@@ -107,40 +107,17 @@
   </div>
 
   <div class="panel tablepanel" id="panel-roster" style="display:none;">
-    <div class="roster-toolbar"><h3>Trainees</h3><button class="btn primary">+ Invite a trainee</button></div>
+    <div class="roster-toolbar"><h3>Trainees</h3></div>
+    <p style="padding:0 20px 14px;font-size:0.82rem;color:var(--grey);">No login, so no personal invite links to send — share this tool's URL directly with your trainees (any way you'd normally share a link). A trainee appears below once they've exported their work and you've imported the file, from the <a href="5_tutor_dashboard.html" style="color:var(--teal);">tutor dashboard</a>.</p>
     <table>
-      <tr><th>Trainee</th><th>Personal link</th><th>Status</th><th></th></tr>
-      <tr>
-        <td>Ramy Sakr</td>
-        <td><span class="link-cell">…exec?trainee=7a5e880be8f0…<button class="btn" style="padding:4px 10px;font-size:0.72rem;">Copy</button></span></td>
-        <td><span class="status-pill passed">Joined</span></td>
-        <td><button class="btn ghost">Resend</button></td>
-      </tr>
-      <tr>
-        <td>New trainee</td>
-        <td><span class="link-cell">…exec?trainee=3f2c1a9de441…<button class="btn" style="padding:4px 10px;font-size:0.72rem;">Copy</button></span></td>
-        <td><span class="status-pill submitted">Invited — not yet opened</span></td>
-        <td><button class="btn ghost">Resend</button></td>
-      </tr>
-      <tr>
-        <td style="color:var(--grey);">—</td>
-        <td style="color:var(--grey);">Not sent yet</td>
-        <td><span class="status-pill draft">Not invited</span></td>
-        <td><button class="btn primary">Send invite</button></td>
-      </tr>
+      <tr><th>Trainee</th><th>TP status</th><th>Imported</th></tr>
+      <tbody id="rosterTraineeBody"></tbody>
     </table>
   </div>
 
   <div class="panel tablepanel" id="panel-tutors" style="display:none;">
-    <div class="roster-toolbar"><h3>Tutors</h3><button class="btn primary">+ Invite a tutor</button></div>
-    <table>
-      <tr><th>Tutor</th><th>Personal link</th><th></th></tr>
-      <tr>
-        <td>Ramy Sakr</td>
-        <td><span class="link-cell">…exec?tutor=7a5e880be8f073c9e93b<button class="btn" style="padding:4px 10px;font-size:0.72rem;">Copy</button></span></td>
-        <td><span class="status-pill passed">Active</span></td>
-      </tr>
-    </table>
+    <div class="roster-toolbar"><h3>Tutors</h3></div>
+    <p style="padding:0 20px 14px;font-size:0.82rem;color:var(--grey);">Same as trainees — no login, so no personal invite links. Share the <a href="5_tutor_dashboard.html" style="color:var(--teal);">tutor dashboard</a> URL with your tutors directly; each imports trainee files into their own browser.</p>
   </div>
 
   <div class="panel tablepanel" id="panel-assignments" style="display:none;">
@@ -161,7 +138,7 @@
     <table id="dmTable">
       <tr><th>Assignment</th><th>Status</th><th>1st marker</th><th>2nd marker</th><th>Double-marked?</th></tr>
     </table>
-    <p style="padding:14px 20px 4px;font-size:0.8rem;color:var(--grey);">Handbook 8.2.3: a minimum of two tutors must be involved in marking overall, and a set proportion of each assignment double-marked (3 of each up to 9 candidates, 4 up to 16, 5 up to 24). This centre currently has 1 trainee — shown for reference; the required-proportion check applies once real rosters are wired in.</p>
+    <p style="padding:14px 20px 4px;font-size:0.8rem;color:var(--grey);">Handbook 8.2.3: a minimum of two tutors must be involved in marking overall, and a set proportion of each assignment double-marked (3 of each up to 9 candidates, 4 up to 16, 5 up to 24) — shown for reference, this doesn't auto-check the proportion against the row count yet.</p>
   </div>
 
   <p class="footer">
@@ -183,6 +160,7 @@ document.getElementById('tabs').addEventListener('click', e=>{
   document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
   document.getElementById('panel-'+btn.dataset.tab).style.display='';
   if (btn.dataset.tab === 'doublemark') renderDoubleMarking();
+  if (btn.dataset.tab === 'roster') renderRoster();
 });
 try {
   const cs = JSON.parse(localStorage.getItem('connect_course_settings'));
@@ -195,19 +173,43 @@ document.getElementById('saveSettings').addEventListener('click', () => {
   }));
 });
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+const ROSTER_KEY='connect_roster_v1';
+function loadRoster(){ try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
+
+function renderRoster(){
+  const roster = loadRoster();
+  const trainees = Object.values(roster.trainees||{}).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  const body = document.getElementById('rosterTraineeBody');
+  if (!trainees.length){ body.innerHTML = `<tr><td colspan="3" style="color:var(--grey);">No trainees imported yet.</td></tr>`; return; }
+  body.innerHTML = trainees.map(tr=>{
+    const fb = tr.tp && tr.tp.feedback, plan = tr.tp && tr.tp.plan, self = tr.tp && tr.tp.selfeval;
+    let status = 'Not yet turned in';
+    if (fb && fb.status==='returned') status = 'Feedback returned';
+    else if (self && self.status==='turned_in') status = 'Awaiting feedback';
+    else if (plan && plan.status==='turned_in') status = 'Plan turned in';
+    return `<tr><td>${esc(tr.name)}</td><td>${esc(status)}</td><td>${tr.importedAt ? new Date(tr.importedAt).toLocaleDateString() : '—'}</td></tr>`;
+  }).join('');
+}
+renderRoster();
+
 function renderDoubleMarking(){
-  let SUBS=null, WORDING=null;
-  try{ SUBS=JSON.parse(localStorage.getItem('connect_assignment_submissions_v1')); }catch(e){}
+  let WORDING=null;
   try{ WORDING=JSON.parse(localStorage.getItem('connect_assignment_wording_v2')); }catch(e){}
   const ORDER=['lrt','lsrt','fol','lfc','a5']; const NAMES={lrt:'LRT',lsrt:'LSRT',fol:'FOL',lfc:'LFC',a5:'Assignment 5'};
-  const rows = ORDER.filter(k=>WORDING&&WORDING[k]).map(k=>{
-    const sub = (SUBS&&SUBS[k]) || {stage:'draft', markers:{first:'',second:'',doubleMarked:false}};
-    const m = sub.markers || {first:'',second:'',doubleMarked:false};
-    const statusLabel = ({draft:'Not submitted',submitted:'Awaiting marking',resubmission_needed:'Resubmission needed',resubmitted:'Resubmission awaiting marking',closed:'Closed'})[sub.stage]||sub.stage;
-    return `<tr><td>${NAMES[k]}</td><td>${esc(statusLabel)}</td><td>${esc(m.first)||'—'}</td><td>${esc(m.second)||'—'}</td>
-      <td><span class="status-pill ${m.doubleMarked?'passed':'draft'}">${m.doubleMarked?'Yes':'No'}</span></td></tr>`;
-  }).join('');
-  document.getElementById('dmTable').innerHTML = '<tr><th>Assignment</th><th>Status</th><th>1st marker</th><th>2nd marker</th><th>Double-marked?</th></tr>' + (rows||'<tr><td colspan="5" style="color:var(--grey);">No assignments set up yet.</td></tr>');
+  const roster = loadRoster();
+  const trainees = Object.values(roster.trainees||{});
+  let rows = [];
+  trainees.forEach(tr=>{
+    const subs = tr.assignments || {};
+    ORDER.filter(k=>WORDING&&WORDING[k]).forEach(k=>{
+      const sub = subs[k]; if (!sub || sub.stage==='draft') return;
+      const m = sub.markers || {first:'',second:'',doubleMarked:false};
+      const statusLabel = ({submitted:'Awaiting marking',resubmission_needed:'Resubmission needed',resubmitted:'Resubmission awaiting marking',closed:'Closed'})[sub.stage]||sub.stage;
+      rows.push(`<tr><td>${esc(tr.name)}</td><td>${NAMES[k]}</td><td>${esc(statusLabel)}</td><td>${esc(m.first)||'—'}</td><td>${esc(m.second)||'—'}</td>
+        <td><span class="status-pill ${m.doubleMarked?'passed':'draft'}">${m.doubleMarked?'Yes':'No'}</span></td></tr>`);
+    });
+  });
+  document.getElementById('dmTable').innerHTML = '<tr><th>Trainee</th><th>Assignment</th><th>Status</th><th>1st marker</th><th>2nd marker</th><th>Double-marked?</th></tr>' + (rows.length ? rows.join('') : '<tr><td colspan="6" style="color:var(--grey);">No assignments submitted yet.</td></tr>');
 }
 </script>
 </body>
