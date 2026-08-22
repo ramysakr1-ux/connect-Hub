@@ -6,8 +6,10 @@ flagged in v1–v3 — read this one; the earlier three are history.
 ## Closed this pass
 
 - **Live word-count validation** — `9_assignment_submission.html` now counts words across
-  all text/field answers live, shows it against the assignment's `wordMin`–`wordMax`, and
-  hard-gates Submit outside that range (same gating pattern as the declaration).
+  all text/field answers live and shows it against the assignment's `wordMin`–`wordMax`.
+  **Correction (23 Aug): changed from a hard gate to a visible warning.** The Handbook only
+  states the centre *sets* this range (8.2.1) — it doesn't require blocking submission
+  outside it. Word count now shows red/amber when out of range but never disables Submit.
 - **Materials/TP-lesson overlap check** — the submission form has a "Materials link"
   field; the tutor marking screen (`10_tutor_assignment_marking.html`) compares it against
   the trainee's TP lesson-plan materials link (`chub:plan.matsLink`) and shows a flag
