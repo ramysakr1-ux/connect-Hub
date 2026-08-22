@@ -92,13 +92,15 @@
     <div class="field-row">
       <label>Centre logo</label>
       <div style="display:flex;align-items:center;gap:14px;">
-        <div class="logo-slot">Centre<br>logo</div>
-        <button class="btn">Upload</button>
+        <div class="logo-slot" id="logoSlot">Centre<br>logo</div>
+        <button class="btn" id="logoUploadBtn" type="button">Upload</button>
+        <input type="file" id="logoFile" accept="image/*" style="display:none;">
       </div>
+      <p id="logoStatus" style="margin:6px 0 0; font-size:0.76rem; color:var(--grey);"></p>
     </div>
-    <div class="field-row"><label>Centre name</label><input type="text" placeholder="e.g. Riverside Language Centre"></div>
-    <div class="field-row"><label>Centre number</label><input type="text" placeholder="Cambridge centre number"></div>
-    <div class="field-row"><label>Course name</label><input type="text" placeholder="e.g. CELTA — August 2026"></div>
+    <div class="field-row"><label>Centre name</label><input type="text" id="centreName" placeholder="e.g. Riverside Language Centre"></div>
+    <div class="field-row"><label>Centre number</label><input type="text" id="centreNumber" placeholder="Cambridge centre number"></div>
+    <div class="field-row"><label>Course name</label><input type="text" id="courseName" placeholder="e.g. CELTA — August 2026"></div>
     <div class="field-row"><label>Course start date</label><input type="date" id="courseStart"></div>
     <div class="field-row"><label>Course end date</label><input type="date" id="courseEnd"></div>
     <div class="settings-actions">
@@ -162,15 +164,41 @@ document.getElementById('tabs').addEventListener('click', e=>{
   if (btn.dataset.tab === 'doublemark') renderDoubleMarking();
   if (btn.dataset.tab === 'roster') renderRoster();
 });
+let courseLogo = '';
+function applyLogoPreview(dataUrl){
+  const slot = document.getElementById('logoSlot');
+  if (dataUrl) slot.innerHTML = `<img src="${dataUrl}" alt="Centre logo" style="width:100%;height:100%;object-fit:cover;border-radius:7px;">`;
+  else slot.innerHTML = 'Centre<br>logo';
+}
 try {
   const cs = JSON.parse(localStorage.getItem('connect_course_settings'));
-  if (cs) { if(cs.start) document.getElementById('courseStart').value = cs.start; if(cs.end) document.getElementById('courseEnd').value = cs.end; }
+  if (cs) {
+    if(cs.start) document.getElementById('courseStart').value = cs.start;
+    if(cs.end) document.getElementById('courseEnd').value = cs.end;
+    if(cs.centreName) document.getElementById('centreName').value = cs.centreName;
+    if(cs.centreNumber) document.getElementById('centreNumber').value = cs.centreNumber;
+    if(cs.courseName) document.getElementById('courseName').value = cs.courseName;
+    if(cs.logo){ courseLogo = cs.logo; applyLogoPreview(courseLogo); }
+  }
 } catch(e) {}
+document.getElementById('logoUploadBtn').addEventListener('click', ()=>document.getElementById('logoFile').click());
+document.getElementById('logoFile').addEventListener('change', e=>{
+  const file = e.target.files[0]; if(!file) return;
+  if (file.size > 500*1024) { document.getElementById('logoStatus').textContent = 'That image is over 500KB — pick something smaller (this is stored in the browser, not uploaded anywhere).'; return; }
+  const reader = new FileReader();
+  reader.onload = () => { courseLogo = reader.result; applyLogoPreview(courseLogo); document.getElementById('logoStatus').textContent = 'Logo ready — click Save to keep it.'; };
+  reader.readAsDataURL(file);
+});
 document.getElementById('saveSettings').addEventListener('click', () => {
   localStorage.setItem('connect_course_settings', JSON.stringify({
     start: document.getElementById('courseStart').value,
-    end: document.getElementById('courseEnd').value
+    end: document.getElementById('courseEnd').value,
+    centreName: document.getElementById('centreName').value,
+    centreNumber: document.getElementById('centreNumber').value,
+    courseName: document.getElementById('courseName').value,
+    logo: courseLogo
   }));
+  document.getElementById('logoStatus').textContent = 'Saved.';
 });
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 const ROSTER_KEY='connect_roster_v1';
