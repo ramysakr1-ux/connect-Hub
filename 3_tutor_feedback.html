@@ -108,9 +108,20 @@
   .crit-panel.open{display:block;}
   .suggest-row{display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:6px 0 0 34px; min-height:0;}
   .suggest-label{font-size:0.7rem; color:var(--grey); font-style:italic;}
-  .suggest-chip{background:none; border:1.5px dashed var(--teal); color:var(--teal); font-size:0.72rem;
+  .suggest-chip{position:relative; background:none; border:1.5px dashed var(--teal); color:var(--teal); font-size:0.72rem;
     font-weight:700; cursor:pointer; padding:3px 9px; border-radius:12px;}
   .suggest-chip:hover{background:rgba(30,107,99,.08);}
+  /* Instant custom tooltip -- native title has a long delay and reads as
+     "hovering does nothing." data-tip + ::before/::after, no JS. */
+  .suggest-chip[data-tip]:hover::before, .suggest-chip[data-tip]:hover::after{
+    position:absolute; left:50%; transform:translateX(-50%); pointer-events:none; z-index:50;}
+  .suggest-chip[data-tip]:hover::after{
+    content:attr(data-tip); bottom:calc(100% + 8px);
+    background:var(--ink); color:var(--paper); font-size:0.72rem; font-weight:500;
+    padding:6px 10px; border-radius:5px; width:max-content; max-width:220px;
+    text-align:left; line-height:1.35; box-shadow:0 2px 10px rgba(0,0,0,0.18);}
+  .suggest-chip[data-tip]:hover::before{
+    content:''; bottom:calc(100% + 3px); border:5px solid transparent; border-top-color:var(--ink);}
   .crit-topic{font-size:0.7rem; font-weight:700; color:var(--terracotta); text-transform:uppercase;
     letter-spacing:.05em; margin:10px 0 5px;}
   .crit-topic:first-child{margin-top:0;}
@@ -512,7 +523,7 @@ function addPoint(listId, html, _unused){
     const codes=suggestCriteria(text, scope).filter(c=>existing.indexOf(c)<0).slice(0,3);
     if(!text.trim() || !codes.length){ suggestRow.innerHTML=''; return; }
     suggestRow.innerHTML='<span class="suggest-label">Suggested:</span>'+
-      codes.map(c=>`<button type="button" class="suggest-chip" data-code="${c}" title="${esc(CRIT_TEXT[c]||'')}">+ ${c}</button>`).join('');
+      codes.map(c=>`<button type="button" class="suggest-chip" data-code="${c}" data-tip="${esc(CRIT_TEXT[c]||'')}">+ ${c}</button>`).join('');
   }
   suggestRow.addEventListener('mousedown',e=>e.preventDefault());
   suggestRow.addEventListener('click',e=>{
@@ -773,8 +784,8 @@ function pointsTable(title,points,tone){
   const th = tone==='good' ? TH_GOOD : tone==='act' ? TH_ACT : TH;
   const td = tone==='good' ? TD_GOOD : tone==='act' ? TD_ACT : TD;
   if(!points.length) return `<tr><td ${th} width="30%">${title}</td><td ${td}>&nbsp;</td></tr>`;
-  return `<tr><td ${th} width="30%">${title}</td><td ${td}>${
-    points.map(p=>(p.star?'★ ':'• ')+p.html).join('<br>')}</td></tr>`;
+  return `<tr><td ${th} width="30%">${title}</td><td ${td}><ul style="margin:0;padding-left:1.1em;">${
+    points.map(p=>`<li>${p.star?'<strong>★ </strong>':''}${p.html}</li>`).join('')}</ul></td></tr>`;
 }
 
 function feedbackHTML(d){

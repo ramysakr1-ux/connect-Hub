@@ -225,6 +225,22 @@
   .done .row{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;}
   .hidden{display:none;}
 
+  .board input:disabled, .board textarea:disabled, .board select:disabled{
+    background:var(--sand-deep); color:var(--grey); cursor:not-allowed; opacity:0.75;}
+
+  .confirm-overlay{position:fixed; inset:0; background:rgba(35,25,15,0.4); display:flex;
+    align-items:center; justify-content:center; z-index:1000; padding:20px;}
+  .confirm-modal{background:var(--paper); border-radius:6px; border-top:3px solid var(--brick);
+    padding:22px 24px; max-width:400px; width:100%; box-shadow:0 8px 30px rgba(0,0,0,0.18);}
+  .confirm-message{margin:0 0 18px; font-size:0.92rem; color:var(--ink); line-height:1.55;}
+  .confirm-actions{display:flex; justify-content:flex-end; gap:10px;}
+  .confirm-actions button{font-family:'Karla',sans-serif; font-size:0.85rem; font-weight:600;
+    padding:9px 18px; border-radius:20px; border:1.5px solid var(--sand-line); cursor:pointer;}
+  .confirm-cancel{background:var(--paper); color:var(--ink);}
+  .confirm-cancel:hover{background:var(--sand-deep);}
+  .confirm-action{background:var(--brick); color:var(--paper); border-color:var(--brick);}
+  .confirm-action:hover{background:oklch(40% 0.15 27);}
+
   @media print{
     body{background:#fff; padding:0; display:block;}
     .actionbar,.ipa-bar,.del-btn,.btn,.example-btn,.fw-row,.credit-pill{display:none !important;}
@@ -461,6 +477,34 @@
 <script>
 const $ = id => document.getElementById(id);
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* Styled stand-in for confirm() -- native dialogs show the page origin in
+   the browser chrome, which read as broken in review. Async, so every call
+   site awaits it instead of branching on a synchronous return. */
+function confirmModal(message, actionLabel){
+  return new Promise(resolve=>{
+    const overlay=document.createElement('div');
+    overlay.className='confirm-overlay';
+    overlay.innerHTML=`<div class="confirm-modal" role="alertdialog" aria-modal="true">
+      <p class="confirm-message"></p>
+      <div class="confirm-actions">
+        <button type="button" class="confirm-cancel">Cancel</button>
+        <button type="button" class="confirm-action"></button>
+      </div>
+    </div>`;
+    overlay.querySelector('.confirm-message').textContent=message;
+    const actionBtn=overlay.querySelector('.confirm-action');
+    actionBtn.textContent=actionLabel;
+    document.body.appendChild(overlay);
+    function cleanup(result){ overlay.remove(); document.removeEventListener('keydown',onKey); resolve(result); }
+    function onKey(e){ if(e.key==='Escape') cleanup(false); }
+    document.addEventListener('keydown',onKey);
+    overlay.addEventListener('mousedown',e=>{ if(e.target===overlay) cleanup(false); });
+    overlay.querySelector('.confirm-cancel').addEventListener('click',()=>cleanup(false));
+    actionBtn.addEventListener('click',()=>cleanup(true));
+    actionBtn.focus();
+  });
+}
 function renderMatsPreview(){
   const url=($('fMatsLink').value||'').trim();
   const el=$('matsPreview');
@@ -653,12 +697,12 @@ function updateTotal(){
 $('fLength').addEventListener('input',updateTotal);
 updateTotal();
 
-$('fwApply').addEventListener('click',()=>{
+$('fwApply').addEventListener('click',async()=>{
   const key=fwSel.value;
   if(!key){ setStatus('Choose a framework first.'); return; }
   const fw=FRAMEWORKS[key];
   const filled=[...procBody.querySelectorAll('tr')].some(tr=>procText(tr.querySelector('.t-proc').value).trim());
-  if(filled && !confirm('This will rename the stages and replace the stage aims. Anything you have typed in Procedure stays — continue?')) return;
+  if(filled && !await confirmModal('This will rename the stages and replace the stage aims. Anything you have typed in Procedure stays — continue?','Replace anyway')) return;
   const rows=[...procBody.querySelectorAll('tr')];
   fw.stages.forEach((st,i)=>{
     const tr=rows[i]||addRow('','','');
@@ -858,9 +902,14 @@ function applyType(){
   $('blocks').innerHTML='';
   addBlock();
 }
-$('typeSel').addEventListener('change',()=>{
+let lastTypeSelValue=$('typeSel').value;
+$('typeSel').addEventListener('change',async()=>{
   const typed=[...document.querySelectorAll('#blocks .fld, #vocabBody textarea')].some(el=>el.value.trim());
-  if(typed && !confirm('Switching will clear the analysis you have typed. The lesson plan above is not affected. Continue?')) return;
+  if(typed && !await confirmModal('Switching will clear the analysis you have typed. The lesson plan above is not affected. Continue?','Switch anyway')){
+    $('typeSel').value=lastTypeSelValue;
+    return;
+  }
+  lastTypeSelValue=$('typeSel').value;
   applyType();
 });
 $('exBtn').addEventListener('click',()=>{ $('exBox').classList.toggle('open'); });
@@ -1148,13 +1197,13 @@ function setStatus(msg){
   setStatus._t=setTimeout(()=>{ $('status').textContent=''; },4000);
 }
 
-$('turnInBtn').addEventListener('click', ()=>{
+$('turnInBtn').addEventListener('click', async()=>{
   const d=collect();
   const missing=[];
   if(!d.meta.name.trim()) missing.push('your name');
   if(!d.plan.main.trim()) missing.push('the main aims');
   if(!d.plan.rows.some(r=>r.proc.trim())) missing.push('the procedure');
-  if(missing.length && !confirm('You haven\'t filled in '+missing.join(', ')+'. Turn in anyway?')) return;
+  if(missing.length && !await confirmModal('You haven\'t filled in '+missing.join(', ')+'. Turn in anyway?','Turn in anyway')) return;
   savePlanRecord({ state:d, label:draftLabel(), status:'turned_in', turnedInAt:Date.now() });
   dirty=false;
   renderTurnStatus();
