@@ -313,6 +313,16 @@ function wordCountOk(a){
   return n >= a.wordMin && n <= a.wordMax;
 }
 
+function refreshGate(){
+  const a = WORDING[CURRENT];
+  if (!a) return;
+  const wc = $('wcCounter');
+  if (wc) { const n = countWords(); wc.textContent = `${n} of ${a.wordMin}–${a.wordMax} words`; wc.style.color = wordCountOk(a) ? '' : 'var(--brick)'; }
+  const sub = subFor(CURRENT);
+  const btn = $('submitBtn');
+  if (btn) btn.disabled = !(declOk(a) && wordCountOk(a) && (sub.stage==='draft' || sub.stage==='resubmission_needed'));
+}
+
 function declOk(a){
   let ok = true;
   a.sections.forEach((s,i) => {
@@ -374,6 +384,7 @@ function autosave(){
   const sub = subFor(CURRENT);
   sub.draft = snapshot();
   saveSubs();
+  refreshGate();
   const s = $('status'); if (s) { s.textContent = 'Saved'; setTimeout(()=>{ if($('status')) $('status').textContent=''; }, 1200); }
 }
 
