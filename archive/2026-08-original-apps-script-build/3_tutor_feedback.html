@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<!--
+  Connect Hub — teaching practice paperwork
+  © 2026 Ramy Sakr. All rights reserved.
+  Tutor-facing form. Not to be redistributed, republished, or altered — including the
+  watermark and this notice — without the author's written permission.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3 · TP Feedback — Tutor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Lora:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sand:#E7D7B6; --sand-deep:#D9C39A; --sand-line:#C9B189;
+    --paper:#FCF8EF; --ink:#2C2418;
+    --terracotta:#A9552E; --terracotta-dk:#8E4526;
+    --teal:#1E6B63; --ochre:#BE8734;
+    --olive:#5C7A3C; --brick:#A33227; --grey:#736A58;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Inter',sans-serif; color:var(--ink);
+    background:linear-gradient(170deg,#F0E4C9 0%,#E7D7B6 55%,#DFCEA9 100%);
+    background-attachment:fixed; padding:28px 16px 110px; display:flex; justify-content:center;}
+  .board{max-width:1120px; width:100%;}
+
+  .header{background:var(--paper); border-radius:8px; margin-bottom:20px;
+    box-shadow:0 10px 26px rgba(74,54,28,0.28); border-top:6px solid var(--terracotta);
+    padding:26px 26px 22px;}
+  .header h1{font-family:'Lora',Georgia,serif; font-weight:700; font-size:1.95rem; margin:0;
+    color:var(--terracotta); text-align:center;}
+  .header p.sub{margin:10px auto 0; font-size:0.88rem; color:var(--grey);
+    text-align:center; max-width:700px; line-height:1.6;}
+  /* widths in proportion to what goes in them — a tutor's name is long, a headcount is two digits */
+  .details{display:grid; grid-template-columns:1.45fr 0.85fr 1.15fr 0.8fr 0.95fr 0.85fr;
+    gap:12px; margin-top:22px;}
+  .details.wide{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));}
+  @media(max-width:860px){
+    .details{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));}
+  }
+  .loadbar{margin-top:20px; padding-top:18px; border-top:1px solid var(--sand-line);
+    display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap;}
+  .loaded{font-size:0.86rem; color:var(--teal); font-weight:600;}
+
+  .field label{display:block; font-size:0.72rem; font-weight:700; color:var(--teal);
+    text-transform:uppercase; letter-spacing:.07em; margin-bottom:5px;}
+  .field input, .field select{width:100%; font-family:'Inter',sans-serif; font-size:0.9rem;
+    padding:8px 11px; border:2px solid var(--sand-line); border-radius:6px;
+    background:#FFFDF8; color:var(--ink);}
+  .field input:focus, .field select:focus{outline:none; border-color:var(--teal);}
+
+  .card{background:var(--paper); border-radius:8px; padding:20px 24px; margin-bottom:16px;
+    box-shadow:0 6px 16px rgba(74,54,28,0.18); border-left:5px solid var(--sand-line);}
+  .card.good{border-left-color:var(--olive);}
+  .card.action{border-left-color:var(--terracotta);}
+  .card.grade{border-left-color:var(--ochre);}
+  .card.seen{border-left-color:var(--sand-deep); background:#F6F0E3;}
+  .card.selfc{border-left-color:var(--ochre);}
+  .card.selfc textarea{background:#FBF3E4; border-color:var(--ochre);}
+  .card h2{font-family:'Lora',Georgia,serif; font-size:1.1rem; margin:0 0 4px; color:var(--terracotta);}
+  .card .guide{font-size:0.8rem; color:var(--grey); font-style:italic; margin:0 0 12px; line-height:1.5;}
+
+  textarea{width:100%; font-family:'Inter',sans-serif; font-size:0.9rem; padding:10px 12px;
+    border:2px solid var(--sand-line); border-radius:6px; background:#FFFDF8; color:var(--ink);
+    line-height:1.65; resize:vertical; overflow:hidden; min-height:56px;}
+  textarea:focus{outline:none; border-color:var(--teal);}
+
+  .grade-select{display:inline-block; width:auto; min-width:260px; margin-top:6px;
+    font-family:'Inter',sans-serif; font-size:1rem; font-weight:700; text-align:center;
+    padding:11px 18px; border:2px solid var(--sand-line); border-radius:8px;
+    background:#FFFDF8; color:var(--ink); cursor:pointer;}
+  .grade-select:focus{outline:none; border-color:var(--teal);}
+  .grade-select.above{background:var(--olive); border-color:var(--olive); color:#fff;}
+  .grade-select.to{background:var(--teal); border-color:var(--teal); color:#fff;}
+  .grade-select.not{background:var(--brick); border-color:var(--brick); color:#fff;}
+
+  /* ---- point rows: the criteria tag sits inside the comment box, at the cursor ---- */
+  .pt{padding:12px 0; border-bottom:1px dashed var(--sand-line);}
+  .pt:last-of-type{border-bottom:none;}
+  .pt-row{display:flex; gap:10px; align-items:flex-start;}
+  .pt-num{background:var(--teal); color:var(--paper); width:22px; height:22px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700;
+    flex:none; margin-top:11px;}
+  .pt-text{flex:1; min-width:0; font-family:'Inter',sans-serif; font-size:0.9rem;
+    padding:10px 12px; border:2px solid var(--sand-line); border-radius:6px;
+    background:#FFFDF8; color:var(--ink); line-height:1.7; min-height:56px;}
+  .pt-text:focus{outline:none; border-color:var(--teal);}
+  .pt-text:empty:before{content:attr(data-ph); color:var(--grey); font-style:italic;}
+  .tag{display:inline-block; background:var(--teal); color:var(--paper); font-size:0.74rem;
+    font-weight:700; padding:1px 8px; border-radius:10px; margin:0 2px; cursor:help;
+    user-select:all; vertical-align:1px;}
+  .star{flex:none; background:none; border:1.5px solid var(--sand-line); color:var(--sand-line);
+    font-size:0.95rem; line-height:1; cursor:pointer; padding:5px 9px; border-radius:12px;
+    margin-top:9px;}
+  .star:hover{border-color:var(--ochre); color:var(--ochre);}
+  .star.on{background:var(--ochre); border-color:var(--ochre); color:#3b2600;}
+  .crit-toggle{flex:none; background:none; border:1.5px solid var(--teal); color:var(--teal);
+    font-size:0.72rem; font-weight:700; cursor:pointer; padding:5px 10px; border-radius:12px;
+    white-space:nowrap; margin-top:9px;}
+  .crit-toggle:hover{background:rgba(30,107,99,.08);}
+  .crit-item{display:flex; gap:8px; align-items:flex-start; font-size:0.8rem; line-height:1.45;
+    padding:4px 6px; cursor:pointer; border-radius:5px;}
+  .crit-item:hover{background:var(--sand-deep);}
+  .chip{background:var(--teal); color:var(--paper); font-size:0.73rem; font-weight:700;
+    padding:3px 9px; border-radius:11px; cursor:help;}
+  .crit-panel{display:none; margin-top:9px; background:#F3EADA; border-left:4px solid var(--ochre);
+    border-radius:6px; padding:10px 14px; max-height:250px; overflow-y:auto;}
+  .crit-panel.open{display:block;}
+  .crit-topic{font-size:0.7rem; font-weight:700; color:var(--terracotta); text-transform:uppercase;
+    letter-spacing:.05em; margin:10px 0 5px;}
+  .crit-topic:first-child{margin-top:0;}
+  .crit-item{display:flex; gap:8px; align-items:flex-start; font-size:0.8rem; line-height:1.45;
+    padding:3px 0; cursor:pointer;}
+  .crit-item input{margin-top:3px; accent-color:var(--teal); flex:none;}
+  .crit-item b{color:var(--teal); flex:none; min-width:22px;}
+  .del-btn{background:none; border:none; color:var(--brick); font-size:1rem; cursor:pointer;
+    padding:10px 2px 0;}
+  .del-btn:hover{color:#7d241c;}
+
+  .ap-row{display:flex; gap:10px; align-items:flex-start; margin-bottom:9px;}
+  .ap-row input[type=text]{flex:1; font-family:'Inter',sans-serif; font-size:0.9rem; padding:9px 12px;
+    border:2px solid var(--sand-line); border-radius:6px; background:#FFFDF8; color:var(--ink);}
+  .ap-row input[type=text]:focus{outline:none; border-color:var(--teal);}
+
+  .btn{border:none; border-radius:8px; font-family:'Inter',sans-serif; font-size:0.84rem; font-weight:600;
+    padding:8px 15px; cursor:pointer;}
+  .btn-teal{background:var(--teal); color:var(--paper);} .btn-teal:hover{background:#17544E;}
+  .btn-sand{background:var(--sand-deep); color:var(--ink);} .btn-sand:hover{background:var(--sand-line);}
+  .example-btn{background:none; border:none; color:var(--terracotta); font-size:0.82rem; font-weight:600;
+    cursor:pointer; padding:0; text-decoration:underline; text-underline-offset:3px;}
+
+  /* ---- what they planned ---- */
+  .seen-head{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px;}
+  .seen-head h2{margin:0;}
+  .seen dl{margin:0 0 12px; font-size:0.86rem; line-height:1.6;}
+  .seen dt{font-weight:700; color:var(--teal); margin-top:10px; font-size:0.76rem;
+    text-transform:uppercase; letter-spacing:.05em;}
+  .seen dt:first-child{margin-top:0;}
+  .seen dd{margin:3px 0 0;}
+  .seen table{width:100%; border-collapse:collapse; font-size:0.84rem; margin-top:8px;}
+  .seen th{background:var(--sand-deep); color:var(--ink); text-align:left; padding:6px 8px;
+    font-size:0.72rem; text-transform:uppercase; letter-spacing:.04em;}
+  .seen td{border-bottom:1px solid var(--sand-line); padding:6px 8px; vertical-align:top; line-height:1.55;}
+  .seen td b{color:var(--terracotta);}
+  .seen td ul{margin:0; padding-left:16px;}
+  .seen h4{font-family:'Lora',Georgia,serif; font-size:0.95rem; margin:16px 0 4px; color:var(--terracotta);}
+  .seen th.tc{background:var(--ochre); color:#3b2600;}
+  .seen textarea.tc{width:100%; min-height:34px; font-family:'Inter',sans-serif; font-size:0.8rem;
+    padding:5px 7px; border:1px solid var(--ochre); border-radius:5px; background:#FBF3E4;
+    color:var(--ink); line-height:1.5; resize:vertical; overflow:hidden;}
+  .seen textarea.tc:focus{outline:none; border-color:var(--terracotta);}
+  .seen textarea.tc::placeholder{color:#b09565; font-style:italic;}
+
+  .actionbar{position:fixed; bottom:0; left:0; right:0; background:rgba(252,248,239,0.97);
+    border-top:2px solid var(--sand-line); padding:12px 18px; display:flex; gap:12px;
+    flex-wrap:wrap; align-items:center; justify-content:center; z-index:430;
+    box-shadow:0 -4px 18px rgba(74,54,28,0.18);}
+  .btn-submit{background:var(--terracotta); color:var(--paper); font-size:1rem; font-weight:700;
+    padding:12px 40px; border-radius:24px; box-shadow:0 5px 14px rgba(169,85,46,0.40);
+    border:none; cursor:pointer;}
+  .btn-submit:hover{background:var(--terracotta-dk);}
+  .status{font-size:0.82rem; color:var(--grey);}
+
+  .barhint{font-size:0.8rem; color:var(--grey); line-height:1.45; max-width:330px;}
+  .barhint b{color:var(--teal);}
+
+  /* ---- unfinished draft, remembered by the browser (a convenience, not the record) ---- */
+  .draftbar{display:none; align-items:center; gap:12px; flex-wrap:wrap;
+    background:#FBF3E4; border:2px solid var(--ochre); border-radius:8px;
+    padding:12px 18px; margin-bottom:16px; font-size:0.86rem; color:var(--ink);
+    box-shadow:0 4px 12px rgba(74,54,28,0.14); line-height:1.5;}
+  .draftbar.show{display:flex;}
+  .draftbar span{flex:1; min-width:220px;}
+  .draftbar b{color:var(--terracotta);}
+
+
+  /* ---- what to do next: the form saves files, Classroom does the returning ---- */
+  .done-veil{position:fixed; inset:0; background:rgba(44,36,24,0.52); z-index:500;
+    display:none; align-items:flex-start; justify-content:center; padding:38px 16px; overflow-y:auto;}
+  .done-veil.open{display:flex;}
+  .done{background:var(--paper); border-radius:10px; max-width:640px; width:100%;
+    border-top:6px solid var(--olive); padding:26px 30px 24px;
+    box-shadow:0 18px 44px rgba(44,36,24,0.42);}
+  .done h2{font-family:'Lora',Georgia,serif; font-size:1.3rem; margin:0 0 4px; color:var(--terracotta);}
+  .done p.lead{font-size:0.88rem; color:var(--grey); margin:0 0 16px; line-height:1.6;}
+  .done .files{background:#F3EADA; border-left:4px solid var(--ochre); border-radius:6px;
+    padding:12px 16px; margin:0 0 18px;}
+  .done .files div{font-size:0.84rem; padding:3px 0; line-height:1.5;}
+  .done .files code{font-family:ui-monospace,Menlo,monospace; font-size:0.8rem; color:var(--teal);
+    font-weight:600;}
+  .done ol{margin:0 0 18px; padding-left:22px;}
+  .done ol li{font-size:0.89rem; line-height:1.75; margin-bottom:6px;}
+  .done ol li b{color:var(--teal);}
+  .done .note{font-size:0.8rem; color:var(--grey); font-style:italic; line-height:1.6;
+    border-top:1px solid var(--sand-line); padding-top:12px; margin:0 0 16px;}
+  .done .row{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;}
+
+  .watermark{position:fixed; bottom:66px; right:26px; font-family:'Kalam',cursive; font-size:2.2rem;
+    letter-spacing:.07em; color:rgba(169,85,46,0.085); transform:rotate(-14deg);
+    pointer-events:none; user-select:none; z-index:300;}
+
+  @media print{
+    body{background:#fff; padding:0; display:block;}
+    .actionbar,.btn,.del-btn,.crit-toggle,.crit-panel,.loadbar{display:none !important;}
+    .card,.header{box-shadow:none; border-radius:0; page-break-inside:avoid;}
+    textarea,input,select{border:1px solid #999 !important; background:#fff !important;}
+    .watermark{bottom:20px;}
+  }
+</style>
+</head>
+<body>
+<div class="watermark">Ramy</div>
+<div class="board">
+<div class="draftbar" id="draftBar">
+  <span id="draftMsg"></span>
+  <button class="btn btn-teal" type="button" id="draftRestore">Restore it</button>
+  <button class="btn btn-sand" type="button" id="draftDiscard">Start fresh</button>
+</div>
+
+
+  <div class="header">
+    <h1>Teaching Practice Feedback</h1>
+    <p class="sub">Load the trainee's file to see their plan beside you while you watch. Write one point per
+    line and tag each point with the criteria it relates to. Saving assembles the whole document; returning
+    it is done in Classroom.</p>
+
+    <div class="loadbar">
+      <button class="btn btn-teal" id="loadBtn">Load the trainee's file</button>
+      <input type="file" id="loadFile" accept=".json,.celta" style="display:none">
+      <span class="loaded" id="loadedInfo">No file loaded — you can still write feedback on its own</span>
+    </div>
+
+    <div class="details">
+      <div class="field"><label for="fTutor">Tutor</label><input id="fTutor" type="text"></div>
+      <div class="field"><label for="fTP">TP #</label><input id="fTP" type="text" placeholder="e.g. TP4"></div>
+      <div class="field"><label for="fDate">Date</label><input id="fDate" type="date"></div>
+      <div class="field"><label for="fLevel">Level</label>
+        <input id="fLevel" type="text" list="cefrLevels" placeholder="e.g. B1"></div>
+      <datalist id="cefrLevels">
+        <option>A1</option><option>A1/A2</option><option>A2</option><option>A2/B1</option>
+        <option>B1</option><option>B1/B2</option><option>B2</option><option>B2/C1</option>
+      </datalist>
+      <div class="field"><label for="fTime">Time (minutes)</label><input id="fTime" type="text" placeholder="45"></div>
+      <div class="field"><label for="fStudents">Students present</label><input id="fStudents" type="text"></div>
+    </div>
+    <div class="details wide" style="margin-top:12px;">
+      <div class="field"><label for="fMain">Main aim — focus</label>
+        <input id="fMain" type="text" list="aimTypes" placeholder="e.g. Grammar"></div>
+      <div class="field"><label for="fSub">Sub aim — focus</label>
+        <input id="fSub" type="text" list="aimTypes" placeholder="e.g. Speaking"></div>
+      <datalist id="aimTypes">
+        <option>Grammar</option><option>Vocabulary</option><option>Functional language</option>
+        <option>Pronunciation</option><option>Reading</option><option>Listening</option>
+        <option>Speaking</option><option>Writing</option>
+        <option>Receptive skills</option><option>Productive skills</option>
+      </datalist>
+    </div>
+  </div>
+
+  <div class="card seen" id="seen" style="display:none;">
+    <div class="seen-head">
+      <h2>What they planned</h2>
+      <button class="example-btn" id="seenToggle">Hide</button>
+    </div>
+    <div id="seenBody"></div>
+  </div>
+
+  <div class="card grade" style="text-align:center;">
+    <h2 style="text-align:center;">Lesson grade at this stage of the course</h2>
+    <select id="fGrade" class="grade-select">
+      <option value="">— choose —</option>
+      <option value="Above standard">Above standard</option>
+      <option value="To standard">To standard</option>
+      <option value="Not to standard">Not to standard</option>
+    </select>
+  </div>
+
+  <div class="card good">
+    <h2>Strengths in planning</h2>
+    <p class="guide">One point per line. Tag each with the planning criteria it shows.</p>
+    <div id="lSP" data-scope="planning"></div>
+    <button class="btn btn-sand add-pt" data-list="lSP">+ Add point</button>
+  </div>
+
+  <div class="card action">
+    <h2>Action points in planning</h2>
+    <p class="guide">Star the ones you want them to prioritise in the next TP — starred points carry into
+    the Personal Aims of their next plan.</p>
+    <div id="lAP" data-scope="planning" data-star="1"></div>
+    <button class="btn btn-sand add-pt" data-list="lAP">+ Add point</button>
+  </div>
+
+  <div class="card good">
+    <h2>Strengths in teaching</h2>
+    <p class="guide">What happened in the room — rapport, clarity, management, language work.</p>
+    <div id="lST" data-scope="teaching"></div>
+    <button class="btn btn-sand add-pt" data-list="lST">+ Add point</button>
+  </div>
+
+  <div class="card action">
+    <h2>Action points in teaching</h2>
+    <p class="guide">Star the ones to prioritise next time.</p>
+    <div id="lAT" data-scope="teaching" data-star="1"></div>
+    <button class="btn btn-sand add-pt" data-list="lAT">+ Add point</button>
+  </div>
+
+  <div class="card">
+    <h2>Overall comment</h2>
+    <textarea id="tOverall" rows="4"></textarea>
+  </div>
+
+  <div class="card selfc">
+    <h2>Your comment on their self-evaluation</h2>
+    <p class="guide">Appears at the end of the document, under their self-evaluation. Leave it empty if
+    you have nothing to add — it will not be printed.</p>
+    <textarea id="tSelf" rows="3"></textarea>
+  </div>
+
+</div>
+
+<div class="actionbar">
+  <button class="btn-submit" id="submitBtn">Finish and save the document</button>
+  <span class="barhint">Saving is not returning — attach the PDF in Classroom and click <b>Return</b> there.</span>
+  <span class="status" id="status"></span>
+</div>
+
+<div class="done-veil" id="doneVeil">
+  <div class="done">
+    <h2>Saved. Now return it in Classroom.</h2>
+    <p class="lead">This form can only write files to your computer — it has no way to reach
+      Classroom itself. Returning is three clicks there.</p>
+    <div class="files" id="doneFiles"></div>
+    <ol id="doneSteps"></ol>
+    <p class="note" id="doneNote"></p>
+    <div class="row">
+      <button class="btn btn-sand" id="pdfBtn">Open as PDF</button>
+      <button class="btn btn-teal" id="doneClose">Done</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function nl2br(s){ return esc(s).replace(/\n/g,'<br>'); }
+function autoGrow(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+2)+'px'; }
+let dirty=false, DOC=null;
+document.addEventListener('input', e=>{
+  if(e.target.tagName==='TEXTAREA') autoGrow(e.target);
+  dirty=true;
+});
+
+/* ================= CELTA 5 assessment criteria (verbatim) ================= */
+const TOPIC_NAMES={
+  '1':'Topic 1 — Learners and teachers, and the teaching and learning context',
+  '2':'Topic 2 — Language analysis and awareness',
+  '3':'Topic 3 — Language skills: reading, listening, speaking and writing',
+  '4':'Topic 4 — Planning and resources for different teaching contexts',
+  '5':'Topic 5 — Developing teaching skills and professionalism'
+};
+const CRITERIA=[
+  ['1a','1','teaching a class with an awareness of the needs and interests of the learner group'],
+  ['1b','1','teaching a class with an awareness of learning preferences and cultural factors that may affect learning'],
+  ['1c','1','acknowledging, when necessary, learners’ backgrounds and previous learning experiences'],
+  ['1d','1','establishing good rapport with learners and ensuring they are fully involved in learning activities'],
+  ['2a','2','adjusting their own use of language in the classroom according to the learner group and the context'],
+  ['2b','2','identifying errors and sensitively correcting learners’ oral and written language'],
+  ['2c','2','providing clear contexts and a communicative focus for language'],
+  ['2d','2','providing accurate and appropriate models of oral and written language in the classroom'],
+  ['2e','2','focusing on language items in the classroom by clarifying relevant aspects of meaning and form (including phonology) to an appropriate degree of depth'],
+  ['2f','2','showing awareness of differences in style and register'],
+  ['2g','2','providing appropriate practice of language items'],
+  ['3a','3','helping learners to understand reading and listening texts'],
+  ['3b','3','helping learners to produce oral and written language'],
+  ['4a','4','identifying and stating appropriate aims/outcomes for individual lessons'],
+  ['4b','4','ordering activities so that they achieve lesson aims'],
+  ['4c','4','selecting, adapting or designing materials, activities, resources and technical aids appropriate for the lesson'],
+  ['4d','4','presenting the materials for classroom use with a professional appearance, and with regard to copyright requirements'],
+  ['4e','4','describing the procedure of the lesson in sufficient detail'],
+  ['4f','4','including interaction patterns appropriate for the materials and activities used in the lesson'],
+  ['4g','4','ensuring balance, variety and a communicative focus in materials, tasks and activities'],
+  ['4h','4','allocating appropriate timing for different stages in the lessons'],
+  ['4i','4','analysing language with attention to form, meaning and phonology and using correct terminology'],
+  ['4j','4','anticipating potential difficulties with language, materials and learners'],
+  ['4k','4','suggesting solutions to anticipated problems'],
+  ['4l','4','using terminology that relates to language skills and subskills correctly'],
+  ['4m','4','working constructively with colleagues in the planning of teaching practice sessions'],
+  ['4n','4','reflecting on and evaluating their plans in light of the learning process and suggesting improvements for future plans'],
+  ['5a','5','arranging the classroom appropriately for teaching and learning, bearing in mind safety regulations of the institution'],
+  ['5b','5','setting up and managing whole class and/or group or individual activities as appropriate'],
+  ['5c','5','selecting appropriate teaching techniques in relation to the content of the lesson'],
+  ['5d','5','managing the learning process in such a way that lesson aims are achieved'],
+  ['5e','5','making use of materials, resources and technical aids in such a way that they enhance learning'],
+  ['5f','5','using appropriate means to make instructions for tasks and activities clear to learners'],
+  ['5g','5','using a range of questions effectively for the purpose of elicitation and checking of understanding'],
+  ['5h','5','providing learners with appropriate feedback on tasks and activities'],
+  ['5i','5','maintaining an appropriate learning pace in relation to materials, tasks and activities'],
+  ['5j','5','monitoring learners appropriately in relation to the task or activity'],
+  ['5k','5','beginning and finishing lessons on time and, if necessary, making any relevant regulations pertaining to the teaching institution clear to learners'],
+  ['5l','5','maintaining accurate and up-to-date records in their portfolio'],
+  ['5m','5','noting their own teaching strengths and weaknesses in different teaching situations in light of feedback from learners, teachers and teacher educators'],
+  ['5n','5','participating in and responding to feedback']
+];
+const CRIT_TEXT={}; CRITERIA.forEach(([c,,x])=>{ CRIT_TEXT[c]=x; });
+
+/* ================= point rows ================= */
+function critPanelHTML(scope){
+  const topics = scope==='planning' ? ['4'] : ['1','2','3','5'];
+  let html='';
+  topics.forEach(t=>{
+    html+=`<p class="crit-topic">${TOPIC_NAMES[t]}</p>`;
+    CRITERIA.filter(c=>c[1]===t).forEach(([code,,text])=>{
+      html+=`<div class="crit-item" data-code="${code}"><b>${code}</b><span>${text}</span></div>`;
+    });
+  });
+  return html;
+}
+function tagHTML(code){
+  return `<span class="tag" contenteditable="false" data-c="${code}" title="${esc(CRIT_TEXT[code]||'')}">${code}</span>&nbsp;`;
+}
+
+/* the caret inside the box we last typed in, so a tag lands where you left off */
+let caretBox=null, caretRange=null;
+function rememberCaret(box){
+  const sel=window.getSelection();
+  if(sel.rangeCount && box.contains(sel.anchorNode)){
+    caretBox=box; caretRange=sel.getRangeAt(0).cloneRange();
+  }
+}
+
+function addPoint(listId, html, _unused){
+  const host=$(listId);
+  const scope=host.dataset.scope;
+  const row=document.createElement('div');
+  row.className='pt';
+  row.innerHTML=`<div class="pt-row">
+      <span class="pt-num"></span>
+      <div class="pt-text" contenteditable="true" data-ph="Write one point — then tag it"></div>
+      ${host.dataset.star ? `<button class="star" type="button" title="Prioritise this in the next TP">★</button>` : ''}
+      <button class="crit-toggle" type="button">＋ criteria</button>
+      <button class="del-btn" type="button" title="Remove this point">✕</button>
+    </div>
+    <div class="crit-panel"></div>`;
+  host.appendChild(row);
+
+  const box=row.querySelector('.pt-text');
+  const panel=row.querySelector('.crit-panel');
+  const toggle=row.querySelector('.crit-toggle');
+  if(html) box.innerHTML=html;
+
+  ['keyup','mouseup','focus'].forEach(ev=>box.addEventListener(ev,()=>rememberCaret(box)));
+  box.addEventListener('input',()=>{ dirty=true; });
+  box.addEventListener('paste',e=>{           /* keep pasted text plain */
+    e.preventDefault();
+    const t=(e.clipboardData||window.clipboardData).getData('text/plain');
+    document.execCommand('insertText',false,t);
+  });
+
+  toggle.addEventListener('click',()=>{
+    if(!panel.dataset.built){ panel.innerHTML=critPanelHTML(scope); panel.dataset.built='1'; }
+    panel.classList.toggle('open');
+    if(panel.classList.contains('open') && caretBox!==box){ box.focus(); rememberCaret(box); }
+  });
+
+  /* click a criterion — the tag is inserted inside the box, where the cursor is */
+  panel.addEventListener('mousedown',e=>e.preventDefault());
+  panel.addEventListener('click',e=>{
+    const item=e.target.closest('.crit-item');
+    if(!item) return;
+    const code=item.dataset.code;
+    box.focus();
+    if(caretBox===box && caretRange){
+      const sel=window.getSelection();
+      sel.removeAllRanges(); sel.addRange(caretRange);
+    } else {
+      const r=document.createRange();
+      r.selectNodeContents(box); r.collapse(false);
+      const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    }
+    document.execCommand('insertHTML',false,tagHTML(code));
+    rememberCaret(box);
+    panel.classList.remove('open');
+    dirty=true;
+  });
+
+  const star=row.querySelector('.star');
+  if(star) star.addEventListener('click',()=>{ star.classList.toggle('on'); dirty=true; });
+
+  row.querySelector('.del-btn').addEventListener('click',()=>{ row.remove(); renumber(host); dirty=true; });
+  renumber(host);
+  return row;
+}
+function renumber(host){
+  [...host.children].forEach((r,i)=>{ r.querySelector('.pt-num').textContent=i+1; });
+}
+['lSP','lAP','lST','lAT'].forEach(id=>{ addPoint(id,''); addPoint(id,''); });
+document.querySelectorAll('.add-pt').forEach(b=>{
+  b.addEventListener('click',()=>{ addPoint(b.dataset.list,''); dirty=true; });
+});
+
+/* only plain text and criteria tags survive into the document */
+function cleanPoint(box){
+  let out='', plain='', codes=[];
+  box.childNodes.forEach(function walk(n){
+    if(n.nodeType===3){ out+=esc(n.nodeValue); plain+=n.nodeValue; return; }
+    if(n.nodeType!==1) return;
+    if(n.classList && n.classList.contains('tag')){
+      const c=n.dataset.c; codes.push(c);
+      out+=`<strong style="color:#1e6b63;">${esc(c)}</strong> `;
+      plain+='['+c+'] ';
+      return;
+    }
+    if(n.tagName==='BR'){ out+='<br>'; plain+='\n'; return; }
+    n.childNodes.forEach(walk);
+  });
+  return {html:out.trim(), plain:plain.trim(), codes, raw:box.innerHTML};
+}
+function readList(id){
+  return [...$(id).children]
+    .map(r=>{
+      const p=cleanPoint(r.querySelector('.pt-text'));
+      const s=r.querySelector('.star');
+      p.star = !!(s && s.classList.contains('on'));
+      return p;
+    })
+    .filter(p=>p.plain.trim());
+}
+
+$('fGrade').addEventListener('change', e=>{
+  const v=e.target.value;
+  e.target.classList.remove('above','to','not');
+  if(v==='Above standard') e.target.classList.add('above');
+  else if(v==='To standard') e.target.classList.add('to');
+  else if(v==='Not to standard') e.target.classList.add('not');
+  dirty=true;
+});
+
+/* ================= your comments against their stages and analysis ================= */
+const TCOMM={};
+function tcBox(key,ph){
+  return `<textarea class="tc" data-tc="${key}" placeholder="${ph||'comment'}">${esc(TCOMM[key]||'')}</textarea>`;
+}
+document.addEventListener('input',e=>{
+  if(e.target.classList && e.target.classList.contains('tc')){
+    TCOMM[e.target.dataset.tc]=e.target.value;
+    autoGrow(e.target); dirty=true;
+  }
+});
+
+/* ================= load the trainee's file ================= */
+function bulletsHTML(s){
+  const lines=(s||'').split('\n').map(l=>l.trim()).filter(l=>l && l.replace(/•/g,'').trim()!=='');
+  if(!lines.length) return '';
+  if(!lines.some(l=>l.startsWith('•'))) return nl2br(s);
+  return '<ul>'+lines.map(l=>'<li>'+esc(l.replace(/^•\s*/,''))+'</li>').join('')+'</ul>';
+}
+$('loadBtn').addEventListener('click',()=>$('loadFile').click());
+$('loadFile').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const d=JSON.parse(rd.result);
+      if(d.kind!=='celta-tp') throw new Error('wrong file');
+      DOC=d; showSeen(d); prefill(d);
+      $('loadedInfo').textContent='Loaded: '+((d.meta.tp||'TP')+' · '+(d.meta.name||''))+
+        (d.self?' · self-evaluation included':' · no self-evaluation yet');
+      setStatus('Loaded. Their plan is shown below while you write.');
+    }catch(err){ setStatus('That file could not be read.'); }
+  };
+  rd.readAsText(f); e.target.value='';
+});
+/* The aims are deliberately not copied across: what the tutor records here is the focus
+   (Grammar, Speaking, Listening…), not the trainee's wording, which is often wrong and is
+   in any case printed in full in the plan itself. */
+function prefill(d){
+  const m=d.meta||{};
+  if(!$('fTP').value) $('fTP').value=m.tp||'';
+  if(!$('fDate').value) $('fDate').value=m.date||'';
+  if(!$('fLevel').value) $('fLevel').value=m.level||'';
+  if(!$('fTime').value) $('fTime').value=m.length||'';
+}
+function showSeen(d){
+  const m=d.meta||{}, p=d.plan||{}, l=d.la||{};
+  const rows=(p.rows||[]).filter(r=>(r.stage||'').trim()||(r.proc||'').trim());
+  let html=`<dl>
+    ${p.main?`<dt>Main aims</dt><dd>${nl2br(p.main)}</dd>`:''}
+    ${p.sub?`<dt>Subsidiary aims</dt><dd>${nl2br(p.sub)}</dd>`:''}
+    ${p.profile?`<dt>Class profile</dt><dd>${nl2br(p.profile)}</dd>`:''}
+    ${p.pers?`<dt>Personal aims</dt><dd>${nl2br(p.pers)}</dd>`:''}
+    ${p.mats?`<dt>Materials</dt><dd>${nl2br(p.mats)}</dd>`:''}
+    ${m.framework?`<dt>Lesson shape</dt><dd>${esc(m.framework)}</dd>`:''}
+  </dl>`;
+  if((p.probs||[]).some(x=>(x.problem||'').trim()||(x.solution||'').trim())){
+    html+=`<h4>Anticipated problems</h4><table>
+      ${p.probs.filter(x=>(x.problem||'').trim()||(x.solution||'').trim())
+        .map(x=>`<tr><td width="45%">${nl2br(x.problem)}</td><td>${nl2br(x.solution)}</td></tr>`).join('')}
+    </table>`;
+  }
+  if(rows.length){
+    html+=`<h4>Procedure</h4><table>
+      <tr><th width="15%">Stage</th><th>Procedure</th><th width="7%">Int.</th><th width="6%">Time</th>
+          <th class="tc" width="26%">Your comment</th></tr>
+      ${rows.map((r,i)=>`<tr><td><b>${esc(r.stage||'—')}</b>${
+        r.aim?`<br><span style="font-style:italic;color:#736A58;">${esc(r.aim)}</span>`:''}</td>
+        <td>${bulletsHTML(r.proc)}</td><td align="center">${esc(r.int||'')}</td>
+        <td align="center">${esc(r.time||'')}</td>
+        <td>${tcBox('st'+i,'on this stage')}</td></tr>`).join('')}
+    </table>`;
+  }
+  const laLabel = l.type==='vocab'?'Vocabulary':(l.type==='grammar'?'Grammar':'Functional language');
+  if(l.type==='vocab' && (l.vocab||[]).length){
+    html+=`<h4>${laLabel} analysis</h4><table>
+      <tr><th width="15%">Item</th><th>Definition</th><th>Clarification</th><th>Problems</th>
+          <th class="tc" width="24%">Your comment</th></tr>
+      ${l.vocab.map((r,i)=>`<tr><td><b>${nl2br(r.item)}</b></td><td>${nl2br(r.def)}</td>
+        <td>${nl2br(r.clar)}</td><td>${nl2br(r.prob)}</td>
+        <td>${tcBox('vo'+i,'on this item')}</td></tr>`).join('')}
+    </table>`;
+  } else if((l.blocks||[]).length){
+    html+=`<h4>${laLabel} analysis</h4>`;
+    l.blocks.forEach((b,bi)=>{
+      html+=`<table style="margin-bottom:14px;">
+        <tr><th width="22%">Section</th><th>What they wrote</th><th class="tc" width="26%">Your comment</th></tr>
+        ${b.fields.map(f=>{
+          let val='';
+          if(f.pairs){
+            if(!f.pairs.length) return '';
+            val=f.pairs.map(x=>`P: ${nl2br(x.problem)}<br>S: ${nl2br(x.solution)}`).join('<br><br>');
+          } else {
+            if(!(f.value||'').trim()) return '';
+            val=nl2br(f.value);
+          }
+          return `<tr><td><b>${esc(f.label)}</b></td><td>${val}</td>
+            <td>${tcBox('la'+bi+'_'+f.key,'on this section')}</td></tr>`;
+        }).join('')}
+      </table>`;
+    });
+  }
+  if(d.self){
+    const s=d.self;
+    html+=`<h4>Their self-evaluation</h4><table>
+      ${[['Went to plan',s.well],["Didn't go as planned",s.not],['Evidence of learning',s.learn],
+         ['Would do differently',s.diff],['Wants to work on next',s.next]]
+        .filter(([,v])=>(v||'').trim())
+        .map(([k,v])=>`<tr><td width="28%"><b>${k}</b></td><td>${nl2br(v)}</td></tr>`).join('')}
+      ${(s.actions||[]).filter(a=>(a.prev||'').trim()||(a.did||'').trim())
+        .map(a=>`<tr><td width="28%"><b>Last TP: ${nl2br(a.prev)}</b></td><td>${nl2br(a.did)}</td></tr>`).join('')}
+    </table>`;
+  }
+  $('seenBody').innerHTML=html;
+  $('seen').style.display='';
+  $('seenBody').querySelectorAll('textarea.tc').forEach(autoGrow);
+}
+$('seenToggle').addEventListener('click',()=>{
+  const b=$('seenBody');
+  const hidden=b.style.display==='none';
+  b.style.display=hidden?'':'none';
+  $('seenToggle').textContent=hidden?'Hide':'Show';
+});
+
+/* ================= collect ================= */
+function collect(){
+  const ap=readList('lAP'), at=readList('lAT');
+  return {
+    tp:$('fTP').value, date:$('fDate').value, tutor:$('fTutor').value,
+    level:$('fLevel').value, time:$('fTime').value, students:$('fStudents').value,
+    main:$('fMain').value, sub:$('fSub').value, grade:$('fGrade').value,
+    sp:readList('lSP'), ap, st:readList('lST'), at,
+    overall:$('tOverall').value, selfComment:$('tSelf').value, tcomm:Object.assign({},TCOMM),
+    /* the starred action points become next TP's priorities */
+    next:[...ap,...at].filter(p=>p.star).map(p=>p.plain)
+  };
+}
+
+/* ================= export ================= */
+/* the document uses the same palette as the forms */
+const B='border:1px solid #C9B189;';
+const TH=`style="${B}background:#F3EADA;color:#1E6B63;padding:7px 9px;text-align:left;font-weight:700;vertical-align:top;"`;
+const THT=`style="${B}background:#FBF3E4;color:#8A6320;padding:7px 9px;text-align:left;font-weight:700;vertical-align:top;"`;
+const TD=`style="${B}padding:7px 9px;vertical-align:top;"`;
+const H1='style="font-family:Georgia,serif;font-size:19pt;color:#A9552E;margin:0 0 10px;text-align:center;"';
+const H2='style="font-family:Georgia,serif;font-size:13pt;color:#A9552E;margin:20px 0 8px;"';
+const H3='style="font-family:Georgia,serif;font-size:12pt;color:#A9552E;margin:18px 0 6px;"';
+const SIG='<p style="font-size:9pt;color:#A9552E;text-align:right;margin:16px 0 0;font-style:italic;">Ramy</p>';
+function SHEETS_LABEL(t){ return t==='function' ? 'Function' : 'Structure'; }
+
+/* the details strip across the top of a page */
+function detailBand(pairs){
+  const cells=pairs.filter(x=>(x[1]||'').toString().trim()).map(([k,v])=>
+    `<td style="${B}background:#F3EADA;padding:8px 10px;text-align:center;">
+      <div style="font-size:8.5pt;color:#1E6B63;font-weight:700;letter-spacing:.06em;">${k.toUpperCase()}</div>
+      <div style="font-size:12pt;font-weight:700;color:#2C2418;margin-top:2px;">${esc(v)}</div></td>`).join('');
+  return cells ? `<table style="width:100%;border-collapse:collapse;margin:0 0 16px;"><tr>${cells}</tr></table>` : '';
+}
+
+/* Strengths read olive, action points read terracotta — the same two colours the form uses.
+   The codes sit inline, where you put them. CODES ONLY: the CELTA 5 wording is never
+   written into anything the trainee receives. */
+const TH_GOOD=`style="${B}background:#EDF1E2;color:#4A6330;padding:7px 9px;text-align:left;font-weight:700;vertical-align:top;"`;
+const TD_GOOD=`style="${B}background:#F7FAF2;padding:7px 9px;vertical-align:top;"`;
+const TH_ACT=`style="${B}background:#F7E9E1;color:#8E4526;padding:7px 9px;text-align:left;font-weight:700;vertical-align:top;"`;
+const TD_ACT=`style="${B}background:#FDF6F2;padding:7px 9px;vertical-align:top;"`;
+
+function pointsTable(title,points,tone){
+  const th = tone==='good' ? TH_GOOD : tone==='act' ? TH_ACT : TH;
+  const td = tone==='good' ? TD_GOOD : tone==='act' ? TD_ACT : TD;
+  if(!points.length) return `<tr><td ${th} width="30%">${title}</td><td ${td}>&nbsp;</td></tr>`;
+  return `<tr><td ${th} width="30%">${title}</td><td ${td}>${
+    points.map(p=>(p.star?'★ ':'• ')+p.html).join('<br>')}</td></tr>`;
+}
+
+function feedbackHTML(d){
+  const gradeColour = d.grade==='Above standard' ? '#5C7A3C'
+                    : d.grade==='To standard' ? '#1E6B63'
+                    : d.grade==='Not to standard' ? '#A33227' : '#000';
+  const band=detailBand([
+    ['Tutor',d.tutor],['TP',d.tp],['Date',d.date],
+    ['Level',d.level],['Time',d.time?d.time+' min':''],['Students present',d.students]
+  ]);
+  const aims=[
+    d.main&&`<strong style="color:#1E6B63;">Main aim:</strong> ${esc(d.main)}`,
+    d.sub&&`<strong style="color:#1E6B63;">Sub aim:</strong> ${esc(d.sub)}`
+  ].filter(Boolean).join('<br>');
+
+  return `<h1 ${H1}>Tutor's Feedback</h1>
+    ${band}
+    ${aims?`<p style="font-size:10.5pt;margin:0 0 12px;line-height:1.6;">${aims}</p>`:''}
+    <p style="font-size:12pt;margin:0 0 16px;"><strong>Lesson grade at this stage of the course:</strong>
+      <span style="color:${gradeColour};font-weight:700;">${esc(d.grade)||'—'}</span></p>
+    <table style="width:100%;border-collapse:collapse;">
+      ${pointsTable('Strengths in planning',d.sp,'good')}
+      ${pointsTable('Action points in planning',d.ap,'act')}
+      ${pointsTable('Strengths in teaching',d.st,'good')}
+      ${pointsTable('Action points in teaching',d.at,'act')}
+      <tr><td ${TH} width="30%">Overall comment</td><td ${TD}>${nl2br(d.overall)||'&nbsp;'}</td></tr>
+      ${d.next.length?`<tr><td ${TH_ACT} width="30%">To prioritise in the next TP<br>
+        <span style="font-weight:400;font-size:9.5pt;font-style:italic;">the starred points above</span></td>
+        <td ${TD_ACT}>${d.next.map((x,i)=>`${i+1}. ${esc(x)}`).join('<br>')}</td></tr>`:''}
+    </table>`;
+}
+
+/* The legend: the codes used in this feedback, spelled out once each, at the very end.
+   Printed in the CELTA 5's own order rather than the order they happened to be tagged, and
+   only the ones actually used — an unabridged list of 41 would bury the four that matter. */
+function legendHTML(d){
+  const used=[];
+  [d.sp,d.ap,d.st,d.at].forEach(list=>(list||[]).forEach(p=>
+    (p.codes||[]).forEach(c=>{ if(used.indexOf(c)<0) used.push(c); })));
+  if(!used.length) return '';
+  const order=CRITERIA.map(x=>x[0]);
+  used.sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+  return `<h2 ${H2}>The criteria referred to above</h2>
+    <p style="font-size:9.5pt;font-style:italic;color:#736A58;margin:0 0 8px;">
+      From the CELTA 5 assessment criteria. Only the criteria mentioned in this feedback are listed.</p>
+    <table style="width:100%;border-collapse:collapse;">
+      ${used.map(c=>`<tr><td ${TH} width="10%" align="center">${esc(c)}</td>
+        <td ${TD}>${esc(CRIT_TEXT[c]||'')}</td></tr>`).join('')}
+    </table>`;
+}
+
+function traineeHTML(d, selfComment, tc){
+  tc=tc||{};
+  const has=k=>((tc[k]||'').trim()!=='');
+  const m=d.meta||{}, p=d.plan||{}, l=d.la||{};
+  const box=(label,val)=>
+    `<table style="width:100%;border-collapse:collapse;margin:0 0 12px;">
+      <tr><td ${TH}>${label}</td></tr><tr><td ${TD}>${nl2br(val)||'&nbsp;'}</td></tr></table>`;
+  const tv=s=>{ const n=(s||'').match(/\d+(?:[.,]\d+)?/g); return n?Math.max(...n.map(x=>parseFloat(x.replace(',','.')))):0; };
+  let total=0; (p.rows||[]).forEach(r=>{ total+=tv(r.time); });
+  const band=detailBand([
+    ['Name',m.name],['TP',m.tp],['Level',m.level],['Date',m.date],
+    ['Length',m.length?m.length+' min':'']
+  ]);
+
+  let html=`<p style="page-break-before:always;mso-break-type:page-break;margin:0;font-size:1pt;line-height:1pt;">&nbsp;</p>
+    <h1 ${H1}>Lesson Plan</h1>
+    ${band}
+    ${m.framework?`<p style="font-size:10.5pt;margin:0 0 14px;"><strong style="color:#1E6B63;">Lesson shape:</strong> ${esc(m.framework)}</p>`:''}
+    ${box('Main Aims',p.main)}${box('Subsidiary Aims',p.sub)}${box('Personal Aims',p.pers)}
+    <table style="width:100%;border-collapse:collapse;margin:0 0 12px;">
+      <tr><td ${TH} colspan="2">Anticipated Problems &amp; Solutions</td></tr>
+      ${(p.probs||[]).map((x,i)=>`<tr><td ${TD}><strong>Problem #${i+1}:</strong><br>${nl2br(x.problem)||'&nbsp;'}</td>
+        <td ${TD}><strong>Solution:</strong><br>${nl2br(x.solution)||'&nbsp;'}</td></tr>`).join('')}
+    </table>
+    ${(p.profile||'').trim()?box('Class Profile',p.profile):''}
+    ${box('Materials',p.mats)}
+    <h2 ${H2}>Lesson Procedure</h2>`;
+
+  const anyStage=(p.rows||[]).some((r,i)=>has('st'+i));
+  html+=`<table style="width:100%;border-collapse:collapse;">
+      <tr><td ${TH} width="${anyStage?13:15}%">Stage</td><td ${TH} width="${anyStage?48:64}%">Procedure</td>
+        <td ${TH} width="8%">Interaction</td><td ${TH} width="6%">Time</td>
+        ${anyStage?`<td ${THT} width="25%">Tutor comments</td>`:''}</tr>
+      ${(p.rows||[]).map((r,i)=>`<tr>
+        <td ${TD}><strong>${nl2br(r.stage)}</strong>${
+          r.aim?`<br><span style="font-size:9pt;font-style:italic;color:#1e6b63;">${esc(r.aim)}</span>`:''}</td>
+        <td ${TD}>${bulletsHTML(r.proc)}</td>
+        <td ${TD} align="center">${nl2br(r.int)}</td>
+        <td ${TD} align="center">${esc(r.time)}</td>
+        ${anyStage?`<td ${TD}>${nl2br(tc['st'+i]||'')||'&nbsp;'}</td>`:''}</tr>`).join('')}
+      <tr><td ${TD} colspan="3" style="${B}padding:6px 8px;text-align:right;font-weight:700;">Total</td>
+        <td ${TD} align="center"><strong>${total}</strong></td>${anyStage?`<td ${TD}>&nbsp;</td>`:''}</tr>
+    </table>`;
+
+  const laLabel=l.type==='vocab'?'Vocabulary':(l.type==='grammar'?'Grammar':'Functional language');
+  html+=`<p style="page-break-before:always;mso-break-type:page-break;margin:0;font-size:1pt;line-height:1pt;">&nbsp;</p>
+    <h1 ${H1}>${laLabel} Analysis Sheet</h1>
+    ${l.mainAim?`<p style="font-size:10pt;margin:0 0 10px;"><strong>${laLabel} is the main aim of the lesson:</strong> ${esc(l.mainAim)}</p>`:''}
+    ${l.context?`<p style="font-size:10pt;margin:0 0 14px;"><strong>Overall context:</strong> ${esc(l.context)}</p>`:''}`;
+  if(l.type==='vocab'){
+    const anyVo=(l.vocab||[]).some((r,i)=>has('vo'+i));
+    const heads=['Vocab item','Definition','How the meaning is conveyed','Clarification','Form','Problems &amp; solutions'];
+    const w=anyVo?[13,14,15,16,11,15]:[15,17,18,19,13,18];
+    html+=`<table style="width:100%;border-collapse:collapse;">
+      <tr>${heads.map((h,i)=>`<td ${TH} width="${w[i]}%">${h}</td>`).join('')}
+        ${anyVo?`<td ${THT} width="16%">Tutor comments</td>`:''}</tr>
+      ${(l.vocab||[]).map((r,i)=>`<tr><td ${TD}>${nl2br(r.item)}</td><td ${TD}>${nl2br(r.def)}</td>
+        <td ${TD}>${nl2br(r.convey)}</td><td ${TD}>${nl2br(r.clar)}</td>
+        <td ${TD}>${nl2br(r.form)}</td><td ${TD}>${nl2br(r.prob)}</td>
+        ${anyVo?`<td ${TD}>${nl2br(tc['vo'+i]||'')||'&nbsp;'}</td>`:''}</tr>`).join('')}
+      </table>${l.ref?`<p style="margin:12px 0 0;"><strong>Reference material:</strong> ${nl2br(l.ref)}</p>`:''}`;
+  } else {
+    (l.blocks||[]).forEach((b,bi)=>{
+      const anyF=b.fields.some(f=>has('la'+bi+'_'+f.key));
+      html+=`<h3 ${H3}>${esc(SHEETS_LABEL(l.type))} ${bi+1}</h3>
+        <table style="width:100%;border-collapse:collapse;">
+        ${anyF?`<tr><td ${TH} width="24%">&nbsp;</td><td ${TH} width="50%">&nbsp;</td>
+          <td ${THT} width="26%">Tutor comments</td></tr>`:''}
+        ${b.fields.map(f=>{
+          const k='la'+bi+'_'+f.key;
+          let inner;
+          if(f.pairs){
+            inner=f.pairs.length
+              ? f.pairs.map((x,n)=>`<strong>Problem ${n+1}:</strong> ${nl2br(x.problem)}<br><strong>Solution ${n+1}:</strong> ${nl2br(x.solution)}`).join('<br><br>')
+              : '&nbsp;';
+          } else {
+            inner=nl2br(f.value)||'&nbsp;';
+          }
+          /* an untouched comment cell still needs to be drawn, or the column runs open
+             down the right-hand edge of the sheet */
+          return `<tr><td ${TH} width="24%">${esc(f.label)}</td><td ${TD}>${inner}</td>
+            ${anyF?`<td ${TD}>${nl2br(tc[k]||'')||'&nbsp;'}</td>`:''}</tr>`;
+        }).join('')}
+        </table>`;
+    });
+  }
+
+  if(d.self){
+    const s=d.self;
+    html+=`<p style="page-break-before:always;mso-break-type:page-break;margin:0;font-size:1pt;line-height:1pt;">&nbsp;</p>
+      <h1 ${H1}>Self-evaluation</h1>
+      <table style="width:100%;border-collapse:collapse;">
+      ${[['What went to plan?',s.well],["What didn't go as planned, and why?",s.not],
+         ['Evidence that the learners had learnt',s.learn],['What I would do differently',s.diff],
+         ['What I want to work on in the next TP',s.next]]
+        .map(([k,v])=>`<tr><td ${TH} width="30%">${k}</td><td ${TD}>${nl2br(v)||'&nbsp;'}</td></tr>`).join('')}
+      </table>
+      ${(s.actions||[]).length?`<h3 ${H3}>Action points from the last TP</h3>
+        <table style="width:100%;border-collapse:collapse;">
+        <tr><td ${TH} width="45%">Action point</td><td ${TH}>What I did about it</td></tr>
+        ${s.actions.map(a=>`<tr><td ${TD}>${nl2br(a.prev)}</td><td ${TD}>${nl2br(a.did)}</td></tr>`).join('')}
+        </table>`:''}
+      ${(selfComment||'').trim()?`<table style="width:100%;border-collapse:collapse;margin-top:12px;">
+        <tr><td ${THT} width="30%">Tutor's comment on the self-evaluation</td>
+            <td ${TD}>${nl2br(selfComment)}</td></tr></table>`:''}`;
+  }
+  return html;
+}
+
+
+function setStatus(msg){
+  $('status').textContent=msg;
+  clearTimeout(setStatus._t);
+  setStatus._t=setTimeout(()=>{ $('status').textContent=''; },7000);
+}
+
+function saveFile(blob,name){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },900);
+}
+/* a Word document — Drive converts it to a Google Doc on upload, so nothing is pasted */
+
+$('submitBtn').addEventListener('click', ()=>{
+  const d=collect();
+  const missing=[];
+  if(!d.grade) missing.push('the lesson grade');
+  if(!d.st.length && !d.at.length) missing.push('any comment on the teaching');
+  /* no star means no priorities row in the returned document — fine on a final TP,
+     an oversight on any other, so it warns rather than blocks */
+  if(!d.next.length && (d.ap.length||d.at.length))
+    missing.push('a star on any action point, so nothing will carry into the next TP');
+  if(missing.length && !confirm('You haven\'t filled in '+missing.join(', ')+'. Save anyway?')) return;
+
+  let html='<div style="font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#000;">'+feedbackHTML(d);
+  const m=(DOC&&DOC.meta)||{};
+  const stem=(m.tp?m.tp:'TP')+(m.name?'-'+m.name.replace(/\s+/g,'-'):'');
+  if(DOC){
+    html+=traineeHTML(DOC, d.selfComment, d.tcomm);
+    DOC.feedback=d;
+    saveFile(new Blob([JSON.stringify(DOC,null,1)],{type:'application/json'}),
+             stem+'-with-feedback.celta.json');
+  }
+  html+=legendHTML(d)+SIG+'</div>';
+  dirty=false;
+  LAST_HTML=html;
+  showDone(stem, !!DOC);
+});
+
+/* ---------------- what to do next ---------------- */
+/* The returned copy is a PDF on purpose: it is the portfolio version, it may be read by an
+   external assessor, and nothing in it can be nudged out of place by accident. */
+let LAST_HTML='';
+
+function showDone(stem, whole){
+  $('doneFiles').innerHTML =
+    `<div>📄 the PDF — press <b>Open as PDF</b> below and save it. This is what you return.</div>`
+    + (whole?`<div>💾 <code>${esc(stem)}-with-feedback.celta.json</code> — return this alongside the PDF. It is what carries their action points into the next TP.</div>`:'');
+
+  $('doneSteps').innerHTML = [
+    'Press <b>Open as PDF</b> below and save the PDF. That is the version you return.',
+    'In Classroom, open the assignment and find the trainee.',
+    'Attach <em>both</em> files to their submission — the PDF to read, and the <code>.celta.json</code> so their next plan and self-evaluation can pull the starred points out of it.',
+    'Click <b>Return</b>. Classroom hands ownership back and they get the notification.'
+  ].map(s=>`<li>${s}</li>`).join('');
+
+  $('doneNote').innerHTML = whole
+    ? 'Keep a copy of the <code>.celta.json</code> in your own folder too — it is the machine-readable record of the whole TP. The trainee needs it as well, though: their next lesson plan reads the starred points straight out of it, which is what stops them retyping your feedback by hand.'
+    : 'You saved without loading their plan, so this is your feedback alone rather than the assembled document.';
+
+  $('doneVeil').classList.add('open');
+}
+$('doneClose').addEventListener('click',()=>$('doneVeil').classList.remove('open'));
+$('doneVeil').addEventListener('click',e=>{ if(e.target===$('doneVeil')) $('doneVeil').classList.remove('open'); });
+
+/* A real PDF, straight from the browser's own print engine — no library, nothing to install.
+   Choose "Save as PDF" as the destination. */
+$('pdfBtn').addEventListener('click',()=>{
+  if(!LAST_HTML){ setStatus('Save the document first — there is nothing to print yet.'); return; }
+  const w=window.open('','_blank');
+  if(!w){ setStatus('Your browser blocked the print window. Allow pop-ups for this page.'); return; }
+  w.document.write(
+    '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Teaching Practice</title><style>'
+    +'@page{size:A4; margin:18mm 16mm;}'
+    +'body{margin:0; font-family:Calibri,Arial,sans-serif; font-size:11pt; color:#000;}'
+    +'table{border-collapse:collapse; width:100%; empty-cells:show;}'
+    +'h1,h2,h3,tr{page-break-inside:avoid;}'
+    +'</style></head><body>'+LAST_HTML+'</body></html>');
+  w.document.close();
+  w.focus();
+  /* the images and fonts settle first, otherwise the first page can print half-laid-out */
+  setTimeout(()=>w.print(),350);
+});
+
+window.addEventListener('beforeunload',e=>{ if(dirty){ e.preventDefault(); e.returnValue=''; } });
+
+
+const DRAFT_FIELDS=['fTP','fDate','fTutor','fLevel','fTime','fStudents','fMain','fSub',
+                    'fGrade','tOverall','tSelf'];
+const DRAFT_LISTS=['lSP','lAP','lST','lAT'];
+function draftLabel(){
+  const m=(DOC&&DOC.meta)||{};
+  return [m.tp||$('fTP').value.trim(), m.name].filter(Boolean).join(' · ');
+}
+function draftState(){
+  const f={}; DRAFT_FIELDS.forEach(function(k){ f[k]=$(k).value; });
+  const lists={};
+  DRAFT_LISTS.forEach(function(id){
+    lists[id]=[...$(id).children].map(function(r){
+      const star=r.querySelector('.star');
+      return { html:r.querySelector('.pt-text').innerHTML,
+               star:!!(star&&star.classList.contains('on')) };
+    });
+  });
+  return {f:f, lists:lists, tcomm:Object.assign({},TCOMM), doc:DOC};
+}
+function draftApply(s){
+  /* TCOMM is filled before the plan is redrawn, because the comment boxes are rendered
+     from it */
+  if(s.tcomm){ Object.keys(TCOMM).forEach(function(k){ delete TCOMM[k]; });
+               Object.assign(TCOMM,s.tcomm); }
+  if(s.doc){
+    DOC=s.doc; showSeen(DOC);
+    $('loadedInfo').textContent='Loaded: '+((DOC.meta.tp||'TP')+' · '+(DOC.meta.name||''))+
+      (DOC.self?' · self-evaluation included':' · no self-evaluation yet');
+  }
+  (s.f?DRAFT_FIELDS:[]).forEach(function(k){ if(s.f[k]!==undefined) $(k).value=s.f[k]; });
+  $('fGrade').dispatchEvent(new Event('change'));
+  if(s.lists) DRAFT_LISTS.forEach(function(id){
+    $(id).innerHTML='';
+    const rows=s.lists[id]||[];
+    (rows.length?rows:[{html:'',star:false}]).forEach(function(p){
+      const row=addPoint(id,p.html||'');
+      const star=row.querySelector('.star');
+      if(star&&p.star) star.classList.add('on');
+    });
+  });
+  document.querySelectorAll('textarea').forEach(autoGrow);
+}
+
+/* ================= unfinished-draft memory ================= */
+/* The browser keeps the last state of this form so reopening it puts you back where you
+   were with no file picker. It is a convenience only — the .celta.json file is still the
+   record, and this is deliberately an offer rather than something that overwrites the
+   form on load. Safari blocks storage for local files, in which case none of this runs
+   and nothing else changes. */
+const DRAFT_KEY='celta-hub:feedback';
+const CAN_STORE=(function(){
+  try{ localStorage.setItem('__probe','1'); localStorage.removeItem('__probe'); return true; }
+  catch(e){ return false; }
+})();
+let draftTimer=null;
+function saveDraft(){
+  if(!CAN_STORE) return;
+  clearTimeout(draftTimer);
+  draftTimer=setTimeout(function(){
+    try{
+      localStorage.setItem(DRAFT_KEY,JSON.stringify({
+        at:Date.now(), label:draftLabel(), state:draftState()
+      }));
+    }catch(e){ /* quota, or private browsing — the file route is unaffected */ }
+  },800);
+}
+function clearDraft(){ if(CAN_STORE){ try{ localStorage.removeItem(DRAFT_KEY); }catch(e){} } }
+document.addEventListener('input',saveDraft);
+document.addEventListener('change',saveDraft);
+
+(function offerDraft(){
+  if(!CAN_STORE) return;
+  let d=null;
+  try{ d=JSON.parse(localStorage.getItem(DRAFT_KEY)||'null'); }catch(e){ return; }
+  if(!d||!d.state) return;
+  const when=new Date(d.at);
+  const today=when.toDateString()===new Date().toDateString();
+  const stamp=today
+    ? 'today at '+when.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
+    : when.toLocaleDateString([],{day:'numeric',month:'short'})+' at '+
+      when.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  $('draftMsg').innerHTML='This browser remembers an unfinished draft'+
+    (d.label?' — <b>'+d.label+'</b>':'')+', last edited '+stamp+'.';
+  $('draftBar').classList.add('show');
+  $('draftRestore').addEventListener('click',function(){
+    try{ draftApply(d.state); setStatus('Draft restored. Carry on.'); }
+    catch(e){ setStatus('That draft could not be restored — load your saved file instead.'); }
+    $('draftBar').classList.remove('show');
+  });
+  $('draftDiscard').addEventListener('click',function(){
+    clearDraft(); $('draftBar').classList.remove('show');
+  });
+})();
+
+/* ================= dictation and spell check ================= */
+/* Spell check is the browser's own. It is switched off for phonemic script and
+   short coded fields, where it would underline everything. */
+(function spellSetup(){
+  const off=['.phon','.t-time','.t-stage','.t-int1','.t-int2'];
+  document.querySelectorAll(off.join(',')).forEach(el=>el.setAttribute('spellcheck','false'));
+  document.querySelectorAll('textarea:not(.phon), input[type=text]:not(.t-time):not(.t-stage), [contenteditable]')
+    .forEach(el=>{ if(!el.hasAttribute('spellcheck')) el.setAttribute('spellcheck','true'); });
+  /* fields built later get the same treatment */
+  new MutationObserver(ms=>{
+    ms.forEach(m=>m.addedNodes.forEach(n=>{
+      if(n.nodeType!==1) return;
+      n.querySelectorAll && n.querySelectorAll('.phon,.t-time,.t-stage,.t-int1,.t-int2')
+        .forEach(el=>el.setAttribute('spellcheck','false'));
+      n.querySelectorAll && n.querySelectorAll('textarea:not(.phon),[contenteditable]')
+        .forEach(el=>{ if(!el.hasAttribute('spellcheck')) el.setAttribute('spellcheck','true'); });
+    }));
+  }).observe(document.body,{childList:true,subtree:true});
+})();
+
+/* Dictation — speaks into whichever box you last clicked in.
+   Chrome and Edge only; the controls hide themselves in browsers without it. */
+(function dictation(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const style=document.createElement('style');
+  style.textContent=
+    '.dictbar{position:fixed;bottom:16px;left:18px;z-index:600;display:flex;gap:8px;align-items:center;}'+
+    '.dictbar select{font-family:\'Inter\',sans-serif;font-size:0.8rem;padding:8px 10px;'+
+      'border:2px solid #C9B189;border-radius:20px;background:#FCF8EF;color:#2C2418;cursor:pointer;'+
+      'box-shadow:0 4px 12px rgba(74,54,28,.22);}'+
+    '.dictbar select:focus{outline:none;border-color:#1E6B63;}'+
+    '.dictbtn{display:flex;gap:8px;align-items:center;background:#FCF8EF;color:#1E6B63;'+
+      'border:2px solid #1E6B63;padding:9px 18px;border-radius:20px;font-family:\'Inter\',sans-serif;'+
+      'font-size:0.86rem;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(74,54,28,.28);}'+
+    '.dot{width:9px;height:9px;border-radius:50%;background:#1E6B63;display:inline-block;}'+
+    '.dictbtn.rec{background:#A33227;color:#FCF8EF;border-color:#A33227;}'+
+    '.dictbtn.rec .dot{background:#FCF8EF;animation:pulse 1s infinite;}'+
+    '@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}';
+  document.head.appendChild(style);
+  if(!SR) return;
+
+  const LANGS=[
+    ['en-GB','English (UK)'],['en-US','English (US)'],['en-AU','English (Australia)'],
+    ['tr-TR','Türkçe'],['ar-SA','العربية'],['es-ES','Español'],['fr-FR','Français'],
+    ['de-DE','Deutsch'],['it-IT','Italiano'],['pt-BR','Português'],['ru-RU','Русский'],
+    ['pl-PL','Polski'],['uk-UA','Українська'],['nl-NL','Nederlands'],
+    ['zh-CN','中文'],['ja-JP','日本語'],['ko-KR','한국어']
+  ];
+
+  const bar=document.createElement('div');
+  bar.className='dictbar';
+  const sel=document.createElement('select');
+  sel.title='Dictation language';
+  const HELP='Say the punctuation: comma · full stop · question mark · colon · semicolon · dash · open bracket · close bracket · new line · new paragraph';
+  sel.innerHTML=LANGS.map(([c,n])=>`<option value="${c}">${n}</option>`).join('');
+  const btn=document.createElement('button');
+  btn.type='button'; btn.className='dictbtn'; btn.title=HELP;
+  btn.innerHTML='<span class="dot"></span><span class="lbl">Dictate</span>';
+  bar.appendChild(sel); bar.appendChild(btn);
+  document.body.appendChild(bar);
+
+  let target=null;
+  document.addEventListener('focusin',e=>{
+    const t=e.target;
+    if(t.matches && t.matches('textarea, input[type=text], [contenteditable="true"]')) target=t;
+  });
+
+  const rec=new SR();
+  rec.continuous=true; rec.interimResults=false; rec.lang=sel.value;
+  let on=false;
+
+  sel.addEventListener('change',()=>{
+    rec.lang=sel.value;
+    /* the spell checker follows the same language */
+    if(target) target.setAttribute('lang',sel.value);
+    if(on){ rec.stop(); setTimeout(()=>{ try{ rec.start(); }catch(e){} },250); }
+  });
+
+  function insert(text){
+    if(!target) return;
+    if(target.isContentEditable){
+      target.focus();
+      document.execCommand('insertText',false,text);
+    } else {
+      const s=target.selectionStart ?? target.value.length;
+      const e2=target.selectionEnd ?? target.value.length;
+      const before=target.value.slice(0,s);
+      const pad = before && !/\s$/.test(before) ? ' ' : '';
+      target.value = before + pad + text + target.value.slice(e2);
+      const pos=s+pad.length+text.length;
+      try{ target.setSelectionRange(pos,pos); }catch(err){}
+      target.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+  }
+  /* Chrome does not punctuate for you, so spoken punctuation is honoured instead:
+     "comma", "full stop", "question mark", "new line", "new paragraph" and so on. */
+  const CASED=/^(en|tr|es|fr|de|it|pt|ru|pl|uk|nl)/;
+  const SPOKEN=[
+    [/\b(full stop|fullstop|period)\b/gi,'.'],
+    [/\b(question mark)\b/gi,'?'],
+    [/\b(exclamation mark|exclamation point)\b/gi,'!'],
+    [/\b(comma)\b/gi,','],
+    [/\b(semicolon|semi colon)\b/gi,';'],
+    [/\b(colon)\b/gi,':'],
+    [/\b(new paragraph)\b/gi,'\n\n'],
+    [/\b(new line|next line)\b/gi,'\n'],
+    [/\b(dash|em dash)\b/gi,' — '],
+    [/\b(hyphen)\b/gi,'-'],
+    [/\b(open bracket|open parenthesis)\b/gi,'('],
+    [/\b(close bracket|close parenthesis)\b/gi,')'],
+    [/\b(apostrophe)\b/gi,'’'],
+    [/\b(open quote|open quotes)\b/gi,'“'],
+    [/\b(close quote|close quotes)\b/gi,'”'],
+    [/\b(ellipsis|dot dot dot)\b/gi,'…']
+  ];
+  function punctuate(t){
+    if(!CASED.test(rec.lang)) return t;
+    SPOKEN.forEach(([re,ch])=>{ t=t.replace(re,ch); });
+    t=t.replace(/\s+([,.;:?!…])/g,'$1')      /* no space before punctuation */
+       .replace(/([,;:])(?=\S)/g,'$1 ')      /* one space after            */
+       .replace(/([.?!])(?=\S)/g,'$1 ')
+       .replace(/\s*\n\s*/g,'\n')            /* tidy around line breaks    */
+       .replace(/[ \t]{2,}/g,' ')
+       .replace(/\(\s+/g,'(').replace(/\s+\)/g,')')
+       .replace(/“\s+/g,'“').replace(/\s+”/g,'”');
+    /* capitals: first word, and after a sentence ends */
+    t=t.replace(/^\s*([a-z])/,(m,c)=>c.toUpperCase());
+    t=t.replace(/([.?!]\s+|\n)([a-z])/g,(m,p,c)=>p+c.toUpperCase());
+    return t.trim();
+  }
+  rec.onresult=ev=>{
+    for(let i=ev.resultIndex;i<ev.results.length;i++){
+      if(!ev.results[i].isFinal) continue;
+      let t=punctuate(ev.results[i][0].transcript.trim());
+      if(!t) continue;
+      if(!CASED.test(rec.lang)){ insert(t+' '); continue; }
+      /* only add a full stop if you did not speak one yourself */
+      if(/[.?!,;:—…]$/.test(t)) insert(t+' ');
+      else if(/\n$/.test(t)) insert(t);
+      else insert(t+'. ');
+    }
+  };
+  rec.onend=()=>{ if(on){ try{ rec.start(); }catch(e){} } };
+  rec.onerror=ev=>{
+    if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){
+      on=false; btn.classList.remove('rec'); btn.querySelector('.lbl').textContent='Dictate';
+    }
+  };
+
+  btn.addEventListener('mousedown',e=>e.preventDefault());
+  btn.addEventListener('click',()=>{
+    if(!target){ alert('Click into the box you want to dictate into first.'); return; }
+    on=!on;
+    btn.classList.toggle('rec',on);
+    btn.querySelector('.lbl').textContent = on ? 'Stop dictating' : 'Dictate';
+    if(target) target.setAttribute('lang',sel.value);
+    if(on){ try{ rec.start(); }catch(e){} } else { rec.stop(); }
+  });
+})();
+
+
+/* ================= watermark guard ================= */
+/* If the watermark is deleted, renamed or hidden in the browser, it comes straight back.
+   This defeats casual fiddling — right-click inspect, delete the element, screenshot it.
+   It does NOT stop anyone opening this file in a text editor, and it is not pretending to:
+   a file someone holds is a file someone can change. The invisible notice at the top of
+   this file is what makes that a copyright matter rather than a technical one. */
+(function markGuard(){
+  const MARK='Ramy';
+  let queued=false;
+  function ensure(){
+    queued=false;
+    let el=document.querySelector('.watermark');
+    if(!el){
+      el=document.createElement('div');
+      el.className='watermark';
+      document.body.insertBefore(el, document.body.firstChild);
+    }
+    if(el.textContent!==MARK) el.textContent=MARK;
+    const cs=getComputedStyle(el);
+    if(cs.display==='none' || cs.visibility==='hidden' || parseFloat(cs.opacity)<0.4){
+      el.style.removeProperty('display');
+      el.style.removeProperty('visibility');
+      el.style.removeProperty('opacity');
+    }
+  }
+  function queue(){                     /* the form changes the DOM constantly — check once a frame */
+    if(queued) return;
+    queued=true;
+    requestAnimationFrame(ensure);
+  }
+  ensure();
+  new MutationObserver(queue).observe(document.body,
+    {childList:true, subtree:true, characterData:true, attributes:true, attributeFilter:['class','style']});
+})();
+
+</script>
+</body>
+</html>
