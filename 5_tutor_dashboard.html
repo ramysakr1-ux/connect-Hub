@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<!--
+  Connect Hub — tutor dashboard
+  © 2026 Ramy Sakr. All rights reserved.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connect Hub — Tutor dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sand:oklch(92.5% 0.012 85); --sand-line:oklch(89.5% 0.012 82);
+    --paper:oklch(99.5% 0.004 90); --card:oklch(96.2% 0.02 80); --ink:oklch(23.5% 0.017 65);
+    --terracotta:oklch(37.5% 0.058 195); --teal:oklch(37.5% 0.058 195);
+    --grey:oklch(51% 0.017 70); --gold:oklch(63% 0.096 72); --gold-lifted:oklch(70% 0.12 72); --ink-warm:oklch(30% 0.042 58);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
+    padding:40px 20px 60px; display:flex; flex-direction:column; align-items:center;}
+  .board{max-width:1080px; width:100%;}
+  .header{background:var(--card); border-radius:10px; border-top:3px solid var(--terracotta);
+    padding:44px 26px 36px; text-align:center; margin-bottom:22px; box-shadow:0 1px 2px rgba(0,0,0,0.03);}
+  .header p.tag{margin:16px 0 0; font-size:1rem; color:var(--grey);}
+  .header p.role{margin:20px 0 0; font-size:0.9rem; font-weight:700; color:var(--teal); letter-spacing:0.03em;}
+  .course-name{margin:2px 0 0; font-size:1.4rem; font-family:'Newsreader',Georgia,serif; font-weight:700; color:var(--ink);}
+  .tabs{display:flex; gap:2px; margin-bottom:0; overflow-x:auto; padding:0 4px;}
+  .tab{font-family:'Karla',sans-serif; font-size:0.88rem; font-weight:600; color:var(--grey);
+    background:transparent; border:none; border-bottom:3px solid transparent; padding:14px 20px 12px; cursor:pointer; white-space:nowrap; transition:color .15s;}
+  .tab:hover{color:var(--ink);}
+  .tab.active{color:var(--teal); border-bottom-color:var(--teal);}
+  .panel{background:var(--card); border-radius:10px; padding:6px; min-height:220px; box-shadow:0 1px 2px rgba(0,0,0,0.03);}
+  table{width:100%; border-collapse:collapse;}
+  th{text-align:left; font-size:0.7rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase;
+    color:var(--grey); padding:15px 20px; border-bottom:1px solid var(--sand-line);}
+  td{padding:17px 20px; border-bottom:1px solid var(--sand-line); font-size:0.92rem; vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  tbody tr:hover td, table tr:not(:first-child):hover td{background:oklch(93.5% 0.02 80);}
+  .pill{display:inline-block; background:var(--sand); color:var(--grey); font-size:0.76rem; font-weight:600;
+    padding:5px 12px; border-radius:20px; margin-right:6px;}
+  .pill.on{background:#EAF3E9; color:#1E6B63;}
+  .pill.off{color:var(--grey); opacity:0.55;}
+  .btn{font-family:'Karla',sans-serif; font-size:0.83rem; font-weight:700; padding:9px 18px; border-radius:20px;
+    border:1.5px solid var(--sand-line); background:var(--card); color:var(--ink); cursor:pointer; transition:opacity .15s;}
+  .btn:hover{opacity:0.8;}
+  .btn.primary{background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  .btn.ghost{border-color:var(--teal); color:var(--teal); background:none;}
+  .roster-toolbar{display:flex; align-items:center; justify-content:space-between; padding:18px 20px 6px;}
+  .roster-toolbar h3{margin:0; font-size:1rem; font-weight:700; color:var(--ink);}
+  .link-cell{display:flex; align-items:center; gap:10px; font-family:monospace; font-size:0.78rem; color:var(--grey);}
+  .status-pill{display:inline-block; font-size:0.78rem; font-weight:700; padding:5px 12px; border-radius:20px;}
+  .status-pill.draft{background:var(--sand); color:var(--grey);}
+  .status-pill.submitted{background:#FBF3E4; color:#8A6320;}
+  .status-pill.resubmit{background:#FBEAE6; color:#A33227;}
+  .status-pill.passed{background:#EAF3E9; color:#1E6B63;}
+  .empty{text-align:center; padding:48px 20px; color:var(--grey);}
+  .empty .icon{font-size:1.8rem; opacity:0.35; margin-bottom:8px;}
+  .footer{display:flex; align-items:center; justify-content:center; gap:8px; margin-top:36px; font-size:0.8rem; color:var(--grey);}
+  .footer span.name{font-weight:600; color:var(--ink);}
+</style>
+</head>
+<body>
+<div class="board">
+  <div class="header">
+    <div style="display:flex;align-items:center;justify-content:center;gap:12px;">
+      <span style="width:44px;height:44px;border-radius:9px;background:var(--ink-warm);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg viewBox="8 30 104 60" width="27" height="15.5" fill="none">
+          <path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path>
+          <path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path>
+        </svg>
+      </span>
+      <span style="font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:34px;color:var(--gold);">Connect</span>
+      <span style="font-family:'Karla',sans-serif;font-weight:600;font-size:24px;color:var(--ink);margin-left:-5px;">Hub</span>
+    </div>
+    <p class="tag">Every submission, and the personal link for each trainee.</p>
+    <p class="course-name">CELTA — August 2026</p>
+    <p class="role">Welcome, Ramy — Course tutor</p>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-tab="submissions">Submissions</button>
+    <button class="tab" data-tab="assignments">Assignments</button>
+  </div>
+
+  <div class="panel" id="panel-submissions">
+    <table>
+      <tr><th>Trainee</th><th>TP</th><th>Status</th><th>Grade</th><th></th></tr>
+      <tr>
+        <td>Ramy Sakr</td><td>TP1</td>
+        <td><span class="status-pill submitted">Feedback in progress</span></td>
+        <td><span class="status-pill passed">To standard</span></td>
+        <td><button class="btn ghost">Edit feedback</button></td>
+      </tr>
+      <tr>
+        <td>Ramy Sakr</td><td>TP2</td>
+        <td><span class="status-pill passed">Returned</span></td>
+        <td><span class="status-pill passed">Above standard</span></td>
+        <td><button class="btn ghost">Edit feedback</button></td>
+      </tr>
+      <tr>
+        <td>New trainee</td><td>TP1</td>
+        <td><span class="status-pill draft">Plan only — no self-eval yet</span></td>
+        <td style="color:var(--grey);">—</td>
+        <td><button class="btn primary">Write feedback</button></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="panel" id="panel-assignments" style="display:none;">
+    <table>
+      <tr><th>Trainee</th><th>Assignment</th><th>Status</th><th></th></tr>
+      <tr>
+        <td>Ramy Sakr</td><td>LRT — Language Related Tasks</td>
+        <td><span class="status-pill passed">Passed</span></td>
+        <td><a class="btn ghost" style="text-decoration:none;display:inline-block;" href="10_tutor_assignment_marking.html?a=lrt">View feedback</a></td>
+      </tr>
+      <tr>
+        <td>Ramy Sakr</td><td>LSRT — Language Skills Related Task</td>
+        <td><span class="status-pill resubmit">Resubmit needed</span></td>
+        <td><a class="btn ghost" style="text-decoration:none;display:inline-block;" href="10_tutor_assignment_marking.html?a=lsrt">Edit feedback</a></td>
+      </tr>
+      <tr>
+        <td>New trainee</td><td>FOL — Focus on the Learner</td>
+        <td><span class="status-pill submitted">Submitted</span></td>
+        <td><a class="btn primary" style="text-decoration:none;display:inline-block;" href="10_tutor_assignment_marking.html?a=fol">Write feedback</a></td>
+      </tr>
+      <tr>
+        <td>New trainee</td><td>LfC — Lessons from the Classroom</td>
+        <td><span class="status-pill draft">Draft — not submitted</span></td>
+        <td><button class="btn ghost" disabled style="opacity:0.4;cursor:default;">Awaiting submission</button></td>
+      </tr>
+    </table>
+  </div>
+
+  <p class="footer">
+    <span style="width:22px;height:22px;border-radius:5px;background:var(--ink-warm);display:inline-flex;align-items:center;justify-content:center;">
+      <svg viewBox="8 30 104 60" width="13" height="7.4" fill="none">
+        <path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path>
+        <path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path>
+      </svg>
+    </span>
+    Designed and built by <span class="name">Ramy</span>
+  </p>
+</div>
+<script>
+document.getElementById('tabs').addEventListener('click', e=>{
+  const btn = e.target.closest('.tab');
+  if(!btn) return;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
+  document.getElementById('panel-'+btn.dataset.tab).style.display='';
+});
+</script>
+</body>
+</html>

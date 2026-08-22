@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<!--
+  Connect Hub — edit assignment (centre admin)
+  © 2026 Ramy Sakr. All rights reserved.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connect Hub — Edit assignment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sand:oklch(92.5% 0.012 85); --sand-line:oklch(89.5% 0.012 82);
+    --paper:oklch(96.4% 0.014 85); --card:oklch(96.2% 0.02 80); --ink:oklch(23.5% 0.017 65);
+    --teal:oklch(37.5% 0.058 195); --grey:oklch(51% 0.017 70); --brick:oklch(45% 0.15 27);
+  }
+  *{box-sizing:border-box;}
+  a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
+  body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:36px 20px 80px;
+    display:flex; justify-content:center;}
+  .board{max-width:1040px; width:100%;}
+  .back{display:inline-block; margin-bottom:16px; font-size:0.85rem; text-decoration:none; font-weight:600;}
+  .back:hover{text-decoration:underline;}
+  h1{font-family:'Newsreader',Georgia,serif; font-size:1.6rem; margin:0 0 4px;}
+  .sub{color:var(--grey); font-size:0.9rem; margin:0 0 24px; max-width:640px; line-height:1.55;}
+  .layout{display:grid; grid-template-columns:220px 1fr; gap:20px; align-items:start;}
+  .list{background:var(--card); border-radius:10px; padding:8px; box-shadow:0 1px 2px rgba(0,0,0,0.03);}
+  .list button{display:block; width:100%; text-align:left; background:none; border:none; border-radius:8px;
+    padding:12px 14px; font-family:'Karla',sans-serif; font-size:0.88rem; font-weight:600; color:var(--ink); cursor:pointer;}
+  .list button.active{background:var(--teal); color:var(--paper);}
+  .list button:not(.active):hover{background:var(--sand);}
+  .list button.missing{color:var(--grey); font-weight:500;}
+  .editor{background:var(--card); border-radius:10px; padding:24px 28px; box-shadow:0 1px 2px rgba(0,0,0,0.03);}
+  .editor h2{font-family:'Newsreader',Georgia,serif; font-size:1.25rem; margin:0 0 2px;}
+  .notice{font-size:0.8rem; color:var(--grey); margin:0 0 18px; line-height:1.5;}
+  .empty{color:var(--grey); text-align:center; padding:40px 20px;}
+  .empty .btn{margin-top:14px;}
+
+  .section{border:1.5px solid var(--sand-line); border-radius:8px; padding:16px 18px; margin-bottom:14px; background:var(--paper);}
+  .section-head{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
+  .section-head input.label{flex:1; font-family:'Karla',sans-serif; font-size:0.95rem; font-weight:700;
+    border:1.5px solid transparent; border-radius:6px; padding:5px 8px; background:transparent; color:var(--ink);}
+  .section-head input.label:hover, .section-head input.label:focus{border-color:var(--sand-line); background:var(--card); outline:none;}
+  .section-head .type-tag{font-size:0.68rem; text-transform:uppercase; letter-spacing:.05em; color:var(--grey);
+    background:var(--sand); padding:3px 8px; border-radius:10px; white-space:nowrap;}
+  .icon-btn{border:none; background:none; cursor:pointer; color:var(--grey); font-size:1rem; padding:4px 6px; border-radius:6px; line-height:1;}
+  .icon-btn:hover{background:var(--sand); color:var(--ink);}
+  .icon-btn.danger:hover{color:var(--brick);}
+
+  textarea, input[type=text]{width:100%; font-family:'Karla',sans-serif; font-size:0.88rem; line-height:1.5; padding:9px 11px;
+    border:1.5px solid var(--sand-line); border-radius:6px; background:var(--paper); color:var(--ink); resize:vertical;}
+  .field-row{display:flex; gap:8px; align-items:flex-start; margin-bottom:8px;}
+  .field-row .fcol{flex:1; display:flex; flex-direction:column; gap:5px;}
+  .field-row input.flabel{font-weight:600; font-size:0.85rem;}
+  .field-row textarea.fhint{font-size:0.82rem; color:var(--grey); min-height:38px;}
+  .addline{font-family:'Karla',sans-serif; font-size:0.82rem; font-weight:600; color:var(--teal); background:none;
+    border:1.5px dashed var(--sand-line); border-radius:6px; padding:8px 12px; cursor:pointer; width:100%; text-align:left;}
+  .addline:hover{border-color:var(--teal); background:var(--card);}
+
+  .catwrap{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:6px;}
+  @media(max-width:640px){ .catwrap{grid-template-columns:1fr;} }
+  .catbox{background:var(--card); border-radius:8px; padding:12px;}
+  .catbox input.catlabel{font-weight:700; margin-bottom:8px;}
+  .chip-row{display:flex; align-items:center; gap:6px; margin-bottom:6px;}
+  .chip-row input{flex:1; font-size:0.85rem;}
+  .pickcount{display:flex; align-items:center; gap:8px; margin:12px 0 0; font-size:0.82rem; color:var(--grey);}
+  .pickcount input{width:52px; flex:none; text-align:center;}
+
+  .addsection{display:flex; gap:8px; margin-top:6px;}
+  .addsection select{font-family:'Karla',sans-serif; font-size:0.85rem; padding:8px 10px; border:1.5px solid var(--sand-line);
+    border-radius:6px; background:var(--paper); color:var(--ink);}
+  .btn{font-family:'Karla',sans-serif; font-size:0.85rem; font-weight:700; padding:10px 20px; border-radius:20px;
+    border:1.5px solid var(--teal); background:var(--teal); color:var(--paper); cursor:pointer;}
+  .btn.secondary{background:none; color:var(--teal);}
+  .actions{display:flex; justify-content:space-between; align-items:center; margin-top:20px;}
+  .saved{font-size:0.8rem; color:var(--grey);}
+  .importrow{display:flex; align-items:center; gap:10px; margin-bottom:16px;}
+  .importnote{font-size:0.78rem; color:var(--grey);}
+  .banner{font-size:0.82rem; font-weight:600; padding:9px 14px; border-radius:8px; border:1.5px solid; margin-bottom:16px;}
+  .metabox{background:var(--paper); border:1.5px solid var(--sand-line); border-radius:8px; padding:14px 16px; margin-bottom:16px; display:flex; flex-direction:column; gap:10px;}
+  .metarow{display:flex; align-items:center; gap:8px; font-size:0.85rem;}
+  .metarow label{font-weight:700; width:110px; flex:none;}
+  .metahint{font-size:0.76rem; color:var(--grey); font-weight:400;}
+</style>
+</head>
+<body>
+<div class="board">
+  <a class="back" href="6_centre_admin_dashboard.html">← Back to course admin</a>
+  <h1>Edit assignment</h1>
+  <p class="sub">Rework this assignment as your own: rewrite instructions, add or remove sections, reorder them, and — for tasks with a pick-your-item step like LRT — edit the item choices trainees choose from. Changes only affect your centre.</p>
+  <div class="banner" id="proseBanner"></div>
+  <div class="layout">
+    <div class="list" id="list"></div>
+    <div class="editor" id="editor"></div>
+  </div>
+</div>
+<script>
+const STORE_KEY = 'connect_assignment_wording_v2';
+
+const DEFAULT_DATA = {
+  lrt: { title:'Language Related Tasks', wordMin:750, wordMax:1000, format:'structured', criteria:[
+      {text:'Identifies meaning, form and pronunciation accurately for each item.', sectionIndex:2},
+      {text:'Uses correct terminology throughout.', sectionIndex:2}
+    ], sections:[
+    { type:'text', label:'Before you start', body:'You\u2019ll pick 2 items from Category A and 2 from Category B, then analyse each one \u2014 meaning, form, pronunciation and so on. Work through this one step at a time; nothing is submitted until the last step.' },
+    { type:'picker', label:'Pick your items',
+      catA:{ label:'Category A', options:['Grammar item 1','Grammar item 2','Grammar item 3'] },
+      catB:{ label:'Category B', options:['Lexis item 1','Lexis item 2','Lexis item 3'] },
+      pickCount:2 },
+    { type:'fields', label:'Analyse each item', intro:'Repeat this for each item you picked above.', fields:[
+      { label:'Meaning', hint:'The essential meaning of the item, in this context.' },
+      { label:'Clarification of meaning', hint:'CCQs (with answers), and/or a timeline, diagram, or personalised example.' },
+      { label:'Form', hint:'Break down each part. Use accurate, specific terminology.' },
+      { label:'Pronunciation', hint:'Phonemic script \u2014 weak forms, stress, linking, problem sounds.' },
+      { label:'Appropriacy', hint:'Only where relevant \u2014 register, more/less formal alternatives.' },
+      { label:'Anticipated problems & solutions', hint:'Cover meaning, form, AND pronunciation \u2014 a solution for each problem you raise.' }
+    ]},
+    { type:'declaration', label:'Declaration', items:['This is my own work.', 'All sources are referenced, in the format (Author, Year, p. ##).'], aiToggle:true }
+  ]},
+  lsrt: { title:'Language Skills Related Task', wordMin:750, wordMax:1000, format:'structured', criteria:[
+      {text:'Identifies sub-skills and task types accurately.', sectionIndex:1},
+      {text:'Anticipates problems with the skill and proposes workable solutions.', sectionIndex:3}
+    ], sections:[
+    { type:'text', label:'The material', body:'The lesson or extract you are analysing \u2014 not the whole unit, just the skills-focused part.' },
+    { type:'text', label:'Sub-skills and task types', body:'Name the specific sub-skills the material targets (e.g. skimming for gist, listening for specific information, turn-taking, planning before writing) and how each task exercises them.' },
+    { type:'text', label:'How the lesson stages the skill', body:'Lead-in, pre-task (vocabulary/prediction), the task itself, and post-task \u2014 what each stage is for, and how it prepares learners for the next.' },
+    { type:'text', label:'Anticipated problems and solutions', body:'Problems with the skill itself (not language) \u2014 task difficulty, background knowledge, text length, unfamiliar text types \u2014 and how you would address each.' },
+    { type:'declaration', label:'Declaration', items:['This is my own work.', 'All sources are referenced, in the format (Author, Year, p. ##).'], aiToggle:true }
+  ]},
+  fol: { title:'Focus on the Learner', wordMin:750, wordMax:1000, format:'prose', criteria:[
+      {text:'Names the grammar and pronunciation problems accurately, using correct terminology.', sectionIndex:null},
+      {text:'Proposes activities that genuinely address the stated problems.', sectionIndex:null}
+    ], sections:[
+    { type:'text', label:'Before you start', body:'You\u2019ll describe your current TP group, then identify one grammar and one pronunciation difficulty they\u2019ve shown \u2014 two examples of each \u2014 and present one activity for each problem. Word count: 750\u20131,000 words of continuous prose, not counting the bibliography or appendices.' },
+    { type:'text', label:'A \u2014 Your TP group', body:'Describe your group of learners, covering group size, gender, age range and level.' },
+    { type:'text', label:'B \u2014 The grammar problem', body:'Name the grammar area you\u2019ve chosen to focus on, using correct terminology, with two examples.' },
+    { type:'text', label:'C \u2014 The pronunciation problem', body:'Name the pronunciation area you\u2019ve chosen to focus on, using correct terminology and IPA script, with two examples.' },
+    { type:'text', label:'D \u2014 The grammar task', body:'Attach one task in Appendix 1 that addresses the grammar problem above \u2014 just one, not a choice of options.' },
+    { type:'text', label:'E \u2014 The pronunciation task', body:'Attach one task in Appendix 2 that addresses the pronunciation problem above. Repeating after the teacher or drilling doesn\u2019t count as a task.' },
+    { type:'declaration', label:'Declaration', items:['This is my own work.', 'All sources are referenced, in the format (Author, Year, p. ##).'], aiToggle:true }
+  ]},
+  lfc: { title:'LFC \u2014 Lessons from the Classroom', wordMin:750, wordMax:1000, format:'prose', criteria:[
+      {text:'Reflects honestly on strengths and action points with reference to TP feedback.', sectionIndex:null},
+      {text:'Draws specific, actionable insights from observation of others.', sectionIndex:null}
+    ], sections:[
+    { type:'text', label:'Before you start', body:'This assignment is a reflection on your progress during the course. You\u2019ll summarise your main teaching strengths and action points, insights from observing peers and experienced teachers, and how you\u2019ll continue developing after the CELTA. Word count: 750\u20131,000 words of continuous prose, not counting the bibliography or appendices.' },
+    { type:'text', label:'A \u2014 Identifying strengths', body:'Browse your 3 most recent TPs\u2019 feedback and identify 3 teaching strengths you\u2019ve shown.' },
+    { type:'text', label:'B \u2014 Identifying action points', body:'Browse your 3 most recent TPs\u2019 feedback and identify 3 action points you still have.' },
+    { type:'text', label:'C \u2014 Reflecting on observation of others', body:'For each action point from Part B, give one example of how another teacher addressed it \u2014 through peer observation, a tutor\u2019s live observation, or a video observation.' },
+    { type:'text', label:'D \u2014 Post-course development', body:'Choose 3 areas you want to focus on after the course.' },
+    { type:'declaration', label:'Declaration', items:['This is my own work.', 'All sources are referenced, in the format (Author, Year, p. ##).'], aiToggle:true }
+  ]},
+  a5: { title:'Plagiarism Reflection \u2014 Assignment 5 (centre sanction)', sections:[
+    { type:'text', label:'Before you start', body:'This is not a research essay about plagiarism. It is an account of what happened in your own case, which rule it breached, and what you will do differently. Write it in your own words \u2014 a general essay on academic honesty will not pass, and will be scanned like everything else.\n\n750\u20131,000 words, due by the last day of the course.' },
+    { type:'text', label:'What this does and does not affect', body:'It does not count toward the three-of-four rule, and it cannot raise or lower your certificate grade.\nOne chance, pass or fail \u2014 the same as the resubmission it accompanies.\nIt is a condition set by the centre, not a Cambridge assignment, and it is not numbered with the four.\nIt stays with the case in your file. An assessor asking how the centre handled this sees both the decision and what followed.' },
+    { type:'text', label:'1 \u2014 What happened (~200 words)', body:'In your own words: what you submitted, and how it came about.\nAn account, not an apology. What you were doing, when, and what you were thinking.\nIf you disagree with the finding, say so here \u2014 that is allowed, and this section is where it goes.' },
+    { type:'text', label:'2 \u2014 Which rule it breached (~200 words)', body:'Quote the clause from the centre\u2019s malpractice policy that applies, and say why it applies to what you did.\nQuote the relevant line from the Cambridge AI guidance and the candidate agreement you accepted when you set up your account.\nBoth documents are in the resource hub. You have already signed one of them.' },
+    { type:'text', label:'3 \u2014 Why it matters here (~150 words)', body:'What it would mean for a learner, a colleague or a centre if a teacher\u2019s materials or claims were not their own.\nNot why plagiarism is wrong in general \u2014 why it matters for someone about to teach.\nUse the word \u2018willow\u2019 somewhere in this section.' },
+    { type:'text', label:'4 \u2014 What you will do differently (~250 words)', body:'How you will note sources while you read, so this cannot happen by accident.\nHow you will use AI tools and declare them, specifically.\nWhat you will do at 1am with a deadline in seven hours and nothing written. That is the situation this is really about.' },
+    { type:'declaration', label:'Declaration', items:['This is my own work.', 'All sources are referenced, in the format (Author, Year, p. ##).'], aiToggle:true }
+  ]}
+};
+
+let DATA = null;
+try { DATA = JSON.parse(localStorage.getItem(STORE_KEY)); } catch(e) {}
+if (!DATA) DATA = JSON.parse(JSON.stringify(DEFAULT_DATA));
+Object.keys(DATA).forEach(k => {
+  const a = DATA[k]; if (!a || !a.criteria) return;
+  a.criteria = a.criteria.map(c => typeof c === 'string' ? {text:c, sectionIndex:null} : c);
+});
+
+const ORDER = ['lrt','lsrt','fol','lfc','a5'];
+const NAMES = { lrt:'LRT \u2014 Language Related Tasks', lsrt:'LSRT \u2014 Language Skills Related Task', fol:'FOL \u2014 Focus on the Learner', lfc:'LFC \u2014 Lessons from the Classroom', a5:'Assignment 5' };
+
+let CURRENT = 'lrt';
+const $ = id => document.getElementById(id);
+
+function persist(){
+  localStorage.setItem(STORE_KEY, JSON.stringify(DATA));
+  const s = $('savedNote'); if (s) { s.textContent = 'Saved'; setTimeout(()=>{ if (s) s.textContent=''; }, 1400); }
+}
+
+function renderList(){
+  $('list').innerHTML = ORDER.map(key => {
+    const has = !!DATA[key];
+    return `<button class="${key===CURRENT?'active':''} ${has?'':'missing'}" data-a="${key}">${NAMES[key]}${has?'':' \u2014 not built yet'}</button>`;
+  }).join('');
+}
+
+function fieldSectionHTML(s, i){
+  return `<div class="section" data-i="${i}">
+    ${sectionHead(s,i,'Item fields')}
+    <textarea class="intro" rows="2" oninput="updateSection(${i},'intro',this.value)" placeholder="Intro line shown above the fields (optional)">${esc(s.intro||'')}</textarea>
+    <div style="margin-top:10px;">
+    ${s.fields.map((f,fi)=>`
+      <div class="field-row" data-fi="${fi}">
+        <div class="fcol">
+          <input type="text" class="flabel" value="${esc(f.label)}" oninput="updateField(${i},${fi},'label',this.value)">
+          <textarea class="fhint" rows="1" oninput="updateField(${i},${fi},'hint',this.value)" placeholder="Guidance shown under the field">${esc(f.hint||'')}</textarea>
+        </div>
+        <button class="icon-btn danger" title="Remove field" onclick="removeField(${i},${fi})">\u2715</button>
+      </div>`).join('')}
+    </div>
+    <button class="addline" onclick="addField(${i})">+ Add field</button>
+  </div>`;
+}
+
+function pickerSectionHTML(s, i){
+  return `<div class="section" data-i="${i}">
+    ${sectionHead(s,i,'Pick items')}
+    <div class="catwrap">
+      ${['catA','catB'].map(cat => `
+        <div class="catbox">
+          <input type="text" class="catlabel" value="${esc(s[cat].label)}" oninput="updateCatLabel(${i},'${cat}',this.value)">
+          ${s[cat].options.map((opt,oi)=>`
+            <div class="chip-row">
+              <input type="text" value="${esc(opt)}" oninput="updateOption(${i},'${cat}',${oi},this.value)">
+              <button class="icon-btn danger" title="Remove option" onclick="removeOption(${i},'${cat}',${oi})">\u2715</button>
+            </div>`).join('')}
+          <button class="addline" onclick="addOption(${i},'${cat}')">+ Add option</button>
+        </div>`).join('')}
+    </div>
+    <div class="pickcount">Trainee picks <input type="text" value="${s.pickCount}" oninput="updatePickCount(${i},this.value)"> from each category</div>
+  </div>`;
+}
+
+function textSectionHTML(s, i){
+  return `<div class="section" data-i="${i}">
+    ${sectionHead(s,i,'Instructions')}
+    <textarea rows="3" oninput="updateSection(${i},'body',this.value)">${esc(s.body)}</textarea>
+  </div>`;
+}
+
+function declSectionHTML(s, i){
+  return `<div class="section" data-i="${i}">
+    ${sectionHead(s,i,'Declaration')}
+    ${s.items.map((it,di)=>`
+      <div class="chip-row">
+        <input type="text" value="${esc(it)}" oninput="updateDeclItem(${i},${di},this.value)">
+        <button class="icon-btn danger" title="Remove" onclick="removeDeclItem(${i},${di})">\u2715</button>
+      </div>`).join('')}
+    <button class="addline" onclick="addDeclItem(${i})">+ Add checkbox</button>
+    <p class="metahint" style="margin:6px 0 0;">Own work doesn\u2019t exclude joint preparation and discussion \u2014 but submitting an assignment substantially similar to another candidate\u2019s does count as a breach.</p>
+    <label style="display:flex; align-items:center; gap:8px; font-size:0.85rem; margin-top:12px; color:var(--ink);">
+      <input type="checkbox" ${s.aiToggle?'checked':''} onchange="toggleAi(${i},this.checked)"> Include the \u201Cdid you use AI?\u201D question and link-to-conversation field
+    </label>
+  </div>`;
+}
+
+function sectionHead(s, i, tag){
+  return `<div class="section-head">
+    <button class="icon-btn" title="Move up" onclick="moveSection(${i},-1)">\u2191</button>
+    <button class="icon-btn" title="Move down" onclick="moveSection(${i},1)">\u2193</button>
+    <input type="text" class="label" value="${esc(s.label)}" oninput="updateSection(${i},'label',this.value)">
+    <span class="type-tag">${tag}</span>
+    <button class="icon-btn danger" title="Remove section" onclick="removeSection(${i})">\u2715</button>
+  </div>`;
+}
+
+function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function metaHTML(a){
+  return `<div class="metabox">
+    <div class="metarow">
+      <label>Word count</label>
+      <input type="text" style="width:64px;" value="${a.wordMin||''}" oninput="updateMeta('wordMin',this.value)"> –
+      <input type="text" style="width:64px;" value="${a.wordMax||''}" oninput="updateMeta('wordMax',this.value)"> words
+      <span class="metahint">Handbook range: 750–1,000.</span>
+    </div>
+    <div class="metarow">
+      <label>Format</label>
+      <select onchange="updateMeta('format',this.value)">
+        <option value="prose" ${a.format==='prose'?'selected':''}>Continuous prose</option>
+        <option value="structured" ${a.format==='structured'?'selected':''}>Structured (sections/tables)</option>
+      </select>
+      <span class="metahint">Handbook requires at least 2 of the 4 core assignments in continuous prose.</span>
+    </div>
+    <div class="metarow" style="align-items:flex-start;">
+      <label style="margin-top:6px;">Marking criteria</label>
+      <div style="flex:1;">
+        ${(a.criteria||[]).map((c,ci)=>`
+          <div class="chip-row" style="align-items:flex-start;">
+            <input type="text" style="flex:2;" value="${esc(c.text)}" oninput="updateCriterionText(${ci},this.value)">
+            <select style="flex:1;" onchange="updateCriterionSection(${ci},this.value)">
+              <option value="" ${c.sectionIndex==null?'selected':''}>General (whole assignment)</option>
+              ${a.sections.map((s,si)=>s.type==='declaration'||s.type==='picker'?'':`<option value="${si}" ${c.sectionIndex===si?'selected':''}>${esc(s.label)}</option>`).join('')}
+            </select>
+            <button class="icon-btn danger" title="Remove" onclick="removeCriterion(${ci})">\u2715</button>
+          </div>`).join('')}
+        <button class="addline" onclick="addCriterion()">+ Add criterion</button>
+        <p class="metahint" style="margin:4px 0 0;">Shown to candidates alongside the instructions — Handbook 8.2.1 requires criteria to be made explicit. Tying a criterion to a section lets it lock on resubmission once met, instead of reopening the whole assignment.</p>
+      </div>
+    </div>
+  </div>`;
+}
+function updateMeta(key,v){ DATA[CURRENT][key] = (key==='wordMin'||key==='wordMax') ? (parseInt(v,10)||0) : v; renderProseBanner(); }
+function updateCriterionText(ci,v){ DATA[CURRENT].criteria[ci].text=v; }
+function updateCriterionSection(ci,v){ DATA[CURRENT].criteria[ci].sectionIndex = v===''? null : parseInt(v,10); }
+function addCriterion(){ (DATA[CURRENT].criteria=DATA[CURRENT].criteria||[]).push({text:'New criterion', sectionIndex:null}); renderEditor(); }
+function removeCriterion(ci){ DATA[CURRENT].criteria.splice(ci,1); renderEditor(); }
+function renderProseBanner(){
+  const core=['lrt','lsrt','fol','lfc'];
+  const proseCount = core.filter(k=>DATA[k] && DATA[k].format==='prose').length;
+  const el=$('proseBanner');
+  if(!el) return;
+  const ok = proseCount>=2;
+  el.style.background = ok ? 'oklch(94% 0.03 195)' : 'oklch(93% 0.05 40)';
+  el.style.borderColor = ok ? 'var(--teal)' : 'var(--brick)';
+  el.style.color = ok ? 'var(--teal)' : 'var(--brick)';
+  el.textContent = `${proseCount} of 4 core assignments marked continuous prose — Handbook 8.2.1 requires at least 2.`;
+}
+
+function renderEditor(){
+  const a = DATA[CURRENT];
+  if (!a){
+    $('editor').innerHTML = `<div class="empty">
+      <p>${CURRENT==='a5' ? 'Assignment 5 hasn\u2019t been imported yet.' : 'This assignment isn\u2019t set up yet.'}</p>
+      <button class="btn" onclick="startBlank()">Start from a blank assignment</button>
+    </div>`;
+    return;
+  }
+  $('editor').innerHTML = `
+    <input type="text" style="font-family:'Newsreader',Georgia,serif; font-size:1.25rem; font-weight:700; border:none; background:transparent; padding:0 0 2px; margin-bottom:2px; width:100%;" value="${esc(a.title)}" oninput="updateTitle(this.value)">
+    <p class="notice">Edit wording freely, and add, remove or reorder sections to match how you actually want this assignment to run.</p>
+    ${CURRENT!=='a5' ? metaHTML(a) : ''}
+    <div class="importrow">
+      <button class="btn secondary" onclick="$('importFile').click()">\u2B06 Import from a file</button>
+      <input type="file" id="importFile" accept=".txt,.md" style="display:none;" onchange="handleImport(this.files[0])">
+      <span class="importnote">Plain text or Markdown — blank-line-separated paragraphs become sections you can then edit.</span>
+    </div>
+    <div id="sections"></div>
+    <div class="addsection">
+      <select id="newType">
+        <option value="text">Instructions section</option>
+        <option value="fields">Item fields (a repeatable analysis block)</option>
+        <option value="picker">Pick-your-items step (two categories)</option>
+        <option value="declaration">Plagiarism & AI declaration</option>
+      </select>
+      <button class="btn secondary" onclick="addSection()">+ Add section</button>
+    </div>
+    <div class="actions">
+      <span class="saved" id="savedNote"></span>
+      <button class="btn" onclick="persist()">Save assignment</button>
+    </div>`;
+  $('sections').innerHTML = a.sections.map((s,i) => {
+    if (s.type==='fields') return fieldSectionHTML(s,i);
+    if (s.type==='picker') return pickerSectionHTML(s,i);
+    if (s.type==='declaration') return declSectionHTML(s,i);
+    return textSectionHTML(s,i);
+  }).join('');
+}
+
+function updateTitle(v){ DATA[CURRENT].title = v; }
+function updateSection(i, key, v){ DATA[CURRENT].sections[i][key] = v; }
+function updateField(i, fi, key, v){ DATA[CURRENT].sections[i].fields[fi][key] = v; }
+function addField(i){ DATA[CURRENT].sections[i].fields.push({label:'New field', hint:''}); renderEditor(); }
+function removeField(i, fi){ DATA[CURRENT].sections[i].fields.splice(fi,1); renderEditor(); }
+function updateCatLabel(i, cat, v){ DATA[CURRENT].sections[i][cat].label = v; }
+function updateOption(i, cat, oi, v){ DATA[CURRENT].sections[i][cat].options[oi] = v; }
+function addOption(i, cat){ DATA[CURRENT].sections[i][cat].options.push('New item'); renderEditor(); }
+function removeOption(i, cat, oi){ DATA[CURRENT].sections[i][cat].options.splice(oi,1); renderEditor(); }
+function updatePickCount(i, v){ DATA[CURRENT].sections[i].pickCount = parseInt(v,10) || 1; }
+function moveSection(i, dir){
+  const arr = DATA[CURRENT].sections;
+  const j = i + dir;
+  if (j < 0 || j >= arr.length) return;
+  [arr[i], arr[j]] = [arr[j], arr[i]];
+  renderEditor();
+}
+function removeSection(i){ DATA[CURRENT].sections.splice(i,1); renderEditor(); }
+function updateDeclItem(i, di, v){ DATA[CURRENT].sections[i].items[di] = v; }
+function addDeclItem(i){ DATA[CURRENT].sections[i].items.push('New declaration'); renderEditor(); }
+function removeDeclItem(i, di){ DATA[CURRENT].sections[i].items.splice(di,1); renderEditor(); }
+function toggleAi(i, checked){ DATA[CURRENT].sections[i].aiToggle = checked; }
+function handleImport(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const text = reader.result || '';
+    const blocks = text.split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean);
+    const sections = blocks.map(b=>{
+      const lines = b.split('\n');
+      const heading = /^#{1,3}\s+/.test(lines[0]) ? lines.shift().replace(/^#{1,3}\s+/,'') : lines[0].slice(0,60);
+      return { type:'text', label: heading || 'Imported section', body: lines.join('\n').trim() || b };
+    });
+    if (!sections.length) { alert('Could not find any text to import from that file.'); return; }
+    if (!DATA[CURRENT]) DATA[CURRENT] = { title: file.name.replace(/\.[^.]+$/,''), sections: [] };
+    const ok = confirm(`Found ${sections.length} section${sections.length===1?'':'s'} in this file. They\u2019ll be added to the END of ${NAMES[CURRENT]} as new instruction sections \u2014 existing sections (including any \u201Cpick your items\u201D step and its categories) are left exactly as they are. Continue?`);
+    if (!ok) return;
+    DATA[CURRENT].sections = DATA[CURRENT].sections.concat(sections);
+    renderList(); renderEditor();
+  };
+  reader.readAsText(file);
+}
+function addSection(){
+  const type = $('newType').value;
+  const arr = DATA[CURRENT].sections;
+  if (type==='text') arr.push({ type:'text', label:'New section', body:'' });
+  else if (type==='fields') arr.push({ type:'fields', label:'New fields block', intro:'', fields:[{label:'New field', hint:''}] });
+  else if (type==='picker') arr.push({ type:'picker', label:'Pick your items', catA:{label:'Category A', options:['Item 1','Item 2']}, catB:{label:'Category B', options:['Item 1','Item 2']}, pickCount:2 });
+  else if (type==='declaration') arr.push({ type:'declaration', label:'Declaration', items:['This is my own work.', 'All sources are referenced, in the format (Author, Year, p. ##).'], aiToggle:true });
+  renderEditor();
+}
+function startBlank(){
+  const parts = NAMES[CURRENT].split('\u2014');
+  DATA[CURRENT] = { title: (parts[1] ? parts[1].trim() : 'New assignment'), sections: [{ type:'text', label:'Before you start', body:'' }] };
+  renderList(); renderEditor();
+}
+
+$('list').addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  CURRENT = btn.dataset.a;
+  renderList(); renderEditor(); renderProseBanner();
+});
+
+renderList(); renderEditor(); renderProseBanner();
+</script>
+</body>
+</html>

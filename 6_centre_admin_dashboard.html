@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<!--
+  Connect Hub — centre/course admin dashboard
+  © 2026 Ramy Sakr. All rights reserved.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connect Hub — Course admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sand:oklch(92.5% 0.012 85); --sand-line:oklch(89.5% 0.012 82);
+    --paper:oklch(99.5% 0.004 90); --card:oklch(96.2% 0.02 80); --ink:oklch(23.5% 0.017 65);
+    --terracotta:oklch(37.5% 0.058 195); --teal:oklch(37.5% 0.058 195);
+    --grey:oklch(51% 0.017 70); --gold:oklch(63% 0.096 72); --gold-lifted:oklch(70% 0.12 72); --ink-warm:oklch(30% 0.042 58);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
+    padding:40px 20px 60px; display:flex; flex-direction:column; align-items:center;}
+  .board{max-width:1080px; width:100%;}
+  .header{background:var(--card); border-radius:10px; border-top:3px solid var(--terracotta);
+    padding:44px 26px 36px; text-align:center; margin-bottom:22px; box-shadow:0 1px 2px rgba(0,0,0,0.03);}
+  .header p.tag{margin:16px 0 0; font-size:1rem; color:var(--grey);}
+  .header p.role{margin:20px 0 0; font-size:0.9rem; font-weight:700; color:var(--teal); letter-spacing:0.03em;}
+  .tabs{display:flex; gap:2px; margin-bottom:0; overflow-x:auto; padding:0 4px;}
+  .tab{font-family:'Karla',sans-serif; font-size:0.88rem; font-weight:600; color:var(--grey);
+    background:transparent; border:none; border-bottom:3px solid transparent; padding:14px 20px 12px; cursor:pointer; white-space:nowrap; transition:color .15s;}
+  .tab:hover{color:var(--ink);}
+  .tab.active{color:var(--teal); border-bottom-color:var(--teal);}
+  .panel{background:var(--card); border-radius:10px; padding:26px 28px; min-height:220px; box-shadow:0 1px 2px rgba(0,0,0,0.03);}
+  .panel.tablepanel{padding:6px;}
+  table{width:100%; border-collapse:collapse;}
+  th{text-align:left; font-size:0.7rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase;
+    color:var(--grey); padding:15px 20px; border-bottom:1px solid var(--sand-line);}
+  td{padding:17px 20px; border-bottom:1px solid var(--sand-line); font-size:0.92rem; vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  tbody tr:hover td{background:oklch(93.5% 0.02 80);}
+  .status-pill{display:inline-block; font-size:0.78rem; font-weight:700; padding:5px 12px; border-radius:20px;}
+  .status-pill.draft{background:var(--sand); color:var(--grey);}
+  .status-pill.submitted{background:#FBF3E4; color:#8A6320;}
+  .status-pill.passed{background:#EAF3E9; color:#1E6B63;}
+  .btn{font-family:'Karla',sans-serif; font-size:0.83rem; font-weight:700; padding:9px 18px; border-radius:20px;
+    border:1.5px solid var(--sand-line); background:var(--card); color:var(--ink); cursor:pointer; transition:opacity .15s;}
+  .btn:hover{opacity:0.8;}
+  .btn.primary{background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  .btn.ghost{border-color:var(--teal); color:var(--teal); background:none;}
+  .roster-toolbar{display:flex; align-items:center; justify-content:space-between; padding:18px 20px 6px;}
+  .roster-toolbar h3{margin:0; font-size:1rem; font-weight:700; color:var(--ink);}
+  .link-cell{display:flex; align-items:center; gap:10px; font-family:monospace; font-size:0.78rem; color:var(--grey);}
+  .field-row{display:grid; grid-template-columns:200px 1fr; gap:16px; align-items:center; padding:14px 0; border-bottom:1px solid var(--sand-line);}
+  .field-row:last-child{border-bottom:none;}
+  .field-row label{font-weight:700; font-size:0.88rem;}
+  .field-row input[type="text"], .field-row input[type="date"]{
+    font-family:'Karla',sans-serif; font-size:0.92rem; padding:10px 12px; border:1.5px solid var(--sand-line);
+    border-radius:6px; background:var(--paper); color:var(--ink); max-width:340px; width:100%;}
+  .logo-slot{width:64px; height:64px; border-radius:9px; border:1.5px dashed var(--sand-line);
+    display:flex; align-items:center; justify-content:center; font-size:9px; color:var(--grey); text-align:center; line-height:1.2; flex-shrink:0;}
+  .settings-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:22px;}
+  .footer{display:flex; align-items:center; justify-content:center; gap:8px; margin-top:36px; font-size:0.8rem; color:var(--grey);}
+  .footer span.name{font-weight:600; color:var(--ink);}
+</style>
+</head>
+<body>
+<div class="board">
+  <div class="header">
+    <div style="display:flex;align-items:center;justify-content:center;gap:12px;">
+      <span style="width:44px;height:44px;border-radius:9px;background:var(--ink-warm);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg viewBox="8 30 104 60" width="27" height="15.5" fill="none">
+          <path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path>
+          <path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path>
+        </svg>
+      </span>
+      <span style="font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:34px;color:var(--gold);">Connect</span>
+      <span style="font-family:'Karla',sans-serif;font-weight:600;font-size:24px;color:var(--ink);margin-left:-5px;">Hub</span>
+    </div>
+    <p class="tag">Set up your course, then invite your tutors and trainees.</p>
+    <p class="role">Course admin</p>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-tab="settings">Settings</button>
+    <button class="tab" data-tab="roster">Roster and links</button>
+    <button class="tab" data-tab="tutors">Tutors</button>
+    <button class="tab" data-tab="assignments">Assignments</button>
+  </div>
+
+  <div class="panel" id="panel-settings">
+    <div class="field-row">
+      <label>Centre logo</label>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div class="logo-slot">Centre<br>logo</div>
+        <button class="btn">Upload</button>
+      </div>
+    </div>
+    <div class="field-row"><label>Centre name</label><input type="text" placeholder="e.g. Riverside Language Centre"></div>
+    <div class="field-row"><label>Centre number</label><input type="text" placeholder="Cambridge centre number"></div>
+    <div class="field-row"><label>Course name</label><input type="text" placeholder="e.g. CELTA — August 2026"></div>
+    <div class="field-row"><label>Course start date</label><input type="date"></div>
+    <div class="field-row"><label>Course end date</label><input type="date"></div>
+    <div class="settings-actions">
+      <button class="btn primary">Save</button>
+    </div>
+  </div>
+
+  <div class="panel tablepanel" id="panel-roster" style="display:none;">
+    <div class="roster-toolbar"><h3>Trainees</h3><button class="btn primary">+ Invite a trainee</button></div>
+    <table>
+      <tr><th>Trainee</th><th>Personal link</th><th>Status</th><th></th></tr>
+      <tr>
+        <td>Ramy Sakr</td>
+        <td><span class="link-cell">…exec?trainee=7a5e880be8f0…<button class="btn" style="padding:4px 10px;font-size:0.72rem;">Copy</button></span></td>
+        <td><span class="status-pill passed">Joined</span></td>
+        <td><button class="btn ghost">Resend</button></td>
+      </tr>
+      <tr>
+        <td>New trainee</td>
+        <td><span class="link-cell">…exec?trainee=3f2c1a9de441…<button class="btn" style="padding:4px 10px;font-size:0.72rem;">Copy</button></span></td>
+        <td><span class="status-pill submitted">Invited — not yet opened</span></td>
+        <td><button class="btn ghost">Resend</button></td>
+      </tr>
+      <tr>
+        <td style="color:var(--grey);">—</td>
+        <td style="color:var(--grey);">Not sent yet</td>
+        <td><span class="status-pill draft">Not invited</span></td>
+        <td><button class="btn primary">Send invite</button></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="panel tablepanel" id="panel-tutors" style="display:none;">
+    <div class="roster-toolbar"><h3>Tutors</h3><button class="btn primary">+ Invite a tutor</button></div>
+    <table>
+      <tr><th>Tutor</th><th>Personal link</th><th></th></tr>
+      <tr>
+        <td>Ramy Sakr</td>
+        <td><span class="link-cell">…exec?tutor=7a5e880be8f073c9e93b<button class="btn" style="padding:4px 10px;font-size:0.72rem;">Copy</button></span></td>
+        <td><span class="status-pill passed">Active</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="panel tablepanel" id="panel-assignments" style="display:none;">
+    <div class="roster-toolbar"><h3>Written assignments</h3></div>
+    <table>
+      <tr><th>Assignment</th><th></th></tr>
+      <tr><td>LRT — Language Related Tasks</td><td><a class="btn ghost" href="8_assignment_wording.html" style="text-decoration:none;display:inline-block;">Edit wording</a></td></tr>
+      <tr><td>LSRT — Language Skills Related Task</td><td><a class="btn ghost" href="8_assignment_wording.html" style="text-decoration:none;display:inline-block;">Edit wording</a></td></tr>
+      <tr><td>FOL — Focus on the Learner</td><td><a class="btn ghost" href="8_assignment_wording.html" style="text-decoration:none;display:inline-block;">Edit wording</a></td></tr>
+      <tr><td>LfC — Lessons from the Classroom</td><td><a class="btn ghost" href="8_assignment_wording.html" style="text-decoration:none;display:inline-block;">Edit wording</a></td></tr>
+      <tr><td>Assignment 5 \u2014 Plagiarism Reflection <span style="color:var(--grey);font-weight:400;">(centre sanction, not part of the four)</span></td><td><a class="btn ghost" href="8_assignment_wording.html" style="text-decoration:none;display:inline-block;">Edit wording</a></td></tr>
+    </table>
+    <p style="padding:14px 20px 4px;font-size:0.8rem;color:var(--grey);">Wording only — the layout, fields and structure of each assignment are fixed.</p>
+  </div>
+
+  <p class="footer">
+    <span style="width:22px;height:22px;border-radius:5px;background:var(--ink-warm);display:inline-flex;align-items:center;justify-content:center;">
+      <svg viewBox="8 30 104 60" width="13" height="7.4" fill="none">
+        <path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path>
+        <path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path>
+      </svg>
+    </span>
+    Designed and built by <span class="name">Ramy</span>
+  </p>
+</div>
+<script>
+document.getElementById('tabs').addEventListener('click', e=>{
+  const btn = e.target.closest('.tab');
+  if(!btn) return;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
+  document.getElementById('panel-'+btn.dataset.tab).style.display='';
+});
+</script>
+</body>
+</html>

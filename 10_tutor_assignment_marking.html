@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<!--
+  Connect Hub — mark a written assignment (tutor)
+  © 2026 Ramy Sakr. All rights reserved.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connect Hub — Mark assignment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sand:oklch(92.5% 0.012 85); --sand-line:oklch(89.5% 0.012 82); --sand-deep:oklch(94.8% 0.01 85);
+    --paper:oklch(96.4% 0.014 85); --card:oklch(96.2% 0.02 80); --ink:oklch(23.5% 0.017 65);
+    --teal:oklch(37.5% 0.058 195); --grey:oklch(51% 0.017 70); --brick:oklch(45% 0.15 27);
+  }
+  *{box-sizing:border-box;}
+  a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
+  body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:32px 16px 80px; display:flex; justify-content:center;}
+  .board{max-width:760px; width:100%;}
+  .back{display:inline-block; margin-bottom:16px; font-size:0.85rem; font-weight:600; text-decoration:none;}
+  .back:hover{text-decoration:underline;}
+  .picker{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px;}
+  .picker button{font-family:'Karla',sans-serif; font-size:0.82rem; font-weight:600; padding:7px 14px; border-radius:16px;
+    border:1.5px solid var(--sand-line); background:var(--card); color:var(--ink); cursor:pointer;}
+  .picker button.active{background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  .header{background:var(--paper); border-radius:6px; margin-bottom:20px; border-top:2px solid var(--teal); padding:22px 26px;}
+  .header h1{font-family:'Newsreader',Georgia,serif; font-size:1.6rem; margin:0;}
+  .stage-pill{display:inline-block; font-size:0.78rem; font-weight:700; padding:3px 10px; border-radius:10px; margin-top:8px;}
+  .stage-pill.submitted{background:oklch(90% 0.05 260); color:oklch(40% 0.1 260);}
+  .stage-pill.resubmitted{background:oklch(93% 0.06 60); color:oklch(40% 0.1 60);}
+  .stage-pill.closed{background:oklch(93% 0.05 145); color:oklch(35% 0.08 145);}
+  .stage-pill.draft{background:var(--sand-deep); color:var(--grey);}
+  .card{background:var(--paper); border-radius:6px; padding:18px 22px; margin-bottom:16px; border-left:5px solid var(--sand-line);}
+  .card h2{font-family:'Newsreader',Georgia,serif; font-size:1.05rem; margin:0 0 8px;}
+  .roundlabel{font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--teal); margin:0 0 6px;}
+  .readonly{white-space:pre-wrap; font-size:0.88rem; line-height:1.6; background:#FFFDF8; border:1.5px solid var(--sand-line); border-radius:6px; padding:10px 12px; margin-bottom:10px;}
+  textarea, select{width:100%; font-family:'Karla',sans-serif; font-size:0.9rem; padding:9px 12px; border:1.5px solid var(--sand-line);
+    border-radius:6px; background:#FFFDF8; color:var(--ink); line-height:1.55; resize:vertical;}
+  .outcomes{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;}
+  .outcomes button{font-family:'Karla',sans-serif; font-size:0.85rem; font-weight:600; padding:8px 16px; border-radius:16px;
+    border:1.5px solid var(--sand-line); background:var(--card); cursor:pointer;}
+  .outcomes button.active{background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  .critrow{display:flex; align-items:flex-start; justify-content:space-between; gap:14px; padding:10px 0; border-bottom:1px solid var(--sand-line);}
+  .critrow:last-child{border-bottom:none;}
+  .critrow .txt{font-size:0.87rem; line-height:1.5; flex:1;}
+  .crit-toggle{font-family:'Karla',sans-serif; font-size:0.78rem; font-weight:700; padding:5px 12px; border-radius:14px; border:1.5px solid var(--sand-line);
+    background:var(--card); color:var(--grey); cursor:pointer; flex:none; white-space:nowrap;}
+  .crit-toggle.met{background:oklch(93% 0.05 145); border-color:oklch(70% 0.1 145); color:oklch(35% 0.08 145);}
+  .crit-toggle.not{background:oklch(92% 0.08 27); border-color:oklch(70% 0.12 27); color:var(--brick);}
+  .derived{font-size:0.9rem; font-weight:700; padding:8px 14px; border-radius:8px; margin:12px 0; display:inline-block;}
+  .derived.pending{background:var(--sand-deep); color:var(--grey);}
+  .derived.pass{background:oklch(93% 0.05 145); color:oklch(35% 0.08 145);}
+  .derived.fail{background:oklch(92% 0.08 27); color:var(--brick);}
+  .row label{display:block; font-size:0.75rem; font-weight:700; color:var(--teal); text-transform:uppercase; letter-spacing:.05em; margin-bottom:5px;}
+  .actions{display:flex; justify-content:flex-end; gap:10px; margin-top:16px;}
+  .btn{font-family:'Karla',sans-serif; font-size:0.88rem; font-weight:700; padding:10px 22px; border-radius:20px; border:none; cursor:pointer;}
+  .btn-teal{background:var(--teal); color:var(--paper);}
+  .btn-teal:disabled{opacity:0.4; cursor:not-allowed;}
+  .btn-sand{background:var(--sand-deep); color:var(--ink);}
+  .note{font-size:0.8rem; color:var(--grey); margin:0 0 14px;}
+</style>
+</head>
+<body>
+<div class="board">
+  <a class="back" href="5_tutor_dashboard.html">&#8592; Back to dashboard</a>
+  <div class="picker" id="picker"></div>
+  <div id="app"></div>
+</div>
+<script>
+const WORDING_KEY = 'connect_assignment_wording_v2';
+const SUB_KEY = 'connect_assignment_submissions_v1';
+const ORDER = ['lrt','lsrt','fol','lfc','a5'];
+const NAMES = { lrt:'LRT', lsrt:'LSRT', fol:'FOL', lfc:'LFC', a5:'Assignment 5' };
+const $ = id => document.getElementById(id);
+function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function nl2br(s){ return esc(s).replace(/\n/g,'<br>'); }
+
+let WORDING = null;
+try { WORDING = JSON.parse(localStorage.getItem(WORDING_KEY)); } catch(e) {}
+if (WORDING) { Object.keys(WORDING).forEach(k => {
+  const a = WORDING[k]; if (!a || !a.criteria) return;
+  a.criteria = a.criteria.map(c => typeof c === 'string' ? {text:c, sectionIndex:null} : c);
+}); }
+let SUBS = null;
+try { SUBS = JSON.parse(localStorage.getItem(SUB_KEY)); } catch(e) {}
+if (!SUBS) SUBS = {};
+
+const params = new URLSearchParams(location.search);
+let CURRENT = params.get('a') || 'lrt';
+let OUTCOME = '';
+
+function saveSubs(){ localStorage.setItem(SUB_KEY, JSON.stringify(SUBS)); }
+function subFor(key){ if (!SUBS[key]) SUBS[key] = { stage:'draft', usedResubmission:false, sub1:null, sub2:null, feedback:null, criteriaMarks:{sub1:[],sub2:[]}, criteriaComments:{sub1:[],sub2:[]} }; if(!SUBS[key].criteriaMarks) SUBS[key].criteriaMarks={sub1:[],sub2:[]}; if(!SUBS[key].criteriaComments) SUBS[key].criteriaComments={sub1:[],sub2:[]}; return SUBS[key]; }
+
+function renderPicker(){
+  $('picker').innerHTML = ORDER.filter(k => WORDING && WORDING[k]).map(k =>
+    `<button class="${k===CURRENT?'active':''}" data-a="${k}">${NAMES[k]}</button>`).join('');
+}
+$('picker').addEventListener('click', e => { const b=e.target.closest('button'); if(!b) return; location.search='?a='+b.dataset.a; });
+
+function summarize(a, snap){
+  if (!snap) return '<p class="note">Nothing submitted yet.</p>';
+  let out = '';
+  a.sections.forEach((s,i) => {
+    if (s.type==='text' && !/before you start/i.test(s.label) && snap.text && snap.text[i]) {
+      out += `<div class="roundlabel">${esc(s.label)}</div><div class="readonly">${nl2br(snap.text[i])}</div>`;
+    } else if (s.type==='picker' && snap.picked && snap.picked[i]) {
+      const p = snap.picked[i];
+      out += `<div class="roundlabel">${esc(s.label)}</div><div class="readonly">${esc(s.catA.label)}: ${p.A.map(esc).join(', ')||'\u2014'}\n${esc(s.catB.label)}: ${p.B.map(esc).join(', ')||'\u2014'}</div>`;
+    } else if (s.type==='fields' && snap.fields) {
+      const items = (snap.picked && (function(){ for(let j=i-1;j>=0;j--){ if(a.sections[j].type==='picker'){ const p=snap.picked[j]||{A:[],B:[]}; return p.A.concat(p.B);} } return []; })());
+      (items||[]).forEach((item, ii) => {
+        out += `<div class="roundlabel">${esc(s.label)} \u2014 ${esc(item)}</div>`;
+        s.fields.forEach((f,fi) => {
+          const v = snap.fields[`s${i}_i${ii}_f${fi}`];
+          if (v) out += `<div class="readonly"><strong>${esc(f.label)}:</strong> ${nl2br(v)}</div>`;
+        });
+      });
+    } else if (s.type==='declaration' && snap.decl && snap.decl[i]) {
+      const d = snap.decl[i];
+      out += `<div class="roundlabel">Declaration</div><div class="readonly">${s.items.map((it,ci)=>`${d.checks[ci]?'\u2611':'\u2610'} ${esc(it)}`).join('\n')}${s.aiToggle?`\nAI used: ${d.aiUsed==='yes'?('Yes \u2014 '+esc(d.aiPurpose)+' \u2014 '+esc(d.aiLink)):'No'}`:''}</div>`;
+    }
+  });
+  return out || '<p class="note">Nothing submitted yet.</p>';
+}
+
+function render(){
+  const a = WORDING && WORDING[CURRENT];
+  if (!a){ $('app').innerHTML = '<div class="card"><p class="note">This assignment isn\u2019t set up yet.</p></div>'; return; }
+  const sub = subFor(CURRENT);
+  OUTCOME = (sub.feedback && sub.feedback.outcome) || OUTCOME;
+
+  let html = `<div class="header"><h1>${esc(a.title)}</h1>
+    <span class="stage-pill ${sub.stage}">${({draft:'Not submitted', submitted:'Awaiting marking', resubmission_needed:'Resubmission needed', resubmitted:'Resubmission awaiting marking', closed:'Closed'})[sub.stage]}</span>
+  </div>`;
+
+  if (sub.stage === 'draft') {
+    html += `<div class="card"><p class="note">Nothing to mark yet \u2014 the trainee hasn\u2019t submitted this assignment.</p></div>`;
+  } else {
+    html += `<div class="card"><h2>First submission</h2>${summarize(a, sub.sub1)}</div>`;
+    if (sub.sub2) html += `<div class="card"><h2>Resubmission</h2>${summarize(a, sub.sub2)}</div>`;
+    if (sub.feedback && sub.feedback.outcome) {
+      html += `<div class="card"><h2>Your feedback</h2><div class="readonly">${esc(sub.feedback.outcome)}${sub.feedback.generalComment1?('\n\n'+nl2br(sub.feedback.generalComment1)):''}${sub.feedback.generalComment2?('\n\n'+nl2br(sub.feedback.generalComment2)):''}</div></div>`;
+    }
+
+    if (sub.stage === 'resubmission_needed') {
+      html += `<div class="card"><p class="note">Waiting on the trainee to resubmit \u2014 nothing more to mark until they do.</p></div>`;
+    } else if (sub.stage === 'submitted' || sub.stage === 'resubmitted') {
+      const round = sub.stage==='resubmitted' ? 'sub2' : 'sub1';
+      const crit = (a.criteria||[]);
+      const marks = sub.criteriaMarks[round];
+      const allMarked = crit.length>0 && crit.every((c,i)=>marks[i]===true||marks[i]===false);
+      const allMet = allMarked && crit.every((c,i)=>marks[i]===true);
+      let derivedLabel, derivedCls;
+      if (!allMarked) { derivedLabel = 'Mark every criterion to see the outcome'; derivedCls='pending'; }
+      else if (allMet) { derivedLabel = round==='sub2' ? 'Pass (on resubmission)' : 'Pass'; derivedCls='pass'; }
+      else { derivedLabel = round==='sub2' ? 'Fail (on resubmission)' : 'Resubmission needed'; derivedCls='fail'; }
+
+      html += `<div class="card"><h2>Assessment criteria</h2>
+        ${sub.stage==='submitted' && sub.usedResubmission ? '<p class="note">This candidate has already used their one resubmission for this assignment \u2014 any criterion Not met here is a final Fail.</p>' : ''}
+        ${crit.length ? crit.map((c,i)=>{
+          const m = marks[i];
+          const cls = m===true?'met':m===false?'not':'';
+          const label = m===true?'Met':m===false?'Not met':'Not yet marked';
+          const cm = (sub.criteriaComments[round]||[])[i] || '';
+          return `<div class="critrow" style="flex-direction:column; align-items:stretch;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:14px;">
+              <div class="txt">${esc(c.text)}</div>
+              <button class="crit-toggle ${cls}" data-crit="${i}">${label}</button>
+            </div>
+            <textarea data-crit-comment="${i}" rows="2" placeholder="Comment on this criterion (shown to the trainee if resubmitting)" style="margin-top:8px;">${esc(cm)}</textarea>
+          </div>`;
+        }).join('') : '<p class="note">No marking criteria set for this assignment yet \u2014 add them in the assignment builder.</p>'}
+        <div class="derived ${derivedCls}">${derivedLabel}</div>
+        <div class="row" style="margin-top:12px;"><label>General comment${round==='sub2'?' on the resubmission':''} (optional)</label>
+          <textarea id="comment" rows="3">${esc((sub.feedback&&(round==='sub2'?sub.feedback.generalComment2:sub.feedback.generalComment1))||'')}</textarea></div>
+        <div class="actions">
+          <button class="btn btn-sand" id="unmarkedBtn">Return unmarked</button>
+          <button class="btn btn-teal" id="saveBtn" ${allMarked?'':'disabled'}>Save & return to trainee</button>
+        </div>
+      </div>`;
+    }
+  }
+
+  $('app').innerHTML = html;
+  document.querySelectorAll('[data-crit]').forEach(b => b.addEventListener('click', () => {
+    const round = sub.stage==='resubmitted' ? 'sub2' : 'sub1';
+    const i = +b.dataset.crit;
+    const cur = sub.criteriaMarks[round][i];
+    sub.criteriaMarks[round][i] = cur===true ? false : cur===false ? null : true;
+    saveSubs(); render();
+  }));
+  const saveBtn = $('saveBtn');
+  if (saveBtn) saveBtn.addEventListener('click', doSave);
+  const unmarkedBtn = $('unmarkedBtn');
+  if (unmarkedBtn) unmarkedBtn.addEventListener('click', doReturnUnmarked);
+}
+
+function doSave(){
+  const sub = subFor(CURRENT);
+  const a = WORDING[CURRENT];
+  const round = sub.stage==='resubmitted' ? 'sub2' : 'sub1';
+  const crit = (a.criteria||[]);
+  const marks = sub.criteriaMarks[round];
+  const allMet = crit.length>0 && crit.every((c,i)=>marks[i]===true);
+  const comment = $('comment').value;
+  sub.criteriaComments[round] = crit.map((c,i)=>{ const el=document.querySelector(`[data-crit-comment="${i}"]`); return el?el.value:''; });
+  if (!sub.feedback) sub.feedback = { outcome:'', generalComment1:'', generalComment2:'' };
+
+  if (round === 'sub2') {
+    sub.feedback.generalComment2 = comment;
+    sub.feedback.outcome = allMet ? 'Pass (on resubmission)' : 'Fail (on resubmission)';
+    sub.stage = 'closed';
+  } else {
+    sub.feedback.generalComment1 = comment;
+    if (allMet) { sub.feedback.outcome = 'Pass'; sub.stage = 'closed'; }
+    else if (!sub.usedResubmission) { sub.feedback.outcome = 'Resubmission needed'; sub.stage = 'resubmission_needed'; }
+    else { sub.feedback.outcome = 'Fail'; sub.stage = 'closed'; }
+  }
+  saveSubs();
+  render();
+}
+
+function doReturnUnmarked(){
+  const sub = subFor(CURRENT);
+  const comment = $('comment').value;
+  if (!sub.feedback) sub.feedback = { outcome:'', generalComment1:'', generalComment2:'' };
+  const round = sub.stage==='resubmitted' ? 'sub2' : 'sub1';
+  if (round==='sub2') sub.feedback.generalComment2 = 'Returned unmarked: ' + comment; else sub.feedback.generalComment1 = 'Returned unmarked: ' + comment;
+  sub.feedback.outcome = 'Returned unmarked';
+  sub.stage = 'resubmission_needed';
+  saveSubs();
+  render();
+}
+
+renderPicker();
+render();
+</script>
+</body>
+</html>
