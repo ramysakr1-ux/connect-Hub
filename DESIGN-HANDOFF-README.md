@@ -5,6 +5,13 @@ Connect Hub is a separate, standalone tool from the main Connect app (`ramysakr1
 
 None of this has been shared with the main Connect repo or discussed there — treat everything in this package as new context.
 
+> **Amendment, 22 Aug 2026:** per a follow-up spec, `7_ramy_command_center.html`
+> does *not* belong in this product — it's been removed. The platform-owner
+> command center is being built as a real route inside `celta-connect`
+> instead (owner-role-gated, querying Connect's own database), where a copy
+> of this file lives on as the visual reference. Wherever this doc still
+> describes screen 7 below, treat it as historical.
+
 ## About the design files
 These are **design references built in HTML** — functioning prototypes (open any file directly in a browser) showing intended structure, wording, and behavior. They also happen to be close to production-ready static HTML/JS, since Connect Hub has no build step or framework — recreate in whatever stack the actual Connect Hub repo uses, matching this behavior and wording exactly.
 
