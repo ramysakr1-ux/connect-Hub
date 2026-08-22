@@ -93,7 +93,7 @@ let CURRENT = params.get('a') || 'lrt';
 let OUTCOME = '';
 
 function saveSubs(){ localStorage.setItem(SUB_KEY, JSON.stringify(SUBS)); }
-function subFor(key){ if (!SUBS[key]) SUBS[key] = { stage:'draft', usedResubmission:false, sub1:null, sub2:null, feedback:null, criteriaMarks:{sub1:[],sub2:[]}, criteriaComments:{sub1:[],sub2:[]} }; if(!SUBS[key].criteriaMarks) SUBS[key].criteriaMarks={sub1:[],sub2:[]}; if(!SUBS[key].criteriaComments) SUBS[key].criteriaComments={sub1:[],sub2:[]}; return SUBS[key]; }
+function subFor(key){ if (!SUBS[key]) SUBS[key] = { stage:'draft', usedResubmission:false, sub1:null, sub2:null, feedback:null, criteriaMarks:{sub1:[],sub2:[]}, criteriaComments:{sub1:[],sub2:[]}, markers:{first:'',second:'',doubleMarked:false} }; if(!SUBS[key].criteriaMarks) SUBS[key].criteriaMarks={sub1:[],sub2:[]}; if(!SUBS[key].criteriaComments) SUBS[key].criteriaComments={sub1:[],sub2:[]}; if(!SUBS[key].markers) SUBS[key].markers={first:'',second:'',doubleMarked:false}; return SUBS[key]; }
 
 function renderPicker(){
   $('picker').innerHTML = ORDER.filter(k => WORDING && WORDING[k]).map(k =>
@@ -137,6 +137,24 @@ function render(){
     <span class="stage-pill ${sub.stage}">${({draft:'Not submitted', submitted:'Awaiting marking', resubmission_needed:'Resubmission needed', resubmitted:'Resubmission awaiting marking', closed:'Closed'})[sub.stage]}</span>
   </div>`;
 
+  if (sub.stage !== 'draft') {
+    let overlapFlag = '';
+    try {
+      const plan = JSON.parse(localStorage.getItem('chub:plan'));
+      const matsLink = plan && plan.matsLink && plan.matsLink.trim();
+      const subLink = sub.sub1 && sub.sub1.materialsLink && sub.sub1.materialsLink.trim();
+      if (matsLink && subLink && matsLink === subLink) {
+        overlapFlag = `<div class="card" style="border-left-color:var(--brick);"><h2 style="color:var(--brick);">Materials overlap flagged</h2><p class="note" style="margin:0;">This assignment's materials link matches the trainee's TP lesson plan materials link. Handbook 8.2.1: materials for LRT/LSRT should not be the basis for an assessed TP lesson, or vice versa. Worth a look before marking \u2014 this is a flag, not an accusation.</p></div>`;
+      }
+    } catch(e) {}
+    html += overlapFlag;
+    html += `<div class="card"><h2>Marker record</h2>
+      <div class="row"><label>1st marker</label><input type="text" id="marker1" value="${esc(sub.markers.first)}" placeholder="Name"></div>
+      <div class="row"><label>2nd marker (double-marking)</label><input type="text" id="marker2" value="${esc(sub.markers.second)}" placeholder="Leave blank if this assignment isn\u2019t in the double-marked sample"></div>
+      <p class="note" style="margin:0;">Handbook 8.2.3: a set proportion of each assignment must be double-marked (3 up to 9 candidates, 4 up to 16, 5 up to 24), initialled by both tutors.</p>
+    </div>`;
+  }
+
   if (sub.stage === 'draft') {
     html += `<div class="card"><p class="note">Nothing to mark yet \u2014 the trainee hasn\u2019t submitted this assignment.</p></div>`;
   } else {
@@ -159,7 +177,19 @@ function render(){
       else if (allMet) { derivedLabel = round==='sub2' ? 'Pass (on resubmission)' : 'Pass'; derivedCls='pass'; }
       else { derivedLabel = round==='sub2' ? 'Fail (on resubmission)' : 'Resubmission needed'; derivedCls='fail'; }
 
+      let deadlineWarn = '';
+      try {
+        const cs = JSON.parse(localStorage.getItem('connect_course_settings'));
+        if (cs && cs.end) {
+          const end = new Date(cs.end + 'T23:59:59');
+          const threeDaysOut = new Date(); threeDaysOut.setDate(threeDaysOut.getDate() + 3);
+          if (round === 'sub1' && threeDaysOut > end) {
+            deadlineWarn = `<p class="note" style="color:var(--brick);">A resubmission window (typically a few days) may run past the course end date (${esc(cs.end)}) \u2014 Handbook 8.2.3 requires the chance to resubmit within the span of the course. Check the trainee has real time left before sending this back.</p>`;
+          }
+        }
+      } catch(e) {}
       html += `<div class="card"><h2>Assessment criteria</h2>
+        ${deadlineWarn}
         ${sub.stage==='submitted' && sub.usedResubmission ? '<p class="note">This candidate has already used their one resubmission for this assignment \u2014 any criterion Not met here is a final Fail.</p>' : ''}
         ${crit.length ? crit.map((c,i)=>{
           const m = marks[i];
@@ -197,6 +227,9 @@ function render(){
   if (saveBtn) saveBtn.addEventListener('click', doSave);
   const unmarkedBtn = $('unmarkedBtn');
   if (unmarkedBtn) unmarkedBtn.addEventListener('click', doReturnUnmarked);
+  const m1 = $('marker1'), m2 = $('marker2');
+  if (m1) m1.addEventListener('input', () => { sub.markers.first = m1.value; saveSubs(); });
+  if (m2) m2.addEventListener('input', () => { sub.markers.second = m2.value; sub.markers.doubleMarked = !!m2.value.trim(); saveSubs(); });
 }
 
 function doSave(){

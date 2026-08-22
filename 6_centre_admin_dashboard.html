@@ -85,6 +85,7 @@
     <button class="tab" data-tab="roster">Roster and links</button>
     <button class="tab" data-tab="tutors">Tutors</button>
     <button class="tab" data-tab="assignments">Assignments</button>
+    <button class="tab" data-tab="doublemark">Double-marking</button>
   </div>
 
   <div class="panel" id="panel-settings">
@@ -98,10 +99,10 @@
     <div class="field-row"><label>Centre name</label><input type="text" placeholder="e.g. Riverside Language Centre"></div>
     <div class="field-row"><label>Centre number</label><input type="text" placeholder="Cambridge centre number"></div>
     <div class="field-row"><label>Course name</label><input type="text" placeholder="e.g. CELTA — August 2026"></div>
-    <div class="field-row"><label>Course start date</label><input type="date"></div>
-    <div class="field-row"><label>Course end date</label><input type="date"></div>
+    <div class="field-row"><label>Course start date</label><input type="date" id="courseStart"></div>
+    <div class="field-row"><label>Course end date</label><input type="date" id="courseEnd"></div>
     <div class="settings-actions">
-      <button class="btn primary">Save</button>
+      <button class="btn primary" id="saveSettings">Save</button>
     </div>
   </div>
 
@@ -155,6 +156,14 @@
     <p style="padding:14px 20px 4px;font-size:0.8rem;color:var(--grey);">Wording only — the layout, fields and structure of each assignment are fixed.</p>
   </div>
 
+  <div class="panel tablepanel" id="panel-doublemark" style="display:none;">
+    <div class="roster-toolbar"><h3>Double-marking record</h3></div>
+    <table id="dmTable">
+      <tr><th>Assignment</th><th>Status</th><th>1st marker</th><th>2nd marker</th><th>Double-marked?</th></tr>
+    </table>
+    <p style="padding:14px 20px 4px;font-size:0.8rem;color:var(--grey);">Handbook 8.2.3: a minimum of two tutors must be involved in marking overall, and a set proportion of each assignment double-marked (3 of each up to 9 candidates, 4 up to 16, 5 up to 24). This centre currently has 1 trainee — shown for reference; the required-proportion check applies once real rosters are wired in.</p>
+  </div>
+
   <p class="footer">
     <span style="width:22px;height:22px;border-radius:5px;background:var(--ink-warm);display:inline-flex;align-items:center;justify-content:center;">
       <svg viewBox="8 30 104 60" width="13" height="7.4" fill="none">
@@ -173,7 +182,33 @@ document.getElementById('tabs').addEventListener('click', e=>{
   btn.classList.add('active');
   document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
   document.getElementById('panel-'+btn.dataset.tab).style.display='';
+  if (btn.dataset.tab === 'doublemark') renderDoubleMarking();
 });
+try {
+  const cs = JSON.parse(localStorage.getItem('connect_course_settings'));
+  if (cs) { if(cs.start) document.getElementById('courseStart').value = cs.start; if(cs.end) document.getElementById('courseEnd').value = cs.end; }
+} catch(e) {}
+document.getElementById('saveSettings').addEventListener('click', () => {
+  localStorage.setItem('connect_course_settings', JSON.stringify({
+    start: document.getElementById('courseStart').value,
+    end: document.getElementById('courseEnd').value
+  }));
+});
+function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function renderDoubleMarking(){
+  let SUBS=null, WORDING=null;
+  try{ SUBS=JSON.parse(localStorage.getItem('connect_assignment_submissions_v1')); }catch(e){}
+  try{ WORDING=JSON.parse(localStorage.getItem('connect_assignment_wording_v2')); }catch(e){}
+  const ORDER=['lrt','lsrt','fol','lfc','a5']; const NAMES={lrt:'LRT',lsrt:'LSRT',fol:'FOL',lfc:'LFC',a5:'Assignment 5'};
+  const rows = ORDER.filter(k=>WORDING&&WORDING[k]).map(k=>{
+    const sub = (SUBS&&SUBS[k]) || {stage:'draft', markers:{first:'',second:'',doubleMarked:false}};
+    const m = sub.markers || {first:'',second:'',doubleMarked:false};
+    const statusLabel = ({draft:'Not submitted',submitted:'Awaiting marking',resubmission_needed:'Resubmission needed',resubmitted:'Resubmission awaiting marking',closed:'Closed'})[sub.stage]||sub.stage;
+    return `<tr><td>${NAMES[k]}</td><td>${esc(statusLabel)}</td><td>${esc(m.first)||'—'}</td><td>${esc(m.second)||'—'}</td>
+      <td><span class="status-pill ${m.doubleMarked?'passed':'draft'}">${m.doubleMarked?'Yes':'No'}</span></td></tr>`;
+  }).join('');
+  document.getElementById('dmTable').innerHTML = '<tr><th>Assignment</th><th>Status</th><th>1st marker</th><th>2nd marker</th><th>Double-marked?</th></tr>' + (rows||'<tr><td colspan="5" style="color:var(--grey);">No assignments set up yet.</td></tr>');
+}
 </script>
 </body>
 </html>

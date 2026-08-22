@@ -143,6 +143,7 @@ function collect(){
 }
 
 let FIELDS = {}; // s{idx}_i{itemIdx}_f{fieldIdx} or s{idx} for plain text response
+let MATERIALSLINK = '';
 
 function itemsForFieldsSection(a, secIdx){
   // find nearest preceding picker section
@@ -180,9 +181,10 @@ function render(){
   TEXT = sub.draft && sub.draft.text ? sub.draft.text : TEXT;
   FIELDS = sub.draft && sub.draft.fields ? sub.draft.fields : FIELDS;
   DECL = sub.draft && sub.draft.decl ? sub.draft.decl : DECL;
+  MATERIALSLINK = sub.draft && sub.draft.materialsLink ? sub.draft.materialsLink : MATERIALSLINK;
 
   let html = `<div class="header"><h1>${esc(a.title)}</h1>
-    <div class="meta">${a.wordMin?`<span>${a.wordMin}\u2013${a.wordMax} words</span>`:''}${a.format?`<span>${a.format==='prose'?'Continuous prose':'Structured'}</span>`:''}</div>
+    <div class="meta">${a.wordMin?`<span id="wcCounter"></span>`:''}${a.format?`<span>${a.format==='prose'?'Continuous prose':'Structured'}</span>`:''}</div>
     ${(a.criteria&&a.criteria.length)?`<p class="crit"><strong>Marking criteria:</strong> ${a.criteria.map(c=>esc(c.text)).join(' \u00b7 ')}</p>`:''}
   </div>`;
 
@@ -267,6 +269,9 @@ function render(){
     } else if (s.type==='declaration') {
       const d = DECL[i] || { checks:s.items.map(()=>false), aiUsed:'', aiLink:'', aiPurpose:'' };
       html += `<div class="card"><h2>${esc(s.label)}</h2>
+        <div class="row"><label>Materials link (if this assignment uses outside material)</label>
+          <p class="hint">If you're linking a Drive file or worksheet here, use different material from any assessed TP lesson \u2014 Handbook 8.2.1.</p>
+          <input type="url" data-role="materialslink" value="${esc(MATERIALSLINK)}" placeholder="https://drive.google.com/..." ${locked?'disabled':''}></div>
         ${s.items.map((it,ci)=>`<div class="decl"><input type="checkbox" data-role="decl-check" data-i="${i}" data-ci="${ci}" ${d.checks[ci]?'checked':''} ${locked?'disabled':''}><span>${esc(it)}</span></div>`).join('')}
         ${s.aiToggle?`<div class="ai-toggle">
           <label><input type="radio" name="ai${i}" data-role="ai" data-i="${i}" value="yes" ${d.aiUsed==='yes'?'checked':''} ${locked?'disabled':''}> Used AI</label>
@@ -287,13 +292,25 @@ function render(){
     }
   });
 
-  const canSubmit = declOk(a) && (sub.stage==='draft' || sub.stage==='resubmission_needed');
+  const canSubmit = declOk(a) && wordCountOk(a) && (sub.stage==='draft' || sub.stage==='resubmission_needed');
   html += `<div class="navbar"><span class="status" id="status"></span>
     <button class="btn btn-submit" id="submitBtn" ${canSubmit?'':'disabled'}>${sub.stage==='resubmission_needed'?'Resubmit':'Submit'}</button>
   </div>`;
 
   $('app').innerHTML = html;
+  const wc = $('wcCounter');
+  if (wc) { const n = countWords(); wc.textContent = `${n} of ${a.wordMin}\u2013${a.wordMax} words`; wc.style.color = wordCountOk(a) ? '' : 'var(--brick)'; }
   bindInputs();
+}
+
+function countWords(){
+  let text = Object.values(TEXT||{}).join(' ') + ' ' + Object.values(FIELDS||{}).join(' ');
+  return (text.match(/\S+/g) || []).length;
+}
+function wordCountOk(a){
+  if (!a.wordMin) return true;
+  const n = countWords();
+  return n >= a.wordMin && n <= a.wordMax;
 }
 
 function declOk(a){
@@ -344,11 +361,14 @@ function bindInputs(){
   document.querySelectorAll('[data-role="aipurpose"]').forEach(el => el.addEventListener('change', () => {
     const i = el.dataset.i; if (!DECL[i]) DECL[i]={checks:[],aiUsed:'',aiLink:'',aiPurpose:''}; DECL[i].aiPurpose = el.value; dirty=true; autosave();
   }));
+  document.querySelectorAll('[data-role="materialslink"]').forEach(el => el.addEventListener('input', () => {
+    MATERIALSLINK = el.value; dirty = true; autosave();
+  }));
   const btn = $('submitBtn');
   if (btn) btn.addEventListener('click', doSubmit);
 }
 
-function snapshot(){ return { picked:PICKED, text:TEXT, fields:FIELDS, decl:DECL }; }
+function snapshot(){ return { picked:PICKED, text:TEXT, fields:FIELDS, decl:DECL, materialsLink:MATERIALSLINK }; }
 
 function autosave(){
   const sub = subFor(CURRENT);
