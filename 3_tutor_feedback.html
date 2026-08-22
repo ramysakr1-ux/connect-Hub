@@ -1050,12 +1050,30 @@ function draftApply(s){
 const FEEDBACK_KEY='chub:feedback';
 const PLAN_KEY='chub:plan';
 const SELF_KEY='chub:selfeval';
+const ROSTER_KEY='connect_roster_v1';
+const feedbackParams=new URLSearchParams(location.search);
+const TRAINEE_ID=feedbackParams.get('trainee')||'';
+function loadRoster(){ try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
+function saveRosterObj(r){ localStorage.setItem(ROSTER_KEY, JSON.stringify(r)); }
 const CAN_STORE=(function(){
   try{ localStorage.setItem('__probe','1'); localStorage.removeItem('__probe'); return true; }
   catch(e){ return false; }
 })();
-function loadFeedbackRecord(){ if(!CAN_STORE) return null; try{ return JSON.parse(localStorage.getItem(FEEDBACK_KEY)||'null'); }catch(e){ return null; } }
+function loadFeedbackRecord(){
+  if (TRAINEE_ID) { const tr=loadRoster().trainees[TRAINEE_ID]; return (tr&&tr.tp&&tr.tp.feedback)||null; }
+  if(!CAN_STORE) return null; try{ return JSON.parse(localStorage.getItem(FEEDBACK_KEY)||'null'); }catch(e){ return null; }
+}
 function saveFeedbackRecord(patch){
+  if (TRAINEE_ID) {
+    const roster=loadRoster();
+    if (!roster.trainees[TRAINEE_ID]) roster.trainees[TRAINEE_ID]={id:TRAINEE_ID,name:'Trainee',tp:{},assignments:{}};
+    if (!roster.trainees[TRAINEE_ID].tp) roster.trainees[TRAINEE_ID].tp={};
+    const cur=roster.trainees[TRAINEE_ID].tp.feedback||{status:'draft'};
+    Object.assign(cur,patch);
+    roster.trainees[TRAINEE_ID].tp.feedback=cur;
+    saveRosterObj(roster);
+    return;
+  }
   if(!CAN_STORE) return;
   const cur=loadFeedbackRecord()||{status:'draft'};
   Object.assign(cur,patch);
@@ -1101,8 +1119,14 @@ function renderTurnStatus(){
 }
 (function initFromStorage(){
   let planRec=null, selfRec=null;
-  try{ planRec=JSON.parse(localStorage.getItem(PLAN_KEY)||'null'); }catch(e){}
-  try{ selfRec=JSON.parse(localStorage.getItem(SELF_KEY)||'null'); }catch(e){}
+  if (TRAINEE_ID) {
+    const tr=loadRoster().trainees[TRAINEE_ID];
+    planRec=(tr&&tr.tp&&tr.tp.plan)||null;
+    selfRec=(tr&&tr.tp&&tr.tp.selfeval)||null;
+  } else {
+    try{ planRec=JSON.parse(localStorage.getItem(PLAN_KEY)||'null'); }catch(e){}
+    try{ selfRec=JSON.parse(localStorage.getItem(SELF_KEY)||'null'); }catch(e){}
+  }
   if(planRec&&planRec.state){
     DOC=planRec.state;
     if(selfRec&&selfRec.state) DOC.self=selfRec.state;

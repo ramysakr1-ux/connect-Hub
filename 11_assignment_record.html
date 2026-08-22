@@ -62,9 +62,15 @@ if (WORDING) { Object.keys(WORDING).forEach(k => {
   const aa = WORDING[k]; if (!aa || !aa.criteria) return;
   aa.criteria = aa.criteria.map(c => typeof c === 'string' ? {text:c, sectionIndex:null} : c);
 }); }
-let SUBS = null; try { SUBS = JSON.parse(localStorage.getItem(SUB_KEY)); } catch(e) {}
-
 const params = new URLSearchParams(location.search);
+const TRAINEE_ID = params.get('trainee') || '';
+const ROSTER_KEY = 'connect_roster_v1';
+function loadRoster(){ try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
+
+let SUBS = null;
+if (TRAINEE_ID) { const tr = loadRoster().trainees[TRAINEE_ID]; SUBS = (tr && tr.assignments) || {}; }
+else { try { SUBS = JSON.parse(localStorage.getItem(SUB_KEY)); } catch(e) {} }
+
 const key = params.get('a') || 'lrt';
 const a = WORDING && WORDING[key];
 const sub = SUBS && SUBS[key];

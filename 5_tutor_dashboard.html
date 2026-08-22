@@ -74,63 +74,40 @@
       <span style="font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:34px;color:var(--gold);">Connect</span>
       <span style="font-family:'Karla',sans-serif;font-weight:600;font-size:24px;color:var(--ink);margin-left:-5px;">Hub</span>
     </div>
-    <p class="tag">Every submission, and the personal link for each trainee.</p>
+    <p class="tag">Every submission a trainee has sent you, imported from their export file.</p>
     <p class="course-name">CELTA — August 2026</p>
     <p class="role">Welcome, Ramy — Course tutor</p>
+    <div style="margin-top:18px;">
+      <button class="btn primary" id="importTriggerBtn" type="button">Import trainee file</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
+      <span id="importStatus" style="margin-left:10px; font-size:0.82rem; color:var(--grey);"></span>
+    </div>
   </div>
 
   <div class="tabs" id="tabs">
     <button class="tab active" data-tab="submissions">Submissions</button>
     <button class="tab" data-tab="assignments">Assignments</button>
+    <button class="tab" data-tab="trainees">Trainees</button>
   </div>
 
   <div class="panel" id="panel-submissions">
     <table>
       <tr><th>Trainee</th><th>TP</th><th>Status</th><th>Grade</th><th></th></tr>
-      <tr>
-        <td>Ramy Sakr</td><td>TP1</td>
-        <td><span class="status-pill submitted">Feedback in progress</span></td>
-        <td><span class="status-pill passed">To standard</span></td>
-        <td><button class="btn ghost">Edit feedback</button></td>
-      </tr>
-      <tr>
-        <td>Ramy Sakr</td><td>TP2</td>
-        <td><span class="status-pill passed">Returned</span></td>
-        <td><span class="status-pill passed">Above standard</span></td>
-        <td><button class="btn ghost">Edit feedback</button></td>
-      </tr>
-      <tr>
-        <td>New trainee</td><td>TP1</td>
-        <td><span class="status-pill draft">Plan only — no self-eval yet</span></td>
-        <td style="color:var(--grey);">—</td>
-        <td><button class="btn primary">Write feedback</button></td>
-      </tr>
+      <tbody id="subsBody"></tbody>
+    </table>
+  </div>
+
+  <div class="panel" id="panel-trainees" style="display:none;">
+    <table>
+      <tr><th>Trainee</th><th>Imported</th><th></th></tr>
+      <tbody id="traineesBody"></tbody>
     </table>
   </div>
 
   <div class="panel" id="panel-assignments" style="display:none;">
     <table>
       <tr><th>Trainee</th><th>Assignment</th><th>Status</th><th></th></tr>
-      <tr>
-        <td>Ramy Sakr</td><td>LRT — Language Related Tasks</td>
-        <td><span class="status-pill passed">Passed</span></td>
-        <td><a class="btn ghost" style="text-decoration:none;display:inline-block;" href="10_tutor_assignment_marking.html?a=lrt">View feedback</a></td>
-      </tr>
-      <tr>
-        <td>Ramy Sakr</td><td>LSRT — Language Skills Related Task</td>
-        <td><span class="status-pill resubmit">Resubmit needed</span></td>
-        <td><a class="btn ghost" style="text-decoration:none;display:inline-block;" href="10_tutor_assignment_marking.html?a=lsrt">Edit feedback</a></td>
-      </tr>
-      <tr>
-        <td>New trainee</td><td>FOL — Focus on the Learner</td>
-        <td><span class="status-pill submitted">Submitted</span></td>
-        <td><a class="btn primary" style="text-decoration:none;display:inline-block;" href="10_tutor_assignment_marking.html?a=fol">Write feedback</a></td>
-      </tr>
-      <tr>
-        <td>New trainee</td><td>LfC — Lessons from the Classroom</td>
-        <td><span class="status-pill draft">Draft — not submitted</span></td>
-        <td><button class="btn ghost" disabled style="opacity:0.4;cursor:default;">Awaiting submission</button></td>
-      </tr>
+      <tbody id="assignBody"></tbody>
     </table>
   </div>
 
@@ -152,6 +129,120 @@ document.getElementById('tabs').addEventListener('click', e=>{
   btn.classList.add('active');
   document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
   document.getElementById('panel-'+btn.dataset.tab).style.display='';
+});
+
+const ASSIGN_NAMES = { lrt:'LRT — Language Related Tasks', lsrt:'LSRT — Language Skills Related Task', fol:'FOL — Focus on the Learner', lfc:'LFC — Lessons from the Classroom', a5:'Assignment 5' };
+const ROSTER_KEY = 'connect_roster_v1';
+function loadRoster(){ try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
+function saveRoster(r){ localStorage.setItem(ROSTER_KEY, JSON.stringify(r)); }
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function tpStatusPill(tr){
+  const fb = tr.tp && tr.tp.feedback, plan = tr.tp && tr.tp.plan, self = tr.tp && tr.tp.selfeval;
+  if (fb && fb.status==='returned') return {cls:'passed', label:'Returned'};
+  if (self && self.status==='turned_in') return {cls:'submitted', label:'Feedback in progress'};
+  if (plan && plan.status==='turned_in') return {cls:'draft', label:'Plan only — no self-eval yet'};
+  return {cls:'draft', label:'Not yet turned in'};
+}
+function assignStatusPill(sub){
+  if (!sub) return {cls:'draft', label:'Not started'};
+  const map = { draft:['draft','Draft — not submitted'], submitted:['submitted','Submitted'], resubmission_needed:['resubmit','Resubmission needed'], resubmitted:['submitted','Resubmission submitted'], closed:['passed', sub.feedback ? sub.feedback.outcome : 'Closed'] };
+  const m = map[sub.stage] || ['draft', sub.stage];
+  return {cls:m[0], label:m[1]};
+}
+
+function render(){
+  const roster = loadRoster();
+  const trainees = Object.values(roster.trainees||{}).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  const subsBody = document.getElementById('subsBody');
+  const assignBody = document.getElementById('assignBody');
+
+  const traineesBody = document.getElementById('traineesBody');
+  if (!trainees.length){
+    subsBody.innerHTML = `<tr><td colspan="5" class="empty"><div class="icon">—</div>No trainee files imported yet. Ask your trainees to export their work and send you the file.</td></tr>`;
+    assignBody.innerHTML = `<tr><td colspan="4" class="empty"><div class="icon">—</div>No trainee files imported yet.</td></tr>`;
+    traineesBody.innerHTML = `<tr><td colspan="3" class="empty"><div class="icon">—</div>No trainee files imported yet.</td></tr>`;
+    return;
+  }
+
+  traineesBody.innerHTML = trainees.map(tr=>`<tr>
+    <td>${esc(tr.name)}</td>
+    <td>${tr.importedAt ? new Date(tr.importedAt).toLocaleString() : '—'}</td>
+    <td><button class="btn primary export-return" data-id="${esc(tr.id)}">Export for trainee</button></td>
+  </tr>`).join('');
+
+  subsBody.innerHTML = trainees.map(tr=>{
+    const p = tpStatusPill(tr);
+    const grade = tr.tp && tr.tp.feedback && tr.tp.feedback.state ? (tr.tp.feedback.state.grade||'—') : '—';
+    return `<tr>
+      <td>${esc(tr.name)}</td>
+      <td>TP</td>
+      <td><span class="status-pill ${p.cls}">${esc(p.label)}</span></td>
+      <td>${esc(grade)}</td>
+      <td><a class="btn ${p.cls==='draft'?'primary':'ghost'}" style="text-decoration:none;display:inline-block;" href="3_tutor_feedback.html?trainee=${encodeURIComponent(tr.id)}">${p.label==='Returned'?'View feedback':'Write feedback'}</a></td>
+    </tr>`;
+  }).join('');
+
+  let assignRows = [];
+  trainees.forEach(tr=>{
+    const subs = tr.assignments||{};
+    Object.keys(ASSIGN_NAMES).forEach(key=>{
+      const sub = subs[key];
+      if (!sub || sub.stage==='draft') return; // nothing to mark yet
+      const p = assignStatusPill(sub);
+      const action = (sub.stage==='submitted'||sub.stage==='resubmitted') ? 'Write feedback' : 'View feedback';
+      assignRows.push(`<tr>
+        <td>${esc(tr.name)}</td>
+        <td>${esc(ASSIGN_NAMES[key])}</td>
+        <td><span class="status-pill ${p.cls}">${esc(p.label)}</span></td>
+        <td><a class="btn ${action==='Write feedback'?'primary':'ghost'}" style="text-decoration:none;display:inline-block;" href="10_tutor_assignment_marking.html?trainee=${encodeURIComponent(tr.id)}&a=${key}">${action}</a></td>
+      </tr>`);
+    });
+  });
+  assignBody.innerHTML = assignRows.length ? assignRows.join('') : `<tr><td colspan="4" class="empty"><div class="icon">—</div>No assignments submitted yet.</td></tr>`;
+}
+render();
+
+document.getElementById('importTriggerBtn').addEventListener('click', ()=>document.getElementById('importFile').click());
+document.getElementById('importFile').addEventListener('change', e=>{
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    let data;
+    try{ data = JSON.parse(reader.result); }catch(err){ document.getElementById('importStatus').textContent = 'Not a valid file.'; return; }
+    if (!data || data.schema !== 'connect-hub-export-v1' || !data.traineeId){
+      document.getElementById('importStatus').textContent = 'That doesn’t look like a trainee export file.'; return;
+    }
+    const roster = loadRoster();
+    roster.trainees[data.traineeId] = { id:data.traineeId, name:data.traineeName, centreName:data.centreName, importedAt:new Date().toISOString(), tp:data.tp||{}, assignments:data.assignments||{} };
+    saveRoster(roster);
+    document.getElementById('importStatus').textContent = 'Imported ' + data.traineeName + '.';
+    render();
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+document.getElementById('traineesBody').addEventListener('click', e=>{
+  const btn = e.target.closest('.export-return'); if (!btn) return;
+  const roster = loadRoster();
+  const tr = roster.trainees[btn.dataset.id];
+  if (!tr) return;
+  const payload = {
+    schema: 'connect-hub-return-v1',
+    exportedAt: new Date().toISOString(),
+    traineeId: tr.id,
+    traineeName: tr.name,
+    tp: { feedback: (tr.tp && tr.tp.feedback) || null },
+    assignments: tr.assignments || {}
+  };
+  const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'connect-hub-return-' + (tr.name||'trainee').toLowerCase().replace(/[^a-z0-9]+/g,'-') + '-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
 });
 </script>
 </body>

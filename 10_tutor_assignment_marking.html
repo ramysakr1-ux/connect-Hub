@@ -84,22 +84,45 @@ if (WORDING) { Object.keys(WORDING).forEach(k => {
   const a = WORDING[k]; if (!a || !a.criteria) return;
   a.criteria = a.criteria.map(c => typeof c === 'string' ? {text:c, sectionIndex:null} : c);
 }); }
-let SUBS = null;
-try { SUBS = JSON.parse(localStorage.getItem(SUB_KEY)); } catch(e) {}
-if (!SUBS) SUBS = {};
+
+const ROSTER_KEY = 'connect_roster_v1';
+function loadRoster(){ try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
+function saveRoster(r){ localStorage.setItem(ROSTER_KEY, JSON.stringify(r)); }
 
 const params = new URLSearchParams(location.search);
 let CURRENT = params.get('a') || 'lrt';
+const TRAINEE_ID = params.get('trainee') || '';
 let OUTCOME = '';
 
-function saveSubs(){ localStorage.setItem(SUB_KEY, JSON.stringify(SUBS)); }
+let SUBS = null;
+if (TRAINEE_ID) {
+  const roster = loadRoster();
+  const tr = roster.trainees[TRAINEE_ID];
+  SUBS = (tr && tr.assignments) || {};
+} else {
+  try { SUBS = JSON.parse(localStorage.getItem(SUB_KEY)); } catch(e) {}
+}
+if (!SUBS) SUBS = {};
+
+function saveSubs(){
+  if (TRAINEE_ID) {
+    const roster = loadRoster();
+    if (!roster.trainees[TRAINEE_ID]) roster.trainees[TRAINEE_ID] = { id:TRAINEE_ID, name:'Trainee', tp:{}, assignments:{} };
+    roster.trainees[TRAINEE_ID].assignments = SUBS;
+    saveRoster(roster);
+  } else {
+    localStorage.setItem(SUB_KEY, JSON.stringify(SUBS));
+  }
+}
 function subFor(key){ if (!SUBS[key]) SUBS[key] = { stage:'draft', usedResubmission:false, sub1:null, sub2:null, feedback:null, criteriaMarks:{sub1:[],sub2:[]}, criteriaComments:{sub1:[],sub2:[]}, markers:{first:'',second:'',doubleMarked:false} }; if(!SUBS[key].criteriaMarks) SUBS[key].criteriaMarks={sub1:[],sub2:[]}; if(!SUBS[key].criteriaComments) SUBS[key].criteriaComments={sub1:[],sub2:[]}; if(!SUBS[key].markers) SUBS[key].markers={first:'',second:'',doubleMarked:false}; return SUBS[key]; }
 
 function renderPicker(){
+  const suffix = TRAINEE_ID ? '&trainee='+encodeURIComponent(TRAINEE_ID) : '';
   $('picker').innerHTML = ORDER.filter(k => WORDING && WORDING[k]).map(k =>
-    `<button class="${k===CURRENT?'active':''}" data-a="${k}">${NAMES[k]}</button>`).join('');
+    `<button class="${k===CURRENT?'active':''}" data-a="${k}">${NAMES[k]}</button>`).join('')
+    + (TRAINEE_ID ? `<span style="margin-left:12px; color:var(--grey); font-size:0.85rem; align-self:center;">Marking: ${esc((loadRoster().trainees[TRAINEE_ID]||{}).name||'trainee')}</span>` : '');
 }
-$('picker').addEventListener('click', e => { const b=e.target.closest('button'); if(!b) return; location.search='?a='+b.dataset.a; });
+$('picker').addEventListener('click', e => { const b=e.target.closest('button'); if(!b) return; location.search='?a='+b.dataset.a+(TRAINEE_ID?'&trainee='+encodeURIComponent(TRAINEE_ID):''); });
 
 function summarize(a, snap){
   if (!snap) return '<p class="note">Nothing submitted yet.</p>';
@@ -140,7 +163,7 @@ function render(){
   if (sub.stage !== 'draft') {
     let overlapFlag = '';
     try {
-      const plan = JSON.parse(localStorage.getItem('chub:plan'));
+      const plan = TRAINEE_ID ? ((loadRoster().trainees[TRAINEE_ID]||{}).tp||{}).plan : JSON.parse(localStorage.getItem('chub:plan'));
       const matsLink = plan && plan.state && plan.state.plan && plan.state.plan.matsLink && plan.state.plan.matsLink.trim();
       const subLink = sub.sub1 && sub.sub1.materialsLink && sub.sub1.materialsLink.trim();
       if (matsLink && subLink && matsLink === subLink) {

@@ -130,6 +130,21 @@
     One resubmission per assignment if it doesn't meet the criteria first time.</p>
   </a>
 
+  <p class="stage">Send to / receive from your tutor</p>
+  <div style="background:var(--paper); border-radius:6px; padding:20px 24px; margin-bottom:14px; border-left:5px solid var(--sand-line);">
+    <span style="display:inline-block; font-size:0.72rem; font-weight:700; color:var(--teal); text-transform:uppercase; letter-spacing:.06em; margin-bottom:7px;">No login, no server</span>
+    <h2 style="font-family:'Newsreader',Georgia,serif; font-size:1.15rem; margin:0 0 5px; color:var(--terracotta);">Exchange with your tutor</h2>
+    <p style="margin:0; font-size:0.85rem; color:var(--grey); line-height:1.65;">Your tutor is on their own browser, so nothing here reaches them on its own. Export a file and
+    send it to them (email, chat, however you'd share a document) once you've turned things in. When
+    they return marked work, import the file they send back.</p>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+      <button id="exportBtn" type="button" style="padding:9px 20px; border-radius:20px; border:1.5px solid var(--teal); background:var(--paper); color:var(--teal); font-family:'Karla',sans-serif; font-size:0.82rem; font-weight:600; cursor:pointer;">Export my work</button>
+      <button id="importTriggerBtn" type="button" style="padding:9px 20px; border-radius:20px; border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink); font-family:'Karla',sans-serif; font-size:0.82rem; font-weight:600; cursor:pointer;">Import from tutor</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
+    </div>
+    <p id="exchangeStatus" style="margin:10px 0 0; font-size:0.82rem; color:var(--grey);"></p>
+  </div>
+
   <p class="note">
     <b>The order matters.</b> Write your self-evaluation before you read your tutor's feedback — that is
     the point of it. Everything above saves itself as you go and carries automatically from one form to
@@ -166,6 +181,51 @@ if(fb && fb.status==='returned'){
     location.reload();
   });
 }
+
+function traineeId(){
+  let id = localStorage.getItem('chub:traineeId');
+  if(!id){ id = 'tr_' + Date.now().toString(36) + Math.random().toString(36).slice(2,10); localStorage.setItem('chub:traineeId', id); }
+  return id;
+}
+function exchangeStatus(msg){ document.getElementById('exchangeStatus').textContent = msg; }
+
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const p = rec('chub:plan');
+  const name = (p && p.state && p.state.meta && p.state.meta.name) || (p && p.label) || 'Trainee';
+  const payload = {
+    schema: 'connect-hub-export-v1',
+    exportedAt: new Date().toISOString(),
+    traineeId: traineeId(),
+    traineeName: name,
+    centreName: (p && p.centreName) || '',
+    tp: { plan: p, selfeval: rec('chub:selfeval'), feedback: rec('chub:feedback') },
+    assignments: rec('connect_assignment_submissions_v1') || {}
+  };
+  const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'connect-hub-' + name.toLowerCase().replace(/[^a-z0-9]+/g,'-') + '-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  exchangeStatus('Exported. Send this file to your tutor.');
+});
+
+document.getElementById('importTriggerBtn').addEventListener('click', ()=>document.getElementById('importFile').click());
+document.getElementById('importFile').addEventListener('change', e=>{
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    let data;
+    try{ data = JSON.parse(reader.result); }catch(err){ exchangeStatus('That file isn’t valid — could not read it.'); return; }
+    if(!data || data.schema !== 'connect-hub-return-v1'){ exchangeStatus('That doesn’t look like a file returned from your tutor.'); return; }
+    if(data.tp && data.tp.feedback) localStorage.setItem('chub:feedback', JSON.stringify(data.tp.feedback));
+    if(data.assignments) localStorage.setItem('connect_assignment_submissions_v1', JSON.stringify(data.assignments));
+    exchangeStatus('Imported — refreshing.');
+    setTimeout(()=>location.reload(), 600);
+  };
+  reader.readAsText(file);
+});
 </script>
 </body>
 </html>
