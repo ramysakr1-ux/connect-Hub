@@ -128,6 +128,7 @@
     <h2>Assignments</h2>
     <p>LRT, LSRT, FOL, LfC and Assignment 5 — one form each, built from whatever your centre set up.
     One resubmission per assignment if it doesn't meet the criteria first time.</p>
+    <p class="badge" id="badgeAssignments"></p>
   </a>
 
   <p class="stage">Send to / receive from your tutor</p>
@@ -173,6 +174,43 @@ badge(document.getElementById('badgeSelf'),
 badge(document.getElementById('badgeFeedback'),
   fb ? (fb.status==='returned' ? 'Returned' : 'In progress') : 'Waiting for trainee',
   fb && fb.status==='returned' ? 'ready' : '');
+
+/* Assignments card had no progress indicator at all -- unlike the three TP
+   cards above, which each show exactly where that piece stands. Same
+   connect_assignment_submissions_v1 data 9/10/11 already read, summarised
+   to one line rather than five, matching this card's own one-card-not-five
+   shape. Needs-resubmission always wins the headline (it's the one state
+   that needs the trainee to actually do something), then all-complete,
+   then a plain in-progress count -- 'not started' only when every
+   assignment is still literally untouched. */
+(function(){
+  var subs = rec('connect_assignment_submissions_v1') || {};
+  var TYPES = ['lrt','lsrt','fol','lfc','a5'];
+  var needsResub = 0, closed = 0, touched = 0;
+  TYPES.forEach(function(t){
+    var s = subs[t];
+    if(!s) return;
+    touched++;
+    if(s.stage === 'resubmission_needed') needsResub++;
+    else if(s.stage === 'closed') closed++;
+  });
+  var text, cls;
+  if(needsResub > 0){
+    text = needsResub + (needsResub===1 ? ' assignment needs resubmission' : ' assignments need resubmission');
+    cls = 'ready';
+  } else if(closed === 5){
+    text = 'All 5 complete';
+    cls = 'done';
+  } else if(touched === 0){
+    text = 'Not started';
+    cls = '';
+  } else {
+    text = closed + ' of 5 complete';
+    cls = '';
+  }
+  badge(document.getElementById('badgeAssignments'), text, cls);
+})();
+
 if(fb && fb.status==='returned'){
   document.getElementById('returnedPanel').style.display='block';
   document.getElementById('nextTpBtn').addEventListener('click',()=>{
