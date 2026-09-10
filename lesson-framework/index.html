@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lesson Framework — Input Session</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cork:#c49a6c;
+    --cork-dark:#a97f52;
+    --ink:#2c2016;
+    --paper:#fdf8ee;
+    --yellow:#f4d35e;
+    --pink:#ef8fa3;
+    --teal:#4fb6ae;
+    --orange:#f2914d;
+    --purple:#a992d6;
+    --blue:#5fa8d3;
+    --green:#6fb56a;
+    --red:#d9534f;
+    --twine:#8a6d4c;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(circle at 20% 10%, rgba(255,255,255,0.05), transparent 40%),
+      repeating-radial-gradient(circle at 0 0, rgba(0,0,0,0.03) 0, rgba(0,0,0,0.03) 1px, transparent 1px, transparent 6px),
+      var(--cork);
+    background-blend-mode:multiply, normal;
+    padding:32px 16px 80px;
+    display:flex;
+    justify-content:center;
+  }
+  .board{max-width:1080px; width:100%; margin:0 auto;}
+
+  /* Header */
+  .header-pin-wrap{display:flex;justify-content:center;margin-bottom:44px;}
+  .banner{
+    background:var(--paper);
+    padding:18px 44px;
+    transform:rotate(-1.5deg);
+    box-shadow:0 10px 24px rgba(0,0,0,0.28);
+    position:relative;
+    border-radius:2px;
+  }
+  .banner h1{
+    font-family:'Kalam',cursive;
+    font-size:2.3rem;
+    margin:0;
+    text-align:center;
+    color:var(--ink);
+  }
+  .banner p{
+    text-align:center;
+    margin:6px 0 0;
+    font-size:0.95rem;
+    color:#5c4b36;
+    font-weight:500;
+  }
+  .pin{
+    width:16px;height:16px;border-radius:50%;
+    position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+    background:radial-gradient(circle at 35% 30%, #ff6b6b, #b83227 70%);
+    box-shadow:0 3px 5px rgba(0,0,0,0.4);
+  }
+
+  section{margin-bottom:56px;}
+  .section-label{
+    font-family:'Kalam',cursive;
+    font-size:1.5rem;
+    color:var(--paper);
+    text-shadow:0 2px 4px rgba(0,0,0,0.35);
+    margin:0 auto 18px;
+    display:table;
+    background:var(--cork-dark);
+    padding:4px 16px;
+    border-radius:3px;
+    transform:rotate(-0.5deg);
+  }
+
+  /* Flowchart */
+  .flow{
+    background:rgba(253,248,238,0.15);
+    border:2px dashed rgba(253,248,238,0.4);
+    border-radius:10px;
+    padding:28px;
+    max-width:820px;
+    margin:0 auto;
+  }
+  .flow-row{
+    display:flex;
+    justify-content:center;
+    gap:24px;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+    position:relative;
+  }
+  .flow-card{
+    background:var(--paper);
+    padding:12px 18px;
+    border-radius:4px;
+    box-shadow:0 6px 14px rgba(0,0,0,0.25);
+    font-weight:600;
+    font-size:0.9rem;
+    text-align:center;
+    min-width:150px;
+    position:relative;
+  }
+  .flow-card.q{background:var(--yellow);}
+  .flow-card.branch{background:var(--paper); font-weight:400; font-size:0.82rem; color:#5c4b36;}
+  .flow-arrow{
+    text-align:center;
+    color:var(--paper);
+    font-size:1.3rem;
+    margin:-6px 0 10px;
+  }
+  .fork{display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:28px; margin-bottom:6px; justify-items:center; align-items:start;}
+  .fork-branch{display:flex; flex-direction:column; align-items:center; gap:8px; width:100%; max-width:300px;}
+  .fork-tag{
+    font-family:'Kalam',cursive;
+    color:var(--paper);
+    font-size:0.95rem;
+    background:rgba(0,0,0,0.25);
+    padding:2px 10px;
+    border-radius:10px;
+  }
+
+  /* Framework cards grid */
+  .fw-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(240px,1fr));
+    gap:26px;
+  }
+  .fw-card{
+    padding:18px 18px 22px;
+    border-radius:3px;
+    box-shadow:0 8px 18px rgba(0,0,0,0.3);
+    position:relative;
+    font-size:0.87rem;
+    min-height:210px;
+  }
+  .fw-card:nth-child(odd){transform:rotate(-1.2deg);}
+  .fw-card:nth-child(even){transform:rotate(1deg);}
+  .fw-card .pin{position:absolute; top:-8px; left:50%;}
+  .fw-card h3{
+    font-family:'Kalam',cursive;
+    font-size:1.15rem;
+    margin:6px 0 10px;
+  }
+  .fw-card ol{margin:0; padding-left:18px;}
+  .fw-card li{margin-bottom:4px;}
+  .fw-card.ppp{background:var(--yellow);}
+  .fw-card.ttt{background:var(--pink); color:#3a1420;}
+  .fw-card.text{background:var(--teal); color:#0c2b28;}
+  .fw-card.practice{background:var(--orange); color:#3a1c04;}
+  .fw-card.receptive{background:var(--blue); color:#062338;}
+  .fw-card.productive{background:var(--purple); color:#241537;}
+
+  /* Card sort activity */
+  .sort-wrap{background:rgba(253,248,238,0.15); border-radius:10px; padding:24px; border:2px dashed rgba(253,248,238,0.4);}
+  .sort-instructions{color:var(--paper); font-size:0.95rem; margin:0 0 18px; font-weight:500;}
+  .stage-tray{display:flex; flex-wrap:wrap; gap:12px; margin-bottom:26px; min-height:56px;}
+  .stage-card{
+    background:var(--paper);
+    padding:10px 14px;
+    border-radius:4px;
+    font-weight:600;
+    font-size:0.85rem;
+    cursor:pointer;
+    box-shadow:0 5px 10px rgba(0,0,0,0.25);
+    user-select:none;
+    transition:transform .15s, opacity .2s;
+  }
+  .stage-card:hover{transform:translateY(-3px);}
+  .stage-card.selected{outline:3px solid #fff; box-shadow:0 0 0 4px rgba(255,255,255,0.5), 0 5px 10px rgba(0,0,0,0.25);}
+  .stage-card.placed{opacity:0; pointer-events:none; height:0; padding:0; margin:0; overflow:hidden;}
+  .zone-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:16px;}
+  .zone{
+    min-height:90px;
+    border-radius:6px;
+    border:3px solid rgba(253,248,238,0.6);
+    background:rgba(253,248,238,0.08);
+    padding:10px;
+    text-align:center;
+    cursor:pointer;
+    transition:background .2s, border-color .2s;
+  }
+  .zone-title{font-family:'Kalam',cursive; color:var(--paper); font-size:1rem; margin-bottom:6px;}
+  .zone.correct{background:rgba(111,181,106,0.35); border-color:var(--green);}
+  .zone.wrong{animation:shake .35s;}
+  .zone .dropped-card{background:var(--paper); padding:8px 10px; border-radius:4px; font-size:0.8rem; font-weight:600; box-shadow:0 4px 8px rgba(0,0,0,0.2);}
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-6px);}
+    75%{transform:translateX(6px);}
+  }
+  .reset-btn{
+    margin-top:20px;
+    background:var(--paper);
+    border:none;
+    padding:10px 20px;
+    border-radius:20px;
+    font-family:'Kalam',cursive;
+    font-size:1rem;
+    cursor:pointer;
+    box-shadow:0 5px 10px rgba(0,0,0,0.25);
+  }
+  .progress-note{color:var(--paper); font-weight:600; margin-top:14px;}
+
+  /* Quiz */
+  .quiz-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(230px,1fr)); gap:22px;}
+  .flip-card{perspective:1000px; height:150px; cursor:pointer;}
+  .flip-inner{position:relative; width:100%; height:100%; transition:transform .5s; transform-style:preserve-3d;}
+  .flip-card.flipped .flip-inner{transform:rotateY(180deg);}
+  .flip-face{
+    position:absolute; width:100%; height:100%;
+    border-radius:4px; padding:16px;
+    backface-visibility:hidden;
+    display:flex; align-items:center; justify-content:center;
+    text-align:center; font-size:0.88rem; font-weight:600;
+    box-shadow:0 8px 16px rgba(0,0,0,0.3);
+  }
+  .flip-front{background:var(--paper);}
+  .flip-back{background:var(--green); color:#fff; transform:rotateY(180deg); font-weight:500;}
+  .quiz-num{
+    font-family:'Kalam',cursive;
+    position:absolute; top:6px; left:10px; font-size:1rem; color:#8a7455;
+  }
+
+
+  /* Scenario challenge */
+  .scenario-card{
+    background:rgba(253,248,238,0.95);
+    border-radius:6px;
+    padding:18px 20px;
+    margin-bottom:18px;
+    box-shadow:0 6px 14px rgba(0,0,0,0.22);
+  }
+  .scenario-text{font-size:0.92rem; margin:0 0 12px; font-weight:500; color:#3a2c1a;}
+  .scenario-options{display:flex; flex-wrap:wrap; gap:10px;}
+  .opt-btn{
+    background:var(--paper);
+    border:2px solid #cbb890;
+    padding:8px 14px;
+    border-radius:20px;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:0.82rem;
+    cursor:pointer;
+    transition:background .15s, transform .1s;
+  }
+  .opt-btn:hover{transform:translateY(-2px);}
+  .opt-btn.correct-pick{background:var(--green); color:#fff; border-color:var(--green);}
+  .opt-btn.wrong-pick{background:var(--red); color:#fff; border-color:var(--red);}
+  .opt-btn.reveal-correct{background:var(--green); color:#fff; border-color:var(--green); opacity:0.7;}
+  .opt-btn[disabled]{cursor:default;}
+
+  /* Meaning or Form quick fire */
+  .mf-card{
+    background:rgba(253,248,238,0.95);
+    border-radius:6px;
+    padding:14px 18px;
+    margin-bottom:14px;
+    box-shadow:0 6px 14px rgba(0,0,0,0.22);
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+  }
+  .mf-example{font-size:0.88rem; font-weight:600; color:#3a2c1a; flex:1; min-width:200px;}
+  .mf-example em{font-style:italic; font-weight:400; display:block; font-size:0.82rem; color:#6b5a40; margin-top:2px;}
+  .mf-options{display:flex; gap:8px; flex-wrap:wrap;}
+
+  /* Error analysis */
+  .flaw-card{
+    background:rgba(253,248,238,0.95);
+    border-radius:6px;
+    padding:18px 20px;
+    margin-bottom:18px;
+    box-shadow:0 6px 14px rgba(0,0,0,0.22);
+  }
+  .flaw-title{font-family:'Kalam',cursive; font-size:1.05rem; margin:0 0 8px; color:var(--ink);}
+  .flaw-plan{font-size:0.88rem; margin:0 0 12px; color:#3a2c1a; line-height:1.5;}
+  .flaw-toggle{
+    background:var(--orange);
+    color:#3a1c04;
+    border:none;
+    padding:8px 16px;
+    border-radius:20px;
+    font-family:'Kalam',cursive;
+    font-size:0.92rem;
+    cursor:pointer;
+    box-shadow:0 4px 8px rgba(0,0,0,0.2);
+  }
+  .flaw-fix{
+    display:none;
+    margin-top:12px;
+    padding:12px 14px;
+    background:rgba(111,181,106,0.25);
+    border-left:4px solid var(--green);
+    border-radius:4px;
+    font-size:0.85rem;
+    line-height:1.5;
+  }
+  .flaw-fix.open{display:block;}
+
+  /* Pacing challenge */
+  .pacing-intro{color:var(--paper); font-size:0.95rem; margin:0 0 18px; font-weight:500;}
+  .pacing-stage-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    background:rgba(253,248,238,0.95);
+    border-radius:6px;
+    padding:12px 16px;
+    margin-bottom:10px;
+    flex-wrap:wrap;
+  }
+  .pacing-stage-name{font-size:0.86rem; font-weight:600; flex:1; min-width:200px;}
+  .pacing-input-wrap{display:flex; align-items:center; gap:6px;}
+  .pacing-input{
+    width:60px;
+    padding:6px 8px;
+    border-radius:4px;
+    border:2px solid #cbb890;
+    font-size:0.9rem;
+    font-family:'Inter',sans-serif;
+    text-align:center;
+  }
+  .pacing-total-bar{
+    margin-top:16px;
+    padding:12px 16px;
+    border-radius:6px;
+    background:rgba(253,248,238,0.95);
+    font-family:'Kalam',cursive;
+    font-size:1.1rem;
+    text-align:center;
+    transition:background .2s;
+  }
+  .pacing-total-bar.ok{background:var(--green); color:#fff;}
+  .pacing-total-bar.over{background:var(--red); color:#fff;}
+  .pacing-question{
+    margin-top:22px;
+    background:rgba(253,248,238,0.95);
+    border-radius:6px;
+    padding:16px 18px;
+  }
+  .pacing-question p{font-size:0.9rem; font-weight:600; margin:0 0 10px;}
+  .pacing-reveal-btn, .seq-reveal-btn{
+    background:var(--blue);
+    color:#062338;
+    border:none;
+    padding:8px 16px;
+    border-radius:20px;
+    font-family:'Kalam',cursive;
+    font-size:0.92rem;
+    cursor:pointer;
+    box-shadow:0 4px 8px rgba(0,0,0,0.2);
+    margin-top:6px;
+  }
+  .pacing-answer{
+    display:none;
+    margin-top:12px;
+    padding:12px 14px;
+    background:rgba(111,181,106,0.25);
+    border-left:4px solid var(--green);
+    border-radius:4px;
+    font-size:0.85rem;
+    line-height:1.5;
+  }
+  .pacing-answer.open{display:block;}
+  .pacing-table{width:100%; border-collapse:collapse; margin-top:14px; font-size:0.82rem;}
+  .pacing-table th, .pacing-table td{border:1px solid #cbb890; padding:6px 10px; text-align:left;}
+  .pacing-table th{background:var(--cork-dark); color:var(--paper); font-family:'Kalam',cursive; font-weight:400;}
+
+  /* Stage sequencer */
+  .seq-framework-select{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;}
+  .seq-fw-btn{
+    background:var(--paper);
+    border:2px solid #cbb890;
+    padding:8px 16px;
+    border-radius:20px;
+    font-family:'Kalam',cursive;
+    font-size:0.95rem;
+    cursor:pointer;
+  }
+  .seq-fw-btn.active{background:var(--yellow); border-color:var(--yellow); font-weight:700;}
+  .seq-bank{display:flex; flex-wrap:wrap; gap:12px; margin-bottom:22px; min-height:56px;}
+  .seq-chip{
+    background:var(--paper);
+    padding:10px 14px;
+    border-radius:4px;
+    font-weight:600;
+    font-size:0.85rem;
+    cursor:pointer;
+    box-shadow:0 5px 10px rgba(0,0,0,0.25);
+    user-select:none;
+    transition:transform .15s, opacity .2s;
+  }
+  .seq-chip:hover{transform:translateY(-3px);}
+  .seq-chip.used{opacity:0.25; pointer-events:none;}
+  .seq-build{
+    min-height:60px;
+    border-radius:6px;
+    border:3px dashed rgba(253,248,238,0.6);
+    background:rgba(253,248,238,0.08);
+    padding:14px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-bottom:16px;
+  }
+  .seq-slot{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--paper);
+    padding:9px 14px;
+    border-radius:4px;
+    font-size:0.85rem;
+    font-weight:600;
+    box-shadow:0 4px 8px rgba(0,0,0,0.2);
+    cursor:pointer;
+  }
+  .seq-slot.correct{background:rgba(111,181,106,0.5); outline:2px solid var(--green);}
+  .seq-slot.wrong{background:rgba(217,83,79,0.35); outline:2px solid var(--red);}
+  .seq-slot .seq-num{
+    font-family:'Kalam',cursive;
+    background:var(--cork-dark);
+    color:var(--paper);
+    width:22px; height:22px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.85rem;
+    flex-shrink:0;
+  }
+  .seq-btn-row{display:flex; gap:12px; flex-wrap:wrap;}
+  .seq-check-btn, .seq-reset-btn, .seq-reveal-btn{
+    background:var(--paper);
+    border:none;
+    padding:10px 20px;
+    border-radius:20px;
+    font-family:'Kalam',cursive;
+    font-size:1rem;
+    cursor:pointer;
+    box-shadow:0 5px 10px rgba(0,0,0,0.25);
+  }
+  .seq-check-btn{background:var(--green); color:#fff;}
+  .seq-feedback{margin-top:10px; color:var(--paper); font-weight:600;}
+  .seq-answer{
+    display:none;
+    margin-top:14px;
+    padding:12px 14px;
+    background:rgba(253,248,238,0.95);
+    border-left:4px solid var(--blue);
+    border-radius:4px;
+    font-size:0.85rem;
+    line-height:1.6;
+  }
+  .seq-answer.open{display:block;}
+  .seq-answer ol{margin:6px 0 0; padding-left:20px;}
+
+  /* Coursebook flashcards */
+  .cb-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); gap:22px;}
+  .cb-flip-card{perspective:1000px; height:210px; cursor:pointer;}
+  .cb-flip-inner{position:relative; width:100%; height:100%; transition:transform .5s; transform-style:preserve-3d;}
+  .cb-flip-card.flipped .cb-flip-inner{transform:rotateY(180deg);}
+  .cb-flip-face{
+    position:absolute; width:100%; height:100%;
+    border-radius:6px; padding:16px;
+    backface-visibility:hidden;
+    box-shadow:0 8px 16px rgba(0,0,0,0.3);
+    display:flex; flex-direction:column; justify-content:center;
+  }
+  .cb-flip-front{background:var(--paper); text-align:center;}
+  .cb-flip-front .cb-page{
+    font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em;
+    color:#8a7455; font-weight:700; margin:0 0 8px;
+  }
+  .cb-flip-front h4{font-family:'Kalam',cursive; font-size:1.15rem; margin:0 0 8px; color:var(--ink);}
+  .cb-flip-front .cb-topic{font-size:0.8rem; color:#5c4b36; margin:0 0 12px;}
+  .cb-flip-front .cb-tap{font-size:0.72rem; color:#8a7455; font-style:italic;}
+  .cb-flip-back{background:var(--teal); color:#0c2b28; transform:rotateY(180deg); overflow-y:auto; font-size:0.78rem; line-height:1.5;}
+  .cb-flip-back strong{display:block; margin-bottom:4px;}
+  .cb-flip-back.cb-dense{font-size:0.68rem; line-height:1.4; padding:12px 14px;}
+
+  /* Watermark */
+  .watermark{
+    position:fixed;
+    bottom:14px;
+    right:18px;
+    font-family:'Kalam',cursive;
+    font-size:1.3rem;
+    color:rgba(253,248,238,0.18);
+    transform:rotate(-6deg);
+    pointer-events:none;
+    z-index:500;
+    text-shadow:0 1px 2px rgba(0,0,0,0.1);
+    border:2px solid rgba(253,248,238,0.18);
+    border-radius:8px;
+    padding:4px 14px;
+  }
+</style>
+</head>
+<body>
+<div class="watermark">Ramy</div>
+<div class="board">
+
+  <div class="header-pin-wrap">
+    <div class="banner">
+      <div class="pin"></div>
+      <h1>Lesson Framework: Finding Your Shape</h1>
+    </div>
+  </div>
+
+  <section>
+    <span class="section-label">1 · The decision tree</span>
+    <div class="flow">
+      <div class="flow-row">
+        <div class="flow-card q">Is the MAIN aim language or skills?</div>
+      </div>
+      <div class="fork">
+        <div class="fork-branch">
+          <span class="fork-tag">LANGUAGE</span>
+          <div class="flow-card branch">Clarification / Practice / Both?</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-card branch">Does TL arise from a text? (Y/N)</div>
+          <div class="flow-arrow">↓</div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+            <div class="flow-card ppp-mini" style="background:var(--pink); font-size:0.8rem;">NO → PPP / TTT</div>
+            <div class="flow-card ppp-mini" style="background:var(--teal); font-size:0.8rem;">YES → Text-Based</div>
+          </div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-card branch" style="background:var(--orange);">PRACTICE only → Language Practice</div>
+        </div>
+        <div class="fork-branch">
+          <span class="fork-tag">SKILLS</span>
+          <div class="flow-card branch">Listening / Reading? (Y/N)</div>
+          <div class="flow-arrow">↓</div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+            <div class="flow-card ppp-mini" style="background:var(--blue); font-size:0.8rem;">YES → Receptive Skills</div>
+            <div class="flow-card ppp-mini" style="background:var(--purple); font-size:0.8rem;">NO → check Speaking/Writing → Productive Skills</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <span class="section-label">2 · The six shapes</span>
+    <div class="fw-grid">
+      <div class="fw-card ppp"><div class="pin"></div>
+        <h3>PPP</h3>
+        <ol><li>Lead-in</li><li>Present (meaning, form, pron.)</li><li>Practice (accuracy)</li><li>Production (fluency)</li><li>Error correction</li></ol>
+      </div>
+      <div class="fw-card ttt"><div class="pin"></div>
+        <h3>Test-Teach-Test</h3>
+        <ol><li>Lead-in</li><li>First test (diagnostic)</li><li>Teach (clarify gaps)</li><li>Second test</li><li>Feedback</li></ol>
+      </div>
+      <div class="fw-card text"><div class="pin"></div>
+        <h3>Text-Based</h3>
+        <ol><li>Lead-in / build context</li><li>Reading or listening task</li><li>Highlight target language</li><li>Clarify TL</li><li>Practice</li><li>Feedback</li></ol>
+      </div>
+      <div class="fw-card practice"><div class="pin"></div>
+        <h3>Language Practice</h3>
+        <ol><li>Lead-in (optional)</li><li>Set up</li><li>Controlled practice</li><li>Freer practice</li><li>Feedback</li></ol>
+      </div>
+      <div class="fw-card receptive"><div class="pin"></div>
+        <h3>Receptive Skills</h3>
+        <ol><li>Lead-in</li><li>(Prediction task)</li><li>Pre-teach vocab</li><li>Gist → Detail → Specific info</li><li>Post-task response</li></ol>
+      </div>
+      <div class="fw-card productive"><div class="pin"></div>
+        <h3>Productive Skills</h3>
+        <ol><li>Lead-in</li><li>Preparing to write/speak</li><li>Useful language (optional)</li><li>Speaking/writing task</li><li>Feedback</li></ol>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <span class="section-label">3 · Card sort — pin the stage to its shape</span>
+    <div class="sort-wrap">
+      <p class="sort-instructions">Tap a stage card below, then tap the shape it belongs to. Six cards, six homes.</p>
+      <div class="stage-tray" id="stageTray"></div>
+      <div class="zone-grid" id="zoneGrid"></div>
+      <p class="progress-note" id="progressNote">0 / 6 pinned correctly</p>
+      <button class="reset-btn" id="resetSort">↺ Reset the tray</button>
+    </div>
+  </section>
+
+  <section>
+    <span class="section-label">4 · Quick quiz — tap a card to flip</span>
+    <div class="quiz-grid" id="quizGrid"></div>
+  </section>
+
+
+  <section>
+    <span class="section-label">5 · Scenario challenge — name that framework</span>
+    <div class="sort-wrap">
+      <p class="sort-instructions">Read the mini lesson, tap the framework you think it is. Cards flash green if you're right, red if not — try again either way.</p>
+      <div id="scenarioContainer"></div>
+      <p class="progress-note" id="scenarioProgress">0 / 6 correct</p>
+    </div>
+  </section>
+
+  <section>
+    <span class="section-label">6 · Meaning or Form? — quick fire</span>
+    <div class="sort-wrap">
+      <p class="sort-instructions">Based on the MFPA table: for each task type, tap whether the focus is on Meaning, Form, or Both.</p>
+      <div id="mfContainer"></div>
+      <p class="progress-note" id="mfProgress">0 / 6 correct</p>
+    </div>
+  </section>
+
+  <section>
+    <span class="section-label">7 · Error analysis — spot the stage flaw</span>
+    <div class="sort-wrap">
+      <p class="sort-instructions">Read each lesson plan. Decide what's structurally wrong before you tap "Reveal the fix."</p>
+      <div id="flawContainer"></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="section-label">8 · Stage timer — pacing challenge</span>
+    <div class="sort-wrap">
+      <p class="pacing-intro">You have <strong>45 minutes</strong> for a Text-Based lesson. Budget the minutes across the three stages below — the total should land close to 45.</p>
+      <div id="pacingContainer"></div>
+      <div class="pacing-total-bar" id="pacingTotal">Total: 0 / 45 min</div>
+      <div class="pacing-question">
+        <p>If your Lead-in &amp; Text Reading stage runs 5 minutes over, which stage do you trim without destroying the lesson aim?</p>
+        <button class="pacing-reveal-btn" id="pacingRevealBtn">Reveal the answer</button>
+        <div class="pacing-answer" id="pacingAnswer">
+          Trim <strong>Controlled Practice &amp; Feedback</strong>, not Clarification. The clarification stage (meaning, form, pronunciation) is where the actual learning happens — cutting it short undermines the lesson aim. Practice can be shortened to one activity instead of two, or feedback can be done more briefly, without losing the core teaching point.
+          <table class="pacing-table">
+            <tr><th>Stage</th><th>Target allocation (45-min TP)</th></tr>
+            <tr><td>Lead-in &amp; Text Reading (Gist/Detail)</td><td>10–12 mins</td></tr>
+            <tr><td>Clarification (MFPA)</td><td>15 mins</td></tr>
+            <tr><td>Controlled Practice &amp; Feedback</td><td>15–18 mins</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <span class="section-label">9 · Stage sequencer — build the lesson in order</span>
+    <div class="sort-wrap">
+      <p class="sort-instructions">Pick a framework, then tap the shuffled stages below in the order you think they belong. Check your sequence when you're done.</p>
+      <div class="seq-framework-select" id="seqFwSelect"></div>
+      <div class="seq-bank" id="seqBank"></div>
+      <p class="aim-label" style="color:var(--paper); font-family:'Kalam',cursive; font-size:1rem;">Your sequence:</p>
+      <div class="seq-build" id="seqBuild"></div>
+      <div class="seq-btn-row">
+        <button class="seq-check-btn" id="seqCheckBtn">Check my order</button>
+        <button class="seq-reset-btn" id="seqResetBtn">↺ Reshuffle</button>
+        <button class="seq-reveal-btn" id="seqRevealBtn">Reveal correct order</button>
+      </div>
+      <p class="seq-feedback" id="seqFeedback"></p>
+      <div class="seq-answer" id="seqAnswer"></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="section-label">10 · Final activity — build your own lessons</span>
+    <div class="sort-wrap">
+      <p class="sort-instructions">Pull up each page from your own copy of the coursebook using the reference on the card. As a group, decide: how many separate 45-minute lessons could you build from this page, and which framework would each one use? Tap the card to compare against a suggested breakdown.</p>
+      <div class="cb-grid" id="cbGrid"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+// ---------- Card sort ----------
+const stages = [
+  {text:"Present: clarify and focus on TL", zone:"PPP"},
+  {text:"First Test (diagnostic)", zone:"TTT"},
+  {text:"Highlighting target language", zone:"Text-Based"},
+  {text:"Set up", zone:"Language Practice"},
+  {text:"(Prediction task)", zone:"Receptive Skills"},
+  {text:"Useful language???", zone:"Productive Skills"}
+];
+const zoneNames = ["PPP","TTT","Text-Based","Language Practice","Receptive Skills","Productive Skills"];
+
+let selectedStage = null;
+let correctCount = 0;
+const tray = document.getElementById('stageTray');
+const zoneGrid = document.getElementById('zoneGrid');
+const progressNote = document.getElementById('progressNote');
+
+function shuffle(arr){
+  const a = [...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function buildSort(){
+  tray.innerHTML = '';
+  zoneGrid.innerHTML = '';
+  correctCount = 0;
+  selectedStage = null;
+  progressNote.textContent = '0 / 6 pinned correctly';
+
+  const shuffled = shuffle(stages);
+  shuffled.forEach((s, idx) => {
+    const el = document.createElement('div');
+    el.className = 'stage-card';
+    el.textContent = s.text;
+    el.dataset.zone = s.zone;
+    el.dataset.id = idx;
+    el.addEventListener('click', () => {
+      if(el.classList.contains('placed')) return;
+      document.querySelectorAll('.stage-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedStage = el;
+    });
+    tray.appendChild(el);
+  });
+
+  zoneNames.forEach(name => {
+    const z = document.createElement('div');
+    z.className = 'zone';
+    z.dataset.zone = name;
+    z.innerHTML = `<div class="zone-title">${name}</div>`;
+    z.addEventListener('click', () => {
+      if(!selectedStage) return;
+      if(selectedStage.dataset.zone === name){
+        z.classList.add('correct');
+        const dropped = document.createElement('div');
+        dropped.className = 'dropped-card';
+        dropped.textContent = selectedStage.textContent;
+        z.appendChild(dropped);
+        selectedStage.classList.add('placed');
+        selectedStage.classList.remove('selected');
+        selectedStage = null;
+        correctCount++;
+        progressNote.textContent = `${correctCount} / 6 pinned correctly`;
+      } else {
+        z.classList.add('wrong');
+        setTimeout(() => z.classList.remove('wrong'), 350);
+      }
+    });
+    zoneGrid.appendChild(z);
+  });
+}
+buildSort();
+document.getElementById('resetSort').addEventListener('click', buildSort);
+
+// ---------- Quiz ----------
+const quiz = [
+  {q:"What are the three possible main aims of a language-focused lesson?", a:"Clarification, Practice, or Both."},
+  {q:"If the target language arises from a reading or listening text, which framework do you use?", a:"Text-Based / Guided Discovery."},
+  {q:"In TTT, what's the purpose of the First Test?", a:"Diagnostic — to see what students already know and where the gaps are."},
+  {q:"True or False: underlining past simple examples in a text counts as controlled practice.", a:"False — that's recognition, not production."},
+  {q:"What is 'useful language' in a Productive Skills lesson NOT?", a:"It's not the target language — it's optional support, students don't have to use it."},
+  {q:"In PPP, which stage targets accuracy and which targets fluency?", a:"Practice = accuracy. Production = fluency."},
+  {q:"Why might a 45-minute TTT lesson skip the second test stage?", a:"No time — the next teacher covers it as a Language Practice lesson."},
+  {q:"Give one form-only practice task type from the MFPA table.", a:"Gap-fill or sentence jumble."}
+];
+const quizGrid = document.getElementById('quizGrid');
+quiz.forEach((item, i) => {
+  const card = document.createElement('div');
+  card.className = 'flip-card';
+  card.innerHTML = `
+    <div class="flip-inner">
+      <div class="flip-face flip-front"><span class="quiz-num">${i+1}</span>${item.q}</div>
+      <div class="flip-face flip-back">${item.a}</div>
+    </div>`;
+  card.addEventListener('click', () => card.classList.toggle('flipped'));
+  quizGrid.appendChild(card);
+});
+
+// ---------- Scenario challenge ----------
+const scenarios = [
+  {
+    text: "Students do a gap-fill on reported speech with no prior teaching. The teacher monitors closely, notes common errors, then clarifies just those problem areas before a second, similar task.",
+    options: ["PPP","TTT","Text-Based","Language Practice"],
+    correct: "TTT"
+  },
+  {
+    text: "The lesson opens with a short listening about someone's daily routine. The teacher elicits and underlines examples of present simple from the audio script, then clarifies meaning, form and pronunciation before controlled practice.",
+    options: ["Text-Based","PPP","Receptive Skills","Productive Skills"],
+    correct: "Text-Based"
+  },
+  {
+    text: "Following on from yesterday's grammar lesson on the second conditional, today's lesson goes straight into a controlled matching activity, then a freer roleplay, with feedback at the end.",
+    options: ["Language Practice","PPP","TTT","Text-Based"],
+    correct: "Language Practice"
+  },
+  {
+    text: "Students brainstorm ideas about a controversial topic, look at some useful phrases for agreeing and disagreeing, then hold a structured discussion. Feedback focuses on how well they expressed opinions.",
+    options: ["Productive Skills","Receptive Skills","PPP","TTT"],
+    correct: "Productive Skills"
+  },
+  {
+    text: "The teacher presents the third conditional with a timeline and CCQs, drills pronunciation, then moves to a controlled gap-fill followed by a freer personalised speaking task.",
+    options: ["PPP","TTT","Language Practice","Text-Based"],
+    correct: "PPP"
+  },
+  {
+    text: "Students skim a news article for gist, then read again for specific details, before reacting orally to the content in pairs.",
+    options: ["Receptive Skills","Productive Skills","Text-Based","TTT"],
+    correct: "Receptive Skills"
+  }
+];
+
+const scenarioContainer = document.getElementById('scenarioContainer');
+const scenarioProgress = document.getElementById('scenarioProgress');
+let scenarioCorrectCount = 0;
+const scenarioSolved = new Set();
+
+scenarios.forEach((sc, idx) => {
+  const card = document.createElement('div');
+  card.className = 'scenario-card';
+  const optsHtml = sc.options.map(opt =>
+    `<button class="opt-btn" data-opt="${opt}">${opt}</button>`
+  ).join('');
+  card.innerHTML = `<p class="scenario-text">${sc.text}</p><div class="scenario-options">${optsHtml}</div>`;
+  scenarioContainer.appendChild(card);
+
+  const buttons = card.querySelectorAll('.opt-btn');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if(scenarioSolved.has(idx)) return;
+      if(btn.dataset.opt === sc.correct){
+        btn.classList.add('correct-pick');
+        buttons.forEach(b => b.disabled = true);
+        scenarioSolved.add(idx);
+        scenarioCorrectCount++;
+        scenarioProgress.textContent = `${scenarioCorrectCount} / 6 correct`;
+      } else {
+        btn.classList.add('wrong-pick');
+        setTimeout(() => btn.classList.remove('wrong-pick'), 500);
+      }
+    });
+  });
+});
+
+// ---------- Meaning or Form quick fire ----------
+const mfItems = [
+  {example: "I ___ (play) basketball in high school.", note: "Gap-fill", answer: "Form only"},
+  {example: "Nicole: How have you changed since high school? Myriam: I ___ basketball every day.", note: "Grammaring (with context)", answer: "Meaning and form"},
+  {example: "used to / play / basketball / I / every day.", note: "Sentence jumble", answer: "Form only"},
+  {example: "I played basketball frequently in high school but not now.", note: "Sentence transformation", answer: "Meaning and form"},
+  {example: "I used to / would play basketball.", note: "Contrastive analysis", answer: "Meaning only"},
+  {example: "I used playing basketball every day.", note: "Spot the mistake", answer: "Form only"}
+];
+
+const mfContainer = document.getElementById('mfContainer');
+const mfProgress = document.getElementById('mfProgress');
+let mfCorrectCount = 0;
+const mfSolved = new Set();
+const mfOptions = ["Meaning only","Form only","Meaning and form"];
+
+mfItems.forEach((item, idx) => {
+  const card = document.createElement('div');
+  card.className = 'mf-card';
+  const optsHtml = mfOptions.map(opt =>
+    `<button class="opt-btn" data-opt="${opt}">${opt}</button>`
+  ).join('');
+  card.innerHTML = `<div class="mf-example">"${item.example}"<em>${item.note}</em></div><div class="mf-options">${optsHtml}</div>`;
+  mfContainer.appendChild(card);
+
+  const buttons = card.querySelectorAll('.opt-btn');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if(mfSolved.has(idx)) return;
+      if(btn.dataset.opt === item.answer){
+        btn.classList.add('correct-pick');
+        buttons.forEach(b => b.disabled = true);
+        mfSolved.add(idx);
+        mfCorrectCount++;
+        mfProgress.textContent = `${mfCorrectCount} / 6 correct`;
+      } else {
+        btn.classList.add('wrong-pick');
+        setTimeout(() => btn.classList.remove('wrong-pick'), 500);
+      }
+    });
+  });
+});
+
+// ---------- Error analysis: spot the stage flaw ----------
+const flaws = [
+  {
+    title: "Scenario A — Productive Skills",
+    plan: "The Plan: The teacher spends 25 minutes explaining and drilling conditional forms, asking students to copy grammar tables, before doing a 10-minute roleplay.",
+    fix: "The Fix: In a Productive Skills lesson, \"useful language\" is not target language to be formally presented — it's optional support to help students complete the task. A full MFPA-style clarification with drilling and grammar tables belongs in a language lesson (PPP/TTT), not here. The focus of this lesson should stay on preparing ideas and building fluency, with far more time going to the speaking/writing task itself."
+  },
+  {
+    title: "Scenario B — Receptive Skills",
+    plan: "The Plan: The teacher has students read a text out loud sentence-by-sentence to check pronunciation, before setting any reading comprehension tasks.",
+    fix: "The Fix: Reading aloud for pronunciation isn't a reading sub-skill at all — it skips straight to language work before the text has been used for its actual purpose. Standard receptive skills staging moves from Gist → Detail → Specific Information comprehension tasks first. Any reaction to or analysis of the language in the text comes after comprehension, not before it."
+  }
+];
+const flawContainer = document.getElementById('flawContainer');
+flaws.forEach((f, i) => {
+  const card = document.createElement('div');
+  card.className = 'flaw-card';
+  card.innerHTML = `
+    <h4 class="flaw-title">${f.title}</h4>
+    <p class="flaw-plan">${f.plan}</p>
+    <button class="flaw-toggle" data-idx="${i}">What's the flaw?</button>
+    <div class="flaw-fix" id="flawFix${i}">${f.fix}</div>
+  `;
+  flawContainer.appendChild(card);
+});
+flawContainer.addEventListener('click', (e) => {
+  if(e.target.classList.contains('flaw-toggle')){
+    const idx = e.target.dataset.idx;
+    const fixEl = document.getElementById('flawFix' + idx);
+    fixEl.classList.toggle('open');
+    e.target.textContent = fixEl.classList.contains('open') ? 'Hide the fix' : "What's the flaw?";
+  }
+});
+
+// ---------- Pacing challenge ----------
+const pacingStages = [
+  "Lead-in & Text Reading (Gist/Detail)",
+  "Clarification (MFPA)",
+  "Controlled Practice & Feedback"
+];
+const pacingContainer = document.getElementById('pacingContainer');
+const pacingTotal = document.getElementById('pacingTotal');
+pacingStages.forEach((stage, i) => {
+  const row = document.createElement('div');
+  row.className = 'pacing-stage-row';
+  row.innerHTML = `
+    <span class="pacing-stage-name">${stage}</span>
+    <div class="pacing-input-wrap">
+      <input type="number" min="0" max="45" class="pacing-input" id="pacingInput${i}" value="0"> min
+    </div>
+  `;
+  pacingContainer.appendChild(row);
+});
+function updatePacingTotal(){
+  let total = 0;
+  pacingStages.forEach((_, i) => {
+    const val = parseInt(document.getElementById('pacingInput' + i).value, 10) || 0;
+    total += val;
+  });
+  pacingTotal.textContent = `Total: ${total} / 45 min`;
+  pacingTotal.classList.remove('ok', 'over');
+  if(total === 45){
+    pacingTotal.classList.add('ok');
+  } else if(total > 45){
+    pacingTotal.classList.add('over');
+  }
+}
+pacingStages.forEach((_, i) => {
+  document.getElementById('pacingInput' + i).addEventListener('input', updatePacingTotal);
+});
+document.getElementById('pacingRevealBtn').addEventListener('click', () => {
+  const ans = document.getElementById('pacingAnswer');
+  ans.classList.toggle('open');
+});
+
+// ---------- Stage sequencer ----------
+const seqFrameworks = {
+  "PPP": ["Lead-in", "Present: clarify and focus on TL", "Practice", "Production", "Error correction"],
+  "TTT": ["Lead-in", "First Test (diagnostic)", "Teach (clarifying)", "Second Test", "Feedback"],
+  "Receptive Skills": ["Lead-in", "(Prediction task)", "Pre-teach vocabulary", "Reading/listening for gist", "Reading/listening for detail", "Post-reading/listening task"],
+  "Language Practice": ["Lead-in (optional)", "Set up", "Controlled Practice activity", "Free(r) practice activity", "Feedback and error correction"]
+};
+const seqFwSelect = document.getElementById('seqFwSelect');
+const seqBank = document.getElementById('seqBank');
+const seqBuild = document.getElementById('seqBuild');
+const seqFeedback = document.getElementById('seqFeedback');
+const seqAnswer = document.getElementById('seqAnswer');
+let currentFw = "PPP";
+let builtSequence = [];
+
+function shuffleArr(arr){
+  const a = [...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function renderFwSelect(){
+  seqFwSelect.innerHTML = '';
+  Object.keys(seqFrameworks).forEach(fw => {
+    const btn = document.createElement('button');
+    btn.className = 'seq-fw-btn' + (fw === currentFw ? ' active' : '');
+    btn.textContent = fw;
+    btn.addEventListener('click', () => {
+      currentFw = fw;
+      startSequence();
+      renderFwSelect();
+    });
+    seqFwSelect.appendChild(btn);
+  });
+}
+
+function startSequence(){
+  builtSequence = [];
+  seqFeedback.textContent = '';
+  seqAnswer.classList.remove('open');
+  seqAnswer.innerHTML = '';
+  const shuffled = shuffleArr(seqFrameworks[currentFw]);
+  seqBank.innerHTML = '';
+  shuffled.forEach(stage => {
+    const chip = document.createElement('div');
+    chip.className = 'seq-chip';
+    chip.textContent = stage;
+    chip.addEventListener('click', () => {
+      if(chip.classList.contains('used')) return;
+      chip.classList.add('used');
+      builtSequence.push(stage);
+      renderBuild();
+    });
+    seqBank.appendChild(chip);
+  });
+  renderBuild();
+}
+
+function renderBuild(){
+  seqBuild.innerHTML = '';
+  if(builtSequence.length === 0){
+    seqBuild.innerHTML = '<span style="color:#8a7455; font-size:0.85rem;">Tap stages above to add them here, in order.</span>';
+    return;
+  }
+  builtSequence.forEach((stage, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'seq-slot';
+    slot.innerHTML = `<span class="seq-num">${i+1}</span><span>${stage}</span>`;
+    slot.title = 'Click to remove';
+    slot.addEventListener('click', () => {
+      builtSequence.splice(i, 1);
+      const chips = seqBank.querySelectorAll('.seq-chip');
+      chips.forEach(c => { if(c.textContent === stage) c.classList.remove('used'); });
+      renderBuild();
+    });
+    seqBuild.appendChild(slot);
+  });
+}
+
+document.getElementById('seqCheckBtn').addEventListener('click', () => {
+  const correct = seqFrameworks[currentFw];
+  if(builtSequence.length !== correct.length){
+    seqFeedback.textContent = `Add all ${correct.length} stages before checking.`;
+    return;
+  }
+  let numCorrect = 0;
+  const slots = seqBuild.querySelectorAll('.seq-slot');
+  slots.forEach((slot, i) => {
+    slot.classList.remove('correct', 'wrong');
+    if(builtSequence[i] === correct[i]){
+      slot.classList.add('correct');
+      numCorrect++;
+    } else {
+      slot.classList.add('wrong');
+    }
+  });
+  seqFeedback.textContent = `${numCorrect} / ${correct.length} in the right position.`;
+});
+
+document.getElementById('seqResetBtn').addEventListener('click', startSequence);
+
+document.getElementById('seqRevealBtn').addEventListener('click', () => {
+  const correct = seqFrameworks[currentFw];
+  seqAnswer.innerHTML = `<strong>Correct order for ${currentFw}:</strong><ol>${correct.map(s => `<li>${s}</li>`).join('')}</ol>`;
+  seqAnswer.classList.toggle('open');
+});
+
+renderFwSelect();
+startSequence();
+
+// ---------- Final activity: coursebook flashcards ----------
+const cbItems = [
+  {
+    page: "Pages 6–7",
+    title: "1.3 What's in Your Bag?",
+    topic: "Vocabulary (everyday items) + Reading + Grammar: a/an, plural nouns, this/that/these/those + Listening + Speaking Hub",
+    answer: "<strong>Suggested: 2–3 lessons</strong>Lesson 1 — Text-Based / Guided Discovery: 'What's in your hand luggage?' is where a/an and plural nouns are highlighted and checked, so stage lead-in, reading for gist/detail, TL highlighting, clarification, then controlled practice.<br><br>Lesson 2 — Receptive Skills: the airport security listening (gist, detail, key words) stands alone well as a listening lesson.<br><br>Lesson 3 — Language Practice / Productive Skills: pair the this/that/these/those practice with the Speaking Hub (draw items, plan, roleplay at security) as a practice-into-freer-speaking lesson."
+  },
+  {
+    page: "Pages 2–3",
+    title: "1.1 People and Places",
+    topic: "Listening + Grammar: present simple be (+/-) + Pronunciation: syllable stress + Vocabulary: countries & nationalities + Speaking",
+    answer: "<strong>Suggested: 2 lessons</strong>Lesson 1 — Text-Based / Guided Discovery: the Helen &amp; Veronica boarding-pass conversation is where present simple 'be' positive/negative is checked and clarified directly from the transcript, so stage listening for gist/detail into TL highlighting, clarification, and controlled practice (completing Chloe's introduction).<br><br>Lesson 2 — Language Practice: follow on with countries/nationalities vocabulary, syllable stress pronunciation, and the freer speaking task (introducing yourself on a plane, guessing the false sentence) as practice and personalisation."
+  },
+  {
+    page: "Pages 14–15",
+    title: "What's Your Name?",
+    topic: "Video interviews + Grammar: singular/plural, a/an, have/has + Speaking & Writing",
+    answer: "<strong>Suggested: 2–3 lessons</strong>Lesson 1 — Receptive Skills: use the video-watching tasks (numbering speakers, matching bags to people) as a listening-for-gist/detail lesson.<br><br>Lesson 2 — PPP: the grammar (a/an, have/has, plurals) is practised through standalone exercises rather than pulled from a text, so this fits a fresh presentation.<br><br>Lesson 3 — Productive Skills: combine the speaking task (what's in your bag) with the lost-and-found writing task as a single productive lesson, or split into two if time allows."
+  },
+  {
+    page: "Pages 10–11",
+    title: "Two Jobs",
+    topic: "Vocabulary (jobs) + Reading + Grammar: present simple be (he/she/it)",
+    answer: "<strong>Suggested: 2 lessons</strong>Lesson 1 — Text-Based / Guided Discovery: the 'Weekend Work' reading text is where the target grammar (present simple be) is checked and clarified, so stage it as gist/detail reading into TL highlighting and practice.<br><br>Lesson 2 — Language Practice or Productive Skills: the jobs vocabulary, pronunciation (word stress), and speaking mime activity work well as a follow-on lesson focused on practice and personalisation rather than new clarification."
+  },
+  {
+    page: "Pages 16–17",
+    title: "Personality",
+    topic: "Video interviews + Grammar: while/whereas/whilst + Speaking & Writing",
+    answer: "<strong>Suggested: 2–3 lessons</strong>Lesson 1 — Receptive Skills: the video-watching tasks (matching adjectives, choosing correct meanings) make a solid listening lesson.<br><br>Lesson 2 — Text-Based / Guided Discovery: while/whereas/whilst are drawn directly from what the interviewees say, so this is a listening-text-based grammar lesson.<br><br>Lesson 3 — Productive Skills: split speaking (discussing personality traits) and writing (a letter of recommendation) into one or two lessons depending on your group's needs — note this is a skills lesson, not vocabulary/grammar practice through speaking."
+  },
+  {
+    page: "Pages 22–23",
+    title: "Future Probability & Closer to Nature",
+    topic: "Grammar: future probability modals + Listening + Grammar: quantifiers",
+    answer: "<strong>Suggested: 2 lessons</strong>Lesson 1 — Language Practice or PPP: the future probability modals (going to, due to, certain to...) are practised through standalone sentence completion rather than a text, so treat this as controlled-to-freer practice, or a fresh PPP presentation if this is new language for your group.<br><br>Lesson 2 — Text-Based / Guided Discovery: the 'Why We Should Listen to Trees' listening leads into the quantifier language via the listener comments, so stage it as listening comprehension into TL highlighting and clarification."
+  }
+];
+const cbGrid = document.getElementById('cbGrid');
+cbItems.forEach((item, i) => {
+  const card = document.createElement('div');
+  card.className = 'cb-flip-card';
+  const denseClass = item.page === "Pages 14–15" ? ' cb-dense' : '';
+  card.innerHTML = `
+    <div class="cb-flip-inner">
+      <div class="cb-flip-face cb-flip-front">
+        <p class="cb-page">${item.page}</p>
+        <h4>${item.title}</h4>
+        <p class="cb-topic">${item.topic}</p>
+        <p class="cb-tap">Tap for a suggested breakdown</p>
+      </div>
+      <div class="cb-flip-face cb-flip-back${denseClass}">${item.answer}</div>
+    </div>`;
+  card.addEventListener('click', () => card.classList.toggle('flipped'));
+  cbGrid.appendChild(card);
+});
+</script>
+</body>
+</html>
