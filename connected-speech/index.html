@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CELTA Input Session – Connected Speech</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f7fa; --paper:#ffffff; --ink:#1c2b3a; --sub:#5b6b7c; --line:#d9e2ec;
+    --navy:#1F497D; --navy-deep:#163a63; --navy-soft:#e3ebf5;
+    --teal:#2a8c82; --teal-deep:#1f6f66; --teal-soft:#dff1ee;
+    --amber:#c98a1c; --amber-soft:#fbf0d8;
+    --red:#b8433a; --red-soft:#f8e1de;
+    --purple:#7a4a9c; --purple-soft:#efe3f5;
+    --gold:#caa23a;
+    --shadow:0 10px 30px rgba(28,43,58,.08);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;background:var(--bg);font-family:'Nunito',sans-serif;color:var(--ink);}
+  .watermark{position:fixed;bottom:16px;right:16px;font-weight:800;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:var(--teal);opacity:.35;padding:5px 13px;border-radius:999px;pointer-events:none;z-index:30;}
+  .progress-bar{position:sticky;top:0;z-index:20;height:4px;background:var(--line);}
+  .progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--navy),var(--teal));transition:width .1s;}
+  .topbar{position:sticky;top:4px;z-index:20;background:rgba(244,247,250,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:8px 14px;}
+  .topbar .logo{height:36px;width:auto;flex:0 0 auto;}
+  nav.sticky-nav{display:flex;gap:6px;overflow-x:auto;flex:1;scrollbar-width:none;}
+  nav.sticky-nav::-webkit-scrollbar{display:none;}
+  nav.sticky-nav a{flex:0 0 auto;text-decoration:none;font-size:.66rem;font-weight:800;color:var(--navy);background:#fff;border:1.3px solid var(--line);padding:6px 10px;border-radius:999px;white-space:nowrap;transition:.2s;}
+  nav.sticky-nav a.active{background:var(--navy);color:#fff;border-color:transparent;}
+  .print-btn{flex:0 0 auto;border:1.5px solid var(--teal);background:#fff;color:var(--teal-deep);font-weight:800;font-size:.72rem;padding:7px 14px;border-radius:999px;cursor:pointer;}
+
+  .hero{padding:34px 20px 20px;text-align:center;}
+  .hero h1{font-family:'Playfair Display',serif;font-weight:700;font-size:2rem;margin:0 0 .2em;color:var(--navy-deep);}
+  .hero p{margin:0;color:var(--sub);font-size:.94rem;}
+
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px 70px;}
+  section{padding-top:70px;margin-top:-40px;scroll-margin-top:100px;}
+  section:first-of-type{padding-top:10px;}
+  .card{background:var(--paper);border-radius:16px;padding:26px 28px;box-shadow:var(--shadow);border:1px solid var(--line);border-left:6px solid var(--accent,var(--navy));margin-bottom:6px;}
+  .stage-title{font-family:'Playfair Display',serif;font-size:1.32rem;color:var(--navy-deep);margin:0 0 6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .badge{font-size:.64rem;font-weight:800;background:var(--accent-soft,var(--navy-soft));color:var(--accent,var(--navy));padding:4px 10px;border-radius:999px;letter-spacing:.05em;text-transform:uppercase;}
+  .time{font-size:.7rem;font-weight:800;color:var(--sub);background:var(--bg);border:1px solid var(--line);padding:4px 10px;border-radius:999px;}
+  .lead{color:var(--sub);margin:0 0 16px;font-size:.94rem;line-height:1.55;}
+  .lead b{color:var(--ink);}
+
+  .btn{background:var(--navy);color:#fff;border:none;padding:10px 20px;border-radius:999px;font-weight:800;font-size:.85rem;cursor:pointer;box-shadow:var(--shadow);}
+  .btn.teal{background:var(--teal);}
+  .btn.secondary{background:#fff;color:var(--navy);border:1.5px solid var(--line);box-shadow:none;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center;}
+  .feedback{font-weight:700;font-size:.9rem;min-height:1.2em;}
+  .feedback.good{color:var(--teal-deep);}
+  .feedback.bad{color:var(--red);}
+
+  .text-block{background:var(--bg);border-radius:12px;padding:14px 18px;margin:10px 0;font-size:.9rem;line-height:1.65;}
+  .text-block b{color:var(--navy-deep);}
+
+  .reveal-card{background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:12px 16px;margin:8px 0;cursor:pointer;transition:.15s;}
+  .reveal-card:hover{border-color:var(--teal);}
+  .reveal-card .q{font-weight:700;font-size:.9rem;color:var(--ink);}
+  .reveal-card .a{display:none;margin-top:8px;font-size:.86rem;color:var(--teal-deep);font-weight:700;}
+  .reveal-card.open .a{display:block;}
+  .reveal-card .hint{font-size:.72rem;color:var(--sub);font-weight:600;}
+
+  .feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0;}
+  @media(max-width:640px){.feat-grid{grid-template-columns:1fr;}}
+  .feat-card{border-radius:14px;border:2px solid var(--c);overflow:hidden;cursor:pointer;background:#fff;transition:.2s;}
+  .feat-card:hover{transform:translateY(-2px);}
+  .feat-front{padding:14px 16px;background:var(--c-soft);}
+  .feat-front .fname{font-family:'Playfair Display';font-weight:700;color:var(--c);font-size:1.05rem;}
+  .feat-say-label{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--sub);margin-top:10px;}
+  .feat-say-item{font-size:.92rem;font-weight:700;color:var(--ink);margin-top:4px;}
+  .feat-back{display:none;padding:14px 16px;font-size:.86rem;line-height:1.6;border-top:2px dashed var(--c);}
+  .feat-card.open .feat-back{display:block;}
+  .feat-card.open .feat-front{background:#fff;}
+  .feat-examples{margin-top:8px;}
+  .feat-ex-row{display:flex;align-items:baseline;gap:8px;margin-top:6px;font-size:.83rem;flex-wrap:wrap;}
+  .feat-written{color:var(--sub);text-decoration:line-through;text-decoration-color:var(--line);}
+  .feat-arrow{color:var(--c);font-weight:800;}
+  .feat-heard{color:var(--ink);font-weight:700;}
+
+  .pill-match-wrap{display:grid;grid-template-columns:1fr 1.3fr;gap:16px;margin:14px 0;}
+  @media(max-width:640px){.pill-match-wrap{grid-template-columns:1fr;}}
+  .pill-col{display:flex;flex-direction:column;gap:9px;}
+  .pill{background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:10px 14px;font-size:.84rem;font-weight:700;color:var(--ink);cursor:pointer;transition:.15s;line-height:1.4;}
+  .pill:hover{border-color:var(--teal);}
+  .pill.selected{border-color:var(--navy);background:#fff;box-shadow:0 0 0 3px rgba(31,73,125,.15);}
+  .pill.matched{background:var(--teal-soft);border-color:var(--teal);color:var(--teal-deep);}
+
+  .word-link{display:inline-block;padding:3px 2px;margin:1px;border-radius:6px;cursor:pointer;font-size:.95rem;transition:.15s;}
+  .word-link.marked{background:var(--amber-soft);box-shadow:0 2px 0 var(--amber);}
+  .word-link.linked{background:var(--teal-soft);box-shadow:0 2px 0 var(--teal);}
+  .word-link.weak{background:var(--purple-soft);box-shadow:0 2px 0 var(--purple);}
+  .word-plain{font-size:1rem;}
+  .link-gap{display:inline-block;width:20px;text-align:center;cursor:pointer;color:#b9c4d0;font-weight:900;font-size:1.15rem;transition:.15s;vertical-align:middle;}
+  .link-gap:hover{color:var(--navy);}
+  .link-gap.marked{color:var(--amber);transform:scale(1.5);}
+  .link-gap.linked{color:var(--teal);transform:scale(1.5);}
+  .linking-para{font-size:1rem;line-height:2.3;background:var(--bg);border-radius:12px;padding:16px 18px;margin:12px 0;}
+
+  .divider{display:flex;align-items:center;gap:12px;margin:30px 0 16px;color:var(--line);}
+  .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--line);}
+  .divider span{font-family:'Playfair Display';font-style:italic;color:var(--sub);font-size:.9rem;}
+  footer.note{text-align:center;color:var(--sub);font-size:.76rem;margin-top:30px;}
+
+  /* maze */
+  .maze-legend{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;}
+  .maze-legend span{font-size:.78rem;font-weight:800;padding:6px 12px;border-radius:999px;border:2px solid var(--c);color:var(--c);}
+  .maze-grid{display:grid;grid-template-columns:repeat(var(--cols,5),1fr);gap:6px;margin:14px 0;}
+  .maze-cell.wall{background:var(--bg);border:2px dashed var(--line);cursor:default;}
+  .maze-cell.wall:hover{border-color:var(--line);}
+  .maze-cell{border:2px solid var(--line);border-radius:10px;padding:8px 6px;font-size:.68rem;font-weight:700;text-align:center;line-height:1.3;cursor:pointer;background:#fff;min-height:64px;display:flex;align-items:center;justify-content:center;transition:.15s;color:var(--ink);}
+  .maze-cell:hover{border-color:var(--navy);}
+  .maze-cell.start{background:var(--navy);color:#fff;font-family:'Nunito';font-size:.62rem;font-weight:800;}
+  .maze-cell.start div{line-height:1.5;}
+  .maze-cell.current{box-shadow:0 0 0 3px var(--gold);border-color:var(--gold);}
+  .maze-cell.visited{background:var(--teal-soft);border-color:var(--teal);color:var(--teal-deep);}
+  .maze-cell.finish{border-color:var(--red);}
+  .maze-cell.finish.visited{background:var(--red-soft);border-color:var(--red);color:var(--red);}
+  .maze-cell.wrong{animation:shake .3s;border-color:var(--red);}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
+
+  .checklist{list-style:none;margin:0;padding:0;}
+  .checklist li{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:.9rem;line-height:1.5;}
+  .checklist li:last-child{border-bottom:none;}
+  .checklist li::before{content:'●';color:var(--accent,var(--navy));font-size:.6rem;margin-top:6px;}
+  @media print{.topbar,.progress-bar,.watermark{display:none !important;}.card{box-shadow:none;break-inside:avoid;}}
+</style>
+</head>
+<body>
+<div class="watermark">Ramy</div>
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+<div class="topbar">
+  <svg class="logo" viewBox="0 0 220 60" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="International House Istanbul">
+    <circle cx="30" cy="30" r="28" fill="#3B44B5"/>
+    <text x="30" y="43" text-anchor="middle" font-family="Nunito,Arial,sans-serif" font-weight="800" font-size="34" fill="#fff">ih</text>
+    <text x="68" y="22" font-family="Nunito,Arial,sans-serif" font-weight="800" font-size="17" fill="#111">International</text>
+    <text x="68" y="40" font-family="Nunito,Arial,sans-serif" font-weight="800" font-size="17" fill="#111">House</text>
+    <text x="68" y="56" font-family="Nunito,Arial,sans-serif" font-weight="600" font-size="14" fill="#333">Istanbul</text>
+  </svg>
+  <nav class="sticky-nav" id="stickyNav">
+    <a href="#s1">Lead-in</a>
+    <a href="#s2">1 · Elision</a>
+    <a href="#s3">2 · Assimilation</a>
+    <a href="#s4">3 · Intrusive Sounds</a>
+    <a href="#s5">4 · Linking</a>
+    <a href="#s6">5 · Weak Forms</a>
+    <a href="#s7">All Together</a>
+  </nav>
+  <button class="print-btn" onclick="window.print()">🖨 Print</button>
+</div>
+
+<div class="hero">
+  <h1>Connected Speech</h1>
+  <p>Five features, five activities — then the full picture</p>
+</div>
+
+<div class="wrap">
+
+  <!-- LEAD-IN -->
+  <section id="s1">
+    <div class="card" style="--accent:var(--purple);--accent-soft:var(--purple-soft);">
+      <div class="stage-title">Can You Read These? <span class="badge">Lead-in</span><span class="time">7 min</span></div>
+      <p class="lead">Try reading these out loud. They look strange written down — but say them fast, and listen for the real sentence hiding inside. Click each one to reveal it.</p>
+      <div id="decodeArea"></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>activity 1</span></div>
+
+  <!-- ELISION -->
+  <section id="s2">
+    <div class="card" style="--accent:var(--amber);--accent-soft:var(--amber-soft);">
+      <div class="stage-title">Elision Trivia <span class="badge">Guess the fact</span><span class="time">8 min</span></div>
+      <p class="lead">Here's the same phrase written two ways — how it "should" sound, and how it actually sounds when a sound gets dropped. Read the second version out loud, work out the phrase, then guess the real-world fact.</p>
+      <div id="elisionArea"></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>activity 2</span></div>
+
+  <!-- ASSIMILATION -->
+  <section id="s3">
+    <div class="card" style="--accent:var(--red);--accent-soft:var(--red-soft);">
+      <div class="stage-title">The Dictation Computer <span class="badge">Puzzle</span><span class="time">10 min</span></div>
+      <p class="lead">A dictation computer prints exactly what it hears — and connected speech confuses it. Each sentence on the left has a mistake. Match it to the response on the right that gives you a clue to the real sentence, then say what the computer should have printed.</p>
+      <p class="lead" style="font-size:.82rem;font-style:italic;">There's sometimes more than one defensible pairing — that's the nature of the puzzle. Compare your matches with your group.</p>
+      <div class="pill-match-wrap"><div class="pill-col" id="dcLeft"></div><div class="pill-col" id="dcRight"></div></div>
+      <div class="feedback" id="dcFeedback" style="color:var(--sub);"></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>activity 3</span></div>
+
+  <!-- INTRUSIVE SOUNDS: MAZE -->
+  <section id="s4">
+    <div class="card" style="--accent:var(--teal);--accent-soft:var(--teal-soft);">
+      <div class="stage-title">The Link Maze <span class="badge">Escape the grid</span><span class="time">12 min</span></div>
+      <p class="lead">Your phrase is already waiting in the navy start cell. Say it out loud — which sound joins the two words: /j/, /w/, or /r/? That tells you which direction to click. Land on a new cell, say its phrase, and move again. Reach the red FINISH cell to win.</p>
+      <div class="maze-legend">
+        <span style="--c:#7a4a9c">/j/ → move LEFT</span>
+        <span style="--c:#2a8c82">/w/ → move UP</span>
+        <span style="--c:#1F497D">/r/ → move RIGHT</span>
+      </div>
+      <div class="maze-grid" id="mazeGrid"></div>
+      <div class="btn-row">
+        <button class="btn secondary" onclick="resetMaze()">Reset maze</button>
+        <span class="feedback" id="mazeFeedback"></span>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"><span>activity 4</span></div>
+
+  <!-- LINKING -->
+  <section id="s5">
+    <div class="card" style="--accent:var(--navy);--accent-soft:var(--navy-soft);">
+      <div class="stage-title">Mark the Links <span class="badge">Sherlock Holmes</span><span class="time">8 min</span></div>
+      <p class="lead">Click between two words to mark a link (just like drawing a ◡ shape by hand). Read it aloud smoothly, gliding over each link you've marked.</p>
+      <div class="linking-para" id="linkingPara"></div>
+      <p class="lead" style="font-size:.8rem;">Your marks show in amber. Suggested links (when revealed) show in teal.</p>
+      <div class="btn-row">
+        <button class="btn secondary" onclick="toggleKey()">Show / hide suggested links</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"><span>activity 5</span></div>
+
+  <!-- WEAK FORMS -->
+  <section id="s6">
+    <div class="card" style="--accent:var(--purple);--accent-soft:var(--purple-soft);">
+      <div class="stage-title">Spot the Weak Forms <span class="badge">Click the words</span><span class="time">8 min</span></div>
+      <p class="lead">Say each sentence at natural speed. Click the word or words you think get "swallowed" — weakened so the listener mainly hears the content words. Then reveal to check.</p>
+      <div id="weakArea"></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>the full picture</span></div>
+
+  <!-- ALL TOGETHER: H/O7 -->
+  <section id="s7">
+    <div class="card" style="--accent:var(--gold);--accent-soft:var(--amber-soft);">
+      <div class="stage-title">All Five, Together <span class="badge">H/O7 — the reference</span></div>
+      <p class="lead">You've now done one activity for each. Say the examples on each card out loud first — then click the card to reveal what's actually happening and what it's called.</p>
+      <div class="feat-grid" id="featGrid"></div>
+    </div>
+  </section>
+
+  <footer class="note">CELTA Input Session – Connected Speech · International House Istanbul</footer>
+</div>
+
+<script>
+function toggleOpenCard(el){ el.classList.toggle('open'); }
+
+// ---------- Lead-in: Decode ----------
+const decodeItems = [
+  {puzzle:'Eye here you want to meat hour sun.', answer:'I hear you want to meet our son.'},
+  {puzzle:'He nose for people who where there old close to work.', answer:'He knows for people who wear their old clothes to work.'},
+  {puzzle:'Hour jump a risen may jet.', answer:'Say it aloud and compare with your group — listen for the sounds!'},
+  {puzzle:'Weave scene hour glass is.', answer:"We've seen our glasses."},
+  {puzzle:'Mine ease ark why tall write.', answer:"Say it aloud and compare with your group!"},
+  {puzzle:'Hearse is to Scot a taught us.', answer:"Say it aloud and compare with your group!"}
+];
+const decodeArea = document.getElementById('decodeArea');
+decodeItems.forEach(it=>{
+  const d=document.createElement('div'); d.className='reveal-card';
+  d.innerHTML='<div class="q">'+it.puzzle+'</div><div class="hint">click to reveal</div><div class="a">'+it.answer+'</div>';
+  d.onclick=()=>d.classList.toggle('open');
+  decodeArea.appendChild(d);
+});
+
+// ---------- Activity 1: Elision trivia ----------
+const elisionItems = [
+  {elided:'/tɔ:lɪs bɪldɪŋ/', full:'/tɔ:lɪst bɪldɪŋ/', phrase:'tallest building', fact:'The Burj Khalifa in Dubai — the tallest building in the world.'},
+  {elided:'/fa:stɪs mæməl/', full:'/fa:stɪst mæməl/', phrase:'fastest mammal', fact:'The cheetah — the fastest land mammal, reaching over 100 km/h.'}
+];
+const elisionArea = document.getElementById('elisionArea');
+elisionItems.forEach(it=>{
+  const d=document.createElement('div'); d.className='reveal-card';
+  d.innerHTML='<div class="q">'+it.elided+' <span style="color:var(--sub);font-weight:400;">(compare: '+it.full+')</span></div><div class="hint">click to reveal the phrase and fact</div>'+
+    '<div class="a">"'+it.phrase+'" — '+it.fact+'</div>';
+  d.onclick=()=>d.classList.toggle('open');
+  elisionArea.appendChild(d);
+});
+
+// ---------- Activity 2: Dictation computer (free pairing) ----------
+const dcLeftItems = [
+  'Alaska if she wants to come with us.',
+  'I can pose music for TV programmes.',
+  'The office has changed into civilian clothes.',
+  'Did you see the way to go? He was at the next table a minute ago.',
+  'In this newspaper, the TV guide is on the sent a page.',
+  'I picture book off the floor.',
+  'Will you ever for give me?',
+  'This map shows all the citizen railways in the country.',
+  'Spy does are not really insects you know.',
+  'Coke and Pepsi arrival companies.'
+];
+const dcRightItems = [
+  'Who changed into civilian clothes?',
+  'Yes; I saw him going into the kitchen.',
+  "You'll ask who?",
+  'Really? It used to be on the back page.',
+  'I didn\u2019t know you were a composer.',
+  'Only if you promise never to do it again.',
+  'They look like insects to me!',
+  "Oh thanks! I didn't realise I'd dropped it.",
+  'Do you think so? I think they work together myself.',
+  "It doesn't show the smaller places then?"
+];
+const dcL = document.getElementById('dcLeft'), dcR = document.getElementById('dcRight');
+let dcSelL=null, dcSelR=null, dcCount=0;
+const dcRShuffled = dcRightItems.map((t,i)=>({t,i})).sort(()=>Math.random()-0.5);
+dcLeftItems.forEach((t,i)=>{ const p=document.createElement('div'); p.className='pill'; p.textContent=(i+1)+'. '+t; p.dataset.i=i;
+  p.onclick=()=>{ if(p.classList.contains('matched'))return; dcL.querySelectorAll('.pill').forEach(x=>x.classList.remove('selected')); p.classList.add('selected'); dcSelL=p; dcGo(); }; dcL.appendChild(p); });
+dcRShuffled.forEach(s=>{ const p=document.createElement('div'); p.className='pill'; p.textContent=String.fromCharCode(97+s.i)+'. '+s.t; p.dataset.i=s.i;
+  p.onclick=()=>{ if(p.classList.contains('matched'))return; dcR.querySelectorAll('.pill').forEach(x=>x.classList.remove('selected')); p.classList.add('selected'); dcSelR=p; dcGo(); }; dcR.appendChild(p); });
+function dcGo(){
+  if(!dcSelL||!dcSelR) return;
+  dcSelL.classList.replace('selected','matched'); dcSelR.classList.replace('selected','matched');
+  dcCount++;
+  const fb=document.getElementById('dcFeedback');
+  fb.textContent = dcCount+' / 10 paired — discuss your choices with your group.';
+  dcSelL=null; dcSelR=null;
+}
+
+// ---------- Activity 3: The Link Maze ----------
+const mazeData = {"grid": [[{"text": "Where are you?", "snd": "r", "role": "path"}, {"text": "Never again!", "snd": "r", "role": "path"}, {"text": "Score a goal", "snd": "r", "role": "path"}, {"text": "FINISH", "snd": "finish", "role": "finish"}, {"text": "", "snd": "wall", "role": "wall"}, {"text": "", "snd": "wall", "role": "wall"}], [{"text": "Go ahead", "snd": "w", "role": "path"}, {"text": "Give me a ring", "snd": "j", "role": "path"}, {"text": "I agree", "snd": "j", "role": "path"}, {"text": "Tea or coffee?", "snd": "j", "role": "path"}, {"text": "We aren't ready", "snd": "j", "role": "path"}, {"text": "Three and a half", "snd": "j", "role": "path"}], [{"text": "", "snd": "wall", "role": "wall"}, {"text": "", "snd": "wall", "role": "wall"}, {"text": "She arrived", "snd": "j", "role": "decoy"}, {"text": "", "snd": "wall", "role": "wall"}, {"text": "Go to England", "snd": "w", "role": "decoy"}, {"text": "Hello everybody!", "snd": "w", "role": "path"}], [{"text": "A few apples", "snd": "w", "role": "decoy"}, {"text": "", "snd": "wall", "role": "wall"}, {"text": "Day and night", "snd": "j", "role": "decoy"}, {"text": "", "snd": "wall", "role": "wall"}, {"text": "True or false?", "snd": "w", "role": "decoy"}, {"text": "A queue of people", "snd": "w", "role": "path"}], [{"text": "", "snd": "wall", "role": "wall"}, {"text": "Four and a half", "snd": "r", "role": "decoy"}, {"text": "Law and order", "snd": "r", "role": "decoy"}, {"text": "Draw a line", "snd": "r", "role": "start"}, {"text": "We saw a film", "snd": "r", "role": "path"}, {"text": "Two or three", "snd": "w", "role": "path"}], [{"text": "Try again!", "snd": "j", "role": "decoy"}, {"text": "", "snd": "wall", "role": "wall"}, {"text": "Answer a question", "snd": "r", "role": "decoy"}, {"text": "", "snd": "wall", "role": "wall"}, {"text": "Blue eyes", "snd": "w", "role": "decoy"}, {"text": "", "snd": "wall", "role": "wall"}]], "finish": [0, 3], "start": [4, 3], "rows": 6, "cols": 6};
+const mazeGridEl = document.getElementById('mazeGrid');
+mazeGridEl.style.setProperty('--cols', mazeData.cols);
+let mazePos = mazeData.start.slice();
+const mazeCellEls = {};
+function mazeKey(r,c){ return r+','+c; }
+mazeData.grid.forEach((row,r)=>{
+  row.forEach((cell,c)=>{
+    const d=document.createElement('div'); d.className='maze-cell';
+    if(cell.role==='wall'){ d.classList.add('wall'); }
+    else if(cell.role==='start'){ d.classList.add('start','current','visited'); d.innerHTML='<div>▶ START<br>'+cell.text+'</div>'; }
+    else if(cell.role==='finish'){ d.classList.add('finish'); d.textContent=cell.text; }
+    else { d.textContent=cell.text; }
+    d.dataset.r=r; d.dataset.c=c;
+    if(cell.role!=='wall') d.onclick=()=>mazeClick(r,c);
+    mazeGridEl.appendChild(d);
+    mazeCellEls[mazeKey(r,c)] = d;
+  });
+});
+const mazeDir = {j:[0,-1], w:[-1,0], r:[0,1]};
+function mazeClick(r,c){
+  const fb=document.getElementById('mazeFeedback');
+  const curCell = mazeData.grid[mazePos[0]][mazePos[1]];
+  const dr=r-mazePos[0], dc=c-mazePos[1];
+  const isAdjacent = Math.abs(dr)+Math.abs(dc)===1;
+  if(!isAdjacent){ return; }
+  if(curCell.role==='finish'){ return; }
+  const needed = mazeDir[curCell.snd];
+  const correct = needed && needed[0]===dr && needed[1]===dc;
+  const targetEl = mazeCellEls[mazeKey(r,c)];
+  if(correct){
+    mazeCellEls[mazeKey(mazePos[0],mazePos[1])].classList.remove('current');
+    mazePos=[r,c];
+    targetEl.classList.add('visited','current');
+    if(r===mazeData.finish[0] && c===mazeData.finish[1]){
+      fb.textContent = 'You escaped the maze! ✓'; fb.className='feedback good';
+    } else {
+      fb.textContent = 'Correct — now say the phrase in this new cell!'; fb.className='feedback good';
+    }
+  } else {
+    targetEl.classList.add('wrong');
+    fb.textContent = 'Not quite — say the phrase in your CURRENT (gold-outlined) cell out loud, work out /j/, /w/, or /r/, then click that direction.'; fb.className='feedback bad';
+    setTimeout(()=>targetEl.classList.remove('wrong'),400);
+  }
+}
+function resetMaze(){
+  Object.values(mazeCellEls).forEach(el=>el.classList.remove('visited','current','wrong'));
+  mazePos = mazeData.start.slice();
+  mazeCellEls[mazeKey(mazePos[0],mazePos[1])].classList.add('visited','current');
+  document.getElementById('mazeFeedback').textContent='';
+}
+
+// ---------- Activity 4: Mark the links ----------
+const holmesText = "But before we could move, the man had come outside again. In the light we could see that he had something white under his arm. He looked round to see if anyone was watching him. Then there was a sudden crash as he broke the thing against the wall. He was so busy that he didn't see the three of us coming towards him. Holmes jumped on his back and he fell to the ground heavily. Lestrade and I quickly ran to help Holmes. I had my gun ready and soon it was impossible for the man to escape.";
+const lp = document.getElementById('linkingPara');
+const words = holmesText.split(' ');
+let html='';
+words.forEach((w,i)=>{
+  html += '<span class="word-plain">'+w+'</span>';
+  if(i < words.length-1){
+    html += '<span class="link-gap" data-idx="'+i+'" onclick="this.classList.toggle(\'marked\')">\u203F</span>';
+  }
+});
+lp.innerHTML = html;
+const keyIdx = [8,9,21,23,30,37,40,45,59,65,68,76,77,90,92];
+let keyShown=false;
+function toggleKey(){
+  keyShown = !keyShown;
+  document.querySelectorAll('.link-gap').forEach(el=>{
+    const idx = parseInt(el.dataset.idx);
+    if(keyIdx.includes(idx)) el.classList.toggle('linked', keyShown);
+  });
+}
+
+// ---------- Activity 5: Spot the weak forms ----------
+const weakSentences = [
+  {text:'You and me', weak:[1]},
+  {text:'He must have gone', weak:[1,2]},
+  {text:'The corner of the table', weak:[0,3]},
+  {text:'I can swim', weak:[1]},
+  {text:'She was there for an hour', weak:[1,3,4]}
+];
+const weakArea = document.getElementById('weakArea');
+weakSentences.forEach((s,si)=>{
+  const wrapper=document.createElement('div'); wrapper.className='text-block';
+  const wordsArr = s.text.split(' ');
+  let inner = '';
+  wordsArr.forEach((w,wi)=>{
+    inner += '<span class="word-link" data-correct="'+(s.weak.includes(wi)?1:0)+'" onclick="this.classList.toggle(\'marked\')">'+w+'</span> ';
+  });
+  wrapper.innerHTML = inner;
+  weakArea.appendChild(wrapper);
+});
+const weakBtnRow = document.createElement('div'); weakBtnRow.className='btn-row';
+weakBtnRow.innerHTML = '<button class="btn secondary" onclick="revealWeak(this)">Show / hide answer</button>';
+weakArea.appendChild(weakBtnRow);
+let weakShown=false;
+function revealWeak(btn){
+  weakShown=!weakShown;
+  document.querySelectorAll('#weakArea .word-link').forEach(el=>{
+    if(el.dataset.correct==='1') el.classList.toggle('weak', weakShown);
+  });
+  btn.textContent = weakShown ? 'Hide answer' : 'Show / hide answer';
+}
+
+// ---------- Final: 5 features ----------
+const features = [
+  {name:'ELISION', c:'#c98a1c', csoft:'#fbf0d8', def:'A sound disappears completely to make the phrase easier to say.', ex:[['next day','nex\u2019 day — the /t/ disappears'],['must be','mus\u2019 be — the /t/ disappears']]},
+  {name:'ASSIMILATION', c:'#b8433a', csoft:'#f8e1de', def:'A sound changes to become more like the sound next to it.', ex:[['ten bikes','tem bikes — /n/ becomes /m/ before a \u2018b\u2019 sound'],['good girl','goog girl — /d/ becomes /g/ before a \u2018g\u2019 sound']]},
+  {name:'INTRUSIVE SOUNDS', c:'#2a8c82', csoft:'#dff1ee', def:'An extra sound is inserted between two vowel sounds to make them easier to say together.', ex:[['go away','go-w-away — a /w/ is inserted'],['I agree','I-y-agree — a /j/ is inserted']]},
+  {name:'LINKING / LIAISON', c:'#1F497D', csoft:'#e3ebf5', def:'A consonant sound at the end of one word joins onto the vowel sound starting the next word.', ex:[['an egg','a-negg — the /n/ joins onto \u2018egg\u2019'],['look at','loo-kat — the /k/ joins onto \u2018at\u2019']]},
+  {name:'STRONG & WEAK FORMS', c:'#7a4a9c', csoft:'#efe3f5', def:'Small grammar words (auxiliaries, prepositions, conjunctions) weaken so the listener mainly hears the content words.', ex:[['you AND me','you \u2018n me — and weakens'],['he MUST HAVE gone','he muhstuv gone — must and have weaken']]}
+];
+const featGrid = document.getElementById('featGrid');
+features.forEach(f=>{
+  const c=document.createElement('div'); c.className='feat-card'; c.style.setProperty('--c',f.c); c.style.setProperty('--c-soft',f.csoft);
+  const writtenList = f.ex.map(pair=>'<div class="feat-say-item">'+pair[0]+'</div>').join('');
+  const exHtml = f.ex.map(pair=>'<div class="feat-ex-row"><span class="feat-written">'+pair[0]+'</span><span class="feat-arrow">\u2192</span><span class="feat-heard">'+pair[1]+'</span></div>').join('');
+  c.innerHTML='<div class="feat-front"><div class="fname">'+f.name+'</div><div class="feat-say-label">say these out loud first:</div>'+writtenList+'</div>'+
+    '<div class="feat-back"><div class="feat-def">'+f.def+'</div><div class="feat-examples">'+exHtml+'</div></div>';
+  c.onclick=()=>toggleOpenCard(c);
+  featGrid.appendChild(c);
+});
+
+// ---------- nav ----------
+const navLinks=document.querySelectorAll('.sticky-nav a'), allSections=document.querySelectorAll('section[id]');
+function onScroll(){ const d=document.documentElement; const st=d.scrollTop||document.body.scrollTop; const sh=d.scrollHeight-d.clientHeight;
+  document.getElementById('progressFill').style.width=(sh>0?st/sh*100:0)+'%';
+  let cur=allSections[0]?allSections[0].id:''; allSections.forEach(s=>{ if(s.getBoundingClientRect().top<=150) cur=s.id; });
+  navLinks.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+cur)); }
+document.addEventListener('scroll',onScroll); onScroll();
+</script>
+</body>
+</html>
