@@ -219,6 +219,16 @@
 <script>
 function toggleOpenCard(el){ el.classList.toggle('open'); }
 
+// The reveal button sits inside its own .btn-row, so `this.nextElementSibling`
+// was null and the answer never opened -- every item in the practice table
+// looked like it had no answer at all. Reach the card, not the sibling.
+function revealRow(btn){
+  const card = btn.closest('.word-card').querySelector('.reveal-card');
+  if(!card) return;
+  const open = card.classList.toggle('open');
+  btn.textContent = open ? 'Hide answer' : 'Reveal answer';
+}
+
 // ---------- 1. What is eliciting: comprehension matching ----------
 function buildPillMatch(items,leftId,rightId,fbId,keyL,keyR){
   const L=document.getElementById(leftId), R=document.getElementById(rightId), fb=document.getElementById(fbId);
@@ -295,7 +305,7 @@ tableItems.forEach(item=>{
     d.innerHTML = '<div class="wname">'+item.structure+'</div>'+
       '<label>Meaning</label><textarea class="write-area" rows="2" placeholder="What does this mean?"></textarea>'+
       '<label>Your CCQs</label><textarea class="write-area" rows="2" placeholder="Write 2-3 CCQs..."></textarea>'+
-      '<div class="btn-row"><button class="btn secondary" onclick="this.nextElementSibling.classList.toggle(\'open\')">Reveal answer</button></div>'+
+      '<div class="btn-row"><button class="btn secondary" onclick="revealRow(this)">Reveal answer</button></div>'+
       '<div class="reveal-card" style="cursor:default;margin-top:8px;"><div class="a"><b>Meaning:</b> '+item.meaning+'<br><b>CCQs:</b> '+item.ccq+'</div></div>';
   }
   tableArea.appendChild(d);
