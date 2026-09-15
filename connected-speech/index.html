@@ -187,9 +187,9 @@
     <div class="card" style="--accent:var(--red);--accent-soft:var(--red-soft);">
       <div class="stage-title">The Dictation Computer <span class="badge">Puzzle</span><span class="time">10 min</span></div>
       <p class="lead">A dictation computer prints exactly what it hears — and connected speech confuses it. Each sentence on the left has a mistake. Match it to the response on the right that gives you a clue to the real sentence, then say what the computer should have printed.</p>
-      <p class="lead" style="font-size:.82rem;font-style:italic;">There's sometimes more than one defensible pairing — that's the nature of the puzzle. Compare your matches with your group.</p>
+      <p class="lead" style="font-size:.82rem;font-style:italic;">Each printed sentence has exactly one reply that gives the game away. Match it, and the real sentence appears with the feature that caused the mis-hearing.</p>
       <div class="pill-match-wrap"><div class="pill-col" id="dcLeft"></div><div class="pill-col" id="dcRight"></div></div>
-      <div class="feedback" id="dcFeedback" style="color:var(--sub);"></div>
+      <div class="btn-row"><button class="btn secondary" id="dcReveal">Show all answers</button><span class="feedback" id="dcFeedback" style="color:var(--sub);"></span></div>
     </div>
   </section>
 
@@ -288,45 +288,57 @@ elisionItems.forEach(it=>{
 });
 
 // ---------- Activity 2: Dictation computer (free pairing) ----------
-const dcLeftItems = [
-  'Alaska if she wants to come with us.',
-  'I can pose music for TV programmes.',
-  'The office has changed into civilian clothes.',
-  'Did you see the way to go? He was at the next table a minute ago.',
-  'In this newspaper, the TV guide is on the sent a page.',
-  'I picture book off the floor.',
-  'Will you ever for give me?',
-  'This map shows all the citizen railways in the country.',
-  'Spy does are not really insects you know.',
-  'Coke and Pepsi arrival companies.'
-];
-const dcRightItems = [
-  'Who changed into civilian clothes?',
-  'Yes; I saw him going into the kitchen.',
-  "You'll ask who?",
-  'Really? It used to be on the back page.',
-  'I didn\u2019t know you were a composer.',
-  'Only if you promise never to do it again.',
-  'They look like insects to me!',
-  "Oh thanks! I didn't realise I'd dropped it.",
-  'Do you think so? I think they work together myself.',
-  "It doesn't show the smaller places then?"
+const dcItems = [
+  { heard: 'Alaska if she wants to come with us.',                              real: "I'll ask her if she wants to come with us.", reply: "You'll ask who?",                                     feature: "/l/ links into 'ask her' — I'll ask her → Alaska" },
+  { heard: 'I can pose music for TV programmes.',                               real: 'I compose music for TV programmes.',         reply: "I didn't know you were a composer.",                 feature: "compose → 'can pose': the weak first syllable is heard as a separate word" },
+  { heard: 'The office has changed into civilian clothes.',                     real: 'The officer has changed into civilian clothes.', reply: 'Who changed into civilian clothes?',              feature: "officer has → /ɒfɪsəz/ — the weak 'er has' disappears into the /z/" },
+  { heard: 'Did you see the way to go? He was at the next table a minute ago.', real: 'Did you see the waiter go?',                 reply: 'Yes; I saw him going into the kitchen.',             feature: "waiter go → 'way to go': the /t/ flaps and the word boundary moves" },
+  { heard: 'In this newspaper, the TV guide is on the sent a page.',            real: 'In this newspaper, the TV guide is on the centre page.', reply: 'Really? It used to be on the back page.',  feature: "centre page → 'sent a page': the /r/ is lost and the schwa becomes 'a'" },
+  { heard: 'I picture book off the floor.',                                     real: "I'll pick your book off the floor.",         reply: "Oh thanks! I didn't realise I'd dropped it.",        feature: "pick your → /pɪktʃə/ — /k/ + /j/ coalesce into /tʃ/" },
+  { heard: 'Will you ever for give me?',                                        real: 'Will you ever forgive me?',                  reply: 'Only if you promise never to do it again.',          feature: "forgive → 'for give': the unstressed first syllable sounds like its own word" },
+  { heard: 'This map shows all the citizen railways in the country.',           real: 'This map shows all the cities and railways in the country.', reply: "It doesn't show the smaller places then?", feature: "cities and → /sɪtɪzən/ — 'and' weakens to /ən/ and joins on" },
+  { heard: 'Spy does are not really insects you know.',                         real: 'Spiders are not really insects, you know.',  reply: 'They look like insects to me!',                      feature: "spiders are → 'spy does are': the /z/ moves to the front of 'are'" },
+  { heard: 'Coke and Pepsi arrival companies.',                                 real: 'Coke and Pepsi are rival companies.',        reply: 'Do you think so? I think they work together myself.', feature: "are rival → 'arrival': the linking /r/ joins the two words" }
 ];
 const dcL = document.getElementById('dcLeft'), dcR = document.getElementById('dcRight');
-let dcSelL=null, dcSelR=null, dcCount=0;
-const dcRShuffled = dcRightItems.map((t,i)=>({t,i})).sort(()=>Math.random()-0.5);
-dcLeftItems.forEach((t,i)=>{ const p=document.createElement('div'); p.className='pill'; p.textContent=(i+1)+'. '+t; p.dataset.i=i;
-  p.onclick=()=>{ if(p.classList.contains('matched'))return; dcL.querySelectorAll('.pill').forEach(x=>x.classList.remove('selected')); p.classList.add('selected'); dcSelL=p; dcGo(); }; dcL.appendChild(p); });
-dcRShuffled.forEach(s=>{ const p=document.createElement('div'); p.className='pill'; p.textContent=String.fromCharCode(97+s.i)+'. '+s.t; p.dataset.i=s.i;
-  p.onclick=()=>{ if(p.classList.contains('matched'))return; dcR.querySelectorAll('.pill').forEach(x=>x.classList.remove('selected')); p.classList.add('selected'); dcSelR=p; dcGo(); }; dcR.appendChild(p); });
+let dcSelL=null, dcSelR=null, dcDone=0;
+const dcFb = document.getElementById('dcFeedback');
+const dcShuffled = dcItems.map((it,i)=>({reply:it.reply, idx:i})).sort(()=>Math.random()-0.5);
+dcItems.forEach((it,i)=>{
+  const p=document.createElement('div'); p.className='pill'; p.dataset.i=i;
+  p.innerHTML='<div>'+(i+1)+'. '+it.heard+'</div><div class="dc-real" style="display:none;margin-top:6px;font-weight:700;color:var(--teal-deep);">\u2192 '+it.real+'<div style="font-weight:600;color:var(--sub);font-size:.78rem;margin-top:3px;">'+it.feature+'</div></div>';
+  p.onclick=()=>{ if(p.classList.contains('matched'))return; dcL.querySelectorAll('.pill').forEach(x=>x.classList.remove('selected')); p.classList.add('selected'); dcSelL=p; dcGo(); };
+  dcL.appendChild(p);
+});
+dcShuffled.forEach(s=>{
+  const p=document.createElement('div'); p.className='pill'; p.dataset.i=s.idx; p.textContent=String.fromCharCode(97+s.idx)+'. '+s.reply;
+  p.onclick=()=>{ if(p.classList.contains('matched'))return; dcR.querySelectorAll('.pill').forEach(x=>x.classList.remove('selected')); p.classList.add('selected'); dcSelR=p; dcGo(); };
+  dcR.appendChild(p);
+});
 function dcGo(){
   if(!dcSelL||!dcSelR) return;
-  dcSelL.classList.replace('selected','matched'); dcSelR.classList.replace('selected','matched');
-  dcCount++;
-  const fb=document.getElementById('dcFeedback');
-  fb.textContent = dcCount+' / 10 paired — discuss your choices with your group.';
-  dcSelL=null; dcSelR=null;
+  const a=dcSelL, b=dcSelR; dcSelL=null; dcSelR=null;
+  if(a.dataset.i===b.dataset.i){
+    a.classList.replace('selected','matched'); b.classList.replace('selected','matched');
+    const real=a.querySelector('.dc-real'); if(real) real.style.display='block';
+    dcDone++;
+    dcFb.textContent = dcDone===dcItems.length ? 'All ten \u2014 every sentence recovered. \u2713' : dcDone+' / '+dcItems.length+' correct';
+    dcFb.className='feedback good';
+  } else {
+    a.classList.add('wrong'); b.classList.add('wrong');
+    dcFb.textContent='Not that one \u2014 read the reply again and ask what it tells you about the real sentence.';
+    dcFb.className='feedback bad';
+    setTimeout(()=>{ a.classList.remove('selected','wrong'); b.classList.remove('selected','wrong'); },600);
+  }
 }
+document.getElementById('dcReveal').onclick=()=>{
+  dcL.querySelectorAll('.pill').forEach((p,i)=>{
+    p.classList.add('matched'); const real=p.querySelector('.dc-real'); if(real) real.style.display='block';
+  });
+  dcR.querySelectorAll('.pill').forEach(p=>p.classList.add('matched'));
+  dcDone=dcItems.length;
+  dcFb.textContent='Answers shown.'; dcFb.className='feedback good';
+};
 
 // ---------- Activity 3: The Link Maze ----------
 const mazeData = {"grid": [[{"text": "Where are you?", "snd": "r", "role": "path"}, {"text": "Never again!", "snd": "r", "role": "path"}, {"text": "Score a goal", "snd": "r", "role": "path"}, {"text": "FINISH", "snd": "finish", "role": "finish"}, {"text": "", "snd": "wall", "role": "wall"}, {"text": "", "snd": "wall", "role": "wall"}], [{"text": "Go ahead", "snd": "w", "role": "path"}, {"text": "Give me a ring", "snd": "j", "role": "path"}, {"text": "I agree", "snd": "j", "role": "path"}, {"text": "Tea or coffee?", "snd": "j", "role": "path"}, {"text": "We aren't ready", "snd": "j", "role": "path"}, {"text": "Three and a half", "snd": "j", "role": "path"}], [{"text": "", "snd": "wall", "role": "wall"}, {"text": "", "snd": "wall", "role": "wall"}, {"text": "She arrived", "snd": "j", "role": "decoy"}, {"text": "", "snd": "wall", "role": "wall"}, {"text": "Go to England", "snd": "w", "role": "decoy"}, {"text": "Hello everybody!", "snd": "w", "role": "path"}], [{"text": "A few apples", "snd": "w", "role": "decoy"}, {"text": "", "snd": "wall", "role": "wall"}, {"text": "Day and night", "snd": "j", "role": "decoy"}, {"text": "", "snd": "wall", "role": "wall"}, {"text": "True or false?", "snd": "w", "role": "decoy"}, {"text": "A queue of people", "snd": "w", "role": "path"}], [{"text": "", "snd": "wall", "role": "wall"}, {"text": "Four and a half", "snd": "r", "role": "decoy"}, {"text": "Law and order", "snd": "r", "role": "decoy"}, {"text": "Draw a line", "snd": "r", "role": "start"}, {"text": "We saw a film", "snd": "r", "role": "path"}, {"text": "Two or three", "snd": "w", "role": "path"}], [{"text": "Try again!", "snd": "j", "role": "decoy"}, {"text": "", "snd": "wall", "role": "wall"}, {"text": "Answer a question", "snd": "r", "role": "decoy"}, {"text": "", "snd": "wall", "role": "wall"}, {"text": "Blue eyes", "snd": "w", "role": "decoy"}, {"text": "", "snd": "wall", "role": "wall"}]], "finish": [0, 3], "start": [4, 3], "rows": 6, "cols": 6};
