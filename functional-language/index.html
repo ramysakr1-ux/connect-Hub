@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CELTA Input Session – Functional Language</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f7fa; --paper:#ffffff; --ink:#1c2b3a; --sub:#5b6b7c; --line:#d9e2ec;
+    --navy:#1F497D; --navy-deep:#163a63; --navy-soft:#e3ebf5;
+    --teal:#2a8c82; --teal-deep:#1f6f66; --teal-soft:#dff1ee;
+    --amber:#c98a1c; --amber-soft:#fbf0d8;
+    --red:#b8433a; --red-soft:#f8e1de;
+    --purple:#7a4a9c; --purple-soft:#efe3f5;
+    --gold:#caa23a;
+    --shadow:0 10px 30px rgba(28,43,58,.08);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;background:var(--bg);font-family:'Nunito',sans-serif;color:var(--ink);}
+  .watermark{position:fixed;bottom:16px;right:16px;font-weight:800;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:var(--teal);opacity:.35;padding:5px 13px;border-radius:999px;pointer-events:none;z-index:30;}
+  .progress-bar{position:sticky;top:0;z-index:20;height:4px;background:var(--line);}
+  .progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--navy),var(--teal));transition:width .1s;}
+  .topbar{position:sticky;top:4px;z-index:20;background:rgba(244,247,250,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:8px 14px;}
+  .topbar .logo{height:36px;width:auto;flex:0 0 auto;}
+  nav.sticky-nav{display:flex;gap:6px;overflow-x:auto;flex:1;scrollbar-width:none;}
+  nav.sticky-nav::-webkit-scrollbar{display:none;}
+  nav.sticky-nav a{flex:0 0 auto;text-decoration:none;font-size:.66rem;font-weight:800;color:var(--navy);background:#fff;border:1.3px solid var(--line);padding:6px 10px;border-radius:999px;white-space:nowrap;transition:.2s;}
+  nav.sticky-nav a.active{background:var(--navy);color:#fff;border-color:transparent;}
+  .print-btn{flex:0 0 auto;border:1.5px solid var(--teal);background:#fff;color:var(--teal-deep);font-weight:800;font-size:.72rem;padding:7px 14px;border-radius:999px;cursor:pointer;}
+
+  .hero{padding:34px 20px 20px;text-align:center;}
+  .hero h1{font-family:'Playfair Display',serif;font-weight:700;font-size:2rem;margin:0 0 .2em;color:var(--navy-deep);}
+  .hero p{margin:0;color:var(--sub);font-size:.94rem;}
+
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px 70px;}
+  section{padding-top:70px;margin-top:-40px;scroll-margin-top:100px;}
+  section:first-of-type{padding-top:10px;}
+  .card{background:var(--paper);border-radius:16px;padding:26px 28px;box-shadow:var(--shadow);border:1px solid var(--line);border-left:6px solid var(--accent,var(--navy));margin-bottom:6px;}
+  .stage-title{font-family:'Playfair Display',serif;font-size:1.32rem;color:var(--navy-deep);margin:0 0 6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .badge{font-size:.64rem;font-weight:800;background:var(--accent-soft,var(--navy-soft));color:var(--accent,var(--navy));padding:4px 10px;border-radius:999px;letter-spacing:.05em;text-transform:uppercase;}
+  .time{font-size:.7rem;font-weight:800;color:var(--sub);background:var(--bg);border:1px solid var(--line);padding:4px 10px;border-radius:999px;}
+  .lead{color:var(--sub);margin:0 0 16px;font-size:.94rem;line-height:1.55;}
+  .lead b{color:var(--ink);}
+
+  .btn{background:var(--navy);color:#fff;border:none;padding:10px 20px;border-radius:999px;font-weight:800;font-size:.85rem;cursor:pointer;box-shadow:var(--shadow);}
+  .btn.teal{background:var(--teal);}
+  .btn.secondary{background:#fff;color:var(--navy);border:1.5px solid var(--line);box-shadow:none;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center;}
+  .feedback{font-weight:700;font-size:.9rem;min-height:1.2em;}
+  .feedback.good{color:var(--teal-deep);}
+  .feedback.bad{color:var(--red);}
+
+  .text-block{background:var(--bg);border-radius:12px;padding:14px 18px;margin:10px 0;font-size:.9rem;line-height:1.65;}
+  .text-block b{color:var(--navy-deep);}
+
+  .reveal-card{background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:12px 16px;margin:8px 0;cursor:pointer;transition:.15s;}
+  .reveal-card:hover{border-color:var(--teal);}
+  .reveal-card .q{font-weight:700;font-size:.9rem;color:var(--ink);}
+  .reveal-card .a{display:none;margin-top:8px;font-size:.86rem;color:var(--teal-deep);font-weight:700;}
+  .reveal-card.open .a{display:block;}
+  .reveal-card .hint{font-size:.72rem;color:var(--sub);font-weight:600;}
+
+  .feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0;}
+  @media(max-width:640px){.feat-grid{grid-template-columns:1fr;}}
+  .feat-card{border-radius:14px;border:2px solid var(--c);overflow:hidden;cursor:pointer;background:#fff;transition:.2s;}
+  .feat-card:hover{transform:translateY(-2px);}
+  .feat-front{padding:14px 16px;background:var(--c-soft);}
+  .feat-front .fname{font-family:'Playfair Display';font-weight:700;color:var(--c);font-size:1.05rem;}
+  .feat-say-label{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--sub);margin-top:10px;}
+  .feat-say-item{font-size:.92rem;font-weight:700;color:var(--ink);margin-top:4px;}
+  .feat-back{display:none;padding:14px 16px;font-size:.86rem;line-height:1.6;border-top:2px dashed var(--c);}
+  .feat-card.open .feat-back{display:block;}
+  .feat-card.open .feat-front{background:#fff;}
+  .feat-examples{margin-top:8px;}
+  .feat-ex-row{display:flex;align-items:baseline;gap:8px;margin-top:6px;font-size:.83rem;flex-wrap:wrap;}
+  .feat-written{color:var(--sub);text-decoration:line-through;text-decoration-color:var(--line);}
+  .feat-arrow{color:var(--c);font-weight:800;}
+  .feat-heard{color:var(--ink);font-weight:700;}
+
+  .pill-match-wrap{display:grid;grid-template-columns:1fr 1.3fr;gap:16px;margin:14px 0;}
+  @media(max-width:640px){.pill-match-wrap{grid-template-columns:1fr;}}
+  .pill-col{display:flex;flex-direction:column;gap:9px;}
+  .pill{background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:10px 14px;font-size:.84rem;font-weight:700;color:var(--ink);cursor:pointer;transition:.15s;line-height:1.4;}
+  .pill:hover{border-color:var(--teal);}
+  .pill.selected{border-color:var(--navy);background:#fff;box-shadow:0 0 0 3px rgba(31,73,125,.15);}
+  .pill.matched{background:var(--teal-soft);border-color:var(--teal);color:var(--teal-deep);}
+
+  .word-link{display:inline-block;padding:3px 2px;margin:1px;border-radius:6px;cursor:pointer;font-size:.95rem;transition:.15s;}
+  .word-link.marked{background:var(--amber-soft);box-shadow:0 2px 0 var(--amber);}
+  .word-link.linked{background:var(--teal-soft);box-shadow:0 2px 0 var(--teal);}
+  .word-link.weak{background:var(--purple-soft);box-shadow:0 2px 0 var(--purple);}
+  .word-plain{font-size:1rem;}
+  .link-gap{display:inline-block;width:20px;text-align:center;cursor:pointer;color:#b9c4d0;font-weight:900;font-size:1.15rem;transition:.15s;vertical-align:middle;}
+  .link-gap:hover{color:var(--navy);}
+  .link-gap.marked{color:var(--amber);transform:scale(1.5);}
+  .link-gap.linked{color:var(--teal);transform:scale(1.5);}
+  .linking-para{font-size:1rem;line-height:2.3;background:var(--bg);border-radius:12px;padding:16px 18px;margin:12px 0;}
+
+  .divider{display:flex;align-items:center;gap:12px;margin:30px 0 16px;color:var(--line);}
+  .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--line);}
+  .divider span{font-family:'Playfair Display';font-style:italic;color:var(--sub);font-size:.9rem;}
+  footer.note{text-align:center;color:var(--sub);font-size:.76rem;margin-top:30px;}
+
+  /* maze */
+  .maze-legend{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;}
+  .maze-legend span{font-size:.78rem;font-weight:800;padding:6px 12px;border-radius:999px;border:2px solid var(--c);color:var(--c);}
+  .maze-grid{display:grid;grid-template-columns:repeat(var(--cols,5),1fr);gap:6px;margin:14px 0;}
+  .maze-cell.wall{background:var(--bg);border:2px dashed var(--line);cursor:default;}
+  .maze-cell.wall:hover{border-color:var(--line);}
+  .maze-cell{border:2px solid var(--line);border-radius:10px;padding:8px 6px;font-size:.68rem;font-weight:700;text-align:center;line-height:1.3;cursor:pointer;background:#fff;min-height:64px;display:flex;align-items:center;justify-content:center;transition:.15s;color:var(--ink);}
+  .maze-cell:hover{border-color:var(--navy);}
+  .maze-cell.start{background:var(--navy);color:#fff;font-family:'Nunito';font-size:.62rem;font-weight:800;}
+  .maze-cell.start div{line-height:1.5;}
+  .maze-cell.current{box-shadow:0 0 0 3px var(--gold);border-color:var(--gold);}
+  .maze-cell.visited{background:var(--teal-soft);border-color:var(--teal);color:var(--teal-deep);}
+  .maze-cell.finish{border-color:var(--red);}
+  .maze-cell.finish.visited{background:var(--red-soft);border-color:var(--red);color:var(--red);}
+  .maze-cell.wrong{animation:shake .3s;border-color:var(--red);}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
+
+  .checklist{list-style:none;margin:0;padding:0;}
+  .checklist li{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:.9rem;line-height:1.5;}
+  .checklist li:last-child{border-bottom:none;}
+  .checklist li::before{content:'●';color:var(--accent,var(--navy));font-size:.6rem;margin-top:6px;}
+  @media print{.topbar,.progress-bar,.watermark{display:none !important;}.card{box-shadow:none;break-inside:avoid;}}
+
+  .flip-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;}
+  @media(max-width:640px){.flip-grid{grid-template-columns:1fr;}}
+  .flip-card{border-radius:14px;border:2px solid var(--c);overflow:hidden;cursor:pointer;background:#fff;transition:.2s;}
+  .flip-card:hover{transform:translateY(-2px);}
+  .flip-front{padding:12px 14px;background:var(--c-soft);font-family:'Playfair Display';font-weight:700;color:var(--c);font-size:.98rem;}
+  .flip-back{display:none;padding:12px 14px;font-size:.84rem;line-height:1.55;border-top:2px dashed var(--c);}
+  .flip-card.open .flip-back{display:block;}
+  .flip-card.open .flip-front{background:#fff;}
+  .flip-example{font-style:italic;color:var(--sub);margin-top:6px;}
+  .write-area{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Nunito';font-size:.9rem;color:var(--ink);resize:vertical;margin-top:6px;background:var(--bg);}
+  .write-area:focus{outline:none;border-color:var(--teal);}
+  .word-card{background:var(--bg);border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;}
+  .word-card .wname{font-family:'Playfair Display';font-weight:700;color:var(--navy-deep);font-size:1.05rem;margin-bottom:8px;}
+  .word-card label{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--sub);display:block;margin-top:8px;}
+  .pair-tag{font-family:'Nunito';font-size:.62rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--navy);border:1.5px solid var(--navy);border-radius:999px;padding:3px 9px;vertical-align:middle;margin-left:6px;}
+
+  .analysis-row{display:grid;grid-template-columns:130px 1fr;gap:10px;align-items:start;margin:8px 0;}
+  @media(max-width:560px){.analysis-row{grid-template-columns:1fr;}}
+  .analysis-label{background:var(--navy);color:#fff;border-radius:10px;padding:9px 12px;font-weight:800;font-size:.8rem;text-align:center;}
+  .analysis-row .write-area{margin-top:0;}
+  .key-row{display:grid;grid-template-columns:130px 1fr;gap:10px;align-items:start;margin:8px 0;font-size:.9rem;line-height:1.55;}
+  @media(max-width:560px){.key-row{grid-template-columns:1fr;}}
+  .key-row .analysis-label{background:var(--teal);}
+  .key-box{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 12px;}
+  .chip-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0;}
+  @media(max-width:700px){.chip-grid{grid-template-columns:repeat(2,1fr);}}
+  .chip{background:var(--navy-soft);border:1.5px solid var(--navy);border-radius:12px;padding:10px;text-align:center;font-weight:800;color:var(--navy-deep);font-size:.85rem;}
+  .quote{font-family:'Playfair Display';font-size:1.25rem;color:var(--navy-deep);margin:6px 0 14px;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:600px){.two-col{grid-template-columns:1fr;}}
+  .link-card{display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--navy-soft);border:1.5px solid var(--navy);border-radius:14px;padding:12px 18px;margin:10px 0;flex-wrap:wrap;}
+  .link-card .lc-text{font-size:.88rem;color:var(--navy-deep);}
+  .link-card a{background:var(--navy);color:#fff;text-decoration:none;font-weight:800;font-size:.83rem;padding:8px 16px;border-radius:999px;white-space:nowrap;}
+  .reveal-block{display:none;margin-top:14px;}
+  .reveal-block.shown{display:block;}
+</style>
+</head>
+<body>
+<div class="watermark">Ramy</div>
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+<div class="topbar">
+  <svg class="logo" viewBox="0 0 220 60" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="International House Istanbul">
+    <circle cx="30" cy="30" r="28" fill="#3B44B5"/>
+    <text x="30" y="43" text-anchor="middle" font-family="Nunito,Arial,sans-serif" font-weight="800" font-size="34" fill="#fff">ih</text>
+    <text x="68" y="22" font-family="Nunito,Arial,sans-serif" font-weight="800" font-size="17" fill="#111">International</text>
+    <text x="68" y="40" font-family="Nunito,Arial,sans-serif" font-weight="800" font-size="17" fill="#111">House</text>
+    <text x="68" y="56" font-family="Nunito,Arial,sans-serif" font-weight="600" font-size="14" fill="#333">Istanbul</text>
+  </svg>
+  <nav class="sticky-nav" id="stickyNav">
+    <a href="#s1">1 · Practice</a>
+    <a href="#s2">2 · Key: Exp 1</a>
+    <a href="#s3">3 · Analyse: Exp 2</a>
+    <a href="#s4">4 · Analyse: Exp 3</a>
+    <a href="#s5">5 · Functions</a>
+    <a href="#s6">6 · Matching</a>
+    <a href="#s7">7 · Key: Matching</a>
+    <a href="#s8">8 · Requests</a>
+    <a href="#s9">9 · Responding</a>
+    <a href="#s10">10 · Key: Exp 2</a>
+    <a href="#s11">11 · Key: Exp 3</a>
+  </nav>
+  <button class="print-btn" onclick="window.print()">🖨 Print</button>
+</div>
+
+<div class="hero">
+  <h1>Functional Language</h1>
+</div>
+
+<div class="wrap">
+
+  <section id="s1">
+    <div class="card" style="--accent:var(--navy);--accent-soft:var(--navy-soft);">
+      <div class="stage-title">Analysing Functional Exponents <span class="badge">Practice</span></div>
+      <p class="lead">For each sentence, identify: <b>Form</b> (as a chunk) · <b>Phonology</b> · <b>Function</b> · <b>CCQs</b> · <b>Context</b>.</p>
+      <ol style="font-size:.95rem;line-height:1.9;color:var(--ink);">
+        <li>Can you pass me the sugar, please?</li>
+        <li>You should stay in bed.</li>
+        <li>If only I'd been more romantic with her.</li>
+      </ol>
+      <p class="lead" style="margin-top:14px;">Start with exponent 1.</p>
+      <div class="quote">“Can you pass me the sugar, please?”</div>
+      <div class="analysis-row"><div class="analysis-label">Form</div><textarea class="write-area" rows="2" placeholder="..."></textarea></div><div class="analysis-row"><div class="analysis-label">Function</div><textarea class="write-area" rows="2" placeholder="..."></textarea></div><div class="analysis-row"><div class="analysis-label">Phonology</div><textarea class="write-area" rows="2" placeholder="..."></textarea></div><div class="analysis-row"><div class="analysis-label">CCQs</div><textarea class="write-area" rows="2" placeholder="..."></textarea></div><div class="analysis-row"><div class="analysis-label">Context</div><textarea class="write-area" rows="2" placeholder="..."></textarea></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>answer key</span></div>
+
+  <section id="s2">
+    <div class="card" style="--accent:var(--teal);--accent-soft:var(--teal-soft);">
+      <div class="stage-title">Answer Key — Exponent 1 <span class="badge">Reveal</span></div>
+      <div class="quote">“Can you pass me the sugar, please?”</div>
+      <div class="btn-row"><button class="btn secondary" onclick="toggleReveal('key1',this)">Reveal answer key</button></div>
+      <div class="reveal-block" id="key1"><div class="key-row"><div class="analysis-label">Form</div><div class="key-box">can + subject pronoun + infinitive verb (no ‘to’) + object pronoun + definite article + noun — present simple</div></div><div class="key-row"><div class="analysis-label">Function</div><div class="key-box">A polite request</div></div><div class="key-row"><div class="analysis-label">Phonology</div><div class="key-box">/kən/ weak form; /kənju/ linking of ‘can’ + ‘you’</div></div><div class="key-row"><div class="analysis-label">CCQs</div><div class="key-box">Is it past, present or future? (Present) · Does she have the sugar? (No) · Does she want the sugar? (Yes)</div></div><div class="key-row"><div class="analysis-label">Context</div><div class="key-box">Two friends are drinking tea in a café. The table is a bit long and the other friend can't reach the sugar, so they need to ask for it.</div></div></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>practice</span></div>
+
+  <section id="s3">
+    <div class="card" style="--accent:var(--navy);--accent-soft:var(--navy-soft);">
+      <div class="stage-title">Analyse the Following Sentence <span class="badge">Exponent 2</span></div>
+      <div class="quote">“You should stay in bed.”</div>
+      <div class="analysis-row"><div class="analysis-label">Form</div><textarea class="write-area" rows="2" placeholder="..."></textarea></div><div class="analysis-row"><div class="analysis-label">Function</div><textarea class="write-area" rows="2" placeholder="..."></textarea></div><div class="analysis-row"><div class="analysis-label">Phonology</div><textarea class="write-area" rows="2" placeholder="..."></textarea></div><div class="analysis-row"><div class="analysis-label">CCQs</div><textarea class="write-area" rows="2" placeholder="..."></textarea></div><div class="analysis-row"><div class="analysis-label">Context</div><textarea class="write-area" rows="2" placeholder="..."></textarea></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>practice</span></div>
+
+  <section id="s4">
+    <div class="card" style="--accent:var(--navy);--accent-soft:var(--navy-soft);">
+      <div class="stage-title">Analyse the Following Sentence <span class="badge">Exponent 3</span></div>
+      <div class="quote">“If only I'd been more romantic with her.”</div>
+      <div class="analysis-row"><div class="analysis-label">Form</div><textarea class="write-area" rows="2" placeholder="..."></textarea></div><div class="analysis-row"><div class="analysis-label">Function</div><textarea class="write-area" rows="2" placeholder="..."></textarea></div><div class="analysis-row"><div class="analysis-label">Phonology</div><textarea class="write-area" rows="2" placeholder="..."></textarea></div><div class="analysis-row"><div class="analysis-label">CCQs</div><textarea class="write-area" rows="2" placeholder="..."></textarea></div><div class="analysis-row"><div class="analysis-label">Context</div><textarea class="write-area" rows="2" placeholder="..."></textarea></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>handouts</span></div>
+
+  <section id="s5">
+    <div class="card" style="--accent:var(--teal);--accent-soft:var(--teal-soft);">
+      <div class="stage-title">Functions We'll Cover Today <span class="badge">Handouts</span></div>
+      <p class="lead">For each function below, think: what's an exponent you already know? What's another way of expressing it?</p>
+      <div class="chip-grid"><div class="chip">Advising</div><div class="chip">Thanking</div><div class="chip">Greeting</div><div class="chip">Agreeing</div><div class="chip">Interrupting</div><div class="chip">Clarifying</div><div class="chip">Disagreeing</div><div class="chip">Expressing obligation</div><div class="chip">Inviting</div><div class="chip">Refusing</div><div class="chip">Expressing preferences</div><div class="chip">Threatening</div></div>
+      <textarea class="write-area" rows="3" placeholder="Jot down your own exponents here..."></textarea>
+    </div>
+  </section>
+
+  <div class="divider"><span>handouts — matching activity</span></div>
+
+  <section id="s6">
+    <div class="card" style="--accent:var(--navy);--accent-soft:var(--navy-soft);">
+      <div class="stage-title">Match Each Exponent to a Function <span class="badge">Match the pills</span></div>
+      <p class="lead">Which function from the list above does each phrase express? Click a phrase on the left, then its function on the right.</p>
+      <div class="link-card"><div class="lc-text">Prefer to play it on Wordwall?</div><a href="https://wordwall.net/resource/64517127" target="_blank">Open Wordwall ↗</a></div>
+      <div class="pill-match-wrap"><div class="pill-col" id="mLeft"></div><div class="pill-col" id="mRight"></div></div>
+      <div class="feedback" id="mFeedback"></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>answer key</span></div>
+
+  <section id="s7">
+    <div class="card" style="--accent:var(--teal);--accent-soft:var(--teal-soft);">
+      <div class="stage-title">Matching — Answer Key <span class="badge">Reveal</span></div>
+      <div class="btn-row"><button class="btn secondary" onclick="toggleReveal('keyM',this)">Reveal answer key</button></div>
+      <div class="reveal-block" id="keyM"></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>further considerations</span></div>
+
+  <section id="s8">
+    <div class="card" style="--accent:var(--navy);--accent-soft:var(--navy-soft);">
+      <div class="stage-title">Requests — What Else Do Learners Need to Know? <span class="badge">Discussion</span></div>
+      <p class="lead">Imagine you're teaching all of these exponents for requests in the same lesson. What else do learners need to understand about them — formality, appropriacy, the relationship between speakers? How would you clarify this in class?</p>
+      <ul class="checklist" style="--accent:var(--navy);"><li>Can you pass me the sugar?</li><li>Would you be so kind as to pass me the sugar, please?</li><li>Pass the sugar, please.</li><li>Sugar.</li><li>Could you pass me the sugar?</li><li>Would you mind passing the sugar?</li></ul>
+      <textarea class="write-area" rows="3" placeholder="Your notes..."></textarea>
+    </div>
+  </section>
+
+  <div class="divider"><span>further considerations</span></div>
+
+  <section id="s9">
+    <div class="card" style="--accent:var(--navy);--accent-soft:var(--navy-soft);">
+      <div class="stage-title">Don't Forget the Other Side of the Conversation! <span class="badge">Discussion</span></div>
+      <div class="text-block">If we teach learners how to make requests, we equally need to teach them how to <input class="blank" id="gap1" style="width:120px" placeholder="________"> to them!</div>
+      <div class="btn-row"><button class="btn" onclick="checkGap()">Check</button><span class="feedback" id="gapFeedback"></span></div>
+      <p class="lead" style="margin-top:16px;"><b>Discuss:</b> list some examples of how learners might respond to a request — both accepting and declining.</p>
+      <div class="two-col">
+        <div><div class="analysis-label" style="background:var(--teal);">Accepting</div><textarea class="write-area" rows="4" placeholder="..."></textarea></div>
+        <div><div class="analysis-label" style="background:var(--red);">Declining</div><textarea class="write-area" rows="4" placeholder="..."></textarea></div>
+      </div>
+      <div class="btn-row"><button class="btn secondary" onclick="toggleReveal('keyR',this)">Reveal examples</button></div>
+      <div class="reveal-block" id="keyR"><div class="two-col">
+        <div class="key-box"><b>Accepting</b><br>• Sure, no problem.<br>• Of course, here you go.<br>• Yeah, I'd be happy to.</div>
+        <div class="key-box"><b>Declining</b><br>• I'm sorry, I can't right now.<br>• I'd love to, but I'm busy.<br>• Sorry, I'm afraid not.</div>
+      </div></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>answer key</span></div>
+
+  <section id="s10">
+    <div class="card" style="--accent:var(--teal);--accent-soft:var(--teal-soft);">
+      <div class="stage-title">Answer Key — Exponent 2 <span class="badge">Reveal</span></div>
+      <div class="quote">“You should stay in bed.”</div>
+      <div class="btn-row"><button class="btn secondary" onclick="toggleReveal('key2',this)">Reveal answer key</button></div>
+      <div class="reveal-block" id="key2"><div class="key-row"><div class="analysis-label">Form</div><div class="key-box">subject pronoun + should + infinitive verb (no ‘to’) + prepositional phrase (in + noun) — modal verb, present</div></div><div class="key-row"><div class="analysis-label">Function</div><div class="key-box">Giving advice</div></div><div class="key-row"><div class="analysis-label">Phonology</div><div class="key-box">‘should’ weak form /ʃəd/; sentence stress on ‘stay’ and ‘bed’; falling intonation</div></div><div class="key-row"><div class="analysis-label">CCQs</div><div class="key-box">Is the person ill? (Yes) · Is this an order or a suggestion? (Suggestion) · Does the speaker think it’s a good idea? (Yes) · Must they stay in bed? (No)</div></div><div class="key-row"><div class="analysis-label">Context</div><div class="key-box">A friend has a bad cold but is thinking of going to work anyway. Their flatmate tells them it’s better to rest.</div></div></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>answer key</span></div>
+
+  <section id="s11">
+    <div class="card" style="--accent:var(--teal);--accent-soft:var(--teal-soft);">
+      <div class="stage-title">Answer Key — Exponent 3 <span class="badge">Reveal</span></div>
+      <div class="quote">“If only I'd been more romantic with her.”</div>
+      <div class="btn-row"><button class="btn secondary" onclick="toggleReveal('key3',this)">Reveal answer key</button></div>
+      <div class="reveal-block" id="key3"><div class="key-row"><div class="analysis-label">Form</div><div class="key-box">If only + subject pronoun + had (‘d) + past participle + comparative adjective + prepositional phrase — past perfect</div></div><div class="key-row"><div class="analysis-label">Function</div><div class="key-box">Expressing regret about the past</div></div><div class="key-row"><div class="analysis-label">Phonology</div><div class="key-box">‘I’d’ contracted /aɪd/; ‘been’ weak form /bɪn/; stress on ‘only’ and ‘romantic’; falling intonation</div></div><div class="key-row"><div class="analysis-label">CCQs</div><div class="key-box">Is he talking about the past? (Yes) · Was he romantic with her? (No) · Can he change it now? (No) · Does he feel sorry about it? (Yes)</div></div><div class="key-row"><div class="analysis-label">Context</div><div class="key-box">A man is telling a friend about his ex-girlfriend, who has just left him. He’s thinking about what he could have done differently.</div></div></div>
+    </div>
+  </section>
+
+  <footer class="note">CELTA Input Session – Functional Language · International House Istanbul</footer>
+</div>
+
+<script>
+function toggleReveal(id,btn){ const el=document.getElementById(id); if(!btn.dataset.orig) btn.dataset.orig=btn.textContent; el.classList.toggle('shown'); btn.textContent = el.classList.contains('shown') ? 'Hide' : btn.dataset.orig; }
+const pairs = [
+  ['Would you like to go to see a film tonight?','Inviting'],
+  ['Sorry to stop you but what do you mean?','Interrupting'],
+  ["Yes, that's exactly what I think.",'Agreeing'],
+  ["Good morning, how's it going?",'Greeting'],
+  ["If you do that again there'll be trouble.",'Threatening'],
+  ["I really don't share your view on this.",'Disagreeing'],
+  ['I think you should go and see a doctor.','Advising'],
+  ['Oh, thank you so much for the lovely hat you gave me!','Thanking'],
+  ['What I mean is, this is the important part.','Clarifying'],
+  ["I think the red one's much more interesting.",'Expressing preferences'],
+  ['You must be at work by 4pm.','Expressing obligation'],
+  ["I'd love to but I'm busy.",'Refusing']
+];
+(function(){
+  const L=document.getElementById('mLeft'),R=document.getElementById('mRight'),fb=document.getElementById('mFeedback');
+  let selL=null,selR=null,done=0;
+  const shuffled=pairs.map((p,i)=>({t:p[1],i})).sort(()=>Math.random()-0.5);
+  pairs.forEach((p,i)=>{const d=document.createElement('div');d.className='pill';d.textContent=(i+1)+'. '+p[0];d.dataset.i=i;
+    d.onclick=()=>{if(d.classList.contains('matched'))return;L.querySelectorAll('.pill').forEach(x=>x.classList.remove('selected'));d.classList.add('selected');selL=d;go();};L.appendChild(d);});
+  shuffled.forEach(s=>{const d=document.createElement('div');d.className='pill';d.textContent=s.t;d.dataset.i=s.i;
+    d.onclick=()=>{if(d.classList.contains('matched'))return;R.querySelectorAll('.pill').forEach(x=>x.classList.remove('selected'));d.classList.add('selected');selR=d;go();};R.appendChild(d);});
+  function go(){ if(!selL||!selR)return;
+    if(selL.dataset.i===selR.dataset.i){selL.classList.replace('selected','matched');selR.classList.replace('selected','matched');done++;fb.textContent=done===pairs.length?'All matched! ✓':done+' / '+pairs.length+' matched';fb.className='feedback good';selL=selR=null;}
+    else{selL.classList.add('wrong');selR.classList.add('wrong');const a=selL,b=selR;selL=selR=null;setTimeout(()=>{a.classList.remove('selected','wrong');b.classList.remove('selected','wrong');},500);} }
+})();
+document.getElementById('keyM').innerHTML = pairs.map((p,i)=>'<div class="key-row"><div class="analysis-label">'+p[1]+'</div><div class="key-box">'+p[0]+'</div></div>').join('');
+function checkGap(){ const v=document.getElementById('gap1').value.trim().toLowerCase(); const fb=document.getElementById('gapFeedback');
+  const ok=['respond','reply','answer'].includes(v); fb.textContent= ok ? 'Yes — respond!' : 'Not quite — think about the other side of the conversation.'; fb.className='feedback '+(ok?'good':'bad'); }
+const navLinks=document.querySelectorAll('.sticky-nav a'),allSections=document.querySelectorAll('section[id]');
+function onScroll(){const d=document.documentElement;const st=d.scrollTop||document.body.scrollTop;const sh=d.scrollHeight-d.clientHeight;
+ document.getElementById('progressFill').style.width=(sh>0?st/sh*100:0)+'%';let cur=allSections[0]?allSections[0].id:'';
+ allSections.forEach(s=>{if(s.getBoundingClientRect().top<=150)cur=s.id;});navLinks.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+cur));}
+document.addEventListener('scroll',onScroll);onScroll();
+</script>
+</body>
+</html>
