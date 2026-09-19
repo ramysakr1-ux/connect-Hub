@@ -214,6 +214,7 @@
   <span class="status" id="status"></span>
 </div>
 
+<script src="hub-shared.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -310,7 +311,7 @@ $('prevFile').addEventListener('change',e=>{
 function showRecall(d){
   const m=d.meta||{}, p=d.plan||{};
   $('recall').style.display='';
-  $('recallMeta').textContent=[m.tp,m.level&&('level '+m.level),m.date,m.length&&(m.length+' min'),m.framework]
+  $('recallMeta').textContent=[m.tp,m.level&&('level '+m.level),niceDate(m.date),m.length&&(m.length+' min'),m.framework]
     .filter(Boolean).join('  ·  ');
   $('recallAims').innerHTML=
     (p.main?`<dt>Main aims</dt><dd>${nl2br(p.main)}</dd>`:'')+
@@ -372,10 +373,10 @@ function setStatus(msg){
   setStatus._t=setTimeout(()=>{ $('status').textContent=''; },7000);
 }
 
-$('turnInBtn').addEventListener('click', ()=>{
+$('turnInBtn').addEventListener('click', async ()=>{
   const s=collectSelf();
   if(!s.well.trim() && !s.not.trim() &&
-     !confirm('You haven\'t written much yet. Turn in anyway?')) return;
+     !(await confirmModal('You haven\'t written much yet. Turn in anyway?','Turn in anyway'))) return;
   saveSelfRecord({ state:s, label:draftLabel(), status:'turned_in', turnedInAt:Date.now() });
   dirty=false;
   renderTurnStatus();
@@ -417,7 +418,7 @@ function printWindow(){
 $('pdfBtn').addEventListener('click',()=>{
   const s=collectSelf();
   const m=(DOC&&DOC.meta)||{};
-  const metaLine=[m.name,m.tp,m.date].filter(Boolean).join('  ·  ');
+  const metaLine=[m.name,m.tp,niceDate(m.date)].filter(Boolean).join('  ·  ');
   LAST_HTML=`<div style="font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#000;">
     ${selfHTML(s,metaLine)}</div>`;
   printWindow();

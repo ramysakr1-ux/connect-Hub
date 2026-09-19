@@ -477,6 +477,7 @@
   <span class="status" id="status"></span>
 </div>
 
+<script src="hub-shared.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -1114,7 +1115,7 @@ function docHTML(d){
       <tr><td ${TH}>${label}</td></tr><tr><td ${TD}>${nl2br(val)||'&nbsp;'}</td></tr></table>`;
   let total=0; p.rows.forEach(r=>{ total+=timeVal(r.time); });
   const band=detailBand([
-    ['Name',m.name],['TP',m.tp],['Level',m.level],['Date',m.date],
+    ['Name',m.name],['TP',m.tp],['Level',m.level],['Date',niceDate(m.date)],
     ['Length',m.length?m.length+' min':'']
   ]);
 
@@ -1134,7 +1135,7 @@ function docHTML(d){
       <tr><td ${TH} colspan="2">Anticipated Problems &amp; Solutions<br>
         <span style="font-weight:400;font-size:9.5pt;font-style:italic;">problems with tasks, materials,
         technology, classroom management, interaction patterns (NOT language)</span></td></tr>
-      ${p.probs.map((x,i)=>`<tr><td ${TD}><strong>Problem #${i+1}:</strong><br>${bullets(x.problem)||'&nbsp;'}</td>
+      ${p.probs.filter(x=>(x.problem||'').trim()||(x.solution||'').trim()).map((x,i)=>`<tr><td ${TD}><strong>Problem #${i+1}:</strong><br>${bullets(x.problem)||'&nbsp;'}</td>
         <td ${TD}><strong>Solution:</strong><br>${bullets(x.solution)||'&nbsp;'}</td></tr>`).join('')}
     </table>
     ${(p.profile||'').trim()?boxProfile('Class Profile',p.profile):''}

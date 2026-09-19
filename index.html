@@ -161,6 +161,7 @@
     </svg>
   </span>
 </div>
+<script src="hub-shared.js"></script>
 <script>
 function rec(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
 function badge(el,text,cls){ el.textContent=text; el.className='badge'+(cls?' '+cls:''); }
@@ -186,17 +187,21 @@ badge(document.getElementById('badgeFeedback'),
 (function(){
   var subs = rec('connect_assignment_submissions_v1') || {};
   var TYPES = ['lrt','lsrt','fol','lfc','a5'];
-  var needsResub = 0, closed = 0, touched = 0;
+  var needsResub = 0, sentBack = 0, closed = 0, touched = 0;
   TYPES.forEach(function(t){
     var s = subs[t];
     if(!s) return;
     touched++;
     if(s.stage === 'resubmission_needed') needsResub++;
+    else if(s.stage === 'returned_unmarked') sentBack++;
     else if(s.stage === 'closed') closed++;
   });
   var text, cls;
   if(needsResub > 0){
     text = needsResub + (needsResub===1 ? ' assignment needs resubmission' : ' assignments need resubmission');
+    cls = 'ready';
+  } else if(sentBack > 0){
+    text = sentBack + (sentBack===1 ? ' assignment returned unmarked — submit it again' : ' assignments returned unmarked — submit them again');
     cls = 'ready';
   } else if(closed === 5){
     text = 'All 5 complete';
@@ -213,8 +218,8 @@ badge(document.getElementById('badgeFeedback'),
 
 if(fb && fb.status==='returned'){
   document.getElementById('returnedPanel').style.display='block';
-  document.getElementById('nextTpBtn').addEventListener('click',()=>{
-    if(!confirm('Archive this TP and start a fresh plan, self-evaluation and feedback?')) return;
+  document.getElementById('nextTpBtn').addEventListener('click',async ()=>{
+    if(!(await confirmModal('Archive this TP and start a fresh plan, self-evaluation and feedback?','Start fresh'))) return;
     ['chub:plan','chub:selfeval','chub:feedback'].forEach(k=>localStorage.removeItem(k));
     location.reload();
   });

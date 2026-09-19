@@ -346,6 +346,7 @@
 </div>
 
 
+<script src="hub-shared.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -796,7 +797,7 @@ function feedbackHTML(d){
                     : d.grade==='To standard' ? '#1E6B63'
                     : d.grade==='Not to standard' ? '#A33227' : '#000';
   const band=detailBand([
-    ['Tutor',d.tutor],['TP',d.tp],['Date',d.date],
+    ['Tutor',d.tutor],['TP',d.tp],['Date',niceDate(d.date)],
     ['Level',d.level],['Time',d.time?d.time+' min':''],['Students present',d.students]
   ]);
   const aims=[
@@ -850,7 +851,7 @@ function traineeHTML(d, selfComment, tc, laComment){
   const tv=s=>{ const n=(s||'').match(/\d+(?:[.,]\d+)?/g); return n?Math.max(...n.map(x=>parseFloat(x.replace(',','.')))):0; };
   let total=0; (p.rows||[]).forEach(r=>{ total+=tv(r.time); });
   const band=detailBand([
-    ['Name',m.name],['TP',m.tp],['Level',m.level],['Date',m.date],
+    ['Name',m.name],['TP',m.tp],['Level',m.level],['Date',niceDate(m.date)],
     ['Length',m.length?m.length+' min':'']
   ]);
 
@@ -861,7 +862,7 @@ function traineeHTML(d, selfComment, tc, laComment){
     ${box('Main Aims',p.main,true)}${box('Subsidiary Aims',p.sub,true)}${box('Personal Aims',p.pers,true)}
     <table style="width:100%;border-collapse:collapse;margin:0 0 12px;">
       <tr><td ${TH} colspan="2">Anticipated Problems &amp; Solutions</td></tr>
-      ${(p.probs||[]).map((x,i)=>`<tr><td ${TD}><strong>Problem #${i+1}:</strong><br>${bulletsHTML(x.problem)||'&nbsp;'}</td>
+      ${(p.probs||[]).filter(x=>(x.problem||'').trim()||(x.solution||'').trim()).map((x,i)=>`<tr><td ${TD}><strong>Problem #${i+1}:</strong><br>${bulletsHTML(x.problem)||'&nbsp;'}</td>
         <td ${TD}><strong>Solution:</strong><br>${bulletsHTML(x.solution)||'&nbsp;'}</td></tr>`).join('')}
     </table>
     ${(p.profile||'').trim()?box('Class Profile',p.profile):''}
@@ -977,14 +978,14 @@ function buildHTML(d){
 }
 let LAST_HTML='';
 
-$('returnBtn').addEventListener('click', ()=>{
+$('returnBtn').addEventListener('click', async ()=>{
   const d=collect();
   const missing=[];
   if(!d.grade) missing.push('the lesson grade');
   if(!d.st.length && !d.at.length) missing.push('any comment on the teaching');
   if(!d.next.length && (d.ap.length||d.at.length))
     missing.push('a star on any action point, so nothing will carry into the next TP');
-  if(missing.length && !confirm('You haven\'t filled in '+missing.join(', ')+'. Return anyway?')) return;
+  if(missing.length && !(await confirmModal('You haven\'t filled in '+missing.join(', ')+'. Return anyway?','Return anyway'))) return;
   LAST_HTML=buildHTML(d);
   if(d.next.length) localStorage.setItem('chub:lastFeedback', JSON.stringify(d));
   saveFeedbackRecord({ label:draftLabel(), state:draftState(), status:'returned', returnedAt:Date.now(), docHTML:LAST_HTML });

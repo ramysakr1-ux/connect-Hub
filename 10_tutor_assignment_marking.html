@@ -160,7 +160,7 @@ function render(){
   OUTCOME = (sub.feedback && sub.feedback.outcome) || OUTCOME;
 
   let html = `<div class="header"><h1>${esc(a.title)}</h1>
-    <span class="stage-pill ${sub.stage}">${({draft:'Not submitted', submitted:'Awaiting marking', resubmission_needed:'Resubmission needed', resubmitted:'Resubmission awaiting marking', closed:'Closed'})[sub.stage]}</span>
+    <span class="stage-pill ${sub.stage}">${({draft:'Not submitted', submitted:'Awaiting marking', returned_unmarked:'Returned unmarked', resubmission_needed:'Resubmission needed', resubmitted:'Resubmission awaiting marking', closed:'Closed'})[sub.stage]}</span>
   </div>`;
 
   if (sub.stage !== 'draft') {
@@ -288,9 +288,24 @@ function doReturnUnmarked(){
   const comment = $('comment').value;
   if (!sub.feedback) sub.feedback = { outcome:'', generalComment1:'', generalComment2:'' };
   const round = sub.stage==='resubmitted' ? 'sub2' : 'sub1';
-  if (round==='sub2') sub.feedback.generalComment2 = 'Returned unmarked: ' + comment; else sub.feedback.generalComment1 = 'Returned unmarked: ' + comment;
+  // Returned unmarked does NOT spend the one resubmission (Handbook 8.2.3;
+  // DESIGN-HANDOFF-README's core rule). It used to set resubmission_needed,
+  // and the trainee's next submit then counted as their resubmission -- so an
+  // incomplete first attempt sent back for a missing section cost them their
+  // only second chance (Hub walk, 20 Sep 2026). The round stays what it was:
+  // the trainee edits what they sent, declares again, and submits it again.
+  if (round==='sub2') {
+    sub.feedback.generalComment2 = 'Returned unmarked: ' + comment;
+    sub.stage = 'resubmission_needed';
+    sub.draft = Object.assign({}, sub.sub2 || {}, { decl:{} });
+    sub.round2Seeded = true;
+  } else {
+    sub.feedback.generalComment1 = 'Returned unmarked: ' + comment;
+    sub.stage = 'returned_unmarked';
+    sub.draft = Object.assign({}, sub.sub1 || {}, { decl:{} });
+  }
+  sub.criteriaMarks[round] = [];
   sub.feedback.outcome = 'Returned unmarked';
-  sub.stage = 'resubmission_needed';
   saveSubs();
   render();
 }

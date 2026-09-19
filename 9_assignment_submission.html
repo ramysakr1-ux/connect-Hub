@@ -167,6 +167,9 @@ function render(){
   if (!a){ $('app').innerHTML = '<div class="card"><p class="guide">This assignment isn\u2019t set up yet \u2014 check with your centre.</p></div>'; return; }
   const sub = subFor(CURRENT);
   const onRound2 = sub.stage === 'resubmission_needed';
+  // Returned unmarked: still round one. The tutor sent it back without
+  // marking, so nothing is locked and submitting again is not the resubmission.
+  const onRedo = sub.stage === 'returned_unmarked';
 
   if (onRound2 && !sub.round2Seeded) {
     const seeded = { picked:{}, text:{}, fields:{}, decl:{} };
@@ -209,6 +212,9 @@ function render(){
 
   if (sub.stage==='resubmission_needed') {
     html += `<div class="locked-banner" style="background:oklch(93% 0.06 60);">Resubmission needed \u2014 you have one attempt. Edit below and resubmit.</div>`;
+  }
+  if (onRedo) {
+    html += `<div class="locked-banner" style="background:oklch(93% 0.06 60);">Returned unmarked \u2014 your tutor sent this back without marking it. Fix what they asked for and submit it again. This does not use your one resubmission.</div>`;
   }
 
   a.sections.forEach((s,i) => {
@@ -298,9 +304,9 @@ function render(){
     }
   });
 
-  const canSubmit = declOk(a) && (sub.stage==='draft' || sub.stage==='resubmission_needed');
+  const canSubmit = declOk(a) && (sub.stage==='draft' || sub.stage==='resubmission_needed' || sub.stage==='returned_unmarked');
   html += `<div class="navbar"><span class="status" id="status"></span>
-    <button class="btn btn-submit" id="submitBtn" ${canSubmit?'':'disabled'}>${sub.stage==='resubmission_needed'?'Resubmit':'Submit'}</button>
+    <button class="btn btn-submit" id="submitBtn" ${canSubmit?'':'disabled'}>${sub.stage==='resubmission_needed'?'Resubmit':sub.stage==='returned_unmarked'?'Submit again':'Submit'}</button>
   </div>`;
 
   $('app').innerHTML = html;
@@ -326,7 +332,7 @@ function refreshGate(){
   if (wc) { const n = countWords(); wc.textContent = `${n} of ${a.wordMin}–${a.wordMax} words`; wc.style.color = wordCountOk(a) ? '' : 'var(--brick)'; }
   const sub = subFor(CURRENT);
   const btn = $('submitBtn');
-  if (btn) btn.disabled = !(declOk(a) && (sub.stage==='draft' || sub.stage==='resubmission_needed'));
+  if (btn) btn.disabled = !(declOk(a) && (sub.stage==='draft' || sub.stage==='resubmission_needed' || sub.stage==='returned_unmarked'));
 }
 
 function declOk(a){

@@ -97,6 +97,7 @@
   </div>
 </div>
 <script src="assignment-defaults.js"></script>
+<script src="hub-shared.js"></script>
 <script>
 const STORE_KEY = 'connect_assignment_wording_v2';
 
@@ -316,7 +317,7 @@ function toggleAi(i, checked){ DATA[CURRENT].sections[i].aiToggle = checked; }
 function handleImport(file){
   if(!file) return;
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async ()=>{
     const text = reader.result || '';
     const blocks = text.split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean);
     const sections = blocks.map(b=>{
@@ -326,7 +327,7 @@ function handleImport(file){
     });
     if (!sections.length) { alert('Could not find any text to import from that file.'); return; }
     if (!DATA[CURRENT]) DATA[CURRENT] = { title: file.name.replace(/\.[^.]+$/,''), sections: [] };
-    const ok = confirm(`Found ${sections.length} section${sections.length===1?'':'s'} in this file. They\u2019ll be added to the END of ${NAMES[CURRENT]} as new instruction sections \u2014 existing sections (including any \u201Cpick your items\u201D step and its categories) are left exactly as they are. Continue?`);
+    const ok = await confirmModal(`Found ${sections.length} section${sections.length===1?'':'s'} in this file. They\u2019ll be added to the END of ${NAMES[CURRENT]} as new instruction sections \u2014 existing sections (including any \u201Cpick your items\u201D step and its categories) are left exactly as they are. Continue?`, 'Add sections');
     if (!ok) return;
     DATA[CURRENT].sections = DATA[CURRENT].sections.concat(sections);
     renderList(); renderEditor();
