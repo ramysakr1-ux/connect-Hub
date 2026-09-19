@@ -75,3 +75,6 @@ Per the compliance audit (attached): a Google Drive picker (materials currently 
 
 ## Wording distribution (decided 20 Sep 2026)
 Screen 8 has "Export wording for trainees and tutors", which writes a `connect-hub-wording-v1` file of all five assignments. Trainees import it on the home page ("Import centre's wording"), tutors on the tutor dashboard ("Import centre wording"); either screen's other import button also accepts it. Nobody off the admin's device sees customised wording until they import the file; until then they work from `assignment-defaults.js`.
+
+## Assignment 5 is out of sight until set (20 Sep 2026)
+The plagiarism reflection is a centre sanction, not one of the four. No screen lists it until a tutor sets it for that candidate ("Set Assignment 5" on the marking screen of the assignment where the plagiarism was found; "Withdraw it" while nothing is submitted). `subs.a5.assigned = true` (with `assignedAt`, `assignedAfter`) is the flag; `a5InPlay()` in `hub-shared.js` is the one test, and a submission already on file counts as set. The home badge counts four assignments, five once it is set. Its wording stays editable on screen 8.
