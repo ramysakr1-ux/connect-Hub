@@ -14,7 +14,10 @@
 // withdrawal are the tutor's to set here, as they are in the tracker.
 
 window.HubTracker = (function(){
-  var ASSIGNMENTS = ['SRT', 'FOL', 'LRT', 'LFC'];
+  // Course order (Ramy, 20 Sep 2026). SRT is the tracker's code for the LSRT;
+  // the Hub shows the Hub's name.
+  var ASSIGNMENTS = ['FOL', 'LRT', 'SRT', 'LFC'];
+  var SHOW_AS = { SRT:'LSRT', FOL:'FOL', LRT:'LRT', LFC:'LFC' };
   var HUB_KEY_FOR = { SRT:'lsrt', FOL:'fol', LRT:'lrt', LFC:'lfc' };
   var TP_GRADES = [
     { key:'ABOVE', label:'Above standard', short:'AS' },
@@ -189,7 +192,7 @@ window.HubTracker = (function(){
     above:     { text:'ABOVE STANDARD', cls:'tk-above' },
     none:      { text:'NOT STARTED', cls:'tk-none' }
   };
-  return { ASSIGNMENTS:ASSIGNMENTS, HUB_KEY_FOR:HUB_KEY_FOR, TP_GRADES:TP_GRADES, tpGrade:tpGrade, AIMS:AIMS, aimShort:aimShort, aimFor:aimFor,
+  return { ASSIGNMENTS:ASSIGNMENTS, SHOW_AS:SHOW_AS, HUB_KEY_FOR:HUB_KEY_FOR, TP_GRADES:TP_GRADES, tpGrade:tpGrade, AIMS:AIMS, aimShort:aimShort, aimFor:aimFor,
     ASSIGN_LABEL:ASSIGN_LABEL, STAGES:STAGES, tpNumberOf:tpNumberOf, tpHistory:tpHistory, assignmentState:assignmentState,
     recordFor:recordFor, readCandidate:readCandidate, STATE_CHIP:STATE_CHIP };
 })();

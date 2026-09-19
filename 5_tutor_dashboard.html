@@ -293,7 +293,7 @@ function renderTracker(){
   const box = (cls, title, names) => names.length ? `<div class="tk-box ${cls}"><b>${title}</b> ${names.join(' · ')}</div>` : '';
   boxes.innerHTML =
     box('', 'Fail letter due —', people.filter(p=>p.r.letterDue).map(p=>`${esc(p.tr.name)} (${p.r.failWhy.join('; ')})`)) +
-    box('amber', 'A letter can go out now —', people.filter(p=>p.r.letterAdvised).map(p=>`${esc(p.tr.name)} (${[...p.r.fails,...p.r.pending].join(', ')})`)) +
+    box('amber', 'A letter can go out now —', people.filter(p=>p.r.letterAdvised).map(p=>`${esc(p.tr.name)} (${[...p.r.fails,...p.r.pending].map(x=>T.SHOW_AS[x]||x).join(', ')})`)) +
     box('amber', 'Written assignments — final grade capped:', people.filter(p=>p.r.ceiling).map(p=>`${esc(p.tr.name)} — ${p.r.ceiling}`)) +
     box('purple', 'Stage 3 required —', people.filter(p=>p.r.stage3Why).map(p=>`${esc(p.tr.name)} (${p.r.stage3Why})`)) +
     box('amber', 'Stage 2 due —', people.filter(p=>p.r.stage2Due).map(p=>esc(p.tr.name))) +
@@ -301,7 +301,7 @@ function renderTracker(){
   cards.innerHTML = people.map(({tr,c,r})=>{
     const chip = T.STATE_CHIP[r.state];
     const tps = []; for (let n=1;n<=8;n++){ const g = T.tpGrade(c['tp'+n]); const aim = T.aimShort(c['tp'+n+'_aim']); tps.push(`<span class="tk-tp ${g?'g-'+g.key:''}" title="${g?g.label:'not graded yet'}${c['tp'+n+'_aim']?' · '+c['tp'+n+'_aim']:''}"><b>${g?g.short:n}</b><span>${g?(aim||'TP'+n):'—'}</span></span>`); }
-    const asg = T.ASSIGNMENTS.map(code=>{ const st = c[code.toLowerCase()+'_hub']; const lab = T.ASSIGN_LABEL[st.code]||'–'; const round = st.round ? ` <small>${st.round===2?'2nd sub':'1st sub'}</small>` : ''; const dm = st.dm ? ` <small title="${esc([st.markers.first,st.markers.second].filter(Boolean).join(' + '))}">DM ✓</small>` : ''; return `<span class="tk-as s-${st.code}"><b>${code}</b> ${lab}${round}${dm}</span>`; }).join('');
+    const asg = T.ASSIGNMENTS.map(code=>{ const st = c[code.toLowerCase()+'_hub']; const lab = T.ASSIGN_LABEL[st.code]||'–'; const round = st.round ? ` <small>${st.round===2?'2nd sub':'1st sub'}</small>` : ''; const dm = st.dm ? ` <small title="${esc([st.markers.first,st.markers.second].filter(Boolean).join(' + '))}">DM ✓</small>` : ''; return `<span class="tk-as s-${st.code}"><b>${T.SHOW_AS[code]||code}</b> ${lab}${round}${dm}</span>`; }).join('');
     const stages = T.STAGES.map(sd=>{ const v = c[sd.field]||''; return `<button class="tk-btn ${v?'on-'+v:''}" data-id="${esc(tr.id)}" data-field="${sd.field}" data-cycle="${sd.cycle.join('|')}">${sd.label}: ${sd.labels[v]}</button>`; }).join('');
     const letter = c.failLetter ? `<button class="tk-btn on-letter" data-id="${esc(tr.id)}" data-field="failLetter" data-toggle="letter">Fail letter issued ${esc(String(c.failLetter))}</button>` : `<button class="tk-btn" data-id="${esc(tr.id)}" data-field="failLetter" data-toggle="letter">Fail letter: not issued</button>`;
     const wd = `<button class="tk-btn ${c.withdrawn?'on-withdrawn':''}" data-id="${esc(tr.id)}" data-field="withdrawn" data-toggle="withdrawn">${c.withdrawn?'Withdrawn':'Withdrawn: no'}</button>`;
