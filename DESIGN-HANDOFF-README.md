@@ -83,4 +83,4 @@ The plagiarism reflection is a centre sanction, not one of the four. No screen l
 - The four assignments run in course order everywhere: **FOL, LRT, LSRT, LFC** (`ORDER` arrays on screens 6, 8, 9, 10; `ASSIGN_NAMES` on 5; `TYPES` on the home page).
 - Typefaces are Newsreader (headings) and Karla (everything else) on every screen, including the assembled TP documents and the print view, which used Georgia/Calibri with terracotta headings before; the dictation bar used Inter; Kalam was loaded and never used. A document assembled before this date keeps the styles it was assembled with (the HTML is stored at return time).
 - `hub-theme.css` is loaded last on screens 8-11 and gives them the shell every other screen has: paper header card with the terracotta rule, an eyebrow, a centred Newsreader title in teal, 6px-radius buttons and tabs, one board width.
-
+- The tutor dashboard greets by the name the tutor types once there (`chub:tutorName`); it also prefills the Tutor field on screen 3 and the first-marker field on screen 10. No name, no fabricated greeting. The course name reads from course settings, and says so when none is set (20 Sep 2026).

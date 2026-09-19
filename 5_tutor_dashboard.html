@@ -75,8 +75,9 @@
       <span style="font-family:'Karla',sans-serif;font-weight:600;font-size:24px;color:var(--ink);margin-left:-5px;">Hub</span>
     </div>
     <p class="tag">Every submission a trainee has sent you, imported from their export file.</p>
-    <p class="course-name" id="courseName">CELTA — August 2026</p>
-    <p class="role">Welcome, Ramy — Course tutor</p>
+    <p class="course-name" id="courseName">Course name not set yet — the centre sets it in course admin</p>
+    <p class="role" id="roleLine">Course tutor</p>
+    <p style="margin:6px 0 0; font-size:0.82rem; color:var(--grey);"><label for="tutorName" style="margin-right:6px;">Your name</label><input id="tutorName" type="text" placeholder="as it should appear on feedback" style="font-family:'Karla',sans-serif; font-size:0.85rem; padding:5px 9px; border:1.5px solid var(--sand-line); border-radius:6px; background:var(--paper); color:var(--ink); min-width:220px;"></p>
     <div style="margin-top:18px;">
       <button class="btn primary" id="importTriggerBtn" type="button">Import trainee file</button>
       <input type="file" id="importFile" accept="application/json" style="display:none;">
@@ -137,6 +138,14 @@ document.getElementById('tabs').addEventListener('click', e=>{
 try {
   const cs = JSON.parse(localStorage.getItem('connect_course_settings'));
   if (cs && cs.courseName) document.getElementById('courseName').textContent = cs.courseName;
+  // 'Welcome, Ramy' was hardcoded for everyone (Ramy, 20 Sep 2026). The name
+  // is typed once here, greets by it, and prefills the tutor and marker
+  // fields on screens 3 and 10 in this browser.
+  const nameInput = document.getElementById('tutorName');
+  const greet = () => { const n = (localStorage.getItem('chub:tutorName') || '').trim(); document.getElementById('roleLine').textContent = n ? 'Welcome, ' + n + ' \u2014 Course tutor' : 'Course tutor'; };
+  nameInput.value = localStorage.getItem('chub:tutorName') || '';
+  nameInput.addEventListener('input', () => { localStorage.setItem('chub:tutorName', nameInput.value); greet(); });
+  greet();
 } catch(e) {}
 
 const ASSIGN_NAMES = { fol:'FOL — Focus on the Learner', lrt:'LRT — Language Related Tasks', lsrt:'LSRT — Language Skills Related Task', lfc:'LFC — Lessons from the Classroom', a5:'Assignment 5 \u2014 Plagiarism Reflection' };
