@@ -311,7 +311,7 @@ function render(){
   // alone used to be enough, and an empty body went through.
   const openStage = sub.stage==='draft' || sub.stage==='resubmission_needed' || sub.stage==='returned_unmarked';
   const canSubmit = declOk(a) && hasWriting() && openStage;
-  html += `<div class="navbar"><span class="status" id="status">${openStage && !hasWriting() ? 'Nothing written yet \u2014 an empty assignment can\u2019t be submitted.' : ''}</span>
+  html += `<div class="navbar"><span class="status" id="status"></span><span class="status" id="emptyHint">${openStage && !hasWriting() ? 'Nothing written yet \u2014 an empty assignment can\u2019t be submitted.' : ''}</span>
     <button class="btn btn-submit" id="submitBtn" ${canSubmit?'':'disabled'}>${sub.stage==='resubmission_needed'?'Resubmit':sub.stage==='returned_unmarked'?'Submit again':'Submit'}</button>
   </div>`;
 
@@ -340,8 +340,9 @@ function refreshGate(){
   const btn = $('submitBtn');
   const openStage = sub.stage==='draft' || sub.stage==='resubmission_needed' || sub.stage==='returned_unmarked';
   if (btn) btn.disabled = !(declOk(a) && hasWriting() && openStage);
-  const st = $('status');
-  if (st && openStage) st.textContent = hasWriting() ? (st.textContent.startsWith('Nothing written') ? '' : st.textContent) : 'Nothing written yet \u2014 an empty assignment can\u2019t be submitted.';
+  // Its own element: the autosave's 'Saved' flash clears #status a moment later.
+  const eh = $('emptyHint');
+  if (eh) eh.textContent = openStage && !hasWriting() ? 'Nothing written yet \u2014 an empty assignment can\u2019t be submitted.' : '';
 }
 // At least one word in any answer. Picked items alone are not writing.
 function hasWriting(){ return countWords() > 0; }
