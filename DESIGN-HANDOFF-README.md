@@ -73,5 +73,5 @@ Per the compliance audit (attached): a Google Drive picker (materials currently 
 - `11_assignment_record.html` — printable/PDF assignment record, both rounds.
 - `for-claude-code-assignment-compliance-audit.md` — Cambridge Administration Handbook §8.2 compliance check against this build, current gaps, and what's confirmed solid. Read this alongside the files — it documents *why* several mechanisms (per-field criteria, return-unmarked vs. resubmission-needed, fresh declaration per round) are shaped the way they are.
 
-## Open question (20 Sep 2026)
-A centre that reworks an assignment's wording on screen 8 has no way to get that wording to trainees' and tutors' browsers: the exchange files carry submissions, not wording. Until that is decided (an "export wording" file from screen 8, or the wording travelling inside the trainee export), everyone off the admin's device works from the standard wording in `assignment-defaults.js`.
+## Wording distribution (decided 20 Sep 2026)
+Screen 8 has "Export wording for trainees and tutors", which writes a `connect-hub-wording-v1` file of all five assignments. Trainees import it on the home page ("Import centre's wording"), tutors on the tutor dashboard ("Import centre wording"); either screen's other import button also accepts it. Nobody off the admin's device sees customised wording until they import the file; until then they work from `assignment-defaults.js`.

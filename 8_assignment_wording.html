@@ -117,6 +117,15 @@ const NAMES = { lrt:'LRT \u2014 Language Related Tasks', lsrt:'LSRT \u2014 Langu
 let CURRENT = 'lrt';
 const $ = id => document.getElementById(id);
 
+// Saves first, so the file is what the screen shows. Trainees import it on
+// their home page, tutors on their dashboard.
+function exportWording(){
+  persist();
+  let centre = '';
+  try { centre = (JSON.parse(localStorage.getItem('connect_course_settings')||'{}').centreName) || ''; } catch(e) {}
+  exportWordingFile(DATA, centre);
+  const s = $('savedNote'); if (s) { s.textContent = 'Wording exported — send the file to your trainees and tutors'; setTimeout(()=>{ if (s) s.textContent=''; }, 4000); }
+}
 function persist(){
   localStorage.setItem(STORE_KEY, JSON.stringify(DATA));
   const s = $('savedNote'); if (s) { s.textContent = 'Saved'; setTimeout(()=>{ if (s) s.textContent=''; }, 1400); }
@@ -283,6 +292,7 @@ function renderEditor(){
     <div class="actions">
       <span class="saved" id="savedNote"></span>
       <button class="btn" onclick="persist()">Save assignment</button>
+      <button class="btn secondary" id="exportWordingBtn" type="button" onclick="exportWording()">Export wording for trainees and tutors</button>
     </div>`;
   $('sections').innerHTML = a.sections.map((s,i) => {
     if (s.type==='fields') return fieldSectionHTML(s,i);
