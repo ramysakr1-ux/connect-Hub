@@ -78,3 +78,9 @@ Screen 8 has "Export wording for trainees and tutors", which writes a `connect-h
 
 ## Assignment 5 is out of sight until set (20 Sep 2026)
 The plagiarism reflection is a centre sanction, not one of the four. No screen lists it until a tutor sets it for that candidate ("Set Assignment 5" on the marking screen of the assignment where the plagiarism was found; "Withdraw it" while nothing is submitted). `subs.a5.assigned = true` (with `assignedAt`, `assignedAfter`) is the flag; `a5InPlay()` in `hub-shared.js` is the one test, and a submission already on file counts as set. The home badge counts four assignments, five once it is set. Its wording stays editable on screen 8.
+
+## Order, typefaces and shell (20 Sep 2026)
+- The four assignments run in course order everywhere: **FOL, LRT, LSRT, LFC** (`ORDER` arrays on screens 6, 8, 9, 10; `ASSIGN_NAMES` on 5; `TYPES` on the home page).
+- Typefaces are Newsreader (headings) and Karla (everything else) on every screen, including the assembled TP documents and the print view, which used Georgia/Calibri with terracotta headings before; the dictation bar used Inter; Kalam was loaded and never used. A document assembled before this date keeps the styles it was assembled with (the HTML is stored at return time).
+- `hub-theme.css` is loaded last on screens 8-11 and gives them the shell every other screen has: paper header card with the terracotta rule, an eyebrow, a centred Newsreader title in teal, 6px-radius buttons and tabs, one board width.
+
