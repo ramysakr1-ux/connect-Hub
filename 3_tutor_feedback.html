@@ -1086,6 +1086,11 @@ function saveFeedbackRecord(patch){
     const cur=roster.trainees[TRAINEE_ID].tp.feedback||{status:'draft'};
     Object.assign(cur,patch);
     roster.trainees[TRAINEE_ID].tp.feedback=cur;
+    // The tracker tab reads every returned TP, not just the latest one.
+    if (cur.status==='returned') {
+      const n=parseInt(String((cur.state&&cur.state.f&&cur.state.f.fTP)||cur.label||'').replace(/\D/g,''),10);
+      if (n>=1&&n<=8) { roster.trainees[TRAINEE_ID].tp.history=roster.trainees[TRAINEE_ID].tp.history||{}; roster.trainees[TRAINEE_ID].tp.history[n]=cur; }
+    }
     saveRosterObj(roster);
     return;
   }
