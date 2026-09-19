@@ -30,7 +30,7 @@ High-fidelity. Copy, color, layout, and interaction logic are final. The written
 All client-side, `localStorage`-only, no auth:
 - `chub:plan`, `chub:selfeval`, `chub:feedback` — one TP's paperwork, `{status: 'draft'|'turned_in'|'returned', ...}`.
 - `connect_assignment_wording_v2` — per-centre, per-assignment structure: `{title, wordMin, wordMax, format: 'prose'|'structured', criteria: [{text, sectionIndex}], sections: [...]}`. `sectionIndex` ties a criterion to one section (or `null` for a whole-assignment criterion) — this is what makes the per-field lock-on-resubmission mechanism work. A section is one of: `text` (instructions/prose prompt), `picker` (pick-N-per-category chips, e.g. LRT's item selection), `fields` (a repeatable analysis block keyed to whatever was picked), `declaration` (own-work + AI-use, always re-rendered blank on every round).
-- `connect_assignment_submissions_v1` — per-assignment state machine: `stage: 'draft'|'submitted'|'resubmission_needed'|'resubmitted'|'closed'`, `sub1`/`sub2` snapshots, `criteriaMarks: {sub1:[], sub2:[]}` and `criteriaComments: {sub1:[], sub2:[]}` indexed by criterion, `usedResubmission` flag, `feedback: {outcome, generalComment1, generalComment2}`.
+- `connect_assignment_submissions_v1` — per-assignment state machine: `stage: 'draft'|'submitted'|'returned_unmarked'|'resubmission_needed'|'resubmitted'|'closed'` (`returned_unmarked`, added 20 Sep 2026, is still round one: the tutor sent it back without marking, the trainee submits it again, and `usedResubmission` stays false), `sub1`/`sub2` snapshots, `criteriaMarks: {sub1:[], sub2:[]}` and `criteriaComments: {sub1:[], sub2:[]}` indexed by criterion, `usedResubmission` flag, `feedback: {outcome, generalComment1, generalComment2}`.
 - Both wording and submission readers include an inline migration that upgrades old flat-string `criteria` arrays to `{text, sectionIndex:null}` objects on load — needed because the data model changed mid-project; keep this migration if porting the raw localStorage schema forward.
 
 ## Assignment outcome logic (the core mechanism — port this exactly)
@@ -60,6 +60,8 @@ No external images or icon library. The Connect Hub mark is inline SVG (two over
 Per the compliance audit (attached): a Google Drive picker (materials currently take a pasted link, not an OAuth-connected picker), an automatic language-error/proofreading scanner and a text-similarity/malpractice scanner (both are real backend logic — text diffing, error detection — not just UI), live word-count validation against the stored min/max, a resubmission deadline check against course end date, double-marking identity (first/second marker names), materials/TP-lesson overlap detection, and conflated-assignment support (two assignments merged into one submission with two grades). All are flagged, none are silent gaps.
 
 ## Files
+- `assignment-defaults.js` — the five assignments' standard wording, shared by screens 6, 8, 9, 10 and 11 (added 20 Sep 2026: the readers fall back to it when the browser holds no saved wording, so a trainee or tutor on a fresh device is never told the assignment "isn't set up yet"). A centre's *customised* wording still lives only in the browser it was saved in — see the open question below.
+- `hub-shared.js` — the styled confirm modal (every screen, replacing the browser's `confirm()`) and `niceDate()` for the assembled documents.
 - `index.html` — trainee home / TP + assignments launcher.
 - `1_trainee_plan_and_analysis.html` through `4_feedback_returned.html` — the TP loop.
 - `5_tutor_dashboard.html` — tutor's cross-trainee queue.
@@ -70,3 +72,6 @@ Per the compliance audit (attached): a Google Drive picker (materials currently 
 - `10_tutor_assignment_marking.html` — tutor per-criterion marking + derived outcome.
 - `11_assignment_record.html` — printable/PDF assignment record, both rounds.
 - `for-claude-code-assignment-compliance-audit.md` — Cambridge Administration Handbook §8.2 compliance check against this build, current gaps, and what's confirmed solid. Read this alongside the files — it documents *why* several mechanisms (per-field criteria, return-unmarked vs. resubmission-needed, fresh declaration per round) are shaped the way they are.
+
+## Open question (20 Sep 2026)
+A centre that reworks an assignment's wording on screen 8 has no way to get that wording to trainees' and tutors' browsers: the exchange files carry submissions, not wording. Until that is decided (an "export wording" file from screen 8, or the wording travelling inside the trainee export), everyone off the admin's device works from the standard wording in `assignment-defaults.js`.
