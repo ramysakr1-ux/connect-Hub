@@ -70,6 +70,7 @@
   <div id="app"></div>
 </div>
 <script src="assignment-defaults.js"></script>
+<script src="hub-shared.js"></script>
 <script>
 const WORDING_KEY = 'connect_assignment_wording_v2';
 const SUB_KEY = 'connect_assignment_submissions_v1';
@@ -121,7 +122,7 @@ function subFor(key){ if (!SUBS[key]) SUBS[key] = { stage:'draft', usedResubmiss
 
 function renderPicker(){
   const suffix = TRAINEE_ID ? '&trainee='+encodeURIComponent(TRAINEE_ID) : '';
-  $('picker').innerHTML = ORDER.filter(k => WORDING && WORDING[k]).map(k =>
+  $('picker').innerHTML = ORDER.filter(k => WORDING && WORDING[k] && (k !== 'a5' || a5InPlay(SUBS))).map(k =>
     `<button class="${k===CURRENT?'active':''}" data-a="${k}">${NAMES[k]}</button>`).join('')
     + (TRAINEE_ID ? `<span style="margin-left:12px; color:var(--grey); font-size:0.85rem; align-self:center;">Marking: ${esc((loadRoster().trainees[TRAINEE_ID]||{}).name||'trainee')}</span>` : '');
 }
@@ -156,11 +157,15 @@ function summarize(a, snap){
 function render(){
   const a = WORDING && WORDING[CURRENT];
   if (!a){ $('app').innerHTML = '<div class="card"><p class="note">This assignment isn\u2019t set up yet.</p></div>'; return; }
+  if (CURRENT === 'a5' && !a5InPlay(SUBS)){ $('app').innerHTML = '<div class="card"><p class="note">Assignment 5 has not been set for this candidate. Set it from the assignment where the plagiarism was found.</p></div>'; return; }
   const sub = subFor(CURRENT);
   OUTCOME = (sub.feedback && sub.feedback.outcome) || OUTCOME;
 
   let html = `<div class="header"><h1>${esc(a.title)}</h1>
     <span class="stage-pill ${sub.stage}">${({draft:'Not submitted', submitted:'Awaiting marking', returned_unmarked:'Returned unmarked', resubmission_needed:'Resubmission needed', resubmitted:'Resubmission awaiting marking', closed:'Closed'})[sub.stage]}</span>
+    ${CURRENT !== 'a5' ? (a5InPlay(SUBS)
+      ? `<p class="note" style="margin:12px 0 0;">Assignment 5 (plagiarism reflection) is set for this candidate${SUBS.a5 && SUBS.a5.assignedAfter ? ' after ' + esc(NAMES[SUBS.a5.assignedAfter] || SUBS.a5.assignedAfter) : ''}.${SUBS.a5 && SUBS.a5.stage === 'draft' ? ' <button type="button" class="btn btn-sand" id="a5WithdrawBtn" style="margin-left:8px;">Withdraw it</button>' : ''}</p>`
+      : `<p class="note" style="margin:12px 0 0;">Plagiarism found here? <button type="button" class="btn btn-sand" id="a5SetBtn">Set Assignment 5 (plagiarism reflection)</button> It is a centre sanction, not one of the four, and stays out of sight until set.</p>`) : ''}
   </div>`;
 
   if (sub.stage !== 'draft') {
@@ -253,6 +258,19 @@ function render(){
   if (saveBtn) saveBtn.addEventListener('click', doSave);
   const unmarkedBtn = $('unmarkedBtn');
   if (unmarkedBtn) unmarkedBtn.addEventListener('click', doReturnUnmarked);
+  const setBtn = $('a5SetBtn');
+  if (setBtn) setBtn.addEventListener('click', async () => {
+    if (!(await confirmModal('Set Assignment 5, the plagiarism reflection, for this candidate? It appears in their assignment list once you return this file to them.', 'Set Assignment 5'))) return;
+    const a5 = subFor('a5');
+    a5.assigned = true; a5.assignedAt = new Date().toISOString(); a5.assignedAfter = CURRENT;
+    saveSubs(); renderPicker(); render();
+  });
+  const wBtn = $('a5WithdrawBtn');
+  if (wBtn) wBtn.addEventListener('click', async () => {
+    if (!(await confirmModal('Withdraw Assignment 5 for this candidate? Nothing has been submitted for it.', 'Withdraw'))) return;
+    delete SUBS.a5;
+    saveSubs(); renderPicker(); render();
+  });
   const m1 = $('marker1'), m2 = $('marker2');
   if (m1) m1.addEventListener('input', () => { sub.markers.first = m1.value; saveSubs(); });
   if (m2) m2.addEventListener('input', () => { sub.markers.second = m2.value; sub.markers.doubleMarked = !!m2.value.trim(); saveSubs(); });

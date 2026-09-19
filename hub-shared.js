@@ -75,3 +75,13 @@ window.readWordingFile = function(file){
     reader.readAsText(file);
   });
 };
+
+// Assignment 5 (the plagiarism reflection) is a centre sanction, not one of
+// the four: it exists for a candidate only once a tutor has set it after a
+// plagiarism finding. Ramy, 20 Sep 2026: "I don't want assignment five to be
+// visible... can we have it out of the way somehow?" Nothing lists it until
+// then; a submission of it already on file counts as set.
+window.a5InPlay = function(subs){
+  var s = subs && subs.a5;
+  return !!(s && (s.assigned || (s.stage && s.stage !== 'draft')));
+};

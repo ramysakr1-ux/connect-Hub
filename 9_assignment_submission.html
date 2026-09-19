@@ -84,6 +84,7 @@
   <div id="app"></div>
 </div>
 <script src="assignment-defaults.js"></script>
+<script src="hub-shared.js"></script>
 <script>
 const WORDING_KEY = 'connect_assignment_wording_v2';
 const SUB_KEY = 'connect_assignment_submissions_v1';
@@ -129,7 +130,7 @@ function sectionLocked(a, sub, i){
 }
 
 function renderPicker(){
-  $('picker').innerHTML = ORDER.filter(k => WORDING && WORDING[k]).map(k =>
+  $('picker').innerHTML = ORDER.filter(k => WORDING && WORDING[k] && (k !== 'a5' || a5InPlay(SUBS))).map(k =>
     `<button class="${k===CURRENT?'active':''}" data-a="${k}">${NAMES[k]}</button>`).join('');
 }
 $('picker').addEventListener('click', e => {
@@ -165,6 +166,7 @@ function itemsForFieldsSection(a, secIdx){
 function render(){
   const a = WORDING && WORDING[CURRENT];
   if (!a){ $('app').innerHTML = '<div class="card"><p class="guide">This assignment isn\u2019t set up yet \u2014 check with your centre.</p></div>'; return; }
+  if (CURRENT === 'a5' && !a5InPlay(SUBS)){ $('app').innerHTML = '<div class="card"><p class="guide">Assignment 5 is a centre sanction, set by your tutor only after a plagiarism finding. It is not one of your four assignments and there is nothing to do here.</p></div>'; return; }
   const sub = subFor(CURRENT);
   const onRound2 = sub.stage === 'resubmission_needed';
   // Returned unmarked: still round one. The tutor sent it back without
