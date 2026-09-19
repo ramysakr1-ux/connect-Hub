@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connect Hub — Candidate tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Newsreader:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  /* design_handoff_candidate_tracker (Ramy, 20 Sep 2026), with the Hub's
+     colour-coded chips in the cells -- "I like the chips that you created.
+     I think they're nicer. So we can keep those instead." Everything else
+     follows the handoff: one grid, two tabs, filters with live counts,
+     stage bands, tail column, legend, detail strip. */
+  :root{ --sand:oklch(92.5% 0.012 85); --card:oklch(97.6% 0.01 85); --line:oklch(89.5% 0.012 82); --line2:oklch(93% 0.01 82);
+    --ink:oklch(23.5% 0.017 65); --deep:oklch(30% 0.042 58); --mut:oklch(51% 0.017 70); --mut2:oklch(60% 0.017 70); --faint:oklch(76% 0.012 82);
+    --quiet:oklch(55% 0.014 78); --red:oklch(46% 0.17 25); --red-bg:oklch(92% 0.05 25); --amb:oklch(45% 0.11 65); --amb-bg:oklch(94% 0.055 78);
+    --blu:oklch(40% 0.09 235); --blu-bg:oklch(94.5% 0.03 232); --grn:oklch(38% 0.085 155); --grn-bg:oklch(94% 0.04 155); --purp:oklch(45% 0.15 300); --purp-soft:oklch(62% 0.03 300);
+    --teal:oklch(37.5% 0.058 195); --paper:oklch(99.5% 0.004 90); }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--sand); font-family:Karla, Helvetica, sans-serif; color:var(--ink); }
+  .page{ max-width:1380px; margin:0 auto; padding:32px 48px 80px; display:flex; flex-direction:column; gap:22px; }
+  a{ color:var(--teal); text-decoration:none; } a:hover{ color:var(--deep); }
+  .back{ font-size:0.85rem; font-weight:600; }
+  .head{ display:flex; flex-direction:column; gap:7px; max-width:700px; }
+  .eyebrow{ font-size:10.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:oklch(55% 0.017 70); }
+  h1{ font-family:Newsreader, Georgia, serif; font-size:30px; font-weight:700; line-height:1.15; color:var(--deep); margin:0; }
+  .lede{ font-size:12.5px; line-height:1.55; color:var(--mut); }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  .bar{ display:flex; align-items:stretch; justify-content:space-between; gap:24px; border-bottom:1px solid oklch(90% 0.012 82); padding:0 16px; flex-wrap:wrap; }
+  .tabs{ display:flex; gap:22px; }
+  .tab{ cursor:pointer; padding:13px 0 12px; font-size:13px; font-weight:500; color:var(--mut); border-bottom:2px solid transparent; margin-bottom:-1px; background:none; border-top:none; border-left:none; border-right:none; font-family:inherit; }
+  .tab.on{ font-weight:700; color:var(--deep); border-bottom-color:var(--deep); }
+  .filters{ display:flex; align-items:center; gap:16px; }
+  .filter{ cursor:pointer; font-size:11.5px; font-weight:500; color:var(--mut); display:flex; align-items:baseline; gap:5px; background:none; border:none; font-family:inherit; padding:0; }
+  .filter.on{ font-weight:700; color:var(--deep); }
+  .filter .n{ font-size:10px; font-weight:700; }
+  .gridwrap{ padding:4px 16px 14px; overflow-x:auto; }
+  .grid{ display:grid; align-items:center; }
+  .bands{ padding-top:10px; }
+  .band{ font-size:9px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--mut2); text-align:center; padding-bottom:5px; border-bottom:1px solid oklch(91% 0.012 82); margin:0 4px; }
+  .colhead{ align-items:end; padding:12px 0 9px; border-bottom:1px solid oklch(88% 0.014 82); }
+  .count, .tail-h{ font-size:9px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--mut2); }
+  .tail-h{ text-align:right; }
+  .col{ display:flex; flex-direction:column; align-items:center; gap:1px; }
+  .col b{ font-size:11.5px; font-weight:600; color:oklch(35% 0.02 68); }
+  .col span{ font-size:9px; color:oklch(66% 0.017 70); }
+  .row{ border-bottom:1px solid var(--line2); }
+  .row.risk{ background:oklch(97% 0.014 40); }
+  .who{ display:flex; align-items:baseline; gap:8px; min-width:0; padding-right:8px; }
+  .who .nm{ font-size:12.5px; font-weight:500; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .who .flag{ font-size:9.5px; font-weight:700; color:oklch(45% 0.16 25); flex:none; }
+  .cell{ cursor:pointer; height:40px; display:flex; align-items:center; justify-content:center; border-left:1px solid oklch(94% 0.01 82); }
+  .cell:hover .chip{ box-shadow:0 0 0 1.5px var(--line); }
+  .cell.sel .chip{ box-shadow:0 0 0 1.5px var(--deep); }
+  /* the Hub's chips, in the handoff's colour buckets */
+  .chip{ display:inline-flex; align-items:center; gap:6px; padding:4px 9px; border-radius:6px; border:1px solid var(--line); background:var(--paper); font-size:11.5px; font-weight:500; color:var(--quiet); line-height:1.2; white-space:nowrap; }
+  .chip .aim{ font-size:9.5px; color:var(--mut2); font-weight:600; }
+  .chip .dm{ font-size:9.5px; color:var(--purp-soft); font-weight:500; }
+  .chip .dm b{ font-weight:600; }
+  .chip.nd{ background:transparent; border-color:transparent; color:var(--faint); }
+  .chip.fine{ background:oklch(95% 0.02 155); border-color:oklch(86% 0.04 155); color:oklch(35% 0.08 155); }
+  .chip.above{ background:var(--grn-bg); border-color:oklch(80% 0.07 155); color:var(--grn); font-weight:600; }
+  .chip.wait{ background:var(--blu-bg); border-color:oklch(84% 0.05 232); color:var(--blu); font-weight:600; }
+  .chip.work{ background:var(--amb-bg); border-color:oklch(84% 0.08 78); color:var(--amb); font-weight:600; }
+  .chip.wrong{ background:var(--red-bg); border-color:oklch(82% 0.08 25); color:var(--red); font-weight:700; }
+  .tail{ text-align:right; font-size:11.5px; font-weight:600; color:var(--quiet); padding-left:8px; }
+  .row.risk .tail{ color:var(--red); }
+  .legend{ display:flex; flex-wrap:wrap; gap:6px 16px; padding-top:16px; margin-top:2px; border-top:1px solid var(--line2); }
+  .legend .it{ display:flex; align-items:center; gap:6px; }
+  .legend .chip{ padding:2px 7px; font-size:10px; }
+  .legend .lb{ font-size:10px; color:oklch(62% 0.017 70); }
+  .empty{ padding:36px 16px; text-align:center; font-size:12.5px; color:var(--mut); line-height:1.6; }
+  /* detail strip */
+  .detail{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:20px 22px; display:flex; gap:40px; align-items:flex-start; flex-wrap:wrap; }
+  .d-id{ width:250px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .kicker{ font-size:9px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--mut2); }
+  .d-title{ font-family:Newsreader, Georgia, serif; font-size:20px; font-weight:700; line-height:1.2; color:var(--deep); }
+  .d-sub{ font-size:12px; color:var(--mut); }
+  .d-mid{ flex:1; min-width:280px; display:flex; gap:36px; align-items:flex-start; flex-wrap:wrap; }
+  .facts{ flex:1; min-width:240px; display:flex; flex-direction:column; gap:7px; }
+  .fact{ display:flex; gap:12px; align-items:baseline; }
+  .fact .k{ width:88px; flex:none; font-size:9px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:oklch(62% 0.017 70); }
+  .fact .v{ font-size:11.5px; line-height:1.45; color:oklch(28% 0.018 66); }
+  .fact .v.red{ color:var(--red); } .fact .v.amb{ color:var(--amb); } .fact .v.purp{ color:var(--purp); }
+  .trail{ width:270px; flex:none; display:flex; flex-direction:column; gap:6px; }
+  .ev{ display:flex; gap:10px; align-items:baseline; }
+  .ev .w{ width:74px; flex:none; font-size:9.5px; color:oklch(62% 0.017 70); }
+  .ev .t{ font-size:11px; line-height:1.4; color:oklch(45% 0.018 68); }
+  .d-act{ width:200px; flex:none; display:flex; flex-direction:column; gap:6px; }
+  .act{ display:block; cursor:pointer; text-align:center; padding:8px 12px; border-radius:5px; font-size:12px; font-weight:600; border:1px solid oklch(82% 0.02 82); background:transparent; color:var(--deep); font-family:inherit; }
+  .act.primary{ background:var(--deep); color:oklch(99.5% 0.004 90); border-color:var(--deep); }
+  .close{ cursor:pointer; text-align:center; padding:4px; font-size:11px; color:oklch(58% 0.017 70); background:none; border:none; font-family:inherit; }
+  /* the record: the tutorial verdicts, letter and withdrawal, set by hand */
+  .rec{ display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+  .rb{ font-family:inherit; font-size:11px; font-weight:600; padding:5px 9px; border-radius:5px; border:1px solid var(--line); background:var(--paper); color:var(--ink); cursor:pointer; }
+  .rb.on-GIVEN, .rb.on-STD{ background:var(--blu-bg); border-color:oklch(84% 0.05 232); color:var(--blu); }
+  .rb.on-NOTSTD, .rb.on-letter{ background:var(--red-bg); border-color:oklch(82% 0.08 25); color:var(--red); }
+  .rb.on-ABOVE{ background:var(--grn-bg); border-color:oklch(80% 0.07 155); color:var(--grn); }
+  .rb.on-withdrawn{ background:var(--sand); color:var(--mut); }
+  @media (max-width:900px){ .page{ padding:20px 16px 60px; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <a class="back" href="5_tutor_dashboard.html">&#8592; Back to dashboard</a>
+  <div class="head">
+    <div class="eyebrow" id="eyebrow">Connect Hub</div>
+    <h1>Candidate tracker</h1>
+    <div class="lede">Colour only marks what needs you. Everything that is fine stays quiet. Every cell is written by the thing that produced it — a submission, a mark sheet, the feedback you returned. Nothing on the grid is typed into it; only the Stage records, the Fail letter and withdrawal are yours to set, in the strip that opens under a candidate.</div>
+  </div>
+  <div class="card">
+    <div class="bar">
+      <div class="tabs"><button class="tab on" data-tab="assn">Assignments</button><button class="tab" data-tab="tp">Teaching practice</button></div>
+      <div class="filters" id="filters"></div>
+    </div>
+    <div class="gridwrap" id="gridwrap"></div>
+  </div>
+  <div id="detail"></div>
+</div>
+<script src="hub-shared.js"></script>
+<script src="assignment-defaults.js"></script>
+<script src="hub-tracker.js"></script>
+<script>
+const T = window.HubTracker;
+const ROSTER_KEY = 'connect_roster_v1';
+function loadRoster(){ try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
+function saveRoster(r){ localStorage.setItem(ROSTER_KEY, JSON.stringify(r)); }
+const $ = id => document.getElementById(id);
+function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function initials(name){ return String(name||'').trim().split(/\s+/).filter(Boolean).map(w=>w[0].toUpperCase()).slice(0,2).join(''); }
+function when(iso){ if(!iso) return ''; const d=new Date(iso); if(isNaN(d)) return ''; return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
+
+// Wording (for brief titles) -- the browser's own, else the standard set.
+let WORDING = null; try{ WORDING = JSON.parse(localStorage.getItem('connect_assignment_wording_v2')); }catch(e){}
+if (!WORDING && window.CONNECT_HUB_DEFAULT_WORDING) WORDING = window.CONNECT_HUB_DEFAULT_WORDING;
+const ASSN = [ {key:'fol',label:'FOL'}, {key:'lrt',label:'LRT'}, {key:'lsrt',label:'LSRT'}, {key:'lfc',label:'LFC'} ];
+const TPS = [1,2,3,4,5,6,7,8].map(n=>({key:'tp'+n, n, label:'TP'+n}));
+
+// The handoff's vocabulary and colour buckets, over the Hub's own states.
+// Missing / due need deadlines the Hub does not hold, so they never render.
+const A_STATE = {
+  '':        { t:'·', cls:'nd',   name:'Not started' },
+  WAIT:      { t:'in', cls:'wait',    name:'Submitted, waiting to be marked' },
+  UNMARKED:  { t:'sent back', cls:'work', name:'Returned unmarked — to be submitted again' },
+  PASS:      { t:'pass', cls:'fine',  name:'Pass' },
+  FAILRES:   { t:'resubmit', cls:'work', name:'Resubmission required' },
+  WAIT2:     { t:'resub in', cls:'wait', name:'Resubmission waiting to be marked' },
+  RES:       { t:'pass²', cls:'fine', name:'Passed on resubmission' },
+  FAIL:      { t:'fail', cls:'wrong', name:'Fail' }
+};
+const T_STATE = {
+  nd:     { t:'·', cls:'nd', name:'Not yet taught' },
+  un:     { t:'taught', cls:'wait', name:'Taught, feedback not yet returned' },
+  ABOVE:  { t:'above', cls:'above', name:'Above standard' },
+  STD:    { t:'std', cls:'fine', name:'To standard' },
+  NOTSTD: { t:'not std', cls:'wrong', name:'Not to standard' }
+};
+
+let TAB = 'assn', FILTER = 'Everyone', SEL = null;
+
+function people(){
+  const roster = loadRoster();
+  return Object.values(roster.trainees||{}).sort((a,b)=>(a.name||'').localeCompare(b.name||'')).map(tr=>{
+    const c = T.recordFor(tr); const r = T.readCandidate(c);
+    const hist = T.tpHistory(tr);
+    const tps = {};
+    TPS.forEach(({key,n})=>{
+      const fb = hist[n];
+      const cur = tr.tp && tr.tp.feedback;
+      const drafting = !fb && cur && cur.status !== 'returned' && T.tpNumberOf(cur) === n;
+      const f = fb && fb.state && fb.state.f;
+      tps[key] = { g: fb ? (c['tp'+n] || 'un') : (drafting ? 'un' : 'nd'), aim: c['tp'+n+'_aim'], tutor: f ? f.fTutor : '', date: f ? f.fDate : '', at: fb ? fb.returnedAt : null, fb };
+    });
+    const asg = {};
+    ASSN.forEach(({key})=>{ const sub = (tr.assignments||{})[key]; asg[key] = Object.assign({ sub }, T.assignmentState(sub)); });
+    return { tr, c, r, tps, asg };
+  });
+}
+const toMark = p => ASSN.filter(a=>['WAIT','WAIT2'].includes(p.asg[a.key].code)).length + TPS.filter(t=>p.tps[t.key].g==='un').length;
+const dmCount = p => ASSN.filter(a=>p.asg[a.key].dm).length;
+const atRisk = p => p.r.potentialFail;
+
+function render(){
+  const all = people();
+  const counts = { 'Everyone':0, 'To mark': all.reduce((n,p)=>n+toMark(p),0), 'Double marked': all.reduce((n,p)=>n+dmCount(p),0), 'At risk': all.filter(atRisk).length };
+  const countCls = { 'To mark':'var(--blu)', 'Double marked':'var(--purp)', 'At risk':'var(--red)' };
+  $('filters').innerHTML = Object.keys(counts).map(f=>`<button class="filter ${FILTER===f?'on':''}" data-f="${f}">${f}${counts[f]?`<span class="n" style="color:${countCls[f]}">${counts[f]}</span>`:''}</button>`).join('');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.tab===TAB));
+  const shown = all.filter(p => FILTER==='Everyone' || (FILTER==='To mark' && toMark(p)>0) || (FILTER==='Double marked' && dmCount(p)>0) || (FILTER==='At risk' && atRisk(p)));
+  const isA = TAB==='assn';
+  const cols = isA ? ASSN : TPS;
+  const gridCols = isA ? '210px repeat(4, 1fr) 58px' : '210px repeat(8, 1fr) 58px';
+  if (!all.length){ $('gridwrap').innerHTML = `<div class="empty">No trainee files imported yet. The tracker fills itself from the files you import on the dashboard and the feedback you return.</div>`; $('detail').innerHTML=''; return; }
+  let html = '';
+  if (!isA) html += `<div class="grid bands" style="grid-template-columns:${gridCols}"><div></div><div class="band" style="grid-column:span 2">Stage 1</div><div class="band" style="grid-column:span 3">Stage 2</div><div class="band" style="grid-column:span 3">Stage 3</div><div></div></div>`;
+  html += `<div class="grid colhead" style="grid-template-columns:${gridCols}"><div class="count">${shown.length} candidate${shown.length===1?'':'s'}</div>${cols.map(c=>`<div class="col"><b>${c.label}</b><span>mark / DM</span></div>`).join('')}<div class="tail-h">${isA?'Passed':'To std'}</div></div>`;
+  html += shown.map(p=>{
+    const risk = atRisk(p);
+    const cells = cols.map(col=>{
+      let chip, selected = SEL && SEL.id===p.tr.id && SEL.col===col.key;
+      if (isA){
+        const a = p.asg[col.key]; const st = A_STATE[a.code] || A_STATE[''];
+        const dm = a.code ? `<span class="dm">/ ${a.dm ? 'DM <b>'+esc(initials(a.markers.second))+'</b>' : '—'}</span>` : '';
+        chip = `<span class="chip ${st.cls}">${st.t}${dm}</span>`;
+      } else {
+        const t = p.tps[col.key]; const st = T_STATE[t.g] || T_STATE.nd;
+        const aim = t.aim ? `<span class="aim">${T.aimShort(t.aim)}</span>` : '';
+        const dm = t.g!=='nd' ? `<span class="dm">/ —</span>` : '';
+        chip = `<span class="chip ${st.cls}">${st.t}${aim}${dm}</span>`;
+      }
+      return `<div class="cell ${selected?'sel':''}" data-id="${esc(p.tr.id)}" data-col="${col.key}">${chip}</div>`;
+    }).join('');
+    const passed = ASSN.filter(a=>['PASS','RES'].includes(p.asg[a.key].code)).length;
+    const toStd = TPS.slice(0,6).filter(t=>['STD','ABOVE'].includes(p.tps[t.key].g)).length;
+    return `<div class="grid row ${risk?'risk':''}" style="grid-template-columns:${gridCols}"><div class="who"><div class="nm">${esc(p.tr.name)}</div>${risk?'<div class="flag">at risk</div>':''}</div>${cells}<div class="tail">${isA?passed+'/4':toStd+'/6'}</div></div>`;
+  }).join('');
+  const leg = isA ? ['WAIT','FAILRES','WAIT2','UNMARKED','FAIL','PASS','RES'].map(k=>A_STATE[k]) : ['un','NOTSTD','STD','ABOVE'].map(k=>T_STATE[k]);
+  html += `<div class="legend">${leg.map(s=>`<div class="it"><span class="chip ${s.cls}">${s.t}</span><span class="lb">${s.name}</span></div>`).join('')}<div class="it"><span class="chip nd" style="color:var(--purp-soft)">/ —</span><span class="lb">Not double marked</span></div><div class="it"><span class="chip nd" style="color:var(--purp-soft)">/ DM JB</span><span class="lb">Second marker's initials</span></div></div>`;
+  $('gridwrap').innerHTML = html;
+  renderDetail(all);
+}
+
+function renderDetail(all){
+  const box = $('detail');
+  if (!SEL){ box.innerHTML=''; return; }
+  const p = all.find(x=>x.tr.id===SEL.id); if(!p){ SEL=null; box.innerHTML=''; return; }
+  const isA = SEL.col.indexOf('tp')!==0;
+  const facts = [], trail = [], actions = [];
+  let kicker, subtitle, status;
+  const q = 'trainee=' + encodeURIComponent(p.tr.id);
+  if (isA){
+    const a = p.asg[SEL.col]; const st = A_STATE[a.code] || A_STATE['']; const w = WORDING && WORDING[SEL.col];
+    kicker = 'Assignment'; subtitle = SEL.col.toUpperCase() + (w ? ' · ' + w.title : ''); status = st;
+    facts.push(['Brief', w ? w.title : SEL.col.toUpperCase()]);
+    facts.push(['Round', a.round===2 ? 'Second submission — the one resubmission is used' : a.round===1 ? 'First submission' : 'Nothing submitted yet']);
+    facts.push(['First marker', a.markers && a.markers.first ? a.markers.first : 'not yet']);
+    facts.push(['Second marker', a.dm ? a.markers.second + ' — double-marked' : 'none']);
+    const s = a.sub || {};
+    if (s.sub1At) trail.push([s.sub1At, 'Submitted']);
+    if (s.marked1At) trail.push([s.marked1At, 'Marked' + (a.markers&&a.markers.first?' by '+a.markers.first:'') + (s.feedback&&s.feedback.outcome&&a.round<2?' — '+s.feedback.outcome:'')]);
+    if (s.sub2At) trail.push([s.sub2At, 'Resubmitted']);
+    if (s.marked2At) trail.push([s.marked2At, 'Resubmission marked' + (s.feedback&&s.feedback.outcome?' — '+s.feedback.outcome:'')]);
+    if (['WAIT','WAIT2'].includes(a.code)) actions.push(['Open the mark sheet', `10_tutor_assignment_marking.html?${q}&a=${SEL.col}`, true]);
+    else if (['PASS','RES','FAIL','FAILRES'].includes(a.code)) actions.push(['Open the marked record', `11_assignment_record.html?${q}&a=${SEL.col}`, true]);
+    if (a.code && a.code!=='PASS' && a.code!=='RES' && a.code!=='FAIL') actions.push(['Open the mark sheet', `10_tutor_assignment_marking.html?${q}&a=${SEL.col}`, false]);
+  } else {
+    const t = p.tps[SEL.col]; const n = parseInt(SEL.col.slice(2),10); const st = T_STATE[t.g] || T_STATE.nd;
+    kicker = 'Teaching practice'; subtitle = 'TP' + n + ' · ' + (n<=2?'Stage 1':n<=5?'Stage 2':'Stage 3'); status = st;
+    facts.push(['Stage', n<=2?'Stage 1 (TP1–2)':n<=5?'Stage 2 (TP3–5)':'Stage 3 (TP6–8)']);
+    facts.push(['Tutor', t.tutor || 'not yet']);
+    if (t.aim) facts.push(['Main aim', t.aim]);
+    if (t.date) facts.push(['Taught', niceDate(t.date)]);
+    if (t.at) trail.push([new Date(t.at).toISOString(), 'Feedback returned' + (t.tutor?' by '+t.tutor:'') + (t.g && t.g!=='un' ? ' — ' + st.name : '')]);
+    const cur = p.tr.tp && p.tr.tp.feedback; const isCurrent = cur && T.tpNumberOf(cur)===n;
+    if (t.g==='un') actions.push(['Sign off the feedback', `3_tutor_feedback.html?${q}`, true]);
+    else if (t.g!=='nd' && isCurrent) actions.push(['Open the TP record', `3_tutor_feedback.html?${q}`, true]);
+  }
+  // the candidate's standing, from the tracker's rules
+  const r = p.r; const chip = T.STATE_CHIP[r.state];
+  facts.push(['Standing', chip.text.charAt(0)+chip.text.slice(1).toLowerCase() + (r.from?' — from '+r.from:''), r.state==='notstd'?'red':'']);
+  if (r.potentialFail) facts.push(['Potential Fail', r.failWhy.join('; ') + (r.letterIssued?' · Fail letter issued':''), 'red']);
+  if (r.letterAdvised) facts.push(['Letter', 'A letter can go out now — ' + [...r.fails,...r.pending].map(x=>T.SHOW_AS[x]||x).join(', '), 'amb']);
+  if (r.ceiling) facts.push(['Grade cap', r.ceiling.replace('SRT','LSRT'), 'amb']);
+  if (r.stage3Why) facts.push(['Stage 3', 'required — ' + r.stage3Why, 'purp']);
+  if (r.stage2Hint) facts.push(['Stage 2', r.stage2Hint, 'amb']);
+  else if (r.stage2Due) facts.push(['Stage 2', 'due — ' + r.graded + ' TPs taught, no Stage 2 recorded', 'amb']);
+  if (r.stage1Due) facts.push(['Stage 1', 'record outstanding', 'amb']);
+  const man = p.tr.tracker || {};
+  const rec = T.STAGES.map(sd=>{ const v = man[sd.field]||''; return `<button class="rb ${v?'on-'+v:''}" data-id="${esc(p.tr.id)}" data-field="${sd.field}" data-cycle="${sd.cycle.join('|')}">${sd.label}: ${sd.labels[v]}</button>`; }).join('')
+    + `<button class="rb ${man.failLetter?'on-letter':''}" data-id="${esc(p.tr.id)}" data-field="failLetter" data-toggle="letter">${man.failLetter?'Fail letter issued '+esc(String(man.failLetter)):'Fail letter: not issued'}</button>`
+    + `<button class="rb ${man.withdrawn?'on-withdrawn':''}" data-id="${esc(p.tr.id)}" data-field="withdrawn" data-toggle="withdrawn">${man.withdrawn?'Withdrawn':'Withdrawn: no'}</button>`;
+  box.innerHTML = `<div class="detail">
+    <div class="d-id"><div class="kicker">${kicker}</div><div class="d-title">${esc(p.tr.name)}</div><div class="d-sub">${esc(subtitle)}</div><div><span class="chip ${status.cls}" style="font-size:11.5px; font-weight:600;">${status.name}</span></div></div>
+    <div class="d-mid">
+      <div class="facts">${facts.map(f=>`<div class="fact"><div class="k">${f[0]}</div><div class="v ${f[2]||''}">${esc(f[1])}</div></div>`).join('')}
+        <div class="fact" style="padding-top:6px;"><div class="k">Record</div><div class="rec">${rec}</div></div>
+      </div>
+      <div class="trail">${trail.length ? trail.map(e=>`<div class="ev"><div class="w">${when(e[0])}</div><div class="t">${esc(e[1])}</div></div>`).join('') : '<div class="ev"><div class="t" style="color:var(--mut2)">No dated events yet.</div></div>'}</div>
+    </div>
+    <div class="d-act">${actions.map(a=>`<a class="act ${a[2]?'primary':''}" href="${a[1]}">${a[0]}</a>`).join('')}<button class="close" id="closeDetail">Close</button></div>
+  </div>`;
+}
+
+document.querySelector('.tabs').addEventListener('click', e=>{ const b=e.target.closest('.tab'); if(!b) return; TAB=b.dataset.tab; SEL=null; render(); });
+$('filters').addEventListener('click', e=>{ const b=e.target.closest('.filter'); if(!b) return; FILTER=b.dataset.f; render(); });
+$('gridwrap').addEventListener('click', e=>{ const c=e.target.closest('.cell'); if(!c) return; SEL={id:c.dataset.id, col:c.dataset.col}; render(); document.getElementById('detail').scrollIntoView({behavior:'smooth', block:'nearest'}); });
+$('detail').addEventListener('click', e=>{
+  if (e.target.id==='closeDetail'){ SEL=null; render(); return; }
+  const b = e.target.closest('button.rb'); if(!b) return;
+  const roster = loadRoster(); const tr = roster.trainees[b.dataset.id]; if(!tr) return;
+  tr.tracker = tr.tracker || {}; const cur = tr.tracker[b.dataset.field] || '';
+  if (b.dataset.cycle){ const cyc=b.dataset.cycle.split('|'); tr.tracker[b.dataset.field] = cyc[(cyc.indexOf(cur)+1)%cyc.length]; }
+  else if (b.dataset.toggle==='letter') tr.tracker.failLetter = cur ? '' : new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  else if (b.dataset.toggle==='withdrawn') tr.tracker.withdrawn = cur ? '' : true;
+  saveRoster(roster); render();
+});
+(function(){ try{ const cs = JSON.parse(localStorage.getItem('connect_course_settings')||'{}'); const parts=['Connect Hub', cs.courseName, cs.centreName].filter(Boolean); $('eyebrow').textContent = parts.join(' · '); }catch(e){} })();
+render();
+</script>
+</body>
+</html>
