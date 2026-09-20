@@ -212,6 +212,17 @@ function render(){
       <p class="guide" style="margin:0;">Comments on specific parts are shown inline next to the relevant section below.</p>
       ${f.generalComment1?`<p>${nl2br(f.generalComment1)}</p>`:''}
       ${f.generalComment2?`<h2 style="margin-top:14px;">On the resubmission</h2><p>${nl2br(f.generalComment2)}</p>`:''}
+      ${(function(){
+        // Every criterion with its mark and the tutor's comment, for the last
+        // round marked. A criterion tied to a section also shows inline there;
+        // one that is not tied (FOL's are) showed nowhere before (trainee
+        // walk, 20 Sep 2026).
+        const round = (sub.criteriaMarks.sub2||[]).some(m=>m===true||m===false) ? 'sub2' : 'sub1';
+        const marks = sub.criteriaMarks[round]||[], cms = (sub.criteriaComments&&sub.criteriaComments[round])||[];
+        const rows = (a.criteria||[]).map((c,i)=>({ text:c.text, m:marks[i], cm:cms[i]||'' })).filter(r=>r.m===true||r.m===false||r.cm);
+        if (!rows.length) return '';
+        return `<div style="margin-top:12px;">${rows.map(r=>`<div style="display:flex; gap:10px; align-items:flex-start; padding:6px 0; border-top:1px solid var(--sand-line);"><span style="flex:none; font-size:0.72rem; font-weight:700; padding:3px 8px; border-radius:10px; ${r.m===true?'background:#EAF3E9;color:#1E6B63;':r.m===false?'background:#FBEAE6;color:#A33227;':'background:var(--sand);color:var(--grey);'}">${r.m===true?'Met':r.m===false?'Not met':'\u2014'}</span><div style="font-size:0.85rem; line-height:1.5;"><div>${esc(r.text)}</div>${r.cm?`<div style="color:var(--grey); margin-top:2px;">${nl2br(r.cm)}</div>`:''}</div></div>`).join('')}</div>`;
+      })()}
     </div>`;
   }
 
