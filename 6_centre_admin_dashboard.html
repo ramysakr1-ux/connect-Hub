@@ -152,10 +152,10 @@
 
 
 </div>
-<script src="assignment-defaults.js?v=202609201601"></script>
-<script src="hub-store.js?v=202609201601"></script>
-<script src="hub-shared.js?v=202609201601"></script>
-<script src="hub-sync.js?v=202609201601"></script>
+<script src="assignment-defaults.js?v=202609202149"></script>
+<script src="hub-store.js?v=202609202149"></script>
+<script src="hub-shared.js?v=202609202149"></script>
+<script src="hub-sync.js?v=202609202149"></script>
 <script type="text/x-hub-app">
 document.getElementById('tabs').addEventListener('click', e=>{
   const btn = e.target.closest('.tab');
@@ -276,13 +276,23 @@ async function renderStoreRoster(){
   const groups = [...new Set(trainees.map(t=>t.group).filter(Boolean))];
   const esc2 = esc;
   box.innerHTML = `
-    <form id="storeAddForm" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+    <form id="storeAddForm" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
       <input id="storeAddName" placeholder="Trainee's name" required style="font-family:'Karla',sans-serif;font-size:0.85rem;padding:7px 10px;border:1.5px solid var(--sand-line);border-radius:6px;min-width:220px;">
       <input id="storeAddGroup" placeholder="Group (e.g. A)" list="storeGroups" style="font-family:'Karla',sans-serif;font-size:0.85rem;padding:7px 10px;border:1.5px solid var(--sand-line);border-radius:6px;width:120px;">
       <datalist id="storeGroups">${groups.map(g=>`<option value="${esc2(g)}">`).join('')}</datalist>
       <button class="btn primary" type="submit">Add trainee</button>
       <span id="storeAddStatus" style="font-size:0.82rem;color:var(--grey);"></span>
     </form>
+    <details style="margin-bottom:12px;">
+      <summary style="font-size:0.82rem;color:var(--teal);cursor:pointer;">Add several at once</summary>
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px;max-width:420px;">
+        <textarea id="storeBulkNames" rows="6" placeholder="One trainee per line — a name on its own, or Name, Group&#10;e.g.&#10;Amara Okafor, A&#10;Daniel Kim, A&#10;Priya Sharma" style="font-family:'Karla',sans-serif;font-size:0.85rem;padding:8px 10px;border:1.5px solid var(--sand-line);border-radius:6px;resize:vertical;"></textarea>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button class="btn primary" type="button" id="storeBulkAddBtn">Add all</button>
+          <span id="storeBulkStatus" style="font-size:0.82rem;color:var(--grey);"></span>
+        </div>
+      </div>
+    </details>
     <p style="font-size:0.82rem;color:var(--grey);margin:0 0 10px;">Each trainee's link is theirs alone — post it to them in Classroom as a Material. The tutor link is for tutors only: <code style="font-size:0.78rem;">${esc2(S.tutorLink())}</code> <button class="btn ghost" type="button" data-copy="${esc2(S.tutorLink())}" style="padding:4px 10px;font-size:0.78rem;">Copy</button> <button class="btn ghost" type="button" id="storeRotateKey" style="padding:4px 10px;font-size:0.78rem;color:var(--brick);">Rotate the course key</button></p>
     <div id="assessorBlock" style="font-size:0.82rem;color:var(--grey);margin:0 0 14px;padding:10px 12px;border:1.5px dashed var(--sand-line);border-radius:8px;">Loading the assessor link…</div>
     <table style="width:100%;">
@@ -303,6 +313,32 @@ async function renderStoreRoster(){
     const name = document.getElementById('storeAddName').value.trim(), group = document.getElementById('storeAddGroup').value.trim();
     const st = document.getElementById('storeAddStatus'); st.textContent = 'Adding…';
     try { await S.addTrainee(name, group); renderStoreRoster(); } catch (err) { st.textContent = err.message; }
+  });
+  // Paste a class list -- one trainee per line, "Name" or "Name, Group". Added
+  // one at a time (the store copes badly with a burst, 20 Sep 2026 finding),
+  // with the box re-rendered once at the end rather than after each row.
+  document.getElementById('storeBulkAddBtn').addEventListener('click', async () => {
+    const box = document.getElementById('storeBulkNames');
+    const status = document.getElementById('storeBulkStatus');
+    const rows = box.value.split('\n').map(line => {
+      const parts = line.split(',');
+      const name = (parts[0] || '').trim();
+      const group = (parts.slice(1).join(',') || '').trim();
+      return { name, group };
+    }).filter(r => r.name);
+    if (!rows.length) { status.textContent = 'Nothing to add -- paste at least one name.'; return; }
+    if (!(await confirmModal(`Add ${rows.length} trainee${rows.length === 1 ? '' : 's'}?`, 'Add all'))) return;
+    let done = 0, failed = [];
+    for (const r of rows) {
+      status.textContent = `Adding ${done + 1} of ${rows.length}…`;
+      try { await S.addTrainee(r.name, r.group); done++; }
+      catch (err) { failed.push(`${r.name}: ${err.message}`); }
+    }
+    status.textContent = failed.length
+      ? `Added ${done} of ${rows.length}. Failed: ${failed.join('; ')}`
+      : `Added ${done}.`;
+    if (done > 0) box.value = '';
+    renderStoreRoster();
   });
   box.addEventListener('click', async e=>{
     const c = e.target.closest('[data-copy]'); if (c){ try{ await navigator.clipboard.writeText(c.dataset.copy); c.textContent='Copied'; setTimeout(()=>{ c.textContent = c.dataset.copy.indexOf('?t=')>-1 ? 'Copy link' : 'Copy'; }, 1500); }catch(err){ prompt('Copy this link', c.dataset.copy); } return; }
