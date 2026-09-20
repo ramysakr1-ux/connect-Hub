@@ -80,16 +80,19 @@
     padding:5px 11px 5px 5px; border-radius:20px; cursor:pointer; font-family:'Karla',sans-serif;
     font-size:0.8rem; color:var(--grey); transition:background .15s,color .15s;}
   .setup button:hover{background:var(--card); color:var(--ink);}
-  /* A done step used to replace its number with a tick, so the row read
-     "1 ✓ 3" -- a counting sequence with a hole in it (Ramy, 21 Sep 2026:
-     "you have like one, tick, three. Does that make sense?"). It does not, and
-     the numbers were never load-bearing: the three can be done in any order.
-     So the dot is a tick when done and empty when not, which is also exactly
-     how the tutor dashboard's setup panel draws the same three steps. */
+  /* The number STAYS in the dot, done or not, and the fill is what says done
+     (Ramy, 21 Sep 2026: "in order of what they do" -- settings one, links and
+     trainees two, assignment wording three). A done step used to swap its
+     number for a tick, which left a half-finished row reading "1, tick, 3": a
+     counting sequence with a hole where the second number should be, and his
+     question was exactly that -- "does that make sense?" Two ways of marking
+     one state cannot both be in the same 18px circle, so colour carries it and
+     the digits stay put. */
   .setup .dot{width:18px; height:18px; border-radius:50%; display:inline-flex; align-items:center;
-    justify-content:center; font-size:11px; font-weight:700; background:var(--sand-line);
+    justify-content:center; font-size:10px; font-weight:700; background:var(--sand-line);
     color:var(--paper); flex-shrink:0;}
   .setup button.done .dot{background:var(--teal); color:var(--paper);}
+  .setup button.done{color:var(--ink);}
 
   /* ---- tabs ------------------------------------------------------------ */
   .tabs{display:flex; gap:26px; margin-top:26px; border-bottom:1px solid var(--sand-line); overflow-x:auto;}
@@ -221,9 +224,9 @@
        invitation for the app to watch. Dropped on Ramy's call, 21 Sep 2026.
        The Tutors tab stays; it was only the step that tracked nothing. -->
   <div class="setup" id="setupRow">
-    <button type="button" data-goto="settings"><span class="dot"></span>Course set up</button>
-    <button type="button" data-goto="roster"><span class="dot"></span>Trainees added</button>
-    <button type="button" data-goto="assignments"><span class="dot"></span>Assignment wording</button>
+    <button type="button" data-goto="settings"><span class="dot">1</span>Course set up</button>
+    <button type="button" data-goto="roster"><span class="dot">2</span>Links and trainees</button>
+    <button type="button" data-goto="assignments"><span class="dot">3</span>Assignment wording</button>
   </div>
 
   <div class="tabs" id="tabs">
@@ -310,10 +313,10 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609210225"></script>
-<script src="hub-store.js?v=202609210225"></script>
-<script src="hub-shared.js?v=202609210225"></script>
-<script src="hub-sync.js?v=202609210225"></script>
+<script src="assignment-defaults.js?v=202609210226"></script>
+<script src="hub-store.js?v=202609210226"></script>
+<script src="hub-shared.js?v=202609210226"></script>
+<script src="hub-sync.js?v=202609210226"></script>
 <script type="text/x-hub-app">
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -379,7 +382,6 @@ function renderSetup(){
   document.querySelectorAll('#setupRow [data-goto]').forEach(b=>{
     const ok = done[b.dataset.goto];
     b.classList.toggle('done', !!ok);
-    b.querySelector('.dot').textContent = ok ? '\u2713' : '';
   });
 }
 
