@@ -100,8 +100,8 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609210130"></script>
-<script src="hub-store.js?v=202609210130"></script>
+<script src="hub-shared.js?v=202609210157"></script>
+<script src="hub-store.js?v=202609210157"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -202,7 +202,11 @@ function render(courses, msg){
     btn.disabled = true; status('Making the course…');
     try {
       const made = await call({ op: 'createCourse' });
-      load('Made ' + made.id + '. Copy its tutor link and send it to the centre.');
+      /* The store answers with the refreshed list, so the screen repaints from
+         this one answer. Asking it again for the list would cost a second
+         Apps Script round trip, and each of those is 1.5-13 s -- the wait Ramy
+         called out on 21 Sep 2026 ("making the course takes a while"). */
+      showList(made.courses, 'Made ' + made.id + '. Copy its tutor link and send it to the centre.');
     } catch (err) { status(err.message); btn.disabled = false; }
   });
 
@@ -229,10 +233,17 @@ function render(courses, msg){
       try {
         const r = await call({ op: 'deleteCourse', course: d.dataset.delete, confirm: d.dataset.delete });
         const g = r.removed || {};
-        load(`Deleted ${r.deleted} — ${g.trainees || 0} trainee${g.trainees === 1 ? '' : 's'} and ${g.records || 0} record${g.records === 1 ? '' : 's'} with it.`);
+        showList(r.courses, `Deleted ${r.deleted} — ${g.trainees || 0} trainee${g.trainees === 1 ? '' : 's'} and ${g.records || 0} record${g.records === 1 ? '' : 's'} with it.`);
       } catch (err) { status(err.message); }
     }
   });
+}
+
+/* Repaint from a list the store has already sent back, and only fall back to
+   asking for one if an older deployment answered without it. */
+function showList(courses, msg){
+  if (courses) { render(courses, msg); return; }
+  load(msg);
 }
 
 async function load(msg){
