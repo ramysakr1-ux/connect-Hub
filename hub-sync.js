@@ -51,9 +51,13 @@
   function flush(){
     var jobs = queue; queue = {}; clearTimeout(timer); timer = null;
     var ps = Object.keys(jobs).map(function(k){ return S.call(jobs[k]); });
-    if (!ps.length) return;
-    Promise.all(ps).then(function(){ status('Saved to the course', 'ok'); }).catch(function(err){ status('Not saved — ' + (err && err.message || err), 'error'); });
+    if (!ps.length) return Promise.resolve();
+    var all = Promise.all(ps);
+    all.then(function(){ status('Saved to the course', 'ok'); }).catch(function(err){ status('Not saved \u2014 ' + (err && err.message || err), 'error'); });
+    return all;
   }
+  // A page about to navigate awaits this, so nothing is left to the beacon.
+  window.HubSync = { flushNow: function(){ return flush(); }, mode: mode };
   function flushBeacon(){
     var jobs = queue; queue = {}; clearTimeout(timer); timer = null;
     Object.keys(jobs).forEach(function(k){
