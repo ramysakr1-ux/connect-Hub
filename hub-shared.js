@@ -26,7 +26,11 @@
   // Chosen states keep their own colour; disabled things do nothing.
   if(!document.getElementById('hub-hover-css')){
     var hcss=document.createElement('style'); hcss.id='hub-hover-css';
-    hcss.textContent=":root{ --hub-ring: 0 0 0 2px oklch(88% 0.04 195); --hub-wash: oklch(94% 0.025 195); }"+
+    // Ramy, 20 Sep 2026: the credit is a watermark like Connect's -- in the header band beside the mark, on the landing screens only, never a door.
+    hcss.textContent=":root{ --hub-ring: 0 0 0 2px oklch(88% 0.04 195); --hub-wash: oklch(94% 0.025 195); --bronze: oklch(50% 0.09 62); }"+
+      ".hub-credit{ font-family:'Karla',sans-serif; font-size:11px; letter-spacing:0.01em; color:var(--bronze); opacity:.8; white-space:nowrap; margin-left:12px; align-self:center; }"+
+      ".hub-credit b{ font-weight:700; }"+
+      "@media (max-width:768px){ .hub-credit{ display:none; } }"+
       "a.card, .tk-card[href], .cell, .list-row > button:first-child{ transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease; }"+
       "a.card:hover, .cell:hover{ transform: translateY(-1px); box-shadow: var(--hub-ring); border-color: var(--teal, #1E6B63); }"+
       ".cell:hover .chip{ box-shadow: none; }"+
