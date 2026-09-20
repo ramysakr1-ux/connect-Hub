@@ -96,7 +96,8 @@
   // ---- preload ------------------------------------------------------------------
   if (mode === 'solo') { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', runApp); else runApp(); return; }
   status('Loading from the course…', 'busy');
-  var work = S.boot().catch(function(){ return S.boot(); }).then(function(boot){
+  // Apps Script drops the odd call; three tries, the last after a pause.
+  var work = S.boot().catch(function(){ return S.boot(); }).catch(function(){ return new Promise(function(res){ setTimeout(res, 1500); }).then(function(){ return S.boot(); }); }).then(function(boot){
     boot = boot || {};
     var course = boot.course || {};
     if (course.wording) origSet('connect_assignment_wording_v2', JSON.stringify(course.wording)); else origRemove('connect_assignment_wording_v2');
