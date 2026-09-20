@@ -92,13 +92,17 @@
   .act{ display:block; cursor:pointer; text-align:center; padding:8px 12px; border-radius:5px; font-size:12px; font-weight:600; border:1px solid oklch(82% 0.02 82); background:transparent; color:var(--deep); font-family:inherit; }
   .act.primary{ background:var(--deep); color:oklch(99.5% 0.004 90); border-color:var(--deep); }
   .close{ cursor:pointer; text-align:center; padding:4px; font-size:11px; color:oklch(58% 0.017 70); background:none; border:none; font-family:inherit; }
-  /* the record: the tutorial verdicts, letter and withdrawal, set by hand */
-  .rec{ display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
-  .rb{ font-family:inherit; font-size:11px; font-weight:600; padding:5px 9px; border-radius:5px; border:1px solid var(--line); background:var(--paper); color:var(--ink); cursor:pointer; }
-  .rb.on-GIVEN, .rb.on-STD{ background:var(--blu-bg); border-color:oklch(84% 0.05 232); color:var(--blu); }
-  .rb.on-NOTSTD, .rb.on-letter{ background:var(--red-bg); border-color:oklch(82% 0.08 25); color:var(--red); }
-  .rb.on-ABOVE{ background:var(--grn-bg); border-color:oklch(80% 0.07 155); color:var(--grn); }
-  .rb.on-withdrawn{ background:var(--sand); color:var(--mut); }
+  /* the tutorials, letter and withdrawal: one segmented control per row */
+  .seg{ display:inline-flex; border:1px solid var(--line); border-radius:6px; overflow:hidden; background:var(--paper); }
+  .sg{ font-family:inherit; font-size:11px; font-weight:500; padding:4px 10px; border:none; border-right:1px solid var(--line); background:transparent; color:var(--mut); cursor:pointer; }
+  .sg:last-child{ border-right:none; }
+  .sg:hover{ color:var(--ink); }
+  .sg.on{ font-weight:700; color:var(--ink); background:var(--sand); }
+  .sg.on.set-GIVEN, .sg.on.set-STD{ background:var(--blu-bg); color:var(--blu); }
+  .sg.on.set-NOTSTD{ background:var(--red-bg); color:var(--red); }
+  .sg.on.set-ABOVE{ background:var(--grn-bg); color:var(--grn); }
+  .sg.on.set-true{ background:var(--sand); color:var(--mut); }
+  .v.set-STD, .v.set-GIVEN{ color:var(--blu); } .v.set-NOTSTD{ color:var(--red); } .v.set-ABOVE{ color:var(--grn); }
   @media (max-width:900px){ .page{ padding:20px 16px 60px; } }
 </style>
 </head>
@@ -287,15 +291,29 @@ function renderDetail(all){
   if (!ME && r.stage2Hint) facts.push(['Stage 2', r.stage2Hint, 'amb']);
   else if (!ME && r.stage2Due) facts.push(['Stage 2', 'due — ' + r.graded + ' TPs taught, no Stage 2 recorded', 'amb']);
   if (!ME && r.stage1Due) facts.push(['Stage 1', 'record outstanding', 'amb']);
+  // The tutorials, the letter and withdrawal: one row each, set by choosing
+  // a value, not by cycling a button (Ramy, 20 Sep 2026: "the stages look
+  // really messy"). The candidate's view prints the values as text.
   const man = p.tr.tracker || {};
-  const rec = ME ? T.STAGES.map(sd=>`<span class="rb ${man[sd.field]?'on-'+man[sd.field]:''}" style="cursor:default">${sd.label}: ${sd.labels[man[sd.field]||'']}</span>`).join('') + (man.failLetter?`<span class="rb on-letter" style="cursor:default">Fail letter issued ${esc(String(man.failLetter))}</span>`:'') : T.STAGES.map(sd=>{ const v = man[sd.field]||''; return `<button class="rb ${v?'on-'+v:''}" data-id="${esc(p.tr.id)}" data-field="${sd.field}" data-cycle="${sd.cycle.join('|')}">${sd.label}: ${sd.labels[v]}</button>`; }).join('')
-    + `<button class="rb ${man.failLetter?'on-letter':''}" data-id="${esc(p.tr.id)}" data-field="failLetter" data-toggle="letter">${man.failLetter?'Fail letter issued '+esc(String(man.failLetter)):'Fail letter: not issued'}</button>`
-    + (ME ? '' : `<button class="rb ${man.withdrawn?'on-withdrawn':''}" data-id="${esc(p.tr.id)}" data-field="withdrawn" data-toggle="withdrawn">${man.withdrawn?'Withdrawn':'Withdrawn: no'}</button>`);
+  const seg = (field, options, cur) => ME
+    ? `<span class="v ${cur ? 'set-'+cur : ''}">${(options.find(o=>o[0]===cur)||options[options.length-1])[1]}</span>`
+    : `<span class="seg">${options.map(o=>`<button class="sg ${o[0]===cur?'on set-'+(o[0]||'none'):''}" data-id="${esc(p.tr.id)}" data-field="${field}" data-value="${o[0]}">${o[1]}</button>`).join('')}</span>`;
+  const verdicts = [['NOTSTD','Not to standard'],['STD','To standard'],['ABOVE','Above standard'],['','Not held yet']];
+  const recRows = [
+    ['Stage 1', seg('stage1', [['GIVEN','Record completed'],['','Not yet']], man.stage1||'')],
+    ['Stage 2', seg('stage2', verdicts, man.stage2||'')],
+    ['Stage 3', seg('stage3', verdicts, man.stage3||'')],
+    ['Fail letter', ME ? `<span class="v ${man.failLetter?'set-NOTSTD':''}">${man.failLetter ? 'Issued ' + esc(String(man.failLetter)) : 'Not issued'}</span>`
+      : (man.failLetter ? `<span class="seg"><button class="sg on set-NOTSTD" data-id="${esc(p.tr.id)}" data-field="failLetter" data-value="">Issued ${esc(String(man.failLetter))} · undo</button></span>`
+                        : `<span class="seg"><button class="sg" data-id="${esc(p.tr.id)}" data-field="failLetter" data-value="today">Mark as issued today</button></span>`)],
+  ];
+  if (!ME) recRows.push(['Withdrawn', seg('withdrawn', [['','No'],['true','Yes']], man.withdrawn ? 'true' : '')]);
+  const rec = recRows.map(r=>`<div class="fact"><div class="k">${r[0]}</div><div class="v">${r[1]}</div></div>`).join('');
   box.innerHTML = `<div class="detail">
     <div class="d-id"><div class="kicker">${kicker}</div><div class="d-title">${esc(p.tr.name)}</div><div class="d-sub">${esc(subtitle)}</div><div><span class="chip ${status.cls}" style="font-size:11.5px; font-weight:600;">${status.name}</span></div></div>
     <div class="d-mid">
       <div class="facts">${facts.map(f=>`<div class="fact"><div class="k">${f[0]}</div><div class="v ${f[2]||''}">${esc(f[1])}</div></div>`).join('')}
-        <div class="fact" style="padding-top:6px;"><div class="k">Record</div><div class="rec">${rec}</div></div>
+        <div class="kicker" style="padding-top:10px;">Tutorials and record</div>${rec}
       </div>
       <div class="trail">${trail.length ? trail.map(e=>`<div class="ev"><div class="w">${when(e[0])}</div><div class="t">${esc(e[1])}</div></div>`).join('') : '<div class="ev"><div class="t" style="color:var(--mut2)">No dated events yet.</div></div>'}</div>
     </div>
@@ -308,12 +326,13 @@ $('filters').addEventListener('click', e=>{ const b=e.target.closest('.filter');
 $('gridwrap').addEventListener('click', e=>{ const c=e.target.closest('.cell'); if(!c) return; SEL={id:c.dataset.id, col:c.dataset.col}; render(); document.getElementById('detail').scrollIntoView({behavior:'smooth', block:'nearest'}); });
 $('detail').addEventListener('click', e=>{
   if (e.target.id==='closeDetail'){ SEL=null; render(); return; }
-  const b = e.target.closest('button.rb'); if(!b || ME) return;
+  const b = e.target.closest('button.sg'); if(!b || ME) return;
   const roster = loadRoster(); const tr = roster.trainees[b.dataset.id]; if(!tr) return;
-  tr.tracker = tr.tracker || {}; const cur = tr.tracker[b.dataset.field] || '';
-  if (b.dataset.cycle){ const cyc=b.dataset.cycle.split('|'); tr.tracker[b.dataset.field] = cyc[(cyc.indexOf(cur)+1)%cyc.length]; }
-  else if (b.dataset.toggle==='letter') tr.tracker.failLetter = cur ? '' : new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
-  else if (b.dataset.toggle==='withdrawn') tr.tracker.withdrawn = cur ? '' : true;
+  tr.tracker = tr.tracker || {};
+  const f = b.dataset.field, v = b.dataset.value;
+  if (f === 'failLetter') tr.tracker.failLetter = v === 'today' ? new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '';
+  else if (f === 'withdrawn') tr.tracker.withdrawn = v === 'true' ? true : '';
+  else tr.tracker[f] = v;
   saveRoster(roster); render();
 });
 (function(){ if (ME) { document.getElementById('backLink').href='index.html'; document.getElementById('backLink').innerHTML='&#8592; Back'; document.querySelector('.lede').textContent='Every teaching practice and every assignment, read from what you have submitted and what your tutor has returned. Colour only marks what needs attention; everything that is fine stays quiet. The Stage records and the standing are your tutor\u2019s, as recorded.'; } try{ const cs = JSON.parse(localStorage.getItem('connect_course_settings')||'{}'); const parts=['Connect Hub', ME ? 'Your progress' : '', cs.courseName, cs.centreName].filter(Boolean); $('eyebrow').textContent = parts.join(' · '); }catch(e){} })();
