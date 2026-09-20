@@ -13,7 +13,10 @@
       ".confirm-message{margin:0 0 18px; font-size:0.92rem; color:var(--ink,#2b2620); line-height:1.55;}"+
       ".confirm-actions{display:flex; justify-content:flex-end; gap:10px;}"+
       ".confirm-actions button{font-family:'Karla',sans-serif; font-size:0.85rem; font-weight:600; padding:9px 18px; border-radius:20px; border:1.5px solid var(--sand-line,#e2d9c8); cursor:pointer;}"+
-      ".confirm-cancel{background:var(--paper,#fdfcf9); color:var(--ink,#2b2620);}"+
+      // The cancel button is a control, so it takes the control fill (--box) like
+// every other button in Lite; the literal is the same warm tone, for a page
+// that has not declared the token.
+      ".confirm-cancel{background:var(--box,#faf1e4); color:var(--ink,#2b2620);}"+
       ".confirm-cancel:hover{background:var(--sand-deep,#f3efe6);}"+
       ".confirm-action{background:var(--brick,#8c2f1f); color:var(--paper,#fdfcf9); border-color:var(--brick,#8c2f1f);}"+
       ".confirm-action:hover{background:oklch(40% 0.15 27);}";
