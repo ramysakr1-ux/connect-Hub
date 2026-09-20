@@ -19,9 +19,18 @@ window.HubStore = (function(){
   function akey(){ try { return localStorage.getItem('hub:a') || ''; } catch (e) { return ''; } }
   // text/plain keeps the browser from sending a CORS preflight, which Apps
   // Script would not answer; the response itself is plain JSON.
+  // A call that never answers is worse than one that fails: 20 s, then it is
+  // treated as transient and retried (20 Sep 2026: a boot hung and the page
+  // sat on "Loading from the course" for good).
   async function once(payload){
-    var res = await fetch(URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
-    var text = await res.text();
+    var ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = ctl ? setTimeout(function(){ ctl.abort(); }, 20000) : null;
+    var res, text;
+    try {
+      res = await fetch(URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload), signal: ctl ? ctl.signal : undefined });
+      text = await res.text();
+    } catch (e) { var ne = new Error(e && e.name === 'AbortError' ? 'The store took too long to answer' : 'Could not reach the store'); ne.transient = true; throw ne; }
+    finally { if (timer) clearTimeout(timer); }
     try { return JSON.parse(text); } catch (e) { var title = (text.match(/<title>([^<]*)<\/title>/) || [])[1] || ''; var err = new Error('The store did not answer as expected' + (title ? ' (' + title + ')' : '')); err.transient = true; throw err; }
   }
   // Apps Script drops the odd call, especially several in quick succession,
@@ -30,9 +39,13 @@ window.HubStore = (function(){
     var payload = Object.assign({}, body);
     if (key() && payload.key == null) payload.key = key();
     else if (akey() && payload.a == null) payload.a = akey();
-    var out;
-    try { out = await once(payload); }
-    catch (e) { if (!e.transient) throw e; await new Promise(function(r){ setTimeout(r, 900); }); out = await once(payload); }
+    // Apps Script answers the odd call with an HTML error page ("Sayfa
+    // Bulunamadi", 1 in 3 during a bad minute on 20 Sep 2026): three tries.
+    var out, tries = 0, waits = [900, 1800];
+    for (;;) {
+      try { out = await once(payload); break; }
+      catch (e) { if (!e.transient || tries >= waits.length) throw e; await new Promise(function(r){ setTimeout(r, waits[tries++]); }); }
+    }
     if (!out.ok) throw new Error(out.error || 'Store error');
     return out.result;
   }
