@@ -1098,6 +1098,9 @@ function saveFeedbackRecord(patch){
   const cur=loadFeedbackRecord()||{status:'draft'};
   Object.assign(cur,patch);
   try{ localStorage.setItem(FEEDBACK_KEY,JSON.stringify(cur)); }catch(e){}
+  if (cur.status==='returned') {
+    try{ const n=parseInt(String((cur.state&&cur.state.f&&cur.state.f.fTP)||cur.label||'').replace(/\D/g,''),10); if(n>=1&&n<=8){ const h=JSON.parse(localStorage.getItem('chub:tpHistory')||'{}'); h[n]=cur; localStorage.setItem('chub:tpHistory',JSON.stringify(h)); } }catch(e){}
+  }
 }
 let saveTimer=null, locked=false;
 function autosave(){

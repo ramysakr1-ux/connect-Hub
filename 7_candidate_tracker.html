@@ -104,7 +104,7 @@
 </head>
 <body>
 <div class="page">
-  <a class="back" href="5_tutor_dashboard.html">&#8592; Back to dashboard</a>
+  <a class="back" id="backLink" href="5_tutor_dashboard.html">&#8592; Back to dashboard</a>
   <div class="head">
     <div class="eyebrow" id="eyebrow">Connect Hub</div>
     <h1>Candidate tracker</h1>
@@ -125,7 +125,18 @@
 <script>
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
-function loadRoster(){ try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
+// ?me=1: the candidate's own view. One row, built from this browser's own
+// records (the paperwork and what the tutor returned), nothing editable.
+const ME = new URLSearchParams(location.search).get('me') === '1';
+function loadRoster(){
+  if (ME) {
+    const rec = k => { try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } };
+    const plan = rec('chub:plan');
+    const name = (plan && plan.state && plan.state.meta && plan.state.meta.name) || 'You';
+    return { trainees: { me: { id:'me', name:name, tp:{ feedback: rec('chub:feedback'), history: rec('chub:tpHistory') || {} }, assignments: rec('connect_assignment_submissions_v1') || {}, tracker: rec('chub:tracker') || {} } } };
+  }
+  try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) || {trainees:{}}; }catch(e){ return {trainees:{}}; }
+}
 function saveRoster(r){ localStorage.setItem(ROSTER_KEY, JSON.stringify(r)); }
 const $ = id => document.getElementById(id);
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -186,13 +197,14 @@ function render(){
   const all = people();
   const counts = { 'Everyone':0, 'To mark': all.reduce((n,p)=>n+toMark(p),0), 'Double marked': all.reduce((n,p)=>n+dmCount(p),0), 'At risk': all.filter(atRisk).length };
   const countCls = { 'To mark':'var(--blu)', 'Double marked':'var(--purp)', 'At risk':'var(--red)' };
-  $('filters').innerHTML = Object.keys(counts).map(f=>`<button class="filter ${FILTER===f?'on':''}" data-f="${f}">${f}${counts[f]?`<span class="n" style="color:${countCls[f]}">${counts[f]}</span>`:''}</button>`).join('');
+  $('filters').innerHTML = ME ? '' : Object.keys(counts).map(f=>`<button class="filter ${FILTER===f?'on':''}" data-f="${f}">${f}${counts[f]?`<span class="n" style="color:${countCls[f]}">${counts[f]}</span>`:''}</button>`).join('');
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.tab===TAB));
   const shown = all.filter(p => FILTER==='Everyone' || (FILTER==='To mark' && toMark(p)>0) || (FILTER==='Double marked' && dmCount(p)>0) || (FILTER==='At risk' && atRisk(p)));
   const isA = TAB==='assn';
   const cols = isA ? ASSN : TPS;
   const gridCols = isA ? '210px repeat(4, 1fr) 58px' : '210px repeat(8, 1fr) 58px';
   if (!all.length){ $('gridwrap').innerHTML = `<div class="empty">No trainee files imported yet. The tracker fills itself from the files you import on the dashboard and the feedback you return.</div>`; $('detail').innerHTML=''; return; }
+  if (ME && !all.some(p=>Object.keys(p.tr.assignments||{}).length || Object.keys(p.tr.tp.history||{}).length || (p.tr.tp.feedback))){ $('gridwrap').innerHTML = `<div class="empty">Nothing to show yet. Your row fills in as you submit work and as your tutor returns it.</div>`; $('detail').innerHTML=''; return; }
   let html = '';
   if (!isA) html += `<div class="grid bands" style="grid-template-columns:${gridCols}"><div></div><div class="band" style="grid-column:span 2">Stage 1</div><div class="band" style="grid-column:span 3">Stage 2</div><div class="band" style="grid-column:span 3">Stage 3</div><div></div></div>`;
   html += `<div class="grid colhead" style="grid-template-columns:${gridCols}"><div class="count">${shown.length} candidate${shown.length===1?'':'s'}</div>${cols.map(c=>`<div class="col"><b>${c.label}</b><span>mark / DM</span></div>`).join('')}<div class="tail-h">${isA?'Passed':'To std'}</div></div>`;
@@ -242,9 +254,12 @@ function renderDetail(all){
     if (s.marked1At) trail.push([s.marked1At, 'Marked' + (a.markers&&a.markers.first?' by '+a.markers.first:'') + (s.feedback&&s.feedback.outcome&&a.round<2?' — '+s.feedback.outcome:'')]);
     if (s.sub2At) trail.push([s.sub2At, 'Resubmitted']);
     if (s.marked2At) trail.push([s.marked2At, 'Resubmission marked' + (s.feedback&&s.feedback.outcome?' — '+s.feedback.outcome:'')]);
+    if (ME) { actions.push([a.code==='FAILRES'||a.code==='UNMARKED' ? 'Open and resubmit' : a.code ? 'Open the assignment' : 'Start the assignment', `9_assignment_submission.html?a=${SEL.col}`, true]); if (['PASS','RES','FAIL'].includes(a.code)) actions.push(['Open the record', `11_assignment_record.html?a=${SEL.col}`, false]); }
+    else {
     if (['WAIT','WAIT2'].includes(a.code)) actions.push(['Open the mark sheet', `10_tutor_assignment_marking.html?${q}&a=${SEL.col}`, true]);
     else if (['PASS','RES','FAIL','FAILRES'].includes(a.code)) actions.push(['Open the marked record', `11_assignment_record.html?${q}&a=${SEL.col}`, true]);
     if (a.code && a.code!=='PASS' && a.code!=='RES' && a.code!=='FAIL') actions.push(['Open the mark sheet', `10_tutor_assignment_marking.html?${q}&a=${SEL.col}`, false]);
+    }
   } else {
     const t = p.tps[SEL.col]; const n = parseInt(SEL.col.slice(2),10); const st = T_STATE[t.g] || T_STATE.nd;
     kicker = 'Teaching practice'; subtitle = 'TP' + n + ' · ' + (n<=2?'Stage 1':n<=5?'Stage 2':'Stage 3'); status = st;
@@ -254,7 +269,8 @@ function renderDetail(all){
     if (t.date) facts.push(['Taught', niceDate(t.date)]);
     if (t.at) trail.push([new Date(t.at).toISOString(), 'Feedback returned' + (t.tutor?' by '+t.tutor:'') + (t.g && t.g!=='un' ? ' — ' + st.name : '')]);
     const cur = p.tr.tp && p.tr.tp.feedback; const isCurrent = cur && T.tpNumberOf(cur)===n;
-    if (t.g==='un') actions.push(['Sign off the feedback', `3_tutor_feedback.html?${q}`, true]);
+    if (ME) { if (t.g!=='nd' && t.g!=='un' && isCurrent) actions.push(['Read the feedback', '4_feedback_returned.html', true]); }
+    else if (t.g==='un') actions.push(['Sign off the feedback', `3_tutor_feedback.html?${q}`, true]);
     else if (t.g!=='nd' && isCurrent) actions.push(['Open the TP record', `3_tutor_feedback.html?${q}`, true]);
   }
   // the candidate's standing, from the tracker's rules
@@ -268,9 +284,9 @@ function renderDetail(all){
   else if (r.stage2Due) facts.push(['Stage 2', 'due — ' + r.graded + ' TPs taught, no Stage 2 recorded', 'amb']);
   if (r.stage1Due) facts.push(['Stage 1', 'record outstanding', 'amb']);
   const man = p.tr.tracker || {};
-  const rec = T.STAGES.map(sd=>{ const v = man[sd.field]||''; return `<button class="rb ${v?'on-'+v:''}" data-id="${esc(p.tr.id)}" data-field="${sd.field}" data-cycle="${sd.cycle.join('|')}">${sd.label}: ${sd.labels[v]}</button>`; }).join('')
+  const rec = ME ? T.STAGES.map(sd=>`<span class="rb ${man[sd.field]?'on-'+man[sd.field]:''}" style="cursor:default">${sd.label}: ${sd.labels[man[sd.field]||'']}</span>`).join('') + (man.failLetter?`<span class="rb on-letter" style="cursor:default">Fail letter issued ${esc(String(man.failLetter))}</span>`:'') : T.STAGES.map(sd=>{ const v = man[sd.field]||''; return `<button class="rb ${v?'on-'+v:''}" data-id="${esc(p.tr.id)}" data-field="${sd.field}" data-cycle="${sd.cycle.join('|')}">${sd.label}: ${sd.labels[v]}</button>`; }).join('')
     + `<button class="rb ${man.failLetter?'on-letter':''}" data-id="${esc(p.tr.id)}" data-field="failLetter" data-toggle="letter">${man.failLetter?'Fail letter issued '+esc(String(man.failLetter)):'Fail letter: not issued'}</button>`
-    + `<button class="rb ${man.withdrawn?'on-withdrawn':''}" data-id="${esc(p.tr.id)}" data-field="withdrawn" data-toggle="withdrawn">${man.withdrawn?'Withdrawn':'Withdrawn: no'}</button>`;
+    + (ME ? '' : `<button class="rb ${man.withdrawn?'on-withdrawn':''}" data-id="${esc(p.tr.id)}" data-field="withdrawn" data-toggle="withdrawn">${man.withdrawn?'Withdrawn':'Withdrawn: no'}</button>`);
   box.innerHTML = `<div class="detail">
     <div class="d-id"><div class="kicker">${kicker}</div><div class="d-title">${esc(p.tr.name)}</div><div class="d-sub">${esc(subtitle)}</div><div><span class="chip ${status.cls}" style="font-size:11.5px; font-weight:600;">${status.name}</span></div></div>
     <div class="d-mid">
@@ -288,7 +304,7 @@ $('filters').addEventListener('click', e=>{ const b=e.target.closest('.filter');
 $('gridwrap').addEventListener('click', e=>{ const c=e.target.closest('.cell'); if(!c) return; SEL={id:c.dataset.id, col:c.dataset.col}; render(); document.getElementById('detail').scrollIntoView({behavior:'smooth', block:'nearest'}); });
 $('detail').addEventListener('click', e=>{
   if (e.target.id==='closeDetail'){ SEL=null; render(); return; }
-  const b = e.target.closest('button.rb'); if(!b) return;
+  const b = e.target.closest('button.rb'); if(!b || ME) return;
   const roster = loadRoster(); const tr = roster.trainees[b.dataset.id]; if(!tr) return;
   tr.tracker = tr.tracker || {}; const cur = tr.tracker[b.dataset.field] || '';
   if (b.dataset.cycle){ const cyc=b.dataset.cycle.split('|'); tr.tracker[b.dataset.field] = cyc[(cyc.indexOf(cur)+1)%cyc.length]; }
@@ -296,7 +312,7 @@ $('detail').addEventListener('click', e=>{
   else if (b.dataset.toggle==='withdrawn') tr.tracker.withdrawn = cur ? '' : true;
   saveRoster(roster); render();
 });
-(function(){ try{ const cs = JSON.parse(localStorage.getItem('connect_course_settings')||'{}'); const parts=['Connect Hub', cs.courseName, cs.centreName].filter(Boolean); $('eyebrow').textContent = parts.join(' · '); }catch(e){} })();
+(function(){ if (ME) { document.getElementById('backLink').href='index.html'; document.getElementById('backLink').innerHTML='&#8592; Back'; document.querySelector('.lede').textContent='Every teaching practice and every assignment, read from what you have submitted and what your tutor has returned. Colour only marks what needs attention; everything that is fine stays quiet. The Stage records and the standing are your tutor\u2019s, as recorded.'; } try{ const cs = JSON.parse(localStorage.getItem('connect_course_settings')||'{}'); const parts=['Connect Hub', ME ? 'Your progress' : '', cs.courseName, cs.centreName].filter(Boolean); $('eyebrow').textContent = parts.join(' · '); }catch(e){} })();
 render();
 </script>
 </body>
