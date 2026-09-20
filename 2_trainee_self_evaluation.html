@@ -217,9 +217,9 @@
   <span class="status" id="status"></span>
 </div>
 
-<script src="hub-shared.js?v=202609210015"></script>
-<script src="hub-store.js?v=202609210015"></script>
-<script src="hub-sync.js?v=202609210015"></script>
+<script src="hub-shared.js?v=202609210018"></script>
+<script src="hub-store.js?v=202609210018"></script>
+<script src="hub-sync.js?v=202609210018"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -418,7 +418,15 @@ function printWindow(){
 </style></head><body>`+LAST_HTML+'</body></html>');
   w.document.close();
   w.focus();
-  setTimeout(function(){ w.print(); },350);
+  /* Print when the popup has actually laid the document out. A fixed delay
+     printed before layout had finished on some browsers, which paginated the
+     first page and dropped the rest (Ramy, 21 Sep 2026). */
+  const go = function(){ try{ w.focus(); w.print(); }catch(e){} };
+  const ready = function(){
+    const fonts = (w.document.fonts && w.document.fonts.ready) || Promise.resolve();
+    fonts.then(function(){ w.requestAnimationFrame(function(){ w.requestAnimationFrame(go); }); });
+  };
+  if (w.document.readyState === 'complete') ready(); else w.addEventListener('load', ready);
 }
 $('pdfBtn').addEventListener('click',()=>{
   const s=collectSelf();
