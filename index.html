@@ -200,7 +200,7 @@
 
   <p class="roomhead" id="exchangeHead">Working without a course link</p>
   <div class="exchange" id="exchangeBlock">
-    <p>You opened this without a course link, so your work lives in this browser alone and your tutor is on their own. Export a file and send it to them (email, chat, however you'd share a document) once you've turned things in. Export a file and send it to them (email, chat, however you'd share a document) once you've turned things in. When they return marked work, import the file they send back. If your centre has reworked the assignments, they will send you a wording file too — import it here and the assignment forms use it. Open the page from the link your centre sent you instead and all of this goes away.</p>
+    <p>You opened this without a course link, so your work lives in this browser alone and your tutor is on their own. Export a file and send it to them (email, chat, however you'd share a document) once you've turned things in. When they return marked work, import the file they send back. If your centre has reworked the assignments, they will send you a wording file too — import it here and the assignment forms use it. Open the page from the link your centre sent you instead and all of this goes away.</p>
     <div class="acts">
       <button class="btn primary" id="exportBtn" type="button">Export my work</button>
       <button class="btn" id="importTriggerBtn" type="button">Import from tutor</button>
@@ -215,9 +215,9 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-shared.js?v=202609210027"></script>
-<script src="hub-store.js?v=202609210027"></script>
-<script src="hub-sync.js?v=202609210027"></script>
+<script src="hub-shared.js?v=202609210030"></script>
+<script src="hub-store.js?v=202609210030"></script>
+<script src="hub-sync.js?v=202609210030"></script>
 <script type="text/x-hub-app">
 
 /* The trainee's home. The rooms below are permanent doors; the band at the top
@@ -301,23 +301,17 @@ function tpNow(){
   if (plan) return {k:TP_LABEL, l:'Finish your lesson plan', why:'Saved as a draft. Turn it in when it is ready for your tutor.', href:'1_trainee_plan_and_analysis.html', tone:'act'};
   return {k:TP_LABEL, l:'Write your lesson plan', why:'The plan and the language analysis are the first thing in each TP.', href:'1_trainee_plan_and_analysis.html', tone:'act'};
 }
+/* The band is what needs the trainee NOW. The assignments room below already
+   carries this exact status line, so a permanent second card here said the same
+   words twice about the same door (Ramy, 21 Sep 2026, asking twice what the
+   difference was -- there was none). It earns a place in the band only when an
+   assignment is actually back with them. */
 function asgNow(){
-  const idle = ASG.tone === '' && ASG.text !== 'Not started' && ASG.text.indexOf('All ') !== 0;
-  if (ASG.tone === 'stuck') return {k:'Written assignments', l:ASG.text, why:'Open the assignment, read the tutor’s comments and submit it again.', href:'9_assignment_submission.html', tone:'stuck'};
-  if (ASG.text.indexOf('All ') === 0) return {k:'Written assignments', l:ASG.text, why:'Nothing outstanding.', href:'9_assignment_submission.html', tone:'idle'};
-  if (ASG.text === 'Not started'){
-    /* the real number, since the centre may be holding some back */
-    const WORDS = {0:'No', 1:'One', 2:'Two', 3:'Three', 4:'Four', 5:'Five'};
-    const n = WORDS[ASG.total] || ASG.total;
-    const why = ASG.total === 1
-      ? 'One assignment is open alongside your teaching practice.'
-      : n + ' assignments run alongside your teaching practice, in your centre’s order.';
-    return {k:'Written assignments', l:'Not started', why:why, href:'9_assignment_submission.html', tone:''};
-  }
-  return {k:'Written assignments', l:ASG.text, why:idle ? 'Carry on in your centre’s order.' : '', href:'9_assignment_submission.html', tone:''};
+  if (ASG.tone !== 'stuck') return null;
+  return {k:'Written assignments', l:ASG.text, why:'Open the assignment, read the tutor’s comments and submit it again.', href:'9_assignment_submission.html', tone:'stuck'};
 }
 (function(){
-  const cards = [tpNow(), asgNow()].map(c=>{
+  const cards = [tpNow(), asgNow()].filter(Boolean).map(c=>{
     const body = `<div class="k">${esc(c.k)}</div><div class="l">${esc(c.l)}</div>${c.why?`<div class="why">${esc(c.why)}</div>`:''}`;
     return c.href
       ? `<a class="ncard ${c.tone}" href="${c.href}">${body}</a>`
