@@ -9,10 +9,14 @@
 window.HubStore = (function(){
   var URL = 'https://script.google.com/macros/s/AKfycbz5ESCtTg6kIDNCf7ynt1fB0tOSVusgOUiMub9-wEZunwQ2uTw2wzz1vmbHxzbvpG-eyA/exec';
   var params = new URLSearchParams(location.search);
+  // The last link opened wins: a browser that once held a tutor or assessor
+  // key would otherwise open a trainee's link as that tutor or assessor
+  // (found on the 20 Sep 2026 trainee walk -- a leftover assessor key made a
+  // trainee link read-only).
   try {
-    if (params.get('t')) localStorage.setItem('hub:t', params.get('t'));
-    if (params.get('k')) localStorage.setItem('hub:k', params.get('k'));
-    if (params.get('a')) localStorage.setItem('hub:a', params.get('a'));
+    if (params.get('t')) { localStorage.setItem('hub:t', params.get('t')); localStorage.removeItem('hub:k'); localStorage.removeItem('hub:a'); }
+    if (params.get('k')) { localStorage.setItem('hub:k', params.get('k')); localStorage.removeItem('hub:t'); localStorage.removeItem('hub:a'); }
+    if (params.get('a')) { localStorage.setItem('hub:a', params.get('a')); localStorage.removeItem('hub:t'); localStorage.removeItem('hub:k'); }
   } catch (e) {}
   function token(){ try { return localStorage.getItem('hub:t') || ''; } catch (e) { return ''; } }
   function key(){ try { return localStorage.getItem('hub:k') || ''; } catch (e) { return ''; } }
