@@ -60,8 +60,12 @@
   .title p{margin:7px 0 0; font-size:0.9rem; color:var(--grey); line-height:1.6; max-width:600px;}
 
   /* ---- the now band ----------------------------------------------------- */
-  .now{display:flex; gap:10px; flex-wrap:wrap; margin-top:24px;}
-  .ncard{flex:1 1 240px; text-align:left; text-decoration:none; color:inherit; font-family:'Karla',sans-serif;
+  /* A pass-through, so the band's cards are items of the rooms grid itself and
+     every card on the page is one size (Ramy, 21 Sep 2026: "all of them the same
+     shape pill... and the same size as well, because right now this is just a
+     kitchen sink"). */
+  .band{display:contents;}
+  .ncard{text-align:left; text-decoration:none; color:inherit; font-family:'Karla',sans-serif;
     background:var(--card); border:1px solid var(--sand-line); border-radius:10px; padding:16px 18px;
     display:block; cursor:pointer; transition:border-color .15s;}
   .ncard:hover{border-color:var(--teal); color:inherit;}
@@ -81,19 +85,17 @@
   /* ---- rooms ------------------------------------------------------------ */
   .roomhead{margin:38px 0 12px; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px;
     font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--grey);}
-  /* Pulled out by its own padding (Ramy, 20 Sep 2026: on hover "the edges are
-     too close to the beginning"), so every room has the same 20px on all four
-     sides while the text still lines up with the headings above it. */
-  .rooms{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--row-line);
-    border-top:1px solid var(--row-line); border-bottom:1px solid var(--row-line);
-    margin:0 -20px;}
-  .room{display:block; text-decoration:none; color:inherit; background:var(--sand); padding:18px 20px;
-    transition:background .15s;}
-  /* an odd last room would leave the grid's gap colour showing as an empty cell
-     beside it, so it spans the row instead */
-  .rooms > .room:last-child:nth-child(odd){grid-column:1 / -1;}
-  .room:hover{background:var(--card); color:inherit;}
-  .room h2{margin:0; font-family:'Newsreader',Georgia,serif; font-size:1.1rem; font-weight:600; color:var(--ink);}
+  /* One card, everywhere (Ramy, 21 Sep 2026: "all of them the same shape pill.
+     With little curve and the same size as well, because right now this is just
+     a kitchen sink"). The rooms are the same object as the band's cards -- same
+     fill, same 1px edge, same 10px curve, same padding -- and grid-auto-rows
+     keeps every row of them one height. Colour, not shape, carries urgency. */
+  .rooms{display:grid; grid-template-columns:1fr 1fr; gap:10px; grid-auto-rows:1fr; margin-top:24px;}
+  .room{display:block; text-decoration:none; color:inherit; font-family:'Karla',sans-serif;
+    background:var(--card); border:1px solid var(--sand-line); border-radius:10px; padding:16px 18px;
+    transition:border-color .15s;}
+  .room:hover{border-color:var(--teal); color:inherit;}
+  .room h2{margin:0; font-family:'Newsreader',Georgia,serif; font-size:1.2rem; font-weight:600; line-height:1.25; color:var(--ink);}
   .room p{margin:5px 0 0; font-size:0.82rem; color:var(--grey); line-height:1.6;}
   .room .st{display:block; margin-top:9px; font-size:0.78rem; font-weight:600; color:var(--grey);}
   .room .st.act{color:var(--amber);}
@@ -102,7 +104,7 @@
     letter-spacing:0.14em; text-transform:uppercase; color:var(--grey); display:block; margin-bottom:6px;}
 
   /* ---- returned / next TP ------------------------------------------------ */
-  #returnedPanel{display:none; align-items:center; gap:14px; flex-wrap:wrap; margin-top:20px;}
+  #returnedPanel{display:none; align-items:center; gap:14px; flex-wrap:wrap; margin-top:16px;}
   #returnedPanel p{margin:0; font-size:0.82rem; color:var(--grey); line-height:1.55; flex:1 1 260px;}
 
   /* ---- buttons ----------------------------------------------------------- */
@@ -162,15 +164,8 @@
     <p id="courseMeta">Your teaching practice and your written assignments, in the order you need them. Each form saves itself as you go — nothing reaches your tutor until you turn it in.</p>
   </div>
 
-  <div class="now" id="nowBand"></div>
-
-  <div id="returnedPanel">
-    <p>Read it, then start the next teaching practice — this archives the plan, self-evaluation and feedback you have just finished with.</p>
-    <a class="btn" href="4_feedback_returned.html">Read your feedback</a>
-    <button class="btn" id="nextTpBtn" type="button">Start next TP</button>
-  </div>
-
   <div class="rooms">
+    <div id="nowBand" class="band"></div>
     <a class="room" href="1_trainee_plan_and_analysis.html">
       <h2>Lesson plan &amp; language analysis</h2>
       <p>Aims, class profile, anticipated problems, materials and the procedure, with the analysis sheet underneath. Choose a lesson shape and the stages fill themselves in.</p>
@@ -191,11 +186,12 @@
       <h2>Your progress</h2>
       <p>Every teaching practice and every assignment on one grid, read from what your tutor has returned to you. The same view your tutor has of you.</p>
     </a>
-    <a class="room" href="9_assignment_submission.html">
-      <h2>Assignments</h2>
-      <p>FOL, LRT, LSRT and LFC — one form each, built from whatever your centre set up. One resubmission per assignment if it doesn't meet the criteria first time.</p>
-      <span class="st" id="badgeAssignments"></span>
-    </a>
+  </div>
+
+  <div id="returnedPanel">
+    <p>Read it, then start the next teaching practice — this archives the plan, self-evaluation and feedback you have just finished with.</p>
+    <a class="btn" href="4_feedback_returned.html">Read your feedback</a>
+    <button class="btn" id="nextTpBtn" type="button">Start next TP</button>
   </div>
 
   <p class="roomhead" id="exchangeHead">Working without a course link</p>
@@ -215,9 +211,9 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-shared.js?v=202609210030"></script>
-<script src="hub-store.js?v=202609210030"></script>
-<script src="hub-sync.js?v=202609210030"></script>
+<script src="hub-shared.js?v=202609210034"></script>
+<script src="hub-store.js?v=202609210034"></script>
+<script src="hub-sync.js?v=202609210034"></script>
 <script type="text/x-hub-app">
 
 /* The trainee's home. The rooms below are permanent doors; the band at the top
@@ -270,7 +266,6 @@ const ASG = (function(){
   if(touched === 0) return {text:'Not started', tone:'', total:TOTAL};
   return {text: closed + ' of ' + TOTAL + ' complete', tone:'', total:TOTAL};
 })();
-status(document.getElementById('badgeAssignments'), ASG.text, ASG.tone);
 
 /* Which TP this is. The tutor's feedback and the trainee's own plan both carry
    the number in the same place (state.f.fTP, else the label -- "TP4 · Name"),
@@ -301,14 +296,21 @@ function tpNow(){
   if (plan) return {k:TP_LABEL, l:'Finish your lesson plan', why:'Saved as a draft. Turn it in when it is ready for your tutor.', href:'1_trainee_plan_and_analysis.html', tone:'act'};
   return {k:TP_LABEL, l:'Write your lesson plan', why:'The plan and the language analysis are the first thing in each TP.', href:'1_trainee_plan_and_analysis.html', tone:'act'};
 }
-/* The band is what needs the trainee NOW. The assignments room below already
-   carries this exact status line, so a permanent second card here said the same
-   words twice about the same door (Ramy, 21 Sep 2026, asking twice what the
-   difference was -- there was none). It earns a place in the band only when an
-   assignment is actually back with them. */
+/* Assignments live HERE, as a card beside the teaching practice one, and not
+   also as a room below (Ramy, 21 Sep 2026: "he should have gotten rid of the
+   one at the bottom and kept the pill on top"). One door, one place. */
 function asgNow(){
-  if (ASG.tone !== 'stuck') return null;
-  return {k:'Written assignments', l:ASG.text, why:'Open the assignment, read the tutor’s comments and submit it again.', href:'9_assignment_submission.html', tone:'stuck'};
+  if (ASG.tone === 'stuck') return {k:'Written assignments', l:ASG.text, why:'Open the assignment, read the tutor’s comments and submit it again.', href:'9_assignment_submission.html', tone:'stuck'};
+  if (ASG.text.indexOf('All ') === 0) return {k:'Written assignments', l:ASG.text, why:'Nothing outstanding.', href:'9_assignment_submission.html', tone:''};
+  if (ASG.text === 'Not started'){
+    const WORDS = {0:'No', 1:'One', 2:'Two', 3:'Three', 4:'Four', 5:'Five'};
+    const n = WORDS[ASG.total] || ASG.total;
+    const why = ASG.total === 1
+      ? 'One assignment is open alongside your teaching practice.'
+      : n + ' assignments run alongside your teaching practice, in your centre’s order.';
+    return {k:'Written assignments', l:'Not started', why:why, href:'9_assignment_submission.html', tone:''};
+  }
+  return {k:'Written assignments', l:ASG.text, why:'Carry on in your centre’s order.', href:'9_assignment_submission.html', tone:''};
 }
 (function(){
   const cards = [tpNow(), asgNow()].filter(Boolean).map(c=>{
