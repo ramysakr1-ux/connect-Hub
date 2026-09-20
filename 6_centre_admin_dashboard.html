@@ -110,7 +110,8 @@
 
   <div class="panel tablepanel" id="panel-roster" style="display:none;">
     <div class="roster-toolbar"><h3>Trainees</h3></div>
-    <p style="padding:0 20px 14px;font-size:0.82rem;color:var(--grey);">No login, so no personal invite links to send — share this tool's URL directly with your trainees (any way you'd normally share a link). A trainee appears below once they've exported their work and you've imported the file, from the <a href="5_tutor_dashboard.html" style="color:var(--teal);">tutor dashboard</a>.</p>
+    <div id="storeRoster" style="padding:0 20px 14px;"></div>
+    <p id="rosterNoStore" style="padding:0 20px 14px;font-size:0.82rem;color:var(--grey);">Open this page from the tutor link (the one with the course key) to add trainees and hand out their personal links. Without it, a trainee appears below only once you've imported their file from the <a href="5_tutor_dashboard.html" style="color:var(--teal);">tutor dashboard</a>.</p>
     <table>
       <tr><th>Trainee</th><th>TP status</th><th>Imported</th></tr>
       <tbody id="rosterTraineeBody"></tbody>
@@ -154,6 +155,8 @@
   </p>
 </div>
 <script src="assignment-defaults.js"></script>
+<script src="hub-store.js"></script>
+<script src="hub-shared.js"></script>
 <script>
 document.getElementById('tabs').addEventListener('click', e=>{
   const btn = e.target.closest('.tab');
@@ -243,6 +246,50 @@ function renderDoubleMarking(){
   });
   document.getElementById('dmTable').innerHTML = '<tr><th>Trainee</th><th>Assignment</th><th>Status</th><th>1st marker</th><th>2nd marker</th><th>Double-marked?</th></tr>' + (rows.length ? rows.join('') : '<tr><td colspan="6" style="color:var(--grey);">No assignments submitted yet.</td></tr>');
 }
+
+// ---- Roster and links, from the store -----------------------------------
+// A trainee is added here and gets a link with their own token in it; that
+// link is what goes into Classroom for them. Tutors get the tutor link.
+async function renderStoreRoster(){
+  const box = document.getElementById('storeRoster'); if (!box) return;
+  const S = window.HubStore;
+  if (!S || !S.isTutor()){ box.innerHTML = ''; return; }
+  document.getElementById('rosterNoStore').style.display = 'none';
+  box.innerHTML = '<p style="font-size:0.82rem;color:var(--grey);">Loading the roster from the store…</p>';
+  let trainees;
+  try { trainees = await S.roster(); }
+  catch (err) { box.innerHTML = `<p style="font-size:0.82rem;color:var(--brick);">${esc(err.message)}</p>`; return; }
+  const groups = [...new Set(trainees.map(t=>t.group).filter(Boolean))];
+  const esc2 = esc;
+  box.innerHTML = `
+    <form id="storeAddForm" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+      <input id="storeAddName" placeholder="Trainee's name" required style="font-family:'Karla',sans-serif;font-size:0.85rem;padding:7px 10px;border:1.5px solid var(--sand-line);border-radius:6px;min-width:220px;">
+      <input id="storeAddGroup" placeholder="Group (e.g. A)" list="storeGroups" style="font-family:'Karla',sans-serif;font-size:0.85rem;padding:7px 10px;border:1.5px solid var(--sand-line);border-radius:6px;width:120px;">
+      <datalist id="storeGroups">${groups.map(g=>`<option value="${esc2(g)}">`).join('')}</datalist>
+      <button class="btn primary" type="submit">Add trainee</button>
+      <span id="storeAddStatus" style="font-size:0.82rem;color:var(--grey);"></span>
+    </form>
+    <p style="font-size:0.82rem;color:var(--grey);margin:0 0 10px;">Each trainee's link is theirs alone — post it to them in Classroom as a Material. The tutor link is for tutors only: <code style="font-size:0.78rem;">${esc2(S.tutorLink())}</code> <button class="btn ghost" type="button" data-copy="${esc2(S.tutorLink())}" style="padding:4px 10px;font-size:0.78rem;">Copy</button></p>
+    <table style="width:100%;">
+      <tr><th>Trainee</th><th>Group</th><th>Personal link</th><th></th></tr>
+      ${trainees.length ? trainees.map(t=>`<tr>
+        <td>${esc2(t.name)}</td><td>${esc2(t.group||'—')}</td>
+        <td><code style="font-size:0.75rem;word-break:break-all;">${esc2(S.traineeLink(t.token))}</code></td>
+        <td style="white-space:nowrap;"><button class="btn ghost" type="button" data-copy="${esc2(S.traineeLink(t.token))}" style="padding:4px 10px;font-size:0.78rem;">Copy link</button> <button class="btn ghost" type="button" data-remove="${esc2(t.token)}" data-name="${esc2(t.name)}" style="padding:4px 10px;font-size:0.78rem;color:var(--brick);">Remove</button></td>
+      </tr>`).join('') : '<tr><td colspan="4" style="color:var(--grey);">No trainees on the course yet — add the first one above.</td></tr>'}
+    </table>`;
+  document.getElementById('storeAddForm').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const name = document.getElementById('storeAddName').value.trim(), group = document.getElementById('storeAddGroup').value.trim();
+    const st = document.getElementById('storeAddStatus'); st.textContent = 'Adding…';
+    try { await S.addTrainee(name, group); renderStoreRoster(); } catch (err) { st.textContent = err.message; }
+  });
+  box.addEventListener('click', async e=>{
+    const c = e.target.closest('[data-copy]'); if (c){ try{ await navigator.clipboard.writeText(c.dataset.copy); c.textContent='Copied'; setTimeout(()=>{ c.textContent = c.dataset.copy.indexOf('?t=')>-1 ? 'Copy link' : 'Copy'; }, 1500); }catch(err){ prompt('Copy this link', c.dataset.copy); } return; }
+    const r = e.target.closest('[data-remove]'); if (r){ if(!(await confirmModal(`Remove ${r.dataset.name} from the course? Their records stay in the sheet; their link stops working.`, 'Remove'))) return; try { await S.removeTrainee(r.dataset.remove); renderStoreRoster(); } catch(err){ alert(err.message); } }
+  });
+}
+renderStoreRoster();
 </script>
 </body>
 </html>
