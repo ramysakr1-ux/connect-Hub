@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <!--
-  Connect Lite — tutor dashboard
+  Connect Lite — tutor dashboard (v2 layout, 20 Sep 2026)
   © 2026 Ramy Sakr. All rights reserved.
+
+  Drop-in replacement for 5_tutor_dashboard.html. Same three tabs, the same
+  data, the same store calls and the same destinations. Layout only — see
+  for-claude-code-tutor-dashboard-v2.md.
 -->
 <html lang="en">
 <head>
@@ -12,295 +16,425 @@
 <link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
 <title>Connect Lite — Tutor dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --sand:oklch(92.5% 0.012 85); --sand-line:oklch(89.5% 0.012 82);
+    --row-line:oklch(91% 0.012 84);
     --paper:oklch(99.5% 0.004 90); --card:oklch(96.2% 0.02 80); --ink:oklch(23.5% 0.017 65);
     --terracotta:oklch(37.5% 0.058 195); --teal:oklch(37.5% 0.058 195);
-    --grey:oklch(51% 0.017 70); --gold:oklch(63% 0.096 72); --gold-lifted:oklch(70% 0.12 72); --ink-warm:oklch(30% 0.042 58);
+    --grey:oklch(51% 0.017 70); --gold:oklch(63% 0.096 72); --gold-lifted:oklch(70% 0.12 72);
+    --ink-warm:oklch(30% 0.042 58); --brick:oklch(52% 0.19 32); --amber:oklch(52% 0.11 75);
   }
   *{box-sizing:border-box;}
-  body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
-    padding:40px 20px 60px; display:flex; flex-direction:column; align-items:center;}
-  .board{max-width:1080px; width:100%;}
-  .header{background:var(--card); border-radius:10px; border-top:3px solid var(--terracotta);
-    padding:44px 26px 36px; text-align:center; margin-bottom:22px; box-shadow:0 1px 2px rgba(0,0,0,0.03);}
-  .header p.tag{margin:16px 0 0; font-size:1rem; color:var(--grey);}
-  .header p.role{margin:20px 0 0; font-size:0.9rem; font-weight:700; color:var(--teal); letter-spacing:0.03em;}
-  .course-name{margin:2px 0 0; font-size:1.4rem; font-family:'Newsreader',Georgia,serif; font-weight:700; color:var(--ink);}
-  .tabs{display:flex; gap:2px; margin-bottom:0; overflow-x:auto; padding:0 4px;}
-  .tab{font-family:'Karla',sans-serif; font-size:0.88rem; font-weight:600; color:var(--grey);
-    background:transparent; border:none; border-bottom:3px solid transparent; padding:14px 20px 12px; cursor:pointer; white-space:nowrap; transition:color .15s;}
+  body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
+  .board{max-width:1080px; margin:0 auto;}
+  a{color:var(--teal);} a:hover{color:var(--ink-warm);}
+  input{font-family:'Karla',sans-serif; color:var(--ink);}
+  input:focus{outline:none; border-color:var(--teal);}
+
+  /* ---- chrome ---------------------------------------------------------- */
+  .chrome{display:flex; align-items:center; justify-content:space-between; gap:24px; height:64px;}
+  .lockup{display:flex; align-items:center; gap:9px;}
+  .lockup .tile{width:30px; height:30px; border-radius:7px; background:var(--ink-warm);
+    display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .lockup .word{font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:21px;
+    line-height:0.85; letter-spacing:-0.012em; color:var(--gold);}
+  /* Ramy, 20 Sep 2026: "Lite" sits on Connect's baseline, close to it; the credit stays on this screen (index, 5, 12). */
+  .hub-pair{display:inline-flex;align-items:baseline;gap:4px;}
+  .hub-word{font-family:'Instrument Sans','Karla',sans-serif; font-weight:500; font-size:9px;
+    letter-spacing:0.24em; text-transform:uppercase; color:var(--ink); line-height:1; margin-left:1px;}
+  .chrome .right{display:flex; align-items:center; gap:14px;}
+  #tutorName{font-size:0.82rem; padding:5px 10px; border:1.5px solid var(--sand-line);
+    border-radius:6px; background:var(--paper); width:150px;}
+  .role{font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:600;
+    letter-spacing:0.22em; text-transform:uppercase; color:var(--grey);}
+
+  /* ---- title ----------------------------------------------------------- */
+  .title{border-top:2px solid var(--terracotta); padding-top:26px; display:flex;
+    align-items:flex-end; justify-content:space-between; gap:28px; flex-wrap:wrap;}
+  .title h1{margin:0; font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:2.1rem; line-height:1.15;}
+  .title p{margin:7px 0 0; font-size:0.9rem; color:var(--grey);}
+  .titleacts{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+
+  /* Every control in this row is the same height; only the fill differs. */
+  .btn{display:inline-flex; align-items:center; justify-content:center; height:34px; padding:0 14px;
+    font-family:'Karla',sans-serif; font-size:0.82rem; font-weight:600; border-radius:6px;
+    border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink);
+    text-decoration:none; cursor:pointer; transition:border-color .15s,color .15s;}
+  .btn:hover{border-color:var(--teal); color:var(--teal);}
+  .btn.primary{border-color:var(--teal); background:var(--teal); color:var(--paper); font-weight:700; padding:0 15px;}
+  .btn.primary:hover{opacity:0.88; color:var(--paper);}
+
+  /* ---- queue ----------------------------------------------------------- */
+  .queue{display:flex; gap:10px; margin-top:24px; flex-wrap:wrap;}
+  .qcard{flex:1 1 200px; min-width:0; text-align:left; font-family:'Karla',sans-serif;
+    background:var(--card); border:1px solid var(--sand-line); border-radius:10px;
+    padding:14px 16px; cursor:pointer;}
+  .qcard .n{font-family:'Newsreader',Georgia,serif; font-size:1.6rem; font-weight:600;
+    line-height:1; color:var(--amber);}
+  .qcard .l{font-size:0.85rem; color:var(--grey); margin-top:5px; text-wrap:pretty;}
+  .qcard.stuck{border-color:color-mix(in oklab, var(--brick) 32%, transparent);}
+  .qcard.stuck .n{color:var(--brick);}
+  .qcard.zero{background:none;}
+  .qcard.zero .n{color:var(--grey);}
+  .qcard.zero{border-color:var(--sand-line); cursor:default;}
+  .qcard.on{outline:2px solid color-mix(in oklab, var(--teal) 40%, transparent); outline-offset:-1px;}
+
+  /* ---- tabs ------------------------------------------------------------ */
+  .tabs{display:flex; gap:26px; margin-top:28px; border-bottom:1px solid var(--sand-line); overflow-x:auto;}
+  .tab{font-family:'Karla',sans-serif; font-size:0.9rem; font-weight:600; background:none; border:none;
+    border-bottom:2px solid transparent; color:var(--grey); padding:0 0 11px; margin-bottom:-1px;
+    cursor:pointer; white-space:nowrap;}
   .tab:hover{color:var(--ink);}
   .tab.active{color:var(--teal); border-bottom-color:var(--teal);}
-  .panel{background:var(--card); border-radius:10px; padding:6px; min-height:220px; box-shadow:0 1px 2px rgba(0,0,0,0.03);}
-  table{width:100%; border-collapse:collapse;}
-  th{text-align:left; font-size:0.7rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase;
-    color:var(--grey); padding:15px 20px; border-bottom:1px solid var(--sand-line);}
-  td{padding:17px 20px; border-bottom:1px solid var(--sand-line); font-size:0.92rem; vertical-align:middle;}
-  tr:last-child td{border-bottom:none;}
-  tbody tr:hover td, table tr:not(:first-child):hover td{background:oklch(93.5% 0.02 80);}
-  .pill{display:inline-block; background:var(--sand); color:var(--grey); font-size:0.76rem; font-weight:600;
-    padding:5px 12px; border-radius:20px; margin-right:6px;}
-  .pill.on{background:#EAF3E9; color:#1E6B63;}
-  .pill.off{color:var(--grey); opacity:0.55;}
-  .btn{font-family:'Karla',sans-serif; font-size:0.83rem; font-weight:700; padding:9px 18px; border-radius:20px;
-    border:1.5px solid var(--sand-line); background:var(--card); color:var(--ink); cursor:pointer; transition:opacity .15s;}
-  .btn:hover{opacity:0.8;}
-  .btn.primary{background:var(--teal); border-color:var(--teal); color:var(--paper);}
-  .btn.ghost{border-color:var(--teal); color:var(--teal); background:none;}
-  .roster-toolbar{display:flex; align-items:center; justify-content:space-between; padding:18px 20px 6px;}
-  .roster-toolbar h3{margin:0; font-size:1rem; font-weight:700; color:var(--ink);}
-  .link-cell{display:flex; align-items:center; gap:10px; font-family:monospace; font-size:0.78rem; color:var(--grey);}
-  .status-pill{display:inline-block; font-size:0.78rem; font-weight:700; padding:5px 12px; border-radius:20px;}
-  .status-pill.draft{background:var(--sand); color:var(--grey);}
-  .status-pill.submitted{background:#FBF3E4; color:#8A6320;}
-  .status-pill.resubmit{background:#FBEAE6; color:#A33227;}
-  .status-pill.passed{background:#EAF3E9; color:#1E6B63;}
-  .empty{text-align:center; padding:48px 20px; color:var(--grey);}
-  .empty .icon{font-size:1.8rem; opacity:0.35; margin-bottom:8px;}
-  .footer{display:flex; align-items:center; justify-content:center; gap:8px; margin-top:36px; font-size:0.8rem; color:var(--grey);}
-  .footer span.name{font-weight:600; color:var(--ink);}
+  .tab .c{color:var(--grey); font-weight:500; margin-left:6px;}
 
-  /* Ramy, 20 Sep 2026: the mark stays; "Hub" gets its own play -- teal tracked caps, sitting on Connect's baseline. */
-  /* Ramy, 20 Sep 2026: "Lite" sits on Connect's baseline, not centred against it. */
-  .hub-pair{display:inline-flex;align-items:baseline;gap:4px;}
-  .hub-word{font-family:'Instrument Sans','Karla',sans-serif;font-weight:500;font-size:10px;letter-spacing:0.24em;text-transform:uppercase;color:var(--ink);line-height:1;margin-left:2px;}
+  /* ---- rows ------------------------------------------------------------ */
+  .rows{padding-top:26px;}
+  .grid{display:grid; gap:16px; align-items:center;}
+  .ghead{padding:0 4px 9px; border-bottom:1px solid var(--sand-line);
+    font-family:'Instrument Sans',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.1em;
+    text-transform:uppercase; color:var(--grey);}
+  .grow{padding:13px 4px; border-bottom:1px solid var(--row-line);}
+  .grow .nm{font-size:0.92rem; font-weight:500; min-width:0; overflow:hidden; text-overflow:ellipsis;}
+  .grow .mid{font-size:0.88rem; color:var(--grey); min-width:0;}
+  .grow .st{font-size:0.88rem; min-width:0; text-wrap:pretty; color:var(--grey);}
+  .grow .st.amber{color:var(--amber);}
+  .grow .st.brick{color:var(--brick);}
+  .grow .act{text-align:right;}
+  /* One width for every row action, whatever the label. */
+  .rowbtn{display:inline-flex; align-items:center; justify-content:center; width:148px; height:32px;
+    font-family:'Karla',sans-serif; font-size:0.8rem; font-weight:600; border-radius:6px;
+    border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink);
+    text-decoration:none; white-space:nowrap; cursor:pointer;}
+  .rowbtn:hover{border-color:var(--teal); color:var(--teal);}
+  .rowbtn.go{border-color:var(--teal); background:var(--teal); color:var(--paper); font-weight:700;}
+  .rowbtn.go:hover{opacity:0.88; color:var(--paper);}
+  .empty{padding:26px 4px; font-size:0.9rem; color:var(--grey);}
+
+  @media (max-width:820px){
+    .grid{grid-template-columns:1fr auto !important;}
+    .grid > .mid{display:none;}
+  }
 </style>
 </head>
 <body>
 <div class="board">
-  <div class="header">
-    <div style="display:flex;align-items:center;justify-content:center;gap:10px;">
-      <span style="width:40px;height:40px;border-radius:9px;background:var(--ink-warm);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <svg viewBox="8 30 104 60" width="26" height="15" fill="none">
+
+  <div class="chrome">
+    <div class="lockup">
+      <span class="tile">
+        <svg viewBox="8 30 104 60" width="20" height="12" fill="none">
           <path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path>
           <path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path>
         </svg>
       </span>
-      <span class="hub-pair"><span style="font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:27px;line-height:0.85;letter-spacing:-0.012em;color:var(--gold);">Connect</span><span class="hub-word">Lite</span></span>
+      <span class="hub-pair"><span class="word">Connect</span><span class="hub-word">Lite</span></span>
       <span class="hub-credit">designed and built by <b>Ramy</b></span>
     </div>
-    <p class="tag" id="dashTag">Every submission a trainee has sent you, imported from their export file.</p>
-    <p class="course-name" id="courseName">Course name not set yet — the centre sets it in course admin</p>
-    <p class="role" id="roleLine">Course tutor</p>
-    <p style="margin:6px 0 0; font-size:0.82rem; color:var(--grey);"><label for="tutorName" style="margin-right:6px;">Your name</label><input id="tutorName" type="text" placeholder="as it should appear on feedback" style="font-family:'Karla',sans-serif; font-size:0.85rem; padding:5px 9px; border:1.5px solid var(--sand-line); border-radius:6px; background:var(--paper); color:var(--ink); min-width:220px;"></p>
-    <div style="margin-top:18px;">
-      <button class="btn primary" id="importTriggerBtn" type="button">Import trainee file</button>
-      <input type="file" id="importFile" accept="application/json" style="display:none;">
-      <button class="btn ghost" id="importWordingBtn" type="button">Import centre wording</button>
-      <a class="btn ghost" href="7_candidate_tracker.html" style="text-decoration:none;display:inline-block;">Candidate tracker</a> <a class="btn ghost" href="6_centre_admin_dashboard.html" style="text-decoration:none;display:inline-block;">Course admin</a> <a class="btn ghost" href="13_grades_report.html" style="text-decoration:none;display:inline-block;">Grades report</a>
-      <input type="file" id="importWordingFile" accept="application/json" style="display:none;">
-      <span id="importStatus" style="margin-left:10px; font-size:0.82rem; color:var(--grey);"></span>
+    <div class="right">
+      <input id="tutorName" type="text" placeholder="Your name">
+      <div class="role">Tutor</div>
     </div>
   </div>
 
-  <ol class="hub-steps"><li><b>1</b>Submissions: write feedback when a TP is ready</li><li><b>2</b>Assignments: mark when submitted</li><li><b>3</b>Tracker for the whole picture</li></ol>
-<div class="tabs" id="tabs">
-    <button class="tab active" data-tab="submissions">Submissions</button>
-    <button class="tab" data-tab="assignments">Assignments</button>
-    <button class="tab" data-tab="trainees">Trainees</button>
+  <div class="title">
+    <div>
+      <h1 id="courseName">Course name not set yet</h1>
+      <p id="courseMeta">The centre sets it on the Course admin page.</p>
+    </div>
+    <div class="titleacts">
+      <a class="btn" href="7_candidate_tracker.html">Candidate tracker</a>
+      <a class="btn" href="13_grades_report.html">Grades report</a>
+      <a class="btn" href="6_centre_admin_dashboard.html">Course admin</a>
+      <button class="btn primary" id="importTriggerBtn" type="button">Import trainee file</button>
+      <button class="btn" id="importWordingBtn" type="button">Import wording</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
+      <input type="file" id="importWordingFile" accept="application/json" style="display:none;">
+    </div>
+  </div>
+  <p id="importStatus" style="margin:10px 0 0; font-size:0.82rem; color:var(--grey);"></p>
+
+  <div class="queue" id="queue"></div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-tab="tp">Teaching practice<span class="c" id="cTp"></span></button>
+    <button class="tab" data-tab="assignments">Assignments<span class="c" id="cAssign"></span></button>
+    <button class="tab" data-tab="trainees">Trainees<span class="c" id="cTrainees"></span></button>
   </div>
 
-  <div class="panel" id="panel-submissions">
-    <table>
-      <tr><th>Trainee</th><th>TP</th><th>Status</th><th>Grade</th><th></th></tr>
-      <tbody id="subsBody"></tbody>
-    </table>
-  </div>
-
-  <div class="panel" id="panel-trainees" style="display:none;">
-    <table>
-      <tr><th>Trainee</th><th>Imported</th><th></th></tr>
-      <tbody id="traineesBody"></tbody>
-    </table>
-  </div>
-
-  <div class="panel" id="panel-assignments" style="display:none;">
-    <table>
-      <tr><th>Trainee</th><th>Assignment</th><th>Status</th><th></th></tr>
-      <tbody id="assignBody"></tbody>
-    </table>
-  </div>
-
+  <div class="rows" id="rows"></div>
 
 </div>
-<script src="hub-shared.js?v=202609202334"></script>
-<script src="hub-store.js?v=202609202334"></script>
-<script src="hub-sync.js?v=202609202334"></script>
+
+<script src="hub-shared.js?v=202609202339"></script>
+<script src="hub-store.js?v=202609202339"></script>
+<script src="hub-sync.js?v=202609202339"></script>
+<script src="hub-tracker.js?v=202609202339"></script>
 <script type="text/x-hub-app">
-document.getElementById('tabs').addEventListener('click', e=>{
-  const btn = e.target.closest('.tab');
-  if(!btn) return;
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
-  document.getElementById('panel-'+btn.dataset.tab).style.display='';
-});
+/* ---------------------------------------------------------------------------
+   Tutor dashboard. Three tabs over the same roster; a queue strip above them
+   answering the only question a tutor opens this page with — what is waiting
+   on me. Clicking a queue card filters its tab to exactly those rows.
+--------------------------------------------------------------------------- */
+const ROSTER_KEY='connect_roster_v1';
+const ASSIGN_NAMES={fol:'FOL', lrt:'LRT', lsrt:'LSRT', lfc:'LFC', a5:'A5'};
+const ASSIGN_FULL={fol:'FOL — Focus on the Learner', lrt:'LRT — Language Related Tasks',
+  lsrt:'LSRT — Language Skills Related Task', lfc:'LfC — Lessons from the Classroom',
+  a5:'Assignment 5 — Plagiarism Reflection'};
 
-try {
-  const cs = JSON.parse(localStorage.getItem('connect_course_settings'));
-  if (cs && cs.courseName) document.getElementById('courseName').textContent = cs.courseName;
-  // 'Welcome, Ramy' was hardcoded for everyone (Ramy, 20 Sep 2026). The name
-  // is typed once here, greets by it, and prefills the tutor and marker
-  // fields on screens 3 and 10 in this browser.
-  const nameInput = document.getElementById('tutorName');
-  const greet = () => { const n = (localStorage.getItem('chub:tutorName') || '').trim(); document.getElementById('roleLine').textContent = n ? 'Welcome, ' + n + ' \u2014 Course tutor' : 'Course tutor'; };
-  nameInput.value = localStorage.getItem('chub:tutorName') || '';
-  nameInput.addEventListener('input', () => { localStorage.setItem('chub:tutorName', nameInput.value); greet(); });
-  greet();
-} catch(e) {}
-
-const ASSIGN_NAMES = { fol:'FOL — Focus on the Learner', lrt:'LRT — Language Related Tasks', lsrt:'LSRT — Language Skills Related Task', lfc:'LFC — Lessons from the Classroom', a5:'Assignment 5 \u2014 Plagiarism Reflection' };
-const ROSTER_KEY = 'connect_roster_v1';
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function loadRoster(){ try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
 function saveRoster(r){ localStorage.setItem(ROSTER_KEY, JSON.stringify(r)); }
-function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
-function tpStatusPill(tr){
-  const fb = tr.tp && tr.tp.feedback, plan = tr.tp && tr.tp.plan, self = tr.tp && tr.tp.selfeval;
-  if (fb && fb.status==='returned') return {cls:'passed', label:'Returned'};
-  if (self && self.status==='turned_in') return fb && fb.status==='draft' ? {cls:'submitted', label:'Feedback in progress'} : {cls:'submitted', label:'Ready for feedback'};
-  if (plan && plan.status==='turned_in') return {cls:'draft', label:'Plan only — no self-eval yet'};
-  return {cls:'draft', label:'Not yet turned in'};
+/* Only a state that needs the tutor is coloured. Amber = waiting on you.
+   Brick = back with the candidate. Everything else is grey. */
+function tpState(tr){
+  const fb=tr.tp&&tr.tp.feedback, plan=tr.tp&&tr.tp.plan, self=tr.tp&&tr.tp.selfeval;
+  if (fb && fb.status==='returned') return {label:'Returned', tone:'', act:false};
+  if (self && self.status==='turned_in')
+    return fb && fb.status==='draft'
+      ? {label:'Feedback in progress', tone:'amber', act:true}
+      : {label:'Ready for feedback', tone:'amber', act:true};
+  if (plan && plan.status==='turned_in') return {label:'Plan in, no self-evaluation', tone:'', act:false};
+  return {label:'Not yet turned in', tone:'', act:false};
 }
-function assignStatusPill(sub){
-  if (!sub) return {cls:'draft', label:'Not started'};
-  const map = { draft:['draft','Draft — not submitted'], submitted:['submitted','Submitted'], returned_unmarked:['resubmit','Returned unmarked'], resubmission_needed:['resubmit','Resubmission needed'], resubmitted:['submitted','Resubmission submitted'], closed:['passed', sub.feedback ? sub.feedback.outcome : 'Closed'] };
-  const m = map[sub.stage] || ['draft', sub.stage];
-  return {cls:m[0], label:m[1]};
+const A_STATE={
+  submitted:           {label:'Submitted',              tone:'amber', act:true},
+  resubmitted:         {label:'Resubmission submitted', tone:'amber', act:true},
+  resubmission_needed: {label:'Resubmission needed',    tone:'brick', act:false},
+  returned_unmarked:   {label:'Returned unmarked',      tone:'brick', act:false},
+  closed:              {label:'Closed',                 tone:'',      act:false},
+  draft:               {label:'Draft',                  tone:'',      act:false}
+};
+
+let TAB='tp', FILTER=null;
+
+function people(){
+  return Object.values(loadRoster().trainees||{}).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+}
+function tpNumberOf(tr){
+  const fst = tr.tp && tr.tp.feedback && tr.tp.feedback.state;
+  const m = String((tr.tp&&tr.tp.plan&&tr.tp.plan.label) || (fst&&fst.f&&fst.f.fTP) || '').match(/TP\s?\d/i);
+  return m ? m[0].replace(/\s+/,'') : '—';
+}
+function assignmentRows(list){
+  let wording=null; try{ wording=JSON.parse(localStorage.getItem('connect_assignment_wording_v2')); }catch(e){}
+  const order=hubAssignmentOrder(wording);
+  const out=[];
+  list.forEach(tr=>{
+    const subs=tr.assignments||{};
+    order.forEach(key=>{
+      if (key==='a5' && !a5InPlay(subs)) return;
+      const sub=subs[key];
+      if (key==='a5' && sub && sub.stage==='draft'){
+        out.push({tr, key, stage:'a5set', s:{label:'Set — awaiting submission', tone:'brick', act:false}});
+        return;
+      }
+      if (!sub || sub.stage==='draft') return;
+      out.push({tr, key, stage:sub.stage, s:A_STATE[sub.stage] || {label:sub.stage, tone:'', act:false}});
+    });
+  });
+  return out;
 }
 
-function render(){
-  const roster = loadRoster();
-  const trainees = Object.values(roster.trainees||{}).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
-  const subsBody = document.getElementById('subsBody');
-  const assignBody = document.getElementById('assignBody');
+function paintQueue(){
+  const list=people();
+  const tpWaiting=list.filter(t=>tpState(t).act).length;
+  const aRows=assignmentRows(list);
+  const aWaiting=aRows.filter(r=>r.s.act).length;
+  const stuck=aRows.filter(r=>r.stage==='resubmission_needed'||r.stage==='returned_unmarked').length;
 
-  const traineesBody = document.getElementById('traineesBody');
-  if (!trainees.length){
-    const store = window.HubMode && window.HubMode !== 'solo';
-    const none = store ? 'No trainees on the course yet — add them on course admin\u2019s Roster and links tab, and give each their link.' : 'No trainee files imported yet. Ask your trainees to export their work and send you the file.';
-    subsBody.innerHTML = `<tr><td colspan="5" class="empty"><div class="icon">—</div>${none}</td></tr>`;
-    assignBody.innerHTML = `<tr><td colspan="4" class="empty"><div class="icon">—</div>${store ? 'No trainees on the course yet.' : 'No trainee files imported yet.'}</td></tr>`;
-    traineesBody.innerHTML = `<tr><td colspan="3" class="empty"><div class="icon">—</div>${store ? 'No trainees on the course yet.' : 'No trainee files imported yet.'}</td></tr>`;
+  // One filter key per card: each card shows exactly its own rows, and clicking
+  // another card switches the filter rather than toggling it off.
+  const card=(n,label,tab,key,stuckTone)=>`<button type="button" class="qcard ${n===0?'zero':''} ${stuckTone?'stuck':''} ${FILTER===key&&n>0?'on':''}" data-queue="${tab}" data-key="${key}" ${n===0?'disabled':''}>
+    <div class="n">${n}</div><div class="l">${label}</div></button>`;
+
+  document.getElementById('queue').innerHTML =
+    card(tpWaiting,'teaching practices ready for your feedback','tp','tp',false) +
+    card(aWaiting,'assignments waiting to be marked','assignments','mark',false) +
+    card(stuck,'assignments back with the candidate','assignments','stuck',true);
+}
+
+function paintTabsCounts(){
+  const list=people();
+  document.getElementById('cTp').textContent=list.length||'';
+  document.getElementById('cAssign').textContent=assignmentRows(list).length||'';
+  document.getElementById('cTrainees').textContent=list.length||'';
+}
+
+function row(cols, cells){
+  return `<div class="grid grow" style="grid-template-columns:${cols}">${cells}</div>`;
+}
+function action(label, go, href){
+  return `<div class="act"><a class="rowbtn ${go?'go':''}" href="${href}">${esc(label)}</a></div>`;
+}
+
+function paintRows(){
+  const host=document.getElementById('rows');
+  const list=people();
+  const storeMode = window.HubMode && window.HubMode !== 'solo';
+
+  if (!list.length){
+    host.innerHTML = `<div class="empty">${storeMode
+      ? 'No trainees on the course yet — add them on Course admin\u2019s Roster and links tab, and give each their link.'
+      : 'No trainee files imported yet. Ask your trainees to export their work and send you the file.'}</div>`;
     return;
   }
 
-  const storeMode = window.HubMode && window.HubMode !== 'solo';
-  traineesBody.innerHTML = trainees.map(tr=>`<tr>
-    <td>${esc(tr.name)}${tr.group?` <span style="color:var(--grey);font-size:0.8rem;">· group ${esc(tr.group)}</span>`:''}</td>
-    <td>${tr.importedAt ? new Date(tr.importedAt).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : '—'}</td>
-    <td>${storeMode ? '' : `<button class="btn primary export-return" data-id="${esc(tr.id)}">Export for trainee</button>`}</td>
-  </tr>`).join('');
+  if (TAB==='tp'){
+    const cols='1.5fr 0.5fr 1.3fr auto';
+    let rows=list.map(tr=>({tr, s:tpState(tr)}));
+    if (FILTER==='tp') rows=rows.filter(r=>r.s.act);
+    host.innerHTML =
+      `<div class="grid ghead" style="grid-template-columns:${cols}"><div>Trainee</div><div class="mid">TP</div><div>Status</div><div></div></div>` +
+      (rows.length ? rows.map(({tr,s})=>row(cols,
+        `<div class="nm">${esc(tr.name)}</div>
+         <div class="mid">${esc(tpNumberOf(tr))}</div>
+         <div class="st ${s.tone}">${esc(s.label)}</div>
+         ${action(s.act?'Write feedback':s.label==='Returned'?'View feedback':'Open', s.act,
+           '3_tutor_feedback.html?trainee='+encodeURIComponent(tr.id))}`
+      )).join('') : '<div class="empty">Nothing waiting on this tab.</div>');
+    return;
+  }
 
-  subsBody.innerHTML = trainees.map(tr=>{
-    const p = tpStatusPill(tr);
-    // The grade lives at state.f.fGrade on a real return (state.grade never existed -- the column read '—' for ever).
-    const fst = tr.tp && tr.tp.feedback && tr.tp.feedback.state;
-    const grade = fst ? ((fst.f && fst.f.fGrade) || fst.grade || '—') : '—';
-    const tpNo = (m => m ? m[0].replace(/\s+/, '') : '—')(String((tr.tp && tr.tp.plan && tr.tp.plan.label) || (fst && fst.f && fst.f.fTP) || '').match(/TP\s?\d/i));
-    return `<tr>
-      <td>${esc(tr.name)}</td>
-      <td>${esc(tpNo)}</td>
-      <td><span class="status-pill ${p.cls}">${esc(p.label)}</span></td>
-      <td>${esc(grade)}</td>
-      <td><a class="btn ${p.cls==='draft'?'primary':'ghost'}" style="text-decoration:none;display:inline-block;" href="3_tutor_feedback.html?trainee=${encodeURIComponent(tr.id)}">${p.label==='Returned'?'View feedback':'Write feedback'}</a></td>
-    </tr>`;
-  }).join('');
+  if (TAB==='assignments'){
+    const cols='1.5fr 0.6fr 1.3fr auto';
+    let rows=assignmentRows(list);
+    if (FILTER==='mark') rows=rows.filter(r=>r.s.act);
+    else if (FILTER==='stuck') rows=rows.filter(r=>r.stage==='resubmission_needed' || r.stage==='returned_unmarked');
+    host.innerHTML =
+      `<div class="grid ghead" style="grid-template-columns:${cols}"><div>Trainee</div><div class="mid">Task</div><div>Status</div><div></div></div>` +
+      (rows.length ? rows.map(({tr,key,stage,s})=>{
+        const closed = stage==='closed';
+        const href = (closed ? '11_assignment_record.html' : '10_tutor_assignment_marking.html') +
+          '?trainee='+encodeURIComponent(tr.id)+'&a='+key;
+        return row(cols,
+          `<div class="nm">${esc(tr.name)}</div>
+           <div class="mid" title="${esc(ASSIGN_FULL[key]||key)}">${esc(ASSIGN_NAMES[key]||key)}</div>
+           <div class="st ${s.tone}">${esc(s.label)}</div>
+           ${action(s.act?'Mark':closed?'Open the record':'Open', s.act, href)}`);
+      }).join('') : '<div class="empty">Nothing submitted yet.</div>');
+    return;
+  }
 
-  let assignRows = [];
-  trainees.forEach(tr=>{
-    const subs = tr.assignments||{};
-    let w5 = null; try{ w5 = JSON.parse(localStorage.getItem('connect_assignment_wording_v2')); }catch(e){}
-    hubAssignmentOrder(w5).forEach(key=>{
-      const sub = subs[key];
-      if (key === 'a5' && !a5InPlay(subs)) return; // a sanction, out of sight until set
-      if (key === 'a5' && sub && sub.stage==='draft'){
-        assignRows.push(`<tr><td>${esc(tr.name)}</td><td>${esc(ASSIGN_NAMES[key])}</td><td><span class="status-pill resubmit">Set \u2014 awaiting submission</span></td><td></td></tr>`);
-        return;
-      }
-      if (!sub || sub.stage==='draft') return; // nothing to mark yet
-      const p = assignStatusPill(sub);
-      // One door per thing: a closed assignment opens its record, an open one the mark sheet.
-      const closed = sub.stage==='closed';
-      const action = (sub.stage==='submitted'||sub.stage==='resubmitted') ? 'Write feedback' : closed ? 'Open the record' : 'View feedback';
-      const door = (closed ? '11_assignment_record.html' : '10_tutor_assignment_marking.html') + `?trainee=${encodeURIComponent(tr.id)}&a=${key}`;
-      assignRows.push(`<tr>
-        <td>${esc(tr.name)}</td>
-        <td>${esc(ASSIGN_NAMES[key])}</td>
-        <td><span class="status-pill ${p.cls}">${esc(p.label)}</span></td>
-        <td><a class="btn ${action==='Write feedback'?'primary':'ghost'}" style="text-decoration:none;display:inline-block;" href="${door}">${action}</a></td>
-      </tr>`);
-    });
-  });
-  assignBody.innerHTML = assignRows.length ? assignRows.join('') : `<tr><td colspan="4" class="empty"><div class="icon">—</div>No assignments submitted yet.</td></tr>`;
+  const cols='1.7fr 1fr 1.2fr auto';
+  host.innerHTML =
+    `<div class="grid ghead" style="grid-template-columns:${cols}"><div>Trainee</div><div class="mid">Teaching practice</div><div>Assignments</div><div></div></div>` +
+    list.map(tr=>{
+      const subs=tr.assignments||{};
+      const closed=Object.keys(subs).filter(k=>subs[k] && subs[k].stage==='closed').length;
+      const s=tpState(tr);
+      return row(cols,
+        `<div class="nm">${esc(tr.name)}${tr.group?` <span style="color:var(--grey);font-size:0.8rem;">· group ${esc(tr.group)}</span>`:''}</div>
+         <div class="mid">${esc(tpNumberOf(tr))} · ${esc(s.label.toLowerCase())}</div>
+         <div class="st">${closed} of 4 closed</div>
+         <div class="act">${storeMode ? '' : `<button class="rowbtn export-return" data-id="${esc(tr.id)}">Export for trainee</button>`}</div>`);
+    }).join('');
 }
-function renderTracker(){}
-render(); renderTracker();
 
+function paint(){ paintQueue(); paintTabsCounts(); paintRows(); }
+
+document.getElementById('tabs').addEventListener('click', e=>{
+  const b=e.target.closest('.tab'); if(!b) return;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t===b));
+  TAB=b.dataset.tab; FILTER=null; paint();
+});
+document.getElementById('queue').addEventListener('click', e=>{
+  const b=e.target.closest('[data-queue]'); if(!b || b.disabled) return;
+  const key=b.dataset.key; TAB=b.dataset.queue; FILTER = (FILTER===key) ? null : key;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===TAB));
+  paint();
+});
+
+/* Course identity and the tutor's own name. The name is typed once here and
+   prefills the tutor and marker fields on screens 3 and 10 in this browser. */
+try{
+  const cs=JSON.parse(localStorage.getItem('connect_course_settings'));
+  if (cs){
+    if (cs.courseName) document.getElementById('courseName').textContent = cs.courseName;
+    const fmt=d=>{ try{ return new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}); }catch(e){ return d; } };
+    const bits=[cs.centreName, cs.centreNumber].filter(Boolean);
+    if (cs.start && cs.end) bits.push(fmt(cs.start)+' – '+fmt(cs.end));
+    const n=people().length; if (n) bits.push(n+' candidate'+(n===1?'':'s'));
+    if (bits.length) document.getElementById('courseMeta').textContent = bits.join(' · ');
+  }
+}catch(e){}
+
+const nameInput=document.getElementById('tutorName');
+nameInput.value = localStorage.getItem('chub:tutorName') || '';
+nameInput.addEventListener('input', ()=>localStorage.setItem('chub:tutorName', nameInput.value));
+
+/* ---- import, unchanged from v1 ---------------------------------------- */
 document.getElementById('importTriggerBtn').addEventListener('click', ()=>document.getElementById('importFile').click());
 document.getElementById('importWordingBtn').addEventListener('click', ()=>document.getElementById('importWordingFile').click());
 document.getElementById('importWordingFile').addEventListener('change', e=>{
-  const file = e.target.files[0]; if(!file) return;
-  readWordingFile(file).then(()=>{ document.getElementById('importStatus').textContent = 'Centre wording imported \u2014 marking screens use it now.'; }).catch(err=>{ document.getElementById('importStatus').textContent = err.message; });
-  e.target.value = '';
+  const file=e.target.files[0]; if(!file) return;
+  readWordingFile(file)
+    .then(()=>{ document.getElementById('importStatus').textContent='Centre wording imported — marking screens use it now.'; })
+    .catch(err=>{ document.getElementById('importStatus').textContent=err.message; });
+  e.target.value='';
 });
 document.getElementById('importFile').addEventListener('change', e=>{
-  const file = e.target.files[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = ()=>{
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
     let data;
-    try{ data = JSON.parse(reader.result); }catch(err){ document.getElementById('importStatus').textContent = 'Not a valid file.'; return; }
-    if (data && data.schema === 'connect-hub-wording-v1'){ readWordingFile(file).then(()=>{ document.getElementById('importStatus').textContent = 'Centre wording imported — marking screens use it now.'; }).catch(err=>{ document.getElementById('importStatus').textContent = err.message; }); return; }
-    if (!data || data.schema !== 'connect-hub-export-v1' || !data.traineeId){
-      document.getElementById('importStatus').textContent = 'That doesn’t look like a trainee export file.'; return;
+    try{ data=JSON.parse(reader.result); }catch(err){ document.getElementById('importStatus').textContent='Not a valid file.'; return; }
+    if (data && data.schema==='connect-hub-wording-v1'){
+      readWordingFile(file)
+        .then(()=>{ document.getElementById('importStatus').textContent='Centre wording imported — marking screens use it now.'; })
+        .catch(err=>{ document.getElementById('importStatus').textContent=err.message; });
+      return;
     }
-    const roster = loadRoster();
-    const prev = roster.trainees[data.traineeId] || {};
-    // A re-import replaces the paperwork but keeps what only this browser
-    // holds: every earlier returned TP, and the tutor's Stage, letter and
-    // withdrawal records for the tracker tab.
-    const tp = Object.assign({}, data.tp || {});
-    tp.history = Object.assign({}, (prev.tp && prev.tp.history) || {});
-    if (prev.tp && prev.tp.feedback && prev.tp.feedback.status === 'returned') { const pn = HubTracker.tpNumberOf(prev.tp.feedback); if (pn && !tp.history[pn]) tp.history[pn] = prev.tp.feedback; }
-    if (tp.feedback && tp.feedback.status === 'returned') { const n = HubTracker.tpNumberOf(tp.feedback); if (n) tp.history[n] = tp.feedback; }
-    roster.trainees[data.traineeId] = { id:data.traineeId, name:data.traineeName, centreName:data.centreName, importedAt:new Date().toISOString(), tp:tp, assignments:data.assignments||{}, tracker:prev.tracker||{} };
+    if (!data || data.schema!=='connect-hub-export-v1' || !data.traineeId){
+      document.getElementById('importStatus').textContent='That doesn’t look like a trainee export file.'; return;
+    }
+    const roster=loadRoster();
+    const prev=roster.trainees[data.traineeId] || {};
+    const tp=Object.assign({}, data.tp||{});
+    tp.history=Object.assign({}, (prev.tp&&prev.tp.history)||{});
+    if (prev.tp && prev.tp.feedback && prev.tp.feedback.status==='returned'){
+      const pn=HubTracker.tpNumberOf(prev.tp.feedback); if (pn && !tp.history[pn]) tp.history[pn]=prev.tp.feedback;
+    }
+    if (tp.feedback && tp.feedback.status==='returned'){
+      const n=HubTracker.tpNumberOf(tp.feedback); if (n) tp.history[n]=tp.feedback;
+    }
+    roster.trainees[data.traineeId]={ id:data.traineeId, name:data.traineeName, centreName:data.centreName,
+      importedAt:new Date().toISOString(), tp:tp, assignments:data.assignments||{}, tracker:prev.tracker||{} };
     saveRoster(roster);
-    document.getElementById('importStatus').textContent = 'Imported ' + data.traineeName + '.';
-    render(); renderTracker();
+    document.getElementById('importStatus').textContent='Imported '+data.traineeName+'.';
+    paint();
   };
   reader.readAsText(file);
-  e.target.value = '';
+  e.target.value='';
 });
 
-document.getElementById('traineesBody').addEventListener('click', e=>{
-  const btn = e.target.closest('.export-return'); if (!btn) return;
-  const roster = loadRoster();
-  const tr = roster.trainees[btn.dataset.id];
-  if (!tr) return;
-  const payload = {
-    schema: 'connect-hub-return-v1',
-    exportedAt: new Date().toISOString(),
-    traineeId: tr.id,
-    traineeName: tr.name,
-    tp: { feedback: (tr.tp && tr.tp.feedback) || null, history: (tr.tp && tr.tp.history) || {} },
-    assignments: tr.assignments || {},
-    // So the trainee's own tracker shows the same row and the same Stage
-    // records, letter and standing as the tutor's (Ramy, 20 Sep 2026).
-    tracker: tr.tracker || {}
+document.getElementById('rows').addEventListener('click', e=>{
+  const btn=e.target.closest('.export-return'); if(!btn) return;
+  const tr=loadRoster().trainees[btn.dataset.id]; if(!tr) return;
+  const payload={
+    schema:'connect-hub-return-v1', exportedAt:new Date().toISOString(),
+    traineeId:tr.id, traineeName:tr.name,
+    tp:{ feedback:(tr.tp&&tr.tp.feedback)||null, history:(tr.tp&&tr.tp.history)||{} },
+    assignments:tr.assignments||{}, tracker:tr.tracker||{}
   };
-  const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'connect-hub-return-' + (tr.name||'trainee').toLowerCase().replace(/[^a-z0-9]+/g,'-') + '-' + new Date().toISOString().slice(0,10) + '.json';
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='connect-hub-return-'+(tr.name||'trainee').toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+new Date().toISOString().slice(0,10)+'.json';
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
 });
-// Store mode: the words that were about files.
-if (window.HubMode && window.HubMode !== 'solo') { const tg=document.getElementById('dashTag'); if (tg) tg.textContent='Everything your trainees have turned in, as they turn it in.'; document.querySelectorAll('#panel-trainees th').forEach(th=>{ if(/Imported/i.test(th.textContent)) th.textContent='Joined'; if(/^\s*$/.test(th.textContent)) th.textContent=''; }); }
+
+/* Store mode: nothing is imported, so the words about files go. */
+if (window.HubMode && window.HubMode !== 'solo'){
+  document.getElementById('importTriggerBtn').style.display='none';
+}
+
+paint();
 </script>
 </body>
 </html>
