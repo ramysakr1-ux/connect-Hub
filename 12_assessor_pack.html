@@ -141,11 +141,11 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609210230"></script>
-<script src="assignment-defaults.js?v=202609210230"></script>
-<script src="hub-tracker.js?v=202609210230"></script>
-<script src="hub-store.js?v=202609210230"></script>
-<script src="hub-sync.js?v=202609210230"></script>
+<script src="hub-shared.js?v=202609210233"></script>
+<script src="assignment-defaults.js?v=202609210233"></script>
+<script src="hub-tracker.js?v=202609210233"></script>
+<script src="hub-store.js?v=202609210233"></script>
+<script src="hub-sync.js?v=202609210233"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -181,8 +181,26 @@ const STAGE_OF = n => n<=2 ? 'Stage 1' : n<=5 ? 'Stage 2' : 'Stage 3';
 $('courseName').textContent = SETTINGS.courseName || 'Course name not set';
 $('centreLine').textContent = [SETTINGS.centreName, SETTINGS.centreNumber ? 'Centre ' + SETTINGS.centreNumber : '', (SETTINGS.start && SETTINGS.end) ? niceDate(SETTINGS.start) + ' – ' + niceDate(SETTINGS.end) : ''].filter(Boolean).join(' · ');
 if (MODE === 'assessor') {
-  const ex = window.HubAssessor && window.HubAssessor.expires;
-  $('accessLine').textContent = 'Read-only assessor view' + (ex ? ' · this link stops working on ' + longDate(ex) : ' · no course end date set, so this link does not expire yet');
+  /* The expiry the store sent at boot, or, failing that, worked out here the
+     same way the store works it out: the course end date plus fourteen days
+     (Handbook 15). The fallback matters. This line used to announce "no course
+     end date set" whenever HubAssessor was missing -- which is a claim about
+     the COURSE, not about what this page happens to know -- and it printed it
+     directly under a header stating the course's end date. Two lines of the
+     same screen contradicting each other, found walking the assessor role on
+     21 Sep 2026. It now only says that when the end date really is absent. */
+  const fromEnd = () => {
+    const end = SETTINGS && SETTINGS.end;
+    if (!end || !/^\d{4}-\d{2}-\d{2}$/.test(String(end))) return null;
+    const d = new Date(String(end) + 'T23:59:59');
+    if (isNaN(d.getTime())) return null;
+    d.setDate(d.getDate() + 14);
+    return d.toISOString();
+  };
+  const ex = (window.HubAssessor && window.HubAssessor.expires) || fromEnd();
+  $('accessLine').textContent = 'Read-only assessor view' + (ex
+    ? ' · this link stops working on ' + longDate(ex) + ', fourteen days after the course ends'
+    : ' · the course has no end date set, so this link does not expire yet');
 } else if (MODE === 'tutor') {
   $('accessLine').textContent = 'You are reading this as a tutor — the assessor sees exactly this, without the tutor’s doors.';
 } else {

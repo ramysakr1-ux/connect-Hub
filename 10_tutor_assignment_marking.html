@@ -67,7 +67,7 @@
   .btn-sand{background:var(--sand-deep); color:var(--ink);}
   .note{font-size:0.8rem; color:var(--grey); margin:0 0 14px;}
 </style>
-<link rel="stylesheet" href="hub-theme.css?v=202609210230">
+<link rel="stylesheet" href="hub-theme.css?v=202609210233">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -75,10 +75,10 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202609210230"></script>
-<script src="hub-shared.js?v=202609210230"></script>
-<script src="hub-store.js?v=202609210230"></script>
-<script src="hub-sync.js?v=202609210230"></script>
+<script src="assignment-defaults.js?v=202609210233"></script>
+<script src="hub-shared.js?v=202609210233"></script>
+<script src="hub-store.js?v=202609210233"></script>
+<script src="hub-sync.js?v=202609210233"></script>
 <script type="text/x-hub-app">
 const WORDING_KEY = 'connect_assignment_wording_v2';
 const SUB_KEY = 'connect_assignment_submissions_v1';
@@ -107,6 +107,13 @@ let CURRENT = params.get('a') || 'lrt';
 const TRAINEE_ID = params.get('trainee') || '';
 let OUTCOME = '';
 
+/* Every door into this screen -- the dashboard's rows and the tracker's
+   actions -- carries ?trainee=. Reached without one (a stale bookmark, a
+   hand-typed URL), it used to fall through to connect_assignment_submissions_v1,
+   which is a TRAINEE's own key and means nothing in a tutor's browser: an empty
+   mark sheet, headed with the assignment's real name, that a tutor could type
+   marks into for nobody. Found walking the tutor role, 21 Sep 2026. A mark
+   sheet needs to know whose work it is. */
 let SUBS = null;
 if (TRAINEE_ID) {
   const roster = loadRoster();
@@ -164,6 +171,21 @@ function summarize(a, snap){
 }
 
 function render(){
+  /* Every door into this screen -- the dashboard's rows, the tracker's actions
+     -- carries ?trainee=. Reached without one (a stale bookmark, a hand-typed
+     URL), this used to fall through to connect_assignment_submissions_v1, which
+     is a TRAINEE's own key and means nothing in a tutor's browser: an empty
+     mark sheet under the assignment's real name, which a tutor could type marks
+     into for nobody. Found walking the tutor role, 21 Sep 2026. */
+  if (!TRAINEE_ID) {
+    $('picker').innerHTML = '';
+    $('app').innerHTML =
+      '<div style="max-width:560px; padding:26px 0;">' +
+      '<h2 style="margin:0 0 10px; font-family:\'Newsreader\',Georgia,serif; font-weight:600; font-size:1.3rem;">Whose work?</h2>' +
+      '<p style="margin:0 0 20px; font-size:0.9rem; line-height:1.6; color:var(--grey);">A mark sheet belongs to one candidate and one assignment. Open it from the dashboard or the candidate tracker, where the row you click says which.</p>' +
+      '<a class="btn" href="5_tutor_dashboard.html">Back to dashboard</a></div>';
+    return;
+  }
   const a = WORDING && WORDING[CURRENT];
   if (!a){ $('app').innerHTML = '<div class="card"><p class="note">This assignment isn\u2019t set up yet.</p></div>'; return; }
   if (CURRENT === 'a5' && !a5InPlay(SUBS)){ $('app').innerHTML = '<div class="card"><p class="note">Assignment 5 has not been set for this candidate. Set it from the assignment where the plagiarism was found.</p></div>'; return; }
