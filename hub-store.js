@@ -3,7 +3,7 @@
 // trainee's plan reaches the tutor without a file and comes back the same way.
 //
 // Access is by link, as in Connect: a trainee's link carries ?t=<token>, a
-// tutor's carries ?k=<course key>, an assessor's ?a=<assessor key> (read-only,
+// tutor's carries ?k=<course key>, an assessor's ?ak=<assessor key> (read-only,
 // Ramy 20 Sep 2026). Any of them is remembered in this browser once seen, so
 // the pages can link to each other without repeating it.
 window.HubStore = (function(){
@@ -16,7 +16,10 @@ window.HubStore = (function(){
   try {
     if (params.get('t')) { localStorage.setItem('hub:t', params.get('t')); localStorage.removeItem('hub:k'); localStorage.removeItem('hub:a'); }
     if (params.get('k')) { localStorage.setItem('hub:k', params.get('k')); localStorage.removeItem('hub:t'); localStorage.removeItem('hub:a'); }
-    if (params.get('a')) { localStorage.setItem('hub:a', params.get('a')); localStorage.removeItem('hub:t'); localStorage.removeItem('hub:k'); }
+    // The assessor key travels as ?ak= -- ?a= is the assignment key on screens 9-11
+    // (a collision found on the 20 Sep 2026 trainee walk: opening FOL stored 'fol' as an assessor key).
+    if (params.get('ak')) { localStorage.setItem('hub:a', params.get('ak')); localStorage.removeItem('hub:t'); localStorage.removeItem('hub:k'); }
+    var stray = localStorage.getItem('hub:a'); if (stray && /^(fol|lrt|lsrt|lfc|a5)$/.test(stray)) localStorage.removeItem('hub:a');
   } catch (e) {}
   function token(){ try { return localStorage.getItem('hub:t') || ''; } catch (e) { return ''; } }
   function key(){ try { return localStorage.getItem('hub:k') || ''; } catch (e) { return ''; } }
@@ -57,7 +60,7 @@ window.HubStore = (function(){
   function withAccess(href){
     var sep = href.indexOf('?') === -1 ? '?' : '&';
     if (key()) return href + sep + 'k=' + encodeURIComponent(key());
-    if (akey()) return href + sep + 'a=' + encodeURIComponent(akey());
+    if (akey()) return href + sep + 'ak=' + encodeURIComponent(akey());
     if (token()) return href + sep + 't=' + encodeURIComponent(token());
     return href;
   }
@@ -69,7 +72,7 @@ window.HubStore = (function(){
     boot: function(){ return call({ op: 'boot', token: token() || undefined }); },
     assessorLink: function(){ return call({ op: 'assessorLink' }); },
     rotateAssessorKey: function(){ return call({ op: 'rotateAssessorKey' }); },
-    assessorLinkFor: function(k){ return base() + '12_assessor_pack.html?a=' + encodeURIComponent(k); },
+    assessorLinkFor: function(k){ return base() + '12_assessor_pack.html?ak=' + encodeURIComponent(k); },
     rotateKey: function(){ return call({ op: 'rotateKey' }).then(function(r){ try { localStorage.setItem('hub:k', r.key); } catch (e) {} return true; }); },
     purgeTrainee: function(tok){ return call({ op: 'purgeTrainee', token: tok }); },
     me: function(){ return call({ op: 'me', token: token() }); },
