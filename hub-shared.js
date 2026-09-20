@@ -19,6 +19,23 @@
       ".confirm-action:hover{background:oklch(40% 0.15 27);}";
     document.head.appendChild(css);
   }
+  // One hover rule for every clickable card, one for every pill and button
+  // (Ramy, 20 Sep 2026: "one rule for all the cards, one rule for all the
+  // pills"), in the Hub's teal, on every screen. Cards lift a hair and take
+  // a teal ring; pills and buttons take the ring and a light teal wash.
+  // Chosen states keep their own colour; disabled things do nothing.
+  if(!document.getElementById('hub-hover-css')){
+    var hcss=document.createElement('style'); hcss.id='hub-hover-css';
+    hcss.textContent=":root{ --hub-ring: 0 0 0 2px oklch(88% 0.04 195); --hub-wash: oklch(94% 0.025 195); }"+
+      "a.card, .tk-card[href], .cell, .list-row > button:first-child{ transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease; }"+
+      "a.card:hover, .cell:hover{ transform: translateY(-1px); box-shadow: var(--hub-ring); border-color: var(--teal, #1E6B63); }"+
+      ".cell:hover .chip{ box-shadow: none; }"+
+      "button:not(:disabled), .btn, a.act, .chip[data-role], .pchip, .crit-toggle, .picker button, .filter, .tab, .sg, .rb, .copyfirst, .export-return, .order-arrows button{ transition: box-shadow .12s ease, background-color .12s ease, border-color .12s ease; }"+
+      "button:not(:disabled):hover, .btn:not(:disabled):hover, a.act:hover, .chip[data-role]:not(.disabled):hover, .pchip:hover, .crit-toggle:hover, .picker button:hover, .filter:hover, .tab:hover, .sg:hover, .rb:hover, .copyfirst:hover{ box-shadow: var(--hub-ring); border-color: var(--teal, #1E6B63); }"+
+      "button:not(:disabled):not(.primary):not(.btn-teal):not(.btn-submit):not(.active):not(.on):not(.picked):not(.confirm-action):not(.act):hover{ background-color: var(--hub-wash); }"+
+      "@media (prefers-reduced-motion: reduce){ a.card, .cell, button, .btn{ transition: none; } a.card:hover, .cell:hover{ transform: none; } }";
+    document.head.appendChild(hcss);
+  }
   if(!document.getElementById('hub-steps-css')){
     var scss=document.createElement('style'); scss.id='hub-steps-css';
     scss.textContent=".hub-steps{list-style:none; margin:14px auto 0; padding:0; display:flex; flex-wrap:wrap; justify-content:center; gap:6px 14px; max-width:760px;}"+
