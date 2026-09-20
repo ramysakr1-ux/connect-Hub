@@ -85,7 +85,7 @@
   textarea.resub{ background:oklch(96% 0.04 70); border-color:oklch(82% 0.09 75); }
   textarea.resub:focus{ border-color:oklch(60% 0.12 70); }
 </style>
-<link rel="stylesheet" href="hub-theme.css?v=202609210022">
+<link rel="stylesheet" href="hub-theme.css?v=202609210027">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -93,10 +93,10 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202609210022"></script>
-<script src="hub-shared.js?v=202609210022"></script>
-<script src="hub-store.js?v=202609210022"></script>
-<script src="hub-sync.js?v=202609210022"></script>
+<script src="assignment-defaults.js?v=202609210027"></script>
+<script src="hub-shared.js?v=202609210027"></script>
+<script src="hub-store.js?v=202609210027"></script>
+<script src="hub-sync.js?v=202609210027"></script>
 <script type="text/x-hub-app">
 const WORDING_KEY = 'connect_assignment_wording_v2';
 const SUB_KEY = 'connect_assignment_submissions_v1';
@@ -121,6 +121,11 @@ if (!SUBS) SUBS = {};
 
 const params = new URLSearchParams(location.search);
 let CURRENT = params.get('a') || 'lrt';
+/* A link to an assignment the centre has since held back would otherwise open
+   it anyway; fall back to the first one this trainee can actually see. */
+if (WORDING && CURRENT !== 'a5' && !hubReleased(WORDING, CURRENT) && !SUBS[CURRENT]) {
+  CURRENT = ORDER.filter(k => WORDING[k] && k !== 'a5' && (hubReleased(WORDING, k) || SUBS[k]))[0] || CURRENT;
+}
 
 let PICKED = {};   // { sectionIdx: { A:[], B:[] } }
 let TEXT = {};      // { sectionIdx: string }
@@ -143,7 +148,9 @@ function sectionLocked(a, sub, i){
 }
 
 function renderPicker(){
-  $('picker').innerHTML = ORDER.filter(k => WORDING && WORDING[k] && (k !== 'a5' || a5InPlay(SUBS))).map(k =>
+  /* Held-back assignments are not listed -- but one a trainee has already
+     started or submitted always is, so held back can never take their work away. */
+  $('picker').innerHTML = ORDER.filter(k => WORDING && WORDING[k] && (k === 'a5' ? a5InPlay(SUBS) : (hubReleased(WORDING, k) || !!SUBS[k]))).map(k =>
     `<button class="${k===CURRENT?'active':''}" data-a="${k}">${NAMES[k]}</button>`).join('');
 }
 $('picker').addEventListener('click', e => {

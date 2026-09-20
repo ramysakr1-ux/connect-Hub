@@ -128,6 +128,14 @@ window.a5InPlay = function(subs){
   return !!(s && (s.assigned || (s.stage && s.stage !== 'draft')));
 };
 
+// Held back, or open to trainees? The flag lives on the wording, per assignment
+// (screen 8 sets it). ABSENT MEANS RELEASED -- every course that existed before
+// the toggle keeps all four open, and holding one back is a deliberate act.
+// Assignment 5 is not covered here: it has its own gate, a5InPlay.
+window.hubReleased = function(wording, key){
+  return !(wording && wording[key] && wording[key].released === false);
+};
+
 // The four assignments in the order this centre runs them. The order lives
 // in the wording as `_order` (screen 8 sets it; Ramy, 20 Sep 2026: "the
 // order also could change, maybe depending on the centre"). Anything missing

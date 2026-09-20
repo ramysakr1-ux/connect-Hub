@@ -92,7 +92,7 @@
   .order-arrows button{ font-family:inherit; font-size:0.7rem; line-height:1; padding:2px 5px; border:1px solid var(--sand-line); background:var(--paper); border-radius:4px; cursor:pointer; color:var(--grey); }
   .order-arrows button:disabled{ opacity:.35; cursor:default; }
 </style>
-<link rel="stylesheet" href="hub-theme.css?v=202609210022">
+<link rel="stylesheet" href="hub-theme.css?v=202609210027">
 </head>
 <body>
 <div class="board">
@@ -106,10 +106,10 @@
     <div class="editor" id="editor"></div>
   </div>
 </div>
-<script src="assignment-defaults.js?v=202609210022"></script>
-<script src="hub-shared.js?v=202609210022"></script>
-<script src="hub-store.js?v=202609210022"></script>
-<script src="hub-sync.js?v=202609210022"></script>
+<script src="assignment-defaults.js?v=202609210027"></script>
+<script src="hub-shared.js?v=202609210027"></script>
+<script src="hub-store.js?v=202609210027"></script>
+<script src="hub-sync.js?v=202609210027"></script>
 <script type="text/x-hub-app">
 const STORE_KEY = 'connect_assignment_wording_v2';
 
@@ -151,7 +151,8 @@ function renderList(){
     const has = !!DATA[key];
     const pos = core.indexOf(key);
     const arrows = key === 'a5' ? '' : `<span class="order-arrows"><button type="button" title="Earlier in the course" data-move="${key}" data-dir="-1" ${pos<=0?'disabled':''}>\u2191</button><button type="button" title="Later in the course" data-move="${key}" data-dir="1" ${pos>=core.length-1?'disabled':''}>\u2193</button></span>`;
-    return `<div class="list-row"><button class="${key===CURRENT?'active':''} ${has?'':'missing'}" data-a="${key}">${NAMES[key]}${has?'':' \u2014 not built yet'}</button>${arrows}</div>`;
+    const held = has && key !== 'a5' && !hubReleased(DATA, key);
+    return `<div class="list-row"><button class="${key===CURRENT?'active':''} ${has?'':'missing'}" data-a="${key}">${NAMES[key]}${has?'':' \u2014 not built yet'}${held?' \u2014 held back':''}</button>${arrows}</div>`;
   }).join('');
 }
 // The centre's order: move one of the four up or down; Assignment 5 stays last.
@@ -245,6 +246,14 @@ function metaHTML(a){
       <span class="metahint">Handbook range: 750–1,000.</span>
     </div>
     <div class="metarow">
+      <label>Trainees</label>
+      <select onchange="updateReleased(this.value)">
+        <option value="yes" ${hubReleased(DATA, CURRENT) ? 'selected' : ''}>Can open it now</option>
+        <option value="no" ${hubReleased(DATA, CURRENT) ? '' : 'selected'}>Held back for now</option>
+      </select>
+      <span class="metahint">Held back hides it from every trainee's assignment list. Anyone who has already submitted keeps theirs.</span>
+    </div>
+    <div class="metarow">
       <label>Format</label>
       <select onchange="updateMeta('format',this.value)">
         <option value="prose" ${a.format==='prose'?'selected':''}>Continuous prose</option>
@@ -271,6 +280,12 @@ function metaHTML(a){
   </div>`;
 }
 function updateMeta(key,v){ DATA[CURRENT][key] = (key==='wordMin'||key==='wordMax') ? (parseInt(v,10)||0) : v; renderProseBanner(); }
+/* A switch, not a text field: it takes effect at once, like the order arrows,
+   rather than waiting for Save. */
+function updateReleased(v){
+  DATA[CURRENT].released = (v === 'yes');
+  persist(); renderList(); renderEditor();
+}
 function updateCriterionText(ci,v){ DATA[CURRENT].criteria[ci].text=v; }
 function updateCriterionSection(ci,v){ DATA[CURRENT].criteria[ci].sectionIndex = v===''? null : parseInt(v,10); }
 function addCriterion(){ (DATA[CURRENT].criteria=DATA[CURRENT].criteria||[]).push({text:'New criterion', sectionIndex:null}); renderEditor(); }

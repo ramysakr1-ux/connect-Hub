@@ -215,9 +215,9 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-shared.js?v=202609210022"></script>
-<script src="hub-store.js?v=202609210022"></script>
-<script src="hub-sync.js?v=202609210022"></script>
+<script src="hub-shared.js?v=202609210027"></script>
+<script src="hub-store.js?v=202609210027"></script>
+<script src="hub-sync.js?v=202609210027"></script>
 <script type="text/x-hub-app">
 
 /* The trainee's home. The rooms below are permanent doors; the band at the top
@@ -251,7 +251,11 @@ status(document.getElementById('badgeFeedback'),
 const ASG = (function(){
   var subs = rec('connect_assignment_submissions_v1') || {};
   var wI = rec('connect_assignment_wording_v2');
-  var TYPES = hubAssignmentOrder(wI).filter(function(k){ return k !== 'a5' || a5InPlay(subs); });
+  /* counts only what the trainee can actually open, so "2 of 4" does not count
+     an assignment the centre is holding back */
+  var TYPES = hubAssignmentOrder(wI).filter(function(k){
+    return k === 'a5' ? a5InPlay(subs) : (hubReleased(wI, k) || !!subs[k]);
+  });
   var TOTAL = TYPES.length, needsResub = 0, sentBack = 0, closed = 0, touched = 0;
   TYPES.forEach(function(t){
     var s = subs[t]; if(!s) return;
@@ -260,11 +264,11 @@ const ASG = (function(){
     else if(s.stage === 'returned_unmarked') sentBack++;
     else if(s.stage === 'closed') closed++;
   });
-  if(needsResub > 0) return {text: needsResub + (needsResub===1?' assignment needs resubmission':' assignments need resubmission'), tone:'stuck'};
-  if(sentBack > 0) return {text: sentBack + (sentBack===1?' assignment returned unmarked — submit it again':' assignments returned unmarked — submit them again'), tone:'stuck'};
-  if(TOTAL && closed === TOTAL) return {text:'All ' + TOTAL + ' complete', tone:''};
-  if(touched === 0) return {text:'Not started', tone:''};
-  return {text: closed + ' of ' + TOTAL + ' complete', tone:''};
+  if(needsResub > 0) return {text: needsResub + (needsResub===1?' assignment needs resubmission':' assignments need resubmission'), tone:'stuck', total:TOTAL};
+  if(sentBack > 0) return {text: sentBack + (sentBack===1?' assignment returned unmarked — submit it again':' assignments returned unmarked — submit them again'), tone:'stuck', total:TOTAL};
+  if(TOTAL && closed === TOTAL) return {text:'All ' + TOTAL + ' complete', tone:'', total:TOTAL};
+  if(touched === 0) return {text:'Not started', tone:'', total:TOTAL};
+  return {text: closed + ' of ' + TOTAL + ' complete', tone:'', total:TOTAL};
 })();
 status(document.getElementById('badgeAssignments'), ASG.text, ASG.tone);
 
@@ -301,7 +305,15 @@ function asgNow(){
   const idle = ASG.tone === '' && ASG.text !== 'Not started' && ASG.text.indexOf('All ') !== 0;
   if (ASG.tone === 'stuck') return {k:'Written assignments', l:ASG.text, why:'Open the assignment, read the tutor’s comments and submit it again.', href:'9_assignment_submission.html', tone:'stuck'};
   if (ASG.text.indexOf('All ') === 0) return {k:'Written assignments', l:ASG.text, why:'Nothing outstanding.', href:'9_assignment_submission.html', tone:'idle'};
-  if (ASG.text === 'Not started') return {k:'Written assignments', l:'Not started', why:'Four assignments run alongside your teaching practice, in your centre’s order.', href:'9_assignment_submission.html', tone:''};
+  if (ASG.text === 'Not started'){
+    /* the real number, since the centre may be holding some back */
+    const WORDS = {0:'No', 1:'One', 2:'Two', 3:'Three', 4:'Four', 5:'Five'};
+    const n = WORDS[ASG.total] || ASG.total;
+    const why = ASG.total === 1
+      ? 'One assignment is open alongside your teaching practice.'
+      : n + ' assignments run alongside your teaching practice, in your centre’s order.';
+    return {k:'Written assignments', l:'Not started', why:why, href:'9_assignment_submission.html', tone:''};
+  }
   return {k:'Written assignments', l:ASG.text, why:idle ? 'Carry on in your centre’s order.' : '', href:'9_assignment_submission.html', tone:''};
 }
 (function(){
