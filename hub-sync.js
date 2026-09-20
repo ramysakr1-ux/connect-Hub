@@ -40,22 +40,39 @@
   }
 
   // ---- write-through --------------------------------------------------------
+  // Writes are queued for 600 ms and sent together. A page that writes and
+  // then navigates in the same breath ('Start next TP' clears three keys and
+  // goes home) would lose them, so on pagehide whatever is still queued goes
+  // out as beacons, which the browser delivers after the page is gone.
   var queue = {}, timer = null;
-  function schedule(key, fn){ queue[key] = fn; clearTimeout(timer); timer = setTimeout(flush, 600); status('Saving…', 'busy'); }
+  function payloadFor(job){ var pl = Object.assign({}, job); if (key()) pl.key = key(); return pl; }
+  function key(){ return S.key(); }
+  function schedule(id, job){ queue[id] = job; clearTimeout(timer); timer = setTimeout(flush, 600); status('Saving…', 'busy'); }
   function flush(){
-    var jobs = queue; queue = {};
-    var ps = Object.keys(jobs).map(function(k){ return jobs[k](); });
+    var jobs = queue; queue = {}; clearTimeout(timer); timer = null;
+    var ps = Object.keys(jobs).map(function(k){ return S.call(jobs[k]); });
+    if (!ps.length) return;
     Promise.all(ps).then(function(){ status('Saved to the course', 'ok'); }).catch(function(err){ status('Not saved — ' + (err && err.message || err), 'error'); });
   }
+  function flushBeacon(){
+    var jobs = queue; queue = {}; clearTimeout(timer); timer = null;
+    Object.keys(jobs).forEach(function(k){
+      var body = JSON.stringify(payloadFor(jobs[k]));
+      var sent = false;
+      try { sent = navigator.sendBeacon(S.url, new Blob([body], { type: 'text/plain' })); } catch (e) {}
+      if (!sent) { try { fetch(S.url, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: body, keepalive: true }); } catch (e) {} }
+    });
+  }
+  window.addEventListener('pagehide', flushBeacon);
   function recordOf(tr){ return { plan: (tr.tp && tr.tp.plan) || null, selfeval: (tr.tp && tr.tp.selfeval) || null, feedback: (tr.tp && tr.tp.feedback) || null, tpHistory: (tr.tp && tr.tp.history) || {}, assignments: tr.assignments || {}, tracker: tr.tracker || {} }; }
   function route(key, value){
     var data = value == null ? null : parse(value);
     if (mode === 'trainee' && TRAINEE_KEYS[key]) {
       var kind = TRAINEE_KEYS[key];
       if (TUTOR_ONLY[kind] && !(kind === 'feedback' && data === null)) return; // the tutor's records: read here, never written
-      schedule('t:' + kind, function(){ return S.put(kind, data); });
+      schedule('t:' + kind, { op: 'put', token: S.token(), kind: kind, data: data });
     }
-    if (mode === 'tutor' && COURSE_KEYS[key]) schedule('c:' + COURSE_KEYS[key], (function(kind){ return function(){ return S.putCourse(kind, data); }; })(COURSE_KEYS[key]));
+    if (mode === 'tutor' && COURSE_KEYS[key]) schedule('c:' + COURSE_KEYS[key], { op: 'putCourse', kind: COURSE_KEYS[key], data: data });
     if (mode === 'tutor' && key === 'connect_roster_v1' && data && data.trainees) {
       Object.keys(data.trainees).forEach(function(token){
         var rec = recordOf(data.trainees[token]);
@@ -64,7 +81,7 @@
           var json = JSON.stringify(rec[kind]);
           if (snapshot[token][kind] === json) return;
           snapshot[token][kind] = json;
-          schedule('r:' + token + ':' + kind, (function(tok, kd, val){ return function(){ return S.put(kd, val, tok); }; })(token, kind, rec[kind]));
+          schedule('r:' + token + ':' + kind, { op: 'put', token: token, kind: kind, data: rec[kind] });
         });
       });
     }
