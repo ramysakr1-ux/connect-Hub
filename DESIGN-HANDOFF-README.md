@@ -115,3 +115,10 @@ Every screen title, the wordmark tag and every visible mention now say **Connect
 
 ## The mark (Ramy, 20 Sep 2026: "we just want our old logo back")
 A "Connect Lite identity" handoff (two Cs standing apart, a bare mark in the header, Instrument Sans "Lite") was built and then REJECTED by Ramy the same hour and reverted (4b32980): the mark is the Connect mark as it always was -- the interlocked Cs in the dark tile, gold-lifted and paper arcs, the slow spin on the home page -- with "Connect" in gold italic and "Lite" as the small teal tracked tag. The handoff was removed from `specs/`; do not rebuild it. What survived from that hour: no eyebrow under the lockup and none on screens 1 and 3 ("it's not just about teaching practice any more"), the home intro naming both loops, and a favicon set in `brand/` (favicon.svg, favicon.ico 16+32, apple-touch-icon.png 180) drawn from the old mark and linked on every page.
+
+## Pages open at once (Ramy, 20 Sep 2026: "fix the lag issue")
+Apps Script answers even a bare ping in 1.5-13 s (measured), so waiting for the boot on every page load was the lag. `hub-sync.js` now boots cache-first: once a link has booted in a browser (`hub:booted` = mode + credential), the page runs immediately from the localStorage keys it already holds (~250 ms), the boot runs behind it ("Checking the course…"), and if the course has moved on and nothing was written on this page meanwhile the page reloads itself, instantly, from the fresh copy ("The course has moved on — refreshing"). A write made before the boot answers wins: the boot then refreshes only the untouched keys and leaves the page alone. The roster is compared record by record (a page rewrites it in its own shape). First load on a new link still waits, since there is nothing to show yet. Measured: first load 3.0 s, cached 0.24 s, a roster change detected and refreshed within the boot's own time.
+
+## The lockup, settled (Ramy's PDF, 20 Sep 2026)
+Tile 40px with the Connect mark, "Connect" 27px gold italic, "LITE" in Instrument Sans 500 at 10px, 0.24em tracking, ink, no box. Same on the home, tutor dashboard, course admin and assessor pack.
+
