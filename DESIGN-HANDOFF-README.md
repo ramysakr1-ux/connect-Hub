@@ -223,3 +223,12 @@ Lite was born as a one-browser tool: no link, work kept in that browser, and eve
 **Verified:** all thirteen screens gate with no console errors, and the linked path in `hub-sync.js` is untouched — the diff there is only the removal of the `solo` branches. **Not verified:** the linked path itself, tutor/trainee/assessor, which needs a key this session does not hold.
 
 **One thing left needing a decision.** Screen 2's "Bring in last TP's action points" reads a `.celta` file *your tutor returned* — a file nothing produces any more. Its data does exist locally, in `chub:tpHistory`, so the button could read the last returned TP directly instead. I have not touched it, because starred action points are one of the three known open bugs and this is a mechanism change rather than a removal.
+
+## "Bring in last TP's action points" reads the record, not a file (Ramy, 21 Sep 2026)
+The loose end from removing solo mode. The button asked for a `.celta` file the tutor had exported, read `feedback.next` out of it, and filled the action-point rows. Nothing produces that file any more.
+
+It now reads this browser's own record of the course. `chub:tpHistory` holds every returned TP by number, so the button takes the highest one, pulls the tutor's two action-point lists (`state.lists.lAP` for planning and `lAT` for teaching), keeps the ones the tutor **starred**, and turns each from stored HTML into the line of text that belongs in a box — `<br>` becomes a space, tags and entities resolve, blank ones are dropped. Same clearing of empty rows, same wording afterwards, except it can now name the TP it came from ("3 action points brought in from TP3") because it knows.
+
+Two states it could not say before, and now can: nothing has come back yet, and the tutor starred nothing on that TP. Both are messages rather than silence. The file input is gone, so no Lite screen takes a file except the centre's wording authoring and the plan's materials.
+
+Verified against records shaped exactly as screen 3 writes them: picks the highest returned TP of three, takes only the starred points across both lists, strips a tutor's bold and italic and an `&mdash;`, drops a whitespace-only starred point, and returns nothing for an empty history, a missing key, and a TP with nothing starred. **Not verified end to end** — the button itself needs a trainee link this session does not hold.

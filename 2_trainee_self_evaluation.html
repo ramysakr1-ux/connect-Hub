@@ -198,7 +198,6 @@
     then say what you actually did about each one in this lesson.</p>
     <div id="apList"></div>
     <button class="btn btn-teal" id="prevBtn">Bring in last TP's action points</button>
-    <input type="file" id="prevFile" accept=".json,.celta" style="display:none">
     <button class="btn btn-sand" id="addAP">+ Add another</button>
   </div>
 
@@ -217,9 +216,9 @@
   <span class="status" id="status"></span>
 </div>
 
-<script src="hub-shared.js?v=202609210044"></script>
-<script src="hub-store.js?v=202609210044"></script>
-<script src="hub-sync.js?v=202609210044"></script>
+<script src="hub-shared.js?v=202609210046"></script>
+<script src="hub-store.js?v=202609210046"></script>
+<script src="hub-sync.js?v=202609210046"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -286,30 +285,47 @@ function renumber(){
 for(let i=0;i<2;i++) addAP('','');
 $('addAP').addEventListener('click',()=>{ addAP('',''); dirty=true; });
 
-/* The action points come out of the file your tutor returned, so nothing is retyped and
-   nothing is mistranscribed. Empty rows are cleared out first. */
-$('prevBtn').addEventListener('click',()=>$('prevFile').click());
-$('prevFile').addEventListener('change',e=>{
-  const f=e.target.files[0]; if(!f) return;
-  const rd=new FileReader();
-  rd.onload=()=>{
-    try{
-      const d=JSON.parse(rd.result);
-      if(d.kind!=='celta-tp') throw new Error('wrong file');
-      const pts=(d.feedback&&d.feedback.next)||[];
-      if(!pts.length){ setStatus('That file has no starred action points in it — check it is the one your tutor returned.'); return; }
-      [...$('apList').children].forEach(r=>{
-        if(!r.querySelector('.ap-prev').value.trim() && !r.querySelector('.ap-did').value.trim()) r.remove();
-      });
-      pts.forEach(x=>addAP(x,''));
-      renumber();
-      document.querySelectorAll('#apList textarea').forEach(autoGrow);
-      setStatus(pts.length+' action point'+(pts.length>1?'s':'')+' brought in from '+
-                ((d.meta&&d.meta.tp)||'last TP')+'. Say what you did about each.');
-      dirty=true;
-    }catch(err){ setStatus('That file could not be read.'); }
-  };
-  rd.readAsText(f); e.target.value='';
+/* The action points come from the last TP your tutor returned -- read straight out
+   of this browser's own record of it, so nothing is retyped and nothing is
+   mistranscribed. It used to ask for a file the tutor exported; the store returns
+   the TP itself now, so there is no file (Ramy, 21 Sep 2026). Empty rows are
+   cleared out first. */
+function lastReturnedTP(){
+  let hist = {};
+  try { hist = JSON.parse(localStorage.getItem('chub:tpHistory')) || {}; } catch(e) {}
+  const ns = Object.keys(hist).map(Number).filter(n => n >= 1 && n <= 8 && hist[n]).sort((a,b) => a-b);
+  if (!ns.length) return null;
+  const n = ns[ns.length-1];
+  return { n: n, rec: hist[n] };
+}
+/* The tutor's points are stored as HTML on the record; a point is one line, so the
+   text of it is what belongs in the box. */
+function pointText(html){
+  const d = document.createElement('div');
+  d.innerHTML = String(html || '').replace(/<br\s*\/?>/gi, ' ');
+  return (d.textContent || '').replace(/\s+/g, ' ').trim();
+}
+function starredFrom(rec){
+  const lists = (rec && rec.state && rec.state.lists) || {};
+  return ['lAP','lAT']
+    .reduce((all, id) => all.concat(lists[id] || []), [])
+    .filter(p => p && p.star)
+    .map(p => pointText(p.html))
+    .filter(Boolean);
+}
+$('prevBtn').addEventListener('click',()=>{
+  const last = lastReturnedTP();
+  if (!last){ setStatus('No teaching practice has come back yet, so there are no action points to bring in.'); return; }
+  const pts = starredFrom(last.rec);
+  if (!pts.length){ setStatus('Your tutor starred no action points on TP' + last.n + ', so there is nothing to carry forward.'); return; }
+  [...$('apList').children].forEach(r=>{
+    if(!r.querySelector('.ap-prev').value.trim() && !r.querySelector('.ap-did').value.trim()) r.remove();
+  });
+  pts.forEach(x=>addAP(x,''));
+  renumber();
+  document.querySelectorAll('#apList textarea').forEach(autoGrow);
+  setStatus(pts.length+' action point'+(pts.length>1?'s':'')+' brought in from TP'+last.n+'. Say what you did about each.');
+  dirty=true;
 });
 
 /* ---------------- load the plan file ---------------- */
