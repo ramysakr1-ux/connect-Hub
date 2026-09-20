@@ -77,6 +77,19 @@
   .btn.primary{border-color:var(--teal); background:var(--teal); color:var(--paper); font-weight:700; padding:0 15px;}
   .btn.primary:hover{opacity:0.88; color:var(--paper);}
 
+  /* ---- setting up (day one only) --------------------------------------- */
+  .setup{display:flex; flex-direction:column; gap:15px; max-width:600px;}
+  .setup h2{margin:0; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.3rem;}
+  .setup .lede{margin:0 0 4px; font-size:0.9rem; color:var(--grey); line-height:1.6; text-wrap:pretty;}
+  .sstep{display:flex; gap:12px; align-items:flex-start;}
+  .sdot{width:19px; height:19px; border-radius:50%; flex-shrink:0; margin-top:2px;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700; background:var(--sand-line); color:var(--paper);}
+  .sstep.done .sdot{background:var(--teal);}
+  .sstep b{font-size:0.92rem; font-weight:600;}
+  .sstep p{margin:3px 0 0; font-size:0.85rem; color:var(--grey); line-height:1.55; text-wrap:pretty;}
+  .setup-go{align-self:flex-start; margin-top:5px;}
+
   /* ---- queue ----------------------------------------------------------- */
   .queue{display:flex; gap:10px; margin-top:24px; flex-wrap:wrap;}
   .qcard{flex:1 1 200px; min-width:0; text-align:left; font-family:'Karla',sans-serif;
@@ -175,10 +188,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609210122"></script>
-<script src="hub-store.js?v=202609210122"></script>
-<script src="hub-sync.js?v=202609210122"></script>
-<script src="hub-tracker.js?v=202609210122"></script>
+<script src="hub-shared.js?v=202609210130"></script>
+<script src="hub-store.js?v=202609210130"></script>
+<script src="hub-sync.js?v=202609210130"></script>
+<script src="hub-tracker.js?v=202609210130"></script>
 <script type="text/x-hub-app">
 /* ---------------------------------------------------------------------------
    Tutor dashboard. Three tabs over the same roster; a queue strip above them
@@ -337,7 +350,55 @@ function paintRows(){
     }).join('');
 }
 
-function paint(){ paintQueue(); paintTabsCounts(); paintRows(); }
+/* Day one, a centre opening its tutor link for the first time met three empty
+   tabs and a queue of zeroes: a work queue for work that cannot exist yet
+   (Ramy, 21 Sep 2026 -- "this page is supposed to be where the centre creates
+   the course and it just doesn't look like one"). Until the course has a name
+   and at least one trainee, this screen is the setting-up screen instead. The
+   queue and the tabs come back by themselves once both are true, and then they
+   never go away again: one home, which changes shape once. Course admin still
+   owns the doing; this only says what is left to do. */
+function setupState(){
+  let cs = null;
+  try { cs = JSON.parse(localStorage.getItem('connect_course_settings')); } catch (e) {}
+  const named = !!(cs && cs.courseName);
+  const dated = !!(cs && cs.start && cs.end);
+  const trainees = people().length;
+  return { named, dated, trainees, ready: named && trainees > 0 };
+}
+function paintSetup(s){
+  document.getElementById('queue').style.display = 'none';
+  document.getElementById('tabs').style.display = 'none';
+  /* "Course name not set yet" as a headline, above a panel that says to set
+     the course up, states the same thing twice and wastes the biggest line on
+     the page. Named courses keep their own name here (settings paint first). */
+  if (!s.named){
+    document.getElementById('courseName').textContent = 'Your new course';
+    document.getElementById('courseMeta').textContent = 'Nothing set up on it yet.';
+  }
+  const step = (done, title, note) =>
+    `<div class="sstep${done ? ' done' : ''}"><span class="sdot">${done ? '\u2713' : ''}</span>` +
+    `<div><b>${title}</b><p>${note}</p></div></div>`;
+  document.getElementById('rows').innerHTML =
+    '<div class="setup"><h2>Set your course up</h2>' +
+    '<p class="lede">Two things on the Course admin page, and this screen becomes your working list: the teaching practices waiting for your feedback, and the assignments waiting to be marked.</p>' +
+    step(s.named && s.dated, 'Name the course and set its dates',
+         'The centre, the course, and when it runs. The dates also decide when the assessor\u2019s link stops working.') +
+    step(s.trainees > 0, 'Add your trainees',
+         s.trainees > 0
+           ? esc(s.trainees + (s.trainees === 1 ? ' trainee' : ' trainees') + ' on the course. Each one has a personal link to be sent to them.')
+           : 'Each one gets a personal link. Paste the whole list in one go if you have it.') +
+    step(false, 'Check the assignment wording',
+         'Optional. The four assignments are ready to use as they are; change the wording or the order if your centre runs them differently.') +
+    '<a class="btn primary setup-go" href="6_centre_admin_dashboard.html">Open Course admin</a></div>';
+}
+function paint(){
+  const s = setupState();
+  if (!s.ready) { paintSetup(s); return; }
+  document.getElementById('queue').style.display = '';
+  document.getElementById('tabs').style.display = '';
+  paintQueue(); paintTabsCounts(); paintRows();
+}
 
 document.getElementById('tabs').addEventListener('click', e=>{
   const b=e.target.closest('.tab'); if(!b) return;
