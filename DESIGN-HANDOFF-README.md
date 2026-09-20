@@ -134,3 +134,6 @@ Entered through the real link (`?ak=`), which cleared the tutor key from the bro
 ## Scope, settled 20 Sep 2026
 Connect Lite has three roles: trainee, tutor, assessor. There is no volunteer (TP student) role and none is planned (Ramy: "leave it out"); volunteers, their RSVPs, hours and certificates belong to Connect.
 
+## Course admin walk in store mode, 20 Sep 2026 (after the day's changes)
+Course admin is screen 6 behind the tutor key; walked the setup path in order: Settings (centre name, number, course name, dates, logo → the store; the logo then shows in the page headers of screens 1-4 and inside the assembled documents' letterhead), Roster and links (add a trainee, their link; Remove keeps the records and the link answers "This link is not on the course"; Rotate the course key and Rotate the assessor link from their buttons, with the new links shown at once and the expiry line following the course end date), Tutors (the note), Assignments (each row now opens the wording editor on that assignment, `8_assignment_wording.html?a=<key>`), Double-marking (empty state and rows). Fixed on the way: the five Assignments rows all opened the editor on LRT.
+
