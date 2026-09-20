@@ -54,6 +54,13 @@
   .title p{margin:7px 0 0; font-size:0.9rem; color:var(--grey);}
 
   /* ---- setup tick row -------------------------------------------------- */
+  /* Save said "Saved." up on the logo's own status line, a field and a half
+     above the button that had just been pressed -- and wiped "Logo ready --
+     click Save to keep it." to do it, so saving the whole form read as though
+     only the logo had been kept. The answer belongs beside the button. */
+  .saverow{display:flex; align-items:center; gap:12px; margin-top:26px; flex-wrap:wrap;}
+  .saverow span{font-size:0.82rem; color:var(--teal);}
+
   .setup{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:20px;}
   .setup button{display:flex; align-items:center; gap:7px; background:none; border:none;
     padding:5px 11px 5px 5px; border-radius:20px; cursor:pointer; font-family:'Karla',sans-serif;
@@ -243,7 +250,7 @@
       </div>
     </div>
     <p class="note">The end date sets when the assessor link expires — fourteen days after it.</p>
-    <div style="margin-top:26px;"><button class="btn primary" id="saveSettings">Save</button></div>
+    <div class="saverow"><button class="btn primary" id="saveSettings">Save</button><span id="settingsStatus" aria-live="polite"></span></div>
   </div>
 
   <!-- ================= Roster and links ================= -->
@@ -255,7 +262,12 @@
   <!-- ================= Tutors ================= -->
   <div class="panel" id="panel-tutors" style="display:none;">
     <h2>Tutors</h2>
-    <p class="lede" id="tutorsNote" style="max-width:560px;font-size:0.9rem;line-height:1.65;">Same as trainees — no login, so no personal invite links. Share the <a href="5_tutor_dashboard.html">tutor dashboard</a> URL with your tutors directly; each imports trainee files into their own browser.</p>
+    <!-- Replaced on load by the real note (tutorsNote, below). This fallback is
+         only ever seen with scripting off, so it says the same thing rather
+         than the solo-mode line it used to carry, which described a file
+         exchange that no longer exists and linked a keyless dashboard URL
+         that now gates the reader out. -->
+    <p class="lede" id="tutorsNote" style="max-width:560px;font-size:0.9rem;line-height:1.65;">Give your tutors the tutor link from the Roster and links tab. Everyone who opens it works on the same course: the same trainees, the same records.</p>
   </div>
 
   <!-- ================= Assignments ================= -->
@@ -284,10 +296,10 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609210157"></script>
-<script src="hub-store.js?v=202609210157"></script>
-<script src="hub-shared.js?v=202609210157"></script>
-<script src="hub-sync.js?v=202609210157"></script>
+<script src="assignment-defaults.js?v=202609210201"></script>
+<script src="hub-store.js?v=202609210201"></script>
+<script src="hub-shared.js?v=202609210201"></script>
+<script src="hub-sync.js?v=202609210201"></script>
 <script type="text/x-hub-app">
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -336,7 +348,12 @@ function renderSetup(){
   const roster = loadRoster();
   const done = {
     settings: !!(cs && cs.courseName && cs.start && cs.end),
-    roster: Object.keys(roster.trainees||{}).length > 0 || !!(window.HubStore && window.HubStore.isTutor()),
+    /* isTutor() is only "this browser holds a tutor key", which is true of
+       everyone who can open Course admin at all -- so this step ticked itself
+       on a course with nobody on it, while the tutor dashboard next door was
+       still asking for the trainees to be added. The roster is the only thing
+       that knows. */
+    roster: Object.keys(roster.trainees||{}).length > 0,
     assignments: !!w,
     tutors: !!(window.HubStore && window.HubStore.isTutor())
   };
@@ -377,7 +394,8 @@ document.getElementById('saveSettings').addEventListener('click', () => {
     courseName: document.getElementById('courseName').value,
     logo: courseLogo
   }));
-  document.getElementById('logoStatus').textContent = 'Saved.';
+  const cn = document.getElementById('courseName').value.trim();
+  document.getElementById('settingsStatus').textContent = cn ? 'Saved \u2014 ' + cn + '.' : 'Saved.';
   renderTitle(); renderSetup();
 });
 
