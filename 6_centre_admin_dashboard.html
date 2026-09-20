@@ -154,7 +154,6 @@
   /* ---- tables as grids --------------------------------------------------- */
   .grid{display:grid; gap:16px; align-items:center;}
   .grid.roster{grid-template-columns:1.6fr 0.6fr 1.4fr auto;}
-  .grid.dm{grid-template-columns:1.4fr 0.7fr 1.3fr 1fr 1fr;}
   .ghead{padding:0 4px 9px; border-bottom:1px solid var(--sand-line); font-size:0.72rem; font-weight:700;
     letter-spacing:0.05em; text-transform:uppercase; color:var(--grey);}
   .grow{padding:13px 4px; border-bottom:1px solid var(--sand-line); font-size:0.9rem;}
@@ -172,22 +171,11 @@
   .arow .title2{font-size:0.92rem; margin-top:2px;}
   .arow .aside{font-size:0.78rem; color:var(--grey); margin-top:2px;}
 
-  /* ---- double-marking quota ------------------------------------------------ */
-  .quota{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:30px;}
-  .qcard{border:1px solid var(--sand-line); border-radius:9px; padding:13px 15px; background:var(--card);}
-  .qcard.short{border-color:var(--amber-edge);}
-  .qcard .code{font-size:0.74rem; font-weight:700; letter-spacing:0.06em; color:var(--grey);}
-  .qcard .n{font-size:1.3rem; font-family:'Newsreader',Georgia,serif; font-weight:600; margin-top:4px;}
-  .qcard.short .n{color:var(--amber);}
-  .qcard.idle .n{color:var(--grey);}
-  .qcard .note2{font-size:0.78rem; color:var(--grey); margin-top:1px;}
 
   @media (max-width:780px){
     .fields{grid-template-columns:1fr;}
     .grid.roster{grid-template-columns:1fr auto;}
     .grid.roster > .col-group, .grid.roster > .col-status{display:none;}
-    .grid.dm{grid-template-columns:1.4fr 0.7fr 1.3fr;}
-    .grid.dm > .col-first, .grid.dm > .col-second{display:none;}
   }
 </style>
 </head>
@@ -229,7 +217,6 @@
     <button class="tab" data-tab="roster">Roster and links</button>
     <button class="tab" data-tab="tutors">Tutors</button>
     <button class="tab" data-tab="assignments">Assignments</button>
-    <button class="tab" data-tab="doublemark">Double-marking</button>
   </div>
 
   <!-- ================= Settings ================= -->
@@ -301,22 +288,20 @@
   </div>
 
   <!-- ================= Double-marking ================= -->
-  <div class="panel" id="panel-doublemark" style="display:none;">
-    <h2>Double-marking record</h2>
-    <p class="lede" id="dmRule">Handbook 9.2.3: at least two tutors must mark across the course, and a set proportion of each assignment must be double-marked — three of each up to nine candidates, four up to sixteen, five up to twenty-four.</p>
-    <div class="quota" id="dmQuota"></div>
-    <div class="grid dm ghead">
-      <div>Trainee</div><div>Task</div><div>Status</div><div class="col-first">First marker</div><div class="col-second">Second marker</div>
-    </div>
-    <div id="dmBody"></div>
-  </div>
+  <!-- The Double-marking tab lived here until 21 Sep 2026. Ramy: "does double
+       marking really need its own tab? Can it just be part of the candidate
+       tracking?" It can, and most of it already was: the tracker badges DM with
+       the second marker's initials in every cell, names both markers under a
+       candidate and filters on Double marked. Only the Handbook 9.2.3 sample
+       was this tab's own, and it moved to the tracker with the rest. Course
+       admin is setup again. -->
 
 </div>
 
-<script src="assignment-defaults.js?v=202609210212"></script>
-<script src="hub-store.js?v=202609210212"></script>
-<script src="hub-shared.js?v=202609210212"></script>
-<script src="hub-sync.js?v=202609210212"></script>
+<script src="assignment-defaults.js?v=202609210215"></script>
+<script src="hub-store.js?v=202609210215"></script>
+<script src="hub-shared.js?v=202609210215"></script>
+<script src="hub-sync.js?v=202609210215"></script>
 <script type="text/x-hub-app">
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -325,7 +310,6 @@ function showTab(key){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===key));
   document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
   document.getElementById('panel-'+key).style.display='';
-  if (key === 'doublemark') renderDoubleMarking();
 }
 document.getElementById('tabs').addEventListener('click', e=>{
   const btn = e.target.closest('.tab'); if(!btn) return; showTab(btn.dataset.tab);
@@ -417,59 +401,6 @@ document.getElementById('saveSettings').addEventListener('click', () => {
 
 const ROSTER_KEY='connect_roster_v1';
 function loadRoster(){ try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
-
-/* ---- double-marking -------------------------------------------------------- */
-/* The required sample follows the cohort, per Handbook 9.2.3: 3 of each up to
-   nine candidates, 4 up to sixteen, 5 up to twenty-four. It is derived here, not
-   hard-coded — a wrong denominator on a compliance screen is worse than none. */
-function requiredSample(cohort){ return cohort <= 9 ? 3 : cohort <= 16 ? 4 : 5; }
-
-function renderDoubleMarking(){
-  let WORDING=null;
-  try{ WORDING=JSON.parse(localStorage.getItem('connect_assignment_wording_v2')); }catch(e){}
-  if(!WORDING && window.CONNECT_HUB_DEFAULT_WORDING) WORDING = window.CONNECT_HUB_DEFAULT_WORDING;
-  const ORDER=hubAssignmentOrder(WORDING); const NAMES={lrt:'LRT',lsrt:'LSRT',fol:'FOL',lfc:'LFC',a5:'Assignment 5'};
-  const roster = loadRoster();
-  const trainees = Object.values(roster.trainees||{});
-  const cohort = trainees.length;
-  const required = requiredSample(cohort);
-
-  const counted = {}, started = {};
-  let rows = [];
-  trainees.forEach(tr=>{
-    const subs = tr.assignments || {};
-    ORDER.filter(k=>WORDING&&WORDING[k]).forEach(k=>{
-      if (k === 'a5') return; // a centre sanction, never in the double-marking sample
-      const sub = subs[k]; if (!sub || sub.stage==='draft') return;
-      const m = sub.markers || {first:'',second:'',doubleMarked:false};
-      started[k] = true;
-      if (m.doubleMarked && m.second) counted[k] = (counted[k]||0) + 1;
-      const statusLabel = ({submitted:'Awaiting marking',returned_unmarked:'Returned unmarked',resubmission_needed:'Resubmission needed',resubmitted:'Resubmission awaiting marking',closed:'Closed'})[sub.stage]||sub.stage;
-      const tone = sub.stage==='resubmission_needed' ? 'brick' : (sub.stage==='submitted'||sub.stage==='resubmitted') ? 'amber' : 'muted';
-      rows.push(`<div class="grid dm grow">
-        <div class="name">${esc(tr.name)}</div>
-        <div class="muted">${NAMES[k]}</div>
-        <div class="${tone}">${esc(statusLabel)}</div>
-        <div class="col-first">${esc(m.first)||'<span class="muted">—</span>'}</div>
-        <div class="col-second">${m.second ? esc(m.second) : '<span class="muted">—</span>'}</div>
-      </div>`);
-    });
-  });
-
-  document.getElementById('dmRule').textContent =
-    'Handbook 9.2.3: at least two tutors must mark across the course, and a set proportion of each assignment must be double-marked — three of each up to nine candidates, four up to sixteen, five up to twenty-four.'
-    + (cohort ? ' With ' + cohort + ' candidate' + (cohort===1?'':'s') + ' on this course the sample is ' + required + ' of each.' : '');
-
-  const quotaKeys = ORDER.filter(k=>k!=='a5' && WORDING && WORDING[k]);
-  document.getElementById('dmQuota').innerHTML = quotaKeys.map(k=>{
-    const n = counted[k]||0, met = n >= required, begun = !!started[k];
-    const cls = met ? '' : begun ? 'short' : 'idle';
-    const note = met ? 'sample met' : begun ? 'short of the sample' : 'not marked yet';
-    return `<div class="qcard ${cls}"><div class="code">${NAMES[k]}</div><div class="n">${n} of ${required}</div><div class="note2">${note}</div></div>`;
-  }).join('');
-
-  document.getElementById('dmBody').innerHTML = rows.length ? rows.join('') : '<div class="empty">No assignments submitted yet.</div>';
-}
 
 /* ---- Roster and links, from the store -------------------------------------- */
 /* A trainee is added here and gets a link with their own token in it; that link
