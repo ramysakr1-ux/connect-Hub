@@ -46,20 +46,38 @@
   // goes home) would lose them, so on pagehide whatever is still queued goes
   // out as beacons, which the browser delivers after the page is gone.
   var queue = {}, timer = null;
+  // Unconfirmed writes are kept in the browser until the store has answered,
+  // so a write handed to the beacon as a page closed is re-sent by the next
+  // page, and a boot never overwrites a record this browser has changed but
+  // the store has not confirmed yet (the cache-first race, 20 Sep 2026).
+  var LEDGER = 'hub:pending';
+  function ledger(){ return parse((function(){ try { return localStorage.getItem(LEDGER); } catch (e) { return null; } })()) || {}; }
+  function ledgerSet(l){ try { if (Object.keys(l).length) origSet(LEDGER, JSON.stringify(l)); else origRemove(LEDGER); } catch (e) {} }
+  function remember(id, job){ var l = ledger(); l[id] = job; ledgerSet(l); }
+  function confirmed(id){ var l = ledger(); if (l[id]) { delete l[id]; ledgerSet(l); } }
+  // Which storage key a queued job stands for, so a boot can leave it alone.
+  function keyOfJob(id){
+    if (id.indexOf('t:') === 0) { var kind = id.slice(2); for (var k in TRAINEE_KEYS) if (TRAINEE_KEYS[k] === kind) return k; }
+    if (id.indexOf('c:') === 0) { var ck = id.slice(2); for (var c in COURSE_KEYS) if (COURSE_KEYS[c] === ck) return c; }
+    if (id.indexOf('r:') === 0) return 'connect_roster_v1';
+    return null;
+  }
   function payloadFor(job){ var pl = Object.assign({}, job); if (key()) pl.key = key(); return pl; }
   function key(){ return S.key(); }
-  function schedule(id, job){ queue[id] = job; clearTimeout(timer); timer = setTimeout(flush, 600); status('Saving…', 'busy'); }
+  function schedule(id, job){ queue[id] = job; remember(id, job); clearTimeout(timer); timer = setTimeout(flush, 600); status('Saving…', 'busy'); }
   function flush(){
     var jobs = queue; queue = {}; clearTimeout(timer); timer = null;
     var keys = Object.keys(jobs);
     if (!keys.length) return Promise.resolve();
     // One at a time: Apps Script copes badly with a burst.
-    var all = keys.reduce(function(chain, k){ return chain.then(function(){ return S.call(jobs[k]); }); }, Promise.resolve());
+    var all = keys.reduce(function(chain, k){ return chain.then(function(){ return S.call(jobs[k]).then(function(r){ confirmed(k); return r; }); }); }, Promise.resolve());
     all.then(function(){ status('Saved to the course', 'ok'); }).catch(function(err){ status('Not saved \u2014 ' + (err && err.message || err), 'error'); });
     return all;
   }
   // A page about to navigate awaits this, so nothing is left to the beacon.
-  window.HubSync = { flushNow: function(){ return flush(); }, mode: mode };
+  // A page about to navigate waits up to 2.5 s for the store; after that the
+  // beacon and the ledger carry the rest, so 'Start next TP' never hangs.
+  window.HubSync = { flushNow: function(){ return Promise.race([flush(), new Promise(function(r){ setTimeout(r, 2500); })]); }, mode: mode };
   function flushBeacon(){
     var jobs = queue; queue = {}; clearTimeout(timer); timer = null;
     Object.keys(jobs).forEach(function(k){
@@ -108,6 +126,11 @@
   var identity = mode + ':' + (mode === 'tutor' ? S.key() : mode === 'assessor' ? S.assessorKey() : S.token());
   var cached = false; try { cached = localStorage.getItem('hub:booted') === identity; } catch (e) {}
   var dirty = {}, started = false;
+  // Writes the store never confirmed: their keys are off-limits to the boot,
+  // and they go out again now.
+  var held = ledger();
+  Object.keys(held).forEach(function(id){ var k = keyOfJob(id); if (k) dirty[k] = true; });
+  if (Object.keys(held).length) setTimeout(function(){ Object.keys(held).forEach(function(id){ schedule(id, held[id]); }); }, 0);
   var origRoute = route;
   route = function(k, v){ if (started) dirty[k] = true; origRoute(k, v); };
 
