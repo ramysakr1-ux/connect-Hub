@@ -75,6 +75,12 @@
   .status{font-size:0.8rem; color:var(--grey);}
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
+  .firstround{ background:var(--sand-deep); border-left:4px solid var(--sand-line); border-radius:6px; padding:10px 12px; margin:8px 0 10px; }
+  .fr-tag{ display:block; font-size:0.7rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); margin-bottom:6px; }
+  .fr-inline{ background:var(--sand-deep); border-left:3px solid var(--sand-line); border-radius:4px; padding:6px 10px; margin:4px 0 6px; font-size:0.85rem; }
+  .copyfirst{ font-family:'Karla',sans-serif; font-size:0.78rem; font-weight:600; margin-top:8px; padding:5px 11px; border-radius:6px; border:1px solid var(--sand-line); background:var(--paper); color:var(--teal); cursor:pointer; }
+  textarea.resub{ background:oklch(96% 0.04 70); border-color:oklch(82% 0.09 75); }
+  textarea.resub:focus{ border-color:oklch(60% 0.12 70); }
 </style>
 <link rel="stylesheet" href="hub-theme.css">
 </head>
@@ -91,7 +97,7 @@
 <script type="text/x-hub-app">
 const WORDING_KEY = 'connect_assignment_wording_v2';
 const SUB_KEY = 'connect_assignment_submissions_v1';
-const ORDER = ['fol','lrt','lsrt','lfc','a5']; // course order (Ramy, 20 Sep 2026)
+let ORDER = ['fol','lrt','lsrt','lfc','a5']; // replaced by the centre's order once the wording is read
 const NAMES = { lrt:'LRT', lsrt:'LSRT', fol:'FOL', lfc:'LFC', a5:'Assignment 5' };
 const $ = id => document.getElementById(id);
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -105,6 +111,7 @@ if (WORDING) { Object.keys(WORDING).forEach(k => {
   const a = WORDING[k]; if (!a || !a.criteria) return;
   a.criteria = a.criteria.map(c => typeof c === 'string' ? {text:c, sectionIndex:null} : c);
 }); }
+ORDER = hubAssignmentOrder(WORDING);
 let SUBS = null;
 try { SUBS = JSON.parse(localStorage.getItem(SUB_KEY)); } catch(e) {}
 if (!SUBS) SUBS = {};
@@ -182,9 +189,12 @@ function render(){
     a.sections.forEach((s,i) => {
       if (s.type==='declaration') return; // always fresh
       if (sectionLocked(a, sub, i)) return; // locked sections render from sub1 directly, no working state needed
-      if (s.type==='text') seeded.text[i] = s1.text ? s1.text[i] : undefined;
+      // Connect's shape (Ramy, 20 Sep 2026): the first attempt stays as it
+      // was, read-only; the resubmission is written in its own box, empty
+      // until the trainee starts it or copies the first attempt down.
+      if (s.type==='text') seeded.text[i] = '';
       if (s.type==='picker') seeded.picked[i] = s1.picked ? s1.picked[i] : undefined;
-      if (s.type==='fields') { Object.keys(s1.fields||{}).forEach(k=>{ if (k.startsWith('s'+i+'_')) seeded.fields[k] = s1.fields[k]; }); }
+      if (s.type==='fields') { /* fields start empty too; the copy-down button fills them */ }
     });
     sub.draft = seeded;
     sub.round2Seeded = true;
@@ -227,7 +237,7 @@ function render(){
   }
 
   if (sub.stage==='resubmission_needed') {
-    html += `<div class="locked-banner" style="background:oklch(93% 0.06 60);">Resubmission needed \u2014 you have one attempt. Edit below and resubmit.</div>`;
+    html += `<div class="locked-banner" style="background:oklch(93% 0.06 60);">Resubmission needed \u2014 you have one attempt. Your first submission stays as it was, read-only; write the resubmission in the amber boxes below it.</div>`;
   }
   if (onRedo) {
     html += `<div class="locked-banner" style="background:oklch(93% 0.06 60);">Returned unmarked \u2014 your tutor sent this back without marking it. Fix what they asked for and submit it again. This does not use your one resubmission.</div>`;
@@ -249,7 +259,8 @@ function render(){
               html += `<div class="tutorcomment"><span class="tutorlabel">Your tutor, on \u201C${esc(c.text)}\u201D</span>${nl2br(cm||'(not met \u2014 no comment left)')}</div>`;
             }
           });
-          html += `<textarea data-role="text" data-i="${i}" rows="4" ${locked?'disabled':''}>${esc(TEXT[i]||'')}</textarea>`;
+          if (onRound2 && sub.sub1 && sub.sub1.text && sub.sub1.text[i]) html += `<div class="firstround"><span class="fr-tag">Your first submission \u2014 as marked, read-only</span><div class="readonly">${nl2br(sub.sub1.text[i])}</div><button type="button" class="copyfirst" data-role="copyfirst" data-i="${i}" ${locked?'disabled':''}>Start the resubmission from this</button></div>`;
+          html += `<textarea data-role="text" data-i="${i}" rows="4" class="${onRound2?'resub':''}" ${locked?'disabled':''} ${onRound2?'placeholder="Your resubmission"':''}>${esc(TEXT[i]||'')}</textarea>`;
         }
       }
       html += `</div>`;
@@ -284,11 +295,13 @@ function render(){
             html += `<div class="tutorcomment"><span class="tutorlabel">Your tutor, on \u201C${esc(c.text)}\u201D</span>${nl2br(cm||'(not met \u2014 no comment left)')}</div>`;
           }
         });
+        if (onRound2 && sub.sub1 && sub.sub1.fields && Object.keys(sub.sub1.fields).some(k=>k.startsWith('s'+i+'_'))) html += `<div class="firstround"><span class="fr-tag">Your first submission \u2014 as marked, read-only, shown under each field</span><button type="button" class="copyfirst" data-role="copyfirst" data-i="${i}" ${locked?'disabled':''}>Start the resubmission from it</button></div>`;
         items.forEach((item, ii) => {
           html += `<div class="itemblock"><span class="tag">${esc(item)}</span>`;
           s.fields.forEach((f, fi) => {
-            html += `<div class="row"><label>${esc(f.label)}</label>${f.hint?`<p class="hint">${esc(f.hint)}</p>`:''}
-              <textarea data-role="field" data-i="${i}" data-ii="${ii}" data-fi="${fi}" rows="2" ${locked?'disabled':''}>${esc((FIELDS[`s${i}_i${ii}_f${fi}`])||'')}</textarea></div>`;
+            const first = onRound2 && sub.sub1 && sub.sub1.fields ? (sub.sub1.fields[`s${i}_i${ii}_f${fi}`]||'') : '';
+            html += `<div class="row"><label>${esc(f.label)}</label>${f.hint?`<p class="hint">${esc(f.hint)}</p>`:''}${first?`<div class="readonly fr-inline">${nl2br(first)}</div>`:''}
+              <textarea data-role="field" data-i="${i}" data-ii="${ii}" data-fi="${fi}" rows="2" class="${onRound2?'resub':''}" ${locked?'disabled':''} ${onRound2?'placeholder="Your resubmission"':''}>${esc((FIELDS[`s${i}_i${ii}_f${fi}`])||'')}</textarea></div>`;
           });
           html += `</div>`;
         });
@@ -376,6 +389,12 @@ function declOk(a){
 }
 
 function bindInputs(){
+  $('app').querySelectorAll('[data-role="copyfirst"]').forEach(b => b.addEventListener('click', () => {
+    const i = +b.dataset.i, sub = subFor(CURRENT), s1 = sub.sub1 || {};
+    if (s1.text && s1.text[i] != null) TEXT[i] = s1.text[i];
+    Object.keys(s1.fields||{}).forEach(k => { if (k.startsWith('s'+i+'_')) FIELDS[k] = s1.fields[k]; });
+    autosave(); render();
+  }));
   document.querySelectorAll('[data-role="text"]').forEach(el => el.addEventListener('input', () => {
     TEXT[el.dataset.i] = el.value; dirty = true; autosave();
   }));

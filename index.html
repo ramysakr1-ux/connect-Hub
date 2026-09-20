@@ -184,7 +184,7 @@ badge(document.getElementById('badgeSelf'),
   self ? (self.status==='turned_in' ? 'Turned in' : 'Draft — saving automatically') : 'Not started',
   self && self.status==='turned_in' ? 'done' : '');
 badge(document.getElementById('badgeFeedback'),
-  fb ? (fb.status==='returned' ? 'Returned' : 'In progress') : 'Waiting for trainee',
+  fb ? (fb.status==='returned' ? (self && self.status==='turned_in' ? 'Returned' : 'Returned \u2014 turn in your self-evaluation to read it') : 'In progress') : 'Waiting for trainee',
   fb && fb.status==='returned' ? 'ready' : '');
 
 /* Assignments card had no progress indicator at all -- unlike the three TP
@@ -197,7 +197,8 @@ badge(document.getElementById('badgeFeedback'),
    assignment is still literally untouched. */
 (function(){
   var subs = rec('connect_assignment_submissions_v1') || {};
-  var TYPES = a5InPlay(subs) ? ['fol','lrt','lsrt','lfc','a5'] : ['fol','lrt','lsrt','lfc'];
+  var wI = rec('connect_assignment_wording_v2');
+  var TYPES = hubAssignmentOrder(wI).filter(function(k){ return k !== 'a5' || a5InPlay(subs); });
   var TOTAL = TYPES.length;
   var needsResub = 0, sentBack = 0, closed = 0, touched = 0;
   TYPES.forEach(function(t){

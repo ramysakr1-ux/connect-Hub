@@ -230,7 +230,7 @@ function renderDoubleMarking(){
   try{ WORDING=JSON.parse(localStorage.getItem('connect_assignment_wording_v2')); }catch(e){}
   // Nothing saved in this browser: the centre's standard wording (assignment-defaults.js).
   if(!WORDING && window.CONNECT_HUB_DEFAULT_WORDING) WORDING = window.CONNECT_HUB_DEFAULT_WORDING;
-  const ORDER=['fol','lrt','lsrt','lfc','a5']; const NAMES={lrt:'LRT',lsrt:'LSRT',fol:'FOL',lfc:'LFC',a5:'Assignment 5'};
+  const ORDER=hubAssignmentOrder(WORDING); const NAMES={lrt:'LRT',lsrt:'LSRT',fol:'FOL',lfc:'LFC',a5:'Assignment 5'};
   const roster = loadRoster();
   const trainees = Object.values(roster.trainees||{});
   let rows = [];
@@ -300,6 +300,18 @@ if (window.HubMode && window.HubMode !== 'solo') {
   const tn = document.getElementById('tutorsNote'); if (tn) tn.textContent = 'Give your tutors the tutor link from the Roster and links tab. Everyone who opens it works on the same course: the same trainees, the same records. Keep it to tutors; it can be rotated there if it leaks.';
   const old = document.querySelector('#panel-roster table'); if (old && !old.closest('#storeRoster')) old.style.display = 'none';
 }
+// The Assignments tab lists the four in this centre's order.
+(function(){
+  try {
+    let w = null; try{ w = JSON.parse(localStorage.getItem('connect_assignment_wording_v2')); }catch(e){}
+    if (!w && window.CONNECT_HUB_DEFAULT_WORDING) w = window.CONNECT_HUB_DEFAULT_WORDING;
+    const order = hubAssignmentOrder(w);
+    const table = document.querySelector('#panel-assignments table'); if (!table) return;
+    const rows = [...table.querySelectorAll('tr')].filter(tr => tr.querySelector('td'));
+    const keyOf = tr => { const t = tr.textContent; return /Assignment 5/.test(t) ? 'a5' : /^\s*FOL/.test(t) ? 'fol' : /^\s*LRT/.test(t) ? 'lrt' : /^\s*LSRT/.test(t) ? 'lsrt' : 'lfc'; };
+    rows.sort((a,b) => order.indexOf(keyOf(a)) - order.indexOf(keyOf(b))).forEach(tr => tr.parentNode.appendChild(tr));
+  } catch (e) {}
+})();
 </script>
 </body>
 </html>

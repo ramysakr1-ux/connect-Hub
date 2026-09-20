@@ -483,7 +483,13 @@ function renderTurnStatus(){
     DOC=planRec.state; showRecall(DOC);
     $('loadedInfo').textContent='Plan pulled in: '+((DOC.meta.tp||'TP')+' · '+(DOC.meta.name||''));
   } else {
-    $('loadedInfo').textContent='No lesson plan saved in this browser yet — you can still write your self-evaluation.';
+    $('loadedInfo').textContent='No lesson plan yet.';
+  }
+  // Connect's order: plan in, teach, reflect, then feedback. Without a turned-in
+  // plan there is nothing to evaluate against, so the form waits (Ramy, 20 Sep 2026).
+  if (!(planRec && planRec.status==='turned_in')) {
+    $('loadedInfo').textContent='Turn in your lesson plan first \u2014 the self-evaluation opens once your plan is in.';
+    document.querySelectorAll('input, textarea, select, button').forEach(el => { if (el.id !== 'backLink' && !el.closest('.back')) el.disabled = true; });
   }
   const selfRec=loadSelfRecord();
   if(selfRec&&selfRec.state) fillSelf(selfRec.state);

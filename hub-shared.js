@@ -85,3 +85,14 @@ window.a5InPlay = function(subs){
   var s = subs && subs.a5;
   return !!(s && (s.assigned || (s.stage && s.stage !== 'draft')));
 };
+
+// The four assignments in the order this centre runs them. The order lives
+// in the wording as `_order` (screen 8 sets it; Ramy, 20 Sep 2026: "the
+// order also could change, maybe depending on the centre"). Anything missing
+// falls in after in the default order; Assignment 5 is always last.
+window.hubAssignmentOrder = function(wording){
+  var base = ['fol', 'lrt', 'lsrt', 'lfc'];
+  var o = (wording && Array.isArray(wording._order)) ? wording._order.filter(function(k){ return base.indexOf(k) > -1; }) : [];
+  base.forEach(function(k){ if (o.indexOf(k) === -1) o.push(k); });
+  return o.concat(['a5']);
+};

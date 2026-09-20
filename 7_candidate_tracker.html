@@ -152,7 +152,7 @@ function when(iso){ if(!iso) return ''; const d=new Date(iso); if(isNaN(d)) retu
 // Wording (for brief titles) -- the browser's own, else the standard set.
 let WORDING = null; try{ WORDING = JSON.parse(localStorage.getItem('connect_assignment_wording_v2')); }catch(e){}
 if (!WORDING && window.CONNECT_HUB_DEFAULT_WORDING) WORDING = window.CONNECT_HUB_DEFAULT_WORDING;
-const ASSN = [ {key:'fol',label:'FOL'}, {key:'lrt',label:'LRT'}, {key:'lsrt',label:'LSRT'}, {key:'lfc',label:'LFC'} ];
+const ASSN = hubAssignmentOrder(WORDING).filter(k => k !== 'a5').map(k => ({ key:k, label:k.toUpperCase() }));
 const TPS = [1,2,3,4,5,6,7,8].map(n=>({key:'tp'+n, n, label:'TP'+n}));
 
 // The handoff's vocabulary and colour buckets, over the Hub's own states.
@@ -180,7 +180,11 @@ let TAB = 'assn', FILTER = 'Everyone', SEL = null;
 function people(){
   const roster = loadRoster();
   return Object.values(roster.trainees||{}).sort((a,b)=>(a.name||'').localeCompare(b.name||'')).map(tr=>{
-    const c = T.recordFor(tr); const r = T.readCandidate(c);
+    const c = T.recordFor(tr);
+    // The candidate's own row keeps the reflect-before-reading rule: the current
+    // TP's grade stays hidden until their self-evaluation is in.
+    if (ME) { const cur = tr.tp && tr.tp.feedback; const n = cur ? T.tpNumberOf(cur) : 0; const selfIn = !!(tr.tp && tr.tp.selfeval && tr.tp.selfeval.status==='turned_in'); if (n && !selfIn) { c['tp'+n] = ''; c['tp'+n+'_aim'] = ''; c['tp'+n+'_gated'] = true; } }
+    const r = T.readCandidate(c);
     const hist = T.tpHistory(tr);
     const tps = {};
     TPS.forEach(({key,n})=>{
@@ -188,7 +192,7 @@ function people(){
       const cur = tr.tp && tr.tp.feedback;
       const drafting = !fb && cur && cur.status !== 'returned' && T.tpNumberOf(cur) === n;
       const f = fb && fb.state && fb.state.f;
-      tps[key] = { g: fb ? (c['tp'+n] || 'un') : (drafting ? 'un' : 'nd'), aim: c['tp'+n+'_aim'], tutor: f ? f.fTutor : '', date: f ? f.fDate : '', at: fb ? fb.returnedAt : null, fb };
+      tps[key] = { g: fb ? (c['tp'+n+'_gated'] ? 'un' : (c['tp'+n] || 'un')) : (drafting ? 'un' : 'nd'), aim: c['tp'+n+'_aim'], tutor: f ? f.fTutor : '', date: f ? f.fDate : '', at: fb ? fb.returnedAt : null, fb };
     });
     const asg = {};
     ASSN.forEach(({key})=>{ const sub = (tr.assignments||{})[key]; asg[key] = Object.assign({ sub }, T.assignmentState(sub)); });

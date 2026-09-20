@@ -59,9 +59,15 @@
 function rec(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
 const fb=rec('chub:feedback');
 const plan=rec('chub:plan');
+const selfRec=rec('chub:selfeval');
+// Reflect before reading: the feedback opens once the self-evaluation is in
+// (Connect's rule; Ramy, 20 Sep 2026).
+const selfIn = !!(selfRec && selfRec.status==='turned_in');
 document.getElementById('centreName').textContent=(plan&&plan.centreName)||'';
 const content=document.getElementById('content');
-if(fb && fb.status==='returned' && fb.docHTML){
+if(fb && fb.status==='returned' && fb.docHTML && !selfIn){
+  content.innerHTML='<div class="empty">Your tutor\u2019s feedback is in. Write and turn in your <a href="2_trainee_self_evaluation.html">self-evaluation</a> first \u2014 teach, reflect, then read the feedback \u2014 and it opens here.</div>';
+} else if(fb && fb.status==='returned' && fb.docHTML){
   const doc=document.createElement('div');
   doc.className='doc';
   doc.innerHTML=fb.docHTML;

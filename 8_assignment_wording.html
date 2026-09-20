@@ -83,6 +83,11 @@
   .metarow{display:flex; align-items:center; gap:8px; font-size:0.85rem;}
   .metarow label{font-weight:700; width:110px; flex:none;}
   .metahint{font-size:0.76rem; color:var(--grey); font-weight:400;}
+  .list-row{ display:flex; align-items:center; gap:4px; }
+  .list-row > button:first-child{ flex:1; }
+  .order-arrows{ display:inline-flex; flex-direction:column; gap:1px; }
+  .order-arrows button{ font-family:inherit; font-size:0.7rem; line-height:1; padding:2px 5px; border:1px solid var(--sand-line); background:var(--paper); border-radius:4px; cursor:pointer; color:var(--grey); }
+  .order-arrows button:disabled{ opacity:.35; cursor:default; }
 </style>
 <link rel="stylesheet" href="hub-theme.css">
 </head>
@@ -115,7 +120,7 @@ Object.keys(DATA).forEach(k => {
   a.criteria = a.criteria.map(c => typeof c === 'string' ? {text:c, sectionIndex:null} : c);
 });
 
-const ORDER = ['fol','lrt','lsrt','lfc','a5']; // course order (Ramy, 20 Sep 2026)
+let ORDER = hubAssignmentOrder(DATA); // this centre's order; screen 8 changes it
 const NAMES = { lrt:'LRT \u2014 Language Related Tasks', lsrt:'LSRT \u2014 Language Skills Related Task', fol:'FOL \u2014 Focus on the Learner', lfc:'LFC \u2014 Lessons from the Classroom', a5:'Assignment 5' };
 
 let CURRENT = 'lrt';
@@ -136,10 +141,23 @@ function persist(){
 }
 
 function renderList(){
+  ORDER = hubAssignmentOrder(DATA);
+  const core = ORDER.filter(k => k !== 'a5');
   $('list').innerHTML = ORDER.map(key => {
     const has = !!DATA[key];
-    return `<button class="${key===CURRENT?'active':''} ${has?'':'missing'}" data-a="${key}">${NAMES[key]}${has?'':' \u2014 not built yet'}</button>`;
+    const pos = core.indexOf(key);
+    const arrows = key === 'a5' ? '' : `<span class="order-arrows"><button type="button" title="Earlier in the course" data-move="${key}" data-dir="-1" ${pos<=0?'disabled':''}>\u2191</button><button type="button" title="Later in the course" data-move="${key}" data-dir="1" ${pos>=core.length-1?'disabled':''}>\u2193</button></span>`;
+    return `<div class="list-row"><button class="${key===CURRENT?'active':''} ${has?'':'missing'}" data-a="${key}">${NAMES[key]}${has?'':' \u2014 not built yet'}</button>${arrows}</div>`;
   }).join('');
+}
+// The centre's order: move one of the four up or down; Assignment 5 stays last.
+function moveAssignment(key, dir){
+  const core = hubAssignmentOrder(DATA).filter(k => k !== 'a5');
+  const i = core.indexOf(key), j = i + dir;
+  if (i < 0 || j < 0 || j >= core.length) return;
+  core.splice(i, 1); core.splice(j, 0, key);
+  DATA._order = core;
+  persist(); renderList();
 }
 
 function fieldSectionHTML(s, i){
@@ -364,6 +382,7 @@ function startBlank(){
 }
 
 $('list').addEventListener('click', e => {
+  const mv = e.target.closest('[data-move]'); if (mv){ moveAssignment(mv.dataset.move, +mv.dataset.dir); return; }
   const btn = e.target.closest('button');
   if (!btn) return;
   CURRENT = btn.dataset.a;
