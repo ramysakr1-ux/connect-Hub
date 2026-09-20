@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<!--
+  Connect Lite — grades report (9_grades_report.html)
+  © 2026 Ramy Sakr. All rights reserved.
+
+  The provisional and final grades report, as a screen. Structure follows the
+  centre's own Word form (C13_2026 provisionals) exactly: one record per
+  candidate, five sections, planning beside the update. See
+  for-claude-code-grades-report.md.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="brand/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<title>Connect Lite — Grades report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sand:oklch(92.5% 0.012 85); --sand-line:oklch(89.5% 0.012 82);
+    --row-line:oklch(91% 0.012 84);
+    --paper:oklch(99.5% 0.004 90); --card:oklch(96.2% 0.02 80); --ink:oklch(23.5% 0.017 65);
+    --teal:oklch(37.5% 0.058 195); --grey:oklch(51% 0.017 70);
+    --gold:oklch(63% 0.096 72); --gold-lifted:oklch(70% 0.12 72); --gold-ink:oklch(55% 0.11 70);
+    --ink-warm:oklch(30% 0.042 58); --brick:oklch(52% 0.19 32);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
+  .board{max-width:1180px; margin:0 auto;}
+  a{color:var(--teal);} a:hover{color:var(--ink-warm);}
+  input,textarea,select{font-family:'Karla',sans-serif; color:var(--ink);}
+  input:focus,textarea:focus,select:focus{outline:none; border-color:var(--teal);}
+  textarea{resize:vertical;}
+
+  .chrome{display:flex; align-items:center; justify-content:space-between; gap:24px; height:64px;}
+  .lockup{display:flex; align-items:center; gap:9px;}
+  .lockup .tile{width:30px; height:30px; border-radius:7px; background:var(--ink-warm);
+    display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .lockup .word{font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:21px;
+    line-height:0.85; letter-spacing:-0.012em; color:var(--gold);}
+  .hub-word{font-family:'Instrument Sans','Karla',sans-serif; font-weight:500; font-size:9px;
+    letter-spacing:0.24em; text-transform:uppercase; color:var(--ink); line-height:1; margin-left:1px;}
+  .role{font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:600;
+    letter-spacing:0.22em; text-transform:uppercase; color:var(--grey);}
+
+  .title{border-top:2px solid var(--teal); padding-top:26px; display:flex; align-items:flex-end;
+    justify-content:space-between; gap:28px; flex-wrap:wrap;}
+  .title h1{margin:0; font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:2.1rem; line-height:1.15;}
+  .title p{margin:7px 0 0; font-size:0.9rem; color:var(--grey);}
+  .titleacts{display:flex; align-items:center; gap:10px;}
+  #saveState{font-size:0.82rem; color:var(--grey);}
+
+  .btn{font-family:'Karla',sans-serif; font-size:0.85rem; font-weight:600; padding:9px 18px;
+    border-radius:6px; border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink);
+    cursor:pointer; transition:border-color .15s,color .15s;}
+  .btn:hover{border-color:var(--teal); color:var(--teal);}
+
+  .shell{display:grid; grid-template-columns:236px minmax(0,1fr); gap:30px; margin-top:30px; align-items:start;}
+  .rail{position:sticky; top:18px;}
+  .rail h2{font-family:'Instrument Sans',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.14em;
+    text-transform:uppercase; color:var(--grey); padding:0 4px 9px; margin:0;}
+  .rail .list{display:flex; flex-direction:column;}
+  .rail button{text-align:left; font-family:'Karla',sans-serif; background:none; border:none;
+    border-left:2px solid transparent; padding:10px 12px; cursor:pointer; display:flex; align-items:center;
+    justify-content:space-between; gap:10px;}
+  .rail button:hover{background:color-mix(in oklab, var(--card) 60%, transparent);}
+  .rail button.on{background:var(--card); border-left-color:var(--teal);}
+  .rail .who{display:flex; align-items:baseline; gap:8px; min-width:0;}
+  .rail .letter{font-family:'Instrument Sans',sans-serif; font-size:10px; font-weight:600; color:var(--grey);}
+  .rail .nm{font-size:0.92rem; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .rail button.on .nm{font-weight:600;}
+  .rail .gr{font-size:0.74rem; font-weight:600; white-space:nowrap; color:var(--grey);}
+  .rail .gr.fail{color:var(--brick);} .rail .gr.top{color:var(--gold-ink);} .rail .gr.set{color:var(--ink);}
+  .progress{margin-top:16px; padding:12px 13px; border:1px solid var(--sand-line); border-radius:9px;
+    background:var(--card); font-size:0.78rem; color:var(--grey); line-height:1.5;}
+
+  .recordhead{display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap;
+    border-bottom:1px solid var(--sand-line); padding-bottom:16px;}
+  .recordhead .who{display:flex; align-items:baseline; gap:11px;}
+  .recordhead .letter{font-family:'Instrument Sans',sans-serif; font-size:12px; font-weight:600;
+    letter-spacing:0.16em; color:var(--grey);}
+  .recordhead .nm{font-family:'Newsreader',Georgia,serif; font-size:1.6rem; font-weight:600;}
+  .grades{display:flex; gap:22px; flex-wrap:wrap;}
+  .grades .lab{font-family:'Instrument Sans',sans-serif; font-size:9px; font-weight:600; letter-spacing:0.14em;
+    text-transform:uppercase; color:var(--grey); margin-bottom:6px;}
+  .pills{display:flex; gap:4px; flex-wrap:wrap;}
+  .pill{font-family:'Karla',sans-serif; font-size:0.76rem; font-weight:600; padding:5px 10px; border-radius:5px;
+    border:1px solid var(--sand-line); background:none; color:var(--grey); cursor:pointer; white-space:nowrap;}
+  .pill:hover{border-color:var(--teal); color:var(--teal);}
+  .pills.final .pill{font-weight:700; padding:5px 12px;}
+  .pill.on{background:var(--card); color:var(--ink); border-color:color-mix(in oklab, var(--ink) 45%, transparent);}
+  .pill.on.fail{background:oklch(94% 0.04 27); color:var(--brick); border-color:color-mix(in oklab, var(--brick) 45%, transparent);}
+  .back{display:inline-block; margin:14px 0 -6px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
+  .back:hover{text-decoration:underline;}
+  /* Handbook 11.6: a grade the written assignments rule out is struck, not removed --
+     the tutor may still choose it (Ramy: everything is subject to manual override),
+     and the cap line beneath says why it is struck. */
+  .pill.capped{text-decoration:line-through; opacity:.55;}
+  .cap{flex-basis:100%; font-size:0.8rem; color:var(--brick); line-height:1.5; margin-top:2px;}
+  .rail .gr.wd{color:var(--grey); font-style:italic;}
+  .ro .pill, .ro textarea, .ro select{pointer-events:none;}
+  .ro .add, .ro .rm{display:none;}
+  .pill.on.top{color:var(--gold-ink); border-color:color-mix(in oklab, var(--gold-ink) 45%, transparent);}
+
+  .record{display:grid; grid-template-columns:minmax(0,1.45fr) minmax(0,1fr); gap:0 30px; margin-top:24px; align-items:start;}
+  .lists{display:flex; flex-direction:column; gap:26px;}
+  .sec .head{display:flex; align-items:baseline; justify-content:space-between; gap:14px; padding-bottom:7px;
+    border-bottom:1px solid var(--sand-line);}
+  .sec .head h3{margin:0; font-family:'Instrument Sans',sans-serif; font-size:10px; font-weight:600;
+    letter-spacing:0.13em; text-transform:uppercase; color:var(--grey);}
+  .sec .head .src{font-size:0.76rem; color:var(--grey);}
+  .sec.action .head h3{color:var(--brick);}
+  .sec.action .head{border-bottom-color:color-mix(in oklab, var(--brick) 28%, transparent);}
+  .plain .sec.action .head h3{color:var(--grey);}
+  .plain .sec.action .head{border-bottom-color:var(--sand-line);}
+
+  .pt{display:flex; align-items:flex-start; flex-wrap:nowrap; gap:9px; padding:8px 0; border-bottom:1px solid var(--row-line);}
+  .pt .dot{order:1; width:5px; height:5px; border-radius:50%; background:var(--teal); flex-shrink:0; margin-top:9px;}
+  .sec.action .pt .dot{background:var(--brick);}
+  .plain .sec.action .pt .dot{background:var(--grey);}
+  .pt textarea{order:2; flex:1 1 200px; min-width:0; font-size:0.92rem; line-height:1.5; border:none;
+    background:none; padding:2px 0; overflow:hidden;}
+  .pt select{order:3; flex:0 1 auto; min-width:0; max-width:190px; font-size:0.76rem; font-weight:600;
+    color:var(--grey); border:1px solid var(--sand-line); border-radius:5px; background:var(--paper);
+    padding:4px 5px; cursor:pointer;}
+  .pt .rm{order:4; flex-shrink:0; margin-left:auto; border:none; background:none; color:var(--grey);
+    font-size:1rem; line-height:1; padding:4px 3px; cursor:pointer;}
+  .pt .rm:hover{color:var(--brick);}
+  .sec .none{padding:13px 0 3px; font-size:0.86rem; color:var(--grey);}
+  .sec .add{margin-top:9px; font-family:'Karla',sans-serif; font-size:0.8rem; font-weight:600;
+    background:none; border:none; color:var(--teal); cursor:pointer; padding:0;}
+
+  .prose{display:flex; flex-direction:column; gap:20px; position:sticky; top:18px;}
+  .prose h3{margin:0; font-family:'Instrument Sans',sans-serif; font-size:10px; font-weight:600;
+    letter-spacing:0.13em; text-transform:uppercase; color:var(--grey); padding-bottom:7px;
+    border-bottom:1px solid var(--sand-line);}
+  .prose textarea{width:100%; margin-top:9px; font-size:0.88rem; line-height:1.6; padding:11px 12px;
+    border:1px solid var(--sand-line); border-radius:7px; background:var(--card);}
+  .prose .hint{font-size:0.74rem; color:var(--grey); margin-top:5px;}
+
+  @media (max-width:1000px){
+    .shell{grid-template-columns:minmax(0,1fr); gap:22px;}
+    .rail, .prose{position:static;}
+    .record{grid-template-columns:minmax(0,1fr); gap:26px;}
+    .pt{flex-wrap:wrap;}
+    .pt select{flex-basis:100%; max-width:100%; margin-left:14px;}
+  }
+</style>
+</head>
+<body>
+<div class="board">
+  <a class="back" href="5_tutor_dashboard.html">&larr; Tutor dashboard</a>
+
+  <div class="chrome">
+    <div class="lockup">
+      <span class="tile">
+        <svg viewBox="8 30 104 60" width="20" height="12" fill="none">
+          <path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path>
+          <path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path>
+        </svg>
+      </span>
+      <span class="word">Connect</span>
+      <span class="hub-word">Lite</span>
+    </div>
+    <div class="role" id="roleLabel">Tutor</div>
+  </div>
+
+  <div class="title">
+    <div>
+      <h1>Grades report</h1>
+      <p id="courseMeta">Provisional and final grades for every candidate on the course.</p>
+    </div>
+    <div class="titleacts">
+      <span id="saveState">Saved</span>
+      <button class="btn" id="saveBtn" type="button">Save</button>
+    </div>
+  </div>
+
+  <div class="shell">
+    <div class="rail">
+      <h2>Candidates</h2>
+      <div class="list" id="rail"></div>
+      <div class="progress" id="progress"></div>
+    </div>
+    <div id="record"></div>
+  </div>
+
+</div>
+
+<script src="hub-tracker.js?v=202609202310"></script>
+<script src="hub-store.js?v=202609202310"></script>
+<script src="hub-shared.js?v=202609202310"></script>
+<script src="hub-sync.js?v=202609202310"></script>
+<script type="text/x-hub-app">
+/* ---------------------------------------------------------------------------
+   Grades report. One record per candidate, five sections, matching the
+   centre's Word form. Everything is stored under connect_grades_v1; the roster
+   comes from the store in tutor mode and from connect_roster_v1 otherwise.
+--------------------------------------------------------------------------- */
+/* Grades live on each candidate's tracker record (roster.trainees[id].tracker.grades),
+   the tutor-only kind hub-sync already pushes to the store -- so every tutor on the
+   course and the assessor pack read the same record. Nothing autosaves: Save writes. */
+const T = window.HubTracker;
+const RO = window.HubMode === 'assessor' || window.HubMode === 'trainee';
+
+/* The 41 Cambridge criteria, codes and short labels as Connect's celta-criteria.ts
+   has them (the handoff listed 34; the missing seven are real criteria). */
+const SHORT={
+  '1a':'needs awareness','1b':'cultural awareness','1c':'background awareness','1d':'rapport/learner involvement',
+  '2a':'TTT/language grading','2b':'error-correction','2c':'context','2d':'language models',
+  '2e':'clarifying language','2f':'register','2g':'language practice',
+  '3a':'reading/listening','3b':'speaking/writing',
+  '4a':'stating aims','4b':'staging','4c':'materials','4d':'materials prep','4e':'procedure',
+  '4f':'interaction','4g':'variety and balance','4h':'timing','4i':'language analysis','4j':'anticipated problems',
+  '4k':'anticipated solutions','4l':'terminology','4m':'teamwork','4n':'reflection on plans',
+  '5a':'classroom arrangement','5b':'grouping','5c':'teaching techniques','5d':'achieving aims',
+  '5e':'material use','5f':'instructions','5g':'eliciting/concept-checking','5h':'feedback',
+  '5i':'pace','5j':'monitoring','5k':'timing','5l':'portfolio','5m':'self-reflection','5n':'participation'
+};
+const PROV=['FAIL','FAIL / PASS','PASS','PASS / PASS B','PASS B','PASS B / PASS A','PASS A'];
+const FINAL=['FAIL','PASS','PASS B','PASS A'];
+const SECTIONS=[
+  {key:'planS', heading:'Strengths in planning',      src:'topic 4',            add:'Add a strength',     action:false},
+  {key:'planA', heading:'Action points in planning',  src:'topic 4',            add:'Add an action point',action:true},
+  {key:'teachS',heading:'Strengths in teaching',      src:'topics 1, 2, 3, 5',  add:'Add a strength',     action:false},
+  {key:'teachA',heading:'Action points in teaching',  src:'topics 1, 2, 3, 5',  add:'Add an action point',action:true}
+];
+const FIELDS=[
+  {key:'update',  heading:'Update on strengths and action points', h:170,
+   ph:'What changed across the final TPs, and why the grade landed where it did.', hint:'Written after the grade review meeting.'},
+  {key:'needed',  heading:'Evidence needed for a higher grade', h:150,
+   ph:'Leave empty where the candidate is already at the top of their range.', hint:'If applicable.'},
+  {key:'provided',heading:'What evidence was provided', h:120,
+   ph:'Completed after the final TPs.', hint:'If applicable — answers the section above.'}
+];
+
+function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function blankRecord(name){ return {name, provisional:'', final:'', planS:[], planA:[], teachS:[], teachA:[], update:'', needed:'', provided:''}; }
+function gradeClass(g){ return g==='FAIL' ? 'fail' : g==='PASS A' ? 'top' : g ? 'set' : ''; }
+
+let DATA={}, ORDER=[], sel=null, dirty=false;
+
+function loadRoster(){ try{ return JSON.parse(localStorage.getItem('connect_roster_v1')) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
+function persist(){
+  if (RO) return;
+  const roster = loadRoster();
+  ORDER.forEach(p=>{
+    const tr = roster.trainees[p.id]; if (!tr) return;
+    tr.tracker = tr.tracker || {};
+    const rec = Object.assign({}, DATA[p.id]); delete rec.name;
+    tr.tracker.grades = rec;
+  });
+  localStorage.setItem('connect_roster_v1', JSON.stringify(roster));
+  dirty=false; paintState();
+}
+function touch(){ if (RO) return; dirty=true; paintState(); }
+function paintState(){ document.getElementById('saveState').textContent = RO ? 'Read-only' : (dirty ? 'Unsaved changes' : 'Saved'); }
+
+/* Handbook 11.6, read off the candidate's assignment record by the tracker's own
+   rule engine: one failed written assignment rules out Pass A; more than one rules
+   out a Pass. Reported, never enforced. */
+function capFor(tr){
+  try{
+    const r = T.readCandidate(T.recordFor(tr));
+    if (!r.fails.length) return null;
+    const capped = r.fails.length > 1 ? PROV.concat(FINAL).filter(g=>g!=='FAIL') : ['PASS A','PASS B / PASS A'];
+    return { line: r.ceiling.replace('SRT','LSRT'), capped };
+  }catch(e){ return null; }
+}
+
+/* The roster decides who appears, and in what order. Letters are positional,
+   as the Word form has them: A, B, C… in roster order. */
+function roster(){
+  const r = loadRoster().trainees || {};
+  return Object.values(r).filter(t=>t && t.name).sort((a,b)=>(a.name||'').localeCompare(b.name||''))
+    .map(t=>({ id:t.id||t.name, name:t.name, withdrawn: !!(t.tracker && t.tracker.withdrawn), saved:(t.tracker && t.tracker.grades) || null, cap: capFor(t) }));
+}
+
+function letterFor(i){ return String.fromCharCode(65+i); }
+
+function fit(el){ if(!el) return; el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
+
+function paintRail(){
+  const host=document.getElementById('rail');
+  host.innerHTML = ORDER.map((p,i)=>{
+    const d=DATA[p.id];
+    return `<button type="button" data-pick="${esc(p.id)}" class="${p.id===sel?'on':''}">
+      <span class="who"><span class="letter">${letterFor(i)}</span><span class="nm">${esc(d.name)}</span></span>
+      <span class="gr ${d.final ? gradeClass(d.final) : (p.withdrawn ? 'wd' : '')}">${esc(d.final || (p.withdrawn ? 'Withdrawn' : '—'))}</span>
+    </button>`;
+  }).join('');
+  const done=ORDER.filter(p=>DATA[p.id].final).length;
+  document.getElementById('progress').textContent = done+' of '+ORDER.length+' final grades entered.';
+}
+
+function paintRecord(){
+  const i=ORDER.findIndex(p=>p.id===sel), p=ORDER[i], d=DATA[sel];
+  const codes=Object.keys(SHORT);
+
+  const cap = p.cap, capped = cap ? cap.capped : [];
+  const pills=(opts,cur,kind)=>opts.map(o=>
+    `<button type="button" class="pill ${o===cur?'on '+gradeClass(o):''} ${capped.includes(o)?'capped':''}" data-grade="${kind}" data-value="${esc(o)}"${capped.includes(o)?` title="${esc(cap.line)}"`:''}>${esc(o)}</button>`).join('');
+
+  const section=s=>{
+    const items=d[s.key]||[];
+    return `<div class="sec ${s.action?'action':''}" data-sec="${s.key}">
+      <div class="head"><h3>${s.heading}</h3><div class="src">${s.src}</div></div>
+      ${items.map((it,n)=>`<div class="pt">
+        <div class="dot"></div>
+        <textarea rows="1" data-text="${n}" placeholder="Write the point">${esc(it.text)}</textarea>
+        <select data-code="${n}">
+          <option value="">no code</option>
+          ${codes.map(c=>`<option value="${c}"${c===it.code?' selected':''}>${c} · ${SHORT[c]}</option>`).join('')}
+        </select>
+        <button type="button" class="rm" data-remove="${n}" title="Remove">&times;</button>
+      </div>`).join('')}
+      ${items.length ? '' : '<div class="none">Nothing recorded yet.</div>'}
+      <button type="button" class="add" data-add="${s.key}">${s.add}</button>
+    </div>`;
+  };
+
+  document.getElementById('record').innerHTML = `
+    <div class="recordhead">
+      <div class="who"><span class="letter">${letterFor(i)}</span><span class="nm">${esc(d.name)}</span></div>
+      <div class="grades">
+        <div><div class="lab">Provisional grade</div><div class="pills">${pills(PROV, d.provisional, 'provisional')}</div></div>
+        <div><div class="lab">Final grade</div><div class="pills final">${pills(FINAL, d.final, 'final')}</div></div>
+        ${cap ? `<div class="cap">${esc(cap.line)}</div>` : ''}
+      </div>
+    </div>
+    <div class="record">
+      <div class="lists">${SECTIONS.map(section).join('')}</div>
+      <div class="prose">${FIELDS.map(f=>`<div>
+        <h3>${f.heading}</h3>
+        <textarea data-field="${f.key}" placeholder="${esc(f.ph)}" style="min-height:${f.h}px">${esc(d[f.key]||'')}</textarea>
+        <div class="hint">${f.hint}</div>
+      </div>`).join('')}</div>
+    </div>`;
+
+  document.querySelectorAll('.pt textarea').forEach(fit);
+}
+
+function paint(){ paintRail(); paintRecord(); }
+
+document.getElementById('rail').addEventListener('click', e=>{
+  const b=e.target.closest('[data-pick]'); if(!b) return;
+  sel=b.dataset.pick; paint();
+});
+
+document.getElementById('record').addEventListener('click', e=>{
+  if (RO) return;
+  const d=DATA[sel];
+  const g=e.target.closest('[data-grade]');
+  if (g){ d[g.dataset.grade] = d[g.dataset.grade]===g.dataset.value ? '' : g.dataset.value; touch(); paint(); return; }
+  const a=e.target.closest('[data-add]');
+  if (a){ d[a.dataset.add].push({text:'',code:''}); touch(); paintRecord();
+    const rows=document.querySelectorAll(`[data-sec="${a.dataset.add}"] .pt textarea`);
+    if (rows.length) rows[rows.length-1].focus();
+    return; }
+  const r=e.target.closest('[data-remove]');
+  if (r){ const key=r.closest('[data-sec]').dataset.sec; d[key].splice(+r.dataset.remove,1); touch(); paintRecord(); }
+});
+
+document.getElementById('record').addEventListener('input', e=>{
+  if (RO) return;
+  const d=DATA[sel];
+  if (e.target.matches('[data-text]')){
+    const key=e.target.closest('[data-sec]').dataset.sec;
+    d[key][+e.target.dataset.text].text = e.target.value; fit(e.target); touch(); return;
+  }
+  if (e.target.matches('[data-field]')){ d[e.target.dataset.field]=e.target.value; touch(); }
+});
+
+document.getElementById('record').addEventListener('change', e=>{
+  if (RO || !e.target.matches('[data-code]')) return;
+  const key=e.target.closest('[data-sec]').dataset.sec;
+  DATA[sel][key][+e.target.dataset.code].code = e.target.value; touch();
+});
+
+document.getElementById('saveBtn').addEventListener('click', persist);
+
+(function init(){
+  if (RO){
+    document.getElementById('record').classList.add('ro');
+    document.getElementById('saveBtn').style.display = 'none';
+    if (window.HubMode === 'assessor') document.getElementById('roleLabel').textContent = 'Assessor';
+  }
+  const people=roster();
+  ORDER=people;
+  DATA={};
+  people.forEach(p=>{ DATA[p.id] = p.saved ? {...blankRecord(p.name), ...p.saved, name:p.name} : blankRecord(p.name); });
+  sel = people.length ? people[0].id : null;
+
+  let cs=null; try{ cs=JSON.parse(localStorage.getItem('connect_course_settings')); }catch(e){}
+  const bits=[cs&&cs.courseName, cs&&cs.centreName, cs&&cs.centreNumber].filter(Boolean);
+  if (people.length) bits.push(people.length+' candidate'+(people.length===1?'':'s'));
+  if (bits.length) document.getElementById('courseMeta').textContent = bits.join(' · ');
+
+  if (!people.length){
+    document.getElementById('record').innerHTML =
+      '<p style="font-size:0.9rem;color:var(--grey);line-height:1.6;max-width:560px;">No candidates on the course yet. Add them on the <a href="6_centre_admin_dashboard.html">Course admin</a> page, then come back — every candidate gets a record here.</p>';
+    document.getElementById('progress').textContent='No candidates yet.';
+    return;
+  }
+  paint(); paintState();
+})();
+</script>
+</body>
+</html>
