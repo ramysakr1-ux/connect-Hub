@@ -50,7 +50,7 @@
   // so a write handed to the beacon as a page closed is re-sent by the next
   // page, and a boot never overwrites a record this browser has changed but
   // the store has not confirmed yet (the cache-first race, 20 Sep 2026).
-  var LEDGER = 'hub:pending:' + mode + ':' + (mode === 'tutor' ? S.key() : mode === 'assessor' ? S.assessorKey() : S.token());
+  var LEDGER = 'hub:pending:' + mode + ':' + (!S ? '' : mode === 'tutor' ? S.key() : mode === 'assessor' ? S.assessorKey() : S.token());
   function ledger(){ return parse((function(){ try { return localStorage.getItem(LEDGER); } catch (e) { return null; } })()) || {}; }
   function ledgerSet(l){ try { if (Object.keys(l).length) origSet(LEDGER, JSON.stringify(l)); else origRemove(LEDGER); } catch (e) {} }
   function remember(id, job){ var l = ledger(); l[id] = job; ledgerSet(l); }
