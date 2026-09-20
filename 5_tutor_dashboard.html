@@ -89,7 +89,7 @@
       <button class="btn primary" id="importTriggerBtn" type="button">Import trainee file</button>
       <input type="file" id="importFile" accept="application/json" style="display:none;">
       <button class="btn ghost" id="importWordingBtn" type="button">Import centre wording</button>
-      <a class="btn ghost" href="7_candidate_tracker.html" style="text-decoration:none;display:inline-block;">Candidate tracker</a>
+      <a class="btn ghost" href="7_candidate_tracker.html" style="text-decoration:none;display:inline-block;">Candidate tracker</a> <a class="btn ghost" href="6_centre_admin_dashboard.html" style="text-decoration:none;display:inline-block;">Course admin</a>
       <input type="file" id="importWordingFile" accept="application/json" style="display:none;">
       <span id="importStatus" style="margin-left:10px; font-size:0.82rem; color:var(--grey);"></span>
     </div>
@@ -125,9 +125,9 @@
 
 
 </div>
-<script src="hub-shared.js?v=202609201454"></script>
-<script src="hub-store.js?v=202609201454"></script>
-<script src="hub-sync.js?v=202609201454"></script>
+<script src="hub-shared.js?v=202609201459"></script>
+<script src="hub-store.js?v=202609201459"></script>
+<script src="hub-sync.js?v=202609201459"></script>
 <script type="text/x-hub-app">
 document.getElementById('tabs').addEventListener('click', e=>{
   const btn = e.target.closest('.tab');
@@ -196,10 +196,13 @@ function render(){
 
   subsBody.innerHTML = trainees.map(tr=>{
     const p = tpStatusPill(tr);
-    const grade = tr.tp && tr.tp.feedback && tr.tp.feedback.state ? (tr.tp.feedback.state.grade||'—') : '—';
+    // The grade lives at state.f.fGrade on a real return (state.grade never existed -- the column read '—' for ever).
+    const fst = tr.tp && tr.tp.feedback && tr.tp.feedback.state;
+    const grade = fst ? ((fst.f && fst.f.fGrade) || fst.grade || '—') : '—';
+    const tpNo = (m => m ? m[0].replace(/\s+/, '') : '—')(String((tr.tp && tr.tp.plan && tr.tp.plan.label) || (fst && fst.f && fst.f.fTP) || '').match(/TP\s?\d/i));
     return `<tr>
       <td>${esc(tr.name)}</td>
-      <td>TP</td>
+      <td>${esc(tpNo)}</td>
       <td><span class="status-pill ${p.cls}">${esc(p.label)}</span></td>
       <td>${esc(grade)}</td>
       <td><a class="btn ${p.cls==='draft'?'primary':'ghost'}" style="text-decoration:none;display:inline-block;" href="3_tutor_feedback.html?trainee=${encodeURIComponent(tr.id)}">${p.label==='Returned'?'View feedback':'Write feedback'}</a></td>
