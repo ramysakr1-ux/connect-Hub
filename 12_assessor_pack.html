@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<!--
+  Connect Hub — assessor pack
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy, 20 Sep 2026: "build the assessor link". The third link, read-only:
+  everything the Hub holds for the course, laid out the way an assessor reads
+  it on the visit day -- candidates first, then the double-marking record and
+  the briefs. Nothing on this page, or on the pages it opens, can be changed
+  from the assessor's link (hub-sync.js drops every write in assessor mode).
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connect Hub — Assessor pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sand:oklch(92.5% 0.012 85); --sand-line:oklch(89.5% 0.012 82);
+    --paper:oklch(99.5% 0.004 90); --card:oklch(96.2% 0.02 80); --ink:oklch(23.5% 0.017 65);
+    --terracotta:oklch(37.5% 0.058 195); --teal:oklch(37.5% 0.058 195); --brick:oklch(45% 0.15 27);
+    --grey:oklch(51% 0.017 70); --gold:oklch(63% 0.096 72); --gold-lifted:oklch(70% 0.12 72); --ink-warm:oklch(30% 0.042 58);
+    --line:oklch(89.5% 0.012 82); --quiet:oklch(40% 0.02 70); --faint:oklch(75% 0.012 80);
+    --grn:oklch(35% 0.08 155); --grn-bg:oklch(93% 0.04 155); --blu:oklch(38% 0.07 232); --blu-bg:oklch(94% 0.03 232);
+    --amb:oklch(42% 0.1 78); --amb-bg:oklch(95% 0.05 85); --red:oklch(40% 0.14 25); --red-bg:oklch(95% 0.04 25);
+    --purp:oklch(40% 0.1 300); --purp-bg:oklch(95% 0.03 300);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
+    padding:40px 20px 60px; display:flex; flex-direction:column; align-items:center;}
+  .board{max-width:1080px; width:100%;}
+  .header{background:var(--card); border-radius:10px; border-top:3px solid var(--terracotta);
+    padding:36px 26px 30px; text-align:center; margin-bottom:22px; box-shadow:0 1px 2px rgba(0,0,0,0.03);}
+  .header .eyebrow{margin:14px 0 0; font-family:'Instrument Sans',Karla,sans-serif; font-weight:600; font-size:10px; letter-spacing:0.22em; color:var(--grey); text-transform:uppercase;}
+  .course-name{margin:6px 0 0; font-size:1.5rem; font-family:'Newsreader',Georgia,serif; font-weight:700; color:var(--ink);}
+  .header p.tag{margin:8px 0 0; font-size:0.95rem; color:var(--grey);}
+  .header p.access{margin:16px 0 0; font-size:0.82rem; font-weight:600; color:var(--teal);}
+  .hub-word{font-family:'Karla',sans-serif;font-weight:700;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:var(--teal);padding:3px 6px 2px;border:1.5px solid var(--teal);border-radius:5px;line-height:1;position:relative;top:-2px;}
+  h2.sect{font-family:'Newsreader',Georgia,serif; font-size:1.2rem; font-weight:700; color:var(--teal); margin:28px 4px 10px;}
+  h2.sect small{font-family:'Karla',sans-serif; font-size:0.8rem; font-weight:500; color:var(--grey); margin-left:10px;}
+  .panel{background:var(--card); border-radius:10px; padding:6px; box-shadow:0 1px 2px rgba(0,0,0,0.03);}
+  table{width:100%; border-collapse:collapse;}
+  th{text-align:left; font-size:0.7rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:var(--grey); padding:14px 16px; border-bottom:1px solid var(--sand-line);}
+  td{padding:13px 16px; border-bottom:1px solid var(--sand-line); font-size:0.9rem; vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .name{font-weight:700; color:var(--ink);}
+  .sub{font-size:0.78rem; color:var(--grey);}
+  .chips{display:flex; flex-wrap:wrap; gap:5px;}
+  .chip{display:inline-flex; align-items:center; gap:5px; padding:4px 8px; border-radius:6px; border:1px solid var(--line); background:var(--paper); font-size:11.5px; font-weight:500; color:var(--quiet); line-height:1.2; white-space:nowrap;}
+  .chip b{font-weight:700; font-size:10px; letter-spacing:0.04em; color:var(--grey);}
+  .chip.nd{background:transparent; border-color:transparent; color:var(--faint);}
+  .chip.fine{background:oklch(95% 0.02 155); border-color:oklch(86% 0.04 155); color:var(--grn);}
+  .chip.above{background:var(--grn-bg); border-color:oklch(80% 0.07 155); color:var(--grn); font-weight:600;}
+  .chip.wait{background:var(--blu-bg); border-color:oklch(84% 0.05 232); color:var(--blu); font-weight:600;}
+  .chip.work{background:var(--amb-bg); border-color:oklch(84% 0.08 78); color:var(--amb); font-weight:600;}
+  .chip.wrong{background:var(--red-bg); border-color:oklch(82% 0.08 25); color:var(--red); font-weight:700;}
+  .standing{display:inline-block; font-size:0.72rem; font-weight:700; letter-spacing:0.05em; padding:5px 10px; border-radius:20px; background:var(--sand); color:var(--grey);}
+  .standing.tk-std{background:oklch(95% 0.02 155); color:var(--grn);}
+  .standing.tk-above{background:var(--grn-bg); color:var(--grn);}
+  .standing.tk-notstd{background:var(--red-bg); color:var(--red);}
+  .btn{display:inline-block; text-decoration:none; font-family:'Karla',sans-serif; font-size:0.83rem; font-weight:700; padding:8px 16px; border-radius:20px; border:1.5px solid var(--sand-line); background:var(--card); color:var(--ink); cursor:pointer;}
+  .btn.ghost{border-color:var(--teal); color:var(--teal); background:none;}
+  .btn.primary{background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  .toolbar{display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin:18px 0 0;}
+  .empty{text-align:center; padding:40px 20px; color:var(--grey);}
+  .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
+  .back:hover{text-decoration:underline;}
+  /* candidate view */
+  .cand-head{display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; padding:16px 18px;}
+  .cand-head h1{font-family:'Newsreader',Georgia,serif; font-size:1.5rem; margin:0; color:var(--ink);}
+  .facts{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px 18px; padding:6px 18px 16px;}
+  .fact .k{font-size:0.68rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:var(--grey);}
+  .fact .v{font-size:0.9rem; color:var(--ink); margin-top:2px;}
+  .fact .v.red{color:var(--red); font-weight:600;} .fact .v.amb{color:var(--amb); font-weight:600;}
+  .tp{border-bottom:1px solid var(--sand-line); padding:14px 18px;}
+  .tp:last-child{border-bottom:none;}
+  .tp-row{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
+  .tp-row .n{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.05rem; color:var(--ink); min-width:44px;}
+  .tp-row .meta{font-size:0.82rem; color:var(--grey); flex:1; min-width:200px;}
+  .tp-row .meta b{color:var(--ink); font-weight:600;}
+  .doc{background:var(--paper); border-radius:6px; padding:26px 28px; border:1px solid var(--sand-line); margin-top:12px;}
+  .doc[hidden]{display:none;}
+  .brief{padding:14px 18px; border-bottom:1px solid var(--sand-line);}
+  .brief:last-child{border-bottom:none;}
+  .brief h3{margin:0; font-size:1rem; color:var(--ink);}
+  .brief .sub{margin:2px 0 8px;}
+  .brief ul{margin:0; padding-left:18px; font-size:0.86rem; color:var(--quiet);}
+  .footer{display:flex; align-items:center; justify-content:center; gap:8px; margin-top:36px; font-size:0.8rem; color:var(--grey);}
+  .footer span.name{font-weight:600; color:var(--ink);}
+  @media print{ .back,.toolbar,.hub-steps,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;} }
+</style>
+</head>
+<body>
+<div class="board">
+  <a class="back" id="backLink" href="12_assessor_pack.html" hidden>&#8592; All candidates</a>
+  <div class="header">
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px;">
+      <span style="width:36px;height:36px;border-radius:8px;background:var(--ink-warm);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg viewBox="8 30 104 60" width="23" height="13" fill="none">
+          <path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path>
+          <path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path>
+        </svg>
+      </span>
+      <span style="font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:24px;line-height:0.85;letter-spacing:-0.012em;color:var(--gold);">Connect</span>
+      <span class="hub-word">Hub</span>
+    </div>
+    <p class="eyebrow">Assessor pack</p>
+    <p class="course-name" id="courseName">Course</p>
+    <p class="tag" id="centreLine"></p>
+    <p class="access" id="accessLine"></p>
+    <div class="toolbar" id="toolbar"></div>
+  </div>
+
+  <ol class="hub-steps" id="steps"><li><b>1</b>Candidates: every returned TP document and every marked assignment</li><li><b>2</b>Tracker: the whole course on one grid</li><li><b>3</b>Double-marking record and the briefs, below</li></ol>
+
+  <div id="app"></div>
+
+  <div class="footer">
+    <span style="width:22px;height:22px;border-radius:5px;background:var(--ink-warm);display:inline-flex;align-items:center;justify-content:center;">
+      <svg viewBox="8 30 104 60" width="14" height="8" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg>
+    </span>
+    Designed and built by <span class="name">Ramy</span>
+  </div>
+</div>
+
+<script src="hub-shared.js?v=202609201220"></script>
+<script src="assignment-defaults.js?v=202609201220"></script>
+<script src="hub-tracker.js?v=202609201220"></script>
+<script src="hub-store.js?v=202609201220"></script>
+<script src="hub-sync.js?v=202609201220"></script>
+<script type="text/x-hub-app">
+const T = window.HubTracker;
+const $ = id => document.getElementById(id);
+function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function rec(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }
+function when(iso){ if(!iso) return ''; const d=new Date(iso); if(isNaN(d)) return ''; return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
+function longDate(iso){ if(!iso) return ''; const d=new Date(iso); if(isNaN(d)) return ''; return d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}); }
+
+const MODE = window.HubMode;
+const params = new URLSearchParams(location.search);
+const WHO = params.get('trainee') || '';
+const SETTINGS = rec('connect_course_settings') || {};
+let WORDING = rec('connect_assignment_wording_v2'); if (!WORDING && window.CONNECT_HUB_DEFAULT_WORDING) WORDING = window.CONNECT_HUB_DEFAULT_WORDING;
+const ORDER = hubAssignmentOrder(WORDING);
+const roster = rec('connect_roster_v1') || { trainees: {} };
+const PEOPLE = Object.values(roster.trainees||{}).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+
+// The tracker's vocabulary, so the pack reads like the grid.
+const A_STATE = {
+  '':       { t:'not started', cls:'nd' },
+  WAIT:     { t:'submitted, unmarked', cls:'wait' },
+  UNMARKED: { t:'returned unmarked', cls:'work' },
+  PASS:     { t:'pass', cls:'fine' },
+  FAILRES:  { t:'resubmission required', cls:'work' },
+  WAIT2:    { t:'resubmitted, unmarked', cls:'wait' },
+  RES:      { t:'pass on resubmission', cls:'fine' },
+  FAIL:     { t:'fail', cls:'wrong' }
+};
+const G_STATE = { ABOVE:{ t:'above standard', cls:'above' }, STD:{ t:'to standard', cls:'fine' }, NOTSTD:{ t:'not to standard', cls:'wrong' } };
+const STAGE_OF = n => n<=2 ? 'Stage 1' : n<=5 ? 'Stage 2' : 'Stage 3';
+
+// ---- header ---------------------------------------------------------------------
+$('courseName').textContent = SETTINGS.courseName || 'Course name not set';
+$('centreLine').textContent = [SETTINGS.centreName, SETTINGS.centreNumber ? 'Centre ' + SETTINGS.centreNumber : '', (SETTINGS.start && SETTINGS.end) ? niceDate(SETTINGS.start) + ' – ' + niceDate(SETTINGS.end) : ''].filter(Boolean).join(' · ');
+if (MODE === 'assessor') {
+  const ex = window.HubAssessor && window.HubAssessor.expires;
+  $('accessLine').textContent = 'Read-only assessor view' + (ex ? ' · this link stops working on ' + longDate(ex) : ' · no course end date set, so this link does not expire yet');
+} else if (MODE === 'tutor') {
+  $('accessLine').textContent = 'You are reading this as a tutor — the assessor sees exactly this, without the tutor’s doors.';
+} else {
+  $('accessLine').textContent = 'This page reads the course through the assessor link. Open it with the link the centre gave you.';
+}
+
+// ---- list view -------------------------------------------------------------------
+function personRow(tr){
+  const c = T.recordFor(tr), r = T.readCandidate(c), hist = T.tpHistory(tr);
+  const returned = Object.keys(hist).map(Number).filter(n=>n>=1&&n<=8).sort((a,b)=>a-b);
+  const last = returned.length ? returned[returned.length-1] : 0;
+  const g = last ? G_STATE[c['tp'+last]] : null;
+  const cur = tr.tp && tr.tp.feedback; const curN = cur && cur.status!=='returned' ? T.tpNumberOf(cur) : 0;
+  const tpChips = `<span class="chip ${g?g.cls:'nd'}"><b>${returned.length} of 8</b>${last ? 'TP'+last+' '+(g?g.t:'returned') : 'no TP returned'}</span>${curN ? `<span class="chip wait"><b>TP${curN}</b>in progress</span>` : ''}`;
+  const asg = ORDER.filter(k => k!=='a5' || a5InPlay(tr.assignments||{})).map(k => { const st = T.assignmentState((tr.assignments||{})[k]); const a = A_STATE[st.code] || A_STATE['']; return `<span class="chip ${a.cls}"><b>${esc(k.toUpperCase())}</b>${a.t}${st.dm?' · DM':''}</span>`; }).join('');
+  const chip = T.STATE_CHIP[r.state];
+  const q = 'trainee=' + encodeURIComponent(tr.id);
+  return `<tr>
+    <td><div class="name">${esc(tr.name)}</div><div class="sub">${esc(tr.group ? 'Group ' + tr.group : '')}${tr.tracker && tr.tracker.withdrawn ? ' · withdrawn' : ''}</div></td>
+    <td><div class="chips">${tpChips}</div></td>
+    <td><div class="chips">${asg}</div></td>
+    <td><span class="standing ${chip.cls}">${esc(chip.text)}</span>${r.ceiling ? `<div class="sub">cap: ${esc(r.ceiling.replace('SRT','LSRT'))}</div>` : ''}${r.letterIssued ? '<div class="sub" style="color:var(--red);">Fail letter issued</div>' : ''}</td>
+    <td style="white-space:nowrap;"><a class="btn ghost" href="12_assessor_pack.html?${q}">Open</a></td>
+  </tr>`;
+}
+function doubleMarkingRows(){
+  const rows = [];
+  PEOPLE.forEach(tr => {
+    ORDER.forEach(k => {
+      if (k === 'a5') return; // a centre sanction, never in the sample
+      const sub = (tr.assignments||{})[k]; if (!sub || !sub.sub1) return;
+      const m = sub.markers || {}; const st = T.assignmentState(sub); const a = A_STATE[st.code] || A_STATE[''];
+      rows.push(`<tr><td class="name">${esc(tr.name)}</td><td>${esc(k.toUpperCase())}</td><td>${esc(m.first||'—')}</td><td>${esc(m.second||'—')}</td><td><span class="chip ${m.doubleMarked?'fine':'nd'}">${m.doubleMarked?'yes':'no'}</span></td><td><span class="chip ${a.cls}">${a.t}</span></td></tr>`);
+    });
+  });
+  return rows;
+}
+function briefs(){
+  return ORDER.filter(k => k!=='a5' || PEOPLE.some(tr=>a5InPlay(tr.assignments||{}))).map(k => {
+    const w = WORDING && WORDING[k]; if (!w) return '';
+    const crit = (w.criteria||[]).map(c => `<li>${esc(typeof c==='string' ? c : c.text)}</li>`).join('');
+    return `<div class="brief"><h3>${esc(k.toUpperCase())} — ${esc(w.title||'')}</h3><div class="sub">${w.wordMin ? esc(w.wordMin + '–' + w.wordMax + ' words') : ''}${w.format ? ' · ' + esc(w.format) : ''}</div>${crit ? `<ul>${crit}</ul>` : ''}</div>`;
+  }).join('');
+}
+function renderList(){
+  const dm = doubleMarkingRows();
+  const n = PEOPLE.length, sample = n<=9 ? 3 : n<=16 ? 4 : 5;
+  $('toolbar').innerHTML = `<a class="btn primary" href="7_candidate_tracker.html">Candidate tracker</a><button class="btn ghost" type="button" onclick="window.print()">Print / Save as PDF</button>`;
+  $('app').innerHTML = `
+    <h2 class="sect">Candidates <small>${n} on the course</small></h2>
+    <div class="panel">${n ? `<table><tr><th>Candidate</th><th>Teaching practice</th><th>Assignments</th><th>Standing</th><th></th></tr>${PEOPLE.map(personRow).join('')}</table>` : '<div class="empty">No candidates on the course yet.</div>'}</div>
+    <h2 class="sect">Double-marking record <small>Handbook 8.2.3: ${sample} of each assignment for ${n} candidate${n===1?'':'s'}</small></h2>
+    <div class="panel">${dm.length ? `<table><tr><th>Candidate</th><th>Assignment</th><th>First marker</th><th>Second marker</th><th>Double-marked</th><th>Outcome</th></tr>${dm.join('')}</table>` : '<div class="empty">No assignment has been submitted yet.</div>'}</div>
+    <h2 class="sect">Assignment briefs <small>as the centre set them, in the centre’s order</small></h2>
+    <div class="panel">${briefs()}</div>`;
+}
+
+// ---- one candidate ---------------------------------------------------------------
+function tpBlock(tr, n, c){
+  const hist = T.tpHistory(tr); const fb = hist[n]; const f = fb && fb.state && fb.state.f;
+  const cur = tr.tp && tr.tp.feedback; const isCur = cur && T.tpNumberOf(cur)===n && cur.status!=='returned';
+  let meta, right='';
+  if (fb) {
+    const g = G_STATE[c['tp'+n]];
+    meta = `<span class="chip ${g?g.cls:'wait'}">${g?g.t:'returned'}</span> <b>${esc(c['tp'+n+'_aim'] || (f && f.fMain) || '')}</b>${f && f.fTutor ? ' · tutor ' + esc(f.fTutor) : ''}${f && f.fDate ? ' · taught ' + esc(niceDate(f.fDate)) : ''}${fb.returnedAt ? ' · returned ' + esc(when(fb.returnedAt)) : ''}`;
+    right = fb.docHTML ? `<button class="btn ghost" type="button" data-doc="tp${n}">Show the document</button>` : '<span class="sub">no document stored</span>';
+  } else if (isCur) {
+    const plan = tr.tp && tr.tp.plan, se = tr.tp && tr.tp.selfeval;
+    const bits = [plan && plan.status==='turned_in' ? 'plan turned in' : plan ? 'plan in draft' : 'no plan yet', se && se.status==='turned_in' ? 'self-evaluation in' : 'self-evaluation not yet in', 'feedback being written'];
+    meta = `<span class="chip wait">in progress</span> ${esc(bits.join(' · '))}`;
+  } else {
+    const plan = tr.tp && tr.tp.plan; const planN = plan && plan.state && plan.state.meta && parseInt(String(plan.state.meta.tp||plan.label||'').replace(/\D/g,''),10);
+    if (plan && planN===n) meta = `<span class="chip wait">${plan.status==='turned_in' ? 'plan turned in' : 'plan in draft'}</span> not yet taught`;
+    else meta = `<span class="chip nd">not yet taught</span>`;
+  }
+  return `<div class="tp" id="tp${n}"><div class="tp-row"><span class="n">TP${n}</span><span class="meta"><span class="sub">${STAGE_OF(n)}</span><br>${meta}</span>${right}</div>${fb && fb.docHTML ? `<div class="doc" id="doc-tp${n}" hidden>${fb.docHTML}</div>` : ''}</div>`;
+}
+function assignmentBlock(tr, k){
+  const w = WORDING && WORDING[k]; const sub = (tr.assignments||{})[k] || {}; const st = T.assignmentState(sub); const a = A_STATE[st.code] || A_STATE[''];
+  const m = sub.markers || {};
+  const trail = [];
+  if (sub.sub1At) trail.push('submitted ' + when(sub.sub1At));
+  if (sub.marked1At) trail.push('marked ' + when(sub.marked1At) + (m.first ? ' by ' + m.first : ''));
+  if (sub.sub2At) trail.push('resubmitted ' + when(sub.sub2At));
+  if (sub.marked2At) trail.push('resubmission marked ' + when(sub.marked2At));
+  const door = ['PASS','RES','FAIL','FAILRES'].includes(st.code) ? `<a class="btn ghost" href="11_assignment_record.html?trainee=${encodeURIComponent(tr.id)}&a=${k}">Open the marked record</a>` : '';
+  return `<div class="tp"><div class="tp-row"><span class="n">${esc(k.toUpperCase())}</span><span class="meta"><span class="sub">${esc(w ? w.title : '')}</span><br><span class="chip ${a.cls}">${a.t}</span> ${st.round ? esc(st.round===2 ? 'second submission' : 'first submission') : 'nothing submitted'}${m.second ? ' · double-marked by ' + esc(m.second) : ''}${trail.length ? ' · ' + esc(trail.join(' · ')) : ''}</span>${door}</div></div>`;
+}
+function renderOne(tr){
+  const c = T.recordFor(tr), r = T.readCandidate(c), chip = T.STATE_CHIP[r.state], man = tr.tracker || {};
+  $('backLink').hidden = false; $('steps').style.display = 'none';
+  $('toolbar').innerHTML = `<a class="btn ghost" href="7_candidate_tracker.html">Candidate tracker</a><button class="btn ghost" type="button" onclick="window.print()">Print / Save as PDF</button>`;
+  const verdict = v => v==='NOTSTD' ? 'not to standard' : v==='STD' ? 'to standard' : v==='ABOVE' ? 'above standard' : 'not held';
+  const facts = [
+    ['Standing', chip.text.charAt(0)+chip.text.slice(1).toLowerCase() + (r.from ? ' — from ' + r.from : ''), r.state==='notstd' ? 'red' : ''],
+    ['Grade cap', r.ceiling ? r.ceiling.replace('SRT','LSRT') : 'none', r.ceiling ? 'amb' : ''],
+    ['Stage 1 record', man.stage1 ? 'done' : 'not yet', ''],
+    ['Stage 2 tutorial', verdict(man.stage2), man.stage2==='NOTSTD' ? 'red' : ''],
+    ['Stage 3 tutorial', verdict(man.stage3), man.stage3==='NOTSTD' ? 'red' : ''],
+    ['Fail letter', man.failLetter ? 'issued ' + man.failLetter : 'not issued', man.failLetter ? 'red' : ''],
+    ['Withdrawn', man.withdrawn ? 'yes' : 'no', man.withdrawn ? 'red' : '']
+  ];
+  $('app').innerHTML = `
+    <div class="panel">
+      <div class="cand-head"><div><h1>${esc(tr.name)}</h1><div class="sub">${esc(tr.group ? 'Group ' + tr.group : '')}</div></div><span class="standing ${chip.cls}">${esc(chip.text)}</span></div>
+      <div class="facts">${facts.map(f=>`<div class="fact"><div class="k">${f[0]}</div><div class="v ${f[2]}">${esc(f[1])}</div></div>`).join('')}</div>
+    </div>
+    <h2 class="sect">Teaching practice <small>the document the candidate received, as returned</small></h2>
+    <div class="panel">${[1,2,3,4,5,6,7,8].map(n=>tpBlock(tr, n, c)).join('')}</div>
+    <h2 class="sect">Assignments <small>in the centre’s order</small></h2>
+    <div class="panel">${ORDER.filter(k => k!=='a5' || a5InPlay(tr.assignments||{})).map(k=>assignmentBlock(tr, k)).join('')}</div>`;
+  $('app').addEventListener('click', e => {
+    const b = e.target.closest('[data-doc]'); if (!b) return;
+    const d = $('doc-' + b.dataset.doc); if (!d) return;
+    d.hidden = !d.hidden; b.textContent = d.hidden ? 'Show the document' : 'Hide the document';
+  });
+  if (location.hash && /^#tp\d$/.test(location.hash)) { const b = document.querySelector(`[data-doc="${location.hash.slice(1)}"]`); if (b) b.click(); const el = $(location.hash.slice(1)); if (el) el.scrollIntoView({ behavior:'smooth', block:'start' }); }
+}
+
+if (MODE !== 'assessor' && MODE !== 'tutor') {
+  $('app').innerHTML = '<div class="panel"><div class="empty">Nothing to show — this page needs the assessor link (or the tutor link) to read the course.</div></div>';
+} else if (WHO) {
+  const tr = roster.trainees[WHO];
+  if (tr) renderOne(tr); else $('app').innerHTML = '<div class="panel"><div class="empty">No candidate with that link on the course.</div></div>';
+} else renderList();
+</script>
+</body>
+</html>

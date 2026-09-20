@@ -3,17 +3,20 @@
 // trainee's plan reaches the tutor without a file and comes back the same way.
 //
 // Access is by link, as in Connect: a trainee's link carries ?t=<token>, a
-// tutor's carries ?k=<course key>. Either is remembered in this browser once
-// seen, so the pages can link to each other without repeating it.
+// tutor's carries ?k=<course key>, an assessor's ?a=<assessor key> (read-only,
+// Ramy 20 Sep 2026). Any of them is remembered in this browser once seen, so
+// the pages can link to each other without repeating it.
 window.HubStore = (function(){
   var URL = 'https://script.google.com/macros/s/AKfycbz5ESCtTg6kIDNCf7ynt1fB0tOSVusgOUiMub9-wEZunwQ2uTw2wzz1vmbHxzbvpG-eyA/exec';
   var params = new URLSearchParams(location.search);
   try {
     if (params.get('t')) localStorage.setItem('hub:t', params.get('t'));
     if (params.get('k')) localStorage.setItem('hub:k', params.get('k'));
+    if (params.get('a')) localStorage.setItem('hub:a', params.get('a'));
   } catch (e) {}
   function token(){ try { return localStorage.getItem('hub:t') || ''; } catch (e) { return ''; } }
   function key(){ try { return localStorage.getItem('hub:k') || ''; } catch (e) { return ''; } }
+  function akey(){ try { return localStorage.getItem('hub:a') || ''; } catch (e) { return ''; } }
   // text/plain keeps the browser from sending a CORS preflight, which Apps
   // Script would not answer; the response itself is plain JSON.
   async function once(payload){
@@ -26,6 +29,7 @@ window.HubStore = (function(){
   async function call(body){
     var payload = Object.assign({}, body);
     if (key() && payload.key == null) payload.key = key();
+    else if (akey() && payload.a == null) payload.a = akey();
     var out;
     try { out = await once(payload); }
     catch (e) { if (!e.transient) throw e; await new Promise(function(r){ setTimeout(r, 900); }); out = await once(payload); }
@@ -36,15 +40,19 @@ window.HubStore = (function(){
   function withAccess(href){
     var sep = href.indexOf('?') === -1 ? '?' : '&';
     if (key()) return href + sep + 'k=' + encodeURIComponent(key());
+    if (akey()) return href + sep + 'a=' + encodeURIComponent(akey());
     if (token()) return href + sep + 't=' + encodeURIComponent(token());
     return href;
   }
   return {
-    url: URL, token: token, key: key,
-    isTutor: function(){ return !!key(); }, isTrainee: function(){ return !!token() && !key(); },
+    url: URL, token: token, key: key, assessorKey: akey,
+    isTutor: function(){ return !!key(); }, isAssessor: function(){ return !!akey() && !key(); }, isTrainee: function(){ return !!token() && !key() && !akey(); },
     call: call,
     ping: function(){ return call({ op: 'ping' }); },
     boot: function(){ return call({ op: 'boot', token: token() || undefined }); },
+    assessorLink: function(){ return call({ op: 'assessorLink' }); },
+    rotateAssessorKey: function(){ return call({ op: 'rotateAssessorKey' }); },
+    assessorLinkFor: function(k){ return base() + '12_assessor_pack.html?a=' + encodeURIComponent(k); },
     rotateKey: function(){ return call({ op: 'rotateKey' }).then(function(r){ try { localStorage.setItem('hub:k', r.key); } catch (e) {} return true; }); },
     purgeTrainee: function(tok){ return call({ op: 'purgeTrainee', token: tok }); },
     me: function(){ return call({ op: 'me', token: token() }); },

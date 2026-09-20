@@ -9,7 +9,8 @@
 // run once the preload has finished (or at once, in solo mode).
 (function(){
   var S = window.HubStore;
-  var mode = !S ? 'solo' : S.isTutor() ? 'tutor' : S.isTrainee() ? 'trainee' : 'solo';
+  // Assessor mode (Ramy, 20 Sep 2026): boots like a tutor, writes nothing.
+  var mode = !S ? 'solo' : S.isTutor() ? 'tutor' : S.isAssessor() ? 'assessor' : S.isTrainee() ? 'trainee' : 'solo';
   window.HubMode = mode;
   var TRAINEE_KEYS = { 'chub:plan':'plan', 'chub:selfeval':'selfeval', 'chub:feedback':'feedback', 'connect_assignment_submissions_v1':'assignments', 'chub:tpHistory':'tpHistory', 'chub:tracker':'tracker' };
   var TUTOR_ONLY = { feedback:1, tpHistory:1, tracker:1 };
@@ -35,7 +36,7 @@
   // The file-exchange controls belong to solo mode only.
   function hideExchangeUi(){
     if (mode === 'solo') return;
-    ['exchangeBlock','importTriggerBtn','importWordingBtn','exportWordingBtn','exportBtn'].forEach(function(id){ var el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    ['exchangeBlock','importTriggerBtn','importWordingBtn','exportWordingBtn','exportBtn'].concat(mode === 'assessor' ? ['tutorOnly'] : []).forEach(function(id){ var el = document.getElementById(id); if (el) el.style.display = 'none'; });
     var ex = document.getElementById('exchangeNote'); if (ex) ex.style.display = '';
   }
 
@@ -71,6 +72,7 @@
   window.addEventListener('pagehide', flushBeacon);
   function recordOf(tr){ return { plan: (tr.tp && tr.tp.plan) || null, selfeval: (tr.tp && tr.tp.selfeval) || null, feedback: (tr.tp && tr.tp.feedback) || null, tpHistory: (tr.tp && tr.tp.history) || {}, assignments: tr.assignments || {}, tracker: tr.tracker || {} }; }
   function route(key, value){
+    if (mode === 'assessor') return; // read-only: nothing this browser does reaches the course
     var data = value == null ? null : parse(value);
     if (mode === 'trainee' && TRAINEE_KEYS[key]) {
       var kind = TRAINEE_KEYS[key];
@@ -103,6 +105,7 @@
     var course = boot.course || {};
     if (course.wording) origSet('connect_assignment_wording_v2', JSON.stringify(course.wording)); else origRemove('connect_assignment_wording_v2');
     if (course.settings) origSet('connect_course_settings', JSON.stringify(course.settings)); else origRemove('connect_course_settings');
+    if (mode === 'assessor') window.HubAssessor = boot.assessor || {};
     if (mode === 'trainee') {
       var me = boot.me || { records: {} };
       window.HubMe = me;
@@ -123,6 +126,6 @@
     });
     origSet('connect_roster_v1', JSON.stringify(roster));
   });
-  work.then(function(){ status('Live — saved to the course as you go', 'ok'); }, function(err){ status('Could not reach the course — ' + (err && err.message || err), 'error'); })
+  work.then(function(){ status(mode === 'assessor' ? 'Assessor view — read-only' : 'Live — saved to the course as you go', 'ok'); }, function(err){ status('Could not reach the course — ' + (err && err.message || err), 'error'); })
       .then(function(){ if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', runApp); else runApp(); });
 })();

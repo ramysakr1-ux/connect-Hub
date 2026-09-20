@@ -157,10 +157,10 @@
     Designed and built by <span class="name">Ramy</span>
   </p>
 </div>
-<script src="assignment-defaults.js?v=202609201159"></script>
-<script src="hub-store.js?v=202609201159"></script>
-<script src="hub-shared.js?v=202609201159"></script>
-<script src="hub-sync.js?v=202609201159"></script>
+<script src="assignment-defaults.js?v=202609201220"></script>
+<script src="hub-store.js?v=202609201220"></script>
+<script src="hub-shared.js?v=202609201220"></script>
+<script src="hub-sync.js?v=202609201220"></script>
 <script type="text/x-hub-app">
 document.getElementById('tabs').addEventListener('click', e=>{
   const btn = e.target.closest('.tab');
@@ -254,6 +254,21 @@ function renderDoubleMarking(){
 // ---- Roster and links, from the store -----------------------------------
 // A trainee is added here and gets a link with their own token in it; that
 // link is what goes into Classroom for them. Tutors get the tutor link.
+// The assessor link (Ramy, 20 Sep 2026): read-only, one per course, dies 14
+// days after the course end date set on the Settings tab.
+async function renderAssessorBlock(rotated){
+  const S = window.HubStore, el = document.getElementById('assessorBlock'); if (!el) return;
+  try {
+    const r = rotated || await S.assessorLink();
+    const link = S.assessorLinkFor(r.key);
+    const until = r.expires ? 'It stops working on ' + new Date(r.expires).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) + ' \u2014 14 days after the course end date.' : 'No course end date is set on the Settings tab, so it does not expire yet; set the end date and it will stop working 14 days after it.';
+    el.innerHTML = `<b style="color:var(--ink);">Assessor link</b> \u2014 read-only: every TP document, every assignment record, the tracker and the double-marking record; nothing can be changed from it. ${esc(until)}<br><code style="font-size:0.78rem;word-break:break-all;">${esc(link)}</code> <button class="btn ghost" type="button" data-copy="${esc(link)}" style="padding:4px 10px;font-size:0.78rem;">Copy</button> <button class="btn ghost" type="button" id="rotateAssessor" style="padding:4px 10px;font-size:0.78rem;color:var(--brick);">Rotate the assessor link</button>`;
+    document.getElementById('rotateAssessor').addEventListener('click', async ()=>{
+      if(!(await confirmModal('Rotate the assessor link? The link in circulation stops working at once and a new one shows here.', 'Rotate'))) return;
+      try { const nr = await S.rotateAssessorKey(); renderAssessorBlock(nr); } catch(err){ alert(err.message); }
+    });
+  } catch (err) { el.innerHTML = 'Assessor link: ' + esc(err.message); }
+}
 async function renderStoreRoster(){
   const box = document.getElementById('storeRoster'); if (!box) return;
   const S = window.HubStore;
@@ -274,6 +289,7 @@ async function renderStoreRoster(){
       <span id="storeAddStatus" style="font-size:0.82rem;color:var(--grey);"></span>
     </form>
     <p style="font-size:0.82rem;color:var(--grey);margin:0 0 10px;">Each trainee's link is theirs alone — post it to them in Classroom as a Material. The tutor link is for tutors only: <code style="font-size:0.78rem;">${esc2(S.tutorLink())}</code> <button class="btn ghost" type="button" data-copy="${esc2(S.tutorLink())}" style="padding:4px 10px;font-size:0.78rem;">Copy</button> <button class="btn ghost" type="button" id="storeRotateKey" style="padding:4px 10px;font-size:0.78rem;color:var(--brick);">Rotate the course key</button></p>
+    <div id="assessorBlock" style="font-size:0.82rem;color:var(--grey);margin:0 0 14px;padding:10px 12px;border:1.5px dashed var(--sand-line);border-radius:8px;">Loading the assessor link…</div>
     <table style="width:100%;">
       <tr><th>Trainee</th><th>Group</th><th>Personal link</th><th></th></tr>
       ${trainees.length ? trainees.map(t=>`<tr>
@@ -282,6 +298,7 @@ async function renderStoreRoster(){
         <td style="white-space:nowrap;"><button class="btn ghost" type="button" data-copy="${esc2(S.traineeLink(t.token))}" style="padding:4px 10px;font-size:0.78rem;">Copy link</button> <button class="btn ghost" type="button" data-remove="${esc2(t.token)}" data-name="${esc2(t.name)}" style="padding:4px 10px;font-size:0.78rem;color:var(--brick);">Remove</button></td>
       </tr>`).join('') : '<tr><td colspan="4" style="color:var(--grey);">No trainees on the course yet — add the first one above.</td></tr>'}
     </table>`;
+  renderAssessorBlock();
   document.getElementById('storeRotateKey').addEventListener('click', async ()=>{
     if(!(await confirmModal('Rotate the course key? Every tutor link in circulation stops working; this browser gets the new one and the new tutor link shows here. Trainees\u2019 links are not affected.', 'Rotate'))) return;
     try { await S.rotateKey(); history.replaceState(null, '', location.pathname); renderStoreRoster(); } catch(err){ alert(err.message); }

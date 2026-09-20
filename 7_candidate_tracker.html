@@ -123,17 +123,21 @@
   </div>
   <div id="detail"></div>
 </div>
-<script src="hub-shared.js?v=202609201159"></script>
-<script src="assignment-defaults.js?v=202609201159"></script>
-<script src="hub-tracker.js?v=202609201159"></script>
-<script src="hub-store.js?v=202609201159"></script>
-<script src="hub-sync.js?v=202609201159"></script>
+<script src="hub-shared.js?v=202609201220"></script>
+<script src="assignment-defaults.js?v=202609201220"></script>
+<script src="hub-tracker.js?v=202609201220"></script>
+<script src="hub-store.js?v=202609201220"></script>
+<script src="hub-sync.js?v=202609201220"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
 // ?me=1: the candidate's own view. One row, built from this browser's own
 // records (the paperwork and what the tutor returned), nothing editable.
 const ME = new URLSearchParams(location.search).get('me') === '1';
+// The assessor's view (Ramy, 20 Sep 2026): the tutor's grid, nothing editable,
+// the tutor's prompts kept to the tutor, doors into the pack's documents.
+const ASSESSOR = window.HubMode === 'assessor';
+const RO = ME || ASSESSOR;
 function loadRoster(){
   if (ME) {
     const rec = k => { try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } };
@@ -265,6 +269,7 @@ function renderDetail(all){
     if (s.sub2At) trail.push([s.sub2At, 'Resubmitted']);
     if (s.marked2At) trail.push([s.marked2At, 'Resubmission marked' + (s.feedback&&s.feedback.outcome?' — '+s.feedback.outcome:'')]);
     if (ME) { actions.push([a.code==='FAILRES'||a.code==='UNMARKED' ? 'Open and resubmit' : a.code ? 'Open the assignment' : 'Start the assignment', `9_assignment_submission.html?a=${SEL.col}`, true]); if (['PASS','RES','FAIL'].includes(a.code)) actions.push(['Open the record', `11_assignment_record.html?a=${SEL.col}`, false]); }
+    else if (ASSESSOR) { if (['PASS','RES','FAIL','FAILRES'].includes(a.code)) actions.push(['Open the marked record', `11_assignment_record.html?${q}&a=${SEL.col}`, true]); actions.push(['Open the candidate\u2019s pack', `12_assessor_pack.html?${q}`, false]); }
     else {
     if (['WAIT','WAIT2'].includes(a.code)) actions.push(['Open the mark sheet', `10_tutor_assignment_marking.html?${q}&a=${SEL.col}`, true]);
     else if (['PASS','RES','FAIL','FAILRES'].includes(a.code)) actions.push(['Open the marked record', `11_assignment_record.html?${q}&a=${SEL.col}`, true]);
@@ -280,6 +285,7 @@ function renderDetail(all){
     if (t.at) trail.push([new Date(t.at).toISOString(), 'Feedback returned' + (t.tutor?' by '+t.tutor:'') + (t.g && t.g!=='un' ? ' — ' + st.name : '')]);
     const cur = p.tr.tp && p.tr.tp.feedback; const isCurrent = cur && T.tpNumberOf(cur)===n;
     if (ME) { if (t.g!=='nd' && t.g!=='un' && isCurrent) actions.push(['Read the feedback', '4_feedback_returned.html', true]); }
+    else if (ASSESSOR) { if (t.fb) actions.push(['Open the TP document', `12_assessor_pack.html?${q}#tp${n}`, true]); actions.push(['Open the candidate\u2019s pack', `12_assessor_pack.html?${q}`, false]); }
     else if (t.g==='un') actions.push(['Sign off the feedback', `3_tutor_feedback.html?${q}`, true]);
     else if (t.g!=='nd' && isCurrent) actions.push(['Open the TP record', `3_tutor_feedback.html?${q}`, true]);
   }
@@ -290,18 +296,18 @@ function renderDetail(all){
   // grade cap (11.6 is about them) and a letter once it has been issued --
   // never 'potential Fail' or 'a letter can go out' ahead of the letter itself.
   if (ME && r.letterIssued) facts.push(['Letter', 'Fail letter issued ' + String(man0.failLetter || ''), 'red']);
-  if (!ME && r.potentialFail) facts.push(['Potential Fail', r.failWhy.join('; ') + (r.letterIssued?' · Fail letter issued':''), 'red']);
-  if (!ME && r.letterAdvised) facts.push(['Letter', 'A letter can go out now — ' + [...r.fails,...r.pending].map(x=>T.SHOW_AS[x]||x).join(', '), 'amb']);
+  if (!RO && r.potentialFail) facts.push(['Potential Fail', r.failWhy.join('; ') + (r.letterIssued?' · Fail letter issued':''), 'red']);
+  if (!RO && r.letterAdvised) facts.push(['Letter', 'A letter can go out now — ' + [...r.fails,...r.pending].map(x=>T.SHOW_AS[x]||x).join(', '), 'amb']);
   if (r.ceiling) facts.push(['Grade cap', r.ceiling.replace('SRT','LSRT'), 'amb']);
-  if (!ME && r.stage3Why) facts.push(['Stage 3', 'required — ' + r.stage3Why, 'purp']);
-  if (!ME && r.stage2Hint) facts.push(['Stage 2', r.stage2Hint, 'amb']);
-  else if (!ME && r.stage2Due) facts.push(['Stage 2', 'due — ' + r.graded + ' TPs taught, no Stage 2 recorded', 'amb']);
-  if (!ME && r.stage1Due) facts.push(['Stage 1', 'record outstanding', 'amb']);
+  if (!RO && r.stage3Why) facts.push(['Stage 3', 'required — ' + r.stage3Why, 'purp']);
+  if (!RO && r.stage2Hint) facts.push(['Stage 2', r.stage2Hint, 'amb']);
+  else if (!RO && r.stage2Due) facts.push(['Stage 2', 'due — ' + r.graded + ' TPs taught, no Stage 2 recorded', 'amb']);
+  if (!RO && r.stage1Due) facts.push(['Stage 1', 'record outstanding', 'amb']);
   // The tutorials, the letter and withdrawal: one row each, set by choosing
   // a value, not by cycling a button (Ramy, 20 Sep 2026: "the stages look
   // really messy"). The candidate's view prints the values as text.
   const man = p.tr.tracker || {};
-  const seg = (field, options, cur) => ME
+  const seg = (field, options, cur) => RO
     ? `<span class="v ${cur ? 'set-'+cur : ''}">${(options.find(o=>o[0]===cur)||options[options.length-1])[1]}</span>`
     : `<span class="seg">${options.map(o=>`<button class="sg ${o[0]===cur?'on set-'+(o[0]||'none'):''}" data-id="${esc(p.tr.id)}" data-field="${field}" data-value="${o[0]}">${o[1]}</button>`).join('')}</span>`;
   // The grid's own tokens, so a segment never wraps.
@@ -310,7 +316,7 @@ function renderDetail(all){
     ['Stage 1', seg('stage1', [['GIVEN','record done'],['','not yet']], man.stage1||'')],
     ['Stage 2', seg('stage2', verdicts, man.stage2||'')],
     ['Stage 3', seg('stage3', verdicts, man.stage3||'')],
-    ['Fail letter', ME ? `<span class="v ${man.failLetter?'set-NOTSTD':''}">${man.failLetter ? 'Issued ' + esc(String(man.failLetter)) : 'Not issued'}</span>`
+    ['Fail letter', RO ? `<span class="v ${man.failLetter?'set-NOTSTD':''}">${man.failLetter ? 'Issued ' + esc(String(man.failLetter)) : 'Not issued'}</span>`
       : (man.failLetter ? `<span class="seg"><button class="sg on set-NOTSTD" data-id="${esc(p.tr.id)}" data-field="failLetter" data-value="">Issued ${esc(String(man.failLetter))} · undo</button></span>`
                         : `<span class="seg"><button class="sg" data-id="${esc(p.tr.id)}" data-field="failLetter" data-value="today">Mark as issued today</button></span>`)],
   ];
@@ -333,7 +339,7 @@ $('filters').addEventListener('click', e=>{ const b=e.target.closest('.filter');
 $('gridwrap').addEventListener('click', e=>{ const c=e.target.closest('.cell'); if(!c) return; SEL={id:c.dataset.id, col:c.dataset.col}; render(); document.getElementById('detail').scrollIntoView({behavior:'smooth', block:'nearest'}); });
 $('detail').addEventListener('click', e=>{
   if (e.target.id==='closeDetail'){ SEL=null; render(); return; }
-  const b = e.target.closest('button.sg'); if(!b || ME) return;
+  const b = e.target.closest('button.sg'); if(!b || RO) return;
   const roster = loadRoster(); const tr = roster.trainees[b.dataset.id]; if(!tr) return;
   tr.tracker = tr.tracker || {};
   const f = b.dataset.field, v = b.dataset.value;
@@ -342,7 +348,8 @@ $('detail').addEventListener('click', e=>{
   else tr.tracker[f] = v;
   saveRoster(roster); render();
 });
-(function(){ if (ME) { document.getElementById('backLink').href='index.html'; document.getElementById('backLink').innerHTML='&#8592; Back'; document.querySelector('.lede').textContent='Every teaching practice and every assignment, read from what you have submitted and what your tutor has returned. Colour only marks what needs attention; everything that is fine stays quiet. The Stage records and the standing are your tutor\u2019s, as recorded.'; } try{ const cs = JSON.parse(localStorage.getItem('connect_course_settings')||'{}'); const parts=['Connect Hub', ME ? 'Your progress' : '', cs.courseName, cs.centreName].filter(Boolean); $('eyebrow').textContent = parts.join(' · '); }catch(e){} })();
+(function(){ if (ASSESSOR) { document.getElementById('backLink').href='12_assessor_pack.html'; document.getElementById('backLink').innerHTML='&#8592; Assessor pack'; document.querySelector('.lede').textContent='Every candidate\u2019s teaching practice and assignments, read from what the tutors have returned and marked. Nothing here can be changed from this link; the Stage records and standing are as the tutors recorded them.'; }
+  if (ME) { document.getElementById('backLink').href='index.html'; document.getElementById('backLink').innerHTML='&#8592; Back'; document.querySelector('.lede').textContent='Every teaching practice and every assignment, read from what you have submitted and what your tutor has returned. Colour only marks what needs attention; everything that is fine stays quiet. The Stage records and the standing are your tutor\u2019s, as recorded.'; } try{ const cs = JSON.parse(localStorage.getItem('connect_course_settings')||'{}'); const parts=['Connect Hub', ME ? 'Your progress' : ASSESSOR ? 'Assessor view' : '', cs.courseName, cs.centreName].filter(Boolean); $('eyebrow').textContent = parts.join(' · '); }catch(e){} })();
 render();
 </script>
 </body>
