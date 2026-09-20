@@ -75,28 +75,29 @@
   // ---- preload ------------------------------------------------------------------
   if (mode === 'solo') { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', runApp); else runApp(); return; }
   status('Loading from the course…', 'busy');
-  var work = S.course().then(function(course){
+  var work = S.boot().then(function(boot){
+    var course = boot.course || {};
     if (course.wording) origSet('connect_assignment_wording_v2', JSON.stringify(course.wording)); else origRemove('connect_assignment_wording_v2');
     if (course.settings) origSet('connect_course_settings', JSON.stringify(course.settings)); else origRemove('connect_course_settings');
-    if (mode === 'trainee') return S.me().then(function(me){
+    if (mode === 'trainee') {
+      var me = boot.me || { records: {} };
       window.HubMe = me;
       origSet('hub:name', me.name || '');
       Object.keys(TRAINEE_KEYS).forEach(function(key){
         var kind = TRAINEE_KEYS[key], v = me.records[kind];
         if (v == null) origRemove(key); else origSet(key, JSON.stringify(v));
       });
+      return;
+    }
+    var roster = { trainees: {} };
+    snapshot = {};
+    (boot.roster || []).forEach(function(t){
+      var r = t.records || {};
+      roster.trainees[t.token] = { id: t.token, name: t.name, group: t.group, importedAt: t.created, tp: { plan: r.plan || null, selfeval: r.selfeval || null, feedback: r.feedback || null, history: r.tpHistory || {} }, assignments: r.assignments || {}, tracker: r.tracker || {} };
+      var rec = recordOf(roster.trainees[t.token]); snapshot[t.token] = {};
+      Object.keys(rec).forEach(function(kind){ snapshot[t.token][kind] = JSON.stringify(rec[kind]); });
     });
-    return S.roster().then(function(trainees){
-      var roster = { trainees: {} };
-      snapshot = {};
-      trainees.forEach(function(t){
-        var r = t.records || {};
-        roster.trainees[t.token] = { id: t.token, name: t.name, group: t.group, importedAt: t.created, tp: { plan: r.plan || null, selfeval: r.selfeval || null, feedback: r.feedback || null, history: r.tpHistory || {} }, assignments: r.assignments || {}, tracker: r.tracker || {} };
-        var rec = recordOf(roster.trainees[t.token]); snapshot[t.token] = {};
-        Object.keys(rec).forEach(function(kind){ snapshot[t.token][kind] = JSON.stringify(rec[kind]); });
-      });
-      origSet('connect_roster_v1', JSON.stringify(roster));
-    });
+    origSet('connect_roster_v1', JSON.stringify(roster));
   });
   work.then(function(){ status('Live — saved to the course as you go', 'ok'); }, function(err){ status('Could not reach the course — ' + (err && err.message || err), 'error'); })
       .then(function(){ if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', runApp); else runApp(); });

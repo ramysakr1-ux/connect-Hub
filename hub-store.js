@@ -38,6 +38,8 @@ window.HubStore = (function(){
     isTutor: function(){ return !!key(); }, isTrainee: function(){ return !!token() && !key(); },
     call: call,
     ping: function(){ return call({ op: 'ping' }); },
+    boot: function(){ return call({ op: 'boot', token: token() || undefined }); },
+    purgeTrainee: function(tok){ return call({ op: 'purgeTrainee', token: tok }); },
     me: function(){ return call({ op: 'me', token: token() }); },
     get: function(kind, tok){ return call({ op: 'get', token: tok || token(), kind: kind }).then(function(r){ return r.data; }); },
     put: function(kind, data, tok){ return call({ op: 'put', token: tok || token(), kind: kind, data: data }); },
