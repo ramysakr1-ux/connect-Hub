@@ -191,7 +191,7 @@ function people(){
 }
 const toMark = p => ASSN.filter(a=>['WAIT','WAIT2'].includes(p.asg[a.key].code)).length + TPS.filter(t=>p.tps[t.key].g==='un').length;
 const dmCount = p => ASSN.filter(a=>p.asg[a.key].dm).length;
-const atRisk = p => p.r.potentialFail;
+const atRisk = p => !ME && p.r.potentialFail;
 
 function render(){
   const all = people();
@@ -274,15 +274,19 @@ function renderDetail(all){
     else if (t.g!=='nd' && isCurrent) actions.push(['Open the TP record', `3_tutor_feedback.html?${q}`, true]);
   }
   // the candidate's standing, from the tracker's rules
-  const r = p.r; const chip = T.STATE_CHIP[r.state];
+  const r = p.r; const chip = T.STATE_CHIP[r.state]; const man0 = p.tr.tracker || {};
   facts.push(['Standing', chip.text.charAt(0)+chip.text.slice(1).toLowerCase() + (r.from?' — from '+r.from:''), r.state==='notstd'?'red':'']);
-  if (r.potentialFail) facts.push(['Potential Fail', r.failWhy.join('; ') + (r.letterIssued?' · Fail letter issued':''), 'red']);
-  if (r.letterAdvised) facts.push(['Letter', 'A letter can go out now — ' + [...r.fails,...r.pending].map(x=>T.SHOW_AS[x]||x).join(', '), 'amb']);
+  // The tutor's prompts stay the tutor's. A candidate sees their standing, a
+  // grade cap (11.6 is about them) and a letter once it has been issued --
+  // never 'potential Fail' or 'a letter can go out' ahead of the letter itself.
+  if (ME && r.letterIssued) facts.push(['Letter', 'Fail letter issued ' + String(man0.failLetter || ''), 'red']);
+  if (!ME && r.potentialFail) facts.push(['Potential Fail', r.failWhy.join('; ') + (r.letterIssued?' · Fail letter issued':''), 'red']);
+  if (!ME && r.letterAdvised) facts.push(['Letter', 'A letter can go out now — ' + [...r.fails,...r.pending].map(x=>T.SHOW_AS[x]||x).join(', '), 'amb']);
   if (r.ceiling) facts.push(['Grade cap', r.ceiling.replace('SRT','LSRT'), 'amb']);
-  if (r.stage3Why) facts.push(['Stage 3', 'required — ' + r.stage3Why, 'purp']);
-  if (r.stage2Hint) facts.push(['Stage 2', r.stage2Hint, 'amb']);
-  else if (r.stage2Due) facts.push(['Stage 2', 'due — ' + r.graded + ' TPs taught, no Stage 2 recorded', 'amb']);
-  if (r.stage1Due) facts.push(['Stage 1', 'record outstanding', 'amb']);
+  if (!ME && r.stage3Why) facts.push(['Stage 3', 'required — ' + r.stage3Why, 'purp']);
+  if (!ME && r.stage2Hint) facts.push(['Stage 2', r.stage2Hint, 'amb']);
+  else if (!ME && r.stage2Due) facts.push(['Stage 2', 'due — ' + r.graded + ' TPs taught, no Stage 2 recorded', 'amb']);
+  if (!ME && r.stage1Due) facts.push(['Stage 1', 'record outstanding', 'amb']);
   const man = p.tr.tracker || {};
   const rec = ME ? T.STAGES.map(sd=>`<span class="rb ${man[sd.field]?'on-'+man[sd.field]:''}" style="cursor:default">${sd.label}: ${sd.labels[man[sd.field]||'']}</span>`).join('') + (man.failLetter?`<span class="rb on-letter" style="cursor:default">Fail letter issued ${esc(String(man.failLetter))}</span>`:'') : T.STAGES.map(sd=>{ const v = man[sd.field]||''; return `<button class="rb ${v?'on-'+v:''}" data-id="${esc(p.tr.id)}" data-field="${sd.field}" data-cycle="${sd.cycle.join('|')}">${sd.label}: ${sd.labels[v]}</button>`; }).join('')
     + `<button class="rb ${man.failLetter?'on-letter':''}" data-id="${esc(p.tr.id)}" data-field="failLetter" data-toggle="letter">${man.failLetter?'Fail letter issued '+esc(String(man.failLetter)):'Fail letter: not issued'}</button>`
