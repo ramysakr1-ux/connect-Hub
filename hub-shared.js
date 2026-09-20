@@ -28,11 +28,6 @@
     var hcss=document.createElement('style'); hcss.id='hub-hover-css';
     // Ramy, 20 Sep 2026: the credit is a watermark like Connect's -- in the header band beside the mark, on the landing screens only, never a door.
     hcss.textContent=":root{ --hub-ring: 0 0 0 2px oklch(88% 0.04 195); --hub-wash: oklch(94% 0.025 195); --bronze: oklch(50% 0.09 62); }"+
-      // The Connect Lite identity (design_handoff_connect_lite_logo, 20 Sep 2026): configuration A in the header -- bare mark at stroke 12, "Connect" Instrument Serif Italic in gold, "Lite" Instrument Sans Regular, uppercase, 0.22em; 48:18:16 ratio; never the tile in the header, no descriptor line, no colour of its own.
-      ".lite-lockup{ display:inline-flex; align-items:center; gap:12px; }"+
-      ".wordmark{ display:inline-flex; align-items:baseline; gap:8px; }"+
-      ".wordmark-connect{ font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-weight:400; font-size:20px; line-height:.9; letter-spacing:-.01em; color:#B98B2A; }"+
-      ".wordmark-lite{ font-family:'Instrument Sans',Helvetica,sans-serif; font-weight:400; font-size:9px; letter-spacing:.22em; text-transform:uppercase; color:#16150F; }"+
       ".hub-credit{ font-family:'Karla',sans-serif; font-size:11px; letter-spacing:0.01em; color:var(--bronze); opacity:.8; white-space:nowrap; margin-left:12px; align-self:center; }"+
       ".hub-credit b{ font-weight:700; }"+
       "@media (max-width:768px){ .hub-credit{ display:none; } }"+
@@ -153,20 +148,14 @@ window.hubCentre = function(){
   var cs = {}; try { cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
   return { name: cs.centreName || '', number: cs.centreNumber || '', logo: cs.logo || '', course: cs.courseName || '' };
 };
-// Configuration F, single colour: survives a mono laser printer.
-window.hubLiteStampHTML = function(){
-  return '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">'
-    + '<svg viewBox="8 30 126 60" width="46" height="22" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#16150F" stroke-width="11" stroke-linecap="round" opacity="0.45"></path><path d="M118.1 42.2 A 24 24 0 1 0 118.1 77.8" stroke="#16150F" stroke-width="11" stroke-linecap="round"></path></svg>'
-    + '<span style="display:inline-flex;align-items:baseline;gap:6px;"><span style="font-family:\'Instrument Serif\',Georgia,serif;font-style:italic;font-size:18px;line-height:.9;letter-spacing:-.01em;color:#16150F;">Connect</span><span style="font-family:\'Instrument Sans\',Helvetica,sans-serif;font-weight:400;font-size:7px;letter-spacing:.22em;text-transform:uppercase;color:#16150F;">Lite</span></span></div>';
-};
 window.hubLetterheadHTML = function(eyebrow){
-  var c = window.hubCentre();
+  var c = window.hubCentre(); if (!c.name && !c.logo) return '';
   var esc = function(t){ return String(t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
-  return '<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 0 12px;margin:0 0 16px;border-bottom:1px solid #e3ddd0;"><div style="display:flex;align-items:center;gap:12px;">'
+  return '<div style="display:flex;align-items:center;gap:12px;padding:0 0 12px;margin:0 0 16px;border-bottom:1px solid #e3ddd0;">'
     + (c.logo ? '<img src="' + c.logo + '" alt="" style="width:44px;height:44px;object-fit:contain;border-radius:6px;flex-shrink:0;">' : '')
     + '<div><div style="font-family:Newsreader,Georgia,serif;font-size:16pt;font-weight:700;color:#1e4d4a;line-height:1.15;">' + esc(c.name) + '</div>'
     + (c.number || eyebrow ? '<div style="font-family:Karla,Calibri,Arial,sans-serif;font-size:8.5pt;letter-spacing:0.12em;text-transform:uppercase;color:#6b665c;margin-top:3px;">' + esc([c.number ? 'Cambridge centre ' + c.number : '', eyebrow].filter(Boolean).join(' \u00b7 ')) + '</div>' : '')
-    + '</div></div>' + window.hubLiteStampHTML() + '</div>';
+    + '</div></div>';
 };
 // The page headers' "Centre logo" box and centre-name line, filled from the settings.
 window.hubApplyCentre = function(){
