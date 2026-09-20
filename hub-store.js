@@ -82,6 +82,8 @@ window.HubStore = (function(){
     putCourse: function(kind, data){ return call({ op: 'putCourse', kind: kind, data: data }); },
     roster: function(){ return call({ op: 'roster' }).then(function(r){ return r.trainees; }); },
     addTrainee: function(name, group){ return call({ op: 'addTrainee', name: name, group: group }); },
+    // A pasted class list in one call, rather than one call per name.
+    addTrainees: function(list){ return call({ op: 'addTrainees', trainees: list }); },
     renameTrainee: function(tok, name, group){ return call({ op: 'renameTrainee', token: tok, name: name, group: group }); },
     removeTrainee: function(tok){ return call({ op: 'removeTrainee', token: tok }); },
     traineeLink: function(tok){ return base() + 'index.html?t=' + encodeURIComponent(tok); },

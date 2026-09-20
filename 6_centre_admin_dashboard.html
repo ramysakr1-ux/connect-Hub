@@ -313,10 +313,10 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609210226"></script>
-<script src="hub-store.js?v=202609210226"></script>
-<script src="hub-shared.js?v=202609210226"></script>
-<script src="hub-sync.js?v=202609210226"></script>
+<script src="assignment-defaults.js?v=202609210230"></script>
+<script src="hub-store.js?v=202609210230"></script>
+<script src="hub-shared.js?v=202609210230"></script>
+<script src="hub-sync.js?v=202609210230"></script>
 <script type="text/x-hub-app">
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -414,6 +414,9 @@ document.getElementById('saveSettings').addEventListener('click', () => {
     courseName: document.getElementById('courseName').value,
     logo: courseLogo
   }));
+  // The assessor link expires 14 days after the course end date, which this
+  // form has just written, so the held copy's expiry line is now stale.
+  ASSESSOR_LINK = null;
   const cn = document.getElementById('courseName').value.trim();
   document.getElementById('settingsStatus').textContent = cn ? 'Saved \u2014 ' + cn + '.' : 'Saved.';
   renderTitle(); renderSetup();
@@ -445,10 +448,15 @@ function linkRow(name, note, url, kind, rotateId, rotateLabel){
   </div>`;
 }
 
+/* The assessor key and its expiry, once. It only changes when someone rotates
+   it, and the expiry follows the course end date, which this page rewrites
+   itself -- so asking the store on every redraw bought nothing and cost a round
+   trip each time, including on "Show addresses". */
+let ASSESSOR_LINK = null;
 async function renderAssessorBlock(rotated){
   const S = window.HubStore, el = document.getElementById('assessorBlock'); if (!el) return;
   try {
-    const r = rotated || await S.assessorLink();
+    const r = rotated || ASSESSOR_LINK || (ASSESSOR_LINK = await S.assessorLink());
     const link = S.assessorLinkFor(r.key);
     const until = r.expires
       ? 'Stops working on ' + fmtDate(r.expires) + ' — 14 days after the course end date.'
@@ -459,19 +467,31 @@ async function renderAssessorBlock(rotated){
     const rb = document.getElementById('rotateAssessor');
     if (rb) rb.addEventListener('click', async ()=>{
       if(!(await confirmModal('Rotate the assessor link? The link in circulation stops working at once and a new one shows here.', 'Rotate'))) return;
-      try { const nr = await S.rotateAssessorKey(); renderStoreRoster(); } catch(err){ alert(err.message); }
+      // A new key, so the held one is stale: take the answer as the new truth.
+      try { ASSESSOR_LINK = await S.rotateAssessorKey(); renderStoreRoster(); } catch(err){ alert(err.message); }
     });
   } catch (err) { el.innerHTML = 'Assessor link: ' + esc(err.message); }
 }
 
-async function renderStoreRoster(){
+/* The roster the store last gave us. Every redraw used to re-ask for it, and
+   the store is Apps Script: 1.5-13 s an answer. So "Show addresses" -- a label
+   swap needing nothing from the server -- sat there for seconds, and adding one
+   trainee cost two waits, one to write and one to read back (Ramy, 21 Sep 2026:
+   "there seems to be a lag"). Now the ops that change the roster answer WITH
+   it, and everything else redraws from what is already here. */
+let ROSTER = null;
+
+async function renderStoreRoster(next){
   const box = document.getElementById('storeRoster'); if (!box) return;
   const S = window.HubStore;
   if (!S || !S.isTutor()){ box.innerHTML = ''; return; }
-  box.innerHTML = '<p class="lede">Loading the roster from the store…</p>';
-  let trainees;
-  try { trainees = await S.roster(); }
-  catch (err) { box.innerHTML = `<p class="lede brick">${esc(err.message)}</p>`; return; }
+  if (next) ROSTER = next;
+  if (!ROSTER){
+    box.innerHTML = '<p class="lede">Loading the roster from the store…</p>';
+    try { ROSTER = await S.roster(); }
+    catch (err) { box.innerHTML = `<p class="lede brick">${esc(err.message)}</p>`; return; }
+  }
+  const trainees = ROSTER;
   const groups = [...new Set(trainees.map(t=>t.group).filter(Boolean))];
   // Every path that changes the roster comes back through here -- the first
   // load, one added, several pasted, one removed -- so this is the one place
@@ -527,6 +547,8 @@ async function renderStoreRoster(){
 
   renderAssessorBlock();
 
+  // A pure redraw: the addresses are already in hand, so this must not wait on
+  // the network. renderStoreRoster with no argument keeps ROSTER as it is.
   document.getElementById('toggleUrls').addEventListener('click', ()=>{ SHOW_URLS = !SHOW_URLS; renderStoreRoster(); });
   document.getElementById('toggleAdd').addEventListener('click', e=>{
     const ab = document.getElementById('addBox'), open = ab.style.display === 'none';
@@ -550,12 +572,16 @@ async function renderStoreRoster(){
     e.preventDefault();
     const name = document.getElementById('storeAddName').value.trim(), group = document.getElementById('storeAddGroup').value.trim();
     const st = document.getElementById('storeAddStatus'); st.textContent = 'Adding…';
-    try { await S.addTrainee(name, group); renderStoreRoster(); } catch (err) { st.textContent = err.message; }
+    try { const r = await S.addTrainee(name, group); renderStoreRoster(r.trainees); }
+    catch (err) { st.textContent = err.message; }
   });
 
-  // Paste a class list -- one trainee per line, "Name" or "Name, Group". Added
-  // one at a time (the store copes badly with a burst, 20 Sep 2026 finding),
-  // with the box re-rendered once at the end rather than after each row.
+  /* Paste a class list -- one trainee per line, "Name" or "Name, Group".
+     One call for the lot. It used to send one name per call, each awaited, so
+     a list of twelve was twelve round trips one behind the other at 1.5-13 s
+     each: minutes of watching "Adding 4 of 12...". The earlier note here said
+     the store copes badly with a burst; that was true of twelve SEPARATE
+     writes, and the answer is one write of twelve rows, not a queue. */
   document.getElementById('storeBulkAddBtn').addEventListener('click', async () => {
     const tbox = document.getElementById('storeBulkNames');
     const status = document.getElementById('storeBulkStatus');
@@ -567,17 +593,16 @@ async function renderStoreRoster(){
     }).filter(r => r.name);
     if (!rows.length) { status.textContent = 'Nothing to add -- paste at least one name.'; return; }
     if (!(await confirmModal(`Add ${rows.length} trainee${rows.length === 1 ? '' : 's'}?`, 'Add all'))) return;
-    let done = 0, failed = [];
-    for (const r of rows) {
-      status.textContent = `Adding ${done + 1} of ${rows.length}…`;
-      try { await S.addTrainee(r.name, r.group); done++; }
-      catch (err) { failed.push(`${r.name}: ${err.message}`); }
-    }
-    status.textContent = failed.length
-      ? `Added ${done} of ${rows.length}. Failed: ${failed.join('; ')}`
-      : `Added ${done}.`;
-    if (done > 0) tbox.value = '';
-    renderStoreRoster();
+    status.textContent = `Adding ${rows.length}…`;
+    try {
+      const res = await S.addTrainees(rows);
+      const skipped = res.skipped || [];
+      status.textContent = skipped.length
+        ? `Added ${res.added}. Skipped ${skipped.length}: ${skipped.join('; ')}`
+        : `Added ${res.added}.`;
+      if (res.added > 0) tbox.value = '';
+      renderStoreRoster(res.trainees);
+    } catch (err) { status.textContent = err.message; }
   });
 
   box.addEventListener('click', async e=>{
@@ -590,7 +615,7 @@ async function renderStoreRoster(){
     const r = e.target.closest('[data-remove]');
     if (r){
       if(!(await confirmModal(`Remove ${r.dataset.name} from the course? Their records stay in the sheet; their link stops working.`, 'Remove'))) return;
-      try { await S.removeTrainee(r.dataset.remove); renderStoreRoster(); } catch(err){ alert(err.message); }
+      try { const res = await S.removeTrainee(r.dataset.remove); renderStoreRoster(res.trainees); } catch(err){ alert(err.message); }
     }
   });
 }
