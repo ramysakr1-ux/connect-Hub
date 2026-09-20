@@ -84,9 +84,17 @@
       });
     };
   }
+  /* Takes a date, or a timestamp with a date at the front. It used to accept
+     ONLY a bare YYYY-MM-DD and hand anything else straight back, so passing a
+     returnedAt printed "Last updated 2026-10-12T10:00:00.000Z" on screen --
+     a formatting slip turning into visible machinery rather than an error
+     (21 Sep 2026). A timestamp's date part is read as written, not converted:
+     the callers store local days, and a zone shift would move one. */
   window.niceDate=function(iso){
-    if(!iso||!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso||'';
-    var d=new Date(iso+'T00:00:00');
+    var s=String(iso||''), m=s.match(/^(\d{4}-\d{2}-\d{2})/);
+    if(!m) return s;
+    var d=new Date(m[1]+'T00:00:00');
+    if(isNaN(d.getTime())) return s;
     return d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
   };
 })();
