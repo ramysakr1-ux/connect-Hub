@@ -80,9 +80,15 @@
     padding:5px 11px 5px 5px; border-radius:20px; cursor:pointer; font-family:'Karla',sans-serif;
     font-size:0.8rem; color:var(--grey); transition:background .15s,color .15s;}
   .setup button:hover{background:var(--card); color:var(--ink);}
+  /* A done step used to replace its number with a tick, so the row read
+     "1 ✓ 3" -- a counting sequence with a hole in it (Ramy, 21 Sep 2026:
+     "you have like one, tick, three. Does that make sense?"). It does not, and
+     the numbers were never load-bearing: the three can be done in any order.
+     So the dot is a tick when done and empty when not, which is also exactly
+     how the tutor dashboard's setup panel draws the same three steps. */
   .setup .dot{width:18px; height:18px; border-radius:50%; display:inline-flex; align-items:center;
-    justify-content:center; font-size:10px; font-weight:700; background:var(--sand-line);
-    color:var(--grey); flex-shrink:0;}
+    justify-content:center; font-size:11px; font-weight:700; background:var(--sand-line);
+    color:var(--paper); flex-shrink:0;}
   .setup button.done .dot{background:var(--teal); color:var(--paper);}
 
   /* ---- tabs ------------------------------------------------------------ */
@@ -215,9 +221,9 @@
        invitation for the app to watch. Dropped on Ramy's call, 21 Sep 2026.
        The Tutors tab stays; it was only the step that tracked nothing. -->
   <div class="setup" id="setupRow">
-    <button type="button" data-goto="settings"><span class="dot">1</span>Course set up</button>
-    <button type="button" data-goto="roster"><span class="dot">2</span>Trainees added</button>
-    <button type="button" data-goto="assignments"><span class="dot">3</span>Assignment wording</button>
+    <button type="button" data-goto="settings"><span class="dot"></span>Course set up</button>
+    <button type="button" data-goto="roster"><span class="dot"></span>Trainees added</button>
+    <button type="button" data-goto="assignments"><span class="dot"></span>Assignment wording</button>
   </div>
 
   <div class="tabs" id="tabs">
@@ -304,10 +310,10 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609210221"></script>
-<script src="hub-store.js?v=202609210221"></script>
-<script src="hub-shared.js?v=202609210221"></script>
-<script src="hub-sync.js?v=202609210221"></script>
+<script src="assignment-defaults.js?v=202609210225"></script>
+<script src="hub-store.js?v=202609210225"></script>
+<script src="hub-shared.js?v=202609210225"></script>
+<script src="hub-sync.js?v=202609210225"></script>
 <script type="text/x-hub-app">
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -348,11 +354,18 @@ function renderTitle(){
   meta.textContent = bits.length ? bits.join(' · ') : 'Set up your course, then invite your tutors and trainees.';
 }
 /* Setup ticks: each step is done when its evidence exists. */
+/* null until the store has answered once; then the true number on the course. */
+let TRAINEE_COUNT = null;
 function renderSetup(){
   let cs = null, w = null;
   try{ cs = JSON.parse(localStorage.getItem('connect_course_settings')); }catch(e){}
   try{ w = JSON.parse(localStorage.getItem('connect_assignment_wording_v2')); }catch(e){}
+  // The roster the store just handed renderStoreRoster, when it has run. Going
+  // to localStorage instead would read connect_roster_v1, which hub-sync only
+  // writes at boot -- so adding the first trainee left this step un-ticked
+  // until the page was reloaded, and removing the last one left it ticked.
   const roster = loadRoster();
+  const trainees = TRAINEE_COUNT === null ? Object.keys(roster.trainees||{}).length : TRAINEE_COUNT;
   const done = {
     settings: !!(cs && cs.courseName && cs.start && cs.end),
     /* isTutor() is only "this browser holds a tutor key", which is true of
@@ -360,16 +373,15 @@ function renderSetup(){
        on a course with nobody on it, while the tutor dashboard next door was
        still asking for the trainees to be added. The roster is the only thing
        that knows. */
-    roster: Object.keys(roster.trainees||{}).length > 0,
+    roster: trainees > 0,
     assignments: !!w
   };
   document.querySelectorAll('#setupRow [data-goto]').forEach(b=>{
     const ok = done[b.dataset.goto];
     b.classList.toggle('done', !!ok);
-    b.querySelector('.dot').textContent = ok ? '\u2713' : b.querySelector('.dot').dataset.n || b.querySelector('.dot').textContent;
+    b.querySelector('.dot').textContent = ok ? '\u2713' : '';
   });
 }
-document.querySelectorAll('#setupRow .dot').forEach((d,i)=>d.dataset.n = String(i+1));
 
 try {
   const cs = JSON.parse(localStorage.getItem('connect_course_settings'));
@@ -459,6 +471,11 @@ async function renderStoreRoster(){
   try { trainees = await S.roster(); }
   catch (err) { box.innerHTML = `<p class="lede brick">${esc(err.message)}</p>`; return; }
   const groups = [...new Set(trainees.map(t=>t.group).filter(Boolean))];
+  // Every path that changes the roster comes back through here -- the first
+  // load, one added, several pasted, one removed -- so this is the one place
+  // the setup row needs telling.
+  TRAINEE_COUNT = trainees.length;
+  renderSetup();
 
   box.innerHTML = `
     <div class="sectionhead">
