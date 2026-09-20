@@ -1,4 +1,4 @@
-# Handoff: Connect Hub (offline TP + assignments paperwork tool)
+# Handoff: Connect Lite (formerly Connect Hub; TP + assignments paperwork tool)
 
 ## Overview
 Connect Hub is a separate, standalone tool from the main Connect app (`ramysakr1-ux/celta-connect`) — its own repo (`ramysakr1-ux/connect-Hub`), static HTML, no build step, no login/backend. It replaces a folder of shared Word docs and email threads for one purpose: a trainee's teaching-practice paperwork (lesson plan → self-evaluation → tutor feedback) and their five written assignments (LRT, LSRT, FOL, LFC, Assignment 5), end to end, self-contained in the browser (`localStorage`, no server).
@@ -110,3 +110,5 @@ A third link, read-only: `12_assessor_pack.html?a=<assessor key>`. Course admin'
 ## The centre on the documents (Ramy, 20 Sep 2026)
 Course admin's Settings (centre name, Cambridge centre number, logo) now show on every page header that carried the dashed "Centre logo" box (screens 1-4: the box becomes the logo, the centre-name line reads the setting and locks) and as a letterhead on both assembled documents: the TP feedback document built on screen 3 (so screens 4 and 12 show it as returned) and the assignment record on screen 11. `hubCentre()`, `hubLetterheadHTML(eyebrow)` and `hubApplyCentre()` live in `hub-shared.js`; the letterhead is inline-styled so it survives print and the stored `docHTML`. A document assembled before the settings were filled keeps the letterhead it was assembled with. With no name and no logo set, nothing changes.
 
+## The name (Ramy, 20 Sep 2026: "let's go with Connect Lite")
+Every screen title, the wordmark tag and every visible mention now say **Connect Lite**. Internal names stay as they were, on purpose: the repo and URL (`connect-Hub`), the Apps Script "Connect Hub store", the localStorage keys (`hub:*`, `chub:*`), the `HubStore`/`HubSync`/`HubTracker` globals and the `hub-*.js` files. Renaming those would break every link in circulation for no visible gain.
