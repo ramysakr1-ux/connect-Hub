@@ -221,7 +221,7 @@
   // First time on this link in this browser: nothing to show yet, so wait.
   status('Loading from the course\u2026', 'busy');
   bootWithRetries().then(function(boot){
-    apply(plan(boot)); exposeMeta(); rebuildSnapshot();
+    apply(plan(boot), function(k){ return !dirty[k]; }); exposeMeta(); rebuildSnapshot();
     try { localStorage.setItem('hub:booted', identity); } catch (e) {}
     status(mode === 'assessor' ? 'Assessor view \u2014 read-only' : 'Live \u2014 saved to the course as you go', 'ok');
   }, function(err){ status('Could not reach the course \u2014 ' + (err && err.message || err), 'error'); })
