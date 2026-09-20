@@ -134,3 +134,39 @@ window.hubAssignmentOrder = function(wording){
   base.forEach(function(k){ if (o.indexOf(k) === -1) o.push(k); });
   return o.concat(['a5']);
 };
+
+// The centre on the documents (Ramy, 20 Sep 2026: "put the centre name and
+// logo on the documents"). Course admin's Settings hold the centre's name,
+// number and logo; the store boots them into this browser, so every page and
+// every assembled document can carry them. A document keeps the letterhead it
+// was assembled with.
+window.hubCentre = function(){
+  var cs = {}; try { cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
+  return { name: cs.centreName || '', number: cs.centreNumber || '', logo: cs.logo || '', course: cs.courseName || '' };
+};
+window.hubLetterheadHTML = function(eyebrow){
+  var c = window.hubCentre(); if (!c.name && !c.logo) return '';
+  var esc = function(t){ return String(t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+  return '<div style="display:flex;align-items:center;gap:12px;padding:0 0 12px;margin:0 0 16px;border-bottom:1px solid #e3ddd0;">'
+    + (c.logo ? '<img src="' + c.logo + '" alt="" style="width:44px;height:44px;object-fit:contain;border-radius:6px;flex-shrink:0;">' : '')
+    + '<div><div style="font-family:Newsreader,Georgia,serif;font-size:16pt;font-weight:700;color:#1e4d4a;line-height:1.15;">' + esc(c.name) + '</div>'
+    + (c.number || eyebrow ? '<div style="font-family:Karla,Calibri,Arial,sans-serif;font-size:8.5pt;letter-spacing:0.12em;text-transform:uppercase;color:#6b665c;margin-top:3px;">' + esc([c.number ? 'Cambridge centre ' + c.number : '', eyebrow].filter(Boolean).join(' \u00b7 ')) + '</div>' : '')
+    + '</div></div>';
+};
+// The page headers' "Centre logo" box and centre-name line, filled from the settings.
+window.hubApplyCentre = function(){
+  var c = window.hubCentre();
+  document.querySelectorAll('.hub-centre-logo').forEach(function(slot){
+    if (!c.logo) return;
+    slot.innerHTML = '<img src="' + c.logo + '" alt="' + c.name.replace(/"/g,'&quot;') + ' logo" style="width:100%;height:100%;object-fit:contain;border-radius:6px;">';
+    slot.style.border = 'none';
+  });
+  document.querySelectorAll('.hub-centre-name').forEach(function(el){
+    if (!c.name) return;
+    if (el.tagName === 'INPUT') { if (!el.value) el.value = c.name; el.readOnly = true; el.style.borderBottomColor = 'transparent'; el.title = 'Set on course admin\u2019s Settings tab'; }
+    else el.textContent = c.name;
+  });
+};
+document.addEventListener('hub:ready', window.hubApplyCentre);
+if (!window.HubStore) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', window.hubApplyCentre); else window.hubApplyCentre(); }
+
