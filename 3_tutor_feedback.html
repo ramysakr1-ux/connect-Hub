@@ -349,9 +349,9 @@
 </div>
 
 
-<script src="hub-shared.js?v=202609202149"></script>
-<script src="hub-store.js?v=202609202149"></script>
-<script src="hub-sync.js?v=202609202149"></script>
+<script src="hub-shared.js?v=202609202200"></script>
+<script src="hub-store.js?v=202609202200"></script>
+<script src="hub-sync.js?v=202609202200"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -896,17 +896,17 @@ function traineeHTML(d, selfComment, tc, laComment){
     ${l.mainAim?`<p style="font-size:10pt;margin:0 0 10px;"><strong>${laLabel} is the main aim of the lesson:</strong> ${esc(l.mainAim)}</p>`:''}
     ${l.context?`<p style="font-size:10pt;margin:0 0 14px;"><strong>Overall context:</strong> ${esc(l.context)}</p>`:''}`;
   if(l.type==='vocab'){
-    const anyVo=(l.vocab||[]).some((r,i)=>has('vo'+i));
+    // One block per vocab item, stacked, not a 6-column table -- same fix as
+    // the plan document (Ramy, 20 Sep 2026); the tutor's comment on an item,
+    // where there is one, is its own trailing row in that item's block.
     const heads=['Vocab item','Definition','How the meaning is conveyed','Clarification','Form','Problems &amp; solutions'];
-    const w=anyVo?[13,14,15,16,11,15]:[15,17,18,19,13,18];
-    html+=`<table style="width:100%;border-collapse:collapse;">
-      <tr>${heads.map((h,i)=>`<td ${TH} width="${w[i]}%">${h}</td>`).join('')}
-        ${anyVo?`<td ${THT} width="16%">Tutor comments</td>`:''}</tr>
-      ${(l.vocab||[]).map((r,i)=>`<tr><td ${TD}>${nl2br(r.item)}</td><td ${TD}>${nl2br(r.def)}</td>
-        <td ${TD}>${nl2br(r.convey)}</td><td ${TD}>${nl2br(r.clar)}</td>
-        <td ${TD}>${nl2br(r.form)}</td><td ${TD}>${nl2br(r.prob)}</td>
-        ${anyVo?`<td ${TD}>${bulletsHTML(tc['vo'+i]||'')||'&nbsp;'}</td>`:''}</tr>`).join('')}
-      </table>${l.ref?`<p style="margin:12px 0 0;"><strong>Reference material:</strong> ${nl2br(l.ref)}</p>`:''}`;
+    html+=(l.vocab||[]).map((r,i)=>{
+      const vals=[nl2br(r.item),nl2br(r.def),nl2br(r.convey),nl2br(r.clar),nl2br(r.form),nl2br(r.prob)];
+      const rows=heads.map((h,k)=>`<tr><td ${TH} width="26%">${h}</td><td ${TD}>${vals[k]||'&nbsp;'}</td></tr>`).join('')
+        +(has('vo'+i)?`<tr><td ${THT} width="26%">Tutor comments</td><td ${TD}>${bulletsHTML(tc['vo'+i]||'')||'&nbsp;'}</td></tr>`:'');
+      return `<h3 ${H3}>Vocab item ${i+1}</h3>
+        <table style="width:100%;border-collapse:collapse;">${rows}</table>`;
+    }).join('') + (l.ref?`<p style="margin:12px 0 0;"><strong>Reference material:</strong> ${nl2br(l.ref)}</p>`:'');
   } else {
     (l.blocks||[]).forEach((b,bi)=>{
       const anyF=b.fields.some(f=>has('la'+bi+'_'+f.key));

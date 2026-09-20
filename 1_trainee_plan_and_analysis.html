@@ -480,9 +480,9 @@
   <span class="status" id="status"></span>
 </div>
 
-<script src="hub-shared.js?v=202609202149"></script>
-<script src="hub-store.js?v=202609202149"></script>
-<script src="hub-sync.js?v=202609202149"></script>
+<script src="hub-shared.js?v=202609202200"></script>
+<script src="hub-store.js?v=202609202200"></script>
+<script src="hub-sync.js?v=202609202200"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -1169,14 +1169,15 @@ function docHTML(d){
   const label = l.type==='vocab'?'Vocabulary':(l.type==='grammar'?'Grammar':'Functional language');
   let laBody='';
   if(l.type==='vocab'){
+    // One block per vocab item, stacked, not a 6-column table -- six free-text
+    // answers side by side ran too narrow to read (Ramy, 20 Sep 2026).
     const heads=['Vocab item','Definition','How will you convey the meaning?','Clarification of meaning','Form','Problems &amp; solutions'];
-    const w=[15,17,18,19,13,18];
-    laBody=`<table style="width:100%;border-collapse:collapse;">
-      <tr>${heads.map((h,i)=>`<td ${TH} width="${w[i]}%">${h}</td>`).join('')}</tr>
-      ${l.vocab.map(r=>`<tr><td ${TD}>${nl2br(r.item)}</td><td ${TD}>${bullets(r.def)}</td>
-        <td ${TD}>${bullets(r.convey)}</td><td ${TD}>${bullets(r.clar)}</td>
-        <td ${TD}>${bullets(r.form)}</td><td ${TD}>${bullets(r.prob)}</td></tr>`).join('')}
-      </table>${l.ref?`<p style="margin:12px 0 0;"><strong>Reference material:</strong> ${nl2br(l.ref)}</p>`:''}`;
+    laBody=l.vocab.map((r,i)=>{
+      const vals=[nl2br(r.item),bullets(r.def)||'&nbsp;',bullets(r.convey)||'&nbsp;',bullets(r.clar)||'&nbsp;',bullets(r.form)||'&nbsp;',bullets(r.prob)||'&nbsp;'];
+      const rows=heads.map((h,k)=>`<tr><td ${TH} width="26%">${h}</td><td ${TD}>${vals[k]}</td></tr>`).join('');
+      return `<h3 ${H3}>Vocab item ${i+1}</h3>
+        <table style="width:100%;border-collapse:collapse;">${rows}</table>`;
+    }).join('') + (l.ref?`<p style="margin:12px 0 0;"><strong>Reference material:</strong> ${nl2br(l.ref)}</p>`:'');
   } else {
     laBody=l.blocks.map((b,i)=>{
       const rows=b.fields.map(f=>{
