@@ -125,9 +125,9 @@
 
 
 </div>
-<script src="hub-shared.js?v=202609201502"></script>
-<script src="hub-store.js?v=202609201502"></script>
-<script src="hub-sync.js?v=202609201502"></script>
+<script src="hub-shared.js?v=202609201505"></script>
+<script src="hub-store.js?v=202609201505"></script>
+<script src="hub-sync.js?v=202609201505"></script>
 <script type="text/x-hub-app">
 document.getElementById('tabs').addEventListener('click', e=>{
   const btn = e.target.closest('.tab');
@@ -222,12 +222,15 @@ function render(){
       }
       if (!sub || sub.stage==='draft') return; // nothing to mark yet
       const p = assignStatusPill(sub);
-      const action = (sub.stage==='submitted'||sub.stage==='resubmitted') ? 'Write feedback' : 'View feedback';
+      // One door per thing: a closed assignment opens its record, an open one the mark sheet.
+      const closed = sub.stage==='closed';
+      const action = (sub.stage==='submitted'||sub.stage==='resubmitted') ? 'Write feedback' : closed ? 'Open the record' : 'View feedback';
+      const door = (closed ? '11_assignment_record.html' : '10_tutor_assignment_marking.html') + `?trainee=${encodeURIComponent(tr.id)}&a=${key}`;
       assignRows.push(`<tr>
         <td>${esc(tr.name)}</td>
         <td>${esc(ASSIGN_NAMES[key])}</td>
         <td><span class="status-pill ${p.cls}">${esc(p.label)}</span></td>
-        <td><a class="btn ${action==='Write feedback'?'primary':'ghost'}" style="text-decoration:none;display:inline-block;" href="10_tutor_assignment_marking.html?trainee=${encodeURIComponent(tr.id)}&a=${key}">${action}</a></td>
+        <td><a class="btn ${action==='Write feedback'?'primary':'ghost'}" style="text-decoration:none;display:inline-block;" href="${door}">${action}</a></td>
       </tr>`);
     });
   });
