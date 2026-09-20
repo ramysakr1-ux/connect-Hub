@@ -50,7 +50,7 @@
   // so a write handed to the beacon as a page closed is re-sent by the next
   // page, and a boot never overwrites a record this browser has changed but
   // the store has not confirmed yet (the cache-first race, 20 Sep 2026).
-  var LEDGER = 'hub:pending';
+  var LEDGER = 'hub:pending:' + mode + ':' + (mode === 'tutor' ? S.key() : mode === 'assessor' ? S.assessorKey() : S.token());
   function ledger(){ return parse((function(){ try { return localStorage.getItem(LEDGER); } catch (e) { return null; } })()) || {}; }
   function ledgerSet(l){ try { if (Object.keys(l).length) origSet(LEDGER, JSON.stringify(l)); else origRemove(LEDGER); } catch (e) {} }
   function remember(id, job){ var l = ledger(); l[id] = job; ledgerSet(l); }
@@ -70,7 +70,7 @@
     var keys = Object.keys(jobs);
     if (!keys.length) return Promise.resolve();
     // One at a time: Apps Script copes badly with a burst.
-    var all = keys.reduce(function(chain, k){ return chain.then(function(){ return S.call(jobs[k]).then(function(r){ confirmed(k); return r; }); }); }, Promise.resolve());
+    var all = keys.reduce(function(chain, k){ return chain.then(function(){ return S.call(jobs[k]).then(function(r){ confirmed(k); return r; }, function(err){ if (!(err && err.transient)) confirmed(k); throw err; }); }); }, Promise.resolve());
     all.then(function(){ status('Saved to the course', 'ok'); }).catch(function(err){ status('Not saved \u2014 ' + (err && err.message || err), 'error'); });
     return all;
   }
@@ -93,6 +93,7 @@
     if (mode === 'assessor') return; // read-only: nothing this browser does reaches the course
     var data = value == null ? null : parse(value);
     if (mode === 'trainee' && TRAINEE_KEYS[key]) {
+      if (!S.token()) return; // the link is gone from this browser: nothing to write to
       var kind = TRAINEE_KEYS[key];
       if (TUTOR_ONLY[kind] && !(kind === 'feedback' && data === null)) return; // the tutor's records: read here, never written
       schedule('t:' + kind, { op: 'put', token: S.token(), kind: kind, data: data });
