@@ -94,7 +94,7 @@
   .close{ cursor:pointer; text-align:center; padding:4px; font-size:11px; color:oklch(58% 0.017 70); background:none; border:none; font-family:inherit; }
   /* the tutorials, letter and withdrawal: one segmented control per row */
   .seg{ display:inline-flex; border:1px solid var(--line); border-radius:6px; overflow:hidden; background:var(--paper); }
-  .sg{ font-family:inherit; font-size:11px; font-weight:500; padding:4px 10px; border:none; border-right:1px solid var(--line); background:transparent; color:var(--mut); cursor:pointer; }
+  .sg{ font-family:inherit; font-size:11px; font-weight:500; padding:4px 10px; border:none; border-right:1px solid var(--line); background:transparent; color:var(--mut); cursor:pointer; white-space:nowrap; }
   .sg:last-child{ border-right:none; }
   .sg:hover{ color:var(--ink); }
   .sg.on{ font-weight:700; color:var(--ink); background:var(--sand); }
@@ -298,9 +298,10 @@ function renderDetail(all){
   const seg = (field, options, cur) => ME
     ? `<span class="v ${cur ? 'set-'+cur : ''}">${(options.find(o=>o[0]===cur)||options[options.length-1])[1]}</span>`
     : `<span class="seg">${options.map(o=>`<button class="sg ${o[0]===cur?'on set-'+(o[0]||'none'):''}" data-id="${esc(p.tr.id)}" data-field="${field}" data-value="${o[0]}">${o[1]}</button>`).join('')}</span>`;
-  const verdicts = [['NOTSTD','Not to standard'],['STD','To standard'],['ABOVE','Above standard'],['','Not held yet']];
+  // The grid's own tokens, so a segment never wraps.
+  const verdicts = [['NOTSTD','not std'],['STD','std'],['ABOVE','above'],['','not held']];
   const recRows = [
-    ['Stage 1', seg('stage1', [['GIVEN','Record completed'],['','Not yet']], man.stage1||'')],
+    ['Stage 1', seg('stage1', [['GIVEN','record done'],['','not yet']], man.stage1||'')],
     ['Stage 2', seg('stage2', verdicts, man.stage2||'')],
     ['Stage 3', seg('stage3', verdicts, man.stage3||'')],
     ['Fail letter', ME ? `<span class="v ${man.failLetter?'set-NOTSTD':''}">${man.failLetter ? 'Issued ' + esc(String(man.failLetter)) : 'Not issued'}</span>`
