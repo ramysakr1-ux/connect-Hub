@@ -39,6 +39,7 @@ window.HubStore = (function(){
     call: call,
     ping: function(){ return call({ op: 'ping' }); },
     boot: function(){ return call({ op: 'boot', token: token() || undefined }); },
+    rotateKey: function(){ return call({ op: 'rotateKey' }).then(function(r){ try { localStorage.setItem('hub:k', r.key); } catch (e) {} return true; }); },
     purgeTrainee: function(tok){ return call({ op: 'purgeTrainee', token: tok }); },
     me: function(){ return call({ op: 'me', token: token() }); },
     get: function(kind, tok){ return call({ op: 'get', token: tok || token(), kind: kind }).then(function(r){ return r.data; }); },

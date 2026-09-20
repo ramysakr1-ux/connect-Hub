@@ -270,7 +270,7 @@ async function renderStoreRoster(){
       <button class="btn primary" type="submit">Add trainee</button>
       <span id="storeAddStatus" style="font-size:0.82rem;color:var(--grey);"></span>
     </form>
-    <p style="font-size:0.82rem;color:var(--grey);margin:0 0 10px;">Each trainee's link is theirs alone — post it to them in Classroom as a Material. The tutor link is for tutors only: <code style="font-size:0.78rem;">${esc2(S.tutorLink())}</code> <button class="btn ghost" type="button" data-copy="${esc2(S.tutorLink())}" style="padding:4px 10px;font-size:0.78rem;">Copy</button></p>
+    <p style="font-size:0.82rem;color:var(--grey);margin:0 0 10px;">Each trainee's link is theirs alone — post it to them in Classroom as a Material. The tutor link is for tutors only: <code style="font-size:0.78rem;">${esc2(S.tutorLink())}</code> <button class="btn ghost" type="button" data-copy="${esc2(S.tutorLink())}" style="padding:4px 10px;font-size:0.78rem;">Copy</button> <button class="btn ghost" type="button" id="storeRotateKey" style="padding:4px 10px;font-size:0.78rem;color:var(--brick);">Rotate the course key</button></p>
     <table style="width:100%;">
       <tr><th>Trainee</th><th>Group</th><th>Personal link</th><th></th></tr>
       ${trainees.length ? trainees.map(t=>`<tr>
@@ -279,6 +279,10 @@ async function renderStoreRoster(){
         <td style="white-space:nowrap;"><button class="btn ghost" type="button" data-copy="${esc2(S.traineeLink(t.token))}" style="padding:4px 10px;font-size:0.78rem;">Copy link</button> <button class="btn ghost" type="button" data-remove="${esc2(t.token)}" data-name="${esc2(t.name)}" style="padding:4px 10px;font-size:0.78rem;color:var(--brick);">Remove</button></td>
       </tr>`).join('') : '<tr><td colspan="4" style="color:var(--grey);">No trainees on the course yet — add the first one above.</td></tr>'}
     </table>`;
+  document.getElementById('storeRotateKey').addEventListener('click', async ()=>{
+    if(!(await confirmModal('Rotate the course key? Every tutor link in circulation stops working; this browser gets the new one and the new tutor link shows here. Trainees\u2019 links are not affected.', 'Rotate'))) return;
+    try { await S.rotateKey(); history.replaceState(null, '', location.pathname); renderStoreRoster(); } catch(err){ alert(err.message); }
+  });
   document.getElementById('storeAddForm').addEventListener('submit', async e=>{
     e.preventDefault();
     const name = document.getElementById('storeAddName').value.trim(), group = document.getElementById('storeAddGroup').value.trim();
