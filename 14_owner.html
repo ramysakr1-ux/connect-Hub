@@ -54,6 +54,8 @@
   .btn.primary{background:var(--teal); border-color:var(--teal); color:var(--paper); font-weight:700;}
   .btn.primary:hover{opacity:.88; color:var(--paper);}
   .btn.small{height:28px; font-size:0.76rem; padding:0 11px;}
+  .btn.quiet{border:none; background:none; color:var(--grey); font-weight:500;}
+  .btn.quiet:hover{color:var(--brick);}
 
   .courses{display:flex; flex-direction:column; gap:10px; margin-top:24px;}
   .course{background:var(--card); border:1px solid var(--sand-line); border-radius:10px; padding:16px 18px;}
@@ -98,8 +100,8 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609210116"></script>
-<script src="hub-store.js?v=202609210116"></script>
+<script src="hub-shared.js?v=202609210122"></script>
+<script src="hub-store.js?v=202609210122"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -160,12 +162,14 @@ function gate(msg){
   $('ownerIn').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
 }
 
-function render(courses){
+function render(courses, msg){
   const rows = courses.map(c => `
     <div class="course">
       <div class="chead">
         <h2>${esc(label(c))}</h2>
-        <span class="meta">${esc(c.id)} · ${c.trainees} trainee${c.trainees === 1 ? '' : 's'}${c.created ? ' · made ' + esc(niceDate(c.created)) : ''}</span>
+        <span class="meta">${esc(c.id)} · ${c.trainees} trainee${c.trainees === 1 ? '' : 's'}${c.created ? ' · made ' + esc(niceDate(c.created)) : ''}
+          <button class="btn quiet small" type="button" data-delete="${esc(c.id)}" data-label="${esc(label(c))}" data-trainees="${c.trainees}">Delete</button>
+        </span>
       </div>
       <div class="links">
         <div class="link">
@@ -191,29 +195,51 @@ function render(courses){
     </div>
     <div class="courses">${rows || '<div class="empty">No courses yet. Make the first one, then send its tutor link to the centre.</div>'}</div>
     <p id="status"></p>`;
+  if (msg) status(msg);
 
   $('makeBtn').addEventListener('click', async () => {
     const btn = $('makeBtn');
     btn.disabled = true; status('Making the course…');
     try {
       const made = await call({ op: 'createCourse' });
-      status('Made ' + made.id + '. Copy its tutor link and send it to the centre.');
-      load();
+      load('Made ' + made.id + '. Copy its tutor link and send it to the centre.');
     } catch (err) { status(err.message); btn.disabled = false; }
   });
 
   $('app').addEventListener('click', async e => {
-    const b = e.target.closest('[data-copy]'); if (!b) return;
-    try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy'; }, 1500); }
-    catch (err) { prompt('Copy this link', b.dataset.copy); }
+    const b = e.target.closest('[data-copy]');
+    if (b) {
+      try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy'; }, 1500); }
+      catch (err) { prompt('Copy this link', b.dataset.copy); }
+      return;
+    }
+    /* The only destructive thing on the screen, so the question names exactly
+       what goes rather than asking "are you sure". */
+    const d = e.target.closest('[data-delete]');
+    if (d) {
+      const n = Number(d.dataset.trainees || 0);
+      const carries = n
+        ? `Its ${n} trainee${n === 1 ? '' : 's'} and every plan, self-evaluation, feedback and assignment on it go with it.`
+        : 'It has no trainees; anything recorded on it goes with it.';
+      const ok = await confirmModal(
+        `Delete ${d.dataset.label}? ${carries} Its tutor and assessor links stop working. This cannot be undone.`,
+        'Delete the course');
+      if (!ok) return;
+      status('Deleting ' + d.dataset.label + '…');
+      try {
+        const r = await call({ op: 'deleteCourse', course: d.dataset.delete, confirm: d.dataset.delete });
+        const g = r.removed || {};
+        load(`Deleted ${r.deleted} — ${g.trainees || 0} trainee${g.trainees === 1 ? '' : 's'} and ${g.records || 0} record${g.records === 1 ? '' : 's'} with it.`);
+      } catch (err) { status(err.message); }
+    }
   });
 }
 
-async function load(){
+async function load(msg){
   if (!ownerKey()) { gate(); return; }
   try {
     const r = await call({ op: 'ownerCourses' });
-    render(r.courses || []);
+    render(r.courses || [], msg);
   } catch (err) {
     if (/not yours/i.test(err.message)) { try { localStorage.removeItem(OWNER_STORE); } catch (e) {} gate('That key was not recognised — check you copied all of it.'); return; }
     $('app').innerHTML = `<div class="empty">${esc(err.message)}</div>`;
