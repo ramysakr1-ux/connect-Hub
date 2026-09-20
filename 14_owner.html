@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<!--
+  Connect Lite — owner console
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy's own screen, behind the owner key: mint a course, and copy the two
+  links that go to the centre. It is NOT a course page, so it does not load
+  hub-sync (which would send it to the "open your course link" gate); it talks
+  to the store directly with the owner secret.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="brand/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<title>Connect Lite — Courses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sand:oklch(92.5% 0.012 85); --sand-line:oklch(89.5% 0.012 82); --row-line:oklch(91% 0.012 84);
+    --paper:oklch(99.5% 0.004 90); --card:oklch(96.2% 0.02 80); --ink:oklch(23.5% 0.017 65);
+    --teal:oklch(37.5% 0.058 195); --grey:oklch(51% 0.017 70); --gold:oklch(63% 0.096 72);
+    --gold-lifted:oklch(70% 0.12 72); --ink-warm:oklch(30% 0.042 58); --brick:oklch(52% 0.19 32);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
+  .board{max-width:1000px; margin:0 auto;}
+  a{color:var(--teal);}
+
+  .chrome{display:flex; align-items:center; justify-content:space-between; gap:24px; height:64px;}
+  .lockup{display:flex; align-items:center; gap:9px;}
+  .lockup .tile{width:30px; height:30px; border-radius:7px; background:var(--ink-warm);
+    display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .lockup .word{font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:21px;
+    line-height:0.85; letter-spacing:-0.012em; color:var(--gold);}
+  .hub-pair{display:inline-flex; align-items:baseline; gap:4px;}
+  .hub-word{font-family:'Instrument Sans','Karla',sans-serif; font-weight:500; font-size:9px;
+    letter-spacing:0.24em; text-transform:uppercase; color:var(--ink); line-height:1; margin-left:1px;}
+  .role{font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:600;
+    letter-spacing:0.22em; text-transform:uppercase; color:var(--grey);}
+
+  .title{border-top:2px solid var(--teal); padding-top:26px; display:flex; align-items:flex-end;
+    justify-content:space-between; gap:20px; flex-wrap:wrap;}
+  .title h1{margin:0; font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:2.1rem; line-height:1.15;}
+  .title p{margin:7px 0 0; font-size:0.9rem; color:var(--grey); line-height:1.6; max-width:620px;}
+
+  .btn{font-family:'Karla',sans-serif; font-size:0.82rem; font-weight:600; height:34px; padding:0 15px;
+    border-radius:6px; border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink);
+    cursor:pointer; display:inline-flex; align-items:center; transition:border-color .15s,color .15s,opacity .15s;}
+  .btn:hover{border-color:var(--teal); color:var(--teal);}
+  .btn.primary{background:var(--teal); border-color:var(--teal); color:var(--paper); font-weight:700;}
+  .btn.primary:hover{opacity:.88; color:var(--paper);}
+  .btn.small{height:28px; font-size:0.76rem; padding:0 11px;}
+
+  .courses{display:flex; flex-direction:column; gap:10px; margin-top:24px;}
+  .course{background:var(--card); border:1px solid var(--sand-line); border-radius:10px; padding:16px 18px;}
+  .chead{display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap;}
+  .chead h2{margin:0; font-family:'Newsreader',Georgia,serif; font-size:1.2rem; font-weight:600;}
+  .chead .meta{font-size:0.8rem; color:var(--grey);}
+  .links{display:flex; flex-direction:column; gap:8px; margin-top:13px; padding-top:13px; border-top:1px solid var(--row-line);}
+  .link{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
+  .link b{font-size:0.82rem; min-width:104px;}
+  .link .note{font-size:0.8rem; color:var(--grey); flex:1; min-width:180px;}
+  .empty{padding:34px 4px; font-size:0.9rem; color:var(--grey); line-height:1.65;}
+  .gate{max-width:560px; padding:16vh 0 0;}
+  .gate h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.9rem; margin:0 0 10px;}
+  .gate p{font-size:0.92rem; line-height:1.65; color:var(--grey); margin:0;}
+  #status{margin-top:14px; font-size:0.82rem; color:var(--grey);}
+  .foot{margin-top:44px; padding-top:16px; border-top:1px solid var(--sand-line);
+    display:flex; align-items:center; justify-content:center; gap:8px;}
+  .foot-mark{width:18px; height:18px; border-radius:4px; background:var(--ink-warm);
+    display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .foot .hub-credit{display:inline; margin-left:0;}
+</style>
+</head>
+<body>
+<div class="board">
+
+  <div class="chrome">
+    <div class="lockup">
+      <span class="tile">
+        <svg viewBox="8 30 104 60" width="20" height="12" fill="none">
+          <path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path>
+          <path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path>
+        </svg>
+      </span>
+      <span class="hub-pair"><span class="word">Connect</span><span class="hub-word">Lite</span></span>
+    </div>
+    <div class="role">Owner</div>
+  </div>
+
+  <div id="app"></div>
+
+  <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
+
+</div>
+
+<script src="hub-shared.js?v=202609210106"></script>
+<script src="hub-store.js?v=202609210106"></script>
+<script>
+/* The owner key rides in ?o= the first time and is kept in this browser after,
+   so the Command Center's Connect Lite door can be a plain link with no secret
+   in it. */
+const OWNER_STORE = 'hub:o';
+const params = new URLSearchParams(location.search);
+try {
+  if (params.get('o')) {
+    localStorage.setItem(OWNER_STORE, params.get('o'));
+    history.replaceState(null, '', location.pathname);
+  }
+} catch (e) {}
+function ownerKey(){ try { return localStorage.getItem(OWNER_STORE) || ''; } catch (e) { return ''; } }
+
+const $ = id => document.getElementById(id);
+const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const base = () => location.origin + location.pathname.replace(/[^/]*$/, '');
+const call = body => HubStore.call(Object.assign({ owner: ownerKey() }, body));
+
+function niceDate(iso){
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'}); }
+  catch (e) { return ''; }
+}
+/* What to call a course: the centre's own words once they have set them, and
+   the handle it was minted with until then. */
+function label(c){
+  if (c.courseName && c.centreName) return c.courseName + ' · ' + c.centreName;
+  return c.courseName || c.centreName || c.name || c.id;
+}
+function status(msg){ const s = $('status'); if (s) s.textContent = msg || ''; }
+
+function gate(){
+  $('app').innerHTML = `<div class="gate">
+    <h1>This is the owner console</h1>
+    <p>Open it with your owner link — the one carrying <code>?o=</code> — and this browser remembers it from then on. If you have lost it, run <code>ownerKey()</code> in the store's Apps Script editor.</p>
+  </div>`;
+}
+
+function render(courses){
+  const rows = courses.map(c => `
+    <div class="course">
+      <div class="chead">
+        <h2>${esc(label(c))}</h2>
+        <span class="meta">${esc(c.id)} · ${c.trainees} trainee${c.trainees === 1 ? '' : 's'}${c.created ? ' · made ' + esc(niceDate(c.created)) : ''}</span>
+      </div>
+      <div class="links">
+        <div class="link">
+          <b>Tutor link</b>
+          <span class="note">The one you send the centre. Their tutors and course admin all use it.</span>
+          <button class="btn small" type="button" data-copy="${esc(base() + '5_tutor_dashboard.html?k=' + encodeURIComponent(c.tutorKey))}">Copy</button>
+        </div>
+        <div class="link">
+          <b>Assessor link</b>
+          <span class="note">Read-only, for the visit. The centre can also find and rotate it themselves.</span>
+          <button class="btn small" type="button" data-copy="${esc(base() + '12_assessor_pack.html?ak=' + encodeURIComponent(c.assessorKey))}">Copy</button>
+        </div>
+      </div>
+    </div>`).join('');
+
+  $('app').innerHTML = `
+    <div class="title">
+      <div>
+        <h1>Courses</h1>
+        <p>One course, one set of links. Make a course, send the centre its tutor link, and they set it up and add their own trainees. Trainees' personal links live on that course's Roster and links tab.</p>
+      </div>
+      <button class="btn primary" id="makeBtn" type="button">Make a course</button>
+    </div>
+    <div class="courses">${rows || '<div class="empty">No courses yet. Make the first one, then send its tutor link to the centre.</div>'}</div>
+    <p id="status"></p>`;
+
+  $('makeBtn').addEventListener('click', async () => {
+    const btn = $('makeBtn');
+    btn.disabled = true; status('Making the course…');
+    try {
+      const made = await call({ op: 'createCourse' });
+      status('Made ' + made.id + '. Copy its tutor link and send it to the centre.');
+      load();
+    } catch (err) { status(err.message); btn.disabled = false; }
+  });
+
+  $('app').addEventListener('click', async e => {
+    const b = e.target.closest('[data-copy]'); if (!b) return;
+    try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy'; }, 1500); }
+    catch (err) { prompt('Copy this link', b.dataset.copy); }
+  });
+}
+
+async function load(){
+  if (!ownerKey()) { gate(); return; }
+  try {
+    const r = await call({ op: 'ownerCourses' });
+    render(r.courses || []);
+  } catch (err) {
+    if (/not yours/i.test(err.message)) { try { localStorage.removeItem(OWNER_STORE); } catch (e) {} gate(); return; }
+    $('app').innerHTML = `<div class="empty">${esc(err.message)}</div>`;
+  }
+}
+load();
+</script>
+</body>
+</html>
