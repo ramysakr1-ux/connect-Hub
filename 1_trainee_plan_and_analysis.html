@@ -1079,6 +1079,9 @@ function restore(d){
 $('prevBtn').addEventListener('click',()=>{
   let last=null;
   try{ last=JSON.parse(localStorage.getItem('chub:lastFeedback')||'null'); }catch(e){}
+  // In store mode the tutor's browser wrote chub:lastFeedback, not this one:
+  // read the starred points straight out of the last returned feedback.
+  if(!last){ try{ const h=JSON.parse(localStorage.getItem('chub:tpHistory')||'{}'); const ns=Object.keys(h).map(Number).filter(n=>n>0).sort((a,b)=>b-a); const fb=ns.length?h[ns[0]]:null; const lists=fb&&fb.state&&fb.state.lists||{}; const next=[]; Object.keys(lists).forEach(k=>(lists[k]||[]).forEach(it=>{ if(it&&it.star){ const d=document.createElement('div'); d.innerHTML=it.html||''; const t=d.textContent.trim(); if(t) next.push(t); } })); if(next.length) last={ next:next, tp: fb.state&&fb.state.f&&fb.state.f.fTP || ('TP'+ns[0]) }; }catch(e){} }
   const pts=(last&&last.next)||[];
   if(!pts.length){ setStatus('No starred action points saved in this browser yet.'); return; }
   const lead='From my last feedback'+(last.tp?' ('+last.tp+')':'')+':';

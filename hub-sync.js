@@ -75,7 +75,8 @@
   // ---- preload ------------------------------------------------------------------
   if (mode === 'solo') { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', runApp); else runApp(); return; }
   status('Loading from the course…', 'busy');
-  var work = S.boot().then(function(boot){
+  var work = S.boot().catch(function(){ return S.boot(); }).then(function(boot){
+    boot = boot || {};
     var course = boot.course || {};
     if (course.wording) origSet('connect_assignment_wording_v2', JSON.stringify(course.wording)); else origRemove('connect_assignment_wording_v2');
     if (course.settings) origSet('connect_course_settings', JSON.stringify(course.settings)); else origRemove('connect_course_settings');
