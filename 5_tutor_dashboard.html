@@ -75,7 +75,7 @@
       <span style="font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:34px;color:var(--gold);">Connect</span>
       <span style="font-family:'Karla',sans-serif;font-weight:600;font-size:24px;color:var(--ink);margin-left:-5px;">Hub</span>
     </div>
-    <p class="tag">Every submission a trainee has sent you, imported from their export file.</p>
+    <p class="tag" id="dashTag">Every submission a trainee has sent you, imported from their export file.</p>
     <p class="course-name" id="courseName">Course name not set yet — the centre sets it in course admin</p>
     <p class="role" id="roleLine">Course tutor</p>
     <p style="margin:6px 0 0; font-size:0.82rem; color:var(--grey);"><label for="tutorName" style="margin-right:6px;">Your name</label><input id="tutorName" type="text" placeholder="as it should appear on feedback" style="font-family:'Karla',sans-serif; font-size:0.85rem; padding:5px 9px; border:1.5px solid var(--sand-line); border-radius:6px; background:var(--paper); color:var(--ink); min-width:220px;"></p>
@@ -161,7 +161,7 @@ function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g, c=>({'&':'&amp
 function tpStatusPill(tr){
   const fb = tr.tp && tr.tp.feedback, plan = tr.tp && tr.tp.plan, self = tr.tp && tr.tp.selfeval;
   if (fb && fb.status==='returned') return {cls:'passed', label:'Returned'};
-  if (self && self.status==='turned_in') return {cls:'submitted', label:'Feedback in progress'};
+  if (self && self.status==='turned_in') return fb && fb.status==='draft' ? {cls:'submitted', label:'Feedback in progress'} : {cls:'submitted', label:'Ready for feedback'};
   if (plan && plan.status==='turned_in') return {cls:'draft', label:'Plan only — no self-eval yet'};
   return {cls:'draft', label:'Not yet turned in'};
 }
@@ -188,10 +188,11 @@ function render(){
     return;
   }
 
+  const storeMode = window.HubMode && window.HubMode !== 'solo';
   traineesBody.innerHTML = trainees.map(tr=>`<tr>
-    <td>${esc(tr.name)}</td>
-    <td>${tr.importedAt ? new Date(tr.importedAt).toLocaleString() : '—'}</td>
-    <td><button class="btn primary export-return" data-id="${esc(tr.id)}">Export for trainee</button></td>
+    <td>${esc(tr.name)}${tr.group?` <span style="color:var(--grey);font-size:0.8rem;">· group ${esc(tr.group)}</span>`:''}</td>
+    <td>${tr.importedAt ? new Date(tr.importedAt).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : '—'}</td>
+    <td>${storeMode ? '' : `<button class="btn primary export-return" data-id="${esc(tr.id)}">Export for trainee</button>`}</td>
   </tr>`).join('');
 
   subsBody.innerHTML = trainees.map(tr=>{
@@ -291,6 +292,8 @@ document.getElementById('traineesBody').addEventListener('click', e=>{
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
 });
+// Store mode: the words that were about files.
+if (window.HubMode && window.HubMode !== 'solo') { const tg=document.getElementById('dashTag'); if (tg) tg.textContent='Everything your trainees have turned in, as they turn it in.'; document.querySelectorAll('#panel-trainees th').forEach(th=>{ if(/Imported/i.test(th.textContent)) th.textContent='Joined'; if(/^\s*$/.test(th.textContent)) th.textContent=''; }); }
 </script>
 </body>
 </html>

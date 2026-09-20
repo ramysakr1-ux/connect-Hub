@@ -16,13 +16,19 @@ window.HubStore = (function(){
   function key(){ try { return localStorage.getItem('hub:k') || ''; } catch (e) { return ''; } }
   // text/plain keeps the browser from sending a CORS preflight, which Apps
   // Script would not answer; the response itself is plain JSON.
-  async function call(body){
-    var payload = Object.assign({}, body);
-    if (key() && !payload.key) payload.key = key();
+  async function once(payload){
     var res = await fetch(URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
     var text = await res.text();
+    try { return JSON.parse(text); } catch (e) { var title = (text.match(/<title>([^<]*)<\/title>/) || [])[1] || ''; var err = new Error('The store did not answer as expected' + (title ? ' (' + title + ')' : '')); err.transient = true; throw err; }
+  }
+  // Apps Script drops the odd call, especially several in quick succession,
+  // and answers with an HTML page instead of JSON. One retry after a pause.
+  async function call(body){
+    var payload = Object.assign({}, body);
+    if (key() && payload.key == null) payload.key = key();
     var out;
-    try { out = JSON.parse(text); } catch (e) { throw new Error('The store did not answer as expected' + (text.indexOf('<') === 0 ? ' (it may not be authorised yet)' : '')); }
+    try { out = await once(payload); }
+    catch (e) { if (!e.transient) throw e; await new Promise(function(r){ setTimeout(r, 900); }); out = await once(payload); }
     if (!out.ok) throw new Error(out.error || 'Store error');
     return out.result;
   }

@@ -50,9 +50,10 @@
   function schedule(id, job){ queue[id] = job; clearTimeout(timer); timer = setTimeout(flush, 600); status('Saving…', 'busy'); }
   function flush(){
     var jobs = queue; queue = {}; clearTimeout(timer); timer = null;
-    var ps = Object.keys(jobs).map(function(k){ return S.call(jobs[k]); });
-    if (!ps.length) return Promise.resolve();
-    var all = Promise.all(ps);
+    var keys = Object.keys(jobs);
+    if (!keys.length) return Promise.resolve();
+    // One at a time: Apps Script copes badly with a burst.
+    var all = keys.reduce(function(chain, k){ return chain.then(function(){ return S.call(jobs[k]); }); }, Promise.resolve());
     all.then(function(){ status('Saved to the course', 'ok'); }).catch(function(err){ status('Not saved \u2014 ' + (err && err.message || err), 'error'); });
     return all;
   }
