@@ -97,35 +97,110 @@
   localStorage.removeItem = function(k){ origRemove(k); route(k, null); };
 
   // ---- preload ------------------------------------------------------------------
+  // Apps Script answers in 1.5-13 s even for a ping (measured 20 Sep 2026), so
+  // a page cannot wait for it. Once this browser has booted this link once, the
+  // page runs at once from what it holds (the same localStorage keys) and the
+  // boot runs behind it; if the course has moved on and nothing was written
+  // here in the meantime, the page reloads itself -- instantly, from the fresh
+  // copy. A write made before the boot answers wins: the boot then only
+  // refreshes the keys it did not touch and leaves the page alone.
   if (mode === 'solo') { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', runApp); else runApp(); return; }
-  status('Loading from the course…', 'busy');
-  // Apps Script drops the odd call; three tries, the last after a pause.
-  var work = S.boot().catch(function(){ return S.boot(); }).catch(function(){ return new Promise(function(res){ setTimeout(res, 1500); }).then(function(){ return S.boot(); }); }).then(function(boot){
+  var identity = mode + ':' + (mode === 'tutor' ? S.key() : mode === 'assessor' ? S.assessorKey() : S.token());
+  var cached = false; try { cached = localStorage.getItem('hub:booted') === identity; } catch (e) {}
+  var dirty = {}, started = false;
+  var origRoute = route;
+  route = function(k, v){ if (started) dirty[k] = true; origRoute(k, v); };
+
+  // What a boot answer means for this browser's storage: key -> JSON or null.
+  function plan(boot){
     boot = boot || {};
-    var course = boot.course || {};
-    if (course.wording) origSet('connect_assignment_wording_v2', JSON.stringify(course.wording)); else origRemove('connect_assignment_wording_v2');
-    if (course.settings) origSet('connect_course_settings', JSON.stringify(course.settings)); else origRemove('connect_course_settings');
-    if (mode === 'assessor') window.HubAssessor = boot.assessor || {};
+    var course = boot.course || {}, out = {};
+    out['connect_assignment_wording_v2'] = course.wording ? JSON.stringify(course.wording) : null;
+    out['connect_course_settings'] = course.settings ? JSON.stringify(course.settings) : null;
     if (mode === 'trainee') {
       var me = boot.me || { records: {} };
-      window.HubMe = me;
-      origSet('hub:name', me.name || '');
-      Object.keys(TRAINEE_KEYS).forEach(function(key){
-        var kind = TRAINEE_KEYS[key], v = me.records[kind];
-        if (v == null) origRemove(key); else origSet(key, JSON.stringify(v));
-      });
-      return;
+      out['hub:name'] = me.name || '';
+      out['hub:me'] = JSON.stringify({ token: me.token, name: me.name, group: me.group });
+      Object.keys(TRAINEE_KEYS).forEach(function(key){ var v = me.records[TRAINEE_KEYS[key]]; out[key] = v == null ? null : JSON.stringify(v); });
+      return out;
     }
+    if (mode === 'assessor') out['hub:assessor'] = JSON.stringify(boot.assessor || {});
     var roster = { trainees: {} };
-    snapshot = {};
     (boot.roster || []).forEach(function(t){
       var r = t.records || {};
       roster.trainees[t.token] = { id: t.token, name: t.name, group: t.group, importedAt: t.created, tp: { plan: r.plan || null, selfeval: r.selfeval || null, feedback: r.feedback || null, history: r.tpHistory || {} }, assignments: r.assignments || {}, tracker: r.tracker || {} };
-      var rec = recordOf(roster.trainees[t.token]); snapshot[t.token] = {};
-      Object.keys(rec).forEach(function(kind){ snapshot[t.token][kind] = JSON.stringify(rec[kind]); });
     });
-    origSet('connect_roster_v1', JSON.stringify(roster));
-  });
-  work.then(function(){ status(mode === 'assessor' ? 'Assessor view — read-only' : 'Live — saved to the course as you go', 'ok'); }, function(err){ status('Could not reach the course — ' + (err && err.message || err), 'error'); })
-      .then(function(){ if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', runApp); else runApp(); });
+    out['connect_roster_v1'] = JSON.stringify(roster);
+    return out;
+  }
+  function current(key){ try { return localStorage.getItem(key); } catch (e) { return null; } }
+  // A page rewrites the roster in its own shape (extra fields, its own key
+  // order), so the roster is compared record by record, not as a string.
+  function rosterEqual(a, b){
+    var ra = parse(a), rb = parse(b); if (!ra || !rb) return a === b;
+    var ta = ra.trainees || {}, tb = rb.trainees || {};
+    var ka = Object.keys(ta).sort(), kb = Object.keys(tb).sort();
+    if (ka.join('|') !== kb.join('|')) return false;
+    return ka.every(function(token){
+      var x = ta[token], y = tb[token];
+      if ((x.name || '') !== (y.name || '') || (x.group || '') !== (y.group || '')) return false;
+      var rx = recordOf(x), ry = recordOf(y);
+      return Object.keys(ry).every(function(kind){ return JSON.stringify(rx[kind]) === JSON.stringify(ry[kind]); });
+    });
+  }
+  function same(key, incoming){ var now = current(key); if (key === 'connect_roster_v1') return rosterEqual(now, incoming); return now === incoming; }
+  function apply(p, only){
+    var changed = [];
+    Object.keys(p).forEach(function(key){
+      if (only && !only(key)) return;
+      if (same(key, p[key])) return;
+      changed.push(key);
+      if (p[key] == null) origRemove(key); else origSet(key, p[key]);
+    });
+    return changed;
+  }
+  function rebuildSnapshot(){
+    snapshot = {};
+    var roster = parse(current('connect_roster_v1')); if (!roster || !roster.trainees) return;
+    Object.keys(roster.trainees).forEach(function(token){
+      var rec = recordOf(roster.trainees[token]); snapshot[token] = {};
+      Object.keys(rec).forEach(function(kind){ snapshot[token][kind] = JSON.stringify(rec[kind]); });
+    });
+  }
+  function exposeMeta(){
+    if (mode === 'trainee') window.HubMe = parse(current('hub:me')) || {};
+    if (mode === 'assessor') window.HubAssessor = parse(current('hub:assessor')) || {};
+  }
+  function bootWithRetries(){
+    return S.boot().catch(function(){ return S.boot(); }).catch(function(){ return new Promise(function(res){ setTimeout(res, 1500); }).then(function(){ return S.boot(); }); });
+  }
+  function start(){ started = true; if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', runApp); else runApp(); }
+
+  if (cached) {
+    // Instant: the page runs from this browser's copy; the course is checked behind it.
+    exposeMeta(); rebuildSnapshot(); start();
+    status('Checking the course\u2026', 'busy');
+    bootWithRetries().then(function(boot){
+      var p = plan(boot);
+      var untouched = Object.keys(p).every(function(k){ return !dirty[k]; });
+      if (untouched) {
+        var changed = apply(p);
+        if (changed.length) { status('The course has moved on \u2014 refreshing', 'busy'); flushBeacon(); setTimeout(function(){ location.reload(); }, 150); return; }
+      } else {
+        apply(p, function(k){ return !dirty[k]; });
+      }
+      try { localStorage.setItem('hub:booted', identity); } catch (e) {}
+      status(mode === 'assessor' ? 'Assessor view \u2014 read-only' : 'Live \u2014 saved to the course as you go', 'ok');
+    }, function(err){ status('Could not reach the course \u2014 ' + (err && err.message || err) + ' (showing this browser\u2019s copy)', 'error'); });
+    return;
+  }
+
+  // First time on this link in this browser: nothing to show yet, so wait.
+  status('Loading from the course\u2026', 'busy');
+  bootWithRetries().then(function(boot){
+    apply(plan(boot)); exposeMeta(); rebuildSnapshot();
+    try { localStorage.setItem('hub:booted', identity); } catch (e) {}
+    status(mode === 'assessor' ? 'Assessor view \u2014 read-only' : 'Live \u2014 saved to the course as you go', 'ok');
+  }, function(err){ status('Could not reach the course \u2014 ' + (err && err.message || err), 'error'); })
+    .then(start);
 })();
