@@ -220,9 +220,9 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-shared.js?v=202609210002"></script>
-<script src="hub-store.js?v=202609210002"></script>
-<script src="hub-sync.js?v=202609210002"></script>
+<script src="hub-shared.js?v=202609210006"></script>
+<script src="hub-store.js?v=202609210006"></script>
+<script src="hub-sync.js?v=202609210006"></script>
 <script type="text/x-hub-app">
 
 /* The trainee's home. The rooms below are permanent doors; the band at the top
@@ -273,16 +273,34 @@ const ASG = (function(){
 })();
 status(document.getElementById('badgeAssignments'), ASG.text, ASG.tone);
 
+/* Which TP this is. The tutor's feedback and the trainee's own plan both carry
+   the number in the same place (state.f.fTP, else the label -- "TP4 · Name"),
+   and once a TP is returned it is filed in chub:tpHistory under its number, so
+   after "Start next TP" clears the three live records the next one is the
+   highest filed plus one. Nothing to show if none of those answer, and never a
+   number past the eighth. */
+function digits(v){ const n = parseInt(String(v||'').replace(/\D/g,''), 10); return n>=1 && n<=8 ? n : 0; }
+function fromRecord(r){ return r ? (digits(r.state && r.state.f && r.state.f.fTP) || digits(r.label)) : 0; }
+function tpNum(){
+  const live = fromRecord(fb) || fromRecord(plan) || fromRecord(self);
+  if (live) return live;
+  const done = Object.keys(rec('chub:tpHistory') || {}).map(Number).filter(n=>n>=1 && n<=8);
+  const next = done.length ? Math.max.apply(null, done) + 1 : 0;
+  return next >= 1 && next <= 8 ? next : 0;
+}
+const TP_N = tpNum();
+const TP_LABEL = 'Teaching practice' + (TP_N ? ' ' + TP_N + ' of 8' : '');
+
 /* ---- the now band --------------------------------------------------------- */
 /* One step at a time, in the cycle's own order. "With your tutor" is the one
    state with nothing to open -- it is grey and inert, not an alarm. */
 function tpNow(){
-  if (fbBack && !selfIn) return {k:'Teaching practice', l:'Turn in your self-evaluation', why:'Your feedback is back. Write and turn in your self-evaluation first — that is the point of writing it.', href:'2_trainee_self_evaluation.html', tone:'act'};
-  if (fbBack) return {k:'Teaching practice', l:'Your feedback is ready', why:'Read it, then start the next teaching practice.', href:'4_feedback_returned.html', tone:'act'};
-  if (selfIn) return {k:'Teaching practice', l:'With your tutor', why:'Your plan and self-evaluation are in. Nothing to do until the feedback comes back.', href:null, tone:'idle'};
-  if (planIn) return {k:'Teaching practice', l:'Write your self-evaluation', why:'Your plan is in. After you teach, write this before you read any feedback.', href:'2_trainee_self_evaluation.html', tone:'act'};
-  if (plan) return {k:'Teaching practice', l:'Finish your lesson plan', why:'Saved as a draft. Turn it in when it is ready for your tutor.', href:'1_trainee_plan_and_analysis.html', tone:'act'};
-  return {k:'Teaching practice', l:'Write your lesson plan', why:'The plan and the language analysis are the first thing in each TP.', href:'1_trainee_plan_and_analysis.html', tone:'act'};
+  if (fbBack && !selfIn) return {k:TP_LABEL, l:'Turn in your self-evaluation', why:'Your feedback is back. Write and turn in your self-evaluation first — that is the point of writing it.', href:'2_trainee_self_evaluation.html', tone:'act'};
+  if (fbBack) return {k:TP_LABEL, l:'Your feedback is ready', why:'Read it, then start the next teaching practice.', href:'4_feedback_returned.html', tone:'act'};
+  if (selfIn) return {k:TP_LABEL, l:'With your tutor', why:'Your plan and self-evaluation are in. Nothing to do until the feedback comes back.', href:null, tone:'idle'};
+  if (planIn) return {k:TP_LABEL, l:'Write your self-evaluation', why:'Your plan is in. After you teach, write this before you read any feedback.', href:'2_trainee_self_evaluation.html', tone:'act'};
+  if (plan) return {k:TP_LABEL, l:'Finish your lesson plan', why:'Saved as a draft. Turn it in when it is ready for your tutor.', href:'1_trainee_plan_and_analysis.html', tone:'act'};
+  return {k:TP_LABEL, l:'Write your lesson plan', why:'The plan and the language analysis are the first thing in each TP.', href:'1_trainee_plan_and_analysis.html', tone:'act'};
 }
 function asgNow(){
   const idle = ASG.tone === '' && ASG.text !== 'Not started' && ASG.text.indexOf('All ') !== 0;
