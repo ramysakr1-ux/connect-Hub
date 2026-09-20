@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <!--
-  Connect Lite — centre/course admin dashboard
+  Connect Lite — centre/course admin dashboard (v2 layout, 20 Sep 2026)
   © 2026 Ramy Sakr. All rights reserved.
+
+  Drop-in replacement for 6_centre_admin_dashboard.html. Same five tabs, the
+  same fields, the same store calls and the same element ids. What changed is
+  the layout only — see for-claude-code-course-admin-v2.md.
 -->
 <html lang="en">
 <head>
@@ -12,78 +16,186 @@
 <link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --sand:oklch(92.5% 0.012 85); --sand-line:oklch(89.5% 0.012 82);
     --paper:oklch(99.5% 0.004 90); --card:oklch(96.2% 0.02 80); --ink:oklch(23.5% 0.017 65);
     --terracotta:oklch(37.5% 0.058 195); --teal:oklch(37.5% 0.058 195);
-    --grey:oklch(51% 0.017 70); --gold:oklch(63% 0.096 72); --gold-lifted:oklch(70% 0.12 72); --ink-warm:oklch(30% 0.042 58);
+    --grey:oklch(51% 0.017 70); --gold:oklch(63% 0.096 72); --gold-lifted:oklch(70% 0.12 72);
+    --ink-warm:oklch(30% 0.042 58); --brick:oklch(52% 0.19 32); --amber:oklch(52% 0.11 75);
+    --amber-edge:oklch(80% 0.07 75);
   }
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
-    padding:40px 20px 60px; display:flex; flex-direction:column; align-items:center;}
-  .board{max-width:1080px; width:100%;}
-  .header{background:var(--card); border-radius:10px; border-top:3px solid var(--terracotta);
-    padding:44px 26px 36px; text-align:center; margin-bottom:22px; box-shadow:0 1px 2px rgba(0,0,0,0.03);}
-  .header p.tag{margin:16px 0 0; font-size:1rem; color:var(--grey);}
-  .header p.role{margin:20px 0 0; font-size:0.9rem; font-weight:700; color:var(--teal); letter-spacing:0.03em;}
-  .tabs{display:flex; gap:2px; margin-bottom:0; overflow-x:auto; padding:0 4px;}
-  .tab{font-family:'Karla',sans-serif; font-size:0.88rem; font-weight:600; color:var(--grey);
-    background:transparent; border:none; border-bottom:3px solid transparent; padding:14px 20px 12px; cursor:pointer; white-space:nowrap; transition:color .15s;}
+    padding:0 20px 80px;}
+  .board{max-width:1000px; margin:0 auto;}
+  a{color:var(--teal);} a:hover{color:var(--ink-warm);}
+
+  /* ---- chrome bar ---------------------------------------------------- */
+  .chrome{display:flex; align-items:center; justify-content:space-between; gap:24px; height:64px;}
+  .lockup{display:flex; align-items:center; gap:9px;}
+  .lockup .tile{width:30px; height:30px; border-radius:7px; background:var(--ink-warm);
+    display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .lockup .word{font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:21px;
+    line-height:0.85; letter-spacing:-0.012em; color:var(--gold);}
+  /* Ramy, 20 Sep 2026: the mark stays; "Lite" is the small tracked tag. */
+  .hub-word{font-family:'Instrument Sans','Karla',sans-serif; font-weight:500; font-size:9px;
+    letter-spacing:0.24em; text-transform:uppercase; color:var(--ink); line-height:1; margin-left:1px;}
+  .role{font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:600;
+    letter-spacing:0.22em; text-transform:uppercase; color:var(--grey);}
+
+  /* ---- title ---------------------------------------------------------- */
+  .title{border-top:2px solid var(--terracotta); padding-top:26px;}
+  .title h1{margin:0; font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:2.1rem;
+    line-height:1.15; color:var(--ink);}
+  .title p{margin:7px 0 0; font-size:0.9rem; color:var(--grey);}
+
+  /* ---- setup tick row -------------------------------------------------- */
+  .setup{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:20px;}
+  .setup button{display:flex; align-items:center; gap:7px; background:none; border:none;
+    padding:5px 11px 5px 5px; border-radius:20px; cursor:pointer; font-family:'Karla',sans-serif;
+    font-size:0.8rem; color:var(--grey); transition:background .15s,color .15s;}
+  .setup button:hover{background:var(--card); color:var(--ink);}
+  .setup .dot{width:18px; height:18px; border-radius:50%; display:inline-flex; align-items:center;
+    justify-content:center; font-size:10px; font-weight:700; background:var(--sand-line);
+    color:var(--grey); flex-shrink:0;}
+  .setup button.done .dot{background:var(--teal); color:var(--paper);}
+
+  /* ---- tabs ------------------------------------------------------------ */
+  .tabs{display:flex; gap:26px; margin-top:26px; border-bottom:1px solid var(--sand-line); overflow-x:auto;}
+  .tab{font-family:'Karla',sans-serif; font-size:0.9rem; font-weight:600; background:none; border:none;
+    border-bottom:2px solid transparent; color:var(--grey); padding:0 0 11px; margin-bottom:-1px;
+    cursor:pointer; white-space:nowrap; transition:color .15s;}
   .tab:hover{color:var(--ink);}
   .tab.active{color:var(--teal); border-bottom-color:var(--teal);}
-  .panel{background:var(--card); border-radius:10px; padding:26px 28px; min-height:220px; box-shadow:0 1px 2px rgba(0,0,0,0.03);}
-  .panel.tablepanel{padding:6px;}
-  table{width:100%; border-collapse:collapse;}
-  th{text-align:left; font-size:0.7rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase;
-    color:var(--grey); padding:15px 20px; border-bottom:1px solid var(--sand-line);}
-  td{padding:17px 20px; border-bottom:1px solid var(--sand-line); font-size:0.92rem; vertical-align:middle;}
-  tr:last-child td{border-bottom:none;}
-  tbody tr:hover td{background:oklch(93.5% 0.02 80);}
-  .status-pill{display:inline-block; font-size:0.78rem; font-weight:700; padding:5px 12px; border-radius:20px;}
-  .status-pill.draft{background:var(--sand); color:var(--grey);}
-  .status-pill.submitted{background:#FBF3E4; color:#8A6320;}
-  .status-pill.passed{background:#EAF3E9; color:#1E6B63;}
-  .btn{font-family:'Karla',sans-serif; font-size:0.83rem; font-weight:700; padding:9px 18px; border-radius:20px;
-    border:1.5px solid var(--sand-line); background:var(--card); color:var(--ink); cursor:pointer; transition:opacity .15s;}
-  .btn:hover{opacity:0.8;}
-  .btn.primary{background:var(--teal); border-color:var(--teal); color:var(--paper);}
-  .btn.ghost{border-color:var(--teal); color:var(--teal); background:none;}
-  .roster-toolbar{display:flex; align-items:center; justify-content:space-between; padding:18px 20px 6px;}
-  .roster-toolbar h3{margin:0; font-size:1rem; font-weight:700; color:var(--ink);}
-  .link-cell{display:flex; align-items:center; gap:10px; font-family:monospace; font-size:0.78rem; color:var(--grey);}
-  .field-row{display:grid; grid-template-columns:200px 1fr; gap:16px; align-items:center; padding:14px 0; border-bottom:1px solid var(--sand-line);}
-  .field-row:last-child{border-bottom:none;}
-  .field-row label{font-weight:700; font-size:0.88rem;}
-  .field-row input[type="text"], .field-row input[type="date"]{
-    font-family:'Karla',sans-serif; font-size:0.92rem; padding:10px 12px; border:1.5px solid var(--sand-line);
-    border-radius:6px; background:var(--paper); color:var(--ink); max-width:340px; width:100%;}
-  .logo-slot{width:64px; height:64px; border-radius:9px; border:1.5px dashed var(--sand-line);
-    display:flex; align-items:center; justify-content:center; font-size:9px; color:var(--grey); text-align:center; line-height:1.2; flex-shrink:0;}
-  .settings-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:22px;}
-  .footer{display:flex; align-items:center; justify-content:center; gap:8px; margin-top:36px; font-size:0.8rem; color:var(--grey);}
-  .footer span.name{font-weight:600; color:var(--ink);}
-  /* Ramy, 20 Sep 2026: the mark stays; "Hub" gets its own play -- teal tracked caps, sitting on Connect's baseline. */
-  .hub-word{font-family:'Instrument Sans','Karla',sans-serif;font-weight:500;font-size:10px;letter-spacing:0.24em;text-transform:uppercase;color:var(--ink);line-height:1;margin-left:2px;}
+
+  .panel{padding:34px 0 0;}
+  .panel h2{margin:0 0 4px; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.15rem;}
+  .panel h2 .count{font-family:'Karla',sans-serif; font-size:0.85rem; font-weight:500; color:var(--grey);}
+  .lede{margin:0 0 18px; font-size:0.85rem; color:var(--grey); line-height:1.6; max-width:640px;}
+
+  /* ---- buttons --------------------------------------------------------- */
+  .btn{font-family:'Karla',sans-serif; font-size:0.82rem; font-weight:600; padding:7px 15px;
+    border-radius:6px; border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink);
+    cursor:pointer; transition:border-color .15s,color .15s,opacity .15s;}
+  .btn:hover{border-color:var(--teal); color:var(--teal);}
+  .btn.primary{background:var(--teal); border-color:var(--teal); color:var(--paper); font-weight:700;}
+  .btn.primary:hover{opacity:0.88; color:var(--paper);}
+  .btn.ghost{border-color:var(--sand-line); background:var(--paper);}
+  .btn.small{font-size:0.76rem; padding:5px 11px;}
+  .btn.quiet{border:none; background:none; color:var(--grey); font-weight:500; padding:5px 6px;}
+  .btn.quiet:hover{color:var(--brick);}
+  .linkbtn{font-family:'Karla',sans-serif; font-size:0.8rem; font-weight:600; background:none;
+    border:none; color:var(--teal); cursor:pointer; padding:0;}
+
+  /* ---- settings -------------------------------------------------------- */
+  .settings{max-width:620px;}
+  .logo-row{display:flex; align-items:flex-start; gap:18px; padding-bottom:26px;}
+  .logo-slot{width:60px; height:60px; border-radius:9px; border:1.5px dashed var(--sand-line);
+    display:flex; align-items:center; justify-content:center; font-size:9px; line-height:1.2;
+    text-align:center; color:var(--grey); flex-shrink:0;}
+  .logo-row h3{margin:0 0 4px; font-size:0.88rem; font-weight:700;}
+  .logo-row p{margin:0 0 9px; font-size:0.8rem; color:var(--grey); line-height:1.5;}
+  .fields{display:grid; grid-template-columns:1fr 1fr; gap:20px 24px;}
+  .fields .wide{grid-column:1 / -1;}
+  .fields label{display:block; font-size:0.74rem; font-weight:700; letter-spacing:0.05em;
+    text-transform:uppercase; color:var(--grey); margin-bottom:6px;}
+  input[type="text"], input[type="date"], textarea{font-family:'Karla',sans-serif; font-size:0.92rem;
+    padding:10px 12px; border:1.5px solid var(--sand-line); border-radius:6px; background:var(--paper);
+    color:var(--ink); width:100%;}
+  textarea{resize:vertical;}
+  input:focus, textarea:focus{outline:none; border-color:var(--teal);}
+  .note{margin:12px 0 0; font-size:0.8rem; color:var(--grey); line-height:1.5;}
+
+  /* ---- course links card ------------------------------------------------ */
+  .sectionhead{display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin-bottom:12px;}
+  .linkcard{border:1px solid var(--sand-line); border-radius:10px; background:var(--card);
+    overflow:hidden; margin-bottom:38px;}
+  .linkrow{display:flex; align-items:flex-start; gap:18px; padding:16px 18px; border-bottom:1px solid var(--sand-line);}
+  .linkrow:last-child{border-bottom:none;}
+  .linkrow .body{flex:1; min-width:0;}
+  .linkrow b{font-size:0.88rem;}
+  .linkrow p{margin:3px 0 0; font-size:0.8rem; color:var(--grey); line-height:1.5;}
+  .linkrow code{display:block; margin-top:8px; font-size:0.74rem; word-break:break-all; color:var(--grey);}
+  .linkrow .acts{display:flex; align-items:center; gap:8px; flex-shrink:0;}
+
+  /* ---- add trainee ------------------------------------------------------ */
+  .addbox{margin:14px 0 6px; padding:16px 18px; border:1px solid var(--sand-line); border-radius:10px;
+    background:var(--card);}
+  .addbox .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  .addbox input{width:auto;}
+  .addbox input.name{min-width:240px; flex:1;}
+  .addbox input.group{width:110px;}
+  .bulkwrap{margin-top:10px; max-width:440px;}
+
+  /* ---- tables as grids --------------------------------------------------- */
+  .grid{display:grid; gap:16px; align-items:center;}
+  .grid.roster{grid-template-columns:1.6fr 0.6fr 1.4fr auto;}
+  .grid.dm{grid-template-columns:1.4fr 0.7fr 1.3fr 1fr 1fr;}
+  .ghead{padding:0 4px 9px; border-bottom:1px solid var(--sand-line); font-size:0.72rem; font-weight:700;
+    letter-spacing:0.05em; text-transform:uppercase; color:var(--grey);}
+  .grow{padding:13px 4px; border-bottom:1px solid var(--sand-line); font-size:0.9rem;}
+  .grow .name{font-weight:500;}
+  .grow .acts{display:flex; gap:6px; justify-content:flex-end;}
+  .muted{color:var(--grey);}
+  .amber{color:var(--amber);}
+  .brick{color:var(--brick);}
+  .empty{padding:20px 4px; font-size:0.88rem; color:var(--grey);}
+
+  /* ---- assignment rows ---------------------------------------------------- */
+  .arow{display:flex; align-items:center; justify-content:space-between; gap:20px; padding:15px 4px;
+    border-bottom:1px solid var(--sand-line);}
+  .arow .code{font-size:0.74rem; font-weight:700; letter-spacing:0.06em; color:var(--teal);}
+  .arow .title2{font-size:0.92rem; margin-top:2px;}
+  .arow .aside{font-size:0.78rem; color:var(--grey); margin-top:2px;}
+
+  /* ---- double-marking quota ------------------------------------------------ */
+  .quota{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:30px;}
+  .qcard{border:1px solid var(--sand-line); border-radius:9px; padding:13px 15px; background:var(--card);}
+  .qcard.short{border-color:var(--amber-edge);}
+  .qcard .code{font-size:0.74rem; font-weight:700; letter-spacing:0.06em; color:var(--grey);}
+  .qcard .n{font-size:1.3rem; font-family:'Newsreader',Georgia,serif; font-weight:600; margin-top:4px;}
+  .qcard.short .n{color:var(--amber);}
+  .qcard.idle .n{color:var(--grey);}
+  .qcard .note2{font-size:0.78rem; color:var(--grey); margin-top:1px;}
+
+  @media (max-width:780px){
+    .fields{grid-template-columns:1fr;}
+    .grid.roster{grid-template-columns:1fr auto;}
+    .grid.roster > .col-group, .grid.roster > .col-status{display:none;}
+    .grid.dm{grid-template-columns:1.4fr 0.7fr 1.3fr;}
+    .grid.dm > .col-first, .grid.dm > .col-second{display:none;}
+  }
 </style>
 </head>
 <body>
 <div class="board">
-  <div class="header">
-    <div style="display:flex;align-items:center;justify-content:center;gap:10px;">
-      <span style="width:40px;height:40px;border-radius:9px;background:var(--ink-warm);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <svg viewBox="8 30 104 60" width="26" height="15" fill="none">
+
+  <div class="chrome">
+    <div class="lockup">
+      <span class="tile">
+        <svg viewBox="8 30 104 60" width="20" height="12" fill="none">
           <path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path>
           <path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path>
         </svg>
       </span>
-      <span style="font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:27px;line-height:0.85;letter-spacing:-0.012em;color:var(--gold);">Connect</span>
+      <span class="word">Connect</span>
       <span class="hub-word">Lite</span>
     </div>
-    <p class="tag">Set up your course, then invite your tutors and trainees.</p>
-<ol class="hub-steps"><li><b>1</b>Settings: centre and course</li><li><b>2</b>Roster and links: add trainees, hand out links</li><li><b>3</b>Assignments: the wording, in your order</li><li><b>4</b>Give tutors the tutor link</li></ol>
-    <p class="role">Course admin</p>
+    <div class="role">Course admin</div>
+  </div>
+
+  <div class="title">
+    <h1 id="boardTitle">Course admin</h1>
+    <p id="boardMeta">Set up your course, then invite your tutors and trainees.</p>
+  </div>
+
+  <div class="setup" id="setupRow">
+    <button type="button" data-goto="settings"><span class="dot">1</span>Course set up</button>
+    <button type="button" data-goto="roster"><span class="dot">2</span>Trainees added</button>
+    <button type="button" data-goto="assignments"><span class="dot">3</span>Assignment wording</button>
+    <button type="button" data-goto="tutors"><span class="dot">4</span>Tutors invited</button>
   </div>
 
   <div class="tabs" id="tabs">
@@ -94,85 +206,155 @@
     <button class="tab" data-tab="doublemark">Double-marking</button>
   </div>
 
-  <div class="panel" id="panel-settings">
-    <div class="field-row">
-      <label>Centre logo</label>
-      <div style="display:flex;align-items:center;gap:14px;">
-        <div class="logo-slot" id="logoSlot">Centre<br>logo</div>
+  <!-- ================= Settings ================= -->
+  <div class="panel settings" id="panel-settings">
+    <div class="logo-row">
+      <div class="logo-slot" id="logoSlot">Centre<br>logo</div>
+      <div>
+        <h3>Centre logo</h3>
+        <p>Appears on printed records. Under 500KB; stays in this browser.</p>
         <button class="btn" id="logoUploadBtn" type="button">Upload</button>
         <input type="file" id="logoFile" accept="image/*" style="display:none;">
+        <p id="logoStatus" style="margin:8px 0 0; font-size:0.78rem; color:var(--grey);"></p>
       </div>
-      <p id="logoStatus" style="margin:6px 0 0; font-size:0.76rem; color:var(--grey);"></p>
     </div>
-    <div class="field-row"><label>Centre name</label><input type="text" id="centreName" placeholder="e.g. Riverside Language Centre"></div>
-    <div class="field-row"><label>Centre number</label><input type="text" id="centreNumber" placeholder="Cambridge centre number"></div>
-    <div class="field-row"><label>Course name</label><input type="text" id="courseName" placeholder="e.g. CELTA — August 2026"></div>
-    <div class="field-row"><label>Course start date</label><input type="date" id="courseStart"></div>
-    <div class="field-row"><label>Course end date</label><input type="date" id="courseEnd"></div>
-    <div class="settings-actions">
-      <button class="btn primary" id="saveSettings">Save</button>
+
+    <div class="fields">
+      <div class="wide">
+        <label for="centreName">Centre name</label>
+        <input type="text" id="centreName" placeholder="e.g. Riverside Language Centre">
+      </div>
+      <div>
+        <label for="centreNumber">Centre number</label>
+        <input type="text" id="centreNumber" placeholder="Cambridge centre number">
+      </div>
+      <div>
+        <label for="courseName">Course name</label>
+        <input type="text" id="courseName" placeholder="e.g. CELTA — August 2026">
+      </div>
+      <div>
+        <label for="courseStart">Starts</label>
+        <input type="date" id="courseStart">
+      </div>
+      <div>
+        <label for="courseEnd">Ends</label>
+        <input type="date" id="courseEnd">
+      </div>
+    </div>
+    <p class="note">The end date sets when the assessor link expires — fourteen days after it.</p>
+    <div style="margin-top:26px;"><button class="btn primary" id="saveSettings">Save</button></div>
+  </div>
+
+  <!-- ================= Roster and links ================= -->
+  <div class="panel" id="panel-roster" style="display:none;">
+    <div id="storeRoster"></div>
+    <p id="rosterNoStore" class="lede">Open this page from the tutor link (the one with the course key) to add trainees and hand out their personal links. Without it, a trainee appears below only once you've imported their file from the <a href="5_tutor_dashboard.html">tutor dashboard</a>.</p>
+    <div id="importedRoster">
+      <div class="sectionhead"><h2>Trainees <span class="count" id="rosterCount"></span></h2></div>
+      <div class="grid roster ghead">
+        <div>Trainee</div><div class="col-group">Group</div><div class="col-status">Teaching practice</div><div></div>
+      </div>
+      <div id="rosterTraineeBody"></div>
     </div>
   </div>
 
-  <div class="panel tablepanel" id="panel-roster" style="display:none;">
-    <div class="roster-toolbar"><h3>Trainees</h3></div>
-    <div id="storeRoster" style="padding:0 20px 14px;"></div>
-    <p id="rosterNoStore" style="padding:0 20px 14px;font-size:0.82rem;color:var(--grey);">Open this page from the tutor link (the one with the course key) to add trainees and hand out their personal links. Without it, a trainee appears below only once you've imported their file from the <a href="5_tutor_dashboard.html" style="color:var(--teal);">tutor dashboard</a>.</p>
-    <table>
-      <tr><th>Trainee</th><th>TP status</th><th>Imported</th></tr>
-      <tbody id="rosterTraineeBody"></tbody>
-    </table>
+  <!-- ================= Tutors ================= -->
+  <div class="panel" id="panel-tutors" style="display:none;">
+    <h2>Tutors</h2>
+    <p class="lede" id="tutorsNote" style="max-width:560px;font-size:0.9rem;line-height:1.65;">Same as trainees — no login, so no personal invite links. Share the <a href="5_tutor_dashboard.html">tutor dashboard</a> URL with your tutors directly; each imports trainee files into their own browser.</p>
   </div>
 
-  <div class="panel tablepanel" id="panel-tutors" style="display:none;">
-    <div class="roster-toolbar"><h3>Tutors</h3></div>
-    <p id="tutorsNote" style="padding:0 20px 14px;font-size:0.82rem;color:var(--grey);">Same as trainees — no login, so no personal invite links. Share the <a href="5_tutor_dashboard.html" style="color:var(--teal);">tutor dashboard</a> URL with your tutors directly; each imports trainee files into their own browser.</p>
+  <!-- ================= Assignments ================= -->
+  <div class="panel" id="panel-assignments" style="display:none;max-width:720px;">
+    <h2>Written assignments</h2>
+    <p class="lede">Wording only — the layout, fields and structure of each assignment are fixed.</p>
+    <div id="assignmentRows">
+      <div class="arow" data-key="fol"><div><span class="code">FOL</span><div class="title2">Focus on the Learner</div></div><a class="btn ghost" href="8_assignment_wording.html?a=fol" style="text-decoration:none;">Edit wording</a></div>
+      <div class="arow" data-key="lrt"><div><span class="code">LRT</span><div class="title2">Language Related Tasks</div></div><a class="btn ghost" href="8_assignment_wording.html?a=lrt" style="text-decoration:none;">Edit wording</a></div>
+      <div class="arow" data-key="lsrt"><div><span class="code">LSRT</span><div class="title2">Language Skills Related Task</div></div><a class="btn ghost" href="8_assignment_wording.html?a=lsrt" style="text-decoration:none;">Edit wording</a></div>
+      <div class="arow" data-key="lfc"><div><span class="code">LfC</span><div class="title2">Lessons from the Classroom</div></div><a class="btn ghost" href="8_assignment_wording.html?a=lfc" style="text-decoration:none;">Edit wording</a></div>
+      <div class="arow" data-key="a5"><div><span class="code">A5</span><div class="title2">Plagiarism Reflection</div><div class="aside">Centre sanction — not part of the four</div></div><a class="btn ghost" href="8_assignment_wording.html?a=a5" style="text-decoration:none;">Edit wording</a></div>
+    </div>
   </div>
 
-  <div class="panel tablepanel" id="panel-assignments" style="display:none;">
-    <div class="roster-toolbar"><h3>Written assignments</h3></div>
-    <table>
-      <tr><th>Assignment</th><th></th></tr>
-      <tr><td>FOL — Focus on the Learner</td><td><a class="btn ghost" href="8_assignment_wording.html?a=fol" style="text-decoration:none;display:inline-block;">Edit wording</a></td></tr>
-      <tr><td>LRT — Language Related Tasks</td><td><a class="btn ghost" href="8_assignment_wording.html?a=lrt" style="text-decoration:none;display:inline-block;">Edit wording</a></td></tr>
-      <tr><td>LSRT — Language Skills Related Task</td><td><a class="btn ghost" href="8_assignment_wording.html?a=lsrt" style="text-decoration:none;display:inline-block;">Edit wording</a></td></tr>
-      <tr><td>LfC — Lessons from the Classroom</td><td><a class="btn ghost" href="8_assignment_wording.html?a=lfc" style="text-decoration:none;display:inline-block;">Edit wording</a></td></tr>
-      <tr><td>Assignment 5 — Plagiarism Reflection <span style="color:var(--grey);font-weight:400;">(centre sanction, not part of the four)</span></td><td><a class="btn ghost" href="8_assignment_wording.html?a=a5" style="text-decoration:none;display:inline-block;">Edit wording</a></td></tr>
-    </table>
-    <p style="padding:14px 20px 4px;font-size:0.8rem;color:var(--grey);">Wording only — the layout, fields and structure of each assignment are fixed.</p>
+  <!-- ================= Double-marking ================= -->
+  <div class="panel" id="panel-doublemark" style="display:none;">
+    <h2>Double-marking record</h2>
+    <p class="lede" id="dmRule">Handbook 9.2.3: at least two tutors must mark across the course, and a set proportion of each assignment must be double-marked — three of each up to nine candidates, four up to sixteen, five up to twenty-four.</p>
+    <div class="quota" id="dmQuota"></div>
+    <div class="grid dm ghead">
+      <div>Trainee</div><div>Task</div><div>Status</div><div class="col-first">First marker</div><div class="col-second">Second marker</div>
+    </div>
+    <div id="dmBody"></div>
   </div>
-
-  <div class="panel tablepanel" id="panel-doublemark" style="display:none;">
-    <div class="roster-toolbar"><h3>Double-marking record</h3></div>
-    <table id="dmTable">
-      <tr><th>Assignment</th><th>Status</th><th>1st marker</th><th>2nd marker</th><th>Double-marked?</th></tr>
-    </table>
-    <p style="padding:14px 20px 4px;font-size:0.8rem;color:var(--grey);">Handbook 8.2.3: a minimum of two tutors must be involved in marking overall, and a set proportion of each assignment double-marked (3 of each up to 9 candidates, 4 up to 16, 5 up to 24) — shown for reference, this doesn't auto-check the proportion against the row count yet.</p>
-  </div>
-
 
 </div>
-<script src="assignment-defaults.js?v=202609202200"></script>
-<script src="hub-store.js?v=202609202200"></script>
-<script src="hub-shared.js?v=202609202200"></script>
-<script src="hub-sync.js?v=202609202200"></script>
+
+<script src="assignment-defaults.js?v=202609202245"></script>
+<script src="hub-store.js?v=202609202245"></script>
+<script src="hub-shared.js?v=202609202245"></script>
+<script src="hub-sync.js?v=202609202245"></script>
 <script type="text/x-hub-app">
-document.getElementById('tabs').addEventListener('click', e=>{
-  const btn = e.target.closest('.tab');
-  if(!btn) return;
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
+function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ---- tabs ---------------------------------------------------------------- */
+function showTab(key){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===key));
   document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
-  document.getElementById('panel-'+btn.dataset.tab).style.display='';
-  if (btn.dataset.tab === 'doublemark') renderDoubleMarking();
-  if (btn.dataset.tab === 'roster') renderRoster();
+  document.getElementById('panel-'+key).style.display='';
+  if (key === 'doublemark') renderDoubleMarking();
+  if (key === 'roster') renderRoster();
+}
+document.getElementById('tabs').addEventListener('click', e=>{
+  const btn = e.target.closest('.tab'); if(!btn) return; showTab(btn.dataset.tab);
 });
+document.getElementById('setupRow').addEventListener('click', e=>{
+  const btn = e.target.closest('[data-goto]'); if(!btn) return; showTab(btn.dataset.goto);
+});
+
+/* ---- settings ------------------------------------------------------------ */
 let courseLogo = '';
 function applyLogoPreview(dataUrl){
   const slot = document.getElementById('logoSlot');
   if (dataUrl) slot.innerHTML = `<img src="${dataUrl}" alt="Centre logo" style="width:100%;height:100%;object-fit:cover;border-radius:7px;">`;
   else slot.innerHTML = 'Centre<br>logo';
 }
+function fmtDate(iso){
+  if(!iso) return '';
+  try{ return new Date(iso).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}); }catch(e){ return iso; }
+}
+/* The title block reads the saved settings: the course is the H1, the centre,
+   number and dates are the one meta line beneath it. */
+function renderTitle(){
+  let cs = null; try{ cs = JSON.parse(localStorage.getItem('connect_course_settings')); }catch(e){}
+  const h1 = document.getElementById('boardTitle'), meta = document.getElementById('boardMeta');
+  if(!cs){ h1.textContent = 'Course admin'; meta.textContent = 'Set up your course, then invite your tutors and trainees.'; return; }
+  h1.textContent = cs.courseName || 'Course admin';
+  const bits = [cs.centreName, cs.centreNumber].filter(Boolean);
+  const span = cs.start && cs.end ? fmtDate(cs.start) + ' – ' + fmtDate(cs.end) : (cs.start ? 'From ' + fmtDate(cs.start) : '');
+  if (span) bits.push(span);
+  meta.textContent = bits.length ? bits.join(' · ') : 'Set up your course, then invite your tutors and trainees.';
+}
+/* Setup ticks: each step is done when its evidence exists. */
+function renderSetup(){
+  let cs = null, w = null;
+  try{ cs = JSON.parse(localStorage.getItem('connect_course_settings')); }catch(e){}
+  try{ w = JSON.parse(localStorage.getItem('connect_assignment_wording_v2')); }catch(e){}
+  const roster = loadRoster();
+  const done = {
+    settings: !!(cs && cs.courseName && cs.start && cs.end),
+    roster: Object.keys(roster.trainees||{}).length > 0 || !!(window.HubStore && window.HubStore.isTutor()),
+    assignments: !!w,
+    tutors: !!(window.HubStore && window.HubStore.isTutor())
+  };
+  document.querySelectorAll('#setupRow [data-goto]').forEach(b=>{
+    const ok = done[b.dataset.goto];
+    b.classList.toggle('done', !!ok);
+    b.querySelector('.dot').textContent = ok ? '\u2713' : b.querySelector('.dot').dataset.n || b.querySelector('.dot').textContent;
+  });
+}
+document.querySelectorAll('#setupRow .dot').forEach((d,i)=>d.dataset.n = String(i+1));
+
 try {
   const cs = JSON.parse(localStorage.getItem('connect_course_settings'));
   if (cs) {
@@ -184,6 +366,7 @@ try {
     if(cs.logo){ courseLogo = cs.logo; applyLogoPreview(courseLogo); }
   }
 } catch(e) {}
+
 document.getElementById('logoUploadBtn').addEventListener('click', ()=>document.getElementById('logoFile').click());
 document.getElementById('logoFile').addEventListener('change', e=>{
   const file = e.target.files[0]; if(!file) return;
@@ -202,35 +385,56 @@ document.getElementById('saveSettings').addEventListener('click', () => {
     logo: courseLogo
   }));
   document.getElementById('logoStatus').textContent = 'Saved.';
+  renderTitle(); renderSetup();
 });
-function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ---- imported roster (solo mode) ------------------------------------------ */
 const ROSTER_KEY='connect_roster_v1';
 function loadRoster(){ try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
+
+function tpStatus(tr){
+  const fb = tr.tp && tr.tp.feedback, plan = tr.tp && tr.tp.plan, self = tr.tp && tr.tp.selfeval;
+  if (fb && fb.status==='returned') return {label:'Feedback returned', cls:'muted'};
+  if (self && self.status==='turned_in') return {label:'Awaiting feedback', cls:'amber'};
+  if (plan && plan.status==='turned_in') return {label:'Plan turned in', cls:'muted'};
+  return {label:'Not yet turned in', cls:'brick'};
+}
 
 function renderRoster(){
   const roster = loadRoster();
   const trainees = Object.values(roster.trainees||{}).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   const body = document.getElementById('rosterTraineeBody');
-  if (!trainees.length){ body.innerHTML = `<tr><td colspan="3" style="color:var(--grey);">No trainees imported yet.</td></tr>`; return; }
+  document.getElementById('rosterCount').textContent = trainees.length ? trainees.length : '';
+  if (!trainees.length){ body.innerHTML = `<div class="empty">No trainees imported yet.</div>`; return; }
   body.innerHTML = trainees.map(tr=>{
-    const fb = tr.tp && tr.tp.feedback, plan = tr.tp && tr.tp.plan, self = tr.tp && tr.tp.selfeval;
-    let status = 'Not yet turned in';
-    if (fb && fb.status==='returned') status = 'Feedback returned';
-    else if (self && self.status==='turned_in') status = 'Awaiting feedback';
-    else if (plan && plan.status==='turned_in') status = 'Plan turned in';
-    return `<tr><td>${esc(tr.name)}</td><td>${esc(status)}</td><td>${tr.importedAt ? new Date(tr.importedAt).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : '—'}</td></tr>`;
+    const st = tpStatus(tr);
+    return `<div class="grid roster grow">
+      <div class="name">${esc(tr.name)}</div>
+      <div class="col-group muted">${esc(tr.group||'—')}</div>
+      <div class="col-status ${st.cls}">${esc(st.label)}</div>
+      <div class="muted" style="font-size:0.8rem;text-align:right;">${tr.importedAt ? 'Imported ' + fmtDate(tr.importedAt) : '—'}</div>
+    </div>`;
   }).join('');
 }
 renderRoster();
 
+/* ---- double-marking -------------------------------------------------------- */
+/* The required sample follows the cohort, per Handbook 9.2.3: 3 of each up to
+   nine candidates, 4 up to sixteen, 5 up to twenty-four. It is derived here, not
+   hard-coded — a wrong denominator on a compliance screen is worse than none. */
+function requiredSample(cohort){ return cohort <= 9 ? 3 : cohort <= 16 ? 4 : 5; }
+
 function renderDoubleMarking(){
   let WORDING=null;
   try{ WORDING=JSON.parse(localStorage.getItem('connect_assignment_wording_v2')); }catch(e){}
-  // Nothing saved in this browser: the centre's standard wording (assignment-defaults.js).
   if(!WORDING && window.CONNECT_HUB_DEFAULT_WORDING) WORDING = window.CONNECT_HUB_DEFAULT_WORDING;
   const ORDER=hubAssignmentOrder(WORDING); const NAMES={lrt:'LRT',lsrt:'LSRT',fol:'FOL',lfc:'LFC',a5:'Assignment 5'};
   const roster = loadRoster();
   const trainees = Object.values(roster.trainees||{});
+  const cohort = trainees.length;
+  const required = requiredSample(cohort);
+
+  const counted = {}, started = {};
   let rows = [];
   trainees.forEach(tr=>{
     const subs = tr.assignments || {};
@@ -238,89 +442,170 @@ function renderDoubleMarking(){
       if (k === 'a5') return; // a centre sanction, never in the double-marking sample
       const sub = subs[k]; if (!sub || sub.stage==='draft') return;
       const m = sub.markers || {first:'',second:'',doubleMarked:false};
+      started[k] = true;
+      if (m.doubleMarked && m.second) counted[k] = (counted[k]||0) + 1;
       const statusLabel = ({submitted:'Awaiting marking',returned_unmarked:'Returned unmarked',resubmission_needed:'Resubmission needed',resubmitted:'Resubmission awaiting marking',closed:'Closed'})[sub.stage]||sub.stage;
-      rows.push(`<tr><td>${esc(tr.name)}</td><td>${NAMES[k]}</td><td>${esc(statusLabel)}</td><td>${esc(m.first)||'—'}</td><td>${esc(m.second)||'—'}</td>
-        <td><span class="status-pill ${m.doubleMarked?'passed':'draft'}">${m.doubleMarked?'Yes':'No'}</span></td></tr>`);
+      const tone = sub.stage==='resubmission_needed' ? 'brick' : (sub.stage==='submitted'||sub.stage==='resubmitted') ? 'amber' : 'muted';
+      rows.push(`<div class="grid dm grow">
+        <div class="name">${esc(tr.name)}</div>
+        <div class="muted">${NAMES[k]}</div>
+        <div class="${tone}">${esc(statusLabel)}</div>
+        <div class="col-first">${esc(m.first)||'<span class="muted">—</span>'}</div>
+        <div class="col-second">${m.second ? esc(m.second) : '<span class="muted">—</span>'}</div>
+      </div>`);
     });
   });
-  document.getElementById('dmTable').innerHTML = '<tr><th>Trainee</th><th>Assignment</th><th>Status</th><th>1st marker</th><th>2nd marker</th><th>Double-marked?</th></tr>' + (rows.length ? rows.join('') : '<tr><td colspan="6" style="color:var(--grey);">No assignments submitted yet.</td></tr>');
+
+  document.getElementById('dmRule').textContent =
+    'Handbook 9.2.3: at least two tutors must mark across the course, and a set proportion of each assignment must be double-marked — three of each up to nine candidates, four up to sixteen, five up to twenty-four.'
+    + (cohort ? ' With ' + cohort + ' candidate' + (cohort===1?'':'s') + ' on this course the sample is ' + required + ' of each.' : '');
+
+  const quotaKeys = ORDER.filter(k=>k!=='a5' && WORDING && WORDING[k]);
+  document.getElementById('dmQuota').innerHTML = quotaKeys.map(k=>{
+    const n = counted[k]||0, met = n >= required, begun = !!started[k];
+    const cls = met ? '' : begun ? 'short' : 'idle';
+    const note = met ? 'sample met' : begun ? 'short of the sample' : 'not marked yet';
+    return `<div class="qcard ${cls}"><div class="code">${NAMES[k]}</div><div class="n">${n} of ${required}</div><div class="note2">${note}</div></div>`;
+  }).join('');
+
+  document.getElementById('dmBody').innerHTML = rows.length ? rows.join('') : '<div class="empty">No assignments submitted yet.</div>';
 }
 
-// ---- Roster and links, from the store -----------------------------------
-// A trainee is added here and gets a link with their own token in it; that
-// link is what goes into Classroom for them. Tutors get the tutor link.
-// The assessor link (Ramy, 20 Sep 2026): read-only, one per course, dies 14
-// days after the course end date set on the Settings tab.
+/* ---- Roster and links, from the store -------------------------------------- */
+/* A trainee is added here and gets a link with their own token in it; that link
+   is what goes into Classroom for them. Tutors get the tutor link. The assessor
+   link (Ramy, 20 Sep 2026) is read-only, one per course, and dies 14 days after
+   the course end date set on the Settings tab.
+   v2: the raw addresses are behind the "Show addresses" toggle — copying is the
+   normal action, reading the URL is the rare one. */
+let SHOW_URLS = false;
+
+function linkRow(name, note, url, kind, rotateId, rotateLabel){
+  return `<div class="linkrow">
+    <div class="body">
+      <b>${esc(name)}</b>
+      <p>${note}</p>
+      ${SHOW_URLS ? `<code>${esc(url)}</code>` : ''}
+    </div>
+    <div class="acts">
+      <button class="btn small" type="button" data-copy="${esc(url)}">Copy</button>
+      <button class="btn quiet small" type="button" id="${rotateId}">${esc(rotateLabel)}</button>
+    </div>
+  </div>`;
+}
+
 async function renderAssessorBlock(rotated){
   const S = window.HubStore, el = document.getElementById('assessorBlock'); if (!el) return;
   try {
     const r = rotated || await S.assessorLink();
     const link = S.assessorLinkFor(r.key);
-    const until = r.expires ? 'It stops working on ' + new Date(r.expires).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) + ' \u2014 14 days after the course end date.' : 'No course end date is set on the Settings tab, so it does not expire yet; set the end date and it will stop working 14 days after it.';
-    el.innerHTML = `<b style="color:var(--ink);">Assessor link</b> \u2014 read-only: every TP document, every assignment record, the tracker and the double-marking record; nothing can be changed from it. ${esc(until)}<br><code style="font-size:0.78rem;word-break:break-all;">${esc(link)}</code> <button class="btn ghost" type="button" data-copy="${esc(link)}" style="padding:4px 10px;font-size:0.78rem;">Copy</button> <button class="btn ghost" type="button" id="rotateAssessor" style="padding:4px 10px;font-size:0.78rem;color:var(--brick);">Rotate the assessor link</button>`;
-    document.getElementById('rotateAssessor').addEventListener('click', async ()=>{
+    const until = r.expires
+      ? 'Stops working on ' + fmtDate(r.expires) + ' — 14 days after the course end date.'
+      : 'No course end date is set on the Settings tab, so it does not expire yet.';
+    el.outerHTML = linkRow('Assessor link',
+      'Read-only: every TP document, every assignment record, the tracker and the double-marking record. ' + esc(until),
+      link, 'assessor', 'rotateAssessor', 'Rotate');
+    const rb = document.getElementById('rotateAssessor');
+    if (rb) rb.addEventListener('click', async ()=>{
       if(!(await confirmModal('Rotate the assessor link? The link in circulation stops working at once and a new one shows here.', 'Rotate'))) return;
-      try { const nr = await S.rotateAssessorKey(); renderAssessorBlock(nr); } catch(err){ alert(err.message); }
+      try { const nr = await S.rotateAssessorKey(); renderStoreRoster(); } catch(err){ alert(err.message); }
     });
   } catch (err) { el.innerHTML = 'Assessor link: ' + esc(err.message); }
 }
+
 async function renderStoreRoster(){
   const box = document.getElementById('storeRoster'); if (!box) return;
   const S = window.HubStore;
   if (!S || !S.isTutor()){ box.innerHTML = ''; return; }
   document.getElementById('rosterNoStore').style.display = 'none';
-  box.innerHTML = '<p style="font-size:0.82rem;color:var(--grey);">Loading the roster from the store…</p>';
+  const imported = document.getElementById('importedRoster'); if (imported) imported.style.display = 'none';
+  box.innerHTML = '<p class="lede">Loading the roster from the store…</p>';
   let trainees;
   try { trainees = await S.roster(); }
-  catch (err) { box.innerHTML = `<p style="font-size:0.82rem;color:var(--brick);">${esc(err.message)}</p>`; return; }
+  catch (err) { box.innerHTML = `<p class="lede brick">${esc(err.message)}</p>`; return; }
   const groups = [...new Set(trainees.map(t=>t.group).filter(Boolean))];
-  const esc2 = esc;
+
   box.innerHTML = `
-    <form id="storeAddForm" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
-      <input id="storeAddName" placeholder="Trainee's name" required style="font-family:'Karla',sans-serif;font-size:0.85rem;padding:7px 10px;border:1.5px solid var(--sand-line);border-radius:6px;min-width:220px;">
-      <input id="storeAddGroup" placeholder="Group (e.g. A)" list="storeGroups" style="font-family:'Karla',sans-serif;font-size:0.85rem;padding:7px 10px;border:1.5px solid var(--sand-line);border-radius:6px;width:120px;">
-      <datalist id="storeGroups">${groups.map(g=>`<option value="${esc2(g)}">`).join('')}</datalist>
-      <button class="btn primary" type="submit">Add trainee</button>
-      <span id="storeAddStatus" style="font-size:0.82rem;color:var(--grey);"></span>
-    </form>
-    <details style="margin-bottom:12px;">
-      <summary style="font-size:0.82rem;color:var(--teal);cursor:pointer;">Add several at once</summary>
-      <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px;max-width:420px;">
-        <textarea id="storeBulkNames" rows="6" placeholder="One trainee per line — a name on its own, or Name, Group&#10;e.g.&#10;Amara Okafor, A&#10;Daniel Kim, A&#10;Priya Sharma" style="font-family:'Karla',sans-serif;font-size:0.85rem;padding:8px 10px;border:1.5px solid var(--sand-line);border-radius:6px;resize:vertical;"></textarea>
-        <div style="display:flex;align-items:center;gap:10px;">
+    <div class="sectionhead">
+      <h2>Course links</h2>
+      <button class="linkbtn" type="button" id="toggleUrls">${SHOW_URLS ? 'Hide addresses' : 'Show addresses'}</button>
+    </div>
+    <div class="linkcard">
+      ${linkRow('Tutor link', 'For tutors only. Everyone who opens it works on the same course — the same trainees, the same records.', S.tutorLink(), 'tutor', 'storeRotateKey', 'Rotate')}
+      <div id="assessorBlock" class="linkrow"><div class="body"><b>Assessor link</b><p>Loading…</p></div></div>
+    </div>
+
+    <div class="sectionhead" style="margin-bottom:4px;">
+      <h2>Trainees <span class="count">${trainees.length || ''}</span></h2>
+      <button class="btn primary" type="button" id="toggleAdd">Add trainee</button>
+    </div>
+
+    <div class="addbox" id="addBox" style="display:none;">
+      <form id="storeAddForm" class="row">
+        <input id="storeAddName" class="name" placeholder="Trainee's name" required>
+        <input id="storeAddGroup" class="group" placeholder="Group" list="storeGroups">
+        <datalist id="storeGroups">${groups.map(g=>`<option value="${esc(g)}">`).join('')}</datalist>
+        <button class="btn primary" type="submit">Add</button>
+        <span id="storeAddStatus" class="muted" style="font-size:0.82rem;"></span>
+      </form>
+      <button class="linkbtn" type="button" id="toggleBulk" style="margin-top:12px;">Add several at once</button>
+      <div class="bulkwrap" id="bulkWrap" style="display:none;">
+        <textarea id="storeBulkNames" rows="5" placeholder="One per line — a name on its own, or Name, Group&#10;e.g.&#10;Amara Okafor, A&#10;Daniel Kim, A&#10;Priya Sharma"></textarea>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:9px;">
           <button class="btn primary" type="button" id="storeBulkAddBtn">Add all</button>
-          <span id="storeBulkStatus" style="font-size:0.82rem;color:var(--grey);"></span>
+          <span id="storeBulkStatus" class="muted" style="font-size:0.82rem;"></span>
         </div>
       </div>
-    </details>
-    <p style="font-size:0.82rem;color:var(--grey);margin:0 0 10px;">Each trainee's link is theirs alone — post it to them in Classroom as a Material. The tutor link is for tutors only: <code style="font-size:0.78rem;">${esc2(S.tutorLink())}</code> <button class="btn ghost" type="button" data-copy="${esc2(S.tutorLink())}" style="padding:4px 10px;font-size:0.78rem;">Copy</button> <button class="btn ghost" type="button" id="storeRotateKey" style="padding:4px 10px;font-size:0.78rem;color:var(--brick);">Rotate the course key</button></p>
-    <div id="assessorBlock" style="font-size:0.82rem;color:var(--grey);margin:0 0 14px;padding:10px 12px;border:1.5px dashed var(--sand-line);border-radius:8px;">Loading the assessor link…</div>
-    <table style="width:100%;">
-      <tr><th>Trainee</th><th>Group</th><th>Personal link</th><th></th></tr>
-      ${trainees.length ? trainees.map(t=>`<tr>
-        <td>${esc2(t.name)}</td><td>${esc2(t.group||'—')}</td>
-        <td><code style="font-size:0.75rem;word-break:break-all;">${esc2(S.traineeLink(t.token))}</code></td>
-        <td style="white-space:nowrap;"><button class="btn ghost" type="button" data-copy="${esc2(S.traineeLink(t.token))}" style="padding:4px 10px;font-size:0.78rem;">Copy link</button> <button class="btn ghost" type="button" data-remove="${esc2(t.token)}" data-name="${esc2(t.name)}" style="padding:4px 10px;font-size:0.78rem;color:var(--brick);">Remove</button></td>
-      </tr>`).join('') : '<tr><td colspan="4" style="color:var(--grey);">No trainees on the course yet — add the first one above.</td></tr>'}
-    </table>`;
+    </div>
+
+    <div style="margin-top:14px;">
+      <div class="grid roster ghead"><div>Trainee</div><div class="col-group">Group</div><div class="col-status">Personal link</div><div></div></div>
+      ${trainees.length ? trainees.map(t=>`<div class="grid roster grow">
+        <div class="name">${esc(t.name)}</div>
+        <div class="col-group muted">${esc(t.group||'—')}</div>
+        <div class="col-status muted" style="font-size:0.8rem;">${SHOW_URLS ? `<code style="word-break:break-all;">${esc(S.traineeLink(t.token))}</code>` : 'Theirs alone — post it in Classroom'}</div>
+        <div class="acts">
+          <button class="btn small" type="button" data-copy="${esc(S.traineeLink(t.token))}">Copy link</button>
+          <button class="btn quiet small" type="button" data-remove="${esc(t.token)}" data-name="${esc(t.name)}">Remove</button>
+        </div>
+      </div>`).join('') : '<div class="empty">No trainees on the course yet — add the first one above.</div>'}
+    </div>`;
+
   renderAssessorBlock();
+
+  document.getElementById('toggleUrls').addEventListener('click', ()=>{ SHOW_URLS = !SHOW_URLS; renderStoreRoster(); });
+  document.getElementById('toggleAdd').addEventListener('click', e=>{
+    const ab = document.getElementById('addBox'), open = ab.style.display === 'none';
+    ab.style.display = open ? '' : 'none';
+    e.target.textContent = open ? 'Close' : 'Add trainee';
+    e.target.classList.toggle('primary', !open);
+    if (open) document.getElementById('storeAddName').focus();
+  });
+  document.getElementById('toggleBulk').addEventListener('click', e=>{
+    const bw = document.getElementById('bulkWrap'), open = bw.style.display === 'none';
+    bw.style.display = open ? '' : 'none';
+    e.target.textContent = open ? 'Hide the paste box' : 'Add several at once';
+  });
+
   document.getElementById('storeRotateKey').addEventListener('click', async ()=>{
     if(!(await confirmModal('Rotate the course key? Every tutor link in circulation stops working; this browser gets the new one and the new tutor link shows here. Trainees\u2019 links are not affected.', 'Rotate'))) return;
     try { await S.rotateKey(); history.replaceState(null, '', location.pathname); renderStoreRoster(); } catch(err){ alert(err.message); }
   });
+
   document.getElementById('storeAddForm').addEventListener('submit', async e=>{
     e.preventDefault();
     const name = document.getElementById('storeAddName').value.trim(), group = document.getElementById('storeAddGroup').value.trim();
     const st = document.getElementById('storeAddStatus'); st.textContent = 'Adding…';
     try { await S.addTrainee(name, group); renderStoreRoster(); } catch (err) { st.textContent = err.message; }
   });
+
   // Paste a class list -- one trainee per line, "Name" or "Name, Group". Added
   // one at a time (the store copes badly with a burst, 20 Sep 2026 finding),
   // with the box re-rendered once at the end rather than after each row.
   document.getElementById('storeBulkAddBtn').addEventListener('click', async () => {
-    const box = document.getElementById('storeBulkNames');
+    const tbox = document.getElementById('storeBulkNames');
     const status = document.getElementById('storeBulkStatus');
-    const rows = box.value.split('\n').map(line => {
+    const rows = tbox.value.split('\n').map(line => {
       const parts = line.split(',');
       const name = (parts[0] || '').trim();
       const group = (parts.slice(1).join(',') || '').trim();
@@ -337,32 +622,47 @@ async function renderStoreRoster(){
     status.textContent = failed.length
       ? `Added ${done} of ${rows.length}. Failed: ${failed.join('; ')}`
       : `Added ${done}.`;
-    if (done > 0) box.value = '';
+    if (done > 0) tbox.value = '';
     renderStoreRoster();
   });
+
   box.addEventListener('click', async e=>{
-    const c = e.target.closest('[data-copy]'); if (c){ try{ await navigator.clipboard.writeText(c.dataset.copy); c.textContent='Copied'; setTimeout(()=>{ c.textContent = c.dataset.copy.indexOf('?t=')>-1 ? 'Copy link' : 'Copy'; }, 1500); }catch(err){ prompt('Copy this link', c.dataset.copy); } return; }
-    const r = e.target.closest('[data-remove]'); if (r){ if(!(await confirmModal(`Remove ${r.dataset.name} from the course? Their records stay in the sheet; their link stops working.`, 'Remove'))) return; try { await S.removeTrainee(r.dataset.remove); renderStoreRoster(); } catch(err){ alert(err.message); } }
+    const c = e.target.closest('[data-copy]');
+    if (c){
+      try{ await navigator.clipboard.writeText(c.dataset.copy); const was = c.textContent; c.textContent='Copied'; setTimeout(()=>{ c.textContent = was; }, 1500); }
+      catch(err){ prompt('Copy this link', c.dataset.copy); }
+      return;
+    }
+    const r = e.target.closest('[data-remove]');
+    if (r){
+      if(!(await confirmModal(`Remove ${r.dataset.name} from the course? Their records stay in the sheet; their link stops working.`, 'Remove'))) return;
+      try { await S.removeTrainee(r.dataset.remove); renderStoreRoster(); } catch(err){ alert(err.message); }
+    }
   });
 }
 renderStoreRoster();
-// Store mode: tutors share one link and one course; the imported-files table is history.
+
+/* Store mode: tutors share one link and one course; the imported-files table is history. */
 if (window.HubMode && window.HubMode !== 'solo') {
-  const tn = document.getElementById('tutorsNote'); if (tn) tn.textContent = 'Give your tutors the tutor link from the Roster and links tab. Everyone who opens it works on the same course: the same trainees, the same records. Keep it to tutors; it can be rotated there if it leaks.';
-  const old = document.querySelector('#panel-roster table'); if (old && !old.closest('#storeRoster')) old.style.display = 'none';
+  const tn = document.getElementById('tutorsNote');
+  if (tn) tn.textContent = 'Give your tutors the tutor link from the Roster and links tab. Everyone who opens it works on the same course: the same trainees, the same records. Keep it to tutors; it can be rotated there if it leaks.';
 }
-// The Assignments tab lists the four in this centre's order.
+
+/* The Assignments tab lists the four in this centre's order. */
 (function(){
   try {
     let w = null; try{ w = JSON.parse(localStorage.getItem('connect_assignment_wording_v2')); }catch(e){}
     if (!w && window.CONNECT_HUB_DEFAULT_WORDING) w = window.CONNECT_HUB_DEFAULT_WORDING;
     const order = hubAssignmentOrder(w);
-    const table = document.querySelector('#panel-assignments table'); if (!table) return;
-    const rows = [...table.querySelectorAll('tr')].filter(tr => tr.querySelector('td'));
-    const keyOf = tr => { const t = tr.textContent; return /Assignment 5/.test(t) ? 'a5' : /^\s*FOL/.test(t) ? 'fol' : /^\s*LRT/.test(t) ? 'lrt' : /^\s*LSRT/.test(t) ? 'lsrt' : 'lfc'; };
-    rows.sort((a,b) => order.indexOf(keyOf(a)) - order.indexOf(keyOf(b))).forEach(tr => tr.parentNode.appendChild(tr));
+    const host = document.getElementById('assignmentRows'); if (!host) return;
+    [...host.querySelectorAll('.arow')]
+      .sort((a,b) => order.indexOf(a.dataset.key) - order.indexOf(b.dataset.key))
+      .forEach(el => host.appendChild(el));
   } catch (e) {}
 })();
+
+renderTitle();
+renderSetup();
 </script>
 </body>
 </html>
