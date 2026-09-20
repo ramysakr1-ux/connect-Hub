@@ -67,28 +67,14 @@
     line-height:1.15; color:var(--ink);}
   .title p{margin:7px 0 0; font-size:0.9rem; color:var(--grey); line-height:1.6; max-width:600px;}
 
-  /* ---- the now band ----------------------------------------------------- */
-  /* A pass-through, so the band's cards are items of the rooms grid itself and
-     every card on the page is one size (Ramy, 21 Sep 2026: "all of them the same
-     shape pill... and the same size as well, because right now this is just a
-     kitchen sink"). */
-  .band{display:contents;}
-  .ncard{text-align:left; text-decoration:none; color:inherit; font-family:'Karla',sans-serif;
-    background:var(--card); border:1px solid var(--sand-line); border-radius:10px; padding:16px 18px;
-    display:block; cursor:pointer; transition:border-color .15s;}
-  .ncard:hover{border-color:var(--teal); color:inherit;}
-  .ncard .k{font-family:'Instrument Sans','Karla',sans-serif; font-size:9px; font-weight:600;
-    letter-spacing:0.14em; text-transform:uppercase; color:var(--grey);}
-  .ncard .l{margin-top:7px; font-family:'Newsreader',Georgia,serif; font-size:1.2rem; font-weight:600;
-    line-height:1.25; color:var(--ink);}
-  .ncard .why{margin-top:5px; font-size:0.82rem; color:var(--grey); line-height:1.55;}
-  .ncard.act{border-color:var(--amber-edge);}
-  .ncard.act .l{color:var(--amber);}
-  .ncard.stuck{border-color:color-mix(in oklab, var(--brick) 40%, transparent);}
-  .ncard.stuck .l{color:var(--brick);}
-  .ncard.idle{cursor:default; background:none;}
-  .ncard.idle:hover{border-color:var(--sand-line);}
-  .ncard.idle .l{color:var(--grey); font-weight:600;}
+  /* Which teaching practice this is. It used to head a card of its own in a
+     band above the rooms; that band also carried the one instruction, which
+     meant the instruction and the card that owned it said the same thing in two
+     places -- the fault Ramy caught on the assignments line ("I thought we got
+     rid of that"). The band is gone: the number is orientation, so it sits in
+     the title block, and the instruction is on the door you act through. */
+  .tpline{margin:10px 0 0; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px;
+    font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--teal);}
 
   /* ---- rooms ------------------------------------------------------------ */
   /* One card, everywhere (Ramy, 21 Sep 2026: "all of them the same shape pill.
@@ -106,6 +92,14 @@
   .room .st{display:block; margin-top:9px; font-size:0.78rem; font-weight:600; color:var(--grey);}
   .room .st.act{color:var(--amber);}
   .room .st.stuck{color:var(--brick);}
+  /* Exactly one card is the next step, and it is the only one wearing colour.
+     Two golds would be two answers to "what now". */
+  .room.act{border-color:var(--amber-edge);}
+  .room.stuck{border-color:color-mix(in oklab, var(--brick) 40%, transparent);}
+  /* Your progress is not a form you fill in, it is the view of all of them, so
+     it sits under the four as a full-width card rather than leaving a hole
+     beside itself in a two-column grid. */
+  .room.wide{grid-column:1 / -1;}
   .room .who{font-family:'Instrument Sans','Karla',sans-serif; font-size:9px; font-weight:600;
     letter-spacing:0.14em; text-transform:uppercase; color:var(--grey); display:block; margin-bottom:6px;}
 
@@ -160,44 +154,52 @@
   <div class="title">
     <h1 id="boardTitle">Your CELTA paperwork</h1>
     <p id="courseMeta">Your teaching practice and your written assignments, in the order you need them. Each form saves itself as you go — nothing reaches your tutor until you turn it in.</p>
+    <p class="tpline" id="tpLine" hidden></p>
   </div>
 
   <div class="rooms">
-    <div id="nowBand" class="band"></div>
-    <a class="room" href="1_trainee_plan_and_analysis.html">
+    <a class="room" id="roomPlan" href="1_trainee_plan_and_analysis.html">
       <h2>Lesson plan &amp; language analysis</h2>
       <p>Aims, class profile, anticipated problems, materials and the procedure, with the analysis sheet underneath. Choose a lesson shape and the stages fill themselves in.</p>
       <span class="st" id="badgePlan"></span>
     </a>
-    <a class="room" href="2_trainee_self_evaluation.html">
+    <a class="room" id="roomSelf" href="2_trainee_self_evaluation.html">
       <h2>Self-evaluation</h2>
       <p>What went to plan, what didn't, and what you did about last TP's action points. Write it before you read your tutor's feedback — that is the point of it.</p>
       <span class="st" id="badgeSelf"></span>
     </a>
-    <a class="room" href="4_feedback_returned.html">
+    <a class="room" id="roomFeedback" href="4_feedback_returned.html">
       <h2>Teaching practice feedback</h2>
       <p>Your tutor's strengths, action points and grade for the teaching practice, with their comments on your plan and self-evaluation.</p>
       <span class="st" id="badgeFeedback"></span>
     </a>
-    <a class="room" href="7_candidate_tracker.html?me=1">
+    <a class="room" id="roomAssign" href="9_assignment_submission.html">
+      <h2>Written assignments</h2>
+      <p>The four written assignments, in your centre's order, with the marking criteria each one is read against. They run alongside your teaching practice.</p>
+      <span class="st" id="badgeAssign"></span>
+    </a>
+    <a class="room wide" href="7_candidate_tracker.html?me=1">
       <h2>Your progress</h2>
       <p>Every teaching practice and every assignment on one grid, read from what your tutor has returned to you. The same view your tutor has of you.</p>
       <span class="st" id="badgeProgress"></span>
     </a>
   </div>
 
+  <!-- "Read your feedback" stood here too, beside the archive button, while the
+       feedback card above now says "Ready to read" and is the door to it. One
+       thing, one door: the panel keeps only what no card does, which is closing
+       this teaching practice and opening the next. -->
   <div id="returnedPanel">
-    <p>Read it, then start the next teaching practice — this archives the plan, self-evaluation and feedback you have just finished with.</p>
-    <a class="btn" href="4_feedback_returned.html">Read your feedback</a>
+    <p>When you have read it, start the next teaching practice — that files this one's plan, self-evaluation and feedback away and opens a fresh set.</p>
     <button class="btn" id="nextTpBtn" type="button">Start next TP</button>
   </div>
 
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-shared.js?v=202609210236"></script>
-<script src="hub-store.js?v=202609210236"></script>
-<script src="hub-sync.js?v=202609210236"></script>
+<script src="hub-shared.js?v=202609210240"></script>
+<script src="hub-store.js?v=202609210240"></script>
+<script src="hub-sync.js?v=202609210240"></script>
 <script type="text/x-hub-app">
 
 /* The trainee's home. The rooms below are permanent doors; the band at the top
@@ -294,42 +296,87 @@ function tpNum(){
 const TP_N = tpNum();
 const TP_LABEL = 'Teaching practice' + (TP_N ? ' ' + TP_N + ' of 8' : '');
 
-/* ---- the now band --------------------------------------------------------- */
-/* One step at a time, in the cycle's own order. "With your tutor" is the one
-   state with nothing to open -- it is grey and inert, not an alarm. */
-function tpNow(){
-  if (fbBack && !selfIn) return {k:TP_LABEL, l:'Turn in your self-evaluation', why:'Your feedback is back. Write and turn in your self-evaluation first — that is the point of writing it.', href:'2_trainee_self_evaluation.html', tone:'act'};
-  if (fbBack) return {k:TP_LABEL, l:'Your feedback is ready', why:'Read it, then start the next teaching practice.', href:'4_feedback_returned.html', tone:'act'};
-  if (selfIn) return {k:TP_LABEL, l:'With your tutor', why:'Your plan and self-evaluation are in. Nothing to do until the feedback comes back.', href:null, tone:'idle'};
-  if (planIn) return {k:TP_LABEL, l:'Write your self-evaluation', why:'Your plan is in. After you teach, write this before you read any feedback.', href:'2_trainee_self_evaluation.html', tone:'act'};
-  if (plan) return {k:TP_LABEL, l:'Finish your lesson plan', why:'Saved as a draft. Turn it in when it is ready for your tutor.', href:'1_trainee_plan_and_analysis.html', tone:'act'};
-  return {k:TP_LABEL, l:'Write your lesson plan', why:'The plan and the language analysis are the first thing in each TP.', href:'1_trainee_plan_and_analysis.html', tone:'act'};
+/* ---- every card says where it stands --------------------------------------
+   The cycle is strictly ordered -- plan, teach, self-evaluate, read the
+   feedback -- so exactly ONE card is the next step, and it is the only one
+   wearing colour. That single gold card is what the band above used to be;
+   putting it on the door you act through means the instruction is written once
+   instead of twice (Ramy, 21 Sep 2026: "should those cards reveal their status
+   ... give instructions to the next stage"; and, earlier that evening, on the
+   band and a room saying the same thing: "I thought we got rid of that").
+
+   Assignments are the exception, and deliberately: they run alongside the
+   teaching practice rather than inside its order, so a resubmission can be
+   marked urgent at the same time without being a second answer to "what now".
+   It is brick, not gold, because it is a different kind of demand. */
+function line(el, text, tone){
+  const card = el && el.closest('.room');
+  status(el, text, tone);
+  if (card){ card.classList.remove('act','stuck'); if (tone) card.classList.add(tone); }
 }
-/* Assignments live HERE, as a card beside the teaching practice one, and not
-   also as a room below (Ramy, 21 Sep 2026: "he should have gotten rid of the
-   one at the bottom and kept the pill on top"). One door, one place. */
-function asgNow(){
-  if (ASG.tone === 'stuck') return {k:'Written assignments', l:ASG.text, why:'Open the assignment, read the tutor’s comments and submit it again.', href:'9_assignment_submission.html', tone:'stuck'};
-  if (ASG.text.indexOf('All ') === 0) return {k:'Written assignments', l:ASG.text, why:'Nothing outstanding.', href:'9_assignment_submission.html', tone:''};
-  if (ASG.text === 'Not started'){
-    const WORDS = {0:'No', 1:'One', 2:'Two', 3:'Three', 4:'Four', 5:'Five'};
-    const n = WORDS[ASG.total] || ASG.total;
-    const why = ASG.total === 1
-      ? 'One assignment is open alongside your teaching practice.'
-      : n + ' assignments run alongside your teaching practice, in your centre’s order.';
-    return {k:'Written assignments', l:'Not started', why:why, href:'9_assignment_submission.html', tone:''};
-  }
-  return {k:'Written assignments', l:ASG.text, why:'Carry on in your centre’s order.', href:'9_assignment_submission.html', tone:''};
-}
-(function(){
-  const cards = [tpNow(), asgNow()].filter(Boolean).map(c=>{
-    const body = `<div class="k">${esc(c.k)}</div><div class="l">${esc(c.l)}</div>${c.why?`<div class="why">${esc(c.why)}</div>`:''}`;
-    return c.href
-      ? `<a class="ncard ${c.tone}" href="${c.href}">${body}</a>`
-      : `<div class="ncard ${c.tone}">${body}</div>`;
+
+/* The next step, named once. Everything below reads NEXT rather than working
+   the cycle out again, so the four cards cannot disagree about where you are. */
+const NEXT = fbBack && !selfIn ? 'self'
+           : fbBack           ? 'feedback'
+           : selfIn           ? 'waiting'
+           : planIn           ? 'self'
+           : plan             ? 'plan'
+           :                    'plan';
+
+line(document.getElementById('badgePlan'),
+  !plan   ? 'Write your lesson plan'
+  : !planIn ? 'Finish it and turn it in'
+  : 'Turned in',
+  NEXT === 'plan' ? 'act' : '');
+
+line(document.getElementById('badgeSelf'),
+  fbBack && !selfIn ? 'Turn this in to open your feedback'
+  : selfIn          ? 'Turned in'
+  : self            ? 'Finish it and turn it in'
+  : planIn          ? 'Write your self-evaluation'
+  : 'After your lesson plan',
+  NEXT === 'self' ? 'act' : '');
+
+line(document.getElementById('badgeFeedback'),
+  fbBack && selfIn  ? 'Ready to read'
+  : fbBack          ? 'Ready — your self-evaluation first'
+  : selfIn          ? 'With your tutor'
+  : planIn          ? 'With your tutor'
+  : 'After your lesson plan',
+  NEXT === 'feedback' ? 'act' : '');
+
+line(document.getElementById('badgeAssign'), ASG.text, ASG.tone);
+
+/* The grid: when it last changed, which is the question you open it with. Never
+   coloured -- it is a view, not a thing to do. */
+line(document.getElementById('badgeProgress'), (function(){
+  const hist = rec('chub:tpHistory') || {};
+  const subs = rec('connect_assignment_submissions_v1') || {};
+  const stamps = [];
+  Object.keys(hist).forEach(function(n){ const at = hist[n] && hist[n].returnedAt; if (at) stamps.push(at); });
+  Object.keys(subs).forEach(function(k){
+    const s = subs[k]; if (!s) return;
+    const at = (s.feedback && s.feedback.at) || (s.sub2 && s.sub2.at) || (s.sub1 && s.sub1.at);
+    if (at) stamps.push(at);
   });
-  document.getElementById('nowBand').innerHTML = cards.join('');
-})();
+  if (!stamps.length) return 'Nothing returned yet';
+  stamps.sort();
+  const d = new Date(stamps[stamps.length - 1]);
+  if (isNaN(d.getTime())) return 'Nothing returned yet';
+  // the LOCAL day, not the UTC one: a timestamp at 00:30 UTC is still the day
+  // before for a reader west of it, and this line names a day to a person.
+  const local = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  return 'Last updated ' + niceDate(local);
+})(), '');
+
+/* Which teaching practice you are on: orientation, so it heads the page rather
+   than occupying a card. */
+if (TP_N){
+  const tl = document.getElementById('tpLine');
+  tl.textContent = TP_LABEL + (NEXT === 'waiting' ? ' · with your tutor' : '');
+  tl.hidden = false;
+}
 
 /* ---- returned: read it, or start the next one ------------------------------ */
 if (fbBack){
