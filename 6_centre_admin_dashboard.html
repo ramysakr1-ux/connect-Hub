@@ -249,14 +249,7 @@
   <!-- ================= Roster and links ================= -->
   <div class="panel" id="panel-roster" style="display:none;">
     <div id="storeRoster"></div>
-    <p id="rosterNoStore" class="lede">Open this page from the tutor link (the one with the course key) to add trainees and hand out their personal links. Without it, a trainee appears below only once you've imported their file from the <a href="5_tutor_dashboard.html">tutor dashboard</a>.</p>
-    <div id="importedRoster">
-      <div class="sectionhead"><h2>Trainees <span class="count" id="rosterCount"></span></h2></div>
-      <div class="grid roster ghead">
-        <div>Trainee</div><div class="col-group">Group</div><div class="col-status">Teaching practice</div><div></div>
-      </div>
-      <div id="rosterTraineeBody"></div>
-    </div>
+  </div>
   </div>
 
   <!-- ================= Tutors ================= -->
@@ -291,10 +284,10 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609210038"></script>
-<script src="hub-store.js?v=202609210038"></script>
-<script src="hub-shared.js?v=202609210038"></script>
-<script src="hub-sync.js?v=202609210038"></script>
+<script src="assignment-defaults.js?v=202609210044"></script>
+<script src="hub-store.js?v=202609210044"></script>
+<script src="hub-shared.js?v=202609210044"></script>
+<script src="hub-sync.js?v=202609210044"></script>
 <script type="text/x-hub-app">
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -304,7 +297,6 @@ function showTab(key){
   document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
   document.getElementById('panel-'+key).style.display='';
   if (key === 'doublemark') renderDoubleMarking();
-  if (key === 'roster') renderRoster();
 }
 document.getElementById('tabs').addEventListener('click', e=>{
   const btn = e.target.closest('.tab'); if(!btn) return; showTab(btn.dataset.tab);
@@ -389,35 +381,8 @@ document.getElementById('saveSettings').addEventListener('click', () => {
   renderTitle(); renderSetup();
 });
 
-/* ---- imported roster (solo mode) ------------------------------------------ */
 const ROSTER_KEY='connect_roster_v1';
 function loadRoster(){ try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
-
-function tpStatus(tr){
-  const fb = tr.tp && tr.tp.feedback, plan = tr.tp && tr.tp.plan, self = tr.tp && tr.tp.selfeval;
-  if (fb && fb.status==='returned') return {label:'Feedback returned', cls:'muted'};
-  if (self && self.status==='turned_in') return {label:'Awaiting feedback', cls:'amber'};
-  if (plan && plan.status==='turned_in') return {label:'Plan turned in', cls:'muted'};
-  return {label:'Not yet turned in', cls:'brick'};
-}
-
-function renderRoster(){
-  const roster = loadRoster();
-  const trainees = Object.values(roster.trainees||{}).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
-  const body = document.getElementById('rosterTraineeBody');
-  document.getElementById('rosterCount').textContent = trainees.length ? trainees.length : '';
-  if (!trainees.length){ body.innerHTML = `<div class="empty">No trainees imported yet.</div>`; return; }
-  body.innerHTML = trainees.map(tr=>{
-    const st = tpStatus(tr);
-    return `<div class="grid roster grow">
-      <div class="name">${esc(tr.name)}</div>
-      <div class="col-group muted">${esc(tr.group||'—')}</div>
-      <div class="col-status ${st.cls}">${esc(st.label)}</div>
-      <div class="muted" style="font-size:0.8rem;text-align:right;">${tr.importedAt ? 'Imported ' + fmtDate(tr.importedAt) : '—'}</div>
-    </div>`;
-  }).join('');
-}
-renderRoster();
 
 /* ---- double-marking -------------------------------------------------------- */
 /* The required sample follows the cohort, per Handbook 9.2.3: 3 of each up to
@@ -518,8 +483,6 @@ async function renderStoreRoster(){
   const box = document.getElementById('storeRoster'); if (!box) return;
   const S = window.HubStore;
   if (!S || !S.isTutor()){ box.innerHTML = ''; return; }
-  document.getElementById('rosterNoStore').style.display = 'none';
-  const imported = document.getElementById('importedRoster'); if (imported) imported.style.display = 'none';
   box.innerHTML = '<p class="lede">Loading the roster from the store…</p>';
   let trainees;
   try { trainees = await S.roster(); }
@@ -643,8 +606,8 @@ async function renderStoreRoster(){
 }
 renderStoreRoster();
 
-/* Store mode: tutors share one link and one course; the imported-files table is history. */
-if (window.HubMode && window.HubMode !== 'solo') {
+/* Tutors share one link and one course. */
+{
   const tn = document.getElementById('tutorsNote');
   if (tn) tn.textContent = 'Give your tutors the tutor link from the Roster and links tab. Everyone who opens it works on the same course: the same trainees, the same records. Keep it to tutors; it can be rotated there if it leaks.';
 }

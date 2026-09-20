@@ -3,14 +3,17 @@
 // it fills the browser's storage from the store (the trainee's own records,
 // or the whole roster for a tutor), and every write a page makes to a known
 // key is pushed back to the store a moment later. Open the site with no link
-// and nothing changes -- it stays the solo, one-browser tool.
+// and there is no course to read, so the page does not run at all: it is
+// replaced by a note asking for the link (Ramy, 21 Sep 2026: "get rid of solo
+// mode"). Before that, a linkless visit rendered a working one-browser tool
+// that moved work by exported files.
 //
 // Each page's app script is a <script type="text/x-hub-app"> block; it is
-// run once the preload has finished (or at once, in solo mode).
+// run once the preload has finished.
 (function(){
   var S = window.HubStore;
   // Assessor mode (Ramy, 20 Sep 2026): boots like a tutor, writes nothing.
-  var mode = !S ? 'solo' : S.isTutor() ? 'tutor' : S.isAssessor() ? 'assessor' : S.isTrainee() ? 'trainee' : 'solo';
+  var mode = !S ? '' : S.isTutor() ? 'tutor' : S.isAssessor() ? 'assessor' : S.isTrainee() ? 'trainee' : '';
   window.HubMode = mode;
   var TRAINEE_KEYS = { 'chub:plan':'plan', 'chub:selfeval':'selfeval', 'chub:feedback':'feedback', 'connect_assignment_submissions_v1':'assignments', 'chub:tpHistory':'tpHistory', 'chub:tracker':'tracker' };
   var TUTOR_ONLY = { feedback:1, tpHistory:1, tracker:1 };
@@ -20,7 +23,6 @@
   var pill;
 
   function status(text, kind){
-    if (mode === 'solo') return;
     if (!pill){ pill = document.createElement('div'); pill.id = 'hubSync'; pill.style.cssText = 'position:fixed;left:14px;bottom:14px;z-index:900;font:600 11px/1 Karla,sans-serif;padding:7px 11px;border-radius:999px;background:oklch(37.5% 0.058 195);color:#fff;opacity:.85;pointer-events:none;transition:opacity .3s;'; document.body.appendChild(pill); }
     pill.textContent = text; pill.style.background = kind === 'error' ? 'oklch(45% 0.15 27)' : kind === 'busy' ? 'oklch(51% 0.017 70)' : 'oklch(37.5% 0.058 195)';
     pill.style.opacity = '.85';
@@ -31,13 +33,29 @@
     var blocks = Array.prototype.slice.call(document.querySelectorAll('script[type="text/x-hub-app"]'));
     blocks.forEach(function(b){ var el = document.createElement('script'); el.textContent = b.textContent; b.parentNode.replaceChild(el, b); });
     document.dispatchEvent(new Event('hub:ready'));
-    hideExchangeUi();
   }
-  // The file-exchange controls belong to solo mode only.
-  function hideExchangeUi(){
-    if (mode === 'solo') return;
-    ['exchangeBlock','importTriggerBtn','importWordingBtn','exportWordingBtn','exportBtn'].concat(mode === 'assessor' ? ['tutorOnly'] : []).forEach(function(id){ var el = document.getElementById(id); if (el) el.style.display = 'none'; });
-    var ex = document.getElementById('exchangeNote'); if (ex) ex.style.display = '';
+
+  // No link, no course. Every screen answers the same way rather than rendering
+  // an empty shell of itself, and the page's own script never runs.
+  function gate(){
+    document.documentElement.style.background = 'oklch(92.5% 0.012 85)';
+    document.body.style.cssText = 'margin:0;background:oklch(92.5% 0.012 85);';
+    document.body.innerHTML =
+      '<div style="max-width:560px;margin:0 auto;padding:16vh 20px 0;font-family:Karla,Helvetica,sans-serif;color:oklch(23.5% 0.017 65);">'
+      + '<div style="display:flex;align-items:center;gap:9px;margin-bottom:26px;">'
+      + '<span style="width:30px;height:30px;border-radius:7px;background:oklch(30% 0.042 58);display:inline-flex;align-items:center;justify-content:center;">'
+      + '<svg viewBox="8 30 104 60" width="20" height="12" fill="none">'
+      + '<path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"></path>'
+      + '<path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"></path>'
+      + '</svg></span>'
+      + '<span style="display:inline-flex;align-items:baseline;gap:4px;">'
+      + '<span style="font-family:Instrument Serif,Georgia,serif;font-style:italic;font-size:21px;line-height:0.85;color:oklch(63% 0.096 72);">Connect</span>'
+      + '<span style="font-family:Instrument Sans,Karla,sans-serif;font-weight:500;font-size:9px;letter-spacing:0.24em;text-transform:uppercase;">Lite</span>'
+      + '</span></div>'
+      + '<h1 style="font-family:Newsreader,Georgia,serif;font-weight:700;font-size:1.9rem;line-height:1.2;margin:0 0 10px;">Open your course link</h1>'
+      + '<p style="font-size:0.92rem;line-height:1.65;color:oklch(51% 0.017 70);margin:0;">This page reads one course, through the link your centre sent you. Trainees have their own personal link, tutors share the tutor link, and an assessor has a read-only one. Open the page from that link and everything appears.</p>'
+      + '<p style="font-size:0.92rem;line-height:1.65;color:oklch(51% 0.017 70);margin:14px 0 0;">Lost it? Your course admin can send it again from the Roster and links tab.</p>'
+      + '</div>';
   }
 
   // ---- write-through --------------------------------------------------------
@@ -123,7 +141,7 @@
   // here in the meantime, the page reloads itself -- instantly, from the fresh
   // copy. A write made before the boot answers wins: the boot then only
   // refreshes the keys it did not touch and leaves the page alone.
-  if (mode === 'solo') { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', runApp); else runApp(); return; }
+  if (!mode) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', gate); else gate(); return; }
   var identity = mode + ':' + (mode === 'tutor' ? S.key() : mode === 'assessor' ? S.assessorKey() : S.token());
   var cached = false; try { cached = localStorage.getItem('hub:booted') === identity; } catch (e) {}
   var dirty = {}, started = false;

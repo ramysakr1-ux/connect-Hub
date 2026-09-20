@@ -93,30 +93,6 @@
 // the tutor dashboard read it into this browser, so everyone works from the
 // same wording without a server. Schema: connect-hub-wording-v1.
 window.HUB_WORDING_KEY = 'connect_assignment_wording_v2';
-window.exportWordingFile = function(wording, centreName){
-  var payload = { schema:'connect-hub-wording-v1', exportedAt:new Date().toISOString(), centreName:centreName||'', wording:wording };
-  var blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url;
-  a.download = 'connect-hub-wording-' + new Date().toISOString().slice(0,10) + '.json';
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
-};
-window.readWordingFile = function(file){
-  return new Promise(function(resolve, reject){
-    var reader = new FileReader();
-    reader.onload = function(){
-      var data = null;
-      try { data = JSON.parse(reader.result); } catch(e) { reject(new Error('That file isn’t valid — could not read it.')); return; }
-      if (!data || data.schema !== 'connect-hub-wording-v1' || !data.wording || typeof data.wording !== 'object') { reject(new Error('That doesn’t look like a wording file from your centre.')); return; }
-      localStorage.setItem(window.HUB_WORDING_KEY, JSON.stringify(data.wording));
-      resolve(data);
-    };
-    reader.onerror = function(){ reject(new Error('Could not read that file.')); };
-    reader.readAsText(file);
-  });
-};
 
 // Assignment 5 (the plagiarism reflection) is a centre sanction, not one of
 // the four: it exists for a candidate only once a tutor has set it after a

@@ -83,8 +83,6 @@
   .ncard.idle .l{color:var(--grey); font-weight:600;}
 
   /* ---- rooms ------------------------------------------------------------ */
-  .roomhead{margin:38px 0 12px; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px;
-    font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--grey);}
   /* One card, everywhere (Ramy, 21 Sep 2026: "all of them the same shape pill.
      With little curve and the same size as well, because right now this is just
      a kitchen sink"). The rooms are the same object as the band's cards -- same
@@ -116,19 +114,6 @@
   .btn.primary{background:var(--teal); border-color:var(--teal); color:var(--paper); font-weight:700;}
   .btn.primary:hover{opacity:0.88; color:var(--paper);}
 
-  /* ---- exchange ---------------------------------------------------------- */
-  .exchange{border:1px solid var(--sand-line); border-radius:10px; background:var(--card);
-    padding:18px 20px; margin-top:16px;}
-  .exchange h3{margin:0 0 5px; font-family:'Newsreader',Georgia,serif; font-size:1.05rem; font-weight:600;}
-  .exchange p{margin:0; font-size:0.82rem; color:var(--grey); line-height:1.6; max-width:620px;}
-  .exchange .acts{display:flex; gap:9px; flex-wrap:wrap; margin-top:13px;}
-  #exchangeStatus{margin-top:10px; font-size:0.82rem; color:var(--grey);}
-  /* The tutor's way in, kept out of the trainee's rooms and inside the linkless
-     section, which hub-sync hides as soon as the page is opened from a real
-     link (Ramy, 21 Sep 2026: the feedback card was a door to the TUTOR's screen
-     on a page whose role line reads Trainee). */
-  .tutorline{margin:12px 0 0; font-size:0.82rem; color:var(--grey);}
-  #exchangeNote{display:none; font-size:0.85rem; color:var(--grey); line-height:1.6; margin-top:16px;}
 
   /* Ramy, 20 Sep 2026: the credit reads as lopsided beside the lockup -- it sits
      at the foot of this page instead. hub-shared hides .hub-credit under 768px
@@ -198,27 +183,12 @@
     <button class="btn" id="nextTpBtn" type="button">Start next TP</button>
   </div>
 
-  <p class="roomhead" id="exchangeHead">Working without a course link</p>
-  <div class="exchange" id="exchangeBlock">
-    <p>You opened this without a course link, so your work lives in this browser alone and your tutor is on their own. Export a file and send it to them (email, chat, however you'd share a document) once you've turned things in. When they return marked work, import the file they send back. If your centre has reworked the assignments, they will send you a wording file too — import it here and the assignment forms use it. Open the page from the link your centre sent you instead and all of this goes away.</p>
-    <div class="acts">
-      <button class="btn primary" id="exportBtn" type="button">Export my work</button>
-      <button class="btn" id="importTriggerBtn" type="button">Import from tutor</button>
-      <button class="btn" id="importWordingBtn" type="button">Import centre's wording</button>
-      <input type="file" id="importFile" accept="application/json" style="display:none;">
-      <input type="file" id="importWordingFile" accept="application/json" style="display:none;">
-    </div>
-    <p class="tutorline">Tutor on this browser? Open the <a href="5_tutor_dashboard.html">tutor dashboard</a>.</p>
-    <p id="exchangeStatus"></p>
-  </div>
-  <div id="exchangeNote">Your work is saved to the course as you go. When you turn something in, your tutor sees it; when they return it, it appears here. Nothing to send.</div>
-
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-shared.js?v=202609210038"></script>
-<script src="hub-store.js?v=202609210038"></script>
-<script src="hub-sync.js?v=202609210038"></script>
+<script src="hub-shared.js?v=202609210044"></script>
+<script src="hub-store.js?v=202609210044"></script>
+<script src="hub-sync.js?v=202609210044"></script>
 <script type="text/x-hub-app">
 
 /* The trainee's home. The rooms below are permanent doors; the band at the top
@@ -349,72 +319,6 @@ if (fbBack){
   if (bits.length) document.getElementById('courseMeta').textContent = bits.join(' · ');
 })();
 
-/* ---- exchange: solo mode only (hub-sync hides the block by id) -------------- */
-function traineeId(){
-  let id = localStorage.getItem('chub:traineeId');
-  if(!id){ id = 'tr_' + Date.now().toString(36) + Math.random().toString(36).slice(2,10); localStorage.setItem('chub:traineeId', id); }
-  return id;
-}
-function exchangeStatus(msg){ document.getElementById('exchangeStatus').textContent = msg; }
-
-document.getElementById('exportBtn').addEventListener('click', ()=>{
-  const p = rec('chub:plan');
-  const name = (p && p.state && p.state.meta && p.state.meta.name) || (p && p.label) || 'Trainee';
-  const payload = {
-    schema: 'connect-hub-export-v1',
-    exportedAt: new Date().toISOString(),
-    traineeId: traineeId(),
-    traineeName: name,
-    centreName: (p && p.centreName) || '',
-    tp: { plan: p, selfeval: rec('chub:selfeval'), feedback: rec('chub:feedback') },
-    assignments: rec('connect_assignment_submissions_v1') || {}
-  };
-  const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'connect-hub-' + name.toLowerCase().replace(/[^a-z0-9]+/g,'-') + '-' + new Date().toISOString().slice(0,10) + '.json';
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
-  exchangeStatus('Exported. Send this file to your tutor.');
-});
-
-document.getElementById('importTriggerBtn').addEventListener('click', ()=>document.getElementById('importFile').click());
-document.getElementById('importWordingBtn').addEventListener('click', ()=>document.getElementById('importWordingFile').click());
-document.getElementById('importWordingFile').addEventListener('change', e=>{
-  const file = e.target.files[0]; if(!file) return;
-  readWordingFile(file).then(()=>exchangeStatus('Your centre’s assignment wording is in — the assignment forms use it now.')).catch(err=>exchangeStatus(err.message));
-  e.target.value = '';
-});
-document.getElementById('importFile').addEventListener('change', e=>{
-  const file = e.target.files[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = ()=>{
-    let data;
-    try{ data = JSON.parse(reader.result); }catch(err){ exchangeStatus('That file isn’t valid — could not read it.'); return; }
-    if(data && data.schema === 'connect-hub-wording-v1'){ readWordingFile(file).then(()=>exchangeStatus('Your centre’s assignment wording is in — the assignment forms use it now.')).catch(err=>exchangeStatus(err.message)); return; }
-    if(!data || data.schema !== 'connect-hub-return-v1'){ exchangeStatus('That doesn’t look like a file returned from your tutor.'); return; }
-    if(data.tp && data.tp.feedback) localStorage.setItem('chub:feedback', JSON.stringify(data.tp.feedback));
-    // Every returned TP, for the candidate's own tracker.
-    try{
-      var hist = rec('chub:tpHistory') || {};
-      Object.keys((data.tp && data.tp.history) || {}).forEach(function(k){ hist[k] = data.tp.history[k]; });
-      if(data.tp && data.tp.feedback && data.tp.feedback.status === 'returned'){ var n = parseInt(String((data.tp.feedback.state && data.tp.feedback.state.f && data.tp.feedback.state.f.fTP) || data.tp.feedback.label || '').replace(/\D/g,''), 10); if(n >= 1 && n <= 8) hist[n] = data.tp.feedback; }
-      localStorage.setItem('chub:tpHistory', JSON.stringify(hist));
-      if(data.tracker) localStorage.setItem('chub:tracker', JSON.stringify(data.tracker));
-    }catch(err){}
-    if(data.assignments) localStorage.setItem('connect_assignment_submissions_v1', JSON.stringify(data.assignments));
-    exchangeStatus('Imported — refreshing.');
-    setTimeout(()=>location.reload(), 600);
-  };
-  reader.readAsText(file);
-});
-
-/* Store mode, as the trainee: the feedback room is a door to what came back,
-   not to the tutor's screen; and the exchange section is a note, not a mailbox. */
-if (window.HubMode === 'trainee') {
-  document.getElementById('exchangeHead').textContent = 'Saved to the course';
-}
 </script>
 </body>
 </html>
