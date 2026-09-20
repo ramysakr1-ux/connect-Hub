@@ -19,6 +19,27 @@
       ".confirm-action:hover{background:oklch(40% 0.15 27);}";
     document.head.appendChild(css);
   }
+  if(!document.getElementById('hub-steps-css')){
+    var scss=document.createElement('style'); scss.id='hub-steps-css';
+    scss.textContent=".hub-steps{list-style:none; margin:14px auto 0; padding:0; display:flex; flex-wrap:wrap; justify-content:center; gap:6px 14px; max-width:760px;}"+
+      ".hub-steps li{font-family:'Karla',sans-serif; font-size:0.8rem; color:var(--grey,#6b6259); display:flex; align-items:center; gap:6px;}"+
+      ".hub-steps li b{font-family:'Karla',sans-serif; font-weight:700; font-size:0.7rem; width:18px; height:18px; border-radius:50%; background:var(--teal,#1E6B63); color:#fff; display:inline-flex; align-items:center; justify-content:center; flex:none;}";
+    document.head.appendChild(scss);
+  }
+  // Connect's auto-bullets (src/lib/bullet-list.ts): an empty field seeds its
+  // first bullet on focus, Enter starts the next, Backspace on an empty bullet
+  // removes it. Applied to list-type fields only, never to prose.
+  window.hubBullets=function(el){
+    if(!el || el.dataset.hubBullets) return; el.dataset.hubBullets='1';
+    var B='\u2022 ';
+    el.addEventListener('focus',function(){ if(el.value==='' && !el.disabled){ el.value=B; try{ el.setSelectionRange(B.length,B.length); }catch(e){} } });
+    el.addEventListener('keydown',function(e){
+      var s=el.selectionStart, t=el.selectionEnd, v=el.value; if(s==null) return;
+      if(e.key==='Enter'){ e.preventDefault(); var next=v.slice(0,s)+'\n'+B+v.slice(t); el.value=next; var c=s+1+B.length; el.setSelectionRange(c,c); el.dispatchEvent(new Event('input',{bubbles:true})); }
+      else if(e.key==='Backspace' && s===t){ var lineStart=v.lastIndexOf('\n',s-1)+1; if(v.slice(lineStart,s)===B){ e.preventDefault(); var cut=lineStart>0?lineStart-1:0; el.value=v.slice(0,cut)+v.slice(s); el.setSelectionRange(cut,cut); el.dispatchEvent(new Event('input',{bubbles:true})); } }
+    });
+    el.addEventListener('blur',function(){ if(el.value.trim()===B.trim()){ el.value=''; el.dispatchEvent(new Event('input',{bubbles:true})); } });
+  };
   if(!window.confirmModal){
     window.confirmModal=function(message, actionLabel){
       return new Promise(function(resolve){
