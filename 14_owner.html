@@ -98,8 +98,8 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609210106"></script>
-<script src="hub-store.js?v=202609210106"></script>
+<script src="hub-shared.js?v=202609210116"></script>
+<script src="hub-store.js?v=202609210116"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -132,11 +132,32 @@ function label(c){
 }
 function status(msg){ const s = $('status'); if (s) s.textContent = msg || ''; }
 
-function gate(){
+/* Two ways in, because one of them should not require editing a web address:
+   open the owner link, or paste the key here (Ramy, 21 Sep 2026). */
+function gate(msg){
   $('app').innerHTML = `<div class="gate">
     <h1>This is the owner console</h1>
-    <p>Open it with your owner link — the one carrying <code>?o=</code> — and this browser remembers it from then on. If you have lost it, run <code>ownerKey()</code> in the store's Apps Script editor.</p>
+    <p>Paste your owner key below, and this browser will remember it. To find it: open the store in the Apps Script editor, choose <b>ownerKey</b> in the function list, press <b>Run</b>, and it prints a link — opening that link works too.</p>
+    <div style="display:flex; gap:9px; margin-top:16px; flex-wrap:wrap;">
+      <input id="ownerIn" type="text" placeholder="Your owner key" autocomplete="off" spellcheck="false"
+        style="font-family:'Karla',sans-serif; font-size:0.9rem; padding:0 12px; height:34px; min-width:280px; flex:1;
+               border:1.5px solid var(--sand-line); border-radius:6px; background:var(--paper); color:var(--ink);">
+      <button class="btn primary" id="ownerGo" type="button">Open the console</button>
+    </div>
+    <p id="status"></p>
   </div>`;
+  if (msg) status(msg);
+  const go = async () => {
+    // A whole link pasted in works as well as the key alone.
+    const raw = $('ownerIn').value.trim();
+    const key = (raw.match(/[?&]o=([^&\s]+)/) || [])[1] || raw;
+    if (!key) { status('Paste the key, or the whole link.'); return; }
+    try { localStorage.setItem(OWNER_STORE, decodeURIComponent(key)); } catch (e) {}
+    status('Opening…');
+    load();
+  };
+  $('ownerGo').addEventListener('click', go);
+  $('ownerIn').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
 }
 
 function render(courses){
@@ -194,7 +215,7 @@ async function load(){
     const r = await call({ op: 'ownerCourses' });
     render(r.courses || []);
   } catch (err) {
-    if (/not yours/i.test(err.message)) { try { localStorage.removeItem(OWNER_STORE); } catch (e) {} gate(); return; }
+    if (/not yours/i.test(err.message)) { try { localStorage.removeItem(OWNER_STORE); } catch (e) {} gate('That key was not recognised — check you copied all of it.'); return; }
     $('app').innerHTML = `<div class="empty">${esc(err.message)}</div>`;
   }
 }
