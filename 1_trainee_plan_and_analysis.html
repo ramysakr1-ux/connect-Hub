@@ -62,7 +62,7 @@
     text-transform:uppercase; letter-spacing:.07em; margin-bottom:5px;}
   .field input, .field select{width:100%; font-family:'Karla',sans-serif; font-size:0.9rem;
     padding:8px 11px; border:2px solid var(--sand-line); border-radius:6px;
-    background:#FFFDF8; color:var(--ink);}
+    background:#FFFDF8; color:var(--ink); min-height:45px;}
   .field input:focus, .field select:focus{outline:none; border-color:var(--teal);}
 
   .card{background:var(--paper); border-radius:6px; padding:18px 22px; margin-bottom:16px; border-left:5px solid var(--sand-line);}
@@ -117,7 +117,7 @@
   table.proc input, table.proc textarea{width:100%; border-width:1px; font-size:0.86rem;
     padding:7px 9px; min-height:52px;}
   table.proc input{min-height:0;}
-  col.c-stage{width:15%;} col.c-proc{width:66%;}
+  col.c-stage{width:21%;} col.c-proc{width:60%;}
   col.c-int{width:7%;} col.c-time{width:7%;} col.c-del{width:3%;}
   table.proc td.narrow{padding:8px 4px;}
   table.proc td.narrow select,
@@ -126,6 +126,10 @@
     background:#FFFDF8; color:var(--ink); text-align:center; min-height:0;}
   table.proc td.narrow select{cursor:pointer;}
   table.proc td.narrow select.t-int2{margin-top:5px;}
+  /* Every box on the sheet is the same box. autoGrow sets an inline height as
+     you type, so the floor is set here where it still wins (Ramy, 21 Sep 2026). */
+  table.proc textarea.t-stage, table.proc textarea.t-proc{min-height:104px; resize:vertical;}
+  table.proc textarea.t-stage{font-weight:600;}
   .stage-hint{font-size:0.7rem; color:var(--teal); font-style:italic; margin:5px 0 0; line-height:1.4;}
   .stage-hint:empty{display:none;}
   .proc-foot{display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin-top:14px;}
@@ -143,6 +147,7 @@
   .blk-head{display:flex; justify-content:space-between; align-items:center; gap:12px;
     margin:0 0 16px; padding-bottom:12px; border-bottom:1px solid var(--sand-line);}
   .blk-head h3{font-family:'Newsreader',Georgia,serif; font-size:1.05rem; margin:0; color:var(--terracotta);}
+  .blk .row > textarea.fld{min-height:91px;}
   .pairs .pair{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px; align-items:start;}
   .pairs .pair .plab{font-size:0.72rem; font-weight:700; color:var(--grey);
     text-transform:uppercase; letter-spacing:.05em; margin:0 0 4px;}
@@ -487,9 +492,9 @@
   <span class="status" id="status"></span>
 </div>
 
-<script src="hub-shared.js?v=202609212207"></script>
-<script src="hub-store.js?v=202609212207"></script>
-<script src="hub-sync.js?v=202609212207"></script>
+<script src="hub-shared.js?v=202609212317"></script>
+<script src="hub-store.js?v=202609212317"></script>
+<script src="hub-sync.js?v=202609212317"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -660,7 +665,7 @@ const procBody=$('procBody');
 function addRow(stage,hint,time){
   const tr=document.createElement('tr');
   tr.innerHTML=`
-    <td><input class="t-stage" type="text" value="${esc(stage||'')}">
+    <td><textarea class="t-stage" rows="3">${esc(stage||'')}</textarea>
         <p class="stage-hint">${esc(hint||'')}</p></td>
     <td><textarea class="t-proc blt" rows="4"></textarea></td>
     <td class="narrow">${intSelect('t-int1')}${intSelect('t-int2')}</td>
@@ -739,10 +744,10 @@ const SHEETS={
     guide:'One block per structure. Add another if your lesson has more than one.',
     aimQ:'Is grammar the main aim of your lesson?',
     fields:[
-      {k:'item', label:'Name of the structure', type:'input', hint:'Include the area of use — e.g. present perfect for unfinished past.'},
+      {k:'item', label:'Name of the structure', type:'box', hint:'Include the area of use — e.g. present perfect for unfinished past.'},
       {k:'marker', label:'Marker sentence(s)', type:'area', hint:'The sentence(s) you will use to present the structure above.'},
       {k:'meaning', label:'Meaning analysis', type:'area'},
-      {k:'source', label:'Source', type:'input', hint:'Where your analysis came from — grammar reference, learner dictionary.'},
+      {k:'source', label:'Source', type:'box', hint:'Where your analysis came from — grammar reference, learner dictionary.'},
       ...COMMON_TAIL],
     example:[
       ['Name of the structure','Present perfect for an unfinished period — <em>since / for</em>'],
@@ -761,12 +766,12 @@ const SHEETS={
     guide:'One block per function. Add another if your lesson covers more than one.',
     aimQ:'Is functional language the main aim of your lesson?',
     fields:[
-      {k:'item', label:'Function and context', type:'input', hint:'e.g. Interrupting politely in a team meeting.'},
+      {k:'item', label:'Function and context', type:'box', hint:'e.g. Interrupting politely in a team meeting.'},
       {k:'register', label:'Register', type:'select', options:['','Formal','Neutral','Informal','Varies — see notes'],
        hint:'Who is speaking to whom, and how formal the exponents are.'},
       {k:'marker', label:'Functional items and language included', type:'area', hint:'The exponents you will teach, exactly as the students will meet them.'},
       {k:'meaning', label:'Meaning and use', type:'area', hint:'What the phrases do, and when a speaker would choose them.'},
-      {k:'source', label:'Source', type:'input', hint:'Coursebook, functional language reference, learner dictionary.'},
+      {k:'source', label:'Source', type:'box', hint:'Coursebook, functional language reference, learner dictionary.'},
       ...COMMON_TAIL],
     example:[
       ['Function and context','Interrupting politely in a team meeting'],
@@ -813,7 +818,9 @@ const IPA=[
 
 function fieldHTML(f){
   const hint=f.hint?`<p class="hint">${f.hint}</p>`:'';
-  if(f.type==='input')  return `<div class="row"><label>${f.label}</label>${hint}<input type="text" class="fld" data-k="${f.k}"></div>`;
+  /* a box, not a one-line field: a single line sitting among four-line boxes
+     read as an afterthought (Ramy, 21 Sep 2026). No bullets -- a name is not a list. */
+  if(f.type==='box')    return `<div class="row"><label>${f.label}</label>${hint}<textarea class="fld" data-k="${f.k}" rows="3"></textarea></div>`;
   if(f.type==='phon')   return `<div class="row"><label>${f.label}</label>${hint}
       <p class="hint" style="color:var(--teal);">Click a symbol from the bar at the bottom to insert it.</p>
       <textarea class="fld phon" data-k="${f.k}" rows="2"></textarea></div>`;
@@ -1125,9 +1132,9 @@ function docHTML(d){
   ]);
 
   const procRows=p.rows.map(r=>
-    `<tr><td ${TD} width="15%"><strong>${nl2br(r.stage)}</strong>${
+    `<tr><td ${TD} width="21%"><strong>${nl2br(r.stage)}</strong>${
       r.aim?`<br><span style="font-size:9pt;font-style:italic;color:#1e6b63;">${esc(r.aim)}</span>`:''}</td>
-      <td ${TD} width="64%">${bullets(r.proc)}</td>
+      <td ${TD} width="58%">${bullets(r.proc)}</td>
       <td ${TD} width="10%" align="center">${nl2br(r.int)}</td>
       <td ${TD} width="7%" align="center">${esc(r.time)}</td></tr>`).join('');
 
@@ -1149,7 +1156,7 @@ function docHTML(d){
     ${(p.matsFile&&p.matsFile.name)?`<p style="font-size:9.5pt;margin:-6px 0 12px;"><strong>Attached file:</strong> <a href="${p.matsFile.dataUrl}" download="${esc(p.matsFile.name)}">${esc(p.matsFile.name)}</a></p>`:''}
     <h2 style="font-family:Newsreader,Georgia,serif;font-size:13pt;color:#1E6B63;margin:20px 0 8px;">Lesson Procedure</h2>
     <table style="width:100%;border-collapse:collapse;">
-      <tr><td ${TH} width="15%">Stage</td><td ${TH} width="64%">Procedure</td>
+      <tr><td ${TH} width="21%">Stage</td><td ${TH} width="58%">Procedure</td>
         <td ${TH} width="10%">Interaction</td><td ${TH} width="7%">Time</td></tr>
       ${procRows}
       <tr><td ${TD} colspan="3" style="${B}padding:6px 8px;text-align:right;font-weight:700;">Total</td>
@@ -1337,7 +1344,7 @@ function renderTurnStatus(){
 (function spellSetup(){
   const off=['.phon','.t-time','.t-stage','.t-int1','.t-int2'];
   document.querySelectorAll(off.join(',')).forEach(el=>el.setAttribute('spellcheck','false'));
-  document.querySelectorAll('textarea:not(.phon), input[type=text]:not(.t-time):not(.t-stage), [contenteditable]')
+  document.querySelectorAll('textarea:not(.phon):not(.t-stage), input[type=text]:not(.t-time), [contenteditable]')
     .forEach(el=>{ if(!el.hasAttribute('spellcheck')) el.setAttribute('spellcheck','true'); });
   /* fields built later get the same treatment */
   new MutationObserver(ms=>{
@@ -1345,7 +1352,7 @@ function renderTurnStatus(){
       if(n.nodeType!==1) return;
       n.querySelectorAll && n.querySelectorAll('.phon,.t-time,.t-stage,.t-int1,.t-int2')
         .forEach(el=>el.setAttribute('spellcheck','false'));
-      n.querySelectorAll && n.querySelectorAll('textarea:not(.phon),[contenteditable]')
+      n.querySelectorAll && n.querySelectorAll('textarea:not(.phon):not(.t-stage),[contenteditable]')
         .forEach(el=>{ if(!el.hasAttribute('spellcheck')) el.setAttribute('spellcheck','true'); });
     }));
   }).observe(document.body,{childList:true,subtree:true});
@@ -1355,9 +1362,14 @@ function renderTurnStatus(){
    Chrome and Edge only; the controls hide themselves in browsers without it. */
 (function dictation(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  /* Safari defines webkitSpeechRecognition but cannot actually dictate: it ends
+     the session after a single utterance, and it only allows start() inside a
+     user gesture, so the restart in onend is refused. A button that looks live
+     and is not is worse than no button, so the bar stays out of Safari. */
+  const SAFARI = /^((?!chrome|chromium|crios|edg|android|fxios|opr|opios).)*safari/i.test(navigator.userAgent);
   const style=document.createElement('style');
   style.textContent=
-    '.dictbar{position:fixed;bottom:88px;left:18px;z-index:600;display:flex;gap:8px;align-items:center;}'+
+    '.dictbar{position:fixed;bottom:88px;right:18px;z-index:600;display:flex;gap:8px;align-items:center;}'+
     '.dictbar select{font-family:\'Karla\',sans-serif;font-size:0.8rem;padding:8px 10px;'+
       'border:2px solid #C9B189;border-radius:20px;background:#FCF8EF;color:#2C2418;cursor:pointer;'+
       '}'+
@@ -1370,7 +1382,7 @@ function renderTurnStatus(){
     '.dictbtn.rec .dot{background:#FCF8EF;animation:pulse 1s infinite;}'+
     '@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}';
   document.head.appendChild(style);
-  if(!SR) return;
+  if(!SR || SAFARI) return;
 
   /* English only (Ramy, 21 Sep 2026): the plan, the self-evaluation and the
      tutor's feedback are written in English, so nobody dictating into them
