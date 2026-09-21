@@ -260,10 +260,18 @@ window.hubCopyButton = async function(btn, text){
   return false;
 };
 
-// A centre's assignment wording travels as a file (Ramy, 20 Sep 2026: "export
-// the wording from screen 8"). Screen 8 writes it; the trainee's home page and
-// the tutor dashboard read it into this browser, so everyone works from the
-// same wording without a server. Schema: connect-hub-wording-v1.
+// A centre's assignment wording. Screen 8 writes this key; every other screen
+// reads it, so the centre's own wording is what a trainee writes against and
+// what a tutor marks from.
+//
+// It used to travel as a FILE between browsers (Ramy, 20 Sep 2026: "export the
+// wording from screen 8"), which is what this note described until 21 Sep.
+// The store replaced that: the key is a COURSE_KEY in hub-sync (carried as
+// `wording`), so an edit on screen 8 reaches the course by itself and there is
+// no export to look for. Screen 8's "Import from a file" is a different thing
+// and still earns its place -- it lifts section text out of the centre's own
+// document into the editor.
+// Schema: connect-hub-wording-v1.
 window.HUB_WORDING_KEY = 'connect_assignment_wording_v2';
 
 // Assignment 5 (the plagiarism reflection) is a centre sanction, not one of
