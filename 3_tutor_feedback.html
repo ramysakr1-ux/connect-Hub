@@ -350,9 +350,9 @@
 </div>
 
 
-<script src="hub-shared.js?v=202609210902"></script>
-<script src="hub-store.js?v=202609210902"></script>
-<script src="hub-sync.js?v=202609210902"></script>
+<script src="hub-shared.js?v=202609210912"></script>
+<script src="hub-store.js?v=202609210912"></script>
+<script src="hub-sync.js?v=202609210912"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -1058,7 +1058,7 @@ function draftApply(s){
                Object.assign(TCOMM,s.tcomm); }
   if(s.doc){
     DOC=s.doc; showSeen(DOC);
-    $('loadedInfo').textContent='Loaded: '+((DOC.meta.tp||'TP')+' · '+(DOC.meta.name||''))+
+    $('loadedInfo').textContent='Loaded: '+((META().tp||'TP')+' · '+(META().name||''))+
       (DOC.self?' · self-evaluation included':' · no self-evaluation yet');
   }
   (s.f?DRAFT_FIELDS:[]).forEach(function(k){ if(s.f[k]!==undefined) $(k).value=s.f[k]; });
@@ -1088,6 +1088,13 @@ const CAN_STORE=(function(){
   try{ localStorage.setItem('__probe','1'); localStorage.removeItem('__probe'); return true; }
   catch(e){ return false; }
 })();
+/* DOC is a plan written by screen 1, and this file already guards its meta in
+   one place. Two other lines read DOC.meta.tp straight, and a plan whose state
+   has no meta threw there -- inside initFromStorage, so the tutor was shown
+   NEITHER the plan nor the self-evaluation, on a page whose whole job is to
+   read them (found walking the tutor role, 21 Sep 2026). */
+function META(){ return (typeof DOC !== 'undefined' && DOC && DOC.meta) || {}; }
+
 function loadFeedbackRecord(){
   if (TRAINEE_ID) { const tr=loadRoster().trainees[TRAINEE_ID]; return (tr&&tr.tp&&tr.tp.feedback)||null; }
   if(!CAN_STORE) return null; try{ return JSON.parse(localStorage.getItem(FEEDBACK_KEY)||'null'); }catch(e){ return null; }
@@ -1102,7 +1109,13 @@ function saveFeedbackRecord(patch){
     roster.trainees[TRAINEE_ID].tp.feedback=cur;
     // The tracker tab reads every returned TP, not just the latest one.
     if (cur.status==='returned') {
-      const n=parseInt(String((cur.state&&cur.state.f&&cur.state.f.fTP)||cur.label||'').replace(/\D/g,''),10);
+      /* The FIRST number, not every digit run together: fTP is free text and a
+         label reads "TP4 · Unit 12" or "Teaching practice 4 of 8", which strip
+         to 412 and 48 -- out of range, so the returned TP was never filed into
+         the history at all, and the tracker, the assessor pack and the
+         candidate's carry-forward all lost it. */
+      const mTP=String((cur.state&&cur.state.f&&cur.state.f.fTP)||cur.label||'').match(/\d+/);
+      const n=mTP?parseInt(mTP[0],10):0;
       if (n>=1&&n<=8) { roster.trainees[TRAINEE_ID].tp.history=roster.trainees[TRAINEE_ID].tp.history||{}; roster.trainees[TRAINEE_ID].tp.history[n]=cur; }
     }
     saveRosterObj(roster);
@@ -1168,7 +1181,7 @@ function renderTurnStatus(){
     DOC=planRec.state;
     if(selfRec&&selfRec.state) DOC.self=selfRec.state;
     showSeen(DOC); prefill(DOC);
-    $('loadedInfo').textContent='Pulled in: '+((DOC.meta.tp||'TP')+' · '+(DOC.meta.name||''))+
+    $('loadedInfo').textContent='Pulled in: '+((META().tp||'TP')+' · '+(META().name||''))+
       (DOC.self?' · self-evaluation included':' · no self-evaluation yet')+
       (planRec.status==='turned_in'?'':' · plan not turned in yet');
   } else {

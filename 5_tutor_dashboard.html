@@ -209,10 +209,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609210902"></script>
-<script src="hub-store.js?v=202609210902"></script>
-<script src="hub-sync.js?v=202609210902"></script>
-<script src="hub-tracker.js?v=202609210902"></script>
+<script src="hub-shared.js?v=202609210912"></script>
+<script src="hub-store.js?v=202609210912"></script>
+<script src="hub-sync.js?v=202609210912"></script>
+<script src="hub-tracker.js?v=202609210912"></script>
 <script type="text/x-hub-app">
 /* ---------------------------------------------------------------------------
    Tutor dashboard. Three tabs over the same roster; a queue strip above them
@@ -255,10 +255,34 @@ let TAB='tp', FILTER=null;
 function people(){
   return Object.values(loadRoster().trainees||{}).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
 }
+/* Which TP a candidate is on, for the middle column.
+   This used to demand the literal text "TP" followed by a digit. The field
+   behind it, fTP on screen 3, is free text with "e.g. TP4" only as a
+   placeholder, and everywhere else in Lite it is read by pulling the NUMBER out
+   of whatever was typed -- hub-tracker's own tpNumberOf strips non-digits. So a
+   candidate whose tutor typed "4" showed an em dash here while the same record
+   read as TP4 on the tracker and on their own home page. Found walking the
+   tutor role, 21 Sep 2026.
+   First number wins, not every digit concatenated: a label like "TP4 · Unit 12"
+   must be 4, not 412. */
+function tpFirstNumber(v){
+  const m = String(v == null ? '' : v).match(/\d+/);
+  const n = m ? parseInt(m[0], 10) : 0;
+  return n >= 1 && n <= 8 ? n : 0;
+}
 function tpNumberOf(tr){
-  const fst = tr.tp && tr.tp.feedback && tr.tp.feedback.state;
-  const m = String((tr.tp&&tr.tp.plan&&tr.tp.plan.label) || (fst&&fst.f&&fst.f.fTP) || '').match(/TP\s?\d/i);
-  return m ? m[0].replace(/\s+/,'') : '—';
+  const t = (tr && tr.tp) || {};
+  const f = r => r && r.state && r.state.f;
+  const n = tpFirstNumber(t.plan && t.plan.label)
+         || tpFirstNumber(f(t.plan) && f(t.plan).fTP)
+         || tpFirstNumber(f(t.feedback) && f(t.feedback).fTP)
+         || tpFirstNumber(t.feedback && t.feedback.label)
+         || tpFirstNumber(f(t.selfeval) && f(t.selfeval).fTP);
+  if (n) return 'TP' + n;
+  // Nothing live says which one, so it is the next after the highest returned.
+  const done = Object.keys(t.history || {}).map(Number).filter(x => x >= 1 && x <= 8);
+  const next = done.length ? Math.max.apply(null, done) + 1 : 0;
+  return next >= 1 && next <= 8 ? 'TP' + next : '\u2014';
 }
 function assignmentRows(list){
   let wording=null; try{ wording=JSON.parse(localStorage.getItem('connect_assignment_wording_v2')); }catch(e){}

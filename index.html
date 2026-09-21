@@ -197,9 +197,9 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-shared.js?v=202609210902"></script>
-<script src="hub-store.js?v=202609210902"></script>
-<script src="hub-sync.js?v=202609210902"></script>
+<script src="hub-shared.js?v=202609210912"></script>
+<script src="hub-store.js?v=202609210912"></script>
+<script src="hub-sync.js?v=202609210912"></script>
 <script type="text/x-hub-app">
 
 /* The trainee's home. The rooms below are permanent doors; the band at the top
@@ -247,7 +247,11 @@ const ASG = (function(){
    after "Start next TP" clears the three live records the next one is the
    highest filed plus one. Nothing to show if none of those answer, and never a
    number past the eighth. */
-function digits(v){ const n = parseInt(String(v||'').replace(/\D/g,''), 10); return n>=1 && n<=8 ? n : 0; }
+/* The FIRST number in whatever was typed, not every digit run together: a
+   label reads "TP4 · Unit 12" or "Teaching practice 4 of 8", and stripping all
+   non-digits turns those into 412 and 48 -- out of range, so the label fallback
+   silently never fired (21 Sep 2026). */
+function digits(v){ const m = String(v == null ? '' : v).match(/\d+/); const n = m ? parseInt(m[0], 10) : 0; return n>=1 && n<=8 ? n : 0; }
 function fromRecord(r){ return r ? (digits(r.state && r.state.f && r.state.f.fTP) || digits(r.label)) : 0; }
 function tpNum(){
   const live = fromRecord(fb) || fromRecord(plan) || fromRecord(self);
