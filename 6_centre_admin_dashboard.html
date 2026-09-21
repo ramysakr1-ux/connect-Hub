@@ -243,7 +243,9 @@
 
   <div class="title">
     <h1 id="boardTitle">Course admin</h1>
-    <p id="boardMeta">Set up your course, then invite your tutors and trainees.</p>
+    <!-- "invite your tutors" outlived the Tutors tab it referred to: Lite has
+         one shared tutor link and no invitation to send. -->
+    <p id="boardMeta">Set the course up, add your trainees, and send out the links.</p>
   </div>
 
   <!-- There were two rows here: a numbered checklist above the tabs. Ramy, 21
@@ -343,10 +345,10 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609210929"></script>
-<script src="hub-store.js?v=202609210929"></script>
-<script src="hub-shared.js?v=202609210929"></script>
-<script src="hub-sync.js?v=202609210929"></script>
+<script src="assignment-defaults.js?v=202609210937"></script>
+<script src="hub-store.js?v=202609210937"></script>
+<script src="hub-shared.js?v=202609210937"></script>
+<script src="hub-sync.js?v=202609210937"></script>
 <script type="text/x-hub-app">
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -367,21 +369,32 @@ function applyLogoPreview(dataUrl){
   if (dataUrl) slot.innerHTML = `<img src="${dataUrl}" alt="Centre logo" style="width:100%;height:100%;object-fit:cover;border-radius:7px;">`;
   else slot.innerHTML = 'Centre<br>logo';
 }
+/* The day at the front of the stamp, read as written rather than converted.
+   The assessor expiry arrives as 23:59:59 of the store's own day, stamped UTC,
+   and reading it as an instant rolled it forward: this page told the centre the
+   link stops on 14 November while the assessor pack told the assessor 13
+   November, for the very same link (found walking course admin, 21 Sep 2026).
+   Course start and end are bare dates and were never affected; this keeps them
+   working and fixes the timestamp beside them. */
 function fmtDate(iso){
-  if(!iso) return '';
-  try{ return new Date(iso).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}); }catch(e){ return iso; }
+  const s = String(iso == null ? '' : iso);
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const d = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(s);
+  if (isNaN(d)) return s;
+  try { return d.toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'}); }
+  catch (e) { return s; }
 }
 /* The title block reads the saved settings: the course is the H1, the centre,
    number and dates are the one meta line beneath it. */
 function renderTitle(){
   let cs = null; try{ cs = JSON.parse(localStorage.getItem('connect_course_settings')); }catch(e){}
   const h1 = document.getElementById('boardTitle'), meta = document.getElementById('boardMeta');
-  if(!cs){ h1.textContent = 'Course admin'; meta.textContent = 'Set up your course, then invite your tutors and trainees.'; return; }
+  if(!cs){ h1.textContent = 'Course admin'; meta.textContent = 'Set the course up, add your trainees, and send out the links.'; return; }
   h1.textContent = cs.courseName || 'Course admin';
   const bits = [cs.centreName, cs.centreNumber].filter(Boolean);
   const span = cs.start && cs.end ? fmtDate(cs.start) + ' – ' + fmtDate(cs.end) : (cs.start ? 'From ' + fmtDate(cs.start) : '');
   if (span) bits.push(span);
-  meta.textContent = bits.length ? bits.join(' · ') : 'Set up your course, then invite your tutors and trainees.';
+  meta.textContent = bits.length ? bits.join(' · ') : 'Set the course up, add your trainees, and send out the links.';
 }
 /* Setup ticks: each step is done when its evidence exists. */
 /* null until the store has answered once; then the true number on the course. */
@@ -631,20 +644,33 @@ async function renderStoreRoster(next){
     } catch (err) { status.textContent = err.message; }
   });
 
-  box.addEventListener('click', async e=>{
-    const c = e.target.closest('[data-copy]');
-    if (c){
-      try{ await navigator.clipboard.writeText(c.dataset.copy); const was = c.textContent; c.textContent='Copied'; setTimeout(()=>{ c.textContent = was; }, 1500); }
-      catch(err){ prompt('Copy this link', c.dataset.copy); }
-      return;
-    }
-    const r = e.target.closest('[data-remove]');
-    if (r){
-      if(!(await confirmModal(`Remove ${r.dataset.name} from the course? Their records stay in the sheet; their link stops working.`, 'Remove'))) return;
-      try { const res = await S.removeTrainee(r.dataset.remove); renderStoreRoster(res.trainees); } catch(err){ alert(err.message); }
-    }
-  });
 }
+
+/* Bound ONCE, outside renderStoreRoster.
+   #storeRoster survives every repaint -- render only replaces its children --
+   so attaching this per render stacked another copy of it. By the time a course
+   was set up (one trainee added, a list pasted, addresses toggled) a single
+   click on Remove opened FOUR confirmation dialogs and could send four
+   removeTrainee calls. The owner console had the identical bug, fixed an hour
+   earlier; this is its sibling, found walking course admin on 21 Sep 2026. */
+let ROSTER_BUSY = false;
+document.getElementById('storeRoster').addEventListener('click', async e=>{
+  const c = e.target.closest('[data-copy]');
+  if (c){
+    try{ await navigator.clipboard.writeText(c.dataset.copy); const was = c.textContent; c.textContent='Copied'; setTimeout(()=>{ c.textContent = was; }, 1500); }
+    catch(err){ prompt('Copy this link', c.dataset.copy); }
+    return;
+  }
+  const r = e.target.closest('[data-remove]');
+  if (r){
+    if (ROSTER_BUSY) return;
+    if(!(await confirmModal(`Remove ${r.dataset.name} from the course? Their records stay in the sheet; their link stops working.`, 'Remove'))) return;
+    ROSTER_BUSY = true;
+    try { const res = await window.HubStore.removeTrainee(r.dataset.remove); renderStoreRoster(res.trainees); } catch(err){ alert(err.message); }
+    ROSTER_BUSY = false;
+  }
+});
+
 renderStoreRoster();
 
 /* The Assignments tab lists the four in this centre's order. */
