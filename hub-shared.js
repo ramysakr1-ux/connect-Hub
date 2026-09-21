@@ -160,7 +160,12 @@ window.hubCopyButton = async function(btn, text){
   if(!btn.dataset.copyLabel) btn.dataset.copyLabel = btn.textContent;
   var back = btn.dataset.copyLabel;
   var host = btn.closest('.link') || btn.parentElement || btn;
-  var stale = host.querySelector('.copy-fallback'); if(stale) stale.remove();
+  /* Every revealed link goes, not just this row's: they are one per row, so
+     copying the tutor link and then the assessor link left both on screen at
+     once, and a link revealed earlier outlived a later successful copy. Only
+     ever one, and only where the copy has just failed (walk, 21 Sep 2026). */
+  var stale = document.querySelectorAll('.copy-fallback');
+  for (var i = 0; i < stale.length; i++) stale[i].remove();
   if(await window.hubCopy(text)){
     btn.textContent='Copied';
     clearTimeout(btn._copyT);
