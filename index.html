@@ -189,17 +189,26 @@
        feedback card above now says "Ready to read" and is the door to it. One
        thing, one door: the panel keeps only what no card does, which is closing
        this teaching practice and opening the next. -->
+  <!-- This used to carry its own "Start next TP" button, a second copy of the
+       one on the record. The two drifted: the record's files the teaching
+       practice into the history before clearing it, and this one did not -- it
+       said "Archive this TP" and deleted the plan, the self-evaluation and the
+       tutor's returned feedback outright, with nothing kept (walk, 21 Sep 2026).
+       It also showed before the self-evaluation was in, so it walked straight
+       past the gate the rest of the page builds. One room, one door: the record
+       is where you read the feedback and where you close the teaching practice,
+       and this only points at it. -->
   <div id="returnedPanel">
-    <p>When you have read it, start the next teaching practice — that files this one's plan, self-evaluation and feedback away and opens a fresh set.</p>
-    <button class="btn" id="nextTpBtn" type="button">Start next TP</button>
+    <p>Read your feedback, then start the next teaching practice from there — that files this one's plan, self-evaluation and feedback away and opens a fresh set.</p>
+    <a class="btn" id="nextTpLink" href="4_feedback_returned.html">Read your feedback</a>
   </div>
 
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-shared.js?v=202609211246"></script>
-<script src="hub-store.js?v=202609211246"></script>
-<script src="hub-sync.js?v=202609211246"></script>
+<script src="hub-shared.js?v=202609211321"></script>
+<script src="hub-store.js?v=202609211321"></script>
+<script src="hub-sync.js?v=202609211321"></script>
 <script type="text/x-hub-app">
 
 /* The trainee's home. The rooms below are permanent doors; the band at the top
@@ -353,12 +362,12 @@ if (TP_N){
 /* ---- returned: read it, or start the next one ------------------------------ */
 if (fbBack){
   document.getElementById('returnedPanel').style.display='flex';
-  document.getElementById('nextTpBtn').addEventListener('click', async ()=>{
-    if(!(await confirmModal('Archive this TP and start a fresh plan, self-evaluation and feedback?','Start fresh'))) return;
-    ['chub:plan','chub:selfeval','chub:feedback'].forEach(k=>localStorage.removeItem(k));
-    if (window.HubSync) { try { await window.HubSync.flushNow(); } catch (e) {} }
-    location.reload();
-  });
+  /* The label follows the gate the cards already state: until the
+     self-evaluation is in there is nothing to read yet, and saying "Read your
+     feedback" would contradict the card right above it. */
+  const l = document.getElementById('nextTpLink');
+  if (l && !selfIn) l.textContent = 'Write your self-evaluation';
+  if (l && !selfIn) l.setAttribute('href', '2_trainee_self_evaluation.html');
 }
 
 /* ---- the title block ------------------------------------------------------- */
