@@ -235,10 +235,10 @@
 
 </div>
 
-<script src="hub-tracker.js?v=202609210944"></script>
-<script src="hub-store.js?v=202609210944"></script>
-<script src="hub-shared.js?v=202609210944"></script>
-<script src="hub-sync.js?v=202609210944"></script>
+<script src="hub-tracker.js?v=202609210950"></script>
+<script src="hub-store.js?v=202609210950"></script>
+<script src="hub-shared.js?v=202609210950"></script>
+<script src="hub-sync.js?v=202609210950"></script>
 <script type="text/x-hub-app">
 /* ---------------------------------------------------------------------------
    Grades report. One record per candidate, five sections, matching the
@@ -346,8 +346,18 @@ function paintRecord(){
   const codes=Object.keys(SHORT);
 
   const cap = p.cap, capped = cap ? cap.capped : [];
+  /* Read-only means read-only, not merely inert. An assessor could tab past
+     the mouse guard into a field and type: the words never reached the data,
+     the save or the print, but they sat on screen looking recorded -- so
+     someone could write a note, print, and find it missing (found walking the
+     assessor role, 21 Sep 2026). The controls say so themselves now. */
+  const off = RO ? ' disabled' : '';
+  /* readonly, but still reachable: an assessor should be able to put the caret
+     in a line and copy it. tabindex="-1" would have taken that away for nothing,
+     since readonly already prevents every edit. */
+  const ro  = RO ? ' readonly' : '';
   const pills=(opts,cur,kind)=>opts.map(o=>
-    `<button type="button" class="pill ${o===cur?'on '+gradeClass(o):''} ${capped.includes(o)?'capped':''}" data-grade="${kind}" data-value="${esc(o)}"${capped.includes(o)?` title="${esc(cap.line)}"`:''}>${esc(o)}</button>`).join('');
+    `<button type="button"${off} class="pill ${o===cur?'on '+gradeClass(o):''} ${capped.includes(o)?'capped':''}" data-grade="${kind}" data-value="${esc(o)}"${capped.includes(o)?` title="${esc(cap.line)}"`:''}>${esc(o)}</button>`).join('');
 
   const section=s=>{
     const items=d[s.key]||[];
@@ -355,8 +365,8 @@ function paintRecord(){
       <div class="head"><h3>${s.heading}</h3><div class="src">${s.src}</div></div>
       ${items.map((it,n)=>`<div class="pt">
         <div class="dot"></div>
-        <textarea rows="1" data-text="${n}" placeholder="Write the point">${esc(it.text)}</textarea>
-        <select data-code="${n}">
+        <textarea rows="1"${ro} data-text="${n}" placeholder="Write the point">${esc(it.text)}</textarea>
+        <select${off} data-code="${n}">
           <option value="">no code</option>
           ${codes.map(c=>`<option value="${c}"${c===it.code?' selected':''}>${c} · ${SHORT[c]}</option>`).join('')}
         </select>
@@ -380,7 +390,7 @@ function paintRecord(){
       <div class="lists">${SECTIONS.map(section).join('')}</div>
       <div class="prose">${FIELDS.map(f=>`<div>
         <h3>${f.heading}</h3>
-        <textarea data-field="${f.key}" placeholder="${esc(f.ph)}" style="min-height:${f.h}px">${esc(d[f.key]||'')}</textarea>
+        <textarea${ro} data-field="${f.key}" placeholder="${esc(f.ph)}" style="min-height:${f.h}px">${esc(d[f.key]||'')}</textarea>
         <div class="hint">${f.hint}</div>
       </div>`).join('')}</div>
     </div>`;
