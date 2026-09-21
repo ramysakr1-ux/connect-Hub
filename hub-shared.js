@@ -128,6 +128,35 @@
   };
 })();
 
+/* The three writing screens (plan, self-evaluation, tutor feedback) put their
+   controls in a `position:fixed` bar across the bottom, and reserve room for it
+   with a fixed padding on the body -- 150px on the plan, 110px on the other
+   two. The bar WRAPS on a narrow screen: at 375px the self-evaluation's grew
+   from 132px to 186px against a 110px reserve, so the bottom 36px of the last
+   field ("What do you want to work on in the next TP?") sat behind the bar and
+   could not be scrolled clear (walk, 21 Sep 2026).
+
+   The reserve now follows the bar's real height. It is published as a custom
+   property rather than set inline, so the print rule's `body{padding:0}` still
+   wins and nothing reserves a strip on paper. */
+window.hubReserveForBar = function(selector){
+  var bar = document.querySelector(selector || '.actionbar');
+  if (!bar) return;
+  var GAP = 28;
+  function fit(){
+    var h = 0;
+    try { h = getComputedStyle(bar).position === 'fixed' ? bar.getBoundingClientRect().height : 0; } catch(e){ return; }
+    if (h > 0) document.documentElement.style.setProperty('--bar-reserve', Math.ceil(h + GAP) + 'px');
+    else document.documentElement.style.removeProperty('--bar-reserve');
+  }
+  fit();
+  window.addEventListener('resize', fit);
+  window.addEventListener('orientationchange', fit);
+  if (window.ResizeObserver) { try { new ResizeObserver(fit).observe(bar); } catch(e){} }
+  document.addEventListener('hub:ready', fit);
+  return fit;
+};
+
 /* Copying a link is the whole product of two screens -- the owner console hands
    a centre its course, and the roster hands a trainee their workspace -- and it
    used to be able to fail in total silence. Both called

@@ -35,7 +35,7 @@
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
     background:var(--sand);
-    background-attachment:fixed; padding:28px 16px 150px; display:flex; justify-content:center;}
+    background-attachment:fixed; padding:28px 16px var(--bar-reserve,150px); display:flex; justify-content:center;}
   .board{max-width:1340px; width:100%;}
 
   .header{background:var(--paper); border-radius:6px; margin-bottom:26px; border-top:2px solid var(--terracotta);
@@ -487,40 +487,19 @@
   <span class="status" id="status"></span>
 </div>
 
-<script src="hub-shared.js?v=202609211321"></script>
-<script src="hub-store.js?v=202609211321"></script>
-<script src="hub-sync.js?v=202609211321"></script>
+<script src="hub-shared.js?v=202609211325"></script>
+<script src="hub-store.js?v=202609211325"></script>
+<script src="hub-sync.js?v=202609211325"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-/* Styled stand-in for confirm() -- native dialogs show the page origin in
-   the browser chrome, which read as broken in review. Async, so every call
-   site awaits it instead of branching on a synchronous return. */
-function confirmModal(message, actionLabel){
-  return new Promise(resolve=>{
-    const overlay=document.createElement('div');
-    overlay.className='confirm-overlay';
-    overlay.innerHTML=`<div class="confirm-modal" role="alertdialog" aria-modal="true">
-      <p class="confirm-message"></p>
-      <div class="confirm-actions">
-        <button type="button" class="confirm-cancel">Cancel</button>
-        <button type="button" class="confirm-action"></button>
-      </div>
-    </div>`;
-    overlay.querySelector('.confirm-message').textContent=message;
-    const actionBtn=overlay.querySelector('.confirm-action');
-    actionBtn.textContent=actionLabel;
-    document.body.appendChild(overlay);
-    function cleanup(result){ overlay.remove(); document.removeEventListener('keydown',onKey); resolve(result); }
-    function onKey(e){ if(e.key==='Escape') cleanup(false); }
-    document.addEventListener('keydown',onKey);
-    overlay.addEventListener('mousedown',e=>{ if(e.target===overlay) cleanup(false); });
-    overlay.querySelector('.confirm-cancel').addEventListener('click',()=>cleanup(false));
-    actionBtn.addEventListener('click',()=>cleanup(true));
-    actionBtn.focus();
-  });
-}
+/* The styled confirm lives in hub-shared.js and is loaded above. This page
+   used to declare its own copy here, which overwrote the shared one for this
+   page only -- the same duplication that let the trainee home's "Start next
+   TP" drift away from the record's and start deleting teaching practices
+   (21 Sep 2026). All three call sites here pass only a message and a label,
+   which the shared one has always handled. */
 function renderMatsPreview(){
   const url=($('fMatsLink').value||'').trim();
   const el=$('matsPreview');
@@ -717,7 +696,12 @@ $('fwApply').addEventListener('click',async()=>{
   const key=fwSel.value;
   if(!key){ setStatus('Choose a framework first.'); return; }
   const fw=FRAMEWORKS[key];
-  const filled=[...procBody.querySelectorAll('tr')].some(tr=>procText(tr.querySelector('.t-proc').value).trim());
+  /* The warning's own first words are "this will rename the stages", but it
+     only looked at the Procedure column -- so a trainee who had typed their
+     own stage names and nothing else had them replaced in silence (walk,
+     21 Sep 2026). It now asks whenever anything typed would go. */
+  const filled=[...procBody.querySelectorAll('tr')].some(tr=>
+    procText(tr.querySelector('.t-proc').value).trim() || tr.querySelector('.t-stage').value.trim());
   if(filled && !await confirmModal('This will rename the stages and replace the stage aims. Anything you have typed in Procedure stays — continue?','Replace anyway')) return;
   const rows=[...procBody.querySelectorAll('tr')];
   fw.stages.forEach((st,i)=>{
@@ -1503,6 +1487,10 @@ function renderTurnStatus(){
 
 // The store knows who this is (the roster name), so the plan need not ask.
 try{ const hn=localStorage.getItem('hub:name'); if(hn && $('fName') && !$('fName').value){ $('fName').value=hn; } }catch(e){}
+
+/* Reserve exactly as much room as the fixed bar actually takes (it wraps on
+   a narrow screen); see hubReserveForBar in hub-shared.js. */
+if (window.hubReserveForBar) hubReserveForBar('.actionbar');
 </script>
 </body>
 </html>
