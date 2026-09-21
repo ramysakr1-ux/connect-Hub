@@ -48,6 +48,18 @@
       "@media (prefers-reduced-motion: reduce){ a.card, .cell, button, .btn{ transition: none; } a.card:hover, .cell:hover{ transform: none; } }";
     document.head.appendChild(hcss);
   }
+  /* Nothing pinned to the screen belongs on paper. The sync pill and the
+     dictation bar are both position:fixed and both were printing into the
+     corner of every document the TP loop produces -- the lesson plan, the
+     self-evaluation, the teaching practice record and the assignment record,
+     which are exactly the pages that go into the candidate's portfolio and in
+     front of the assessor. Only screens 12 and 13 had thought to hide the pill
+     (print sweep, 21 Sep 2026). Done once here so a new screen cannot forget. */
+  if(!document.getElementById('hub-print-css')){
+    var pcss=document.createElement('style'); pcss.id='hub-print-css';
+    pcss.textContent='@media print{#hubSync,.dictbar,.ipa-bar,.credit-pill{display:none !important;}}';
+    document.head.appendChild(pcss);
+  }
   if(!document.getElementById('hub-steps-css')){
     var scss=document.createElement('style'); scss.id='hub-steps-css';
     scss.textContent=".hub-steps{list-style:none; margin:14px auto 0; padding:0; display:flex; flex-wrap:wrap; justify-content:center; gap:6px 14px; max-width:760px;}"+
