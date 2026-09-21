@@ -47,6 +47,12 @@
   table.crit th{text-align:left; font-size:0.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--grey); padding:6px 8px; border-bottom:1.5px solid var(--sand-line);}
   table.crit td{padding:8px; border-bottom:1px solid var(--sand-line); vertical-align:top;}
   table.crit td.mark{text-align:center; font-weight:700; white-space:nowrap;}
+  /* The mark cell is nowrap so "Not met" never breaks across lines, but a
+     criterion comment sitting under it inherits that and cannot wrap, which
+     widens the column until the page scrolls sideways -- a Cambridge-facing
+     record should not (21 Sep 2026). The note wraps and is left-aligned,
+     since it is prose rather than a verdict. */
+  table.crit td.mark .note{white-space:normal; text-align:left;}
   table.crit td.mark.met{color:oklch(35% 0.08 145);}
   table.crit td.mark.not{color:var(--brick);}
   .comment{font-size:0.9rem; line-height:1.6; background:oklch(97.8% 0.02 72); border-left:4px solid oklch(63% 0.096 72); padding:12px 16px; border-radius:6px; margin-top:10px;}
@@ -56,16 +62,16 @@
     border:1.5px solid var(--teal); background:var(--box); color:var(--teal); cursor:pointer;}
   @media print{ .back,.actions{display:none !important;} body{background:#fff; padding:0;} .doc{border-radius:0; padding:0.4in;} }
 </style>
-<link rel="stylesheet" href="hub-theme.css?v=202609211809">
+<link rel="stylesheet" href="hub-theme.css?v=202609212045">
 </head>
 <body class="hub-assign">
 <a class="back" id="backLink" href="5_tutor_dashboard.html">&#8592; Back to dashboard</a>
 <div class="doc" id="doc"></div>
 <div class="actions"><button id="printBtn">Print / Save as PDF</button></div>
-<script src="hub-shared.js?v=202609211809"></script>
-<script src="assignment-defaults.js?v=202609211809"></script>
-<script src="hub-store.js?v=202609211809"></script>
-<script src="hub-sync.js?v=202609211809"></script>
+<script src="hub-shared.js?v=202609212045"></script>
+<script src="assignment-defaults.js?v=202609212045"></script>
+<script src="hub-store.js?v=202609212045"></script>
+<script src="hub-sync.js?v=202609212045"></script>
 <script type="text/x-hub-app">
 const WORDING_KEY = 'connect_assignment_wording_v2';
 const SUB_KEY = 'connect_assignment_submissions_v1';
@@ -126,7 +132,15 @@ function criteriaTable(a, marksRound1, marksRound2, commentsRound1, commentsRoun
     ${crit.map((c,i)=>{
       const m1 = marksRound1[i]; const m2 = hasRound2 ? marksRound2[i] : undefined;
       const cm1 = commentsRound1[i]; const cm2 = hasRound2 ? commentsRound2[i] : '';
-      const cell = (m,cm) => m===true ? '<td class="mark met">Met</td>' : m===false ? `<td class="mark not">Not met${cm?`<div style="font-weight:400; text-transform:none; font-size:0.8rem; margin-top:3px; color:var(--ink);">${nl2br(cm)}</div>`:''}</td>` : '<td class="mark">\u2014</td>';
+      /* The comment goes with the mark whatever the mark is. It used to print
+         only under "Not met", so a tutor's comment on a criterion they HAD met
+         was stored, shown to the candidate on their own screen, and missing
+         from this record -- the one Handbook 12.1.1 puts in the portfolio the
+         assessor reads (walk, 21 Sep 2026). The marking screen offers the box
+         on every criterion regardless of the mark, so the tutor has no way to
+         know which of their comments will survive. */
+      const note = cm => cm ? `<div class="note" style="font-weight:400; text-transform:none; font-size:0.8rem; margin-top:3px; color:var(--ink);">${nl2br(cm)}</div>` : '';
+      const cell = (m,cm) => m===true ? `<td class="mark met">Met${note(cm)}</td>` : m===false ? `<td class="mark not">Not met${note(cm)}</td>` : `<td class="mark">\u2014${note(cm)}</td>`;
       return `<tr><td>${esc(c.text)}</td>${cell(m1,cm1)}${hasRound2?cell(m2,cm2):''}</tr>`;
     }).join('')}
   </table>`;
