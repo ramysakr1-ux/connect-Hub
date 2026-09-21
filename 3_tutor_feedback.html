@@ -350,9 +350,9 @@
 </div>
 
 
-<script src="hub-shared.js?v=202609212317"></script>
-<script src="hub-store.js?v=202609212317"></script>
-<script src="hub-sync.js?v=202609212317"></script>
+<script src="hub-shared.js?v=202609212321"></script>
+<script src="hub-store.js?v=202609212321"></script>
+<script src="hub-sync.js?v=202609212321"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -1216,11 +1216,19 @@ function renderTurnStatus(){
    Chrome and Edge only; the controls hide themselves in browsers without it. */
 (function dictation(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  /* Safari defines webkitSpeechRecognition but cannot actually dictate: it ends
-     the session after a single utterance, and it only allows start() inside a
-     user gesture, so the restart in onend is refused. A button that looks live
-     and is not is worse than no button, so the bar stays out of Safari. */
-  const SAFARI = /^((?!chrome|chromium|crios|edg|android|fxios|opr|opios).)*safari/i.test(navigator.userAgent);
+  /* WebKit defines webkitSpeechRecognition but cannot actually dictate with it:
+     it ends the session after a single utterance and only allows start() inside
+     a user gesture, so the restart in onend is refused. Every browser on iPhone
+     and iPad is WebKit, Chrome and Firefox included, so the test is the engine,
+     not the brand. A button that looks live and is not is worse than no button,
+     so the bar stays out of WebKit entirely. */
+  const WEBKIT = (function(){
+    const ua = navigator.userAgent;
+    if(/iPad|iPhone|iPod/.test(ua)) return true;
+    /* iPadOS reports itself as a Mac; the touch points give it away */
+    if(/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return true;
+    return /Safari/.test(ua) && !/Chrome|Chromium|Edg|OPR|Firefox/.test(ua);
+  })();
   const style=document.createElement('style');
   style.textContent=
     '.dictbar{position:fixed;bottom:88px;right:18px;z-index:600;display:flex;gap:8px;align-items:center;}'+
@@ -1236,7 +1244,7 @@ function renderTurnStatus(){
     '.dictbtn.rec .dot{background:#FCF8EF;animation:pulse 1s infinite;}'+
     '@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}';
   document.head.appendChild(style);
-  if(!SR || SAFARI) return;
+  if(!SR || WEBKIT) return;
 
   /* English only (Ramy, 21 Sep 2026): the plan, the self-evaluation and the
      tutor's feedback are written in English, so nobody dictating into them
