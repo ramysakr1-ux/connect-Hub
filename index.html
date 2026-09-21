@@ -197,9 +197,9 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-shared.js?v=202609210240"></script>
-<script src="hub-store.js?v=202609210240"></script>
-<script src="hub-sync.js?v=202609210240"></script>
+<script src="hub-shared.js?v=202609210849"></script>
+<script src="hub-store.js?v=202609210849"></script>
+<script src="hub-sync.js?v=202609210849"></script>
 <script type="text/x-hub-app">
 
 /* The trainee's home. The rooms below are permanent doors; the band at the top
@@ -214,43 +214,6 @@ const plan=rec('chub:plan'), self=rec('chub:selfeval'), fb=rec('chub:feedback');
 const planIn = !!(plan && plan.status==='turned_in');
 const selfIn = !!(self && self.status==='turned_in');
 const fbBack = !!(fb && fb.status==='returned');
-
-/* ---- room status lines ---------------------------------------------------- */
-status(document.getElementById('badgePlan'),
-  plan ? (planIn ? 'Turned in' : 'Draft — saving automatically') : 'Not started',
-  plan ? '' : 'act');
-status(document.getElementById('badgeSelf'),
-  self ? (selfIn ? 'Turned in' : 'Draft — saving automatically') : 'Not started',
-  planIn && !selfIn ? 'act' : '');
-status(document.getElementById('badgeFeedback'),
-  fbBack ? (selfIn ? 'Returned' : 'Returned — turn in your self-evaluation to read it')
-         : (fb ? 'In progress' : (planIn ? 'With your tutor' : 'Waiting for your plan')),
-  fbBack ? 'act' : '');
-
-/* The grid was the one card of the four with no line at all. It says when the
-   grid last changed, which is the question you open it with -- is there
-   anything new? -- and which neither band card answers: the band says which
-   teaching practice you are ON and how many assignments are complete, not when
-   anything last came back. */
-status(document.getElementById('badgeProgress'), (function(){
-  const hist = rec('chub:tpHistory') || {};
-  const subs = rec('connect_assignment_submissions_v1') || {};
-  const stamps = [];
-  Object.keys(hist).forEach(function(n){ const at = hist[n] && hist[n].returnedAt; if (at) stamps.push(at); });
-  Object.keys(subs).forEach(function(k){
-    const s = subs[k]; if (!s) return;
-    const at = (s.feedback && s.feedback.at) || (s.sub2 && s.sub2.at) || (s.sub1 && s.sub1.at);
-    if (at) stamps.push(at);
-  });
-  if (!stamps.length) return 'Nothing returned yet';
-  stamps.sort();
-  const d = new Date(stamps[stamps.length - 1]);
-  if (isNaN(d.getTime())) return 'Nothing returned yet';
-  // the LOCAL day, not the UTC one: a timestamp at 00:30 UTC is still the day
-  // before for a reader west of it, and this line names a day to a person.
-  const local = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-  return 'Last updated ' + niceDate(local);
-})(), '');
 
 /* Assignments: the same summary the card has carried since 20 Sep -- needs
    resubmission wins the headline, then returned unmarked, then all complete,
@@ -355,6 +318,11 @@ line(document.getElementById('badgeProgress'), (function(){
   const subs = rec('connect_assignment_submissions_v1') || {};
   const stamps = [];
   Object.keys(hist).forEach(function(n){ const at = hist[n] && hist[n].returnedAt; if (at) stamps.push(at); });
+  /* The teaching practice just returned is NOT in the history yet -- "Start
+     next TP" files it there. Without this the newest thing that has happened to
+     you is the one thing this line does not count, so a candidate whose
+     feedback came back today read a date from last week. */
+  if (fbBack && fb.returnedAt) stamps.push(fb.returnedAt);
   Object.keys(subs).forEach(function(k){
     const s = subs[k]; if (!s) return;
     const at = (s.feedback && s.feedback.at) || (s.sub2 && s.sub2.at) || (s.sub1 && s.sub1.at);

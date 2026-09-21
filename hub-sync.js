@@ -154,8 +154,25 @@
   route = function(k, v){ if (started) dirty[k] = true; origRoute(k, v); };
 
   // What a boot answer means for this browser's storage: key -> JSON or null.
+  //
+  // A null in here DELETES. That is right when the store has spoken and the
+  // record is genuinely gone, and dangerous when the answer was not about this
+  // person at all: `boot.me || { records: {} }` used to read an empty answer as
+  // "you have nothing", and every draft in the browser went with it.
+  //
+  // The store never resolves a trainee boot without `me`, nor a tutor's or
+  // assessor's without `roster` -- an unknown token or key throws instead. So a
+  // resolved boot missing its own subject is a malformed answer, and the only
+  // safe reading of it is that nothing is known: change nothing.
+  //
+  // Walking the trainee role on 21 Sep 2026 left `hub:me` as "{}" and
+  // `hub:name` as "" with the course records gone -- which is exactly what
+  // plan({}) writes. The trigger was not reproducible afterwards (a rejected
+  // boot correctly changes nothing and says "showing this browser's copy"), but
+  // the effect was real, and this makes it impossible rather than unlikely.
   function plan(boot){
     boot = boot || {};
+    if (mode === 'trainee' ? !boot.me : !boot.roster) return {};
     var course = boot.course || {}, out = {};
     out['connect_assignment_wording_v2'] = course.wording ? JSON.stringify(course.wording) : null;
     out['connect_course_settings'] = course.settings ? JSON.stringify(course.settings) : null;

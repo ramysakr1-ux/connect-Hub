@@ -218,9 +218,9 @@
   <span class="status" id="status"></span>
 </div>
 
-<script src="hub-shared.js?v=202609210240"></script>
-<script src="hub-store.js?v=202609210240"></script>
-<script src="hub-sync.js?v=202609210240"></script>
+<script src="hub-shared.js?v=202609210849"></script>
+<script src="hub-store.js?v=202609210849"></script>
+<script src="hub-sync.js?v=202609210849"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -496,7 +496,13 @@ function renderTurnStatus(){
   const el=$('turnStatus');
   if(rec&&rec.status==='turned_in'){
     setLock(true);
-    el.innerHTML='Turned in — '+fmtDate(rec.turnedInAt)+'. Your tutor has it now; you can\'t edit it.';
+    // Only name a time when there is one. fmtDate returns '' for a missing
+    // stamp, and the old line glued the dash on regardless, so a record without
+    // one read "Turned in - . Your tutor has it now" (found walking the trainee
+    // role, 21 Sep 2026). A turn-in has written turnedInAt since it was built,
+    // so this is for records that predate it or arrive without it.
+    const when = fmtDate(rec.turnedInAt);
+    el.innerHTML='Turned in'+(when?' — '+when:'')+'. Your tutor has it now; you can\'t edit it.';
     el.classList.add('show');
     $('turnInBtn').style.display='none';
   } else {
