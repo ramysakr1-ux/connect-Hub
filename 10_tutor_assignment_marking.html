@@ -67,7 +67,7 @@
   .btn-sand{background:var(--sand-deep); color:var(--ink);}
   .note{font-size:0.8rem; color:var(--grey); margin:0 0 14px;}
 </style>
-<link rel="stylesheet" href="hub-theme.css?v=202609212045">
+<link rel="stylesheet" href="hub-theme.css?v=202609212101">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -75,10 +75,10 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202609212045"></script>
-<script src="hub-shared.js?v=202609212045"></script>
-<script src="hub-store.js?v=202609212045"></script>
-<script src="hub-sync.js?v=202609212045"></script>
+<script src="assignment-defaults.js?v=202609212101"></script>
+<script src="hub-shared.js?v=202609212101"></script>
+<script src="hub-store.js?v=202609212101"></script>
+<script src="hub-sync.js?v=202609212101"></script>
 <script type="text/x-hub-app">
 const WORDING_KEY = 'connect_assignment_wording_v2';
 const SUB_KEY = 'connect_assignment_submissions_v1';
@@ -267,11 +267,27 @@ function render(){
           const cls = m===true?'met':m===false?'not':'';
           const label = m===true?'Met':m===false?'Not met':'Not yet marked';
           const cm = (sub.criteriaComments[round]||[])[i] || '';
+          /* Marking a RESUBMISSION is the act of checking whether what you
+             flagged got fixed -- so the first round's verdict and your own note
+             belong here, beside the control you are about to press. They were
+             stored and rendered on the record, but this screen showed eight
+             criteria all reading "Not yet marked" and nothing else, so the
+             tutor re-judged blind or went hunting for their own words on
+             another screen (walk, 21 Sep 2026). The candidate's own screen has
+             always shown them these comments; the tutor had the worse view of
+             the two. */
+          const prevMark = round==='sub2' ? (sub.criteriaMarks.sub1||[])[i] : undefined;
+          const prevComment = round==='sub2' ? ((sub.criteriaComments.sub1||[])[i] || '') : '';
+          const prevLine = prevMark===undefined && !prevComment ? '' :
+            `<div class="note" style="margin:6px 0 0; padding:6px 9px; border-radius:6px; background:var(--sand); font-size:0.78rem; line-height:1.5;">
+              <b>First submission:</b> ${prevMark===true?'Met':prevMark===false?'Not met':'not marked'}${prevComment?` \u2014 ${esc(prevComment)}`:''}
+            </div>`;
           return `<div class="critrow" style="flex-direction:column; align-items:stretch;">
             <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:14px;">
               <div class="txt">${esc(c.text)}</div>
               <button class="crit-toggle ${cls}" data-crit="${i}">${label}</button>
             </div>
+            ${prevLine}
             <textarea data-crit-comment="${i}" rows="2" placeholder="Comment on this criterion (shown to the trainee if resubmitting)" style="margin-top:8px;">${esc(cm)}</textarea>
           </div>`;
         }).join('') : '<p class="note">No marking criteria set for this assignment yet \u2014 add them in the assignment builder.</p>'}
