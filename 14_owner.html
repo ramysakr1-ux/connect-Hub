@@ -74,6 +74,10 @@
   .link{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
   .link b{font-size:0.82rem; min-width:104px;}
   .link .note{font-size:0.8rem; color:var(--grey); flex:1; min-width:180px;}
+  .link code{flex-basis:100%; display:block; margin-top:2px; font-size:0.74rem; word-break:break-all; color:var(--grey);}
+  .linkbtn{font-family:'Karla',sans-serif; font-size:0.8rem; font-weight:600; border:none; background:none;
+    color:var(--teal); cursor:pointer; padding:0;}
+  .linkbtn:hover{text-decoration:underline;}
   .empty{padding:34px 4px; font-size:0.9rem; color:var(--grey); line-height:1.65;}
   .gate{max-width:560px; padding:16vh 0 0;}
   .gate h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.9rem; margin:0 0 10px;}
@@ -118,8 +122,8 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609211559"></script>
-<script src="hub-store.js?v=202609211559"></script>
+<script src="hub-shared.js?v=202609211608"></script>
+<script src="hub-store.js?v=202609211608"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -192,6 +196,7 @@ function gate(msg){
 }
 
 function render(courses, msg){
+  COURSES = courses || [];
   const rows = courses.map(c => {
     // A store that answered without a count used to print "undefined trainees".
     const n = Number(c.trainees) || 0;
@@ -208,11 +213,13 @@ function render(courses, msg){
           <b>Tutor link</b>
           <span class="note">The one you send the centre. Their tutors and course admin all use it.</span>
           <button class="btn small" type="button" data-copy="${esc(base() + '5_tutor_dashboard.html?k=' + encodeURIComponent(c.tutorKey))}">Copy</button>
+          ${SHOW_URLS ? `<code>${esc(base() + '5_tutor_dashboard.html?k=' + encodeURIComponent(c.tutorKey))}</code>` : ''}
         </div>
         <div class="link">
           <b>Assessor link</b>
           <span class="note">Read-only, for the visit. The centre can also find and rotate it themselves.</span>
           <button class="btn small" type="button" data-copy="${esc(base() + '12_assessor_pack.html?ak=' + encodeURIComponent(c.assessorKey))}">Copy</button>
+          ${SHOW_URLS ? `<code>${esc(base() + '12_assessor_pack.html?ak=' + encodeURIComponent(c.assessorKey))}</code>` : ''}
         </div>
       </div>
     </div>`; }).join('');
@@ -223,7 +230,10 @@ function render(courses, msg){
         <h1>Courses</h1>
         <p>One course, one set of links. Make a course, send the centre its tutor link, and they set it up and add their own trainees. Trainees' personal links live on that course's Roster and links tab.</p>
       </div>
-      <button class="btn primary" id="makeBtn" type="button">Make a course</button>
+      <div style="display:flex; align-items:center; gap:16px;">
+        ${COURSES.length ? `<button class="linkbtn" id="toggleUrls" type="button">${SHOW_URLS ? 'Hide addresses' : 'Show addresses'}</button>` : ''}
+        <button class="btn primary" id="makeBtn" type="button">Make a course</button>
+      </div>
     </div>
     <div class="courses">${rows || '<div class="empty">No courses yet. Make the first one, then send its tutor link to the centre.</div>'}</div>
     <p id="status"></p>`;
@@ -237,7 +247,17 @@ function render(courses, msg){
    deleteCourse calls; Copy fired as many times as the screen had been redrawn.
    Found walking the owner console, 21 Sep 2026. */
 let BUSY = false;
+/* The list the store last gave us, and whether the raw addresses are showing.
+   Course admin has had "Show addresses" since v2; the owner console never got
+   one, so the only way to find which card carried a given tutor key was to copy
+   every link in turn and compare them somewhere else -- which is exactly what a
+   burned key makes you do (Ramy, 21 Sep 2026). Held here so the toggle repaints
+   from what is already in the browser: reading an address asks the store for
+   nothing. */
+let COURSES = [], SHOW_URLS = false;
 $('app').addEventListener('click', async e => {
+    const urls = e.target.closest('#toggleUrls');
+    if (urls) { SHOW_URLS = !SHOW_URLS; render(COURSES); return; }
     const retry = e.target.closest('#retryBtn');
     if (retry) { retry.disabled = true; retry.textContent = 'Trying…'; load(); return; }
     const make = e.target.closest('#makeBtn');
