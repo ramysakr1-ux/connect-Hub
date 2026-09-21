@@ -118,8 +118,8 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609210918"></script>
-<script src="hub-store.js?v=202609210918"></script>
+<script src="hub-shared.js?v=202609210921"></script>
+<script src="hub-store.js?v=202609210921"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -139,9 +139,17 @@ const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g
 const base = () => location.origin + location.pathname.replace(/[^/]*$/, '');
 const call = body => HubStore.call(Object.assign({ owner: ownerKey() }, body));
 
+/* The day at the front of the stamp, read as written. `created` is a full
+   timestamp, and reading it as an instant moves it to the next day for a reader
+   east of the store -- a course minted late in the evening would be listed as
+   made tomorrow. Same rule as niceDate in hub-shared and longDate on the
+   assessor pack. */
 function niceDate(iso){
-  if (!iso) return '';
-  try { return new Date(iso).toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'}); }
+  const s = String(iso == null ? '' : iso);
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const d = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(s);
+  if (isNaN(d)) return '';
+  try { return d.toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'}); }
   catch (e) { return ''; }
 }
 /* What to call a course: the centre's own words once they have set them, and
@@ -214,21 +222,31 @@ function render(courses, msg){
     <div class="courses">${rows || '<div class="empty">No courses yet. Make the first one, then send its tutor link to the centre.</div>'}</div>
     <p id="status"></p>`;
   if (msg) status(msg);
+}
 
-  $('makeBtn').addEventListener('click', async () => {
-    const btn = $('makeBtn');
-    btn.disabled = true; status('Making the course…');
-    try {
-      const made = await call({ op: 'createCourse' });
-      /* The store answers with the refreshed list, so the screen repaints from
-         this one answer. Asking it again for the list would cost a second
-         Apps Script round trip, and each of those is 1.5-13 s -- the wait Ramy
-         called out on 21 Sep 2026 ("making the course takes a while"). */
-      showList(made.courses, 'Made ' + made.id + '. Copy its tutor link and send it to the centre.');
-    } catch (err) { status(err.message); btn.disabled = false; }
-  });
-
-  $('app').addEventListener('click', async e => {
+/* Bound ONCE, here, and not inside render().
+   #app survives every repaint -- render only replaces its children -- so
+   attaching this on each render stacked another copy of it. After minting two
+   courses, ONE click on Delete opened three confirmation dialogs and sent three
+   deleteCourse calls; Copy fired as many times as the screen had been redrawn.
+   Found walking the owner console, 21 Sep 2026. */
+let BUSY = false;
+$('app').addEventListener('click', async e => {
+    const make = e.target.closest('#makeBtn');
+    if (make) {
+      if (BUSY) return;
+      BUSY = true; make.disabled = true; status('Making the course…');
+      try {
+        /* The store answers with the refreshed list, so the screen repaints from
+           this one answer. Asking it again for the list would cost a second
+           Apps Script round trip, and each of those is 1.5-13 s -- the wait Ramy
+           called out on 21 Sep 2026 ("making the course takes a while"). */
+        const made = await call({ op: 'createCourse' });
+        showList(made.courses, 'Made ' + made.id + '. Copy its tutor link and send it to the centre.');
+      } catch (err) { status(err.message); make.disabled = false; }
+      BUSY = false;
+      return;
+    }
     const b = e.target.closest('[data-copy]');
     if (b) {
       try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy'; }, 1500); }
@@ -239,6 +257,7 @@ function render(courses, msg){
        what goes rather than asking "are you sure". */
     const d = e.target.closest('[data-delete]');
     if (d) {
+      if (BUSY) return;
       const n = Number(d.dataset.trainees || 0);
       const carries = n
         ? `Its ${n} trainee${n === 1 ? '' : 's'} and every plan, self-evaluation, feedback and assignment on it go with it.`
@@ -247,15 +266,16 @@ function render(courses, msg){
         `Delete ${d.dataset.label}? ${carries} Its tutor and assessor links stop working. This cannot be undone.`,
         'Delete the course');
       if (!ok) return;
+      BUSY = true;
       status('Deleting ' + d.dataset.label + '…');
       try {
         const r = await call({ op: 'deleteCourse', course: d.dataset.delete, confirm: d.dataset.delete });
         const g = r.removed || {};
         showList(r.courses, `Deleted ${r.deleted} — ${g.trainees || 0} trainee${g.trainees === 1 ? '' : 's'} and ${g.records || 0} record${g.records === 1 ? '' : 's'} with it.`);
       } catch (err) { status(err.message); }
+      BUSY = false;
     }
-  });
-}
+});
 
 /* Repaint from a list the store has already sent back, and only fall back to
    asking for one if an older deployment answered without it. */
