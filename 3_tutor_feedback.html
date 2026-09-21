@@ -350,9 +350,9 @@
 </div>
 
 
-<script src="hub-shared.js?v=202609212334"></script>
-<script src="hub-store.js?v=202609212334"></script>
-<script src="hub-sync.js?v=202609212334"></script>
+<script src="hub-shared.js?v=202609212353"></script>
+<script src="hub-store.js?v=202609212353"></script>
+<script src="hub-sync.js?v=202609212353"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -1179,7 +1179,15 @@ function renderTurnStatus(){
   }
   if(planRec&&planRec.state){
     DOC=planRec.state;
-    if(selfRec&&selfRec.state) DOC.self=selfRec.state;
+    /* The self-evaluation record's state is { doc, self } -- the plan it was
+       written against, and the answers. Both readers below (showSeen and the
+       document builder) want the ANSWERS: d.self.well, d.self.not and so on.
+       Assigning the whole state made every one of them undefined, and the rows
+       are filtered on being non-empty, so the tutor saw a bare "Their
+       self-evaluation" heading with nothing under it -- and the document the
+       candidate got back had an empty Self-evaluation page (tutor walk,
+       21 Sep 2026). The fallback reads a flat record, should any exist. */
+    if(selfRec&&selfRec.state) DOC.self=selfRec.state.self||selfRec.state;
     showSeen(DOC); prefill(DOC);
     $('loadedInfo').textContent='Pulled in: '+((META().tp||'TP')+' · '+(META().name||''))+
       (DOC.self?' · self-evaluation included':' · no self-evaluation yet')+
