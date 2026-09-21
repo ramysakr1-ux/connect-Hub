@@ -67,7 +67,7 @@
   .btn-sand{background:var(--sand-deep); color:var(--ink);}
   .note{font-size:0.8rem; color:var(--grey); margin:0 0 14px;}
 </style>
-<link rel="stylesheet" href="hub-theme.css?v=202609211326">
+<link rel="stylesheet" href="hub-theme.css?v=202609211521">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -75,10 +75,10 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202609211326"></script>
-<script src="hub-shared.js?v=202609211326"></script>
-<script src="hub-store.js?v=202609211326"></script>
-<script src="hub-sync.js?v=202609211326"></script>
+<script src="assignment-defaults.js?v=202609211521"></script>
+<script src="hub-shared.js?v=202609211521"></script>
+<script src="hub-store.js?v=202609211521"></script>
+<script src="hub-sync.js?v=202609211521"></script>
 <script type="text/x-hub-app">
 const WORDING_KEY = 'connect_assignment_wording_v2';
 const SUB_KEY = 'connect_assignment_submissions_v1';
@@ -236,8 +236,17 @@ function render(){
       const allMet = allMarked && crit.every((c,i)=>marks[i]===true);
       let derivedLabel, derivedCls;
       if (!allMarked) { derivedLabel = 'Mark every criterion to see the outcome'; derivedCls='pending'; }
-      else if (allMet) { derivedLabel = round==='sub2' ? 'Pass (on resubmission)' : 'Pass'; derivedCls='pass'; }
-      else { derivedLabel = round==='sub2' ? 'Fail (on resubmission)' : 'Resubmission needed'; derivedCls='fail'; }
+      else {
+        /* The SAME rule the save uses -- outcomeFor(). This pill used to work
+           the answer out for itself and keyed only on the round, so for a
+           candidate who had already used their one resubmission it read
+           "Resubmission needed" while the note directly above it said the
+           mark was a final Fail and the save recorded exactly that, closing
+           the assignment. The tutor was shown one decision and made another,
+           on a candidate's pass or fail (walk, 21 Sep 2026). */
+        derivedLabel = outcomeFor(round, allMet, sub);
+        derivedCls = /^Pass/.test(derivedLabel) ? 'pass' : 'fail';
+      }
 
       let deadlineWarn = '';
       try {
@@ -321,18 +330,23 @@ function doSave(){
   if (!sub.feedback) sub.feedback = { outcome:'', generalComment1:'', generalComment2:'' };
 
   sub[round === 'sub2' ? 'marked2At' : 'marked1At'] = new Date().toISOString();
-  if (round === 'sub2') {
-    sub.feedback.generalComment2 = comment;
-    sub.feedback.outcome = allMet ? 'Pass (on resubmission)' : 'Fail (on resubmission)';
-    sub.stage = 'closed';
-  } else {
-    sub.feedback.generalComment1 = comment;
-    if (allMet) { sub.feedback.outcome = 'Pass'; sub.stage = 'closed'; }
-    else if (!sub.usedResubmission) { sub.feedback.outcome = 'Resubmission needed'; sub.stage = 'resubmission_needed'; }
-    else { sub.feedback.outcome = 'Fail'; sub.stage = 'closed'; }
-  }
+  if (round === 'sub2') sub.feedback.generalComment2 = comment;
+  else sub.feedback.generalComment1 = comment;
+  sub.feedback.outcome = outcomeFor(round, allMet, sub);
+  sub.stage = sub.feedback.outcome === 'Resubmission needed' ? 'resubmission_needed' : 'closed';
   saveSubs();
   render();
+}
+
+/* What this marking comes to, in the words the candidate will see. Read by the
+   pill the tutor is looking at AND by the save, so the screen cannot promise
+   one outcome and record another. Handbook 9.2.2: one resubmission per
+   assignment -- once it is used, a criterion not met is a Fail, not another
+   chance. */
+function outcomeFor(round, allMet, sub){
+  if (round === 'sub2') return allMet ? 'Pass (on resubmission)' : 'Fail (on resubmission)';
+  if (allMet) return 'Pass';
+  return sub.usedResubmission ? 'Fail' : 'Resubmission needed';
 }
 
 function doReturnUnmarked(){
