@@ -128,6 +128,39 @@
   };
 })();
 
+/* Bringing something into view, and actually getting there.
+
+   Three screens asked the browser to scroll smoothly -- the tracker to its
+   detail strip, the assessor pack to a teaching practice it was deep-linked
+   to, the owner console to a course just made. `behavior: 'smooth'` is
+   SILENTLY A NO-OP in some engines: measured on 21 Sep 2026, both
+   scrollIntoView and window.scrollTo moved nothing at all with it and moved
+   correctly without it. So a tutor clicking a cell on the tracker opened a
+   detail strip below the fold and saw nothing happen, and the owner console's
+   new course was never brought up.
+
+   Same shape as hubCopy: ask for the nice thing, then check, and guarantee the
+   outcome. Reduced motion skips straight to the reliable one. */
+window.hubScrollIntoView = function(el, block){
+  if (!el || !el.scrollIntoView) return;
+  var where = block || 'center';
+  var reduce = false;
+  try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch(e){}
+  var seen = function(){
+    var r = el.getBoundingClientRect();
+    return r.top < (window.innerHeight || 0) && r.bottom > 0;
+  };
+  if (seen()) return;
+  if (reduce) { try { el.scrollIntoView({ block: where }); } catch(e){} return; }
+  var was = window.scrollY;
+  try { el.scrollIntoView({ behavior: 'smooth', block: where }); } catch(e){}
+  setTimeout(function(){
+    if (Math.abs(window.scrollY - was) < 2 && !seen()) {
+      try { el.scrollIntoView({ block: where }); } catch(e){}
+    }
+  }, 300);
+};
+
 /* Course admin and the assignment-wording editor are the CENTRE's rooms, and
    they never checked who was in them. An assessor -- or a trainee -- who
    reached either got the full form: 13 editable fields and a live Save on
