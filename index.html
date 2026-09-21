@@ -206,9 +206,9 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-shared.js?v=202609212321"></script>
-<script src="hub-store.js?v=202609212321"></script>
-<script src="hub-sync.js?v=202609212321"></script>
+<script src="hub-shared.js?v=202609212327"></script>
+<script src="hub-store.js?v=202609212327"></script>
+<script src="hub-sync.js?v=202609212327"></script>
 <script type="text/x-hub-app">
 
 /* The trainee's home. The rooms below are permanent doors; the band at the top
@@ -330,19 +330,34 @@ line(document.getElementById('badgeProgress'), (function(){
   const hist = rec('chub:tpHistory') || {};
   const subs = rec('connect_assignment_submissions_v1') || {};
   const stamps = [];
-  Object.keys(hist).forEach(function(n){ const at = hist[n] && hist[n].returnedAt; if (at) stamps.push(at); });
+  /* Two shapes reach this line: the teaching practice records stamp a number
+     (Date.now()), the assignments an ISO string. Sorted as they came, every
+     epoch number sorts before every ISO string -- "1..." < "2..." -- so a
+     teaching practice returned today always lost to any assignment. They are
+     compared as time, not as text. */
+  function stamp(v){
+    if (v == null || v === '') return null;
+    const d = new Date(typeof v === 'number' ? v : String(v));
+    return isNaN(d.getTime()) ? null : d.getTime();
+  }
+  function push(v){ const t = stamp(v); if (t !== null) stamps.push(t); }
+  Object.keys(hist).forEach(function(n){ push(hist[n] && hist[n].returnedAt); });
   /* The teaching practice just returned is NOT in the history yet -- "Start
      next TP" files it there. Without this the newest thing that has happened to
      you is the one thing this line does not count, so a candidate whose
      feedback came back today read a date from last week. */
-  if (fbBack && fb.returnedAt) stamps.push(fb.returnedAt);
+  if (fbBack) push(fb.returnedAt);
+  /* These are stored on the assignment itself -- sub1At, sub2At, marked1At,
+     marked2At. This read asked for s.sub1.at, s.sub2.at and s.feedback.at,
+     none of which is ever written, so nothing a candidate did with an
+     assignment ever moved this line: submit all four and it still read
+     "Nothing returned yet" (trainee walk, 21 Sep 2026). */
   Object.keys(subs).forEach(function(k){
     const s = subs[k]; if (!s) return;
-    const at = (s.feedback && s.feedback.at) || (s.sub2 && s.sub2.at) || (s.sub1 && s.sub1.at);
-    if (at) stamps.push(at);
+    push(s.marked2At); push(s.marked1At); push(s.sub2At); push(s.sub1At);
   });
   if (!stamps.length) return 'Nothing returned yet';
-  stamps.sort();
+  stamps.sort(function(a, b){ return a - b; });
   const d = new Date(stamps[stamps.length - 1]);
   if (isNaN(d.getTime())) return 'Nothing returned yet';
   // the LOCAL day, not the UTC one: a timestamp at 00:30 UTC is still the day
