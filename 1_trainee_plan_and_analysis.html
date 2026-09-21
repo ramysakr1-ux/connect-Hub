@@ -487,9 +487,9 @@
   <span class="status" id="status"></span>
 </div>
 
-<script src="hub-shared.js?v=202609211035"></script>
-<script src="hub-store.js?v=202609211035"></script>
-<script src="hub-sync.js?v=202609211035"></script>
+<script src="hub-shared.js?v=202609211042"></script>
+<script src="hub-store.js?v=202609211042"></script>
+<script src="hub-sync.js?v=202609211042"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -1224,7 +1224,13 @@ $('turnInBtn').addEventListener('click', async()=>{
   if(!d.plan.main.trim()) missing.push('the main aims');
   if(!d.plan.rows.some(r=>r.proc.trim())) missing.push('the procedure');
   if(missing.length && !await confirmModal('You haven\'t filled in '+missing.join(', ')+'. Turn in anyway?','Turn in anyway')) return;
-  savePlanRecord({ state:d, label:draftLabel(), status:'turned_in', turnedInAt:Date.now() });
+  /* The rendered document travels with the record, exactly as the tutor's
+     feedback does. Handbook 14.1 asks the centre to give the assessor "lesson
+     plans for candidates teaching in teaching practice on the day of the
+     assessment": once a TP is taught the plan is inside the returned feedback
+     document, but the one being taught on the day is not, and the assessor pack
+     could only say a plan existed. Now it can show it. */
+  savePlanRecord({ state:d, label:draftLabel(), status:'turned_in', turnedInAt:Date.now(), docHTML:docHTML(d) });
   dirty=false;
   renderTurnStatus();
   setStatus('Turned in.');

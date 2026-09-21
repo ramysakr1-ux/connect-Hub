@@ -120,6 +120,15 @@
   /* .panel is overflow-x:auto so a wide table can scroll on screen; in print an
      overflow box is not fragmented across pages, so everything past the first
      page was clipped away (Ramy, 21 Sep 2026: "only prints the first page"). */
+  /* the candidates the assessor is steered to read in full, Handbook 14.2 */
+  .review{margin-top:4px; font-family:'Instrument Sans','Karla',sans-serif; font-size:9.5px; font-weight:700;
+    letter-spacing:0.1em; text-transform:uppercase; color:var(--brick);}
+  /* the centre's own documents, as links */
+  .docrow{display:flex; align-items:center; justify-content:space-between; gap:18px; padding:12px 16px; border-bottom:1px solid var(--sand-line);}
+  .docrow:last-child{border-bottom:none;}
+  .docrow span{font-size:0.9rem;}
+  .tpmark{margin:0 0 12px; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:700;
+    letter-spacing:0.12em; text-transform:uppercase; color:var(--grey);}
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
@@ -151,11 +160,11 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609211035"></script>
-<script src="assignment-defaults.js?v=202609211035"></script>
-<script src="hub-tracker.js?v=202609211035"></script>
-<script src="hub-store.js?v=202609211035"></script>
-<script src="hub-sync.js?v=202609211035"></script>
+<script src="hub-shared.js?v=202609211042"></script>
+<script src="assignment-defaults.js?v=202609211042"></script>
+<script src="hub-tracker.js?v=202609211042"></script>
+<script src="hub-store.js?v=202609211042"></script>
+<script src="hub-sync.js?v=202609211042"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -238,9 +247,20 @@ function personRow(tr){
   const tpChips = `<span class="chip ${g?g.cls:'nd'}"><b>${returned.length} of 8</b>${last ? 'TP'+last+' '+(g?g.t:'returned') : 'no TP returned'}</span>${curN ? `<span class="chip wait"><b>TP${curN}</b>in progress</span>` : ''}`;
   const asg = ORDER.filter(k => k!=='a5' || a5InPlay(tr.assignments||{})).map(k => { const st = T.assignmentState((tr.assignments||{})[k]); const a = A_STATE[st.code] || A_STATE['']; return `<span class="chip ${a.cls}"><b>${esc(k.toUpperCase())}</b>${a.t}${st.dm?' · DM':''}</span>`; }).join('');
   const chip = T.STATE_CHIP[r.state];
+  /* Handbook 14.2: at a regular assessment the assessor reads two portfolios in
+     full, and "in cases where there are more than two Fail candidates on the
+     course, the assessor should focus on borderline cases". The pack already
+     works each candidate's standing out, so it can say who those are rather
+     than leaving the assessor to find them. It marks, it does not choose: the
+     assessor picks the two. */
+  const flag = (tr.tracker && tr.tracker.withdrawn) ? ''
+    : r.state === 'notstd' ? '<div class="review">read in full — not to standard</div>'
+    : (r.potentialFail || r.letterIssued) ? '<div class="review">read in full — borderline</div>'
+    : r.ceiling ? '<div class="review">read in full — capped assignment</div>'
+    : '';
   const q = 'trainee=' + encodeURIComponent(tr.id);
   return `<tr>
-    <td><div class="name">${esc(tr.name)}</div><div class="sub">${esc(tr.group ? 'Group ' + tr.group : '')}${tr.tracker && tr.tracker.withdrawn ? ' · withdrawn' : ''}</div></td>
+    <td><div class="name">${esc(tr.name)}</div><div class="sub">${esc(tr.group ? 'Group ' + tr.group : '')}${tr.tracker && tr.tracker.withdrawn ? ' · withdrawn' : ''}</div>${flag}</td>
     <td><div class="chips">${tpChips}</div></td>
     <td><div class="chips">${asg}</div></td>
     <td><span class="standing ${chip.cls}">${esc(chip.text)}</span>${(tr.tracker&&tr.tracker.grades&&tr.tracker.grades.final) ? `<div class="sub"><b>Final: ${esc(tr.tracker.grades.final)}</b></div>` : (tr.tracker&&tr.tracker.grades&&tr.tracker.grades.provisional) ? `<div class="sub">Provisional: ${esc(tr.tracker.grades.provisional)}</div>` : ''}${r.ceiling ? `<div class="sub">cap: ${esc(r.ceiling.replace('SRT','LSRT'))}</div>` : ''}${r.letterIssued ? '<div class="sub" style="color:var(--red);">Fail letter issued</div>' : ''}</td>
@@ -276,35 +296,70 @@ function renderList(){
     <h2 class="sect">Double-marking record <small>Handbook 9.2.3: ${sample} of each assignment for ${n} candidate${n===1?'':'s'}</small></h2>
     <div class="panel">${dm.length ? `<table><tr><th>Candidate</th><th>Assignment</th><th>First marker</th><th>Second marker</th><th>Double-marked</th><th>Outcome</th></tr>${dm.join('')}</table>` : '<div class="empty">No assignment has been submitted yet.</div>'}</div>
     <h2 class="sect">Assignment briefs <small>as the centre set them, in the centre’s order</small></h2>
-    <div class="panel">${briefs()}</div>`;
+    <div class="panel">${briefs()}</div>
+    ${courseDocuments()}`;
+}
+
+/* Handbook 14.1's list, for the parts Connect Lite does not hold itself: the
+   timetable, the registers, the agreement, the applications, the previous
+   report, the action plan. The centre pastes a link for each on Course admin
+   and they appear here, so the assessor's one link reaches everything --
+   which is what 14.1 asks for ("a maximum of two links which give Cambridge
+   English and the assessor access to all course documentation").
+   Nothing is invented: a box the centre left empty is simply not a row. */
+const DOC_LABELS = [
+  ['docTimetable',    'Course timetable'],
+  ['docTpSchedule',   'Teaching practice schedule'],
+  ['docRegisters',    'Attendance registers'],
+  ['docAgreement',    'Candidate agreement'],
+  ['docApplications', 'Applications and interviews'],
+  ['docPrevReport',   "Previous assessor's report"],
+  ['docActionPlan',   'Action plan agreed with Cambridge']
+];
+function courseDocuments(){
+  const docs = (SETTINGS && SETTINGS.docs) || {};
+  const rows = DOC_LABELS.filter(([k]) => docs[k]).map(([k,label]) =>
+    `<div class="docrow"><span>${label}</span><a href="${esc(docs[k])}" target="_blank" rel="noopener noreferrer">Open</a></div>`);
+  if (!rows.length) return '';
+  return `<h2 class="sect">Course documents <small>held by the centre, Handbook 14.1</small></h2>
+    <div class="panel">${rows.join('')}</div>`;
 }
 
 // ---- one candidate ---------------------------------------------------------------
 function tpBlock(tr, n, c){
   const hist = T.tpHistory(tr); const fb = hist[n]; const f = fb && fb.state && fb.state.f;
   const cur = tr.tp && tr.tp.feedback; const isCur = cur && T.tpNumberOf(cur)===n && cur.status!=='returned';
+  /* The live plan and which TP it belongs to, read once here because three
+     things below want them: the in-progress line, the not-yet-taught line, and
+     the plan document itself.
+     Which TP it is used to demand the literal "TP" before the digit, so a
+     candidate whose tutor typed "4" rather than "TP4" lost the "plan turned in"
+     marker -- the sixth place tonight where a number typed freely was read by
+     one spelling only. First number wins, as on the dashboard and the home. */
+  const plan = tr.tp && tr.tp.plan;
+  const pm = plan && String(plan.label || (plan.state && plan.state.meta && plan.state.meta.tp) || '').match(/\d+/);
+  const planN = pm ? parseInt(pm[0], 10) : 0;
   let meta, right='';
   if (fb) {
     const g = G_STATE[c['tp'+n]];
     meta = `<span class="chip ${g?g.cls:'wait'}">${g?g.t:'returned'}</span> <b>${esc(c['tp'+n+'_aim'] || (f && f.fMain) || '')}</b>${f && f.fTutor ? ' · tutor ' + esc(f.fTutor) : ''}${f && f.fDate ? ' · taught ' + esc(niceDate(f.fDate)) : ''}${fb.returnedAt ? ' · returned ' + esc(when(fb.returnedAt)) : ''}`;
     right = fb.docHTML ? `<button class="btn ghost" type="button" data-doc="tp${n}">Show the document</button>` : '<span class="sub">no document stored</span>';
   } else if (isCur) {
-    const plan = tr.tp && tr.tp.plan, se = tr.tp && tr.tp.selfeval;
+    const se = tr.tp && tr.tp.selfeval;
     const bits = [plan && plan.status==='turned_in' ? 'plan turned in' : plan ? 'plan in draft' : 'no plan yet', se && se.status==='turned_in' ? 'self-evaluation in' : 'self-evaluation not yet in', 'feedback being written'];
     meta = `<span class="chip wait">in progress</span> ${esc(bits.join(' · '))}`;
   } else {
-    /* Which TP the plan is for. This demanded the literal "TP" before the
-       digit, so a candidate whose tutor typed "4" rather than "TP4" lost the
-       "plan turned in" marker here -- the sixth place tonight where a number
-       typed freely was read by one spelling only. First number wins, as on the
-       dashboard and the trainee's home. */
-    const plan = tr.tp && tr.tp.plan;
-    const pm = plan && String(plan.label || (plan.state && plan.state.meta && plan.state.meta.tp) || '').match(/\d+/);
-    const planN = pm ? parseInt(pm[0], 10) : 0;
     if (plan && planN===n) meta = `<span class="chip wait">${plan.status==='turned_in' ? 'plan turned in' : 'plan in draft'}</span> not yet taught`;
     else meta = `<span class="chip nd">not yet taught</span>`;
   }
-  return `<div class="tp" id="tp${n}"><div class="tp-row"><span class="n">TP${n}</span><span class="meta"><span class="sub">${STAGE_OF(n)}</span><br>${meta}</span>${right}</div>${fb && fb.docHTML ? `<div class="doc" id="doc-tp${n}" hidden>${fb.docHTML}</div>` : ''}</div>`;
+  /* Handbook 14.1 asks the centre for "lesson plans for candidates teaching in
+     teaching practice on the day of the assessment". Once a TP has been taught
+     its plan is already inside the returned feedback document; the one being
+     taught on the day is not, and this page could only report that a plan
+     existed. The turned-in plan now prints with the rest. */
+  const planDoc = (!fb && plan && planN === n && plan.status === 'turned_in' && plan.docHTML)
+    ? `<div class="doc" id="doc-plan${n}" hidden><p class="tpmark">Teaching practice ${n} — the plan, as turned in. Not taught yet.</p>${plan.docHTML}</div>` : '';
+  return `<div class="tp" id="tp${n}"><div class="tp-row"><span class="n">TP${n}</span><span class="meta"><span class="sub">${STAGE_OF(n)}</span><br>${meta}</span>${right}</div>${fb && fb.docHTML ? `<div class="doc" id="doc-tp${n}" hidden>${fb.docHTML}</div>` : ''}${planDoc}</div>`;
 }
 function assignmentBlock(tr, k){
   const w = WORDING && WORDING[k]; const sub = (tr.assignments||{})[k] || {}; const st = T.assignmentState(sub); const a = A_STATE[st.code] || A_STATE[''];

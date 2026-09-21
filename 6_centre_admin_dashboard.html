@@ -152,6 +152,8 @@
 
   /* ---- settings -------------------------------------------------------- */
   .settings{max-width:620px;}
+  .docsh{margin:34px 0 6px; font-family:'Newsreader',Georgia,serif; font-size:1.15rem; font-weight:600;}
+  .fields.docs{margin-top:14px;}
   .logo-row{display:flex; align-items:flex-start; gap:18px; padding-bottom:26px;}
   .logo-slot{width:60px; height:60px; border-radius:9px; border:1.5px dashed var(--sand-line);
     display:flex; align-items:center; justify-content:center; font-size:9px; line-height:1.2;
@@ -301,6 +303,25 @@
       </div>
     </div>
     <p class="note">The end date sets when the assessor link expires — fourteen days after it.</p>
+
+    <!-- Handbook 14.1: the centre gives the assessor "a maximum of two links
+         which give Cambridge English and the assessor access to all course
+         documentation". Lite holds the portfolios and the assignment briefs;
+         the rest of that list lives in the centre's own systems, so the pack
+         carries links to them rather than copies. Only the ones filled in are
+         shown to the assessor. -->
+    <h3 class="docsh">Documents for the assessor</h3>
+    <p class="note" style="margin-top:0;">Handbook 14.1 asks for these before the visit. Lite already gives the assessor the portfolios, the assignment briefs and the double-marking record — paste a link for anything of yours it cannot hold, and the assessor finds it all behind their one link. Leave a box empty and it simply does not appear.</p>
+    <div class="fields docs">
+      <div class="wide"><label for="docTimetable">Course timetable</label><input type="text" id="docTimetable" placeholder="https://…"></div>
+      <div class="wide"><label for="docTpSchedule">Teaching practice schedule</label><input type="text" id="docTpSchedule" placeholder="https://…"></div>
+      <div class="wide"><label for="docRegisters">Attendance registers</label><input type="text" id="docRegisters" placeholder="https://… — student names only"></div>
+      <div class="wide"><label for="docAgreement">Candidate agreement</label><input type="text" id="docAgreement" placeholder="https://…"></div>
+      <div class="wide"><label for="docApplications">Applications and interviews</label><input type="text" id="docApplications" placeholder="https://… — your Appian course folder"></div>
+      <div class="wide"><label for="docPrevReport">Previous assessor's report</label><input type="text" id="docPrevReport" placeholder="https://…"></div>
+      <div class="wide"><label for="docActionPlan">Action plan agreed with Cambridge</label><input type="text" id="docActionPlan" placeholder="https://… — only if one is in place"></div>
+    </div>
+
     <div class="saverow"><button class="btn primary" id="saveSettings">Save</button><span id="settingsStatus" aria-live="polite"></span></div>
   </div>
 
@@ -345,10 +366,10 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609211035"></script>
-<script src="hub-store.js?v=202609211035"></script>
-<script src="hub-shared.js?v=202609211035"></script>
-<script src="hub-sync.js?v=202609211035"></script>
+<script src="assignment-defaults.js?v=202609211042"></script>
+<script src="hub-store.js?v=202609211042"></script>
+<script src="hub-shared.js?v=202609211042"></script>
+<script src="hub-sync.js?v=202609211042"></script>
 <script type="text/x-hub-app">
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -363,6 +384,10 @@ document.getElementById('tabs').addEventListener('click', e=>{
 });
 
 /* ---- settings ------------------------------------------------------------ */
+/* The assessor-facing links, Handbook 14.1. Kept as one object on the settings
+   record so they travel to the store with everything else and reach the pack
+   through the same boot. */
+const DOC_FIELDS = ['docTimetable','docTpSchedule','docRegisters','docAgreement','docApplications','docPrevReport','docActionPlan'];
 let courseLogo = '';
 function applyLogoPreview(dataUrl){
   const slot = document.getElementById('logoSlot');
@@ -432,6 +457,7 @@ try {
     if(cs.centreName) document.getElementById('centreName').value = cs.centreName;
     if(cs.centreNumber) document.getElementById('centreNumber').value = cs.centreNumber;
     if(cs.courseName) document.getElementById('courseName').value = cs.courseName;
+    if(cs.docs) DOC_FIELDS.forEach(k=>{ if(cs.docs[k]) document.getElementById(k).value = cs.docs[k]; });
     if(cs.logo){ courseLogo = cs.logo; applyLogoPreview(courseLogo); }
   }
 } catch(e) {}
@@ -451,6 +477,7 @@ document.getElementById('saveSettings').addEventListener('click', () => {
     centreName: document.getElementById('centreName').value,
     centreNumber: document.getElementById('centreNumber').value,
     courseName: document.getElementById('courseName').value,
+    docs: DOC_FIELDS.reduce((o,k)=>{ const v = document.getElementById(k).value.trim(); if (v) o[k] = v; return o; }, {}),
     logo: courseLogo
   }));
   // The assessor link expires 14 days after the course end date, which this
