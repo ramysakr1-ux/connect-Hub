@@ -128,6 +128,49 @@
   };
 })();
 
+/* Course admin and the assignment-wording editor are the CENTRE's rooms, and
+   they never checked who was in them. An assessor -- or a trainee -- who
+   reached either got the full form: 13 editable fields and a live Save on
+   Course admin, 41 on the wording editor. hub-sync blocks the write, so
+   nothing they typed ever reached the course and the centre's record was never
+   at risk. But the screen said "Saved -- <course>." and their own copy of the
+   course took the change, so from then on they were reading a course that did
+   not exist: walking the assessor role on 21 Sep 2026 the header read
+   "ASSESSOR CHANGED THIS" for the rest of the session.
+
+   A door, not a disabled form: there is nothing here for them to read, so the
+   room says whose it is and points them back to their own. Tutors are
+   untouched. */
+window.hubCentreRoomOnly = function(){
+  var mode = window.HubMode;
+  if (mode === 'tutor' || !mode) return false;
+  var back = mode === 'assessor'
+    ? { href: '12_assessor_pack.html', label: 'Open your assessor pack' }
+    : { href: 'index.html', label: 'Back to your course' };
+  var who = mode === 'assessor'
+    ? 'Your link is read-only, and this page is where the centre sets the course up.'
+    : 'This page is where your centre sets the course up.';
+  document.documentElement.style.background = 'oklch(92.5% 0.012 85)';
+  document.body.style.cssText = 'margin:0;background:oklch(92.5% 0.012 85);';
+  document.body.innerHTML =
+    '<div style="max-width:560px;margin:0 auto;padding:16vh 20px 0;font-family:Karla,Helvetica,sans-serif;color:oklch(23.5% 0.017 65);">'
+    + '<div style="display:flex;align-items:center;gap:9px;margin-bottom:26px;">'
+    + '<span style="width:30px;height:30px;border-radius:7px;background:oklch(30% 0.042 58);display:inline-flex;align-items:center;justify-content:center;">'
+    + '<svg viewBox="8 30 104 60" width="20" height="12" fill="none">'
+    + '<path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"></path>'
+    + '<path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"></path>'
+    + '</svg></span>'
+    + '<span style="display:inline-flex;align-items:baseline;gap:4px;">'
+    + '<span style="font-family:Instrument Serif,Georgia,serif;font-style:italic;font-size:21px;line-height:0.85;color:oklch(63% 0.096 72);">Connect</span>'
+    + '<span style="font-family:Instrument Sans,Karla,sans-serif;font-weight:500;font-size:9px;letter-spacing:0.24em;text-transform:uppercase;">Lite</span>'
+    + '</span></div>'
+    + '<h1 style="font-family:Newsreader,Georgia,serif;font-weight:700;font-size:1.9rem;line-height:1.2;margin:0 0 10px;">This room belongs to the centre</h1>'
+    + '<p style="font-size:0.92rem;line-height:1.65;color:oklch(51% 0.017 70);margin:0 0 20px;">' + who + ' Nothing you change here would reach the course.</p>'
+    + '<a href="' + back.href + '" style="font-family:Karla,sans-serif;font-size:0.82rem;font-weight:600;height:34px;padding:0 15px;border-radius:6px;border:1.5px solid oklch(89.5% 0.012 82);background:oklch(96.2% 0.02 80);color:oklch(23.5% 0.017 65);display:inline-flex;align-items:center;text-decoration:none;">' + back.label + '</a>'
+    + '</div>';
+  return true;
+};
+
 /* The three writing screens (plan, self-evaluation, tutor feedback) put their
    controls in a `position:fixed` bar across the bottom, and reserve room for it
    with a fixed padding on the body -- 150px on the plan, 110px on the other
