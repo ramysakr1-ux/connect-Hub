@@ -18,6 +18,11 @@
 // that has not declared the token.
       ".confirm-cancel{background:var(--box,#faf1e4); color:var(--ink,#2b2620);}"+
       ".confirm-cancel:hover{background:var(--sand-deep,#f3efe6);}"+
+      ".confirm-type{display:block; margin:0 0 16px;}"+
+      ".confirm-type span{display:block; font-family:'Karla',sans-serif; font-size:0.78rem; font-weight:600; color:var(--grey,#6d655c); margin-bottom:6px;}"+
+      ".confirm-type input{width:100%; box-sizing:border-box; font-family:'Karla',sans-serif; font-size:0.92rem; padding:9px 11px; border:1.5px solid var(--sand-line,#e2d9c8); border-radius:6px; background:var(--box,#faf1e4); color:var(--ink,#2b2620);}"+
+      ".confirm-type input:focus{outline:none; border-color:var(--teal,#0f4a4b);}"+
+      ".confirm-action[disabled]{opacity:.45; cursor:not-allowed;}"+
       ".confirm-action{background:var(--brick,#8c2f1f); color:var(--paper,#fdfcf9); border-color:var(--brick,#8c2f1f);}"+
       ".confirm-action:hover{background:oklch(40% 0.15 27);}";
     document.head.appendChild(css);
@@ -65,22 +70,38 @@
     el.addEventListener('blur',function(){ if(el.value.trim()===B.trim()){ el.value=''; el.dispatchEvent(new Event('input',{bubbles:true})); } });
   };
   if(!window.confirmModal){
-    window.confirmModal=function(message, actionLabel){
+    /* A third argument asks the person to TYPE something before the action
+       opens: confirmModal(msg, 'Delete', { type:'c4', hint:'Type c4 to delete it' }).
+       Used where a click alone is too cheap for what it does. It resolves with
+       the typed text, so a caller can pass the very words the person wrote on
+       to the store rather than filling the confirmation in for them. */
+    window.confirmModal=function(message, actionLabel, opts){
+      opts = opts || {};
+      var want = opts.type == null ? null : String(opts.type);
       return new Promise(function(resolve){
         var overlay=document.createElement('div');
         overlay.className='confirm-overlay';
-        overlay.innerHTML='<div class="confirm-modal" role="alertdialog" aria-modal="true"><p class="confirm-message"></p><div class="confirm-actions"><button type="button" class="confirm-cancel">Cancel</button><button type="button" class="confirm-action"></button></div></div>';
+        overlay.innerHTML='<div class="confirm-modal" role="alertdialog" aria-modal="true"><p class="confirm-message"></p>'
+          + (want==null ? '' : '<label class="confirm-type"><span></span><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>')
+          + '<div class="confirm-actions"><button type="button" class="confirm-cancel">Cancel</button><button type="button" class="confirm-action"></button></div></div>';
         overlay.querySelector('.confirm-message').textContent=message;
         var actionBtn=overlay.querySelector('.confirm-action');
         actionBtn.textContent=actionLabel||'Continue';
+        var input=overlay.querySelector('.confirm-type input');
+        if(input){
+          overlay.querySelector('.confirm-type span').textContent=opts.hint||('Type '+want+' to confirm');
+          actionBtn.disabled=true;
+          input.addEventListener('input',function(){ actionBtn.disabled = input.value.trim()!==want; });
+          input.addEventListener('keydown',function(e){ if(e.key==='Enter' && !actionBtn.disabled) actionBtn.click(); });
+        }
         document.body.appendChild(overlay);
         function cleanup(result){ overlay.remove(); document.removeEventListener('keydown',onKey); resolve(result); }
         function onKey(e){ if(e.key==='Escape') cleanup(false); }
         document.addEventListener('keydown',onKey);
         overlay.addEventListener('mousedown',function(e){ if(e.target===overlay) cleanup(false); });
         overlay.querySelector('.confirm-cancel').addEventListener('click',function(){ cleanup(false); });
-        actionBtn.addEventListener('click',function(){ cleanup(true); });
-        actionBtn.focus();
+        actionBtn.addEventListener('click',function(){ if(actionBtn.disabled) return; cleanup(input ? input.value.trim() : true); });
+        (input||actionBtn).focus();
       });
     };
   }

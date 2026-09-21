@@ -121,6 +121,22 @@
 <script src="hub-shared.js?v=202609210929"></script>
 <script src="hub-store.js?v=202609210929"></script>
 <script>
+(function(){
+  var n=0, courses=[]; window.__calls=[];
+  function mk(){ n++; var id='c'+n; return {id:id, name:id.toUpperCase(), created:'2026-09-21T23:40:00.000Z', centreName:'', courseName:'', trainees:0, tutorKey:'tk'+n, assessorKey:'ak'+n}; }
+  courses.push(mk()); courses[0].courseName='CELTA C14/2026'; courses[0].centreName='Elmswood English Centre'; courses[0].trainees=6;
+  window.HubStore.call=function(body){
+    window.__calls.push(body.op+(body.confirm!==undefined?(' confirm='+body.confirm):''));
+    return new Promise(function(res,rej){ setTimeout(function(){
+      if(body.op==='ownerCourses') return res({courses:courses.slice()});
+      if(body.op==='createCourse'){ var c=mk(); courses.push(c); return res({id:c.id,courses:courses.slice()}); }
+      if(body.op==='deleteCourse'){ if(body.confirm!==body.course) return rej(new Error('Deleting a course needs its id as confirmation')); courses=courses.filter(function(c){return c.id!==body.course;}); return res({deleted:body.course, removed:{trainees:6,records:12}, courses:courses.slice()}); }
+      rej(new Error('unexpected op'));
+    }, 40); });
+  };
+})();
+</script>
+<script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
    in it. */

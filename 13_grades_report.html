@@ -38,6 +38,25 @@
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
   .board{max-width:1180px; margin:0 auto;}
+
+  /* On paper: the working screen goes, the read-only report comes. */
+  #printAll{display:none;}
+  @media print{
+    .chrome, .titleacts, .rail, #record, .back, #hubSync{display:none !important;}
+    body{background:#fff; padding:0;}
+    .shell{display:block;}
+    #printAll{display:block;}
+    .pcand{break-inside:avoid; page-break-inside:avoid; padding:0 0 26px; margin:0 0 26px; border-bottom:1px solid var(--sand-line);}
+    .pcand:last-child{border-bottom:none;}
+  }
+  .pcand h2{margin:0 0 4px; font-family:'Newsreader',Georgia,serif; font-size:1.25rem; font-weight:700;}
+  .pcand .pgrades{font-size:0.9rem; margin:0 0 14px;}
+  .pcand .pgrades b{font-weight:700;}
+  .pcand h3{margin:14px 0 5px; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px;
+    font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--grey);}
+  .pcand ul{margin:0; padding-left:18px; font-size:0.88rem; line-height:1.55;}
+  .pcand p{margin:0; font-size:0.88rem; line-height:1.6; white-space:pre-wrap;}
+  .pcand .none{font-size:0.86rem; color:var(--grey);}
   a{color:var(--teal);} a:hover{color:var(--ink-warm);}
   input,textarea,select{font-family:'Karla',sans-serif; color:var(--ink);}
   input:focus,textarea:focus,select:focus{outline:none; border-color:var(--teal);}
@@ -194,6 +213,7 @@
     </div>
     <div class="titleacts">
       <span id="saveState">Saved</span>
+      <button class="btn" id="printBtn" type="button">Print / Save as PDF</button>
       <button class="btn" id="saveBtn" type="button">Save</button>
     </div>
   </div>
@@ -207,12 +227,18 @@
     <div id="record"></div>
   </div>
 
+  <!-- Every candidate, read-only, built only when Print is pressed. The screen
+       edits one candidate at a time in textareas and selects, which is right for
+       working and wrong for paper: what a centre keeps is the whole cohort as a
+       document. -->
+  <div id="printAll"></div>
+
 </div>
 
-<script src="hub-tracker.js?v=202609210921"></script>
-<script src="hub-store.js?v=202609210921"></script>
-<script src="hub-shared.js?v=202609210921"></script>
-<script src="hub-sync.js?v=202609210921"></script>
+<script src="hub-tracker.js?v=202609210929"></script>
+<script src="hub-store.js?v=202609210929"></script>
+<script src="hub-shared.js?v=202609210929"></script>
+<script src="hub-sync.js?v=202609210929"></script>
 <script type="text/x-hub-app">
 /* ---------------------------------------------------------------------------
    Grades report. One record per candidate, five sections, matching the
@@ -362,6 +388,35 @@ function paintRecord(){
   document.querySelectorAll('.pt textarea').forEach(fit);
 }
 
+/* The same record as the screen shows, with nothing to type into: this is what
+   the centre keeps and what goes to Cambridge. Built on demand rather than kept
+   in step, so it can never drift out of date -- there is no moment between
+   pressing Print and the dialog opening in which the data can change. */
+function printableRecord(p, i){
+  const d = DATA[p.id] || {};
+  const list = key => {
+    const items = (d[key] || []).filter(it => (it.text || '').trim());
+    if (!items.length) return '<div class="none">Nothing recorded.</div>';
+    return '<ul>' + items.map(it => `<li>${esc(it.text)}${it.code ? ' <b>(' + esc(it.code) + ')</b>' : ''}</li>`).join('') + '</ul>';
+  };
+  const prose = f => {
+    const v = (d[f.key] || '').trim();
+    return `<h3>${f.heading}</h3>` + (v ? `<p>${esc(v)}</p>` : '<div class="none">Nothing recorded.</div>');
+  };
+  return `<div class="pcand">
+    <h2>${letterFor(i)} · ${esc(d.name || '')}</h2>
+    <div class="pgrades">Provisional grade: <b>${esc(d.provisional || 'not set')}</b> · Final grade: <b>${esc(d.final || 'not set')}</b>${p.cap ? ' · ' + esc(p.cap.line) : ''}</div>
+    ${SECTIONS.map(s => `<h3>${s.heading}</h3>${list(s.key)}`).join('')}
+    ${FIELDS.map(prose).join('')}
+  </div>`;
+}
+function buildPrintable(){
+  let cs = null; try { cs = JSON.parse(localStorage.getItem('connect_course_settings')); } catch (e) {}
+  const head = cs ? `<h1 style="font-family:'Newsreader',Georgia,serif;margin:0 0 4px;">${esc(cs.courseName || 'Grades report')}</h1>
+    <p style="margin:0 0 22px;font-size:0.88rem;color:var(--grey);">${esc([cs.centreName, cs.centreNumber ? 'Centre ' + cs.centreNumber : ''].filter(Boolean).join(' · '))} — provisional and final grades for every candidate</p>` : '';
+  document.getElementById('printAll').innerHTML = head + ORDER.map((p, i) => printableRecord(p, i)).join('');
+}
+
 function paint(){ paintRail(); paintRecord(); }
 
 document.getElementById('rail').addEventListener('click', e=>{
@@ -400,6 +455,11 @@ document.getElementById('record').addEventListener('change', e=>{
 });
 
 document.getElementById('saveBtn').addEventListener('click', persist);
+/* Built at the moment of pressing, so what prints is what is on screen. Also
+   catches the browser's own print (Cmd-P), which would otherwise paper over
+   nothing at all now that the working panes are hidden on print. */
+document.getElementById('printBtn').addEventListener('click', () => { buildPrintable(); window.print(); });
+window.addEventListener('beforeprint', buildPrintable);
 
 (function init(){
   if (RO){

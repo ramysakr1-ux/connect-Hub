@@ -37,6 +37,11 @@
   .header h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.5rem; margin:10px 0 0; color:var(--terracotta);}
   .header p{margin:8px auto 0; font-size:0.86rem; color:var(--grey); max-width:560px;}
   .doc{background:var(--paper); border-radius:6px; padding:26px 28px; border:1px solid var(--sand-line);}
+  /* Which teaching practice a document is, once there is more than one on the
+     page. Sits above each, and prints with it. */
+  .tpmark{margin:0 0 14px; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px;
+    font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--grey);}
+  @media print{ .doc{break-before:page; page-break-before:always;} .doc:first-of-type{break-before:auto; page-break-before:auto;} }
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
   .empty{background:var(--paper); border-radius:6px; padding:30px 26px; text-align:center; color:var(--grey);}
@@ -57,38 +62,64 @@
       <div class="hub-centre-logo" style="width:44px;height:44px;border-radius:7px;border:1.5px dashed var(--sand-line);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;color:var(--grey);text-align:center;line-height:1.2;">Centre<br>logo</div>
       <span id="centreName" class="hub-centre-name" style="font-family:'Newsreader',Georgia,serif;font-size:18px;color:var(--terracotta);"></span>
     </div>
-    <h1>Feedback returned</h1>
-    <p>Your plan, self-evaluation and tutor's feedback, assembled into one document. Read-only.</p>
+    <h1>Your teaching practice record</h1>
+    <p>Every teaching practice your tutor has returned, newest last, each with your plan, your self-evaluation and their feedback. Read-only. Print the lot as one PDF to keep.</p>
   </div>
   <a class="back" href="index.html">← Back</a>
   <div id="content"></div>
 </div>
-<script src="hub-shared.js?v=202609210921"></script>
-<script src="hub-store.js?v=202609210921"></script>
-<script src="hub-sync.js?v=202609210921"></script>
+<script src="hub-shared.js?v=202609210929"></script>
+<script src="hub-store.js?v=202609210929"></script>
+<script src="hub-sync.js?v=202609210929"></script>
 <script type="text/x-hub-app">
 function rec(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
 const fb=rec('chub:feedback');
 const plan=rec('chub:plan');
 const selfRec=rec('chub:selfeval');
+/* Every teaching practice already returned and filed. This page used to show
+   the CURRENT one only, so the moment a candidate pressed "Start next TP" the
+   document they had just been given became unreachable to them -- while the
+   assessor could read all eight of theirs on the pack. Their own record, and
+   they could not keep a copy of it (Ramy, 21 Sep 2026: "at the end of the
+   course, if they want, can they download this?"). The documents were here in
+   chub:tpHistory the whole time; nothing rendered them. */
+const history = rec('chub:tpHistory') || {};
+const past = Object.keys(history)
+  .map(Number).filter(n => n >= 1 && n <= 8)
+  .sort((a, b) => a - b)
+  .map(n => ({ n: n, r: history[n] }))
+  .filter(x => x.r && x.r.docHTML);
 // Reflect before reading: the feedback opens once the self-evaluation is in
 // (Connect's rule; Ramy, 20 Sep 2026).
 const selfIn = !!(selfRec && selfRec.status==='turned_in');
 document.getElementById('centreName').textContent=(window.hubCentre&&hubCentre().name)||(plan&&plan.centreName)||'';
 const content=document.getElementById('content');
-if(fb && fb.status==='returned' && fb.docHTML && !selfIn){
-  content.innerHTML='<div class="empty">Your tutor\u2019s feedback is in. Write and turn in your <a href="2_trainee_self_evaluation.html">self-evaluation</a> first \u2014 teach, reflect, then read the feedback \u2014 and it opens here.</div>';
-} else if(fb && fb.status==='returned' && fb.docHTML){
+/* The current one is gated -- reflect before reading -- but the ones already
+   returned and read are simply the record, and are never held back. */
+const currentOpen = !!(fb && fb.status==='returned' && fb.docHTML && selfIn);
+const currentHeld  = !!(fb && fb.status==='returned' && fb.docHTML && !selfIn);
+
+function addDoc(html, heading){
   const doc=document.createElement('div');
   doc.className='doc';
-  doc.innerHTML=fb.docHTML;
+  doc.innerHTML=(heading?'<p class="tpmark">'+heading+'</p>':'')+html;
   content.appendChild(doc);
+}
+past.forEach(x => addDoc(x.r.docHTML, 'Teaching practice ' + x.n));
+
+if(currentHeld){
+  if (past.length) content.insertAdjacentHTML('beforeend','<div class="empty">Your tutor\u2019s feedback on the next one is in. Write and turn in your <a href="2_trainee_self_evaluation.html">self-evaluation</a> first \u2014 teach, reflect, then read the feedback \u2014 and it opens here with the rest.</div>');
+  else content.innerHTML='<div class="empty">Your tutor\u2019s feedback is in. Write and turn in your <a href="2_trainee_self_evaluation.html">self-evaluation</a> first \u2014 teach, reflect, then read the feedback \u2014 and it opens here.</div>';
+}
+if(currentOpen || past.length){
+  if (currentOpen) addDoc(fb.docHTML, past.length ? 'Teaching practice ' + (function(){ const m=String((fb.state&&fb.state.f&&fb.state.f.fTP)||fb.label||'').match(/\d+/); return m?m[0]:''; })() : '');
   const actions=document.createElement('div');
   actions.className='actions';
-  actions.innerHTML='<button type="button" id="printBtn">Print / Save as PDF</button> <button type="button" id="nextTpBtn">Start next TP</button>';
+  actions.innerHTML='<button type="button" id="printBtn">Print / Save as PDF</button>'
+    + (currentOpen ? ' <button type="button" id="nextTpBtn">Start next TP</button>' : '');
   content.appendChild(actions);
   document.getElementById('printBtn').addEventListener('click',()=>window.print());
-  document.getElementById('nextTpBtn').addEventListener('click',async ()=>{
+  if (currentOpen) document.getElementById('nextTpBtn').addEventListener('click',async ()=>{
     if(!(await confirmModal('This clears your plan, self-evaluation and this feedback from this browser, so you can start your next TP fresh. Your tutor\'s starred action points have already carried forward. Continue?','Start next TP'))) return;
     localStorage.removeItem('chub:plan');
     localStorage.removeItem('chub:selfeval');
@@ -97,7 +128,7 @@ if(fb && fb.status==='returned' && fb.docHTML && !selfIn){
     if (window.HubSync) { try { await window.HubSync.flushNow(); } catch (e) {} }
     location.href='index.html';
   });
-} else {
+} else if(!currentHeld){
   content.innerHTML='<div class="empty">'+(window.HubMode==='trainee' ? 'No feedback returned yet \u2014 it appears here once your tutor returns it.' : 'No returned feedback yet in this browser.')+'</div>';
 }
 </script>
