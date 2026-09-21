@@ -273,7 +273,7 @@
       <div class="logo-slot" id="logoSlot">Centre<br>logo</div>
       <div>
         <h3>Centre logo</h3>
-        <p>Appears on printed records. Under 500KB; stays in this browser.</p>
+        <p>Appears on printed records. Under 500KB — it is saved with the course, so every tutor, trainee and the assessor see it too.</p>
         <button class="btn" id="logoUploadBtn" type="button">Upload</button>
         <input type="file" id="logoFile" accept="image/*" style="display:none;">
         <p id="logoStatus" style="margin:8px 0 0; font-size:0.78rem; color:var(--grey);"></p>
@@ -366,10 +366,10 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609211134"></script>
-<script src="hub-store.js?v=202609211134"></script>
-<script src="hub-shared.js?v=202609211134"></script>
-<script src="hub-sync.js?v=202609211134"></script>
+<script src="assignment-defaults.js?v=202609211246"></script>
+<script src="hub-store.js?v=202609211246"></script>
+<script src="hub-shared.js?v=202609211246"></script>
+<script src="hub-sync.js?v=202609211246"></script>
 <script type="text/x-hub-app">
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -465,7 +465,14 @@ try {
 document.getElementById('logoUploadBtn').addEventListener('click', ()=>document.getElementById('logoFile').click());
 document.getElementById('logoFile').addEventListener('change', e=>{
   const file = e.target.files[0]; if(!file) return;
-  if (file.size > 500*1024) { document.getElementById('logoStatus').textContent = 'That image is over 500KB — pick something smaller (this is stored in the browser, not uploaded anywhere).'; return; }
+  /* It said "stored in the browser, not uploaded anywhere", which was not true:
+     the logo rides inside connect_course_settings, and hub-sync carries that
+     key to the store as `settings` -- it HAS to, or the letterhead could never
+     reach a trainee's or the assessor's browser. Telling a centre their file
+     stays local when it goes to the sheet is the one kind of wrong worth
+     fixing on sight (walk, 21 Sep 2026). Size still matters, and now for the
+     real reason: it travels with every boot of the course. */
+  if (file.size > 500*1024) { document.getElementById('logoStatus').textContent = 'That image is over 500KB \u2014 pick something smaller. It is saved with the course and travels to every screen, so it needs to stay light.'; return; }
   const reader = new FileReader();
   reader.onload = () => { courseLogo = reader.result; applyLogoPreview(courseLogo); document.getElementById('logoStatus').textContent = 'Logo ready — click Save to keep it.'; };
   reader.readAsDataURL(file);
@@ -637,7 +644,14 @@ async function renderStoreRoster(next){
   document.getElementById('storeAddForm').addEventListener('submit', async e=>{
     e.preventDefault();
     const name = document.getElementById('storeAddName').value.trim(), group = document.getElementById('storeAddGroup').value.trim();
-    const st = document.getElementById('storeAddStatus'); st.textContent = 'Adding…';
+    const st = document.getElementById('storeAddStatus');
+    /* The field is `required`, which the browser satisfies with a space -- so
+       clicking Add on whitespace put a NAMELESS trainee on the roster, with a
+       personal link of their own and nothing to say whose it was (walk,
+       21 Sep 2026). The bulk box next to it has always dropped empty lines and
+       said so; this is the same standard. */
+    if (!name) { st.textContent = 'Type a name first.'; return; }
+    st.textContent = 'Adding…';
     try { const r = await S.addTrainee(name, group); renderStoreRoster(r.trainees); }
     catch (err) { st.textContent = err.message; }
   });
