@@ -151,11 +151,11 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609211031"></script>
-<script src="assignment-defaults.js?v=202609211031"></script>
-<script src="hub-tracker.js?v=202609211031"></script>
-<script src="hub-store.js?v=202609211031"></script>
-<script src="hub-sync.js?v=202609211031"></script>
+<script src="hub-shared.js?v=202609211035"></script>
+<script src="assignment-defaults.js?v=202609211035"></script>
+<script src="hub-tracker.js?v=202609211035"></script>
+<script src="hub-store.js?v=202609211035"></script>
+<script src="hub-sync.js?v=202609211035"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -293,8 +293,14 @@ function tpBlock(tr, n, c){
     const bits = [plan && plan.status==='turned_in' ? 'plan turned in' : plan ? 'plan in draft' : 'no plan yet', se && se.status==='turned_in' ? 'self-evaluation in' : 'self-evaluation not yet in', 'feedback being written'];
     meta = `<span class="chip wait">in progress</span> ${esc(bits.join(' · '))}`;
   } else {
-    // The plan's TP is in its label ("TP3 · Name", as screen 1 writes it); the meta field is a fallback.
-    const plan = tr.tp && tr.tp.plan; const pm = plan && String(plan.label || (plan.state && plan.state.meta && plan.state.meta.tp) || '').match(/TP\s?(\d)/i); const planN = pm ? parseInt(pm[1],10) : 0;
+    /* Which TP the plan is for. This demanded the literal "TP" before the
+       digit, so a candidate whose tutor typed "4" rather than "TP4" lost the
+       "plan turned in" marker here -- the sixth place tonight where a number
+       typed freely was read by one spelling only. First number wins, as on the
+       dashboard and the trainee's home. */
+    const plan = tr.tp && tr.tp.plan;
+    const pm = plan && String(plan.label || (plan.state && plan.state.meta && plan.state.meta.tp) || '').match(/\d+/);
+    const planN = pm ? parseInt(pm[0], 10) : 0;
     if (plan && planN===n) meta = `<span class="chip wait">${plan.status==='turned_in' ? 'plan turned in' : 'plan in draft'}</span> not yet taught`;
     else meta = `<span class="chip nd">not yet taught</span>`;
   }
