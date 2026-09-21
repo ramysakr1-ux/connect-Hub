@@ -68,9 +68,9 @@
   <a class="back" href="index.html">← Back</a>
   <div id="content"></div>
 </div>
-<script src="hub-shared.js?v=202609210937"></script>
-<script src="hub-store.js?v=202609210937"></script>
-<script src="hub-sync.js?v=202609210937"></script>
+<script src="hub-shared.js?v=202609210941"></script>
+<script src="hub-store.js?v=202609210941"></script>
+<script src="hub-sync.js?v=202609210941"></script>
 <script type="text/x-hub-app">
 function rec(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
 const fb=rec('chub:feedback');
@@ -120,11 +120,34 @@ if(currentOpen || past.length){
   content.appendChild(actions);
   document.getElementById('printBtn').addEventListener('click',()=>window.print());
   if (currentOpen) document.getElementById('nextTpBtn').addEventListener('click',async ()=>{
-    if(!(await confirmModal('This clears your plan, self-evaluation and this feedback from this browser, so you can start your next TP fresh. Your tutor\'s starred action points have already carried forward. Continue?','Start next TP'))) return;
+    /* The wording used to say this "clears ... this feedback", which was true
+       when the page showed one teaching practice and nothing else. It is not
+       true now: the document stays on this page with the rest of the record. */
+    if(!(await confirmModal('This files the teaching practice away and clears your plan and self-evaluation, so you can start the next one fresh. The feedback stays in your record on this page, and your tutor\'s starred action points have already carried forward. Continue?','Start next TP'))) return;
+
+    /* File it before clearing it. The store normally has it in the history
+       already -- the tutor's screen puts it there on returning -- and this page
+       then reads it back. But this is the click that DELETES the live copy, and
+       it should not rely on someone else having saved it first: if the history
+       has no record under this number, put it there now. Walking the trainee on
+       21 Sep 2026 with a feedback the history had never seen, the document went
+       and the candidate could never read it again. */
+    try {
+      const cur = JSON.parse(localStorage.getItem('chub:feedback') || 'null');
+      if (cur && cur.docHTML) {
+        const m = String((cur.state && cur.state.f && cur.state.f.fTP) || cur.label || '').match(/\d+/);
+        const n = m ? parseInt(m[0], 10) : 0;
+        if (n >= 1 && n <= 8) {
+          const h = JSON.parse(localStorage.getItem('chub:tpHistory') || '{}') || {};
+          if (!h[n]) { h[n] = cur; localStorage.setItem('chub:tpHistory', JSON.stringify(h)); }
+        }
+      }
+    } catch (e) {}
+
     localStorage.removeItem('chub:plan');
     localStorage.removeItem('chub:selfeval');
     localStorage.removeItem('chub:feedback');
-    // Let the store take the three clears before leaving the page.
+    // Let the store take the filing and the three clears before leaving.
     if (window.HubSync) { try { await window.HubSync.flushNow(); } catch (e) {} }
     location.href='index.html';
   });
