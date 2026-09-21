@@ -26,6 +26,8 @@ High-fidelity. Copy, color, layout, and interaction logic are final. The written
 
 **Shell / navigation:** `index.html` is the trainee's home — links to whichever TP stage is next (badges show Not started / Draft / Turned in / Returned) plus the assignments entry point. `5_tutor_dashboard.html` is the tutor's queue across trainees for both TP and assignments. `6_centre_admin_dashboard.html` is where a centre sets up its course, invites tutors/trainees (personal links + status: Invited/Not invited/Opened), and edits assignment wording. `7_ramy_command_center.html` is the platform-owner view across centres.
 
+> **Amendment, 21 Sep 2026 — read the dated sections below for the current shape.** Three things in that paragraph are no longer true. There are **no invitations**: Lite has one shared tutor link and one read-only assessor link per course, both minted in the owner console, and a personal link per trainee on the Roster and links tab — so no Invited/Not invited/Opened status exists. **Screen 7 is the candidate tracker**, not the command center; the platform owner's screen is `14_owner.html`. And the trainee's home no longer "links to whichever TP stage is next" from a band above the rooms — every card states where it stands, and the one next step is the only one in gold.
+
 ## Data model
 All client-side, `localStorage`-only, no auth:
 - `chub:plan`, `chub:selfeval`, `chub:feedback` — one TP's paperwork, `{status: 'draft'|'turned_in'|'returned', ...}`.
@@ -261,3 +263,63 @@ The console's one destructive control, added once he asked, and built to be hard
 What it removes: the course's rows from `trainees`, `records` and `course`, its row in `courses`, and **both of its key properties**, so no link can outlive the course it opened. The result names the counts, and the console reports them — "Deleted c1 — 0 trainees and 3 records with it." A small thing found while testing: that message was being wiped by the refresh that followed it, so `load()` now carries it through the re-render.
 
 Store version 13. Verified with a stubbed store: the dialog's wording on a course with twelve trainees, Cancel making no call at all, the confirmed call carrying both the course and the matching confirmation, and the row leaving the list with the count reported.
+
+## The tutor link lands on setting the course up (Ramy, 21 Sep 2026)
+He minted a course, copied the tutor link, opened it and said: "this page is supposed to be where the centre creates the course and it just doesn't look like one." It landed on screen 5's work queue — three empty tabs and a row of zeroes — for work that cannot exist before a course has trainees on it.
+
+Of two options he chose the first: **the dashboard shows a setup panel while the course is empty.** Until it has a name and at least one trainee, the queue and the tabs are replaced by three numbered steps, each ticking as it is done, over a button into Course admin. The three doors along the top go too — Candidate tracker, Grades report and Course admin lead into rooms with nothing in them, and on that screen the panel's own button is the only one worth opening. While unnamed the heading reads "Your new course" rather than "Course name not set yet", which would otherwise say the same thing as the panel beneath it in the largest type on the page. Once both are true the normal dashboard returns and never leaves: one home, which changes shape once.
+
+## Course admin is three rooms, and the steps live on the tabs (Ramy, 21 Sep 2026)
+Two tabs went. **Double-marking** because he asked "does double marking really need like its own tab? Can it just be part of the candidate tracking?" — it can, and two thirds of it already was: the tracker badges every double-marked cell with the second marker's initials, names both markers under a candidate, and filters on Double marked. Only Handbook 9.2.3's sample was that tab's own, and it moved to the tracker as a strip above the grid, hidden from a candidate reading their own record because the sample is the centre's compliance and not theirs. **Tutors** because he opened it and said "I'm not really sure what tutors are doing here. There's nothing." It held a heading and one sentence telling you to go to the Roster and links tab, where the tutor link already sat with that same sentence beside it — signage, not a door. Its one extra clause moved onto the link row, which now says plainly that every tutor opens the same link and lands on the same course, and to rotate it if it gets out.
+
+Then the numbered checklist went too, into the tabs themselves. He put it exactly right: "still don't get the difference between 1 2 3 and the sub headings? they do the same thing." They did — three buttons opening the same three panels under two different sets of names. **The tabs now carry all four facts and each only once:** the room's name, the order to work in, what is finished, and where you are.
+
+**The number never turns into a tick.** A done step used to swap its number for one, so a half-finished row read "1, tick, 3" — a counting sequence with a hole in it, and his question about it ("does that make sense?") was the whole answer. The digit stays and the fill carries done. That fill is **gold for still to do, teal for finished** — his call, "let's give the numbers a bit of colour, maybe gold" — which also rescued the digit: white on pale sand measures 1.34:1 and was very nearly invisible in exactly the half of the row you need to read. Ink on gold is 5.06:1. The same pair now means the same thing on the trainee's home, where gold marks the one next step.
+
+## No stark white on a control (Ramy, 21 Sep 2026)
+"I'm not a big fan of white. Could we make all those white boxes similar to the ones we have in the double marking record?" Every control in Lite — buttons, fields, dates, selects, the segmented pickers, the confirm dialog's Cancel — now takes one token, `--box`, the warm tone the Course links card already used. It is named for its job rather than its look, so a control and a panel can part company later without hunting through fifteen stylesheets.
+
+White survives in the two places that need it: text on a teal fill, and the pale arc inside the mark. **The documents keep their white page** — the plan, the self-evaluation, the feedback, the assignments and the assessor pack all print, and a printed page is white.
+
+## The trainee's home: every door says where it stands (Ramy, 21 Sep 2026)
+He asked whether the cards should "be alive and give instructions to the next stage". They already reported state; what they lacked was the instruction, which lived in a band above them. Putting it in both places would have rebuilt the fault he had caught earlier the same evening, when assignments appeared twice saying the same thing. So the band went and its two jobs moved: **which teaching practice you are on is orientation and now heads the page**, and **the instruction is written on the door you act through**.
+
+Written assignments became a card at last — it had only ever existed inside the band. The band's real virtue is kept without it: the cycle is strictly ordered, so **exactly one card is the next step and is the only one in gold**, computed once so the five cannot disagree. While it is with the tutor nothing is gold at all. Assignments are the one deliberate exception, marked in brick when a resubmission is due, because they run alongside the teaching practice rather than inside its order — a different kind of demand, not a second answer to "what now".
+
+## The candidate can keep their record (Ramy, 21 Sep 2026)
+He asked "at the end of the course, if they want, can they download this?" — and they could not. That page showed the current teaching practice only, so the moment they pressed "Start next TP" the document they had just been given became unreachable **to them**, while the assessor could read all eight of theirs. The documents were in their own history the whole time and nothing rendered them.
+
+It now shows every returned teaching practice, oldest first, each labelled, printing as one PDF with a page break between them. The reflect-first rule is untouched: the current one still waits on the self-evaluation, and the past record stays readable while it waits. And **"Start next TP" files the teaching practice before it clears it** — it used to delete the live feedback and trust that something else had already filed it, which is normally true and was catastrophic when it was not.
+
+The grades report prints too, and prints the whole cohort rather than whichever candidate is selected: a read-only rendering built at the moment of pressing, so it cannot drift.
+
+## Delete is typed, not password-protected (Ramy, 21 Sep 2026)
+He suggested a password. The store had always demanded a confirmation naming the course — and the console was filling it in, so the guard protected nobody. **The person types the course id now, and what they typed is what goes to the store**, which makes that check real for the first time. Typing the id also settles *which* course is going, which a password cannot: the danger here was never a careless owner, it was the wrong course.
+
+For the record, since he asked when he would ever delete one: a course minted by mistake, a test, a centre that never went ahead. Not one that ran — that is a cohort's evidence, and now that each candidate can take a copy, slightly less so, but not much.
+
+## The assessor pack is the one link Handbook 14.1 asks for (Ramy, 21 Sep 2026)
+"Is it easy to add to the one we have here? So the assessor can have everything under one link." Checked against the Administration Handbook rather than guessed, and §14.1 asks for precisely that: centres "should provide a maximum of two links which give Cambridge English and the assessor access to all course documentation".
+
+Three additions. **The lesson plan for the lesson being taught on the day** — §14.1 names it, and it was the one gap, because a taught TP already has its plan inside the returned feedback document. The plan now carries its rendered document the way feedback does. **The centre's own documents, as links** — timetable, TP schedule, registers, candidate agreement, applications and interviews (his Appian folder), previous assessor's report, action plan. Course admin takes a link for each; the pack shows the ones filled in. Nothing is copied and Lite stores no files. **And who to read in full** — §14.2 has the assessor read two portfolios in full and focus on borderline cases where there are more than two Fails, so the pack marks the candidates that rule points at. It marks; the assessor still chooses.
+
+## Speed: one round trip (Ramy, 21 Sep 2026: "there seems to be a lag")
+There was, and it was the store being asked for things it had already given. Apps Script answers in 1.5–13 seconds whatever it is asked, so every avoidable call is seconds on screen. Course admin re-fetched the whole roster and the assessor link on every redraw — "Show addresses" is a label swap and cost two round trips; adding one trainee cost three; a pasted class list of twelve sent twelve separate writes one after another plus two reads.
+
+Measured at the store boundary, before and after: showing addresses 2 → 0, adding one 3 → 1, pasting five 7 → 1, removing one 3 → 1. The roster is held in memory, every op that changes it answers *with* it, and a pasted list goes as one write. Server side the listing was worse than slow — it read the whole records sheet once per trainee, so every candidate made it slower for the next. It reads each sheet once now. Store versions 14 and 15.
+
+## What eight walks found (21 Sep 2026)
+Each role walked twice or more. Three shapes of fault recurred, and are worth knowing because they will recur again.
+
+**A number typed freely, read by one spelling.** The TP field is free text — "TP4", "4", "tp 4" — and six different places each read it their own way. Two demanded the literal letters; three concatenated every digit, so "TP4 · Unit 12" became 412 and fell out of range. One of those was the write path that files a returned TP into the history, so a TP labelled that way was never filed at all and the tracker, the pack and the candidate's carry-forward all lost it. All six take the first number now.
+
+**A date treated as a moment rather than a day.** Five places read a timestamp as an instant and shifted it a day for anyone east of the store. Course admin told the centre the assessor link stops on 14 November while the pack told the assessor 13 November, for the same link. A date named to a person is a day.
+
+**A listener attached inside a render, to the element the render refills.** The owner console and Course admin both did this, so every repaint stacked another copy: after a normal setup, one click on Delete opened four confirmation dialogs and could send four destructive calls. Bound once, with a flag across the destructive path.
+
+And one that was none of those: **hub-sync could empty a browser.** The code that turns a store answer into local storage treats a missing record as an instruction to delete, and read an answer that said nothing about the candidate as "this candidate has nothing". The store never legitimately answers that way, so a resolved boot missing its own subject is now read as knowing nothing, and changes nothing. Separately, **a refusal is no longer treated as a network failure**: the pack promised the assessor link stops working on a named date and then went on showing the whole course from cache. A refused credential now stops the screen, with the store's own words, while a genuine network failure still shows the local copy and says so.
+
+## The credit, and the mark (Ramy, 21 Sep 2026)
+"If course admin is now the landing page, it should have my credit." It does — at the foot, centred, with the mark beside it, value for value from the trainee home, the tutor dashboard and the assessor pack. The candidate tracker and the grades report still do not have it; neither is a landing.
+
+"I still want the logo to slowly spin." It was turning on the trainee home and the four documents and sitting still on the six screens that carry the header lockup, which makes it two marks. All seven now run the same rule: one turn every ninety seconds, holding still for the first ten, and no motion at all for a reader who asks for reduced motion.
