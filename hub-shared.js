@@ -358,7 +358,16 @@ window.hubLetterheadHTML = function(eyebrow){
 window.hubApplyCentre = function(){
   var c = window.hubCentre();
   document.querySelectorAll('.hub-centre-logo').forEach(function(slot){
-    if (!c.logo) return;
+    /* No logo: the slot GOES. It used to stay, a dashed box reading "Centre
+       logo" -- an instruction addressed to the centre, sitting on the
+       candidate's own lesson plan, self-evaluation and teaching practice
+       record, where it reads as a broken image (walk, 21 Sep 2026). The
+       letterhead in the printed document has always simply left the logo out;
+       the on-screen header now does the same. Course admin's own upload box is
+       a different element (#logoSlot) and keeps its prompt, which is the one
+       place the instruction belongs. */
+    if (!c.logo) { slot.style.display = 'none'; return; }
+    slot.style.display = '';
     slot.innerHTML = '<img src="' + c.logo + '" alt="' + c.name.replace(/"/g,'&quot;') + ' logo" style="width:100%;height:100%;object-fit:contain;border-radius:6px;">';
     slot.style.border = 'none';
   });
