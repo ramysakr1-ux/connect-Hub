@@ -185,11 +185,11 @@
   </div>
   <div id="detail"></div>
 </div>
-<script src="hub-shared.js?v=202609212353"></script>
-<script src="assignment-defaults.js?v=202609212353"></script>
-<script src="hub-tracker.js?v=202609212353"></script>
-<script src="hub-store.js?v=202609212353"></script>
-<script src="hub-sync.js?v=202609212353"></script>
+<script src="hub-shared.js?v=202609212359"></script>
+<script src="assignment-defaults.js?v=202609212359"></script>
+<script src="hub-tracker.js?v=202609212359"></script>
+<script src="hub-store.js?v=202609212359"></script>
+<script src="hub-sync.js?v=202609212359"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
@@ -270,7 +270,12 @@ function people(){
    hard-coded: a wrong denominator on a compliance reading is worse than none.
    Assignment 5 is a centre sanction and is never in the sample, which is why
    ASSN drops it already. */
-function requiredSample(cohort){ return cohort <= 9 ? 3 : cohort <= 16 ? 4 : 5; }
+/* The sample can never be larger than the cohort. On a course of two, asking
+   for three of each assignment is arithmetically impossible -- the strip read
+   "2 of 3 -- short of the sample" for ever, telling a centre it was in breach
+   of 9.2.3 when in fact every assignment on the course had been double-marked
+   (assessor walk, 21 Sep 2026). Cohorts of three and up are unchanged. */
+function requiredSample(cohort){ return Math.min(cohort, cohort <= 9 ? 3 : cohort <= 16 ? 4 : 5); }
 function paintDmStrip(all, isA){
   const box = $('dmStrip'); if (!box) return;
   // The candidate's own view of the tracker is their record, not the centre's

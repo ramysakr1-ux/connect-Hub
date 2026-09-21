@@ -122,8 +122,8 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609212353"></script>
-<script src="hub-store.js?v=202609212353"></script>
+<script src="hub-shared.js?v=202609212359"></script>
+<script src="hub-store.js?v=202609212359"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -260,6 +260,12 @@ $('app').addEventListener('click', async e => {
     if (urls) { SHOW_URLS = !SHOW_URLS; render(COURSES); return; }
     const retry = e.target.closest('#retryBtn');
     if (retry) { retry.disabled = true; retry.textContent = 'Trying…'; load(); return; }
+    /* A key the store REFUSES clears itself and the paste box comes back. A key
+       the store never answers for does not -- and if the key was the thing that
+       was wrong, this screen was a dead end with only Try again on it (owner
+       walk, 21 Sep 2026). */
+    const other = e.target.closest('#otherKeyBtn');
+    if (other) { try { localStorage.removeItem(OWNER_STORE); } catch (err) {} gate(); return; }
     const make = e.target.closest('#makeBtn');
     if (make) {
       if (BUSY) return;
@@ -337,7 +343,7 @@ async function load(msg){
     /* Without this the screen is a dead end: the store's message and nothing to
        press, so the only way on is to reload by hand. #app keeps its listener
        across repaints, so the button below is already wired. */
-    $('app').innerHTML = `<div class="empty">${esc(err.message)} <button class="btn small" id="retryBtn" type="button" style="margin-left:8px;">Try again</button></div>`;
+    $('app').innerHTML = `<div class="empty">${esc(err.message)} <button class="btn small" id="retryBtn" type="button" style="margin-left:8px;">Try again</button> <button class="btn small" id="otherKeyBtn" type="button" style="margin-left:8px;">Use a different key</button></div>`;
   }
 }
 load();
