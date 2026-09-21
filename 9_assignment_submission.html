@@ -93,7 +93,7 @@
   textarea.resub{ background:oklch(96% 0.04 70); border-color:oklch(82% 0.09 75); }
   textarea.resub:focus{ border-color:oklch(60% 0.12 70); }
 </style>
-<link rel="stylesheet" href="hub-theme.css?v=202609211325">
+<link rel="stylesheet" href="hub-theme.css?v=202609211326">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -101,10 +101,10 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202609211325"></script>
-<script src="hub-shared.js?v=202609211325"></script>
-<script src="hub-store.js?v=202609211325"></script>
-<script src="hub-sync.js?v=202609211325"></script>
+<script src="assignment-defaults.js?v=202609211326"></script>
+<script src="hub-shared.js?v=202609211326"></script>
+<script src="hub-store.js?v=202609211326"></script>
+<script src="hub-sync.js?v=202609211326"></script>
 <script type="text/x-hub-app">
 const WORDING_KEY = 'connect_assignment_wording_v2';
 const SUB_KEY = 'connect_assignment_submissions_v1';
@@ -355,16 +355,7 @@ function render(){
   // alone used to be enough, and an empty body went through.
   const openStage = sub.stage==='draft' || sub.stage==='resubmission_needed' || sub.stage==='returned_unmarked';
   const canSubmit = declOk(a) && hasWriting() && openStage;
-  /* Submit refuses on two counts, and until now only said so on one of them.
-     A candidate who had written their assignment but not scrolled to the
-     declaration clicked a dead button and was told nothing at all (found
-     walking the trainee's authoring path, 21 Sep 2026). A control that refuses
-     should say why it is refusing. */
-  const whyNot = !openStage ? ''
-    : !hasWriting() ? 'Nothing written yet \u2014 an empty assignment can\u2019t be submitted.'
-    : !declOk(a)    ? 'The declaration at the end is not complete yet \u2014 tick each line, and answer the question about AI.'
-    : '';
-  html += `<div class="navbar"><span class="status" id="status"></span><span class="status" id="emptyHint">${whyNot}</span>
+  html += `<div class="navbar"><span class="status" id="status"></span><span class="status" id="emptyHint">${whyNotSubmit(a, sub)}</span>
     <button class="btn btn-submit" id="submitBtn" ${canSubmit?'':'disabled'}>${sub.stage==='resubmission_needed'?'Resubmit':sub.stage==='returned_unmarked'?'Submit again':'Submit'}</button>
   </div>`;
 
@@ -394,11 +385,28 @@ function refreshGate(){
   const openStage = sub.stage==='draft' || sub.stage==='resubmission_needed' || sub.stage==='returned_unmarked';
   if (btn) btn.disabled = !(declOk(a) && hasWriting() && openStage);
   // Its own element: the autosave's 'Saved' flash clears #status a moment later.
+  /* This runs on every keystroke, through autosave. It used to carry its own
+     copy of the reason and knew only one of the two -- so the declaration
+     message that render() put here was WIPED the moment the candidate typed a
+     character, and they were back to a dead Submit button that said nothing.
+     The reason is computed in one place now (walk, 21 Sep 2026). */
   const eh = $('emptyHint');
-  if (eh) eh.textContent = openStage && !hasWriting() ? 'Nothing written yet \u2014 an empty assignment can\u2019t be submitted.' : '';
+  if (eh) eh.textContent = whyNotSubmit(a, sub);
 }
 // At least one word in any answer. Picked items alone are not writing.
 function hasWriting(){ return countWords() > 0; }
+
+/* Why Submit is refusing, in the candidate's words -- read by render() and by
+   refreshGate() on every keystroke, so the two can never disagree. Empty when
+   there is nothing to refuse, or when the stage is closed and the button is
+   gone for a reason the banner above already gives. */
+function whyNotSubmit(a, sub){
+  const openStage = sub.stage==='draft' || sub.stage==='resubmission_needed' || sub.stage==='returned_unmarked';
+  if (!openStage) return '';
+  if (!hasWriting()) return 'Nothing written yet \u2014 an empty assignment can\u2019t be submitted.';
+  if (!declOk(a)) return 'The declaration at the end is not complete yet \u2014 tick each line, and answer the question about AI.';
+  return '';
+}
 
 function declOk(a){
   let ok = true;
