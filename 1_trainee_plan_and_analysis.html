@@ -359,7 +359,9 @@
       <span id="matsDropText">Drag and drop a file here, or <u>click to choose</u></span>
       <input type="file" id="matsFileInput" style="display:none;">
     </div>
-    <p class="hint" style="margin-top:6px;">For now, files stay in this browser only \u2014 once Connect Lite is connected to Drive, this will upload there instead.</p>
+    <p class="hint" style="margin-top:6px;"><strong>This file stays on this device.</strong> It is not sent with your plan and your
+    tutor cannot open it \u2014 it is here so you can keep it beside the plan while you write. For anything your tutor
+    needs to see, use the materials link above.</p>
   </div>
 
   <div class="card" style="border-left-color:var(--ochre);">
@@ -492,9 +494,9 @@
   <span class="status" id="status"></span>
 </div>
 
-<script src="hub-shared.js?v=202609212327"></script>
-<script src="hub-store.js?v=202609212327"></script>
-<script src="hub-sync.js?v=202609212327"></script>
+<script src="hub-shared.js?v=202609212334"></script>
+<script src="hub-store.js?v=202609212334"></script>
+<script src="hub-sync.js?v=202609212334"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -517,19 +519,87 @@ function renderMatsPreview(){
   }
 }
 $('fMatsLink').addEventListener('input', ()=>{ renderMatsPreview(); dirty=true; autosave(); });
+/* The attached file lives in THIS browser and nowhere else.
+   It used to go into the plan record as a base64 data URL, which put it on the
+   way to the store twice over -- once in the record, once again inside the
+   document built from it -- with no size check of any kind. A 1.5 MB worksheet
+   made a 4 MB plan and a 4 MB unsent job beside it, headed for a Google Sheet
+   cell that holds 50,000 characters. Meanwhile the hint under the box promised
+   the opposite: that files stayed in the browser. Both cannot be true.
+   They stay in the browser (Ramy, 21 Sep 2026). The record carries the file's
+   NAME so the plan can say what is attached; the bytes are kept under a key the
+   sync does not know about -- hub-sync only forwards the keys in TRAINEE_KEYS
+   and COURSE_KEYS, so anything else is local by construction. What reaches the
+   tutor is the materials link. */
+const MATS_LOCAL_KEY = 'chub:matsfile';   /* deliberately NOT a synced key */
+const MATS_MAX_BYTES = 10 * 1024 * 1024;
+
 let MATS_FILE=null;
+
+/* What goes in the plan: enough to name the file, none of its weight. */
+function matsFileMeta(){
+  if (!MATS_FILE) return null;
+  return { name: MATS_FILE.name, type: MATS_FILE.type || '', size: MATS_FILE.size || 0 };
+}
+function saveMatsLocal(){
+  try {
+    if (MATS_FILE && MATS_FILE.dataUrl) localStorage.setItem(MATS_LOCAL_KEY, JSON.stringify(MATS_FILE));
+    else localStorage.removeItem(MATS_LOCAL_KEY);
+  } catch (e) {
+    /* out of room: the plan still saves, the file is what goes */
+    MATS_FILE = null;
+    try { localStorage.removeItem(MATS_LOCAL_KEY); } catch (e2) {}
+    matsNote('There was not enough room in this browser to keep that file. Your plan is safe \u2014 use the materials link instead.');
+    renderMatsFile();
+  }
+}
+/* Reading a plan back: only re-attach the file if it is the one this plan
+   names. Otherwise a file left behind by the last teaching practice would
+   reappear on the next one. Older plans that still carry their own bytes are
+   read as they are and re-saved the new way. */
+function restoreMatsFile(meta){
+  if (!meta || !meta.name) { try { localStorage.removeItem(MATS_LOCAL_KEY); } catch (e) {} return null; }
+  if (meta.dataUrl) { MATS_FILE = meta; saveMatsLocal(); return MATS_FILE; }
+  let held = null;
+  try { held = JSON.parse(localStorage.getItem(MATS_LOCAL_KEY) || 'null'); } catch (e) {}
+  if (held && held.name === meta.name && (!meta.size || !held.size || held.size === meta.size)) return held;
+  return { name: meta.name, type: meta.type || '', size: meta.size || 0 };  /* named, but not on this device */
+}
+function matsNote(text){
+  let el = $('matsNote');
+  if (!el) { el = document.createElement('p'); el.id = 'matsNote'; el.className = 'hint'; el.style.cssText = 'margin-top:6px;color:var(--brick);font-weight:600;'; $('matsDrop').insertAdjacentElement('afterend', el); }
+  el.textContent = text || '';
+  el.style.display = text ? '' : 'none';
+}
+function prettySize(n){
+  if (!n) return '';
+  return n >= 1048576 ? (n/1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n/1024)) + ' KB';
+}
+
 function renderMatsFile(){
   const drop=$('matsDrop');
   if(!MATS_FILE){ drop.innerHTML='<span id="matsDropText">Drag and drop a file here, or <u>click to choose</u></span><input type="file" id="matsFileInput" style="display:none;">'; bindFileInput(); return; }
-  drop.innerHTML = `<div class="matsfile"><span class="name">\uD83D\uDCCE ${esc(MATS_FILE.name)}</span>
-    <a href="${MATS_FILE.dataUrl}" download="${esc(MATS_FILE.name)}">Download</a>
+  const size = MATS_FILE.size ? ' \u00b7 ' + prettySize(MATS_FILE.size) : '';
+  drop.innerHTML = `<div class="matsfile"><span class="name">\uD83D\uDCCE ${esc(MATS_FILE.name)}${size}</span>
+    ${MATS_FILE.dataUrl ? `<a href="${MATS_FILE.dataUrl}" download="${esc(MATS_FILE.name)}">Download</a>`
+      : '<span style="color:var(--grey);font-style:italic;">not on this device</span>'}
     <button type="button" id="matsFileRemove">Remove</button></div>`;
-  $('matsFileRemove').addEventListener('click', e=>{ e.stopPropagation(); MATS_FILE=null; dirty=true; autosave(); renderMatsFile(); });
+  $('matsFileRemove').addEventListener('click', e=>{ e.stopPropagation(); MATS_FILE=null; saveMatsLocal(); matsNote(''); dirty=true; autosave(); renderMatsFile(); });
 }
 function handleMatsFile(file){
   if(!file) return;
+  matsNote('');
+  if (file.size > MATS_MAX_BYTES){
+    matsNote(file.name + ' is ' + prettySize(file.size) + '. Files here are kept in this browser and capped at '
+      + prettySize(MATS_MAX_BYTES) + '. Put it on Drive and paste the materials link above \u2014 that is what your tutor opens anyway.');
+    return;
+  }
   const reader=new FileReader();
-  reader.onload = ()=>{ MATS_FILE={ name:file.name, type:file.type, dataUrl:reader.result }; dirty=true; autosave(); renderMatsFile(); };
+  reader.onerror = ()=>{ matsNote('That file could not be read. Try the materials link above instead.'); };
+  reader.onload = ()=>{
+    MATS_FILE={ name:file.name, type:file.type, size:file.size, dataUrl:reader.result };
+    saveMatsLocal(); dirty=true; autosave(); renderMatsFile();
+  };
   reader.readAsDataURL(file);
 }
 function bindFileInput(){
@@ -982,7 +1052,7 @@ function collect(){
            date:$('fDate').value, length:$('fLength').value,
            framework: fwSel.value ? FRAMEWORKS[fwSel.value].name : '' },
     plan:{
-      main:procText($('fMain').value), sub:procText($('fSub').value), pers:procText($('fPers').value), mats:procText($('fMats').value), matsLink:$('fMatsLink').value, matsFile:MATS_FILE,
+      main:procText($('fMain').value), sub:procText($('fSub').value), pers:procText($('fPers').value), mats:procText($('fMats').value), matsLink:$('fMatsLink').value, matsFile:matsFileMeta(),
       profile:$('fProfile').value,
       probs:[...document.querySelectorAll('.prob-pair')].map(p=>({
         problem:procText(p.querySelector('.p-prob').value), solution:procText(p.querySelector('.p-sol').value) })),
@@ -1009,7 +1079,7 @@ function restore(d){
   fwSel.value=key||'';
   const p=d.plan||{};
   $('fMain').value=procText(p.main||''); $('fSub').value=procText(p.sub||'');
-  $('fPers').value=procText(p.pers||''); $('fMats').value=procText(p.mats||''); $('fMatsLink').value=p.matsLink||''; renderMatsPreview(); MATS_FILE=p.matsFile||null; renderMatsFile(); $('fProfile').value=p.profile||'';
+  $('fPers').value=procText(p.pers||''); $('fMats').value=procText(p.mats||''); $('fMatsLink').value=p.matsLink||''; renderMatsPreview(); MATS_FILE=restoreMatsFile(p.matsFile); renderMatsFile(); $('fProfile').value=p.profile||'';
   const pairs=[...document.querySelectorAll('.prob-pair')];
   (p.probs||[]).forEach((x,i)=>{
     if(!pairs[i]) return;
@@ -1153,7 +1223,7 @@ function docHTML(d){
     ${(p.profile||'').trim()?boxProfile('Class Profile',p.profile):''}
     ${box('Materials',p.mats)}
     ${(p.matsLink||'').trim()?`<p style="font-size:9.5pt;margin:-6px 0 12px;"><strong>Materials link:</strong> <a href="${esc(p.matsLink)}">${esc(p.matsLink)}</a></p>`:''}
-    ${(p.matsFile&&p.matsFile.name)?`<p style="font-size:9.5pt;margin:-6px 0 12px;"><strong>Attached file:</strong> <a href="${p.matsFile.dataUrl}" download="${esc(p.matsFile.name)}">${esc(p.matsFile.name)}</a></p>`:''}
+    ${(p.matsFile&&p.matsFile.name)?`<p style="font-size:9.5pt;margin:-6px 0 12px;"><strong>Attached file:</strong> ${esc(p.matsFile.name)}${p.matsFile.dataUrl?` — <a href="${p.matsFile.dataUrl}" download="${esc(p.matsFile.name)}">download</a>`:' — held on the candidate\u2019s own device, not sent with this plan. The materials link above is what travels.'}</p>`:''}
     <h2 style="font-family:Newsreader,Georgia,serif;font-size:13pt;color:#1E6B63;margin:20px 0 8px;">Lesson Procedure</h2>
     <table style="width:100%;border-collapse:collapse;">
       <tr><td ${TH} width="21%">Stage</td><td ${TH} width="58%">Procedure</td>
@@ -1335,6 +1405,14 @@ function renderTurnStatus(){
   const rec=loadPlanRecord();
   if(rec&&rec.state){ try{ draftApply(rec.state); }catch(e){} }
   if(rec&&rec.centreName) $('fCentreName').value=rec.centreName;
+  /* No plan holding it means the file belongs to a teaching practice already
+     filed away -- "Start next TP" clears the plan and never came back through
+     the fill that would have dropped it. Left alone, every TP's attachment
+     stays in the browser for the rest of the course. */
+  if(!(rec && rec.state && rec.state.plan && rec.state.plan.matsFile)){
+    try{ localStorage.removeItem(MATS_LOCAL_KEY); }catch(e){}
+    MATS_FILE=null; renderMatsFile();
+  }
   renderTurnStatus();
 })();
 
