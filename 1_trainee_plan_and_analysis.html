@@ -487,9 +487,9 @@
   <span class="status" id="status"></span>
 </div>
 
-<script src="hub-shared.js?v=202609211608"></script>
-<script src="hub-store.js?v=202609211608"></script>
-<script src="hub-sync.js?v=202609211608"></script>
+<script src="hub-shared.js?v=202609211626"></script>
+<script src="hub-store.js?v=202609211626"></script>
+<script src="hub-sync.js?v=202609211626"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -1078,7 +1078,13 @@ $('prevBtn').addEventListener('click',()=>{
   if(!last){ try{ const h=JSON.parse(localStorage.getItem('chub:tpHistory')||'{}'); const ns=Object.keys(h).map(Number).filter(n=>n>0).sort((a,b)=>b-a); const fb=ns.length?h[ns[0]]:null; const lists=fb&&fb.state&&fb.state.lists||{}; const next=[]; Object.keys(lists).forEach(k=>(lists[k]||[]).forEach(it=>{ if(it&&it.star){ const d=document.createElement('div'); d.innerHTML=it.html||''; const t=d.textContent.trim(); if(t) next.push(t); } })); if(next.length) last={ next:next, tp: fb.state&&fb.state.f&&fb.state.f.fTP || ('TP'+ns[0]) }; }catch(e){} }
   const pts=(last&&last.next)||[];
   if(!pts.length){ setStatus('No starred action points saved in this browser yet.'); return; }
-  const lead='From my last feedback'+(last.tp?' ('+last.tp+')':'')+':';
+  /* Name the teaching practice the way everything else in Lite does: the NUMBER
+     out of whatever the tutor typed in fTP, which is free text. It used to print
+     that text raw, so a tutor who typed "4" gave the candidate "From my last
+     feedback (4):" in their own plan while the self-evaluation next door said
+     "from TP4" (walk, 21 Sep 2026). */
+  const tpNum = (function(){ const m = String(last.tp == null ? '' : last.tp).match(/\d+/); const n = m ? parseInt(m[0],10) : 0; return n >= 1 && n <= 8 ? 'TP' + n : (last.tp || ''); })();
+  const lead='From my last feedback'+(tpNum?' ('+tpNum+')':'')+':';
   const block=lead+'\n'+pts.map((x,i)=>`${i+1}. ${x}\n   What I will do: `).join('\n');
   const cur=$('fPers').value.trim();
   $('fPers').value = cur ? cur+'\n\n'+block : block;
