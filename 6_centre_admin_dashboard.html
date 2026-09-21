@@ -366,10 +366,10 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609211100"></script>
-<script src="hub-store.js?v=202609211100"></script>
-<script src="hub-shared.js?v=202609211100"></script>
-<script src="hub-sync.js?v=202609211100"></script>
+<script src="assignment-defaults.js?v=202609211132"></script>
+<script src="hub-store.js?v=202609211132"></script>
+<script src="hub-shared.js?v=202609211132"></script>
+<script src="hub-sync.js?v=202609211132"></script>
 <script type="text/x-hub-app">
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -684,8 +684,11 @@ let ROSTER_BUSY = false;
 document.getElementById('storeRoster').addEventListener('click', async e=>{
   const c = e.target.closest('[data-copy]');
   if (c){
-    try{ await navigator.clipboard.writeText(c.dataset.copy); const was = c.textContent; c.textContent='Copied'; setTimeout(()=>{ c.textContent = was; }, 1500); }
-    catch(err){ prompt('Copy this link', c.dataset.copy); }
+    // Shared helper: clipboard, then execCommand, then the link on screen to
+    // copy by hand. It used to be clipboard-then-prompt(), and where both are
+    // blocked the click did nothing at all -- on the one screen that hands a
+    // trainee their workspace link (walk, 21 Sep 2026).
+    await hubCopyButton(c, c.dataset.copy);
     return;
   }
   const r = e.target.closest('[data-remove]');

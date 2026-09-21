@@ -91,7 +91,15 @@
         if(input){
           overlay.querySelector('.confirm-type span').textContent=opts.hint||('Type '+want+' to confirm');
           actionBtn.disabled=true;
-          input.addEventListener('input',function(){ actionBtn.disabled = input.value.trim()!==want; });
+          /* Case-insensitive, because the thing being typed is usually on
+             screen in a different case: the owner console's cards head with the
+             minted handle "C2 - 20 September 2026" while the id is "c2", so
+             copying what you can see left the button dead and said nothing
+             about why (walk, 21 Sep 2026). Matching still demands the right
+             id -- which course goes is the whole point of the guard -- and the
+             resolved value is the canonical one, so the store is handed the id
+             it stores rather than the reader's capitalisation. */
+          input.addEventListener('input',function(){ actionBtn.disabled = input.value.trim().toLowerCase()!==want.toLowerCase(); });
           input.addEventListener('keydown',function(e){ if(e.key==='Enter' && !actionBtn.disabled) actionBtn.click(); });
         }
         document.body.appendChild(overlay);
@@ -100,7 +108,7 @@
         document.addEventListener('keydown',onKey);
         overlay.addEventListener('mousedown',function(e){ if(e.target===overlay) cleanup(false); });
         overlay.querySelector('.confirm-cancel').addEventListener('click',function(){ cleanup(false); });
-        actionBtn.addEventListener('click',function(){ if(actionBtn.disabled) return; cleanup(input ? input.value.trim() : true); });
+        actionBtn.addEventListener('click',function(){ if(actionBtn.disabled) return; cleanup(input ? (want==null ? input.value.trim() : want) : true); });
         (input||actionBtn).focus();
       });
     };
@@ -119,6 +127,61 @@
     return d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
   };
 })();
+
+/* Copying a link is the whole product of two screens -- the owner console hands
+   a centre its course, and the roster hands a trainee their workspace -- and it
+   used to be able to fail in total silence. Both called
+   navigator.clipboard.writeText and, if it threw, prompt(). Walking the owner
+   console on 21 Sep 2026 both failed at once: the clipboard refused with
+   NotAllowedError and prompt() threw "not supported". The click did nothing at
+   all -- no copy, no dialog, no message, the button still reading "Copy". A
+   link that silently does not arrive is worse than one that visibly fails.
+
+   So: the modern API, then execCommand, which needs no permission, and if both
+   are gone the link is put on screen, selected, to be copied by hand. */
+window.hubCopy = async function(text){
+  try { await navigator.clipboard.writeText(text); return true; } catch(e){}
+  try {
+    var ta=document.createElement('textarea');
+    ta.value=text; ta.setAttribute('readonly','');
+    ta.style.cssText='position:fixed; top:0; left:0; width:1px; height:1px; opacity:0;';
+    document.body.appendChild(ta);
+    ta.select(); try{ ta.setSelectionRange(0,text.length); }catch(e2){}
+    var ok=document.execCommand('copy');
+    ta.remove();
+    if(ok) return true;
+  } catch(e){}
+  return false;
+};
+
+/* The button-shaped version: says "Copied", and when it cannot, shows the link
+   instead of pretending. Pass the button and what should land on the clipboard. */
+window.hubCopyButton = async function(btn, text){
+  if(!btn.dataset.copyLabel) btn.dataset.copyLabel = btn.textContent;
+  var back = btn.dataset.copyLabel;
+  var host = btn.closest('.link') || btn.parentElement || btn;
+  var stale = host.querySelector('.copy-fallback'); if(stale) stale.remove();
+  if(await window.hubCopy(text)){
+    btn.textContent='Copied';
+    clearTimeout(btn._copyT);
+    btn._copyT=setTimeout(function(){ btn.textContent=back; },1500);
+    return true;
+  }
+  var wrap=document.createElement('div');
+  wrap.className='copy-fallback';
+  wrap.style.cssText='flex-basis:100%; width:100%; display:flex; gap:8px; align-items:center; margin-top:9px; flex-wrap:wrap;';
+  var note=document.createElement('span');
+  note.textContent='Copying is blocked here \u2014 select this and copy it:';
+  note.style.cssText='font-size:0.78rem; color:var(--grey,#6f6257);';
+  var inp=document.createElement('input');
+  inp.type='text'; inp.readOnly=true; inp.value=text;
+  inp.style.cssText="flex:1; min-width:200px; font-family:'Karla',sans-serif; font-size:0.78rem; height:30px; padding:0 10px; border:1.5px solid var(--sand-line,#e2d9c8); border-radius:6px; background:var(--box,#faf1e4); color:var(--ink,#2b2620);";
+  inp.addEventListener('focus',function(){ inp.select(); });
+  wrap.appendChild(note); wrap.appendChild(inp);
+  host.appendChild(wrap);
+  inp.focus(); inp.select();
+  return false;
+};
 
 // A centre's assignment wording travels as a file (Ramy, 20 Sep 2026: "export
 // the wording from screen 8"). Screen 8 writes it; the trainee's home page and

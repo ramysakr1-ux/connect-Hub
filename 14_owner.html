@@ -118,8 +118,8 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609211100"></script>
-<script src="hub-store.js?v=202609211100"></script>
+<script src="hub-shared.js?v=202609211132"></script>
+<script src="hub-store.js?v=202609211132"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -192,12 +192,15 @@ function gate(msg){
 }
 
 function render(courses, msg){
-  const rows = courses.map(c => `
+  const rows = courses.map(c => {
+    // A store that answered without a count used to print "undefined trainees".
+    const n = Number(c.trainees) || 0;
+    return `
     <div class="course">
       <div class="chead">
         <h2>${esc(label(c))}</h2>
-        <span class="meta">${esc(c.id)} · ${c.trainees} trainee${c.trainees === 1 ? '' : 's'}${c.created ? ' · made ' + esc(niceDate(c.created)) : ''}
-          <button class="btn quiet small" type="button" data-delete="${esc(c.id)}" data-label="${esc(label(c))}" data-trainees="${c.trainees}">Delete</button>
+        <span class="meta">${esc(c.id)} · ${n} trainee${n === 1 ? '' : 's'}${c.created ? ' · made ' + esc(niceDate(c.created)) : ''}
+          <button class="btn quiet small" type="button" data-delete="${esc(c.id)}" data-label="${esc(label(c))}" data-trainees="${n}">Delete</button>
         </span>
       </div>
       <div class="links">
@@ -212,7 +215,7 @@ function render(courses, msg){
           <button class="btn small" type="button" data-copy="${esc(base() + '12_assessor_pack.html?ak=' + encodeURIComponent(c.assessorKey))}">Copy</button>
         </div>
       </div>
-    </div>`).join('');
+    </div>`; }).join('');
 
   $('app').innerHTML = `
     <div class="title">
@@ -235,6 +238,8 @@ function render(courses, msg){
    Found walking the owner console, 21 Sep 2026. */
 let BUSY = false;
 $('app').addEventListener('click', async e => {
+    const retry = e.target.closest('#retryBtn');
+    if (retry) { retry.disabled = true; retry.textContent = 'Trying…'; load(); return; }
     const make = e.target.closest('#makeBtn');
     if (make) {
       if (BUSY) return;
@@ -246,14 +251,22 @@ $('app').addEventListener('click', async e => {
            called out on 21 Sep 2026 ("making the course takes a while"). */
         const made = await call({ op: 'createCourse' });
         showList(made.courses, 'Made ' + made.id + '. Copy its tutor link and send it to the centre.');
+        /* The store appends, so a new course arrives at the BOTTOM -- and the
+           line above tells you to copy its tutor link. With a few courses on
+           screen that link is below the fold, so the screen asks for something
+           it has not shown you (walk, 21 Sep 2026). Left where the store puts
+           it, and brought to you instead. */
+        const card = [...document.querySelectorAll('[data-delete]')].find(x => x.dataset.delete === made.id);
+        if (card && card.closest('.course')) card.closest('.course').scrollIntoView({ behavior: 'smooth', block: 'center' });
       } catch (err) { status(err.message); make.disabled = false; }
       BUSY = false;
       return;
     }
     const b = e.target.closest('[data-copy]');
     if (b) {
-      try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy'; }, 1500); }
-      catch (err) { prompt('Copy this link', b.dataset.copy); }
+      /* hubCopy falls back to execCommand and then to showing the link, so a
+         blocked clipboard can no longer swallow the click in silence. */
+      await hubCopyButton(b, b.dataset.copy);
       return;
     }
     /* The only destructive thing on the screen, so the question names exactly
@@ -301,7 +314,10 @@ async function load(msg){
     render(r.courses || [], msg);
   } catch (err) {
     if (/not yours/i.test(err.message)) { try { localStorage.removeItem(OWNER_STORE); } catch (e) {} gate('That key was not recognised — check you copied all of it.'); return; }
-    $('app').innerHTML = `<div class="empty">${esc(err.message)}</div>`;
+    /* Without this the screen is a dead end: the store's message and nothing to
+       press, so the only way on is to reload by hand. #app keeps its listener
+       across repaints, so the button below is already wired. */
+    $('app').innerHTML = `<div class="empty">${esc(err.message)} <button class="btn small" id="retryBtn" type="button" style="margin-left:8px;">Try again</button></div>`;
   }
 }
 load();
