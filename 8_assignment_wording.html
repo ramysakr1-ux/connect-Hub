@@ -100,7 +100,7 @@
   .order-arrows button{ font-family:inherit; font-size:0.7rem; line-height:1; padding:2px 5px; border:1px solid var(--sand-line); background:var(--box); border-radius:4px; cursor:pointer; color:var(--grey); }
   .order-arrows button:disabled{ opacity:.35; cursor:default; }
 </style>
-<link rel="stylesheet" href="hub-theme.css?v=202609211528">
+<link rel="stylesheet" href="hub-theme.css?v=202609211540">
 </head>
 <body>
 <div class="board">
@@ -114,10 +114,10 @@
     <div class="editor" id="editor"></div>
   </div>
 </div>
-<script src="assignment-defaults.js?v=202609211528"></script>
-<script src="hub-shared.js?v=202609211528"></script>
-<script src="hub-store.js?v=202609211528"></script>
-<script src="hub-sync.js?v=202609211528"></script>
+<script src="assignment-defaults.js?v=202609211540"></script>
+<script src="hub-shared.js?v=202609211540"></script>
+<script src="hub-store.js?v=202609211540"></script>
+<script src="hub-sync.js?v=202609211540"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -357,14 +357,41 @@ function updateOption(i, cat, oi, v){ DATA[CURRENT].sections[i][cat].options[oi]
 function addOption(i, cat){ DATA[CURRENT].sections[i][cat].options.push('New item'); renderEditor(); }
 function removeOption(i, cat, oi){ DATA[CURRENT].sections[i][cat].options.splice(oi,1); renderEditor(); }
 function updatePickCount(i, v){ DATA[CURRENT].sections[i].pickCount = parseInt(v,10) || 1; }
+/* A criterion is tied to a section by its POSITION (`sectionIndex`), and the
+   two operations that change positions used to leave those numbers alone. So
+   reordering or deleting a section silently re-pointed every criterion after
+   it: on LRT, removing "Before you start" moved both criteria from "Analyse
+   each item" to the Declaration -- a section the criterion dropdown does not
+   even offer (walk, 21 Sep 2026).
+
+   That is not only a mislabelling. `sectionIndex` decides which section a
+   resubmission LOCKS: screen 9 locks a section when every criterion tied to it
+   was marked met, and screen 10 shows the tutor's per-criterion comments
+   beside it. A wrong number locks the part the candidate passed and leaves
+   open the part they failed.
+
+   Import and Add only ever append, so they cannot disturb an existing index;
+   these two are the whole problem. */
+function retieCriteria(remap){
+  const crit = DATA[CURRENT].criteria || [];
+  crit.forEach(c => { if (c.sectionIndex != null) c.sectionIndex = remap(c.sectionIndex); });
+}
 function moveSection(i, dir){
   const arr = DATA[CURRENT].sections;
   const j = i + dir;
   if (j < 0 || j >= arr.length) return;
   [arr[i], arr[j]] = [arr[j], arr[i]];
+  // the two that swapped places swap their criteria with them
+  retieCriteria(n => n === i ? j : n === j ? i : n);
   renderEditor();
 }
-function removeSection(i){ DATA[CURRENT].sections.splice(i,1); renderEditor(); }
+function removeSection(i){
+  DATA[CURRENT].sections.splice(i,1);
+  /* A criterion tied to the section that just went becomes general rather than
+     pointing at whatever slid into its place. */
+  retieCriteria(n => n === i ? null : n > i ? n - 1 : n);
+  renderEditor();
+}
 function updateDeclItem(i, di, v){ DATA[CURRENT].sections[i].items[di] = v; }
 function addDeclItem(i){ DATA[CURRENT].sections[i].items.push('New declaration'); renderEditor(); }
 function removeDeclItem(i, di){ DATA[CURRENT].sections[i].items.splice(di,1); renderEditor(); }
