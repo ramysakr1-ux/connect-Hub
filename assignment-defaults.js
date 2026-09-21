@@ -47,7 +47,13 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
     { type:'text', label:'E \u2014 The pronunciation task', body:'Attach one task in Appendix 2 that addresses the pronunciation problem above. Repeating after the teacher or drilling doesn\u2019t count as a task.' },
     { type:'declaration', label:'Declaration', items:['This is my own work.', 'All sources are referenced, in the format (Author, Year, p. ##).'], aiToggle:true }
   ]},
-  lfc: { title:'LFC \u2014 Lessons from the Classroom', wordMin:750, wordMax:1000, format:'prose', criteria:[
+  // Its NAME only, like the other three. It carried its own code as well, so
+  // every place that prints the code beside the title doubled it up -- the
+  // assessor pack's briefs read "LFC \u2014 LFC \u2014 Lessons from the Classroom" and a
+  // candidate's assignment row read "LFC LFC \u2014 Lessons from the Classroom"
+  // (walk, 21 Sep 2026). A centre that has already saved its own wording keeps
+  // whatever it saved.
+  lfc: { title:'Lessons from the Classroom', wordMin:750, wordMax:1000, format:'prose', criteria:[
       {text:'Reflects honestly on strengths and action points with reference to TP feedback.', sectionIndex:null},
       {text:'Draws specific, actionable insights from observation of others.', sectionIndex:null}
     ], sections:[
