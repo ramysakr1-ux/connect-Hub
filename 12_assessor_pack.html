@@ -151,18 +151,29 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609210912"></script>
-<script src="assignment-defaults.js?v=202609210912"></script>
-<script src="hub-tracker.js?v=202609210912"></script>
-<script src="hub-store.js?v=202609210912"></script>
-<script src="hub-sync.js?v=202609210912"></script>
+<script src="hub-shared.js?v=202609210918"></script>
+<script src="assignment-defaults.js?v=202609210918"></script>
+<script src="hub-tracker.js?v=202609210918"></script>
+<script src="hub-store.js?v=202609210918"></script>
+<script src="hub-sync.js?v=202609210918"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
 function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function rec(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }
 function when(iso){ if(!iso) return ''; const d=new Date(iso); if(isNaN(d)) return ''; return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
-function longDate(iso){ if(!iso) return ''; const d=new Date(iso); if(isNaN(d)) return ''; return d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}); }
+/* The date at the front of the string, read as written rather than converted.
+   The store stamps the assessor expiry at 23:59:59 of its own day and sends it
+   as UTC, so reading it as an instant moved it to the next day for anyone east
+   of the store -- the same link then said 13 November when the page worked the
+   date out itself and 14 November when the store answered (found walking the
+   assessor role, 21 Sep 2026). A date named to a person is a day, not a moment. */
+function longDate(iso){
+  const m = String(iso == null ? '' : iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const d = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(iso);
+  if (isNaN(d)) return '';
+  return d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+}
 
 const MODE = window.HubMode;
 const params = new URLSearchParams(location.search);

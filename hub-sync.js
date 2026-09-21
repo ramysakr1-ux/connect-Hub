@@ -37,7 +37,7 @@
 
   // No link, no course. Every screen answers the same way rather than rendering
   // an empty shell of itself, and the page's own script never runs.
-  function gate(){
+  function gate(reason){
     document.documentElement.style.background = 'oklch(92.5% 0.012 85)';
     document.body.style.cssText = 'margin:0;background:oklch(92.5% 0.012 85);';
     document.body.innerHTML =
@@ -52,7 +52,8 @@
       + '<span style="font-family:Instrument Serif,Georgia,serif;font-style:italic;font-size:21px;line-height:0.85;color:oklch(63% 0.096 72);">Connect</span>'
       + '<span style="font-family:Instrument Sans,Karla,sans-serif;font-weight:500;font-size:9px;letter-spacing:0.24em;text-transform:uppercase;">Lite</span>'
       + '</span></div>'
-      + '<h1 style="font-family:Newsreader,Georgia,serif;font-weight:700;font-size:1.9rem;line-height:1.2;margin:0 0 10px;">Open your course link</h1>'
+      + '<h1 style="font-family:Newsreader,Georgia,serif;font-weight:700;font-size:1.9rem;line-height:1.2;margin:0 0 10px;">' + (reason ? 'This link no longer opens the course' : 'Open your course link') + '</h1>'
+      + (reason ? '<p style="font-size:0.92rem;line-height:1.65;color:oklch(46% 0.17 25);margin:0 0 14px;">' + String(reason).replace(/[<&]/g, ' ') + '</p>' : '')
       + '<p style="font-size:0.92rem;line-height:1.65;color:oklch(51% 0.017 70);margin:0;">This page reads one course, through the link your centre sent you. Trainees have their own personal link, tutors share the tutor link, and an assessor has a read-only one. Open the page from that link and everything appears.</p>'
       + '<p style="font-size:0.92rem;line-height:1.65;color:oklch(51% 0.017 70);margin:14px 0 0;">Lost it? Your course admin can send it again from the Roster and links tab.</p>'
       + '</div>';
@@ -250,7 +251,17 @@
       }
       try { localStorage.setItem('hub:booted', identity); } catch (e) {}
       status(mode === 'assessor' ? 'Assessor view \u2014 read-only' : 'Live \u2014 saved to the course as you go', 'ok');
-    }, function(err){ status('Could not reach the course \u2014 ' + (err && err.message || err) + ' (showing this browser\u2019s copy)', 'error'); });
+    }, function(err){
+      // The store answering "no" is not the network failing. An expired
+      // assessor link, a rotated tutor key, a trainee removed from the course:
+      // the page says the link stops working, so it has to stop working, and
+      // going on showing the cached course would make that line a lie (found
+      // walking the assessor role, 21 Sep 2026). Nothing is deleted -- a
+      // trainee may hold drafts the store never got -- the screen simply
+      // refuses to render the course.
+      if (err && err.refused) { gate(err.message); return; }
+      status('Could not reach the course \u2014 ' + (err && err.message || err) + ' (showing this browser\u2019s copy)', 'error');
+    });
     return;
   }
 
@@ -260,6 +271,9 @@
     apply(plan(boot), function(k){ return !dirty[k]; }); exposeMeta(); rebuildSnapshot();
     try { localStorage.setItem('hub:booted', identity); } catch (e) {}
     status(mode === 'assessor' ? 'Assessor view \u2014 read-only' : 'Live \u2014 saved to the course as you go', 'ok');
-  }, function(err){ status('Could not reach the course \u2014 ' + (err && err.message || err), 'error'); })
-    .then(start);
+  }, function(err){
+    if (err && err.refused) { gate(err.message); return 'gated'; }
+    status('Could not reach the course \u2014 ' + (err && err.message || err), 'error');
+  })
+    .then(function(gated){ if (gated !== 'gated') start(); });
 })();

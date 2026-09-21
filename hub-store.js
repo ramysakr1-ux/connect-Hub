@@ -53,7 +53,11 @@ window.HubStore = (function(){
       try { out = await once(payload); break; }
       catch (e) { if (!e.transient || tries >= waits.length) throw e; await new Promise(function(r){ setTimeout(r, waits[tries++]); }); }
     }
-    if (!out.ok) throw new Error(out.error || 'Store error');
+    // A refusal is the store answering, not the network failing, and the two
+    // must not be treated alike: a refused credential means the link is dead,
+    // a transport failure means try again later. `transient` already marks the
+    // second; this marks the first.
+    if (!out.ok) { var refusal = new Error(out.error || 'Store error'); refusal.refused = true; throw refusal; }
     return out.result;
   }
   function base(){ return location.origin + location.pathname.replace(/[^/]*$/, ''); }
