@@ -98,11 +98,6 @@
   .saverow{display:flex; align-items:center; gap:12px; margin-top:26px; flex-wrap:wrap;}
   .saverow span{font-size:0.82rem; color:var(--teal);}
 
-  .setup{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:20px;}
-  .setup button{display:flex; align-items:center; gap:7px; background:none; border:none;
-    padding:5px 11px 5px 5px; border-radius:20px; cursor:pointer; font-family:'Karla',sans-serif;
-    font-size:0.8rem; color:var(--grey); transition:background .15s,color .15s;}
-  .setup button:hover{background:var(--card); color:var(--ink);}
   /* The number STAYS in the dot, done or not, and the fill is what says done
      (Ramy, 21 Sep 2026: "in order of what they do" -- settings one, links and
      trainees two, assignment wording three). A done step used to swap its
@@ -111,19 +106,22 @@
      question was exactly that -- "does that make sense?" Two ways of marking
      one state cannot both be in the same 18px circle, so colour carries it and
      the digits stay put. */
-  .setup .dot{width:18px; height:18px; border-radius:50%; display:inline-flex; align-items:center;
-    justify-content:center; font-size:10px; font-weight:700; background:var(--sand-line);
-    color:var(--paper); flex-shrink:0;}
-  .setup button.done .dot{background:var(--teal); color:var(--paper);}
-  .setup button.done{color:var(--ink);}
 
   /* ---- tabs ------------------------------------------------------------ */
   .tabs{display:flex; gap:26px; margin-top:26px; border-bottom:1px solid var(--sand-line); overflow-x:auto;}
   .tab{font-family:'Karla',sans-serif; font-size:0.9rem; font-weight:600; background:none; border:none;
     border-bottom:2px solid transparent; color:var(--grey); padding:0 0 11px; margin-bottom:-1px;
-    cursor:pointer; white-space:nowrap; transition:color .15s;}
+    cursor:pointer; white-space:nowrap; transition:color .15s;
+    display:flex; align-items:center; gap:8px;}
   .tab:hover{color:var(--ink);}
   .tab.active{color:var(--teal); border-bottom-color:var(--teal);}
+  /* The number stays whether the step is done or not: swapping it for a tick
+     left the row counting "1, tick, 3" (Ramy, 21 Sep 2026). The fill carries
+     done -- pale for still to do, teal for finished. */
+  .tab .dot{width:18px; height:18px; border-radius:50%; flex-shrink:0;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:10px; font-weight:700; background:var(--sand-line); color:var(--paper);}
+  .tab.done .dot{background:var(--teal);}
 
   .panel{padding:34px 0 0;}
   .panel h2{margin:0 0 4px; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.15rem;}
@@ -240,22 +238,21 @@
     <p id="boardMeta">Set up your course, then invite your tutors and trainees.</p>
   </div>
 
-  <!-- Three steps, the same three the tutor dashboard's setup panel shows.
-       There was a fourth, "Tutors invited", which ticked the moment the page
-       opened and could never be anything else: it ran on "this browser holds a
-       tutor key", and Lite has one shared tutor link and no per-tutor
-       invitation for the app to watch. Dropped on Ramy's call, 21 Sep 2026.
-       The Tutors tab stays; it was only the step that tracked nothing. -->
-  <div class="setup" id="setupRow">
-    <button type="button" data-goto="settings"><span class="dot">1</span>Course set up</button>
-    <button type="button" data-goto="roster"><span class="dot">2</span>Links and trainees</button>
-    <button type="button" data-goto="assignments"><span class="dot">3</span>Assignment wording</button>
-  </div>
+  <!-- There were two rows here: a numbered checklist above the tabs. Ramy, 21
+       Sep 2026: "still don't get the difference between 1 2 3 and the sub
+       headings? they do the same thing." They did -- three buttons opening the
+       same three panels, under two different sets of names. The checklist's
+       only extra was whether a step was done, so that moved onto the tabs and
+       the row went. One row, one name per room; the number says the order to
+       work in, the fill says what is finished.
 
+       There was a fourth step once, "Tutors invited", which ticked the moment
+       the page opened and could never be anything else -- Lite has one shared
+       tutor link and no per-tutor invitation for the app to watch. -->
   <div class="tabs" id="tabs">
-    <button class="tab active" data-tab="settings">Settings</button>
-    <button class="tab" data-tab="roster">Roster and links</button>
-    <button class="tab" data-tab="assignments">Assignments</button>
+    <button class="tab active" data-tab="settings"><span class="dot">1</span>Settings</button>
+    <button class="tab" data-tab="roster"><span class="dot">2</span>Roster and links</button>
+    <button class="tab" data-tab="assignments"><span class="dot">3</span>Assignments</button>
   </div>
 
   <!-- ================= Settings ================= -->
@@ -338,10 +335,10 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609210852"></script>
-<script src="hub-store.js?v=202609210852"></script>
-<script src="hub-shared.js?v=202609210852"></script>
-<script src="hub-sync.js?v=202609210852"></script>
+<script src="assignment-defaults.js?v=202609210857"></script>
+<script src="hub-store.js?v=202609210857"></script>
+<script src="hub-shared.js?v=202609210857"></script>
+<script src="hub-sync.js?v=202609210857"></script>
 <script type="text/x-hub-app">
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -353,9 +350,6 @@ function showTab(key){
 }
 document.getElementById('tabs').addEventListener('click', e=>{
   const btn = e.target.closest('.tab'); if(!btn) return; showTab(btn.dataset.tab);
-});
-document.getElementById('setupRow').addEventListener('click', e=>{
-  const btn = e.target.closest('[data-goto]'); if(!btn) return; showTab(btn.dataset.goto);
 });
 
 /* ---- settings ------------------------------------------------------------ */
@@ -404,9 +398,8 @@ function renderSetup(){
     roster: trainees > 0,
     assignments: !!w
   };
-  document.querySelectorAll('#setupRow [data-goto]').forEach(b=>{
-    const ok = done[b.dataset.goto];
-    b.classList.toggle('done', !!ok);
+  document.querySelectorAll('#tabs .tab').forEach(b=>{
+    b.classList.toggle('done', !!done[b.dataset.tab]);
   });
 }
 
