@@ -93,7 +93,7 @@
   textarea.resub{ background:oklch(96% 0.04 70); border-color:oklch(82% 0.09 75); }
   textarea.resub:focus{ border-color:oklch(60% 0.12 70); }
 </style>
-<link rel="stylesheet" href="hub-theme.css?v=202609221104">
+<link rel="stylesheet" href="hub-theme.css?v=202609221232">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -101,10 +101,10 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202609221104"></script>
-<script src="hub-shared.js?v=202609221104"></script>
-<script src="hub-store.js?v=202609221104"></script>
-<script src="hub-sync.js?v=202609221104"></script>
+<script src="assignment-defaults.js?v=202609221232"></script>
+<script src="hub-shared.js?v=202609221232"></script>
+<script src="hub-store.js?v=202609221232"></script>
+<script src="hub-sync.js?v=202609221232"></script>
 <script type="text/x-hub-app">
 const WORDING_KEY = 'connect_assignment_wording_v2';
 const SUB_KEY = 'connect_assignment_submissions_v1';
@@ -418,7 +418,13 @@ function declOk(a){
   a.sections.forEach((s,i) => {
     if (s.type==='declaration') {
       const d = DECL[i];
-      if (!d || !d.checks || d.checks.some(c=>!c)) ok = false;
+      // EVERY item, not merely every one recorded. checks is written by index
+      // as each box is ticked, so ticking only the first leaves it [true] --
+      // length one, nothing false in it, and `some(c=>!c)` was perfectly happy.
+      // A candidate could declare the work their own, leave "All sources are
+      // referenced" untouched, and submit: the one gate DESIGN-HANDOFF-README
+      // calls hard, open (trainee walk, 22 Sep 2026).
+      if (!d || !d.checks || !s.items.every((_, ci) => d.checks[ci] === true)) ok = false;
       if (s.aiToggle) {
         if (!d || !d.aiUsed) ok = false;
         else if (d.aiUsed==='yes' && (!d.aiLink || !d.aiPurpose)) ok = false;
