@@ -185,11 +185,11 @@
   </div>
   <div id="detail"></div>
 </div>
-<script src="hub-shared.js?v=202609221257"></script>
-<script src="assignment-defaults.js?v=202609221257"></script>
-<script src="hub-tracker.js?v=202609221257"></script>
-<script src="hub-store.js?v=202609221257"></script>
-<script src="hub-sync.js?v=202609221257"></script>
+<script src="hub-shared.js?v=202609221412"></script>
+<script src="assignment-defaults.js?v=202609221412"></script>
+<script src="hub-tracker.js?v=202609221412"></script>
+<script src="hub-store.js?v=202609221412"></script>
+<script src="hub-sync.js?v=202609221412"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
@@ -377,7 +377,14 @@ function renderDetail(all){
     else {
     if (['WAIT','WAIT2'].includes(a.code)) actions.push(['Open the mark sheet', `10_tutor_assignment_marking.html?${q}&a=${SEL.col}`, true]);
     else if (['PASS','RES','FAIL','FAILRES'].includes(a.code)) actions.push(['Open the marked record', `11_assignment_record.html?${q}&a=${SEL.col}`, true]);
-    if (a.code && a.code!=='PASS' && a.code!=='RES' && a.code!=='FAIL') actions.push(['Open the mark sheet', `10_tutor_assignment_marking.html?${q}&a=${SEL.col}`, false]);
+    /* The SECOND way to the mark sheet, for states whose primary action is
+       something else: a resubmission required (primary: the marked record) and
+       one returned unmarked (no primary at all). WAIT and WAIT2 belong to the
+       line above, which already offers the mark sheet as the primary -- and
+       this being a separate `if` rather than an `else if`, they were getting it
+       twice: two identical links, same destination, side by side in the strip
+       (tutor walk, 22 Sep 2026). */
+    if (a.code && !['PASS','RES','FAIL','WAIT','WAIT2'].includes(a.code)) actions.push(['Open the mark sheet', `10_tutor_assignment_marking.html?${q}&a=${SEL.col}`, false]);
     }
   } else {
     const t = p.tps[SEL.col]; const n = parseInt(SEL.col.slice(2),10); const st = T_STATE[t.g] || T_STATE.nd;
