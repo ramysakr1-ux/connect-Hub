@@ -206,9 +206,9 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-shared.js?v=202609221756"></script>
-<script src="hub-store.js?v=202609221756"></script>
-<script src="hub-sync.js?v=202609221756"></script>
+<script src="hub-shared.js?v=202609221800"></script>
+<script src="hub-store.js?v=202609221800"></script>
+<script src="hub-sync.js?v=202609221800"></script>
 <script type="text/x-hub-app">
 
 /* The trainee's home. The rooms below are permanent doors; the band at the top
@@ -229,6 +229,15 @@ const fbBack = !!(fb && fb.status==='returned');
    your lesson plan" -- on a door with eight documents behind it (end-of-course
    walk, 22 Sep 2026). */
 const filed = (function(){ const h = rec('chub:tpHistory') || {}; return Object.keys(h).filter(function(n){ const r = h[n]; return r && r.docHTML; }).length; })();
+/* How many teaching practices this course gives each candidate, set by the
+   centre on Course admin. Eight when unset, which is every course made before
+   the field existed. Without it the page could not tell a finished candidate
+   from one between teaching practices, and went on asking a candidate with a
+   complete record to write another lesson plan (Ramy, 22 Sep 2026). */
+const tpTotal = (function(){ let cs = null; try { cs = JSON.parse(localStorage.getItem('connect_course_settings')); } catch (e) {}
+  const n = cs && parseInt(cs.tpCount, 10); return (n >= 1 && n <= 8) ? n : 8; })();
+/* Nothing in flight and the last one filed: the teaching practice is over. */
+const tpDone = !plan && !self && !fbBack && filed >= tpTotal;
 
 /* Assignments: the same summary the card has carried since 20 Sep -- needs
    resubmission wins the headline, then returned unmarked, then all complete,
@@ -299,7 +308,8 @@ function line(el, text, tone){
 
 /* The next step, named once. Everything below reads NEXT rather than working
    the cycle out again, so the four cards cannot disagree about where you are. */
-const NEXT = fbBack && !selfIn ? 'self'
+const NEXT = tpDone           ? 'done'
+           : fbBack && !selfIn ? 'self'
            : fbBack           ? 'feedback'
            : selfIn           ? 'waiting'
            : planIn           ? 'self'
@@ -307,13 +317,15 @@ const NEXT = fbBack && !selfIn ? 'self'
            :                    'plan';
 
 line(document.getElementById('badgePlan'),
-  !plan   ? 'Write your lesson plan'
+  tpDone  ? 'All ' + tpTotal + ' taught'
+  : !plan   ? 'Write your lesson plan'
   : !planIn ? 'Finish it and turn it in'
   : 'Turned in',
   NEXT === 'plan' ? 'act' : '');
 
 line(document.getElementById('badgeSelf'),
-  fbBack && !selfIn ? 'Turn this in to open your feedback'
+  tpDone            ? 'All ' + tpTotal + ' written'
+  : fbBack && !selfIn ? 'Turn this in to open your feedback'
   : selfIn          ? 'Turned in'
   : self            ? 'Finish it and turn it in'
   : planIn          ? 'Write your self-evaluation'

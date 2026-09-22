@@ -160,11 +160,11 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609221756"></script>
-<script src="assignment-defaults.js?v=202609221756"></script>
-<script src="hub-tracker.js?v=202609221756"></script>
-<script src="hub-store.js?v=202609221756"></script>
-<script src="hub-sync.js?v=202609221756"></script>
+<script src="hub-shared.js?v=202609221800"></script>
+<script src="assignment-defaults.js?v=202609221800"></script>
+<script src="hub-tracker.js?v=202609221800"></script>
+<script src="hub-store.js?v=202609221800"></script>
+<script src="hub-sync.js?v=202609221800"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -188,6 +188,12 @@ const MODE = window.HubMode;
 const params = new URLSearchParams(location.search);
 const WHO = params.get('trainee') || '';
 const SETTINGS = rec('connect_course_settings') || {};
+/* How many teaching practices this course gives each candidate (Course admin
+   > Settings). Eight when unset, which is every course made before the field
+   existed -- and eight is the most the records model, so it is also the cap.
+   Without it the pack said "6 of 8" and drew eight blocks for a course that
+   only ever had six, showing two that were never going to be taught. */
+const TP_TOTAL = (function(){ const n = parseInt(SETTINGS.tpCount, 10); return (n >= 1 && n <= 8) ? n : 8; })();
 let WORDING = rec('connect_assignment_wording_v2'); if (!WORDING && window.CONNECT_HUB_DEFAULT_WORDING) WORDING = window.CONNECT_HUB_DEFAULT_WORDING;
 const ORDER = hubAssignmentOrder(WORDING);
 const roster = rec('connect_roster_v1') || { trainees: {} };
@@ -244,7 +250,7 @@ function personRow(tr){
   const last = returned.length ? returned[returned.length-1] : 0;
   const g = last ? G_STATE[c['tp'+last]] : null;
   const cur = tr.tp && tr.tp.feedback; const curN = cur && cur.status!=='returned' ? T.tpNumberOf(cur) : 0;
-  const tpChips = `<span class="chip ${g?g.cls:'nd'}"><b>${returned.length} of 8</b>${last ? 'TP'+last+' '+(g?g.t:'returned') : 'no TP returned'}</span>${curN ? `<span class="chip wait"><b>TP${curN}</b>in progress</span>` : ''}`;
+  const tpChips = `<span class="chip ${g?g.cls:'nd'}"><b>${returned.length} of ${TP_TOTAL}</b>${last ? 'TP'+last+' '+(g?g.t:'returned') : 'no TP returned'}</span>${curN ? `<span class="chip wait"><b>TP${curN}</b>in progress</span>` : ''}`;
   const asg = ORDER.filter(k => k!=='a5' || a5InPlay(tr.assignments||{})).map(k => { const st = T.assignmentState((tr.assignments||{})[k]); const a = A_STATE[st.code] || A_STATE['']; return `<span class="chip ${a.cls}"><b>${esc(k.toUpperCase())}</b>${a.t}${st.dm?' · DM':''}</span>`; }).join('');
   const chip = T.STATE_CHIP[r.state];
   /* Handbook 14.2: at a regular assessment the assessor reads two portfolios in
@@ -395,7 +401,7 @@ function renderOne(tr){
       <div class="facts">${facts.map(f=>`<div class="fact"><div class="k">${f[0]}</div><div class="v ${f[2]}">${esc(f[1])}</div></div>`).join('')}</div>
     </div>
     <h2 class="sect">Teaching practice <small>the document the candidate received, as returned</small></h2>
-    <div class="panel">${[1,2,3,4,5,6,7,8].map(n=>tpBlock(tr, n, c)).join('')}</div>
+    <div class="panel">${Array.from({length:TP_TOTAL},(_,i)=>i+1).map(n=>tpBlock(tr, n, c)).join('')}</div>
     <h2 class="sect">Assignments <small>in the centre’s order</small></h2>
     <div class="panel">${ORDER.filter(k => k!=='a5' || a5InPlay(tr.assignments||{})).map(k=>assignmentBlock(tr, k)).join('')}</div>`;
   $('app').addEventListener('click', e => {
