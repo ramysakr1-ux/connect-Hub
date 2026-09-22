@@ -44,25 +44,6 @@
   .wrap{max-width:1500px;margin:0 auto;padding:0 24px 90px;}
   .note{max-width:1500px;}
 
-  /* the candidate list is typed in once and kept in this browser, so the page
-     itself carries no one's name -- it can sit on the web, the names cannot */
-  .setup{max-width:640px;margin:40px auto 0;background:var(--paper);border:1px solid var(--line);
-    border-left:6px solid var(--navy);border-radius:16px;box-shadow:var(--shadow);padding:24px 26px;}
-  .setup h2{font-family:'Playfair Display',serif;font-size:1.2rem;margin:0 0 6px;color:var(--navy-deep);}
-  .setup p{margin:0 0 14px;font-size:.88rem;color:var(--sub);line-height:1.6;}
-  .setup textarea{width:100%;min-height:190px;font-family:'Nunito';font-size:.9rem;line-height:1.65;
-    border:1.5px solid var(--line);border-radius:10px;padding:11px 13px;background:var(--bg);resize:vertical;}
-  .setup textarea:focus{outline:none;border-color:var(--navy);background:#fff;}
-  .setup .go{margin-top:12px;border:none;background:var(--navy);color:#fff;font-family:'Nunito';
-    font-weight:800;font-size:.84rem;padding:10px 20px;border-radius:999px;cursor:pointer;}
-  .setup .go:hover{background:var(--navy-deep);}
-  .roster-edit{font-family:'Nunito';font-size:.66rem;font-weight:800;letter-spacing:.05em;
-    border:1.3px solid var(--line);background:#fff;color:var(--sub);border-radius:999px;
-    padding:5px 11px;cursor:pointer;white-space:nowrap;}
-  .roster-edit:hover{border-color:var(--navy);color:var(--navy);}
-
-  /* the grades, both scales at once -- provisional on the left as it goes to
-     Appian before the visit, final on the right as agreed with the assessor */
   .gradewrap{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:26px;}
   @media(max-width:900px){.gradewrap{grid-template-columns:1fr;}}
   .gt{background:var(--paper);border:1px solid var(--line);border-radius:16px;
@@ -191,7 +172,6 @@
   </svg>
   <nav id="nav"></nav>
   <span class="count" id="count"></span>
-  <button class="roster-edit" id="rosterEdit" type="button">Candidates</button>
   <button class="btn" id="copyAll" type="button">Copy all</button>
   <button class="btn" onclick="window.print()">&#128424; PDF</button>
 </div>
@@ -201,12 +181,7 @@
   <p>Candidate profiles for the centre grade form &middot; course assessment Tuesday 29 September 2026</p>
 </div>
 
-<div class="setup" id="setup" hidden>
-  <h2>Who is on this course?</h2>
-  <p>One name per line, in the order you want them lettered. They are kept in this browser only &mdash; nothing is sent anywhere and the page itself carries no names, which is why it can live on the web.</p>
-  <textarea id="rosterBox" placeholder="One name per line…"></textarea>
-  <button class="go" id="rosterGo" type="button">Start the profiles</button>
-</div>
+
 <div class="wrap" id="main" hidden>
   <div class="gradewrap" id="gradewrap"></div>
 </div>
@@ -240,9 +215,7 @@ const ROSTER=[
   {n:'Ali Behnami'},
   {n:'Sima Piroutzade'}
 ];
-const RKEY='c17-roster-v1';
-let C=ROSTER.slice();
-try{ const saved=JSON.parse(localStorage.getItem(RKEY)||'null'); if(Array.isArray(saved)&&saved.length) C=saved; }catch(e){}
+const C=ROSTER;
 const KEY='c17-provisionals-v1';
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
 let state={}; try{ state=JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ state={}; }
@@ -250,13 +223,23 @@ const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e)
 const letter=i=>String.fromCharCode(65+i);
 const opts=(list,v)=>list.map(o=>`<option value="${esc(o)}"${o===v?' selected':''}>${esc(o)||'— choose —'}</option>`).join('');
 
-function boot(){
-if(!C.length){
-  document.getElementById('setup').hidden=false;
-  document.getElementById('nav').innerHTML='';
-  return;
+/* the same grade appears in the table and on the candidate's own card */
+function sync(){
+  document.querySelectorAll('select[data-n][data-f]').forEach(sel=>{
+    const v=(state[sel.dataset.n]||{})[sel.dataset.f]||'';
+    if(sel.value!==v) sel.value=v;
+    sel.classList.toggle('set', !!v);
+  });
 }
-document.getElementById('setup').hidden=true;
+function grow(t){ t.style.height='auto'; t.style.height=(t.scrollHeight+2)+'px'; }
+function paint(){
+  const done=C.filter(c=>(state[c.n]||{}).prov).length;
+  document.getElementById('count').textContent=done+' / '+C.length;
+  document.querySelectorAll('#nav a').forEach(a=>{
+    a.classList.toggle('done', !!(state[C[+a.dataset.i].n]||{}).prov);
+  });
+}
+function boot(){
 document.getElementById('main').hidden=false;
 document.getElementById('cands').hidden=false;
 document.getElementById('cands').innerHTML = C.map((c,i)=>{
@@ -310,35 +293,12 @@ document.getElementById('gradewrap').addEventListener('input',e=>{
   save(); sync(); paint();
 });
 
-/* the same grade appears in the table and on the candidate's own card */
-function sync(){
-  document.querySelectorAll('select[data-n][data-f]').forEach(sel=>{
-    const v=(state[sel.dataset.n]||{})[sel.dataset.f]||'';
-    if(sel.value!==v) sel.value=v;
-    sel.classList.toggle('set', !!v);
-  });
-}
 
 document.getElementById('nav').innerHTML = C.map((c,i)=>
   `<a href="#c${i}" title="${esc(c.n)}" data-i="${i}">${letter(i)}</a>`).join('');
 
-function grow(t){ t.style.height='auto'; t.style.height=(t.scrollHeight+2)+'px'; }
-function paint(){
-  const done=C.filter(c=>(state[c.n]||{}).prov).length;
-  document.getElementById('count').textContent=done+' / '+C.length;
-  document.querySelectorAll('#nav a').forEach(a=>{
-    a.classList.toggle('done', !!(state[C[+a.dataset.i].n]||{}).prov);
-  });
-}
 document.querySelectorAll('textarea').forEach(grow); sync();
 }
-document.getElementById('rosterGo').addEventListener('click',()=>{
-  const names=document.getElementById('rosterBox').value.split('\n').map(x=>x.trim()).filter(Boolean);
-  if(!names.length) return;
-  C=names.map(n=>({n:n}));
-  try{ localStorage.setItem(RKEY, JSON.stringify(C)); }catch(e){}
-  boot(); paint();
-});
 boot();
 function linesOf(ul){
   return [...ul.querySelectorAll('li')].map(li=>li.textContent.replace(/\s+/g,' ').trim()).filter(Boolean).join('\n');
@@ -362,11 +322,6 @@ document.getElementById('cands').addEventListener('paste',e=>{
   e.preventDefault();
   const txt=(e.clipboardData||window.clipboardData).getData('text');
   document.execCommand('insertText', false, txt.replace(/\r/g,'').trim());
-});
-document.getElementById('rosterEdit').addEventListener('click',()=>{
-  document.getElementById('rosterBox').value = C.map(c=>c.n).join('\n');
-  document.getElementById('setup').hidden=false;
-  document.getElementById('setup').scrollIntoView({block:'center'});
 });
 paint();
 
