@@ -186,15 +186,18 @@ window.hubScrollIntoView = function(el, block){
    A door, not a disabled form: there is nothing here for them to read, so the
    room says whose it is and points them back to their own. Tutors are
    untouched. */
-window.hubCentreRoomOnly = function(){
-  var mode = window.HubMode;
-  if (mode === 'tutor' || !mode) return false;
+/* Whose room a screen belongs to. A link that is not for this room gets the
+   refusal below rather than the working screen: before this, a trainee or an
+   assessor who reached the centre's setup got the full editable form and a
+   Save that said "Saved" while hub-sync quietly dropped the write (walk,
+   21 Sep 2026) -- and the tutor's feedback screen and the candidate's
+   submission form were still open to everyone (walk, 22 Sep 2026). */
+function hubRoomRefusal(title, who, mode){
   var back = mode === 'assessor'
     ? { href: '12_assessor_pack.html', label: 'Open your assessor pack' }
-    : { href: 'index.html', label: 'Back to your course' };
-  var who = mode === 'assessor'
-    ? 'Your link is read-only, and this page is where the centre sets the course up.'
-    : 'This page is where your centre sets the course up.';
+    : mode === 'tutor'
+      ? { href: '5_tutor_dashboard.html', label: 'Back to your dashboard' }
+      : { href: 'index.html', label: 'Back to your course' };
   document.documentElement.style.background = 'oklch(92.5% 0.012 85)';
   document.body.style.cssText = 'margin:0;background:oklch(92.5% 0.012 85);';
   document.body.innerHTML =
@@ -209,11 +212,40 @@ window.hubCentreRoomOnly = function(){
     + '<span style="font-family:Instrument Serif,Georgia,serif;font-style:italic;font-size:21px;line-height:0.85;color:oklch(63% 0.096 72);">Connect</span>'
     + '<span style="font-family:Instrument Sans,Karla,sans-serif;font-weight:500;font-size:9px;letter-spacing:0.24em;text-transform:uppercase;">Lite</span>'
     + '</span></div>'
-    + '<h1 style="font-family:Newsreader,Georgia,serif;font-weight:700;font-size:1.9rem;line-height:1.2;margin:0 0 10px;">This room belongs to the centre</h1>'
+    + '<h1 style="font-family:Newsreader,Georgia,serif;font-weight:700;font-size:1.9rem;line-height:1.2;margin:0 0 10px;">' + title + '</h1>'
     + '<p style="font-size:0.92rem;line-height:1.65;color:oklch(51% 0.017 70);margin:0 0 20px;">' + who + ' Nothing you change here would reach the course.</p>'
     + '<a href="' + back.href + '" style="font-family:Karla,sans-serif;font-size:0.82rem;font-weight:600;height:34px;padding:0 15px;border-radius:6px;border:1.5px solid oklch(89.5% 0.012 82);background:oklch(96.2% 0.02 80);color:oklch(23.5% 0.017 65);display:inline-flex;align-items:center;text-decoration:none;">' + back.label + '</a>'
     + '</div>';
   return true;
+}
+
+window.hubCentreRoomOnly = function(){
+  var mode = window.HubMode;
+  if (mode === 'tutor' || !mode) return false;
+  return hubRoomRefusal('This room belongs to the centre',
+    mode === 'assessor'
+      ? 'Your link is read-only, and this page is where the centre sets the course up.'
+      : 'This page is where your centre sets the course up.', mode);
+};
+
+/* The tutor's own screens: writing feedback, marking an assignment. */
+window.hubTutorRoomOnly = function(){
+  var mode = window.HubMode;
+  if (mode === 'tutor' || !mode) return false;
+  return hubRoomRefusal('This room belongs to your tutors',
+    mode === 'assessor'
+      ? 'Your link is read-only. The returned feedback and the marked records are in your pack.'
+      : 'This is where your tutors write up your teaching practice. What they return to you is on your own feedback page.', mode);
+};
+
+/* The candidate's own writing screens. */
+window.hubTraineeRoomOnly = function(){
+  var mode = window.HubMode;
+  if (mode === 'trainee' || !mode) return false;
+  return hubRoomRefusal('This room belongs to the candidate',
+    mode === 'assessor'
+      ? 'Your link is read-only. Submitted work is in the candidate portfolios and the assignment records.'
+      : 'This is the candidate\u2019s own submission form. What they have submitted is on your marking screen.', mode);
 };
 
 /* The three writing screens (plan, self-evaluation, tutor feedback) put their
