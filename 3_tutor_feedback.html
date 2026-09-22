@@ -350,9 +350,9 @@
 </div>
 
 
-<script src="hub-shared.js?v=202609220009"></script>
-<script src="hub-store.js?v=202609220009"></script>
-<script src="hub-sync.js?v=202609220009"></script>
+<script src="hub-shared.js?v=202609221104"></script>
+<script src="hub-store.js?v=202609221104"></script>
+<script src="hub-sync.js?v=202609221104"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -1159,7 +1159,19 @@ function renderTurnStatus(){
     el.innerHTML='Returned — '+fmtDate(rec.returnedAt)+'. <button class="btn btn-ghost" type="button" id="reopenBtn">Reopen for edits</button>';
     el.classList.add('show');
     $('returnBtn').style.display='none';
-    $('reopenBtn').addEventListener('click',function(){ saveFeedbackRecord({status:'draft'}); renderTurnStatus(); });
+    /* Reopening takes the feedback back off the candidate: their record reads
+       the status, so a draft is one they can no longer open. Every other
+       action with a consequence on this side of the course asks first --
+       turning in, returning, Start next TP, returning an assignment unmarked
+       -- and this one went through on a single click, silently, possibly
+       while they were part way through reading it (tutor walk, 22 Sep 2026).
+       It has already been returned once, so this is not a slip the candidate
+       never saw. */
+    $('reopenBtn').addEventListener('click',async function(){
+      if(!(await confirmModal('Reopening takes this feedback back: until you return it again, '+(((loadRoster().trainees[TRAINEE_ID]||{}).name)||'the candidate')+' cannot open it, even if they have already read it. Continue?','Reopen for edits'))) return;
+      saveFeedbackRecord({status:'draft'});
+      renderTurnStatus();
+    });
   } else {
     setLock(false);
     el.classList.remove('show');

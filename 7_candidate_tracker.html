@@ -185,11 +185,11 @@
   </div>
   <div id="detail"></div>
 </div>
-<script src="hub-shared.js?v=202609220009"></script>
-<script src="assignment-defaults.js?v=202609220009"></script>
-<script src="hub-tracker.js?v=202609220009"></script>
-<script src="hub-store.js?v=202609220009"></script>
-<script src="hub-sync.js?v=202609220009"></script>
+<script src="hub-shared.js?v=202609221104"></script>
+<script src="assignment-defaults.js?v=202609221104"></script>
+<script src="hub-tracker.js?v=202609221104"></script>
+<script src="hub-store.js?v=202609221104"></script>
+<script src="hub-sync.js?v=202609221104"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
@@ -290,7 +290,15 @@ function paintDmStrip(all, isA){
       // n>0 first: a card must never read "2 of 3 -- not marked yet". A
       // submission whose outcome string the state machine does not recognise
       // yields an empty code while its double-marking is plainly recorded.
-      const begun = n > 0 || all.some(p=>p.asg[a.key].code);
+      //
+      // Otherwise it takes a MARKED assignment, not merely a submitted one.
+      // Any non-empty code used to count, and WAIT, WAIT2 and UNMARKED are all
+      // states before a mark exists -- so one candidate submitting turned the
+      // card amber and read "short of the sample" when nothing had been marked
+      // at all, let alone double-marked. Colour on this screen means something
+      // needs you, and that one needed nobody (tutor walk, 22 Sep 2026).
+      const MARKED = ['PASS', 'RES', 'FAIL', 'FAILRES'];
+      const begun = n > 0 || all.some(p=>MARKED.includes(p.asg[a.key].code));
       const met = n >= required;
       const cls = met ? '' : begun ? 'short' : 'idle';
       const note = met ? 'sample met' : begun ? 'short of the sample' : 'not marked yet';
