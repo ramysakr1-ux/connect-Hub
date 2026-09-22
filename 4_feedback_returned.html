@@ -68,9 +68,9 @@
   <a class="back" href="index.html">← Back</a>
   <div id="content"></div>
 </div>
-<script src="hub-shared.js?v=202609221823"></script>
-<script src="hub-store.js?v=202609221823"></script>
-<script src="hub-sync.js?v=202609221823"></script>
+<script src="hub-shared.js?v=202609221859"></script>
+<script src="hub-store.js?v=202609221859"></script>
+<script src="hub-sync.js?v=202609221859"></script>
 <script type="text/x-hub-app">
 function rec(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
 const fb=rec('chub:feedback');
@@ -84,11 +84,23 @@ const selfRec=rec('chub:selfeval');
    course, if they want, can they download this?"). The documents were here in
    chub:tpHistory the whole time; nothing rendered them. */
 const history = rec('chub:tpHistory') || {};
+/* Which teaching practice the live record is, so the page does not show it
+   twice. The tutor files a TP into the history at the moment they return it,
+   and the same document is also the live one until the candidate presses
+   "Start next TP" -- which is where every candidate sits while they read it,
+   and they saw it listed twice (trainee walk, 22 Sep 2026). The live copy is
+   the one kept: the tutor may have reopened and returned it again since. */
+const curN = (function(){
+  const m = String((fb && fb.state && fb.state.f && fb.state.f.fTP) || (fb && fb.label) || '').match(/\d+/);
+  const n = m ? parseInt(m[0], 10) : 0;
+  return n >= 1 && n <= 8 ? n : 0;
+})();
 const past = Object.keys(history)
   .map(Number).filter(n => n >= 1 && n <= 8)
   .sort((a, b) => a - b)
   .map(n => ({ n: n, r: history[n] }))
-  .filter(x => x.r && x.r.docHTML);
+  .filter(x => x.r && x.r.docHTML)
+  .filter(x => !(curN && x.n === curN && fb && fb.status === 'returned' && fb.docHTML));
 // Reflect before reading: the feedback opens once the self-evaluation is in
 // (Connect's rule; Ramy, 20 Sep 2026).
 const selfIn = !!(selfRec && selfRec.status==='turned_in');

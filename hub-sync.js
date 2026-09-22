@@ -182,6 +182,26 @@
       out['hub:name'] = me.name || '';
       out['hub:me'] = JSON.stringify({ token: me.token, name: me.name, group: me.group });
       Object.keys(TRAINEE_KEYS).forEach(function(key){ var v = me.records[TRAINEE_KEYS[key]]; out[key] = v == null ? null : JSON.stringify(v); });
+      /* The history is the tutor's to write, so a trainee's own filing of it
+         never leaves this browser (TUTOR_ONLY, above). "Start next TP" files
+         the returned feedback into the history and then DELETES the live copy,
+         and that delete does reach the store -- so if the store's history had
+         not already been given this teaching practice, the next boot replaced
+         the local filing with the store's shorter one and the document was
+         gone for good (trainee walk, 22 Sep 2026). The store still wins for
+         every teaching practice it knows; this only keeps the ones it does
+         not, which is the trainee's own copy of what they were returned. */
+      out['chub:tpHistory'] = (function(){
+        var theirs = me.records.tpHistory || {}, mine = parse(current('chub:tpHistory')) || {};
+        var merged = null;
+        Object.keys(mine).forEach(function(n){
+          if (theirs[n] || !mine[n] || !mine[n].docHTML) return;
+          if (!merged) merged = JSON.parse(JSON.stringify(theirs));
+          merged[n] = mine[n];
+        });
+        if (!merged) return out['chub:tpHistory'];
+        return JSON.stringify(merged);
+      })();
       return out;
     }
     if (mode === 'assessor') out['hub:assessor'] = JSON.stringify(boot.assessor || {});
