@@ -24,6 +24,10 @@ window.HubTracker = (function(){
     { key:'STD', label:'To standard', short:'S' },
     { key:'NOTSTD', label:'Not to standard', short:'NS' }
   ];
+  /* hub-tracker is loaded before hub-shared on one screen, so the bound is
+     read at call time rather than captured at load. */
+  function MAXTP(){ return window.HUB_MAX_TP || 24; }
+
   var HUB_GRADE = { 'Above standard':'ABOVE', 'To standard':'STD', 'Not to standard':'NOTSTD' };
   function tpGrade(v){ for (var i = 0; i < TP_GRADES.length; i++) if (TP_GRADES[i].key === v) return TP_GRADES[i]; return null; }
   var AIMS = [
@@ -62,7 +66,7 @@ window.HubTracker = (function(){
   function tpTotal(){
     try { var cs = JSON.parse(localStorage.getItem('connect_course_settings') || 'null');
           var n = cs && parseInt(cs.tpCount, 10);
-          if (n >= 1 && n <= 8) return n; } catch (e) {}
+          if (n >= 1 && n <= MAXTP()) return n; } catch (e) {}
     return 8;
   }
 
@@ -95,7 +99,7 @@ window.HubTracker = (function(){
   function tpNumberOf(fb){
     var f = fb && fb.state && fb.state.f;
     var n = parseInt(String((f && f.fTP) || (fb && fb.label) || '').replace(/\D/g, ''), 10);
-    return n >= 1 && n <= 8 ? n : 0;
+    return n >= 1 && n <= MAXTP() ? n : 0;
   }
   /** Every returned TP the roster holds for a trainee, by number. */
   function tpHistory(tr){
@@ -125,7 +129,7 @@ window.HubTracker = (function(){
     var manual = (tr && tr.tracker) || {};
     ['stage1','stage2','stage3','failLetter','withdrawn'].forEach(function(k){ c[k] = manual[k] || ''; });
     var hist = tpHistory(tr);
-    for (var n = 1; n <= 8; n++) {
+    for (var n = 1; n <= MAXTP(); n++) {
       var fb = hist[n];
       var f = fb && fb.state && fb.state.f;
       c['tp'+n] = f ? (HUB_GRADE[String(f.fGrade || '').trim()] || '') : '';
@@ -146,7 +150,7 @@ window.HubTracker = (function(){
   // ---- The tracker's own rule engine, unchanged ----------------------------
   function readCandidate(c){
     var latest = null, latestN = 0, graded = 0, notStd = 0, above = 0, notStdAt = [], run = 0, backToBack = null;
-    for (var k = 1; k <= 8; k++) {
+    for (var k = 1; k <= MAXTP(); k++) {
       var g = tpGrade(c['tp'+k]);
       if (!g) continue;
       graded++; latest = g; latestN = k;
