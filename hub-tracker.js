@@ -179,7 +179,11 @@ window.HubTracker = (function(){
     var potentialFail = failWhy.length > 0;
     var letterIssued = !!(c.failLetter && String(c.failLetter).trim());
     var letterDue = potentialFail && !letterIssued;
-    var lessonsLeft = 8 - graded;
+    /* How much teaching practice is left, which is what makes a Fail letter
+       urgent rather than merely due. Was 8 - graded: on a six-TP course with
+       all six taught it answered "2 lessons left to teach — the window is
+       closing" when the window had shut (tutor walk, 22 Sep 2026). */
+    var lessonsLeft = tpTotal() - graded;
     if (letterDue) failWhy.push(lessonsLeft <= 2
       ? (lessonsLeft <= 0 ? 'no lessons left to teach — issue it today' : lessonsLeft + ' lesson' + (lessonsLeft === 1 ? '' : 's') + ' left to teach — the window is closing')
       : lessonsLeft + ' lessons left to teach');
