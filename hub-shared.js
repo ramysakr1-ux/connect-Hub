@@ -1,10 +1,10 @@
-/* How many teaching practices a course may give each candidate. The
-   Administration Handbook (June 2025, p25) sets a MINIMUM of eight occasions
-   inside the six assessed hours -- it sets no maximum, so eight was never a
-   ceiling and the form should not have treated it as one (Ramy, 22 Sep 2026:
-   "you can have a course of 24"). This is the bound every TP number is sanity
-   checked against; a parsed number outside it is rubbish, not a lesson. */
-window.HUB_MAX_TP = 24;
+/* How many teaching practices a course may give each candidate. Eight, which
+   is what the Administration Handbook (June 2025, p25) asks for as a minimum
+   inside the six assessed hours, and what this centre runs. The Handbook sets
+   no maximum, so this is a centre decision rather than a Cambridge one -- it
+   used to be written into twenty separate bounds and is now written once
+   (Ramy, 22 Sep 2026: "the cap is eight TPs"). */
+window.HUB_MAX_TP = 8;
 
 // Shared by every screen: the styled confirm (screen 1 had its own since the
 // 22 Aug 2026 three-fixes spec; screens 2, 3, 4, 8 and the home page still
