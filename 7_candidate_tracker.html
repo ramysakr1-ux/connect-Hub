@@ -185,11 +185,11 @@
   </div>
   <div id="detail"></div>
 </div>
-<script src="hub-shared.js?v=202609221818"></script>
-<script src="assignment-defaults.js?v=202609221818"></script>
-<script src="hub-tracker.js?v=202609221818"></script>
-<script src="hub-store.js?v=202609221818"></script>
-<script src="hub-sync.js?v=202609221818"></script>
+<script src="hub-shared.js?v=202609221823"></script>
+<script src="assignment-defaults.js?v=202609221823"></script>
+<script src="hub-tracker.js?v=202609221823"></script>
+<script src="hub-store.js?v=202609221823"></script>
+<script src="hub-sync.js?v=202609221823"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
@@ -415,7 +415,16 @@ function renderDetail(all){
     if (t.date) facts.push(['Taught', niceDate(t.date)]);
     if (t.at) trail.push([new Date(t.at).toISOString(), 'Feedback returned' + (t.tutor?' by '+t.tutor:'') + (t.g && t.g!=='un' ? ' — ' + st.name : '')]);
     const cur = p.tr.tp && p.tr.tp.feedback; const isCurrent = cur && T.tpNumberOf(cur)===n;
-    if (ME) { if (t.g!=='nd' && t.g!=='un' && isCurrent) actions.push(['Read the feedback', '4_feedback_returned.html', true]); }
+    /* Any teaching practice already returned, not only the one in flight.
+       4_feedback_returned.html shows the candidate's WHOLE record — every
+       teaching practice filed by "Start next TP", the lot printable as one PDF
+       — so the destination is the same either way, and requiring isCurrent
+       only withheld the door: on a finished course, where nothing is current,
+       every cell offered a candidate nothing but Close while six returned
+       documents sat behind the page (trainee walk, 22 Sep 2026). The tutor's
+       branch below keeps isCurrent, because its door goes to the feedback
+       SHEET, which only ever holds the current one. */
+    if (ME) { if (t.g!=='nd' && t.g!=='un') actions.push(['Read the feedback', '4_feedback_returned.html', true]); }
     else if (ASSESSOR) { if (t.fb) actions.push(['Open the TP document', `12_assessor_pack.html?${q}#tp${n}`, true]); actions.push(['Open the candidate\u2019s pack', `12_assessor_pack.html?${q}`, false]); }
     else if (t.g==='un') actions.push(['Sign off the feedback', `3_tutor_feedback.html?${q}`, true]);
     else if (t.g!=='nd' && isCurrent) actions.push(['Open the TP record', `3_tutor_feedback.html?${q}`, true]);
