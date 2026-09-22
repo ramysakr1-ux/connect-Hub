@@ -93,7 +93,7 @@
   textarea.resub{ background:oklch(96% 0.04 70); border-color:oklch(82% 0.09 75); }
   textarea.resub:focus{ border-color:oklch(60% 0.12 70); }
 </style>
-<link rel="stylesheet" href="hub-theme.css?v=202609221247">
+<link rel="stylesheet" href="hub-theme.css?v=202609221257">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -101,10 +101,10 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202609221247"></script>
-<script src="hub-shared.js?v=202609221247"></script>
-<script src="hub-store.js?v=202609221247"></script>
-<script src="hub-sync.js?v=202609221247"></script>
+<script src="assignment-defaults.js?v=202609221257"></script>
+<script src="hub-shared.js?v=202609221257"></script>
+<script src="hub-store.js?v=202609221257"></script>
+<script src="hub-sync.js?v=202609221257"></script>
 <script type="text/x-hub-app">
 const WORDING_KEY = 'connect_assignment_wording_v2';
 const SUB_KEY = 'connect_assignment_submissions_v1';
@@ -496,6 +496,28 @@ function doSubmit(){
   const sub = subFor(CURRENT);
   const snap = snapshot();
   if (sub.stage === 'resubmission_needed') {
+    /* Carry the locked sections into the resubmission. A section whose every
+       criterion was met renders as the green "Already met — carried forward"
+       box, which has no field in it, and snapshot() collects fields -- so the
+       resubmission went to the tutor holding ONLY the sections that had been
+       reopened. Four sections a tutor had already passed simply vanished from
+       sub2, and with them from the assessor's record of the resubmission
+       (trainee walk, 22 Sep 2026). "Carried forward" was true of the screen
+       and not of the data. */
+    const wa = WORDING && WORDING[CURRENT];
+    (wa && wa.sections || []).forEach((sec, i) => {
+      if (!sectionLocked(wa, sub, i)) return;
+      const first = sub.sub1 || {};
+      if (sec.type === 'text') {
+        if (snap.text[i] == null && first.text) snap.text[i] = first.text[i];
+      } else if (sec.type === 'picker') {
+        if (snap.picked[i] == null && first.picked) snap.picked[i] = first.picked[i];
+      } else if (sec.type === 'fields' && first.fields) {
+        Object.keys(first.fields).forEach(k => {
+          if (k.indexOf('s' + i + '_') === 0 && snap.fields[k] == null) snap.fields[k] = first.fields[k];
+        });
+      }
+    });
     sub.sub2 = snap;
     sub.sub2At = new Date().toISOString();
     sub.stage = 'resubmitted';
