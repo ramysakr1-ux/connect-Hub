@@ -79,6 +79,7 @@ Three attention colours total: blue (waiting on you), amber (candidate has work 
 - Filter is a single selection, not multi.
 - Any cell click opens the detail strip for that candidate × item.
 - Detail actions are context-dependent: `Open the mark sheet` for unmarked work, `Send a reminder` for missing, `Sign off the feedback` for a taught-but-unsigned TP, `Standardise` when double marks differ, `Assign a second marker` when there is none.
+  - **Three of those five are deliberately NOT built — Ramy, 22 September 2026: "leave them out."** `Send a reminder` has nothing to send through; Lite has no messaging. `Standardise` and `Assign a second marker` belong to the mark sheet, which is where the marker names and the double-marked flag are actually edited — consistent with folding double-marking into the tracker rather than giving it its own tab. Built and correct: `Open the mark sheet`, `Open the marked record`, `Sign off the feedback`, `Read the feedback`, `Open the TP record`, `Open the candidate's pack`. **This is a settled decision, not an outstanding gap — do not re-raise it.**
 - At risk = any fail or missing assignment, or two or more not-to-standard TPs.
 
 ## Data it reads from Connect Hub
