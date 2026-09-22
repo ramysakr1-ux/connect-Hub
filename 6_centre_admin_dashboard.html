@@ -375,10 +375,10 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609221232"></script>
-<script src="hub-store.js?v=202609221232"></script>
-<script src="hub-shared.js?v=202609221232"></script>
-<script src="hub-sync.js?v=202609221232"></script>
+<script src="assignment-defaults.js?v=202609221247"></script>
+<script src="hub-store.js?v=202609221247"></script>
+<script src="hub-shared.js?v=202609221247"></script>
+<script src="hub-sync.js?v=202609221247"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -549,8 +549,25 @@ async function renderAssessorBlock(rotated){
   try {
     const r = rotated || ASSESSOR_LINK || (ASSESSOR_LINK = await S.assessorLink());
     const link = S.assessorLinkFor(r.key);
-    const until = r.expires
-      ? 'Stops working on ' + fmtDate(r.expires) + ' — 14 days after the course end date.'
+    /* The store is asked first, but it does not always carry `expires` -- the
+       assessor pack has had a fromEnd() fallback for exactly that since it was
+       built. Without the same fallback here, a centre that HAS set an end date
+       could be told to go and set one, which is both wrong and useless advice,
+       and the two screens could disagree about whether the link expires at all
+       (course admin walk, 22 Sep 2026). Same arithmetic as the pack: the end
+       of that day, plus fourteen (Handbook 15). */
+    const fromEnd = () => {
+      let cs = null; try { cs = JSON.parse(localStorage.getItem('connect_course_settings')); } catch (e) {}
+      const end = cs && cs.end;
+      if (!end || !/^\d{4}-\d{2}-\d{2}$/.test(String(end))) return null;
+      const d = new Date(String(end) + 'T23:59:59');
+      if (isNaN(d.getTime())) return null;
+      d.setDate(d.getDate() + 14);
+      return d.toISOString();
+    };
+    const expires = r.expires || fromEnd();
+    const until = expires
+      ? 'Stops working on ' + fmtDate(expires) + ' — 14 days after the course end date.'
       : 'No course end date is set on the Settings tab, so it does not expire yet.';
     el.outerHTML = linkRow('Assessor link',
       'Read-only: every TP document, every assignment record, the tracker and the double-marking record. ' + esc(until),
