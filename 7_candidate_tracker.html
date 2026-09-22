@@ -185,11 +185,11 @@
   </div>
   <div id="detail"></div>
 </div>
-<script src="hub-shared.js?v=202609221800"></script>
-<script src="assignment-defaults.js?v=202609221800"></script>
-<script src="hub-tracker.js?v=202609221800"></script>
-<script src="hub-store.js?v=202609221800"></script>
-<script src="hub-sync.js?v=202609221800"></script>
+<script src="hub-shared.js?v=202609221809"></script>
+<script src="assignment-defaults.js?v=202609221809"></script>
+<script src="hub-tracker.js?v=202609221809"></script>
+<script src="hub-store.js?v=202609221809"></script>
+<script src="hub-sync.js?v=202609221809"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
@@ -219,7 +219,11 @@ function when(iso){ if(!iso) return ''; const d=new Date(iso); if(isNaN(d)) retu
 let WORDING = null; try{ WORDING = JSON.parse(localStorage.getItem('connect_assignment_wording_v2')); }catch(e){}
 if (!WORDING && window.CONNECT_HUB_DEFAULT_WORDING) WORDING = window.CONNECT_HUB_DEFAULT_WORDING;
 const ASSN = hubAssignmentOrder(WORDING).filter(k => k !== 'a5').map(k => ({ key:k, label:k.toUpperCase() }));
-const TPS = [1,2,3,4,5,6,7,8].map(n=>({key:'tp'+n, n, label:'TP'+n}));
+/* As many teaching practices as the course gives (Course admin > Settings),
+   eight when unset. */
+const TP_TOTAL = T.tpTotal();
+const BANDS = T.stageBands(TP_TOTAL);
+const TPS = Array.from({length:TP_TOTAL},(_,i)=>i+1).map(n=>({key:'tp'+n, n, label:'TP'+n}));
 
 // The handoff's vocabulary and colour buckets, over the Hub's own states.
 // Missing / due need deadlines the Hub does not hold, so they never render.
@@ -324,7 +328,13 @@ function render(){
   if (!all.length){ $('gridwrap').innerHTML = `<div class="empty">No trainee files imported yet. The tracker fills itself from the files you import on the dashboard and the feedback you return.</div>`; $('detail').innerHTML=''; return; }
   if (ME && !all.some(p=>Object.keys(p.tr.assignments||{}).length || Object.keys(p.tr.tp.history||{}).length || (p.tr.tp.feedback))){ $('gridwrap').innerHTML = `<div class="empty">Nothing to show yet. Your row fills in as you submit work and as your tutor returns it.</div>`; $('detail').innerHTML=''; return; }
   let html = '';
-  if (!isA) html += `<div class="grid bands" style="grid-template-columns:${gridCols}"><div></div><div class="band" style="grid-column:span 2">Stage 1</div><div class="band" style="grid-column:span 3">Stage 2</div><div class="band" style="grid-column:span 3">Stage 3</div><div></div></div>`;
+  /* Handbook 10.2: first third, halfway, final third -- so the bands follow the
+     course length rather than assuming eight. See T.stageBands. */
+  if (!isA) { const s1 = BANDS.s1End, s2 = BANDS.s3Start - BANDS.s1End - 1, s3 = TP_TOTAL - BANDS.s3Start + 1;
+    html += `<div class="grid bands" style="grid-template-columns:${gridCols}"><div></div>` +
+      `<div class="band" style="grid-column:span ${s1}">Stage 1</div>` +
+      (s2 > 0 ? `<div class="band" style="grid-column:span ${s2}">Stage 2</div>` : '') +
+      `<div class="band" style="grid-column:span ${s3}">Stage 3</div><div></div></div>`; }
   html += `<div class="grid colhead" style="grid-template-columns:${gridCols}"><div class="count">${shown.length} candidate${shown.length===1?'':'s'}</div>${cols.map(c=>`<div class="col"><b>${c.label}</b><span>mark / DM</span></div>`).join('')}<div class="tail-h">${isA?'Passed':'To std'}</div></div>`;
   html += shown.map(p=>{
     const risk = atRisk(p);
@@ -343,8 +353,15 @@ function render(){
       return `<div class="cell ${selected?'sel':''}" data-id="${esc(p.tr.id)}" data-col="${col.key}">${chip}</div>`;
     }).join('');
     const passed = ASSN.filter(a=>['PASS','RES'].includes(p.asg[a.key].code)).length;
-    const toStd = TPS.slice(0,6).filter(t=>['STD','ABOVE'].includes(p.tps[t.key].g)).length;
-    return `<div class="grid row ${risk?'risk':''}" style="grid-template-columns:${gridCols}"><div class="who"><div class="nm">${esc(p.tr.name)}</div>${risk?'<div class="flag">at risk</div>':''}</div>${cells}<div class="tail">${isA?passed+'/4':toStd+'/6'}</div></div>`;
+    /* design-handoff-candidate-tracker §Tail column: "5/6 to standard across
+       TP1-6". That is all but the last two of an eight-TP course, NOT the first
+       two thirds (which would be TP1-5) -- so it is kept as all but the last
+       two, which reproduces the spec's 6 exactly at eight and shortens with the
+       course. The spec gives one number and this preserves it; do not re-derive
+       it from the stage bands, which is what got it wrong first time. */
+    const tailOf = Math.max(1, TP_TOTAL - 2);
+    const toStd = TPS.slice(0,tailOf).filter(t=>['STD','ABOVE'].includes(p.tps[t.key].g)).length;
+    return `<div class="grid row ${risk?'risk':''}" style="grid-template-columns:${gridCols}"><div class="who"><div class="nm">${esc(p.tr.name)}</div>${risk?'<div class="flag">at risk</div>':''}</div>${cells}<div class="tail">${isA?passed+'/4':toStd+'/'+tailOf}</div></div>`;
   }).join('');
   const leg = isA ? ['WAIT','FAILRES','WAIT2','UNMARKED','FAIL','PASS','RES'].map(k=>A_STATE[k]) : ['un','NOTSTD','STD','ABOVE'].map(k=>T_STATE[k]);
   html += `<div class="legend">${leg.map(s=>`<div class="it"><span class="chip ${s.cls}">${s.t}</span><span class="lb">${s.name}</span></div>`).join('')}<div class="it"><span class="chip nd" style="color:var(--purp-soft)">/ —</span><span class="lb">Not double marked</span></div><div class="it"><span class="chip nd" style="color:var(--purp-soft)">/ DM JB</span><span class="lb">Second marker's initials</span></div></div>`;
@@ -388,8 +405,11 @@ function renderDetail(all){
     }
   } else {
     const t = p.tps[SEL.col]; const n = parseInt(SEL.col.slice(2),10); const st = T_STATE[t.g] || T_STATE.nd;
-    kicker = 'Teaching practice'; subtitle = 'TP' + n + ' · ' + (n<=2?'Stage 1':n<=5?'Stage 2':'Stage 3'); status = st;
-    facts.push(['Stage', n<=2?'Stage 1 (TP1–2)':n<=5?'Stage 2 (TP3–5)':'Stage 3 (TP6–8)']);
+    kicker = 'Teaching practice'; subtitle = 'TP' + n + ' · Stage ' + T.stageOf(n, TP_TOTAL); status = st;
+    facts.push(['Stage', (function(){ const g = T.stageOf(n, TP_TOTAL);
+      const lo = g===1 ? 1 : g===2 ? BANDS.s1End+1 : BANDS.s3Start;
+      const hi = g===1 ? BANDS.s1End : g===2 ? BANDS.s3Start-1 : TP_TOTAL;
+      return 'Stage ' + g + (lo===hi ? ' (TP'+lo+')' : ' (TP'+lo+'\u2013'+hi+')'); })()]);
     facts.push(['Tutor', t.tutor || 'not yet']);
     if (t.aim) facts.push(['Main aim', t.aim]);
     if (t.date) facts.push(['Taught', niceDate(t.date)]);

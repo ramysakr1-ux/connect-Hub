@@ -56,7 +56,39 @@ window.HubTracker = (function(){
     { field:'stage2', label:'Stage 2', cycle:STAGE2_CYCLE, labels:STAGE2_LABEL },
     { field:'stage3', label:'Stage 3', cycle:STAGE2_CYCLE, labels:STAGE2_LABEL }
   ];
-  var SECOND_HALF_FROM = 5;
+  /* How many teaching practices this course gives each candidate, set by the
+     centre on Course admin > Settings. Eight when unset, which is every course
+     made before that field existed. */
+  function tpTotal(){
+    try { var cs = JSON.parse(localStorage.getItem('connect_course_settings') || 'null');
+          var n = cs && parseInt(cs.tpCount, 10);
+          if (n >= 1 && n <= 8) return n; } catch (e) {}
+    return 8;
+  }
+
+  /* Handbook 10.2: Stage 1 is completed "in the first third of the course",
+     Stage 2 "ordinarily aims to be at the halfway point", and Stage 3 "in the
+     final third". Thirds of the course, not fixed teaching practice numbers --
+     and the Handbook works its own example with NINE TP lessons, so it plainly
+     does not assume eight either.
+     First third rounds down and the final third rounds up, which reproduces
+     the eight-TP bands the screens have always drawn (1-2 / 3-5 / 6-8) exactly,
+     and gives 1-2 / 3-4 / 5-6 for a six-TP course and 1-3 / 4-6 / 7-9 shape for
+     longer ones. Stage 1 keeps at least one TP however short the course. */
+  function stageBands(total){
+    var n = total || tpTotal();
+    var s1End = Math.max(1, Math.floor(n / 3));
+    var s3Start = Math.max(s1End + 1, n - Math.ceil(n / 3) + 1);
+    return { s1End: s1End, s3Start: s3Start, total: n };
+  }
+  function stageOf(tp, total){
+    var b = stageBands(total);
+    return tp <= b.s1End ? 1 : tp < b.s3Start ? 2 : 3;
+  }
+  /* "The second half of the course", which Handbook 10.2 uses for the Stage 3
+     triggers ("not making the expected progress in the second half"). Was a
+     hardcoded 5, which is the second half of eight. */
+  function secondHalfFrom(total){ return Math.floor((total || tpTotal()) / 2) + 1; }
   var STAGE2_DUE_AFTER = 4;
 
   /** The TP number a returned feedback record is about, from its own header. */
@@ -142,7 +174,7 @@ window.HubTracker = (function(){
     else if (latest) { standard = latest.key; from = 'TP' + latestN; }
     var failWhy = [];
     if (standard === 'NOTSTD' && from.indexOf('Stage') === 0) failWhy.push(from + ' not to standard');
-    if (backToBack && backToBack[1] >= SECOND_HALF_FROM) failWhy.push('TP' + backToBack[0] + ' and TP' + backToBack[1] + ' not to standard back to back');
+    if (backToBack && backToBack[1] >= secondHalfFrom()) failWhy.push('TP' + backToBack[0] + ' and TP' + backToBack[1] + ' not to standard back to back');
     if (fails.length > 1) failWhy.push(fails.join(' and ') + ' failed — not eligible for a Pass');
     var potentialFail = failWhy.length > 0;
     var letterIssued = !!(c.failLetter && String(c.failLetter).trim());
@@ -152,9 +184,9 @@ window.HubTracker = (function(){
       ? (lessonsLeft <= 0 ? 'no lessons left to teach — issue it today' : lessonsLeft + ' lesson' + (lessonsLeft === 1 ? '' : 's') + ' left to teach — the window is closing')
       : lessonsLeft + ' lessons left to teach');
     var letterAdvised = !potentialFail && !letterIssued && (fails.length + pending.length) >= 1 && fails.length <= 1;
-    var lateNotStd = notStdAt.filter(function(k){ return k >= SECOND_HALF_FROM; });
+    var lateNotStd = notStdAt.filter(function(k){ return k >= secondHalfFrom(); });
     var lateOnlyStd = [];
-    if (c.stage2 === 'ABOVE') for (var k2 = SECOND_HALF_FROM; k2 <= 8; k2++) { var g2 = tpGrade(c['tp'+k2]); if (g2 && g2.key === 'STD') lateOnlyStd.push(k2); }
+    if (c.stage2 === 'ABOVE') for (var k2 = secondHalfFrom(); k2 <= tpTotal(); k2++) { var g2 = tpGrade(c['tp'+k2]); if (g2 && g2.key === 'STD') lateOnlyStd.push(k2); }
     var stage3Why = null;
     if (!c.stage3) {
       if (c.stage2 === 'NOTSTD') stage3Why = 'not to standard at Stage 2';
@@ -193,6 +225,7 @@ window.HubTracker = (function(){
     none:      { text:'NOT STARTED', cls:'tk-none' }
   };
   return { ASSIGNMENTS:ASSIGNMENTS, SHOW_AS:SHOW_AS, HUB_KEY_FOR:HUB_KEY_FOR, TP_GRADES:TP_GRADES, tpGrade:tpGrade, AIMS:AIMS, aimShort:aimShort, aimFor:aimFor,
+    tpTotal:tpTotal, stageBands:stageBands, stageOf:stageOf, secondHalfFrom:secondHalfFrom,
     ASSIGN_LABEL:ASSIGN_LABEL, STAGES:STAGES, tpNumberOf:tpNumberOf, tpHistory:tpHistory, assignmentState:assignmentState,
     recordFor:recordFor, readCandidate:readCandidate, STATE_CHIP:STATE_CHIP };
 })();
