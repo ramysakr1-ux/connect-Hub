@@ -62,20 +62,41 @@
       <div class="hub-centre-logo" style="width:44px;height:44px;border-radius:7px;border:1.5px dashed var(--sand-line);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;color:var(--grey);text-align:center;line-height:1.2;">Centre<br>logo</div>
       <span id="centreName" class="hub-centre-name" style="font-family:'Newsreader',Georgia,serif;font-size:18px;color:var(--terracotta);"></span>
     </div>
-    <h1>Your teaching practice record</h1>
-    <p>Every teaching practice your tutor has returned, newest last, each with your plan, your self-evaluation and their feedback. Read-only. Print the lot as one PDF to keep.</p>
+    <h1 id="recordTitle">Your teaching practice record</h1>
+    <p id="recordIntro">Every teaching practice your tutor has returned, newest last, each with your plan, your self-evaluation and their feedback. Read-only. Print the lot as one PDF to keep.</p>
   </div>
   <a class="back" href="index.html">← Back</a>
   <div id="content"></div>
 </div>
-<script src="hub-shared.js?v=202609231056"></script>
-<script src="hub-store.js?v=202609231056"></script>
-<script src="hub-sync.js?v=202609231056"></script>
+<script src="hub-shared.js?v=202609231115"></script>
+<script src="hub-store.js?v=202609231115"></script>
+<script src="hub-sync.js?v=202609231115"></script>
 <script type="text/x-hub-app">
 function rec(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
-const fb=rec('chub:feedback');
-const plan=rec('chub:plan');
-const selfRec=rec('chub:selfeval');
+
+/* ?trainee= opens ONE candidate's record, for a tutor or the assessor.
+   Without it this screen only ever read chub:* -- whichever records happen to
+   be in the browser -- so a tutor could print all twelve candidates at once
+   (screen 15) or one assignment (screen 11 already takes ?trainee=), but never
+   one candidate's teaching practice record. "Print me Amara's record" was the
+   one thing they could not do (Ramy, 23 Sep 2026).
+
+   A TRAINEE LINK IGNORES IT. The parameter names any candidate on the course,
+   and the roster it reads is only ever in a tutor's or assessor's browser --
+   but leaving the door open and trusting that is how screen 7 came to hand the
+   tutor's grid to a trainee, so this refuses by mode rather than by what
+   happens to be in storage. */
+const VIEW_ID = (window.HubMode === 'tutor' || window.HubMode === 'assessor')
+  ? (new URLSearchParams(location.search).get('trainee') || '')
+  : '';
+const VIEWED = VIEW_ID
+  ? ((rec('connect_roster_v1') || { trainees: {} }).trainees || {})[VIEW_ID] || null
+  : null;
+const OWN = !VIEW_ID;
+
+const fb = OWN ? rec('chub:feedback') : ((VIEWED && VIEWED.tp && VIEWED.tp.feedback) || null);
+const plan = OWN ? rec('chub:plan') : ((VIEWED && VIEWED.tp && VIEWED.tp.plan) || null);
+const selfRec = OWN ? rec('chub:selfeval') : ((VIEWED && VIEWED.tp && VIEWED.tp.selfeval) || null);
 /* Every teaching practice already returned and filed. This page used to show
    the CURRENT one only, so the moment a candidate pressed "Start next TP" the
    document they had just been given became unreachable to them -- while the
@@ -83,7 +104,20 @@ const selfRec=rec('chub:selfeval');
    they could not keep a copy of it (Ramy, 21 Sep 2026: "at the end of the
    course, if they want, can they download this?"). The documents were here in
    chub:tpHistory the whole time; nothing rendered them. */
-const history = rec('chub:tpHistory') || {};
+const history = (OWN ? rec('chub:tpHistory') : ((VIEWED && VIEWED.tp && VIEWED.tp.history))) || {};
+
+/* Whose record this is, said on the page and therefore on the printout. A PDF
+   that goes into a portfolio must not be ambiguous about that, and "Your
+   teaching practice record" over someone else's work would be exactly that. */
+if (VIEW_ID) {
+  const who = (VIEWED && VIEWED.name) || 'This candidate';
+  const t = document.getElementById('recordTitle');
+  const i = document.getElementById('recordIntro');
+  if (t) t.textContent = who + ' \u2014 teaching practice record';
+  if (i) i.textContent = 'Every teaching practice returned to ' + who + ', newest last, each with the plan, the self-evaluation and the tutor\u2019s feedback. Read-only.';
+  const b = document.querySelector('a.back');
+  if (b) { b.href = window.HubMode === 'assessor' ? '12_assessor_pack.html?trainee=' + encodeURIComponent(VIEW_ID) : '6_centre_admin_dashboard.html'; b.textContent = window.HubMode === 'assessor' ? '\u2190 Back to the candidate\u2019s pack' : '\u2190 Back to Course admin'; }
+}
 /* Which teaching practice the live record is, so the page does not show it
    twice. The tutor files a TP into the history at the moment they return it,
    and the same document is also the live one until the candidate presses
