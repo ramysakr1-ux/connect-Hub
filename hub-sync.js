@@ -37,7 +37,48 @@
 
   // No link, no course. Every screen answers the same way rather than rendering
   // an empty shell of itself, and the page's own script never runs.
+  /* Shutting the screen down before the gate paints over it.
+   *
+   * gate() replaced document.body and left everything else running. The
+   * screen's own intervals kept ticking and its document-level listeners kept
+   * firing against elements that no longer existed -- "Cannot set properties
+   * of null (setting 'textContent')" from a handler writing to a status line
+   * that had just been deleted. Harmless in that the page was already a dead
+   * end, but a page that is dead should stop moving (24 Sep 2026).
+   *
+   * Three things end it, and none of them hides an error:
+   *   1. every timer the page set, so nothing ticks;
+   *   2. a capture-phase damper, so an event never reaches the screen's own
+   *      handlers -- capture on document runs before anything the screens
+   *      registered, and stopImmediatePropagation ends it there. The banner is
+   *      let through, because it is the one thing still meant to work;
+   *   3. a brand-new <body>, so nothing holds a live reference into the old
+   *      one.
+   */
+  var STOPPED = false;
+  function shutdown(){
+    if (STOPPED) return; STOPPED = true;
+    try {
+      var last = setTimeout(function(){}, 0);
+      for (var i = 1; i <= last; i++) { clearTimeout(i); clearInterval(i); }
+    } catch (e) {}
+    try {
+      ['focusin','focusout','keydown','keyup','keypress','input','change',
+       'click','mousedown','mouseup','paste','drop','submit'].forEach(function(t){
+        document.addEventListener(t, function(e){
+          var n = e.target;
+          if (n && n.closest && n.closest('#hubUnsaved')) return;   // the banner still works
+          e.stopImmediatePropagation();
+        }, true);
+      });
+    } catch (e) {}
+    try {
+      if (document.body) document.documentElement.replaceChild(document.createElement('body'), document.body);
+    } catch (e) {}
+  }
+
   function gate(reason){
+    shutdown();
     document.documentElement.style.background = 'oklch(92.5% 0.012 85)';
     document.body.style.cssText = 'margin:0;background:oklch(92.5% 0.012 85);';
     document.body.innerHTML =
