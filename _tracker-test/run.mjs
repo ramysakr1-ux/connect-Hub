@@ -2,7 +2,19 @@ import fs from "node:fs";
 import vm from "node:vm";
 import { makeEnv } from "./fake.mjs";
 
-const SRC = process.env.TRACKER_SRC || "../../CELTA connect-code prompt/../tracker/Code.js";
+// The tracker is a standalone Apps Script with no fixed home on disk, so the
+// path is given rather than guessed:
+//
+//   npx @google/clasp clone 14ZHkyw5TRKcJIfbXd4rZvPF-8FX4_eD5h4uxsvxaq9cAP-ttsrEeNhwZ
+//   TRACKER_SRC=/path/to/that/Code.js node run.mjs
+//
+// Reading from a clone rather than a copy kept here is the point: the test is
+// only worth anything run against the source that is actually deployed.
+const SRC = process.env.TRACKER_SRC;
+if (!SRC) {
+  console.error("Set TRACKER_SRC to a clasp clone's Code.js -- see the comment above, or README.md");
+  process.exit(2);
+}
 const { ss, globals } = makeEnv();
 const ctx = vm.createContext({ ...globals, console });
 vm.runInContext(fs.readFileSync(SRC, "utf8"), ctx);   // the REAL Code.js

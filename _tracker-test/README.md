@@ -4,7 +4,8 @@ The C/17 candidate tracker is a standalone Apps Script with no repository of
 its own, so this is where its tests live. `_`-prefixed, so Jekyll does not
 publish it.
 
-    node run.mjs
+    npx @google/clasp clone 14ZHkyw5TRKcJIfbXd4rZvPF-8FX4_eD5h4uxsvxaq9cAP-ttsrEeNhwZ
+    TRACKER_SRC=/path/to/that/Code.js node run.mjs
 
 ## What it is
 
@@ -37,5 +38,6 @@ handling — it does, against the shipped source.
 
 ## Keeping it honest
 
-Point `SRC` in `run.mjs` at a fresh `clasp clone` of the tracker before
-trusting a run; it reads the source from disk, not from the deployment.
+It reads the source from disk, never from the deployment, and refuses to run
+without `TRACKER_SRC` rather than testing a stale copy. Clone the tracker
+fresh before trusting a run.
