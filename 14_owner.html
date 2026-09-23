@@ -122,8 +122,8 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609231326"></script>
-<script src="hub-store.js?v=202609231326"></script>
+<script src="hub-shared.js?v=202609231330"></script>
+<script src="hub-store.js?v=202609231330"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -242,6 +242,11 @@ function render(courses, msg){
     <div class="courses">${rows || '<div class="empty">No courses yet. Make the first one, then send its tutor link to the centre.</div>'}</div>
     <p id="status"></p>`;
   if (msg) status(msg);
+  /* Every paint, not just the ones that go through showList: the FIRST paint
+     is load() -> render() and never touches showList, so hooking it there left
+     the line reading "checking..." for ever (caught on the live console,
+     23 Sep 2026). The toggle at the top repaints through render() too. */
+  fillMaterials();
 }
 
 /* Bound ONCE, here, and not inside render().
@@ -374,7 +379,7 @@ async function fillMaterials(){
 /* Repaint from a list the store has already sent back, and only fall back to
    asking for one if an older deployment answered without it. */
 function showList(courses, msg){
-  if (courses) { render(courses, msg); fillMaterials(); return; }
+  if (courses) { render(courses, msg); return; }
   load(msg);
 }
 
