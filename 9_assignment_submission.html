@@ -41,6 +41,8 @@
   .header{background:var(--paper); border-radius:6px; margin-bottom:20px; border-top:2px solid var(--teal); padding:22px 26px;}
   .header h1{font-family:'Newsreader',Georgia,serif; font-size:1.7rem; margin:0; color:var(--ink);}
   .header .meta{font-size:0.82rem; color:var(--grey); margin-top:8px; display:flex; gap:16px; flex-wrap:wrap;}
+  .duepill{display:inline-flex; align-items:center; border:1.5px solid; border-radius:20px;
+    padding:3px 12px; font-size:0.78rem; font-weight:700; letter-spacing:0.01em;}
   .locked-banner{background:var(--sand-deep); border-radius:6px; padding:10px 16px; font-size:0.85rem; font-weight:600; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
   .fb-card{background:oklch(97.8% 0.02 72); border-left:5px solid var(--ochre); border-radius:8px; padding:18px 22px; margin-bottom:18px;}
   .fb-card h2{font-family:'Newsreader',Georgia,serif; font-size:1.1rem; margin:0 0 8px; color:var(--ink);}
@@ -93,8 +95,8 @@
   textarea.resub{ background:oklch(96% 0.04 70); border-color:oklch(82% 0.09 75); }
   textarea.resub:focus{ border-color:oklch(60% 0.12 70); }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609240017">
-<link rel="stylesheet" href="hub-theme.css?v=202609240017">
+<link rel="stylesheet" href="hub-house.css?v=202609240026">
+<link rel="stylesheet" href="hub-theme.css?v=202609240026">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -102,10 +104,11 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202609240017"></script>
-<script src="hub-shared.js?v=202609240017"></script>
-<script src="hub-store.js?v=202609240017"></script>
-<script src="hub-sync.js?v=202609240017"></script>
+<script src="assignment-defaults.js?v=202609240026"></script>
+<script src="hub-due.js?v=202609240026"></script>
+<script src="hub-shared.js?v=202609240026"></script>
+<script src="hub-store.js?v=202609240026"></script>
+<script src="hub-sync.js?v=202609240026"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the candidate's submission form with a
@@ -237,12 +240,12 @@ function render(){
   DECL = sub.draft && sub.draft.decl ? sub.draft.decl : DECL;
   MATERIALSLINK = sub.draft && sub.draft.materialsLink ? sub.draft.materialsLink : MATERIALSLINK;
 
+  const locked = sub.stage==='submitted' || sub.stage==='resubmitted' || sub.stage==='closed';
   let html = `<div class="header"><p class="eyebrow">Written assignments</p><h1>${esc(a.title)}</h1>
-    <div class="meta">${a.wordMin?`<span id="wcCounter"></span>`:''}${a.format?`<span>${a.format==='prose'?'Continuous prose':'Structured'}</span>`:''}</div>
+    <div class="meta">${a.wordMin?`<span id="wcCounter"></span>`:''}${a.format?`<span>${a.format==='prose'?'Continuous prose':'Structured'}</span>`:''}${duePillHTML(dueFor(a, sub), locked)}</div>
     ${(a.criteria&&a.criteria.length)?`<p class="crit"><strong>Marking criteria:</strong> ${a.criteria.map(c=>esc(c.text)).join(' \u00b7 ')}</p>`:''}
   </div>`;
 
-  const locked = sub.stage==='submitted' || sub.stage==='resubmitted' || sub.stage==='closed';
   if (locked) html += `<div class="locked-banner"><span>${sub.stage==='closed'?'This assignment is closed.':sub.stage==='resubmitted'?'Resubmitted \u2014 waiting on your tutor.':'Submitted \u2014 waiting on your tutor.'}</span>${sub.stage==='resubmission_needed'?'':''}</div>`;
 
   if (sub.feedback) {
@@ -366,7 +369,8 @@ function render(){
   // Ramy, 20 Sep 2026: "nothing written means no submit" -- the declaration
   // alone used to be enough, and an empty body went through.
   const openStage = sub.stage==='draft' || sub.stage==='resubmission_needed' || sub.stage==='returned_unmarked';
-  const canSubmit = declOk(a) && hasWriting() && openStage;
+  const due = dueFor(a, sub);
+  const canSubmit = declOk(a) && hasWriting() && openStage && !due.past;
   html += `<div class="navbar"><span class="status" id="status"></span><span class="status" id="emptyHint">${whyNotSubmit(a, sub)}</span>
     <button class="btn btn-submit" id="submitBtn" ${canSubmit?'':'disabled'}>${sub.stage==='resubmission_needed'?'Resubmit':sub.stage==='returned_unmarked'?'Submit again':'Submit'}</button>
   </div>`;
@@ -395,7 +399,7 @@ function refreshGate(){
   const sub = subFor(CURRENT);
   const btn = $('submitBtn');
   const openStage = sub.stage==='draft' || sub.stage==='resubmission_needed' || sub.stage==='returned_unmarked';
-  if (btn) btn.disabled = !(declOk(a) && hasWriting() && openStage);
+  if (btn) btn.disabled = !(declOk(a) && hasWriting() && openStage && !dueFor(a, sub).past);
   // Its own element: the autosave's 'Saved' flash clears #status a moment later.
   /* This runs on every keystroke, through autosave. It used to carry its own
      copy of the reason and knew only one of the two -- so the declaration
@@ -408,6 +412,43 @@ function refreshGate(){
 // At least one word in any answer. Picked items alone are not writing.
 function hasWriting(){ return countWords() > 0; }
 
+/* The reminder. Ramy, 24 Sep 2026: "a reminder, not a warning."
+ *
+ * So it is quiet while there is time -- the date, plainly -- turns amber
+ * inside the last day, and only goes red once it has closed. It says nothing
+ * at all once the work is in: a countdown on something already submitted is
+ * nagging about a thing that is done. */
+function duePillHTML(due, locked){
+  if (!due.has || locked) return '';
+  const tone = due.past
+    ? 'background:oklch(94% 0.05 27);color:oklch(45% 0.15 27);border-color:oklch(45% 0.15 27);'
+    : due.soon
+      ? 'background:oklch(95% 0.05 75);color:oklch(45% 0.11 62);border-color:oklch(63% 0.096 72);'
+      : 'background:var(--box);color:var(--ink-warm);border-color:var(--sand-line);';
+  const label = due.past ? (due.resub ? 'Resubmission closed' : 'Closed') : 'Due';
+  return `<span class="duepill" style="${tone}">${label} ${esc(due.due)}${due.past ? '' : ' \u00b7 ' + esc(due.text)}${due.extended ? ' \u00b7 your extension' : ''}</span>`;
+}
+
+/* The deadline for this assignment, for this person.
+ *
+ * First submission closes at the assignment's own due date; a resubmission
+ * closes `resubDays` after the tutor returned it, because that day differs for
+ * every candidate. An extension the tutor has given lives in this candidate's
+ * tracker record -- TUTOR_ONLY, so it is read here and never written back --
+ * and can only ever give time (hub-due.js). */
+function extensions(){
+  try { return (JSON.parse(localStorage.getItem('chub:tracker')) || {}).extensions || {}; }
+  catch (e) { return {}; }
+}
+function dueFor(a, sub){
+  const resub = sub && sub.stage === 'resubmission_needed';
+  const base = resub
+    ? HubDue.windowFrom(sub.marked1At || sub.returnedAt, a && a.resubDays)
+    : (a && a.dueAt) || '';
+  const mine = HubDue.forPerson(base, extensions()['a:' + CURRENT + (resub ? ':resub' : '')]);
+  return { ...HubDue.state(mine.iso), extended: mine.extended, resub };
+}
+
 /* Why Submit is refusing, in the candidate's words -- read by render() and by
    refreshGate() on every keystroke, so the two can never disagree. Empty when
    there is nothing to refuse, or when the stage is closed and the button is
@@ -415,6 +456,11 @@ function hasWriting(){ return countWords() > 0; }
 function whyNotSubmit(a, sub){
   const openStage = sub.stage==='draft' || sub.stage==='resubmission_needed' || sub.stage==='returned_unmarked';
   if (!openStage) return '';
+  const due = dueFor(a, sub);
+  /* Said first, because nothing else the candidate fixes will help. And said
+     as a fact with a way forward, not a telling-off: the tutor can open it. */
+  if (due.past) return (due.resub ? 'The resubmission window closed ' : 'Submission closed ')
+    + due.due + '. Ask your tutor if you need it opened.';
   if (!hasWriting()) return 'Nothing written yet \u2014 an empty assignment can\u2019t be submitted.';
   if (!declOk(a)) return 'The declaration at the end is not complete yet \u2014 tick each line, and answer the question about AI.';
   return '';

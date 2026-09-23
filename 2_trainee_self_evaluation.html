@@ -146,8 +146,12 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
+  .duenote{display:inline-flex; align-items:center; gap:7px; font-size:0.78rem; font-weight:700;
+    color:var(--gold-deep, oklch(52% 0.098 70)); background:var(--gold-wash, oklch(94.5% 0.035 78));
+    border:1.5px solid var(--gold); border-radius:20px; padding:5px 13px; line-height:1.3;}
+  .duenote::before{content:"\2022"; font-size:1.1em; line-height:0;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609240017">
+<link rel="stylesheet" href="hub-house.css?v=202609240026">
 </head>
 <body>
 <div class="board">
@@ -223,9 +227,10 @@
   </div>
 </div>
 
-<script src="hub-shared.js?v=202609240017"></script>
-<script src="hub-store.js?v=202609240017"></script>
-<script src="hub-sync.js?v=202609240017"></script>
+<script src="hub-due.js?v=202609240026"></script>
+<script src="hub-shared.js?v=202609240026"></script>
+<script src="hub-store.js?v=202609240026"></script>
+<script src="hub-sync.js?v=202609240026"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -721,6 +726,29 @@ function renderTurnStatus(){
 /* Reserve exactly as much room as the fixed bar actually takes (it wraps on
    a narrow screen); see hubReserveForBar in hub-shared.js. */
 if (window.hubReserveForBar) hubReserveForBar('.actionbar');
+/* The standing turn-in reminder, in the centre's own words (Ramy, 24 Sep
+   2026: "TPs could just read something like submit before a certain time...
+   the self eval will read something like before we do our feedback").
+   Teaching practice moves around and Lite holds no TP dates, so there is
+   nothing to count down to and nothing to lock -- this is a line of guidance
+   beside the button, which is all he asked for. The written assignments have
+   real deadlines; those are set per assignment. */
+(function(){
+  function note(){
+    try { return (JSON.parse(localStorage.getItem('connect_course_settings')) || {})['selfDueNote'] || ''; }
+    catch (e) { return ''; }
+  }
+  function paint(){
+    var t = note(); if (!t) return;
+    var bar = document.querySelector('.actionbar .lhs'); if (!bar) return;
+    var el = document.getElementById('dueNote');
+    if (!el) { el = document.createElement('span'); el.id = 'dueNote'; el.className = 'duenote'; bar.appendChild(el); }
+    el.textContent = t;
+  }
+  document.addEventListener('hub:ready', paint);
+  paint();
+})();
+
 </script>
 </body>
 </html>

@@ -102,8 +102,8 @@
   .order-arrows button{ font-family:inherit; font-size:0.7rem; line-height:1; padding:2px 5px; border:1px solid var(--sand-line); background:var(--box); border-radius:4px; cursor:pointer; color:var(--grey); }
   .order-arrows button:disabled{ opacity:.35; cursor:default; }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609240017">
-<link rel="stylesheet" href="hub-theme.css?v=202609240017">
+<link rel="stylesheet" href="hub-house.css?v=202609240026">
+<link rel="stylesheet" href="hub-theme.css?v=202609240026">
 </head>
 <body>
 <div class="board">
@@ -117,10 +117,11 @@
     <div class="editor" id="editor"></div>
   </div>
 </div>
-<script src="assignment-defaults.js?v=202609240017"></script>
-<script src="hub-shared.js?v=202609240017"></script>
-<script src="hub-store.js?v=202609240017"></script>
-<script src="hub-sync.js?v=202609240017"></script>
+<script src="assignment-defaults.js?v=202609240026"></script>
+<script src="hub-due.js?v=202609240026"></script>
+<script src="hub-shared.js?v=202609240026"></script>
+<script src="hub-store.js?v=202609240026"></script>
+<script src="hub-sync.js?v=202609240026"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -265,6 +266,18 @@ function metaHTML(a){
       <span class="metahint">Held back hides it from every trainee's assignment list. Anyone who has already submitted keeps theirs.</span>
     </div>
     <div class="metarow">
+      <label>Due</label>
+      <input type="datetime-local" value="${HubDue.toLocalInput(a.dueAt)}" onchange="updateDue(this.value)">
+      <button type="button" class="btn-quiet" style="padding:6px 12px;font-size:0.78rem;" onclick="updateDue('')">Clear</button>
+      <span class="metahint">Submission closes then. Leave it empty and it stays open. A tutor can give one trainee longer without moving it for everyone.</span>
+    </div>
+    <div class="metarow">
+      <label>Resubmission</label>
+      <input type="number" min="1" max="30" step="1" style="width:64px;" value="${a.resubDays||''}"
+             onchange="updateMeta('resubDays', this.value)"> days after you return it
+      <span class="metahint">Counted from the day it goes back, because that differs for each trainee — and Handbook 9.2.3 wants the resubmission inside the course.</span>
+    </div>
+    <div class="metarow">
       <label>Format</label>
       <select onchange="updateMeta('format',this.value)">
         <option value="prose" ${a.format==='prose'?'selected':''}>Continuous prose</option>
@@ -290,7 +303,19 @@ function metaHTML(a){
     </div>
   </div>`;
 }
-function updateMeta(key,v){ DATA[CURRENT][key] = (key==='wordMin'||key==='wordMax') ? (parseInt(v,10)||0) : v; renderProseBanner(); }
+function updateMeta(key,v){
+  DATA[CURRENT][key] = (key==='wordMin'||key==='wordMax') ? (parseInt(v,10)||0)
+    : key==='resubDays' ? (parseInt(v,10)||0)
+    : v;
+  renderProseBanner();
+}
+/* Stored as an instant, not as the text in the box: see hub-due.js. Takes
+   effect at once like the release switch -- a date left waiting for Save is a
+   date someone thinks they set. */
+function updateDue(v){
+  DATA[CURRENT].dueAt = v ? HubDue.fromLocalInput(v) : '';
+  persist(); renderEditor();
+}
 /* A switch, not a text field: it takes effect at once, like the order arrows,
    rather than waiting for Save. */
 function updateReleased(v){
