@@ -87,9 +87,11 @@
   .pt{padding:12px 0; border-bottom:1px dashed var(--sand-line);}
   .pt:last-of-type{border-bottom:none;}
   .pt-row{display:flex; gap:10px; align-items:flex-start;}
-  .pt-num{background:var(--teal); color:var(--paper); width:22px; height:22px; border-radius:50%;
-    display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700;
-    flex:none; margin-top:11px;}
+  /* The numbered disc was removed when the boxes got bullets: two markers on
+     one point, and the numbers never meant anything -- they renumbered
+     themselves on every add and delete, and the feedback document has always
+     printed the points as a plain <ul>. The plan's Procedure column, which
+     these now copy, has no number either. */
   .pt-text{flex:1; min-width:0; font-family:'Karla',sans-serif; font-size:0.9rem;
     padding:10px 12px; border:2px solid var(--sand-line); border-radius:6px;
     background:#FFFDF8; color:var(--ink); line-height:1.7; min-height:56px;}
@@ -239,7 +241,7 @@
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609232339">
+<link rel="stylesheet" href="hub-house.css?v=202609232346">
 </head>
 <body>
 <div class="board">
@@ -364,9 +366,9 @@
 </div>
 
 
-<script src="hub-shared.js?v=202609232339"></script>
-<script src="hub-store.js?v=202609232339"></script>
-<script src="hub-sync.js?v=202609232339"></script>
+<script src="hub-shared.js?v=202609232346"></script>
+<script src="hub-store.js?v=202609232346"></script>
+<script src="hub-sync.js?v=202609232346"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -379,6 +381,7 @@ function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').repla
 function nl2br(s){ return esc(s).replace(/\n/g,'<br>'); }
 function autoGrow(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+2)+'px'; }
 const BULLET='• ';
+const POINT_BULLET='\u2022\u00A0';
 function procText(v){
   return (v||'').split('\n').filter(l=>l.replace('•','').trim()!=='').join('\n');
 }
@@ -571,7 +574,6 @@ function addPoint(listId, html, _unused){
   const row=document.createElement('div');
   row.className='pt';
   row.innerHTML=`<div class="pt-row">
-      <span class="pt-num"></span>
       <div class="pt-text" contenteditable="true" data-ph="Write one point — then tag it"></div>
       ${host.dataset.star ? `<button class="star" type="button" title="Prioritise this in the next TP">★</button>` : ''}
       <button class="crit-toggle" type="button">＋ criteria</button>
@@ -618,6 +620,32 @@ function addPoint(listId, html, _unused){
     document.execCommand('insertText',false,t);
   });
 
+  /* Bullets, exactly as the plan's Procedure column does them: the box starts
+     one, and Enter starts the next (Ramy, 23 Sep 2026: "there should be bullet
+     points... the same way we do with the procedure for the lesson plan").
+     The .blt path above cannot serve these -- it drives textareas by .value,
+     and a point box is contenteditable because it carries the criteria tags
+     inline. The bullets are typography, not content: cleanPoint strips them
+     back off, so the record and the feedback document are unchanged and an
+     untouched box still counts as empty. */
+  /* '\u2022 ' with an ordinary space renders as "\u2022Clear" -- HTML collapses a
+     trailing space, so the gap the textarea version gets for free has to be
+     asked for. */
+  const caretToEnd=()=>{
+    const r=document.createRange(); r.selectNodeContents(box); r.collapse(false);
+    const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    rememberCaret(box);
+  };
+  box.addEventListener('focus',()=>{
+    if(isBlankPoint(box)){ box.innerHTML=POINT_BULLET; caretToEnd(); }
+  });
+  box.addEventListener('keydown',e=>{
+    if(e.key!=='Enter' || e.shiftKey) return;
+    e.preventDefault();
+    document.execCommand('insertHTML',false,'<br>'+POINT_BULLET);
+    rememberCaret(box); dirty=true;
+  });
+
   toggle.addEventListener('click',()=>{
     if(!panel.dataset.built){ panel.innerHTML=critPanelHTML(scope); panel.dataset.built='1'; }
     panel.classList.toggle('open');
@@ -636,12 +664,8 @@ function addPoint(listId, html, _unused){
   const star=row.querySelector('.star');
   if(star) star.addEventListener('click',()=>{ star.classList.toggle('on'); dirty=true; });
 
-  row.querySelector('.del-btn').addEventListener('click',()=>{ row.remove(); renumber(host); dirty=true; });
-  renumber(host);
+  row.querySelector('.del-btn').addEventListener('click',()=>{ row.remove(); dirty=true; });
   return row;
-}
-function renumber(host){
-  [...host.children].forEach((r,i)=>{ r.querySelector('.pt-num').textContent=i+1; });
 }
 ['lSP','lAP','lST','lAT'].forEach(id=>{ addPoint(id,''); addPoint(id,''); });
 document.querySelectorAll('.add-pt').forEach(b=>{
@@ -663,7 +687,27 @@ function cleanPoint(box){
     if(n.tagName==='BR'){ out+='<br>'; plain+='\n'; return; }
     n.childNodes.forEach(walk);
   });
-  return {html:out.trim(), plain:plain.trim(), codes, raw:box.innerHTML};
+  /* The bullets are on screen only. Stripping them here keeps the stored
+     point and the feedback document exactly as they were -- the document
+     already wraps each point in its own <li>, so leaving them in would print
+     a bullet inside a bullet -- and it is what makes a box holding nothing
+     but "\u2022 " read as empty to the filter in readList. */
+  return {html:deBullet(out, '<br>').trim(), plain:deBullet(plain, '\n').trim(),
+          codes, raw:box.innerHTML};
+}
+/* A bullet at the very start, or straight after a line break. \u00A0 is in the
+   character class because a contenteditable writes the space after the bullet
+   as a non-breaking one. */
+function deBullet(s, brk){
+  return String(s||'')
+    .replace(/^[\s\u00A0]*\u2022[\s\u00A0]*/, '')
+    .split(brk).join('\u0000')
+    .replace(/\u0000[\s\u00A0]*\u2022[\s\u00A0]*/g, '\u0000')
+    .split('\u0000').join(brk);
+}
+function isBlankPoint(box){
+  return deBullet(box.textContent.split('\n').join('\n'), '\n')
+    .replace(/[\s\u00A0]/g, '') === '';
 }
 function readList(id){
   return [...$(id).children]
