@@ -239,7 +239,7 @@
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609232334">
+<link rel="stylesheet" href="hub-house.css?v=202609232339">
 </head>
 <body>
 <div class="board">
@@ -364,9 +364,9 @@
 </div>
 
 
-<script src="hub-shared.js?v=202609232334"></script>
-<script src="hub-store.js?v=202609232334"></script>
-<script src="hub-sync.js?v=202609232334"></script>
+<script src="hub-shared.js?v=202609232339"></script>
+<script src="hub-store.js?v=202609232339"></script>
+<script src="hub-sync.js?v=202609232339"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -480,18 +480,59 @@ const STOPWORDS=new Set(['the','a','an','and','or','of','to','in','on','for','wi
 function wordsOf(s){
   return (s||'').toLowerCase().match(/[a-z']+/g)||[];
 }
+/* Every matched word used to count one, and that put junk beside the right
+   answer: "clear instructions" gave 5f, 2c and 5k, because "clear" also
+   appears in 2c ("providing clear contexts") and in 5k ("...making any
+   relevant regulations... clear to learners"). 5f had both words and scored
+   2; the other two had one cheap word each and scored 1 -- enough to fill the
+   three slots (Ramy, 23 Sep 2026: "it's clearly 5f, why am I getting the
+   rest?").
+   So a word is now worth what it tells you. "clear" runs through a dozen
+   criteria and is worth little; "instructions" appears in almost none and is
+   worth a lot. That is inverse document frequency, measured off the criteria
+   list itself -- no wordlist to maintain, and it re-measures if a centre ever
+   edits the wording. Trailing -s is dropped so "instruction" and
+   "instructions" are the same word. */
+const DF = (function(){
+  const df = Object.create(null);
+  CRITERIA.forEach(([,,ctext])=>{
+    new Set(critWords(ctext)).forEach(w=>{ df[w] = (df[w]||0) + 1; });
+  });
+  return df;
+})();
+function stem(w){ return w.length > 3 && w.endsWith('s') && !w.endsWith('ss') ? w.slice(0,-1) : w; }
+function critWords(s){
+  return wordsOf(s).filter(w=>w.length>2 && !STOPWORDS.has(w)).map(stem);
+}
+function weight(w){
+  const n = DF[w] || 0;
+  if (!n) return 0;
+  return Math.log(CRITERIA.length / n);
+}
 function suggestCriteria(text, scope){
-  const words=wordsOf(text).filter(w=>w.length>2 && !STOPWORDS.has(w));
-  if(!words.length) return [];
+  const words=new Set(critWords(text));
+  if(!words.size) return [];
   const topics = scope==='planning' ? ['4'] : ['1','2','3','5'];
   const scored=CRITERIA.filter(c=>topics.indexOf(c[1])>=0).map(([code,,ctext])=>{
-    const cwords=new Set(wordsOf(ctext).filter(w=>w.length>2 && !STOPWORDS.has(w)));
+    const cwords=new Set(critWords(ctext));
     let score=0;
-    words.forEach(w=>{ if(cwords.has(w)) score++; });
+    words.forEach(w=>{ if(cwords.has(w)) score+=weight(w); });
     return {code,score};
   }).filter(x=>x.score>0);
+  if(!scored.length) return [];
   scored.sort((a,b)=>b.score-a.score);
-  return scored.map(x=>x.code);
+  /* Two floors, because there are two ways to be wrong.
+     RELATIVE: a clear winner should silence the also-rans -- 2c and 5k sat on
+     one cheap word each beside 5f's two.
+     ABSOLUTE: sometimes NOTHING is a good match and the top of the list is
+     still junk. "drilling the target language for stress" matched only
+     "language", which runs through ten criteria, so seven of them tied on the
+     same weak word and three were shown at random. A suggestion has to be
+     worth more than one word that common: MIN is what a word appearing in six
+     of the criteria is worth. Below that, say nothing. */
+  const MIN = Math.log(CRITERIA.length / 6);
+  const floor = Math.max(scored[0].score * 0.55, MIN);
+  return scored.filter(x=>x.score >= floor).map(x=>x.code);
 }
 
 /* Typing a code by hand (e.g. "4h ") turns into the same styled tag as clicking it —
