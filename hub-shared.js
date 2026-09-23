@@ -467,6 +467,10 @@ if (!window.HubStore) { if (document.readyState === 'loading') document.addEvent
   function submissionHTML(a, snap){
     if (!snap) return '<p class="readonly">Nothing submitted.</p>';
     let out = '';
+    /* The materials link the candidate gave, first, so a marker or an assessor
+       reading the record can open what the writing refers to (24 Sep 2026). */
+    var ml = (snap && snap.materialsLink || '').trim();
+    if (ml) out += '<p style="margin:0 0 10px;"><a href="' + esc(ml) + '" target="_blank" rel="noopener" style="display:inline-block;font-size:0.78rem;font-weight:700;padding:5px 12px;border-radius:16px;background:oklch(37.5% 0.058 195);color:#fff;text-decoration:none;">Open the materials \u2197</a></p>';
     a.sections.forEach((s,i) => {
       if (s.type==='text' && !/before you start/i.test(s.label) && snap.text && snap.text[i]) {
         out += `<div class="roundlabel">${esc(s.label)}</div><div class="readonly">${nl2br(snap.text[i])}</div>`;

@@ -55,6 +55,8 @@
   .xchg{margin:14px 0 4px; padding:12px 14px; border:1.5px solid var(--gold, oklch(63% 0.096 72)); border-left-width:5px; border-radius:6px; background:var(--box, oklch(96.2% 0.02 80));}
   .xchg-acts{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
   #xText{width:100%; font-family:ui-monospace,Menlo,monospace; font-size:0.8rem; line-height:1.5; padding:10px 12px; border:1.5px solid var(--sand-line); border-radius:6px; background:#FFFDF8;}
+  .mats-open{display:inline-block; font-size:0.78rem; font-weight:700; padding:5px 12px; border-radius:16px;
+    background:var(--teal); color:var(--paper); text-decoration:none;}
   .outcomes{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;}
   .outcomes button{font-family:'Karla',sans-serif; font-size:0.85rem; font-weight:600; padding:8px 16px; border-radius:16px;
     border:1.5px solid var(--sand-line); background:var(--card); cursor:pointer;}
@@ -78,8 +80,8 @@
   .btn-sand{background:var(--sand-deep); color:var(--ink);}
   .note{font-size:0.8rem; color:var(--grey); margin:0 0 14px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609240200">
-<link rel="stylesheet" href="hub-theme.css?v=202609240200">
+<link rel="stylesheet" href="hub-house.css?v=202609240203">
+<link rel="stylesheet" href="hub-theme.css?v=202609240203">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -87,12 +89,12 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202609240200"></script>
-<script src="hub-exchange.js?v=202609240200"></script>
-<script src="hub-due.js?v=202609240200"></script>
-<script src="hub-shared.js?v=202609240200"></script>
-<script src="hub-store.js?v=202609240200"></script>
-<script src="hub-sync.js?v=202609240200"></script>
+<script src="assignment-defaults.js?v=202609240203"></script>
+<script src="hub-exchange.js?v=202609240203"></script>
+<script src="hub-due.js?v=202609240203"></script>
+<script src="hub-shared.js?v=202609240203"></script>
+<script src="hub-store.js?v=202609240203"></script>
+<script src="hub-sync.js?v=202609240203"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -227,6 +229,13 @@ $('picker').addEventListener('click', e => { const b=e.target.closest('button');
 function summarize(a, snap){
   if (!snap) return '<p class="note">Nothing submitted yet.</p>';
   let out = '';
+  /* The materials the candidate linked -- worksheets, the coursebook page, a
+     recording -- as something to OPEN, at the top of the submission. It was
+     stored on every snapshot and read only for the overlap check; a tutor
+     marking the assignment had no way to look at what it referred to
+     (Ramy, 24 Sep 2026: "for assignments as well"). */
+  const ml = (snap.materialsLink||'').trim();
+  if (ml) out += `<p style="margin:0 0 10px;"><a class="mats-open" href="${esc(ml)}" target="_blank" rel="noopener">Open the materials \u2197</a></p>`;
   a.sections.forEach((s,i) => {
     if (s.type==='text' && !/before you start/i.test(s.label) && snap.text && snap.text[i]) {
       out += `<div class="roundlabel">${esc(s.label)}</div><div class="readonly">${nl2br(snap.text[i])}</div>`;
