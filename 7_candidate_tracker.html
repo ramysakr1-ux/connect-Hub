@@ -185,17 +185,29 @@
   </div>
   <div id="detail"></div>
 </div>
-<script src="hub-shared.js?v=202609230000"></script>
-<script src="assignment-defaults.js?v=202609230000"></script>
-<script src="hub-tracker.js?v=202609230000"></script>
-<script src="hub-store.js?v=202609230000"></script>
-<script src="hub-sync.js?v=202609230000"></script>
+<script src="hub-shared.js?v=202609231013"></script>
+<script src="assignment-defaults.js?v=202609231013"></script>
+<script src="hub-tracker.js?v=202609231013"></script>
+<script src="hub-store.js?v=202609231013"></script>
+<script src="hub-sync.js?v=202609231013"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
 // ?me=1: the candidate's own view. One row, built from this browser's own
 // records (the paperwork and what the tutor returned), nothing editable.
-const ME = new URLSearchParams(location.search).get('me') === '1';
+//
+// A TRAINEE LINK IS ALWAYS THIS VIEW, parameter or not. Without the second
+// test, a candidate who reached this page without ?me=1 -- a bookmark, a
+// trimmed URL, a back button -- fell through to the roster branch below and
+// got the TUTOR's grid: the whole-cohort chrome, copy written to the tutor
+// ("yours to set"), and RO false, so the Stage records, the Fail letter and
+// withdrawal were editable. Their writes never reached the store (hub-sync's
+// TUTOR_ONLY drops tracker writes from a trainee link), which made it worse
+// rather than better: the edits looked saved and were not. The roster itself
+// was never in their browser -- a trainee's boot returns before hub-sync
+// builds connect_roster_v1 -- so nothing leaked, and this keeps it that way
+// rather than resting on it (walked 23 Sep 2026).
+const ME = new URLSearchParams(location.search).get('me') === '1' || window.HubMode === 'trainee';
 // The assessor's view (Ramy, 20 Sep 2026): the tutor's grid, nothing editable,
 // the tutor's prompts kept to the tutor, doors into the pack's documents.
 const ASSESSOR = window.HubMode === 'assessor';
