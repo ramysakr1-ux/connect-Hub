@@ -37,22 +37,34 @@ window.HUB_MAX_TP = 8;
   }
   // One hover rule for every clickable card, one for every pill and button
   // (Ramy, 20 Sep 2026: "one rule for all the cards, one rule for all the
-  // pills"), in the Hub's teal, on every screen. Cards lift a hair and take
-  // a teal ring; pills and buttons take the ring and a light teal wash.
-  // Chosen states keep their own colour; disabled things do nothing.
+  // pills"), on every screen. Chosen states keep their own colour; disabled
+  // things do nothing.
+  //
+  // The ring and wash carry NO HUE (Ramy, 23 Sep 2026: "that green hover on
+  // the pills is a bit too much... a softer green or a different colour
+  // altogether", then option D of four). They used to be teal in three
+  // places at once -- ring, wash and border -- which put a green halo on
+  // every control whatever colour the control itself was, and once the
+  // structural colour went gold that meant a green ring around a gold fill.
+  // Hue-free, hover says "your mouse is on something" and nothing else, so
+  // gold still means "the action here" and teal "the decision".
+  //
+  // A control with a fill of its own is left out of the wash, or the wash
+  // replaces the fill -- which is what happened to .btn-gold and .btn-add
+  // the moment they existed. Any new filled class has to be added here too.
   if(!document.getElementById('hub-hover-css')){
     var hcss=document.createElement('style'); hcss.id='hub-hover-css';
     // Ramy, 20 Sep 2026: the credit is a watermark like Connect's -- in the header band beside the mark, on the landing screens only, never a door.
-    hcss.textContent=":root{ --hub-ring: 0 0 0 2px oklch(88% 0.04 195); --hub-wash: oklch(94% 0.025 195); --bronze: oklch(50% 0.09 62); }"+
+    hcss.textContent=":root{ --hub-ring: 0 0 0 2px oklch(86% 0.014 82); --hub-wash: oklch(96% 0.009 82); --bronze: oklch(50% 0.09 62); }"+
       ".hub-credit{ font-family:'Karla',sans-serif; font-size:11px; letter-spacing:0.01em; color:var(--bronze); opacity:.8; white-space:nowrap; margin-left:12px; align-self:center; }"+
       ".hub-credit b{ font-weight:700; }"+
       "@media (max-width:768px){ .hub-credit{ display:none; } }"+
       "a.card, .tk-card[href], .cell, .list-row > button:first-child{ transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease; }"+
-      "a.card:hover, .cell:hover{ transform: translateY(-1px); box-shadow: var(--hub-ring); border-color: var(--teal, #1E6B63); }"+
+      "a.card:hover, .cell:hover{ transform: translateY(-1px); box-shadow: var(--hub-ring); }"+
       ".cell:hover .chip{ box-shadow: none; }"+
       "button:not(:disabled), .btn, a.act, .chip[data-role], .pchip, .crit-toggle, .picker button, .filter, .tab, .sg, .rb, .copyfirst, .export-return, .order-arrows button{ transition: box-shadow .12s ease, background-color .12s ease, border-color .12s ease; }"+
-      "button:not(:disabled):hover, .btn:not(:disabled):hover, a.act:hover, .chip[data-role]:not(.disabled):hover, .pchip:hover, .crit-toggle:hover, .picker button:hover, .filter:hover, .tab:hover, .sg:hover, .rb:hover, .copyfirst:hover{ box-shadow: var(--hub-ring); border-color: var(--teal, #1E6B63); }"+
-      "button:not(:disabled):not(.primary):not(.btn-teal):not(.btn-submit):not(.active):not(.on):not(.picked):not(.confirm-action):not(.act):hover{ background-color: var(--hub-wash); }"+
+      "button:not(:disabled):hover, .btn:not(:disabled):hover, a.act:hover, .chip[data-role]:not(.disabled):hover, .pchip:hover, .crit-toggle:hover, .picker button:hover, .filter:hover, .tab:hover, .sg:hover, .rb:hover, .copyfirst:hover{ box-shadow: var(--hub-ring); }"+
+      "button:not(:disabled):not(.primary):not(.btn-teal):not(.btn-gold):not(.btn-add):not(.btn-submit):not(.active):not(.on):not(.picked):not(.confirm-action):not(.act):hover{ background-color: var(--hub-wash); }"+
       "@media (prefers-reduced-motion: reduce){ a.card, .cell, button, .btn{ transition: none; } a.card:hover, .cell:hover{ transform: none; } }";
     document.head.appendChild(hcss);
   }
