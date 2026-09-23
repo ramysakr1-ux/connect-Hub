@@ -22,6 +22,16 @@
  *   the quiet things on the right -- never a sentence sandwiched between two
  *   buttons.
  *
+ * EVERY var() HERE CARRIES A FALLBACK, and that is not tidiness. The base
+ * palette is declared per screen, in each screen's own :root, and five
+ * screens (8, 9, 10, 11, 15) never declared --gold or --gold-lifted, three
+ * never declared --ink-warm. A var() with no fallback and no value makes the
+ * whole declaration invalid, so `border:1.5px dashed var(--gold, oklch(63% 0.096 72))` simply did
+ * not draw -- the dashed chip on the assignment wording screen came out with
+ * no border at all. Declaring the palette in this file instead would be
+ * worse: it loads last, so it would overwrite any screen that means to
+ * differ.
+ *
  * NOT the printed documents. Those are Cambridge-facing and keep their own
  * header colours (Ramy, 23 Sep 2026: "leave the printed documents alone").
  */
@@ -33,27 +43,27 @@
 }
 
 /* ---- buttons ---------------------------------------------------------- */
-.btn-gold{background:var(--gold); color:var(--ink-warm); font-weight:700; border:none;}
-.btn-gold:hover{background:var(--gold-lifted);}
-.btn-quiet{background:none; color:var(--grey); border:1.5px solid var(--sand-line);}
-.btn-quiet:hover{border-color:var(--grey); color:var(--ink);}
-.btn-add{background:none; border:1.5px dashed var(--gold); color:var(--gold-deep); font-weight:700;
+.btn-gold{background:var(--gold, oklch(63% 0.096 72)); color:var(--ink-warm, oklch(30% 0.042 58)); font-weight:700; border:none;}
+.btn-gold:hover{background:var(--gold-lifted, oklch(70% 0.12 72));}
+.btn-quiet{background:none; color:var(--grey, oklch(51% 0.017 70)); border:1.5px solid var(--sand-line, oklch(89.5% 0.012 82));}
+.btn-quiet:hover{border-color:var(--grey, oklch(51% 0.017 70)); color:var(--ink, oklch(23.5% 0.017 65));}
+.btn-add{background:none; border:1.5px dashed var(--gold, oklch(63% 0.096 72)); color:var(--gold-deep); font-weight:700;
   border-radius:20px; padding:9px 20px; font-family:'Karla',sans-serif; font-size:0.84rem; cursor:pointer;}
 .btn-add:hover{background:var(--gold-wash);}
 .btn-add:disabled{opacity:.5; cursor:not-allowed;}
-.btn-print{background:none; border:none; color:var(--grey); font-family:'Karla',sans-serif;
+.btn-print{background:none; border:none; color:var(--grey, oklch(51% 0.017 70)); font-family:'Karla',sans-serif;
   font-size:0.82rem; font-weight:600; cursor:pointer; padding:6px 2px;
-  text-decoration:underline; text-underline-offset:4px; text-decoration-color:var(--gold);}
-.btn-print:hover{color:var(--ink-warm);}
+  text-decoration:underline; text-underline-offset:4px; text-decoration-color:var(--gold, oklch(63% 0.096 72));}
+.btn-print:hover{color:var(--ink-warm, oklch(30% 0.042 58));}
 
 /* ---- a select that looks like a control -------------------------------- */
 .house-sel{position:relative; display:flex;}
 .house-sel select{appearance:none; -webkit-appearance:none; width:100%;
   font-family:'Karla',sans-serif; font-size:0.92rem; font-weight:600;
   padding:0 40px 0 14px; height:46px; min-height:46px;
-  border:1.5px solid var(--sand-line); border-left:4px solid var(--gold); border-radius:6px;
-  background:#FFFDF8; color:var(--ink); cursor:pointer;}
-.house-sel select:hover{border-color:var(--gold);}
+  border:1.5px solid var(--sand-line, oklch(89.5% 0.012 82)); border-left:4px solid var(--gold, oklch(63% 0.096 72)); border-radius:6px;
+  background:#FFFDF8; color:var(--ink, oklch(23.5% 0.017 65)); cursor:pointer;}
+.house-sel select:hover{border-color:var(--gold, oklch(63% 0.096 72));}
 .house-sel select:focus{outline:none; border-color:var(--gold-deep);}
 .house-sel::after{content:""; position:absolute; right:16px; top:50%; width:8px; height:8px;
   border-right:2px solid var(--gold-deep); border-bottom:2px solid var(--gold-deep);
@@ -70,7 +80,7 @@
 /* ---- "you write this" -------------------------------------------------- */
 .aim-cue{font-size:0.72rem; font-style:italic; color:var(--gold-deep); margin:6px 0 0;
   display:flex; align-items:center; gap:6px; line-height:1.3;}
-.aim-cue::before{content:""; width:12px; height:1.5px; background:var(--gold); flex:none;}
+.aim-cue::before{content:""; width:12px; height:1.5px; background:var(--gold, oklch(63% 0.096 72)); flex:none;}
 .aim-cue.done{display:none;}
 
 @media print{ .btn-add,.btn-print,.aim-cue{display:none !important;} }
