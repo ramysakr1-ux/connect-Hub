@@ -69,6 +69,15 @@
   .card.aim{border-left-color:var(--terracotta);}
   .card.prob{border-left-color:var(--ochre);}
   .card.mats{border-left-color:var(--teal);}
+  .mats-preferred{display:inline-block;margin-left:7px;padding:1px 8px;border:1.3px solid var(--teal);border-radius:20px;
+  font-size:0.66rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--teal);vertical-align:2px;}
+  .mats-fallback{margin-top:14px;}
+  .mats-fallback > summary{cursor:pointer;font-size:0.82rem;color:var(--grey);list-style:none;}
+  .mats-fallback > summary::-webkit-details-marker{display:none;}
+  .mats-fallback > summary::before{content:'▸ ';}
+  .mats-fallback[open] > summary::before{content:'▾ ';}
+  .mats-fallback > summary:hover{color:var(--teal);}
+  .mats-fallback .dropzone{margin-top:10px;}
   .dropzone{margin-top:10px; border:2px dashed var(--teal); border-radius:8px; padding:16px; text-align:center;
     font-size:0.85rem; color:var(--teal); cursor:pointer; background:oklch(94% 0.03 195);}
   .dropzone:hover, .dropzone.dragover{border-color:var(--terracotta-dk); background:oklch(91% 0.045 195); color:var(--ink);}
@@ -349,19 +358,28 @@
     <p class="guide">Everything you and the learners will need, including where it came from. Use bullet
     points, one per line.</p>
     <textarea id="fMats" class="blt" rows="3"></textarea>
+    <!-- The link is the main road and the upload is the lay-by. Lite has no
+         accounts, so an attached file cannot land in the candidate's own
+         Drive -- it is created by the store, which runs as the centre, and it
+         lives on the centre's Drive and its storage for ever after. A pasted
+         link is the same file staying where it already is, theirs. That is
+         the whole reason for the order, the pill and the fold (Ramy,
+         23 Sep 2026). -->
     <div class="row" style="margin-top:12px;">
-      <label for="fMatsLink">Materials link (Drive)</label>
-      <p class="hint">Paste the share link to your worksheet/slides/PDF on Drive — set sharing to “anyone with the link can view” so your tutor can see it below without downloading.</p>
+      <label for="fMatsLink">Materials link (Drive) <span class="mats-preferred">Preferred</span></label>
+      <p class="hint">Put the worksheet, slides or PDF on your own Drive and paste the share link — set it to “anyone with the link can view”. The file stays yours, and your tutor opens it straight from the plan.</p>
       <input type="url" id="fMatsLink" placeholder="https://drive.google.com/...">
     </div>
     <div id="matsPreview"></div>
-    <div class="dropzone" id="matsDrop">
-      <span id="matsDropText">Drag and drop a file here, or <u>click to choose</u></span>
-      <input type="file" id="matsFileInput" style="display:none;">
-    </div>
-    <p class="hint" style="margin-top:6px;"><strong>This file goes with your plan.</strong> It is saved to the course and your
-    tutor and the assessor can open it from the plan itself. Up to 10MB. Anything bigger, or already on Drive, belongs in
-    the materials link above.</p>
+    <details class="mats-fallback">
+      <summary>No Drive? Attach the file instead</summary>
+      <div class="dropzone" id="matsDrop">
+        <span id="matsDropText">Drag and drop a file here, or <u>click to choose</u></span>
+        <input type="file" id="matsFileInput" style="display:none;">
+      </div>
+      <p class="hint" style="margin-top:6px;">Attached files are kept with the course rather than on your own Drive, so use the link
+      above where you can. Up to 2MB — anything bigger belongs on Drive.</p>
+    </details>
   </div>
 
   <div class="card" style="border-left-color:var(--ochre);">
@@ -494,9 +512,9 @@
   <span class="status" id="status"></span>
 </div>
 
-<script src="hub-shared.js?v=202609231249"></script>
-<script src="hub-store.js?v=202609231249"></script>
-<script src="hub-sync.js?v=202609231249"></script>
+<script src="hub-shared.js?v=202609231321"></script>
+<script src="hub-store.js?v=202609231321"></script>
+<script src="hub-sync.js?v=202609231321"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -539,7 +557,10 @@ $('fMatsLink').addEventListener('input', ()=>{ renderMatsPreview(); dirty=true; 
    and COURSE_KEYS, so anything else is local by construction. What reaches the
    tutor is the materials link. */
 const MATS_LOCAL_KEY = 'chub:matsfile';   /* deliberately NOT a synced key */
-const MATS_MAX_BYTES = 10 * 1024 * 1024;
+/* 2MB, not 10: this is the fallback for a worksheet, and a slide deck
+   belongs on the candidate's own Drive rather than on the centre's
+   (Ramy, 23 Sep 2026). */
+const MATS_MAX_BYTES = 2 * 1024 * 1024;
 
 let MATS_FILE=null;
 
@@ -605,8 +626,8 @@ function handleMatsFile(file){
   if(!file) return;
   matsNote('');
   if (file.size > MATS_MAX_BYTES){
-    matsNote(file.name + ' is ' + prettySize(file.size) + '. Files here are kept in this browser and capped at '
-      + prettySize(MATS_MAX_BYTES) + '. Put it on Drive and paste the materials link above \u2014 that is what your tutor opens anyway.');
+    matsNote(file.name + ' is ' + prettySize(file.size) + '. Attachments are capped at '
+      + prettySize(MATS_MAX_BYTES) + '. Put it on your own Drive and paste the materials link above \u2014 that is the better way round anyway, and the file stays yours.');
     return;
   }
   const reader=new FileReader();
