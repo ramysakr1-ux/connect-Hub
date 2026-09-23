@@ -63,12 +63,6 @@
   .xchg-acts{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
   #xText{width:100%; font-family:ui-monospace,Menlo,monospace; font-size:0.8rem; line-height:1.5;
     padding:10px 12px; border:1.5px solid var(--sand-line); border-radius:6px; background:#FFFDF8;}
-  .xprev{margin-top:12px; border:1.5px solid var(--gold); border-radius:6px; background:var(--gold-wash, oklch(94.5% 0.035 78)); padding:12px 16px; font-size:0.84rem; line-height:1.55;}
-  .xprev h3{font-family:'Newsreader',Georgia,serif; font-size:1rem; margin:0 0 8px; color:var(--ink-warm);}
-  .xprev .row{display:grid; grid-template-columns:200px 1fr; gap:6px 14px; padding:4px 0; border-top:1px solid oklch(88% 0.05 78);}
-  .xprev .row b{color:var(--gold-deep, oklch(52% 0.098 70)); font-weight:700;}
-  .xprev .miss{color:var(--brick); margin-top:8px;}
-  .xprev .acts{margin-top:12px; display:flex; gap:8px;}
   .card.seen{border-left-color:var(--sand-deep); background:#F6F0E3;}
   .card.selfc{border-left-color:var(--ochre);}
   .card.selfc textarea{background:#FBF3E4; border-color:var(--ochre);}
@@ -251,7 +245,7 @@
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609240111">
+<link rel="stylesheet" href="hub-house.css?v=202609240122">
 </head>
 <body>
 <div class="board">
@@ -311,20 +305,22 @@
        tell me where." Two things, both always visible, nothing to open. The
        old title, "Write it with an AI", read as the AI writing the feedback,
        which is the opposite of what this is. -->
+  <!-- Ramy, 24 Sep 2026: "People copy it for all different kinds of reasons
+       ... I want Copy. I don't want this white box to appear ... it only
+       appears if I paste." So: Copy, and nothing about AI or pasting. The box
+       opens from a quiet link, or by itself when something is pasted onto the
+       page outside a field; and once text is in it, it reads itself -- there
+       is no "Read it" to press and nothing to confirm: it goes in, and Undo puts it back. -->
   <div class="card xchg" id="xchg" style="display:none;">
     <div class="xchg-acts">
       <button type="button" class="btn btn-gold" id="xCopy">Copy</button>
-      <span class="guide" style="margin:0;">the plan and analysis, with a slot for each box below — paste it into any AI and dictate.</span>
+      <span class="guide" style="margin:0;">the plan and language analysis, as text.</span>
+      <button type="button" class="example-btn" id="xPasteToggle" style="margin-left:auto;">Paste something back</button>
     </div>
-    <div id="xPaste" style="margin-top:14px;">
-      <label for="xText" style="display:block; font-size:0.78rem; font-weight:700; color:var(--teal); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px;">Paste its answer here</label>
-      <textarea id="xText" rows="6" placeholder="Paste the whole reply. It can include the plan — that is ignored."></textarea>
-      <div class="xchg-acts" style="margin-top:8px;">
-        <button type="button" class="btn btn-gold" id="xRead">Read it</button>
-        <span class="status" id="xStatus"></span>
-      </div>
-      <div id="xPreview" style="display:none;"></div>
+    <div id="xPaste" style="display:none; margin-top:14px;">
+      <textarea id="xText" rows="4" placeholder="Paste here — it goes straight into the boxes."></textarea>
     </div>
+    <p class="guide" id="xDone" style="display:none; margin:10px 0 0;"></p>
   </div>
 
   <div class="card grade" style="text-align:center;">
@@ -399,10 +395,10 @@
 </div>
 
 
-<script src="hub-exchange.js?v=202609240111"></script>
-<script src="hub-shared.js?v=202609240111"></script>
-<script src="hub-store.js?v=202609240111"></script>
-<script src="hub-sync.js?v=202609240111"></script>
+<script src="hub-exchange.js?v=202609240122"></script>
+<script src="hub-shared.js?v=202609240122"></script>
+<script src="hub-store.js?v=202609240122"></script>
+<script src="hub-sync.js?v=202609240122"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1573,52 +1569,74 @@ if (window.hubReserveForBar) hubReserveForBar('.actionbar');
   var so = showSeen; showSeen = function(d){ so(d); show(); };
   show();
   $('xCopy').addEventListener('click', function(){ hubCopyButton($('xCopy'), briefNow()); });
+  $('xPasteToggle').addEventListener('click', function(){
+    var open = $('xPaste').style.display === 'none';
+    $('xPaste').style.display = open ? '' : 'none';
+    $('xPasteToggle').textContent = open ? 'Hide' : 'Paste something back';
+    if (open) $('xText').focus();
+  });
+  /* It reads itself: the moment there is text in the box, the preview shows
+     what would land. No button between pasting and seeing. */
+  var readTimer = null;
+  $('xText').addEventListener('input', function(){ clearTimeout(readTimer); readTimer = setTimeout(readNow, 250); });
+  /* And a paste anywhere on the page that is not into a field opens the box
+     with what was pasted -- "it only appears if I paste". */
+  document.addEventListener('paste', function(e){
+    var t = e.target;
+    if (t && (t.closest && t.closest('input, textarea, [contenteditable]'))) return;
+    var txt = (e.clipboardData || window.clipboardData).getData('text/plain');
+    if (!txt || !/^\s*#/m.test(txt)) return;      /* only something that looks like a brief */
+    e.preventDefault();
+    if ($('xPaste').style.display === 'none') $('xPasteToggle').click();
+    $('xText').value = txt; readNow();
+    card.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  });
   /* Read, show what would land, and only then apply. A sheet filled by a
      machine and returned unread is the one thing this must never do. */
-  $('xRead').addEventListener('click', function(){
-    var r = HubExchange.read($('xText').value, DOC || {});
+  /* Ramy, 24 Sep 2026: "I just copy and then I paste and then it goes there.
+     End of the story." So it does. What was pasted is read and put in the
+     boxes at once, through draftApply -- the path a saved draft takes -- and
+     the line under the card says what landed. The one thing kept is Undo: the
+     form as it was the moment before, one click, because a wrong paste should
+     cost nothing. */
+  var BEFORE = null;
+  function readNow(){
+    var txt = $('xText').value;
+    if (!txt.trim()) return;
+    var r = HubExchange.read(txt, DOC || {});
     var ids = Object.keys(r.found);
-    var prev = $('xPreview'); prev.style.display = '';
+    var done = $('xDone'); done.style.display = '';
     if (!ids.length) {
-      prev.innerHTML = '<div class="xprev"><h3>Nothing recognised</h3>Paste the model\u2019s answer with its headings kept \u2014 "Grade", "Stage 1 \u2014 \u2026", "Strengths in planning" and so on.</div>';
-      PENDING = null; return;
+      done.innerHTML = 'Nothing in that landed \u2014 the slot headings ("Grade", "Stage 1 \u2014 \u2026", "Strengths in planning") need to be kept.';
+      return;
     }
-    var names = {}; r.manifest.forEach(function(m){ names[m.id] = m.heading; });
-    var rows = ids.map(function(id){
-      var v = r.found[id];
-      var txt = Array.isArray(v) ? v.map(function(x){ return (x.star ? '\u2605 ' : '\u2022 ') + esc(x.text); }).join('<br>') : nl2br(v);
-      return '<div class="row"><b>' + esc(names[id] || id) + '</b><span>' + txt + '</span></div>';
-    }).join('');
-    var miss = r.unplaced.length ? '<div class="miss">Not placed (no box has this name): ' + r.unplaced.map(esc).join(', ') + '</div>' : '';
-    prev.innerHTML = '<div class="xprev"><h3>' + ids.length + ' box' + (ids.length === 1 ? '' : 'es') + ' would be filled</h3>' + rows + miss +
-      '<div class="acts"><button type="button" class="btn btn-gold" id="xApply">Put it in the boxes</button>' +
-      '<button type="button" class="btn btn-quiet" id="xCancel">Cancel</button></div></div>';
-    PENDING = r.found;
-    $('xApply').addEventListener('click', apply);
-    $('xCancel').addEventListener('click', function(){ prev.style.display = 'none'; PENDING = null; });
-  });
-  /* Through draftApply, the path a saved draft takes, so what lands here
-     behaves exactly like something typed. Only found slots are passed; lists
-     draftApply would clear are refilled with their current contents. */
-  function apply(){
-    if (!PENDING) return;
-    var s = { f: {}, lists: {}, tcomm: Object.assign({}, TCOMM) };
+    BEFORE = draftState(); delete BEFORE.doc;
+    var st = { f: {}, lists: {}, tcomm: Object.assign({}, TCOMM) };
     var anyList = false, anyField = false, anyTc = false;
-    Object.keys(PENDING).forEach(function(id){
-      var v = PENDING[id];
-      if (DRAFT_LISTS.indexOf(id) >= 0) { s.lists[id] = v.map(function(x){ return { html: esc(x.text), star: !!x.star }; }); anyList = true; }
-      else if (DRAFT_FIELDS.indexOf(id) >= 0) { s.f[id] = v; anyField = true; }
-      else { s.tcomm[id] = v; anyTc = true; }
+    ids.forEach(function(id){
+      var v = r.found[id];
+      if (DRAFT_LISTS.indexOf(id) >= 0) { st.lists[id] = v.map(function(x){ return { html: esc(x.text), star: !!x.star }; }); anyList = true; }
+      else if (DRAFT_FIELDS.indexOf(id) >= 0) { st.f[id] = v; anyField = true; }
+      else { st.tcomm[id] = v; anyTc = true; }
     });
-    if (anyList) { var cur = draftState().lists; DRAFT_LISTS.forEach(function(id){ if (!s.lists[id]) s.lists[id] = cur[id]; }); }
-    else delete s.lists;
-    if (!anyField) delete s.f;
-    if (!anyTc) delete s.tcomm; else if (DOC) s.doc = DOC;
-    draftApply(s);
+    if (anyList) DRAFT_LISTS.forEach(function(id){ if (!st.lists[id]) st.lists[id] = BEFORE.lists[id]; }); else delete st.lists;
+    if (!anyField) delete st.f;
+    if (!anyTc) delete st.tcomm; else if (DOC) st.doc = DOC;
+    draftApply(st);
     dirty = true;
-    $('xPreview').style.display = 'none'; $('xText').value = ''; PENDING = null;
-    setStatus('Filled from the brief \u2014 read it through before you return it.');
-    card.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    $('xText').value = ''; $('xPaste').style.display = 'none'; $('xPasteToggle').textContent = 'Paste something back';
+    var names = {}; r.manifest.forEach(function(m){ names[m.id] = m.heading; });
+    done.innerHTML = 'Filled ' + ids.length + ' box' + (ids.length === 1 ? '' : 'es') + ': ' + ids.map(function(id){ return esc(names[id] || id); }).join(', ') + '.'
+      + (r.unplaced.length ? ' Not placed: ' + r.unplaced.map(esc).join(', ') + '.' : '')
+      + ' <button type="button" class="example-btn" id="xUndo">Undo</button>';
+    $('xUndo').addEventListener('click', function(){
+      if (!BEFORE) return;
+      var back = BEFORE; BEFORE = null;
+      if (DOC) back.doc = DOC;
+      draftApply(back); dirty = true;
+      done.textContent = 'Put back as it was.';
+    });
+    setStatus('Filled from what you pasted \u2014 read it through before you return it.');
   }
 })();
 </script>

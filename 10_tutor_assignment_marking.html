@@ -55,12 +55,6 @@
   .xchg{margin:14px 0 4px; padding:12px 14px; border:1.5px solid var(--gold, oklch(63% 0.096 72)); border-left-width:5px; border-radius:6px; background:var(--box, oklch(96.2% 0.02 80));}
   .xchg-acts{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
   #xText{width:100%; font-family:ui-monospace,Menlo,monospace; font-size:0.8rem; line-height:1.5; padding:10px 12px; border:1.5px solid var(--sand-line); border-radius:6px; background:#FFFDF8;}
-  .xprev{margin-top:12px; border:1.5px solid var(--gold, oklch(63% 0.096 72)); border-radius:6px; background:oklch(94.5% 0.035 78); padding:12px 16px; font-size:0.84rem; line-height:1.55;}
-  .xprev h3{font-family:'Newsreader',Georgia,serif; font-size:1rem; margin:0 0 8px; color:var(--ink-warm, oklch(30% 0.042 58));}
-  .xprev .row{display:grid; grid-template-columns:220px 1fr; gap:6px 14px; padding:4px 0; border-top:1px solid oklch(88% 0.05 78);}
-  .xprev .row b{color:oklch(52% 0.098 70); font-weight:700;}
-  .xprev .miss{color:var(--brick, oklch(45% 0.15 27)); margin-top:8px;}
-  .xprev .acts{margin-top:12px; display:flex; gap:8px;}
   .outcomes{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;}
   .outcomes button{font-family:'Karla',sans-serif; font-size:0.85rem; font-weight:600; padding:8px 16px; border-radius:16px;
     border:1.5px solid var(--sand-line); background:var(--card); cursor:pointer;}
@@ -84,8 +78,8 @@
   .btn-sand{background:var(--sand-deep); color:var(--ink);}
   .note{font-size:0.8rem; color:var(--grey); margin:0 0 14px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609240111">
-<link rel="stylesheet" href="hub-theme.css?v=202609240111">
+<link rel="stylesheet" href="hub-house.css?v=202609240122">
+<link rel="stylesheet" href="hub-theme.css?v=202609240122">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -93,12 +87,12 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202609240111"></script>
-<script src="hub-exchange.js?v=202609240111"></script>
-<script src="hub-due.js?v=202609240111"></script>
-<script src="hub-shared.js?v=202609240111"></script>
-<script src="hub-store.js?v=202609240111"></script>
-<script src="hub-sync.js?v=202609240111"></script>
+<script src="assignment-defaults.js?v=202609240122"></script>
+<script src="hub-exchange.js?v=202609240122"></script>
+<script src="hub-due.js?v=202609240122"></script>
+<script src="hub-shared.js?v=202609240122"></script>
+<script src="hub-store.js?v=202609240122"></script>
+<script src="hub-sync.js?v=202609240122"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -382,14 +376,13 @@ function render(){
         <div class="xchg" id="xchg">
           <div class="xchg-acts">
             <button type="button" class="btn btn-gold" id="xCopy">Copy</button>
-            <span class="note" style="margin:0;">the submission, with a slot per criterion and one for the general comment — paste it into any AI and dictate. The outcome is still worked out here from the marks.</span>
+            <span class="note" style="margin:0;">the submission and the criteria, as text.</span>
+            <button type="button" class="btn btn-quiet" id="xPasteToggle" style="margin-left:auto;">Paste something back</button>
           </div>
-          <div id="xPaste" style="margin-top:12px;">
-            <label for="xText" style="display:block; font-size:0.78rem; font-weight:700; color:var(--teal); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px;">Paste its answer here</label>
-            <textarea id="xText" rows="5" placeholder="Paste the whole reply."></textarea>
-            <div class="xchg-acts" style="margin-top:8px;"><button type="button" class="btn btn-gold" id="xRead">Read it</button></div>
-            <div id="xPreview" style="display:none;"></div>
+          <div id="xPaste" style="display:none; margin-top:12px;">
+            <textarea id="xText" rows="4" placeholder="Paste here — it goes straight into the criteria. The outcome is still worked out from the marks."></textarea>
           </div>
+          <p class="note" id="xDone" style="display:none; margin:8px 0 0;"></p>
         </div>
         <div class="row" style="margin-top:12px;"><label>General comment${round==='sub2'?' on the resubmission':''} (optional)</label>
           <textarea id="comment" rows="3">${esc((sub.feedback&&(round==='sub2'?sub.feedback.generalComment2:sub.feedback.generalComment1))||'')}</textarea></div>
@@ -548,10 +541,17 @@ function wireExchange(){
   const round = sub.stage==='resubmitted' ? 'sub2' : 'sub1';
   let PENDING = null;
   $('xCopy').addEventListener('click', ()=> hubCopyButton($('xCopy'), xBrief(a, sub, round)));
-  $('xRead').addEventListener('click', ()=>{
-    /* HubExchange.read matches by heading against the manifest; the slot kinds
-       here are our own, so the raw sections are interpreted below. */
-    const txt = $('xText').value;
+  $('xPasteToggle').addEventListener('click', ()=>{ const open = $('xPaste').style.display==='none'; $('xPaste').style.display = open?'':'none'; $('xPasteToggle').textContent = open ? 'Hide' : 'Paste something back'; if (open) $('xText').focus(); });
+  let readTimer = null;
+  $('xText').addEventListener('input', ()=>{ clearTimeout(readTimer); readTimer = setTimeout(readNow, 250); });
+  document.addEventListener('paste', (e)=>{
+    const t = e.target; if (t && t.closest && t.closest('input, textarea, [contenteditable]')) return;
+    const txt = (e.clipboardData||window.clipboardData).getData('text/plain'); if (!txt || !/^\s*#/m.test(txt)) return;
+    e.preventDefault(); if ($('xPaste').style.display==='none') $('xPasteToggle').click();
+    $('xText').value = txt; readNow(); $('xchg').scrollIntoView({block:'start', behavior:'smooth'});
+  });
+  function readNow(){
+    const txt = $('xText').value; if (!txt.trim()) return;
     const man = xSlotsFor(a); const byName = {}; man.forEach(m => byName[m.heading.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()] = m.id);
     man.forEach(m => { const mm = m.heading.match(/^(Criterion \d+)/); if (mm) byName[mm[1].toLowerCase()] = m.id; });
     const norm = h => String(h||'').toLowerCase().replace(/[\u2018\u2019\u201c\u201d"']/g,'').replace(/[^a-z0-9]+/g,' ').trim();
@@ -564,41 +564,35 @@ function wireExchange(){
       if (!sec.text) return;
       if (id === 'comment') { found[id] = { text: sec.text }; return; }
       const ls = sec.text.split(/\r?\n/).map(l=>l.replace(/^\s*[\u2022\-*]\s*/,'').trim()).filter(Boolean);
-      const first = norm(ls[0]||'');
-      let mark = null;
+      const first = norm(ls[0]||''); let mark = null;
       if (/^not met\b/.test(first)) mark = false; else if (/^met\b/.test(first)) mark = true;
-      const rest = (mark===null ? ls : ls.slice(1)).join('\n');
-      found[id] = { mark, text: rest };
+      found[id] = { mark, text: (mark===null ? ls : ls.slice(1)).join('\n') };
     });
-    const prev = $('xPreview'); prev.style.display='';
+    const done = $('xDone'); done.style.display = '';
     const ids = Object.keys(found);
-    if (!ids.length) { prev.innerHTML = '<div class="xprev"><h3>Nothing recognised</h3>Paste the model\u2019s answer with its headings kept \u2014 "Criterion 1 \u2014 \u2026", "General comment".</div>'; PENDING=null; return; }
-    const names = {}; man.forEach(m => names[m.id] = m.heading);
-    prev.innerHTML = '<div class="xprev"><h3>' + ids.length + ' slot' + (ids.length===1?'':'s') + ' would be filled</h3>' +
-      ids.map(id => '<div class="row"><b>' + esc(names[id]||id) + '</b><span>' + (found[id].mark===true?'<b>Met</b> \u2014 ':found[id].mark===false?'<b>Not met</b> \u2014 ':'') + nl2br(found[id].text) + '</span></div>').join('') +
-      (unplaced.length ? '<div class="miss">Not placed: ' + unplaced.map(esc).join(', ') + '</div>' : '') +
-      '<div class="acts"><button type="button" class="btn btn-gold" id="xApply">Put it in the boxes</button><button type="button" class="btn btn-quiet" id="xCancel">Cancel</button></div></div>';
-    PENDING = found;
-    $('xApply').addEventListener('click', ()=>{
-      if (!PENDING) return;
-      sub.criteriaMarks[round] = sub.criteriaMarks[round] || [];
-      sub.criteriaComments[round] = sub.criteriaComments[round] || [];
-      // the current on-screen comments first, so an untouched criterion keeps what was typed
-      document.querySelectorAll('[data-crit-comment]').forEach(el => { sub.criteriaComments[round][+el.dataset.critComment] = el.value; });
-      const curComment = ($('comment')||{}).value;
-      Object.keys(PENDING).forEach(id => {
-        if (id === 'comment') { if (!sub.feedback) sub.feedback = { outcome:'', generalComment1:'', generalComment2:'' }; sub.feedback[round==='sub2'?'generalComment2':'generalComment1'] = PENDING[id].text; return; }
-        const i = +id.slice(4);
-        if (PENDING[id].mark !== null) sub.criteriaMarks[round][i] = PENDING[id].mark;
-        if (PENDING[id].text) sub.criteriaComments[round][i] = PENDING[id].text;
-      });
-      if (!PENDING.comment && curComment) { if (!sub.feedback) sub.feedback = { outcome:'', generalComment1:'', generalComment2:'' }; sub.feedback[round==='sub2'?'generalComment2':'generalComment1'] = curComment; }
-      PENDING = null;
-      render();
-      $('xchg').scrollIntoView({block:'start', behavior:'smooth'});
+    if (!ids.length) { done.textContent = 'Nothing in that landed \u2014 the headings ("Criterion 1 \u2014 \u2026", "General comment") need to be kept.'; return; }
+    /* the form as it was, for Undo */
+    const before = { marks: (sub.criteriaMarks[round]||[]).slice(), comments: [...document.querySelectorAll('[data-crit-comment]')].map(el=>el.value), general: ($('comment')||{}).value || '' };
+    sub.criteriaMarks[round] = sub.criteriaMarks[round] || []; sub.criteriaComments[round] = sub.criteriaComments[round] || [];
+    document.querySelectorAll('[data-crit-comment]').forEach(el => { sub.criteriaComments[round][+el.dataset.critComment] = el.value; });
+    if (!sub.feedback) sub.feedback = { outcome:'', generalComment1:'', generalComment2:'' };
+    const gk = round==='sub2' ? 'generalComment2' : 'generalComment1';
+    if (!found.comment && before.general) sub.feedback[gk] = before.general;
+    ids.forEach(id => {
+      if (id === 'comment') { sub.feedback[gk] = found[id].text; return; }
+      const i = +id.slice(4);
+      if (found[id].mark !== null) sub.criteriaMarks[round][i] = found[id].mark;
+      if (found[id].text) sub.criteriaComments[round][i] = found[id].text;
     });
-    $('xCancel').addEventListener('click', ()=>{ prev.style.display='none'; PENDING=null; });
-  });
+    render();
+    const names = {}; man.forEach(m => names[m.id] = m.heading);
+    const d2 = $('xDone'); d2.style.display = '';
+    d2.innerHTML = 'Filled ' + ids.length + ': ' + ids.map(id => esc(names[id]||id)).join(', ') + '.' + (unplaced.length ? ' Not placed: ' + unplaced.map(esc).join(', ') + '.' : '') + ' <button type="button" class="example-btn" id="xUndo">Undo</button>';
+    $('xUndo').addEventListener('click', ()=>{
+      sub.criteriaMarks[round] = before.marks; before.comments.forEach((v,i)=>{ sub.criteriaComments[round][i] = v; });
+      sub.feedback[gk] = before.general; render(); const d3 = $('xDone'); if (d3) { d3.style.display=''; d3.textContent = 'Put back as it was.'; }
+    });
+  }
 }
 </script>
 </body>
