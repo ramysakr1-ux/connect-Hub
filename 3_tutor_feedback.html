@@ -70,6 +70,10 @@
     line-height:1.65; resize:vertical; overflow:hidden; min-height:56px;}
   textarea:focus{outline:none; border-color:var(--teal);}
 
+  /* Deliberately NOT the house .house-sel treatment: this select carries the
+     grade in its own fill (.above / .to / .not below), and the house rule sets
+     a background, which would erase it. A coloured control is already a
+     control. Checked 23 Sep 2026 while carrying the house style across. */
   .grade-select{display:inline-block; width:auto; min-width:260px; margin-top:6px;
     font-family:'Karla',sans-serif; font-size:1rem; font-weight:700; text-align:center;
     padding:11px 18px; border:2px solid var(--sand-line); border-radius:6px;
@@ -230,6 +234,7 @@
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
 </style>
+<link rel="stylesheet" href="hub-house.css?v=202609232317">
 </head>
 <body>
 <div class="board">
@@ -296,7 +301,7 @@
     <h2>Strengths in planning</h2>
     <p class="guide">One point per line. Tag each with the planning criteria it shows.</p>
     <div id="lSP" data-scope="planning"></div>
-    <button class="btn btn-sand add-pt" data-list="lSP">+ Add point</button>
+    <button type="button" class="btn-add add-pt" data-list="lSP">+ Add point</button>
   </div>
 
   <div class="card action">
@@ -304,21 +309,21 @@
     <p class="guide">Star the ones you want them to prioritise in the next TP — starred points carry into
     the Personal Aims of their next plan.</p>
     <div id="lAP" data-scope="planning" data-star="1"></div>
-    <button class="btn btn-sand add-pt" data-list="lAP">+ Add point</button>
+    <button type="button" class="btn-add add-pt" data-list="lAP">+ Add point</button>
   </div>
 
   <div class="card good">
     <h2>Strengths in teaching</h2>
     <p class="guide">What happened in the room — rapport, clarity, management, language work.</p>
     <div id="lST" data-scope="teaching"></div>
-    <button class="btn btn-sand add-pt" data-list="lST">+ Add point</button>
+    <button type="button" class="btn-add add-pt" data-list="lST">+ Add point</button>
   </div>
 
   <div class="card action">
     <h2>Action points in teaching</h2>
     <p class="guide">Star the ones to prioritise next time.</p>
     <div id="lAT" data-scope="teaching" data-star="1"></div>
-    <button class="btn btn-sand add-pt" data-list="lAT">+ Add point</button>
+    <button type="button" class="btn-add add-pt" data-list="lAT">+ Add point</button>
   </div>
 
   <div class="card">
@@ -343,16 +348,20 @@
 </div>
 
 <div class="actionbar">
-  <button class="btn-submit" id="returnBtn">Return to trainee</button>
-  <span class="barhint">Returning locks it and lets the trainee read it, alongside their plan and self-evaluation.</span>
-  <button class="btn btn-ghost" id="pdfBtn">Print / Save as PDF</button>
-  <span class="status" id="status"></span>
+  <div class="lhs">
+    <button class="btn-submit" id="returnBtn">Return to trainee</button>
+    <span class="barhint">Returning locks it and lets the trainee read it, alongside their plan and self-evaluation.</span>
+  </div>
+  <div class="rhs">
+    <span class="status" id="status"></span>
+    <button class="btn-print" type="button" id="pdfBtn">Print / Save as PDF</button>
+  </div>
 </div>
 
 
-<script src="hub-shared.js?v=202609232313"></script>
-<script src="hub-store.js?v=202609232313"></script>
-<script src="hub-sync.js?v=202609232313"></script>
+<script src="hub-shared.js?v=202609232317"></script>
+<script src="hub-store.js?v=202609232317"></script>
+<script src="hub-sync.js?v=202609232317"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1186,7 +1195,7 @@ function fmtDate(ts){
 }
 function setLock(on){
   locked=on;
-  document.querySelectorAll('.board input, .board textarea, .board select, .board button.btn-sand, .board button.star, .board button.del-btn, .board button.crit-toggle, .board button.suggest-chip').forEach(el=>{ el.disabled=on; });
+  document.querySelectorAll('.board input, .board textarea, .board select, .board button.btn-sand, .board button.btn-add, .board button.star, .board button.del-btn, .board button.crit-toggle, .board button.suggest-chip').forEach(el=>{ el.disabled=on; });
   document.querySelectorAll('.board [contenteditable]').forEach(el=>{ el.contentEditable=on?'false':'true'; });
 }
 function renderTurnStatus(){
@@ -1194,7 +1203,7 @@ function renderTurnStatus(){
   const el=$('turnStatus');
   if(rec&&rec.status==='returned'){
     setLock(true);
-    el.innerHTML='Returned — '+fmtDate(rec.returnedAt)+'. <button class="btn btn-ghost" type="button" id="reopenBtn">Reopen for edits</button>';
+    el.innerHTML='Returned — '+fmtDate(rec.returnedAt)+'. <button class="btn btn-gold" type="button" id="reopenBtn">Reopen for edits</button>';
     el.classList.add('show');
     $('returnBtn').style.display='none';
     /* Reopening takes the feedback back off the candidate: their record reads
