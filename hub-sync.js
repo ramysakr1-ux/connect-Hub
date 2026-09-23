@@ -57,6 +57,9 @@
       + '<p style="font-size:0.92rem;line-height:1.65;color:oklch(51% 0.017 70);margin:0;">This page reads one course, through the link your centre sent you. Trainees have their own personal link, tutors share the tutor link, and an assessor has a read-only one. Open the page from that link and everything appears.</p>'
       + '<p style="font-size:0.92rem;line-height:1.65;color:oklch(51% 0.017 70);margin:14px 0 0;">Lost it? Your course admin can send it again from the Roster and links tab.</p>'
       + '</div>';
+    /* This page has just been wiped. If anything of this person's is unsaved,
+       that is the single most important thing on the screen. */
+    try { showUnsaved(); } catch (e) {}
   }
 
   // ---- write-through --------------------------------------------------------
@@ -73,7 +76,49 @@
   function ledger(){ return parse((function(){ try { return localStorage.getItem(LEDGER); } catch (e) { return null; } })()) || {}; }
   function ledgerSet(l){ try { if (Object.keys(l).length) origSet(LEDGER, JSON.stringify(l)); else origRemove(LEDGER); } catch (e) {} }
   function remember(id, job){ var l = ledger(); l[id] = job; ledgerSet(l); }
-  function confirmed(id){ var l = ledger(); if (l[id]) { delete l[id]; ledgerSet(l); } }
+  function confirmed(id){ var l = ledger(); if (l[id]) { delete l[id]; ledgerSet(l); } unnote(id); }
+
+  /* WHAT DID NOT SAVE, kept apart from the ledger and outliving the page.
+   *
+   * Found 24 Sep 2026 on Ramy's own live course, with a real cohort two weeks
+   * away. flush() used to read: if the error was not marked `transient`, call
+   * confirmed(id) -- which DELETES the job from the ledger -- and rethrow. Only
+   * TRANSPORT failures are marked transient (hub-store: timed out, could not
+   * reach, did not answer as JSON). Everything the Apps Script returns as a
+   * JSON error is therefore "permanent", so the write was thrown away and the
+   * ledger was left EMPTY, which is indistinguishable from having saved. The
+   * one signal was the sync pill reading "Not saved -- ...", on a page the
+   * boot's gate() had already replaced. A tutor's feedback could go that way
+   * in silence.
+   *
+   * So a rejected write now leaves a record that survives the page, the tab
+   * and the browser being closed, and says so on screen until it saves or the
+   * person dismisses it. The job also stays in the ledger to be retried on the
+   * next page -- up to RETRIES, because an error that really is permanent
+   * (a trainee removed from the course) must not be re-sent for ever. After
+   * that it stops being sent and the record stays, which is the honest state:
+   * this did not save, and nothing is still trying. */
+  var UNSAVED = 'hub:unsaved:' + mode + ':' + (!S ? '' : mode === 'tutor' ? S.key() : mode === 'assessor' ? S.assessorKey() : S.token());
+  var RETRIES = 3;
+  function unsaved(){ return parse((function(){ try { return localStorage.getItem(UNSAVED); } catch (e) { return null; } })()) || {}; }
+  function unsavedSet(u){ try { if (Object.keys(u).length) origSet(UNSAVED, JSON.stringify(u)); else origRemove(UNSAVED); } catch (e) {} }
+  function note(id, job, err){
+    var u = unsaved();
+    var prev = u[id] || { tries: 0 };
+    u[id] = { what: describe(job), message: (err && err.message) || String(err || 'refused'),
+              at: Date.now(), tries: (prev.tries || 0) + 1, job: job };
+    unsavedSet(u);
+    return u[id].tries;
+  }
+  function unnote(id){ var u = unsaved(); if (u[id]) { delete u[id]; unsavedSet(u); showUnsaved(); } }
+  /* Named for the person reading it, not for the wire. */
+  function describe(job){
+    var kind = job && job.kind;
+    return ({ plan: 'a lesson plan', selfeval: 'a self-evaluation', feedback: 'tutor feedback',
+              tpHistory: 'the teaching practice record', assignments: 'assignment work',
+              tracker: 'the tracker', settings: 'the course settings',
+              wording: 'the assignment wording', roster: 'the roster' })[kind] || 'a change';
+  }
   // Which storage key a queued job stands for, so a boot can leave it alone.
   function keyOfJob(id){
     if (id.indexOf('t:') === 0) { var kind = id.slice(2); for (var k in TRAINEE_KEYS) if (TRAINEE_KEYS[k] === kind) return k; }
@@ -81,6 +126,56 @@
     if (id.indexOf('r:') === 0) return 'connect_roster_v1';
     return null;
   }
+  /* The banner. It has to outlive the page it was raised on: the boot's gate()
+     replaces document.body outright, and the failure that matters most is
+     exactly the one that arrives alongside a refused boot. Hence the observer
+     -- if the body loses it, it goes back. */
+  var HIDDEN = false;
+  function showUnsaved(){
+    if (!document.body) { document.addEventListener('DOMContentLoaded', showUnsaved); return; }
+    var u = unsaved(), ids = Object.keys(u);
+    var el = document.getElementById('hubUnsaved');
+    if (!ids.length || HIDDEN){ if (el) el.remove(); return; }
+    if (!el){
+      el = document.createElement('div');
+      el.id = 'hubUnsaved';
+      el.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:2147483000;' +
+        'background:oklch(96% 0.03 27);border-bottom:2px solid oklch(45% 0.15 27);' +
+        'color:oklch(23.5% 0.017 65);font:600 13px/1.5 Karla,Helvetica,sans-serif;' +
+        'padding:11px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;';
+    }
+    var newest = ids.map(function(i){ return u[i]; }).sort(function(a,b){ return b.at - a.at; })[0];
+    var what = ids.length === 1 ? newest.what : ids.length + ' changes';
+    var stalled = ids.every(function(i){ return (u[i].tries || 0) >= RETRIES; });
+    el.innerHTML =
+      '<span style="flex:1;min-width:240px;">' +
+      '<b style="color:oklch(45% 0.15 27);">Not saved to the course \u2014 ' + esc(what) + '.</b> ' +
+      esc(newest.message) + '. It is still here in this browser' +
+      (stalled ? ', and nothing is trying any more.' : ' and will be sent again.') +
+      '</span>' +
+      '<button type="button" data-u="retry" style="font:700 12px Karla,sans-serif;padding:7px 14px;border-radius:20px;border:1.5px solid oklch(45% 0.15 27);background:none;color:oklch(45% 0.15 27);cursor:pointer;">Try again</button>' +
+      '<button type="button" data-u="hide" style="font:600 12px Karla,sans-serif;padding:7px 12px;border-radius:20px;border:none;background:none;color:oklch(51% 0.017 70);cursor:pointer;">Hide</button>';
+    el.querySelector('[data-u=retry]').onclick = function(){
+      var uu = unsaved();
+      Object.keys(uu).forEach(function(i){ if (uu[i].job) schedule(i, uu[i].job); });
+    };
+    /* Hide, not dismiss: it is back on the next page, because the change is
+       still unsaved and quietly forgetting it is the bug being fixed. */
+    el.querySelector('[data-u=hide]').onclick = function(){ HIDDEN = true; el.remove(); };
+    if (el.parentNode !== document.body) document.body.appendChild(el);
+    document.documentElement.style.scrollPaddingTop = el.offsetHeight + 'px';
+  }
+  function esc(t){ return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  if (typeof MutationObserver === 'function') {
+    var watch = function(){
+      if (!document.body) return;
+      new MutationObserver(function(){
+        if (Object.keys(unsaved()).length && !document.getElementById('hubUnsaved')) showUnsaved();
+      }).observe(document.body, { childList: true });
+    };
+    if (document.body) watch(); else document.addEventListener('DOMContentLoaded', watch);
+  }
+
   function payloadFor(job){ var pl = Object.assign({}, job); if (key()) pl.key = key(); return pl; }
   function key(){ return S.key(); }
   function schedule(id, job){ queue[id] = job; remember(id, job); clearTimeout(timer); timer = setTimeout(flush, 600); status('Saving…', 'busy'); }
@@ -89,7 +184,14 @@
     var keys = Object.keys(jobs);
     if (!keys.length) return Promise.resolve();
     // One at a time: Apps Script copes badly with a burst.
-    var all = keys.reduce(function(chain, k){ return chain.then(function(){ return S.call(jobs[k]).then(function(r){ confirmed(k); return r; }, function(err){ if (!(err && err.transient)) confirmed(k); throw err; }); }); }, Promise.resolve());
+    var all = keys.reduce(function(chain, k){ return chain.then(function(){ return S.call(jobs[k]).then(function(r){ confirmed(k); return r; }, function(err){
+      if (err && err.transient) throw err;          // stays in the ledger; the next page sends it again
+      if (note(k, jobs[k], err) >= RETRIES) {       // recorded either way -- the record is the point
+        var l = ledger(); if (l[k]) { delete l[k]; ledgerSet(l); }  // stop re-sending, KEEP the record
+      }
+      showUnsaved();
+      throw err;
+    }); }); }, Promise.resolve());
     all.then(function(){ status('Saved to the course', 'ok'); }).catch(function(err){ status('Not saved \u2014 ' + (err && err.message || err), 'error'); });
     return all;
   }
@@ -151,6 +253,7 @@
   // the ordinary case for a fresh visit, so this is what the live site showed
   // (walked 23 Sep 2026).
   if (!mode) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ gate(); }); else gate(); return; }
+  showUnsaved();   // a refusal from an earlier session is still a refusal
   var identity = mode + ':' + (mode === 'tutor' ? S.key() : mode === 'assessor' ? S.assessorKey() : S.token());
   var cached = false; try { cached = localStorage.getItem('hub:booted') === identity; } catch (e) {}
   var dirty = {}, started = false;
