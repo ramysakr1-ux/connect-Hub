@@ -52,6 +52,15 @@
   .readonly{white-space:pre-wrap; font-size:0.88rem; line-height:1.6; background:#FFFDF8; border:1.5px solid var(--sand-line); border-radius:6px; padding:10px 12px; margin-bottom:10px;}
   textarea, select{width:100%; font-family:'Karla',sans-serif; font-size:0.9rem; padding:9px 12px; border:1.5px solid var(--sand-line);
     border-radius:6px; background:#FFFDF8; color:var(--ink); line-height:1.55; resize:vertical;}
+  .xchg{margin:14px 0 4px; padding:12px 14px; border:1.5px solid var(--gold, oklch(63% 0.096 72)); border-left-width:5px; border-radius:6px; background:var(--box, oklch(96.2% 0.02 80));}
+  .xchg-acts{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  #xText{width:100%; font-family:ui-monospace,Menlo,monospace; font-size:0.8rem; line-height:1.5; padding:10px 12px; border:1.5px solid var(--sand-line); border-radius:6px; background:#FFFDF8;}
+  .xprev{margin-top:12px; border:1.5px solid var(--gold, oklch(63% 0.096 72)); border-radius:6px; background:oklch(94.5% 0.035 78); padding:12px 16px; font-size:0.84rem; line-height:1.55;}
+  .xprev h3{font-family:'Newsreader',Georgia,serif; font-size:1rem; margin:0 0 8px; color:var(--ink-warm, oklch(30% 0.042 58));}
+  .xprev .row{display:grid; grid-template-columns:220px 1fr; gap:6px 14px; padding:4px 0; border-top:1px solid oklch(88% 0.05 78);}
+  .xprev .row b{color:oklch(52% 0.098 70); font-weight:700;}
+  .xprev .miss{color:var(--brick, oklch(45% 0.15 27)); margin-top:8px;}
+  .xprev .acts{margin-top:12px; display:flex; gap:8px;}
   .outcomes{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;}
   .outcomes button{font-family:'Karla',sans-serif; font-size:0.85rem; font-weight:600; padding:8px 16px; border-radius:16px;
     border:1.5px solid var(--sand-line); background:var(--card); cursor:pointer;}
@@ -75,8 +84,8 @@
   .btn-sand{background:var(--sand-deep); color:var(--ink);}
   .note{font-size:0.8rem; color:var(--grey); margin:0 0 14px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609240044">
-<link rel="stylesheet" href="hub-theme.css?v=202609240044">
+<link rel="stylesheet" href="hub-house.css?v=202609240058">
+<link rel="stylesheet" href="hub-theme.css?v=202609240058">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -84,11 +93,12 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202609240044"></script>
-<script src="hub-due.js?v=202609240044"></script>
-<script src="hub-shared.js?v=202609240044"></script>
-<script src="hub-store.js?v=202609240044"></script>
-<script src="hub-sync.js?v=202609240044"></script>
+<script src="assignment-defaults.js?v=202609240058"></script>
+<script src="hub-exchange.js?v=202609240058"></script>
+<script src="hub-due.js?v=202609240058"></script>
+<script src="hub-shared.js?v=202609240058"></script>
+<script src="hub-store.js?v=202609240058"></script>
+<script src="hub-sync.js?v=202609240058"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -369,6 +379,20 @@ function render(){
           </div>`;
         }).join('') : '<p class="note">No marking criteria set for this assignment yet \u2014 add them in the assignment builder.</p>'}
         <div class="derived ${derivedCls}">${derivedLabel}</div>
+        <div class="xchg" id="xchg">
+          <div class="xchg-acts">
+            <b style="font-size:0.84rem;color:var(--ink-warm);">Write it with an AI:</b>
+            <button type="button" class="btn btn-gold" id="xCopy">Copy the brief</button>
+            <button type="button" class="btn btn-quiet" id="xDownload">Download it</button>
+            <button type="button" class="btn btn-quiet" id="xPasteToggle">Paste the marking back</button>
+          </div>
+          <p class="note" style="margin:6px 0 0;">The submission and one slot per criterion, plus the general comment. Dictate to any model, paste its answer back, check what landed, then mark. The outcome is still worked out here from the marks — it is never imported.</p>
+          <div id="xPaste" style="display:none; margin-top:10px;">
+            <textarea id="xText" rows="7" placeholder="Paste everything the model wrote."></textarea>
+            <div class="xchg-acts" style="margin-top:8px;"><button type="button" class="btn btn-gold" id="xRead">Read it</button></div>
+            <div id="xPreview" style="display:none;"></div>
+          </div>
+        </div>
         <div class="row" style="margin-top:12px;"><label>General comment${round==='sub2'?' on the resubmission':''} (optional)</label>
           <textarea id="comment" rows="3">${esc((sub.feedback&&(round==='sub2'?sub.feedback.generalComment2:sub.feedback.generalComment1))||'')}</textarea></div>
         <div class="actions">
@@ -391,6 +415,7 @@ function render(){
   if (saveBtn) saveBtn.addEventListener('click', doSave);
   const unmarkedBtn = $('unmarkedBtn');
   if (unmarkedBtn) unmarkedBtn.addEventListener('click', doReturnUnmarked);
+  wireExchange();
   const extBtn = $('extSet');
   if (extBtn) extBtn.addEventListener('click', () => {
     const v = ($('extAt') || {}).value;
@@ -483,6 +508,105 @@ function doReturnUnmarked(){
 
 renderPicker();
 render();
+/* ---- the exchange for a marked assignment (hub-exchange.js) ----
+   Slots: one per criterion (first line Met / Not met, then the comment), and
+   the general comment. The OUTCOME is never a slot: outcomeFor() derives it
+   from the marks under the Handbook's rule, and an AI must not be able to
+   award a pass. */
+function xSlotsFor(a){
+  const crit = (a.criteria||[]);
+  return crit.map((c,i)=>({ id:'crit'+i, heading:'Criterion '+(i+1)+' \u2014 '+String(c.text||'').slice(0,80) }))
+    .concat([{ id:'comment', heading:'General comment' }]);
+}
+function xWho(){
+  /* NAMES maps assignment keys to labels; a person's name lives on the roster. */
+  const tr = TRAINEE_ID && loadRoster().trainees[TRAINEE_ID];
+  return (tr && tr.name) || 'candidate';
+}
+function xSubmissionMd(a, sub, round){
+  const snap = round==='sub2' ? sub.sub2 : sub.sub1;
+  const md = [];
+  md.push('# Assignment \u2014 ' + xWho() + ', ' + (a.title||CURRENT.toUpperCase()) + (round==='sub2' ? ' (resubmission)' : ''));
+  md.push('');
+  const div = document.createElement('div'); div.innerHTML = summarize(a, snap);
+  // the on-screen summary, as text: each label becomes a heading, each body a paragraph
+  div.querySelectorAll('.roundlabel, .readonly').forEach(n => {
+    if (n.classList.contains('roundlabel')) md.push('### ' + n.textContent.trim());
+    else { md.push(n.textContent.trim()); md.push(''); }   /* textContent: innerText is empty on a node that is not in the page */
+  });
+  return md.join('\n');
+}
+function xBrief(a, sub, round){
+  const sl = xSlotsFor(a);
+  const md = [xSubmissionMd(a, sub, round), '---', '', '# Marking \u2014 fill in below', '',
+    'You are helping a CELTA tutor mark the written assignment above against its criteria. The tutor will dictate. Under each criterion write, on the first line, exactly "Met" or "Not met", then the tutor\u2019s comment to the candidate (second person, specific). Keep every heading exactly as it is. Leave a criterion empty if the tutor has not decided.', ''];
+  sl.forEach(s => { md.push('## ' + s.heading); md.push(''); md.push(''); });
+  md.push('<!-- lite:slots ' + JSON.stringify(sl.map(s=>[s.id,s.heading])) + ' -->');
+  return md.join('\n');
+}
+function wireExchange(){
+  const card = $('xchg'); if (!card || !window.HubExchange) return;
+  const a = WORDING[CURRENT], sub = subFor(CURRENT);
+  const round = sub.stage==='resubmitted' ? 'sub2' : 'sub1';
+  let PENDING = null;
+  $('xCopy').addEventListener('click', ()=> hubCopyButton($('xCopy'), xBrief(a, sub, round)));
+  $('xDownload').addEventListener('click', ()=>{
+    const blob = new Blob([xBrief(a, sub, round)], {type:'text/markdown'});
+    const u = URL.createObjectURL(blob); const l = document.createElement('a'); l.href=u; l.download=(xWho()+' '+CURRENT.toUpperCase()+' marking brief.md'); document.body.appendChild(l); l.click(); l.remove(); setTimeout(()=>URL.revokeObjectURL(u), 2000);
+  });
+  $('xPasteToggle').addEventListener('click', ()=>{ const open = $('xPaste').style.display==='none'; $('xPaste').style.display = open?'':'none'; if (open) $('xText').focus(); });
+  $('xRead').addEventListener('click', ()=>{
+    /* HubExchange.read matches by heading against the manifest; the slot kinds
+       here are our own, so the raw sections are interpreted below. */
+    const txt = $('xText').value;
+    const man = xSlotsFor(a); const byName = {}; man.forEach(m => byName[m.heading.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()] = m.id);
+    man.forEach(m => { const mm = m.heading.match(/^(Criterion \d+)/); if (mm) byName[mm[1].toLowerCase()] = m.id; });
+    const norm = h => String(h||'').toLowerCase().replace(/[\u2018\u2019\u201c\u201d"']/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+    let body = txt.replace(/<!--\s*lite:slots[\s\S]*?-->/g,''); const at = body.search(/^\s*#\s+Marking\b/m); if (at>=0) body = body.slice(at);
+    const found = {}, unplaced = [];
+    HubExchange.sections(body).forEach(sec => {
+      if (sec.level !== 2) return;
+      let id = byName[norm(sec.heading)] || byName[norm(sec.heading.split(/\s[\u2014\-\u2013]\s/)[0])];
+      if (!id) { if (sec.text) unplaced.push(sec.heading); return; }
+      if (!sec.text) return;
+      if (id === 'comment') { found[id] = { text: sec.text }; return; }
+      const ls = sec.text.split(/\r?\n/).map(l=>l.replace(/^\s*[\u2022\-*]\s*/,'').trim()).filter(Boolean);
+      const first = norm(ls[0]||'');
+      let mark = null;
+      if (/^not met\b/.test(first)) mark = false; else if (/^met\b/.test(first)) mark = true;
+      const rest = (mark===null ? ls : ls.slice(1)).join('\n');
+      found[id] = { mark, text: rest };
+    });
+    const prev = $('xPreview'); prev.style.display='';
+    const ids = Object.keys(found);
+    if (!ids.length) { prev.innerHTML = '<div class="xprev"><h3>Nothing recognised</h3>Paste the model\u2019s answer with its headings kept \u2014 "Criterion 1 \u2014 \u2026", "General comment".</div>'; PENDING=null; return; }
+    const names = {}; man.forEach(m => names[m.id] = m.heading);
+    prev.innerHTML = '<div class="xprev"><h3>' + ids.length + ' slot' + (ids.length===1?'':'s') + ' would be filled</h3>' +
+      ids.map(id => '<div class="row"><b>' + esc(names[id]||id) + '</b><span>' + (found[id].mark===true?'<b>Met</b> \u2014 ':found[id].mark===false?'<b>Not met</b> \u2014 ':'') + nl2br(found[id].text) + '</span></div>').join('') +
+      (unplaced.length ? '<div class="miss">Not placed: ' + unplaced.map(esc).join(', ') + '</div>' : '') +
+      '<div class="acts"><button type="button" class="btn btn-gold" id="xApply">Put it in the boxes</button><button type="button" class="btn btn-quiet" id="xCancel">Cancel</button></div></div>';
+    PENDING = found;
+    $('xApply').addEventListener('click', ()=>{
+      if (!PENDING) return;
+      sub.criteriaMarks[round] = sub.criteriaMarks[round] || [];
+      sub.criteriaComments[round] = sub.criteriaComments[round] || [];
+      // the current on-screen comments first, so an untouched criterion keeps what was typed
+      document.querySelectorAll('[data-crit-comment]').forEach(el => { sub.criteriaComments[round][+el.dataset.critComment] = el.value; });
+      const curComment = ($('comment')||{}).value;
+      Object.keys(PENDING).forEach(id => {
+        if (id === 'comment') { if (!sub.feedback) sub.feedback = { outcome:'', generalComment1:'', generalComment2:'' }; sub.feedback[round==='sub2'?'generalComment2':'generalComment1'] = PENDING[id].text; return; }
+        const i = +id.slice(4);
+        if (PENDING[id].mark !== null) sub.criteriaMarks[round][i] = PENDING[id].mark;
+        if (PENDING[id].text) sub.criteriaComments[round][i] = PENDING[id].text;
+      });
+      if (!PENDING.comment && curComment) { if (!sub.feedback) sub.feedback = { outcome:'', generalComment1:'', generalComment2:'' }; sub.feedback[round==='sub2'?'generalComment2':'generalComment1'] = curComment; }
+      PENDING = null;
+      render();
+      $('xchg').scrollIntoView({block:'start', behavior:'smooth'});
+    });
+    $('xCancel').addEventListener('click', ()=>{ prev.style.display='none'; PENDING=null; });
+  });
+}
 </script>
 </body>
 </html>
