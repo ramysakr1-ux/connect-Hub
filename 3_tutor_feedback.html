@@ -181,6 +181,11 @@
   .seen dl > div.main{border-left-color:var(--teal);}
   .seen dl > div.wide{grid-column:1 / -1;}
   .seen-meta{margin:-6px 0 12px; font-size:0.84rem; color:var(--grey);}
+  .seen .mats-acts{display:flex; gap:6px; flex-wrap:wrap; margin:0 0 8px;}
+  .seen .mats-open{display:inline-block; font-size:0.78rem; font-weight:700; padding:5px 12px; border-radius:16px;
+    background:var(--teal); color:var(--paper); text-decoration:none;}
+  .seen .mats-open.file{background:var(--gold-wash, oklch(94.5% 0.035 78)); color:var(--ink-warm); border:1.5px solid var(--gold);}
+  .seen .mats-open.off{background:var(--box); color:var(--grey); border:1.5px dashed var(--sand-line);}
   .seen dt{font-weight:700; color:var(--teal); margin-top:10px; font-size:0.76rem;
     text-transform:uppercase; letter-spacing:.05em;}
   .seen dt{margin-top:0;}
@@ -274,7 +279,7 @@
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609240157">
+<link rel="stylesheet" href="hub-house.css?v=202609240200">
 </head>
 <body>
 <div class="board">
@@ -424,10 +429,10 @@
 </div>
 
 
-<script src="hub-exchange.js?v=202609240157"></script>
-<script src="hub-shared.js?v=202609240157"></script>
-<script src="hub-store.js?v=202609240157"></script>
-<script src="hub-sync.js?v=202609240157"></script>
+<script src="hub-exchange.js?v=202609240200"></script>
+<script src="hub-shared.js?v=202609240200"></script>
+<script src="hub-store.js?v=202609240200"></script>
+<script src="hub-sync.js?v=202609240200"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -837,12 +842,30 @@ function showSeen(d){
   const m=d.meta||{}, p=d.plan||{}, l=d.la||{};
   const rows=(p.rows||[]).filter(r=>(r.stage||'').trim()||(r.proc||'').trim());
   const cell=(cls,label,body)=>body?`<div class="${cls}"><dt>${label}</dt><dd>${body}</dd></div>`:'';
+  /* The materials as something to OPEN, not only a list. The plan stores the
+     Drive link the candidate pasted and any file they attached (which the
+     store puts on Drive and hands back as a link); both were on the printed
+     plan and neither was on this screen, so a tutor watching the lesson had
+     the list of materials and no way to look at them (Ramy, 24 Sep 2026). */
+  const matsHTML=p=>{
+    const link=(p.matsLink||'').trim();
+    const f=p.matsFile&&p.matsFile.name?p.matsFile:null;
+    const fUrl=f?(f.url||f.dataUrl||''):'';
+    const acts=[
+      link?`<a class="mats-open" href="${esc(link)}" target="_blank" rel="noopener">Open the materials \u2197</a>`:'',
+      f?(fUrl?`<a class="mats-open file" href="${esc(fUrl)}" target="_blank" rel="noopener"${f.dataUrl&&!f.url?` download="${esc(f.name)}"`:''}>${esc(f.name)} \u2197</a>`
+            :`<span class="mats-open file off" title="Held on the candidate\u2019s own device \u2014 not sent with the plan">${esc(f.name)}</span>`):''
+    ].filter(Boolean).join(' ');
+    const list=p.mats?bulletsHTML(p.mats):'';
+    if(!list&&!acts) return '';
+    return (acts?`<div class="mats-acts">${acts}</div>`:'')+list;
+  };
   const metaBits=[m.level, m.length?m.length+' min':'', m.framework].filter(Boolean);
   let html=(metaBits.length?`<p class="seen-meta">${metaBits.map(esc).join(' \u00b7 ')}</p>`:'')+`<dl>
     ${cell('main','Main aims',p.main&&bulletsHTML(p.main))}
     ${cell('','Subsidiary aims',p.sub&&bulletsHTML(p.sub))}
     ${cell('','Personal aims',p.pers&&bulletsHTML(p.pers))}
-    ${cell('','Materials',p.mats&&bulletsHTML(p.mats))}
+    ${cell('','Materials',matsHTML(p))}
     ${cell('wide','Class profile',p.profile&&nl2br(p.profile))}
   </dl>`;
   if((p.probs||[]).some(x=>(x.problem||'').trim()||(x.solution||'').trim())){
