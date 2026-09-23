@@ -350,9 +350,9 @@
 </div>
 
 
-<script src="hub-shared.js?v=202609231330"></script>
-<script src="hub-store.js?v=202609231330"></script>
-<script src="hub-sync.js?v=202609231330"></script>
+<script src="hub-shared.js?v=202609232251"></script>
+<script src="hub-store.js?v=202609232251"></script>
+<script src="hub-sync.js?v=202609232251"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -853,6 +853,20 @@ function legendHTML(d){
     </table>`;
 }
 
+/* The candidate's stage box holds "NAME: their aim for the stage" -- one
+   field on the page, because the colon is what asks for the aim (23 Sep
+   2026). On a document the name reads as a heading and the aim as prose, so
+   the first colon is where they part. `r.aim` is the older shape, where the
+   aim was the framework's own wording printed underneath; a record that still
+   carries one still prints it. */
+function stageCell(r){
+  const v=String(r.stage||''); const i=v.indexOf(':');
+  const head = i===-1 ? v : v.slice(0,i);
+  const rest = i===-1 ? '' : v.slice(i+1).trim();
+  return `<strong>${nl2br(head)}</strong>`
+    + (rest?`<br><span style="font-size:10pt;">${nl2br(rest)}</span>`:'')
+    + (r.aim?`<br><span style="font-size:9pt;font-style:italic;color:#1e6b63;">${esc(r.aim)}</span>`:'');
+}
 function traineeHTML(d, selfComment, tc, laComment){
   tc=tc||{};
   const has=k=>((tc[k]||'').trim()!=='');
@@ -887,8 +901,7 @@ function traineeHTML(d, selfComment, tc, laComment){
         <td ${TH} width="8%">Interaction</td><td ${TH} width="6%">Time</td>
         ${anyStage?`<td ${THT} width="25%">Tutor comments</td>`:''}</tr>
       ${(p.rows||[]).map((r,i)=>`<tr>
-        <td ${TD}><strong>${nl2br(r.stage)}</strong>${
-          r.aim?`<br><span style="font-size:9pt;font-style:italic;color:#1e6b63;">${esc(r.aim)}</span>`:''}</td>
+        <td ${TD}>${stageCell(r)}</td>
         <td ${TD}>${bulletsHTML(r.proc)}</td>
         <td ${TD} align="center">${nl2br(r.int)}</td>
         <td ${TD} align="center">${esc(r.time)}</td>

@@ -31,6 +31,12 @@
     --terracotta:oklch(37.5% 0.058 195); --terracotta-dk:oklch(30% 0.06 195);
     --teal:oklch(37.5% 0.058 195); --ochre:oklch(63% 0.096 72);
     --olive:oklch(37.5% 0.058 195); --brick:oklch(45% 0.15 27); --grey:oklch(51% 0.017 70); --gold:oklch(63% 0.096 72); --gold-lifted:oklch(70% 0.12 72); --ink-warm:oklch(30% 0.042 58);
+    /* Gold carries the structure now (Ramy, 23 Sep 2026: "maybe we can have a
+       bit more of a contrast of colour... maybe we can use more gold"). The
+       table headers were the widest block of colour on the sheet and were the
+       reason the page read as all one green. --gold-deep is gold dark enough
+       to set type in; --gold-wash is gold thin enough to fill a box with. */
+    --gold-deep:oklch(52% 0.098 70); --gold-wash:oklch(94.5% 0.035 78);
   }
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -110,40 +116,72 @@
     text-transform:uppercase; letter-spacing:.05em;}
   @media(max-width:700px){ .prob-pair{grid-template-columns:1fr;} }
 
-  .fw-row{display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;}
-  .fw-row .field{flex:1; min-width:280px;}
+  .fw-row{display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;}
+  .fw-row .field{flex:1; min-width:280px; display:flex; flex-direction:column;}
+  /* The two buttons were shorter than the field they sit beside and floated
+     against its top edge. One height for all three, bottom-aligned. */
+  .fw-row .acts{display:flex; gap:8px;}
+  .fw-row .acts .btn{height:46px; padding:0 18px;}
+  .fw-sel{position:relative; flex:1; display:flex;}
+  .fw-sel select{appearance:none; -webkit-appearance:none; width:100%;
+    font-family:'Karla',sans-serif; font-size:0.92rem; font-weight:600;
+    padding:0 40px 0 14px; height:46px; min-height:46px;
+    border:1.5px solid var(--sand-line); border-left:4px solid var(--gold); border-radius:6px;
+    background:#FFFDF8; color:var(--ink); cursor:pointer;}
+  .fw-sel select:hover{border-color:var(--gold);}
+  .fw-sel select:focus{outline:none; border-color:var(--gold-deep);}
+  .fw-sel::after{content:""; position:absolute; right:16px; top:50%; width:8px; height:8px;
+    border-right:2px solid var(--gold-deep); border-bottom:2px solid var(--gold-deep);
+    transform:translateY(-70%) rotate(45deg); pointer-events:none;}
   .fw-hint{font-size:0.8rem; color:var(--grey); font-style:italic; margin:10px 0 0; line-height:1.5;}
 
   .proc-wrap{background:var(--paper); border-radius:6px; padding:18px 20px; margin-bottom:16px; border-left:5px solid var(--olive); overflow-x:auto;}
   table.proc{width:100%; border-collapse:collapse; min-width:860px; table-layout:fixed;}
-  table.proc th{background:var(--teal); color:var(--paper); font-size:0.72rem; font-weight:700;
-    text-transform:uppercase; letter-spacing:.04em; padding:9px 8px; text-align:left; vertical-align:bottom;
-    line-height:1.25;}
-  table.proc th.mid{font-size:0.63rem; letter-spacing:0; padding:9px 3px; text-align:center;
-    word-break:break-word;}
-  table.proc td{border-bottom:1px solid var(--sand-line); padding:8px 8px; vertical-align:top;}
+  table.proc th{background:var(--gold); color:var(--ink-warm); font-size:0.7rem; font-weight:700;
+    text-transform:uppercase; letter-spacing:.08em; padding:10px 12px; text-align:left; vertical-align:bottom;
+    line-height:1.25; border-bottom:2px solid var(--gold-deep);}
+  table.proc th.mid{text-align:center; padding:10px 4px;}
+  table.proc td{border-bottom:1px solid var(--sand-line); padding:11px 12px; vertical-align:top;}
+  table.proc tbody tr:nth-child(even) td{background:oklch(97.6% 0.008 82);}
   table.proc tr:last-child td{border-bottom:none;}
   table.proc input, table.proc textarea{width:100%; border-width:1px; font-size:0.86rem;
     padding:7px 9px; min-height:52px;}
   table.proc input{min-height:0;}
-  col.c-stage{width:21%;} col.c-proc{width:60%;}
-  col.c-int{width:7%;} col.c-time{width:7%;} col.c-del{width:3%;}
-  table.proc td.narrow{padding:8px 4px;}
-  table.proc td.narrow select,
-  table.proc td.narrow input{width:100%; font-family:'Karla',sans-serif; font-size:0.76rem;
-    padding:6px 2px; border:1px solid var(--sand-line); border-radius:5px;
-    background:#FFFDF8; color:var(--ink); text-align:center; min-height:0;}
-  table.proc td.narrow select{cursor:pointer;}
-  table.proc td.narrow select.t-int2{margin-top:5px;}
+  col.c-stage{width:21%;} col.c-proc{width:65%;}
+  col.c-meta{width:10%;} col.c-del{width:4%;}
+  /* Interaction pattern and Time were two columns of their own, each about as
+     wide as the word above it, and between them they took the room Procedure
+     needed. They are one TIMING cell now -- minutes on top, the two patterns
+     under it -- and each box says what it is inside itself, so the headers
+     come off the top of the table (Ramy, 23 Sep 2026). */
+  table.proc td.meta{padding:11px 8px;}
+  .metastack{display:flex; flex-direction:column; gap:6px;}
+  .metastack input, .metastack select{width:100%; font-family:'Karla',sans-serif; font-size:0.78rem;
+    font-weight:600; text-align:center; padding:7px 4px; border:1.5px solid var(--sand-line);
+    border-radius:20px; background:#FFFDF8; color:var(--teal);
+    appearance:none; -webkit-appearance:none; cursor:pointer; min-height:0;}
+  .metastack input{border-color:var(--gold); background:var(--gold-wash); color:var(--ink-warm); cursor:text;}
+  .metastack input::placeholder{color:var(--gold-deep); font-weight:600; opacity:.75;}
+  .metastack input:focus, .metastack select:focus{outline:none; border-color:var(--gold-deep);}
   /* Every box on the sheet is the same box. autoGrow sets an inline height as
      you type, so the floor is set here where it still wins (Ramy, 21 Sep 2026). */
   table.proc textarea.t-stage, table.proc textarea.t-proc{min-height:104px; resize:vertical;}
-  table.proc textarea.t-stage{font-weight:600;}
-  .stage-hint{font-size:0.7rem; color:var(--teal); font-style:italic; margin:5px 0 0; line-height:1.4;}
-  .stage-hint:empty{display:none;}
-  .proc-foot{display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin-top:14px;}
-  .total{font-size:0.9rem; font-weight:700; color:var(--teal);}
-  .total.over{color:var(--brick);}
+  table.proc textarea.t-stage{font-weight:400;}
+  table.proc textarea::placeholder{color:var(--grey); font-style:italic; opacity:.8;}
+  /* A framework gives the stage NAME and a colon, and stops. The aim after the
+     colon is the candidate's to write -- it used to be printed for them here
+     in green, which was doing the thinking for them (Ramy, 23 Sep 2026:
+     "we're just giving them the stages"). This is the cue that says so, and it
+     goes as soon as they write anything after the colon. */
+  .aim-cue{font-size:0.72rem; font-style:italic; color:var(--gold-deep); margin:6px 0 0;
+    display:flex; align-items:center; gap:6px; line-height:1.3;}
+  .aim-cue::before{content:""; width:12px; height:1.5px; background:var(--gold); flex:none;}
+  .aim-cue.done{display:none;}
+  .proc-foot{display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin-top:16px;
+    justify-content:space-between;}
+  .total{font-family:'Newsreader',Georgia,serif; font-size:1rem; font-weight:700; color:var(--ink-warm);
+    background:var(--gold-wash); border:1.5px solid var(--gold); border-radius:20px; padding:6px 16px;}
+  .total.over{color:var(--brick); border-color:var(--brick); background:oklch(96% 0.03 27);}
 
   .type-row{display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap;}
   .type-row .field{flex:1; min-width:280px;}
@@ -163,11 +201,13 @@
   @media(max-width:760px){ .pairs .pair{grid-template-columns:1fr;} }
 
   table.vocab{width:100%; border-collapse:collapse; table-layout:fixed; min-width:1000px;}
-  table.vocab th{background:var(--teal); color:var(--paper); font-size:0.7rem; font-weight:700;
-    text-transform:uppercase; letter-spacing:.04em; padding:9px 8px; text-align:left; vertical-align:bottom;
-    line-height:1.3;}
+  /* Follows the procedure table into gold: two tables on one sheet wearing two
+     different header colours disagree with each other. */
+  table.vocab th{background:var(--gold); color:var(--ink-warm); font-size:0.7rem; font-weight:700;
+    text-transform:uppercase; letter-spacing:.06em; padding:10px 8px; text-align:left; vertical-align:bottom;
+    line-height:1.3; border-bottom:2px solid var(--gold-deep);}
   table.vocab th span{display:block; font-weight:400; text-transform:none; letter-spacing:0;
-    font-size:0.68rem; opacity:.85; margin-top:3px;}
+    font-size:0.68rem; opacity:.8; margin-top:3px;}
   table.vocab td{border-bottom:1px solid var(--sand-line); padding:8px 6px; vertical-align:top;}
   table.vocab textarea{min-height:74px; font-size:0.85rem; padding:7px 9px; border-width:1px;}
   .vocab-wrap{overflow-x:auto;}
@@ -182,6 +222,17 @@
   .btn-sand{background:var(--sand-deep); color:var(--ink);} .btn-sand:hover{background:var(--sand-line);}
   .btn-ghost{background:none; color:var(--teal); border:2px solid var(--teal);}
   .btn-ghost:hover{background:rgba(30,107,99,.08);}
+  /* Four buttons on this sheet wore the same teal fill and so read as four
+     equal decisions, when only Turn in is one. Fill in the stages keeps a fill
+     -- in gold, because it is this card's action, not the page's; Clear is an
+     undo and goes quiet; Add stage adds a row and is a dashed chip. */
+  .btn-gold{background:var(--gold); color:var(--ink-warm); font-weight:700;}
+  .btn-gold:hover{background:var(--gold-lifted);}
+  .btn-quiet{background:none; color:var(--grey); border:1.5px solid var(--sand-line);}
+  .btn-quiet:hover{border-color:var(--grey); color:var(--ink);}
+  .btn-add{background:none; border:1.5px dashed var(--gold); color:var(--gold-deep); font-weight:700;
+    border-radius:20px; padding:9px 20px; font-family:'Karla',sans-serif; font-size:0.84rem; cursor:pointer;}
+  .btn-add:hover{background:var(--gold-wash);}
   .del-btn{background:none; border:none; color:var(--brick); font-size:1rem; cursor:pointer; padding:2px 4px;}
   .del-btn:hover{color:#7d241c;}
   .example-btn{background:none; border:none; color:var(--terracotta); font-size:0.82rem; font-weight:600;
@@ -204,21 +255,31 @@
   .ipa-bar .grp{font-size:0.68rem; color:var(--grey); text-transform:uppercase; letter-spacing:.06em;
     align-self:center; margin:0 4px 0 10px; font-weight:700;}
 
+  /* Turn in, a sentence, then Print, all in a centred row -- so the sentence
+     read as filling in a sandwich and Print's border competed with Turn in for
+     the eye (Ramy, 23 Sep 2026). The decision and its consequence sit together
+     on the left now; the quiet things sit on the right. */
   .actionbar{position:fixed; bottom:0; left:0; right:0; background:rgba(252,248,239,0.97);
-    border-top:2px solid var(--sand-line); padding:12px 18px; display:flex; gap:12px;
-    flex-wrap:wrap; align-items:center; justify-content:center; z-index:430;}
+    border-top:2px solid var(--sand-line); padding:12px 18px; display:flex; gap:18px;
+    flex-wrap:wrap; align-items:center; justify-content:space-between; z-index:430;}
+  .actionbar .lhs{display:flex; align-items:center; gap:14px; min-width:0; flex-wrap:wrap;}
+  .actionbar .rhs{display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
+  .btn-print{background:none; border:none; color:var(--grey); font-family:'Karla',sans-serif;
+    font-size:0.82rem; font-weight:600; cursor:pointer; padding:6px 2px;
+    text-decoration:underline; text-underline-offset:4px; text-decoration-color:var(--gold);}
+  .btn-print:hover{color:var(--ink-warm);}
   .turnstatus{display:none; align-items:center; gap:12px; flex-wrap:wrap;
     background:#EAF3E9; border:2px solid var(--teal); border-radius:6px;
     padding:12px 18px; margin-bottom:16px; font-size:0.86rem; color:var(--ink); line-height:1.5;}
   .turnstatus.show{display:flex;}
   .turnstatus button{flex:none;}
-  .btn-submit{background:var(--terracotta); color:var(--paper); font-size:1rem; font-weight:700;
-    padding:12px 40px; border-radius:24px; letter-spacing:.02em; border:none; cursor:pointer;}
+  .btn-submit{background:var(--terracotta); color:var(--paper); font-size:0.98rem; font-weight:700;
+    padding:13px 34px; border-radius:24px; letter-spacing:.02em; border:none; cursor:pointer; flex:none;}
   .btn-submit:hover{background:var(--terracotta-dk);}
-  .status{font-size:0.82rem; color:var(--grey);}
+  .status{font-size:0.78rem; color:var(--gold-deep); font-weight:600;}
 
 
-  .barhint{font-size:0.8rem; color:var(--grey); line-height:1.45; max-width:330px;}
+  .barhint{font-size:0.78rem; color:var(--grey); line-height:1.4; max-width:380px;}
   .barhint b{color:var(--teal);}
 
   /* ---- unfinished draft, remembered by the browser (a convenience, not the record) ---- */
@@ -268,7 +329,7 @@
 
   @media print{
     body{background:#fff; padding:0; display:block;}
-    .actionbar,.ipa-bar,.del-btn,.btn,.example-btn,.fw-row,.credit-pill{display:none !important;}
+    .actionbar,.ipa-bar,.del-btn,.btn,.btn-add,.aim-cue,.example-btn,.fw-row,.credit-pill{display:none !important;}
     .card,.blk,.header,.proc-wrap{ border-radius:0; page-break-inside:avoid;}
     textarea,input,select{border:1px solid #999 !important; background:#fff !important;}
     table.proc,table.vocab{min-width:0;}  }
@@ -384,15 +445,17 @@
 
   <div class="card" style="border-left-color:var(--ochre);">
     <h2>Lesson shape</h2>
-    <p class="guide">Choosing a framework fills the Stage column below with that shape's usual stages, and
-    puts its aim under each stage name.</p>
+    <p class="guide">Choosing a framework fills the Stage column below with that shape's usual stages —
+    the name of each one, and a colon. The aim after the colon is yours to write.</p>
     <div class="fw-row">
       <div class="field">
         <label for="fwSelect">Framework</label>
-        <select id="fwSelect"><option value="">— choose a framework —</option></select>
+        <div class="fw-sel"><select id="fwSelect"><option value="">— choose a framework —</option></select></div>
       </div>
-      <button class="btn btn-teal" id="fwApply">Fill in the stages</button>
-      <button class="btn btn-sand" id="fwClear">Clear stages</button>
+      <div class="acts">
+        <button class="btn btn-gold" id="fwApply">Fill in the stages</button>
+        <button class="btn btn-quiet" id="fwClear">Clear</button>
+      </div>
     </div>
     <p class="fw-hint">Everything stays editable — rename, delete or add stages as your lesson needs.</p>
   </div>
@@ -405,19 +468,18 @@
       Press Enter for the next bullet.</p>
     <table class="proc">
       <colgroup>
-        <col class="c-stage"><col class="c-proc"><col class="c-int"><col class="c-time"><col class="c-del">
+        <col class="c-stage"><col class="c-proc"><col class="c-meta"><col class="c-del">
       </colgroup>
       <thead>
         <tr>
           <th>Stage</th><th>Procedure</th>
-          <th class="mid">Interaction<br>pattern</th>
-          <th class="mid">Time</th><th></th>
+          <th class="mid">Timing</th><th></th>
         </tr>
       </thead>
       <tbody id="procBody"></tbody>
     </table>
     <div class="proc-foot">
-      <button class="btn btn-teal" id="addRow">+ Add stage</button>
+      <button class="btn-add" type="button" id="addRow">+ Add stage</button>
       <span class="total" id="total">Total: 0 min</span>
     </div>
   </div>
@@ -506,15 +568,19 @@
 <div class="ipa-bar" id="ipaBar"></div>
 
 <div class="actionbar">
-  <button class="btn-submit" id="turnInBtn">Turn in</button>
-  <span class="barhint">Turning in gives your tutor access to this plan — you won't be able to edit it until they reopen it for you.</span>
-  <button class="btn btn-ghost" id="pdfBtn">Print / Save as PDF</button>
-  <span class="status" id="status"></span>
+  <div class="lhs">
+    <button class="btn-submit" id="turnInBtn">Turn in</button>
+    <span class="barhint">Your tutor gets access to this plan. You won't be able to edit it until they reopen it for you.</span>
+  </div>
+  <div class="rhs">
+    <span class="status" id="status"></span>
+    <button class="btn-print" type="button" id="pdfBtn">Print / Save as PDF</button>
+  </div>
 </div>
 
-<script src="hub-shared.js?v=202609231330"></script>
-<script src="hub-store.js?v=202609231330"></script>
-<script src="hub-sync.js?v=202609231330"></script>
+<script src="hub-shared.js?v=202609232251"></script>
+<script src="hub-store.js?v=202609232251"></script>
+<script src="hub-sync.js?v=202609232251"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -781,25 +847,41 @@ Object.entries(FRAMEWORKS).forEach(([k,v])=>{
 });
 
 const INT_OPTIONS=['T–S','S–T','S–S','PW','GW','Ind.','OC','Ming.'];
-function intSelect(cls){
-  return `<select class="${cls}"><option value="">–</option>`+
+/* The empty option carries the column's old heading. With Interaction pattern
+   and Time merged into one cell there is no room for a heading above each box,
+   so each box says what it is until it is answered. */
+function intSelect(cls,empty){
+  return `<select class="${cls}"><option value="">${empty}</option>`+
     INT_OPTIONS.map(o=>`<option value="${o}">${o}</option>`).join('')+`</select>`;
 }
 const procBody=$('procBody');
+/* The cue is for a stage that has been NAMED and not yet explained -- exactly
+   the state a framework leaves the row in. An empty row has its placeholder
+   instead, and a row with an aim written needs neither. */
+function syncAimCue(tr){
+  const v=tr.querySelector('.t-stage').value;
+  const i=v.indexOf(':');
+  const wants = v.trim() !== '' && (i === -1 || v.slice(i+1).trim() === '');
+  tr.querySelector('.aim-cue').classList.toggle('done', !wants);
+}
 function addRow(stage,hint,time){
   const tr=document.createElement('tr');
   tr.innerHTML=`
-    <td><textarea class="t-stage" rows="3">${esc(stage||'')}</textarea>
-        <p class="stage-hint">${esc(hint||'')}</p></td>
+    <td><textarea class="t-stage" rows="3" placeholder="Stage name: your aim">${esc(stage||'')}</textarea>
+        <p class="aim-cue">write your aim for this stage</p></td>
     <td><textarea class="t-proc blt" rows="4"></textarea></td>
-    <td class="narrow">${intSelect('t-int1')}${intSelect('t-int2')}</td>
-    <td class="narrow"><input class="t-time" type="text" inputmode="numeric" maxlength="7" value="${esc(time||'')}"></td>
+    <td class="meta"><div class="metastack">
+      <input class="t-time" type="text" inputmode="numeric" maxlength="7" placeholder="min" value="${esc(time||'')}">
+      ${intSelect('t-int1','interaction')}${intSelect('t-int2','then…')}
+    </div></td>
     <td><button class="del-btn" type="button" title="Delete this stage">✕</button></td>`;
   procBody.appendChild(tr);
   tr.querySelector('.del-btn').addEventListener('click',()=>{ tr.remove(); updateTotal(); dirty=true; });
+  tr.querySelector('.t-stage').addEventListener('input',()=>syncAimCue(tr));
+  syncAimCue(tr);
   return tr;
 }
-addRow('LEAD-IN','','');
+addRow('LEAD-IN: ','','');
 for(let i=0;i<4;i++) addRow('','','');
 $('addRow').addEventListener('click',()=>{ addRow('','',''); dirty=true; });
 
@@ -831,23 +913,28 @@ $('fwApply').addEventListener('click',async()=>{
      21 Sep 2026). It now asks whenever anything typed would go. */
   const filled=[...procBody.querySelectorAll('tr')].some(tr=>
     procText(tr.querySelector('.t-proc').value).trim() || tr.querySelector('.t-stage').value.trim());
-  if(filled && !await confirmModal('This will rename the stages and replace the stage aims. Anything you have typed in Procedure stays — continue?','Replace anyway')) return;
+  if(filled && !await confirmModal('This will rename the stages. Anything you have typed in Procedure stays — continue?','Replace anyway')) return;
   const rows=[...procBody.querySelectorAll('tr')];
+  /* st[1] -- the framework's own wording of the aim -- is deliberately not
+     written anywhere. It used to print under the stage name in green, which
+     handed the candidate the one part of the stage they are being assessed on
+     (Ramy, 23 Sep 2026: "it feels like cheating a little bit... we're just
+     giving them the stages"). The colon is what asks for the rest. */
   fw.stages.forEach((st,i)=>{
     const tr=rows[i]||addRow('','','');
-    tr.querySelector('.t-stage').value=st[0];
-    tr.querySelector('.stage-hint').textContent=st[1];
+    tr.querySelector('.t-stage').value=st[0]+': ';
+    syncAimCue(tr);
   });
   rows.slice(fw.stages.length).forEach(tr=>{
     if(!procText(tr.querySelector('.t-proc').value).trim()) tr.remove();
   });
-  updateTotal(); setStatus('Stages filled from “'+fw.name+'”. Edit freely.'); dirty=true;
+  updateTotal(); setStatus('Stages filled from “'+fw.name+'”. Write your aim after each colon.'); dirty=true;
 });
 $('fwClear').addEventListener('click',()=>{
   procBody.querySelectorAll('tr').forEach(tr=>{
-    tr.querySelector('.t-stage').value=''; tr.querySelector('.stage-hint').textContent='';
+    tr.querySelector('.t-stage').value=''; syncAimCue(tr);
   });
-  setStatus('Stage names and aims cleared.'); dirty=true;
+  setStatus('Stage names cleared.'); dirty=true;
 });
 
 /* ---------------- language analysis ---------------- */
@@ -1114,7 +1201,11 @@ function collect(){
         const i1=tr.querySelector('.t-int1').value, i2=tr.querySelector('.t-int2').value;
         return {
           stage:tr.querySelector('.t-stage').value,
-          aim:tr.querySelector('.stage-hint').textContent,
+          /* Kept, and always empty. `aim` was the framework's canned line; the
+             candidate's own aim now lives after the colon in `stage`. The key
+             stays so a record written by either version reads the same shape
+             -- the document builders below print it only when it is there. */
+          aim:'',
           proc:procText(tr.querySelector('.t-proc').value),
           int:[i1,i2].filter(Boolean).join(' + '),
           time:tr.querySelector('.t-time').value
@@ -1142,7 +1233,9 @@ function restore(d){
   });
   procBody.innerHTML='';
   (p.rows||[]).forEach(r=>{
-    const tr=addRow(r.stage,r.aim,r.time);
+    /* r.aim is dropped on purpose: a draft saved by the old version carries
+       the framework's wording, and reopening it should not put it back. */
+    const tr=addRow(r.stage,'',r.time);
     tr.querySelector('.t-proc').value=procText(r.proc||'');
     const picks=String(r.int||'').split('+').map(s=>s.trim());
     ['t-int1','t-int2'].forEach((cls,i)=>{
@@ -1150,7 +1243,7 @@ function restore(d){
       if(picks[i] && INT_OPTIONS.includes(picks[i])) sel.value=picks[i];
     });
   });
-  if(!(p.rows||[]).length){ addRow('LEAD-IN','',''); for(let i=0;i<4;i++) addRow('','',''); }
+  if(!(p.rows||[]).length){ addRow('LEAD-IN: ','',''); for(let i=0;i<4;i++) addRow('','',''); }
 
   const la=d.la||{};
   $('typeSel').value=la.type||'grammar';
@@ -1241,6 +1334,20 @@ function detailBand(pairs){
   return cells ? `<table style="width:100%;border-collapse:collapse;margin:0 0 16px;"><tr>${cells}</tr></table>` : '';
 }
 
+/* The candidate's stage box holds "NAME: their aim for the stage" -- one
+   field on the page, because the colon is what asks for the aim (23 Sep
+   2026). On a document the name reads as a heading and the aim as prose, so
+   the first colon is where they part. `r.aim` is the older shape, where the
+   aim was the framework's own wording printed underneath; a record that still
+   carries one still prints it. */
+function stageCell(r){
+  const v=String(r.stage||''); const i=v.indexOf(':');
+  const head = i===-1 ? v : v.slice(0,i);
+  const rest = i===-1 ? '' : v.slice(i+1).trim();
+  return `<strong>${nl2br(head)}</strong>`
+    + (rest?`<br><span style="font-size:10pt;">${nl2br(rest)}</span>`:'')
+    + (r.aim?`<br><span style="font-size:9pt;font-style:italic;color:#1e6b63;">${esc(r.aim)}</span>`:'');
+}
 function docHTML(d){
   const m=d.meta, p=d.plan, l=d.la;
   const box=(label,val)=>
@@ -1256,8 +1363,7 @@ function docHTML(d){
   ]);
 
   const procRows=p.rows.map(r=>
-    `<tr><td ${TD} width="21%"><strong>${nl2br(r.stage)}</strong>${
-      r.aim?`<br><span style="font-size:9pt;font-style:italic;color:#1e6b63;">${esc(r.aim)}</span>`:''}</td>
+    `<tr><td ${TD} width="21%">${stageCell(r)}</td>
       <td ${TD} width="58%">${bullets(r.proc)}</td>
       <td ${TD} width="10%" align="center">${nl2br(r.int)}</td>
       <td ${TD} width="7%" align="center">${esc(r.time)}</td></tr>`).join('');

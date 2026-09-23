@@ -274,8 +274,16 @@ window.hubReserveForBar = function(selector){
   function fit(){
     var h = 0;
     try { h = getComputedStyle(bar).position === 'fixed' ? bar.getBoundingClientRect().height : 0; } catch(e){ return; }
-    if (h > 0) document.documentElement.style.setProperty('--bar-reserve', Math.ceil(h + GAP) + 'px');
-    else document.documentElement.style.removeProperty('--bar-reserve');
+    if (h > 0) {
+      document.documentElement.style.setProperty('--bar-reserve', Math.ceil(h + GAP) + 'px');
+      /* The sync pill is fixed to the bottom-left corner, which on a screen
+         with an action bar is underneath it -- and on the plan, on top of
+         Turn in (23 Sep 2026). It rides above the bar instead. */
+      document.documentElement.style.setProperty('--sync-bottom', Math.ceil(h + 14) + 'px');
+    } else {
+      document.documentElement.style.removeProperty('--bar-reserve');
+      document.documentElement.style.removeProperty('--sync-bottom');
+    }
   }
   fit();
   window.addEventListener('resize', fit);
