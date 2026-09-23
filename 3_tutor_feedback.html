@@ -251,7 +251,7 @@
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609240058">
+<link rel="stylesheet" href="hub-house.css?v=202609240111">
 </head>
 <body>
 <div class="board">
@@ -307,18 +307,18 @@
   <!-- The exchange: the plan out to any AI as a brief with a labelled slot for
        every box below; the filled brief back into those boxes. Format is never
        touched -- words move, the document is still built from the form. -->
+  <!-- Ramy, 24 Sep 2026: "it should just read Copy and then I paste it --
+       tell me where." Two things, both always visible, nothing to open. The
+       old title, "Write it with an AI", read as the AI writing the feedback,
+       which is the opposite of what this is. -->
   <div class="card xchg" id="xchg" style="display:none;">
-    <div class="xchg-head">
-      <h2>Write it with an AI</h2>
-      <p class="guide">Copy the brief, paste it into any AI model, dictate your feedback, then paste what it wrote back here. Each slot lands in its own box. Nothing is saved until you have looked at it.</p>
-    </div>
     <div class="xchg-acts">
-      <button type="button" class="btn btn-gold" id="xCopy">Copy the brief</button>
-      <button type="button" class="btn btn-quiet" id="xDownload">Download it</button>
-      <button type="button" class="btn btn-quiet" id="xPasteToggle">Paste the feedback back</button>
+      <button type="button" class="btn btn-gold" id="xCopy">Copy</button>
+      <span class="guide" style="margin:0;">the plan and analysis, with a slot for each box below — paste it into any AI and dictate.</span>
     </div>
-    <div id="xPaste" style="display:none; margin-top:12px;">
-      <textarea id="xText" rows="8" placeholder="Paste everything the model wrote — it can include the plan, that is fine."></textarea>
+    <div id="xPaste" style="margin-top:14px;">
+      <label for="xText" style="display:block; font-size:0.78rem; font-weight:700; color:var(--teal); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px;">Paste its answer here</label>
+      <textarea id="xText" rows="6" placeholder="Paste the whole reply. It can include the plan — that is ignored."></textarea>
       <div class="xchg-acts" style="margin-top:8px;">
         <button type="button" class="btn btn-gold" id="xRead">Read it</button>
         <span class="status" id="xStatus"></span>
@@ -399,10 +399,10 @@
 </div>
 
 
-<script src="hub-exchange.js?v=202609240058"></script>
-<script src="hub-shared.js?v=202609240058"></script>
-<script src="hub-store.js?v=202609240058"></script>
-<script src="hub-sync.js?v=202609240058"></script>
+<script src="hub-exchange.js?v=202609240111"></script>
+<script src="hub-shared.js?v=202609240111"></script>
+<script src="hub-store.js?v=202609240111"></script>
+<script src="hub-sync.js?v=202609240111"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1567,19 +1567,12 @@ if (window.hubReserveForBar) hubReserveForBar('.actionbar');
 (function(){
   var card = $('xchg'); if (!card || !window.HubExchange) return;
   var PENDING = null;
-  function fileName(){ var m = META(); return ((m.name || 'candidate') + ' ' + (m.tp || 'TP') + ' feedback brief.md').replace(/\s+/g, ' '); }
   function briefNow(){ return HubExchange.brief(DOC || {}); }
   function show(){ card.style.display = DOC ? '' : 'none'; }
   document.addEventListener('hub:ready', show);
   var so = showSeen; showSeen = function(d){ so(d); show(); };
   show();
   $('xCopy').addEventListener('click', function(){ hubCopyButton($('xCopy'), briefNow()); });
-  $('xDownload').addEventListener('click', function(){ saveFile(new Blob([briefNow()], { type: 'text/markdown' }), fileName()); });
-  $('xPasteToggle').addEventListener('click', function(){
-    var open = $('xPaste').style.display === 'none';
-    $('xPaste').style.display = open ? '' : 'none';
-    if (open) $('xText').focus();
-  });
   /* Read, show what would land, and only then apply. A sheet filled by a
      machine and returned unread is the one thing this must never do. */
   $('xRead').addEventListener('click', function(){
