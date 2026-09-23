@@ -122,8 +122,8 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609231321"></script>
-<script src="hub-store.js?v=202609231321"></script>
+<script src="hub-shared.js?v=202609231326"></script>
+<script src="hub-store.js?v=202609231326"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -208,6 +208,10 @@ function render(courses, msg){
           <button class="btn quiet small" type="button" data-delete="${esc(c.id)}" data-label="${esc(label(c))}" data-trainees="${n}">Delete</button>
         </span>
       </div>
+      <!-- Attachments live on this Drive, not the candidates', so they are the
+           owner's to clear. Deleting the course takes them too; this is for a
+           course being kept (23 Sep 2026). -->
+      <div class="mats-line" data-mats="${esc(c.id)}"><span class="note">Materials on Drive: checking…</span></div>
       <div class="links">
         <div class="link">
           <b>Tutor link</b>
@@ -297,6 +301,27 @@ $('app').addEventListener('click', async e => {
     }
     /* The only destructive thing on the screen, so the question names exactly
        what goes rather than asking "are you sure". */
+    const pg = e.target.closest('[data-purge]');
+    if (pg) {
+      if (BUSY) return;
+      const files = Number(pg.dataset.files) || 0;
+      /* Same shape as deleting a course: the question names exactly what goes,
+         and the id is typed rather than filled in, because the danger is the
+         wrong course rather than a careless owner. */
+      const typed = await confirmModal(
+        `Empty the materials for ${pg.dataset.purge}? ${files} file${files === 1 ? '' : 's'} go to Drive's trash, where Drive keeps them for 30 days. The plans that name them will point at nothing.`,
+        'Empty the materials',
+        { type: pg.dataset.purge, hint: `Type ${pg.dataset.purge} to empty its materials` });
+      if (!typed) return;
+      BUSY = true; status('Emptying materials for ' + pg.dataset.purge + '…');
+      try {
+        const r = await call({ op: 'purgeMaterials', course: pg.dataset.purge, confirm: typed });
+        const t = r.trashed || {};
+        showList(r.courses, `Emptied ${r.emptied} — ${t.files || 0} file${t.files === 1 ? '' : 's'} to Drive's trash.`);
+      } catch (err) { status(err.message); }
+      BUSY = false;
+      return;
+    }
     const d = e.target.closest('[data-delete]');
     if (d) {
       if (BUSY) return;
@@ -320,16 +345,36 @@ $('app').addEventListener('click', async e => {
       try {
         const r = await call({ op: 'deleteCourse', course: d.dataset.delete, confirm: typed });
         const g = r.removed || {};
-        showList(r.courses, `Deleted ${r.deleted} — ${g.trainees || 0} trainee${g.trainees === 1 ? '' : 's'} and ${g.records || 0} record${g.records === 1 ? '' : 's'} with it.`);
+        const m = g.materials || {};
+        showList(r.courses, `Deleted ${r.deleted} — ${g.trainees || 0} trainee${g.trainees === 1 ? '' : 's'} and ${g.records || 0} record${g.records === 1 ? '' : 's'} with it`
+          + (m.folder ? `, and its ${m.files || 0} materials file${m.files === 1 ? '' : 's'} to Drive's trash.` : '.'));
       } catch (err) { status(err.message); }
       BUSY = false;
     }
 });
 
+/* The materials line on each card. Filled after the list paints, one course
+   at a time -- each store call is 1.5-13 seconds and the page is useful
+   without this. A store that has not been redeployed simply answers with an
+   error, and the line says nothing rather than a lie. */
+async function fillMaterials(){
+  const lines = [...document.querySelectorAll('[data-mats]')];
+  for (const line of lines) {
+    const id = line.dataset.mats;
+    try {
+      const info = await call({ op: 'materials', course: id });
+      if (!info || !info.exists || !info.files) { line.innerHTML = '<span class="note">No materials on Drive.</span>'; continue; }
+      const mb = info.bytes >= 1048576 ? (info.bytes / 1048576).toFixed(1) + 'MB' : Math.max(1, Math.round(info.bytes / 1024)) + 'KB';
+      line.innerHTML = '<span class="note">Materials on Drive: <b>' + info.files + ' file' + (info.files === 1 ? '' : 's') + '</b> · ' + mb
+        + ' <button class="btn quiet small" type="button" data-purge="' + id + '" data-files="' + info.files + '">Empty</button></span>';
+    } catch (e) { line.innerHTML = ''; }
+  }
+}
+
 /* Repaint from a list the store has already sent back, and only fall back to
    asking for one if an older deployment answered without it. */
 function showList(courses, msg){
-  if (courses) { render(courses, msg); return; }
+  if (courses) { render(courses, msg); fillMaterials(); return; }
   load(msg);
 }
 
