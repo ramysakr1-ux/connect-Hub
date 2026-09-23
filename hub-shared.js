@@ -432,3 +432,93 @@ window.hubApplyCentre = function(){
 document.addEventListener('hub:ready', window.hubApplyCentre);
 if (!window.HubStore) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', window.hubApplyCentre); else window.hubApplyCentre(); }
 
+
+
+/* ---- one assignment's record, as it prints -------------------------------
+   Lifted out of 11_assignment_record.html on 23 Sep 2026 so the course record
+   (screen 15) prints exactly what the single-assignment screen prints. Copying
+   it would have been two records that drift; this is the one. The caller adds
+   its own letterhead, because screen 15 wants one for the whole document
+   rather than one per assignment. */
+(function(){
+  function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function nl2br(s){ return esc(s).replace(/\n/g,'<br>'); }
+
+  function submissionHTML(a, snap){
+    if (!snap) return '<p class="readonly">Nothing submitted.</p>';
+    let out = '';
+    a.sections.forEach((s,i) => {
+      if (s.type==='text' && !/before you start/i.test(s.label) && snap.text && snap.text[i]) {
+        out += `<div class="roundlabel">${esc(s.label)}</div><div class="readonly">${nl2br(snap.text[i])}</div>`;
+      } else if (s.type==='picker' && snap.picked && snap.picked[i]) {
+        const p = snap.picked[i];
+        out += `<div class="roundlabel">${esc(s.label)}</div><div class="readonly">${esc(s.catA.label)}: ${p.A.map(esc).join(', ')||'\u2014'}\n${esc(s.catB.label)}: ${p.B.map(esc).join(', ')||'\u2014'}</div>`;
+      } else if (s.type==='fields' && snap.fields) {
+        const items = (snap.picked && (function(){ for(let j=i-1;j>=0;j--){ if(a.sections[j].type==='picker'){ const p=snap.picked[j]||{A:[],B:[]}; return p.A.concat(p.B);} } return []; })());
+        (items||[]).forEach((item, ii) => {
+          out += `<div class="roundlabel">${esc(s.label)} \u2014 ${esc(item)}</div>`;
+          s.fields.forEach((f,fi) => {
+            const v = snap.fields[`s${i}_i${ii}_f${fi}`];
+            if (v) out += `<div class="readonly"><strong>${esc(f.label)}:</strong> ${nl2br(v)}</div>`;
+          });
+        });
+      } else if (s.type==='declaration' && snap.decl && snap.decl[i]) {
+        const d = snap.decl[i];
+        out += `<div class="roundlabel">Declaration</div><div class="readonly">${s.items.map((it,ci)=>`${d.checks[ci]?'\u2611':'\u2610'} ${esc(it)}`).join('\n')}${s.aiToggle?`\nAI used: ${d.aiUsed==='yes'?('Yes \u2014 '+esc(d.aiPurpose)+' \u2014 '+esc(d.aiLink)):'No'}`:''}</div>`;
+      }
+    });
+    return out || '<p class="readonly">Nothing submitted.</p>';
+  }
+
+  function criteriaTable(a, marksRound1, marksRound2, commentsRound1, commentsRound2, hasRound2){
+    const crit = a.criteria || [];
+    if (!crit.length) return '';
+    return `<table class="crit"><tr><th>Criterion</th><th>1st sub.</th>${hasRound2?'<th>2nd sub.</th>':''}</tr>
+      ${crit.map((c,i)=>{
+        const m1 = marksRound1[i]; const m2 = hasRound2 ? marksRound2[i] : undefined;
+        const cm1 = commentsRound1[i]; const cm2 = hasRound2 ? commentsRound2[i] : '';
+        /* The comment goes with the mark whatever the mark is. It used to print
+           only under "Not met", so a tutor's comment on a criterion they HAD met
+           was stored, shown to the candidate on their own screen, and missing
+           from this record -- the one Handbook 12.1.1 puts in the portfolio the
+           assessor reads (walk, 21 Sep 2026). The marking screen offers the box
+           on every criterion regardless of the mark, so the tutor has no way to
+           know which of their comments will survive. */
+        const note = cm => cm ? `<div class="note" style="font-weight:400; text-transform:none; font-size:0.8rem; margin-top:3px; color:var(--ink);">${nl2br(cm)}</div>` : '';
+        const cell = (m,cm) => m===true ? `<td class="mark met">Met${note(cm)}</td>` : m===false ? `<td class="mark not">Not met${note(cm)}</td>` : `<td class="mark">\u2014${note(cm)}</td>`;
+        return `<tr><td>${esc(c.text)}</td>${cell(m1,cm1)}${hasRound2?cell(m2,cm2):''}</tr>`;
+      }).join('')}
+    </table>`;
+  }
+
+  window.hubAssignmentRecordHTML = function(a, sub){
+    if (!a || !sub || sub.stage === 'draft') return '';
+    var fb = sub.feedback || {};
+    var isPass = /Pass/.test(fb.outcome || '');
+    var marks = sub.criteriaMarks || { sub1: [], sub2: [] };
+    var comments = sub.criteriaComments || { sub1: [], sub2: [] };
+    var html = '<div class="header"><p class="eyebrow">Cambridge CELTA \u00b7 written assignment record</p>'
+      + '<h1>' + esc(a.title) + '</h1>'
+      + (fb.outcome ? '<div class="outcome-badge ' + (isPass ? 'pass' : 'fail') + '">' + esc(fb.outcome) + '</div>' : '')
+      + '</div>'
+      + '<div class="section"><h2>First submission</h2>' + submissionHTML(a, sub.sub1) + '</div>';
+    if (sub.sub2) html += '<div class="section"><h2>Resubmission</h2>' + submissionHTML(a, sub.sub2) + '</div>';
+    html += '<div class="section"><h2>Assessment criteria</h2>'
+      + criteriaTable(a, marks.sub1 || [], marks.sub2 || [], comments.sub1 || [], comments.sub2 || [], !!sub.sub2) + '</div>';
+    html += '<div class="section"><h2>Tutor\u2019s general comments</h2>'
+      + (fb.generalComment1 ? '<div class="roundlabel">On the first submission</div><div class="comment">' + nl2br(fb.generalComment1) + '</div>' : '')
+      + (fb.generalComment2 ? '<div class="roundlabel">On the resubmission</div><div class="comment">' + nl2br(fb.generalComment2) + '</div>' : '')
+      + ((!fb.generalComment1 && !fb.generalComment2) ? '<p class="readonly">No general comment \u2014 feedback is per-criterion above.</p>' : '')
+      + '</div>';
+    /* Handbook 9.2.3: the record carries who marked it, and whether it was
+       double-marked (found missing on the 20 Sep 2026 tutor walk). */
+    var mk = sub.markers || {};
+    var when = function(iso){ if (!iso) return ''; var d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }); };
+    html += '<div class="section"><h2>Marking record</h2><p class="readonly">First marker: <strong>' + esc(mk.first || '\u2014') + '</strong>'
+      + (sub.marked1At ? ' \u00b7 ' + esc(when(sub.marked1At)) : '')
+      + (sub.marked2At ? ' \u00b7 resubmission marked ' + esc(when(sub.marked2At)) : '')
+      + '<br>Second marker: <strong>' + esc(mk.second || '\u2014') + '</strong> \u00b7 ' + (mk.doubleMarked ? 'double-marked' : 'not double-marked')
+      + '</p></div>';
+    return html;
+  };
+})();

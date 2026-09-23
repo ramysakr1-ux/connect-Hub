@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<!--
+  Connect Lite — the whole course, in one printable document
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy, 23 Sep 2026, on what happens at the end of a course: the PDFs go to
+  Classroom and the course is deleted. Lite has no Classroom integration and
+  never will have one from here — but it had no bundle either, so saving a
+  finished course meant opening every candidate's record and every assignment
+  by hand: about sixty prints for a cohort of twelve, with nothing standing
+  between a tired owner and a delete button that says "this cannot be undone".
+
+  This is the one pass. It prints every candidate's complete record — each
+  teaching practice (the stored feedback document already carries the plan, the
+  language analysis sheet and the self-evaluation with it) and every marked
+  assignment. The grades report and the assessor pack keep their own screens,
+  because each is a single print already.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="brand/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<title>Connect Lite — Course record</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hub-record.css">
+<link rel="stylesheet" href="hub-theme.css?v=202609231056">
+<style>
+  .cand-break{page-break-before:always;}
+  .cand-head{margin:0 0 14px;padding:0 0 8px;border-bottom:2px solid var(--ink,#1c2b3a);}
+  .cand-head h1{margin:0;font-family:Newsreader,Georgia,serif;font-size:1.7rem;}
+  .cand-head p{margin:4px 0 0;font-size:.85rem;color:#5b6b7c;}
+  .part-label{margin:26px 0 10px;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#5b6b7c;}
+  .cover{padding:0 0 10px;}
+  .cover h1{font-family:Newsreader,Georgia,serif;font-size:2rem;margin:0 0 6px;}
+  .cover p{margin:0 0 4px;font-size:.9rem;color:#5b6b7c;}
+  .cover ul{margin:14px 0 0;padding-left:18px;font-size:.9rem;line-height:1.7;}
+  .nothing{font-size:.85rem;color:#5b6b7c;font-style:italic;}
+  @media print{ .actions,.back{display:none !important;} }
+</style>
+</head>
+<body class="hub-assign">
+<a class="back" href="5_tutor_dashboard.html">&#8592; Back to dashboard</a>
+<div class="doc" id="doc"></div>
+<div class="actions"><button id="printBtn">Print / Save as PDF</button></div>
+<script src="hub-shared.js?v=202609231056"></script>
+<script src="assignment-defaults.js?v=202609231056"></script>
+<script src="hub-store.js?v=202609231056"></script>
+<script src="hub-sync.js?v=202609231056"></script>
+<script type="text/x-hub-app">
+/* The centre's room: this reads every candidate on the course. */
+if (hubTutorRoomOnly()) throw new Error('Connect Lite: stopping this page on purpose — the tutors’ room is not open to this link.');
+
+const $ = id => document.getElementById(id);
+const esc = s => (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const rec = k => { try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } };
+
+let WORDING = rec('connect_assignment_wording_v2');
+if (!WORDING && window.CONNECT_HUB_DEFAULT_WORDING) WORDING = window.CONNECT_HUB_DEFAULT_WORDING;
+const SETTINGS = rec('connect_course_settings') || {};
+const ROSTER = rec('connect_roster_v1') || { trainees: {} };
+
+const longDate = iso => { if(!iso) return ''; const d=new Date(iso); return isNaN(d)?'':d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}); };
+
+/* Every teaching practice this candidate has, oldest first. The stored
+   feedback document is the whole record for that TP -- it carries the plan,
+   the language analysis sheet and the self-evaluation inside it -- so there is
+   nothing to reassemble here, only to order. The current TP sits in
+   tp.feedback until "Start next TP" moves it into the history, so it is added
+   after the history and de-duplicated against it, the same way screen 4 does. */
+function tpDocs(t){
+  const tp = t.tp || {};
+  const history = tp.history || {};
+  const out = [];
+  Object.keys(history).map(Number).filter(n => n >= 1 && n <= (window.HUB_MAX_TP || 8)).sort((x,y) => x-y)
+    .forEach(n => { const r = history[n]; if (r && r.docHTML) out.push({ n: n, html: r.docHTML }); });
+  const fb = tp.feedback;
+  if (fb && fb.status === 'returned' && fb.docHTML) {
+    const m = String((fb.state && fb.state.f && fb.state.f.fTP) || fb.label || '').match(/\d+/);
+    const n = m ? parseInt(m[0], 10) : 0;
+    if (!out.some(x => x.n === n)) out.push({ n: n, html: fb.docHTML });
+  }
+  return out;
+}
+
+function assignmentDocs(t){
+  const subs = t.assignments || {};
+  const order = hubAssignmentOrder(WORDING);
+  const out = [];
+  order.forEach(key => {
+    const a = WORDING && WORDING[key];
+    const sub = subs[key];
+    if (!a || !sub) return;
+    const html = window.hubAssignmentRecordHTML ? hubAssignmentRecordHTML(a, sub) : '';
+    if (html) out.push({ key: key, html: html });
+  });
+  return out;
+}
+
+function build(){
+  const people = Object.keys(ROSTER.trainees || {})
+    .map(id => ROSTER.trainees[id])
+    .filter(Boolean)
+    .sort((a,b) => String(a.name||'').localeCompare(String(b.name||''), 'en', { sensitivity:'base' }));
+
+  const parts = [];
+  let tpCount = 0, assnCount = 0;
+  const bodies = people.map((t, i) => {
+    const tps = tpDocs(t), assns = assignmentDocs(t);
+    tpCount += tps.length; assnCount += assns.length;
+    let html = '<section class="' + (i ? 'cand-break' : '') + '">'
+      + '<div class="cand-head"><h1>' + esc(t.name || 'Candidate') + '</h1>'
+      + '<p>' + (t.group ? 'Group ' + esc(t.group) + ' &middot; ' : '')
+      + tps.length + ' teaching practice' + (tps.length === 1 ? '' : 's') + ' &middot; '
+      + assns.length + ' assignment' + (assns.length === 1 ? '' : 's') + '</p></div>';
+    if (!tps.length && !assns.length) html += '<p class="nothing">Nothing recorded for this candidate.</p>';
+    tps.forEach(d => {
+      html += '<div class="part-label">Teaching practice ' + (d.n || '') + '</div>'
+           +  '<div class="tp-doc">' + d.html + '</div>';
+    });
+    assns.forEach(d => {
+      html += '<div class="part-label">Written assignment</div>' + d.html;
+    });
+    return html + '</section>';
+  });
+
+  const cover = '<div class="cover">'
+    + (window.hubLetterheadHTML ? hubLetterheadHTML('') : '')
+    + '<h1>Course record</h1>'
+    + '<p>' + esc([SETTINGS.centreName, SETTINGS.centreNumber].filter(Boolean).join(' · ') || 'Centre not named') + '</p>'
+    + '<p>' + esc(SETTINGS.courseName || 'Course not named')
+    + (SETTINGS.start || SETTINGS.end ? ' &middot; ' + esc([longDate(SETTINGS.start), longDate(SETTINGS.end)].filter(Boolean).join(' – ')) : '') + '</p>'
+    + '<p>Saved ' + esc(longDate(new Date().toISOString())) + '</p>'
+    + '<ul><li>' + people.length + ' candidate' + (people.length === 1 ? '' : 's') + '</li>'
+    + '<li>' + tpCount + ' teaching practice record' + (tpCount === 1 ? '' : 's') + ' — each carries its plan, language analysis sheet and self-evaluation</li>'
+    + '<li>' + assnCount + ' marked assignment' + (assnCount === 1 ? '' : 's') + '</li></ul>'
+    /* Said here rather than discovered later: this document is not the whole
+       of what the centre keeps, and the two that are missing are one print
+       each. */
+    + '<p style="margin-top:14px;">The grades report and the assessor pack are not in this document — each is a single print of its own, from the tutor dashboard.</p>'
+    + '</div>';
+
+  parts.push(cover);
+  if (!people.length) parts.push('<p class="nothing">No candidates on the course yet.</p>');
+  else parts.push(bodies.join(''));
+  $('doc').innerHTML = parts.join('');
+}
+
+build();
+$('printBtn').addEventListener('click', () => window.print());
+</script>
+</body>
+</html>
