@@ -168,20 +168,44 @@
   /* ---- what they planned ---- */
   .seen-head{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px;}
   .seen-head h2{margin:0;}
-  .seen dl{margin:0 0 12px; font-size:0.86rem; line-height:1.6;}
+  /* The plan as the tutor reads it. Ramy, 24 Sep 2026: "the format is messy
+     ... interaction patterns, timing not aligned ... your comments part is a
+     bit too small ... they're all very washed ... some borders with all the
+     stages." So: the aims side by side instead of one thin column; the
+     stages as bands of alternating tone on paper, not a wash on a wash; the
+     interaction pattern and the time as small pills next to each other; and
+     the comment column as wide as the procedure, with a box you can write in. */
+  .seen dl{display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:10px 22px;
+    margin:0 0 14px; font-size:0.86rem; line-height:1.55;}
+  .seen dl > div{background:var(--paper); border-radius:6px; padding:10px 14px; border-left:3px solid var(--sand-line);}
+  .seen dl > div.main{border-left-color:var(--teal);}
+  .seen dl > div.wide{grid-column:1 / -1;}
+  .seen-meta{margin:-6px 0 12px; font-size:0.84rem; color:var(--grey);}
   .seen dt{font-weight:700; color:var(--teal); margin-top:10px; font-size:0.76rem;
     text-transform:uppercase; letter-spacing:.05em;}
-  .seen dt:first-child{margin-top:0;}
-  .seen dd{margin:3px 0 0;}
-  .seen table{width:100%; border-collapse:collapse; font-size:0.84rem; margin-top:8px;}
-  .seen th{background:var(--sand-deep); color:var(--ink); text-align:left; padding:6px 8px;
+  .seen dt{margin-top:0;}
+  .seen dd{margin:4px 0 0;}
+  .seen dd ul{margin:0; padding-left:16px;}
+  .seen dd li{margin:2px 0;}
+  .seen table{width:100%; border-collapse:separate; border-spacing:0; font-size:0.84rem; margin-top:8px;
+    background:var(--paper); border-radius:6px; overflow:hidden; border:1px solid var(--sand-line);}
+  .seen th{background:var(--gold); color:var(--ink-warm); text-align:left; padding:8px 10px;
     font-size:0.72rem; text-transform:uppercase; letter-spacing:.04em;}
-  .seen td{border-bottom:1px solid var(--sand-line); padding:6px 8px; vertical-align:top; line-height:1.55;}
+  .seen td{border-bottom:1px solid var(--sand-line); padding:10px 10px; vertical-align:top; line-height:1.55;}
+  .seen tr:last-child td{border-bottom:none;}
+  .seen tbody tr:nth-child(even) td, .seen table > tr:nth-child(even) td{background:oklch(97.4% 0.012 82);}
   .seen td b{color:var(--terracotta);}
   .seen td ul{margin:0; padding-left:16px;}
+  .seen td.stage .aim{display:block; font-weight:400; color:var(--ink-warm); margin-top:2px;}
+  .seen td.mid{text-align:center; white-space:nowrap;}
+  .seen .pill{display:inline-block; font-size:0.74rem; font-weight:700; padding:2px 9px; border-radius:11px;
+    background:var(--box); border:1px solid var(--sand-line); color:var(--ink-warm);}
+  .seen .pill.time{background:var(--gold-wash, oklch(94.5% 0.035 78)); border-color:var(--gold);}
+  .seen .ps{display:grid; grid-template-columns:auto 1fr; gap:2px 8px;}
+  .seen .ps span{font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--grey); padding-top:3px;}
   .seen h4{font-family:'Newsreader',Georgia,serif; font-size:0.95rem; margin:16px 0 4px; color:var(--terracotta);}
-  .seen th.tc{background:var(--ochre); color:#3b2600;}
-  .seen textarea.tc{width:100%; min-height:34px; font-family:'Karla',sans-serif; font-size:0.8rem;
+  .seen th.tc{background:var(--terracotta); color:var(--paper);}
+  .seen textarea.tc{width:100%; min-height:72px; font-family:'Karla',sans-serif; font-size:0.86rem;
     padding:5px 7px; border:1px solid var(--ochre); border-radius:5px; background:#FBF3E4;
     color:var(--ink); line-height:1.5; resize:vertical; overflow:hidden;}
   .seen textarea.tc:focus{outline:none; border-color:var(--terracotta);}
@@ -245,7 +269,7 @@
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609240122">
+<link rel="stylesheet" href="hub-house.css?v=202609240129">
 </head>
 <body>
 <div class="board">
@@ -395,10 +419,10 @@
 </div>
 
 
-<script src="hub-exchange.js?v=202609240122"></script>
-<script src="hub-shared.js?v=202609240122"></script>
-<script src="hub-store.js?v=202609240122"></script>
-<script src="hub-sync.js?v=202609240122"></script>
+<script src="hub-exchange.js?v=202609240129"></script>
+<script src="hub-shared.js?v=202609240129"></script>
+<script src="hub-store.js?v=202609240129"></script>
+<script src="hub-sync.js?v=202609240129"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -807,36 +831,41 @@ function prefill(d){
 function showSeen(d){
   const m=d.meta||{}, p=d.plan||{}, l=d.la||{};
   const rows=(p.rows||[]).filter(r=>(r.stage||'').trim()||(r.proc||'').trim());
-  let html=`<dl>
-    ${p.main?`<dt>Main aims</dt><dd>${bulletsHTML(p.main)}</dd>`:''}
-    ${p.sub?`<dt>Subsidiary aims</dt><dd>${bulletsHTML(p.sub)}</dd>`:''}
-    ${p.profile?`<dt>Class profile</dt><dd>${nl2br(p.profile)}</dd>`:''}
-    ${p.pers?`<dt>Personal aims</dt><dd>${bulletsHTML(p.pers)}</dd>`:''}
-    ${p.mats?`<dt>Materials</dt><dd>${bulletsHTML(p.mats)}</dd>`:''}
-    ${m.framework?`<dt>Lesson shape</dt><dd>${esc(m.framework)}</dd>`:''}
+  const cell=(cls,label,body)=>body?`<div class="${cls}"><dt>${label}</dt><dd>${body}</dd></div>`:'';
+  const metaBits=[m.level, m.length?m.length+' min':'', m.framework].filter(Boolean);
+  let html=(metaBits.length?`<p class="seen-meta">${metaBits.map(esc).join(' \u00b7 ')}</p>`:'')+`<dl>
+    ${cell('main','Main aims',p.main&&bulletsHTML(p.main))}
+    ${cell('','Subsidiary aims',p.sub&&bulletsHTML(p.sub))}
+    ${cell('','Personal aims',p.pers&&bulletsHTML(p.pers))}
+    ${cell('','Materials',p.mats&&bulletsHTML(p.mats))}
+    ${cell('wide','Class profile',p.profile&&nl2br(p.profile))}
   </dl>`;
   if((p.probs||[]).some(x=>(x.problem||'').trim()||(x.solution||'').trim())){
     html+=`<h4>Anticipated problems</h4><table>
+      <tr><th width="45%">Problem</th><th>Solution</th></tr>
       ${p.probs.filter(x=>(x.problem||'').trim()||(x.solution||'').trim())
-        .map(x=>`<tr><td width="45%">${bulletsHTML(x.problem)}</td><td>${bulletsHTML(x.solution)}</td></tr>`).join('')}
+        .map(x=>`<tr><td>${bulletsHTML(x.problem)}</td><td>${bulletsHTML(x.solution)}</td></tr>`).join('')}
     </table>`;
   }
   if(rows.length){
+    /* The stage box holds "NAME: the aim" -- name bold, aim beneath it. */
+    const stageCell=r=>{ const v=String(r.stage||'\u2014'), k=v.indexOf(':');
+      const name=k===-1?v:v.slice(0,k), aim=k===-1?'':v.slice(k+1).trim();
+      return `<b>${esc(name)}</b>${aim?`<span class="aim">${esc(aim)}</span>`:''}${r.aim?`<span class="aim">${esc(r.aim)}</span>`:''}`; };
     html+=`<h4>Procedure</h4><table>
-      <tr><th width="15%">Stage</th><th>Procedure</th><th width="7%">Int.</th><th width="6%">Time</th>
-          <th class="tc" width="26%">Your comment</th></tr>
-      ${rows.map((r,i)=>`<tr><td><b>${esc(r.stage||'—')}</b>${
-        r.aim?`<br><span style="font-style:italic;color:#736A58;">${esc(r.aim)}</span>`:''}</td>
-        <td>${bulletsHTML(r.proc)}</td><td align="center">${esc(r.int||'')}</td>
-        <td align="center">${esc(r.time||'')}</td>
+      <tr><th width="18%">Stage</th><th width="34%">Procedure</th><th class="mid" width="12%">Int. / time</th>
+          <th class="tc" width="36%">Your comment</th></tr>
+      ${rows.map((r,i)=>`<tr><td class="stage">${stageCell(r)}</td>
+        <td>${bulletsHTML(r.proc)}</td>
+        <td class="mid">${r.int?`<span class="pill">${esc(r.int)}</span>`:''}${r.time?` <span class="pill time">${esc(r.time)} min</span>`:''}</td>
         <td>${tcBox('st'+i,'on this stage')}</td></tr>`).join('')}
     </table>`;
   }
   const laLabel = l.type==='vocab'?'Vocabulary':(l.type==='grammar'?'Grammar':'Functional language');
   if(l.type==='vocab' && (l.vocab||[]).length){
     html+=`<h4>${laLabel} analysis</h4><table>
-      <tr><th width="15%">Item</th><th>Definition</th><th>Clarification</th><th>Problems</th>
-          <th class="tc" width="24%">Your comment</th></tr>
+      <tr><th width="14%">Item</th><th>Definition</th><th>Clarification</th><th>Problems</th>
+          <th class="tc" width="32%">Your comment</th></tr>
       ${l.vocab.map((r,i)=>`<tr><td><b>${nl2br(r.item)}</b></td><td>${bulletsHTML(r.def)}</td>
         <td>${bulletsHTML(r.clar)}</td><td>${bulletsHTML(r.prob)}</td>
         <td>${tcBox('vo'+i,'on this item')}</td></tr>`).join('')}
@@ -845,12 +874,12 @@ function showSeen(d){
     html+=`<h4>${laLabel} analysis</h4>`;
     l.blocks.forEach((b,bi)=>{
       html+=`<table style="margin-bottom:14px;">
-        <tr><th width="22%">Section</th><th>What they wrote</th><th class="tc" width="26%">Your comment</th></tr>
+        <tr><th width="18%">Section</th><th>What they wrote</th><th class="tc" width="36%">Your comment</th></tr>
         ${b.fields.map(f=>{
           let val='';
           if(f.pairs){
             if(!f.pairs.length) return '';
-            val=f.pairs.map(x=>`P: ${bulletsHTML(x.problem)}<br>S: ${bulletsHTML(x.solution)}`).join('<br><br>');
+            val=f.pairs.map(x=>`<div class="ps"><span>Problem</span><div>${bulletsHTML(x.problem)}</div><span>Solution</span><div>${bulletsHTML(x.solution)}</div></div>`).join('<div style="height:8px"></div>');
           } else {
             if(!(f.value||'').trim()) return '';
             val=bulletsHTML(f.value);
