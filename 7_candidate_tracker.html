@@ -157,7 +157,7 @@
 
   @media (max-width:900px){ .page{ padding:20px 16px 60px; } }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609240036">
+<link rel="stylesheet" href="hub-house.css?v=202609240044">
 </head>
 <body>
 <div class="page">
@@ -186,12 +186,12 @@
   </div>
   <div id="detail"></div>
 </div>
-<script src="hub-due.js?v=202609240036"></script>
-<script src="hub-shared.js?v=202609240036"></script>
-<script src="assignment-defaults.js?v=202609240036"></script>
-<script src="hub-tracker.js?v=202609240036"></script>
-<script src="hub-store.js?v=202609240036"></script>
-<script src="hub-sync.js?v=202609240036"></script>
+<script src="hub-due.js?v=202609240044"></script>
+<script src="hub-shared.js?v=202609240044"></script>
+<script src="assignment-defaults.js?v=202609240044"></script>
+<script src="hub-tracker.js?v=202609240044"></script>
+<script src="hub-store.js?v=202609240044"></script>
+<script src="hub-sync.js?v=202609240044"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
@@ -240,7 +240,11 @@ const BANDS = T.stageBands(TP_TOTAL);
 const TPS = Array.from({length:TP_TOTAL},(_,i)=>i+1).map(n=>({key:'tp'+n, n, label:'TP'+n}));
 
 // The handoff's vocabulary and colour buckets, over the Hub's own states.
-// Missing / due need deadlines the Hub does not hold, so they never render.
+//
+// DUE and MISSING are not stored anywhere: they are the ABSENCE of a
+// submission, measured against a deadline, for one candidate. The line above
+// this one used to say they never render because the Hub held no deadlines.
+// It does now (24 Sep 2026), so they do -- see dueChip().
 const A_STATE = {
   '':        { t:'·', cls:'nd',   name:'Not started' },
   WAIT:      { t:'in', cls:'wait',    name:'Submitted, waiting to be marked' },
@@ -249,8 +253,45 @@ const A_STATE = {
   FAILRES:   { t:'resubmit', cls:'work', name:'Resubmission required' },
   WAIT2:     { t:'resub in', cls:'wait', name:'Resubmission waiting to be marked' },
   RES:       { t:'pass²', cls:'fine', name:'Passed on resubmission' },
-  FAIL:      { t:'fail', cls:'wrong', name:'Fail' }
+  FAIL:      { t:'fail', cls:'wrong', name:'Fail' },
+  DUE:       { t:'due', cls:'work', name:'Not submitted \u2014 deadline within three days' },
+  MISSING:   { t:'missing', cls:'wrong', name:'Not submitted \u2014 past the deadline' },
+  RESLATE:   { t:'resubmit', cls:'wrong', name:'Resubmission required \u2014 the window has closed' }
 };
+
+/* The deadline a cell is really against, for THIS candidate -- their own
+   extension included, which is why an extended candidate reads "due" while the
+   rest of a late cohort reads "missing".
+ *
+ * Three days, not the twenty-four hours the candidate's own pill uses, and the
+ * difference is deliberate: a candidate wants to know it is today, a tutor
+ * scanning this board on Monday wants to know what is coming this week.
+ *
+ * Only the states where something is genuinely outstanding are touched. A
+ * submitted or marked assignment keeps its own chip whatever the clock says --
+ * a deadline is about work that has not arrived. The one exception is a
+ * resubmission whose window has closed, which keeps the word "resubmit" and
+ * turns red, because losing that window matters (Handbook 9.2.3: one
+ * resubmission, inside the span of the course). */
+function dueChip(p, key, a){
+  if (!window.HubDue) return null;
+  const w = WORDING && WORDING[key];
+  if (!w) return null;
+  const ext = ((p.tr && p.tr.tracker) || {}).extensions || {};
+  if (a.code === '') {
+    const st = HubDue.state(HubDue.forPerson(w.dueAt, ext['a:' + key]).iso);
+    if (!st.has) return null;
+    if (st.past) return A_STATE.MISSING;
+    if (st.ms <= 3 * HubDue.DAY) return A_STATE.DUE;
+    return null;
+  }
+  if (a.code === 'FAILRES') {
+    const base = HubDue.windowFrom(a.sub && (a.sub.marked1At || a.sub.returnedAt), w.resubDays);
+    const st = HubDue.state(HubDue.forPerson(base, ext['a:' + key + ':resub']).iso);
+    if (st.has && st.past) return A_STATE.RESLATE;
+  }
+  return null;
+}
 const T_STATE = {
   nd:     { t:'·', cls:'nd', name:'Not yet taught' },
   un:     { t:'taught', cls:'wait', name:'Taught, feedback not yet returned' },
@@ -355,7 +396,7 @@ function render(){
     const cells = cols.map(col=>{
       let chip, selected = SEL && SEL.id===p.tr.id && SEL.col===col.key;
       if (isA){
-        const a = p.asg[col.key]; const st = A_STATE[a.code] || A_STATE[''];
+        const a = p.asg[col.key]; const st = dueChip(p, col.key, a) || A_STATE[a.code] || A_STATE[''];
         const dm = a.code ? `<span class="dm">/ ${a.dm ? 'DM <b>'+esc(initials(a.markers.second))+'</b>' : '—'}</span>` : '';
         chip = `<span class="chip ${st.cls}">${st.t}${dm}</span>`;
       } else {
@@ -377,7 +418,7 @@ function render(){
     const toStd = TPS.slice(0,tailOf).filter(t=>['STD','ABOVE'].includes(p.tps[t.key].g)).length;
     return `<div class="grid row ${risk?'risk':''}" style="grid-template-columns:${gridCols}"><div class="who"><div class="nm">${esc(p.tr.name)}</div>${risk?'<div class="flag">at risk</div>':''}</div>${cells}<div class="tail">${isA?passed+'/4':toStd+'/'+tailOf}</div></div>`;
   }).join('');
-  const leg = isA ? ['WAIT','FAILRES','WAIT2','UNMARKED','FAIL','PASS','RES'].map(k=>A_STATE[k]) : ['un','NOTSTD','STD','ABOVE'].map(k=>T_STATE[k]);
+  const leg = isA ? ['DUE','MISSING','WAIT','FAILRES','WAIT2','UNMARKED','FAIL','PASS','RES'].map(k=>A_STATE[k]) : ['un','NOTSTD','STD','ABOVE'].map(k=>T_STATE[k]);
   html += `<div class="legend">${leg.map(s=>`<div class="it"><span class="chip ${s.cls}">${s.t}</span><span class="lb">${s.name}</span></div>`).join('')}<div class="it"><span class="chip nd" style="color:var(--purp-soft)">/ —</span><span class="lb">Not double marked</span></div><div class="it"><span class="chip nd" style="color:var(--purp-soft)">/ DM JB</span><span class="lb">Second marker's initials</span></div></div>`;
   $('gridwrap').innerHTML = html;
   renderDetail(all);
@@ -392,7 +433,7 @@ function renderDetail(all){
   let kicker, subtitle, status;
   const q = 'trainee=' + encodeURIComponent(p.tr.id);
   if (isA){
-    const a = p.asg[SEL.col]; const st = A_STATE[a.code] || A_STATE['']; const w = WORDING && WORDING[SEL.col];
+    const a = p.asg[SEL.col]; const st = dueChip(p, SEL.col, a) || A_STATE[a.code] || A_STATE['']; const w = WORDING && WORDING[SEL.col];
     kicker = 'Assignment'; subtitle = SEL.col.toUpperCase() + (w ? ' · ' + w.title : ''); status = st;
     facts.push(['Brief', w ? w.title : SEL.col.toUpperCase()]);
     facts.push(['Round', a.round===2 ? 'Second submission — the one resubmission is used' : a.round===1 ? 'First submission' : 'Nothing submitted yet']);

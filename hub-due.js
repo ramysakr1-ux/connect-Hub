@@ -36,9 +36,18 @@
 (function(){
   var MIN = 60000, HOUR = 60 * MIN, DAY = 24 * HOUR;
 
+  /* Both shapes, on purpose. These stamps are written as ISO strings today
+     (`new Date().toISOString()`), but this codebase has already been bitten
+     once by assuming one shape: TP records hold a NUMBER from Date.now() while
+     assignments hold a string, and a sort that assumed strings put every epoch
+     before every date (21 Sep 2026). Date.parse(1758...) is NaN, so a numeric
+     stamp read here would silently mean "no deadline" -- which is the safest
+     looking and most dangerous kind of wrong. */
   function parse(v){
-    if (!v) return null;
-    var t = (v instanceof Date) ? v.getTime() : Date.parse(v);
+    if (v === null || v === undefined || v === '') return null;
+    var t = (v instanceof Date) ? v.getTime()
+          : (typeof v === 'number') ? v
+          : Date.parse(v);
     return isFinite(t) ? t : null;
   }
 
