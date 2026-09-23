@@ -1090,6 +1090,25 @@ const feedbackParams=new URLSearchParams(location.search);
 const TRAINEE_ID=feedbackParams.get('trainee')||'';
 function loadRoster(){ try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
 function saveRosterObj(r){ localStorage.setItem(ROSTER_KEY, JSON.stringify(r)); }
+/* The candidate this page is about, by name.
+   Ramy, 23 Sep 2026: "instead of having things like trainee, trainer, we could
+   actually have the names." A tutor on this screen is writing about one
+   person, and the roster has known who since the page gained ?trainee=<id> --
+   the reopen confirmation already said their name while the button beside it
+   said "Return to trainee".
+   The fallback matters: the roster arrives with the boot, so a first paint or
+   a page opened without ?trainee= has no name, and the old wording is right
+   for exactly those cases. */
+function traineeLabel(fallback){
+  try{ return (loadRoster().trainees[TRAINEE_ID]||{}).name || fallback; }
+  catch(e){ return fallback; }
+}
+function applyTraineeNames(){
+  const btn=$('returnBtn'); if(btn) btn.textContent='Return to '+traineeLabel('trainee');
+  const hint=document.querySelector('.barhint');
+  if(hint) hint.textContent='Returning locks it and lets '+traineeLabel('the trainee')+
+    ' read it, alongside their plan and self-evaluation.';
+}
 const CAN_STORE=(function(){
   try{ localStorage.setItem('__probe','1'); localStorage.removeItem('__probe'); return true; }
   catch(e){ return false; }
@@ -1174,7 +1193,7 @@ function renderTurnStatus(){
        It has already been returned once, so this is not a slip the candidate
        never saw. */
     $('reopenBtn').addEventListener('click',async function(){
-      if(!(await confirmModal('Reopening takes this feedback back: until you return it again, '+(((loadRoster().trainees[TRAINEE_ID]||{}).name)||'the candidate')+' cannot open it, even if they have already read it. Continue?','Reopen for edits'))) return;
+      if(!(await confirmModal('Reopening takes this feedback back: until you return it again, '+traineeLabel('the candidate')+' cannot open it, even if they have already read it. Continue?','Reopen for edits'))) return;
       saveFeedbackRecord({status:'draft'});
       renderTurnStatus();
     });
@@ -1186,6 +1205,7 @@ function renderTurnStatus(){
   }
 }
 (function initFromStorage(){
+  applyTraineeNames();
   let planRec=null, selfRec=null;
   if (TRAINEE_ID) {
     const tr=loadRoster().trainees[TRAINEE_ID];

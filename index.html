@@ -422,7 +422,16 @@ if (fbBack){
   try{ me=JSON.parse(localStorage.getItem('hub:me')); }catch(e){}
   const name = (me && me.name) || localStorage.getItem('hub:name') || '';
   if (cs && cs.courseName) document.getElementById('boardTitle').textContent = cs.courseName;
-  const bits = [name, cs && cs.centreName, me && me.group ? 'Group ' + me.group : ''].filter(Boolean);
+  /* The badge says WHO is looking, not what they are.
+     Ramy, 23 Sep 2026: "instead of having things like trainee, trainer, we
+     could actually have the names." A trainee knows they are the trainee; the
+     name is the useful thing, and it was already on the page -- first in this
+     meta line, which is why it comes OUT of the line as it goes into the
+     badge. "Trainee" stays as the fallback for a first paint, before the boot
+     has brought the roster back. */
+  const roleEl = document.getElementById('roleLabel');
+  if (roleEl && name) roleEl.textContent = name;
+  const bits = [cs && cs.centreName, me && me.group ? 'Group ' + me.group : ''].filter(Boolean);
   if (bits.length) document.getElementById('courseMeta').textContent = bits.join(' · ');
 })();
 
