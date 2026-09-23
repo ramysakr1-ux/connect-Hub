@@ -99,6 +99,15 @@ window.HubStore = (function(){
     renameTrainee: function(tok, name, group){ return call({ op: 'renameTrainee', token: tok, name: name, group: group }); },
     removeTrainee: function(tok){ return call({ op: 'removeTrainee', token: tok }); },
     traineeLink: function(tok){ return base() + 'index.html?t=' + encodeURIComponent(tok); },
+    /* The link a centre actually hands out. It opens the invitation card --
+       which says whose link it is, what it opens and that it must not be
+       passed on -- and the card opens the room. The direct links above still
+       work and are what the card's button uses; this is the front door, not a
+       gate (23 Sep 2026, for a course being run through Google Classroom). */
+    inviteFor: function(kind, v){
+      var q = kind === 'tutor' ? 'k=' : kind === 'assessor' ? 'ak=' : 't=';
+      return base() + 'invite.html?' + q + encodeURIComponent(v);
+    },
     tutorLink: function(){ return base() + '5_tutor_dashboard.html?k=' + encodeURIComponent(key()); },
     withAccess: withAccess
   };

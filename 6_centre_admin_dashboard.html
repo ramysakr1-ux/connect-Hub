@@ -234,7 +234,7 @@
     .grid.roster > .col-group, .grid.roster > .col-status{display:none;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609232346">
+<link rel="stylesheet" href="hub-house.css?v=202609232354">
 </head>
 <body>
 <div class="board">
@@ -383,10 +383,10 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609232346"></script>
-<script src="hub-store.js?v=202609232346"></script>
-<script src="hub-shared.js?v=202609232346"></script>
-<script src="hub-sync.js?v=202609232346"></script>
+<script src="assignment-defaults.js?v=202609232354"></script>
+<script src="hub-store.js?v=202609232354"></script>
+<script src="hub-shared.js?v=202609232354"></script>
+<script src="hub-sync.js?v=202609232354"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -561,7 +561,7 @@ async function renderAssessorBlock(rotated){
   const S = window.HubStore, el = document.getElementById('assessorBlock'); if (!el) return;
   try {
     const r = rotated || ASSESSOR_LINK || (ASSESSOR_LINK = await S.assessorLink());
-    const link = S.assessorLinkFor(r.key);
+    const link = S.inviteFor('assessor', r.key);
     /* The store is asked first, but it does not always carry `expires` -- the
        assessor pack has had a fromEnd() fallback for exactly that since it was
        built. Without the same fallback here, a centre that HAS set an end date
@@ -626,7 +626,7 @@ async function renderStoreRoster(next){
       <button class="linkbtn" type="button" id="toggleUrls">${SHOW_URLS ? 'Hide addresses' : 'Show addresses'}</button>
     </div>
     <div class="linkcard">
-      ${linkRow('Tutor link', 'Every tutor on the course opens this same link and lands on the same course — the same trainees, the same records. Keep it to tutors, and rotate it if it gets out: every copy in circulation stops working.', S.tutorLink(), 'tutor', 'storeRotateKey', 'Rotate')}
+      ${linkRow('Tutor link', 'Every tutor on the course opens this same link and lands on the same course — the same trainees, the same records. Keep it to tutors, and rotate it if it gets out: every copy in circulation stops working.', S.inviteFor('tutor', S.key()), 'tutor', 'storeRotateKey', 'Rotate')}
       <div id="assessorBlock" class="linkrow"><div class="body"><b>Assessor link</b><p>Loading…</p></div></div>
     </div>
 
@@ -658,9 +658,9 @@ async function renderStoreRoster(next){
       ${trainees.length ? trainees.map(t=>`<div class="grid roster grow">
         <div class="name">${esc(t.name)}</div>
         <div class="col-group muted">${esc(t.group||'—')}</div>
-        <div class="col-status muted" style="font-size:0.8rem;">${SHOW_URLS ? `<code style="word-break:break-all;">${esc(S.traineeLink(t.token))}</code>` : 'Theirs alone — post it in Classroom'}</div>
+        <div class="col-status muted" style="font-size:0.8rem;">${SHOW_URLS ? `<code style="word-break:break-all;">${esc(S.inviteFor('trainee', t.token))}</code>` : 'Theirs alone — post it in Classroom'}</div>
         <div class="acts">
-          <button class="btn small" type="button" data-copy="${esc(S.traineeLink(t.token))}">Copy link</button>
+          <button class="btn small" type="button" data-copy="${esc(S.inviteFor('trainee', t.token))}">Copy link</button>
           <!-- One candidate's teaching practice record, to read or print on its
                own. Screen 15 prints the whole course and screen 11 one marked
                assignment; this was the gap between them (23 Sep 2026). -->
