@@ -359,9 +359,9 @@
       <span id="matsDropText">Drag and drop a file here, or <u>click to choose</u></span>
       <input type="file" id="matsFileInput" style="display:none;">
     </div>
-    <p class="hint" style="margin-top:6px;"><strong>This file stays on this device.</strong> It is not sent with your plan and your
-    tutor cannot open it \u2014 it is here so you can keep it beside the plan while you write. For anything your tutor
-    needs to see, use the materials link above.</p>
+    <p class="hint" style="margin-top:6px;"><strong>This file goes with your plan.</strong> It is saved to the course and your
+    tutor and the assessor can open it from the plan itself. Up to 10MB. Anything bigger, or already on Drive, belongs in
+    the materials link above.</p>
   </div>
 
   <div class="card" style="border-left-color:var(--ochre);">
@@ -494,9 +494,9 @@
   <span class="status" id="status"></span>
 </div>
 
-<script src="hub-shared.js?v=202609231115"></script>
-<script src="hub-store.js?v=202609231115"></script>
-<script src="hub-sync.js?v=202609231115"></script>
+<script src="hub-shared.js?v=202609231249"></script>
+<script src="hub-store.js?v=202609231249"></script>
+<script src="hub-sync.js?v=202609231249"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -543,10 +543,18 @@ const MATS_MAX_BYTES = 10 * 1024 * 1024;
 
 let MATS_FILE=null;
 
-/* What goes in the plan: enough to name the file, none of its weight. */
+/* What goes in the plan: enough to name the file, none of its weight -- and,
+   since 23 Sep 2026, the Drive link the store gives back when it stores the
+   bytes. The file itself still never enters the record: a Sheets cell holds
+   50,000 characters and base64 costs a third on top, so the most a record
+   could ever carry is about 36KB, less than one worksheet. The link is what
+   travels, which is what makes the attachment reach the tutor, the assessor
+   and the printed record at all. */
 function matsFileMeta(){
   if (!MATS_FILE) return null;
-  return { name: MATS_FILE.name, type: MATS_FILE.type || '', size: MATS_FILE.size || 0 };
+  var m = { name: MATS_FILE.name, type: MATS_FILE.type || '', size: MATS_FILE.size || 0 };
+  if (MATS_FILE.url) m.url = MATS_FILE.url;
+  return m;
 }
 function saveMatsLocal(){
   try {
@@ -603,9 +611,27 @@ function handleMatsFile(file){
   }
   const reader=new FileReader();
   reader.onerror = ()=>{ matsNote('That file could not be read. Try the materials link above instead.'); };
-  reader.onload = ()=>{
+  reader.onload = async ()=>{
     MATS_FILE={ name:file.name, type:file.type, size:file.size, dataUrl:reader.result };
     saveMatsLocal(); dirty=true; autosave(); renderMatsFile();
+    /* The local copy first, so the candidate sees it attached at once, then
+       the upload behind it. A failed upload is not a failed attachment: the
+       file is still on their machine and the plan still saves -- they are told
+       the tutor will not be able to open it, which is the truth and is
+       actionable (use the Drive link box above). */
+    const tok = (function(){ try { return localStorage.getItem('hub:t') || ''; } catch(e){ return ''; } })();
+    if (!tok || !window.HubStore || !HubStore.putMaterial) return;
+    const base64 = String(reader.result || '').split(',')[1] || '';
+    if (!base64) return;
+    matsNote('Sending ' + file.name + ' to the course\u2026');
+    try {
+      const r = await HubStore.putMaterial(tok, file.name, file.type || '', base64);
+      MATS_FILE.url = r && r.url ? r.url : '';
+      saveMatsLocal(); dirty=true; autosave(); renderMatsFile();
+      matsNote(MATS_FILE.url ? '' : 'That file is on this device only \u2014 your tutor will not be able to open it. Paste a Drive link above instead.');
+    } catch (err) {
+      matsNote('That file could not be sent to the course (' + (err && err.message ? err.message : 'no answer') + '). It is still on this device, but your tutor will not be able to open it \u2014 paste a Drive link above instead.');
+    }
   };
   reader.readAsDataURL(file);
 }
@@ -1230,7 +1256,7 @@ function docHTML(d){
     ${(p.profile||'').trim()?boxProfile('Class Profile',p.profile):''}
     ${box('Materials',p.mats)}
     ${(p.matsLink||'').trim()?`<p style="font-size:9.5pt;margin:-6px 0 12px;"><strong>Materials link:</strong> <a href="${esc(p.matsLink)}">${esc(p.matsLink)}</a></p>`:''}
-    ${(p.matsFile&&p.matsFile.name)?`<p style="font-size:9.5pt;margin:-6px 0 12px;"><strong>Attached file:</strong> ${esc(p.matsFile.name)}${p.matsFile.dataUrl?` — <a href="${p.matsFile.dataUrl}" download="${esc(p.matsFile.name)}">download</a>`:' — held on the candidate\u2019s own device, not sent with this plan. The materials link above is what travels.'}</p>`:''}
+    ${(p.matsFile&&p.matsFile.name)?`<p style="font-size:9.5pt;margin:-6px 0 12px;"><strong>Attached file:</strong> ${esc(p.matsFile.name)}${p.matsFile.url?` — <a href="${esc(p.matsFile.url)}">open</a>`:(p.matsFile.dataUrl?` — <a href="${p.matsFile.dataUrl}" download="${esc(p.matsFile.name)}">download</a>`:' — held on the candidate\u2019s own device, not sent with this plan. The materials link above is what travels.')}</p>`:''}
     <h2 style="font-family:Newsreader,Georgia,serif;font-size:13pt;color:#1E6B63;margin:20px 0 8px;">Lesson Procedure</h2>
     <table style="width:100%;border-collapse:collapse;">
       <tr><td ${TH} width="21%">Stage</td><td ${TH} width="58%">Procedure</td>

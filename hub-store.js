@@ -29,9 +29,9 @@ window.HubStore = (function(){
   // A call that never answers is worse than one that fails: 20 s, then it is
   // treated as transient and retried (20 Sep 2026: a boot hung and the page
   // sat on "Loading from the course" for good).
-  async function once(payload){
+  async function once(payload, timeoutMs){
     var ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    var timer = ctl ? setTimeout(function(){ ctl.abort(); }, 20000) : null;
+    var timer = ctl ? setTimeout(function(){ ctl.abort(); }, timeoutMs || 20000) : null;
     var res, text;
     try {
       res = await fetch(URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload), signal: ctl ? ctl.signal : undefined });
@@ -42,7 +42,7 @@ window.HubStore = (function(){
   }
   // Apps Script drops the odd call, especially several in quick succession,
   // and answers with an HTML page instead of JSON. One retry after a pause.
-  async function call(body){
+  async function call(body, timeoutMs){
     var payload = Object.assign({}, body);
     if (key() && payload.key == null) payload.key = key();
     else if (akey() && payload.a == null) payload.a = akey();
@@ -50,7 +50,7 @@ window.HubStore = (function(){
     // Bulunamadi", 1 in 3 during a bad minute on 20 Sep 2026): three tries.
     var out, tries = 0, waits = [900, 1800];
     for (;;) {
-      try { out = await once(payload); break; }
+      try { out = await once(payload, timeoutMs); break; }
       catch (e) { if (!e.transient || tries >= waits.length) throw e; await new Promise(function(r){ setTimeout(r, waits[tries++]); }); }
     }
     // A refusal is the store answering, not the network failing, and the two
@@ -79,6 +79,14 @@ window.HubStore = (function(){
     assessorLinkFor: function(k){ return base() + '12_assessor_pack.html?ak=' + encodeURIComponent(k); },
     rotateKey: function(){ return call({ op: 'rotateKey' }).then(function(r){ try { localStorage.setItem('hub:k', r.key); } catch (e) {} return true; }); },
     purgeTrainee: function(tok){ return call({ op: 'purgeTrainee', token: tok }); },
+    /* A materials file goes to Drive and comes back as a link; the bytes never
+       reach the sheet (a cell holds 50,000 characters). base64 is a third
+       bigger than the file, so 10MB on disk is ~13MB on the wire and cannot
+       finish inside the 20s every other call gets -- this one is given three
+       minutes of its own. */
+    putMaterial: function(tok, name, type, base64){
+      return call({ op: 'putMaterial', token: tok, name: name, type: type, bytes: base64 }, 180000);
+    },
     me: function(){ return call({ op: 'me', token: token() }); },
     get: function(kind, tok){ return call({ op: 'get', token: tok || token(), kind: kind }).then(function(r){ return r.data; }); },
     put: function(kind, data, tok){ return call({ op: 'put', token: tok || token(), kind: kind, data: data }); },
