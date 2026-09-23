@@ -33,6 +33,14 @@
   .picker button.active{background:var(--teal); border-color:var(--teal); color:var(--paper);}
   .header{background:var(--paper); border-radius:6px; margin-bottom:20px; border-top:2px solid var(--teal); padding:22px 26px;}
   .header h1{font-family:'Newsreader',Georgia,serif; font-size:1.6rem; margin:0;}
+  .duerow{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:12px;
+    padding:10px 14px; border-radius:6px; background:var(--box); border:1.5px solid var(--sand-line);}
+  .duerow.past{background:oklch(96% 0.03 27); border-color:oklch(45% 0.15 27);}
+  .duerow .dueline{flex:1; min-width:220px; font-size:0.84rem; font-weight:600; color:var(--ink-warm);}
+  .duerow.past .dueline{color:oklch(45% 0.15 27);}
+  .duerow .dueacts{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+  .duerow input{font-family:'Karla',sans-serif; font-size:0.82rem; padding:6px 10px;
+    border:1.5px solid var(--sand-line); border-radius:6px; background:#FFFDF8;}
   .stage-pill{display:inline-block; font-size:0.78rem; font-weight:700; padding:3px 10px; border-radius:10px; margin-top:8px;}
   .stage-pill.submitted{background:oklch(90% 0.05 260); color:oklch(40% 0.1 260);}
   .stage-pill.resubmitted{background:oklch(93% 0.06 60); color:oklch(40% 0.1 60);}
@@ -67,8 +75,8 @@
   .btn-sand{background:var(--sand-deep); color:var(--ink);}
   .note{font-size:0.8rem; color:var(--grey); margin:0 0 14px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609240026">
-<link rel="stylesheet" href="hub-theme.css?v=202609240026">
+<link rel="stylesheet" href="hub-house.css?v=202609240036">
+<link rel="stylesheet" href="hub-theme.css?v=202609240036">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -76,11 +84,11 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202609240026"></script>
-<script src="hub-due.js?v=202609240026"></script>
-<script src="hub-shared.js?v=202609240026"></script>
-<script src="hub-store.js?v=202609240026"></script>
-<script src="hub-sync.js?v=202609240026"></script>
+<script src="assignment-defaults.js?v=202609240036"></script>
+<script src="hub-due.js?v=202609240036"></script>
+<script src="hub-shared.js?v=202609240036"></script>
+<script src="hub-store.js?v=202609240036"></script>
+<script src="hub-sync.js?v=202609240036"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -135,6 +143,62 @@ if (TRAINEE_ID) {
   try { SUBS = JSON.parse(localStorage.getItem(SUB_KEY)); } catch(e) {}
 }
 if (!SUBS) SUBS = {};
+
+/* Giving ONE candidate more time.
+ *
+ * The deadline belongs to the assignment and to everybody on the course. An
+ * extension belongs to one person, so it is written into that candidate's own
+ * tracker record -- TUTOR_ONLY in hub-sync, which is what stops a candidate
+ * granting themselves one -- and hub-due only ever lets it ADD time.
+ *
+ * Offered whether or not the deadline has passed: a tutor who knows on Tuesday
+ * that someone is in hospital should not have to wait until Friday night for
+ * the button to appear (24 Sep 2026). */
+function extKey(sub){
+  return 'a:' + CURRENT + (sub && sub.stage === 'resubmission_needed' ? ':resub' : '');
+}
+function extensionsOf(){
+  if (!TRAINEE_ID) return {};
+  const tr = loadRoster().trainees[TRAINEE_ID];
+  return (tr && tr.tracker && tr.tracker.extensions) || {};
+}
+function setExtension(sub, iso){
+  if (!TRAINEE_ID) return;
+  const roster = loadRoster();
+  const tr = roster.trainees[TRAINEE_ID] || (roster.trainees[TRAINEE_ID] = { id:TRAINEE_ID, name:'Trainee', tp:{}, assignments:{} });
+  tr.tracker = tr.tracker || {};
+  tr.tracker.extensions = tr.tracker.extensions || {};
+  if (iso) tr.tracker.extensions[extKey(sub)] = iso; else delete tr.tracker.extensions[extKey(sub)];
+  saveRoster(roster);
+  render();
+}
+function baseDue(a, sub){
+  return sub && sub.stage === 'resubmission_needed'
+    ? HubDue.windowFrom(sub.marked1At || sub.returnedAt, a && a.resubDays)
+    : (a && a.dueAt) || '';
+}
+function dueRowHTML(a, sub){
+  if (!TRAINEE_ID) return '';                       // nobody to extend
+  const mine = HubDue.forPerson(baseDue(a, sub), extensionsOf()[extKey(sub)]);
+  const st = HubDue.state(mine.iso);
+  const isResub = sub.stage === 'resubmission_needed';
+  const settled = sub.stage === 'submitted' || sub.stage === 'resubmitted' || sub.stage === 'closed';
+  if (!st.has && settled) return '';
+  const line = !st.has
+    ? (isResub ? 'No resubmission window set for this assignment.' : 'No deadline set for this assignment.')
+    : (st.past ? (isResub ? 'Resubmission closed ' : 'Closed ') + esc(st.due)
+               : 'Due ' + esc(st.due) + ' \u00b7 ' + esc(st.text))
+      + (mine.extended ? ' \u2014 extended for this candidate' : '');
+  const prefill = HubDue.toLocalInput(new Date(Date.now() + 3 * HubDue.DAY).toISOString());
+  return `<div class="duerow ${st.past ? 'past' : ''}">
+    <span class="dueline">${line}</span>
+    ${settled ? '' : `<span class="dueacts">
+      <input type="datetime-local" id="extAt" value="${esc(HubDue.toLocalInput(mine.extended ? mine.iso : '') || prefill)}">
+      <button type="button" class="btn btn-quiet" id="extSet">${mine.extended ? 'Change it' : 'Give more time'}</button>
+      ${mine.extended ? '<button type="button" class="btn btn-quiet" id="extClear">Remove</button>' : ''}
+    </span>`}
+  </div>`;
+}
 
 function saveSubs(){
   if (TRAINEE_ID) {
@@ -206,6 +270,7 @@ function render(){
 
   let html = `<div class="header"><p class="eyebrow">Written assignments · marking</p><h1>${esc(a.title)}</h1>
     <span class="stage-pill ${sub.stage}">${({draft:'Not submitted', submitted:'Awaiting marking', returned_unmarked:'Returned unmarked', resubmission_needed:'Resubmission needed', resubmitted:'Resubmission awaiting marking', closed:'Closed'})[sub.stage]}</span>
+    ${dueRowHTML(a, sub)}
     ${CURRENT !== 'a5' ? (a5InPlay(SUBS)
       ? `<p class="note" style="margin:12px 0 0;">Assignment 5 (plagiarism reflection) is set for this candidate${SUBS.a5 && SUBS.a5.assignedAfter ? ' after ' + esc(NAMES[SUBS.a5.assignedAfter] || SUBS.a5.assignedAfter) : ''}.${SUBS.a5 && SUBS.a5.stage === 'draft' ? ' <button type="button" class="btn btn-quiet" id="a5WithdrawBtn" style="margin-left:8px;">Withdraw it</button>' : ''}</p>`
       : `<p class="note" style="margin:12px 0 0;">Plagiarism found here? <button type="button" class="btn btn-quiet" id="a5SetBtn">Set Assignment 5 (plagiarism reflection)</button> It is a centre sanction, not one of the four, and stays out of sight until set.</p>`) : ''}
@@ -326,6 +391,15 @@ function render(){
   if (saveBtn) saveBtn.addEventListener('click', doSave);
   const unmarkedBtn = $('unmarkedBtn');
   if (unmarkedBtn) unmarkedBtn.addEventListener('click', doReturnUnmarked);
+  const extBtn = $('extSet');
+  if (extBtn) extBtn.addEventListener('click', () => {
+    const v = ($('extAt') || {}).value;
+    if (!v) return;
+    setExtension(subFor(CURRENT), HubDue.fromLocalInput(v));
+  });
+  const extClr = $('extClear');
+  if (extClr) extClr.addEventListener('click', () => setExtension(subFor(CURRENT), ''));
+
   const setBtn = $('a5SetBtn');
   if (setBtn) setBtn.addEventListener('click', async () => {
     if (!(await confirmModal('Set Assignment 5, the plagiarism reflection, for this candidate? It appears in their assignment list once you return this file to them.', 'Set Assignment 5'))) return;
