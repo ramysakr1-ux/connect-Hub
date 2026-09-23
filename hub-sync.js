@@ -142,7 +142,15 @@
   // here in the meantime, the page reloads itself -- instantly, from the fresh
   // copy. A write made before the boot answers wins: the boot then only
   // refreshes the keys it did not touch and leaves the page alone.
-  if (!mode) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', gate); else gate(); return; }
+  // gate(reason) treats its argument as the reason a link STOPPED working, so
+  // handing it straight to addEventListener passed the DOMContentLoaded Event
+  // as that reason: someone opening the bare URL with no link at all was told
+  // "This link no longer opens the course" -- a different and much more
+  // alarming claim than "Open your course link" -- over a paragraph reading
+  // "[object Event]". Only on a page that had not finished parsing, which is
+  // the ordinary case for a fresh visit, so this is what the live site showed
+  // (walked 23 Sep 2026).
+  if (!mode) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ gate(); }); else gate(); return; }
   var identity = mode + ':' + (mode === 'tutor' ? S.key() : mode === 'assessor' ? S.assessorKey() : S.token());
   var cached = false; try { cached = localStorage.getItem('hub:booted') === identity; } catch (e) {}
   var dirty = {}, started = false;
