@@ -20,7 +20,7 @@
  * VERSION is stamped by bump-assets.py with the same stamp as the ?v= links,
  * so each push retires the previous cache on activate.
  */
-const VERSION = 'lite-202609241044';
+const VERSION = 'lite-202609241058';
 const SHELL = [
   './', 'index.html', 'invite.html',
   '1_trainee_plan_and_analysis.html', '2_trainee_self_evaluation.html', '3_tutor_feedback.html',
@@ -81,11 +81,16 @@ self.addEventListener('fetch', function (e) {
       if (hit) return hit;
       if (req.mode === 'navigate') {
         return new Response(
-          '<!doctype html><meta charset="utf-8"><title>Connect Lite — offline</title>' +
-          '<body style="font-family:Karla,sans-serif;padding:40px;max-width:520px;line-height:1.5">' +
-          '<h1 style="font-family:Newsreader,Georgia,serif">You are offline</h1>' +
-          '<p>This page has not been opened on this device before, so there is no copy of it here yet. ' +
-          'Open it once with a connection and it will be here after that.</p></body>',
+          '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+          '<title>Connect Lite \u2014 offline</title>' +
+          '<body style="margin:0;min-height:100vh;background:oklch(96.4% 0.014 85);color:oklch(23.5% 0.017 65);' +
+          'font-family:Karla,\'Helvetica Neue\',Arial,sans-serif;display:flex;align-items:flex-start;justify-content:center;padding:56px 20px;box-sizing:border-box">' +
+          '<div style="max-width:560px;width:100%;background:oklch(96.2% 0.02 80);border-left:5px solid oklch(63% 0.096 72);border-radius:6px;padding:26px 30px 28px;box-shadow:0 1px 2px rgba(0,0,0,.04)">' +
+          '<div style="font-size:.72rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:oklch(51% 0.017 70);margin-bottom:10px">Connect Lite</div>' +
+          '<h1 style="font-family:Newsreader,Georgia,serif;font-weight:700;font-size:1.7rem;line-height:1.15;margin:0 0 12px">You are offline</h1>' +
+          '<p style="font-size:.95rem;line-height:1.6;margin:0 0 10px">This page has not been opened on this device before, so there is no copy of it here yet.</p>' +
+          '<p style="font-size:.95rem;line-height:1.6;margin:0;color:oklch(51% 0.017 70)">Open it once with a connection and it will be here after that. Pages you have already opened still work, and anything you write is kept and sent when the connection returns.</p>' +
+          '</div></body>',
           { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
       }
       return new Response('', { status: 504 });
