@@ -66,6 +66,34 @@
      is set to be read: body size, paragraph spacing, its own measure. The
      .guide grey used for a one-line instruction is unreadable at this length. */
   .card .refbody{font-size:0.92rem; line-height:1.65; color:var(--ink); max-width:66ch; margin:0 0 10px;}
+  /* A little colour, on every assignment (Ramy, 25 Sep 2026). Colour says what
+     a block IS: reference material a teal wash with a teal edge, the things a
+     candidate chooses or fills in a gold wash, the declaration the sand of the
+     page. The boxes they write in stay paper. And each assignment's header
+     takes its own tint, so four screens that share one layout do not read as
+     one screen. */
+  :root{ --teal-wash:oklch(95.5% 0.02 195); --gold-wash:oklch(94.5% 0.035 78); --sage-wash:oklch(95% 0.03 150); --plum-wash:oklch(95% 0.025 330); --sky-wash:oklch(95.5% 0.025 240); }
+  .header.hue-fol{background:linear-gradient(90deg, var(--sage-wash, var(--paper)), var(--paper) 70%);}
+  .header.hue-lrt{background:linear-gradient(90deg, var(--gold-wash, var(--paper)), var(--paper) 70%);}
+  .header.hue-lsrt{background:linear-gradient(90deg, var(--sky-wash, var(--paper)), var(--paper) 70%);}
+  .header.hue-lfc{background:linear-gradient(90deg, var(--plum-wash, var(--paper)), var(--paper) 70%);}
+  .header.hue-a5{background:linear-gradient(90deg, oklch(95% 0.03 27), var(--paper) 70%);}
+  .critfold{margin-top:12px; font-size:0.82rem;}
+  .critfold summary{cursor:pointer; list-style:none; display:inline-flex; align-items:center; gap:6px; font-weight:600; color:var(--teal);}
+  .critfold summary::-webkit-details-marker{display:none;}
+  .critfold summary::before{content:''; width:6px; height:6px; border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor; transform:rotate(-45deg); transition:transform .15s;}
+  .critfold[open] summary::before{transform:rotate(45deg);}
+  .critfold ol{margin:8px 0 0; padding-left:20px; color:var(--grey); line-height:1.55;}
+  details.card.ref{background:var(--teal-wash, var(--paper)); border-left-color:var(--teal);}
+  details.card.ref summary{cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  details.card.ref summary::-webkit-details-marker{display:none;}
+  details.card.ref summary h2{margin:0;}
+  details.card.ref .fold{width:8px; height:8px; border-right:1.5px solid var(--grey); border-bottom:1.5px solid var(--grey); transform:rotate(-45deg); transition:transform .15s; flex-shrink:0; margin-right:4px;}
+  details.card.ref[open] .fold{transform:rotate(45deg);}
+  details.card.ref[open] summary{margin-bottom:8px;}
+  details.card.ref .refbody{max-width:70ch;}
+  .card.pick, .card.fill{background:var(--gold-wash, var(--paper)); border-left-color:var(--gold, oklch(63% 0.096 72));}
+  .card.decl{background:var(--sand-deep); border-left-color:var(--sand-line);}
   .card .refbody strong{font-weight:700;}
   .chip{border:2px solid var(--sand-line); background:#FFFDF8; color:var(--ink); font-family:'Karla',sans-serif;
     font-size:0.85rem; padding:7px 14px; border-radius:18px; cursor:pointer; margin:0 6px 6px 0;}
@@ -120,7 +148,7 @@
   textarea.resub:focus{ border-color:oklch(60% 0.12 70); }
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202609240203">
-<link rel="stylesheet" href="hub-theme.css?v=202609250237">
+<link rel="stylesheet" href="hub-theme.css?v=202609250245">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -128,11 +156,11 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202609250237"></script>
+<script src="assignment-defaults.js?v=202609250245"></script>
 <script src="hub-due.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609250237"></script>
-<script src="hub-store.js?v=202609250237"></script>
-<script src="hub-sync.js?v=202609250237"></script>
+<script src="hub-shared.js?v=202609250245"></script>
+<script src="hub-store.js?v=202609250245"></script>
+<script src="hub-sync.js?v=202609250245"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the candidate's submission form with a
@@ -264,9 +292,15 @@ function render(){
   MATERIALSLINK = sub.draft && sub.draft.materialsLink ? sub.draft.materialsLink : MATERIALSLINK;
 
   const locked = sub.stage==='submitted' || sub.stage==='resubmitted' || sub.stage==='closed';
-  let html = `<div class="header"><p class="eyebrow">Written assignments</p><h1>${esc(a.title)}</h1>
-    <div class="meta">${a.wordMin?`<span id="wcCounter"></span>`:''}${a.format?`<span>${a.format==='prose'?'Continuous prose':'Structured'}</span>`:''}${duePillHTML(dueFor(a, sub), locked)}</div>
-    ${(a.criteria&&a.criteria.length)?`<p class="crit"><strong>Marking criteria:</strong> ${a.criteria.map(c=>esc(c.text)).join(' \u00b7 ')}</p>`:''}
+  /* The header carries what changes -- the deadline and the word count -- and
+     nothing that does not. It used to print the format and then every marking
+     criterion on one line, joined by dots: six criteria of Cambridge prose
+     under the title before a word of the assignment (Ramy, 25 Sep 2026: "that
+     top part... is just too crowded"). The criteria fold away under their
+     count; the format is in the brief. */
+  let html = `<div class="header hue-${esc(CURRENT)}"><p class="eyebrow">Written assignments</p><h1>${esc(a.title)}</h1>
+    <div class="meta">${duePillHTML(dueFor(a, sub), locked)}${a.wordMin?`<span id="wcCounter"></span>`:''}</div>
+    ${(a.criteria&&a.criteria.length)?`<details class="critfold"><summary>Marking criteria · ${a.criteria.length}</summary><ol>${a.criteria.map(c=>`<li>${esc(c.text)}</li>`).join('')}</ol></details>`:''}
   </div>`;
 
   if (locked) html += `<div class="locked-banner"><span>${sub.stage==='closed'?'This assignment is closed.':sub.stage==='resubmitted'?'Resubmitted \u2014 waiting on your tutor.':'Submitted \u2014 waiting on your tutor.'}</span>${sub.stage==='resubmission_needed'?'':''}</div>`;
@@ -309,8 +343,18 @@ function render(){
       const isIntro = hubIsReference(s);
       const crit = critsForSection(a,i);
       const isLockedNow = onRound2 && sectionLocked(a,sub,i);
-      html += `<div class="card"><h2>${esc(s.label)}</h2><${s.readonly===true?'div class="refbody"':'p class="guide"'}>${nl2br(s.body)}</${s.readonly===true?'div':'p'}>`;
-      if (!isIntro) {
+      if (isIntro) {
+        /* Reference material folds. "Before you start" and the texts open,
+           because the assignment cannot be done without them; a reading list
+           or a list of resubmission pitfalls starts closed, because it is
+           there when wanted and in the way when not (Ramy, 25 Sep 2026: "you
+           should be able to hide that if you want to"). */
+        const startsClosed = /recommended|reading|reference materials|resources|reasons for resubmission/i.test(s.label) && !/^text |the text/i.test(s.label);
+        html += `<details class="card ref ${startsClosed?'':'open'}"${startsClosed?'':' open'}><summary><h2>${esc(s.label)}</h2><span class="fold" aria-hidden="true"></span></summary><div class="refbody">${nl2br(s.body)}</div></details>`;
+        return;
+      }
+      html += `<div class="card"><h2>${esc(s.label)}</h2><p class="guide">${nl2br(s.body)}</p>`;
+      {
         if (isLockedNow) {
           html += `<div class="lockedbox"><span class="lockedtag">\u2713 Already met \u2014 carried forward, no changes needed</span><div class="readonly">${nl2br((sub.sub1&&sub.sub1.text&&sub.sub1.text[i])||'')}</div></div>`;
         } else {
@@ -327,7 +371,7 @@ function render(){
       html += `</div>`;
     } else if (s.type==='picker') {
       const picked = PICKED[i] || {};
-      html += `<div class="card"><h2>${esc(s.label)}</h2>${s.intro?`<p class="guide">${nl2br(s.intro)}</p>`:''}<div class="catwrap">
+      html += `<div class="card pick"><h2>${esc(s.label)}</h2>${s.intro?`<p class="guide">${nl2br(s.intro)}</p>`:''}<div class="catwrap">
         ${hubPickerCats(s).map(c => {
           const chosen = c.fixed ? c.options : (picked[c.key] || []);
           // A fixed group is not a choice. Everyone analyses it, so its chips
@@ -342,7 +386,7 @@ function render(){
       const items = itemsForFieldsSection(a, i);
       const crit = critsForSection(a,i);
       const isLockedNow = onRound2 && sectionLocked(a,sub,i);
-      html += `<div class="card"><h2>${esc(s.label)}</h2>${s.intro?`<p class="guide">${esc(s.intro)}</p>`:''}`;
+      html += `<div class="card fill"><h2>${esc(s.label)}</h2>${s.intro?`<p class="guide">${esc(s.intro)}</p>`:''}`;
       if (!items.length) {
         html += `<p class="guide">Pick your items above first.</p>`;
       } else if (isLockedNow) {
@@ -376,7 +420,7 @@ function render(){
       html += `</div>`;
     } else if (s.type==='declaration') {
       const d = DECL[i] || { checks:s.items.map(()=>false), aiUsed:'', aiLink:'', aiPurpose:'' };
-      html += `<div class="card"><h2>${esc(s.label)}</h2>
+      html += `<div class="card decl"><h2>${esc(s.label)}</h2>
         <div class="row"><label>Materials link (if this assignment uses outside material)</label>
           <p class="hint">If you're linking a Drive file or worksheet here, use different material from any assessed TP lesson \u2014 Handbook 9.2.1.</p>
           <input type="url" data-role="materialslink" value="${esc(MATERIALSLINK)}" placeholder="https://drive.google.com/..." ${locked?'disabled':''}></div>
