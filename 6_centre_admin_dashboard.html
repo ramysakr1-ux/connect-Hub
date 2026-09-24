@@ -137,7 +137,7 @@
   .lede{margin:0 0 18px; font-size:0.85rem; color:var(--grey); line-height:1.6; max-width:640px;}
 
   /* ---- buttons --------------------------------------------------------- */
-  .btn{font-family:'Karla',sans-serif; font-size:0.82rem; font-weight:600; padding:7px 15px;
+  .btn{font-family:'Karla',sans-serif; font-size:0.82rem; font-weight:600; padding:7px 15px; text-decoration:none;
     border-radius:6px; border:1.5px solid var(--sand-line); background:var(--box); color:var(--ink);
     cursor:pointer; transition:border-color .15s,color .15s,opacity .15s;}
   .btn.primary{background:var(--teal); border-color:var(--teal); color:var(--paper); font-weight:700;}
@@ -187,6 +187,7 @@
   .linkrow p{margin:3px 0 0; font-size:0.8rem; color:var(--grey); line-height:1.5;}
   .linkrow code{display:block; margin-top:8px; font-size:0.74rem; word-break:break-all; color:var(--grey);}
   .linkrow .acts{display:flex; align-items:center; gap:8px; flex-shrink:0;}
+  .linkrow .acts .btn{min-width:70px; justify-content:center; text-align:center;} /* the same width as the roster's, so both sets of rows read alike */
 
   /* ---- add trainee ------------------------------------------------------ */
   .addbox{margin:14px 0 6px; padding:16px 18px; border:1px solid var(--sand-line); border-left:5px solid var(--gold, oklch(63% 0.096 72)); border-radius:10px;
@@ -199,12 +200,20 @@
 
   /* ---- tables as grids --------------------------------------------------- */
   .grid{display:grid; gap:16px; align-items:center;}
-  .grid.roster{grid-template-columns:1.6fr 0.6fr 1.4fr auto;}
+  /* The head and every row are separate grids, so an `auto` last column made
+     them different widths -- the head's was empty and collapsed to nothing,
+     each row's was as wide as its buttons, and the headings never sat over
+     their columns. A fixed action column gives every one of them identical
+     tracks (Ramy, 24 Sep 2026: "make sure the roster is the same"). */
+  .grid.roster{grid-template-columns:1.6fr 0.6fr 1.4fr 232px;}
   .ghead{padding:0 4px 9px; border-bottom:1px solid var(--sand-line); font-size:0.72rem; font-weight:700;
     letter-spacing:0.05em; text-transform:uppercase; color:var(--grey);}
   .grow{padding:13px 4px; border-bottom:1px solid var(--sand-line); font-size:0.9rem;}
   .grow .name{font-weight:500;}
   .grow .acts{display:flex; gap:6px; justify-content:flex-end;}
+  /* One width for the three, so the buttons stack into columns down the
+     roster instead of three ragged edges. */
+  .grow .acts .btn{min-width:70px; justify-content:center; text-align:center;}
   .muted{color:var(--grey);}
   .amber{color:var(--amber);}
   .brick{color:var(--brick);}
@@ -228,7 +237,7 @@
 
   @media (max-width:780px){
     .fields{grid-template-columns:1fr;}
-    .grid.roster{grid-template-columns:1fr auto;}
+    .grid.roster{grid-template-columns:minmax(0,1fr) 232px;}
     .grid.roster > .col-group, .grid.roster > .col-status{display:none;}
   }
 </style>
@@ -396,10 +405,10 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609241518"></script>
-<script src="hub-store.js?v=202609241518"></script>
-<script src="hub-shared.js?v=202609241518"></script>
-<script src="hub-sync.js?v=202609241518"></script>
+<script src="assignment-defaults.js?v=202609241543"></script>
+<script src="hub-store.js?v=202609241543"></script>
+<script src="hub-shared.js?v=202609241543"></script>
+<script src="hub-sync.js?v=202609241543"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -677,7 +686,7 @@ async function renderStoreRoster(next){
         <div class="col-group muted">${esc(t.group||'—')}</div>
         <div class="col-status muted" style="font-size:0.8rem;">${SHOW_URLS ? `<code style="word-break:break-all;">${esc(S.inviteFor('trainee', t.token))}</code>` : 'Theirs alone — post it in Classroom'}</div>
         <div class="acts">
-          <button class="btn small" type="button" data-copy="${esc(S.inviteFor('trainee', t.token))}">Copy link</button>
+          <button class="btn small" type="button" data-copy="${esc(S.inviteFor('trainee', t.token))}">Copy</button>
           <!-- One candidate's teaching practice record, to read or print on its
                own. Screen 15 prints the whole course and screen 11 one marked
                assignment; this was the gap between them (23 Sep 2026). -->
