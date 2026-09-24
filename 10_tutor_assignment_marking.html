@@ -95,7 +95,7 @@
   .note{font-size:0.8rem; color:var(--grey); margin:0 0 14px;}
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202609240203">
-<link rel="stylesheet" href="hub-theme.css?v=202609242343">
+<link rel="stylesheet" href="hub-theme.css?v=202609242347">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -103,12 +103,12 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202609242343"></script>
+<script src="assignment-defaults.js?v=202609242347"></script>
 <script src="hub-exchange.js?v=202609240203"></script>
 <script src="hub-due.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609242343"></script>
-<script src="hub-store.js?v=202609242343"></script>
-<script src="hub-sync.js?v=202609242343"></script>
+<script src="hub-shared.js?v=202609242347"></script>
+<script src="hub-store.js?v=202609242347"></script>
+<script src="hub-sync.js?v=202609242347"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -583,7 +583,12 @@ function wireExchange(){
   $('xText').addEventListener('input', ()=>{ clearTimeout(readTimer); readTimer = setTimeout(readNow, 250); });
   document.addEventListener('paste', (e)=>{
     const t = e.target; if (t && t.closest && t.closest('input, textarea, [contenteditable]')) return;
-    const txt = (e.clipboardData||window.clipboardData).getData('text/plain'); if (!txt || !/^\s*#/m.test(txt)) return;
+    const txt = (e.clipboardData||window.clipboardData).getData('text/plain');
+    /* A model that bolds its headings writes a reply with no '#' in it, and
+       this gate swallowed the paste silently even though the reader handles
+       bold (24 Sep 2026). Same two shapes the reader accepts. */
+    if (!txt) return;
+    if (!/^\s*#/m.test(txt) && !/^\s*(?:\*\*|__).+(?:\*\*|__)\s*:?\s*$/m.test(txt)) return;
     e.preventDefault(); if ($('xPaste').style.display==='none') $('xPasteToggle').click();
     $('xText').value = txt; readNow(); $('xchg').scrollIntoView({block:'start', behavior:'smooth'});
   });

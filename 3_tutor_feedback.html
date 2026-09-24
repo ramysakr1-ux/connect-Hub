@@ -452,9 +452,9 @@
 
 
 <script src="hub-exchange.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609242343"></script>
-<script src="hub-store.js?v=202609242343"></script>
-<script src="hub-sync.js?v=202609242343"></script>
+<script src="hub-shared.js?v=202609242347"></script>
+<script src="hub-store.js?v=202609242347"></script>
+<script src="hub-sync.js?v=202609242347"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1672,7 +1672,13 @@ if (window.hubReserveForBar) hubReserveForBar('.actionbar');
     var t = e.target;
     if (t && (t.closest && t.closest('input, textarea, [contenteditable]'))) return;
     var txt = (e.clipboardData || window.clipboardData).getData('text/plain');
-    if (!txt || !/^\s*#/m.test(txt)) return;      /* only something that looks like a brief */
+    /* A model that bolds its headings instead of using hashes writes a reply
+       with no '#' in it at all -- and this gate then swallowed the paste and
+       did nothing, silently, even though the reader handles bold perfectly
+       well (Ramy hit this on the live site, 24 Sep 2026). Same two shapes the
+       reader accepts. */
+    if (!txt) return;
+    if (!/^\s*#/m.test(txt) && !/^\s*(?:\*\*|__).+(?:\*\*|__)\s*:?\s*$/m.test(txt)) return;      /* only something that looks like a brief */
     e.preventDefault();
     if ($('xPaste').style.display === 'none') $('xPasteToggle').click();
     $('xText').value = txt; readNow();
