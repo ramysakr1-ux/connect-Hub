@@ -573,17 +573,26 @@ window.hubStackTables = function(root){
   var scope = root || document;
   [].forEach.call(scope.querySelectorAll('table'), function(t){
     if (t.getAttribute('data-stacked')) return;
-    var rows = t.rows; if (!rows || rows.length < 3) return;
+    var rows = t.rows; if (!rows || rows.length < 2) return;
     var labels = [].map.call(rows[0].cells, function(c){
       return ((c.textContent || '').trim().split('\n')[0] || '').trim();
     });
+    /* A row of <th> IS a header, however few rows follow it -- which is how
+       the assessor pack's two tables say so, and they can have one candidate
+       on them. Everything else has to earn it by having rows to spare, because
+       the stored documents mark their header row with a background colour on
+       plain <td>s and a label/value grid's first row is data. */
+    var headRow = [].every.call(rows[0].cells, function(c){ return c.tagName === 'TH'; });
+    if (!headRow && rows.length < 3) return;
     /* Only a table that is genuinely too wide, and genuinely has a header row.
        Three columns or more, three rows or more: that is the procedure table
        and the criteria table, and it leaves alone the label/value grids -- the
        feedback points, the analysis sheets, the meta band -- whose first row
        is DATA, not headings. Stacking those put "Strengths in planning" over
        every row beneath it (caught on a phone, 24 Sep 2026). */
-    if (labels.length < 3 || !labels.every(Boolean)) return;
+    /* Three columns or more, and enough of them named to be worth labelling --
+       a trailing empty heading (the pack's actions column) is allowed. */
+    if (labels.length < 3 || labels.filter(Boolean).length < 3) return;
     for (var i = 1; i < rows.length; i++){
       /* Count COLUMNS, not cells: the procedure table's Total row spans three,
          so the number after it is the fourth column and was being labelled
