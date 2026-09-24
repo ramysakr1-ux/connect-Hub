@@ -110,6 +110,14 @@
   .legend .it{ display:flex; align-items:center; gap:9px; }
   .legend .chip{ width:76px; justify-content:center; flex:none; } /* one width for all of them, so every description starts on the same line */
   .legend .lb{ font-size:11px; color:oklch(62% 0.017 70); line-height:1.35; }
+  /* The double-marking marks are not chips: you never see one on its own, they
+     sit INSIDE a chip after the outcome. Shown as two pills they floated in a
+     pill-shaped gap with no box, which is what made the key look ragged (Ramy,
+     24 Sep 2026). They are a note under the key instead, saying where they
+     appear. */
+  .legend-note{ grid-column:1 / -1; margin:2px 0 0; font-size:11px; line-height:1.5;
+    color:oklch(62% 0.017 70); }
+  .legend-note b{ color:var(--purp-soft); font-weight:700; }
   .empty{ padding:36px 16px; text-align:center; font-size:12.5px; color:var(--mut); line-height:1.6; }
   /* detail strip */
   .detail{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:20px 22px; display:flex; gap:40px; align-items:flex-start; flex-wrap:wrap; }
@@ -208,11 +216,11 @@
   <div id="detail"></div>
 </div>
 <script src="hub-due.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609242149"></script>
-<script src="assignment-defaults.js?v=202609242149"></script>
-<script src="hub-tracker.js?v=202609242149"></script>
-<script src="hub-store.js?v=202609242149"></script>
-<script src="hub-sync.js?v=202609242149"></script>
+<script src="hub-shared.js?v=202609242241"></script>
+<script src="assignment-defaults.js?v=202609242241"></script>
+<script src="hub-tracker.js?v=202609242241"></script>
+<script src="hub-store.js?v=202609242241"></script>
+<script src="hub-sync.js?v=202609242241"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
@@ -448,7 +456,7 @@ function render(){
     return `<div class="grid row ${risk?'risk':''}" style="grid-template-columns:${gridCols}"><div class="who"><div class="nm">${esc(p.tr.name)}</div>${risk?'<div class="flag">at risk</div>':''}</div>${cells}<div class="tail">${isA?passed+'/4':toStd+'/'+tailOf}</div></div>`;
   }).join('');
   const leg = isA ? ['DUE','MISSING','WAIT','FAILRES','WAIT2','UNMARKED','FAIL','PASS','RES'].map(k=>A_STATE[k]) : ['un','NOTSTD','STD','ABOVE'].map(k=>T_STATE[k]);
-  html += `<div class="legend">${leg.map(s=>`<div class="it"><span class="chip ${s.cls}">${s.t}</span><span class="lb">${s.name}</span></div>`).join('')}<div class="it"><span class="chip nd" style="color:var(--purp-soft)">/ —</span><span class="lb">Not double marked</span></div><div class="it"><span class="chip nd" style="color:var(--purp-soft)">/ DM JB</span><span class="lb">Second marker's initials</span></div></div>`;
+  html += `<div class="legend">${leg.map(s=>`<div class="it"><span class="chip ${s.cls}">${s.t}</span><span class="lb">${s.name}</span></div>`).join('')}<p class="legend-note">Inside a chip: <b>/ —</b> not double marked · <b>/ DM JB</b> the second marker’s initials</p></div>`;
   $('gridwrap').innerHTML = html;
   renderDetail(all);
 }
