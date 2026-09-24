@@ -443,6 +443,20 @@ function render(){
   try{ const tn=localStorage.getItem('chub:tutorName'); if(m1 && tn && !m1.value){ m1.value=tn; sub.markers.first=tn; saveSubs(); } }catch(e){}
   if (m1) m1.addEventListener('input', () => { sub.markers.first = m1.value; saveSubs(); });
   if (m2) m2.addEventListener('input', () => { sub.markers.second = m2.value; sub.markers.doubleMarked = !!m2.value.trim(); saveSubs(); });
+  /* Comments keep as they are typed. Until 24 Sep 2026 only Save read them,
+     and render() rebuilds the whole form on every pill click -- so a comment
+     typed on criterion 1 vanished the moment criterion 2 was marked, and a
+     tutor who switched candidate lost everything but the pills. */
+  const rnd = sub.stage==='resubmitted' ? 'sub2' : 'sub1';
+  document.querySelectorAll('[data-crit-comment]').forEach(el => el.addEventListener('input', () => {
+    sub.criteriaComments[rnd] = sub.criteriaComments[rnd] || [];
+    sub.criteriaComments[rnd][+el.dataset.critComment] = el.value; saveSubs();
+  }));
+  const gc = $('comment');
+  if (gc) gc.addEventListener('input', () => {
+    if (!sub.feedback) sub.feedback = { outcome:'', generalComment1:'', generalComment2:'' };
+    sub.feedback[rnd==='sub2' ? 'generalComment2' : 'generalComment1'] = gc.value; saveSubs();
+  });
 }
 
 function doSave(){
@@ -593,13 +607,13 @@ function wireExchange(){
       if (found[id].mark !== null) sub.criteriaMarks[round][i] = found[id].mark;
       if (found[id].text) sub.criteriaComments[round][i] = found[id].text;
     });
-    render();
+    saveSubs(); render();
     const names = {}; man.forEach(m => names[m.id] = m.heading);
     const d2 = $('xDone'); d2.style.display = '';
     d2.innerHTML = 'Filled ' + ids.length + ': ' + ids.map(id => esc(names[id]||id)).join(', ') + '.' + (unplaced.length ? ' Not placed: ' + unplaced.map(esc).join(', ') + '.' : '') + ' <button type="button" class="example-btn" id="xUndo">Undo</button>';
     $('xUndo').addEventListener('click', ()=>{
       sub.criteriaMarks[round] = before.marks; before.comments.forEach((v,i)=>{ sub.criteriaComments[round][i] = v; });
-      sub.feedback[gk] = before.general; render(); const d3 = $('xDone'); if (d3) { d3.style.display=''; d3.textContent = 'Put back as it was.'; }
+      sub.feedback[gk] = before.general; saveSubs(); render(); const d3 = $('xDone'); if (d3) { d3.style.display=''; d3.textContent = 'Put back as it was.'; }
     });
   }
 }

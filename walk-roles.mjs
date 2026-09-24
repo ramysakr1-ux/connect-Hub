@@ -77,8 +77,8 @@ writeFileSync(sp, pointed);
 const TYPES = { '.html':'text/html', '.js':'text/javascript', '.css':'text/css', '.svg':'image/svg+xml' };
 const site = createServer((req, res) => {
   const name = decodeURIComponent((req.url || '/').split('?')[0]).replace(/^\/+/, '') || 'index.html';
-  try { res.writeHead(200, { 'Content-Type': TYPES[extname(name)] || 'application/octet-stream' }); res.end(readFileSync(join(dir, name))); }
-  catch { res.writeHead(404); res.end('not found'); }
+  let body; try { body = readFileSync(join(dir, name)); } catch { res.writeHead(404); return res.end('not found'); }
+  res.writeHead(200, { 'Content-Type': TYPES[extname(name)] || 'application/octet-stream' }); res.end(body);
 });
 await new Promise(r => site.listen(0, r));
 const BASE = `http://127.0.0.1:${site.address().port}/`;
@@ -256,6 +256,22 @@ await step('tutor: marking shows the materials button and the due row; a pasted 
   await settle(T.p, 800);
   const got = await T.p.evaluate(() => eval('(function(){ const s = subFor(CURRENT); return { m0: s.criteriaMarks.sub1[0], c0: s.criteriaComments.sub1[0], g: document.getElementById("comment").value }; })()'));
   must(got.m0 === true && got.c0 === 'Accurate.' && got.g === 'Careful work.', 'marking boxes: ' + JSON.stringify(got));
+  await settle(T.p, 2500);
+  const onStore = ((STORE.trainees[amaraToken].records.assignments || {})[assignKey] || {});
+  must((onStore.criteriaMarks || {}).sub1?.[0] === true && (onStore.criteriaComments || {}).sub1?.[0] === 'Accurate.', 'pasted marking not on the store: ' + JSON.stringify({ m: onStore.criteriaMarks, c: onStore.criteriaComments }));
+});
+await step('tutor: a comment typed by hand survives marking the next criterion', async () => {
+  // 24 Sep 2026: render() rebuilt the form on every pill click and only Save
+  // read the comment boxes, so typing on criterion 2 then marking criterion 3
+  // wiped the comment.
+  await T.p.evaluate(() => { const el = document.querySelector('[data-crit-comment="1"]'); el.value = 'Terminology is right.'; el.dispatchEvent(new Event('input', { bubbles: true })); const g = document.getElementById('comment'); g.value = 'Careful work, and on time.'; g.dispatchEvent(new Event('input', { bubbles: true })); });
+  await T.p.click('[data-crit="2"]'); await settle(T.p, 2500);
+  const after = await T.p.evaluate(() => ({ c1: document.querySelector('[data-crit-comment="1"]').value, g: document.getElementById('comment').value, p2: document.querySelector('[data-crit="2"]').textContent.trim() }));
+  must(after.c1 === 'Terminology is right.' && after.g === 'Careful work, and on time.', 'comment wiped by the pill click: ' + JSON.stringify(after));
+  must(after.p2 === 'Met', 'pill did not mark: ' + after.p2);
+  const onStore = ((STORE.trainees[amaraToken].records.assignments || {})[assignKey] || {});
+  must(onStore.criteriaComments?.sub1?.[1] === 'Terminology is right.' && onStore.feedback?.generalComment1 === 'Careful work, and on time.', 'typed comments not on the store: ' + JSON.stringify({ c: onStore.criteriaComments, f: onStore.feedback }));
+  return 'comment and general comment kept, and on the store';
 });
 await step('tutor: an extension on the closed assignment reaches her through the store', async () => {
   await T.p.goto(`${tutorUrl('10_tutor_assignment_marking.html')}&trainee=${amaraToken}&a=${lateKey}`, { waitUntil: 'domcontentloaded' }); await settle(T.p, 3000);
