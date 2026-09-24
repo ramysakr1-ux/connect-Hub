@@ -33,7 +33,7 @@
     --box:oklch(96.2% 0.02 80); --card:oklch(96.2% 0.02 80); --ink:oklch(23.5% 0.017 65);
     --terracotta:oklch(37.5% 0.058 195); --teal:oklch(37.5% 0.058 195);
     --grey:oklch(51% 0.017 70); --gold:oklch(63% 0.096 72); --gold-lifted:oklch(70% 0.12 72);
-    --ink-warm:oklch(30% 0.042 58); --brick:oklch(52% 0.19 32); --amber:oklch(52% 0.11 75);
+    --ink-warm:oklch(30% 0.042 58); --brick:oklch(52% 0.19 32); --faint:oklch(54% 0.012 75); --amber:oklch(52% 0.11 75);
     --amber-edge:oklch(80% 0.07 75);
   }
   *{box-sizing:border-box;}
@@ -92,6 +92,13 @@
   .room .st{display:block; margin-top:9px; font-size:0.78rem; font-weight:600; color:var(--grey);}
   .room .st.act{color:var(--amber);}
   .room .st.stuck{color:var(--brick);}
+  /* Turned in: done, and out of the way. Ramy, 24 Sep 2026 -- weighed against
+     red and gold and chose faint, because the tracker's own rule is that
+     colour only marks what needs you and everything fine stays quiet. The
+     lightest tone that still clears 4.5:1 on the card (measured, 4.52), with
+     the weight dropped a step; the recede is as much the weight as the tone.
+     .room.done is deliberately unstyled -- the door's border does not change. */
+  .room .st.done{color:var(--faint, oklch(54% 0.012 75)); font-weight:500;}
   /* Exactly one card is the next step, and it is the only one wearing colour.
      Two golds would be two answers to "what now". */
   .room.act{border-color:var(--amber-edge);}
@@ -206,9 +213,9 @@
 
 </div>
 <script src="hub-due.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609241435"></script>
-<script src="hub-store.js?v=202609241435"></script>
-<script src="hub-sync.js?v=202609241435"></script>
+<script src="hub-shared.js?v=202609241451"></script>
+<script src="hub-store.js?v=202609241451"></script>
+<script src="hub-sync.js?v=202609241451"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -314,7 +321,7 @@ const TP_LABEL = 'Teaching practice' + (TP_N ? ' ' + TP_N + ' of ' + tpTotal : '
 function line(el, text, tone){
   const card = el && el.closest('.room');
   status(el, text, tone);
-  if (card){ card.classList.remove('act','stuck'); if (tone) card.classList.add(tone); }
+  if (card){ card.classList.remove('act','stuck','done'); if (tone) card.classList.add(tone); }
 }
 
 /* The next step, named once. Everything below reads NEXT rather than working
@@ -332,7 +339,7 @@ line(document.getElementById('badgePlan'),
   : !plan   ? 'Write your lesson plan'
   : !planIn ? 'Finish it and turn it in'
   : 'Turned in',
-  NEXT === 'plan' ? 'act' : '');
+  NEXT === 'plan' ? 'act' : planIn ? 'done' : '');
 
 line(document.getElementById('badgeSelf'),
   tpDone            ? 'All ' + tpTotal + ' written'
@@ -341,7 +348,7 @@ line(document.getElementById('badgeSelf'),
   : self            ? 'Finish it and turn it in'
   : planIn          ? 'Write your self-evaluation'
   : 'After your lesson plan',
-  NEXT === 'self' ? 'act' : '');
+  NEXT === 'self' ? 'act' : selfIn ? 'done' : '');
 
 line(document.getElementById('badgeFeedback'),
   fbBack && selfIn  ? 'Ready to read'
