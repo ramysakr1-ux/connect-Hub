@@ -4,9 +4,13 @@
   © 2026 Ramy Sakr. All rights reserved.
 
   The provisional and final grades report, as a screen. Structure follows the
-  centre's own Word form (C13_2026 provisionals) exactly: one record per
-  candidate, five sections, planning beside the update. See
-  for-claude-code-grades-report.md.
+  centre's own C/17 page (c17-provisional-grades/) -- Ramy, 25 Sep 2026: "I
+  want the provisionals to have the same structure as what we have on
+  Classroom, it's much clearer": the whole cohort in two grade tables at the
+  top, then every candidate down one page, a copy button on every section so
+  it pastes straight into Appian's separate fields, and a bank of points
+  already written for other candidates. The one-candidate-at-a-time rail this
+  replaced hid the cohort, which is what the grade meeting actually looks at.
 -->
 <html lang="en">
 <head>
@@ -42,7 +46,7 @@
   /* On paper: the working screen goes, the read-only report comes. */
   #printAll{display:none;}
   @media print{
-    .chrome, .titleacts, .rail, #record, .back, #hubSync{display:none !important;}
+    .chrome, .titleacts, .jump, .cohort, #cands, .back, #hubSync{display:none !important;}
     body{background:#fff; padding:0;}
     .shell{display:block;}
     #printAll{display:block;}
@@ -86,109 +90,99 @@
     border-radius:6px; border:1.5px solid var(--sand-line); background:var(--box); color:var(--ink);
     cursor:pointer; transition:border-color .15s,color .15s;}
 
-  .shell{display:grid; grid-template-columns:236px minmax(0,1fr); gap:30px; margin-top:30px; align-items:start;}
-  .rail{position:sticky; top:18px;}
-  .rail h2{font-family:'Instrument Sans',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.14em;
-    text-transform:uppercase; color:var(--grey); padding:0 4px 9px; margin:0;}
-  .rail .list{display:flex; flex-direction:column;}
-  .rail button{text-align:left; font-family:'Karla',sans-serif; background:none; border:none;
-    border-left:2px solid transparent; padding:10px 12px; cursor:pointer; display:flex; align-items:center;
-    justify-content:space-between; gap:10px;}
-  .rail button:hover{background:color-mix(in oklab, var(--card) 60%, transparent);}
-  .rail button.on{background:var(--card); border-left-color:var(--teal);}
-  .rail .who{display:flex; align-items:baseline; gap:8px; min-width:0;}
-  .rail .letter{font-family:'Instrument Sans',sans-serif; font-size:10px; font-weight:600; color:var(--grey);}
-  .rail .nm{font-size:0.92rem; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .rail button.on .nm{font-weight:600;}
-  .rail .gr{font-size:0.74rem; font-weight:600; white-space:nowrap; color:var(--grey);}
-  .rail .gr.fail{color:var(--brick);} .rail .gr.top{color:var(--gold-ink);} .rail .gr.set{color:var(--ink);}
-  .progress{margin-top:16px; padding:12px 13px; border:1px solid var(--sand-line); border-radius:9px;
-    background:var(--card); font-size:0.78rem; color:var(--grey); line-height:1.5;}
+  /* ---- the sticky letter bar: one tap to any candidate ---- */
+  .jump{position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+    padding:10px 0; margin:18px 0 0; background:color-mix(in oklab, var(--sand) 92%, transparent); backdrop-filter:blur(6px);}
+  .jump a{display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%;
+    font-family:'Instrument Sans',sans-serif; font-size:11px; font-weight:600; letter-spacing:.04em;
+    color:var(--ink); background:var(--card); border:1px solid var(--sand-line); text-decoration:none;}
+  .jump a:hover{border-color:var(--teal); color:var(--teal);}
+  .jump a.done{border-color:var(--teal); color:var(--teal);}
+  .jump .count{margin-left:6px; font-size:0.78rem; color:var(--grey);}
 
-  .recordhead{display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap;
-    border-bottom:1px solid var(--sand-line); padding-bottom:16px;}
-  .recordhead .who{display:flex; align-items:baseline; gap:11px;}
-  .recordhead .letter{font-family:'Instrument Sans',sans-serif; font-size:12px; font-weight:600;
-    letter-spacing:0.16em; color:var(--grey);}
-  .recordhead .nm{font-family:'Newsreader',Georgia,serif; font-size:1.6rem; font-weight:600;}
-  .grades{display:flex; gap:22px; flex-wrap:wrap;}
-  .grades .lab{font-family:'Instrument Sans',sans-serif; font-size:9px; font-weight:600; letter-spacing:0.14em;
-    text-transform:uppercase; color:var(--grey); margin-bottom:6px;}
-  .pills{display:flex; gap:4px; flex-wrap:wrap;}
-  .pill{font-family:'Karla',sans-serif; font-size:0.76rem; font-weight:600; padding:5px 10px; border-radius:5px;
-    border:1px solid var(--sand-line); background:none; color:var(--grey); cursor:pointer; white-space:nowrap;}
-  .pills.final .pill{font-weight:700; padding:5px 12px;}
-  /* A phone. Eleven grade pills at 26px tall, and choosing one is the whole
-     point of this screen -- a wrong tap records the wrong grade on a document
-     that goes to Cambridge (Ramy, 24 Sep 2026). They become full-height
-     targets on a two-column grid, so they stop wrapping into ragged rows of
-     45 to 113px, and Save comes up to size with them. */
-  @media(max-width:560px){
-    .pills{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px;}
-    .pills .pill{min-height:46px; display:flex; align-items:center; justify-content:center;
-      text-align:center; padding:6px 10px; font-size:0.8rem;}
-    .pills.final{grid-template-columns:repeat(2, minmax(0,1fr));}
-    .titleacts .btn{min-height:44px;}
-    .titleacts button.btn-print{min-height:44px;}
-    .sec .add{min-height:40px;}
-    .rail button{min-height:44px;}
-  }
-  .pill.on{background:var(--card); color:var(--ink); border-color:color-mix(in oklab, var(--ink) 45%, transparent);}
-  .pill.on.fail{background:oklch(94% 0.04 27); color:var(--brick); border-color:color-mix(in oklab, var(--brick) 45%, transparent);}
-  .back{display:inline-block; margin:14px 0 -6px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
-  .back:hover{text-decoration:underline;}
-  /* Handbook 11.6: a grade the written assignments rule out is struck, not removed --
-     the tutor may still choose it (Ramy: everything is subject to manual override),
-     and the cap line beneath says why it is struck. */
-  .pill.capped{text-decoration:line-through; opacity:.55;}
-  .cap{flex-basis:100%; font-size:0.8rem; color:var(--brick); line-height:1.5; margin-top:2px;}
-  .rail .gr.wd{color:var(--grey); font-style:italic;}
-  .ro .pill, .ro textarea, .ro select{pointer-events:none;}
-  .ro .add, .ro .rm{display:none;}
-  .pill.on.top{color:var(--gold-ink); border-color:color-mix(in oklab, var(--gold-ink) 45%, transparent);}
+  /* ---- the cohort: two grade tables, side by side ---- */
+  .cohort{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:18px;}
+  @media(max-width:860px){ .cohort{grid-template-columns:1fr;} }
+  .gt{background:var(--card); border-radius:10px; border-left:5px solid var(--gold); overflow:hidden;}
+  .gt.fin{border-left-color:var(--teal);}
+  .gt h2{margin:0; padding:15px 20px 3px; font-family:'Newsreader',Georgia,serif; font-size:1.1rem; font-weight:700;}
+  .gt p.sc{margin:0; padding:0 20px 12px; font-size:0.76rem; color:var(--grey); line-height:1.5;}
+  .gt table{width:100%; border-collapse:collapse; font-size:0.86rem;}
+  .gt td{padding:7px 20px; border-top:1px solid var(--row-line); vertical-align:middle;}
+  .gt td.l{width:1%; white-space:nowrap; font-family:'Instrument Sans',sans-serif; font-size:11px; font-weight:600; color:var(--grey);}
+  .gt td.n{font-weight:600;}
+  .gt td.n .wd{font-weight:400; color:var(--grey); font-style:italic; font-size:0.78rem; margin-left:6px;}
+  .gt td.s{width:46%;}
+  select.grade{width:100%; font-family:'Karla',sans-serif; font-size:0.84rem; font-weight:700; color:var(--ink);
+    padding:7px 10px; border:1.5px solid var(--sand-line); border-radius:6px; background:var(--box); cursor:pointer;}
+  select.grade.set{color:var(--teal); border-color:color-mix(in oklab, var(--teal) 45%, transparent);}
+  select.grade.fail{color:var(--brick); border-color:color-mix(in oklab, var(--brick) 45%, transparent);}
+  select.grade.top{color:var(--gold-ink); border-color:color-mix(in oklab, var(--gold-ink) 50%, transparent);}
+  select.grade:disabled{opacity:1; cursor:default;}
 
-  .record{display:grid; grid-template-columns:minmax(0,1.45fr) minmax(0,1fr); gap:0 30px; margin-top:24px; align-items:start;}
-  .lists{display:flex; flex-direction:column; gap:26px;}
-  .sec .head{display:flex; align-items:baseline; justify-content:space-between; gap:14px; padding-bottom:7px;
+  /* ---- every candidate, down the page ---- */
+  .cand{background:var(--paper); border-radius:10px; border-left:5px solid var(--gold); margin-top:22px; scroll-margin-top:64px;}
+  .chead{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    padding:18px 24px 14px; border-bottom:1px solid var(--sand-line);}
+  .chead h2{margin:0; font-family:'Newsreader',Georgia,serif; font-size:1.35rem; font-weight:600;}
+  .chead .ltr{font-family:'Instrument Sans',sans-serif; font-size:12px; font-weight:600; letter-spacing:.16em; color:var(--grey); margin-right:10px;}
+  .chead .cap{font-size:0.8rem; color:var(--brick); line-height:1.5;}
+  .grow{display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:12px 24px;
+    background:var(--card); border-bottom:1px solid var(--sand-line);}
+  .grow label{font-family:'Instrument Sans',sans-serif; font-size:9px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); white-space:nowrap;}
+  .grow select.grade{width:auto; min-width:220px;}
+  .grow.final{background:color-mix(in oklab, var(--teal) 8%, var(--paper)); border-top:1px solid var(--sand-line); margin-top:6px;}
+  .cols{display:grid; grid-template-columns:1fr 1fr; gap:0 26px; padding:4px 24px 8px;}
+  @media(max-width:1000px){ .cols{grid-template-columns:1fr;} }
+  .prosewrap{padding:6px 24px 8px;}
+  .sec{padding:14px 0 6px;}
+  .sec .head{display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding-bottom:7px;
     border-bottom:1px solid var(--sand-line);}
   .sec .head h3{margin:0; font-family:'Instrument Sans',sans-serif; font-size:10px; font-weight:600;
     letter-spacing:0.13em; text-transform:uppercase; color:var(--grey);}
-  .sec .head .src{font-size:0.76rem; color:var(--grey);}
+  .sec .head .src{font-size:0.74rem; color:var(--grey); margin-left:auto;}
   .sec.action .head h3{color:var(--brick);}
   .sec.action .head{border-bottom-color:color-mix(in oklab, var(--brick) 28%, transparent);}
-  .plain .sec.action .head h3{color:var(--grey);}
-  .plain .sec.action .head{border-bottom-color:var(--sand-line);}
-
-  .pt{display:flex; align-items:flex-start; flex-wrap:nowrap; gap:9px; padding:8px 0; border-bottom:1px solid var(--row-line);}
-  .pt .dot{order:1; width:5px; height:5px; border-radius:50%; background:var(--teal); flex-shrink:0; margin-top:9px;}
+  .seccopy{flex:0 0 auto; font-family:'Instrument Sans',sans-serif; font-size:10px; font-weight:600; letter-spacing:.06em;
+    text-transform:uppercase; padding:3px 9px; border-radius:12px; border:1px solid var(--sand-line); background:none;
+    color:var(--grey); cursor:pointer; opacity:.55; transition:opacity .15s, border-color .15s, color .15s;}
+  .sec:hover .seccopy, .seccopy:focus{opacity:1;}
+  .seccopy:hover{border-color:var(--teal); color:var(--teal);}
+  .seccopy.ok{opacity:1; background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  .pt{display:flex; align-items:flex-start; gap:9px; padding:8px 0; border-bottom:1px solid var(--row-line);}
+  .pt .dot{width:5px; height:5px; border-radius:50%; background:var(--teal); flex-shrink:0; margin-top:9px;}
   .sec.action .pt .dot{background:var(--brick);}
-  .plain .sec.action .pt .dot{background:var(--grey);}
-  .pt textarea{order:2; flex:1 1 200px; min-width:0; font-size:0.92rem; line-height:1.5; border:none;
-    background:none; padding:2px 0; overflow:hidden;}
-  .pt select{order:3; flex:0 1 auto; min-width:0; max-width:190px; font-size:0.76rem; font-weight:600;
-    color:var(--grey); border:1px solid var(--sand-line); border-radius:5px; background:var(--box);
-    padding:4px 5px; cursor:pointer;}
-  .pt .rm{order:4; flex-shrink:0; margin-left:auto; border:none; background:none; color:var(--grey);
-    font-size:1rem; line-height:1; padding:4px 3px; cursor:pointer;}
+  .pt textarea{flex:1 1 200px; min-width:0; font-size:0.92rem; line-height:1.5; border:none; background:none; padding:2px 0; overflow:hidden;}
+  .pt select{flex:0 1 auto; min-width:0; max-width:190px; font-size:0.76rem; font-weight:600; color:var(--grey);
+    border:1px solid var(--sand-line); border-radius:5px; background:var(--box); padding:4px 5px; cursor:pointer;}
+  .pt .rm{flex-shrink:0; margin-left:auto; border:none; background:none; color:var(--grey); font-size:1rem; line-height:1; padding:4px 3px; cursor:pointer;}
   .pt .rm:hover{color:var(--brick);}
-  .sec .none{padding:13px 0 3px; font-size:0.86rem; color:var(--grey);}
-  .sec .add{margin-top:9px; font-family:'Karla',sans-serif; font-size:0.8rem; font-weight:600;
-    background:none; border:none; color:var(--teal); cursor:pointer; padding:0;}
-
-  .prose{display:flex; flex-direction:column; gap:20px; position:sticky; top:18px;}
-  .prose h3{margin:0; font-family:'Instrument Sans',sans-serif; font-size:10px; font-weight:600;
-    letter-spacing:0.13em; text-transform:uppercase; color:var(--grey); padding-bottom:7px;
-    border-bottom:1px solid var(--sand-line);}
-  .prose textarea{width:100%; margin-top:9px; font-size:0.88rem; line-height:1.6; padding:11px 12px;
+  .sec .none{padding:12px 0 2px; font-size:0.86rem; color:var(--grey);}
+  .sec .add{margin-top:9px; font-family:'Karla',sans-serif; font-size:0.8rem; font-weight:600; background:none; border:none; color:var(--teal); cursor:pointer; padding:0;}
+  .sec textarea.prose{width:100%; margin-top:9px; font-size:0.88rem; line-height:1.6; padding:11px 12px;
     border:1px solid var(--sand-line); border-radius:7px; background:var(--card);}
-  .prose .hint{font-size:0.74rem; color:var(--grey); margin-top:5px;}
-
-  @media (max-width:1000px){
-    .shell{grid-template-columns:minmax(0,1fr); gap:22px;}
-    .rail, .prose{position:static;}
-    .record{grid-template-columns:minmax(0,1fr); gap:26px;}
-    .pt{flex-wrap:wrap;}
-    .pt select{flex-basis:100%; max-width:100%; margin-left:14px;}
+  .sec .hint{font-size:0.74rem; color:var(--grey); margin-top:5px;}
+  /* the point bank: what has already been written for another candidate */
+  .reuse{margin:8px 0 0;}
+  .reuse summary{list-style:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px;
+    font-size:0.74rem; font-weight:600; color:var(--grey); padding:3px 0;}
+  .reuse summary::-webkit-details-marker{display:none;}
+  .reuse summary:hover{color:var(--teal);}
+  .reuse .lines{display:flex; flex-direction:column; gap:4px; margin-top:6px;}
+  .reuse .lines button{text-align:left; font-family:'Karla',sans-serif; font-size:0.84rem; line-height:1.45;
+    padding:7px 10px; border:1px solid var(--sand-line); border-radius:6px; background:var(--card); color:var(--ink); cursor:pointer;}
+  .reuse .lines button:hover{border-color:var(--teal);}
+  .reuse .none{font-size:0.8rem; color:var(--grey); margin:6px 0 0;}
+  .cfoot{display:flex; justify-content:flex-end; padding:8px 24px 16px;}
+  .frrow{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:10px;}
+  .frrow label{display:inline-flex; align-items:center; gap:8px; font-size:0.84rem; font-weight:600;}
+  .frrow input{width:96px; font-size:0.88rem; padding:7px 10px; border:1.5px solid var(--sand-line); border-radius:6px; background:var(--box);}
+  .frrow a.btn{text-decoration:none;}
+  .ro .add, .ro .rm, .ro .reuse{display:none;}
+  @media(max-width:560px){
+    .titleacts .btn{min-height:44px;}
+    .sec .add{min-height:40px;}
+    .grow select.grade{width:100%;}
   }
   /* The mark turns once every ninety seconds, holding still for the first ten
      of them -- the same rule the trainee home and the four documents carry.
@@ -228,18 +222,14 @@
     <div class="titleacts">
       <button class="btn" id="saveBtn" type="button">Save</button>
       <span id="saveState">Saved</span>
+      <button class="btn" id="copyAll" type="button">Copy all</button>
       <button class="btn-print" id="printBtn" type="button">Print / Save as PDF</button>
     </div>
   </div>
 
-  <div class="shell">
-    <div class="rail">
-      <h2>Candidates</h2>
-      <div class="list" id="rail"></div>
-      <div class="progress" id="progress"></div>
-    </div>
-    <div id="record"></div>
-  </div>
+  <div class="jump" id="jump"></div>
+  <div class="cohort" id="cohort"></div>
+  <div id="cands"></div>
 
   <!-- Every candidate, read-only, built only when Print is pressed. The screen
        edits one candidate at a time in textareas and selects, which is right for
@@ -249,10 +239,10 @@
 
 </div>
 
-<script src="hub-tracker.js?v=202609250209"></script>
-<script src="hub-store.js?v=202609250209"></script>
-<script src="hub-shared.js?v=202609250209"></script>
-<script src="hub-sync.js?v=202609250209"></script>
+<script src="hub-tracker.js?v=202609250237"></script>
+<script src="hub-store.js?v=202609250237"></script>
+<script src="hub-shared.js?v=202609250237"></script>
+<script src="hub-sync.js?v=202609250237"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a candidate's link opened it and read the course and
@@ -309,10 +299,10 @@ const FIELDS=[
 ];
 
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function blankRecord(name){ return {name, provisional:'', final:'', planS:[], planA:[], teachS:[], teachA:[], update:'', needed:'', provided:''}; }
+function blankRecord(name){ return {name, provisional:'', final:'', planS:[], planA:[], teachS:[], teachA:[], update:'', needed:'', provided:'', hoursAttended:'', overall:''}; }
 function gradeClass(g){ return g==='FAIL' ? 'fail' : g==='PASS A' ? 'top' : g ? 'set' : ''; }
 
-let DATA={}, ORDER=[], sel=null, dirty=false;
+let DATA={}, ORDER=[], dirty=false;
 
 function loadRoster(){ try{ return JSON.parse(localStorage.getItem('connect_roster_v1')) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
 function persist(){
@@ -354,81 +344,204 @@ function letterFor(i){ return String.fromCharCode(65+i); }
 
 function fit(el){ if(!el) return; el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
 
-function paintRail(){
-  const host=document.getElementById('rail');
-  host.innerHTML = ORDER.map((p,i)=>{
-    const d=DATA[p.id];
-    return `<button type="button" data-pick="${esc(p.id)}" class="${p.id===sel?'on':''}">
-      <span class="who"><span class="letter">${letterFor(i)}</span><span class="nm">${esc(d.name)}</span></span>
-      <span class="gr ${d.final ? gradeClass(d.final) : (p.withdrawn ? 'wd' : '')}">${esc(d.final || (p.withdrawn ? 'Withdrawn' : '—'))}</span>
-    </button>`;
-  }).join('');
-  const done=ORDER.filter(p=>DATA[p.id].final).length;
-  document.getElementById('progress').textContent = done+' of '+ORDER.length+' final grades entered.';
+const CODES = Object.keys(SHORT);
+const off = () => RO ? ' disabled' : '';
+const ro  = () => RO ? ' readonly' : '';
+
+/* A grade select. The options a failed written assignment rules out
+   (Handbook 11.6) are marked, not removed -- the tutor may still choose one,
+   everything is subject to manual override, and the cap line under the name
+   says why it is marked. */
+function gradeSelect(kind, opts, cur, p){
+  const capped = (p.cap && p.cap.capped) || [];
+  const cls = cur ? (cur === 'FAIL' ? 'fail' : cur === 'PASS A' ? 'top' : 'set') : '';
+  return `<select class="grade ${cls}" data-id="${esc(p.id)}" data-grade="${kind}"${off()}>
+    <option value="">— choose —</option>
+    ${opts.map(o => `<option value="${esc(o)}"${o === cur ? ' selected' : ''}>${esc(o)}${capped.includes(o) ? ' · ruled out by assignments' : ''}</option>`).join('')}
+  </select>`;
 }
 
-function paintRecord(){
-  const i=ORDER.findIndex(p=>p.id===sel), p=ORDER[i], d=DATA[sel];
-  const codes=Object.keys(SHORT);
+function paintJump(){
+  const done = ORDER.filter(p => DATA[p.id].final).length;
+  document.getElementById('jump').innerHTML = ORDER.map((p, i) =>
+    `<a href="#c${i}" title="${esc(p.name)}" class="${DATA[p.id].final ? 'done' : ''}">${letterFor(i)}</a>`).join('') +
+    `<span class="count">${done} of ${ORDER.length} final grades</span>`;
+}
 
-  const cap = p.cap, capped = cap ? cap.capped : [];
-  /* Read-only means read-only, not merely inert. An assessor could tab past
-     the mouse guard into a field and type: the words never reached the data,
-     the save or the print, but they sat on screen looking recorded -- so
-     someone could write a note, print, and find it missing (found walking the
-     assessor role, 21 Sep 2026). The controls say so themselves now.
-     Second pass, same walk: `off` reached the grade pills, the code selects
-     and (as `ro`) the textareas, but NOT the four "Add a strength / Add an
-     action point" buttons or the per-point remove crosses. Those stayed
-     live-looking and did nothing when clicked -- the click handler's
-     `if (RO) return;` swallowed them silently, which is the very thing this
-     note says was wrong. They carry `off` now too. */
-  const off = RO ? ' disabled' : '';
-  /* readonly, but still reachable: an assessor should be able to put the caret
-     in a line and copy it. tabindex="-1" would have taken that away for nothing,
-     since readonly already prevents every edit. */
-  const ro  = RO ? ' readonly' : '';
-  const pills=(opts,cur,kind)=>opts.map(o=>
-    `<button type="button"${off} class="pill ${o===cur?'on '+gradeClass(o):''} ${capped.includes(o)?'capped':''}" data-grade="${kind}" data-value="${esc(o)}"${capped.includes(o)?` title="${esc(cap.line)}"`:''}>${esc(o)}</button>`).join('');
-
-  const section=s=>{
-    const items=d[s.key]||[];
-    return `<div class="sec ${s.action?'action':''}" data-sec="${s.key}">
-      <div class="head"><h3>${s.heading}</h3><div class="src">${s.src}</div></div>
-      ${items.map((it,n)=>`<div class="pt">
-        <div class="dot"></div>
-        <textarea rows="1"${ro} data-text="${n}" placeholder="Write the point">${esc(it.text)}</textarea>
-        <select${off} data-code="${n}">
-          <option value="">no code</option>
-          ${codes.map(c=>`<option value="${c}"${c===it.code?' selected':''}>${c} · ${SHORT[c]}</option>`).join('')}
-        </select>
-        <button type="button"${off} class="rm" data-remove="${n}" title="Remove">&times;</button>
-      </div>`).join('')}
-      ${items.length ? '' : '<div class="none">Nothing recorded yet.</div>'}
-      <button type="button"${off} class="add" data-add="${s.key}">${s.add}</button>
-    </div>`;
-  };
-
-  document.getElementById('record').innerHTML = `
-    <div class="recordhead">
-      <div class="who"><span class="letter">${letterFor(i)}</span><span class="nm">${esc(d.name)}</span></div>
-      <div class="grades">
-        <div><div class="lab">Provisional grade</div><div class="pills">${pills(PROV, d.provisional, 'provisional')}</div></div>
-        <div><div class="lab">Final grade</div><div class="pills final">${pills(FINAL, d.final, 'final')}</div></div>
-        ${cap ? `<div class="cap">${esc(cap.line)}</div>` : ''}
-      </div>
+/* The whole cohort, twice: what goes on the centre grade form before the
+   visit, and what is agreed with the assessor at the end. */
+function paintCohort(){
+  const table = (kind, opts) => `<table><tbody>${ORDER.map((p, i) => `<tr>
+    <td class="l">${letterFor(i)}</td>
+    <td class="n">${esc(p.name)}${p.withdrawn ? '<span class="wd">withdrawn</span>' : ''}</td>
+    <td class="s">${gradeSelect(kind, opts, DATA[p.id][kind], p)}</td></tr>`).join('')}</tbody></table>`;
+  document.getElementById('cohort').innerHTML = `
+    <div class="gt">
+      <h2>Provisional grades</h2>
+      <p class="sc">On the centre grade form in Appian, two or more days before the assessment. Seven points.</p>
+      ${table('provisional', PROV)}
     </div>
-    <div class="record">
-      <div class="lists">${SECTIONS.map(section).join('')}</div>
-      <div class="prose">${FIELDS.map(f=>`<div>
-        <h3>${f.heading}</h3>
-        <textarea${ro} data-field="${f.key}" placeholder="${esc(f.ph)}" style="min-height:${f.h}px">${esc(d[f.key]||'')}</textarea>
-        <div class="hint">${f.hint}</div>
-      </div>`).join('')}</div>
+    <div class="gt fin">
+      <h2>Final recommended grades</h2>
+      <p class="sc">Agreed with the assessor at the end of the course. Four points. Where these differ from the provisional, the reason belongs in the evidence sections below.</p>
+      ${table('final', FINAL)}
     </div>`;
+}
 
+function listSection(p, s){
+  const d = DATA[p.id], items = d[s.key] || [];
+  return `<div class="sec ${s.action ? 'action' : ''}" data-id="${esc(p.id)}" data-sec="${s.key}">
+    <div class="head"><h3>${s.heading}</h3><span class="src">${s.src}</span><button type="button" class="seccopy" data-seccopy="${s.key}">copy</button></div>
+    ${items.map((it, n) => `<div class="pt">
+      <div class="dot"></div>
+      <textarea rows="1"${ro()} data-text="${n}" placeholder="Write the point">${esc(it.text)}</textarea>
+      <select${off()} data-code="${n}"><option value="">no code</option>
+        ${CODES.map(c => `<option value="${c}"${c === it.code ? ' selected' : ''}>${c} · ${SHORT[c]}</option>`).join('')}
+      </select>
+      <button type="button"${off()} class="rm" data-remove="${n}" title="Remove">&times;</button>
+    </div>`).join('')}
+    ${items.length ? '' : '<div class="none">Nothing recorded yet.</div>'}
+    <button type="button"${off()} class="add" data-add="${s.key}">${s.add}</button>
+    <details class="reuse" data-sec="${s.key}"><summary>Reuse a point from another candidate</summary><div class="lines"></div></details>
+  </div>`;
+}
+
+function proseSection(p, f){
+  const d = DATA[p.id];
+  return `<div class="sec" data-id="${esc(p.id)}" data-sec="${f.key}">
+    <div class="head"><h3>${f.heading}</h3><button type="button" class="seccopy" data-seccopy="${f.key}">copy</button></div>
+    <textarea class="prose"${ro()} data-field="${f.key}" placeholder="${esc(f.ph)}" style="min-height:${f.h}px">${esc(d[f.key] || '')}</textarea>
+    <div class="hint">${f.hint}</div>
+    <details class="reuse" data-sec="${f.key}"><summary>Reuse a point from another candidate</summary><div class="lines"></div></details>
+  </div>`;
+}
+
+function paintCands(){
+  document.getElementById('cands').innerHTML = ORDER.map((p, i) => {
+    const d = DATA[p.id];
+    return `<section class="cand" id="c${i}" data-id="${esc(p.id)}">
+      <div class="chead">
+        <h2><span class="ltr">${letterFor(i)}</span>${esc(d.name)}${p.withdrawn ? ' <span class="src">(withdrawn)</span>' : ''}</h2>
+        ${p.cap ? `<div class="cap">${esc(p.cap.line)}</div>` : ''}
+      </div>
+      <div class="grow"><label>Provisional grade</label>${gradeSelect('provisional', PROV, d.provisional, p)}</div>
+      <div class="cols">${SECTIONS.map(s => listSection(p, s)).join('')}</div>
+      <div class="grow final"><label>Final grade</label>${gradeSelect('final', FINAL, d.final, p)}</div>
+      <div class="prosewrap">${FIELDS.map(f => proseSection(p, f)).join('')}
+        <!-- What the final course report needs that the grade form does not:
+             the hours this candidate attended and the overall comment that
+             closes the report (Connect's final report, mirrored 25 Sep 2026). -->
+        <div class="sec" data-id="${esc(p.id)}" data-sec="overall">
+          <div class="head"><h3>Final course report</h3><span class="src">hours attended, and the overall comment</span></div>
+          <div class="frrow">
+            <label>Hours attended <input type="number" min="0" max="999" step="0.5"${ro()} data-field="hoursAttended" value="${esc(d.hoursAttended)}" placeholder="e.g. 118"></label>
+            <a class="btn" href="16_final_report.html?id=${encodeURIComponent(p.id)}">${d.final ? 'Open the final report' : 'Final report (needs a final grade)'}</a>
+          </div>
+          <textarea class="prose"${ro()} data-field="overall" placeholder="The overall comment on the final report, addressed to the candidate. Optional." style="min-height:110px">${esc(d.overall || '')}</textarea>
+        </div>
+      </div>
+      <div class="cfoot"><button type="button" class="btn" data-copyprofile="${esc(p.id)}">Copy this profile</button></div>
+    </section>`;
+  }).join('');
   document.querySelectorAll('.pt textarea').forEach(fit);
 }
+
+function paint(){ paintJump(); paintCohort(); paintCands(); }
+
+/* ---- copying: the unit Appian wants is one section ---- */
+function sectionText(id, key){
+  const d = DATA[id]; if (!d) return '';
+  if (Array.isArray(d[key])) return d[key].map(it => (it.text || '').trim()).filter(Boolean)
+    .map((t, n) => t + ((d[key][n].code) ? ' (' + d[key][n].code + ')' : '')).join('\n');
+  return (d[key] || '').trim();
+}
+function profileText(id, i){
+  const d = DATA[id];
+  const lines = [letterFor(i) + ' — ' + d.name, 'Provisional grade: ' + (d.provisional || 'not set'), ''];
+  SECTIONS.forEach(s => { lines.push(s.heading.toUpperCase() + ':'); lines.push(sectionText(id, s.key) || '(nothing recorded)'); lines.push(''); });
+  lines.push('Final grade: ' + (d.final || 'not set'), '');
+  FIELDS.forEach(f => { lines.push(f.heading.toUpperCase() + ':'); lines.push(sectionText(id, f.key) || '(nothing recorded)'); lines.push(''); });
+  return lines.join('\n').trim();
+}
+function toClipboard(text, btn, okLabel){
+  const done = () => { if (!btn) return; const was = btn.textContent; btn.classList.add('ok'); btn.textContent = okLabel || 'copied'; setTimeout(() => { btn.classList.remove('ok'); btn.textContent = was; }, 1400); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => fallbackCopy(text, done));
+  else fallbackCopy(text, done);
+}
+function fallbackCopy(text, done){
+  const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} document.body.removeChild(ta); done();
+}
+
+/* ---- the point bank: only what has already been written on this course ---- */
+function bankFor(key, exceptId){
+  const seen = new Set(), out = [];
+  ORDER.forEach(p => {
+    if (p.id === exceptId) return;
+    const v = DATA[p.id][key];
+    const items = Array.isArray(v) ? v.map(it => ({ text: (it.text || '').trim(), code: it.code || '' }))
+                                   : String(v || '').split('\n').map(t => ({ text: t.trim(), code: '' }));
+    items.forEach(it => { if (!it.text) return; const k = it.text.toLowerCase(); if (seen.has(k)) return; seen.add(k); out.push(it); });
+  });
+  return out;
+}
+
+const cands = document.getElementById('cands');
+cands.addEventListener('toggle', e => {
+  const det = e.target; if (!det.classList || !det.classList.contains('reuse') || !det.open) return;
+  const sec = det.closest('[data-sec]'); const id = sec.dataset.id, key = sec.dataset.sec;
+  const bank = bankFor(key, id);
+  det.querySelector('.lines').innerHTML = bank.length
+    ? bank.map(it => `<button type="button" data-bank-text="${esc(it.text)}" data-bank-code="${esc(it.code)}">${esc(it.text)}${it.code ? ' <b>(' + esc(it.code) + ')</b>' : ''}</button>`).join('')
+    : '<p class="none">Nothing written in this section for another candidate yet. Once there is, it appears here to reuse.</p>';
+}, true);
+
+cands.addEventListener('click', e => {
+  const sc = e.target.closest('[data-seccopy]');
+  if (sc){ const sec = sc.closest('[data-sec]'); const v = sectionText(sec.dataset.id, sec.dataset.sec);
+    if (v) toClipboard(v, sc, 'copied'); else { sc.textContent = 'empty'; setTimeout(() => sc.textContent = 'copy', 1200); } return; }
+  const cp = e.target.closest('[data-copyprofile]');
+  if (cp){ const i = ORDER.findIndex(p => p.id === cp.dataset.copyprofile); toClipboard(profileText(cp.dataset.copyprofile, i), cp, 'Copied'); return; }
+  if (RO) return;
+  const bank = e.target.closest('.reuse .lines button');
+  if (bank){ const sec = bank.closest('[data-sec]'); const d = DATA[sec.dataset.id], key = sec.dataset.sec;
+    if (Array.isArray(d[key])) d[key].push({ text: bank.dataset.bankText, code: bank.dataset.bankCode });
+    else d[key] = (d[key] && d[key].trim() ? d[key].replace(/\s*$/, '') + '\n' : '') + bank.dataset.bankText;
+    touch(); paintCands(); return; }
+  const a = e.target.closest('[data-add]');
+  if (a){ const sec = a.closest('[data-sec]'); DATA[sec.dataset.id][a.dataset.add].push({ text: '', code: '' }); touch(); paintCands();
+    const rows = document.querySelectorAll(`[data-id="${sec.dataset.id}"][data-sec="${a.dataset.add}"] .pt textarea`);
+    if (rows.length) rows[rows.length - 1].focus(); return; }
+  const r = e.target.closest('[data-remove]');
+  if (r){ const sec = r.closest('[data-sec]'); DATA[sec.dataset.id][sec.dataset.sec].splice(+r.dataset.remove, 1); touch(); paintCands(); }
+});
+
+cands.addEventListener('input', e => {
+  if (RO) return;
+  const sec = e.target.closest('[data-sec]'); if (!sec) return;
+  const d = DATA[sec.dataset.id];
+  if (e.target.matches('[data-text]')){ d[sec.dataset.sec][+e.target.dataset.text].text = e.target.value; fit(e.target); touch(); return; }
+  if (e.target.matches('[data-field]')){ d[e.target.dataset.field] = e.target.value; touch(); }
+});
+
+/* A grade changed anywhere -- the cohort table or the candidate's own row --
+   lands in the same record, and both views repaint from it. */
+function onGrade(e){
+  if (RO || !e.target.matches('select.grade')) return;
+  DATA[e.target.dataset.id][e.target.dataset.grade] = e.target.value; touch();
+  paintJump(); paintCohort();
+  document.querySelectorAll(`select.grade[data-id="${CSS.escape(e.target.dataset.id)}"][data-grade="${e.target.dataset.grade}"]`).forEach(sel => {
+    if (sel !== e.target) sel.value = e.target.value;
+    sel.className = 'grade ' + (e.target.value ? (e.target.value === 'FAIL' ? 'fail' : e.target.value === 'PASS A' ? 'top' : 'set') : '');
+  });
+}
+document.getElementById('cohort').addEventListener('change', onGrade);
+cands.addEventListener('change', e => {
+  if (e.target.matches('select.grade')) return onGrade(e);
+  if (RO || !e.target.matches('[data-code]')) return;
+  const sec = e.target.closest('[data-sec]');
+  DATA[sec.dataset.id][sec.dataset.sec][+e.target.dataset.code].code = e.target.value; touch();
+});
 
 /* The same record as the screen shows, with nothing to type into: this is what
    the centre keeps and what goes to Cambridge. Built on demand rather than kept
@@ -459,41 +572,8 @@ function buildPrintable(){
   document.getElementById('printAll').innerHTML = head + ORDER.map((p, i) => printableRecord(p, i)).join('');
 }
 
-function paint(){ paintRail(); paintRecord(); }
-
-document.getElementById('rail').addEventListener('click', e=>{
-  const b=e.target.closest('[data-pick]'); if(!b) return;
-  sel=b.dataset.pick; paint();
-});
-
-document.getElementById('record').addEventListener('click', e=>{
-  if (RO) return;
-  const d=DATA[sel];
-  const g=e.target.closest('[data-grade]');
-  if (g){ d[g.dataset.grade] = d[g.dataset.grade]===g.dataset.value ? '' : g.dataset.value; touch(); paint(); return; }
-  const a=e.target.closest('[data-add]');
-  if (a){ d[a.dataset.add].push({text:'',code:''}); touch(); paintRecord();
-    const rows=document.querySelectorAll(`[data-sec="${a.dataset.add}"] .pt textarea`);
-    if (rows.length) rows[rows.length-1].focus();
-    return; }
-  const r=e.target.closest('[data-remove]');
-  if (r){ const key=r.closest('[data-sec]').dataset.sec; d[key].splice(+r.dataset.remove,1); touch(); paintRecord(); }
-});
-
-document.getElementById('record').addEventListener('input', e=>{
-  if (RO) return;
-  const d=DATA[sel];
-  if (e.target.matches('[data-text]')){
-    const key=e.target.closest('[data-sec]').dataset.sec;
-    d[key][+e.target.dataset.text].text = e.target.value; fit(e.target); touch(); return;
-  }
-  if (e.target.matches('[data-field]')){ d[e.target.dataset.field]=e.target.value; touch(); }
-});
-
-document.getElementById('record').addEventListener('change', e=>{
-  if (RO || !e.target.matches('[data-code]')) return;
-  const key=e.target.closest('[data-sec]').dataset.sec;
-  DATA[sel][key][+e.target.dataset.code].code = e.target.value; touch();
+document.getElementById('copyAll').addEventListener('click', e => {
+  toClipboard(ORDER.map((p, i) => profileText(p.id, i)).join('\n\n———\n\n'), e.currentTarget, 'Copied');
 });
 
 document.getElementById('saveBtn').addEventListener('click', persist);
@@ -505,7 +585,7 @@ window.addEventListener('beforeprint', buildPrintable);
 
 (function init(){
   if (RO){
-    document.getElementById('record').classList.add('ro');
+    document.body.classList.add('ro');
     document.getElementById('saveBtn').style.display = 'none';
     if (window.HubMode === 'assessor') document.getElementById('roleLabel').textContent = 'Assessor';
   }
@@ -513,7 +593,6 @@ window.addEventListener('beforeprint', buildPrintable);
   ORDER=people;
   DATA={};
   people.forEach(p=>{ DATA[p.id] = p.saved ? {...blankRecord(p.name), ...p.saved, name:p.name} : blankRecord(p.name); });
-  sel = people.length ? people[0].id : null;
 
   let cs=null; try{ cs=JSON.parse(localStorage.getItem('connect_course_settings')); }catch(e){}
   const bits=[cs&&cs.courseName, cs&&cs.centreName, cs&&cs.centreNumber].filter(Boolean);
@@ -521,9 +600,8 @@ window.addEventListener('beforeprint', buildPrintable);
   if (bits.length) document.getElementById('courseMeta').textContent = bits.join(' · ');
 
   if (!people.length){
-    document.getElementById('record').innerHTML =
-      '<p style="font-size:0.9rem;color:var(--grey);line-height:1.6;max-width:560px;">No candidates on the course yet. Add them on the <a href="6_centre_admin_dashboard.html">Course admin</a> page, then come back — every candidate gets a record here.</p>';
-    document.getElementById('progress').textContent='No candidates yet.';
+    document.getElementById('cands').innerHTML =
+      '<p style="font-size:0.9rem;color:var(--grey);line-height:1.6;max-width:560px;margin-top:24px;">No candidates on the course yet. Add them on the <a href="6_centre_admin_dashboard.html">Course admin</a> page, then come back — every candidate gets a record here.</p>';
     return;
   }
   paint(); paintState();

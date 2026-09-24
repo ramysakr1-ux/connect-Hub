@@ -20,14 +20,14 @@
  * VERSION is stamped by bump-assets.py with the same stamp as the ?v= links,
  * so each push retires the previous cache on activate.
  */
-const VERSION = 'lite-202609250209';
+const VERSION = 'lite-202609250237';
 const SHELL = [
   './', 'index.html', 'invite.html',
   '1_trainee_plan_and_analysis.html', '2_trainee_self_evaluation.html', '3_tutor_feedback.html',
   '4_feedback_returned.html', '5_tutor_dashboard.html', '6_centre_admin_dashboard.html',
   '7_candidate_tracker.html', '8_assignment_wording.html', '9_assignment_submission.html',
   '10_tutor_assignment_marking.html', '11_assignment_record.html', '12_assessor_pack.html',
-  '13_grades_report.html', '14_owner.html', '15_course_record.html',
+  '13_grades_report.html', '14_owner.html', '15_course_record.html', '16_final_report.html',
   'hub-shared.js', 'hub-store.js', 'hub-sync.js', 'hub-tracker.js', 'hub-due.js', 'hub-exchange.js',
   'assignment-defaults.js', 'hub-house.css', 'hub-theme.css', 'hub-record.css',
   'brand/favicon.svg', 'brand/favicon.ico', 'brand/apple-touch-icon.png',

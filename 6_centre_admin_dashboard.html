@@ -346,6 +346,25 @@
         <label for="tpCount">Teaching practices each</label>
         <input type="number" id="tpCount" min="1" max="8" step="1" placeholder="8">
       </div>
+      <!-- The three things the final course report states that nothing else on
+           the course records (Handbook 7.11: the report gives the course hours,
+           the delivery mode and the hours attended; 25 Sep 2026). -->
+      <div>
+        <label for="totalHours">Course hours</label>
+        <input type="number" id="totalHours" min="1" max="999" step="1" placeholder="120">
+      </div>
+      <div>
+        <label for="deliveryMode">Delivery mode</label>
+        <select id="deliveryMode">
+          <option value="f2f">Face-to-face</option>
+          <option value="online">Online</option>
+          <option value="mixed">Mixed mode</option>
+        </select>
+      </div>
+      <div class="wide">
+        <label for="tutorNames">Tutors, for the signatures on the final report</label>
+        <input type="text" id="tutorNames" placeholder="One name, or several separated by commas">
+      </div>
     </div>
     <div class="fields" style="margin-top:16px;">
       <div>
@@ -430,10 +449,10 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609250209"></script>
-<script src="hub-store.js?v=202609250209"></script>
-<script src="hub-shared.js?v=202609250209"></script>
-<script src="hub-sync.js?v=202609250209"></script>
+<script src="assignment-defaults.js?v=202609250237"></script>
+<script src="hub-store.js?v=202609250237"></script>
+<script src="hub-shared.js?v=202609250237"></script>
+<script src="hub-sync.js?v=202609250237"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -533,6 +552,9 @@ try {
     if(cs.selfDueNote) document.getElementById('selfDueNote').value = cs.selfDueNote;
     if(cs.courseName) document.getElementById('courseName').value = cs.courseName;
     if(cs.tpCount) document.getElementById('tpCount').value = cs.tpCount;
+    if(cs.totalHours) document.getElementById('totalHours').value = cs.totalHours;
+    if(cs.deliveryMode) document.getElementById('deliveryMode').value = cs.deliveryMode;
+    if(cs.tutorNames) document.getElementById('tutorNames').value = cs.tutorNames;
     if(cs.docs) DOC_FIELDS.forEach(k=>{ if(cs.docs[k]) document.getElementById(k).value = cs.docs[k]; });
     if(cs.logo){ courseLogo = cs.logo; applyLogoPreview(courseLogo); }
   }
@@ -566,6 +588,9 @@ document.getElementById('saveSettings').addEventListener('click', () => {
        candidate's own page to know when they have finished; 8 when unset,
        which is what every course had before this field existed. */
     tpCount: (function(){ const n = parseInt(document.getElementById('tpCount').value, 10); return (n >= 1 && n <= HUB_MAX_TP) ? n : ''; })(),
+    totalHours: (function(){ const n = parseInt(document.getElementById('totalHours').value, 10); return n > 0 ? n : ''; })(),
+    deliveryMode: document.getElementById('deliveryMode').value || 'f2f',
+    tutorNames: document.getElementById('tutorNames').value.trim(),
     docs: DOC_FIELDS.reduce((o,k)=>{ const v = document.getElementById(k).value.trim(); if (v) o[k] = v; return o; }, {}),
     logo: courseLogo
   }));

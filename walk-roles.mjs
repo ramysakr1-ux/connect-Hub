@@ -395,12 +395,55 @@ await step('tutor: the tracker shows her, with the assignment states', async () 
 });
 await step('tutor: a grade saved to the store', async () => {
   await T.p.goto(tutorUrl('13_grades_report.html'), { waitUntil: 'domcontentloaded' }); await settle(T.p, 3000);
-  const pill = await T.p.$('[data-grade="final"]:not(.capped)') || await T.p.$('[data-grade]');
-  must(pill, 'no grade pills'); await pill.click(); await settle(T.p, 300);
+  /* The Classroom shape (25 Sep 2026): the cohort in two tables at the top,
+     every candidate down the page. A grade chosen in the cohort table must
+     show on the candidate's own row, and the other way round. */
+  const inTable = await T.p.$('.cohort select.grade[data-grade="final"]'); must(inTable, 'no final-grade select in the cohort table');
+  await inTable.selectOption('PASS'); await settle(T.p, 300);
+  const onRow = await T.p.$eval('.cand .grow.final select.grade', el => el.value);
+  must(onRow === 'PASS', 'the candidate row did not follow the cohort table: ' + onRow);
+  await T.p.selectOption('.cand .grow select.grade[data-grade="provisional"]', 'PASS / PASS B'); await settle(T.p, 300);
+  const inTable2 = await T.p.$eval('.cohort select.grade[data-grade="provisional"]', el => el.value);
+  must(inTable2 === 'PASS / PASS B', 'the cohort table did not follow the candidate row: ' + inTable2);
+  // a strength, with its criterion code, and the section's copy button
+  await T.p.click('.cand [data-sec="teachS"] [data-add]'); await settle(T.p, 300);
+  await T.p.fill('.cand [data-sec="teachS"] .pt textarea', 'Establishes good rapport with the group from the outset');
+  await T.p.selectOption('.cand [data-sec="teachS"] .pt select', '1d'); await settle(T.p, 200);
+  const copied = await T.p.evaluate(() => eval('sectionText(ORDER[0].id, "teachS")'));
+  must(copied === 'Establishes good rapport with the group from the outset (1d)', 'section copy text: ' + JSON.stringify(copied));
   await T.p.click('#saveBtn'); await settle(T.p, 3000);
   const g = (STORE.trainees[amaraToken].records.tracker || {}).grades;
-  must(g && Object.keys(g).length, 'grade not on the store tracker: ' + JSON.stringify(STORE.trainees[amaraToken].records.tracker));
-  return JSON.stringify(g);
+  must(g && g.final === 'PASS' && g.provisional === 'PASS / PASS B', 'grades not on the store tracker: ' + JSON.stringify(g));
+  must(g.teachS && g.teachS[0] && g.teachS[0].code === '1d', 'the coded strength not on the store: ' + JSON.stringify(g.teachS));
+  return 'final PASS, provisional PASS / PASS B, one coded strength, on the store';
+});
+
+await step('tutor: the final course report, from the grade just saved', async () => {
+  /* Connect's final report, page for page (25 Sep 2026). The cover certifies
+     the hours and the grade over the tutors' signatures; the reverse gives the
+     two assessment areas and the syllabus descriptor for the grade. Nothing on
+     it is typed twice: the grade is the grades report's, the assignments'
+     Pass/Fail is read off her record, the hours and tutors are the course's. */
+  await T.p.goto(tutorUrl('6_centre_admin_dashboard.html'), { waitUntil: 'domcontentloaded' }); await settle(T.p, 2500);
+  await T.p.fill('#totalHours', '120'); await T.p.selectOption('#deliveryMode', 'mixed'); await T.p.fill('#tutorNames', 'Ramy Sakr, Pelin Korkmaz');
+  await T.p.click('#saveSettings'); await settle(T.p, 3000);
+  must((STORE.course.settings || {}).tutorNames === 'Ramy Sakr, Pelin Korkmaz', 'tutor names not on the store: ' + JSON.stringify(STORE.course.settings));
+  await T.p.goto(tutorUrl('13_grades_report.html'), { waitUntil: 'domcontentloaded' }); await settle(T.p, 3000);
+  await T.p.fill('.cand [data-field="hoursAttended"]', '118');
+  await T.p.fill('.cand [data-field="overall"]', 'A confident, well-prepared teacher by the end of the course.');
+  await T.p.click('#saveBtn'); await settle(T.p, 3000);
+  const door = await T.p.$eval('.cand .frrow a.btn', a => a.getAttribute('href'));
+  await T.p.goto(`${BASE}${door}&k=${STORE.key}`, { waitUntil: 'domcontentloaded' }); await settle(T.p, 3000);
+  const body = await text(T.p);
+  must(/This is to certify that\s+Amara Nwosu/.test(body), 'the cover does not certify her: ' + body.slice(0, 200));
+  must(/120-hour/.test(body) && /mixed mode/.test(body) && /Hours attended: 118 of 120/.test(body), 'hours or mode missing: ' + body.slice(0, 600));
+  must(/Ramy Sakr[\s\S]*Pelin Korkmaz[\s\S]*CELTA Course Tutor/.test(body), 'signatures missing');
+  must(/Preparing, planning and practising teaching\s+Pass/.test(body), 'the teaching area grade is not the final grade');
+  must(/Written assignments\s+(Pass|Fail|\u2014|—)/.test(body), 'the assignments area is missing');
+  // innerText carries the heading's text-transform, so the heading arrives in capitals
+  must(/Performance Descriptor for a Pass Grade/i.test(body) && /continue to need guidance/.test(body), 'the descriptor for the grade is missing');
+  must(/A confident, well-prepared teacher/.test(body), 'the overall comment is missing');
+  return 'cover, two areas, descriptor, comment, two signatures';
 });
 
 /* ===== ASSESSOR ===== */
@@ -412,6 +455,16 @@ await step('assessor: the invitation card, then the pack, from a clean browser',
   const pk = await text(S.p);
   must(/Amara/.test(pk), 'pack does not list her'); must(/C\/18 2026/.test(pk), 'pack has no course name');
   must((await S.p.$$('textarea, input:not([type=hidden]):not([type=checkbox])')).length <= 2, 'assessor pack has editable fields');
+});
+await step('assessor: the final report opens from the pack; the candidate is refused', async () => {
+  await S.p.goto(`${BASE}12_assessor_pack.html?ak=${STORE.akey}`, { waitUntil: 'domcontentloaded' }); await settle(S.p, 3000);
+  const door = await S.p.$('a[href^="16_final_report.html"]'); must(door, 'no final-report door on the pack');
+  await door.click(); await settle(S.p, 3000);
+  must(/This is to certify that\s+Amara Nwosu/.test(await text(S.p)), 'the assessor could not open the report');
+  await A.p.goto(`${BASE}16_final_report.html?id=${encodeURIComponent(amaraToken)}&t=${amaraToken}`, { waitUntil: 'domcontentloaded' }); await settle(A.p, 2500);
+  const t = await text(A.p);
+  must(!/This is to certify/.test(t), 'a candidate could open her own final report before release');
+  return 'assessor in, candidate refused';
 });
 await step('assessor: the tutor room refuses', async () => {
   await S.p.goto(`${BASE}3_tutor_feedback.html?ak=${STORE.akey}`, { waitUntil: 'domcontentloaded' }); await settle(S.p, 2000);

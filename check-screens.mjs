@@ -46,6 +46,7 @@ const ROOMS = {
   '10_tutor_assignment_marking.html':{ trainee:'refuse', tutor:'open',   assessor:'refuse' },
   '13_grades_report.html':           { trainee:'refuse', tutor:'open',   assessor:'refuse' },
   '15_course_record.html':           { trainee:'refuse', tutor:'open',   assessor:'refuse' },
+  '16_final_report.html':            { trainee:'refuse', tutor:'open',   assessor:'open'   },
 };
 const MODES = [
   { name:'trainee',  seed:{ 'hub:t':'check-t', 'hub:booted':'trainee:check-t' },  q:'?t=check-t' },
