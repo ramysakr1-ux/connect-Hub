@@ -303,6 +303,17 @@
   var held = ledger();
   Object.keys(held).forEach(function(id){ var k = keyOfJob(id); if (k) dirty[k] = true; });
   if (Object.keys(held).length) setTimeout(function(){ Object.keys(held).forEach(function(id){ schedule(id, held[id]); }); }, 0);
+  // ...and again the moment the connection comes back, without waiting for a
+  // page change. Ramy, 24 Sep 2026: "I have it on my desktop and write the
+  // plan, and then when the internet is back, we can upload." A write made
+  // while offline fails as transient and sits in the ledger; until this it
+  // only went out on the NEXT page load, so a tab left open all evening
+  // never sent anything by itself.
+  window.addEventListener('online', function(){
+    var l = ledger(); var ids = Object.keys(l); if (!ids.length) return;
+    status('Back online — sending what was written', 'busy');
+    ids.forEach(function(id){ schedule(id, l[id]); });
+  });
   var origRoute = route;
   route = function(k, v){ if (started) dirty[k] = true; origRoute(k, v); };
 
