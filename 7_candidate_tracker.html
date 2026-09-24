@@ -70,7 +70,7 @@
   .filter.on{ font-weight:700; color:var(--deep); }
   .filter .n{ font-size:10px; font-weight:700; }
   .gridwrap{ padding:4px 16px 14px; overflow-x:auto; }
-  .grid{ display:grid; align-items:center; }
+  .grid{ display:grid; align-items:center; --who-col:210px; --cell-min:0px; --tail-col:58px; }
   .bands{ padding-top:10px; }
   .band{ font-size:9px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--mut2); text-align:center; padding-bottom:5px; border-bottom:1px solid oklch(91% 0.012 82); margin:0 4px; }
   .colhead{ align-items:end; padding:12px 0 9px; border-bottom:1px solid oklch(88% 0.014 82); }
@@ -159,7 +159,15 @@
      (Ramy, 24 Sep 2026: "a bit of harmony and more symmetrical pills"). */
   .dmq{ display:grid; grid-template-columns:repeat(var(--cols,4),minmax(0,1fr)); gap:10px; }
   @media(max-width:860px){ .dmq{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
-  @media(max-width:520px){ .dmq{ grid-template-columns:1fr; } }
+  /* A phone. The filters were 14px tall and they are the control most used on
+     this screen; the grid needed room for its own headings. */
+  @media(max-width:640px){
+    .grid{ --who-col:132px; --cell-min:76px; --tail-col:64px; }
+    .tab{ padding:15px 0 14px; }
+    .filter{ min-height:44px; align-items:center; }
+    .filters{ gap:14px; flex-wrap:wrap; }
+  }
+  @media(max-width:380px){ .dmq{ grid-template-columns:1fr; } }
   .qcard{ border:1px solid var(--line); border-radius:9px; padding:11px 13px; background:var(--box); }
   .qcard .code{ font-size:10.5px; font-weight:700; letter-spacing:0.09em; color:var(--mut2); text-transform:uppercase; }
   .qcard .n{ font-family:Newsreader, Georgia, serif; font-size:21px; font-weight:600; margin-top:3px; color:var(--purp); }
@@ -200,11 +208,11 @@
   <div id="detail"></div>
 </div>
 <script src="hub-due.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609241849"></script>
-<script src="assignment-defaults.js?v=202609241849"></script>
-<script src="hub-tracker.js?v=202609241849"></script>
-<script src="hub-store.js?v=202609241849"></script>
-<script src="hub-sync.js?v=202609241849"></script>
+<script src="hub-shared.js?v=202609241900"></script>
+<script src="assignment-defaults.js?v=202609241900"></script>
+<script src="hub-tracker.js?v=202609241900"></script>
+<script src="hub-store.js?v=202609241900"></script>
+<script src="hub-sync.js?v=202609241900"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
@@ -392,7 +400,15 @@ function render(){
   const isA = TAB==='assn';
   paintDmStrip(all, isA);
   const cols = isA ? ASSN : TPS;
-  const gridCols = isA ? '210px repeat(4, 1fr) 58px' : '210px repeat(8, 1fr) 58px';
+  /* The widths come from CSS custom properties so a phone can change them
+     without this having to know the viewport. On a narrow screen the name
+     column shrinks and every mark column takes a floor, which makes the grid
+     wider than the screen -- and it is already inside a scroller, so it
+     scrolls instead of crushing "FOL LRT LSRT LFC" into each other and
+     cutting "Passed" off the edge (Ramy, 24 Sep 2026). */
+  const gridCols = isA
+    ? 'var(--who-col,210px) repeat(4, minmax(var(--cell-min,0px), 1fr)) var(--tail-col,58px)'
+    : 'var(--who-col,210px) repeat(8, minmax(var(--cell-min,0px), 1fr)) var(--tail-col,58px)';
   if (!all.length){ $('gridwrap').innerHTML = `<div class="empty">No trainee files imported yet. The tracker fills itself from the files you import on the dashboard and the feedback you return.</div>`; $('detail').innerHTML=''; return; }
   if (ME && !all.some(p=>Object.keys(p.tr.assignments||{}).length || Object.keys(p.tr.tp.history||{}).length || (p.tr.tp.feedback))){ $('gridwrap').innerHTML = `<div class="empty">Nothing to show yet. Your row fills in as you submit work and as your tutor returns it.</div>`; $('detail').innerHTML=''; return; }
   let html = '';
