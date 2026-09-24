@@ -213,9 +213,9 @@
 
 </div>
 <script src="hub-due.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609241502"></script>
-<script src="hub-store.js?v=202609241502"></script>
-<script src="hub-sync.js?v=202609241502"></script>
+<script src="hub-shared.js?v=202609241510"></script>
+<script src="hub-store.js?v=202609241510"></script>
+<script src="hub-sync.js?v=202609241510"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -272,11 +272,11 @@ const ASG = (function(){
     else if(s.stage === 'returned_unmarked') sentBack++;
     else if(s.stage === 'closed') closed++;
   });
-  if(needsResub > 0) return {text: needsResub + (needsResub===1?' assignment needs resubmission':' assignments need resubmission'), tone:'stuck', total:TOTAL, closed:closed};
-  if(sentBack > 0) return {text: sentBack + (sentBack===1?' assignment returned unmarked — submit it again':' assignments returned unmarked — submit them again'), tone:'stuck', total:TOTAL, closed:closed};
-  if(TOTAL && closed === TOTAL) return {text:'All ' + TOTAL + ' complete', tone:'', total:TOTAL, closed:closed};
-  if(touched === 0) return {text:'Not started', tone:'', total:TOTAL, closed:closed};
-  return {text: closed + ' of ' + TOTAL + ' complete', tone:'', total:TOTAL, closed:closed};
+  if(needsResub > 0) return {text: needsResub + (needsResub===1?' assignment needs resubmission':' assignments need resubmission'), tone:'stuck', total:TOTAL};
+  if(sentBack > 0) return {text: sentBack + (sentBack===1?' assignment returned unmarked — submit it again':' assignments returned unmarked — submit them again'), tone:'stuck', total:TOTAL};
+  if(TOTAL && closed === TOTAL) return {text:'All ' + TOTAL + ' complete', tone:'', total:TOTAL};
+  if(touched === 0) return {text:'Not started', tone:'', total:TOTAL};
+  return {text: closed + ' of ' + TOTAL + ' complete', tone:'', total:TOTAL};
 })();
 
 /* Which TP this is. The tutor's feedback and the trainee's own plan both carry
@@ -403,31 +403,15 @@ line(document.getElementById('badgeProgress'), (function(){
   return 'Last updated ' + niceDate(local);
 })(), '');
 
-/* Where you are on the course: orientation, so it heads the page rather than
-   occupying a card. BOTH strands, because this page is not only teaching
-   practice -- the assignments run alongside it and used to go unnamed here
-   (Ramy, 24 Sep 2026: "but it's not just about TP is it?").
-
-   The two halves are worded differently on purpose. "Teaching practice 1 of 8"
-   means the one you are ON; "1 of 4 assignments complete" means the ones you
-   have FINISHED. Same grammar for both would read as the same kind of count
-   and be wrong about one of them. */
-const ASG_LABEL = (function(){
-  const t = ASG.total, c = ASG.closed || 0;
-  if (!t) return '';
-  if (c === 0) return t + (t === 1 ? ' written assignment' : ' written assignments');
-  if (c === t) return 'all ' + t + ' assignments complete';
-  return c + ' of ' + t + ' assignments complete';
-})();
-(function(){
-  const bits = [];
-  if (TP_N) bits.push(TP_LABEL + (NEXT === 'waiting' ? ' · with your tutor' : ''));
-  if (ASG_LABEL) bits.push(ASG_LABEL);
-  if (!bits.length) return;
+/* Which teaching practice you are on: orientation, so it heads the page rather
+   than occupying a card. The assignments are NOT named here -- their door
+   carries the count, and saying it twice on one screen is saying it twice
+   (Ramy, 24 Sep 2026: "leave it to the door"). */
+if (TP_N){
   const tl = document.getElementById('tpLine');
-  tl.textContent = bits.join(' · ');
+  tl.textContent = TP_LABEL + (NEXT === 'waiting' ? ' · with your tutor' : '');
   tl.hidden = false;
-})();
+}
 
 /* ---- returned: read it, or start the next one ------------------------------ */
 if (fbBack){
