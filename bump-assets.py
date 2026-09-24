@@ -11,3 +11,7 @@ for f in glob.glob("*.html"):
     for a in assets:
         s = re.sub(r'(["\'])' + re.escape(a) + r'(\?v=[^"\']*)?(["\'])', lambda m: m.group(1) + a + "?v=" + stamp + m.group(3), s)
     if s != orig: p.write_text(s); print("stamped", f)
+# The offline shell's cache is named by the same stamp, so each push retires the last one.
+sw = pathlib.Path("sw.js"); t = sw.read_text()
+t2 = re.sub(r"const VERSION = '[^']*'", "const VERSION = 'lite-" + stamp + "'", t)
+if t2 != t: sw.write_text(t2); print("stamped sw.js")

@@ -546,3 +546,9 @@ if (!window.HubStore) { if (document.readyState === 'loading') document.addEvent
     return html;
   };
 })();
+
+/* The offline shell (sw.js): one registration here, since every screen loads
+   this file. Same-origin pages and assets are kept in the browser once
+   visited -- and the whole shell on first visit -- so a page can be opened
+   with no connection. Online, nothing changes: network first. */
+try { if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js'); } catch (e) {}
