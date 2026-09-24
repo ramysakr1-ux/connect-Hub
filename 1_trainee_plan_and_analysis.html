@@ -95,11 +95,13 @@
   .card h2{font-family:'Newsreader',Georgia,serif; font-size:1.1rem; margin:0 0 4px; color:var(--terracotta);}
   .card .guide{font-size:0.8rem; color:var(--grey); font-style:italic; margin:0 0 12px; line-height:1.5;}
 
-  input[type=text], textarea, select{width:100%; font-family:'Karla',sans-serif; font-size:0.9rem;
+  /* input[type=url] belongs here too: the materials link was left at the
+     browser's own width, 153px against the 306px of every field beside it. */
+  input[type=text], input[type=url], textarea, select{width:100%; font-family:'Karla',sans-serif; font-size:0.9rem;
     padding:9px 12px; border:2px solid var(--sand-line); border-radius:6px;
     background:#FFFDF8; color:var(--ink); line-height:1.6;}
   textarea{resize:vertical; overflow:hidden; min-height:60px;}
-  input[type=text]:focus, textarea:focus, select:focus{outline:none; border-color:var(--teal);}
+  input[type=text]:focus, input[type=url]:focus, textarea:focus, select:focus{outline:none; border-color:var(--teal);}
   .phon{font-size:1rem; letter-spacing:.02em;}
 
   .row{margin-bottom:16px;}
@@ -143,6 +145,35 @@
      come off the top of the table (Ramy, 23 Sep 2026). */
   table.proc td.meta{padding:11px 8px;}
   .metastack{display:flex; flex-direction:column; gap:6px;}
+  /* A phone. The procedure table is 900px of fixed columns in a 353px window,
+     so writing a plan meant dragging it sideways for every stage and the two
+     columns you fill most were never on screen together (Ramy, 24 Sep 2026:
+     "build it"). Each stage becomes a block with its fields labelled and
+     full width; the interaction and time sit on one line; the delete goes to
+     the foot, away from what you are writing. Above 640px nothing changes,
+     and print is untouched -- paper has the room. */
+  @media screen and (max-width:640px){
+    .proc-wrap{overflow-x:visible; padding:16px 14px;}
+    table.proc{min-width:0; display:block; table-layout:auto;}
+    table.proc colgroup, table.proc thead{display:none;}
+    table.proc tbody{display:block;}
+    table.proc tbody tr{display:block; background:var(--paper);
+      border:1px solid var(--sand-line); border-left:4px solid var(--gold);
+      border-radius:6px; padding:12px 12px 8px; margin:0 0 10px;}
+    table.proc tbody tr:nth-child(even) td{background:transparent;}
+    table.proc td{display:block; border:none; padding:0 0 12px;}
+    table.proc td[data-l]::before{content:attr(data-l); display:block; margin-bottom:4px;
+      font-family:'Karla',sans-serif; font-size:0.66rem; font-weight:700;
+      letter-spacing:.07em; text-transform:uppercase; color:var(--grey);}
+    table.proc td.meta{padding:0 0 12px;}
+    table.proc td:last-child{padding:0; text-align:right;}
+    .metastack{flex-direction:row; flex-wrap:wrap; gap:8px;}
+    /* table.proc input sets min-height:0 and is the more specific selector, so
+       these have to match it or the fields stay at 38px. */
+    table.proc .metastack input{flex:0 0 88px; min-height:44px;}
+    table.proc .metastack select{flex:1 1 130px; min-height:44px;}
+    table.proc .del-btn{min-width:44px; min-height:44px;}
+  }
   .metastack input, .metastack select{width:100%; font-family:'Karla',sans-serif; font-size:0.78rem;
     font-weight:600; text-align:center; padding:7px 4px; border:1.5px solid var(--sand-line);
     border-radius:20px; background:#FFFDF8; color:var(--teal);
@@ -553,9 +584,9 @@
 </div>
 
 <script src="hub-due.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609242012"></script>
-<script src="hub-store.js?v=202609242012"></script>
-<script src="hub-sync.js?v=202609242012"></script>
+<script src="hub-shared.js?v=202609242032"></script>
+<script src="hub-store.js?v=202609242032"></script>
+<script src="hub-sync.js?v=202609242032"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -846,10 +877,10 @@ function syncAimCue(tr){
 function addRow(stage,hint,time){
   const tr=document.createElement('tr');
   tr.innerHTML=`
-    <td><textarea class="t-stage" rows="3" placeholder="Stage name: your aim">${esc(stage||'')}</textarea>
+    <td data-l="Stage"><textarea class="t-stage" rows="3" placeholder="Stage name: your aim">${esc(stage||'')}</textarea>
         <p class="aim-cue">write your aim for this stage</p></td>
-    <td><textarea class="t-proc blt" rows="4"></textarea></td>
-    <td class="meta"><div class="metastack">
+    <td data-l="Procedure"><textarea class="t-proc blt" rows="4"></textarea></td>
+    <td class="meta" data-l="Interaction and time"><div class="metastack">
       <input class="t-time" type="text" inputmode="numeric" maxlength="7" placeholder="min" value="${esc(time||'')}">
       ${intSelect('t-int1','interaction')}${intSelect('t-int2','+ another')}
     </div></td>
