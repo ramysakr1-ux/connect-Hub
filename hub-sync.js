@@ -363,6 +363,27 @@
     boot = boot || {};
     if (mode === 'trainee' ? !boot.me : !boot.roster) return {};
     var course = boot.course || {}, out = {};
+    /* A correction to the shipped criteria, adopted once by a course that never
+       had its own -- see CONNECT_HUB_ADOPT_CORRECTED_CRITERIA in
+       assignment-defaults.js for why, and for the shape of the question it
+       asks. Here are its guards.
+         - Tutor only: one writer, and the putCourse below heals the store, so
+           every trainee then reads the same criteria the tutor is marking to.
+         - Nothing marked anywhere on the course: criteriaMarks are positional,
+           and the corrected lists are shorter, so on marked work a Met would
+           move to a different criterion.
+       The put goes through the same queue as any other course write, so it is
+       ledgered and retried like the rest, and a course that has already adopted
+       no longer matches -- this cannot fire twice. */
+    if (mode === 'tutor' && course.wording && window.CONNECT_HUB_ADOPT_CORRECTED_CRITERIA) {
+      var marked = (boot.roster || []).some(function(t){
+        var a = ((t || {}).records || {}).assignments;
+        return !!a && Object.keys(a).length > 0;
+      });
+      if (!marked && window.CONNECT_HUB_ADOPT_CORRECTED_CRITERIA(course.wording).length) {
+        schedule('c:wording', { op: 'putCourse', kind: 'wording', data: course.wording });
+      }
+    }
     out['connect_assignment_wording_v2'] = course.wording ? JSON.stringify(course.wording) : null;
     out['connect_course_settings'] = course.settings ? JSON.stringify(course.settings) : null;
     if (mode === 'trainee') {

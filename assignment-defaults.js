@@ -123,3 +123,81 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
     { type:'declaration', label:'Declaration', items:['This is my own work.', 'All sources are referenced, in the format (Author, Year, p. ##).'], aiToggle:true }
   ]}
 };
+
+/* A course's stored wording is a frozen COPY, so correcting the defaults above
+   reaches new courses and no existing one. That is right when a centre has
+   reworked its own wording on screen 8 -- their words must not be overwritten
+   -- and wrong when the stored copy is simply the old shipped default, which is
+   every course sold before 25 Sep 2026. C/18 2026 was in exactly that state:
+   the criteria went to the store when its four deadlines were set, so the
+   course would have run on the superseded lists whatever this file said.
+
+   Nothing in the record says whether a centre edited its wording, so this asks
+   the only question that can be answered: is the stored copy still the old
+   default, word for word? If it is, nobody edited it, and it is replaced. Once
+   replaced it no longer matches, so this can only ever fire once.
+
+   Three deliberate limits, all in hub-sync:
+
+   - Only the TUTOR adopts. One writer, and it heals the store, so a trainee
+     never reads different criteria from the tutor marking them.
+   - Only while the course has NO assignment record at all. criteriaMarks and
+     criteriaComments are POSITIONAL, so a shorter list would silently move a
+     Met from one criterion to another on work already marked.
+   - Only the criteria and the title. dueAt, resubDays, the sections and the
+     word range are the centre's, and are untouched. */
+window.CONNECT_HUB_SUPERSEDED_WORDING = {
+  lrt: { title:'Language Related Tasks', criteria:[
+    'Analyses language correctly',
+    'Uses terminology correctly',
+    'Shows evidence of having accessed appropriate reference materials, i.e. give the name of at least one book that you have used to research the area',
+    'Uses clear, accurate and appropriate language',
+    'The assignment meets the 750-1,000-word count requirement'
+  ]},
+  lsrt: { title:'Language Skills Related Task', criteria:[
+    'Identifying receptive/productive skills that could be practised in relation to the text',
+    'Correctly using terminology that relates to language skills and sub-skills',
+    'Designing tasks in relation to the text with a rationale',
+    'Finding, selecting and showing evidence of background reading in the topic area i.e. at least one sourced quote in the body of the assignment.',
+    'Using written language that is clear, accurate and appropriate to the task',
+    'The assignment meets the 750-1,000-word count requirement'
+  ]},
+  fol: { title:'Focus on the Learner', criteria:[
+    'Showing awareness of how a learner’s background, previous learning experience and learning preferences affect learning.',
+    'Identifying the learner’s language/skills needs',
+    'Correctly using terminology relating to the description of language systems and language skills.',
+    'Selecting appropriate material and/or resources (at least one of which must be from published materials) to aid the learners’ language development.',
+    'Providing a rationale for using specific activities with the learners in mind.',
+    'Finding, selecting and referencing information from one or more sources, within the body of the assignment.',
+    'Using written language that is clear, accurate and appropriate to the task',
+    'The assignment meets the 750-1,000-word count requirement'
+  ]},
+  lfc: { title:'Lessons from the Classroom', criteria:[
+    'Show (convincing) evidence of an ability to identify their own teaching strengths and weaknesses in the light of feedback from learners, teachers and tutors.',
+    'Show convincing understanding of how their strengths/weaknesses can affect the learners.',
+    'Identify ways of improving their weaknesses (one or two practical solutions).',
+    'Show reflection on their observation of other teachers in relation to their weaknesses.',
+    'Describe in a specific way how to develop ELT knowledge and skills beyond the course (professional development post-CELTA).',
+    'Able to write in clear, accurate and appropriate language.',
+    'The assignment meets the 750-1,000-word count requirement and there is clear reference to the sources used.'
+  ]}
+};
+
+/* Names the assignments whose stored criteria were replaced, mutating `wording`
+   in place. Empty when there was nothing to do, which is the normal case. */
+window.CONNECT_HUB_ADOPT_CORRECTED_CRITERIA = function(wording){
+  var was = window.CONNECT_HUB_SUPERSEDED_WORDING, now = window.CONNECT_HUB_DEFAULT_WORDING, changed = [];
+  if (!wording || !was || !now) return changed;
+  Object.keys(was).forEach(function(k){
+    var a = wording[k];
+    if (!a || !a.criteria || !now[k]) return;
+    // Screen 8 has stored criteria as bare strings in the past; read both.
+    var stored = a.criteria.map(function(c){ return typeof c === 'string' ? c : (c && c.text) || ''; });
+    if (stored.length !== was[k].criteria.length) return;
+    for (var i = 0; i < stored.length; i++) if (stored[i] !== was[k].criteria[i]) return;
+    a.criteria = now[k].criteria.map(function(c){ return { text: c.text, sectionIndex: null }; });
+    if (a.title === was[k].title) a.title = now[k].title;
+    changed.push(k);
+  });
+  return changed;
+};

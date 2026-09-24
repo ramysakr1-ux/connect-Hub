@@ -150,6 +150,48 @@ await step('tutor: assignment deadlines set on the wording (one ahead, one alrea
   must(w[assignKey] && w[assignKey].dueAt && w[lateKey] && w[lateKey].dueAt, 'dueAt not in the store: ' + JSON.stringify({ a: w[assignKey] && w[assignKey].dueAt, l: w[lateKey] && w[lateKey].dueAt }));
   return `${assignKey.toUpperCase()} due in 3 days, ${lateKey.toUpperCase()} closed 2 days ago`;
 });
+await step('tutor: a course still on the superseded criteria adopts the corrected ones', async () => {
+  /* 25 Sep 2026. The four assignments' criteria were checked against the ones
+     IH Istanbul actually sets on C/17 and against the syllabus, and corrected.
+     A course's stored wording is a frozen copy, so the correction reached no
+     existing course -- C/18 2026 included, whose criteria went to the store the
+     moment its deadlines were set. So the tutor's landing page adopts the
+     corrected lists when the stored copy is still the old default word for
+     word, and heals the store. Planted in the STORE, not in localStorage: the
+     sync path is the thing under test. */
+  // Read the old lists out of the page rather than parsing the JS by hand, so
+  // this step cannot drift from the file it is testing.
+  await T.p.goto(tutorUrl('5_tutor_dashboard.html'), { waitUntil: 'domcontentloaded' }); await settle(T.p, 2500);
+  const was = await T.p.evaluate(() => eval('JSON.parse(JSON.stringify(window.CONNECT_HUB_SUPERSEDED_WORDING || {}))'));
+  must(Object.keys(was).length === 4, 'the superseded wording is not on the dashboard: ' + JSON.stringify(Object.keys(was)));
+  /* Only the criteria and the title are wound back -- this is the state C/18
+     was actually in, the course's own sections and the deadlines just set
+     intact. Replacing the whole object instead would leave the assignments with
+     no sections, which is not a state any course reaches. */
+  for (const k of Object.keys(was)) {
+    const a = STORE.course.wording[k]; if (!a) continue;
+    a.title = was[k].title;
+    a.criteria = was[k].criteria.map(t => ({ text: t, sectionIndex: null }));
+  }
+  const dueBefore = JSON.stringify(Object.fromEntries(Object.entries(STORE.course.wording).map(([k, v]) => [k, v.dueAt || ''])));
+  const secBefore = JSON.stringify(Object.fromEntries(Object.entries(STORE.course.wording).map(([k, v]) => [k, (v.sections || []).length])));
+  const before = Object.fromEntries(Object.entries(was).map(([k]) => [k, STORE.course.wording[k].criteria.length]));
+
+  await T.p.goto(tutorUrl('5_tutor_dashboard.html'), { waitUntil: 'domcontentloaded' }); await settle(T.p, 3500);
+
+  const after = Object.fromEntries(Object.entries(was).map(([k]) => [k, STORE.course.wording[k].criteria.length]));
+  must(JSON.stringify(after) === JSON.stringify({ lrt: 4, lsrt: 4, fol: 6, lfc: 5 }),
+    'store not healed: ' + JSON.stringify({ before, after }));
+  must(STORE.course.wording.lsrt.title === 'Language Skills Related Tasks', 'lsrt title still singular');
+  must(STORE.course.wording.lrt.criteria[0].text === 'Analysing language correctly for teaching purposes',
+    'lrt criterion 1 is not the syllabus wording: ' + STORE.course.wording.lrt.criteria[0].text);
+  // The point of doing this in place: what the centre set must survive it.
+  const dueAfter = JSON.stringify(Object.fromEntries(Object.entries(STORE.course.wording).map(([k, v]) => [k, v.dueAt || ''])));
+  const secAfter = JSON.stringify(Object.fromEntries(Object.entries(STORE.course.wording).map(([k, v]) => [k, (v.sections || []).length])));
+  must(dueAfter === dueBefore, 'the deadlines did not survive: ' + dueBefore + ' -> ' + dueAfter);
+  must(secAfter === secBefore, 'the sections did not survive: ' + secBefore + ' -> ' + secAfter);
+  return Object.entries(before).map(([k, v]) => `${k} ${v}→${after[k]}`).join(', ') + '; deadlines and sections kept';
+});
 
 /* ===== TRAINEE opens her invitation, cold ===== */
 const A = await ctx('trainee');
@@ -340,6 +382,33 @@ await step('trainee: a refused write is kept and shown, not thrown away', async 
   must(!(await A.p.$('#hubUnsaved')), 'banner still up after the store came back');
   must(JSON.stringify(STORE.trainees[amaraToken].records.assignments || {}).includes('written while the store said no'), 'her draft never reached the store after retry');
   return 'refused, kept, shown; retried and cleared';
+});
+await step('tutor: a course with work already marked is left on its own criteria', async () => {
+  /* The other half of the adoption above, and the one that matters more.
+     criteriaMarks and criteriaComments are POSITIONAL, so replacing an
+     eight-item list with a six-item one on an assignment already marked would
+     move a Met from one criterion to another and drop the last two. By this
+     point in the walk Amara has a marked assignment, so the guard must hold. */
+  // The dashboard, so the superseded lists are on the page to read.
+  await T.p.goto(tutorUrl('5_tutor_dashboard.html'), { waitUntil: 'domcontentloaded' }); await settle(T.p, 2500);
+  const was = await T.p.evaluate(() => eval('JSON.parse(JSON.stringify(window.CONNECT_HUB_SUPERSEDED_WORDING || {}))'));
+  must(Object.keys(was).length === 4, 'the superseded wording is not on the dashboard: ' + JSON.stringify(Object.keys(was)));
+  const marked = Object.values(STORE.trainees).some(t => Object.keys((t.records || {}).assignments || {}).length);
+  must(marked, 'this step proves nothing unless the course has an assignment record by now');
+  const keep = JSON.parse(JSON.stringify(STORE.course.wording));
+  for (const k of Object.keys(was)) {
+    const a = STORE.course.wording[k]; if (!a) continue;
+    a.title = was[k].title;
+    a.criteria = was[k].criteria.map(t => ({ text: t, sectionIndex: null }));
+  }
+  const before = Object.fromEntries(Object.entries(was).map(([k]) => [k, STORE.course.wording[k].criteria.length]));
+
+  await T.p.goto(tutorUrl('5_tutor_dashboard.html'), { waitUntil: 'domcontentloaded' }); await settle(T.p, 3500);
+
+  const after = Object.fromEntries(Object.entries(was).map(([k]) => [k, STORE.course.wording[k].criteria.length]));
+  STORE.course.wording = keep;
+  must(JSON.stringify(after) === JSON.stringify(before), 'marked work had its criteria swapped under it: ' + JSON.stringify({ before, after }));
+  return 'left alone: ' + Object.entries(after).map(([k, v]) => `${k} ${v}`).join(', ');
 });
 
 console.log(`\n${passed} of ${n} steps passed; ${STORE.calls.length} store calls.`);
