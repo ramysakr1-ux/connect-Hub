@@ -173,11 +173,52 @@
   /* Splits the pasted text into headed sections. Only H2 headings ("## ...")
      open a section; anything above the first one is ignored, so a model that
      echoes the plan back is harmless. */
-  function sections(text){
+  /* A heading a model might write. Hashes are the contract, but models bold a
+     heading instead at least as often, so a line that is nothing but bold text
+     counts as one too -- at level 2, the level the brief asks for (fuzzed
+     against real model habits, 24 Sep 2026: bold headings landed 0 of 14).
+     An enumeration the model added ("## 1. Grade", "## Slot 3 - Grade") is
+     stripped before the name is matched; it landed 6 of 14 before. */
+  function headingOf(raw, allowBold){
+    var h = raw.match(/^\s*(#{1,4})\s+(.+?)\s*#*\s*$/);
+    if (h) return { level: h[1].length, heading: h[2].trim() };
+    if (!allowBold) return null;
+    var b = raw.match(/^\s*(?:\*\*|__)\s*(.+?)\s*(?:\*\*|__)\s*:?\s*$/);
+    if (b && b[1]) return { level: 2, heading: b[1].trim(), bold: true };
+    return null;
+  }
+  /* Which heading level the model used for the slots. The brief asks for H2
+     and the plan's own headings are H3, so H2 is preferred -- but a model that
+     renders every slot as H3 was landing NOTHING, silently, because the level
+     was hard-coded. Count the levels whose headings actually name a slot and
+     take the best; ties go to 2. Shared with the assignment marking screen,
+     which had the same hard-coded 2. */
+  function bestLevel(secs, byName){
+    var hits = {};
+    secs.forEach(function(sec){
+      var nm = norm(sec.heading), dn = norm(deNumber(sec.heading));
+      if (byName[nm] || byName[dn]) hits[sec.level] = (hits[sec.level] || 0) + 1;
+    });
+    var use = 2;
+    Object.keys(hits).forEach(function(lv){ if (hits[lv] > (hits[use] || 0)) use = +lv; });
+    return use;
+  }
+  function deNumber(h){
+    return String(h || '').replace(/^\s*(?:slot\s*)?\(?\d{1,2}\)?\s*[.):\-–—]\s*/i, '').trim();
+  }
+  /* Bold headings are a FALLBACK, not a guess. A bold line in ordinary prose
+     would otherwise open a section and swallow the paragraph under it, and
+     truncate the real answer above. So the text is read with hashes first; a
+     caller that finds nothing re-reads with allowBold and takes that instead.
+     That also means no length or punctuation guards are needed on a bold
+     heading -- and a criterion long enough to wrap, or ending in a full stop,
+     was being rejected by them (fuzzed on the marking screen, 24 Sep 2026:
+     5 of 7). */
+  function sections(text, allowBold){
     var out = [], cur = null;
     String(text || '').split(/\r?\n/).forEach(function(raw){
-      var h = raw.match(/^\s*(#{1,3})\s+(.+?)\s*#*\s*$/);
-      if (h) { cur = { level: h[1].length, heading: h[2].trim(), body: [] }; out.push(cur); return; }
+      var h = headingOf(raw, allowBold);
+      if (h) { cur = { level: h.level, heading: h.heading, bold: !!h.bold, body: [] }; out.push(cur); return; }
       if (cur) cur.body.push(raw);
     });
     out.forEach(function(s){ s.text = s.body.join('\n').replace(/^\s+|\s+$/g, ''); });
@@ -216,6 +257,15 @@
     var kinds = {}; slots(doc).forEach(function(s){ kinds[s.id] = s.kind; });
     var found = {}, unplaced = [];
     var secs = sections(text);
+    /* Which heading level the model used for the slots. The brief asks for H2
+       and the plan's own headings are H3, so H2 is preferred -- but a model
+       that renders every slot as H3 was landing NOTHING, silently, because the
+       level was hard-coded. Count the levels that actually match slot names
+       and take the best; ties go to 2. */
+    if (!secs.some(function(sec){ return byName[norm(sec.heading)] || byName[norm(deNumber(sec.heading))]; })) {
+      secs = sections(text, true);                 // the model bolded its headings
+    }
+    var useLevel = bestLevel(secs, byName);
     if (!scoped) {
       // keep only the last section per heading
       var last = {}; secs.forEach(function(sec, i){ last[norm(sec.heading)] = i; });
@@ -225,11 +275,11 @@
       /* Slots are H2. The plan's own headings are H3, and the marker is H1:
          a model that echoes the plan and strips the marker must not have its
          "### Stage 2 -- First test" read as an answer for stage 2. */
-      if (sec.level !== 2) return;
-      var id = byName[norm(sec.heading)];
+      if (sec.level !== useLevel) return;
+      var id = byName[norm(sec.heading)] || byName[norm(deNumber(sec.heading))];
       if (!id) {
         // the model dropped the dash? try the text after any dash
-        var tail = sec.heading.split(/\s[—\-–]\s/).pop();
+        var tail = deNumber(sec.heading).split(/\s[—\-–]\s/).pop();
         id = byName[norm(tail)];
       }
       if (!id) { if (sec.text) unplaced.push(sec.heading); return; }
@@ -251,5 +301,5 @@
     return { found: found, unplaced: unplaced, manifest: man };
   }
 
-  window.HubExchange = { brief: brief, planMarkdown: planMarkdown, slots: slots, read: read, sections: sections };
+  window.HubExchange = { brief: brief, planMarkdown: planMarkdown, slots: slots, read: read, sections: sections, bestLevel: bestLevel, deNumber: deNumber };
 })();

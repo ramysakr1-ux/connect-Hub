@@ -95,7 +95,7 @@
   .note{font-size:0.8rem; color:var(--grey); margin:0 0 14px;}
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202609240203">
-<link rel="stylesheet" href="hub-theme.css?v=202609242247">
+<link rel="stylesheet" href="hub-theme.css?v=202609242327">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -103,12 +103,12 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202609242247"></script>
+<script src="assignment-defaults.js?v=202609242327"></script>
 <script src="hub-exchange.js?v=202609240203"></script>
 <script src="hub-due.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609242247"></script>
-<script src="hub-store.js?v=202609242247"></script>
-<script src="hub-sync.js?v=202609242247"></script>
+<script src="hub-shared.js?v=202609242327"></script>
+<script src="hub-store.js?v=202609242327"></script>
+<script src="hub-sync.js?v=202609242327"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -594,9 +594,17 @@ function wireExchange(){
     const norm = h => String(h||'').toLowerCase().replace(/[\u2018\u2019\u201c\u201d"']/g,'').replace(/[^a-z0-9]+/g,' ').trim();
     let body = txt.replace(/<!--\s*lite:slots[\s\S]*?-->/g,''); const at = body.search(/^\s*#\s+Marking\b/m); if (at>=0) body = body.slice(at);
     const found = {}, unplaced = [];
-    HubExchange.sections(body).forEach(sec => {
-      if (sec.level !== 2) return;
-      let id = byName[norm(sec.heading)] || byName[norm(sec.heading.split(/\s[\u2014\-\u2013]\s/)[0])];
+    /* Same two habits as the feedback form: a model may render the slots as
+       H3, or number them. Both were landing nothing here (24 Sep 2026). */
+    let secs = HubExchange.sections(body);
+    const named = ss => ss.some(sec => byName[norm(sec.heading)] || byName[norm((HubExchange.deNumber||(x=>x))(sec.heading))]);
+    if (!named(secs)) secs = HubExchange.sections(body, true);   // the model bolded its headings
+    const useLevel = HubExchange.bestLevel ? HubExchange.bestLevel(secs, byName) : 2;
+    const dn = HubExchange.deNumber || (x => x);
+    secs.forEach(sec => {
+      if (sec.level !== useLevel) return;
+      let id = byName[norm(sec.heading)] || byName[norm(dn(sec.heading))]
+            || byName[norm(dn(sec.heading).split(/\s[\u2014\-\u2013]\s/)[0])];
       if (!id) { if (sec.text) unplaced.push(sec.heading); return; }
       if (!sec.text) return;
       if (id === 'comment') { found[id] = { text: sec.text }; return; }
