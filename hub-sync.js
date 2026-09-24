@@ -250,6 +250,31 @@
     });
   }
   window.addEventListener('pagehide', flushBeacon);
+
+  /* And if anything is still unsent, SAY SO before the tab goes.
+   *
+   * Ramy, 25 Sep 2026, after a deadline he had set looked right on his own
+   * screen and had never reached the course: "someone could imagine that this
+   * is actually working, because they can't see it." Quite. The pill says
+   * "Saving…" and then "Saved to the course", but nothing stops you closing
+   * the tab in between, and a page you have closed cannot tell you it failed.
+   *
+   * The beacon above is the belt: it hands what is queued to the browser to
+   * deliver after the page is gone. This is the braces, for the case the
+   * beacon cannot cover -- a write the store has already refused and which is
+   * sitting in the ledger, or a queue that has not flushed yet. The browser
+   * shows its own "Leave site?" dialog; the wording is the browser's and
+   * cannot be changed, which is why the pill carries the detail.
+   *
+   * Only when something is genuinely outstanding, so an ordinary close is
+   * never interrupted. */
+  window.addEventListener('beforeunload', function(e){
+    var pending = Object.keys(queue).length || Object.keys(ledger()).length;
+    if (!pending) return;
+    e.preventDefault();
+    e.returnValue = '';           // required for the dialog to appear at all
+    return '';
+  });
   function recordOf(tr){ return { plan: (tr.tp && tr.tp.plan) || null, selfeval: (tr.tp && tr.tp.selfeval) || null, feedback: (tr.tp && tr.tp.feedback) || null, tpHistory: (tr.tp && tr.tp.history) || {}, assignments: tr.assignments || {}, tracker: tr.tracker || {} }; }
   function route(key, value){
     if (mode === 'assessor') return; // read-only: nothing this browser does reaches the course
