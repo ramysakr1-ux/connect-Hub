@@ -70,7 +70,8 @@
   .row{margin-bottom:12px;}
   .row label{display:block; font-size:0.75rem; font-weight:700; color:var(--teal); text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px;}
   .row .hint{font-size:0.78rem; color:var(--grey); font-style:italic; margin:0 0 6px;}
-  .decl{display:flex; align-items:flex-start; gap:8px; margin-bottom:8px; font-size:0.87rem; line-height:1.5;}
+  /* A label, not a div: the words are half the target, and on a phone the box alone is 21px of it. */
+  .decl{display:flex; align-items:flex-start; gap:8px; margin-bottom:8px; font-size:0.87rem; line-height:1.5; cursor:pointer;}
   .decl input{width:auto; accent-color:var(--teal); margin-top:3px; flex:none;}
   .ai-toggle{display:flex; gap:16px; align-items:center; margin:10px 0;}
   .ai-toggle label{display:flex; align-items:center; gap:6px; font-size:0.87rem; font-weight:600; cursor:pointer;}
@@ -86,6 +87,21 @@
   .btn{font-family:'Karla',sans-serif; font-size:0.88rem; font-weight:700; padding:10px 22px; border-radius:20px; border:none; cursor:pointer;}
   .btn-submit{background:var(--teal); color:var(--paper);}
   .btn-submit:disabled{opacity:0.4; cursor:not-allowed;}
+  /* A phone. This is the candidate's own screen and the declaration is
+     compulsory before Submit lights, so four browser-default 13px boxes stood
+     between her and handing in an assignment (Ramy, 24 Sep 2026). The boxes
+     are scaled up and each one gets a full-width row to tap, the AI choice
+     stacks rather than sharing a line, and Submit runs the width. */
+  @media(max-width:560px){
+    .decl{align-items:center; gap:12px; padding:6px 0; min-height:44px;}
+    .decl input{transform:scale(1.6); transform-origin:left center; margin:0 4px 0 2px;}
+    .ai-toggle{flex-direction:column; align-items:stretch; gap:4px;}
+    .ai-toggle label{min-height:44px; gap:12px;}
+    .ai-toggle input{transform:scale(1.6); transform-origin:left center; margin:0 4px 0 2px;}
+    .navbar{flex-wrap:wrap; gap:10px;}
+    .navbar .btn-submit{width:100%; min-height:48px; order:3;}
+    .navbar .status{flex:1 1 100%;}
+  }
   .status{font-size:0.8rem; color:var(--grey);}
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
@@ -97,7 +113,7 @@
   textarea.resub:focus{ border-color:oklch(60% 0.12 70); }
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202609240203">
-<link rel="stylesheet" href="hub-theme.css?v=202609241907">
+<link rel="stylesheet" href="hub-theme.css?v=202609241953">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -105,11 +121,11 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202609241907"></script>
+<script src="assignment-defaults.js?v=202609241953"></script>
 <script src="hub-due.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609241907"></script>
-<script src="hub-store.js?v=202609241907"></script>
-<script src="hub-sync.js?v=202609241907"></script>
+<script src="hub-shared.js?v=202609241953"></script>
+<script src="hub-store.js?v=202609241953"></script>
+<script src="hub-sync.js?v=202609241953"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the candidate's submission form with a
@@ -347,7 +363,7 @@ function render(){
         <div class="row"><label>Materials link (if this assignment uses outside material)</label>
           <p class="hint">If you're linking a Drive file or worksheet here, use different material from any assessed TP lesson \u2014 Handbook 9.2.1.</p>
           <input type="url" data-role="materialslink" value="${esc(MATERIALSLINK)}" placeholder="https://drive.google.com/..." ${locked?'disabled':''}></div>
-        ${s.items.map((it,ci)=>`<div class="decl"><input type="checkbox" data-role="decl-check" data-i="${i}" data-ci="${ci}" ${d.checks[ci]?'checked':''} ${locked?'disabled':''}><span>${esc(it)}</span></div>`).join('')}
+        ${s.items.map((it,ci)=>`<label class="decl"><input type="checkbox" data-role="decl-check" data-i="${i}" data-ci="${ci}" ${d.checks[ci]?'checked':''} ${locked?'disabled':''}><span>${esc(it)}</span></label>`).join('')}
         ${s.aiToggle?`<div class="ai-toggle">
           <label><input type="radio" name="ai${i}" data-role="ai" data-i="${i}" value="yes" ${d.aiUsed==='yes'?'checked':''} ${locked?'disabled':''}> Used AI</label>
           <label><input type="radio" name="ai${i}" data-role="ai" data-i="${i}" value="no" ${d.aiUsed==='no'?'checked':''} ${locked?'disabled':''}> Did not use AI</label>
