@@ -552,3 +552,50 @@ if (!window.HubStore) { if (document.readyState === 'loading') document.addEvent
    visited -- and the whole shell on first visit -- so a page can be opened
    with no connection. Online, nothing changes: network first. */
 try { if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js'); } catch (e) {}
+
+/* Tables that stack on a phone.
+ *
+ * The plan, the language analysis and the marked assignment are stored as
+ * HTML, generated for A4, with no classes on anything -- so at 390px a four
+ * column procedure table is far wider than the screen and has to be shoved
+ * about sideways to be read (Ramy, 24 Sep 2026: "stack the plan table on a
+ * phone").
+ *
+ * Rather than change the generator, which would only help records written
+ * from today, each table is labelled as it is rendered: the first row is the
+ * header, so its cells name the columns, and every cell below carries its
+ * column's name in data-l. hub-house.css turns that into a stacked row at
+ * narrow widths and ignores it everywhere else, so A4 and print are untouched.
+ *
+ * A cell spanning columns (the procedure table's Total) has no single column
+ * to be named by, and says so instead. */
+window.hubStackTables = function(root){
+  var scope = root || document;
+  [].forEach.call(scope.querySelectorAll('table'), function(t){
+    if (t.getAttribute('data-stacked')) return;
+    var rows = t.rows; if (!rows || rows.length < 3) return;
+    var labels = [].map.call(rows[0].cells, function(c){
+      return ((c.textContent || '').trim().split('\n')[0] || '').trim();
+    });
+    /* Only a table that is genuinely too wide, and genuinely has a header row.
+       Three columns or more, three rows or more: that is the procedure table
+       and the criteria table, and it leaves alone the label/value grids -- the
+       feedback points, the analysis sheets, the meta band -- whose first row
+       is DATA, not headings. Stacking those put "Strengths in planning" over
+       every row beneath it (caught on a phone, 24 Sep 2026). */
+    if (labels.length < 3 || !labels.every(Boolean)) return;
+    for (var i = 1; i < rows.length; i++){
+      /* Count COLUMNS, not cells: the procedure table's Total row spans three,
+         so the number after it is the fourth column and was being labelled
+         with the second one's name. */
+      var col = 0;
+      [].forEach.call(rows[i].cells, function(c){
+        if (c.colSpan > 1) { c.setAttribute('data-full', '1'); col += c.colSpan; return; }
+        if (labels[col]) c.setAttribute('data-l', labels[col]);
+        col += 1;
+      });
+    }
+    t.setAttribute('data-stacked', '1');
+    t.classList.add('hub-stack');
+  });
+};
