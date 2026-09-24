@@ -66,7 +66,7 @@
   .tab{ cursor:pointer; padding:13px 0 12px; font-size:13px; font-weight:500; color:var(--mut); border-bottom:2px solid transparent; margin-bottom:-1px; background:none; border-top:none; border-left:none; border-right:none; font-family:inherit; }
   .tab.on{ font-weight:700; color:var(--deep); border-bottom-color:var(--deep); }
   .filters{ display:flex; align-items:center; gap:16px; }
-  .filter{ cursor:pointer; font-size:11.5px; font-weight:500; color:var(--mut); display:flex; align-items:baseline; gap:5px; background:none; border:none; font-family:inherit; padding:0; }
+  .filter{ cursor:pointer; font-size:12.5px; font-weight:500; color:var(--mut); display:flex; align-items:baseline; gap:5px; background:none; border:none; font-family:inherit; padding:0; }
   .filter.on{ font-weight:700; color:var(--deep); }
   .filter .n{ font-size:10px; font-weight:700; }
   .gridwrap{ padding:4px 16px 14px; overflow-x:auto; }
@@ -85,6 +85,7 @@
   .who .nm{ font-size:12.5px; font-weight:500; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .who .flag{ font-size:9.5px; font-weight:700; color:oklch(45% 0.16 25); flex:none; }
   .cell{ cursor:pointer; height:40px; display:flex; align-items:center; justify-content:center; border-left:1px solid oklch(94% 0.01 82); }
+  .cell .chip{ min-width:66px; justify-content:center; } /* one width per column, or the chips sit ragged */
   .cell:hover .chip{ box-shadow:0 0 0 1.5px var(--line); }
   .cell.sel .chip{ box-shadow:0 0 0 1.5px var(--deep); }
   /* the Hub's chips, in the handoff's colour buckets */
@@ -100,10 +101,15 @@
   .chip.wrong{ background:var(--red-bg); border-color:oklch(82% 0.08 25); color:var(--red); font-weight:700; }
   .tail{ text-align:right; font-size:11.5px; font-weight:600; color:var(--quiet); padding-left:8px; }
   .row.risk .tail{ color:var(--red); }
-  .legend{ display:flex; flex-wrap:wrap; gap:6px 16px; padding-top:16px; margin-top:2px; border-top:1px solid var(--line2); }
-  .legend .it{ display:flex; align-items:center; gap:6px; }
-  .legend .chip{ padding:2px 7px; font-size:10px; }
-  .legend .lb{ font-size:10px; color:oklch(62% 0.017 70); }
+  /* The key shows the pill it is explaining, at the pill's own size -- it used
+     to draw them smaller than the grid's, so the key and the thing it keys did
+     not look like the same object. Even columns, and one pill width, so the
+     descriptions start on a line. */
+  .legend{ display:grid; grid-template-columns:repeat(auto-fit,minmax(255px,1fr));
+    gap:9px 18px; padding-top:16px; margin-top:2px; border-top:1px solid var(--line2); }
+  .legend .it{ display:flex; align-items:center; gap:9px; }
+  .legend .chip{ width:76px; justify-content:center; flex:none; } /* one width for all of them, so every description starts on the same line */
+  .legend .lb{ font-size:11px; color:oklch(62% 0.017 70); line-height:1.35; }
   .empty{ padding:36px 16px; text-align:center; font-size:12.5px; color:var(--mut); line-height:1.6; }
   /* detail strip */
   .detail{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:20px 22px; display:flex; gap:40px; align-items:flex-start; flex-wrap:wrap; }
@@ -148,7 +154,12 @@
      again: settings, roster, tutors, wording. */
   .dmstrip{ border-bottom:1px solid var(--line); padding:16px 18px 18px; }
   .dmrule{ margin:0 0 12px; font-size:12px; line-height:1.55; color:var(--mut); max-width:840px; }
-  .dmq{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; }
+  /* Columns are set from the number of tiles (see renderDM) rather than by
+     auto-fit, which fitted three and orphaned the fourth on its own row
+     (Ramy, 24 Sep 2026: "a bit of harmony and more symmetrical pills"). */
+  .dmq{ display:grid; grid-template-columns:repeat(var(--cols,4),minmax(0,1fr)); gap:10px; }
+  @media(max-width:860px){ .dmq{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media(max-width:520px){ .dmq{ grid-template-columns:1fr; } }
   .qcard{ border:1px solid var(--line); border-radius:9px; padding:11px 13px; background:var(--box); }
   .qcard .code{ font-size:10.5px; font-weight:700; letter-spacing:0.09em; color:var(--mut2); text-transform:uppercase; }
   .qcard .n{ font-family:Newsreader, Georgia, serif; font-size:21px; font-weight:600; margin-top:3px; color:var(--purp); }
@@ -189,11 +200,11 @@
   <div id="detail"></div>
 </div>
 <script src="hub-due.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609241510"></script>
-<script src="assignment-defaults.js?v=202609241510"></script>
-<script src="hub-tracker.js?v=202609241510"></script>
-<script src="hub-store.js?v=202609241510"></script>
-<script src="hub-sync.js?v=202609241510"></script>
+<script src="hub-shared.js?v=202609241518"></script>
+<script src="assignment-defaults.js?v=202609241518"></script>
+<script src="hub-tracker.js?v=202609241518"></script>
+<script src="hub-store.js?v=202609241518"></script>
+<script src="hub-sync.js?v=202609241518"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
@@ -346,7 +357,7 @@ function paintDmStrip(all, isA){
   box.className = 'dmstrip';
   box.innerHTML =
     `<p class="dmrule">Handbook 9.2.3: at least two tutors must mark across the course, and a set proportion of each assignment must be double-marked \u2014 three of each up to nine candidates, four up to sixteen, five up to twenty-four. With ${cohort} candidate${cohort===1?'':'s'} on this course the sample is ${required} of each.</p>` +
-    `<div class="dmq">` + ASSN.map(a=>{
+    `<div class="dmq" style="--cols:${ASSN.length<=4?ASSN.length:Math.ceil(ASSN.length/2)}">` + ASSN.map(a=>{
       const n = all.filter(p=>p.asg[a.key].dm).length;
       // n>0 first: a card must never read "2 of 3 -- not marked yet". A
       // submission whose outcome string the state machine does not recognise
