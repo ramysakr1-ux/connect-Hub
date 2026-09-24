@@ -18,7 +18,7 @@
  */
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
-import { readFileSync, writeFileSync, mkdtempSync, copyFileSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync, copyFileSync, readdirSync, mkdirSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -97,11 +97,26 @@ function watch(page, who){
   // guard working, not the app failing; a real browser shows the prompt.
   page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|UNSAFE_PORT|favicon|beforeunload' confirmation panel/.test(m.text())) findings.push(`[${who}] console on ${page.url().replace(BASE, '').replace(/\?.*$/, '')} (step ${n}): ${m.text().slice(0, 160)}`); });
 }
-async function ctx(who){ const c = await browser.newContext({ viewport: { width: 1340, height: 1000 } }); const p = await c.newPage(); watch(p, who); return { c, p }; }
+const PAGES = {};
+async function ctx(who){ const c = await browser.newContext({ viewport: { width: 1340, height: 1000 } }); const p = await c.newPage(); watch(p, who); PAGES[who] = p; return { c, p }; }
 let n = 0, passed = 0;
+/* SHOTS=<dir> node walk-roles.mjs saves a full-page screenshot of every role's
+   page after every step, named <step>-<role>.png -- so a screen can be LOOKED
+   at in the state the walk put it in, without planting anything or opening a
+   real course (25 Sep 2026: the live tutor pages could not be opened from the
+   browser pane without pasting a course key into a URL). */
+const SHOTS = process.env.SHOTS || '';
+if (SHOTS) mkdirSync(SHOTS, { recursive: true });
+async function snap(){
+  if (!SHOTS) return;
+  for (const [who, p] of Object.entries(PAGES)) {
+    try { await p.screenshot({ path: join(SHOTS, `${String(n).padStart(2, '0')}-${who}.png`), fullPage: true }); } catch (e) {}
+  }
+}
 async function step(name, fn){
   n++; try { const note = await fn(); passed++; console.log(`  ok  ${n}. ${name}${note ? ' — ' + note : ''}`); }
   catch (e) { findings.push(`step ${n} (${name}): ${e.message}`); console.log(`  FAIL ${n}. ${name} — ${e.message}`); }
+  await snap();
 }
 const must = (cond, msg) => { if (!cond) throw new Error(msg); };
 const settle = (p, ms = 1500) => p.waitForTimeout(ms);
