@@ -433,9 +433,9 @@
 
 
 <script src="hub-exchange.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609241809"></script>
-<script src="hub-store.js?v=202609241809"></script>
-<script src="hub-sync.js?v=202609241809"></script>
+<script src="hub-shared.js?v=202609241823"></script>
+<script src="hub-store.js?v=202609241823"></script>
+<script src="hub-sync.js?v=202609241823"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -902,9 +902,13 @@ function showSeen(d){
         <td>${tcBox('vo'+i,'on this item')}</td></tr>`).join('')}
     </table>`;
   } else if((l.blocks||[]).length){
-    html+=`<h4>${laLabel} analysis</h4>`;
+    /* Built first, shown only if there is anything in it. Every field filters
+       itself out when empty, so a section with nothing written produced a
+       table of nothing but its own header -- a stray three-column band, which
+       on a phone is all you see of it (24 Sep 2026). */
+    let blocksHTML='';
     l.blocks.forEach((b,bi)=>{
-      html+=`<table style="margin-bottom:14px;">
+      blocksHTML+=`<table style="margin-bottom:14px;">
         <tr><th width="18%">Section</th><th>What they wrote</th><th class="tc" width="36%">Your comment</th></tr>
         ${b.fields.map(f=>{
           let val='';
@@ -920,6 +924,9 @@ function showSeen(d){
         }).join('')}
       </table>`;
     });
+    /* A table with one row is the header alone: nothing was written. */
+    const filled = (blocksHTML.match(/<tr>/g)||[]).length > (l.blocks||[]).length;
+    if (filled) html += `<h4>${laLabel} analysis</h4>` + blocksHTML;
   }
   if(d.self){
     const s=d.self;
