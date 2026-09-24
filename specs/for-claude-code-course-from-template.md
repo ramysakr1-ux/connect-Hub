@@ -16,15 +16,22 @@ The owner console mints with `createCourse` and **sends nothing**:
 const made = await call({ op: 'createCourse' });
 ```
 
-The store hands back an empty course. Centre name, centre number, teaching
-practices each, the two turn-in sentences, the eight document links, and the
-whole of the assignment wording -- four assignments with their criteria, word
-counts, formats and section structure -- are then typed by hand on course
-admin. That is roughly fifteen minutes a course, every course, and it is the
-same fifteen minutes every time.
+The store hands back an empty course, and then a dozen fields are typed by
+hand on course admin: centre name, centre number, teaching practices each, the
+two turn-in sentences, the logo, and the eight document links.
 
-Setting up C/18 2026 on 25 September took four screens and a dozen fields
-before a single trainee could be added.
+**The four assignments are NOT among them.** `assignment-defaults.js` ships
+with the site, so every new course already has Focus on the Learner with its
+eight criteria, Language Related Tasks with five, Language Skills Related Task
+with six and Lessons from the Classroom with seven, all at 750-1,000 words and
+open to trainees. Checked on the live October course, 25 September. The wording
+screen exists to CHANGE them; a centre that never opens it has the Cambridge
+four as they should be.
+
+So the honest size of the prize is one screen of settings, not the assignments.
+Setting up C/18 2026 took four screens, but two of them were the deadlines and
+the roster, and a template cannot fill either. Worth half a day; not worth
+pretending it is more.
 
 ## Why the owner console is the right place
 
@@ -71,7 +78,7 @@ copying assignments…"*, rather than a spinner that looks stuck.
 | `planDueNote`, `selfDueNote` | the centre's own wording |
 | `logo` | the centre's mark |
 | `docs.*` | the eight assessor documents, where stable |
-| the whole of `wording` | four assignments, criteria, word counts, formats, sections, `released` |
+| `wording`, **only where the centre has edited it** | the four assignments ship with the site, so copying them from a source is copying the same defaults twice. What is worth carrying is a centre's own edits: a reworded brief, an extra section, a changed word count, a criterion added, `released` set to held back. |
 
 **Does not copy** — the things that make it a different course:
 
@@ -98,14 +105,19 @@ to two.
 2. **The source is mid-course.** Only `settings` and `wording` are read, never
    a trainee record, so a live source is safe to copy from. Worth stating in
    the UI, because it will not feel safe.
-3. **A copy that half fails.** Four round trips, any of which can fail. If
+3. **Wording that has not been edited.** Copying `wording` wholesale is
+   harmless but pointless, and it hides the one case that matters: a source
+   whose wording the centre HAS changed. Either copy it always and say so
+   plainly, or diff against `assignment-defaults.js` and report "3 of 4
+   assignments as shipped, 1 edited". The second is better and costs an hour.
+4. **A copy that half fails.** Four round trips, any of which can fail. If
    `createCourse` succeeds and a `putCourse` does not, the result is an empty
    course with a confusing name. Rule: the course is minted FIRST and the
    copies are retried; on final failure the screen says which part did not
    land and offers the copy again, and never silently leaves a half course.
-4. **No source courses yet.** The control is hidden until there is at least
+5. **No source courses yet.** The control is hidden until there is at least
    one other course.
-5. **A deleted source.** The list is refreshed from the store on every render,
+6. **A deleted source.** The list is refreshed from the store on every render,
    so a stale choice fails at step 2 and reports it.
 
 ## What this is not
@@ -132,8 +144,10 @@ In the walk, against the fake store:
 
 - a source course with settings, wording and four deadlines;
 - a copy made from it;
-- the copy has the centre, the practices, both notes and all four assignment
-  briefs with their criteria;
+- the copy has the centre, the practices and both notes;
+- the copy's assignments match the source's, INCLUDING an edit made to the
+  source before copying -- the point being the edit, not the defaults, which
+  the copy would have had anyway;
 - the copy has **no** course name, **no** dates, **no** `dueAt`, **no**
   trainees;
 - the source is untouched, checked field by field after the copy.
