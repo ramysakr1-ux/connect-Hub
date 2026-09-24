@@ -95,7 +95,7 @@
   .note{font-size:0.8rem; color:var(--grey); margin:0 0 14px;}
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202609240203">
-<link rel="stylesheet" href="hub-theme.css?v=202609250029">
+<link rel="stylesheet" href="hub-theme.css?v=202609250053">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -103,12 +103,12 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202609250029"></script>
+<script src="assignment-defaults.js?v=202609250053"></script>
 <script src="hub-exchange.js?v=202609240203"></script>
 <script src="hub-due.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609250029"></script>
-<script src="hub-store.js?v=202609250029"></script>
-<script src="hub-sync.js?v=202609250029"></script>
+<script src="hub-shared.js?v=202609250053"></script>
+<script src="hub-store.js?v=202609250053"></script>
+<script src="hub-sync.js?v=202609250053"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -243,6 +243,21 @@ $('picker').addEventListener('click', e => { const b=e.target.closest('button');
 function summarize(a, snap){
   if (!snap) return '<p class="note">Nothing submitted yet.</p>';
   let out = '';
+  /* The word count, in the same figure the candidate was shown.
+     Cambridge lists 750-1,000 words under the DESIGN of each assignment, not
+     among the criteria a candidate is judged on (syllabus, Component 2), and
+     the centre's own cover sheets put it under "Submission requirements"
+     beside the declaration. Lite had it as a fifth/sixth/seventh criterion
+     instead, which is where the tutor's only sight of the word count lived --
+     so taking it out of the criteria lists (25 Sep 2026) had to put it here,
+     or a tutor would have marked a 1,400-word assignment with nothing saying
+     so. Counted exactly as screen 9 counts it, so the two agree. */
+  if (a.wordMin) {
+    const n = (Object.values(snap.text||{}).join(' ') + ' ' + Object.values(snap.fields||{}).join(' ')).match(/\S+/g);
+    const c = n ? n.length : 0;
+    const ok = c >= a.wordMin && c <= a.wordMax;
+    out += `<p class="note" style="margin:0 0 10px;${ok?'':'color:var(--brick);'}">${c} words submitted, against ${esc(a.wordMin+'\u2013'+a.wordMax)}${ok?'':' \u2014 outside the range'}</p>`;
+  }
   /* The materials the candidate linked -- worksheets, the coursebook page, a
      recording -- as something to OPEN, at the top of the submission. It was
      stored on every snapshot and read only for the overlap check; a tutor

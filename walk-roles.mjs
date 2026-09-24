@@ -249,6 +249,12 @@ await step('tutor: marking shows the materials button and the due row; a pasted 
   await T.p.goto(`${tutorUrl('10_tutor_assignment_marking.html')}&trainee=${amaraToken}&a=${assignKey}`, { waitUntil: 'domcontentloaded' }); await settle(T.p, 3000);
   must(await T.p.$('a.mats-open'), 'no materials button on the submission');
   must(await T.p.$('.duerow'), 'no due row');
+  // The word count. It used to be a CRITERION on every assignment, which
+  // Cambridge does not have (syllabus, Component 2), so 25 Sep 2026 took it
+  // out of the criteria lists -- and that was the tutor's only sight of the
+  // count. If this line goes, a tutor marks a 1,400-word assignment blind.
+  const wc = await T.p.evaluate(() => [...document.querySelectorAll('p.note')].map(n => n.textContent).find(t => /words submitted, against/.test(t)) || '');
+  must(/^\d+ words submitted, against 750\u20131,?000/.test(wc), 'no word count on the marking screen: ' + JSON.stringify(wc));
   const brief = await T.p.evaluate(() => eval('xBrief(WORDING[CURRENT], subFor(CURRENT), "sub1")'));
   const h1 = brief.match(/## Criterion 1 — [^\n]*/)[0];
   const filled = brief.replace(h1 + '\n\n', h1 + '\nMet\nAccurate.\n').replace('## General comment\n\n', '## General comment\nCareful work.\n');

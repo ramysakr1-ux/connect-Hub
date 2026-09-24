@@ -5,13 +5,44 @@
 // fresh device saw "This assignment isn't set up yet" for every assignment
 // until someone pressed Save on the wording editor in that same browser
 // (Hub walk, 20 Sep 2026).
+//
+// The CRITERIA are now the syllabus's own, verbatim: Component 2, assignments
+// 2.1-2.4 (21816-celta-syllabus.pdf, p. 17-18). They did not used to be, which
+// came out on 25 Sep 2026 when these were checked against the four assignments
+// IH Istanbul actually sets on C/17. Three faults, all in the same direction:
+//
+//   1. Every one carried an extra criterion, "The assignment meets the
+//      750-1,000-word count requirement". Cambridge puts the length under the
+//      DESIGN of each assignment, not among the things a candidate is judged
+//      on, and the centre's cover sheets put it under "Submission
+//      requirements" beside the declaration. A candidate could be failed here
+//      on a count. Removed; screen 10 now prints the count where the cover
+//      sheet does (see summarize()).
+//   2. Cambridge states referencing and clear written language as ONE
+//      criterion for FOL and LSRT. Lite split it in two, so a weak
+//      bibliography could cost a candidate two Not-mets instead of one.
+//   3. LRT's four were paraphrases ("Analyses language correctly" for
+//      "analysing language correctly FOR TEACHING PURPOSES") and LFC's seven
+//      rewrote Cambridge's four. An assessor reads the criteria on the
+//      candidate's record against CELTA 5; a paraphrase invites the question.
+//
+// So: fol 6, lrt 4, lsrt 4, lfc 5. lsrt also gained its plural -- Cambridge
+// and the cover sheet both say "Tasks". The one departure from the syllabus
+// kept here is lsrt's second criterion, identifying receptive and productive
+// skills, which Cambridge lists under the design; C/17 assesses it, and a
+// centre may. a5 is not a Cambridge assignment and keeps its own wording.
+//
+// What is NOT copied from C/17 is the SHAPE of lrt and lsrt -- C/17 analyses
+// one grammar item, one functional exponent and two vocabulary items, and
+// designs two reading tasks plus a productive follow-up from a chosen text.
+// The syllabus explicitly allows a variety of formats, so that is the centre's
+// design, not a default. Reworking these for a centre is what screen 8 is for.
 window.CONNECT_HUB_DEFAULT_WORDING = {
   lrt: { title:'Language Related Tasks', wordMin:750, wordMax:1000, format:'structured', criteria:[
-      {text:'Analyses language correctly', sectionIndex:null},
-      {text:'Uses terminology correctly', sectionIndex:null},
-      {text:'Shows evidence of having accessed appropriate reference materials, i.e. give the name of at least one book that you have used to research the area', sectionIndex:null},
-      {text:'Uses clear, accurate and appropriate language', sectionIndex:null},
-      {text:'The assignment meets the 750-1,000-word count requirement', sectionIndex:null},
+      {text:'Analysing language correctly for teaching purposes', sectionIndex:null},
+      {text:'Correctly using terminology relating to form, meaning and phonology when analysing language', sectionIndex:null},
+      {text:'Accessing reference materials and referencing information they have learned about language to an appropriate source', sectionIndex:null},
+      {text:'Using written language that is clear, accurate and appropriate to the task', sectionIndex:null},
     ], sections:[
     { type:'text', label:'Before you start', body:'You\u2019ll pick 2 items from Category A and 2 from Category B, then analyse each one \u2014 meaning, form, pronunciation and so on. Work through this one step at a time; nothing is submitted until the last step.' },
     { type:'picker', label:'Pick your items',
@@ -28,13 +59,11 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
     ]},
     { type:'declaration', label:'Declaration', items:['This is my own work.', 'All sources are referenced, in the format (Author, Year, p. ##).'], aiToggle:true }
   ]},
-  lsrt: { title:'Language Skills Related Task', wordMin:750, wordMax:1000, format:'structured', criteria:[
-      {text:'Identifying receptive/productive skills that could be practised in relation to the text', sectionIndex:null},
+  lsrt: { title:'Language Skills Related Tasks', wordMin:750, wordMax:1000, format:'structured', criteria:[
       {text:'Correctly using terminology that relates to language skills and sub-skills', sectionIndex:null},
-      {text:'Designing tasks in relation to the text with a rationale', sectionIndex:null},
-      {text:'Finding, selecting and showing evidence of background reading in the topic area i.e. at least one sourced quote in the body of the assignment.', sectionIndex:null},
-      {text:'Using written language that is clear, accurate and appropriate to the task', sectionIndex:null},
-      {text:'The assignment meets the 750-1,000-word count requirement', sectionIndex:null},
+      {text:'Identifying receptive and productive skills that could be practised in relation to the text', sectionIndex:null},
+      {text:'Relating task design to language skills development, with a rationale', sectionIndex:null},
+      {text:'Finding, selecting and referencing information from one or more sources, using written language that is clear, accurate and appropriate to the task', sectionIndex:null},
     ], sections:[
     { type:'text', label:'The material', body:'The lesson or extract you are analysing \u2014 not the whole unit, just the skills-focused part.' },
     { type:'text', label:'Sub-skills and task types', body:'Name the specific sub-skills the material targets (e.g. skimming for gist, listening for specific information, turn-taking, planning before writing) and how each task exercises them.' },
@@ -43,14 +72,12 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
     { type:'declaration', label:'Declaration', items:['This is my own work.', 'All sources are referenced, in the format (Author, Year, p. ##).'], aiToggle:true }
   ]},
   fol: { title:'Focus on the Learner', wordMin:750, wordMax:1000, format:'prose', criteria:[
-      {text:'Showing awareness of how a learner’s background, previous learning experience and learning preferences affect learning.', sectionIndex:null},
-      {text:'Identifying the learner’s language/skills needs', sectionIndex:null},
-      {text:'Correctly using terminology relating to the description of language systems and language skills.', sectionIndex:null},
-      {text:'Selecting appropriate material and/or resources (at least one of which must be from published materials) to aid the learners’ language development.', sectionIndex:null},
-      {text:'Providing a rationale for using specific activities with the learners in mind.', sectionIndex:null},
-      {text:'Finding, selecting and referencing information from one or more sources, within the body of the assignment.', sectionIndex:null},
-      {text:'Using written language that is clear, accurate and appropriate to the task', sectionIndex:null},
-      {text:'The assignment meets the 750-1,000-word count requirement', sectionIndex:null},
+      {text:'Showing awareness of how the learner’s background, previous learning experience and learning preferences affect learning', sectionIndex:null},
+      {text:'Identifying the learner’s language and/or skills needs', sectionIndex:null},
+      {text:'Correctly using terminology relating to the description of language systems and language skills', sectionIndex:null},
+      {text:'Selecting appropriate material and/or resources (at least one of which must be from published materials) to aid the learner’s language development', sectionIndex:null},
+      {text:'Providing a rationale for using specific activities with the learner in mind', sectionIndex:null},
+      {text:'Finding, selecting and referencing information from one or more sources, using written language that is clear, accurate and appropriate to the task', sectionIndex:null},
     ], sections:[
     { type:'text', label:'Before you start', body:'You\u2019ll describe your current TP group, then identify one grammar and one pronunciation difficulty they\u2019ve shown \u2014 two examples of each \u2014 and present one activity for each problem. Word count: 750\u20131,000 words of continuous prose, not counting the bibliography or appendices.' },
     { type:'text', label:'A \u2014 Your TP group', body:'Describe your group of learners, covering group size, gender, age range and level.' },
@@ -67,13 +94,11 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
   // (walk, 21 Sep 2026). A centre that has already saved its own wording keeps
   // whatever it saved.
   lfc: { title:'Lessons from the Classroom', wordMin:750, wordMax:1000, format:'prose', criteria:[
-      {text:'Show (convincing) evidence of an ability to identify their own teaching strengths and weaknesses in the light of feedback from learners, teachers and tutors.', sectionIndex:null},
-      {text:'Show convincing understanding of how their strengths/weaknesses can affect the learners.', sectionIndex:null},
-      {text:'Identify ways of improving their weaknesses (one or two practical solutions).', sectionIndex:null},
-      {text:'Show reflection on their observation of other teachers in relation to their weaknesses.', sectionIndex:null},
-      {text:'Describe in a specific way how to develop ELT knowledge and skills beyond the course (professional development post-CELTA).', sectionIndex:null},
-      {text:'Able to write in clear, accurate and appropriate language.', sectionIndex:null},
-      {text:'The assignment meets the 750-1,000-word count requirement and there is clear reference to the sources used.', sectionIndex:null},
+      {text:'Identifying their own teaching strengths and weaknesses in light of feedback from learners, teachers and tutors, and how these affect the learners', sectionIndex:null},
+      {text:'Identifying which ELT areas of knowledge and skills they need further development in, with practical ways to improve', sectionIndex:null},
+      {text:'Reflecting on their observation of other teachers in relation to their own development', sectionIndex:null},
+      {text:'Describing in a specific way how to develop ELT knowledge and skills beyond the course', sectionIndex:null},
+      {text:'Using written language that is clear, accurate and appropriate to the task', sectionIndex:null},
     ], sections:[
     { type:'text', label:'Before you start', body:'This assignment is a reflection on your progress during the course. You\u2019ll summarise your main teaching strengths and action points, insights from observing peers and experienced teachers, and how you\u2019ll continue developing after the CELTA. Word count: 750\u20131,000 words of continuous prose, not counting the bibliography or appendices.' },
     { type:'text', label:'A \u2014 Identifying strengths', body:'Browse your 3 most recent TPs\u2019 feedback and identify 3 teaching strengths you\u2019ve shown.' },
