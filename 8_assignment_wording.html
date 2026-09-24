@@ -73,14 +73,17 @@
   .addline{font-family:'Karla',sans-serif; font-size:0.82rem; font-weight:600; color:var(--teal); background:none;
     border:1.5px dashed var(--sand-line); border-radius:6px; padding:8px 12px; cursor:pointer; width:100%; text-align:left;}
 
-  .catwrap{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:6px;}
+  /* auto-fit: a picker can have three groups now, not two */
+  .catwrap{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-top:6px;}
   @media(max-width:640px){ .catwrap{grid-template-columns:1fr;} }
   .catbox{background:var(--card); border-radius:8px; padding:12px;}
   .catbox input.catlabel{font-weight:700; margin-bottom:8px;}
   .chip-row{display:flex; align-items:center; gap:6px; margin-bottom:6px;}
   .chip-row input{flex:1; font-size:0.85rem;}
-  .pickcount{display:flex; align-items:center; gap:8px; margin:12px 0 0; font-size:0.82rem; color:var(--grey);}
-  .pickcount input{width:52px; flex:none; text-align:center;}
+  .pickcount{display:flex; align-items:center; gap:8px; margin:12px 0 0; font-size:0.82rem; color:var(--grey); flex-wrap:wrap;}
+  .pickcount input[type=text]{width:52px; flex:none; text-align:center;}
+  .pickcount label{display:inline-flex; align-items:center; gap:6px;}
+  .refline{display:inline-flex; align-items:center; gap:6px; margin:10px 0 0; font-size:0.82rem; color:var(--grey);}
 
   .addsection{display:flex; gap:8px; margin-top:6px; align-items:stretch;}
   .addsection .house-sel{flex:0 1 340px;}
@@ -122,7 +125,7 @@
   }
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202609240203">
-<link rel="stylesheet" href="hub-theme.css?v=202609250112">
+<link rel="stylesheet" href="hub-theme.css?v=202609250209">
 </head>
 <body>
 <div class="board">
@@ -136,11 +139,11 @@
     <div class="editor" id="editor"></div>
   </div>
 </div>
-<script src="assignment-defaults.js?v=202609250112"></script>
+<script src="assignment-defaults.js?v=202609250209"></script>
 <script src="hub-due.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609250112"></script>
-<script src="hub-store.js?v=202609250112"></script>
-<script src="hub-sync.js?v=202609250112"></script>
+<script src="hub-shared.js?v=202609250209"></script>
+<script src="hub-store.js?v=202609250209"></script>
+<script src="hub-sync.js?v=202609250209"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -214,22 +217,34 @@ function fieldSectionHTML(s, i){
   </div>`;
 }
 
+/* A picker's groups are edited through hubPickerCats, so this one editor reads
+   both shapes: the old catA/catB with a shared pickCount, and the newer `cats`
+   array where each group has its own count and a group can be fixed. Editing a
+   catA/catB section converts it to `cats` on the first change -- the two shapes
+   say the same thing when there are two groups, and carrying one of them is
+   simpler than carrying both (25 Sep 2026). */
 function pickerSectionHTML(s, i){
+  const cats = hubPickerCats(s);
   return `<div class="section" data-i="${i}">
     ${sectionHead(s,i,'Pick items')}
     <div class="catwrap">
-      ${['catA','catB'].map(cat => `
+      ${cats.map((c,ci) => `
         <div class="catbox">
-          <input type="text" class="catlabel" value="${esc(s[cat].label)}" oninput="updateCatLabel(${i},'${cat}',this.value)">
-          ${s[cat].options.map((opt,oi)=>`
+          <input type="text" class="catlabel" value="${esc(c.label)}" oninput="updateCatLabel(${i},${ci},this.value)">
+          ${c.options.map((opt,oi)=>`
             <div class="chip-row">
-              <input type="text" value="${esc(opt)}" oninput="updateOption(${i},'${cat}',${oi},this.value)">
-              <button class="icon-btn danger" title="Remove option" onclick="removeOption(${i},'${cat}',${oi})">\u2715</button>
+              <input type="text" value="${esc(opt)}" oninput="updateOption(${i},${ci},${oi},this.value)">
+              <button class="icon-btn danger" title="Remove option" onclick="removeOption(${i},${ci},${oi})">\u2715</button>
             </div>`).join('')}
-          <button class="addline" onclick="addOption(${i},'${cat}')">+ Add option</button>
+          <button class="addline" onclick="addOption(${i},${ci})">+ Add option</button>
+          <div class="pickcount">
+            <label><input type="checkbox" ${c.fixed?'checked':''} onchange="updateCatFixed(${i},${ci},this.checked)"> Everyone analyses these</label>
+            ${c.fixed ? '' : `<span>Trainee picks <input type="text" value="${c.pick}" oninput="updateCatPick(${i},${ci},this.value)"> from this group</span>`}
+          </div>
+          ${cats.length > 1 ? `<button class="addline" onclick="removeCat(${i},${ci})">Remove this group</button>` : ''}
         </div>`).join('')}
     </div>
-    <div class="pickcount">Trainee picks <input type="text" value="${s.pickCount}" oninput="updatePickCount(${i},this.value)"> from each category</div>
+    <button class="addline" onclick="addCat(${i})">+ Add a group</button>
   </div>`;
 }
 
@@ -237,6 +252,9 @@ function textSectionHTML(s, i){
   return `<div class="section" data-i="${i}">
     ${sectionHead(s,i,'Instructions')}
     <textarea rows="3" oninput="updateSection(${i},'body',this.value)">${esc(s.body)}</textarea>
+    <!-- Reference material: a letter, a text, a class profile. The candidate
+         reads it and gets no box to write in. -->
+    <label class="refline"><input type="checkbox" ${s.readonly===true?'checked':''} onchange="updateReadonly(${i},this.checked)"> Reference material \u2014 no answer box</label>
   </div>`;
 }
 
@@ -406,11 +424,32 @@ function updateSection(i, key, v){ DATA[CURRENT].sections[i][key] = v; }
 function updateField(i, fi, key, v){ DATA[CURRENT].sections[i].fields[fi][key] = v; }
 function addField(i){ DATA[CURRENT].sections[i].fields.push({label:'New field', hint:''}); renderEditor(); }
 function removeField(i, fi){ DATA[CURRENT].sections[i].fields.splice(fi,1); renderEditor(); }
-function updateCatLabel(i, cat, v){ DATA[CURRENT].sections[i][cat].label = v; }
-function updateOption(i, cat, oi, v){ DATA[CURRENT].sections[i][cat].options[oi] = v; }
-function addOption(i, cat){ DATA[CURRENT].sections[i][cat].options.push('New item'); renderEditor(); }
-function removeOption(i, cat, oi){ DATA[CURRENT].sections[i][cat].options.splice(oi,1); renderEditor(); }
-function updatePickCount(i, v){ DATA[CURRENT].sections[i].pickCount = parseInt(v,10) || 1; }
+/* Normalise a picker to the `cats` array before changing it, and drop the old
+   catA/catB/pickCount fields so the section has one shape, not two. Called by
+   every mutation below, so an untouched section keeps whatever it had. */
+function catsOf(i){
+  const s = DATA[CURRENT].sections[i];
+  if (!Array.isArray(s.cats) || !s.cats.length) {
+    s.cats = hubPickerCats(s).map(c => ({ key: c.key, label: c.label, options: c.options.slice(), pick: c.pick, fixed: c.fixed }));
+    delete s.catA; delete s.catB; delete s.pickCount;
+  }
+  return s.cats;
+}
+/* A key each group keeps for life: a candidate's picks are stored under it, so
+   renaming or reordering groups must not move someone's answers. */
+function nextCatKey(cats){
+  const used = cats.map(c => c.key);
+  for (let n = 0; ; n++) { const k = 'G' + n; if (used.indexOf(k) < 0) return k; }
+}
+function updateCatLabel(i, ci, v){ catsOf(i)[ci].label = v; }
+function updateOption(i, ci, oi, v){ catsOf(i)[ci].options[oi] = v; }
+function addOption(i, ci){ catsOf(i)[ci].options.push('New item'); renderEditor(); }
+function removeOption(i, ci, oi){ catsOf(i)[ci].options.splice(oi,1); renderEditor(); }
+function updateCatPick(i, ci, v){ catsOf(i)[ci].pick = parseInt(v,10) || 1; }
+function updateCatFixed(i, ci, on){ catsOf(i)[ci].fixed = !!on; renderEditor(); }
+function addCat(i){ const c = catsOf(i); c.push({ key: nextCatKey(c), label: 'New group', options: ['New item'], pick: 1, fixed: false }); renderEditor(); }
+function removeCat(i, ci){ const c = catsOf(i); if (c.length > 1) c.splice(ci,1); renderEditor(); }
+function updateReadonly(i, on){ DATA[CURRENT].sections[i].readonly = !!on; renderEditor(); }
 /* A criterion is tied to a section by its POSITION (`sectionIndex`), and the
    two operations that change positions used to leave those numbers alone. So
    reordering or deleting a section silently re-pointed every criterion after
@@ -475,7 +514,7 @@ function addSection(){
   const arr = DATA[CURRENT].sections;
   if (type==='text') arr.push({ type:'text', label:'New section', body:'' });
   else if (type==='fields') arr.push({ type:'fields', label:'New fields block', intro:'', fields:[{label:'New field', hint:''}] });
-  else if (type==='picker') arr.push({ type:'picker', label:'Pick your items', catA:{label:'Category A', options:['Item 1','Item 2']}, catB:{label:'Category B', options:['Item 1','Item 2']}, pickCount:2 });
+  else if (type==='picker') arr.push({ type:'picker', label:'Pick your items', cats:[{key:'A', label:'Group A', options:['Item 1','Item 2'], pick:1, fixed:false}, {key:'B', label:'Group B', options:['Item 1','Item 2'], pick:1, fixed:false}] });
   else if (type==='declaration') arr.push({ type:'declaration', label:'Declaration', items:['This is my own work.', 'All sources are referenced, in the format (Author, Year, p. ##).'], aiToggle:true });
   renderEditor();
 }

@@ -608,3 +608,62 @@ window.hubStackTables = function(root){
     t.classList.add('hub-stack');
   });
 };
+
+/* ---- assignment sections: two shapes a real centre's assignments need ----
+ *
+ * Both came out of copying IH Istanbul's C/17 assignments into Lite word for
+ * word (25 Sep 2026). Neither could be expressed before, and both are general:
+ * they are not about that centre.
+ *
+ * 1. A picker with more than two groups, each with its own count, and a group
+ *    the candidate does not choose. C/17's Language Related Tasks analyses
+ *    FOUR items -- one grammar structure chosen from three, one functional
+ *    exponent that is fixed for everyone, and two vocabulary items chosen from
+ *    three. The picker was hard-wired to exactly two categories sharing one
+ *    pickCount, so that assignment could not be written down.
+ *
+ * 2. Reference material the candidate reads and does not write in: the letter
+ *    the items come from, the three texts, the class profile, the submission
+ *    rules. A text section always rendered a textarea, with one exception
+ *    keyed on the LABEL being "Before you start" -- so the only read-only block
+ *    an assignment could have was one called that, and only one of it.
+ */
+
+/* Every group in a picker, old shape or new, as one array.
+ * Old: catA + catB + pickCount (both groups share the count).
+ * New: cats: [{ key, label, options, pick, fixed }] -- any number of groups,
+ * each with its own count. `fixed` means the group is not chosen: its options
+ * are simply part of the assignment, shown and always included. */
+window.hubPickerCats = function(s){
+  if (s && Array.isArray(s.cats) && s.cats.length) {
+    return s.cats.map(function(c, i){
+      return { key: c.key || String.fromCharCode(65 + i), label: c.label || '',
+               options: c.options || [], pick: c.fixed ? (c.options || []).length : (c.pick == null ? 1 : c.pick),
+               fixed: !!c.fixed };
+    });
+  }
+  var n = s && s.pickCount == null ? 1 : s.pickCount;
+  return ['A','B'].filter(function(k){ return s && s['cat'+k]; }).map(function(k){
+    return { key: k, label: s['cat'+k].label || '', options: s['cat'+k].options || [], pick: n, fixed: false };
+  });
+};
+
+/* What a candidate ends up with from a picker, in the groups' own order.
+ * A fixed group contributes its options whether or not anything was clicked,
+ * which is what makes "everyone analyses this one" expressible. */
+window.hubPickedItems = function(s, picked){
+  picked = picked || {};
+  var out = [];
+  window.hubPickerCats(s).forEach(function(c){
+    if (c.fixed) { c.options.forEach(function(o){ if (out.indexOf(o) < 0) out.push(o); }); return; }
+    (picked[c.key] || []).forEach(function(o){ if (out.indexOf(o) < 0) out.push(o); });
+  });
+  return out;
+};
+
+/* Reference material, not a question. True for a section the candidate reads
+ * and does not write in. The "Before you start" label keeps working so that
+ * every assignment written before this stays as it was. */
+window.hubIsReference = function(s){
+  return !!(s && (s.readonly === true || /before you start/i.test(s.label || '')));
+};

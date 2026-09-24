@@ -95,7 +95,7 @@
   .note{font-size:0.8rem; color:var(--grey); margin:0 0 14px;}
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202609240203">
-<link rel="stylesheet" href="hub-theme.css?v=202609250112">
+<link rel="stylesheet" href="hub-theme.css?v=202609250209">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -103,12 +103,12 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202609250112"></script>
+<script src="assignment-defaults.js?v=202609250209"></script>
 <script src="hub-exchange.js?v=202609240203"></script>
 <script src="hub-due.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609250112"></script>
-<script src="hub-store.js?v=202609250112"></script>
-<script src="hub-sync.js?v=202609250112"></script>
+<script src="hub-shared.js?v=202609250209"></script>
+<script src="hub-store.js?v=202609250209"></script>
+<script src="hub-sync.js?v=202609250209"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -266,13 +266,17 @@ function summarize(a, snap){
   const ml = (snap.materialsLink||'').trim();
   if (ml) out += `<p style="margin:0 0 10px;"><a class="mats-open" href="${esc(ml)}" target="_blank" rel="noopener">Open the materials \u2197</a></p>`;
   a.sections.forEach((s,i) => {
-    if (s.type==='text' && !/before you start/i.test(s.label) && snap.text && snap.text[i]) {
+    // Reference material has no answer in it, so there is nothing to show a
+    // tutor: hubIsReference covers both "Before you start" and the read-only
+    // blocks an assignment can now carry (a letter, a text, a class profile).
+    if (s.type==='text' && !hubIsReference(s) && snap.text && snap.text[i]) {
       out += `<div class="roundlabel">${esc(s.label)}</div><div class="readonly">${nl2br(snap.text[i])}</div>`;
     } else if (s.type==='picker' && snap.picked && snap.picked[i]) {
-      const p = snap.picked[i];
-      out += `<div class="roundlabel">${esc(s.label)}</div><div class="readonly">${esc(s.catA.label)}: ${p.A.map(esc).join(', ')||'\u2014'}\n${esc(s.catB.label)}: ${p.B.map(esc).join(', ')||'\u2014'}</div>`;
+      const p = snap.picked[i] || {};
+      out += `<div class="roundlabel">${esc(s.label)}</div><div class="readonly">${hubPickerCats(s).map(c =>
+        `${esc(c.label)}: ${((c.fixed ? c.options : (p[c.key] || [])).map(esc).join(', ')) || '\u2014'}`).join('\n')}</div>`;
     } else if (s.type==='fields' && snap.fields) {
-      const items = (snap.picked && (function(){ for(let j=i-1;j>=0;j--){ if(a.sections[j].type==='picker'){ const p=snap.picked[j]||{A:[],B:[]}; return p.A.concat(p.B);} } return []; })());
+      const items = (snap.picked && (function(){ for(let j=i-1;j>=0;j--){ if(a.sections[j].type==='picker'){ return hubPickedItems(a.sections[j], snap.picked[j]); } } return []; })());
       (items||[]).forEach((item, ii) => {
         out += `<div class="roundlabel">${esc(s.label)} \u2014 ${esc(item)}</div>`;
         s.fields.forEach((f,fi) => {

@@ -89,7 +89,13 @@ const findings = [];
 const GUARD = /stopping this page on purpose/;
 function watch(page, who){
   page.on('pageerror', e => { if (!GUARD.test(e.message)) findings.push(`[${who}] page error: ${e.message}`); });
-  page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|UNSAFE_PORT|favicon/.test(m.text())) findings.push(`[${who}] console: ${m.text().slice(0, 160)}`); });
+  // A finding names the page it came from: a console error with no address
+  // took three runs to place on 25 Sep 2026.
+  // "Blocked attempt to show a 'beforeunload' confirmation panel" is Chrome
+  // reporting that the unsaved-writes guard asked to prompt and headless
+  // Chrome, which never has a user gesture, refused to show it. That is the
+  // guard working, not the app failing; a real browser shows the prompt.
+  page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|UNSAFE_PORT|favicon|beforeunload' confirmation panel/.test(m.text())) findings.push(`[${who}] console on ${page.url().replace(BASE, '').replace(/\?.*$/, '')} (step ${n}): ${m.text().slice(0, 160)}`); });
 }
 async function ctx(who){ const c = await browser.newContext({ viewport: { width: 1340, height: 1000 } }); const p = await c.newPage(); watch(p, who); return { c, p }; }
 let n = 0, passed = 0;
@@ -137,8 +143,13 @@ let assignKey = '', lateKey = '';
 await step('tutor: assignment deadlines set on the wording (one ahead, one already closed)', async () => {
   await T.p.goto(tutorUrl('8_assignment_wording.html'), { waitUntil: 'domcontentloaded' }); await settle(T.p, 2000);
   const keys = await T.p.evaluate(() => eval('hubAssignmentOrder(DATA).filter(k => k !== "a5")'));
-  const prose = await T.p.evaluate(() => eval('Object.keys(DATA).filter(k => DATA[k] && DATA[k].sections && DATA[k].sections.some(s => s.type === "text" && !/before you start/i.test(s.label)))'));
-  assignKey = prose[0]; lateKey = keys.find(k => k !== assignKey);
+  /* Neither of these may be the assignment with the item picker. One is
+     submitted, the other closed by its deadline and later extended, and both
+     would leave Language Related Tasks locked for the four-item picker step
+     below (25 Sep 2026: it was, and the step found no chips to click). In
+     COURSE order, not Object.keys order, which follows the file. */
+  const plain = await T.p.evaluate(() => eval('hubAssignmentOrder(DATA).filter(k => k !== "a5" && DATA[k] && DATA[k].sections && !DATA[k].sections.some(s => s.type === "picker") && DATA[k].sections.some(s => s.type === "text" && !hubIsReference(s)))'));
+  assignKey = plain[0]; lateKey = plain[1] || keys.find(k => k !== assignKey);
   for (const [k, off] of [[assignKey, 3 * DAY], [lateKey, -2 * DAY]]) {
     await T.p.evaluate(k => eval(`CURRENT='${k}'; renderList(); renderEditor();`), k); await settle(T.p, 300);
     const local = await T.p.evaluate(off => HubDue.toLocalInput(new Date(Date.now() + off).toISOString()), off);
@@ -161,9 +172,18 @@ await step('tutor: a course still on the superseded criteria adopts the correcte
      sync path is the thing under test. */
   // Read the old lists out of the page rather than parsing the JS by hand, so
   // this step cannot drift from the file it is testing.
+  // The step before this saved the deadlines a moment ago. Leaving the wording
+  // editor while that write is still in flight is exactly what the
+  // beforeunload guard exists to stop, and Chrome logs its refusal to show
+  // the prompt as a console error -- a real guard doing its job, not a fault.
+  await settle(T.p, 2000);
   await T.p.goto(tutorUrl('5_tutor_dashboard.html'), { waitUntil: 'domcontentloaded' }); await settle(T.p, 2500);
-  const was = await T.p.evaluate(() => eval('JSON.parse(JSON.stringify(window.CONNECT_HUB_SUPERSEDED_WORDING || {}))'));
-  must(Object.keys(was).length === 4, 'the superseded wording is not on the dashboard: ' + JSON.stringify(Object.keys(was)));
+  // A LIST of every default Lite has shipped, oldest first. The oldest is the
+  // one worth planting: a course that has sat untouched the longest.
+  const versions = await T.p.evaluate(() => eval('JSON.parse(JSON.stringify(window.CONNECT_HUB_SUPERSEDED_WORDING || []))'));
+  must(Array.isArray(versions) && versions.length, 'the superseded wording is not on the dashboard: ' + JSON.stringify(versions).slice(0, 120));
+  const was = versions[0];
+  must(Object.keys(was).length === 4, 'the oldest superseded version does not hold four assignments: ' + JSON.stringify(Object.keys(was)));
   /* Only the criteria and the title are wound back -- this is the state C/18
      was actually in, the course's own sections and the deadlines just set
      intact. Replacing the whole object instead would leave the assignments with
@@ -172,9 +192,9 @@ await step('tutor: a course still on the superseded criteria adopts the correcte
     const a = STORE.course.wording[k]; if (!a) continue;
     a.title = was[k].title;
     a.criteria = was[k].criteria.map(t => ({ text: t, sectionIndex: null }));
+    a.sections = JSON.parse(JSON.stringify(was[k].sections));
   }
   const dueBefore = JSON.stringify(Object.fromEntries(Object.entries(STORE.course.wording).map(([k, v]) => [k, v.dueAt || ''])));
-  const secBefore = JSON.stringify(Object.fromEntries(Object.entries(STORE.course.wording).map(([k, v]) => [k, (v.sections || []).length])));
   const before = Object.fromEntries(Object.entries(was).map(([k]) => [k, STORE.course.wording[k].criteria.length]));
 
   await T.p.goto(tutorUrl('5_tutor_dashboard.html'), { waitUntil: 'domcontentloaded' }); await settle(T.p, 3500);
@@ -185,12 +205,17 @@ await step('tutor: a course still on the superseded criteria adopts the correcte
   must(STORE.course.wording.lsrt.title === 'Language Skills Related Tasks', 'lsrt title still singular');
   must(STORE.course.wording.lrt.criteria[0].text === 'Analysing language correctly for teaching purposes',
     'lrt criterion 1 is not the syllabus wording: ' + STORE.course.wording.lrt.criteria[0].text);
-  // The point of doing this in place: what the centre set must survive it.
+  // Untouched end to end, so the course gets the whole shipped brief and not
+  // just corrected criteria: the reading text, the picker, the three texts.
+  const lrtJson = JSON.stringify(STORE.course.wording.lrt);
+  must(/Dear Marta/.test(lrtJson), 'the letter did not come with the brief');
+  must(/talk properly soon/.test(lrtJson), 'the fixed functional exponent is missing');
+  must(STORE.course.wording.lsrt.sections.filter(x => x.readonly).length >= 4,
+    'the class profile and three texts did not come with the skills brief');
+  // What the centre set on this course must survive it.
   const dueAfter = JSON.stringify(Object.fromEntries(Object.entries(STORE.course.wording).map(([k, v]) => [k, v.dueAt || ''])));
-  const secAfter = JSON.stringify(Object.fromEntries(Object.entries(STORE.course.wording).map(([k, v]) => [k, (v.sections || []).length])));
   must(dueAfter === dueBefore, 'the deadlines did not survive: ' + dueBefore + ' -> ' + dueAfter);
-  must(secAfter === secBefore, 'the sections did not survive: ' + secBefore + ' -> ' + secAfter);
-  return Object.entries(before).map(([k, v]) => `${k} ${v}→${after[k]}`).join(', ') + '; deadlines and sections kept';
+  return Object.entries(before).map(([k, v]) => `${k} ${v}→${after[k]}`).join(', ') + '; full briefs in, deadlines kept';
 });
 
 /* ===== TRAINEE opens her invitation, cold ===== */
@@ -277,6 +302,35 @@ await step('trainee: assignment shows its deadline, submits to the store', async
   const sub = (STORE.trainees[amaraToken].records.assignments || {})[assignKey];
   must(sub && sub.stage === 'submitted', 'not submitted on the store: ' + JSON.stringify(sub && sub.stage));
   must(sub.sub1 && sub.sub1.materialsLink, 'materials link not on the submission');
+});
+await step('trainee: the four-item picker, with a group nobody chooses', async () => {
+  /* Language Related Tasks analyses FOUR items: one grammar structure chosen
+     from three, one functional exponent that is the same for everyone, and two
+     vocabulary items chosen from three. The picker used to be exactly two
+     groups sharing one count, so this assignment could not be written down at
+     all (25 Sep 2026). Each group's own cap has to hold, the fixed group has to
+     arrive without being clicked, and the analysis table has to repeat for all
+     four. */
+  await A.p.goto(`${BASE}9_assignment_submission.html?t=${amaraToken}&a=lrt`, { waitUntil: 'domcontentloaded' }); await settle(A.p, 3000);
+  must(/Dear Marta/.test(await text(A.p)), 'the letter the items come from is not on the page');
+
+  const chips = c => A.p.$$(`[data-role="chip"][data-cat="${c}"]:not([disabled])`);
+  const g = await chips('A');
+  must(g.length === 3, 'grammar group: ' + g.length + ' chips');
+  await g[0].click(); await settle(A.p, 500);
+  // one only: the second click must be refused by the group's own cap
+  const gAfter = await A.p.$$('[data-role="chip"][data-cat="A"].disabled');
+  must(gAfter.length === 2, 'grammar group did not cap at one: ' + gAfter.length + ' disabled');
+
+  const v = await chips('C'); await v[0].click(); await settle(A.p, 400);
+  const v2 = await chips('C'); await v2[1].click(); await settle(A.p, 600);
+
+  const got = await A.p.evaluate(() => eval('itemsForFieldsSection(WORDING.lrt, WORDING.lrt.sections.findIndex(s => s.type === "fields"))'));
+  must(got.length === 4, 'four items expected, got ' + JSON.stringify(got));
+  must(got.some(x => /talk properly soon/.test(x)), 'the fixed functional exponent did not arrive: ' + JSON.stringify(got));
+  const blocks = await A.p.$$('.itemblock');
+  must(blocks.length === 4, 'the analysis table did not repeat for all four: ' + blocks.length);
+  return got.join(' · ');
 });
 await step('trainee: the closed assignment refuses, and says why', async () => {
   await A.p.goto(`${BASE}9_assignment_submission.html?t=${amaraToken}&a=${lateKey}`, { waitUntil: 'domcontentloaded' }); await settle(A.p, 2500);
@@ -391,8 +445,12 @@ await step('tutor: a course with work already marked is left on its own criteria
      point in the walk Amara has a marked assignment, so the guard must hold. */
   // The dashboard, so the superseded lists are on the page to read.
   await T.p.goto(tutorUrl('5_tutor_dashboard.html'), { waitUntil: 'domcontentloaded' }); await settle(T.p, 2500);
-  const was = await T.p.evaluate(() => eval('JSON.parse(JSON.stringify(window.CONNECT_HUB_SUPERSEDED_WORDING || {}))'));
-  must(Object.keys(was).length === 4, 'the superseded wording is not on the dashboard: ' + JSON.stringify(Object.keys(was)));
+  // A LIST of every default Lite has shipped, oldest first. The oldest is the
+  // one worth planting: a course that has sat untouched the longest.
+  const versions = await T.p.evaluate(() => eval('JSON.parse(JSON.stringify(window.CONNECT_HUB_SUPERSEDED_WORDING || []))'));
+  must(Array.isArray(versions) && versions.length, 'the superseded wording is not on the dashboard: ' + JSON.stringify(versions).slice(0, 120));
+  const was = versions[0];
+  must(Object.keys(was).length === 4, 'the oldest superseded version does not hold four assignments: ' + JSON.stringify(Object.keys(was)));
   const marked = Object.values(STORE.trainees).some(t => Object.keys((t.records || {}).assignments || {}).length);
   must(marked, 'this step proves nothing unless the course has an assignment record by now');
   const keep = JSON.parse(JSON.stringify(STORE.course.wording));
@@ -400,6 +458,7 @@ await step('tutor: a course with work already marked is left on its own criteria
     const a = STORE.course.wording[k]; if (!a) continue;
     a.title = was[k].title;
     a.criteria = was[k].criteria.map(t => ({ text: t, sectionIndex: null }));
+    a.sections = JSON.parse(JSON.stringify(was[k].sections));
   }
   const before = Object.fromEntries(Object.entries(was).map(([k]) => [k, STORE.course.wording[k].criteria.length]));
 
