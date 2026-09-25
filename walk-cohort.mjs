@@ -273,16 +273,26 @@ await step(`weeks 1-2: ${TUTOR_1} returns feedback to three`, async () => {
   await T.p.evaluate(nm => localStorage.setItem('chub:tutorName', nm), TUTOR_1);
   for (const c of COHORT.slice(0, 3)) {
     await T.p.goto(`${BASE}3_tutor_feedback.html?k=${STORE.key}&trainee=${tokens[c.name]}`, { waitUntil: 'domcontentloaded' }); await settle(T.p, 3000);
-    await T.p.evaluate(() => { const g = document.querySelector('#gradeSel'); if (g) { g.value = 'To standard'; g.dispatchEvent(new Event('change', { bubbles: true })); } });
-    await T.p.evaluate(() => { const t = document.querySelector('#overall'); if (t) { t.value = 'A solid lesson.'; t.dispatchEvent(new Event('input', { bubbles: true })); } });
+    await T.p.selectOption('#fGrade', 'To standard'); await settle(T.p, 300);
+    /* A strength in teaching, or the return warns that nothing was said about
+       the teaching and stops to ask -- which is the screen working, not a
+       fault, and it is what the tutor would actually write. */
+    await T.p.evaluate(() => {
+      const box = [...document.querySelectorAll('textarea, input[type=text]')].find(e => /one point/i.test(e.placeholder || ''));
+      if (box) { box.value = 'Clear instructions, checked before the task'; box.dispatchEvent(new Event('input', { bubbles: true })); }
+      const ov = document.querySelector('#overall'); if (ov) { ov.value = 'A solid lesson.'; ov.dispatchEvent(new Event('input', { bubbles: true })); }
+    });
+    await settle(T.p, 400);
     const ret = await T.p.$('#returnBtn'); must(ret, 'no Return button for ' + c.name);
-    await ret.click(); await settle(T.p, 700);
+    await ret.click(); await settle(T.p, 800);
     const cf = await T.p.$('.confirm-action'); if (cf) await cf.click();
     await settle(T.p, 3000);
   }
   const returned = Object.values(STORE.trainees).filter(t => t.records.feedback);
   must(returned.length === 3, 'feedback on the store: ' + returned.length + ', expected 3');
-  return `${TUTOR_1} returned 3`;
+  const graded = Object.values(STORE.trainees).filter(t => /To standard/.test(JSON.stringify(t.records.feedback || {})));
+  must(graded.length === 3, 'returned without a grade: ' + graded.length + ' of 3 carry one');
+  return `${TUTOR_1} returned 3, each graded`;
 });
 
 /* ===== weeks 3-4: the second tutor, same course key ===== */
@@ -360,6 +370,12 @@ await step('the assessor pack holds all six, with the visit at the end of week f
   const body = await text(S.p);
   for (const c of COHORT) must(body.includes(c.name), 'missing from the assessor pack: ' + c.name);
   must(/6 on the course|6 candidates/i.test(body), 'the pack does not count six: ' + (body.match(/\d+ on the course/) || ['none'])[0]);
+  /* The standing column is the TP standard, and three candidates were graded
+     To standard in weeks 1-2. If it reads NOT STARTED for all six, the grade
+     never reached the record the pack reads. */
+  const standings = await S.p.evaluate(() => [...document.querySelectorAll('.standing')].map(e => e.textContent.trim()));
+  must(standings.filter(t => /TO STANDARD/i.test(t)).length === 3,
+    'standing column: ' + JSON.stringify(standings) + ' -- three should read TO STANDARD');
   // the four briefs, and the link that expires fourteen days after the course
   for (const k of ['FOL', 'LRT', 'LSRT', 'LFC']) must(body.includes(k), 'brief missing from the pack: ' + k);
   must(/13 November 2026/.test(body), 'the expiry is not course end + 14 days: ' + (body.match(/stops working on [^\n]*/) || ['none'])[0]);
@@ -376,8 +392,13 @@ await step('the assessor reads a final report, and it names the right tutors', a
   must(/This is to confirm that/.test(body), 'the report did not open');
   must(new RegExp(TUTOR_1).test(body) && new RegExp(TUTOR_2).test(body), 'both tutors should sign the report');
   must(/120-hour/.test(body), 'the course hours are missing');
+  /* This candidate has submitted no written assignment at all, so the
+     assessment area must NOT claim they passed one. It did: the old test
+     asked for fails and resubmissions-due and found neither. */
+  must(/Written assignments\s+Grade: [\u2014—]/.test(body),
+    'the written assignments area claims a grade for a candidate who submitted nothing: ' + (body.match(/Written assignments[^\n]*/) || ['none'])[0]);
   await noSideScroll(S.p, 'Final report');
-  return 'both tutors signed';
+  return 'both tutors signed; assignments area honest about nothing submitted';
 });
 
 await step('nothing on any screen runs off the side at phone width', async () => {

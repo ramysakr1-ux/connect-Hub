@@ -101,6 +101,8 @@
   .missing{background:var(--paper); border-radius:6px; border-left:5px solid var(--brick); padding:22px 26px;}
   .missing h2{margin:0 0 8px; font-family:'Newsreader',Georgia,serif; font-size:1.2rem;}
 
+  /* Orientation stated, not left to the print dialog -- see hub-record.css. */
+  @page{ size:A4 portrait; margin:12mm; }
   @media print{
     body{background:#fff; padding:0;}
     .bar, #hubSync{display:none !important;}
@@ -123,10 +125,10 @@
   <div id="doc"></div>
 </div>
 
-<script src="hub-tracker.js?v=202609251047"></script>
-<script src="hub-store.js?v=202609251047"></script>
-<script src="hub-shared.js?v=202609251047"></script>
-<script src="hub-sync.js?v=202609251047"></script>
+<script src="hub-tracker.js?v=202609251108"></script>
+<script src="hub-store.js?v=202609251108"></script>
+<script src="hub-shared.js?v=202609251108"></script>
+<script src="hub-sync.js?v=202609251108"></script>
 <script type="text/x-hub-app">
 /* Tutors and the assessor. A candidate's link is refused: Connect releases the
    candidate's own copy as a separate, later act once Cambridge has confirmed,
@@ -208,7 +210,20 @@ if (!who) {
     /* The written assignments, Pass or Fail, read off the candidate's own
        assignment record rather than typed a second time. */
     let assignments = '—';
-    try { const r = T.readCandidate(T.recordFor(who)); assignments = r.fails.length ? 'Fail' : (r.pending.length ? '—' : 'Pass'); } catch (e) {}
+    /* Every one of the four has to have been PASSED -- first time or on the
+       resubmission -- for this to read Pass. It used to ask readCandidate for
+       fails and "pending", and pending means only "failed, resubmission due",
+       so a candidate who had submitted NOTHING had neither and their final
+       report said the written assignments passed (25 Sep 2026, walking a
+       cohort where three had submitted nothing). Anything unfinished reads as
+       a dash, which is what an incomplete record should say on a document that
+       goes to Cambridge. */
+    try {
+      const rec = T.recordFor(who);
+      const states = T.ASSIGNMENTS.map(code => rec[code.toLowerCase() + '_r'] || '');
+      if (states.some(v => v === 'FAIL')) assignments = 'Fail';
+      else if (states.every(v => v === 'PASS' || v === 'RES')) assignments = 'Pass';
+    } catch (e) {}
     const totalHours = cs.totalHours || 120;
     /* The centre's sentence: "attended x hours of a y-hour initial [online]
        teacher training course". The mode is an adjective in it, and the
