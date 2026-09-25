@@ -291,8 +291,9 @@ for (const name of Object.keys(FEEDBACK)) {
   await tp.fill('#fName', name);
   await tp.fill('#fMain', 'By the end of the lesson learners will be better able to talk about their weekend routines, using the present simple.');
   await tp.fill('#fSub', 'To give controlled and freer speaking practice in a personalised context.');
-  const proc = await tp.$('table.proc textarea, table.proc input[type=text]');
-  if (proc) { await proc.fill('Lead-in: learners talk in pairs about last weekend.'); }
+  /* the first row is seeded "Lead-in"; the sentence goes in its procedure, not its name */
+  const proc = await tp.$('#procBody .t-proc');
+  if (proc) { await proc.fill('• Learners talk in pairs about last weekend.'); }
   await settle(tp, 800);
   await clickAndConfirm(tp, '#turnInBtn');
   await settle(tp, 1500);

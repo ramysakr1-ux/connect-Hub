@@ -249,7 +249,9 @@ await step('trainee: the plan shows the turn-in line, and turns in to the store'
   await A.p.fill('#fTP', 'TP1'); await A.p.fill('#fLevel', 'B1'); await A.p.fill('#fLength', '45');
   // the shape is a menu now (26 Sep): open it, pick the item, and the pick is the action
   await A.p.click('#fwBtn'); await A.p.click('.fw-item:has-text("Test – Teach – Test")'); await settle(A.p, 300); const c = await A.p.$('.confirm-action'); if (c) await c.click();
-  await A.p.evaluate(() => { const t = document.querySelector('.t-stage'); t.value = 'Lead-in: to set the topic'; t.dispatchEvent(new Event('input', { bubbles: true }));
+  // the name and the aim are two fields in the editor (26 Sep); the record still joins them with the colon
+  await A.p.evaluate(() => { const t = document.querySelector('.t-stage'); t.value = 'Lead-in'; t.dispatchEvent(new Event('input', { bubbles: true }));
+    const a = document.querySelector('.t-aim'); a.value = 'to set the topic'; a.dispatchEvent(new Event('input', { bubbles: true }));
     const pr = document.querySelector('.t-proc'); pr.value = '• Show three photos'; pr.dispatchEvent(new Event('input', { bubbles: true }));
     const tm = document.querySelector('.t-time'); tm.value = '6'; tm.dispatchEvent(new Event('input', { bubbles: true }));
     document.getElementById('fMain').value = '• To clarify the past simple'; document.getElementById('fMain').dispatchEvent(new Event('input', { bubbles: true }));
