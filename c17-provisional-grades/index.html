@@ -285,14 +285,23 @@ const PRESET = {
    different candidates never overwrite each other. */
 const STORE_URL='https://script.google.com/macros/s/AKfycbz5ESCtTg6kIDNCf7ynt1fB0tOSVusgOUiMub9-wEZunwQ2uTw2wzz1vmbHxzbvpG-eyA/exec';
 const WKEY='c17grades:k', RKEY='c17grades:ak';
+/* The key in the link is held in memory for this page, and remembered in the
+   browser as well if the browser will have it. Safari Private Browsing, and
+   any browser with site data blocked, throws on localStorage -- and the page
+   used to read the key ONLY from there, so it refused a perfectly good link
+   with "Open this page from your link" (found in WebKit, 25 Sep 2026). The
+   link now works whatever the browser allows; only the remembering is
+   optional, so in a private window she keeps using the full link. */
+const MEM={};
 (function(){
   const q=new URLSearchParams(location.search);
+  if(q.get('k')) MEM[WKEY]=q.get('k'); else if(q.get('ak')) MEM[RKEY]=q.get('ak');
   try{
     if(q.get('k')){ localStorage.setItem(WKEY,q.get('k')); localStorage.removeItem(RKEY); }
     else if(q.get('ak')){ localStorage.setItem(RKEY,q.get('ak')); localStorage.removeItem(WKEY); }
   }catch(e){}
 })();
-const remembered=k=>{ try{ return localStorage.getItem(k)||''; }catch(e){ return ''; } };
+const remembered=k=>{ if(MEM[k]) return MEM[k]; try{ return localStorage.getItem(k)||''; }catch(e){ return ''; } };
 const CAN_WRITE=!!remembered(WKEY), CAN_READ=CAN_WRITE||!!remembered(RKEY);
 async function storeCall(body){
   const payload=Object.assign({},body); if(CAN_WRITE) payload.key=remembered(WKEY); else payload.a=remembered(RKEY);
