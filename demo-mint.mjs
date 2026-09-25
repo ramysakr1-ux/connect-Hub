@@ -317,8 +317,10 @@ const someone = Object.entries(tokens)[0];
 console.log('\n' + '='.repeat(66));
 console.log('DEMO COURSE ' + made.id + '  (' + LABEL + ')');
 console.log('='.repeat(66));
-console.log('\nTutor — this is the one to send:\n  ' + url('5_tutor_dashboard.html', 'k=' + K));
+/* Through the card, as the owner console now hands it out: the card says what
+   the link is and who it is for, then opens the dashboard. */
+console.log('\nTutor — this is the one to send:\n  ' + url('invite.html', 'k=' + K));
 if (someone) console.log('\nA candidate, ' + someone[0] + ', so they can see the other side:\n  ' + url('invite.html', 't=' + someone[1]));
-if (AK) console.log('\nAssessor, view only:\n  ' + url('12_assessor_pack.html', 'ak=' + AK));
+if (AK) console.log('\nAssessor, view only:\n  ' + url('invite.html', 'ak=' + AK));
 console.log('\nWhen you are done:  node demo-clear.mjs ' + made.id);
 console.log('Deleting it kills all three links at once.\n');
