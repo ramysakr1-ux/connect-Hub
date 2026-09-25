@@ -123,10 +123,10 @@
   <div id="doc"></div>
 </div>
 
-<script src="hub-tracker.js?v=202609250614"></script>
-<script src="hub-store.js?v=202609250614"></script>
-<script src="hub-shared.js?v=202609250614"></script>
-<script src="hub-sync.js?v=202609250614"></script>
+<script src="hub-tracker.js?v=202609250923"></script>
+<script src="hub-store.js?v=202609250923"></script>
+<script src="hub-shared.js?v=202609250923"></script>
+<script src="hub-sync.js?v=202609250923"></script>
 <script type="text/x-hub-app">
 /* Tutors and the assessor. A candidate's link is refused: Connect releases the
    candidate's own copy as a separate, later act once Cambridge has confirmed,
@@ -139,18 +139,20 @@ if (window.HubMode === 'trainee') {
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const T = window.HubTracker;
 
-/* Appendix 2 of the syllabus -- the CELTA performance descriptors, verbatim.
-   Performance must match ALL descriptors at a grade to achieve it. The
-   closing lines are the ones real centre reports carry for Pass and Pass B;
-   Pass A follows the same three-step "guidance" language. Fail has none: the
-   descriptor's own text stands alone. */
+/* The performance descriptors as IH Istanbul's own end-of-course reports
+   print them -- read off the centre's Pass A and Pass B templates and a real
+   Pass report on 25 Sep 2026, not off the syllabus. They differ from Appendix
+   2 in small, deliberate ways: the overall line drops "at CELTA level", a Pass
+   delivers "satisfactory" lessons, Pass A selects "highly appropriate"
+   resources, and Pass A's closing line is its own sentence, not a third step
+   of "guidance". Fail has no centre template; the syllabus's Fail text stands. */
 const DESCRIPTORS = [
   { name: 'Planning',
     'Pass':   'Candidates can plan effectively with guidance. They can analyse target language adequately and generally select appropriate resources and tasks for successful language and language skills development.',
     'Pass B': 'Candidates can plan effectively with some guidance. They can analyse target language well and select appropriate resources and tasks for successful language and language skills development.',
-    'Pass A': 'Candidates can plan effectively with minimal guidance. They can analyse target language thoroughly and select appropriate resources and tasks for successful language and language skills development.' },
+    'Pass A': 'Candidates can plan effectively with minimal guidance. They can analyse target language thoroughly and select highly appropriate resources and tasks for successful language and language skills development.' },
   { name: 'Teaching',
-    'Pass':   'Candidates can generally deliver effective language and skills lessons, using a variety of classroom teaching techniques with a degree of success.',
+    'Pass':   'Candidates can deliver satisfactory language and skills lessons, using a variety of classroom teaching techniques with a degree of success.',
     'Pass B': 'Candidates can deliver effective language and skills lessons, using a variety of classroom teaching techniques successfully.',
     'Pass A': 'Candidates can deliver effective language and skills lessons, using a variety of classroom teaching techniques successfully.' },
   { name: 'Awareness of learners',
@@ -159,19 +161,19 @@ const DESCRIPTORS = [
     'Pass A': 'Candidates show very good awareness of learners and can respond so that learners benefit from the lessons.' },
   { name: 'Reflection',
     'Pass':   'Candidates can reflect on some key strengths and weaknesses and generally use these reflections to develop their teaching skills.',
-    'Pass B': 'Candidates can reflect on key strengths and weaknesses and generally use these reflections to develop their teaching skills.',
-    'Pass A': 'Candidates can reflect on key strengths and weaknesses and consistently use these reflections to develop their teaching skills.' }
+    'Pass B': 'Candidates can reflect on key strengths and weaknesses and can generally use these reflections to develop their teaching skills.',
+    'Pass A': 'Candidates can reflect on key strengths and weaknesses and can consistently use these reflections to develop their teaching skills.' }
 ];
 const OVERALL = {
-  'Pass':   'Candidates’ planning and teaching show satisfactory understanding of English language learning and teaching processes at CELTA level.',
-  'Pass B': 'Candidates’ planning and teaching show good understanding of English language learning and teaching processes at CELTA level.',
-  'Pass A': 'Candidates’ planning and teaching show excellent understanding of English language learning and teaching processes at CELTA level.'
+  'Pass':   'Candidates’ planning and teaching show satisfactory understanding of English language learning and teaching processes.',
+  'Pass B': 'Candidates’ planning and teaching show good understanding of English language learning and teaching processes.',
+  'Pass A': 'Candidates’ planning and teaching show excellent understanding of English language learning and teaching processes.'
 };
 const FAIL_TEXT = 'Candidates’ performance does not match all of the Pass descriptors. Some CELTA assessment criteria are not achieved and/or requirements for written work are not met.';
 const CLOSING = {
   'Pass':   'They will continue to need guidance to help them develop and broaden their range of skills as teachers in post.',
   'Pass B': 'They will continue to need some guidance to help them develop and broaden their range of skills as teachers in post.',
-  'Pass A': 'They will continue to need minimal guidance to help them develop and broaden their range of skills as teachers in post.'
+  'Pass A': 'They will benefit from further guidance in post but will be able to work independently.'
 };
 
 /* The grades report stores FAIL / PASS / PASS B / PASS A; the syllabus writes
@@ -208,10 +210,12 @@ if (!who) {
     let assignments = '—';
     try { const r = T.readCandidate(T.recordFor(who)); assignments = r.fails.length ? 'Fail' : (r.pending.length ? '—' : 'Pass'); } catch (e) {}
     const totalHours = cs.totalHours || 120;
-    const mode = cs.deliveryMode === 'online' ? 'Course delivery mode: online (teaching practice online)'
-               : cs.deliveryMode === 'mixed' ? 'Course delivery mode: mixed mode (teaching practice partly face-to-face, partly online)'
-               : 'Course delivery mode: face-to-face (teaching practice face-to-face)';
-    const hours = g.hoursAttended !== '' && g.hoursAttended != null ? ` · Hours attended: ${esc(g.hoursAttended)} of ${esc(totalHours)}` : '';
+    /* The centre's sentence: "attended x hours of a y-hour initial [online]
+       teacher training course". The mode is an adjective in it, and the
+       teaching-practice paragraph names the mode again. */
+    const attended = g.hoursAttended !== '' && g.hoursAttended != null ? `attended ${esc(g.hoursAttended)} hours of a ${esc(totalHours)}-hour` : `attended a ${esc(totalHours)}-hour`;
+    const courseKind = cs.deliveryMode === 'online' ? 'initial online teacher training course' : 'initial teacher training course';
+    const tpMode = cs.deliveryMode === 'online' ? 'online' : cs.deliveryMode === 'mixed' ? 'classroom-based and online' : 'classroom-based';
     const tutors = String(cs.tutorNames || '').split(/[,\n]/).map(s => s.trim()).filter(Boolean);
     const banded = word === 'Pass' || word === 'Pass B' || word === 'Pass A';
 
@@ -224,18 +228,17 @@ if (!who) {
         <p class="eyebrow">Final Course Report</p>
         <p class="courseline">${esc(cs.courseName || '')}</p>
         <div class="divider"><span class="rule"></span><span class="mark">❖</span><span class="rule"></span></div>
-        <p class="body">This is to certify that</p>
+        <p class="body">This is to confirm that</p>
         <p class="name">${esc(who.name)}</p>
-        <p class="body">attended a ${esc(totalHours)}-hour initial teacher training course leading to the Cambridge Certificate in Teaching English to Speakers of Other Languages (CELTA)</p>
+        <p class="body">${attended} ${courseKind} leading to the Certificate in Teaching English to Speakers of Other Languages (CELTA)</p>
         ${cs.centreName ? `<p class="body">at ${esc(cs.centreName)}</p>` : ''}
         ${cs.start && cs.end ? `<p class="body">from ${esc(longDate(cs.start))} to ${esc(longDate(cs.end))}</p>` : ''}
-        <p class="body">${mode}${hours}</p>
         <p class="gradelabel">The following provisional grade was awarded</p>
         <div class="badge ${gradeCls(finalGrade)}">${esc(finalGrade)}</div>
-        <p class="disclaimer">This is an internal course report. The final grade is subject to confirmation by Cambridge Assessment English.</p>
-        <p class="para">The course included collaborative planning, peer observation and shared evaluation and feedback. Within this framework each candidate completed 6 hours of individually assessed teaching, and 6 hours of observation of experienced teachers.</p>
-        <p class="para">A full report is set out on the reverse of this document.</p>
-        ${tutors.length ? `<div class="signrow">${tutors.map(t => `<div class="signblock"><div class="signature">${esc(t)}</div><div class="signname">${esc(t)}</div><div class="signrole">CELTA Course Tutor</div></div>`).join('')}</div>` : ''}
+        <p class="disclaimer">Please note that this is an internal course report and that the final grade has not yet been confirmed by Cambridge English.</p>
+        <p class="para">Participants on this course completed 6 hours of ${tpMode} teaching practice. This included collaborative planning, peer observation and shared evaluation and feedback. Within this framework each participant completed 6 hours of individual teaching which was observed and assessed by an experienced trainer.</p>
+        <p class="para">A full report can be found on the reverse of this document.</p>
+        ${tutors.length ? `<div class="signrow">${tutors.map(t => `<div class="signblock"><div class="signature">${esc(t)}</div><div class="signname">${esc(t)}</div><div class="signrole">CELTA course Tutor</div></div>`).join('')}</div>` : ''}
       </div>
     </div>
 
@@ -246,9 +249,9 @@ if (!who) {
       </div>
       <div class="section">
         <h2>Achievements in Individual Assessment Areas</h2>
-        <p class="intro">These grades refer to the two assessment areas in the Cambridge CELTA Syllabus and Assessment Guidelines. Written assignments are graded Pass or Fail. Classroom teaching skills are graded Pass A, Pass B, Pass, or Fail.</p>
-        <div class="grow"><span class="lab">Preparing, planning and practising teaching</span><span class="val ${gradeCls(finalGrade)}">${esc(word)}</span></div>
-        <div class="grow"><span class="lab">Written assignments</span><span class="val ${assignments === 'Fail' ? 'fail' : assignments === 'Pass' ? 'set' : ''}">${esc(assignments)}</span></div>
+        <p class="intro">The grades in this section refer to the two assessment areas in the Cambridge CELTA Syllabus and Assessment Guidelines. Please note that written assignments are graded Pass or Fail. Classroom teaching skills are graded as Pass A, Pass B, Pass or Fail. A full description of topics covered in each area can be found on the Cambridge website (www.cambridgeesol.org).</p>
+        <div class="grow"><span class="lab">Preparing, planning and practising teaching</span><span class="val ${gradeCls(finalGrade)}">Grade: ${esc(word)}</span></div>
+        <div class="grow"><span class="lab">Written assignments</span><span class="val ${assignments === 'Fail' ? 'fail' : assignments === 'Pass' ? 'set' : ''}">Grade: ${esc(assignments)}</span></div>
         <div class="grow last"><span class="lab">Overall recommended grade</span><span class="val ${gradeCls(finalGrade)}">${esc(finalGrade)}</span></div>
       </div>
       <div class="section">

@@ -450,11 +450,12 @@ await step('tutor: the final course report, from the grade just saved', async ()
   const door = await T.p.$eval('.cand .frrow a.btn', a => a.getAttribute('href'));
   await T.p.goto(`${BASE}${door}&k=${STORE.key}`, { waitUntil: 'domcontentloaded' }); await settle(T.p, 3000);
   const body = await text(T.p);
-  must(/This is to certify that\s+Amara Nwosu/.test(body), 'the cover does not certify her: ' + body.slice(0, 200));
-  must(/120-hour/.test(body) && /mixed mode/.test(body) && /Hours attended: 118 of 120/.test(body), 'hours or mode missing: ' + body.slice(0, 600));
-  must(/Ramy Sakr[\s\S]*Pelin Korkmaz[\s\S]*CELTA Course Tutor/.test(body), 'signatures missing');
-  must(/Preparing, planning and practising teaching\s+Pass/.test(body), 'the teaching area grade is not the final grade');
-  must(/Written assignments\s+(Pass|Fail|\u2014|—)/.test(body), 'the assignments area is missing');
+  // The centre's own wording (its Pass A / Pass B templates and a real Pass report, 25 Sep 2026)
+  must(/This is to confirm that\s+Amara Nwosu/.test(body), 'the cover does not confirm her: ' + body.slice(0, 200));
+  must(/attended 118 hours of a 120-hour initial teacher training course/.test(body) && /6 hours of classroom-based and online teaching practice/.test(body), 'hours or mode missing: ' + body.slice(0, 700));
+  must(/Ramy Sakr[\s\S]*Pelin Korkmaz[\s\S]*CELTA course Tutor/.test(body), 'signatures missing');
+  must(/Preparing, planning and practising teaching\s+Grade: Pass/.test(body), 'the teaching area grade is not the final grade');
+  must(/Written assignments\s+Grade: (Pass|Fail|\u2014|—)/.test(body), 'the assignments area is missing');
   // innerText carries the heading's text-transform, so the heading arrives in capitals
   must(/Performance Descriptor for a Pass Grade/i.test(body) && /continue to need guidance/.test(body), 'the descriptor for the grade is missing');
   must(/A confident, well-prepared teacher/.test(body), 'the overall comment is missing');
@@ -475,10 +476,10 @@ await step('assessor: the final report opens from the pack; the candidate is ref
   await S.p.goto(`${BASE}12_assessor_pack.html?ak=${STORE.akey}`, { waitUntil: 'domcontentloaded' }); await settle(S.p, 3000);
   const door = await S.p.$('a[href^="16_final_report.html"]'); must(door, 'no final-report door on the pack');
   await door.click(); await settle(S.p, 3000);
-  must(/This is to certify that\s+Amara Nwosu/.test(await text(S.p)), 'the assessor could not open the report');
+  must(/This is to confirm that\s+Amara Nwosu/.test(await text(S.p)), 'the assessor could not open the report');
   await A.p.goto(`${BASE}16_final_report.html?id=${encodeURIComponent(amaraToken)}&t=${amaraToken}`, { waitUntil: 'domcontentloaded' }); await settle(A.p, 2500);
   const t = await text(A.p);
-  must(!/This is to certify/.test(t), 'a candidate could open her own final report before release');
+  must(!/This is to confirm/.test(t), 'a candidate could open her own final report before release');
   return 'assessor in, candidate refused';
 });
 await step('assessor: the tutor room refuses', async () => {
