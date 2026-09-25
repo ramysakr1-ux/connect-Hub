@@ -15,20 +15,29 @@
  * at their shape, and a guess about that shape is what cost an afternoon on
  * 25 Sep (a point lives at state.lists.lST, not state.f.st).
  *
- * UNFINISHED, 25 Sep 2026. Four of the six steps are solid: the course, its
- * settings, six candidates, and two plans turned in. Returning feedback lands
- * on some runs and not others, and the provisional grades have not landed yet.
- * Both are timing against a store whose calls take 1.5-13 seconds, and both
- * need the writes driven and CONFIRMED one at a time rather than raced -- a
- * rewrite of the last two steps, not another wait.
+ * FINISHED 25 Sep 2026. Two candidates end up with a plan, TP3 feedback in all
+ * four sections and a provisional grade; the other four are untouched, which is
+ * what a course looks like mid-flight.
  *
- * Every failure tonight was a guessed selector or a guessed data shape, found
- * one failed run at a time: wrong field ids, a tabbed panel, an unanswered
- * confirmation modal, and four wrong guesses about shape -- a point lives at
- * state.lists.lST not state.f.st, courseName is top-level not under settings,
- * the roster op returns `records` not `tp`. Print the real shape first. Every
- * one of those cost twenty minutes to discover and would have cost one to look
- * up.
+ * Three rules were what finally made it deterministic, and all three exist
+ * because guessing failed first:
+ *
+ *   WAIT FOR THE RECORD BEFORE TYPING. Every screen paints from static HTML,
+ *   then repaints when the store answers, and the repaint WIPES what was typed
+ *   in between -- silently. One candidate's points survived and the next one's
+ *   did not, and the Return went through carrying a grade and no words.
+ *
+ *   TYPE, THEN CHECK IT STUCK (stickyFill / stickyType). Cheaper than knowing
+ *   how long the store will take, and it cannot pass while the field is empty.
+ *
+ *   NEVER WAIT ON AN ON-SCREEN MESSAGE. setStatus wipes itself after four
+ *   seconds, and waiting up to four seconds for a confirm dialog outlives it.
+ *   The store is the only durable proof; `until` polls that.
+ *
+ * And the shapes, none of which were what I assumed: a point lives at
+ * state.lists.lST (not state.f.st), courseName is top-level (not under
+ * settings), the roster op returns `records` (not `tp`). Print the real shape
+ * before writing against it.
  *
  * The owner key is not in this repo and must not be. Put it in a file called
  * .owner-key beside this script, or pass OWNER_KEY in the environment.
@@ -91,6 +100,52 @@ const call = async body => {
   return out.result;
 };
 const settle = (p, ms) => p.waitForTimeout(ms);
+
+/* Click something that MAY raise a confirmation, and wait for the answer
+   properly. The old version clicked, waited 900ms, and looked once -- so when
+   the dialog was slower than that it was never answered, the action never
+   happened, and the run spent a minute polling a store that was never going to
+   change. Feedback landed on some runs and not others for exactly this reason.
+   Waiting for the dialog to appear, with a short timeout for "there wasn't
+   one", is deterministic either way. */
+/* Type, then check it is still there. The feedback screen repaints when the
+   trainee's record arrives from the store, and anything typed before that
+   moment is wiped -- silently, so the Return went through with a grade and
+   nothing else, exactly the empty record the cohort walk used to produce.
+   Retrying until the value sticks is the only version of this that does not
+   depend on guessing how long the store will take. */
+async function stickyFill(p, sel, value, tries = 8) {
+  for (let i = 0; i < tries; i++) {
+    await p.fill(sel, value);
+    await p.waitForTimeout(1200);
+    if ((await p.inputValue(sel)) === value) return;
+  }
+  throw new Error(sel + ' would not hold its value');
+}
+async function stickyType(p, sel, text, tries = 8) {
+  for (let i = 0; i < tries; i++) {
+    await p.click(sel);
+    await p.evaluate(([s, t]) => { const el = document.querySelector(s); if (el) el.textContent = ''; }, [sel, text]);
+    await p.click(sel);
+    await p.keyboard.type(text);
+    await p.waitForTimeout(1200);
+    const got = await p.$eval(sel, e => e.textContent.replace(/\u2022/g, '').trim());
+    if (got.includes(text.slice(0, 24))) return;
+  }
+  throw new Error(sel + ' would not hold its text');
+}
+
+async function clickAndConfirm(p, selector) {
+  await p.click(selector);
+  const dialog = await p.waitForSelector('.confirm-action', { state: 'visible', timeout: 4000 }).catch(() => null);
+  if (dialog) { await dialog.click(); }
+  return !!dialog;
+}
+
+/* No waiting on the on-screen status: setStatus wipes itself after four
+   seconds, and clickAndConfirm can spend four seconds establishing that there
+   was no dialog -- so the message is gone before anyone looks. The store is the
+   only durable proof anyway, and `until` already checks it. */
 const day = n => new Date(Date.now() + n * DAY).toISOString().slice(0, 10);
 
 /* A cohort that reads like a course, not like test data. */
@@ -239,10 +294,8 @@ for (const name of Object.keys(FEEDBACK)) {
   const proc = await tp.$('table.proc textarea, table.proc input[type=text]');
   if (proc) { await proc.fill('Lead-in: learners talk in pairs about last weekend.'); }
   await settle(tp, 800);
-  await tp.click('#turnInBtn');
-  await settle(tp, 900);
-  const cf = await tp.$('.confirm-action'); if (cf) { await cf.click(); }
-  await settle(tp, 2500);
+  await clickAndConfirm(tp, '#turnInBtn');
+  await settle(tp, 1500);
   /* Kept open until the store has it — hub-sync flushes on its own schedule
      and a closed tab flushes nothing. */
   await until('a plan', t2 => recOf(t2).plan, 12, 4000);
@@ -263,23 +316,34 @@ for (const [name, f] of Object.entries(FEEDBACK)) {
      "execution context was destroyed" the moment the page moves under it. */
   await p.waitForSelector('#fGrade', { state: 'visible', timeout: 30000 });
   await p.waitForSelector('#lST .pt-text', { state: 'visible', timeout: 30000 });
-  await settle(p, 1500);
+  /* Wait for the CANDIDATE'S OWN RECORD to arrive before touching anything.
+     The screen paints from static HTML first and repaints when the store
+     answers, and that repaint wipes whatever was typed in between -- which is
+     why one candidate's points survived and the next one's did not. Their name
+     on the page is the signal that the answer has landed. */
+  await p.waitForFunction(
+    n => (document.body.innerText || '').includes(n), name, { timeout: 40000 }
+  ).catch(() => {});
+  await settle(p, 2500);
   await p.selectOption('#fGrade', 'To standard');
-  await p.fill('#fTP', 'TP3');
+  await stickyFill(p, '#fTP', 'TP3');
   for (const [list, text] of [['lSP', f.sp], ['lAP', f.ap], ['lST', f.st], ['lAT', f.at]]) {
     const sel = '#' + list + ' .pt-text';
     await p.waitForSelector(sel, { state: 'visible', timeout: 15000 });
-    await p.click(sel);
-    await p.keyboard.type(text);
-    await settle(p, 300);
+    await stickyType(p, sel, text);
   }
-  await p.fill('#tOverall', 'A lesson that did what it set out to do.');
+  /* Nothing is returned until the page really holds it: a TP number, because
+     T.tpHistory drops a record it cannot place on a TP, and a point, because a
+     record with a grade and no words is worth nothing to the demo. */
+  if ((await p.inputValue('#fTP')) !== 'TP3') throw new Error('the TP number did not stick for ' + name);
+  const wrote = await p.$eval('#lST .pt-text', e => e.textContent.trim().length);
+  if (!wrote) throw new Error('the teaching strength did not stick for ' + name);
+  await stickyFill(p, '#tOverall', 'A lesson that did what it set out to do.');
   await settle(p, 700);
-  const ret = await p.$('#returnBtn');
-  if (!ret) throw new Error('no Return button on the feedback screen for ' + name);
-  { await ret.click(); await settle(p, 900);
-    const cf = await p.$('.confirm-action'); if (cf) await cf.click(); await settle(p, 2500); }
-  await until('feedback', t => recOf(t).feedback, 12, 4000);
+  await p.waitForSelector('#returnBtn', { state: 'visible', timeout: 20000 });
+  await clickAndConfirm(p, '#returnBtn');
+  await settle(p, 1500);
+  await until('feedback for ' + name, t => t.name === name && recOf(t).feedback, 15, 4000);
 }
 {
   const n = await until('feedback', t => recOf(t).feedback, 1, 0);
@@ -293,20 +357,38 @@ await p.goto(url('13_grades_report.html', 'k=' + K), { waitUntil: 'domcontentloa
    that lost two grades every run. */
 await p.waitForSelector('.cand .grow select.grade[data-grade="provisional"]', { state: 'visible', timeout: 30000 });
 await settle(p, 1500);
-const grades = ['PASS', 'PASS B'];
-for (let i = 0; i < grades.length; i++) {
-  const sel = `.cand:nth-of-type(${i + 1}) .grow select.grade[data-grade="provisional"]`;
-  const el = await p.$(sel);
-  if (!el) break;
-  await p.selectOption(sel, grades[i]);
-  await settle(p, 500);
+/* Graded BY NAME, not by position: the grades report sorts alphabetically, so
+   nth-of-type(1) is whoever comes first in the alphabet, and the grades landed
+   on two candidates who had no feedback while the two who did had none. The
+   demo has to hold together -- the walkthrough asks a trainer to open the
+   grades report and find the point they just read in the drawer, which only
+   works if the same people have both. */
+const graded = Object.keys(FEEDBACK);
+for (let i = 0; i < graded.length; i++) {
+  const card = p.locator('.cand', { hasText: graded[i] });
+  const sel = card.locator('.grow select.grade[data-grade="provisional"]').first();
+  if (!(await sel.count())) continue;
+  await sel.selectOption(i === 0 ? 'PASS' : 'PASS B');
+  await settle(p, 600);
 }
 await p.click('#saveBtn');
-await settle(p, 3500);
+/* The grades report says "Saved" on its own status line before hub-sync pushes
+   anything, so wait for that, then wait for the store. Guessing 3.5 seconds
+   lost both grades every run. */
+await p.waitForFunction(() => {
+  const el = document.getElementById('saveState');
+  return el && /saved/i.test(el.textContent) && !/unsaved/i.test(el.textContent);
+}, null, { timeout: 20000 }).catch(() => {});
+await settle(p, 1500);
 {
-  const after = await call({ op: 'roster', key: K });
-  const n = Object.values((after && after.trainees) || {})
-    .filter(t => (recOf(t).tracker || {}).grades && recOf(t).tracker.grades.provisional).length;
+  /* until() returns on the first poll that matches, so it undercounts when the
+     second write is still in flight. Wait for one, then read once more. */
+  await until('a provisional grade',
+    t => ((recOf(t).tracker || {}).grades || {}).provisional, 12, 4000).catch(() => 0);
+  await new Promise(r => setTimeout(r, 6000));
+  const last = await call({ op: 'roster', key: K });
+  const n = Object.values((last && last.trainees) || {})
+    .filter(t => ((recOf(t).tracker || {}).grades || {}).provisional).length;
   if (!n) console.log('  (no provisional grades saved — the grades report will open blank)');
   else console.log('  ' + n + ' provisional grade(s) set');
 }
