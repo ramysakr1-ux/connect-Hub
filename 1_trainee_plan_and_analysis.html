@@ -115,13 +115,47 @@
     text-transform:uppercase; letter-spacing:.05em;}
   @media(max-width:700px){ .prob-pair{grid-template-columns:1fr;} }
 
-  .fw-row{display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;}
-  .fw-row .field{flex:1; min-width:280px; display:flex; flex-direction:column;}
-  /* The two buttons were shorter than the field they sit beside and floated
-     against its top edge. One height for all three, bottom-aligned. */
-  .fw-row .acts{display:flex; gap:8px;}
-  .fw-row .acts .btn{height:46px; padding:0 18px;}
-  .fw-row .house-sel{flex:1;}
+  /* ---- the lesson-shape menu ---------------------------------------------
+     Ramy, 26 Sep 2026: "when you open that drop down menu to choose the lesson
+     framework... the card looks better, the drop down menu looks better than
+     Connect Lite." It was a native <select> in a house-sel with an Apply and a
+     Clear beside it -- three controls for one choice. Connect's is one button
+     that opens a menu, each shape naming how many stages it has, and the pick
+     IS the action. Same thing here, in Lite's own words: Connect says "lesson
+     sequence", this card has always said "lesson shape".
+
+     The <select> itself stays in the DOM, hidden. It is the state: the save
+     writes FRAMEWORKS[fwSel.value].name and restore() sets fwSel.value back,
+     and re-pointing those at a new variable buys nothing and could lose a
+     plan. The menu sets it and re-renders the button. */
+  .fw-wrap{position:relative; display:flex; flex-direction:column; gap:5px; max-width:420px;}
+  .fw-wrap select{position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;}
+  .fw-btn{display:inline-flex; align-items:center; justify-content:space-between; gap:10px;
+    width:100%; border-radius:8px; padding:11px 14px; cursor:pointer; text-align:left;
+    font-family:'Karla',sans-serif; font-weight:600; font-size:0.92rem;
+    border:1px solid var(--sand-line, oklch(85.5% 0.02 80)); background:var(--card, oklch(95.2% 0.018 84)); color:var(--grey, oklch(51% 0.017 70));}
+  .fw-btn .caret{font-size:0.6rem; opacity:.65;}
+  /* Chosen, the button says so in the same teal the plan uses for a decision. */
+  .fw-btn.on{border-color:color-mix(in oklab, var(--teal, oklch(37.5% 0.058 195)) 35%, transparent);
+    background:color-mix(in oklab, var(--teal, oklch(37.5% 0.058 195)) 9%, transparent); color:var(--teal, oklch(37.5% 0.058 195));}
+  .fw-menu{position:absolute; z-index:50; top:calc(100% + 8px); left:0; width:420px; max-width:min(420px, calc(100vw - 40px));
+    border-radius:11px; border:1px solid var(--sand-line, oklch(85.5% 0.02 80)); background:var(--card, oklch(95.2% 0.018 84)); padding:7px;
+    box-shadow:0 20px 50px oklch(23.5% 0.017 65 / 0.28);}
+  .fw-menu[hidden]{display:none;}
+  .fw-item{display:flex; width:100%; align-items:flex-start; justify-content:space-between; gap:12px;
+    text-align:left; border:none; background:none; cursor:pointer; border-radius:8px; padding:9px 11px;
+    font-family:'Karla',sans-serif; font-size:0.86rem; font-weight:500; color:var(--ink, oklch(23.5% 0.017 65));
+    transition:background-color .12s ease;}
+  .fw-item .meta{font-size:0.72rem; padding-top:2px; color:var(--grey, oklch(51% 0.017 70)); flex:none;}
+  .fw-item.on{font-weight:700; color:var(--teal, oklch(37.5% 0.058 195)); background:color-mix(in oklab, var(--teal, oklch(37.5% 0.058 195)) 10%, transparent);}
+  .fw-item.on .meta{color:var(--teal, oklch(37.5% 0.058 195));}
+  .fw-rule{border-top:1px solid var(--row-line, oklch(90% 0.016 82)); margin:3px 0;}
+  /* The pick applies on the spot, so what it costs is written where the pick
+     happens -- the same line Connect puts at the foot of its menu. Lite still
+     asks first when there is typed work to lose, which Connect cannot do
+     because it has no Apply step to ask on. */
+  .fw-note{border-top:1px solid var(--row-line, oklch(90% 0.016 82)); margin:6px 0 0; padding:7px 9px 2px;
+    font-size:0.72rem; line-height:1.45; color:var(--grey, oklch(51% 0.017 70));}
   .fw-hint{font-size:0.8rem; color:var(--grey); font-style:italic; margin:10px 0 0; line-height:1.5;}
 
   .proc-wrap{background:var(--surface); border-radius:6px; padding:18px 20px; margin-bottom:16px; border-left:5px solid var(--olive); overflow-x:auto;}
@@ -329,7 +363,7 @@
 
   @media print{
     body{background:#fff; padding:0; display:block;}
-    .actionbar,.ipa-bar,.del-btn,.btn,.btn-add,.aim-cue,.example-btn,.fw-row,.credit-pill{display:none !important;}
+    .actionbar,.ipa-bar,.del-btn,.btn,.btn-add,.aim-cue,.example-btn,.fw-wrap,.credit-pill{display:none !important;}
     .card,.blk,.header,.proc-wrap{ border-radius:0; page-break-inside:avoid;}
     textarea,input,select{border:1px solid #999 !important; background:#fff !important;}
     table.proc,table.vocab{min-width:0;}  }
@@ -450,17 +484,13 @@
 
   <div class="card" style="border-left-color:var(--ochre);">
     <h2>Lesson shape</h2>
-    <p class="guide">Choosing a framework fills the Stage column below with that shape's usual stages —
+    <p class="guide">Choosing a shape fills the Stage column below with that shape's usual stages —
     the name of each one, and a colon. The aim after the colon is yours to write.</p>
-    <div class="fw-row">
-      <div class="field">
-        <label for="fwSelect">Framework</label>
-        <div class="house-sel"><select id="fwSelect"><option value="">— choose a framework —</option></select></div>
-      </div>
-      <div class="acts">
-        <button class="btn btn-gold" id="fwApply">Fill in the stages</button>
-        <button class="btn btn-quiet" id="fwClear">Clear</button>
-      </div>
+    <div class="fw-wrap" id="fwWrap">
+      <select id="fwSelect" tabindex="-1" aria-hidden="true"><option value="">— choose a framework —</option></select>
+      <button type="button" class="fw-btn" id="fwBtn" aria-haspopup="menu" aria-expanded="false">
+        <span id="fwBtnLabel">Choose a lesson shape</span><span class="caret">▼</span></button>
+      <div class="fw-menu" id="fwMenu" role="menu" hidden></div>
     </div>
     <p class="fw-hint">Everything stays editable — rename, delete or add stages as your lesson needs.</p>
   </div>
@@ -584,9 +614,9 @@
 </div>
 
 <script src="hub-due.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609260047"></script>
-<script src="hub-store.js?v=202609260047"></script>
-<script src="hub-sync.js?v=202609260047"></script>
+<script src="hub-shared.js?v=202609260117"></script>
+<script src="hub-store.js?v=202609260117"></script>
+<script src="hub-sync.js?v=202609260117"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -852,6 +882,42 @@ Object.entries(FRAMEWORKS).forEach(([k,v])=>{
   const o=document.createElement('option'); o.value=k; o.textContent=v.name; fwSel.appendChild(o);
 });
 
+/* ---- the lesson-shape menu -------------------------------------------------
+   One button that opens a menu, each shape naming how many stages it has, and
+   the pick IS the action -- Connect's sequence picker, in Lite's own words
+   (Ramy, 26 Sep 2026). The hidden <select> above stays the state; this only
+   reads and writes it. */
+const fwWrap=$('fwWrap'), fwBtn=$('fwBtn'), fwMenu=$('fwMenu'), fwBtnLabel=$('fwBtnLabel');
+
+function fwRender(){
+  const cur=fwSel.value;
+  fwBtnLabel.textContent = cur ? FRAMEWORKS[cur].name : 'Choose a lesson shape';
+  fwBtn.classList.toggle('on', !!cur);
+  fwMenu.innerHTML='';
+  /* "No shape chosen" is where Clear went. It is the first thing in the menu
+     because it is the same kind of choice as the six below it, not a separate
+     button standing next to them. */
+  const items=[{key:'', label:'No shape chosen', meta:'clears the names'}]
+    .concat(Object.entries(FRAMEWORKS).map(([k,v])=>({key:k, label:v.name, meta:v.stages.length+' stages'})));
+  items.forEach((it,i)=>{
+    if(i===1){ const r=document.createElement('div'); r.className='fw-rule'; fwMenu.appendChild(r); }
+    const b=document.createElement('button');
+    b.type='button'; b.className='fw-item'+(it.key===cur?' on':''); b.setAttribute('role','menuitem');
+    b.innerHTML='<span></span><span class="meta"></span>';
+    b.firstChild.textContent=it.label; b.lastChild.textContent=it.meta;
+    b.addEventListener('click',()=>{ fwClose(); fwPick(it.key); });
+    fwMenu.appendChild(b);
+  });
+  const note=document.createElement('p'); note.className='fw-note';
+  note.textContent='Choosing a shape renames the stages. A stage whose name changes gives up its time and interaction pattern with it — they described the old stage. Anything you have typed in Procedure stays.';
+  fwMenu.appendChild(note);
+}
+function fwOpen(){ fwMenu.hidden=false; fwBtn.setAttribute('aria-expanded','true'); }
+function fwClose(){ fwMenu.hidden=true; fwBtn.setAttribute('aria-expanded','false'); }
+fwBtn.addEventListener('click',()=>{ fwMenu.hidden ? fwOpen() : fwClose(); });
+window.addEventListener('mousedown',e=>{ if(!fwMenu.hidden && !fwWrap.contains(e.target)) fwClose(); });
+window.addEventListener('keydown',e=>{ if(e.key==='Escape' && !fwMenu.hidden){ fwClose(); fwBtn.focus(); } });
+
 const INT_OPTIONS=['T–S','S–T','S–S','PW','GW','Ind.','OC','Ming.'];
 /* The empty option carries the column's old heading. With Interaction pattern
    and Time merged into one cell there is no room for a heading above each box,
@@ -913,17 +979,45 @@ function updateTotal(){
 $('fLength').addEventListener('input',updateTotal);
 updateTotal();
 
-$('fwApply').addEventListener('click',async()=>{
-  const key=fwSel.value;
-  if(!key){ setStatus('Choose a framework first.'); return; }
+/* Picking IS the action -- there is no Apply step any more, the way there is
+   none in Connect. Lite keeps the question Connect cannot ask, though: when
+   there is typed work to lose it asks first, and on an untouched plan it just
+   does it. */
+/* Is there anything on this plan that the TRAINEE put there? Not "is the stage
+   column non-empty": row one is seeded 'LEAD-IN: ' before anyone touches the
+   page, and a shape leaves every row as 'Name: ', so that test called a
+   brand-new plan full and asked "this renames the stages, continue?" as the
+   very first thing a trainee met. A row counts when its Procedure has text, or
+   when its stage has something after the colon (the aim is always theirs), or
+   when it has a name and no colon at all -- which is a stage they typed by
+   hand, the case the 21 Sep walk found being replaced in silence. */
+function rowIsTheirs(tr){
+  if(procText(tr.querySelector('.t-proc').value).trim()) return true;
+  const v=tr.querySelector('.t-stage').value, i=v.indexOf(':');
+  return i===-1 ? v.trim()!=='' : v.slice(i+1).trim()!=='';
+}
+async function fwPick(key){
+  const filled=[...procBody.querySelectorAll('tr')].some(rowIsTheirs);
+
+  if(!key){
+    /* "No shape chosen" is where the old Clear button went. It wipes the stage
+       names -- and in Lite the aim lives after the colon INSIDE that field, so
+       it wipes the aims with them. That was true of the button too, but a
+       button labelled Clear is harder to hit by accident than an item at the
+       top of a menu, so it asks now. */
+    if(filled && !await confirmModal('This clears every stage name, and the aim written after each colon with it. Anything you have typed in Procedure stays. Continue?','Clear the names')) return;
+    fwSel.value=''; fwRender();
+    procBody.querySelectorAll('tr').forEach(tr=>{ tr.querySelector('.t-stage').value=''; syncAimCue(tr); });
+    setStatus('Stage names cleared.'); dirty=true; return;
+  }
+
   const fw=FRAMEWORKS[key];
-  /* The warning's own first words are "this will rename the stages", but it
-     only looked at the Procedure column -- so a trainee who had typed their
-     own stage names and nothing else had them replaced in silence (walk,
+  /* The warning's own first words are "this renames the stages", but it only
+     looked at the Procedure column -- so a trainee who had typed their own
+     stage names and nothing else had them replaced in silence (walk,
      21 Sep 2026). It now asks whenever anything typed would go. */
-  const filled=[...procBody.querySelectorAll('tr')].some(tr=>
-    procText(tr.querySelector('.t-proc').value).trim() || tr.querySelector('.t-stage').value.trim());
   if(filled && !await confirmModal('This renames the stages. A stage that changes loses its time and interaction pattern with it — they described the old stage. Anything you have typed in Procedure stays. Continue?','Replace anyway')) return;
+  fwSel.value=key; fwRender();
   const rows=[...procBody.querySelectorAll('tr')];
   /* The name of the stage a row currently holds: everything before the first
      colon, which is where the framework's wording stops and the trainee's own
@@ -966,14 +1060,9 @@ $('fwApply').addEventListener('click',async()=>{
       || tr.querySelector('.t-int1').value || tr.querySelector('.t-int2').value;
     if(!used) tr.remove();
   });
-  updateTotal(); setStatus('Stages filled from “'+fw.name+'”. Write your aim after each colon.'); dirty=true;
-});
-$('fwClear').addEventListener('click',()=>{
-  procBody.querySelectorAll('tr').forEach(tr=>{
-    tr.querySelector('.t-stage').value=''; syncAimCue(tr);
-  });
-  setStatus('Stage names cleared.'); dirty=true;
-});
+  updateTotal(); setStatus('Stages filled from \u201C'+fw.name+'\u201D. Write your aim after each colon.'); dirty=true;
+}
+fwRender();
 
 /* ---------------- language analysis ---------------- */
 const COMMON_TAIL=[
@@ -1259,7 +1348,10 @@ function restore(d){
   $('fName').value=m.name||''; $('fTP').value=m.tp||''; $('fLevel').value=m.level||'';
   $('fDate').value=m.date||''; $('fLength').value=m.length||'';
   const key=Object.keys(FRAMEWORKS).find(k=>FRAMEWORKS[k].name===m.framework);
-  fwSel.value=key||'';
+  /* The button reads the select, so reopening a saved plan has to repaint it.
+     Without this the shape came back on the record and the control went on
+     saying "Choose a lesson shape". */
+  fwSel.value=key||''; fwRender();
   const p=d.plan||{};
   $('fMain').value=procText(p.main||''); $('fSub').value=procText(p.sub||'');
   $('fPers').value=procText(p.pers||''); $('fMats').value=procText(p.mats||''); $('fMatsLink').value=p.matsLink||''; renderMatsPreview(); MATS_FILE=restoreMatsFile(p.matsFile); renderMatsFile(); $('fProfile').value=p.profile||'';
