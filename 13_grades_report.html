@@ -110,6 +110,11 @@
      is the left edge, gold for the provisional table, teal for the final. */
   .gt{background:var(--paper); border-radius:10px; border-left:5px solid var(--gold); overflow:hidden;}
   .gt.fin{border-left-color:var(--teal);}
+  /* the course-level four: same card, and its sections sit inside it rather
+     than on a candidate, so they get the card's padding */
+  .gt.course-gt{border-left-color:var(--teal-deep, var(--teal)); padding-bottom:6px;}
+  .gt.course-gt .sec{padding:0 20px 14px;}
+  .gt.course-gt .sec:last-child{padding-bottom:18px;}
   .gt h2{margin:0; padding:15px 20px 3px; font-family:'Newsreader',Georgia,serif; font-size:1.1rem; font-weight:700;}
   .gt p.sc{margin:0; padding:0 20px 12px; font-size:0.76rem; color:var(--grey); line-height:1.5;}
   .gt table{width:100%; border-collapse:collapse; font-size:0.86rem;}
@@ -237,6 +242,7 @@
   </div>
 
   <div class="jump" id="jump"></div>
+  <div class="course" id="course"></div>
   <div class="cohort" id="cohort"></div>
   <div id="cands"></div>
 
@@ -248,10 +254,10 @@
 
 </div>
 
-<script src="hub-tracker.js?v=202609251514"></script>
-<script src="hub-store.js?v=202609251514"></script>
-<script src="hub-shared.js?v=202609251514"></script>
-<script src="hub-sync.js?v=202609251514"></script>
+<script src="hub-tracker.js?v=202609251555"></script>
+<script src="hub-store.js?v=202609251555"></script>
+<script src="hub-shared.js?v=202609251555"></script>
+<script src="hub-sync.js?v=202609251555"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a candidate's link opened it and read the course and
@@ -336,6 +342,56 @@ const EVIDENCE = { key:'evidence',
   ph:'What the centre is putting forward for the higher of the two grades.',
   hint:'Optional on the Cambridge form, but expected on a borderline candidate, so the higher grade has a justification on record.' };
 const isBorderline = g => /\//.test(g || '');
+
+/* The course-level half of the Cambridge Centre Grade Form, read off the live
+   form in Appian against TR073-C17/2026 on 25 Sep 2026. It opens with these
+   four before it reaches a single candidate, all four required, 2000
+   characters each. They describe the COURSE, not a person, so they are kept
+   with the course settings rather than on anybody's record -- which also
+   means they sync to every tutor on the course like the rest of the
+   settings. */
+const COURSE_FIELDS = [
+  {key:'tp',       heading:'Teaching Practice',
+   ph:'How teaching practice was organised: the groups, the levels, the hours, who taught when.',
+   hint:'Required on the Cambridge form.'},
+  {key:'tpSup',    heading:'Teaching Practice Supervision and Feedback',
+   ph:'How TP was supervised and how feedback was given — who observed, how feedback ran, what candidates were asked to do with it.',
+   hint:'Required on the Cambridge form.'},
+  {key:'tutorials',heading:'Tutorials',
+   ph:'When tutorials were held, who held them, and what they covered.',
+   hint:'Required on the Cambridge form.'},
+  {key:'extra',    heading:'Additional Comments',
+   ph:'Anything else the assessor should know about how the course ran.',
+   hint:'Required on the Cambridge form.'}
+];
+const CS_KEY = 'connect_course_settings';
+function loadCourseSettings(){ try{ return JSON.parse(localStorage.getItem(CS_KEY)) || {}; }catch(e){ return {}; } }
+let COURSE = (loadCourseSettings().gradeForm) || {};
+
+/* Written back into the course settings, which hub-sync carries to the store
+   for every tutor on the course. Read the settings again at save time rather
+   than holding the whole object: another screen may have changed something
+   else in it while this page was open. */
+function persistCourse(){
+  if (RO) return;
+  const cs = loadCourseSettings();
+  cs.gradeForm = COURSE;
+  localStorage.setItem(CS_KEY, JSON.stringify(cs));
+}
+
+function paintCourse(){
+  const box = document.getElementById('course'); if (!box) return;
+  box.innerHTML = `<div class="gt course-gt">
+    <h2>Teaching Practice and Tutorials</h2>
+    <p class="sc">The course-level half of the centre grade form, above the candidates on Cambridge's own form. Four fields, all required.</p>
+    ${COURSE_FIELDS.map(f => `<div class="sec" data-course="${f.key}">
+      <div class="head"><h3>${f.heading}</h3><button type="button" class="seccopy" data-coursecopy="${f.key}">copy</button></div>
+      <textarea class="prose"${ro()} data-coursefield="${f.key}" placeholder="${esc(f.ph)}" style="min-height:120px">${esc(COURSE[f.key] || '')}</textarea>
+      <div class="hint">${f.hint}</div>
+    </div>`).join('')}
+  </div>`;
+  box.querySelectorAll('textarea').forEach(fit);
+}
 /* The door to the final course report. There is no report to write on a
    course that ended in an outcome rather than a grade -- the document
    confirms attendance and states a grade, and neither sentence would hold. */
@@ -368,6 +424,7 @@ function persist(){
     tr.tracker.grades = rec;
   });
   localStorage.setItem('connect_roster_v1', JSON.stringify(roster));
+  persistCourse();
   dirty=false; paintState();
 }
 function touch(){ if (RO) return; dirty=true; paintState(); }
@@ -500,7 +557,7 @@ function paintCands(){
   document.querySelectorAll('.pt textarea').forEach(fit);
 }
 
-function paint(){ paintJump(); paintCohort(); paintCands(); }
+function paint(){ paintJump(); paintCourse(); paintCohort(); paintCands(); }
 
 /* ---- copying: the unit Appian wants is one section ---- */
 function sectionText(id, key){
@@ -632,11 +689,33 @@ function buildPrintable(){
   let cs = null; try { cs = JSON.parse(localStorage.getItem('connect_course_settings')); } catch (e) {}
   const head = cs ? `<h1 style="font-family:'Newsreader',Georgia,serif;margin:0 0 4px;">${esc(cs.courseName || 'Grades report')}</h1>
     <p style="margin:0 0 22px;font-size:0.88rem;color:var(--grey);">${esc([cs.centreName, cs.centreNumber ? 'Centre ' + cs.centreNumber : ''].filter(Boolean).join(' · '))} — provisional and final grades for every candidate</p>` : '';
-  document.getElementById('printAll').innerHTML = head + ORDER.map((p, i) => printableRecord(p, i)).join('');
+  /* The course-level four print before the candidates, as they come first on
+     Cambridge's form. Anything left empty still prints its heading and says
+     so: on a required field, a silent gap reads as an answer. */
+  const written = COURSE_FIELDS.some(f => (COURSE[f.key] || '').trim());
+  const course = written ? `<div class="pcand"><h2>Teaching Practice and Tutorials</h2>` +
+    COURSE_FIELDS.map(f => `<h3>${f.heading}</h3>` +
+      ((COURSE[f.key] || '').trim() ? `<p>${esc(COURSE[f.key].trim())}</p>` : '<div class="none">Nothing recorded.</div>')
+    ).join('') + '</div>' : '';
+  document.getElementById('printAll').innerHTML = head + course + ORDER.map((p, i) => printableRecord(p, i)).join('');
 }
 
+/* The course fields sit outside #cands, so they get their own two handlers --
+   one to keep what is typed, one for the copy button beside each heading. */
+document.getElementById('course').addEventListener('input', e => {
+  const t = e.target.closest('[data-coursefield]'); if (!t || RO) return;
+  COURSE[t.dataset.coursefield] = t.value; fit(t); touch();
+});
+document.getElementById('course').addEventListener('click', e => {
+  const b = e.target.closest('[data-coursecopy]'); if (!b) return;
+  const v = (COURSE[b.dataset.coursecopy] || '').trim();
+  if (v) toClipboard(v, b, 'copied'); else { b.textContent = 'empty'; setTimeout(() => b.textContent = 'copy', 1200); }
+});
+
 document.getElementById('copyAll').addEventListener('click', e => {
-  toClipboard(ORDER.map((p, i) => profileText(p.id, i)).join('\n\n———\n\n'), e.currentTarget, 'Copied');
+  const course = COURSE_FIELDS.filter(f => (COURSE[f.key] || '').trim())
+    .map(f => f.heading.toUpperCase() + ':\n' + COURSE[f.key].trim()).join('\n\n');
+  toClipboard([course, ...ORDER.map((p, i) => profileText(p.id, i))].filter(Boolean).join('\n\n———\n\n'), e.currentTarget, 'Copied');
 });
 
 document.getElementById('saveBtn').addEventListener('click', persist);

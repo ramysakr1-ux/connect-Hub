@@ -366,6 +366,10 @@ await step('the grades report holds six, and each grade stays on its own person'
      nothing else (Handbook June 2025, p43). A slash grade must reveal it; a
      clean grade must not have it at all. */
   const evShown = () => T.p.evaluate(() => [...document.querySelectorAll('.evwrap')].map(b => !b.hidden));
+  /* Both grades on this candidate are put back before the step ends -- step 12
+     reads them off the assessor pack, and this step now SAVES, so anything
+     left behind here would travel. */
+  const provWas = await T.p.$eval('.cand:nth-of-type(1) .grow select.grade[data-grade="provisional"]', e => e.value);
   must((await evShown()).every(v => v === false), 'the evidence box shows on a candidate with no provisional grade');
   await T.p.selectOption('.cand:nth-of-type(1) .grow select.grade[data-grade="provisional"]', 'PASS / PASS B'); await settle(T.p, 500);
   const after = await evShown();
@@ -399,14 +403,36 @@ await step('the grades report holds six, and each grade stays on its own person'
     must(finOpts.includes(o), 'the final dropdown is missing ' + o));
   must(finOpts.length === 7, 'the final dropdown holds ' + finOpts.length + ' values, not 7');
   const frLabel = () => T.p.$eval('.cand:nth-of-type(1) .frbtn', e => e.textContent.trim());
+  /* Put back whatever the earlier steps left here -- step 12 reads this
+     candidate's final grade off the assessor pack, and a walk step must not
+     quietly undo the one before it. */
+  const finalWas = await T.p.$eval('.cand:nth-of-type(1) .grow.final select.grade', e => e.value);
   await T.p.selectOption('.cand:nth-of-type(1) .grow.final select.grade', 'PASS B'); await settle(T.p, 400);
   must(/^Open the final report$/.test(await frLabel()), 'a graded candidate cannot open the final report: ' + await frLabel());
   await T.p.selectOption('.cand:nth-of-type(1) .grow.final select.grade', 'WITHDRAWN'); await settle(T.p, 400);
   must(/not issued/.test(await frLabel()), 'the final report is still offered on a withdrawal: ' + await frLabel());
-  await T.p.selectOption('.cand:nth-of-type(1) .grow.final select.grade', ''); await settle(T.p, 400);
+  await T.p.selectOption('.cand:nth-of-type(1) .grow.final select.grade', finalWas); await settle(T.p, 400);
+  await T.p.selectOption('.cand:nth-of-type(1) .grow select.grade[data-grade="provisional"]', provWas); await settle(T.p, 400);
+  await T.p.click('#saveBtn'); await settle(T.p, 700);
+
+  /* The course-level half of the Cambridge form: four required fields, above
+     the candidates, kept with the course so every tutor has them. */
+  const courseHeads = await T.p.$$eval('#course .sec h3', hs => hs.map(h => h.textContent.trim()));
+  must(JSON.stringify(courseHeads) === JSON.stringify([
+    'Teaching Practice','Teaching Practice Supervision and Feedback','Tutorials','Additional Comments'
+  ]), 'the course-level fields are not the form\'s four, in order: ' + JSON.stringify(courseHeads));
+  await T.p.fill('#course textarea[data-coursefield="tutorials"]', 'Two tutorials each, week two and week four.');
+  await T.p.click('#saveBtn'); await settle(T.p, 700);
+  await T.p.reload({waitUntil:'networkidle'}); await settle(T.p, 900);
+  must(await T.p.$eval('#course textarea[data-coursefield="tutorials"]', e => e.value)
+    === 'Two tutorials each, week two and week four.', 'a course-level field did not survive a reload');
+  const heads = await T.p.$$eval('.cand:nth-of-type(1) .cols .sec h3', hs => hs.map(h => h.textContent.trim()));
+  must(JSON.stringify(heads) === JSON.stringify([
+    'Planning: Strengths','Planning: Areas for development','Teaching: Strengths','Teaching: Areas for development'
+  ]), 'the candidate headings are not the form\'s: ' + JSON.stringify(heads));
 
   await noSideScroll(T.p, 'Grades report, six candidates');
-  return 'A-F, three graded, each on the right person; evidence borderline-only; ten provisional and seven final values';
+  return 'A-F, three graded, each on the right person; evidence borderline-only; ten provisional and seven final values; the form\'s own headings, course fields kept';
 });
 
 await step('the assessor pack holds all six, with the visit at the end of week four', async () => {
