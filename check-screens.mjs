@@ -47,6 +47,9 @@ const ROOMS = {
   '13_grades_report.html':           { trainee:'refuse', tutor:'open',   assessor:'refuse' },
   '15_course_record.html':           { trainee:'refuse', tutor:'open',   assessor:'refuse' },
   '16_final_report.html':            { trainee:'refuse', tutor:'open',   assessor:'open'   },
+  /* Guidance, not a room: it holds no course data and takes no key, because
+     somebody reads it BEFORE their link works, or because theirs did not. */
+  '17_how_it_works.html':            { trainee:'open',   tutor:'open',   assessor:'open'   },
 };
 const MODES = [
   { name:'trainee',  seed:{ 'hub:t':'check-t', 'hub:booted':'trainee:check-t' },  q:'?t=check-t' },
