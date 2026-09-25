@@ -118,7 +118,12 @@
   .seccopy:hover{border-color:var(--secc,var(--navy));color:var(--secc,var(--navy));}
   .seccopy.ok{opacity:1;background:var(--teal-deep);border-color:var(--teal-deep);color:#fff;}
   .sec.act h3{--secc:var(--amber-deep);}
-  .sec.evi h3{--secc:var(--sub);}
+  .sec.evi h3{
+  /* the suggestion line under the final-grade box */
+  .suggestline{margin-top:6px;font-size:.74rem;color:#6b6257;}
+  .suggestline kbd{font-family:inherit;font-size:.72rem;font-weight:800;border:1px solid var(--line,#d8d2c6);
+    border-bottom-width:2px;border-radius:4px;padding:1px 5px;background:#fff;}
+  .sec.upd h3{--secc:var(--teal-deep,#0f5c5c);}--secc:var(--sub);}
   textarea{width:100%;font-family:'Nunito';font-size:.88rem;line-height:1.6;color:var(--ink);
     border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg);
     resize:vertical;min-height:62px;overflow:hidden;}
@@ -225,8 +230,36 @@ const SECTIONS=[
      field on a candidate's card, under the four prose boxes, optional. The
      form carries no "update on strengths" field at all — that belongs to the
      final grade, not to this one — and no second evidence box. */
-  ['ev','EVIDENCE NEEDED FOR A PASS / HIGHER GRADE (IF APPLICABLE):','evi','What the centre is putting forward for the higher of the two grades.']
+  ['ev','EVIDENCE NEEDED FOR A PASS / HIGHER GRADE (IF APPLICABLE):','evi','What the centre is putting forward for the higher of the two grades.','prov'],
+  /* The final-grade box, which appears only once a final grade is entered
+     (Ramy, 25 Sep 2026). It carries either the justification for a higher
+     grade or, for a straight pass, the line saying the candidate held their
+     ground — Cambridge asks for one on every candidate, not only the
+     borderline ones, and the assessor copies it into their own Appian form.
+
+     The heading is Cambridge's name for the field at the final stage. It is
+     the one thing here NOT verified against Appian itself: the assessor
+     report form only opens for an assessor account, so it is to be checked
+     against Kasia's screen after the visit. */
+  ['upd','UPDATE ON STRENGTHS AND AREAS FOR DEVELOPMENT:','upd','','fin']
 ];
+/* The final-grade box offers its own first sentence, with the candidate's name
+   already in it, and a key press accepts it (Ramy, 25 Sep 2026: "click enter
+   and then that sentence would just be there... like arrow forward and then
+   enter"). It is a suggestion, not a default: it is only offered while the box
+   is empty, and what it inserts is ordinary text to edit. */
+/* Which of the two grades a box follows: the evidence box a borderline
+   provisional, the update box any final grade at all. */
+function secShown(gate, rec, key){
+  const r = rec || {};
+  if (key && (r[key] || '').trim()) return true;
+  return gate === 'fin' ? !!(r.fin || '').trim() : isBorderline(r.prov);
+}
+const firstName = n => String(n||'').trim().split(/\s+/)[0] || 'They';
+function finalSuggestion(name){
+  return firstName(name) + ' maintained progress through the second half of the course and passed all four written assignments.';
+}
+
 /* Cambridge's three borderline grades — Pass/Fail, Pass B/Pass, Pass A/Pass B
    — are the ones written here with a slash. */
 const isBorderline = g => /\//.test(g || '');
@@ -443,12 +476,15 @@ function sync(){
     sel.classList.toggle('set', !!v && !OUTCOMES.includes(v));
     sel.classList.toggle('out', OUTCOMES.includes(v));
   });
-  /* the evidence box belongs to a borderline provisional, and to nothing else
-     — but it never hides text someone has already typed */
-  document.querySelectorAll('.sec[data-ev]').forEach(sec=>{
+  /* Two boxes that come and go: the evidence one belongs to a borderline
+     PROVISIONAL, the update one appears once a FINAL grade is entered. Neither
+     ever hides text someone has already written. */
+  document.querySelectorAll('.sec[data-gate]').forEach(sec=>{
     const r = state[sec.dataset.ev] || {};
     const t = sec.querySelector('textarea');
-    sec.hidden = !(isBorderline(r.prov) || (t && t.value.trim()));
+    sec.hidden = !(secShown(sec.dataset.gate, r, null) || (t && t.value.trim()));
+    const line = sec.querySelector('.suggestline');
+    if (line) line.hidden = !!(t && t.value.trim());
   });
 }
 function grow(t){ t.style.height='auto'; t.style.height=(t.scrollHeight+2)+'px'; }
@@ -482,9 +518,10 @@ function cardHTML(c,i){
         : `<textarea data-n="${esc(c.n)}" data-f="${k}" placeholder="${esc(ph)}">${esc(st[k]||'')}</textarea>`}
       <details class="reuse" data-sec="${k}" data-n="${esc(c.n)}"><summary>Reuse a point from another candidate</summary><div class="lines"></div></details>
       </div>`).join('')}</div>
-    ${SECTIONS.filter(x=>!LIST[x[0]]).map(([k,h,cls,ph])=>`<div class="sec ${cls}" data-ev="${esc(c.n)}"${(isBorderline(st.prov) || (st[k]||'').trim()) ? '' : ' hidden'}>
+    ${SECTIONS.filter(x=>!LIST[x[0]]).map(([k,h,cls,ph,gate])=>`<div class="sec ${cls}" data-gate="${gate}" data-ev="${esc(c.n)}"${secShown(gate, st, k) ? '' : ' hidden'}>
       <div class="sechead"><h3>${h}</h3><button type="button" class="seccopy" data-seccopy="${k}" data-n="${esc(c.n)}">copy</button></div>
-      <textarea data-n="${esc(c.n)}" data-f="${k}" placeholder="${esc(ph)}">${esc(st[k]||'')}</textarea>
+      <textarea data-n="${esc(c.n)}" data-f="${k}"${k === 'upd' ? ` data-suggest="${esc(finalSuggestion(c.n))}"` : ''} placeholder="${esc(k === 'upd' ? finalSuggestion(c.n) + '   —   Tab or Enter to use this' : ph)}">${esc(st[k]||'')}</textarea>
+      ${k === 'upd' ? `<div class="suggestline"${(st[k]||'').trim() ? ' hidden' : ''}>Press <kbd>Tab</kbd> or <kbd>Enter</kbd> to write the suggested sentence, then edit it.</div>` : ''}
       <details class="reuse" data-sec="${k}" data-n="${esc(c.n)}"><summary>Reuse a point from another candidate</summary><div class="lines"></div></details>
       </div>`).join('')}
     <div class="grades final">
@@ -545,6 +582,20 @@ loadShared().finally(()=>{ boot(); applyMode(); paint(); startPulling(); });
 function linesOf(ul){
   return [...ul.querySelectorAll('li')].map(li=>li.textContent.replace(/\s+/g,' ').trim()).filter(Boolean).join('\n');
 }
+/* Tab, Enter or the right arrow writes the suggested sentence, but only into
+   an empty box -- once there is anything in it those keys do what they always
+   do. Tab still has to move on when there is no suggestion to take. */
+document.getElementById('cands').addEventListener('keydown',e=>{
+  const t = e.target;
+  if (!t.dataset || !t.dataset.suggest || t.value.trim()) return;
+  if (e.key !== 'Tab' && e.key !== 'Enter' && e.key !== 'ArrowRight') return;
+  e.preventDefault();
+  t.value = t.dataset.suggest;
+  t.setSelectionRange(t.value.length, t.value.length);
+  (state[t.dataset.n]=state[t.dataset.n]||{})[t.dataset.f] = t.value;
+  save(t.dataset.n); grow(t); sync(); paint();
+});
+
 document.getElementById('cands').addEventListener('input',e=>{
   const ul = e.target.closest && e.target.closest('ul.pts');
   if (ul){
