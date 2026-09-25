@@ -375,8 +375,23 @@ await step('the grades report holds six, and each grade stays on its own person'
   must(!(await T.p.$('.cand .grow.final ~ .prosewrap .evwrap')), 'the evidence box is still attached to the final grade');
   await T.p.selectOption('.cand:nth-of-type(1) .grow select.grade[data-grade="provisional"]', 'PASS'); await settle(T.p, 500);
   must((await evShown()).every(v => v === false), 'a clean provisional did not hide the evidence box again');
+
+  /* The provisional dropdown carries all ten values the Cambridge form has:
+     seven grades and three outcomes that are not grades. An outcome is not
+     borderline and does not take a grade's colour. */
+  const provOpts = await T.p.$$eval('.cand:nth-of-type(1) .grow select.grade[data-grade="provisional"] option',
+    os => os.map(o => o.value).filter(Boolean));
+  ['WITHDRAWN','EXTENSION','DEFERRAL'].forEach(o =>
+    must(provOpts.includes(o), 'the provisional dropdown is missing ' + o));
+  must(provOpts.length === 10, 'the provisional dropdown holds ' + provOpts.length + ' values, not 10');
+  await T.p.selectOption('.cand:nth-of-type(1) .grow select.grade[data-grade="provisional"]', 'WITHDRAWN'); await settle(T.p, 500);
+  must((await evShown()).every(v => v === false), 'an outcome revealed the borderline evidence box');
+  must(await T.p.$eval('.cand:nth-of-type(1) .grow select.grade[data-grade="provisional"]',
+    e => e.classList.contains('out') && !e.classList.contains('set')), 'an outcome is painted as a grade');
+  await T.p.selectOption('.cand:nth-of-type(1) .grow select.grade[data-grade="provisional"]', 'PASS'); await settle(T.p, 500);
+
   await noSideScroll(T.p, 'Grades report, six candidates');
-  return 'A-F, three graded, each on the right person; evidence box borderline-only';
+  return 'A-F, three graded, each on the right person; evidence borderline-only; ten provisional values';
 });
 
 await step('the assessor pack holds all six, with the visit at the end of week four', async () => {

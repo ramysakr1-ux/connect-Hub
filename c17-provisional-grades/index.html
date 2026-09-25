@@ -76,6 +76,8 @@
     border:1.5px solid var(--line);border-radius:8px;padding:5px 8px;background:var(--bg);}
   .gt select:focus{outline:none;border-color:var(--gtc,var(--navy));}
   .gt select.set{border-color:var(--gtc);background:#fff;color:var(--gtc);}
+  /* an outcome is not a grade, so it does not take a grade's colour */
+  .gt select.out{border-color:var(--line,#d8d2c6);background:#fff;color:#6b6257;font-style:italic;}
 
   /* the profile, across the width: planning on the left, teaching on the right */
   .cols{display:grid;grid-template-columns:1fr 1fr;gap:0 26px;}
@@ -103,6 +105,7 @@
   .gr select{font-family:'Nunito';font-size:.84rem;font-weight:800;color:var(--navy-deep);
     border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;background:#fff;min-width:150px;}
   .gr select:focus{outline:none;border-color:var(--navy);}
+  .gr select.out{color:#6b6257;font-style:italic;}
 
   .sec{padding:15px 24px 4px;}
   .sechead{display:flex;align-items:center;gap:10px;margin:0 0 7px;}
@@ -206,7 +209,10 @@
 <div class="note"><b>&sect;11.6.</b> A candidate who fails one written assignment may still be recommended a Pass or a Pass B, where there is sufficient evidence of that assignment's assessment criteria in their record of teaching practice and/or their written work as a whole &mdash; the assessor documents this in the course report. They are not eligible for Pass A. A candidate who fails more than one assignment is not eligible for a Pass. <b>p43:</b> complete the evidence field for any candidate who was borderline, so the reason for the final grade is on record.</div>
 
 <script>
-const PROV=['','FAIL','FAIL / PASS','PASS','PASS / PASS B','PASS B','PASS B / PASS A','PASS A'];
+/* Seven grades, then the three outcomes that are not grades -- both sets are
+   on the live Cambridge form's provisional dropdown (read 25 Sep 2026). */
+const PROV=['','FAIL','FAIL / PASS','PASS','PASS / PASS B','PASS B','PASS B / PASS A','PASS A','WITHDRAWN','EXTENSION','DEFERRAL'];
+const OUTCOMES=['WITHDRAWN','EXTENSION','DEFERRAL'];
 const FIN=['','FAIL','PASS','PASS B','PASS A'];
 const LIST = {sp:1, st:1, ap:1, at:1};   /* bulleted; the rest are prose */
 const SECTIONS=[
@@ -361,7 +367,8 @@ function sync(){
   document.querySelectorAll('select[data-n][data-f]').forEach(sel=>{
     const v=(state[sel.dataset.n]||{})[sel.dataset.f]||'';
     if(sel.value!==v) sel.value=v;
-    sel.classList.toggle('set', !!v);
+    sel.classList.toggle('set', !!v && !OUTCOMES.includes(v));
+    sel.classList.toggle('out', OUTCOMES.includes(v));
   });
   /* the evidence box belongs to a borderline provisional, and to nothing else
      — but it never hides text someone has already typed */

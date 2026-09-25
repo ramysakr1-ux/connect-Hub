@@ -123,6 +123,7 @@
   select.grade.set{color:var(--teal); border-color:color-mix(in oklab, var(--teal) 45%, transparent);}
   select.grade.fail{color:var(--brick); border-color:color-mix(in oklab, var(--brick) 45%, transparent);}
   select.grade.top{color:var(--gold-ink); border-color:color-mix(in oklab, var(--gold-ink) 50%, transparent);}
+  select.grade.out{color:var(--grey); font-style:italic; border-color:var(--sand-line);}
   select.grade:disabled{opacity:1; cursor:default;}
 
   /* ---- every candidate, down the page ---- */
@@ -247,10 +248,10 @@
 
 </div>
 
-<script src="hub-tracker.js?v=202609251419"></script>
-<script src="hub-store.js?v=202609251419"></script>
-<script src="hub-shared.js?v=202609251419"></script>
-<script src="hub-sync.js?v=202609251419"></script>
+<script src="hub-tracker.js?v=202609251435"></script>
+<script src="hub-store.js?v=202609251435"></script>
+<script src="hub-shared.js?v=202609251435"></script>
+<script src="hub-sync.js?v=202609251435"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a candidate's link opened it and read the course and
@@ -283,7 +284,13 @@ const SHORT={
   '5e':'material use','5f':'instructions','5g':'eliciting/concept-checking','5h':'feedback',
   '5i':'pace','5j':'monitoring','5k':'timing','5l':'portfolio','5m':'self-reflection','5n':'participation'
 };
-const PROV=['FAIL','FAIL / PASS','PASS','PASS / PASS B','PASS B','PASS B / PASS A','PASS A'];
+/* The seven grades, then the three outcomes that are not grades at all. Both
+   sets are on the live Cambridge CELTA Centre Grade Form's provisional
+   dropdown (read 25 Sep 2026); the form's own order runs Pass A downwards,
+   ours runs upwards, and the outcomes sit after the grades either way. */
+const GRADES=['FAIL','FAIL / PASS','PASS','PASS / PASS B','PASS B','PASS B / PASS A','PASS A'];
+const OUTCOMES=['WITHDRAWN','EXTENSION','DEFERRAL'];
+const PROV=GRADES.concat(OUTCOMES);
 const FINAL=['FAIL','PASS','PASS B','PASS A'];
 const SECTIONS=[
   {key:'planS', heading:'Strengths in planning',      src:'topic 4',            add:'Add a strength',     action:false},
@@ -334,7 +341,7 @@ function foldEvidence(r){
   delete r.needed; delete r.provided;
   return r;
 }
-function gradeClass(g){ return g==='FAIL' ? 'fail' : g==='PASS A' ? 'top' : g ? 'set' : ''; }
+function gradeClass(g){ return OUTCOMES.includes(g) ? 'out' : g==='FAIL' ? 'fail' : g==='PASS A' ? 'top' : g ? 'set' : ''; }
 
 let DATA={}, ORDER=[], dirty=false;
 
@@ -361,7 +368,7 @@ function capFor(tr){
   try{
     const r = T.readCandidate(T.recordFor(tr));
     if (!r.fails.length) return null;
-    const capped = r.fails.length > 1 ? PROV.concat(FINAL).filter(g=>g!=='FAIL') : ['PASS A','PASS B / PASS A'];
+    const capped = r.fails.length > 1 ? GRADES.concat(FINAL).filter(g=>g!=='FAIL') : ['PASS A','PASS B / PASS A'];
     return { line: r.ceiling.replace('SRT','LSRT'), capped };
   }catch(e){ return null; }
 }
@@ -388,7 +395,7 @@ const ro  = () => RO ? ' readonly' : '';
    says why it is marked. */
 function gradeSelect(kind, opts, cur, p){
   const capped = (p.cap && p.cap.capped) || [];
-  const cls = cur ? (cur === 'FAIL' ? 'fail' : cur === 'PASS A' ? 'top' : 'set') : '';
+  const cls = gradeClass(cur);
   return `<select class="grade ${cls}" data-id="${esc(p.id)}" data-grade="${kind}"${off()}>
     <option value="">— choose —</option>
     ${opts.map(o => `<option value="${esc(o)}"${o === cur ? ' selected' : ''}>${esc(o)}${capped.includes(o) ? ' · ruled out by assignments' : ''}</option>`).join('')}
@@ -571,7 +578,7 @@ function onGrade(e){
   paintJump(); paintCohort();
   document.querySelectorAll(`select.grade[data-id="${CSS.escape(e.target.dataset.id)}"][data-grade="${e.target.dataset.grade}"]`).forEach(sel => {
     if (sel !== e.target) sel.value = e.target.value;
-    sel.className = 'grade ' + (e.target.value ? (e.target.value === 'FAIL' ? 'fail' : e.target.value === 'PASS A' ? 'top' : 'set') : '');
+    sel.className = 'grade ' + gradeClass(e.target.value);
   });
 }
 document.getElementById('cohort').addEventListener('change', onGrade);
