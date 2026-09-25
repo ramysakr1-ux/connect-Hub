@@ -236,6 +236,55 @@
   .seen .ps{display:grid; grid-template-columns:auto 1fr; gap:2px 8px;}
   .seen .ps span{font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--grey); padding-top:3px;}
   .seen h4{font-family:'Newsreader',Georgia,serif; font-size:0.95rem; margin:16px 0 4px; color:var(--terracotta);}
+  /* ---- the procedure as the trainee now writes it: a numbered spine ----
+     Ramy, 26 Sep 2026: "match the tutor's view to the spine." The trainee's
+     editor became Connect's spine earlier today; this is the same row, read
+     only, with the one column the trainee does not have -- the tutor's
+     comment on the stage -- on the right. The comment boxes keep their
+     data-tc keys (st0, st1...), so collect(), the paste-back, the printed
+     feedback and the returned view are untouched. --hue per row from the
+     same list the trainee's rows use; the dot fills when the stage has a
+     procedure, hollow when the trainee left it empty. */
+  .pspine{margin-top:8px; border:1px solid var(--sand-line); border-radius:6px; background:var(--surface); overflow:hidden;}
+  .prow{display:grid; grid-template-columns:40px minmax(0,200px) minmax(0,1fr) minmax(0,300px);
+    border-top:1px solid var(--row-line, oklch(90% 0.016 82));}
+  .prow:first-child{border-top:none;}
+  .prow .gut{position:relative; display:flex; justify-content:center; padding:14px 0 16px;}
+  .prow .spine{position:absolute; width:2px; left:calc(50% - 1px); top:0; bottom:0; background:var(--sand-line);}
+  .prow.first .spine{top:14px;} .prow.last .spine{bottom:calc(100% - 36px);}
+  .prow.written .spine{background:var(--hue);}
+  .prow .sdot{position:relative; display:flex; align-items:center; justify-content:center; width:22px; height:22px;
+    border-radius:50%; border:2px solid var(--hue); background:var(--surface); color:var(--grey);
+    font-family:'Karla',sans-serif; font-size:0.7rem; font-weight:700;}
+  .prow.written .sdot{background:var(--hue); color:var(--paper);}
+  .prow .who{padding:12px 14px 14px 0; min-width:0; display:flex; flex-direction:column; gap:5px;}
+  .prow .who b{display:block; font-family:'Newsreader',Georgia,serif; font-size:0.98rem; font-weight:600; line-height:1.25; color:var(--ink);}
+  .prow .who .aim{display:block; font-size:0.78rem; font-style:italic; color:var(--grey); line-height:1.4;}
+  .prow .chips{display:flex; flex-wrap:wrap; align-items:center; gap:5px; margin-top:3px;}
+  .prow .tpill{display:inline-flex; align-items:center; border-radius:6px; padding:2px 8px; font-size:0.78rem; font-weight:700;
+    background:var(--box); color:var(--grey); font-variant-numeric:tabular-nums;}
+  .prow.written .tpill{background:color-mix(in oklab, var(--hue) 13%, transparent); color:var(--hue);}
+  .prow .ichip{border-radius:6px; border:1px solid var(--sand-line); background:var(--box); padding:2px 8px;
+    font-size:0.72rem; font-weight:600; color:var(--ink-warm);}
+  .prow .prose{border-left:1px solid var(--row-line, oklch(90% 0.016 82)); padding:12px 14px 14px 16px; min-width:0; font-size:0.86rem; line-height:1.55;}
+  .prow .prose ul{margin:0; padding-left:16px;}
+  .prow .prose .none{color:var(--grey); font-style:italic;}
+  .prow .tcol{border-left:1px solid var(--row-line, oklch(90% 0.016 82)); padding:10px 12px 12px; min-width:0;
+    background:color-mix(in oklab, var(--terracotta) 4%, transparent);}
+  .prow .tcol textarea.tc{min-height:60px;}
+  /* the column heading, once, above the spine -- the one thing the trainee's version has no need of */
+  .pspine-head{display:grid; grid-template-columns:40px minmax(0,200px) minmax(0,1fr) minmax(0,300px);
+    font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--grey); padding:0 0 4px;}
+  .pspine-head span:last-child{color:var(--terracotta); padding-left:12px;}
+  .pspine-head span:nth-child(3){padding-left:16px;}
+  /* A phone: name and aim over the prose over the comment, the spine down the left. */
+  @media(max-width:640px){
+    .prow{grid-template-columns:32px minmax(0,1fr);}
+    .prow .who{grid-column:2; padding-right:0; padding-bottom:4px;}
+    .prow .prose{grid-column:2; border-left:none; padding:0 0 8px 0;}
+    .prow .tcol{grid-column:2; border-left:none; padding:8px 0 14px 0; background:none;}
+    .pspine-head{display:none;}
+  }
   .seen th.tc{background:var(--terracotta); color:var(--paper);}
   .seen textarea.tc{width:100%; min-height:72px; font-family:'Karla',sans-serif; font-size:0.86rem;
     padding:5px 7px; border:1px solid var(--ochre); border-radius:5px; background:#FBF3E4;
@@ -452,9 +501,9 @@
 
 
 <script src="hub-exchange.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609260150"></script>
-<script src="hub-store.js?v=202609260150"></script>
-<script src="hub-sync.js?v=202609260150"></script>
+<script src="hub-shared.js?v=202609260205"></script>
+<script src="hub-store.js?v=202609260205"></script>
+<script src="hub-sync.js?v=202609260205"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -898,18 +947,26 @@ function showSeen(d){
     </table>`;
   }
   if(rows.length){
-    /* The stage box holds "NAME: the aim" -- name bold, aim beneath it. */
-    const stageCell=r=>{ const v=String(r.stage||'\u2014'), k=v.indexOf(':');
-      const name=k===-1?v:v.slice(0,k), aim=k===-1?'':v.slice(k+1).trim();
-      return `<b>${esc(name)}</b>${aim?`<span class="aim">${esc(aim)}</span>`:''}${r.aim?`<span class="aim">${esc(r.aim)}</span>`:''}`; };
-    html+=`<h4>Procedure</h4><table>
-      <tr><th width="18%">Stage</th><th width="34%">Procedure</th><th class="mid" width="12%">Int. / time</th>
-          <th class="tc" width="36%">Your comment</th></tr>
-      ${rows.map((r,i)=>`<tr><td class="stage">${stageCell(r)}</td>
-        <td>${bulletsHTML(r.proc)}</td>
-        <td class="mid">${r.int?`<span class="pill">${esc(r.int)}</span>`:''}${r.time?`<span class="pill time">${esc(r.time)} min</span>`:''}</td>
-        <td>${tcBox('st'+i,'on this stage')}</td></tr>`).join('')}
-    </table>`;
+    /* The record holds "NAME: the aim" in one string; they part at the first
+       colon. Same hue list as the trainee's editor, so stage 3 is the same
+       colour on both screens. */
+    const HUES=['var(--teal)','var(--gold-deep, oklch(52% 0.098 70))','var(--ink-warm)','var(--ink-warm)','var(--brick)','var(--grey)','var(--teal)'];
+    const parts=r=>{ const v=String(r.stage||''), k=v.indexOf(':');
+      return { name:(k===-1?v:v.slice(0,k)).trim(), aim:(k===-1?'':v.slice(k+1)).trim() || (r.aim||'').trim() }; };
+    html+=`<h4>Procedure</h4>
+    <div class="pspine-head"><span></span><span>Stage</span><span>Procedure</span><span>Your comment</span></div>
+    <div class="pspine">
+      ${rows.map((r,i)=>{ const {name,aim}=parts(r); const written=!!(r.proc||'').trim();
+        const named=!!(name||m.framework);
+        const ints=String(r.int||'').split('+').map(x=>x.trim()).filter(Boolean);
+        return `<div class="prow${written?' written':''}${i===0?' first':''}${i===rows.length-1?' last':''}" style="--hue:${named?HUES[i%HUES.length]:'var(--sand-line)'}">
+        <div class="gut"><span class="spine"></span><span class="sdot">${i+1}</span></div>
+        <div class="who"><b>${esc(name||'\u2014')}</b>${aim?`<span class="aim">${esc(aim)}</span>`:''}
+          <div class="chips">${r.time?`<span class="tpill">${esc(r.time)}\u2032</span>`:''}${ints.map(c=>`<span class="ichip">${esc(c)}</span>`).join('')}</div></div>
+        <div class="prose">${written?bulletsHTML(r.proc):'<span class="none">nothing written for this stage</span>'}</div>
+        <div class="tcol">${tcBox('st'+i,'on this stage')}</div>
+      </div>`; }).join('')}
+    </div>`;
   }
   const laLabel = l.type==='vocab'?'Vocabulary':(l.type==='grammar'?'Grammar':'Functional language');
   if(l.type==='vocab' && (l.vocab||[]).length){
