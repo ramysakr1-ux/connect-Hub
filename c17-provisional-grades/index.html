@@ -118,12 +118,22 @@
   .seccopy:hover{border-color:var(--secc,var(--navy));color:var(--secc,var(--navy));}
   .seccopy.ok{opacity:1;background:var(--teal-deep);border-color:var(--teal-deep);color:#fff;}
   .sec.act h3{--secc:var(--amber-deep);}
-  .sec.evi h3{
-  /* the suggestion line under the final-grade box */
+  .sec.evi h3{--secc:var(--sub);}
+  .sec.upd h3{--secc:var(--teal-deep,#0f5c5c);}
+
+  /* One box, two sides: the update on the left, the evidence for a higher
+     grade on the right, divided by a rule rather than by a second card. */
+  .sec.finalbox{padding-top:2px;}
+  .fsides{display:grid;grid-template-columns:1fr 1fr;gap:0 26px;}
+  .fside{min-width:0;}
+  .fside + .fside{border-left:1px solid var(--line,#e6e0d4);padding-left:26px;}
+  @media (max-width:820px){ .fsides{grid-template-columns:1fr;gap:16px;}
+    .fside + .fside{border-left:0;padding-left:0;border-top:1px solid var(--line,#e6e0d4);padding-top:14px;} }
+
+  /* how to take the offered sentence */
   .suggestline{margin-top:6px;font-size:.74rem;color:#6b6257;}
   .suggestline kbd{font-family:inherit;font-size:.72rem;font-weight:800;border:1px solid var(--line,#d8d2c6);
     border-bottom-width:2px;border-radius:4px;padding:1px 5px;background:#fff;}
-  .sec.upd h3{--secc:var(--teal-deep,#0f5c5c);}--secc:var(--sub);}
   textarea{width:100%;font-family:'Nunito';font-size:.88rem;line-height:1.6;color:var(--ink);
     border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg);
     resize:vertical;min-height:62px;overflow:hidden;}
@@ -237,11 +247,14 @@ const SECTIONS=[
      ground — Cambridge asks for one on every candidate, not only the
      borderline ones, and the assessor copies it into their own Appian form.
 
-     The heading is Cambridge's name for the field at the final stage. It is
-     the one thing here NOT verified against Appian itself: the assessor
-     report form only opens for an assessor account, so it is to be checked
-     against Kasia's screen after the visit. */
-  ['upd','UPDATE ON STRENGTHS AND AREAS FOR DEVELOPMENT:','upd','','fin']
+     Both headings are Ramy's, read off his own Appian screen on 25 Sep 2026,
+     and they are NOT the same words as the provisional box above: that one is
+     "evidence NEEDED for a Pass / Higher Grade", this one "what evidence WAS
+     PROVIDED for a Higher Grade" -- needed before, provided after. The
+     assessor report form only opens for an assessor account, so these could
+     not be read here directly. */
+  ['upd','UPDATE ON STRENGTHS AND ACTION POINTS:','upd','','fin'],
+  ['wp','WHAT EVIDENCE WAS PROVIDED FOR A HIGHER GRADE (IF APPLICABLE):','evi','Where the final grade moved, what earned it.','fin']
 ];
 /* The final-grade box offers its own first sentence, with the candidate's name
    already in it, and a key press accepts it (Ramy, 25 Sep 2026: "click enter
@@ -355,12 +368,10 @@ let state={}; try{ state=JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){
    profiles, under a status line nobody reads, which is worse than an empty
    page: it looks like it worked. Found 25 Sep 2026, on the bare link the
    assessor pack was carrying. */
-/* Anything typed into the old second evidence box moves into the one field. */
-Object.keys(state).forEach(function(n){
-  var r = state[n]; if (!r || !r.wp) return;
-  r.ev = [r.ev, r.wp].map(function(v){ return (v||'').trim(); }).filter(Boolean).join('\n\n');
-  delete r.wp;
-});
+/* The one-time fold of the old second evidence box ran on 25 Sep 2026 and is
+   gone: `wp` is now the final-grade box's own key, and folding it on every
+   load would eat what is typed there. Any browser still holding the old text
+   under that key is holding the same field's words, so it reads correctly. */
 const DIRTY=new Set(); let flushTimer=null, LOADED=false;
 const save=(n)=>{
   try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
@@ -481,10 +492,14 @@ function sync(){
      ever hides text someone has already written. */
   document.querySelectorAll('.sec[data-gate]').forEach(sec=>{
     const r = state[sec.dataset.ev] || {};
-    const t = sec.querySelector('textarea');
-    sec.hidden = !(secShown(sec.dataset.gate, r, null) || (t && t.value.trim()));
-    const line = sec.querySelector('.suggestline');
-    if (line) line.hidden = !!(t && t.value.trim());
+    /* ANY side with something in it keeps the box: the final box holds two,
+       and asking only the first would hide what is written in the second. */
+    const written = [...sec.querySelectorAll('textarea')].some(t => t.value.trim());
+    sec.hidden = !(secShown(sec.dataset.gate, r, null) || written);
+    sec.querySelectorAll('.suggestline').forEach(line => {
+      const own = line.parentNode.querySelector('textarea');
+      line.hidden = !!(own && own.value.trim());
+    });
   });
 }
 function grow(t){ t.style.height='auto'; t.style.height=(t.scrollHeight+2)+'px'; }
@@ -498,6 +513,27 @@ function paint(){
     a.classList.toggle('done', !!(state[C[+a.dataset.i].n]||{}).prov);
   });
 }
+/* The final grade's box: ONE box with two sides (Ramy, 25 Sep 2026), not two
+   stacked cards — the update on the left, the evidence that earned a higher
+   grade on the right, which is how his Appian screen has it. It appears with
+   the final grade and goes with it, unless there is already something written
+   in either side. */
+function finalBoxHTML(c, st){
+  const side = (k) => {
+    const [, h, , ph] = SECTIONS.find(x => x[0] === k);
+    const suggest = k === 'upd' ? finalSuggestion(c.n) : '';
+    return `<div class="fside">
+      <div class="sechead"><h3>${h}</h3><button type="button" class="seccopy" data-seccopy="${k}" data-n="${esc(c.n)}">copy</button></div>
+      <textarea data-n="${esc(c.n)}" data-f="${k}"${suggest ? ` data-suggest="${esc(suggest)}"` : ''} placeholder="${esc(suggest ? suggest + '   —   Tab or Enter to use this' : ph)}">${esc(st[k]||'')}</textarea>
+      ${suggest ? `<div class="suggestline"${(st[k]||'').trim() ? ' hidden' : ''}>Press <kbd>Tab</kbd> or <kbd>Enter</kbd> to write this, then edit it.</div>` : ''}
+    </div>`;
+  };
+  const written = ['upd','wp'].some(k => (st[k]||'').trim());
+  return `<div class="sec finalbox" data-gate="fin" data-ev="${esc(c.n)}"${(st.fin || written) ? '' : ' hidden'}>
+    <div class="fsides">${side('upd')}${side('wp')}</div>
+  </div>`;
+}
+
 /* One candidate's card. Pulled out of boot() so that work arriving from the
    other trainer can redraw that candidate alone, leaving the rest of the page
    — and anything being typed on it — exactly where it was. */
@@ -518,7 +554,7 @@ function cardHTML(c,i){
         : `<textarea data-n="${esc(c.n)}" data-f="${k}" placeholder="${esc(ph)}">${esc(st[k]||'')}</textarea>`}
       <details class="reuse" data-sec="${k}" data-n="${esc(c.n)}"><summary>Reuse a point from another candidate</summary><div class="lines"></div></details>
       </div>`).join('')}</div>
-    ${SECTIONS.filter(x=>!LIST[x[0]]).map(([k,h,cls,ph,gate])=>`<div class="sec ${cls}" data-gate="${gate}" data-ev="${esc(c.n)}"${secShown(gate, st, k) ? '' : ' hidden'}>
+    ${SECTIONS.filter(x=>!LIST[x[0]] && x[4] !== 'fin').map(([k,h,cls,ph,gate])=>`<div class="sec ${cls}" data-gate="${gate}" data-ev="${esc(c.n)}"${secShown(gate, st, k) ? '' : ' hidden'}>
       <div class="sechead"><h3>${h}</h3><button type="button" class="seccopy" data-seccopy="${k}" data-n="${esc(c.n)}">copy</button></div>
       <textarea data-n="${esc(c.n)}" data-f="${k}"${k === 'upd' ? ` data-suggest="${esc(finalSuggestion(c.n))}"` : ''} placeholder="${esc(k === 'upd' ? finalSuggestion(c.n) + '   —   Tab or Enter to use this' : ph)}">${esc(st[k]||'')}</textarea>
       ${k === 'upd' ? `<div class="suggestline"${(st[k]||'').trim() ? ' hidden' : ''}>Press <kbd>Tab</kbd> or <kbd>Enter</kbd> to write the suggested sentence, then edit it.</div>` : ''}
@@ -527,6 +563,7 @@ function cardHTML(c,i){
     <div class="grades final">
       <span class="gr"><label>Final Grade</label><select data-n="${esc(c.n)}" data-f="fin">${opts(FIN,st.fin||'')}</select></span>
     </div>
+    ${finalBoxHTML(c, st)}
     <div class="cfoot"><button class="mini" data-copy="${esc(c.n)}">Copy this profile</button></div>
   </section>`;
 }
