@@ -241,9 +241,9 @@
 </div>
 
 <script src="hub-due.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609250923"></script>
-<script src="hub-store.js?v=202609250923"></script>
-<script src="hub-sync.js?v=202609250923"></script>
+<script src="hub-shared.js?v=202609251047"></script>
+<script src="hub-store.js?v=202609251047"></script>
+<script src="hub-sync.js?v=202609251047"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -519,7 +519,17 @@ function fmtDate(ts){
 }
 function setLock(on){
   locked=on;
+  /* Buttons too. A turned-in document says "your tutor has it now; you can't
+     edit it" and then left every button live: Dictate, Bring in last TP's
+     action points, + Add stage, + another, and the row-delete crosses. They
+     still worked, so a candidate could change a document that was already
+     with the tutor, and nothing they changed would ever reach it (25 Sep
+     2026). Back and Print are the two that stay. */
   document.querySelectorAll('.board input, .board textarea, .board select').forEach(el=>{ el.disabled=on; });
+  document.querySelectorAll('.board button').forEach(el=>{
+    if (el.closest('.back') || el.classList.contains('btn-print') || el.id === 'backLink') return;
+    el.disabled = on;
+  });
 }
 function renderTurnStatus(){
   const rec=loadSelfRecord();
