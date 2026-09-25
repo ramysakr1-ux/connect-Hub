@@ -248,10 +248,10 @@
 
 </div>
 
-<script src="hub-tracker.js?v=202609251435"></script>
-<script src="hub-store.js?v=202609251435"></script>
-<script src="hub-shared.js?v=202609251435"></script>
-<script src="hub-sync.js?v=202609251435"></script>
+<script src="hub-tracker.js?v=202609251442"></script>
+<script src="hub-store.js?v=202609251442"></script>
+<script src="hub-shared.js?v=202609251442"></script>
+<script src="hub-sync.js?v=202609251442"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a candidate's link opened it and read the course and
@@ -291,7 +291,7 @@ const SHORT={
 const GRADES=['FAIL','FAIL / PASS','PASS','PASS / PASS B','PASS B','PASS B / PASS A','PASS A'];
 const OUTCOMES=['WITHDRAWN','EXTENSION','DEFERRAL'];
 const PROV=GRADES.concat(OUTCOMES);
-const FINAL=['FAIL','PASS','PASS B','PASS A'];
+const FINAL=['FAIL','PASS','PASS B','PASS A'].concat(OUTCOMES);
 const SECTIONS=[
   {key:'planS', heading:'Strengths in planning',      src:'topic 4',            add:'Add a strength',     action:false},
   {key:'planA', heading:'Action points in planning',  src:'topic 4',            add:'Add an action point',action:true},
@@ -331,6 +331,13 @@ const EVIDENCE = { key:'evidence',
   ph:'What the centre is putting forward for the higher of the two grades.',
   hint:'Optional on the Cambridge form, but expected on a borderline candidate, so the higher grade has a justification on record.' };
 const isBorderline = g => /\//.test(g || '');
+/* The door to the final course report. There is no report to write on a
+   course that ended in an outcome rather than a grade -- the document
+   confirms attendance and states a grade, and neither sentence would hold. */
+function reportLabel(g){
+  return OUTCOMES.includes(g) ? 'Final report (not issued on a ' + g.toLowerCase() + ')'
+       : g ? 'Open the final report' : 'Final report (needs a final grade)';
+}
 
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function blankRecord(name){ return {name, provisional:'', final:'', planS:[], planA:[], teachS:[], teachA:[], update:'', evidence:'', hoursAttended:'', overall:''}; }
@@ -477,7 +484,7 @@ function paintCands(){
           <div class="head"><h3>Final course report</h3><span class="src">hours attended, and the overall comment</span></div>
           <div class="frrow">
             <label>Hours attended <input type="number" min="0" max="999" step="0.5"${ro()} data-field="hoursAttended" value="${esc(d.hoursAttended)}" placeholder="e.g. 118"></label>
-            <a class="btn" href="16_final_report.html?id=${encodeURIComponent(p.id)}">${d.final ? 'Open the final report' : 'Final report (needs a final grade)'}</a>
+            <a class="btn frbtn" data-fr="${esc(p.id)}" href="16_final_report.html?id=${encodeURIComponent(p.id)}">${reportLabel(d.final)}</a>
           </div>
           <textarea class="prose"${ro()} data-field="overall" placeholder="The overall comment on the final report, addressed to the candidate. Optional." style="min-height:110px">${esc(d.overall || '')}</textarea>
         </div>
@@ -574,6 +581,10 @@ function onGrade(e){
   if (e.target.dataset.grade === 'provisional') {
     const box = document.querySelector(`.evwrap[data-ev="${CSS.escape(e.target.dataset.id)}"]`);
     if (box) box.hidden = !isBorderline(e.target.value);
+  }
+  if (e.target.dataset.grade === 'final') {
+    const btn = document.querySelector(`.frbtn[data-fr="${CSS.escape(e.target.dataset.id)}"]`);
+    if (btn) btn.textContent = reportLabel(e.target.value);
   }
   paintJump(); paintCohort();
   document.querySelectorAll(`select.grade[data-id="${CSS.escape(e.target.dataset.id)}"][data-grade="${e.target.dataset.grade}"]`).forEach(sel => {

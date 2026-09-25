@@ -390,8 +390,23 @@ await step('the grades report holds six, and each grade stays on its own person'
     e => e.classList.contains('out') && !e.classList.contains('set')), 'an outcome is painted as a grade');
   await T.p.selectOption('.cand:nth-of-type(1) .grow select.grade[data-grade="provisional"]', 'PASS'); await settle(T.p, 500);
 
+  /* The same three values on the final grade, where they close the door to
+     the final course report: that document confirms attendance and states a
+     grade, and a candidate who withdrew has neither. */
+  const finOpts = await T.p.$$eval('.cand:nth-of-type(1) .grow.final select.grade option',
+    os => os.map(o => o.value).filter(Boolean));
+  ['WITHDRAWN','EXTENSION','DEFERRAL'].forEach(o =>
+    must(finOpts.includes(o), 'the final dropdown is missing ' + o));
+  must(finOpts.length === 7, 'the final dropdown holds ' + finOpts.length + ' values, not 7');
+  const frLabel = () => T.p.$eval('.cand:nth-of-type(1) .frbtn', e => e.textContent.trim());
+  await T.p.selectOption('.cand:nth-of-type(1) .grow.final select.grade', 'PASS B'); await settle(T.p, 400);
+  must(/^Open the final report$/.test(await frLabel()), 'a graded candidate cannot open the final report: ' + await frLabel());
+  await T.p.selectOption('.cand:nth-of-type(1) .grow.final select.grade', 'WITHDRAWN'); await settle(T.p, 400);
+  must(/not issued/.test(await frLabel()), 'the final report is still offered on a withdrawal: ' + await frLabel());
+  await T.p.selectOption('.cand:nth-of-type(1) .grow.final select.grade', ''); await settle(T.p, 400);
+
   await noSideScroll(T.p, 'Grades report, six candidates');
-  return 'A-F, three graded, each on the right person; evidence borderline-only; ten provisional values';
+  return 'A-F, three graded, each on the right person; evidence borderline-only; ten provisional and seven final values';
 });
 
 await step('the assessor pack holds all six, with the visit at the end of week four', async () => {

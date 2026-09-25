@@ -125,10 +125,10 @@
   <div id="doc"></div>
 </div>
 
-<script src="hub-tracker.js?v=202609251435"></script>
-<script src="hub-store.js?v=202609251435"></script>
-<script src="hub-shared.js?v=202609251435"></script>
-<script src="hub-sync.js?v=202609251435"></script>
+<script src="hub-tracker.js?v=202609251442"></script>
+<script src="hub-store.js?v=202609251442"></script>
+<script src="hub-shared.js?v=202609251442"></script>
+<script src="hub-sync.js?v=202609251442"></script>
 <script type="text/x-hub-app">
 /* Tutors and the assessor. A candidate's link is refused: Connect releases the
    candidate's own copy as a separate, later act once Cambridge has confirmed,
@@ -182,6 +182,16 @@ const CLOSING = {
    them as Fail / Pass / Pass B / Pass A. */
 function gradeWord(g){ return ({ 'FAIL':'Fail', 'PASS':'Pass', 'PASS B':'Pass B', 'PASS A':'Pass A' })[g] || ''; }
 function gradeCls(g){ return g === 'FAIL' ? 'fail' : g === 'PASS A' ? 'top' : g ? 'set' : ''; }
+/* The three values on the Cambridge form that are outcomes, not grades. A
+   course that ends in one of them ends without a grade, so there is no report
+   to write: this document confirms attendance and states a grade, and both
+   sentences would be untrue. */
+const OUTCOMES = ['WITHDRAWN','EXTENSION','DEFERRAL'];
+const OUTCOME_LINE = {
+  'WITHDRAWN': ['withdrew from the course', 'A final course report states the grade agreed with the assessor. A candidate who withdrew has no grade to state.'],
+  'EXTENSION': ['has been granted an extension', 'The report is written once the extension is complete and a grade has been agreed with the assessor.'],
+  'DEFERRAL':  ['has deferred', 'The report is written on the course the candidate completes, once a grade has been agreed with the assessor.']
+};
 /* A date-only string, read as the calendar date it names -- never through a
    time zone that could turn the 5th into the 4th. */
 function longDate(s){
@@ -204,7 +214,10 @@ if (!who) {
   const g = (who.tracker && who.tracker.grades) || {};
   const finalGrade = g.final || '';
   const word = gradeWord(finalGrade);
-  if (!finalGrade) {
+  if (OUTCOMES.includes(finalGrade)) {
+    const [what, why] = OUTCOME_LINE[finalGrade];
+    doc.innerHTML = `<div class="missing"><h2>${esc(who.name)} ${what}</h2><p class="note">${why} Back to the <a href="13_grades_report.html">grades report</a>.</p></div>`;
+  } else if (!finalGrade) {
     doc.innerHTML = `<div class="missing"><h2>${esc(who.name)} has no final grade yet</h2><p class="note">The final course report states the grade agreed with the assessor. Record it on the <a href="13_grades_report.html">grades report</a> and this page fills itself in.</p></div>`;
   } else {
     /* The written assignments, Pass or Fail, read off the candidate's own
