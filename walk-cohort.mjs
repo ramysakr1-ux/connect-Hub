@@ -274,15 +274,30 @@ await step(`weeks 1-2: ${TUTOR_1} returns feedback to three`, async () => {
   for (const c of COHORT.slice(0, 3)) {
     await T.p.goto(`${BASE}3_tutor_feedback.html?k=${STORE.key}&trainee=${tokens[c.name]}`, { waitUntil: 'domcontentloaded' }); await settle(T.p, 3000);
     await T.p.selectOption('#fGrade', 'To standard'); await settle(T.p, 300);
+    /* The TP number, which the walk never set: without it the record cannot be
+       placed on a TP, and T.tpHistory -- which everything reads through -- drops
+       it. A tutor always fills this in; the fixture has to as well. */
+    await T.p.fill('#fTP', 'TP3'); await settle(T.p, 300);
     /* A strength in teaching, or the return warns that nothing was said about
        the teaching and stops to ask -- which is the screen working, not a
-       fault, and it is what the tutor would actually write. */
-    await T.p.evaluate(() => {
-      const box = [...document.querySelectorAll('textarea, input[type=text]')].find(e => /one point/i.test(e.placeholder || ''));
-      if (box) { box.value = 'Clear instructions, checked before the task'; box.dispatchEvent(new Event('input', { bubbles: true })); }
-      const ov = document.querySelector('#overall'); if (ov) { ov.value = 'A solid lesson.'; ov.dispatchEvent(new Event('input', { bubbles: true })); }
-    });
-    await settle(T.p, 400);
+       fault, and it is what the tutor would actually write.
+
+       Written into the real controls: a point is a contenteditable .pt-text
+       inside its list, NOT a textarea, and the overall comment is #tOverall.
+       This step used to look for a textarea whose placeholder said "one
+       point", which matches nothing on the page -- so for weeks it returned
+       feedback carrying a grade and not one word, and every later step that
+       leaned on a point being there was passing on an empty record. The
+       writes are asserted now so the fixture cannot lie again. */
+    /* TYPED, not assigned. A point is a contenteditable div, and setting its
+       textContent leaves the form's own state untouched -- the record then
+       returns with a grade and an empty list, which is exactly what this step
+       did for weeks while reporting success. Clicking and typing is what a
+       tutor does and what the form listens for. */
+    await T.p.click('#lST .pt-text');
+    await T.p.keyboard.type('Clear instructions, checked before the task');
+    await T.p.fill('#tOverall', 'A solid lesson.');
+    await settle(T.p, 600);
     const ret = await T.p.$('#returnBtn'); must(ret, 'no Return button for ' + c.name);
     await ret.click(); await settle(T.p, 800);
     const cf = await T.p.$('.confirm-action'); if (cf) await cf.click();
@@ -290,6 +305,13 @@ await step(`weeks 1-2: ${TUTOR_1} returns feedback to three`, async () => {
   }
   const returned = Object.values(STORE.trainees).filter(t => t.records.feedback);
   must(returned.length === 3, 'feedback on the store: ' + returned.length + ', expected 3');
+  /* The point itself, on the record -- not just "a record exists". Asserting
+     the container and not the contents is what let an empty fixture pass. */
+  const withPoint = returned.filter(t => {
+    const st = t.records.feedback && t.records.feedback.state;
+    return st && ((st.lists && st.lists.lST) || []).some(pt => /Clear instructions/.test(pt.html || ''));
+  });
+  must(withPoint.length === 3, 'returned feedback carrying the strength in teaching: ' + withPoint.length + ' of 3');
   const graded = Object.values(STORE.trainees).filter(t => /To standard/.test(JSON.stringify(t.records.feedback || {})));
   must(graded.length === 3, 'returned without a grade: ' + graded.length + ' of 3 carry one');
   return `${TUTOR_1} returned 3, each graded`;
@@ -446,8 +468,29 @@ await step('the grades report holds six, and each grade stays on its own person'
     'Planning: Strengths','Planning: Areas for development','Teaching: Strengths','Teaching: Areas for development'
   ]), 'the candidate headings are not the form\'s: ' + JSON.stringify(heads));
 
+  /* "It remembers what you wrote": the drawer offers this candidate's own TP
+     feedback back, in the matching section, newest TP first — and a click puts
+     it in the box with its criterion code. Defne Yılmaz is one of the three
+     who had feedback returned in weeks 1-2. */
+  const card = T.p.locator('.cand', { hasText: 'Defne Yılmaz' });
+  const drawer = card.locator('details.tprec[data-tp="teachS"]');
+  must(await drawer.count() === 1, 'no "Add from the TP records" drawer on the teaching strengths');
+  must(await card.locator('details.tprec[data-tp="update"]').count() === 0,
+    'the drawer is offered on a section the feedback form does not have');
+  await drawer.locator('summary').click(); await settle(T.p, 700);
+  const offered = await drawer.locator('.lines button').allTextContents();
+  must(offered.some(t => /Clear instructions, checked before the task/.test(t)),
+    'the drawer did not offer what the tutor wrote in TP feedback: ' + JSON.stringify(offered));
+  must(offered.some(t => /^TP\d/.test(t.trim())), 'a suggested point does not say which TP it came from');
+  const before = await card.locator('[data-sec="teachS"] .pt').count();
+  await drawer.locator('.lines button').first().click(); await settle(T.p, 700);
+  must(await card.locator('[data-sec="teachS"] .pt').count() === before + 1, 'clicking a suggestion did not add it');
+  const added = await card.locator('[data-sec="teachS"] .pt textarea').last().inputValue();
+  must(/Clear instructions, checked before the task/.test(added), 'the wrong text landed: ' + added);
+  must(!(await drawer.evaluate(d => d.open)), 'the drawer stayed open over the point it just added');
+
   await noSideScroll(T.p, 'Grades report, six candidates');
-  return 'A-F, three graded, each on the right person; evidence borderline-only; ten provisional and seven final values; the form\'s own headings, course fields kept';
+  return 'A-F, three graded, each on the right person; evidence borderline-only; ten provisional and seven final values; the form\'s own headings, course fields kept; the TP drawer remembers what the tutor wrote';
 });
 
 await step('the assessor pack holds all six, with the visit at the end of week four', async () => {

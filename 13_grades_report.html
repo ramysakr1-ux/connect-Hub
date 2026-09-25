@@ -146,6 +146,9 @@
   .cols{display:grid; grid-template-columns:1fr 1fr; gap:0 26px; padding:4px 24px 8px;}
   @media(max-width:1000px){ .cols{grid-template-columns:1fr;} }
   .prosewrap{padding:6px 24px 8px;}
+  /* which TP a suggested point came from */
+  .fromtp{display:inline-block; margin-right:7px; font-family:'Instrument Sans',sans-serif; font-size:10px;
+    font-weight:700; letter-spacing:.04em; color:var(--grey); vertical-align:1px;}
   /* the final grade's box: one box, two sides */
   .fsides{display:grid; grid-template-columns:1fr 1fr; gap:0 26px;}
   .fside{min-width:0;}
@@ -261,10 +264,10 @@
 
 </div>
 
-<script src="hub-tracker.js?v=202609251808"></script>
-<script src="hub-store.js?v=202609251808"></script>
-<script src="hub-shared.js?v=202609251808"></script>
-<script src="hub-sync.js?v=202609251808"></script>
+<script src="hub-tracker.js?v=202609252032"></script>
+<script src="hub-store.js?v=202609252032"></script>
+<script src="hub-shared.js?v=202609252032"></script>
+<script src="hub-sync.js?v=202609252032"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a candidate's link opened it and read the course and
@@ -530,6 +533,7 @@ function listSection(p, s){
     </div>`).join('')}
     ${items.length ? '' : '<div class="none">Nothing recorded yet.</div>'}
     <button type="button"${off()} class="add" data-add="${s.key}">${s.add}</button>
+    ${FB_SECTION[s.key] ? `<details class="reuse tprec" data-tp="${s.key}"><summary>Add from the TP records</summary><div class="lines"></div></details>` : ''}
     <details class="reuse" data-sec="${s.key}"><summary>Reuse a point from another candidate</summary><div class="lines"></div></details>
   </div>`;
 }
@@ -608,6 +612,67 @@ function fallbackCopy(text, done){
   document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} document.body.removeChild(ta); done();
 }
 
+/* ---- what this tutor already wrote about THIS candidate ------------------
+   The four sections of the grade form are the same four the TP feedback form
+   has, so a point written in feedback belongs in exactly one box here and
+   never needs sorting. Every returned feedback lives on the roster as
+   `tr.tp.history[n]` -- on the roster, not in one browser, so the MCT drafting
+   a candidate they taught for half the course still sees the other tutor's
+   points.
+
+   Newest TP first, and no ranking: Ramy, 25 Sep 2026, on keeping Lite simple
+   -- "it remembers what you wrote". Choosing which four matter is the tutor's
+   judgement, and a bad guess at it would be worse than an empty box. */
+/* The stored record keeps its points under `state.lists.<listId>`, as the raw
+   editor HTML plus a star -- NOT under `state.f`, which holds only the plain
+   fields (TP number, date, grade, the overall comment). collect()'s tidy
+   sp/ap/st/at shape is built for the DOCUMENT and never stored. Read the
+   wrong one and every drawer comes up empty with nothing to show for it. */
+const FB_SECTION = { planS:'lSP', planA:'lAP', teachS:'lST', teachA:'lAT' };
+
+/* A point as the editor left it: the text with its criterion tags inside, and
+   the on-screen bullet. The tags carry the code in data-c, so the code comes
+   out clean and the text comes out without it. */
+function pointFromHTML(html){
+  const box = document.createElement('div');
+  box.innerHTML = String(html || '');
+  const codes = [...box.querySelectorAll('.tag')].map(t => t.dataset.c).filter(Boolean);
+  box.querySelectorAll('.tag').forEach(t => t.remove());
+  const text = (box.textContent || '').replace(/\u2022/g, ' ').replace(/\s+/g, ' ').trim();
+  return { text, code: codes[0] || '' };
+}
+
+function tpPointsFor(id, key){
+  const src = FB_SECTION[key]; if (!src) return [];
+  /* Matched the way roster() builds its ids -- `t.id || t.name` -- not by the
+     roster's own map key, which is something else entirely. Indexing by the
+     key found nobody and the drawer came up empty for everyone. */
+  const tr = Object.values(loadRoster().trainees || {}).find(t => t && (t.id || t.name) === id);
+  if (!tr) return [];
+  /* T.tpHistory is THE source, not `tr.tp.history` directly: it keeps only the
+     returned ones and folds in the feedback that has just been returned and
+     not yet moved into the history. Reading the raw field instead meant the
+     drawer was empty for exactly the candidate whose feedback had gone back
+     that afternoon -- which is when a tutor would use it. */
+  const history = T.tpHistory(tr) || {};
+  const out = [], seen = new Set();
+  Object.keys(history)
+    .map(Number).filter(n => n >= 1).sort((a, b) => b - a)      // newest TP first
+    .forEach(n => {
+      const st = history[n] && history[n].state;
+      const list = (st && st.lists && st.lists[src]) || [];
+      list.forEach(pt => {
+        const { text, code } = pointFromHTML(pt && pt.html);
+        if (!text) return;
+        const k = text.toLowerCase();
+        if (seen.has(k)) return;                                 // said twice, offered once
+        seen.add(k);
+        out.push({ text, code, tp: n });
+      });
+    });
+  return out;
+}
+
 /* ---- the point bank: only what has already been written on this course ---- */
 function bankFor(key, exceptId){
   const seen = new Set(), out = [];
@@ -622,11 +687,23 @@ function bankFor(key, exceptId){
 }
 
 const cands = document.getElementById('cands');
+/* Both drawers fill when they open, not before: a course of twelve with eight
+   TPs each is a lot of reading to do for panes nobody has asked for. */
 cands.addEventListener('toggle', e => {
   const det = e.target; if (!det.classList || !det.classList.contains('reuse') || !det.open) return;
-  const sec = det.closest('[data-sec]'); const id = sec.dataset.id, key = sec.dataset.sec;
-  const bank = bankFor(key, id);
-  det.querySelector('.lines').innerHTML = bank.length
+  const sec = det.closest('[data-sec]'); const id = sec.dataset.id;
+  const lines = det.querySelector('.lines');
+
+  if (det.classList.contains('tprec')) {
+    const pts = tpPointsFor(id, det.dataset.tp);
+    lines.innerHTML = pts.length
+      ? pts.map(it => `<button type="button" data-bank-text="${esc(it.text)}" data-bank-code="${esc(it.code)}"><span class="fromtp">TP${it.tp}</span>${esc(it.text)}${it.code ? ' <b>(' + esc(it.code) + ')</b>' : ''}</button>`).join('')
+      : '<p class="none">Nothing written in this section of their teaching practice feedback yet.</p>';
+    return;
+  }
+
+  const bank = bankFor(sec.dataset.sec, id);
+  lines.innerHTML = bank.length
     ? bank.map(it => `<button type="button" data-bank-text="${esc(it.text)}" data-bank-code="${esc(it.code)}">${esc(it.text)}${it.code ? ' <b>(' + esc(it.code) + ')</b>' : ''}</button>`).join('')
     : '<p class="none">Nothing written in this section for another candidate yet. Once there is, it appears here to reuse.</p>';
 }, true);
@@ -640,6 +717,9 @@ cands.addEventListener('click', e => {
   if (RO) return;
   const bank = e.target.closest('.reuse .lines button');
   if (bank){ const sec = bank.closest('[data-sec]'); const d = DATA[sec.dataset.id], key = sec.dataset.sec;
+    /* Either drawer adds the same way, and both close behind the click: the
+       point is now in the box, and a drawer left open hides it. */
+    const det = bank.closest('details'); if (det) det.open = false;
     if (Array.isArray(d[key])) d[key].push({ text: bank.dataset.bankText, code: bank.dataset.bankCode });
     else d[key] = (d[key] && d[key].trim() ? d[key].replace(/\s*$/, '') + '\n' : '') + bank.dataset.bankText;
     touch(); paintCands(); return; }
