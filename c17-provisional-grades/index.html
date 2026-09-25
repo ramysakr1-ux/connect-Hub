@@ -464,10 +464,22 @@ function startPulling(){
 }
 
 /* view only: the assessor reads, and nothing on the page pretends otherwise */
+/* View only has to stay COPYABLE. Ramy, 25 Sep 2026: the assessor reads the
+   provisionals in Appian, not here — what they need this page for is the final
+   grade, and there they must be able to lift the wording into their own
+   report. A `disabled` textarea cannot be selected at all, so the text was
+   unreachable by hand; `readonly` refuses every edit and still lets it be
+   selected, dragged over and copied. A select has no readonly, and its value
+   is not something anyone copies, so that stays disabled. */
 function applyMode(){
   if(CAN_WRITE) return;
-  document.querySelectorAll('select[data-n], textarea[data-n]').forEach(el=>{ el.disabled=true; });
+  document.querySelectorAll('textarea[data-n]').forEach(el=>{ el.readOnly = true; });
+  document.querySelectorAll('select[data-n]').forEach(el=>{ el.disabled = true; });
+  /* contenteditable="false" still allows selection, so the bulleted points
+     stay copyable too. */
   document.querySelectorAll('ul.pts[contenteditable]').forEach(ul=>{ ul.setAttribute('contenteditable','false'); });
+  /* The per-section copy buttons are deliberately LEFT working: they read from
+     the record, not the DOM, so they never depended on the field being live. */
   document.querySelectorAll('details.reuse').forEach(d=>{ d.remove(); });
 }
 const letter=i=>String.fromCharCode(65+i);
