@@ -30,22 +30,49 @@ const STORE = (readFileSync(join(HERE, 'hub-store.js'), 'utf8').match(/https:\/\
 const LABEL = process.argv[2] || 'Demo';
 const DAY = 864e5;
 
+const KEYFILE = join(HERE, '.owner-key');
 function ownerKey() {
   if (process.env.OWNER_KEY) return process.env.OWNER_KEY.trim();
-  const f = join(HERE, '.owner-key');
-  if (existsSync(f)) return readFileSync(f, 'utf8').trim();
+  if (existsSync(KEYFILE)) return readFileSync(KEYFILE, 'utf8').trim();
   console.error('No owner key. Put it in .owner-key beside this script, or set OWNER_KEY.');
   console.error('To find it: open the store in the Apps Script editor, choose ownerKey in the');
   console.error('function list, press Run, and it prints a link — the key is the ?o= on the end.');
   process.exit(1);
 }
-const OWNER = ownerKey();
+const RAW = ownerKey();
+if (RAW === 'PASTE_THE_KEY_HERE' || !RAW) {
+  console.error('\n' + KEYFILE + ' holds the placeholder text, not your owner key.\n');
+  console.error('  Open the store in the Apps Script editor, choose ownerKey in the function');
+  console.error('  list, press Run, and copy the part after ?o= into that file.\n');
+  process.exit(1);
+}
+const OWNER = RAW;
 if (!STORE) { console.error('Could not read the store URL out of hub-store.js.'); process.exit(1); }
+
+/* A wrong key is an ordinary thing to happen, not a crash. The store answers
+   "Not yours to open", which said nothing about WHICH key was wrong or where
+   it is kept -- and arrived as a stack trace (Ramy hit exactly this with the
+   placeholder still in the file, 25 Sep 2026). */
+function explain(err){
+  const m = String(err && err.message || err);
+  if (/not yours|owner|denied|forbidden/i.test(m)) {
+    console.error('\nThe store refused that owner key.\n');
+    console.error('  It is read from ' + KEYFILE + (process.env.OWNER_KEY ? ' (overridden by OWNER_KEY)' : ''));
+    console.error('  and right now it holds ' + (RAW === 'PASTE_THE_KEY_HERE'
+      ? 'the placeholder text, not a key.'
+      : RAW.length + ' characters.'));
+    console.error('\n  To find the real one: open the store in the Apps Script editor, choose');
+    console.error('  ownerKey in the function list, press Run, and copy the part after ?o=.\n');
+  } else {
+    console.error('\nThe store said: ' + m + '\n');
+  }
+  process.exit(1);
+}
 
 const call = async body => {
   const r = await fetch(STORE, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(body) });
   const out = await r.json();
-  if (!out.ok) throw new Error(out.error || 'store error');
+  if (!out.ok) explain(new Error(out.error || 'store error'));
   return out.result;
 };
 const settle = (p, ms) => p.waitForTimeout(ms);
