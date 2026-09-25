@@ -140,6 +140,9 @@
   .cols{display:grid; grid-template-columns:1fr 1fr; gap:0 26px; padding:4px 24px 8px;}
   @media(max-width:1000px){ .cols{grid-template-columns:1fr;} }
   .prosewrap{padding:6px 24px 8px;}
+  /* the borderline evidence box, directly under the provisional it belongs to */
+  .evwrap{padding-top:0; padding-bottom:2px;}
+  .evwrap .sec{padding-top:10px;}
   .sec{padding:14px 0 6px;}
   .sec .head{display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding-bottom:7px;
     border-bottom:1px solid var(--sand-line);}
@@ -244,10 +247,10 @@
 
 </div>
 
-<script src="hub-tracker.js?v=202609251243"></script>
-<script src="hub-store.js?v=202609251243"></script>
-<script src="hub-shared.js?v=202609251243"></script>
-<script src="hub-sync.js?v=202609251243"></script>
+<script src="hub-tracker.js?v=202609251419"></script>
+<script src="hub-store.js?v=202609251419"></script>
+<script src="hub-shared.js?v=202609251419"></script>
+<script src="hub-sync.js?v=202609251419"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a candidate's link opened it and read the course and
@@ -297,14 +300,40 @@ const FIELDS=[
      everywhere feedback is written (walked 23 Sep 2026). */
   {key:'update',  heading:'Update on strengths and areas for development', h:170,
    ph:'What changed across the final TPs, and why the grade landed where it did.', hint:'Written after the grade review meeting.'},
-  {key:'needed',  heading:'Evidence needed for a higher grade', h:150,
-   ph:'Leave empty where the candidate is already at the top of their range.', hint:'If applicable.'},
-  {key:'provided',heading:'What evidence was provided', h:120,
-   ph:'Completed after the final TPs.', hint:'If applicable — answers the section above.'}
 ];
 
+/* Cambridge has ONE evidence field, not two, and it belongs to the
+   PROVISIONAL grade (25 Sep 2026). The heading below is copied off the live
+   Cambridge CELTA Centre Grade Form in Appian, read against TR073-C17/2026:
+   it is the last field on every candidate's card, under the four prose boxes,
+   and it carries no asterisk -- optional, unlike the four above it. The
+   Administration Handbook June 2025 (printed p43) describes the same field in
+   its own words and says it "should be completed for any candidates that were
+   borderline (e.g., Pass/Fail->Pass, Pass->Pass B) so there is a justification
+   recorded for the final recommended grade"; where the two differ, the form a
+   centre actually fills in wins.
+
+   The three slash grades on that form -- Pass/Fail, Pass B/Pass, Pass A/Pass B
+   -- are our FAIL / PASS, PASS / PASS B, PASS B / PASS A, so the box shows
+   itself exactly when Cambridge asks for it and stays out of the way
+   otherwise. It used to sit under the FINAL grade, always, beside a second box
+   Cambridge does not have at all. */
+const EVIDENCE = { key:'evidence',
+  heading:'Evidence needed for a Pass / Higher Grade (if applicable)',
+  h:150,
+  ph:'What the centre is putting forward for the higher of the two grades.',
+  hint:'Optional on the Cambridge form, but expected on a borderline candidate, so the higher grade has a justification on record.' };
+const isBorderline = g => /\//.test(g || '');
+
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function blankRecord(name){ return {name, provisional:'', final:'', planS:[], planA:[], teachS:[], teachA:[], update:'', needed:'', provided:'', hoursAttended:'', overall:''}; }
+function blankRecord(name){ return {name, provisional:'', final:'', planS:[], planA:[], teachS:[], teachA:[], update:'', evidence:'', hoursAttended:'', overall:''}; }
+/* Anything written in the two old boxes moves into the one field, so no
+   centre loses what it recorded before today. */
+function foldEvidence(r){
+  if (!r.evidence) r.evidence = [r.provided, r.needed].map(v => (v || '').trim()).filter(Boolean).join('\n\n');
+  delete r.needed; delete r.provided;
+  return r;
+}
 function gradeClass(g){ return g==='FAIL' ? 'fail' : g==='PASS A' ? 'top' : g ? 'set' : ''; }
 
 let DATA={}, ORDER=[], dirty=false;
@@ -430,6 +459,7 @@ function paintCands(){
         ${p.cap ? `<div class="cap">${esc(p.cap.line)}</div>` : ''}
       </div>
       <div class="grow"><label>Provisional grade</label>${gradeSelect('provisional', PROV, d.provisional, p)}</div>
+      <div class="prosewrap evwrap" data-ev="${esc(p.id)}"${isBorderline(d.provisional) ? '' : ' hidden'}>${proseSection(p, EVIDENCE)}</div>
       <div class="cols">${SECTIONS.map(s => listSection(p, s)).join('')}</div>
       <div class="grow final"><label>Final grade</label>${gradeSelect('final', FINAL, d.final, p)}</div>
       <div class="prosewrap">${FIELDS.map(f => proseSection(p, f)).join('')}
@@ -534,6 +564,10 @@ cands.addEventListener('input', e => {
 function onGrade(e){
   if (RO || !e.target.matches('select.grade')) return;
   DATA[e.target.dataset.id][e.target.dataset.grade] = e.target.value; touch();
+  if (e.target.dataset.grade === 'provisional') {
+    const box = document.querySelector(`.evwrap[data-ev="${CSS.escape(e.target.dataset.id)}"]`);
+    if (box) box.hidden = !isBorderline(e.target.value);
+  }
   paintJump(); paintCohort();
   document.querySelectorAll(`select.grade[data-id="${CSS.escape(e.target.dataset.id)}"][data-grade="${e.target.dataset.grade}"]`).forEach(sel => {
     if (sel !== e.target) sel.value = e.target.value;
@@ -568,6 +602,7 @@ function printableRecord(p, i){
     <div class="pgrades">Provisional grade: <b>${esc(d.provisional || 'not set')}</b> · Final grade: <b>${esc(d.final || 'not set')}</b>${p.cap ? ' · ' + esc(p.cap.line) : ''}</div>
     ${SECTIONS.map(s => `<h3>${s.heading}</h3>${list(s.key)}`).join('')}
     ${FIELDS.map(prose).join('')}
+    ${isBorderline(d.provisional) ? prose(EVIDENCE) : ''}
   </div>`;
 }
 function buildPrintable(){
@@ -597,7 +632,7 @@ window.addEventListener('beforeprint', buildPrintable);
   const people=roster();
   ORDER=people;
   DATA={};
-  people.forEach(p=>{ DATA[p.id] = p.saved ? {...blankRecord(p.name), ...p.saved, name:p.name} : blankRecord(p.name); });
+  people.forEach(p=>{ DATA[p.id] = foldEvidence(p.saved ? {...blankRecord(p.name), ...p.saved, name:p.name} : blankRecord(p.name)); });
 
   let cs=null; try{ cs=JSON.parse(localStorage.getItem('connect_course_settings')); }catch(e){}
   const bits=[cs&&cs.courseName, cs&&cs.centreName, cs&&cs.centreNumber].filter(Boolean);

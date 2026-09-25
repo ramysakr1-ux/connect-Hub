@@ -362,8 +362,21 @@ await step('the grades report holds six, and each grade stays on its own person'
   for (const [i, g] of Object.entries(want)) {
     must(byName[order[+i]] === g, `${order[+i]} should be ${g}, store has ${JSON.stringify(byName[order[+i]])}`);
   }
+  /* Cambridge's evidence field belongs to a BORDERLINE provisional and to
+     nothing else (Handbook June 2025, p43). A slash grade must reveal it; a
+     clean grade must not have it at all. */
+  const evShown = () => T.p.evaluate(() => [...document.querySelectorAll('.evwrap')].map(b => !b.hidden));
+  must((await evShown()).every(v => v === false), 'the evidence box shows on a candidate with no provisional grade');
+  await T.p.selectOption('.cand:nth-of-type(1) .grow select.grade[data-grade="provisional"]', 'PASS / PASS B'); await settle(T.p, 500);
+  const after = await evShown();
+  must(after[0] === true && after.slice(1).every(v => v === false), 'a slash provisional did not reveal the evidence box: ' + JSON.stringify(after));
+  const heading = await T.p.$eval('.cand:nth-of-type(1) .evwrap h3', e => e.textContent.trim());
+  must(/^Evidence needed for a Pass \/ Higher Grade \(if applicable\)$/i.test(heading), 'not Cambridge\'s wording: ' + heading);
+  must(!(await T.p.$('.cand .grow.final ~ .prosewrap .evwrap')), 'the evidence box is still attached to the final grade');
+  await T.p.selectOption('.cand:nth-of-type(1) .grow select.grade[data-grade="provisional"]', 'PASS'); await settle(T.p, 500);
+  must((await evShown()).every(v => v === false), 'a clean provisional did not hide the evidence box again');
   await noSideScroll(T.p, 'Grades report, six candidates');
-  return 'A-F, three graded, each on the right person';
+  return 'A-F, three graded, each on the right person; evidence box borderline-only';
 });
 
 await step('the assessor pack holds all six, with the visit at the end of week four', async () => {

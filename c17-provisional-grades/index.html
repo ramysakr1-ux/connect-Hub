@@ -115,7 +115,6 @@
   .seccopy:hover{border-color:var(--secc,var(--navy));color:var(--secc,var(--navy));}
   .seccopy.ok{opacity:1;background:var(--teal-deep);border-color:var(--teal-deep);color:#fff;}
   .sec.act h3{--secc:var(--amber-deep);}
-  .sec.upd h3{--secc:var(--teal-deep);}
   .sec.evi h3{--secc:var(--sub);}
   textarea{width:100%;font-family:'Nunito';font-size:.88rem;line-height:1.6;color:var(--ink);
     border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg);
@@ -203,8 +202,8 @@
   <div class="gradewrap" id="gradewrap"></div>
 </div>
 <div class="wrap" id="cands" hidden></div>
-<div class="note"><b>Two headings follow Cambridge's own field names</b> (Administration Handbook June 2025, p43), so a section pastes straight into Appian: <i>Update on strengths and areas for development</i> &mdash; a required field for every candidate, withdrawn ones included &mdash; and <i>What evidence was provided for a Pass / Higher Grade</i>, which covers a borderline Pass/Fail&nbsp;&rarr;&nbsp;Pass, not just an upgrade.</div>
-<div class="note"><b>&sect;11.6.</b> A candidate who fails one written assignment may still be recommended a Pass or a Pass B, where there is sufficient evidence of that assignment's assessment criteria in their record of teaching practice and/or their written work as a whole &mdash; the assessor documents this in the course report. They are not eligible for Pass A. A candidate who fails more than one assignment is not eligible for a Pass. <b>p43:</b> complete the evidence sections for any candidate who was borderline, so the reason for the final grade is on record.</div>
+<div class="note"><b>Every heading here is a field on the Cambridge form</b>, in the same order, so a section pastes straight across: strengths and areas for development in planning and in teaching, then <i>Evidence needed for a Pass / Higher Grade (if applicable)</i>, which appears only on a borderline grade &mdash; Pass/Fail, Pass&nbsp;B/Pass, Pass&nbsp;A/Pass&nbsp;B. There is no <i>update on strengths</i> field on the provisional form; that one belongs to the final grade.</div>
+<div class="note"><b>&sect;11.6.</b> A candidate who fails one written assignment may still be recommended a Pass or a Pass B, where there is sufficient evidence of that assignment's assessment criteria in their record of teaching practice and/or their written work as a whole &mdash; the assessor documents this in the course report. They are not eligible for Pass A. A candidate who fails more than one assignment is not eligible for a Pass. <b>p43:</b> complete the evidence field for any candidate who was borderline, so the reason for the final grade is on record.</div>
 
 <script>
 const PROV=['','FAIL','FAIL / PASS','PASS','PASS / PASS B','PASS B','PASS B / PASS A','PASS A'];
@@ -215,10 +214,16 @@ const SECTIONS=[
   ['st','STRENGTHS IN TEACHING:','','A point, then Enter for the next'],
   ['ap','ACTION POINTS IN PLANNING:','act','A point, then Enter for the next'],
   ['at','ACTION POINTS IN TEACHING:','act','A point, then Enter for the next'],
-  ['upd','UPDATE ON STRENGTHS AND AREAS FOR DEVELOPMENT:','upd','Required by Cambridge for EVERY candidate, including anyone deferred, extended or withdrawn (a brief note on that is enough). §14.4 also asks for a rationale for the final grade.'],
-  ['ev','EVIDENCE NEEDED FOR A HIGHER GRADE (IF APPLICABLE):','evi','Leave empty where the candidate is already at the top of their range.'],
-  ['wp','WHAT EVIDENCE WAS PROVIDED FOR A PASS / HIGHER GRADE (IF APPLICABLE):','evi','Optional, but Cambridge asks for it on any borderline candidate — Pass/Fail → Pass as well as Pass → Pass B.']
+  /* One evidence box, named and placed as the live Cambridge CELTA Centre
+     Grade Form has it (read against TR073-C17/2026, 25 Sep 2026): the last
+     field on a candidate's card, under the four prose boxes, optional. The
+     form carries no "update on strengths" field at all — that belongs to the
+     final grade, not to this one — and no second evidence box. */
+  ['ev','EVIDENCE NEEDED FOR A PASS / HIGHER GRADE (IF APPLICABLE):','evi','What the centre is putting forward for the higher of the two grades.']
 ];
+/* Cambridge's three borderline grades — Pass/Fail, Pass B/Pass, Pass A/Pass B
+   — are the ones written here with a slash. */
+const isBorderline = g => /\//.test(g || '');
 const ROSTER=[
   {n:'Christopher Douglas Deniz Jones'},
   {n:'Maedeh Ahmadizadeh'},
@@ -297,6 +302,12 @@ function syncStatus(msg, cls){ const el=document.getElementById('sync'); if(!el)
 
 let state={}; try{ state=JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ state={}; }
 Object.keys(PRESET).forEach(function(n){ state[n] = Object.assign({}, PRESET[n], state[n]||{}); });
+/* Anything typed into the old second evidence box moves into the one field. */
+Object.keys(state).forEach(function(n){
+  var r = state[n]; if (!r || !r.wp) return;
+  r.ev = [r.ev, r.wp].map(function(v){ return (v||'').trim(); }).filter(Boolean).join('\n\n');
+  delete r.wp;
+});
 const DIRTY=new Set(); let flushTimer=null, LOADED=false;
 const save=(n)=>{
   try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
@@ -352,6 +363,13 @@ function sync(){
     if(sel.value!==v) sel.value=v;
     sel.classList.toggle('set', !!v);
   });
+  /* the evidence box belongs to a borderline provisional, and to nothing else
+     — but it never hides text someone has already typed */
+  document.querySelectorAll('.sec[data-ev]').forEach(sec=>{
+    const r = state[sec.dataset.ev] || {};
+    const t = sec.querySelector('textarea');
+    sec.hidden = !(isBorderline(r.prov) || (t && t.value.trim()));
+  });
 }
 function grow(t){ t.style.height='auto'; t.style.height=(t.scrollHeight+2)+'px'; }
 function paint(){
@@ -381,14 +399,14 @@ document.getElementById('cands').innerHTML = C.map((c,i)=>{
         : `<textarea data-n="${esc(c.n)}" data-f="${k}" placeholder="${esc(ph)}">${esc(st[k]||'')}</textarea>`}
       <details class="reuse" data-sec="${k}" data-n="${esc(c.n)}"><summary>Reuse a point from another candidate</summary><div class="lines"></div></details>
       </div>`).join('')}</div>
-    <div class="grades final">
-      <span class="gr"><label>Final Grade</label><select data-n="${esc(c.n)}" data-f="fin">${opts(FIN,st.fin||'')}</select></span>
-    </div>
-    ${SECTIONS.filter(x=>!LIST[x[0]]).map(([k,h,cls,ph])=>`<div class="sec ${cls}">
+    ${SECTIONS.filter(x=>!LIST[x[0]]).map(([k,h,cls,ph])=>`<div class="sec ${cls}" data-ev="${esc(c.n)}"${(isBorderline(st.prov) || (st[k]||'').trim()) ? '' : ' hidden'}>
       <div class="sechead"><h3>${h}</h3><button type="button" class="seccopy" data-seccopy="${k}" data-n="${esc(c.n)}">copy</button></div>
       <textarea data-n="${esc(c.n)}" data-f="${k}" placeholder="${esc(ph)}">${esc(st[k]||'')}</textarea>
       <details class="reuse" data-sec="${k}" data-n="${esc(c.n)}"><summary>Reuse a point from another candidate</summary><div class="lines"></div></details>
       </div>`).join('')}
+    <div class="grades final">
+      <span class="gr"><label>Final Grade</label><select data-n="${esc(c.n)}" data-f="fin">${opts(FIN,st.fin||'')}</select></span>
+    </div>
     <div class="cfoot"><button class="mini" data-copy="${esc(c.n)}">Copy this profile</button></div>
   </section>`;
 }).join('');
