@@ -584,9 +584,9 @@
 </div>
 
 <script src="hub-due.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609260033"></script>
-<script src="hub-store.js?v=202609260033"></script>
-<script src="hub-sync.js?v=202609260033"></script>
+<script src="hub-shared.js?v=202609260047"></script>
+<script src="hub-store.js?v=202609260047"></script>
+<script src="hub-sync.js?v=202609260047"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -923,8 +923,13 @@ $('fwApply').addEventListener('click',async()=>{
      21 Sep 2026). It now asks whenever anything typed would go. */
   const filled=[...procBody.querySelectorAll('tr')].some(tr=>
     procText(tr.querySelector('.t-proc').value).trim() || tr.querySelector('.t-stage').value.trim());
-  if(filled && !await confirmModal('This will rename the stages. Anything you have typed in Procedure stays — continue?','Replace anyway')) return;
+  if(filled && !await confirmModal('This renames the stages. A stage that changes loses its time and interaction pattern with it — they described the old stage. Anything you have typed in Procedure stays. Continue?','Replace anyway')) return;
   const rows=[...procBody.querySelectorAll('tr')];
+  /* The name of the stage a row currently holds: everything before the first
+     colon, which is where the framework's wording stops and the trainee's own
+     aim begins. */
+  const stageName = tr => { const v=tr.querySelector('.t-stage').value; const i=v.indexOf(':');
+    return (i===-1?v:v.slice(0,i)).trim().toLowerCase(); };
   /* st[1] -- the framework's own wording of the aim -- is deliberately not
      written anywhere. It used to print under the stage name in green, which
      handed the candidate the one part of the stage they are being assessed on
@@ -932,11 +937,34 @@ $('fwApply').addEventListener('click',async()=>{
      giving them the stages"). The colon is what asks for the rest. */
   fw.stages.forEach((st,i)=>{
     const tr=rows[i]||addRow('','','');
+    /* The interaction pattern and the timing describe THE STAGE, so when the
+       stage changes they go with it. They used to stay put: switch a plan from
+       Receptive skills to PPP and row 2's "Prediction task · OC · 7 min"
+       became "Present: clarify and focus on TL · OC · 7 min" -- a pattern and
+       a timing nobody chose for that stage, sitting in the plan ready to be
+       turned in (Ramy, 25 Sep 2026: "it fills in the interaction patterns,
+       and that should not be the case"). What looked like the framework
+       WRITING an interaction pattern was the framework renaming the stage out
+       from under one. A stage whose name does not change -- Lead-in is in
+       every framework -- keeps both, because it is the same stage. */
+    const same = stageName(tr) === st[0].trim().toLowerCase();
     tr.querySelector('.t-stage').value=st[0]+': ';
+    if(!same){
+      tr.querySelector('.t-time').value='';
+      tr.querySelector('.t-int1').value='';
+      tr.querySelector('.t-int2').value='';
+    }
     syncAimCue(tr);
   });
+  /* A spare row past the end of the new shape goes only if it is EMPTY. It
+     used to go whenever its Procedure was empty, which quietly threw away a
+     row the trainee had already timed and given an interaction pattern -- the
+     same column the warning does not mention. */
   rows.slice(fw.stages.length).forEach(tr=>{
-    if(!procText(tr.querySelector('.t-proc').value).trim()) tr.remove();
+    const used = procText(tr.querySelector('.t-proc').value).trim()
+      || tr.querySelector('.t-time').value.trim()
+      || tr.querySelector('.t-int1').value || tr.querySelector('.t-int2').value;
+    if(!used) tr.remove();
   });
   updateTotal(); setStatus('Stages filled from “'+fw.name+'”. Write your aim after each colon.'); dirty=true;
 });
