@@ -36,7 +36,30 @@
     padding:26px 26px 22px; text-align:center;}
   .header h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.5rem; margin:10px 0 0; color:var(--terracotta);}
   .header p{margin:8px auto 0; font-size:0.86rem; color:var(--grey); max-width:560px;}
-  .doc{background:var(--surface); border-radius:6px; padding:26px 28px; border:1px solid var(--sand-line);}
+  /* ---- sheets on the desk, newest on top -----------------------------------
+     Ramy, 26 Sep 2026: "go, A with the stack." Each returned teaching
+     practice is a white sheet lying on the ivory desk -- the same sheet the
+     assignment record and the course record are, with the hairline edge and
+     the two shadows, one tight where it touches the desk and one wide and
+     soft. This was the only document screen still drawn as tinted panels.
+     The earlier teaching practices sit a step behind the current one: a
+     touch smaller, a touch dimmer, their foot tucked under the sheet that
+     came after -- a pile of returned work, newest on top. No tilt: the type
+     stays the same size from the head of a sheet to its foot, because this
+     is read line by line. Mouse on a sheet and it lifts 3px, the landing
+     cards' own motion. Print strips all of it; paper has no desk. */
+  #content{position:relative;}
+  .doc{position:relative; background:var(--paper); border-radius:6px; padding:26px 28px; border:1px solid var(--sand-line);
+    margin-bottom:22px;
+    box-shadow:0 1px 2px oklch(58% 0.03 70 / 0.11), 0 7px 16px -7px oklch(58% 0.03 70 / 0.09);
+    transition:transform .14s ease, box-shadow .14s ease;}
+  .doc.earlier{z-index:1; transform:scale(.975); transform-origin:50% 0; margin-bottom:-14px;
+    filter:saturate(.92) brightness(.985);}
+  .doc.current{z-index:2;}
+  .doc:hover{z-index:3; transform:translateY(-3px);
+    box-shadow:0 2px 4px oklch(58% 0.03 70 / 0.11), 0 16px 28px -12px oklch(58% 0.03 70 / 0.09);}
+  .doc.earlier:hover{transform:scale(.975) translateY(-3px); filter:none;}
+  @media (prefers-reduced-motion:reduce){ .doc{transition:none;} .doc:hover{transform:none;} .doc.earlier:hover{transform:scale(.975);} }
   /* A phone: the stored plan and analysis tables are wider than 390px, and
      without a scroller of their own the whole page slid sideways (measured,
      24 Sep 2026). The document scrolls inside its own card instead. Print is
@@ -47,7 +70,7 @@
   .tpmark{margin:0 0 14px; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px;
     font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--grey);}
   @page{size:A4 landscape; margin:8mm;}
-  @media print{ .doc{break-before:page; page-break-before:always; padding:0; border:none; max-width:none;} .doc:first-of-type{break-before:auto; page-break-before:auto;} }
+  @media print{ .doc{break-before:page; page-break-before:always; padding:0; border:none; max-width:none; box-shadow:none; transform:none; filter:none; margin:0; background:#fff;} .doc:first-of-type{break-before:auto; page-break-before:auto;} }
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
   .empty{background:var(--surface); border-radius:6px; padding:30px 26px; text-align:center; color:var(--grey);}
@@ -75,9 +98,9 @@
   <a class="back" href="index.html">← Back</a>
   <div id="content"></div>
 </div>
-<script src="hub-shared.js?v=202609260205"></script>
-<script src="hub-store.js?v=202609260205"></script>
-<script src="hub-sync.js?v=202609260205"></script>
+<script src="hub-shared.js?v=202609260231"></script>
+<script src="hub-store.js?v=202609260231"></script>
+<script src="hub-sync.js?v=202609260231"></script>
 <script type="text/x-hub-app">
 function rec(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
 
@@ -167,6 +190,9 @@ if(currentHeld){
 }
 if(currentOpen || past.length){
   if (currentOpen) addDoc(fb.docHTML, past.length ? 'Teaching practice ' + (function(){ const m=String((fb.state&&fb.state.f&&fb.state.f.fTP)||fb.label||'').match(/\d+/); return m?m[0]:''; })() : '');
+  /* the pile: every sheet but the last sits behind it */
+  const sheets=[...content.querySelectorAll('.doc')];
+  sheets.forEach((d,i)=>d.classList.add(i===sheets.length-1?'current':'earlier'));
   const actions=document.createElement('div');
   actions.className='actions';
   actions.innerHTML='<button type="button" class="btn-print" id="printBtn">Print / Save as PDF</button>'
