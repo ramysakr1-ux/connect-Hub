@@ -352,6 +352,64 @@ async function flush(){
   }catch(e){ syncStatus('Not saved \u2014 '+e.message+' \u2014 will retry','err'); clearTimeout(flushTimer); flushTimer=setTimeout(flush, 8000); }
 }
 window.addEventListener('beforeunload', e=>{ if(DIRTY.size && CAN_WRITE){ e.preventDefault(); e.returnValue=''; } });
+
+/* ---- the others' work, while this page is open -------------------------
+   Two trainers write the one record and an assessor reads it, so a page that
+   only read the record when it loaded made everyone reload to see each other
+   (25 Sep 2026). It now re-reads every 20 seconds, and immediately whenever
+   the tab is brought back to the front.
+
+   Three rules keep a refresh from treading on the person at the keyboard:
+   a candidate this browser has typed into and not yet saved (DIRTY) is never
+   overwritten; a candidate whose card holds the cursor is left until they
+   move off it; and only the candidates that actually changed are redrawn, so
+   everything else keeps its scroll, its open "reuse" panels and its caret. */
+const PULL_MS = 20000;
+let pullTimer = null, pulling = false;
+
+function sameRecord(a, b){ return JSON.stringify(a||{}) === JSON.stringify(b||{}); }
+
+async function pullShared(){
+  if (!CAN_READ || !LOADED || pulling || document.hidden) return;
+  pulling = true;
+  try{
+    const r = await storeCall({op:'course'});
+    const g = ((r && r.settings) || {}).grades || {};
+    const focusedCard = document.activeElement && document.activeElement.closest
+      ? document.activeElement.closest('.cand') : null;
+    const changed = [];
+    C.forEach((c, i) => {
+      const n = c.n;
+      if (!g[n]) return;                       // nothing on the record for them yet
+      if (DIRTY.has(n)) return;                // unsaved work here wins until it is saved
+      const next = Object.assign({}, PRESET[n] || {}, g[n]);
+      if (sameRecord(state[n], next)) return;
+      const card = document.getElementById('c' + i);
+      if (card && card === focusedCard) return;   // they are typing on this one; next time
+      state[n] = next;
+      if (card){
+        card.outerHTML = cardHTML(c, i);
+        document.getElementById('c' + i).querySelectorAll('textarea').forEach(grow);
+      }
+      changed.push(n);
+    });
+    if (changed.length){
+      try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+      sync(); paint();
+      syncStatus((CAN_WRITE ? 'Saved for everyone' : 'View only') + ' \u00b7 updated '
+        + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}), CAN_WRITE ? 'ok' : 'ro');
+    }
+  }catch(e){ /* a dropped poll changes nothing; the next one tries again */ }
+  finally{ pulling = false; }
+}
+
+function startPulling(){
+  if (pullTimer) return;
+  pullTimer = setInterval(pullShared, PULL_MS);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) pullShared(); });
+  window.addEventListener('focus', pullShared);
+}
+
 /* view only: the assessor reads, and nothing on the page pretends otherwise */
 function applyMode(){
   if(CAN_WRITE) return;
@@ -386,10 +444,10 @@ function paint(){
     a.classList.toggle('done', !!(state[C[+a.dataset.i].n]||{}).prov);
   });
 }
-function boot(){
-document.getElementById('main').hidden=false;
-document.getElementById('cands').hidden=false;
-document.getElementById('cands').innerHTML = C.map((c,i)=>{
+/* One candidate's card. Pulled out of boot() so that work arriving from the
+   other trainer can redraw that candidate alone, leaving the rest of the page
+   — and anything being typed on it — exactly where it was. */
+function cardHTML(c,i){
   const st=state[c.n]||{};
   return `<section class="cand" id="c${i}">
     <div class="chead">
@@ -416,7 +474,12 @@ document.getElementById('cands').innerHTML = C.map((c,i)=>{
     </div>
     <div class="cfoot"><button class="mini" data-copy="${esc(c.n)}">Copy this profile</button></div>
   </section>`;
-}).join('');
+}
+
+function boot(){
+document.getElementById('main').hidden=false;
+document.getElementById('cands').hidden=false;
+document.getElementById('cands').innerHTML = C.map(cardHTML).join('');
 
 document.getElementById('gradewrap').innerHTML = `
   <div class="gt">
@@ -449,7 +512,7 @@ document.querySelectorAll('textarea').forEach(grow); sync();
 /* paint() last: the count and the letter bar read `state`, and the top-level
    paint() below runs before the shared record has arrived -- so the bar said
    "2 / 10" over five graded cards (25 Sep 2026). */
-loadShared().finally(()=>{ boot(); applyMode(); paint(); });
+loadShared().finally(()=>{ boot(); applyMode(); paint(); startPulling(); });
 function linesOf(ul){
   return [...ul.querySelectorAll('li')].map(li=>li.textContent.replace(/\s+/g,' ').trim()).filter(Boolean).join('\n');
 }
