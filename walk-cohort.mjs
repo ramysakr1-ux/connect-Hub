@@ -352,6 +352,8 @@ await step('the grades report holds six, and each grade stays on its own person'
   // a different grade for each of three people, then read them back by name
   const want = { 0: 'PASS A', 2: 'PASS', 4: 'FAIL' };
   for (const [i, g] of Object.entries(want)) {
+    // the provisional too, so the pack can be checked for both
+    await T.p.selectOption(`.cand:nth-of-type(${+i + 1}) .grow select.grade[data-grade="provisional"]`, g); await settle(T.p, 300);
     await T.p.selectOption(`.cand:nth-of-type(${+i + 1}) .grow.final select.grade`, g); await settle(T.p, 350);
   }
   await T.p.click('#saveBtn'); await settle(T.p, 3500);
@@ -379,8 +381,12 @@ await step('the assessor pack holds all six, with the visit at the end of week f
   // the four briefs, and the link that expires fourteen days after the course
   for (const k of ['FOL', 'LRT', 'LSRT', 'LFC']) must(body.includes(k), 'brief missing from the pack: ' + k);
   must(/13 November 2026/.test(body), 'the expiry is not course end + 14 days: ' + (body.match(/stops working on [^\n]*/) || ['none'])[0]);
+  /* The provisional is what the centre files before the assessment, so it must
+     be on the table -- and it must not disappear when a final is agreed. */
+  must(/Provisional: PASS A/.test(body) && /Final: PASS A/.test(body),
+    'the pack does not show both grades: ' + (body.match(/Provisional[^\n]*|Final[^\n]*/g) || ['none']).join(' / '));
   await noSideScroll(S.p, 'Assessor pack, six candidates');
-  return 'six candidates, four briefs, link expires 13 Nov';
+  return 'six candidates, four briefs, both grades, link expires 13 Nov';
 });
 
 await step('the assessor reads a final report, and it names the right tutors', async () => {

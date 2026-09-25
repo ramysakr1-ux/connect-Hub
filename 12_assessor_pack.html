@@ -174,11 +174,11 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609251108"></script>
-<script src="assignment-defaults.js?v=202609251108"></script>
-<script src="hub-tracker.js?v=202609251108"></script>
-<script src="hub-store.js?v=202609251108"></script>
-<script src="hub-sync.js?v=202609251108"></script>
+<script src="hub-shared.js?v=202609251243"></script>
+<script src="assignment-defaults.js?v=202609251243"></script>
+<script src="hub-tracker.js?v=202609251243"></script>
+<script src="hub-store.js?v=202609251243"></script>
+<script src="hub-sync.js?v=202609251243"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -286,7 +286,20 @@ function personRow(tr){
     <td><div class="name">${esc(tr.name)}</div><div class="sub">${esc(tr.group ? 'Group ' + tr.group : '')}${tr.tracker && tr.tracker.withdrawn ? ' · withdrawn' : ''}</div>${flag}</td>
     <td><div class="chips">${tpChips}</div></td>
     <td><div class="chips">${asg}</div></td>
-    <td><span class="standing ${chip.cls}">${esc(chip.text)}</span>${(tr.tracker&&tr.tracker.grades&&tr.tracker.grades.final) ? `<div class="sub"><b>Final: ${esc(tr.tracker.grades.final)}</b> · <a href="16_final_report.html?id=${encodeURIComponent(tr.id || tr.name)}">final report</a></div>` : (tr.tracker&&tr.tracker.grades&&tr.tracker.grades.provisional) ? `<div class="sub">Provisional: ${esc(tr.tracker.grades.provisional)}</div>` : ''}${r.ceiling ? `<div class="sub">cap: ${esc(r.ceiling.replace('SRT','LSRT'))}</div>` : ''}${r.letterIssued ? '<div class="sub" style="color:var(--red);">Fail letter issued</div>' : ''}</td>
+    <td><span class="standing ${chip.cls}">${esc(chip.text)}</span>${(function(){
+      /* BOTH grades, always. This showed the final if there was one and the
+         provisional only if there was not -- so the moment a final was agreed
+         the provisional vanished from the table. The provisional is what the
+         centre puts on the Appian grade form two or more days BEFORE the
+         assessment, and it is the first thing the assessor looks for; where
+         the two differ, the difference is the conversation (Ramy, 25 Sep 2026:
+         "this is a candidate tracker without the provisional, which is the
+         most important thing"). */
+      var g = (tr.tracker && tr.tracker.grades) || {}, out = '';
+      if (g.provisional) out += `<div class="sub">Provisional: <b>${esc(g.provisional)}</b></div>`;
+      if (g.final) out += `<div class="sub">Final: <b>${esc(g.final)}</b> · <a href="16_final_report.html?id=${encodeURIComponent(tr.id || tr.name)}">final report</a></div>`;
+      return out;
+    })()}${r.ceiling ? `<div class="sub">cap: ${esc(r.ceiling.replace('SRT','LSRT'))}</div>` : ''}${r.letterIssued ? '<div class="sub" style="color:var(--red);">Fail letter issued</div>' : ''}</td>
     <td style="white-space:nowrap;"><a class="btn ghost" href="12_assessor_pack.html?${q}">Open</a></td>
   </tr>`;
 }
