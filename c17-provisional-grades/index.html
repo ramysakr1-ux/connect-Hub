@@ -42,6 +42,7 @@
   .btn{border:1.5px solid var(--teal-deep);background:#fff;color:var(--teal-deep);font-weight:800;
     font-size:.72rem;padding:7px 13px;border-radius:999px;cursor:pointer;font-family:'Nunito';white-space:nowrap;}
   .btn:hover{background:var(--teal-deep);color:#fff;}
+  .count.ok{color:var(--teal-deep,#1e5c58);} .count.err{color:#a03a2c;} .count.ro{color:#6b7280;} .count.busy{opacity:.7;}
   .count{font-size:.74rem;font-weight:800;color:var(--sub);white-space:nowrap;}
 
   .hero{padding:30px 20px 10px;text-align:center;}
@@ -186,6 +187,7 @@
   </svg>
   <nav id="nav"></nav>
   <span class="count" id="count"></span>
+  <span class="count" id="sync" title="Where this is saved"></span>
   <button class="btn" id="copyAll" type="button">Copy all</button>
   <button class="btn" onclick="window.print()">&#128424; PDF</button>
 </div>
@@ -233,10 +235,9 @@ const C=ROSTER;
 const KEY='c17-provisionals-v1';
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
 /* Written into the page on 24 Sep 2026, so the link SHOWS them. What is typed
-   into this page is saved in the browser it was typed in and nowhere else, so
-   a profile filled in on the tutor's laptop reaches nobody -- the assessor
-   opens the same URL and sees a blank form. Anything here is the record; a
-   local edit still wins on the machine that made it. */
+   into this page used to be saved in the browser it was typed in and nowhere
+   else. Since 25 Sep 2026 the record is the shared store (see loadShared);
+   these two remain as the baseline the file ships with, and the store wins. */
 const PRESET = {
   "Maryam Moumivand": {
     "prov": "PASS",
@@ -253,9 +254,94 @@ const PRESET = {
     "at": "Establish the target language before teaching it, clarifying meaning through a clear context and objective concept questions (2c/2e/5g)\nSet the task before the text, giving instructions and an example first (5f)\nProvide accurate models, both on the board and in correction (2d/2b)\nMonitor unobtrusively (5j)\nFace the learners and put them at ease (1d)\nReduce teacher talk, particularly when presenting language (2a)"
   }
 };
+/* ---- the shared record (25 Sep 2026) -------------------------------------
+   Until today this page saved in the browser it was typed in and nowhere
+   else: a second trainer wrote her provisionals and Ramy could not see them.
+   It now keeps ONE record for everyone, in the store that already runs behind
+   Connect Lite, in a course minted for this page alone.
+
+   Two links, one record, no key in this file:
+     ?k=<tutor key>     trainers: everything typed is saved for everyone.
+     ?ak=<assessor key> view only: the store refuses every write with it.
+   Whichever a browser opened last is remembered here, under this page's own
+   names -- never Lite's, so a tutor's October dashboard is not disturbed.
+
+   Merge, per candidate: what the file ships (PRESET), then the store, then
+   anything THIS browser typed that the store has never seen -- so a trainer
+   who filled a profile in before today and opens her own browser with the
+   tutor link finds her work uploaded, not lost. A save sends only the
+   candidates changed here, merged into the latest record, so two trainers on
+   different candidates never overwrite each other. */
+const STORE_URL='https://script.google.com/macros/s/AKfycbz5ESCtTg6kIDNCf7ynt1fB0tOSVusgOUiMub9-wEZunwQ2uTw2wzz1vmbHxzbvpG-eyA/exec';
+const WKEY='c17grades:k', RKEY='c17grades:ak';
+(function(){
+  const q=new URLSearchParams(location.search);
+  try{
+    if(q.get('k')){ localStorage.setItem(WKEY,q.get('k')); localStorage.removeItem(RKEY); }
+    else if(q.get('ak')){ localStorage.setItem(RKEY,q.get('ak')); localStorage.removeItem(WKEY); }
+  }catch(e){}
+})();
+const remembered=k=>{ try{ return localStorage.getItem(k)||''; }catch(e){ return ''; } };
+const CAN_WRITE=!!remembered(WKEY), CAN_READ=CAN_WRITE||!!remembered(RKEY);
+async function storeCall(body){
+  const payload=Object.assign({},body); if(CAN_WRITE) payload.key=remembered(WKEY); else payload.a=remembered(RKEY);
+  const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),25000);
+  let txt;
+  try{ const res=await fetch(STORE_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload),signal:ctl.signal}); txt=await res.text(); }
+  catch(e){ throw new Error('Could not reach the store'); } finally{ clearTimeout(t); }
+  let out; try{ out=JSON.parse(txt); }catch(e){ throw new Error('The store did not answer as expected'); }
+  if(!out.ok) throw new Error(out.error||'Store error'); return out.result;
+}
+const hasContent=o=>!!o && Object.keys(o).some(k=>String(o[k]||'').trim());
+function syncStatus(msg, cls){ const el=document.getElementById('sync'); if(!el) return; el.textContent=msg; el.className='count '+(cls||''); }
+
 let state={}; try{ state=JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ state={}; }
 Object.keys(PRESET).forEach(function(n){ state[n] = Object.assign({}, PRESET[n], state[n]||{}); });
-const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){} };
+const DIRTY=new Set(); let flushTimer=null, LOADED=false;
+const save=(n)=>{
+  try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
+  if(n) DIRTY.add(n);
+  if(CAN_WRITE && LOADED){ clearTimeout(flushTimer); flushTimer=setTimeout(flush, 900); syncStatus('Saving\u2026','busy'); }
+};
+async function loadShared(){
+  if(!CAN_READ){ syncStatus('Open this page from your link','err'); return; }
+  syncStatus(CAN_WRITE ? 'Loading\u2026' : 'Loading (view only)\u2026','busy');
+  const local=JSON.parse(JSON.stringify(state));
+  try{
+    const r=await storeCall({op:'course'});
+    const g=((r&&r.settings)||{}).grades||{};
+    Object.keys(PRESET).concat(Object.keys(g), Object.keys(local)).forEach(function(n){
+      if(g[n]) state[n]=Object.assign({}, PRESET[n]||{}, g[n]);
+      else if(hasContent(local[n]) && CAN_WRITE){ state[n]=local[n]; DIRTY.add(n); }   // typed here before today, never uploaded
+    });
+    LOADED=true;
+    try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
+    if(DIRTY.size && CAN_WRITE) flush(); else syncStatus(CAN_WRITE ? 'Saved for everyone' : 'View only', CAN_WRITE?'ok':'ro');
+  }catch(e){
+    LOADED=CAN_WRITE;   // a trainer may still type; the next change retries
+    syncStatus((CAN_WRITE ? 'Not saved \u2014 ' : 'Could not load \u2014 ') + e.message, 'err');
+  }
+}
+async function flush(){
+  if(!CAN_WRITE || !DIRTY.size) return;
+  const names=[...DIRTY];
+  try{
+    const r=await storeCall({op:'course'});
+    const settings=(r&&r.settings)||{}; const grades=settings.grades||{};
+    names.forEach(n=>{ grades[n]=state[n]; });
+    await storeCall({op:'putCourse',kind:'settings',data:{courseName:settings.courseName||'C/17 2026 \u2014 provisional grades',grades:grades}});
+    names.forEach(n=>DIRTY.delete(n));
+    syncStatus('Saved for everyone \u00b7 '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),'ok');
+  }catch(e){ syncStatus('Not saved \u2014 '+e.message+' \u2014 will retry','err'); clearTimeout(flushTimer); flushTimer=setTimeout(flush, 8000); }
+}
+window.addEventListener('beforeunload', e=>{ if(DIRTY.size && CAN_WRITE){ e.preventDefault(); e.returnValue=''; } });
+/* view only: the assessor reads, and nothing on the page pretends otherwise */
+function applyMode(){
+  if(CAN_WRITE) return;
+  document.querySelectorAll('select[data-n], textarea[data-n]').forEach(el=>{ el.disabled=true; });
+  document.querySelectorAll('ul.pts[contenteditable]').forEach(ul=>{ ul.setAttribute('contenteditable','false'); });
+  document.querySelectorAll('details.reuse').forEach(d=>{ d.remove(); });
+}
 const letter=i=>String.fromCharCode(65+i);
 const opts=(list,v)=>list.map(o=>`<option value="${esc(o)}"${o===v?' selected':''}>${esc(o)||'— choose —'}</option>`).join('');
 
@@ -326,7 +412,7 @@ document.getElementById('gradewrap').innerHTML = `
 document.getElementById('gradewrap').addEventListener('input',e=>{
   const el=e.target; if(!el.dataset.n||!el.dataset.f) return;
   (state[el.dataset.n]=state[el.dataset.n]||{})[el.dataset.f]=el.value;
-  save(); sync(); paint();
+  save(el.dataset.n); sync(); paint();
 });
 
 
@@ -335,7 +421,7 @@ document.getElementById('nav').innerHTML = C.map((c,i)=>
 
 document.querySelectorAll('textarea').forEach(grow); sync();
 }
-boot();
+loadShared().finally(()=>{ boot(); applyMode(); });
 function linesOf(ul){
   return [...ul.querySelectorAll('li')].map(li=>li.textContent.replace(/\s+/g,' ').trim()).filter(Boolean).join('\n');
 }
@@ -343,13 +429,13 @@ document.getElementById('cands').addEventListener('input',e=>{
   const ul = e.target.closest && e.target.closest('ul.pts');
   if (ul){
     (state[ul.dataset.n]=state[ul.dataset.n]||{})[ul.dataset.f]=linesOf(ul);
-    save(); paint(); return;
+    save(ul.dataset.n); paint(); return;
   }
   const el=e.target, n=el.dataset.n, f=el.dataset.f;
   if(!n||!f) return;
   (state[n]=state[n]||{})[f]=el.value;
   if(el.tagName==='TEXTAREA') grow(el);
-  save(); sync(); paint();
+  save(n); sync(); paint();
 });
 /* paste as plain text, so a copied bullet does not bring its markup in */
 document.getElementById('cands').addEventListener('paste',e=>{
