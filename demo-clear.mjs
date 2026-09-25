@@ -19,7 +19,16 @@ import { join } from 'node:path';
 
 const HERE = new URL('.', import.meta.url).pathname;
 const STORE = (readFileSync(join(HERE, 'hub-store.js'), 'utf8').match(/https:\/\/script\.google\.com\/macros\/s\/[^'"]+/) || [])[0];
-const DEMO_NAME = /demo course/i;
+/* The store returns courseName at the TOP level, not under settings -- read
+   the wrong one and every course looks nameless, --demos matches nothing, and
+   the listing shows only the store's own "C3 · 25 Sep 2026" label. Checked
+   against the live store, 25 Sep 2026.
+
+   The match is the exact name demo-mint gives a demo, not a loose "demo"
+   anywhere in the name: a real course called "CELTA demo run" is otherwise one
+   flag away from being deleted, and there is no undo. */
+const DEMO_NAME = /^CELTA \u2014 demo course$/;
+const nameOf = c => c.courseName || c.name || '(no name)';
 
 const KEYFILE = join(HERE, '.owner-key');
 function ownerKey() {
@@ -71,8 +80,10 @@ const courses = listed.courses || listed || [];
 if (!arg) {
   console.log(courses.length + ' course(s):\n');
   for (const c of courses) {
-    const name = (c.settings && c.settings.courseName) || c.name || '(no name)';
-    console.log('  ' + String(c.id).padEnd(12) + (DEMO_NAME.test(name) ? 'DEMO  ' : '      ') + name);
+    const name = nameOf(c);
+    const n = (c.trainees == null ? '' : c.trainees + ' trainees');
+    console.log('  ' + String(c.id).padEnd(5) + (DEMO_NAME.test(name) ? 'DEMO  ' : '      ')
+      + name.padEnd(34) + n);
   }
   console.log('\nDelete one:  node demo-clear.mjs <id>');
   console.log('Delete every demo:  node demo-clear.mjs --demos');
@@ -80,7 +91,7 @@ if (!arg) {
 }
 
 const targets = arg === '--demos'
-  ? courses.filter(c => DEMO_NAME.test((c.settings && c.settings.courseName) || c.name || ''))
+  ? courses.filter(c => DEMO_NAME.test(nameOf(c)))
   : courses.filter(c => String(c.id) === String(arg));
 
 if (!targets.length) {
@@ -91,7 +102,7 @@ if (!targets.length) {
 /* Named the courses about to go before going, because the id alone is not
    something anybody can check at a glance. */
 console.log('About to delete:');
-for (const c of targets) console.log('  ' + c.id + '  ' + ((c.settings && c.settings.courseName) || c.name || '(no name)'));
+for (const c of targets) console.log('  ' + c.id + '  ' + nameOf(c));
 
 for (const c of targets) {
   /* The store asks for the id typed back as a confirmation; the owner console
