@@ -146,6 +146,13 @@
   .cols{display:grid; grid-template-columns:1fr 1fr; gap:0 26px; padding:4px 24px 8px;}
   @media(max-width:1000px){ .cols{grid-template-columns:1fr;} }
   .prosewrap{padding:6px 24px 8px;}
+  /* the final grade's box: one box, two sides */
+  .fsides{display:grid; grid-template-columns:1fr 1fr; gap:0 26px;}
+  .fside{min-width:0;}
+  .fside + .fside{border-left:1px solid var(--sand-line); padding-left:26px;}
+  .fside .sec{padding-left:0; padding-right:0;}
+  @media (max-width:900px){ .fsides{grid-template-columns:1fr; gap:14px;}
+    .fside + .fside{border-left:0; padding-left:0; border-top:1px solid var(--sand-line); padding-top:14px;} }
   /* the borderline evidence box, directly under the provisional it belongs to */
   .evwrap{padding-top:0; padding-bottom:2px;}
   .evwrap .sec{padding-top:10px;}
@@ -254,10 +261,10 @@
 
 </div>
 
-<script src="hub-tracker.js?v=202609251656"></script>
-<script src="hub-store.js?v=202609251656"></script>
-<script src="hub-shared.js?v=202609251656"></script>
-<script src="hub-sync.js?v=202609251656"></script>
+<script src="hub-tracker.js?v=202609251808"></script>
+<script src="hub-store.js?v=202609251808"></script>
+<script src="hub-shared.js?v=202609251808"></script>
+<script src="hub-sync.js?v=202609251808"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a candidate's link opened it and read the course and
@@ -309,15 +316,21 @@ const SECTIONS=[
   {key:'teachS',heading:'Teaching: Strengths',               src:'topics 1, 2, 3, 5',  add:'Add a strength',     action:false},
   {key:'teachA',heading:'Teaching: Areas for development',   src:'topics 1, 2, 3, 5',  add:'Add an action point',action:true}
 ];
+/* The final grade's two fields, in Appian's own words, read off Ramy's screen
+   on 25 Sep 2026 -- NOT the Handbook's, which calls the first "update on
+   strengths and areas for development". Appian says "action points", and the
+   form a centre fills in wins.
+
+   Note the two evidence headings differ on purpose: "evidence NEEDED for a
+   Pass / Higher Grade" under the PROVISIONAL, "what evidence WAS PROVIDED for
+   a Higher Grade" here. Needed before, provided after. */
 const FIELDS=[
-  /* Cambridge's own name for this field, not ours. Administration Handbook
-     June 2025 calls it "update on strengths and areas for development" on
-     printed pages 33, 41 and 43, and p43 adds "This is a required field in
-     the form" -- it is a field of Cambridge's grade form, so it takes
-     Cambridge's words even though "action points" is Lite's own vocabulary
-     everywhere feedback is written (walked 23 Sep 2026). */
-  {key:'update',  heading:'Update on strengths and areas for development', h:170,
-   ph:'What changed across the final TPs, and why the grade landed where it did.', hint:'Written after the grade review meeting.'},
+  {key:'update',   heading:'Update on strengths and action points', h:150,
+   ph:'What changed across the final TPs. On a straight pass, the line saying they held their ground.',
+   hint:'Cambridge asks for one on every candidate, not only the borderline ones.'},
+  {key:'provided', heading:'What evidence was provided for a Higher Grade (if applicable)', h:150,
+   ph:'Where the final grade moved, what earned it.',
+   hint:'Leave empty where the grade did not move.'},
 ];
 
 /* Cambridge has ONE evidence field, not two, and it belongs to the
@@ -404,9 +417,14 @@ function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&
 function blankRecord(name){ return {name, provisional:'', final:'', planS:[], planA:[], teachS:[], teachA:[], update:'', evidence:'', hoursAttended:'', overall:''}; }
 /* Anything written in the two old boxes moves into the one field, so no
    centre loses what it recorded before today. */
+/* The one-time fold of the two old evidence boxes ran on 25 Sep 2026. `needed`
+   still folds in; `provided` does NOT, because it is now the final grade's own
+   field -- the same field it always was, so anything still under that key
+   reads correctly under the new heading. Deleting it here would eat what is
+   typed there. */
 function foldEvidence(r){
-  if (!r.evidence) r.evidence = [r.provided, r.needed].map(v => (v || '').trim()).filter(Boolean).join('\n\n');
-  delete r.needed; delete r.provided;
+  if (!r.evidence && r.needed) r.evidence = String(r.needed).trim();
+  delete r.needed;
   return r;
 }
 function gradeClass(g){ return OUTCOMES.includes(g) ? 'out' : g==='FAIL' ? 'fail' : g==='PASS A' ? 'top' : g ? 'set' : ''; }
@@ -538,7 +556,13 @@ function paintCands(){
       <div class="prosewrap evwrap" data-ev="${esc(p.id)}"${isBorderline(d.provisional) ? '' : ' hidden'}>${proseSection(p, EVIDENCE)}</div>
       <div class="cols">${SECTIONS.map(s => listSection(p, s)).join('')}</div>
       <div class="grow final"><label>Final grade</label>${gradeSelect('final', FINAL, d.final, p)}</div>
-      <div class="prosewrap">${FIELDS.map(f => proseSection(p, f)).join('')}
+      <!-- One box, two sides, as Appian has it: the update on the left, the
+           evidence that earned a higher grade on the right. It comes with the
+           final grade and goes with it, unless either side already has text. -->
+      <div class="prosewrap finwrap" data-fin="${esc(p.id)}"${(d.final || FIELDS.some(f => (d[f.key] || '').trim())) ? '' : ' hidden'}>
+        <div class="fsides">${FIELDS.map(f => `<div class="fside">${proseSection(p, f)}</div>`).join('')}</div>
+      </div>
+      <div class="prosewrap">
         <!-- What the final course report needs that the grade form does not:
              the hours this candidate attended and the overall comment that
              closes the report (Connect's final report, mirrored 25 Sep 2026). -->
@@ -647,6 +671,8 @@ function onGrade(e){
   if (e.target.dataset.grade === 'final') {
     const btn = document.querySelector(`.frbtn[data-fr="${CSS.escape(e.target.dataset.id)}"]`);
     if (btn) btn.textContent = reportLabel(e.target.value);
+    const box = document.querySelector(`.finwrap[data-fin="${CSS.escape(e.target.dataset.id)}"]`);
+    if (box) box.hidden = !(e.target.value || [...box.querySelectorAll('textarea')].some(t => t.value.trim()));
   }
   paintJump(); paintCohort();
   document.querySelectorAll(`select.grade[data-id="${CSS.escape(e.target.dataset.id)}"][data-grade="${e.target.dataset.grade}"]`).forEach(sel => {
@@ -681,8 +707,8 @@ function printableRecord(p, i){
     <h2>${letterFor(i)} · ${esc(d.name || '')}</h2>
     <div class="pgrades">Provisional grade: <b>${esc(d.provisional || 'not set')}</b> · Final grade: <b>${esc(d.final || 'not set')}</b>${p.cap ? ' · ' + esc(p.cap.line) : ''}</div>
     ${SECTIONS.map(s => `<h3>${s.heading}</h3>${list(s.key)}`).join('')}
-    ${FIELDS.map(prose).join('')}
     ${isBorderline(d.provisional) ? prose(EVIDENCE) : ''}
+    ${(d.final || FIELDS.some(f => (d[f.key] || '').trim())) ? FIELDS.map(prose).join('') : ''}
   </div>`;
 }
 function buildPrintable(){

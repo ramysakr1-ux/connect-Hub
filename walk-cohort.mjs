@@ -411,6 +411,21 @@ await step('the grades report holds six, and each grade stays on its own person'
   must(/^Open the final report$/.test(await frLabel()), 'a graded candidate cannot open the final report: ' + await frLabel());
   await T.p.selectOption('.cand:nth-of-type(1) .grow.final select.grade', 'WITHDRAWN'); await settle(T.p, 400);
   must(/not issued/.test(await frLabel()), 'the final report is still offered on a withdrawal: ' + await frLabel());
+  /* The final grade's box: Appian's two fields, side by side, arriving with
+     the grade and leaving with it. */
+  const finBox = '.cand:nth-of-type(1) .finwrap';
+  await T.p.selectOption('.cand:nth-of-type(1) .grow.final select.grade', ''); await settle(T.p, 500);
+  must(!(await T.p.isVisible(finBox)), 'the final box shows with no final grade');
+  await T.p.selectOption('.cand:nth-of-type(1) .grow.final select.grade', 'PASS'); await settle(T.p, 500);
+  must(await T.p.isVisible(finBox), 'the final box did not arrive with the final grade');
+  const finHeads = await T.p.$$eval(finBox + ' .fside h3', hs => hs.map(h => h.textContent.trim()));
+  must(JSON.stringify(finHeads) === JSON.stringify([
+    'Update on strengths and action points',
+    'What evidence was provided for a Higher Grade (if applicable)'
+  ]), 'the final box is not Appian\'s two fields: ' + JSON.stringify(finHeads));
+  const [fa, fb] = await T.p.$$eval(finBox + ' .fside', els => els.map(e => Math.round(e.getBoundingClientRect().top)));
+  must(Math.abs(fa - fb) < 4, 'the two sides are stacked, not side by side');
+
   await T.p.selectOption('.cand:nth-of-type(1) .grow.final select.grade', finalWas); await settle(T.p, 400);
   await T.p.selectOption('.cand:nth-of-type(1) .grow select.grade[data-grade="provisional"]', provWas); await settle(T.p, 400);
   await T.p.click('#saveBtn'); await settle(T.p, 700);
