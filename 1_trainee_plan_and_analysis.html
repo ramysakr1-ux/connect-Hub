@@ -631,9 +631,9 @@
 </div>
 
 <script src="hub-due.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609261536"></script>
-<script src="hub-store.js?v=202609261536"></script>
-<script src="hub-sync.js?v=202609261536"></script>
+<script src="hub-shared.js?v=202609261554"></script>
+<script src="hub-store.js?v=202609261554"></script>
+<script src="hub-sync.js?v=202609261554"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -735,9 +735,17 @@ function renderMatsFile(){
   const drop=$('matsDrop');
   if(!MATS_FILE){ drop.innerHTML='<span id="matsDropText">Drag and drop a file here, or <u>click to choose</u></span><input type="file" id="matsFileInput" style="display:none;">'; bindFileInput(); return; }
   const size = MATS_FILE.size ? ' \u00b7 ' + prettySize(MATS_FILE.size) : '';
+  /* The local copy (dataUrl) only ever exists in the browser that did the
+     attaching -- open the plan on another device and this read "not on this
+     device" with nothing to be done about it, although the upload had already
+     reached the course's Drive folder and the file was one click away there
+     (Ramy, 26 Sep 2026, having asked the same of the owner console). Drive
+     first, because it works from anywhere; the local Download stays for the
+     one browser that still holds the bytes. */
   drop.innerHTML = `<div class="matsfile"><span class="name">\uD83D\uDCCE ${esc(MATS_FILE.name)}${size}</span>
+    ${MATS_FILE.url ? `<a href="${esc(MATS_FILE.url)}" target="_blank" rel="noopener">Open in Drive</a>` : ''}
     ${MATS_FILE.dataUrl ? `<a href="${MATS_FILE.dataUrl}" download="${esc(MATS_FILE.name)}">Download</a>`
-      : '<span style="color:var(--grey);font-style:italic;">not on this device</span>'}
+      : (MATS_FILE.url ? '' : '<span style="color:var(--grey);font-style:italic;">not on this device</span>')}
     <button type="button" id="matsFileRemove">Remove</button></div>`;
   $('matsFileRemove').addEventListener('click', e=>{ e.stopPropagation(); MATS_FILE=null; saveMatsLocal(); matsNote(''); dirty=true; autosave(); renderMatsFile(); });
 }
