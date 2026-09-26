@@ -101,11 +101,31 @@
      The frame's label is which teaching practice you are on. That line used to
      float under the title with nothing to attach to; it is the name of this
      group, so it sits on the group's own edge. */
-  .tpgroup{position:relative; border:1.5px dashed var(--gold-hair); border-radius:16px;
-    padding:28px 16px 16px; margin-top:34px;}
-  .grouplabel{position:absolute; top:-8px; left:20px; background:var(--sand); padding:0 10px;
-    font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:600;
+  /* The hero card (Ramy, 26 Sep 2026, pointing at the owner console: "a card
+     inside a card... I'd like to use this"). The teaching practice was a dashed
+     frame around three cards of the same weight as the two below them, so the
+     thing the whole page is about had no more presence than the footnotes. Now
+     it is a card, and the three rooms are panels inside it.
+     Depth moved outward: the OUTER card carries the gradient, the lit top edge
+     and the two shadows that .room used to carry, and the rooms inside give
+     them up -- a pane inside a pane is two objects arguing. */
+  .tpgroup{position:relative; margin-top:34px; border-radius:16px; padding:18px 18px 18px;
+    background:linear-gradient(180deg, var(--card-top) 0%, var(--card) 64%);
+    border:1px solid var(--sand-line);
+    box-shadow:inset 0 1px 0 var(--card-edge), 0 1px 2px var(--shade-near), 0 7px 16px -7px var(--shade-far);}
+  /* The head: which teaching practice this is, and where it stands. The state
+     is teal because gold on this page means one thing only -- what to do next
+     -- and a second colour saying "what now" would be a second answer. */
+  .herohead{display:flex; align-items:baseline; justify-content:space-between; gap:14px;
+    flex-wrap:wrap; margin:0 2px 14px;}
+  .grouplabel{font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:600;
     letter-spacing:0.16em; text-transform:uppercase; color:var(--gold-deep, oklch(52% 0.098 70));}
+  .herostate{font-family:'Karla',sans-serif; font-size:0.78rem; font-weight:700;
+    padding:3px 10px; border-radius:20px;
+    color:var(--teal, oklch(37.5% 0.058 195));
+    background:color-mix(in oklab, var(--teal, oklch(37.5% 0.058 195)) 6%, var(--surface, oklch(95.2% 0.018 84)));
+    border:1px solid color-mix(in oklab, var(--teal, oklch(37.5% 0.058 195)) 35%, transparent);}
+  .herostate:empty{display:none;}
 
   /* ---- rooms ------------------------------------------------------------ */
   /* One card, everywhere (Ramy, 21 Sep 2026: "all of them the same shape pill.
@@ -131,6 +151,14 @@
                0 7px 16px -7px var(--shade-far);
     transition:transform .14s ease, box-shadow .14s ease, border-color .14s ease;}
   .room:hover{color:inherit;}
+  /* Inside the hero the room is a panel, not a pane: the face flattens to the
+     surface, the shadows go, and the hairline is the quieter row line. The two
+     that sit outside the hero keep the pane, because out there they are
+     objects on the ground rather than things inside a card. */
+  .tpgroup .room{background:var(--surface, oklch(95.2% 0.018 84)); border-color:var(--row-line, oklch(90% 0.016 82));
+    border-radius:10px; box-shadow:none; padding:16px 18px;}
+  .tpgroup .room:hover{box-shadow:0 1px 2px var(--shade-near), 0 8px 18px -10px var(--shade-far);
+    border-color:var(--sand-line);}
   /* The whole card lifts, and it is meant to be felt (Ramy, 25 Sep 2026:
      "hovering effect on the whole card"). hub-shared.js gives every a.room a
      1px nudge and a flat ring; that rule is injected into the head at runtime
@@ -205,7 +233,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609262225">
+<link rel="stylesheet" href="hub-house.css?v=202609262241">
 </head>
 <body>
 <div class="board">
@@ -232,7 +260,10 @@
        order: you write the plan, you teach and write the self-evaluation, you
        read what came back. -->
   <div class="tpgroup">
-    <span class="grouplabel" id="tpLine">Teaching practice</span>
+    <div class="herohead">
+      <span class="grouplabel" id="tpLine">Teaching practice</span>
+      <span class="herostate" id="tpState"></span>
+    </div>
     <div class="rooms">
       <a class="room" id="roomPlan" href="1_trainee_plan_and_analysis.html">
         <h2>Lesson plan &amp; language analysis</h2>
@@ -294,10 +325,10 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202609262225"></script>
-<script src="hub-shared.js?v=202609262225"></script>
-<script src="hub-store.js?v=202609262225"></script>
-<script src="hub-sync.js?v=202609262225"></script>
+<script src="hub-due.js?v=202609262241"></script>
+<script src="hub-shared.js?v=202609262241"></script>
+<script src="hub-store.js?v=202609262241"></script>
+<script src="hub-sync.js?v=202609262241"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -495,7 +526,12 @@ line(document.getElementById('badgeProgress'), (function(){
    be on. */
 (function(){
   const tl = document.getElementById('tpLine');
-  if (tl) tl.textContent = TP_LABEL + (NEXT === 'waiting' ? ' · with your tutor' : '');
+  if (tl) tl.textContent = TP_LABEL;
+  /* Where this teaching practice stands, in the head rather than trailing the
+     label with a middot. Only when there is something to say: a candidate with
+     work still to do already has a gold card telling them so. */
+  const ts = document.getElementById('tpState');
+  if (ts) ts.textContent = NEXT === 'waiting' ? 'With your tutor' : '';
 })();
 
 /* ---- returned: read it, or start the next one ------------------------------ */
