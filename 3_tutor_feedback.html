@@ -293,6 +293,18 @@
     .prow .tcol{grid-column:2; border-left:none; padding:8px 0 14px 0; background:none;}
     .pspine-head{display:none;}
   }
+  /* The fold wears the h4 the analysis used to have, so the card's rhythm is
+     unchanged when it is open. */
+  .la-fold{margin-top:16px;}
+  .la-fold > summary{cursor:pointer; list-style:none; font-family:'Newsreader',Georgia,serif;
+    font-size:0.95rem; color:var(--terracotta); display:flex; align-items:baseline; gap:10px;}
+  .la-fold > summary::-webkit-details-marker{display:none;}
+  .la-fold > summary::before{content:"\25B8"; font-size:0.8em; color:var(--grey); transition:transform .12s;}
+  .la-fold[open] > summary::before{transform:rotate(90deg);}
+  .la-fold > summary .n{font-family:'Karla',sans-serif; font-size:0.78rem; font-weight:500; color:var(--grey);}
+  .la-fold > summary:hover{text-decoration:underline; text-decoration-color:var(--gold, oklch(63% 0.096 72));
+    text-decoration-thickness:2px; text-underline-offset:5px;}
+  .la-fold .la-body{margin-top:4px;}
   .seen th.tc{background:var(--terracotta); color:var(--paper);}
   .seen textarea.tc{width:100%; min-height:72px; font-family:'Karla',sans-serif; font-size:0.86rem;
     padding:5px 7px; border:1px solid var(--ochre); border-radius:5px; background:#FBF3E4;
@@ -509,9 +521,9 @@
 
 
 <script src="hub-exchange.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609261638"></script>
-<script src="hub-store.js?v=202609261638"></script>
-<script src="hub-sync.js?v=202609261638"></script>
+<script src="hub-shared.js?v=202609261650"></script>
+<script src="hub-store.js?v=202609261650"></script>
+<script src="hub-sync.js?v=202609261650"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -976,15 +988,31 @@ function showSeen(d){
       </div>`; }).join('')}
     </div>`;
   }
+  /* The analysis is the longest thing on this screen -- eleven sections on a
+     functional lesson, each with its own comment box -- and it sits between
+     the procedure and the self-evaluation, so the grade and the four lists
+     the tutor actually fills in were a long scroll past someone else's
+     writing (Ramy, 26 Sep 2026: "fold the language analysis"). Folded, with
+     the summary saying what is inside and that there is a box on each section,
+     because a fold that hides work a tutor is meant to do has to say so. It
+     opens itself when any of those boxes already has something in it: that is
+     a tutor coming back to what they wrote, and it should be where they left
+     it. */
+  const laFold = (label, rows, inner) => {
+    const written = /<textarea[^>]*>[^<]/.test(inner);
+    return `<details class="la-fold"${written?' open':''}>
+      <summary>${label} analysis <span class="n">${rows} section${rows===1?'':'s'}, a comment box on each</span></summary>
+      <div class="la-body">${inner}</div></details>`;
+  };
   const laLabel = l.type==='vocab'?'Vocabulary':(l.type==='grammar'?'Grammar':'Functional language');
   if(l.type==='vocab' && (l.vocab||[]).length){
-    html+=`<h4>${laLabel} analysis</h4><table>
+    html+=laFold(laLabel, l.vocab.length, `<table>
       <tr><th width="14%">Item</th><th>Definition</th><th>Clarification</th><th>Problems</th>
           <th class="tc" width="32%">Your comment</th></tr>
       ${l.vocab.map((r,i)=>`<tr><td><b>${nl2br(r.item)}</b></td><td>${bulletsHTML(r.def)}</td>
         <td>${bulletsHTML(r.clar)}</td><td>${bulletsHTML(r.prob)}</td>
         <td>${tcBox('vo'+i,'on this item')}</td></tr>`).join('')}
-    </table>`;
+    </table>`);
   } else if((l.blocks||[]).length){
     /* Built first, shown only if there is anything in it. Every field filters
        itself out when empty, so a section with nothing written produced a
@@ -1010,7 +1038,9 @@ function showSeen(d){
     });
     /* A table with one row is the header alone: nothing was written. */
     const filled = (blocksHTML.match(/<tr>/g)||[]).length > (l.blocks||[]).length;
-    if (filled) html += `<h4>${laLabel} analysis</h4>` + blocksHTML;
+    /* every row but the header rows: the sections that were actually written */
+    const rows = (blocksHTML.match(/<tr>/g)||[]).length - (l.blocks||[]).length;
+    if (filled) html += laFold(laLabel, rows, blocksHTML);
   }
   if(d.self){
     const s=d.self;
@@ -1032,6 +1062,11 @@ function showSeen(d){
   if (window.hubStackTables) hubStackTables($('seenBody'));
   $('seen').style.display='';
   $('seenBody').querySelectorAll('textarea.tc').forEach(autoGrow);
+  /* A box inside a closed <details> has no height to measure, so it would open
+     collapsed to one line however much is in it. */
+  $('seenBody').querySelectorAll('details.la-fold').forEach(d=>d.addEventListener('toggle',()=>{
+    if(d.open) d.querySelectorAll('textarea.tc').forEach(autoGrow);
+  }));
 }
 $('seenToggle').addEventListener('click',()=>{
   const b=$('seenBody');
