@@ -381,7 +381,7 @@
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609261943">
+<link rel="stylesheet" href="hub-house.css?v=202609262002">
 </head>
 <body>
 <div class="board">
@@ -531,11 +531,11 @@
 </div>
 
 
-<script src="hub-exchange.js?v=202609261943"></script>
-<script src="hub-shared.js?v=202609261943"></script>
-<script src="hub-store.js?v=202609261943"></script>
-<script src="hub-crit-learn.js?v=202609261943"></script>
-<script src="hub-sync.js?v=202609261943"></script>
+<script src="hub-exchange.js?v=202609262002"></script>
+<script src="hub-shared.js?v=202609262002"></script>
+<script src="hub-store.js?v=202609262002"></script>
+<script src="hub-crit-learn.js?v=202609262002"></script>
+<script src="hub-sync.js?v=202609262002"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -738,16 +738,33 @@ function suggestCriteria(text, scope){ return scoreCriteria(text, scope).map(x=>
    before the store has answered, and must not lose what it learned if a return
    happens while the connection is down -- the next return merges it in. */
 const LEARN_KEY='chub:critlearn';
+const SEED_KEY='chub:critlearn:asked';
 let CRIT_MODEL=null;
 (function loadCritModel(){
   try{ CRIT_MODEL=JSON.parse(localStorage.getItem(LEARN_KEY)||'null'); }catch(e){}
   if(!(window.HubStore && HubStore.isTutor && HubStore.isTutor() && HubStore.course)) return;
-  HubStore.course().then(c=>{
-    if(!c || !c.critLearn) return;
-    CRIT_MODEL=c.critLearn;
-    try{ localStorage.setItem(LEARN_KEY, JSON.stringify(CRIT_MODEL)); }catch(e){}
+  const take=m=>{
+    if(!m) return;
+    CRIT_MODEL=m;
+    try{ localStorage.setItem(LEARN_KEY, JSON.stringify(m)); }catch(e){}
     /* A point already typed keeps its stale suggestions otherwise. */
     document.querySelectorAll('.pt-text').forEach(b=>b.dispatchEvent(new Event('input',{bubbles:true})));
+  };
+  HubStore.course().then(c=>{
+    if(c && c.critLearn && Number(c.critLearn.n) > 0){ take(c.critLearn); return; }
+    /* Nothing of its own yet: ask whether the centre's last course has
+       anything to hand over. Asked once per browser per course, because the
+       answer is almost always "no" and the store has to read every course to
+       say so; the store refuses it anyway once this course has tagging. */
+    let asked=false;
+    try{ asked = localStorage.getItem(SEED_KEY)==='1'; }catch(e){}
+    if(asked || !HubStore.seedCritLearn) return;
+    try{ localStorage.setItem(SEED_KEY,'1'); }catch(e){}
+    return HubStore.seedCritLearn().then(r=>{
+      if(!r || !r.seeded) return;
+      take(r.critLearn);
+      setStatus('Criteria suggestions carried over from ' + (r.from || 'this centre\u2019s last course') + '.');
+    });
   }).catch(()=>{});
 })();
 

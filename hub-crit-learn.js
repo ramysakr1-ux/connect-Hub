@@ -62,6 +62,9 @@ window.HubCritLearn = (function () {
     var m = empty();
     if (!raw || typeof raw !== 'object') return m;
     m.n = Math.max(0, Number(raw.n) || 0);
+    /* Where a seeded course got its head start, kept through every later
+       observe so the evidence line never overstates what this course did. */
+    if (raw.seed && typeof raw.seed === 'object') m.seed = raw.seed;
     if (raw.words && typeof raw.words === 'object') {
       Object.keys(raw.words).forEach(function (w) {
         var c = Number(raw.words[w]); if (c > 0) m.words[w] = c;
@@ -199,8 +202,15 @@ window.HubCritLearn = (function () {
     var m = normalise(model);
     var e = m.codes[code];
     if (!e || !e.n) return '';
-    return 'this course has tagged ' + e.n + ' point' + (e.n === 1 ? '' : 's') + ' ' + code;
+    var many = e.n + ' point' + (e.n === 1 ? '' : 's');
+    /* A seeded course must not claim the evidence as its own: half of it was
+       carried over, and a tutor reading "12 points tagged 5f" should be able
+       to find twelve points on this course. */
+    return m.seed
+      ? many + ' tagged ' + code + ', counting what carried over from ' + (m.seed.name || 'the last course')
+      : 'this course has tagged ' + many + ' ' + code;
   }
+
 
   function size(model) { return JSON.stringify(normalise(model)).length; }
 

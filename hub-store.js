@@ -92,6 +92,10 @@ window.HubStore = (function(){
     put: function(kind, data, tok){ return call({ op: 'put', token: tok || token(), kind: kind, data: data }); },
     course: function(){ return call({ op: 'course' }); },
     putCourse: function(kind, data){ return call({ op: 'putCourse', kind: kind, data: data }); },
+    /* A centre's next course starts from what its last one taught the criteria
+       suggester. The store decides whether there is anything to take: it
+       refuses if this course has tagging of its own, so this can only seed. */
+    seedCritLearn: function(){ return call({ op: 'seedCritLearn' }); },
     roster: function(){ return call({ op: 'roster' }).then(function(r){ return r.trainees; }); },
     addTrainee: function(name, group){ return call({ op: 'addTrainee', name: name, group: group }); },
     // A pasted class list in one call, rather than one call per name.
