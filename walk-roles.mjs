@@ -26,7 +26,12 @@ const HERE = new URL('.', import.meta.url).pathname;
 const DAY = 864e5;
 
 /* ---------------- the fake store ---------------- */
-const STORE = { course: { settings: null, wording: null }, trainees: {}, key: 'tutor-key-1', akey: 'assessor-key-1', calls: [] };
+const STORE = { course: { settings: null, wording: null }, trainees: {}, key: 'tutor-key-1', akey: 'assessor-key-1', calls: [],
+  // Faults the walk can switch on: `refuse` names a record kind whose put the
+  // store turns down (ok:false, the way the Apps Script refuses), `slow` is a
+  // delay in ms on every put (the Apps Script takes 1.5-13 s to answer).
+  refuse: '', slow: 0, overCell: [] };
+const CELL = 50000;
 const REFUSE = { ok: false, error: 'This link is not on a course' };
 function handle(p){
   STORE.calls.push(p.op);
@@ -42,7 +47,7 @@ function handle(p){
       return REFUSE;
     case 'me': { const t = tr(p.token); if (!t) return REFUSE; return { ok: true, result: { token: t.token, name: t.name, group: t.group, records: t.records } }; }
     case 'get': { const t = tr(p.token); if (!t) return REFUSE; return { ok: true, result: { data: t.records[p.kind] ?? null } }; }
-    case 'put': { const t = tr(p.token); if (!t) return REFUSE; if (p.data == null) delete t.records[p.kind]; else t.records[p.kind] = p.data; return { ok: true, result: { saved: true } }; }
+    case 'put': { const t = tr(p.token); if (!t) return REFUSE; if (STORE.refuse && p.kind === STORE.refuse) return { ok: false, error: 'The store refused this write' }; if (p.data != null && JSON.stringify(p.data).length > CELL) return { ok: false, error: 'over the cell' }; if (p.data == null) delete t.records[p.kind]; else t.records[p.kind] = p.data; return { ok: true, result: { saved: true } }; }
     case 'course': if (!isTutor && !isAssessor) return REFUSE; return { ok: true, result: STORE.course };
     case 'putCourse': if (!isTutor) return REFUSE; STORE.course[p.kind] = p.data; return { ok: true, result: { saved: true } };
     case 'roster': if (!isTutor && !isAssessor) return REFUSE; return { ok: true, result: { trainees: rosterOut() } };
@@ -59,8 +64,21 @@ function handle(p){
 }
 const storeServer = createServer((req, res) => {
   let body = ''; req.on('data', c => body += c); req.on('end', () => {
-    let out; try { out = handle(JSON.parse(body || '{}')); } catch (e) { out = { ok: false, error: String(e.message) }; }
-    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); res.end(JSON.stringify(out));
+    let p = {}, out; try { p = JSON.parse(body || '{}'); out = handle(p); } catch (e) { out = { ok: false, error: String(e.message) }; }
+    /* A record is one Sheets cell, and a cell holds 50,000 characters. Above
+       that the Apps Script throws and Google answers with an HTML error page
+       (title "Hata"), which hub-store reads as a transient failure. Measured
+       on the live store 26 Sep 2026: a tpHistory put of 49,495 chars saved,
+       50,995 did not. This fake used to hold anything, which is how a
+       candidate's second TP never filing went unseen. */
+    const answer = () => {
+      if (p.op === 'put' && p.data != null && JSON.stringify(p.data).length > CELL) {
+        STORE.overCell.push(p.kind + ' ' + JSON.stringify(p.data).length);
+        res.writeHead(200, { 'Content-Type': 'text/html', 'Access-Control-Allow-Origin': '*' }); return res.end('<!DOCTYPE html><html><head><title>Hata</title></head><body>Hata</body></html>');
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); res.end(JSON.stringify(out));
+    };
+    if (STORE.slow && p.op === 'put') setTimeout(answer, STORE.slow); else answer();
   });
 });
 await new Promise(r => storeServer.listen(0, r));
@@ -116,6 +134,14 @@ async function snap(){
 async function step(name, fn){
   n++; try { const note = await fn(); passed++; console.log(`  ok  ${n}. ${name}${note ? ' — ' + note : ''}`); }
   catch (e) { findings.push(`step ${n} (${name}): ${e.message}`); console.log(`  FAIL ${n}. ${name} — ${e.message}`); }
+  await snap();
+}
+/* A step for a fault that is known and still open. It runs every time so the
+   walk keeps saying what the store cannot do, it does not fail the walk, and
+   it turns INTO a finding the day it passes -- the marker is then stale. */
+async function known(name, fn){
+  n++; try { const note = await fn(); findings.push(`step ${n} (${name}) PASSED but is marked known-open: retire the marker`); console.log(`  ??  ${n}. ${name} — passed; retire the known-open marker${note ? ' — ' + note : ''}`); }
+  catch (e) { passed++; console.log(`  open ${n}. ${name} — ${e.message}`); }
   await snap();
 }
 const must = (cond, msg) => { if (!cond) throw new Error(msg); };
@@ -303,6 +329,167 @@ await step('trainee: her record opens the returned feedback, read-only, landscap
   must((await A.p.$$('#content textarea, #content input, #content [contenteditable="true"]')).length === 0, 'editable controls on the record');
   const pg = await A.p.evaluate(() => [...document.styleSheets].some(s => { try { return [...s.cssRules].some(r => r.constructor.name === 'CSSPageRule' && /landscape/.test(r.style.size)); } catch (e) { return false; } }));
   must(pg, 'no landscape @page');
+});
+
+/* ===== TWO MORE TPs, SAME CANDIDATE, SAME TUTOR BROWSER =====
+   Found 26 Sep 2026 under the demo mint, against the live store: TP2 returned
+   to a candidate who already had TP1, and the store ended up holding
+   feedback:null (she had started TP3) and tpHistory:{1}. Returning writes the
+   feedback AND files the TP into the roster's history, both through the 600 ms
+   debounce; leave the page first and the beacon carries them, and a beacon
+   with a ~100 KB document fails silently. Neither harness had ever returned
+   two TPs to one candidate from one tutor browser, so nothing caught it.
+   These steps do, and they test the two halves of the fix separately: Return
+   may not say "Returned" until the store has the document; and a tutor's boot
+   keeps a filed document the store lacks and sends it, the way the trainee's
+   side has kept its own copy since 22 Sep. */
+// An overall comment the length a tutor writes.
+const COMMENT_LINE = i => `Line ${i + 1}: the pair work ran long, but every student spoke, and the correction slot at the end was well judged.`;
+const LONG_COMMENT = Array.from({ length: 12 }, (_, i) => COMMENT_LINE(i)).join('\n');
+// The size of a returned TP measured on the live demo course, 26 Sep 2026: 25-35 KB of docHTML.
+const LIVE_SIZE_COMMENT = Array.from({ length: 75 }, (_, i) => COMMENT_LINE(i)).join('\n');
+async function traineeTurnsIn(tp){
+  await A.p.goto(`${BASE}1_trainee_plan_and_analysis.html?t=${amaraToken}`, { waitUntil: 'domcontentloaded' }); await settle(A.p, 2500);
+  must(!(await A.p.$eval('#fTP', n => n.disabled)), 'the plan form is locked: the last TP was never cleared');
+  await A.p.fill('#fTP', tp); await A.p.fill('#fLevel', 'B1'); await A.p.fill('#fLength', '45');
+  await A.p.click('#fwBtn'); await A.p.click('.fw-item:has-text("Test – Teach – Test")'); await settle(A.p, 300); const c = await A.p.$('.confirm-action'); if (c) await c.click();
+  await A.p.evaluate(tp => { const set = (sel, v) => { const el = document.querySelector(sel); el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); };
+    set('.t-stage', 'Lead-in'); set('.t-aim', 'to set the topic'); set('.t-proc', '• Show three photos'); set('.t-time', '6'); set('#fMain', '• To practise the past simple, ' + tp); }, tp);
+  await A.p.click('#turnInBtn'); await settle(A.p, 500); const c2 = await A.p.$('.confirm-action'); if (c2) await c2.click(); await settle(A.p, 3000);
+  const rec = STORE.trainees[amaraToken].records.plan;
+  must(rec && rec.status === 'turned_in', tp + ' plan not turned in on the store: ' + JSON.stringify(rec && rec.status));
+  await A.p.goto(`${BASE}2_trainee_self_evaluation.html?t=${amaraToken}`, { waitUntil: 'domcontentloaded' }); await settle(A.p, 2500);
+  await A.p.evaluate(tp => { const t = document.getElementById('sWell'); t.value = '• ' + tp + ': the lead-in got everyone talking'; t.dispatchEvent(new Event('input', { bubbles: true })); }, tp);
+  await A.p.click('#turnInBtn'); await settle(A.p, 500); const c3 = await A.p.$('.confirm-action'); if (c3) await c3.click(); await settle(A.p, 3000);
+  must((STORE.trainees[amaraToken].records.selfeval || {}).status === 'turned_in', tp + ' self-evaluation not on the store');
+}
+async function traineeStartsNextTP(filedTP){
+  await A.p.goto(`${BASE}4_feedback_returned.html?t=${amaraToken}`, { waitUntil: 'domcontentloaded' }); await settle(A.p, 3500);
+  const btn = await A.p.$('#nextTpBtn'); must(btn, 'no Start next TP button');
+  await btn.click(); await settle(A.p, 500); const c = await A.p.$('.confirm-action'); if (c) await c.click(); await settle(A.p, 4000);
+  const r = STORE.trainees[amaraToken].records;
+  must(!r.plan && !r.selfeval && !r.feedback, 'desk not cleared on the store: ' + JSON.stringify(Object.keys(r)));
+  const h = r.tpHistory || {};
+  must(h[filedTP] && h[filedTP].docHTML, 'TP' + filedTP + ' not in the store history: {' + Object.keys(h) + '}');
+  return Object.keys(h);
+}
+// The tutor's feedback screen for the candidate's current TP, filled and ready to return.
+async function tutorFills(tp, strength){
+  await T.p.goto(`${tutorUrl('3_tutor_feedback.html')}&trainee=${amaraToken}`, { waitUntil: 'domcontentloaded' }); await settle(T.p, 3000);
+  const reads = await T.p.$eval('#fTP', n => n.value);
+  must(reads === tp, '#fTP reads ' + JSON.stringify(reads) + ', not ' + tp + ': the screen is not on her current plan');
+  must(!(await T.p.$eval('#fGrade', n => n.disabled)), 'the board is locked on an old return');
+  const brief = await T.p.evaluate(() => eval('HubExchange.brief(DOC)'));
+  const filled = brief.replace('## Grade\n\n', '## Grade\nTo standard\n').replace('## Strengths in teaching\n\n', '## Strengths in teaching\n- ' + strength + '\n');
+  await T.p.evaluate(txt => { const dt = new DataTransfer(); dt.setData('text/plain', txt); document.body.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); }, filled);
+  await settle(T.p, 800);
+  await T.p.evaluate(txt => { const t = document.getElementById('tOverall'); t.value = txt; t.dispatchEvent(new Event('input', { bubbles: true })); }, LONG_COMMENT);
+  await settle(T.p, 1200);   // the autosave, so the return is not racing a draft
+  const got = await T.p.evaluate(() => eval('(function(){ const c = collect(); return { grade: c.grade, st: c.st.length, overall: (c.overall || "").length }; })()'));
+  must(got.grade === 'To standard' && got.st === 1 && got.overall > 1000, 'boxes: ' + JSON.stringify(got));
+}
+const returned = () => T.p.waitForFunction(() => /Returned/.test((document.getElementById('turnStatus') || {}).textContent || ''), null, { timeout: 20000 });
+const localHistory = () => T.p.evaluate(t => { const r = JSON.parse(localStorage.getItem('connect_roster_v1') || '{}'); return Object.keys((((r.trainees || {})[t] || {}).tp || {}).history || {}); }, amaraToken);
+
+await step('trainee: Start next TP files TP1 away and clears the desk', async () => {
+  const h = await traineeStartsNextTP(1);
+  return 'store history {' + h + '}, desk clear';
+});
+await step('trainee: TP2 plan and self-evaluation turned in', async () => { await traineeTurnsIn('TP2'); });
+await step('tutor: TP2 returned from the same browser, to a slow store: "Returned" waits for the store', async () => {
+  await tutorFills('TP2', 'Clear instructions');
+  STORE.slow = 1500;
+  const t0 = Date.now();
+  try {
+    await T.p.click('#returnBtn'); await settle(T.p, 300); const c = await T.p.$('.confirm-action'); if (c) await c.click();
+    await returned();
+  } finally { STORE.slow = 0; }
+  const took = Date.now() - t0;
+  const h = STORE.trainees[amaraToken].records.tpHistory || {};
+  must(h[2] && h[2].docHTML, `the screen said Returned after ${took} ms, and the store's history was {${Object.keys(h)}}`);
+  must(await T.p.$eval('#returnBtn', n => n.style.display === 'none'), 'the Return button is still showing');
+  const sizes = Object.keys(h).map(k => `TP${k} ${h[k].docHTML.length}`).join(', ');
+  return `store history {${Object.keys(h)}} (${sizes} chars), Returned after ${took} ms`;
+});
+await step('trainee: both sheets on the desk, the current one in front of the pile', async () => {
+  await A.p.goto(`${BASE}4_feedback_returned.html?t=${amaraToken}`, { waitUntil: 'domcontentloaded' }); await settle(A.p, 3500);
+  const t = await text(A.p);
+  must(/Clear instructions/.test(t), 'TP2 not shown'); must(/Good hook/.test(t), 'TP1 no longer shown');
+  // newest last in the record, and the last sheet is the one in front
+  const pile = await A.p.$$eval('#content .doc', ds => ds.map(d => (d.classList.contains('current') ? 'current' : 'earlier') + ':' + (/Clear instructions/.test(d.textContent) ? 'TP2' : /Good hook/.test(d.textContent) ? 'TP1' : '?')));
+  must(pile.join(' ') === 'earlier:TP1 current:TP2', 'the pile reads ' + pile.join(' '));
+});
+// Reopen the returned TP on the tutor's screen, change the overall comment, return it again.
+async function tutorReturnsAgain(comment){
+  await T.p.goto(`${tutorUrl('3_tutor_feedback.html')}&trainee=${amaraToken}`, { waitUntil: 'domcontentloaded' }); await settle(T.p, 3000);
+  const reopen = await T.p.$('#reopenBtn'); must(reopen, 'TP2 is not on the screen as returned');
+  await reopen.click(); await settle(T.p, 300); const c = await T.p.$('.confirm-action'); if (c) await c.click(); await settle(T.p, 500);
+  await T.p.evaluate(txt => { const t = document.getElementById('tOverall'); t.value = txt; t.dispatchEvent(new Event('input', { bubbles: true })); }, comment);
+  await settle(T.p, 1200);
+  await T.p.click('#returnBtn'); await settle(T.p, 300); const c2 = await T.p.$('.confirm-action'); if (c2) await c2.click();
+  await returned(); await settle(T.p, 1500);
+}
+const localTP2 = () => T.p.evaluate(t => { const r = JSON.parse(localStorage.getItem('connect_roster_v1')); const e = r.trainees[t].tp.history[2]; return { at: e.returnedAt, chars: e.docHTML.length }; }, amaraToken);
+await step('tutor: TP2 re-returned while the store refuses the filing, given up after three tries; the next boot still sends it', async () => {
+  STORE.refuse = 'tpHistory';
+  let mine;
+  try {
+    await tutorReturnsAgain(LONG_COMMENT + '\nAnd one more line, added on a second look.');
+    const r = STORE.trainees[amaraToken].records;
+    mine = await localTP2();
+    must(r.feedback && r.feedback.returnedAt === mine.at, 'the re-returned feedback is not on the store');
+    must((r.tpHistory[2] || {}).returnedAt !== mine.at, 'the store took the filing it was told to refuse');
+    must(/Not saved to the course/.test(await text(T.p)), 'no banner for the refused filing');
+    // Two more visits with the store still refusing: the ledger gives up after
+    // three tries and keeps only the record of the refusal.
+    for (let i = 0; i < 2; i++) { await T.p.reload({ waitUntil: 'domcontentloaded' }); await settle(T.p, 3000); }
+    const kept = await T.p.evaluate(k => ({ ledger: localStorage.getItem('hub:pending:tutor:' + k), unsaved: localStorage.getItem('hub:unsaved:tutor:' + k) || '' }), STORE.key);
+    must(!kept.ledger, 'the ledger still holds it after three refusals: ' + String(kept.ledger).slice(0, 80));
+    must(/teaching practice record/.test(kept.unsaved), 'no record of the refusal: ' + kept.unsaved.slice(0, 120));
+    must((await localTP2()).at === mine.at, 'the browser lost the re-return before any boot');
+  } finally { STORE.refuse = ''; }
+  // The store is back. Nothing is pending, so this boot is the one that used
+  // to replace the roster with the store's older copy.
+  await T.p.goto(tutorUrl('5_tutor_dashboard.html'), { waitUntil: 'domcontentloaded' }); await settle(T.p, 5000);
+  const h = STORE.trainees[amaraToken].records.tpHistory || {};
+  must(h[2] && h[2].returnedAt === mine.at, 'the boot lost the re-return: the store holds ' + JSON.stringify(h[2] && h[2].returnedAt) + ', the browser ' + mine.at);
+  must((await localTP2()).at === mine.at, 'the browser gave up its newer copy');
+  must(!(await T.p.$('#hubUnsaved')), 'the banner is still up after the filing saved');
+  return `store history {${Object.keys(h)}}, TP2 ${h[2].docHTML.length} chars, banner down`;
+});
+/* ===== KNOWN OPEN: a candidate's history is one Sheets cell ===== */
+await known('store: a TP the size of a real one files into a history that already holds one', async () => {
+  /* A candidate's whole tpHistory -- every returned TP, each with its docHTML
+     -- is ONE record, one cell, 50,000 characters. A returned TP on the live
+     demo course measures 25-35 KB, so a real candidate's second TP cannot
+     file, and the October course will hit this at every candidate's second
+     return. The client-side fix (Return waits for the store; the boot keeps a
+     filing the store lacks) is right and does not cure this: the put itself
+     is refused, sits in the ledger as transient, and -- worse -- a pending
+     write holds every later boot off the roster, so the tutor stops seeing
+     new work. Needs the store to hold each TP's entry as its own record: an
+     Apps Script change plus every reader of tpHistory, not this repo's to
+     make on its own. The step puts the short return back afterwards so the
+     doomed write does not sit under the rest of the walk. */
+  let sizes = '';
+  try {
+    await tutorReturnsAgain(LIVE_SIZE_COMMENT);
+    const r = STORE.trainees[amaraToken].records, h = r.tpHistory || {}, mine = await localTP2();
+    sizes = `feedback record ${JSON.stringify(r.feedback).length} chars, history cell ${JSON.stringify(h).length} chars`;
+    must(r.feedback && r.feedback.returnedAt === mine.at, 'the feedback itself did not save: ' + sizes);
+    must(h[2] && h[2].returnedAt === mine.at, `the ${mine.chars}-char TP2 did not file (${sizes}); refused over the cell: ${STORE.overCell.join('; ') || 'none'}`);
+  } finally {
+    STORE.overCell = [];
+    await tutorReturnsAgain(LONG_COMMENT);
+    const r = STORE.trainees[amaraToken].records, mine = await localTP2();
+    if (!(r.tpHistory[2] && r.tpHistory[2].returnedAt === mine.at)) findings.push('the short return did not go back on the store after the cell-limit step');
+  }
+  return sizes;
+});
+await step('trainee: Start next TP files TP2; the desk is clear', async () => {
+  const h = await traineeStartsNextTP(2);
+  must(h.includes('1') && h.includes('2'), 'store history {' + h + '}');
+  return 'store history {' + h + '}, desk clear';
 });
 
 /* ===== TRAINEE submits an assignment against a deadline ===== */

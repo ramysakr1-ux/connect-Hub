@@ -501,9 +501,9 @@
 
 
 <script src="hub-exchange.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609260854"></script>
-<script src="hub-store.js?v=202609260854"></script>
-<script src="hub-sync.js?v=202609260854"></script>
+<script src="hub-shared.js?v=202609261046"></script>
+<script src="hub-store.js?v=202609261046"></script>
+<script src="hub-sync.js?v=202609261046"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1286,10 +1286,23 @@ $('returnBtn').addEventListener('click', async ()=>{
   if(missing.length && !(await confirmModal('You haven\'t filled in '+missing.join(', ')+'. Return anyway?','Return anyway'))) return;
   LAST_HTML=buildHTML(d);
   if(d.next.length) localStorage.setItem('chub:lastFeedback', JSON.stringify(d));
+  /* The store has it before the screen says so. Returning writes the feedback
+     AND files the TP into the roster's history, and both used to go out on
+     hub-sync's 600 ms debounce while this line already read "Returned": leave
+     the page inside that window and the beacon carried them, and a beacon
+     with a ~100 KB document fails silently -- so a tutor's TP2 was gone from
+     the history on the next boot (Emily Carter on the demo course, 26 Sep
+     2026). Now the button stays down until the store has answered, and the
+     status line says which of the two things is true. */
+  const btn=$('returnBtn'); btn.disabled=true; const wasLabel=btn.textContent; btn.textContent='Returning…';
+  setStatus('Returning — saving to the course…');
   saveFeedbackRecord({ label:draftLabel(), state:draftState(), status:'returned', returnedAt:Date.now(), docHTML:LAST_HTML });
   dirty=false;
+  let saved=true;
+  if (window.HubSync) { try { await window.HubSync.flushNow(true); } catch (e) { saved=false; } }
+  btn.disabled=false; btn.textContent=wasLabel;
   renderTurnStatus();
-  setStatus('Returned.');
+  setStatus(saved ? 'Returned.' : 'Returned here, but not yet saved to the course — it will be sent again.');
 });
 
 /* A real PDF, straight from the browser's own print engine — no library, nothing to install.

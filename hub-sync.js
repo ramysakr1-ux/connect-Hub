@@ -239,7 +239,11 @@
   // A page about to navigate awaits this, so nothing is left to the beacon.
   // A page about to navigate waits up to 2.5 s for the store; after that the
   // beacon and the ledger carry the rest, so 'Start next TP' never hangs.
-  window.HubSync = { flushNow: function(){ return Promise.race([flush(), new Promise(function(r){ setTimeout(r, 2500); })]); }, mode: mode };
+  // A page that is STAYING passes `wait` and gets the store's actual answer,
+  // however long it takes: the tutor's Return holds its button down on this,
+  // and a 2.5 s cap would have let the screen say "Returned" with a 100 KB
+  // document still on its way (26 Sep 2026).
+  window.HubSync = { flushNow: function(wait){ var f = flush(); return wait ? f : Promise.race([f, new Promise(function(r){ setTimeout(r, 2500); })]); }, mode: mode };
   function flushBeacon(){
     var jobs = queue; queue = {}; clearTimeout(timer); timer = null;
     Object.keys(jobs).forEach(function(k){
@@ -415,9 +419,31 @@
     }
     if (mode === 'assessor') out['hub:assessor'] = JSON.stringify(boot.assessor || {});
     var roster = { trainees: {} };
+    /* The tutor's own filings, kept the way the trainee's are above. Returning
+       feedback files the TP into this browser's copy of the history; if that
+       write never reached the store -- a beacon that could not carry the
+       document, a put the store turned down until the ledger gave up -- the
+       boot used to replace the roster with the store's shorter one and the
+       document was gone from everywhere (Emily Carter's TP2 on the demo
+       course, 26 Sep 2026: store feedback null, history {1}). The store still
+       wins for every teaching practice it knows, unless this browser returned
+       that same one again later (a reopened and re-returned TP carries a newer
+       returnedAt); a filing only this browser holds is kept, and sent, so the
+       store catches up rather than the browser forgetting. Tutor only: an
+       assessor writes nothing. */
+    var mine = mode === 'tutor' ? (parse(current('connect_roster_v1')) || {}).trainees || {} : {};
     (boot.roster || []).forEach(function(t){
       var r = t.records || {};
-      roster.trainees[t.token] = { id: t.token, name: t.name, group: t.group, importedAt: t.created, tp: { plan: r.plan || null, selfeval: r.selfeval || null, feedback: r.feedback || null, history: r.tpHistory || {} }, assignments: r.assignments || {}, tracker: r.tracker || {} };
+      var history = r.tpHistory || {};
+      var local = ((mine[t.token] || {}).tp || {}).history || {}, kept = false;
+      Object.keys(local).forEach(function(n){
+        if (!local[n] || !local[n].docHTML) return;
+        if (history[n] && !((local[n].returnedAt || 0) > (history[n].returnedAt || 0))) return;
+        if (!kept) { history = JSON.parse(JSON.stringify(history)); kept = true; }
+        history[n] = local[n];
+      });
+      if (kept) schedule('r:' + t.token + ':tpHistory', { op: 'put', token: t.token, kind: 'tpHistory', data: history });
+      roster.trainees[t.token] = { id: t.token, name: t.name, group: t.group, importedAt: t.created, tp: { plan: r.plan || null, selfeval: r.selfeval || null, feedback: r.feedback || null, history: history }, assignments: r.assignments || {}, tracker: r.tracker || {} };
     });
     out['connect_roster_v1'] = JSON.stringify(roster);
     return out;
