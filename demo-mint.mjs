@@ -119,8 +119,17 @@ const paste = (p, txt) => p.evaluate(txt => { const dt = new DataTransfer(); dt.
    most pages the first time they open after a save. A handle taken before
    that reload dies with "execution context was destroyed". So: go, wait for
    the marker, and keep waiting until three seconds pass with no navigation. */
+/* A return visit boots from the browser's copy and checks the store behind
+   it -- and if the page has written anything before the store answers, the
+   boot skips the roster, so a stale "returned" feedback stays and the tutor's
+   screen opens locked (Defne Yilmaz's TP3, run eleven; Emily's won the same
+   race). Forgetting that this browser has booted makes the page take the
+   first-visit path instead: wait for the store, apply everything. What a
+   fresh browser does, on every visit. */
 async function gotoSettled(p, u, marker) {
   await p.goto(u, { waitUntil: 'domcontentloaded' });
+  await p.evaluate(() => { try { localStorage.removeItem('hub:booted'); } catch (e) {} }).catch(() => {});
+  await p.reload({ waitUntil: 'domcontentloaded' });
   for (let i = 0; i < 8; i++) {
     await p.waitForSelector(marker, { timeout: 40000 });
     const nav = await p.waitForEvent('framenavigated', { predicate: f => f === p.mainFrame(), timeout: 3000 }).then(() => true).catch(() => false);
@@ -413,14 +422,30 @@ await settle(p, 12000);
   if (Object.keys(tokens).length < COHORT.length) throw new Error('only ' + Object.keys(tokens).length + ' of ' + COHORT.length + ' candidates reached the store');
 }
 log(Object.keys(tokens).length + ' candidates added');
+}
+/* Resuming: the roster is read back rather than made, and the course's settings re-saved. */
+if (RESUMING) {
+  const roster = await call({ op: 'roster', key: K });
+  for (const [id, t] of Object.entries((roster && roster.trainees) || {})) tokens[t.name] = t.token || id;
+  if (Object.keys(tokens).length < COHORT.length) explain(new Error('the reused course has ' + Object.keys(tokens).length + ' candidates, not ' + COHORT.length));
+  await gotoSettled(p, url('6_centre_admin_dashboard.html', 'k=' + K), '#tutorNames'); await settle(p, 1000);
+  await p.fill('#tutorNames', TUTOR_1 + ', ' + TUTOR_2); await p.fill('#courseStart', day(-11)); await p.fill('#courseEnd', day(11));
+  await p.click('#saveSettings'); await settle(p, 3000); log('settings re-saved: ' + TUTOR_1 + ', ' + TUTOR_2 + '; ' + day(-11) + ' to ' + day(11));
+  log(Object.keys(tokens).length + ' candidates on the course');
+}
 
-/* ---- 3. deadlines on the four assignments, spread across the course ---- */
+/* ---- 3. the assignment keys and their deadlines -- both paths ------------
+   A1 is submitted and marked, so it is still OPEN: due tomorrow, submitted
+   just in time. A2 closed two days ago and is where the extension story lives
+   (nobody submits it). A3 is open and carries the resubmission story. The
+   first version had A1 nine days past, and the page refused every submission
+   -- correctly: a candidate cannot submit past a deadline, and neither can a
+   script. */
 await gotoSettled(p, url('8_assignment_wording.html', 'k=' + K), 'input[type="datetime-local"]'); await settle(p, 1500);
-var ORDER, PLAIN, A1, A2, A3;
-ORDER = await evalRetry(p, () => eval('hubAssignmentOrder(DATA).filter(k => k !== "a5")'));
-PLAIN = await evalRetry(p, () => eval('hubAssignmentOrder(DATA).filter(k => k !== "a5" && DATA[k] && DATA[k].sections && !DATA[k].sections.some(s => s.type === "picker") && DATA[k].sections.some(s => s.type === "text" && !hubIsReference(s)))'));
-A1 = PLAIN[0]; A2 = PLAIN[1] || ORDER.find(k => k !== A1); A3 = PLAIN[2] || ORDER.find(k => k !== A1 && k !== A2);
-const DUE = { [A1]: -9, [A2]: -2, [A3]: 5 };
+const ORDER = await evalRetry(p, () => eval('hubAssignmentOrder(DATA).filter(k => k !== "a5")'));
+const PLAIN = await evalRetry(p, () => eval('hubAssignmentOrder(DATA).filter(k => k !== "a5" && DATA[k] && DATA[k].sections && !DATA[k].sections.some(s => s.type === "picker") && DATA[k].sections.some(s => s.type === "text" && !hubIsReference(s)))'));
+const A1 = PLAIN[0], A2 = PLAIN[1] || ORDER.find(k => k !== A1), A3 = PLAIN[2] || ORDER.find(k => k !== A1 && k !== A2);
+const DUE = { [A1]: 1, [A2]: -2, [A3]: 5 };
 for (const k of ORDER) { if (!(k in DUE)) DUE[k] = 3; }
 for (const [k, off] of Object.entries(DUE)) {
   await p.evaluate(k => eval(`CURRENT='${k}'; renderList(); renderEditor();`), k); await settle(p, 300);
@@ -430,21 +455,6 @@ for (const [k, off] of Object.entries(DUE)) {
 }
 await p.evaluate(() => eval('persist()')); await settle(p, 3000);
 log('deadlines set: ' + Object.entries(DUE).map(([k, d]) => k.toUpperCase() + ' ' + (d < 0 ? d : '+' + d) + 'd').join(', '));
-}
-/* Resuming: the roster and the assignment keys are read back rather than made. */
-if (RESUMING) {
-  const roster = await call({ op: 'roster', key: K });
-  for (const [id, t] of Object.entries((roster && roster.trainees) || {})) tokens[t.name] = t.token || id;
-  if (Object.keys(tokens).length < COHORT.length) explain(new Error('the reused course has ' + Object.keys(tokens).length + ' candidates, not ' + COHORT.length));
-  await gotoSettled(p, url('6_centre_admin_dashboard.html', 'k=' + K), '#tutorNames'); await settle(p, 1000);
-  await p.fill('#tutorNames', TUTOR_1 + ', ' + TUTOR_2); await p.fill('#courseStart', day(-11)); await p.fill('#courseEnd', day(11));
-  await p.click('#saveSettings'); await settle(p, 3000); log('settings re-saved: ' + TUTOR_1 + ', ' + TUTOR_2 + '; ' + day(-11) + ' to ' + day(11));
-  await gotoSettled(p, url('8_assignment_wording.html', 'k=' + K), 'input[type="datetime-local"]'); await settle(p, 1000);
-  ORDER = await evalRetry(p, () => eval('hubAssignmentOrder(DATA).filter(k => k !== "a5")'));
-  PLAIN = await evalRetry(p, () => eval('hubAssignmentOrder(DATA).filter(k => k !== "a5" && DATA[k] && DATA[k].sections && !DATA[k].sections.some(s => s.type === "picker") && DATA[k].sections.some(s => s.type === "text" && !hubIsReference(s)))'));
-  A1 = PLAIN[0]; A2 = PLAIN[1] || ORDER.find(k => k !== A1); A3 = PLAIN[2] || ORDER.find(k => k !== A1 && k !== A2);
-  log(Object.keys(tokens).length + ' candidates on the course');
-}
 
 /* ---- helpers for the TP cycle ---- */
 async function traineePage(name) {
@@ -651,8 +661,21 @@ async function markAssignment(T, name, key, round, notMetIndex, comment) {
   const marks = await tp.evaluate(r => eval(`(subFor(CURRENT).criteriaMarks["${r}"] || [])`), round);
   if (!marks.length || marks.some(m => m === null || m === undefined)) throw new Error('marking did not land for ' + name + ' on ' + key + ': ' + JSON.stringify(marks));
   await tp.waitForSelector('#saveBtn:not([disabled])', { timeout: 15000 });
-  await clickAndConfirm(tp, '#saveBtn'); await settle(tp, 1500);
-  await untilRec(name, key + ' marking', r => (r.assignments || {})[key] && /closed|resubmission_needed/.test(r.assignments[key].stage), 15, 4000);
+  /* The paste re-renders the form once per criterion, so a pointer click can
+     land on a Save button the page has just replaced -- the marks reached the
+     store, the outcome never did (run thirteen). Click the button that is
+     bound NOW, and check the page's own record changed before asking the
+     store; once more if it did not. */
+  for (let i = 0; i < 3; i++) {
+    await settle(tp, 1500);
+    await tp.evaluate(() => { const b = document.getElementById('saveBtn'); if (b && !b.disabled) b.click(); });
+    await settle(tp, 800);
+    const st = await tp.evaluate(() => { try { return subFor(CURRENT).stage; } catch (e) { return ''; } });
+    if (/closed|resubmission_needed/.test(st)) break;
+    if (i === 2) throw new Error('Save & return did not take for ' + name + ' on ' + key + ': stage ' + st);
+  }
+  await tp.waitForFunction(() => { const el = document.getElementById('hubSync'); return el && /Saved to the course|Live/.test(el.textContent || '') && !/Saving/.test(el.textContent || ''); }, null, { timeout: 60000 }).catch(() => {});
+  await untilRec(name, key + ' marking', r => (r.assignments || {})[key] && /closed|resubmission_needed/.test(r.assignments[key].stage), 15, 5000);
   return marks;
 }
 const [D, A, B, E, N, W, Y] = COHORT.map(c => c.name);
@@ -670,9 +693,9 @@ log(A + ': ' + A1.toUpperCase() + ' not met on one criterion, resubmitted, close
 await submitAssignment(B, A1, FOL_TEXT.replace('Selin', 'Marta').replace('Turkish speaker', 'Spanish speaker'));
 log(B + ': ' + A1.toUpperCase() + ' submitted, awaiting marking');
 // Emre: the second assignment, not met and not yet resubmitted
-await submitAssignment(E, A2, FOL_TEXT.replace('For this assignment', 'For this task'));
-await markAssignment(T1, E, A2, 'sub1', 1, 'Criterion two is the one to look at again: the problems you identify are real, but the activity you propose for the first does not require the target language. Resubmit with an activity that does.');
-log(E + ': ' + A2.toUpperCase() + ' resubmission needed, not yet resubmitted');
+await submitAssignment(E, A3, FOL_TEXT.replace('For this assignment', 'For this task'));
+await markAssignment(T1, E, A3, 'sub1', 1, 'Criterion two is the one to look at again: the problems you identify are real, but the activity you propose for the first does not require the target language. Resubmit with an activity that does.');
+log(E + ': ' + A3.toUpperCase() + ' resubmission needed, not yet resubmitted');
 // Nadia: first closed, and an extension on the second, which has passed its deadline
 await submitAssignment(N, A1, FOL_TEXT.replace('Selin', 'Youssef').replace('her ', 'his ').replace('She ', 'He '));
 await markAssignment(T1, N, A1, 'sub1', -1, 'Thorough and thoughtful. The strongest section is the reflection, which reads as something you actually learned rather than something you were told to say. Passed.');
