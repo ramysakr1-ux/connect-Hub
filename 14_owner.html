@@ -149,7 +149,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609262241">
+<link rel="stylesheet" href="hub-house.css?v=202609262339">
 </head>
 <body>
 <div class="board">
@@ -173,8 +173,8 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609262241"></script>
-<script src="hub-store.js?v=202609262241"></script>
+<script src="hub-shared.js?v=202609262339"></script>
+<script src="hub-store.js?v=202609262339"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -267,26 +267,34 @@ async function firstTrainee(c){
   } catch (e) { FIRST[c.id] = null; }
   return FIRST[c.id];
 }
+/* ONE link, and it opens the card. The message used to paste the three invite
+   links raw, which is what a link looks like in an email and not what a card
+   looks like (Ramy, 26 Sep 2026: "what happened to the card idea? It looks
+   like it's just a link"). offer.html IS the card -- what Lite is, what it
+   costs, a note in his own voice, and the three doors into this very course --
+   and it takes the course from ?k= and the film from &f=, so the message
+   carries neither and cannot fall out of step with either. */
+function cardLink(c){
+  const film = filmLink();
+  return base() + 'offer.html?k=' + encodeURIComponent(c.tutorKey)
+    + (film ? '&f=' + encodeURIComponent(film) : '');
+}
 async function noteFor(c){
-  const link = (q, v) => base() + 'invite.html?' + q + '=' + encodeURIComponent(v);
-  const name = (c.settings && c.settings.courseName) || c.name || c.id;
-  const one = await firstTrainee(c);
   const film = filmLink();
   return [
-    'Here is ' + name + ' in Connect Lite — a working course, not a video, so do type in it.',
+    'Hi,',
     '',
-    'Tutor (start here) — this is what a centre’s trainers and course admin get:',
-    link('k', c.tutorKey),
+    'Here is Connect Lite \u2014 everything a CELTA course writes, in one place.',
     '',
-    one ? 'A candidate \u2014 ' + one.name + ' \u2014 so you can see the other side:' : 'No candidates on this course yet, so there is no candidate link to send.',
-    one ? link('t', one.token) : null,
+    cardLink(c),
     '',
-    'Assessor, read-only:',
-    link('ak', c.assessorKey),
+    'That opens a page with what it does and what it costs, and three ways into a real course you can type in: as a tutor, as one of the candidates, and as the assessor. Nothing you do there touches anybody\u2019s record.',
     film ? '' : null,
-    film ? 'And a five-minute film of the whole thing: ' + film : null,
+    film ? 'There is a five-minute film on the same page if you would rather watch it first.' : null,
     '',
-    'Nothing you do touches anybody’s real record. Any questions, just reply. — Ramy',
+    'Any questions, just reply.',
+    '',
+    'Ramy',
   ].filter(x => x !== null).join('\n');
 }
 
@@ -350,9 +358,10 @@ function render(courses, msg){
              This writes the note, with this course's real links in it. -->
         <div class="link send">
           <b>Send this course to someone</b>
-          <span class="note">The three links with a short note around them, ready to paste into a message — or straight into an email.</span>
+          <span class="note">One link that opens the card — what Lite is, what it costs, and three ways into this course. Copy the message, or send it as an email.</span>
           <button class="btn small" type="button" data-note="${esc(c.id)}">Copy the message</button>
           <a class="linkbtn" data-mail="${esc(c.id)}" href="#">Email it</a>
+          <a class="linkbtn" data-card="${esc(c.id)}" href="#">See the card</a>
         </div>
       </div>
     </div>`; }).join('');
@@ -386,7 +395,7 @@ $('app').innerHTML = `
     <div class="filmrow">
       <label for="filmLink">Link to the film</label>
       <input type="url" id="filmLink" placeholder="https://… — added to every message below" value="${esc(filmLink())}">
-      <span class="note">Kept in this browser.</span>
+      <span class="note">Goes on the card, not in the message. Kept in this browser.</span>
     </div>
     <div class="courses">${rows || '<div class="empty">No courses yet. Make the first one, then send its tutor link to the centre.</div>'}</div>
     <p id="status"></p>`;
@@ -456,6 +465,13 @@ $('app').addEventListener('click', async e => {
     if (note) {
       const c = COURSES.filter(function(x){ return x.id === note.dataset.note; })[0];
       if (c) { note.textContent = 'Building\u2026'; await hubCopyButton(note, await noteFor(c)); }
+      return;
+    }
+    const card = e.target.closest('[data-card]');
+    if (card) {
+      e.preventDefault();
+      const c = COURSES.filter(function(x){ return x.id === card.dataset.card; })[0];
+      if (c) window.open(cardLink(c), '_blank', 'noopener');
       return;
     }
     const mail = e.target.closest('[data-mail]');
