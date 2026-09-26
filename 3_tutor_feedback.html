@@ -149,6 +149,10 @@
   .suggest-chip{position:relative; background:none; border:1.5px dashed var(--teal); color:var(--teal); font-size:0.72rem;
     font-weight:700; cursor:pointer; padding:3px 9px; border-radius:12px;}
   .suggest-chip:hover{background:rgba(30,107,99,.08);}
+  /* Solid, not dashed: this one is not a guess from the wording, it is what
+     this course has done with points like it. */
+  .suggest-chip.taught{border-style:solid;}
+  .suggest-chip.taught::first-letter{font-weight:700;}
   /* Instant custom tooltip -- native title has a long delay and reads as
      "hovering does nothing." data-tip + ::before/::after, no JS. */
   .suggest-chip[data-tip]:hover::before, .suggest-chip[data-tip]:hover::after{
@@ -377,7 +381,7 @@
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609240203">
+<link rel="stylesheet" href="hub-house.css?v=202609261943">
 </head>
 <body>
 <div class="board">
@@ -527,10 +531,11 @@
 </div>
 
 
-<script src="hub-exchange.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609261844"></script>
-<script src="hub-store.js?v=202609261844"></script>
-<script src="hub-sync.js?v=202609261844"></script>
+<script src="hub-exchange.js?v=202609261943"></script>
+<script src="hub-shared.js?v=202609261943"></script>
+<script src="hub-store.js?v=202609261943"></script>
+<script src="hub-crit-learn.js?v=202609261943"></script>
+<script src="hub-sync.js?v=202609261943"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -674,16 +679,41 @@ function weight(w){
   if (!n) return 0;
   return Math.log(CRITERIA.length / n);
 }
-function suggestCriteria(text, scope){
+/* The wording rule alone: what the criteria say, matched against the point.
+   Kept separate because it is also the baseline the learned half is added to,
+   and because a course with no tagging yet gets exactly this and nothing
+   else. */
+function wordingScores(text, scope){
   const words=new Set(critWords(text));
-  if(!words.size) return [];
+  const out={};
+  if(!words.size) return out;
   const topics = scope==='planning' ? ['4'] : ['1','2','3','5'];
-  const scored=CRITERIA.filter(c=>topics.indexOf(c[1])>=0).map(([code,,ctext])=>{
+  CRITERIA.forEach(([code,topic,ctext])=>{
+    if(topics.indexOf(topic)<0) return;
     const cwords=new Set(critWords(ctext));
     let score=0;
     words.forEach(w=>{ if(cwords.has(w)) score+=weight(w); });
-    return {code,score};
-  }).filter(x=>x.score>0);
+    if(score>0) out[code]=score;
+  });
+  return out;
+}
+/* The wording, plus what this course's tutors have actually tagged. The two
+   are in the same units -- both are logs of how much a word narrows things
+   down -- so they add. See hub-crit-learn.js for what the second half is and
+   the five things it is not. */
+function scoreCriteria(text, scope){
+  const words=critWords(text);
+  if(!words.length) return [];
+  const topics = scope==='planning' ? ['4'] : ['1','2','3','5'];
+  const allowed=CRITERIA.filter(c=>topics.indexOf(c[1])>=0).map(c=>c[0]);
+  const wording=wordingScores(text, scope);
+  const learned=(window.HubCritLearn && CRIT_MODEL) ? HubCritLearn.score(CRIT_MODEL, words, allowed) : {};
+  const total={};
+  Object.keys(wording).forEach(c=>{ total[c]=(total[c]||0)+wording[c]; });
+  Object.keys(learned).forEach(c=>{ if(allowed.indexOf(c)>=0) total[c]=(total[c]||0)+learned[c]; });
+  const scored=Object.keys(total)
+    .map(c=>({code:c, score:total[c], wording:wording[c]||0, learned:learned[c]||0}))
+    .filter(x=>x.score>0);
   if(!scored.length) return [];
   scored.sort((a,b)=>b.score-a.score);
   /* Two floors, because there are two ways to be wrong.
@@ -697,7 +727,64 @@ function suggestCriteria(text, scope){
      of the criteria is worth. Below that, say nothing. */
   const MIN = Math.log(CRITERIA.length / 6);
   const floor = Math.max(scored[0].score * 0.55, MIN);
-  return scored.filter(x=>x.score >= floor).map(x=>x.code);
+  return scored.filter(x=>x.score >= floor);
+}
+function suggestCriteria(text, scope){ return scoreCriteria(text, scope).map(x=>x.code); }
+
+/* ---- what this course has tagged ---------------------------------------
+   The record lives beside the course settings, so both tutors on a course see
+   the same evidence and a second course starts from the wording alone. The
+   local copy is a cache and a fallback: the page must suggest something useful
+   before the store has answered, and must not lose what it learned if a return
+   happens while the connection is down -- the next return merges it in. */
+const LEARN_KEY='chub:critlearn';
+let CRIT_MODEL=null;
+(function loadCritModel(){
+  try{ CRIT_MODEL=JSON.parse(localStorage.getItem(LEARN_KEY)||'null'); }catch(e){}
+  if(!(window.HubStore && HubStore.isTutor && HubStore.isTutor() && HubStore.course)) return;
+  HubStore.course().then(c=>{
+    if(!c || !c.critLearn) return;
+    CRIT_MODEL=c.critLearn;
+    try{ localStorage.setItem(LEARN_KEY, JSON.stringify(CRIT_MODEL)); }catch(e){}
+    /* A point already typed keeps its stale suggestions otherwise. */
+    document.querySelectorAll('.pt-text').forEach(b=>b.dispatchEvent(new Event('input',{bubbles:true})));
+  }).catch(()=>{});
+})();
+
+/* One tagged point is one example: the words the tutor wrote, the codes they
+   settled on, and -- so the model can learn what NOT to offer -- whatever was
+   suggested at the time and left alone. A point with no tags at all is not an
+   example: the tutor did not tag it, which is not the same as saying every
+   criterion is wrong for it. */
+function learnFromPoints(){
+  if(!(window.HubCritLearn && window.HubStore && HubStore.isTutor && HubStore.isTutor())) return;
+  const obs=[];
+  DRAFT_LISTS.forEach(id=>{
+    const host=$(id); if(!host) return;
+    const scope=host.dataset.scope;
+    [...host.children].forEach(row=>{
+      const box=row.querySelector('.pt-text'); if(!box) return;
+      const c=cleanPoint(box);
+      if(!c.codes.length) return;
+      const text=c.plain.replace(/\[[0-9][a-n]\]/gi,' ');
+      const words=critWords(text);
+      if(!words.length) return;
+      obs.push({ words, codes:c.codes, suggested:scoreCriteria(text, scope).map(x=>x.code) });
+    });
+  });
+  if(!obs.length) return;
+  /* Merged onto whatever the store holds now, not onto the copy this page
+     loaded: the other tutor may have returned a TP since. Counts merge by
+     addition, so the worst a collision costs is one return's evidence. */
+  const merge=base=>{
+    const next=HubCritLearn.observe(base, obs);
+    CRIT_MODEL=next;
+    try{ localStorage.setItem(LEARN_KEY, JSON.stringify(next)); }catch(e){}
+    return next;
+  };
+  HubStore.course()
+    .then(c=>HubStore.putCourse('critLearn', merge((c && c.critLearn) || CRIT_MODEL)))
+    .catch(()=>{ merge(CRIT_MODEL); });
 }
 
 /* Typing a code by hand (e.g. "4h ") turns into the same styled tag as clicking it —
@@ -755,10 +842,18 @@ function addPoint(listId, html, _unused){
   function renderSuggestions(){
     const existing=[...box.querySelectorAll('.tag')].map(t=>t.dataset.c);
     const text=box.textContent||'';
-    const codes=suggestCriteria(text, scope).filter(c=>existing.indexOf(c)<0).slice(0,3);
-    if(!text.trim() || !codes.length){ suggestRow.innerHTML=''; return; }
+    const picks=scoreCriteria(text, scope).filter(x=>existing.indexOf(x.code)<0).slice(0,3);
+    if(!text.trim() || !picks.length){ suggestRow.innerHTML=''; return; }
     suggestRow.innerHTML='<span class="suggest-label">Suggested:</span>'+
-      codes.map(c=>`<button type="button" class="suggest-chip" data-code="${c}" data-tip="${esc(CRIT_TEXT[c]||'')}">+ ${c}</button>`).join('');
+      picks.map(x=>{
+        /* A suggestion the criteria wording would never have made is the
+           course's own habit talking, and says so rather than appearing from
+           nowhere. */
+        const taught = x.learned > x.wording;
+        const tip = (CRIT_TEXT[x.code]||'') + (taught && window.HubCritLearn
+          ? ' \u2014 ' + HubCritLearn.evidence(CRIT_MODEL, x.code) : '');
+        return `<button type="button" class="suggest-chip${taught?' taught':''}" data-code="${x.code}" data-tip="${esc(tip)}">+ ${x.code}</button>`;
+      }).join('');
   }
   suggestRow.addEventListener('mousedown',e=>e.preventDefault());
   suggestRow.addEventListener('click',e=>{
@@ -1352,6 +1447,11 @@ $('returnBtn').addEventListener('click', async ()=>{
   const btn=$('returnBtn'); btn.disabled=true; const wasLabel=btn.textContent; btn.textContent='Returning…';
   setStatus('Returning — saving to the course…');
   saveFeedbackRecord({ label:draftLabel(), state:draftState(), status:'returned', returnedAt:Date.now(), docHTML:LAST_HTML });
+  /* Returning is the moment the tutor has committed to these tags -- before
+     that they are still editing. It runs alongside the return rather than in
+     front of it: a suggester that cannot save must never hold up a candidate's
+     feedback. */
+  try{ learnFromPoints(); }catch(e){}
   dirty=false;
   let saved=true;
   if (window.HubSync) { try { await window.HubSync.flushNow(true); } catch (e) { saved=false; } }

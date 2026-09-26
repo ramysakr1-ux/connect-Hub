@@ -22,3 +22,7 @@ See `2026-09-26-chunked-records.md`. Deployed as version 21. The per-TP change
 above fixed two TPs sharing a cell; this fixes one record that is itself too
 big, which tagging the demo's feedback points with their criteria made real.
 Proven live by `node store/verify-chunks.mjs` (ten checks).
+
+## 26 Sep 2026 — critLearn, a course record for what its tutors tag
+See `2026-09-26-critlearn.md`. Deployed as version 22. One more course kind,
+handed to a tutor only. Proven by `node check-crit-learn.mjs`.
