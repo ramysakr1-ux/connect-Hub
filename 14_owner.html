@@ -32,6 +32,10 @@
     --box:oklch(91.2% 0.03 80); --card:oklch(95.2% 0.018 84); --ink:oklch(23.5% 0.017 65);
     --teal:oklch(37.5% 0.058 195); --grey:oklch(51% 0.017 70); --gold:oklch(63% 0.096 72);
     --gold-lifted:oklch(70% 0.12 72); --ink-warm:oklch(30% 0.042 58); --brick:oklch(52% 0.19 32);
+    /* the pane -- the same four values the trainee landing's cards use */
+    --card-top:oklch(97.6% 0.012 86); --card-edge:oklch(99.4% 0.005 90);
+    --shade-near:oklch(58% 0.03 70 / 0.11); --shade-far:oklch(58% 0.03 70 / 0.09);
+    --sand-line-deep:oklch(78% 0.018 80);
   }
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -63,16 +67,56 @@
   .btn.quiet{border:none; background:none; color:var(--grey); font-weight:500;}
   .btn.quiet:hover{color:var(--brick);}
 
-  .courses{display:flex; flex-direction:column; gap:10px; margin-top:24px;}
-  .course{background:var(--card); border:1px solid var(--sand-line); border-radius:10px; padding:16px 18px;}
-  .chead{display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap;}
-  .chead h2{margin:0; font-family:'Newsreader',Georgia,serif; font-size:1.2rem; font-weight:600;}
-  .chead .meta{font-size:0.8rem; color:var(--grey);}
-  .links{display:flex; flex-direction:column; gap:8px; margin-top:13px; padding-top:13px; border-top:1px solid var(--row-line);}
-  .link{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
-  .link b{font-size:0.82rem; min-width:104px;}
-  .link .note{font-size:0.8rem; color:var(--grey); flex:1; min-width:180px;}
-  .link code{flex-basis:100%; display:block; margin-top:2px; font-size:0.74rem; word-break:break-all; color:var(--grey);}
+  /* ---- a course is a thing, not a row -------------------------------------
+     Ramy, 26 Sep 2026: "it kind of looks pretty basic." It was three identical
+     tinted panels with two link rows each. A course is now a pane -- the
+     trainee landing's card, with the face that lightens toward the top, the
+     hairline where the top edge catches, the two shadows, and the 3px lift
+     under the mouse -- and it reads in one glance: the name, the centre, the
+     numbers as chips, and the two links as two different doors. The tutor
+     link is THE action on this screen (it is the one you send), so it wears
+     teal; the assessor link is the quiet one. */
+  .courses{display:flex; flex-direction:column; gap:14px; margin-top:24px;}
+  .course{position:relative; background:linear-gradient(180deg, var(--card-top) 0%, var(--card) 64%);
+    border:1px solid var(--sand-line); border-radius:14px; padding:20px 22px 18px;
+    box-shadow:inset 0 1px 0 var(--card-edge), 0 1px 2px var(--shade-near), 0 7px 16px -7px var(--shade-far);
+    transition:transform .14s ease, box-shadow .14s ease, border-color .14s ease;}
+  .course:hover{transform:translateY(-3px); border-color:var(--sand-line-deep);
+    box-shadow:inset 0 1px 0 var(--paper), 0 2px 4px var(--shade-near), 0 16px 28px -12px var(--shade-far);}
+  @media(prefers-reduced-motion:reduce){ .course{transition:none;} .course:hover{transform:none;} }
+  .chead{display:flex; align-items:flex-start; justify-content:space-between; gap:18px; flex-wrap:wrap;}
+  .chead h2{margin:0; font-family:'Newsreader',Georgia,serif; font-size:1.45rem; font-weight:600; line-height:1.2;}
+  .chead .centre{margin:3px 0 0; font-size:0.9rem; color:var(--grey);}
+  .chead .meta{display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:0.8rem; color:var(--grey);}
+  .chip{display:inline-flex; align-items:center; gap:5px; border-radius:6px; padding:3px 9px;
+    background:var(--box); font-size:0.76rem; font-weight:600; color:var(--ink-warm); white-space:nowrap;}
+  .chip.faint{background:none; border:1px solid var(--row-line); color:var(--grey); font-weight:500;}
+  .chip code{font-family:'Karla',sans-serif; font-size:0.72rem; color:var(--grey);}
+  .chip .btn.quiet{height:auto; padding:0 0 0 4px; font-size:0.74rem;}
+  /* the two doors */
+  .links{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px; padding-top:16px; border-top:1px solid var(--row-line);}
+  .link{display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:auto auto; column-gap:14px; row-gap:4px;
+    align-items:center; border-radius:10px; padding:12px 14px; background:var(--surface); border:1px solid var(--row-line);}
+  .link.tutor{border-color:color-mix(in oklab, var(--teal) 35%, transparent); background:color-mix(in oklab, var(--teal) 6%, var(--surface));}
+  .link b{grid-column:1; grid-row:1; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:700;
+    letter-spacing:0.12em; text-transform:uppercase; color:var(--grey);}
+  .link.tutor b{color:var(--teal);}
+  .link .note{grid-column:1; grid-row:2; font-size:0.8rem; color:var(--grey); line-height:1.45;}
+  .link .btn{grid-column:2; grid-row:1 / span 2;}
+  .link.tutor .btn{background:var(--teal); border-color:var(--teal); color:var(--paper); font-weight:700;}
+  .link code{grid-column:1 / -1; grid-row:3; display:block; margin-top:4px; font-size:0.72rem; word-break:break-all; color:var(--grey);}
+  @media(max-width:640px){ .links{grid-template-columns:1fr;} }
+  /* ---- freshly minted --------------------------------------------------------
+     After "Make a course" the new one is not the last item in a list, it is
+     the thing you just made: it lands at the top, wears the house's gold edge
+     and wash -- the same "this is the next step" the trainee landing uses --
+     and says what to do with it. It stays marked until the page is opened
+     again. */
+  .course.minted{border-color:var(--gold); border-left:4px solid var(--gold); padding-left:19px;
+    background:linear-gradient(180deg, oklch(97.8% 0.026 80) 0%, var(--gold-wash, oklch(94.5% 0.035 78)) 68%);}
+  .minted-line{display:flex; align-items:center; gap:8px; margin:0 0 12px; font-size:0.82rem; font-weight:700;
+    color:var(--gold-deep, oklch(52% 0.098 70));}
+  .minted-line::before{content:""; width:8px; height:8px; border-radius:50%; background:var(--gold);}
   .linkbtn{font-family:'Karla',sans-serif; font-size:0.8rem; font-weight:600; border:none; background:none;
     color:var(--teal); cursor:pointer; padding:0;}
   .linkbtn:hover{text-decoration:underline;}
@@ -121,13 +165,16 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609260231"></script>
-<script src="hub-store.js?v=202609260231"></script>
+<script src="hub-shared.js?v=202609260854"></script>
+<script src="hub-store.js?v=202609260854"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
    in it. */
 const OWNER_STORE = 'hub:o';
+/* The course made in this sitting. It is drawn first and marked until the
+   console is opened again. */
+let NEW_ID = '';
 const params = new URLSearchParams(location.search);
 try {
   if (params.get('o')) {
@@ -196,21 +243,34 @@ function gate(msg){
 
 function render(courses, msg){
   COURSES = courses || [];
-  const rows = courses.map(c => {
+  /* The one just made goes first, whatever order the store keeps. */
+  const ordered = NEW_ID ? [...courses].sort((x, y) => (y.id === NEW_ID) - (x.id === NEW_ID)) : courses;
+  const rows = ordered.map(c => {
     // A store that answered without a count used to print "undefined trainees".
     const n = Number(c.trainees) || 0;
+    /* A course has no name until the centre gives it one on Course admin, so
+       a freshly minted card used to be titled by its id -- "c4" -- with the
+       id repeated in the chip beside it. */
+    const name = c.courseName || c.name || 'New course', centre = c.centreName || '';
+    const minted = c.id === NEW_ID;
     return `
-    <div class="course">
+    <div class="course${minted ? ' minted' : ''}">
+      ${minted ? '<p class="minted-line">New — copy the tutor link and send it to the centre. They set the course up and add their own trainees.</p>' : ''}
       <div class="chead">
-        <h2>${esc(label(c))}</h2>
-        <span class="meta">${esc(c.id)} · ${n} trainee${n === 1 ? '' : 's'}${c.created ? ' · made ' + esc(niceDate(c.created)) : ''}
+        <div>
+          <h2>${esc(name)}</h2>
+          ${centre ? `<p class="centre">${esc(centre)}</p>` : ''}
+        </div>
+        <span class="meta">
+          <span class="chip">${n} candidate${n === 1 ? '' : 's'}</span>
+          <!-- Attachments live on this Drive, not the candidates', so they are the
+               owner's to clear. Deleting the course takes them too; this is for a
+               course being kept (23 Sep 2026). Filled in by fillMaterials(). -->
+          <span class="chip faint mats-line" data-mats="${esc(c.id)}"><span class="note">Materials: checking…</span></span>
+          <span class="chip faint"><code>${esc(c.id)}</code>${c.created ? ' · made ' + esc(niceDate(c.created)) : ''}</span>
           <button class="btn quiet small" type="button" data-delete="${esc(c.id)}" data-label="${esc(label(c))}" data-trainees="${n}">Delete</button>
         </span>
       </div>
-      <!-- Attachments live on this Drive, not the candidates', so they are the
-           owner's to clear. Deleting the course takes them too; this is for a
-           course being kept (23 Sep 2026). -->
-      <div class="mats-line" data-mats="${esc(c.id)}"><span class="note">Materials on Drive: checking…</span></div>
       <!-- Both links go through the invitation card (invite.html), the same way
            a candidate's does. This console used to hand out the bare
            destination -- 5_tutor_dashboard.html?k= and 12_assessor_pack.html?ak=
@@ -223,7 +283,7 @@ function render(courses, msg){
            destination; skipping it drops someone into a dashboard with no
            introduction at all. -->
       <div class="links">
-        <div class="link">
+        <div class="link tutor">
           <b>Tutor link</b>
           <span class="note">The one you send the centre. Their tutors and course admin all use it. It opens the invitation card, then the dashboard.</span>
           <button class="btn small" type="button" data-copy="${esc(base() + 'invite.html?k=' + encodeURIComponent(c.tutorKey))}">Copy</button>
@@ -295,14 +355,14 @@ $('app').addEventListener('click', async e => {
            Apps Script round trip, and each of those is 1.5-13 s -- the wait Ramy
            called out on 21 Sep 2026 ("making the course takes a while"). */
         const made = await call({ op: 'createCourse' });
+        /* The store appends, so the new course used to arrive at the BOTTOM,
+           below the fold, while the status line asked you to copy a link it
+           had not shown you (walk, 21 Sep 2026). It is drawn FIRST now, marked
+           as new, and the screen goes to it. */
+        NEW_ID = made.id;
         showList(made.courses, 'Made ' + made.id + '. Copy its tutor link and send it to the centre.');
-        /* The store appends, so a new course arrives at the BOTTOM -- and the
-           line above tells you to copy its tutor link. With a few courses on
-           screen that link is below the fold, so the screen asks for something
-           it has not shown you (walk, 21 Sep 2026). Left where the store puts
-           it, and brought to you instead. */
-        const card = [...document.querySelectorAll('[data-delete]')].find(x => x.dataset.delete === made.id);
-        if (card && card.closest('.course')) hubScrollIntoView(card.closest('.course'), 'center');
+        const card = document.querySelector('.course.minted');
+        if (card) hubScrollIntoView(card, 'start');
       } catch (err) { status(err.message); make.disabled = false; }
       BUSY = false;
       return;
@@ -378,10 +438,10 @@ async function fillMaterials(){
     const id = line.dataset.mats;
     try {
       const info = await call({ op: 'materials', course: id });
-      if (!info || !info.exists || !info.files) { line.innerHTML = '<span class="note">No materials on Drive.</span>'; continue; }
+      if (!info || !info.exists || !info.files) { line.innerHTML = '<span class="note">No materials on Drive</span>'; continue; }
       const mb = info.bytes >= 1048576 ? (info.bytes / 1048576).toFixed(1) + 'MB' : Math.max(1, Math.round(info.bytes / 1024)) + 'KB';
-      line.innerHTML = '<span class="note">Materials on Drive: <b>' + info.files + ' file' + (info.files === 1 ? '' : 's') + '</b> · ' + mb
-        + ' <button class="btn quiet small" type="button" data-purge="' + id + '" data-files="' + info.files + '">Empty</button></span>';
+      line.innerHTML = '<span class="note">' + info.files + ' file' + (info.files === 1 ? '' : 's') + ' on Drive · ' + mb + '</span>'
+        + '<button class="btn quiet small" type="button" data-purge="' + id + '" data-files="' + info.files + '">Empty</button>';
     } catch (e) { line.innerHTML = ''; }
   }
 }
