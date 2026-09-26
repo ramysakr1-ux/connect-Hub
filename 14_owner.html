@@ -120,6 +120,14 @@
   .linkbtn{font-family:'Karla',sans-serif; font-size:0.8rem; font-weight:600; border:none; background:none;
     color:var(--teal); cursor:pointer; padding:0;}
   .linkbtn:hover{text-decoration:underline;}
+  .filmrow{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:14px 0 4px;}
+  .filmrow label{font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--grey);}
+  .filmrow input{flex:1 1 320px; min-width:240px; font-family:'Karla',sans-serif; font-size:0.86rem;
+    padding:9px 12px; border:1.5px solid var(--sand-line); border-radius:6px;
+    background:var(--field, oklch(90% 0.032 84)); color:var(--ink);}
+  .filmrow input:focus{outline:none; border-color:var(--gold, oklch(63% 0.096 72));}
+  .filmrow .note{font-size:0.74rem; color:var(--grey);}
+  .link.send{border-top:1px dashed var(--sand-line); padding-top:12px; margin-top:4px;}
   .empty{padding:34px 4px; font-size:0.9rem; color:var(--grey); line-height:1.65;}
   .gate{max-width:560px; padding:16vh 0 0;}
   .gate h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.9rem; margin:0 0 10px;}
@@ -141,7 +149,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609262112">
+<link rel="stylesheet" href="hub-house.css?v=202609262201">
 </head>
 <body>
 <div class="board">
@@ -165,8 +173,8 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609262112"></script>
-<script src="hub-store.js?v=202609262112"></script>
+<script src="hub-shared.js?v=202609262201"></script>
+<script src="hub-store.js?v=202609262201"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -241,6 +249,47 @@ function gate(msg){
   $('ownerIn').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
 }
 
+/* One message, so the same course is always described the same way. The film
+   link rides along when there is one: it is the thing people ask for after
+   they have clicked around for two minutes. */
+const FILM_KEY = 'chub:filmlink';
+function filmLink(){ try { return (localStorage.getItem(FILM_KEY) || '').trim(); } catch (e) { return ''; } }
+/* The owner's own listing does not carry the trainees -- it carries how many
+   -- so the candidate link is fetched when the button is pressed rather than
+   on every draw. A course with nobody on it says so instead of pretending. */
+const FIRST = {};
+async function firstTrainee(c){
+  if (FIRST[c.id] !== undefined) return FIRST[c.id];
+  try {
+    const r = await HubStore.call({ op: 'roster', key: c.tutorKey });
+    const list = Object.values((r && r.trainees) || {}).sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    FIRST[c.id] = list.length ? list[0] : null;
+  } catch (e) { FIRST[c.id] = null; }
+  return FIRST[c.id];
+}
+async function noteFor(c){
+  const link = (q, v) => base() + 'invite.html?' + q + '=' + encodeURIComponent(v);
+  const name = (c.settings && c.settings.courseName) || c.name || c.id;
+  const one = await firstTrainee(c);
+  const film = filmLink();
+  return [
+    'Here is ' + name + ' in Connect Lite — a working course, not a video, so do type in it.',
+    '',
+    'Tutor (start here) — this is what a centre’s trainers and course admin get:',
+    link('k', c.tutorKey),
+    '',
+    one ? 'A candidate \u2014 ' + one.name + ' \u2014 so you can see the other side:' : 'No candidates on this course yet, so there is no candidate link to send.',
+    one ? link('t', one.token) : null,
+    '',
+    'Assessor, read-only:',
+    link('ak', c.assessorKey),
+    film ? '' : null,
+    film ? 'And a five-minute film of the whole thing: ' + film : null,
+    '',
+    'Nothing you do touches anybody’s real record. Any questions, just reply. — Ramy',
+  ].filter(x => x !== null).join('\n');
+}
+
 function render(courses, msg){
   COURSES = courses || [];
   /* The one just made goes first, whatever order the store keeps. */
@@ -295,6 +344,16 @@ function render(courses, msg){
           <button class="btn small" type="button" data-copy="${esc(base() + 'invite.html?ak=' + encodeURIComponent(c.assessorKey))}">Copy</button>
           ${SHOW_URLS ? `<code>${esc(base() + 'invite.html?ak=' + encodeURIComponent(c.assessorKey))}</code>` : ''}
         </div>
+        <!-- Showing a course to somebody meant copying three links out of
+             here one at a time and writing the same note around them again
+             (Ramy, 26 Sep 2026: "could I ship them to people from there?").
+             This writes the note, with this course's real links in it. -->
+        <div class="link send">
+          <b>Send this course to someone</b>
+          <span class="note">The three links with a short note around them, ready to paste into a message — or straight into an email.</span>
+          <button class="btn small" type="button" data-note="${esc(c.id)}">Copy the message</button>
+          <a class="linkbtn" data-mail="${esc(c.id)}" href="#">Email it</a>
+        </div>
       </div>
     </div>`; }).join('');
 
@@ -319,6 +378,15 @@ $('app').innerHTML = `
         ${COURSES.length ? `<button class="linkbtn" id="toggleUrls" type="button">${SHOW_URLS ? 'Hide addresses' : 'Show addresses'}</button>` : ''}
         <button class="btn primary" id="makeBtn" type="button">Make a course</button>
       </div>
+    </div>
+    <!-- The film is the thing people ask for after two minutes of clicking,
+         so it rides along in every message rather than being looked up. It is
+         kept in this browser only: there is nowhere on the course to put a
+         thing that belongs to no course. -->
+    <div class="filmrow">
+      <label for="filmLink">Link to the film</label>
+      <input type="url" id="filmLink" placeholder="https://… — added to every message below" value="${esc(filmLink())}">
+      <span class="note">Kept in this browser.</span>
     </div>
     <div class="courses">${rows || '<div class="empty">No courses yet. Make the first one, then send its tutor link to the centre.</div>'}</div>
     <p id="status"></p>`;
@@ -345,6 +413,10 @@ let BUSY = false;
    from what is already in the browser: reading an address asks the store for
    nothing. */
 let COURSES = [], SHOW_URLS = false;
+document.addEventListener('input', e => {
+  if (!e.target.closest || !e.target.closest('#filmLink')) return;
+  try { localStorage.setItem(FILM_KEY, e.target.value.trim()); } catch (err) {}
+});
 $('app').addEventListener('click', async e => {
     const urls = e.target.closest('#toggleUrls');
     if (urls) { SHOW_URLS = !SHOW_URLS; render(COURSES); return; }
@@ -376,6 +448,23 @@ $('app').addEventListener('click', async e => {
         if (card) hubScrollIntoView(card, 'start');
       } catch (err) { status(err.message); make.disabled = false; }
       BUSY = false;
+      return;
+    }
+    const film = e.target.closest('#filmLink');
+    if (film) return;                       /* typing in it is not a click on a card */
+    const note = e.target.closest('[data-note]');
+    if (note) {
+      const c = COURSES.filter(function(x){ return x.id === note.dataset.note; })[0];
+      if (c) { note.textContent = 'Building\u2026'; await hubCopyButton(note, await noteFor(c)); }
+      return;
+    }
+    const mail = e.target.closest('[data-mail]');
+    if (mail) {
+      e.preventDefault();
+      const c = COURSES.filter(function(x){ return x.id === mail.dataset.mail; })[0];
+      if (!c) return;
+      const subject = 'Connect Lite — ' + ((c.settings && c.settings.courseName) || c.name || c.id);
+      location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(await noteFor(c));
       return;
     }
     const b = e.target.closest('[data-copy]');

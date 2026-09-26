@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<!--
+  Connect Lite — the card a centre is sent before they have bought anything
+  © 2026 Ramy Sakr. All rights reserved.
+
+  invite.html is the card someone gets once they are ON a course. This is its
+  sibling for the step before: what a centre receives when they ask what
+  Connect Lite is (Ramy, 26 Sep 2026: "it arrives as a nice card instead of
+  just a link... a personal note signed by me and also some vital information
+  and price information").
+
+  One link, and it carries the lot: what it is, what it costs, a note in his
+  own voice, and the demo doors — the tutor's, a candidate's and the
+  assessor's — so the reader can be inside a working course in one click
+  rather than being asked to book a call first.
+
+  It renders from ?k= alone, a demo course's tutor key. Everything specific to
+  the course — its name, its centre, the candidate to offer, the assessor link
+  — is fetched with that key, so the card is never out of step with the course
+  behind it, and nothing about pricing or the note lives in a URL.
+
+  What it will never do: it has no owner key in it, nothing here can change a
+  record, and the demo courses it points at are demo courses.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="brand/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<title>Connect Lite — for your centre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sand:oklch(98.8% 0.006 85); --sand-deep:oklch(94.8% 0.01 85); --sand-line:oklch(85.5% 0.02 80);
+    --paper:oklch(99.5% 0.004 90); --surface:oklch(95.2% 0.018 84); --box:oklch(91.2% 0.03 80); --ink:oklch(23.5% 0.017 65);
+    --teal:oklch(37.5% 0.058 195); --terracotta:oklch(37.5% 0.058 195);
+    --gold:oklch(63% 0.096 72); --gold-lifted:oklch(70% 0.12 72);
+    --grey:oklch(51% 0.017 70); --brick:oklch(45% 0.15 27); --ink-warm:oklch(30% 0.042 58);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
+    min-height:100vh; display:flex; align-items:flex-start; justify-content:center; padding:6vh 18px 40px;}
+  .card{background:var(--surface); border-left:5px solid var(--gold); border-radius:8px; max-width:600px; width:100%;
+    padding:30px 34px 28px;}
+
+  .mark{display:flex; align-items:center; gap:9px; margin-bottom:26px;}
+  .mark .tile{width:30px; height:30px; border-radius:7px; background:var(--ink-warm);
+    display:inline-flex; align-items:center; justify-content:center; flex:none;}
+  .mark .word{display:inline-flex; align-items:baseline; gap:4px;}
+  .mark .word .c{font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:21px;
+    line-height:0.85; color:var(--gold);}
+  .mark .word .l{font-family:'Instrument Sans','Karla',sans-serif; font-weight:500; font-size:9px;
+    letter-spacing:0.24em; text-transform:uppercase;}
+
+  .eyebrow{font-family:'Instrument Sans','Karla',sans-serif; font-weight:600; font-size:10px;
+    letter-spacing:0.22em; text-transform:uppercase; color:var(--grey); margin:0 0 5px;}
+  h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.75rem; line-height:1.2;
+    margin:0 0 6px; color:var(--teal);}
+  .lede{font-size:0.95rem; line-height:1.7; margin:0;}
+
+  h2{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.05rem; color:var(--ink-warm);
+    margin:26px 0 8px;}
+
+  /* What it does: four lines, because a centre reading this on a phone will
+     read four and not eight. */
+  .does{list-style:none; margin:0; padding:0;}
+  .does li{position:relative; padding:0 0 0 22px; margin:0 0 9px; font-size:0.9rem; line-height:1.6;}
+  .does li:before{content:""; position:absolute; left:2px; top:9px; width:7px; height:7px;
+    border-radius:50%; background:var(--gold);}
+  .does b{color:var(--ink-warm);}
+
+  /* The doors. Same shape as a course card's links, because they are the same
+     links -- a real course, opened as three different people. */
+  .doors{margin:8px 0 0; padding:0; border-top:1px solid var(--sand-line);}
+  .door{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;
+    padding:13px 0; border-bottom:1px solid var(--sand-line);}
+  .door b{font-size:0.88rem; color:var(--ink-warm); flex:none; min-width:104px;}
+  .door .note{font-size:0.8rem; color:var(--grey); line-height:1.55; flex:1 1 200px;}
+  .door a{font-family:'Karla',sans-serif; font-size:0.82rem; font-weight:700; color:var(--teal);
+    text-decoration:none; border:1.5px solid var(--teal); border-radius:20px; padding:6px 14px; flex:none;}
+  .door a:hover{background:rgba(30,107,99,.08);}
+  .door a[aria-disabled="true"]{opacity:.45; pointer-events:none;}
+
+  /* Price: stated, not hedged. A centre that has to ask what it costs assumes
+     the answer is "more than you want to pay". */
+  .price{margin:24px 0 0; padding:18px 20px; background:var(--box); border-radius:8px;}
+  .price .amount{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.6rem;
+    color:var(--ink-warm); line-height:1.1;}
+  .price .per{font-size:0.85rem; color:var(--grey); margin-top:2px;}
+  .price .terms{font-size:0.82rem; line-height:1.65; color:var(--ink); margin:10px 0 0;}
+  .price .terms b{color:var(--ink-warm);}
+
+  /* The note, in his hand. Serif and a shade warmer than the rest of the card,
+     so it reads as written rather than assembled. */
+  .note-from{margin:26px 0 0; padding:18px 0 0; border-top:1px solid var(--sand-line);
+    font-family:'Newsreader',Georgia,serif; font-size:0.98rem; line-height:1.75; color:var(--ink);}
+  .note-from p{margin:0 0 12px;}
+  .note-from .sign{font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:1.3rem;
+    color:var(--ink-warm); margin:14px 0 0;}
+  .note-from .sub{font-size:0.78rem; font-family:'Karla',sans-serif; color:var(--grey); margin:2px 0 0;}
+
+  .go{display:block; width:100%; text-align:center; margin:24px 0 0;
+    background:var(--teal); color:var(--paper); font-family:'Karla',sans-serif;
+    font-size:1rem; font-weight:700; padding:15px 24px; border-radius:26px;
+    border:none; cursor:pointer; text-decoration:none;}
+  .go:hover{background:oklch(44% 0.062 195);}
+  .after{font-size:0.8rem; color:var(--grey); text-align:center; margin:10px 0 0; line-height:1.6;}
+
+  .foot{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    margin:22px 0 0; padding-top:16px; border-top:1px solid var(--sand-line);}
+  .credit{font-family:'Karla',sans-serif; font-size:11px; color:oklch(50% 0.09 62); opacity:.8;}
+  .credit b{font-weight:700;}
+  .btn-print{font-family:'Karla',sans-serif; font-size:0.78rem; font-weight:600; color:var(--teal);
+    background:none; border:none; cursor:pointer; text-decoration:underline;}
+
+  @media print{
+    body{background:#fff; padding:0; display:block;}
+    .card{border-radius:0; border-left:none; max-width:none; padding:0.4in;}
+    .go{background:none !important; color:var(--teal) !important; border:2px solid var(--teal);
+      border-radius:6px; font-size:0.9rem;}
+    .btn-print{display:none !important;}
+    .door a{border:none; padding:0; text-decoration:underline;}
+  }
+  @media(max-width:420px){ .card{padding:24px 20px 22px;} h1{font-size:1.45rem;} .door b{min-width:0;} }
+</style>
+<link rel="stylesheet" href="hub-house.css?v=202609262201">
+</head>
+<body>
+
+<div class="card">
+  <div class="mark">
+    <span class="tile">
+      <svg viewBox="8 30 104 60" width="20" height="12" fill="none">
+        <path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path>
+        <path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path>
+      </svg>
+    </span>
+    <span class="word"><span class="c">Connect</span><span class="l">Lite</span></span>
+  </div>
+
+  <p class="eyebrow">For a CELTA centre</p>
+  <h1>Everything a CELTA course writes, in one place</h1>
+  <p class="lede">No accounts, no passwords, nothing to install. A course is three links: one for your tutors, one for each candidate, one for the assessor.</p>
+
+  <h2>What it does</h2>
+  <ul class="does">
+    <li><b>Plans, analyses and self-evaluations</b> come in from candidates and land on the tutor's screen. No files, no email.</li>
+    <li><b>Feedback</b> is written against the plan the candidate wrote, tagged with the CELTA 5 criteria, and returned the same day.</li>
+    <li><b>Written assignments</b> carry your centre's own wording and criteria, and the outcome follows the marks rather than a box.</li>
+    <li><b>The assessor's pack, the Cambridge grade form and the end-of-course reports</b> assemble themselves from what is already there.</li>
+  </ul>
+
+  <h2>See it working</h2>
+  <p class="lede" style="font-size:0.88rem; color:var(--grey);">This is a real course, not a video. Type in it — nothing here touches anybody's record.</p>
+  <div class="doors">
+    <div class="door">
+      <b>As a tutor</b>
+      <span class="note">The whole course: twelve candidates, their work, the grades and the reports.</span>
+      <a id="doorTutor" href="#">Open</a>
+    </div>
+    <div class="door">
+      <b>As a candidate</b>
+      <span class="note" id="candNote">One person's own view — their plan, their feedback, and nobody else's.</span>
+      <a id="doorCand" href="#" aria-disabled="true">Open</a>
+    </div>
+    <div class="door">
+      <b>As the assessor</b>
+      <span class="note">Read-only. Everything a visit needs behind one link.</span>
+      <a id="doorAssessor" href="#" aria-disabled="true">Open</a>
+    </div>
+  </div>
+
+  <div class="price">
+    <div class="amount" id="priceAmount">£PRICE</div>
+    <div class="per" id="pricePer">per course, paid once</div>
+    <p class="terms" id="priceTerms"><b>One course, one price.</b> However many candidates and however many tutors are on it. Nothing recurring, nothing per seat, and no charge for the assessor.</p>
+  </div>
+
+  <div class="note-from" id="noteFrom">
+    <p>I built this because I run CELTA courses myself, and the paperwork was living in five places at once — a plan in a Drive folder, feedback in a document, grades in a spreadsheet, and the assessor's pack typed out again from all three.</p>
+    <p>It does one thing: it keeps a course's writing in one place, in the words Cambridge uses, so that nothing has to be typed twice. If it would help your centre, open the tutor link above and spend five minutes in it — that will tell you more than I can.</p>
+    <p class="sign">Ramy</p>
+    <p class="sub">Ramy Sakr · CELTA tutor · designed and built Connect Lite</p>
+  </div>
+
+  <a class="go" id="goBtn" href="#">Open the course as a tutor</a>
+  <p class="after" id="filmRow" hidden>Or watch it first: <a id="filmLink" href="#">a five-minute film</a>.</p>
+
+  <div class="foot">
+    <span class="credit">designed and built by <b>Ramy</b></span>
+    <button type="button" class="btn-print" onclick="window.print()">Print / Save as PDF</button>
+  </div>
+</div>
+
+<script src="hub-shared.js?v=202609262201"></script>
+<script src="hub-store.js?v=202609262201"></script>
+<script>
+/* Everything course-specific comes from the one key in the URL. The card is
+   complete and readable before any of it arrives -- what the store adds is the
+   course's name and the two links that have to be asked for. */
+(function(){
+  var q = new URLSearchParams(location.search);
+  var k = (q.get('k') || '').trim();
+  var film = (q.get('f') || '').trim();
+  var base = location.origin + location.pathname.replace(/[^/]*$/, '');
+  var invite = function(param, value){ return base + 'invite.html?' + param + '=' + encodeURIComponent(value); };
+
+  if (film && /^https?:\/\//i.test(film)) {
+    var row = document.getElementById('filmRow');
+    document.getElementById('filmLink').href = film;
+    row.hidden = false;
+  }
+  if (!k) {
+    document.getElementById('goBtn').textContent = 'No course on this link';
+    document.getElementById('goBtn').setAttribute('aria-disabled', 'true');
+    return;
+  }
+
+  var tutor = invite('k', k);
+  document.getElementById('doorTutor').href = tutor;
+  document.getElementById('goBtn').href = tutor;
+
+  /* The assessor link is minted per course and the candidate is whoever is
+     first on the roster, so both are asked for rather than guessed. A failure
+     here leaves those two doors closed and the rest of the card intact. */
+  if (!window.HubStore) return;
+  HubStore.call({ op: 'assessorLink', key: k }).then(function(r){
+    var key = r && (r.key || r.assessorKey);
+    if (!key) return;
+    var a = document.getElementById('doorAssessor');
+    a.href = invite('ak', key); a.removeAttribute('aria-disabled');
+  }).catch(function(){});
+  HubStore.call({ op: 'roster', key: k }).then(function(r){
+    var list = Object.keys((r && r.trainees) || {}).map(function(id){ return r.trainees[id]; })
+      .sort(function(a, b){ return String(a.name).localeCompare(String(b.name)); });
+    if (!list.length) return;
+    var one = list[0];
+    var a = document.getElementById('doorCand');
+    a.href = invite('t', one.token); a.removeAttribute('aria-disabled');
+    document.getElementById('candNote').textContent =
+      one.name + '’s own view — their plan, their feedback, and nobody else’s.';
+  }).catch(function(){});
+})();
+</script>
+</body>
+</html>
