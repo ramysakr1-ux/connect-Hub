@@ -30,3 +30,8 @@ handed to a tutor only. Proven by `node check-crit-learn.mjs`.
 ## 26 Sep 2026 — seedCritLearn, a centre's next course starts from its last
 See `2026-09-26-seed-critlearn.md`. Deployed as version 23. Proven by
 `node store/verify-seed.mjs`, which makes its own courses and deletes them.
+
+## 26 Sep 2026 — one link is one course
+See `2026-09-26-one-course.md`. Deployed as version 25. Candidates counted for
+the life of the course, and the dates sealed by the first one. Proven by
+`node store/verify-one-course.mjs`.
