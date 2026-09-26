@@ -24,7 +24,7 @@ const WRITE=process.argv.includes('--write');
 const HERE='/Users/work/connect-Hub/';
 const STORE=(readFileSync(HERE+'hub-store.js','utf8').match(/https:\/\/script\.google\.com\/macros\/s\/[^'"]+/)||[])[0];
 const K=process.env.KEY||'6940749234e54144bba44ce5';
-const B='https://ramysakr1-ux.github.io/connect-Hub/';
+const B='https://lite.celtaconnect.com/';
 const call=async b=>{ for(let i=0;i<6;i++){ const r=await fetch(STORE,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(b)});
   const t=await r.text(); try{ return JSON.parse(t);}catch(e){ await new Promise(s=>setTimeout(s,4000)); } } return {ok:false,error:'no JSON'}; };
 

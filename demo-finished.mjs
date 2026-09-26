@@ -334,7 +334,7 @@ console.log('\n' + docs + ' documents built by the feedback screen, ' + writes +
 if (WRITE) {
   const links = await call({ op: 'assessorLink', key: KEY });
   console.log('\ncourse ' + course.id);
-  console.log('  tutor     https://ramysakr1-ux.github.io/connect-Hub/invite.html?k=' + KEY);
-  if (links.ok) console.log('  assessor  https://ramysakr1-ux.github.io/connect-Hub/invite.html?ak=' + (links.result.key || links.result.assessorKey || ''));
-  console.log('  a candidate  https://ramysakr1-ux.github.io/connect-Hub/invite.html?t=' + people[0].token + '  (' + people[0].name + ')');
+  console.log('  tutor     https://lite.celtaconnect.com/invite.html?k=' + KEY);
+  if (links.ok) console.log('  assessor  https://lite.celtaconnect.com/invite.html?ak=' + (links.result.key || links.result.assessorKey || ''));
+  console.log('  a candidate  https://lite.celtaconnect.com/invite.html?t=' + people[0].token + '  (' + people[0].name + ')');
 }

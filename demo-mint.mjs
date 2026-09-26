@@ -46,7 +46,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 const HERE = new URL('.', import.meta.url).pathname;
-const SITE = process.env.SITE || 'https://ramysakr1-ux.github.io/connect-Hub/';
+const SITE = process.env.SITE || 'https://lite.celtaconnect.com/';
 const STORE = (readFileSync(join(HERE, 'hub-store.js'), 'utf8').match(/https:\/\/script\.google\.com\/macros\/s\/[^'"]+/) || [])[0];
 const LABEL = process.argv[2] || 'Demo';
 const DAY = 864e5;
