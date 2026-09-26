@@ -15,4 +15,10 @@ Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
 ## 26 Sep 2026 — the teaching-practice history, one row per TP
-See `2026-09-26-tpHistory-per-row.md`.
+See `2026-09-26-tpHistory-per-row.md`. Deployed as version 20.
+
+## 26 Sep 2026 — any record too big for one cell, split across rows
+See `2026-09-26-chunked-records.md`. Deployed as version 21. The per-TP change
+above fixed two TPs sharing a cell; this fixes one record that is itself too
+big, which tagging the demo's feedback points with their criteria made real.
+Proven live by `node store/verify-chunks.mjs` (ten checks).
