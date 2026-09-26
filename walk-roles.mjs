@@ -420,9 +420,12 @@ await step('trainee: both sheets on the desk, the current one in front of the pi
   await A.p.goto(`${BASE}4_feedback_returned.html?t=${amaraToken}`, { waitUntil: 'domcontentloaded' }); await settle(A.p, 3500);
   const t = await text(A.p);
   must(/Clear instructions/.test(t), 'TP2 not shown'); must(/Good hook/.test(t), 'TP1 no longer shown');
-  // newest last in the record, and the last sheet is the one in front
+  // Newest first: the front sheet is the one at the top of the page, and the
+  // earlier ones lie behind it. This asserted the opposite until 26 Sep 2026,
+  // which is how the sheets came out oldest-first while the screen's own
+  // comment -- and the voiceover written from it -- said "newest on top".
   const pile = await A.p.$$eval('#content .doc', ds => ds.map(d => (d.classList.contains('current') ? 'current' : 'earlier') + ':' + (/Clear instructions/.test(d.textContent) ? 'TP2' : /Good hook/.test(d.textContent) ? 'TP1' : '?')));
-  must(pile.join(' ') === 'earlier:TP1 current:TP2', 'the pile reads ' + pile.join(' '));
+  must(pile.join(' ') === 'current:TP2 earlier:TP1', 'the pile reads ' + pile.join(' '));
 });
 // Reopen the returned TP on the tutor's screen, change the overall comment, return it again.
 async function tutorReturnsAgain(comment){

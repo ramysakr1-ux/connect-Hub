@@ -53,9 +53,13 @@
     margin-bottom:22px;
     box-shadow:0 1px 2px oklch(58% 0.03 70 / 0.11), 0 7px 16px -7px oklch(58% 0.03 70 / 0.09);
     transition:transform .14s ease, box-shadow .14s ease;}
-  .doc.earlier{z-index:1; transform:scale(.975); transform-origin:50% 0; margin-bottom:-14px;
+  .doc.earlier{z-index:1; transform:scale(.975); transform-origin:50% 0;
     filter:saturate(.92) brightness(.985);}
   .doc.current{z-index:2;}
+  /* The tuck belongs to the sheet ABOVE, whichever it is: it pulls the next
+     one up under its own foot. It was on .earlier while the newest sheet was
+     last, which worked only for that order. */
+  .doc.tucked{margin-bottom:-14px;}
   .doc:hover{z-index:3; transform:translateY(-3px);
     box-shadow:0 2px 4px oklch(58% 0.03 70 / 0.11), 0 16px 28px -12px oklch(58% 0.03 70 / 0.09);}
   .doc.earlier:hover{transform:scale(.975) translateY(-3px); filter:none;}
@@ -83,7 +87,7 @@
   .wordmark-spin{animation:wordmark-spin 90s linear infinite; transform-origin:50% 50%; transform-style:preserve-3d;}
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609262002">
+<link rel="stylesheet" href="hub-house.css?v=202609262029">
 </head>
 <body>
 <div class="board">
@@ -98,9 +102,9 @@
   <a class="back" href="index.html">← Back</a>
   <div id="content"></div>
 </div>
-<script src="hub-shared.js?v=202609262002"></script>
-<script src="hub-store.js?v=202609262002"></script>
-<script src="hub-sync.js?v=202609262002"></script>
+<script src="hub-shared.js?v=202609262029"></script>
+<script src="hub-store.js?v=202609262029"></script>
+<script src="hub-sync.js?v=202609262029"></script>
 <script type="text/x-hub-app">
 function rec(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
 
@@ -161,7 +165,10 @@ const curN = (function(){
 })();
 const past = Object.keys(history)
   .map(Number).filter(n => n >= 1 && n <= HUB_MAX_TP)
-  .sort((a, b) => a - b)
+  /* Newest first: the pile reads the way the desk looks, front sheet on top
+     (the comment above the stack has said so since it was built; the order
+     did not, and the sheets came out oldest-first -- found 26 Sep 2026). */
+  .sort((a, b) => b - a)
   .map(n => ({ n: n, r: history[n] }))
   .filter(x => x.r && x.r.docHTML)
   .filter(x => !(curN && x.n === curN && fb && fb.status === 'returned' && fb.docHTML));
@@ -182,6 +189,10 @@ function addDoc(html, heading){
   if (window.hubStackTables) hubStackTables(doc);
   content.appendChild(doc);
 }
+/* The current one goes on first so it sits at the front; the returned ones
+   follow it, newest to oldest. Held back, it is not drawn at all and the
+   earlier ones are the whole pile. */
+if(currentOpen) addDoc(fb.docHTML, past.length ? 'Teaching practice ' + (function(){ const m=String((fb.state&&fb.state.f&&fb.state.f.fTP)||fb.label||'').match(/\d+/); return m?m[0]:''; })() : '');
 past.forEach(x => addDoc(x.r.docHTML, 'Teaching practice ' + x.n));
 
 if(currentHeld){
@@ -189,10 +200,13 @@ if(currentHeld){
   else content.innerHTML='<div class="empty">Your tutor\u2019s feedback is in. Write and turn in your <a href="2_trainee_self_evaluation.html">self-evaluation</a> first \u2014 teach, reflect, then read the feedback \u2014 and it opens here.</div>';
 }
 if(currentOpen || past.length){
-  if (currentOpen) addDoc(fb.docHTML, past.length ? 'Teaching practice ' + (function(){ const m=String((fb.state&&fb.state.f&&fb.state.f.fTP)||fb.label||'').match(/\d+/); return m?m[0]:''; })() : '');
-  /* the pile: every sheet but the last sits behind it */
+  /* the pile: the first sheet is the front one, and every sheet but the last
+     tucks the one after it under its foot */
   const sheets=[...content.querySelectorAll('.doc')];
-  sheets.forEach((d,i)=>d.classList.add(i===sheets.length-1?'current':'earlier'));
+  sheets.forEach((d,i)=>{
+    d.classList.add(i===0?'current':'earlier');
+    if(i<sheets.length-1) d.classList.add('tucked');
+  });
   const actions=document.createElement('div');
   actions.className='actions';
   actions.innerHTML='<button type="button" class="btn-print" id="printBtn">Print / Save as PDF</button>'
