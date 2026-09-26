@@ -131,7 +131,7 @@
   }
   @media(max-width:420px){ .card{padding:24px 20px 22px;} h1{font-size:1.45rem;} .door b{min-width:0;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609262344">
+<link rel="stylesheet" href="hub-house.css?v=202609262354">
 </head>
 <body>
 
@@ -185,9 +185,14 @@
     </div>
   </div>
 
+  <!-- The price is set on the card's link (&p=), so the card can go out
+       before it is decided: with no price it says what the price is FOR and
+       invites the question, rather than showing a placeholder that reads as a
+       page half-built. -->
   <div class="price">
-    <div class="amount" id="priceAmount">£PRICE</div>
-    <div class="per" id="pricePer">per course, paid once</div>
+    <div class="amount" id="priceAmount" hidden></div>
+    <div class="per" id="pricePer" hidden>per course, paid once</div>
+    <p class="terms" id="priceAsk">Ask me what it costs — reply to this and I will tell you the same day.</p>
     <p class="terms"><b>Per course, not per candidate.</b> One price covers the whole course — up to 24 trainees, all of their tutors, and your course administrator. Nothing recurring, nothing per seat, and no charge for the assessor's access.</p>
     <p class="terms">A course is one set of dates. You choose the start and the end while you are setting it up; from the first trainee you add, they are the course's dates — it can run a few days over, as courses do, but a new pair of dates is a new course. Your next course gets its own link.</p>
   </div>
@@ -206,7 +211,11 @@
     <p>I built this because I run CELTA courses myself, and the paperwork was living in five places at once — a plan in a Drive folder, feedback in a document, grades in a spreadsheet, and the assessor's pack typed out again from all three.</p>
     <p>It does one thing: it keeps a course's writing in one place, in the words Cambridge uses, so that nothing has to be typed twice. If it would help your centre, open the tutor link above and spend five minutes in it — that will tell you more than I can.</p>
     <p class="sign">Ramy</p>
-    <p class="sub">Ramy Sakr · CELTA tutor · designed and built Connect Lite</p>
+    <!-- "designed and built Connect Lite" was here too, and the card's own foot
+         already says it (Ramy, 26 Sep 2026: "it's already at the bottom, so we
+         wouldn't have to say that"). What is left is the thing the foot does
+         NOT say and a centre cares about: that he teaches the course himself. -->
+    <p class="sub">Ramy Sakr · CELTA tutor</p>
   </div>
 
   <a class="go" id="goBtn" href="#">Open the course as a tutor</a>
@@ -218,8 +227,8 @@
   </div>
 </div>
 
-<script src="hub-shared.js?v=202609262344"></script>
-<script src="hub-store.js?v=202609262344"></script>
+<script src="hub-shared.js?v=202609262354"></script>
+<script src="hub-store.js?v=202609262354"></script>
 <script>
 /* Everything course-specific comes from the one key in the URL. The card is
    complete and readable before any of it arrives -- what the store adds is the
@@ -231,6 +240,15 @@
   var base = location.origin + location.pathname.replace(/[^/]*$/, '');
   var invite = function(param, value){ return base + 'invite.html?' + param + '=' + encodeURIComponent(value); };
 
+  /* A price, when there is one: shown as given, so it can be "£240" or
+     "£240 + VAT" or a number in any currency without the card guessing. */
+  var price = (q.get('p') || '').trim().slice(0, 40);
+  if (price) {
+    var amt = document.getElementById('priceAmount');
+    amt.textContent = price; amt.hidden = false;
+    document.getElementById('pricePer').hidden = false;
+    document.getElementById('priceAsk').hidden = true;
+  }
   if (film && /^https?:\/\//i.test(film)) {
     var row = document.getElementById('filmRow');
     document.getElementById('filmLink').href = film;

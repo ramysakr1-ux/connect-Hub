@@ -149,7 +149,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609262344">
+<link rel="stylesheet" href="hub-house.css?v=202609262354">
 </head>
 <body>
 <div class="board">
@@ -173,8 +173,8 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609262344"></script>
-<script src="hub-store.js?v=202609262344"></script>
+<script src="hub-shared.js?v=202609262354"></script>
+<script src="hub-store.js?v=202609262354"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -253,7 +253,9 @@ function gate(msg){
    link rides along when there is one: it is the thing people ask for after
    they have clicked around for two minutes. */
 const FILM_KEY = 'chub:filmlink';
+const PRICE_KEY = 'chub:price';
 function filmLink(){ try { return (localStorage.getItem(FILM_KEY) || '').trim(); } catch (e) { return ''; } }
+function priceText(){ try { return (localStorage.getItem(PRICE_KEY) || '').trim(); } catch (e) { return ''; } }
 /* The owner's own listing does not carry the trainees -- it carries how many
    -- so the candidate link is fetched when the button is pressed rather than
    on every draw. A course with nobody on it says so instead of pretending. */
@@ -275,9 +277,10 @@ async function firstTrainee(c){
    and it takes the course from ?k= and the film from &f=, so the message
    carries neither and cannot fall out of step with either. */
 function cardLink(c){
-  const film = filmLink();
+  const film = filmLink(), price = priceText();
   return base() + 'offer.html?k=' + encodeURIComponent(c.tutorKey)
-    + (film ? '&f=' + encodeURIComponent(film) : '');
+    + (film ? '&f=' + encodeURIComponent(film) : '')
+    + (price ? '&p=' + encodeURIComponent(price) : '');
 }
 async function noteFor(c){
   const film = filmLink();
@@ -394,8 +397,10 @@ $('app').innerHTML = `
          thing that belongs to no course. -->
     <div class="filmrow">
       <label for="filmLink">Link to the film</label>
-      <input type="url" id="filmLink" placeholder="https://… — added to every message below" value="${esc(filmLink())}">
-      <span class="note">Goes on the card, not in the message. Kept in this browser.</span>
+      <input type="url" id="filmLink" placeholder="https://…" value="${esc(filmLink())}">
+      <label for="priceText">Price</label>
+      <input type="text" id="priceText" placeholder="£240, or leave empty" value="${esc(priceText())}" style="flex:0 1 190px; min-width:140px;">
+      <span class="note">Both go on the card, not in the message. Kept in this browser — leave the price empty and the card invites the question instead.</span>
     </div>
     <div class="courses">${rows || '<div class="empty">No courses yet. Make the first one, then send its tutor link to the centre.</div>'}</div>
     <p id="status"></p>`;
@@ -423,8 +428,9 @@ let BUSY = false;
    nothing. */
 let COURSES = [], SHOW_URLS = false;
 document.addEventListener('input', e => {
-  if (!e.target.closest || !e.target.closest('#filmLink')) return;
-  try { localStorage.setItem(FILM_KEY, e.target.value.trim()); } catch (err) {}
+  if (!e.target.closest) return;
+  if (e.target.closest('#filmLink')) { try { localStorage.setItem(FILM_KEY, e.target.value.trim()); } catch (err) {} return; }
+  if (e.target.closest('#priceText')) { try { localStorage.setItem(PRICE_KEY, e.target.value.trim()); } catch (err) {} }
 });
 $('app').addEventListener('click', async e => {
     const urls = e.target.closest('#toggleUrls');
@@ -459,8 +465,7 @@ $('app').addEventListener('click', async e => {
       BUSY = false;
       return;
     }
-    const film = e.target.closest('#filmLink');
-    if (film) return;                       /* typing in it is not a click on a card */
+    if (e.target.closest('#filmLink') || e.target.closest('#priceText')) return;
     const note = e.target.closest('[data-note]');
     if (note) {
       const c = COURSES.filter(function(x){ return x.id === note.dataset.note; })[0];
