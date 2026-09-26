@@ -631,9 +631,9 @@
 </div>
 
 <script src="hub-due.js?v=202609240203"></script>
-<script src="hub-shared.js?v=202609261554"></script>
-<script src="hub-store.js?v=202609261554"></script>
-<script src="hub-sync.js?v=202609261554"></script>
+<script src="hub-shared.js?v=202609261605"></script>
+<script src="hub-store.js?v=202609261605"></script>
+<script src="hub-sync.js?v=202609261605"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -651,16 +651,38 @@ function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').repla
    TP" drift away from the record's and start deleting teaching practices
    (21 Sep 2026). All three call sites here pass only a message and a label,
    which the shared one has always handled. */
+/* The preview is an iframe on drive.google.com, and nothing inside it can be
+   read from here. A file that is not shared, or a mistyped id, loads Google's
+   own "you need access" page -- which fires the frame's load event exactly as
+   a worksheet does, so this screen cannot tell the two apart by any means.
+   It used to embed 420px unconditionally, so a wrong link left the candidate
+   staring at a large silent box with nothing to explain it (Ramy, 26 Sep
+   2026); an eight-second timeout was tried first and could never fire, for
+   the reason above. So the height is not reserved at all: the link shows as a
+   pill with one line saying what the sharing has to be, and the preview opens
+   only when it is asked for. Nothing to explain, because there is nothing
+   there until someone wants it. */
 function renderMatsPreview(){
   const url=($('fMatsLink').value||'').trim();
   const el=$('matsPreview');
   if(!url){ el.innerHTML=''; return; }
   const m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if(m){
-    el.innerHTML = `<div class="drivepill">\uD83D\uDCCE Drive file attached</div><iframe src="https://drive.google.com/file/d/${m[1]}/preview" style="width:100%;height:420px;border:1.5px solid var(--sand-line);border-radius:6px;margin-top:8px;" allow="autoplay"></iframe>`;
-  } else {
+  if(!m){
     el.innerHTML = `<div class="drivepill">\uD83D\uDD17 <a href="${esc(url)}" target="_blank" rel="noopener">Open materials link</a></div>`;
+    return;
   }
+  el.innerHTML = `<div class="drivepill">\uD83D\uDCCE Drive file attached</div>
+    <p class="hint" style="margin-top:6px;">Your tutor opens this link from the plan. It has to be shared as \u201canyone with the link can view\u201d \u2014
+      <a href="${esc(url)}" target="_blank" rel="noopener">open it in a new tab</a> to see what they will get, or
+      <button type="button" class="example-btn" id="matsPreviewBtn">preview it here</button>.</p>
+    <div id="matsFrameWrap"></div>`;
+  $('matsPreviewBtn').addEventListener('click', ()=>{
+    const wrap=$('matsFrameWrap'); if(!wrap) return;
+    const btn=$('matsPreviewBtn');
+    if(wrap.firstChild){ wrap.innerHTML=''; if(btn) btn.textContent='preview it here'; return; }
+    wrap.innerHTML = `<iframe src="https://drive.google.com/file/d/${m[1]}/preview" style="width:100%;height:420px;border:1.5px solid var(--sand-line);border-radius:6px;margin-top:8px;" allow="autoplay"></iframe>`;
+    if(btn) btn.textContent='hide the preview';
+  });
 }
 $('fMatsLink').addEventListener('input', ()=>{ renderMatsPreview(); dirty=true; autosave(); });
 /* The attached file lives in THIS browser and nowhere else.
