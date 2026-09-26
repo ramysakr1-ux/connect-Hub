@@ -436,7 +436,7 @@ if (RESUMING) {
 
 /* ---- 3. the assignment keys and their deadlines -- both paths ------------
    A1 is submitted and marked, so it is still OPEN: due tomorrow, submitted
-   just in time. A2 closed two days ago and is where the extension story lives
+   just in time. A2 is the furthest out and carries the extension story
    (nobody submits it). A3 is open and carries the resubmission story. The
    first version had A1 nine days past, and the page refused every submission
    -- correctly: a candidate cannot submit past a deadline, and neither can a
@@ -445,7 +445,7 @@ await gotoSettled(p, url('8_assignment_wording.html', 'k=' + K), 'input[type="da
 const ORDER = await evalRetry(p, () => eval('hubAssignmentOrder(DATA).filter(k => k !== "a5")'));
 const PLAIN = await evalRetry(p, () => eval('hubAssignmentOrder(DATA).filter(k => k !== "a5" && DATA[k] && DATA[k].sections && !DATA[k].sections.some(s => s.type === "picker") && DATA[k].sections.some(s => s.type === "text" && !hubIsReference(s)))'));
 const A1 = PLAIN[0], A2 = PLAIN[1] || ORDER.find(k => k !== A1), A3 = PLAIN[2] || ORDER.find(k => k !== A1 && k !== A2);
-const DUE = { [A1]: 1, [A2]: -2, [A3]: 5 };
+const DUE = { [A1]: 1, [A2]: 8, [A3]: 5 };   // nothing closed at the end of week two; A2 is the furthest out and carries the extension
 for (const k of ORDER) { if (!(k in DUE)) DUE[k] = 3; }
 for (const [k, off] of Object.entries(DUE)) {
   await p.evaluate(k => eval(`CURRENT='${k}'; renderList(); renderEditor();`), k); await settle(p, 300);
@@ -622,7 +622,13 @@ for (const [ci, c] of COHORT.entries()) {
     } else log(c.name + ': TP' + n + ' already returned');
     if (n < c.tps || c.pending) { const r3 = await recordOf(c.name); if (r3.plan && planTP(r3) === n) await startNextTP(tp, c.name); }
   }
-  if (c.pending) { const r = await recordOf(c.name); if (planTP(r) !== c.tps + 1) { await writePlan(tp, c.name, c.tps + 1, LESSONS[c.tps]); log(c.name + ': TP' + (c.tps + 1) + ' plan turned in, awaiting feedback'); } }
+  if (c.pending) {
+    const r = await recordOf(c.name);
+    if (planTP(r) !== c.tps + 1) await writePlan(tp, c.name, c.tps + 1, LESSONS[c.tps]);
+    const r2 = await recordOf(c.name);
+    if (!(r2.selfeval && r2.selfeval.status === 'turned_in')) await writeSelfEval(tp, c.name, LESSONS[c.tps]);
+    log(c.name + ': TP' + (c.tps + 1) + ' plan and self-evaluation in, awaiting feedback');
+  }
   await tc.close();
 }
 
@@ -719,10 +725,10 @@ await gotoSettled(p, url('13_grades_report.html', 'k=' + K), '.cand .grow select
 await p.waitForFunction(n => document.querySelectorAll('.cand').length >= n, COHORT.length, { timeout: 40000 });
 await settle(p, 2500);
 const COURSE_TEXT = {
-  tp: 'Six candidates in two teaching practice groups of three, teaching alternate days; each candidate teaches eight assessed lessons of forty-five minutes, four at A2 in the first half of the course and four at B1 in the second. Levels swap after TP4. Lessons are observed by the tutor responsible for that group in that half of the course.',
+  tp: 'Twelve candidates in two teaching practice groups of six; each candidate teaches eight assessed lessons of forty-five minutes, four at A2 in the first half of the course and four at B1 in the second. Levels swap after TP4. Each group has one tutor for its first four lessons and the other tutor for its last four, so every candidate is observed by both.',
   tpSup: 'Every lesson is followed by a feedback session of forty-five minutes with the observing tutor and the TP group. Written feedback is returned to the candidate on the same day, through Connect Lite, with strengths and action points in planning and in teaching, a comment on each stage of the plan, and a comment on the self-evaluation. Starred action points carry forward into the personal aims of the next plan.',
   tutorials: 'Two tutorials for each candidate: the first at the end of week two, the second at the end of week three. The first round is this week and is recorded on each candidate’s tracker with the standing at that point and the action points agreed. Candidates whose standing is below the standard at the first tutorial are seen again in week three.',
-  extra: 'The course runs with a first-half tutor and a second-half tutor sharing one course record, so every document a candidate produces is seen by both. One candidate has used a resubmission on the first written assignment; one has an extension on the second. No cause for concern at the time of writing.',
+  extra: 'Two tutors on the whole course, one teaching practice group each, swapping groups after TP4, sharing one course record so that every document a candidate produces is seen by both. One candidate has passed the first written assignment on resubmission; one has a resubmission outstanding; one has an extension on the second. No cause for concern at the time of writing.',
 };
 for (const [k, v] of Object.entries(COURSE_TEXT)) await setVal(p, `#course textarea[data-coursefield="${k}"]`, v);
 const PROVS = ['PASS A', 'PASS / PASS B', 'PASS B', 'PASS', 'PASS B', 'PASS', 'PASS A', 'PASS B', 'PASS', 'FAIL / PASS', 'PASS', 'PASS B'];
