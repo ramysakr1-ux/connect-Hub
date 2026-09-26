@@ -333,13 +333,34 @@ const WKEY='c17grades:k', RKEY='c17grades:ak';
    link now works whatever the browser allows; only the remembering is
    optional, so in a private window she keeps using the full link. */
 const MEM={};
+/* Retired assessor keys, mapped to the one that is live.
+   The assessor pack went to Appian as a PDF with the grades link inside it,
+   and a PDF cannot be edited once it is filed -- Ramy has no control over
+   that folder. So when the assessor key was rotated (27 Sep 2026) the link
+   in that PDF died, and there was no way to reach the assessor to give them
+   a new one. This maps the key they hold onto the key that works. It is not
+   a second credential: the retired value is dead at the store, and only this
+   page knows to swap it. Retire an entry here once the pack is refiled. */
+const RETIRED_AK={'4bdc5a1158f645cf97c37a6a':'95c029538cf34ab384d2d088',
+                  'c5740ff8e81647519d74ce6d':'95c029538cf34ab384d2d088'};
 (function(){
   const q=new URLSearchParams(location.search);
+  const ak=q.get('ak'), live=ak&&RETIRED_AK[ak];
+  if(live){ MEM[RKEY]=live; try{ localStorage.setItem(RKEY,live); localStorage.removeItem(WKEY); }catch(e){} return; }
   if(q.get('k')) MEM[WKEY]=q.get('k'); else if(q.get('ak')) MEM[RKEY]=q.get('ak');
   try{
     if(q.get('k')){ localStorage.setItem(WKEY,q.get('k')); localStorage.removeItem(RKEY); }
     else if(q.get('ak')){ localStorage.setItem(RKEY,q.get('ak')); localStorage.removeItem(WKEY); }
   }catch(e){}
+  /* And the assessor who opened it once already: their browser remembers the
+     retired key and they arrive with no query string at all, which would
+     otherwise refuse them just the same. */
+  if(!q.get('k')&&!q.get('ak')){
+    try{
+      const held=localStorage.getItem(RKEY);
+      if(held&&RETIRED_AK[held]){ MEM[RKEY]=RETIRED_AK[held]; localStorage.setItem(RKEY,RETIRED_AK[held]); }
+    }catch(e){}
+  }
 })();
 const remembered=k=>{ if(MEM[k]) return MEM[k]; try{ return localStorage.getItem(k)||''; }catch(e){ return ''; } };
 const CAN_WRITE=!!remembered(WKEY), CAN_READ=CAN_WRITE||!!remembered(RKEY);
