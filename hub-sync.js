@@ -280,6 +280,35 @@
     return '';
   });
   function recordOf(tr){ return { plan: (tr.tp && tr.tp.plan) || null, selfeval: (tr.tp && tr.tp.selfeval) || null, feedback: (tr.tp && tr.tp.feedback) || null, tpHistory: (tr.tp && tr.tp.history) || {}, assignments: tr.assignments || {}, tracker: tr.tracker || {} }; }
+  /* The store's roster, with this browser's own unconfirmed records laid over
+     it -- one trainee's one record at a time.
+     The boot used to leave the WHOLE roster alone if anything in it was
+     dirty: one pending write for one candidate, and every other candidate's
+     records stayed as this browser last saw them. So the feedback screen for
+     Defne opened locked on "Returned -- Reopen for edits" for a TP she had
+     already filed away and moved on from, because Emily's return a minute
+     earlier was still waiting on the store (demo course, 26 Sep 2026). A
+     fresh browser boots clean, which is why no walk and no new device ever
+     saw it. What this browser has written and the store has not confirmed
+     -- a held job, or a write this page made -- is a (token, kind) pair, and
+     that pair is what is kept; everything else is the store's. */
+  var wrotePairs = {};
+  function mergeRoster(incoming){
+    var keep = Object.assign({}, heldPairs, wrotePairs);
+    if (!Object.keys(keep).length) return incoming;
+    var theirs = parse(incoming), mine = parse(current('connect_roster_v1'));
+    if (!theirs || !theirs.trainees || !mine || !mine.trainees) return incoming;
+    Object.keys(theirs.trainees).forEach(function(token){
+      var m = mine.trainees[token]; if (!m) return;
+      var t = theirs.trainees[token], rm = recordOf(m);
+      Object.keys(rm).forEach(function(kind){
+        if (!keep[token + ':' + kind]) return;
+        if (kind === 'assignments' || kind === 'tracker') t[kind] = rm[kind];
+        else { t.tp = t.tp || {}; t.tp[kind === 'tpHistory' ? 'history' : kind] = rm[kind]; }
+      });
+    });
+    return JSON.stringify(theirs);
+  }
   function route(key, value){
     if (mode === 'assessor') return; // read-only: nothing this browser does reaches the course
     var data = value == null ? null : parse(value);
@@ -298,6 +327,7 @@
           var json = JSON.stringify(rec[kind]);
           if (snapshot[token][kind] === json) return;
           snapshot[token][kind] = json;
+          if (started) wrotePairs[token + ':' + kind] = true;
           schedule('r:' + token + ':' + kind, { op: 'put', token: token, kind: kind, data: rec[kind] });
         });
       });
@@ -328,9 +358,14 @@
   var cached = false; try { cached = localStorage.getItem('hub:booted') === identity; } catch (e) {}
   var dirty = {}, started = false;
   // Writes the store never confirmed: their keys are off-limits to the boot,
-  // and they go out again now.
-  var held = ledger();
-  Object.keys(held).forEach(function(id){ var k = keyOfJob(id); if (k) dirty[k] = true; });
+  // and they go out again now. A roster write is one trainee's one record,
+  // and it is that PAIR the boot leaves alone, not the roster: held roster
+  // jobs go into heldPairs and are merged in by mergeRoster below.
+  var held = ledger(), heldPairs = {};
+  Object.keys(held).forEach(function(id){
+    if (id.indexOf('r:') === 0) { heldPairs[id.slice(2)] = true; return; }
+    var k = keyOfJob(id); if (k) dirty[k] = true;
+  });
   if (Object.keys(held).length) setTimeout(function(){ Object.keys(held).forEach(function(id){ schedule(id, held[id]); }); }, 0);
   // ...and again the moment the connection comes back, without waiting for a
   // page change. Ramy, 24 Sep 2026: "I have it on my desktop and write the
@@ -497,12 +532,15 @@
     status('Checking the course\u2026', 'busy');
     bootWithRetries().then(function(boot){
       var p = plan(boot);
+      if (p['connect_roster_v1'] != null) p['connect_roster_v1'] = mergeRoster(p['connect_roster_v1']);
       var untouched = Object.keys(p).every(function(k){ return !dirty[k]; });
       if (untouched) {
         var changed = apply(p);
         if (changed.length) { status('The course has moved on \u2014 refreshing', 'busy'); flushBeacon(); setTimeout(function(){ location.reload(); }, 150); return; }
       } else {
-        apply(p, function(k){ return !dirty[k]; });
+        // The roster goes in merged: this page's own records are already laid over it.
+        apply(p, function(k){ return !dirty[k] || k === 'connect_roster_v1'; });
+        rebuildSnapshot();
       }
       try { localStorage.setItem('hub:booted', identity); } catch (e) {}
       status(mode === 'assessor' ? 'Assessor view \u2014 read-only' : 'Live \u2014 saved to the course as you go', 'ok');
@@ -523,7 +561,9 @@
   // First time on this link in this browser: nothing to show yet, so wait.
   status('Loading from the course\u2026', 'busy');
   bootWithRetries().then(function(boot){
-    apply(plan(boot), function(k){ return !dirty[k]; }); exposeMeta(); rebuildSnapshot();
+    var p = plan(boot);
+    if (p['connect_roster_v1'] != null) p['connect_roster_v1'] = mergeRoster(p['connect_roster_v1']);
+    apply(p, function(k){ return !dirty[k] || k === 'connect_roster_v1'; }); exposeMeta(); rebuildSnapshot();
     try { localStorage.setItem('hub:booted', identity); } catch (e) {}
     status(mode === 'assessor' ? 'Assessor view \u2014 read-only' : 'Live \u2014 saved to the course as you go', 'ok');
   }, function(err){

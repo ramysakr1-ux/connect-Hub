@@ -30,8 +30,9 @@ const STORE = { course: { settings: null, wording: null }, trainees: {}, key: 't
   // Faults the walk can switch on: `refuse` names a record kind whose put the
   // store turns down (ok:false, the way the Apps Script refuses), `slow` is a
   // delay in ms on every put (the Apps Script takes 1.5-13 s to answer).
-  refuse: '', slow: 0, overCell: [] };
+  refuse: '', slow: 0, html: '', overCell: [] };
 const CELL = 50000;
+const tooLarge = (kind, n) => ({ ok: false, error: `Too large to store: ${kind} is ${n} characters and a record holds ${CELL}` });
 const REFUSE = { ok: false, error: 'This link is not on a course' };
 function handle(p){
   STORE.calls.push(p.op);
@@ -47,7 +48,21 @@ function handle(p){
       return REFUSE;
     case 'me': { const t = tr(p.token); if (!t) return REFUSE; return { ok: true, result: { token: t.token, name: t.name, group: t.group, records: t.records } }; }
     case 'get': { const t = tr(p.token); if (!t) return REFUSE; return { ok: true, result: { data: t.records[p.kind] ?? null } }; }
-    case 'put': { const t = tr(p.token); if (!t) return REFUSE; if (STORE.refuse && p.kind === STORE.refuse) return { ok: false, error: 'The store refused this write' }; if (p.data != null && JSON.stringify(p.data).length > CELL) return { ok: false, error: 'over the cell' }; if (p.data == null) delete t.records[p.kind]; else t.records[p.kind] = p.data; return { ok: true, result: { saved: true } }; }
+    case 'put': { const t = tr(p.token); if (!t) return REFUSE; if (STORE.refuse && p.kind === STORE.refuse) return { ok: false, error: 'The store refused this write' };
+      /* A record is one Sheets cell, and a cell holds 50,000 characters. Since
+         store version 19 (26 Sep 2026) a candidate's history is one row per
+         TP: a put of the whole map is split, an entry not sent is kept, and
+         every read assembles the map. Any other record over the cell is
+         refused with a readable error. Before that the history was one cell,
+         the second TP never filed, and this fake held anything. */
+      if (p.kind === 'tpHistory') {
+        const have = t.records.tpHistory || {}, want = (p.data && typeof p.data === 'object') ? p.data : {}, merged = { ...have };
+        for (const k of Object.keys(want)) { if (!want[k]) continue; const n = JSON.stringify(want[k]).length; if (n > CELL) { STORE.overCell.push('tpHistory:' + k + ' ' + n); return tooLarge('tpHistory:' + k, n); } merged[k] = want[k]; }
+        if (Object.keys(merged).length) t.records.tpHistory = merged; else delete t.records.tpHistory;
+        return { ok: true, result: { saved: true } };
+      }
+      if (p.data != null && JSON.stringify(p.data).length > CELL) { STORE.overCell.push(p.kind + ' ' + JSON.stringify(p.data).length); return tooLarge(p.kind, JSON.stringify(p.data).length); }
+      if (p.data == null) delete t.records[p.kind]; else t.records[p.kind] = p.data; return { ok: true, result: { saved: true } }; }
     case 'course': if (!isTutor && !isAssessor) return REFUSE; return { ok: true, result: STORE.course };
     case 'putCourse': if (!isTutor) return REFUSE; STORE.course[p.kind] = p.data; return { ok: true, result: { saved: true } };
     case 'roster': if (!isTutor && !isAssessor) return REFUSE; return { ok: true, result: { trainees: rosterOut() } };
@@ -64,16 +79,14 @@ function handle(p){
 }
 const storeServer = createServer((req, res) => {
   let body = ''; req.on('data', c => body += c); req.on('end', () => {
-    let p = {}, out; try { p = JSON.parse(body || '{}'); out = handle(p); } catch (e) { out = { ok: false, error: String(e.message) }; }
-    /* A record is one Sheets cell, and a cell holds 50,000 characters. Above
-       that the Apps Script throws and Google answers with an HTML error page
-       (title "Hata"), which hub-store reads as a transient failure. Measured
-       on the live store 26 Sep 2026: a tpHistory put of 49,495 chars saved,
-       50,995 did not. This fake used to hold anything, which is how a
-       candidate's second TP never filing went unseen. */
+    let p = {}, out; try { p = JSON.parse(body || '{}'); out = (p.op === 'put' && STORE.html && p.kind === STORE.html) ? null : handle(p); } catch (e) { out = { ok: false, error: String(e.message) }; }
+    /* Apps Script answers the odd call with an HTML error page instead of JSON
+       (title "Hata"; 1 in 3 during a bad minute on 20 Sep 2026), which
+       hub-store reads as transient: the write stays in the ledger and is sent
+       again from every later page. `STORE.html = <kind>` makes every put of
+       that kind answer that way. */
     const answer = () => {
-      if (p.op === 'put' && p.data != null && JSON.stringify(p.data).length > CELL) {
-        STORE.overCell.push(p.kind + ' ' + JSON.stringify(p.data).length);
+      if (p.op === 'put' && STORE.html && p.kind === STORE.html) {
         res.writeHead(200, { 'Content-Type': 'text/html', 'Access-Control-Allow-Origin': '*' }); return res.end('<!DOCTYPE html><html><head><title>Hata</title></head><body>Hata</body></html>');
       }
       res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); res.end(JSON.stringify(out));
@@ -134,14 +147,6 @@ async function snap(){
 async function step(name, fn){
   n++; try { const note = await fn(); passed++; console.log(`  ok  ${n}. ${name}${note ? ' — ' + note : ''}`); }
   catch (e) { findings.push(`step ${n} (${name}): ${e.message}`); console.log(`  FAIL ${n}. ${name} — ${e.message}`); }
-  await snap();
-}
-/* A step for a fault that is known and still open. It runs every time so the
-   walk keeps saying what the store cannot do, it does not fail the walk, and
-   it turns INTO a finding the day it passes -- the marker is then stale. */
-async function known(name, fn){
-  n++; try { const note = await fn(); findings.push(`step ${n} (${name}) PASSED but is marked known-open: retire the marker`); console.log(`  ??  ${n}. ${name} — passed; retire the known-open marker${note ? ' — ' + note : ''}`); }
-  catch (e) { passed++; console.log(`  open ${n}. ${name} — ${e.message}`); }
   await snap();
 }
 const must = (cond, msg) => { if (!cond) throw new Error(msg); };
@@ -457,39 +462,70 @@ await step('tutor: TP2 re-returned while the store refuses the filing, given up 
   must(!(await T.p.$('#hubUnsaved')), 'the banner is still up after the filing saved');
   return `store history {${Object.keys(h)}}, TP2 ${h[2].docHTML.length} chars, banner down`;
 });
-/* ===== KNOWN OPEN: a candidate's history is one Sheets cell ===== */
-await known('store: a TP the size of a real one files into a history that already holds one', async () => {
-  /* A candidate's whole tpHistory -- every returned TP, each with its docHTML
-     -- is ONE record, one cell, 50,000 characters. A returned TP on the live
-     demo course measures 25-35 KB, so a real candidate's second TP cannot
-     file, and the October course will hit this at every candidate's second
-     return. The client-side fix (Return waits for the store; the boot keeps a
-     filing the store lacks) is right and does not cure this: the put itself
-     is refused, sits in the ledger as transient, and -- worse -- a pending
-     write holds every later boot off the roster, so the tutor stops seeing
-     new work. Needs the store to hold each TP's entry as its own record: an
-     Apps Script change plus every reader of tpHistory, not this repo's to
-     make on its own. The step puts the short return back afterwards so the
-     doomed write does not sit under the rest of the walk. */
-  let sizes = '';
-  try {
-    await tutorReturnsAgain(LIVE_SIZE_COMMENT);
-    const r = STORE.trainees[amaraToken].records, h = r.tpHistory || {}, mine = await localTP2();
-    sizes = `feedback record ${JSON.stringify(r.feedback).length} chars, history cell ${JSON.stringify(h).length} chars`;
-    must(r.feedback && r.feedback.returnedAt === mine.at, 'the feedback itself did not save: ' + sizes);
-    must(h[2] && h[2].returnedAt === mine.at, `the ${mine.chars}-char TP2 did not file (${sizes}); refused over the cell: ${STORE.overCell.join('; ') || 'none'}`);
-  } finally {
-    STORE.overCell = [];
-    await tutorReturnsAgain(LONG_COMMENT);
-    const r = STORE.trainees[amaraToken].records, mine = await localTP2();
-    if (!(r.tpHistory[2] && r.tpHistory[2].returnedAt === mine.at)) findings.push('the short return did not go back on the store after the cell-limit step');
-  }
+/* ===== A TP the size of a real one, into a history that already holds one ===== */
+await step('store: a live-sized TP files into a history that already holds one, its own row', async () => {
+  /* A candidate's whole history used to be ONE record, one Sheets cell,
+     50,000 characters; a returned TP on the live demo course is 25-35 KB, so
+     the second TP was refused every time -- feedback on the store, history
+     still {1} -- and the refused put sat in the ledger holding every later
+     boot off the roster. Store version 19 (26 Sep 2026, store/README.md)
+     keeps one row per TP behind the same wire, and the fake above does too.
+     This step is what stayed red until it did. */
+  await tutorReturnsAgain(LIVE_SIZE_COMMENT);
+  const r = STORE.trainees[amaraToken].records, h = r.tpHistory || {}, mine = await localTP2();
+  const sizes = `feedback record ${JSON.stringify(r.feedback).length} chars, history ${JSON.stringify(h).length} chars`;
+  must(r.feedback && r.feedback.returnedAt === mine.at, 'the feedback itself did not save: ' + sizes);
+  must(h[2] && h[2].returnedAt === mine.at, `the ${mine.chars}-char TP2 did not file (${sizes}); refused: ${STORE.overCell.join('; ') || 'none'}`);
+  must(!(await T.p.$('#hubUnsaved')), 'the banner is up');
   return sizes;
 });
 await step('trainee: Start next TP files TP2; the desk is clear', async () => {
   const h = await traineeStartsNextTP(2);
   must(h.includes('1') && h.includes('2'), 'store history {' + h + '}');
   return 'store history {' + h + '}, desk clear';
+});
+
+/* ===== ONE CANDIDATE'S PENDING WRITE, ANOTHER CANDIDATE'S SCREEN =====
+   26 Sep 2026, on the live demo course: Emily's return was still waiting on
+   the store when the tutor opened Defne's feedback screen in the same
+   browser, and it opened locked on "Returned -- Reopen for edits" for a TP
+   Defne had already filed away, her TP3 plan invisible. The boot left the
+   WHOLE roster alone because one record in it was pending. A fresh browser
+   boots clean, which is why no walk had seen it. */
+let boraToken = '';
+await step('tutor: a second candidate; her feedback draft is one the store keeps failing to take', async () => {
+  // Planted in the STORE, as the course admin would add her: the sync path is the thing under test.
+  boraToken = 'tbora' + Math.random().toString(36).slice(2, 8);
+  STORE.trainees[boraToken] = { token: boraToken, name: 'Bora Demir', group: '', created: Date.now(), records: {} };
+  await T.p.goto(tutorUrl('5_tutor_dashboard.html'), { waitUntil: 'domcontentloaded' }); await settle(T.p, 3500);
+  must(/Bora Demir/.test(await text(T.p)), 'the dashboard does not show her');
+  await T.p.goto(`${tutorUrl('3_tutor_feedback.html')}&trainee=${boraToken}`, { waitUntil: 'domcontentloaded' }); await settle(T.p, 3000);
+  STORE.html = 'feedback';
+  await T.p.evaluate(() => { const t = document.getElementById('tOverall'); t.value = 'A first note, before her plan is in.'; t.dispatchEvent(new Event('input', { bubbles: true })); });
+  await settle(T.p, 6000);   // the autosave, then hub-store's three tries at the HTML page
+  const ledger = await T.p.evaluate(k => JSON.parse(localStorage.getItem('hub:pending:tutor:' + k) || '{}'), STORE.key);
+  must(ledger['r:' + boraToken + ':feedback'], 'her draft is not in the ledger: ' + Object.keys(ledger));
+  must(!(STORE.trainees[boraToken].records || {}).feedback, 'the store took the write it was told to fail');
+  return 'her draft is pending, and stays pending';
+});
+await step('trainee: TP3 plan and self-evaluation turned in', async () => { await traineeTurnsIn('TP3'); });
+await step('tutor: her screen in the same browser opens on TP3, unlocked, with the other draft still pending', async () => {
+  await T.p.goto(`${tutorUrl('3_tutor_feedback.html')}&trainee=${amaraToken}`, { waitUntil: 'domcontentloaded' }); await settle(T.p, 7000);
+  const reads = await T.p.$eval('#fTP', n => n.value);
+  must(!(await T.p.$('#reopenBtn')), 'locked on the old return: "' + (await T.p.$eval('#turnStatus', n => n.textContent)).trim() + '", #fTP reads ' + JSON.stringify(reads));
+  must(reads === 'TP3', '#fTP reads ' + JSON.stringify(reads) + ', not TP3');
+  must(!(await T.p.$eval('#fGrade', n => n.disabled)), 'the board is locked');
+  const local = await T.p.evaluate(t => { const r = JSON.parse(localStorage.getItem('connect_roster_v1')); return ((r.trainees[t].tp || {}).feedback || {}).state; }, boraToken);
+  must(local && JSON.stringify(local).includes('A first note'), 'the boot threw away the other candidate\'s pending draft');
+  const ledger = await T.p.evaluate(k => Object.keys(JSON.parse(localStorage.getItem('hub:pending:tutor:' + k) || '{}')), STORE.key);
+  must(ledger.includes('r:' + boraToken + ':feedback'), 'her draft left the ledger: ' + ledger);
+  // The store takes it again; the next page sends it and nothing is left pending.
+  STORE.html = '';
+  await T.p.reload({ waitUntil: 'domcontentloaded' }); await settle(T.p, 3500);
+  const fb = (STORE.trainees[boraToken].records || {}).feedback;
+  must(fb && JSON.stringify(fb.state || {}).includes('A first note'), 'her draft never reached the store');
+  must(!(await T.p.evaluate(k => localStorage.getItem('hub:pending:tutor:' + k), STORE.key)), 'the ledger is not empty');
+  return 'TP3 on screen, unlocked; the other draft reached the store on the next page';
 });
 
 /* ===== TRAINEE submits an assignment against a deadline ===== */
