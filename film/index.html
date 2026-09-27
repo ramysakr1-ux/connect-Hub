@@ -169,14 +169,61 @@
   fit();
 
   var OWNER = new URLSearchParams(location.search).get('o') || '';
-  /* The scratch course, for the one scene that sets a course up from nothing.
-     A scene asks for it with `key:'scratch'`; everything else uses ?k=. */
+  /* Three courses, three tutor keys on the film's own URL:
+       ?k=  the running demo (c3)      -- most scenes
+       ?s=  the scratch course (c5)    -- the one that sets a course up
+       ?fk= the finished demo (c4)     -- the assessor, grades and reports
+     A scene names which with `course:`. Everything ELSE a scene needs -- a
+     candidate's own token, the assessor's key -- is looked up from the store
+     with READ ops, so there is nothing more to paste and nothing that can go
+     stale between takes. */
   var SCRATCH = new URLSearchParams(location.search).get('s') || '';
+  var FINISHED = new URLSearchParams(location.search).get('fk') || '';
+  var STORE_URL = null;
+  var resolved = {};                       /* course+role -> the key to use */
+
+  function tutorKeyFor(course) {
+    return course === 'scratch' ? SCRATCH : course === 'finished' ? FINISHED : KEY;
+  }
+  function storeCall(body) {
+    return (STORE_URL ? Promise.resolve(STORE_URL)
+      : fetch('../hub-store.js').then(function (r) { return r.text(); })
+          .then(function (t) { STORE_URL = (t.match(/https:\/\/script\.google\.com\/macros\/s\/[^'"]+/) || [])[0]; return STORE_URL; }))
+      .then(function (url) {
+        return fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(body) })
+          .then(function (r) { return r.json(); });
+      });
+  }
+  /* Read-only: a roster lookup and an assessor link. Nothing here changes
+     anything, which is why it may run against the real courses. */
+  function keyForScene(sc) {
+    var course = sc.course || 'demo';
+    var role = sc.role || 'tutor';
+    var tag = course + ':' + role + ':' + (sc.as || '');
+    if (resolved[tag]) return Promise.resolve(resolved[tag]);
+    var tutor = tutorKeyFor(course);
+    if (!tutor) return Promise.resolve({ error: 'no key for the ' + course + ' course' });
+    if (role === 'tutor') { resolved[tag] = { k: tutor }; return Promise.resolve(resolved[tag]); }
+    if (role === 'assessor') {
+      return storeCall({ op: 'assessorLink', key: tutor }).then(function (r) {
+        var v = r && r.ok ? { ak: r.result.key } : { error: 'assessorLink: ' + ((r && r.error) || '?') };
+        resolved[tag] = v; return v;
+      });
+    }
+    return storeCall({ op: 'roster', key: tutor }).then(function (r) {
+      if (!r || !r.ok) { return { error: 'roster: ' + ((r && r.error) || '?') }; }
+      var people = (r.result && r.result.trainees) || [];
+      var who = sc.as ? people.filter(function (p) { return p.name === sc.as; })[0] : people[0];
+      var v = who ? { t: who.token } : { error: 'no candidate ' + (sc.as || '') + ' on the ' + course + ' course' };
+      resolved[tag] = v; return v;
+    });
+  }
   var timers = [];
   var playing = true;
   var current = 0;
   var startedAt = 0;
   var stubbed = [];      /* which writes were caught, per scene -- shown below */
+  var loadSeq = 0;       /* makes every iframe URL unique, so onload always fires */
 
   function clearTimers() { timers.forEach(clearTimeout); timers = []; }
   function later(fn, ms) { var t = setTimeout(fn, ms); timers.push(t); return t; }
@@ -286,6 +333,16 @@
       return ms + 200;
     },
     hold: function (s) { return s.ms || 2000; },
+    /* Move to another screen inside the same scene, optionally as someone
+       else -- {do:'goto', screen:'...', role:'trainee', as:'Emily Carter'}.
+       Inherits the scene's course unless the step names its own. */
+    goto: function (s) {
+      var sc = SCENES[current];
+      var as = { course: s.course || sc.course, role: s.role || 'tutor', as: s.as, stub: s.stub || sc.stub, settle: s.settle };
+      cursor.classList.remove('on');
+      showScreen(as, s.screen, function () {});
+      return (s.ms || 2200);
+    },
     still: function (s) {
       document.getElementById('stillWant').textContent = s.want;
       document.getElementById('stillHow').textContent = s.how || '';
@@ -314,22 +371,56 @@
     paintTabs();
 
     stubbed = [];
-    var url = '../' + SCENES[i].screen;
-    var q = [];
-    var useKey = SCENES[i].key === 'scratch' ? SCRATCH : KEY;
-    if (SCENES[i].key === 'scratch' && !SCRATCH) warn('this scene wants the scratch course — add &s=<its tutor key>');
-    if (useKey) q.push('k=' + encodeURIComponent(useKey));
-    /* The console is the one screen that needs the OWNER key, and it takes it
-       as ?o=. Passed through only to that screen, never to the others. */
-    if (OWNER && SCENES[i].screen.indexOf('14_owner') === 0) q.push('o=' + encodeURIComponent(OWNER));
-    if (q.length) url += (url.indexOf('?') === -1 ? '?' : '&') + q.join('&');
+    showScreen(SCENES[i], SCENES[i].screen, then);
+  }
 
-    frame.onload = function () {
-      frame.onload = null;
-      stubStore(SCENES[i].stub || []);
-      later(function () { then(); }, SCENES[i].settle || 900);
-    };
-    frame.src = url;
+  /* Point the frame at a screen, as whoever that scene is. Also the `goto`
+     step, so one scene can follow a document from one side to the other --
+     a candidate submits, the tutor marks, the candidate reads it back. */
+  function showScreen(sc, screen, then) {
+    keyForScene(sc).then(function (who) {
+      if (who.error) warn(who.error);
+      var url = '../' + screen;
+      var q = [];
+      if (who.k) q.push('k=' + encodeURIComponent(who.k));
+      if (who.t) q.push('t=' + encodeURIComponent(who.t));
+      if (who.ak) q.push('ak=' + encodeURIComponent(who.ak));
+      /* The console is the one screen that needs the OWNER key, and it takes
+         it as ?o=. Passed through only to that screen, never to the others. */
+      if (OWNER && screen.indexOf('14_owner') === 0) q.push('o=' + encodeURIComponent(OWNER));
+      /* Anything else the screen takes in its own URL -- ?trainee= on the
+         feedback sheet, say. */
+      Object.keys(sc.params || {}).forEach(function (p) {
+        q.push(p + '=' + encodeURIComponent(sc.params[p]));
+      });
+      if (q.length) url += (url.indexOf('?') === -1 ? '?' : '&') + q.join('&');
+
+      /* A unique parameter on every load. Two scenes in a row can want the
+         same screen as the same person -- the plan and the analysis sheet,
+         the two feedback scenes -- and setting an iframe's src to the URL it
+         already has fires no load event at all, so the film simply stopped.
+         The screens ignore it. */
+      url += (url.indexOf('?') === -1 ? '?' : '&') + '_=' + (++loadSeq);
+
+      /* Forget who the last scene was. The screens remember a key in
+         localStorage, which is the right behaviour for a person following a
+         link and the wrong one for a film: after the finished-course scenes,
+         the closing invite card came back as C/16 2026 instead of the demo,
+         because the page preferred what the browser already held. Same
+         origin, so the film can clear it from here before the screen boots. */
+      try {
+        localStorage.removeItem('hub:k');
+        localStorage.removeItem('hub:t');
+        localStorage.removeItem('hub:a');
+      } catch (e) {}
+
+      frame.onload = function () {
+        frame.onload = null;
+        stubStore(sc.stub || []);
+        later(then, sc.settle || 900);
+      };
+      frame.src = url;
+    });
   }
 
   /* Ops that CHANGE something never reach the store. The screen calls what it
@@ -371,7 +462,7 @@
     /* hub-sync pushes localStorage to the store on its own clock, so a screen
        that "saves" locally still reaches it. Held for the length of a scene
        that stubs writes. */
-    if (w.HubSync && typeof w.HubSync.flushNow === 'function' && ops.indexOf('putCourse') !== -1) {
+    if (w.HubSync && typeof w.HubSync.flushNow === 'function') {
       w.HubSync.flushNow = function () { stubbed.push('flushNow'); return Promise.resolve({ ok: true }); };
     }
   }
@@ -448,7 +539,69 @@
     note.innerHTML = '<span class="warn">No course key. Open this as <b>film/?k=&lt;the demo course tutor key&gt;</b> — ' +
       'it is in the owner console, and it is never committed to this repo.</span>';
   }
-  play(0);
+
+  /* ?check=1 -- walk every scene, load its screen as whoever that scene is,
+     and say whether each selector it reaches for actually exists. Clicks
+     nothing and types nothing, so it is safe to run against the real courses
+     and cannot add twelve people to the scratch one. This is the film's own
+     test: a selector that has gone stale because a screen changed shows up
+     here rather than halfway through a take. */
+  function check() {
+    var out = [];
+    var i = 0;
+    note.innerHTML = '<b>Checking every scene…</b>';
+    (function nextScene() {
+      if (i >= SCENES.length) {
+        var bad = out.filter(function (r) { return r.missing.length; });
+        note.innerHTML = '<b>' + (bad.length ? bad.length + ' scene' + (bad.length === 1 ? '' : 's') + ' with a selector that is not there' : 'All ' + SCENES.length + ' scenes: every selector resolves') + '</b>';
+        out.forEach(function (r) {
+          var d = document.createElement('div');
+          d.className = r.missing.length ? 'warn' : '';
+          d.textContent = (r.missing.length ? '  NOT THERE  ' : '  ok          ') + r.n + ' · ' + r.title +
+            (r.missing.length ? ' — ' + r.missing.join(', ') : '') +
+            (r.later.length ? '   (behind a click, not judged: ' + r.later.join(', ') + ')' : '');
+          note.appendChild(d);
+        });
+        window.FILM_CHECK = out;
+        return;
+      }
+      var sc = SCENES[i];
+      current = i;
+      var n = i + 1;
+      i++;
+      note.innerHTML = '<b>Checking scene ' + n + ' of ' + SCENES.length + '…</b> ' + sc.title;
+      /* A screen that never fires load would hang the walk silently. */
+      var moved = false;
+      later(function () { if (!moved) { moved = true; out.push({ n: n, title: sc.title, missing: ['(screen did not load)'] }); nextScene(); } }, 12000);
+      showScreen(sc, sc.screen, function () {
+        if (moved) return;
+        moved = true;
+        /* What this can and cannot tell you. It sees the screen AS IT LOADS,
+           so a control that only exists after a tab is opened or a button is
+           pressed is legitimately absent here -- scene 3's paste box is
+           behind two clicks, and .confirm-action does not exist until Add all
+           is pressed. Reporting those as failures would make the check
+           useless, so a selector that comes after a click in its own scene is
+           listed as "later" and only one with nothing before it is a real
+           miss. A "later" can still be wrong; it just cannot be judged from
+           here, and the film warns at play time if it is. */
+        var missing = [], later_ = [], clickedYet = false;
+        sc.steps.forEach(function (s) {
+          var sel = s.do === 'move' ? s.to : s.do === 'click' ? s.on : s.do === 'type' ? s.into : null;
+          if (typeof sel === 'string' && !find(sel)) {
+            if (clickedYet) { if (later_.indexOf(sel) === -1) later_.push(sel); }
+            else if (missing.indexOf(sel) === -1) missing.push(sel);
+          }
+          if (s.do === 'click' || s.do === 'goto') clickedYet = true;
+        });
+        out.push({ n: n, title: sc.title, missing: missing, later: later_ });
+        later(nextScene, 200);
+      });
+    })();
+  }
+
+  if (new URLSearchParams(location.search).get('check')) { playing = false; check(); }
+  else play(0);
 })();
 </script>
 </body>
