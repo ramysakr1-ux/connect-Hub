@@ -169,7 +169,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609272009">
+<link rel="stylesheet" href="hub-house.css?v=202609272112">
 </head>
 <body>
 <div class="board">
@@ -198,11 +198,12 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609272009"></script>
-<script src="assignment-defaults.js?v=202609272009"></script>
-<script src="hub-tracker.js?v=202609272009"></script>
-<script src="hub-store.js?v=202609272009"></script>
-<script src="hub-sync.js?v=202609272009"></script>
+<script src="observation-defaults.js"></script>
+<script src="hub-shared.js?v=202609272112"></script>
+<script src="assignment-defaults.js?v=202609272112"></script>
+<script src="hub-tracker.js?v=202609272112"></script>
+<script src="hub-store.js?v=202609272112"></script>
+<script src="hub-sync.js?v=202609272112"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -580,6 +581,26 @@ function assignmentBlock(tr, k){
   const door = ['PASS','RES','FAIL','FAILRES'].includes(st.code) ? `<a class="btn ghost" href="11_assignment_record.html?trainee=${encodeURIComponent(tr.id)}&a=${k}">Open the marked record</a>` : '';
   return `<div class="tp"><div class="tp-row"><span class="n">${esc(k.toUpperCase())}</span><span class="meta"><span class="sub">${esc(w ? w.title : '')}</span><br><span class="chip ${a.cls}">${a.t}</span> ${st.round ? esc(st.round===2 ? 'second submission' : 'first submission') : 'nothing submitted'}${m.second ? ' · double-marked by ' + esc(m.second) : ''}${trail.length ? ' · ' + esc(trail.join(' · ')) : ''}</span>${door}</div></div>`;
 }
+/* Handbook 12.1.1: the observation write-ups are portfolio evidence. The
+   filmed and live sheets are turned in and dated; the peer sheets are the
+   candidate's own notes and are only counted. The sheets themselves open on
+   their own page, read-only under this link. */
+function observationBlock(tr){
+  const T0 = window.CONNECT_HUB_OBSERVATION_DEFAULTS || { peer:[], filmed:[], live:[] };
+  const tasks = (SETTINGS && SETTINGS.observations) || T0;
+  const w = tr.observations || {};
+  const turned = list => list.filter(t => w[t.id] && w[t.id].turnedInAt).length;
+  const peerStarted = tasks.peer.reduce((n,t) => n + ['a','b'].filter(sit => { const r = w[t.id + '#' + sit]; return r && Object.values(r.a||{}).some(v => String(v||'').trim()); }).length, 0);
+  const filmed = turned(tasks.filmed), live = turned(tasks.live);
+  const chip = (n, of) => `<span class="chip ${n >= of ? 'fine' : n ? 'wait' : 'nd'}">${n} of ${of}</span>`;
+  const rows = [
+    ['Filmed lessons', chip(filmed, tasks.filmed.length) + ' turned in'],
+    ['Live demonstration lessons', chip(live, tasks.live.length) + ' turned in'],
+    ['Peer observation notes', chip(peerStarted, tasks.peer.length * 2) + ' written']
+  ];
+  return rows.map(([k,v]) => `<div class="tp"><div class="tp-row"><span class="n">${k}</span><span class="meta">${v}</span></div></div>`).join('') +
+    `<div class="tp"><div class="tp-row"><span class="n"></span><span class="meta"></span><a class="btn ghost" href="18_observation_tasks.html?trainee=${encodeURIComponent(tr.id)}">Open the sheets</a></div></div>`;
+}
 function renderOne(tr){
   const c = T.recordFor(tr), r = T.readCandidate(c), chip = T.STATE_CHIP[r.state], man = tr.tracker || {};
   $('backLink').hidden = false;
@@ -604,7 +625,9 @@ function renderOne(tr){
     <h2 class="sect">Teaching practice <small>the document the candidate received, as returned</small></h2>
     <div class="panel">${Array.from({length:TP_TOTAL},(_,i)=>i+1).map(n=>tpBlock(tr, n, c)).join('')}</div>
     <h2 class="sect">Assignments <small>in the centre’s order</small></h2>
-    <div class="panel">${ORDER.filter(k => k!=='a5' || a5InPlay(tr.assignments||{})).map(k=>assignmentBlock(tr, k)).join('')}</div>`;
+    <div class="panel">${ORDER.filter(k => k!=='a5' || a5InPlay(tr.assignments||{})).map(k=>assignmentBlock(tr, k)).join('')}</div>
+    <h2 class="sect">Observations <small>the sheets, as the candidate wrote them</small></h2>
+    <div class="panel">${observationBlock(tr)}</div>`;
   /* The candidate page carries the stored documents, whose plan tables stack
      the same way (24 Sep 2026). */
   if (window.hubStackTables) hubStackTables($('app'));

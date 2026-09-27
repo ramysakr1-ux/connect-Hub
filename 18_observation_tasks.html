@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<!--
+  Connect Lite — observation tasks
+  © 2026 Ramy Sakr. All rights reserved.
+
+  A CELTA candidate observes six hours of teaching and writes up what they saw,
+  and the completed sheets go in the portfolio (Administration Handbook 12.1.1).
+  Lite had nowhere for them.
+
+  WHAT CHANGED THE DESIGN. The first version of this screen was a checklist:
+  tick what you have observed, the sheet itself lives in Classroom. Ramy, 27
+  Sep 2026: "you're just ticking boxes here. I was talking about the actual
+  observation tasks." He was right, and it failed the test I had set two
+  minutes earlier — for an observation, the completed sheet IS the record. A
+  tick saying a document exists elsewhere carries no information.
+
+  So the task is the document, and it lives here. The candidate writes into it
+  and turns it in, exactly as with a written assignment, and it lands in their
+  portfolio with a date on it.
+
+  SIX SHAPES, because the centre's sheets are not all one thing and flattening
+  them would lose what makes them good:
+    grid       focus rows answered for Teacher 1, 2 and 3   peer TP1-5, 7
+    single     questions answered once across all teachers   peer TP6
+    focus      a focus area per teacher, no set questions     peer TP8
+    notes      focus rows with one notes column               the four filmed
+    questions  numbered questions, open answers               live demo 1
+    parts      lettered parts, some with choices              live task 2
+
+  The task wording is the centre's (observation-defaults.js, generated from
+  their own Word sheets by store/build-observation-defaults.mjs). The SHAPE is
+  not editable: a centre can change any question, and cannot turn the peer grid
+  into something that will not print.
+
+  Each peer task is done TWICE -- the a and b halves of a TP day -- which is
+  why a sitting is part of the record's key rather than a second task.
+
+  ONLY THE FILMED AND LIVE SHEETS ARE TURNED IN. Ramy, 27 Sep 2026: "they
+  don't need to turn in peer observations, only demo lesson observations and
+  experienced teacher observations, whether it's filmed or not." The peer
+  sheets are the candidate's own notes: they save, the tutor can read them,
+  and nothing about them is dated or counted.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="brand/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<title>Connect Lite — Observation tasks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
+<style>
+  /* The palette lives on each screen, not in hub-house.css. */
+  :root{
+    --sync-bottom:66px; /* the sync pill clears the Turn in bar */
+    --sand:oklch(98.8% 0.006 85); --sand-line:oklch(85.5% 0.02 80); --sand-deep:oklch(94.8% 0.01 85);
+    --paper:oklch(99.5% 0.004 90); --surface:oklch(95.2% 0.018 84);
+    --box:oklch(91.2% 0.03 80); --card:oklch(95.2% 0.018 84); --ink:oklch(23.5% 0.017 65);
+    --teal:oklch(37.5% 0.058 195); --grey:oklch(51% 0.017 70); --brick:oklch(45% 0.15 27);
+    --ochre:oklch(63% 0.096 72); --olive:oklch(37.5% 0.058 195);
+  }
+  body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
+  .board{max-width:1020px; margin:0 auto; padding:26px 20px 64px;}
+  .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
+  .back:hover{text-decoration:underline;}
+
+  /* ---- the list of tasks ------------------------------------------------ */
+  .grp{background:var(--surface); border:1px solid var(--sand-line); border-radius:10px;
+    padding:18px 20px 8px; margin:16px 0;}
+  .grp > .hd{display:flex; align-items:center; gap:10px; justify-content:space-between; margin-bottom:3px;}
+  .grp h2{font-family:'Newsreader',Georgia,serif; font-size:1.15rem; color:var(--ink); margin:0;}
+  .grp > .note{margin:0 0 14px; color:var(--grey); font-size:0.85rem; line-height:1.55;}
+  .sub{background:var(--paper); border:1px solid var(--sand-line); border-radius:8px; padding:6px 14px; margin:0 0 14px;}
+  .sub h3{font-family:'Newsreader',Georgia,serif; font-size:1rem; color:var(--ink); margin:12px 0 2px;}
+  .sub > .note{color:var(--grey); font-size:0.82rem; margin:0 0 8px;}
+
+  .task{display:flex; align-items:center; gap:12px; padding:11px 0; border-top:1px solid var(--sand-line);
+    text-decoration:none; color:inherit;}
+  .task:first-of-type{border-top:0;}
+  .task .tp{flex:none; width:52px; font-size:0.72rem; font-weight:700; letter-spacing:.05em; color:var(--grey);}
+  .task .nm{flex:1; min-width:0; font-size:0.92rem; font-weight:600; color:var(--ink);}
+  .task .nm small{display:block; font-weight:400; font-size:0.79rem; color:var(--grey); margin-top:1px;}
+  .task:hover .nm{color:var(--teal);}
+  .st{flex:none; font-size:0.71rem; font-weight:700; padding:3px 9px; border-radius:999px;
+    background:var(--box); color:var(--grey);}
+  .st.done{background:oklch(92% 0.05 150); color:oklch(38% 0.09 150);}
+  .st.part{background:oklch(94% 0.05 85); color:var(--ochre);}
+  .tally{font-size:0.75rem; font-weight:700; color:var(--teal); background:var(--box);
+    border-radius:999px; padding:3px 10px; white-space:nowrap;}
+
+  /* ---- one task, open --------------------------------------------------- */
+  .brief{background:var(--box); border-radius:7px; padding:11px 13px; font-size:0.85rem;
+    line-height:1.55; margin:0 0 16px;}
+  table.sheet{width:100%; border-collapse:collapse; margin:0 0 18px;}
+  table.sheet th{font-size:0.7rem; letter-spacing:.06em; text-transform:uppercase; color:var(--grey);
+    text-align:left; font-weight:700; padding:0 8px 7px; border-bottom:1px solid var(--sand-line);}
+  table.sheet th.n{width:26px;} table.sheet th.q{width:38%;}
+  table.sheet td{vertical-align:top; padding:9px 8px; border-bottom:1px solid var(--sand-line);}
+  table.sheet td.n{color:var(--grey); font-size:0.8rem; padding-top:13px;}
+  table.sheet td.q{font-size:0.86rem; line-height:1.5;}
+  textarea{width:100%; font-family:'Karla',sans-serif; font-size:0.86rem; line-height:1.5;
+    color:var(--ink); background:var(--paper); border:1px solid var(--sand-line); border-radius:6px;
+    padding:7px 9px; resize:vertical; min-height:46px; box-sizing:border-box;}
+  textarea:focus{outline:none; border-color:var(--teal);}
+  .hdrow{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:0 0 16px;}
+  .hdrow label{display:block; font-size:0.7rem; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--grey); font-weight:700; margin-bottom:4px;}
+  .hdrow input{width:100%; font-family:'Karla',sans-serif; font-size:0.86rem; color:var(--ink);
+    background:var(--paper); border:1px solid var(--sand-line); border-radius:6px; padding:7px 9px; box-sizing:border-box;}
+  .part{margin:0 0 20px;}
+  .part h4{font-family:'Newsreader',Georgia,serif; font-size:1.02rem; margin:0 0 4px;}
+  .part .lines{font-size:0.84rem; color:var(--grey); line-height:1.6; margin:0 0 9px; white-space:pre-line;}
+  .bar{position:sticky; bottom:0; background:var(--sand); border-top:1px solid var(--sand-line);
+    padding:12px 0; margin-top:8px; display:flex; align-items:center; gap:12px;}
+  .btn{font-family:'Karla',sans-serif; font-size:0.85rem; font-weight:700; padding:9px 18px;
+    border-radius:8px; border:0; background:var(--teal); color:#fff; cursor:pointer;}
+  .status{font-size:0.8rem; color:var(--grey);}
+  .turned{background:oklch(92% 0.05 150); color:oklch(38% 0.09 150); border-radius:7px;
+    padding:10px 13px; font-size:0.85rem; margin:0 0 16px;}
+  h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.6rem; margin:0 0 4px;}
+  .eyebrow{font-size:0.7rem; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:0 0 4px;}
+  .lede{color:var(--grey); font-size:0.88rem; line-height:1.6; margin:0 0 18px; max-width:66ch;}
+</style>
+<link rel="stylesheet" href="hub-house.css?v=202609272112">
+<link rel="stylesheet" href="hub-theme.css?v=202609272112">
+</head>
+<body class="hub-obs">
+<div class="board">
+  <a class="back" id="back" href="index.html">&larr; Back</a>
+  <div id="app"></div>
+</div>
+<script src="observation-defaults.js"></script>
+<script src="hub-shared.js?v=202609272112"></script>
+<script src="hub-store.js?v=202609272112"></script>
+<script src="hub-sync.js?v=202609272112"></script>
+<script type="text/x-hub-app">
+/* A candidate's own work. A tutor or an assessor READS it -- they have to, it
+   is portfolio evidence -- so the page is not refused them; the fields are
+   simply not theirs to type in. */
+const READONLY = window.HubMode !== 'trainee';
+
+const KEY = 'connect_observations_v1';
+const SETTINGS_KEY = 'connect_course_settings';
+const $ = id => document.getElementById(id);
+const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const P = new URLSearchParams(location.search);
+/* Whichever key opened this page comes along on every link inside it. */
+const KEYQ = ['t','k','ak','trainee'].filter(n => P.get(n)).map(n => n + '=' + encodeURIComponent(P.get(n))).join('&');
+
+/* The centre's own set, once it has edited them; otherwise the ones Lite
+   ships -- generated from the centre's Word sheets. */
+let SETTINGS = {}; try { SETTINGS = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') || {}; } catch(e) {}
+const TASKS = SETTINGS.observations || window.CONNECT_HUB_OBSERVATION_DEFAULTS || { peer:[], filmed:[], live:[] };
+
+/* The candidate's own copy, or -- for a tutor or assessor -- the candidate
+   named in the link, out of the roster the boot brought down. */
+let WORK = {}, WHO = '';
+try {
+  if (!READONLY) WORK = JSON.parse(localStorage.getItem(KEY) || '{}') || {};
+  else {
+    const roster = JSON.parse(localStorage.getItem('connect_roster_v1') || '{}') || {};
+    const tr = ((roster.trainees || {})[P.get('trainee') || ''] || null);
+    if (tr) { WORK = tr.observations || {}; WHO = tr.name || ''; }
+  }
+} catch(e) {}
+/* The first version of this screen was a checklist under the same key; its
+   ticks are not sheets and are dropped rather than carried. */
+const KNOWN = {}; ['peer','filmed','live'].forEach(g => (TASKS[g]||[]).forEach(t => KNOWN[t.id] = 1));
+Object.keys(WORK).forEach(k => { if (!KNOWN[k.split('#')[0]] || !WORK[k] || typeof WORK[k].a !== 'object') delete WORK[k]; });
+const save = () => { if (READONLY) return; try { localStorage.setItem(KEY, JSON.stringify(WORK)); } catch(e) {} };
+/* Peer sheets are notes; the filmed and live ones are turned in. */
+const turnsIn = t => !t.tp;
+
+/* A peer task is done twice, for the two halves of a TP day, so a sitting is
+   part of the key. Everything else is done once. */
+const recKey = (id, sit) => sit ? id + '#' + sit : id;
+const rec = k => (WORK[k] = WORK[k] || { a:{}, turnedInAt:null });
+const answered = k => Object.values((WORK[k] || {}).a || {}).filter(v => String(v||'').trim()).length;
+
+const TEACHERS = ['Teacher 1','Teacher 2','Teacher 3'];
+
+/* ---------------------------------------------------------------- the list */
+const expectedOf = t =>
+  t.shape === 'grid'  ? t.rows.length * 3 :
+  t.shape === 'focus' ? TEACHERS.length :
+  t.shape === 'parts' ? (t.parts||[]).length : (t.rows||[]).length;
+
+function statusOf(k, expected, dated){
+  const r = WORK[k];
+  if (dated && r && r.turnedInAt) return '<span class="st done">Turned in</span>';
+  const n = answered(k);
+  if (!n) return '<span class="st">Not started</span>';
+  if (expected && n >= expected) return '<span class="st done">Complete</span>';
+  return `<span class="st part">${n}${expected ? ' of ' + expected : ''} answered</span>`;
+}
+function row(t, sit){
+  const k = recKey(t.id, sit);
+  const label = sit ? `TP${t.tp}${sit}` : (t.tp ? 'TP'+t.tp : '');
+  const q = `?task=${encodeURIComponent(t.id)}${sit ? '&sit=' + sit : ''}${KEYQ ? '&' + KEYQ : ''}`;
+  return `<a class="task" href="${q}">
+    <span class="tp">${esc(label)}</span>
+    <span class="nm">${esc(t.title)}${t.sub||t.recording ? `<small>${esc(t.sub||t.recording)}</small>` : ''}</span>
+    ${statusOf(k, expectedOf(t), turnsIn(t))}
+  </a>`;
+}
+const tallyOf = keys => `<span class="tally">${keys.filter(k => (WORK[k]||{}).turnedInAt).length} of ${keys.length} turned in</span>`;
+
+function list(){
+  const otherKeys = TASKS.filmed.concat(TASKS.live).map(t => t.id);
+  $('back').href = READONLY && P.get('trainee') ? '12_assessor_pack.html?' + KEYQ : 'index.html' + (KEYQ ? '?' + KEYQ : '');
+  $('app').innerHTML = `
+    <p class="eyebrow">${READONLY ? 'Candidate record' : 'Your course'}</p>
+    <h1>Observation tasks</h1>
+    <p class="lede">${READONLY
+      ? (WHO ? `<b>${esc(WHO)}</b>’s observation sheets, as they wrote them. Not yours to type in.` : 'Name a candidate in the link to read their sheets.')
+      : 'Watching other people teach, and writing up what you saw. The sheets for filmed and live lessons are turned in here and go in your portfolio with the date on them; the peer sheets are your own notes.'}</p>
+
+    <div class="grp">
+      <div class="hd"><h2>Peer observations</h2></div>
+      <p class="note">${READONLY ? 'The candidate’s own teaching practice group. Each task is done twice — once for each half of the TP day. Notes, not turned in.'
+        : 'Your own teaching practice group. Each task is done twice — once for each half of the TP day. These are your notes for feedback; they save as you go and are not turned in.'}</p>
+      <div class="sub">${TASKS.peer.map(t => ['a','b'].map(s => row(t, s)).join('')).join('')}</div>
+    </div>
+
+    <div class="grp">
+      <div class="hd"><h2>Experienced teachers</h2>${tallyOf(otherKeys)}</div>
+      <p class="note">The observations Cambridge asks for outside your own group.</p>
+      <div class="sub">
+        <h3>Filmed</h3>
+        <p class="note">${READONLY ? 'Watched in the candidate’s own time; turned in and dated.' : 'Watched in your own time. Pause and rewind — these are not meant to be done in one viewing.'}</p>
+        ${TASKS.filmed.map(t => row(t)).join('')}
+      </div>
+      <div class="sub">
+        <h3>Live</h3>
+        <p class="note">A real class, watched as it happens.</p>
+        ${TASKS.live.map(t => row(t)).join('')}
+      </div>
+    </div>`;
+}
+
+/* ------------------------------------------------------------- one task */
+function findTask(id){
+  for (const g of ['peer','filmed','live']) { const t = (TASKS[g]||[]).find(x => x.id === id); if (t) return t; }
+  return null;
+}
+const box = (k, field) => {
+  const v = ((WORK[k]||{}).a || {})[field] || '';
+  return `<textarea data-f="${esc(field)}"${READONLY ? ' readonly' : ''}>${esc(v)}</textarea>`;
+};
+const field = (k, name, label) => `<div><label>${label}</label><input data-f="${name}" value="${esc((((WORK[k]||{}).a)||{})[name]||'')}"${READONLY ? ' readonly' : ''}></div>`;
+
+function sheet(t, sit){
+  const k = recKey(t.id, sit);
+  rec(k);
+  const turned = WORK[k].turnedInAt;
+
+  let body = '';
+  if (t.shape === 'grid') {
+    body = `<table class="sheet"><thead><tr><th class="n"></th><th class="q">Observation focus</th>
+      ${TEACHERS.map(n => `<th>${n}</th>`).join('')}</tr></thead><tbody>
+      ${t.rows.map((q,i) => `<tr><td class="n">${i+1}</td><td class="q">${esc(q)}</td>
+        ${TEACHERS.map((n,c) => `<td>${box(k, 'r'+i+'c'+c)}</td>`).join('')}</tr>`).join('')}
+      </tbody></table>`;
+  } else if (t.shape === 'single' || t.shape === 'notes') {
+    const head = t.shape === 'notes' ? 'Your notes' : 'Notes (all teachers)';
+    body = `<table class="sheet"><thead><tr><th class="n"></th><th class="q">Observation focus</th><th>${head}</th></tr></thead><tbody>
+      ${t.rows.map((q,i) => `<tr><td class="n">${i+1}</td><td class="q">${esc(q)}</td><td>${box(k, 'r'+i)}</td></tr>`).join('')}
+      </tbody></table>`;
+  } else if (t.shape === 'focus') {
+    body = TEACHERS.map((n,c) => `<div class="part"><h4>${n}</h4>
+      <p class="lines">Focus area — what they asked you to watch for, and what you saw.</p>${box(k, 'f'+c)}</div>`).join('');
+  } else if (t.shape === 'questions') {
+    body = t.rows.map((q,i) => `<div class="part"><h4>${i+1}. ${esc(q)}</h4>${box(k, 'q'+i)}</div>`).join('');
+  } else if (t.shape === 'parts') {
+    body = (t.parts||[]).map((p,i) => `<div class="part"><h4>${esc(p.letter)}. ${esc(p.title)}</h4>
+      <p class="lines">${esc((p.lines||[]).join('\n'))}</p>${box(k, 'p'+i)}</div>`).join('');
+  }
+
+  /* The filmed and live sheets open with the lesson's particulars; the peer
+     ones do not -- the candidate was in the room. */
+  const header = /^(notes|parts|questions)$/.test(t.shape)
+    ? `<div class="hdrow">${field(k,'hLesson','Lesson')}${field(k,'hLevel','Level')}${field(k,'hLength','Length')}${field(k,'hDate','Date watched')}</div>` : '';
+
+  $('back').href = location.pathname + (KEYQ ? '?' + KEYQ : '');
+  $('app').innerHTML = `
+    <p class="eyebrow">${READONLY && WHO ? esc(WHO) + ' · ' : ''}${t.tp ? 'Peer observation · TP' + t.tp + (sit||'') : (t.id.startsWith('filmed') ? 'Filmed observation' : 'Live observation')}</p>
+    <h1>${esc(t.title)}</h1>
+    ${t.sub||t.recording ? `<p class="lede">${esc(t.sub||t.recording)}</p>` : ''}
+    ${turnsIn(t) && turned ? `<div class="turned"><b>Turned in</b> — ${new Date(turned).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}.${READONLY ? '' : ' It is on your record; you can still add to it.'}</div>` : ''}
+    ${t.brief ? `<div class="brief">${esc(t.brief)}</div>` : ''}
+    ${header}
+    ${body}
+    ${READONLY ? '' : turnsIn(t)
+      ? `<div class="bar"><button class="btn" id="turnIn">${turned ? 'Turn in again' : 'Turn in'}</button><span class="status" id="status"></span></div>`
+      : `<div class="bar"><span class="status" id="status">Your notes save as you type.</span></div>`}`;
+
+  if (READONLY) return;
+  let t0;
+  const touch = el => {
+    WORK[k].a[el.dataset.f] = el.value; save();
+    const s = $('status'); if (s) { s.textContent = 'Saved'; clearTimeout(t0); t0 = setTimeout(() => { if ($('status')) $('status').textContent = turnsIn(t) ? '' : 'Your notes save as you type.'; }, 1200); }
+  };
+  document.querySelectorAll('textarea[data-f], input[data-f]').forEach(el => el.addEventListener('input', () => touch(el)));
+  if ($('turnIn')) $('turnIn').addEventListener('click', () => {
+    /* Handbook 12.1.2: everything that goes in a portfolio carries its date. */
+    WORK[k].turnedInAt = new Date().toISOString(); save(); sheet(t, sit);
+  });
+}
+
+const id = P.get('task');
+if (id && findTask(id)) sheet(findTask(id), P.get('sit') || '');
+else list();
+</script>
+</body>
+</html>
