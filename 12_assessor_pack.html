@@ -95,7 +95,9 @@
      this card an assessor is looking for could not be told from the ordinary
      case (Ramy, 27 Sep 2026: "it's all kind of different green... maybe we
      can go with above standard with the gold colour instead"). */
-  .standing.tk-above{background:var(--gold, oklch(63% 0.096 72)); color:oklch(23.5% 0.017 65);}
+  /* Above standard carries no colour: gold already edges every card in
+     Lite, and colour here marks what needs you (Ramy, 27 Sep 2026). */
+  .standing.tk-above{background:var(--sand); color:var(--grey);}
   .standing.tk-notstd{background:var(--red-bg); color:var(--red);}
 
   /* The grades, and the report, unpacked. This cell used to stack the
@@ -167,7 +169,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609271135">
+<link rel="stylesheet" href="hub-house.css?v=202609271230">
 </head>
 <body>
 <div class="board">
@@ -196,11 +198,11 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609271135"></script>
-<script src="assignment-defaults.js?v=202609271135"></script>
-<script src="hub-tracker.js?v=202609271135"></script>
-<script src="hub-store.js?v=202609271135"></script>
-<script src="hub-sync.js?v=202609271135"></script>
+<script src="hub-shared.js?v=202609271230"></script>
+<script src="assignment-defaults.js?v=202609271230"></script>
+<script src="hub-tracker.js?v=202609271230"></script>
+<script src="hub-store.js?v=202609271230"></script>
+<script src="hub-sync.js?v=202609271230"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -382,7 +384,30 @@ function renderList(){
   $('toolbar').innerHTML = `<a class="btn primary" href="7_candidate_tracker.html">Candidate tracker</a>${appianBtn('ghost')}<button class="btn-print" type="button" onclick="window.print()">Print / Save as PDF</button>`;
   $('app').innerHTML = `
     <h2 class="sect">Candidates <small>${n} on the course</small></h2>
-    <div class="panel">${n ? `<table><tr><th>Candidate</th><th>Teaching practice</th><th>Assignments</th><th>Standing</th><th></th></tr>${PEOPLE.map(personRow).join('')}</table>` : '<div class="empty">No candidates on the course yet.</div>'}</div>
+    <!-- A shortcut, not a second table. The assessor can already open the
+         candidate tracker -- it is theirs as much as the tutors' -- and this
+         rebuilt it here with teaching-practice counts, assignment chips and a
+         standing: more crowded than the real one, and with a name that was
+         not even clickable (Ramy, 27 Sep 2026: "why is the assessor getting
+         this busy one... how about we just give the assessor a shortcut to
+         the candidates instead"). Same shape as the documents below -- a line
+         and a link. -->
+    <div class="panel">${n ? `
+      <div class="docrow"><span>Every candidate &mdash; teaching practice, assignments and where each one stands</span><a href="7_candidate_tracker.html">Open the tracker</a></div>
+      <div class="docrow"><span>Provisional and final grades, in Cambridge&rsquo;s own fields, to copy into Appian</span><a href="13_grades_report.html">Open the grades</a></div>
+    ` : '<div class="empty">No candidates on the course yet.</div>'}</div>
+
+    <!-- Handbook 14.1 opens its list with "Candidate portfolios - clearly
+         named candidate portfolios including the documentation detailed in
+         section 12.1.1", and 14.2 requires that "the portfolio of at least
+         one of the candidates observed doing teaching practice should be
+         read". So the portfolios are not optional and they are not the
+         tracker: they are one door per candidate, named, and nothing else on
+         the row. Read-only, like everything the assessor's link opens. -->
+    <h2 class="sect">Candidate portfolios <small>Handbook 14.1 &middot; every candidate&rsquo;s own record</small></h2>
+    <div class="panel">${n ? PEOPLE.map(tr =>
+      `<div class="docrow"><span>${esc(tr.name)}${tr.group ? ` <span class="sub">Group ${esc(tr.group)}</span>` : ''}</span><a href="12_assessor_pack.html?trainee=${encodeURIComponent(tr.id)}">Open portfolio</a></div>`
+    ).join('') : '<div class="empty">No candidates on the course yet.</div>'}</div>
     <h2 class="sect">Double-marking record <small>Handbook 9.2.3: ${sample} of each assignment for ${n} candidate${n===1?'':'s'}</small></h2>
     <div class="panel">${dm.length ? `<table><tr><th>Candidate</th><th>Assignment</th><th>First marker</th><th>Second marker</th><th>Double-marked</th><th>Outcome</th></tr>${dm.join('')}</table>` : '<div class="empty">No assignment has been submitted yet.</div>'}</div>
     <h2 class="sect">Assignment briefs <small>as the centre set them, in the centre’s order</small></h2>
