@@ -61,7 +61,7 @@ var SCENES = [
       { do: 'caption', text: 'A course is one link.' },
       { do: 'move', to: '#makeBtn' },
       { do: 'click', on: '#makeBtn', ms: 1600 },
-      { do: 'hold', ms: 3000 },
+      { do: 'hold', ms: 1950 },
       { do: 'move', to: 'text:Copy' },
       { do: 'hold', ms: 1400 }
     ]
@@ -75,19 +75,19 @@ var SCENES = [
     steps: [
       { do: 'hold', ms: 1200 },
       { do: 'caption', text: 'Put it wherever your course already lives.' },
-      { do: 'hold', ms: 1600 },
+      { do: 'hold', ms: 1500 },
       {
-        do: 'still', ms: 3600,
-        want: 'Google Classroom — the Lite link posted as a material',
-        how: 'A demo Classroom stream with the link in it, then the click that opens the card. The Classroom post is the frame; the link is a line inside it. Never a real class.'
+        do: 'still', ms: 2520,
+        want: 'Google Classroom',
+        how: 'Simple: the Classroom name or a plain shot of a stream with the link in it. It only has to say WHERE the link can live — no elaborate capture.'
       },
       {
-        do: 'still', ms: 3600,
-        want: 'Google Drive — the link saved in the course folder',
-        how: 'A demo Drive folder with the Lite link saved as a shortcut among the course files, then the click. Never a real folder.'
+        do: 'still', ms: 2520,
+        want: 'Google Drive',
+        how: 'Simple: a Drive folder with Connect Lite in it — the shot that already exists is enough. Same job as the Classroom one: where the link can live.'
       },
       { do: 'caption', text: 'It still opens when the internet doesn’t.' },
-      { do: 'hold', ms: 4000 },
+      { do: 'hold', ms: 2600 },
       { do: 'move', to: '#go' },
       { do: 'click', on: '#go', ms: 1800 }
     ]
@@ -105,7 +105,7 @@ var SCENES = [
       { do: 'hold', ms: 900 },
       { do: 'move', to: '[data-tab="settings"]' },
       { do: 'click', on: '[data-tab="settings"]', ms: 1400 },
-      { do: 'hold', ms: 2400 },
+      { do: 'hold', ms: 1560 },
       { do: 'caption', text: 'No accounts, no passwords. The link is the account.' },
       { do: 'click', on: '[data-tab="roster"]', ms: 1500 },
       { do: 'hold', ms: 1400 },
@@ -119,7 +119,7 @@ var SCENES = [
       },
       { do: 'click', on: '#storeBulkAddBtn', ms: 1400 },
       { do: 'click', on: '.confirm-action', ms: 2600 },
-      { do: 'hold', ms: 3600 }
+      { do: 'hold', ms: 2340 }
     ]
   },
 
@@ -138,16 +138,16 @@ var SCENES = [
          to whichever one is picked. */
       { do: 'click', on: '#list button[data-a]', ms: 1800 },
       { do: 'scroll', to: 800, ms: 2600 },
-      { do: 'hold', ms: 2200 },
+      { do: 'hold', ms: 1500 },
       { do: 'scroll', to: 1600, ms: 2400 },
-      { do: 'hold', ms: 3000 },
+      { do: 'hold', ms: 1950 },
       { do: 'click', on: 'text:Save assignment', ms: 2000 },
       /* The point of the scene: the centre's words are what the candidate is
          marked against. Same course, the candidate's own side. */
       { do: 'goto', screen: '9_assignment_submission.html', role: 'trainee', ms: 3200 },
       { do: 'caption', text: 'And that is what your candidates see.' },
       { do: 'scroll', to: 600, ms: 2800 },
-      { do: 'hold', ms: 3000 }
+      { do: 'hold', ms: 1950 }
     ]
   },
 
@@ -160,11 +160,11 @@ var SCENES = [
     about: 'The hero card: one lifted card, three panels inside it, exactly one gold. Read-only.',
     settle: 1300,
     steps: [
-      { do: 'hold', ms: 1800 },
+      { do: 'hold', ms: 1500 },
       { do: 'caption', text: 'One thing is gold: the next step.' },
-      { do: 'hold', ms: 4000 },
+      { do: 'hold', ms: 2600 },
       { do: 'move', to: '#roomPlan' },
-      { do: 'hold', ms: 2200 }
+      { do: 'hold', ms: 1500 }
     ]
   },
 
@@ -183,14 +183,14 @@ var SCENES = [
          them; the engine cannot hold a microphone, and typing shows the same
          picture. See the spec's build notes. */
       { do: 'type', into: '#fMain', ms: 3400, text: 'By the end of the lesson learners will be better able to ask for and give advice using should and ought to.' },
-      { do: 'hold', ms: 1800 },
+      { do: 'hold', ms: 1500 },
       { do: 'click', on: '#fwBtn', ms: 1400 },
-      { do: 'hold', ms: 2600 },
+      { do: 'hold', ms: 1690 },
       { do: 'caption', text: 'Choose a lesson shape — the stages appear.' },
-      { do: 'hold', ms: 2400 },
+      { do: 'hold', ms: 1560 },
       { do: 'caption', text: 'Worksheets stay on the trainee’s own Drive. Nothing is uploaded.' },
       { do: 'move', to: '#fMatsLink' },
-      { do: 'hold', ms: 2600 }
+      { do: 'hold', ms: 1690 }
     ]
   },
 
@@ -203,13 +203,13 @@ var SCENES = [
     stub: ['put'],
     steps: [
       { do: 'click', on: '#laToggle', ms: 1600 },
-      { do: 'hold', ms: 1600 },
+      { do: 'hold', ms: 1500 },
       { do: 'caption', text: 'The language analysis is part of the same document.' },
       /* Ramy, 27 Sep: open the box so all three show before taking one. */
       { do: 'click', on: '#typeSel', ms: 1200 },
-      { do: 'hold', ms: 3000 },
+      { do: 'hold', ms: 1950 },
       { do: 'move', to: '#ipaBar' },
-      { do: 'hold', ms: 3200 }
+      { do: 'hold', ms: 2080 }
     ]
   },
 
@@ -221,12 +221,12 @@ var SCENES = [
     settle: 1600,
     stub: ['put'],
     steps: [
-      { do: 'hold', ms: 1600 },
+      { do: 'hold', ms: 1500 },
       { do: 'caption', text: 'Written before they read their tutor. That is the point of it.' },
       { do: 'scroll', to: 600, ms: 2600 },
-      { do: 'hold', ms: 2400 },
+      { do: 'hold', ms: 1560 },
       { do: 'move', to: '#turnInBtn' },
-      { do: 'hold', ms: 2600 }
+      { do: 'hold', ms: 1690 }
     ]
   },
 
@@ -238,12 +238,12 @@ var SCENES = [
     about: 'Twelve rows and the three counters. Read-only.',
     settle: 1600,
     steps: [
-      { do: 'hold', ms: 2000 },
+      { do: 'hold', ms: 1500 },
       { do: 'caption', text: 'Nothing to hunt for.' },
       { do: 'move', to: '#cTp' },
-      { do: 'hold', ms: 4000 },
+      { do: 'hold', ms: 2600 },
       { do: 'scroll', to: 420, ms: 2200 },
-      { do: 'hold', ms: 2000 }
+      { do: 'hold', ms: 1500 }
     ]
   },
 
@@ -261,9 +261,9 @@ var SCENES = [
          carries data-list="lST", is what puts an input in it. */
       { do: 'click', on: 'button[data-list="lST"]', ms: 1200 },
       { do: 'type', into: '#lST textarea:last-of-type, #lST input:last-of-type', ms: 3200, text: 'Set the task before handing out the text, and checked it with a quick question' },
-      { do: 'hold', ms: 2600 },
+      { do: 'hold', ms: 1690 },
       { do: 'caption', text: 'The solid chips are what your own tutors tag. It learns your centre.' },
-      { do: 'hold', ms: 4000 }
+      { do: 'hold', ms: 2600 }
     ]
   },
 
@@ -279,15 +279,15 @@ var SCENES = [
       { do: 'caption', text: 'Or talk the whole lesson through somewhere else, and paste it all back.' },
       { do: 'click', on: '#xCopy', ms: 1800 },
       {
-        do: 'still', ms: 3400,
+        do: 'still', ms: 2380,
         want: 'The brief, pasted into any model, and the trainer talking',
         how: 'Capture a dictation window with the copied brief in it and the trainer speaking the lesson through. If it cannot be shown, cut straight from Copy to Paste something back.'
       },
       { do: 'click', on: '#xPasteToggle', ms: 1400 },
-      { do: 'hold', ms: 2000 },
+      { do: 'hold', ms: 1500 },
       { do: 'caption', text: 'Every stage, every list, every comment — to read before it goes anywhere.' },
       { do: 'move', to: '#returnBtn' },
-      { do: 'hold', ms: 5000 }
+      { do: 'hold', ms: 3250 }
     ]
   },
 
@@ -300,12 +300,12 @@ var SCENES = [
     about: 'Newest on top, read-only. <b>No criterion codes here</b> — checked 27 Sep: this screen carries none, and that is the decision.',
     settle: 1800,
     steps: [
-      { do: 'hold', ms: 1800 },
+      { do: 'hold', ms: 1500 },
       { do: 'caption', text: 'Read-only. Not a word of their tutor’s can be touched.' },
       { do: 'scroll', to: 900, ms: 3400 },
-      { do: 'hold', ms: 2600 },
+      { do: 'hold', ms: 1690 },
       { do: 'scroll', to: 1900, ms: 3200 },
-      { do: 'hold', ms: 3000 }
+      { do: 'hold', ms: 1950 }
     ]
   },
 
@@ -323,13 +323,13 @@ var SCENES = [
          belongs to the assignment, not to the page. */
       { do: 'click', on: '#picker button', ms: 1600 },
       { do: 'scroll', to: 700, ms: 2800 },
-      { do: 'hold', ms: 2000 },
+      { do: 'hold', ms: 1500 },
       { do: 'move', to: '#submitBtn' },
-      { do: 'hold', ms: 1800 },
+      { do: 'hold', ms: 1500 },
       { do: 'goto', screen: '10_tutor_assignment_marking.html', role: 'tutor', ms: 3000 },
       { do: 'caption', text: 'The outcome comes from the marks, not from a box.' },
       { do: 'scroll', to: 800, ms: 2800 },
-      { do: 'hold', ms: 3400 }
+      { do: 'hold', ms: 2210 }
     ]
   },
 
@@ -342,12 +342,12 @@ var SCENES = [
     about: 'Opened from the assessor’s own read-only link on the finished course. Scrolled, never printed — nothing is downloaded or sent.',
     settle: 2200,
     steps: [
-      { do: 'hold', ms: 2000 },
+      { do: 'hold', ms: 1500 },
       { do: 'caption', text: 'The assessor gets a link. Read-only.' },
       { do: 'scroll', to: 900, ms: 3600 },
-      { do: 'hold', ms: 2600 },
+      { do: 'hold', ms: 1690 },
       { do: 'scroll', to: 2000, ms: 3600 },
-      { do: 'hold', ms: 3000 }
+      { do: 'hold', ms: 1950 }
     ]
   },
 
@@ -359,67 +359,35 @@ var SCENES = [
     settle: 2200,
     stub: ['put', 'putCourse'],
     steps: [
-      { do: 'hold', ms: 1800 },
+      { do: 'hold', ms: 1500 },
       { do: 'caption', text: 'Cambridge’s own form. Into Appian by paste, not by retyping.' },
       { do: 'scroll', to: 800, ms: 3000 },
-      { do: 'hold', ms: 2400 },
+      { do: 'hold', ms: 1560 },
       { do: 'scroll', to: 1700, ms: 3000 },
-      { do: 'hold', ms: 4000 }
+      { do: 'hold', ms: 2600 }
     ]
   },
 
   /* ================================== Part 7 · The end of the course (c4) == */
 
   {
-    title: 'The final report, whole',
+    title: 'The final report \u2014 the end',
     screen: '16_final_report.html',
     course: 'finished', role: 'trainee', as: 'Olivia Bennett',
-    about: 'The whole document, scrolled at reading pace, with its colour. Ramy: the whole report should be seen.',
+    about: 'The whole document, scrolled, with its colour. <b>This is where the film ends</b> (Ramy, 27 Sep) \u2014 nothing after it: no card, no credit, no PDF.',
     settle: 2400,
     steps: [
-      { do: 'hold', ms: 2400 },
+      { do: 'hold', ms: 1560 },
       { do: 'caption', text: 'Assembled from the record. Not written.' },
       { do: 'scroll', to: 900, ms: 4000 },
-      { do: 'hold', ms: 2000 },
+      { do: 'hold', ms: 1500 },
       { do: 'scroll', to: 2000, ms: 4000 },
-      { do: 'hold', ms: 2000 },
+      { do: 'hold', ms: 1500 },
       { do: 'scroll', to: 'bottom', ms: 4200 },
-      { do: 'hold', ms: 3400 }
+      { do: 'hold', ms: 2210 }
     ]
   },
 
-  {
-    title: 'Paper, if you want it',
-    screen: '4_feedback_returned.html',
-    course: 'finished', role: 'trainee', as: 'Olivia Bennett',
-    about: 'Eight teaching practices, the whole course, printed as one. The PDF itself is a capture — window.print() is a browser dialog the film cannot drive.',
-    /* The sheets, and the print button appended after them, arrive only
-       once every record has loaded -- eight teaching practices, not three. */
-    settle: 5000,
-    steps: [
-      { do: 'hold', ms: 1600 },
-      { do: 'scroll', to: 1200, ms: 3600 },
-      { do: 'caption', text: 'And if you want paper, one button prints the lot.' },
-      { do: 'move', to: '#printBtn' },
-      { do: 'hold', ms: 2000 },
-      {
-        do: 'still', ms: 6000,
-        want: 'The PDF itself, in colour, pages flipping',
-        how: 'Print this screen to PDF and capture the PDF in Preview: every teaching practice’s feedback and grade, the plan’s spine, the analysis, the self-evaluation. Hold five seconds at least, and zoom one page so the colour reads.'
-      }
-    ]
-  },
 
-  {
-    title: 'Close',
-    screen: 'invite.html',
-    about: 'The card at rest. The credit is in frame; nothing zooms on it.',
-    settle: 1400,
-    steps: [
-      { do: 'hold', ms: 2400 },
-      { do: 'caption', text: 'One link. The whole course.' },
-      { do: 'hold', ms: 3000 }
-    ]
-  }
 
 ];

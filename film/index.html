@@ -54,8 +54,21 @@
   .stage{position:relative; width:var(--stage-w); height:var(--stage-h);
     transform-origin:top left; border-radius:10px; overflow:hidden;
     background:var(--sand, #fbfaf7); box-shadow:0 30px 80px -20px oklch(0% 0 0 / 0.6);}
-  .stage iframe{width:var(--stage-w); height:var(--stage-h); border:0; display:block;}
+  /* A FILM, not a demo. The screens are real and would happily be clicked,
+     which is exactly what confused the first viewing -- some things opened,
+     some did not, and there was no telling which. The demo links are the
+     interactive thing; this is a picture of them. So the stage takes no
+     clicks at all, and the opening card says so. */
+  .stage iframe{width:var(--stage-w); height:var(--stage-h); border:0; display:block; pointer-events:none;}
   .stagewrap{position:relative;}
+
+  /* The opening card: what this is, before anything moves. */
+  .opening{position:absolute; inset:0; z-index:9; background:var(--sand, #fbfaf7);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:70px;
+    transition:opacity 700ms ease;}
+  .opening.gone{opacity:0; pointer-events:none;}
+  .opening h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:2.1rem; margin:0; color:var(--teal, #1e6b63);}
+  .opening p{margin:0; font-size:1rem; line-height:1.7; color:var(--grey, #6b6157); max-width:46ch;}
 
   /* A still frame for the two cuts that are not Lite at all -- the Classroom
      stream and the Drive folder. Until the captures exist it says so, rather
@@ -122,6 +135,11 @@
       </svg>
     </div>
     <div class="caption" id="caption"></div>
+    <div class="opening" id="opening">
+      <h1>Connect Lite</h1>
+      <p>A CELTA course, from the link being sent to the final report.</p>
+      <p style="font-size:0.88rem;">Nothing here needs clicking — sit back. The working demo is a separate link.</p>
+    </div>
   </div>
 </div>
 
@@ -642,8 +660,14 @@
     })();
   }
 
-  if (new URLSearchParams(location.search).get('check')) { playing = false; check(); }
-  else play(0);
+  /* The opening card holds for a beat, then lifts into scene 1. Skipped in
+     check mode, which is not watching anything. */
+  var opening = document.getElementById('opening');
+  if (new URLSearchParams(location.search).get('check')) { playing = false; opening.classList.add('gone'); check(); }
+  else {
+    play(0);
+    later(function () { opening.classList.add('gone'); }, 3200);
+  }
 })();
 </script>
 </body>
