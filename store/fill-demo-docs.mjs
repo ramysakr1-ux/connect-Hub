@@ -31,6 +31,7 @@ const DOCS = {
   docRegisters:       'https://drive.google.com/drive/folders/demo-attendance-registers',
   docAgreement:       'https://drive.google.com/drive/folders/demo-candidate-agreement',
   docOwnWork:         'https://drive.google.com/drive/folders/demo-own-work-declaration',
+  docDescriptions:    'https://drive.google.com/drive/folders/demo-candidate-descriptions',
   docApplications:    'https://drive.google.com/drive/folders/demo-applications',
   docPrevReport:      'https://drive.google.com/drive/folders/demo-previous-assessor-report',
   docActionPlan:      'https://drive.google.com/drive/folders/demo-action-plan',
