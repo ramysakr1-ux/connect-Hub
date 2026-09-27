@@ -92,9 +92,15 @@ for (const [file, id] of [['Live_Teacher_Observations_Demo_1.docx', 'live1'],
     for (let k = j + 1; k < raw.length && !/^[A-E]\.\s/.test(raw[k]); k++) if (raw[k]) body.push(raw[k]);
     parts.push({ letter: m[1], title: m[2], lines: body });
   }
+  /* The two documents title themselves differently ("Live Teacher
+     Observations Demo 1", "CELTA  ·  LIVE OBSERVATION TASK 2"). Ramy, 27 Sep
+     2026: "normalise the live task 2 title". Both read the same way now;
+     the number is the document's own. */
+  const num = (lines[0].match(/(\d+)\s*$/) || [])[1];
+  const title = num ? 'Live Teacher Observation ' + num : lines[0];
   live.push(qs.length
-    ? { id, title: lines[0], sub: lines[1] || '', shape: 'questions', rows: qs }
-    : { id, title: lines[0], sub: lines[1] || '', shape: 'parts', parts });
+    ? { id, title, sub: lines[1] || '', shape: 'questions', rows: qs }
+    : { id, title, sub: lines[1] || '', shape: 'parts', parts });
 }
 
 const out = `/* Connect Lite — the observation tasks a course starts with.

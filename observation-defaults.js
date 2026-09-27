@@ -262,7 +262,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
   "live": [
     {
       "id": "live1",
-      "title": "Live Teacher Observations Demo 1",
+      "title": "Live Teacher Observation 1",
       "sub": "Classroom Management — Strengths and Action Points",
       "shape": "questions",
       "rows": [
@@ -278,7 +278,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
     },
     {
       "id": "live2",
-      "title": "CELTA  ·  LIVE OBSERVATION TASK 2",
+      "title": "Live Teacher Observation 2",
       "sub": "Lesson Shape- Language and/or Skill Focus",
       "shape": "parts",
       "parts": [
