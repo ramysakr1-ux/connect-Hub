@@ -267,7 +267,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609280028">
+<link rel="stylesheet" href="hub-house.css?v=202609280047">
 </head>
 <body>
 <div class="board">
@@ -522,11 +522,11 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609280028"></script>
-<script src="hub-store.js?v=202609280028"></script>
-<script src="observation-defaults.js?v=202609280028"></script>
-<script src="hub-shared.js?v=202609280028"></script>
-<script src="hub-sync.js?v=202609280028"></script>
+<script src="assignment-defaults.js?v=202609280047"></script>
+<script src="hub-store.js?v=202609280047"></script>
+<script src="observation-defaults.js?v=202609280047"></script>
+<script src="hub-shared.js?v=202609280047"></script>
+<script src="hub-sync.js?v=202609280047"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -769,10 +769,12 @@ const ROSTER_KEY='connect_roster_v1';
 /* A candidate's private links, read from and written to the local roster,
    which hub-sync mirrors to the store one record at a time. */
 function privateLinksOf(token){ try { const r = JSON.parse(localStorage.getItem(ROSTER_KEY)); const t = r && r.trainees && r.trainees[token]; return (t && Array.isArray(t.links)) ? t.links : []; } catch (e) { return []; } }
-function savePrivateLinks(token, links){
+function staffLinksOf(token){ try { const r = JSON.parse(localStorage.getItem(ROSTER_KEY)); const t = r && r.trainees && r.trainees[token]; return (t && Array.isArray(t.staffLinks)) ? t.staffLinks : []; } catch (e) { return []; } }
+function savePrivateLinks(token, links, staffLinks){
   let r = null; try { r = JSON.parse(localStorage.getItem(ROSTER_KEY)); } catch (e) {}
   if (!r || !r.trainees || !r.trainees[token]) { alert('The roster has not loaded yet \u2014 give it a moment and try again.'); return; }
   r.trainees[token].links = links;
+  r.trainees[token].staffLinks = staffLinks || [];
   localStorage.setItem(ROSTER_KEY, JSON.stringify(r));
 }
 function loadRoster(){ try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
@@ -928,7 +930,7 @@ async function renderStoreRoster(next){
                own. Screen 15 prints the whole course and screen 11 one marked
                assignment; this was the gap between them (23 Sep 2026). -->
           <a class="btn quiet small" href="4_feedback_returned.html?trainee=${esc(t.token)}">Record</a>
-          <button class="btn quiet small" type="button" data-links="${esc(t.token)}">Links${privateLinksOf(t.token).length ? ' \u00b7 ' + privateLinksOf(t.token).length : ''}</button>
+          <button class="btn quiet small" type="button" data-links="${esc(t.token)}">Links${(privateLinksOf(t.token).length + staffLinksOf(t.token).length) ? ' \u00b7 ' + (privateLinksOf(t.token).length + staffLinksOf(t.token).length) : ''}</button>
           <button class="btn quiet small" type="button" data-remove="${esc(t.token)}" data-name="${esc(t.name)}">Remove</button>
         </div>
       </div><div class="plinks" id="plinks-${esc(t.token)}" hidden></div>`).join('') : '<div class="empty">No trainees on the course yet — add the first one above.</div>'}
@@ -946,22 +948,34 @@ async function renderStoreRoster(next){
     const token = b.dataset.links, host = document.getElementById('plinks-' + token);
     if (!host.hidden) { host.hidden = true; return; }
     const t = trainees.find(x => x.token === token);
-    const rows = privateLinksOf(token);
-    const draw = list => {
-      host.innerHTML = `<div class="plinks-box"><p class="note" style="margin:0 0 8px;"><b>${esc(t.name)}</b>\u2019s private links \u2014 their CELTA 5, a reading, anything for them alone. Only their link shows these; the tutors and the assessor see them on the portfolio.</p>
-        <div class="fields docs" style="margin-top:0;">${(list.length ? list : [{label:'CELTA 5', url:''}]).map((l, i) => `<div><label>Label</label><input type="text" class="pl-label" value="${esc(l.label)}" placeholder="What ${esc(t.name.split(' ')[0])} sees"></div><div><label>Link</label><input type="text" class="pl-url" value="${esc(l.url)}" placeholder="https://\u2026"></div>`).join('')}</div>
-        <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;"><button class="btn quiet small" type="button" data-pl-add>Add a link</button><button class="btn primary small" type="button" data-pl-save>Save</button><span class="muted" style="font-size:0.82rem;" data-pl-status></span></div></div>`;
+    const first = t.name.split(' ')[0];
+    /* Two sets in one box. The first the candidate sees (their CELTA 5); the
+       second is STAFF ONLY -- Ramy, 28 Sep 2026: "the trainer can also add a
+       link that is not shared with the trainees, right?" -- kept under a kind
+       the store never hands to a candidate's token (staffLinks, v30). */
+    const rowsHtml = (cls, list, ph) => list.map(l => `<div><label>Label</label><input type="text" class="${cls}-label" value="${esc(l.label)}" placeholder="${ph}"></div><div><label>Link</label><input type="text" class="${cls}-url" value="${esc(l.url)}" placeholder="https://\u2026"></div>`).join('');
+    const draw = (mine, staff) => {
+      host.innerHTML = `<div class="plinks-box">
+        <p class="note" style="margin:0 0 8px;"><b>${esc(t.name)}</b>\u2019s private links \u2014 their CELTA 5, a reading, anything for them alone. Only their link shows these; the tutors and the assessor see them on the portfolio.</p>
+        <div class="fields docs" style="margin-top:0;">${rowsHtml('pl', mine.length ? mine : [{label:'CELTA 5', url:''}], 'What ' + esc(first) + ' sees')}</div>
+        <div style="margin-top:6px;"><button class="btn quiet small" type="button" data-pl-add>Add a link</button></div>
+        <p class="note" style="margin:16px 0 8px;"><b>Staff only</b> \u2014 about ${esc(first)}, for the tutors and the assessor. ${esc(first)} never receives these: the store does not hand them to a candidate\u2019s link.</p>
+        <div class="fields docs" style="margin-top:0;">${rowsHtml('sl', staff.length ? staff : [{label:'', url:''}], 'e.g. Interview notes')}</div>
+        <div style="margin-top:6px;"><button class="btn quiet small" type="button" data-sl-add>Add a staff link</button></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap;"><button class="btn primary small" type="button" data-pl-save>Save</button><span class="muted" style="font-size:0.82rem;" data-pl-status></span></div></div>`;
       host.hidden = false;
-      const read = () => { const L = [...host.querySelectorAll('.pl-label')], U = [...host.querySelectorAll('.pl-url')]; return L.map((el, i) => ({ label: el.value.trim(), url: U[i].value.trim() })); };
-      host.querySelector('[data-pl-add]').addEventListener('click', () => draw(read().concat([{label:'', url:''}])));
+      const read = cls => { const L = [...host.querySelectorAll('.' + cls + '-label')], U = [...host.querySelectorAll('.' + cls + '-url')]; return L.map((el, i) => ({ label: el.value.trim(), url: U[i].value.trim() })); };
+      host.querySelector('[data-pl-add]').addEventListener('click', () => draw(read('pl').concat([{label:'', url:''}]), read('sl')));
+      host.querySelector('[data-sl-add]').addEventListener('click', () => draw(read('pl'), read('sl').concat([{label:'', url:''}])));
       host.querySelector('[data-pl-save]').addEventListener('click', () => {
-        const saved = read().filter(l => l.url).map(l => ({ label: l.label || l.url, url: l.url }));
-        savePrivateLinks(token, saved);
-        host.querySelector('[data-pl-status]').textContent = saved.length ? 'Saved \u2014 ' + saved.length + (saved.length === 1 ? ' link, ' : ' links, ') + t.name.split(' ')[0] + '\u2019s alone.' : 'Saved \u2014 no links.';
-        b.textContent = 'Links' + (saved.length ? ' \u00b7 ' + saved.length : '');
+        const keep = list => list.filter(l => l.url).map(l => ({ label: l.label || l.url, url: l.url }));
+        const savedMine = keep(read('pl')), savedStaff = keep(read('sl'));
+        savePrivateLinks(token, savedMine, savedStaff);
+        host.querySelector('[data-pl-status]').textContent = 'Saved \u2014 ' + savedMine.length + ' for ' + first + ', ' + savedStaff.length + ' staff only.';
+        b.textContent = 'Links' + (savedMine.length + savedStaff.length ? ' \u00b7 ' + (savedMine.length + savedStaff.length) : '');
       });
     };
-    draw(rows);
+    draw(privateLinksOf(token), staffLinksOf(token));
   }));
 
   // A pure redraw: the addresses are already in hand, so this must not wait on

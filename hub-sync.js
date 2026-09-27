@@ -17,6 +17,7 @@
   window.HubMode = mode;
   var TRAINEE_KEYS = { 'chub:plan':'plan', 'chub:selfeval':'selfeval', 'chub:feedback':'feedback', 'connect_assignment_submissions_v1':'assignments', 'chub:tpHistory':'tpHistory', 'chub:tracker':'tracker', 'connect_observations_v1':'observations', 'chub:links':'links' };
   var TUTOR_ONLY = { feedback:1, tpHistory:1, tracker:1, links:1 }; // links: a candidate's private links, the tutor's to write
+  // staffLinks -- about a candidate, for staff only -- has no trainee key at all: the store never hands it to a candidate's token
   var COURSE_KEYS = { 'connect_assignment_wording_v2':'wording', 'connect_course_settings':'settings', 'connect_observation_wording_v1':'observations' };
   var origSet = localStorage.setItem.bind(localStorage), origRemove = localStorage.removeItem.bind(localStorage);
   var snapshot = {};   // tutor mode: token -> kind -> json, what the store holds
@@ -156,7 +157,7 @@
   function describe(job){
     var kind = job && job.kind;
     return ({ plan: 'a lesson plan', selfeval: 'a self-evaluation', feedback: 'tutor feedback',
-              tpHistory: 'the teaching practice record', assignments: 'assignment work', observations: 'observation tasks', links: 'a candidate\u2019s links',
+              tpHistory: 'the teaching practice record', assignments: 'assignment work', observations: 'observation tasks', links: 'a candidate\u2019s links', staffLinks: 'a staff-only link',
               tracker: 'the tracker', settings: 'the course settings',
               wording: 'the assignment wording', roster: 'the roster' })[kind] || 'a change';
   }
@@ -279,7 +280,7 @@
     e.returnValue = '';           // required for the dialog to appear at all
     return '';
   });
-  function recordOf(tr){ return { plan: (tr.tp && tr.tp.plan) || null, selfeval: (tr.tp && tr.tp.selfeval) || null, feedback: (tr.tp && tr.tp.feedback) || null, tpHistory: (tr.tp && tr.tp.history) || {}, assignments: tr.assignments || {}, tracker: tr.tracker || {}, observations: tr.observations || {}, links: tr.links || [] }; }
+  function recordOf(tr){ return { plan: (tr.tp && tr.tp.plan) || null, selfeval: (tr.tp && tr.tp.selfeval) || null, feedback: (tr.tp && tr.tp.feedback) || null, tpHistory: (tr.tp && tr.tp.history) || {}, assignments: tr.assignments || {}, tracker: tr.tracker || {}, observations: tr.observations || {}, links: tr.links || [], staffLinks: tr.staffLinks || [] }; }
   /* The store's roster, with this browser's own unconfirmed records laid over
      it -- one trainee's one record at a time.
      The boot used to leave the WHOLE roster alone if anything in it was
@@ -303,7 +304,7 @@
       var t = theirs.trainees[token], rm = recordOf(m);
       Object.keys(rm).forEach(function(kind){
         if (!keep[token + ':' + kind]) return;
-        if (kind === 'assignments' || kind === 'tracker' || kind === 'observations' || kind === 'links') t[kind] = rm[kind];
+        if (kind === 'assignments' || kind === 'tracker' || kind === 'observations' || kind === 'links' || kind === 'staffLinks') t[kind] = rm[kind];
         else { t.tp = t.tp || {}; t.tp[kind === 'tpHistory' ? 'history' : kind] = rm[kind]; }
       });
     });
@@ -479,7 +480,7 @@
         history[n] = local[n];
       });
       if (kept) schedule('r:' + t.token + ':tpHistory', { op: 'put', token: t.token, kind: 'tpHistory', data: history });
-      roster.trainees[t.token] = { id: t.token, name: t.name, group: t.group, importedAt: t.created, tp: { plan: r.plan || null, selfeval: r.selfeval || null, feedback: r.feedback || null, history: history }, assignments: r.assignments || {}, tracker: r.tracker || {}, observations: r.observations || {}, links: r.links || [] };
+      roster.trainees[t.token] = { id: t.token, name: t.name, group: t.group, importedAt: t.created, tp: { plan: r.plan || null, selfeval: r.selfeval || null, feedback: r.feedback || null, history: history }, assignments: r.assignments || {}, tracker: r.tracker || {}, observations: r.observations || {}, links: r.links || [], staffLinks: r.staffLinks || [] };
     });
     out['connect_roster_v1'] = JSON.stringify(roster);
     return out;
