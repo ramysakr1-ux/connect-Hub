@@ -135,11 +135,19 @@
        floating over them was nearly invisible, whatever glow it carried. The
        halo is the paper colour, spread wide and soft, which lifts the words
        off the screen without drawing a box round them. */
-    /* The centre's own ink, and no hue. It was a dark teal and read as green
-       (Ramy, 27 Sep 2026: "I don't want green for caption"). */
-    color:oklch(24% 0.012 65);
-    text-shadow:0 0 14px oklch(99% 0.004 85 / .95), 0 0 30px oklch(99% 0.004 85 / .9),
-      0 0 60px oklch(99% 0.004 85 / .8), 0 1px 0 oklch(99% 0.004 85 / .9);
+    /* WHITE, with a dark aura. Ramy, 27 Sep 2026: "let's try the captions in
+       white, like we did before, not black, so it doesn't block the view."
+       Ink read as a second layer of content on a screen already full of text;
+       white reads as something over the top of it, which is what a floating
+       caption should be.
+       The aura is what makes white work on Lite's cream screens. The first
+       attempt used a wide, soft shadow and the words nearly vanished; this one
+       is TIGHT and dense right at the glyph edge and only then spreads, so the
+       letters keep their own edge without a box being drawn round them. */
+    color:oklch(99% 0.004 85);
+    text-shadow:0 0 5px oklch(21% 0.02 65 / .95), 0 0 12px oklch(21% 0.02 65 / .92),
+      0 0 26px oklch(21% 0.02 65 / .8), 0 0 54px oklch(21% 0.02 65 / .6),
+      0 2px 3px oklch(21% 0.02 65 / .9);
     opacity:0; transform:translate(-50%, 0);
     transition:opacity 700ms ease;}
   /* IT KEEPS FLOATING WHILE IT GOES. The drift used to live on `.on`, so
@@ -344,6 +352,10 @@
   var CAPTION_FADE = 500;       /* in; matches .caption's transition */
   var CAPTION_FADE_OUT = 1600;  /* out -- slow, and it drifts the whole way */
   var CAPTION_GAP = 1000;   /* silence before the next one may begin */
+  /* How long the film waits before carrying on past a caption -- just enough
+     for the words to arrive, not for them to be finished with. Two captions in
+     a row need a hold between them or the second lands on the first. */
+  var CAPTION_STEP = 1200;
 
   var stubbed = [];      /* which writes were caught, per scene -- shown below */
   var loadSeq = 0;       /* makes every iframe URL unique, so onload always fires */
@@ -428,7 +440,18 @@
          sits for about eight seconds. */
       var hold = Math.max(CAPTION_MIN, (s.text.length / CAPTION_CPS) * 1000);
       later(function () { capEl.classList.add('out'); }, CAPTION_FADE + hold);
-      return CAPTION_FADE + hold + CAPTION_FADE_OUT + CAPTION_GAP;
+      /* A CAPTION DOES NOT STOP THE FILM. It used to return its whole life, so
+         the picture froze for six or seven seconds while the words were up --
+         which meant every caption described the screen as it had been a moment
+         earlier, and by the time the screen moved the words were gone. Ramy,
+         27 Sep 2026: "when the caption comes it should be referring to
+         something they can see. Everyone gets their own link, but it's not
+         showing the links. Why?" Because the scroll that showed them was
+         waiting for the caption to finish.
+         Now it hands back after a beat and the next step -- the scroll, the
+         click, the cursor moving to the thing -- happens UNDER the floating
+         words. The caption fades on its own timer regardless. */
+      return CAPTION_STEP;
     },
     move: function (s) {
       var el = find(s.to);
@@ -608,6 +631,10 @@
 
       frame.onload = function () {
         frame.onload = null;
+        /* A caption outlives the step that started it now, which is the point
+           -- but it must not outlive the SCENE and float over the next
+           chapter's title. It fades rather than vanishing. */
+        if (capEl.classList.contains('on')) capEl.classList.add('out');
         silenceDialogs();
         stubStore(sc.stub || []);
         later(then, sc.settle || 900);

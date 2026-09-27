@@ -104,7 +104,7 @@ var SCENES = [
          the next scene read as walking rather than teleporting. */
       { do: 'click', on: '#go', ms: 2200 },
       { do: 'hold', ms: 840 },
-      { do: 'click', on: 'text:Course admin', ms: 2400 }
+      { do: 'click', on: 'a[href="6_centre_admin_dashboard.html"]', ms: 2400 }
     ]
   },
 
@@ -150,7 +150,6 @@ var SCENES = [
          first beat: a new course already has Cambridge's four assignments in
          it, with their criteria, before anybody has set anything up. The scene
          used to click straight past it. */
-      { do: 'caption', text: 'The four assignments come with it.' },
       { do: 'move', to: '#list' },
       { do: 'hold', ms: 1819 },
       /* BOTH halves. Ramy, 27 Sep 2026: "every word is yours to type if you
@@ -191,7 +190,6 @@ var SCENES = [
       { do: 'hold', ms: 1050 },
       { do: 'scroll', to: 1700, ms: 2240 },
       { do: 'hold', ms: 1456 },
-      { do: 'caption', text: 'And who they will observe. Your choice.' },
       { do: 'scroll', to: 2500, ms: 2080 },
       { do: 'hold', ms: 1819 }
     ]
@@ -205,7 +203,6 @@ var SCENES = [
     steps: [
       { do: 'click', on: '[data-tab="roster"]', ms: 1600 },
       { do: 'hold', ms: 800 },
-      { do: 'caption', text: 'Everyone gets their own link.' },
       { do: 'move', to: '#assessorBlock' },
       { do: 'hold', ms: 1128 },
       { do: 'scroll', to: 600, ms: 1920 },
@@ -237,7 +234,6 @@ var SCENES = [
     stub: ['put'],
     steps: [
       { do: 'hold', ms: 979 },
-      { do: 'caption', text: 'Box, then Dictate.' },
       /* #lST is an empty container -- its own "+ Add point" button, which
          carries data-list="lST", is what puts a point row in it. A point is a
          contenteditable div, not a field: the tag chips live inside it. The
@@ -253,7 +249,6 @@ var SCENES = [
          picture. The suggester reads the point 500ms after it stops changing,
          so the chips are there by now; clicking one puts the code inside the
          sentence, where it stays with the words it belongs to. */
-      { do: 'caption', text: 'It offers the criteria it meets.' },
       { do: 'move', to: '#lST .pt:last-child .suggest-row' },
       { do: 'hold', ms: 1540 },
       { do: 'click', on: '#lST .pt:last-child .suggest-chip', ms: 1800 },
@@ -279,7 +274,6 @@ var SCENES = [
     stub: ['put'],
     steps: [
       { do: 'scroll', to: 300, ms: 1440 },
-      { do: 'caption', text: 'Or talk it through elsewhere \u2014 and paste.' },
       { do: 'click', on: '#xCopy', ms: 1800 },
       {
         do: 'still', ms: 2380,
@@ -337,7 +331,6 @@ var SCENES = [
     steps: [
       { do: 'chapter', num: 'Chapter two', text: 'The trainee', sub: 'One link, and everything they write on the course lives behind it \u2014 plans, self-evaluations, the feedback they are given, four assignments.', ms: 3000 },
       { do: 'hold', ms: 800 },
-      { do: 'caption', text: 'The same card, in their words.' },
       { do: 'click', on: '#go', ms: 2200 }
     ]
   },
@@ -350,7 +343,6 @@ var SCENES = [
     settle: 1300,
     steps: [
       { do: 'hold', ms: 1050 },
-      { do: 'caption', text: 'One thing is gold: the next step.' },
       { do: 'hold', ms: 800 },
       { do: 'move', to: '#roomPlan' },
       { do: 'hold', ms: 1050 }
@@ -369,7 +361,6 @@ var SCENES = [
       /* Ramy, 27 Sep: "you put the cursor inside the box and you dictate."
          So that is the order on screen -- the box first, then the button.
          Pressing it with nothing focused raises an alert and stops the film. */
-      { do: 'caption', text: 'Click into a box. Press Dictate.' },
       { do: 'click', on: '#fMain', ms: 900 },
       /* The real control, really pressed: it turns garnet and the dot pulses,
          which is the whole point of the beat -- voice was the most-wanted
@@ -386,7 +377,6 @@ var SCENES = [
       { do: 'hold', ms: 1050 },
       { do: 'click', on: '#fwBtn', ms: 1400 },
       { do: 'hold', ms: 1183 },
-      { do: 'caption', text: 'Choose a shape. The stages appear.' },
       { do: 'move', to: '#fMatsLink' },
       { do: 'hold', ms: 1183 }
     ]
@@ -419,7 +409,6 @@ var SCENES = [
     stub: ['put'],
     steps: [
       { do: 'hold', ms: 1050 },
-      { do: 'caption', text: 'Written before they read their tutor.' },
       { do: 'scroll', to: 600, ms: 2080 },
       { do: 'hold', ms: 1092 },
       { do: 'move', to: '#turnInBtn' },
@@ -435,7 +424,6 @@ var SCENES = [
     settle: 1800,
     steps: [
       { do: 'hold', ms: 1050 },
-      { do: 'caption', text: 'Read-only. Not a word can be touched.' },
       { do: 'scroll', to: 900, ms: 2720 },
       { do: 'hold', ms: 1183 },
       { do: 'scroll', to: 1900, ms: 2560 },
@@ -560,7 +548,6 @@ var SCENES = [
     stub: ['put', 'putCourse'],
     steps: [
       { do: 'hold', ms: 1050 },
-      { do: 'caption', text: 'Into Appian by paste, not retyping.' },
       { do: 'scroll', to: 800, ms: 2400 },
       { do: 'hold', ms: 1092 },
       { do: 'scroll', to: 1700, ms: 2400 },
@@ -589,7 +576,6 @@ var SCENES = [
     settle: 2400,
     steps: [
       { do: 'hold', ms: 1092 },
-      { do: 'caption', text: 'Assembled from the record.' },
       { do: 'scroll', to: 900, ms: 3200 },
       { do: 'hold', ms: 1050 },
       { do: 'scroll', to: 2000, ms: 3200 },
