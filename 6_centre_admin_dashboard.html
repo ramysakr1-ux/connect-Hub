@@ -228,6 +228,8 @@
   .empty{padding:20px 4px; font-size:0.88rem; color:var(--grey);}
 
   /* ---- assignment rows ---------------------------------------------------- */
+  .plinks{grid-column:1 / -1;}
+  .plinks-box{background:var(--surface); border:1px solid var(--sand-line); border-radius:8px; padding:12px 14px; margin:2px 0 10px;}
   .arow{display:flex; align-items:center; justify-content:space-between; gap:20px; padding:15px 4px;
     border-bottom:1px solid var(--sand-line);}
   .arow .code{font-size:0.74rem; font-weight:700; letter-spacing:0.06em; color:var(--teal);}
@@ -265,7 +267,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609280020">
+<link rel="stylesheet" href="hub-house.css?v=202609280028">
 </head>
 <body>
 <div class="board">
@@ -520,11 +522,11 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609280020"></script>
-<script src="hub-store.js?v=202609280020"></script>
-<script src="observation-defaults.js?v=202609280020"></script>
-<script src="hub-shared.js?v=202609280020"></script>
-<script src="hub-sync.js?v=202609280020"></script>
+<script src="assignment-defaults.js?v=202609280028"></script>
+<script src="hub-store.js?v=202609280028"></script>
+<script src="observation-defaults.js?v=202609280028"></script>
+<script src="hub-shared.js?v=202609280028"></script>
+<script src="hub-sync.js?v=202609280028"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -764,6 +766,15 @@ document.getElementById('addCandLink').addEventListener('click', () => {
 })();
 
 const ROSTER_KEY='connect_roster_v1';
+/* A candidate's private links, read from and written to the local roster,
+   which hub-sync mirrors to the store one record at a time. */
+function privateLinksOf(token){ try { const r = JSON.parse(localStorage.getItem(ROSTER_KEY)); const t = r && r.trainees && r.trainees[token]; return (t && Array.isArray(t.links)) ? t.links : []; } catch (e) { return []; } }
+function savePrivateLinks(token, links){
+  let r = null; try { r = JSON.parse(localStorage.getItem(ROSTER_KEY)); } catch (e) {}
+  if (!r || !r.trainees || !r.trainees[token]) { alert('The roster has not loaded yet \u2014 give it a moment and try again.'); return; }
+  r.trainees[token].links = links;
+  localStorage.setItem(ROSTER_KEY, JSON.stringify(r));
+}
 function loadRoster(){ try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
 
 /* ---- Roster and links, from the store -------------------------------------- */
@@ -917,12 +928,41 @@ async function renderStoreRoster(next){
                own. Screen 15 prints the whole course and screen 11 one marked
                assignment; this was the gap between them (23 Sep 2026). -->
           <a class="btn quiet small" href="4_feedback_returned.html?trainee=${esc(t.token)}">Record</a>
+          <button class="btn quiet small" type="button" data-links="${esc(t.token)}">Links${privateLinksOf(t.token).length ? ' \u00b7 ' + privateLinksOf(t.token).length : ''}</button>
           <button class="btn quiet small" type="button" data-remove="${esc(t.token)}" data-name="${esc(t.name)}">Remove</button>
         </div>
-      </div>`).join('') : '<div class="empty">No trainees on the course yet — add the first one above.</div>'}
+      </div><div class="plinks" id="plinks-${esc(t.token)}" hidden></div>`).join('') : '<div class="empty">No trainees on the course yet — add the first one above.</div>'}
     </div>`;
 
   renderAssessorBlock();
+
+  /* Ramy, 28 Sep 2026: "if I want to add the CELTA 5 link to a specific
+     trainee, so the others cannot see it. Can I do that?" A candidate's
+     private links live on the candidate's own record (kind `links`, store
+     v29): the tutor writes them here, the store hands them only to that
+     candidate's token, and their home shows each as a card. Written through
+     the local roster so hub-sync carries them like any other record. */
+  box.querySelectorAll('[data-links]').forEach(b => b.addEventListener('click', () => {
+    const token = b.dataset.links, host = document.getElementById('plinks-' + token);
+    if (!host.hidden) { host.hidden = true; return; }
+    const t = trainees.find(x => x.token === token);
+    const rows = privateLinksOf(token);
+    const draw = list => {
+      host.innerHTML = `<div class="plinks-box"><p class="note" style="margin:0 0 8px;"><b>${esc(t.name)}</b>\u2019s private links \u2014 their CELTA 5, a reading, anything for them alone. Only their link shows these; the tutors and the assessor see them on the portfolio.</p>
+        <div class="fields docs" style="margin-top:0;">${(list.length ? list : [{label:'CELTA 5', url:''}]).map((l, i) => `<div><label>Label</label><input type="text" class="pl-label" value="${esc(l.label)}" placeholder="What ${esc(t.name.split(' ')[0])} sees"></div><div><label>Link</label><input type="text" class="pl-url" value="${esc(l.url)}" placeholder="https://\u2026"></div>`).join('')}</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;"><button class="btn quiet small" type="button" data-pl-add>Add a link</button><button class="btn primary small" type="button" data-pl-save>Save</button><span class="muted" style="font-size:0.82rem;" data-pl-status></span></div></div>`;
+      host.hidden = false;
+      const read = () => { const L = [...host.querySelectorAll('.pl-label')], U = [...host.querySelectorAll('.pl-url')]; return L.map((el, i) => ({ label: el.value.trim(), url: U[i].value.trim() })); };
+      host.querySelector('[data-pl-add]').addEventListener('click', () => draw(read().concat([{label:'', url:''}])));
+      host.querySelector('[data-pl-save]').addEventListener('click', () => {
+        const saved = read().filter(l => l.url).map(l => ({ label: l.label || l.url, url: l.url }));
+        savePrivateLinks(token, saved);
+        host.querySelector('[data-pl-status]').textContent = saved.length ? 'Saved \u2014 ' + saved.length + (saved.length === 1 ? ' link, ' : ' links, ') + t.name.split(' ')[0] + '\u2019s alone.' : 'Saved \u2014 no links.';
+        b.textContent = 'Links' + (saved.length ? ' \u00b7 ' + saved.length : '');
+      });
+    };
+    draw(rows);
+  }));
 
   // A pure redraw: the addresses are already in hand, so this must not wait on
   // the network. renderStoreRoster with no argument keeps ROSTER as it is.
