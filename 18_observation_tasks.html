@@ -123,18 +123,18 @@
   .eyebrow{font-size:0.7rem; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:0 0 4px;}
   .lede{color:var(--grey); font-size:0.88rem; line-height:1.6; margin:0 0 18px; max-width:66ch;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609272135">
-<link rel="stylesheet" href="hub-theme.css?v=202609272135">
+<link rel="stylesheet" href="hub-house.css?v=202609272155">
+<link rel="stylesheet" href="hub-theme.css?v=202609272155">
 </head>
 <body class="hub-obs">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="observation-defaults.js"></script>
-<script src="hub-shared.js?v=202609272135"></script>
-<script src="hub-store.js?v=202609272135"></script>
-<script src="hub-sync.js?v=202609272135"></script>
+<script src="observation-defaults.js?v=202609272155"></script>
+<script src="hub-shared.js?v=202609272155"></script>
+<script src="hub-store.js?v=202609272155"></script>
+<script src="hub-sync.js?v=202609272155"></script>
 <script type="text/x-hub-app">
 /* A candidate's own work. A tutor or an assessor READS it -- they have to, it
    is portfolio evidence -- so the page is not refused them; the fields are
@@ -142,17 +142,17 @@
 const READONLY = window.HubMode !== 'trainee';
 
 const KEY = 'connect_observations_v1';
-const SETTINGS_KEY = 'connect_course_settings';
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const P = new URLSearchParams(location.search);
 /* Whichever key opened this page comes along on every link inside it. */
 const KEYQ = ['t','k','ak','trainee'].filter(n => P.get(n)).map(n => n + '=' + encodeURIComponent(P.get(n))).join('&');
 
-/* The centre's own set, once it has edited them; otherwise the ones Lite
-   ships -- generated from the centre's Word sheets. */
-let SETTINGS = {}; try { SETTINGS = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') || {}; } catch(e) {}
-const TASKS = SETTINGS.observations || window.CONNECT_HUB_OBSERVATION_DEFAULTS || { peer:[], filmed:[], live:[] };
+/* The centre's own wording, once it has saved any (19_observation_wording,
+   course kind `observations`); otherwise the set Lite ships, generated from
+   the centre's Word sheets. Whole record or nothing -- never a merge. */
+let WORDING = null; try { WORDING = JSON.parse(localStorage.getItem('connect_observation_wording_v1')); } catch(e) {}
+const TASKS = (WORDING && WORDING.peer) ? WORDING : (window.CONNECT_HUB_OBSERVATION_DEFAULTS || { peer:[], filmed:[], live:[] });
 
 /* The candidate's own copy, or -- for a tutor or assessor -- the candidate
    named in the link, out of the roster the boot brought down. */

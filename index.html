@@ -142,6 +142,11 @@
      of text in a 1020px card leaves half the card empty, which is the slab the
      old Your progress card already was. Two columns, and the page ends where
      the content ends. */
+  .room.files ul{list-style:none; margin:6px 0 0; padding:0;}
+  .room.files li{padding:5px 0; border-top:1px solid var(--row-line, oklch(90% 0.016 82)); font-size:0.88rem;}
+  .room.files li:first-child{border-top:0;}
+  .room.files a{color:var(--teal); text-decoration:none; font-weight:600;}
+  .room.files a:hover{text-decoration:underline;}
   .solo{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; grid-auto-rows:1fr;}
   .room{display:block; text-decoration:none; color:inherit; font-family:'Karla',sans-serif;
     background:linear-gradient(180deg, var(--card-top) 0%, var(--card) 64%);
@@ -233,7 +238,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609272135">
+<link rel="stylesheet" href="hub-house.css?v=202609272155">
 </head>
 <body>
 <div class="board">
@@ -298,9 +303,17 @@
          rather than inside it. -->
     <a class="room" id="roomObs" href="18_observation_tasks.html">
       <h2>Observation tasks</h2>
-      <p>Watching other people teach — your own group, filmed lessons and live ones — and ticking each off as you do it. Cambridge asks for a record of what you observed; this is it.</p>
+      <p>Watching other people teach — your own group, filmed lessons and live ones — and writing up what you saw. The filmed and live write-ups go in your portfolio.</p>
       <span class="st" id="badgeObs"></span>
     </a>
+    <!-- Things a candidate reads and never writes into -- TP points, the
+         getting-to-know-you activities, the timetable -- wherever the centre
+         keeps them. Filled from Course admin's "Files for candidates"; hidden
+         until there is one. -->
+    <div class="room files" id="roomFiles" hidden>
+      <h2>Course files</h2>
+      <ul id="fileLinks"></ul>
+    </div>
     <a class="room" href="7_candidate_tracker.html?me=1">
       <h2>Your progress</h2>
       <p>Every teaching practice and every assignment on one grid, read from what your tutor has returned to you. The same view your tutor has of you.</p>
@@ -334,10 +347,10 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202609272135"></script>
-<script src="hub-shared.js?v=202609272135"></script>
-<script src="hub-store.js?v=202609272135"></script>
-<script src="hub-sync.js?v=202609272135"></script>
+<script src="hub-due.js?v=202609272155"></script>
+<script src="hub-shared.js?v=202609272155"></script>
+<script src="hub-store.js?v=202609272155"></script>
+<script src="hub-sync.js?v=202609272155"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -482,6 +495,23 @@ line(document.getElementById('badgeFeedback'),
   NEXT === 'feedback' ? 'act' : '');
 
 line(document.getElementById('badgeAssign'), ASG.text, ASG.tone);
+
+/* Observations: only the filmed and live sheets are turned in (six of them);
+   the peer sheets are notes and are not counted here. */
+line(document.getElementById('badgeObs'), (function(){
+  const w = rec('connect_observations_v1') || {};
+  const n = ['filmed1','filmed2','filmed3','filmed4','live1','live2'].filter(k => w[k] && w[k].turnedInAt).length;
+  return n === 6 ? 'All six turned in' : n ? n + ' of 6 turned in' : 'Six to turn in';
+})(), (function(){ const w = rec('connect_observations_v1') || {}; return ['filmed1','filmed2','filmed3','filmed4','live1','live2'].every(k => w[k] && w[k].turnedInAt) ? 'done' : ''; })());
+
+/* Course files, from the centre's settings. */
+(function(){
+  const links = ((rec('connect_course_settings') || {}).courseLinks || []).filter(l => l && l.url);
+  const card = document.getElementById('roomFiles'); if (!card) return;
+  if (!links.length) return;
+  document.getElementById('fileLinks').innerHTML = links.map(l => `<li><a href="${l.url.replace(/"/g,'&quot;')}" target="_blank" rel="noopener noreferrer">${(l.label || l.url).replace(/&/g,'&amp;').replace(/</g,'&lt;')}</a></li>`).join('');
+  card.hidden = false;
+})();
 
 /* The grid: when it last changed, which is the question you open it with. Never
    coloured -- it is a view, not a thing to do. */

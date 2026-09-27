@@ -17,7 +17,7 @@
   window.HubMode = mode;
   var TRAINEE_KEYS = { 'chub:plan':'plan', 'chub:selfeval':'selfeval', 'chub:feedback':'feedback', 'connect_assignment_submissions_v1':'assignments', 'chub:tpHistory':'tpHistory', 'chub:tracker':'tracker', 'connect_observations_v1':'observations' };
   var TUTOR_ONLY = { feedback:1, tpHistory:1, tracker:1 };
-  var COURSE_KEYS = { 'connect_assignment_wording_v2':'wording', 'connect_course_settings':'settings' };
+  var COURSE_KEYS = { 'connect_assignment_wording_v2':'wording', 'connect_course_settings':'settings', 'connect_observation_wording_v1':'observations' };
   var origSet = localStorage.setItem.bind(localStorage), origRemove = localStorage.removeItem.bind(localStorage);
   var snapshot = {};   // tutor mode: token -> kind -> json, what the store holds
   var pill;
@@ -425,6 +425,7 @@
     }
     out['connect_assignment_wording_v2'] = course.wording ? JSON.stringify(course.wording) : null;
     out['connect_course_settings'] = course.settings ? JSON.stringify(course.settings) : null;
+    out['connect_observation_wording_v1'] = course.observations ? JSON.stringify(course.observations) : null;
     if (mode === 'trainee') {
       var me = boot.me || { records: {} };
       out['hub:name'] = me.name || '';

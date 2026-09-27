@@ -265,7 +265,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609272135">
+<link rel="stylesheet" href="hub-house.css?v=202609272155">
 </head>
 <body>
 <div class="board">
@@ -306,6 +306,7 @@
     <button class="tab active" data-tab="settings"><span class="dot">1</span>Settings</button>
     <button class="tab" data-tab="roster"><span class="dot">2</span>Roster and links</button>
     <button class="tab" data-tab="assignments"><span class="dot">3</span>Assignments</button>
+    <button class="tab" data-tab="observations"><span class="dot">4</span>Observations</button>
   </div>
 
   <!-- ================= Settings ================= -->
@@ -427,6 +428,12 @@
            centre's job and nothing else on this screen would remind them. -->
       <div class="wide"><label for="docDescriptions">Candidate descriptions</label><input type="text" id="docDescriptions" placeholder="https://… — with photos if possible; tell your candidates these are shared"></div>
       <div class="wide"><label for="docApplications">Applications and interviews</label><input type="text" id="docApplications" placeholder="https://… — your Appian course folder"></div>
+    </div>
+    <!-- This </div> closes the assessor documents group. It went missing
+         when the three 14.1 documents were added on 27 Sep 2026, and without
+         it the Save button and every panel after Settings -- Roster and
+         links, Assignments -- were parsed INSIDE the Settings panel: those
+         two tabs opened blank on the live site until the same evening. -->
     <!-- Handbook 14.2: the assessor "will co-observe" teaching practice and
          "the portfolio of at least one of the candidates observed doing
          teaching practice should be read". Which candidates that is, is the
@@ -447,10 +454,28 @@
       <div class="wide"><label for="docActionPlan">Action plan agreed with Cambridge</label><input type="text" id="docActionPlan" placeholder="https://… — only if one is in place"></div>
     </div>
 
+    <!-- Ramy, 27 Sep 2026: "TP points could also be a link then... They're
+         only going to read them." The things a candidate reads but never
+         writes into -- TP points, the getting-to-know-you activities, the
+         timetable -- live wherever the centre keeps them; the candidate's home
+         gets a Course files card listing whatever is pasted here. -->
+    <h3 class="docsh">Files for candidates</h3>
+    <p class="note" style="margin-top:0;">Links the candidates read: TP points, getting-to-know-you activities, the timetable, anything else. Each one becomes a line on their home screen. Leave a link empty and it does not show.</p>
+    <div id="candLinks" class="fields docs"></div>
+    <button type="button" class="btn ghost" id="addCandLink" style="margin-top:10px;">Add a link</button>
+
     <div class="saverow"><button class="btn primary" id="saveSettings">Save</button><span id="settingsStatus" aria-live="polite"></span></div>
   </div>
 
+
   <!-- ================= Roster and links ================= -->
+  <!-- ================= Observations ================= -->
+  <div class="panel" id="panel-observations" style="display:none;max-width:720px;">
+    <h2>Observation tasks</h2>
+    <p class="lede">Fifteen sheets the candidates fill in: nine for their own teaching practice group, four for filmed lessons, two for live ones. The words are yours to change; the shape of each sheet is fixed, because it is what the candidate fills in and what prints.</p>
+    <div id="observationRows"></div>
+  </div>
+
   <div class="panel" id="panel-roster" style="display:none;">
     <div id="storeRoster"></div>
   </div>
@@ -495,10 +520,11 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609272135"></script>
-<script src="hub-store.js?v=202609272135"></script>
-<script src="hub-shared.js?v=202609272135"></script>
-<script src="hub-sync.js?v=202609272135"></script>
+<script src="assignment-defaults.js?v=202609272155"></script>
+<script src="hub-store.js?v=202609272155"></script>
+<script src="observation-defaults.js?v=202609272155"></script>
+<script src="hub-shared.js?v=202609272155"></script>
+<script src="hub-sync.js?v=202609272155"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -603,7 +629,8 @@ function renderSetup(){
        still asking for the trainees to be added. The roster is the only thing
        that knows. */
     roster: trainees > 0,
-    assignments: !!w
+    assignments: !!w,
+    observations: (function(){ try { const o = JSON.parse(localStorage.getItem('connect_observation_wording_v1')); return !!(o && o.peer); } catch(e) { return false; } })()
   };
   document.querySelectorAll('#tabs .tab').forEach(b=>{
     b.classList.toggle('done', !!done[b.dataset.tab]);
@@ -630,8 +657,10 @@ try {
     if(cs.notificationRef) document.getElementById('notificationRef').value = cs.notificationRef;
     if(cs.docs) DOC_FIELDS.forEach(k=>{ if(cs.docs[k]) document.getElementById(k).value = cs.docs[k]; });
     if(cs.logo){ courseLogo = cs.logo; applyLogoPreview(courseLogo); }
+    if(Array.isArray(cs.courseLinks)) CAND_LINKS = cs.courseLinks.filter(l => l && (l.label || l.url));
   }
 } catch(e) {}
+renderCandLinks();
 
 document.getElementById('logoUploadBtn').addEventListener('click', ()=>document.getElementById('logoFile').click());
 document.getElementById('logoFile').addEventListener('change', e=>{
@@ -669,6 +698,7 @@ document.getElementById('saveSettings').addEventListener('click', () => {
     notificationRef: document.getElementById('notificationRef').value.trim(),
     assessorVisit: [...document.querySelectorAll('.avpick:checked')].map(b=>b.value),
     docs: DOC_FIELDS.reduce((o,k)=>{ const v = document.getElementById(k).value.trim(); if (v) o[k] = v; return o; }, {}),
+    courseLinks: readCandLinks(),
     logo: courseLogo
   }));
   // The assessor link expires 14 days after the course end date, which this
@@ -678,6 +708,40 @@ document.getElementById('saveSettings').addEventListener('click', () => {
   document.getElementById('settingsStatus').textContent = cn ? 'Saved \u2014 ' + cn + '.' : 'Saved.';
   renderTitle(); renderSetup();
 });
+
+/* ---- Files for candidates ----------------------------------------------- */
+/* Three suggested lines to start with, so the field says what it is for; a
+   line with no link is not saved and does not show. */
+/* var, not const: the settings load above runs first and already calls
+   renderCandLinks(); function declarations hoist, block-scoped names do not. */
+var SUGGESTED_LINKS = ['TP points', 'Getting-to-know-you activities', 'Course timetable'];
+var CAND_LINKS = CAND_LINKS || [];
+function renderCandLinks(){
+  if (!CAND_LINKS) CAND_LINKS = []; // the load block calls this before the var below is assigned
+  const SUG = ['TP points', 'Getting-to-know-you activities', 'Course timetable'];
+  const have = CAND_LINKS.map(l => l.label);
+  const rows = CAND_LINKS.concat(SUG.filter(s => !have.includes(s)).map(label => ({ label, url:'' })));
+  document.getElementById('candLinks').innerHTML = rows.map((l, i) =>
+    `<div><label>Label</label><input type="text" class="cl-label" data-i="${i}" value="${esc(l.label)}" placeholder="What the candidate sees"></div>
+     <div><label>Link</label><input type="text" class="cl-url" data-i="${i}" value="${esc(l.url)}" placeholder="https://…"></div>`).join('');
+}
+function readCandLinks(){
+  const labels = [...document.querySelectorAll('.cl-label')], urls = [...document.querySelectorAll('.cl-url')];
+  const out = labels.map((el, i) => ({ label: el.value.trim(), url: (urls[i] ? urls[i].value : '').trim() })).filter(l => l.url);
+  CAND_LINKS = out; return out;
+}
+document.getElementById('addCandLink').addEventListener('click', () => { readCandLinks(); CAND_LINKS.push({ label:'', url:'' }); renderCandLinks(); });
+
+/* ---- Observations tab ------------------------------------------------------ */
+(function(){
+  let ow = null; try { ow = JSON.parse(localStorage.getItem('connect_observation_wording_v1')); } catch(e) {}
+  const set = (ow && ow.peer) ? ow : (window.CONNECT_HUB_OBSERVATION_DEFAULTS || { peer:[], filmed:[], live:[] });
+  const groups = [['peer','Peer observations','done twice, for the a and b halves of the TP day'], ['filmed','Filmed lessons','turned in, with the date'], ['live','Live lessons','turned in, with the date']];
+  document.getElementById('observationRows').innerHTML = groups.map(([g, name, aside]) =>
+    `<h3 class="docsh" style="margin-top:22px;">${name} <span class="muted" style="font-weight:400;font-size:0.8rem;">${aside}</span></h3>` +
+    (set[g]||[]).map(t => `<div class="arow" data-key="${esc(t.id)}"><div><span class="code">${t.tp ? 'TP' + t.tp : g === 'filmed' ? 'FILMED' : 'LIVE'}</span><div class="title2">${esc(t.title)}</div>${t.recording || t.sub ? `<div class="aside">${esc(t.recording || t.sub)}</div>` : ''}</div><a class="btn ghost" href="19_observation_wording.html?task=${encodeURIComponent(t.id)}" style="text-decoration:none;">Edit wording</a></div>`).join('')
+  ).join('');
+})();
 
 const ROSTER_KEY='connect_roster_v1';
 function loadRoster(){ try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
