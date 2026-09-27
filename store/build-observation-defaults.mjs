@@ -65,7 +65,11 @@ const filmedSrc = docText('Filmed_Observation_Tasks-2.docx');
 const filmed = [];
 for (const part of filmedSrc.split(/\n(?=[A-Z][^\n]{0,60}\nRecording:)/).slice(1)) {
   const lines = part.split('\n').map((l) => l.trim()).filter(Boolean);
-  filmed.push({ id: 'filmed' + (filmed.length + 1), title: lines[0], recording: lines[1] || '',
+  /* The first sheet named its teacher by her clothes ("female teacher in
+     yellow"); Ramy, 27 Sep 2026: "remove the female teacher in yellow part".
+     Every recording line reads the same way now. */
+  const recording = (lines[1] || '').replace(/^Recording:.*?observation\s*(\d+)\s*$/i, 'Recording: observation $1');
+  filmed.push({ id: 'filmed' + (filmed.length + 1), title: lines[0], recording,
     shape: 'notes', rows: numbered(part) });
 }
 

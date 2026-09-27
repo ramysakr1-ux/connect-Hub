@@ -189,7 +189,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
     {
       "id": "filmed1",
       "title": "Grammar: Conditionals",
-      "recording": "Recording: female teacher in yellow- Observation 1",
+      "recording": "Recording: observation 1",
       "shape": "notes",
       "rows": [
         "What is the target language, and what is the marker sentence the teacher works from? Write it down exactly.",
