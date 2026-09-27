@@ -80,6 +80,26 @@
   .still .want{font-family:'Newsreader',Georgia,serif; font-size:1.3rem; color:var(--ink-warm, #46342a);}
   .still .how{font-size:0.9rem; color:var(--grey, #6b6157); max-width:46ch; line-height:1.6;}
 
+  /* A chapter card. Ramy, 27 Sep 2026: "one screen, big font \u2014 the trainer
+     side, then the trainee, then the assessor. It's like this is a new chapter
+     in this book." It covers the stage completely, so the cut either side of
+     it is clean, and it fades rather than snaps. */
+  .chapter{position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:18px; text-align:center; padding:60px;
+    background:var(--sand, #fbfaf7); opacity:0; pointer-events:none;
+    transition:opacity .55s ease;}
+  .chapter.on{opacity:1;}
+  .chapter .num{font-size:0.78rem; letter-spacing:0.22em; text-transform:uppercase;
+    color:var(--grey, #6b6157);}
+  .chapter .who{font-family:'Newsreader',Georgia,serif; font-weight:700;
+    font-size:3.4rem; line-height:1.05; margin:0; color:var(--teal, #1e6b63);}
+  /* One hairline under the title, in the gold that edges every card in the
+     product -- the only ornament the card gets. */
+  .chapter .rule{width:84px; height:3px; border-radius:2px;
+    background:var(--gold, oklch(63% 0.096 72));}
+  .chapter .sub{margin:0; font-size:1.02rem; line-height:1.65; max-width:44ch;
+    color:var(--ink-warm, #46342a);}
+
   /* The cursor. Drawn over the stage, moved with a transition so it glides
      rather than jumps; the click ring is a one-shot. */
   .cursor{position:absolute; top:0; left:0; width:22px; height:22px; pointer-events:none;
@@ -126,6 +146,12 @@
     <div class="still" id="still">
       <div class="want" id="stillWant"></div>
       <div class="how" id="stillHow"></div>
+    </div>
+    <div class="chapter" id="chapter">
+      <div class="num" id="chapterNum"></div>
+      <h2 class="who" id="chapterWho"></h2>
+      <div class="rule"></div>
+      <p class="sub" id="chapterSub"></p>
     </div>
     <div class="ring" id="ring"></div>
     <div class="cursor" id="cursor">
@@ -174,6 +200,7 @@
   var stage = document.getElementById('stage');
   var frame = document.getElementById('screen');
   var still = document.getElementById('still');
+  var chapter = document.getElementById('chapter');
   var cursor = document.getElementById('cursor');
   var ring = document.getElementById('ring');
   var capEl = document.getElementById('caption');
@@ -446,6 +473,19 @@
       cursor.classList.remove('on');
       showScreen(as, s.screen, function () {});
       return (s.ms || 2200);
+    },
+    /* A full-screen title between the journeys. It holds, then fades out and
+       leaves the screen behind it, which is why the scene it opens still does
+       its own settle: the card is covering a real screen that is loading. */
+    chapter: function (s) {
+      document.getElementById('chapterNum').textContent = s.num || '';
+      document.getElementById('chapterWho').textContent = s.text || '';
+      document.getElementById('chapterSub').textContent = s.sub || '';
+      chapter.classList.add('on');
+      cursor.classList.remove('on');
+      var hold = s.ms || 3400;
+      later(function () { chapter.classList.remove('on'); }, hold);
+      return hold + 700;
     },
     still: function (s) {
       document.getElementById('stillWant').textContent = s.want;

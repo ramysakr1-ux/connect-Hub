@@ -41,33 +41,44 @@
 
 var SCENES = [
 
-  /* ============================ Stage one \u00b7 A centre sets up a course == */
+  /* THREE CHAPTERS, EACH OPENING ON ITS OWN LINK.
+
+     Ramy, 27 Sep 2026: "we don't have to have an overture. It could be a big
+     title \u2014 the assessor link \u2014 and then it shows the assessor. The trainee
+     shows the trainee link again. So we don't have to build something new."
+
+     So there is no separate introduction. Each chapter opens with a title
+     card, then the invitation card for that person, then what they do. The
+     card is the same design three times over and only the words change, which
+     is the point being made: one link each, and the link says what it opens.
+
+     The owner console is not here at all \u2014 it is how the product's owner
+     mints a course, not how a centre uses one. */
+
+  /* ======================================== Chapter one \u00b7 The trainer == */
 
   {
-    title: 'The card arrives',
+    title: 'The trainer\u2019s link',
     screen: 'invite.html',
-    about: 'The trainer opens their invitation card. Held properly this time \u2014 the card used to get under three seconds before two capture placeholders covered it. Then where the link can live, then offline, then it opens the course. Read-only; the card renders from the URL alone.',
+    about: 'Chapter one opens. The trainer\u2019s card, held, then it opens the course. The film\u2019s first words are here because this is its first frame.',
     settle: 1400,
     steps: [
-      { do: 'hold', ms: 1600 },
+      /* The film's own opening card covers the stage for 3.2 seconds while the
+         first screen loads behind it. Chapter one's card used to play UNDER
+         it and was almost entirely spent by the time it cleared. This waits
+         it out. The other two chapters need no such wait. */
+      { do: 'hold', ms: 2400 },
+      { do: 'chapter', num: 'Chapter one', text: 'The trainer', sub: 'A course set up, its assignments written, its assessor expected, and eight lessons of feedback to give.', ms: 3600 },
+      { do: 'hold', ms: 1400 },
       { do: 'caption', text: 'No download, no upload, no hunting for paper.' },
       { do: 'hold', ms: 2600 },
       { do: 'caption', text: 'A course arrives as one link, and a card that says what it opens.' },
       { do: 'hold', ms: 3120 },
       { do: 'caption', text: 'No account to make. No password to forget.' },
-      { do: 'hold', ms: 2600 },
-      {
-        do: 'still', ms: 2600,
-        want: 'Google Classroom, or Drive \u2014 the link sitting where the course already lives',
-        how: 'Simple: a stream or a folder with the Lite link in it. It only has to say WHERE the link can live \u2014 no elaborate capture. ONE shot; the film used to spend five seconds under two of these and the card lost its own scene to them.'
-      },
-      { do: 'caption', text: 'Put it wherever your course already lives.' },
       { do: 'hold', ms: 2080 },
-      { do: 'caption', text: 'It still opens when the internet doesn\u2019t.' },
-      { do: 'hold', ms: 2600 },
       { do: 'move', to: '#go' },
-      { do: 'hold', ms: 1690 },
-      { do: 'click', on: '#go', ms: 2200 }
+      { do: 'hold', ms: 1400 },
+      { do: 'click', on: '#go', ms: 2400 }
     ]
   },
 
@@ -139,7 +150,6 @@ var SCENES = [
     ]
   },
 
-
   {
     title: 'Ready for the assessor',
     screen: '6_centre_admin_dashboard.html',
@@ -163,36 +173,156 @@ var SCENES = [
   },
 
   {
-    title: 'The candidate gets their link',
+    title: 'And it makes the others',
     screen: '6_centre_admin_dashboard.html',
-    course: 'scratch',
-    about: 'The roster, and the Copy beside a name. Each candidate\u2019s link is their own \u2014 the screen says so in place of the address: \u201cTheirs alone \u2014 post it in Classroom.\u201d Nothing is written here; Copy is a clipboard call.',
-    settle: 2000,
+    about: 'Where the other two links come from: the course\u2019s own links panel, and a Copy beside every candidate\u2019s name. Read-only \u2014 nothing is rotated and nothing is added.',
+    settle: 2200,
     steps: [
-      { do: 'click', on: '[data-tab="roster"]', ms: 1500 },
-      { do: 'hold', ms: 1500 },
-      { do: 'caption', text: 'Every candidate gets their own link. Nobody gets anyone else\u2019s.' },
-      { do: 'scroll', to: 500, ms: 2400 },
+      { do: 'click', on: '[data-tab="roster"]', ms: 1600 },
+      { do: 'hold', ms: 1400 },
+      { do: 'caption', text: 'Everyone gets their own link. Nobody gets anyone else\u2019s.' },
+      { do: 'move', to: '#assessorBlock' },
+      { do: 'hold', ms: 2600 },
+      { do: 'scroll', to: 600, ms: 2400 },
       { do: 'move', to: '.roster .acts button[data-copy]' },
       { do: 'hold', ms: 2600 }
     ]
   },
 
-  /* ======================== Stage two \u00b7 A candidate does the course == */
-
   {
-    title: 'The candidate\u2019s card',
-    screen: 'invite.html',
-    role: 'trainee', as: 'Emily Carter',
-    about: 'The same card, the candidate\u2019s words. One design, three roles \u2014 the wording changes and nothing else does.',
-    settle: 1400,
+    title: 'The trainer’s desk',
+    screen: '5_tutor_dashboard.html',
+    about: 'Twelve rows and the three counters. Read-only.',
+    settle: 1600,
     steps: [
       { do: 'hold', ms: 1500 },
+      { do: 'caption', text: 'Nothing to hunt for.' },
+      { do: 'move', to: '#cTp' },
+      { do: 'hold', ms: 2600 },
+      { do: 'scroll', to: 420, ms: 2200 },
+      { do: 'hold', ms: 1500 }
+    ]
+  },
+
+  {
+    title: 'Feedback, said',
+    screen: '3_tutor_feedback.html',
+    params: { trainee: 'Zeyne' },
+    about: 'A point dictated, the criterion chips underneath, the solid one that the course’s own tutors have tagged, and the code landing inside the sentence. <b>Writes stubbed</b> — a take must not alter a real candidate’s feedback.<br><b>Chrome, microphone permitted</b>, as with the plan.',
+    settle: 2200,
+    stub: ['put'],
+    steps: [
+      { do: 'hold', ms: 1400 },
+      { do: 'caption', text: 'The tutor writes the same way. Box, then Dictate.' },
+      /* #lST is an empty container -- its own "+ Add point" button, which
+         carries data-list="lST", is what puts a point row in it. A point is a
+         contenteditable div, not a field: the tag chips live inside it. The
+         selector here used to look for a textarea, found nothing, and the
+         scene played through typing not one word (27 Sep 2026). */
+      { do: 'click', on: 'button[data-list="lST"]', ms: 1200 },
+      { do: 'click', on: '#lST .pt:last-child .pt-text', ms: 900 },
+      { do: 'click', on: '.dictbtn', ms: 1500 },
+      { do: 'type', into: '#lST .pt:last-child .pt-text', ms: 4000, text: 'Set the task before handing out the text, and checked it with a quick question' },
+      { do: 'click', on: '.dictbtn', ms: 1400 },
+      { do: 'hold', ms: 1690 },
+      /* THE CLEVEREST THING IN THE PRODUCT, and it had one caption and no
+         picture. The suggester reads the point 500ms after it stops changing,
+         so the chips are there by now; clicking one puts the code inside the
+         sentence, where it stays with the words it belongs to. */
+      { do: 'caption', text: 'It reads the point and offers the criteria it meets.' },
+      { do: 'move', to: '#lST .pt:last-child .suggest-row' },
+      { do: 'hold', ms: 2200 },
+      { do: 'click', on: '#lST .pt:last-child .suggest-chip', ms: 1800 },
+      { do: 'hold', ms: 1690 },
+      { do: 'caption', text: 'Tagged inside the sentence — not on a separate form afterwards.' },
+      { do: 'hold', ms: 2080 },
+      /* Checked on the demo, 27 Sep: this sentence draws 5g and 5f and BOTH
+         come back solid -- the course's own tutors have tagged them before. So
+         the caption claims only what is in the frame. The dashed/solid contrast
+         is real but there is no dashed chip on screen to compare it against,
+         and a caption naming one would be describing a picture the viewer
+         cannot see. */
+      { do: 'caption', text: 'Solid means your own tutors have tagged it before. It learns your centre.' },
+      { do: 'hold', ms: 2600 }
+    ]
+  },
+
+  {
+    title: 'Feedback, all at once',
+    screen: '3_tutor_feedback.html',
+    params: { trainee: 'Zeyne' },
+    about: 'The exchange: Copy, talk it through elsewhere, Paste something back, every box fills. Writes stubbed.',
+    settle: 2200,
+    stub: ['put'],
+    steps: [
+      { do: 'scroll', to: 300, ms: 1800 },
+      { do: 'caption', text: 'Or talk the whole lesson through somewhere else, and paste it all back.' },
+      { do: 'click', on: '#xCopy', ms: 1800 },
+      {
+        do: 'still', ms: 2380,
+        want: 'The brief, pasted into any model, and the trainer talking',
+        how: 'Capture a dictation window with the copied brief in it and the trainer speaking the lesson through. If it cannot be shown, cut straight from Copy to Paste something back.'
+      },
+      { do: 'click', on: '#xPasteToggle', ms: 1400 },
+      { do: 'hold', ms: 1500 },
+      { do: 'caption', text: 'Every stage, every list, every comment — to read before it goes anywhere.' },
+      { do: 'move', to: '#returnBtn' },
+      { do: 'hold', ms: 3250 }
+    ]
+  },
+
+  {
+    title: 'Marked against the criteria',
+    screen: '10_tutor_assignment_marking.html',
+    params: { trainee: 'Anastasia', a: 'fol' },
+    about: 'Anastasia Volkova’s Focus on the Learner is really awaiting marking on the demo course. Six criteria are marked on camera and the outcome works itself out; <b>writes stubbed</b>, so Save &amp; return changes nothing and the record is the same after the take.',
+    settle: 6000,
+    stub: ['put'],
+    steps: [
+      { do: 'hold', ms: 1400 },
+      { do: 'caption', text: 'One sheet, one candidate, the centre’s own criteria.' },
+      { do: 'scroll', to: 700, ms: 2600 },
+      { do: 'hold', ms: 1200 },
+      /* Six criteria, one at a time. Each click re-renders the sheet, which is
+         why they are separate steps against the same selectors rather than one
+         loop: the buttons are new elements each time. */
+      { do: 'caption', text: 'Met, or not yet met. One judgement each.' },
+      { do: 'click', on: '[data-crit="0"]', ms: 1100 },
+      { do: 'click', on: '[data-crit="1"]', ms: 1000 },
+      { do: 'click', on: '[data-crit="2"]', ms: 1000 },
+      { do: 'click', on: '[data-crit="3"]', ms: 1000 },
+      { do: 'click', on: '[data-crit="4"]', ms: 1000 },
+      { do: 'click', on: '[data-crit="5"]', ms: 1400 },
+      /* .derived carries the outcome, and it only exists once every criterion
+         is marked -- so this beat cannot be faked by skipping one. */
+      { do: 'caption', text: 'The outcome comes from the marks, not from a box.' },
+      { do: 'move', to: '.derived' },
+      { do: 'hold', ms: 2600 },
+      { do: 'type', into: '#comment', ms: 3200, text: 'Strong on the learner’s background and needs. The two language points need more evidence from the interview.' },
+      { do: 'hold', ms: 1200 },
+      { do: 'caption', text: 'Sent back with your comment on every criterion.' },
+      { do: 'move', to: '#saveBtn' },
+      { do: 'hold', ms: 1950 }
+    ]
+  },
+
+
+  /* ======================================== Chapter two \u00b7 The trainee == */
+
+  {
+    title: 'The trainee\u2019s link',
+    screen: 'invite.html',
+    role: 'trainee', as: 'Emily Carter',
+    about: 'Chapter two opens. The same card, the candidate\u2019s words \u2014 and the line that matters to them: this one is theirs alone.',
+    settle: 1400,
+    steps: [
+      { do: 'chapter', num: 'Chapter two', text: 'The trainee', sub: 'One link, and everything they write on the course lives behind it \u2014 plans, self-evaluations, the feedback they are given, four assignments.', ms: 3600 },
+      { do: 'hold', ms: 1400 },
       { do: 'caption', text: 'The same card, in their words.' },
       { do: 'hold', ms: 2600 },
       { do: 'caption', text: 'This one is theirs alone \u2014 and the card says so.' },
       { do: 'hold', ms: 2600 },
-      { do: 'click', on: '#go', ms: 2200 }
+      { do: 'click', on: '#go', ms: 2400 }
     ]
   },
 
@@ -285,90 +415,6 @@ var SCENES = [
     ]
   },
 
-
-  {
-    title: 'The trainer’s desk',
-    screen: '5_tutor_dashboard.html',
-    about: 'Twelve rows and the three counters. Read-only.',
-    settle: 1600,
-    steps: [
-      { do: 'hold', ms: 1500 },
-      { do: 'caption', text: 'Nothing to hunt for.' },
-      { do: 'move', to: '#cTp' },
-      { do: 'hold', ms: 2600 },
-      { do: 'scroll', to: 420, ms: 2200 },
-      { do: 'hold', ms: 1500 }
-    ]
-  },
-
-  {
-    title: 'Feedback, said',
-    screen: '3_tutor_feedback.html',
-    params: { trainee: 'Zeyne' },
-    about: 'A point dictated, the criterion chips underneath, the solid one that the course’s own tutors have tagged, and the code landing inside the sentence. <b>Writes stubbed</b> — a take must not alter a real candidate’s feedback.<br><b>Chrome, microphone permitted</b>, as with the plan.',
-    settle: 2200,
-    stub: ['put'],
-    steps: [
-      { do: 'hold', ms: 1400 },
-      { do: 'caption', text: 'The tutor writes the same way. Box, then Dictate.' },
-      /* #lST is an empty container -- its own "+ Add point" button, which
-         carries data-list="lST", is what puts a point row in it. A point is a
-         contenteditable div, not a field: the tag chips live inside it. The
-         selector here used to look for a textarea, found nothing, and the
-         scene played through typing not one word (27 Sep 2026). */
-      { do: 'click', on: 'button[data-list="lST"]', ms: 1200 },
-      { do: 'click', on: '#lST .pt:last-child .pt-text', ms: 900 },
-      { do: 'click', on: '.dictbtn', ms: 1500 },
-      { do: 'type', into: '#lST .pt:last-child .pt-text', ms: 4000, text: 'Set the task before handing out the text, and checked it with a quick question' },
-      { do: 'click', on: '.dictbtn', ms: 1400 },
-      { do: 'hold', ms: 1690 },
-      /* THE CLEVEREST THING IN THE PRODUCT, and it had one caption and no
-         picture. The suggester reads the point 500ms after it stops changing,
-         so the chips are there by now; clicking one puts the code inside the
-         sentence, where it stays with the words it belongs to. */
-      { do: 'caption', text: 'It reads the point and offers the criteria it meets.' },
-      { do: 'move', to: '#lST .pt:last-child .suggest-row' },
-      { do: 'hold', ms: 2200 },
-      { do: 'click', on: '#lST .pt:last-child .suggest-chip', ms: 1800 },
-      { do: 'hold', ms: 1690 },
-      { do: 'caption', text: 'Tagged inside the sentence — not on a separate form afterwards.' },
-      { do: 'hold', ms: 2080 },
-      /* Checked on the demo, 27 Sep: this sentence draws 5g and 5f and BOTH
-         come back solid -- the course's own tutors have tagged them before. So
-         the caption claims only what is in the frame. The dashed/solid contrast
-         is real but there is no dashed chip on screen to compare it against,
-         and a caption naming one would be describing a picture the viewer
-         cannot see. */
-      { do: 'caption', text: 'Solid means your own tutors have tagged it before. It learns your centre.' },
-      { do: 'hold', ms: 2600 }
-    ]
-  },
-
-  {
-    title: 'Feedback, all at once',
-    screen: '3_tutor_feedback.html',
-    params: { trainee: 'Zeyne' },
-    about: 'The exchange: Copy, talk it through elsewhere, Paste something back, every box fills. Writes stubbed.',
-    settle: 2200,
-    stub: ['put'],
-    steps: [
-      { do: 'scroll', to: 300, ms: 1800 },
-      { do: 'caption', text: 'Or talk the whole lesson through somewhere else, and paste it all back.' },
-      { do: 'click', on: '#xCopy', ms: 1800 },
-      {
-        do: 'still', ms: 2380,
-        want: 'The brief, pasted into any model, and the trainer talking',
-        how: 'Capture a dictation window with the copied brief in it and the trainer speaking the lesson through. If it cannot be shown, cut straight from Copy to Paste something back.'
-      },
-      { do: 'click', on: '#xPasteToggle', ms: 1400 },
-      { do: 'hold', ms: 1500 },
-      { do: 'caption', text: 'Every stage, every list, every comment — to read before it goes anywhere.' },
-      { do: 'move', to: '#returnBtn' },
-      { do: 'hold', ms: 3250 }
-    ]
-  },
-
-
   {
     title: 'The trainee reads it',
     screen: '4_feedback_returned.html',
@@ -431,41 +477,6 @@ var SCENES = [
   },
 
   {
-    title: 'Marked against the criteria',
-    screen: '10_tutor_assignment_marking.html',
-    params: { trainee: 'Anastasia', a: 'fol' },
-    about: 'Anastasia Volkova’s Focus on the Learner is really awaiting marking on the demo course. Six criteria are marked on camera and the outcome works itself out; <b>writes stubbed</b>, so Save &amp; return changes nothing and the record is the same after the take.',
-    settle: 6000,
-    stub: ['put'],
-    steps: [
-      { do: 'hold', ms: 1400 },
-      { do: 'caption', text: 'One sheet, one candidate, the centre’s own criteria.' },
-      { do: 'scroll', to: 700, ms: 2600 },
-      { do: 'hold', ms: 1200 },
-      /* Six criteria, one at a time. Each click re-renders the sheet, which is
-         why they are separate steps against the same selectors rather than one
-         loop: the buttons are new elements each time. */
-      { do: 'caption', text: 'Met, or not yet met. One judgement each.' },
-      { do: 'click', on: '[data-crit="0"]', ms: 1100 },
-      { do: 'click', on: '[data-crit="1"]', ms: 1000 },
-      { do: 'click', on: '[data-crit="2"]', ms: 1000 },
-      { do: 'click', on: '[data-crit="3"]', ms: 1000 },
-      { do: 'click', on: '[data-crit="4"]', ms: 1000 },
-      { do: 'click', on: '[data-crit="5"]', ms: 1400 },
-      /* .derived carries the outcome, and it only exists once every criterion
-         is marked -- so this beat cannot be faked by skipping one. */
-      { do: 'caption', text: 'The outcome comes from the marks, not from a box.' },
-      { do: 'move', to: '.derived' },
-      { do: 'hold', ms: 2600 },
-      { do: 'type', into: '#comment', ms: 3200, text: 'Strong on the learner’s background and needs. The two language points need more evidence from the interview.' },
-      { do: 'hold', ms: 1200 },
-      { do: 'caption', text: 'Sent back with your comment on every criterion.' },
-      { do: 'move', to: '#saveBtn' },
-      { do: 'hold', ms: 1950 }
-    ]
-  },
-
-  {
     title: 'Sent back, and one more go',
     screen: '9_assignment_submission.html',
     course: 'scratch',
@@ -500,19 +511,22 @@ var SCENES = [
   },
 
 
-  /* ================================== Stage three \u00b7 The assessor == */
+
+
+  /* ===================================== Chapter three \u00b7 The assessor == */
 
   {
-    title: 'The assessor\u2019s card',
+    title: 'The assessor\u2019s link',
     screen: 'invite.html',
     course: 'finished', role: 'assessor',
-    about: 'The third card. Read-only, and it says when it stops working \u2014 the course end plus fourteen days (Handbook 15).',
+    about: 'Chapter three opens. The third card \u2014 read-only, and it says when it stops working: the course end plus fourteen days (Handbook 15).',
     settle: 1400,
     steps: [
-      { do: 'hold', ms: 1500 },
+      { do: 'chapter', num: 'Chapter three', text: 'The assessor', sub: 'Everything Cambridge asks a centre to have ready, gathered behind one read-only link.', ms: 3600 },
+      { do: 'hold', ms: 1400 },
       { do: 'caption', text: 'And the assessor\u2019s \u2014 read-only, and it expires.' },
       { do: 'hold', ms: 3120 },
-      { do: 'click', on: '#go', ms: 2200 }
+      { do: 'click', on: '#go', ms: 2400 }
     ]
   },
 
@@ -548,7 +562,6 @@ var SCENES = [
       { do: 'hold', ms: 2600 }
     ]
   },
-
 
   {
     title: 'The final report \u2014 the end',
