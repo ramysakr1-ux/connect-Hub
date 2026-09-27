@@ -241,38 +241,36 @@ var SCENES = [
     title: 'Feedback, said',
     screen: '3_tutor_feedback.html',
     params: { trainee: 'Zeyne' },
-    about: 'A point dictated, the criterion chips underneath, the solid one that the course’s own tutors have tagged, and the code landing inside the sentence. <b>Writes stubbed</b> — a take must not alter a real candidate’s feedback.<br><b>Chrome, microphone permitted</b>, as with the plan.',
+    about: 'A point spoken, then the criteria the sentence itself suggests, and the code landing inside it. <b>Writes stubbed</b> \u2014 a take must not alter a real candidate\u2019s feedback.<br><b>Chrome, with the microphone already permitted.</b> If the mic is refused the button drops back to \u201cDictate\u201d on camera and the beat is lost \u2014 watch for the garnet on the first take.',
     settle: 2200,
     stub: ['put'],
     steps: [
-      { do: 'hold', ms: 979 },
+      { do: 'hold', ms: 900 },
       /* #lST is an empty container -- its own "+ Add point" button, which
          carries data-list="lST", is what puts a point row in it. A point is a
-         contenteditable div, not a field: the tag chips live inside it. The
-         selector here used to look for a textarea, found nothing, and the
-         scene played through typing not one word (27 Sep 2026). */
+         contenteditable div, not a field: the tag chips live inside it. */
       { do: 'click', on: 'button[data-list="lST"]', ms: 1200 },
       { do: 'click', on: '#lST .pt:last-child .pt-text', ms: 900 },
+      /* PRESSED ONCE, AND LEFT ON. It used to be pressed again to stop, and
+         that second press was backwards whenever recognition did not start:
+         a refused microphone fires onerror, which sets the button back to
+         "Dictate" by itself -- so the film's "stop" click TURNED IT ON again,
+         asked for the microphone a second time, and ended the scene recording.
+         Nothing needs stopping here: the scene ends and the screen changes.
+         It also saves the cursor a second round trip to the bar, which is
+         fixed at the bottom right, a long way from the box. */
       { do: 'click', on: '.dictbtn', ms: 1500 },
       { do: 'type', into: '#lST .pt:last-child .pt-text', ms: 4000, text: 'Set the task before handing out the text, and checked it with a quick question' },
-      { do: 'click', on: '.dictbtn', ms: 1400 },
-      { do: 'hold', ms: 1183 },
-      /* THE CLEVEREST THING IN THE PRODUCT, and it had one caption and no
-         picture. The suggester reads the point 500ms after it stops changing,
-         so the chips are there by now; clicking one puts the code inside the
-         sentence, where it stays with the words it belongs to. */
+      { do: 'hold', ms: 1200 },
+      /* The suggester reads the point 500ms after it stops changing, so the
+         chips are there by now; clicking one puts the code inside the
+         sentence, where it stays with the words it belongs to. On the demo
+         this sentence draws 5g and 5f and both come back solid -- tagged
+         before by the course's own tutors. */
       { do: 'move', to: '#lST .pt:last-child .suggest-row' },
-      { do: 'hold', ms: 1540 },
+      { do: 'hold', ms: 1500 },
       { do: 'click', on: '#lST .pt:last-child .suggest-chip', ms: 1800 },
-      { do: 'hold', ms: 1183 },
-      { do: 'hold', ms: 800 },
-      /* Checked on the demo, 27 Sep: this sentence draws 5g and 5f and BOTH
-         come back solid -- the course's own tutors have tagged them before. So
-         the caption claims only what is in the frame. The dashed/solid contrast
-         is real but there is no dashed chip on screen to compare it against,
-         and a caption naming one would be describing a picture the viewer
-         cannot see. */
-      { do: 'hold', ms: 800 }
+      { do: 'hold', ms: 2000 }
     ]
   },
 
