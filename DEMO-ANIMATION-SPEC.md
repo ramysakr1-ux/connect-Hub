@@ -34,8 +34,12 @@ Capture from the live links, not from mock-ups. The tutor link opens everything.
 ◆ Hold on the card as it lands, one beat, no more. *The console is the place the link comes from and nothing else here; the film does not stay in it.*
 
 ### 2 · The card arrives — 0:12–0:35
-**Screen:** `invite.html` — the tutor's invitation card, as the trainer receives it: what the link is, who it is for, what not to do with it. Then the same card cut fast, three ways: open in a browser; posted inside a Google Classroom stream; in a Drive folder — and the Wi-Fi icon goes off and the page is still there.
-**Cursor:** arrives on the card; a beat; the three cuts; then *Open*.
+**Screen:** `invite.html` — the tutor's invitation card, as the trainer receives it: what the link is, who it is for, what not to do with it. Then three cuts that show **where the link lives**, and each one must show the *link itself* sitting in the other product, not just Lite's page again:
+1. a **Google Classroom** stream, with the Lite link posted as a material in it — the Classroom post is the frame, the link is a line inside it; click it and the card opens;
+2. a **Google Drive** folder listing, with the Lite link saved in it as a shortcut among the course's files; click it and the card opens;
+3. the card open in a plain browser tab, the Wi-Fi icon goes off — and the page is still there.
+**Cursor:** arrives on the card; a beat; the three cuts, each with the click that opens it; then *Open*.
+*(The earlier film showed the trainee page with an OFFLINE pill for all three cuts and never showed Drive or Classroom at all — Ramy, 27 Sep: "it should show that the link could live inside a G drive or inside Google Classroom." That is the point of the scene: the link is a thing that can be put where the course already lives.)*
 **Voice:** "This is what the trainer receives. It opens in a browser, in Classroom, from a Drive folder — anywhere a link opens. And once it has opened, it stays: lose the internet in the middle of a lesson plan and the page is still there. Nothing to install. Then it opens the course."
 ◆ Hold on the card before the click. ◆ Hold on Wi-Fi off, page still there.
 
@@ -154,16 +158,22 @@ Capture from the live links, not from mock-ups. The tutor link opens everything.
 
 ## Part 7 · The end of the course — 4:30–4:55 · *from `c4`*
 
-### 19 · The final report — 4:30–4:45
+### 19 · The whole record, printed — 4:30–4:45
+**Screen:** `4_feedback_returned.html` for one `c4` candidate — eight sheets on the desk, every teaching practice of the course. *Print / Save as PDF* → the dialog → **the PDF itself, in colour**: page after page — each TP's feedback with its grade and its coloured criteria, the plan's spine, the analysis sheet, the self-evaluation — the pages flipping steadily to the end.
+**Cursor:** the print button, then nothing; the pages do the work.
+**Voice:** "At the end of the course, one button prints a candidate's entire record — every teaching practice, every plan, every analysis, every self-evaluation and every word of feedback, as it was, in colour. That is what goes in the file."
+◆ **Hold on the PDF flipping.** Zoom on one feedback page so the colour reads. *Ramy, 27 Sep: "I want to show that colourful PDF of the whole feedback and lesson plan that is generated at the end. That should be there."*
+
+### 20 · The final report — 4:45–4:57
 **Screen:** `16_final_report.html` — the cover, the two assessment areas, the descriptor, both tutors' signatures. Then a second candidate's, cut fast; then a third.
-**Voice:** "And at the end, the report — assembled from the record, not written. Two signatures. One for every candidate. Print it."
+**Voice:** "And the report — assembled from the record, not written. Two signatures. One for every candidate. Print it."
 ◆ Hold on the signatures.
 
-### 20 · Close — 4:45–4:55
+### 21 · Close — 4:57–5:07
 **Screen:** back to the tutor's invitation card from scene 2, at rest. The foot of the screen is in frame — *designed and built by Ramy* — but nothing zooms on it and nothing is said about it.
 **Voice:** "That is the course. Every document a candidate produces and every word a trainer writes, in one place, behind one link — from the day it is sent to the day the reports are printed. Connect Lite."
 
-Running time ≈ 4:55 at a natural pace.
+Running time ≈ 5:07 at a natural pace; trim scenes 5 and 16 to land at 5:00. Seven parts, twenty-one scenes.
 
 ---
 
@@ -181,7 +191,9 @@ Running time ≈ 4:55 at a natural pace.
 
 All at `https://lite.celtaconnect.com/`. From **`c3`** (running): `14_owner.html` · `invite.html?k=` · `6_centre_admin_dashboard.html` (both tabs) · `8_assignment_wording.html` · `invite.html?t=` · `invite.html?ak=` · `index.html` · `1_trainee_plan_and_analysis.html` · `2_trainee_self_evaluation.html` · `5_tutor_dashboard.html` · `3_tutor_feedback.html?trainee=Zeynep` · `4_feedback_returned.html` (Emily) · `9_assignment_submission.html` (Jacob, LFC) · `10_tutor_assignment_marking.html` · `7_candidate_tracker.html`.
 
-From **`c4`** (finished): `12_assessor_pack.html` · `13_grades_report.html` · `16_final_report.html` (three candidates — all twelve have one).
+From **`c4`** (finished): `12_assessor_pack.html` · `13_grades_report.html` · `4_feedback_returned.html` (one candidate, all eight TPs, printed to PDF for scene 19) · `16_final_report.html` (three candidates — all twelve have one).
+
+For scene 2, two frames that are not Lite at all: a Google Classroom stream with the Lite link posted as a material, and a Google Drive folder with the link saved as a shortcut. Use a real Classroom and a real Drive folder of Ramy's, with nothing else of a real course visible in the frame.
 
 Both courses' three links are in the owner console. Never paste a link into this file.
 
