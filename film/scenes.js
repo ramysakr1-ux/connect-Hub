@@ -79,7 +79,10 @@ var SCENES = [
        held frame with nothing in it is the whole shot wasted. */
     settle: 3800,
     steps: [
-      { do: 'hold', ms: 3600 }
+      /* Quick. Ramy, 27 Sep 2026: "the console should be quick." There is
+         nothing to read on it \u2014 it is a look, not a screen a viewer has to
+         take anything from. */
+      { do: 'hold', ms: 2200 }
     ]
   },
 
@@ -88,26 +91,22 @@ var SCENES = [
   {
     title: 'The trainer\u2019s link',
     screen: 'invite.html',
-    about: 'Chapter one opens. The trainer\u2019s card, held, then it opens the course. The film\u2019s first words are here because this is its first frame.',
+    course: 'scratch',
+    about: 'Chapter one opens. The trainer\u2019s card, then the door it actually opens, then one click through to course admin \u2014 which is where the next scene carries on. <b>On the scratch course</b>, because this is the course about to be set up: the card used to be the demo\u2019s while the scene after it was a different course\u2019s admin screen, which is the jump that read as wrong.',
     settle: 1400,
     steps: [
-      /* No wait needed here any more: the console shot before this one runs
-         long enough to absorb the film's own opening card, which covers the
-         stage for its first 3.2 seconds. Chapter one's card used to play under
-         it and was nearly spent by the time it cleared. If the console shot is
-         ever cut, put a hold of about 2.4 seconds back at the top of this
-         scene or this card goes under the splash again. */
-      { do: 'chapter', num: 'Chapter one', text: 'The trainer', sub: 'A course set up, its assignments written, its assessor expected, and eight lessons of feedback to give.', ms: 3600 },
-      { do: 'hold', ms: 1400 },
-      { do: 'caption', text: 'No download, no upload, no hunting for paper.' },
-      { do: 'hold', ms: 2600 },
-      { do: 'caption', text: 'A course arrives as one link, and a card that says what it opens.' },
-      { do: 'hold', ms: 3120 },
-      { do: 'caption', text: 'No account to make. No password to forget.' },
-      { do: 'hold', ms: 2080 },
-      { do: 'move', to: '#go' },
-      { do: 'hold', ms: 1400 },
-      { do: 'click', on: '#go', ms: 2400 }
+      { do: 'chapter', num: 'Chapter one', text: 'The trainer', sub: 'A course set up, its assignments written, its assessor expected, and eight lessons of feedback to give.', ms: 3000 },
+      { do: 'hold', ms: 900 },
+      { do: 'caption', text: 'No download. No upload. No paper.' },
+      { do: 'caption', text: 'One link. No account, no password.' },
+      /* The card's own button, and then the room it opens. A tutor's link
+         lands on their dashboard -- that is the product and it is right -- and
+         course admin is one door off it. Showing BOTH is what makes the cut to
+         the next scene read as walking rather than teleporting. */
+      { do: 'click', on: '#go', ms: 2200 },
+      { do: 'hold', ms: 1200 },
+      { do: 'caption', text: 'A new course, waiting.' },
+      { do: 'click', on: 'text:Course admin', ms: 2400 }
     ]
   },
 
@@ -122,7 +121,7 @@ var SCENES = [
       { do: 'move', to: '[data-tab="settings"]' },
       { do: 'click', on: '[data-tab="settings"]', ms: 1400 },
       { do: 'hold', ms: 1560 },
-      { do: 'caption', text: 'No accounts, no passwords. The link is the account.' },
+      { do: 'caption', text: 'The link is the account.' },
       { do: 'click', on: '[data-tab="roster"]', ms: 1500 },
       { do: 'hold', ms: 1400 },
       /* The paste box is two doors in: "Add trainee" opens #addBox, and
@@ -153,28 +152,26 @@ var SCENES = [
          first beat: a new course already has Cambridge's four assignments in
          it, with their criteria, before anybody has set anything up. The scene
          used to click straight past it. */
-      { do: 'caption', text: 'A new course already has the four assignments in it.' },
+      { do: 'caption', text: 'The four assignments come with it.' },
       { do: 'move', to: '#list' },
       { do: 'hold', ms: 2600 },
-      { do: 'caption', text: 'Every word of them is yours to rewrite.' },
+      { do: 'caption', text: 'Every word is yours to rewrite.' },
       { do: 'click', on: '#list button[data-a]', ms: 1800 },
-      { do: 'scroll', to: 800, ms: 2600 },
+      { do: 'scroll', to: 800, ms: 2080 },
       { do: 'hold', ms: 1500 },
-      { do: 'caption', text: 'The sections, the fields, the declaration — your centre’s wording.' },
-      { do: 'scroll', to: 1600, ms: 2400 },
+      { do: 'scroll', to: 1600, ms: 1920 },
       { do: 'hold', ms: 1690 },
       /* The criteria are the load-bearing half of this screen: they are what
          the mark sheet two scenes later is built from, and what the candidate
          is judged against. */
-      { do: 'caption', text: 'And the marking criteria — which is what your tutors will mark against.' },
-      { do: 'scroll', to: 2400, ms: 2600 },
+      { do: 'caption', text: 'And the criteria they mark against.' },
+      { do: 'scroll', to: 2400, ms: 2080 },
       { do: 'hold', ms: 1950 },
       { do: 'click', on: 'text:Save assignment', ms: 2000 },
       /* The point of the scene: the centre's words are what the candidate is
          marked against. Same course, the candidate's own side. */
       { do: 'goto', screen: '9_assignment_submission.html', role: 'trainee', ms: 3200 },
-      { do: 'caption', text: 'And that is what your candidates see.' },
-      { do: 'scroll', to: 600, ms: 2800 },
+      { do: 'scroll', to: 600, ms: 2240 },
       { do: 'hold', ms: 1950 }
     ]
   },
@@ -188,15 +185,14 @@ var SCENES = [
     steps: [
       { do: 'click', on: '[data-tab="settings"]', ms: 1500 },
       { do: 'hold', ms: 1200 },
-      { do: 'caption', text: 'The assessor\u2019s visit is part of setting the course up, not a scramble at the end.' },
-      { do: 'scroll', to: 900, ms: 2600 },
+      { do: 'caption', text: 'The assessor\u2019s visit, set up early.' },
+      { do: 'scroll', to: 900, ms: 2080 },
       { do: 'type', into: '#visitDate', ms: 1400, text: '2026-10-21' },
       { do: 'hold', ms: 1500 },
-      { do: 'caption', text: 'Everything the Handbook asks you to have ready, in one list.' },
-      { do: 'scroll', to: 1700, ms: 2800 },
+      { do: 'scroll', to: 1700, ms: 2240 },
       { do: 'hold', ms: 2080 },
-      { do: 'caption', text: 'And the candidates the assessor will observe \u2014 your choice, recorded.' },
-      { do: 'scroll', to: 2500, ms: 2600 },
+      { do: 'caption', text: 'And who they will observe. Your choice.' },
+      { do: 'scroll', to: 2500, ms: 2080 },
       { do: 'hold', ms: 2600 }
     ]
   },
@@ -208,13 +204,13 @@ var SCENES = [
     settle: 2200,
     steps: [
       { do: 'click', on: '[data-tab="roster"]', ms: 1600 },
-      { do: 'hold', ms: 1400 },
-      { do: 'caption', text: 'Everyone gets their own link. Nobody gets anyone else\u2019s.' },
+      { do: 'hold', ms: 900 },
+      { do: 'caption', text: 'Everyone gets their own link.' },
       { do: 'move', to: '#assessorBlock' },
-      { do: 'hold', ms: 2600 },
-      { do: 'scroll', to: 600, ms: 2400 },
+      { do: 'hold', ms: 1612 },
+      { do: 'scroll', to: 600, ms: 1920 },
       { do: 'move', to: '.roster .acts button[data-copy]' },
-      { do: 'hold', ms: 2600 }
+      { do: 'hold', ms: 1612 }
     ]
   },
 
@@ -228,7 +224,7 @@ var SCENES = [
       { do: 'caption', text: 'Nothing to hunt for.' },
       { do: 'move', to: '#cTp' },
       { do: 'hold', ms: 2600 },
-      { do: 'scroll', to: 420, ms: 2200 },
+      { do: 'scroll', to: 420, ms: 1760 },
       { do: 'hold', ms: 1500 }
     ]
   },
@@ -242,7 +238,7 @@ var SCENES = [
     stub: ['put'],
     steps: [
       { do: 'hold', ms: 1400 },
-      { do: 'caption', text: 'The tutor writes the same way. Box, then Dictate.' },
+      { do: 'caption', text: 'Box, then Dictate.' },
       /* #lST is an empty container -- its own "+ Add point" button, which
          carries data-list="lST", is what puts a point row in it. A point is a
          contenteditable div, not a field: the tag chips live inside it. The
@@ -258,21 +254,21 @@ var SCENES = [
          picture. The suggester reads the point 500ms after it stops changing,
          so the chips are there by now; clicking one puts the code inside the
          sentence, where it stays with the words it belongs to. */
-      { do: 'caption', text: 'It reads the point and offers the criteria it meets.' },
+      { do: 'caption', text: 'It offers the criteria it meets.' },
       { do: 'move', to: '#lST .pt:last-child .suggest-row' },
       { do: 'hold', ms: 2200 },
       { do: 'click', on: '#lST .pt:last-child .suggest-chip', ms: 1800 },
       { do: 'hold', ms: 1690 },
-      { do: 'caption', text: 'Tagged inside the sentence — not on a separate form afterwards.' },
-      { do: 'hold', ms: 2080 },
+      { do: 'caption', text: 'Tagged inside the sentence.' },
+      { do: 'hold', ms: 900 },
       /* Checked on the demo, 27 Sep: this sentence draws 5g and 5f and BOTH
          come back solid -- the course's own tutors have tagged them before. So
          the caption claims only what is in the frame. The dashed/solid contrast
          is real but there is no dashed chip on screen to compare it against,
          and a caption naming one would be describing a picture the viewer
          cannot see. */
-      { do: 'caption', text: 'Solid means your own tutors have tagged it before. It learns your centre.' },
-      { do: 'hold', ms: 2600 }
+      { do: 'caption', text: 'Solid: your own tutors tagged it.' },
+      { do: 'hold', ms: 900 }
     ]
   },
 
@@ -284,8 +280,8 @@ var SCENES = [
     settle: 2200,
     stub: ['put'],
     steps: [
-      { do: 'scroll', to: 300, ms: 1800 },
-      { do: 'caption', text: 'Or talk the whole lesson through somewhere else, and paste it all back.' },
+      { do: 'scroll', to: 300, ms: 1440 },
+      { do: 'caption', text: 'Or talk it through elsewhere \u2014 and paste.' },
       { do: 'click', on: '#xCopy', ms: 1800 },
       {
         do: 'still', ms: 2380,
@@ -294,7 +290,7 @@ var SCENES = [
       },
       { do: 'click', on: '#xPasteToggle', ms: 1400 },
       { do: 'hold', ms: 1500 },
-      { do: 'caption', text: 'Every stage, every list, every comment — to read before it goes anywhere.' },
+      { do: 'caption', text: 'Every box filled. Yours to read first.' },
       { do: 'move', to: '#returnBtn' },
       { do: 'hold', ms: 3250 }
     ]
@@ -309,13 +305,12 @@ var SCENES = [
     stub: ['put'],
     steps: [
       { do: 'hold', ms: 1400 },
-      { do: 'caption', text: 'One sheet, one candidate, the centre’s own criteria.' },
-      { do: 'scroll', to: 700, ms: 2600 },
+      { do: 'caption', text: 'One sheet. Your own criteria.' },
+      { do: 'scroll', to: 700, ms: 2080 },
       { do: 'hold', ms: 1200 },
       /* Six criteria, one at a time. Each click re-renders the sheet, which is
          why they are separate steps against the same selectors rather than one
          loop: the buttons are new elements each time. */
-      { do: 'caption', text: 'Met, or not yet met. One judgement each.' },
       { do: 'click', on: '[data-crit="0"]', ms: 1100 },
       { do: 'click', on: '[data-crit="1"]', ms: 1000 },
       { do: 'click', on: '[data-crit="2"]', ms: 1000 },
@@ -324,12 +319,12 @@ var SCENES = [
       { do: 'click', on: '[data-crit="5"]', ms: 1400 },
       /* .derived carries the outcome, and it only exists once every criterion
          is marked -- so this beat cannot be faked by skipping one. */
-      { do: 'caption', text: 'The outcome comes from the marks, not from a box.' },
+      { do: 'caption', text: 'The outcome comes from the marks.' },
       { do: 'move', to: '.derived' },
       { do: 'hold', ms: 2600 },
       { do: 'type', into: '#comment', ms: 3200, text: 'Strong on the learner’s background and needs. The two language points need more evidence from the interview.' },
       { do: 'hold', ms: 1200 },
-      { do: 'caption', text: 'Sent back with your comment on every criterion.' },
+      { do: 'caption', text: 'Sent back, with a comment on each.' },
       { do: 'move', to: '#saveBtn' },
       { do: 'hold', ms: 1950 }
     ]
@@ -345,13 +340,10 @@ var SCENES = [
     about: 'Chapter two opens. The same card, the candidate\u2019s words \u2014 and the line that matters to them: this one is theirs alone.',
     settle: 1400,
     steps: [
-      { do: 'chapter', num: 'Chapter two', text: 'The trainee', sub: 'One link, and everything they write on the course lives behind it \u2014 plans, self-evaluations, the feedback they are given, four assignments.', ms: 3600 },
-      { do: 'hold', ms: 1400 },
+      { do: 'chapter', num: 'Chapter two', text: 'The trainee', sub: 'One link, and everything they write on the course lives behind it \u2014 plans, self-evaluations, the feedback they are given, four assignments.', ms: 3000 },
+      { do: 'hold', ms: 900 },
       { do: 'caption', text: 'The same card, in their words.' },
-      { do: 'hold', ms: 2600 },
-      { do: 'caption', text: 'This one is theirs alone \u2014 and the card says so.' },
-      { do: 'hold', ms: 2600 },
-      { do: 'click', on: '#go', ms: 2400 }
+      { do: 'click', on: '#go', ms: 2200 }
     ]
   },
 
@@ -364,7 +356,7 @@ var SCENES = [
     steps: [
       { do: 'hold', ms: 1500 },
       { do: 'caption', text: 'One thing is gold: the next step.' },
-      { do: 'hold', ms: 2600 },
+      { do: 'hold', ms: 900 },
       { do: 'move', to: '#roomPlan' },
       { do: 'hold', ms: 1500 }
     ]
@@ -382,7 +374,7 @@ var SCENES = [
       /* Ramy, 27 Sep: "you put the cursor inside the box and you dictate."
          So that is the order on screen -- the box first, then the button.
          Pressing it with nothing focused raises an alert and stops the film. */
-      { do: 'caption', text: 'Click into a box. Then press Dictate.' },
+      { do: 'caption', text: 'Click into a box. Press Dictate.' },
       { do: 'click', on: '#fMain', ms: 900 },
       /* The real control, really pressed: it turns garnet and the dot pulses,
          which is the whole point of the beat -- voice was the most-wanted
@@ -394,15 +386,13 @@ var SCENES = [
          room being quiet or on what the recogniser hears. */
       { do: 'type', into: '#fMain', ms: 4200, text: 'By the end of the lesson learners will be better able to ask for and give advice using should and ought to.' },
       { do: 'hold', ms: 1200 },
-      { do: 'caption', text: 'Punctuation is spoken too — comma, full stop, new line.' },
       /* Off again, so the bar is not left recording under the next beats. */
       { do: 'click', on: '.dictbtn', ms: 1400 },
       { do: 'hold', ms: 1500 },
       { do: 'click', on: '#fwBtn', ms: 1400 },
       { do: 'hold', ms: 1690 },
-      { do: 'caption', text: 'Choose a lesson shape — the stages appear.' },
-      { do: 'hold', ms: 1560 },
-      { do: 'caption', text: 'Worksheets stay on the trainee’s own Drive. Nothing is uploaded.' },
+      { do: 'caption', text: 'Choose a shape. The stages appear.' },
+      { do: 'caption', text: 'Worksheets stay on their own Drive.' },
       { do: 'move', to: '#fMatsLink' },
       { do: 'hold', ms: 1690 }
     ]
@@ -417,13 +407,13 @@ var SCENES = [
     stub: ['put'],
     steps: [
       { do: 'click', on: '#laToggle', ms: 1600 },
-      { do: 'hold', ms: 1500 },
-      { do: 'caption', text: 'The language analysis is part of the same document.' },
+      { do: 'hold', ms: 930 },
+      { do: 'caption', text: 'The analysis is the same document.' },
       /* Ramy, 27 Sep: open the box so all three show before taking one. */
       { do: 'click', on: '#typeSel', ms: 1200 },
-      { do: 'hold', ms: 1950 },
+      { do: 'hold', ms: 1209 },
       { do: 'move', to: '#ipaBar' },
-      { do: 'hold', ms: 2080 }
+      { do: 'hold', ms: 1289 }
     ]
   },
 
@@ -436,8 +426,8 @@ var SCENES = [
     stub: ['put'],
     steps: [
       { do: 'hold', ms: 1500 },
-      { do: 'caption', text: 'Written before they read their tutor. That is the point of it.' },
-      { do: 'scroll', to: 600, ms: 2600 },
+      { do: 'caption', text: 'Written before they read their tutor.' },
+      { do: 'scroll', to: 600, ms: 2080 },
       { do: 'hold', ms: 1560 },
       { do: 'move', to: '#turnInBtn' },
       { do: 'hold', ms: 1690 }
@@ -452,10 +442,10 @@ var SCENES = [
     settle: 1800,
     steps: [
       { do: 'hold', ms: 1500 },
-      { do: 'caption', text: 'Read-only. Not a word of their tutor’s can be touched.' },
-      { do: 'scroll', to: 900, ms: 3400 },
+      { do: 'caption', text: 'Read-only. Not a word can be touched.' },
+      { do: 'scroll', to: 900, ms: 2720 },
       { do: 'hold', ms: 1690 },
-      { do: 'scroll', to: 1900, ms: 3200 },
+      { do: 'scroll', to: 1900, ms: 2560 },
       { do: 'hold', ms: 1950 }
     ]
   },
@@ -493,13 +483,13 @@ var SCENES = [
     stub: ['put'],
     steps: [
       { do: 'hold', ms: 1400 },
-      { do: 'caption', text: 'Four assignments, each with its criteria and its deadline.' },
+      { do: 'caption', text: 'Four assignments, with criteria.' },
       /* Nothing is on screen until one of the four is chosen: #submitBtn
          belongs to the assignment, not to the page. */
       { do: 'click', on: '#picker button', ms: 1600 },
-      { do: 'scroll', to: 700, ms: 2800 },
+      { do: 'scroll', to: 700, ms: 2240 },
       { do: 'hold', ms: 1500 },
-      { do: 'caption', text: 'Written in the page. Nothing to download, nothing to upload.' },
+      { do: 'caption', text: 'Written in the page.' },
       { do: 'move', to: '#submitBtn' },
       { do: 'hold', ms: 1690 }
     ]
@@ -516,14 +506,13 @@ var SCENES = [
     stub: ['put'],
     steps: [
       { do: 'hold', ms: 1500 },
-      { do: 'caption', text: 'One resubmission. The candidate can see exactly what to fix.' },
-      { do: 'scroll', to: 500, ms: 2600 },
+      { do: 'caption', text: 'One resubmission. They see what to fix.' },
+      { do: 'scroll', to: 500, ms: 2080 },
       { do: 'hold', ms: 1690 },
-      { do: 'caption', text: 'Met, or not met, with your tutor’s words beside each one.' },
-      { do: 'scroll', to: 1100, ms: 2800 },
+      { do: 'scroll', to: 1100, ms: 2240 },
       { do: 'hold', ms: 1950 },
-      { do: 'caption', text: 'The first submission stays as it was. The new writing goes in the amber boxes.' },
-      { do: 'scroll', to: 1900, ms: 3000 },
+      { do: 'caption', text: 'The first stays. The new goes in amber.' },
+      { do: 'scroll', to: 1900, ms: 2400 },
       { do: 'hold', ms: 1690 },
       { do: 'move', to: '#submitBtn' },
       { do: 'hold', ms: 1500 },
@@ -533,8 +522,8 @@ var SCENES = [
          course is Language Related Tasks -- a closing beat reading
          "Not submitted". */
       { do: 'goto', screen: '9_assignment_submission.html', course: 'demo', role: 'trainee', as: 'Emily Carter', params: { a: 'fol' }, ms: 6000 },
-      { do: 'caption', text: 'Closed. The outcome, the marks, and every word of it, kept.' },
-      { do: 'scroll', to: 600, ms: 2800 },
+      { do: 'caption', text: 'Closed. All of it kept.' },
+      { do: 'scroll', to: 600, ms: 2240 },
       { do: 'hold', ms: 2210 }
     ]
   },
@@ -551,11 +540,10 @@ var SCENES = [
     about: 'Chapter three opens. The third card \u2014 read-only, and it says when it stops working: the course end plus fourteen days (Handbook 15).',
     settle: 1400,
     steps: [
-      { do: 'chapter', num: 'Chapter three', text: 'The assessor', sub: 'Everything Cambridge asks a centre to have ready, gathered behind one read-only link.', ms: 3600 },
-      { do: 'hold', ms: 1400 },
-      { do: 'caption', text: 'And the assessor\u2019s \u2014 read-only, and it expires.' },
-      { do: 'hold', ms: 3120 },
-      { do: 'click', on: '#go', ms: 2400 }
+      { do: 'chapter', num: 'Chapter three', text: 'The assessor', sub: 'Everything Cambridge asks a centre to have ready, gathered behind one read-only link.', ms: 3000 },
+      { do: 'hold', ms: 900 },
+      { do: 'caption', text: 'Read-only, and it expires.' },
+      { do: 'click', on: '#go', ms: 2200 }
     ]
   },
 
@@ -567,10 +555,9 @@ var SCENES = [
     settle: 2200,
     steps: [
       { do: 'hold', ms: 1500 },
-      { do: 'caption', text: 'The assessor gets a link. Read-only.' },
-      { do: 'scroll', to: 900, ms: 3600 },
+      { do: 'scroll', to: 900, ms: 2880 },
       { do: 'hold', ms: 1690 },
-      { do: 'scroll', to: 2000, ms: 3600 },
+      { do: 'scroll', to: 2000, ms: 2880 },
       { do: 'hold', ms: 1950 }
     ]
   },
@@ -584,10 +571,10 @@ var SCENES = [
     stub: ['put', 'putCourse'],
     steps: [
       { do: 'hold', ms: 1500 },
-      { do: 'caption', text: 'Cambridge’s own form. Into Appian by paste, not by retyping.' },
-      { do: 'scroll', to: 800, ms: 3000 },
+      { do: 'caption', text: 'Into Appian by paste, not retyping.' },
+      { do: 'scroll', to: 800, ms: 2400 },
       { do: 'hold', ms: 1560 },
-      { do: 'scroll', to: 1700, ms: 3000 },
+      { do: 'scroll', to: 1700, ms: 2400 },
       { do: 'hold', ms: 2600 }
     ]
   },
@@ -613,12 +600,12 @@ var SCENES = [
     settle: 2400,
     steps: [
       { do: 'hold', ms: 1560 },
-      { do: 'caption', text: 'Assembled from the record. Not written.' },
-      { do: 'scroll', to: 900, ms: 4000 },
+      { do: 'caption', text: 'Assembled from the record.' },
+      { do: 'scroll', to: 900, ms: 3200 },
       { do: 'hold', ms: 1500 },
-      { do: 'scroll', to: 2000, ms: 4000 },
+      { do: 'scroll', to: 2000, ms: 3200 },
       { do: 'hold', ms: 1500 },
-      { do: 'scroll', to: 'bottom', ms: 4200 },
+      { do: 'scroll', to: 'bottom', ms: 3360 },
       { do: 'hold', ms: 2210 }
     ]
   },
