@@ -26,7 +26,11 @@ const [courseId] = process.argv.slice(2);
 const WRITE = process.argv.includes('--write');
 const REMOVE = process.argv.includes('--remove');
 if (!courseId) { console.error('Usage: node store/add-techniques-link.mjs <courseId> [--write]'); process.exit(1); }
-if (courseId === 'c1' || courseId === 'c2') { console.error('refusing ' + courseId + ' — a real course; the centre saves its own Settings'); process.exit(1); }
+/* c2 is the C/17 provisional-grades course: no candidates, nothing to link.
+   c1 is Ramy's real October course; it is written only on his word, which
+   --asked records (27 Sep 2026: "add it to my October course"). */
+if (courseId === 'c2') { console.error('refusing c2 — the C/17 grades course has no candidates'); process.exit(1); }
+if (courseId === 'c1' && !process.argv.includes('--asked')) { console.error('refusing c1 — a real course; add --asked only when Ramy has asked for this write'); process.exit(1); }
 
 const call = async (b) => {
   const r = await fetch(STORE, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(b) });
