@@ -14,6 +14,12 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
+## 27 Sep 2026 — course materials folders live in one folder
+See `2026-09-27-materials-folders-live-in-one-place.md`. `matsRoot_()` and
+`MATS_ROOT`, so course folders stop landing at the root of My Drive, plus
+`tidyMaterialsFolders()` to file the ones already there. Saved in the editor;
+**needs a new version deployed** for new folders to use it.
+
 ## 27 Sep 2026 — the owner key can be rotated
 See `2026-09-27-rotate-the-owner-key.md`. One new owner-only op,
 `rotateOwnerKey`, plus a one-line fix to `ownerKey()`'s link (it still points at
