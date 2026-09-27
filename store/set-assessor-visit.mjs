@@ -83,7 +83,7 @@ if (observe) {
     }
     picks.push(hits[0]);
   }
-  console.log(`  observed after: ${picks.map((p) => p.name).join(', ')}`);
+  console.log(`  names resolved: ${picks.map((p) => p.name).join(', ')}`);
 }
 
 const next = { ...cur };
