@@ -219,7 +219,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609271121">
+<link rel="stylesheet" href="hub-house.css?v=202609271126">
 </head>
 <body>
 <div class="board">
@@ -272,10 +272,10 @@
 
 </div>
 
-<script src="hub-tracker.js?v=202609271121"></script>
-<script src="hub-store.js?v=202609271121"></script>
-<script src="hub-shared.js?v=202609271121"></script>
-<script src="hub-sync.js?v=202609271121"></script>
+<script src="hub-tracker.js?v=202609271126"></script>
+<script src="hub-store.js?v=202609271126"></script>
+<script src="hub-shared.js?v=202609271126"></script>
+<script src="hub-sync.js?v=202609271126"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a candidate's link opened it and read the course and
@@ -860,12 +860,23 @@ window.addEventListener('beforeprint', buildPrintable);
   if (people.length) bits.push(people.length+' candidate'+(people.length===1?'':'s'));
   if (bits.length) document.getElementById('courseMeta').textContent = bits.join(' · ');
 
-  /* The Appian link, if this centre has set one. http/https only: the value
-     is typed by a person into a settings box and ends up in an href, so
-     anything else is refused rather than rendered. */
+  /* The Appian link. The address is the SAME for every centre -- what differs
+     is the login -- and it comes from Cambridge's own CELTA Appian User
+     Guidelines, p1: "you can use the following link to access Appian:
+     https://cambridget2.appiancloud.com/suite/". So it is built in and always
+     shown, and the course setting only OVERRIDES it (a bookmark, an SSO
+     wrapper, a future address).
+     Connect made the mistake first and it is worth not repeating: every link
+     to Appian there was gated on a per-centre field, the field was null on
+     both real centres, and so nobody ever saw the link (Ramy, 30 Aug 2026:
+     "I don't see the Appian link, assessor or the MCT view"). A link that is
+     right for every centre should not be withheld because nobody filled in a
+     field. http/https only, because the override is typed by a person and
+     ends up in an href. */
   const appian = document.getElementById('appianLink');
-  const url = (cs && cs.appianUrl || '').trim();
-  if (appian && /^https?:\/\//i.test(url)) { appian.href = url; appian.hidden = false; }
+  const own = (cs && cs.appianUrl || '').trim();
+  const url = /^https?:\/\//i.test(own) ? own : 'https://cambridget2.appiancloud.com/suite/';
+  if (appian) { appian.href = url; appian.hidden = false; }
 
   if (!people.length){
     document.getElementById('cands').innerHTML =
