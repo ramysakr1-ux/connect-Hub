@@ -126,26 +126,28 @@ var SCENES = [
     title: 'Setting up',
     screen: '6_centre_admin_dashboard.html',
     course: 'scratch',
-    about: 'The scratch course (<b>&s=</b>): real dates, empty roster, so the twelve rows really appear. <b>This scene writes.</b> Between takes: <code>node store/scratch-course.mjs --reset</code>',
+    about: 'The course is TYPED INTO BEING. Ramy, 27 Sep 2026: \u201cit shouldn\u2019t already be there \u2014 it\u2019s a journey. The trainer gets a link, it opens course admin, it\u2019s a blank page, and then they start typing. You don\u2019t have to type everything, just type for a couple of seconds and then it shows.\u201d The type step rebuilds a field from empty one character at a time, so a field already holding something still reads as being written. <b>This scene writes</b> \u2014 between takes: <code>node store/scratch-course.mjs --reset</code>',
     settle: 1800,
     steps: [
-      { do: 'hold', ms: 800 },
-      { do: 'move', to: '[data-tab="settings"]' },
+      { do: 'hold', ms: 900 },
       { do: 'click', on: '[data-tab="settings"]', ms: 1400 },
-      { do: 'hold', ms: 1092 },
-      { do: 'click', on: '[data-tab="roster"]', ms: 1500 },
-      { do: 'hold', ms: 979 },
+      { do: 'hold', ms: 900 },
+      /* A couple of seconds of typing, and the course has a name. */
+      { do: 'type', into: '#courseName', ms: 2600, text: 'CELTA \u2014 October 2026' },
+      { do: 'hold', ms: 1100 },
+      { do: 'click', on: '[data-tab="roster"]', ms: 1400 },
+      { do: 'hold', ms: 900 },
       /* The paste box is two doors in: "Add trainee" opens #addBox, and
          "Add several at once" inside it opens #bulkWrap. */
       { do: 'click', on: '#toggleAdd', ms: 1100 },
       { do: 'click', on: '#toggleBulk', ms: 1200 },
       {
-        do: 'type', into: '#storeBulkNames', ms: 5200,
-        text: 'Defne Yılmaz, 1\nAnastasia Volkova, 1\nJacob Miller, 1\nZeynep Aydın, 1\nEmily Carter, 1\nOmar Haddad, 1\nPriya Nair, 2\nLucas Moreau, 2\nSofia Rossi, 2\nKenji Watanabe, 2\nAmina Diallo, 2\nTom Fletcher, 2'
+        do: 'type', into: '#storeBulkNames', ms: 4200,
+        text: 'Defne Y\u0131lmaz, 1\nAnastasia Volkova, 1\nJacob Miller, 1\nZeynep Ayd\u0131n, 1\nEmily Carter, 1\nOmar Haddad, 1\nPriya Nair, 2\nLucas Moreau, 2\nSofia Rossi, 2\nKenji Watanabe, 2\nAmina Diallo, 2\nTom Fletcher, 2'
       },
       { do: 'click', on: '#storeBulkAddBtn', ms: 1400 },
-      { do: 'click', on: '.confirm-action', ms: 2600 },
-      { do: 'hold', ms: 1638 }
+      { do: 'click', on: '.confirm-action', ms: 2400 },
+      { do: 'hold', ms: 2000 }
     ]
   },
 
@@ -360,34 +362,26 @@ var SCENES = [
   {
     title: 'The plan',
     screen: '1_trainee_plan_and_analysis.html',
-    role: 'trainee', as: 'Emily Carter',
-    about: 'Dictation, the lesson shape, the time budget, a Drive link. <b>Writes are stubbed</b> — this is a real candidate’s real plan on the demo and a take must not change it.<br><b>Capture in Chrome with the microphone already permitted.</b> The Dictate button is really pressed: Safari has no dictation bar at all, and a refused microphone drops the button straight back to “Dictate” on camera.',
+    course: 'scratch', role: 'trainee', as: 'Marta Kowalczyk',
+    about: 'A BLANK plan, written on camera. Marta has no plan on the scratch course, so this really is an empty one \u2014 the aim is typed, a lesson shape chosen, and the stages appear. Then it cuts to a finished plan on the demo, rather than pretending a whole one was written in eight seconds. <b>Writes stubbed</b>.',
     settle: 2000,
     stub: ['put'],
     steps: [
-      { do: 'hold', ms: 840 },
-      /* Ramy, 27 Sep: "you put the cursor inside the box and you dictate."
-         So that is the order on screen -- the box first, then the button.
-         Pressing it with nothing focused raises an alert and stops the film. */
+      { do: 'hold', ms: 1100 },
       /* The dictation bar is on screen and was pressed in chapter one; the
-         plan simply uses it. Pressing it a second time taught nobody
-         anything (Ramy, 27 Sep 2026). */
+         plan simply uses it. */
       { do: 'click', on: '#fMain', ms: 900 },
-      /* The real control, really pressed: it turns garnet and the dot pulses,
-         which is the whole point of the beat -- voice was the most-wanted
-         feature and the film never showed it being switched on. */
-      { do: 'hold', ms: 979 },
-      /* The words arrive as if spoken. The microphone is live and listening;
-         the engine supplies the sentence so a take does not depend on the
-         room being quiet or on what the recogniser hears. */
-      { do: 'type', into: '#fMain', ms: 4200, text: 'By the end of the lesson learners will be better able to ask for and give advice using should and ought to.' },
-      { do: 'hold', ms: 840 },
-      /* Off again, so the bar is not left recording under the next beats. */
-      { do: 'hold', ms: 1050 },
+      { do: 'type', into: '#fMain', ms: 3800, text: 'By the end of the lesson learners will be better able to ask for and give advice using should and ought to.' },
+      { do: 'hold', ms: 1100 },
       { do: 'click', on: '#fwBtn', ms: 1400 },
-      { do: 'hold', ms: 1183 },
+      { do: 'hold', ms: 1800 },
+      /* And now one that was really written, so the rest of the document is a
+         candidate's own work and not eight seconds of typing. */
+      { do: 'goto', screen: '1_trainee_plan_and_analysis.html', course: 'demo', role: 'trainee', as: 'Emily Carter', ms: 3400 },
+      { do: 'scroll', to: 700, ms: 2600 },
+      { do: 'hold', ms: 1400 },
       { do: 'move', to: '#fMatsLink' },
-      { do: 'hold', ms: 1183 }
+      { do: 'hold', ms: 1600 }
     ]
   },
 
@@ -410,18 +404,24 @@ var SCENES = [
   },
 
   {
-    title: 'Turning in, and the self-evaluation',
+    title: 'After the lesson',
     screen: '2_trainee_self_evaluation.html',
-    role: 'trainee', as: 'Emily Carter',
-    about: 'Written before they read their tutor. Writes stubbed — Turn in is moved to, not clicked.',
-    settle: 1600,
+    course: 'scratch', role: 'trainee', as: 'Marta Kowalczyk',
+    about: 'The one caption in the film that is not about the link, and it earns its place: nothing on screen can say a lesson has happened in between. Then the self-evaluation is written on a blank one and the film cuts to a finished one. <b>Writes stubbed</b> \u2014 Turn in is moved to, not pressed.',
+    settle: 1800,
     stub: ['put'],
     steps: [
-      { do: 'hold', ms: 1050 },
-      { do: 'scroll', to: 600, ms: 2080 },
-      { do: 'hold', ms: 1092 },
+      { do: 'hold', ms: 900 },
+      { do: 'caption', text: 'After the lesson.' },
+      { do: 'hold', ms: 2400 },
+      { do: 'click', on: '#sWell', ms: 900 },
+      { do: 'type', into: '#sWell', ms: 3400, text: 'The task was set before the handout went out, and the pair check gave everyone an answer ready before I nominated.' },
+      { do: 'hold', ms: 1100 },
+      { do: 'goto', screen: '2_trainee_self_evaluation.html', course: 'demo', role: 'trainee', as: 'Emily Carter', ms: 3200 },
+      { do: 'scroll', to: 600, ms: 2400 },
+      { do: 'hold', ms: 1200 },
       { do: 'move', to: '#turnInBtn' },
-      { do: 'hold', ms: 1183 }
+      { do: 'hold', ms: 1600 }
     ]
   },
 
