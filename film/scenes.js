@@ -361,11 +361,13 @@ var SCENES = [
       /* Ramy, 27 Sep: "you put the cursor inside the box and you dictate."
          So that is the order on screen -- the box first, then the button.
          Pressing it with nothing focused raises an alert and stops the film. */
+      /* The dictation bar is on screen and was pressed in chapter one; the
+         plan simply uses it. Pressing it a second time taught nobody
+         anything (Ramy, 27 Sep 2026). */
       { do: 'click', on: '#fMain', ms: 900 },
       /* The real control, really pressed: it turns garnet and the dot pulses,
          which is the whole point of the beat -- voice was the most-wanted
          feature and the film never showed it being switched on. */
-      { do: 'click', on: '.dictbtn', ms: 1600 },
       { do: 'hold', ms: 979 },
       /* The words arrive as if spoken. The microphone is live and listening;
          the engine supplies the sentence so a take does not depend on the
@@ -373,7 +375,6 @@ var SCENES = [
       { do: 'type', into: '#fMain', ms: 4200, text: 'By the end of the lesson learners will be better able to ask for and give advice using should and ought to.' },
       { do: 'hold', ms: 840 },
       /* Off again, so the bar is not left recording under the next beats. */
-      { do: 'click', on: '.dictbtn', ms: 1400 },
       { do: 'hold', ms: 1050 },
       { do: 'click', on: '#fwBtn', ms: 1400 },
       { do: 'hold', ms: 1183 },
