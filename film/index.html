@@ -243,6 +243,28 @@
       resolved[tag] = v; return v;
     });
   }
+  /* ?trainee= is a TOKEN on the screens that use it -- the marking sheet reads
+     the roster by it -- and a token is a candidate's own way in. None may go
+     in this file: the repository is public. So a scene names the candidate and
+     the token is looked up here, at run time, from the same read-only roster
+     call keyForScene already makes. A prefix is enough ('Zeyne'), which is how
+     the scenes were already written. */
+  function resolveParams(sc) {
+    var ps = sc.params || {};
+    if (!ps.trainee) return Promise.resolve(ps);
+    var tutor = tutorKeyFor(sc.course || 'demo');
+    if (!tutor) return Promise.resolve(ps);
+    return storeCall({ op: 'roster', key: tutor }).then(function (r) {
+      var people = (r && r.ok && r.result && r.result.trainees) || [];
+      var want = String(ps.trainee).toLowerCase();
+      var who = people.filter(function (p) { return String(p.name).toLowerCase().indexOf(want) === 0; })[0];
+      if (!who) { warn('no candidate whose name starts "' + ps.trainee + '" on the ' + (sc.course || 'demo') + ' course'); return ps; }
+      var out = {};
+      Object.keys(ps).forEach(function (k) { out[k] = ps[k]; });
+      out.trainee = who.token;
+      return out;
+    });
+  }
   var timers = [];
   var playing = true;
   var current = 0;
@@ -301,6 +323,16 @@
      a plain assignment plus an input event is enough -- kept in one place so
      there is somewhere to fix it if that ever changes. */
   function setValue(el, v) {
+    /* A feedback point is a contenteditable div, not a field -- setting .value
+       on one does nothing at all, silently: the scene played, the cursor sat
+       in the right place and no words appeared. The tag chips live inside these
+       boxes, which is why they are contenteditable in the first place, so the
+       text goes in as a text node and the same input event is fired. */
+    if (el.isContentEditable) {
+      el.textContent = v;
+      el.dispatchEvent(new InputEvent('input', { bubbles: true, data: v.slice(-1) }));
+      return;
+    }
     el.value = v;
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
@@ -336,6 +368,25 @@
       moveTo(c.x, c.y);
       later(function () {
         popAt(c.x, c.y);
+        /* A real click on a box puts the caret in it. el.click() does not move
+           focus at all, which the dictation beat found the hard way: the plan
+           clicked into the aim, then pressed Dictate, and Dictate refuses with
+           an alert() when nothing is focused -- so the film pressed a button
+           that could never turn on. Focus first, the way the mouse would. */
+        if (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) {
+          try {
+            el.focus();
+            /* And say so. focus() sets activeElement but fires NO focus event
+               while the OS window itself is unfocused (document.hasFocus() is
+               false), so the dictation bar -- which learns which box to write
+               into from a focusin listener -- never heard about it. True of a
+               check run in a background window, and true of a take the moment
+               the recording window loses focus, which is the worse case
+               because it fails silently and the button just refuses. */
+            el.dispatchEvent(new FocusEvent('focus', { bubbles: false }));
+            el.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+          } catch (e) {}
+        }
         el.click();
       }, 620);
       return (s.ms || 1200);
@@ -377,7 +428,10 @@
        Inherits the scene's course unless the step names its own. */
     goto: function (s) {
       var sc = SCENES[current];
-      var as = { course: s.course || sc.course, role: s.role || 'tutor', as: s.as, stub: s.stub || sc.stub, settle: s.settle };
+      /* params too, and NOT inherited: a goto usually lands on a different
+         screen, where the scene's own ?trainee= or ?a= would be wrong or would
+         name somebody who is not on the course it just moved to. */
+      var as = { course: s.course || sc.course, role: s.role || 'tutor', as: s.as, params: s.params, stub: s.stub || sc.stub, settle: s.settle };
       cursor.classList.remove('on');
       showScreen(as, s.screen, function () {});
       return (s.ms || 2200);
@@ -417,7 +471,8 @@
      step, so one scene can follow a document from one side to the other --
      a candidate submits, the tutor marks, the candidate reads it back. */
   function showScreen(sc, screen, then) {
-    keyForScene(sc).then(function (who) {
+    Promise.all([keyForScene(sc), resolveParams(sc)]).then(function (both) {
+      var who = both[0], params = both[1];
       if (who.error) warn(who.error);
       var url = '../' + screen;
       var q = [];
@@ -429,8 +484,8 @@
       if (OWNER && screen.indexOf('14_owner') === 0) q.push('o=' + encodeURIComponent(OWNER));
       /* Anything else the screen takes in its own URL -- ?trainee= on the
          feedback sheet, say. */
-      Object.keys(sc.params || {}).forEach(function (p) {
-        q.push(p + '=' + encodeURIComponent(sc.params[p]));
+      Object.keys(params || {}).forEach(function (p) {
+        q.push(p + '=' + encodeURIComponent(params[p]));
       });
       if (q.length) url += (url.indexOf('?') === -1 ? '?' : '&') + q.join('&');
 
@@ -455,6 +510,7 @@
 
       frame.onload = function () {
         frame.onload = null;
+        silenceDialogs();
         stubStore(sc.stub || []);
         later(then, sc.settle || 900);
       };
@@ -475,6 +531,22 @@
          course admin, which uses S.addTrainees and never HubStore.call.
      Anything not caught here reaches the live store, so a scene's `stub`
      list is a safety rail, not decoration. */
+  /* A modal dialog stops the film dead and cannot be dismissed from out here:
+     the frame's script is blocked mid-step, every timer queues up behind it and
+     the take is lost. The screens raise a few -- Dictate says "click into the
+     box first", a delete asks to be confirmed -- so they are turned into
+     warnings in the film's own note panel instead. A confirm answers yes,
+     because a scene only ever reaches one on its way somewhere. */
+  function silenceDialogs() {
+    var w = frame.contentWindow;
+    if (!w) return;
+    try {
+      w.alert = function (m) { warn('the screen tried to say: ' + m); };
+      w.confirm = function (m) { warn('the screen asked: ' + m + ' — answered yes'); return true; };
+      w.prompt = function (m) { warn('the screen asked for input: ' + m); return null; };
+    } catch (e) { /* cross-origin, which cannot happen here */ }
+  }
+
   function stubStore(ops) {
     if (!ops.length) return;
     var w = frame.contentWindow;
@@ -665,7 +737,12 @@
   var opening = document.getElementById('opening');
   if (new URLSearchParams(location.search).get('check')) { playing = false; opening.classList.add('gone'); check(); }
   else {
-    play(0);
+    /* ?scene=N starts at that scene and plays on from there. A take is one
+       scene, filmed on its own and often several times over, so watching the
+       four minutes in front of it is not on. 1-based, the way the scene list
+       and the counter read. */
+    var from = parseInt(new URLSearchParams(location.search).get('scene'), 10);
+    play(from >= 1 && from <= SCENES.length ? from - 1 : 0);
     later(function () { opening.classList.add('gone'); }, 3200);
   }
 })();

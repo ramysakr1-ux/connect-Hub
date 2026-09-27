@@ -74,6 +74,10 @@ var SCENES = [
     settle: 1100,
     steps: [
       { do: 'hold', ms: 1200 },
+      /* The framing, said once and early. Ramy, 27 Sep 2026: this is the thing
+         the film is about and it was buried in the middle. */
+      { do: 'caption', text: 'No download, no upload, no hunting for paper.' },
+      { do: 'hold', ms: 1200 },
       { do: 'caption', text: 'Put it wherever your course already lives.' },
       { do: 'hold', ms: 1500 },
       {
@@ -133,13 +137,25 @@ var SCENES = [
     settle: 6000,
     steps: [
       { do: 'hold', ms: 1200 },
-      { do: 'caption', text: 'Every word of the four Cambridge assignments is yours to rewrite.' },
-      /* The screen opens on the list of four; the editor, and its Save, belong
-         to whichever one is picked. */
+      /* The screen opens on the list of four. That list IS the point of the
+         first beat: a new course already has Cambridge's four assignments in
+         it, with their criteria, before anybody has set anything up. The scene
+         used to click straight past it. */
+      { do: 'caption', text: 'A new course already has the four assignments in it.' },
+      { do: 'move', to: '#list' },
+      { do: 'hold', ms: 2600 },
+      { do: 'caption', text: 'Every word of them is yours to rewrite.' },
       { do: 'click', on: '#list button[data-a]', ms: 1800 },
       { do: 'scroll', to: 800, ms: 2600 },
       { do: 'hold', ms: 1500 },
+      { do: 'caption', text: 'The sections, the fields, the declaration — your centre’s wording.' },
       { do: 'scroll', to: 1600, ms: 2400 },
+      { do: 'hold', ms: 1690 },
+      /* The criteria are the load-bearing half of this screen: they are what
+         the mark sheet two scenes later is built from, and what the candidate
+         is judged against. */
+      { do: 'caption', text: 'And the marking criteria — which is what your tutors will mark against.' },
+      { do: 'scroll', to: 2400, ms: 2600 },
       { do: 'hold', ms: 1950 },
       { do: 'click', on: 'text:Save assignment', ms: 2000 },
       /* The point of the scene: the centre's words are what the candidate is
@@ -172,17 +188,29 @@ var SCENES = [
     title: 'The plan',
     screen: '1_trainee_plan_and_analysis.html',
     role: 'trainee', as: 'Emily Carter',
-    about: 'Dictation, the lesson shape, the time budget, a Drive link. <b>Writes are stubbed</b> — this is a real candidate’s real plan on the demo and a take must not change it.',
+    about: 'Dictation, the lesson shape, the time budget, a Drive link. <b>Writes are stubbed</b> — this is a real candidate’s real plan on the demo and a take must not change it.<br><b>Capture in Chrome with the microphone already permitted.</b> The Dictate button is really pressed: Safari has no dictation bar at all, and a refused microphone drops the button straight back to “Dictate” on camera.',
     settle: 2000,
     stub: ['put'],
     steps: [
       { do: 'hold', ms: 1200 },
-      { do: 'caption', text: 'Click into a box and talk.' },
+      /* Ramy, 27 Sep: "you put the cursor inside the box and you dictate."
+         So that is the order on screen -- the box first, then the button.
+         Pressing it with nothing focused raises an alert and stops the film. */
+      { do: 'caption', text: 'Click into a box. Then press Dictate.' },
       { do: 'click', on: '#fMain', ms: 900 },
-      /* The words arrive as if spoken. The real take clicks Dictate and says
-         them; the engine cannot hold a microphone, and typing shows the same
-         picture. See the spec's build notes. */
-      { do: 'type', into: '#fMain', ms: 3400, text: 'By the end of the lesson learners will be better able to ask for and give advice using should and ought to.' },
+      /* The real control, really pressed: it turns garnet and the dot pulses,
+         which is the whole point of the beat -- voice was the most-wanted
+         feature and the film never showed it being switched on. */
+      { do: 'click', on: '.dictbtn', ms: 1600 },
+      { do: 'hold', ms: 1400 },
+      /* The words arrive as if spoken. The microphone is live and listening;
+         the engine supplies the sentence so a take does not depend on the
+         room being quiet or on what the recogniser hears. */
+      { do: 'type', into: '#fMain', ms: 4200, text: 'By the end of the lesson learners will be better able to ask for and give advice using should and ought to.' },
+      { do: 'hold', ms: 1200 },
+      { do: 'caption', text: 'Punctuation is spoken too — comma, full stop, new line.' },
+      /* Off again, so the bar is not left recording under the next beats. */
+      { do: 'click', on: '.dictbtn', ms: 1400 },
       { do: 'hold', ms: 1500 },
       { do: 'click', on: '#fwBtn', ms: 1400 },
       { do: 'hold', ms: 1690 },
@@ -251,18 +279,41 @@ var SCENES = [
     title: 'Feedback, said',
     screen: '3_tutor_feedback.html',
     params: { trainee: 'Zeyne' },
-    about: 'A point dictated, the criterion chips underneath, the solid one that the course’s own tutors have tagged. <b>Writes stubbed</b> — a take must not alter a real candidate’s feedback.',
+    about: 'A point dictated, the criterion chips underneath, the solid one that the course’s own tutors have tagged, and the code landing inside the sentence. <b>Writes stubbed</b> — a take must not alter a real candidate’s feedback.<br><b>Chrome, microphone permitted</b>, as with the plan.',
     settle: 2200,
     stub: ['put'],
     steps: [
       { do: 'hold', ms: 1400 },
-      { do: 'caption', text: 'Say a point. It’s written.' },
+      { do: 'caption', text: 'The tutor writes the same way. Box, then Dictate.' },
       /* #lST is an empty container -- its own "+ Add point" button, which
-         carries data-list="lST", is what puts an input in it. */
+         carries data-list="lST", is what puts a point row in it. A point is a
+         contenteditable div, not a field: the tag chips live inside it. The
+         selector here used to look for a textarea, found nothing, and the
+         scene played through typing not one word (27 Sep 2026). */
       { do: 'click', on: 'button[data-list="lST"]', ms: 1200 },
-      { do: 'type', into: '#lST textarea:last-of-type, #lST input:last-of-type', ms: 3200, text: 'Set the task before handing out the text, and checked it with a quick question' },
+      { do: 'click', on: '#lST .pt:last-child .pt-text', ms: 900 },
+      { do: 'click', on: '.dictbtn', ms: 1500 },
+      { do: 'type', into: '#lST .pt:last-child .pt-text', ms: 4000, text: 'Set the task before handing out the text, and checked it with a quick question' },
+      { do: 'click', on: '.dictbtn', ms: 1400 },
       { do: 'hold', ms: 1690 },
-      { do: 'caption', text: 'The solid chips are what your own tutors tag. It learns your centre.' },
+      /* THE CLEVEREST THING IN THE PRODUCT, and it had one caption and no
+         picture. The suggester reads the point 500ms after it stops changing,
+         so the chips are there by now; clicking one puts the code inside the
+         sentence, where it stays with the words it belongs to. */
+      { do: 'caption', text: 'It reads the point and offers the criteria it meets.' },
+      { do: 'move', to: '#lST .pt:last-child .suggest-row' },
+      { do: 'hold', ms: 2200 },
+      { do: 'click', on: '#lST .pt:last-child .suggest-chip', ms: 1800 },
+      { do: 'hold', ms: 1690 },
+      { do: 'caption', text: 'Tagged inside the sentence — not on a separate form afterwards.' },
+      { do: 'hold', ms: 2080 },
+      /* Checked on the demo, 27 Sep: this sentence draws 5g and 5f and BOTH
+         come back solid -- the course's own tutors have tagged them before. So
+         the caption claims only what is in the frame. The dashed/solid contrast
+         is real but there is no dashed chip on screen to compare it against,
+         and a caption naming one would be describing a picture the viewer
+         cannot see. */
+      { do: 'caption', text: 'Solid means your own tutors have tagged it before. It learns your centre.' },
       { do: 'hold', ms: 2600 }
     ]
   },
@@ -309,26 +360,117 @@ var SCENES = [
     ]
   },
 
+  /* ======================== Part 5b · The written assignments, end to end == */
+
+  /* THE ASSIGNMENT CYCLE, in three scenes. Ramy, 27 Sep 2026: the film showed
+     a submission and a mark sheet and stopped, so the thing that makes the
+     four assignments work -- the going back and forth -- was missing.
+
+     Every rung below is a candidate who is REALLY at it. Nothing is staged and
+     no stubbed save is asked to stand for a stage change:
+
+       submitted           c3  Anastasia Volkova   the sheet awaiting marking
+       resubmission_needed c5  Marta Kowalczyk     planted, see below
+       closed              c3  Emily Carter        done, read-only
+
+     The middle rung is the one no demo course holds, so it is planted on the
+     scratch course -- the one course a take may write to:
+
+       node store/plant-assignment-rungs.mjs --plant
+
+     which rewinds a real closed-on-resubmission record from the finished demo
+     by one step. Run it after scratch-course.mjs, and before filming 13b.
+
+     ?trainee= is a TOKEN, and no token may go in this file -- the repository
+     is public. So these scenes name the candidate and the engine looks the
+     token up at run time from the roster. */
+
   {
     title: 'The written assignments',
     screen: '9_assignment_submission.html',
     role: 'trainee', as: 'Emily Carter',
-    about: 'Submitted by the candidate, marked by the tutor, returned for one resubmission. Writes stubbed on both sides.',
+    about: 'The candidate’s side: four assignments, each with the centre’s own criteria, its declaration and its deadline. Writes stubbed.',
     settle: 6000,
     stub: ['put'],
     steps: [
       { do: 'hold', ms: 1400 },
-      { do: 'caption', text: 'Four assignments, each with its criteria and deadline.' },
+      { do: 'caption', text: 'Four assignments, each with its criteria and its deadline.' },
       /* Nothing is on screen until one of the four is chosen: #submitBtn
          belongs to the assignment, not to the page. */
       { do: 'click', on: '#picker button', ms: 1600 },
       { do: 'scroll', to: 700, ms: 2800 },
       { do: 'hold', ms: 1500 },
+      { do: 'caption', text: 'Written in the page. Nothing to download, nothing to upload.' },
+      { do: 'move', to: '#submitBtn' },
+      { do: 'hold', ms: 1690 }
+    ]
+  },
+
+  {
+    title: 'Marked against the criteria',
+    screen: '10_tutor_assignment_marking.html',
+    params: { trainee: 'Anastasia', a: 'fol' },
+    about: 'Anastasia Volkova’s Focus on the Learner is really awaiting marking on the demo course. Six criteria are marked on camera and the outcome works itself out; <b>writes stubbed</b>, so Save &amp; return changes nothing and the record is the same after the take.',
+    settle: 6000,
+    stub: ['put'],
+    steps: [
+      { do: 'hold', ms: 1400 },
+      { do: 'caption', text: 'One sheet, one candidate, the centre’s own criteria.' },
+      { do: 'scroll', to: 700, ms: 2600 },
+      { do: 'hold', ms: 1200 },
+      /* Six criteria, one at a time. Each click re-renders the sheet, which is
+         why they are separate steps against the same selectors rather than one
+         loop: the buttons are new elements each time. */
+      { do: 'caption', text: 'Met, or not yet met. One judgement each.' },
+      { do: 'click', on: '[data-crit="0"]', ms: 1100 },
+      { do: 'click', on: '[data-crit="1"]', ms: 1000 },
+      { do: 'click', on: '[data-crit="2"]', ms: 1000 },
+      { do: 'click', on: '[data-crit="3"]', ms: 1000 },
+      { do: 'click', on: '[data-crit="4"]', ms: 1000 },
+      { do: 'click', on: '[data-crit="5"]', ms: 1400 },
+      /* .derived carries the outcome, and it only exists once every criterion
+         is marked -- so this beat cannot be faked by skipping one. */
+      { do: 'caption', text: 'The outcome comes from the marks, not from a box.' },
+      { do: 'move', to: '.derived' },
+      { do: 'hold', ms: 2600 },
+      { do: 'type', into: '#comment', ms: 3200, text: 'Strong on the learner’s background and needs. The two language points need more evidence from the interview.' },
+      { do: 'hold', ms: 1200 },
+      { do: 'caption', text: 'Sent back with your comment on every criterion.' },
+      { do: 'move', to: '#saveBtn' },
+      { do: 'hold', ms: 1950 }
+    ]
+  },
+
+  {
+    title: 'Sent back, and one more go',
+    screen: '9_assignment_submission.html',
+    course: 'scratch',
+    role: 'trainee', as: 'Marta Kowalczyk',
+    params: { a: 'fol' },
+    about: 'The rung no demo course holds: a candidate at <b>Resubmission needed</b>, reading which criteria were not met and why, with their first submission read-only above the amber boxes. On the scratch course — run <code>node store/plant-assignment-rungs.mjs --plant</code> first. Writes stubbed, so Submit is moved to, not pressed.',
+    settle: 6000,
+    stub: ['put'],
+    steps: [
+      { do: 'hold', ms: 1500 },
+      { do: 'caption', text: 'One resubmission. The candidate can see exactly what to fix.' },
+      { do: 'scroll', to: 500, ms: 2600 },
+      { do: 'hold', ms: 1690 },
+      { do: 'caption', text: 'Met, or not met, with your tutor’s words beside each one.' },
+      { do: 'scroll', to: 1100, ms: 2800 },
+      { do: 'hold', ms: 1950 },
+      { do: 'caption', text: 'The first submission stays as it was. The new writing goes in the amber boxes.' },
+      { do: 'scroll', to: 1900, ms: 3000 },
+      { do: 'hold', ms: 1690 },
       { do: 'move', to: '#submitBtn' },
       { do: 'hold', ms: 1500 },
-      { do: 'goto', screen: '10_tutor_assignment_marking.html', role: 'tutor', ms: 3000 },
-      { do: 'caption', text: 'The outcome comes from the marks, not from a box.' },
-      { do: 'scroll', to: 800, ms: 2800 },
+      /* And the end of it, on a candidate who is really finished. */
+      /* Emily's FOCUS ON THE LEARNER is the closed one. Without ?a= the screen
+         opens on whichever assignment the centre put first, which for this
+         course is Language Related Tasks -- a closing beat reading
+         "Not submitted". */
+      { do: 'goto', screen: '9_assignment_submission.html', course: 'demo', role: 'trainee', as: 'Emily Carter', params: { a: 'fol' }, ms: 6000 },
+      { do: 'caption', text: 'Closed. The outcome, the marks, and every word of it, kept.' },
+      { do: 'scroll', to: 600, ms: 2800 },
       { do: 'hold', ms: 2210 }
     ]
   },

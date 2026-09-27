@@ -41,6 +41,8 @@ Capture from the live links, not from mock-ups. Never paste a link into this fil
 
 **And one thing it must not say:** that anything is downloaded, exported or sent to anyone. The assessor gets a link. Paper is an *option*, and it comes at the very end.
 
+**Said out loud, early.** Ramy, 27 Sep: *“no download, no upload, no hunting for paper”* is the whole point and it was buried in the middle. It is now the first caption of scene 2, before the link goes into Classroom.
+
 ---
 
 ## Part 1 · The link — 0:00–0:40
@@ -128,7 +130,7 @@ Capture from the live links, not from mock-ups. Never paste a link into this fil
 
 ---
 
-## Part 5 · Back with the trainee — 3:25–4:00
+## Part 5 · Back with the trainee — 3:25–3:45
 
 ### 12 · The trainee reads it — 3:25–3:45
 **Screen:** `4_feedback_returned.html` for Emily Carter — three sheets on the desk, newest on top.
@@ -137,23 +139,57 @@ Capture from the live links, not from mock-ups. Never paste a link into this fil
 ◆ Hold on the stack. ◆ Hold on the starred points.
 *Note: the candidate's returned sheet carries **no criterion codes** — that was decided and it holds. The criteria live on the tutor's side, and on the assignments. Do not show or claim codes here.*
 
-### 13 · The written assignments — 3:45–4:00
-**Screen:** `9_assignment_submission.html` → *Submit*. `10_tutor_assignment_marking.html`: the criteria pills, one *Not met* → *Save & return* → *Resubmission needed*. The trainee: the trainer's comments shown and greyed → *Resubmit*. Marked again → *Closed*.
-**Caption:** *The outcome comes from the marks, not from a box.*
-◆ Hold on *Resubmission needed* arriving on the trainee's side.
+---
+
+## Part 5b · The written assignments, end to end — 3:45–4:35
+
+Ramy, 27 Sep: the film showed a submission and a mark sheet and stopped, so the
+thing that makes the four assignments work — the going back and forth — was
+missing. It is now three scenes, and **every rung is a candidate who is really
+at it.** No stubbed save is asked to stand for a stage change.
+
+| rung | course | candidate | what the screen says |
+|---|---|---|---|
+| submitted | `c3` | Anastasia Volkova | Awaiting marking |
+| resubmission needed | `c5` scratch | Marta Kowalczyk | Resubmission needed — planted |
+| closed | `c3` | Emily Carter | Closed |
+
+The middle rung is the one no demo course holds, so it is planted on the scratch
+course — the one course a take may write to:
+
+    node store/plant-assignment-rungs.mjs --plant
+
+It rewinds a real closed-on-resubmission record from the finished demo by one
+step, so the writing on screen is the seed's own and the section indices cannot
+drift. `--clear` takes it away again.
+
+### 13 · The written assignments — 3:45–3:58
+**Screen:** `9_assignment_submission.html`, Emily Carter. One of the four picked; its criteria, its declaration, its deadline; the writing happens in the page.
+**Captions:** *Four assignments, each with its criteria and its deadline.* → *Written in the page. Nothing to download, nothing to upload.*
+◆ Move to *Submit*, do not press it — writes are stubbed.
 *The candidate DOES see an assignment's marking criteria — that is the one place criteria face them, and it is right.*
+
+### 14 · Marked against the criteria — 3:58–4:16
+**Screen:** `10_tutor_assignment_marking.html` for **Anastasia Volkova**, `?a=fol` — really awaiting marking on `c3`.
+Six criteria marked one at a time on camera; `.derived` only exists once every one of them is judged, so this beat cannot be faked by skipping one. Then the general comment, then *Save & return* — moved to, not pressed.
+**Captions:** *One sheet, one candidate, the centre's own criteria.* → *Met, or not yet met. One judgement each.* → *The outcome comes from the marks, not from a box.* → *Sent back with your comment on every criterion.*
+
+### 15 · Sent back, and one more go — 4:16–4:35
+**Screen:** `9_assignment_submission.html` on the **scratch** course as **Marta Kowalczyk**, `?a=fol`: the amber *Resubmission needed* banner, the two criteria not met with the tutor's words beside each, the first submission read-only above the amber boxes. Then a cut back to `c3` and **Emily Carter**'s closed one.
+**Captions:** *One resubmission. The candidate can see exactly what to fix.* → *Met, or not met, with your tutor's words beside each one.* → *The first submission stays as it was. The new writing goes in the amber boxes.* → *Closed. The outcome, the marks, and every word of it, kept.*
+◆ Hold on the amber banner. ◆ Hold on *Closed*.
 
 ---
 
-## Part 6 · The assessor — 4:00–4:35 · *from `c4`, the finished course*
+## Part 6 · The assessor — 4:35–5:10 · *from `c4`, the finished course*
 
-### 14 · The assessor's view — 4:00–4:18
+### 16 · The assessor's view — 4:35–4:53
 **Screen:** `12_assessor_pack.html`, opened from the assessor's own link: candidates first, each with their standing and both grades; the double-marking record; the briefs. **Scrolled, not printed.** Nothing is downloaded, exported or sent.
 **Cursor:** scroll slowly; try to edit a grade — nothing moves.
 **Caption:** *The assessor gets a link. Read-only.*
 ◆ Hold on the scroll. ◆ Hold three seconds on the grade that will not move.
 
-### 15 · Grades — 4:18–4:35
+### 17 · Grades — 4:53–5:10
 **Screen:** `13_grades_report.html` — the course-level fields, the provisional table, a candidate's four sections with criterion codes, the final grade box with Appian's two fields.
 **Cursor:** *Add from the TP records* → the trainer's own feedback offered back → one click puts it in the box with its code.
 **Caption:** *Cambridge's own form. Into Appian by paste, not by retyping.*
@@ -161,26 +197,28 @@ Capture from the live links, not from mock-ups. Never paste a link into this fil
 
 ---
 
-## Part 7 · The end of the course — 4:35–5:15 · *from `c4`*
+## Part 7 · The end of the course — 5:10–5:53 · *from `c4`*
 
-### 16 · The final report, whole — 4:35–4:57
+### 18 · The final report, whole — 5:10–5:32
 **Screen:** `16_final_report.html` for one candidate — **the whole document**, top to bottom: the cover, the two assessment areas with their colour, the descriptor, the criteria, both tutors' signatures. Scrolled at reading pace, no cuts. Then two more candidates' covers.
 **Cursor:** the scroll and nothing else.
 **Caption:** *Assembled from the record. Not written.*
 ◆ **Let the whole report scroll.** This is a selling point; do not cut it short. ◆ Hold on the signatures.
 
-### 17 · Paper, if you want it — 4:57–5:10
+### 19 · Paper, if you want it — 5:32–5:45 · *not a scene in the engine — a `still` to capture by hand*
 **Screen:** back on `4_feedback_returned.html` for a `c4` candidate — eight sheets, the whole course. *Print / Save as PDF* → the dialog → **the PDF itself, in colour**, page after page: every TP's feedback and grade, the plan's spine, the analysis, the self-evaluation — flipping steadily. Then the final report's PDF.
 **Cursor:** the print button, then nothing; the pages do the work.
 **Caption:** *And if you want paper, one button prints the lot.*
 ◆ **Hold on the PDF flipping**, five seconds at least. Zoom on one page so the colour reads.
 *The only place printing appears, framed as an option at the end — never as how the assessor gets anything.*
 
-### 18 · Close — 5:10–5:18
+### 20 · Close — 5:45–5:53 · *not a scene in the engine*
 **Screen:** the tutor's invitation card from scene 2, at rest. The foot is in frame — *designed and built by Ramy* — nothing zooms on it.
 **Caption:** *One link. The whole course.*
 
-**Running time ≈ 5:18.** Eighteen scenes, twenty captions. Against the first cut: three scenes gone (the three cards cut fast, the candidate tracker, the Drive materials folded into the plan), roughly half the captions, and every hold longer.
+**Running time ≈ 5:53.** Twenty scenes here, of which **eighteen are in the engine** — 19 and 20 are a captured still and a held card, not driven screens. Against the first cut: three scenes gone (the three cards cut fast, the candidate tracker, the Drive materials folded into the plan), roughly half the captions, and every hold longer. Two scenes were added back on 27 Sep, both inside the assignment cycle (14 and 15), because the going back and forth was the thing the film was missing.
+
+**The engine's scene numbers are the ones in `film/scenes.js`, and `?scene=N` counts the same way.** They match the headings above through 18.
 
 ---
 
@@ -204,17 +242,26 @@ Capture from the live links, not from mock-ups. Never paste a link into this fil
 - **Make the running demo permanent first.** `c3` runs 15 Sep → 7 Oct 2026: it reads as finished in October, and its assessor link — the same door the offer card carries — dies fourteen days after that. A demo course must have no beginning and no end. Its dates are **not sealed** (`seats.ever` is 0 on every course, so nothing has been counted against them yet), so this is an edit to `c3`'s settings, not a re-mint: no new links, and the 404 tagged points and the criteria learning stay where they are. See the note below on what an empty end date costs.
 - **Everything else the film shows is built and live** as of 27 Sep: the hero card, the criterion chips and their tip, the finished demo course, the domain.
 - **Demo Classroom and demo Drive for scene 2** — make them for the film, named for the demo course, nothing real in frame.
-- **Dictation — Chrome or Edge on a computer, always.** Safari and every browser on iPhone and iPad hide the *Dictate* button. Film scenes 6, 8 and 10 in Chrome, microphone permitted beforehand so no permission sheet appears.
+- **Dictation — Chrome or Edge on a computer, always, and the microphone must already be permitted.** Safari and every browser on iPhone and iPad have no *Dictate* button at all (`if(!SR || WEBKIT) return;`), so there is nothing to click. Scenes 6 and 10 now **really press it**: the button turns garnet and its dot pulses, which is the beat. A refused microphone fires `onerror` and drops it straight back to “Dictate” on camera, and pressing it with no box focused raises an `alert()` that stops the film — which is why both scenes click into the box first. Ramy, 27 Sep: *“you put the cursor inside the box and you dictate.”*
 - **Dictation and the exchange are two features.** Scene 10 is cursor-in-the-box; scene 11 is Copy → outside → Paste.
-- **Printing appears once, in scene 17.** Not in 12, not in 14.
+- **The criteria suggester is scene 10's second half.** The chips appear 500ms after the point stops changing; clicking one puts the code *inside the sentence*. Dashed is the criteria wording talking, solid (`.taught`) is what this course's own tutors have tagged. Hold long enough that the difference reads.
+- **Plant the resubmission rung before filming scene 15** — `node store/plant-assignment-rungs.mjs --plant`, after `scratch-course.mjs`.
+- **Watch the Dictate button on the first take of scenes 6 and 10.** A refused or unavailable microphone fails *silently*: `rec.start()` throws `not-allowed`, the button drops back to “Dictate” and the film plays on with the words appearing and no sign of voice. **If the button does not go garnet with the dot pulsing, stop the take** — nothing in the film will tell you.
+- **Film with the recording window focused.** `element.focus()` fires no focus event while the OS window is unfocused, which is how the dictation bar learns which box to write into. The engine now announces the focus itself so this cannot bite, but the window should be in front anyway.
+- **`?scene=N`** starts the film at that scene and plays on — one take at a time, instead of watching four minutes to reach the one being filmed.
+- **Printing appears once, in scene 19.** Not in 12, not in 16.
 - **No criterion codes on the candidate's returned feedback** (scene 12). Checked 27 Sep: `4_feedback_returned.html` contains the word "criteria" zero times, and no codes. The candidate meets criteria on their assignments, not on their TP feedback.
 - **Offline for scene 2.** The offline shell (`sw.js`) must have cached the pages once before the Wi-Fi goes off.
 - **Drive link for scene 6.** A real shared file; the preview needs "anyone with the link".
-- **The PDF for scene 17.** macOS Safari's dialog is cleanest; export and show the PDF in Preview for the flip and the zoom.
+- **The PDF for scene 19.** macOS Safari's dialog is cleanest; export and show the PDF in Preview for the flip and the zoom.
 
 ## Screens to capture, in order
 
-All at `https://lite.celtaconnect.com/`. From **`c3`** (running): `14_owner.html` · `invite.html?k=` · `6_centre_admin_dashboard.html` (both tabs) · `8_assignment_wording.html` · `index.html` · `1_trainee_plan_and_analysis.html` · `2_trainee_self_evaluation.html` · `5_tutor_dashboard.html` · `3_tutor_feedback.html?trainee=Zeynep` · `4_feedback_returned.html` (Emily) · `9_assignment_submission.html` (Jacob, LFC) · `10_tutor_assignment_marking.html`.
+All at `https://lite.celtaconnect.com/`. From **`c3`** (running): `14_owner.html` · `invite.html?k=` · `index.html` · `1_trainee_plan_and_analysis.html` · `2_trainee_self_evaluation.html` · `5_tutor_dashboard.html` · `3_tutor_feedback.html` (Zeynep) · `4_feedback_returned.html` (Emily) · `9_assignment_submission.html` (Emily — one blank for scene 13, her closed `?a=fol` for the tail of 15) · `10_tutor_assignment_marking.html` (Anastasia, `?a=fol`).
+
+From the **scratch** course (`c5`): `6_centre_admin_dashboard.html` (both tabs) · `8_assignment_wording.html` · `9_assignment_submission.html` (Marta Kowalczyk, `?a=fol`, at Resubmission needed).
+
+`?trainee=` is a **token**, never a name, on every screen that takes one — and no token goes in `film/scenes.js`, because the repository is public. The scenes name the candidate and the engine looks the token up from the roster when it builds the URL.
 
 From **`c4`** (finished): `12_assessor_pack.html` (via the assessor link) · `13_grades_report.html` · `16_final_report.html` (one whole, two covers) · `4_feedback_returned.html` (one candidate, all eight TPs, printed to PDF for scene 17).
 
