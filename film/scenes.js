@@ -153,7 +153,11 @@ var SCENES = [
       { do: 'caption', text: 'The four assignments come with it.' },
       { do: 'move', to: '#list' },
       { do: 'hold', ms: 1819 },
-      { do: 'caption', text: 'Every word is yours to rewrite.' },
+      /* BOTH halves. Ramy, 27 Sep 2026: "every word is yours to type if you
+         choose to \u2014 because some people don't want to bother, so they just use
+         the native assignments." The caption said only that you could rewrite
+         them, which reads as work to do rather than work already done. */
+      { do: 'caption', text: 'Ready as they are \u2014 or yours to rewrite.' },
       { do: 'click', on: '#list button[data-a]', ms: 1800 },
       { do: 'scroll', to: 800, ms: 2080 },
       { do: 'hold', ms: 1050 },

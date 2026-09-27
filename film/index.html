@@ -135,21 +135,30 @@
        floating over them was nearly invisible, whatever glow it carried. The
        halo is the paper colour, spread wide and soft, which lifts the words
        off the screen without drawing a box round them. */
-    color:oklch(28% 0.03 195);
+    /* The centre's own ink, and no hue. It was a dark teal and read as green
+       (Ramy, 27 Sep 2026: "I don't want green for caption"). */
+    color:oklch(24% 0.012 65);
     text-shadow:0 0 14px oklch(99% 0.004 85 / .95), 0 0 30px oklch(99% 0.004 85 / .9),
       0 0 60px oklch(99% 0.004 85 / .8), 0 1px 0 oklch(99% 0.004 85 / .9);
-    opacity:0; transform:translate(-50%, 18px);
-    transition:opacity 500ms ease, transform 500ms cubic-bezier(.2,.8,.2,1);}
-  .caption.on{opacity:1; transform:translate(-50%, 0);
-    animation:drift 9s linear forwards;}
-  /* Up and a little to the right, the whole time it is on screen. Small: the
-     point is that it is never still, not that it travels. */
+    opacity:0; transform:translate(-50%, 0);
+    transition:opacity 700ms ease;}
+  /* IT KEEPS FLOATING WHILE IT GOES. The drift used to live on `.on`, so
+     taking `.on` away removed the animation and the transform snapped back to
+     where it started while the opacity was still fading -- the glitch Ramy
+     saw: "it should fade out, not just stop." Now `.on` starts the drift and
+     `.out` only touches opacity, so the words carry on travelling the whole
+     way out and simply become less and less there. */
+  .caption.on{opacity:1; animation:drift 13s linear forwards;}
+  .caption.on.out{opacity:0; transition:opacity 1600ms ease;}
+  /* Up and a little to the right, the whole time it is on screen and all the
+     way through the fade. Small: the point is that it is never still, not
+     that it travels. */
   @keyframes drift{
-    from{ transform:translate(-50%, 0); }
-    to{ transform:translate(calc(-50% + 26px), -34px); }
+    from{ transform:translate(-50%, 10px); }
+    to{ transform:translate(calc(-50% + 30px), -46px); }
   }
   @media (prefers-reduced-motion: reduce){
-    .caption.on{ animation:none; }
+    .caption.on{ animation:none; transform:translate(-50%, 0); }
   }
 
   /* Transport. Not part of the film -- it is how we watch it while building. */
@@ -332,7 +341,8 @@
      film reads comfortably; nothing else sets it. */
   var CAPTION_CPS = 6;      /* characters a second -- slow, and meant to be */
   var CAPTION_MIN = 3600;   /* even three words get this long */
-  var CAPTION_FADE = 500;   /* in, and out; matches .caption's transition */
+  var CAPTION_FADE = 500;       /* in; matches .caption's transition */
+  var CAPTION_FADE_OUT = 1600;  /* out -- slow, and it drifts the whole way */
   var CAPTION_GAP = 1000;   /* silence before the next one may begin */
 
   var stubbed = [];      /* which writes were caught, per scene -- shown below */
@@ -400,6 +410,11 @@
   /* ---- the steps ------------------------------------------------------- */
   var STEP = {
     caption: function (s) {
+      /* Off and reset before it comes back on, with a reflow in between, or
+         the browser keeps the old animation running and the new caption
+         inherits however far the last one had drifted. */
+      capEl.classList.remove('on', 'out');
+      void capEl.offsetWidth;
       capEl.textContent = s.text;
       capEl.classList.add('on');
       /* A caption is read WHILE watching something else, so it needs far
@@ -412,8 +427,8 @@
          8 once the film was watched end to end, so 6. A twelve-word line now
          sits for about eight seconds. */
       var hold = Math.max(CAPTION_MIN, (s.text.length / CAPTION_CPS) * 1000);
-      later(function () { capEl.classList.remove('on'); }, CAPTION_FADE + hold);
-      return CAPTION_FADE + hold + CAPTION_FADE + CAPTION_GAP;
+      later(function () { capEl.classList.add('out'); }, CAPTION_FADE + hold);
+      return CAPTION_FADE + hold + CAPTION_FADE_OUT + CAPTION_GAP;
     },
     move: function (s) {
       var el = find(s.to);
