@@ -1,9 +1,18 @@
 // The film's scratch course: a real course, with real dates and an empty
 // roster, that scene 3 can genuinely set up on camera.
 //
-//   node store/scratch-course.mjs            what it is now (read only)
-//   node store/scratch-course.mjs --make     create it, or put it back as it should be
-//   node store/scratch-course.mjs --reset    empty the roster, ready for another take
+//   node store/scratch-course.mjs                  what it is now (read only)
+//   node store/scratch-course.mjs --make           create it, or put it back as it should be
+//   node store/scratch-course.mjs --reset          empty the roster, ready for another take
+//   node store/scratch-course.mjs --reset --one    empty it, then leave ONE candidate
+//
+// --one is for working on scene 4 by itself. Played in order the film does
+// not need it: scene 3 pastes twelve people onto this course, and scene 4
+// cuts to one of them to show the centre's own wording as a candidate sees
+// it. But jumping straight to scene 4, or running the film's ?check=1, finds
+// an empty course -- so --one leaves somebody there. Scene 3 must still be
+// able to start from nothing, which is why this is a flag and not the
+// default.
 //
 // WHY IT EXISTS. Scene 3 shows a centre setting its course up and pasting in
 // twelve trainees. On the demo course that cannot be filmed honestly: the
@@ -26,6 +35,9 @@ const NAME = 'Film scratch — not a demo';
 const KEEP = new Set(['c1', 'c2', 'c3', 'c4']);
 const MAKE = process.argv.includes('--make');
 const RESET = process.argv.includes('--reset');
+const ONE = process.argv.includes('--one');
+// Not one of the twelve scene 3 pastes in, so the two can never collide.
+const KEEPER = { name: 'Marta Kowalczyk', group: '1' };
 
 // Real dates, so the Settings tab is filled and the assessor link has an
 // expiry to state. A month starting next Monday reads like any course.
@@ -118,8 +130,18 @@ if (MAKE || RESET) {
   const seats = await call({ op: 'seats', owner: OWNER, course: course.id, ever: 0 });
   // Read it back rather than trusting the loop: the first version of this
   // reported "emptied 12" and left twelve on the course.
+  if (ONE) {
+    const add = await call({ op: 'addTrainee', key: course.tutorKey, name: KEEPER.name, group: KEEPER.group });
+    console.log(`one candidate: ${add.ok ? KEEPER.name : 'FAILED ' + add.error}`);
+  }
+
   const check = await call({ op: 'roster', key: course.tutorKey });
   const left = ((check.result && check.result.trainees) || []).length;
+  if (ONE) {
+    console.log(`roster: ${gone} removed, ${left} left (should be 1)`);
+    if (left !== 1) { console.error('\nExpected exactly one candidate.'); process.exit(1); }
+    process.exit(0);
+  }
   console.log(`roster: ${gone} removed over ${pass} pass${pass === 1 ? '' : 'es'}, ${left} left; seats.ever reset: ${seats.ok ? 'yes' : 'no (' + seats.error + ')'}`);
   if (left) { console.error('\nThe roster did not empty. Not safe to film scene 3 on it.'); process.exit(1); }
 }

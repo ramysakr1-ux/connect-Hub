@@ -127,7 +127,7 @@ var SCENES = [
     title: 'The centre’s own assignments',
     screen: '8_assignment_wording.html',
     course: 'scratch',
-    about: 'Every section, field, declaration and marking criterion in an editable box. On the scratch course, so the edit is real. <b>TODO:</b> the spec cuts from here to the candidate seeing the changed wording — that needs one candidate left on the scratch course.',
+    about: 'Every section, field, declaration and marking criterion in an editable box, then the cut to a candidate seeing it. On the scratch course, so the edit is real. Played in order, scene 3 has just put twelve people here; on its own, run <code>node store/scratch-course.mjs --reset --one</code> first.',
     /* The editor draws itself once the assignment wording has arrived;
        its Save button does not exist before that. */
     settle: 6000,
@@ -141,8 +141,13 @@ var SCENES = [
       { do: 'hold', ms: 2200 },
       { do: 'scroll', to: 1600, ms: 2400 },
       { do: 'hold', ms: 3000 },
-      { do: 'move', to: 'text:Save assignment' },
-      { do: 'hold', ms: 2000 }
+      { do: 'click', on: 'text:Save assignment', ms: 2000 },
+      /* The point of the scene: the centre's words are what the candidate is
+         marked against. Same course, the candidate's own side. */
+      { do: 'goto', screen: '9_assignment_submission.html', role: 'trainee', ms: 3200 },
+      { do: 'caption', text: 'And that is what your candidates see.' },
+      { do: 'scroll', to: 600, ms: 2800 },
+      { do: 'hold', ms: 3000 }
     ]
   },
 
