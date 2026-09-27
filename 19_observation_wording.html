@@ -73,10 +73,16 @@
     border:1.5px solid var(--teal); background:var(--teal); color:var(--paper); cursor:pointer;}
   .btn.secondary{background:none; color:var(--teal);}
   .saved{font-size:0.8rem; color:var(--grey);}
+  .importrow{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:0 0 18px; font-size:0.85rem;}
+  .importrow select{font-family:'Karla',sans-serif; font-size:0.85rem; padding:8px 10px; border:1.5px solid var(--sand-line); border-radius:6px; background:var(--box); color:var(--ink);}
+  .importrow .note{color:var(--grey); font-size:0.78rem; flex-basis:100%; line-height:1.5;}
+  .review .found{border:1.5px solid var(--sand-line); border-radius:8px; padding:10px 14px; margin-bottom:8px; background:var(--surface); font-size:0.88rem;}
+  .review .found small{display:block; color:var(--grey); font-size:0.76rem;}
+  .review .skipped{color:var(--brick); font-size:0.82rem;}
   @media(max-width:900px){ .layout{grid-template-columns:1fr;} .editor{padding:18px 16px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609272219">
-<link rel="stylesheet" href="hub-theme.css?v=202609272219">
+<link rel="stylesheet" href="hub-house.css?v=202609272231">
+<link rel="stylesheet" href="hub-theme.css?v=202609272231">
 </head>
 <body>
 <div class="board">
@@ -84,15 +90,28 @@
   <p class="eyebrow">Course admin · observation tasks</p>
   <h1>Observation task wording</h1>
   <p class="sub">The words are yours: retitle a task, rewrite a question, change the brief. The shape of each sheet — a grid for three teachers, one notes column, lettered parts — stays, because that is what the candidate fills in and what prints.</p>
+  <!-- Ramy, 27 Sep 2026: "should there be an option for them to just upload
+       their own observation tasks and push into whatever we built here?"
+       A Word or text file, read in the browser, sorted into the six shapes
+       by its layout, shown for review, and only then saved. A first draft
+       to check, not a promise: another centre's file has its own quirks. -->
+  <div class="importrow">
+    <span>Import from a file:</span>
+    <select id="importGroup"><option value="peer">Peer observations</option><option value="filmed">Filmed lessons</option><option value="live">Live lessons</option></select>
+    <button type="button" class="btn secondary" id="importBtn">⬆ Choose a Word or text file</button>
+    <input type="file" id="importFile" accept=".docx,.txt,.md" style="display:none;">
+    <span class="note">Reads your own sheets — numbered questions become rows, lettered A/B/C headings become parts, “Before the lesson” becomes the brief — and shows what it found before anything is replaced. Check every task afterwards; a file it has never seen is a first draft.</span>
+  </div>
   <div class="layout">
     <nav class="list" id="list"></nav>
     <div class="editor" id="editor"></div>
   </div>
 </div>
-<script src="observation-defaults.js?v=202609272219"></script>
-<script src="hub-shared.js?v=202609272219"></script>
-<script src="hub-store.js?v=202609272219"></script>
-<script src="hub-sync.js?v=202609272219"></script>
+<script src="observation-defaults.js?v=202609272231"></script>
+<script src="hub-docx.js?v=202609272231"></script>
+<script src="hub-shared.js?v=202609272231"></script>
+<script src="hub-store.js?v=202609272231"></script>
+<script src="hub-sync.js?v=202609272231"></script>
 <script type="text/x-hub-app">
 /* The centre's room. Same gate as the assignment wording editor: a link that
    cannot write the course does not get a form that says "Saved". */
@@ -174,6 +193,108 @@ function renderEditor(){
     DATA[f.g][f.i] = JSON.parse(JSON.stringify(d.t)); persist(); renderEditor();
   });
 }
+/* ---- Import from a file ---------------------------------------------------- */
+/* The rules the shipped set was built with, loosened for a file this page has
+   never seen. Each task is what sits between two headings; inside it,
+   numbered lines are the rows (typed "1." or a table's bare number cell),
+   lettered "A." lines are parts, and the shape follows the group. */
+function parseImport(text, group){
+  const lines = text.split('\n').map(l => l.replace(/[  ]+/g, ' ').trim());
+  const boundary = i => {
+    const l = lines[i]; if (!l || l.includes('\t')) return false; // a table row is never a heading
+    if (/^# /.test(l)) return true;
+    if (/^(peer|filmed|live)\s+observation/i.test(l)) return true;
+    if (/^(observation|task)\s*\d+\b/i.test(l) && l.length < 60) return true;
+    if (/^TP\s*\d\b/i.test(l) && l.length < 60) return true;
+    if (i + 1 < lines.length && /^Recording:/i.test(lines[i + 1]) && !/^Recording:/i.test(l)) return true;
+    return false;
+  };
+  let starts = lines.map((_, i) => i).filter(boundary);
+  /* The file's own title ("Peer Observation Tasks") sits in its first lines
+     and reads like a heading; with real tasks after it, it is the cover, not
+     a task. */
+  if (starts.length > 1 && starts[0] < 3) starts = starts.slice(1);
+  if (!starts.length) starts = [0];
+  const segs = starts.map((st, k) => lines.slice(st, k + 1 < starts.length ? starts[k + 1] : lines.length).filter(Boolean));
+  const HEADER_CELL = /^(observation focus|question|questions|your notes|notes( \(all teachers\))?|teacher\s*\d)$/i;
+  const found = [], skipped = [];
+  segs.forEach((seg, k) => {
+    if (!seg.length) return;
+    const strip = l => l.replace(/^#\s*/, '').replace(/^(peer|filmed|live)\s+observation\s*[·:—\-]?\s*/i, '').replace(/^TP\s*\d\s*[·:—\-]?\s*/i, '').replace(/^task\s*\d\s*[·:—\-]?\s*/i, '').trim();
+    let head = strip(seg[0]);
+    let bodyFrom = 1;
+    /* "PEER OBSERVATION · TP1A AND 1B · TASK 1" strips to "A AND 1B · TASK 1":
+       no lowercase letter left means it was a code line, and the title is the
+       line under it. */
+    if (!head || !/[a-z]/.test(head) || /^(task|tp)\s*\d*$/i.test(head)) { head = strip(seg[1] || '') || ('Task ' + (k + 1)); bodyFrom = 2; }
+    const tp = ((seg.slice(0, 3).join(' ').match(/\bTP\s*(\d)/i) || [])[1]); // "TP1A": the letter follows the digit
+    const recording = (seg.find(l => /^Recording:/i.test(l)) || '').replace(/^Recording:\s*/i, 'Recording: ').replace(/^Recording:.*?observation\s*(\d+)\s*$/i, 'Recording: observation $1');
+    const rows = [], parts = [];
+    let brief = '', lastBare = false;
+    for (let i = bodyFrom; i < seg.length; i++) {
+      const l = seg[i];
+      if (/^Recording:/i.test(l)) continue;
+      const cells = l.split('\t').map(c => c.trim()).filter(Boolean);
+      if (cells.length > 1 && /^\d{1,2}$/.test(cells[0]) && !HEADER_CELL.test(cells[1])) { rows.push(cells[1]); lastBare = false; continue; }
+      if (cells.length > 1 && cells.every(c => HEADER_CELL.test(c) || /^\d{1,2}$/.test(c))) continue;
+      const num = l.match(/^(\d{1,2})[.)]\s+(.+)$/);
+      if (num) { rows.push(num[2]); lastBare = false; continue; }
+      if (/^\d{1,2}$/.test(l)) { lastBare = true; continue; }
+      const part = l.match(/^([A-H])[.)]\s+(.+)$/);
+      if (part) { parts.push({ letter: part[1], title: part[2], lines: [] }); lastBare = false; continue; }
+      if (/^(before|during) the lesson\b|^before you watch\b/i.test(l)) { brief = l.replace(/^((?:before|during) the lesson|before you watch)\s*[—:\-]?\s*/i, (m, w) => w.charAt(0).toUpperCase() + w.slice(1) + ' — '); lastBare = false; continue; }
+      if (HEADER_CELL.test(l)) { lastBare = false; continue; }
+      if (parts.length) { parts[parts.length - 1].lines.push(l); continue; }
+      if (lastBare) { rows.push(l); lastBare = false; continue; }
+      /* a question wrapped over a second line in a table cell */
+      if (rows.length && cells.length === 1 && !/[.?!]$/.test(rows[rows.length - 1])) { rows[rows.length - 1] += ' ' + l; }
+    }
+    const single = seg.some(l => /all teachers/i.test(l));
+    const shape = group === 'peer' ? (rows.length ? (single ? 'single' : 'grid') : 'focus') : group === 'filmed' ? 'notes' : (rows.length ? 'questions' : 'parts');
+    if (group !== 'peer' && !rows.length && !parts.length) { skipped.push(head); return; }
+    const t = { id: '', title: head, shape };
+    if (group === 'peer') { t.tp = Number(tp) || found.length + 1; t.variant = 0; t.brief = brief; t.rows = shape === 'focus' ? [] : rows; }
+    else if (group === 'filmed') { t.recording = recording || ''; t.rows = rows; }
+    else { t.sub = (bodyFrom === 1 && seg[1] && seg[1].length < 90 && !/^\d/.test(seg[1]) && !/^[A-H][.)]\s/.test(seg[1])) ? seg[1] : ''; if (shape === 'questions') t.rows = rows; else t.parts = parts; }
+    if (brief && group !== 'peer') t.brief = brief;
+    if (group === 'peer' && found.some(o => o.tp === t.tp && o.title === t.title)) return; // TP1a and TP1b: one sheet, done twice
+    found.push(t);
+  });
+  /* ids: peer by TP; two tasks on one TP become -1 and -2, the way TP5 ships */
+  if (group === 'peer') {
+    const perTp = {}; found.forEach(t => { perTp[t.tp] = (perTp[t.tp] || 0) + 1; });
+    const seen = {};
+    found.forEach(t => { seen[t.tp] = (seen[t.tp] || 0) + 1; if (perTp[t.tp] > 1) { t.variant = seen[t.tp]; t.id = 'peer' + t.tp + '-' + seen[t.tp]; } else t.id = 'peer' + t.tp; });
+  } else found.forEach((t, i) => { t.id = group + (i + 1); });
+  return { found, skipped };
+}
+
+function renderReview(result, group, fileName){
+  const names = { peer:'Peer observations', filmed:'Filmed lessons', live:'Live lessons' };
+  const shapeWord = { grid:'three-teacher grid', single:'one column', focus:'one focus per teacher', notes:'notes column', questions:'questions', parts:'lettered parts' };
+  const count = t => t.parts ? t.parts.length + ' parts' : (t.rows||[]).length + (t.shape === 'questions' ? ' questions' : ' rows');
+  $('editor').innerHTML = `<div class="review"><h2>What the file holds</h2>
+    <p class="notice">${esc(fileName)} — read as <b>${names[group]}</b>. Replacing the ${(DATA[group]||[]).length} tasks in that group with these ${result.found.length}. Nothing else changes, and you can still edit every one afterwards.</p>
+    ${result.found.map(t => `<div class="found"><b>${esc(t.title)}</b> ${t.tp ? '<span style="color:var(--grey)">TP' + t.tp + '</span>' : ''}<small>${shapeWord[t.shape]} · ${count(t)}${t.brief ? ' · brief found' : ''}${t.recording ? ' · ' + esc(t.recording) : ''}</small></div>`).join('')}
+    ${result.skipped.length ? `<p class="skipped">Skipped, nothing to fill in: ${result.skipped.map(esc).join('; ')}</p>` : ''}
+    ${!result.found.length ? '<p class="skipped">Nothing usable was found. A sheet needs numbered questions, or lettered A/B/C parts.</p>' : ''}
+    <div class="actions"><button type="button" class="btn secondary" id="reviewCancel">Keep what I have</button>${result.found.length ? '<button type="button" class="btn" id="reviewApply">Replace and save</button>' : ''}</div></div>`;
+  $('reviewCancel').addEventListener('click', () => renderEditor());
+  if ($('reviewApply')) $('reviewApply').addEventListener('click', () => {
+    DATA[group] = result.found; CURRENT = result.found[0].id; persist(); renderList(); renderEditor();
+  });
+}
+
+$('importBtn').addEventListener('click', () => $('importFile').click());
+$('importFile').addEventListener('change', async e => {
+  const file = e.target.files[0]; e.target.value = ''; if (!file) return;
+  const group = $('importGroup').value;
+  try {
+    const text = await window.hubFileText(file);
+    renderReview(parseImport(text, group), group, file.name);
+  } catch (err) { alert(err && err.message ? err.message : 'That file could not be read.'); }
+});
+
 renderList(); renderEditor();
 </script>
 </body>

@@ -124,8 +124,8 @@
     .section-head input.label{flex:1 1 100%; order:-1;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609272219">
-<link rel="stylesheet" href="hub-theme.css?v=202609272219">
+<link rel="stylesheet" href="hub-house.css?v=202609272231">
+<link rel="stylesheet" href="hub-theme.css?v=202609272231">
 </head>
 <body>
 <div class="board">
@@ -139,11 +139,12 @@
     <div class="editor" id="editor"></div>
   </div>
 </div>
-<script src="assignment-defaults.js?v=202609272219"></script>
-<script src="hub-due.js?v=202609272219"></script>
-<script src="hub-shared.js?v=202609272219"></script>
-<script src="hub-store.js?v=202609272219"></script>
-<script src="hub-sync.js?v=202609272219"></script>
+<script src="assignment-defaults.js?v=202609272231"></script>
+<script src="hub-due.js?v=202609272231"></script>
+<script src="hub-docx.js?v=202609272231"></script>
+<script src="hub-shared.js?v=202609272231"></script>
+<script src="hub-store.js?v=202609272231"></script>
+<script src="hub-sync.js?v=202609272231"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -394,7 +395,7 @@ function renderEditor(){
     ${CURRENT!=='a5' ? metaHTML(a) : ''}
     <div class="importrow">
       <button type="button" class="btn btn-quiet" onclick="$('importFile').click()">\u2B06 Import from a file</button>
-      <input type="file" id="importFile" accept=".txt,.md" style="display:none;" onchange="handleImport(this.files[0])">
+      <input type="file" id="importFile" accept=".docx,.txt,.md" style="display:none;" onchange="handleImport(this.files[0])">
       <span class="importnote">Plain text or Markdown — blank-line-separated paragraphs become sections you can then edit.</span>
     </div>
     <div id="sections"></div>
@@ -489,11 +490,14 @@ function updateDeclItem(i, di, v){ DATA[CURRENT].sections[i].items[di] = v; }
 function addDeclItem(i){ DATA[CURRENT].sections[i].items.push('New declaration'); renderEditor(); }
 function removeDeclItem(i, di){ DATA[CURRENT].sections[i].items.splice(di,1); renderEditor(); }
 function toggleAi(i, checked){ DATA[CURRENT].sections[i].aiToggle = checked; }
-function handleImport(file){
+/* Word files too (27 Sep 2026): hub-docx.js turns a .docx into the same
+   plain text -- one paragraph per line, Word headings as "# " lines with a
+   blank line before them -- so the section rule below sees them as sections. */
+async function handleImport(file){
   if(!file) return;
-  const reader = new FileReader();
-  reader.onload = async ()=>{
-    const text = reader.result || '';
+  let text = '';
+  try { text = await window.hubFileText(file); } catch (err) { alert(err && err.message ? err.message : 'That file could not be read.'); return; }
+  await (async ()=>{
     const blocks = text.split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean);
     const sections = blocks.map(b=>{
       const lines = b.split('\n');
@@ -506,8 +510,7 @@ function handleImport(file){
     if (!ok) return;
     DATA[CURRENT].sections = DATA[CURRENT].sections.concat(sections);
     renderList(); renderEditor();
-  };
-  reader.readAsText(file);
+  })();
 }
 function addSection(){
   const type = $('newType').value;
