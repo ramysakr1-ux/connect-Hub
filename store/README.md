@@ -14,6 +14,13 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
+## 27 Sep 2026 — the owner key can be rotated
+See `2026-09-27-rotate-the-owner-key.md`. One new owner-only op,
+`rotateOwnerKey`, plus a one-line fix to `ownerKey()`'s link (it still points at
+github.io). **Not yet deployed** — apply it in the editor and redeploy as a new
+VERSION. `node store/rotate-owner-key.mjs` is the runner and refuses to write a
+key it cannot then use.
+
 ## 27 Sep 2026 — c4 had no assignment wording, and clearing localStorage wiped its course record
 See `2026-09-27-c4-wording-and-a-wiped-course-record.md`. No store change — a
 seed bug and an operating mistake. **Clearing localStorage on a live tutor page
