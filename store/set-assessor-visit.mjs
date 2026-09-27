@@ -3,12 +3,20 @@
 //
 //   node store/set-assessor-visit.mjs c4
 //   node store/set-assessor-visit.mjs c4 --date 2026-09-01 --ref TR073-C16/2026
+//   node store/set-assessor-visit.mjs c4 --observe "Deniz, Marcus, Selin"
 //   node store/set-assessor-visit.mjs c4 --clear
 //
 // They are what the assessor pack builds its "lesson plans for the day of the
 // assessment" section from, and what it heads the pack with. A pack with no
 // visit date hides that section rather than breaking, which is the intended
 // behaviour, so this is a filling-in, not a repair.
+//
+// --observe is the MCT's choice of which candidates the assessor will observe
+// (Handbook 14.2). It is stored as a list of candidate TOKENS -- the pack keeps
+// only the ids it can still find on the roster -- so names are given here and
+// resolved against the roster. A name that matches more than one candidate, or
+// none, stops the whole thing: three names are three people, and half a list
+// written to the course is worse than none.
 //
 // GUARDED the way the other settings writers are: a `course` read that comes
 // back with too few fields is a FAILED READ, and putCourse REPLACES.
@@ -23,8 +31,9 @@ const courseId = process.argv[2];
 const arg = (name) => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : undefined; };
 const date = arg('--date');
 const ref = arg('--ref');
+const observe = arg('--observe');
 const CLEAR = process.argv.includes('--clear');
-if (!courseId || courseId.startsWith('--')) { console.error('Usage: node store/set-assessor-visit.mjs <courseId> [--date YYYY-MM-DD] [--ref TEXT] [--clear]'); process.exit(1); }
+if (!courseId || courseId.startsWith('--')) { console.error('Usage: node store/set-assessor-visit.mjs <courseId> [--date YYYY-MM-DD] [--ref TEXT] [--observe "Name, Name"] [--clear]'); process.exit(1); }
 if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) { console.error('--date must be YYYY-MM-DD'); process.exit(1); }
 
 const once = async (b) => {
@@ -47,18 +56,46 @@ const cur = (read.result && read.result.settings) || {};
 const n = Object.keys(cur).length;
 if (n < 6) { console.error(`Read returned only ${n} settings fields. That is a FAILED READ — refusing to write over it.`); process.exit(1); }
 
+const roster = await call({ op: 'roster', key: course.tutorKey });
+const people = (roster.result && roster.result.trainees) || [];
+const nameOf = (tok) => (people.find((p) => p.token === tok) || {}).name || '(not on the roster)';
+
 console.log(`${courseId} — ${course.name}`);
 console.log(`  visitDate now: ${JSON.stringify(cur.visitDate || '')}   notificationRef now: ${JSON.stringify(cur.notificationRef || '')}`);
-if (!date && !ref && !CLEAR) { console.log('\nRead only. Pass --date and/or --ref, or --clear.\n'); process.exit(0); }
+console.log(`  observed now: ${(cur.assessorVisit || []).map(nameOf).join(', ') || '(nobody chosen)'}`);
+if (!date && !ref && !observe && !CLEAR) { console.log('\nRead only. Pass --date, --ref and/or --observe, or --clear.\n'); process.exit(0); }
+
+/* Names to tokens. Exact first, then a unique prefix -- "Deniz" for Deniz
+   Arslan. Anything ambiguous or unfound stops everything. */
+let picks = null;
+if (observe) {
+  const wanted = observe.split(',').map((x) => x.trim()).filter(Boolean);
+  if (!wanted.length) { console.error('--observe was empty'); process.exit(1); }
+  picks = [];
+  for (const want of wanted) {
+    const lc = want.toLowerCase();
+    let hits = people.filter((p) => p.name.toLowerCase() === lc);
+    if (!hits.length) hits = people.filter((p) => p.name.toLowerCase().startsWith(lc));
+    if (!hits.length) hits = people.filter((p) => p.name.toLowerCase().includes(lc));
+    if (hits.length !== 1) {
+      console.error(`"${want}" matches ${hits.length} candidates${hits.length ? ': ' + hits.map((h) => h.name).join(', ') : ''} — writing nothing.`);
+      process.exit(1);
+    }
+    picks.push(hits[0]);
+  }
+  console.log(`  observed after: ${picks.map((p) => p.name).join(', ')}`);
+}
 
 const next = { ...cur };
-if (CLEAR) { delete next.visitDate; delete next.notificationRef; }
+if (CLEAR) { delete next.visitDate; delete next.notificationRef; delete next.assessorVisit; }
 if (date) next.visitDate = date;
 if (ref) next.notificationRef = ref;
+if (picks) next.assessorVisit = picks.map((p) => p.token);
 
 const w = await call({ op: 'putCourse', key: course.tutorKey, kind: 'settings', data: next });
 if (!w.ok) { console.error('write refused: ' + w.error); process.exit(1); }
 const after = ((await call({ op: 'course', key: course.tutorKey })).result || {}).settings || {};
 console.log(`  visitDate after: ${JSON.stringify(after.visitDate || '')}   notificationRef after: ${JSON.stringify(after.notificationRef || '')}`);
+console.log(`  observed after: ${(after.assessorVisit || []).map(nameOf).join(', ') || '(nobody chosen)'}`);
 console.log(`  settings fields: ${n} before, ${Object.keys(after).length} after`);
 if (Object.keys(after).length < n) { console.error('\nFields were lost. Put them back before doing anything else.'); process.exit(1); }
