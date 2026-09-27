@@ -486,7 +486,7 @@ var SCENES = [
     stub: ['put'],
     steps: [
       { do: 'hold', ms: 1050 },
-      { do: 'caption', text: 'One resubmission. They see what to fix.' },
+      { do: 'caption', text: 'The resubmission opens where it failed.' },
       { do: 'scroll', to: 500, ms: 2080 },
       { do: 'hold', ms: 1183 },
       { do: 'scroll', to: 1100, ms: 2240 },
