@@ -14,6 +14,11 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
+## 27 Sep 2026 — c4 had no assignment wording, and clearing localStorage wiped its course record
+See `2026-09-27-c4-wording-and-a-wiped-course-record.md`. No store change — a
+seed bug and an operating mistake. **Clearing localStorage on a live tutor page
+is a write**; hub-sync pushes the emptiness up.
+
 ## 26 Sep 2026 — the teaching-practice history, one row per TP
 See `2026-09-26-tpHistory-per-row.md`. Deployed as version 20.
 

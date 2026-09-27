@@ -64,9 +64,30 @@ if (REUSE) {
 if (KEEP.has(course.id)) { console.log('refusing to touch ' + course.id); process.exit(1); }
 const KEY = course.tutorKey;
 
+/* The four assignments, from the product's own defaults. This was missing: the
+   course was built with twelve candidates' assignments all marked and closed
+   and NO wording behind them, so every assignment screen on the finished demo
+   read "This assignment isn't set up yet" -- and the self-heal that fills a
+   course's wording in deliberately refuses a course that has marks on it, so
+   it could never repair itself. Found 27 Sep 2026. Never hard-code the four
+   here: they are one file, and this must follow it. */
+const DEFAULT_WORDING = (() => {
+  const src = readFileSync(join(HERE, 'assignment-defaults.js'), 'utf8');
+  const scope = { window: {} };
+  new Function('window', src)(scope.window);
+  const w = scope.window.CONNECT_HUB_DEFAULT_WORDING;
+  if (!w || Object.keys(w).length < 4) throw new Error('assignment-defaults.js gave no wording');
+  return JSON.parse(JSON.stringify(w));
+})();
+/* How many criteria each assignment really has -- 6/4/4/5 from the syllabus,
+   not the four this file used to assume for all of them. */
+const CRIT_COUNT = Object.fromEntries(Object.keys(DEFAULT_WORDING).map(k => [k, (DEFAULT_WORDING[k].criteria || []).length]));
+
 if (WRITE) {
   const s = await call({ op: 'putCourse', key: KEY, kind: 'settings', data: COURSE.settings });
   console.log(s.ok ? 'settings saved' : 'settings FAILED: ' + s.error);
+  const w = await call({ op: 'putCourse', key: KEY, kind: 'wording', data: DEFAULT_WORDING });
+  console.log(w.ok ? `wording saved — ${Object.keys(DEFAULT_WORDING).map(k => k + ':' + CRIT_COUNT[k]).join(' ')}` : 'wording FAILED: ' + w.error);
 }
 
 /* ---- the people ---------------------------------------------------------- */
@@ -281,21 +302,53 @@ for (const [ci, cand] of people.entries()) {
 const ASG = { fol: 'Focus on the Learner', lrt: 'Language Related Tasks', lsrt: 'Language Skills Related Tasks', lfc: 'Lessons from the Classroom' };
 const asgAt = { fol: at(2), lrt: at(4), lsrt: at(6), lfc: at(8) };
 
+/* A resubmission's not-met note has to be about the criterion it sits under,
+   and the general comment must not name a criterion at all. This file used to
+   give every resubmitted assignment the same sentence -- "the rationale for
+   the second activity" -- which is a Focus on the Learner story: Language
+   Related Tasks and Lessons from the Classroom have no rationale criterion, so
+   on those two the tutor's words described something the assignment does not
+   ask for (27 Sep 2026). */
+const notMetNote = (c) => `Not met yet: ${String((c && c.text) || 'this criterion').replace(/^[A-Z]/, (m) => m.toLowerCase())} \u2014 the evidence for this is not there yet. Rewrite this section only and resubmit.`;
+const notMetIndexFor = (code) => {
+  const crit = (DEFAULT_WORDING[code] && DEFAULT_WORDING[code].criteria) || [];
+  const byWord = crit.findIndex((c) => /rationale/i.test(c.text || ''));
+  return byWord >= 0 ? byWord : Math.min(3, crit.length - 1);
+};
+
 function assignment(cand, code, how) {
   const marker = cand.group === '1' ? 'Jordan Blake' : 'Diane Okonkwo';
+  const crit = (DEFAULT_WORDING[code] && DEFAULT_WORDING[code].criteria) || [];
+  const n = crit.length || 4;
+  const notMetAt = notMetIndexFor(code);
   const body = `This assignment is submitted as part of the CELTA course at ${COURSE.settings.centreName}. It addresses each of the criteria set out in the brief, in the order the brief gives them, with reference to the teaching practice class and to the reading listed at the end.`;
   const sub = { picked: {}, text: { 1: body }, fields: {}, decl: { 8: { checks: [true, true, true], aiUsed: 'no', aiLink: '', aiPurpose: '' } }, materialsLink: '' };
   const base = {
     stage: 'closed', usedResubmission: how === 'resub',
     sub1: sub, sub2: how === 'resub' ? sub : null,
-    criteriaMarks: { sub1: [true, true, true, true], sub2: how === 'resub' ? [true, true, true, true] : [] },
-    criteriaComments: { sub1: ['Met.', 'Met.', 'Met.', 'Met.'], sub2: [] },
+    /* One mark per criterion the assignment HAS. This was four for all of
+       them, so once the wording was written the two extra criteria of Focus on
+       the Learner and the fifth of Lessons from the Classroom sat unmarked on
+       a closed, passed assignment.
+       And a resubmission is asked for because something was NOT met: the
+       general comment below says "not yet met on one criterion" while every
+       first-round mark read Met, so the tutor's words and the tutor's marks
+       disagreed on the same screen. The last criterion of the first round
+       carries the reason; the resubmission meets it. */
+    criteriaMarks: {
+      sub1: Array.from({ length: n }, (_, i) => !(how === 'resub' && i === notMetAt)),
+      sub2: how === 'resub' ? Array.from({ length: n }, () => true) : [],
+    },
+    criteriaComments: {
+      sub1: Array.from({ length: n }, (_, i) => (how === 'resub' && i === notMetAt ? notMetNote(crit[i]) : 'Met.')),
+      sub2: how === 'resub' ? Array.from({ length: n }, () => '') : [],
+    },
     markers: { first: marker, second: '', doubleMarked: false },
     sub1At: asgAt[code] - 864e5, marked1At: asgAt[code],
     feedback: {
       outcome: how === 'resub' ? 'Pass (on resubmission)' : 'Pass',
       generalComment1: how === 'resub'
-        ? 'Not yet met on one criterion: the rationale for the second activity did not follow from the problem you identified. Everything else is there. Resubmit that section only.'
+        ? 'Not yet met on one criterion \u2014 the note against it says what is missing. Everything else is there and is well done. Resubmit that section only.'
         : 'A careful, well-organised piece of work that does what the brief asks. The examples are from your own teaching practice class and they are used, not just mentioned.',
       generalComment2: how === 'resub' ? 'The resubmitted section deals fully with the point raised. Passed.' : '',
     },
