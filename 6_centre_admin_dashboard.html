@@ -265,7 +265,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609272345">
+<link rel="stylesheet" href="hub-house.css?v=202609272354">
 </head>
 <body>
 <div class="board">
@@ -460,7 +460,7 @@
          timetable -- live wherever the centre keeps them; the candidate's home
          gets a Course files card listing whatever is pasted here. -->
     <h3 class="docsh">Files for candidates</h3>
-    <p class="note" style="margin-top:0;">Links the candidates read: TP points, getting-to-know-you activities, the timetable, anything else. Each one becomes a line on their home screen. Leave a link empty and it does not show.</p>
+    <p class="note" style="margin-top:0;">Links the candidates read: TP points, getting-to-know-you activities, the timetable, the input sessions, anything else. Each one becomes a line on their home screen, under the card you name — links with the same card name share a card, so “Input sessions” can hold twenty. Leave a link empty and it does not show.</p>
     <div id="candLinks" class="fields docs"></div>
     <button type="button" class="btn ghost" id="addCandLink" style="margin-top:10px;">Add a link</button>
 
@@ -520,11 +520,11 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609272345"></script>
-<script src="hub-store.js?v=202609272345"></script>
-<script src="observation-defaults.js?v=202609272345"></script>
-<script src="hub-shared.js?v=202609272345"></script>
-<script src="hub-sync.js?v=202609272345"></script>
+<script src="assignment-defaults.js?v=202609272354"></script>
+<script src="hub-store.js?v=202609272354"></script>
+<script src="observation-defaults.js?v=202609272354"></script>
+<script src="hub-shared.js?v=202609272354"></script>
+<script src="hub-sync.js?v=202609272354"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -718,23 +718,36 @@ document.getElementById('saveSettings').addEventListener('click', () => {
    clears it. */
 /* var, not const: the settings load above runs first and already calls
    renderCandLinks(); function declarations hoist, block-scoped names do not. */
-var SUGGESTED_LINKS = [['TP points', ''], ['Getting-to-know-you activities', ''], ['Course timetable', ''], ['Alternative teaching techniques', 'https://lite.celtaconnect.com/alternative-teaching-techniques/']];
+var SUGGESTED_LINKS = [['TP points', '', 'Course files'], ['Getting-to-know-you activities', '', 'Course files'], ['Course timetable', '', 'Course files'], ['Alternative teaching techniques', 'https://lite.celtaconnect.com/alternative-teaching-techniques/', 'Course files']];
 var CAND_LINKS = CAND_LINKS || [];
 function renderCandLinks(){
   if (!CAND_LINKS) CAND_LINKS = []; // the load block calls this before the var below is assigned
-  const SUG = [['TP points', ''], ['Getting-to-know-you activities', ''], ['Course timetable', ''], ['Alternative teaching techniques', 'https://lite.celtaconnect.com/alternative-teaching-techniques/']];
+  const SUG = [['TP points', '', 'Course files'], ['Getting-to-know-you activities', '', 'Course files'], ['Course timetable', '', 'Course files'], ['Alternative teaching techniques', 'https://lite.celtaconnect.com/alternative-teaching-techniques/', 'Course files']];
   const have = CAND_LINKS.map(l => l.label), haveUrl = CAND_LINKS.map(l => l.url);
-  const rows = CAND_LINKS.concat(SUG.filter(([label, url]) => !have.includes(label) && !(url && haveUrl.includes(url))).map(([label, url]) => ({ label, url })));
+  const rows = CAND_LINKS.concat(SUG.filter(([label, url]) => !have.includes(label) && !(url && haveUrl.includes(url))).map(([label, url, card]) => ({ label, url, card })));
+  /* Ramy, 27 Sep 2026: "you have an input session card and then they just go
+     underneath that card." The third field names the card; the same name on
+     several rows is one card with several lines. */
+  const cards = [...new Set(rows.map(l => l.card || 'Course files'))];
   document.getElementById('candLinks').innerHTML = rows.map((l, i) =>
     `<div><label>Label</label><input type="text" class="cl-label" data-i="${i}" value="${esc(l.label)}" placeholder="What the candidate sees"></div>
-     <div><label>Link</label><input type="text" class="cl-url" data-i="${i}" value="${esc(l.url)}" placeholder="https://…"></div>`).join('');
+     <div><label>Link</label><input type="text" class="cl-url" data-i="${i}" value="${esc(l.url)}" placeholder="https://…"></div>
+     <div class="wide"><label>Card</label><input type="text" class="cl-card" data-i="${i}" value="${esc(l.card || 'Course files')}" list="cardNames" placeholder="Course files"></div>`).join('') +
+    `<datalist id="cardNames">${cards.concat(['Input sessions', 'Timetable']).filter((c, k, a) => a.indexOf(c) === k).map(c => `<option value="${esc(c)}">`).join('')}</datalist>`;
 }
 function readCandLinks(){
-  const labels = [...document.querySelectorAll('.cl-label')], urls = [...document.querySelectorAll('.cl-url')];
-  const out = labels.map((el, i) => ({ label: el.value.trim(), url: (urls[i] ? urls[i].value : '').trim() })).filter(l => l.url);
-  CAND_LINKS = out; return out;
+  const labels = [...document.querySelectorAll('.cl-label')], urls = [...document.querySelectorAll('.cl-url')], cards = [...document.querySelectorAll('.cl-card')];
+  const all = labels.map((el, i) => ({ label: el.value.trim(), url: (urls[i] ? urls[i].value : '').trim(), card: ((cards[i] ? cards[i].value : '').trim() || 'Course files') }));
+  /* Every row stays on screen as typed -- an empty suggestion keeps its place
+     and a new row goes at the end; only rows with a link are saved. */
+  CAND_LINKS = all; return all.filter(l => l.url);
 }
-document.getElementById('addCandLink').addEventListener('click', () => { readCandLinks(); CAND_LINKS.push({ label:'', url:'' }); renderCandLinks(); });
+document.getElementById('addCandLink').addEventListener('click', () => {
+  readCandLinks();
+  /* a new row joins the card of the row above it, which is what "add another input session" means */
+  const last = [...document.querySelectorAll('.cl-card')].pop();
+  CAND_LINKS.push({ label:'', url:'', card: (last && last.value.trim()) || 'Course files' }); renderCandLinks();
+});
 
 /* ---- Observations tab ------------------------------------------------------ */
 (function(){

@@ -238,7 +238,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609272345">
+<link rel="stylesheet" href="hub-house.css?v=202609272354">
 </head>
 <body>
 <div class="board">
@@ -310,10 +310,7 @@
          getting-to-know-you activities, the timetable -- wherever the centre
          keeps them. Filled from Course admin's "Files for candidates"; hidden
          until there is one. -->
-    <div class="room files" id="roomFiles" hidden>
-      <h2>Course files</h2>
-      <ul id="fileLinks"></ul>
-    </div>
+    <div id="roomFiles" hidden></div>
     <a class="room" href="7_candidate_tracker.html?me=1">
       <h2>Your progress</h2>
       <p>Every teaching practice and every assignment on one grid, read from what your tutor has returned to you. The same view your tutor has of you.</p>
@@ -347,10 +344,10 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202609272345"></script>
-<script src="hub-shared.js?v=202609272345"></script>
-<script src="hub-store.js?v=202609272345"></script>
-<script src="hub-sync.js?v=202609272345"></script>
+<script src="hub-due.js?v=202609272354"></script>
+<script src="hub-shared.js?v=202609272354"></script>
+<script src="hub-store.js?v=202609272354"></script>
+<script src="hub-sync.js?v=202609272354"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -504,13 +501,16 @@ line(document.getElementById('badgeObs'), (function(){
   return n === 6 ? 'All six turned in' : n ? n + ' of 6 turned in' : 'Six to turn in';
 })(), (function(){ const w = rec('connect_observations_v1') || {}; return ['filmed1','filmed2','filmed3','filmed4','live1','live2'].every(k => w[k] && w[k].turnedInAt) ? 'done' : ''; })());
 
-/* Course files, from the centre's settings. */
+/* The centre's links for candidates, one card per card name (Ramy, 27 Sep
+   2026: "an input session card and then they just go underneath that
+   card"). Cards come in the order the centre listed them. */
 (function(){
   const links = ((rec('connect_course_settings') || {}).courseLinks || []).filter(l => l && l.url);
-  const card = document.getElementById('roomFiles'); if (!card) return;
-  if (!links.length) return;
-  document.getElementById('fileLinks').innerHTML = links.map(l => `<li><a href="${l.url.replace(/"/g,'&quot;')}" target="_blank" rel="noopener noreferrer">${(l.label || l.url).replace(/&/g,'&amp;').replace(/</g,'&lt;')}</a></li>`).join('');
-  card.hidden = false;
+  const host = document.getElementById('roomFiles'); if (!host || !links.length) return;
+  const e = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+  const cards = [];
+  links.forEach(l => { const name = (l.card || 'Course files').trim() || 'Course files'; let c = cards.find(x => x.name === name); if (!c) { c = { name, links: [] }; cards.push(c); } c.links.push(l); });
+  host.outerHTML = cards.map(c => `<div class="room files"><h2>${e(c.name)}</h2><ul>${c.links.map(l => `<li><a href="${e(l.url)}" target="_blank" rel="noopener noreferrer">${e(l.label || l.url)}</a></li>`).join('')}</ul></div>`).join('');
 })();
 
 /* The grid: when it last changed, which is the question you open it with. Never
