@@ -125,6 +125,13 @@
   </div>
 </div>
 
+<!-- The music. One track, under everything, low. Dropped in as
+     film/music.mp3, or pointed at with &music=<url>; the film plays without
+     one and says so, rather than failing. Volume starts at 0.18 because a
+     soundtrack that competes with the screens is the commonest way a product
+     film gets turned off. -->
+<audio id="music" loop preload="auto"></audio>
+
 <div class="bar">
   <button id="play">Pause</button>
   <button id="again">Replay scene</button>
@@ -529,10 +536,31 @@
     });
   }
 
+  /* ---- the music ------------------------------------------------------- */
+  var music = document.getElementById('music');
+  var musicSrc = new URLSearchParams(location.search).get('music') || 'music.mp3';
+  music.src = musicSrc;
+  music.volume = 0.18;
+  var musicOn = false;
+  /* Browsers refuse audio until the page has been clicked, which is correct
+     and cannot be worked around -- so the first press of Pause/Play starts
+     it, and the note says so instead of leaving a silent film unexplained. */
+  function startMusic() {
+    if (musicOn) return;
+    music.play().then(function () { musicOn = true; }).catch(function () {});
+  }
+  music.addEventListener('error', function () {
+    var d = document.createElement('div');
+    d.textContent = 'No music track yet — drop one in as film/music.mp3, or add &music=<url>.';
+    note.appendChild(d);
+  });
+
   document.getElementById('play').onclick = function () {
     playing = !playing;
     this.textContent = playing ? 'Pause' : 'Play';
+    if (playing) { startMusic(); if (musicOn) music.play(); } else { music.pause(); }
   };
+  document.addEventListener('click', startMusic, { once: true });
   document.getElementById('again').onclick = function () { play(current); };
 
   if (!KEY) {

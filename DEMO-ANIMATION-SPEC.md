@@ -186,7 +186,18 @@ Capture from the live links, not from mock-ups. Never paste a link into this fil
 
 ## Music
 
-One track, under everything, low. Royalty-free, no vocals, no drop at the start, nothing that asks to be noticed — the screens are the film. Three to be shortlisted for Ramy to choose. It ducks slightly under the long holds.
+One track, under everything, low. It goes in as `film/music.mp3`, or with `&music=<url>` on the film's own address; the film starts it on the first click (browsers refuse audio before one) at 18% volume, and plays without one if none is there.
+
+**The brief, which matters more than the track.** No vocals — a lyric competes with a caption for the same reader. No drop, no build, no arrival: the film has no climax and music that promises one makes the screens look slow. Nothing percussive enough to imply urgency; this is a tool a centre will use for four weeks, not an app launch. Warm rather than bright, and quiet enough that a viewer could talk over it. Two to four minutes, looping cleanly, because the film is about five and nobody should hear a seam.
+
+**Where to look, both checked 27 September 2026:**
+
+- **Pixabay** — pixabay.com/music. Licence verified: attribution **not** required, commercial use allowed, and a soundtrack inside a video is fine because what it forbids is redistributing the track *standalone*. It also warns that a particular track may carry extra rights, so check the one you pick.
+- **Mixkit** — mixkit.co/free-stock-music. Free, but I could not retrieve the actual licence text, so read it before this goes out commercially. Understated instrumentals there include **Meditation**, **Infinity** and **Nature Yoga**, all by Arulo, and **Voxscape** by Eugenio Mininni.
+
+**FreePD.com is gone** — the site has closed. Anything still recommending it is out of date.
+
+**I cannot hear any of these**, so the pick is Ramy's: play three against the film with the transport running and take the one you stop noticing. That is the test — the right track is the one you forget is there.
 
 ## Build notes before filming
 
