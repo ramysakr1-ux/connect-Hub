@@ -90,8 +90,30 @@
   .chip.wrong{background:var(--red-bg); border-color:oklch(82% 0.08 25); color:var(--red); font-weight:700;}
   .standing{display:inline-block; font-size:0.72rem; font-weight:700; letter-spacing:0.05em; padding:5px 10px; border-radius:20px; background:var(--sand); color:var(--grey);}
   .standing.tk-std{background:oklch(95% 0.02 155); color:var(--grn);}
-  .standing.tk-above{background:var(--grn-bg); color:var(--grn);}
+  /* Above standard is gold, and solid. It was --grn-bg against tk-std's
+     oklch(95% 0.02 155): the same hue, a chroma apart, so the one thing on
+     this card an assessor is looking for could not be told from the ordinary
+     case (Ramy, 27 Sep 2026: "it's all kind of different green... maybe we
+     can go with above standard with the gold colour instead"). */
+  .standing.tk-above{background:var(--gold, oklch(63% 0.096 72)); color:oklch(23.5% 0.017 65);}
   .standing.tk-notstd{background:var(--red-bg); color:var(--red);}
+
+  /* The grades, and the report, unpacked. This cell used to stack the
+     standing chip, two prose lines reading "Provisional: PASS" and "Final:
+     PASS B · final report", the cap and the fail letter -- five things in one
+     column, with the report link welded to the end of a grade. At full width
+     that is what reads as crowded. Now: the grades are two small pills that
+     scan as a pair, and the report is its own line under them. */
+  .grades{display:flex; flex-wrap:wrap; gap:6px; margin-top:7px;}
+  .gpill{display:inline-flex; align-items:baseline; gap:5px; font-size:0.7rem; font-weight:600;
+    letter-spacing:0.04em; text-transform:uppercase; padding:3px 9px; border-radius:20px;
+    background:var(--sand); border:1px solid var(--sand-line); color:var(--grey); white-space:nowrap;}
+  .gpill b{font-size:0.78rem; font-weight:700; letter-spacing:0; text-transform:none; color:var(--ink);}
+  /* The final is the one that counts, so it carries the edge. */
+  .gpill.fin{border-color:color-mix(in oklab, var(--teal) 40%, transparent);
+    background:color-mix(in oklab, var(--teal) 5%, var(--sand));}
+  .gpill.fin b{color:var(--teal);}
+  .reportlink{display:inline-block; margin-top:6px; font-size:0.76rem; font-weight:600;}
   .btn{display:inline-block; text-decoration:none; font-family:'Karla',sans-serif; font-size:0.83rem; font-weight:700; padding:8px 16px; border-radius:20px; border:1.5px solid var(--sand-line); background:var(--card); color:var(--ink); cursor:pointer;}
   .btn.ghost{border-color:var(--teal); color:var(--teal); background:none;}
   .btn.primary{background:var(--teal); border-color:var(--teal); color:var(--paper);}
@@ -145,7 +167,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609271126">
+<link rel="stylesheet" href="hub-house.css?v=202609271135">
 </head>
 <body>
 <div class="board">
@@ -174,11 +196,11 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609271126"></script>
-<script src="assignment-defaults.js?v=202609271126"></script>
-<script src="hub-tracker.js?v=202609271126"></script>
-<script src="hub-store.js?v=202609271126"></script>
-<script src="hub-sync.js?v=202609271126"></script>
+<script src="hub-shared.js?v=202609271135"></script>
+<script src="assignment-defaults.js?v=202609271135"></script>
+<script src="hub-tracker.js?v=202609271135"></script>
+<script src="hub-store.js?v=202609271135"></script>
+<script src="hub-sync.js?v=202609271135"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -314,10 +336,21 @@ function personRow(tr){
          "this is a candidate tracker without the provisional, which is the
          most important thing"). */
       var g = (tr.tracker && tr.tracker.grades) || {}, out = '';
-      if (g.provisional) out += `<div class="sub">Provisional: <b>${esc(g.provisional)}</b></div>`;
+
+      /* Two pills, read as a pair, and the report on its own line beneath
+         them -- it was welded onto the end of the final grade with a middot
+         (Ramy, 27 Sep 2026: "final report sitting right next to the grade,
+         maybe it should have its own pill"). */
+      if (g.provisional || g.final) {
+        out += '<div class="grades">';
+        if (g.provisional) out += `<span class="gpill">Prov <b>${esc(g.provisional)}</b></span>`;
+        if (g.final) out += `<span class="gpill fin">Final <b>${esc(g.final)}</b></span>`;
+        out += '</div>';
+      }
       /* Withdrawn, Extension and Deferral are outcomes, not grades: there is
          no final report on a course that ended without one. */
-      if (g.final) out += `<div class="sub">Final: <b>${esc(g.final)}</b>${['WITHDRAWN','EXTENSION','DEFERRAL'].includes(g.final) ? '' : ` · <a href="16_final_report.html?id=${encodeURIComponent(tr.id || tr.name)}">final report</a>`}</div>`;
+      if (g.final && !['WITHDRAWN','EXTENSION','DEFERRAL'].includes(g.final))
+        out += `<a class="reportlink" href="16_final_report.html?id=${encodeURIComponent(tr.id)}">Final report</a>`;
       return out;
     })()}${r.ceiling ? `<div class="sub">cap: ${esc(r.ceiling.replace('SRT','LSRT'))}</div>` : ''}${r.letterIssued ? '<div class="sub" style="color:var(--red);">Fail letter issued</div>' : ''}</td>
     <td style="white-space:nowrap;"><a class="btn ghost" href="12_assessor_pack.html?${q}">Open</a></td>
