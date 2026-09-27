@@ -169,7 +169,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609271230">
+<link rel="stylesheet" href="hub-house.css?v=202609271234">
 </head>
 <body>
 <div class="board">
@@ -198,11 +198,11 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609271230"></script>
-<script src="assignment-defaults.js?v=202609271230"></script>
-<script src="hub-tracker.js?v=202609271230"></script>
-<script src="hub-store.js?v=202609271230"></script>
-<script src="hub-sync.js?v=202609271230"></script>
+<script src="hub-shared.js?v=202609271234"></script>
+<script src="assignment-defaults.js?v=202609271234"></script>
+<script src="hub-tracker.js?v=202609271234"></script>
+<script src="hub-store.js?v=202609271234"></script>
+<script src="hub-sync.js?v=202609271234"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -364,7 +364,17 @@ function doubleMarkingRows(){
     ORDER.forEach(k => {
       if (k === 'a5') return; // a centre sanction, never in the sample
       const sub = (tr.assignments||{})[k]; if (!sub || !sub.sub1) return;
-      const m = sub.markers || {}; const st = T.assignmentState(sub); const a = A_STATE[st.code] || A_STATE[''];
+      const m = sub.markers || {};
+      /* ONLY what was actually double-marked. This listed every submitted
+         assignment on the course -- twelve candidates by four assignments,
+         forty-eight rows, most of them reading "second marker: -- ,
+         double-marked: no" (Ramy, 27 Sep 2026: "this is not a double marking
+         record, they're not all double marked"). Handbook 9.2.3 asks for a
+         SAMPLE to be double-marked; the record is the sample, not the
+         cohort. What is missing from the sample is the quota line above,
+         which counts it. */
+      if (!(m.doubleMarked || m.second)) return;
+      const st = T.assignmentState(sub); const a = A_STATE[st.code] || A_STATE[''];
       rows.push(`<tr><td class="name">${esc(tr.name)}</td><td>${esc(k.toUpperCase())}</td><td>${esc(m.first||'—')}</td><td>${esc(m.second||'—')}</td><td><span class="chip ${m.doubleMarked?'fine':'nd'}">${m.doubleMarked?'yes':'no'}</span></td><td><span class="chip ${a.cls}">${a.t}</span></td></tr>`);
     });
   });
@@ -409,7 +419,7 @@ function renderList(){
       `<div class="docrow"><span>${esc(tr.name)}${tr.group ? ` <span class="sub">Group ${esc(tr.group)}</span>` : ''}</span><a href="12_assessor_pack.html?trainee=${encodeURIComponent(tr.id)}">Open portfolio</a></div>`
     ).join('') : '<div class="empty">No candidates on the course yet.</div>'}</div>
     <h2 class="sect">Double-marking record <small>Handbook 9.2.3: ${sample} of each assignment for ${n} candidate${n===1?'':'s'}</small></h2>
-    <div class="panel">${dm.length ? `<table><tr><th>Candidate</th><th>Assignment</th><th>First marker</th><th>Second marker</th><th>Double-marked</th><th>Outcome</th></tr>${dm.join('')}</table>` : '<div class="empty">No assignment has been submitted yet.</div>'}</div>
+    <div class="panel">${dm.length ? `<table><tr><th>Candidate</th><th>Assignment</th><th>First marker</th><th>Second marker</th><th>Double-marked</th><th>Outcome</th></tr>${dm.join('')}</table>` : '<div class="empty">Nothing has been double-marked yet. The quota above says how many of each assignment need to be.</div>'}</div>
     <h2 class="sect">Assignment briefs <small>as the centre set them, in the centre’s order</small></h2>
     <div class="panel">${briefs()}</div>
     ${courseDocuments()}`;
