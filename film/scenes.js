@@ -55,6 +55,34 @@ var SCENES = [
      The owner console is not here at all \u2014 it is how the product's owner
      mints a course, not how a centre uses one. */
 
+  /* ================================================== Before chapter one == */
+
+  /* One silent shot of the owner console, and nothing else. Ramy, 27 Sep 2026:
+     "just show it \u2014 it shows owner, my name, and the console, because it
+     looks cool. And then go straight to the trainer receiving the link."
+
+     No caption, no cursor, no click. It is a title frame that happens to be a
+     real screen. It was the film's first SCENE once and that was wrong: the
+     console is how the product's owner mints a course, not how a centre uses
+     one, so it cannot carry an explanation. As a held frame it carries none.
+
+     It is the only screen that needs the owner key, as &o= on the film's own
+     address, and the engine passes it to this screen and to no other. Without
+     it the console draws nothing and this scene is four blank seconds \u2014 so
+     leave &o= off only if you mean to cut this shot. */
+
+  {
+    title: 'The console',
+    screen: '14_owner.html',
+    about: 'A held frame, no words. <b>Needs &amp;o=</b> (the owner key) on the film\u2019s address as well as the three course keys. Read-only: nothing is minted, nothing is clicked.',
+    /* The console draws its courses only once the store has answered, and a
+       held frame with nothing in it is the whole shot wasted. */
+    settle: 3800,
+    steps: [
+      { do: 'hold', ms: 3600 }
+    ]
+  },
+
   /* ======================================== Chapter one \u00b7 The trainer == */
 
   {
@@ -63,11 +91,12 @@ var SCENES = [
     about: 'Chapter one opens. The trainer\u2019s card, held, then it opens the course. The film\u2019s first words are here because this is its first frame.',
     settle: 1400,
     steps: [
-      /* The film's own opening card covers the stage for 3.2 seconds while the
-         first screen loads behind it. Chapter one's card used to play UNDER
-         it and was almost entirely spent by the time it cleared. This waits
-         it out. The other two chapters need no such wait. */
-      { do: 'hold', ms: 2400 },
+      /* No wait needed here any more: the console shot before this one runs
+         long enough to absorb the film's own opening card, which covers the
+         stage for its first 3.2 seconds. Chapter one's card used to play under
+         it and was nearly spent by the time it cleared. If the console shot is
+         ever cut, put a hold of about 2.4 seconds back at the top of this
+         scene or this card goes under the splash again. */
       { do: 'chapter', num: 'Chapter one', text: 'The trainer', sub: 'A course set up, its assignments written, its assessor expected, and eight lessons of feedback to give.', ms: 3600 },
       { do: 'hold', ms: 1400 },
       { do: 'caption', text: 'No download, no upload, no hunting for paper.' },

@@ -85,10 +85,17 @@ card … sort of do it in logical order, maybe in three different stages.”*
 Each stage opens on **the same invitation card in that person's words**, which
 is what carries the viewer from one to the next.
 
-**The owner console is not in the film.** It was scene 1 and it showed the
-wrong audience the wrong thing: the console is how the product's owner mints a
-course, not how a centre uses one. Dropping it also means the film no longer
-needs the owner key on its address.
+**The owner console is one silent frame before chapter one, and nothing more.**
+It was scene 1 with captions and a click, and that was wrong: the console is
+how the product's owner mints a course, not how a centre uses one, so it cannot
+carry an explanation. Ramy, 27 Sep 2026: *“just show it — it shows owner, my
+name, and the console, because it looks cool. And then go straight to the
+trainer receiving the link.”* So it is held for three and a half seconds with
+no caption, no cursor and no click.
+
+It is the only screen that takes the **owner key**, as `&o=` on the film's
+address. Without it the console draws nothing and the shot is four blank
+seconds — so leave `&o=` off only if you mean to cut it.
 
 ---
 
