@@ -271,8 +271,8 @@
   var startedAt = 0;
   /* How the captions are paced. The four numbers that decide whether the
      film reads comfortably; nothing else sets it. */
-  var CAPTION_CPS = 8;      /* characters a second -- slow, and meant to be */
-  var CAPTION_MIN = 3500;   /* even three words get this long */
+  var CAPTION_CPS = 6;      /* characters a second -- slow, and meant to be */
+  var CAPTION_MIN = 4200;   /* even three words get this long */
   var CAPTION_FADE = 500;   /* in, and out; matches .caption's transition */
   var CAPTION_GAP = 1200;   /* silence before the next one may begin */
 
@@ -349,7 +349,9 @@
          characters a second a twelve-word line sits for about six seconds.
          Raise the numbers here to slow the whole film's words at once; they
          are the only place the pace of the captions is set.
-         Ramy, 27 Sep: still too fast at 13/sec, so 8. */
+         Ramy, 27 Sep: still too fast at 13/sec, so 8; then still too fast at
+         8 once the film was watched end to end, so 6. A twelve-word line now
+         sits for about eight seconds. */
       var hold = Math.max(CAPTION_MIN, (s.text.length / CAPTION_CPS) * 1000);
       later(function () { capEl.classList.remove('on'); }, CAPTION_FADE + hold);
       return CAPTION_FADE + hold + CAPTION_FADE + CAPTION_GAP;
@@ -402,6 +404,15 @@
       el.focus();
       var text = s.text, i = 0;
       var each = s.ms ? s.ms / text.length : 34;
+      /* A date, time or colour field rejects every partial value as invalid,
+         so typing one character at a time leaves it EMPTY until the last
+         keystroke and then snaps -- the animation plays and shows nothing.
+         Those get the whole value at once, after a beat, which is what the
+         field does for a person using the picker anyway. */
+      if (/^(date|time|datetime-local|month|week|color)$/.test(el.type || '')) {
+        later(function () { setValue(el, text); }, Math.min(600, s.ms || 600));
+        return (s.ms || 900) + 400;
+      }
       (function tick() {
         if (i > text.length) return;
         setValue(el, text.slice(0, i++));

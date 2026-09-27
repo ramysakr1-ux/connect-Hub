@@ -41,63 +41,35 @@
 
 var SCENES = [
 
-  /* ================================================== Part 1 · The link == */
+  /* ============================ Stage one \u00b7 A centre sets up a course == */
 
   {
-    title: 'A course is made',
-    screen: '14_owner.html',
-    about: 'The owner console, one beat. Needs <b>&o=</b> (the owner key) as well. createCourse is stubbed — nothing is minted.',
-    /* The console draws its Make a course button only after the store has
-       answered with the courses, so it needs longer than a static screen. */
-    settle: 3800,
-    stub: ['createCourse'],
-    answers: {
-      createCourse: function () {
-        return { ok: true, result: { course: { id: 'c9', name: 'CELTA — new course', tutorKey: 'film-demo-key', trainees: 0 } } };
-      }
-    },
-    steps: [
-      { do: 'hold', ms: 900 },
-      { do: 'caption', text: 'A course is one link.' },
-      { do: 'move', to: '#makeBtn' },
-      { do: 'click', on: '#makeBtn', ms: 1600 },
-      { do: 'hold', ms: 1950 },
-      { do: 'move', to: 'text:Copy' },
-      { do: 'hold', ms: 1400 }
-    ]
-  },
-
-  {
-    title: 'Where the link lives',
+    title: 'The card arrives',
     screen: 'invite.html',
-    about: 'The tutor’s card, then the link inside Classroom and Drive, then offline. Read-only screen.',
-    settle: 1100,
+    about: 'The trainer opens their invitation card. Held properly this time \u2014 the card used to get under three seconds before two capture placeholders covered it. Then where the link can live, then offline, then it opens the course. Read-only; the card renders from the URL alone.',
+    settle: 1400,
     steps: [
-      { do: 'hold', ms: 1200 },
-      /* The framing, said once and early. Ramy, 27 Sep 2026: this is the thing
-         the film is about and it was buried in the middle. */
+      { do: 'hold', ms: 1600 },
       { do: 'caption', text: 'No download, no upload, no hunting for paper.' },
-      { do: 'hold', ms: 1200 },
+      { do: 'hold', ms: 2600 },
+      { do: 'caption', text: 'A course arrives as one link, and a card that says what it opens.' },
+      { do: 'hold', ms: 3120 },
+      { do: 'caption', text: 'No account to make. No password to forget.' },
+      { do: 'hold', ms: 2600 },
+      {
+        do: 'still', ms: 2600,
+        want: 'Google Classroom, or Drive \u2014 the link sitting where the course already lives',
+        how: 'Simple: a stream or a folder with the Lite link in it. It only has to say WHERE the link can live \u2014 no elaborate capture. ONE shot; the film used to spend five seconds under two of these and the card lost its own scene to them.'
+      },
       { do: 'caption', text: 'Put it wherever your course already lives.' },
-      { do: 'hold', ms: 1500 },
-      {
-        do: 'still', ms: 2520,
-        want: 'Google Classroom',
-        how: 'Simple: the Classroom name or a plain shot of a stream with the link in it. It only has to say WHERE the link can live — no elaborate capture.'
-      },
-      {
-        do: 'still', ms: 2520,
-        want: 'Google Drive',
-        how: 'Simple: a Drive folder with Connect Lite in it — the shot that already exists is enough. Same job as the Classroom one: where the link can live.'
-      },
-      { do: 'caption', text: 'It still opens when the internet doesn’t.' },
+      { do: 'hold', ms: 2080 },
+      { do: 'caption', text: 'It still opens when the internet doesn\u2019t.' },
       { do: 'hold', ms: 2600 },
       { do: 'move', to: '#go' },
-      { do: 'click', on: '#go', ms: 1800 }
+      { do: 'hold', ms: 1690 },
+      { do: 'click', on: '#go', ms: 2200 }
     ]
   },
-
-  /* ========================================== Part 2 · The trainer sets up == */
 
   {
     title: 'Setting up',
@@ -167,7 +139,62 @@ var SCENES = [
     ]
   },
 
-  /* ================================ Part 3 · The trainee's teaching practice == */
+
+  {
+    title: 'Ready for the assessor',
+    screen: '6_centre_admin_dashboard.html',
+    course: 'scratch',
+    about: 'The half of course admin the film never showed: the visit date, the documents Cambridge asks the centre to have ready (Handbook 14.1), and the candidates the MCT chooses for the assessor to observe (14.2). <b>Writes to the scratch course</b>, like the two scenes before it \u2014 this is a centre setting its course up, on camera.',
+    settle: 2000,
+    steps: [
+      { do: 'click', on: '[data-tab="settings"]', ms: 1500 },
+      { do: 'hold', ms: 1200 },
+      { do: 'caption', text: 'The assessor\u2019s visit is part of setting the course up, not a scramble at the end.' },
+      { do: 'scroll', to: 900, ms: 2600 },
+      { do: 'type', into: '#visitDate', ms: 1400, text: '2026-10-21' },
+      { do: 'hold', ms: 1500 },
+      { do: 'caption', text: 'Everything the Handbook asks you to have ready, in one list.' },
+      { do: 'scroll', to: 1700, ms: 2800 },
+      { do: 'hold', ms: 2080 },
+      { do: 'caption', text: 'And the candidates the assessor will observe \u2014 your choice, recorded.' },
+      { do: 'scroll', to: 2500, ms: 2600 },
+      { do: 'hold', ms: 2600 }
+    ]
+  },
+
+  {
+    title: 'The candidate gets their link',
+    screen: '6_centre_admin_dashboard.html',
+    course: 'scratch',
+    about: 'The roster, and the Copy beside a name. Each candidate\u2019s link is their own \u2014 the screen says so in place of the address: \u201cTheirs alone \u2014 post it in Classroom.\u201d Nothing is written here; Copy is a clipboard call.',
+    settle: 2000,
+    steps: [
+      { do: 'click', on: '[data-tab="roster"]', ms: 1500 },
+      { do: 'hold', ms: 1500 },
+      { do: 'caption', text: 'Every candidate gets their own link. Nobody gets anyone else\u2019s.' },
+      { do: 'scroll', to: 500, ms: 2400 },
+      { do: 'move', to: '.roster .acts button[data-copy]' },
+      { do: 'hold', ms: 2600 }
+    ]
+  },
+
+  /* ======================== Stage two \u00b7 A candidate does the course == */
+
+  {
+    title: 'The candidate\u2019s card',
+    screen: 'invite.html',
+    role: 'trainee', as: 'Emily Carter',
+    about: 'The same card, the candidate\u2019s words. One design, three roles \u2014 the wording changes and nothing else does.',
+    settle: 1400,
+    steps: [
+      { do: 'hold', ms: 1500 },
+      { do: 'caption', text: 'The same card, in their words.' },
+      { do: 'hold', ms: 2600 },
+      { do: 'caption', text: 'This one is theirs alone \u2014 and the card says so.' },
+      { do: 'hold', ms: 2600 },
+      { do: 'click', on: '#go', ms: 2200 }
+    ]
+  },
 
   {
     title: 'The trainee’s home',
@@ -258,7 +285,6 @@ var SCENES = [
     ]
   },
 
-  /* ==================================== Part 4 · The trainer gives feedback == */
 
   {
     title: 'The trainer’s desk',
@@ -342,7 +368,6 @@ var SCENES = [
     ]
   },
 
-  /* ======================================= Part 5 · Back with the trainee == */
 
   {
     title: 'The trainee reads it',
@@ -360,7 +385,6 @@ var SCENES = [
     ]
   },
 
-  /* ======================== Part 5b · The written assignments, end to end == */
 
   /* THE ASSIGNMENT CYCLE, in three scenes. Ramy, 27 Sep 2026: the film showed
      a submission and a mark sheet and stopped, so the thing that makes the
@@ -475,7 +499,22 @@ var SCENES = [
     ]
   },
 
-  /* ============================================ Part 6 · The assessor (c4) == */
+
+  /* ================================== Stage three \u00b7 The assessor == */
+
+  {
+    title: 'The assessor\u2019s card',
+    screen: 'invite.html',
+    course: 'finished', role: 'assessor',
+    about: 'The third card. Read-only, and it says when it stops working \u2014 the course end plus fourteen days (Handbook 15).',
+    settle: 1400,
+    steps: [
+      { do: 'hold', ms: 1500 },
+      { do: 'caption', text: 'And the assessor\u2019s \u2014 read-only, and it expires.' },
+      { do: 'hold', ms: 3120 },
+      { do: 'click', on: '#go', ms: 2200 }
+    ]
+  },
 
   {
     title: 'The assessor’s view',
@@ -510,7 +549,6 @@ var SCENES = [
     ]
   },
 
-  /* ================================== Part 7 · The end of the course (c4) == */
 
   {
     title: 'The final report \u2014 the end',
@@ -529,7 +567,4 @@ var SCENES = [
       { do: 'hold', ms: 2210 }
     ]
   },
-
-
-
 ];

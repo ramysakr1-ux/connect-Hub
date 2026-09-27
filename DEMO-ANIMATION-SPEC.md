@@ -57,6 +57,41 @@ Lite lives at **`https://lite.celtaconnect.com/`** — every link in the film sh
 
 Capture from the live links, not from mock-ups. Never paste a link into this file — the repo is public and a link is a key.
 
+## It is a film, not a demo — view only
+
+Ramy asked, 27 Sep 2026: *“is this an interactive video, can they click on
+things, or do we just make it view only?”* **View only.** The film drives the
+real screens behind the glass with writes stubbed, so a stray click lands on a
+live screen mid-take and everything after it is out of step. The opening card
+says so: *“Nothing here needs clicking — sit back. The working demo is a
+separate link.”* That is the division of labour — the film shows, the demo
+link lets them try it.
+
+---
+
+## Three stages, in the order somebody actually meets it
+
+Ramy, 27 Sep 2026: *“show it in the order in which the trainer received the
+card … sort of do it in logical order, maybe in three different stages.”*
+
+1. **A centre sets up a course** (1–5) — the card arrives, the course is set
+   up, the centre's own assignments, the assessor's visit prepared, and each
+   candidate handed their own link.
+2. **A candidate does the course** (6–17) — their card, their home, the plan,
+   the analysis, the self-evaluation, the feedback going both ways, and the
+   written assignments from submitted to closed.
+3. **The assessor** (18–21) — their card, the pack, the grades, the report.
+
+Each stage opens on **the same invitation card in that person's words**, which
+is what carries the viewer from one to the next.
+
+**The owner console is not in the film.** It was scene 1 and it showed the
+wrong audience the wrong thing: the console is how the product's owner mints a
+course, not how a centre uses one. Dropping it also means the film no longer
+needs the owner key on its address.
+
+---
+
 ## The three things the film must sell
 
 1. **One link, and a course happens inside it.** No accounts, no passwords, no installing. The link lives wherever the course already lives, and keeps working when the internet drops.
