@@ -169,7 +169,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609271234">
+<link rel="stylesheet" href="hub-house.css?v=202609271250">
 </head>
 <body>
 <div class="board">
@@ -198,11 +198,11 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609271234"></script>
-<script src="assignment-defaults.js?v=202609271234"></script>
-<script src="hub-tracker.js?v=202609271234"></script>
-<script src="hub-store.js?v=202609271234"></script>
-<script src="hub-sync.js?v=202609271234"></script>
+<script src="hub-shared.js?v=202609271250"></script>
+<script src="assignment-defaults.js?v=202609271250"></script>
+<script src="hub-tracker.js?v=202609271250"></script>
+<script src="hub-store.js?v=202609271250"></script>
+<script src="hub-sync.js?v=202609271250"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -244,6 +244,14 @@ const APPIAN = (function(){
 })();
 const appianBtn = (cls) =>
   `<a class="btn ${cls}" href="${APPIAN.replace(/"/g,'&quot;')}" target="_blank" rel="noopener">Open Appian</a>`;
+/* Handbook 14.1: 2-3 days before, the centre must "give the assessor the
+   course notification reference number". The Appian grade form gates on it,
+   so a link to Appian without the reference is a door the assessor cannot
+   open. Shown under the buttons, where they are about to need it. */
+const refLine = () => {
+  const r = String(SETTINGS.notificationRef || '').trim();
+  return r ? `<p class="access" style="font-weight:500;">Course notification reference <b>${esc(r)}</b> — Appian asks for this</p>` : '';
+};
 /* How many teaching practices this course gives each candidate (Course admin
    > Settings). Eight when unset, which is every course made before the field
    existed -- and eight is the most the records model, so it is also the cap.
@@ -293,6 +301,7 @@ if (MODE === 'assessor') {
     return d.toISOString();
   };
   const ex = (window.HubAssessor && window.HubAssessor.expires) || fromEnd();
+  $('accessLine').insertAdjacentHTML('afterend', refLine());
   $('accessLine').textContent = 'Read-only assessor view' + (ex
     ? ' · this link stops working on ' + longDate(ex) + ', fourteen days after the course ends'
     : ' · the course has no end date set, so this link does not expire yet');
@@ -414,10 +423,27 @@ function renderList(){
          read". So the portfolios are not optional and they are not the
          tracker: they are one door per candidate, named, and nothing else on
          the row. Read-only, like everything the assessor's link opens. -->
-    <h2 class="sect">Candidate portfolios <small>Handbook 14.1 &middot; every candidate&rsquo;s own record</small></h2>
-    <div class="panel">${n ? PEOPLE.map(tr =>
-      `<div class="docrow"><span>${esc(tr.name)}${tr.group ? ` <span class="sub">Group ${esc(tr.group)}</span>` : ''}</span><a href="12_assessor_pack.html?trainee=${encodeURIComponent(tr.id)}">Open portfolio</a></div>`
-    ).join('') : '<div class="empty">No candidates on the course yet.</div>'}</div>
+    ${(function(){
+      /* Handbook 14.2: the assessor co-observes teaching practice and reads
+         "the portfolio of at least one of the candidates observed". The
+         centre chooses who, before the visit, on Course admin.
+         Connect settled how that is shown and Lite follows it: DEFAULT to
+         the chosen few, with the whole cohort always one click away -- an
+         ordering, never a restriction, because an assessor may read any
+         portfolio on the course. Where the centre has chosen nobody, show
+         everyone and say so rather than pretending a choice was made. */
+      const chosen = (SETTINGS.assessorVisit || []).filter(id => PEOPLE.some(p => p.id === id));
+      const row = tr => `<div class="docrow"><span>${esc(tr.name)}${tr.group ? ` <span class="sub">Group ${esc(tr.group)}</span>` : ''}</span><a href="12_assessor_pack.html?trainee=${encodeURIComponent(tr.id)}">Open portfolio</a></div>`;
+      if (!n) return '<h2 class="sect">Candidate portfolios</h2><div class="panel"><div class="empty">No candidates on the course yet.</div></div>';
+      if (!chosen.length) return `<h2 class="sect">Candidate portfolios <small>Handbook 14.1 &middot; the centre has not said which candidates you are observing</small></h2>
+        <div class="panel">${PEOPLE.map(row).join('')}</div>`;
+      const first = PEOPLE.filter(p => chosen.includes(p.id));
+      const rest = PEOPLE.filter(p => !chosen.includes(p.id));
+      return `<h2 class="sect">Candidates you are observing <small>Handbook 14.2 &middot; chosen by the centre</small></h2>
+        <div class="panel">${first.map(row).join('')}</div>
+        ${rest.length ? `<h2 class="sect">Every other candidate <small>read any of them — nothing here is closed to you</small></h2>
+        <div class="panel">${rest.map(row).join('')}</div>` : ''}`;
+    })()}
     <h2 class="sect">Double-marking record <small>Handbook 9.2.3: ${sample} of each assignment for ${n} candidate${n===1?'':'s'}</small></h2>
     <div class="panel">${dm.length ? `<table><tr><th>Candidate</th><th>Assignment</th><th>First marker</th><th>Second marker</th><th>Double-marked</th><th>Outcome</th></tr>${dm.join('')}</table>` : '<div class="empty">Nothing has been double-marked yet. The quota above says how many of each assignment need to be.</div>'}</div>
     <h2 class="sect">Assignment briefs <small>as the centre set them, in the centre’s order</small></h2>

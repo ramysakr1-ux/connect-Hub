@@ -265,7 +265,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609271234">
+<link rel="stylesheet" href="hub-house.css?v=202609271250">
 </head>
 <body>
 <div class="board">
@@ -370,6 +370,18 @@
            the form gates on a notification ref that is this course's alone --
            so the useful link is the one the centre already uses, pasted once.
            It appears on the grades report and in the assessor's pack. -->
+      <div>
+        <label for="visitDate">Assessment date</label>
+        <input type="date" id="visitDate">
+      </div>
+      <div>
+        <!-- Handbook 14.1, the 2-3 days before list: the centre must "give the
+             assessor the course notification reference number". The Appian
+             grade form gates on it, so sending an assessor to Appian without
+             it is sending them to a door they cannot open. -->
+        <label for="notificationRef">Course notification reference</label>
+        <input type="text" id="notificationRef" placeholder="e.g. TR073-C17/2026">
+      </div>
       <div class="wide">
         <label for="appianUrl">Appian — only if your centre uses a different address</label>
         <input type="url" id="appianUrl" placeholder="https://cambridget2.appiancloud.com/suite/ — only if yours differs">
@@ -410,6 +422,22 @@
       <div class="wide"><label for="docAgreement">Candidate agreement</label><input type="text" id="docAgreement" placeholder="https://…"></div>
       <div class="wide"><label for="docOwnWork">Your own work <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0;">the AI and plagiarism declaration issued with the assignments — the blank one; the signed copies stay with the portfolios</span></label><input type="text" id="docOwnWork" placeholder="https://… — the blank sheet, not the signed copies"></div>
       <div class="wide"><label for="docApplications">Applications and interviews</label><input type="text" id="docApplications" placeholder="https://… — your Appian course folder"></div>
+    <!-- Handbook 14.2: the assessor "will co-observe" teaching practice and
+         "the portfolio of at least one of the candidates observed doing
+         teaching practice should be read". Which candidates that is, is the
+         centre's to decide before the visit -- so it is set here, and the
+         pack leads with them.
+         Connect settled the rule and Lite follows it: the pack DEFAULTS to
+         the chosen few, with the rest of the cohort always one click away.
+         It is an ordering, never a restriction -- an assessor may read any
+         portfolio on the course. -->
+    <h3 class="docsh">Candidates the assessor will observe</h3>
+    <p class="note" style="margin-top:0;">Handbook 14.2. Tick the two or three whose teaching the assessor will watch and whose portfolios they will read. The pack opens with them; every other candidate stays one click below, because the assessor may read any of them.</p>
+    <div id="avPick" class="fields"><p class="note" style="margin:0;">Add candidates on the Roster tab first.</p></div>
+    <div class="fields" style="margin-top:16px;">
+      <div class="wide"><label for="docAssessTimetable">Assessment timetable</label><input type="text" id="docAssessTimetable" placeholder="https://… — the assessor's own timetable for the day"></div>
+      <div class="wide"><label for="docSampleReport">Sample end-of-course report</label><input type="text" id="docSampleReport" placeholder="https://… — for this course's mode: face-to-face, online or mixed"></div>
+      <div class="wide"><label for="docMap">Map and accommodation</label><input type="text" id="docMap" placeholder="https://… — face-to-face visits only, if the assessor is not local"></div>
       <div class="wide"><label for="docPrevReport">Previous assessor's report</label><input type="text" id="docPrevReport" placeholder="https://…"></div>
       <div class="wide"><label for="docActionPlan">Action plan agreed with Cambridge</label><input type="text" id="docActionPlan" placeholder="https://… — only if one is in place"></div>
     </div>
@@ -462,10 +490,10 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609271234"></script>
-<script src="hub-store.js?v=202609271234"></script>
-<script src="hub-shared.js?v=202609271234"></script>
-<script src="hub-sync.js?v=202609271234"></script>
+<script src="assignment-defaults.js?v=202609271250"></script>
+<script src="hub-store.js?v=202609271250"></script>
+<script src="hub-shared.js?v=202609271250"></script>
+<script src="hub-sync.js?v=202609271250"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -492,7 +520,30 @@ document.getElementById('tabs').addEventListener('click', e=>{
 /* The assessor-facing links, Handbook 14.1. Kept as one object on the settings
    record so they travel to the store with everything else and reach the pack
    through the same boot. */
-const DOC_FIELDS = ['docTimetable','docTpSchedule','docRegisters','docAgreement','docOwnWork','docApplications','docPrevReport','docActionPlan'];
+/* Handbook 14.1's list in full. The three added on 27 Sep 2026 were simply
+   absent: the assessment timetable (14.1 names it first under "Assessor
+   documentation"), the sample end-of-course report, and the map and
+   accommodation for a face-to-face visit where the assessor is not local. */
+/* One tick per candidate, drawn from the roster the page already has. The
+   ids are the roster's own, so the pack can link straight to a portfolio
+   rather than matching on a typed name. */
+function paintAssessorPicks(chosen){
+  const box = document.getElementById('avPick');
+  if (!box) return;
+  const roster = loadRoster();
+  const people = Object.entries((roster && roster.trainees) || {})
+    .map(([id, p]) => ({ id, name: (p && p.name) || id, group: p && p.group }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  if (!people.length) { box.innerHTML = '<p class="note" style="margin:0;">Add candidates on the Roster tab first.</p>'; return; }
+  const on = new Set(chosen || []);
+  box.innerHTML = people.map(p =>
+    `<label class="wide" style="display:flex;align-items:center;gap:9px;font-size:0.9rem;cursor:pointer;">
+       <input type="checkbox" class="avpick" value="${p.id}"${on.has(p.id) ? ' checked' : ''}>
+       <span>${p.name}${p.group ? ` <span class="note" style="margin:0;">Group ${p.group}</span>` : ''}</span>
+     </label>`).join('');
+}
+
+const DOC_FIELDS = ['docTimetable','docTpSchedule','docRegisters','docAgreement','docOwnWork','docApplications','docPrevReport','docActionPlan','docAssessTimetable','docSampleReport','docMap'];
 let courseLogo = '';
 function applyLogoPreview(dataUrl){
   const slot = document.getElementById('logoSlot');
@@ -569,6 +620,9 @@ try {
     if(cs.deliveryMode) document.getElementById('deliveryMode').value = cs.deliveryMode;
     if(cs.tutorNames) document.getElementById('tutorNames').value = cs.tutorNames;
     if(cs.appianUrl) document.getElementById('appianUrl').value = cs.appianUrl;
+    if(cs.visitDate) document.getElementById('visitDate').value = cs.visitDate;
+    paintAssessorPicks(cs.assessorVisit || []);
+    if(cs.notificationRef) document.getElementById('notificationRef').value = cs.notificationRef;
     if(cs.docs) DOC_FIELDS.forEach(k=>{ if(cs.docs[k]) document.getElementById(k).value = cs.docs[k]; });
     if(cs.logo){ courseLogo = cs.logo; applyLogoPreview(courseLogo); }
   }
@@ -606,6 +660,9 @@ document.getElementById('saveSettings').addEventListener('click', () => {
     deliveryMode: document.getElementById('deliveryMode').value || 'f2f',
     tutorNames: document.getElementById('tutorNames').value.trim(),
     appianUrl: document.getElementById('appianUrl').value.trim(),
+    visitDate: document.getElementById('visitDate').value,
+    notificationRef: document.getElementById('notificationRef').value.trim(),
+    assessorVisit: [...document.querySelectorAll('.avpick:checked')].map(b=>b.value),
     docs: DOC_FIELDS.reduce((o,k)=>{ const v = document.getElementById(k).value.trim(); if (v) o[k] = v; return o; }, {}),
     logo: courseLogo
   }));
@@ -716,6 +773,15 @@ async function renderStoreRoster(next){
   // the setup row needs telling.
   TRAINEE_COUNT = trainees.length;
   renderSetup();
+  /* The roster arrives from the store AFTER the settings have painted, so the
+     assessor-visit ticks have to be drawn again here -- every path that
+     changes the roster comes back through this function, which is why the
+     count is set here too. Keeps whatever is already ticked. */
+  (function(){
+    let cs = null; try { cs = JSON.parse(localStorage.getItem('connect_course_settings')); } catch (e) {}
+    const already = [...document.querySelectorAll('.avpick:checked')].map(b => b.value);
+    paintAssessorPicks(already.length ? already : ((cs && cs.assessorVisit) || []));
+  })();
 
   box.innerHTML = `
     <div class="sectionhead">
