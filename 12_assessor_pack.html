@@ -169,7 +169,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609271250">
+<link rel="stylesheet" href="hub-house.css?v=202609271258">
 </head>
 <body>
 <div class="board">
@@ -198,11 +198,11 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609271250"></script>
-<script src="assignment-defaults.js?v=202609271250"></script>
-<script src="hub-tracker.js?v=202609271250"></script>
-<script src="hub-store.js?v=202609271250"></script>
-<script src="hub-sync.js?v=202609271250"></script>
+<script src="hub-shared.js?v=202609271258"></script>
+<script src="assignment-defaults.js?v=202609271258"></script>
+<script src="hub-tracker.js?v=202609271258"></script>
+<script src="hub-store.js?v=202609271258"></script>
+<script src="hub-sync.js?v=202609271258"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -477,14 +477,34 @@ const DOC_LABELS = [
   ['docOwnWork',      "Your own work \u2014 the AI and plagiarism declaration, as issued"],
   ['docApplications', 'Applications and interviews'],
   ['docPrevReport',   "Previous assessor's report"],
-  ['docActionPlan',   'Action plan agreed with Cambridge']
+  ['docActionPlan',   'Action plan agreed with Cambridge'],
+  /* Added 27 Sep 2026 -- 14.1 asks for all three and Lite had no box for any
+     of them. The map is only for a face-to-face visit where the assessor is
+     not local, so it is the one that is legitimately blank most of the time. */
+  ['docAssessTimetable', 'Assessment timetable'],
+  ['docSampleReport',    'Sample end-of-course report'],
+  ['docMap',             'Map and accommodation'],
 ];
 function courseDocuments(){
   const docs = (SETTINGS && SETTINGS.docs) || {};
+  /* Every document 14.1 asks for, whether or not the centre has provided it.
+     This used to render only what was filled in, and to disappear entirely
+     when nothing was -- so a pack with no documents looked like a pack with
+     no such requirement, and an assessor had no way to tell "the centre has
+     not sent the registers" from "Lite does not do registers" (Ramy, 27 Sep
+     2026: "where is the rest of the pack?"). Connect keeps its eight
+     compiled-in defaults on screen for the same reason. A missing row says
+     so plainly; it is the centre's to fill, not the assessor's to chase. */
+  /* Only what the centre has actually provided. Showing every expected
+     document with "not provided" beside it was tried on 27 Sep 2026 and
+     rejected: an empty section hiding itself is right, because the pack is
+     what the centre HAS sent, not a checklist of what it has not (Ramy: "if
+     nothing is filled in, then it makes sense that it will hide itself").
+     The count says how many, so a half-filled pack still reads as partial. */
   const rows = DOC_LABELS.filter(([k]) => docs[k]).map(([k,label]) =>
     `<div class="docrow"><span>${label}</span><a href="${esc(docs[k])}" target="_blank" rel="noopener noreferrer">Open</a></div>`);
   if (!rows.length) return '';
-  return `<h2 class="sect">Course documents <small>held by the centre, Handbook 14.1</small></h2>
+  return `<h2 class="sect">Course documents <small>Handbook 14.1 &middot; ${rows.length} of ${DOC_LABELS.length} provided by the centre</small></h2>
     <div class="panel">${rows.join('')}</div>`;
 }
 
