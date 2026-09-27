@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<!--
+  Connect Lite — the film
+  © 2026 Ramy Sakr. All rights reserved.
+
+  The film plays the REAL screens. Every scene loads an actual Lite page in a
+  same-origin iframe and drives it: opens menus, types into boxes, clicks
+  buttons. Nothing here is a mock-up, so the film cannot drift from the
+  product the way a rendered video does -- when a screen changes, the film
+  changes with it.
+
+  DEPLOY SPEC: DEMO-ANIMATION-SPEC.md, the file beside this one in the repo.
+  Eighteen scenes, captions and music, no narration.
+
+  THREE RULES THIS FILE KEEPS.
+
+  1. It never writes to the store. A film that mints a course every take
+     would leave a trail of them, and a roster paste would really add twelve
+     people. Ops that CHANGE anything are listed in a scene's `stub` and are
+     answered locally instead of being sent -- the interface is real, the
+     answer is canned. Everything else (reads) goes to the real store, so
+     what you see is the real course.
+  2. It carries no key. The tutor key arrives in the film's own URL as ?k=
+     and is passed through to the iframe. This repo is public; a key in it
+     would be a key anyone could use.
+  3. Captions float, and there is never more than one. Spec: in over 400ms,
+     still for at least 2.5s, out over 400ms, then a second of silence.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Connect Lite — the film</title>
+<link rel="icon" href="../brand/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sand:oklch(98.8% 0.006 85); --sand-line:oklch(85.5% 0.02 80);
+    --paper:oklch(99.5% 0.004 90); --surface:oklch(95.2% 0.018 84);
+    --ink:oklch(23.5% 0.017 65); --ink-warm:oklch(30% 0.042 58);
+    --teal:oklch(37.5% 0.058 195); --gold:oklch(63% 0.096 72);
+    --grey:oklch(51% 0.017 70);
+    --stage-w:1280px; --stage-h:800px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Karla',sans-serif; color:var(--ink, #2b2118);
+    background:oklch(17% 0.012 65); min-height:100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:20px;}
+
+  /* The stage. The iframe is always 1280x800 and is scaled to fit, so a
+     scene's coordinates never depend on the window. */
+  .stage{position:relative; width:var(--stage-w); height:var(--stage-h);
+    transform-origin:top left; border-radius:10px; overflow:hidden;
+    background:var(--sand, #fbfaf7); box-shadow:0 30px 80px -20px oklch(0% 0 0 / 0.6);}
+  .stage iframe{width:var(--stage-w); height:var(--stage-h); border:0; display:block;}
+  .stagewrap{position:relative;}
+
+  /* A still frame for the two cuts that are not Lite at all -- the Classroom
+     stream and the Drive folder. Until the captures exist it says so, rather
+     than quietly showing nothing. */
+  .still{position:absolute; inset:0; display:none; background:var(--sand, #fbfaf7);
+    align-items:center; justify-content:center; flex-direction:column; gap:12px; text-align:center; padding:60px;}
+  .still.on{display:flex;}
+  .still img{max-width:100%; max-height:100%; object-fit:contain;}
+  .still .want{font-family:'Newsreader',Georgia,serif; font-size:1.3rem; color:var(--ink-warm, #46342a);}
+  .still .how{font-size:0.9rem; color:var(--grey, #6b6157); max-width:46ch; line-height:1.6;}
+
+  /* The cursor. Drawn over the stage, moved with a transition so it glides
+     rather than jumps; the click ring is a one-shot. */
+  .cursor{position:absolute; top:0; left:0; width:22px; height:22px; pointer-events:none;
+    transition:transform 620ms cubic-bezier(.33,.9,.25,1); z-index:6; opacity:0;}
+  .cursor.on{opacity:1;}
+  .cursor svg{display:block; filter:drop-shadow(0 2px 3px oklch(0% 0 0 / 0.35));}
+  .ring{position:absolute; top:0; left:0; width:34px; height:34px; margin:-6px 0 0 -6px;
+    border-radius:50%; border:2px solid var(--gold, #b98a3e); opacity:0; pointer-events:none; z-index:5;}
+  .ring.pop{animation:pop 520ms ease-out;}
+  @keyframes pop{0%{opacity:.9; transform:scale(.4);} 100%{opacity:0; transform:scale(1.5);}}
+
+  /* Captions: one at a time, rising from the bottom, still while read. */
+  .caption{position:absolute; left:50%; bottom:46px; transform:translate(-50%, 14px);
+    max-width:62ch; padding:11px 22px; border-radius:999px;
+    background:oklch(23.5% 0.017 65 / 0.92); color:var(--paper, #fdfcfa);
+    font-size:1.02rem; line-height:1.45; text-align:center; letter-spacing:0.002em;
+    opacity:0; transition:opacity 400ms ease, transform 400ms cubic-bezier(.2,.8,.2,1);
+    pointer-events:none; z-index:7;}
+  .caption.on{opacity:1; transform:translate(-50%, 0);}
+
+  /* Transport. Not part of the film -- it is how we watch it while building. */
+  .bar{display:flex; align-items:center; gap:14px; width:var(--stage-w); max-width:100%;
+    color:oklch(80% 0.01 85); font-size:0.84rem;}
+  .bar button{font-family:'Karla',sans-serif; font-size:0.84rem; font-weight:700;
+    color:var(--sand, #fbfaf7); background:oklch(30% 0.02 65); border:1px solid oklch(42% 0.02 65);
+    border-radius:20px; padding:7px 16px; cursor:pointer;}
+  .bar button:hover{background:oklch(36% 0.03 65);}
+  .bar .now{font-variant-numeric:tabular-nums; min-width:112px;}
+  .scenes{display:flex; gap:5px; flex-wrap:wrap; flex:1;}
+  .scenes b{font-weight:600; font-size:0.72rem; padding:4px 9px; border-radius:20px; cursor:pointer;
+    background:oklch(27% 0.015 65); color:oklch(72% 0.012 85); border:1px solid transparent;}
+  .scenes b.is{background:var(--teal, #1e6b63); color:var(--paper, #fdfcfa); border-color:var(--teal, #1e6b63);}
+  .scenes b:hover{border-color:oklch(52% 0.02 65);}
+  .note{width:var(--stage-w); max-width:100%; color:oklch(62% 0.012 85); font-size:0.78rem; line-height:1.6;}
+  .note b{color:oklch(78% 0.02 85);}
+  .warn{color:oklch(72% 0.13 55);}
+</style>
+</head>
+<body>
+
+<div class="stagewrap">
+  <div class="stage" id="stage">
+    <iframe id="screen" title="Connect Lite"></iframe>
+    <div class="still" id="still">
+      <div class="want" id="stillWant"></div>
+      <div class="how" id="stillHow"></div>
+    </div>
+    <div class="ring" id="ring"></div>
+    <div class="cursor" id="cursor">
+      <svg viewBox="0 0 22 22" width="22" height="22" aria-hidden="true">
+        <path d="M2 1 L2 17 L6.2 13.2 L9 19.6 L12 18.2 L9.2 12 L15 12 Z"
+              fill="#fdfcfa" stroke="#2b2118" stroke-width="1.4" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="caption" id="caption"></div>
+  </div>
+</div>
+
+<div class="bar">
+  <button id="play">Pause</button>
+  <button id="again">Replay scene</button>
+  <span class="now" id="now">1 / 3 · 0:00</span>
+  <div class="scenes" id="scenes"></div>
+</div>
+
+<div class="note" id="note"></div>
+
+<script src="scenes.js?v=1"></script>
+<script>
+/* ============================================================ the engine ==
+   A scene is a screen plus a list of steps. Steps run in order; each returns
+   how long it takes. The clock is real time, so a scene can be replayed but
+   not scrubbed into -- replaying from the top is the only honest way to get
+   a deterministic frame when the steps are driving a live page.
+   ========================================================================= */
+(function () {
+  'use strict';
+
+  var KEY = new URLSearchParams(location.search).get('k') || '';
+  var stage = document.getElementById('stage');
+  var frame = document.getElementById('screen');
+  var still = document.getElementById('still');
+  var cursor = document.getElementById('cursor');
+  var ring = document.getElementById('ring');
+  var capEl = document.getElementById('caption');
+  var nowEl = document.getElementById('now');
+  var tabs = document.getElementById('scenes');
+  var note = document.getElementById('note');
+
+  /* Fit the 1280-wide stage into whatever window we are watching in. */
+  function fit() {
+    var pad = 40;
+    var s = Math.min(1, (window.innerWidth - pad) / 1280, (window.innerHeight - 190) / 800);
+    stage.style.transform = 'scale(' + s + ')';
+    stage.parentElement.style.width = (1280 * s) + 'px';
+    stage.parentElement.style.height = (800 * s) + 'px';
+    document.documentElement.style.setProperty('--fit', s);
+  }
+  window.addEventListener('resize', fit);
+  fit();
+
+  var OWNER = new URLSearchParams(location.search).get('o') || '';
+  var timers = [];
+  var playing = true;
+  var current = 0;
+  var startedAt = 0;
+  var stubbed = [];      /* which writes were caught, per scene -- shown below */
+
+  function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+  function later(fn, ms) { var t = setTimeout(fn, ms); timers.push(t); return t; }
+
+  /* ---- the cursor ------------------------------------------------------ */
+  function moveTo(x, y) {
+    cursor.classList.add('on');
+    cursor.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+  }
+  function popAt(x, y) {
+    ring.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+    ring.classList.remove('pop');
+    void ring.offsetWidth;
+    ring.classList.add('pop');
+  }
+  function centreOf(el) {
+    var r = el.getBoundingClientRect();
+    var doc = frame.contentDocument.documentElement;
+    return { x: r.left + r.width / 2 - (doc.scrollLeft || 0), y: r.top + r.height / 2 - (doc.scrollTop || 0) };
+  }
+
+  /* ---- reaching into the screen ---------------------------------------- */
+  function doc() { return frame.contentDocument; }
+  function find(sel) {
+    var d = doc();
+    if (!d) return null;
+    /* "text:Some words" finds the first element whose own text is that --
+       the screens are hand-written HTML and not every button has an id. */
+    if (sel.indexOf('text:') === 0) {
+      var want = sel.slice(5).toLowerCase();
+      var all = d.querySelectorAll('button, a, .btn, [role=button], summary, label, option');
+      for (var i = 0; i < all.length; i++) {
+        var t = (all[i].textContent || '').trim().toLowerCase();
+        if (t === want || (t.length < 60 && t.indexOf(want) === 0)) return all[i];
+      }
+      return null;
+    }
+    return d.querySelector(sel);
+  }
+
+  /* React-free pages, but the same trap applies: a framework field needs the
+     prototype's setter or its listener never fires. Lite is hand-written, so
+     a plain assignment plus an input event is enough -- kept in one place so
+     there is somewhere to fix it if that ever changes. */
+  function setValue(el, v) {
+    el.value = v;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  /* ---- the steps ------------------------------------------------------- */
+  var STEP = {
+    caption: function (s) {
+      capEl.textContent = s.text;
+      capEl.classList.add('on');
+      var hold = Math.max(2500, (s.text.length / 13) * 1000);
+      later(function () { capEl.classList.remove('on'); }, 400 + hold);
+      return 400 + hold + 400 + 1000;          /* in, still, out, silence */
+    },
+    move: function (s) {
+      var el = find(s.to);
+      if (!el) { warn('move: no ' + s.to); return 200; }
+      var c = centreOf(el);
+      moveTo(c.x, c.y);
+      return s.ms || 700;
+    },
+    click: function (s) {
+      var el = find(s.on);
+      if (!el) { warn('click: no ' + s.on); return 200; }
+      var c = centreOf(el);
+      moveTo(c.x, c.y);
+      later(function () {
+        popAt(c.x, c.y);
+        el.click();
+      }, 620);
+      return (s.ms || 1200);
+    },
+    type: function (s) {
+      var el = find(s.into);
+      if (!el) { warn('type: no ' + s.into); return 200; }
+      /* Typing into something nobody can see is the quietest way for a scene
+         to look broken -- it plays perfectly and shows nothing. Say so. */
+      if (!el.offsetHeight) warn('type: ' + s.into + ' is hidden — open its panel first');
+      var c = centreOf(el);
+      moveTo(c.x, c.y);
+      el.focus();
+      var text = s.text, i = 0;
+      var each = s.ms ? s.ms / text.length : 34;
+      (function tick() {
+        if (i > text.length) return;
+        setValue(el, text.slice(0, i++));
+        later(tick, each);
+      })();
+      return (s.ms || text.length * 34) + 400;
+    },
+    scroll: function (s) {
+      var d = doc();
+      var to = s.to === 'bottom' ? d.body.scrollHeight : (s.px || 0);
+      var from = d.documentElement.scrollTop || d.body.scrollTop || 0;
+      var ms = s.ms || 2000, t0 = performance.now();
+      (function tick(t) {
+        var k = Math.min(1, ((t || performance.now()) - t0) / ms);
+        var e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+        d.documentElement.scrollTop = d.body.scrollTop = from + (to - from) * e;
+        if (k < 1 && playing) requestAnimationFrame(tick);
+      })();
+      return ms + 200;
+    },
+    hold: function (s) { return s.ms || 2000; },
+    still: function (s) {
+      document.getElementById('stillWant').textContent = s.want;
+      document.getElementById('stillHow').textContent = s.how || '';
+      still.classList.add('on');
+      cursor.classList.remove('on');
+      later(function () { still.classList.remove('on'); }, s.ms || 3000);
+      return (s.ms || 3000) + 200;
+    }
+  };
+
+  function warn(msg) {
+    var w = document.createElement('div');
+    w.className = 'warn';
+    w.textContent = 'scene ' + (current + 1) + ': ' + msg;
+    note.appendChild(w);
+  }
+
+  /* ---- a scene --------------------------------------------------------- */
+  function loadScene(i, then) {
+    current = i;
+    clearTimers();
+    capEl.classList.remove('on');
+    cursor.classList.remove('on');
+    still.classList.remove('on');
+    note.innerHTML = '<b>' + (i + 1) + ' · ' + SCENES[i].title + '</b> — ' + (SCENES[i].about || '');
+    paintTabs();
+
+    stubbed = [];
+    var url = '../' + SCENES[i].screen;
+    var q = [];
+    if (KEY) q.push('k=' + encodeURIComponent(KEY));
+    /* The console is the one screen that needs the OWNER key, and it takes it
+       as ?o=. Passed through only to that screen, never to the others. */
+    if (OWNER && SCENES[i].screen.indexOf('14_owner') === 0) q.push('o=' + encodeURIComponent(OWNER));
+    if (q.length) url += (url.indexOf('?') === -1 ? '?' : '&') + q.join('&');
+
+    frame.onload = function () {
+      frame.onload = null;
+      stubStore(SCENES[i].stub || []);
+      later(function () { then(); }, SCENES[i].settle || 900);
+    };
+    frame.src = url;
+  }
+
+  /* Ops that CHANGE something never reach the store. The screen calls what it
+     always calls; this answers for it. Read ops are untouched, so the film
+     shows the real course.
+
+     It has to catch TWO layers, which is not obvious from the outside:
+       - HubStore.call({op}) -- what the owner console uses;
+       - HubStore.<name>()   -- what the other screens use, and these do NOT
+         go through HubStore.call. hub-store.js builds them on a private
+         `call` inside its own closure, so replacing HubStore.call leaves
+         HubStore.addTrainees writing to the real store. Found by reading
+         course admin, which uses S.addTrainees and never HubStore.call.
+     Anything not caught here reaches the live store, so a scene's `stub`
+     list is a safety rail, not decoration. */
+  function stubStore(ops) {
+    if (!ops.length) return;
+    var w = frame.contentWindow;
+    if (!w || !w.HubStore) { warn('no HubStore on this screen — writes are NOT stubbed'); return; }
+    var answers = SCENES[current].answers || {};
+    var reply = function (op) {
+      var canned = answers[op];
+      return Promise.resolve(typeof canned === 'function' ? canned() : (canned || { ok: true, result: {} }));
+    };
+
+    if (typeof w.HubStore.call === 'function') {
+      var realCall = w.HubStore.call;
+      w.HubStore.call = function (body) {
+        var op = body && body.op;
+        if (ops.indexOf(op) !== -1) { stubbed.push(op); return reply(op); }
+        return realCall.apply(this, arguments);
+      };
+    }
+    ops.forEach(function (op) {
+      if (typeof w.HubStore[op] === 'function') {
+        w.HubStore[op] = function () { stubbed.push(op); return reply(op); };
+      }
+    });
+    /* hub-sync pushes localStorage to the store on its own clock, so a screen
+       that "saves" locally still reaches it. Held for the length of a scene
+       that stubs writes. */
+    if (w.HubSync && typeof w.HubSync.flushNow === 'function' && ops.indexOf('putCourse') !== -1) {
+      w.HubSync.flushNow = function () { stubbed.push('flushNow'); return Promise.resolve({ ok: true }); };
+    }
+  }
+
+  function runSteps(steps, done) {
+    var i = 0;
+    (function next() {
+      if (!playing) { later(next, 120); return; }
+      if (i >= steps.length) { done(); return; }
+      var s = steps[i++];
+      var fn = STEP[s.do];
+      if (!fn) { warn('unknown step ' + s.do); later(next, 50); return; }
+      var ms = fn(s) || 200;
+      later(next, ms);
+    })();
+  }
+
+  function play(i) {
+    loadScene(i, function () {
+      startedAt = performance.now();
+      tick();
+      runSteps(SCENES[i].steps, function () {
+        /* Say what was caught. A scene that lists a write and never triggers
+           it is fine; a scene that triggers one NOT in its list would have
+           reached the store, and that is what this is watching for. */
+        if (stubbed.length) {
+          var seen = stubbed.filter(function (v, n, a) { return a.indexOf(v) === n; });
+          var d = document.createElement('div');
+          d.innerHTML = 'writes held back: <b>' + seen.join(', ') + '</b>';
+          note.appendChild(d);
+        }
+        later(function () { play((i + 1) % SCENES.length); }, 700);
+      });
+    });
+  }
+
+  function tick() {
+    if (!timers.length && !playing) return;
+    var s = Math.floor((performance.now() - startedAt) / 1000);
+    nowEl.textContent = (current + 1) + ' / ' + SCENES.length + ' · ' +
+      Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    requestAnimationFrame(tick);
+  }
+
+  function paintTabs() {
+    tabs.innerHTML = '';
+    SCENES.forEach(function (sc, i) {
+      var b = document.createElement('b');
+      b.textContent = (i + 1) + ' ' + sc.title;
+      if (i === current) b.className = 'is';
+      b.onclick = function () { playing = true; document.getElementById('play').textContent = 'Pause'; play(i); };
+      tabs.appendChild(b);
+    });
+  }
+
+  document.getElementById('play').onclick = function () {
+    playing = !playing;
+    this.textContent = playing ? 'Pause' : 'Play';
+  };
+  document.getElementById('again').onclick = function () { play(current); };
+
+  if (!KEY) {
+    note.innerHTML = '<span class="warn">No course key. Open this as <b>film/?k=&lt;the demo course tutor key&gt;</b> — ' +
+      'it is in the owner console, and it is never committed to this repo.</span>';
+  }
+  play(0);
+})();
+</script>
+</body>
+</html>
