@@ -13,7 +13,7 @@ So:
 - **One caption per scene is the rule.** Two only where a scene genuinely turns twice. **Several scenes carry none at all** — a lesson plan filling itself in does not need to be described.
 - **A caption earns its place by saying what the picture cannot.** *"Paste a Drive link"* is visible; *"nothing is uploaded anywhere"* is not. Write the second kind.
 - **They float.** Each caption rises a little way up from the bottom of the frame as it fades in, holds still while it is read, then fades out where it stands. Nothing slides sideways, nothing sits on screen waiting for the next one, and two are never on screen together.
-- **Timing:** in over 400 ms, still for **at least 2.5 seconds**, out over 400 ms. Then at least a second of silence before the next one can begin.
+- **Timing:** in over 500 ms, still for **at least 3.5 seconds** and longer for a longer line — **8 characters a second**, which is far slower than reading speed because the eye is on the screen and comes to the words late. Out over 500 ms, then 1.2 seconds of silence before the next may begin. In practice a caption is on screen between **5.7 and 11.3 seconds**. All four numbers are together at the top of `film/index.html` (`CAPTION_CPS`, `CAPTION_MIN`, `CAPTION_FADE`, `CAPTION_GAP`) and nothing else sets the pace of the words. *Ramy, 27 Sep: still too fast at 13 characters a second, so 8.*
 - **The picture is slower than it wants to be.** Each ◆ hold is a real pause — three seconds where two would do — with the cursor stopped. Cuts are fewer and longer. The film is shorter than the first cut by dropping scenes, not by speeding anything up.
 
 Nobody is introduced and nobody's name is zoomed on. The foot of every screen says *designed and built by Ramy* and that is enough.
@@ -184,9 +184,9 @@ Capture from the live links, not from mock-ups. Never paste a link into this fil
 
 ---
 
-## Music
+## Music — parked
 
-One track, under everything, low. It goes in as `film/music.mp3`, or with `&music=<url>` on the film's own address; the film starts it on the first click (browsers refuse audio before one) at 18% volume, and plays without one if none is there.
+**Ramy, 27 September: not important, leave it.** The slot stays wired so it costs nothing to change his mind — a track goes in as `film/music.mp3` or with `&music=<url>`, starts on the first click (browsers refuse audio before one) at 18% volume, and the film plays silently without one. Everything below is only for the day it matters.
 
 **The brief, which matters more than the track.** No vocals — a lyric competes with a caption for the same reader. No drop, no build, no arrival: the film has no climax and music that promises one makes the screens look slow. Nothing percussive enough to imply urgency; this is a tool a centre will use for four weeks, not an app launch. Warm rather than bright, and quiet enough that a viewer could talk over it. Two to four minutes, looping cleanly, because the film is about five and nobody should hear a seam.
 
