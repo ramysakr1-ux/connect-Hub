@@ -677,6 +677,52 @@
     } catch (e) { /* cross-origin, which cannot happen here */ }
   }
 
+  /* THE TRANSPORT, not the API.
+     The stub used to replace HubStore.call and the named write methods, and a
+     take still marked six criteria onto a real candidate's assignment on the
+     demo course (found 27 Sep 2026, by looking at the marking sheet rather
+     than at the stub).
+     The path it missed: hub-sync keeps unsent writes in a queue and flushes
+     them on `pagehide` through flushBeacon(), which uses navigator.sendBeacon
+     — or a raw fetch — straight to the store's URL and never touches
+     HubStore. The film changes scene by setting frame.src, which fires
+     pagehide on the outgoing document. So every cut posted the queue.
+     Stubbing each way in turn is a losing game: the next path added to
+     hub-sync would leak in the same silence. So this wraps the two things
+     that can actually reach the network, and drops anything addressed to the
+     store carrying a stubbed op. */
+  function stubTransport(w, ops, reply) {
+    var url = STORE_URL || '';
+    var opOf = function (body) {
+      try { return (typeof body === 'string' ? JSON.parse(body) : JSON.parse(body && body.toString())).op; }
+      catch (e) { return null; }
+    };
+    var mine = function (u) { return url && String(u).indexOf(url) === 0; };
+
+    var realFetch = w.fetch;
+    w.fetch = function (u, init) {
+      var op = init && init.body ? opOf(init.body) : null;
+      if (mine(u) && op && ops.indexOf(op) !== -1) {
+        stubbed.push(op + ' (fetch)');
+        return reply(op).then(function (r) { return new Response(JSON.stringify(r), { status: 200 }); });
+      }
+      return realFetch.apply(this, arguments);
+    };
+
+    var nav = w.navigator;
+    if (nav && typeof nav.sendBeacon === 'function') {
+      var realBeacon = nav.sendBeacon.bind(nav);
+      nav.sendBeacon = function (u, data) {
+        /* A Blob has to be read to be judged, and sendBeacon is synchronous.
+           Anything aimed at the store during a take is dropped: a take never
+           has a write worth keeping, and answering true is what the caller
+           expects from a beacon it will never hear about again. */
+        if (mine(u)) { stubbed.push('beacon'); return true; }
+        return realBeacon(u, data);
+      };
+    }
+  }
+
   function stubStore(ops) {
     if (!ops.length) return;
     var w = frame.contentWindow;
@@ -686,6 +732,8 @@
       var canned = answers[op];
       return Promise.resolve(typeof canned === 'function' ? canned() : (canned || { ok: true, result: {} }));
     };
+    /* First, because it is the one that cannot be got round. */
+    stubTransport(w, ops, reply);
 
     if (typeof w.HubStore.call === 'function') {
       var realCall = w.HubStore.call;
