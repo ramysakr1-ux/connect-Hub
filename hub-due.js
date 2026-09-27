@@ -72,8 +72,10 @@
   function fmt(iso){
     var t = parse(iso); if (t === null) return '';
     var d = new Date(t);
-    return d.toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' })
-      + ', ' + d.toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' });
+    /* en-GB, not the browser's locale: on a US machine this read "Sun, Sep 27,
+       02:32 PM" while every other date on Lite is British (walk, 28 Sep 2026). */
+    return d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' })
+      + ', ' + d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
   }
 
   /* "3 days left", "4 hours left", "closed yesterday". Rounded the way a person
