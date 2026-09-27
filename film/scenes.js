@@ -82,7 +82,7 @@ var SCENES = [
       /* Quick. Ramy, 27 Sep 2026: "the console should be quick." There is
          nothing to read on it \u2014 it is a look, not a screen a viewer has to
          take anything from. */
-      { do: 'hold', ms: 2200 }
+      { do: 'hold', ms: 1540 }
     ]
   },
 
@@ -96,16 +96,14 @@ var SCENES = [
     settle: 1400,
     steps: [
       { do: 'chapter', num: 'Chapter one', text: 'The trainer', sub: 'A course set up, its assignments written, its assessor expected, and eight lessons of feedback to give.', ms: 3000 },
-      { do: 'hold', ms: 900 },
+      { do: 'hold', ms: 800 },
       { do: 'caption', text: 'No download. No upload. No paper.' },
-      { do: 'caption', text: 'One link. No account, no password.' },
       /* The card's own button, and then the room it opens. A tutor's link
          lands on their dashboard -- that is the product and it is right -- and
          course admin is one door off it. Showing BOTH is what makes the cut to
          the next scene read as walking rather than teleporting. */
       { do: 'click', on: '#go', ms: 2200 },
-      { do: 'hold', ms: 1200 },
-      { do: 'caption', text: 'A new course, waiting.' },
+      { do: 'hold', ms: 840 },
       { do: 'click', on: 'text:Course admin', ms: 2400 }
     ]
   },
@@ -117,13 +115,13 @@ var SCENES = [
     about: 'The scratch course (<b>&s=</b>): real dates, empty roster, so the twelve rows really appear. <b>This scene writes.</b> Between takes: <code>node store/scratch-course.mjs --reset</code>',
     settle: 1800,
     steps: [
-      { do: 'hold', ms: 900 },
+      { do: 'hold', ms: 800 },
       { do: 'move', to: '[data-tab="settings"]' },
       { do: 'click', on: '[data-tab="settings"]', ms: 1400 },
-      { do: 'hold', ms: 1560 },
+      { do: 'hold', ms: 1092 },
       { do: 'caption', text: 'The link is the account.' },
       { do: 'click', on: '[data-tab="roster"]', ms: 1500 },
-      { do: 'hold', ms: 1400 },
+      { do: 'hold', ms: 979 },
       /* The paste box is two doors in: "Add trainee" opens #addBox, and
          "Add several at once" inside it opens #bulkWrap. */
       { do: 'click', on: '#toggleAdd', ms: 1100 },
@@ -134,7 +132,7 @@ var SCENES = [
       },
       { do: 'click', on: '#storeBulkAddBtn', ms: 1400 },
       { do: 'click', on: '.confirm-action', ms: 2600 },
-      { do: 'hold', ms: 2340 }
+      { do: 'hold', ms: 1638 }
     ]
   },
 
@@ -147,32 +145,31 @@ var SCENES = [
        its Save button does not exist before that. */
     settle: 6000,
     steps: [
-      { do: 'hold', ms: 1200 },
+      { do: 'hold', ms: 840 },
       /* The screen opens on the list of four. That list IS the point of the
          first beat: a new course already has Cambridge's four assignments in
          it, with their criteria, before anybody has set anything up. The scene
          used to click straight past it. */
       { do: 'caption', text: 'The four assignments come with it.' },
       { do: 'move', to: '#list' },
-      { do: 'hold', ms: 2600 },
+      { do: 'hold', ms: 1819 },
       { do: 'caption', text: 'Every word is yours to rewrite.' },
       { do: 'click', on: '#list button[data-a]', ms: 1800 },
       { do: 'scroll', to: 800, ms: 2080 },
-      { do: 'hold', ms: 1500 },
+      { do: 'hold', ms: 1050 },
       { do: 'scroll', to: 1600, ms: 1920 },
-      { do: 'hold', ms: 1690 },
+      { do: 'hold', ms: 1183 },
       /* The criteria are the load-bearing half of this screen: they are what
          the mark sheet two scenes later is built from, and what the candidate
          is judged against. */
-      { do: 'caption', text: 'And the criteria they mark against.' },
       { do: 'scroll', to: 2400, ms: 2080 },
-      { do: 'hold', ms: 1950 },
+      { do: 'hold', ms: 1365 },
       { do: 'click', on: 'text:Save assignment', ms: 2000 },
       /* The point of the scene: the centre's words are what the candidate is
          marked against. Same course, the candidate's own side. */
       { do: 'goto', screen: '9_assignment_submission.html', role: 'trainee', ms: 3200 },
       { do: 'scroll', to: 600, ms: 2240 },
-      { do: 'hold', ms: 1950 }
+      { do: 'hold', ms: 1365 }
     ]
   },
 
@@ -184,16 +181,15 @@ var SCENES = [
     settle: 2000,
     steps: [
       { do: 'click', on: '[data-tab="settings"]', ms: 1500 },
-      { do: 'hold', ms: 1200 },
-      { do: 'caption', text: 'The assessor\u2019s visit, set up early.' },
+      { do: 'hold', ms: 840 },
       { do: 'scroll', to: 900, ms: 2080 },
       { do: 'type', into: '#visitDate', ms: 1400, text: '2026-10-21' },
-      { do: 'hold', ms: 1500 },
+      { do: 'hold', ms: 1050 },
       { do: 'scroll', to: 1700, ms: 2240 },
-      { do: 'hold', ms: 2080 },
+      { do: 'hold', ms: 1456 },
       { do: 'caption', text: 'And who they will observe. Your choice.' },
       { do: 'scroll', to: 2500, ms: 2080 },
-      { do: 'hold', ms: 2600 }
+      { do: 'hold', ms: 1819 }
     ]
   },
 
@@ -204,13 +200,13 @@ var SCENES = [
     settle: 2200,
     steps: [
       { do: 'click', on: '[data-tab="roster"]', ms: 1600 },
-      { do: 'hold', ms: 900 },
+      { do: 'hold', ms: 800 },
       { do: 'caption', text: 'Everyone gets their own link.' },
       { do: 'move', to: '#assessorBlock' },
-      { do: 'hold', ms: 1612 },
+      { do: 'hold', ms: 1128 },
       { do: 'scroll', to: 600, ms: 1920 },
       { do: 'move', to: '.roster .acts button[data-copy]' },
-      { do: 'hold', ms: 1612 }
+      { do: 'hold', ms: 1128 }
     ]
   },
 
@@ -220,12 +216,11 @@ var SCENES = [
     about: 'Twelve rows and the three counters. Read-only.',
     settle: 1600,
     steps: [
-      { do: 'hold', ms: 1500 },
-      { do: 'caption', text: 'Nothing to hunt for.' },
+      { do: 'hold', ms: 1050 },
       { do: 'move', to: '#cTp' },
-      { do: 'hold', ms: 2600 },
+      { do: 'hold', ms: 1819 },
       { do: 'scroll', to: 420, ms: 1760 },
-      { do: 'hold', ms: 1500 }
+      { do: 'hold', ms: 1050 }
     ]
   },
 
@@ -237,7 +232,7 @@ var SCENES = [
     settle: 2200,
     stub: ['put'],
     steps: [
-      { do: 'hold', ms: 1400 },
+      { do: 'hold', ms: 979 },
       { do: 'caption', text: 'Box, then Dictate.' },
       /* #lST is an empty container -- its own "+ Add point" button, which
          carries data-list="lST", is what puts a point row in it. A point is a
@@ -249,18 +244,17 @@ var SCENES = [
       { do: 'click', on: '.dictbtn', ms: 1500 },
       { do: 'type', into: '#lST .pt:last-child .pt-text', ms: 4000, text: 'Set the task before handing out the text, and checked it with a quick question' },
       { do: 'click', on: '.dictbtn', ms: 1400 },
-      { do: 'hold', ms: 1690 },
+      { do: 'hold', ms: 1183 },
       /* THE CLEVEREST THING IN THE PRODUCT, and it had one caption and no
          picture. The suggester reads the point 500ms after it stops changing,
          so the chips are there by now; clicking one puts the code inside the
          sentence, where it stays with the words it belongs to. */
       { do: 'caption', text: 'It offers the criteria it meets.' },
       { do: 'move', to: '#lST .pt:last-child .suggest-row' },
-      { do: 'hold', ms: 2200 },
+      { do: 'hold', ms: 1540 },
       { do: 'click', on: '#lST .pt:last-child .suggest-chip', ms: 1800 },
-      { do: 'hold', ms: 1690 },
-      { do: 'caption', text: 'Tagged inside the sentence.' },
-      { do: 'hold', ms: 900 },
+      { do: 'hold', ms: 1183 },
+      { do: 'hold', ms: 800 },
       /* Checked on the demo, 27 Sep: this sentence draws 5g and 5f and BOTH
          come back solid -- the course's own tutors have tagged them before. So
          the caption claims only what is in the frame. The dashed/solid contrast
@@ -268,7 +262,7 @@ var SCENES = [
          and a caption naming one would be describing a picture the viewer
          cannot see. */
       { do: 'caption', text: 'Solid: your own tutors tagged it.' },
-      { do: 'hold', ms: 900 }
+      { do: 'hold', ms: 800 }
     ]
   },
 
@@ -289,10 +283,9 @@ var SCENES = [
         how: 'Capture a dictation window with the copied brief in it and the trainer speaking the lesson through. If it cannot be shown, cut straight from Copy to Paste something back.'
       },
       { do: 'click', on: '#xPasteToggle', ms: 1400 },
-      { do: 'hold', ms: 1500 },
-      { do: 'caption', text: 'Every box filled. Yours to read first.' },
+      { do: 'hold', ms: 1050 },
       { do: 'move', to: '#returnBtn' },
-      { do: 'hold', ms: 3250 }
+      { do: 'hold', ms: 2275 }
     ]
   },
 
@@ -304,10 +297,9 @@ var SCENES = [
     settle: 6000,
     stub: ['put'],
     steps: [
-      { do: 'hold', ms: 1400 },
-      { do: 'caption', text: 'One sheet. Your own criteria.' },
+      { do: 'hold', ms: 979 },
       { do: 'scroll', to: 700, ms: 2080 },
-      { do: 'hold', ms: 1200 },
+      { do: 'hold', ms: 840 },
       /* Six criteria, one at a time. Each click re-renders the sheet, which is
          why they are separate steps against the same selectors rather than one
          loop: the buttons are new elements each time. */
@@ -321,12 +313,11 @@ var SCENES = [
          is marked -- so this beat cannot be faked by skipping one. */
       { do: 'caption', text: 'The outcome comes from the marks.' },
       { do: 'move', to: '.derived' },
-      { do: 'hold', ms: 2600 },
+      { do: 'hold', ms: 1819 },
       { do: 'type', into: '#comment', ms: 3200, text: 'Strong on the learner’s background and needs. The two language points need more evidence from the interview.' },
-      { do: 'hold', ms: 1200 },
-      { do: 'caption', text: 'Sent back, with a comment on each.' },
+      { do: 'hold', ms: 840 },
       { do: 'move', to: '#saveBtn' },
-      { do: 'hold', ms: 1950 }
+      { do: 'hold', ms: 1365 }
     ]
   },
 
@@ -341,7 +332,7 @@ var SCENES = [
     settle: 1400,
     steps: [
       { do: 'chapter', num: 'Chapter two', text: 'The trainee', sub: 'One link, and everything they write on the course lives behind it \u2014 plans, self-evaluations, the feedback they are given, four assignments.', ms: 3000 },
-      { do: 'hold', ms: 900 },
+      { do: 'hold', ms: 800 },
       { do: 'caption', text: 'The same card, in their words.' },
       { do: 'click', on: '#go', ms: 2200 }
     ]
@@ -354,11 +345,11 @@ var SCENES = [
     about: 'The hero card: one lifted card, three panels inside it, exactly one gold. Read-only.',
     settle: 1300,
     steps: [
-      { do: 'hold', ms: 1500 },
+      { do: 'hold', ms: 1050 },
       { do: 'caption', text: 'One thing is gold: the next step.' },
-      { do: 'hold', ms: 900 },
+      { do: 'hold', ms: 800 },
       { do: 'move', to: '#roomPlan' },
-      { do: 'hold', ms: 1500 }
+      { do: 'hold', ms: 1050 }
     ]
   },
 
@@ -370,7 +361,7 @@ var SCENES = [
     settle: 2000,
     stub: ['put'],
     steps: [
-      { do: 'hold', ms: 1200 },
+      { do: 'hold', ms: 840 },
       /* Ramy, 27 Sep: "you put the cursor inside the box and you dictate."
          So that is the order on screen -- the box first, then the button.
          Pressing it with nothing focused raises an alert and stops the film. */
@@ -380,21 +371,20 @@ var SCENES = [
          which is the whole point of the beat -- voice was the most-wanted
          feature and the film never showed it being switched on. */
       { do: 'click', on: '.dictbtn', ms: 1600 },
-      { do: 'hold', ms: 1400 },
+      { do: 'hold', ms: 979 },
       /* The words arrive as if spoken. The microphone is live and listening;
          the engine supplies the sentence so a take does not depend on the
          room being quiet or on what the recogniser hears. */
       { do: 'type', into: '#fMain', ms: 4200, text: 'By the end of the lesson learners will be better able to ask for and give advice using should and ought to.' },
-      { do: 'hold', ms: 1200 },
+      { do: 'hold', ms: 840 },
       /* Off again, so the bar is not left recording under the next beats. */
       { do: 'click', on: '.dictbtn', ms: 1400 },
-      { do: 'hold', ms: 1500 },
+      { do: 'hold', ms: 1050 },
       { do: 'click', on: '#fwBtn', ms: 1400 },
-      { do: 'hold', ms: 1690 },
+      { do: 'hold', ms: 1183 },
       { do: 'caption', text: 'Choose a shape. The stages appear.' },
-      { do: 'caption', text: 'Worksheets stay on their own Drive.' },
       { do: 'move', to: '#fMatsLink' },
-      { do: 'hold', ms: 1690 }
+      { do: 'hold', ms: 1183 }
     ]
   },
 
@@ -407,13 +397,12 @@ var SCENES = [
     stub: ['put'],
     steps: [
       { do: 'click', on: '#laToggle', ms: 1600 },
-      { do: 'hold', ms: 930 },
-      { do: 'caption', text: 'The analysis is the same document.' },
+      { do: 'hold', ms: 800 },
       /* Ramy, 27 Sep: open the box so all three show before taking one. */
       { do: 'click', on: '#typeSel', ms: 1200 },
-      { do: 'hold', ms: 1209 },
+      { do: 'hold', ms: 846 },
       { do: 'move', to: '#ipaBar' },
-      { do: 'hold', ms: 1289 }
+      { do: 'hold', ms: 902 }
     ]
   },
 
@@ -425,12 +414,12 @@ var SCENES = [
     settle: 1600,
     stub: ['put'],
     steps: [
-      { do: 'hold', ms: 1500 },
+      { do: 'hold', ms: 1050 },
       { do: 'caption', text: 'Written before they read their tutor.' },
       { do: 'scroll', to: 600, ms: 2080 },
-      { do: 'hold', ms: 1560 },
+      { do: 'hold', ms: 1092 },
       { do: 'move', to: '#turnInBtn' },
-      { do: 'hold', ms: 1690 }
+      { do: 'hold', ms: 1183 }
     ]
   },
 
@@ -441,12 +430,12 @@ var SCENES = [
     about: 'Newest on top, read-only. <b>No criterion codes here</b> — checked 27 Sep: this screen carries none, and that is the decision.',
     settle: 1800,
     steps: [
-      { do: 'hold', ms: 1500 },
+      { do: 'hold', ms: 1050 },
       { do: 'caption', text: 'Read-only. Not a word can be touched.' },
       { do: 'scroll', to: 900, ms: 2720 },
-      { do: 'hold', ms: 1690 },
+      { do: 'hold', ms: 1183 },
       { do: 'scroll', to: 1900, ms: 2560 },
-      { do: 'hold', ms: 1950 }
+      { do: 'hold', ms: 1365 }
     ]
   },
 
@@ -482,16 +471,14 @@ var SCENES = [
     settle: 6000,
     stub: ['put'],
     steps: [
-      { do: 'hold', ms: 1400 },
-      { do: 'caption', text: 'Four assignments, with criteria.' },
+      { do: 'hold', ms: 979 },
       /* Nothing is on screen until one of the four is chosen: #submitBtn
          belongs to the assignment, not to the page. */
       { do: 'click', on: '#picker button', ms: 1600 },
       { do: 'scroll', to: 700, ms: 2240 },
-      { do: 'hold', ms: 1500 },
-      { do: 'caption', text: 'Written in the page.' },
+      { do: 'hold', ms: 1050 },
       { do: 'move', to: '#submitBtn' },
-      { do: 'hold', ms: 1690 }
+      { do: 'hold', ms: 1183 }
     ]
   },
 
@@ -505,26 +492,24 @@ var SCENES = [
     settle: 6000,
     stub: ['put'],
     steps: [
-      { do: 'hold', ms: 1500 },
+      { do: 'hold', ms: 1050 },
       { do: 'caption', text: 'One resubmission. They see what to fix.' },
       { do: 'scroll', to: 500, ms: 2080 },
-      { do: 'hold', ms: 1690 },
+      { do: 'hold', ms: 1183 },
       { do: 'scroll', to: 1100, ms: 2240 },
-      { do: 'hold', ms: 1950 },
-      { do: 'caption', text: 'The first stays. The new goes in amber.' },
+      { do: 'hold', ms: 1365 },
       { do: 'scroll', to: 1900, ms: 2400 },
-      { do: 'hold', ms: 1690 },
+      { do: 'hold', ms: 1183 },
       { do: 'move', to: '#submitBtn' },
-      { do: 'hold', ms: 1500 },
+      { do: 'hold', ms: 1050 },
       /* And the end of it, on a candidate who is really finished. */
       /* Emily's FOCUS ON THE LEARNER is the closed one. Without ?a= the screen
          opens on whichever assignment the centre put first, which for this
          course is Language Related Tasks -- a closing beat reading
          "Not submitted". */
       { do: 'goto', screen: '9_assignment_submission.html', course: 'demo', role: 'trainee', as: 'Emily Carter', params: { a: 'fol' }, ms: 6000 },
-      { do: 'caption', text: 'Closed. All of it kept.' },
       { do: 'scroll', to: 600, ms: 2240 },
-      { do: 'hold', ms: 2210 }
+      { do: 'hold', ms: 1547 }
     ]
   },
 
@@ -541,7 +526,7 @@ var SCENES = [
     settle: 1400,
     steps: [
       { do: 'chapter', num: 'Chapter three', text: 'The assessor', sub: 'Everything Cambridge asks a centre to have ready, gathered behind one read-only link.', ms: 3000 },
-      { do: 'hold', ms: 900 },
+      { do: 'hold', ms: 800 },
       { do: 'caption', text: 'Read-only, and it expires.' },
       { do: 'click', on: '#go', ms: 2200 }
     ]
@@ -554,11 +539,11 @@ var SCENES = [
     about: 'Opened from the assessor’s own read-only link on the finished course. Scrolled, never printed — nothing is downloaded or sent.',
     settle: 2200,
     steps: [
-      { do: 'hold', ms: 1500 },
+      { do: 'hold', ms: 1050 },
       { do: 'scroll', to: 900, ms: 2880 },
-      { do: 'hold', ms: 1690 },
+      { do: 'hold', ms: 1183 },
       { do: 'scroll', to: 2000, ms: 2880 },
-      { do: 'hold', ms: 1950 }
+      { do: 'hold', ms: 1365 }
     ]
   },
 
@@ -570,12 +555,12 @@ var SCENES = [
     settle: 2200,
     stub: ['put', 'putCourse'],
     steps: [
-      { do: 'hold', ms: 1500 },
+      { do: 'hold', ms: 1050 },
       { do: 'caption', text: 'Into Appian by paste, not retyping.' },
       { do: 'scroll', to: 800, ms: 2400 },
-      { do: 'hold', ms: 1560 },
+      { do: 'hold', ms: 1092 },
       { do: 'scroll', to: 1700, ms: 2400 },
-      { do: 'hold', ms: 2600 }
+      { do: 'hold', ms: 1819 }
     ]
   },
 
@@ -599,14 +584,14 @@ var SCENES = [
     about: 'The whole document, scrolled, with its colour \u2014 read by the assessor, whose chapter this is. A candidate\u2019s own link is refused here by design, so this scene must not be opened as one. <b>This is where the film ends</b> (Ramy, 27 Sep) \u2014 nothing after it: no card, no credit, no PDF.',
     settle: 2400,
     steps: [
-      { do: 'hold', ms: 1560 },
+      { do: 'hold', ms: 1092 },
       { do: 'caption', text: 'Assembled from the record.' },
       { do: 'scroll', to: 900, ms: 3200 },
-      { do: 'hold', ms: 1500 },
+      { do: 'hold', ms: 1050 },
       { do: 'scroll', to: 2000, ms: 3200 },
-      { do: 'hold', ms: 1500 },
+      { do: 'hold', ms: 1050 },
       { do: 'scroll', to: 'bottom', ms: 3360 },
-      { do: 'hold', ms: 2210 }
+      { do: 'hold', ms: 1547 }
     ]
   },
 ];

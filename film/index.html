@@ -112,13 +112,45 @@
   @keyframes pop{0%{opacity:.9; transform:scale(.4);} 100%{opacity:0; transform:scale(1.5);}}
 
   /* Captions: one at a time, rising from the bottom, still while read. */
-  .caption{position:absolute; left:50%; bottom:46px; transform:translate(-50%, 14px);
-    max-width:62ch; padding:11px 22px; border-radius:999px;
-    background:oklch(23.5% 0.017 65 / 0.92); color:var(--paper, #fdfcfa);
-    font-size:1.02rem; line-height:1.45; text-align:center; letter-spacing:0.002em;
-    opacity:0; transition:opacity 500ms ease, transform 500ms cubic-bezier(.2,.8,.2,1);
-    pointer-events:none; z-index:7;}
-  .caption.on{opacity:1; transform:translate(-50%, 0);}
+  /* A caption FLOATS. Ramy, 27 Sep 2026: "it shouldn't be like a subtitle, it
+     should be kind of floating in the air, crossing the screen."
+
+     So: no pill, no bar pinned to the bottom edge. The words sit over the
+     screen in the product's own serif, large enough to read at a glance and
+     light enough not to fight what is underneath; they drift up and across
+     the whole time they are visible, so they are always moving and never look
+     parked. A soft glow behind the glyphs, not a box, is what keeps them
+     legible over a pale screen and a dark one alike -- a box would put the
+     subtitle back.
+
+     `.caption` drifts on its own timeline (the `drift` animation) rather than
+     on the .on transition, because the transition only runs at the two ends
+     and the middle is where the floating has to happen. */
+  .caption{position:absolute; left:50%; bottom:20%; width:max-content; max-width:58ch;
+    padding:0 24px; text-align:center; pointer-events:none; z-index:7;
+    font-family:'Newsreader', Georgia, serif; font-weight:600;
+    font-size:1.6rem; line-height:1.3; letter-spacing:0.004em;
+    /* INK on a light halo, not white on a dark one. Every screen the stage
+       ever shows is one of Lite's, and they are all cream -- so pale text
+       floating over them was nearly invisible, whatever glow it carried. The
+       halo is the paper colour, spread wide and soft, which lifts the words
+       off the screen without drawing a box round them. */
+    color:oklch(28% 0.03 195);
+    text-shadow:0 0 14px oklch(99% 0.004 85 / .95), 0 0 30px oklch(99% 0.004 85 / .9),
+      0 0 60px oklch(99% 0.004 85 / .8), 0 1px 0 oklch(99% 0.004 85 / .9);
+    opacity:0; transform:translate(-50%, 18px);
+    transition:opacity 500ms ease, transform 500ms cubic-bezier(.2,.8,.2,1);}
+  .caption.on{opacity:1; transform:translate(-50%, 0);
+    animation:drift 9s linear forwards;}
+  /* Up and a little to the right, the whole time it is on screen. Small: the
+     point is that it is never still, not that it travels. */
+  @keyframes drift{
+    from{ transform:translate(-50%, 0); }
+    to{ transform:translate(calc(-50% + 26px), -34px); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .caption.on{ animation:none; }
+  }
 
   /* Transport. Not part of the film -- it is how we watch it while building. */
   .bar{display:flex; align-items:center; gap:14px; width:var(--stage-w); max-width:100%;
