@@ -169,6 +169,9 @@
   fit();
 
   var OWNER = new URLSearchParams(location.search).get('o') || '';
+  /* The scratch course, for the one scene that sets a course up from nothing.
+     A scene asks for it with `key:'scratch'`; everything else uses ?k=. */
+  var SCRATCH = new URLSearchParams(location.search).get('s') || '';
   var timers = [];
   var playing = true;
   var current = 0;
@@ -313,7 +316,9 @@
     stubbed = [];
     var url = '../' + SCENES[i].screen;
     var q = [];
-    if (KEY) q.push('k=' + encodeURIComponent(KEY));
+    var useKey = SCENES[i].key === 'scratch' ? SCRATCH : KEY;
+    if (SCENES[i].key === 'scratch' && !SCRATCH) warn('this scene wants the scratch course — add &s=<its tutor key>');
+    if (useKey) q.push('k=' + encodeURIComponent(useKey));
     /* The console is the one screen that needs the OWNER key, and it takes it
        as ?o=. Passed through only to that screen, never to the others. */
     if (OWNER && SCENES[i].screen.indexOf('14_owner') === 0) q.push('o=' + encodeURIComponent(OWNER));
@@ -398,7 +403,18 @@
           d.innerHTML = 'writes held back: <b>' + seen.join(', ') + '</b>';
           note.appendChild(d);
         }
-        later(function () { play((i + 1) % SCENES.length); }, 700);
+        /* Stop at the end rather than loop. Scene 3 WRITES -- it really adds
+           twelve people to the scratch course -- and a loop quietly ran it
+           again every cycle, so a roster reset was undone seconds later by a
+           film nobody was watching. A film that plays once and stops is also
+           what you want when recording. */
+        if (i + 1 < SCENES.length) { later(function () { play(i + 1); }, 700); }
+        else {
+          var d = document.createElement('div');
+          d.innerHTML = '<b>End.</b> Press Replay scene, or pick one above.';
+          note.appendChild(d);
+          cursor.classList.remove('on');
+        }
       });
     });
   }

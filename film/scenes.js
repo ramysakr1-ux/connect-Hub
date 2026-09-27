@@ -104,10 +104,9 @@ var SCENES = [
   {
     title: 'Setting up',
     screen: '6_centre_admin_dashboard.html',
-    about: 'Settings, then the roster paste. <b>The paste is typed but not submitted</b> — for the real take, point this scene at a scratch course and let Add all run.',
+    key: 'scratch',
+    about: 'The scratch course (<b>&s=</b>), not the demo: it has real dates and starts empty, so the twelve rows really appear. Nothing is stubbed — this scene writes, and that is the point. <b>Between takes:</b> <code>node store/scratch-course.mjs --reset</code>',
     settle: 1800,
-    stub: ['addTrainees', 'addTrainee', 'putCourse'],
-    answers: { addTrainees: { ok: true, result: { added: [], skipped: [] } } },
     steps: [
       { do: 'hold', ms: 900 },
       { do: 'move', to: '[data-tab="settings"]' },
@@ -125,8 +124,11 @@ var SCENES = [
         do: 'type', into: '#storeBulkNames', ms: 5200,
         text: 'Defne Yılmaz, 1\nAnastasia Volkova, 1\nJacob Miller, 1\nZeynep Aydın, 1\nEmily Carter, 1\nOmar Haddad, 1\nPriya Nair, 2\nLucas Moreau, 2\nSofia Rossi, 2\nKenji Watanabe, 2\nAmina Diallo, 2\nTom Fletcher, 2'
       },
-      { do: 'move', to: '#storeBulkAddBtn' },
-      { do: 'hold', ms: 3000 }
+      { do: 'click', on: '#storeBulkAddBtn', ms: 1400 },
+      /* "Add all" asks first -- confirmModal in hub-shared.js, whose button
+         is .confirm-action and carries the same words. */
+      { do: 'click', on: '.confirm-action', ms: 2600 },
+      { do: 'hold', ms: 3600 }                     /* twelve rows, each with its own link */
     ]
   }
 
