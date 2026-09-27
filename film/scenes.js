@@ -92,18 +92,32 @@ var SCENES = [
     title: 'The trainer\u2019s link',
     screen: 'invite.html',
     course: 'scratch',
-    about: 'Chapter one opens. The trainer\u2019s card, then the door it actually opens, then one click through to course admin \u2014 which is where the next scene carries on. <b>On the scratch course</b>, because this is the course about to be set up: the card used to be the demo\u2019s while the scene after it was a different course\u2019s admin screen, which is the jump that read as wrong.',
+    about: 'Chapter one opens, and <b>every word in the film is here</b>. Ramy, 27 Sep 2026: \u201cat the beginning we give some information, some captions. After that it\u2019s just show, not tell \u2014 only when there is something a trainer doesn\u2019t understand, something only Connect Lite does.\u201d A trainer knows how a CELTA course works; what they do not know is that this one is a link. So the four things that are true of the LINK are said here and never again.',
     settle: 1400,
     steps: [
-      { do: 'chapter', num: 'Chapter one', text: 'The trainer', sub: 'A course set up, its assignments written, its assessor expected, and eight lessons of feedback to give.', ms: 3000 },
-      { do: 'hold', ms: 800 },
+      { do: 'chapter', num: 'Chapter one', text: 'The trainer', sub: 'Sets the course up in one screen, and hands out the links.', ms: 3000 },
+      { do: 'hold', ms: 900 },
+      /* Each caption is followed by something that takes time, so the next one
+         does not land on it -- a caption hands back after 1.2s and floats for
+         about five. */
       { do: 'caption', text: 'No download. No upload. No paper.' },
-      /* The card's own button, and then the room it opens. A tutor's link
-         lands on their dashboard -- that is the product and it is right -- and
-         course admin is one door off it. Showing BOTH is what makes the cut to
-         the next scene read as walking rather than teleporting. */
+      { do: 'hold', ms: 3600 },
+      { do: 'caption', text: 'The link is the account.' },
+      {
+        do: 'still', ms: 3400,
+        want: 'Google Classroom, or Drive \u2014 the link sitting where the course already lives',
+        how: 'Simple: a stream or a folder with the Lite link in it. It only has to say WHERE the link can live. ONE shot.'
+      },
+      { do: 'caption', text: 'It lives where your course already lives.' },
+      { do: 'hold', ms: 3600 },
+      { do: 'caption', text: 'And it opens when the internet doesn\u2019t.' },
+      { do: 'hold', ms: 3600 },
+      /* The card's own button, then the room it opens, then one door on. A
+         tutor's link lands on their dashboard -- that is the product -- and
+         course admin is one click off it, which is where the next scene
+         carries on. */
       { do: 'click', on: '#go', ms: 2200 },
-      { do: 'hold', ms: 840 },
+      { do: 'hold', ms: 1400 },
       { do: 'click', on: 'a[href="6_centre_admin_dashboard.html"]', ms: 2400 }
     ]
   },
@@ -119,7 +133,6 @@ var SCENES = [
       { do: 'move', to: '[data-tab="settings"]' },
       { do: 'click', on: '[data-tab="settings"]', ms: 1400 },
       { do: 'hold', ms: 1092 },
-      { do: 'caption', text: 'The link is the account.' },
       { do: 'click', on: '[data-tab="roster"]', ms: 1500 },
       { do: 'hold', ms: 979 },
       /* The paste box is two doors in: "Add trainee" opens #addBox, and
@@ -156,7 +169,6 @@ var SCENES = [
          choose to \u2014 because some people don't want to bother, so they just use
          the native assignments." The caption said only that you could rewrite
          them, which reads as work to do rather than work already done. */
-      { do: 'caption', text: 'Ready as they are \u2014 or yours to rewrite.' },
       { do: 'click', on: '#list button[data-a]', ms: 1800 },
       { do: 'scroll', to: 800, ms: 2080 },
       { do: 'hold', ms: 1050 },
@@ -260,7 +272,6 @@ var SCENES = [
          is real but there is no dashed chip on screen to compare it against,
          and a caption naming one would be describing a picture the viewer
          cannot see. */
-      { do: 'caption', text: 'Solid: your own tutors tagged it.' },
       { do: 'hold', ms: 800 }
     ]
   },
@@ -309,7 +320,6 @@ var SCENES = [
       { do: 'click', on: '[data-crit="5"]', ms: 1400 },
       /* .derived carries the outcome, and it only exists once every criterion
          is marked -- so this beat cannot be faked by skipping one. */
-      { do: 'caption', text: 'The outcome comes from the marks.' },
       { do: 'move', to: '.derived' },
       { do: 'hold', ms: 1819 },
       { do: 'type', into: '#comment', ms: 3200, text: 'Strong on the learner’s background and needs. The two language points need more evidence from the interview.' },
@@ -329,7 +339,7 @@ var SCENES = [
     about: 'Chapter two opens. The same card, the candidate\u2019s words \u2014 and the line that matters to them: this one is theirs alone.',
     settle: 1400,
     steps: [
-      { do: 'chapter', num: 'Chapter two', text: 'The trainee', sub: 'One link, and everything they write on the course lives behind it \u2014 plans, self-evaluations, the feedback they are given, four assignments.', ms: 3000 },
+      { do: 'chapter', num: 'Chapter two', text: 'The trainee', sub: 'One link. Everything they write, and everything they are given, behind it.', ms: 3000 },
       { do: 'hold', ms: 800 },
       { do: 'click', on: '#go', ms: 2200 }
     ]
@@ -486,7 +496,6 @@ var SCENES = [
     stub: ['put'],
     steps: [
       { do: 'hold', ms: 1050 },
-      { do: 'caption', text: 'The resubmission opens where it failed.' },
       { do: 'scroll', to: 500, ms: 2080 },
       { do: 'hold', ms: 1183 },
       { do: 'scroll', to: 1100, ms: 2240 },
@@ -518,9 +527,8 @@ var SCENES = [
     about: 'Chapter three opens. The third card \u2014 read-only, and it says when it stops working: the course end plus fourteen days (Handbook 15).',
     settle: 1400,
     steps: [
-      { do: 'chapter', num: 'Chapter three', text: 'The assessor', sub: 'Everything Cambridge asks a centre to have ready, gathered behind one read-only link.', ms: 3000 },
+      { do: 'chapter', num: 'Chapter three', text: 'The assessor', sub: 'One read-only link, and the pack is already assembled.', ms: 3000 },
       { do: 'hold', ms: 800 },
-      { do: 'caption', text: 'Read-only, and it expires.' },
       { do: 'click', on: '#go', ms: 2200 }
     ]
   },
@@ -557,32 +565,44 @@ var SCENES = [
   },
 
   {
-    title: 'The final report \u2014 the end',
+    title: 'The final report',
     screen: '16_final_report.html',
     /* THE ASSESSOR, not a candidate. 16_final_report.html REFUSES a candidate's
        link on purpose -- the final report reaches them from the centre after
-       the course, once the grade is confirmed, and Lite has no release for
-       that yet. So the film's closing shot, opened as Olivia, was the door
-       politely closing: "This room belongs to your centre." Ramy, 27 Sep 2026:
-       "I don't really understand this page. Who are you talking to?" Nobody --
-       it was a refusal addressed to a candidate, at the end of a chapter about
-       the assessor. */
+       the course, once the grade is confirmed. Opened as Olivia, the film's
+       closing shot was the door politely closing. */
     course: 'finished', role: 'assessor',
     /* This screen takes ?id=, not ?trainee=, and matches it against the id OR
-       the name -- so the name is enough and no token goes in this file. With
-       no match it draws "No candidate to report on", which is the other way
-       this scene can end the film on a dead frame. */
+       the name -- so the name is enough and no token goes in this file. */
     params: { id: 'Olivia Bennett' },
-    about: 'The whole document, scrolled, with its colour \u2014 read by the assessor, whose chapter this is. A candidate\u2019s own link is refused here by design, so this scene must not be opened as one. <b>This is where the film ends</b> (Ramy, 27 Sep) \u2014 nothing after it: no card, no credit, no PDF.',
+    about: 'Down the whole document, then back up to the head of it. Ramy, 27 Sep 2026: \u201cend with the TOP side of the final report, the side that says Pass A \u2014 it goes down, shows the rest of it, and then it goes up again.\u201d A document you have seen the length of, resting on the thing it says.',
     settle: 2400,
     steps: [
-      { do: 'hold', ms: 1092 },
-      { do: 'scroll', to: 900, ms: 3200 },
-      { do: 'hold', ms: 1050 },
-      { do: 'scroll', to: 2000, ms: 3200 },
-      { do: 'hold', ms: 1050 },
-      { do: 'scroll', to: 'bottom', ms: 3360 },
-      { do: 'hold', ms: 1547 }
+      { do: 'hold', ms: 1100 },
+      { do: 'scroll', to: 1200, ms: 3000 },
+      { do: 'hold', ms: 900 },
+      { do: 'scroll', to: 'bottom', ms: 3400 },
+      { do: 'hold', ms: 1200 },
+      /* And back up, so the film rests where the report says what it says
+         rather than on its last line. */
+      { do: 'scroll', to: 0, ms: 3600 },
+      { do: 'hold', ms: 2600 }
+    ]
+  },
+
+  /* ===================================================== And the ask == */
+
+  {
+    title: 'Connect Lite \u2014 the card',
+    screen: 'offer.html',
+    about: 'The last frame. Ramy, 27 Sep 2026: \u201cmaybe the final slide goes back to Connect \u2014 email me. It\u2019s a sales pitch. Make it a sales pitch.\u201d This is the card a centre is sent before they have bought anything: what it is, what it costs, his note in his own voice, and the three demo doors. It renders from <b>?k=</b> alone. <b>The film ends here</b> \u2014 nothing after it.',
+    settle: 2600,
+    steps: [
+      { do: 'hold', ms: 2600 },
+      { do: 'scroll', to: 700, ms: 3400 },
+      { do: 'hold', ms: 2600 },
+      { do: 'scroll', to: 0, ms: 2600 },
+      { do: 'hold', ms: 3200 }
     ]
   },
 ];
