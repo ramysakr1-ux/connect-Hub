@@ -595,8 +595,21 @@ var SCENES = [
   {
     title: 'The final report \u2014 the end',
     screen: '16_final_report.html',
-    course: 'finished', role: 'trainee', as: 'Olivia Bennett',
-    about: 'The whole document, scrolled, with its colour. <b>This is where the film ends</b> (Ramy, 27 Sep) \u2014 nothing after it: no card, no credit, no PDF.',
+    /* THE ASSESSOR, not a candidate. 16_final_report.html REFUSES a candidate's
+       link on purpose -- the final report reaches them from the centre after
+       the course, once the grade is confirmed, and Lite has no release for
+       that yet. So the film's closing shot, opened as Olivia, was the door
+       politely closing: "This room belongs to your centre." Ramy, 27 Sep 2026:
+       "I don't really understand this page. Who are you talking to?" Nobody --
+       it was a refusal addressed to a candidate, at the end of a chapter about
+       the assessor. */
+    course: 'finished', role: 'assessor',
+    /* This screen takes ?id=, not ?trainee=, and matches it against the id OR
+       the name -- so the name is enough and no token goes in this file. With
+       no match it draws "No candidate to report on", which is the other way
+       this scene can end the film on a dead frame. */
+    params: { id: 'Olivia Bennett' },
+    about: 'The whole document, scrolled, with its colour \u2014 read by the assessor, whose chapter this is. A candidate\u2019s own link is refused here by design, so this scene must not be opened as one. <b>This is where the film ends</b> (Ramy, 27 Sep) \u2014 nothing after it: no card, no credit, no PDF.',
     settle: 2400,
     steps: [
       { do: 'hold', ms: 1560 },
