@@ -145,7 +145,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609270302">
+<link rel="stylesheet" href="hub-house.css?v=202609271121">
 </head>
 <body>
 <div class="board">
@@ -174,11 +174,11 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609270302"></script>
-<script src="assignment-defaults.js?v=202609270302"></script>
-<script src="hub-tracker.js?v=202609270302"></script>
-<script src="hub-store.js?v=202609270302"></script>
-<script src="hub-sync.js?v=202609270302"></script>
+<script src="hub-shared.js?v=202609271121"></script>
+<script src="assignment-defaults.js?v=202609271121"></script>
+<script src="hub-tracker.js?v=202609271121"></script>
+<script src="hub-store.js?v=202609271121"></script>
+<script src="hub-sync.js?v=202609271121"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -202,6 +202,19 @@ const MODE = window.HubMode;
 const params = new URLSearchParams(location.search);
 const WHO = params.get('trainee') || '';
 const SETTINGS = rec('connect_course_settings') || {};
+/* Where this centre files its grades. The assessor's own job at the end of a
+   visit is to put the final grades into Appian, and until now the pack sent
+   them looking for the address themselves. Set on Course admin -> Settings;
+   http/https only, because the value is typed by a person and ends up in an
+   href; nothing is shown at all when it is unset, since a dead link is worse
+   than none. The grades stay open behind it -- copy here, paste there. */
+const APPIAN = (function(){
+  const u = String(SETTINGS.appianUrl || '').trim();
+  return /^https?:\/\//i.test(u) ? u : '';
+})();
+const appianBtn = (cls) => APPIAN
+  ? `<a class="btn ${cls}" href="${APPIAN.replace(/"/g,'&quot;')}" target="_blank" rel="noopener">Open Appian</a>`
+  : '';
 /* How many teaching practices this course gives each candidate (Course admin
    > Settings). Eight when unset, which is every course made before the field
    existed -- and eight is the most the records model, so it is also the cap.
@@ -328,7 +341,7 @@ function renderList(){
   const dm = doubleMarkingRows();
   /* Never more than the cohort -- see requiredSample in 7_candidate_tracker.html. */
   const n = PEOPLE.length, sample = Math.min(n, n<=9 ? 3 : n<=16 ? 4 : 5);
-  $('toolbar').innerHTML = `<a class="btn primary" href="7_candidate_tracker.html">Candidate tracker</a><button class="btn-print" type="button" onclick="window.print()">Print / Save as PDF</button>`;
+  $('toolbar').innerHTML = `<a class="btn primary" href="7_candidate_tracker.html">Candidate tracker</a>${appianBtn('ghost')}<button class="btn-print" type="button" onclick="window.print()">Print / Save as PDF</button>`;
   $('app').innerHTML = `
     <h2 class="sect">Candidates <small>${n} on the course</small></h2>
     <div class="panel">${n ? `<table><tr><th>Candidate</th><th>Teaching practice</th><th>Assignments</th><th>Standing</th><th></th></tr>${PEOPLE.map(personRow).join('')}</table>` : '<div class="empty">No candidates on the course yet.</div>'}</div>
@@ -426,7 +439,7 @@ function assignmentBlock(tr, k){
 function renderOne(tr){
   const c = T.recordFor(tr), r = T.readCandidate(c), chip = T.STATE_CHIP[r.state], man = tr.tracker || {};
   $('backLink').hidden = false;
-  $('toolbar').innerHTML = `<a class="btn ghost" href="7_candidate_tracker.html">Candidate tracker</a><button class="btn-print" type="button" onclick="window.print()">Print / Save as PDF</button>`;
+  $('toolbar').innerHTML = `<a class="btn ghost" href="7_candidate_tracker.html">Candidate tracker</a>${appianBtn('ghost')}<button class="btn-print" type="button" onclick="window.print()">Print / Save as PDF</button>`;
   const verdict = v => v==='NOTSTD' ? 'not to standard' : v==='STD' ? 'to standard' : v==='ABOVE' ? 'above standard' : 'not held';
   const facts = [
     ['Standing', chip.text.charAt(0)+chip.text.slice(1).toLowerCase() + (r.from ? ' — from ' + r.from : ''), r.state==='notstd' ? 'red' : ''],

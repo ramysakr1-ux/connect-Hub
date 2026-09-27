@@ -219,7 +219,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609270302">
+<link rel="stylesheet" href="hub-house.css?v=202609271121">
 </head>
 <body>
 <div class="board">
@@ -247,6 +247,14 @@
       <button class="btn" id="saveBtn" type="button">Save</button>
       <span id="saveState">Saved</span>
       <button class="btn" id="copyAll" type="button">Copy all</button>
+      <!-- Where these grades are going. Filled in from the course's own
+           Appian address (Course admin -> Settings) and hidden until one is
+           set, because a dead link is worse than none. It opens in its own
+           tab so the grades stay open behind it -- the whole point is to copy
+           from here and paste there. Shown to the ASSESSOR too: the final
+           grades are theirs to file, and read-only has never meant they
+           cannot copy. -->
+      <a class="btn" id="appianLink" href="#" target="_blank" rel="noopener" hidden>Open Appian</a>
       <button class="btn-print" id="printBtn" type="button">Print / Save as PDF</button>
     </div>
   </div>
@@ -264,15 +272,20 @@
 
 </div>
 
-<script src="hub-tracker.js?v=202609270302"></script>
-<script src="hub-store.js?v=202609270302"></script>
-<script src="hub-shared.js?v=202609270302"></script>
-<script src="hub-sync.js?v=202609270302"></script>
+<script src="hub-tracker.js?v=202609271121"></script>
+<script src="hub-store.js?v=202609271121"></script>
+<script src="hub-shared.js?v=202609271121"></script>
+<script src="hub-sync.js?v=202609271121"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a candidate's link opened it and read the course and
-   centre off the header (walk, 22 Sep 2026). */
-if (window.hubTutorRoomOnly && hubTutorRoomOnly())
+   centre off the header (walk, 22 Sep 2026).
+   The ASSESSOR is admitted, read-only: agreeing the final grades and putting
+   them into Appian is their job, and they should not have to be handed the
+   numbers by someone else to do it (Ramy, 27 Sep 2026). Everything that
+   writes is already behind this page's RO flag, and the store refuses a
+   write from an assessor key regardless. */
+if (window.hubTutorRoomOnly && hubTutorRoomOnly({ assessor: true }))
   throw new Error('Connect Lite: stopping this page on purpose \u2014 the tutors\u2019 room is not open to this link.');
 
 /* ---------------------------------------------------------------------------
@@ -846,6 +859,13 @@ window.addEventListener('beforeprint', buildPrintable);
   const bits=[cs&&cs.courseName, cs&&cs.centreName, cs&&cs.centreNumber].filter(Boolean);
   if (people.length) bits.push(people.length+' candidate'+(people.length===1?'':'s'));
   if (bits.length) document.getElementById('courseMeta').textContent = bits.join(' · ');
+
+  /* The Appian link, if this centre has set one. http/https only: the value
+     is typed by a person into a settings box and ends up in an href, so
+     anything else is refused rather than rendered. */
+  const appian = document.getElementById('appianLink');
+  const url = (cs && cs.appianUrl || '').trim();
+  if (appian && /^https?:\/\//i.test(url)) { appian.href = url; appian.hidden = false; }
 
   if (!people.length){
     document.getElementById('cands').innerHTML =

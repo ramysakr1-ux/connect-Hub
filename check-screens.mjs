@@ -44,7 +44,7 @@ const ROOMS = {
   '8_assignment_wording.html':       { trainee:'refuse', tutor:'open',   assessor:'refuse' },
   '9_assignment_submission.html':    { trainee:'open',   tutor:'refuse', assessor:'refuse' },
   '10_tutor_assignment_marking.html':{ trainee:'refuse', tutor:'open',   assessor:'refuse' },
-  '13_grades_report.html':           { trainee:'refuse', tutor:'open',   assessor:'refuse' },
+  '13_grades_report.html':           { trainee:'refuse', tutor:'open',   assessor:'open'   },
   '15_course_record.html':           { trainee:'refuse', tutor:'open',   assessor:'refuse' },
   '16_final_report.html':            { trainee:'refuse', tutor:'open',   assessor:'open'   },
   /* Guidance, not a room: it holds no course data and takes no key, because

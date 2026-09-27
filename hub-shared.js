@@ -248,10 +248,19 @@ window.hubCentreRoomOnly = function(){
       : 'This page is where your centre sets the course up.', mode);
 };
 
-/* The tutor's own screens: writing feedback, marking an assignment. */
-window.hubTutorRoomOnly = function(){
+/* The tutor's own screens: writing feedback, marking an assignment.
+   `hubTutorRoomOnly({ assessor: true })` lets the assessor in as well, for a
+   screen that is the tutors' to WRITE but the assessor's to READ. The grades
+   report is the one: agreeing the final grades and filing them is the
+   assessor's own job, and that page has always had a read-only mode built for
+   them -- it was this guard, added on 22 Sep 2026 to keep a candidate out,
+   that swept the assessor out with them. Read-only is enforced separately, by
+   the page's own RO flag and by the store, which refuses every write from an
+   assessor key. */
+window.hubTutorRoomOnly = function(opts){
   var mode = window.HubMode;
   if (mode === 'tutor' || !mode) return false;
+  if (opts && opts.assessor && mode === 'assessor') return false;
   return hubRoomRefusal('This room belongs to your tutors',
     mode === 'assessor'
       ? 'Your link is read-only. The returned feedback and the marked records are in your pack.'
