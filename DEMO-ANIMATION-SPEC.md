@@ -22,12 +22,36 @@ Every scene names the screen, what the cursor does, its caption if it has one, a
 
 **The shape of the film is a journey.** One link is sent. The trainer sets the course up. A trainee does a teaching practice. The trainer gives feedback. The trainee reads it and does the written work. The assessor comes. The course ends with its reports — and, right at the end, paper, if anyone wants paper.
 
+## The centre is invented, and looks it on purpose
+
+**Elmswood English Centre, TR999, CELTA — C/1 2026**, with its own elm-leaf
+logo (`assets/elmswood-logo.svg`). Every part of that is made up, and set on
+all three courses by `node store/set-demo-identity.mjs --write`.
+
+Ramy, 27 Sep 2026: *“I don't want a real centre — a made up centre with a made
+up logo.”* Three things had to change to mean it:
+
+- **`XX000` → `TR999`.** The old number read as an unfilled placeholder rather
+  than a centre. TR999 is shaped like a real centre number and is the one
+  nobody holds. **Never TR073** — that is the centre Ramy actually works with,
+  and it must not appear on anything sent to a prospect.
+- **`C/16 2026` → `C/1 2026`.** One digit from his real C/17 2026, so a viewer
+  could have read the finished demo as his own previous course.
+- **A logo, where there was none.** In the centre's own dark green,
+  deliberately none of Connect's colours, so nobody reads the centre and the
+  product as the same organisation.
+
+The owner console lists `settings.courseName` in preference to the course's
+stored name, so scene 1 shows the same course code as every scene after it.
+
+---
+
 ## Everything is the demo — nothing real
 
 Lite lives at **`https://lite.celtaconnect.com/`** — every link in the film shows that address, never `github.io`. Both courses are demo courses in the owner console:
 
 - **`c3` — running.** Elmswood English Centre, twelve candidates, three weeks in: TP1–3 written up and returned, the fourth in progress. Tutors Jordan Blake and Diane Okonkwo; Emily Carter for the trainee side. **Parts 1–5** come from here.
-- **`c4` — finished.** *CELTA — C/16 2026*, the same centre, twelve candidates, eight TPs each, four assignments each, a full end-of-course report for every one. **Parts 6–7** come from here — because a course three weeks in has none of those yet, and a report naming TP7 on a course at TP3 is what an assessor notices. **Nothing in the film may show a finished document on the running course.**
+- **`c4` — finished.** *CELTA — C/1 2026*, the same centre, twelve candidates, eight TPs each, four assignments each, a full end-of-course report for every one. **Parts 6–7** come from here — because a course three weeks in has none of those yet, and a report naming TP7 on a course at TP3 is what an assessor notices. **Nothing in the film may show a finished document on the running course.**
 
 **The Classroom and Drive frames in scene 2 are demo ones too** — a demo class and a demo Drive folder made for the film, named for the demo course. Never a real course, never real candidates.
 

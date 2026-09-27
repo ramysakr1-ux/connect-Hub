@@ -390,7 +390,7 @@ if (!RESUMING) {
 await gotoSettled(p, url('6_centre_admin_dashboard.html', 'k=' + K), '#courseName'); await settle(p, 1500);
 const set = async (sel, v) => { const el = await p.$(sel); if (!el) throw new Error('no field ' + sel + ' on the course admin screen'); await el.fill(String(v)); await settle(p, 200); };
 await set('#centreName', 'Demo Centre');
-await set('#centreNumber', 'XX000');
+await set('#centreNumber', 'TR999');
 await set('#courseName', 'CELTA — demo course');
 await set('#courseStart', day(-11));
 await set('#courseEnd', day(11));

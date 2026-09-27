@@ -53,7 +53,7 @@ const SETTINGS = {
   start: iso(monday),
   end: iso(plus(monday, 25)),
   centreName: 'Elmswood English Centre',
-  centreNumber: 'XX000',
+  centreNumber: 'TR999',
   courseName: 'CELTA — October 2026',
   tpCount: 8,
   totalHours: 120,

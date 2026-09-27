@@ -9,15 +9,28 @@
  * tagged two ways in two places.
  */
 
+import { readFileSync } from 'node:fs';
+
+/* The centre's own mark, read from the file rather than pasted in here as 750
+   characters of base64. It is a made-up centre and this is its made-up logo
+   (Ramy, 27 Sep 2026) -- an elm leaf, in a green that is deliberately none of
+   Connect's colours, so nobody reads the centre and the product as the same
+   organisation. restore-c4-settings.mjs writes these settings wholesale, so a
+   logo missing from here is a logo wiped off the course. */
+const LOGO = (() => {
+  const svg = readFileSync(new URL('./assets/elmswood-logo.svg', import.meta.url), 'utf8').replace(/\n\s*/g, ' ').trim();
+  return 'data:image/svg+xml;base64,' + Buffer.from(svg, 'utf8').toString('base64');
+})();
+
 export const COURSE = {
-  name: 'CELTA — C/16 2026',
+  name: 'CELTA — C/1 2026',
   settings: {
     start: '2026-08-10', end: '2026-09-04',
-    centreName: 'Elmswood English Centre', centreNumber: 'XX000',
-    courseName: 'CELTA — C/16 2026',
+    centreName: 'Elmswood English Centre', centreNumber: 'TR999',
+    courseName: 'CELTA — C/1 2026',
     tpCount: 8, totalHours: 120, deliveryMode: 'f2f',
     tutorNames: 'Jordan Blake, Diane Okonkwo',
-    planDueNote: '', selfDueNote: '', docs: {}, logo: '',
+    planDueNote: '', selfDueNote: '', docs: {}, logo: LOGO,
     gradeForm: {
       tp: 'Twelve candidates in two teaching practice groups of six; each candidate taught eight assessed lessons of forty-five minutes, four at A2 in the first half of the course and four at B1 in the second. Levels swapped after TP4. Each group had one tutor for its first four lessons and the other for its last four, so every candidate was observed by both.',
       tpSup: 'Every lesson was followed by a feedback session of forty-five minutes with the observing tutor and the TP group. Written feedback was returned to the candidate the same day through Connect Lite, with strengths and action points in planning and in teaching, a comment on each stage of the plan, and a comment on the self-evaluation.',
