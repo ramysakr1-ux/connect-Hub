@@ -238,7 +238,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609280011">
+<link rel="stylesheet" href="hub-house.css?v=202609280020">
 </head>
 <body>
 <div class="board">
@@ -344,10 +344,10 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202609280011"></script>
-<script src="hub-shared.js?v=202609280011"></script>
-<script src="hub-store.js?v=202609280011"></script>
-<script src="hub-sync.js?v=202609280011"></script>
+<script src="hub-due.js?v=202609280020"></script>
+<script src="hub-shared.js?v=202609280020"></script>
+<script src="hub-store.js?v=202609280020"></script>
+<script src="hub-sync.js?v=202609280020"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -510,7 +510,12 @@ line(document.getElementById('badgeObs'), (function(){
   const e = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
   const cards = [];
   links.forEach(l => { const name = ((l.card || '').trim() || (l.label || '').trim() || 'Course files'); let c = cards.find(x => x.name === name); if (!c) { c = { name, links: [] }; cards.push(c); } c.links.push(l); });
-  host.outerHTML = cards.map(c => `<div class="room files"><h2>${e(c.name)}</h2><ul>${c.links.map(l => `<li><a href="${e(l.url)}" target="_blank" rel="noopener noreferrer">${e(l.label || l.url)}</a></li>`).join('')}</ul></div>`).join('');
+  /* One link under its own name would read "Timetable / Timetable" (Ramy,
+     28 Sep 2026, on the same repetition in the form) -- so a one-link card is
+     the link, whole. */
+  host.outerHTML = cards.map(c => c.links.length === 1 && (c.links[0].label || '') === c.name
+    ? `<a class="room files one" href="${e(c.links[0].url)}" target="_blank" rel="noopener noreferrer"><h2>${e(c.name)}</h2><span class="st">Opens in a new tab</span></a>`
+    : `<div class="room files"><h2>${e(c.name)}</h2><ul>${c.links.map(l => `<li><a href="${e(l.url)}" target="_blank" rel="noopener noreferrer">${e(l.label || l.url)}</a></li>`).join('')}</ul></div>`).join('');
 })();
 
 /* The grid: when it last changed, which is the question you open it with. Never
