@@ -1,30 +1,42 @@
 <!DOCTYPE html>
 <!--
-  Connect Lite — the film. One file, and nothing else.
+  Connect Lite — the film. One page, and 26 photographs of the real thing.
   © 2026 Ramy Sakr. All rights reserved.
 
-  WHY THIS EXISTS. The first film drove the real screens in an iframe, which
-  meant it depended on three live courses, a store, a network and a browser
-  that had not throttled its own timers. The second was an artifact export:
-  eighteen scenes compiled into 1.4MB of React that could be watched and never
-  edited. Ramy, 27 Sep 2026: "rebuild it as one plain HTML file."
+  WHY IT IS BUILT THIS WAY. Three attempts got here.
 
-  So: no framework, no bundler, no build step, no live screens. Every screen in
-  it is DRAWN here in HTML and CSS, in Lite's own colours and type. Open the
-  file and it plays. Change a number below and it changes.
+  The first drove the live screens in an iframe. Honest, and fragile: it needed
+  three live courses, a store, a network and a browser that had not throttled
+  its own timers — and a take could WRITE, which it did, marking six criteria
+  onto a real candidate's assignment.
+
+  The second was an artifact export: eighteen scenes compiled into 1.4MB of
+  React that could be watched and never edited.
+
+  The third drew mock screens in HTML. Ramy, 27 Sep 2026: "I want a video that
+  actually shows what Connect Lite looks like, not a made up one that looks
+  nothing like what we built." Quite right — a drawing that merely resembles
+  the product is no good for selling it.
+
+  So: every frame is a PHOTOGRAPH of the live site, taken once by capture.mjs
+  at 1280x800 and at twice that in pixels. The film needs no store, no network
+  and no live course, and it cannot write to anything, because there is
+  nothing live in it. When a screen changes, run capture.mjs again — the file
+  names do not change, so nothing here needs touching.
 
   HOW IT IS PUT TOGETHER
-    SCENES      the whole film, in order: id, seconds, and what it draws.
-    screen()    each scene returns HTML. They share the pieces in SCREEN —
-                a header, a card, a row — so they look like one product.
-    cue()       schedules a class change inside a scene: that is the motion.
-    The caption and chapter layers sit above the stage and are never part of
-    a screen, so a screen can be reused without its words coming with it.
+    SCENES   the film in order. A scene is its seconds, one or more `shots`,
+             and its cues.
+    cue      [seconds in, what happens]:
+               ['say', text]   a caption floats in and drifts away
+               ['shot', n]     cut to the n-th shot of this scene
+               ['on']          start the slow push on the picture
+    A chapter scene is { s, chapter:[number, who, line] } and draws no shot.
 
   TO CHANGE IT
-    A caption      edit its cue(…, 'say', …) line.
-    A scene length edit the `s:` seconds on the scene.
-    The order      move the scene in SCENES. Nothing else needs touching.
+    A caption      edit its ['say', …] line.
+    A scene length edit `s`.
+    A screen       re-run capture.mjs.
 -->
 <html lang="en">
 <head>
@@ -33,141 +45,74 @@
 <title>Connect Lite — the film</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;0,700;1,400&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,600;0,700;1,400&family=Karla:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  /* Lite's own palette. Nothing here is invented for the film. */
-  :root{
-    --sand:#FBFAF7; --sand-2:#F2EEE4; --paper:#FDFCFA; --box:#EDE6D8;
-    --line:#DCD3C2; --ink:#2C2418; --grey:#6B6157;
-    --teal:#1E6B63; --teal-l:#E8F0EE; --gold:#C9B189; --gold-d:#A88A57;
-    --garnet:#A33227; --ok:#2F7D4F;
-    --stage-w:1120px; --stage-h:630px;
-  }
+  :root{ --sand:#FBFAF7; --ink:#2C2418; --grey:#6B6157; --teal:#1E6B63; --gold:#C9B189; }
   *{box-sizing:border-box; margin:0; padding:0}
   body{background:#161310; color:#E8E2D6; font-family:Karla,system-ui,sans-serif;
-    display:flex; flex-direction:column; align-items:center; gap:18px; padding:26px 16px 40px; min-height:100vh}
+    display:flex; flex-direction:column; align-items:center; gap:16px; padding:24px 16px 36px; min-height:100vh}
 
-  /* ---- the stage ------------------------------------------------------- */
-  .wrap{width:var(--stage-w); max-width:100%}
-  .stage{position:relative; width:var(--stage-w); height:var(--stage-h); max-width:100%;
-    background:var(--sand); border-radius:14px; overflow:hidden;
-    box-shadow:0 30px 80px rgba(0,0,0,.5); transform-origin:top left}
-  .screen{position:absolute; inset:0; opacity:0; transition:opacity .45s ease}
-  .screen.on{opacity:1}
+  /* ---- the stage: 1280x800, the size the screens were photographed at --- */
+  .wrap{position:relative}
+  .stage{position:relative; width:1280px; height:800px; background:var(--sand);
+    border-radius:12px; overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,.55);
+    transform-origin:top left}
 
-  /* ---- the words ------------------------------------------------------- */
-  /* A caption floats over the screen and drifts the whole time it is up. It
-     is never a subtitle bar: translucent white with a dark aura, because every
-     screen under it is cream. */
-  .cap{position:absolute; left:50%; bottom:18%; width:max-content; max-width:52ch;
+  /* Two layers, so one picture dissolves into the next instead of blinking. */
+  .shot{position:absolute; inset:0; opacity:0; transition:opacity .5s ease}
+  .shot.on{opacity:1}
+  .shot img{width:100%; height:100%; object-fit:cover; object-position:top center; display:block;
+    transform:scale(1); transition:transform 9s linear}
+  /* A slow push, so a still photograph is not a dead one. Never more than 3%:
+     these are screens, and a screen that drifts reads as a mistake. */
+  .shot.push img{transform:scale(1.03)}
+
+  /* ---- the words. Never a subtitle bar: every screen under them is cream -- */
+  .cap{position:absolute; left:50%; bottom:15%; width:max-content; max-width:52ch;
     padding:0 24px; text-align:center; pointer-events:none; z-index:7;
-    font-family:Newsreader,Georgia,serif; font-weight:600; font-size:1.65rem; line-height:1.3;
-    color:#fff; opacity:0;
-    text-shadow:0 0 5px rgba(28,22,14,.95),0 0 12px rgba(28,22,14,.92),
-      0 0 26px rgba(28,22,14,.8),0 2px 3px rgba(28,22,14,.9);
-    transform:translate(-50%,0); transition:opacity .7s ease}
-  .cap.on{opacity:.84; animation:drift 12s linear forwards}
+    font-family:Newsreader,Georgia,serif; font-weight:600; font-size:1.9rem; line-height:1.3;
+    color:#fff; opacity:0; transform:translate(-50%,0); transition:opacity .7s ease;
+    text-shadow:0 0 5px rgba(24,18,12,.96),0 0 13px rgba(24,18,12,.94),
+      0 0 30px rgba(24,18,12,.85),0 2px 4px rgba(24,18,12,.9)}
+  .cap.on{opacity:.86; animation:drift 12s linear forwards}
   .cap.out{opacity:0; transition:opacity 1.4s ease}
-  @keyframes drift{from{transform:translate(-50%,8px)} to{transform:translate(calc(-50% + 26px),-40px)}}
+  @keyframes drift{from{transform:translate(-50%,10px)} to{transform:translate(calc(-50% + 28px),-42px)}}
 
-  /* A chapter card covers the stage completely, so the cut either side is clean. */
   .chap{position:absolute; inset:0; z-index:9; background:var(--sand);
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
     opacity:0; pointer-events:none; transition:opacity .55s ease}
   .chap.on{opacity:1}
-  .chap .n{font-size:.78rem; letter-spacing:.22em; text-transform:uppercase; color:var(--grey)}
-  .chap h2{font-family:Newsreader,Georgia,serif; font-weight:700; font-size:3.4rem; color:var(--teal); line-height:1.05}
-  .chap .rule{width:84px; height:3px; border-radius:2px; background:var(--gold)}
-  .chap p{max-width:44ch; text-align:center; color:var(--ink); font-size:1.02rem; line-height:1.6}
-
-  /* The cursor. One element, moved by cue(). */
-  .cur{position:absolute; width:22px; height:22px; z-index:8; left:0; top:0; opacity:0;
-    transition:transform 1s cubic-bezier(.3,.7,.2,1), opacity .3s}
-  .cur.on{opacity:1}
-  .ring{position:absolute; width:34px; height:34px; margin:-6px 0 0 -6px; border-radius:50%;
-    border:2px solid var(--teal); opacity:0; z-index:8; left:0; top:0}
-  .ring.pop{animation:pop .5s ease-out}
-  @keyframes pop{from{opacity:.75; transform:scale(.4)} to{opacity:0; transform:scale(1.5)}}
-
-  /* ---- the pieces every screen is built from --------------------------- */
-  .pg{position:absolute; inset:0; padding:26px 30px; display:flex; flex-direction:column; gap:14px}
-  .hd{display:flex; align-items:center; gap:12px; padding-bottom:12px; border-bottom:1px solid var(--line)}
-  .mark{font-family:Newsreader,Georgia,serif; font-style:italic; font-size:19px; color:var(--teal)}
-  .mark b{font-style:normal; font-weight:700; font-size:11px; letter-spacing:.14em; color:var(--gold-d); margin-left:5px}
-  .eyebrow{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); font-weight:700}
-  .hd .who{margin-left:auto; font-size:12px; color:var(--grey)}
-  h1{font-family:Newsreader,Georgia,serif; font-weight:700; font-size:27px; color:var(--ink); line-height:1.15}
-  h3{font-family:Newsreader,Georgia,serif; font-weight:600; font-size:18px; color:var(--ink)}
-  .card{background:var(--paper); border:1px solid var(--line); border-left:4px solid var(--gold);
-    border-radius:9px; padding:16px 18px}
-  .card.teal{border-left-color:var(--teal)}
-  .card.flat{border-left:1px solid var(--line)}
-  .row{display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid var(--line); font-size:13.5px}
-  .row:last-child{border-bottom:0}
-  .row .nm{font-weight:600; color:var(--ink); min-width:150px}
-  .row .mt{color:var(--grey); font-size:12.5px}
-  .pill{display:inline-flex; align-items:center; padding:3px 10px; border-radius:999px;
-    font-size:11px; font-weight:700; letter-spacing:.02em}
-  .pill.teal{background:var(--teal-l); color:var(--teal)}
-  .pill.gold{background:#F6EEDC; color:var(--gold-d)}
-  .pill.ok{background:#E7F1E9; color:var(--ok)}
-  .pill.no{background:#F7E7E5; color:var(--garnet)}
-  .fld{background:#fff; border:1px solid var(--line); border-radius:7px; padding:9px 11px;
-    font-size:13.5px; color:var(--ink); min-height:38px}
-  .fld.lg{min-height:74px; line-height:1.5}
-  .btn{display:inline-flex; align-items:center; justify-content:center; height:34px; padding:0 16px;
-    border-radius:8px; font-size:13px; font-weight:700; background:var(--teal); color:#fff}
-  .btn.gold{background:var(--gold); color:var(--ink)}
-  .btn.quiet{background:transparent; border:1px solid var(--line); color:var(--ink)}
-  .grid{display:grid; gap:12px}
-  .muted{color:var(--grey); font-size:12.5px; line-height:1.55}
-
-  /* things that appear on cue */
-  .later{opacity:0; transform:translateY(7px); transition:opacity .5s ease, transform .5s ease}
-  .go .later{opacity:1; transform:none}
-  .go .later.d1{transition-delay:.18s} .go .later.d2{transition-delay:.36s}
-  .go .later.d3{transition-delay:.54s} .go .later.d4{transition-delay:.72s}
-  .typed{border-right:2px solid var(--teal)}
-
-  /* the invitation card, used three times with different words */
-  .invite{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:var(--sand-2)}
-  .invite .c{width:470px; background:var(--paper); border-left:5px solid var(--gold);
-    border-radius:10px; padding:26px 28px; box-shadow:0 10px 30px rgba(44,36,24,.1)}
-  .invite h1{font-size:24px; margin:6px 0 10px}
-  .invite p{font-size:13.5px; color:var(--grey); line-height:1.6; margin-bottom:12px}
-  .invite .keep{background:var(--box); border-radius:7px; padding:11px 13px; font-size:12.5px;
-    color:var(--ink); line-height:1.55; margin-bottom:16px}
+  .chap .n{font-size:.82rem; letter-spacing:.22em; text-transform:uppercase; color:var(--grey)}
+  .chap h2{font-family:Newsreader,Georgia,serif; font-weight:700; font-size:4rem; color:var(--teal); line-height:1.05}
+  .chap .rule{width:92px; height:3px; border-radius:2px; background:var(--gold)}
+  .chap p{max-width:44ch; text-align:center; color:var(--ink); font-size:1.12rem; line-height:1.6}
 
   /* ---- the transport, which is not part of the film -------------------- */
-  .bar{display:flex; align-items:center; gap:14px; width:var(--stage-w); max-width:100%;
-    color:#9A9184; font-size:13px}
+  .bar{display:flex; align-items:center; gap:14px; color:#9A9184; font-size:13px}
   .bar button{font:700 13px Karla,sans-serif; color:#EFE9DD; background:#2A241D;
     border:1px solid #3D362C; border-radius:999px; padding:8px 16px; cursor:pointer}
   .bar button:hover{background:#352E25}
   .track{flex:1; height:5px; background:#2A241D; border-radius:3px; overflow:hidden}
   .track i{display:block; height:100%; width:0; background:var(--gold)}
-  .list{display:flex; flex-wrap:wrap; gap:6px; width:var(--stage-w); max-width:100%}
+  .list{display:flex; flex-wrap:wrap; gap:6px; justify-content:center}
   .list b{font:600 11.5px Karla,sans-serif; padding:5px 10px; border-radius:999px;
     background:#241F19; color:#8C8377; cursor:pointer}
   .list b.now{background:var(--teal); color:#fff}
-  .foot{width:var(--stage-w); max-width:100%; color:#6E665B; font-size:12px; text-align:center}
+  .foot{color:#6E665B; font-size:12px; text-align:center}
 </style>
 </head>
 <body>
 
-<div class="wrap">
+<div class="wrap" id="wrap">
   <div class="stage" id="stage">
-    <div class="screen on" id="scr"></div>
+    <div class="shot" id="a"><img alt=""></div>
+    <div class="shot" id="b"><img alt=""></div>
     <div class="cap" id="cap"></div>
     <div class="chap" id="chap"><div class="n" id="chapN"></div><h2 id="chapH"></h2><div class="rule"></div><p id="chapP"></p></div>
-    <div class="ring" id="ring"></div>
-    <svg class="cur" id="cur" viewBox="0 0 22 22" aria-hidden="true">
-      <path d="M2 1 L2 17 L6.2 13.2 L9 19.6 L12 18.2 L9.2 12 L15 12 Z" fill="#fdfcfa" stroke="#2b2118" stroke-width="1.4" stroke-linejoin="round"/>
-    </svg>
   </div>
 </div>
 
-<div class="bar">
+<div class="bar" id="bar">
   <button id="play">Pause</button>
   <button id="again">Replay scene</button>
   <div class="track"><i id="prog"></i></div>
@@ -178,421 +123,204 @@
 
 <script>
 /* ======================================================================
-   THE PIECES EVERY SCREEN IS BUILT FROM
-   One header, one card, one row, so eighteen scenes look like one product
-   rather than eighteen drawings.
-   ====================================================================== */
-const S = {
-  head: (eyebrow, who) => `
-    <div class="hd">
-      <span class="mark">Connect<b>LITE</b></span>
-      <span class="eyebrow">${eyebrow}</span>
-      <span class="who">${who || 'Elmswood English Centre · TR999'}</span>
-    </div>`,
-  page: (eyebrow, who, body) => `<div class="pg">${S.head(eyebrow, who)}${body}</div>`,
-  /* The invitation card. The same design three times over; only the words
-     change, which is the point it is making. */
-  invite: (eyebrow, title, what, keep, go) => `
-    <div class="invite"><div class="c">
-      <div class="eyebrow">${eyebrow}</div>
-      <h1>${title}</h1>
-      <p>${what}</p>
-      <div class="keep">${keep}</div>
-      <div class="btn" id="go">${go}</div>
-    </div></div>`,
-  row: (name, meta, pill) => `
-    <div class="row"><span class="nm">${name}</span><span class="mt">${meta}</span>
-    ${pill ? `<span style="margin-left:auto">${pill}</span>` : ''}</div>`,
-};
-
-const NAMES = ['Defne Yılmaz','Anastasia Volkova','Jacob Miller','Zeynep Aydın','Emily Carter',
-  'Omar Haddad','Priya Nair','Lucas Moreau','Sofia Rossi','Kenji Watanabe','Amina Diallo','Tom Fletcher'];
-
-/* ======================================================================
-   THE FILM
-   id · s: seconds · html() · cues: [seconds in, what happens]
-   A cue is one of:
-     ['say', text]           a floating caption
-     ['go']                  reveal the .later things on this screen
-     ['type', sel, text]     type into an element
-     ['at', sel]             move the cursor there
-     ['click', sel]          move there and click
-     ['add', sel, class]     add a class — this is how anything else moves
+   THE FILM. Every `shot` is a file in shots/, photographed from the live
+   site by capture.mjs. Nothing here is drawn.
    ====================================================================== */
 const SCENES = [
 
-/* ---------------------------------------------------- the opening ---- */
-{ id:'Open', s:30, title:'A course is one link',
-  html:()=> S.page('Owner console','Ramy Sakr', `
-    <h1>Your courses</h1>
-    <div class="grid" style="grid-template-columns:1fr 1fr">
-      <div class="card">
-        <h3>CELTA — demo course</h3>
-        <p class="muted">Elmswood English Centre · 12 candidates</p>
-      </div>
-      <div class="card later d1" id="made">
-        <h3>CELTA — October 2026</h3>
-        <p class="muted">Elmswood English Centre · 0 candidates</p>
-        <div style="display:flex; gap:8px; margin-top:10px">
-          <span class="pill teal">tutor link</span><span class="pill gold">assessor link</span>
-        </div>
-      </div>
-    </div>
-    <div class="card flat later d3" style="margin-top:4px">
-      <p class="muted">A course is made here, and from this moment it is three links: one for
-      the tutors, one for each candidate, one for the assessor.</p>
-    </div>`),
-  cues:[
-    [0.8,'say','No download. No upload. No paper.'],
-    [3.0,'click','#made'],
-    [4.2,'go'],
-    [7.5,'say','The link is the account.'],
-    [13,'say','It lives where your course already lives.'],
-    [20,'say','And it opens when the internet doesn’t.'],
-  ]},
+/* ------------------------------------------------- the opening ------- */
+{ t:'A course is one link', s:26, shots:['01-owner','02-invite-tutor'], cues:[
+  [0.5,'on'],
+  [1.0,'say','No download. No upload. No paper.'],
+  [8.0,'say','The link is the account.'],
+  [13,'shot',1],[13.3,'on'],
+  [15,'say','It lives where your course already lives.'],
+  [21,'say','And it opens when the internet doesn’t.'],
+]},
 
-/* ------------------------------------------ chapter one · trainer ---- */
-{ id:'Ch1', s:4, chapter:['Chapter one','The trainer','Sets the course up in one screen, and hands out the links.'] },
+/* ------------------------------------ chapter one · the trainer ------ */
+{ t:'The trainer', s:4.5, chapter:['Chapter one','The trainer','Sets the course up in one screen, and hands out the links.'] },
 
-{ id:'TInvite', s:9, title:'The tutor’s card',
-  html:()=> `<div class="pg">${S.head('Tutor access')}</div>` + S.invite(
-    'Tutor access', 'Your CELTA course',
-    'This link opens the course as the tutors see it: every candidate’s plans and self-evaluations, the feedback sheets, the assignment marking, and the candidate tracker.',
-    '<b>Every tutor on the course opens this same link.</b> Keep it to the teaching team — anyone who has it can read and change every candidate’s record.',
-    'Open the course'),
-  cues:[[1.4,'at','#go'],[5.4,'click','#go']]},
+{ t:'Setting the course up', s:16, shots:['03-admin','04-roster'], cues:[
+  [0.4,'on'],
+  [1.2,'say','No accounts. No passwords.'],
+  [8,'shot',1],[8.3,'on'],
+]},
 
-{ id:'TSetup', s:22, title:'Setting the course up',
-  html:()=> S.page('Course admin · settings', `Elmswood English Centre · TR999`, `
-    <h1>Set the course up</h1>
-    <div class="grid" style="grid-template-columns:1fr 1fr; gap:14px">
-      <div><div class="eyebrow" style="margin-bottom:5px">Course name</div><div class="fld" id="cname"></div></div>
-      <div><div class="eyebrow" style="margin-bottom:5px">Tutors</div><div class="fld" id="tutors"></div></div>
-    </div>
-    <div class="later d1"><div class="eyebrow" style="margin:6px 0 5px">Add several at once</div>
-      <div class="fld lg" id="paste" style="font-size:12.5px; white-space:pre-line"></div></div>
-    <div class="card teal later d3" id="roster" style="margin-top:2px">
-      <h3>Trainees <span class="pill teal" style="margin-left:6px">12</span></h3>
-      <div style="columns:3; font-size:12.5px; color:var(--grey); margin-top:8px; line-height:1.9">
-        ${NAMES.map(n=>`<div>${n}</div>`).join('')}
-      </div>
-    </div>`),
-  cues:[
-    [0.6,'type','#cname','CELTA — October 2026'],
-    [3.4,'type','#tutors','Jordan Blake, Diane Okonkwo'],
-    [6.4,'go'],
-    [7.0,'type','#paste','Defne Yılmaz, 1\nAnastasia Volkova, 1\nJacob Miller, 1\nZeynep Aydın, 1 …'],
-    [12.5,'say','No accounts. No passwords.'],
-    [17,'at','#roster'],
-  ]},
+{ t:'The centre’s own assignments', s:15, shots:['06-wording','07-wording-open'], cues:[
+  [0.4,'on'],
+  [1.0,'say','The four assignments come with it.'],
+  [7,'shot',1],[7.3,'on'],
+  [9,'say','Ready as they are — or yours to rewrite.'],
+]},
 
-{ id:'TAssign', s:14, title:'The centre’s own assignments',
-  html:()=> S.page('Course admin · assignments', null, `
-    <h1>The four assignments</h1>
-    <div class="grid" style="grid-template-columns:repeat(4,1fr)">
-      ${[['Focus on the Learner','6 criteria'],['Language Related Tasks','4 criteria'],
-         ['Language Skills Related Tasks','4 criteria'],['Lessons from the Classroom','5 criteria']]
-        .map(([t,c],i)=>`<div class="card flat" id="a${i}"><h3 style="font-size:14.5px">${t}</h3>
-          <p class="muted" style="margin-top:5px">${c}</p></div>`).join('')}
-    </div>
-    <div class="card later d1" style="margin-top:6px">
-      <div class="eyebrow">Focus on the Learner · the wording</div>
-      <div class="fld lg" style="margin-top:8px" id="wording">Describe one learner in your teaching practice group. Identify two areas of difficulty and propose one activity for each, with a rationale.</div>
-      <div style="display:flex; gap:8px; margin-top:10px"><span class="btn">Save assignment</span>
-        <span class="btn quiet">Restore Cambridge’s wording</span></div>
-    </div>`),
-  cues:[
-    [0.8,'say','They come with the course.'],
-    [4.0,'click','#a0'],[4.6,'go'],
-    [7.5,'say','Ready as they are — or yours to rewrite.'],
-    [11,'at','#wording'],
-  ]},
+{ t:'Three links', s:10, shots:['05-links'], cues:[
+  [0.4,'on'],
+  [1.2,'say','Everyone gets their own link.'],
+]},
 
-{ id:'TLinks', s:11, title:'Three links',
-  html:()=> S.page('Course admin · links', null, `
-    <h1>Course links</h1>
-    <div class="card"><h3>Tutor link</h3><p class="muted">Every tutor on the course opens this same link.</p></div>
-    <div class="card teal later d1"><h3>Assessor link</h3><p class="muted">Read-only. It stops working fourteen days after the course ends.</p></div>
-    <div class="card flat later d2"><h3>Every candidate, their own</h3>
-      <div style="margin-top:8px">
-        ${S.row('Emily Carter','Theirs alone — post it in Classroom','<span class="pill gold">Copy</span>')}
-        ${S.row('Zeynep Aydın','Theirs alone — post it in Classroom','<span class="pill gold">Copy</span>')}
-      </div></div>`),
-  cues:[[0.6,'go'],[2.0,'say','Everyone gets their own link.'],[7.5,'at','.pill.gold']]},
+/* ------------------------------------ chapter two · the trainee ------ */
+{ t:'The trainee', s:4.5, chapter:['Chapter two','The trainee','One link. Everything they write, and everything they are given, behind it.'] },
 
-/* ------------------------------------------ chapter two · trainee ---- */
-{ id:'Ch2', s:4, chapter:['Chapter two','The trainee','One link. Everything they write, and everything they are given, behind it.'] },
+{ t:'Their card, then home', s:15, shots:['08-invite-trainee','09-home'], cues:[
+  [0.4,'on'],
+  [1.0,'say','The same card, in their words.'],
+  [8,'shot',1],[8.3,'on'],
+]},
 
-{ id:'Home', s:12, title:'The candidate’s card, then home',
-  html:()=> S.invite('Course invitation','Your CELTA course',
-    'This link opens your own space on the course. Your lesson plans and language analysis, your self-evaluations, the feedback your tutors return to you, and your written assignments all live behind it.',
-    '<b>This link is yours alone.</b> Anyone who opens it is you.','Open my workspace'),
-  cues:[[1.2,'say','The same card, in their words.'],[6.0,'click','#go'],
-        [6.6,'swap','HomeHub']]},
+{ t:'The plan', s:19, shots:['10-plan','11-plan-stages'], cues:[
+  [0.4,'on'],
+  [1.2,'say','Written by talking, if you like.'],
+  [9,'shot',1],[9.3,'on'],
+  [11,'say','A shape names the stages. The aims are yours.'],
+]},
 
-{ id:'Plan', s:24, title:'The plan',
-  html:()=> S.page('Teaching practice 1 · lesson plan','Emily Carter', `
-    <h1>TP1 — lesson plan</h1>
-    <div><div class="eyebrow" style="margin-bottom:5px">Main aim</div><div class="fld lg" id="aim"></div></div>
-    <div style="display:flex; align-items:center; gap:10px">
-      <span class="eyebrow">Lesson shape</span>
-      <span class="pill teal" id="shape">Text-Based Presentation of Language</span>
-      <span class="pill gold" id="dict" style="margin-left:auto">● Dictate</span>
-    </div>
-    <!-- The framework gives the STRUCTURE and nothing else. Ramy, 27 Sep 2026:
-         "when they choose a lesson framework it will give them the structure,
-         but they still have to write their own aims." It names the stages; the
-         stage aim, the timing and the interaction pattern are all the
-         candidate's, and this scene used to show them arriving filled in,
-         which claimed the product does the thinking. -->
-    <div class="card later d1" id="stages">
-      <h3>The stages, from the shape you chose</h3>
-      <div style="margin-top:6px">
-        ${S.row('Lead-in','<i style="color:var(--line)">your aim, timing, interaction</i>')}
-        ${S.row('Text and gist task','<i style="color:var(--line)">your aim, timing, interaction</i>')}
-        ${S.row('Language focus','<i style="color:var(--line)">your aim, timing, interaction</i>')}
-        ${S.row('Controlled practice','<i style="color:var(--line)">your aim, timing, interaction</i>')}
-      </div>
-      <p class="muted later d4" style="margin-top:10px" id="theirs">The shape names the stages. What each one is
-      <i>for</i> — the aim, the time, who is talking to whom — is yours to write.</p>
-    </div>
-    <div class="muted later d3">Worksheets stay on the candidate’s own Drive. Nothing is uploaded.</div>`),
-  cues:[
-    [0.8,'at','#aim'],
-    [1.6,'add','#dict','on'],
-    [2.2,'say','Click into a box. Press Dictate.'],
-    [3.0,'type','#aim','By the end of the lesson learners will be better able to ask for and give advice using should and ought to.'],
-    [11,'at','#shape'],
-    [12.5,'go'],
-    [14,'say','A shape names the stages.'],
-    [19.5,'say','The aims are still yours to write.'],
-    [21,'at','#theirs'],
-  ]},
+{ t:'The language analysis', s:10, shots:['12-analysis'], cues:[
+  [0.4,'on'],
+  [1.2,'say','The analysis is the same document.'],
+]},
 
-{ id:'Feedback', s:28, title:'Feedback, said',
-  html:()=> S.page('Teaching practice 1 · tutor feedback','Jordan Blake', `
-    <h1>Feedback — Zeynep Aydın</h1>
-    <div><div class="eyebrow" style="margin-bottom:5px">Strengths in teaching</div>
-      <div class="fld lg" id="pt"></div>
-      <div style="display:flex; gap:7px; align-items:center; margin-top:9px" class="later d1">
-        <span class="muted" style="font-size:12px">Suggested:</span>
-        <span class="pill teal" id="chip1">+ 5g</span><span class="pill teal" id="chip2">+ 5f</span>
-      </div>
-    </div>
-    <div class="card later d3" id="brief">
-      <h3>Or talk it through elsewhere</h3>
-      <p class="muted" style="margin-top:5px">Copy the plan, the self-evaluation and the criteria as text — talk
-      the lesson through anywhere — and paste it back. Every box fills, and you read it before it goes anywhere.</p>
-      <div style="display:flex; gap:8px; margin-top:10px"><span class="btn gold">Copy</span>
-        <span class="btn quiet">Paste something back</span><span class="btn" style="margin-left:auto">Return to Zeynep</span></div>
-    </div>`),
-  cues:[
-    [0.6,'at','#pt'],
-    [1.2,'say','The tutor writes the same way.'],
-    [2.2,'type','#pt','Set the task before handing out the text, and checked it with a quick question'],
-    [9,'go'],
-    [10.5,'say','It offers the criteria it meets.'],
-    [14,'click','#chip1'],
-    [15,'add','#pt','tagged'],
-    [16.5,'say','Solid: your own tutors tagged it.'],
-    [22,'at','#brief'],
-  ]},
+{ t:'The self-evaluation', s:10, shots:['13-selfeval'], cues:[
+  [0.4,'on'],
+  [1.2,'say','Written before they read their tutor.'],
+]},
 
-{ id:'Reads', s:9, title:'The trainee reads it',
-  html:()=> S.page('Your feedback','Emily Carter', `
-    <h1>Your record</h1>
-    <div class="card"><h3>TP3 — returned</h3>
-      <p class="muted" style="margin-top:5px">Strengths, action points, a comment on every stage of your plan,
-      and a comment on your self-evaluation.</p></div>
-    <div class="card flat later d1"><h3>TP2 — returned</h3></div>
-    <div class="card flat later d2"><h3>TP1 — returned</h3></div>`),
-  cues:[[0.5,'go'],[1.6,'say','Read-only. Not a word can be touched.']]},
+{ t:'The trainer’s desk', s:9, shots:['14-desk'], cues:[
+  [0.4,'on'],[1.2,'say','Nothing to hunt for.'],
+]},
 
-{ id:'Assign', s:22, title:'The written assignments',
-  html:()=> S.page('Written assignments','Marta Kowalczyk', `
-    <h1>Focus on the Learner</h1>
-    <div style="display:flex; gap:8px; align-items:center">
-      <span class="pill no" id="stage1">Resubmission needed</span>
-      <span class="muted">one attempt left</span>
-    </div>
-    <div class="card"><h3>Your tutor’s marks</h3>
-      <div style="margin-top:6px">
-        ${S.row('Awareness of the learner’s background','','<span class="pill ok">Met</span>')}
-        ${S.row('Identifying language needs','','<span class="pill ok">Met</span>')}
-        ${S.row('Providing a rationale for the activities','not yet evidenced','<span class="pill no">Not met</span>')}
-      </div></div>
-    <div class="card teal later d2" id="closed"><h3>Closed <span class="pill ok" style="margin-left:8px">Pass (on resubmission)</span></h3>
-      <p class="muted" style="margin-top:5px">The outcome comes from the marks, not from a box. The first submission
-      stays as it was; the new writing goes in beside it, and all of it is kept.</p></div>`),
-  cues:[
-    [0.8,'say','Submitted, marked, sent back.'],
-    [6,'at','.pill.no'],
-    [9,'say','The resubmission opens where it failed.'],
-    [14,'go'],
-    [15,'at','#closed'],
-    [17,'say','Closed. All of it kept.'],
-  ]},
+{ t:'Feedback', s:20, shots:['15-feedback','16-feedback-2'], cues:[
+  [0.4,'on'],
+  [1.2,'say','It offers the criteria the point meets.'],
+  [10,'shot',1],[10.3,'on'],
+  [12,'say','Or talk it through elsewhere, and paste it back.'],
+]},
 
-/* ---------------------------------------- chapter three · assessor ---- */
-{ id:'Ch3', s:4, chapter:['Chapter three','The assessor','One read-only link, and the pack is already assembled.'] },
+{ t:'The trainee reads it', s:9, shots:['17-returned'], cues:[
+  [0.4,'on'],[1.2,'say','Read-only. Not a word can be touched.'],
+]},
 
-{ id:'AInvite', s:8, title:'The assessor’s card',
-  html:()=> S.invite('Assessor access','CELTA — C/1 2026',
-    'This link opens the assessment pack for the course: each candidate’s teaching practice record, their grades, and their written assignments, gathered in one place.',
-    '<b>Read-only, and yours for this assessment.</b> Nothing you do here changes the course record. The link works until fourteen days after the course ends.',
-    'Open the assessment pack'),
-  cues:[[1.0,'say','Read-only, and it expires.'],[5.2,'click','#go']]},
+{ t:'The written assignments', s:24, shots:['18-assign','19-assign-resub','20-marking'], cues:[
+  [0.4,'on'],
+  [1.0,'say','Four assignments, with the centre’s criteria.'],
+  [8,'shot',1],[8.3,'on'],
+  [10,'say','The resubmission opens where it failed.'],
+  [16,'shot',2],[16.3,'on'],
+  [18,'say','The outcome comes from the marks.'],
+]},
 
-{ id:'Pack', s:13, title:'The assessor pack',
-  html:()=> S.page('Assessor pack · read only','CELTA — C/1 2026', `
-    <h1>Everything, in one place</h1>
-    <div class="grid" style="grid-template-columns:1fr 1fr">
-      <div class="card"><h3>Candidates you are observing</h3>
-        <p class="muted" style="margin-top:4px">Handbook 14.2 · chosen by the centre</p>
-        <div style="margin-top:6px">${S.row('Deniz Arslan','Group 1')}${S.row('Marcus Ellery','Group 1')}${S.row('Selin Kaya','Group 2')}</div></div>
-      <div class="grid">
-        <div class="card flat later d1"><h3>Double-marking record</h3><p class="muted">Handbook 9.2.3</p></div>
-        <div class="card flat later d2"><h3>Assignment briefs</h3><p class="muted">as the centre set them</p></div>
-        <div class="card flat later d3"><h3>Lesson plans for the day</h3><p class="muted">Handbook 14.1</p></div>
-        <div class="card flat later d4"><h3>Course documents</h3><p class="muted">11 of 11 provided</p></div>
-      </div>
-    </div>`),
-  cues:[[0.6,'go'],[2,'say','Assembled, not collected.'],[8,'at','.card']]},
+/* ---------------------------------- chapter three · the assessor ----- */
+{ t:'The assessor', s:4.5, chapter:['Chapter three','The assessor','One read-only link, and the pack is already assembled.'] },
 
-{ id:'Grades', s:11, title:'Grades',
-  html:()=> S.page('Grades report','CELTA — C/1 2026', `
-    <h1>Provisional and final grades</h1>
-    <div class="card">
-      ${S.row('Olivia Bennett','120 hours','<span class="pill ok">Pass A</span>')}
-      ${S.row('Deniz Arslan','120 hours','<span class="pill ok">Pass</span>')}
-      ${S.row('Marcus Ellery','120 hours','<span class="pill ok">Pass B</span>')}
-      ${S.row('Selin Kaya','120 hours','<span class="pill ok">Pass</span>')}
-    </div>
-    <div class="card flat later d1"><p class="muted">In Cambridge’s own fields, ready to copy into Appian —
-      assembled from the teaching practice records, not typed again.</p></div>`),
-  cues:[[0.6,'go'],[2,'say','Into Appian by paste, not retyping.'],[7,'at','.pill.ok']]},
+{ t:'Their link', s:9, shots:['21-invite-assessor'], cues:[
+  [0.4,'on'],[1.2,'say','Read-only, and it expires.'],
+]},
 
-{ id:'Final', s:11, title:'The final report',
-  html:()=> S.page('Final course report','Olivia Bennett', `
-    <div style="text-align:center; padding:14px 0 6px">
-      <div class="eyebrow">Elmswood English Centre · Cambridge centre TR999</div>
-      <h1 style="margin-top:8px">CELTA — C/1 2026</h1>
-      <div style="margin:14px 0"><span class="pill ok" style="font-size:14px; padding:7px 18px">Pass A</span></div>
-      <p class="muted" style="max-width:52ch; margin:0 auto">This is to confirm that <b>Olivia Bennett</b> attended
-      120 hours of a 120-hour initial teacher training course leading to the Certificate in Teaching English to
-      Speakers of Other Languages.</p>
-    </div>
-    <div class="card later d1"><h3>Achievements in the individual assessment areas</h3>
-      <p class="muted" style="margin-top:5px">Assembled from the record. Not written.</p></div>`),
-  cues:[[0.8,'go'],[2.2,'say','Assembled from the record.'],[7,'at','.pill.ok']]},
+{ t:'The assessor pack', s:18, shots:['22-pack','23-pack-2'], cues:[
+  [0.4,'on'],
+  [1.2,'say','Assembled, not collected.'],
+  [9,'shot',1],[9.3,'on'],
+]},
 
-{ id:'Offer', s:12, title:'The card, and the end',
-  html:()=> `<div class="invite"><div class="c" style="width:520px">
-      <div class="eyebrow">For a CELTA centre</div>
-      <h1 style="font-size:26px">Everything your candidates write, and everything you write back</h1>
-      <p>The assessed paperwork of a CELTA course in one place — plans, language analyses, self-evaluations,
-      the four written assignments, your feedback, the grades and the reports. No accounts, no passwords,
-      nothing to install.</p>
-      <div class="keep"><b>Per course, not per candidate.</b> One price covers the whole course — up to 24
-      trainees, all of their tutors, and your course administrator.</div>
-      <div style="display:flex; gap:8px"><span class="btn">See it working</span><span class="btn quiet">Watch the film</span></div>
-    </div></div>`,
-  cues:[[1.0,'say','A course is three links.'],[7,'at','.btn']]},
+{ t:'Grades', s:11, shots:['24-grades'], cues:[
+  [0.4,'on'],[1.2,'say','Into Appian by paste, not retyping.'],
+]},
+
+{ t:'The final report', s:11, shots:['25-final'], cues:[
+  [0.4,'on'],[1.2,'say','Assembled from the record.'],
+]},
+
+{ t:'The card, and the end', s:13, shots:['26-offer'], cues:[
+  [0.4,'on'],[1.4,'say','A course is three links.'],
+]},
 ];
 
 /* ======================================================================
-   THE PLAYER. Small on purpose: a clock, a class, and a cursor.
+   THE PLAYER
    ====================================================================== */
-const stage=document.getElementById('stage'), scr=document.getElementById('scr'),
+const stage=document.getElementById('stage'), wrap=document.getElementById('wrap'),
+  A=document.getElementById('a'), B=document.getElementById('b'),
   cap=document.getElementById('cap'), chap=document.getElementById('chap'),
-  cur=document.getElementById('cur'), ring=document.getElementById('ring'),
   prog=document.getElementById('prog'), clock=document.getElementById('clock'),
   listEl=document.getElementById('list');
 
-const TOTAL = SCENES.reduce((n,s)=>n+s.s,0);
-let i=0, t0=0, timers=[], playing=true;
+const TOTAL=SCENES.reduce((n,s)=>n+s.s,0);
+let i=0, t0=0, timers=[], playing=true, front=A, back=B;
 
-/* Fit the stage to the window without touching the layout inside it. */
-/* Scale the stage to the window WITHOUT touching anything inside it, so every
-   scene is laid out once at 1120x630 and never reflows. Measured off the
-   viewport, not off .wrap: in a column flex box the wrapper collapses to its
-   content before the first paint, and the film opened at a third of its size. */
+/* Scale the stage to the window without touching what is inside it: the
+   photographs are 1280x800 and are never re-laid-out. */
 function fit(){
-  const w=Math.min(document.documentElement.clientWidth-32, 1120);
-  const k=Math.max(.3, w/1120);
+  const k=Math.max(.25, Math.min((document.documentElement.clientWidth-32)/1280, 1));
   stage.style.transform=`scale(${k})`;
-  stage.parentElement.style.height=(630*k)+'px';
-  document.querySelectorAll('.bar,.list,.foot').forEach(el=>el.style.width=(1120*k)+'px');
+  wrap.style.width=(1280*k)+'px'; wrap.style.height=(800*k)+'px';
+  document.getElementById('bar').style.width=(1280*k)+'px';
+  listEl.style.width=(1280*k)+'px';
 }
-addEventListener('resize',fit);
-addEventListener('load',fit);
+addEventListener('resize',fit); addEventListener('load',fit);
 
 SCENES.forEach((s,n)=>{
-  const b=document.createElement('b'); b.textContent=(n+1)+' '+(s.title||s.chapter?.[1]||s.id);
-  b.onclick=()=>play(n); listEl.appendChild(b);
+  const b=document.createElement('b'); b.textContent=(n+1)+' '+s.t;
+  b.onclick=()=>{ playing=true; document.getElementById('play').textContent='Pause'; play(n); };
+  listEl.appendChild(b);
 });
 const chips=[...listEl.children];
 
+/* Every picture in memory before the film starts, so a cut never waits. */
+const seen=new Set();
+SCENES.forEach(s=>(s.shots||[]).forEach(n=>{ if(seen.has(n))return; seen.add(n);
+  const im=new Image(); im.src='shots/'+n+'.png'; }));
+
 function clear(){ timers.forEach(clearTimeout); timers=[]; }
-function at(ms,fn){ timers.push(setTimeout(fn,ms*1000)); }
+function at(sec,fn){ timers.push(setTimeout(fn,sec*1000)); }
 
 function say(text){
   cap.classList.remove('on','out'); void cap.offsetWidth;
   cap.textContent=text; cap.classList.add('on');
-  at(Math.max(3.4, text.length/9) , ()=>cap.classList.add('out'));
+  at(Math.max(3.6, text.length/9), ()=>cap.classList.add('out'));
 }
-function point(sel, click){
-  const el=scr.querySelector(sel); if(!el) return;
-  const r=el.getBoundingClientRect(), s=stage.getBoundingClientRect(), k=r.width?(r.width/el.offsetWidth):1;
-  const x=(r.left-s.left)/k + el.offsetWidth/2, y=(r.top-s.top)/k + el.offsetHeight/2;
-  cur.classList.add('on'); cur.style.transform=`translate(${x}px,${y}px)`;
-  if(click) at(.65,()=>{ ring.style.transform=`translate(${x}px,${y}px)`;
-    ring.classList.remove('pop'); void ring.offsetWidth; ring.classList.add('pop'); });
+/* Cross-fade to the next photograph on whichever layer is not showing. */
+function show(name){
+  const img=back.querySelector('img');
+  back.classList.remove('push');
+  img.src='shots/'+name+'.png';
+  back.classList.add('on'); front.classList.remove('on');
+  const was=front; front=back; back=was;
 }
-function type(sel, text, secs){
-  const el=scr.querySelector(sel); if(!el) return;
-  el.classList.add('typed'); let n=0; const step=(secs*1000)/text.length;
-  (function tick(){ if(n>text.length){ el.classList.remove('typed'); return; }
-    el.textContent=text.slice(0,n++); timers.push(setTimeout(tick, step)); })();
-}
+function push(){ front.classList.add('push'); }
 
 function play(n){
   clear(); i=n; t0=performance.now();
   chips.forEach((c,k)=>c.classList.toggle('now',k===n));
-  const sc=SCENES[n];
   cap.classList.remove('on','out');
-  cur.classList.remove('on');
+  const sc=SCENES[n];
 
   if(sc.chapter){
-    scr.classList.remove('on');
     chap.querySelector('#chapN').textContent=sc.chapter[0];
     chap.querySelector('#chapH').textContent=sc.chapter[1];
     chap.querySelector('#chapP').textContent=sc.chapter[2];
     chap.classList.add('on');
-    at(sc.s-.6,()=>chap.classList.remove('on'));
+    at(sc.s-.7,()=>chap.classList.remove('on'));
   } else {
     chap.classList.remove('on');
-    scr.innerHTML=sc.html(); scr.classList.add('on');
-    (sc.cues||[]).forEach(([s,kind,a,b])=>at(s,()=>{
-      if(kind==='say') say(a);
-      else if(kind==='go') scr.querySelector('.pg,.invite')?.classList.add('go');
-      else if(kind==='at') point(a,false);
-      else if(kind==='click') point(a,true);
-      else if(kind==='type') type(a,b,Math.min(4.5,b.length/26));
-      else if(kind==='add') scr.querySelector(a)?.classList.add(b);
+    show(sc.shots[0]);
+    (sc.cues||[]).forEach(([sec,kind,arg])=>at(sec,()=>{
+      if(kind==='say') say(arg);
+      else if(kind==='shot') show(sc.shots[arg]);
+      else if(kind==='on') push();
     }));
   }
-  at(sc.s, ()=>{ if(i<SCENES.length-1) play(i+1); else { playing=false; document.getElementById('play').textContent='Replay'; } });
+  at(sc.s,()=>{ if(!playing) return;
+    if(i<SCENES.length-1) play(i+1);
+    else { playing=false; document.getElementById('play').textContent='Replay'; } });
 }
 
-/* the clock */
 setInterval(()=>{
   if(!playing) return;
   const before=SCENES.slice(0,i).reduce((n,s)=>n+s.s,0);
   const now=Math.min(TOTAL, before+(performance.now()-t0)/1000);
   prog.style.width=(now/TOTAL*100)+'%';
-  clock.textContent=Math.floor(now/60)+':'+String(Math.floor(now%60)).padStart(2,'0')+
-    ' / '+Math.floor(TOTAL/60)+':'+String(TOTAL%60).padStart(2,'0');
+  const mm=t=>Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0');
+  clock.textContent=mm(now)+' / '+mm(TOTAL);
 },200);
 
 document.getElementById('play').onclick=function(){
