@@ -431,6 +431,11 @@
        tutor posts through the store's own post/unpost ops, never by putting
        the list whole. */
     out['connect_course_stream_v1'] = course.stream ? JSON.stringify(course.stream) : null;
+    /* The TP7-TP8 planning grid (28 Sep 2026): the store shapes it per
+       reader -- a candidate gets their group's rows by name once released,
+       nothing before; tutors the whole thing. Written through gridSet /
+       gridRelease, never put whole. */
+    out['connect_tp_grid_v1'] = course.grid ? JSON.stringify(course.grid) : null;
     if (mode === 'trainee') {
       var me = boot.me || { records: {} };
       out['hub:name'] = me.name || '';
