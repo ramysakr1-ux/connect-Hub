@@ -427,6 +427,10 @@
     out['connect_assignment_wording_v2'] = course.wording ? JSON.stringify(course.wording) : null;
     out['connect_course_settings'] = course.settings ? JSON.stringify(course.settings) : null;
     out['connect_observation_wording_v1'] = course.observations ? JSON.stringify(course.observations) : null;
+    /* The course stream (28 Sep 2026): read-only here for every mode -- a
+       tutor posts through the store's own post/unpost ops, never by putting
+       the list whole. */
+    out['connect_course_stream_v1'] = course.stream ? JSON.stringify(course.stream) : null;
     if (mode === 'trainee') {
       var me = boot.me || { records: {} };
       out['hub:name'] = me.name || '';

@@ -14,6 +14,12 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
+## 28 Sep 2026 — the course stream
+See `2026-09-28-course-stream.md`. Course kind `stream`, ops `post` / `unpost`
+appending one post at a time under the lock (`courseUpdate_`, and
+`courseWrite_` split into wrapper + `courseWriteRaw_`); `boot` and `course`
+return it. **Deployed as version 34.**
+
 ## 27 Sep 2026 — course materials folders live in one folder
 See `2026-09-27-materials-folders-live-in-one-place.md`. `matsRoot_()` and
 `MATS_ROOT`, so course folders stop landing at the root of My Drive, plus
