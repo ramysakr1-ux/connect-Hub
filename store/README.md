@@ -14,6 +14,12 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
+## 28 Sep 2026 — the switch: a clone arrives with everything off
+See `2026-09-28-the-switch.md`. `cloneCourse` marks carried links `show:false`
+(timetable excepted) and each assignment `released:false`; the pages show a
+candidate only what a tutor turns on. **Deployed as version 38.** (Parse the
+editor's text before deploying — a stray comment ate a brace.)
+
 ## 28 Sep 2026 — the TP7 & TP8 planning grid
 See `2026-09-28-planning-grid.md`. Course kind `grid`, ops `gridSet` /
 `gridRelease` under the lock (`courseUpdateObj_`); `boot` / `course` return it
