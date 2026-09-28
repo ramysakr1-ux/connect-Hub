@@ -244,7 +244,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609281927">
+<link rel="stylesheet" href="hub-house.css?v=202609281933">
 </head>
 <body>
 <div class="board">
@@ -272,6 +272,11 @@
        to a TP group (Ramy, 28 Sep 2026: "the only thing missing now is an
        announcement stream"). Hidden until there is a post. -->
   <section class="stream" id="stream" hidden></section>
+  <!-- "Email your tutor": opens the candidate's own mail app with the tutor's
+       address; carries the clock so a message sent at night is sent knowing
+       it will be read in the morning (Ramy, 28 Sep 2026). Hidden until
+       Course admin has an address. -->
+  <div class="mailtutor" id="mailTutor" hidden></div>
 
   <!-- The cycle, in its order, inside its own frame. Left to right IS the
        order: you write the plan, you teach and write the self-evaluation, you
@@ -364,10 +369,10 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202609281927"></script>
-<script src="hub-shared.js?v=202609281927"></script>
-<script src="hub-store.js?v=202609281927"></script>
-<script src="hub-sync.js?v=202609281927"></script>
+<script src="hub-due.js?v=202609281933"></script>
+<script src="hub-shared.js?v=202609281933"></script>
+<script src="hub-store.js?v=202609281933"></script>
+<script src="hub-sync.js?v=202609281933"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -667,6 +672,21 @@ if (fbBack){
     /* Seen once it has been on screen a moment -- the dots stay for this
        visit and are gone on the next. */
     setTimeout(() => { try { localStorage.setItem('chub:streamSeen', posts[0].at); } catch(e) {} }, 4000);
+  })();
+  /* Email your tutor -- their group's tutor first, then the course's. */
+  (function(){
+    const host = document.getElementById('mailTutor'); if (!host) return;
+    const all = ((cs || {}).tutorContacts || []).filter(c => c && c.email);
+    if (!all.length) return;
+    const grp = String((me && me.group) || '');
+    const list = all.filter(c => !c.group || String(c.group) === grp).sort((a, b) => (String(b.group || '') === grp) - (String(a.group || '') === grp));
+    if (!list.length) return;
+    const e = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+    const subject = encodeURIComponent(((cs && cs.courseName) || 'CELTA') + ' \u2014 ' + (name || 'a candidate'));
+    const h = new Date().getHours(), hm = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const late = h >= 18 || h < 8;
+    host.innerHTML = `<span class="ml-lbl">Email your tutor</span>${list.map(c => `<a class="ml-who" href="mailto:${e(c.email)}?subject=${subject}">${e(c.name || c.email)}${c.group ? `<small>Group ${e(c.group)}</small>` : '<small>course tutor</small>'}</a>`).join('')}<span class="ml-time${late ? ' late' : ''}">${late ? `It\u2019s ${hm}. Tutors read mail in working hours, so expect a reply tomorrow.` : `It\u2019s ${hm}. Tutors read mail in working hours.`}</span>`;
+    host.hidden = false;
   })();
   /* The badge says WHO is looking, not what they are.
      Ramy, 23 Sep 2026: "instead of having things like trainee, trainer, we

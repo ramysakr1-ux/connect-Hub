@@ -270,7 +270,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609281927">
+<link rel="stylesheet" href="hub-house.css?v=202609281933">
 </head>
 <body>
 <div class="board">
@@ -468,6 +468,15 @@
          trainees and assessor?" The rooms an online or mixed-mode course
          teaches in. One list, shown as a join strip on the trainee home, the
          tutor dashboard and the assessor pack alike. -->
+    <!-- Ramy, 28 Sep 2026: "there's no way for the trainees to contact the
+         course tutors… an email-your-tutor option." The addresses live here
+         and nowhere else; the candidate's home turns them into a mail link
+         that opens THEIR mail app -- Lite sends nothing. -->
+    <h3 class="docsh">Tutor contacts</h3>
+    <p class="note" style="margin-top:0;">The tutors’ email addresses, for the “Email your tutor” line on the candidates’ home. <b>For</b> says whose tutor it is: the whole course, or one teaching practice group. A candidate sees their group’s tutor first, then the course’s. Nothing shows until an address is here.</p>
+    <div id="tutorContacts" class="fields docs"></div>
+    <button type="button" class="btn ghost" id="addTutorContact" style="margin-top:10px;">Add a tutor</button>
+
     <h3 class="docsh">Online rooms</h3>
     <p class="note" style="margin-top:0;">Zoom, Meet or Teams links for an online or mixed-mode course, each room a button. Everyone — candidates, tutors, the assessor — sees every room and chooses theirs. Teaching practice and tutorials are suggested once per group, since each tutor holds their own. <b>For</b> is optional: name a teaching practice group and that group’s candidates see the room first, marked as theirs; nobody is kept out of it. The assessor sees only the rooms you tick for them — the ones they will sit in on the visit — and nothing else. Leave a link empty and it does not show.</p>
     <div id="onlineRooms" class="fields docs"></div>
@@ -534,11 +543,11 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609281927"></script>
-<script src="hub-store.js?v=202609281927"></script>
-<script src="observation-defaults.js?v=202609281927"></script>
-<script src="hub-shared.js?v=202609281927"></script>
-<script src="hub-sync.js?v=202609281927"></script>
+<script src="assignment-defaults.js?v=202609281933"></script>
+<script src="hub-store.js?v=202609281933"></script>
+<script src="observation-defaults.js?v=202609281933"></script>
+<script src="hub-shared.js?v=202609281933"></script>
+<script src="hub-sync.js?v=202609281933"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -672,11 +681,13 @@ try {
     if(cs.docs) DOC_FIELDS.forEach(k=>{ if(cs.docs[k]) document.getElementById(k).value = cs.docs[k]; });
     if(cs.logo){ courseLogo = cs.logo; applyLogoPreview(courseLogo); }
     if(Array.isArray(cs.courseLinks)) CAND_LINKS = cs.courseLinks.filter(l => l && (l.label || l.url));
+    if(Array.isArray(cs.tutorContacts)) CONTACTS = cs.tutorContacts.filter(c => c && (c.name || c.email)).map(c => ({ name: c.name || '', email: c.email || '', group: c.group || '' }));
     if(Array.isArray(cs.onlineRooms)) ROOMS = cs.onlineRooms.filter(r => r && (r.label || r.url)).map(r => ({ label: r.label || '', url: r.url || '', group: r.group || '', assessor: !!r.assessor }));
   }
 } catch(e) {}
 renderCandLinks();
 renderRooms();
+renderContacts();
 
 document.getElementById('logoUploadBtn').addEventListener('click', ()=>document.getElementById('logoFile').click());
 document.getElementById('logoFile').addEventListener('change', e=>{
@@ -716,6 +727,7 @@ document.getElementById('saveSettings').addEventListener('click', () => {
     docs: DOC_FIELDS.reduce((o,k)=>{ const v = document.getElementById(k).value.trim(); if (v) o[k] = v; return o; }, {}),
     courseLinks: readCandLinks(),
     onlineRooms: readRooms(),
+    tutorContacts: readContacts(),
     logo: courseLogo
   }));
   // The assessor link expires 14 days after the course end date, which this
@@ -732,6 +744,31 @@ document.getElementById('saveSettings').addEventListener('click', () => {
 /* var, not const: the settings load above runs first and already calls
    renderCandLinks(); function declarations hoist, block-scoped names do not. */
 var CAND_LINKS = CAND_LINKS || [];
+/* ---- Tutor contacts -------------------------------------------------- */
+var CONTACTS = CONTACTS || [];
+function renderContacts(){
+  if (!CONTACTS) CONTACTS = [];
+  let people = []; try { people = Array.isArray(ROSTER) ? ROSTER : Object.values(loadRoster().trainees || {}); } catch(e) {}
+  const groups = [...new Set(people.map(p => p && p.group).filter(Boolean).map(String).concat(CONTACTS.map(c => c.group).filter(Boolean)))].sort();
+  /* One row for the course tutor and one per group, suggested empty; the
+     names come from the "Tutors" field above when the centre typed them. */
+  const typed = (document.getElementById('tutorNames').value || '').split(',').map(s => s.trim()).filter(Boolean);
+  const SUG = [['', '']].concat(groups.map(g => ['', g]));
+  const haveG = CONTACTS.map(c => c.group || '');
+  const rows = CONTACTS.concat(SUG.filter(([n, g]) => !haveG.includes(g)).map(([n, g], i) => ({ name: typed[CONTACTS.length + i] || '', email: '', group: g })));
+  const whoSel = (c, i) => `<div class="house-sel"><select class="tc-group" data-i="${i}"><option value="">The whole course</option>${groups.map(g => `<option value="${esc(g)}"${c.group === g ? ' selected' : ''}>Group ${esc(g)}</option>`).join('')}</select></div>`;
+  document.getElementById('tutorContacts').innerHTML = rows.map((c, i) =>
+    `<div><label>Tutor</label><input type="text" class="tc-name" data-i="${i}" value="${esc(c.name)}" placeholder="Name"></div>
+     <div><label>For</label>${whoSel(c, i)}</div>
+     <div class="wide"><label>Email</label><input type="email" class="tc-email" data-i="${i}" value="${esc(c.email)}" placeholder="name@centre.org"></div>`).join('');
+}
+function readContacts(){
+  const names = [...document.querySelectorAll('.tc-name')], emails = [...document.querySelectorAll('.tc-email')], grp = [...document.querySelectorAll('.tc-group')];
+  const all = names.map((el, i) => ({ name: el.value.trim(), email: (emails[i] ? emails[i].value : '').trim(), group: (grp[i] ? grp[i].value : '').trim() }));
+  CONTACTS = all; return all.filter(c => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email)).map(c => { const o = { name: c.name, email: c.email }; if (c.group) o.group = c.group; return o; });
+}
+document.getElementById('addTutorContact').addEventListener('click', () => { readContacts(); CONTACTS.push({ name:'', email:'', group:'' }); renderContacts(); });
+
 /* ---- Online rooms ---------------------------------------------------- */
 var ROOMS = ROOMS || []; // the load block above fills it first; a bare `= null` here would wipe it
 function renderRooms(){
@@ -930,6 +967,7 @@ async function renderStoreRoster(next){
   /* The rooms' "For" list is the roster's groups, and the roster arrives
      after the settings painted -- redraw, keeping whatever is typed. */
   try { readRooms(); renderRooms(); } catch (e) {}
+  try { readContacts(); renderContacts(); } catch (e) {}
   /* The roster arrives from the store AFTER the settings have painted, so the
      assessor-visit ticks have to be drawn again here -- every path that
      changes the roster comes back through this function, which is why the
