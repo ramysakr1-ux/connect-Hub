@@ -90,6 +90,28 @@ window.HUB_MAX_TP = 8;
   // Connect's auto-bullets (src/lib/bullet-list.ts): an empty field seeds its
   // first bullet on focus, Enter starts the next, Backspace on an empty bullet
   // removes it. Applied to list-type fields only, never to prose.
+  /* The online rooms strip (Zoom, Meet, Teams) -- Course admin -> Settings
+     -> Online rooms. Returns '' when the course has none, so a page can drop
+     it into a container and hide nothing by hand. */
+  /* Ramy, 28 Sep 2026: "they should be able to access all rooms and choose
+     theirs." Everyone sees every room. A room's optional "For" group never
+     hides it: on a candidate's home (opts.group = their group) their group's
+     rooms come first and say "your group"; on the tutor and assessor screens
+     (opts.all) every button shows its group. Lite does not know which tutor
+     is which -- one tutor key -- so tutors pick theirs like everyone else. */
+  window.hubOnlineRoomsHTML=function(settings, opts){
+    opts=opts||{};
+    var rooms=(settings&&Array.isArray(settings.onlineRooms)?settings.onlineRooms:[]).filter(function(r){ return r&&r.url&&/^https?:\/\//i.test(r.url); });
+    if(!rooms.length) return '';
+    var mine=String(opts.group||'');
+    if(mine) rooms=rooms.slice().sort(function(a,b){ return (String(b.group||'')===mine)-(String(a.group||'')===mine); });
+    var e=function(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); };
+    return '<div class="online-rooms"><span class="or-lbl">Online rooms</span>'+rooms.map(function(r){
+      var g=String(r.group||''), who='';
+      if(g&&mine&&g===mine) who='<small>your group</small>';
+      else if(g&&(opts.all||mine)) who='<small>Group '+e(g)+'</small>';
+      return '<a class="or-join'+(g&&mine&&g===mine?' mine':'')+'" href="'+e(r.url)+'" target="_blank" rel="noopener noreferrer">'+e(r.label||'Join')+who+'</a>'; }).join('')+'</div>';
+  };
   window.hubBullets=function(el){
     if(!el || el.dataset.hubBullets) return; el.dataset.hubBullets='1';
     var B='\u2022 ';

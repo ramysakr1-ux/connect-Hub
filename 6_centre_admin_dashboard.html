@@ -270,7 +270,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609281457">
+<link rel="stylesheet" href="hub-house.css?v=202609281529">
 </head>
 <body>
 <div class="board">
@@ -464,6 +464,15 @@
          writes into -- TP points, the getting-to-know-you activities, the
          timetable -- live wherever the centre keeps them; the candidate's home
          gets a Course files card listing whatever is pasted here. -->
+    <!-- Ramy, 28 Sep 2026: "can we add zoom links to both tutors and
+         trainees and assessor?" The rooms an online or mixed-mode course
+         teaches in. One list, shown as a join strip on the trainee home, the
+         tutor dashboard and the assessor pack alike. -->
+    <h3 class="docsh">Online rooms</h3>
+    <p class="note" style="margin-top:0;">Zoom, Meet or Teams links for an online or mixed-mode course, each room a button. Everyone — candidates, tutors, the assessor — sees every room and chooses theirs. <b>For</b> is optional: name a teaching practice group and that group’s candidates see the room first, marked as theirs; nobody is kept out of it. Leave a link empty and it does not show.</p>
+    <div id="onlineRooms" class="fields docs"></div>
+    <button type="button" class="btn ghost" id="addOnlineRoom" style="margin-top:10px;">Add a room</button>
+
     <h3 class="docsh">Files for candidates</h3>
     <p class="note" style="margin-top:0;">Links the candidates read: the timetable, CELTA 5, the input sessions, TP points, anything else. Each one becomes a line on their home screen, under the card you name — links with the same card name share a card, so “Input sessions” can hold twenty; a link with no card name is a card of its own. Leave a link empty and it does not show.</p>
     <div id="candLinks" class="fields docs"></div>
@@ -525,11 +534,11 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609281457"></script>
-<script src="hub-store.js?v=202609281457"></script>
-<script src="observation-defaults.js?v=202609281457"></script>
-<script src="hub-shared.js?v=202609281457"></script>
-<script src="hub-sync.js?v=202609281457"></script>
+<script src="assignment-defaults.js?v=202609281529"></script>
+<script src="hub-store.js?v=202609281529"></script>
+<script src="observation-defaults.js?v=202609281529"></script>
+<script src="hub-shared.js?v=202609281529"></script>
+<script src="hub-sync.js?v=202609281529"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -663,9 +672,11 @@ try {
     if(cs.docs) DOC_FIELDS.forEach(k=>{ if(cs.docs[k]) document.getElementById(k).value = cs.docs[k]; });
     if(cs.logo){ courseLogo = cs.logo; applyLogoPreview(courseLogo); }
     if(Array.isArray(cs.courseLinks)) CAND_LINKS = cs.courseLinks.filter(l => l && (l.label || l.url));
+    if(Array.isArray(cs.onlineRooms)) ROOMS = cs.onlineRooms.filter(r => r && (r.label || r.url)).map(r => ({ label: r.label || '', url: r.url || '', group: r.group || '' }));
   }
 } catch(e) {}
 renderCandLinks();
+renderRooms();
 
 document.getElementById('logoUploadBtn').addEventListener('click', ()=>document.getElementById('logoFile').click());
 document.getElementById('logoFile').addEventListener('change', e=>{
@@ -704,6 +715,7 @@ document.getElementById('saveSettings').addEventListener('click', () => {
     assessorVisit: [...document.querySelectorAll('.avpick:checked')].map(b=>b.value),
     docs: DOC_FIELDS.reduce((o,k)=>{ const v = document.getElementById(k).value.trim(); if (v) o[k] = v; return o; }, {}),
     courseLinks: readCandLinks(),
+    onlineRooms: readRooms(),
     logo: courseLogo
   }));
   // The assessor link expires 14 days after the course end date, which this
@@ -720,6 +732,38 @@ document.getElementById('saveSettings').addEventListener('click', () => {
 /* var, not const: the settings load above runs first and already calls
    renderCandLinks(); function declarations hoist, block-scoped names do not. */
 var CAND_LINKS = CAND_LINKS || [];
+/* ---- Online rooms ---------------------------------------------------- */
+var ROOMS = ROOMS || []; // the load block above fills it first; a bare `= null` here would wipe it
+function renderRooms(){
+  if (!ROOMS) ROOMS = [];
+  /* The groups come off the roster; a room for a group the roster does not
+     have yet keeps its letter as a free choice. */
+  let people = []; try { people = Array.isArray(ROSTER) ? ROSTER : Object.values(loadRoster().trainees || {}); } catch(e) {}
+  const groups = [...new Set(people.map(p => p && p.group).filter(Boolean).map(String).concat(ROOMS.map(r => r.group).filter(Boolean)))].sort();
+  /* Ramy, 28 Sep 2026: "we could also have an input room for the whole
+     course" -- Input sessions is the whole-course room; teaching practice is
+     one room per group. */
+  /* The pre-roster paint suggested one "Teaching practice" with no group;
+     once the roster's groups are known that blank row gives way to one per
+     group. Only an untouched suggestion goes -- a row with a link stays. */
+  if (groups.length) ROOMS = ROOMS.filter(r => !(r.label === 'Teaching practice' && !r.url && !r.group));
+  const SUG = [['Input sessions', '', '']].concat((groups.length ? groups : ['']).map(g => ['Teaching practice', '', g])).concat([['Tutorials', '', '']]);
+  const haveG = ROOMS.map(r => r.label + '|' + (r.group || ''));
+  const have = ROOMS.map(r => r.label);
+  const rows = ROOMS.concat(SUG.filter(([label, url, group]) => !haveG.includes(label + '|' + group) && !(label !== 'Teaching practice' && have.includes(label))).map(([label, url, group]) => ({ label, url, group })));
+  const whoSel = (r, i) => `<div class="house-sel"><select class="or-group" data-i="${i}"><option value="">The whole course</option>${groups.map(g => `<option value="${esc(g)}"${r.group === g ? ' selected' : ''}>Group ${esc(g)}</option>`).join('')}</select></div>`;
+  document.getElementById('onlineRooms').innerHTML = rows.map((r, i) =>
+    `<div><label>Room</label><input type="text" class="or-label" data-i="${i}" value="${esc(r.label)}" placeholder="What the button says"></div>
+     <div><label>For</label>${whoSel(r, i)}</div>
+     <div class="wide"><label>Link</label><input type="url" class="or-url" data-i="${i}" value="${esc(r.url)}" placeholder="https://zoom.us/j/…"></div>`).join('');
+}
+function readRooms(){
+  const labels = [...document.querySelectorAll('.or-label')], urls = [...document.querySelectorAll('.or-url')], grp = [...document.querySelectorAll('.or-group')];
+  const all = labels.map((el, i) => ({ label: el.value.trim(), url: (urls[i] ? urls[i].value : '').trim(), group: (grp[i] ? grp[i].value : '').trim() }));
+  ROOMS = all; return all.filter(r => r.url).map(r => r.group ? r : { label: r.label, url: r.url });
+}
+document.getElementById('addOnlineRoom').addEventListener('click', () => { readRooms(); ROOMS.push({ label:'', url:'', group:'' }); renderRooms(); });
+
 function renderCandLinks(){
   if (!CAND_LINKS) CAND_LINKS = []; // the load block calls this before the var below is assigned
   /* Ramy, 28 Sep 2026: the cards are Timetable, CELTA 5, Input sessions and
@@ -878,6 +922,9 @@ async function renderStoreRoster(next){
   // the setup row needs telling.
   TRAINEE_COUNT = trainees.length;
   renderSetup();
+  /* The rooms' "For" list is the roster's groups, and the roster arrives
+     after the settings painted -- redraw, keeping whatever is typed. */
+  try { readRooms(); renderRooms(); } catch (e) {}
   /* The roster arrives from the store AFTER the settings have painted, so the
      assessor-visit ticks have to be drawn again here -- every path that
      changes the roster comes back through this function, which is why the
