@@ -171,7 +171,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609281249">
+<link rel="stylesheet" href="hub-house.css?v=202609281351">
 </head>
 <body>
 <div class="board">
@@ -201,12 +201,12 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202609281249"></script>
-<script src="hub-shared.js?v=202609281249"></script>
-<script src="assignment-defaults.js?v=202609281249"></script>
-<script src="hub-tracker.js?v=202609281249"></script>
-<script src="hub-store.js?v=202609281249"></script>
-<script src="hub-sync.js?v=202609281249"></script>
+<script src="observation-defaults.js?v=202609281351"></script>
+<script src="hub-shared.js?v=202609281351"></script>
+<script src="assignment-defaults.js?v=202609281351"></script>
+<script src="hub-tracker.js?v=202609281351"></script>
+<script src="hub-store.js?v=202609281351"></script>
+<script src="hub-sync.js?v=202609281351"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -605,6 +605,16 @@ function observationBlock(tr){
   return rows.map(([k,v]) => `<div class="tp"><div class="tp-row"><span class="n">${k}</span><span class="meta">${v}</span></div></div>`).join('') +
     `<div class="tp"><div class="tp-row"><span class="n"></span><span class="meta"></span><a class="btn ghost" href="18_observation_tasks.html?trainee=${encodeURIComponent(tr.id)}">Open the sheets</a></div></div>`;
 }
+/* The CELTA 5 Record Booklet: where each stage stands, and the door. */
+function celta5Block(tr){
+  const c = tr.celta5 || {}, t = tr.celta5t || {}; const conf = c.confirms || {};
+  const sig = s => s && s.at ? '<span class="chip fine">signed</span>' : '<span class="chip nd">not signed</span>';
+  const stage = (n, ret, signed, sub) => `<div class="tp"><div class="tp-row"><span class="n">Stage ${n}</span><span class="meta">${ret ? '<span class="chip fine">returned</span>' : sub ? '<span class="chip wait">with the tutor</span>' : '<span class="chip nd">open</span>'} ${sig(signed)}</span></div></div>`;
+  return `<div class="tp"><div class="tp-row"><span class="n">Confirmations</span><span class="meta">portfolio ${sig(conf.portfolio)} · appeals ${sig(conf.appeals)}</span></div></div>`
+    + stage(1, t.stage1 && t.stage1.returnedAt, c.stage1 && c.stage1.signed) + stage(2, t.stage2 && t.stage2.returnedAt, c.stage2 && c.stage2.signed, c.stage2 && c.stage2.submittedAt) + stage(3, t.stage3 && t.stage3.returnedAt, c.stage3 && c.stage3.signed)
+    + `<div class="tp"><div class="tp-row"><span class="n">Final declaration</span><span class="meta">candidate ${sig(c.final && c.final.signed)} · tutor ${sig(t.final && t.final.signed)}</span></div></div>`
+    + `<div class="tp"><div class="tp-row"><span class="n"></span><span class="meta"></span><a class="btn ghost" href="20_celta5.html?trainee=${encodeURIComponent(tr.id)}">Open the CELTA 5</a></div></div>`;
+}
 function renderOne(tr){
   const c = T.recordFor(tr), r = T.readCandidate(c), chip = T.STATE_CHIP[r.state], man = tr.tracker || {};
   $('backLink').hidden = false;
@@ -632,6 +642,8 @@ function renderOne(tr){
     <div class="panel">${ORDER.filter(k => k!=='a5' || a5InPlay(tr.assignments||{})).map(k=>assignmentBlock(tr, k)).join('')}</div>
     <h2 class="sect">Observations <small>the sheets, as the candidate wrote them</small></h2>
     <div class="panel">${observationBlock(tr)}</div>
+    <h2 class="sect">CELTA 5 <small>the record booklet</small></h2>
+    <div class="panel">${celta5Block(tr)}</div>
     ${(tr.links || []).filter(l => l && l.url).length ? `<h2 class="sect">Private links <small>given to this candidate alone</small></h2>
     <div class="panel">${(tr.links || []).filter(l => l && l.url).map(l => `<div class="tp"><div class="tp-row"><span class="n">${esc(l.label || l.url)}</span><span class="meta"></span><a class="btn ghost" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">Open</a></div></div>`).join('')}</div>` : ''}
     ${(tr.staffLinks || []).filter(l => l && l.url).length ? `<h2 class="sect">Course files <small>application, interview notes, pre-course task \u2014 for the tutors and the assessor; the candidate does not see these</small></h2>

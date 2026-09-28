@@ -238,7 +238,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609281249">
+<link rel="stylesheet" href="hub-house.css?v=202609281351">
 </head>
 <body>
 <div class="board">
@@ -310,6 +310,14 @@
          getting-to-know-you activities, the timetable -- wherever the centre
          keeps them. Filled from Course admin's "Files for candidates"; hidden
          until there is one. -->
+    <!-- The CELTA 5 Record Booklet: read and confirm at the start, the three
+         stage records, the tables that fill themselves, the final declaration
+         (28 Sep 2026). Cambridge's own document, kept here. -->
+    <a class="room" id="roomCelta5" href="20_celta5.html">
+      <h2>CELTA 5</h2>
+      <p>Your record for the whole course — the two confirmations at the start, the stage records you and your tutor each write your half of, and the tables that fill themselves from your work.</p>
+      <span class="st" id="badgeCelta5"></span>
+    </a>
     <div id="roomFiles" hidden></div>
     <a class="room" href="7_candidate_tracker.html?me=1">
       <h2>Your progress</h2>
@@ -344,10 +352,10 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202609281249"></script>
-<script src="hub-shared.js?v=202609281249"></script>
-<script src="hub-store.js?v=202609281249"></script>
-<script src="hub-sync.js?v=202609281249"></script>
+<script src="hub-due.js?v=202609281351"></script>
+<script src="hub-shared.js?v=202609281351"></script>
+<script src="hub-store.js?v=202609281351"></script>
+<script src="hub-sync.js?v=202609281351"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -500,6 +508,21 @@ line(document.getElementById('badgeObs'), (function(){
   const n = ['filmed1','filmed2','filmed3','filmed4','live1','live2'].filter(k => w[k] && w[k].turnedInAt).length;
   return n === 6 ? 'All six turned in' : n ? n + ' of 6 turned in' : 'Six to turn in';
 })(), (function(){ const w = rec('connect_observations_v1') || {}; return ['filmed1','filmed2','filmed3','filmed4','live1','live2'].every(k => w[k] && w[k].turnedInAt) ? 'done' : ''; })());
+
+/* The CELTA 5: what is waiting on the candidate right now. */
+line(document.getElementById('badgeCelta5'), (function(){
+  const c = rec('chub:celta5') || {}, t = rec('chub:celta5t') || {};
+  const conf = c.confirms || {};
+  if (!(conf.portfolio && conf.portfolio.at) || !(conf.appeals && conf.appeals.at)) return 'Read and sign the two confirmations';
+  if (t.stage1 && t.stage1.returnedAt && !(c.stage1 && c.stage1.signed && c.stage1.signed.at)) return 'Stage 1 returned — sign it';
+  if (t.stage2 && t.stage2.returnedAt && !(c.stage2 && c.stage2.signed && c.stage2.signed.at)) return 'Stage 2 returned — sign it';
+  if (t.stage3 && t.stage3.returnedAt && !(c.stage3 && c.stage3.signed && c.stage3.signed.at)) return 'Stage 3 returned — sign it';
+  if (!(c.stage2 && c.stage2.submittedAt)) return 'Stage 2 self-assessment to write';
+  if (t.final && t.final.signed && t.final.signed.at && !(c.final && c.final.signed && c.final.signed.at)) return 'Final declaration to sign';
+  return 'Up to date';
+})(), (function(){ const c = rec('chub:celta5') || {}, t = rec('chub:celta5t') || {}; const conf = c.confirms || {};
+  const waiting = !(conf.portfolio && conf.portfolio.at) || ['stage1','stage2','stage3'].some(s => t[s] && t[s].returnedAt && !(c[s] && c[s].signed && c[s].signed.at)) || (t.final && t.final.signed && t.final.signed.at && !(c.final && c.final.signed && c.final.signed.at));
+  return waiting ? 'act' : ''; })());
 
 /* The centre's links for candidates, one card per card name (Ramy, 27 Sep
    2026: "an input session card and then they just go underneath that

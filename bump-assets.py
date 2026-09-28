@@ -14,7 +14,7 @@ stamp = datetime.datetime.now().strftime("%Y%m%d%H%M")
 # other is the kind of thing nobody notices until a page runs against a file
 # that is older than the code expecting it.
 assets = ["hub-shared.js", "hub-store.js", "hub-sync.js", "hub-tracker.js", "hub-due.js",
-          "hub-exchange.js", "hub-crit-learn.js", "assignment-defaults.js", "observation-defaults.js", "hub-docx.js",
+          "hub-exchange.js", "hub-crit-learn.js", "assignment-defaults.js", "observation-defaults.js", "hub-docx.js", "celta5-text.js", "celta5-criteria.js",
           "hub-theme.css", "hub-house.css", "hub-record.css"]
 for f in glob.glob("*.html"):
     p = pathlib.Path(f); s = p.read_text(); orig = s
