@@ -102,16 +102,27 @@
   const fmtLong = iso => { if (!iso) return ''; const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); };
 
   // ---- pages -------------------------------------------------------------
-  const PAGE_INDEX = { attendance: 10, observations: 11, assessedTp: 12, writtenAssignments: 13, stage1: 14, stage2Notes: 19, stage2Overall: 20, stage3Notes: 24, stage3Overall: 25, finalDeclaration: 26 };
+  /* Source-page indices into Cambridge's master. stage2Hours is the topic-4
+     grid page, whose heading carries "STAGE TWO PROGRESS RECORD - HOURS
+     TAUGHT"; stage3Header is the Stage Three page that carries the tutorial
+     row AND the topic-4 grid. Both were missing until 29 Sep 2026. */
+  const PAGE_INDEX = { attendance: 10, observations: 11, assessedTp: 12, writtenAssignments: 13, stage1: 14, stage2Hours: 16, stage2Notes: 19, stage2Overall: 20, stage3Header: 21, stage3Notes: 24, stage3Overall: 25, finalDeclaration: 26 };
 
   function drawCover(page, f, d){
     drawAt(page, f.regular, d.traineeName, 148, 443.2);
     drawCellGrid(page, f.regular, (d.centerNumber || '').toUpperCase(), [160.6, 186.35, 211.9, 237.4, 262.9], 485.8 - 6.5);
     drawAt(page, f.regular, d.centerName, 131, 521.0);
-    if (d.courseCode) { const [first, second] = d.courseCode.split('/').map(s => s.trim()); drawAt(page, f.regular, first || '', 152, 550.6); if (second) drawAt(page, f.regular, second, 186, 550.6); }
+    /* Cambridge's Course Number is "......... / ........................":
+       a SHORT left field (149.1-176.8, under 28pt) and a longer right one.
+       It is not the course notification reference, which is what Lite used
+       to put here (audit, 29 Sep 2026) -- that overflows the left box. */
+    if (d.courseNumber) { const [first, second] = String(d.courseNumber).split('/').map(s => s.trim()); drawSignature(page, f.regular, first || '', 150, 550.6, 26, 10.5, 6); if (second) drawAt(page, f.regular, second, 181, 550.6); }
     drawAt(page, f.regular, d.courseDates, 145, 580.4);
     (d.tutorNames || []).slice(0, 4).forEach((name, i) => drawAt(page, f.regular, name, 102, [610.0, 633.5, 656.9, 680.4][i]));
-    /* the ULN grid stays blank: Cambridge's own field */
+    /* The ULN: ten cells, filled only where the centre has one. Required
+       "where relevant in UK learning and skills contexts", and obtaining it
+       is a centre duty (Handbook 12.1) -- so it is a field, not a blank. */
+    if (d.uln) drawCellGrid(page, f.regular, String(d.uln).replace(/\D/g, '').slice(0, 10), [217.7, 243.2, 268.7, 294.3, 319.8, 345.4, 370.9, 396.5, 422.1, 447.6], 716.6 - 6.5);
   }
 
   function drawStage1(page, f, d){
@@ -122,6 +133,26 @@
     if (d.actionPlan) drawWrapped(page, f.regular, [d.actionPlan], { x0: 52, y0: 394, x1: 538, y1: 625 });
     if (d.tutorSignatureName && d.tutorSignedAt) { drawSigned(page, f.regular, d.tutorSignatureName, d.tutorSignatureInk, 156, 666.6, 434 - 156 - 10); drawAt(page, f.regular, fmtDate(d.tutorSignedAt), 434, 666.6); }
     if (d.candidateSignatureName && d.candidateSignedAt) { drawSigned(page, f.regular, d.candidateSignatureName, d.candidateSignatureInk, 181, 729.7, 434 - 181 - 10); drawAt(page, f.regular, fmtDate(d.candidateSignedAt), 434, 729.7); }
+    /* "I have read and agree/do not agree with the above comments." The form
+       offers a choice and Lite recorded only a signature, so a candidate who
+       disputed a record had nowhere to say so (audit, 29 Sep 2026). */
+    if (d.candidateAgrees === true) drawOvalAround(page, S1_AGREE);
+    if (d.candidateAgrees === false) drawOvalAround(page, S1_DISAGREE);
+  }
+  const S1_AGREE = { x0: 130.7, y0: 693.5, x1: 160.0, y1: 705.5 }, S1_DISAGREE = { x0: 163.1, y0: 693.5, x1: 229.1, y1: 705.5 };
+
+  /* The Stage Two grid's heading carries the hours taught; the Stage Three
+     page carries the whole tutorial row. Handbook 10.2 on Stage 3: "a
+     tutorial must be given and the whole record completed" -- so "not given"
+     is a state the form can show, and an empty tick is not a claim. */
+  function drawStage2Hours(page, f, d){
+    if (d && d.hoursTaught !== null && d.hoursTaught !== undefined && d.hoursTaught !== '') drawAt(page, f.regular, String(d.hoursTaught), 0, 75.4, 10.5, { align: 'center', xMid: 583.9 });
+  }
+  function drawStage3Header(page, f, d){
+    const GIVEN = [144.0, 96.2, 159.8, 111.9], HOURS = [324.0, 96.2, 339.8, 111.9], NOT_GIVEN = [522.0, 96.2, 537.8, 111.9];
+    if (d.tutorialGiven === true) drawCheck(page, f.bold, GIVEN);
+    if (d.tutorialGiven === false) drawCheck(page, f.bold, NOT_GIVEN);
+    if (d.hoursTaught !== null && d.hoursTaught !== undefined && d.hoursTaught !== '') drawAt(page, f.regular, String(d.hoursTaught), 0, (HOURS[1] + HOURS[3]) / 2 + 4, 10.5, { align: 'center', xMid: (HOURS[0] + HOURS[2]) / 2 });
   }
 
   const UNAVOIDABLE_DIV = [216.89, 239.69, 262.49, 285.19, 307.99, 330.79];
@@ -136,9 +167,11 @@
   }
 
   const OBS_PER_PAGE = 10, OBS_DIV = [129.0, 157.8, 186.5, 215.3, 244.0, 272.8, 301.6, 330.3, 359.1, 387.8, 416.7];
-  const OBS_COLS = [{ x0: 66.2, x1: 152.7 }, { x0: 152.7, x1: 239.1 }, { x0: 239.1, x1: 347.1 }, { x0: 347.1, x1: 419.1 }, { x0: 419.1, x1: 692.9, wrap: true }];
+  /* Six columns, as the form has: the last is "Signature of observed teacher
+     (where required by centre)". Lite drew five until 29 Sep 2026. */
+  const OBS_COLS = [{ x0: 66.2, x1: 152.7 }, { x0: 152.7, x1: 239.1 }, { x0: 239.1, x1: 347.1 }, { x0: 347.1, x1: 419.1 }, { x0: 419.1, x1: 692.9, wrap: true }, { x0: 692.9, x1: 809.9, wrap: true }];
   function drawObservations(page, f, rows, offset){
-    rows.slice(offset * OBS_PER_PAGE, offset * OBS_PER_PAGE + OBS_PER_PAGE).forEach((r, i) => drawTableRow(page, f.regular, [r.date, r.lengthMinutes != null ? String(r.lengthMinutes) : '', r.level || '', r.learnersPresent != null ? String(r.learnersPresent) : '', r.lessonFocus || ''], OBS_COLS, OBS_DIV, i));
+    rows.slice(offset * OBS_PER_PAGE, offset * OBS_PER_PAGE + OBS_PER_PAGE).forEach((r, i) => drawTableRow(page, f.regular, [r.date, r.lengthMinutes != null ? String(r.lengthMinutes) : '', r.level || '', r.learnersPresent != null ? String(r.learnersPresent) : '', r.lessonFocus || '', r.observedTeacherSignature || ''], OBS_COLS, OBS_DIV, i));
   }
 
   const TP_PER_PAGE = 12, TP_DIV = [156.0, 182.8, 209.6, 236.2, 263.0, 289.9, 316.5, 343.3, 370.0, 396.9, 423.7, 450.3, 477.2];
@@ -163,13 +196,13 @@
     { sourcePageIndex: 17, youXMid: 617.5, tutorXMid: 693.5, codes: [['1a',135.4],['1b',157.9],['1c',189.7],['1d',212.2],['2a',257.2],['2b',279.7],['2c',302.4],['2d',324.8],['2e',347.4],['2f',379.2],['2g',401.7],['3a',446.7],['3b',469.2]] },
     { sourcePageIndex: 18, youXMid: 620.5, tutorXMid: 695.3, codes: [['5a',121.3],['5b',153.1],['5c',175.5],['5d',198.1],['5e',220.6],['5f',243.1],['5g',265.6],['5h',288.1],['5i',310.7],['5j',333.1],['5k',355.7],['5l',387.5],['5m',410.1],['5n',441.9]] },
   ];
-  /* OUTSTANDING (29 Sep 2026): the real Stage Three record has THREE criteria
-     pages, and the first -- source index 21, topic 4, 4a-4n -- is missing here,
-     so the generated booklet leaves Cambridge's own page blank. The screen now
-     collects those marks; drawing them needs that page's row coordinates
-     measured the way pages 22 and 23 were. Until then this list is short by
-     one page, and that is a gap, not the form's shape. */
+  /* THREE pages, not two. The real Stage Three Progress Record opens with
+     TOPIC 4 - PLANNING, 4a-4n, on source index 21; Lite drew only the two
+     pages after it and left Cambridge's own page blank in a Fail candidate's
+     booklet (audit, 29 Sep 2026). Rows measured off the master like the rest.
+     What Stage Three actually drops is the candidate's "You" column. */
   const STAGE3_PAGES = [
+    { sourcePageIndex: 21, youXMid: null, tutorXMid: 660.0, codes: [['4a',227.7],['4b',248.7],['4c',270.0],['4d',292.4],['4e',321.2],['4f',341.6],['4g',362.9],['4h',384.5],['4i',405.6],['4j',426.4],['4k',448.1],['4l',469.5],['4m',490.5],['4n',511.6]] },
     { sourcePageIndex: 22, youXMid: null, tutorXMid: 621.5, codes: [['1a',131.6],['1b',159.1],['1c',186.2],['1d',208.5],['2a',253.5],['2b',276.2],['2c',298.5],['2d',321.3],['2e',348.2],['2f',375.3],['2g',398.2],['3a',443.2],['3b',470.2]] },
     { sourcePageIndex: 23, youXMid: null, tutorXMid: 617.5, codes: [['5a',114.4],['5b',146.2],['5c',169.0],['5d',191.2],['5e',214.0],['5f',236.2],['5g',259.0],['5h',281.3],['5i',304.1],['5j',326.3],['5k',349.1],['5l',380.9],['5m',403.1],['5n',434.9]] },
   ];
@@ -197,6 +230,13 @@
     if (d.tutorNotes) drawWrapped(page, f.regular, [d.tutorNotes], { x0: 57, y0: 431, x1: 525, y1: 618 });
     if (d.tutorSignatureName && d.tutorSignedAt) { drawSigned(page, f.regular, d.tutorSignatureName, d.tutorSignatureInk, 165, 657.4, 440 - 165 - 10); drawAt(page, f.regular, fmtDate(d.tutorSignedAt), 440, 657.4); }
     if (d.candidateSignatureName && d.candidateSignedAt) { drawSigned(page, f.regular, d.candidateSignatureName, d.candidateSignatureInk, 190, 726.5, 440.5 - 190 - 10); drawAt(page, f.regular, fmtDate(d.candidateSignedAt), 440.5, 726.5); }
+    /* "This is/is not an accurate record of the tutorial discussion and my
+       progress to date. I have read and agree/do not agree with the
+       summarising comments." Two separate choices, both the candidate's. */
+    if (d.candidateAccurate === true) drawOvalAround(page, { x0: 80.8, y0: 671.5, x1: 90.0, y1: 683.6 });
+    if (d.candidateAccurate === false) drawOvalAround(page, { x0: 93.0, y0: 671.5, x1: 122.4, y1: 683.6 });
+    if (d.candidateAgrees === true) drawOvalAround(page, { x0: 78.4, y0: 684.3, x1: 107.7, y1: 696.3 });
+    if (d.candidateAgrees === false) drawOvalAround(page, { x0: 110.8, y0: 684.3, x1: 176.9, y1: 696.3 });
   }
   function drawStage3Notes(page, f, d){
     if (d.tutorWrittenAssignmentsNotes) drawWrapped(page, f.regular, [d.tutorWrittenAssignmentsNotes], { x0: 65, y0: 132, x1: 530, y1: 335 });
@@ -208,12 +248,20 @@
     if (d.tutorNotes) drawWrapped(page, f.regular, [d.tutorNotes], { x0: 65, y0: 168, x1: 530, y1: 568 });
     if (d.tutorSignatureName && d.tutorSignedAt) { drawSigned(page, f.regular, d.tutorSignatureName, d.tutorSignatureInk, 170, 608.5, 448 - 170 - 10); drawAt(page, f.regular, fmtDate(d.tutorSignedAt), 448, 608.5); }
     if (d.candidateSignatureName && d.candidateSignedAt) { drawSigned(page, f.regular, d.candidateSignatureName, d.candidateSignatureInk, 195, 665.2, 449 - 195 - 10); drawAt(page, f.regular, fmtDate(d.candidateSignedAt), 449, 665.2); }
+    if (d.candidateAgrees === true) drawOvalAround(page, { x0: 144.9, y0: 622.8, x1: 174.1, y1: 634.9 });
+    if (d.candidateAgrees === false) drawOvalAround(page, { x0: 177.3, y0: 622.8, x1: 243.3, y1: 634.9 });
   }
   function drawFinalDeclaration(page, f, d){
     const BOXES = [[61.8, 167.6, 72.2, 178.6], [61.8, 195.9, 72.2, 206.2], [61.8, 223.5, 72.2, 232.7], [62.5, 251.7, 72.8, 262.6], [62.5, 275.4, 72.8, 286.3]];
     [d.checklistTp, d.checklistObservations, d.checklistAssignments, d.checklistOwnWork, d.checklistAllRecords].forEach((c, i) => { if (c) drawCheck(page, f.bold, BOXES[i]); });
     if (d.candidateSignatureName && d.candidateSignedAt) { drawSigned(page, f.regular, d.candidateSignatureName, d.candidateSignatureInk, 192, 340.3, 412 - 192 - 10); drawAt(page, f.regular, fmtDate(d.candidateSignedAt), 412, 340.3); }
     if (d.tutorSignatureName && d.tutorSignedAt) { drawSigned(page, f.regular, d.tutorSignatureName, d.tutorSignatureInk, 174, 435.8, 412 - 174 - 10); drawAt(page, f.regular, fmtDate(d.tutorSignedAt), 412, 435.8); }
+    /* "INFORMATION FOR THE CELTA GRADE REVIEW - TUTOR COMMENTS ON ACTION
+       POINTS DETAILED IN STAGE THREE PROGRESS RECORD ... to be completed for
+       all candidates whose portfolios are submitted to Cambridge English."
+       Exactly the Fail and borderline candidates. No field existed until
+       29 Sep 2026. */
+    if (d.gradeReviewComments) drawWrapped(page, f.regular, [d.gradeReviewComments], { x0: 62, y0: 583, x1: 534, y1: 772 }, 9.5, 12.5);
   }
   /* An appended page, not one of Cambridge's: the centre's own record that the
      candidate was given, and signed for, the portfolio requirements and the
@@ -260,6 +308,8 @@
     drawAttendance(at(PAGE_INDEX.attendance), fonts, input.attendance);
     drawWrittenAssignments(at(PAGE_INDEX.writtenAssignments), fonts, input.writtenAssignments);
     drawStage1(at(PAGE_INDEX.stage1), fonts, input.stage1);
+    drawStage2Hours(at(PAGE_INDEX.stage2Hours), fonts, input.stage2Overall);
+    drawStage3Header(at(PAGE_INDEX.stage3Header), fonts, input.stage3Header || {});
     for (let i = 0; i < obsCopies; i++) drawObservations(out.getPage(start.get(PAGE_INDEX.observations) + i), fonts, input.observations || [], i);
     for (let i = 0; i < tpCopies; i++) drawAssessedTp(out.getPage(start.get(PAGE_INDEX.assessedTp) + i), fonts, input.assessedTp || [], i);
     for (const g of STAGE2_PAGES) drawCriteriaGrid(at(g.sourcePageIndex), fonts, g, input.candidateStage2Marks, input.tutorStage2Marks);

@@ -130,8 +130,20 @@
   .confirm{background:var(--sand-deep); border-radius:8px; padding:10px 12px; font-size:0.84rem; line-height:1.55; margin:8px 0 0;}
   .chk{display:flex; gap:10px; align-items:flex-start; font-size:0.88rem; line-height:1.5; margin:6px 0;}
   .chk input{margin-top:4px; accent-color:var(--teal);}
-  .absence{display:grid; grid-template-columns:130px 1fr 1fr 1fr; gap:6px; margin:6px 0;}
-  @media(max-width:760px){ .absence{grid-template-columns:1fr 1fr;} }
+  /* the column count is set inline per table: Cambridge's two absence tables
+     have five and six columns */
+  .absence{display:grid; gap:6px; margin:6px 0;}
+  @media(max-width:760px){ .absence{grid-template-columns:1fr 1fr !important;} }
+  .mk label.wide{padding:3px 5px;}
+  .mk .shown.none{background:transparent; color:var(--grey);}
+  .oneline{display:flex; gap:18px; flex-wrap:wrap; align-items:flex-end; margin:0 0 12px;}
+  .oneline .ol{flex:0 0 auto; min-width:140px; max-width:200px;}
+  .oneline .ol.wide{max-width:none;}
+  .oneline .ol > *{margin:0;}
+  .oneline .f{display:block; margin-bottom:5px;}
+  /* Cambridge's agree / do not agree, printed beside the signature line */
+  .elect{margin:12px 0 0; padding:10px 12px; border:1px solid var(--sand-line); border-radius:10px; background:var(--surface);}
+  .elect .lead{margin:0 0 8px; font-size:0.84rem; line-height:1.5;}
   .topbar{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin:0 0 16px;}
   @media print{
     body{background:#fff;} .board{padding:0; max-width:none;}
@@ -141,8 +153,8 @@
     textarea, input{border:0; background:none; padding:0;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609290131">
-<link rel="stylesheet" href="hub-theme.css?v=202609290131">
+<link rel="stylesheet" href="hub-house.css?v=202609290208">
+<link rel="stylesheet" href="hub-theme.css?v=202609290208">
 </head>
 <body class="hub-celta5">
 <div class="board">
@@ -155,14 +167,14 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202609290131"></script>
-<script src="hub-ink.js?v=202609290131"></script>
-<script src="celta5-text.js?v=202609290131"></script>
-<script src="celta5-criteria.js?v=202609290131"></script>
-<script src="hub-tracker.js?v=202609290131"></script>
-<script src="hub-shared.js?v=202609290131"></script>
-<script src="hub-store.js?v=202609290131"></script>
-<script src="hub-sync.js?v=202609290131"></script>
+<script src="celta5-pdf.js?v=202609290208"></script>
+<script src="hub-ink.js?v=202609290208"></script>
+<script src="celta5-text.js?v=202609290208"></script>
+<script src="celta5-criteria.js?v=202609290208"></script>
+<script src="hub-tracker.js?v=202609290208"></script>
+<script src="hub-shared.js?v=202609290208"></script>
+<script src="hub-store.js?v=202609290208"></script>
+<script src="hub-sync.js?v=202609290208"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -214,10 +226,21 @@ const field = (obj, key, label, opts) => {
     : `<textarea data-o="${opts.o}" data-k="${key}"${opts.locked ? ' readonly' : ''}>${esc(v)}</textarea>`);
 };
 const RATINGS = [['above','Above standard'],['to','To standard'],['not','Not to standard']];
+const MARKS_TUTOR = ['S+','S','N'], MARKS_CAND = ['S+','S','N','X'];
 const rating = (obj, key, opts) => {
   const v = obj[key] || '';
   if (!opts.mine || opts.locked) return `<div class="rating">${RATINGS.map(([k,l]) => `<label class="dis" style="${v===k ? 'background:var(--teal);border-color:var(--teal);color:var(--paper)' : 'opacity:.55'}">${l}</label>`).join('')}</div>`;
   return `<div class="rating">${RATINGS.map(([k,l]) => `<label><input type="radio" name="${opts.o}-${key}" data-o="${opts.o}" data-k="${key}" value="${k}"${v===k?' checked':''}><span>${l}</span></label>`).join('')}</div>`;
+};
+/* Cambridge's agree / do not agree is a CHOICE on the form, printed beside
+   the signature line, and a signature is the act, not the answer. Stored as
+   true/false so "not answered" stays distinct from "does not agree". */
+const election = (obj, key, opts) => {
+  const v = obj[key];
+  const opt = (val, label) => (!opts.mine || opts.locked)
+    ? `<label class="dis" style="${v===val ? 'background:var(--teal);border-color:var(--teal);color:var(--paper)' : 'opacity:.55'}">${label}</label>`
+    : `<label><input type="radio" name="${opts.o}-${key}" data-elect="${opts.o}:${key}" value="${val?'y':'n'}"${v===val?' checked':''}><span>${label}</span></label>`;
+  return `<div class="elect"><p class="lead">${opts.lead}</p><div class="rating">${opt(true, opts.yes)}${opt(false, opts.no)}</div></div>`;
 };
 /* one signature: a typed name and the moment */
 const signature = (obj, key, opts) => {
@@ -229,10 +252,19 @@ const signature = (obj, key, opts) => {
 };
 const marksGrid = (candMarks, tutorMarks, opts) => {
   const topics = opts.topics; let last = '';
+  /* Cambridge's scale, not a reduction of it. The form defines S+ "Above the
+     Standard", S "Meets the Standard", N "Not to standard", and for the
+     candidate's own column X "Not Applicable at this stage in the course
+     because you have not yet focused on teaching or planning skills
+     associated with that criterion". Lite offered S and N only, so nobody
+     could record above standard -- evidence a Pass A rests on -- and a
+     criterion the course had not reached looked identical to one failed
+     (audit, 29 Sep 2026). X is the candidate's alone, as on the form. */
   const cell = (marks, mine, name) => code => {
     const v = (marks || {})[code] || '';
-    if (!mine) return `<span class="mk"><span class="shown">${v === 'S' ? 'S' : v === 'N' ? 'N' : '–'}</span></span>`;
-    return `<span class="mk">${['S','N'].map(m => `<label><input type="radio" name="${name}-${code}" data-marks="${name}" data-code="${code}" value="${m}"${v===m?' checked':''}>${m}</label>`).join('')}</span>`;
+    const scale = name === 'cand' ? MARKS_CAND : MARKS_TUTOR;
+    if (!mine) return `<span class="mk"><span class="shown${v ? '' : ' none'}">${scale.includes(v) ? esc(v) : '–'}</span></span>`;
+    return `<span class="mk">${scale.map(m => `<label class="m${m.length > 1 ? ' wide' : ''}"><input type="radio" name="${name}-${code}" data-marks="${name}" data-code="${code}" value="${m}"${v===m?' checked':''}>${m}</label>`).join('')}</span>`;
   };
   const cCell = cell(candMarks, opts.candMine, 'cand'), tCell = cell(tutorMarks, opts.tutorMine, 'tutor');
   const names = { '1':'Learners and teachers, and the teaching and learning context', '2':'Language analysis and awareness', '3':'Language skills', '4':'Planning and resources for different teaching contexts', '5':'Developing teaching skills and professionalism' };
@@ -242,7 +274,7 @@ const marksGrid = (candMarks, tutorMarks, opts) => {
     rows += `<tr><td class="code">${c[0]}</td><td>${esc(c[2])}</td>${opts.showCand ? `<td class="mark">${cCell(c[0])}</td>` : ''}<td class="mark">${tCell(c[0])}</td></tr>`;
   });
   return `<table class="grid"><thead><tr><th></th><th>Criterion</th>${opts.showCand ? '<th>You</th>' : ''}<th>Tutor</th></tr></thead><tbody>${rows}</tbody></table>
-    <p class="note" style="margin:6px 0 0;font-size:0.76rem;color:var(--grey)">S — to standard at this stage · N — not yet to standard</p>`;
+    <p class="note" style="margin:6px 0 0;font-size:0.76rem;color:var(--grey)">S+ — above the standard at this stage · S — meets the standard · N — not to standard${opts.showCand ? ' · X — not applicable yet (your column only)' : ''}</p>`;
 };
 
 /* ---- the tables that fill themselves ------------------------------------ */
@@ -252,14 +284,14 @@ function tpRows(){
   Object.keys(hist).sort((a,b) => a-b).forEach(n => {
     const fb = hist[n], f = (fb.state && fb.state.f) || {};
     const g = T.HUB_GRADE ? T.HUB_GRADE[String(f.fGrade || '').trim()] : '';
-    out.push([`TP${n}`, f.fDate ? when(f.fDate) : '', f.fTime ? f.fTime + ' min' : '', f.fLevel || '', f.fMain || '', G_WORD[g] || (f.fGrade || ''), f.fTutor || '']);
+    out.push([`TP${n}`, f.fDate ? when(f.fDate) : '', f.fTime ? f.fTime + ' min' : '', f.fLevel || '', f.fStudents || '', f.fMain || '', G_WORD[g] || (f.fGrade || ''), f.fTutor || '']);
   });
   return out;
 }
 function obsRows(){
   const w = who.tr.observations || {}; const out = [];
   ['filmed1','filmed2','filmed3','filmed4','live1','live2'].forEach(k => { const r = w[k]; if (!r || !r.turnedInAt) return; const a = r.a || {};
-    out.push([k.startsWith('filmed') ? 'Filmed' : 'Live', a.hDate || '', a.hLength || '', a.hLevel || '', a.hLesson || '', when(r.turnedInAt)]); });
+    out.push([k.startsWith('filmed') ? 'Filmed' : 'Live', a.hDate || '', a.hLength || '', a.hLevel || '', a.hLearners || '', a.hLesson || '', a.hSigned || '', when(r.turnedInAt)]); });
   return out;
 }
 function assignRows(){
@@ -293,6 +325,15 @@ function render(){
     <div><div class="k">Centre</div><div class="v">${esc(SETTINGS.centreName || '')} ${SETTINGS.centreNumber ? '· ' + esc(SETTINGS.centreNumber) : ''}</div></div>
     <div><div class="k">Course</div><div class="v">${esc(SETTINGS.courseName || '')}${dates ? '<br>' + dates : ''}</div></div>
     <div><div class="k">Tutors</div><div class="v">${esc(SETTINGS.tutorNames || '')}</div></div>
+    ${SETTINGS.courseNumber ? `<div><div class="k">Course number</div><div class="v">${esc(SETTINGS.courseNumber)}</div></div>` : ''}
+    <!-- The ULN is a ten-digit identifier applied, where required, to anyone
+         over 14 in UK education or training; obtaining one is a centre duty
+         (Handbook 12.1) and the cover has a grid for it. Blank outside the UK,
+         and blank is a fair answer -- but it had no field at all until
+         29 Sep 2026. -->
+    ${tut || (TT.cover || {}).uln ? `<div><div class="k">ULN <small style="font-weight:400">where required</small></div>
+      ${tut ? `<input type="text" data-o="cover" data-k="uln" inputmode="numeric" maxlength="10" placeholder="10 digits" value="${esc((TT.cover || {}).uln || '')}" style="width:100%;font-family:inherit;font-size:0.9rem;padding:4px 6px;border:1px solid var(--sand-line);border-radius:6px;background:var(--paper);color:var(--ink)">`
+            : `<div class="v">${esc((TT.cover || {}).uln || '')}</div>`}</div>` : ''}
   </div>
   <nav class="jump"><a href="#read">Read and confirm</a><a href="#s1">Stage 1</a><a href="#s2">Stage 2</a><a href="#s3">Stage 3</a><a href="#tp">Teaching practice</a><a href="#obs">Observations</a><a href="#wa">Written assignments</a><a href="#att">Attendance</a><a href="#final">Final declaration</a></nav>
 
@@ -316,13 +357,15 @@ function render(){
         ${signature(s1, 'signedBy', { o:'s1', mine:false, waiting: 'Not returned yet' })}
       </div>
       <div class="half ${my?'mine':''}"><h3>Candidate</h3>
-        ${signature(C.stage1 = C.stage1 || {}, 'signed', { o:'c1', mine: my, prefill: who.name, locked: s1.returnedAt ? '' : 'Your tutor has not returned Stage 1 yet', label:'Your name, to sign that you have read it', button:'Sign' })}
+        ${election(C.stage1 = C.stage1 || {}, 'agrees', { o:'c1', mine: my && !!s1.returnedAt, locked: !!((C.stage1||{}).signed && C.stage1.signed.at), yes:'I agree', no:'I do not agree', lead:'I have read and <b>agree / do not agree</b> with the above comments.' })}
+        ${signature(C.stage1, 'signed', { o:'c1', mine: my, prefill: who.name, locked: s1.returnedAt ? '' : 'Your tutor has not returned Stage 1 yet', label:'Your name, to sign that you have read it', button:'Sign' })}
       </div>
     </div>
   </section>
 
   <section class="part" id="s2"><h2>Stage 2 <small>mid-course tutorial</small> ${pill(st2[0], st2[1])}</h2>
-    <p class="note">Both of you mark every criterion. The candidate writes first and submits; the tutor marks, writes the summary and action points, and returns it; the candidate signs.</p>
+    <p class="note">Both of you mark every criterion. The candidate writes first and submits; the tutor marks, writes the summary and action points, and returns it; the candidate signs. Cambridge’s own heading on this record is “Stage Two Progress Record — hours taught”.</p>
+    ${tut || s2t.hoursTaught ? `<div class="oneline"><div class="ol">${field(s2t, 'hoursTaught', 'Hours taught at this stage', { o:'s2t', mine: tut, input:'text', locked: !!s2t.returnedAt })}</div></div>` : ''}
     ${marksGrid(s2c.marks, s2t.marks, { topics:['1','2','3','4','5'], showCand:true, candMine: my && !s2c.submittedAt, tutorMine: tut && !s2t.returnedAt })}
     <div class="halves" style="margin-top:14px">
       <div class="half ${my?'mine':''}"><h3>Candidate <small>${s2c.submittedAt ? 'submitted ' + when(s2c.submittedAt) : ''}</small></h3>
@@ -331,6 +374,8 @@ function render(){
         <label class="f">Your overall self-assessment at this stage</label>${rating(s2c, 'overall', { o:'s2c', mine: my, locked: !!s2c.submittedAt })}
         ${field(s2c, 'areas', 'Areas you need to work on', { o:'s2c', mine: my, locked: !!s2c.submittedAt })}
         ${my ? (s2c.submittedAt ? '' : `<div class="bar"><button class="btn primary" type="button" data-submit="stage2">Submit to your tutor</button><span class="status" id="savedNote"></span></div>`) : ''}
+        ${election(s2c, 'accurate', { o:'s2c', mine: my && !!s2t.returnedAt, locked: !!(s2c.signed && s2c.signed.at), yes:'is', no:'is not', lead:'This <b>is / is not</b> an accurate record of the tutorial discussion and my progress to date.' })}
+        ${election(s2c, 'agrees', { o:'s2c', mine: my && !!s2t.returnedAt, locked: !!(s2c.signed && s2c.signed.at), yes:'I agree', no:'I do not agree', lead:'I have read and <b>agree / do not agree</b> with the summarising comments.' })}
         ${signature(s2c, 'signed', { o:'c2', mine: my, prefill: who.name, locked: s2t.returnedAt ? '' : 'Your tutor has not returned Stage 2 yet', label:'Your name, to sign', button:'Sign' })}
       </div>
       <div class="half ${tut?'mine':''}"><h3>Tutor <small>${s2t.returnedAt ? 'returned ' + when(s2t.returnedAt) : ''}</small></h3>
@@ -346,6 +391,12 @@ function render(){
 
   <section class="part" id="s3"><h2>Stage 3 <small>where a further tutorial is needed</small> ${pill(st3[0], st3[1])}</h2>
     <p class="note">Cambridge asks for a Stage 3 record where a candidate was not to standard at Stage 2, or was at or above standard but is not making the expected progress in the second half of the course. All three are conditions, not the tutors’ choice, and a tutorial must be given with the whole record completed.</p>
+    ${tut || s3.returnedAt ? `<div class="oneline">
+      <div class="ol wide"><label class="f">Tutorial</label><div class="rating">${[['yes','Given'],['no','Not given']].map(([k,l]) => tut && !s3.returnedAt
+        ? `<label><input type="radio" name="s3-tut" data-o="s3" data-k="tutorialGiven" value="${k}"${s3.tutorialGiven===k?' checked':''}><span>${l}</span></label>`
+        : `<label class="dis" style="${s3.tutorialGiven===k ? 'background:var(--teal);border-color:var(--teal);color:var(--paper)' : 'opacity:.55'}">${l}</label>`).join('')}</div></div>
+      <div class="ol">${field(s3, 'hoursTaught', 'Hours taught', { o:'s3', mine: tut, input:'text', locked: !!s3.returnedAt })}</div>
+    </div>` : ''}
     ${(tut || s3.returnedAt || s3.marks) ? marksGrid(null, s3.marks, { topics:['1','2','3','4','5'], showCand:false, candMine:false, tutorMine: tut && !s3.returnedAt }) : '<div class="ro empty">No Stage 3 record yet</div>'}
     <div class="halves" style="margin-top:14px">
       <div class="half ${tut?'mine':''}"><h3>Tutor <small>${s3.returnedAt ? 'returned ' + when(s3.returnedAt) : ''}</small></h3>
@@ -357,16 +408,17 @@ function render(){
         ${signature(s3, 'signedBy', { o:'s3', mine:false, waiting:'Not returned yet' })}
       </div>
       <div class="half ${my?'mine':''}"><h3>Candidate</h3>
-        ${signature(C.stage3 = C.stage3 || {}, 'signed', { o:'c3', mine: my, prefill: who.name, locked: s3.returnedAt ? '' : 'No Stage 3 record to sign yet', label:'Your name, to sign', button:'Sign' })}
+        ${election(C.stage3 = C.stage3 || {}, 'agrees', { o:'c3', mine: my && !!s3.returnedAt, locked: !!((C.stage3||{}).signed && C.stage3.signed.at), yes:'I agree', no:'I do not agree', lead:'I have read and <b>agree / do not agree</b> with the summarising comments.' })}
+        ${signature(C.stage3, 'signed', { o:'c3', mine: my, prefill: who.name, locked: s3.returnedAt ? '' : 'No Stage 3 record to sign yet', label:'Your name, to sign', button:'Sign' })}
       </div>
     </div>
   </section>
 
   <section class="part" id="tp"><h2>Assessed teaching practice <small>from the returned feedback</small></h2>
-    ${table(['TP','Date','Length','Level','Lesson focus','Assessment','Tutor'], tpRows(), 'No teaching practice returned yet.')}
+    ${table(['TP','Date','Length','Level','Learners','Lesson focus','Assessment','Tutor'], tpRows(), 'No teaching practice returned yet.')}
   </section>
   <section class="part" id="obs"><h2>Observation of experienced teachers <small>from the turned-in sheets</small></h2>
-    ${table(['Kind','Date','Length','Level','Lesson','Turned in'], obsRows(), 'No filmed or live observation turned in yet.')}
+    ${table(['Kind','Date','Length','Level','Learners','Lesson','Observed teacher','Turned in'], obsRows(), 'No filmed or live observation turned in yet.')}
     <p class="note" style="margin:8px 0 0">Peer observations are the candidate’s own notes and are not listed here, as on the form.</p>
   </section>
   <section class="part" id="wa"><h2>Written assignments <small>from the assignment records</small></h2>
@@ -379,17 +431,23 @@ function render(){
         <label class="f">Total course hours</label><div class="ro">${esc(SETTINGS.totalHours || '')}</div>
         ${field(att, 'attended', 'Total hours attended', { o:'att', mine: tut, input:'text' })}
       </div>
-      <div class="half ${tut?'mine':''}"><h3>Absences <small>date · session missed · reason · work made up</small></h3>
-        <div id="absences">${(att.rows || []).map((r, i) => absenceRow(r, i, tut)).join('')}</div>
-        ${tut ? `<div class="bar"><button class="btn quiet" type="button" data-add-absence>Add an absence</button><span class="status" id="savedNote3"></span></div>` : ((att.rows||[]).length ? '' : '<div class="ro empty">No absences recorded</div>')}
+      <div class="half ${tut?'mine':''}"><h3>Unavoidable absence <small>illness, bereavement, unexpected family commitment</small></h3>
+        <p class="note" style="margin:0 0 8px">100% attendance is expected. An unavoidable absence is recorded here, and the work from the session missed must be made up.</p>
+        <div id="absences">${(att.rows || []).map((r, i) => absenceRow(r, i, tut, 'abs')).join('')}</div>
+        ${tut ? `<div class="bar"><button class="btn quiet" type="button" data-add-absence="abs">Add an absence</button><span class="status" id="savedNote3"></span></div>` : ((att.rows||[]).length ? '' : '<div class="ro empty">No absences recorded</div>')}
       </div>
+    </div>
+    <div class="half ${tut?'mine':''}" style="margin-top:14px"><h3>Other absences and late arrivals <small>recorded by the course tutor</small></h3>
+      <div id="others">${(att.other || []).map((r, i) => absenceRow(r, i, tut, 'oth')).join('')}</div>
+      ${tut ? `<div class="bar"><button class="btn quiet" type="button" data-add-absence="oth">Add a row</button></div>` : ((att.other||[]).length ? '' : '<div class="ro empty">None recorded</div>')}
     </div>
   </section>
 
   <section class="part" id="final"><h2>Final declaration <small>end of course</small> ${pill(stF[0], stF[1])}</h2>
     <div class="halves">
       <div class="half ${my?'mine':''}"><h3>Candidate</h3>
-        ${[['tp','I have completed six hours of assessed teaching practice at two levels'],['obs','I have completed six hours of observation of experienced teachers'],['wa','I have submitted the four written assignments'],['own','The work in my portfolio is my own'],['records','My portfolio and this record are complete and up to date']].map(([k,l]) => `<div class="chk"><input type="checkbox" data-final="${k}"${(fin.checks||{})[k]?' checked':''}${my && !(fin.signed && fin.signed.at) ? '' : ' disabled'}> ${l}</div>`).join('')}
+        <p class="note" style="margin:0 0 8px">In handing in this portfolio for assessment purposes, I confirm that:</p>
+        ${FINAL_LINES.map(([k,l]) => `<div class="chk"><input type="checkbox" data-final="${k}"${(fin.checks||{})[k]?' checked':''}${my && !(fin.signed && fin.signed.at) ? '' : ' disabled'}> ${l}</div>`).join('')}
         ${signature(fin, 'signed', { o:'fin', mine: my, prefill: who.name, label:'Your name, to sign the declaration', button:'Sign' })}
       </div>
       <div class="half ${tut?'mine':''}"><h3>Tutor</h3>
@@ -397,12 +455,29 @@ function render(){
         ${signature(fint, 'signed', { o:'fint', mine: tut, prefill: tutorName(), label:'Tutor’s name, to sign', button:'Sign' })}
       </div>
     </div>
+    ${tut || fint.gradeReview ? `<div class="half ${tut?'mine':''}" style="margin-top:14px"><h3>For the CELTA Grade Review <small>tutor comments on Stage 3 action points</small></h3>
+      <p class="note" style="margin:0 0 8px">Completed for every candidate whose portfolio goes to Cambridge English. State whether the candidate did or did not demonstrate effectiveness in the areas identified, referring to feedback in final lessons and/or written assignments.</p>
+      ${field(fint, 'gradeReview', 'Tutor comments on the action points', { o:'fint', mine: tut })}
+    </div>` : ''}
   </section>`;
   bind();
   const pdfBtn = $('cambridgePdf'); if (pdfBtn) pdfBtn.addEventListener('click', cambridgeBooklet);
 }
 
 /* ---- Cambridge's booklet: Lite's records in the shape Connect's replica takes ------ */
+/* Cambridge's own five, word for word (CELTA 5 July 2023, final day page).
+   Lite had reworded all five and three of them said something different:
+   "at two levels" for "at AT LEAST two levels", "submitted" for "completed",
+   "the work in my portfolio" for "the written assignments", and "complete and
+   up to date" for "all records" (audit, 29 Sep 2026). It is a declaration the
+   candidate signs on Cambridge's form, so it is quoted, not improved. */
+const FINAL_LINES = [
+  ['tp','I have completed six hours of assessed teaching practice at at least two levels.'],
+  ['obs','I have completed six hours of observation of experienced teachers.'],
+  ['wa','I have completed four written assignments.'],
+  ['own','The written assignments are my own work.'],
+  ['records','I have completed all records.']
+];
 const RATE = { above: 'above_standard', to: 'to_standard', not: 'not_to_standard' };
 const sigName = s => (s && s.at) ? s.name : null, sigAt = s => (s && s.at) ? s.at : null, sigInk = s => (s && s.at && s.ink) ? s.ink : null;
 const shortDate = iso => iso ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
@@ -413,10 +488,13 @@ function bookletInput(){
     const focus = flat['tp' + n + '_aim'] || f.fMain || f.fAim || null;  // the tracker's reading of the lesson's aim, then the form's own fields
     const g = String(f.fGrade || ''); const code = /above/i.test(g) ? 'S+' : /not/i.test(g) ? 'N' : /standard/i.test(g) ? 'S' : g;
     const initials = String(f.fTutor || '').split(/\s+/).filter(Boolean).map(w => w[0].toUpperCase()).join('');
-    return { date: f.fDate ? shortDate(f.fDate) : '', lengthMinutes: f.fTime ? Number(f.fTime) || null : null, level: f.fLevel || null, learnerCount: f.fLearners ? Number(f.fLearners) || null : null, lessonFocus: focus, tutorAssessment: code || null, tutorInitials: initials || null }; });
+    return { date: f.fDate ? shortDate(f.fDate) : '', lengthMinutes: f.fTime ? Number(f.fTime) || null : null, level: f.fLevel || null, learnerCount: f.fStudents ? Number(String(f.fStudents).replace(/\D/g, '')) || null : null, lessonFocus: focus, tutorAssessment: code || null, tutorInitials: initials || null }; });
   const w = who.tr.observations || {};
   const observations = ['filmed1','filmed2','filmed3','filmed4','live1','live2'].filter(k => w[k] && w[k].turnedInAt).map(k => { const a = w[k].a || {};
-    return { date: a.hDate || '', lengthMinutes: a.hLength ? Number(String(a.hLength).replace(/\D/g, '')) || null : null, level: a.hLevel || null, learnersPresent: null, lessonFocus: (k.startsWith('filmed') ? 'Filmed: ' : 'Live: ') + (a.hLesson || '') }; });
+    return { date: a.hDate || '', lengthMinutes: a.hLength ? Number(String(a.hLength).replace(/\D/g, '')) || null : null, level: a.hLevel || null,
+             learnersPresent: a.hLearners ? Number(String(a.hLearners).replace(/\D/g, '')) || null : null,
+             observedTeacherSignature: a.hSigned || null,
+             lessonFocus: (k.startsWith('filmed') ? 'Filmed: ' : 'Live: ') + (a.hLesson || '') }; });
   const subs = who.tr.assignments || {};
   const WA = { fol: 'Focus on Learner', lrt: 'LRT', lsrt: 'Skills', lfc: 'LfC' };
   /* Cambridge's own-work column on the written-assignments page is a
@@ -434,24 +512,32 @@ function bookletInput(){
   const assignments = Object.keys(WA).map(k => { const st = T.assignmentState(subs[k]);
     const grade = st.code === 'PASS' || st.code === 'RES' ? 'Pass' : st.code === 'FAIL' ? 'Fail' : null;
     return { assignmentType: WA[k], finalGrade: grade, passedOnResubmission: st.code === 'RES', candidateSignatureName: ownWorkConfirmed(subs[k]) ? who.name : null }; });
-  const abs = (att.rows || []).map(r => ({ date: r.date || '', sessionMissed: r.session || null, reason: r.reason || null, workMadeUp: r.madeUp || null, candidateComment: null, tutorComment: null }));
+  const absRow = r => ({ date: r.date || '', sessionMissed: r.session || null, reason: r.reason || null, workMadeUp: r.madeUp || null, candidateComment: r.cand || null, tutorComment: r.tutor || null });
+  const abs = (att.rows || []).map(absRow), other = (att.other || []).map(absRow);
   const marks = m => { const out = {}; Object.keys(m || {}).forEach(k => { out[k] = m[k] || null; }); return out; };
   return {
     cover: { traineeName: who.name, centerName: SETTINGS.centreName || '', centerNumber: (SETTINGS.centreNumber || '').slice(0, 5), courseCode: SETTINGS.notificationRef || null,
+             courseNumber: SETTINGS.courseNumber || null, uln: (TT.cover || {}).uln || null,
              courseDates: (SETTINGS.start && SETTINGS.end) ? shortDate(SETTINGS.start) + ' - ' + shortDate(SETTINGS.end) : '', tutorNames: String(SETTINGS.tutorNames || '').split(/,|\band\b/).map(x => x.trim()).filter(Boolean) },
-    attendance: { totalCourseHours: SETTINGS.totalHours ? Number(SETTINGS.totalHours) : null, totalHoursAttended: att.attended ? Number(att.attended) : null, unavoidableAbsences: abs, otherAbsences: [] },
+    attendance: { totalCourseHours: SETTINGS.totalHours ? Number(SETTINGS.totalHours) : null, totalHoursAttended: att.attended ? Number(att.attended) : null, unavoidableAbsences: abs, otherAbsences: other },
     stage1: { tutorialGiven: !!s1.tutorialGiven, hoursTaught: s1.hoursTaught ? Number(s1.hoursTaught) : null, strengths: s1.strengths || null, actionPlan: s1.actionPlan || null,
+              candidateAgrees: typeof (C.stage1 || {}).agrees === 'boolean' ? C.stage1.agrees : null,
               candidateSignatureName: sigName((C.stage1 || {}).signed), candidateSignedAt: sigAt((C.stage1 || {}).signed), candidateSignatureInk: sigInk((C.stage1 || {}).signed), tutorSignatureName: sigName(s1.signedBy), tutorSignedAt: sigAt(s1.signedBy), tutorSignatureInk: sigInk(s1.signedBy) },
     observations, assessedTp,
     candidateStage2Marks: marks(s2c.marks), tutorStage2Marks: marks(s2t.marks), tutorStage3Marks: marks(s3.marks),
     writtenAssignments: { assignments },
     stage2Notes: { candidateWrittenAssignmentsNotes: s2c.notesWA || null, tutorWrittenAssignmentsNotes: s2t.notesWA || null, candidateOtherNotes: s2c.notesOther || null, tutorOtherNotes: s2t.notesOther || null },
     stage2Overall: { candidateOverall: RATE[s2c.overall] || null, candidateNotes: s2c.areas || null, tutorOverall: RATE[s2t.overall] || null, tutorNotes: s2t.summary || null,
+                     hoursTaught: s2t.hoursTaught || null,
+                     candidateAccurate: typeof s2c.accurate === 'boolean' ? s2c.accurate : null, candidateAgrees: typeof s2c.agrees === 'boolean' ? s2c.agrees : null,
                      tutorSignatureName: sigName(s2t.signedBy), tutorSignedAt: sigAt(s2t.signedBy), tutorSignatureInk: sigInk(s2t.signedBy), candidateSignatureName: sigName(s2c.signed), candidateSignedAt: sigAt(s2c.signed), candidateSignatureInk: sigInk(s2c.signed) },
+    stage3Header: { tutorialGiven: s3.tutorialGiven === 'yes' ? true : s3.tutorialGiven === 'no' ? false : null, hoursTaught: s3.hoursTaught || null },
     stage3Notes: { tutorWrittenAssignmentsNotes: s3.notesWA || null, tutorOtherNotes: s3.notesOther || null },
     stage3Overall: { tutorOverall: RATE[s3.overall] || null, tutorNotes: s3.summary || null, tutorSignatureName: sigName(s3.signedBy), tutorSignedAt: sigAt(s3.signedBy), tutorSignatureInk: sigInk(s3.signedBy),
+                     candidateAgrees: typeof (C.stage3 || {}).agrees === 'boolean' ? C.stage3.agrees : null,
                      candidateSignatureName: sigName((C.stage3 || {}).signed), candidateSignedAt: sigAt((C.stage3 || {}).signed), candidateSignatureInk: sigInk((C.stage3 || {}).signed) },
     finalDeclaration: { checklistTp: !!(fin.checks || {}).tp, checklistObservations: !!(fin.checks || {}).obs, checklistAssignments: !!(fin.checks || {}).wa, checklistOwnWork: !!(fin.checks || {}).own, checklistAllRecords: !!(fin.checks || {}).records,
+                        gradeReviewComments: fint.gradeReview || null,
                         candidateSignatureName: sigName(fin.signed), candidateSignedAt: sigAt(fin.signed), candidateSignatureInk: sigInk(fin.signed), tutorSignatureName: sigName(fint.signed), tutorSignedAt: sigAt(fint.signed), tutorSignatureInk: sigInk(fint.signed) },
     confirmations: { candidateName: who.name, portfolioConfirmedAt: sigAt(conf.portfolio), portfolioSignatureName: sigName(conf.portfolio), portfolioSignatureInk: sigInk(conf.portfolio), appealsConfirmedAt: sigAt(conf.appeals), appealsSignatureName: sigName(conf.appeals), appealsSignatureInk: sigInk(conf.appeals) }
   };
@@ -472,15 +558,23 @@ async function cambridgeBooklet(){
   } catch (e) { st.textContent = 'Could not draw the booklet: ' + (e && e.message ? e.message : e); }
   btn.disabled = false;
 }
-function absenceRow(r, i, mine){
-  const cells = ['date','session','reason','madeUp'];
-  if (!mine) return `<div class="absence">${cells.map(k => `<div class="ro ${r[k]?'':'empty'}">${esc(r[k] || '–')}</div>`).join('')}</div>`;
-  return `<div class="absence">${cells.map(k => `<input type="text" data-abs="${i}" data-k="${k}" value="${esc(r[k] || '')}" placeholder="${{date:'Date',session:'Session missed',reason:'Reason',madeUp:'Work made up'}[k]}">`).join('')}</div>`;
+/* Cambridge has TWO absence tables: unavoidable absence (four columns plus
+   the tutor's signature) and other absences/late arrivals (the same plus a
+   candidate comment). Lite drew half the page -- the second table was
+   hard-coded empty and the first table's signature column read a key nothing
+   ever set (audit, 29 Sep 2026). */
+const ABS_CELLS = { abs: ['date','session','reason','madeUp','tutor'], oth: ['date','session','reason','madeUp','cand','tutor'] };
+const ABS_PLACE = { date:'Date / times', session:'Session missed', reason:'Reason', madeUp:'Work made up', cand:'Candidate comment', tutor:'Tutor comment / signature' };
+function absenceRow(r, i, mine, which){
+  const cells = ABS_CELLS[which || 'abs'];
+  const style = ` style="grid-template-columns:repeat(${cells.length},1fr)"`;
+  if (!mine) return `<div class="absence"${style}>${cells.map(k => `<div class="ro ${r[k]?'':'empty'}">${esc(r[k] || '–')}</div>`).join('')}</div>`;
+  return `<div class="absence"${style}>${cells.map(k => `<input type="text" data-abs="${i}" data-which="${which || 'abs'}" data-k="${k}" value="${esc(r[k] || '')}" placeholder="${ABS_PLACE[k]}">`).join('')}</div>`;
 }
 
 /* ---- writing --------------------------------------------------------------- */
 const OBJ = { conf: () => (C.confirms = C.confirms || {}), c1: () => (C.stage1 = C.stage1 || {}), s2c: () => (C.stage2 = C.stage2 || {}), c2: () => (C.stage2 = C.stage2 || {}), c3: () => (C.stage3 = C.stage3 || {}), fin: () => (C.final = C.final || {}),
-              s1: () => (TT.stage1 = TT.stage1 || {}), s2t: () => (TT.stage2 = TT.stage2 || {}), s3: () => (TT.stage3 = TT.stage3 || {}), att: () => (TT.attendance = TT.attendance || {}), fint: () => (TT.final = TT.final || {}) };
+              cover: () => (TT.cover = TT.cover || {}), s1: () => (TT.stage1 = TT.stage1 || {}), s2t: () => (TT.stage2 = TT.stage2 || {}), s3: () => (TT.stage3 = TT.stage3 || {}), att: () => (TT.attendance = TT.attendance || {}), fint: () => (TT.final = TT.final || {}) };
 const isMineObj = o => /^(conf|c1|s2c|c2|c3|fin)$/.test(o) ? IS_TRAINEE : IS_TUTOR;
 const save = o => (isMineObj(o) && /^(conf|c1|s2c|c2|c3|fin)$/.test(o)) ? saveC() : saveT();
 function bind(){
@@ -496,8 +590,14 @@ function bind(){
     else { if (!IS_TUTOR) return; TT[stage] = TT[stage] || {}; TT[stage].marks = TT[stage].marks || {}; TT[stage].marks[el.dataset.code] = el.value; saveT(); }
   }));
   app.querySelectorAll('[data-final]').forEach(el => el.addEventListener('change', () => { if (!IS_TRAINEE) return; C.final = C.final || {}; C.final.checks = C.final.checks || {}; C.final.checks[el.dataset.final] = el.checked; saveC(); }));
-  app.querySelectorAll('[data-abs]').forEach(el => el.addEventListener('input', () => { if (!IS_TUTOR) return; TT.attendance = TT.attendance || {}; TT.attendance.rows = TT.attendance.rows || []; const r = TT.attendance.rows[+el.dataset.abs] = TT.attendance.rows[+el.dataset.abs] || {}; r[el.dataset.k] = el.value; saveT(); }));
-  const addAbs = app.querySelector('[data-add-absence]'); if (addAbs) addAbs.addEventListener('click', () => { TT.attendance = TT.attendance || {}; (TT.attendance.rows = TT.attendance.rows || []).push({}); saveT(); render(); });
+  const absList = which => { TT.attendance = TT.attendance || {}; const k = which === 'oth' ? 'other' : 'rows'; return (TT.attendance[k] = TT.attendance[k] || []); };
+  app.querySelectorAll('[data-abs]').forEach(el => el.addEventListener('input', () => { if (!IS_TUTOR) return; const list = absList(el.dataset.which); const r = list[+el.dataset.abs] = list[+el.dataset.abs] || {}; r[el.dataset.k] = el.value; saveT(); }));
+  app.querySelectorAll('[data-add-absence]').forEach(b => b.addEventListener('click', () => { if (!IS_TUTOR) return; absList(b.dataset.addAbsence).push({}); saveT(); render(); }));
+  /* An election is a three-state answer: agreed, did not agree, not answered. */
+  app.querySelectorAll('[data-elect]').forEach(el => el.addEventListener('change', () => {
+    const [o, key] = el.dataset.elect.split(':'); if (!isMineObj(o)) return;
+    OBJ[o]()[key] = el.value === 'y'; save(o);
+  }));
   /* A signature is the typed name and the moment; the drawn ink, when the
      signer draws one, rides along as a small path (hub-ink.js). */
   app.querySelectorAll('[data-sign]').forEach(b => b.addEventListener('click', async () => {
