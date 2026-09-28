@@ -97,8 +97,8 @@
   .btn-sand{background:var(--sand-deep); color:var(--ink);}
   .note{font-size:0.8rem; color:var(--grey); margin:0 0 14px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609290024">
-<link rel="stylesheet" href="hub-theme.css?v=202609290024">
+<link rel="stylesheet" href="hub-house.css?v=202609290034">
+<link rel="stylesheet" href="hub-theme.css?v=202609290034">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -106,12 +106,12 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202609290024"></script>
-<script src="hub-exchange.js?v=202609290024"></script>
-<script src="hub-due.js?v=202609290024"></script>
-<script src="hub-shared.js?v=202609290024"></script>
-<script src="hub-store.js?v=202609290024"></script>
-<script src="hub-sync.js?v=202609290024"></script>
+<script src="assignment-defaults.js?v=202609290034"></script>
+<script src="hub-exchange.js?v=202609290034"></script>
+<script src="hub-due.js?v=202609290034"></script>
+<script src="hub-shared.js?v=202609290034"></script>
+<script src="hub-store.js?v=202609290034"></script>
+<script src="hub-sync.js?v=202609290034"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -354,8 +354,20 @@ function render(){
       html += `<div class="card"><h2>Your feedback</h2><div class="readonly">${esc(sub.feedback.outcome)}${sub.feedback.generalComment1?('\n\n'+nl2br(sub.feedback.generalComment1)):''}${sub.feedback.generalComment2?('\n\n'+nl2br(sub.feedback.generalComment2)):''}</div></div>`;
     }
 
-    if (sub.stage === 'resubmission_needed') {
-      html += `<div class="card"><p class="note">Waiting on the trainee to resubmit \u2014 nothing more to mark until they do.</p></div>`;
+    if (sub.stage === 'resubmission_needed' || sub.stage === 'returned_unmarked') {
+      /* Sent back: the criteria stay in view, read-only, with each mark and
+         note as given in round one -- the candidate has always seen these on
+         their page; the tutor had no view of their own marking until the
+         resubmission arrived (Ramy, 28 Sep 2026: "I don't see this criteria").
+         Round two, when it comes, draws these beside the fresh controls. */
+      const crit1 = (a.criteria||[]), m1 = sub.criteriaMarks.sub1 || [], c1 = sub.criteriaComments.sub1 || [];
+      if (crit1.length && (m1.length || c1.some(Boolean))) {
+        html += `<div class="card"><h2>Assessment criteria <small style="font-family:'Karla',sans-serif;font-size:0.8rem;font-weight:500;color:var(--grey)">first submission, as marked</small></h2>
+          ${crit1.map((c,i)=>{ const m=m1[i]; const cls=m===true?'met':m===false?'not':''; const label=m===true?'Met':m===false?'Not met':'Not marked';
+            return `<div class="critrow" style="flex-direction:column; align-items:stretch;"><div class="critline"><div class="txt">${esc(c.text)}</div><span class="crit-toggle ${cls}" style="cursor:default">${label}</span></div>${c1[i] ? `<div class="readonly" style="margin:8px 0 0">${nl2br(c1[i])}</div>` : ''}</div>`; }).join('')}
+        </div>`;
+      }
+      html += `<div class="card"><p class="note">${sub.stage === 'returned_unmarked' ? 'Returned unmarked \u2014 waiting on the trainee to submit again.' : 'Waiting on the trainee to resubmit \u2014 nothing more to mark until they do.'}</p></div>`;
     } else if (sub.stage === 'submitted' || sub.stage === 'resubmitted') {
       const round = sub.stage==='resubmitted' ? 'sub2' : 'sub1';
       const crit = (a.criteria||[]);
