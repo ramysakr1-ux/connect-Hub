@@ -192,6 +192,9 @@
     font-family:'Instrument Sans',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.1em;
     text-transform:uppercase; color:var(--grey);}
   .grow{padding:13px 4px; border-bottom:1px solid var(--row-line);}
+  .grouphead{display:flex; align-items:baseline; gap:10px; padding:18px 4px 6px; border-bottom:1px solid var(--sand-line);}
+  .grouphead b{font-family:'Newsreader',Georgia,serif; font-size:1.05rem; font-weight:600; color:var(--ink);}
+  .grouphead span{font-size:0.78rem; color:var(--grey);}
   .grow .nm{font-size:0.92rem; font-weight:500; min-width:0; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center;}
   .grow .mid{font-size:0.88rem; color:var(--grey); min-width:0;}
   .grow .st{font-size:0.88rem; min-width:0; text-wrap:pretty; color:var(--grey);}
@@ -213,7 +216,7 @@
     .grid > .mid{display:none;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609282359">
+<link rel="stylesheet" href="hub-house.css?v=202609290006">
 </head>
 <body>
 <div class="board">
@@ -288,16 +291,16 @@
 
 </div>
 
-<script src="hub-due.js?v=202609282359"></script>
-<script src="hub-shared.js?v=202609282359"></script>
-<script src="hub-store.js?v=202609282359"></script>
+<script src="hub-due.js?v=202609290006"></script>
+<script src="hub-shared.js?v=202609290006"></script>
+<script src="hub-store.js?v=202609290006"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202609282359"></script>
-<script src="hub-sync.js?v=202609282359"></script>
-<script src="hub-tracker.js?v=202609282359"></script>
+<script src="assignment-defaults.js?v=202609290006"></script>
+<script src="hub-sync.js?v=202609290006"></script>
+<script src="hub-tracker.js?v=202609290006"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a candidate's link opened it and read the course and
@@ -436,6 +439,18 @@ function paintCourseMenu(){
   document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
   paintCourseMenu();
 })();
+/* Rows under their TP group (Ramy, 28 Sep 2026: "they should be
+   categorised based on their TP groups"). Groups in order, a candidate
+   with no group last under its own heading; inside a group the order the
+   caller chose, so what needs the tutor still comes first. */
+function byGroup(rows, of){
+  const groups = new Map();
+  rows.forEach(r => { const g = String(of(r) || ''); if (!groups.has(g)) groups.set(g, []); groups.get(g).push(r); });
+  return [...groups.entries()].sort((a, b) => (a[0] === '') - (b[0] === '') || a[0].localeCompare(b[0], undefined, { numeric: true }));
+}
+function groupHead(g, n){
+  return `<div class="grouphead"><b>${g ? 'Group ' + esc(g) : 'No group yet'}</b><span>${n} candidate${n === 1 ? '' : 's'}</span></div>`;
+}
 function row(cols, cells){
   return `<div class="grid grow" style="grid-template-columns:${cols}">${cells}</div>`;
 }
@@ -455,15 +470,15 @@ function paintRows(){
     const cols='1.5fr 0.5fr 1.3fr auto';
     /* What needs the tutor first, then the rest in name order -- nothing hidden. */
     let rows=list.map(tr=>({tr, s:tpState(tr)})).sort((a,b)=>(b.s.act?1:0)-(a.s.act?1:0));
-    host.innerHTML =
-      `<div class="grid ghead" style="grid-template-columns:${cols}"><div>Trainee</div><div class="mid">TP</div><div>Status</div><div></div></div>` +
-      (rows.length ? rows.map(({tr,s})=>row(cols,
+    const tpRow = ({tr,s}) => row(cols,
         `<div class="nm">${hubAvatar(tr.name)}${esc(tr.name)}</div>
          <div class="mid">${esc(tpNumberOf(tr))}</div>
          <div class="st ${s.tone}">${esc(s.label)}</div>
          ${action(s.act?'Write feedback':s.label==='Returned'?'View feedback':'Open', s.act,
-           '3_tutor_feedback.html?trainee='+encodeURIComponent(tr.id))}`
-      )).join('') : '<div class="empty">Nothing waiting on this tab.</div>');
+           '3_tutor_feedback.html?trainee='+encodeURIComponent(tr.id))}`);
+    host.innerHTML =
+      `<div class="grid ghead" style="grid-template-columns:${cols}"><div>Trainee</div><div class="mid">TP</div><div>Status</div><div></div></div>` +
+      (rows.length ? byGroup(rows, r => r.tr.group).map(([g, rs]) => groupHead(g, rs.length) + rs.map(tpRow).join('')).join('') : '<div class="empty">Nothing waiting on this tab.</div>');
     return;
   }
 
@@ -487,18 +502,19 @@ function paintRows(){
   }
 
   const cols='1.7fr 1fr 1.2fr auto';
-  host.innerHTML =
-    `<div class="grid ghead" style="grid-template-columns:${cols}"><div>Trainee</div><div class="mid">Teaching practice</div><div>Assignments</div><div></div></div>` +
-    list.map(tr=>{
+  const trRow = tr => {
       const subs=tr.assignments||{};
       const closed=Object.keys(subs).filter(k=>subs[k] && subs[k].stage==='closed').length;
       const s=tpState(tr);
       return row(cols,
-        `<div class="nm">${hubAvatar(tr.name)}${esc(tr.name)}${tr.group?` <span style="color:var(--grey);font-size:0.8rem;">· group ${esc(tr.group)}</span>`:''}</div>
+        `<div class="nm">${hubAvatar(tr.name)}${esc(tr.name)}</div>
          <div class="mid">${esc(tpNumberOf(tr))} · ${esc(s.label.toLowerCase())}</div>
          <div class="st">${closed} of 4 closed</div>
          <div class="act"><a class="rowbtn pair" href="20_celta5.html?trainee=${encodeURIComponent(tr.id)}">CELTA 5</a><a class="rowbtn pair" href="12_assessor_pack.html?trainee=${encodeURIComponent(tr.id)}">Portfolio</a></div>`);
-    }).join('');
+    };
+  host.innerHTML =
+    `<div class="grid ghead" style="grid-template-columns:${cols}"><div>Trainee</div><div class="mid">Teaching practice</div><div>Assignments</div><div></div></div>` +
+    byGroup(list, tr => tr.group).map(([g, rs]) => groupHead(g, rs.length) + rs.map(trRow).join('')).join('');
 }
 
 /* Day one, a centre opening its tutor link for the first time met three empty
