@@ -437,6 +437,10 @@ window.a5InPlay = function(subs){
 // (screen 8 sets it). ABSENT MEANS RELEASED -- every course that existed before
 // the toggle keeps all four open, and holding one back is a deliberate act.
 // Assignment 5 is not covered here: it has its own gate, a5InPlay.
+/* A course link the candidates may see: off only when switched off. The
+   timetable is never switched (Ramy: "they should see it anyway"). */
+window.hubLinkIsTimetable = function(l){ return /timetable/i.test(String((l && l.label) || '') + ' ' + String((l && l.card) || '')); };
+window.hubLinkShown = function(l){ return !!l && (window.hubLinkIsTimetable(l) || l.show !== false); };
 window.hubReleased = function(wording, key){
   return !(wording && wording[key] && wording[key].released === false);
 };

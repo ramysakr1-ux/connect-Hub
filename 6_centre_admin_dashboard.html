@@ -270,7 +270,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609282207">
+<link rel="stylesheet" href="hub-house.css?v=202609282219">
 </head>
 <body>
 <div class="board">
@@ -483,7 +483,7 @@
     <button type="button" class="btn ghost" id="addOnlineRoom" style="margin-top:10px;">Add a room</button>
 
     <h3 class="docsh">Files for candidates</h3>
-    <p class="note" style="margin-top:0;">Links the candidates read: the timetable, CELTA 5, the input sessions, TP points, anything else. Each one becomes a line on their home screen, under the card you name — links with the same card name share a card, so “Input sessions” can hold twenty; a link with no card name is a card of its own. Leave a link empty and it does not show.</p>
+    <p class="note" style="margin-top:0;">Links the candidates read: the timetable, CELTA 5, the input sessions, TP points, anything else. Each row has a switch: off, and the candidates do not see it — a cloned course arrives with every row off except the timetable. Each one becomes a line on their home screen, under the card you name — links with the same card name share a card, so “Input sessions” can hold twenty; a link with no card name is a card of its own. Leave a link empty and it does not show.</p>
     <div id="candLinks" class="fields docs"></div>
     <button type="button" class="btn ghost" id="addCandLink" style="margin-top:10px;">Add a link</button>
 
@@ -543,11 +543,11 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609282207"></script>
-<script src="hub-store.js?v=202609282207"></script>
-<script src="observation-defaults.js?v=202609282207"></script>
-<script src="hub-shared.js?v=202609282207"></script>
-<script src="hub-sync.js?v=202609282207"></script>
+<script src="assignment-defaults.js?v=202609282219"></script>
+<script src="hub-store.js?v=202609282219"></script>
+<script src="observation-defaults.js?v=202609282219"></script>
+<script src="hub-shared.js?v=202609282219"></script>
+<script src="hub-sync.js?v=202609282219"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -816,9 +816,15 @@ function renderCandLinks(){
      other, pasted by the centre.
      Declared here, not above: the settings load calls this before the script
      below it has run, so a top-level var would still be undefined. */
-  const SUG = [['Timetable', '', ''], ['CELTA 5', '', ''], ['Input sessions', '', ''], ['TP points', '', '']];
+  const SUG = [['Timetable', '', ''], ['CELTA 5', '', ''], ['TP points', '', '']];
+  /* Ramy, 28 Sep 2026: "the course ships a starting list" -- the standard
+     input sessions as empty rows under their card, so the centre pastes
+     links against names. Only on a course with no input sessions yet. */
+  const INPUT_SESSIONS = ['Lesson shapes and staging', 'Classroom management', 'Concept checking and instructions', 'Presenting grammar', 'Teaching vocabulary', 'Phonology: sounds and the chart', 'Phonology: stress and intonation', 'Receptive skills: reading', 'Receptive skills: listening', 'Productive skills: speaking', 'Productive skills: writing', 'Functional language', 'Error correction and feedback', 'Materials and adapting the coursebook', 'Analysing language for teaching', 'Learner needs and Focus on the Learner', 'Teaching at low levels', 'Test-teach-test and task-based learning', 'Developing as a teacher'];
+  const hasInput = CAND_LINKS.some(l => /input session/i.test((l.card || '') + ' ' + (l.label || '')));
   const have = CAND_LINKS.map(l => l.label), haveUrl = CAND_LINKS.map(l => l.url);
-  const rows = CAND_LINKS.concat(SUG.filter(([label, url]) => !have.includes(label) && !(url && haveUrl.includes(url))).map(([label, url, card]) => ({ label, url, card })));
+  const rows = CAND_LINKS.concat(SUG.filter(([label, url]) => !have.includes(label) && !(url && haveUrl.includes(url))).map(([label, url, card]) => ({ label, url, card })))
+    .concat(hasInput ? [] : INPUT_SESSIONS.map(label => ({ label, url: '', card: 'Input sessions', show: true })));
   /* Ramy, 27 Sep 2026: "you have an input session card and then they just go
      underneath that card." The third field names the card; the same name on
      several rows is one card with several lines. */
@@ -826,16 +832,22 @@ function renderCandLinks(){
   document.getElementById('candLinks').innerHTML = rows.map((l, i) =>
     `<div><label>Label</label><input type="text" class="cl-label" data-i="${i}" value="${esc(l.label)}" placeholder="What the candidate sees"></div>
      <div><label>Link</label><input type="text" class="cl-url" data-i="${i}" value="${esc(l.url)}" placeholder="https://…"></div>
-     <div class="wide"><label>Card <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0;">— only to put several links on one card; empty means its own card</span></label><input type="text" class="cl-card" data-i="${i}" value="${esc(l.card || '')}" list="cardNames" placeholder="${esc(l.label ? 'Its own card: ' + l.label : 'Its own card, under the label')}"></div>`).join('') +
+     <div class="wide" style="display:flex;gap:14px;align-items:end;flex-wrap:wrap;"><div style="flex:1;min-width:200px;"><label>Card <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0;">— only to put several links on one card; empty means its own card</span></label><input type="text" class="cl-card" data-i="${i}" value="${esc(l.card || '')}" list="cardNames" placeholder="${esc(l.label ? 'Its own card: ' + l.label : 'Its own card, under the label')}"></div>
+       ${hubLinkIsTimetable(l) ? '<span class="muted" style="font-size:0.78rem;padding-bottom:10px;">The timetable always shows.</span>' : `<label class="sw" style="padding-bottom:8px;"><input type="checkbox" class="cl-show" data-i="${i}"${l.show === false ? '' : ' checked'}><span class="track"></span><span class="lbl">${l.show === false ? 'Hidden from candidates' : 'Candidates can see it'}</span></label>`}</div>`).join('') +
     `<datalist id="cardNames">${cards.map(c => `<option value="${esc(c)}">`).join('')}</datalist>`;
 }
 function readCandLinks(){
   const labels = [...document.querySelectorAll('.cl-label')], urls = [...document.querySelectorAll('.cl-url')], cards = [...document.querySelectorAll('.cl-card')];
-  const all = labels.map((el, i) => ({ label: el.value.trim(), url: (urls[i] ? urls[i].value : '').trim(), card: (cards[i] ? cards[i].value : '').trim() }));
-  /* Every row stays on screen as typed -- an empty suggestion keeps its place
-     and a new row goes at the end; only rows with a link are saved. */
-  CAND_LINKS = all; return all.filter(l => l.url);
+  const all = labels.map((el, i) => { const row = el.closest('div').parentElement; const sw = document.querySelector(`.cl-show[data-i="${i}"]`); return { label: el.value.trim(), url: (urls[i] ? urls[i].value : '').trim(), card: (cards[i] ? cards[i].value : '').trim(), show: sw ? sw.checked : true }; });
+  /* Every row stays on screen as typed. Saved: any row with a link, and any
+     row under a card with a label (an input session that has no link yet
+     shows the candidates its name and "no link yet" -- Ramy, 28 Sep 2026:
+     "see the input sessions already on the course, and the ones that need a
+     link"). The bare suggestions with nothing typed are not saved. */
+  CAND_LINKS = all;
+  return all.filter(l => l.url || (l.label && l.card)).map(l => { const o = { label: l.label, url: l.url, card: l.card }; if (!l.show && !hubLinkIsTimetable(l)) o.show = false; return o; });
 }
+document.getElementById('candLinks').addEventListener('change', e => { const sw = e.target.closest('.cl-show'); if (!sw) return; sw.parentElement.querySelector('.lbl').textContent = sw.checked ? 'Candidates can see it' : 'Hidden from candidates'; });
 document.getElementById('addCandLink').addEventListener('click', () => {
   readCandLinks();
   /* a new row joins the card of the row above it, which is what "add another input session" means */
@@ -1173,18 +1185,35 @@ document.getElementById('storeRoster').addEventListener('click', async e=>{
 
 renderStoreRoster();
 
-/* The Assignments tab lists the four in this centre's order. */
+/* The Assignments tab lists the four in this centre's order, each with the
+   switch that decides whether the candidates can open it (the wording's
+   `released`, which screen 8 also sets; a cloned course arrives with every
+   one off -- Ramy, 28 Sep 2026). */
 (function(){
   try {
-    let w = null; try{ w = JSON.parse(localStorage.getItem('connect_assignment_wording_v2')); }catch(e){}
-    if (!w && window.CONNECT_HUB_DEFAULT_WORDING) w = window.CONNECT_HUB_DEFAULT_WORDING;
+    const readW = () => { let w = null; try{ w = JSON.parse(localStorage.getItem('connect_assignment_wording_v2')); }catch(e){} if (!w && window.CONNECT_HUB_DEFAULT_WORDING) w = JSON.parse(JSON.stringify(window.CONNECT_HUB_DEFAULT_WORDING)); return w || {}; };
+    let w = readW();
     const order = hubAssignmentOrder(w);
     const host = document.getElementById('assignmentRows'); if (!host) return;
     [...host.querySelectorAll('.arow')]
       .sort((a,b) => order.indexOf(a.dataset.key) - order.indexOf(b.dataset.key))
       .forEach(el => host.appendChild(el));
+    const write = () => { localStorage.setItem('connect_assignment_wording_v2', JSON.stringify(w)); };
+    const paint = () => host.querySelectorAll('.arow').forEach(el => {
+      const k = el.dataset.key; if (k === 'a5') return;
+      let sw = el.querySelector('.sw');
+      if (!sw) { sw = document.createElement('label'); sw.className = 'sw'; sw.style.marginLeft = 'auto'; sw.innerHTML = '<input type="checkbox" class="as-show"><span class="track"></span><span class="lbl"></span>'; el.insertBefore(sw, el.querySelector('a.btn')); }
+      const on = hubReleased(w, k); sw.querySelector('input').checked = on; sw.querySelector('.lbl').textContent = on ? 'Candidates can see it' : 'Hidden from candidates';
+    });
+    paint();
+    host.addEventListener('change', e => { const sw = e.target.closest('.as-show'); if (!sw) return; const k = sw.closest('.arow').dataset.key; w[k] = w[k] || {}; w[k].released = sw.checked; write(); paint(); });
+    const bar = document.createElement('div'); bar.className = 'visbar'; bar.innerHTML = '<span>The candidates see only the assignments switched on.</span><button type="button" data-all="1">Show all to candidates</button><button type="button" data-all="0">Hide all</button>';
+    host.after(bar);
+    bar.addEventListener('click', e => { const b = e.target.closest('[data-all]'); if (!b) return; ['fol','lrt','lsrt','lfc'].forEach(k => { w[k] = w[k] || {}; w[k].released = b.dataset.all === '1'; }); write(); paint(); });
   } catch (e) {}
 })();
+/* The Input sessions door on the tutor dashboard lands on the links block. */
+if (location.hash === '#candLinks') { showTab('settings'); setTimeout(() => { const el = document.getElementById('candLinks'); if (el) el.scrollIntoView({ block: 'start' }); }, 300); }
 
 renderTitle();
 renderSetup();

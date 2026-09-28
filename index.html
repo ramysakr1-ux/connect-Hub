@@ -147,6 +147,8 @@
   .room.files li:first-child{border-top:0;}
   .room.files a{color:var(--teal); text-decoration:none; font-weight:600;}
   .room.files a:hover{text-decoration:underline;}
+  .room.files li.nolink{color:var(--grey);}
+  .room.files li.nolink small{font-size:0.74rem; font-style:italic; color:var(--faint, oklch(60% 0.012 80));}
   .solo{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; grid-auto-rows:1fr;}
   .room{display:block; text-decoration:none; color:inherit; font-family:'Karla',sans-serif;
     background:linear-gradient(180deg, var(--card-top) 0%, var(--card) 64%);
@@ -244,7 +246,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609282207">
+<link rel="stylesheet" href="hub-house.css?v=202609282219">
 </head>
 <body>
 <div class="board">
@@ -377,10 +379,10 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202609282207"></script>
-<script src="hub-shared.js?v=202609282207"></script>
-<script src="hub-store.js?v=202609282207"></script>
-<script src="hub-sync.js?v=202609282207"></script>
+<script src="hub-due.js?v=202609282219"></script>
+<script src="hub-shared.js?v=202609282219"></script>
+<script src="hub-store.js?v=202609282219"></script>
+<script src="hub-sync.js?v=202609282219"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -576,7 +578,9 @@ line(document.getElementById('badgeCelta5'), (function(){
      the tutor wrote them on this candidate alone, and the store hands them to
      no other token. Then the course's links, the same for everyone. */
   const mine = (rec('chub:links') || []).filter(l => l && l.url).map(l => ({ label: l.label || l.url, url: l.url, card: l.card || '' }));
-  const links = mine.concat(((rec('connect_course_settings') || {}).courseLinks || []).filter(l => l && l.url));
+  /* Only what is switched on; a row with a name and no link yet shows as
+     such, so the candidates see the course's input sessions whole. */
+  const links = mine.concat(((rec('connect_course_settings') || {}).courseLinks || []).filter(l => l && (l.url || l.label) && hubLinkShown(l)));
   const host = document.getElementById('roomFiles'); if (!host || !links.length) return;
   const e = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
   const cards = [];
@@ -584,9 +588,9 @@ line(document.getElementById('badgeCelta5'), (function(){
   /* One link under its own name would read "Timetable / Timetable" (Ramy,
      28 Sep 2026, on the same repetition in the form) -- so a one-link card is
      the link, whole. */
-  host.outerHTML = cards.map(c => c.links.length === 1 && (c.links[0].label || '') === c.name
+  host.outerHTML = cards.map(c => c.links.length === 1 && c.links[0].url && (c.links[0].label || '') === c.name
     ? `<a class="room files one" href="${e(c.links[0].url)}" target="_blank" rel="noopener noreferrer"><h2>${e(c.name)}</h2><span class="st">Opens in a new tab</span></a>`
-    : `<div class="room files"><h2>${e(c.name)}</h2><ul>${c.links.map(l => `<li><a href="${e(l.url)}" target="_blank" rel="noopener noreferrer">${e(l.label || l.url)}</a></li>`).join('')}</ul></div>`).join('');
+    : `<div class="room files"><h2>${e(c.name)}</h2><ul>${c.links.map(l => l.url ? `<li><a href="${e(l.url)}" target="_blank" rel="noopener noreferrer">${e(l.label || l.url)}</a></li>` : `<li class="nolink">${e(l.label)} <small>no link yet</small></li>`).join('')}</ul></div>`).join('');
 })();
 
 /* The grid: when it last changed, which is the question you open it with. Never
