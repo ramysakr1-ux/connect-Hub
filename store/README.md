@@ -24,7 +24,7 @@ version 35**; version 36 adds the optional `due` date to `gridRelease`.
 See `2026-09-28-course-stream.md`. Course kind `stream`, ops `post` / `unpost`
 appending one post at a time under the lock (`courseUpdate_`, and
 `courseWrite_` split into wrapper + `courseWriteRaw_`); `boot` and `course`
-return it. **Deployed as version 34.**
+return it. **Deployed as version 34**; version 37 adds the optional `due` on a post.
 
 ## 27 Sep 2026 — course materials folders live in one folder
 See `2026-09-27-materials-folders-live-in-one-place.md`. `matsRoot_()` and

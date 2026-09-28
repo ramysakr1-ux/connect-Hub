@@ -51,3 +51,9 @@ tab title carries the unseen count.
 saw the whole-course and group-1 posts and not group 2's; a candidate token
 and the assessor key were refused; deletes went through; the stream was
 cleared afterwards.
+
+## Addendum — version 37: a post can carry a "by when"
+
+`post {…, due?}` — an optional ISO date stored on the post as `due` (≤ 40
+chars). The pages count it down (gold pill) and keep the post at the top of a
+candidate's stream until it passes. The store has no clock; nothing fires.
