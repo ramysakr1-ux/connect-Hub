@@ -187,7 +187,7 @@
     .grid > .mid{display:none;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609282125">
+<link rel="stylesheet" href="hub-house.css?v=202609282132">
 </head>
 <body>
 <div class="board">
@@ -244,16 +244,16 @@
 
 </div>
 
-<script src="hub-due.js?v=202609282125"></script>
-<script src="hub-shared.js?v=202609282125"></script>
-<script src="hub-store.js?v=202609282125"></script>
+<script src="hub-due.js?v=202609282132"></script>
+<script src="hub-shared.js?v=202609282132"></script>
+<script src="hub-store.js?v=202609282132"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202609282125"></script>
-<script src="hub-sync.js?v=202609282125"></script>
-<script src="hub-tracker.js?v=202609282125"></script>
+<script src="assignment-defaults.js?v=202609282132"></script>
+<script src="hub-sync.js?v=202609282132"></script>
+<script src="hub-tracker.js?v=202609282132"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a candidate's link opened it and read the course and
@@ -554,19 +554,24 @@ nameInput.addEventListener('input', ()=>localStorage.setItem('chub:tutorName', n
   const read = () => { try { return (JSON.parse(localStorage.getItem(KEY)) || []).filter(p => p && p.text); } catch(err) { return []; } };
   const groups = () => [...new Set(people().map(p => p.group).filter(Boolean).map(String))].sort();
   let showAll = false, busy = false, note = '', pending = null;
+  /* A post with a "by when" (28 Sep 2026): a gold pill counting down, and
+     the post stays at the top until the date passes. Shared with the home. */
+  const dueState = p => (p && p.due && window.HubDue) ? HubDue.state(p.due) : { has: false };
+  const duePill = p => { const d = dueState(p); return d.has ? `<span class="due${d.past ? ' past' : ''}">${d.past ? 'was due ' + e(d.due) : e(d.due) + ' · ' + e(d.text)}</span>` : ''; };
+  const orderPosts = list => list.slice().sort((a, b) => { const da = dueState(a), db = dueState(b); const la = da.has && !da.past, lb = db.has && !db.past; if (la !== lb) return la ? -1 : 1; if (la && lb) return da.at - db.at; return String(b.at).localeCompare(String(a.at)); });
   /* Ramy, 28 Sep 2026: "some kind of warning -- this post is going to group
      one, this post is going to the whole course -- and then you can click
      post anyway." One more look before it goes: who, and how many. */
   const audience = to => { const all = people(); const n = to ? all.filter(p => String(p.group || '') === String(to)).length : all.length; return { name: to ? 'Group ' + to : 'the whole course', n }; };
   function draw(){
-    const posts = read().sort((a, b) => String(b.at).localeCompare(String(a.at)));
+    const posts = orderPosts(read());
     const list = showAll ? posts : posts.slice(0, 5);
     const gs = groups(); const last = localStorage.getItem('chub:streamTo') || '';
     host.innerHTML = `<div class="shead"><h2>Course stream</h2><span class="new">${e(note)}</span>${posts.length > 5 ? `<button class="more" type="button">${showAll ? 'Fewer' : 'Older posts (' + (posts.length - 5) + ')'}</button>` : ''}</div>`
       + `<div class="compose"><div class="row"><span class="who" aria-hidden="true">${e(initials(nameInput.value))}</span><textarea id="streamText" placeholder="Tell the course something — a room change, a deadline, where to find a file. Links become clickable."></textarea></div>
-         ${pending ? (() => { const a = audience(pending.to); return `<div class="check" role="alert"><div class="ttl">Are you sure?</div><div class="msg">This post is going to <b>${e(a.name)}</b> — ${a.n} candidate${a.n === 1 ? '' : 's'}${pending.to ? '' : ', every group'}. They will see it on their home the moment you post.</div><div class="acts"><button class="btn-back" type="button" id="streamBack">Cancel</button><button class="btn-post primary" type="button" id="streamConfirm"${busy ? ' disabled' : ''}>Post anyway</button></div></div>`; })() : ''}
-         <div class="bar"${pending ? ' hidden' : ''}><div class="house-sel"><select id="streamTo"><option value="">The whole course</option>${gs.map(g => `<option value="${e(g)}"${g === last ? ' selected' : ''}>Group ${e(g)}</option>`).join('')}</select></div><span class="hint">The whole course is the main course tutor’s; a group is its tutor’s.</span><button class="btn-post primary" type="button" id="streamPost"${busy ? ' disabled' : ''}>Post</button></div></div>`
-      + list.map(p => `<article class="post" data-id="${e(p.id)}"><span class="who" aria-hidden="true">${e(initials(p.by))}</span><div><div class="top"><b>${e(p.by || 'Tutor')}</b><span class="to">${p.to ? 'Group ' + e(p.to) : 'Whole course'}</span><span>${e(when(p.at))}</span><button class="rm" type="button" data-rm="${e(p.id)}" title="Delete this post">Delete</button></div><p class="body">${linkify(p.text)}</p></div></article>`).join('')
+         ${pending ? (() => { const a = audience(pending.to); return `<div class="check" role="alert"><div class="ttl">Are you sure?</div><div class="msg">This post is going to <b>${e(a.name)}</b> — ${a.n} candidate${a.n === 1 ? '' : 's'}${pending.to ? '' : ', every group'}. They will see it on their home the moment you post.${pending.due && window.HubDue ? ` It counts down to <b>${e(HubDue.state(pending.due).due)}</b> and stays at the top of their stream until then.` : ''}</div><div class="acts"><button class="btn-back" type="button" id="streamBack">Cancel</button><button class="btn-post primary" type="button" id="streamConfirm"${busy ? ' disabled' : ''}>Post anyway</button></div></div>`; })() : ''}
+         <div class="bar"${pending ? ' hidden' : ''}><div class="house-sel"><select id="streamTo"><option value="">The whole course</option>${gs.map(g => `<option value="${e(g)}"${g === last ? ' selected' : ''}>Group ${e(g)}</option>`).join('')}</select></div><label class="bywhen">By when <input type="datetime-local" id="streamDue" title="Optional — a date the post counts down to"></label><span class="hint">The whole course is the main course tutor’s; a group is its tutor’s.</span><button class="btn-post primary" type="button" id="streamPost"${busy ? ' disabled' : ''}>Post</button></div></div>`
+      + list.map(p => `<article class="post" data-id="${e(p.id)}"><span class="who" aria-hidden="true">${e(initials(p.by))}</span><div><div class="top"><b>${e(p.by || 'Tutor')}</b><span class="to">${p.to ? 'Group ' + e(p.to) : 'Whole course'}</span><span>${e(when(p.at))}</span>${duePill(p)}<button class="rm" type="button" data-rm="${e(p.id)}" title="Delete this post">Delete</button></div><p class="body">${linkify(p.text)}</p></div></article>`).join('')
       + (posts.length ? '' : '<p class="empty">Nothing posted yet. The candidates see this stream on their home.</p>');
     const m = host.querySelector('.more'); if (m) m.addEventListener('click', () => { showAll = !showAll; draw(); });
     if (pending) { host.querySelector('#streamText').value = pending.text; host.querySelector('#streamText').readOnly = true; }
@@ -589,12 +594,13 @@ nameInput.addEventListener('input', ()=>localStorage.setItem('chub:tutorName', n
     if (!by) { nameInput.focus(); note = 'Type your name at the top first — it signs the post.'; draw(); return; }
     if (!text) { ta.focus(); return; }
     localStorage.setItem('chub:streamTo', sel.value);
-    pending = { to: sel.value, text }; note = ''; draw();
+    const dueEl = host.querySelector('#streamDue'); const due = dueEl && dueEl.value && window.HubDue ? HubDue.fromLocalInput(dueEl.value) : '';
+    pending = { to: sel.value, text, due }; note = ''; draw();
   }
   async function send(){
-    if (!pending) return; const { to, text } = pending; const by = nameInput.value.trim();
+    if (!pending) return; const { to, text, due } = pending; const by = nameInput.value.trim();
     busy = true; note = 'Posting…'; draw();
-    try { const r = await window.HubStore.call({ op: 'post', by, to, text }); localStorage.setItem(KEY, JSON.stringify(r.stream || [])); note = ''; pending = null; }
+    try { const r = await window.HubStore.call(Object.assign({ op: 'post', by, to, text }, due ? { due } : {})); localStorage.setItem(KEY, JSON.stringify(r.stream || [])); note = ''; pending = null; }
     catch(err) { note = 'Could not post — ' + (err.message || err); }
     busy = false; draw();
   }

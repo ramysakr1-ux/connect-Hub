@@ -244,7 +244,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609282125">
+<link rel="stylesheet" href="hub-house.css?v=202609282132">
 </head>
 <body>
 <div class="board">
@@ -377,10 +377,10 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202609282125"></script>
-<script src="hub-shared.js?v=202609282125"></script>
-<script src="hub-store.js?v=202609282125"></script>
-<script src="hub-sync.js?v=202609282125"></script>
+<script src="hub-due.js?v=202609282132"></script>
+<script src="hub-shared.js?v=202609282132"></script>
+<script src="hub-store.js?v=202609282132"></script>
+<script src="hub-sync.js?v=202609282132"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -675,7 +675,12 @@ if (fbBack){
   (function(){
     let posts = []; try { posts = JSON.parse(localStorage.getItem('connect_course_stream_v1')) || []; } catch(e) {}
     const grp = String((me && me.group) || '');
-    posts = posts.filter(p => p && p.text && (!p.to || String(p.to) === grp)).sort((a, b) => String(b.at).localeCompare(String(a.at)));
+    posts = posts.filter(p => p && p.text && (!p.to || String(p.to) === grp));
+    /* A post with a "by when" stays at the top until it passes, then falls
+       back into the order of posting; its pill counts down in gold. */
+    const dueState = p => (p && p.due && window.HubDue) ? HubDue.state(p.due) : { has: false };
+    posts.sort((a, b) => { const da = dueState(a), db = dueState(b); const la = da.has && !da.past, lb = db.has && !db.past; if (la !== lb) return la ? -1 : 1; if (la && lb) return da.at - db.at; return String(b.at).localeCompare(String(a.at)); });
+    const duePill = p => { const d = dueState(p); return d.has ? `<span class="due${d.past ? ' past' : ''}">${d.past ? 'was due ' + e(d.due) : e(d.due) + ' · ' + e(d.text)}</span>` : ''; };
     const host = document.getElementById('stream'); if (!host || !posts.length) return;
     const seenAt = localStorage.getItem('chub:streamSeen') || '';
     const e = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
@@ -683,6 +688,9 @@ if (fbBack){
     const initials = n => hubInitials(n);
     const when = iso => { const d = new Date(iso); if (isNaN(d)) return ''; const today = new Date(); const sameDay = d.toDateString() === today.toDateString(); return sameDay ? 'Today, ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }); };
     const fresh = posts.filter(p => String(p.at) > seenAt).length;
+    /* The stream's newest post is not always first now (a due post leads),
+       so "seen" is stamped from the newest, not the first. */
+    const newestAt = posts.reduce((m, p) => String(p.at) > m ? String(p.at) : m, '');
     /* The tab's title carries the count while there are unseen posts -- the
        one nudge that fits Lite: quiet, and it works from behind another
        tab. Back to the plain title on the next open, with the dots. */
@@ -691,14 +699,14 @@ if (fbBack){
     const draw = () => {
       const list = showAll ? posts : posts.slice(0, 5);
       host.innerHTML = `<div class="shead"><h2>Course stream</h2>${fresh ? `<span class="new">${fresh} new</span>` : ''}${posts.length > 5 ? `<button class="more" type="button">${showAll ? 'Fewer' : 'Older posts (' + (posts.length - 5) + ')'}</button>` : ''}</div>`
-        + list.map(p => `<article class="post"><span class="who" aria-hidden="true">${e(initials(p.by))}</span><div><div class="top"><b>${e(p.by || 'Tutor')}</b><span class="to${p.to ? ' mine' : ''}">${p.to ? 'Group ' + e(p.to) : 'Whole course'}</span><span>${e(when(p.at))}</span>${String(p.at) > seenAt ? '<span class="dot" title="New since you last looked"></span>' : ''}</div><p class="body">${linkify(p.text)}</p></div></article>`).join('');
+        + list.map(p => `<article class="post"><span class="who" aria-hidden="true">${e(initials(p.by))}</span><div><div class="top"><b>${e(p.by || 'Tutor')}</b><span class="to${p.to ? ' mine' : ''}">${p.to ? 'Group ' + e(p.to) : 'Whole course'}</span><span>${e(when(p.at))}</span>${duePill(p)}${String(p.at) > seenAt ? '<span class="dot" title="New since you last looked"></span>' : ''}</div><p class="body">${linkify(p.text)}</p></div></article>`).join('');
       host.hidden = false;
       const m = host.querySelector('.more'); if (m) m.addEventListener('click', () => { showAll = !showAll; draw(); });
     };
     draw();
     /* Seen once it has been on screen a moment -- the dots stay for this
        visit and are gone on the next. */
-    setTimeout(() => { try { localStorage.setItem('chub:streamSeen', posts[0].at); } catch(e) {} }, 4000);
+    setTimeout(() => { try { localStorage.setItem('chub:streamSeen', newestAt); } catch(e) {} }, 4000);
   })();
   /* Email your tutor -- their group's tutor first, then the course's. */
   (function(){
