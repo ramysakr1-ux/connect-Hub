@@ -134,7 +134,11 @@ window.HUB_MAX_TP = 8;
     if (!host) return;
     try {
       if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) return;
-      if (localStorage.getItem('chub:installHintDone')) return;
+      /* "Not now" holds for a week, then the line returns (Ramy, 28 Sep
+         2026); an actual install holds for good. */
+      var held = localStorage.getItem('chub:installHintDone');
+      if (held === 'installed') return;
+      if (held && Date.now() - Number(held) < 7 * 24 * 3600 * 1000) return;
     } catch (e) { return; }
     var ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
     var deferred = null;
@@ -144,12 +148,13 @@ window.HUB_MAX_TP = 8;
               : '<span>In Chrome or Edge, use <b>Install</b> in the address bar; on a phone, <b>Add to Home Screen</b>.</span>';
       host.innerHTML = '<span><b>Put Connect Lite on your ' + (ios ? 'phone' : 'phone or computer') + '.</b> It opens like an app and remembers your link.</span>' + how + '<button type="button" class="dismiss">Not now</button>';
       host.hidden = false;
-      var b = host.querySelector('.btn-install'); if (b) b.addEventListener('click', function(){ if (!deferred) return; deferred.prompt(); deferred.userChoice.then(function(){ done(); }); });
+      var b = host.querySelector('.btn-install'); if (b) b.addEventListener('click', function(){ if (!deferred) return; deferred.prompt(); deferred.userChoice.then(function(r){ (r && r.outcome === 'accepted') ? installed() : done(); }); });
       host.querySelector('.dismiss').addEventListener('click', done);
     };
-    var done = function(){ try { localStorage.setItem('chub:installHintDone', '1'); } catch (e) {} host.hidden = true; };
+    var done = function(){ try { localStorage.setItem('chub:installHintDone', String(Date.now())); } catch (e) {} host.hidden = true; };
+    var installed = function(){ try { localStorage.setItem('chub:installHintDone', 'installed'); } catch (e) {} host.hidden = true; };
     window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferred = e; draw(); });
-    window.addEventListener('appinstalled', done);
+    window.addEventListener('appinstalled', installed);
     draw();
   };
   window.hubBullets=function(el){
