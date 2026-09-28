@@ -149,7 +149,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609281054">
+<link rel="stylesheet" href="hub-house.css?v=202609281249">
 </head>
 <body>
 <div class="board">
@@ -173,8 +173,8 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609281054"></script>
-<script src="hub-store.js?v=202609281054"></script>
+<script src="hub-shared.js?v=202609281249"></script>
+<script src="hub-store.js?v=202609281249"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -328,6 +328,14 @@ function render(courses, msg){
                course being kept (23 Sep 2026). Filled in by fillMaterials(). -->
           <span class="chip faint mats-line" data-mats="${esc(c.id)}"><span class="note">Materials: checking…</span></span>
           <span class="chip faint"><code>${esc(c.id)}</code>${c.created ? ' · made ' + esc(niceDate(c.created)) : ''}</span>
+          <!-- Ramy, 28 Sep 2026: "can we duplicate the course at the end?" The
+               centre's things carry over (name, number, logo, tutors, the
+               standing instructions, TPs each, hours, mode, Appian, the
+               candidates' shared links, the assignment wording, the observation
+               sheets); this course's things start fresh (dates, assessment
+               date and picks, notification reference, the assessor's document
+               links, the roster and every record, both keys). -->
+          <button class="btn quiet small" type="button" data-clone="${esc(c.id)}" data-label="${esc(label(c))}">Start the next course from this</button>
           <button class="btn quiet small" type="button" data-delete="${esc(c.id)}" data-label="${esc(label(c))}" data-trainees="${n}">Delete</button>
         </span>
       </div>
@@ -514,6 +522,24 @@ $('app').addEventListener('click', async e => {
         const r = await call({ op: 'purgeMaterials', course: pg.dataset.purge, confirm: typed });
         const t = r.trashed || {};
         showList(r.courses, `Emptied ${r.emptied} — ${t.files || 0} file${t.files === 1 ? '' : 's'} to Drive's trash.`);
+      } catch (err) { status(err.message); }
+      BUSY = false;
+      return;
+    }
+    const cl = e.target.closest('[data-clone]');
+    if (cl) {
+      if (BUSY) return;
+      const ok = await confirmModal(
+        `Start the next course from ${cl.dataset.label}? The centre's settings, logo, tutors, standing instructions, shared links, assignment wording and observation sheets carry over. Dates, the assessment date, the notification reference, the assessor's document links, the roster and every record start fresh, and the new course gets its own tutor and assessor links.`,
+        'Start the next course');
+      if (!ok) return;
+      BUSY = true; status('Starting the next course from ' + cl.dataset.label + '\u2026');
+      try {
+        const made = await call({ op: 'cloneCourse', from: cl.dataset.clone });
+        NEW_ID = made.id;
+        showList(made.courses, 'Made ' + made.id + ' from ' + cl.dataset.label + '. Open its Course admin, set the dates, then send the tutor link to the centre.');
+        const card = document.querySelector('.course.minted');
+        if (card) hubScrollIntoView(card, 'start');
       } catch (err) { status(err.message); }
       BUSY = false;
       return;
