@@ -41,7 +41,7 @@
     ".ink-bar .btn{font-family:'Karla',sans-serif; font-size:0.84rem; font-weight:700; padding:9px 16px; border-radius:8px; border:0; background:var(--teal,#1f6f6b); color:#fff; cursor:pointer;}"+
     ".ink-bar .btn.quiet{background:none; color:var(--grey,#6b625a); border:1.5px solid var(--sand-line,#e3dccf);}"+
     ".ink-bar .btn:disabled{opacity:.45; cursor:not-allowed;}"+
-    ".ink-bar .btn:not(:disabled):hover{filter:brightness(.96);}"+
+    ".ink-bar .btn.primary:not(:disabled):hover{background:var(--teal-lifted,#2a7f7a);}"+
     "svg.ink{display:block; height:44px; width:auto; max-width:180px; color:var(--ink,#1f1a14);}";
   document.head.appendChild(css);
 
@@ -83,7 +83,7 @@
         + '<div class="ink-bar"><button type="button" class="btn quiet ink-clear">Clear</button><span class="grow"></span>'
         + '<button type="button" class="btn quiet ink-cancel">Cancel</button>'
         + '<button type="button" class="btn quiet ink-typed">Typed name only</button>'
-        + '<button type="button" class="btn ink-ok" disabled>Sign</button></div></div>';
+        + '<button type="button" class="btn primary ink-ok" disabled>Sign</button></div></div>';
       overlay.querySelector('h3').textContent = opts.title || 'Sign';
       var nameRow = overlay.querySelector('.ink-name'), nameIn = nameRow.querySelector('input');
       if (opts.askName) { nameIn.value = opts.name || ''; overlay.querySelector('.ink-sub').textContent = 'Draw your signature with a finger, a pen or the mouse; the typed name and the moment stay on the record underneath.'; }

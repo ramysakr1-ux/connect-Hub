@@ -105,6 +105,10 @@
   .bar{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:14px;}
   .btn{font-family:'Karla',sans-serif; font-size:0.84rem; font-weight:700; padding:9px 18px; border-radius:8px; border:0; background:var(--teal); color:#fff; cursor:pointer;}
   .btn.quiet{background:none; color:var(--grey); border:1.5px solid var(--sand-line);}
+  /* hub-shared washes every button on hover unless it is .primary; a filled
+     teal button that goes sand under the mouse reads as broken (Ramy, 28 Sep
+     2026: "colour completely disappeared"). Filled ones lift instead. */
+  .btn.primary:not(:disabled):hover{background:var(--teal-lifted, oklch(44% 0.062 195));}
   .btn:disabled{opacity:.5; cursor:not-allowed;}
   .status{font-size:0.8rem; color:var(--grey);}
   .sig{display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap; margin-top:12px;}
@@ -137,8 +141,8 @@
     textarea, input{border:0; background:none; padding:0;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609281841">
-<link rel="stylesheet" href="hub-theme.css?v=202609281841">
+<link rel="stylesheet" href="hub-house.css?v=202609281851">
+<link rel="stylesheet" href="hub-theme.css?v=202609281851">
 </head>
 <body class="hub-celta5">
 <div class="board">
@@ -151,14 +155,14 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202609281841"></script>
-<script src="hub-ink.js?v=202609281841"></script>
-<script src="celta5-text.js?v=202609281841"></script>
-<script src="celta5-criteria.js?v=202609281841"></script>
-<script src="hub-tracker.js?v=202609281841"></script>
-<script src="hub-shared.js?v=202609281841"></script>
-<script src="hub-store.js?v=202609281841"></script>
-<script src="hub-sync.js?v=202609281841"></script>
+<script src="celta5-pdf.js?v=202609281851"></script>
+<script src="hub-ink.js?v=202609281851"></script>
+<script src="celta5-text.js?v=202609281851"></script>
+<script src="celta5-criteria.js?v=202609281851"></script>
+<script src="hub-tracker.js?v=202609281851"></script>
+<script src="hub-shared.js?v=202609281851"></script>
+<script src="hub-store.js?v=202609281851"></script>
+<script src="hub-sync.js?v=202609281851"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -221,7 +225,7 @@ const signature = (obj, key, opts) => {
   if (s && s.at) return `<div class="signed${s.ink ? ' inked' : ''}">${s.ink ? window.hubInk.svg(s.ink) : ''}<div><b>${esc(s.name)}</b> — signed ${when(s.at)}</div></div>`;
   if (!opts.mine) return `<div class="ro empty" style="margin-top:12px">${opts.waiting || 'Not signed yet'}</div>`;
   if (opts.locked) return `<div class="ro empty" style="margin-top:12px">${opts.locked}</div>`;
-  return `<div class="sig"><div class="who"><label class="f">${opts.label || 'Your name, to sign'}</label><input type="text" data-sig="${opts.o}:${key}" value="${esc(opts.prefill || '')}" placeholder="Type your name"></div><button class="btn" type="button" data-sign="${opts.o}:${key}">${opts.button || 'Sign'}</button></div>`;
+  return `<div class="sig"><div class="who"><label class="f">${opts.label || 'Your name, to sign'}</label><input type="text" data-sig="${opts.o}:${key}" value="${esc(opts.prefill || '')}" placeholder="Type your name"></div><button class="btn primary" type="button" data-sign="${opts.o}:${key}">${opts.button || 'Sign'}</button></div>`;
 };
 const marksGrid = (candMarks, tutorMarks, opts) => {
   const topics = opts.topics; let last = '';
@@ -282,7 +286,7 @@ function render(){
 
   $('app').innerHTML = `
   <div class="topbar"><div><p class="eyebrow">${my ? 'Your CELTA 5' : 'Candidate record'}</p><h1>CELTA 5 Record Booklet</h1></div>
-    <span style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">${my ? '' : `<button class="btn" type="button" id="cambridgePdf">Cambridge\u2019s booklet (PDF)</button><span class="status" id="pdfStatus"></span>`}<button class="btn quiet" type="button" onclick="window.print()">Print / Save as PDF</button></span></div>
+    <span style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">${my ? '' : `<button class="btn primary" type="button" id="cambridgePdf">Cambridge\u2019s booklet (PDF)</button><span class="status" id="pdfStatus"></span>`}<button class="btn quiet" type="button" onclick="window.print()">Print / Save as PDF</button></span></div>
   <p class="lede">${my ? 'Your record for the whole course. Read and confirm the two sections at the start; at each stage write your half, submit it, and sign when your tutor returns theirs. The tables fill themselves from what you have already done.' : `<b>${esc(who.name)}</b>’s record. ${tut ? 'Write the tutors’ half of each stage and return it; the candidate signs. The tables fill themselves.' : 'Read-only.'}`}</p>
   <div class="cover">
     <div><div class="k">Candidate</div><div class="v">${esc(who.name)}</div></div>
@@ -308,7 +312,7 @@ function render(){
         ${field(s1, 'hoursTaught', 'Hours taught so far', { o:'s1', mine: tut, input:'text', locked: !!s1.returnedAt })}
         ${field(s1, 'strengths', 'Strengths', { o:'s1', mine: tut, locked: !!s1.returnedAt })}
         ${field(s1, 'actionPlan', 'Action plan', { o:'s1', mine: tut, locked: !!s1.returnedAt })}
-        ${tut ? (s1.returnedAt ? `<div class="bar"><button class="btn quiet" type="button" data-reopen="stage1">Reopen</button><span class="status">Returned by ${esc((s1.signedBy||{}).name||'')}</span></div>` : `<div class="bar"><button class="btn" type="button" data-return="stage1">Return to candidate</button><span class="status" id="savedNote"></span></div>`) : ''}
+        ${tut ? (s1.returnedAt ? `<div class="bar"><button class="btn quiet" type="button" data-reopen="stage1">Reopen</button><span class="status">Returned by ${esc((s1.signedBy||{}).name||'')}</span></div>` : `<div class="bar"><button class="btn primary" type="button" data-return="stage1">Return to candidate</button><span class="status" id="savedNote"></span></div>`) : ''}
         ${signature(s1, 'signedBy', { o:'s1', mine:false, waiting: 'Not returned yet' })}
       </div>
       <div class="half ${my?'mine':''}"><h3>Candidate</h3>
@@ -326,7 +330,7 @@ function render(){
         ${field(s2c, 'notesOther', 'Other notes', { o:'s2c', mine: my, locked: !!s2c.submittedAt })}
         <label class="f">Your overall self-assessment at this stage</label>${rating(s2c, 'overall', { o:'s2c', mine: my, locked: !!s2c.submittedAt })}
         ${field(s2c, 'areas', 'Areas you need to work on', { o:'s2c', mine: my, locked: !!s2c.submittedAt })}
-        ${my ? (s2c.submittedAt ? '' : `<div class="bar"><button class="btn" type="button" data-submit="stage2">Submit to your tutor</button><span class="status" id="savedNote"></span></div>`) : ''}
+        ${my ? (s2c.submittedAt ? '' : `<div class="bar"><button class="btn primary" type="button" data-submit="stage2">Submit to your tutor</button><span class="status" id="savedNote"></span></div>`) : ''}
         ${signature(s2c, 'signed', { o:'c2', mine: my, prefill: who.name, locked: s2t.returnedAt ? '' : 'Your tutor has not returned Stage 2 yet', label:'Your name, to sign', button:'Sign' })}
       </div>
       <div class="half ${tut?'mine':''}"><h3>Tutor <small>${s2t.returnedAt ? 'returned ' + when(s2t.returnedAt) : ''}</small></h3>
@@ -334,7 +338,7 @@ function render(){
         ${field(s2t, 'notesOther', 'Other notes', { o:'s2t', mine: tut, locked: !!s2t.returnedAt })}
         <label class="f">Overall at this stage</label>${rating(s2t, 'overall', { o:'s2t', mine: tut, locked: !!s2t.returnedAt })}
         ${field(s2t, 'summary', 'Summary of tutorial and action points', { o:'s2t', mine: tut, locked: !!s2t.returnedAt })}
-        ${tut ? (s2t.returnedAt ? `<div class="bar"><button class="btn quiet" type="button" data-reopen="stage2">Reopen</button></div>` : `<div class="bar"><button class="btn" type="button" data-return="stage2">Return to candidate</button><span class="status" id="savedNote2"></span></div>`) : ''}
+        ${tut ? (s2t.returnedAt ? `<div class="bar"><button class="btn quiet" type="button" data-reopen="stage2">Reopen</button></div>` : `<div class="bar"><button class="btn primary" type="button" data-return="stage2">Return to candidate</button><span class="status" id="savedNote2"></span></div>`) : ''}
         ${signature(s2t, 'signedBy', { o:'s2t', mine:false, waiting:'Not returned yet' })}
       </div>
     </div>
@@ -349,7 +353,7 @@ function render(){
         ${field(s3, 'notesOther', 'Other notes', { o:'s3', mine: tut, locked: !!s3.returnedAt })}
         <label class="f">Overall at this stage</label>${rating(s3, 'overall', { o:'s3', mine: tut, locked: !!s3.returnedAt })}
         ${field(s3, 'summary', 'Summary of tutorial and action points', { o:'s3', mine: tut, locked: !!s3.returnedAt })}
-        ${tut ? (s3.returnedAt ? `<div class="bar"><button class="btn quiet" type="button" data-reopen="stage3">Reopen</button></div>` : `<div class="bar"><button class="btn" type="button" data-return="stage3">Return to candidate</button></div>`) : ''}
+        ${tut ? (s3.returnedAt ? `<div class="bar"><button class="btn quiet" type="button" data-reopen="stage3">Reopen</button></div>` : `<div class="bar"><button class="btn primary" type="button" data-return="stage3">Return to candidate</button></div>`) : ''}
         ${signature(s3, 'signedBy', { o:'s3', mine:false, waiting:'Not returned yet' })}
       </div>
       <div class="half ${my?'mine':''}"><h3>Candidate</h3>
