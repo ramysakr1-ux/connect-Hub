@@ -83,18 +83,18 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} section.group{padding:12px 12px 14px;} .sofar{max-width:160px;} }
   @media print{ .back, .relbar, .check, #hubSync{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609282003">
-<link rel="stylesheet" href="hub-theme.css?v=202609282003">
+<link rel="stylesheet" href="hub-house.css?v=202609282032">
+<link rel="stylesheet" href="hub-theme.css?v=202609282032">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-tracker.js?v=202609282003"></script>
-<script src="hub-shared.js?v=202609282003"></script>
-<script src="hub-store.js?v=202609282003"></script>
-<script src="hub-sync.js?v=202609282003"></script>
+<script src="hub-tracker.js?v=202609282032"></script>
+<script src="hub-shared.js?v=202609282032"></script>
+<script src="hub-store.js?v=202609282032"></script>
+<script src="hub-sync.js?v=202609282032"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -161,7 +161,10 @@ function render(){
           return `<td class="cell first${isClash ? ' clash' : ''}" data-tp="${tp}" data-f="main">${sel('main', p.main, AIMS, editable)}</td><td class="cell" data-tp="${tp}" data-f="sub">${sel('sub', p.sub, AIMS, editable)}</td><td class="cell" data-tp="${tp}" data-f="material">${editable ? `<input type="text" class="material" value="${esc(p.material || '')}" placeholder="Coursebook, pages…">` : `<div class="ro${p.material ? '' : ' empty'}">${esc(p.material || 'not yet')}</div>`}</td>`; }).join('')
         + `</tr>`;
     }).join('');
-    return `<section class="group" data-group="${esc(g.group)}"><h2>Group ${esc(g.group) || '—'} <small>${n} candidate${n === 1 ? '' : 's'}</small></h2>${relbar}
+    /* Ramy, 28 Sep 2026: "you can't have more than six per TP group." A
+       reminder, not a block -- the roster is the centre's to fix. */
+    const over = n > 6 ? `<p class="clashnote">A teaching practice group is at most six candidates. This one has ${n} \u2014 split it on Course admin.</p>` : '';
+    return `<section class="group" data-group="${esc(g.group)}"><h2>Group ${esc(g.group) || '—'} <small>${n} candidate${n === 1 ? '' : 's'}</small></h2>${over}${relbar}
       <div class="tablewrap"><table class="grid"><thead><tr><th rowspan="2">Candidate</th>${TPS.map(tp => `<th class="tp" colspan="3">TP${tp}</th>`).join('')}</tr><tr>${TPS.map(() => `<th style="border-left:1px solid var(--sand-line)">Main aim</th><th>Sub aim</th><th>Material</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
       ${anyClash ? `<p class="clashnote">Two of you have the same main aim for the same teaching practice. Not a problem if the group means it — worth a word if not.</p>` : ''}
       <p class="aims">Main aim: ${AIMS.join(' · ')}. Sub aim: usually a skill for a language lesson, or language for a skills lesson.</p></section>`;

@@ -270,7 +270,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609282003">
+<link rel="stylesheet" href="hub-house.css?v=202609282032">
 </head>
 <body>
 <div class="board">
@@ -543,11 +543,11 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609282003"></script>
-<script src="hub-store.js?v=202609282003"></script>
-<script src="observation-defaults.js?v=202609282003"></script>
-<script src="hub-shared.js?v=202609282003"></script>
-<script src="hub-sync.js?v=202609282003"></script>
+<script src="assignment-defaults.js?v=202609282032"></script>
+<script src="hub-store.js?v=202609282032"></script>
+<script src="observation-defaults.js?v=202609282032"></script>
+<script src="hub-shared.js?v=202609282032"></script>
+<script src="hub-sync.js?v=202609282032"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -959,6 +959,10 @@ async function renderStoreRoster(next){
      (25 Sep 2026, walking a cohort of six). Sorted the same way as the rest. */
   const trainees = [...ROSTER].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   const groups = [...new Set(trainees.map(t=>t.group).filter(Boolean))];
+  /* A TP group is at most six (Ramy, 28 Sep 2026: "you can't have more than
+     six per TP group"). Said here, where the groups are typed; never a block. */
+  const overSix = groups.map(g => [g, trainees.filter(t => String(t.group) === String(g)).length]).filter(([g, n]) => n > 6);
+  const overNote = overSix.length ? `<p class="note" style="margin:8px 0 0;color:var(--gold-deep, oklch(52% 0.098 70));font-weight:600;">A teaching practice group is at most six candidates \u2014 ${overSix.map(([g, n]) => `Group ${esc(String(g))} has ${n}`).join(', ')}. Change the group letters below to split it.</p>` : '';
   // Every path that changes the roster comes back through here -- the first
   // load, one added, several pasted, one removed -- so this is the one place
   // the setup row needs telling.
@@ -1012,6 +1016,7 @@ async function renderStoreRoster(next){
     </div>
 
     <div style="margin-top:14px;">
+      ${overNote}
       <div class="grid roster ghead"><div>Trainee</div><div class="col-group">Group</div><div class="col-status">Personal link</div><div></div></div>
       ${trainees.length ? trainees.map(t=>`<div class="grid roster grow">
         <div class="name" style="display:flex;align-items:center;">${hubAvatar(t.name)}${esc(t.name)}</div>
