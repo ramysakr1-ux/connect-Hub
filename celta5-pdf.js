@@ -42,6 +42,21 @@
     if (font.widthOfTextAtSize(t, fit) > maxWidth) { while (t.length > 1 && font.widthOfTextAtSize(t + '...', fit) > maxWidth) t = t.slice(0, -1); t += '...'; }
     page.drawText(t, { x, y: fitzY(page, y1), size: fit, font, color: rgb(0, 0, 0) });
   }
+  /* Ramy, 28 Sep 2026: the drawn signature. The ink is an SVG path in
+     hub-ink's 300 x 100 box; it is scaled to sit on the signature line, and
+     the typed name follows it in small print so the form still reads. */
+  const INK_H = 30;
+  function drawInk(page, ink, x, y1, maxWidth){
+    const scale = INK_H / 100, w = 300 * scale;
+    if (w > maxWidth) return 0;
+    const cap = (window.PDFLib && window.PDFLib.LineCapStyle) ? window.PDFLib.LineCapStyle.Round : undefined;
+    page.drawSvgPath(ink, { x, y: fitzY(page, y1 - INK_H + 6, 0), scale, borderColor: rgb(0.1, 0.08, 0.06), borderWidth: 1.25 / scale, borderLineCap: cap });
+    return w;
+  }
+  function drawSigned(page, font, name, ink, x, y1, maxWidth){
+    if (ink) { const w = drawInk(page, ink, x, y1, maxWidth); if (w) { drawSignature(page, font, name, x + w + 8, y1, maxWidth - w - 8, 6.5, 5); return; } }
+    drawSignature(page, font, name, x, y1, maxWidth);
+  }
   function drawCellGrid(page, font, value, xMids, y1, size){
     const chars = String(value || '').split('');
     xMids.forEach((xMid, i) => { if (chars[i]) drawAt(page, font, chars[i], 0, y1, size || 12, { align: 'center', xMid }); });
@@ -105,8 +120,8 @@
     if (d.hoursTaught !== null && d.hoursTaught !== undefined && d.hoursTaught !== '') drawAt(page, f.regular, String(d.hoursTaught), 0, (HOURS[1] + HOURS[3]) / 2 + 4, 11, { align: 'center', xMid: (HOURS[0] + HOURS[2]) / 2 });
     if (d.strengths) drawWrapped(page, f.regular, [d.strengths], { x0: 52, y0: 230, x1: 538, y1: 335 });
     if (d.actionPlan) drawWrapped(page, f.regular, [d.actionPlan], { x0: 52, y0: 394, x1: 538, y1: 625 });
-    if (d.tutorSignatureName && d.tutorSignedAt) { drawSignature(page, f.regular, d.tutorSignatureName, 156, 666.6, 434 - 156 - 10); drawAt(page, f.regular, fmtDate(d.tutorSignedAt), 434, 666.6); }
-    if (d.candidateSignatureName && d.candidateSignedAt) { drawSignature(page, f.regular, d.candidateSignatureName, 181, 729.7, 434 - 181 - 10); drawAt(page, f.regular, fmtDate(d.candidateSignedAt), 434, 729.7); }
+    if (d.tutorSignatureName && d.tutorSignedAt) { drawSigned(page, f.regular, d.tutorSignatureName, d.tutorSignatureInk, 156, 666.6, 434 - 156 - 10); drawAt(page, f.regular, fmtDate(d.tutorSignedAt), 434, 666.6); }
+    if (d.candidateSignatureName && d.candidateSignedAt) { drawSigned(page, f.regular, d.candidateSignatureName, d.candidateSignatureInk, 181, 729.7, 434 - 181 - 10); drawAt(page, f.regular, fmtDate(d.candidateSignedAt), 434, 729.7); }
   }
 
   const UNAVOIDABLE_DIV = [216.89, 239.69, 262.49, 285.19, 307.99, 330.79];
@@ -175,8 +190,8 @@
     if (d.candidateNotes) drawWrapped(page, f.regular, [d.candidateNotes], { x0: 62, y0: 178, x1: 525, y1: 316 });
     if (d.tutorOverall) drawOvalAround(page, TUT[RATINGS.indexOf(d.tutorOverall)]);
     if (d.tutorNotes) drawWrapped(page, f.regular, [d.tutorNotes], { x0: 57, y0: 431, x1: 525, y1: 618 });
-    if (d.tutorSignatureName && d.tutorSignedAt) { drawSignature(page, f.regular, d.tutorSignatureName, 165, 657.4, 440 - 165 - 10); drawAt(page, f.regular, fmtDate(d.tutorSignedAt), 440, 657.4); }
-    if (d.candidateSignatureName && d.candidateSignedAt) { drawSignature(page, f.regular, d.candidateSignatureName, 190, 726.5, 440.5 - 190 - 10); drawAt(page, f.regular, fmtDate(d.candidateSignedAt), 440.5, 726.5); }
+    if (d.tutorSignatureName && d.tutorSignedAt) { drawSigned(page, f.regular, d.tutorSignatureName, d.tutorSignatureInk, 165, 657.4, 440 - 165 - 10); drawAt(page, f.regular, fmtDate(d.tutorSignedAt), 440, 657.4); }
+    if (d.candidateSignatureName && d.candidateSignedAt) { drawSigned(page, f.regular, d.candidateSignatureName, d.candidateSignatureInk, 190, 726.5, 440.5 - 190 - 10); drawAt(page, f.regular, fmtDate(d.candidateSignedAt), 440.5, 726.5); }
   }
   function drawStage3Notes(page, f, d){
     if (d.tutorWrittenAssignmentsNotes) drawWrapped(page, f.regular, [d.tutorWrittenAssignmentsNotes], { x0: 65, y0: 132, x1: 530, y1: 335 });
@@ -186,14 +201,14 @@
     const TUT = [{ x0: 78, y0: 89.1, x1: 318, y1: 101.5 }, { x0: 78, y0: 101.9, x1: 300, y1: 114.2 }, { x0: 78, y0: 114.5, x1: 492, y1: 126.8 }];
     if (d.tutorOverall) drawOvalAround(page, TUT[RATINGS.indexOf(d.tutorOverall)]);
     if (d.tutorNotes) drawWrapped(page, f.regular, [d.tutorNotes], { x0: 65, y0: 168, x1: 530, y1: 568 });
-    if (d.tutorSignatureName && d.tutorSignedAt) { drawSignature(page, f.regular, d.tutorSignatureName, 170, 608.5, 448 - 170 - 10); drawAt(page, f.regular, fmtDate(d.tutorSignedAt), 448, 608.5); }
-    if (d.candidateSignatureName && d.candidateSignedAt) { drawSignature(page, f.regular, d.candidateSignatureName, 195, 665.2, 449 - 195 - 10); drawAt(page, f.regular, fmtDate(d.candidateSignedAt), 449, 665.2); }
+    if (d.tutorSignatureName && d.tutorSignedAt) { drawSigned(page, f.regular, d.tutorSignatureName, d.tutorSignatureInk, 170, 608.5, 448 - 170 - 10); drawAt(page, f.regular, fmtDate(d.tutorSignedAt), 448, 608.5); }
+    if (d.candidateSignatureName && d.candidateSignedAt) { drawSigned(page, f.regular, d.candidateSignatureName, d.candidateSignatureInk, 195, 665.2, 449 - 195 - 10); drawAt(page, f.regular, fmtDate(d.candidateSignedAt), 449, 665.2); }
   }
   function drawFinalDeclaration(page, f, d){
     const BOXES = [[61.8, 167.6, 72.2, 178.6], [61.8, 195.9, 72.2, 206.2], [61.8, 223.5, 72.2, 232.7], [62.5, 251.7, 72.8, 262.6], [62.5, 275.4, 72.8, 286.3]];
     [d.checklistTp, d.checklistObservations, d.checklistAssignments, d.checklistOwnWork, d.checklistAllRecords].forEach((c, i) => { if (c) drawCheck(page, f.bold, BOXES[i]); });
-    if (d.candidateSignatureName && d.candidateSignedAt) { drawSignature(page, f.regular, d.candidateSignatureName, 192, 340.3, 412 - 192 - 10); drawAt(page, f.regular, fmtDate(d.candidateSignedAt), 412, 340.3); }
-    if (d.tutorSignatureName && d.tutorSignedAt) { drawSignature(page, f.regular, d.tutorSignatureName, 174, 435.8, 412 - 174 - 10); drawAt(page, f.regular, fmtDate(d.tutorSignedAt), 412, 435.8); }
+    if (d.candidateSignatureName && d.candidateSignedAt) { drawSigned(page, f.regular, d.candidateSignatureName, d.candidateSignatureInk, 192, 340.3, 412 - 192 - 10); drawAt(page, f.regular, fmtDate(d.candidateSignedAt), 412, 340.3); }
+    if (d.tutorSignatureName && d.tutorSignedAt) { drawSigned(page, f.regular, d.tutorSignatureName, d.tutorSignatureInk, 174, 435.8, 412 - 174 - 10); drawAt(page, f.regular, fmtDate(d.tutorSignedAt), 412, 435.8); }
   }
   /* An appended page, not one of Cambridge's: the centre's own record that the
      candidate was given, and signed for, the portfolio requirements and the
@@ -206,15 +221,20 @@
     page.drawText('CENTRE RECORD -- CANDIDATE CONFIRMATIONS', { x: LEFT, y, size: 12, font: f.bold }); y -= 18;
     page.drawText('Not part of the Cambridge CELTA 5. Retained by the centre as evidence that the', { x: LEFT, y, size: 8.5, font: f.regular }); y -= 12;
     page.drawText('candidate was given these documents and confirmed reading them.', { x: LEFT, y, size: 8.5, font: f.regular }); y -= 34;
-    const block = (title, statement, name, at) => {
+    const block = (title, statement, name, at, ink) => {
       page.drawText(title, { x: LEFT, y, size: 10, font: f.bold }); y -= 15;
       page.drawText(statement, { x: LEFT, y, size: 8.5, font: f.regular }); y -= 20;
-      if (at) { page.drawText('Signed: ' + (name || d.candidateName), { x: LEFT + 12, y, size: 9.5, font: f.regular }); page.drawText('Date: ' + fmtLong(at), { x: LEFT + 300, y, size: 9.5, font: f.regular }); }
+      if (at) {
+        let sx = LEFT + 12; page.drawText('Signed: ', { x: sx, y, size: 9.5, font: f.regular }); sx += f.regular.widthOfTextAtSize('Signed: ', 9.5);
+        if (ink) { const w = drawInk(page, ink, sx, page.getHeight() - y, 240); if (w) sx += w + 8; }
+        page.drawText(name || d.candidateName, { x: sx, y, size: ink ? 6.5 : 9.5, font: f.regular });
+        page.drawText('Date: ' + fmtLong(at), { x: LEFT + 300, y, size: 9.5, font: f.regular });
+      }
       else page.drawText('Not confirmed by the candidate.', { x: LEFT + 12, y, size: 9.5, font: f.regular });
       y -= 34;
     };
-    block('Candidate portfolio requirements', 'I confirm that I have understood and accept the requirements for the CELTA portfolio.', d.portfolioSignatureName, d.portfolioConfirmedAt);
-    block('Cambridge English appeals procedure', 'I confirm that I have read the Cambridge English Appeals Procedure.', d.appealsSignatureName, d.appealsConfirmedAt);
+    block('Candidate portfolio requirements', 'I confirm that I have understood and accept the requirements for the CELTA portfolio.', d.portfolioSignatureName, d.portfolioConfirmedAt, d.portfolioSignatureInk);
+    block('Cambridge English appeals procedure', 'I confirm that I have read the Cambridge English Appeals Procedure.', d.appealsSignatureName, d.appealsConfirmedAt, d.appealsSignatureInk);
   }
 
   // ---- the booklet ---------------------------------------------------------
