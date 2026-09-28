@@ -244,7 +244,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609282102">
+<link rel="stylesheet" href="hub-house.css?v=202609282109">
 </head>
 <body>
 <div class="board">
@@ -377,10 +377,10 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202609282102"></script>
-<script src="hub-shared.js?v=202609282102"></script>
-<script src="hub-store.js?v=202609282102"></script>
-<script src="hub-sync.js?v=202609282102"></script>
+<script src="hub-due.js?v=202609282109"></script>
+<script src="hub-shared.js?v=202609282109"></script>
+<script src="hub-store.js?v=202609282109"></script>
+<script src="hub-sync.js?v=202609282109"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -558,7 +558,12 @@ line(document.getElementById('badgeCelta5'), (function(){
   document.getElementById('roomGridTitle').innerHTML = `TP${tps[0]} &amp; TP${tps[1]} planning`;
   const mine = (g.rows || []).find(r => r.mine); const plan = (mine && mine.plan) || {};
   const done = tps.filter(n => { const p = plan['tp' + n] || {}; return p.main && p.sub && p.material; });
-  const st = done.length === tps.length ? ['Both planned — your group can see them', 'done'] : done.length ? [`TP${tps.find(n => !done.includes(n))} still to plan`, 'act'] : ['Choose your aims and material', 'act'];
+  const ds = window.HubDue && g.due ? HubDue.state(g.due) : { has: false };
+  const allDone = done.length === tps.length;
+  const st = allDone ? ['Both planned — your group can see them', 'done']
+    : ds.has && ds.past ? [`Was due ${ds.due} — ${done.length ? 'TP' + tps.find(n => !done.includes(n)) + ' still to plan' : 'choose your aims and material'}`, 'stuck']
+    : ds.has ? [`Fill in your row by ${ds.due} — ${ds.text}`, 'act']
+    : done.length ? [`TP${tps.find(n => !done.includes(n))} still to plan`, 'act'] : ['Choose your aims and material', 'act'];
   line(document.getElementById('badgeGrid'), st[0], st[1]);
   card.hidden = false;
 })();

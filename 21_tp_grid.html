@@ -57,6 +57,15 @@
   .check .ttl{font-family:'Newsreader',Georgia,serif; font-size:1.05rem; font-weight:600; margin:0 0 4px;}
   .check .msg{font-size:0.9rem; line-height:1.5;}
   .check .acts{display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; margin-top:10px;}
+  .check .opts{display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; margin-top:12px;}
+  .check .opts label.f{display:block; font-size:0.7rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); margin-bottom:4px;}
+  .check .opts input[type=datetime-local], .check .opts input[type=text]{width:100%; box-sizing:border-box; font:inherit; font-size:0.9rem; padding:8px 10px; border:1.5px solid var(--sand-line); border-radius:8px; background:var(--paper); color:inherit;}
+  .check .opts .tick{display:flex; align-items:center; gap:9px; font-size:0.88rem; align-self:end; padding-bottom:6px;}
+  .check .opts .tick input{accent-color:var(--teal);}
+  .dueline{font-size:0.82rem; margin:8px 0 0; color:var(--grey);}
+  .dueline b{color:var(--ink); font-weight:600;}
+  .dueline.soon b, .dueline.past b{color:var(--gold-deep);}
+  @media (max-width:560px){ .check .opts{grid-template-columns:1fr;} }
   .tablewrap{overflow-x:auto; -webkit-overflow-scrolling:touch; margin:14px 0 0;}
   table.grid{width:100%; border-collapse:collapse; font-size:0.86rem; background:var(--paper); border:1px solid var(--sand-line); border-radius:8px;}
   table.grid th{font-size:0.66rem; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); text-align:left; padding:8px 8px; border-bottom:1px solid var(--sand-line); font-weight:700; white-space:nowrap;}
@@ -87,18 +96,19 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} section.group{padding:12px 12px 14px;} .sofar{max-width:160px;} }
   @media print{ .back, .relbar, .check, #hubSync{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609282102">
-<link rel="stylesheet" href="hub-theme.css?v=202609282102">
+<link rel="stylesheet" href="hub-house.css?v=202609282109">
+<link rel="stylesheet" href="hub-theme.css?v=202609282109">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-tracker.js?v=202609282102"></script>
-<script src="hub-shared.js?v=202609282102"></script>
-<script src="hub-store.js?v=202609282102"></script>
-<script src="hub-sync.js?v=202609282102"></script>
+<script src="hub-due.js?v=202609282109"></script>
+<script src="hub-tracker.js?v=202609282109"></script>
+<script src="hub-shared.js?v=202609282109"></script>
+<script src="hub-store.js?v=202609282109"></script>
+<script src="hub-sync.js?v=202609282109"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -155,7 +165,7 @@ function render(){
     const clash = {}; TPS.forEach(tp => { const c = {}; g.rows.forEach(r => { const m = aimWord((r.plan['tp' + tp] || {}).main); if (m) c[m] = (c[m] || 0) + 1; }); clash[tp] = c; });
     const anyClash = TPS.some(tp => Object.values(clash[tp]).some(v => v > 1));
     const relbar = IS_TUTOR ? (pendingRelease && pendingRelease.group === g.group
-      ? `<div class="check" role="alert"><div class="ttl">Are you sure?</div><div class="msg">${pendingRelease.on ? `<b>Group ${esc(g.group) || '—'}</b> — ${n} candidate${n === 1 ? '' : 's'} — will see the grid on their home the moment you release it. Releasing is the main course tutor’s call.` : `The grid disappears from <b>Group ${esc(g.group) || '—'}</b>’s home. Nothing typed is lost; release it again to show it.`}</div><div class="acts"><button class="btn quiet" type="button" data-rel-cancel="1">Cancel</button><button class="btn primary" type="button" data-rel-go="${esc(g.group)}"${busy ? ' disabled' : ''}>${pendingRelease.on ? 'Release anyway' : 'Take it back'}</button></div></div>`
+      ? `<div class="check" role="alert"><div class="ttl">Are you sure?</div><div class="msg">${pendingRelease.on ? `<b>Group ${esc(g.group) || '—'}</b> — ${n} candidate${n === 1 ? '' : 's'} — will see the grid on their home the moment you release it. Releasing is the main course tutor’s call.` : `The grid disappears from <b>Group ${esc(g.group) || '—'}</b>’s home. Nothing typed is lost; release it again to show it.`}</div>${pendingRelease.on ? `<div class="opts"><div><label class="f">Fill in by <span style="font-weight:500;text-transform:none;letter-spacing:0">(optional)</span></label><input type="datetime-local" id="relDue" value="${esc(window.HubDue ? HubDue.toLocalInput(((grid && grid.due) || {})[g.group] || '') : '')}"></div><label class="tick"><input type="checkbox" id="relPost" checked> Post it to the course stream</label>${tutorName() ? '' : `<div style="grid-column:1/-1"><label class="f">Your name, to sign the post</label><input type="text" id="relName" placeholder="Type your name"></div>`}</div>` : ''}<div class="acts"><button class="btn quiet" type="button" data-rel-cancel="1">Cancel</button><button class="btn primary" type="button" data-rel-go="${esc(g.group)}"${busy ? ' disabled' : ''}>${pendingRelease.on ? 'Release anyway' : 'Take it back'}</button></div></div>`
       : `<div class="relbar">${on ? `<span class="chip fine">Released</span><button class="btn quiet" type="button" data-rel="${esc(g.group)}" data-on="0">Unrelease</button>` : `<span class="chip nd">Not released</span><button class="btn primary" type="button" data-rel="${esc(g.group)}" data-on="1">Release to Group ${esc(g.group) || '—'}</button>`}<span class="relnote">${on ? 'The candidates can see and fill their rows.' : 'Only tutors can see it until it is released.'}</span><span class="status">${esc(note)}</span></div>`) : (IS_TRAINEE ? `<div class="relbar"><span class="status">${esc(note)}</span></div>` : '');
     const rows = g.rows.map(r => {
       const editable = IS_TUTOR || (IS_TRAINEE && r.mine);
@@ -167,8 +177,13 @@ function render(){
     }).join('');
     /* Ramy, 28 Sep 2026: "you can't have more than six per TP group." A
        reminder, not a block -- the roster is the centre's to fix. */
+    /* The "fill in by" date: a reminder in the house's tone, plain until the
+       day, gold on it; after it, "was due", and nothing locks. */
+    const dueIso = IS_TRAINEE ? (grid && grid.due) || '' : ((grid && grid.due) || {})[g.group] || '';
+    const ds = window.HubDue ? HubDue.state(dueIso) : { has: false };
+    const dueLine = (on && ds.has) ? `<p class="dueline${ds.past ? ' past' : ds.soon ? ' soon' : ''}">${ds.past ? `Was due <b>${esc(ds.due)}</b>` : `Fill in your row by <b>${esc(ds.due)}</b> — ${esc(ds.text)}`}</p>` : '';
     const over = n > 6 ? `<p class="clashnote">A teaching practice group is at most six candidates. This one has ${n} \u2014 split it on Course admin.</p>` : '';
-    return `<section class="group" data-group="${esc(g.group)}"><h2>Group ${esc(g.group) || '—'} <small>${n} candidate${n === 1 ? '' : 's'}</small></h2>${over}${relbar}
+    return `<section class="group" data-group="${esc(g.group)}"><h2>Group ${esc(g.group) || '—'} <small>${n} candidate${n === 1 ? '' : 's'}</small></h2>${over}${relbar}${dueLine}
       <div class="tablewrap"><table class="grid"><thead><tr><th rowspan="2">Candidate</th>${TPS.map(tp => `<th class="tp" colspan="3">TP${tp}</th>`).join('')}</tr><tr>${TPS.map(() => `<th style="border-left:1px solid var(--sand-line)">Main aim</th><th>Sub aim</th><th>Material</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
       ${anyClash ? `<p class="clashnote">Two of you have the same main aim for the same teaching practice. Not a problem if the group means it — worth a word if not.</p>` : ''}
       <p class="aims">Main aim: ${AIMS.join(' · ')}. Sub aim: usually a skill for a language lesson, or language for a skills lesson.</p></section>`;
@@ -197,12 +212,31 @@ function wire(){
   app.querySelectorAll('[data-rel]').forEach(b => b.addEventListener('click', () => { pendingRelease = { group: b.dataset.rel, on: b.dataset.on === '1' }; render(); }));
   app.querySelectorAll('[data-rel-cancel]').forEach(b => b.addEventListener('click', () => { pendingRelease = null; render(); }));
   app.querySelectorAll('[data-rel-go]').forEach(b => b.addEventListener('click', async () => {
-    const { group, on } = pendingRelease; busy = true; render();
-    try { const r = await window.HubStore.call({ op: 'gridRelease', group, released: on }); grid = r.grid; localStorage.setItem(KEY, JSON.stringify(grid)); note = on ? 'Released.' : 'Taken back.'; }
+    const { group, on } = pendingRelease;
+    const dueEl = $('relDue'), postEl = $('relPost'), nameEl = $('relName');
+    const due = on && dueEl && dueEl.value && window.HubDue ? HubDue.fromLocalInput(dueEl.value) : (on ? '' : undefined);
+    const wantPost = on && postEl && postEl.checked;
+    const by = tutorName() || (nameEl ? nameEl.value.trim() : '');
+    if (wantPost && !by) { if (nameEl) nameEl.focus(); return; }
+    if (by && !tutorName()) localStorage.setItem('chub:tutorName', by);
+    busy = true; render();
+    try {
+      const r = await window.HubStore.call(Object.assign({ op: 'gridRelease', group, released: on }, due === undefined ? {} : { due }));
+      grid = r.grid; localStorage.setItem(KEY, JSON.stringify(grid)); note = on ? 'Released.' : 'Taken back.';
+      /* The release IS the announcement: one post to that group's stream,
+         under the tutor's name, with the date when there is one. */
+      if (wantPost) {
+        const ds = window.HubDue && due ? HubDue.state(due) : { has: false };
+        const text = `The TP${TPS[0]} & TP${TPS[1]} planning grid is open — choose your main aim, sub aim and material for each. ${ds.has ? 'Fill in your row by ' + ds.due + '.' : 'Fill in your row when you can.'}`;
+        try { const p = await window.HubStore.call({ op: 'post', by, to: group, text }); localStorage.setItem('connect_course_stream_v1', JSON.stringify(p.stream || [])); note = 'Released, and posted to Group ' + (group || '—') + '.'; }
+        catch(err) { note = 'Released, but the post did not go — ' + (err.message || err); }
+      }
+    }
     catch(err) { note = 'Could not — ' + (err.message || err); }
     busy = false; pendingRelease = null; render(); setTimeout(() => { note = ''; setStatus(); }, 3000);
   }));
 }
+function tutorName(){ return (localStorage.getItem('chub:tutorName') || '').trim(); }
 function setStatus(){ document.querySelectorAll('.status').forEach(s => s.textContent = note); }
 render();
 </script>
