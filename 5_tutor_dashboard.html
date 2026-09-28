@@ -162,6 +162,8 @@
   .qcard .l{font-size:0.85rem; color:var(--grey); margin-top:5px; text-wrap:pretty;}
   .qcard.stuck{border-color:color-mix(in oklab, var(--brick) 32%, transparent);}
   .qcard.stuck .n{color:var(--tone-stuck, oklch(45% 0.15 27));}
+  .qcard.wait{border-color:var(--pill-wait-line, oklch(84% 0.05 232));}
+  .qcard.wait .n{color:var(--pill-wait-text, oklch(37% 0.09 235));}
   .qcard.zero{background:none;}
   .qcard.zero .n{color:var(--grey);}
   .qcard.zero{border-color:var(--sand-line); cursor:default;}
@@ -204,7 +206,7 @@
     .grid > .mid{display:none;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609282348">
+<link rel="stylesheet" href="hub-house.css?v=202609282356">
 </head>
 <body>
 <div class="board">
@@ -280,16 +282,16 @@
 
 </div>
 
-<script src="hub-due.js?v=202609282348"></script>
-<script src="hub-shared.js?v=202609282348"></script>
-<script src="hub-store.js?v=202609282348"></script>
+<script src="hub-due.js?v=202609282356"></script>
+<script src="hub-shared.js?v=202609282356"></script>
+<script src="hub-store.js?v=202609282356"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202609282348"></script>
-<script src="hub-sync.js?v=202609282348"></script>
-<script src="hub-tracker.js?v=202609282348"></script>
+<script src="assignment-defaults.js?v=202609282356"></script>
+<script src="hub-sync.js?v=202609282356"></script>
+<script src="hub-tracker.js?v=202609282356"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a candidate's link opened it and read the course and
@@ -397,13 +399,17 @@ function paintQueue(){
   // One filter key per card: each card shows exactly its own rows, and clicking
   // another card switches the filter rather than toggling it off.
   /* One of anything is not "1 teaching practices" (tutor walk, 21 Sep 2026). */
-  const card=(n,one,many,tab,key,stuckTone)=>`<button type="button" class="qcard ${n===0?'zero':''} ${stuckTone?'stuck':''} ${FILTER===key&&n>0?'on':''}" data-queue="${tab}" data-key="${key}" ${n===0?'disabled':''}>
+  const card=(n,one,many,tab,key,stuckTone,tone)=>`<button type="button" class="qcard ${n===0?'zero':''} ${stuckTone?'stuck':''} ${tone&&n>0?tone:''} ${FILTER===key&&n>0?'on':''}" data-queue="${tab}" data-key="${key}" ${n===0?'disabled':''}>
     <div class="n">${n}</div><div class="l">${n===1?one:many}</div></button>`;
 
   document.getElementById('queue').innerHTML =
-    card(tpWaiting,'teaching practice ready for your feedback','teaching practices ready for your feedback','tp','tp',false) +
-    card(aWaiting,'assignment waiting to be marked','assignments waiting to be marked','assignments','mark',false) +
-    card(stuck,'assignment back with the candidate','assignments back with the candidate','assignments','stuck',true);
+    /* Ramy, 28 Sep 2026: "red should be what's outstanding — things that I
+       need to do." Feedback to write and marking to do go garnet when there
+       is any; an assignment back with the candidate is waiting on THEM, so
+       it takes the wait tone, never red. */
+    card(tpWaiting,'teaching practice ready for your feedback','teaching practices ready for your feedback','tp','tp',tpWaiting>0) +
+    card(aWaiting,'assignment waiting to be marked','assignments waiting to be marked','assignments','mark',aWaiting>0) +
+    card(stuck,'assignment back with the candidate','assignments back with the candidate','assignments','stuck',false,'wait');
 }
 
 /* The number on a tab is what is waiting on the tutor there, not how many
@@ -412,11 +418,10 @@ function paintQueue(){
    lessons turned in and waiting for feedback. Assignments: submissions
    waiting to be marked. Trainees: how many are on the course, which is the
    one place a plain count means something. */
+/* And then, the same afternoon: "drop the numbers from the tabs" -- the
+   cards carry them, once. */
 function paintTabsCounts(){
-  const list=people();
-  document.getElementById('cTp').textContent=list.filter(tr=>tpState(tr).act).length||'';
-  document.getElementById('cAssign').textContent=assignmentRows(list).filter(r=>r.s.act).length||'';
-  document.getElementById('cTrainees').textContent=list.length||'';
+  ['cTp','cAssign','cTrainees'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = ''; });
 }
 
 /* The last two teaching practices' planning grid, as one quiet line at the
