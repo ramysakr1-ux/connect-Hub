@@ -183,6 +183,26 @@
      2026). The state's colour stays; only the shadow and the lift move. */
   .rooms a.room.act:hover, .solo a.room.act:hover{border-color:var(--amber-edge); border-left-color:var(--gold);}
   .rooms a.room.stuck:hover, .solo a.room.stuck:hover{border-color:color-mix(in oklab, var(--brick) 35%, var(--sand-line)); border-left-color:var(--brick);}
+  /* ---- the course stream ---------------------------------------------- */
+  .stream{margin:18px 0 0; background:var(--paper); border:1px solid var(--sand-line); border-radius:10px; padding:4px 18px 8px;}
+  .stream .shead{display:flex; align-items:center; gap:10px; padding:12px 0 8px; border-bottom:1px solid var(--row-line, oklch(90% 0.016 82));}
+  .stream .shead h2{margin:0; font-family:'Newsreader',Georgia,serif; font-size:1.15rem; font-weight:600; color:var(--ink);}
+  .stream .shead .new{font-size:0.72rem; font-weight:700; color:var(--tone-act, oklch(52% 0.098 70));}
+  .stream .shead .more{margin-left:auto; font-family:'Karla',sans-serif; font-size:0.78rem; font-weight:700; color:var(--grey); background:none; border:0; cursor:pointer; padding:4px 0;}
+  .stream .shead .more:hover{color:var(--ink);}
+  .post{display:grid; grid-template-columns:38px 1fr; gap:12px; padding:14px 0; border-top:1px solid var(--row-line, oklch(90% 0.016 82));}
+  .post:first-of-type{border-top:0;}
+  .post .who{width:38px; height:38px; border-radius:9px; background:var(--ink-warm, oklch(30% 0.02 60)); color:var(--paper); display:inline-flex; align-items:center; justify-content:center; font-family:'Karla',sans-serif; font-size:0.82rem; font-weight:700; letter-spacing:.04em;}
+  .post .top{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; font-size:0.8rem; color:var(--grey);}
+  .post .top b{color:var(--ink); font-size:0.88rem;}
+  .post .top .to{font-size:0.68rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; border:1px solid var(--pill-neutral-line, oklch(85.5% 0.02 80)); background:var(--pill-neutral-bg, oklch(91.2% 0.03 80)); color:var(--pill-neutral-text, oklch(45% 0.02 70)); border-radius:999px; padding:2px 8px;}
+  .post .top .to.mine{background:var(--pill-good-bg, oklch(94% 0.04 155)); border-color:var(--pill-good-line, oklch(84% 0.06 155)); color:var(--pill-good-text, oklch(34% 0.09 155));}
+  .post .top .dot{width:7px; height:7px; border-radius:50%; background:var(--tone-act, oklch(52% 0.098 70)); align-self:center;}
+  .post .body{margin:5px 0 0; font-size:0.92rem; line-height:1.6; color:var(--ink); white-space:pre-wrap; overflow-wrap:anywhere;}
+  .post .body a{color:var(--teal); font-weight:600; text-decoration:none;}
+  .post .body a:hover{text-decoration:underline;}
+  @media (max-width:560px){ .post{grid-template-columns:32px 1fr; gap:10px;} .post .who{width:32px; height:32px; font-size:0.72rem;} }
+
   .room h2{margin:0; font-family:'Newsreader',Georgia,serif; font-size:1.3rem; font-weight:600; line-height:1.22; color:var(--ink);}
   .room p{margin:7px 0 0; font-size:0.83rem; color:var(--grey); line-height:1.6; max-width:62ch;}
   .room .st{display:block; margin-top:12px; font-size:0.78rem; font-weight:600; color:var(--grey);}
@@ -244,7 +264,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609281629">
+<link rel="stylesheet" href="hub-house.css?v=202609281642">
 </head>
 <body>
 <div class="board">
@@ -267,6 +287,11 @@
     <p id="courseMeta">Your teaching practice and your written assignments, in the order you need them. Each form saves itself as you go — nothing reaches your tutor until you turn it in.</p>
     <div id="onlineRooms"></div>
   </div>
+
+  <!-- The course stream: short posts from the tutors to the whole course or
+       to a TP group (Ramy, 28 Sep 2026: "the only thing missing now is an
+       announcement stream"). Hidden until there is a post. -->
+  <section class="stream" id="stream" hidden></section>
 
   <!-- The cycle, in its order, inside its own frame. Left to right IS the
        order: you write the plan, you teach and write the self-evaluation, you
@@ -359,10 +384,10 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202609281629"></script>
-<script src="hub-shared.js?v=202609281629"></script>
-<script src="hub-store.js?v=202609281629"></script>
-<script src="hub-sync.js?v=202609281629"></script>
+<script src="hub-due.js?v=202609281642"></script>
+<script src="hub-shared.js?v=202609281642"></script>
+<script src="hub-store.js?v=202609281642"></script>
+<script src="hub-sync.js?v=202609281642"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -632,6 +657,33 @@ if (fbBack){
   if (cs && cs.courseName) document.getElementById('boardTitle').textContent = cs.courseName;
   /* The rooms an online course teaches in -- Course admin -> Settings. */
   if (window.hubOnlineRoomsHTML) document.getElementById('onlineRooms').innerHTML = hubOnlineRoomsHTML(cs, { group: me && me.group });
+  /* The course stream: posts for the whole course and for this candidate's
+     group, newest first, five at a time. "New" is anything since this
+     browser last looked (a stamp kept locally, never synced). */
+  (function(){
+    let posts = []; try { posts = JSON.parse(localStorage.getItem('connect_course_stream_v1')) || []; } catch(e) {}
+    const grp = String((me && me.group) || '');
+    posts = posts.filter(p => p && p.text && (!p.to || String(p.to) === grp)).sort((a, b) => String(b.at).localeCompare(String(a.at)));
+    const host = document.getElementById('stream'); if (!host || !posts.length) return;
+    const seenAt = localStorage.getItem('chub:streamSeen') || '';
+    const e = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+    const linkify = t => e(t).replace(/(https?:\/\/[^\s<]+)/g, m => `<a href="${m}" target="_blank" rel="noopener noreferrer">${m.replace(/^https?:\/\//,'').replace(/\/$/,'')}</a>`);
+    const initials = n => String(n || '').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '·';
+    const when = iso => { const d = new Date(iso); if (isNaN(d)) return ''; const today = new Date(); const sameDay = d.toDateString() === today.toDateString(); return sameDay ? 'Today, ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }); };
+    const fresh = posts.filter(p => String(p.at) > seenAt).length;
+    let showAll = false;
+    const draw = () => {
+      const list = showAll ? posts : posts.slice(0, 5);
+      host.innerHTML = `<div class="shead"><h2>Course stream</h2>${fresh ? `<span class="new">${fresh} new</span>` : ''}${posts.length > 5 ? `<button class="more" type="button">${showAll ? 'Fewer' : 'Older posts (' + (posts.length - 5) + ')'}</button>` : ''}</div>`
+        + list.map(p => `<article class="post"><span class="who" aria-hidden="true">${e(initials(p.by))}</span><div><div class="top"><b>${e(p.by || 'Tutor')}</b><span class="to${p.to ? ' mine' : ''}">${p.to ? 'Group ' + e(p.to) : 'Whole course'}</span><span>${e(when(p.at))}</span>${String(p.at) > seenAt ? '<span class="dot" title="New since you last looked"></span>' : ''}</div><p class="body">${linkify(p.text)}</p></div></article>`).join('');
+      host.hidden = false;
+      const m = host.querySelector('.more'); if (m) m.addEventListener('click', () => { showAll = !showAll; draw(); });
+    };
+    draw();
+    /* Seen once it has been on screen a moment -- the dots stay for this
+       visit and are gone on the next. */
+    setTimeout(() => { try { localStorage.setItem('chub:streamSeen', posts[0].at); } catch(e) {} }, 4000);
+  })();
   /* The badge says WHO is looking, not what they are.
      Ramy, 23 Sep 2026: "instead of having things like trainee, trainer, we
      could actually have the names." A trainee knows they are the trainee; the
