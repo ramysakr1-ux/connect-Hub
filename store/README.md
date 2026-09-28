@@ -18,7 +18,7 @@ so the editor's text and this folder can be reconciled.
 See `2026-09-28-planning-grid.md`. Course kind `grid`, ops `gridSet` /
 `gridRelease` under the lock (`courseUpdateObj_`); `boot` / `course` return it
 shaped per reader (`gridFor_` — a candidate never sees a token). **Deployed as
-version 35.**
+version 35**; version 36 adds the optional `due` date to `gridRelease`.
 
 ## 28 Sep 2026 — the course stream
 See `2026-09-28-course-stream.md`. Course kind `stream`, ops `post` / `unpost`

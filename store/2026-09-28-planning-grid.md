@@ -40,3 +40,11 @@ candidate's copy carries no tokens; released to Group 1 → card, badge,
 13 rows by name with one editable; Marta's TP7 saved to the store; Defne saw
 Marta's row read-only; two Grammar picks marked a clash on the tutor's view;
 rows blanked and the release taken back afterwards.
+
+## Addendum — version 36: the release carries a date
+
+`gridRelease {group, released, due?}` — `due` (ISO) is stored in `g.due[group]`
+when given, cleared when `''`, left alone when absent; unreleasing keeps it.
+`gridFor_` returns `due` (the map, to readers; the group's own value to a
+candidate). The stream post on release is the client's doing (one `post` op
+under the tutor's name); the store has no clock and nothing fires at a time.
