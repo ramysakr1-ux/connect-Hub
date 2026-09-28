@@ -125,6 +125,33 @@ window.HUB_MAX_TP = 8;
     var e=function(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); };
     return '<span class="avi '+(kind==='staff'?'avi-staff':'avi-cand')+'" aria-hidden="true">'+e(window.hubInitials(name))+'</span>';
   };
+
+  /* The install hint: shown once per browser on the pages people live on,
+     never when already installed. Chrome/Edge hand us a real Install button
+     (beforeinstallprompt); iPhone gets the words for Share -> Add to Home
+     Screen; anything else gets the plain sentence. */
+  window.hubInstallHint = function(host, who){
+    if (!host) return;
+    try {
+      if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) return;
+      if (localStorage.getItem('chub:installHintDone')) return;
+    } catch (e) { return; }
+    var ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+    var deferred = null;
+    var draw = function(){
+      var how = deferred ? '<button type="button" class="btn-install">Install Connect Lite</button>'
+              : ios ? '<span>Tap <b>Share</b>, then <b>Add to Home Screen</b>.</span>'
+              : '<span>In Chrome or Edge, use <b>Install</b> in the address bar; on a phone, <b>Add to Home Screen</b>.</span>';
+      host.innerHTML = '<span><b>Put Connect Lite on your ' + (ios ? 'phone' : 'phone or computer') + '.</b> It opens like an app and remembers your link.</span>' + how + '<button type="button" class="dismiss">Not now</button>';
+      host.hidden = false;
+      var b = host.querySelector('.btn-install'); if (b) b.addEventListener('click', function(){ if (!deferred) return; deferred.prompt(); deferred.userChoice.then(function(){ done(); }); });
+      host.querySelector('.dismiss').addEventListener('click', done);
+    };
+    var done = function(){ try { localStorage.setItem('chub:installHintDone', '1'); } catch (e) {} host.hidden = true; };
+    window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferred = e; draw(); });
+    window.addEventListener('appinstalled', done);
+    draw();
+  };
   window.hubBullets=function(el){
     if(!el || el.dataset.hubBullets) return; el.dataset.hubBullets='1';
     var B='\u2022 ';
