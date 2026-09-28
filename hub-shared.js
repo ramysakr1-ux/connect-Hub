@@ -102,6 +102,10 @@ window.HUB_MAX_TP = 8;
   window.hubOnlineRoomsHTML=function(settings, opts){
     opts=opts||{};
     var rooms=(settings&&Array.isArray(settings.onlineRooms)?settings.onlineRooms:[]).filter(function(r){ return r&&r.url&&/^https?:\/\//i.test(r.url); });
+    /* Ramy, 28 Sep 2026: the assessor "should only see the rooms assigned to
+       them by the MCT -- too confusing otherwise." opts.assessor keeps the
+       ticked rooms only; none ticked, no strip. */
+    if(opts.assessor) rooms=rooms.filter(function(r){ return !!r.assessor; });
     if(!rooms.length) return '';
     var mine=String(opts.group||'');
     if(mine) rooms=rooms.slice().sort(function(a,b){ return (String(b.group||'')===mine)-(String(a.group||'')===mine); });

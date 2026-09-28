@@ -270,7 +270,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609281538">
+<link rel="stylesheet" href="hub-house.css?v=202609281553">
 </head>
 <body>
 <div class="board">
@@ -469,7 +469,7 @@
          teaches in. One list, shown as a join strip on the trainee home, the
          tutor dashboard and the assessor pack alike. -->
     <h3 class="docsh">Online rooms</h3>
-    <p class="note" style="margin-top:0;">Zoom, Meet or Teams links for an online or mixed-mode course, each room a button. Everyone — candidates, tutors, the assessor — sees every room and chooses theirs. Teaching practice and tutorials are suggested once per group, since each tutor holds their own. <b>For</b> is optional: name a teaching practice group and that group’s candidates see the room first, marked as theirs; nobody is kept out of it. Leave a link empty and it does not show.</p>
+    <p class="note" style="margin-top:0;">Zoom, Meet or Teams links for an online or mixed-mode course, each room a button. Everyone — candidates, tutors, the assessor — sees every room and chooses theirs. Teaching practice and tutorials are suggested once per group, since each tutor holds their own. <b>For</b> is optional: name a teaching practice group and that group’s candidates see the room first, marked as theirs; nobody is kept out of it. The assessor sees only the rooms you tick for them — the ones they will sit in on the visit — and nothing else. Leave a link empty and it does not show.</p>
     <div id="onlineRooms" class="fields docs"></div>
     <button type="button" class="btn ghost" id="addOnlineRoom" style="margin-top:10px;">Add a room</button>
 
@@ -534,11 +534,11 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609281538"></script>
-<script src="hub-store.js?v=202609281538"></script>
-<script src="observation-defaults.js?v=202609281538"></script>
-<script src="hub-shared.js?v=202609281538"></script>
-<script src="hub-sync.js?v=202609281538"></script>
+<script src="assignment-defaults.js?v=202609281553"></script>
+<script src="hub-store.js?v=202609281553"></script>
+<script src="observation-defaults.js?v=202609281553"></script>
+<script src="hub-shared.js?v=202609281553"></script>
+<script src="hub-sync.js?v=202609281553"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -672,7 +672,7 @@ try {
     if(cs.docs) DOC_FIELDS.forEach(k=>{ if(cs.docs[k]) document.getElementById(k).value = cs.docs[k]; });
     if(cs.logo){ courseLogo = cs.logo; applyLogoPreview(courseLogo); }
     if(Array.isArray(cs.courseLinks)) CAND_LINKS = cs.courseLinks.filter(l => l && (l.label || l.url));
-    if(Array.isArray(cs.onlineRooms)) ROOMS = cs.onlineRooms.filter(r => r && (r.label || r.url)).map(r => ({ label: r.label || '', url: r.url || '', group: r.group || '' }));
+    if(Array.isArray(cs.onlineRooms)) ROOMS = cs.onlineRooms.filter(r => r && (r.label || r.url)).map(r => ({ label: r.label || '', url: r.url || '', group: r.group || '', assessor: !!r.assessor }));
   }
 } catch(e) {}
 renderCandLinks();
@@ -759,14 +759,15 @@ function renderRooms(){
   document.getElementById('onlineRooms').innerHTML = rows.map((r, i) =>
     `<div><label>Room</label><input type="text" class="or-label" data-i="${i}" value="${esc(r.label)}" placeholder="What the button says"></div>
      <div><label>For</label>${whoSel(r, i)}</div>
-     <div class="wide"><label>Link</label><input type="url" class="or-url" data-i="${i}" value="${esc(r.url)}" placeholder="https://zoom.us/j/…"></div>`).join('');
+     <div class="wide"><label>Link</label><input type="url" class="or-url" data-i="${i}" value="${esc(r.url)}" placeholder="https://zoom.us/j/…">
+       <label class="or-asl" style="display:flex;align-items:center;gap:9px;font-size:0.86rem;font-weight:500;letter-spacing:0;text-transform:none;margin-top:8px;cursor:pointer;"><input type="checkbox" class="or-assessor" data-i="${i}"${r.assessor ? ' checked' : ''}><span>The assessor joins this room</span></label></div>`).join('');
 }
 function readRooms(){
-  const labels = [...document.querySelectorAll('.or-label')], urls = [...document.querySelectorAll('.or-url')], grp = [...document.querySelectorAll('.or-group')];
-  const all = labels.map((el, i) => ({ label: el.value.trim(), url: (urls[i] ? urls[i].value : '').trim(), group: (grp[i] ? grp[i].value : '').trim() }));
-  ROOMS = all; return all.filter(r => r.url).map(r => r.group ? r : { label: r.label, url: r.url });
+  const labels = [...document.querySelectorAll('.or-label')], urls = [...document.querySelectorAll('.or-url')], grp = [...document.querySelectorAll('.or-group')], asr = [...document.querySelectorAll('.or-assessor')];
+  const all = labels.map((el, i) => ({ label: el.value.trim(), url: (urls[i] ? urls[i].value : '').trim(), group: (grp[i] ? grp[i].value : '').trim(), assessor: !!(asr[i] && asr[i].checked) }));
+  ROOMS = all; return all.filter(r => r.url).map(r => { const o = { label: r.label, url: r.url }; if (r.group) o.group = r.group; if (r.assessor) o.assessor = true; return o; });
 }
-document.getElementById('addOnlineRoom').addEventListener('click', () => { readRooms(); ROOMS.push({ label:'', url:'', group:'' }); renderRooms(); });
+document.getElementById('addOnlineRoom').addEventListener('click', () => { readRooms(); ROOMS.push({ label:'', url:'', group:'', assessor:false }); renderRooms(); });
 
 function renderCandLinks(){
   if (!CAND_LINKS) CAND_LINKS = []; // the load block calls this before the var below is assigned
