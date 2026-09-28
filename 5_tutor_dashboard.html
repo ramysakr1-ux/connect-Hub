@@ -167,7 +167,7 @@
     font-family:'Instrument Sans',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.1em;
     text-transform:uppercase; color:var(--grey);}
   .grow{padding:13px 4px; border-bottom:1px solid var(--row-line);}
-  .grow .nm{font-size:0.92rem; font-weight:500; min-width:0; overflow:hidden; text-overflow:ellipsis;}
+  .grow .nm{font-size:0.92rem; font-weight:500; min-width:0; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center;}
   .grow .mid{font-size:0.88rem; color:var(--grey); min-width:0;}
   .grow .st{font-size:0.88rem; min-width:0; text-wrap:pretty; color:var(--grey);}
   .grow .st.amber{color:var(--amber);}
@@ -187,7 +187,7 @@
     .grid > .mid{display:none;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609281913">
+<link rel="stylesheet" href="hub-house.css?v=202609281919">
 </head>
 <body>
 <div class="board">
@@ -243,16 +243,16 @@
 
 </div>
 
-<script src="hub-due.js?v=202609281913"></script>
-<script src="hub-shared.js?v=202609281913"></script>
-<script src="hub-store.js?v=202609281913"></script>
+<script src="hub-due.js?v=202609281919"></script>
+<script src="hub-shared.js?v=202609281919"></script>
+<script src="hub-store.js?v=202609281919"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202609281913"></script>
-<script src="hub-sync.js?v=202609281913"></script>
-<script src="hub-tracker.js?v=202609281913"></script>
+<script src="assignment-defaults.js?v=202609281919"></script>
+<script src="hub-sync.js?v=202609281919"></script>
+<script src="hub-tracker.js?v=202609281919"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a candidate's link opened it and read the course and
@@ -398,7 +398,7 @@ function paintRows(){
     host.innerHTML =
       `<div class="grid ghead" style="grid-template-columns:${cols}"><div>Trainee</div><div class="mid">TP</div><div>Status</div><div></div></div>` +
       (rows.length ? rows.map(({tr,s})=>row(cols,
-        `<div class="nm">${esc(tr.name)}</div>
+        `<div class="nm">${hubAvatar(tr.name)}${esc(tr.name)}</div>
          <div class="mid">${esc(tpNumberOf(tr))}</div>
          <div class="st ${s.tone}">${esc(s.label)}</div>
          ${action(s.act?'Write feedback':s.label==='Returned'?'View feedback':'Open', s.act,
@@ -419,7 +419,7 @@ function paintRows(){
         const href = (closed ? '11_assignment_record.html' : '10_tutor_assignment_marking.html') +
           '?trainee='+encodeURIComponent(tr.id)+'&a='+key;
         return row(cols,
-          `<div class="nm">${esc(tr.name)}</div>
+          `<div class="nm">${hubAvatar(tr.name)}${esc(tr.name)}</div>
            <div class="mid" title="${esc(ASSIGN_FULL[key]||key)}">${esc(ASSIGN_NAMES[key]||key)}</div>
            <div class="st ${s.tone}">${esc(s.label)}</div>
            ${action(s.act?'Mark':closed?'Open the record':'Open', s.act, href)}`);
@@ -435,7 +435,7 @@ function paintRows(){
       const closed=Object.keys(subs).filter(k=>subs[k] && subs[k].stage==='closed').length;
       const s=tpState(tr);
       return row(cols,
-        `<div class="nm">${esc(tr.name)}${tr.group?` <span style="color:var(--grey);font-size:0.8rem;">· group ${esc(tr.group)}</span>`:''}</div>
+        `<div class="nm">${hubAvatar(tr.name)}${esc(tr.name)}${tr.group?` <span style="color:var(--grey);font-size:0.8rem;">· group ${esc(tr.group)}</span>`:''}</div>
          <div class="mid">${esc(tpNumberOf(tr))} · ${esc(s.label.toLowerCase())}</div>
          <div class="st">${closed} of 4 closed</div>
          <div class="act"></div>`);
@@ -548,7 +548,7 @@ nameInput.addEventListener('input', ()=>localStorage.setItem('chub:tutorName', n
   const KEY = 'connect_course_stream_v1';
   const e = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
   const linkify = t => e(t).replace(/(https?:\/\/[^\s<]+)/g, m => `<a href="${m}" target="_blank" rel="noopener noreferrer">${m.replace(/^https?:\/\//,'').replace(/\/$/,'')}</a>`);
-  const initials = n => String(n || '').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '·';
+  const initials = n => hubInitials(n);
   const when = iso => { const d = new Date(iso); if (isNaN(d)) return ''; const same = d.toDateString() === new Date().toDateString(); return same ? 'Today, ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }); };
   const read = () => { try { return (JSON.parse(localStorage.getItem(KEY)) || []).filter(p => p && p.text); } catch(err) { return []; } };
   const groups = () => [...new Set(people().map(p => p.group).filter(Boolean).map(String))].sort();
@@ -598,6 +598,9 @@ nameInput.addEventListener('input', ()=>localStorage.setItem('chub:tutorName', n
     busy = false; draw();
   }
   draw();
+  /* The composer's tile follows the name as it is typed (Ramy, 28 Sep 2026:
+     "fix the avatar in the course stream"). */
+  nameInput.addEventListener('input', () => { const w = host.querySelector('.compose .who'); if (w) w.textContent = hubInitials(nameInput.value); });
 })();
 
 

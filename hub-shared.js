@@ -116,6 +116,15 @@ window.HUB_MAX_TP = 8;
       else if(g&&(opts.all||mine)) who='<small>Group '+e(g)+'</small>';
       return '<a class="or-join'+(g&&mine&&g===mine?' mine':'')+'" href="'+e(r.url)+'" target="_blank" rel="noopener noreferrer">'+e(r.label||'Join')+who+'</a>'; }).join('')+'</div>';
   };
+  /* An initials tile for a person (Ramy, 28 Sep 2026: "should trainees have
+     avatars as well, with their initials, like the tutors? perhaps a
+     different colour?"). Staff are teal, candidates sand with ink initials,
+     so the two read apart at a glance; the colour never follows the person. */
+  window.hubInitials=function(name){ return String(name||'').trim().split(/\s+/).slice(0,2).map(function(w){ return w[0]||''; }).join('').toUpperCase(); };
+  window.hubAvatar=function(name, kind){
+    var e=function(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); };
+    return '<span class="avi '+(kind==='staff'?'avi-staff':'avi-cand')+'" aria-hidden="true">'+e(window.hubInitials(name))+'</span>';
+  };
   window.hubBullets=function(el){
     if(!el || el.dataset.hubBullets) return; el.dataset.hubBullets='1';
     var B='\u2022 ';
