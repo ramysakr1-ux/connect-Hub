@@ -270,7 +270,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609281529">
+<link rel="stylesheet" href="hub-house.css?v=202609281538">
 </head>
 <body>
 <div class="board">
@@ -469,7 +469,7 @@
          teaches in. One list, shown as a join strip on the trainee home, the
          tutor dashboard and the assessor pack alike. -->
     <h3 class="docsh">Online rooms</h3>
-    <p class="note" style="margin-top:0;">Zoom, Meet or Teams links for an online or mixed-mode course, each room a button. Everyone — candidates, tutors, the assessor — sees every room and chooses theirs. <b>For</b> is optional: name a teaching practice group and that group’s candidates see the room first, marked as theirs; nobody is kept out of it. Leave a link empty and it does not show.</p>
+    <p class="note" style="margin-top:0;">Zoom, Meet or Teams links for an online or mixed-mode course, each room a button. Everyone — candidates, tutors, the assessor — sees every room and chooses theirs. Teaching practice and tutorials are suggested once per group, since each tutor holds their own. <b>For</b> is optional: name a teaching practice group and that group’s candidates see the room first, marked as theirs; nobody is kept out of it. Leave a link empty and it does not show.</p>
     <div id="onlineRooms" class="fields docs"></div>
     <button type="button" class="btn ghost" id="addOnlineRoom" style="margin-top:10px;">Add a room</button>
 
@@ -534,11 +534,11 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609281529"></script>
-<script src="hub-store.js?v=202609281529"></script>
-<script src="observation-defaults.js?v=202609281529"></script>
-<script src="hub-shared.js?v=202609281529"></script>
-<script src="hub-sync.js?v=202609281529"></script>
+<script src="assignment-defaults.js?v=202609281538"></script>
+<script src="hub-store.js?v=202609281538"></script>
+<script src="observation-defaults.js?v=202609281538"></script>
+<script src="hub-shared.js?v=202609281538"></script>
+<script src="hub-sync.js?v=202609281538"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -746,11 +746,15 @@ function renderRooms(){
   /* The pre-roster paint suggested one "Teaching practice" with no group;
      once the roster's groups are known that blank row gives way to one per
      group. Only an untouched suggestion goes -- a row with a link stays. */
-  if (groups.length) ROOMS = ROOMS.filter(r => !(r.label === 'Teaching practice' && !r.url && !r.group));
-  const SUG = [['Input sessions', '', '']].concat((groups.length ? groups : ['']).map(g => ['Teaching practice', '', g])).concat([['Tutorials', '', '']]);
+  if (groups.length) ROOMS = ROOMS.filter(r => !((r.label === 'Teaching practice' || r.label === 'Tutorials') && !r.url && !r.group));
+  /* Ramy, 28 Sep 2026: "tutorials don't take place in the same room" --
+     tutorials are each tutor's own, so they are suggested per group like
+     teaching practice, not once for the course. */
+  const SUG = [['Input sessions', '', '']].concat((groups.length ? groups : ['']).flatMap(g => [['Teaching practice', '', g], ['Tutorials', '', g]]));
   const haveG = ROOMS.map(r => r.label + '|' + (r.group || ''));
   const have = ROOMS.map(r => r.label);
-  const rows = ROOMS.concat(SUG.filter(([label, url, group]) => !haveG.includes(label + '|' + group) && !(label !== 'Teaching practice' && have.includes(label))).map(([label, url, group]) => ({ label, url, group })));
+  const perGroup = ['Teaching practice', 'Tutorials'];
+  const rows = ROOMS.concat(SUG.filter(([label, url, group]) => !haveG.includes(label + '|' + group) && !(!perGroup.includes(label) && have.includes(label))).map(([label, url, group]) => ({ label, url, group })));
   const whoSel = (r, i) => `<div class="house-sel"><select class="or-group" data-i="${i}"><option value="">The whole course</option>${groups.map(g => `<option value="${esc(g)}"${r.group === g ? ' selected' : ''}>Group ${esc(g)}</option>`).join('')}</select></div>`;
   document.getElementById('onlineRooms').innerHTML = rows.map((r, i) =>
     `<div><label>Room</label><input type="text" class="or-label" data-i="${i}" value="${esc(r.label)}" placeholder="What the button says"></div>
