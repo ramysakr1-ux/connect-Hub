@@ -230,7 +230,7 @@
     .grid > .mid{display:none;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609290014">
+<link rel="stylesheet" href="hub-house.css?v=202609290019">
 </head>
 <body>
 <div class="board">
@@ -305,16 +305,16 @@
 
 </div>
 
-<script src="hub-due.js?v=202609290014"></script>
-<script src="hub-shared.js?v=202609290014"></script>
-<script src="hub-store.js?v=202609290014"></script>
+<script src="hub-due.js?v=202609290019"></script>
+<script src="hub-shared.js?v=202609290019"></script>
+<script src="hub-store.js?v=202609290019"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202609290014"></script>
-<script src="hub-sync.js?v=202609290014"></script>
-<script src="hub-tracker.js?v=202609290014"></script>
+<script src="assignment-defaults.js?v=202609290019"></script>
+<script src="hub-sync.js?v=202609290019"></script>
+<script src="hub-tracker.js?v=202609290019"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a candidate's link opened it and read the course and
@@ -515,8 +515,11 @@ function paintRows(){
       return {stage:sub.stage, s:A_STATE[sub.stage] || {label:sub.stage, tone:'', act:false}};
     };
     const rank=r=>r.s.act?0:(r.stage==='resubmission_needed'||r.stage==='returned_unmarked')?1:r.stage==='closed'?2:r.stage==='none'?4:3;
+    /* Closed by the tutor is remembered as closed ('none'); only a browser
+       that has never chosen falls back to the first that needs marking. */
     let open=null; try{ open=localStorage.getItem('chub:asgOpen'); }catch(e){}
-    if (!keys.includes(open)) open = keys.find(k=>list.some(tr=>stateOf(tr,k).s.act)) || keys[0] || null;
+    if (open==='none') open=null;
+    else if (!keys.includes(open)) open = keys.find(k=>list.some(tr=>stateOf(tr,k).s.act)) || keys[0] || null;
     const section=key=>{
       const rows=list.map(tr=>Object.assign({tr,key},stateOf(tr,key)));
       const waiting=rows.filter(r=>r.s.act).length, back=rows.filter(r=>r.stage==='resubmission_needed'||r.stage==='returned_unmarked').length, closed=rows.filter(r=>r.stage==='closed').length, none=rows.filter(r=>r.stage==='none').length;
@@ -533,7 +536,7 @@ function paintRows(){
     };
     host.innerHTML = (keys.length ? keys.map(section).join('') : '<div class="empty">No assignments are switched on for the candidates yet.</div>')
       + (a5Rows.length ? `<div class="asec open"><div class="ahead" style="cursor:default"><span class="code">A5</span><span class="full">Plagiarism Reflection</span><span class="bits">${a5Rows.length} set</span></div><div class="abody">${a5Rows.map(({tr,key,stage,s})=>row(cols,`<div class="nm">${hubAvatar(tr.name)}${esc(tr.name)}</div><div class="st ${s.tone}">${esc(s.label)}</div>${action(s.act?'Mark':stage==='closed'?'Open the record':'Open', s.act, (stage==='closed'?'11_assignment_record.html':'10_tutor_assignment_marking.html')+'?trainee='+encodeURIComponent(tr.id)+'&a=a5')}`)).join('')}</div></div>` : '');
-    host.querySelectorAll('[data-asg]').forEach(b=>b.addEventListener('click',()=>{ try{ localStorage.setItem('chub:asgOpen', b.dataset.asg===open?'':b.dataset.asg); }catch(e){} paintRows(); }));
+    host.querySelectorAll('[data-asg]').forEach(b=>b.addEventListener('click',()=>{ try{ localStorage.setItem('chub:asgOpen', b.dataset.asg===open?'none':b.dataset.asg); }catch(e){} paintRows(); }));
     return;
   }
 
