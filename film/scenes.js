@@ -522,7 +522,7 @@ var SCENES = [
     title: 'The assessor\u2019s link',
     screen: 'invite.html',
     course: 'finished', role: 'assessor',
-    about: 'Chapter three opens. The third card \u2014 read-only, and it says when it stops working: the course end plus fourteen days (Handbook 15).',
+    about: 'Chapter three opens. The third card \u2014 read-only, and it says when it stops working: the course end plus fourteen days.',
     settle: 1400,
     steps: [
       { do: 'chapter', num: 'Chapter three', text: 'The assessor', sub: 'One read-only link, and the pack is already assembled.', ms: 3000 },

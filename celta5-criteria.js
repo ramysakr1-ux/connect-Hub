@@ -1,7 +1,10 @@
 /* Connect Lite — the 41 CELTA assessment criteria, as the feedback form lists them.
  * © 2026 Ramy Sakr. All rights reserved.
  * [code, topic, wording]. The Stage 2 and Stage 3 pages of the CELTA 5 grid
- * these; Stage 3 leaves topic 4 (planning) out, as the real form does.
+ * these. Stage 3 covers the SAME five topics -- the real form's Stage Three
+ * Progress Record opens with TOPIC 4, 4a-4n (July 2023, printed p20). What
+ * Stage 3 drops is the candidate's own "You" column, not planning. Lite said
+ * the opposite until the compliance audit of 29 Sep 2026.
  */
 window.CONNECT_HUB_CRITERIA = [
   ['1a','1','teaching a class with an awareness of the needs and interests of the learner group'],

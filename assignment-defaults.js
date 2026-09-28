@@ -23,12 +23,32 @@
 // Two things are left exactly as the centre wrote them, and both are worth
 // knowing before anyone copies them into another centre's course:
 //
-//   - "You must pass 3 of 4 assignments to be eligible for a PASS." The
-//     Administration Handbook (11.6) requires all four, with the resubmission
-//     chance. Three of four is not the rule. It is the centre's wording.
+//   - "You must pass 3 of 4 assignments to be eligible for a PASS." This is
+//     the centre's wording and it is left alone, but the comment here used to
+//     say the Handbook "requires all four", which is backwards (audit, 29 Sep
+//     2026). 11.6 says a candidate who fails a SINGLE assignment may still be
+//     recommended a Pass, on sufficient evidence elsewhere, but is not
+//     eligible for Pass A; more than one failed means no Pass. 9.2.1's "all
+//     four" is about COMPLETING them, not passing. The centre's sentence is
+//     closer to Cambridge than the old comment claimed -- what it leaves out
+//     is the evidence condition and the loss of Pass A.
 //   - The word count is a submission requirement, never a criterion -- which
-//     is what the syllabus does too (Component 2). The criteria themselves are
-//     the syllabus's own words, assignments 2.1-2.4.
+//     is what the syllabus does too (Component 2).
+//   - The criteria below are NOT the syllabus's own words, whatever this
+//     comment said before 29 Sep 2026. The syllabus (Component 2, 2.1-2.4)
+//     specifies 6 / 4 / 3 / 4 = seventeen; these are 6 / 4 / 4 / 5 = nineteen.
+//     LSRT's "Identifying receptive and productive skills..." and LfC's
+//     "Reflecting on their observation of other teachers..." are promoted from
+//     the syllabus's DESIGN column, which says what the assignment must ask
+//     for, not what the candidate is judged on. Several others are reworded,
+//     and two of those raise the bar above Cambridge's: FOL c turns "language
+//     systems and/or language skills" into "and", and FOL d drops "and/or
+//     skills" while inserting the centre's published-materials condition.
+//     Designing the assignments IS the centre's job (9.2.1), so a centre may
+//     legitimately set these -- but they must not be described as Cambridge's.
+//     Changing them is not a free edit: criteriaMarks are POSITIONAL, so a
+//     replacement is only safe while no marking exists (see
+//     CONNECT_HUB_ADOPT_CORRECTED_CRITERIA).
 //
 // The three reading texts in the skills assignment are VOA Learning English,
 // which states its texts are in the public domain and may be reprinted with

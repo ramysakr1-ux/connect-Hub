@@ -163,7 +163,12 @@
     { sourcePageIndex: 17, youXMid: 617.5, tutorXMid: 693.5, codes: [['1a',135.4],['1b',157.9],['1c',189.7],['1d',212.2],['2a',257.2],['2b',279.7],['2c',302.4],['2d',324.8],['2e',347.4],['2f',379.2],['2g',401.7],['3a',446.7],['3b',469.2]] },
     { sourcePageIndex: 18, youXMid: 620.5, tutorXMid: 695.3, codes: [['5a',121.3],['5b',153.1],['5c',175.5],['5d',198.1],['5e',220.6],['5f',243.1],['5g',265.6],['5h',288.1],['5i',310.7],['5j',333.1],['5k',355.7],['5l',387.5],['5m',410.1],['5n',441.9]] },
   ];
-  /* Stage 3 re-assesses topics 1, 2, 3 and 5 only: no topic 4 on either page. */
+  /* OUTSTANDING (29 Sep 2026): the real Stage Three record has THREE criteria
+     pages, and the first -- source index 21, topic 4, 4a-4n -- is missing here,
+     so the generated booklet leaves Cambridge's own page blank. The screen now
+     collects those marks; drawing them needs that page's row coordinates
+     measured the way pages 22 and 23 were. Until then this list is short by
+     one page, and that is a gap, not the form's shape. */
   const STAGE3_PAGES = [
     { sourcePageIndex: 22, youXMid: null, tutorXMid: 621.5, codes: [['1a',131.6],['1b',159.1],['1c',186.2],['1d',208.5],['2a',253.5],['2b',276.2],['2c',298.5],['2d',321.3],['2e',348.2],['2f',375.3],['2g',398.2],['3a',443.2],['3b',470.2]] },
     { sourcePageIndex: 23, youXMid: null, tutorXMid: 617.5, codes: [['5a',114.4],['5b',146.2],['5c',169.0],['5d',191.2],['5e',214.0],['5f',236.2],['5g',259.0],['5h',281.3],['5i',304.1],['5j',326.3],['5k',349.1],['5l',380.9],['5m',403.1],['5n',434.9]] },

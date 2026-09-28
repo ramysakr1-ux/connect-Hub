@@ -4,7 +4,9 @@
 //
 // A demo course must never age: no start, no end, so its assessor link --
 // the door the offer card carries -- never expires (the store computes the
-// expiry from the course's end date + 14, Handbook 15). And its settings
+// expiry from the course's end date + 14 -- our own window, matching the
+// assessor's two-week reporting deadline at Handbook 15.2, not a Cambridge
+// rule). And its settings
 // must be whole: `putCourse` REPLACES, so a bad merge can leave a course
 // with two fields where it had fourteen.
 import { readFileSync } from 'node:fs';
