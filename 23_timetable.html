@@ -81,6 +81,8 @@
   .btn:disabled{opacity:.5; cursor:not-allowed;}
   .bar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:0 0 18px;}
   .status{font-size:0.8rem; color:var(--grey);}
+  .chip{font-size:0.72rem; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--box); color:var(--grey);}
+  .chip.on{background:var(--teal); color:#fff;}
   .empty{background:var(--surface); border:1px dashed var(--sand-line); border-radius:10px; padding:26px 22px; color:var(--grey); font-size:0.9rem; line-height:1.6;}
   .legend{font-size:0.76rem; color:var(--grey); margin:14px 0 0; line-height:1.6;}
   .imp{background:var(--surface); border:1px solid var(--sand-line); border-radius:10px; padding:14px 16px; margin:0 0 18px;}
@@ -98,22 +100,22 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} .days{grid-template-columns:1fr;} }
   @media print{ .back,.bar,#hubSync{display:none !important;} body{background:#fff;} .days{grid-template-columns:repeat(5,1fr);} .day{break-inside:avoid;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609292319">
-<link rel="stylesheet" href="hub-theme.css?v=202609292319">
+<link rel="stylesheet" href="hub-house.css?v=202609292323">
+<link rel="stylesheet" href="hub-theme.css?v=202609292323">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609292319"></script>
-<script src="hub-tracker.js?v=202609292319"></script>
-<script src="hub-rotation.js?v=202609292319"></script>
-<script src="hub-docx.js?v=202609292319"></script>
-<script src="hub-timetable-parse.js?v=202609292319"></script>
-<script src="hub-shared.js?v=202609292319"></script>
-<script src="hub-store.js?v=202609292319"></script>
-<script src="hub-sync.js?v=202609292319"></script>
+<script src="hub-due.js?v=202609292323"></script>
+<script src="hub-tracker.js?v=202609292323"></script>
+<script src="hub-rotation.js?v=202609292323"></script>
+<script src="hub-docx.js?v=202609292323"></script>
+<script src="hub-timetable-parse.js?v=202609292323"></script>
+<script src="hub-shared.js?v=202609292323"></script>
+<script src="hub-store.js?v=202609292323"></script>
+<script src="hub-sync.js?v=202609292323"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -230,14 +232,26 @@ function cellHTML(day, g){
 }
 
 let GROUPS = [], DUES = {}, EDIT = false;
+/* A tutor can look at the timetable the way the course sees it. Without this
+   they only ever see input boxes and can never check what they have
+   published (Ramy, 29 Sep 2026: "there's the course admin view, and then
+   there's the view-only timetable for the course once it's set"). */
+let PREVIEW = false;
 
 function render(){
-  GROUPS = groups(); DUES = dues(); EDIT = IS_TUTOR;
+  GROUPS = groups(); DUES = dues(); EDIT = IS_TUTOR && !PREVIEW;
   const app = $('app');
   const head = `<p class="eyebrow">Course</p><h1>Timetable</h1>
     <p class="lede">${IS_TUTOR
       ? 'The course’s own timetable. The teaching practices and the assignment deadlines come from the course itself; the input sessions and notes are yours to type. Letters are people — a day is named by its date and by who teaches on it.'
       : 'Every day of the course. The teaching practice cell says who is teaching that day; your assignment deadlines are marked on the day they fall.'}</p>`;
+  /* Set, then seen. A skeleton is twenty empty days, and until 29 Sep 2026 the
+     course saw it the moment it was built. The timetable is the tutors' until
+     they publish it; after that everyone on the course reads the same one. */
+  if (!IS_TUTOR && TT && TT.days && TT.days.length && !TT.published) {
+    app.innerHTML = head + `<div class="empty">The timetable is not ready yet. It will appear here once the course admin has set it.</div>`;
+    return;
+  }
   if (!TT || !TT.days || !TT.days.length) {
     app.innerHTML = head + (IS_TUTOR
       ? `<div class="bar"><button class="btn" id="build"${(!SETTINGS.start || !SETTINGS.end) ? ' disabled' : ''}>Build the timetable</button><span class="status">${(!SETTINGS.start || !SETTINGS.end) ? 'Set the course start and end dates on Course admin first.' : 'Lays out every weekday from the start to the end, with the teaching practices along it. Everything stays editable.'}</span></div>`
@@ -256,13 +270,25 @@ function render(){
     if (!weeks.length) weeks.push([]);
     weeks[weeks.length-1].push(day);
   });
-  const bar = IS_TUTOR ? `<div class="bar"><button class="btn quiet" id="rebuild">Rebuild the shape</button><button class="btn quiet" id="importOpen">Import from a sheet</button><span class="status">${esc(note)}</span></div>` + importHTML() : '';
+  const pub = !!(TT && TT.published);
+  const bar = IS_TUTOR ? `<div class="bar">
+      ${pub ? `<span class="chip on">The course can see it</span><button class="btn quiet" id="unpublish">Take it back</button>`
+            : `<span class="chip">Not set yet</span><button class="btn" id="publish">Set it for the course</button>`}
+      <button class="btn quiet" id="preview">${PREVIEW ? 'Back to editing' : 'See what they see'}</button>
+      <button class="btn quiet" id="rebuild">Rebuild the shape</button>
+      <button class="btn quiet" id="importOpen">Import from a sheet</button>
+      <span class="status">${esc(note)}</span></div>
+      <p class="legend" style="margin:0 0 14px">${pub ? 'Everyone on the course reads this timetable. Edits show at once.' : 'Only tutors can see it until you set it.'}</p>`
+      + (PREVIEW ? '' : importHTML()) : '';
   app.innerHTML = head + bar + weeks.map((w, i) => {
     const a = parse(w[0].date), b = parse(w[w.length-1].date);
     return `<section class="wk"><h2>Week ${i+1} <small>${dm(a)} – ${dm(b)}</small></h2>
       <div class="days">${w.map(d => cellHTML(d)).join('')}</div></section>`;
   }).join('') + `<p class="legend">Teaching practice runs the same number on two days, one teaching set each: the letters name the candidates teaching that day. ${GROUPS.map(g => 'Group ' + esc(g.group || '—') + ': ' + g.sets.map(R.setName).filter(Boolean).join(' and ')).join('. ')}.</p>`;
   if ($('rebuild')) $('rebuild').addEventListener('click', () => { if (confirm('Rebuild the shape from the course dates? Input sessions and notes you have typed are kept where the day still exists.')) build(true); });
+  if ($('preview')) $('preview').addEventListener('click', () => { PREVIEW = !PREVIEW; render(); });
+  if ($('publish')) $('publish').addEventListener('click', () => { TT.published = true; save('Set \u2014 the course can see it'); render(); });
+  if ($('unpublish')) $('unpublish').addEventListener('click', () => { TT.published = false; save('Taken back'); render(); });
   wireEdits();
   wireImport();
 }
