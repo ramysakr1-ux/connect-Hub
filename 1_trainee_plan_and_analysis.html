@@ -421,7 +421,7 @@
   .duenote::before{content:"\2022"; font-size:1.1em; line-height:0;}
   .fromtt{display:block; font-size:0.72rem; color:var(--grey,#6b7280); margin-top:3px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609300244">
+<link rel="stylesheet" href="hub-house.css?v=202609300249">
 </head>
 <body>
 <div class="board">
@@ -652,11 +652,11 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202609300244"></script>
-<script src="hub-shared.js?v=202609300244"></script>
-<script src="hub-rotation.js?v=202609300244"></script>
-<script src="hub-store.js?v=202609300244"></script>
-<script src="hub-sync.js?v=202609300244"></script>
+<script src="hub-due.js?v=202609300249"></script>
+<script src="hub-shared.js?v=202609300249"></script>
+<script src="hub-rotation.js?v=202609300249"></script>
+<script src="hub-store.js?v=202609300249"></script>
+<script src="hub-sync.js?v=202609300249"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -719,15 +719,19 @@ if ($('fShareVol')) $('fShareVol').addEventListener('change', async () => {
   try {
     if (box.checked) {
       const tp = ($('fTP').value || '').trim();
-      const r = await window.HubStore.call({ op: 'shareMaterial', name: m.name, url: m.url,
-        by: ($('fName').value || '').trim(), tp: tp, kind: 'materials' });
+      /* The store's call() attaches a tutor key or an assessor key by itself,
+         but NOT a trainee's token -- every op that needs one passes it. Without
+         it the store refused with "Only a trainee or a tutor can share", the
+         catch put the switch back, and nothing said why (30 Sep 2026). */
+      const r = await window.HubStore.call({ op: 'shareMaterial', token: window.HubStore.token(),
+        name: m.name, url: m.url, by: ($('fName').value || '').trim(), tp: tp, kind: 'materials' });
       localStorage.setItem('connect_shared_v1', JSON.stringify(r.shared || []));
       say('Shared. The students see it on their own page.');
     } else {
       const list = rec0('connect_shared_v1') || [];
       const mine = list.find(x => x && x.url === m.url);
       if (mine) {
-        const r = await window.HubStore.call({ op: 'unshareMaterial', id: mine.id });
+        const r = await window.HubStore.call({ op: 'unshareMaterial', token: window.HubStore.token(), id: mine.id });
         localStorage.setItem('connect_shared_v1', JSON.stringify(r.shared || []));
       }
       say('Taken back. The students no longer see it.');
