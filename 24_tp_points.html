@@ -77,20 +77,20 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} section.group{padding:12px 12px 14px;} }
   @media print{ .back,.relbar,#hubSync{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609292238">
-<link rel="stylesheet" href="hub-theme.css?v=202609292238">
+<link rel="stylesheet" href="hub-house.css?v=202609292243">
+<link rel="stylesheet" href="hub-theme.css?v=202609292243">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609292238"></script>
-<script src="hub-tracker.js?v=202609292238"></script>
-<script src="hub-rotation.js?v=202609292238"></script>
-<script src="hub-shared.js?v=202609292238"></script>
-<script src="hub-store.js?v=202609292238"></script>
-<script src="hub-sync.js?v=202609292238"></script>
+<script src="hub-due.js?v=202609292243"></script>
+<script src="hub-tracker.js?v=202609292243"></script>
+<script src="hub-rotation.js?v=202609292243"></script>
+<script src="hub-shared.js?v=202609292243"></script>
+<script src="hub-store.js?v=202609292243"></script>
+<script src="hub-sync.js?v=202609292243"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -171,7 +171,18 @@ function render(){
 
   const gs = groups();
   if (!gs.length) { app.innerHTML = head + `<div class="empty">No candidates on the roster yet.</div>`; return; }
-  if (!P || !P.groups) {
+  /* "Has it been built?" is a question about CONTENT, not about whether a key
+     exists. The store answers a course with no points as { groups:{} }, and an
+     empty object is truthy -- so testing `P.groups` showed the grid instead of
+     the build button, rendered every cell blank, and then printed the
+     all-clear underneath because the checks had nothing to fail on (found
+     testing on the scratch course, 29 Sep 2026). A rotation counts as built
+     only when every candidate on the roster has a row. */
+  const built = P && P.groups && gs.every(g => {
+    const rows = P.groups[g.group] || {};
+    return g.people.length && g.people.every(t => rows[t.token] && Object.keys(rows[t.token]).length);
+  });
+  if (!built) {
     app.innerHTML = head + `<div class="relbar"><button class="btn" id="build">Build the rotation</button><span class="status">Works out the lesson type for every candidate across practices 1 to ${TPS}.</span></div>`;
     $('build').addEventListener('click', () => build(false));
     return;
@@ -201,7 +212,7 @@ function render(){
         }).join('')}</tr>`).join('')}</table></div>
       ${noLang.length ? `<div class="warn"><b>Handbook 9.1.2:</b> a centre must include language-focus lessons for every candidate. ${noLang.length===1?'Candidate':'Candidates'} ${esc(noLang.join(', '))} ${noLang.length===1?'has':'have'} none in practices 1 to ${TPS}. Grammar, vocabulary and functional language are the language-focus types.</div>` : ''}
       ${clash.length ? `<div class="warn"><b>Same type, same day:</b> ${clash.map(c => 'TP ' + c.tp + ' — ' + esc(c.set) + ' — ' + esc(c.aim)).join('; ')}. They teach on the same day, so two of them would be teaching the same thing.</div>` : ''}
-      ${(!noLang.length && !clash.length) ? `<p class="ok">Every candidate has at least one language-focus lesson, and nobody in a teaching set repeats a type on the same day.</p>` : ''}
+      ${(!noLang.length && !clash.length && Object.keys(flat).length) ? `<p class="ok">Every candidate has at least one language-focus lesson, and nobody in a teaching set repeats a type on the same day.</p>` : ''}
     </section>`;
   }).join('');
 
