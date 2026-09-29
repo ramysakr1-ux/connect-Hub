@@ -171,18 +171,18 @@
   .eyebrow{font-size:0.7rem; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:0 0 4px;}
   .lede{color:var(--grey); font-size:0.88rem; line-height:1.6; margin:0 0 18px; max-width:66ch;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609291904">
-<link rel="stylesheet" href="hub-theme.css?v=202609291904">
+<link rel="stylesheet" href="hub-house.css?v=202609291924">
+<link rel="stylesheet" href="hub-theme.css?v=202609291924">
 </head>
 <body class="hub-obs">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="observation-defaults.js?v=202609291904"></script>
-<script src="hub-shared.js?v=202609291904"></script>
-<script src="hub-store.js?v=202609291904"></script>
-<script src="hub-sync.js?v=202609291904"></script>
+<script src="observation-defaults.js?v=202609291924"></script>
+<script src="hub-shared.js?v=202609291924"></script>
+<script src="hub-store.js?v=202609291924"></script>
+<script src="hub-sync.js?v=202609291924"></script>
 <script type="text/x-hub-app">
 /* A candidate's own work. A tutor or an assessor READS it -- they have to, it
    is portfolio evidence -- so the page is not refused them; the fields are
@@ -230,7 +230,7 @@ const recKey = (id, sit) => sit ? id + '#' + sit : id;
    where the trainer gave one; the Word file's own "Recording: observation N"
    is only the fallback. */
 const posOf = t => { const g = t.id.startsWith('filmed') ? TASKS.filmed : t.id.startsWith('live') ? TASKS.live : null; const i = g ? g.findIndex(x => x.id === t.id) : -1; return i >= 0 ? i + 1 : null; };
-const subOf = t => { if (t.sub) return t.sub; if (!t.id.startsWith('filmed')) return t.recording || ''; const n = posOf(t); return (n ? 'Recording: observation ' + n : (t.recording || '')) + (t.film ? ' \u00b7 ' + t.film : ''); };
+const subOf = t => { if (t.id.startsWith('live')) return 'Demonstration class led by a tutor with the TP students \u00b7 two 45-minute lessons' + (t.sub ? ' \u00b7 ' + t.sub : ''); if (t.sub) return t.sub; if (!t.id.startsWith('filmed')) return t.recording || ''; const n = posOf(t); return (n ? 'Recording: observation ' + n : (t.recording || '')) + (t.film ? ' \u00b7 ' + t.film : ''); };
 const rec = k => (WORK[k] = WORK[k] || { a:{}, turnedInAt:null });
 /* How much of a sheet is done. A parts sheet counts PARTS with anything in
    them, not fields -- its stage map alone is twenty-eight cells, which would
@@ -291,12 +291,12 @@ function list(){
       <div class="hd"><h2>Experienced teachers</h2>${tallyOf(otherKeys)}</div>
       <p class="note">The observations Cambridge asks for outside your own group.</p>
       <div class="sub">
-        <h3>Filmed</h3>
+        <h3>Filmed lessons</h3>
         <p class="note">${READONLY ? 'Watched in the candidate’s own time; turned in and dated.' : 'Watched in your own time. Pause and rewind — these are not meant to be done in one viewing.'}</p>
         ${TASKS.filmed.map(t => row(t)).join('')}
       </div>
       <div class="sub">
-        <h3>Live</h3>
+        <h3>Live observation of experienced teachers</h3>
         <p class="note">A real class, watched as it happens.</p>
         ${TASKS.live.map(t => row(t)).join('')}
       </div>
@@ -386,7 +386,7 @@ function sheet(t, sit){
 
   $('back').href = location.pathname + (KEYQ ? '?' + KEYQ : '');
   $('app').innerHTML = `
-    <p class="eyebrow">${READONLY && WHO ? esc(WHO) + ' · ' : ''}${t.tp ? 'Peer observation · TP' + t.tp + (sit||'') : (t.id.startsWith('filmed') ? 'Filmed observation' : 'Live observation')}</p>
+    <p class="eyebrow">${READONLY && WHO ? esc(WHO) + ' · ' : ''}${t.tp ? 'Peer observation · TP' + t.tp + (sit||'') : (t.id.startsWith('filmed') ? 'Filmed observation' : 'Live observation of experienced teachers')}</p>
     <h1>${esc(t.title)}</h1>
     ${subOf(t) ? `<p class="lede">${esc(subOf(t))}</p>` : ''}
     ${turnsIn(t) && turned ? `<div class="turned"><b>Turned in</b> — ${new Date(turned).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}.${READONLY ? '' : ' It is on your record; you can still add to it.'}</div>` : ''}

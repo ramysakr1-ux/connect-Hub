@@ -279,7 +279,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
   "live": [
     {
       "id": "live1",
-      "title": "Live Teacher Observation 1",
+      "title": "Demonstration class 1",
       "sub": "Classroom Management — Strengths and Action Points",
       "minutes": 90,
       "shape": "questions",
@@ -299,7 +299,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
     },
     {
       "id": "live2",
-      "title": "Live Teacher Observation 2",
+      "title": "Demonstration class 2",
       "sub": "Lesson Shape- Language and/or Skill Focus",
       "minutes": 90,
       "brief": "In Task 1 you watched how a teacher runs a room. This time, watch how the lesson is built.\nBefore the lesson\nAsk the tutor for the main aim.\nDecide from the aim alone: is this a language lesson or a skills lesson? Write your prediction in Part A before it starts.",

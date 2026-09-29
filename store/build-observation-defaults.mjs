@@ -212,8 +212,15 @@ for (const [file, id] of [['Live_Teacher_Observations_Demo_1.docx', 'live1'],
      Observations Demo 1", "CELTA  ·  LIVE OBSERVATION TASK 2"). Ramy, 27 Sep
      2026: "normalise the live task 2 title". Both read the same way now;
      the number is the document's own. */
+  /* Ramy, 29 Sep 2026: Demo 1 and Demo 2 are the live observation of
+     experienced teachers -- each a demonstration class led by a tutor with
+     the TP students (Handbook 10.1's phrase), two 45-minute lessons, ninety
+     minutes; Demo 1 on a day the course admin picks, Demo 2 at the level
+     swap. Titled in Cambridge's words; the centre's own subtitle stays.
+     Demo 1's Word file carries a stale line "watch the whole recording ·
+     45 minutes" from an older version; it is not carried. */
   const num = (lines[0].match(/(\d+)\s*$/) || [])[1];
-  const title = num ? 'Live Teacher Observation ' + num : lines[0];
+  const title = num ? 'Demonstration class ' + num : lines[0];
   /* Live teaching is 90 minutes at each level (Ramy, 29 Sep 2026), so the two
      live sheets carry their own length. The candidate can still change it on
      the sheet; this is what it starts at, and it means the three live hours
