@@ -56,26 +56,40 @@
   h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.7rem; margin:0 0 4px;}
   .lede{color:var(--grey); font-size:0.88rem; line-height:1.6; margin:0 0 18px; max-width:72ch;}
   .wk{margin:0 0 20px;}
-  .wk h2{font-family:'Newsreader',Georgia,serif; font-size:1.12rem; margin:0 0 8px; display:flex; gap:10px; align-items:baseline; flex-wrap:wrap;}
+  /* The week heading follows you down a four-week page, so you always know
+     which week you are reading (29 Sep 2026). */
+  .wk h2{font-family:'Newsreader',Georgia,serif; font-size:1.12rem; margin:0 0 8px; display:flex; gap:10px; align-items:baseline; flex-wrap:wrap;
+    position:sticky; top:0; z-index:2; background:var(--sand); padding:6px 0 5px;}
   .wk h2 small{font-family:'Karla',sans-serif; font-size:0.78rem; font-weight:500; color:var(--grey);}
   .days{display:grid; grid-template-columns:repeat(5,1fr); gap:10px;}
-  .day{background:var(--surface); border:1px solid var(--sand-line); border-radius:10px; padding:10px 11px 12px; display:flex; flex-direction:column; gap:7px; min-width:0;}
-  .day.today{border-color:var(--gold); border-width:2px; padding:9px 10px 11px;}
-  .day .dh{display:flex; justify-content:space-between; align-items:baseline; gap:6px; border-bottom:1px solid var(--sand-line); padding-bottom:5px;}
+  .day{background:var(--surface); border:1px solid var(--sand-line); border-radius:10px; padding:0 0 8px; overflow:hidden; min-width:0;}
+  .day.today{border-color:var(--gold); border-width:2px;}
+  .day .dh{display:flex; justify-content:space-between; align-items:baseline; gap:6px; border-bottom:1px solid var(--sand-line); padding:9px 11px 7px;}
+  /* One row per slot: the time in its own narrow column so the clock reads
+     straight down the day, whatever the content beside it does. */
+  .sl{display:grid; grid-template-columns:44px 1fr; gap:7px; padding:5px 11px; align-items:start; font-size:0.76rem; line-height:1.38; min-width:0;}
+  .sl .t{color:var(--faint); font-size:0.66rem; font-weight:700; padding-top:2px; font-variant-numeric:tabular-nums;}
+  .sl .lab{font-size:0.62rem; letter-spacing:.09em; text-transform:uppercase; color:var(--faint); font-weight:700; display:block;}
+  .sl.brk{color:var(--faint); font-style:italic; font-size:0.71rem; padding-top:2px; padding-bottom:2px;}
+  .sl.fix{color:var(--grey);}
+  .sl .dash{color:var(--faint);}
+  .sl.tp{background:var(--box);}
+  .sl.tp .who{color:var(--gold-deep); font-weight:700;}
+  .sl.tp .line{display:block;}
+  .sl.tp .gl{color:var(--grey); font-weight:500;}
+  .sl.note{color:var(--grey); font-size:0.73rem;}
+  .sl input{font-family:inherit; font-size:0.76rem; width:100%; padding:3px 6px; border:1px solid var(--sand-line); border-radius:5px; background:var(--paper); color:var(--ink); min-width:0;}
+  .sl input:focus{outline:2px solid var(--teal); outline-offset:-1px;}
+  .room{color:var(--teal); text-decoration:none; font-weight:600; font-size:0.71rem;}
+  .room:hover{text-decoration:underline;}
+  .slots{width:100%; border-collapse:collapse; font-size:0.78rem;}
+  .slots th{text-align:left; font-size:0.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--grey); padding:4px 6px; border-bottom:1px solid var(--sand-line);}
+  .slots td{padding:3px 6px; border-bottom:1px solid var(--sand-line);}
+  .slots input, .slots select{font-family:inherit; font-size:0.76rem; width:100%; padding:3px 5px; border:1px solid var(--sand-line); border-radius:5px; background:var(--paper); color:var(--ink);}
+  .btn.sm{padding:4px 10px; font-size:0.74rem;}
   .day .dow{font-weight:700; font-size:0.84rem;}
   .day .dm{font-size:0.74rem; color:var(--grey);}
-  .cell{font-size:0.78rem; line-height:1.4; min-width:0;}
-  .cell .k{font-size:0.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); font-weight:700; display:block;}
-  .cell a{color:var(--teal); text-decoration:none; font-weight:600;}
-  .cell a:hover{text-decoration:underline;}
-  .cell.tp{background:var(--box); border-radius:6px; padding:5px 7px; margin:1px 0;}
-  .cell.tp b{font-weight:700;}
-  .cell.tp .who{color:var(--gold-deep); font-weight:700;}
-  .cell.tp .gl{display:block; color:var(--grey); font-size:0.74rem; margin-top:2px;}
-  .cell.due{color:var(--brick); font-weight:600; font-size:0.74rem;}
-  .cell.note{color:var(--grey); font-size:0.73rem;}
-  .cell input{font-family:inherit; font-size:0.78rem; width:100%; padding:4px 6px; border:1px solid var(--sand-line); border-radius:5px; background:var(--paper); color:var(--ink); min-width:0;}
-  .cell input:focus{outline:2px solid var(--teal); outline-offset:-1px;}
+  .due{color:var(--brick); font-weight:600; font-size:0.72rem; padding:4px 11px;}
   .btn{font-family:'Karla',sans-serif; font-size:0.84rem; font-weight:700; padding:9px 18px; border-radius:8px; border:0; background:var(--teal); color:#fff; cursor:pointer;}
   .btn.quiet{background:none; color:var(--grey); border:1.5px solid var(--sand-line);}
   .btn:disabled{opacity:.5; cursor:not-allowed;}
@@ -100,22 +114,22 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} .days{grid-template-columns:1fr;} }
   @media print{ .back,.bar,#hubSync{display:none !important;} body{background:#fff;} .days{grid-template-columns:repeat(5,1fr);} .day{break-inside:avoid;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609292323">
-<link rel="stylesheet" href="hub-theme.css?v=202609292323">
+<link rel="stylesheet" href="hub-house.css?v=202609292335">
+<link rel="stylesheet" href="hub-theme.css?v=202609292335">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609292323"></script>
-<script src="hub-tracker.js?v=202609292323"></script>
-<script src="hub-rotation.js?v=202609292323"></script>
-<script src="hub-docx.js?v=202609292323"></script>
-<script src="hub-timetable-parse.js?v=202609292323"></script>
-<script src="hub-shared.js?v=202609292323"></script>
-<script src="hub-store.js?v=202609292323"></script>
-<script src="hub-sync.js?v=202609292323"></script>
+<script src="hub-due.js?v=202609292335"></script>
+<script src="hub-tracker.js?v=202609292335"></script>
+<script src="hub-rotation.js?v=202609292335"></script>
+<script src="hub-docx.js?v=202609292335"></script>
+<script src="hub-timetable-parse.js?v=202609292335"></script>
+<script src="hub-shared.js?v=202609292335"></script>
+<script src="hub-store.js?v=202609292335"></script>
+<script src="hub-sync.js?v=202609292335"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -126,6 +140,32 @@ const SETTINGS = rec('connect_course_settings') || {};
 const KEY = 'connect_timetable_v1';
 const R = window.hubRotation;
 $('back').href = IS_TRAINEE ? 'index.html' : IS_TUTOR ? '5_tutor_dashboard.html' : '12_assessor_pack.html';
+
+/* THE DAY'S SHAPE. Set once for the course; every day is laid out from it.
+   The default is Ramy's own C/17 day, read off his timetable on 29 Sep 2026:
+   "input 10:00-11:00, break, input 11:15-12:15, lunch 12:15-13:15, TP
+   preparation 13:15-13:30. Teaching practice 13:30-14:15 and 14:15-15:00,
+   break, 15:15-16:00. Break, lesson planning 16:15-17:00, break, TP feedback
+   17:15-18:00." A centre that runs mornings changes it; nothing here is
+   fixed. `kind` is what the slot IS, and it is what the page renders from:
+     input     something a tutor types, and a room to join
+     tp        one 45-minute lesson; the teaching order decides whose
+     break     the day's rhythm, shown quietly and never typed in
+     prep / plan / feedback   fixed appointments, named, not typed in
+   `room` names which of the course's online rooms belongs to the slot, by
+   label, so a room is still typed once on Course admin and never here. */
+const DEFAULT_SLOTS = [
+  { key:'i1',   from:'10:00', to:'11:00', kind:'input',    label:'Input',          room:'Input' },
+  { key:'br1',  from:'11:00', to:'11:15', kind:'break',    label:'Break' },
+  { key:'i2',   from:'11:15', to:'12:15', kind:'input',    label:'Input',          room:'Input' },
+  { key:'lun',  from:'12:15', to:'13:15', kind:'break',    label:'Lunch' },
+  { key:'prep', from:'13:15', to:'13:30', kind:'prep',     label:'TP preparation' },
+  { key:'tp1',  from:'13:30', to:'14:15', kind:'tp',       label:'Teaching practice', room:'Teaching practice' },
+  { key:'tp2',  from:'14:15', to:'15:00', kind:'tp',       label:'Teaching practice', room:'Teaching practice' },
+  { key:'tp3',  from:'15:15', to:'16:00', kind:'tp',       label:'Teaching practice', room:'Teaching practice' },
+  { key:'plan', from:'16:15', to:'17:00', kind:'plan',     label:'Lesson planning' },
+  { key:'fb',   from:'17:15', to:'18:00', kind:'feedback', label:'TP feedback' }
+];
 
 let TT = rec(KEY) || null;
 let note = '', busy = false;
@@ -138,6 +178,41 @@ const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const dm = d => d.getDate() + ' ' + MON[d.getMonth()];
 const TODAY = ymd(new Date());
+
+/* A timetable built before the day shape existed carried two input strings on
+   the day itself (`a`, `b`). They become the first two input slots, in order,
+   so nothing typed is lost when the shape arrives. */
+function migrate(){
+  if (!TT || !TT.days) return;
+  if (!TT.slots || !TT.slots.length) TT.slots = DEFAULT_SLOTS.map(x => Object.assign({}, x));
+  const ins = TT.slots.filter(x => x.kind === 'input');
+  TT.days.forEach(d => {
+    if (d.cells) return;
+    d.cells = {};
+    [d.a, d.b].forEach((v, i) => { if (v && ins[i]) d.cells[ins[i].key] = v; });
+    delete d.a; delete d.b;
+  });
+}
+
+/* The course's online rooms, typed once on Course admin. A slot names one by
+   label; a room tagged for a group is preferred for that group. Nothing is
+   typed twice, so the two can never drift apart. */
+function roomsByLabel(){
+  const list = Array.isArray(SETTINGS.onlineRooms) ? SETTINGS.onlineRooms : [];
+  const by = {};
+  list.forEach(r => {
+    if (!r || !r.url) return;
+    const k = String(r.label || '').trim().toLowerCase();
+    (by[k] = by[k] || []).push(r);
+  });
+  return by;
+}
+function roomFor(slot, group){
+  if (!slot.room) return null;
+  const list = ROOMS[String(slot.room).trim().toLowerCase()] || [];
+  if (!list.length) return null;
+  return list.find(r => String(r.group || '') === String(group || '')) || list.find(r => !r.group) || list[0];
+}
 
 /* The groups, and each one's two teaching sets, from the roster. */
 function groups(){
@@ -180,7 +255,7 @@ function skeleton(){
   for (let d = new Date(s); d <= e; d.setDate(d.getDate()+1)) {
     const dow = d.getDay();
     if (dow === 0 || dow === 6) continue;          // weekends are not course days
-    days.push({ date: ymd(d), a:'', b:'', notes:'' });
+    days.push({ date: ymd(d), cells:{}, notes:'' });
   }
   /* Day one is orientation and the demonstration class — no assessed practice
      (Ramy's unassessed slots). Teaching starts the next course day. */
@@ -192,54 +267,92 @@ function skeleton(){
     teaching[i].tp = tp;
     teaching[i].setIndex = i % nSets;
   }
-  return { days, built: new Date().toISOString() };
+  return { days, slots: (TT && TT.slots && TT.slots.length ? TT.slots : DEFAULT_SLOTS).map(x => Object.assign({}, x)), published: !!(TT && TT.published), built: new Date().toISOString() };
 }
 
-function cellHTML(day, g){
+/* One day, laid out from the shape. Times down the left; breaks quiet,
+   because they are the day's rhythm and not its content; the three teaching
+   practice slots carrying the rotating order, so a candidate reads the time
+   they teach rather than working it out from a letter. */
+function cellHTML(day){
   const d = parse(day.date);
   const isToday = day.date === TODAY;
   const dueHere = (DUES[day.date] || []);
-  let tp = '';
+  const slots = (TT && TT.slots && TT.slots.length) ? TT.slots : DEFAULT_SLOTS;
+  const cells = day.cells || {};
+
+  /* Who teaches which of the day's practice slots. The set that teaches today
+     is the one this day was given; within it the order steps one place each
+     practice (hub-rotation.js), and slot 1, 2, 3 take them in that order. */
+  const teachers = [];
   if (day.tp) {
-    /* One group: "TP 3 · ABC" on one line. More than one: the practice
-       number, then a line per group. Letters are per group, so two groups
-       teaching in parallel both read ABC, and side by side on one line that
-       came out as "TP 3 · ABC (Group 1) · ABC (Group 2)" -- a stutter that
-       told the reader less than it could (Ramy, seeing it in the pane,
-       29 Sep 2026). Group first, letters after, one line each. */
-    const rows = GROUPS.map(gr => {
+    GROUPS.forEach(gr => {
       const set = gr.sets[day.setIndex] || [];
-      return set.length ? { group: gr.group, who: R.setName(set) } : null;
-    }).filter(Boolean);
-    const body = rows.length === 1
-      ? ` · <span class="who">${esc(rows[0].who)}</span>`
-      : rows.map(r => `<span class="gl">Group ${esc(r.group || '—')} <span class="who">${esc(r.who)}</span></span>`).join('');
-    tp = `<div class="cell tp"><span class="k">Teaching practice</span><b>TP ${day.tp}</b>${body}</div>`;
+      if (set.length) teachers.push({ group: gr.group, order: R.orderFor(set, day.tp) });
+    });
   }
-  const slot = (k, label) => {
-    const v = day[k] || '';
-    if (!EDIT) return v ? `<div class="cell"><span class="k">${label}</span>${esc(v)}</div>` : '';
-    return `<div class="cell"><span class="k">${label}</span><input type="text" data-date="${esc(day.date)}" data-f="${k}" value="${esc(v)}" placeholder="—"></div>`;
+  let tpSeen = 0;
+
+  const roomLink = (slot, group) => {
+    const r = roomFor(slot, group);
+    return r ? `<a class="room" href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.label || 'Room')}</a>` : '';
   };
-  return `<div class="day${isToday ? ' today' : ''}">
-    <div class="dh"><span class="dow">${DOW[d.getDay()]}</span><span class="dm">${dm(d)}${isToday ? ' · today' : ''}</span></div>
-    ${slot('a','Input 1')}${slot('b','Input 2')}
-    ${tp}
-    ${dueHere.map(t => `<div class="cell due">${esc(t)} due</div>`).join('')}
-    ${EDIT ? `<div class="cell"><span class="k">Notes</span><input type="text" data-date="${esc(day.date)}" data-f="notes" value="${esc(day.notes||'')}" placeholder="—"></div>`
-           : (day.notes ? `<div class="cell note">${esc(day.notes)}</div>` : '')}
+
+  const body = slots.map(slot => {
+    const t = `<span class="t">${esc(slot.from || '')}</span>`;
+    if (slot.kind === 'break') return `<div class="sl brk">${t}<span>${esc(slot.label || 'Break')}</span></div>`;
+    if (slot.kind === 'tp') {
+      const i = tpSeen++;
+      if (!day.tp || !teachers.length) return `<div class="sl fix">${t}<span class="dash">\u2014</span></div>`;
+      const who = teachers.map(g => {
+        const p = g.order[i];
+        if (!p) return '';
+        return `<span class="line"><span class="who">${esc(p.letter)}</span>${teachers.length > 1 ? ' <span class="gl">Group ' + esc(g.group || '\u2014') + '</span>' : ''} \u00b7 ${esc(mins(slot))}${roomLink(slot, g.group) ? ' \u00b7 ' + roomLink(slot, g.group) : ''}</span>`;
+      }).filter(Boolean).join('');
+      if (!who) return `<div class="sl fix">${t}<span class="dash">\u2014</span></div>`;
+      return `<div class="sl tp">${t}<span><span class="lab">TP ${day.tp}</span>${who}</span></div>`;
+    }
+    if (slot.kind === 'input') {
+      const v = cells[slot.key] || '';
+      const link = roomLink(slot, '');
+      if (!EDIT) return (v || link) ? `<div class="sl">${t}<span><span class="lab">${esc(slot.label || 'Input')}</span>${esc(v)}${link ? '<br>' + link : ''}</span></div>` : `<div class="sl fix">${t}<span class="dash">\u2014</span></div>`;
+      return `<div class="sl">${t}<span><span class="lab">${esc(slot.label || 'Input')}</span><input type="text" data-date="${esc(day.date)}" data-slot="${esc(slot.key)}" value="${esc(v)}" placeholder="\u2014">${link ? link : ''}</span></div>`;
+    }
+    /* prep / plan / feedback: named appointments, nothing to type */
+    return `<div class="sl fix">${t}<span><span class="lab">${esc(slot.label || '')}</span></span></div>`;
+  }).join('');
+
+  const notes = EDIT
+    ? `<div class="sl note">${'<span class="t"></span>'}<span><span class="lab">Notes</span><input type="text" data-date="${esc(day.date)}" data-f="notes" value="${esc(day.notes||'')}" placeholder="\u2014"></span></div>`
+    : (day.notes ? `<div class="sl note"><span class="t"></span><span>${esc(day.notes)}</span></div>` : '');
+
+  return `<div class="day${isToday ? ' today' : ''}" id="d-${esc(day.date)}">
+    <div class="dh"><span class="dow">${DOW[d.getDay()]}</span><span class="dm">${dm(d)}${isToday ? ' \u00b7 today' : ''}</span></div>
+    ${body}
+    ${dueHere.map(t => `<div class="due">${esc(t)} due</div>`).join('')}
+    ${notes}
   </div>`;
 }
 
-let GROUPS = [], DUES = {}, EDIT = false;
+/* "45 min" from a slot's own two times, so changing a time changes the label
+   with it rather than leaving a number behind that used to be true. */
+function mins(slot){
+  const a = String(slot.from || '').match(/^(\d{1,2}):(\d{2})/), b = String(slot.to || '').match(/^(\d{1,2}):(\d{2})/);
+  if (!a || !b) return '';
+  const n = (+b[1]*60 + +b[2]) - (+a[1]*60 + +a[2]);
+  return n > 0 ? n + ' min' : '';
+}
+
+let GROUPS = [], DUES = {}, ROOMS = {}, EDIT = false;
 /* A tutor can look at the timetable the way the course sees it. Without this
    they only ever see input boxes and can never check what they have
    published (Ramy, 29 Sep 2026: "there's the course admin view, and then
    there's the view-only timetable for the course once it's set"). */
-let PREVIEW = false;
+let PREVIEW = false, SCROLLED = false, SLOTS_OPEN = false;
 
 function render(){
-  GROUPS = groups(); DUES = dues(); EDIT = IS_TUTOR && !PREVIEW;
+  migrate();
+  GROUPS = groups(); DUES = dues(); ROOMS = roomsByLabel(); EDIT = IS_TUTOR && !PREVIEW;
   const app = $('app');
   const head = `<p class="eyebrow">Course</p><h1>Timetable</h1>
     <p class="lede">${IS_TUTOR
@@ -276,10 +389,11 @@ function render(){
             : `<span class="chip">Not set yet</span><button class="btn" id="publish">Set it for the course</button>`}
       <button class="btn quiet" id="preview">${PREVIEW ? 'Back to editing' : 'See what they see'}</button>
       <button class="btn quiet" id="rebuild">Rebuild the shape</button>
+      <button class="btn quiet" id="slotsOpen">The day’s shape</button>
       <button class="btn quiet" id="importOpen">Import from a sheet</button>
       <span class="status">${esc(note)}</span></div>
       <p class="legend" style="margin:0 0 14px">${pub ? 'Everyone on the course reads this timetable. Edits show at once.' : 'Only tutors can see it until you set it.'}</p>`
-      + (PREVIEW ? '' : importHTML()) : '';
+      + (PREVIEW ? '' : slotsHTML() + importHTML()) : '';
   app.innerHTML = head + bar + weeks.map((w, i) => {
     const a = parse(w[0].date), b = parse(w[w.length-1].date);
     return `<section class="wk"><h2>Week ${i+1} <small>${dm(a)} – ${dm(b)}</small></h2>
@@ -291,6 +405,71 @@ function render(){
   if ($('unpublish')) $('unpublish').addEventListener('click', () => { TT.published = false; save('Taken back'); render(); });
   wireEdits();
   wireImport();
+  wireSlots();
+  /* Twenty full days stacked on a phone is a long way to scroll to reach this
+     afternoon, so a narrow screen opens on today. Once only: scrolling back up
+     to read the week should not be undone by the next save. */
+  if (!SCROLLED && window.innerWidth <= 980) {
+    const t = document.getElementById('d-' + TODAY);
+    if (t) { SCROLLED = true; t.scrollIntoView({ block: 'center' }); }
+  }
+}
+
+/* The day's shape, editable. One list for the whole course: change a time
+   here and every day follows, which is the point of having a shape at all.
+   `kind` is what the slot is; `room` names one of the course's online rooms
+   by label, so a room is still typed once on Course admin. */
+const KINDS = [['input','Input, typed per day'],['tp','Teaching practice lesson'],
+               ['break','Break or lunch'],['prep','TP preparation'],
+               ['plan','Lesson planning'],['feedback','TP feedback']];
+
+function slotsHTML(){
+  if (!SLOTS_OPEN) return '';
+  const slots = (TT.slots && TT.slots.length) ? TT.slots : DEFAULT_SLOTS;
+  return `<div class="imp"><h3>The day\u2019s shape</h3>
+    <p>Set once for the course; every day is laid out from it. The teaching practice slots are one lesson each \u2014 three of them means three candidates teach a day, and the order rotates. The room is one of the course\u2019s online rooms, named by its label so it is still typed once on Course admin.</p>
+    <div class="wrap"><table class="slots"><tr><th>From</th><th>To</th><th>What it is</th><th>Label</th><th>Room</th><th></th></tr>
+    ${slots.map((sl, i) => `<tr>
+      <td><input type="time" data-sl="${i}" data-k="from" value="${esc(sl.from||'')}"></td>
+      <td><input type="time" data-sl="${i}" data-k="to" value="${esc(sl.to||'')}"></td>
+      <td><select data-sl="${i}" data-k="kind">${KINDS.map(([v,l]) => `<option value="${v}"${sl.kind===v?' selected':''}>${esc(l)}</option>`).join('')}</select></td>
+      <td><input type="text" data-sl="${i}" data-k="label" value="${esc(sl.label||'')}"></td>
+      <td><input type="text" data-sl="${i}" data-k="room" value="${esc(sl.room||'')}" placeholder="\u2014"></td>
+      <td><button class="btn quiet sm" data-slrm="${i}">Remove</button></td></tr>`).join('')}
+    </table></div>
+    <div class="row"><button class="btn" id="slotAdd">Add a slot</button>
+      <button class="btn quiet" id="slotReset">Back to the default day</button>
+      <button class="btn quiet" id="slotsClose">Close</button></div></div>`;
+}
+
+function wireSlots(){
+  if (!IS_TUTOR) return;
+  if ($('slotsOpen')) $('slotsOpen').addEventListener('click', () => { SLOTS_OPEN = !SLOTS_OPEN; render(); });
+  if ($('slotsClose')) $('slotsClose').addEventListener('click', () => { SLOTS_OPEN = false; render(); });
+  if ($('slotAdd')) $('slotAdd').addEventListener('click', () => {
+    TT.slots = (TT.slots || DEFAULT_SLOTS).slice();
+    TT.slots.push({ key: 's' + Date.now().toString(36), from:'', to:'', kind:'input', label:'Input', room:'' });
+    save('Added'); render();
+  });
+  if ($('slotReset')) $('slotReset').addEventListener('click', () => {
+    if (!confirm('Back to the default day? Anything typed into a slot that no longer exists stops showing.')) return;
+    TT.slots = DEFAULT_SLOTS.map(x => Object.assign({}, x)); save('Shape reset'); render();
+  });
+  document.querySelectorAll('[data-slrm]').forEach(el => el.addEventListener('click', () => {
+    TT.slots = (TT.slots || DEFAULT_SLOTS).slice();
+    TT.slots.splice(+el.dataset.slrm, 1); save('Removed'); render();
+  }));
+  document.querySelectorAll('[data-sl]').forEach(el => {
+    const fire = () => {
+      TT.slots = (TT.slots || DEFAULT_SLOTS).slice();
+      const sl = TT.slots[+el.dataset.sl]; if (!sl) return;
+      sl[el.dataset.k] = el.value;
+      save('Saved');
+      if (el.dataset.k === 'kind') render();
+    };
+    if (el.tagName === 'SELECT') el.addEventListener('change', fire);
+    else { let t = null; el.addEventListener('input', () => { clearTimeout(t); t = setTimeout(fire, 700); }); el.addEventListener('blur', () => { clearTimeout(t); fire(); }); }
+  });
 }
 
 /* Import. Ramy, 29 Sep 2026: "is it possible to just import a timetable the
@@ -382,7 +561,8 @@ function wireEdits(){
     const fire = () => {
       const day = TT.days.find(d => d.date === el.dataset.date);
       if (!day) return;
-      day[el.dataset.f] = el.value;
+      if (el.dataset.slot) { day.cells = day.cells || {}; day.cells[el.dataset.slot] = el.value; }
+      else day[el.dataset.f] = el.value;
       save('Saved');
     };
     el.addEventListener('input', () => { clearTimeout(t); t = setTimeout(fire, 800); });
