@@ -171,18 +171,18 @@
   .eyebrow{font-size:0.7rem; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:0 0 4px;}
   .lede{color:var(--grey); font-size:0.88rem; line-height:1.6; margin:0 0 18px; max-width:66ch;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609291816">
-<link rel="stylesheet" href="hub-theme.css?v=202609291816">
+<link rel="stylesheet" href="hub-house.css?v=202609291832">
+<link rel="stylesheet" href="hub-theme.css?v=202609291832">
 </head>
 <body class="hub-obs">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="observation-defaults.js?v=202609291816"></script>
-<script src="hub-shared.js?v=202609291816"></script>
-<script src="hub-store.js?v=202609291816"></script>
-<script src="hub-sync.js?v=202609291816"></script>
+<script src="observation-defaults.js?v=202609291832"></script>
+<script src="hub-shared.js?v=202609291832"></script>
+<script src="hub-store.js?v=202609291832"></script>
+<script src="hub-sync.js?v=202609291832"></script>
 <script type="text/x-hub-app">
 /* A candidate's own work. A tutor or an assessor READS it -- they have to, it
    is portfolio evidence -- so the page is not refused them; the fields are
@@ -224,6 +224,13 @@ const turnsIn = t => !t.tp;
 /* A peer task is done twice, for the two halves of a TP day, so a sitting is
    part of the key. Everything else is done once. */
 const recKey = (id, sit) => sit ? id + '#' + sit : id;
+/* A filmed or live sheet is numbered by its position in the course's own
+   order, which the trainer sets on Course admin. The line under the title
+   reads "Recording: observation N" from that, with the film's name after it
+   where the trainer gave one; the Word file's own "Recording: observation N"
+   is only the fallback. */
+const posOf = t => { const g = t.id.startsWith('filmed') ? TASKS.filmed : t.id.startsWith('live') ? TASKS.live : null; const i = g ? g.findIndex(x => x.id === t.id) : -1; return i >= 0 ? i + 1 : null; };
+const subOf = t => { if (t.sub) return t.sub; if (!t.id.startsWith('filmed')) return t.recording || ''; const n = posOf(t); return (n ? 'Recording: observation ' + n : (t.recording || '')) + (t.film ? ' \u00b7 ' + t.film : ''); };
 const rec = k => (WORK[k] = WORK[k] || { a:{}, turnedInAt:null });
 /* How much of a sheet is done. A parts sheet counts PARTS with anything in
    them, not fields -- its stage map alone is twenty-eight cells, which would
@@ -253,11 +260,11 @@ function statusOf(k, expected, dated){
 }
 function row(t, sit){
   const k = recKey(t.id, sit);
-  const label = sit ? `TP${t.tp}${sit}` : (t.tp ? 'TP'+t.tp : '');
+  const label = sit ? `TP${t.tp}${sit}` : (t.tp ? 'TP'+t.tp : (posOf(t) ? (t.id.startsWith('filmed') ? 'Film ' : 'Live ') + posOf(t) : ''));
   const q = `?task=${encodeURIComponent(t.id)}${sit ? '&sit=' + sit : ''}${KEYQ ? '&' + KEYQ : ''}`;
   return `<a class="task" href="${q}">
     <span class="tp">${esc(label)}</span>
-    <span class="nm">${esc(t.title)}${t.sub||t.recording ? `<small>${esc(t.sub||t.recording)}</small>` : ''}</span>
+    <span class="nm">${esc(t.title)}${subOf(t) ? `<small>${esc(subOf(t))}</small>` : ''}</span>
     ${statusOf(k, expectedOf(t), turnsIn(t))}
   </a>`;
 }
@@ -379,7 +386,7 @@ function sheet(t, sit){
   $('app').innerHTML = `
     <p class="eyebrow">${READONLY && WHO ? esc(WHO) + ' · ' : ''}${t.tp ? 'Peer observation · TP' + t.tp + (sit||'') : (t.id.startsWith('filmed') ? 'Filmed observation' : 'Live observation')}</p>
     <h1>${esc(t.title)}</h1>
-    ${t.sub||t.recording ? `<p class="lede">${esc(t.sub||t.recording)}</p>` : ''}
+    ${subOf(t) ? `<p class="lede">${esc(subOf(t))}</p>` : ''}
     ${turnsIn(t) && turned ? `<div class="turned"><b>Turned in</b> — ${new Date(turned).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}.${READONLY ? '' : ' It is on your record; you can still add to it.'}</div>` : ''}
     ${t.brief ? `<div class="brief">${esc(t.brief)}</div>` : ''}
     ${header}

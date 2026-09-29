@@ -240,6 +240,14 @@
   /* Three columns, so every switch and every button sits on the same line
      down the list (Ramy, 28 Sep 2026: "align it"). */
   .arow{display:grid !important; grid-template-columns:1fr 240px 140px; align-items:center;}
+  .arow.obs-filmed{grid-template-columns:1fr 72px 140px;}
+  .obs-move{grid-column:2; display:flex; gap:4px; justify-self:end;}
+  .obs-move .mv{width:32px; height:32px; border:1px solid var(--sand-line, oklch(85.5% 0.02 80)); border-radius:8px; background:var(--paper, #fff); font-size:1rem; cursor:pointer; color:var(--ink);}
+  .obs-move .mv:disabled{opacity:.35; cursor:default;}
+  .obs-film{margin-top:6px;}
+  .obs-film label{display:block; font-size:0.68rem; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); margin:0 0 3px;}
+  .obs-film input{width:100%; max-width:460px; font-family:inherit; font-size:0.84rem; padding:6px 9px; border:1px solid var(--sand-line, oklch(85.5% 0.02 80)); border-radius:8px; background:var(--paper, #fff); color:var(--ink);}
+  @media (max-width:640px){ .arow.obs-filmed{grid-template-columns:1fr 72px;} .obs-move{grid-column:2; grid-row:1;} .arow.obs-filmed a.btn{grid-column:1 / -1; justify-self:start;} }
   .arow .sw{grid-column:2; margin-left:0 !important;}
   .arow a.btn{grid-column:3; justify-self:end; white-space:nowrap;}
   @media (max-width:640px){ .arow{grid-template-columns:1fr 140px;} .arow .sw{grid-column:1 / -1; order:3; padding-top:4px;} .arow a.btn{grid-column:2; grid-row:1;} }
@@ -280,7 +288,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609291816">
+<link rel="stylesheet" href="hub-house.css?v=202609291832">
 </head>
 <body>
 <div class="board">
@@ -564,11 +572,11 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609291816"></script>
-<script src="hub-store.js?v=202609291816"></script>
-<script src="observation-defaults.js?v=202609291816"></script>
-<script src="hub-shared.js?v=202609291816"></script>
-<script src="hub-sync.js?v=202609291816"></script>
+<script src="assignment-defaults.js?v=202609291832"></script>
+<script src="hub-store.js?v=202609291832"></script>
+<script src="observation-defaults.js?v=202609291832"></script>
+<script src="hub-shared.js?v=202609291832"></script>
+<script src="hub-sync.js?v=202609291832"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -879,14 +887,48 @@ document.getElementById('addCandLink').addEventListener('click', () => {
 });
 
 /* ---- Observations tab ------------------------------------------------------ */
+/* The four filmed tasks are numbered by POSITION, and the trainer sets the
+   position. Ramy, 29 Sep 2026: the sheets are fixed but the films change, so
+   which task is "observation 1" should be the trainer's call before the
+   course, not the Word file's. The task's id never moves -- that is what a
+   candidate's answers are filed against -- only its place in the list, saved
+   with the course's own observation wording (the whole set, as screen 19
+   saves it), so it carries over to the next course and can change mid-course
+   without harm. A film name beside each is optional and shows on the sheet. */
 (function(){
-  let ow = null; try { ow = JSON.parse(localStorage.getItem('connect_observation_wording_v1')); } catch(e) {}
-  const set = (ow && ow.peer) ? ow : (window.CONNECT_HUB_OBSERVATION_DEFAULTS || { peer:[], filmed:[], live:[] });
-  const groups = [['peer','Peer observations','done twice, for the a and b halves of the TP day'], ['filmed','Filmed lessons','turned in, with the date'], ['live','Live lessons','turned in, with the date']];
-  document.getElementById('observationRows').innerHTML = groups.map(([g, name, aside]) =>
-    `<h3 class="docsh" style="margin-top:22px;">${name} <span class="muted" style="font-weight:400;font-size:0.8rem;">${aside}</span></h3>` +
-    (set[g]||[]).map(t => `<div class="arow" data-key="${esc(t.id)}"><div><span class="code">${t.tp ? 'TP' + t.tp : g === 'filmed' ? 'FILMED' : 'LIVE'}</span><div class="title2">${esc(t.title)}</div>${t.recording || t.sub ? `<div class="aside">${esc(t.recording || t.sub)}</div>` : ''}</div><a class="btn ghost" href="19_observation_wording.html?task=${encodeURIComponent(t.id)}" style="text-decoration:none;">Edit wording</a></div>`).join('')
-  ).join('');
+  const KEY = 'connect_observation_wording_v1';
+  const load = () => { let ow = null; try { ow = JSON.parse(localStorage.getItem(KEY)); } catch(e) {}
+    return (ow && ow.peer) ? ow : JSON.parse(JSON.stringify(window.CONNECT_HUB_OBSERVATION_DEFAULTS || { peer:[], filmed:[], live:[] })); };
+  const groups = [['peer','Peer observations','done twice, for the a and b halves of the TP day'], ['filmed','Filmed lessons','turned in, with the date \u2014 numbered in the order you set here'], ['live','Live lessons','turned in, with the date']];
+  const box = document.getElementById('observationRows');
+  function render(){
+    const set = load();
+    box.innerHTML = groups.map(([g, name, aside]) =>
+      `<h3 class="docsh" style="margin-top:22px;">${name} <span class="muted" style="font-weight:400;font-size:0.8rem;">${aside}</span></h3>` +
+      (set[g]||[]).map((t, i, arr) => {
+        const code = t.tp ? 'TP' + t.tp : g === 'filmed' ? 'FILMED ' + (i + 1) : 'LIVE ' + (i + 1);
+        const filmed = g === 'filmed';
+        return `<div class="arow${filmed ? ' obs-filmed' : ''}" data-key="${esc(t.id)}"><div><span class="code">${code}</span><div class="title2">${esc(t.title)}</div>${!filmed && t.sub ? `<div class="aside">${esc(t.sub)}</div>` : ''}
+          ${filmed ? `<div class="obs-film"><label>Film</label><input type="text" data-film="${esc(t.id)}" value="${esc(t.film || '')}" placeholder="which recording this one is, e.g. the title or the link" maxlength="160"></div>` : ''}</div>
+          ${filmed ? `<span class="obs-move"><button type="button" class="mv" data-move="${esc(t.id)}" data-dir="-1" title="Move up"${i === 0 ? ' disabled' : ''}>\u2191</button><button type="button" class="mv" data-move="${esc(t.id)}" data-dir="1" title="Move down"${i === arr.length - 1 ? ' disabled' : ''}>\u2193</button></span>` : ''}
+          <a class="btn ghost" href="19_observation_wording.html?task=${encodeURIComponent(t.id)}">Edit wording</a></div>`;
+      }).join('')
+    ).join('');
+  }
+  const persist = (set) => { localStorage.setItem(KEY, JSON.stringify(set)); };
+  box.addEventListener('click', e => {
+    const b = e.target.closest('[data-move]'); if (!b || b.disabled) return;
+    const set = load(), i = set.filmed.findIndex(t => t.id === b.dataset.move), j = i + (+b.dataset.dir);
+    if (i < 0 || j < 0 || j >= set.filmed.length) return;
+    [set.filmed[i], set.filmed[j]] = [set.filmed[j], set.filmed[i]];
+    persist(set); render();
+  });
+  box.addEventListener('input', e => {
+    const f = e.target.closest('[data-film]'); if (!f) return;
+    const set = load(), t = set.filmed.find(x => x.id === f.dataset.film); if (!t) return;
+    t.film = f.value.trim(); persist(set);
+  });
+  render();
 })();
 
 const ROSTER_KEY='connect_roster_v1';
