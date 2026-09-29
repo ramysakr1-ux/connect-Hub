@@ -81,6 +81,14 @@
   .sl.tp .line{display:flex; flex-wrap:wrap; align-items:baseline; gap:0 6px; line-height:1.5;}
   .sl.tp .line + .line{margin-top:1px;}
   .sl.tp .mn{color:var(--grey); font-size:0.72rem; white-space:nowrap;}
+  /* One meaning per colour, and a mark rather than a painted cell: the grid
+     has to stay readable when nothing is wrong. */
+  .mk{font-size:0.7rem; line-height:1; flex:none;}
+  .mk.done{color:var(--teal); opacity:.55;}
+  .mk.watch{color:var(--gold);}
+  .mk.alarm{color:var(--brick);}
+  .keyline{display:flex; gap:0 14px; flex-wrap:wrap; align-items:center;}
+  .keyline .sp{color:var(--sand-line);}
   .sl.tp .gl{color:var(--grey); font-weight:500;}
   .sl.note{color:var(--grey); font-size:0.73rem;}
   .sl input{font-family:inherit; font-size:0.76rem; width:100%; padding:3px 6px; border:1px solid var(--sand-line); border-radius:5px; background:var(--paper); color:var(--ink); min-width:0;}
@@ -94,7 +102,8 @@
   .btn.sm{padding:4px 10px; font-size:0.74rem;}
   .day .dow{font-weight:700; font-size:0.84rem;}
   .day .dm{font-size:0.74rem; color:var(--grey);}
-  .due{color:var(--brick); font-weight:600; font-size:0.72rem; padding:4px 11px;}
+  .due{color:var(--gold-deep); font-weight:600; font-size:0.72rem; padding:4px 11px;}
+  .due.late{color:var(--brick);}
   .btn{font-family:'Karla',sans-serif; font-size:0.84rem; font-weight:700; padding:9px 18px; border-radius:8px; border:0; background:var(--teal); color:#fff; cursor:pointer;}
   .btn.quiet{background:none; color:var(--grey); border:1.5px solid var(--sand-line);}
   .btn:disabled{opacity:.5; cursor:not-allowed;}
@@ -124,22 +133,22 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} .days{grid-template-columns:1fr;} }
   @media print{ .back,.bar,#hubSync{display:none !important;} body{background:#fff;} .days{grid-template-columns:repeat(5,1fr);} .day{break-inside:avoid;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609300020">
-<link rel="stylesheet" href="hub-theme.css?v=202609300020">
+<link rel="stylesheet" href="hub-house.css?v=202609300029">
+<link rel="stylesheet" href="hub-theme.css?v=202609300029">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609300020"></script>
-<script src="hub-tracker.js?v=202609300020"></script>
-<script src="hub-rotation.js?v=202609300020"></script>
-<script src="hub-docx.js?v=202609300020"></script>
-<script src="hub-timetable-parse.js?v=202609300020"></script>
-<script src="hub-shared.js?v=202609300020"></script>
-<script src="hub-store.js?v=202609300020"></script>
-<script src="hub-sync.js?v=202609300020"></script>
+<script src="hub-due.js?v=202609300029"></script>
+<script src="hub-tracker.js?v=202609300029"></script>
+<script src="hub-rotation.js?v=202609300029"></script>
+<script src="hub-docx.js?v=202609300029"></script>
+<script src="hub-timetable-parse.js?v=202609300029"></script>
+<script src="hub-shared.js?v=202609300029"></script>
+<script src="hub-store.js?v=202609300029"></script>
+<script src="hub-sync.js?v=202609300029"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -251,13 +260,37 @@ function groups(){
 
 /* Assignment deadlines, so a due date is a cell rather than something the
    candidate has to remember from another screen. */
+/* The deadlines, and how they are going. A date on its own is a fact about
+   the course; a date that has passed with work still not in is a fact about
+   the people on it, and that is the half a printed timetable can never show
+   (Ramy: "this timetable is alive"). A tutor sees the count outstanding; a
+   candidate sees only whether THEIRS is in, because whether somebody else has
+   submitted is not theirs to read. */
 function dues(){
   const w = rec('connect_assignment_wording_v2') || {};
+  const roster = rec('connect_roster_v1') || {};
+  const me = rec('hub:me') || {};
+  const people = Object.values(roster.trainees || {}).filter(Boolean);
   const out = {};
   Object.keys(w).forEach(k => {
     const a = w[k] || {};
     const iso = String(a.due || '').slice(0,10);
-    if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) (out[iso] = out[iso] || []).push(a.title || k.toUpperCase());
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return;
+    let missing = 0, mineIn = null;
+    people.forEach(tr => {
+      const token = tr.id || tr.token;
+      const subs = (tr.records && tr.records.assignments) || (IS_TRAINEE ? rec('connect_assignment_submissions_v1') : null) || {};
+      const sub = subs[k];
+      const inHand = !!(sub && (sub.submittedAt || sub.submitted || sub.turnedIn));
+      if (IS_TRAINEE) { if (token === me.token) mineIn = inHand; return; }
+      if (!inHand) missing++;
+    });
+    (out[iso] = out[iso] || []).push({
+      title: a.title || k.toUpperCase(),
+      past: iso < TODAY,
+      missing: IS_TRAINEE ? (mineIn === false ? 1 : 0) : missing,
+      total: IS_TRAINEE ? 1 : people.length
+    });
   });
   return out;
 }
@@ -340,7 +373,7 @@ function cellHTML(day){
         if (!p) return '';
         const link = roomLink(slot, g.group, true);
         const m = mins(slot);
-        return `<span class="line"><b class="who">${esc(p.letter)}</b>${teachers.length > 1 ? '<span class="gl">Group ' + esc(g.group || '\u2014') + '</span>' : ''}${m ? '<span class="mn">' + esc(m) + '</span>' : ''}${link}</span>`;
+        return `<span class="line">${markFor(p.token, day.tp, day.date)}<b class="who">${esc(p.letter)}</b>${teachers.length > 1 ? '<span class="gl">Group ' + esc(g.group || '\u2014') + '</span>' : ''}${m ? '<span class="mn">' + esc(m) + '</span>' : ''}${link}</span>`;
       }).filter(Boolean).join('');
       if (!who) return `<div class="sl fix">${t}<span class="dash">\u2014</span></div>`;
       return `<div class="sl tp">${t}<span><span class="lab">TP ${day.tp}</span>${who}</span></div>`;
@@ -362,9 +395,97 @@ function cellHTML(day){
   return `<div class="day${isToday ? ' today' : ''}" id="d-${esc(day.date)}">
     <div class="dh"><span class="dow">${DOW[d.getDay()]}</span><span class="dm">${dm(d)}${isToday ? ' \u00b7 today' : ''}</span></div>
     ${body}
-    ${dueHere.map(t => `<div class="due">${esc(t)} due</div>`).join('')}
+    ${dueHere.map(x => {
+      const late = x.past && x.missing;
+      return `<div class="due${late ? ' late' : ''}">${esc(x.title)} due${
+        late ? ' \u00b7 ' + (IS_TRAINEE ? 'yours is not in' : x.missing + ' of ' + x.total + ' not in') : ''}</div>`;
+    }).join('')}
     ${notes}
   </div>`;
+}
+
+/* LIVE COLOUR. Ramy, 29 Sep 2026: "this timetable is alive, so colour should
+   maybe mean something on the timetable."
+ *
+ * A printed timetable can only say what is planned. This one knows what
+ * happened, because Lite holds the plans, the feedback and the grades. Three
+ * states, one meaning each, and nothing else gets a hue:
+ *
+ *   done   the lesson was taught and returned to standard or above. A quiet
+ *          tick. It is the ordinary outcome and should not shout.
+ *   watch  the lesson is today or tomorrow and the plan is not in. Amber.
+ *          A reminder, not a warning -- the same tone as the deadlines.
+ *   alarm  the lesson was not to standard. Garnet. Something followed from
+ *          it: another lesson in the same family, possibly a stage record.
+ *
+ * WHO SEES WHAT. A tutor sees every candidate's state, because that is their
+ * job. A candidate sees only their own -- whether somebody else failed a
+ * lesson is not theirs to read off a timetable, and the store only sends them
+ * their own record anyway.
+ */
+function stateMap(){
+  const T = window.HubTracker;
+  const out = {};
+  if (!T) return out;
+  const roster = rec('connect_roster_v1') || {};
+  const me = rec('hub:me') || {};
+  Object.values(roster.trainees || {}).filter(Boolean).forEach(tr => {
+    const token = tr.id || tr.token;
+    if (!token) return;
+    if (IS_TRAINEE && token !== me.token) return;       // only their own
+    let c = null; try { c = T.recordFor(tr); } catch (e) { return; }
+    if (!c) return;
+    const mine = {};
+    for (let n = 1; n <= 20; n++) {
+      const g = c['tp' + n];
+      if (g) mine[n] = { grade: g };
+    }
+    /* The plan in hand, and which practice it is for. A plan names its own
+       TP ("TP3"), so a plan for a later lesson does not count as this one's. */
+    const plan = (tr.records && tr.records.plan) || (IS_TRAINEE ? rec('chub:plan') : null);
+    const planFor = plan && plan.meta && plan.meta.tp ? String(plan.meta.tp).replace(/[^0-9]/g, '') : '';
+    out[token] = { tps: mine, planFor: planFor ? +planFor : 0 };
+  });
+  return out;
+}
+
+/* Is this day today or tomorrow? A plan that is not in three weeks out is not
+   news; one that is not in for tomorrow is. */
+function soon(dateISO){
+  const d = parse(dateISO); if (!d) return false;
+  const now = parse(TODAY); if (!now) return false;
+  const diff = Math.round((d - now) / 86400000);
+  return diff >= 0 && diff <= 1;
+}
+
+/* The mark for one candidate on one practice. Nothing when there is nothing
+   to say, which is most of the time -- the grid stays readable and the eye
+   goes to the day that needs somebody. */
+function markFor(token, tp, dateISO){
+  const st = STATE[token];
+  if (!st) return '';
+  const g = (st.tps[tp] || {}).grade;
+  if (g === 'NOTSTD') return `<span class="mk alarm" title="Not to standard">\u25cf</span>`;
+  if (g) return `<span class="mk done" title="${g === 'ABOVE' ? 'Above standard' : 'To standard'}">\u2713</span>`;
+  if (soon(dateISO) && st.planFor !== tp) return `<span class="mk watch" title="The plan is not in yet">\u25cf</span>`;
+  return '';
+}
+
+/* A colour that means something has to say what it means, and only while it
+   is on the page: a key to marks nobody can see is furniture. */
+function keyLine(){
+  const seen = { done:0, watch:0, alarm:0 };
+  Object.keys(STATE).forEach(t => {
+    const st = STATE[t];
+    Object.keys(st.tps).forEach(n => { const g = st.tps[n].grade; if (g === 'NOTSTD') seen.alarm++; else if (g) seen.done++; });
+  });
+  (TT.days || []).forEach(d => { if (d.tp && soon(d.date)) seen.watch++; });
+  const bits = [];
+  if (seen.done) bits.push('<span class="mk done">\u2713</span> taught and returned');
+  if (seen.watch) bits.push('<span class="mk watch">\u25cf</span> the plan is not in yet');
+  if (seen.alarm) bits.push('<span class="mk alarm">\u25cf</span> not to standard');
+  if (!bits.length) return '';
+  return `<p class="legend keyline">${bits.join('<span class="sp">\u00b7</span>')}</p>`;
 }
 
 /* Whose clock the times are in. Said once, under the grid, and only when it
@@ -386,7 +507,7 @@ function mins(slot){
   return n > 0 ? n + ' min' : '';
 }
 
-let GROUPS = [], DUES = {}, ROOMS = {}, ZONE = '', EDIT = false;
+let GROUPS = [], DUES = {}, ROOMS = {}, ZONE = '', STATE = {}, EDIT = false;
 /* A tutor can look at the timetable the way the course sees it. Without this
    they only ever see input boxes and can never check what they have
    published (Ramy, 29 Sep 2026: "there's the course admin view, and then
@@ -396,6 +517,7 @@ let PREVIEW = false, SCROLLED = false, SLOTS_OPEN = false;
 function render(){
   migrate();
   ZONE = SETTINGS.timeZone || '';
+  STATE = stateMap();
   GROUPS = groups(); DUES = dues(); ROOMS = roomsByLabel(); EDIT = IS_TUTOR && !PREVIEW;
   const app = $('app');
   const head = `<p class="eyebrow">Course</p><h1>Timetable</h1>
@@ -442,7 +564,7 @@ function render(){
     const a = parse(w[0].date), b = parse(w[w.length-1].date);
     return `<section class="wk"><h2>Week ${i+1} <small>${dm(a)} – ${dm(b)}</small></h2>
       <div class="days">${w.map(d => cellHTML(d)).join('')}</div></section>`;
-  }).join('') + `<p class="legend">Teaching practice runs the same number on two days, one teaching set each: the letters name the candidates teaching that day. ${GROUPS.map(g => 'Group ' + esc(g.group || '—') + ': ' + g.sets.map(R.setName).filter(Boolean).join(' and ')).join('. ')}.</p>`;
+  }).join('') + keyLine() + `<p class="legend">Teaching practice runs the same number on two days, one teaching set each: the letters name the candidates teaching that day. ${GROUPS.map(g => 'Group ' + esc(g.group || '—') + ': ' + g.sets.map(R.setName).filter(Boolean).join(' and ')).join('. ')}.</p>`;
   if ($('rebuild')) $('rebuild').addEventListener('click', () => { if (confirm('Rebuild the shape from the course dates? Input sessions and notes you have typed are kept where the day still exists.')) build(true); });
   if ($('preview')) $('preview').addEventListener('click', () => { PREVIEW = !PREVIEW; render(); });
   if ($('publish')) $('publish').addEventListener('click', () => { TT.published = true; save('Set \u2014 the course can see it'); render(); });
