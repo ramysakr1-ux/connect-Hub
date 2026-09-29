@@ -21,6 +21,76 @@ const docText = (file) => {
 };
 const clean = (s) => s.replace(/\s+/g, ' ').trim();
 
+/* The same document, with its tables kept. Word wraps a table in <w:tbl>, a
+   row in <w:tr>, a cell in <w:tc>; docText above flattens all of that to
+   lines, which is fine for a sheet made of paragraphs and wrong for one made
+   of tables -- Live Task 2's stage map came out as the column names and the
+   digits one to seven, and its tick-boxes as text (Ramy, 29 Sep 2026, seeing
+   it at laptop width). This reader returns blocks: {kind:'p', text} or
+   {kind:'table', rows:[[cellParagraphs...]]}. */
+const docBlocks = (file) => {
+  const xml = execSync(`unzip -p ${JSON.stringify(join(SRC, file))} word/document.xml`, { maxBuffer: 1 << 24 }).toString('utf8');
+  const body = xml.slice(xml.indexOf('<w:body>'));
+  const text = (frag) => frag.replace(/<w:tab[^>]*\/>/g, '\t').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#(\d+);/g, (_, n) => String.fromCharCode(+n));
+  const paras = (frag) => [...frag.matchAll(/<w:p[ >][\s\S]*?<\/w:p>/g)].map((m) => clean(text(m[0]))).filter(Boolean);
+  const out = [];
+  const re = /<w:tbl>[\s\S]*?<\/w:tbl>|<w:p[ >][\s\S]*?<\/w:p>/g;
+  let m;
+  while ((m = re.exec(body))) {
+    const frag = m[0];
+    if (frag.startsWith('<w:tbl>')) {
+      const rows = [...frag.matchAll(/<w:tr[ >][\s\S]*?<\/w:tr>/g)].map((r) => [...r[0].matchAll(/<w:tc>[\s\S]*?<\/w:tc>/g)].map((c) => paras(c[0])));
+      out.push({ kind: 'table', rows });
+    } else {
+      const t = clean(text(frag)); if (t) out.push({ kind: 'p', text: t });
+    }
+  }
+  return out;
+};
+
+/* A part's body, block by block. Three kinds a sheet can render:
+     text  -- a line of instruction
+     tick  -- a run of box-marked options ("Tick the one that fits best");
+              a plain line among them is a group label (Language lessons /
+              Skills lessons)
+     grid  -- a table whose first row is headings and whose other rows are
+              numbered and empty: the candidate fills the cells in
+   Any other table is read cell by cell as the lines it contains. */
+const TICK = /^[\u2610\u25A1\u2751\u25AF\u2B1C]\s*/;
+function partBlocks(items) {
+  const out = [];
+  const pushText = (t) => { if (t) out.push({ kind: 'text', text: t }); };
+  const lines = [];
+  items.forEach((b) => {
+    if (b.kind === 'p') { lines.push(b.text); return; }
+    const rows = b.rows;
+    /* The heading row's first cell is empty: it sits over the row numbers. */
+    const isGrid = rows.length >= 3 && rows[0].every((c) => c.length <= 1) && rows[0].filter((c) => c.length).length >= 2 &&
+      rows.slice(1).every((r) => r.every((c, i) => c.length === 0 || (i === 0 && c.length === 1 && /^\d+$/.test(c[0]))));
+    if (isGrid) { const head = rows[0].map((c) => c[0] || ''); if (!head[0]) head.shift(); lines.push({ grid: { head, rows: rows.length - 1 } }); return; }
+    rows.forEach((r) => r.forEach((c) => c.forEach((t) => lines.push(t))));
+  });
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (typeof l !== 'string') { out.push({ kind: 'grid', head: l.grid.head, rows: l.grid.rows }); continue; }
+    if (!TICK.test(l)) { pushText(l); continue; }
+    /* a tick block: options, with any un-ticked line between them a group label */
+    const groups = [{ label: '', options: [] }];
+    const prev = out[out.length - 1];
+    if (prev && prev.kind === 'text' && !/[.?!]$/.test(prev.text) && prev.text.length < 40) { groups[0].label = prev.text; out.pop(); }
+    let j = i;
+    for (; j < lines.length; j++) {
+      const t = lines[j]; if (typeof t !== 'string') break;
+      if (TICK.test(t)) groups[groups.length - 1].options.push(clean(t.replace(TICK, '')));
+      else if (!/[.?!]$/.test(t) && t.length < 40 && j + 1 < lines.length && typeof lines[j + 1] === 'string' && TICK.test(lines[j + 1])) groups.push({ label: t, options: [] });
+      else break;
+    }
+    out.push({ kind: 'tick', groups: groups.filter((g) => g.options.length) });
+    i = j - 1;
+  }
+  return out;
+}
+
 /* A table row: a bare number on its own line, then the question, which may
    wrap over the lines that follow. */
 function numbered(body) {
@@ -93,13 +163,15 @@ for (const [file, id] of [['Live_Teacher_Observations_Demo_1.docx', 'live1'],
      which would have shipped an empty task (27 Sep 2026). */
   const qs = t.split('\n').map(clean).filter((l) => /^\d{1,2}\.\s/.test(l)).map((l) => l.replace(/^\d{1,2}\.\s*/, ''));
   const parts = [];
-  const raw = t.split('\n').map(clean);
-  for (let j = 0; j < raw.length; j++) {
-    const m = raw[j].match(/^([A-E])\.\s+(.+)$/);
+  const blocks = docBlocks(file);
+  for (let j = 0; j < blocks.length; j++) {
+    const m = blocks[j].kind === 'p' && blocks[j].text.match(/^([A-E])\.\s+(.+)$/);
     if (!m) continue;
     const body = [];
-    for (let k = j + 1; k < raw.length && !/^[A-E]\.\s/.test(raw[k]); k++) if (raw[k]) body.push(raw[k]);
-    parts.push({ letter: m[1], title: m[2], lines: body });
+    for (let k = j + 1; k < blocks.length && !(blocks[k].kind === 'p' && /^[A-E]\.\s/.test(blocks[k].text)); k++) body.push(blocks[k]);
+    const bl = partBlocks(body);
+    /* `lines` stays for anything that still reads the flat form */
+    parts.push({ letter: m[1], title: m[2], lines: bl.filter((b) => b.kind === 'text').map((b) => b.text), blocks: bl });
   }
   /* The two documents title themselves differently ("Live Teacher
      Observations Demo 1", "CELTA  ·  LIVE OBSERVATION TASK 2"). Ramy, 27 Sep

@@ -140,6 +140,20 @@
   .part{margin:0 0 20px;}
   .part h4{font-family:'Newsreader',Georgia,serif; font-size:1.02rem; margin:0 0 4px;}
   .part .lines{font-size:0.84rem; color:var(--grey); line-height:1.6; margin:0 0 9px; white-space:pre-line;}
+  /* a tick list: one choice, as pills; the document's group labels above each run */
+  .tick{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:0 0 10px;}
+  .tick-g{flex-basis:100%; font-size:0.7rem; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); margin:4px 0 0;}
+  .tick-o{font-size:0.82rem; border:1px solid var(--sand-line); border-radius:999px; padding:5px 11px; cursor:pointer; background:var(--paper);}
+  .tick-o input{display:none;}
+  .tick-o:has(input:checked){background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  .tick-o:has(input:disabled){cursor:default;}
+  /* a grid to fill in: text inputs in Cambridge-style cells; stacks on a phone like the rest */
+  .tablewrap{overflow-x:auto; margin:0 0 10px;}
+  table.sheet.fill td{padding:5px 4px;}
+  table.sheet.fill td.narrow{width:76px;}
+  table.sheet.fill input{width:100%; box-sizing:border-box; font-family:'Karla',sans-serif; font-size:0.84rem; color:var(--ink); background:var(--cream, var(--surface)); border:1px solid var(--sand-line); border-radius:6px; padding:6px 8px;}
+  table.sheet.fill input:focus{outline:2px solid var(--teal); outline-offset:1px;}
+  @media(max-width:600px){ table.sheet.stack.fill td.n{display:block; font-weight:700; color:var(--ink); margin:0 0 4px;} table.sheet.stack.fill td[data-t]{margin-top:8px;} }
   .bar{position:sticky; bottom:0; background:var(--sand); border-top:1px solid var(--sand-line);
     padding:12px 0; margin-top:8px; display:flex; align-items:center; gap:12px;}
   .btn{font-family:'Karla',sans-serif; font-size:0.85rem; font-weight:700; padding:9px 18px;
@@ -151,18 +165,18 @@
   .eyebrow{font-size:0.7rem; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:0 0 4px;}
   .lede{color:var(--grey); font-size:0.88rem; line-height:1.6; margin:0 0 18px; max-width:66ch;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609291622">
-<link rel="stylesheet" href="hub-theme.css?v=202609291622">
+<link rel="stylesheet" href="hub-house.css?v=202609291721">
+<link rel="stylesheet" href="hub-theme.css?v=202609291721">
 </head>
 <body class="hub-obs">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="observation-defaults.js?v=202609291622"></script>
-<script src="hub-shared.js?v=202609291622"></script>
-<script src="hub-store.js?v=202609291622"></script>
-<script src="hub-sync.js?v=202609291622"></script>
+<script src="observation-defaults.js?v=202609291721"></script>
+<script src="hub-shared.js?v=202609291721"></script>
+<script src="hub-store.js?v=202609291721"></script>
+<script src="hub-sync.js?v=202609291721"></script>
 <script type="text/x-hub-app">
 /* A candidate's own work. A tutor or an assessor READS it -- they have to, it
    is portfolio evidence -- so the page is not refused them; the fields are
@@ -205,7 +219,15 @@ const turnsIn = t => !t.tp;
    part of the key. Everything else is done once. */
 const recKey = (id, sit) => sit ? id + '#' + sit : id;
 const rec = k => (WORK[k] = WORK[k] || { a:{}, turnedInAt:null });
-const answered = k => Object.values((WORK[k] || {}).a || {}).filter(v => String(v||'').trim()).length;
+/* How much of a sheet is done. A parts sheet counts PARTS with anything in
+   them, not fields -- its stage map alone is twenty-eight cells, which would
+   have read as "Complete" on its own. Every other shape counts filled boxes. */
+const answered = k => {
+  const a = (WORK[k] || {}).a || {};
+  const keys = Object.keys(a).filter(f => String(a[f]||'').trim());
+  const parts = new Set(keys.map(f => (f.match(/^p(\d+)/) || [])[1]).filter(Boolean));
+  return parts.size ? parts.size : keys.length;
+};
 
 const TEACHERS = ['Teacher 1','Teacher 2','Teacher 3'];
 
@@ -313,8 +335,27 @@ function sheet(t, sit){
   } else if (t.shape === 'questions') {
     body = t.rows.map((q,i) => `<div class="part"><h4>${i+1}. ${esc(q)}</h4>${box(k, 'q'+i)}</div>`).join('');
   } else if (t.shape === 'parts') {
-    body = (t.parts||[]).map((p,i) => `<div class="part"><h4>${esc(p.letter)}. ${esc(p.title)}</h4>
-      <p class="lines">${esc((p.lines||[]).join('\n'))}</p>${box(k, 'p'+i)}</div>`).join('');
+    /* A part is a run of blocks from the centre's own document: lines of
+       instruction, tick lists, and grids to fill in. Until 29 Sep 2026 the
+       document's tables and tick-boxes were flattened to text, so the stage
+       map in Live Task 2 read as its column names and the digits one to seven
+       over a single box, and "Tick the one that fits best" had nothing to
+       tick. A part with no blocks (an older wording record) renders as before. */
+    const tick = (pi, bi, g) => {
+      const f = 'p' + pi + 't' + bi, v = ((WORK[k]||{}).a || {})[f] || '';
+      return `<div class="tick">${g.groups.map(gr => `${gr.label ? `<div class="tick-g">${esc(gr.label)}</div>` : ''}
+        ${gr.options.map(o => `<label class="tick-o"><input type="radio" name="${esc(f)}" data-f="${esc(f)}" value="${esc(o)}"${v===o?' checked':''}${READONLY ? ' disabled' : ''}><span>${esc(o)}</span></label>`).join('')}`).join('')}</div>`;
+    };
+    const grid = (pi, bi, g) => `<div class="tablewrap"><table class="sheet stack fill"><thead><tr><th class="n"></th>${g.head.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>
+      ${Array.from({ length: g.rows }, (_, r) => `<tr><td class="n">${r+1}</td>${g.head.map((h, c) => { const f = 'p' + pi + 'g' + r + 'c' + c, v = ((WORK[k]||{}).a || {})[f] || '';
+        return `<td data-t="${esc(h)}"${/minute/i.test(h) ? ' class="narrow"' : ''}><input data-f="${esc(f)}" value="${esc(v)}"${READONLY ? ' readonly' : ''}></td>`; }).join('')}</tr>`).join('')}
+      </tbody></table></div>`;
+    body = (t.parts||[]).map((p,i) => {
+      const blocks = p.blocks && p.blocks.length ? p.blocks : (p.lines||[]).map(text => ({ kind:'text', text }));
+      const hasGrid = blocks.some(b => b.kind === 'grid');
+      const inner = blocks.map((b, bi) => b.kind === 'tick' ? tick(i, bi, b) : b.kind === 'grid' ? grid(i, bi, b) : `<p class="lines">${esc(b.text)}</p>`).join('');
+      return `<div class="part"><h4>${esc(p.letter)}. ${esc(p.title)}</h4>${inner}${hasGrid ? '' : box(k, 'p'+i)}</div>`;
+    }).join('');
   }
 
   /* The filmed and live sheets open with the lesson's particulars; the peer
@@ -341,7 +382,7 @@ function sheet(t, sit){
     WORK[k].a[el.dataset.f] = el.value; save();
     const s = $('status'); if (s) { s.textContent = 'Saved'; clearTimeout(t0); t0 = setTimeout(() => { if ($('status')) $('status').textContent = turnsIn(t) ? '' : 'Your notes save as you type.'; }, 1200); }
   };
-  document.querySelectorAll('textarea[data-f], input[data-f]').forEach(el => el.addEventListener('input', () => touch(el)));
+  document.querySelectorAll('textarea[data-f], input[data-f]').forEach(el => { el.addEventListener('input', () => touch(el)); if (el.type === 'radio') el.addEventListener('change', () => touch(el)); });
   if ($('turnIn')) $('turnIn').addEventListener('click', () => {
     /* Handbook 12.1.2: everything that goes in a portfolio carries its date. */
     WORK[k].turnedInAt = new Date().toISOString(); save(); sheet(t, sit);

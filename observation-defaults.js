@@ -305,12 +305,39 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
           "title": "What kind of lesson is it?",
           "lines": [
             "Main aim (from the teacher or the plan)",
-            "Your prediction before it starts",
-            "☐ Language — grammar / vocabulary / functions",
-            "☐ Skills — reading / listening / speaking / writing",
             "Circle the one that applies.",
             "After the lesson: were you right?",
             "If not, what made it hard to tell? A skills lesson with a language slot, or the other way round, is common — say which was the main aim and which was secondary."
+          ],
+          "blocks": [
+            {
+              "kind": "text",
+              "text": "Main aim (from the teacher or the plan)"
+            },
+            {
+              "kind": "tick",
+              "groups": [
+                {
+                  "label": "Your prediction before it starts",
+                  "options": [
+                    "Language — grammar / vocabulary / functions",
+                    "Skills — reading / listening / speaking / writing"
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "text",
+              "text": "Circle the one that applies."
+            },
+            {
+              "kind": "text",
+              "text": "After the lesson: were you right?"
+            },
+            {
+              "kind": "text",
+              "text": "If not, what made it hard to tell? A skills lesson with a language slot, or the other way round, is common — say which was the main aim and which was secondary."
+            }
           ]
         },
         {
@@ -318,34 +345,62 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
           "title": "Which framework?",
           "lines": [
             "Tick the one that fits best, then say what made you choose it. If the teacher combined two, say how.",
-            "Language lessons",
-            "☐ PPP — present, practise, produce",
-            "☐ TTT — test, teach, test",
-            "☐ Text-based — language taken from a text",
-            "☐ Guided discovery — learners work out the rule",
-            "Skills lessons",
-            "☐ Receptive — lead-in, gist, detail, follow-up",
-            "☐ Productive — preparation, task, feedback",
-            "☐ Task-based — task first, language after",
             "What made you choose it"
+          ],
+          "blocks": [
+            {
+              "kind": "text",
+              "text": "Tick the one that fits best, then say what made you choose it. If the teacher combined two, say how."
+            },
+            {
+              "kind": "tick",
+              "groups": [
+                {
+                  "label": "Language lessons",
+                  "options": [
+                    "PPP — present, practise, produce",
+                    "TTT — test, teach, test",
+                    "Text-based — language taken from a text",
+                    "Guided discovery — learners work out the rule"
+                  ]
+                },
+                {
+                  "label": "Skills lessons",
+                  "options": [
+                    "Receptive — lead-in, gist, detail, follow-up",
+                    "Productive — preparation, task, feedback",
+                    "Task-based — task first, language after"
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "text",
+              "text": "What made you choose it"
+            }
           ]
         },
         {
           "letter": "C",
           "title": "Map the stages",
           "lines": [
-            "Fill this in as the lesson runs. Name each stage the way you would on your own plan, and write its aim as a purpose, not a description — “to set the context”, not “teacher shows a picture”.",
-            "Stage name",
-            "Aim of the stage",
-            "What the teacher actually did",
-            "Minutes",
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7"
+            "Fill this in as the lesson runs. Name each stage the way you would on your own plan, and write its aim as a purpose, not a description — “to set the context”, not “teacher shows a picture”."
+          ],
+          "blocks": [
+            {
+              "kind": "text",
+              "text": "Fill this in as the lesson runs. Name each stage the way you would on your own plan, and write its aim as a purpose, not a description — “to set the context”, not “teacher shows a picture”."
+            },
+            {
+              "kind": "grid",
+              "head": [
+                "Stage name",
+                "Aim of the stage",
+                "What the teacher actually did",
+                "Minutes"
+              ],
+              "rows": 7
+            }
           ]
         },
         {
@@ -363,6 +418,52 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
             "Tasks — what was the first task, and what was the second? Which sub-skill did each one develop? Could either be done without the text?",
             "Set-up and feedback — how was each task set up, and how did the teacher check answers? Did learners justify, or just confirm?",
             "Follow-up — what did learners do with the text at the end? Was it genuinely a follow-up, or a separate activity?"
+          ],
+          "blocks": [
+            {
+              "kind": "text",
+              "text": "Answer the set that matches the lesson. Leave the other blank."
+            },
+            {
+              "kind": "text",
+              "text": "If it was a LANGUAGE lesson"
+            },
+            {
+              "kind": "text",
+              "text": "Meaning — how was it conveyed? Context, CCQs, timeline, examples? Write down one CCQ you heard."
+            },
+            {
+              "kind": "text",
+              "text": "Form — how was it highlighted? On the board, in a handout, elicited? What did the board look like?"
+            },
+            {
+              "kind": "text",
+              "text": "Pronunciation — was it dealt with at all? Drilling, stress marked, a feature of connected speech?"
+            },
+            {
+              "kind": "text",
+              "text": "Practice — what was the controlled practice, and what was the freer practice? Did the freer practice actually need the target language?"
+            },
+            {
+              "kind": "text",
+              "text": "If it was a SKILLS lesson"
+            },
+            {
+              "kind": "text",
+              "text": "Lead-in — how did the teacher get learners interested before the text or task?"
+            },
+            {
+              "kind": "text",
+              "text": "Tasks — what was the first task, and what was the second? Which sub-skill did each one develop? Could either be done without the text?"
+            },
+            {
+              "kind": "text",
+              "text": "Set-up and feedback — how was each task set up, and how did the teacher check answers? Did learners justify, or just confirm?"
+            },
+            {
+              "kind": "text",
+              "text": "Follow-up — what did learners do with the text at the end? Was it genuinely a follow-up, or a separate activity?"
+            }
           ]
         },
         {
@@ -373,6 +474,24 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
             "One thing you would have done differently, and what you would expect to change as a result",
             "One question to ask the teacher afterwards",
             "Ask it. Write the answer here."
+          ],
+          "blocks": [
+            {
+              "kind": "text",
+              "text": "One stage you would lift into your own next TP, and why"
+            },
+            {
+              "kind": "text",
+              "text": "One thing you would have done differently, and what you would expect to change as a result"
+            },
+            {
+              "kind": "text",
+              "text": "One question to ask the teacher afterwards"
+            },
+            {
+              "kind": "text",
+              "text": "Ask it. Write the answer here."
+            }
           ]
         }
       ]
