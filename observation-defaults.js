@@ -407,17 +407,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
           "letter": "D",
           "title": "Look closely at the middle",
           "lines": [
-            "Answer the set that matches the lesson. Leave the other blank.",
-            "If it was a LANGUAGE lesson",
-            "Meaning — how was it conveyed? Context, CCQs, timeline, examples? Write down one CCQ you heard.",
-            "Form — how was it highlighted? On the board, in a handout, elicited? What did the board look like?",
-            "Pronunciation — was it dealt with at all? Drilling, stress marked, a feature of connected speech?",
-            "Practice — what was the controlled practice, and what was the freer practice? Did the freer practice actually need the target language?",
-            "If it was a SKILLS lesson",
-            "Lead-in — how did the teacher get learners interested before the text or task?",
-            "Tasks — what was the first task, and what was the second? Which sub-skill did each one develop? Could either be done without the text?",
-            "Set-up and feedback — how was each task set up, and how did the teacher check answers? Did learners justify, or just confirm?",
-            "Follow-up — what did learners do with the text at the end? Was it genuinely a follow-up, or a separate activity?"
+            "Answer the set that matches the lesson. Leave the other blank."
           ],
           "blocks": [
             {
@@ -425,72 +415,39 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
               "text": "Answer the set that matches the lesson. Leave the other blank."
             },
             {
-              "kind": "text",
-              "text": "If it was a LANGUAGE lesson"
+              "kind": "set",
+              "label": "If it was a LANGUAGE lesson",
+              "prompts": [
+                "Meaning — how was it conveyed? Context, CCQs, timeline, examples? Write down one CCQ you heard.",
+                "Form — how was it highlighted? On the board, in a handout, elicited? What did the board look like?",
+                "Pronunciation — was it dealt with at all? Drilling, stress marked, a feature of connected speech?",
+                "Practice — what was the controlled practice, and what was the freer practice? Did the freer practice actually need the target language?"
+              ]
             },
             {
-              "kind": "text",
-              "text": "Meaning — how was it conveyed? Context, CCQs, timeline, examples? Write down one CCQ you heard."
-            },
-            {
-              "kind": "text",
-              "text": "Form — how was it highlighted? On the board, in a handout, elicited? What did the board look like?"
-            },
-            {
-              "kind": "text",
-              "text": "Pronunciation — was it dealt with at all? Drilling, stress marked, a feature of connected speech?"
-            },
-            {
-              "kind": "text",
-              "text": "Practice — what was the controlled practice, and what was the freer practice? Did the freer practice actually need the target language?"
-            },
-            {
-              "kind": "text",
-              "text": "If it was a SKILLS lesson"
-            },
-            {
-              "kind": "text",
-              "text": "Lead-in — how did the teacher get learners interested before the text or task?"
-            },
-            {
-              "kind": "text",
-              "text": "Tasks — what was the first task, and what was the second? Which sub-skill did each one develop? Could either be done without the text?"
-            },
-            {
-              "kind": "text",
-              "text": "Set-up and feedback — how was each task set up, and how did the teacher check answers? Did learners justify, or just confirm?"
-            },
-            {
-              "kind": "text",
-              "text": "Follow-up — what did learners do with the text at the end? Was it genuinely a follow-up, or a separate activity?"
+              "kind": "set",
+              "label": "If it was a SKILLS lesson",
+              "prompts": [
+                "Lead-in — how did the teacher get learners interested before the text or task?",
+                "Tasks — what was the first task, and what was the second? Which sub-skill did each one develop? Could either be done without the text?",
+                "Set-up and feedback — how was each task set up, and how did the teacher check answers? Did learners justify, or just confirm?",
+                "Follow-up — what did learners do with the text at the end? Was it genuinely a follow-up, or a separate activity?"
+              ]
             }
           ]
         },
         {
           "letter": "E",
           "title": "What you take away",
-          "lines": [
-            "One stage you would lift into your own next TP, and why",
-            "One thing you would have done differently, and what you would expect to change as a result",
-            "One question to ask the teacher afterwards",
-            "Ask it. Write the answer here."
-          ],
+          "lines": [],
           "blocks": [
             {
-              "kind": "text",
-              "text": "One stage you would lift into your own next TP, and why"
-            },
-            {
-              "kind": "text",
-              "text": "One thing you would have done differently, and what you would expect to change as a result"
-            },
-            {
-              "kind": "text",
-              "text": "One question to ask the teacher afterwards"
-            },
-            {
-              "kind": "text",
-              "text": "Ask it. Write the answer here."
+              "kind": "items",
+              "items": [
+                "One stage you would lift into your own next TP, and why",
+                "One thing you would have done differently, and what you would expect to change as a result",
+                "One question to ask the teacher afterwards Ask it. Write the answer here."
+              ]
             }
           ]
         }

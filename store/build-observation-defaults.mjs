@@ -68,11 +68,29 @@ function partBlocks(items) {
     const isGrid = rows.length >= 3 && rows[0].every((c) => c.length <= 1) && rows[0].filter((c) => c.length).length >= 2 &&
       rows.slice(1).every((r) => r.every((c, i) => c.length === 0 || (i === 0 && c.length === 1 && /^\d+$/.test(c[0]))));
     if (isGrid) { const head = rows[0].map((c) => c[0] || ''); if (!head[0]) head.shift(); lines.push({ grid: { head, rows: rows.length - 1 } }); return; }
+    /* A one-column table is the document grouping its prompts. If its first
+       row is a short heading ("If it was a LANGUAGE lesson") the table is a
+       SET: that label, the prompts under it, one answer for the set. If not,
+       each row is its own thing to write -- ITEMS, one answer each (part E:
+       one stage, one thing, one question). Ramy, 29 Sep 2026, on part D at
+       phone width: eight prompts feeding one box meant scrolling back a screen
+       to re-read the question. */
+    const oneCol = rows.every((r) => r.length === 1);
+    const headingLike = (t) => typeof t === 'string' && t.length < 40 && !/[.?!:]$/.test(t);
+    if (oneCol && rows.length >= 2 && rows[0][0].length === 1 && headingLike(rows[0][0][0])) {
+      lines.push({ set: { label: rows[0][0][0], prompts: rows.slice(1).flatMap((r) => r[0]) } }); return;
+    }
+    if (oneCol && rows.length >= 2) { lines.push({ items: rows.map((r) => r[0].join(' ')) }); return; }
     rows.forEach((r) => r.forEach((c) => c.forEach((t) => lines.push(t))));
   });
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i];
-    if (typeof l !== 'string') { out.push({ kind: 'grid', head: l.grid.head, rows: l.grid.rows }); continue; }
+    if (typeof l !== 'string') {
+      if (l.grid) out.push({ kind: 'grid', head: l.grid.head, rows: l.grid.rows });
+      else if (l.set) out.push({ kind: 'set', label: l.set.label, prompts: l.set.prompts });
+      else if (l.items) out.push({ kind: 'items', items: l.items });
+      continue;
+    }
     if (!TICK.test(l)) { pushText(l); continue; }
     /* a tick block: options, with any un-ticked line between them a group label */
     const groups = [{ label: '', options: [] }];

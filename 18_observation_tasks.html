@@ -143,6 +143,9 @@
   /* a tick list: one choice, as pills; the document's group labels above each run */
   .tick{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:0 0 10px;}
   .tick-g{flex-basis:100%; font-size:0.7rem; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); margin:4px 0 0;}
+  .set{margin:0 0 14px;}
+  .set .tick-g{margin:0 0 6px;}
+  .set textarea{min-height:72px;}
   .tick-o{font-size:0.82rem; border:1px solid var(--sand-line); border-radius:999px; padding:5px 11px; cursor:pointer; background:var(--paper);}
   .tick-o input{display:none;}
   .tick-o:has(input:checked){background:var(--teal); border-color:var(--teal); color:var(--paper);}
@@ -168,18 +171,18 @@
   .eyebrow{font-size:0.7rem; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:0 0 4px;}
   .lede{color:var(--grey); font-size:0.88rem; line-height:1.6; margin:0 0 18px; max-width:66ch;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609291802">
-<link rel="stylesheet" href="hub-theme.css?v=202609291802">
+<link rel="stylesheet" href="hub-house.css?v=202609291811">
+<link rel="stylesheet" href="hub-theme.css?v=202609291811">
 </head>
 <body class="hub-obs">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="observation-defaults.js?v=202609291802"></script>
-<script src="hub-shared.js?v=202609291802"></script>
-<script src="hub-store.js?v=202609291802"></script>
-<script src="hub-sync.js?v=202609291802"></script>
+<script src="observation-defaults.js?v=202609291811"></script>
+<script src="hub-shared.js?v=202609291811"></script>
+<script src="hub-store.js?v=202609291811"></script>
+<script src="hub-sync.js?v=202609291811"></script>
 <script type="text/x-hub-app">
 /* A candidate's own work. A tutor or an assessor READS it -- they have to, it
    is portfolio evidence -- so the page is not refused them; the fields are
@@ -353,11 +356,17 @@ function sheet(t, sit){
       ${Array.from({ length: g.rows }, (_, r) => `<tr><td class="n">${r+1}</td>${g.head.map((h, c) => { const f = 'p' + pi + 'g' + r + 'c' + c, v = ((WORK[k]||{}).a || {})[f] || '';
         return `<td data-t="${esc(h)}"${/minute/i.test(h) ? ' class="narrow"' : ''}><input data-f="${esc(f)}" value="${esc(v)}"${READONLY ? ' readonly' : ''}></td>`; }).join('')}</tr>`).join('')}
       </tbody></table></div>`;
+    /* A set is the document's own grouping: its label in small capitals, its
+       prompts, and one answer for the set. Items are one answer each. A part
+       built of sets, items or a grid has its answers inside it and no box at
+       the end. */
+    const set = (pi, bi, b) => `<div class="set"><div class="tick-g">${esc(b.label)}</div>${b.prompts.map(t => `<p class="lines">${esc(t)}</p>`).join('')}${box(k, 'p' + pi + 's' + bi)}</div>`;
+    const items = (pi, bi, b) => b.items.map((t, n) => `<div class="set"><p class="lines">${esc(t)}</p>${box(k, 'p' + pi + 'i' + bi + '_' + n)}</div>`).join('');
     body = (t.parts||[]).map((p,i) => {
       const blocks = p.blocks && p.blocks.length ? p.blocks : (p.lines||[]).map(text => ({ kind:'text', text }));
-      const hasGrid = blocks.some(b => b.kind === 'grid');
-      const inner = blocks.map((b, bi) => b.kind === 'tick' ? tick(i, bi, b) : b.kind === 'grid' ? grid(i, bi, b) : `<p class="lines">${esc(b.text)}</p>`).join('');
-      return `<div class="part"><h4>${esc(p.letter)}. ${esc(p.title)}</h4>${inner}${hasGrid ? '' : box(k, 'p'+i)}</div>`;
+      const selfAnswered = blocks.some(b => b.kind === 'grid' || b.kind === 'set' || b.kind === 'items');
+      const inner = blocks.map((b, bi) => b.kind === 'tick' ? tick(i, bi, b) : b.kind === 'grid' ? grid(i, bi, b) : b.kind === 'set' ? set(i, bi, b) : b.kind === 'items' ? items(i, bi, b) : `<p class="lines">${esc(b.text)}</p>`).join('');
+      return `<div class="part"><h4>${esc(p.letter)}. ${esc(p.title)}</h4>${inner}${selfAnswered ? '' : box(k, 'p'+i)}</div>`;
     }).join('');
   }
 
