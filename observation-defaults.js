@@ -256,7 +256,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
       "id": "filmed4",
       "title": "Teaching Online",
       "recording": "Recording: observation 4",
-      "brief": "Before you watch  This lesson is taught live on Zoom. As you watch, keep asking yourself what the teacher is doing differently because the lesson is online, and what stays exactly the same as it would in a classroom.",
+      "brief": "Before you watch This lesson is taught live on Zoom. As you watch, keep asking yourself what the teacher is doing differently because the lesson is online, and what stays exactly the same as it would in a classroom.",
       "shape": "notes",
       "rows": [
         "How does the teacher open the lesson and build rapport in the online space? What do they do that a face-to-face teacher would not need to do?",

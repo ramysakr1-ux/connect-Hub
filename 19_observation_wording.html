@@ -81,8 +81,8 @@
   .review .skipped{color:var(--brick); font-size:0.82rem;}
   @media(max-width:900px){ .layout{grid-template-columns:1fr;} .editor{padding:18px 16px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609292021">
-<link rel="stylesheet" href="hub-theme.css?v=202609292021">
+<link rel="stylesheet" href="hub-house.css?v=202609292040">
+<link rel="stylesheet" href="hub-theme.css?v=202609292040">
 </head>
 <body>
 <div class="board">
@@ -97,21 +97,22 @@
        to check, not a promise: another centre's file has its own quirks. -->
   <div class="importrow">
     <span>Import from a file:</span>
-    <select id="importGroup"><option value="peer">Peer observations</option><option value="filmed">Filmed lessons</option><option value="live">Live lessons</option></select>
+    <select id="importGroup"><option value="peer">Peer observations</option><option value="filmed">Filmed lessons</option><option value="live">Live observation of experienced teachers</option></select>
     <button type="button" class="btn secondary" id="importBtn">⬆ Choose a Word or text file</button>
     <input type="file" id="importFile" accept=".docx,.txt,.md" style="display:none;">
-    <span class="note">Reads your own sheets — numbered questions become rows, lettered A/B/C headings become parts, “Before the lesson” becomes the brief — and shows what it found before anything is replaced. Check every task afterwards; a file it has never seen is a first draft.</span>
+    <span class="note">Reads your own sheets — numbered questions become rows, lettered A/B/C headings become parts, tick-boxes become tick lists, a table to fill in stays a table, “Before the lesson” and “After watching” are kept — and shows what it found before anything is replaced. A live sheet is one file: it replaces the demonstration class with the same number, or joins the group. Check every task afterwards; a file it has never seen is a first draft.</span>
   </div>
   <div class="layout">
     <nav class="list" id="list"></nav>
     <div class="editor" id="editor"></div>
   </div>
 </div>
-<script src="observation-defaults.js?v=202609292021"></script>
-<script src="hub-docx.js?v=202609292021"></script>
-<script src="hub-shared.js?v=202609292021"></script>
-<script src="hub-store.js?v=202609292021"></script>
-<script src="hub-sync.js?v=202609292021"></script>
+<script src="observation-defaults.js?v=202609292040"></script>
+<script src="hub-docx.js?v=202609292040"></script>
+<script src="hub-observation-parse.js?v=202609292040"></script>
+<script src="hub-shared.js?v=202609292040"></script>
+<script src="hub-store.js?v=202609292040"></script>
+<script src="hub-sync.js?v=202609292040"></script>
 <script type="text/x-hub-app">
 /* The centre's room. Same gate as the assignment wording editor: a link that
    cannot write the course does not get a form that says "Saved". */
@@ -122,7 +123,7 @@ const STORE_KEY = 'connect_observation_wording_v1';
 const DEFAULTS = window.CONNECT_HUB_OBSERVATION_DEFAULTS;
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const GROUPS = [['peer','Peer observations'], ['filmed','Filmed lessons'], ['live','Live lessons']];
+const GROUPS = [['peer','Peer observations'], ['filmed','Filmed lessons'], ['live','Live observation of experienced teachers']];
 
 let DATA = null;
 try { DATA = JSON.parse(localStorage.getItem(STORE_KEY)); } catch(e) {}
@@ -270,18 +271,46 @@ function parseImport(text, group){
 }
 
 function renderReview(result, group, fileName){
-  const names = { peer:'Peer observations', filmed:'Filmed lessons', live:'Live lessons' };
+  const names = { peer:'Peer observations', filmed:'Filmed lessons', live:'Live observation of experienced teachers' };
   const shapeWord = { grid:'three-teacher grid', single:'one column', focus:'one focus per teacher', notes:'notes column', questions:'questions', parts:'lettered parts' };
-  const count = t => t.parts ? t.parts.length + ' parts' : (t.rows||[]).length + (t.shape === 'questions' ? ' questions' : ' rows');
+  /* What the sheet will carry, so the admin can see a stage map or a tick
+     list was read as one, not as a run of words. */
+  const count = t => {
+    const bits = [];
+    if (t.parts) {
+      bits.push(t.parts.length + ' parts');
+      const kinds = {}; t.parts.forEach(p => (p.blocks||[]).forEach(b => { kinds[b.kind] = (kinds[b.kind]||0) + 1; }));
+      if (kinds.tick) bits.push(kinds.tick + (kinds.tick > 1 ? ' tick lists' : ' tick list'));
+      if (kinds.grid) bits.push(kinds.grid + (kinds.grid > 1 ? ' tables to fill in' : ' table to fill in'));
+      if (kinds.set || kinds.items) bits.push(((kinds.set||0) + (kinds.items||0)) + ' prompt sets');
+    } else bits.push((t.rows||[]).length + (t.shape === 'questions' ? ' questions' : ' rows'));
+    if (t.after && t.after.length) bits.push(t.after.length + ' after-watching');
+    if (t.minutes) bits.push(t.minutes + ' min');
+    return bits.join(' · ');
+  };
+  /* A live file holds ONE sheet. It replaces the sheet with the same number
+     (Demonstration class 2 replaces Demonstration class 2) or joins the
+     group; the other live sheets stay. Peer and filmed files hold the whole
+     group and replace it. */
+  const one = result.mode === 'one' && result.found.length === 1;
+  const existing = one ? (DATA[group]||[]).find(t => t.id === result.found[0].id) : null;
+  const what = one
+    ? (existing ? `Replacing <b>${esc(existing.title)}</b> with this sheet. The other ${(DATA[group]||[]).length - 1} in that group stay as they are` : `Adding this sheet to the ${(DATA[group]||[]).length} in that group`)
+    : `Replacing the ${(DATA[group]||[]).length} tasks in that group with these ${result.found.length}`;
   $('editor').innerHTML = `<div class="review"><h2>What the file holds</h2>
-    <p class="notice">${esc(fileName)} — read as <b>${names[group]}</b>. Replacing the ${(DATA[group]||[]).length} tasks in that group with these ${result.found.length}. Nothing else changes, and you can still edit every one afterwards.</p>
+    <p class="notice">${esc(fileName)} — read as <b>${names[group]}</b>. ${what}. Nothing else changes, and you can still edit every one afterwards.</p>
     ${result.found.map(t => `<div class="found"><b>${esc(t.title)}</b> ${t.tp ? '<span style="color:var(--grey)">TP' + t.tp + '</span>' : ''}<small>${shapeWord[t.shape]} · ${count(t)}${t.brief ? ' · brief found' : ''}${t.recording ? ' · ' + esc(t.recording) : ''}</small></div>`).join('')}
     ${result.skipped.length ? `<p class="skipped">Skipped, nothing to fill in: ${result.skipped.map(esc).join('; ')}</p>` : ''}
     ${!result.found.length ? '<p class="skipped">Nothing usable was found. A sheet needs numbered questions, or lettered A/B/C parts.</p>' : ''}
     <div class="actions"><button type="button" class="btn secondary" id="reviewCancel">Keep what I have</button>${result.found.length ? '<button type="button" class="btn primary" id="reviewApply">Replace and save</button>' : ''}</div></div>`;
   $('reviewCancel').addEventListener('click', () => renderEditor());
   if ($('reviewApply')) $('reviewApply').addEventListener('click', () => {
-    DATA[group] = result.found; CURRENT = result.found[0].id; persist(); renderList(); renderEditor();
+    if (one) {
+      const list = (DATA[group]||[]).slice(), at = list.findIndex(t => t.id === result.found[0].id);
+      if (at >= 0) list[at] = result.found[0]; else list.push(result.found[0]);
+      DATA[group] = list;
+    } else DATA[group] = result.found;
+    CURRENT = result.found[0].id; persist(); renderList(); renderEditor();
   });
 }
 
@@ -290,8 +319,22 @@ $('importFile').addEventListener('change', async e => {
   const file = e.target.files[0]; e.target.value = ''; if (!file) return;
   const group = $('importGroup').value;
   try {
-    const text = await window.hubFileText(file);
-    renderReview(parseImport(text, group), group, file.name);
+    /* First the reader the shipped sheets were built with (hub-observation-
+       parse.js): tables kept, so a stage map, a tick list or a prompt set
+       arrives as one. A Word file is read block by block; a text file line
+       by line. Only a file it cannot place falls back to the looser
+       text reading below, which knows numbered rows and lettered parts. */
+    let result = null;
+    if (window.hubObservationParse) {
+      const blocks = /\.docx$/i.test(file.name) ? await window.hubDocxBlocks(file) : window.hubTextBlocks(await file.text());
+      const head = blocks.length ? blocks[0].text || '' : '';
+      const num = group === 'live' ? (head.match(/(\d+)\s*$/) || [])[1] : null;   // "…Demo 1", "…TASK 2"
+      const idx = group === 'live' ? (num ? Number(num) - 1 : (DATA.live||[]).length) : 0;
+      result = window.hubObservationParse.parse(blocks, group, idx);
+      if (result.found.length) { if (group === 'live') result.mode = 'one'; } else result = null;
+    }
+    if (!result) result = parseImport(await window.hubFileText(file), group);
+    renderReview(result, group, file.name);
   } catch (err) { alert(err && err.message ? err.message : 'That file could not be read.'); }
 });
 

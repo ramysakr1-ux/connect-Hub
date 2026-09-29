@@ -20,6 +20,8 @@
  *
  * window.hubDocxText(file) -> Promise<string>. Rejects with a plain message
  * when the file is not a Word document or the browser cannot inflate.
+ * window.hubDocxBlocks(file) -> Promise<blocks>: the same document with its
+ * tables kept, for the observation parser.
  */
 (function(){
   'use strict';
@@ -84,6 +86,40 @@
     });
     return out.join('\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
   }
+
+  /* The same document as BLOCKS, tables kept: {kind:'p', text} for a
+     paragraph, {kind:'table', rows:[[cellParagraphs...]...]} for a table,
+     each cell an array of its paragraphs, in document order, empties
+     dropped. This is what the observation parser (hub-observation-parse.js)
+     reads -- the flat text above loses a sheet's stage map and tick-boxes,
+     which is how an imported Live Task 2 came through as column names and
+     the digits one to seven (29 Sep 2026). Matches the shape the generator
+     builds in Node, so a centre's file reads here exactly as Ramy's did. */
+  function xmlToBlocks(xml){
+    const body = xml.slice(Math.max(0, xml.indexOf('<w:body>')));
+    const paraText = p => decode(p.replace(/<w:tab[^>]*\/>/g, '\t').replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim();
+    const paras = frag => (frag.match(/<w:p[ >][\s\S]*?<\/w:p>/g) || []).map(paraText).filter(Boolean);
+    const out = [];
+    const re = /<w:tbl>[\s\S]*?<\/w:tbl>|<w:p[ >][\s\S]*?<\/w:p>/g;
+    let m;
+    while ((m = re.exec(body))) {
+      const frag = m[0];
+      if (frag.startsWith('<w:tbl>')) {
+        const rows = (frag.match(/<w:tr[ >][\s\S]*?<\/w:tr>/g) || []).map(tr => (tr.match(/<w:tc>[\s\S]*?<\/w:tc>/g) || []).map(tc => paras(tc)));
+        out.push({ kind: 'table', rows });
+      } else {
+        const t = paraText(frag); if (t) out.push({ kind: 'p', text: t });
+      }
+    }
+    return out;
+  }
+  window.hubDocxBlocks = async function(file){
+    const buf = await file.arrayBuffer();
+    const bytes = await entryBytes(buf, 'word/document.xml');
+    return xmlToBlocks(new TextDecoder('utf-8').decode(bytes));
+  };
+  /* Plain text as blocks: every non-empty line a paragraph. */
+  window.hubTextBlocks = text => String(text || '').split(/\r?\n/).map(l => l.replace(/\s+/g, ' ').trim()).filter(Boolean).map(text => ({ kind: 'p', text }));
 
   window.hubDocxText = async function(file){
     const buf = await file.arrayBuffer();
