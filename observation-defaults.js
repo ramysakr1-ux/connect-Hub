@@ -201,7 +201,11 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
         "Is pronunciation addressed — contractions, the weak form of “would”, sentence stress, intonation across the two clauses? How is it drilled?",
         "What controlled practice is provided? Is the task genuinely restricted to the target form, and how is it checked?",
         "What freer practice follows? Does the task create a real reason to use the target language, or could learners complete it without the form?",
-        "How is error correction handled during and after the practice stages? Note one example of on-the-spot correction and one of delayed correction. After watching How much of the language work was done by the learners rather than by the teacher? Which stage of the clarification would you find hardest to teach, and why?"
+        "How is error correction handled during and after the practice stages? Note one example of on-the-spot correction and one of delayed correction."
+      ],
+      "after": [
+        "How much of the language work was done by the learners rather than by the teacher?",
+        "Which stage of the clarification would you find hardest to teach, and why?"
       ]
     },
     {
@@ -219,7 +223,11 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
         "Which lexical items are clarified after the reading? How is meaning conveyed, and how is it checked?",
         "How thoroughly is form dealt with — part of speech, collocation, register, spelling? What goes on the board?",
         "Is pronunciation of the new lexis addressed? Note stress marking, drilling and any use of phonemic script.",
-        "What practice of the new lexis do the learners get? Is it personalised, and does it move from controlled towards freer use? After watching Which single decision by the teacher had the biggest effect on how well the learners read the text? What would you do differently if you were teaching this text to your own TP class?"
+        "What practice of the new lexis do the learners get? Is it personalised, and does it move from controlled towards freer use?"
+      ],
+      "after": [
+        "Which single decision by the teacher had the biggest effect on how well the learners read the text?",
+        "What would you do differently if you were teaching this text to your own TP class?"
       ]
     },
     {
@@ -237,7 +245,11 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
         "How is the drilling staged? Note the balance of choral and individual drilling, and whether the model is clear and natural.",
         "Is phonemic script used on the board? Is stress marked? How useful is the board work as a record for the learners?",
         "What controlled practice is set up, and how does the teacher ensure accuracy of both form and pronunciation?",
-        "What freer or communicative practice follows? Do the learners use the target exponents naturally, and how is that language fed back on? After watching Which pronunciation feature caused the learners the most difficulty, and how did the teacher deal with it? Where could you build a short pronunciation focus into one of your own upcoming lessons?"
+        "What freer or communicative practice follows? Do the learners use the target exponents naturally, and how is that language fed back on?"
+      ],
+      "after": [
+        "Which pronunciation feature caused the learners the most difficulty, and how did the teacher deal with it?",
+        "Where could you build a short pronunciation focus into one of your own upcoming lessons?"
       ]
     },
     {
@@ -255,7 +267,11 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
         "How is the chat box used by the teacher and by the learners — for answers, for language feedback, for questions?",
         "How is the board work handled? Is there a shared visual record of the language covered, and can learners access it afterwards?",
         "What happens when there is a technical problem or a learner drops out? How does the teacher manage it?",
-        "What proportion of the lesson is teacher-fronted? Compare the TTT and interaction patterns with an equivalent face-to-face lesson. After watching Which techniques from this lesson would transfer straight into a face-to-face classroom? Which classroom techniques would you have to abandon or redesign if you taught your last TP lesson online?"
+        "What proportion of the lesson is teacher-fronted? Compare the TTT and interaction patterns with an equivalent face-to-face lesson."
+      ],
+      "after": [
+        "Which techniques from this lesson would transfer straight into a face-to-face classroom?",
+        "Which classroom techniques would you have to abandon or redesign if you taught your last TP lesson online?"
       ]
     }
   ],

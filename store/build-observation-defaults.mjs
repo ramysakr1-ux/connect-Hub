@@ -26,13 +26,18 @@ const clean = (s) => s.replace(/\s+/g, ' ').trim();
 function numbered(body) {
   const lines = body.split('\n').map((l) => l.trim()).filter(Boolean);
   const skip = new Set(['Observation focus', 'Question', 'Your notes', 'Notes (all teachers)']);
+  /* "After watching" heads the reflection questions that follow the table. It
+     is not a row and it does not belong on the end of the last one -- which is
+     where every filmed sheet had been putting it, along with both questions
+     under it (found 29 Sep 2026, looking at the rendered sheet). */
+  const STOP = /^After watching\b/i;
   const out = [];
   for (let j = 0; j < lines.length; j++) {
     if (!/^\d{1,2}$/.test(lines[j]) || j + 1 >= lines.length) continue;
     let q = lines[j + 1];
     if (/^\d{1,2}$/.test(q) || q.startsWith('Teacher') || skip.has(q)) continue;
     let k = j + 2;
-    while (k < lines.length && !/^\d{1,2}$/.test(lines[k]) && !lines[k].startsWith('Teacher') && !skip.has(lines[k])) { q += ' ' + lines[k]; k++; }
+    while (k < lines.length && !/^\d{1,2}$/.test(lines[k]) && !lines[k].startsWith('Teacher') && !skip.has(lines[k]) && !STOP.test(lines[k])) { q += ' ' + lines[k]; k++; }
     out.push(clean(q));
   }
   return out;
@@ -69,8 +74,12 @@ for (const part of filmedSrc.split(/\n(?=[A-Z][^\n]{0,60}\nRecording:)/).slice(1
      yellow"); Ramy, 27 Sep 2026: "remove the female teacher in yellow part".
      Every recording line reads the same way now. */
   const recording = (lines[1] || '').replace(/^Recording:.*?observation\s*(\d+)\s*$/i, 'Recording: observation $1');
+  /* Everything under "After watching" is a reflection question, one per line,
+     asked once at the end of the sheet rather than against a row. */
+  const ai = lines.findIndex((l) => /^After watching\b/i.test(l));
+  const after = ai >= 0 ? lines.slice(ai + 1).map(clean).filter(Boolean) : [];
   filmed.push({ id: 'filmed' + (filmed.length + 1), title: lines[0], recording,
-    shape: 'notes', rows: numbered(part) });
+    shape: 'notes', rows: numbered(part), after });
 }
 
 const live = [];
