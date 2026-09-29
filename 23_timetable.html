@@ -136,22 +136,22 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} .days{grid-template-columns:1fr;} }
   @media print{ .back,.bar,#hubSync{display:none !important;} body{background:#fff;} .days{grid-template-columns:repeat(5,1fr);} .day{break-inside:avoid;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609300101">
-<link rel="stylesheet" href="hub-theme.css?v=202609300101">
+<link rel="stylesheet" href="hub-house.css?v=202609300105">
+<link rel="stylesheet" href="hub-theme.css?v=202609300105">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609300101"></script>
-<script src="hub-tracker.js?v=202609300101"></script>
-<script src="hub-rotation.js?v=202609300101"></script>
-<script src="hub-docx.js?v=202609300101"></script>
-<script src="hub-timetable-parse.js?v=202609300101"></script>
-<script src="hub-shared.js?v=202609300101"></script>
-<script src="hub-store.js?v=202609300101"></script>
-<script src="hub-sync.js?v=202609300101"></script>
+<script src="hub-due.js?v=202609300105"></script>
+<script src="hub-tracker.js?v=202609300105"></script>
+<script src="hub-rotation.js?v=202609300105"></script>
+<script src="hub-docx.js?v=202609300105"></script>
+<script src="hub-timetable-parse.js?v=202609300105"></script>
+<script src="hub-shared.js?v=202609300105"></script>
+<script src="hub-store.js?v=202609300105"></script>
+<script src="hub-sync.js?v=202609300105"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -685,11 +685,20 @@ function render(){
        the afternoon with no idea which day you were looking at. Start at the
        top of the card, less the sticky week heading that would otherwise sit
        over it. */
-    if (t) requestAnimationFrame(() => {
-      const head = document.querySelector('.wk h2');
-      const off = head ? head.getBoundingClientRect().height + 8 : 0;
-      window.scrollTo({ top: Math.max(0, t.getBoundingClientRect().top + window.scrollY - off) });
-    });
+    /* Twice, and by offsetTop. The first pass runs before the day cards have
+       their final height -- the marks, the room links and the second clock
+       all arrive and change it -- so a single measurement landed 488px past
+       the day it was aiming at. offsetTop is the document position rather
+       than a viewport one, so the second pass corrects rather than compounds. */
+    if (t) {
+      const land = () => {
+        const head = document.querySelector('.wk h2');
+        const off = head ? head.offsetHeight + 8 : 0;
+        window.scrollTo({ top: Math.max(0, t.offsetTop - off) });
+      };
+      requestAnimationFrame(land);
+      setTimeout(() => { if (!SCROLLED) land(); }, 300);
+    }
   }
 }
 
@@ -858,18 +867,14 @@ function save(word){
   if (word === 'Built') render();
 }
 
-/* The reader taking over: from their first scroll, the page is theirs. */
-window.addEventListener('scroll', function once(){
-  if (SCROLLED) return;
-  const t = document.getElementById('d-' + TODAY);
-  if (!t) return;
-  const box = t.getBoundingClientRect();
-  if (Math.abs(box.top) > 4 || window.scrollY === 0) return;   // not our own scroll landing
-  SCROLLED = true;
-  window.removeEventListener('scroll', once);
-}, { passive: true });
-document.addEventListener('pointerdown', () => { SCROLLED = true; }, { once: true, passive: true });
-document.addEventListener('keydown', () => { SCROLLED = true; }, { once: true });
+/* The reader taking over. NOT on `scroll`: my own scrollTo fires that event,
+   so a scroll listener marked the page as touched the instant the page put
+   itself on today, and every later render then left it wherever it landed.
+   A wheel, a finger, a key or a click is a person; a scroll event is not
+   (30 Sep 2026). */
+['wheel','touchstart','pointerdown','keydown'].forEach(function(ev){
+  document.addEventListener(ev, function(){ SCROLLED = true; }, { once: true, passive: true });
+});
 
 render();
 </script>
