@@ -195,7 +195,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609292100">
+<link rel="stylesheet" href="hub-house.css?v=202609292137">
 </head>
 <body>
 <div class="board">
@@ -226,12 +226,12 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202609292100"></script>
-<script src="hub-shared.js?v=202609292100"></script>
-<script src="assignment-defaults.js?v=202609292100"></script>
-<script src="hub-tracker.js?v=202609292100"></script>
-<script src="hub-store.js?v=202609292100"></script>
-<script src="hub-sync.js?v=202609292100"></script>
+<script src="observation-defaults.js?v=202609292137"></script>
+<script src="hub-shared.js?v=202609292137"></script>
+<script src="assignment-defaults.js?v=202609292137"></script>
+<script src="hub-tracker.js?v=202609292137"></script>
+<script src="hub-store.js?v=202609292137"></script>
+<script src="hub-sync.js?v=202609292137"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -394,28 +394,39 @@ const STAGE_OF = n => 'Stage ' + HubTracker.stageOf(n, TP_TOTAL);
 $('courseName').textContent = SETTINGS.courseName || 'Course name not set';
 $('centreLine').textContent = [SETTINGS.centreName, SETTINGS.centreNumber ? 'Centre ' + SETTINGS.centreNumber : '', (SETTINGS.start && SETTINGS.end) ? niceDate(SETTINGS.start) + ' – ' + niceDate(SETTINGS.end) : ''].filter(Boolean).join(' · ');
 if (MODE === 'assessor') {
-  /* The expiry the store sent at boot, or, failing that, worked out here the
-     same way the store works it out: the course end date plus fourteen days
-     (our own window, matching the assessor's two-week reporting deadline at
-     Handbook 15.2 -- Cambridge sets no expiry of its own). The fallback
-     matters. This line used to announce "no course
-     end date set" whenever HubAssessor was missing -- which is a claim about
-     the COURSE, not about what this page happens to know -- and it printed it
-     directly under a header stating the course's end date. Two lines of the
-     same screen contradicting each other, found walking the assessor role on
-     21 Sep 2026. It now only says that when the end date really is absent. */
+  /* Ramy, 29 Sep 2026: the assessor link ends when the COURSE ends.
+     The old window was the end date plus fourteen days, ours, chosen to match
+     the assessor's two-week reporting deadline (Handbook 15.2) -- Cambridge
+     sets no expiry of its own. He weighed the real end (the final grades reach
+     the assessor and they approve, about 48 hours) and decided against
+     carrying a fortnight for it: "the assessor can always get another link,
+     it's not really like a biggie." The link runs to the end of the last day
+     of the course.
+
+     The date is worked out here, from the course's own end date, and the
+     store's stamped `expires` is only the fallback. That is the way round it
+     has to be while the store still carries the old arithmetic: a page that
+     preferred the store's value would go on announcing a fortnight that is no
+     longer the rule. Once the store is redeployed the two agree exactly.
+
+     The fallback still matters for the other reason it was added: this line
+     used to announce "no course end date set" whenever HubAssessor was
+     missing -- a claim about the COURSE, not about what this page happens to
+     know -- printed directly under a header stating the course's end date.
+     Two lines of the same screen contradicting each other, found walking the
+     assessor role on 21 Sep 2026. It only says that when the end date really
+     is absent. */
   const fromEnd = () => {
     const end = SETTINGS && SETTINGS.end;
     if (!end || !/^\d{4}-\d{2}-\d{2}$/.test(String(end))) return null;
     const d = new Date(String(end) + 'T23:59:59');
     if (isNaN(d.getTime())) return null;
-    d.setDate(d.getDate() + 14);
     return d.toISOString();
   };
-  const ex = (window.HubAssessor && window.HubAssessor.expires) || fromEnd();
+  const ex = fromEnd() || (window.HubAssessor && window.HubAssessor.expires);
   $('accessLine').insertAdjacentHTML('afterend', refLine());
   $('accessLine').textContent = 'Read-only assessor view' + (ex
-    ? ' · this link stops working on ' + longDate(ex) + ', fourteen days after the course ends'
+    ? ' · this link stops working on ' + longDate(ex) + ', the last day of the course'
     : ' · the course has no end date set, so this link does not expire yet');
 } else if (MODE === 'tutor') {
   $('accessLine').textContent = 'You are reading this as a tutor — the assessor sees exactly this, without the tutor’s doors.';
