@@ -69,6 +69,7 @@
      straight down the day, whatever the content beside it does. */
   .sl{display:grid; grid-template-columns:44px 1fr; gap:7px; padding:5px 11px; align-items:start; font-size:0.76rem; line-height:1.38; min-width:0;}
   .sl .t{color:var(--faint); font-size:0.66rem; font-weight:700; padding-top:2px; font-variant-numeric:tabular-nums;}
+  .sl .t .lt{display:block; color:var(--teal); font-weight:600; font-size:0.62rem; margin-top:1px;}
   .sl .lab{font-size:0.62rem; letter-spacing:.09em; text-transform:uppercase; color:var(--faint); font-weight:700; display:block;}
   .sl.brk{color:var(--faint); font-style:italic; font-size:0.71rem; padding-top:2px; padding-bottom:2px;}
   .sl.fix{color:var(--grey);}
@@ -118,22 +119,22 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} .days{grid-template-columns:1fr;} }
   @media print{ .back,.bar,#hubSync{display:none !important;} body{background:#fff;} .days{grid-template-columns:repeat(5,1fr);} .day{break-inside:avoid;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609292342">
-<link rel="stylesheet" href="hub-theme.css?v=202609292342">
+<link rel="stylesheet" href="hub-house.css?v=202609292348">
+<link rel="stylesheet" href="hub-theme.css?v=202609292348">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609292342"></script>
-<script src="hub-tracker.js?v=202609292342"></script>
-<script src="hub-rotation.js?v=202609292342"></script>
-<script src="hub-docx.js?v=202609292342"></script>
-<script src="hub-timetable-parse.js?v=202609292342"></script>
-<script src="hub-shared.js?v=202609292342"></script>
-<script src="hub-store.js?v=202609292342"></script>
-<script src="hub-sync.js?v=202609292342"></script>
+<script src="hub-due.js?v=202609292348"></script>
+<script src="hub-tracker.js?v=202609292348"></script>
+<script src="hub-rotation.js?v=202609292348"></script>
+<script src="hub-docx.js?v=202609292348"></script>
+<script src="hub-timetable-parse.js?v=202609292348"></script>
+<script src="hub-shared.js?v=202609292348"></script>
+<script src="hub-store.js?v=202609292348"></script>
+<script src="hub-sync.js?v=202609292348"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -309,7 +310,12 @@ function cellHTML(day){
   };
 
   const body = slots.map(slot => {
-    const t = `<span class="t">${esc(slot.from || '')}</span>`;
+    /* The course's own clock, and the reader's beside it when they are
+       somewhere that makes it a different time. A face-to-face centre never
+       sees two times; an online course with join links on the timetable is
+       read from elsewhere by definition, and that is who this is for. */
+    const tf = (window.hubTimeFor && ZONE) ? window.hubTimeFor(day.date, slot.from, ZONE) : null;
+    const t = `<span class="t">${esc(slot.from || '')}${(tf && tf.differs) ? '<span class="lt">' + esc(tf.local) + '</span>' : ''}</span>`;
     if (slot.kind === 'break') return `<div class="sl brk">${t}<span>${esc(slot.label || 'Break')}</span></div>`;
     if (slot.kind === 'tp') {
       const i = tpSeen++;
@@ -346,6 +352,16 @@ function cellHTML(day){
   </div>`;
 }
 
+/* Whose clock the times are in. Said once, under the grid, and only when it
+   could matter -- a reader in the course's own zone is told nothing, because
+   for them there is nothing to know. */
+function zoneLine(){
+  if (!ZONE || !window.hubReaderZone) return '';
+  const reader = window.hubReaderZone();
+  if (!reader || reader === ZONE) return '';
+  return `<p class="legend">Times are the course\u2019s own clock in ${esc(window.hubZoneName(ZONE))}. The smaller time under each is yours in ${esc(window.hubZoneName(reader))}.</p>`;
+}
+
 /* "45 min" from a slot's own two times, so changing a time changes the label
    with it rather than leaving a number behind that used to be true. */
 function mins(slot){
@@ -355,7 +371,7 @@ function mins(slot){
   return n > 0 ? n + ' min' : '';
 }
 
-let GROUPS = [], DUES = {}, ROOMS = {}, EDIT = false;
+let GROUPS = [], DUES = {}, ROOMS = {}, ZONE = '', EDIT = false;
 /* A tutor can look at the timetable the way the course sees it. Without this
    they only ever see input boxes and can never check what they have
    published (Ramy, 29 Sep 2026: "there's the course admin view, and then
@@ -364,6 +380,7 @@ let PREVIEW = false, SCROLLED = false, SLOTS_OPEN = false;
 
 function render(){
   migrate();
+  ZONE = SETTINGS.timeZone || '';
   GROUPS = groups(); DUES = dues(); ROOMS = roomsByLabel(); EDIT = IS_TUTOR && !PREVIEW;
   const app = $('app');
   const head = `<p class="eyebrow">Course</p><h1>Timetable</h1>
@@ -410,7 +427,7 @@ function render(){
     const a = parse(w[0].date), b = parse(w[w.length-1].date);
     return `<section class="wk"><h2>Week ${i+1} <small>${dm(a)} – ${dm(b)}</small></h2>
       <div class="days">${w.map(d => cellHTML(d)).join('')}</div></section>`;
-  }).join('') + `<p class="legend">Teaching practice runs the same number on two days, one teaching set each: the letters name the candidates teaching that day. ${GROUPS.map(g => 'Group ' + esc(g.group || '—') + ': ' + g.sets.map(R.setName).filter(Boolean).join(' and ')).join('. ')}.</p>`;
+  }).join('') + zoneLine() + `<p class="legend">Teaching practice runs the same number on two days, one teaching set each: the letters name the candidates teaching that day. ${GROUPS.map(g => 'Group ' + esc(g.group || '—') + ': ' + g.sets.map(R.setName).filter(Boolean).join(' and ')).join('. ')}.</p>`;
   if ($('rebuild')) $('rebuild').addEventListener('click', () => { if (confirm('Rebuild the shape from the course dates? Input sessions and notes you have typed are kept where the day still exists.')) build(true); });
   if ($('preview')) $('preview').addEventListener('click', () => { PREVIEW = !PREVIEW; render(); });
   if ($('publish')) $('publish').addEventListener('click', () => { TT.published = true; save('Set \u2014 the course can see it'); render(); });

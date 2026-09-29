@@ -808,3 +808,73 @@ window.hubPickedItems = function(s, picked){
 window.hubIsReference = function(s){
   return !!(s && (s.readonly === true || /before you start/i.test(s.label || '')));
 };
+
+/* ---- the course's clock -------------------------------------------------
+ * Ramy, 29 Sep 2026: "how does Lite deal with different time zones? Trainees
+ * and trainers in different time zones, with deadlines and timings."
+ *
+ * Lite answers that in three different ways, on purpose, because the three
+ * things are not alike:
+ *   a DEADLINE is an INSTANT — stored with its offset, rendered in each
+ *     reader's own clock (hub-due.js). Nobody sets a zone, nobody sets it
+ *     wrong;
+ *   a course DATE is a DAY — the 5th of October is the 5th everywhere, so it
+ *     is stored bare and never read as a moment;
+ *   a TIMETABLE TIME is a WALL CLOCK in the course's own zone. "Input at
+ *     10:00" means ten in the morning where the course is, on every day of
+ *     the course, through a daylight-saving change. It is not an instant,
+ *     because it does not move when the clocks do.
+ *
+ * So a timetable time needs the course's zone to mean anything to somebody
+ * reading it from elsewhere — which an online course with join links on the
+ * timetable is, by definition. That is what this is for.
+ */
+(function(){
+  /* What a zone's offset is at a given instant, in ms. Intl knows the rules,
+     including daylight saving, so nothing here has a table of its own. */
+  function offsetAt(t, tz){
+    try {
+      var dtf = new Intl.DateTimeFormat('en-US', { timeZone: tz, hour12:false,
+        year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+      var p = {}; dtf.formatToParts(new Date(t)).forEach(function(x){ p[x.type] = x.value; });
+      var asUTC = Date.UTC(+p.year, +p.month - 1, +p.day, (+p.hour) % 24, +p.minute, +p.second);
+      return asUTC - t;
+    } catch (e) { return 0; }
+  }
+  /* A wall-clock time in a zone, as an instant. Guess, then correct: the
+     first guess can land on the wrong side of a daylight-saving change, so
+     the offset is taken again at the corrected instant. */
+  window.hubZonedInstant = function(dateISO, hhmm, tz){
+    var d = String(dateISO || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    var t = String(hhmm || '').match(/^(\d{1,2}):(\d{2})/);
+    if (!d || !t || !tz) return null;
+    var guess = Date.UTC(+d[1], +d[2] - 1, +d[3], +t[1], +t[2]);
+    var inst = guess - offsetAt(guess, tz);
+    return guess - offsetAt(inst, tz);
+  };
+  /* The reader's own zone, as the browser reports it. */
+  window.hubReaderZone = function(){
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { return ''; }
+  };
+  /* The short name a zone goes by on screen: "Istanbul", not
+     "Europe/Istanbul", because the second half is the only part anyone says. */
+  window.hubZoneName = function(tz){
+    return String(tz || '').split('/').pop().replace(/_/g, ' ');
+  };
+  /* What a timetable time reads as for THIS reader. Returns the course's own
+     label always, and a local one only when the reader is somewhere that
+     makes it a different time — a face-to-face centre never sees two clocks. */
+  window.hubTimeFor = function(dateISO, hhmm, courseZone){
+    var out = { course: String(hhmm || ''), local: '', differs: false, zone: courseZone || '' };
+    var reader = window.hubReaderZone();
+    if (!courseZone || !reader || courseZone === reader) return out;
+    var inst = window.hubZonedInstant(dateISO, hhmm, courseZone);
+    if (inst == null) return out;
+    var local;
+    try { local = new Date(inst).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit', timeZone: reader }); }
+    catch (e) { return out; }
+    out.local = local;
+    out.differs = local !== out.course;
+    return out;
+  };
+})();

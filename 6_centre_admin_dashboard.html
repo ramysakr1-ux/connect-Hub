@@ -292,7 +292,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609292342">
+<link rel="stylesheet" href="hub-house.css?v=202609292348">
 </head>
 <body>
 <div class="board">
@@ -369,6 +369,11 @@
       <div>
         <label for="courseEnd">Ends</label>
         <input type="date" id="courseEnd">
+      </div>
+      <div>
+        <label for="courseZone">The course’s clock</label>
+        <select id="courseZone"></select>
+        <p class="hintline">The zone the timetable’s times are in. Somebody reading the timetable from another country sees their own time beside it. Deadlines never needed this — they are stored as a moment and always shown in each reader’s own clock.</p>
       </div>
       <div>
         <label for="tpCount">Teaching practices each</label>
@@ -576,11 +581,11 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609292342"></script>
-<script src="hub-store.js?v=202609292342"></script>
-<script src="observation-defaults.js?v=202609292342"></script>
-<script src="hub-shared.js?v=202609292342"></script>
-<script src="hub-sync.js?v=202609292342"></script>
+<script src="assignment-defaults.js?v=202609292348"></script>
+<script src="hub-store.js?v=202609292348"></script>
+<script src="observation-defaults.js?v=202609292348"></script>
+<script src="hub-shared.js?v=202609292348"></script>
+<script src="hub-sync.js?v=202609292348"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -634,6 +639,30 @@ const DOC_FIELDS = ['docTimetable','docTpSchedule','docRegisters','docAgreement'
 let courseLogo = '';
 function applyLogoPreview(dataUrl){
   const slot = document.getElementById('logoSlot');
+/* The course's clock. The browser's own zone is always in the list and is
+   the default, so a centre that never leaves its own city sets nothing and
+   sees nothing. The rest is a short list of the places CELTA courses
+   actually run from, plus whatever the course already had. */
+const ZONES = ['Europe/Istanbul','Europe/London','Europe/Dublin','Europe/Madrid','Europe/Lisbon',
+  'Europe/Paris','Europe/Berlin','Europe/Rome','Europe/Athens','Europe/Warsaw','Europe/Moscow',
+  'Africa/Cairo','Asia/Dubai','Asia/Riyadh','Asia/Karachi','Asia/Kolkata','Asia/Bangkok',
+  'Asia/Ho_Chi_Minh','Asia/Shanghai','Asia/Tokyo','Asia/Seoul','Australia/Sydney',
+  'America/New_York','America/Chicago','America/Denver','America/Los_Angeles','America/Sao_Paulo',
+  'America/Mexico_City','UTC'];
+function fillZones(current){
+  const el = document.getElementById('courseZone'); if (!el) return;
+  let here = ''; try { here = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch(e) {}
+  const list = [];
+  [current, here].forEach(z => { if (z && list.indexOf(z) < 0) list.push(z); });
+  ZONES.forEach(z => { if (list.indexOf(z) < 0) list.push(z); });
+  const chosen = current || here;
+  el.innerHTML = list.map(z => {
+    const name = z.split('/').pop().replace(/_/g,' ');
+    const tag = z === here ? ' \u2014 this device' : '';
+    return `<option value="${z}"${z === chosen ? ' selected' : ''}>${name}${tag}</option>`;
+  }).join('');
+}
+
   if (dataUrl) slot.innerHTML = `<img src="${dataUrl}" alt="Centre logo" style="width:100%;height:100%;object-fit:cover;border-radius:7px;">`;
   else slot.innerHTML = 'Centre<br>logo';
 }
@@ -705,6 +734,7 @@ try {
     if(cs.courseName) document.getElementById('courseName').value = cs.courseName;
     if(cs.tpCount) document.getElementById('tpCount').value = cs.tpCount;
     if(cs.totalHours) document.getElementById('totalHours').value = cs.totalHours;
+    fillZones(cs.timeZone || '');
     if(cs.deliveryMode) document.getElementById('deliveryMode').value = cs.deliveryMode;
     if(cs.tutorNames) document.getElementById('tutorNames').value = cs.tutorNames;
     if(cs.appianUrl) document.getElementById('appianUrl').value = cs.appianUrl;
@@ -752,6 +782,7 @@ document.getElementById('saveSettings').addEventListener('click', () => {
        which is what every course had before this field existed. */
     tpCount: (function(){ const n = parseInt(document.getElementById('tpCount').value, 10); return (n >= 1 && n <= HUB_MAX_TP) ? n : ''; })(),
     totalHours: (function(){ const n = parseInt(document.getElementById('totalHours').value, 10); return n > 0 ? n : ''; })(),
+    timeZone: (document.getElementById('courseZone') || {}).value || '',
     deliveryMode: document.getElementById('deliveryMode').value || 'f2f',
     tutorNames: document.getElementById('tutorNames').value.trim(),
     appianUrl: document.getElementById('appianUrl').value.trim(),
