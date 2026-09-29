@@ -14,12 +14,12 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
-## 29 Sep 2026 — the assessor link ends when the course ends — **NOT DEPLOYED**
+## 29 Sep 2026 — the assessor link ends when the course ends
 See `2026-09-29-assessor-link-ends-with-the-course.md`. The expiry stops being
 the course end date plus fourteen days and becomes the end of the course's last
-day (Ramy's call). One line to delete. **The pages already say the new rule**,
-so until this is deployed the store lets a link work a fortnight longer than
-the screens state — the safe direction, but it is a disagreement.
+day (Ramy's call): one line out of `assessorExpiry_`. **Deployed as version
+39.** Verified against the live store — every course with an end date reports
+that date as its assessor expiry, and the pages already said so.
 
 ## 28 Sep 2026 — the switch: a clone arrives with everything off
 See `2026-09-28-the-switch.md`. `cloneCourse` marks carried links `show:false`

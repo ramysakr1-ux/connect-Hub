@@ -1,4 +1,4 @@
-# The assessor link ends when the course ends (29 Sep 2026) — NOT YET DEPLOYED
+# The assessor link ends when the course ends (29 Sep 2026) — version 39
 
 **Why.** Ramy, 29 Sep 2026: "let's just end it when the course ends." The
 window had been the course end date **plus fourteen days** — ours, chosen to
@@ -42,11 +42,13 @@ If any comment in the file explains the fourteen days, it now says the wrong
 thing. Replace it with: `the link ends at the end of the course's last day
 (Ramy, 29 Sep 2026)`.
 
-## Deploy
+## Deployed
 
-Editor → Save → **Deploy → Manage deployments → pencil → Version: New version
-→ Deploy**. Never "New deployment": that mints a new URL and every link in
-circulation keeps pointing at the old code.
+**Version 39, 29 Sep 2026, 21:52** — as a new version of the existing
+deployment (never "New deployment": that mints a new URL and every link in
+circulation keeps pointing at the old code). The comment above
+`assessorExpiry_` was rewritten at the same time; `d.setDate(d.getDate() + 14)`
+is gone and the 23:59:59 stays.
 
 **Parse before deploying.** In the editor tab's console:
 `new Function(monaco.editor.getModels()[0].getValue())` — a stray comment that
@@ -61,14 +63,13 @@ themselves, taking the store's stamped `expires` only as a fallback. That way
 round is deliberate: a page that preferred the store's value would go on
 announcing a fortnight that is no longer the rule.
 
-**Until this patch is deployed** the two disagree in the safe direction — the
-pages name the course end date while the store still lets the link work for
-another fortnight. An assessor is never locked out earlier than the pages say.
-After the deploy they agree exactly.
+They agree: checked against the live store after the deploy, every course
+with an end date reports an assessor expiry equal to that date (c1 30 Oct,
+c5 23 Oct); a course with no end date still reports none, as designed.
 
-## Afterwards
+## Checked after the deploy
 
-Check one course: open Course admin → Roster and links on a course with an end
-date, and confirm the assessor row reads "Stops working on <the end date> —
-the last day of the course". Then open the assessor link itself; the header
-line should name the same day.
+Store answers `ping`, `ownerCourses` (5), the C/17 grades page's course still
+holds its ten grade rows, a tutor boot answers, and an assessor key is still
+refused a write ("The assessor link is read-only"). Assessor expiry equals the
+course end date on every course that has one.
