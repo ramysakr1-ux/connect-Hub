@@ -71,6 +71,7 @@
   .cell.tp{background:var(--box); border-radius:6px; padding:5px 7px; margin:1px 0;}
   .cell.tp b{font-weight:700;}
   .cell.tp .who{color:var(--gold-deep); font-weight:700;}
+  .cell.tp .gl{display:block; color:var(--grey); font-size:0.74rem; margin-top:2px;}
   .cell.due{color:var(--brick); font-weight:600; font-size:0.74rem;}
   .cell.note{color:var(--grey); font-size:0.73rem;}
   .cell input{font-family:inherit; font-size:0.78rem; width:100%; padding:4px 6px; border:1px solid var(--sand-line); border-radius:5px; background:var(--paper); color:var(--ink); min-width:0;}
@@ -97,22 +98,22 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} .days{grid-template-columns:1fr;} }
   @media print{ .back,.bar,#hubSync{display:none !important;} body{background:#fff;} .days{grid-template-columns:repeat(5,1fr);} .day{break-inside:avoid;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609292309">
-<link rel="stylesheet" href="hub-theme.css?v=202609292309">
+<link rel="stylesheet" href="hub-house.css?v=202609292319">
+<link rel="stylesheet" href="hub-theme.css?v=202609292319">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609292309"></script>
-<script src="hub-tracker.js?v=202609292309"></script>
-<script src="hub-rotation.js?v=202609292309"></script>
-<script src="hub-docx.js?v=202609292309"></script>
-<script src="hub-timetable-parse.js?v=202609292309"></script>
-<script src="hub-shared.js?v=202609292309"></script>
-<script src="hub-store.js?v=202609292309"></script>
-<script src="hub-sync.js?v=202609292309"></script>
+<script src="hub-due.js?v=202609292319"></script>
+<script src="hub-tracker.js?v=202609292319"></script>
+<script src="hub-rotation.js?v=202609292319"></script>
+<script src="hub-docx.js?v=202609292319"></script>
+<script src="hub-timetable-parse.js?v=202609292319"></script>
+<script src="hub-shared.js?v=202609292319"></script>
+<script src="hub-store.js?v=202609292319"></script>
+<script src="hub-sync.js?v=202609292319"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -198,13 +199,20 @@ function cellHTML(day, g){
   const dueHere = (DUES[day.date] || []);
   let tp = '';
   if (day.tp) {
-    const bits = GROUPS.map(gr => {
+    /* One group: "TP 3 · ABC" on one line. More than one: the practice
+       number, then a line per group. Letters are per group, so two groups
+       teaching in parallel both read ABC, and side by side on one line that
+       came out as "TP 3 · ABC (Group 1) · ABC (Group 2)" -- a stutter that
+       told the reader less than it could (Ramy, seeing it in the pane,
+       29 Sep 2026). Group first, letters after, one line each. */
+    const rows = GROUPS.map(gr => {
       const set = gr.sets[day.setIndex] || [];
-      if (!set.length) return '';
-      const who = R.setName(set);
-      return `<span class="who">${esc(who)}</span>${GROUPS.length > 1 ? ' <small>(Group ' + esc(gr.group || '—') + ')</small>' : ''}`;
-    }).filter(Boolean).join(' · ');
-    tp = `<div class="cell tp"><span class="k">Teaching practice</span><b>TP ${day.tp}</b>${bits ? ' · ' + bits : ''}</div>`;
+      return set.length ? { group: gr.group, who: R.setName(set) } : null;
+    }).filter(Boolean);
+    const body = rows.length === 1
+      ? ` · <span class="who">${esc(rows[0].who)}</span>`
+      : rows.map(r => `<span class="gl">Group ${esc(r.group || '—')} <span class="who">${esc(r.who)}</span></span>`).join('');
+    tp = `<div class="cell tp"><span class="k">Teaching practice</span><b>TP ${day.tp}</b>${body}</div>`;
   }
   const slot = (k, label) => {
     const v = day[k] || '';
