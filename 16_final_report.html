@@ -8,8 +8,9 @@
   here." It is Connect's document, page for page: a cover that certifies the
   attendance, the hours, the delivery mode and the provisional grade, over the
   tutors' signatures; then the report proper -- the two assessment areas, the
-  performance descriptor for the grade in the syllabus's own words (Appendix
-  2), and the overall comment.
+  performance descriptor for the grade in this centre's own words (read off
+  its report templates; they differ from the syllabus's Appendix 2 in a few
+  places and the page says whose they are), and the overall comment.
 
   What was NOT already here, and now lives where it belongs: course hours,
   delivery mode and the tutors' names on Course admin's settings; hours
@@ -115,7 +116,7 @@
   }
   h2 .whose{font-family:'Karla',sans-serif; font-weight:500; font-size:0.68em; color:var(--ink-soft); letter-spacing:0;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609291842">
+<link rel="stylesheet" href="hub-house.css?v=202609291904">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -126,10 +127,10 @@
   <div id="doc"></div>
 </div>
 
-<script src="hub-tracker.js?v=202609291842"></script>
-<script src="hub-store.js?v=202609291842"></script>
-<script src="hub-shared.js?v=202609291842"></script>
-<script src="hub-sync.js?v=202609291842"></script>
+<script src="hub-tracker.js?v=202609291904"></script>
+<script src="hub-store.js?v=202609291904"></script>
+<script src="hub-shared.js?v=202609291904"></script>
+<script src="hub-sync.js?v=202609291904"></script>
 <script type="text/x-hub-app">
 /* Tutors and the assessor. A candidate's link is refused: Connect releases the
    candidate's own copy as a separate, later act once Cambridge has confirmed,
@@ -265,7 +266,12 @@ if (!who) {
           if (isFinite(m) && m > 0) { mins += m; lessons++; } else if (f.fDate || f.fMain) { lessons++; }
         });
       } catch (e) {}
-      const shared = 'This included collaborative planning, peer observation and shared evaluation and feedback, and every assessed lesson was observed and assessed by an experienced trainer.';
+      /* Whether a tutor is named on every returned lesson is on the record;
+         the sentence says only what the record supports (second audit,
+         29 Sep 2026 -- this clause had survived the six-hours fix). */
+      let tutored = lessons > 0;
+      try { Object.values(T.tpHistory(who) || {}).forEach(fb => { if (!String((((fb.state || {}).f) || {}).fTutor || '').trim()) tutored = false; }); } catch (e) { tutored = false; }
+      const shared = 'This included collaborative planning, peer observation and shared evaluation and feedback' + (tutored ? ', and every assessed lesson was observed and assessed by an experienced trainer.' : '.');
       if (!lessons) return `Teaching practice on this course is assessed throughout. ${shared}`;
       const hrs = mins ? (Math.round((mins / 60) * 10) / 10).toString().replace(/\.0$/, '') : null;
       const lessonWord = lessons === 1 ? 'lesson' : 'lessons';

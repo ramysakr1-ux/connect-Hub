@@ -146,7 +146,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
       "tp": 6,
       "title": "Feedback Techniques",
       "variant": 0,
-      "brief": "During the lesson — Pay close attention to the feedback to tasks that all the teachers provide in TP6.",
+      "brief": "Feedback helps consolidate what learners have learnt and contributes to successful task achievement, especially when learners have found something difficult. Feedback can come in many forms, for example:\nThe teacher providing a clear conclusion to a task\nPraise / acknowledgement\nLetting learners know how well they did\nAcknowledging and responding to the content of what learners say\nAcknowledging, praising or correcting the language that learners use\nProviding the answers on a handout, on the board or orally\nEliciting the answers orally\nGetting learners to write up answers on the board\nDuring the lesson — Pay close attention to the feedback to tasks that all the teachers provide in TP6.",
       "rows": [
         "How many different types of feedback technique did you see?",
         "Did any of the teachers provide feedback on the content of what learners had to say (i.e. the message rather than the language)?",
@@ -256,6 +256,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
       "id": "filmed4",
       "title": "Teaching Online",
       "recording": "Recording: observation 4",
+      "brief": "Before you watch  This lesson is taught live on Zoom. As you watch, keep asking yourself what the teacher is doing differently because the lesson is online, and what stays exactly the same as it would in a classroom.",
       "shape": "notes",
       "rows": [
         "How does the teacher open the lesson and build rapport in the online space? What do they do that a face-to-face teacher would not need to do?",
@@ -291,6 +292,9 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
         "Strengths. Name three things this teacher does well in managing the class. Give a timestamp for each.",
         "Action points. Name two things you would do differently, and say what you would do instead — not just what was wrong.",
         "One thing from this lesson you intend to use in your own teaching practice this week."
+      ],
+      "after": [
+        "How much of the lesson was learners working rather than the teacher managing? Mostly teacher · Fairly even · Mostly learners"
       ]
     },
     {
@@ -298,6 +302,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
       "title": "Live Teacher Observation 2",
       "sub": "Lesson Shape- Language and/or Skill Focus",
       "minutes": 90,
+      "brief": "In Task 1 you watched how a teacher runs a room. This time, watch how the lesson is built.\nBefore the lesson\nAsk the tutor for the main aim.\nDecide from the aim alone: is this a language lesson or a skills lesson? Write your prediction in Part A before it starts.",
       "shape": "parts",
       "parts": [
         {

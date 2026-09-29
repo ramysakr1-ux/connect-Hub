@@ -18,7 +18,8 @@ window.HUB_MAX_TP = 12;
    The set now comes from the course's own wording, falling back to the
    shipped sheets.
 
-   10.1, in its own verbs: candidates are given six hours' directed
+   11.2 lists six hours of observation among what candidates "are required
+   to" do to meet the course requirements. 10.1, in its own verbs: candidates are given six hours' directed
    observation; "All six hours CAN be live observation, but a centre MAY
    choose to provide up to three hours of filmed lessons", and "three hours of
    live online or face-to-face observation MUST be provided by the centre".
@@ -62,7 +63,7 @@ window.hubObservationHours = function(records){
   var complete = (f.turnedIn + l.turnedIn) >= set.all.length && set.all.length > 0;
   if (f.minutes > 180) notes.push('over three hours of filmed observation \u2014 10.1 lets a centre provide up to three');
   if (complete && l.minutes < 180) notes.push('under three hours of live observation \u2014 10.1: three hours of live online or face-to-face observation must be provided');
-  if (complete && total < 360) notes.push('under six hours in total \u2014 10.1 asks centres to ensure candidates are given six hours');
+  if (complete && total < 360) notes.push('under six hours in total \u2014 11.2: candidates are required to observe experienced teachers for a total of six hours');
   return { filmed: f, live: l, totalMinutes: total, turnedIn: f.turnedIn + l.turnedIn, of: set.all.length, notes: notes };
 };
 

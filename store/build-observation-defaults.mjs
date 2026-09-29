@@ -135,9 +135,18 @@ function numbered(body) {
 }
 /* Whatever the sheet says to do BEFORE or DURING the lesson. It is part of the
    task -- "find out what your peer is teaching" cannot be read afterwards. */
+/* The brief is everything the sheet says before its table: the "Before /
+   During the lesson" instruction, and any preamble above it (TP6 opens with
+   "Feedback helps consolidate..." and eight examples, which used to be
+   dropped -- second audit, 29 Sep 2026). Lines are kept on their own lines. */
 const briefOf = (body) => {
   const m = body.match(/(Before the lesson|During the lesson)\s+([^\n]+(?:\n(?!#|\d{1,2}$)[^\n]+)*)/);
-  return m ? clean(m[1] + ' — ' + m[2]) : '';
+  const marker = m ? clean(m[1] + ' \u2014 ' + m[2]) : '';
+  const lines = body.split('\n').map((l) => l.trim());
+  const start = lines.findIndex((l, i) => i > 1 && l);           // 0 = tp head, 1 = title
+  const stop = lines.findIndex((l) => /^(Before the lesson|During the lesson)\b/.test(l) || l === '#' || /^\d{1,2}$/.test(l));
+  const pre = (start >= 0 && stop > start) ? lines.slice(start, stop).filter(Boolean) : [];
+  return [pre.join('\n'), marker].filter(Boolean).join('\n');
 };
 
 const peerSrc = docText('Peer_Observation_Tasks.docx');
@@ -169,7 +178,12 @@ for (const part of filmedSrc.split(/\n(?=[A-Z][^\n]{0,60}\nRecording:)/).slice(1
      asked once at the end of the sheet rather than against a row. */
   const ai = lines.findIndex((l) => /^After watching\b/i.test(l));
   const after = ai >= 0 ? lines.slice(ai + 1).map(clean).filter(Boolean) : [];
-  filmed.push({ id: 'filmed' + (filmed.length + 1), title: lines[0], recording,
+  /* Anything between the Recording line and the table head is the sheet's
+     brief -- Filmed 4 opens with a boxed "Before you watch" that was dropped
+     (second audit, 29 Sep 2026). */
+  const headAt = lines.findIndex((l) => l === '#' || /^Observation focus/.test(l) || /^Lesson:/.test(l));
+  const brief = headAt > 2 ? lines.slice(2, headAt).filter((l) => !/^(Lesson|Level|Length|Date watched|Learners present):?$/i.test(l)).join('\n') : '';
+  filmed.push({ id: 'filmed' + (filmed.length + 1), title: lines[0], recording, ...(brief ? { brief } : {}),
     shape: 'notes', rows: numbered(part), after });
 }
 
@@ -205,9 +219,24 @@ for (const [file, id] of [['Live_Teacher_Observations_Demo_1.docx', 'live1'],
      the sheet; this is what it starts at, and it means the three live hours
      Handbook 10.1 requires are on the record without anyone typing them. The
      filmed recordings vary course to course, so they carry none. */
+  /* The brief: what the sheet says before its first question or part, minus
+     the title, the sub-title and the header labels (Live Task 2 opens "In Task
+     1 you watched how a teacher runs a room..." and a "Before the lesson"
+     block; both were dropped). Demo 1 closes with a circle-one prompt after
+     question 8, which was dropped too -- it is carried as an after-prompt. */
+  const HDR = /^(Lesson|Level|Length|Date watched|Learners present|Teacher observed|Teacher|Date|Your name)\s*:?$/i;
+  const firstQ = lines.findIndex((l) => /^(1\.\s|A\.\s)/.test(l));
+  const brief = firstQ > 2 ? lines.slice(2, firstQ).filter((l) => !HDR.test(l) && !/^Recording:/i.test(l) && !/\u00b7.*minutes$/i.test(l)).join('\n') : '';
+  const lastQ = qs.length ? lines.findIndex((l) => /^8\.\s/.test(l)) : -1;
+  let after = [];
+  if (lastQ >= 0) {
+    const tail = lines.slice(lastQ + 1).filter((l) => l && !/^\(circle one\)$/i.test(l));
+    const prompt = tail.findIndex((l) => /\?$/.test(l));
+    if (prompt >= 0) after = [tail.slice(prompt).join(' ').replace(/\s{2,}/g, ' ')];
+  }
   live.push(qs.length
-    ? { id, title, sub: lines[1] || '', minutes: 90, shape: 'questions', rows: qs }
-    : { id, title, sub: lines[1] || '', minutes: 90, shape: 'parts', parts });
+    ? { id, title, sub: lines[1] || '', minutes: 90, ...(brief ? { brief } : {}), shape: 'questions', rows: qs, ...(after.length ? { after } : {}) }
+    : { id, title, sub: lines[1] || '', minutes: 90, ...(brief ? { brief } : {}), shape: 'parts', parts });
 }
 
 const out = `/* Connect Lite — the observation tasks a course starts with.

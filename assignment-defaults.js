@@ -53,12 +53,16 @@
 //     wording keeps it untouched, and the editor's panel shows it the
 //     syllabus's beside its own.
 //
-//     NOTE FOR ANY FUTURE CHANGE: criteriaMarks are POSITIONAL. Never add an
-//     old shipped list to CONNECT_HUB_SUPERSEDED_WORDING to force existing
-//     courses over -- that machinery rewrites a course's criteria at boot,
-//     and on marked work every Met would land on a different criterion. The
-//     29 Sep change deliberately did NOT do that: every course that had
-//     marking (c3, c4, c5) holds its own wording and was left alone.
+//     NOTE FOR ANY FUTURE CHANGE: criteriaMarks are POSITIONAL. The boot
+//     machinery (CONNECT_HUB_ADOPT_CORRECTED_CRITERIA, run by hub-sync) moves a
+//     course whose criteria still match an entry in CONNECT_HUB_SUPERSEDED_WORDING
+//     onto the current shipped list -- and versions 1 and 2 there ARE the old
+//     nineteen. So a course holding the untouched nineteen with NO assignment
+//     record on any candidate (a fresh clone, say) is moved to the seventeen
+//     at its next tutor boot; hub-sync's guard refuses the moment any
+//     candidate has an assignments record, so marked work is never touched.
+//     That is the behaviour, stated plainly (second audit, 29 Sep 2026): the
+//     earlier version of this note claimed no course would move at all.
 //
 // The three reading texts in the skills assignment are VOA Learning English,
 // which states its texts are in the public domain and may be reprinted with

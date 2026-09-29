@@ -174,8 +174,9 @@
      overflow box is not fragmented across pages, so everything past the first
      page was clipped away (Ramy, 21 Sep 2026: "only prints the first page"). */
   /* the candidates the assessor is steered to read in full, Handbook 14.2 */
+  /* a steer from 14.2 / 15.1 ("should focus on borderline cases"): gold, not brick */
   .review{margin-top:4px; font-family:'Instrument Sans','Karla',sans-serif; font-size:9.5px; font-weight:700;
-    letter-spacing:0.1em; text-transform:uppercase; color:var(--brick);}
+    letter-spacing:0.1em; text-transform:uppercase; color:var(--gold, oklch(63% 0.096 72));}
   /* the centre's own documents, as links */
   .docrow{display:flex; align-items:center; justify-content:space-between; gap:18px; padding:12px 16px; border-bottom:1px solid var(--sand-line);}
   .docrow:last-child{border-bottom:none;}
@@ -194,7 +195,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609291842">
+<link rel="stylesheet" href="hub-house.css?v=202609291904">
 </head>
 <body>
 <div class="board">
@@ -225,12 +226,12 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202609291842"></script>
-<script src="hub-shared.js?v=202609291842"></script>
-<script src="assignment-defaults.js?v=202609291842"></script>
-<script src="hub-tracker.js?v=202609291842"></script>
-<script src="hub-store.js?v=202609291842"></script>
-<script src="hub-sync.js?v=202609291842"></script>
+<script src="observation-defaults.js?v=202609291904"></script>
+<script src="hub-shared.js?v=202609291904"></script>
+<script src="assignment-defaults.js?v=202609291904"></script>
+<script src="hub-tracker.js?v=202609291904"></script>
+<script src="hub-store.js?v=202609291904"></script>
+<script src="hub-sync.js?v=202609291904"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -324,9 +325,13 @@ function courseChecks(){
   }).filter(c => c.taught);
   const shortOf = (pred) => perCand.filter(pred).map(c => c.name);
   if (perCand.length) {
-    const noSix = shortOf(c => c.mins && c.mins < 360);
-    say('must', 'Six hours of assessed teaching practice', noSix.length ? 'short' : 'met',
-        noSix.length ? noSix.length + ' under six hours: ' + noSix.slice(0, 3).join(', ') + (noSix.length > 3 ? '…' : '') : 'every candidate at six hours or more',
+    /* A candidate with no minutes on any sheet is not "at six hours"; they are
+       unknown, and the line says so rather than affirming a must (second
+       audit, 29 Sep 2026: the old guard skipped them and read "met"). */
+    const noSix = shortOf(c => c.mins && c.mins < 360), noMins = shortOf(c => !c.mins);
+    say('must', 'Six hours of assessed teaching practice', noSix.length ? 'short' : noMins.length ? 'unknown' : 'met',
+        noSix.length ? noSix.length + ' under six hours: ' + noSix.slice(0, 3).join(', ') + (noSix.length > 3 ? '…' : '')
+          : noMins.length ? noMins.length + ' with no lesson lengths recorded yet' : 'every candidate at six hours or more',
         '9.1.1 — six hours of assessed teaching practice for each candidate');
     const oneLevel = shortOf(c => c.levels < 2);
     say('should', 'Two significantly different levels', oneLevel.length ? 'short' : 'met',
@@ -527,7 +532,7 @@ function renderList(){
 
     <!-- Handbook 14.1 opens its list with "Candidate portfolios - clearly
          named candidate portfolios including the documentation detailed in
-         section 12.1.1", and 14.2 requires that "the portfolio of at least
+         section 12.1.1", and 14.2 says that "the portfolio of at least
          one of the candidates observed doing teaching practice should be
          read". So the portfolios are not optional and they are not the
          tracker: they are one door per candidate, named, and nothing else on
@@ -703,6 +708,10 @@ function observationBlock(tr){
   const filmed = turned(tasks.filmed), live = turned(tasks.live);
   const chip = (n, of) => `<span class="chip ${n >= of ? 'fine' : n ? 'wait' : 'nd'}">${n} of ${of}</span>`;
   const rows = [
+    /* hours, not sheets: 11.2's six is six HOURS, and the 10.1 notes carry
+       Cambridge's own verbs (second audit, 29 Sep 2026) */
+    ['Observation hours', (function(){ try { const h = window.hubObservationHours(w); const t = Math.round((h.totalMinutes / 60) * 10) / 10;
+        return chip(t, 6) + ' hours (' + Math.round(h.filmed.minutes / 60 * 10) / 10 + ' filmed, ' + Math.round(h.live.minutes / 60 * 10) / 10 + ' live)' + ((h.notes || []).length ? ' \u2014 ' + h.notes.join('; ') : ''); } catch (e) { return '\u2014'; } })()],
     ['Filmed lessons', chip(filmed, tasks.filmed.length) + ' turned in'],
     ['Live demonstration lessons', chip(live, tasks.live.length) + ' turned in'],
     ['Peer observation notes', chip(peerStarted, tasks.peer.length * 2) + ' written']

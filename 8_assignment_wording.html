@@ -130,8 +130,8 @@
     .section-head input.label{flex:1 1 100%; order:-1;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609291842">
-<link rel="stylesheet" href="hub-theme.css?v=202609291842">
+<link rel="stylesheet" href="hub-house.css?v=202609291904">
+<link rel="stylesheet" href="hub-theme.css?v=202609291904">
 </head>
 <body>
 <div class="board">
@@ -145,12 +145,12 @@
     <div class="editor" id="editor"></div>
   </div>
 </div>
-<script src="assignment-defaults.js?v=202609291842"></script>
-<script src="hub-due.js?v=202609291842"></script>
-<script src="hub-docx.js?v=202609291842"></script>
-<script src="hub-shared.js?v=202609291842"></script>
-<script src="hub-store.js?v=202609291842"></script>
-<script src="hub-sync.js?v=202609291842"></script>
+<script src="assignment-defaults.js?v=202609291904"></script>
+<script src="hub-due.js?v=202609291904"></script>
+<script src="hub-docx.js?v=202609291904"></script>
+<script src="hub-shared.js?v=202609291904"></script>
+<script src="hub-store.js?v=202609291904"></script>
+<script src="hub-sync.js?v=202609291904"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -327,7 +327,7 @@ function metaHTML(a){
         <option value="prose" ${a.format==='prose'?'selected':''}>Continuous prose</option>
         <option value="structured" ${a.format==='structured'?'selected':''}>Structured (sections/tables)</option>
       </select>
-      <span class="metahint">Handbook 9.2.1: at least 2 of the 4 should be in continuous prose.</span>
+      <span class="metahint">at least 2 of the 4 must be in continuous prose (syllabus; CELTA 5 p12) \u2014 Handbook 9.2.1 says \u201cshould\u201d.</span>
     </div>
     <div class="metarow" style="align-items:flex-start;">
       <label style="margin-top:6px;">Marking criteria</label>
@@ -399,8 +399,8 @@ function countMarked(){
 }
 function updateMeta(key,v){
   /* 9.2.1: "The word length of each assignment is set by the centre within the
-     range of 750-1,000 words." The centre sets it; the range is Cambridge's,
-     and a figure outside it is flagged below rather than silently adopted. */
+     range of 750-1,000 words." The centre sets it; the range is shown as a
+     hint beside the fields. */
   DATA[CURRENT][key] = (key==='wordMin'||key==='wordMax') ? (parseInt(v,10)||0)
     : key==='resubDays' ? (parseInt(v,10)||0)
     : v;
@@ -434,7 +434,9 @@ function addCriterion(){ (DATA[CURRENT].criteria=DATA[CURRENT].criteria||[]).pus
    none of them is silent. */
 function removeCriterion(ci){
   const c = DATA[CURRENT].criteria || [];
-  if (c.length <= 1) { alert('An assignment keeps at least one criterion.\n\nHandbook 9.2.1: the CELTA marking criteria for each assignment should be made explicit in the guidelines candidates are given. An assignment with no criteria can also never be passed \u2014 the marking screen needs every criterion met.'); return; }
+  if (c.length <= 1) { alert('An assignment keeps at least one criterion.\n\nWith none, the marking screen can never pass it \u2014 a pass needs every criterion met. (Handbook 9.2.1 also says the criteria should be made explicit to candidates.)'); return; }
+  const marked = countMarked();
+  if (marked) { alert('Not while marking exists.\n\n' + marked + ' submission' + (marked === 1 ? ' has' : 's have') + ' criterion marks on this assignment, and marks are stored by POSITION \u2014 removing a criterion would move every later mark onto a different one.'); return; }
   c.splice(ci,1); renderEditor();
 }
 function renderProseBanner(){
@@ -445,12 +447,14 @@ function renderProseBanner(){
   const ok = proseCount>=2;
   /* Met: the house's quiet sand with the gold edge every assignment card
      carries -- it was a teal wash with teal text ("that green is a bit too
-     much", Ramy, 24 Sep 2026). Not met keeps brick: that one is a warning. */
+     much", Ramy, 24 Sep 2026). Not met keeps brick: the syllabus and the CELTA 5
+     both say two MUST be in prose (the Handbook's 9.2.1 says should), so this
+     one is a requirement, not a recommendation. */
   el.style.background = ok ? 'var(--gold-wash, oklch(94.5% 0.035 78))' : 'oklch(93% 0.05 40)';
   el.style.borderColor = ok ? 'var(--sand-line)' : 'var(--brick)';
   el.style.borderLeftColor = ok ? 'var(--gold, oklch(63% 0.096 72))' : 'var(--brick)';
   el.style.color = ok ? 'var(--ink)' : 'var(--brick)';
-  el.textContent = `${proseCount} of 4 core assignments marked continuous prose — Handbook 9.2.1 asks for at least 2 (a "should").`;
+  el.textContent = `${proseCount} of 4 core assignments marked continuous prose — the syllabus and the CELTA 5 say two <b>must</b> be in prose (Handbook 9.2.1 says should).`;
 }
 
 function renderEditor(){
@@ -555,7 +559,7 @@ function moveSection(i, dir){
 function removeSection(i){
   const secs = DATA[CURRENT].sections || [];
   if ((secs[i] || {}).type === 'declaration' && secs.filter(x => x && x.type === 'declaration').length <= 1) {
-    alert('The declaration stays.\n\nHandbook 9.2.3: candidates should confirm in writing that the written assignments are their own work. Without this section the submission form has nothing to gate on, and it would let the work through with no confirmation at all.\n\nYou can reword every line of it.');
+    alert('The declaration stays.\n\nWithout this section the submission form has nothing to gate on, and would let work through with no confirmation at all. (Handbook 9.2.3 says candidates should confirm in writing that the work is their own.)\n\nYou can reword every line of it.');
     return;
   }
   secs.splice(i,1);
@@ -568,7 +572,7 @@ function updateDeclItem(i, di, v){ DATA[CURRENT].sections[i].items[di] = v; }
 function addDeclItem(i){ DATA[CURRENT].sections[i].items.push('New declaration'); renderEditor(); }
 function removeDeclItem(i, di){
   const items = DATA[CURRENT].sections[i].items || [];
-  if (items.length <= 1) { alert('The declaration keeps at least one line \u2014 otherwise there is nothing for the candidate to confirm, and the submission gate passes on an empty list (Handbook 9.2.3).'); return; }
+  if (items.length <= 1) { alert('The declaration keeps at least one line \u2014 otherwise there is nothing for the candidate to confirm, and the submission gate passes on an empty list.'); return; }
   items.splice(di,1); renderEditor();
 }
 function toggleAi(i, checked){ DATA[CURRENT].sections[i].aiToggle = checked; }
@@ -604,6 +608,8 @@ function addSection(){
   renderEditor();
 }
 function startBlank(){
+  const marked = countMarked();
+  if (marked) { alert('Not while marking exists.\n\n' + marked + ' submission' + (marked === 1 ? ' has' : 's have') + ' criterion marks on this assignment; a blank assignment would leave those marks pointing at criteria that no longer exist.'); return; }
   const parts = NAMES[CURRENT].split('\u2014');
   /* A blank assignment still arrives with the three things Cambridge asks
      every assignment to carry: a word range inside 750-1,000 (9.2.1), at

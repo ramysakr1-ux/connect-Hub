@@ -95,7 +95,7 @@
     border-radius:999px; padding:3px 10px; white-space:nowrap;}
 
   /* ---- one task, open --------------------------------------------------- */
-  .brief{background:var(--box); border-radius:7px; padding:11px 13px; font-size:0.85rem;
+  .brief{white-space:pre-line; background:var(--box); border-radius:7px; padding:11px 13px; font-size:0.85rem;
     line-height:1.55; margin:0 0 16px;}
   table.sheet{width:100%; border-collapse:collapse; margin:0 0 18px;}
   table.sheet th{font-size:0.7rem; letter-spacing:.06em; text-transform:uppercase; color:var(--grey);
@@ -171,18 +171,18 @@
   .eyebrow{font-size:0.7rem; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:0 0 4px;}
   .lede{color:var(--grey); font-size:0.88rem; line-height:1.6; margin:0 0 18px; max-width:66ch;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609291842">
-<link rel="stylesheet" href="hub-theme.css?v=202609291842">
+<link rel="stylesheet" href="hub-house.css?v=202609291904">
+<link rel="stylesheet" href="hub-theme.css?v=202609291904">
 </head>
 <body class="hub-obs">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="observation-defaults.js?v=202609291842"></script>
-<script src="hub-shared.js?v=202609291842"></script>
-<script src="hub-store.js?v=202609291842"></script>
-<script src="hub-sync.js?v=202609291842"></script>
+<script src="observation-defaults.js?v=202609291904"></script>
+<script src="hub-shared.js?v=202609291904"></script>
+<script src="hub-store.js?v=202609291904"></script>
+<script src="hub-sync.js?v=202609291904"></script>
 <script type="text/x-hub-app">
 /* A candidate's own work. A tutor or an assessor READS it -- they have to, it
    is portfolio evidence -- so the page is not refused them; the fields are
@@ -347,6 +347,8 @@ function sheet(t, sit){
       <p class="lines">Focus area — what they asked you to watch for, and what you saw.</p>${box(k, 'f'+c)}</div>`).join('');
   } else if (t.shape === 'questions') {
     body = t.rows.map((q,i) => `<div class="part"><h4>${i+1}. ${esc(q)}</h4>${box(k, 'q'+i)}</div>`).join('');
+    if ((t.after || []).length) body += `<div class="after"><h4>After the lesson</h4>
+      ${t.after.map((q,i) => `<div class="part"><p class="lines">${esc(q)}</p>${box(k, 'a'+i)}</div>`).join('')}</div>`;
   } else if (t.shape === 'parts') {
     /* A part is a run of blocks from the centre's own document: lines of
        instruction, tick lists, and grids to fill in. Until 29 Sep 2026 the
@@ -380,7 +382,7 @@ function sheet(t, sit){
   /* The filmed and live sheets open with the lesson's particulars; the peer
      ones do not -- the candidate was in the room. */
   const header = /^(notes|parts|questions)$/.test(t.shape)
-    ? `<div class="hdrow">${field(k,'hLesson','Lesson')}${field(k,'hLevel','Level')}${field(k,'hLength','Length',t.minutes)}${field(k,'hLearners','Learners present')}${field(k,'hDate','Date watched')}${field(k,'hSigned','Signature of observed teacher', null, 'if your centre asks')}</div>` : '';
+    ? `<div class="hdrow">${t.id.startsWith('live') ? field(k,'hTeacher','Teacher observed') : ''}${field(k,'hLesson','Lesson')}${field(k,'hLevel','Level')}${field(k,'hLength','Length',t.minutes)}${field(k,'hLearners','Learners present')}${field(k,'hDate','Date watched')}${field(k,'hSigned','Signature of observed teacher', null, 'if your centre asks')}</div>` : '';
 
   $('back').href = location.pathname + (KEYQ ? '?' + KEYQ : '');
   $('app').innerHTML = `
@@ -403,7 +405,7 @@ function sheet(t, sit){
   };
   document.querySelectorAll('textarea[data-f], input[data-f]').forEach(el => { el.addEventListener('input', () => touch(el)); if (el.type === 'radio') el.addEventListener('change', () => touch(el)); });
   if ($('turnIn')) $('turnIn').addEventListener('click', () => {
-    /* Handbook 12.1.2: everything that goes in a portfolio carries its date. */
+    /* Handbook 12.1.2 asks for the tutor's name and date on feedback and progress records; dating a turned-in sheet is the centre's own practice. */
     WORK[k].turnedInAt = new Date().toISOString(); save(); sheet(t, sit);
   });
 }

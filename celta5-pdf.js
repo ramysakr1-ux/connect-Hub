@@ -123,13 +123,17 @@
     (d.tutorNames || []).slice(0, 4).forEach((name, i) => drawAt(page, f.regular, name, 102, [610.0, 633.5, 656.9, 680.4][i]));
     /* The ULN: ten cells, filled only where the centre has one. Required
        "where relevant in UK learning and skills contexts", and obtaining it
-       is a centre duty (Handbook 12.1) -- so it is a field, not a blank. */
+       is listed among the centre's responsibilities on the CELTA 5 itself
+       (p1, The Centre) -- so it is a field, not a blank. */
     if (d.uln) drawCellGrid(page, f.regular, String(d.uln).replace(/\D/g, '').slice(0, 10), [217.7, 243.2, 268.7, 294.3, 319.8, 345.4, 370.9, 396.5, 422.1, 447.6], 716.6 - 6.5);
   }
 
   function drawStage1(page, f, d){
     const GIVEN = [123.1, 170.1, 138.8, 185.8], HOURS = [267.0, 170.1, 282.8, 185.8], NOT_GIVEN = [429.0, 170.1, 444.8, 185.8];
-    drawCheck(page, f.bold, d.tutorialGiven ? GIVEN : NOT_GIVEN);
+    /* three states: an unanswered Stage 1 ticks nothing (it used to tick
+       "not given" on an empty record -- second audit, 29 Sep 2026) */
+    if (d.tutorialGiven === true) drawCheck(page, f.bold, GIVEN);
+    if (d.tutorialGiven === false) drawCheck(page, f.bold, NOT_GIVEN);
     if (d.hoursTaught !== null && d.hoursTaught !== undefined && d.hoursTaught !== '') drawAt(page, f.regular, String(d.hoursTaught), 0, (HOURS[1] + HOURS[3]) / 2 + 4, 11, { align: 'center', xMid: (HOURS[0] + HOURS[2]) / 2 });
     if (d.strengths) drawWrapped(page, f.regular, [d.strengths], { x0: 52, y0: 230, x1: 538, y1: 335 });
     if (d.actionPlan) drawWrapped(page, f.regular, [d.actionPlan], { x0: 52, y0: 394, x1: 538, y1: 625 });
@@ -171,7 +175,7 @@
   const OBS_PER_PAGE = 10, OBS_DIV = [129.0, 157.8, 186.5, 215.3, 244.0, 272.8, 301.6, 330.3, 359.1, 387.8, 416.7];
   /* Six columns, as the form has: the last is "Signature of observed teacher
      (where required by centre)". Lite drew five until 29 Sep 2026. */
-  const OBS_COLS = [{ x0: 66.2, x1: 152.7 }, { x0: 152.7, x1: 239.1 }, { x0: 239.1, x1: 347.1 }, { x0: 347.1, x1: 419.1 }, { x0: 419.1, x1: 692.9, wrap: true }, { x0: 692.9, x1: 809.9, wrap: true }];
+  const OBS_COLS = [{ x0: 66.2, x1: 152.7 }, { x0: 152.7, x1: 239.1 }, { x0: 239.1, x1: 347.1 }, { x0: 347.1, x1: 419.1 }, { x0: 419.1, x1: 692.9, wrap: true }, { x0: 692.9, x1: 801.2, wrap: true }];
   function drawObservations(page, f, rows, offset){
     rows.slice(offset * OBS_PER_PAGE, offset * OBS_PER_PAGE + OBS_PER_PAGE).forEach((r, i) => drawTableRow(page, f.regular, [r.date, r.lengthMinutes != null ? String(r.lengthMinutes) : '', r.level || '', r.learnersPresent != null ? String(r.learnersPresent) : '', r.lessonFocus || '', r.observedTeacherSignature || ''], OBS_COLS, OBS_DIV, i));
   }
@@ -216,7 +220,11 @@
   }
 
   function drawStage2Notes(page, f, d){
-    const YOU = { x0: 51, x1: 385 }, TUT = { x0: 390, x1: 535 }, WA = { y0: 155, y1: 395 }, OTHER = { y0: 500, y1: 775 };
+    /* measured off the master (second audit, 29 Sep 2026): column dividers at
+       45.4 / 297.4 / 549.6, the written-work box 136.8-365.1, the other box
+       481.1-709.4. The old YOU column ran 88pt into the tutor's, and both
+       boxes ran past their bottoms. */
+    const YOU = { x0: 51, x1: 292 }, TUT = { x0: 303, x1: 544 }, WA = { y0: 150, y1: 362 }, OTHER = { y0: 494, y1: 706 };
     if (d.candidateWrittenAssignmentsNotes) drawWrapped(page, f.regular, [d.candidateWrittenAssignmentsNotes], Object.assign({}, YOU, WA));
     if (d.tutorWrittenAssignmentsNotes) drawWrapped(page, f.regular, [d.tutorWrittenAssignmentsNotes], Object.assign({}, TUT, WA));
     if (d.candidateOtherNotes) drawWrapped(page, f.regular, [d.candidateOtherNotes], Object.assign({}, YOU, OTHER));
@@ -241,8 +249,10 @@
     if (d.candidateAgrees === false) drawOvalAround(page, { x0: 110.8, y0: 684.3, x1: 176.9, y1: 696.3 });
   }
   function drawStage3Notes(page, f, d){
-    if (d.tutorWrittenAssignmentsNotes) drawWrapped(page, f.regular, [d.tutorWrittenAssignmentsNotes], { x0: 65, y0: 132, x1: 530, y1: 335 });
-    if (d.tutorOtherNotes) drawWrapped(page, f.regular, [d.tutorOtherNotes], { x0: 65, y0: 437, x1: 530, y1: 750 });
+    /* boxes measured 102.0-304.9 and 406.6-647.6 (second audit): the old
+       bottoms of 335 and 750 let long comments spill out of Cambridge's boxes */
+    if (d.tutorWrittenAssignmentsNotes) drawWrapped(page, f.regular, [d.tutorWrittenAssignmentsNotes], { x0: 65, y0: 116, x1: 530, y1: 301 });
+    if (d.tutorOtherNotes) drawWrapped(page, f.regular, [d.tutorOtherNotes], { x0: 65, y0: 421, x1: 530, y1: 644 });
   }
   function drawStage3Overall(page, f, d){
     const TUT = [{ x0: 78, y0: 89.1, x1: 318, y1: 101.5 }, { x0: 78, y0: 101.9, x1: 300, y1: 114.2 }, { x0: 78, y0: 114.5, x1: 492, y1: 126.8 }];

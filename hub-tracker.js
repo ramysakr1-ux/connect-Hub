@@ -217,9 +217,9 @@ window.HubTracker = (function(){
        all six taught it answered "2 lessons left to teach — the window is
        closing" when the window had shut (tutor walk, 22 Sep 2026). */
     var lessonsLeft = tpTotal() - graded;
-    if (letterDue) failWhy.push(lessonsLeft <= 2
-      ? (lessonsLeft <= 0 ? 'no lessons left to teach — issue it today' : lessonsLeft + ' lesson' + (lessonsLeft === 1 ? '' : 's') + ' left to teach — the window is closing')
-      : lessonsLeft + ' lessons left to teach');
+    /* 10.2: a Fail letter "should" be issued, "ideally with at least two
+       lessons left to teach". Said in Cambridge's words; never an order. */
+    if (letterDue) failWhy.push('no Fail letter issued · ' + (lessonsLeft <= 0 ? 'no lessons left to teach' : lessonsLeft + ' lesson' + (lessonsLeft === 1 ? '' : 's') + ' left to teach') + ' — 10.2: one should be issued, ideally with at least two lessons left');
     /* letterAdvised used to fire on a single assignment awaiting its
        resubmission and say "a letter can go out now". 9.2.3 GUARANTEES that
        resubmission ("candidates must have the opportunity... on one occasion
@@ -262,7 +262,7 @@ window.HubTracker = (function(){
        now said out loud. */
     var withdrawnFlag = (c.withdrawn === true || c.withdrawn === 'true');
     var withdrawnQuery = (withdrawnFlag && c.finalDeclarationSigned)
-      ? 'marked withdrawn, but the CELTA 5 final declaration is signed — 11.4.1 makes that a Fail, not a Withdrawn'
+      ? 'marked withdrawn, but the CELTA 5 final declaration is signed — 11.4.1 makes that a Fail unless the candidate withdrew from assessment in writing'
       : null;
     var state = withdrawnFlag ? 'withdrawn'
       : !recorded ? 'none'
