@@ -416,7 +416,7 @@
   .duenote::before{content:"\2022"; font-size:1.1em; line-height:0;}
   .fromtt{display:block; font-size:0.72rem; color:var(--grey,#6b7280); margin-top:3px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609300036">
+<link rel="stylesheet" href="hub-house.css?v=202609300041">
 </head>
 <body>
 <div class="board">
@@ -639,11 +639,11 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202609300036"></script>
-<script src="hub-shared.js?v=202609300036"></script>
-<script src="hub-rotation.js?v=202609300036"></script>
-<script src="hub-store.js?v=202609300036"></script>
-<script src="hub-sync.js?v=202609300036"></script>
+<script src="hub-due.js?v=202609300041"></script>
+<script src="hub-shared.js?v=202609300041"></script>
+<script src="hub-rotation.js?v=202609300041"></script>
+<script src="hub-store.js?v=202609300041"></script>
+<script src="hub-sync.js?v=202609300041"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -1446,20 +1446,33 @@ function collect(){
  */
 function timetableDateFor(tpNumber){
   if (!tpNumber) return '';
-  var tt = null, roster = null, me = null;
+  var tt = null, me = null, pts = null, roster = null;
   try { tt = JSON.parse(localStorage.getItem('connect_timetable_v1') || 'null'); } catch(e) {}
-  try { roster = JSON.parse(localStorage.getItem('connect_roster_v1') || 'null'); } catch(e) {}
   try { me = JSON.parse(localStorage.getItem('hub:me') || 'null'); } catch(e) {}
-  if (!tt || !tt.days || !me || !me.token || !window.hubRotation) return '';
-  var people = Object.values((roster && roster.trainees) || {}).filter(Boolean)
-    .filter(function(t){ return String(t.group || '') === String(me.group || ''); })
-    .map(function(t){ return { token: t.id || t.token, name: t.name }; });
-  if (!people.length) return '';
-  var sets = window.hubRotation.setsFor(people);
-  /* Which of the two teaching sets is this candidate in? That decides which
-     of the practice's two days is theirs. */
+  try { pts = JSON.parse(localStorage.getItem('connect_tp_points_v1') || 'null'); } catch(e) {}
+  try { roster = JSON.parse(localStorage.getItem('connect_roster_v1') || 'null'); } catch(e) {}
+  if (!tt || !tt.days || !me || !me.token) return '';
+
+  /* Which teaching set is this candidate in? That decides which of the
+     practice's two days is theirs.
+     A CANDIDATE HAS NO ROSTER -- the store does not send one, and should not:
+     who else is on the course is not theirs to hold. What they do have is the
+     teaching points record, which carries their own group's two sets as lists
+     of tokens. That is the source here; the roster is the fallback for a
+     tutor's browser, which has one (found testing on a candidate link,
+     30 Sep 2026, when the date would not fill at all). */
   var mine = -1;
-  sets.forEach(function(set, i){ if (set.some(function(x){ return x.token === me.token; })) mine = i; });
+  var sets = pts && pts.sets;
+  if (sets && sets.length) {
+    sets.forEach(function(set, i){ if ((set || []).indexOf(me.token) >= 0) mine = i; });
+  } else if (roster && roster.trainees && window.hubRotation) {
+    var people = Object.values(roster.trainees).filter(Boolean)
+      .filter(function(t){ return String(t.group || '') === String(me.group || ''); })
+      .map(function(t){ return { token: t.id || t.token, name: t.name }; });
+    window.hubRotation.setsFor(people).forEach(function(set, i){
+      if (set.some(function(x){ return x.token === me.token; })) mine = i;
+    });
+  }
   if (mine < 0) return '';
   var day = (tt.days || []).find(function(d){ return d.tp === tpNumber && d.setIndex === mine; });
   return day ? day.date : '';
