@@ -252,7 +252,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609290208">
+<link rel="stylesheet" href="hub-house.css?v=202609291158">
 </head>
 <body>
 <div class="board">
@@ -386,10 +386,10 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202609290208"></script>
-<script src="hub-shared.js?v=202609290208"></script>
-<script src="hub-store.js?v=202609290208"></script>
-<script src="hub-sync.js?v=202609290208"></script>
+<script src="hub-due.js?v=202609291158"></script>
+<script src="hub-shared.js?v=202609291158"></script>
+<script src="hub-store.js?v=202609291158"></script>
+<script src="hub-sync.js?v=202609291158"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -537,11 +537,20 @@ line(document.getElementById('badgeAssign'), ASG.text, ASG.tone);
 
 /* Observations: only the filmed and live sheets are turned in (six of them);
    the peer sheets are notes and are not counted here. */
+/* Sheets AND hours. Cambridge's six is six HOURS of directed observation
+   (10.1); counting sheets and saying "All six turned in" read as the
+   requirement discharged when six sheets could total two hours (audit,
+   29 Sep 2026). The sheet list comes from the course's own wording now, so a
+   centre that runs three filmed and three live is counted properly. */
 line(document.getElementById('badgeObs'), (function(){
-  const w = rec('connect_observations_v1') || {};
-  const n = ['filmed1','filmed2','filmed3','filmed4','live1','live2'].filter(k => w[k] && w[k].turnedInAt).length;
-  return n === 6 ? 'All six turned in' : n ? n + ' of 6 turned in' : 'Six to turn in';
-})(), (function(){ const w = rec('connect_observations_v1') || {}; return ['filmed1','filmed2','filmed3','filmed4','live1','live2'].every(k => w[k] && w[k].turnedInAt) ? 'done' : ''; })());
+  const h = window.hubObservationHours(rec('connect_observations_v1') || {});
+  if (!h.of) return 'Nothing to turn in yet';
+  const hrs = h.totalMinutes ? ' \u00b7 ' + (Math.round((h.totalMinutes / 60) * 10) / 10) + ' of 6 hours' : '';
+  return (h.turnedIn === h.of ? 'All ' + h.of + ' turned in' : h.turnedIn ? h.turnedIn + ' of ' + h.of + ' turned in' : h.of + ' to turn in') + hrs;
+})(), (function(){
+  const h = window.hubObservationHours(rec('connect_observations_v1') || {});
+  return (h.of && h.turnedIn === h.of && h.totalMinutes >= 360) ? 'done' : '';
+})());
 
 /* The CELTA 5: what is waiting on the candidate right now. */
 line(document.getElementById('badgeCelta5'), (function(){

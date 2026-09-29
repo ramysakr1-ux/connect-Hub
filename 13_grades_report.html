@@ -220,7 +220,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609290208">
+<link rel="stylesheet" href="hub-house.css?v=202609291158">
 </head>
 <body>
 <div class="board">
@@ -273,10 +273,10 @@
 
 </div>
 
-<script src="hub-tracker.js?v=202609290208"></script>
-<script src="hub-store.js?v=202609290208"></script>
-<script src="hub-shared.js?v=202609290208"></script>
-<script src="hub-sync.js?v=202609290208"></script>
+<script src="hub-tracker.js?v=202609291158"></script>
+<script src="hub-store.js?v=202609291158"></script>
+<script src="hub-shared.js?v=202609291158"></script>
+<script src="hub-sync.js?v=202609291158"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a candidate's link opened it and read the course and
@@ -372,6 +372,19 @@ const EVIDENCE = { key:'evidence',
   ph:'What the centre is putting forward for the higher of the two grades.',
   hint:'Optional on the Cambridge form, but expected on a borderline candidate, so the higher grade has a justification on record.' };
 const isBorderline = g => /\//.test(g || '');
+/* 11.6 has a second half Lite never asked for. Where a candidate has failed a
+   single written assignment and the centre still recommends a Pass, "there
+   MUST, however, be sufficient evidence of the candidate's ability to meet the
+   assessment criteria for the assignment in: the candidate's record of
+   teaching practice and/or in the candidate's written work as a whole", and
+   "where a Pass is recommended on this basis, the details should be documented
+   by the assessor in the course report". A must, on the evidence.
+   Lite computed the cap correctly, printed "a Pass is still open on other
+   evidence", and never asked anyone what that evidence was (audit, 29 Sep
+   2026). The same box now shows for that case as well as the borderline one. */
+const cappedPass = (p, grade) => !!(p && p.cap && p.cap.fails === 1 && /PASS/.test(grade || ''));
+const wantsEvidence = (p, grade) => isBorderline(grade) || cappedPass(p, grade);
+const byId = id => (typeof ORDER !== 'undefined' && ORDER ? ORDER : []).find(x => x.id === id) || null;
 
 /* The course-level half of the Cambridge Centre Grade Form, read off the live
    form in Appian against TR073-C17/2026 on 25 Sep 2026. It opens with these
@@ -392,7 +405,17 @@ const COURSE_FIELDS = [
    hint:'Required on the Cambridge form.'},
   {key:'extra',    heading:'Additional Comments',
    ph:'Anything else the assessor should know about how the course ran.',
-   hint:'Required on the Cambridge form.'}
+   hint:'Required on the Cambridge form.'},
+  /* 14.3: "the assessor MUST hold a grading meeting with all tutors to discuss
+     provisional grades and the work needed to achieve a final recommended
+     grade by the end of the course... If it is not possible for all tutors to
+     attend, it must be clear that the decisions made are agreed by all the
+     course tutors." A must, twice, and the phrase "grading meeting" did not
+     appear anywhere in Lite (audit, 29 Sep 2026). Not a Cambridge form field
+     -- it is the centre's own record that the meeting happened. */
+  {key:'meeting',  heading:'Grading meeting',
+   ph:'When the grading meeting was held, who was there, and — if a tutor could not attend — how their agreement to the decisions was confirmed.',
+   hint:'Handbook 14.3: the assessor must hold a grading meeting with all tutors. Where not all could attend, it must be clear the decisions are agreed by all of them. This is the centre\u2019s own record, not a field on the Cambridge form.'}
 ];
 const CS_KEY = 'connect_course_settings';
 function loadCourseSettings(){ try{ return JSON.parse(localStorage.getItem(CS_KEY)) || {}; }catch(e){ return {}; } }
@@ -473,7 +496,7 @@ function capFor(tr){
     const r = T.readCandidate(T.recordFor(tr));
     if (!r.fails.length) return null;
     const capped = r.fails.length > 1 ? GRADES.concat(FINAL).filter(g=>g!=='FAIL') : ['PASS A','PASS B / PASS A'];
-    return { line: r.ceiling.replace('SRT','LSRT'), capped };
+    return { line: r.ceiling.replace('SRT','LSRT'), capped, fails: r.fails.length };
   }catch(e){ return null; }
 }
 
@@ -571,7 +594,7 @@ function paintCands(){
         ${p.cap ? `<div class="cap">${esc(p.cap.line)}</div>` : ''}
       </div>
       <div class="grow"><label>Provisional grade</label>${gradeSelect('provisional', PROV, d.provisional, p)}</div>
-      <div class="prosewrap evwrap" data-ev="${esc(p.id)}"${isBorderline(d.provisional) ? '' : ' hidden'}>${proseSection(p, EVIDENCE)}</div>
+      <div class="prosewrap evwrap" data-ev="${esc(p.id)}"${wantsEvidence(p, d.provisional) ? '' : ' hidden'}>${proseSection(p, EVIDENCE)}</div>
       <div class="cols">${SECTIONS.map(s => listSection(p, s)).join('')}</div>
       <div class="grow final"><label>Final grade</label>${gradeSelect('final', FINAL, d.final, p)}</div>
       <!-- One box, two sides, as Appian has it: the update on the left, the
@@ -760,7 +783,7 @@ function onGrade(e){
   DATA[e.target.dataset.id][e.target.dataset.grade] = e.target.value; touch();
   if (e.target.dataset.grade === 'provisional') {
     const box = document.querySelector(`.evwrap[data-ev="${CSS.escape(e.target.dataset.id)}"]`);
-    if (box) box.hidden = !isBorderline(e.target.value);
+    if (box) box.hidden = !wantsEvidence(byId(e.target.dataset.id), e.target.value);
   }
   if (e.target.dataset.grade === 'final') {
     const btn = document.querySelector(`.frbtn[data-fr="${CSS.escape(e.target.dataset.id)}"]`);
@@ -801,7 +824,7 @@ function printableRecord(p, i){
     <h2>${letterFor(i)} · ${esc(d.name || '')}</h2>
     <div class="pgrades">Provisional grade: <b>${esc(d.provisional || 'not set')}</b> · Final grade: <b>${esc(d.final || 'not set')}</b>${p.cap ? ' · ' + esc(p.cap.line) : ''}</div>
     ${SECTIONS.map(s => `<h3>${s.heading}</h3>${list(s.key)}`).join('')}
-    ${isBorderline(d.provisional) ? prose(EVIDENCE) : ''}
+    ${wantsEvidence(p, d.provisional) ? prose(EVIDENCE) : ''}
     ${(d.final || FIELDS.some(f => (d[f.key] || '').trim())) ? FIELDS.map(prose).join('') : ''}
   </div>`;
 }

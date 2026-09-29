@@ -78,6 +78,23 @@
   h2.sect small{font-family:'Karla',sans-serif; font-size:0.8rem; font-weight:500; color:var(--grey); margin-left:10px;}
   /* Gold edges the card, as on every other screen (Ramy, 24 Sep 2026). */
   .panel{background:var(--card); border-left:5px solid var(--gold, oklch(63% 0.096 72)); border-radius:10px; padding:6px; box-shadow:0 1px 2px rgba(0,0,0,0.03);}
+  /* The course against the Handbook. Colour carries the VERB, not the mood:
+     a "must" that is short is brick, a "should" that is short is gold, and
+     anything met is quiet. Nothing here blocks: it is what an assessor asks. */
+  .chkgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:8px; padding:6px;}
+  .chk{border:1px solid var(--line, oklch(85.5% 0.02 80)); border-radius:8px; padding:9px 11px; background:var(--paper, #fff);}
+  .chk-h{display:flex; align-items:center; gap:7px; font-size:0.84rem; margin-bottom:4px;}
+  .chk-d{font-size:0.78rem; color:var(--mut, oklch(45% 0.01 70)); line-height:1.45;}
+  .chk-c{font-size:0.7rem; color:var(--mut, oklch(45% 0.01 70)); opacity:.75; margin-top:5px;}
+  .verb{font-size:0.62rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; padding:2px 6px; border-radius:999px;
+        border:1px solid var(--line, oklch(85.5% 0.02 80)); color:var(--mut, oklch(45% 0.01 70));}
+  .chk.short.a-must, .chk.short .verb.must{}
+  .chk.short{border-color:var(--gold, oklch(63% 0.096 72));}
+  .chk.short:has(.verb.must){border-color:var(--brick); background:oklch(97% 0.02 30);}
+  .chk.short:has(.verb.must) .verb.must{background:var(--brick); border-color:var(--brick); color:#fff;}
+  .chk.short:has(.verb.should) .verb.should{background:var(--gold, oklch(63% 0.096 72)); border-color:var(--gold, oklch(63% 0.096 72)); color:#fff;}
+  .chk.unknown{border-style:dashed;}
+  @media print{ .chkgrid{grid-template-columns:repeat(2,1fr);} }
   /* Orientation stated, not left to the print dialog -- see hub-record.css. */
   @page{ size:A4 portrait; margin:12mm; }
   @media print{ .panel{border-left:none;} } /* the printed pack keeps its plain page */
@@ -177,7 +194,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609290208">
+<link rel="stylesheet" href="hub-house.css?v=202609291158">
 </head>
 <body>
 <div class="board">
@@ -208,12 +225,12 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202609290208"></script>
-<script src="hub-shared.js?v=202609290208"></script>
-<script src="assignment-defaults.js?v=202609290208"></script>
-<script src="hub-tracker.js?v=202609290208"></script>
-<script src="hub-store.js?v=202609290208"></script>
-<script src="hub-sync.js?v=202609290208"></script>
+<script src="observation-defaults.js?v=202609291158"></script>
+<script src="hub-shared.js?v=202609291158"></script>
+<script src="assignment-defaults.js?v=202609291158"></script>
+<script src="hub-tracker.js?v=202609291158"></script>
+<script src="hub-store.js?v=202609291158"></script>
+<script src="hub-sync.js?v=202609291158"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -272,6 +289,80 @@ const refLine = () => {
    Without it the pack said "6 of 8" and drew eight blocks for a course that
    only ever had six, showing two that were never going to be taught. */
 const TP_TOTAL = (function(){ const n = parseInt(SETTINGS.tpCount, 10); return (n >= 1 && n <= HUB_MAX_TP) ? n : 8; })();
+
+/* THE COURSE'S OWN NUMBERS, against the sections that set them. Lite recorded
+   every one of these and checked none, and reported "N of TP_TOTAL" against
+   the centre's own figure -- so a four-lesson course read "4 of 4" and looked
+   complete to an assessor (audit, 29 Sep 2026).
+
+   Each line carries Cambridge's own VERB, because "should" is a recommendation
+   and "must" is not (Ramy, 29 Sep 2026). Nothing here blocks anything: it is
+   what an assessor would ask in the room, answered in advance. */
+function courseChecks(){
+  const out = [];
+  const say = (verb, label, state, detail, cite) => out.push({ verb, label, state, detail, cite });
+  const hours = parseInt(SETTINGS.totalHours, 10) || 0;
+  say('must', 'Course hours', !hours ? 'unknown' : hours >= 120 ? 'met' : 'short',
+      hours ? hours + ' contact hours' : 'not set', '3.1 — at least 120 contact hours');
+  say('should', 'Teaching practices each', TP_TOTAL >= 8 ? 'met' : 'short',
+      TP_TOTAL + ' per candidate', '9.1.2 — a minimum of eight occasions');
+
+  /* Six hours, two levels one below intermediate, 40 minutes twice, never over
+     an hour -- all read off the feedback sheets the tutors already filled in. */
+  const BELOW = /^(a0|a1|a2|beginner|elementary|pre-int|pre int|pre-intermediate)/i;
+  const perCand = PEOPLE.map(tr => {
+    const hist = T.tpHistory(tr) || {};
+    let mins = 0, over60 = 0, atLeast40 = 0; const levels = new Set(); let below = false;
+    Object.keys(hist).forEach(n => {
+      const f = ((hist[n].state || {}).f) || {};
+      const m = parseInt(String(f.fTime || '').replace(/[^0-9]/g, ''), 10);
+      if (m > 0) { mins += m; if (m > 60) over60++; if (m >= 40) atLeast40++; }
+      const lv = String(f.fLevel || '').trim();
+      if (lv) { levels.add(lv.toLowerCase()); if (BELOW.test(lv)) below = true; }
+    });
+    return { name: tr.name, mins, over60, atLeast40, levels: levels.size, below, taught: Object.keys(hist).length };
+  }).filter(c => c.taught);
+  const shortOf = (pred) => perCand.filter(pred).map(c => c.name);
+  if (perCand.length) {
+    const noSix = shortOf(c => c.mins && c.mins < 360);
+    say('must', 'Six hours of assessed teaching practice', noSix.length ? 'short' : 'met',
+        noSix.length ? noSix.length + ' under six hours: ' + noSix.slice(0, 3).join(', ') + (noSix.length > 3 ? '…' : '') : 'every candidate at six hours or more',
+        '9.1.1 — six hours of assessed teaching practice for each candidate');
+    const oneLevel = shortOf(c => c.levels < 2);
+    say('should', 'Two significantly different levels', oneLevel.length ? 'short' : 'met',
+        oneLevel.length ? oneLevel.length + ' taught at one level only' : 'every candidate at two levels or more',
+        '9.1.2 — at least two hours at two significantly different levels, one below intermediate');
+    const noBelow = shortOf(c => !c.below);
+    if (noBelow.length) say('should', 'A level below intermediate', 'short',
+        noBelow.length + ' with nothing recorded below intermediate', '9.1.2 — one of which should be below intermediate');
+    const short40 = shortOf(c => c.atLeast40 < 2);
+    if (short40.length) say('should', 'Forty minutes, at least twice', 'short',
+        short40.length + ' with fewer than two lessons of 40 minutes or more', '9.1.2 — a minimum of 40 minutes at least twice');
+    const long = shortOf(c => c.over60 > 0);
+    if (long.length) say('should', 'Never longer than an hour', 'short',
+        long.length + ' with a lesson over 60 minutes', '9.1.2 — never longer than for one hour');
+  }
+  /* 7.1 sets the cohort and the group size; both are "must". */
+  const n = PEOPLE.length;
+  if (n) say('must', 'Candidates on the course', n >= 4 && n <= 24 ? 'met' : 'short',
+      n + ' on the roster', '7.1 — minimum four, maximum 24');
+  const groups = {};
+  PEOPLE.forEach(tr => { const g = tr.group || ''; if (g) groups[g] = (groups[g] || 0) + 1; });
+  const bad = Object.keys(groups).filter(g => groups[g] < 4 || groups[g] > 6);
+  if (Object.keys(groups).length) say('must', 'Teaching practice groups', bad.length ? 'short' : 'met',
+      bad.length ? bad.map(g => g + ' has ' + groups[g]).join(', ') : Object.keys(groups).length + ' groups, each 4 to 6',
+      '7.1 — groups must consist of 4–6 candidates');
+  return out;
+}
+function checksHTML(){
+  const rows = courseChecks();
+  if (!rows.length) return '';
+  const cell = r => `<div class="chk ${r.state}"><div class="chk-h"><span class="verb ${r.verb}">${r.verb}</span><b>${esc(r.label)}</b></div>
+    <div class="chk-d">${esc(r.detail)}</div><div class="chk-c">Handbook ${esc(r.cite)}</div></div>`;
+  return `<h2 class="sect">The course against the Handbook <small>recorded here, checked against Cambridge</small></h2>
+    <div class="panel"><p class="note" style="margin:0 0 12px">Cambridge's own verb on each line. <b>Must</b> is a requirement; <b>should</b> is a recommendation, and the call stays the centre's.</p>
+    <div class="chkgrid">${rows.map(cell).join('')}</div></div>`;
+}
 let WORDING = rec('connect_assignment_wording_v2'); if (!WORDING && window.CONNECT_HUB_DEFAULT_WORDING) WORDING = window.CONNECT_HUB_DEFAULT_WORDING;
 const ORDER = hubAssignmentOrder(WORDING);
 const roster = rec('connect_roster_v1') || { trainees: {} };
@@ -418,6 +509,7 @@ function renderList(){
   const n = PEOPLE.length, sample = Math.min(n, n<=9 ? 3 : n<=16 ? 4 : 5);
   $('toolbar').innerHTML = `<a class="btn primary" href="7_candidate_tracker.html">Candidate tracker</a>${appianBtn('ghost')}<button class="btn-print" type="button" onclick="window.print()">Print / Save as PDF</button>`;
   $('app').innerHTML = `
+    ${checksHTML()}
     <h2 class="sect">Candidates <small>${n} on the course</small></h2>
     <!-- A shortcut, not a second table. The assessor can already open the
          candidate tracker -- it is theirs as much as the tutors' -- and this

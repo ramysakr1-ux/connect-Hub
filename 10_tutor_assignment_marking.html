@@ -97,8 +97,8 @@
   .btn-sand{background:var(--sand-deep); color:var(--ink);}
   .note{font-size:0.8rem; color:var(--grey); margin:0 0 14px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609290208">
-<link rel="stylesheet" href="hub-theme.css?v=202609290208">
+<link rel="stylesheet" href="hub-house.css?v=202609291158">
+<link rel="stylesheet" href="hub-theme.css?v=202609291158">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -106,12 +106,12 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202609290208"></script>
-<script src="hub-exchange.js?v=202609290208"></script>
-<script src="hub-due.js?v=202609290208"></script>
-<script src="hub-shared.js?v=202609290208"></script>
-<script src="hub-store.js?v=202609290208"></script>
-<script src="hub-sync.js?v=202609290208"></script>
+<script src="assignment-defaults.js?v=202609291158"></script>
+<script src="hub-exchange.js?v=202609291158"></script>
+<script src="hub-due.js?v=202609291158"></script>
+<script src="hub-shared.js?v=202609291158"></script>
+<script src="hub-store.js?v=202609291158"></script>
+<script src="hub-sync.js?v=202609291158"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -328,13 +328,40 @@ function render(){
   </div>`;
 
   if (sub.stage !== 'draft') {
+    /* Handbook 9.2.1: materials prepared for the language related task and the
+       language skills task "SHOULD not be used as the basis for assessed TP
+       lessons, or vice versa... This avoids the same content being assessed
+       for two different components of assessment". A recommendation, so this
+       is a flag in Cambridge's words and never a block.
+
+       It used to compare against `tp.plan` ALONE -- the one live plan -- so it
+       could see roughly one lesson out of eight, and a tutor who had watched
+       it fire once would read its silence as clearance. Every returned lesson
+       keeps its own plan at state.doc.plan, so the whole course is in reach
+       (audit, 29 Sep 2026). Both submission rounds are checked, not just the
+       first. */
     let overlapFlag = '';
     try {
-      const plan = TRAINEE_ID ? ((loadRoster().trainees[TRAINEE_ID]||{}).tp||{}).plan : JSON.parse(localStorage.getItem('chub:plan'));
-      const matsLink = plan && plan.state && plan.state.plan && plan.state.plan.matsLink && plan.state.plan.matsLink.trim();
-      const subLink = sub.sub1 && sub.sub1.materialsLink && sub.sub1.materialsLink.trim();
-      if (matsLink && subLink && matsLink === subLink) {
-        overlapFlag = `<div class="card" style="border-left-color:var(--brick);"><h2 style="color:var(--brick);">Materials overlap flagged</h2><p class="note" style="margin:0;">This assignment's materials link matches the trainee's TP lesson plan materials link. Handbook 9.2.1: materials for LRT/LSRT should not be the basis for an assessed TP lesson, or vice versa. Worth a look before marking \u2014 this is a flag, not an accusation.</p></div>`;
+      const tr = TRAINEE_ID ? (loadRoster().trainees[TRAINEE_ID] || {}) : null;
+      const norm = v => String(v || '').trim().replace(/[?#].*$/, '').replace(/\/+$/, '').toLowerCase();
+      const lessons = [];
+      const live = tr ? (tr.tp || {}).plan : JSON.parse(localStorage.getItem('chub:plan') || 'null');
+      const liveLink = live && live.state && live.state.plan && live.state.plan.matsLink;
+      if (liveLink) lessons.push({ tp: (live.state.meta || {}).tp || 'the current plan', link: liveLink });
+      const hist = tr ? ((tr.tp || {}).history || {}) : (JSON.parse(localStorage.getItem('chub:tpHistory') || '{}') || {});
+      Object.keys(hist).forEach(n => {
+        const d = ((hist[n] || {}).state || {}).doc || {};
+        const l = (d.plan || {}).matsLink;
+        if (l) lessons.push({ tp: 'TP' + n, link: l });
+      });
+      const rounds = [['first submission', sub.sub1], ['resubmission', sub.sub2]];
+      const hits = [];
+      rounds.forEach(([label, r]) => {
+        const sl = norm(r && r.materialsLink);
+        if (!sl) return;
+        lessons.forEach(L => { if (norm(L.link) === sl) hits.push(label + ' \u2014 same materials as ' + L.tp); });
+      });
+      if (hits.length) {        overlapFlag = `<div class="card" style="border-left-color:var(--brick);"><h2 style="color:var(--brick);">Materials overlap flagged</h2><p class="note" style="margin:0;">${hits.map(esc).join('<br>')}<br><br>Handbook 9.2.1: materials prepared for the language related task and the language skills task <b>should</b> not be used as the basis for assessed TP lessons, or vice versa \u2014 it avoids the same content being assessed twice, and the candidate being doubly credited or doubly penalised. A recommendation; the call is yours.</p></div>`;
       }
     } catch(e) {}
     html += overlapFlag;

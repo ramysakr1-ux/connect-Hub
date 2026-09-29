@@ -176,6 +176,10 @@
      again: settings, roster, tutors, wording. */
   .dmstrip{ border-bottom:1px solid var(--line); padding:16px 18px 18px; }
   .dmrule{ margin:0 0 12px; font-size:12px; line-height:1.55; color:var(--mut); max-width:840px; }
+  .dmcount{ margin:12px 0 0; }
+  .dmcount .ok{ color:var(--mut); }
+  .dmcount .warn{ color:var(--gold-deep, oklch(52% 0.098 70)); font-weight:600; }
+  .dmcount b{ color:var(--ink); }
   /* Columns are set from the number of tiles (see renderDM) rather than by
      auto-fit, which fitted three and orphaned the fourth on its own row
      (Ramy, 24 Sep 2026: "a bit of harmony and more symmetrical pills"). */
@@ -208,7 +212,7 @@
 
   @media (max-width:900px){ .page{ padding:20px 16px 60px; } }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609290208">
+<link rel="stylesheet" href="hub-house.css?v=202609291158">
 </head>
 <body>
 <div class="page">
@@ -237,12 +241,12 @@
   </div>
   <div id="detail"></div>
 </div>
-<script src="hub-due.js?v=202609290208"></script>
-<script src="hub-shared.js?v=202609290208"></script>
-<script src="assignment-defaults.js?v=202609290208"></script>
-<script src="hub-tracker.js?v=202609290208"></script>
-<script src="hub-store.js?v=202609290208"></script>
-<script src="hub-sync.js?v=202609290208"></script>
+<script src="hub-due.js?v=202609291158"></script>
+<script src="hub-shared.js?v=202609291158"></script>
+<script src="assignment-defaults.js?v=202609291158"></script>
+<script src="hub-tracker.js?v=202609291158"></script>
+<script src="hub-store.js?v=202609291158"></script>
+<script src="hub-sync.js?v=202609291158"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
@@ -394,7 +398,7 @@ function paintDmStrip(all, isA){
   const cohort = all.length, required = requiredSample(cohort);
   box.className = 'dmstrip';
   box.innerHTML =
-    `<p class="dmrule">Handbook 9.2.3: at least two tutors must mark across the course, and a set proportion of each assignment must be double-marked \u2014 three of each up to nine candidates, four up to sixteen, five up to twenty-four. With ${cohort} candidate${cohort===1?'':'s'} on this course the sample is ${required} of each.</p>` +
+    `<p class="dmrule">Handbook 9.2.3: a minimum of two tutors <b>should</b> be involved in the marking, and a proportion of each assignment <b>must</b> be double-marked \u2014 three of each up to nine candidates, four up to sixteen, five up to twenty-four. With ${cohort} candidate${cohort===1?'':'s'} on this course the sample is ${required} of each.</p>` +
     `<div class="dmq" style="--cols:${ASSN.length<=4?ASSN.length:Math.ceil(ASSN.length/2)}">` + ASSN.map(a=>{
       const n = all.filter(p=>p.asg[a.key].dm).length;
       // n>0 first: a card must never read "2 of 3 -- not marked yet". A
@@ -409,11 +413,43 @@ function paintDmStrip(all, isA){
       // needs you, and that one needed nobody (tutor walk, 22 Sep 2026).
       const MARKED = ['PASS', 'RES', 'FAIL', 'FAILRES'];
       const begun = n > 0 || all.some(p=>MARKED.includes(p.asg[a.key].code));
+      /* 9.2.3: "The sample checked SHOULD include any fail assignments." The
+         count alone used to print "sample met" over three double-marked
+         passes and no double-marked fail -- Lite affirming a compliance
+         Cambridge had not granted (audit, 29 Sep 2026). A "should", so this
+         is a note in Cambridge's words, never a red. */
+      const FAILED = ['FAIL', 'FAILRES'];
+      const failing = all.filter(p=>FAILED.includes(p.asg[a.key].code));
+      const failsUnchecked = failing.filter(p=>!p.asg[a.key].dm).length;
       const met = n >= required;
-      const cls = met ? '' : begun ? 'short' : 'idle';
-      const note = met ? 'sample met' : begun ? 'short of the sample' : 'not marked yet';
+      const cls = met ? (failsUnchecked ? 'short' : '') : begun ? 'short' : 'idle';
+      const note = !met ? (begun ? 'short of the sample' : 'not marked yet')
+        : failsUnchecked ? `${failsUnchecked} fail${failsUnchecked===1?'':'s'} not double-marked \u2014 9.2.3 asks for fails in the sample`
+        : 'sample met';
       return `<div class="qcard ${cls}"><div class="code">${esc(a.label)}</div><div class="n">${n} of ${required}</div><div class="note2">${note}</div></div>`;
-    }).join('') + `</div>`;
+    }).join('') + `</div>` + markersLine(all);
+}
+/* Two separate Cambridge sentences, two different verbs, so they are said
+   separately and coloured differently. 9.2.3: "A minimum of two tutors SHOULD
+   be involved in the marking of written assignments" -- a recommendation.
+   9.1.3: candidates "MUST be observed/assessed by a minimum of two tutors
+   during the course" -- a requirement, and about teaching practice, not
+   marking. Lite asserted the first as "must" and never counted either
+   (audit, 29 Sep 2026). */
+function markersLine(all){
+  const names = new Set();
+  all.forEach(p => ASSN.forEach(a => { const mk = (p.asg[a.key] || {}).markers || {};
+    [mk.first, mk.second].forEach(n => { const v = String(n || '').trim(); if (v) names.add(v.toLowerCase()); }); }));
+  const short = [];
+  all.forEach(p => { const t = new Set();
+    Object.values(T.tpHistory(p.tr) || {}).forEach(fb => { const v = String(((fb.state || {}).f || {}).fTutor || '').trim(); if (v) t.add(v.toLowerCase()); });
+    if (t.size === 1) short.push(p.tr.name); });
+  const bits = [];
+  bits.push(names.size >= 2
+    ? `<span class="ok">${names.size} tutors have marked</span>`
+    : `<span class="warn">${names.size === 1 ? 'one tutor has' : 'no tutor has'} marked so far \u2014 9.2.3 asks for a minimum of two (a <b>should</b>)</span>`);
+  if (short.length) bits.push(`<span class="warn">observed by one tutor only: ${short.map(esc).join(', ')} \u2014 9.1.3 says candidates <b>must</b> be observed by a minimum of two</span>`);
+  return `<p class="dmrule dmcount">${bits.join(' \u00b7 ')}</p>`;
 }
 
 const toMark = p => ASSN.filter(a=>['WAIT','WAIT2'].includes(p.asg[a.key].code)).length + TPS.filter(t=>p.tps[t.key].g==='un').length;
@@ -549,7 +585,7 @@ function renderDetail(all){
   // Grades are set on the Grades report (13); read here, never edited.
   const gr = man0.grades || {};
   if (gr.provisional || gr.final || !ME){
-    facts.push(['Provisional grade', gr.provisional || 'not set', gr.provisional==='FAIL' ? 'red' : '']);
+    facts.push(['Provisional grade', gr.provisional || 'not set', /FAIL/.test(gr.provisional || '') ? 'red' : '']);
     facts.push(['Final grade', gr.final || 'not set', gr.final==='FAIL' ? 'red' : '']);
   }
   // The tutor's prompts stay the tutor's. A candidate sees their standing, a
@@ -557,12 +593,16 @@ function renderDetail(all){
   // never 'potential Fail' or 'a letter can go out' ahead of the letter itself.
   if (ME && r.letterIssued) facts.push(['Letter', 'Fail letter issued ' + String(man0.failLetter || ''), 'red']);
   if (!RO && r.potentialFail) facts.push(['Potential Fail', r.failWhy.join('; ') + (r.letterIssued?' · Fail letter issued':''), 'red']);
-  if (!RO && r.letterAdvised) facts.push(['Letter', 'A letter can go out now — ' + [...r.fails,...r.pending].map(x=>T.SHOW_AS[x]||x).join(', '), 'amb']);
   if (r.ceiling) facts.push(['Grade cap', r.ceiling.replace('SRT','LSRT'), 'amb']);
-  if (!RO && r.stage3Why) facts.push(['Stage 3', 'required — ' + r.stage3Why, 'purp']);
-  if (!RO && r.stage2Hint) facts.push(['Stage 2', r.stage2Hint, 'amb']);
-  else if (!RO && r.stage2Due) facts.push(['Stage 2', 'due — ' + r.graded + ' TPs taught, no Stage 2 recorded', 'amb']);
-  if (!RO && r.stage1Due) facts.push(['Stage 1', 'record outstanding', 'amb']);
+  /* Cambridge's own verb decides the colour. 10.2 says Stage 3 "must be
+     completed" for a candidate who meets its triggers, so that is red; the
+     Fail letter "should" be issued, so it is amber and worded as Cambridge
+     words it. The watch signal is the centre's own and says so. */
+  if (!RO && r.stage3Why) facts.push(['Stage 3', 'must be completed — ' + r.stage3Why + ' (10.2)', 'red']);
+  if (!RO && r.stage2Due) facts.push(['Stage 2', 'the course is at its halfway point and no Stage 2 is recorded — 10.2 asks for the tutorial there', 'amb']);
+  if (!RO && r.stage1Due) facts.push(['Stage 1', 'the first third of the course has passed and no Stage 1 is recorded (10.2)', 'amb']);
+  if (!RO && r.watch) facts.push(['Watch', r.watch, 'amb']);
+  if (!RO && r.withdrawnQuery) facts.push(['Withdrawn', r.withdrawnQuery, 'red']);
   // The tutorials, the letter and withdrawal: one row each, set by choosing
   // a value, not by cycling a button (Ramy, 20 Sep 2026: "the stages look
   // really messy"). The candidate's view prints the values as text.
@@ -577,8 +617,9 @@ function renderDetail(all){
     ['Stage 2', seg('stage2', verdicts, man.stage2||'')],
     ['Stage 3', seg('stage3', verdicts, man.stage3||'')],
     ['Fail letter', RO ? `<span class="v ${man.failLetter?'set-NOTSTD':''}">${man.failLetter ? 'Issued ' + esc(String(man.failLetter)) : 'Not issued'}</span>`
-      : (man.failLetter ? `<span class="seg"><button class="sg on set-NOTSTD" data-id="${esc(p.tr.id)}" data-field="failLetter" data-value="">Issued ${esc(String(man.failLetter))} · undo</button></span>`
-                        : `<span class="seg"><button class="sg" data-id="${esc(p.tr.id)}" data-field="failLetter" data-value="today">Mark as issued today</button></span>`)],
+      : `<span class="seg">${man.failLetter
+          ? `<button class="sg on set-NOTSTD" data-id="${esc(p.tr.id)}" data-field="failLetter" data-value="">Issued ${esc(String(man.failLetter))} · undo</button>`
+          : `<button class="sg" data-id="${esc(p.tr.id)}" data-field="failLetter" data-value="today">Mark as issued today</button>`}<a class="sg" href="22_fail_letter.html?trainee=${encodeURIComponent(p.tr.id)}">Write the letter</a></span>`],
   ];
   if (!ME) recRows.push(['Withdrawn', seg('withdrawn', [['','No'],['true','Yes']], man.withdrawn ? 'true' : '')]);
   const rec = recRows.map(r=>`<div class="fact"><div class="k">${r[0]}</div><div class="v">${r[1]}</div></div>`).join('');

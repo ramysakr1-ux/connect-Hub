@@ -1,10 +1,53 @@
-/* How many teaching practices a course may give each candidate. Eight, which
-   is what the Administration Handbook (June 2025, p25) asks for as a minimum
-   inside the six assessed hours, and what this centre runs. The Handbook sets
-   no maximum, so this is a centre decision rather than a Cambridge one -- it
-   used to be written into twenty separate bounds and is now written once
-   (Ramy, 22 Sep 2026: "the cap is eight TPs"). */
-window.HUB_MAX_TP = 8;
+/* The highest teaching-practice NUMBER any screen will accept. Handbook 9.1.2
+   says candidates "should teach on a minimum of eight occasions" -- a minimum,
+   and a "should", and no maximum anywhere. The cap sat at 8, which made the
+   Handbook's OWN worked example unenterable: 10.2 reasons about "a course
+   [that] consists of nine 40-minute TP lessons" (audit, 29 Sep 2026). Twelve
+   covers that and the shortest sensible lessons inside six hours; the
+   planning grid already allowed twelve. This is a bound on numbering, not a
+   requirement -- the eight is a note beside the field on Course admin, in
+   Cambridge's own words. */
+window.HUB_MAX_TP = 12;
+
+/* WHICH observation sheets a candidate turns in, and what Cambridge asks of
+   the set. Four screens each held the literal list
+   ['filmed1'..'filmed4','live1','live2'], so a centre that imported a
+   different split -- three filmed and three live, which is what 10.1 actually
+   allows -- broke them: live3 never counted and filmed4 was demanded forever,
+   so the home page asked for a sheet that did not exist (audit, 29 Sep 2026).
+   The set now comes from the course's own wording, falling back to the
+   shipped sheets.
+
+   10.1, in its own verbs: candidates are given six hours' directed
+   observation; "All six hours CAN be live observation, but a centre MAY
+   choose to provide up to three hours of filmed lessons", and "three hours of
+   live online or face-to-face observation MUST be provided by the centre".
+   So: at most three filmed hours, at least three live hours, six in total --
+   and the count that matters is HOURS, not sheets. Lite counted sheets and
+   reported "All six turned in", which reads as the six-hour requirement
+   discharged when six sheets could total two hours. */
+window.hubObservationSet = function(){
+  var w = null;
+  try { w = JSON.parse(localStorage.getItem('connect_observation_wording_v1')); } catch (e) {}
+  var src = (w && (w.filmed || w.live)) ? w : (window.CONNECT_HUB_OBSERVATION_DEFAULTS || {});
+  var ids = function(g){ return ((src && src[g]) || []).map(function(t){ return t && t.id; }).filter(Boolean); };
+  var filmed = ids('filmed'), live = ids('live');
+  return { filmed: filmed, live: live, all: filmed.concat(live) };
+};
+/* Minutes turned in, per group, from the sheets' own Length header. */
+window.hubObservationHours = function(records){
+  var set = window.hubObservationSet(), w = records || {};
+  var mins = function(list){ var t = 0, n = 0;
+    list.forEach(function(k){ var r = w[k]; if (!r || !r.turnedInAt) return; n++;
+      var m = parseInt(String(((r.a || {}).hLength) || '').replace(/[^0-9]/g, ''), 10); if (m > 0) t += m; });
+    return { minutes: t, turnedIn: n }; };
+  var f = mins(set.filmed), l = mins(set.live);
+  var total = f.minutes + l.minutes;
+  var notes = [];
+  if (f.minutes > 180) notes.push('more than three hours of filmed observation \u2014 10.1 lets a centre provide up to three');
+  if (l.minutes && l.minutes < 180) notes.push('under three hours of live observation \u2014 10.1 says three hours must be provided');
+  return { filmed: f, live: l, totalMinutes: total, turnedIn: f.turnedIn + l.turnedIn, of: set.all.length, notes: notes };
+};
 
 // Shared by every screen: the styled confirm (screen 1 had its own since the
 // 22 Aug 2026 three-fixes spec; screens 2, 3, 4, 8 and the home page still

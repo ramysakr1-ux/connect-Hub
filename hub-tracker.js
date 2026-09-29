@@ -93,7 +93,10 @@ window.HubTracker = (function(){
      triggers ("not making the expected progress in the second half"). Was a
      hardcoded 5, which is the second half of eight. */
   function secondHalfFrom(total){ return Math.floor((total || tpTotal()) / 2) + 1; }
-  var STAGE2_DUE_AFTER = 4;
+  /* STAGE2_DUE_AFTER was a hardcoded 4 while stageBands and secondHalfFrom
+     already respected the course's own length, so a six-TP course was prompted
+     a lesson late. Stage 2 is now due from secondHalfFrom() - 1, i.e. as the
+     course reaches its halfway point, which is what 10.2 asks for. */
 
   /** The TP number a returned feedback record is about, from its own header. */
   function tpNumberOf(fb){
@@ -128,6 +131,18 @@ window.HubTracker = (function(){
     var c = {};
     var manual = (tr && tr.tracker) || {};
     ['stage1','stage2','stage3','failLetter','withdrawn'].forEach(function(k){ c[k] = manual[k] || ''; });
+    /* Handbook 15.1 DEFINES a potential Fail: "the portfolios of all candidates
+       identified as potential Fails, i.e., Pass/Fail at the provisional
+       grading meeting". The grade was sitting in tracker.grades.provisional
+       and recordFor never read it, so a candidate the centre had just put on
+       the Appian form as FAIL / PASS was a potential Fail nowhere in Lite
+       (audit, 29 Sep 2026). */
+    var grades = manual.grades || {};
+    c.provisional = grades.provisional || '';
+    c.finalGrade = grades.final || '';
+    /* 11.4.1 turns on two facts Lite already holds: whether the candidate
+       signed the CELTA 5's final declaration, and whether there is a portfolio. */
+    c.finalDeclarationSigned = !!(tr && tr.celta5 && tr.celta5.final && tr.celta5.final.signed && tr.celta5.final.signed.at);
     var hist = tpHistory(tr);
     for (var n = 1; n <= MAXTP(); n++) {
       var fb = hist[n];
@@ -176,11 +191,25 @@ window.HubTracker = (function(){
     if (c.stage3) { standard = c.stage3; from = 'Stage 3'; }
     else if (c.stage2) { standard = c.stage2; from = 'Stage 2'; }
     else if (latest) { standard = latest.key; from = 'TP' + latestN; }
+    /* WHAT MAKES A POTENTIAL FAIL. Cambridge gives one definition (15.1:
+       "Pass/Fail at the provisional grading meeting") and Lite never used it.
+       These are the triggers, each carrying the document it comes from; the
+       back-to-back rule that used to sit here appears in NO Cambridge
+       document, and 14.3 points the other way ("candidates cannot be judged
+       on the basis of their performance on any one particular occasion"), so
+       it is now a watch signal below and not a Fail trigger. */
+    var provisionalPassFail = /FAIL/.test(c.provisional) && /PASS/.test(c.provisional);
     var failWhy = [];
+    if (provisionalPassFail) failWhy.push('provisionally graded ' + c.provisional + ' — a potential Fail (15.1)');
     if (standard === 'NOTSTD' && from.indexOf('Stage') === 0) failWhy.push(from + ' not to standard');
-    if (backToBack && backToBack[1] >= secondHalfFrom()) failWhy.push('TP' + backToBack[0] + ' and TP' + backToBack[1] + ' not to standard back to back');
-    if (fails.length > 1) failWhy.push(fails.join(' and ') + ' failed — not eligible for a Pass');
+    if (fails.length > 1) failWhy.push(fails.join(' and ') + ' failed — not eligible for a Pass (11.6)');
     var potentialFail = failWhy.length > 0;
+    /* The centre's own early-warning signal, not Cambridge's, and labelled so.
+       Two not-to-standard lessons running in the second half is worth a tutor's
+       eye; it is not a rule and it does not make anyone a potential Fail. */
+    var watch = (backToBack && backToBack[1] >= secondHalfFrom() && !potentialFail)
+      ? 'TP' + backToBack[0] + ' and TP' + backToBack[1] + ' not to standard back to back — worth a look (the centre\'s own signal, not a Cambridge rule)'
+      : null;
     var letterIssued = !!(c.failLetter && String(c.failLetter).trim());
     var letterDue = potentialFail && !letterIssued;
     /* How much teaching practice is left, which is what makes a Fail letter
@@ -191,7 +220,12 @@ window.HubTracker = (function(){
     if (letterDue) failWhy.push(lessonsLeft <= 2
       ? (lessonsLeft <= 0 ? 'no lessons left to teach — issue it today' : lessonsLeft + ' lesson' + (lessonsLeft === 1 ? '' : 's') + ' left to teach — the window is closing')
       : lessonsLeft + ' lessons left to teach');
-    var letterAdvised = !potentialFail && !letterIssued && (fails.length + pending.length) >= 1 && fails.length <= 1;
+    /* letterAdvised used to fire on a single assignment awaiting its
+       resubmission and say "a letter can go out now". 9.2.3 GUARANTEES that
+       resubmission ("candidates must have the opportunity... on one occasion
+       only") and 11.6 says one failed assignment still permits a Pass, so the
+       advice cut against two sections. Removed (audit, 29 Sep 2026). */
+    var letterAdvised = false;
     var lateNotStd = notStdAt.filter(function(k){ return k >= secondHalfFrom(); });
     var lateOnlyStd = [];
     if (c.stage2 === 'ABOVE') for (var k2 = secondHalfFrom(); k2 <= tpTotal(); k2++) { var g2 = tpGrade(c['tp'+k2]); if (g2 && g2.key === 'STD') lateOnlyStd.push(k2); }
@@ -200,19 +234,37 @@ window.HubTracker = (function(){
       if (c.stage2 === 'NOTSTD') stage3Why = 'not to standard at Stage 2';
       else if (c.stage2 === 'ABOVE' && lateOnlyStd.length && !lateNotStd.length && !fails.length)
         stage3Why = 'above standard at Stage 2, then TP' + lateOnlyStd.join(' and TP') + ' only to standard — progress not maintained';
-      else if (c.stage2 && (lateNotStd.length || fails.length))
-        stage3Why = (c.stage2 === 'ABOVE' ? 'above standard' : 'to standard') + ' at Stage 2, then ' +
-          (lateNotStd.length ? 'TP' + lateNotStd.join(' and TP') + ' not to standard' : fails.join(' and ') + ' failed');
-      else if (backToBack) stage3Why = 'TP' + backToBack[0] + ' and TP' + backToBack[1] + ' not to standard back to back';
-      else if (fails.length > 1) stage3Why = fails.join(' and ') + ' failed — not eligible for a Pass';
+      else if (c.stage2 && lateNotStd.length)
+        stage3Why = (c.stage2 === 'ABOVE' ? 'above standard' : 'to standard') + ' at Stage 2, then TP' + lateNotStd.join(' and TP') + ' not to standard';
     }
-    var stage2Hint = (!c.stage2 && backToBack)
-      ? 'TP' + backToBack[0] + ' and TP' + backToBack[1] + ' not to standard back to back — Stage 2 should be recorded as not to standard'
-      : null;
-    var stage1Due = (graded >= 3 && !c.stage1);
-    var stage2Due = (graded >= STAGE2_DUE_AFTER && !c.stage2);
+    /* 10.2's Stage 3 triggers are all about TP standard and progress after
+       Stage 2. The three that used to sit here -- back-to-back lessons with no
+       Stage 2 record, a failed assignment, more than one failed assignment --
+       have no authority in 10.2, so they no longer claim Cambridge's name.
+       stage2Hint went the same way: it told a tutor what judgement to enter
+       ("Stage 2 should be recorded as not to standard") on arithmetic no
+       Cambridge document recognises. */
+    var stage2Hint = null;
+    /* Due dates come from the course's own bands, as 10.2 measures them --
+       "the first third", "the halfway point" -- not from fixed lesson counts.
+       stage1Due fired at 3 while the first third of an eight-TP course ends at
+       2, so it only ever appeared after the deadline had passed; stage2Due's
+       hardcoded 4 ignored the course length entirely (audit, 29 Sep 2026). */
+    var bands = stageBands();
+    var stage1Due = (graded >= bands.s1End && !c.stage1);
+    var stage2Due = (graded >= secondHalfFrom() - 1 && !c.stage2);
     var recorded = graded > 0 || fails.length > 0 || resubs.length > 0 || !!c.stage2 || !!c.stage3;
-    var state = (c.withdrawn === true || c.withdrawn === 'true') ? 'withdrawn'
+    /* 11.4.1: "If an unsuccessful candidate attends until the end of the
+       course and submits a portfolio for assessment (even if incomplete), the
+       result is Fail rather than Withdrawn." Lite held the deciding fact --
+       the signed final declaration -- and let a yes/no toggle override
+       everything. The toggle stays (manual override), but a contradiction is
+       now said out loud. */
+    var withdrawnFlag = (c.withdrawn === true || c.withdrawn === 'true');
+    var withdrawnQuery = (withdrawnFlag && c.finalDeclarationSigned)
+      ? 'marked withdrawn, but the CELTA 5 final declaration is signed — 11.4.1 makes that a Fail, not a Withdrawn'
+      : null;
+    var state = withdrawnFlag ? 'withdrawn'
       : !recorded ? 'none'
       : standard === 'NOTSTD' ? 'notstd'
       : standard === 'ABOVE' ? 'above'
@@ -222,7 +274,8 @@ window.HubTracker = (function(){
       state:state, from:from, graded:graded, notStd:notStd, above:above,
       fails:fails, resubs:resubs, pending:pending, ceiling:ceiling,
       potentialFail:potentialFail, failWhy:failWhy, letterDue:letterDue, letterAdvised:letterAdvised, letterIssued:letterIssued,
-      stage3Why:stage3Why, stage2Hint:stage2Hint, stage1Due:stage1Due, stage2Due:stage2Due
+      provisional:c.provisional, provisionalPassFail:provisionalPassFail, watch:watch, withdrawnQuery:withdrawnQuery,
+      lessonsLeft:lessonsLeft, stage3Why:stage3Why, stage2Hint:stage2Hint, stage1Due:stage1Due, stage2Due:stage2Due
     };
   }
   var STATE_CHIP = {
