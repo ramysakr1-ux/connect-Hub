@@ -108,7 +108,12 @@
   textarea:focus{outline:none; border-color:var(--teal);}
   /* six fields, as Cambridge's observation record has: lesson, level, length,
      learners present, date, and the observed teacher's signature */
-  .hdrow{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:0 0 16px;}
+  /* Each cell is its own column so the boxes line up however long a label
+     runs -- the signature label is two lines and used to drag its box below
+     the two beside it. */
+  .hdrow{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:0 0 16px; align-items:end;}
+  .hdrow > div{display:flex; flex-direction:column;}
+  .hdrow > div > label{flex:1;}
   @media(max-width:700px){ .hdrow{grid-template-columns:repeat(2,1fr);} }
   .hdrow label{display:block; font-size:0.7rem; letter-spacing:.06em; text-transform:uppercase;
     color:var(--grey); font-weight:700; margin-bottom:4px;}
@@ -128,18 +133,18 @@
   .eyebrow{font-size:0.7rem; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:0 0 4px;}
   .lede{color:var(--grey); font-size:0.88rem; line-height:1.6; margin:0 0 18px; max-width:66ch;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609291441">
-<link rel="stylesheet" href="hub-theme.css?v=202609291441">
+<link rel="stylesheet" href="hub-house.css?v=202609291524">
+<link rel="stylesheet" href="hub-theme.css?v=202609291524">
 </head>
 <body class="hub-obs">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="observation-defaults.js?v=202609291441"></script>
-<script src="hub-shared.js?v=202609291441"></script>
-<script src="hub-store.js?v=202609291441"></script>
-<script src="hub-sync.js?v=202609291441"></script>
+<script src="observation-defaults.js?v=202609291524"></script>
+<script src="hub-shared.js?v=202609291524"></script>
+<script src="hub-store.js?v=202609291524"></script>
+<script src="hub-sync.js?v=202609291524"></script>
 <script type="text/x-hub-app">
 /* A candidate's own work. A tutor or an assessor READS it -- they have to, it
    is portfolio evidence -- so the page is not refused them; the fields are
@@ -257,10 +262,10 @@ const box = (k, field) => {
 /* A sheet may declare its own length: live teaching is 90 minutes at each
    level, so those two start filled in and the candidate can still change it.
    The filmed recordings vary course to course and declare none. */
-const field = (k, name, label, fallback) => {
+const field = (k, name, label, fallback, hint) => {
   const v = (((WORK[k]||{}).a)||{})[name];
   const shown = (v === undefined || v === '') && fallback != null ? String(fallback) : (v || '');
-  return `<div><label>${label}</label><input data-f="${name}" value="${esc(shown)}"${READONLY ? ' readonly' : ''}></div>`;
+  return `<div><label>${label}</label><input data-f="${name}" value="${esc(shown)}"${hint ? ` placeholder="${esc(hint)}"` : ''}${READONLY ? ' readonly' : ''}></div>`;
 };
 
 function sheet(t, sit){
@@ -293,7 +298,7 @@ function sheet(t, sit){
   /* The filmed and live sheets open with the lesson's particulars; the peer
      ones do not -- the candidate was in the room. */
   const header = /^(notes|parts|questions)$/.test(t.shape)
-    ? `<div class="hdrow">${field(k,'hLesson','Lesson')}${field(k,'hLevel','Level')}${field(k,'hLength','Length',t.minutes)}${field(k,'hLearners','Learners present')}${field(k,'hDate','Date watched')}${field(k,'hSigned','Observed teacher (signature, where the centre asks for one)')}</div>` : '';
+    ? `<div class="hdrow">${field(k,'hLesson','Lesson')}${field(k,'hLevel','Level')}${field(k,'hLength','Length',t.minutes)}${field(k,'hLearners','Learners present')}${field(k,'hDate','Date watched')}${field(k,'hSigned','Signature of observed teacher', null, 'if your centre asks')}</div>` : '';
 
   $('back').href = location.pathname + (KEYQ ? '?' + KEYQ : '');
   $('app').innerHTML = `
