@@ -102,6 +102,9 @@
   .mats-read .mpoint{color:var(--grey);}
   .mats-read .msub{color:var(--gold-deep); font-weight:600;}
   .mats-read .mframe{color:var(--grey); font-style:italic;}
+  .mats-read.gets{margin-top:2px;}
+  .mats-read.gets .glab{display:inline-block; font-size:0.66rem; letter-spacing:.07em; text-transform:uppercase;
+    color:var(--faint); font-weight:700; margin-right:7px;}
   .mats-read .mlink{color:var(--teal); font-weight:600; text-decoration:none;}
   .mats-read .mlink:hover{text-decoration:underline;}
   .mats-read.ref .mlink{color:var(--grey);}
@@ -133,20 +136,20 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} section.group{padding:12px 12px 14px;} }
   @media print{ .back,.relbar,#hubSync{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609300117">
-<link rel="stylesheet" href="hub-theme.css?v=202609300117">
+<link rel="stylesheet" href="hub-house.css?v=202609300128">
+<link rel="stylesheet" href="hub-theme.css?v=202609300128">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609300117"></script>
-<script src="hub-tracker.js?v=202609300117"></script>
-<script src="hub-rotation.js?v=202609300117"></script>
-<script src="hub-shared.js?v=202609300117"></script>
-<script src="hub-store.js?v=202609300117"></script>
-<script src="hub-sync.js?v=202609300117"></script>
+<script src="hub-due.js?v=202609300128"></script>
+<script src="hub-tracker.js?v=202609300128"></script>
+<script src="hub-rotation.js?v=202609300128"></script>
+<script src="hub-shared.js?v=202609300128"></script>
+<script src="hub-store.js?v=202609300128"></script>
+<script src="hub-sync.js?v=202609300128"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -318,29 +321,32 @@ function wireMats(){
    anchor when there is one, so a direct PDF opens where the lesson is. */
 function matsRead(c, mine){
   if (!c) return '';
-  const bits = [];
-  if (c.sub) bits.push(`<span class="msub">with ${esc(c.sub)}</span>`);
-  if (c.framework) bits.push(`<span class="mframe">${esc(c.framework)}</span>`);
-  if (c.point) bits.push(`<span class="mpoint">${esc(c.point)}</span>`);
+  /* Two lines, not one run of everything. What the lesson IS -- the sub aim,
+     the framework, the point -- reads as a sentence. What the candidate has
+     to go and GET sits on its own labelled line beneath it, a source per
+     line. Run together they wrapped into a paragraph where a page reference
+     and a framework looked like the same kind of thing (Ramy, 30 Sep 2026,
+     seeing his own TP 1 in it). */
+  const says = [];
+  if (c.sub) says.push(`<span class="msub">with ${esc(c.sub)}</span>`);
+  if (c.framework) says.push(`<span class="mframe">${esc(c.framework)}</span>`);
+  if (c.point) says.push(`<span class="mpoint">${esc(c.point)}</span>`);
+
   const b = c.book || {};
-  if (b.ref || b.url) {
-    const href = b.url ? (b.page && /\.pdf($|\?)/i.test(b.url) ? b.url + '#page=' + encodeURIComponent(b.page) : b.url) : '';
-    /* Materials come from more than one place -- a student's book, a workbook,
-       a video -- so the field takes a line each and they are shown that way
-       (Ramy's own TP1 ABC points, 30 Sep 2026). The first line carries the
-       link, since that is the book the page anchor belongs to. */
-    const lines = String(b.ref || '').split(/\n+/).map(x => x.trim()).filter(Boolean);
-    if (!lines.length && href) bits.push(`<a class="mlink" href="${esc(href)}" target="_blank" rel="noopener">The coursebook</a>`);
-    lines.forEach((ln, i) => {
-      bits.push(i === 0 && href
-        ? `<a class="mlink" href="${esc(href)}" target="_blank" rel="noopener">${esc(ln)}</a>`
-        : `<span class="mref">${esc(ln)}</span>`);
-    });
-  }
-  (c.pages || []).forEach(f => bits.push(`<a class="mlink" href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a>`));
-  if ((c.audio || {}).url) bits.push(`<a class="mlink audio" href="${esc(c.audio.url)}" target="_blank" rel="noopener">Audio</a>`);
-  if (!bits.length) return '';
-  return `<span class="mats-read${mine ? '' : ' ref'}">${bits.join('<span class="sep">\u00b7</span>')}</span>`;
+  const href = b.url ? (b.page && /\.pdf($|\?)/i.test(b.url) ? b.url + '#page=' + encodeURIComponent(b.page) : b.url) : '';
+  const lines = String(b.ref || '').split(/\n+/).map(x => x.trim()).filter(Boolean);
+  const got = [];
+  if (!lines.length && href) got.push(`<a class="mlink" href="${esc(href)}" target="_blank" rel="noopener">The coursebook</a>`);
+  lines.forEach((ln, i) => got.push(i === 0 && href
+    ? `<a class="mlink" href="${esc(href)}" target="_blank" rel="noopener">${esc(ln)}</a>`
+    : `<span class="mref">${esc(ln)}</span>`));
+  (c.pages || []).forEach(f => got.push(`<a class="mlink" href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a>`));
+  if ((c.audio || {}).url) got.push(`<a class="mlink audio" href="${esc(c.audio.url)}" target="_blank" rel="noopener">Audio</a>`);
+
+  if (!says.length && !got.length) return '';
+  const cls = 'mats-read' + (mine ? '' : ' ref');
+  return (says.length ? `<span class="${cls}">${says.join('<span class="sep">\u00b7</span>')}</span>` : '')
+       + (got.length ? `<span class="${cls} gets"><span class="glab">Materials</span>${got.join('<span class="sep">\u00b7</span>')}</span>` : '');
 }
 
 function render(){
