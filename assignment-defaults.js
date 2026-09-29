@@ -34,21 +34,31 @@
 //     is the evidence condition and the loss of Pass A.
 //   - The word count is a submission requirement, never a criterion -- which
 //     is what the syllabus does too (Component 2).
-//   - The criteria below are NOT the syllabus's own words, whatever this
-//     comment said before 29 Sep 2026. The syllabus (Component 2, 2.1-2.4)
-//     specifies 6 / 4 / 3 / 4 = seventeen; these are 6 / 4 / 4 / 5 = nineteen.
-//     LSRT's "Identifying receptive and productive skills..." and LfC's
-//     "Reflecting on their observation of other teachers..." are promoted from
-//     the syllabus's DESIGN column, which says what the assignment must ask
-//     for, not what the candidate is judged on. Several others are reworded,
-//     and two of those raise the bar above Cambridge's: FOL c turns "language
-//     systems and/or language skills" into "and", and FOL d drops "and/or
-//     skills" while inserting the centre's published-materials condition.
-//     Designing the assignments IS the centre's job (9.2.1), so a centre may
-//     legitimately set these -- but they must not be described as Cambridge's.
-//     Changing them is not a free edit: criteriaMarks are POSITIONAL, so a
-//     replacement is only safe while no marking exists (see
-//     CONNECT_HUB_ADOPT_CORRECTED_CRITERIA).
+//   - The criteria ARE the syllabus's own words, and this time the claim is
+//     true: since 29 Sep 2026 the four shipped lists are assigned straight
+//     from CONNECT_HUB_SYLLABUS_CRITERIA, which holds Component 2's 2.1-2.4
+//     verbatim -- 6 / 4 / 3 / 4 = seventeen. Ramy's call ("use the syllabus's
+//     criteria") after the compliance audit found the previous nineteen, two
+//     of them promoted from the syllabus's DESIGN column (what the assignment
+//     must ASK FOR) and two reworded so they asked more than Cambridge does:
+//     FOL c turned "language systems and/or language skills" into "and", and
+//     FOL d dropped "and/or skills" while carrying the centre's
+//     published-materials condition. That condition is NOT lost -- it is an
+//     instruction in FOL's own brief ("At least one activity must come from a
+//     published source"), where a design requirement belongs.
+//
+//     Because they are assigned rather than typed, the two can no longer
+//     drift. Designing the assignments is still the centre's job under 9.2.1
+//     and a course may write its own; a course that already has stored
+//     wording keeps it untouched, and the editor's panel shows it the
+//     syllabus's beside its own.
+//
+//     NOTE FOR ANY FUTURE CHANGE: criteriaMarks are POSITIONAL. Never add an
+//     old shipped list to CONNECT_HUB_SUPERSEDED_WORDING to force existing
+//     courses over -- that machinery rewrites a course's criteria at boot,
+//     and on marked work every Met would land on a different criterion. The
+//     29 Sep change deliberately did NOT do that: every course that had
+//     marking (c3, c4, c5) holds its own wording and was left alone.
 //
 // The three reading texts in the skills assignment are VOA Learning English,
 // which states its texts are in the public domain and may be reprinted with
@@ -1324,6 +1334,15 @@ window.CONNECT_HUB_SYLLABUS_CRITERIA = {
     'Using written language that is clear, accurate and appropriate to the task'
   ]
 };
+
+/* The four shipped lists ARE the syllabus's, assigned rather than retyped so
+   the two cannot drift. Everything else about each assignment -- its title,
+   its word range, its brief, its declaration -- stays the centre's. */
+['fol', 'lrt', 'lsrt', 'lfc'].forEach(function(k){
+  var a = window.CONNECT_HUB_DEFAULT_WORDING[k];
+  if (!a) return;
+  a.criteria = window.CONNECT_HUB_SYLLABUS_CRITERIA[k].map(function(t){ return { text: t, sectionIndex: null }; });
+});
 
 window.CONNECT_HUB_ADOPT_CORRECTED_CRITERIA = function(wording){
   var versions = window.CONNECT_HUB_SUPERSEDED_WORDING, now = window.CONNECT_HUB_DEFAULT_WORDING, changed = [];
