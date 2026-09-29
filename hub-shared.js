@@ -37,9 +37,21 @@ window.hubObservationSet = function(){
 /* Minutes turned in, per group, from the sheets' own Length header. */
 window.hubObservationHours = function(records){
   var set = window.hubObservationSet(), w = records || {};
+  /* A sheet that declares its own length counts at that length when the
+     candidate has not written one over it -- the two live sheets are 90
+     minutes each. */
+  var declared = {};
+  (function(){
+    var d = null;
+    try { d = JSON.parse(localStorage.getItem('connect_observation_wording_v1')); } catch (e) {}
+    var from = (d && (d.filmed || d.live)) ? d : (window.CONNECT_HUB_OBSERVATION_DEFAULTS || {});
+    ['filmed', 'live'].forEach(function(g){ ((from && from[g]) || []).forEach(function(t){ if (t && t.id && t.minutes) declared[t.id] = t.minutes; }); });
+  })();
   var mins = function(list){ var t = 0, n = 0;
     list.forEach(function(k){ var r = w[k]; if (!r || !r.turnedInAt) return; n++;
-      var m = parseInt(String(((r.a || {}).hLength) || '').replace(/[^0-9]/g, ''), 10); if (m > 0) t += m; });
+      var m = parseInt(String(((r.a || {}).hLength) || '').replace(/[^0-9]/g, ''), 10);
+      if (!(m > 0)) m = declared[k] || 0;
+      if (m > 0) t += m; });
     return { minutes: t, turnedIn: n }; };
   var f = mins(set.filmed), l = mins(set.live);
   var total = f.minutes + l.minutes;

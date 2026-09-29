@@ -264,6 +264,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
       "id": "live1",
       "title": "Live Teacher Observation 1",
       "sub": "Classroom Management — Strengths and Action Points",
+      "minutes": 90,
       "shape": "questions",
       "rows": [
         "Before you watch: from the input session, write down in your own words what classroom management covers. Keep the list in front of you while you watch.",
@@ -280,6 +281,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
       "id": "live2",
       "title": "Live Teacher Observation 2",
       "sub": "Lesson Shape- Language and/or Skill Focus",
+      "minutes": 90,
       "shape": "parts",
       "parts": [
         {

@@ -128,18 +128,18 @@
   .eyebrow{font-size:0.7rem; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:0 0 4px;}
   .lede{color:var(--grey); font-size:0.88rem; line-height:1.6; margin:0 0 18px; max-width:66ch;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609291425">
-<link rel="stylesheet" href="hub-theme.css?v=202609291425">
+<link rel="stylesheet" href="hub-house.css?v=202609291441">
+<link rel="stylesheet" href="hub-theme.css?v=202609291441">
 </head>
 <body class="hub-obs">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="observation-defaults.js?v=202609291425"></script>
-<script src="hub-shared.js?v=202609291425"></script>
-<script src="hub-store.js?v=202609291425"></script>
-<script src="hub-sync.js?v=202609291425"></script>
+<script src="observation-defaults.js?v=202609291441"></script>
+<script src="hub-shared.js?v=202609291441"></script>
+<script src="hub-store.js?v=202609291441"></script>
+<script src="hub-sync.js?v=202609291441"></script>
 <script type="text/x-hub-app">
 /* A candidate's own work. A tutor or an assessor READS it -- they have to, it
    is portfolio evidence -- so the page is not refused them; the fields are
@@ -254,7 +254,14 @@ const box = (k, field) => {
   const v = ((WORK[k]||{}).a || {})[field] || '';
   return `<textarea data-f="${esc(field)}"${READONLY ? ' readonly' : ''}>${esc(v)}</textarea>`;
 };
-const field = (k, name, label) => `<div><label>${label}</label><input data-f="${name}" value="${esc((((WORK[k]||{}).a)||{})[name]||'')}"${READONLY ? ' readonly' : ''}></div>`;
+/* A sheet may declare its own length: live teaching is 90 minutes at each
+   level, so those two start filled in and the candidate can still change it.
+   The filmed recordings vary course to course and declare none. */
+const field = (k, name, label, fallback) => {
+  const v = (((WORK[k]||{}).a)||{})[name];
+  const shown = (v === undefined || v === '') && fallback != null ? String(fallback) : (v || '');
+  return `<div><label>${label}</label><input data-f="${name}" value="${esc(shown)}"${READONLY ? ' readonly' : ''}></div>`;
+};
 
 function sheet(t, sit){
   const k = recKey(t.id, sit);
@@ -286,7 +293,7 @@ function sheet(t, sit){
   /* The filmed and live sheets open with the lesson's particulars; the peer
      ones do not -- the candidate was in the room. */
   const header = /^(notes|parts|questions)$/.test(t.shape)
-    ? `<div class="hdrow">${field(k,'hLesson','Lesson')}${field(k,'hLevel','Level')}${field(k,'hLength','Length')}${field(k,'hLearners','Learners present')}${field(k,'hDate','Date watched')}${field(k,'hSigned','Observed teacher (signature, where the centre asks for one)')}</div>` : '';
+    ? `<div class="hdrow">${field(k,'hLesson','Lesson')}${field(k,'hLevel','Level')}${field(k,'hLength','Length',t.minutes)}${field(k,'hLearners','Learners present')}${field(k,'hDate','Date watched')}${field(k,'hSigned','Observed teacher (signature, where the centre asks for one)')}</div>` : '';
 
   $('back').href = location.pathname + (KEYQ ? '?' + KEYQ : '');
   $('app').innerHTML = `

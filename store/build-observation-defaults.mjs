@@ -98,9 +98,14 @@ for (const [file, id] of [['Live_Teacher_Observations_Demo_1.docx', 'live1'],
      the number is the document's own. */
   const num = (lines[0].match(/(\d+)\s*$/) || [])[1];
   const title = num ? 'Live Teacher Observation ' + num : lines[0];
+  /* Live teaching is 90 minutes at each level (Ramy, 29 Sep 2026), so the two
+     live sheets carry their own length. The candidate can still change it on
+     the sheet; this is what it starts at, and it means the three live hours
+     Handbook 10.1 requires are on the record without anyone typing them. The
+     filmed recordings vary course to course, so they carry none. */
   live.push(qs.length
-    ? { id, title, sub: lines[1] || '', shape: 'questions', rows: qs }
-    : { id, title, sub: lines[1] || '', shape: 'parts', parts });
+    ? { id, title, sub: lines[1] || '', minutes: 90, shape: 'questions', rows: qs }
+    : { id, title, sub: lines[1] || '', minutes: 90, shape: 'parts', parts });
 }
 
 const out = `/* Connect Lite — the observation tasks a course starts with.
