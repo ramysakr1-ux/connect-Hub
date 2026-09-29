@@ -13,7 +13,7 @@
 (function(){
   var S = window.HubStore;
   // Assessor mode (Ramy, 20 Sep 2026): boots like a tutor, writes nothing.
-  var mode = !S ? '' : S.isTutor() ? 'tutor' : S.isAssessor() ? 'assessor' : S.isTrainee() ? 'trainee' : '';
+  var mode = !S ? '' : S.isTutor() ? 'tutor' : S.isAssessor() ? 'assessor' : S.isTrainee() ? 'trainee' : (S.isVolunteer && S.isVolunteer()) ? 'volunteer' : '';
   window.HubMode = mode;
   var TRAINEE_KEYS = { 'chub:plan':'plan', 'chub:selfeval':'selfeval', 'chub:feedback':'feedback', 'connect_assignment_submissions_v1':'assignments', 'chub:tpHistory':'tpHistory', 'chub:tracker':'tracker', 'connect_observations_v1':'observations', 'chub:links':'links', 'chub:celta5':'celta5', 'chub:celta5t':'celta5t' };
   var TUTOR_ONLY = { feedback:1, tpHistory:1, tracker:1, links:1, celta5t:1 }; // links: a candidate's private links, the tutor's to write; celta5t: the tutors' half of the CELTA 5
@@ -114,7 +114,7 @@
   // so a write handed to the beacon as a page closed is re-sent by the next
   // page, and a boot never overwrites a record this browser has changed but
   // the store has not confirmed yet (the cache-first race, 20 Sep 2026).
-  var LEDGER = 'hub:pending:' + mode + ':' + (!S ? '' : mode === 'tutor' ? S.key() : mode === 'assessor' ? S.assessorKey() : S.token());
+  var LEDGER = 'hub:pending:' + mode + ':' + (!S ? '' : mode === 'tutor' ? S.key() : mode === 'assessor' ? S.assessorKey() : mode === 'volunteer' ? S.volunteerToken() : S.token());
   function ledger(){ return parse((function(){ try { return localStorage.getItem(LEDGER); } catch (e) { return null; } })()) || {}; }
   function ledgerSet(l){ try { if (Object.keys(l).length) origSet(LEDGER, JSON.stringify(l)); else origRemove(LEDGER); } catch (e) {} }
   function remember(id, job){ var l = ledger(); l[id] = job; ledgerSet(l); }
@@ -140,7 +140,7 @@
    * (a trainee removed from the course) must not be re-sent for ever. After
    * that it stops being sent and the record stays, which is the honest state:
    * this did not save, and nothing is still trying. */
-  var UNSAVED = 'hub:unsaved:' + mode + ':' + (!S ? '' : mode === 'tutor' ? S.key() : mode === 'assessor' ? S.assessorKey() : S.token());
+  var UNSAVED = 'hub:unsaved:' + mode + ':' + (!S ? '' : mode === 'tutor' ? S.key() : mode === 'assessor' ? S.assessorKey() : mode === 'volunteer' ? S.volunteerToken() : S.token());
   var RETRIES = 3;
   function unsaved(){ return parse((function(){ try { return localStorage.getItem(UNSAVED); } catch (e) { return null; } })()) || {}; }
   function unsavedSet(u){ try { if (Object.keys(u).length) origSet(UNSAVED, JSON.stringify(u)); else origRemove(UNSAVED); } catch (e) {} }
@@ -311,7 +311,7 @@
     return JSON.stringify(theirs);
   }
   function route(key, value){
-    if (mode === 'assessor') return; // read-only: nothing this browser does reaches the course
+    if (mode === 'assessor' || mode === 'volunteer') return; // read-only: nothing this browser does reaches the course
     var data = value == null ? null : parse(value);
     if (mode === 'trainee' && TRAINEE_KEYS[key]) {
       if (!S.token()) return; // the link is gone from this browser: nothing to write to
@@ -355,7 +355,7 @@
   // (walked 23 Sep 2026).
   if (!mode) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ gate(); }); else gate(); return; }
   showUnsaved();   // a refusal from an earlier session is still a refusal
-  var identity = mode + ':' + (mode === 'tutor' ? S.key() : mode === 'assessor' ? S.assessorKey() : S.token());
+  var identity = mode + ':' + (mode === 'tutor' ? S.key() : mode === 'assessor' ? S.assessorKey() : mode === 'volunteer' ? S.volunteerToken() : S.token());
   var cached = false; try { cached = localStorage.getItem('hub:booted') === identity; } catch (e) {}
   var dirty = {}, started = false;
   // Writes the store never confirmed: their keys are off-limits to the boot,
@@ -401,8 +401,24 @@
   // the effect was real, and this makes it impossible rather than unlikely.
   function plan(boot){
     boot = boot || {};
+    /* A VOLUNTEER'S BOOT is its own small shape (30 Sep 2026): the store
+       answers with { volunteer, course:{settings, timetable} } and nothing
+       else. Their page is made of exactly that, so that is all that lands. */
+    if (mode === 'volunteer') {
+      if (!boot.volunteer) return {};
+      var vc = boot.course || {};
+      return {
+        'hub:volunteer': JSON.stringify(boot.volunteer),
+        'connect_course_settings': vc.settings ? JSON.stringify(vc.settings) : null,
+        'connect_timetable_v1': vc.timetable ? JSON.stringify(vc.timetable) : null
+      };
+    }
     if (mode === 'trainee' ? !boot.me : !boot.roster) return {};
     var course = boot.course || {}, out = {};
+    /* The course's own id, for a tutor: the volunteer register mints each
+       student's link as "<courseId>-<random>" and this is the only way the
+       browser can learn which course it is on (store version 43). */
+    if (course.id) out['hub:course'] = String(course.id);
     /* A correction to the shipped criteria, adopted once by a course that never
        had its own -- see CONNECT_HUB_ADOPT_CORRECTED_CRITERIA in
        assignment-defaults.js for why, and for the shape of the question it
@@ -547,6 +563,7 @@
   function exposeMeta(){
     if (mode === 'trainee') window.HubMe = parse(current('hub:me')) || {};
     if (mode === 'assessor') window.HubAssessor = parse(current('hub:assessor')) || {};
+    if (mode === 'volunteer') window.HubVolunteer = parse(current('hub:volunteer')) || {};
   }
   function bootWithRetries(){
     return S.boot().catch(function(){ return S.boot(); }).catch(function(){ return new Promise(function(res){ setTimeout(res, 1500); }).then(function(){ return S.boot(); }); });
@@ -570,7 +587,7 @@
         rebuildSnapshot();
       }
       try { localStorage.setItem('hub:booted', identity); } catch (e) {}
-      status(mode === 'assessor' ? 'Assessor view \u2014 read-only' : 'Live \u2014 saved to the course as you go', 'ok');
+      status(mode === 'assessor' ? 'Assessor view \u2014 read-only' : mode === 'volunteer' ? 'Your page' : 'Live \u2014 saved to the course as you go', 'ok');
     }, function(err){
       // The store answering "no" is not the network failing. An expired
       // assessor link, a rotated tutor key, a trainee removed from the course:
@@ -592,7 +609,7 @@
     if (p['connect_roster_v1'] != null) p['connect_roster_v1'] = mergeRoster(p['connect_roster_v1']);
     apply(p, function(k){ return !dirty[k] || k === 'connect_roster_v1'; }); exposeMeta(); rebuildSnapshot();
     try { localStorage.setItem('hub:booted', identity); } catch (e) {}
-    status(mode === 'assessor' ? 'Assessor view \u2014 read-only' : 'Live \u2014 saved to the course as you go', 'ok');
+    status(mode === 'assessor' ? 'Assessor view \u2014 read-only' : mode === 'volunteer' ? 'Your page' : 'Live \u2014 saved to the course as you go', 'ok');
   }, function(err){
     if (err && err.refused) { gate(err.message); return 'gated'; }
     status('Could not reach the course \u2014 ' + (err && err.message || err), 'error');

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<!--
+  Connect Lite — a volunteer student's own page
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy, 30 Sep 2026: "a nice landing page for them, and a nice certificate
+  of attendance at the end. You have no idea how big a problem finding
+  volunteer students is for a course. This could really sweeten the deal."
+
+  WHO THIS IS FOR. A member of the public who has agreed to be taught by
+  trainee teachers. Not a user of the course, not staff, often not a
+  confident reader of English. So the page opens with the one thing they
+  came for -- when the next class is and the button to join it -- and
+  everything else sits underneath. Nothing on it is homework: the materials
+  say "have a look if you like", because a volunteer is doing the centre a
+  favour and an assignment is not part of the deal.
+
+  WHERE IT ALL COMES FROM. Every line is data Lite already holds. The next
+  class and its times are the timetable's; the room is the one typed once on
+  Course admin; the attendance bar is the register the tutor marks; the hours
+  are that day's teaching slots added up. The store answers this link with
+  exactly that and nothing else (version 42): their own row, a subset of the
+  settings, the timetable. Never the roster, never another volunteer.
+
+  THE LINK. "?v=<courseId>-<random>", minted on the register. It reads and
+  never writes: hub-sync treats this mode like the assessor's, so nothing
+  this browser does can reach the course. It stops working when the row is
+  removed from the register.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="brand/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<link rel="manifest" href="manifest-volunteer.webmanifest">
+<meta name="theme-color" content="#1f4f4c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="My classes">
+<title>Connect Lite — My classes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sand:oklch(98.8% 0.006 85); --sand-line:oklch(85.5% 0.02 80); --sand-deep:oklch(94.8% 0.01 85);
+    --paper:oklch(99.5% 0.004 90); --surface:oklch(95.2% 0.018 84); --box:oklch(91.2% 0.03 80);
+    --ink:oklch(23.5% 0.017 65); --teal:oklch(37.5% 0.058 195); --grey:oklch(51% 0.017 70);
+    --brick:oklch(45% 0.15 27); --gold:oklch(63% 0.096 72); --gold-deep:oklch(52% 0.098 70); --faint:oklch(60% 0.012 80);
+  }
+  body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
+  .board{max-width:720px; margin:0 auto; padding:22px 20px 60px;}
+  .eyebrow{font-size:0.7rem; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:0 0 4px;}
+  h1{font-family:'Newsreader',Georgia,serif; font-size:1.8rem; margin:0 0 4px;}
+  .sub{color:var(--grey); font-size:0.9rem; margin:0 0 20px; line-height:1.55;}
+  .next{background:var(--teal); color:#fff; border-radius:12px; padding:20px 22px; margin:0 0 16px;}
+  .next .k{font-size:0.68rem; letter-spacing:.14em; text-transform:uppercase; opacity:.72; font-weight:700;}
+  .next h2{font-family:'Newsreader',Georgia,serif; font-size:1.5rem; margin:5px 0 3px;}
+  .next .when{font-size:1rem; opacity:.92;}
+  .next .when small{display:block; font-size:0.8rem; opacity:.8; margin-top:2px;}
+  .next .room{display:inline-block; margin-top:14px; background:#fff; color:var(--teal); font-weight:700; font-size:0.9rem; padding:10px 20px; border-radius:999px; text-decoration:none;}
+  .next .tiny{font-size:0.78rem; opacity:.75; margin-top:10px; line-height:1.5;}
+  .next.done{background:var(--box); color:var(--ink);}
+  .next.done .k{opacity:1; color:var(--grey);}
+  .card{background:var(--surface); border:1px solid var(--sand-line); border-radius:11px; padding:16px 18px; margin:0 0 14px;}
+  .card h3{font-family:'Newsreader',Georgia,serif; font-size:1.1rem; margin:0 0 3px;}
+  .card p.note{color:var(--grey); font-size:0.82rem; margin:0 0 12px; line-height:1.55;}
+  .mat{display:flex; gap:12px; align-items:center; background:var(--paper); border:1px solid var(--sand-line); border-radius:9px; padding:11px 13px; margin:0 0 8px;}
+  .mat b{display:block; font-size:0.88rem;}
+  .mat small{color:var(--grey); font-size:0.76rem;}
+  .mat a{color:var(--teal); font-weight:700; font-size:0.8rem; text-decoration:none; margin-left:auto; white-space:nowrap;}
+  .segs{display:flex; flex-wrap:wrap; gap:3px; margin:10px 0 8px;}
+  .seg{width:17px; height:19px; border-radius:3px; background:oklch(93% 0.006 80);}
+  .seg.here{background:var(--teal);} .seg.miss{background:oklch(88% 0.055 27);}
+  .hrs{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;}
+  .hrs b{font-family:'Newsreader',Georgia,serif; font-size:1.9rem;}
+  .hrs span{color:var(--grey); font-size:0.84rem;}
+  .track{height:7px; background:var(--box); border-radius:99px; margin:10px 0 6px; overflow:hidden;}
+  .track i{display:block; height:100%; background:var(--gold);}
+  .cert{background:var(--paper); border:1px dashed var(--sand-line); border-radius:9px; padding:13px 15px; font-size:0.84rem; color:var(--grey); line-height:1.55;}
+  .cert b{color:var(--ink);}
+  .days{font-size:0.82rem; color:var(--grey); line-height:2;}
+  .days b{color:var(--ink); font-weight:700; margin-right:2px;}
+  .days span{display:inline-block; margin-right:14px; white-space:nowrap;}
+  .foot{font-size:0.76rem; color:var(--faint); margin:20px 0 0; line-height:1.6;}
+  .empty{color:var(--grey); font-size:0.86rem; line-height:1.6;}
+  @media (max-width:480px){ .board{padding:16px 14px 50px;} .next{padding:16px 16px;} }
+</style>
+<link rel="stylesheet" href="hub-house.css?v=202609300211">
+<link rel="stylesheet" href="hub-theme.css?v=202609300211">
+</head>
+<body class="hub-grid">
+<div class="board" id="app"></div>
+<script src="hub-shared.js?v=202609300211"></script>
+<script src="hub-store.js?v=202609300211"></script>
+<script src="hub-sync.js?v=202609300211"></script>
+<script type="text/x-hub-app">
+const $ = id => document.getElementById(id);
+const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const rec = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch(e) { return null; } };
+
+const ME = rec('hub:volunteer') || {};
+const SETTINGS = rec('connect_course_settings') || {};
+const TT = rec('connect_timetable_v1') || {};
+const ZONE = SETTINGS.timeZone || '';
+
+const MON = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DOW = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const parse = s => { const m = String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(+m[1], +m[2]-1, +m[3]) : null; };
+const ymd = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+const TODAY = ymd(new Date());
+const longDay = iso => { const d = parse(iso); return d ? DOW[d.getDay()] + ' ' + d.getDate() + ' ' + MON[d.getMonth()] : iso; };
+const shortDay = iso => { const d = parse(iso); return d ? DOW[d.getDay()].slice(0,3) + ' ' + d.getDate() + ' ' + MON[d.getMonth()].slice(0,3) : iso; };
+
+/* THE TEACHING DAYS ARE THE TIMETABLE'S. A class is a day the timetable gives
+   a practice to; its start is the first teaching slot, its end the last, and
+   its length is those slots added up. Nothing here has a schedule of its own. */
+const tpSlots = (TT.slots || []).filter(s => s.kind === 'tp');
+const mins = sl => { const a = String(sl.from||'').match(/^(\d{1,2}):(\d{2})/), b = String(sl.to||'').match(/^(\d{1,2}):(\d{2})/); if (!a||!b) return 0; const d = (+b[1]*60 + +b[2]) - (+a[1]*60 + +a[2]); return d > 0 ? d : 0; };
+const hoursPerDay = tpSlots.reduce((n, sl) => n + mins(sl), 0) / 60;
+const days = (TT.days || []).filter(d => d.tp).map(d => d.date).sort();
+const here = new Set(ME.here || []);
+const attended = days.filter(d => here.has(d)).length;
+const hours = attended * hoursPerDay;
+const upcoming = days.filter(d => d >= TODAY);
+const next = upcoming[0] || '';
+const fmtH = h => (Math.round(h * 100) / 100).toString().replace(/\.00$/, '');
+
+/* A time as this reader sees it: the course's own clock, and theirs beside
+   it when they are somewhere that makes it a different time. */
+function timeFor(iso, hhmm){
+  const tf = (window.hubTimeFor && ZONE) ? hubTimeFor(iso, hhmm, ZONE) : null;
+  return (tf && tf.differs) ? hhmm + ' (' + tf.local + ' your time)' : hhmm;
+}
+
+/* The room to join: the course's teaching practice room, typed once on
+   Course admin. An untagged room serves everyone; a group-tagged one is a
+   candidate-group thing, and a volunteer is in the room with whoever is
+   teaching, so any teaching practice room will do. */
+function room(){
+  const list = Array.isArray(SETTINGS.onlineRooms) ? SETTINGS.onlineRooms : [];
+  const tp = list.filter(r => r && r.url && /teaching practice/i.test(r.label || ''));
+  return tp.find(r => !r.group) || tp[0] || list.find(r => r && r.url && !/input/i.test(r.label || '')) || null;
+}
+
+/* CERTIFICATE. Twenty hours until the centre sets its own -- Connect keeps a
+   threshold per centre, and this is the same idea with a sensible default.
+   Stated as a distance in CLASSES, because "two more classes" is a thing a
+   person can act on and "seventy-nine percent" is not. */
+const TARGET = parseFloat(SETTINGS.volunteerCertificateHours) || 20;
+const left = Math.max(0, TARGET - hours);
+const classesLeft = hoursPerDay ? Math.ceil(left / hoursPerDay - 1e-9) : 0;
+const earned = hours >= TARGET && TARGET > 0;
+
+function render(){
+  const app = $('app');
+  const first = String(ME.name || '').trim().split(/\s+/)[0] || '';
+  const tutors = String(SETTINGS.tutorNames || '').split(/[,\n;]+/).map(x => x.trim()).filter(Boolean);
+  const r = room();
+  const startT = tpSlots.length ? tpSlots[0].from : '', endT = tpSlots.length ? tpSlots[tpSlots.length-1].to : '';
+  const isToday = next === TODAY;
+  const nextBlock = !days.length
+    ? `<div class="next done"><div class="k">Your classes</div><h2>Nothing is scheduled yet</h2><div class="tiny">The centre has not set the timetable. This page fills in when it does.</div></div>`
+    : next
+    ? `<div class="next"><div class="k">Your next class</div>
+        <h2>${isToday ? 'Today, ' : (upcoming[0] && daysBetween(TODAY, next) === 1) ? 'Tomorrow, ' : ''}${esc(longDay(next))}</h2>
+        <div class="when">${esc(timeFor(next, startT))} – ${esc(timeFor(next, endT))}${tpSlots.length > 1 ? ' · ' + tpSlots.length + ' short lessons' : ''}${ZONE && window.hubReaderZone && hubReaderZone() !== ZONE ? '<small>Course time is ' + esc(hubZoneName(ZONE)) + '.</small>' : ''}</div>
+        ${r ? `<a class="room" href="${esc(r.url)}" target="_blank" rel="noopener">Join on ${/zoom/i.test(r.url) ? 'Zoom' : /meet\.google/i.test(r.url) ? 'Meet' : /teams/i.test(r.url) ? 'Teams' : 'the link'}</a>` : ''}
+        <div class="tiny">${tutors.length ? 'Your teachers are trainees, with ' + esc(tutors.join(' and ')) + ' watching. ' : ''}You do not need to prepare anything.</div></div>`
+    : `<div class="next done"><div class="k">Your classes</div><h2>The course has finished</h2><div class="tiny">Thank you for coming. Your attendance and hours are below.</div></div>`;
+
+  app.innerHTML = `
+    <p class="eyebrow">${esc([SETTINGS.centreName, SETTINGS.courseName].filter(Boolean).join(' · '))}</p>
+    <h1>Hello${first ? ' ' + esc(first) : ''}</h1>
+    <p class="sub">Thank you for coming in to be taught. Here is everything for your classes.</p>
+    ${nextBlock}
+    <div class="card"><h3>For your next class</h3>
+      <p class="note">Anything your teachers share for the lesson appears here. Have a look if you like — you do not have to.</p>
+      <p class="empty">Nothing shared yet.</p></div>
+    <div class="card"><h3>Your attendance</h3>
+      <div class="segs">${days.map(d => `<span class="seg ${here.has(d) ? 'here' : d < TODAY ? 'miss' : ''}" title="${esc(shortDay(d))}"></span>`).join('')}</div>
+      <div class="hrs"><b>${fmtH(hours)} h</b><span>${attended} ${attended === 1 ? 'class' : 'classes'}${upcoming.length ? ' · ' + upcoming.length + ' still to come' : ''}</span></div>
+      ${TARGET > 0 ? `<div class="track"><i style="width:${Math.min(100, Math.round(hours / TARGET * 100))}%"></i></div>
+      <div class="cert">${earned
+        ? `Your <b>certificate of attendance</b> is earned. The centre will give it to you at the end of the course.`
+        : `Your <b>certificate of attendance</b> is ready at ${fmtH(TARGET)} hours. That is <b>${classesLeft} more ${classesLeft === 1 ? 'class' : 'classes'}</b>. It is signed by the centre and yours to keep.`}</div>` : ''}
+    </div>
+    ${upcoming.length > 1 ? `<div class="card"><h3>The rest of the course</h3>
+      <p class="days">${upcoming.slice(0, 8).map(d => `<span><b>${esc(shortDay(d))}</b> · ${esc(startT)}</span>`).join('')}${upcoming.length > 8 ? '<span>and ' + (upcoming.length - 8) + ' more to ' + esc(shortDay(upcoming[upcoming.length-1])) + '</span>' : ''}</p></div>` : ''}
+    <div class="install-hint" id="installHint" hidden></div>
+    <p class="foot">This link is yours. It stops working when the course ends.<br>If you cannot come to a class, just let your teacher know.</p>`;
+  if (window.hubInstallHint) hubInstallHint($('installHint'), 'volunteer');
+}
+function daysBetween(a, b){ const x = parse(a), y = parse(b); return (x && y) ? Math.round((y - x) / 86400000) : 99; }
+
+render();
+</script>
+</body>
+</html>

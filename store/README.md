@@ -14,6 +14,14 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
+## 30 Sep 2026 — the volunteer register and a volunteer's own link
+See `2026-09-30-volunteer-register-and-link.md`. Course kind `volunteers`
+(tutors + assessor only; a candidate gets null), a volunteer's link `?v=` that
+reads its own page and nothing else, and the course id in a tutor's boot so
+the register can mint links. **Deployed as versions 41, 42 and 43.** Two
+deploys in between silently re-deployed version 40 — the note says why and
+the order that works.
+
 ## 29 Sep 2026 — the assessor link ends when the course ends
 See `2026-09-29-assessor-link-ends-with-the-course.md`. The expiry stops being
 the course end date plus fourteen days and becomes the end of the course's last

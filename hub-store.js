@@ -19,11 +19,17 @@ window.HubStore = (function(){
     // The assessor key travels as ?ak= -- ?a= is the assignment key on screens 9-11
     // (a collision found on the 20 Sep 2026 trainee walk: opening FOL stored 'fol' as an assessor key).
     if (params.get('ak')) { localStorage.setItem('hub:a', params.get('ak')); localStorage.removeItem('hub:t'); localStorage.removeItem('hub:k'); }
+    /* A volunteer student's own link (30 Sep 2026): "?v=<courseId>-<random>".
+       It opens their own page and nothing else, and like every other link it
+       is the LAST one that wins in this browser. */
+    if (params.get('v')) { localStorage.setItem('hub:v', params.get('v')); localStorage.removeItem('hub:t'); localStorage.removeItem('hub:k'); localStorage.removeItem('hub:a'); }
+    if (params.get('t') || params.get('k') || params.get('ak')) localStorage.removeItem('hub:v');
     var stray = localStorage.getItem('hub:a'); if (stray && /^(fol|lrt|lsrt|lfc|a5)$/.test(stray)) localStorage.removeItem('hub:a');
   } catch (e) {}
   function token(){ try { return localStorage.getItem('hub:t') || ''; } catch (e) { return ''; } }
   function key(){ try { return localStorage.getItem('hub:k') || ''; } catch (e) { return ''; } }
   function akey(){ try { return localStorage.getItem('hub:a') || ''; } catch (e) { return ''; } }
+  function vtoken(){ try { return localStorage.getItem('hub:v') || ''; } catch (e) { return ''; } }
   // text/plain keeps the browser from sending a CORS preflight, which Apps
   // Script would not answer; the response itself is plain JSON.
   // A call that never answers is worse than one that fails: 20 s, then it is
@@ -46,6 +52,7 @@ window.HubStore = (function(){
     var payload = Object.assign({}, body);
     if (key() && payload.key == null) payload.key = key();
     else if (akey() && payload.a == null) payload.a = akey();
+    else if (vtoken() && payload.v == null) payload.v = vtoken();
     // Apps Script answers the odd call with an HTML error page ("Sayfa
     // Bulunamadi", 1 in 3 during a bad minute on 20 Sep 2026): three tries.
     var out, tries = 0, waits = [900, 1800];
@@ -66,10 +73,13 @@ window.HubStore = (function(){
     if (key()) return href + sep + 'k=' + encodeURIComponent(key());
     if (akey()) return href + sep + 'ak=' + encodeURIComponent(akey());
     if (token()) return href + sep + 't=' + encodeURIComponent(token());
+    if (vtoken()) return href + sep + 'v=' + encodeURIComponent(vtoken());
     return href;
   }
   return {
-    url: URL, token: token, key: key, assessorKey: akey,
+    url: URL, token: token, key: key, assessorKey: akey, volunteerToken: vtoken,
+    isVolunteer: function(){ return !!vtoken() && !key() && !akey() && !token(); },
+    volunteerLinkFor: function(v){ return base() + '26_volunteer.html?v=' + encodeURIComponent(v); },
     isTutor: function(){ return !!key(); }, isAssessor: function(){ return !!akey() && !key(); }, isTrainee: function(){ return !!token() && !key() && !akey(); },
     call: call,
     ping: function(){ return call({ op: 'ping' }); },
