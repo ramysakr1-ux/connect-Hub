@@ -414,8 +414,9 @@
     color:var(--gold-deep, oklch(52% 0.098 70)); background:var(--gold-wash, oklch(94.5% 0.035 78));
     border:1.5px solid var(--gold); border-radius:20px; padding:5px 13px; line-height:1.3;}
   .duenote::before{content:"\2022"; font-size:1.1em; line-height:0;}
+  .fromtt{display:block; font-size:0.72rem; color:var(--grey,#6b7280); margin-top:3px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609300029">
+<link rel="stylesheet" href="hub-house.css?v=202609300036">
 </head>
 <body>
 <div class="board">
@@ -440,7 +441,7 @@
         <option>A1</option><option>A1/A2</option><option>A2</option><option>A2/B1</option>
         <option>B1</option><option>B1/B2</option><option>B2</option><option>B2/C1</option>
       </datalist>
-      <div class="field"><label for="fDate">Date</label><input id="fDate" type="date"></div>
+      <div class="field"><label for="fDate">Date</label><input id="fDate" type="date"><small id="fDateFromTt" class="fromtt"></small></div>
       <div class="field"><label for="fLength">Lesson length (min)</label><input id="fLength" type="number" min="0" step="5" placeholder="45"></div>
     </div>
   </div>
@@ -638,10 +639,11 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202609300029"></script>
-<script src="hub-shared.js?v=202609300029"></script>
-<script src="hub-store.js?v=202609300029"></script>
-<script src="hub-sync.js?v=202609300029"></script>
+<script src="hub-due.js?v=202609300036"></script>
+<script src="hub-shared.js?v=202609300036"></script>
+<script src="hub-rotation.js?v=202609300036"></script>
+<script src="hub-store.js?v=202609300036"></script>
+<script src="hub-sync.js?v=202609300036"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -1428,10 +1430,77 @@ function collect(){
   };
 }
 
+/* THE DATE OF A LESSON COMES FROM THE TIMETABLE (30 Sep 2026).
+ *
+ * Until now a candidate typed the date of their own teaching practice into
+ * the plan, and the timetable said the same thing somewhere else. Two places
+ * holding one fact is how they come to disagree -- and the tracker, the
+ * CELTA 5 and the six-hours check all read the typed one.
+ *
+ * The timetable knows which day each practice falls on and which teaching set
+ * teaches it, so for a candidate it can work out their own date. It is filled
+ * in for them, not locked: a lesson that actually moved is a real thing, and
+ * the standing rule is that anything the system decides can be overridden. So
+ * the field is prefilled when empty and left alone when the candidate has put
+ * something there.
+ */
+function timetableDateFor(tpNumber){
+  if (!tpNumber) return '';
+  var tt = null, roster = null, me = null;
+  try { tt = JSON.parse(localStorage.getItem('connect_timetable_v1') || 'null'); } catch(e) {}
+  try { roster = JSON.parse(localStorage.getItem('connect_roster_v1') || 'null'); } catch(e) {}
+  try { me = JSON.parse(localStorage.getItem('hub:me') || 'null'); } catch(e) {}
+  if (!tt || !tt.days || !me || !me.token || !window.hubRotation) return '';
+  var people = Object.values((roster && roster.trainees) || {}).filter(Boolean)
+    .filter(function(t){ return String(t.group || '') === String(me.group || ''); })
+    .map(function(t){ return { token: t.id || t.token, name: t.name }; });
+  if (!people.length) return '';
+  var sets = window.hubRotation.setsFor(people);
+  /* Which of the two teaching sets is this candidate in? That decides which
+     of the practice's two days is theirs. */
+  var mine = -1;
+  sets.forEach(function(set, i){ if (set.some(function(x){ return x.token === me.token; })) mine = i; });
+  if (mine < 0) return '';
+  var day = (tt.days || []).find(function(d){ return d.tp === tpNumber && d.setIndex === mine; });
+  return day ? day.date : '';
+}
+
+/* "TP4", "tp 4", "4" -- the field is free text and always has been. */
+function tpNumberOf(text){
+  var m = String(text || '').match(/(\d{1,2})/);
+  return m ? +m[1] : 0;
+}
+
+/* Fill the date in when the practice number is known and the box is empty. */
+function fillDateFromTimetable(){
+  var dateEl = document.getElementById('fDate'), tpEl = document.getElementById('fTP');
+  if (!dateEl || !tpEl || dateEl.value) return;
+  var iso = timetableDateFor(tpNumberOf(tpEl.value));
+  if (!iso) return;
+  dateEl.value = iso;
+  var hint = document.getElementById('fDateFromTt');
+  if (hint) hint.textContent = 'From the timetable. Change it if the lesson moved.';
+}
+
+/* Typing the practice number is the moment the date becomes knowable, so it
+   fills then as well as on load. */
+(function(){
+  function wire(){
+    var tpEl = document.getElementById('fTP');
+    if (tpEl && !tpEl.dataset.ttWired) {
+      tpEl.dataset.ttWired = '1';
+      tpEl.addEventListener('change', fillDateFromTimetable);
+      tpEl.addEventListener('blur', fillDateFromTimetable);
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire); else wire();
+})();
+
 function restore(d){
   const m=d.meta||{};
   $('fName').value=m.name||''; $('fTP').value=m.tp||''; $('fLevel').value=m.level||'';
   $('fDate').value=m.date||''; $('fLength').value=m.length||'';
+  fillDateFromTimetable();
   const key=Object.keys(FRAMEWORKS).find(k=>FRAMEWORKS[k].name===m.framework);
   /* The button reads the select, so reopening a saved plan has to repaint it.
      Without this the shape came back on the record and the control went on
