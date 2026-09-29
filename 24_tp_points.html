@@ -79,24 +79,51 @@
   .sugg li{margin:3px 0;}
   .tbl.ord{margin:0 0 12px;}
   .tbl.ord td{font-weight:700; letter-spacing:.08em;}
+  .mbtn{display:block; width:100%; margin-top:3px; font-family:inherit; font-size:0.66rem; font-weight:700;
+    letter-spacing:.04em; padding:2px 5px; border:1px solid var(--sand-line); border-radius:5px;
+    background:var(--paper); color:var(--grey); cursor:pointer;}
+  .mbtn:hover{border-color:var(--teal); color:var(--teal);}
+  .mbtn.has{background:var(--box); color:var(--gold-deep); border-color:var(--gold);}
+  .mats{margin:12px 0 0; padding:14px 16px; background:var(--paper); border:1px solid var(--sand-line);
+    border-left:4px solid var(--gold); border-radius:9px;}
+  .mats h4{font-family:'Newsreader',Georgia,serif; font-size:1.02rem; margin:0 0 10px;}
+  .mats .mrow{display:grid; grid-template-columns:130px 1fr; gap:10px; align-items:start; margin:0 0 8px;}
+  .mats label{font-size:0.72rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--grey); padding-top:6px;}
+  .mats input, .mats textarea{font-family:inherit; font-size:0.8rem; width:100%; padding:5px 8px;
+    border:1px solid var(--sand-line); border-radius:6px; background:var(--paper); color:var(--ink);}
+  .mats input:focus, .mats textarea:focus{outline:2px solid var(--teal); outline-offset:-1px;}
+  .mats .hint{font-size:0.73rem; color:var(--grey); margin:4px 0 0; line-height:1.5;}
+  .mats .files{list-style:none; margin:0 0 6px; padding:0; font-size:0.79rem;}
+  .mats .files li{display:flex; gap:8px; align-items:center; margin:0 0 4px;}
+  .mats .files a{color:var(--teal); font-weight:600;}
+  .mats .macts{display:flex; justify-content:flex-end; margin-top:8px;}
+  .mats-read{display:block; margin-top:3px; font-size:0.75rem; line-height:1.6;}
+  .mats-read .sep{color:var(--faint); margin:0 5px;}
+  .mats-read .mpoint{color:var(--grey);}
+  .mats-read .mlink{color:var(--teal); font-weight:600; text-decoration:none;}
+  .mats-read .mlink:hover{text-decoration:underline;}
+  .mats-read.ref .mlink{color:var(--grey);}
+  .mats-read .mref{color:var(--grey);}
+  .btn.sm{padding:3px 9px; font-size:0.72rem;}
+  @media (max-width:560px){ .mats .mrow{grid-template-columns:1fr; gap:3px;} .mats label{padding-top:0;} }
   .wrap{overflow-x:auto;}
   @media (max-width:560px){ .board{padding:18px 12px 60px;} section.group{padding:12px 12px 14px;} }
   @media print{ .back,.relbar,#hubSync{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609292358">
-<link rel="stylesheet" href="hub-theme.css?v=202609292358">
+<link rel="stylesheet" href="hub-house.css?v=202609300008">
+<link rel="stylesheet" href="hub-theme.css?v=202609300008">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609292358"></script>
-<script src="hub-tracker.js?v=202609292358"></script>
-<script src="hub-rotation.js?v=202609292358"></script>
-<script src="hub-shared.js?v=202609292358"></script>
-<script src="hub-store.js?v=202609292358"></script>
-<script src="hub-sync.js?v=202609292358"></script>
+<script src="hub-due.js?v=202609300008"></script>
+<script src="hub-tracker.js?v=202609300008"></script>
+<script src="hub-rotation.js?v=202609300008"></script>
+<script src="hub-shared.js?v=202609300008"></script>
+<script src="hub-store.js?v=202609300008"></script>
+<script src="hub-sync.js?v=202609300008"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -114,6 +141,11 @@ $('back').href = IS_TRAINEE ? 'index.html' : IS_TUTOR ? '5_tutor_dashboard.html'
 
 let P = rec(KEY) || null;
 let note = '';
+/* Which cell's materials are open, as "group|token|tp". Ramy, 29 Sep 2026:
+   a candidate should get "their TP points and scanned copies of the pages
+   they are teaching and the embedded audio link". A grid of dropdowns cannot
+   hold that, so a cell opens a panel of its own. */
+let OPEN = null, UPLOADING = false;
 
 function groups(){
   const roster = rec('connect_roster_v1') || {};
@@ -179,6 +211,99 @@ function persist(word){
   setTimeout(() => { if (note === word) { note = ''; const s = document.querySelector('.status'); if (s) s.textContent = ''; } }, 2500);
 }
 
+const MKEY = (g, t, tp) => g + '|' + t + '|' + tp;
+function cellOf(g, t, tp){
+  P.groups = P.groups || {}; P.groups[g] = P.groups[g] || {}; P.groups[g][t] = P.groups[g][t] || {};
+  return (P.groups[g][t]['tp' + tp] = P.groups[g][t]['tp' + tp] || {});
+}
+
+/* The materials for one lesson. Three kinds, because a centre has three:
+     pages   scanned pages, uploaded into the course's own Drive folder --
+             the same path a candidate's own materials already take;
+     book    a link to a coursebook that lives somewhere else, with the page
+             and exercise reference as words. Lite cannot cut pages out of a
+             PDF it does not host, and should not pretend to: the reference
+             plus the link is what a tutor actually needs on screen. Where the
+             link is a direct PDF address, a page number opens it at that page;
+     audio   a link to wherever the audio lives, which need not be Lite. */
+function matsPanel(g, t, tp, letter, name){
+  const c = cellOf(g, t, tp);
+  const pages = c.pages || [];
+  return `<div class="mats"><h4>TP ${tp} \u00b7 ${esc(letter)}${name ? ' \u00b7 ' + esc(name) : ''} \u2014 what they are teaching</h4>
+    <div class="mrow"><label>The point</label><textarea data-m="point" rows="2" placeholder="What the lesson is, in your words">${esc(c.point || '')}</textarea></div>
+    <div class="mrow"><label>Coursebook</label><input type="url" data-m="bookUrl" value="${esc((c.book||{}).url || '')}" placeholder="https://\u2026 a link to the book"></div>
+    <div class="mrow"><label>Pages and exercises</label><input type="text" data-m="bookRef" value="${esc((c.book||{}).ref || '')}" placeholder="Unit 4, pp. 42\u201343, ex. 3\u20135"></div>
+    <div class="mrow"><label>Page to open at</label><input type="number" min="1" data-m="bookPage" value="${esc((c.book||{}).page || '')}" placeholder="42"><small>Only works where the link is a direct PDF address; a Drive preview ignores it.</small></div>
+    <div class="mrow"><label>Audio</label><input type="url" data-m="audioUrl" value="${esc((c.audio||{}).url || '')}" placeholder="https://\u2026 wherever the audio lives"></div>
+    <div class="mrow"><label>Scanned pages</label><div>
+      ${pages.length ? '<ul class="files">' + pages.map((f, i) => `<li><a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a> <button type="button" class="btn quiet sm" data-mrm="${i}">Remove</button></li>`).join('') + '</ul>' : '<p class="hint">Nothing attached yet.</p>'}
+      <input type="file" id="matsFile" accept="application/pdf,image/*"${UPLOADING ? ' disabled' : ''}>
+      <p class="hint">${UPLOADING ? 'Uploading\u2026' : 'Up to 2MB each, into the course\u2019s own folder. Anyone with the link can open it, because a tutor or an assessor is usually not signed in to your Workspace \u2014 so for a whole coursebook, link to your own Drive above instead.'}</p>
+    </div></div>
+    <div class="macts"><button type="button" class="btn quiet" id="matsClose">Close</button></div></div>`;
+}
+
+function wireMats(){
+  if (!OPEN) return;
+  const [g, t, tp] = OPEN.split('|');
+  const c = cellOf(g, t, tp);
+  document.querySelectorAll('[data-m]').forEach(el => {
+    let timer = null;
+    const fire = () => {
+      const k = el.dataset.m, v = el.value;
+      if (k === 'point') c.point = v;
+      else if (k === 'bookUrl') { c.book = c.book || {}; c.book.url = v; }
+      else if (k === 'bookRef') { c.book = c.book || {}; c.book.ref = v; }
+      else if (k === 'bookPage') { c.book = c.book || {}; c.book.page = v; }
+      else if (k === 'audioUrl') { c.audio = c.audio || {}; c.audio.url = v; }
+      c.edited = true;
+      try { localStorage.setItem(KEY, JSON.stringify(P)); } catch(e) {}
+      const st = document.querySelector('.status'); if (st) st.textContent = 'Saved';
+    };
+    el.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(fire, 700); });
+    el.addEventListener('blur', () => { clearTimeout(timer); fire(); });
+  });
+  document.querySelectorAll('[data-mrm]').forEach(el => el.addEventListener('click', () => {
+    (c.pages || []).splice(+el.dataset.mrm, 1); c.edited = true; persist('Removed');
+  }));
+  const f = $('matsFile');
+  if (f) f.addEventListener('change', async e => {
+    const file = e.target.files[0]; e.target.value = ''; if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { alert('That file is over 2MB. Put it on your own Drive and paste the coursebook link instead.'); return; }
+    UPLOADING = true; render();
+    try {
+      const b64 = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(String(r.result).split(',')[1] || '');
+        r.onerror = () => rej(new Error('That file could not be read.'));
+        r.readAsDataURL(file);
+      });
+      const out = await window.HubStore.putMaterial(t, file.name, file.type || 'application/octet-stream', b64);
+      c.pages = (c.pages || []).concat([{ name: out.name || file.name, url: out.url }]);
+      c.edited = true;
+      UPLOADING = false; persist('Attached');
+    } catch (err) { UPLOADING = false; alert(err && err.message ? err.message : 'That file could not be attached.'); render(); }
+  });
+  if ($('matsClose')) $('matsClose').addEventListener('click', () => { OPEN = null; render(); });
+}
+
+/* What a candidate reads under their lesson. The book link carries the page
+   anchor when there is one, so a direct PDF opens where the lesson is. */
+function matsRead(c, mine){
+  if (!c) return '';
+  const bits = [];
+  if (c.point) bits.push(`<span class="mpoint">${esc(c.point)}</span>`);
+  const b = c.book || {};
+  if (b.ref || b.url) {
+    const href = b.url ? (b.page && /\.pdf($|\?)/i.test(b.url) ? b.url + '#page=' + encodeURIComponent(b.page) : b.url) : '';
+    bits.push(href ? `<a class="mlink" href="${esc(href)}" target="_blank" rel="noopener">${esc(b.ref || 'The coursebook')}</a>` : `<span class="mref">${esc(b.ref)}</span>`);
+  }
+  (c.pages || []).forEach(f => bits.push(`<a class="mlink" href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a>`));
+  if ((c.audio || {}).url) bits.push(`<a class="mlink audio" href="${esc(c.audio.url)}" target="_blank" rel="noopener">Audio</a>`);
+  if (!bits.length) return '';
+  return `<span class="mats-read${mine ? '' : ' ref'}">${bits.join('<span class="sep">\u00b7</span>')}</span>`;
+}
+
 function render(){
   const app = $('app');
   const head = `<p class="eyebrow">Teaching practice</p><h1>TP points</h1>
@@ -204,8 +329,10 @@ function render(){
         const c = mine['tp'+tp] || {};
         const lang = R.LANGUAGE_FOCUS.indexOf(c.aim) >= 0;
         const ref = others.map(t => (rows[t] || {})['tp'+tp] || {}).map(x => x.aim).filter(Boolean);
-        return `<tr><td class="who">TP ${tp}</td><td${lang ? ' class="lang"' : ''}>${esc(c.aim || '\u2014')}${c.point ? '<br><small>' + esc(c.point) + '</small>' : ''}</td>${
-          others.length ? `<td class="ref">${ref.length ? esc(ref.join(' \u00b7 ')) : '\u2014'}</td>` : ''}</tr>`;
+        const m = matsRead(c, true);
+        const refCells = others.map(t => (rows[t] || {})['tp'+tp] || {});
+        return `<tr><td class="who">TP ${tp}</td><td${lang ? ' class="lang"' : ''}>${esc(c.aim || '\u2014')}${m ? '<br>' + m : ''}</td>${
+          others.length ? `<td class="ref">${refCells.filter(x => x.aim).map(x => esc(x.aim) + (matsRead(x, false) ? '<br>' + matsRead(x, false) : '')).join('<br>') || '\u2014'}</td>` : ''}</tr>`;
       }).join('')}</table></div>
       ${others.length ? '<p class="ok">The last column is what the rest of your group is teaching. You are watching those lessons, not planning them.</p>' : ''}</section>`;
     return;
@@ -258,11 +385,18 @@ function render(){
       ${lettered.map(p => `<tr><td class="who">${esc(p.letter)}<small>${esc(p.name||'')}</small></td>${
         Array.from({length:TPS},(_,i)=>i+1).map(tp => {
           const c = (rows[p.token] || {})['tp'+tp] || {};
+          const has = !!(c.point || (c.pages||[]).length || (c.book||{}).url || (c.book||{}).ref || (c.audio||{}).url);
           return `<td><select data-g="${esc(g.group)}" data-t="${esc(p.token)}" data-tp="${tp}">${
-            R.AIMS.map(a => `<option value="${esc(a)}"${c.aim===a?' selected':''}>${esc(a)}</option>`).join('')}</select></td>`;
+            R.AIMS.map(a => `<option value="${esc(a)}"${c.aim===a?' selected':''}>${esc(a)}</option>`).join('')}</select>
+            <button type="button" class="mbtn${has?' has':''}" data-mats="${esc(MKEY(g.group, p.token, tp))}" title="Pages, coursebook and audio">${has ? 'Materials \u2713' : 'Materials'}</button></td>`;
         }).join('')}</tr>`).join('')}</table></div>
       ${noLang.length ? `<div class="warn"><b>Handbook 9.1.2:</b> a centre must include language-focus lessons for every candidate. ${noLang.length===1?'Candidate':'Candidates'} ${esc(noLang.join(', '))} ${noLang.length===1?'has':'have'} none in practices 1 to ${TPS}. Grammar, vocabulary and functional language are the language-focus types.</div>` : ''}
       ${clash.length ? `<div class="warn"><b>Same type, same day:</b> ${clash.map(c => 'TP ' + c.tp + ' — ' + esc(c.set) + ' — ' + esc(c.aim)).join('; ')}. They teach on the same day, so two of them would be teaching the same thing.</div>` : ''}
+      ${OPEN && OPEN.split('|')[0] === g.group ? (function(){
+        const [, t, tp] = OPEN.split('|');
+        const who = lettered.find(x => x.token === t) || {};
+        return matsPanel(g.group, t, tp, who.letter || '?', who.name || '');
+      })() : ''}
       ${after.length ? `<div class="sugg"><b>After a lesson that was not to standard</b> — the centre’s own recommendation, not a Cambridge rule.<ul>${
         after.map(a => `<li>${esc(letterOf(a.token))} was not to standard on TP ${a.failed} (${esc(a.failedAim)}). TP ${a.next} is ${esc(a.nextAim || 'not set')}; another ${esc(a.familyWord)} lesson would give them a second go at it — ${esc(a.suggest.join(', '))}.</li>`).join('')}</ul></div>` : ''}
       ${(!noLang.length && !clash.length && Object.keys(flat).length) ? `<p class="ok">Every candidate has at least one language-focus lesson, and nobody in a teaching set repeats a type on the same day.</p>` : ''}
@@ -276,6 +410,10 @@ function render(){
     P.groups[g][t]['tp'+tp] = { aim: el.value, edited: true };
     persist('Saved');
   }));
+  document.querySelectorAll('button[data-mats]').forEach(el => el.addEventListener('click', () => {
+    OPEN = (OPEN === el.dataset.mats) ? null : el.dataset.mats; render();
+  }));
+  wireMats();
   document.querySelectorAll('button[data-rel]').forEach(el => el.addEventListener('click', () => {
     P.released = P.released || {};
     P.released[el.dataset.rel] = el.dataset.on === '1';
