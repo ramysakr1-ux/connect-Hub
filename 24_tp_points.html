@@ -107,23 +107,44 @@
   .btn.sm{padding:3px 9px; font-size:0.72rem;}
   @media (max-width:560px){ .mats .mrow{grid-template-columns:1fr; gap:3px;} .mats label{padding-top:0;} }
   .wrap{overflow-x:auto;}
+  .ord{white-space:nowrap; letter-spacing:.12em;}
+  /* On a phone six practices across cannot be a table: four columns simply
+     ran off the right edge and the dropdowns were too narrow to read a word
+     in ("Grammar" showed as "Gram"). Below 700px each candidate becomes a
+     card and each practice a full-width row that says which practice it is.
+     More scrolling, nothing hidden, nothing guessed at. */
+  @media (max-width:700px){
+    .tbl.stack{border:0; background:none;}
+    .tbl.stack tr:first-child{display:none;}
+    .tbl.stack tr{display:block; background:var(--paper); border:1px solid var(--sand-line);
+      border-radius:9px; margin:0 0 12px; overflow:hidden;}
+    .tbl.stack td{display:grid; grid-template-columns:74px 1fr; gap:10px; align-items:center;
+      border:0; border-top:1px solid var(--sand-line); padding:7px 10px;}
+    .tbl.stack td:first-child{border-top:0; background:var(--box); display:block;}
+    .tbl.stack td[data-lab]::before{content:attr(data-lab); font-size:0.68rem; letter-spacing:.07em;
+      text-transform:uppercase; color:var(--grey); font-weight:700;}
+    .tbl.stack td.who{white-space:normal;}
+    .tbl.stack select{font-size:0.86rem; padding:7px 8px;}
+    .tbl.stack .mbtn{width:auto; margin:5px 0 0; padding:5px 10px; font-size:0.72rem;}
+    .tbl.ord.stack td{grid-template-columns:74px 1fr;}
+  }
   @media (max-width:560px){ .board{padding:18px 12px 60px;} section.group{padding:12px 12px 14px;} }
   @media print{ .back,.relbar,#hubSync{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609300105">
-<link rel="stylesheet" href="hub-theme.css?v=202609300105">
+<link rel="stylesheet" href="hub-house.css?v=202609300111">
+<link rel="stylesheet" href="hub-theme.css?v=202609300111">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609300105"></script>
-<script src="hub-tracker.js?v=202609300105"></script>
-<script src="hub-rotation.js?v=202609300105"></script>
-<script src="hub-shared.js?v=202609300105"></script>
-<script src="hub-store.js?v=202609300105"></script>
-<script src="hub-sync.js?v=202609300105"></script>
+<script src="hub-due.js?v=202609300111"></script>
+<script src="hub-tracker.js?v=202609300111"></script>
+<script src="hub-rotation.js?v=202609300111"></script>
+<script src="hub-shared.js?v=202609300111"></script>
+<script src="hub-store.js?v=202609300111"></script>
+<script src="hub-sync.js?v=202609300111"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -375,18 +396,18 @@ function render(){
     const letterOf = t => (lettered.find(p => p.token === t) || {}).letter || '?';
     return `<section class="group"><h2>Group ${esc(g.group || '—')} <small>${g.people.length} candidate${g.people.length===1?'':'s'}</small></h2>
       <p class="sets">Teaching sets: ${sets.map(s => '<b>' + esc(R.setName(s)) + '</b>').filter(Boolean).join(' and ')} — they take alternate days, so each candidate teaches every other day.</p>
-      <div class="wrap"><table class="tbl ord"><tr><th>Teaching order</th>${Array.from({length:TPS},(_,i)=>`<th>TP ${i+1}</th>`).join('')}</tr>
+      <div class="wrap"><table class="tbl ord stack"><tr><th>Teaching order</th>${Array.from({length:TPS},(_,i)=>`<th>TP ${i+1}</th>`).join('')}</tr>
         ${sets.filter(st => st.length).map(st => `<tr><td class="who">${esc(R.setName(st))}</td>${
-          Array.from({length:TPS},(_,i)=>i+1).map(tp => `<td>${esc(R.orderFor(st, tp).map(x => x.letter).join(' '))}</td>`).join('')}</tr>`).join('')}</table></div>
+          Array.from({length:TPS},(_,i)=>i+1).map(tp => `<td data-lab="TP ${tp}"><span class="ord">${esc(R.orderFor(st, tp).map(x => x.letter).join(' '))}</span></td>`).join('')}</tr>`).join('')}</table></div>
       <div class="relbar">${on
         ? `<span class="chip on">Released</span><button class="btn quiet" data-rel="${esc(g.group)}" data-on="0">Take it back</button><span class="status">The candidates can see their own points.</span>`
         : `<span class="chip">Not released</span><button class="btn" data-rel="${esc(g.group)}" data-on="1">Release to Group ${esc(g.group) || '—'}</button><span class="status">Only tutors can see it until it is released.</span>`}</div>
-      <div class="wrap"><table class="tbl"><tr><th>Candidate</th>${Array.from({length:TPS},(_,i)=>`<th>TP ${i+1}</th>`).join('')}</tr>
+      <div class="wrap"><table class="tbl stack"><tr><th>Candidate</th>${Array.from({length:TPS},(_,i)=>`<th>TP ${i+1}</th>`).join('')}</tr>
       ${lettered.map(p => `<tr><td class="who">${esc(p.letter)}<small>${esc(p.name||'')}</small></td>${
         Array.from({length:TPS},(_,i)=>i+1).map(tp => {
           const c = (rows[p.token] || {})['tp'+tp] || {};
           const has = !!(c.point || (c.pages||[]).length || (c.book||{}).url || (c.book||{}).ref || (c.audio||{}).url);
-          return `<td><select data-g="${esc(g.group)}" data-t="${esc(p.token)}" data-tp="${tp}">${
+          return `<td data-lab="TP ${tp}"><select data-g="${esc(g.group)}" data-t="${esc(p.token)}" data-tp="${tp}">${
             R.AIMS.map(a => `<option value="${esc(a)}"${c.aim===a?' selected':''}>${esc(a)}</option>`).join('')}</select>
             <button type="button" class="mbtn${has?' has':''}" data-mats="${esc(MKEY(g.group, p.token, tp))}" title="Pages, coursebook and audio">${has ? 'Materials \u2713' : 'Materials'}</button></td>`;
         }).join('')}</tr>`).join('')}</table></div>
