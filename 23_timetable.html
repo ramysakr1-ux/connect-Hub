@@ -136,22 +136,22 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} .days{grid-template-columns:1fr;} }
   @media print{ .back,.bar,#hubSync{display:none !important;} body{background:#fff;} .days{grid-template-columns:repeat(5,1fr);} .day{break-inside:avoid;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609300052">
-<link rel="stylesheet" href="hub-theme.css?v=202609300052">
+<link rel="stylesheet" href="hub-house.css?v=202609300057">
+<link rel="stylesheet" href="hub-theme.css?v=202609300057">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609300052"></script>
-<script src="hub-tracker.js?v=202609300052"></script>
-<script src="hub-rotation.js?v=202609300052"></script>
-<script src="hub-docx.js?v=202609300052"></script>
-<script src="hub-timetable-parse.js?v=202609300052"></script>
-<script src="hub-shared.js?v=202609300052"></script>
-<script src="hub-store.js?v=202609300052"></script>
-<script src="hub-sync.js?v=202609300052"></script>
+<script src="hub-due.js?v=202609300057"></script>
+<script src="hub-tracker.js?v=202609300057"></script>
+<script src="hub-rotation.js?v=202609300057"></script>
+<script src="hub-docx.js?v=202609300057"></script>
+<script src="hub-timetable-parse.js?v=202609300057"></script>
+<script src="hub-shared.js?v=202609300057"></script>
+<script src="hub-store.js?v=202609300057"></script>
+<script src="hub-sync.js?v=202609300057"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -670,11 +670,17 @@ function render(){
   wireSlots();
   wireMove();
   /* Twenty full days stacked on a phone is a long way to scroll to reach this
-     afternoon, so a narrow screen opens on today. Once only: scrolling back up
-     to read the week should not be undone by the next save. */
+     afternoon, so a narrow screen opens on today.
+     It has to survive a RE-RENDER. Replacing the grid's innerHTML puts the
+     page back at the top, and the first render is followed by others -- the
+     migration saves, the boot arrives, a preview toggles -- so doing this
+     once meant it was always undone and the phone opened on day one
+     (30 Sep 2026). It re-applies after every render until the reader scrolls
+     for themselves, and then never again: scrolling back to read week one
+     must not be yanked away by the next save. */
   if (!SCROLLED && window.innerWidth <= 980) {
     const t = document.getElementById('d-' + TODAY);
-    if (t) { SCROLLED = true; t.scrollIntoView({ block: 'center' }); }
+    if (t) requestAnimationFrame(() => t.scrollIntoView({ block: 'center' }));
   }
 }
 
@@ -842,6 +848,19 @@ function save(word){
   setTimeout(() => { note = ''; const s2 = document.querySelector('.status'); if (s2 && !busy) s2.textContent = ''; }, 2500);
   if (word === 'Built') render();
 }
+
+/* The reader taking over: from their first scroll, the page is theirs. */
+window.addEventListener('scroll', function once(){
+  if (SCROLLED) return;
+  const t = document.getElementById('d-' + TODAY);
+  if (!t) return;
+  const box = t.getBoundingClientRect();
+  if (Math.abs(box.top) > 4 || window.scrollY === 0) return;   // not our own scroll landing
+  SCROLLED = true;
+  window.removeEventListener('scroll', once);
+}, { passive: true });
+document.addEventListener('pointerdown', () => { SCROLLED = true; }, { once: true, passive: true });
+document.addEventListener('keydown', () => { SCROLLED = true; }, { once: true });
 
 render();
 </script>
