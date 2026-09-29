@@ -82,24 +82,37 @@
   .status{font-size:0.8rem; color:var(--grey);}
   .empty{background:var(--surface); border:1px dashed var(--sand-line); border-radius:10px; padding:26px 22px; color:var(--grey); font-size:0.9rem; line-height:1.6;}
   .legend{font-size:0.76rem; color:var(--grey); margin:14px 0 0; line-height:1.6;}
+  .imp{background:var(--surface); border:1px solid var(--sand-line); border-radius:10px; padding:14px 16px; margin:0 0 18px;}
+  .imp h3{font-family:'Newsreader',Georgia,serif; font-size:1.02rem; margin:0 0 4px;}
+  .imp p{font-size:0.8rem; color:var(--grey); margin:0 0 10px; line-height:1.55;}
+  .imp textarea{font-family:ui-monospace,Menlo,monospace; font-size:0.76rem; width:100%; min-height:90px; padding:8px 10px; border:1px solid var(--sand-line); border-radius:7px; background:var(--paper); color:var(--ink);}
+  .imp .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px;}
+  .review{background:var(--surface); border:1px solid var(--sand-line); border-left:5px solid var(--gold); border-radius:10px; padding:16px 18px; margin:0 0 18px;}
+  .review h3{font-family:'Newsreader',Georgia,serif; font-size:1.1rem; margin:0 0 6px;}
+  .review .n{font-size:0.82rem; color:var(--grey); line-height:1.55; margin:0 0 10px;}
+  .review .found{background:var(--paper); border:1px solid var(--sand-line); border-radius:7px; padding:7px 10px; margin:0 0 6px; font-size:0.79rem;}
+  .review .skipped{font-size:0.78rem; color:var(--brick); margin:8px 0 0;}
+  .review .acts{display:flex; gap:10px; justify-content:flex-end; margin-top:12px; flex-wrap:wrap;}
   @media (max-width:980px){ .days{grid-template-columns:repeat(2,1fr);} }
   @media (max-width:560px){ .board{padding:18px 12px 60px;} .days{grid-template-columns:1fr;} }
   @media print{ .back,.bar,#hubSync{display:none !important;} body{background:#fff;} .days{grid-template-columns:repeat(5,1fr);} .day{break-inside:avoid;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609292259">
-<link rel="stylesheet" href="hub-theme.css?v=202609292259">
+<link rel="stylesheet" href="hub-house.css?v=202609292309">
+<link rel="stylesheet" href="hub-theme.css?v=202609292309">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609292259"></script>
-<script src="hub-tracker.js?v=202609292259"></script>
-<script src="hub-rotation.js?v=202609292259"></script>
-<script src="hub-shared.js?v=202609292259"></script>
-<script src="hub-store.js?v=202609292259"></script>
-<script src="hub-sync.js?v=202609292259"></script>
+<script src="hub-due.js?v=202609292309"></script>
+<script src="hub-tracker.js?v=202609292309"></script>
+<script src="hub-rotation.js?v=202609292309"></script>
+<script src="hub-docx.js?v=202609292309"></script>
+<script src="hub-timetable-parse.js?v=202609292309"></script>
+<script src="hub-shared.js?v=202609292309"></script>
+<script src="hub-store.js?v=202609292309"></script>
+<script src="hub-sync.js?v=202609292309"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -235,7 +248,7 @@ function render(){
     if (!weeks.length) weeks.push([]);
     weeks[weeks.length-1].push(day);
   });
-  const bar = IS_TUTOR ? `<div class="bar"><button class="btn quiet" id="rebuild">Rebuild the shape</button><span class="status">${esc(note)}</span></div>` : '';
+  const bar = IS_TUTOR ? `<div class="bar"><button class="btn quiet" id="rebuild">Rebuild the shape</button><button class="btn quiet" id="importOpen">Import from a sheet</button><span class="status">${esc(note)}</span></div>` + importHTML() : '';
   app.innerHTML = head + bar + weeks.map((w, i) => {
     const a = parse(w[0].date), b = parse(w[w.length-1].date);
     return `<section class="wk"><h2>Week ${i+1} <small>${dm(a)} – ${dm(b)}</small></h2>
@@ -243,6 +256,79 @@ function render(){
   }).join('') + `<p class="legend">Teaching practice runs the same number on two days, one teaching set each: the letters name the candidates teaching that day. ${GROUPS.map(g => 'Group ' + esc(g.group || '—') + ': ' + g.sets.map(R.setName).filter(Boolean).join(' and ')).join('. ')}.</p>`;
   if ($('rebuild')) $('rebuild').addEventListener('click', () => { if (confirm('Rebuild the shape from the course dates? Input sessions and notes you have typed are kept where the day still exists.')) build(true); });
   wireEdits();
+  wireImport();
+}
+
+/* Import. Ramy, 29 Sep 2026: "is it possible to just import a timetable the
+   same way we do with the TP points, the same way we do with the observation
+   tasks?" The rules live in hub-timetable-parse.js so they can be tested away
+   from the page. What arrives is shown before anything is replaced, the same
+   as the observation importer: a file it has never seen is a first draft. */
+let IMPORT_OPEN = false, REVIEW = null;
+
+function importHTML(){
+  if (REVIEW) {
+    const r = REVIEW;
+    return `<div class="review"><h3>What the sheet holds</h3>
+      <p class="n">${esc(r.from)} — ${r.found.length} day${r.found.length===1?'':'s'} read${r.header ? ', by the column names it gives' : ', by position'}${r.byDate ? ', ' + r.byDate + ' matched on their own date' : ''}${r.byPosition ? ', ' + r.byPosition + ' matched in order' : ''}. The input sessions and notes are replaced on those days; the teaching practices Lite works out for itself are left alone unless the sheet names one.</p>
+      ${r.found.slice(0,8).map(f => `<div class="found"><b>${esc(f.date)}</b> — ${esc([f.a, f.b].filter(Boolean).join(' · ') || 'nothing in the session columns')}${f.tp ? ' · TP ' + f.tp : ''}${f.notes ? ' · ' + esc(f.notes) : ''}</div>`).join('')}
+      ${r.found.length > 8 ? `<div class="found">… and ${r.found.length - 8} more</div>` : ''}
+      ${r.unmatched.length ? `<p class="skipped">Not used, nothing to place them on: ${r.unmatched.slice(0,4).map(esc).join('; ')}${r.unmatched.length>4 ? ' and ' + (r.unmatched.length-4) + ' more' : ''}</p>` : ''}
+      ${!r.found.length ? `<p class="skipped">Nothing usable was found. A sheet needs one row per day, with the sessions in their own columns.</p>` : ''}
+      <div class="acts"><button class="btn quiet" id="impCancel">Keep what I have</button>${r.found.length ? '<button class="btn" id="impApply">Put it in</button>' : ''}</div></div>`;
+  }
+  if (!IMPORT_OPEN) return '';
+  return `<div class="imp"><h3>Import from a sheet</h3>
+    <p>Paste from Excel or Google Sheets, or choose a Word, CSV or text file. One row per day, with columns for the date, the input sessions and any notes — a header row naming them helps but is not needed. Rows without a readable date are taken in order from the first course day.</p>
+    <textarea id="impPaste" placeholder="Paste the rows here"></textarea>
+    <div class="row"><button class="btn" id="impRead">Read the paste</button>
+      <input type="file" id="impFile" accept=".docx,.csv,.tsv,.txt" style="font-size:0.78rem">
+      <button class="btn quiet" id="impClose">Close</button></div></div>`;
+}
+
+function wireImport(){
+  if (!IS_TUTOR) return;
+  const open = $('importOpen');
+  if (open) open.addEventListener('click', () => { IMPORT_OPEN = !IMPORT_OPEN; REVIEW = null; render(); });
+  if ($('impClose')) $('impClose').addEventListener('click', () => { IMPORT_OPEN = false; render(); });
+  if ($('impRead')) $('impRead').addEventListener('click', () => {
+    const text = $('impPaste').value;
+    if (!text.trim()) { note = 'Nothing pasted yet.'; render(); return; }
+    review(window.hubTimetableParse.rowsFromText(text), 'What you pasted');
+  });
+  if ($('impFile')) $('impFile').addEventListener('change', async e => {
+    const file = e.target.files[0]; e.target.value = ''; if (!file) return;
+    try {
+      const rows = /\.docx$/i.test(file.name) && window.hubDocxBlocks
+        ? window.hubTimetableParse.rowsFromBlocks(await window.hubDocxBlocks(file))
+        : window.hubTimetableParse.rowsFromText(await file.text());
+      review(rows, file.name);
+    } catch (err) { alert(err && err.message ? err.message : 'That file could not be read.'); }
+  });
+  if ($('impCancel')) $('impCancel').addEventListener('click', () => { REVIEW = null; render(); });
+  if ($('impApply')) $('impApply').addEventListener('click', () => {
+    const by = {}; TT.days.forEach(d => { by[d.date] = d; });
+    REVIEW.found.forEach(f => {
+      const day = by[f.date]; if (!day) return;
+      if (f.a) day.a = f.a;
+      if (f.b) day.b = f.b;
+      if (f.notes) day.notes = f.notes;
+      /* A practice number the sheet states outright wins; one Lite worked out
+         for itself is left alone, because the course knows its own practices
+         and a pasted sheet is a claim about them. */
+      if (f.tp) day.tp = f.tp;
+    });
+    REVIEW = null; IMPORT_OPEN = false;
+    save('Imported');
+    render();
+  });
+}
+
+function review(rows, from){
+  const r = window.hubTimetableParse.parse(rows, TT.days, { year: +String((TT.days[0]||{}).date || '').slice(0,4) });
+  r.from = from;
+  REVIEW = r;
+  render();
 }
 
 function build(keep){
