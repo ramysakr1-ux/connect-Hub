@@ -69,28 +69,34 @@
   .tbl td.who small{display:block; font-weight:500; color:var(--grey); font-size:0.72rem;}
   .tbl select{font-family:inherit; font-size:0.76rem; width:100%; padding:3px 4px; border:1px solid var(--sand-line); border-radius:5px; background:var(--paper); color:var(--ink);}
   .tbl .lang{color:var(--gold-deep); font-weight:700;}
+  .tbl .ref{color:var(--grey); font-style:italic;}
   .tbl tr.mine{background:var(--sand-deep);}
   .warn{margin:10px 0 0; padding:10px 12px; border-radius:7px; background:oklch(94.5% 0.035 78); border:1px solid oklch(84% 0.08 78); border-left:4px solid var(--gold); font-size:0.82rem; line-height:1.5;}
   .ok{margin:10px 0 0; font-size:0.78rem; color:var(--grey);}
   .empty{background:var(--surface); border:1px dashed var(--sand-line); border-radius:10px; padding:26px 22px; color:var(--grey); font-size:0.9rem; line-height:1.6;}
+  .sugg{margin:10px 0 0; padding:10px 12px; border-radius:7px; background:var(--sand-deep); border:1px solid var(--sand-line); border-left:4px solid var(--teal); font-size:0.82rem; line-height:1.55;}
+  .sugg ul{margin:6px 0 0; padding-left:20px;}
+  .sugg li{margin:3px 0;}
+  .tbl.ord{margin:0 0 12px;}
+  .tbl.ord td{font-weight:700; letter-spacing:.08em;}
   .wrap{overflow-x:auto;}
   @media (max-width:560px){ .board{padding:18px 12px 60px;} section.group{padding:12px 12px 14px;} }
   @media print{ .back,.relbar,#hubSync{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609292249">
-<link rel="stylesheet" href="hub-theme.css?v=202609292249">
+<link rel="stylesheet" href="hub-house.css?v=202609292259">
+<link rel="stylesheet" href="hub-theme.css?v=202609292259">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609292249"></script>
-<script src="hub-tracker.js?v=202609292249"></script>
-<script src="hub-rotation.js?v=202609292249"></script>
-<script src="hub-shared.js?v=202609292249"></script>
-<script src="hub-store.js?v=202609292249"></script>
-<script src="hub-sync.js?v=202609292249"></script>
+<script src="hub-due.js?v=202609292259"></script>
+<script src="hub-tracker.js?v=202609292259"></script>
+<script src="hub-rotation.js?v=202609292259"></script>
+<script src="hub-shared.js?v=202609292259"></script>
+<script src="hub-store.js?v=202609292259"></script>
+<script src="hub-sync.js?v=202609292259"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -119,8 +125,28 @@ function groups(){
      `undefined`, so one shared row stood in for the whole group and the
      rotation came out identical for everybody (found on the scratch course,
      29 Sep 2026). */
-  people.forEach(t => { const g = String(t.group || ''); (by[g] = by[g] || []).push({ token: t.id || t.token, name: t.name, group: g }); });
+  people.forEach(t => { const g = String(t.group || ''); (by[g] = by[g] || []).push({ token: t.id || t.token, name: t.name, group: g, tr: t }); });
   return Object.keys(by).sort().map(g => ({ group: g, people: by[g] }));
+}
+
+/* What each candidate has already taught and how it went, read from the
+   returned feedback the tracker already reads. { token: { 3: {grade,aim} } }.
+   This is what the failed-lesson rule works on. */
+function taughtSoFar(people){
+  const T = window.HubTracker;
+  const out = {};
+  (people || []).forEach(p => {
+    if (!T || !p.tr) return;
+    let c = null; try { c = T.recordFor(p.tr); } catch(e) { return; }
+    if (!c) return;
+    const mine = {};
+    for (let n = 1; n <= TOTAL; n++) {
+      const g = c['tp' + n], a = c['tp' + n + '_aim'];
+      if (g || a) mine[n] = { grade: g || '', aim: a || '' };
+    }
+    if (Object.keys(mine).length) out[p.token] = mine;
+  });
+  return out;
 }
 
 /* Build or rebuild the rotation. The second group starts three places along,
@@ -165,13 +191,23 @@ function render(){
     const me = rec('hub:me') || {};
     const rows = P.points || {};
     const mine = rows[me.token] || {};
-    app.innerHTML = head + `<section class="group"><h2>Group ${esc(P.group || '—')}</h2>
-      <div class="wrap"><table class="tbl"><tr><th>Practice</th><th>What you are teaching</th></tr>
+    /* The rest of the group, marked as what it is. Ramy, 29 Sep 2026: a
+       candidate should see the other two's lessons "but it will state that
+       this is not your lesson, just for reference" -- they sit in on those
+       lessons, so knowing what is coming is part of the day. Names are not
+       carried to a candidate (the store sends the group's rows without them),
+       so the others are shown by their letter. */
+    const others = Object.keys(rows).filter(t => t !== me.token);
+    app.innerHTML = head + `<section class="group"><h2>Group ${esc(P.group || '\u2014')}</h2>
+      <div class="wrap"><table class="tbl"><tr><th>Practice</th><th>Your lesson</th>${others.length ? '<th>Also teaching that day \u2014 not your lesson</th>' : ''}</tr>
       ${Array.from({length:TPS},(_,i)=>i+1).map(tp => {
         const c = mine['tp'+tp] || {};
         const lang = R.LANGUAGE_FOCUS.indexOf(c.aim) >= 0;
-        return `<tr><td class="who">TP ${tp}</td><td${lang ? ' class="lang"' : ''}>${esc(c.aim || '—')}${c.point ? '<br><small>' + esc(c.point) + '</small>' : ''}</td></tr>`;
-      }).join('')}</table></div></section>`;
+        const ref = others.map(t => (rows[t] || {})['tp'+tp] || {}).map(x => x.aim).filter(Boolean);
+        return `<tr><td class="who">TP ${tp}</td><td${lang ? ' class="lang"' : ''}>${esc(c.aim || '\u2014')}${c.point ? '<br><small>' + esc(c.point) + '</small>' : ''}</td>${
+          others.length ? `<td class="ref">${ref.length ? esc(ref.join(' \u00b7 ')) : '\u2014'}</td>` : ''}</tr>`;
+      }).join('')}</table></div>
+      ${others.length ? '<p class="ok">The last column is what the rest of your group is teaching. You are watching those lessons, not planning them.</p>' : ''}</section>`;
     return;
   }
 
@@ -204,8 +240,17 @@ function render(){
     const flat = {}; Object.keys(rows).forEach(t => { flat[t] = {}; for (let tp=1;tp<=TPS;tp++) flat[t]['tp'+tp] = (rows[t]['tp'+tp]||{}).aim; });
     const noLang = R.languageFocusCheck(flat, TPS).map(t => (lettered.find(p => p.token === t) || {}).letter).filter(Boolean);
     const clash = R.clashes(flat, sets, TPS);
+    /* The centre's own recommendation, not Cambridge's: after a practice
+       graded Not to standard, the next should be in the same family. It is a
+       note, never red and never a gate -- a "should" is a recommendation and
+       the call stays the centre's. */
+    const after = R.afterFail(taughtSoFar(g.people), flat, TPS);
+    const letterOf = t => (lettered.find(p => p.token === t) || {}).letter || '?';
     return `<section class="group"><h2>Group ${esc(g.group || '—')} <small>${g.people.length} candidate${g.people.length===1?'':'s'}</small></h2>
       <p class="sets">Teaching sets: ${sets.map(s => '<b>' + esc(R.setName(s)) + '</b>').filter(Boolean).join(' and ')} — they take alternate days, so each candidate teaches every other day.</p>
+      <div class="wrap"><table class="tbl ord"><tr><th>Teaching order</th>${Array.from({length:TPS},(_,i)=>`<th>TP ${i+1}</th>`).join('')}</tr>
+        ${sets.filter(st => st.length).map(st => `<tr><td class="who">${esc(R.setName(st))}</td>${
+          Array.from({length:TPS},(_,i)=>i+1).map(tp => `<td>${esc(R.orderFor(st, tp).map(x => x.letter).join(' '))}</td>`).join('')}</tr>`).join('')}</table></div>
       <div class="relbar">${on
         ? `<span class="chip on">Released</span><button class="btn quiet" data-rel="${esc(g.group)}" data-on="0">Take it back</button><span class="status">The candidates can see their own points.</span>`
         : `<span class="chip">Not released</span><button class="btn" data-rel="${esc(g.group)}" data-on="1">Release to Group ${esc(g.group) || '—'}</button><span class="status">Only tutors can see it until it is released.</span>`}</div>
@@ -218,6 +263,8 @@ function render(){
         }).join('')}</tr>`).join('')}</table></div>
       ${noLang.length ? `<div class="warn"><b>Handbook 9.1.2:</b> a centre must include language-focus lessons for every candidate. ${noLang.length===1?'Candidate':'Candidates'} ${esc(noLang.join(', '))} ${noLang.length===1?'has':'have'} none in practices 1 to ${TPS}. Grammar, vocabulary and functional language are the language-focus types.</div>` : ''}
       ${clash.length ? `<div class="warn"><b>Same type, same day:</b> ${clash.map(c => 'TP ' + c.tp + ' — ' + esc(c.set) + ' — ' + esc(c.aim)).join('; ')}. They teach on the same day, so two of them would be teaching the same thing.</div>` : ''}
+      ${after.length ? `<div class="sugg"><b>After a lesson that was not to standard</b> — the centre’s own recommendation, not a Cambridge rule.<ul>${
+        after.map(a => `<li>${esc(letterOf(a.token))} was not to standard on TP ${a.failed} (${esc(a.failedAim)}). TP ${a.next} is ${esc(a.nextAim || 'not set')}; another ${esc(a.familyWord)} lesson would give them a second go at it — ${esc(a.suggest.join(', '))}.</li>`).join('')}</ul></div>` : ''}
       ${(!noLang.length && !clash.length && Object.keys(flat).length) ? `<p class="ok">Every candidate has at least one language-focus lesson, and nobody in a teaching set repeats a type on the same day.</p>` : ''}
     </section>`;
   }).join('');

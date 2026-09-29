@@ -44,6 +44,22 @@
   const LANGUAGE_FOCUS = ['Grammar', 'Vocabulary', 'Functional language'];
   const LETTERS = 'ABCDEF';
 
+  /* The three families a lesson type belongs to. They carry the failed-lesson
+     rule: Ramy, 29 Sep 2026 -- "if they fail a receptive skill, they should
+     get another receptive skill. Doesn't have to be the same receptive, but a
+     receptive nonetheless. And if they fail language, they should also get
+     another language lesson." He was explicit that this is the centre's
+     recommendation and NOT a Cambridge rule, so it suggests and says why; it
+     never overrides a tutor and never goes red. */
+  const FAMILY = {
+    'Grammar': 'language', 'Vocabulary': 'language', 'Functional language': 'language',
+    'Reading': 'receptive', 'Listening': 'receptive',
+    'Speaking': 'productive', 'Writing': 'productive'
+  };
+  const FAMILY_WORD = { language: 'language focus', receptive: 'receptive skills', productive: 'productive skills' };
+  const familyOf = (aim) => FAMILY[aim] || '';
+  const aimsInFamily = (fam) => AIMS.filter((a) => FAMILY[a] === fam);
+
   /* The letter is the candidate's place in their own group, by name, so it is
      stable for everyone else when one person leaves. */
   function lettersFor(people) {
@@ -84,6 +100,19 @@
       rows[p.token] = row;
     });
     return { letters: lettered, sets: sets, setNames: sets.map(setName), rows: rows };
+  }
+
+  /* The teaching ORDER within a set rotates too. Ramy, 29 Sep 2026: "the order
+     within the subgroup is not always going to be A, B, C. So one time it's
+     A, B, C, another time B, C, A, C, B, A." Rotating the aims alone left the
+     same person going first for eight practices running. The order steps one
+     place each practice, so over a set of three everyone leads, goes second
+     and goes last. */
+  function orderFor(set, tp) {
+    const n = (set || []).length;
+    if (!n) return [];
+    const shift = ((tp - 1) % n + n) % n;
+    return set.slice(shift).concat(set.slice(0, shift));
   }
 
   /* BOTH sets teach every practice, on consecutive days: "TP 1 · ABC" on one
@@ -128,7 +157,38 @@
     return out;
   }
 
-  const api = { AIMS, LANGUAGE_FOCUS, LETTERS, lettersFor, setsFor, setName, aimFor, rotate, dayOfSet, languageFocusCheck, clashes };
+  /* After a practice graded Not to standard, the next one should be in the
+     same family -- another receptive lesson after a failed receptive one, and
+     another language lesson after a failed language one. `taught` is what the
+     tracker knows: { 1: {grade,aim}, 2: {...} } per practice number, read
+     from the returned feedback. Returns one entry per suggestion, each saying
+     which practice failed, which family it was, and what the next practice is
+     currently set to -- so the screen can say why rather than just nudge.
+     A recommendation: nothing here changes a cell on its own. */
+  function afterFail(taught, rows, tps) {
+    tps = tps || 6;
+    const out = [];
+    Object.keys(taught || {}).forEach((token) => {
+      const mine = taught[token] || {};
+      Object.keys(mine).forEach((k) => {
+        const n = parseInt(k, 10);
+        if (!n || n >= tps) return;                       // nothing follows the last one
+        const t = mine[n] || {};
+        if (String(t.grade || '').toUpperCase() !== 'NOTSTD') return;
+        const fam = familyOf(t.aim);
+        if (!fam) return;
+        const next = ((rows || {})[token] || {})['tp' + (n + 1)];
+        if (familyOf(next) === fam) return;               // already what it should be
+        out.push({ token: token, failed: n, family: fam, familyWord: FAMILY_WORD[fam] || fam,
+                   failedAim: t.aim, next: n + 1, nextAim: next || '', suggest: aimsInFamily(fam) });
+      });
+    });
+    return out;
+  }
+
+  const api = { AIMS, LANGUAGE_FOCUS, LETTERS, FAMILY, FAMILY_WORD, familyOf, aimsInFamily,
+                lettersFor, setsFor, setName, aimFor, rotate, orderFor, dayOfSet,
+                languageFocusCheck, clashes, afterFail };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.hubRotation = api;
 })(typeof window !== 'undefined' ? window : globalThis);
