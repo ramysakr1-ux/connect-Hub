@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<!--
+  Connect Lite — the course timetable
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy, 29 Sep 2026: "can we make the timetable native?" Until now it was a
+  link the centre pasted — Lite carried the address to a document it could not
+  read. Native, it knows things a linked document never can: which teaching
+  practice falls on which day and who teaches it, when each assignment is due,
+  and what each candidate is teaching, because Lite already holds all three.
+
+  THE SHAPE OF A DAY (Ramy's own C/17 timetable, and his description on
+  29 Sep): two input sessions, then teaching practice, then feedback. A
+  teaching practice group of 4-6 splits into two TEACHING SETS which take
+  alternate days — ABC one day, DEF the next — so each candidate teaches every
+  other day and the whole group attends both. The same practice number runs on
+  both days: "TP 1 · ABC" then "TP 1 · DEF", then TP 2 the same way.
+
+  THE NAMING: letters are people, never days. A day is named by its date and
+  by who teaches on it. "Day A" is not used anywhere — Ramy, 29 Sep 2026, on
+  the earlier rename: the A day and candidate A were two different things
+  wearing one letter, and nobody could hold both.
+
+  WHO WRITES IT: the course admin, through the ordinary putCourse, the way
+  settings and wording are written. Everyone on the course reads the same
+  grid — there is nothing per-reader about a timetable.
+
+  The skeleton builds itself from what the course already holds (the dates,
+  the number of practices, the roster's groups) and is then the centre's to
+  edit. Nothing it works out is locked: every cell is editable, which is the
+  standing rule that anything the system decides can be overridden.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="brand/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<title>Connect Lite — Timetable</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sand:oklch(98.8% 0.006 85); --sand-line:oklch(85.5% 0.02 80); --sand-deep:oklch(94.8% 0.01 85);
+    --paper:oklch(99.5% 0.004 90); --surface:oklch(95.2% 0.018 84);
+    --box:oklch(91.2% 0.03 80); --card:oklch(95.2% 0.018 84); --ink:oklch(23.5% 0.017 65);
+    --teal:oklch(37.5% 0.058 195); --grey:oklch(51% 0.017 70); --brick:oklch(45% 0.15 27);
+    --gold:oklch(63% 0.096 72); --gold-deep:oklch(52% 0.098 70); --faint:oklch(60% 0.012 80);
+  }
+  body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
+  .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
+  .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
+  .back:hover{text-decoration:underline;}
+  .eyebrow{font-size:0.7rem; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:0 0 4px;}
+  h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.7rem; margin:0 0 4px;}
+  .lede{color:var(--grey); font-size:0.88rem; line-height:1.6; margin:0 0 18px; max-width:72ch;}
+  .wk{margin:0 0 20px;}
+  .wk h2{font-family:'Newsreader',Georgia,serif; font-size:1.12rem; margin:0 0 8px; display:flex; gap:10px; align-items:baseline; flex-wrap:wrap;}
+  .wk h2 small{font-family:'Karla',sans-serif; font-size:0.78rem; font-weight:500; color:var(--grey);}
+  .days{display:grid; grid-template-columns:repeat(5,1fr); gap:10px;}
+  .day{background:var(--surface); border:1px solid var(--sand-line); border-radius:10px; padding:10px 11px 12px; display:flex; flex-direction:column; gap:7px; min-width:0;}
+  .day.today{border-color:var(--gold); border-width:2px; padding:9px 10px 11px;}
+  .day .dh{display:flex; justify-content:space-between; align-items:baseline; gap:6px; border-bottom:1px solid var(--sand-line); padding-bottom:5px;}
+  .day .dow{font-weight:700; font-size:0.84rem;}
+  .day .dm{font-size:0.74rem; color:var(--grey);}
+  .cell{font-size:0.78rem; line-height:1.4; min-width:0;}
+  .cell .k{font-size:0.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); font-weight:700; display:block;}
+  .cell a{color:var(--teal); text-decoration:none; font-weight:600;}
+  .cell a:hover{text-decoration:underline;}
+  .cell.tp{background:var(--box); border-radius:6px; padding:5px 7px; margin:1px 0;}
+  .cell.tp b{font-weight:700;}
+  .cell.tp .who{color:var(--gold-deep); font-weight:700;}
+  .cell.due{color:var(--brick); font-weight:600; font-size:0.74rem;}
+  .cell.note{color:var(--grey); font-size:0.73rem;}
+  .cell input{font-family:inherit; font-size:0.78rem; width:100%; padding:4px 6px; border:1px solid var(--sand-line); border-radius:5px; background:var(--paper); color:var(--ink); min-width:0;}
+  .cell input:focus{outline:2px solid var(--teal); outline-offset:-1px;}
+  .btn{font-family:'Karla',sans-serif; font-size:0.84rem; font-weight:700; padding:9px 18px; border-radius:8px; border:0; background:var(--teal); color:#fff; cursor:pointer;}
+  .btn.quiet{background:none; color:var(--grey); border:1.5px solid var(--sand-line);}
+  .btn:disabled{opacity:.5; cursor:not-allowed;}
+  .bar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:0 0 18px;}
+  .status{font-size:0.8rem; color:var(--grey);}
+  .empty{background:var(--surface); border:1px dashed var(--sand-line); border-radius:10px; padding:26px 22px; color:var(--grey); font-size:0.9rem; line-height:1.6;}
+  .legend{font-size:0.76rem; color:var(--grey); margin:14px 0 0; line-height:1.6;}
+  @media (max-width:980px){ .days{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:560px){ .board{padding:18px 12px 60px;} .days{grid-template-columns:1fr;} }
+  @media print{ .back,.bar,#hubSync{display:none !important;} body{background:#fff;} .days{grid-template-columns:repeat(5,1fr);} .day{break-inside:avoid;} }
+</style>
+<link rel="stylesheet" href="hub-house.css?v=202609292238">
+<link rel="stylesheet" href="hub-theme.css?v=202609292238">
+</head>
+<body class="hub-grid">
+<div class="board">
+  <a class="back" id="back" href="index.html">&larr; Back</a>
+  <div id="app"></div>
+</div>
+<script src="hub-due.js?v=202609292238"></script>
+<script src="hub-tracker.js?v=202609292238"></script>
+<script src="hub-rotation.js?v=202609292238"></script>
+<script src="hub-shared.js?v=202609292238"></script>
+<script src="hub-store.js?v=202609292238"></script>
+<script src="hub-sync.js?v=202609292238"></script>
+<script type="text/x-hub-app">
+const MODE = window.HubMode;
+const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
+const $ = id => document.getElementById(id);
+const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const rec = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch(e) { return null; } };
+const SETTINGS = rec('connect_course_settings') || {};
+const KEY = 'connect_timetable_v1';
+const R = window.hubRotation;
+$('back').href = IS_TRAINEE ? 'index.html' : IS_TUTOR ? '5_tutor_dashboard.html' : '12_assessor_pack.html';
+
+let TT = rec(KEY) || null;
+let note = '', busy = false;
+
+/* A bare date, read as written. A timetable day is a day, never a moment --
+   the same rule the assessor expiry learned on 21 Sep 2026. */
+const ymd = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+const parse = s => { const m = String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(+m[1], +m[2]-1, +m[3]) : null; };
+const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const dm = d => d.getDate() + ' ' + MON[d.getMonth()];
+const TODAY = ymd(new Date());
+
+/* The groups, and each one's two teaching sets, from the roster. */
+function groups(){
+  const roster = rec('connect_roster_v1') || {};
+  const people = Object.values(roster.trainees || {}).filter(Boolean);
+  const by = {};
+  people.forEach(t => { const g = String(t.group || ''); (by[g] = by[g] || []).push({ token: t.token, name: t.name, group: g }); });
+  return Object.keys(by).sort().map(g => ({ group: g, people: by[g], sets: R.setsFor(by[g]) }));
+}
+
+/* Assignment deadlines, so a due date is a cell rather than something the
+   candidate has to remember from another screen. */
+function dues(){
+  const w = rec('connect_assignment_wording_v2') || {};
+  const out = {};
+  Object.keys(w).forEach(k => {
+    const a = w[k] || {};
+    const iso = String(a.due || '').slice(0,10);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) (out[iso] = out[iso] || []).push(a.title || k.toUpperCase());
+  });
+  return out;
+}
+
+/* The skeleton: every weekday from the start to the end, with the teaching
+   practices laid along the teaching days two at a time — the same practice
+   number for each set on consecutive days. Nothing here is a guess the centre
+   cannot change; it is a first draft of the shape, and every cell is editable
+   afterwards. */
+function skeleton(){
+  const s = parse(SETTINGS.start), e = parse(SETTINGS.end);
+  if (!s || !e) return null;
+  const tpCount = parseInt(SETTINGS.tpCount, 10) || 8;
+  const days = [];
+  for (let d = new Date(s); d <= e; d.setDate(d.getDate()+1)) {
+    const dow = d.getDay();
+    if (dow === 0 || dow === 6) continue;          // weekends are not course days
+    days.push({ date: ymd(d), a:'', b:'', notes:'' });
+  }
+  /* Day one is orientation and the demonstration class — no assessed practice
+     (Ramy's unassessed slots). Teaching starts the next course day. */
+  const teaching = days.slice(1);
+  const nSets = 2;
+  for (let i = 0; i < teaching.length; i++) {
+    const tp = Math.floor(i / nSets) + 1;
+    if (tp > tpCount) break;
+    teaching[i].tp = tp;
+    teaching[i].setIndex = i % nSets;
+  }
+  return { days, built: new Date().toISOString() };
+}
+
+function cellHTML(day, g){
+  const d = parse(day.date);
+  const isToday = day.date === TODAY;
+  const dueHere = (DUES[day.date] || []);
+  let tp = '';
+  if (day.tp) {
+    const bits = GROUPS.map(gr => {
+      const set = gr.sets[day.setIndex] || [];
+      if (!set.length) return '';
+      const who = R.setName(set);
+      return `<span class="who">${esc(who)}</span>${GROUPS.length > 1 ? ' <small>(Group ' + esc(gr.group || '—') + ')</small>' : ''}`;
+    }).filter(Boolean).join(' · ');
+    tp = `<div class="cell tp"><span class="k">Teaching practice</span><b>TP ${day.tp}</b>${bits ? ' · ' + bits : ''}</div>`;
+  }
+  const slot = (k, label) => {
+    const v = day[k] || '';
+    if (!EDIT) return v ? `<div class="cell"><span class="k">${label}</span>${esc(v)}</div>` : '';
+    return `<div class="cell"><span class="k">${label}</span><input type="text" data-date="${esc(day.date)}" data-f="${k}" value="${esc(v)}" placeholder="—"></div>`;
+  };
+  return `<div class="day${isToday ? ' today' : ''}">
+    <div class="dh"><span class="dow">${DOW[d.getDay()]}</span><span class="dm">${dm(d)}${isToday ? ' · today' : ''}</span></div>
+    ${slot('a','Input 1')}${slot('b','Input 2')}
+    ${tp}
+    ${dueHere.map(t => `<div class="cell due">${esc(t)} due</div>`).join('')}
+    ${EDIT ? `<div class="cell"><span class="k">Notes</span><input type="text" data-date="${esc(day.date)}" data-f="notes" value="${esc(day.notes||'')}" placeholder="—"></div>`
+           : (day.notes ? `<div class="cell note">${esc(day.notes)}</div>` : '')}
+  </div>`;
+}
+
+let GROUPS = [], DUES = {}, EDIT = false;
+
+function render(){
+  GROUPS = groups(); DUES = dues(); EDIT = IS_TUTOR;
+  const app = $('app');
+  const head = `<p class="eyebrow">Course</p><h1>Timetable</h1>
+    <p class="lede">${IS_TUTOR
+      ? 'The course’s own timetable. The teaching practices and the assignment deadlines come from the course itself; the input sessions and notes are yours to type. Letters are people — a day is named by its date and by who teaches on it.'
+      : 'Every day of the course. The teaching practice cell says who is teaching that day; your assignment deadlines are marked on the day they fall.'}</p>`;
+  if (!TT || !TT.days || !TT.days.length) {
+    app.innerHTML = head + (IS_TUTOR
+      ? `<div class="bar"><button class="btn" id="build"${(!SETTINGS.start || !SETTINGS.end) ? ' disabled' : ''}>Build the timetable</button><span class="status">${(!SETTINGS.start || !SETTINGS.end) ? 'Set the course start and end dates on Course admin first.' : 'Lays out every weekday from the start to the end, with the teaching practices along it. Everything stays editable.'}</span></div>`
+      : `<div class="empty">The timetable has not been set up yet.</div>`);
+    if ($('build')) $('build').addEventListener('click', build);
+    return;
+  }
+  /* Weeks are Monday to Friday runs, so a four-week course reads as four
+     rows rather than one long ribbon. */
+  const weeks = [];
+  TT.days.forEach(day => {
+    const d = parse(day.date); if (!d) return;
+    if (!weeks.length || d.getDay() <= (parse(weeks[weeks.length-1][weeks[weeks.length-1].length-1].date) || d).getDay()) {
+      if (!weeks.length || d.getDay() === 1) weeks.push([]);
+    }
+    if (!weeks.length) weeks.push([]);
+    weeks[weeks.length-1].push(day);
+  });
+  const bar = IS_TUTOR ? `<div class="bar"><button class="btn quiet" id="rebuild">Rebuild the shape</button><span class="status">${esc(note)}</span></div>` : '';
+  app.innerHTML = head + bar + weeks.map((w, i) => {
+    const a = parse(w[0].date), b = parse(w[w.length-1].date);
+    return `<section class="wk"><h2>Week ${i+1} <small>${dm(a)} – ${dm(b)}</small></h2>
+      <div class="days">${w.map(d => cellHTML(d)).join('')}</div></section>`;
+  }).join('') + `<p class="legend">Teaching practice runs the same number on two days, one teaching set each: the letters name the candidates teaching that day. ${GROUPS.map(g => 'Group ' + esc(g.group || '—') + ': ' + g.sets.map(R.setName).filter(Boolean).join(' and ')).join('. ')}.</p>`;
+  if ($('rebuild')) $('rebuild').addEventListener('click', () => { if (confirm('Rebuild the shape from the course dates? Input sessions and notes you have typed are kept where the day still exists.')) build(true); });
+  wireEdits();
+}
+
+function build(keep){
+  const sk = skeleton();
+  if (!sk) { note = 'The course needs a start and an end date first.'; render(); return; }
+  if (keep && TT && TT.days) {
+    const old = {}; TT.days.forEach(d => { old[d.date] = d; });
+    sk.days.forEach(d => { const o = old[d.date]; if (o) { d.a = o.a || ''; d.b = o.b || ''; d.notes = o.notes || ''; } });
+  }
+  TT = sk; save('Built');
+}
+
+function wireEdits(){
+  if (!EDIT) return;
+  document.querySelectorAll('input[data-date]').forEach(el => {
+    let t = null;
+    const fire = () => {
+      const day = TT.days.find(d => d.date === el.dataset.date);
+      if (!day) return;
+      day[el.dataset.f] = el.value;
+      save('Saved');
+    };
+    el.addEventListener('input', () => { clearTimeout(t); t = setTimeout(fire, 800); });
+    el.addEventListener('blur', () => { clearTimeout(t); fire(); });
+  });
+}
+
+/* Written whole, through the ordinary course-record queue in hub-sync: the
+   same path settings and wording take, so it is ledgered and retried. */
+function save(word){
+  try { localStorage.setItem(KEY, JSON.stringify(TT)); } catch(e) {}
+  note = word || 'Saved';
+  const st = document.querySelector('.status'); if (st) st.textContent = note;
+  setTimeout(() => { note = ''; const s2 = document.querySelector('.status'); if (s2 && !busy) s2.textContent = ''; }, 2500);
+  if (word === 'Built') render();
+}
+
+render();
+</script>
+</body>
+</html>

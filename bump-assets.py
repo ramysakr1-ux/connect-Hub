@@ -13,7 +13,7 @@ stamp = datetime.datetime.now().strftime("%Y%m%d%H%M")
 # the ?v= is what makes it immediate, and an asset in one list and not the
 # other is the kind of thing nobody notices until a page runs against a file
 # that is older than the code expecting it.
-assets = ["hub-shared.js", "hub-store.js", "hub-sync.js", "hub-tracker.js", "hub-due.js",
+assets = ["hub-shared.js", "hub-store.js", "hub-sync.js", "hub-tracker.js", "hub-due.js", "hub-rotation.js",
           "hub-exchange.js", "hub-crit-learn.js", "assignment-defaults.js", "observation-defaults.js", "hub-docx.js", "hub-observation-parse.js", "celta5-text.js", "celta5-criteria.js", "celta5-pdf.js", "hub-ink.js",
           "hub-theme.css", "hub-house.css", "hub-record.css"]
 for f in glob.glob("*.html"):

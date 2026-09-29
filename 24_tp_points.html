@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<!--
+  Connect Lite — teaching practice points
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Handbook 9.1.2, a MUST twice over: "Centres must ensure that all candidates
+  have practice in a range of lessons covering all aspects of language
+  teaching and must include language-focus lessons. The type of lesson must be
+  recorded in the CELTA 5."
+
+  A centre satisfies that by rotating the lesson types round the group instead
+  of letting them fall where they may. Ramy, 29 Sep 2026: "TP points that
+  rotate automatically, depending on aims and different order for the
+  teachers." The rotation lives in hub-rotation.js and is explained there; in
+  short, each candidate starts at their own place in the seven types and steps
+  one along each practice, so nobody in a teaching set teaches the same type on
+  the same day, each candidate's six practices are six different types, and
+  every one of them includes language focus by construction rather than by
+  luck.
+
+  It is a PROPOSAL. Every cell is the tutor's to change, which is the standing
+  rule that anything the system decides can be overridden — and because an
+  override can break what the rotation guaranteed, the language-focus check
+  runs against what is actually on the page, not against what was generated.
+
+  Released per group, the same way the planning grid is: the candidates see
+  their own group's points and nothing before release.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="brand/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<title>Connect Lite — TP points</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sand:oklch(98.8% 0.006 85); --sand-line:oklch(85.5% 0.02 80); --sand-deep:oklch(94.8% 0.01 85);
+    --paper:oklch(99.5% 0.004 90); --surface:oklch(95.2% 0.018 84);
+    --box:oklch(91.2% 0.03 80); --card:oklch(95.2% 0.018 84); --ink:oklch(23.5% 0.017 65);
+    --teal:oklch(37.5% 0.058 195); --grey:oklch(51% 0.017 70); --brick:oklch(45% 0.15 27);
+    --gold:oklch(63% 0.096 72); --gold-deep:oklch(52% 0.098 70); --faint:oklch(60% 0.012 80);
+  }
+  body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
+  .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
+  .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
+  .back:hover{text-decoration:underline;}
+  .eyebrow{font-size:0.7rem; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:0 0 4px;}
+  h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.7rem; margin:0 0 4px;}
+  .lede{color:var(--grey); font-size:0.88rem; line-height:1.6; margin:0 0 18px; max-width:72ch;}
+  section.group{background:var(--surface); border:1px solid var(--sand-line); border-left:5px solid var(--teal); border-radius:10px; padding:16px 18px 18px; margin:0 0 18px;}
+  section.group h2{font-family:'Newsreader',Georgia,serif; font-size:1.2rem; margin:0; display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  section.group h2 small{font-family:'Karla',sans-serif; font-size:0.8rem; font-weight:500; color:var(--grey);}
+  .sets{font-size:0.8rem; color:var(--grey); margin:4px 0 0;}
+  .relbar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:10px 0 14px;}
+  .btn{font-family:'Karla',sans-serif; font-size:0.84rem; font-weight:700; padding:9px 18px; border-radius:8px; border:0; background:var(--teal); color:#fff; cursor:pointer;}
+  .btn.quiet{background:none; color:var(--grey); border:1.5px solid var(--sand-line);}
+  .btn:disabled{opacity:.5; cursor:not-allowed;}
+  .chip{font-size:0.72rem; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--box); color:var(--grey);}
+  .chip.on{background:var(--teal); color:#fff;}
+  .status{font-size:0.8rem; color:var(--grey);}
+  .tbl{width:100%; border-collapse:collapse; font-size:0.8rem; background:var(--paper); border:1px solid var(--sand-line); border-radius:8px; overflow:hidden;}
+  .tbl th,.tbl td{border:1px solid var(--sand-line); padding:6px 8px; text-align:left; vertical-align:top;}
+  .tbl th{background:var(--box); font-size:0.7rem; letter-spacing:.06em; text-transform:uppercase; color:var(--grey);}
+  .tbl td.who{white-space:nowrap; font-weight:700;}
+  .tbl td.who small{display:block; font-weight:500; color:var(--grey); font-size:0.72rem;}
+  .tbl select{font-family:inherit; font-size:0.76rem; width:100%; padding:3px 4px; border:1px solid var(--sand-line); border-radius:5px; background:var(--paper); color:var(--ink);}
+  .tbl .lang{color:var(--gold-deep); font-weight:700;}
+  .tbl tr.mine{background:var(--sand-deep);}
+  .warn{margin:10px 0 0; padding:10px 12px; border-radius:7px; background:oklch(94.5% 0.035 78); border:1px solid oklch(84% 0.08 78); border-left:4px solid var(--gold); font-size:0.82rem; line-height:1.5;}
+  .ok{margin:10px 0 0; font-size:0.78rem; color:var(--grey);}
+  .empty{background:var(--surface); border:1px dashed var(--sand-line); border-radius:10px; padding:26px 22px; color:var(--grey); font-size:0.9rem; line-height:1.6;}
+  .wrap{overflow-x:auto;}
+  @media (max-width:560px){ .board{padding:18px 12px 60px;} section.group{padding:12px 12px 14px;} }
+  @media print{ .back,.relbar,#hubSync{display:none !important;} body{background:#fff;} }
+</style>
+<link rel="stylesheet" href="hub-house.css?v=202609292238">
+<link rel="stylesheet" href="hub-theme.css?v=202609292238">
+</head>
+<body class="hub-grid">
+<div class="board">
+  <a class="back" id="back" href="index.html">&larr; Back</a>
+  <div id="app"></div>
+</div>
+<script src="hub-due.js?v=202609292238"></script>
+<script src="hub-tracker.js?v=202609292238"></script>
+<script src="hub-rotation.js?v=202609292238"></script>
+<script src="hub-shared.js?v=202609292238"></script>
+<script src="hub-store.js?v=202609292238"></script>
+<script src="hub-sync.js?v=202609292238"></script>
+<script type="text/x-hub-app">
+const MODE = window.HubMode;
+const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
+const $ = id => document.getElementById(id);
+const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const rec = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch(e) { return null; } };
+const SETTINGS = rec('connect_course_settings') || {};
+const KEY = 'connect_tp_points_v1';
+const R = window.hubRotation;
+/* The last two practices are the candidates' own, on the planning grid, so
+   the rotation covers everything before them. */
+const TOTAL = parseInt(SETTINGS.tpCount, 10) || 8;
+const TPS = Math.max(1, TOTAL - 2);
+$('back').href = IS_TRAINEE ? 'index.html' : IS_TUTOR ? '5_tutor_dashboard.html' : '12_assessor_pack.html';
+
+let P = rec(KEY) || null;
+let note = '';
+
+function groups(){
+  const roster = rec('connect_roster_v1') || {};
+  const people = Object.values(roster.trainees || {}).filter(Boolean);
+  const by = {};
+  people.forEach(t => { const g = String(t.group || ''); (by[g] = by[g] || []).push({ token: t.token, name: t.name, group: g }); });
+  return Object.keys(by).sort().map(g => ({ group: g, people: by[g] }));
+}
+
+/* Build or rebuild the rotation. The second group starts three places along,
+   so two groups running in parallel never teach the same type on the same
+   day. Anything a tutor has already changed is kept. */
+function build(keepEdits){
+  const gs = groups();
+  const out = { groups: {}, released: (P && P.released) || {}, sets: {} };
+  gs.forEach((g, i) => {
+    const r = R.rotate(g.people, { tps: TPS, groupOffset: i * 3 });
+    const rows = {};
+    Object.keys(r.rows).forEach(token => {
+      rows[token] = {};
+      for (let tp = 1; tp <= TPS; tp++) {
+        const was = keepEdits && P && P.groups && P.groups[g.group] && P.groups[g.group][token] && P.groups[g.group][token]['tp'+tp];
+        rows[token]['tp'+tp] = (was && was.edited) ? was : { aim: r.rows[token]['tp'+tp] };
+      }
+    });
+    out.groups[g.group] = rows;
+    out.sets[g.group] = r.sets.map(s => s.map(p => p.token));
+  });
+  P = out;
+  persist('Rotation built');
+}
+
+function persist(word){
+  try { localStorage.setItem(KEY, JSON.stringify(P)); } catch(e) {}
+  note = word || 'Saved';
+  render();
+  setTimeout(() => { if (note === word) { note = ''; const s = document.querySelector('.status'); if (s) s.textContent = ''; } }, 2500);
+}
+
+function render(){
+  const app = $('app');
+  const head = `<p class="eyebrow">Teaching practice</p><h1>TP points</h1>
+    <p class="lede">${IS_TRAINEE
+      ? 'What you are teaching, practice by practice. The type rotates round your group so everybody covers the full range, and every candidate teaches at least one language-focus lesson — Cambridge asks for both.'
+      : 'The lesson type for each candidate, practices 1 to ' + TPS + '. It rotates so nobody in a teaching set teaches the same type on the same day and each candidate covers six different types. Change any cell; the check below reads what is on the page, not what was generated. The last two practices are the candidates’ own on the planning grid.'}</p>`;
+
+  if (IS_TRAINEE) {
+    if (!P || !P.released) { app.innerHTML = head + `<div class="empty">Your tutor has not released the teaching practice points yet.</div>`; return; }
+    const me = rec('hub:me') || {};
+    const rows = P.points || {};
+    const mine = rows[me.token] || {};
+    app.innerHTML = head + `<section class="group"><h2>Group ${esc(P.group || '—')}</h2>
+      <div class="wrap"><table class="tbl"><tr><th>Practice</th><th>What you are teaching</th></tr>
+      ${Array.from({length:TPS},(_,i)=>i+1).map(tp => {
+        const c = mine['tp'+tp] || {};
+        const lang = R.LANGUAGE_FOCUS.indexOf(c.aim) >= 0;
+        return `<tr><td class="who">TP ${tp}</td><td${lang ? ' class="lang"' : ''}>${esc(c.aim || '—')}${c.point ? '<br><small>' + esc(c.point) + '</small>' : ''}</td></tr>`;
+      }).join('')}</table></div></section>`;
+    return;
+  }
+
+  const gs = groups();
+  if (!gs.length) { app.innerHTML = head + `<div class="empty">No candidates on the roster yet.</div>`; return; }
+  if (!P || !P.groups) {
+    app.innerHTML = head + `<div class="relbar"><button class="btn" id="build">Build the rotation</button><span class="status">Works out the lesson type for every candidate across practices 1 to ${TPS}.</span></div>`;
+    $('build').addEventListener('click', () => build(false));
+    return;
+  }
+
+  app.innerHTML = head + `<div class="relbar"><button class="btn quiet" id="rebuild">Rebuild</button><span class="status">${esc(note)}</span></div>` + gs.map(g => {
+    const rows = (P.groups || {})[g.group] || {};
+    const lettered = R.lettersFor(g.people);
+    const sets = R.setsFor(g.people);
+    const on = !!((P.released || {})[g.group]);
+    /* The check reads the page, so a tutor's override that removes somebody's
+       only language lesson is caught. */
+    const flat = {}; Object.keys(rows).forEach(t => { flat[t] = {}; for (let tp=1;tp<=TPS;tp++) flat[t]['tp'+tp] = (rows[t]['tp'+tp]||{}).aim; });
+    const noLang = R.languageFocusCheck(flat, TPS).map(t => (lettered.find(p => p.token === t) || {}).letter).filter(Boolean);
+    const clash = R.clashes(flat, sets, TPS);
+    return `<section class="group"><h2>Group ${esc(g.group || '—')} <small>${g.people.length} candidate${g.people.length===1?'':'s'}</small></h2>
+      <p class="sets">Teaching sets: ${sets.map(s => '<b>' + esc(R.setName(s)) + '</b>').filter(Boolean).join(' and ')} — they take alternate days, so each candidate teaches every other day.</p>
+      <div class="relbar">${on
+        ? `<span class="chip on">Released</span><button class="btn quiet" data-rel="${esc(g.group)}" data-on="0">Take it back</button><span class="status">The candidates can see their own points.</span>`
+        : `<span class="chip">Not released</span><button class="btn" data-rel="${esc(g.group)}" data-on="1">Release to Group ${esc(g.group) || '—'}</button><span class="status">Only tutors can see it until it is released.</span>`}</div>
+      <div class="wrap"><table class="tbl"><tr><th>Candidate</th>${Array.from({length:TPS},(_,i)=>`<th>TP ${i+1}</th>`).join('')}</tr>
+      ${lettered.map(p => `<tr><td class="who">${esc(p.letter)}<small>${esc(p.name||'')}</small></td>${
+        Array.from({length:TPS},(_,i)=>i+1).map(tp => {
+          const c = (rows[p.token] || {})['tp'+tp] || {};
+          return `<td><select data-g="${esc(g.group)}" data-t="${esc(p.token)}" data-tp="${tp}">${
+            R.AIMS.map(a => `<option value="${esc(a)}"${c.aim===a?' selected':''}>${esc(a)}</option>`).join('')}</select></td>`;
+        }).join('')}</tr>`).join('')}</table></div>
+      ${noLang.length ? `<div class="warn"><b>Handbook 9.1.2:</b> a centre must include language-focus lessons for every candidate. ${noLang.length===1?'Candidate':'Candidates'} ${esc(noLang.join(', '))} ${noLang.length===1?'has':'have'} none in practices 1 to ${TPS}. Grammar, vocabulary and functional language are the language-focus types.</div>` : ''}
+      ${clash.length ? `<div class="warn"><b>Same type, same day:</b> ${clash.map(c => 'TP ' + c.tp + ' — ' + esc(c.set) + ' — ' + esc(c.aim)).join('; ')}. They teach on the same day, so two of them would be teaching the same thing.</div>` : ''}
+      ${(!noLang.length && !clash.length) ? `<p class="ok">Every candidate has at least one language-focus lesson, and nobody in a teaching set repeats a type on the same day.</p>` : ''}
+    </section>`;
+  }).join('');
+
+  if ($('rebuild')) $('rebuild').addEventListener('click', () => { if (confirm('Rebuild the rotation? Cells you changed by hand are kept.')) build(true); });
+  document.querySelectorAll('select[data-tp]').forEach(el => el.addEventListener('change', () => {
+    const { g, t, tp } = el.dataset;
+    P.groups[g] = P.groups[g] || {}; P.groups[g][t] = P.groups[g][t] || {};
+    P.groups[g][t]['tp'+tp] = { aim: el.value, edited: true };
+    persist('Saved');
+  }));
+  document.querySelectorAll('button[data-rel]').forEach(el => el.addEventListener('click', () => {
+    P.released = P.released || {};
+    P.released[el.dataset.rel] = el.dataset.on === '1';
+    persist(el.dataset.on === '1' ? 'Released' : 'Taken back');
+  }));
+}
+
+render();
+</script>
+</body>
+</html>

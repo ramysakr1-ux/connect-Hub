@@ -252,7 +252,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609292202">
+<link rel="stylesheet" href="hub-house.css?v=202609292238">
 </head>
 <body>
 <div class="board">
@@ -347,6 +347,19 @@
       <p>The last two teaching practices are yours to plan: a main aim, a sub aim and the material for each, on one grid your whole group can see.</p>
       <span class="st" id="badgeGrid"></span>
     </a>
+    <!-- The timetable is the course's own since 29 Sep 2026, not a link out.
+         Everyone on the course reads the same one. -->
+    <a class="room" id="roomTimetable" href="23_timetable.html" hidden>
+      <h2>Timetable</h2>
+      <p>Every day of the course — the input sessions, which teaching practice falls where and who is teaching it, and your assignment deadlines on the day they fall.</p>
+    </a>
+    <!-- What each candidate is teaching, practice by practice. Shown once a
+         tutor has released it to their group. -->
+    <a class="room" id="roomPoints" href="24_tp_points.html" hidden>
+      <h2>TP points</h2>
+      <p>What you are teaching at each practice. The lesson type rotates round your group so everybody covers the full range.</p>
+      <span class="st" id="badgePoints"></span>
+    </a>
     <a class="room" id="roomCelta5" href="20_celta5.html">
       <h2>CELTA 5</h2>
       <p>Your record for the whole course — the two confirmations at the start, the stage records you and your tutor each write your half of, and the tables that fill themselves from your work.</p>
@@ -386,11 +399,11 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202609292202"></script>
-<script src="observation-defaults.js?v=202609292202"></script>
-<script src="hub-shared.js?v=202609292202"></script>
-<script src="hub-store.js?v=202609292202"></script>
-<script src="hub-sync.js?v=202609292202"></script>
+<script src="hub-due.js?v=202609292238"></script>
+<script src="observation-defaults.js?v=202609292238"></script>
+<script src="hub-shared.js?v=202609292238"></script>
+<script src="hub-store.js?v=202609292238"></script>
+<script src="hub-sync.js?v=202609292238"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -570,6 +583,34 @@ line(document.getElementById('badgeCelta5'), (function(){
 })(), (function(){ const c = rec('chub:celta5') || {}, t = rec('chub:celta5t') || {}; const conf = c.confirms || {};
   const waiting = !(conf.portfolio && conf.portfolio.at) || ['stage1','stage2','stage3'].some(s => t[s] && t[s].returnedAt && !(c[s] && c[s].signed && c[s].signed.at)) || (t.final && t.final.signed && t.final.signed.at && !(c.final && c.final.signed && c.final.signed.at));
   return waiting ? 'act' : ''; })());
+
+/* The timetable card: shown as soon as the course has one. A timetable is
+   not released to anybody -- everyone on the course reads the same one
+   (29 Sep 2026). */
+(function(){
+  const card = document.getElementById('roomTimetable'); if (!card) return;
+  const tt = rec('connect_timetable_v1');
+  if (tt && tt.days && tt.days.length) card.hidden = false;
+})();
+
+/* The TP points card: only once a tutor has released it to this candidate's
+   group, the same rule as the planning grid. The line names the next practice
+   they have not taught yet, so the card says something useful rather than
+   just existing. */
+(function(){
+  const card = document.getElementById('roomPoints'); if (!card) return;
+  const p = rec('connect_tp_points_v1');
+  if (!p || !p.released) return;
+  card.hidden = false;
+  const me = rec('hub:me') || {};
+  const mine = ((p.points || {})[me.token]) || {};
+  const nums = Object.keys(mine).map(k => parseInt(k.replace('tp',''),10)).filter(n => n).sort((a,b)=>a-b);
+  const badge = document.getElementById('badgePoints');
+  if (badge && nums.length) {
+    const first = mine['tp' + nums[0]] || {};
+    badge.textContent = first.aim ? 'TP' + nums[0] + ' \u00b7 ' + first.aim : nums.length + ' practices listed';
+  }
+})();
 
 /* The planning grid card: only once released, and its line says what is
    left to fill in the candidate's own row. */
