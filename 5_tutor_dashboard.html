@@ -212,6 +212,7 @@
   .grow .nm{font-size:0.92rem; font-weight:500; min-width:0; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center;}
   .grow .mid{font-size:0.88rem; color:var(--grey); min-width:0;}
   .grow .st{font-size:0.88rem; min-width:0; text-wrap:pretty; color:var(--grey);}
+  .grow .st.ok{color:var(--teal); font-weight:600;}   /* every sheet in and six hours reached */
   .grow .st.amber{color:var(--amber);}
   .grow .st.brick{color:var(--tone-stuck, oklch(45% 0.15 27));}
   .grow .act{text-align:right;}
@@ -230,7 +231,7 @@
     .grid > .mid{display:none;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609291943">
+<link rel="stylesheet" href="hub-house.css?v=202609291956">
 </head>
 <body>
 <div class="board">
@@ -305,16 +306,17 @@
 
 </div>
 
-<script src="hub-due.js?v=202609291943"></script>
-<script src="hub-shared.js?v=202609291943"></script>
-<script src="hub-store.js?v=202609291943"></script>
+<script src="hub-due.js?v=202609291956"></script>
+<script src="observation-defaults.js?v=202609291956"></script>
+<script src="hub-shared.js?v=202609291956"></script>
+<script src="hub-store.js?v=202609291956"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202609291943"></script>
-<script src="hub-sync.js?v=202609291943"></script>
-<script src="hub-tracker.js?v=202609291943"></script>
+<script src="assignment-defaults.js?v=202609291956"></script>
+<script src="hub-sync.js?v=202609291956"></script>
+<script src="hub-tracker.js?v=202609291956"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a candidate's link opened it and read the course and
@@ -540,7 +542,15 @@ function paintRows(){
     return;
   }
 
-  const cols='1.7fr 1fr 1.2fr auto';
+  const cols='1.7fr 1fr 1.1fr 1.2fr auto';
+  /* Observation of experienced teachers, at a glance (Ramy, 29 Sep 2026: the
+     turned-in sheets should show on the roster). Sheets turned in out of the
+     course's set, and the hours those sheets carry against Cambridge's six;
+     the peer sheets are notes and are not counted. */
+  const obsCell = tr => { try { const h = window.hubObservationHours(tr.observations || {}); if (!h.of) return '<div class="st">\u2014</div>';
+      const hrs = h.totalMinutes ? Math.round((h.totalMinutes / 60) * 10) / 10 : 0;
+      const done = h.turnedIn === h.of && h.totalMinutes >= 360;
+      return `<div class="st${done ? ' ok' : ''}" title="${esc((h.notes || []).join('; '))}">${h.turnedIn} of ${h.of}${hrs ? ' \u00b7 ' + hrs + ' h' : ''}</div>`; } catch (e) { return '<div class="st">\u2014</div>'; } };
   const trRow = tr => {
       const subs=tr.assignments||{};
       const closed=Object.keys(subs).filter(k=>subs[k] && subs[k].stage==='closed').length;
@@ -549,10 +559,11 @@ function paintRows(){
         `<div class="nm">${hubAvatar(tr.name)}${esc(tr.name)}</div>
          <div class="mid">${esc(tpNumberOf(tr))} · ${esc(s.label.toLowerCase())}</div>
          <div class="st">${closed} of 4 closed</div>
+         ${obsCell(tr)}
          <div class="act"><a class="rowbtn pair" href="20_celta5.html?trainee=${encodeURIComponent(tr.id)}">CELTA 5</a><a class="rowbtn pair" href="12_assessor_pack.html?trainee=${encodeURIComponent(tr.id)}">Portfolio</a></div>`);
     };
   host.innerHTML =
-    `<div class="grid ghead" style="grid-template-columns:${cols}"><div>Trainee</div><div class="mid">Teaching practice</div><div>Assignments</div><div></div></div>` +
+    `<div class="grid ghead" style="grid-template-columns:${cols}"><div>Trainee</div><div class="mid">Teaching practice</div><div>Assignments</div><div>Observations</div><div></div></div>` +
     byGroup(list, tr => tr.group).map(([g, rs]) => groupHead(g, rs.length) + rs.map(trRow).join('')).join('');
 }
 
