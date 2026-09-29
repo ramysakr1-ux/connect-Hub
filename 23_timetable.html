@@ -124,22 +124,22 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} .days{grid-template-columns:1fr;} }
   @media print{ .back,.bar,#hubSync{display:none !important;} body{background:#fff;} .days{grid-template-columns:repeat(5,1fr);} .day{break-inside:avoid;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609300015">
-<link rel="stylesheet" href="hub-theme.css?v=202609300015">
+<link rel="stylesheet" href="hub-house.css?v=202609300020">
+<link rel="stylesheet" href="hub-theme.css?v=202609300020">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609300015"></script>
-<script src="hub-tracker.js?v=202609300015"></script>
-<script src="hub-rotation.js?v=202609300015"></script>
-<script src="hub-docx.js?v=202609300015"></script>
-<script src="hub-timetable-parse.js?v=202609300015"></script>
-<script src="hub-shared.js?v=202609300015"></script>
-<script src="hub-store.js?v=202609300015"></script>
-<script src="hub-sync.js?v=202609300015"></script>
+<script src="hub-due.js?v=202609300020"></script>
+<script src="hub-tracker.js?v=202609300020"></script>
+<script src="hub-rotation.js?v=202609300020"></script>
+<script src="hub-docx.js?v=202609300020"></script>
+<script src="hub-timetable-parse.js?v=202609300020"></script>
+<script src="hub-shared.js?v=202609300020"></script>
+<script src="hub-store.js?v=202609300020"></script>
+<script src="hub-sync.js?v=202609300020"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -194,14 +194,24 @@ const TODAY = ymd(new Date());
    so nothing typed is lost when the shape arrives. */
 function migrate(){
   if (!TT || !TT.days) return;
-  if (!TT.slots || !TT.slots.length) TT.slots = DEFAULT_SLOTS.map(x => Object.assign({}, x));
+  let changed = false;
+  if (!TT.slots || !TT.slots.length) { TT.slots = DEFAULT_SLOTS.map(x => Object.assign({}, x)); changed = true; }
   const ins = TT.slots.filter(x => x.kind === 'input');
   TT.days.forEach(d => {
     if (d.cells) return;
     d.cells = {};
     [d.a, d.b].forEach((v, i) => { if (v && ins[i]) d.cells[ins[i].key] = v; });
     delete d.a; delete d.b;
+    changed = true;
   });
+  /* The migration has to be WRITTEN, not just held. It ran on every render and
+     saved nothing, so the timetable screen looked right from its own memory
+     while the store still had a timetable with no day shape in it -- and the
+     assessor pack, which reads the store on a different page, could not work
+     out the contact hours it was supposed to (found checking the new Handbook
+     checks live, 30 Sep 2026). Only a tutor can write a course record, so a
+     candidate's browser migrates for itself and writes nothing. */
+  if (changed && IS_TUTOR) { try { localStorage.setItem(KEY, JSON.stringify(TT)); } catch (e) {} }
 }
 
 /* The course's online rooms, typed once on Course admin. A slot names one by
