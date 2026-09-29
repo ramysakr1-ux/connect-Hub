@@ -195,7 +195,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609300008">
+<link rel="stylesheet" href="hub-house.css?v=202609300015">
 </head>
 <body>
 <div class="board">
@@ -226,12 +226,13 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202609300008"></script>
-<script src="hub-shared.js?v=202609300008"></script>
-<script src="assignment-defaults.js?v=202609300008"></script>
-<script src="hub-tracker.js?v=202609300008"></script>
-<script src="hub-store.js?v=202609300008"></script>
-<script src="hub-sync.js?v=202609300008"></script>
+<script src="observation-defaults.js?v=202609300015"></script>
+<script src="hub-shared.js?v=202609300015"></script>
+<script src="assignment-defaults.js?v=202609300015"></script>
+<script src="hub-tracker.js?v=202609300015"></script>
+<script src="hub-rotation.js?v=202609300015"></script>
+<script src="hub-store.js?v=202609300015"></script>
+<script src="hub-sync.js?v=202609300015"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -302,9 +303,73 @@ const TP_TOTAL = (function(){ const n = parseInt(SETTINGS.tpCount, 10); return (
 function courseChecks(){
   const out = [];
   const say = (verb, label, state, detail, cite) => out.push({ verb, label, state, detail, cite });
+  /* Contact hours: the timetable can now work this out, because it knows the
+     shape of a day and how many days there are. Before the timetable existed
+     this was a number somebody typed, and on C/18 nobody had (29 Sep 2026).
+     Breaks and lunch are not contact; everything else on the day is. The
+     typed value still wins when it is set, because a centre may count
+     differently and the number belongs to them -- but when the two disagree
+     the check says so, rather than quietly preferring one. */
+  const tt = rec('connect_timetable_v1') || null;
+  const fromTimetable = (function(){
+    if (!tt || !tt.days || !tt.days.length || !tt.slots || !tt.slots.length) return null;
+    const mins = tt.slots.reduce((n, sl) => {
+      if (sl.kind === 'break') return n;
+      const a = String(sl.from||'').match(/^(\d{1,2}):(\d{2})/), b = String(sl.to||'').match(/^(\d{1,2}):(\d{2})/);
+      if (!a || !b) return n;
+      const d = (+b[1]*60 + +b[2]) - (+a[1]*60 + +a[2]);
+      return d > 0 ? n + d : n;
+    }, 0);
+    if (!mins) return null;
+    return { perDay: mins, days: tt.days.length, hours: Math.round(mins * tt.days.length / 60) };
+  })();
   const hours = parseInt(SETTINGS.totalHours, 10) || 0;
-  say('must', 'Course hours', !hours ? 'unknown' : hours >= 120 ? 'met' : 'short',
-      hours ? hours + ' contact hours' : 'not set', '3.1 — at least 120 contact hours');
+  const shown = hours || (fromTimetable ? fromTimetable.hours : 0);
+  const disagree = hours && fromTimetable && Math.abs(hours - fromTimetable.hours) > 2;
+  say('must', 'Course hours', !shown ? 'unknown' : shown >= 120 ? 'met' : 'short',
+      !shown ? 'not set, and no timetable to work it out from'
+        : hours && fromTimetable
+          ? (disagree ? hours + ' contact hours set; the timetable comes to ' + fromTimetable.hours
+                      : hours + ' contact hours, and the timetable agrees')
+        : hours ? hours + ' contact hours'
+        : fromTimetable.hours + ' contact hours, from the timetable (' + fromTimetable.days + ' days)',
+      '3.1 — at least 120 contact hours');
+
+  /* Two things a timetable makes checkable that nothing else could: a
+     candidate teaches once a day, and a class takes no more than three hours
+     of teaching practice in a day (Handbook 9.1.1 and §26). Both are about
+     the SHAPE of the day, so before the timetable there was nothing to read. */
+  if (tt && tt.slots && tt.slots.length) {
+    const tpSlots = tt.slots.filter(sl => sl.kind === 'tp');
+    const tpMins = tpSlots.reduce((n, sl) => {
+      const a = String(sl.from||'').match(/^(\d{1,2}):(\d{2})/), b = String(sl.to||'').match(/^(\d{1,2}):(\d{2})/);
+      if (!a || !b) return n;
+      const d = (+b[1]*60 + +b[2]) - (+a[1]*60 + +a[2]);
+      return d > 0 ? n + d : n;
+    }, 0);
+    if (tpMins) say('must', 'Teaching practice in a day', tpMins <= 180 ? 'met' : 'short',
+        (tpMins/60).toFixed(tpMins % 60 ? 2 : 0).replace('.00','') + ' hours a day across ' + tpSlots.length + ' lesson' + (tpSlots.length===1?'':'s'),
+        '9.1.1 — a class takes no more than three hours of teaching practice in a day');
+    /* Once a day: the rotation gives each candidate one slot, but a tutor can
+       change any of it, so this reads the teaching sets rather than trusting
+       the shape. A set larger than the number of lessons means somebody has
+       to teach twice, or somebody does not teach. */
+    const R = window.hubRotation;
+    if (R && tpSlots.length) {
+      const sizes = {};
+      const by = {};
+      PEOPLE.forEach(t => { const g = String(t.group||''); (by[g] = by[g] || []).push({ token: t.id || t.token, name: t.name }); });
+      let worst = 0, which = '';
+      Object.keys(by).forEach(g => {
+        R.setsFor(by[g]).forEach(set => { if (set.length > worst) { worst = set.length; which = 'Group ' + (g || '—'); } });
+      });
+      if (worst) say('must', 'Once a day each', worst <= tpSlots.length ? 'met' : 'short',
+          worst <= tpSlots.length
+            ? tpSlots.length + ' lessons a day, ' + worst + ' teaching — each candidate teaches once'
+            : which + ' has ' + worst + ' teaching on a day with ' + tpSlots.length + ' lesson' + (tpSlots.length===1?'':'s'),
+          '§26 — a candidate teaches on no more than one occasion a day');
+    }
+  }
   say('should', 'Teaching practices each', TP_TOTAL >= 8 ? 'met' : 'short',
       TP_TOTAL + ' per candidate', '9.1.2 — a minimum of eight occasions');
 
