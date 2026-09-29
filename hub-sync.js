@@ -410,7 +410,8 @@
       return {
         'hub:volunteer': JSON.stringify(boot.volunteer),
         'connect_course_settings': vc.settings ? JSON.stringify(vc.settings) : null,
-        'connect_timetable_v1': vc.timetable ? JSON.stringify(vc.timetable) : null
+        'connect_timetable_v1': vc.timetable ? JSON.stringify(vc.timetable) : null,
+        'connect_shared_v1': vc.shared ? JSON.stringify(vc.shared) : null
       };
     }
     if (mode === 'trainee' ? !boot.me : !boot.roster) return {};
@@ -468,6 +469,11 @@
        candidate has no business holding a list of their names and who turned
        up when. Written whole by a tutor, like the timetable. */
     out['connect_volunteers_v1'] = course.volunteers ? JSON.stringify(course.volunteers) : null;
+    /* What the candidates have shared with the volunteer students (30 Sep
+       2026). Everyone on the course reads it -- it is the candidates' own
+       handouts, not anybody's private data -- and it is written through the
+       store's shareMaterial op, never put whole. */
+    out['connect_shared_v1'] = course.shared ? JSON.stringify(course.shared) : null;
     if (mode === 'trainee') {
       var me = boot.me || { records: {} };
       out['hub:name'] = me.name || '';

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<!--
+  Connect Lite — a volunteer student's certificate of attendance
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy, 30 Sep 2026: "a nice certificate of attendance at the end, just to
+  encourage them to attend."
+
+  WHAT IT IS. One page, printed. The centre's name and logo, the student's
+  name, the course, the dates, the hours they actually attended and how many
+  classes, and a line for the centre to sign. Nothing decorative that a
+  printer will turn into a grey smear, and no claim the register does not
+  support.
+
+  WHERE THE NUMBERS COME FROM. The register the tutor marked, counted against
+  the timetable's teaching days -- the same arithmetic as their own page and
+  the register, so the three can never disagree. It says HOURS ATTENDED, not
+  hours offered.
+
+  WHO CAN OPEN IT. The student, on their own link, once they are over the
+  centre's threshold; and a tutor, for any student on the register, at any
+  time -- a centre sometimes has to print one early, and that is the centre's
+  call to make. A student below the threshold is told how many classes are
+  left rather than shown a certificate they have not earned.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<title>Certificate of attendance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sand:oklch(98.8% 0.006 85); --sand-line:oklch(85.5% 0.02 80); --paper:oklch(99.5% 0.004 90);
+    --ink:oklch(23.5% 0.017 65); --teal:oklch(37.5% 0.058 195); --grey:oklch(51% 0.017 70);
+    --gold:oklch(63% 0.096 72); --gold-deep:oklch(52% 0.098 70); --faint:oklch(60% 0.012 80);
+  }
+  body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
+  .board{max-width:860px; margin:0 auto; padding:22px 20px 60px;}
+  .bar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:0 0 16px;}
+  .btn{font-family:'Karla',sans-serif; font-size:0.86rem; font-weight:700; padding:10px 20px; border-radius:8px; border:0; background:var(--teal); color:#fff; cursor:pointer; text-decoration:none;}
+  .btn.quiet{background:none; color:var(--grey); border:1.5px solid var(--sand-line);}
+  .note{font-size:0.82rem; color:var(--grey); line-height:1.55;}
+
+  .cert{background:var(--paper); border:1px solid var(--sand-line); border-radius:12px;
+    padding:52px 56px 44px; position:relative; overflow:hidden;}
+  .cert::before{content:''; position:absolute; inset:0; border:2px solid var(--gold); border-radius:12px; opacity:.35; pointer-events:none; margin:14px;}
+  .logo{height:46px; width:auto; display:block; margin:0 0 18px;}
+  .centre{font-size:0.78rem; letter-spacing:.16em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:0 0 30px;}
+  .kind{font-size:0.74rem; letter-spacing:.2em; text-transform:uppercase; color:var(--gold-deep); font-weight:700; margin:0 0 6px;}
+  h1{font-family:'Newsreader',Georgia,serif; font-size:2.1rem; font-weight:700; margin:0 0 26px; line-height:1.15;}
+  .awarded{font-size:0.9rem; color:var(--grey); margin:0 0 6px;}
+  .who{font-family:'Newsreader',Georgia,serif; font-size:2.4rem; font-weight:700; margin:0 0 4px; line-height:1.15;}
+  .rule{height:1px; background:var(--sand-line); margin:14px 0 24px;}
+  .body{font-size:1rem; line-height:1.75; max-width:56ch;}
+  .body b{font-weight:700;}
+  .facts{display:flex; gap:38px; flex-wrap:wrap; margin:28px 0 0;}
+  .fact .n{font-family:'Newsreader',Georgia,serif; font-size:1.7rem; font-weight:700; display:block; line-height:1.1;}
+  .fact .l{font-size:0.74rem; letter-spacing:.09em; text-transform:uppercase; color:var(--grey); font-weight:700;}
+  .sign{display:flex; gap:44px; flex-wrap:wrap; margin:44px 0 0; align-items:flex-end;}
+  .sign .slot{min-width:220px;}
+  .sign .line{height:1px; background:var(--ink); opacity:.45; margin:0 0 6px;}
+  .sign .l{font-size:0.74rem; letter-spacing:.09em; text-transform:uppercase; color:var(--grey); font-weight:700;}
+  .issued{font-size:0.78rem; color:var(--faint); margin:26px 0 0;}
+  .empty{background:var(--paper); border:1px dashed var(--sand-line); border-radius:11px; padding:26px 24px; color:var(--grey); font-size:0.9rem; line-height:1.65;}
+  .empty b{color:var(--ink);}
+  @media (max-width:560px){ .cert{padding:30px 24px 26px;} h1{font-size:1.6rem;} .who{font-size:1.8rem;} }
+  @media print{
+    .bar,#hubSync{display:none !important;}
+    body{background:#fff;} .board{max-width:none; padding:0;}
+    .cert{border:0; border-radius:0; padding:40px 44px;}
+    .cert::before{margin:8px;}
+    @page{ margin:14mm; }
+  }
+</style>
+<link rel="stylesheet" href="hub-house.css?v=202609300244">
+<link rel="stylesheet" href="hub-theme.css?v=202609300244">
+</head>
+<body class="hub-grid">
+<div class="board" id="app"></div>
+<script src="hub-shared.js?v=202609300244"></script>
+<script src="hub-store.js?v=202609300244"></script>
+<script src="hub-sync.js?v=202609300244"></script>
+<script type="text/x-hub-app">
+const $ = id => document.getElementById(id);
+const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const rec = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch(e) { return null; } };
+const MODE = window.HubMode;
+const IS_TUTOR = MODE === 'tutor';
+
+const SETTINGS = rec('connect_course_settings') || {};
+const TT = rec('connect_timetable_v1') || {};
+const MON = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const parse = s => { const m = String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(+m[1], +m[2]-1, +m[3]) : null; };
+const longDate = iso => { const d = parse(iso); return d ? d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear() : ''; };
+const fmtH = h => (Math.round(h * 100) / 100).toString().replace(/\.00$/, '');
+
+/* The same arithmetic as the register and their own page, so the three can
+   never disagree: teaching days from the timetable, hours from that day's
+   teaching slots. */
+const tpSlots = (TT.slots || []).filter(s => s.kind === 'tp');
+const mins = sl => { const a = String(sl.from||'').match(/^(\d{1,2}):(\d{2})/), b = String(sl.to||'').match(/^(\d{1,2}):(\d{2})/); if (!a||!b) return 0; const d = (+b[1]*60 + +b[2]) - (+a[1]*60 + +a[2]); return d > 0 ? d : 0; };
+const hoursPerDay = tpSlots.reduce((n, sl) => n + mins(sl), 0) / 60;
+const days = (TT.days || []).filter(d => d.tp).map(d => d.date).sort();
+const TARGET = parseFloat(SETTINGS.volunteerCertificateHours) || 20;
+
+/* Whose certificate. A student opens their own on their own link; a tutor
+   opens any by passing ?who=<their token> from the register. */
+function subject(){
+  if (IS_TUTOR) {
+    const want = new URLSearchParams(location.search).get('who') || '';
+    const reg = rec('connect_volunteers_v1') || {};
+    const st = (reg.students || []).find(s => s && s.token === want);
+    return st ? { name: st.name, here: st.here || [] } : null;
+  }
+  const me = rec('hub:volunteer');
+  return me && me.name ? { name: me.name, here: me.here || [] } : null;
+}
+
+function render(){
+  const who = subject();
+  const app = $('app');
+  if (!who) {
+    app.innerHTML = `<div class="empty">This page needs a student. ${IS_TUTOR ? 'Open it from the volunteer register, using the certificate button on their row.' : 'Open your own link from the centre.'}</div>`;
+    return;
+  }
+  const here = new Set(who.here);
+  const attended = days.filter(d => here.has(d)).length;
+  const hours = attended * hoursPerDay;
+  const earned = TARGET <= 0 || hours >= TARGET;
+  const left = Math.max(0, TARGET - hours);
+  const classesLeft = hoursPerDay ? Math.ceil(left / hoursPerDay - 1e-9) : 0;
+
+  /* Not yet earned, and the reader is the student: tell them what is left.
+     A tutor may print one early -- a centre sometimes has to -- and is told
+     plainly that it is below the threshold. */
+  if (!earned && !IS_TUTOR) {
+    app.innerHTML = `<div class="empty"><b>Not quite yet.</b><br>Your certificate is ready at ${fmtH(TARGET)} hours of classes. You have ${fmtH(hours)} so far, so that is <b>${classesLeft} more ${classesLeft === 1 ? 'class' : 'classes'}</b>. It will appear here on its own.</div>`;
+    return;
+  }
+
+  const centre = SETTINGS.centreName || '';
+  const course = SETTINGS.courseName || '';
+  const first = days.filter(d => here.has(d))[0] || '';
+  const last = days.filter(d => here.has(d)).slice(-1)[0] || '';
+  const span = (first && last) ? (first === last ? longDate(first) : longDate(first) + ' to ' + longDate(last)) : '';
+
+  app.innerHTML = `
+    <div class="bar">
+      <button class="btn" id="print">Print or save as PDF</button>
+      ${IS_TUTOR ? '<a class="btn quiet" href="25_volunteer_register.html">Back to the register</a>' : ''}
+      <span class="note">${earned ? 'One page. It prints without the buttons.' : 'Below the centre\\u2019s threshold \\u2014 printing it is your call.'}</span>
+    </div>
+    <div class="cert">
+      ${SETTINGS.logo ? `<img class="logo" src="${esc(SETTINGS.logo)}" alt="">` : ''}
+      <p class="centre">${esc(centre)}</p>
+      <p class="kind">Certificate of attendance</p>
+      <h1>With thanks</h1>
+      <p class="awarded">This certifies that</p>
+      <p class="who">${esc(who.name)}</p>
+      <div class="rule"></div>
+      <p class="body">attended English classes as a volunteer student on
+        <b>${esc(course || 'the course')}</b>${centre ? ' at <b>' + esc(centre) + '</b>' : ''}${span ? ', between <b>' + esc(span) + '</b>' : ''}.
+        These classes were taught by teachers in training, and their learning
+        depended on people willing to come and be taught. Thank you.</p>
+      <div class="facts">
+        <div class="fact"><span class="n">${fmtH(hours)}</span><span class="l">hours attended</span></div>
+        <div class="fact"><span class="n">${attended}</span><span class="l">${attended === 1 ? 'class' : 'classes'}</span></div>
+        ${days.length ? `<div class="fact"><span class="n">${days.length}</span><span class="l">classes on the course</span></div>` : ''}
+      </div>
+      <div class="sign">
+        <div class="slot"><div class="line"></div><span class="l">Signed for the centre</span></div>
+        <div class="slot"><div class="line"></div><span class="l">Date</span></div>
+      </div>
+      <p class="issued">Attendance recorded on the course register${SETTINGS.centreNumber ? ' \\u00b7 Cambridge centre ' + esc(SETTINGS.centreNumber) : ''}.</p>
+    </div>`;
+  if ($('print')) $('print').addEventListener('click', () => window.print());
+}
+render();
+</script>
+</body>
+</html>

@@ -81,6 +81,8 @@
   .track i{display:block; height:100%; background:var(--gold);}
   .cert{background:var(--paper); border:1px dashed var(--sand-line); border-radius:9px; padding:13px 15px; font-size:0.84rem; color:var(--grey); line-height:1.55;}
   .cert b{color:var(--ink);}
+  .cert .certlink{color:var(--teal); font-weight:700; text-decoration:none;}
+  .cert .certlink:hover{text-decoration:underline;}
   .days{font-size:0.82rem; color:var(--grey); line-height:2;}
   .days b{color:var(--ink); font-weight:700; margin-right:2px;}
   .days span{display:inline-block; margin-right:14px; white-space:nowrap;}
@@ -88,14 +90,14 @@
   .empty{color:var(--grey); font-size:0.86rem; line-height:1.6;}
   @media (max-width:480px){ .board{padding:16px 14px 50px;} .next{padding:16px 16px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609300221">
-<link rel="stylesheet" href="hub-theme.css?v=202609300221">
+<link rel="stylesheet" href="hub-house.css?v=202609300244">
+<link rel="stylesheet" href="hub-theme.css?v=202609300244">
 </head>
 <body class="hub-grid">
 <div class="board" id="app"></div>
-<script src="hub-shared.js?v=202609300221"></script>
-<script src="hub-store.js?v=202609300221"></script>
-<script src="hub-sync.js?v=202609300221"></script>
+<script src="hub-shared.js?v=202609300244"></script>
+<script src="hub-store.js?v=202609300244"></script>
+<script src="hub-sync.js?v=202609300244"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -104,6 +106,10 @@ const rec = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); }
 const ME = rec('hub:volunteer') || {};
 const SETTINGS = rec('connect_course_settings') || {};
 const TT = rec('connect_timetable_v1') || {};
+/* What the candidates have shared for the lesson. The store appends, so the
+   newest is last; newest first here, because the thing shared for tomorrow is
+   what they came to look at. */
+const SHARED = (rec('connect_shared_v1') || []).filter(x => x && x.url && x.name).slice().reverse();
 const ZONE = SETTINGS.timeZone || '';
 
 const MON = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -178,13 +184,14 @@ function render(){
     ${nextBlock}
     <div class="card"><h3>For your next class</h3>
       <p class="note">Anything your teachers share for the lesson appears here. Have a look if you like — you do not have to.</p>
-      <p class="empty">Nothing shared yet.</p></div>
+      ${SHARED.length ? SHARED.map(x => `<div class="mat"><div><b>${esc(x.name)}</b>${(x.by || x.kind) ? '<small>' + esc([x.by, x.kind].filter(Boolean).join(' \u00b7 ')) + '</small>' : ''}</div><a href="${esc(x.url)}" target="_blank" rel="noopener">Open</a></div>`).join('')
+        : '<p class="empty">Nothing shared yet.</p>'}</div>
     <div class="card"><h3>Your attendance</h3>
       <div class="segs">${days.map(d => `<span class="seg ${here.has(d) ? 'here' : d < TODAY ? 'miss' : ''}" title="${esc(shortDay(d))}"></span>`).join('')}</div>
       <div class="hrs"><b>${fmtH(hours)} h</b><span>${attended} ${attended === 1 ? 'class' : 'classes'}${upcoming.length ? ' · ' + upcoming.length + ' still to come' : ''}</span></div>
       ${TARGET > 0 ? `<div class="track"><i style="width:${Math.min(100, Math.round(hours / TARGET * 100))}%"></i></div>
       <div class="cert">${earned
-        ? `Your <b>certificate of attendance</b> is earned. The centre will give it to you at the end of the course.`
+        ? `Your <b>certificate of attendance</b> is ready. <a class="certlink" href="27_volunteer_certificate.html">Open it</a> \u2014 print it or save it as a PDF.`
         : `Your <b>certificate of attendance</b> is ready at ${fmtH(TARGET)} hours. That is <b>${classesLeft} more ${classesLeft === 1 ? 'class' : 'classes'}</b>. It is signed by the centre and yours to keep.`}</div>` : ''}
     </div>
     ${upcoming.length > 1 ? `<div class="card"><h3>The rest of the course</h3>

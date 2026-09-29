@@ -72,6 +72,11 @@
   .card.aim{border-left-color:var(--terracotta);}
   .card.prob{border-left-color:var(--ochre);}
   .card.mats{border-left-color:var(--teal);}
+  .shareVol{margin:10px 0 0; padding:10px 12px; border:1px dashed var(--sand-line,#d8d2c4); border-radius:9px;}
+  .shareVol[hidden]{display:none !important;}
+  .sv-row{display:flex; gap:10px; align-items:flex-start; cursor:pointer; font-size:0.86rem;}
+  .sv-row input{margin-top:3px; flex:none;}
+  .sv-row small{display:block; color:var(--grey,#6b7280); font-size:0.78rem; line-height:1.5; margin-top:2px;}
   .mats-preferred{display:inline-block;margin-left:7px;padding:1px 8px;border:1.3px solid var(--teal);border-radius:20px;
   font-size:0.66rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--teal);vertical-align:2px;}
   .mats-fallback{margin-top:14px;}
@@ -416,7 +421,7 @@
   .duenote::before{content:"\2022"; font-size:1.1em; line-height:0;}
   .fromtt{display:block; font-size:0.72rem; color:var(--grey,#6b7280); margin-top:3px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609300221">
+<link rel="stylesheet" href="hub-house.css?v=202609300244">
 </head>
 <body>
 <div class="board">
@@ -508,6 +513,14 @@
       <input type="url" id="fMatsLink" placeholder="https://drive.google.com/...">
     </div>
     <div id="matsPreview"></div>
+    <!-- Ramy, 30 Sep 2026: trainees should be able to share material with the
+         volunteer students while planning, before they teach. The switch puts
+         the link on the students' own page; it never sends a file anywhere the
+         link does not already go. -->
+    <div class="shareVol" id="shareVol" hidden>
+      <label class="sv-row"><input type="checkbox" id="fShareVol">
+        <span><b>Share this with the students</b><small id="shareVolNote">It appears on their own page for this lesson. They are told to look only if they want to.</small></span></label>
+    </div>
     <details class="mats-fallback">
       <summary>No Drive? Attach the file instead</summary>
       <div class="dropzone" id="matsDrop">
@@ -639,11 +652,11 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202609300221"></script>
-<script src="hub-shared.js?v=202609300221"></script>
-<script src="hub-rotation.js?v=202609300221"></script>
-<script src="hub-store.js?v=202609300221"></script>
-<script src="hub-sync.js?v=202609300221"></script>
+<script src="hub-due.js?v=202609300244"></script>
+<script src="hub-shared.js?v=202609300244"></script>
+<script src="hub-rotation.js?v=202609300244"></script>
+<script src="hub-store.js?v=202609300244"></script>
+<script src="hub-sync.js?v=202609300244"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    candidate's own screens; nothing in the tutor or assessor flow links to them,
@@ -694,7 +707,38 @@ function renderMatsPreview(){
     if(btn) btn.textContent='hide the preview';
   });
 }
-$('fMatsLink').addEventListener('input', ()=>{ renderMatsPreview(); dirty=true; autosave(); });
+$('fMatsLink').addEventListener('input', ()=>{ renderMatsPreview(); renderShareVol(); dirty=true; autosave(); });
+/* The switch itself. It calls the store directly rather than going through
+   the plan record, because the students' list belongs to the course. */
+if ($('fShareVol')) $('fShareVol').addEventListener('change', async () => {
+  const box = $('fShareVol'), note = $('shareVolNote');
+  const m = sharableMaterial(); if (!m) return;
+  const was = note ? note.textContent : '';
+  const say = t => { if (note) note.textContent = t; };
+  box.disabled = true;
+  try {
+    if (box.checked) {
+      const tp = ($('fTP').value || '').trim();
+      const r = await window.HubStore.call({ op: 'shareMaterial', name: m.name, url: m.url,
+        by: ($('fName').value || '').trim(), tp: tp, kind: 'materials' });
+      localStorage.setItem('connect_shared_v1', JSON.stringify(r.shared || []));
+      say('Shared. The students see it on their own page.');
+    } else {
+      const list = rec0('connect_shared_v1') || [];
+      const mine = list.find(x => x && x.url === m.url);
+      if (mine) {
+        const r = await window.HubStore.call({ op: 'unshareMaterial', id: mine.id });
+        localStorage.setItem('connect_shared_v1', JSON.stringify(r.shared || []));
+      }
+      say('Taken back. The students no longer see it.');
+    }
+    setTimeout(() => say(was), 2600);
+  } catch (err) {
+    box.checked = !box.checked;
+    say('Could not change that \u2014 ' + (err && err.message ? err.message : 'try again'));
+    setTimeout(() => say(was), 3200);
+  } finally { box.disabled = false; }
+});
 /* The attached file lives in THIS browser and nowhere else.
    It used to go into the plan record as a base64 data URL, which put it on the
    way to the store twice over -- once in the record, once again inside the
@@ -722,6 +766,30 @@ let MATS_FILE=null;
    could ever carry is about 36KB, less than one worksheet. The link is what
    travels, which is what makes the attachment reach the tutor, the assessor
    and the printed record at all. */
+/* SHARING WITH THE VOLUNTEER STUDENTS (30 Sep 2026).
+   The switch shows only when there is something to share -- a Drive link, or
+   a file that has been uploaded and so has a URL of its own. A file that
+   never left this browser has no link to give anybody, and saying "shared"
+   about it would be a lie.
+   It writes through the store's own op, not the plan record: a trainee cannot
+   write a course record, and the students' list is course-wide. */
+function sharableMaterial(){
+  const url = ($('fMatsLink').value || '').trim();
+  if (/^https?:\/\//i.test(url)) return { url: url, name: ($('fMats').value || '').split('\n')[0].trim() || 'Materials for the lesson' };
+  if (MATS_FILE && MATS_FILE.url) return { url: MATS_FILE.url, name: MATS_FILE.name || 'Materials for the lesson' };
+  return null;
+}
+function renderShareVol(){
+  const host = $('shareVol'); if (!host) return;
+  const m = sharableMaterial();
+  host.hidden = !m;
+  if (!m) return;
+  const shared = (rec0('connect_shared_v1') || []).some(x => x && x.url === m.url);
+  const box = $('fShareVol');
+  if (box && box.checked !== shared) box.checked = shared;
+}
+function rec0(k){ try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch(e) { return null; } }
+
 function matsFileMeta(){
   if (!MATS_FILE) return null;
   var m = { name: MATS_FILE.name, type: MATS_FILE.type || '', size: MATS_FILE.size || 0 };
@@ -780,6 +848,8 @@ function renderMatsFile(){
       : (MATS_FILE.url ? '' : '<span style="color:var(--grey);font-style:italic;">not on this device</span>')}
     <button type="button" id="matsFileRemove">Remove</button></div>`;
   $('matsFileRemove').addEventListener('click', e=>{ e.stopPropagation(); MATS_FILE=null; saveMatsLocal(); matsNote(''); dirty=true; autosave(); renderMatsFile(); });
+
+  if (typeof renderShareVol === "function") renderShareVol();
 }
 function handleMatsFile(file){
   if(!file) return;
@@ -1522,6 +1592,7 @@ function restore(d){
   const p=d.plan||{};
   $('fMain').value=procText(p.main||''); $('fSub').value=procText(p.sub||'');
   $('fPers').value=procText(p.pers||''); $('fMats').value=procText(p.mats||''); $('fMatsLink').value=p.matsLink||''; renderMatsPreview(); MATS_FILE=restoreMatsFile(p.matsFile); renderMatsFile(); $('fProfile').value=p.profile||'';
+  renderShareVol();
   const pairs=[...document.querySelectorAll('.prob-pair')];
   (p.probs||[]).forEach((x,i)=>{
     if(!pairs[i]) return;
