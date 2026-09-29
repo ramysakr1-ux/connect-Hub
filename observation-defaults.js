@@ -446,7 +446,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
               "items": [
                 "One stage you would lift into your own next TP, and why",
                 "One thing you would have done differently, and what you would expect to change as a result",
-                "One question to ask the teacher afterwards Ask it. Write the answer here."
+                "One question to ask the teacher afterwards\nAsk it. Write the answer here."
               ]
             }
           ]

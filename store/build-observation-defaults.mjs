@@ -80,7 +80,10 @@ function partBlocks(items) {
     if (oneCol && rows.length >= 2 && rows[0][0].length === 1 && headingLike(rows[0][0][0])) {
       lines.push({ set: { label: rows[0][0][0], prompts: rows.slice(1).flatMap((r) => r[0]) } }); return;
     }
-    if (oneCol && rows.length >= 2) { lines.push({ items: rows.map((r) => r[0].join(' ')) }); return; }
+    /* an item's paragraphs stay on their own lines (the sheet renders a
+       newline as a line break): "One question to ask the teacher afterwards"
+       and "Ask it. Write the answer here." are two lines, not one sentence */
+    if (oneCol && rows.length >= 2) { lines.push({ items: rows.map((r) => r[0].join('\n')) }); return; }
     rows.forEach((r) => r.forEach((c) => c.forEach((t) => lines.push(t))));
   });
   for (let i = 0; i < lines.length; i++) {
