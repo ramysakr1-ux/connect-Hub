@@ -136,22 +136,22 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} .days{grid-template-columns:1fr;} }
   @media print{ .back,.bar,#hubSync{display:none !important;} body{background:#fff;} .days{grid-template-columns:repeat(5,1fr);} .day{break-inside:avoid;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609300046">
-<link rel="stylesheet" href="hub-theme.css?v=202609300046">
+<link rel="stylesheet" href="hub-house.css?v=202609300052">
+<link rel="stylesheet" href="hub-theme.css?v=202609300052">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609300046"></script>
-<script src="hub-tracker.js?v=202609300046"></script>
-<script src="hub-rotation.js?v=202609300046"></script>
-<script src="hub-docx.js?v=202609300046"></script>
-<script src="hub-timetable-parse.js?v=202609300046"></script>
-<script src="hub-shared.js?v=202609300046"></script>
-<script src="hub-store.js?v=202609300046"></script>
-<script src="hub-sync.js?v=202609300046"></script>
+<script src="hub-due.js?v=202609300052"></script>
+<script src="hub-tracker.js?v=202609300052"></script>
+<script src="hub-rotation.js?v=202609300052"></script>
+<script src="hub-docx.js?v=202609300052"></script>
+<script src="hub-timetable-parse.js?v=202609300052"></script>
+<script src="hub-shared.js?v=202609300052"></script>
+<script src="hub-store.js?v=202609300052"></script>
+<script src="hub-sync.js?v=202609300052"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -269,6 +269,17 @@ function groups(){
    (Ramy: "this timetable is alive"). A tutor sees the count outstanding; a
    candidate sees only whether THEIRS is in, because whether somebody else has
    submitted is not theirs to read. */
+/* The local calendar day of an instant, as YYYY-MM-DD. */
+function dayOf(iso){
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) {
+    const m = String(iso).match(/^(\d{4}-\d{2}-\d{2})/);
+    return m ? m[1] : '';
+  }
+  return ymd(d);
+}
+
 function dues(){
   const w = rec('connect_assignment_wording_v2') || {};
   const roster = rec('connect_roster_v1') || {};
@@ -277,8 +288,15 @@ function dues(){
   const out = {};
   Object.keys(w).forEach(k => {
     const a = w[k] || {};
-    const iso = String(a.due || '').slice(0,10);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return;
+    /* WHICH DAY A DEADLINE FALLS ON. A deadline is an INSTANT, so the first
+       ten characters of its stamp are its UTC date, not its day. Taking them
+       put a deadline set for 01:59 on the 13th in Istanbul onto the 12th --
+       the reader watched it move to the day before the one they picked
+       (30 Sep 2026). It is the same fault the assessor expiry had in
+       September: a date named to a person is a day, and a day is worked out
+       in the clock they are reading it in. */
+    const iso = dayOf(a.due);
+    if (!iso) return;
     let missing = 0, mineIn = null;
     people.forEach(tr => {
       const token = tr.id || tr.token;
@@ -524,7 +542,7 @@ function moveHTML(){
   if (!MOVING || !IS_TUTOR) return '';
   const w = rec('connect_assignment_wording_v2') || {};
   const a = w[MOVING] || {};
-  const cur = String(a.due || '').slice(0, 10);
+  const cur = dayOf(a.due);
   const days = (TT.days || []).map(d => d.date);
   return `<div class="imp"><h3>Move ${esc(a.title || MOVING.toUpperCase())}</h3>
     <p>It is due on ${esc(cur || 'no day yet')}. Pick another course day; the time of day is kept.</p>
