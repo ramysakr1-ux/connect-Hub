@@ -247,7 +247,11 @@
   .obs-film{margin-top:6px;}
   .obs-film label{display:block; font-size:0.68rem; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); margin:0 0 3px;}
   .obs-film input{width:100%; max-width:460px; font-family:inherit; font-size:0.84rem; padding:6px 9px; border:1px solid var(--sand-line, oklch(85.5% 0.02 80)); border-radius:8px; background:var(--paper, #fff); color:var(--ink);}
-  @media (max-width:640px){ .arow.obs-filmed{grid-template-columns:1fr 72px;} .obs-move{grid-column:2; grid-row:1;} .arow.obs-filmed a.btn{grid-column:1 / -1; justify-self:start;} }
+  /* On a phone: title and film field first, arrows beside the title, and the
+     Edit wording button LAST -- the tab's general phone rule pins every
+     button to row 1, which put it above the title (seen in the pane,
+     29 Sep 2026), so the row is overridden here. */
+  @media (max-width:640px){ .arow.obs-filmed{grid-template-columns:1fr 72px;} .arow.obs-filmed > div:first-child{grid-column:1; grid-row:1;} .obs-move{grid-column:2; grid-row:1; align-self:start; margin-top:2px;} .arow.obs-filmed a.btn{grid-column:1 / -1; grid-row:2; justify-self:start; margin-top:8px;} }
   .arow .sw{grid-column:2; margin-left:0 !important;}
   .arow a.btn{grid-column:3; justify-self:end; white-space:nowrap;}
   @media (max-width:640px){ .arow{grid-template-columns:1fr 140px;} .arow .sw{grid-column:1 / -1; order:3; padding-top:4px;} .arow a.btn{grid-column:2; grid-row:1;} }
@@ -288,7 +292,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609291832">
+<link rel="stylesheet" href="hub-house.css?v=202609291842">
 </head>
 <body>
 <div class="board">
@@ -572,11 +576,11 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609291832"></script>
-<script src="hub-store.js?v=202609291832"></script>
-<script src="observation-defaults.js?v=202609291832"></script>
-<script src="hub-shared.js?v=202609291832"></script>
-<script src="hub-sync.js?v=202609291832"></script>
+<script src="assignment-defaults.js?v=202609291842"></script>
+<script src="hub-store.js?v=202609291842"></script>
+<script src="observation-defaults.js?v=202609291842"></script>
+<script src="hub-shared.js?v=202609291842"></script>
+<script src="hub-sync.js?v=202609291842"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -909,7 +913,7 @@ document.getElementById('addCandLink').addEventListener('click', () => {
         const code = t.tp ? 'TP' + t.tp : g === 'filmed' ? 'FILMED ' + (i + 1) : 'LIVE ' + (i + 1);
         const filmed = g === 'filmed';
         return `<div class="arow${filmed ? ' obs-filmed' : ''}" data-key="${esc(t.id)}"><div><span class="code">${code}</span><div class="title2">${esc(t.title)}</div>${!filmed && t.sub ? `<div class="aside">${esc(t.sub)}</div>` : ''}
-          ${filmed ? `<div class="obs-film"><label>Film</label><input type="text" data-film="${esc(t.id)}" value="${esc(t.film || '')}" placeholder="which recording this one is, e.g. the title or the link" maxlength="160"></div>` : ''}</div>
+          ${filmed ? `<div class="obs-film"><label>Film</label><input type="text" data-film="${esc(t.id)}" value="${esc(t.film || '')}" placeholder="the recording\u2019s title or link" maxlength="160"></div>` : ''}</div>
           ${filmed ? `<span class="obs-move"><button type="button" class="mv" data-move="${esc(t.id)}" data-dir="-1" title="Move up"${i === 0 ? ' disabled' : ''}>\u2191</button><button type="button" class="mv" data-move="${esc(t.id)}" data-dir="1" title="Move down"${i === arr.length - 1 ? ' disabled' : ''}>\u2193</button></span>` : ''}
           <a class="btn ghost" href="19_observation_wording.html?task=${encodeURIComponent(t.id)}">Edit wording</a></div>`;
       }).join('')
