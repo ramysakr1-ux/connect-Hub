@@ -104,6 +104,9 @@
   .day .dm{font-size:0.74rem; color:var(--grey);}
   .due{color:var(--gold-deep); font-weight:600; font-size:0.72rem; padding:4px 11px;}
   .due.late{color:var(--brick);}
+  .due.asbtn{display:block; width:100%; text-align:left; font-family:inherit; background:none; border:0;
+    border-top:1px dashed var(--sand-line); cursor:pointer;}
+  .due.asbtn:hover{background:var(--sand-deep);}
   .btn{font-family:'Karla',sans-serif; font-size:0.84rem; font-weight:700; padding:9px 18px; border-radius:8px; border:0; background:var(--teal); color:#fff; cursor:pointer;}
   .btn.quiet{background:none; color:var(--grey); border:1.5px solid var(--sand-line);}
   .btn:disabled{opacity:.5; cursor:not-allowed;}
@@ -133,22 +136,22 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} .days{grid-template-columns:1fr;} }
   @media print{ .back,.bar,#hubSync{display:none !important;} body{background:#fff;} .days{grid-template-columns:repeat(5,1fr);} .day{break-inside:avoid;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609300041">
-<link rel="stylesheet" href="hub-theme.css?v=202609300041">
+<link rel="stylesheet" href="hub-house.css?v=202609300046">
+<link rel="stylesheet" href="hub-theme.css?v=202609300046">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609300041"></script>
-<script src="hub-tracker.js?v=202609300041"></script>
-<script src="hub-rotation.js?v=202609300041"></script>
-<script src="hub-docx.js?v=202609300041"></script>
-<script src="hub-timetable-parse.js?v=202609300041"></script>
-<script src="hub-shared.js?v=202609300041"></script>
-<script src="hub-store.js?v=202609300041"></script>
-<script src="hub-sync.js?v=202609300041"></script>
+<script src="hub-due.js?v=202609300046"></script>
+<script src="hub-tracker.js?v=202609300046"></script>
+<script src="hub-rotation.js?v=202609300046"></script>
+<script src="hub-docx.js?v=202609300046"></script>
+<script src="hub-timetable-parse.js?v=202609300046"></script>
+<script src="hub-shared.js?v=202609300046"></script>
+<script src="hub-store.js?v=202609300046"></script>
+<script src="hub-sync.js?v=202609300046"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -286,6 +289,8 @@ function dues(){
       if (!inHand) missing++;
     });
     (out[iso] = out[iso] || []).push({
+      key: k,
+      due: a.due,
       title: a.title || k.toUpperCase(),
       past: iso < TODAY,
       missing: IS_TRAINEE ? (mineIn === false ? 1 : 0) : missing,
@@ -397,8 +402,10 @@ function cellHTML(day){
     ${body}
     ${dueHere.map(x => {
       const late = x.past && x.missing;
-      return `<div class="due${late ? ' late' : ''}">${esc(x.title)} due${
-        late ? ' \u00b7 ' + (IS_TRAINEE ? 'yours is not in' : x.missing + ' of ' + x.total + ' not in') : ''}</div>`;
+      const body = `${esc(x.title)} due${late ? ' \u00b7 ' + (IS_TRAINEE ? 'yours is not in' : x.missing + ' of ' + x.total + ' not in') : ''}`;
+      return EDIT
+        ? `<button type="button" class="due asbtn${late ? ' late' : ''}" data-move="${esc(x.key)}" title="Move this deadline">${body}</button>`
+        : `<div class="due${late ? ' late' : ''}">${body}</div>`;
     }).join('')}
     ${notes}
   </div>`;
@@ -488,6 +495,77 @@ function keyLine(){
   return `<p class="legend keyline">${bits.join('<span class="sp">\u00b7</span>')}</p>`;
 }
 
+/* MOVING A DEADLINE FROM THE TIMETABLE (30 Sep 2026, the last of phase two).
+ *
+ * A deadline has always lived on the assignment's own wording, and the
+ * timetable could only show it. But the timetable is where you can SEE that a
+ * deadline lands the day before three lessons, or on the day a group teaches,
+ * and seeing it somewhere you cannot act is its own small cruelty.
+ *
+ * So a tutor can move one from here. It writes back to the same field the
+ * wording screen writes, so there is still one deadline, not two. The time of
+ * day is kept -- moving a date should not quietly turn 23:00 into midnight.
+ *
+ * And it warns rather than refuses. A deadline on a day the group is teaching
+ * is against the centre's own scheduling rule, but a warning is right where a
+ * veto is not: a tutor moving a deadline usually knows something the software
+ * does not. */
+let MOVING = null;   // the assignment key whose deadline is being moved
+
+/* Does this group teach on that day? Their set decides which of a practice's
+   two days is theirs, so "teaching that day" is a per-group question. */
+function teachesOn(dateISO){
+  const day = (TT.days || []).find(d => d.date === dateISO);
+  if (!day || !day.tp) return [];
+  return GROUPS.filter(g => (g.sets[day.setIndex] || []).length).map(g => g.group);
+}
+
+function moveHTML(){
+  if (!MOVING || !IS_TUTOR) return '';
+  const w = rec('connect_assignment_wording_v2') || {};
+  const a = w[MOVING] || {};
+  const cur = String(a.due || '').slice(0, 10);
+  const days = (TT.days || []).map(d => d.date);
+  return `<div class="imp"><h3>Move ${esc(a.title || MOVING.toUpperCase())}</h3>
+    <p>It is due on ${esc(cur || 'no day yet')}. Pick another course day; the time of day is kept.</p>
+    <div class="row">
+      <select id="moveTo">${days.map(d => {
+        const t = teachesOn(d);
+        return `<option value="${esc(d)}"${d === cur ? ' selected' : ''}>${esc(d)}${t.length ? ' \u2014 ' + (t.length > 1 ? 'groups' : 'group') + ' ' + t.join(', ') + ' teach' : ''}</option>`;
+      }).join('')}</select>
+      <button class="btn" id="moveGo">Move it</button>
+      <button class="btn quiet" id="moveCancel">Leave it</button>
+    </div>
+    <p class="hint" id="moveWarn"></p></div>`;
+}
+
+function wireMove(){
+  if (!IS_TUTOR) return;
+  document.querySelectorAll('[data-move]').forEach(el => el.addEventListener('click', () => {
+    MOVING = (MOVING === el.dataset.move) ? null : el.dataset.move; render();
+  }));
+  const sel = $('moveTo');
+  const warn = () => {
+    const el = $('moveWarn'); if (!el || !sel) return;
+    const t = teachesOn(sel.value);
+    el.textContent = t.length
+      ? 'Group ' + t.join(' and ') + ' teach that day. A deadline usually falls on a day a group is not teaching \u2014 this is a note, not a block.'
+      : '';
+  };
+  if (sel) { sel.addEventListener('change', warn); warn(); }
+  if ($('moveCancel')) $('moveCancel').addEventListener('click', () => { MOVING = null; render(); });
+  if ($('moveGo')) $('moveGo').addEventListener('click', () => {
+    const w = rec('connect_assignment_wording_v2') || {};
+    const a = w[MOVING]; if (!a || !sel) return;
+    /* Keep the hour: the deadline is an instant, and only its DAY is moving. */
+    const local = window.HubDue ? HubDue.toLocalInput(a.due) : '';
+    const time = local ? local.slice(11, 16) : '23:59';
+    a.due = window.HubDue ? HubDue.fromLocalInput(sel.value + 'T' + time) : sel.value;
+    try { localStorage.setItem('connect_assignment_wording_v2', JSON.stringify(w)); } catch (e) {}
+    MOVING = null; note = 'Deadline moved'; render();
+  });
+}
+
 /* Whose clock the times are in. Said once, under the grid, and only when it
    could matter -- a reader in the course's own zone is told nothing, because
    for them there is nothing to know. */
@@ -559,7 +637,7 @@ function render(){
       <button class="btn quiet" id="importOpen">Import from a sheet</button>
       <span class="status">${esc(note)}</span></div>
       <p class="legend" style="margin:0 0 14px">${pub ? 'Everyone on the course reads this timetable. Edits show at once.' : 'Only tutors can see it until you set it.'}</p>`
-      + (PREVIEW ? '' : slotsHTML() + importHTML()) : '';
+      + (PREVIEW ? '' : moveHTML() + slotsHTML() + importHTML()) : '';
   app.innerHTML = head + zoneLine() + bar + weeks.map((w, i) => {
     const a = parse(w[0].date), b = parse(w[w.length-1].date);
     return `<section class="wk"><h2>Week ${i+1} <small>${dm(a)} – ${dm(b)}</small></h2>
@@ -572,6 +650,7 @@ function render(){
   wireEdits();
   wireImport();
   wireSlots();
+  wireMove();
   /* Twenty full days stacked on a phone is a long way to scroll to reach this
      afternoon, so a narrow screen opens on today. Once only: scrolling back up
      to read the week should not be undone by the next save. */
