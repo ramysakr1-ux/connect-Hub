@@ -100,6 +100,8 @@
   .mats-read{display:block; margin-top:3px; font-size:0.75rem; line-height:1.6;}
   .mats-read .sep{color:var(--faint); margin:0 5px;}
   .mats-read .mpoint{color:var(--grey);}
+  .mats-read .msub{color:var(--gold-deep); font-weight:600;}
+  .mats-read .mframe{color:var(--grey); font-style:italic;}
   .mats-read .mlink{color:var(--teal); font-weight:600; text-decoration:none;}
   .mats-read .mlink:hover{text-decoration:underline;}
   .mats-read.ref .mlink{color:var(--grey);}
@@ -131,20 +133,20 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} section.group{padding:12px 12px 14px;} }
   @media print{ .back,.relbar,#hubSync{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609300111">
-<link rel="stylesheet" href="hub-theme.css?v=202609300111">
+<link rel="stylesheet" href="hub-house.css?v=202609300117">
+<link rel="stylesheet" href="hub-theme.css?v=202609300117">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609300111"></script>
-<script src="hub-tracker.js?v=202609300111"></script>
-<script src="hub-rotation.js?v=202609300111"></script>
-<script src="hub-shared.js?v=202609300111"></script>
-<script src="hub-store.js?v=202609300111"></script>
-<script src="hub-sync.js?v=202609300111"></script>
+<script src="hub-due.js?v=202609300117"></script>
+<script src="hub-tracker.js?v=202609300117"></script>
+<script src="hub-rotation.js?v=202609300117"></script>
+<script src="hub-shared.js?v=202609300117"></script>
+<script src="hub-store.js?v=202609300117"></script>
+<script src="hub-sync.js?v=202609300117"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -251,15 +253,17 @@ function matsPanel(g, t, tp, letter, name){
   const c = cellOf(g, t, tp);
   const pages = c.pages || [];
   return `<div class="mats"><h4>TP ${tp} \u00b7 ${esc(letter)}${name ? ' \u00b7 ' + esc(name) : ''} \u2014 what they are teaching</h4>
-    <div class="mrow"><label>The point</label><textarea data-m="point" rows="2" placeholder="What the lesson is, in your words">${esc(c.point || '')}</textarea></div>
+    <div class="mrow"><label>Sub aim</label><input type="text" data-m="sub" value="${esc(c.sub || '')}" placeholder="Lexis, speaking \u2014 the second focus"></div>
+    <div class="mrow"><label>Framework</label><input type="text" data-m="framework" value="${esc(c.framework || '')}" placeholder="Receptive skills, PPP, Test-Teach-Test\u2026"></div>
+    <div class="mrow"><label>The point</label><textarea data-m="point" rows="2" placeholder="The lesson in a line. The full aims and the stage-by-stage suggestions go in the document you attach below.">${esc(c.point || '')}</textarea></div>
     <div class="mrow"><label>Coursebook</label><input type="url" data-m="bookUrl" value="${esc((c.book||{}).url || '')}" placeholder="https://\u2026 a link to the book"></div>
-    <div class="mrow"><label>Pages and exercises</label><input type="text" data-m="bookRef" value="${esc((c.book||{}).ref || '')}" placeholder="Unit 4, pp. 42\u201343, ex. 3\u20135"></div>
+    <div class="mrow"><label>Materials</label><textarea data-m="bookRef" rows="3" placeholder="SpeakOut A1, SB p. 14, ex. 2a, 2b, 3a&#10;WB p. 9, ex. 1a, 1b&#10;One line each">${esc((c.book||{}).ref || '')}</textarea></div>
     <div class="mrow"><label>Page to open at</label><input type="number" min="1" data-m="bookPage" value="${esc((c.book||{}).page || '')}" placeholder="42"><small>Only works where the link is a direct PDF address; a Drive preview ignores it.</small></div>
     <div class="mrow"><label>Audio</label><input type="url" data-m="audioUrl" value="${esc((c.audio||{}).url || '')}" placeholder="https://\u2026 wherever the audio lives"></div>
     <div class="mrow"><label>Scanned pages</label><div>
       ${pages.length ? '<ul class="files">' + pages.map((f, i) => `<li><a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a> <button type="button" class="btn quiet sm" data-mrm="${i}">Remove</button></li>`).join('') + '</ul>' : '<p class="hint">Nothing attached yet.</p>'}
       <input type="file" id="matsFile" accept="application/pdf,image/*"${UPLOADING ? ' disabled' : ''}>
-      <p class="hint">${UPLOADING ? 'Uploading\u2026' : 'Up to 2MB each, into the course\u2019s own folder. Anyone with the link can open it, because a tutor or an assessor is usually not signed in to your Workspace \u2014 so for a whole coursebook, link to your own Drive above instead.'}</p>
+      <p class="hint">${UPLOADING ? 'Uploading\u2026' : 'The TP points document itself goes here, and any scanned pages \u2014 the full aims, the framework and the stage-by-stage suggestions live in it, not retyped into this form. Up to 2MB each, into the course\u2019s own folder. Anyone with the link can open it, because a tutor or an assessor is usually not signed in to your Workspace, so for a whole coursebook link to your own Drive above instead.'}</p>
     </div></div>
     <div class="macts"><button type="button" class="btn quiet" id="matsClose">Close</button></div></div>`;
 }
@@ -273,6 +277,8 @@ function wireMats(){
     const fire = () => {
       const k = el.dataset.m, v = el.value;
       if (k === 'point') c.point = v;
+      else if (k === 'sub') c.sub = v;
+      else if (k === 'framework') c.framework = v;
       else if (k === 'bookUrl') { c.book = c.book || {}; c.book.url = v; }
       else if (k === 'bookRef') { c.book = c.book || {}; c.book.ref = v; }
       else if (k === 'bookPage') { c.book = c.book || {}; c.book.page = v; }
@@ -313,11 +319,23 @@ function wireMats(){
 function matsRead(c, mine){
   if (!c) return '';
   const bits = [];
+  if (c.sub) bits.push(`<span class="msub">with ${esc(c.sub)}</span>`);
+  if (c.framework) bits.push(`<span class="mframe">${esc(c.framework)}</span>`);
   if (c.point) bits.push(`<span class="mpoint">${esc(c.point)}</span>`);
   const b = c.book || {};
   if (b.ref || b.url) {
     const href = b.url ? (b.page && /\.pdf($|\?)/i.test(b.url) ? b.url + '#page=' + encodeURIComponent(b.page) : b.url) : '';
-    bits.push(href ? `<a class="mlink" href="${esc(href)}" target="_blank" rel="noopener">${esc(b.ref || 'The coursebook')}</a>` : `<span class="mref">${esc(b.ref)}</span>`);
+    /* Materials come from more than one place -- a student's book, a workbook,
+       a video -- so the field takes a line each and they are shown that way
+       (Ramy's own TP1 ABC points, 30 Sep 2026). The first line carries the
+       link, since that is the book the page anchor belongs to. */
+    const lines = String(b.ref || '').split(/\n+/).map(x => x.trim()).filter(Boolean);
+    if (!lines.length && href) bits.push(`<a class="mlink" href="${esc(href)}" target="_blank" rel="noopener">The coursebook</a>`);
+    lines.forEach((ln, i) => {
+      bits.push(i === 0 && href
+        ? `<a class="mlink" href="${esc(href)}" target="_blank" rel="noopener">${esc(ln)}</a>`
+        : `<span class="mref">${esc(ln)}</span>`);
+    });
   }
   (c.pages || []).forEach(f => bits.push(`<a class="mlink" href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a>`));
   if ((c.audio || {}).url) bits.push(`<a class="mlink audio" href="${esc(c.audio.url)}" target="_blank" rel="noopener">Audio</a>`);
@@ -406,7 +424,7 @@ function render(){
       ${lettered.map(p => `<tr><td class="who">${esc(p.letter)}<small>${esc(p.name||'')}</small></td>${
         Array.from({length:TPS},(_,i)=>i+1).map(tp => {
           const c = (rows[p.token] || {})['tp'+tp] || {};
-          const has = !!(c.point || (c.pages||[]).length || (c.book||{}).url || (c.book||{}).ref || (c.audio||{}).url);
+          const has = !!(c.point || c.sub || c.framework || (c.pages||[]).length || (c.book||{}).url || (c.book||{}).ref || (c.audio||{}).url);
           return `<td data-lab="TP ${tp}"><select data-g="${esc(g.group)}" data-t="${esc(p.token)}" data-tp="${tp}">${
             R.AIMS.map(a => `<option value="${esc(a)}"${c.aim===a?' selected':''}>${esc(a)}</option>`).join('')}</select>
             <button type="button" class="mbtn${has?' has':''}" data-mats="${esc(MKEY(g.group, p.token, tp))}" title="Pages, coursebook and audio">${has ? 'Materials \u2713' : 'Materials'}</button></td>`;
