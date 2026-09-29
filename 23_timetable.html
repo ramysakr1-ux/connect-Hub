@@ -86,20 +86,20 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} .days{grid-template-columns:1fr;} }
   @media print{ .back,.bar,#hubSync{display:none !important;} body{background:#fff;} .days{grid-template-columns:repeat(5,1fr);} .day{break-inside:avoid;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609292243">
-<link rel="stylesheet" href="hub-theme.css?v=202609292243">
+<link rel="stylesheet" href="hub-house.css?v=202609292249">
+<link rel="stylesheet" href="hub-theme.css?v=202609292249">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609292243"></script>
-<script src="hub-tracker.js?v=202609292243"></script>
-<script src="hub-rotation.js?v=202609292243"></script>
-<script src="hub-shared.js?v=202609292243"></script>
-<script src="hub-store.js?v=202609292243"></script>
-<script src="hub-sync.js?v=202609292243"></script>
+<script src="hub-due.js?v=202609292249"></script>
+<script src="hub-tracker.js?v=202609292249"></script>
+<script src="hub-rotation.js?v=202609292249"></script>
+<script src="hub-shared.js?v=202609292249"></script>
+<script src="hub-store.js?v=202609292249"></script>
+<script src="hub-sync.js?v=202609292249"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -128,7 +128,13 @@ function groups(){
   const roster = rec('connect_roster_v1') || {};
   const people = Object.values(roster.trainees || {}).filter(Boolean);
   const by = {};
-  people.forEach(t => { const g = String(t.group || ''); (by[g] = by[g] || []).push({ token: t.token, name: t.name, group: g }); });
+  /* The roster in this browser keys a candidate by `id`, not `token` -- the
+     store's own roster op says token, hub-sync writes id, and the planning
+     grid has always read id. Reading t.token gave every candidate the key
+     `undefined`, so one shared row stood in for the whole group and the
+     rotation came out identical for everybody (found on the scratch course,
+     29 Sep 2026). */
+  people.forEach(t => { const g = String(t.group || ''); (by[g] = by[g] || []).push({ token: t.id || t.token, name: t.name, group: g }); });
   return Object.keys(by).sort().map(g => ({ group: g, people: by[g], sets: R.setsFor(by[g]) }));
 }
 
