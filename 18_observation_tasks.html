@@ -171,18 +171,18 @@
   .eyebrow{font-size:0.7rem; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:0 0 4px;}
   .lede{color:var(--grey); font-size:0.88rem; line-height:1.6; margin:0 0 18px; max-width:66ch;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609291936">
-<link rel="stylesheet" href="hub-theme.css?v=202609291936">
+<link rel="stylesheet" href="hub-house.css?v=202609291943">
+<link rel="stylesheet" href="hub-theme.css?v=202609291943">
 </head>
 <body class="hub-obs">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="observation-defaults.js?v=202609291936"></script>
-<script src="hub-shared.js?v=202609291936"></script>
-<script src="hub-store.js?v=202609291936"></script>
-<script src="hub-sync.js?v=202609291936"></script>
+<script src="observation-defaults.js?v=202609291943"></script>
+<script src="hub-shared.js?v=202609291943"></script>
+<script src="hub-store.js?v=202609291943"></script>
+<script src="hub-sync.js?v=202609291943"></script>
 <script type="text/x-hub-app">
 /* A candidate's own work. A tutor or an assessor READS it -- they have to, it
    is portfolio evidence -- so the page is not refused them; the fields are
@@ -404,6 +404,26 @@ function sheet(t, sit){
     const s = $('status'); if (s) { s.textContent = 'Saved'; clearTimeout(t0); t0 = setTimeout(() => { if ($('status')) $('status').textContent = turnsIn(t) ? '' : 'Your notes save as you type.'; }, 1200); }
   };
   document.querySelectorAll('textarea[data-f], input[data-f]').forEach(el => { el.addEventListener('input', () => touch(el)); if (el.type === 'radio') el.addEventListener('change', () => touch(el)); });
+  /* Bullets that carry themselves (Ramy, 29 Sep 2026: "just makes it easier
+     to take notes"). In any notes box, a line that starts with a bullet --
+     "• ", "- ", "– " or "* " -- continues onto the next line when Enter is
+     pressed, and Enter on an empty bullet ends the list. Nothing is stored
+     differently; a candidate who never types a bullet never sees one. */
+  document.querySelectorAll('textarea[data-f]').forEach(ta => ta.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || e.shiftKey || e.isComposing || ta.readOnly) return;
+    const v = ta.value, at = ta.selectionStart;
+    if (at !== ta.selectionEnd) return;
+    const lineStart = v.lastIndexOf('\n', at - 1) + 1;
+    const line = v.slice(lineStart, at);
+    const m = line.match(/^(\s*)([\u2022\-\u2013*])\s(.*)$/);
+    if (!m) return;
+    e.preventDefault();
+    let next, caret;
+    if (!m[3].trim()) { next = v.slice(0, lineStart) + v.slice(at); caret = lineStart; }          // empty bullet: end the list
+    else { const ins = '\n' + m[1] + m[2] + ' '; next = v.slice(0, at) + ins + v.slice(at); caret = at + ins.length; }
+    ta.value = next; ta.setSelectionRange(caret, caret);
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+  }));
   if ($('turnIn')) $('turnIn').addEventListener('click', () => {
     /* Handbook 12.1.2 asks for the tutor's name and date on feedback and progress records; dating a turned-in sheet is the centre's own practice. */
     WORK[k].turnedInAt = new Date().toISOString(); save(); sheet(t, sit);
