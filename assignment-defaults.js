@@ -1281,6 +1281,50 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
 
 /* Names the assignments that were replaced, mutating `wording` in place.
    Empty when there was nothing to do, which is the normal case. */
+
+/* THE SYLLABUS'S OWN SEVENTEEN, exactly as Component 2 sets them out
+ * (21816-celta-syllabus, assignments 2.1-2.4, extracted column-by-column from
+ * the two-column table so the DESIGN column could not leak in). Six, four,
+ * three, four.
+ *
+ * These are NOT what Lite ships. Designing the four assignments is the
+ * centre's job under 9.2.1 and the shipped criteria are the centre's, which
+ * is legitimate -- but they are nineteen, two of them promoted from the
+ * design column, and two reworded in a way that raises the bar above
+ * Cambridge's (FOL c turns "language systems and/or language skills" into
+ * "and"; FOL d drops "and/or skills"). A centre that wants Cambridge's own
+ * wording can now see it and take it; nothing adopts it automatically,
+ * because criteriaMarks are POSITIONAL and replacing a list under existing
+ * marking would move every mark (audit, 29 Sep 2026).
+ */
+window.CONNECT_HUB_SYLLABUS_CRITERIA = {
+  fol: [
+    'Showing awareness of how a learner\u2019s/learners\u2019 background(s), previous learning experience and learning preferences affect learning',
+    'Identifying the learner\u2019s/learners\u2019 language and/or skills needs',
+    'Correctly using terminology relating to the description of language systems and/or language skills',
+    'Selecting appropriate material and/or resources to aid the learner\u2019s/learners\u2019 language and/or skills development',
+    'Providing a rationale for using specific activities with a learner/learners',
+    'Finding, selecting and referencing information from one or more sources using written language that is clear, accurate and appropriate to the task'
+  ],
+  lrt: [
+    'Analysing language correctly for teaching purposes',
+    'Correctly using terminology relating to form, meaning and phonology when analysing language',
+    'Accessing reference materials and referencing information they have learned about language to an appropriate source',
+    'Using written language that is clear, accurate and appropriate to the task'
+  ],
+  lsrt: [
+    'Correctly using terminology that relates to language skills and subskills',
+    'Relating task design to language skills development',
+    'Finding, selecting and referencing information from one or more sources using written language that is clear, accurate and appropriate to the task'
+  ],
+  lfc: [
+    'Noting their own teaching strengths and weaknesses in different situations in light of feedback from learners, teachers and teacher educators',
+    'Identifying which ELT areas of knowledge and skills they need further development in',
+    'Describing in a specific way how they might develop their ELT knowledge and skills beyond the course',
+    'Using written language that is clear, accurate and appropriate to the task'
+  ]
+};
+
 window.CONNECT_HUB_ADOPT_CORRECTED_CRITERIA = function(wording){
   var versions = window.CONNECT_HUB_SUPERSEDED_WORDING, now = window.CONNECT_HUB_DEFAULT_WORDING, changed = [];
   if (!wording || !versions || !now) return changed;

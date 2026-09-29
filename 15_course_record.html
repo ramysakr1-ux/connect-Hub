@@ -26,14 +26,18 @@
 <title>Connect Lite — Course record</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-record.css?v=202609291158">
-<link rel="stylesheet" href="hub-theme.css?v=202609291158">
+<link rel="stylesheet" href="hub-record.css?v=202609291228">
+<link rel="stylesheet" href="hub-theme.css?v=202609291228">
 <style>
   .cand-break{page-break-before:always;}
   .cand-head{margin:0 0 14px;padding:0 0 8px;border-bottom:2px solid var(--ink,#1c2b3a);}
   .cand-head h1{margin:0;font-family:Newsreader,Georgia,serif;font-size:1.7rem;}
   .cand-head p{margin:4px 0 0;font-size:.85rem;color:#5b6b7c;}
   .part-label{margin:26px 0 10px;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#5b6b7c;}
+  .sec-a{width:100%; border-collapse:collapse; font-size:10pt; margin:0 0 6px;}
+  .sec-a th, .sec-a td{border:1px solid #d9d2c4; padding:4px 7px; text-align:left;}
+  .sec-a th{background:#f3efe6; font-weight:700;}
+  .sec-a-note{font-size:9pt; color:#6b6355; margin:0 0 14px;}
   .cover{padding:0 0 10px;}
   .cover h1{font-family:Newsreader,Georgia,serif;font-size:2rem;margin:0 0 6px;}
   .cover p{margin:0 0 4px;font-size:.9rem;color:#5b6b7c;}
@@ -41,16 +45,16 @@
   .nothing{font-size:.85rem;color:#5b6b7c;font-style:italic;}
   @media print{ .actions,.back{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609291158">
+<link rel="stylesheet" href="hub-house.css?v=202609291228">
 </head>
 <body class="hub-assign">
 <a class="back" href="5_tutor_dashboard.html">&#8592; Back to dashboard</a>
 <div class="doc" id="doc"></div>
 <div class="actions"><button type="button" class="btn-print" id="printBtn">Print / Save as PDF</button></div>
-<script src="hub-shared.js?v=202609291158"></script>
-<script src="assignment-defaults.js?v=202609291158"></script>
-<script src="hub-store.js?v=202609291158"></script>
-<script src="hub-sync.js?v=202609291158"></script>
+<script src="hub-shared.js?v=202609291228"></script>
+<script src="assignment-defaults.js?v=202609291228"></script>
+<script src="hub-store.js?v=202609291228"></script>
+<script src="hub-sync.js?v=202609291228"></script>
 <script type="text/x-hub-app">
 /* The centre's room: this reads every candidate on the course. */
 if (hubTutorRoomOnly()) throw new Error('Connect Lite: stopping this page on purpose — the tutors’ room is not open to this link.');
@@ -107,6 +111,35 @@ function build(){
     .filter(Boolean)
     .sort((a,b) => String(a.name||'').localeCompare(String(b.name||''), 'en', { sensitivity:'base' }));
 
+  /* Section A of the portfolio, summarised on the page and pointing at the
+     booklet itself, which prints on its own from the CELTA 5 screen (and
+     exports onto Cambridge's master from there). */
+  function sectionA(t){
+    const c = t.celta5 || {}, ct = t.celta5t || {}, att = ct.attendance || {};
+    const sig = s => (s && s.at) ? esc(s.name || '') + ' \u00b7 ' + new Date(s.at).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : '\u2014';
+    const stage = (k, label) => {
+      const t2 = ct[k] || {}, c2 = c[k] || {};
+      if (!t2.returnedAt && !(c2.signed && c2.signed.at) && !t2.marks) return '';
+      return '<tr><td>' + label + '</td><td>' + (t2.returnedAt ? 'returned ' + new Date(t2.returnedAt).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : 'not returned')
+           + '</td><td>' + sig(c2.signed) + '</td></tr>';
+    };
+    const stages = stage('stage1','Stage 1') + stage('stage2','Stage 2') + stage('stage3','Stage 3');
+    const set = (window.hubObservationSet ? window.hubObservationSet().all : []);
+    const obs = set.map(k => (t.observations || {})[k]).filter(o => o && o.turnedInAt);
+    const hrs = window.hubObservationHours ? window.hubObservationHours(t.observations || {}) : null;
+    const rows = [];
+    if (att.attended || SETTINGS.totalHours) rows.push('<tr><td>Attendance</td><td colspan="2">' + esc(att.attended || '\u2014') + ' of ' + esc(SETTINGS.totalHours || '\u2014') + ' course hours</td></tr>');
+    if (obs.length) rows.push('<tr><td>Observation of experienced teachers</td><td colspan="2">' + obs.length + ' of ' + set.length + ' sheets turned in'
+      + (hrs && hrs.totalMinutes ? ' \u00b7 ' + (Math.round((hrs.totalMinutes / 60) * 10) / 10) + ' hours' : '') + '</td></tr>');
+    const fin = (c.final || {}).signed, fint = (ct.final || {}).signed;
+    if ((fin && fin.at) || (fint && fint.at)) rows.push('<tr><td>Final declaration</td><td>' + sig(fint) + '</td><td>' + sig(fin) + '</td></tr>');
+    if (!stages && !rows.length) return '';
+    return '<div class="part-label">CELTA 5 and Section A records</div>'
+      + '<table class="sec-a"><thead><tr><th>Record</th><th>Tutor</th><th>Candidate</th></tr></thead><tbody>'
+      + stages + rows.join('') + '</tbody></table>'
+      + '<p class="sec-a-note">The CELTA 5 booklet itself prints from the candidate\u2019s record, and exports onto Cambridge\u2019s own form from there.</p>';
+  }
+
   const parts = [];
   let tpCount = 0, assnCount = 0;
   const bodies = people.map((t, i) => {
@@ -117,7 +150,13 @@ function build(){
       + '<p>' + (t.group ? 'Group ' + esc(t.group) + ' &middot; ' : '')
       + tps.length + ' teaching practice' + (tps.length === 1 ? '' : 's') + ' &middot; '
       + assns.length + ' assignment' + (assns.length === 1 ? '' : 's') + '</p></div>';
-    if (!tps.length && !assns.length) html += '<p class="nothing">Nothing recorded for this candidate.</p>';
+    /* Handbook 12.1.1's SECTION A -- the completed CELTA 5 and the record of
+       observations undertaken -- was missing from this print entirely, so the
+       archive a centre keeps was missing the record booklet (audit, 29 Sep
+       2026). Section B (plans, self-evaluations, materials, feedback) and
+       Section C (the assignments) were already here. */
+    html += sectionA(t);
+    if (!tps.length && !assns.length) html += '<p class="nothing">Nothing else recorded for this candidate.</p>';
     tps.forEach(d => {
       html += '<div class="part-label">Teaching practice ' + (d.n || '') + '</div>'
            +  '<div class="tp-doc">' + d.html + '</div>';

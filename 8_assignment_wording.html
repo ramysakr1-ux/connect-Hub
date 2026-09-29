@@ -100,6 +100,12 @@
   .metarow{display:flex; align-items:center; gap:8px; font-size:0.85rem;}
   .metarow label{font-weight:700; width:110px; flex:none;}
   .metahint{font-size:0.76rem; color:var(--grey); font-weight:400;}
+  .sylbox{margin:8px 0 0; border:1px solid var(--line,#ddd6c8); border-radius:8px; background:var(--surface,#f6f2e9); padding:0 10px;}
+  .sylbox summary{cursor:pointer; font-size:0.78rem; font-weight:600; padding:8px 0;}
+  .sylbody{padding:0 0 10px;}
+  .syllist{margin:0; padding-left:20px; font-size:0.78rem; line-height:1.55;}
+  .syllist li.only{font-weight:600;}
+  .syllist li.only::after{content:' \2014 not on this course'; font-weight:400; opacity:.7;}
   .list-row{ display:flex; align-items:center; gap:4px; }
   .list-row > button:first-child{ flex:1; }
   .order-arrows{ display:inline-flex; flex-direction:column; gap:1px; }
@@ -124,8 +130,8 @@
     .section-head input.label{flex:1 1 100%; order:-1;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609291158">
-<link rel="stylesheet" href="hub-theme.css?v=202609291158">
+<link rel="stylesheet" href="hub-house.css?v=202609291228">
+<link rel="stylesheet" href="hub-theme.css?v=202609291228">
 </head>
 <body>
 <div class="board">
@@ -139,12 +145,12 @@
     <div class="editor" id="editor"></div>
   </div>
 </div>
-<script src="assignment-defaults.js?v=202609291158"></script>
-<script src="hub-due.js?v=202609291158"></script>
-<script src="hub-docx.js?v=202609291158"></script>
-<script src="hub-shared.js?v=202609291158"></script>
-<script src="hub-store.js?v=202609291158"></script>
-<script src="hub-sync.js?v=202609291158"></script>
+<script src="assignment-defaults.js?v=202609291228"></script>
+<script src="hub-due.js?v=202609291228"></script>
+<script src="hub-docx.js?v=202609291228"></script>
+<script src="hub-shared.js?v=202609291228"></script>
+<script src="hub-store.js?v=202609291228"></script>
+<script src="hub-sync.js?v=202609291228"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -321,7 +327,7 @@ function metaHTML(a){
         <option value="prose" ${a.format==='prose'?'selected':''}>Continuous prose</option>
         <option value="structured" ${a.format==='structured'?'selected':''}>Structured (sections/tables)</option>
       </select>
-      <span class="metahint">Handbook requires at least 2 of the 4 core assignments in continuous prose.</span>
+      <span class="metahint">Handbook 9.2.1: at least 2 of the 4 should be in continuous prose.</span>
     </div>
     <div class="metarow" style="align-items:flex-start;">
       <label style="margin-top:6px;">Marking criteria</label>
@@ -336,12 +342,65 @@ function metaHTML(a){
             <button class="icon-btn danger" title="Remove" onclick="removeCriterion(${ci})">\u2715</button>
           </div>`).join('')}
         <button class="addline" onclick="addCriterion()">+ Add criterion</button>
-        <p class="metahint" style="margin:4px 0 0;">Shown to candidates alongside the instructions — Handbook 9.2.1 requires criteria to be made explicit. Tying a criterion to a section lets it lock on resubmission once met, instead of reopening the whole assignment.</p>
+        ${syllabusPanel()}
+        <p class="metahint" style="margin:4px 0 0;">Shown to candidates alongside the instructions — Handbook 9.2.1: the criteria should be made explicit. Tying a criterion to a section lets it lock on resubmission once met, instead of reopening the whole assignment.</p>
       </div>
     </div>
   </div>`;
 }
+
+/* WHAT THE SYLLABUS ITSELF SAYS, beside what this centre uses. Designing the
+   assignments is the centre's job (9.2.1) and these criteria are the centre's
+   to set -- but they had been described in the code as "the syllabus's own
+   words", which they are not: nineteen against Cambridge's seventeen, two
+   promoted from the syllabus's DESIGN column, and two reworded so they ask
+   more than Cambridge does (audit, 29 Sep 2026).
+
+   So the syllabus's set is shown, never imposed. Adopting it is one click and
+   it is REFUSED once any marking exists, because criteriaMarks are positional
+   -- replacing the list would move every mark already made. */
+function syllabusCriteria(){ return (window.CONNECT_HUB_SYLLABUS_CRITERIA || {})[CURRENT] || null; }
+function syllabusPanel(){
+  const syl = syllabusCriteria(); if (!syl) return '';
+  const mine = (DATA[CURRENT].criteria || []).map(c => (typeof c === 'string' ? c : c.text) || '');
+  /* Compare on letters and digits only, so "sub-skills" and "subskills" are
+     the same criterion and only a real difference in wording shows. */
+  const norm = t => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '');
+  const same = mine.length === syl.length && syl.every((t, i) => norm(t) === norm(mine[i]));
+  if (same) return `<p class="metahint" style="margin:8px 0 0;">These are the syllabus's own words for assignment ${esc(SYL_REF[CURRENT])}, unchanged.</p>`;
+  const missing = syl.filter(t => !mine.some(m => norm(m) === norm(t)));
+  const extra = mine.filter(m => !syl.some(t => norm(t) === norm(m)));
+  return `<details class="sylbox"><summary>The syllabus has ${syl.length} for assignment ${esc(SYL_REF[CURRENT])}; this course uses ${mine.length}</summary>
+    <div class="sylbody">
+      <p class="metahint" style="margin:0 0 8px;">Designing the four assignments is the centre's job (Handbook 9.2.1), so these may differ on purpose. What matters is not calling them Cambridge's when they are not.</p>
+      <ol class="syllist">${syl.map(t => `<li${missing.some(x => x === t) ? ' class="only"' : ''}>${esc(t)}</li>`).join('')}</ol>
+      ${extra.length ? `<p class="metahint" style="margin:8px 0 0;"><b>Only on this course:</b> ${extra.map(esc).join(' \u00b7 ')}</p>` : ''}
+      <button class="addline" onclick="adoptSyllabus()">Use the syllabus's ${syl.length} instead</button>
+    </div></details>`;
+}
+const SYL_REF = { fol:'2.1', lrt:'2.2', lsrt:'2.3', lfc:'2.4' };
+function adoptSyllabus(){
+  const syl = syllabusCriteria(); if (!syl) return;
+  const marked = countMarked();
+  if (marked) { alert('Not while marking exists.\n\n' + marked + ' submission' + (marked === 1 ? ' has' : 's have') + ' criterion marks on this assignment, and marks are stored by POSITION \u2014 replacing the list would move every one of them onto a different criterion.\n\nThis can be changed on a course where nothing has been marked yet.'); return; }
+  if (!confirm('Replace this assignment\u2019s ' + (DATA[CURRENT].criteria || []).length + ' criteria with the syllabus\u2019s ' + syl.length + '?\n\nAny wording of your own on them is lost, and criteria tied to a section become general.')) return;
+  DATA[CURRENT].criteria = syl.map(t => ({ text: t, sectionIndex: null }));
+  renderEditor();
+}
+function countMarked(){
+  try {
+    const subs = JSON.parse(localStorage.getItem('connect_assignment_submissions_v1') || 'null');
+    const roster = JSON.parse(localStorage.getItem('connect_roster_v1') || 'null');
+    const all = [];
+    if (subs && subs[CURRENT]) all.push(subs[CURRENT]);
+    if (roster && roster.trainees) Object.values(roster.trainees).forEach(t => { const x = (t.assignments || {})[CURRENT]; if (x) all.push(x); });
+    return all.filter(x => { const cm = x.criteriaMarks || {}; return (cm.sub1 || []).some(v => v != null) || (cm.sub2 || []).some(v => v != null); }).length;
+  } catch (e) { return 0; }
+}
 function updateMeta(key,v){
+  /* 9.2.1: "The word length of each assignment is set by the centre within the
+     range of 750-1,000 words." The centre sets it; the range is Cambridge's,
+     and a figure outside it is flagged below rather than silently adopted. */
   DATA[CURRENT][key] = (key==='wordMin'||key==='wordMax') ? (parseInt(v,10)||0)
     : key==='resubDays' ? (parseInt(v,10)||0)
     : v;
@@ -363,7 +422,21 @@ function updateReleased(v){
 function updateCriterionText(ci,v){ DATA[CURRENT].criteria[ci].text=v; }
 function updateCriterionSection(ci,v){ DATA[CURRENT].criteria[ci].sectionIndex = v===''? null : parseInt(v,10); }
 function addCriterion(){ (DATA[CURRENT].criteria=DATA[CURRENT].criteria||[]).push({text:'New criterion', sectionIndex:null}); renderEditor(); }
-function removeCriterion(ci){ DATA[CURRENT].criteria.splice(ci,1); renderEditor(); }
+/* FLOORS. Designing the assignments is the centre's job (9.2.1), so these are
+   the centre's to write -- but 9.2.1 also says "the CELTA marking criteria for
+   each assignment SHOULD be made explicit in assignment guidelines for
+   candidates", and 9.2.3 that candidates "SHOULD confirm in writing that the
+   written assignments are their own work". This editor had no floor anywhere:
+   criteria to zero, the declaration deleted outright, its items to zero, and
+   startBlank() handing over an assignment with none of the three in one click.
+   Marking an assignment with no criteria also yields allMet=false forever, so
+   it could never pass (audit, 29 Sep 2026). Each floor explains itself and
+   none of them is silent. */
+function removeCriterion(ci){
+  const c = DATA[CURRENT].criteria || [];
+  if (c.length <= 1) { alert('An assignment keeps at least one criterion.\n\nHandbook 9.2.1: the CELTA marking criteria for each assignment should be made explicit in the guidelines candidates are given. An assignment with no criteria can also never be passed \u2014 the marking screen needs every criterion met.'); return; }
+  c.splice(ci,1); renderEditor();
+}
 function renderProseBanner(){
   const core=['fol','lrt','lsrt','lfc'];
   const proseCount = core.filter(k=>DATA[k] && DATA[k].format==='prose').length;
@@ -377,7 +450,7 @@ function renderProseBanner(){
   el.style.borderColor = ok ? 'var(--sand-line)' : 'var(--brick)';
   el.style.borderLeftColor = ok ? 'var(--gold, oklch(63% 0.096 72))' : 'var(--brick)';
   el.style.color = ok ? 'var(--ink)' : 'var(--brick)';
-  el.textContent = `${proseCount} of 4 core assignments marked continuous prose — Handbook 9.2.1 requires at least 2.`;
+  el.textContent = `${proseCount} of 4 core assignments marked continuous prose — Handbook 9.2.1 asks for at least 2 (a "should").`;
 }
 
 function renderEditor(){
@@ -480,7 +553,12 @@ function moveSection(i, dir){
   renderEditor();
 }
 function removeSection(i){
-  DATA[CURRENT].sections.splice(i,1);
+  const secs = DATA[CURRENT].sections || [];
+  if ((secs[i] || {}).type === 'declaration' && secs.filter(x => x && x.type === 'declaration').length <= 1) {
+    alert('The declaration stays.\n\nHandbook 9.2.3: candidates should confirm in writing that the written assignments are their own work. Without this section the submission form has nothing to gate on, and it would let the work through with no confirmation at all.\n\nYou can reword every line of it.');
+    return;
+  }
+  secs.splice(i,1);
   /* A criterion tied to the section that just went becomes general rather than
      pointing at whatever slid into its place. */
   retieCriteria(n => n === i ? null : n > i ? n - 1 : n);
@@ -488,7 +566,11 @@ function removeSection(i){
 }
 function updateDeclItem(i, di, v){ DATA[CURRENT].sections[i].items[di] = v; }
 function addDeclItem(i){ DATA[CURRENT].sections[i].items.push('New declaration'); renderEditor(); }
-function removeDeclItem(i, di){ DATA[CURRENT].sections[i].items.splice(di,1); renderEditor(); }
+function removeDeclItem(i, di){
+  const items = DATA[CURRENT].sections[i].items || [];
+  if (items.length <= 1) { alert('The declaration keeps at least one line \u2014 otherwise there is nothing for the candidate to confirm, and the submission gate passes on an empty list (Handbook 9.2.3).'); return; }
+  items.splice(di,1); renderEditor();
+}
 function toggleAi(i, checked){ DATA[CURRENT].sections[i].aiToggle = checked; }
 /* Word files too (27 Sep 2026): hub-docx.js turns a .docx into the same
    plain text -- one paragraph per line, Word headings as "# " lines with a
@@ -523,7 +605,19 @@ function addSection(){
 }
 function startBlank(){
   const parts = NAMES[CURRENT].split('\u2014');
-  DATA[CURRENT] = { title: (parts[1] ? parts[1].trim() : 'New assignment'), sections: [{ type:'text', label:'Before you start', body:'' }] };
+  /* A blank assignment still arrives with the three things Cambridge asks
+     every assignment to carry: a word range inside 750-1,000 (9.2.1), at
+     least one criterion made explicit to candidates, and the own-work
+     declaration. All of them are editable; none of them starts missing. */
+  DATA[CURRENT] = {
+    title: (parts[1] ? parts[1].trim() : 'New assignment'),
+    wordMin: 750, wordMax: 1000,
+    criteria: [{ text: 'Using written language that is clear, accurate and appropriate to the task', sectionIndex: null }],
+    sections: [
+      { type:'text', label:'Before you start', body:'' },
+      { type:'declaration', label:'Before you submit', items:['This assignment is my own work.'], aiToggle:true }
+    ]
+  };
   renderList(); renderEditor();
 }
 

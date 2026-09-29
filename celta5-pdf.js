@@ -12,9 +12,19 @@
  *
  * Produces a visually identical copy of Cambridge's booklet -- the master's
  * own pages, unchanged, with the candidate's record drawn on top at the
- * form's own positions. Cambridge requires the CELTA 5 a candidate submits
- * to be an unaltered copy of their document; this is why the screen's own
- * printed booklet was never enough.
+ * form's own positions, which is why the screen's own printed booklet was
+ * never enough.
+ *
+ * UNSOURCED (29 Sep 2026): this used to say "Cambridge requires the CELTA 5 a
+ * candidate submits to be an unaltered copy of their document." A full read of
+ * the Administration Handbook, the syllabus, the CELTA 5 itself and the
+ * Moodle-and-CELTA-5 note turns up no such requirement: 12.1.1 asks for "the
+ * completed Candidate Record Booklet CELTA 5" and says nothing about the copy
+ * being unaltered, and the Moodle note describes the booklet being used as a
+ * Word doc or a Google Doc. Drawing onto Cambridge's own master is still the
+ * right thing to do -- it is the document an assessor and a Grade Review
+ * expect to read -- but it is OUR standard until someone can point at the
+ * sentence. Ramy to say where it came from.
  *
  * window.hubCelta5Pdf.render(input, assets) -> Promise<Uint8Array>
  *   input:  the same shape Connect's renderCelta5ReplicaBuffer takes
