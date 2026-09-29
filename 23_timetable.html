@@ -75,7 +75,11 @@
   .sl .dash{color:var(--faint);}
   .sl.tp{background:var(--box);}
   .sl.tp .who{color:var(--gold-deep); font-weight:700;}
-  .sl.tp .line{display:block;}
+  /* One teaching line is a row of small parts that should break as a unit
+     rather than mid-phrase: the letter, the group, the length, the door. */
+  .sl.tp .line{display:flex; flex-wrap:wrap; align-items:baseline; gap:0 6px; line-height:1.5;}
+  .sl.tp .line + .line{margin-top:1px;}
+  .sl.tp .mn{color:var(--grey); font-size:0.72rem; white-space:nowrap;}
   .sl.tp .gl{color:var(--grey); font-weight:500;}
   .sl.note{color:var(--grey); font-size:0.73rem;}
   .sl input{font-family:inherit; font-size:0.76rem; width:100%; padding:3px 6px; border:1px solid var(--sand-line); border-radius:5px; background:var(--paper); color:var(--ink); min-width:0;}
@@ -114,22 +118,22 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} .days{grid-template-columns:1fr;} }
   @media print{ .back,.bar,#hubSync{display:none !important;} body{background:#fff;} .days{grid-template-columns:repeat(5,1fr);} .day{break-inside:avoid;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609292335">
-<link rel="stylesheet" href="hub-theme.css?v=202609292335">
+<link rel="stylesheet" href="hub-house.css?v=202609292342">
+<link rel="stylesheet" href="hub-theme.css?v=202609292342">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609292335"></script>
-<script src="hub-tracker.js?v=202609292335"></script>
-<script src="hub-rotation.js?v=202609292335"></script>
-<script src="hub-docx.js?v=202609292335"></script>
-<script src="hub-timetable-parse.js?v=202609292335"></script>
-<script src="hub-shared.js?v=202609292335"></script>
-<script src="hub-store.js?v=202609292335"></script>
-<script src="hub-sync.js?v=202609292335"></script>
+<script src="hub-due.js?v=202609292342"></script>
+<script src="hub-tracker.js?v=202609292342"></script>
+<script src="hub-rotation.js?v=202609292342"></script>
+<script src="hub-docx.js?v=202609292342"></script>
+<script src="hub-timetable-parse.js?v=202609292342"></script>
+<script src="hub-shared.js?v=202609292342"></script>
+<script src="hub-store.js?v=202609292342"></script>
+<script src="hub-sync.js?v=202609292342"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -293,9 +297,15 @@ function cellHTML(day){
   }
   let tpSeen = 0;
 
-  const roomLink = (slot, group) => {
+  /* On an input slot the label is the only clue about which room it is, so it
+     is shown. On a teaching slot the group is already named on the same line,
+     so repeating "Teaching practice" five times down one day says nothing and
+     pushes the line into a wrap (Ramy, seeing it live, 29 Sep 2026). There it
+     is just the door. */
+  const roomLink = (slot, group, short) => {
     const r = roomFor(slot, group);
-    return r ? `<a class="room" href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.label || 'Room')}</a>` : '';
+    if (!r) return '';
+    return `<a class="room" href="${esc(r.url)}" target="_blank" rel="noopener">${short ? 'Join' : esc(r.label || 'Room')}</a>`;
   };
 
   const body = slots.map(slot => {
@@ -307,7 +317,9 @@ function cellHTML(day){
       const who = teachers.map(g => {
         const p = g.order[i];
         if (!p) return '';
-        return `<span class="line"><span class="who">${esc(p.letter)}</span>${teachers.length > 1 ? ' <span class="gl">Group ' + esc(g.group || '\u2014') + '</span>' : ''} \u00b7 ${esc(mins(slot))}${roomLink(slot, g.group) ? ' \u00b7 ' + roomLink(slot, g.group) : ''}</span>`;
+        const link = roomLink(slot, g.group, true);
+        const m = mins(slot);
+        return `<span class="line"><b class="who">${esc(p.letter)}</b>${teachers.length > 1 ? '<span class="gl">Group ' + esc(g.group || '\u2014') + '</span>' : ''}${m ? '<span class="mn">' + esc(m) + '</span>' : ''}${link}</span>`;
       }).filter(Boolean).join('');
       if (!who) return `<div class="sl fix">${t}<span class="dash">\u2014</span></div>`;
       return `<div class="sl tp">${t}<span><span class="lab">TP ${day.tp}</span>${who}</span></div>`;
