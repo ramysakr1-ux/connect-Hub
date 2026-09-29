@@ -104,6 +104,22 @@
   table.sheet td{vertical-align:top; padding:9px 8px; border-bottom:1px solid var(--sand-line);}
   table.sheet td.n{color:var(--grey); font-size:0.8rem; padding-top:13px;}
   table.sheet td.q{font-size:0.86rem; line-height:1.5;}
+  /* On a phone the grid stops being a grid. Five columns in 375px crushed
+     each teacher's box to 53px and stretched a question over eight lines
+     (Ramy, 29 Sep 2026, looking at it in the pane). Below 600px each row is a
+     block: the question, then one full-width box per teacher, labelled. Same
+     cells, same record -- only the layout changes. */
+  @media(max-width:600px){
+    table.sheet.stack, table.sheet.stack tbody, table.sheet.stack tr, table.sheet.stack td{display:block; width:100%;}
+    table.sheet.stack thead{display:none;}
+    table.sheet.stack tr{padding:12px 0 14px; border-bottom:1px solid var(--sand-line);}
+    table.sheet.stack td{border:none; padding:0;}
+    table.sheet.stack td.n{display:inline; padding:0 8px 0 0; font-size:0.78rem; vertical-align:baseline;}
+    table.sheet.stack td.q{display:inline; font-size:0.9rem; line-height:1.5; vertical-align:baseline;}
+    table.sheet.stack td[data-t]{margin-top:10px;}
+    table.sheet.stack td[data-t]::before{content:attr(data-t); display:block; font-size:0.68rem; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); margin:0 0 4px;}
+    table.sheet.stack td[data-t] textarea{width:100%; min-height:64px;}
+  }
   textarea{width:100%; font-family:'Karla',sans-serif; font-size:0.86rem; line-height:1.5;
     color:var(--ink); background:var(--paper); border:1px solid var(--sand-line); border-radius:6px;
     padding:7px 9px; resize:vertical; min-height:46px; box-sizing:border-box;}
@@ -135,18 +151,18 @@
   .eyebrow{font-size:0.7rem; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:0 0 4px;}
   .lede{color:var(--grey); font-size:0.88rem; line-height:1.6; margin:0 0 18px; max-width:66ch;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609291555">
-<link rel="stylesheet" href="hub-theme.css?v=202609291555">
+<link rel="stylesheet" href="hub-house.css?v=202609291616">
+<link rel="stylesheet" href="hub-theme.css?v=202609291616">
 </head>
 <body class="hub-obs">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="observation-defaults.js?v=202609291555"></script>
-<script src="hub-shared.js?v=202609291555"></script>
-<script src="hub-store.js?v=202609291555"></script>
-<script src="hub-sync.js?v=202609291555"></script>
+<script src="observation-defaults.js?v=202609291616"></script>
+<script src="hub-shared.js?v=202609291616"></script>
+<script src="hub-store.js?v=202609291616"></script>
+<script src="hub-sync.js?v=202609291616"></script>
 <script type="text/x-hub-app">
 /* A candidate's own work. A tutor or an assessor READS it -- they have to, it
    is portfolio evidence -- so the page is not refused them; the fields are
@@ -277,10 +293,10 @@ function sheet(t, sit){
 
   let body = '';
   if (t.shape === 'grid') {
-    body = `<table class="sheet"><thead><tr><th class="n"></th><th class="q">Observation focus</th>
+    body = `<table class="sheet stack"><thead><tr><th class="n"></th><th class="q">Observation focus</th>
       ${TEACHERS.map(n => `<th>${n}</th>`).join('')}</tr></thead><tbody>
       ${t.rows.map((q,i) => `<tr><td class="n">${i+1}</td><td class="q">${esc(q)}</td>
-        ${TEACHERS.map((n,c) => `<td>${box(k, 'r'+i+'c'+c)}</td>`).join('')}</tr>`).join('')}
+        ${TEACHERS.map((n,c) => `<td data-t="${esc(n)}">${box(k, 'r'+i+'c'+c)}</td>`).join('')}</tr>`).join('')}
       </tbody></table>`;
   } else if (t.shape === 'single' || t.shape === 'notes') {
     const head = t.shape === 'notes' ? 'Your notes' : 'Notes (all teachers)';
