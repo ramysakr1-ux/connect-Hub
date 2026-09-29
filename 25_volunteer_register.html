@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<!--
+  Connect Lite — the volunteer register
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy, 30 Sep 2026: "you have no idea how big a problem finding volunteer
+  students is for a course." The people who come in to be taught are the one
+  part of a CELTA that a centre begs for and then treats worst: a paper list,
+  a biro, and nothing back at the end.
+
+  WHAT THIS IS. The register itself, one row per student, with a bar of small
+  blocks for the teaching days — the shape Connect uses and Ramy asked for.
+  Attended, missed, still to come, at a glance across the whole course, and
+  the hours that follow from it.
+
+  WHY IT COULD ONLY BE BUILT NOW. Attendance has to be attendance AT
+  something. Until the timetable went native there was no notion of a teaching
+  day in Lite, so the columns are not invented here: they are the days the
+  timetable says have teaching practice, and the hours are that day's own
+  teaching slots added up. Change the day shape and the hours follow.
+
+  WHO SEES IT. Tutors and the assessor, nobody else. The store sends it to
+  them and returns null to a candidate: these are members of the public, and
+  a candidate has no business holding a list of their names and who turned up
+  when. (The assessor does need it — Handbook 14.1 lists attendance registers
+  among the documents for the visit.)
+
+  Marking is a tap, and nothing is ever ticked on somebody's behalf. A record
+  that says a person was in the room when they were not is worse than an
+  empty one, and a certificate is going to be printed off the back of it.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="brand/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<title>Connect Lite — Volunteer register</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sand:oklch(98.8% 0.006 85); --sand-line:oklch(85.5% 0.02 80); --sand-deep:oklch(94.8% 0.01 85);
+    --paper:oklch(99.5% 0.004 90); --surface:oklch(95.2% 0.018 84);
+    --box:oklch(91.2% 0.03 80); --card:oklch(95.2% 0.018 84); --ink:oklch(23.5% 0.017 65);
+    --teal:oklch(37.5% 0.058 195); --grey:oklch(51% 0.017 70); --brick:oklch(45% 0.15 27);
+    --gold:oklch(63% 0.096 72); --gold-deep:oklch(52% 0.098 70); --faint:oklch(60% 0.012 80);
+  }
+  body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
+  .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
+  .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
+  .back:hover{text-decoration:underline;}
+  .eyebrow{font-size:0.7rem; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:0 0 4px;}
+  h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.7rem; margin:0 0 4px;}
+  .lede{color:var(--grey); font-size:0.88rem; line-height:1.6; margin:0 0 18px; max-width:72ch;}
+  .bar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:0 0 16px;}
+  .btn{font-family:'Karla',sans-serif; font-size:0.84rem; font-weight:700; padding:9px 18px; border-radius:8px; border:0; background:var(--teal); color:#fff; cursor:pointer;}
+  .btn.quiet{background:none; color:var(--grey); border:1.5px solid var(--sand-line);}
+  .btn.sm{padding:4px 10px; font-size:0.74rem;}
+  .btn:disabled{opacity:.5; cursor:not-allowed;}
+  .status{font-size:0.8rem; color:var(--grey);}
+  .panel{background:var(--surface); border:1px solid var(--sand-line); border-radius:10px; padding:14px 16px; margin:0 0 18px;}
+  .panel h3{font-family:'Newsreader',Georgia,serif; font-size:1.02rem; margin:0 0 4px;}
+  .panel p{font-size:0.8rem; color:var(--grey); margin:0 0 10px; line-height:1.55;}
+  .panel textarea{font-family:ui-monospace,Menlo,monospace; font-size:0.78rem; width:100%; min-height:88px; padding:8px 10px; border:1px solid var(--sand-line); border-radius:7px; background:var(--paper); color:var(--ink);}
+  .panel input[type=text]{font-family:inherit; font-size:0.86rem; padding:7px 10px; border:1px solid var(--sand-line); border-radius:7px; background:var(--paper); color:var(--ink); min-width:220px;}
+  .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  .reg{background:var(--surface); border:1px solid var(--sand-line); border-left:5px solid var(--teal); border-radius:10px; padding:4px 0 6px;}
+  .who{display:grid; grid-template-columns:1.1fr auto; gap:12px; align-items:center; padding:11px 16px; border-top:1px solid var(--sand-line);}
+  .who:first-child{border-top:0;}
+  .nm{font-weight:700; font-size:0.94rem;}
+  .nm small{display:block; font-weight:500; font-size:0.76rem; color:var(--grey); margin-top:2px;}
+  .segs{display:flex; flex-wrap:wrap; gap:3px; margin-top:6px;}
+  .seg{width:15px; height:17px; border-radius:3px; border:0; padding:0; cursor:pointer; background:oklch(88% 0.008 80);}
+  .seg.here{background:var(--teal);}
+  .seg.miss{background:oklch(88% 0.055 27);}
+  .seg.soon{background:oklch(93% 0.006 80); cursor:default;}
+  .seg:disabled{cursor:default;}
+  .hrs{text-align:right; white-space:nowrap;}
+  .hrs b{font-family:'Newsreader',Georgia,serif; font-size:1.2rem;}
+  .hrs small{display:block; font-size:0.74rem; color:var(--grey);}
+  .empty{background:var(--surface); border:1px dashed var(--sand-line); border-radius:10px; padding:26px 22px; color:var(--grey); font-size:0.9rem; line-height:1.6;}
+  .legend{font-size:0.76rem; color:var(--grey); margin:14px 0 0; line-height:1.7; display:flex; gap:0 16px; flex-wrap:wrap; align-items:center;}
+  .legend .seg{cursor:default; margin-right:5px; vertical-align:-3px; display:inline-block;}
+  @media (max-width:560px){ .board{padding:18px 12px 60px;} .who{grid-template-columns:1fr; gap:6px;} .hrs{text-align:left;} }
+  @media print{ .back,.bar,.panel,#hubSync,.seg{cursor:auto;} .bar,.panel,.back,#hubSync{display:none !important;} body{background:#fff;} }
+</style>
+<link rel="stylesheet" href="hub-house.css?v=202609300141">
+<link rel="stylesheet" href="hub-theme.css?v=202609300141">
+</head>
+<body class="hub-grid">
+<div class="board">
+  <a class="back" id="back" href="5_tutor_dashboard.html">&larr; Back</a>
+  <div id="app"></div>
+</div>
+<script src="hub-due.js?v=202609300141"></script>
+<script src="hub-shared.js?v=202609300141"></script>
+<script src="hub-timetable-parse.js?v=202609300141"></script>
+<script src="hub-store.js?v=202609300141"></script>
+<script src="hub-sync.js?v=202609300141"></script>
+<script type="text/x-hub-app">
+const MODE = window.HubMode;
+const IS_TUTOR = MODE === 'tutor';
+const $ = id => document.getElementById(id);
+const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const rec = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch(e) { return null; } };
+const SETTINGS = rec('connect_course_settings') || {};
+const KEY = 'connect_volunteers_v1';
+$('back').href = IS_TUTOR ? '5_tutor_dashboard.html' : '12_assessor_pack.html';
+
+let REG = rec(KEY) || null;
+let note = '', ADD_OPEN = false;
+
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const parse = s => { const m = String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(+m[1], +m[2]-1, +m[3]) : null; };
+const ymd = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+const dm = iso => { const d = parse(iso); return d ? d.getDate() + ' ' + MON[d.getMonth()] : iso; };
+const TODAY = ymd(new Date());
+
+/* THE DAYS ARE THE TIMETABLE'S, NOT THIS SCREEN'S. A teaching day is a day
+   the timetable gives a practice to, and the hours on it are that day's own
+   teaching slots added up. Nothing here invents a schedule, so changing the
+   day shape changes the register with it. */
+function teachingDays(){
+  const tt = rec('connect_timetable_v1');
+  if (!tt || !tt.days) return { days: [], hoursPerDay: 0 };
+  const slots = (tt.slots || []).filter(s => s.kind === 'tp');
+  const mins = slots.reduce((n, sl) => {
+    const a = String(sl.from||'').match(/^(\d{1,2}):(\d{2})/), b = String(sl.to||'').match(/^(\d{1,2}):(\d{2})/);
+    if (!a || !b) return n;
+    const d = (+b[1]*60 + +b[2]) - (+a[1]*60 + +a[2]);
+    return d > 0 ? n + d : n;
+  }, 0);
+  return { days: tt.days.filter(d => d.tp).map(d => d.date), hoursPerDay: mins / 60 };
+}
+
+const students = () => (REG && Array.isArray(REG.students)) ? REG.students : [];
+const hoursOf = (st, perDay) => (st.here || []).length * perDay;
+const fmtH = h => (Math.round(h * 100) / 100).toString().replace(/\.00$/, '');
+
+function persist(word){
+  REG = REG || { students: [] };
+  try { localStorage.setItem(KEY, JSON.stringify(REG)); } catch(e) {}
+  note = word || 'Saved';
+  render();
+  setTimeout(() => { if (note === word) { note = ''; const s = document.querySelector('.status'); if (s) s.textContent = ''; } }, 2200);
+}
+
+function render(){
+  const app = $('app');
+  const { days, hoursPerDay } = teachingDays();
+  const list = students();
+  const head = `<p class="eyebrow">Course</p><h1>Volunteer register</h1>
+    <p class="lede">${IS_TUTOR
+      ? 'The students who come in to be taught. One row each, one block per teaching day — tap a block to mark somebody in the room. The days and the hours come from the timetable, so nothing here is a second schedule to keep.'
+      : 'The students who came in to be taught, and which teaching days each of them attended.'}</p>`;
+
+  if (!days.length) {
+    app.innerHTML = head + `<div class="empty">There are no teaching days yet. The register counts attendance against the timetable, so ${IS_TUTOR ? 'build the timetable first and the days will appear here.' : 'the course has not set its timetable yet.'}</div>`;
+    return;
+  }
+
+  const bar = IS_TUTOR ? `<div class="bar">
+      <button class="btn" id="addOpen">${ADD_OPEN ? 'Close' : 'Add students'}</button>
+      <span class="status">${esc(note)}</span></div>` + (ADD_OPEN ? addHTML() : '') : '';
+
+  if (!list.length) {
+    app.innerHTML = head + bar + `<div class="empty">Nobody on the register yet.${IS_TUTOR ? ' Add them one at a time, or paste a list from a spreadsheet.' : ''}</div>`;
+    wire();
+    return;
+  }
+
+  app.innerHTML = head + bar + `<div class="reg">${list.map((st, i) => {
+    const hrs = hoursOf(st, hoursPerDay);
+    return `<div class="who">
+      <div>
+        <div class="nm">${esc(st.name)}${st.note ? '<small>' + esc(st.note) + '</small>' : ''}</div>
+        <div class="segs">${days.map(d => {
+          const here = (st.here || []).indexOf(d) >= 0;
+          const past = d < TODAY;
+          const cls = here ? 'here' : past ? 'miss' : 'soon';
+          const what = here ? 'In the room' : past ? 'Not marked' : 'Still to come';
+          return IS_TUTOR
+            ? `<button type="button" class="seg ${cls}" data-i="${i}" data-d="${esc(d)}" title="${dm(d)} — ${what}"></button>`
+            : `<span class="seg ${cls}" title="${dm(d)} — ${what}"></span>`;
+        }).join('')}</div>
+      </div>
+      <div class="hrs"><b>${fmtH(hrs)} h</b><small>${(st.here||[]).length} of ${days.length} days</small>
+        ${IS_TUTOR ? `<button type="button" class="btn quiet sm" data-rm="${i}" style="margin-top:6px">Remove</button>` : ''}</div>
+    </div>`;
+  }).join('')}</div>
+  <p class="legend">
+    <span><span class="seg here"></span>in the room</span>
+    <span><span class="seg miss"></span>not marked, day has passed</span>
+    <span><span class="seg soon"></span>still to come</span>
+    <span>${fmtH(hoursPerDay)} h a day · ${days.length} teaching days · ${fmtH(days.length * hoursPerDay)} h if somebody comes to all of them</span>
+  </p>`;
+  wire();
+}
+
+function addHTML(){
+  return `<div class="panel"><h3>Add students</h3>
+    <p>One at a time, or paste a list — one name a line, or a spreadsheet column. A second column is kept as a note (a phone number, a level, whatever you use).</p>
+    <div class="row"><input type="text" id="oneName" placeholder="Name"><button class="btn" id="addOne">Add</button></div>
+    <p style="margin:12px 0 6px">Or paste:</p>
+    <textarea id="paste" placeholder="Ayşe Demir&#10;Mehmet Yılmaz&#10;Elena Petrova"></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn" id="addMany">Add the pasted list</button></div></div>`;
+}
+
+function addNames(rows){
+  REG = REG || { students: [] };
+  const have = new Set(students().map(s => s.name.trim().toLowerCase()));
+  let added = 0;
+  rows.forEach(r => {
+    const name = String(r[0] || '').trim();
+    if (!name) return;
+    /* A header row from a spreadsheet is not a person. */
+    if (/^(name|student|volunteer|full name)$/i.test(name)) return;
+    if (have.has(name.toLowerCase())) return;      // adding the same list twice is a mistake, not a second person
+    have.add(name.toLowerCase());
+    REG.students.push({ name, note: String(r[1] || '').trim(), here: [] });
+    added++;
+  });
+  REG.students.sort((a, b) => a.name.localeCompare(b.name));
+  persist(added ? added + (added === 1 ? ' student added' : ' students added') : 'Nobody new in that list');
+}
+
+function wire(){
+  if (!IS_TUTOR) return;
+  if ($('addOpen')) $('addOpen').addEventListener('click', () => { ADD_OPEN = !ADD_OPEN; render(); });
+  if ($('addOne')) $('addOne').addEventListener('click', () => {
+    const v = $('oneName').value.trim(); if (!v) return;
+    addNames([[v]]);
+  });
+  if ($('addMany')) $('addMany').addEventListener('click', () => {
+    const text = $('paste').value;
+    if (!text.trim()) { note = 'Nothing pasted yet.'; render(); return; }
+    addNames(window.hubTimetableParse.rowsFromText(text));
+  });
+  document.querySelectorAll('[data-rm]').forEach(el => el.addEventListener('click', () => {
+    const st = students()[+el.dataset.rm]; if (!st) return;
+    if (!confirm('Remove ' + st.name + ' from the register? Their attendance goes with them.')) return;
+    REG.students.splice(+el.dataset.rm, 1); persist('Removed');
+  }));
+  /* Marking: a tap, and only ever by a person. Nothing is ticked on anyone's
+     behalf -- a register that says somebody was in the room when they were
+     not is worse than an empty one, and a certificate is printed off it. */
+  document.querySelectorAll('.seg[data-i]').forEach(el => el.addEventListener('click', () => {
+    const st = students()[+el.dataset.i]; if (!st) return;
+    st.here = st.here || [];
+    const at = st.here.indexOf(el.dataset.d);
+    if (at >= 0) st.here.splice(at, 1); else st.here.push(el.dataset.d);
+    st.here.sort();
+    persist(at >= 0 ? 'Unmarked' : 'Marked');
+  }));
+}
+
+render();
+</script>
+</body>
+</html>

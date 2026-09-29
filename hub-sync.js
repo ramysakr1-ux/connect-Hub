@@ -18,7 +18,7 @@
   var TRAINEE_KEYS = { 'chub:plan':'plan', 'chub:selfeval':'selfeval', 'chub:feedback':'feedback', 'connect_assignment_submissions_v1':'assignments', 'chub:tpHistory':'tpHistory', 'chub:tracker':'tracker', 'connect_observations_v1':'observations', 'chub:links':'links', 'chub:celta5':'celta5', 'chub:celta5t':'celta5t' };
   var TUTOR_ONLY = { feedback:1, tpHistory:1, tracker:1, links:1, celta5t:1 }; // links: a candidate's private links, the tutor's to write; celta5t: the tutors' half of the CELTA 5
   // staffLinks -- about a candidate, for staff only -- has no trainee key at all: the store never hands it to a candidate's token
-  var COURSE_KEYS = { 'connect_assignment_wording_v2':'wording', 'connect_course_settings':'settings', 'connect_observation_wording_v1':'observations', 'connect_timetable_v1':'timetable', 'connect_tp_points_v1':'tppoints' };
+  var COURSE_KEYS = { 'connect_assignment_wording_v2':'wording', 'connect_course_settings':'settings', 'connect_observation_wording_v1':'observations', 'connect_timetable_v1':'timetable', 'connect_tp_points_v1':'tppoints', 'connect_volunteers_v1':'volunteers' };
   var origSet = localStorage.setItem.bind(localStorage), origRemove = localStorage.removeItem.bind(localStorage);
   var snapshot = {};   // tutor mode: token -> kind -> json, what the store holds
   var pill;
@@ -447,6 +447,11 @@
        own group's points once released and nothing before, tutors and the
        assessor get the whole rotation. */
     out['connect_tp_points_v1'] = course.tppoints ? JSON.stringify(course.tppoints) : null;
+    /* The volunteer register (30 Sep 2026). The store sends it to tutors and
+       the assessor and nobody else: these are members of the public, and a
+       candidate has no business holding a list of their names and who turned
+       up when. Written whole by a tutor, like the timetable. */
+    out['connect_volunteers_v1'] = course.volunteers ? JSON.stringify(course.volunteers) : null;
     if (mode === 'trainee') {
       var me = boot.me || { records: {} };
       out['hub:name'] = me.name || '';
