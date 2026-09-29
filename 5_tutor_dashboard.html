@@ -229,9 +229,13 @@
   @media (max-width:820px){
     .grid{grid-template-columns:1fr auto !important;}
     .grid > .mid{display:none;}
+    /* the folded row: observations sit on the second line, labelled, and the
+       head does not repeat a label it cannot align */
+    .ghead > .obs{display:none;}
+    .grow .st.obs::before{content:'Observations \u00b7 '; color:var(--grey); font-weight:400;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609291956">
+<link rel="stylesheet" href="hub-house.css?v=202609291959">
 </head>
 <body>
 <div class="board">
@@ -306,17 +310,17 @@
 
 </div>
 
-<script src="hub-due.js?v=202609291956"></script>
-<script src="observation-defaults.js?v=202609291956"></script>
-<script src="hub-shared.js?v=202609291956"></script>
-<script src="hub-store.js?v=202609291956"></script>
+<script src="hub-due.js?v=202609291959"></script>
+<script src="observation-defaults.js?v=202609291959"></script>
+<script src="hub-shared.js?v=202609291959"></script>
+<script src="hub-store.js?v=202609291959"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202609291956"></script>
-<script src="hub-sync.js?v=202609291956"></script>
-<script src="hub-tracker.js?v=202609291956"></script>
+<script src="assignment-defaults.js?v=202609291959"></script>
+<script src="hub-sync.js?v=202609291959"></script>
+<script src="hub-tracker.js?v=202609291959"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a candidate's link opened it and read the course and
@@ -547,10 +551,10 @@ function paintRows(){
      turned-in sheets should show on the roster). Sheets turned in out of the
      course's set, and the hours those sheets carry against Cambridge's six;
      the peer sheets are notes and are not counted. */
-  const obsCell = tr => { try { const h = window.hubObservationHours(tr.observations || {}); if (!h.of) return '<div class="st">\u2014</div>';
+  const obsCell = tr => { try { const h = window.hubObservationHours(tr.observations || {}); if (!h.of) return '<div class="st obs">\u2014</div>';
       const hrs = h.totalMinutes ? Math.round((h.totalMinutes / 60) * 10) / 10 : 0;
       const done = h.turnedIn === h.of && h.totalMinutes >= 360;
-      return `<div class="st${done ? ' ok' : ''}" title="${esc((h.notes || []).join('; '))}">${h.turnedIn} of ${h.of}${hrs ? ' \u00b7 ' + hrs + ' h' : ''}</div>`; } catch (e) { return '<div class="st">\u2014</div>'; } };
+      return `<div class="st obs${done ? ' ok' : ''}" title="${esc((h.notes || []).join('; '))}">${h.turnedIn} of ${h.of}${hrs ? ' \u00b7 ' + hrs + ' h' : ''}</div>`; } catch (e) { return '<div class="st obs">\u2014</div>'; } };
   const trRow = tr => {
       const subs=tr.assignments||{};
       const closed=Object.keys(subs).filter(k=>subs[k] && subs[k].stage==='closed').length;
@@ -563,7 +567,7 @@ function paintRows(){
          <div class="act"><a class="rowbtn pair" href="20_celta5.html?trainee=${encodeURIComponent(tr.id)}">CELTA 5</a><a class="rowbtn pair" href="12_assessor_pack.html?trainee=${encodeURIComponent(tr.id)}">Portfolio</a></div>`);
     };
   host.innerHTML =
-    `<div class="grid ghead" style="grid-template-columns:${cols}"><div>Trainee</div><div class="mid">Teaching practice</div><div>Assignments</div><div>Observations</div><div></div></div>` +
+    `<div class="grid ghead" style="grid-template-columns:${cols}"><div>Trainee</div><div class="mid">Teaching practice</div><div>Assignments</div><div class="obs">Observations</div><div></div></div>` +
     byGroup(list, tr => tr.group).map(([g, rs]) => groupHead(g, rs.length) + rs.map(trRow).join('')).join('');
 }
 
