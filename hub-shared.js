@@ -44,8 +44,13 @@ window.hubObservationHours = function(records){
   var f = mins(set.filmed), l = mins(set.live);
   var total = f.minutes + l.minutes;
   var notes = [];
-  if (f.minutes > 180) notes.push('more than three hours of filmed observation \u2014 10.1 lets a centre provide up to three');
-  if (l.minutes && l.minutes < 180) notes.push('under three hours of live observation \u2014 10.1 says three hours must be provided');
+  /* The live check used to need some live minutes before it would speak, so a
+     course with NO live observation said nothing at all -- the one case that
+     most needs saying. It now waits for the sheets to be in, then answers. */
+  var complete = (f.turnedIn + l.turnedIn) >= set.all.length && set.all.length > 0;
+  if (f.minutes > 180) notes.push('over three hours of filmed observation \u2014 10.1 lets a centre provide up to three');
+  if (complete && l.minutes < 180) notes.push('under three hours of live observation \u2014 10.1: three hours of live online or face-to-face observation must be provided');
+  if (complete && total < 360) notes.push('under six hours in total \u2014 10.1 asks centres to ensure candidates are given six hours');
   return { filmed: f, live: l, totalMinutes: total, turnedIn: f.turnedIn + l.turnedIn, of: set.all.length, notes: notes };
 };
 
