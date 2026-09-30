@@ -187,6 +187,21 @@
      2026) -- and the bottom of a Lite screen is where the return bar, the
      dictation bar and the save line all live. The top left corner is margin
      on every screen the film uses. */
+  /* The curtain. A Lite screen takes six to eighteen seconds to come back
+     from the store, and the first take filmed all of it: five of its eleven
+     minutes were a half-drawn page with "Loading from the course…" in the
+     corner. The curtain goes up while a scene's screen loads and comes down
+     when the screen is ready, so the waiting is a quiet ground instead of a
+     spinner -- and the cut (film/cut.mjs) can find those stretches by the mark
+     in the corner and take them out, which is what turns a take into a film. */
+  .curtain{position:absolute; inset:0; z-index:6; display:none;
+    background:var(--sand, #fbfaf7); align-items:center; justify-content:center;}
+  .curtain.on{display:flex;}
+  .curtain .mark{font-family:'Newsreader',Georgia,serif; font-size:1.5rem; color:oklch(45% 0.06 190 / .5);}
+  .curtain .mark span{font-family:'Karla',sans-serif; font-size:0.62rem; letter-spacing:.26em; vertical-align:middle;}
+  /* Six pixels of a colour no screen uses, so the cut can tell a curtain frame
+     from a picture without guessing. It never survives the cut. */
+  .curtain .cue{position:absolute; left:0; top:0; width:6px; height:6px; background:#ff00ff;}
   .day{position:absolute; left:28px; top:24px; z-index:7; pointer-events:none;
     font-family:'Karla',sans-serif; font-size:0.72rem; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
     color:oklch(99% 0.004 85); background:oklch(21% 0.02 65 / .82); padding:7px 12px; border-radius:999px;
@@ -227,6 +242,7 @@
       <div class="rule"></div>
       <p class="sub" id="chapterSub"></p>
     </div>
+    <div class="curtain" id="curtain"><i class="cue"></i><div class="mark">Connect <span>LITE</span></div></div>
     <div class="ring" id="ring"></div>
     <div class="cursor" id="cursor">
       <svg viewBox="0 0 22 22" width="22" height="22" aria-hidden="true">
@@ -279,6 +295,7 @@
   var frame = document.getElementById('screen');
   var still = document.getElementById('still');
   var chapter = document.getElementById('chapter');
+  var curtain = document.getElementById('curtain');
   var cursor = document.getElementById('cursor');
   var ring = document.getElementById('ring');
   var capEl = document.getElementById('caption');
@@ -700,6 +717,10 @@
     paintTabs();
 
     stubbed = [];
+    /* Up for the load, down when the screen is ready -- scene loads only. A
+       `goto` inside a scene keeps its own timing; its steps run to a budget
+       the scene author set, and a curtain there would hide them. */
+    curtain.classList.add('on');
     showScreen(SCENES[i], SCENES[i].screen, then);
   }
 
@@ -930,6 +951,7 @@
 
   function play(i) {
     loadScene(i, function () {
+      curtain.classList.remove('on');
       startedAt = performance.now();
       tick();
       runSteps(SCENES[i].steps, function () {
@@ -1049,6 +1071,7 @@
          the report's own loop stops on it (30 Sep 2026). */
       later(function () { if (!moved) { moved = true; out.push({ n: n, title: sc.title, missing: ['(screen did not load)'], later: [] }); nextScene(); } }, 120000);
       showScreen(sc, sc.screen, function () {
+        curtain.classList.remove('on');
         if (moved) return;
         moved = true;
         /* What this can and cannot tell you. It sees the screen AS IT LOADS,
