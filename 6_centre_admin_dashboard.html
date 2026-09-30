@@ -292,7 +292,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609302330">
+<link rel="stylesheet" href="hub-house.css?v=202609302354">
 </head>
 <body>
 <div class="board">
@@ -586,11 +586,11 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202609302330"></script>
-<script src="hub-store.js?v=202609302330"></script>
-<script src="observation-defaults.js?v=202609302330"></script>
-<script src="hub-shared.js?v=202609302330"></script>
-<script src="hub-sync.js?v=202609302330"></script>
+<script src="assignment-defaults.js?v=202609302354"></script>
+<script src="hub-store.js?v=202609302354"></script>
+<script src="observation-defaults.js?v=202609302354"></script>
+<script src="hub-shared.js?v=202609302354"></script>
+<script src="hub-sync.js?v=202609302354"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -751,7 +751,7 @@ try {
     if(cs.docs) DOC_FIELDS.forEach(k=>{ if(cs.docs[k]) document.getElementById(k).value = cs.docs[k]; });
     if(cs.logo){ courseLogo = cs.logo; applyLogoPreview(courseLogo); }
     if(Array.isArray(cs.courseLinks)) CAND_LINKS = cs.courseLinks.filter(l => l && (l.label || l.url));
-    if(Array.isArray(cs.tutorContacts)) CONTACTS = cs.tutorContacts.filter(c => c && (c.name || c.email)).map(c => ({ name: c.name || '', email: c.email || '', group: c.group || '' }));
+    if(Array.isArray(cs.tutorContacts)) CONTACTS = cs.tutorContacts.filter(c => c && (c.name || c.email)).map(c => ({ name: c.name || '', email: c.email || '', group: c.group || '', role: c.role || '' }));
     if(Array.isArray(cs.onlineRooms)) ROOMS = cs.onlineRooms.filter(r => r && (r.label || r.url)).map(r => ({ label: r.label || '', url: r.url || '', group: r.group || '', assessor: !!r.assessor }));
   }
 } catch(e) {}
@@ -830,14 +830,21 @@ function renderContacts(){
   const haveG = CONTACTS.map(c => c.group || '');
   const rows = CONTACTS.concat(SUG.filter(([n, g]) => !haveG.includes(g)).map(([n, g], i) => ({ name: typed[CONTACTS.length + i] || '', email: '', group: g })));
   const whoSel = (c, i) => `<div class="house-sel"><select class="tc-group" data-i="${i}"><option value="">The whole course</option>${groups.map(g => `<option value="${esc(g)}"${c.group === g ? ' selected' : ''}>Group ${esc(g)}</option>`).join('')}</select></div>`;
+  /* Ramy, 30 Sep 2026: the distinction belongs here, where a course is set up,
+     and nowhere near a candidate -- "just say course tutor... so the trainees
+     don't have to get confused". Cambridge's own MCT and ACT never appear on a
+     screen a candidate opens; one tutor is the main course tutor, the rest are
+     course tutors, and that is all anybody else is told. */
+  const roleSel = (c, i) => `<div class="house-sel"><select class="tc-role" data-i="${i}"><option value=""${c.role ? '' : ' selected'}>Course tutor</option><option value="main"${c.role === 'main' ? ' selected' : ''}>Main course tutor</option></select></div>`;
   document.getElementById('tutorContacts').innerHTML = rows.map((c, i) =>
     `<div><label>Tutor</label><input type="text" class="tc-name" data-i="${i}" value="${esc(c.name)}" placeholder="Name"></div>
+     <div><label>Is</label>${roleSel(c, i)}</div>
      <div><label>For</label>${whoSel(c, i)}</div>
      <div class="wide"><label>Email</label><input type="email" class="tc-email" data-i="${i}" value="${esc(c.email)}" placeholder="name@centre.org"></div>`).join('');
 }
 function readContacts(){
-  const names = [...document.querySelectorAll('.tc-name')], emails = [...document.querySelectorAll('.tc-email')], grp = [...document.querySelectorAll('.tc-group')];
-  const all = names.map((el, i) => ({ name: el.value.trim(), email: (emails[i] ? emails[i].value : '').trim(), group: (grp[i] ? grp[i].value : '').trim() }));
+  const names = [...document.querySelectorAll('.tc-name')], emails = [...document.querySelectorAll('.tc-email')], grp = [...document.querySelectorAll('.tc-group')], rol = [...document.querySelectorAll('.tc-role')];
+  const all = names.map((el, i) => ({ name: el.value.trim(), email: (emails[i] ? emails[i].value : '').trim(), group: (grp[i] ? grp[i].value : '').trim(), role: (rol[i] ? rol[i].value : '').trim() }));
   CONTACTS = all; return all.filter(c => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email)).map(c => { const o = { name: c.name, email: c.email }; if (c.group) o.group = c.group; return o; });
 }
 document.getElementById('addTutorContact').addEventListener('click', () => { readContacts(); CONTACTS.push({ name:'', email:'', group:'' }); renderContacts(); });

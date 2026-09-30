@@ -140,25 +140,38 @@
   .review .acts{display:flex; gap:10px; justify-content:flex-end; margin-top:12px; flex-wrap:wrap;}
   @media (max-width:980px){ .days{grid-template-columns:repeat(2,1fr);} }
   @media (max-width:560px){ .board{padding:18px 12px 60px;} .days{grid-template-columns:1fr;} }
-  @media print{ .back,.bar,#hubSync{display:none !important;} body{background:#fff;} .days{grid-template-columns:repeat(5,1fr);} .day{break-inside:avoid;} }
+  .printbtn{font-size:0.72rem; font-weight:700; padding:5px 12px; margin-left:14px; vertical-align:middle;}
+  /* On paper: one week to a page, the furniture gone, and nothing split. */
+  @media print{
+    .back,.bar,#hubSync,.printbtn,.zone .ingreen{display:none !important;}
+    body{background:#fff; padding:0;}
+    .board{max-width:none; padding:0;}
+    .wk{break-before:page; page-break-before:always; margin:0 0 10px;}
+    .wk:first-of-type{break-before:auto; page-break-before:auto;}
+    .wk h2{position:static; background:none;}
+    .days{grid-template-columns:repeat(5,1fr); gap:6px;}
+    .day{break-inside:avoid; page-break-inside:avoid; border-color:#bbb;}
+    .day.today{border-width:1px;}
+    h1{font-size:1.4rem;}
+  }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609302330">
-<link rel="stylesheet" href="hub-theme.css?v=202609302330">
+<link rel="stylesheet" href="hub-house.css?v=202609302354">
+<link rel="stylesheet" href="hub-theme.css?v=202609302354">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609302330"></script>
-<script src="hub-tracker.js?v=202609302330"></script>
-<script src="hub-rotation.js?v=202609302330"></script>
-<script src="hub-xlsx.js?v=202609302330"></script>
-<script src="hub-docx.js?v=202609302330"></script>
-<script src="hub-timetable-parse.js?v=202609302330"></script>
-<script src="hub-shared.js?v=202609302330"></script>
-<script src="hub-store.js?v=202609302330"></script>
-<script src="hub-sync.js?v=202609302330"></script>
+<script src="hub-due.js?v=202609302354"></script>
+<script src="hub-tracker.js?v=202609302354"></script>
+<script src="hub-rotation.js?v=202609302354"></script>
+<script src="hub-xlsx.js?v=202609302354"></script>
+<script src="hub-docx.js?v=202609302354"></script>
+<script src="hub-timetable-parse.js?v=202609302354"></script>
+<script src="hub-shared.js?v=202609302354"></script>
+<script src="hub-store.js?v=202609302354"></script>
+<script src="hub-sync.js?v=202609302354"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -630,8 +643,12 @@ function render(){
   ZONE = SETTINGS.timeZone || '';
   STATE = stateMap();
   GROUPS = groups(); DUES = dues(); ROOMS = roomsByLabel(); EDIT = IS_TUTOR && !PREVIEW;
+  document.addEventListener('click', (e) => { if (e.target && e.target.id === 'ttPrint') window.print(); });
   const app = $('app');
-  const head = `<p class="eyebrow">Course</p><h1>Timetable</h1>
+  /* Ramy, 30 Sep 2026: "we should be able to print the timetable" -- and a
+     four-week course does not fit one sheet, so it prints as weeks: each week
+     starts a page, and no day is ever split across the fold. */
+  const head = `<p class="eyebrow">Course</p><h1>Timetable <button type="button" class="btn quiet printbtn" id="ttPrint">Print / Save as PDF</button></h1>
     <p class="lede">${IS_TUTOR
       ? 'The course’s own timetable. The teaching practices and the assignment deadlines come from the course itself; the input sessions and notes are yours to type. Letters are people — a day is named by its date and by who teaches on it.'
       : 'Every day of the course. The teaching practice cell says who is teaching that day; your assignment deadlines are marked on the day they fall.'}</p>`;
