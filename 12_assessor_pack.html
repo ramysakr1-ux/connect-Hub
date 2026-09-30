@@ -86,6 +86,7 @@
      verb's colour, which is how the one line that needs attention still
      stands out from the twenty that do not. Nothing here blocks: it is what
      an assessor asks. */
+  table.mid th:not(:first-child), table.mid td:not(:first-child){text-align:center;}
   .chkgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:8px; padding:6px;}
   .chk{border:1px solid var(--line, oklch(85.5% 0.02 80)); border-radius:8px; padding:9px 11px; background:var(--paper, #fff);}
   .chk-h{display:flex; align-items:center; gap:7px; font-size:0.84rem; margin-bottom:4px;}
@@ -201,7 +202,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610010026">
+<link rel="stylesheet" href="hub-house.css?v=202610010031">
 </head>
 <body>
 <div class="board">
@@ -232,14 +233,14 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202610010026"></script>
-<script src="hub-shared.js?v=202610010026"></script>
-<script src="assignment-defaults.js?v=202610010026"></script>
-<script src="hub-tracker.js?v=202610010026"></script>
-<script src="hub-rotation.js?v=202610010026"></script>
-<script src="hub-attendance.js?v=202610010026"></script>
-<script src="hub-store.js?v=202610010026"></script>
-<script src="hub-sync.js?v=202610010026"></script>
+<script src="observation-defaults.js?v=202610010031"></script>
+<script src="hub-shared.js?v=202610010031"></script>
+<script src="assignment-defaults.js?v=202610010031"></script>
+<script src="hub-tracker.js?v=202610010031"></script>
+<script src="hub-rotation.js?v=202610010031"></script>
+<script src="hub-attendance.js?v=202610010031"></script>
+<script src="hub-store.js?v=202610010031"></script>
+<script src="hub-sync.js?v=202610010031"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -287,7 +288,26 @@ function visitWhen(){
   const zone = SETTINGS.timeZone && window.hubZoneName ? ' (' + window.hubZoneName(SETTINGS.timeZone) + ')' : '';
   return day + times + (times ? zone : '');
 }
-if (window.hubOnlineRoomsHTML) document.getElementById('onlineRooms').innerHTML = hubOnlineRoomsHTML(SETTINGS, { all: true, assessor: true, when: visitWhen() });
+if (window.hubOnlineRoomsHTML) {
+  const strip = hubOnlineRoomsHTML(SETTINGS, { all: true, assessor: true, when: visitWhen() });
+  /* And the assessment timetable beside it, when the centre has provided one.
+     It is the document that says what happens and at what hour on the day the
+     assessor is there, and it was the last row of the last panel on the page
+     (Ramy, 1 Oct 2026). It still appears in Course documents, where 14.1
+     counts it; this is a door, not a second copy. */
+  const at = ((SETTINGS.docs || {}).docAssessTimetable || '').trim();
+  const when = visitWhen();
+  /* The visit leads, and clicking it opens the timetable for the day -- what
+     happens and at what hour. Ramy, 1 Oct 2026: "the visit should be, click on
+     it and then it shows the time, the assessor visit timetable." The room
+     follows it, because the room is the same one all day. */
+  const day = at
+    ? `<a class="or-join first" href="${esc(at)}" target="_blank" rel="noopener noreferrer">Visit timetable${when ? '<small>' + esc(when) + '</small>' : ''}</a>`
+    : (when ? `<span class="or-when">${esc(when)}</span>` : '');
+  document.getElementById('onlineRooms').innerHTML = strip
+    ? strip.replace('</span>', '</span>' + day)
+    : (day ? '<div class="online-rooms"><span class="or-lbl">Your visit</span>' + day + '</div>' : '');
+}
 /* Where this centre files its grades. The assessor's own job at the end of a
    visit is to put the final grades into Appian, and until now the pack sent
    them looking for the address themselves. Set on Course admin -> Settings;
@@ -690,6 +710,10 @@ function renderList(){
    English and the assessor access to all course documentation").
    Nothing is invented: a box the centre left empty is simply not a row. */
 const DOC_LABELS = [
+  /* Ramy, 1 Oct 2026: "the assessment timetable is way at the bottom -- it
+     should be the first one, and then the course timetable, and then the
+     rest." It is the assessor's own day; it leads. */
+  ['docAssessTimetable', 'Assessment timetable'],
   ['docTimetable',    'Course timetable'],
   ['docTpSchedule',   'Teaching practice schedule'],
   ['docRegisters',    'Attendance registers'],
@@ -717,7 +741,6 @@ const DOC_LABELS = [
   /* Added 27 Sep 2026 -- 14.1 asks for all three and Lite had no box for any
      of them. The map is only for a face-to-face visit where the assessor is
      not local, so it is the one that is legitimately blank most of the time. */
-  ['docAssessTimetable', 'Assessment timetable'],
   ['docSampleReport',    'Sample end-of-course report'],
   ['docMap',             'Map and accommodation'],
 ];
@@ -777,7 +800,11 @@ function volunteerStudents(){
   return `<h2 class="sect">Volunteer students <small>Handbook 14.1 &middot; the centre's own register, ${list.length} on it</small></h2>
     <div class="panel">
       <div class="docrow"><span>${list.length} student${list.length===1?'':'s'} on the register, ${attended} with attendance recorded${levelLine ? ' &middot; levels: ' + esc(levelLine) : ''}</span><span>${days.length} teaching day${days.length===1?'':'s'}</span></div>
-      <table><tr><th>Student</th><th>Level</th><th>Classes attended</th><th>Part of a class</th><th>Hours</th></tr>
+      <!-- Ramy, 1 Oct 2026: "the numbers should sit in the middle of the
+           headline" -- a figure parked at the left edge of a wide column has
+           nothing to do with the word above it. Every column but the name is
+           centred, heading and figure together. -->
+      <table class="mid"><tr><th>Student</th><th>Level</th><th>Classes attended</th><th>Part of a class</th><th>Hours</th></tr>
       ${rows.map(({st, r}) => `<tr><td>${esc(st.name)}</td><td>${esc(st.level || '')}</td><td>${r.present} of ${days.length}</td><td>${r.partial || ''}</td><td>${fmtH(r.hours)}</td></tr>`).join('')}
       </table>
     </div>`;
