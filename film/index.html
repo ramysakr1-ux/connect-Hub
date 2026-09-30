@@ -679,6 +679,12 @@
         localStorage.removeItem('hub:t');
         localStorage.removeItem('hub:a');
         localStorage.removeItem('hub:v');
+        /* And forget the last screen's boot, so the wait below sees this
+           screen's own. The tutor's name goes in for every tutor screen: the
+           dashboard asks for it once and draws nothing until it has it, which
+           is right for a person and a blank frame for a film. */
+        localStorage.removeItem('hub:booted');
+        if (who.k && !who.t && !who.ak && !who.v) localStorage.setItem('chub:tutorName', 'Jordan Blake');
       } catch (e) {}
 
       frame.onload = function () {
@@ -689,10 +695,45 @@
         if (capEl.classList.contains('on')) capEl.classList.add('out');
         silenceDialogs();
         stubStore(sc.stub || []);
-        later(then, sc.settle || 900);
+        /* A Lite screen paints from static HTML and repaints when the store
+           answers, which on Apps Script is anywhere from two to twenty
+           seconds; a fixed settle was either wasted or too short (30 Sep
+           2026). hub-sync writes hub:booted as "mode:key" when its boot has
+           landed, so the film waits for THIS screen's own flag -- the previous
+           screen, alive in the frame until replaced, can write its flag a
+           moment after the engine cleared it -- up to forty seconds, then the
+           scene's settle for the paint, then the first control the scene
+           reaches for. A screen with no hub-sync (the card, the console, the
+           film's own pages) has no flag to wait for. */
+        var d0 = frame.contentDocument;
+        var hasSync = !!(d0 && d0.querySelector('script[src*="hub-sync"]'));
+        var expect = who.k && !who.t && !who.ak && !who.v ? 'tutor:' + who.k : who.ak ? 'assessor:' + who.ak : who.v ? 'volunteer:' + who.v : who.t ? 'trainee:' + who.t : '';
+        var t0 = performance.now();
+        (function waitBoot() {
+          var booted = false;
+          try { booted = expect ? localStorage.getItem('hub:booted') === expect : !!localStorage.getItem('hub:booted'); } catch (e) {}
+          if (!hasSync || booted || performance.now() - t0 > 40000) { later(function () { waitFirst(sc, then); }, sc.settle || 900); return; }
+          later(waitBoot, 250);
+        })();
       };
       frame.src = url;
     });
+  }
+
+  /* Then the first thing the scene reaches for, up to thirty seconds. The
+     console paints from the store with no hub-sync at all, and a screen with
+     one may paint a beat after its flag; a scene judged or played before its
+     first control exists fails for nothing. */
+  function waitFirst(sc, then) {
+    var first = null;
+    (sc.steps || []).some(function (s) { var sel = s.do === 'move' ? s.to : s.do === 'click' ? s.on : s.do === 'type' ? s.into : (s.do === 'scroll' && typeof s.to === 'string' && s.to !== 'bottom') ? s.to : null; if (typeof sel === 'string') { first = sel; return true; } return false; });
+    if (!first) { then(); return; }
+    var t0 = performance.now();
+    (function poll() {
+      var ok = false; try { ok = !!find(first); } catch (e) {}
+      if (ok || performance.now() - t0 > 30000) { then(); return; }
+      later(poll, 300);
+    })();
   }
 
   /* Ops that CHANGE something never reach the store. The screen calls what it
