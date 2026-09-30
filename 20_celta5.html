@@ -91,6 +91,14 @@
      the page never scrolls sideways (design audit, 28 Sep 2026). */
   .tablewrap{overflow-x:auto; -webkit-overflow-scrolling:touch; margin:8px 0 4px;}
   /* Cambridge's appendices: a reference, set quieter than the record itself. */
+  .watbl{overflow-x:auto;}
+  .watbl th small{display:block; font-weight:400; text-transform:none; letter-spacing:0; color:var(--grey); font-size:0.68rem; margin-top:2px;}
+  .watbl .wac{text-align:center; width:11%;}
+  .watbl .watick{font-size:1.1rem; color:var(--teal); font-weight:700;}
+  .watbl .wasig{width:34%;}
+  .watbl .wasig .sig{display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap;}
+  .watbl .wasig .sig .who{flex:1; min-width:120px;}
+  .watbl .wasig .ro{margin-top:0 !important;}
   /* Cambridge's four marks are a list in the booklet, so they are a list here. */
   .cam-mark{margin:2px 0 2px 18px; position:relative;}
   .cam-mark::before{content:"\2022"; position:absolute; left:-12px;}
@@ -173,8 +181,8 @@
     textarea, input{border:0; background:none; padding:0;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610010013">
-<link rel="stylesheet" href="hub-theme.css?v=202610010013">
+<link rel="stylesheet" href="hub-house.css?v=202610010021">
+<link rel="stylesheet" href="hub-theme.css?v=202610010021">
 </head>
 <body class="hub-celta5">
 <div class="board">
@@ -187,17 +195,17 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202610010013"></script>
-<script src="hub-ink.js?v=202610010013"></script>
-<script src="assignment-defaults.js?v=202610010013"></script>
-<script src="celta5-text.js?v=202610010013"></script>
+<script src="celta5-pdf.js?v=202610010021"></script>
+<script src="hub-ink.js?v=202610010021"></script>
+<script src="assignment-defaults.js?v=202610010021"></script>
+<script src="celta5-text.js?v=202610010021"></script>
 <script src="celta5-appendix.js?v=202609302308"></script>
-<script src="celta5-criteria.js?v=202610010013"></script>
-<script src="hub-tracker.js?v=202610010013"></script>
-<script src="observation-defaults.js?v=202610010013"></script>
-<script src="hub-shared.js?v=202610010013"></script>
-<script src="hub-store.js?v=202610010013"></script>
-<script src="hub-sync.js?v=202610010013"></script>
+<script src="celta5-criteria.js?v=202610010021"></script>
+<script src="hub-tracker.js?v=202610010021"></script>
+<script src="observation-defaults.js?v=202610010021"></script>
+<script src="hub-shared.js?v=202610010021"></script>
+<script src="hub-store.js?v=202610010021"></script>
+<script src="hub-sync.js?v=202610010021"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -344,6 +352,36 @@ function obsRows(){
     out.push([k.startsWith('filmed') ? 'Filmed' : 'Live', a.hDate || '', obsLength(k, a), a.hLevel || '', a.hLearners || '', a.hLesson || '', a.hSigned || '', when(r.turnedInAt)]); });
   return out;
 }
+/* Cambridge's own Record of Assessment of Written Assignments (July 2023,
+   page 12): four rows by title, and four columns -- Pass at the first
+   submission, Pass at the second, Fail, and the candidate's signature under
+   "I confirm that this is my own work".
+
+   This page used to print Outcome / Round / Marking, which is Lite's internal
+   language and is not on the form: "what is round two, round one unmarking?
+   ... you're supposed to sign this. Can you make it like the one in the CELTA
+   5?" (Ramy, 1 Oct 2026). The marks below are read from the same assignment
+   records as before; only the shape is Cambridge's. A state with no outcome
+   yet -- submitted and being marked, returned unmarked, not submitted -- ticks
+   nothing, exactly as a paper form would carry nothing. */
+function waTable(){
+  const subs = who.tr.assignments || {};
+  const W = (rec('connect_assignment_wording_v2') || window.CONNECT_HUB_DEFAULT_WORDING || {});
+  const A = { fol:'Focus on the Learner', lrt:'Language Related Tasks', lsrt:'Language Skills Related Tasks', lfc:'Lessons from the Classroom' };
+  Object.keys(A).forEach(k => { const t = (W[k] || {}).title; if (t && String(t).trim()) A[k] = String(t).trim(); });
+  const wa = C.wa || {};
+  const tick = '<span class="watick">\u2713</span>';
+  const rows = ['fol','lrt','lsrt','lfc'].map(k => {
+    const st = T.assignmentState(subs[k]);
+    const first = st.code === 'PASS' && (!st.round || st.round === 1);
+    const second = st.code === 'RES' || (st.code === 'PASS' && st.round > 1);
+    const failed = st.code === 'FAIL';
+    const sig = signature(wa, k, { o: 'wa', mine: IS_TRAINEE, prefill: who.name, label: 'Your name, to sign', button: 'Sign', waiting: 'Not signed yet' });
+    return `<tr><td>${esc(A[k] || k.toUpperCase())}</td><td class="wac">${first ? tick : ''}</td><td class="wac">${second ? tick : ''}</td><td class="wac">${failed ? tick : ''}</td><td class="wasig">${sig}</td></tr>`;
+  }).join('');
+  return `<div class="watbl"><table class="grid"><thead><tr><th>Title</th><th class="wac">Pass<small>1st submission</small></th><th class="wac">Pass<small>2nd submission</small></th><th class="wac">Fail</th><th>Candidate signature<small>I confirm that this is my own work</small></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
 function assignRows(){
   const subs = who.tr.assignments || {};
   /* Cambridge's page lists the four by TITLE. This read T.ASSIGN_LABEL, which
@@ -525,7 +563,7 @@ function render(){
     <p class="note" style="margin:8px 0 0">Peer observations are the candidate’s own notes and are not listed here, as on the form.</p>
   </section>
   <section class="part" id="wa"><h2>Written assignments <small>from the assignment records</small></h2>
-    ${table(['Assignment','Outcome','Round','Marking'], assignRows(), 'Nothing yet.')}
+    ${waTable()}
   </section>
 
   <section class="part" id="att"><h2>Attendance <small>the tutors’ record</small></h2>
@@ -691,10 +729,10 @@ function absenceRow(r, i, mine, which){
 }
 
 /* ---- writing --------------------------------------------------------------- */
-const OBJ = { conf: () => (C.confirms = C.confirms || {}), c1: () => (C.stage1 = C.stage1 || {}), s2c: () => (C.stage2 = C.stage2 || {}), c2: () => (C.stage2 = C.stage2 || {}), c3: () => (C.stage3 = C.stage3 || {}), fin: () => (C.final = C.final || {}),
+const OBJ = { wa: () => (C.wa = C.wa || {}), conf: () => (C.confirms = C.confirms || {}), c1: () => (C.stage1 = C.stage1 || {}), s2c: () => (C.stage2 = C.stage2 || {}), c2: () => (C.stage2 = C.stage2 || {}), c3: () => (C.stage3 = C.stage3 || {}), fin: () => (C.final = C.final || {}),
               cover: () => (TT.cover = TT.cover || {}), s1: () => (TT.stage1 = TT.stage1 || {}), s2t: () => (TT.stage2 = TT.stage2 || {}), s3: () => (TT.stage3 = TT.stage3 || {}), att: () => (TT.attendance = TT.attendance || {}), fint: () => (TT.final = TT.final || {}) };
-const isMineObj = o => /^(conf|c1|s2c|c2|c3|fin)$/.test(o) ? IS_TRAINEE : IS_TUTOR;
-const save = o => (isMineObj(o) && /^(conf|c1|s2c|c2|c3|fin)$/.test(o)) ? saveC() : saveT();
+const isMineObj = o => /^(wa|conf|c1|s2c|c2|c3|fin)$/.test(o) ? IS_TRAINEE : IS_TUTOR;
+const save = o => (isMineObj(o) && /^(wa|conf|c1|s2c|c2|c3|fin)$/.test(o)) ? saveC() : saveT();
 function bind(){
   const app = $('app');
   app.querySelectorAll('[data-o][data-k]').forEach(el => el.addEventListener('input', () => {
