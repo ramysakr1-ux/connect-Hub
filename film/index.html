@@ -449,9 +449,15 @@
     ring.classList.add('pop');
   }
   function centreOf(el) {
+    /* A rect is already where the thing IS on screen -- the browser has taken
+       the scroll off it. Taking the scroll off a second time put the cursor
+       as far above the button as the page had been scrolled, which is why the
+       cursor was sometimes nowhere near what it was about to press (Ramy,
+       30 Sep 2026). The click always landed; only the hand was in the wrong
+       place. The iframe sits at the stage's origin at its own size, so the
+       rect's numbers are the cursor's numbers. */
     var r = el.getBoundingClientRect();
-    var doc = frame.contentDocument.documentElement;
-    return { x: r.left + r.width / 2 - (doc.scrollLeft || 0), y: r.top + r.height / 2 - (doc.scrollTop || 0) };
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
   }
 
   /* ---- reaching into the screen ---------------------------------------- */
@@ -617,9 +623,11 @@
       /* params too, and NOT inherited: a goto usually lands on a different
          screen, where the scene's own ?trainee= or ?a= would be wrong or would
          name somebody who is not on the course it just moved to. */
-      var as = { course: s.course || sc.course, role: s.role || 'tutor', as: s.as, params: s.params, stub: s.stub || sc.stub, settle: s.settle };
+      var as = { course: s.course || sc.course, role: s.role || 'tutor', as: s.as, params: s.params, stub: s.stub || sc.stub, settle: s.settle || sc.settle };
       cursor.classList.remove('on');
-      showScreen(as, s.screen, function () {});
+      waiting = true;
+      curtain.classList.add('on');
+      showScreen(as, s.screen, function () { curtain.classList.remove('on'); waiting = false; });
       return (s.ms || 2200);
     },
     /* A full-screen title between the journeys. It holds, then fades out and
@@ -717,6 +725,7 @@
     paintTabs();
 
     stubbed = [];
+    waiting = false;
     /* Up for the load, down when the screen is ready -- scene loads only. A
        `goto` inside a scene keeps its own timing; its steps run to a budget
        the scene author set, and a curtain there would hide them. */
@@ -936,10 +945,19 @@
     }
   }
 
+  /* A `goto` loads another screen, and until 30 Sep 2026 the steps after it
+     kept running on the engine's clock while that screen was still coming
+     back from the store: a click or a scroll would reach for a control that
+     did not exist yet, do nothing, and leave the film sitting on a half-drawn
+     page. The queue now waits for the screen, behind the curtain, and the
+     step's own ms becomes what it was meant to be -- a beat after the screen
+     is there, not instead of it. */
+  var waiting = false;
+
   function runSteps(steps, done) {
     var i = 0;
     (function next() {
-      if (!playing) { later(next, 120); return; }
+      if (!playing || waiting) { later(next, 120); return; }
       if (i >= steps.length) { done(); return; }
       var s = steps[i++];
       var fn = STEP[s.do];
