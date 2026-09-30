@@ -88,17 +88,37 @@
   .days span{display:inline-block; margin-right:14px; white-space:nowrap;}
   .foot{font-size:0.76rem; color:var(--faint); margin:20px 0 0; line-height:1.6;}
   .empty{color:var(--grey); font-size:0.86rem; line-height:1.6;}
+  /* THE JOINING NOTE. Shown once, before anything else, the first time the
+     link is opened on a device. The wording is Connect's own consent text
+     (src/lib/fol/volunteer-signup-i18n.ts, English), because it has been
+     read by a lawyer once already and this page is the same promise. */
+  .consent{position:fixed; inset:0; z-index:40; background:oklch(23.5% 0.017 65 / .55); display:flex; align-items:flex-end; justify-content:center; padding:0;}
+  .consent .box{background:var(--paper); border-radius:18px 18px 0 0; width:min(560px, 100%); padding:26px 24px 30px; box-shadow:0 -12px 40px oklch(0% 0 0 / .18); max-height:92vh; overflow:auto; box-sizing:border-box;}
+  .consent h2{font-family:'Newsreader',Georgia,serif; font-size:1.5rem; margin:0 0 4px;}
+  .consent .intro{color:var(--grey); font-size:0.9rem; margin:0 0 14px;}
+  .consent ul{margin:0 0 14px; padding:0 0 0 20px; font-size:0.94rem; line-height:1.65;}
+  .consent li{margin:0 0 6px;}
+  .consent .rec{background:var(--surface); border:1px solid var(--sand-line); border-radius:10px; padding:12px 14px; font-size:0.9rem; line-height:1.6; margin:0 0 18px;}
+  .consent .agree{display:block; width:100%; background:var(--teal); color:#fff; border:0; border-radius:999px; padding:14px 20px; font:inherit; font-weight:700; font-size:1rem; cursor:pointer;}
+  .consent .agree:hover{filter:brightness(1.08);}
+  .consent .agree:focus-visible{outline:3px solid var(--gold); outline-offset:2px;}
+  .consent .close{display:block; width:100%; background:none; border:1px solid var(--sand-line); color:var(--grey); border-radius:999px; padding:12px 20px; font:inherit; font-weight:600; font-size:0.9rem; cursor:pointer;}
+  .consent .kept{font-size:0.76rem; color:var(--faint); margin:12px 0 0; text-align:center; line-height:1.5;}
+  @media (min-width:600px){ .consent{align-items:center; padding:20px;} .consent .box{border-radius:18px;} }
+  .agreed{font-size:0.76rem; color:var(--faint); margin:8px 0 0;}
+  .agreed button{background:none; border:0; padding:0; color:var(--teal); font:inherit; font-weight:700; cursor:pointer;}
   @media (max-width:480px){ .board{padding:16px 14px 50px;} .next{padding:16px 16px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609300937">
-<link rel="stylesheet" href="hub-theme.css?v=202609300937">
+<link rel="stylesheet" href="hub-house.css?v=202609301005">
+<link rel="stylesheet" href="hub-theme.css?v=202609301005">
 </head>
 <body class="hub-grid">
 <div class="board" id="app"></div>
-<script src="hub-shared.js?v=202609300937"></script>
-<script src="hub-attendance.js?v=202609300937"></script>
-<script src="hub-store.js?v=202609300937"></script>
-<script src="hub-sync.js?v=202609300937"></script>
+<div id="consent"></div>
+<script src="hub-shared.js?v=202609301005"></script>
+<script src="hub-attendance.js?v=202609301005"></script>
+<script src="hub-store.js?v=202609301005"></script>
+<script src="hub-sync.js?v=202609301005"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -209,12 +229,63 @@ function render(){
     ${upcoming.length > 1 ? `<div class="card"><h3>The rest of the course</h3>
       <p class="days">${upcoming.slice(1, 9).map(d => `<span><b>${esc(shortDay(d))}</b> · ${esc(startT)}</span>`).join('')}${upcoming.length > 9 ? '<span>and ' + (upcoming.length - 9) + ' more to ' + esc(shortDay(upcoming[upcoming.length-1])) + '</span>' : ''}</p></div>` : ''}
     <div class="install-hint" id="installHint" hidden></div>
-    <p class="foot">This link is yours. It stops working when the course ends.<br>If you cannot come to a class, just let your teacher know.</p>`;
+    <p class="foot">This link is yours. It stops working when the course ends.<br>If you cannot come to a class, just let your teacher know.</p>
+    ${agreedAt() ? `<p class="agreed">You agreed to the centre's note on ${esc(longDay(agreedAt().slice(0, 10)))}. <button type="button" id="readAgain">Read it again</button></p>` : ''}`;
   if (window.hubInstallHint) hubInstallHint($('installHint'), 'volunteer');
+  if ($('readAgain')) $('readAgain').addEventListener('click', () => consent(true));
+}
+
+/* THE JOINING NOTE. Ramy, 30 Sep 2026: "we can always get them to sign
+   something when they join... Disclaimer, it can also come from Connect."
+   It does: the lines below are Connect's volunteer sign-up consent, word for
+   word, so both products make the same promise to the same people.
+
+   Where the agreement goes. A volunteer's link cannot write to the course, so
+   the click is kept on this device (and shown as a line at the foot of the
+   page) and ALSO sent to the store as the one write a volunteer may make --
+   'volunteerAgree', which stamps their own register row once and can stamp
+   nothing else. The register then shows the tutor who has agreed. If the
+   store is not reachable at that moment, the device copy still stands and
+   the stamp is retried on the next open. */
+const CONSENT_KEY = 'chub:volunteerConsent:' + ((window.HubStore && HubStore.volunteerToken) ? HubStore.volunteerToken() : '');
+function agreedAt(){ const r = rec(CONSENT_KEY); return r && r.at ? r.at : ''; }
+function stamp(){
+  if (!window.HubStore || !HubStore.call) return;
+  const r = rec(CONSENT_KEY); if (!r || !r.at || r.stamped) return;
+  /* call() resolves on success and throws on a refusal or a dead network;
+     either way the device copy stands and this runs again next open. */
+  HubStore.call({ op: 'volunteerAgree', at: r.at }).then(() => {
+    r.stamped = true; try { localStorage.setItem(CONSENT_KEY, JSON.stringify(r)); } catch (e) {}
+  }).catch(() => {});
+}
+function consent(readOnly){
+  const host = $('consent'); if (!host) return;
+  host.innerHTML = `<div class="consent" role="dialog" aria-modal="true" aria-labelledby="cTitle"><div class="box">
+    <h2 id="cTitle">Before we begin</h2>
+    <p class="intro">Please note the following.</p>
+    <ul>
+      <li>The information you provide will be shared with the centre for teacher-training purposes.</li>
+      <li>Trainee teachers may reference it in their coursework. It will not be shared with any other party.</li>
+      <li>You may withdraw from the course at any time.</li>
+    </ul>
+    <p class="rec">I agree to being recorded, in sound or on video, during this sign-up and in lessons, for teacher-training purposes only.</p>
+    ${readOnly
+      ? `<button type="button" class="close" id="cClose">Close</button>`
+      : `<button type="button" class="agree" id="cAgree">I agree</button>
+         <p class="kept">Your agreement is kept on this device and noted on the course register${SETTINGS.centreName ? ' at ' + esc(SETTINGS.centreName) : ''}.</p>`}
+  </div></div>`;
+  document.body.style.overflow = 'hidden';
+  const done = () => { host.innerHTML = ''; document.body.style.overflow = ''; };
+  if ($('cClose')) $('cClose').addEventListener('click', done);
+  if ($('cAgree')) { $('cAgree').focus(); $('cAgree').addEventListener('click', () => {
+    try { localStorage.setItem(CONSENT_KEY, JSON.stringify({ at: new Date().toISOString(), name: ME.name || '' })); } catch (e) {}
+    done(); stamp(); render();
+  }); }
 }
 function daysBetween(a, b){ const x = parse(a), y = parse(b); return (x && y) ? Math.round((y - x) / 86400000) : 99; }
 
 render();
+if (!agreedAt()) consent(false); else stamp();
 </script>
 </body>
 </html>
