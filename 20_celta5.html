@@ -159,8 +159,8 @@
     textarea, input{border:0; background:none; padding:0;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609302232">
-<link rel="stylesheet" href="hub-theme.css?v=202609302232">
+<link rel="stylesheet" href="hub-house.css?v=202609302306">
+<link rel="stylesheet" href="hub-theme.css?v=202609302306">
 </head>
 <body class="hub-celta5">
 <div class="board">
@@ -173,16 +173,16 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202609302232"></script>
-<script src="hub-ink.js?v=202609302232"></script>
-<script src="assignment-defaults.js?v=202609302232"></script>
-<script src="celta5-text.js?v=202609302232"></script>
-<script src="celta5-criteria.js?v=202609302232"></script>
-<script src="hub-tracker.js?v=202609302232"></script>
-<script src="observation-defaults.js?v=202609302232"></script>
-<script src="hub-shared.js?v=202609302232"></script>
-<script src="hub-store.js?v=202609302232"></script>
-<script src="hub-sync.js?v=202609302232"></script>
+<script src="celta5-pdf.js?v=202609302306"></script>
+<script src="hub-ink.js?v=202609302306"></script>
+<script src="assignment-defaults.js?v=202609302306"></script>
+<script src="celta5-text.js?v=202609302306"></script>
+<script src="celta5-criteria.js?v=202609302306"></script>
+<script src="hub-tracker.js?v=202609302306"></script>
+<script src="observation-defaults.js?v=202609302306"></script>
+<script src="hub-shared.js?v=202609302306"></script>
+<script src="hub-store.js?v=202609302306"></script>
+<script src="hub-sync.js?v=202609302306"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -225,7 +225,29 @@ const tutorName = () => (localStorage.getItem('chub:tutorName') || localStorage.
 
 /* ---- pieces ------------------------------------------------------------- */
 const pill = (t, cls) => `<span class="st ${cls||''}">${t}</span>`;
+/* The hours taught at each stage, as a starting figure. Cambridge asks for six
+   hours of assessed teaching across the course, so with eight teaching
+   practices each is forty-five minutes: Stage 1 comes after TP2 (1.5), Stage 2
+   at the half-way point (3), Stage 3 at the end (6). Ramy, 30 Sep 2026: "that's
+   the standard" -- and standard means a figure already in the box, not a rule.
+   The tutor can type anything over it, and a centre whose course is built
+   differently gets its own arithmetic from the number of teaching practices it
+   actually runs. Nothing is written by looking: the figure goes into the record
+   in memory and is saved with whatever the tutor does next. */
+const ASSESSED_HOURS = 6;
+function standardHours(which) {
+  const tps = Math.max(2, parseInt(SETTINGS.tpCount, 10) || 8);
+  const done = which === 's1' ? 2 : which === 's3' ? tps : Math.round(tps / 2);
+  const h = ASSESSED_HOURS * done / tps;
+  return String(Math.round(h * 100) / 100);
+}
+
 const field = (obj, key, label, opts) => {
+  /* A stage's hours arrive filled in, unless somebody has already changed them
+     or the stage has been returned and locked. */
+  if (key === 'hoursTaught' && opts.mine && !opts.locked && !obj[key]) {
+    obj[key] = standardHours(opts.o === 's2t' ? 's2' : opts.o);
+  }
   const v = obj[key] || '';
   const mine = opts.mine;
   if (!mine) return `<label class="f">${label}</label><div class="ro ${v ? '' : 'empty'}">${v ? esc(v) : 'Nothing written yet'}</div>`;
@@ -371,7 +393,12 @@ function render(){
   </section>
 
   <section class="part" id="s1"><h2>Stage 1 <small>after the first teaching practices</small> ${pill(st1[0], st1[1])}</h2>
-    <p class="note">The tutor records the hours taught so far, strengths and an action plan; the candidate signs to say they have read it.</p>
+    <!-- Cambridge's own instruction, and Cambridge's own reader. The booklet
+         is the candidate's and every page of it says "you" and "your tutor";
+         this page was explaining the tutor's job to whoever opened it, which
+         is the wrong voice for the half of its readers it belongs to
+         (Ramy, 30 Sep 2026). July 2023, page 13. -->
+    <p class="note">This form will be completed by your tutor in the first third of the course. Some centres may hold a tutorial with you at the same time, but this is not obligatory. Having read and agreed with the summary, sign and date the report.</p>
     <div class="halves">
       <div class="half ${tut?'mine':''}"><h3>Tutor <small>${s1.returnedAt ? 'returned ' + when(s1.returnedAt) : ''}</small></h3>
         <label class="f">Stage 1 tutorial</label><div class="rating">${[['yes','Given'],['no','Not given']].map(([k,l]) => tut && !s1.returnedAt
@@ -391,7 +418,12 @@ function render(){
   </section>
 
   <section class="part" id="s2"><h2>Stage 2 <small>mid-course tutorial</small> ${pill(st2[0], st2[1])}</h2>
-    <p class="note">Both of you mark every criterion. The candidate writes first and submits; the tutor marks, writes the summary and action points, and returns it; the candidate signs. Cambridge’s own heading on this record is “Stage Two Progress Record — hours taught”.</p>
+    <!-- July 2023, page 14, in Cambridge's words. The four marks are quoted
+         because the fourth one is the answer to "why is there no X?": X is the
+         candidate's to give, in the column marked You, and the tutor's scale
+         has three marks, not four. -->
+    <p class="note">With this record, a tutor will conduct a one-to-one tutorial with you. Before your tutorial, read through your lesson plans, your teaching practice feedback and any written work you have had marked and returned. Then, in your own column, say how far you feel you have met each criterion at this stage of the course.</p>
+    <p class="note" style="margin-top:6px"><b>S+</b> above the standard expected at this stage · <b>S</b> meets the standard expected at this stage · <b>N</b> not to standard at this stage, and needs more work in order to pass · <b>X</b> not applicable yet, because you have not yet focused on the teaching or planning skills for that criterion. <b>X is yours alone</b> — your tutor marks S+, S or N.</p>
     ${tut || s2t.hoursTaught ? `<div class="oneline"><div class="ol">${field(s2t, 'hoursTaught', 'Hours taught at this stage', { o:'s2t', mine: tut, input:'text', locked: !!s2t.returnedAt })}</div></div>` : ''}
     ${marksGrid(s2c.marks, s2t.marks, { topics:['1','2','3','4','5'], showCand:true, candMine: my && !s2c.submittedAt, tutorMine: tut && !s2t.returnedAt })}
     <div class="halves" style="margin-top:14px">

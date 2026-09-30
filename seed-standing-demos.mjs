@@ -121,8 +121,9 @@ const signed = (name, day, hhmm) => ({ name, at: iso(day, hhmm), ink: ink(name) 
 const LOGO = FINISHED.settings.logo;
 const ROOMS = [
   { label: 'Input', url: 'https://zoom.us/j/81000000001', assessor: false },
+  /* Two rooms, not three. Ramy, 30 Sep 2026: feedback and tutorials happen in
+     the teaching practice room -- they do not need a door of their own. */
   { label: 'Teaching practice', url: 'https://zoom.us/j/81000000002', assessor: true },
-  { label: 'Feedback and tutorials', url: 'https://zoom.us/j/81000000003', assessor: false },
 ];
 const COURSE_LINKS = [
   { label: 'CELTA syllabus and assessment guidelines', url: 'https://www.cambridgeenglish.org/Images/21816-celta-syllbus.pdf', card: 'Course files', show: true },
@@ -339,14 +340,21 @@ async function candidateRecords(cand, ci, token, setIndex, rot, buildDoc, volunt
   const T = { cover: { uln: '' } };
   const stage1Day = WHICH === 'start' ? 5 : 10;
   if (WHICH === 'start' ? ci < 2 : true) {
-    T.stage1 = { tutorialGiven: 'yes', hoursTaught: WHICH === 'start' ? '1.5' : '3', strengths: cand.teachS.slice(0, 2).map(x => x[1]).join('\n'), actionPlan: cand.teachA.slice(0, 2).map(x => x[1]).join('\n'), returnedAt: iso(stage1Day, '17:40'), signedBy: signed(TUTORS[0], stage1Day, '17:40') };
+    T.stage1 = { tutorialGiven: 'yes', /* Stage 1 is written after TP2, whenever it is read: 1.5 hours on both
+       demos, not 3 on the later one. */
+      hoursTaught: '1.5', /* Bulleted, and each point carrying the criterion it was tagged
+         against in the tutor's feedback -- which is how a tutor writes this
+         box in practice (Ramy, 30 Sep 2026: "just add the criteria next to
+         the number"). Demo dressing, not a rule the page enforces. */
+      strengths: cand.teachS.slice(0, 2).map(x => '\u2022 ' + x[1] + ' (' + x[0] + ')').join('\n'),
+      actionPlan: cand.teachA.slice(0, 2).map(x => '\u2022 ' + x[1] + ' (' + x[0] + ')').join('\n'), returnedAt: iso(stage1Day, '17:40'), signedBy: signed(TUTORS[0], stage1Day, '17:40') };
     if (WHICH === 'start' ? ci === 0 : true) C.stage1 = { agrees: true, signed: signed(cand.name, stage1Day, '19:12') };
   }
   if (WHICH === 'visit') {
     const marksC = {}, marksT = {};
     CRITERIA.forEach((code, i) => { marksC[code] = (i + ci) % 9 === 0 ? 'S+' : (i + ci) % 13 === 0 ? 'N' : 'S'; marksT[code] = (i + ci) % 11 === 0 ? 'S+' : (i + ci) % 17 === 0 ? 'N' : 'S'; });
     C.stage2 = { notesWA: 'FOL and LRT passed; LSRT submitted. I found the rationale section of FOL hard and rewrote it once.', notesOther: 'I am planning faster and my instructions are shorter.', overall: 'to', areas: cand.teachA.map(x => x[1]).join('\n'), marks: marksC, submittedAt: iso(12, '20:15') };
-    T.stage2 = { notesWA: 'Three assignments passed' + (cand.assignments.fol === 'resub' ? ', FOL on resubmission' : '') + '. LfC due in week four.', notesOther: cand.tutorial, overall: /PASS [AB]/.test(cand.final) ? 'above' : 'to', summary: 'Action points from Stage 1 met. ' + cand.teachA[0][1] + ' remains the target for the last week.', marks: marksT, returnedAt: iso(13, '17:50'), signedBy: signed(TUTORS[1], 13, '17:50') };
+    T.stage2 = { hoursTaught: '3', notesWA: 'Three assignments passed' + (cand.assignments.fol === 'resub' ? ', FOL on resubmission' : '') + '. LfC due in week four.', notesOther: cand.tutorial, overall: /PASS [AB]/.test(cand.final) ? 'above' : 'to', summary: 'Action points from Stage 1 met. ' + cand.teachA[0][1] + ' remains the target for the last week.', marks: marksT, returnedAt: iso(13, '17:50'), signedBy: signed(TUTORS[1], 13, '17:50') };
     if (ci !== 5) C.stage2.signed = signed(cand.name, 13, '21:05'), C.stage2.agrees = true;
     if (ci === 5) T.attendance = { rows: [{ date: DAY(9) + ' 10:00–12:15', session: 'Input: speaking; phonology 2', reason: 'Illness, with a note', madeUp: 'Yes — notes and the recording', cand: 'Watched the recording on the Wednesday.', tutor: 'JB' }], other: [] };
   }
