@@ -171,11 +171,19 @@ window.hubObservationHours = function(records){
     var mine=String(opts.group||'');
     if(mine) rooms=rooms.slice().sort(function(a,b){ return (String(b.group||'')===mine)-(String(a.group||'')===mine); });
     var e=function(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); };
-    return '<div class="online-rooms"><span class="or-lbl">Online rooms</span>'+rooms.map(function(r){
+    /* An assessor is not choosing between rooms -- the centre has ticked the
+       one they are joining -- so the button does not need the centre's own
+       label for it. Ramy, 1 Oct 2026: "the assessor link, the online room,
+       should not read teaching practice, it should just say join here." It
+       says Join the lesson, and `opts.when` puts the day and time beside it,
+       so the link answers what and when without anybody explaining it. */
+    var lbl=function(r){ return opts.assessor ? 'Join the lesson' : (r.label||'Join'); };
+    return '<div class="online-rooms"><span class="or-lbl">'+(opts.assessor?'Your visit':'Online rooms')+'</span>'+rooms.map(function(r){
       var g=String(r.group||''), who='';
-      if(g&&mine&&g===mine) who='<small>your group</small>';
+      if(opts.assessor) who=opts.when?'<small>'+e(opts.when)+'</small>':'';
+      else if(g&&mine&&g===mine) who='<small>your group</small>';
       else if(g&&(opts.all||mine)) who='<small>Group '+e(g)+'</small>';
-      return '<a class="or-join'+(g&&mine&&g===mine?' mine':'')+'" href="'+e(r.url)+'" target="_blank" rel="noopener noreferrer">'+e(r.label||'Join')+who+'</a>'; }).join('')+'</div>';
+      return '<a class="or-join'+(g&&mine&&g===mine?' mine':'')+'" href="'+e(r.url)+'" target="_blank" rel="noopener noreferrer">'+e(lbl(r))+who+'</a>'; }).join('')+'</div>';
   };
   /* An initials tile for a person (Ramy, 28 Sep 2026: "should trainees have
      avatars as well, with their initials, like the tutors? perhaps a

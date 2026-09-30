@@ -78,9 +78,14 @@
   h2.sect small{font-family:'Karla',sans-serif; font-size:0.8rem; font-weight:500; color:var(--grey); margin-left:10px;}
   /* Gold edges the card, as on every other screen (Ramy, 24 Sep 2026). */
   .panel{background:var(--card); border-left:5px solid var(--gold, oklch(63% 0.096 72)); border-radius:10px; padding:6px; box-shadow:0 1px 2px rgba(0,0,0,0.03);}
-  /* The course against the Handbook. Colour carries the VERB, not the mood:
-     a "must" that is short is brick, a "should" that is short is gold, and
-     anything met is quiet. Nothing here blocks: it is what an assessor asks. */
+  /* The course against the Handbook. The VERB is coloured on every line --
+     brick for a must, gold for a should -- so the grid reads as two kinds of
+     line at a glance. Ramy, 1 Oct 2026: one card in red and the rest in white
+     "doesn't make sense... maybe must will be one colour and should another".
+     The card itself stays quiet until it falls short, and then it takes the
+     verb's colour, which is how the one line that needs attention still
+     stands out from the twenty that do not. Nothing here blocks: it is what
+     an assessor asks. */
   .chkgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:8px; padding:6px;}
   .chk{border:1px solid var(--line, oklch(85.5% 0.02 80)); border-radius:8px; padding:9px 11px; background:var(--paper, #fff);}
   .chk-h{display:flex; align-items:center; gap:7px; font-size:0.84rem; margin-bottom:4px;}
@@ -88,7 +93,8 @@
   .chk-c{font-size:0.7rem; color:var(--mut, oklch(45% 0.01 70)); opacity:.75; margin-top:5px;}
   .verb{font-size:0.62rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; padding:2px 6px; border-radius:999px;
         border:1px solid var(--line, oklch(85.5% 0.02 80)); color:var(--mut, oklch(45% 0.01 70));}
-  .chk.short.a-must, .chk.short .verb.must{}
+  .verb.must{color:var(--brick); border-color:color-mix(in oklab, var(--brick) 45%, transparent);}
+  .verb.should{color:var(--gold-deep, oklch(52% 0.098 70)); border-color:color-mix(in oklab, var(--gold, oklch(63% 0.096 72)) 55%, transparent);}
   .chk.short{border-color:var(--gold, oklch(63% 0.096 72));}
   .chk.short:has(.verb.must){border-color:var(--brick); background:oklch(97% 0.02 30);}
   .chk.short:has(.verb.must) .verb.must{background:var(--brick); border-color:var(--brick); color:#fff;}
@@ -195,7 +201,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610010021">
+<link rel="stylesheet" href="hub-house.css?v=202610010026">
 </head>
 <body>
 <div class="board">
@@ -226,14 +232,14 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202610010021"></script>
-<script src="hub-shared.js?v=202610010021"></script>
-<script src="assignment-defaults.js?v=202610010021"></script>
-<script src="hub-tracker.js?v=202610010021"></script>
-<script src="hub-rotation.js?v=202610010021"></script>
-<script src="hub-attendance.js?v=202610010021"></script>
-<script src="hub-store.js?v=202610010021"></script>
-<script src="hub-sync.js?v=202610010021"></script>
+<script src="observation-defaults.js?v=202610010026"></script>
+<script src="hub-shared.js?v=202610010026"></script>
+<script src="assignment-defaults.js?v=202610010026"></script>
+<script src="hub-tracker.js?v=202610010026"></script>
+<script src="hub-rotation.js?v=202610010026"></script>
+<script src="hub-attendance.js?v=202610010026"></script>
+<script src="hub-store.js?v=202610010026"></script>
+<script src="hub-sync.js?v=202610010026"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -259,7 +265,29 @@ const WHO = params.get('trainee') || '';
 const SETTINGS = rec('connect_course_settings') || {};
 /* The rooms an online course teaches in: the assessor joins the teaching
    practice from here on the day (Ramy, 28 Sep 2026). Print drops it. */
-if (window.hubOnlineRoomsHTML) document.getElementById('onlineRooms').innerHTML = hubOnlineRoomsHTML(SETTINGS, { all: true, assessor: true });
+/* What and when, beside the door. The assessment date is the centre's
+   (Course admin), and the times are the teaching practice slots of that day
+   from the course's own timetable, in the course's clock -- so the assessor
+   does not have to find the day in the timetable to know when to click.
+   Ramy, 1 Oct 2026: "next to the link should be some information about what
+   and when." */
+function visitWhen(){
+  const d = SETTINGS.visitDate;
+  if (!d) return '';
+  const day = (function(){ try { return new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }); } catch (e) { return d; } })();
+  let times = '';
+  try {
+    const tt = rec('connect_timetable_v1') || {};
+    const slots = (tt.slots || []).filter(sl => sl && sl.kind === 'tp' && sl.from);
+    if (slots.length) {
+      const from = slots[0].from, to = slots[slots.length - 1].to || '';
+      times = ' \u00b7 ' + from + (to ? '\u2013' + to : '');
+    }
+  } catch (e) {}
+  const zone = SETTINGS.timeZone && window.hubZoneName ? ' (' + window.hubZoneName(SETTINGS.timeZone) + ')' : '';
+  return day + times + (times ? zone : '');
+}
+if (window.hubOnlineRoomsHTML) document.getElementById('onlineRooms').innerHTML = hubOnlineRoomsHTML(SETTINGS, { all: true, assessor: true, when: visitWhen() });
 /* Where this centre files its grades. The assessor's own job at the end of a
    visit is to put the final grades into Appian, and until now the pack sent
    them looking for the address themselves. Set on Course admin -> Settings;
@@ -596,21 +624,6 @@ function renderList(){
   $('toolbar').innerHTML = `<a class="btn primary" href="7_candidate_tracker.html">Candidate tracker</a>${appianBtn('ghost')}<button class="btn-print" type="button" onclick="window.print()">Print / Save as PDF</button>`;
   $('app').innerHTML = `
     ${checksHTML()}
-    <h2 class="sect">Candidates <small>${n} on the course</small></h2>
-    <!-- A shortcut, not a second table. The assessor can already open the
-         candidate tracker -- it is theirs as much as the tutors' -- and this
-         rebuilt it here with teaching-practice counts, assignment chips and a
-         standing: more crowded than the real one, and with a name that was
-         not even clickable (Ramy, 27 Sep 2026: "why is the assessor getting
-         this busy one... how about we just give the assessor a shortcut to
-         the candidates instead"). Same shape as the documents below -- a line
-         and a link. -->
-    <div class="panel">${n ? `
-      <div class="docrow"><span>Every candidate &mdash; teaching practice, assignments and where each one stands</span><a href="7_candidate_tracker.html">Open the tracker</a></div>
-      <div class="docrow"><span>The candidates&rsquo; own aims for the last two teaching practices, by group</span><a href="21_tp_grid.html">Open TP7&amp;8 grid</a></div>
-      <div class="docrow"><span>Provisional and final grades, in Cambridge&rsquo;s own fields, to copy into Appian</span><a href="13_grades_report.html">Open the grades</a></div>
-    ` : '<div class="empty">No candidates on the course yet.</div>'}</div>
-
     <!-- Handbook 14.1 opens its list with "Candidate portfolios - clearly
          named candidate portfolios including the documentation detailed in
          section 12.1.1", and 14.2 says that "the portfolio of at least
@@ -639,6 +652,27 @@ function renderList(){
         ${rest.length ? `<h2 class="sect">Every other candidate <small>read any of them — nothing here is closed to you</small></h2>
         <div class="panel">${rest.map(row).join('')}</div>` : ''}`;
     })()}
+    <!-- Ramy, 1 Oct 2026: "what the assessor is observing should come first,
+         and then the rest after that... what's the difference between
+         candidates and every other candidate?" There was none worth the
+         confusion: this heading said Candidates and held three links, above
+         two sections that really were candidates. The people come first now,
+         and this is named for what it is. -->
+    <h2 class="sect">The rest of the course <small>read-only, like everything else here</small></h2>
+    <!-- A shortcut, not a second table. The assessor can already open the
+         candidate tracker -- it is theirs as much as the tutors' -- and this
+         rebuilt it here with teaching-practice counts, assignment chips and a
+         standing: more crowded than the real one, and with a name that was
+         not even clickable (Ramy, 27 Sep 2026: "why is the assessor getting
+         this busy one... how about we just give the assessor a shortcut to
+         the candidates instead"). Same shape as the documents below -- a line
+         and a link. -->
+    <div class="panel">${n ? `
+      <div class="docrow"><span>Every candidate &mdash; teaching practice, assignments and where each one stands</span><a href="7_candidate_tracker.html">Open the tracker</a></div>
+      <div class="docrow"><span>The candidates&rsquo; own aims for the last two teaching practices, by group</span><a href="21_tp_grid.html">Open TP7&amp;8 grid</a></div>
+      <div class="docrow"><span>Provisional and final grades, in Cambridge&rsquo;s own fields, to copy into Appian</span><a href="13_grades_report.html">Open the grades</a></div>
+    ` : '<div class="empty">No candidates on the course yet.</div>'}</div>
+
     <h2 class="sect">Double-marking record <small>Handbook 9.2.3: ${sample} of each assignment for ${n} candidate${n===1?'':'s'}</small></h2>
     <div class="panel">${dm.length ? `<table><tr><th>Candidate</th><th>Assignment</th><th>First marker</th><th>Second marker</th><th>Double-marked</th><th>Outcome</th></tr>${dm.join('')}</table>` : '<div class="empty">Nothing has been double-marked yet. The quota above says how many of each assignment need to be.</div>'}</div>
     <h2 class="sect">Assignment briefs <small>as the centre set them, in the centre’s order</small></h2>
