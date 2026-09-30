@@ -29,7 +29,11 @@
      {do:'scroll', to:'bottom'|px|sel, ms}
      {do:'hold',   ms}
      {do:'goto',   screen, role, as}  same scene, another screen or person
-     {do:'still',  want, how, ms}     a frame that is not Lite, or a PDF
+     {do:'still',  img, want, how, ms} a frame that is not Lite: `img` is a
+                                      frame made for the film (film/stills/,
+                                      by make-stills.mjs); without one, a card
+                                      saying what to capture
+     {do:'draw',   name, ms}          draw a signature on the open pad, then Sign
 
    A selector is CSS, or `text:Some words` to find a control by what it says.
 
@@ -44,7 +48,8 @@
    Olivia's next plan) and the stub is what keeps them open.
 
    PRINTING. window.print() is a browser dialog the film cannot drive; every
-   PDF beat is a `still` captured by hand, as the spec's build notes say. */
+   PDF beat is a `still` captured by hand, as the spec's build notes say;
+   the other stills are made by make-stills.mjs. */
 
 var SCENES = [
 
@@ -84,8 +89,9 @@ var SCENES = [
       { do: 'hold', ms: 1200 },
       { do: 'caption', text: 'Nothing to install. Nothing to remember. Nothing to lose.' },
       { do: 'hold', ms: 3200 },
-      { do: 'still', ms: 3000, want: 'The link inside a demo Classroom stream, then inside a demo Drive folder', how: 'Two frames, one cut each. Made-up centre, made-up names.' },
-      { do: 'still', ms: 3400, want: 'A plain tab, Wi-Fi switched off, the page still there', how: 'Toggle Wi-Fi on camera; hold four seconds on the page not changing.' },
+      { do: 'still', ms: 2600, img: 'stills/classroom-stream.png', want: 'The link inside a demo Classroom stream' },
+      { do: 'still', ms: 2600, img: 'stills/drive-folder.png', want: 'The link inside a demo Drive folder' },
+      { do: 'still', ms: 3400, img: 'stills/wifi-off.png', want: 'A plain tab, Wi-Fi switched off, the page still there' },
       { do: 'caption', text: 'Works offline.' },
       { do: 'hold', ms: 2600 },
       { do: 'click', on: '#go', ms: 2200 }
@@ -125,7 +131,7 @@ var SCENES = [
     title: 'The candidate reads Cambridge’s words',
     screen: 'index.html',
     course: 'start', role: 'trainee', as: 'Selin Kaya', day: 'Day 0',
-    about: 'Selin’s home — the rooms strip, the timetable card with day one marked — then the CELTA 5: <i>Read and confirm</i>, Cambridge’s own words scrolled, the confirmation box with her name in it, <b>Confirm and sign</b>, the pad. Selin was left unconfirmed on the demo for this beat; <b>writes stubbed</b> so she stays that way. The pad is drawn on camera.',
+    about: 'Selin’s home — the rooms strip, the timetable card with day one marked — then the CELTA 5: <i>Read and confirm</i>, Cambridge’s own words scrolled, the confirmation box with her name in it, <b>Confirm and sign</b>, the pad. Selin was left unconfirmed on the demo for this beat; <b>writes stubbed</b> so she stays that way. The pad is drawn by the film.',
     settle: 1800,
     stub: ['put'],
     steps: [
@@ -136,7 +142,9 @@ var SCENES = [
       { do: 'caption', text: 'This booklet is going to fill itself. Watch.' },
       { do: 'scroll', to: '[data-sig="conf:portfolio"]', ms: 2200 },
       { do: 'click', on: '[data-sign="conf:portfolio"]', ms: 1800 },
-      { do: 'hold', ms: 5200 },
+      { do: 'hold', ms: 900 },
+      { do: 'draw', name: 'Selin Kaya', ms: 1500 },
+      { do: 'hold', ms: 2600 },
       { do: 'caption', text: 'Signed. Dated. Kept.' },
       { do: 'hold', ms: 3400 }
     ]
@@ -279,7 +287,7 @@ var SCENES = [
     steps: [
       { do: 'scroll', to: 300, ms: 1440 },
       { do: 'click', on: '#xCopy', ms: 1800 },
-      { do: 'still', ms: 2400, want: 'The brief pasted into any model, and the trainer talking the lesson through', how: 'A dictation window with the copied brief in it. If it cannot be shown, cut straight from Copy to Paste something back.' },
+      { do: 'still', ms: 2400, img: 'stills/exchange-window.png', want: 'The brief pasted into any model, and the trainer talking the lesson through', how: 'A dictation window with the copied brief in it. If it cannot be shown, cut straight from Copy to Paste something back.' },
       { do: 'click', on: '#xPasteToggle', ms: 1400 },
       { do: 'hold', ms: 1400 },
       { do: 'caption', text: 'The rest of the form was already there.' },
@@ -292,19 +300,23 @@ var SCENES = [
     title: 'Stage 1, signed',
     screen: '20_celta5.html',
     course: 'start', params: { trainee: 'Sofia' }, day: 'Day 6',
-    about: 'The tutor’s side of Sofia’s CELTA 5: Stage 1 written, <b>Return to candidate</b>, the pad (drawn on camera). Then Deniz’s side — his Stage 1 is returned and unsigned on the demo — <b>Sign</b>, the pad, the green block; below it the teaching practice table already holding TP1 and TP2. <b>Writes stubbed</b> on both sides.',
+    about: 'The tutor’s side of Sofia’s CELTA 5: Stage 1 written, <b>Return to candidate</b>, the pad (drawn by the film). Then Deniz’s side — his Stage 1 is returned and unsigned on the demo — <b>Sign</b>, the pad, the green block; below it the teaching practice table already holding TP1 and TP2. <b>Writes stubbed</b> on both sides.',
     settle: 2400,
     stub: ['put'],
     steps: [
       { do: 'scroll', to: '#s1', ms: 2200 },
       { do: 'hold', ms: 1400 },
       { do: 'click', on: '[data-return="stage1"]', ms: 1800 },
-      { do: 'hold', ms: 4200 },
+      { do: 'hold', ms: 900 },
+      { do: 'draw', name: 'Jordan Blake', ms: 1500 },
+      { do: 'hold', ms: 2400 },
       { do: 'caption', text: 'Signed on screen. Personal, and dated to the second.' },
       { do: 'goto', screen: '20_celta5.html', course: 'start', role: 'trainee', as: 'Deniz Arslan', stub: ['put'], ms: 3000 },
       { do: 'scroll', to: '#s1', ms: 2000 },
       { do: 'click', on: '[data-sign="c1:signed"]', ms: 1800 },
-      { do: 'hold', ms: 3600 },
+      { do: 'hold', ms: 900 },
+      { do: 'draw', name: 'Deniz Arslan', ms: 1500 },
+      { do: 'hold', ms: 2400 },
       { do: 'scroll', to: '#tp', ms: 2200 },
       { do: 'caption', text: 'Nothing here was typed twice.' },
       { do: 'hold', ms: 3400 }
@@ -470,7 +482,7 @@ var SCENES = [
     about: 'A captured still of the print dialog over the booklet. The one printing beat in the film, as an option.',
     settle: 1600,
     steps: [
-      { do: 'still', ms: 4200, want: 'The print dialog over Cambridge’s booklet', how: 'Press Print on camera and capture the dialog; the film cannot drive it.' },
+      { do: 'still', ms: 4200, img: 'stills/print-dialog.png', want: 'The print dialog over Cambridge’s booklet', how: 'Press Print on camera and capture the dialog; the film cannot drive it.' },
       { do: 'caption', text: 'Print it, if a drawer needs it.' },
       { do: 'hold', ms: 2200 }
     ]
@@ -487,7 +499,7 @@ var SCENES = [
       { do: 'move', to: '[data-clone]' },
       { do: 'hold', ms: 1600 },
       { do: 'caption', text: 'The wording stays. The people change.' },
-      { do: 'still', ms: 3800, want: 'The new course’s card on the console, an empty roster, the switches all off', how: 'Clone once by hand, capture the card, delete the course.' }
+      { do: 'still', ms: 3800, img: 'stills/next-course-card.png', want: 'The new course’s card on the console, an empty roster, the switches all off', how: 'Clone once by hand, capture the card, delete the course.' }
     ]
   },
 

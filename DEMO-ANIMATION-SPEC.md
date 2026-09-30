@@ -72,7 +72,7 @@ Audience: **trainers and centre owners**, not trainees. Length: **about five min
 ### 1 · The card arrives — *Day 0* — 0:39–0:55
 **Screen:** `invite.html`, the tutor's invitation card as the trainer receives it. Three cuts, each showing **the link itself inside the other product**: a demo Classroom stream; a demo Drive folder; a plain tab with the Wi-Fi going off and the page still there.
 **Captions:** *Nothing to install. Nothing to remember. Nothing to lose.* → on Wi-Fi off: *Works offline.*
-◆ Hold four seconds on Wi-Fi off, page still there.
+◆ Hold four seconds on Wi-Fi off, page still there. All three are made stills (`film/stills/`), not screen captures.
 
 ### 2 · A course is set up — *Day 0* — 0:55–1:16
 **Screen:** Course admin (`6_centre_admin_dashboard.html`). Settings: the centre, the dates, the course's clock, three **Online rooms** rows, one ticked *The assessor joins this room*. Then the timetable (`23_timetable.html`): **an Excel file chosen**, the review, *Apply*, the day shape, every day laid out with the rooms on it. Then the roster: a class list pasted → *Add all* → six rows, each with its own link.
@@ -185,7 +185,7 @@ Audience: **trainers and centre owners**, not trainees. Length: **about five min
 ◆ Hold. This is the line the film was made for; nothing moves under it.
 *Fourth and last look at the booklet.*
 
-### 20 · Paper, if you want it — *Day 20* — 5:29–5:35 · *a captured still*
+### 20 · Paper, if you want it — *Day 20* — 5:29–5:35 · *a made still*
 **Screen:** the print dialog over the booklet, a still.
 **Caption:** *Print it, if a drawer needs it.*
 
@@ -214,14 +214,16 @@ Nothing is written to a demo course until Ramy says so. Then the clock, then the
 ## Build notes
 
 - Dictation: Chrome or Edge on a computer, the microphone already permitted; if the button does not go garnet with the dot pulsing, stop the take.
-- The pad in scenes 3, 10, 13 and 16: draw with the mouse on camera, slowly; the engine can replay a stored stroke, but a drawn one reads better. The tutor's second signature comes preloaded from the first, which is itself a beat.
+- **The pad draws itself (30 Sep 2026).** A `draw` step sends the pointer across the pad stroke by stroke, types the name where the pad asks for one, and presses *Sign*; scenes 5 and 13 carry it, so no hand is needed for a take. The ink is the same shape every time — nobody's, and legible as a signature. Proved on both scenes: the pad opens, the canvas takes the stroke, *Sign* enables, the pad closes and the signature stands on the screen behind it.
+- **The five stills are made, not captured (30 Sep 2026).** `node film/make-stills.mjs` draws the Classroom stream, the Drive folder, the Wi-Fi-off tab, the exchange window and the print dialog as pages of the film's own, photographs them at 1280 x 800 into `film/stills/`, and takes the sixth for real: it clones the finished course, photographs the new card on the console, and deletes the clone. Invented centre, invented names. A `still` step names its `img`.
 - The rooms strip appears only when the course has rooms saved — seed them first or scenes 3, 7 and 14 show nothing there.
 - Scene 17 needs the store's assets (the July 2023 master and the two fonts) reachable from the tutor link the take uses; the assessor link can draw it too.
 - **The film's address carries five keys, none of them in this repo:** `?k=` the running demo (c3), `&sk=` the first-week demo (c6), `&vk=` the before-the-visit demo (c7), `&fk=` the finished course (c4), `&s=` the scratch course (c5), and `&o=` the owner key for the console frame. A scene names its course (`start`, `visit`, `finished`) and its person; candidate tokens, the assessor key and a volunteer's link are looked up from the store at run time.
 - **The cold open** is `film/open.html`, a page of the film's own: it plays itself (the Drive windows, the chips, the tallies, 35 s) and the engine lays the two captions over it. No keys reach it.
 - **Store-painted screens need `settle: 12000`.** Apps Script answers in 6–18 s; a scene judged earlier finds an empty page, and `?check=1` reports selectors as missing that are only late.
 - **Check before a take:** `?check=1` on the film's address walks every scene and names any selector that is not there. The scratchpad's `film-check.mjs` serves the repo locally and runs it headless with all five keys read from the store.
-- Film with the recording window focused. `?scene=N` starts at that scene.
+- **Recording:** `node film/take.mjs` — `?take=1` shows the stage alone (no bar, no scene tabs, no note) at 1280 x 800, the film plays to its end, and the take lands in `film/takes/`. `--scene N` records one scene for a retake. The pages come from a local copy of the working tree; the records come from the live store, so c6, c7 and c4 must be up. Format is **webm (VP8)** — Playwright's own encoder writes nothing else; every browser plays it and YouTube and Vimeo take it as it is. For an mp4, run the webm through an ffmpeg with H.264.
+- `?scene=N` starts at that scene.
 - `?trainee=` is a **token**, never a name; no token and no key goes in `film/scenes.js` or in this file. The repository is public.
 
 ## Still needed from Ramy, not from the code
@@ -229,4 +231,4 @@ Nothing is written to a demo course until Ramy says so. Then the clock, then the
 - **The go** for the seed and the scenes.
 - **The price** for the card, and the tiers if there are tiers.
 - **The film's link** once it exists.
-- **The music** — pick one of three when they are shortlisted.
+- **The music** — pick one; the shortlist is in the chat.

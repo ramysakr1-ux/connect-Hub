@@ -61,6 +61,13 @@
      clicks at all, and the opening card says so. */
   .stage iframe{width:var(--stage-w); height:var(--stage-h); border:0; display:block; pointer-events:none;}
   .stagewrap{position:relative;}
+  /* ?take=1 -- the recording. Only the stage, at its own size, no padding,
+     no bar, no tabs, no note: a 1280x800 window records the film and nothing
+     else. The engine sets window.filmEnded when the last scene is done, so
+     the recorder knows when to stop. */
+  html.take body{padding:0; gap:0; background:var(--sand, #fbfaf7); min-height:0; display:block;}
+  html.take .stage{border-radius:0; box-shadow:none;}
+  html.take .bar, html.take .note{display:none;}
 
   /* The opening card: what this is, before anything moves. */
   .opening{position:absolute; inset:0; z-index:9; background:var(--sand, #fbfaf7);
@@ -77,6 +84,7 @@
     align-items:center; justify-content:center; flex-direction:column; gap:12px; text-align:center; padding:60px;}
   .still.on{display:flex;}
   .still img{max-width:100%; max-height:100%; object-fit:contain;}
+  .still img:not([hidden]) ~ .want, .still img:not([hidden]) ~ .how{display:none;}
   .still .want{font-family:'Newsreader',Georgia,serif; font-size:1.3rem; color:var(--ink-warm, #46342a);}
   .still .how{font-size:0.9rem; color:var(--grey, #6b6157); max-width:46ch; line-height:1.6;}
 
@@ -174,7 +182,12 @@
     .caption.on{ animation:none; transform:translate(-50%, 0); }
   }
 
-  .day{position:absolute; left:28px; bottom:24px; z-index:7; pointer-events:none;
+  /* Top left. It sat bottom left and landed on the screens' own sync pill --
+     "DAY 4" printed over "Saved to the course" in the first take (30 Sep
+     2026) -- and the bottom of a Lite screen is where the return bar, the
+     dictation bar and the save line all live. The top left corner is margin
+     on every screen the film uses. */
+  .day{position:absolute; left:28px; top:24px; z-index:7; pointer-events:none;
     font-family:'Karla',sans-serif; font-size:0.72rem; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
     color:oklch(99% 0.004 85); background:oklch(21% 0.02 65 / .82); padding:7px 12px; border-radius:999px;
     opacity:0; transition:opacity 600ms ease;}
@@ -204,6 +217,7 @@
   <div class="stage" id="stage">
     <iframe id="screen" title="Connect Lite"></iframe>
     <div class="still" id="still">
+      <img id="stillImg" alt="" hidden>
       <div class="want" id="stillWant"></div>
       <div class="how" id="stillHow"></div>
     </div>
@@ -273,7 +287,10 @@
   var note = document.getElementById('note');
 
   /* Fit the 1280-wide stage into whatever window we are watching in. */
+  var TAKE = !!new URLSearchParams(location.search).get('take');
+  if (TAKE) document.documentElement.classList.add('take');
   function fit() {
+    if (TAKE) { stage.style.transform = 'none'; stage.parentElement.style.width = '1280px'; stage.parentElement.style.height = '800px'; document.documentElement.style.setProperty('--fit', 1); return; }
     var pad = 40;
     var s = Math.min(1, (window.innerWidth - pad) / 1280, (window.innerHeight - 190) / 800);
     stage.style.transform = 'scale(' + s + ')';
@@ -601,9 +618,61 @@
       later(function () { chapter.classList.remove('on'); }, hold);
       return hold + 700;
     },
+    /* Draw on the open signature pad (hub-ink), stroke by stroke with pointer
+       events from the top-left of the pad, so the ink appears as a hand would
+       leave it; type the name if the pad asks for one and it is empty; then
+       Sign. The stroke is the same shape every take -- nobody's, and legible
+       as a signature. {do:'draw', name:'Jordan Blake', ms} */
+    draw: function (s) {
+      var d = doc();
+      var padEl = d && d.querySelector('.ink-pad');
+      if (!padEl) { warn('draw: no signature pad is open'); return 200; }
+      /* hub-ink captures the pointer on pointerdown; a synthetic pointer is
+         not active, and Chrome throws before the stroke begins. The pad does
+         not need capture when the film is the hand. */
+      padEl.setPointerCapture = function () {}; padEl.releasePointerCapture = function () {};
+      var nameIn = d.querySelector('.ink-name input');
+      if (nameIn && !nameIn.value && s.name) setValue(nameIn, s.name);
+      /* The overlay is fixed, so its rect is already where the cursor goes:
+         the iframe sits at the stage's origin at its own size. */
+      var r = padEl.getBoundingClientRect();
+      var pts = [[0.08,0.62],[0.13,0.40],[0.18,0.66],[0.24,0.36],[0.29,0.60],[0.35,0.48],[0.41,0.70],[0.47,0.42],[0.53,0.62],[0.59,0.38],[0.65,0.66],[0.71,0.46],[0.78,0.62],[0.85,0.50],[0.91,0.58]];
+      var at = function (p) { return { x: r.left + p[0] * r.width, y: r.top + p[1] * r.height }; };
+      var fire = function (type, p) { var c = at(p); padEl.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerId: 1, pointerType: 'mouse', button: 0, buttons: 1, clientX: c.x, clientY: c.y })); moveTo(c.x, c.y); };
+      var total = s.ms || 1500, i = 0;
+      moveTo(at(pts[0]).x, at(pts[0]).y);
+      later(function () {
+        fire('pointerdown', pts[0]);
+        (function step() {
+          i++;
+          if (i >= pts.length) {
+            fire('pointerup', pts[pts.length - 1]);
+            later(function () {
+              var ok = d.querySelector('.ink-ok');
+              if (!ok) { warn('draw: the pad closed before Sign'); return; }
+              var b = ok.getBoundingClientRect();
+              moveTo(b.left + b.width / 2, b.top + b.height / 2);
+              later(function () {
+                if (ok.disabled) { warn('draw: Sign stayed disabled — no stroke was taken'); return; }
+                popAt(b.left + b.width / 2, b.top + b.height / 2);
+                ok.click();
+              }, 520);
+            }, 420);
+            return;
+          }
+          fire('pointermove', pts[i]);
+          later(step, total / pts.length);
+        })();
+      }, 260);
+      return total + 1900;
+    },
     still: function (s) {
-      document.getElementById('stillWant').textContent = s.want;
-      document.getElementById('stillHow').textContent = s.how || '';
+      /* A still with an `img` is a frame made for the film (film/stills/);
+         without one it is the placeholder card that says what to capture. */
+      var im = document.getElementById('stillImg');
+      if (s.img) { im.src = s.img; im.hidden = false; } else { im.hidden = true; im.removeAttribute('src'); }
+      document.getElementById('stillWant').textContent = s.img ? '' : s.want;
+      document.getElementById('stillHow').textContent = s.img ? '' : (s.how || '');
       still.classList.add('on');
       cursor.classList.remove('on');
       later(function () { still.classList.remove('on'); }, s.ms || 3000);
@@ -884,6 +953,7 @@
           d.innerHTML = '<b>End.</b> Press Replay scene, or pick one above.';
           note.appendChild(d);
           cursor.classList.remove('on');
+          window.filmEnded = true;
         }
       });
     });
