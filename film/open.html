@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<!--
+  Connect Lite — the film's cold open (30 Sep 2026)
+  © 2026 Ramy Sakr. All rights reserved.
+
+  The comparison page ("The Same Course, Twice") as one animated scene, before
+  the day stamps begin. It plays itself on load, in three movements:
+
+    0-11 s   four Google Drive windows descend, one per folder level, exactly
+             as Drive draws them: the way to one lesson plan.
+    11-27 s  the Drive column fills with grey chips, one every third of a
+             second, while the Lite column stops at three.
+    27-35 s  the two tallies land.
+
+  The engine (film/index.html) shows it as a screen of the film's own -- no
+  keys, no store -- and lays its captions over it. Everything is invented:
+  Elmswood, the names, the dates. The step counts are the comparison page's,
+  as Ramy corrected them.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The same course, twice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,500;0,700;1,500&family=Karla:wght@400;500;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{ --sand:#f8f5ee; --paper:#fdfcf8; --surface:#f1ecdf; --line-soft:#e7e1d3; --ink:#2b241c; --grey:#7a7166; --faint:#a39a8d;
+         --teal:#1f5b58; --garnet:#8a2f2a; --chip:#ece7db; --chip-ink:#6f675c; --work:#1f5b58; --work-ink:#fff; }
+  html,body{height:100%;}
+  body{margin:0; background:var(--sand); color:var(--ink); font-family:'Karla',system-ui,sans-serif; overflow:hidden;}
+  .wrap{width:1280px; height:800px; box-sizing:border-box; padding:34px 44px; display:grid; grid-template-columns:1fr 1fr; gap:26px; align-items:start;}
+  h2{font-family:'Newsreader',Georgia,serif; font-size:1.35rem; font-weight:700; margin:0 0 12px;}
+  .col h2 b{font-weight:700;} .drive h2{color:var(--garnet);} .lite h2{color:var(--teal);}
+  .eyebrow{font-size:0.7rem; letter-spacing:.16em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:0 0 4px;}
+
+  /* Google Drive, as it looks */
+  .gd{background:#fff; color:#1f1f1f; font-family:'Roboto',Arial,sans-serif; font-size:13px; border:1px solid #dadce0; border-radius:8px; overflow:hidden;
+    box-shadow:0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15); margin-bottom:10px;
+    opacity:0; transform:translateY(14px); transition:opacity 700ms ease, transform 700ms ease;}
+  .gd.on{opacity:1; transform:none;}
+  .gd .crumbs{display:flex; align-items:center; gap:2px; padding:9px 14px; border-bottom:1px solid #e0e0e0; font-size:14px; color:#444746; white-space:nowrap;}
+  .gd .crumbs span{padding:2px 6px;} .gd .crumbs span:last-child{color:#1f1f1f; font-weight:500;} .gd .crumbs i{color:#5f6368; font-style:normal;}
+  .gd .hd,.gd .row{display:grid; grid-template-columns:minmax(0,1fr) 100px 110px 64px; gap:10px; align-items:center; padding:7px 14px;}
+  .gd .hd{color:#444746; font-weight:500; font-size:12px; border-bottom:1px solid #e0e0e0;}
+  .gd .row{border-bottom:1px solid #f1f3f4;} .gd .row:last-child{border-bottom:0;}
+  .gd .nm{display:flex; align-items:center; gap:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .gd .nm svg{width:20px; height:20px; flex-shrink:0;}
+  .gd .own{display:flex; align-items:center; gap:6px; color:#444746;}
+  .gd .own b{width:20px; height:20px; border-radius:50%; display:inline-grid; place-items:center; font-size:10px; font-weight:500; color:#fff; background:#7c4dff;}
+  .gd .own b.me{background:#0b8043;} .gd .own b.k{background:#e37400;}
+  .gd .dt,.gd .sz{color:#444746;} .gd .sz{text-align:right;}
+  .stack .gd:nth-child(2){margin-left:14px;} .stack .gd:nth-child(3){margin-left:28px;} .stack .gd:nth-child(4){margin-left:42px;}
+  /* The descent is taller than the frame: the stack follows its newest window
+     down, so the eye is always on the level just opened. */
+  .stack{max-height:690px; overflow:hidden; scroll-behavior:smooth;}
+  .stage2 .col{max-height:732px; overflow:hidden; scroll-behavior:smooth;}
+
+  /* the chips */
+  .steps{display:grid; gap:5px; margin:0;}
+  .steps li{list-style:none; display:grid; grid-template-columns:22px 1fr; gap:8px; align-items:center; font-size:0.86rem; padding:5px 10px 5px 8px; border-radius:7px;
+    background:var(--chip); color:var(--chip-ink); opacity:0; transform:translateX(-8px); transition:opacity 260ms ease, transform 260ms ease; line-height:1.3;}
+  .steps li.on{opacity:1; transform:none;}
+  .steps li.work{background:var(--work); color:var(--work-ink); font-weight:600;}
+  .steps li i{font-family:ui-monospace,Menlo,monospace; font-size:0.68rem; color:var(--faint); text-align:right; font-style:normal;}
+  .steps li.work i{color:var(--work-ink); opacity:.75;}
+  .stage2, .stage3{position:absolute; inset:0; padding:34px 44px; box-sizing:border-box; opacity:0; transition:opacity 900ms ease; pointer-events:none;}
+  .stage2.on, .stage3.on{opacity:1;}
+  .stage2{display:grid; grid-template-columns:1fr 1fr; gap:26px; align-items:start;}
+  .stage2 .col{background:var(--paper); border:1px solid var(--line-soft); border-radius:14px; padding:18px 20px; min-height:600px;}
+  .stage2 .col header{display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid var(--line-soft); padding-bottom:8px; margin-bottom:12px;}
+  .stage2 .col header span{font-size:0.78rem; color:var(--grey); font-variant-numeric:tabular-nums;}
+  .actor{font-size:0.68rem; letter-spacing:.14em; text-transform:uppercase; font-weight:700; color:var(--faint); margin:0 0 10px;}
+  .stage3{display:grid; align-content:center; justify-items:center; gap:26px; background:var(--sand);}
+  .stage3 h1{font-family:'Newsreader',Georgia,serif; font-size:2.6rem; font-weight:700; margin:0; text-align:center; max-width:22ch; line-height:1.1;}
+  .tallies{display:grid; grid-template-columns:repeat(3, 300px); gap:16px;}
+  .tally{background:var(--paper); border:1px solid var(--line-soft); border-radius:12px; padding:18px 20px; opacity:0; transform:translateY(12px); transition:opacity 700ms ease, transform 700ms ease;}
+  .tally.on{opacity:1; transform:none;}
+  .tally .who{font-size:0.7rem; letter-spacing:.14em; text-transform:uppercase; font-weight:700; color:var(--grey);}
+  .tally .n{font-family:'Newsreader',Georgia,serif; font-size:2.7rem; font-weight:700; line-height:1.1; font-variant-numeric:tabular-nums; margin-top:4px;}
+  .tally .n small{font-size:1rem; font-family:'Karla',sans-serif; font-weight:500; color:var(--grey); margin-left:6px;}
+  .tally.drive .n{color:var(--garnet);} .tally.lite .n{color:var(--teal);}
+  .tally .sub{font-size:0.84rem; color:var(--grey); margin-top:4px;}
+  .fade{opacity:0 !important;}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="gd-folder" viewBox="0 0 24 24"><path fill="#5f6368" d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></symbol>
+  <symbol id="gd-pdf" viewBox="0 0 24 24"><path fill="#ea4335" d="M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path fill="#fff" d="M14 2v6h6"/><path fill="#fff" d="M8 17v-6h2.2c1.2 0 1.9.7 1.9 1.7S11.4 14.4 10.2 14.4H9.2V17H8zm1.2-3.6h1c.5 0 .8-.3.8-.7s-.3-.7-.8-.7h-1v1.4z"/></symbol>
+  <symbol id="gd-doc" viewBox="0 0 24 24"><path fill="#4285f4" d="M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path fill="#a1c2fa" d="M14 2v6h6"/><path fill="#fff" d="M8 12h8v1.3H8zM8 14.5h8v1.3H8zM8 17h5v1.3H8z"/></symbol>
+</svg>
+
+<div class="wrap" id="stage1">
+  <div class="col drive">
+    <p class="eyebrow">A CELTA course on Google Drive</p>
+    <h2>Five folders down to one lesson plan</h2>
+    <div class="stack" id="stack"></div>
+  </div>
+  <div class="col lite">
+    <p class="eyebrow">The same course on Connect Lite</p>
+    <h2>One link each. No folders.</h2>
+  </div>
+</div>
+
+<div class="stage2" id="stage2">
+  <div class="col drive"><header><h2>Google Drive</h2><span id="dCount">0 actions</span></header><p class="actor">The tutor, after TP1</p><ol class="steps" id="dSteps"></ol></div>
+  <div class="col lite"><header><h2>Connect Lite</h2><span id="lCount">0 actions</span></header><p class="actor">The tutor, after TP1</p><ol class="steps" id="lSteps"></ol></div>
+</div>
+
+<div class="stage3" id="stage3">
+  <h1>The same CELTA course, run two ways.</h1>
+  <div class="tallies">
+    <div class="tally drive"><div class="who">Google Drive · one course</div><div class="n">2,258<small>actions</small></div><div class="sub">1,937 of them moving files and keeping records</div></div>
+    <div class="tally lite"><div class="who">Connect Lite · the same course</div><div class="n">627<small>actions</small></div><div class="sub">nothing to download, rename, convert, upload or write down twice</div></div>
+    <div class="tally"><div class="who">Fewer, by</div><div class="n">72<small>per cent</small></div><div class="sub">four candidates, eight TPs, four assignments</div></div>
+  </div>
+</div>
+
+<script>
+const C = 'C/1 2026 @ Elmswood';
+const own = w => w === 'me' ? '<span class="own"><b class="me">J</b>me</span>' : w === 'k' ? '<span class="own"><b class="k">M</b>Marta</span>' : '<span class="own"><b>D</b>Diane</span>';
+const row = (kind, name, w, dt, sz) => `<div class="row"><span class="nm"><svg><use href="#gd-${kind}"/></svg>${name}</span>${own(w)}<span class="dt">${dt}</span><span class="sz">${sz || '—'}</span></div>`;
+const win = (crumbs, rows) => `<div class="gd"><div class="crumbs">${crumbs.map((c, i) => (i ? '<i>›</i>' : '') + '<span>' + c + '</span>').join('')}</div><div class="hd"><span>Name</span><span>Owner</span><span>Last modified</span><span class="sz">File size</span></div>${rows.join('')}</div>`;
+document.getElementById('stack').innerHTML = [
+  win(['My Drive', C], [row('folder','Admin','a','20 Mar 2026'), row('folder','Common Files','a','9 Feb 2026'), row('folder','Portfolios','a','19 Mar 2026')]),
+  win(['My Drive', C, 'Portfolios', 'A - Marta'], [row('folder','ASSIGNMENTS','a','12 Feb 2026'), row('folder','PRE-COURSE TASK','a','3 Jul 2025'), row('folder','TEACHING PRACTICE','a','20 Jan 2026'), row('doc','CELTA5_Marta','a','16 Mar 2026','103 KB'), row('pdf','How to name your files.pdf','a','3 Feb 2026','61 KB')]),
+  win(['My Drive', C, 'Portfolios', 'A - Marta', 'TEACHING PRACTICE'], [row('folder','TP1','a','11 Feb 2026'), row('folder','TP2','a','11 Feb 2026'), row('folder','TP3','a','11 Feb 2026'), row('folder','TP4','a','11 Feb 2026'), row('folder','TP5','a','19 Mar 2026'), row('folder','TP6','a','19 Mar 2026'), row('folder','TP7','a','19 Mar 2026'), row('folder','TP8','a','19 Mar 2026')]),
+  win(['My Drive', C, 'Portfolios', 'A - Marta', 'TEACHING PRACTICE', 'TP7'], [row('folder','Materials','k','9 Mar 2026'), row('pdf','TP7_Marta_LP.pdf','me','9 Mar 2026','1.9 MB'), row('pdf','TP7_Marta_SE.pdf','a','19 Mar 2026','136 KB'), row('pdf','TP7_Marta_feedback.pdf','me','19 Mar 2026','412 KB')]),
+].join('');
+
+const DRIVE = [
+  ['Open Portfolios'], ['Open the candidate'], ['Open TEACHING PRACTICE'], ['Open TP1'], ['Download the plan, a Word document'], ['Read the plan', 1], ['Write the comments and the feedback into it', 1], ['Check the aims again', 1], ['Enter the date, the time and the level'], ['Go and find the register'], ['Count the students, enter the number'], ['Change the file name: TP1_Marta_feedback'], ['Back to Portfolios › candidate › TEACHING PRACTICE › TP1'], ['Download the self-evaluation'], ['Read it', 1], ['Write comments on it', 1], ['Paste everything into one document'], ['Convert to PDF'], ['Upload'], ['Tell the candidate it is back'], ['Open CELTA5_Marta, record TP1 in the table'], ['Remind the candidate to record it in theirs'], ['Open Candidate profiles, find the row, enter the grade'],
+];
+const LITE = [
+  ['The dashboard says the plan is in. Open the candidate.'], ['The plan and the self-evaluation are beside the form. Read them.', 1], ['Write the feedback, tagged with the criteria.', 1], ['Return. Their home says it is back.'], ['The CELTA 5 table and the tracker read it. Nothing more.'],
+];
+function fill(id, list, countId) {
+  const ol = document.getElementById(id);
+  ol.innerHTML = list.map((s, i) => `<li class="${s[1] ? 'work' : ''}"><i>${i + 1}</i><span>${s[0]}</span></li>`).join('');
+  return [...ol.children];
+}
+const dLis = fill('dSteps', DRIVE), lLis = fill('lSteps', LITE);
+
+const at = (ms, fn) => setTimeout(fn, ms);
+/* movement one: the descent */
+const stack = document.getElementById('stack');
+[...document.querySelectorAll('.stack .gd')].forEach((w, i) => at(600 + i * 2300, () => { w.classList.add('on'); at(80, () => { stack.scrollTop = Math.max(0, w.offsetTop + w.offsetHeight - stack.clientHeight + 6); }); }));
+/* movement two: the chips */
+at(11000, () => { document.getElementById('stage1').classList.add('fade'); document.getElementById('stage2').classList.add('on'); });
+const dCol = document.getElementById('dSteps').closest('.col');
+dLis.forEach((li, i) => at(11800 + i * 340, () => { li.classList.add('on'); document.getElementById('dCount').textContent = (i + 1) + ' actions'; dCol.scrollTop = Math.max(0, li.offsetTop + li.offsetHeight - dCol.clientHeight + 12); }));
+lLis.forEach((li, i) => at(11800 + i * 340, () => { li.classList.add('on'); document.getElementById('lCount').textContent = (i + 1) + ' actions'; }));
+/* movement three: the tallies */
+at(27000, () => { document.getElementById('stage2').classList.remove('on'); document.getElementById('stage3').classList.add('on'); });
+[...document.querySelectorAll('.tally')].forEach((t, i) => at(27800 + i * 700, () => t.classList.add('on')));
+</script>
+</body>
+</html>

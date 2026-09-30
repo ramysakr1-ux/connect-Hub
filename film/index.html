@@ -174,6 +174,12 @@
     .caption.on{ animation:none; transform:translate(-50%, 0); }
   }
 
+  .day{position:absolute; left:28px; bottom:24px; z-index:7; pointer-events:none;
+    font-family:'Karla',sans-serif; font-size:0.72rem; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
+    color:oklch(99% 0.004 85); background:oklch(21% 0.02 65 / .82); padding:7px 12px; border-radius:999px;
+    opacity:0; transition:opacity 600ms ease;}
+  .day.on{opacity:.92;}
+
   /* Transport. Not part of the film -- it is how we watch it while building. */
   .bar{display:flex; align-items:center; gap:14px; width:var(--stage-w); max-width:100%;
     color:oklch(80% 0.01 85); font-size:0.84rem;}
@@ -215,6 +221,10 @@
       </svg>
     </div>
     <div class="caption" id="caption"></div>
+    <!-- The day stamp (spec, 28 Sep 2026): the calendar is the film's spine,
+         so the day sits on screen even when no caption does, and changes only
+         on a cut. Bottom left, small caps, the product's own label style. -->
+    <div class="day" id="day"></div>
     <div class="opening" id="opening">
       <h1>Connect Lite</h1>
       <p>A CELTA course, from the link being sent to the final report.</p>
@@ -285,19 +295,33 @@
      stale between takes. */
   var SCRATCH = new URLSearchParams(location.search).get('s') || '';
   var FINISHED = new URLSearchParams(location.search).get('fk') || '';
+  /* The two STANDING demos (30 Sep 2026), pinned by the demo clock so they
+     never age: ?sk= the first-week demo (c6, day 6), ?vk= the before-the-visit
+     demo (c7, day 17). Parts 1-2 shoot from the first, 3-4 from the second. */
+  var START = new URLSearchParams(location.search).get('sk') || '';
+  var VISIT = new URLSearchParams(location.search).get('vk') || '';
   var STORE_URL = null;
   var resolved = {};                       /* course+role -> the key to use */
 
   function tutorKeyFor(course) {
-    return course === 'scratch' ? SCRATCH : course === 'finished' ? FINISHED : KEY;
+    return course === 'scratch' ? SCRATCH : course === 'finished' ? FINISHED : course === 'start' ? START : course === 'visit' ? VISIT : KEY;
   }
   function storeCall(body) {
     return (STORE_URL ? Promise.resolve(STORE_URL)
       : fetch('../hub-store.js').then(function (r) { return r.text(); })
           .then(function (t) { STORE_URL = (t.match(/https:\/\/script\.google\.com\/macros\/s\/[^'"]+/) || [])[0]; return STORE_URL; }))
       .then(function (url) {
-        return fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(body) })
-          .then(function (r) { return r.json(); });
+        /* Apps Script answers the odd call with an HTML error page (one in
+           three during a bad minute), which is not the film's fault and
+           should not cost a scene its person: three tries, a pause between. */
+        var tries = 0;
+        function once() {
+          return fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(body) })
+            .then(function (r) { return r.text(); })
+            .then(function (t) { try { return JSON.parse(t); } catch (e) { throw new Error('not JSON'); } })
+            .catch(function (e) { if (++tries >= 3) throw e; return new Promise(function (res) { setTimeout(res, 2500); }).then(once); });
+        }
+        return once();
       });
   }
   /* Read-only: a roster lookup and an assessor link. Nothing here changes
@@ -313,6 +337,17 @@
     if (role === 'assessor') {
       return storeCall({ op: 'assessorLink', key: tutor }).then(function (r) {
         var v = r && r.ok ? { ak: r.result.key } : { error: 'assessorLink: ' + ((r && r.error) || '?') };
+        resolved[tag] = v; return v;
+      });
+    }
+    /* A volunteer student's own link: their token is on the course's
+       register, read with the tutor key and never written down here. */
+    if (role === 'volunteer') {
+      return storeCall({ op: 'course', key: tutor }).then(function (r) {
+        var st = (r && r.ok && r.result && r.result.volunteers && r.result.volunteers.students) || [];
+        var want = String(sc.as || '').toLowerCase();
+        var who = st.filter(function (p) { return p && p.token && (!want || String(p.name).toLowerCase().indexOf(want) === 0); })[0];
+        var v = who ? { v: who.token } : { error: 'no volunteer ' + (sc.as || '') + ' on the ' + course + ' course' };
         resolved[tag] = v; return v;
       });
     }
@@ -524,7 +559,11 @@
     },
     scroll: function (s) {
       var d = doc();
-      var to = s.to === 'bottom' ? d.body.scrollHeight : (s.px || 0);
+      /* A number, 'bottom', or a selector: the element's own top, less a
+         little air, so a section heading lands where an eye expects it. */
+      var to = s.to === 'bottom' ? d.body.scrollHeight
+             : typeof s.to === 'number' ? s.to
+             : (function () { var el = find(String(s.to)); if (!el) { warn('scroll: no ' + s.to); return 0; } return Math.max(0, el.getBoundingClientRect().top + (d.documentElement.scrollTop || d.body.scrollTop || 0) - 40); })();
       var from = d.documentElement.scrollTop || d.body.scrollTop || 0;
       var ms = s.ms || 2000, t0 = performance.now();
       (function tick(t) {
@@ -587,6 +626,8 @@
     cursor.classList.remove('on');
     still.classList.remove('on');
     note.innerHTML = '<b>' + (i + 1) + ' · ' + SCENES[i].title + '</b> — ' + (SCENES[i].about || '');
+    var dayEl = document.getElementById('day');
+    if (SCENES[i].day) { dayEl.textContent = SCENES[i].day; dayEl.classList.add('on'); } else { dayEl.classList.remove('on'); }
     paintTabs();
 
     stubbed = [];
@@ -600,11 +641,16 @@
     Promise.all([keyForScene(sc), resolveParams(sc)]).then(function (both) {
       var who = both[0], params = both[1];
       if (who.error) warn(who.error);
-      var url = '../' + screen;
+      /* A page of the film's own -- the cold open -- rather than one of
+         Lite's screens: served from film/, and it gets no keys. */
+      var own = screen.indexOf('film/') === 0;
+      var url = own ? screen.slice(5) : '../' + screen;
       var q = [];
+      if (own) { who = {}; params = {}; }
       if (who.k) q.push('k=' + encodeURIComponent(who.k));
       if (who.t) q.push('t=' + encodeURIComponent(who.t));
       if (who.ak) q.push('ak=' + encodeURIComponent(who.ak));
+      if (who.v) q.push('v=' + encodeURIComponent(who.v));
       /* The console is the one screen that needs the OWNER key, and it takes
          it as ?o=. Passed through only to that screen, never to the others. */
       if (OWNER && screen.indexOf('14_owner') === 0) q.push('o=' + encodeURIComponent(OWNER));
@@ -632,6 +678,7 @@
         localStorage.removeItem('hub:k');
         localStorage.removeItem('hub:t');
         localStorage.removeItem('hub:a');
+        localStorage.removeItem('hub:v');
       } catch (e) {}
 
       frame.onload = function () {

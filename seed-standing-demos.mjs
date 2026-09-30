@@ -298,7 +298,9 @@ async function candidateRecords(cand, ci, token, setIndex, rot, buildDoc, volunt
   } else if (nextTp <= TP_COUNT) {
     /* The next lesson: its plan is in once the day before has passed (or is today). */
     const day = teachDay(nextTp);
-    if (day - 1 <= PIN_DAY) {
+    /* And Olivia's next plan is still blank on the first-week demo, so scene 6
+       can write one on camera (stubbed): she teaches tomorrow, it is due today. */
+    if (day - 1 <= PIN_DAY && !(WHICH === 'start' && ci === 0)) {
       const { doc } = plan(cand, ci, nextTp, rot.rows[token]['tp' + nextTp], setIndex);
       recs.plan = { status: 'turned_in', label: nextTp + ' · ' + cand.name, state: doc, centreName: 'Elmswood English Centre', turnedInAt: ts(Math.min(day - 1, PIN_DAY), ci % 2 ? '16:52' : '09:14'), docHTML: '' };
     }
@@ -331,7 +333,9 @@ async function candidateRecords(cand, ci, token, setIndex, rot, buildDoc, volunt
   if (Object.keys(obs).length) recs.observations = obs;
 
   /* The CELTA 5, both halves. */
-  const C = { confirms: { portfolio: signed(cand.name, 1, '12:05'), appeals: signed(cand.name, 1, '12:06') } };
+  /* For the film (30 Sep 2026): on the first-week demo Selin has not yet
+     confirmed Cambridge's words, so scene 3 can sign them on camera (stubbed). */
+  const C = (WHICH === 'start' && ci === 5) ? { confirms: {} } : { confirms: { portfolio: signed(cand.name, 1, '12:05'), appeals: signed(cand.name, 1, '12:06') } };
   const T = { cover: { uln: '' } };
   const stage1Day = WHICH === 'start' ? 5 : 10;
   if (WHICH === 'start' ? ci < 2 : true) {

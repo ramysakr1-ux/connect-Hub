@@ -207,7 +207,7 @@ The film is shot from **three courses that never age**: the two standing demos R
 - **The before-the-visit demo** — pinned to **day 17**, the assessor's visit on day 19. Everything above carried through: seven TPs returned, all four assignments through with one double-marked and one resubmitted, Stage 2 returned and signed, the planning grid released with a clash, volunteers with marks and one certificate earned and signed by the centre, provisional grades in, the assessor pack complete. Parts 3 and 4.
 - **The finished course** — every stage signed, the final declarations both sides, attendance filled, so scene 19 draws a complete booklet. Never sent to anyone. Part 5.
 
-**Pinning a course to a day is not built yet.** It needs `settings.demoToday` on the course, a shared `hubToday()` / `hubNow()` in hub-shared read by the timetable, the register, the volunteer page and hub-due, a *Demo · today is …* note on the sync pill, and the store's `assessorExpiry_` to skip a pinned course. Stamps on records stay real; the seed writes them consistent with the pinned day.
+**Pinning a course to a day is built (30 Sep 2026, store v48–v50):** `settings.demoToday`, `hubToday()` / `hubNow()` in hub-shared, the gold "Demo, today is …" pill, the Course admin field, no assessor expiry on a pinned course, and `post` / `shareMaterial` / `gridSet` stamped with the moment a seed gives. **The two standing demos exist: c6 (day 6) and c7 (day 17)**, built by `seed-standing-demos.mjs`; the console marks them. Two beats are left open on c6 for the camera: Selin has not confirmed Cambridge's words (scene 3) and Olivia's next plan is blank (scene 6); the scenes stub their writes so they stay open.
 
 Nothing is written to a demo course until Ramy says so. Then the clock, then the seed, then `film/scenes.js` against the scene list above, then the `film/` page.
 
@@ -217,6 +217,10 @@ Nothing is written to a demo course until Ramy says so. Then the clock, then the
 - The pad in scenes 3, 10, 13 and 16: draw with the mouse on camera, slowly; the engine can replay a stored stroke, but a drawn one reads better. The tutor's second signature comes preloaded from the first, which is itself a beat.
 - The rooms strip appears only when the course has rooms saved — seed them first or scenes 3, 7 and 14 show nothing there.
 - Scene 17 needs the store's assets (the July 2023 master and the two fonts) reachable from the tutor link the take uses; the assessor link can draw it too.
+- **The film's address carries five keys, none of them in this repo:** `?k=` the running demo (c3), `&sk=` the first-week demo (c6), `&vk=` the before-the-visit demo (c7), `&fk=` the finished course (c4), `&s=` the scratch course (c5), and `&o=` the owner key for the console frame. A scene names its course (`start`, `visit`, `finished`) and its person; candidate tokens, the assessor key and a volunteer's link are looked up from the store at run time.
+- **The cold open** is `film/open.html`, a page of the film's own: it plays itself (the Drive windows, the chips, the tallies, 35 s) and the engine lays the two captions over it. No keys reach it.
+- **Store-painted screens need `settle: 12000`.** Apps Script answers in 6–18 s; a scene judged earlier finds an empty page, and `?check=1` reports selectors as missing that are only late.
+- **Check before a take:** `?check=1` on the film's address walks every scene and names any selector that is not there. The scratchpad's `film-check.mjs` serves the repo locally and runs it headless with all five keys read from the store.
 - Film with the recording window focused. `?scene=N` starts at that scene.
 - `?trainee=` is a **token**, never a name; no token and no key goes in `film/scenes.js` or in this file. The repository is public.
 

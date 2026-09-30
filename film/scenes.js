@@ -1,605 +1,507 @@
 /* Connect Lite — the film, scene by scene.
    © 2026 Ramy Sakr.
 
-   The spec is DEMO-ANIMATION-SPEC.md. This file is the spec made executable:
+   The spec is DEMO-ANIMATION-SPEC.md (restructured 30 Sep 2026): a cold open
+   from the Drive-versus-Lite page, then five parts told by the calendar, with
+   the CELTA 5 as the through-line. This file is the spec made executable:
    every scene names a real screen and drives it. Re-timing the film is
    editing numbers here, not re-rendering anything.
 
    WHO A SCENE IS
-     course: 'demo'      the running demo, c3      (?k=)   -- default
-             'scratch'   the empty course, c5      (?s=)
-             'finished'  the completed demo, c4    (?fk=)
-     role:   'tutor'     the course's tutor key             -- default
+     course: 'start'     the first-week demo, c6, pinned to day 6      (?sk=)
+             'visit'     the before-the-visit demo, c7, day 17         (?vk=)
+             'finished'  the finished course, c4 -- part 5             (?fk=)
+             'demo'      the running demo, c3                          (?k=)
+             'scratch'   the film's scratch course, c5                 (?s=)
+     role:   'tutor'     the course's tutor key                        -- default
              'trainee'   that candidate's own token, with `as: 'Their Name'`
              'assessor'  the course's read-only key
-   The token and the assessor key are looked up from the store with READ ops,
-   so only the three tutor keys go on the film's URL.
+             'volunteer' a volunteer student's own link, with `as: 'First'`
+     day:    the day stamp on the stage, bottom left, for the whole scene.
+   Every token and key is looked up from the store with READ ops, so only the
+   course keys go on the film's URL and nothing secret lives in this file.
 
    STEPS
      {do:'caption', text}             one line, floats up, holds, fades
      {do:'move',   to:sel}            glide the cursor there
      {do:'click',  on:sel}            glide, then click
      {do:'type',   into:sel, text, ms}
-     {do:'scroll', to:'bottom'|px, ms}
+     {do:'scroll', to:'bottom'|px|sel, ms}
      {do:'hold',   ms}
      {do:'goto',   screen, role, as}  same scene, another screen or person
      {do:'still',  want, how, ms}     a frame that is not Lite, or a PDF
 
    A selector is CSS, or `text:Some words` to find a control by what it says.
 
-   WRITES. A scene lists in `stub` the ops that must never really happen.
-   The demo courses are what a prospect will be sent, so nothing on them may
-   be altered by a take: their scenes stub `put` (the record write) and the
-   engine always holds HubSync's flush. The SCRATCH course is the exception --
-   scene 3 and 4 really write, because setting a course up is the thing being
-   shown, and `node store/scratch-course.mjs --reset` puts it back.
+   CAPTIONS. Ramy, 30 Sep 2026: "I don't want the captions to read what's
+   already there, but rather make a smart comment on what's on the screen."
+   Every line below is a comment or a benefit, never a description.
 
-   PRINTING. The print buttons call window.print(), a browser dialog the film
-   cannot drive and which would stop it dead. Every PDF beat is therefore a
-   `still` to be captured by hand -- the spec's build notes say the same.
-*/
+   WRITES. The two standing demos are what a centre will be sent, so nothing
+   on them may be altered by a take: every scene that could write lists the
+   op in `stub`, and the engine always holds HubSync's flush. Two beats were
+   left open on the first-week demo for the camera (Selin's confirmations,
+   Olivia's next plan) and the stub is what keeps them open.
+
+   PRINTING. window.print() is a browser dialog the film cannot drive; every
+   PDF beat is a `still` captured by hand, as the spec's build notes say. */
 
 var SCENES = [
 
-  /* THREE CHAPTERS, EACH OPENING ON ITS OWN LINK.
+  /* ====================================================== The cold open == */
 
-     Ramy, 27 Sep 2026: "we don't have to have an overture. It could be a big
-     title \u2014 the assessor link \u2014 and then it shows the assessor. The trainee
-     shows the trainee link again. So we don't have to build something new."
+  {
+    title: 'The same course, twice',
+    screen: 'film/open.html',
+    about: 'The comparison page as one animated scene, no keys, no store: four Drive windows descend, the Drive column fills with grey chips while Lite’s stops at five, the tallies land. Two captions, then a beat of black before the day stamps begin.',
+    settle: 800,
+    steps: [
+      { do: 'hold', ms: 12800 },
+      { do: 'caption', text: 'Most of this is finding the file.' },
+      { do: 'hold', ms: 15200 },
+      { do: 'caption', text: 'Same course. Same tutors. One of them had time to teach.' },
+      { do: 'hold', ms: 6200 }
+    ]
+  },
 
-     So there is no separate introduction. Each chapter opens with a title
-     card, then the invitation card for that person, then what they do. The
-     card is the same design three times over and only the words change, which
-     is the point being made: one link each, and the link says what it opens.
-
-     The owner console is not here at all \u2014 it is how the product's owner
-     mints a course, not how a centre uses one. */
-
-  /* ================================================== Before chapter one == */
-
-  /* One silent shot of the owner console, and nothing else. Ramy, 27 Sep 2026:
-     "just show it \u2014 it shows owner, my name, and the console, because it
-     looks cool. And then go straight to the trainer receiving the link."
-
-     No caption, no cursor, no click. It is a title frame that happens to be a
-     real screen. It was the film's first SCENE once and that was wrong: the
-     console is how the product's owner mints a course, not how a centre uses
-     one, so it cannot carry an explanation. As a held frame it carries none.
-
-     It is the only screen that needs the owner key, as &o= on the film's own
-     address, and the engine passes it to this screen and to no other. Without
-     it the console draws nothing and this scene is four blank seconds \u2014 so
-     leave &o= off only if you mean to cut this shot. */
+  /* ========================================== Part 1 · Before day one == */
 
   {
     title: 'The console',
     screen: '14_owner.html',
-    about: 'A held frame, no words. <b>Needs &amp;o=</b> (the owner key) on the film\u2019s address as well as the three course keys. Read-only: nothing is minted, nothing is clicked.',
-    /* The console draws its courses only once the store has answered, and a
-       held frame with nothing in it is the whole shot wasted. */
+    about: 'A held frame, no words. <b>Needs &amp;o=</b> (the owner key) on the film’s address. Read-only.',
     settle: 3800,
-    steps: [
-      /* Quick. Ramy, 27 Sep 2026: "the console should be quick." There is
-         nothing to read on it \u2014 it is a look, not a screen a viewer has to
-         take anything from. */
-      { do: 'hold', ms: 1540 }
-    ]
+    steps: [{ do: 'hold', ms: 1540 }]
   },
 
-  /* ======================================== Chapter one \u00b7 The trainer == */
-
   {
-    title: 'The trainer\u2019s link',
+    title: 'The card arrives',
     screen: 'invite.html',
-    course: 'scratch',
-    about: 'Chapter one opens, and <b>every word in the film is here</b>. Ramy, 27 Sep 2026: \u201cat the beginning we give some information, some captions. After that it\u2019s just show, not tell \u2014 only when there is something a trainer doesn\u2019t understand, something only Connect Lite does.\u201d A trainer knows how a CELTA course works; what they do not know is that this one is a link. So the four things that are true of the LINK are said here and never again.',
+    course: 'start', day: 'Day 0',
+    about: 'The tutor’s invitation card as the trainer receives it, then three cuts of the link sitting where a course already lives: a Classroom stream, a Drive folder, a plain tab with the Wi-Fi going off. The stills are made for the film, from the demo.',
     settle: 1400,
     steps: [
-      { do: 'chapter', num: 'Chapter one', text: 'The trainer', sub: 'Sets the course up in one screen, and hands out the links.', ms: 3000 },
-      { do: 'hold', ms: 900 },
-      /* Each caption is followed by something that takes time, so the next one
-         does not land on it -- a caption hands back after 1.2s and floats for
-         about five. */
-      { do: 'caption', text: 'No download. No upload. No paper.' },
-      { do: 'hold', ms: 3600 },
-      { do: 'caption', text: 'The link is the account.' },
-      {
-        do: 'still', ms: 3400,
-        want: 'Google Classroom, or Drive \u2014 the link sitting where the course already lives',
-        how: 'Simple: a stream or a folder with the Lite link in it. It only has to say WHERE the link can live. ONE shot.'
-      },
-      { do: 'caption', text: 'It lives where your course already lives.' },
-      { do: 'hold', ms: 3600 },
-      { do: 'caption', text: 'And it opens when the internet doesn\u2019t.' },
-      { do: 'hold', ms: 3600 },
-      /* The card's own button, then the room it opens, then one door on. A
-         tutor's link lands on their dashboard -- that is the product -- and
-         course admin is one click off it, which is where the next scene
-         carries on. */
-      { do: 'click', on: '#go', ms: 2200 },
-      { do: 'hold', ms: 1400 },
-      { do: 'click', on: 'a[href="6_centre_admin_dashboard.html"]', ms: 2400 }
-    ]
-  },
-
-  {
-    title: 'Setting up',
-    screen: '6_centre_admin_dashboard.html',
-    course: 'scratch',
-    about: 'The course is TYPED INTO BEING. Ramy, 27 Sep 2026: \u201cit shouldn\u2019t already be there \u2014 it\u2019s a journey. The trainer gets a link, it opens course admin, it\u2019s a blank page, and then they start typing. You don\u2019t have to type everything, just type for a couple of seconds and then it shows.\u201d The type step rebuilds a field from empty one character at a time, so a field already holding something still reads as being written. <b>This scene writes</b> \u2014 between takes: <code>node store/scratch-course.mjs --reset</code>',
-    settle: 1800,
-    steps: [
-      { do: 'hold', ms: 900 },
-      { do: 'click', on: '[data-tab="settings"]', ms: 1400 },
-      { do: 'hold', ms: 900 },
-      /* A couple of seconds of typing, and the course has a name. */
-      { do: 'type', into: '#courseName', ms: 2600, text: 'CELTA \u2014 October 2026' },
-      { do: 'hold', ms: 1100 },
-      { do: 'click', on: '[data-tab="roster"]', ms: 1400 },
-      { do: 'hold', ms: 900 },
-      /* The paste box is two doors in: "Add trainee" opens #addBox, and
-         "Add several at once" inside it opens #bulkWrap. */
-      { do: 'click', on: '#toggleAdd', ms: 1100 },
-      { do: 'click', on: '#toggleBulk', ms: 1200 },
-      {
-        do: 'type', into: '#storeBulkNames', ms: 4200,
-        text: 'Defne Y\u0131lmaz, 1\nAnastasia Volkova, 1\nJacob Miller, 1\nZeynep Ayd\u0131n, 1\nEmily Carter, 1\nOmar Haddad, 1\nPriya Nair, 2\nLucas Moreau, 2\nSofia Rossi, 2\nKenji Watanabe, 2\nAmina Diallo, 2\nTom Fletcher, 2'
-      },
-      { do: 'click', on: '#storeBulkAddBtn', ms: 1400 },
-      { do: 'click', on: '.confirm-action', ms: 2400 },
-      { do: 'hold', ms: 2000 }
-    ]
-  },
-
-  {
-    title: 'The centre’s own assignments',
-    screen: '8_assignment_wording.html',
-    course: 'scratch',
-    about: 'Every section, field, declaration and marking criterion in an editable box, then the cut to a candidate seeing it. On the scratch course, so the edit is real. Played in order, scene 3 has just put twelve people here; on its own, run <code>node store/scratch-course.mjs --reset --one</code> first.',
-    /* The editor draws itself once the assignment wording has arrived;
-       its Save button does not exist before that. */
-    settle: 6000,
-    steps: [
-      { do: 'hold', ms: 840 },
-      /* The screen opens on the list of four. That list IS the point of the
-         first beat: a new course already has Cambridge's four assignments in
-         it, with their criteria, before anybody has set anything up. The scene
-         used to click straight past it. */
-      { do: 'move', to: '#list' },
-      { do: 'hold', ms: 1819 },
-      /* BOTH halves. Ramy, 27 Sep 2026: "every word is yours to type if you
-         choose to \u2014 because some people don't want to bother, so they just use
-         the native assignments." The caption said only that you could rewrite
-         them, which reads as work to do rather than work already done. */
-      { do: 'click', on: '#list button[data-a]', ms: 1800 },
-      { do: 'scroll', to: 800, ms: 2080 },
-      { do: 'hold', ms: 1050 },
-      { do: 'scroll', to: 1600, ms: 1920 },
-      { do: 'hold', ms: 1183 },
-      /* The criteria are the load-bearing half of this screen: they are what
-         the mark sheet two scenes later is built from, and what the candidate
-         is judged against. */
-      { do: 'scroll', to: 2400, ms: 2080 },
-      { do: 'hold', ms: 1365 },
-      { do: 'click', on: 'text:Save assignment', ms: 2000 },
-      /* The point of the scene: the centre's words are what the candidate is
-         marked against. Same course, the candidate's own side. */
-      { do: 'goto', screen: '9_assignment_submission.html', role: 'trainee', ms: 3200 },
-      { do: 'scroll', to: 600, ms: 2240 },
-      { do: 'hold', ms: 1365 }
-    ]
-  },
-
-  {
-    title: 'Ready for the assessor',
-    screen: '6_centre_admin_dashboard.html',
-    course: 'scratch',
-    about: 'The half of course admin the film never showed: the visit date, the documents Cambridge asks the centre to have ready (Handbook 14.1), and the candidates the MCT chooses for the assessor to observe (14.2). <b>Writes to the scratch course</b>, like the two scenes before it \u2014 this is a centre setting its course up, on camera.',
-    settle: 2000,
-    steps: [
-      { do: 'click', on: '[data-tab="settings"]', ms: 1500 },
-      { do: 'hold', ms: 840 },
-      { do: 'scroll', to: 900, ms: 2080 },
-      { do: 'type', into: '#visitDate', ms: 1400, text: '2026-10-21' },
-      { do: 'hold', ms: 1050 },
-      { do: 'scroll', to: 1700, ms: 2240 },
-      { do: 'hold', ms: 1456 },
-      { do: 'scroll', to: 2500, ms: 2080 },
-      { do: 'hold', ms: 1819 }
-    ]
-  },
-
-  {
-    title: 'And it makes the others',
-    screen: '6_centre_admin_dashboard.html',
-    about: 'Where the other two links come from: the course\u2019s own links panel, and a Copy beside every candidate\u2019s name. Read-only \u2014 nothing is rotated and nothing is added.',
-    settle: 2200,
-    steps: [
-      { do: 'click', on: '[data-tab="roster"]', ms: 1600 },
-      { do: 'hold', ms: 800 },
-      { do: 'move', to: '#assessorBlock' },
-      { do: 'hold', ms: 1128 },
-      { do: 'scroll', to: 600, ms: 1920 },
-      { do: 'move', to: '.roster .acts button[data-copy]' },
-      { do: 'hold', ms: 1128 }
-    ]
-  },
-
-  {
-    title: 'The trainer’s desk',
-    screen: '5_tutor_dashboard.html',
-    about: 'Twelve rows and the three counters. Read-only.',
-    settle: 1600,
-    steps: [
-      { do: 'hold', ms: 1050 },
-      { do: 'move', to: '#cTp' },
-      { do: 'hold', ms: 1819 },
-      { do: 'scroll', to: 420, ms: 1760 },
-      { do: 'hold', ms: 1050 }
-    ]
-  },
-
-  {
-    title: 'Feedback, said',
-    screen: '3_tutor_feedback.html',
-    params: { trainee: 'Zeyne' },
-    about: 'A point spoken, then the criteria the sentence itself suggests, and the code landing inside it. <b>Writes stubbed</b> \u2014 a take must not alter a real candidate\u2019s feedback.<br><b>Chrome, with the microphone already permitted.</b> If the mic is refused the button drops back to \u201cDictate\u201d on camera and the beat is lost \u2014 watch for the garnet on the first take.',
-    settle: 2200,
-    stub: ['put'],
-    steps: [
-      { do: 'hold', ms: 900 },
-      /* #lST is an empty container -- its own "+ Add point" button, which
-         carries data-list="lST", is what puts a point row in it. A point is a
-         contenteditable div, not a field: the tag chips live inside it. */
-      { do: 'click', on: 'button[data-list="lST"]', ms: 1200 },
-      { do: 'click', on: '#lST .pt:last-child .pt-text', ms: 900 },
-      /* PRESSED ONCE, AND LEFT ON. It used to be pressed again to stop, and
-         that second press was backwards whenever recognition did not start:
-         a refused microphone fires onerror, which sets the button back to
-         "Dictate" by itself -- so the film's "stop" click TURNED IT ON again,
-         asked for the microphone a second time, and ended the scene recording.
-         Nothing needs stopping here: the scene ends and the screen changes.
-         It also saves the cursor a second round trip to the bar, which is
-         fixed at the bottom right, a long way from the box. */
-      { do: 'click', on: '.dictbtn', ms: 1500 },
-      { do: 'type', into: '#lST .pt:last-child .pt-text', ms: 4000, text: 'Set the task before handing out the text, and checked it with a quick question' },
       { do: 'hold', ms: 1200 },
-      /* The suggester reads the point 500ms after it stops changing, so the
-         chips are there by now; clicking one puts the code inside the
-         sentence, where it stays with the words it belongs to. On the demo
-         this sentence draws 5g and 5f and both come back solid -- tagged
-         before by the course's own tutors. */
-      { do: 'move', to: '#lST .pt:last-child .suggest-row' },
-      { do: 'hold', ms: 1500 },
-      { do: 'click', on: '#lST .pt:last-child .suggest-chip', ms: 1800 },
-      { do: 'hold', ms: 2000 }
-    ]
-  },
-
-  {
-    title: 'Feedback, all at once',
-    screen: '3_tutor_feedback.html',
-    params: { trainee: 'Zeyne' },
-    about: 'The exchange: Copy, talk it through elsewhere, Paste something back, every box fills. Writes stubbed.',
-    settle: 2200,
-    stub: ['put'],
-    steps: [
-      { do: 'scroll', to: 300, ms: 1440 },
-      { do: 'click', on: '#xCopy', ms: 1800 },
-      {
-        do: 'still', ms: 2380,
-        want: 'The brief, pasted into any model, and the trainer talking',
-        how: 'Capture a dictation window with the copied brief in it and the trainer speaking the lesson through. If it cannot be shown, cut straight from Copy to Paste something back.'
-      },
-      { do: 'click', on: '#xPasteToggle', ms: 1400 },
-      { do: 'hold', ms: 1050 },
-      { do: 'move', to: '#returnBtn' },
-      { do: 'hold', ms: 2275 }
-    ]
-  },
-
-  {
-    title: 'Marked against the criteria',
-    screen: '10_tutor_assignment_marking.html',
-    params: { trainee: 'Anastasia', a: 'fol' },
-    about: 'Anastasia Volkova’s Focus on the Learner is really awaiting marking on the demo course. Six criteria are marked on camera and the outcome works itself out; <b>writes stubbed</b>, so Save &amp; return changes nothing and the record is the same after the take.',
-    settle: 6000,
-    stub: ['put'],
-    steps: [
-      { do: 'hold', ms: 979 },
-      { do: 'scroll', to: 700, ms: 2080 },
-      { do: 'hold', ms: 840 },
-      /* Six criteria, one at a time. Each click re-renders the sheet, which is
-         why they are separate steps against the same selectors rather than one
-         loop: the buttons are new elements each time. */
-      { do: 'click', on: '[data-crit="0"]', ms: 1100 },
-      { do: 'click', on: '[data-crit="1"]', ms: 1000 },
-      { do: 'click', on: '[data-crit="2"]', ms: 1000 },
-      { do: 'click', on: '[data-crit="3"]', ms: 1000 },
-      { do: 'click', on: '[data-crit="4"]', ms: 1000 },
-      { do: 'click', on: '[data-crit="5"]', ms: 1400 },
-      /* .derived carries the outcome, and it only exists once every criterion
-         is marked -- so this beat cannot be faked by skipping one. */
-      { do: 'move', to: '.derived' },
-      { do: 'hold', ms: 1819 },
-      { do: 'type', into: '#comment', ms: 3200, text: 'Strong on the learner’s background and needs. The two language points need more evidence from the interview.' },
-      { do: 'hold', ms: 840 },
-      { do: 'move', to: '#saveBtn' },
-      { do: 'hold', ms: 1365 }
-    ]
-  },
-
-
-  /* ======================================== Chapter two \u00b7 The trainee == */
-
-  {
-    title: 'The trainee\u2019s link',
-    screen: 'invite.html',
-    role: 'trainee', as: 'Emily Carter',
-    about: 'Chapter two opens. The same card, the candidate\u2019s words \u2014 and the line that matters to them: this one is theirs alone.',
-    settle: 1400,
-    steps: [
-      { do: 'chapter', num: 'Chapter two', text: 'The trainee', sub: 'One link. Everything they write, and everything they are given, behind it.', ms: 3000 },
-      { do: 'hold', ms: 800 },
+      { do: 'caption', text: 'Nothing to install. Nothing to remember. Nothing to lose.' },
+      { do: 'hold', ms: 3200 },
+      { do: 'still', ms: 3000, want: 'The link inside a demo Classroom stream, then inside a demo Drive folder', how: 'Two frames, one cut each. Made-up centre, made-up names.' },
+      { do: 'still', ms: 3400, want: 'A plain tab, Wi-Fi switched off, the page still there', how: 'Toggle Wi-Fi on camera; hold four seconds on the page not changing.' },
+      { do: 'caption', text: 'Works offline.' },
+      { do: 'hold', ms: 2600 },
       { do: 'click', on: '#go', ms: 2200 }
     ]
   },
 
   {
-    title: 'The trainee’s home',
-    screen: 'index.html',
-    role: 'trainee', as: 'Emily Carter',
-    about: 'The hero card: one lifted card, three panels inside it, exactly one gold. Read-only.',
-    settle: 1300,
+    title: 'A course is set up',
+    screen: '6_centre_admin_dashboard.html',
+    course: 'start', day: 'Day 0',
+    about: 'Course admin: the centre, the dates, the clock, the three online rooms. Then the timetable: a spreadsheet PASTED in (a file chooser cannot be driven), the review, Apply, every day laid out. Then the roster with six links. <b>Writes stubbed</b> — the standing demo must not change.',
+    settle: 2000,
+    stub: ['putCourse', 'addTrainees', 'addTrainee'],
     steps: [
-      { do: 'hold', ms: 1050 },
-      { do: 'hold', ms: 800 },
-      { do: 'move', to: '#roomPlan' },
-      { do: 'hold', ms: 1050 }
+      { do: 'click', on: '[data-tab="settings"]', ms: 1400 },
+      { do: 'hold', ms: 900 },
+      { do: 'scroll', to: '#courseZone', ms: 1800 },
+      { do: 'hold', ms: 1400 },
+      { do: 'goto', screen: '23_timetable.html', course: 'start', stub: ['putCourse'], ms: 2600 },
+      { do: 'click', on: '#importOpen', ms: 1400 },
+      { do: 'type', into: '#impPaste', ms: 3600, text: 'Date\tSession 1\tSession 2\n02/03/2026\tWelcome and the portfolio\tDemonstration lesson\n03/03/2026\tThe lesson framework\tClassroom management\n04/03/2026\tReceptive skills: reading\tLanguage analysis 1' },
+      { do: 'click', on: '#impRead', ms: 1800 },
+      { do: 'hold', ms: 1600 },
+      { do: 'caption', text: 'The spreadsheet you already had, read once.' },
+      { do: 'click', on: '#impApply', ms: 2200 },
+      { do: 'hold', ms: 2200 },
+      { do: 'goto', screen: '6_centre_admin_dashboard.html', course: 'start', stub: ['putCourse', 'addTrainees', 'addTrainee'], ms: 2400 },
+      { do: 'click', on: '[data-tab="roster"]', ms: 1400 },
+      { do: 'hold', ms: 1200 },
+      { do: 'caption', text: 'One link each. No accounts.' },
+      { do: 'move', to: '.roster .acts button[data-copy]' },
+      { do: 'hold', ms: 2600 }
+    ]
+  },
+
+  {
+    title: 'The candidate reads Cambridge’s words',
+    screen: 'index.html',
+    course: 'start', role: 'trainee', as: 'Selin Kaya', day: 'Day 0',
+    about: 'Selin’s home — the rooms strip, the timetable card with day one marked — then the CELTA 5: <i>Read and confirm</i>, Cambridge’s own words scrolled, the confirmation box with her name in it, <b>Confirm and sign</b>, the pad. Selin was left unconfirmed on the demo for this beat; <b>writes stubbed</b> so she stays that way. The pad is drawn on camera.',
+    settle: 1800,
+    stub: ['put'],
+    steps: [
+      { do: 'hold', ms: 1400 },
+      { do: 'goto', screen: '20_celta5.html', course: 'start', role: 'trainee', as: 'Selin Kaya', stub: ['put'], ms: 2600 },
+      { do: 'scroll', to: 420, ms: 2400 },
+      { do: 'hold', ms: 1200 },
+      { do: 'caption', text: 'This booklet is going to fill itself. Watch.' },
+      { do: 'scroll', to: '[data-sig="conf:portfolio"]', ms: 2200 },
+      { do: 'click', on: '[data-sign="conf:portfolio"]', ms: 1800 },
+      { do: 'hold', ms: 5200 },
+      { do: 'caption', text: 'Signed. Dated. Kept.' },
+      { do: 'hold', ms: 3400 }
+    ]
+  },
+
+  /* ============================================ Part 2 · The first week == */
+
+  {
+    title: 'A volunteer’s page',
+    screen: '26_volunteer.html',
+    course: 'start', role: 'volunteer', as: 'Omar', day: 'Day 1',
+    about: 'Omar has not agreed yet on the demo, so his link opens on the joining note. Turkish is chosen, <i>Kabul ediyorum</i>, and the page behind it: the next class in the course’s clock, <b>Join on Zoom</b>. <b>volunteerAgree stubbed</b> — he stays unagreed for the next take.',
+    settle: 12000,
+    stub: ['volunteerAgree'],
+    steps: [
+      { do: 'hold', ms: 1400 },
+      { do: 'click', on: '.consent [data-lang="tr"]', ms: 1600 },
+      { do: 'hold', ms: 1800 },
+      { do: 'caption', text: 'Their language for the small print. English for the lesson.' },
+      { do: 'hold', ms: 2200 },
+      { do: 'click', on: '#cAgree', ms: 1800 },
+      { do: 'hold', ms: 1600 },
+      { do: 'move', to: '.next .room' },
+      { do: 'caption', text: 'One tap to the room.' },
+      { do: 'hold', ms: 3000 }
+    ]
+  },
+
+  {
+    title: 'The TP points arrive',
+    screen: '24_tp_points.html',
+    course: 'start', role: 'trainee', as: 'Olivia Bennett', day: 'Day 3',
+    about: 'Olivia’s own lesson on the released points: aim, framework, the coursebook pages, the audio, with the other two lessons of the day beside hers for reference. Read-only.',
+    settle: 12000,
+    steps: [
+      { do: 'hold', ms: 1400 },
+      { do: 'scroll', to: 260, ms: 2000 },
+      { do: 'hold', ms: 1200 },
+      { do: 'caption', text: 'The pages, the audio, the aim. Already on the card when they wake up.' },
+      { do: 'move', to: '.tbl .mats-read, .tbl' },
+      { do: 'hold', ms: 4200 }
     ]
   },
 
   {
     title: 'The plan',
     screen: '1_trainee_plan_and_analysis.html',
-    course: 'scratch', role: 'trainee', as: 'Marta Kowalczyk',
-    about: 'A BLANK plan, written on camera. Marta has no plan on the scratch course, so this really is an empty one \u2014 the aim is typed, a lesson shape chosen, and the stages appear. Then it cuts to a finished plan on the demo, rather than pretending a whole one was written in eight seconds. <b>Writes stubbed</b>.',
+    course: 'start', role: 'trainee', as: 'Olivia Bennett', day: 'Day 3',
+    about: 'Olivia’s next plan is BLANK on the demo (she teaches tomorrow; it is due today). The aim dictated, a lesson shape chosen, the stages appear, a Drive link pasted, the share switch to the volunteers goes green. <b>Writes stubbed</b> so it stays blank. Dictation needs Chrome with the microphone already permitted.',
     settle: 2000,
-    stub: ['put'],
+    stub: ['put', 'shareMaterial'],
     steps: [
       { do: 'hold', ms: 1100 },
-      /* The dictation bar is on screen and was pressed in chapter one; the
-         plan simply uses it. */
       { do: 'click', on: '#fMain', ms: 900 },
-      { do: 'type', into: '#fMain', ms: 3800, text: 'By the end of the lesson learners will be better able to ask for and give advice using should and ought to.' },
-      { do: 'hold', ms: 1100 },
+      { do: 'click', on: '.dictbtn', ms: 1500 },
+      { do: 'type', into: '#fMain', ms: 3800, text: 'By the end of the lesson learners will be better able to understand a short article about jobs, reading first for gist and then for detail.' },
+      { do: 'hold', ms: 1000 },
       { do: 'click', on: '#fwBtn', ms: 1400 },
-      { do: 'hold', ms: 1800 },
-      /* And now one that was really written, so the rest of the document is a
-         candidate's own work and not eight seconds of typing. */
-      { do: 'goto', screen: '1_trainee_plan_and_analysis.html', course: 'demo', role: 'trainee', as: 'Emily Carter', ms: 3400 },
-      { do: 'scroll', to: 700, ms: 2600 },
       { do: 'hold', ms: 1400 },
-      { do: 'move', to: '#fMatsLink' },
-      { do: 'hold', ms: 1600 }
+      { do: 'caption', text: 'The shape is given. The thinking is theirs.' },
+      { do: 'hold', ms: 2600 },
+      { do: 'scroll', to: '#fMatsLink', ms: 2200 },
+      { do: 'type', into: '#fMatsLink', ms: 1800, text: 'https://drive.google.com/file/d/demo-penguins-adapted/view' },
+      { do: 'hold', ms: 900 },
+      { do: 'click', on: '#fShareVol', ms: 1600 },
+      { do: 'hold', ms: 2600 }
     ]
   },
 
   {
-    title: 'The analysis sheet',
-    screen: '1_trainee_plan_and_analysis.html',
-    role: 'trainee', as: 'Emily Carter',
-    about: 'The type box opens showing all three — Functional language, Grammar, Vocabulary — then Vocabulary, then the phonemic chart.',
-    settle: 2000,
-    stub: ['put'],
-    steps: [
-      { do: 'click', on: '#laToggle', ms: 1600 },
-      { do: 'hold', ms: 800 },
-      /* Ramy, 27 Sep: open the box so all three show before taking one. */
-      { do: 'click', on: '#typeSel', ms: 1200 },
-      { do: 'hold', ms: 846 },
-      { do: 'move', to: '#ipaBar' },
-      { do: 'hold', ms: 902 }
-    ]
-  },
-
-  {
-    title: 'After the lesson',
+    title: 'Taught, and written up',
     screen: '2_trainee_self_evaluation.html',
-    course: 'scratch', role: 'trainee', as: 'Marta Kowalczyk',
-    about: 'The one caption in the film that is not about the link, and it earns its place: nothing on screen can say a lesson has happened in between. Then the self-evaluation is written on a blank one and the film cuts to a finished one. <b>Writes stubbed</b> \u2014 Turn in is moved to, not pressed.',
+    course: 'start', role: 'trainee', as: 'Marcus Ellery', day: 'Day 4',
+    about: 'Marcus taught today and has not written yet. The first box, dictated; then the observation sheet for the second filmed lesson, which he has not done either — notes typed, <b>Turn in</b>, the date lands. <b>Writes stubbed.</b>',
     settle: 1800,
     stub: ['put'],
     steps: [
       { do: 'hold', ms: 900 },
-      { do: 'caption', text: 'After the lesson.' },
-      { do: 'hold', ms: 2400 },
       { do: 'click', on: '#sWell', ms: 900 },
       { do: 'type', into: '#sWell', ms: 3400, text: 'The task was set before the handout went out, and the pair check gave everyone an answer ready before I nominated.' },
       { do: 'hold', ms: 1100 },
-      { do: 'goto', screen: '2_trainee_self_evaluation.html', course: 'demo', role: 'trainee', as: 'Emily Carter', ms: 3200 },
-      { do: 'scroll', to: 600, ms: 2400 },
+      { do: 'caption', text: 'Written before the feedback is read. That is the point of it.' },
+      { do: 'hold', ms: 2600 },
+      { do: 'goto', screen: '18_observation_tasks.html', course: 'start', role: 'trainee', as: 'Marcus Ellery', params: { task: 'filmed2' }, stub: ['put'], ms: 3000 },
+      { do: 'click', on: 'textarea[data-f="r0"]', ms: 900 },
+      { do: 'type', into: 'textarea[data-f="r0"]', ms: 2600, text: 'Yes — the instruction came before the paper, and she checked it with one question.' },
+      { do: 'hold', ms: 800 },
+      { do: 'click', on: '#turnIn', ms: 1800 },
+      { do: 'hold', ms: 2200 }
+    ]
+  },
+
+  {
+    title: 'The trainer’s desk',
+    screen: '5_tutor_dashboard.html',
+    course: 'start', day: 'Day 4',
+    about: 'The counters and the rows: two waiting for feedback, one assignment to mark, and beside a name the time a plan was turned in. Read-only.',
+    settle: 1800,
+    steps: [
       { do: 'hold', ms: 1200 },
-      { do: 'move', to: '#turnInBtn' },
+      { do: 'move', to: '.qcard[data-tab="tp"]' },
+      { do: 'hold', ms: 1600 },
+      { do: 'caption', text: 'Nobody asked “did you get it?”' },
+      { do: 'hold', ms: 2600 },
+      { do: 'scroll', to: 420, ms: 1800 },
       { do: 'hold', ms: 1600 }
     ]
   },
 
   {
-    title: 'The trainee reads it',
-    screen: '4_feedback_returned.html',
-    role: 'trainee', as: 'Emily Carter',
-    about: 'Newest on top, read-only. <b>No criterion codes here</b> — checked 27 Sep: this screen carries none, and that is the decision.',
-    settle: 1800,
-    steps: [
-      { do: 'hold', ms: 1050 },
-      { do: 'scroll', to: 900, ms: 2720 },
-      { do: 'hold', ms: 1183 },
-      { do: 'scroll', to: 1900, ms: 2560 },
-      { do: 'hold', ms: 1365 }
-    ]
-  },
-
-
-  /* THE ASSIGNMENT CYCLE, in three scenes. Ramy, 27 Sep 2026: the film showed
-     a submission and a mark sheet and stopped, so the thing that makes the
-     four assignments work -- the going back and forth -- was missing.
-
-     Every rung below is a candidate who is REALLY at it. Nothing is staged and
-     no stubbed save is asked to stand for a stage change:
-
-       submitted           c3  Anastasia Volkova   the sheet awaiting marking
-       resubmission_needed c5  Marta Kowalczyk     planted, see below
-       closed              c3  Emily Carter        done, read-only
-
-     The middle rung is the one no demo course holds, so it is planted on the
-     scratch course -- the one course a take may write to:
-
-       node store/plant-assignment-rungs.mjs --plant
-
-     which rewinds a real closed-on-resubmission record from the finished demo
-     by one step. Run it after scratch-course.mjs, and before filming 13b.
-
-     ?trainee= is a TOKEN, and no token may go in this file -- the repository
-     is public. So these scenes name the candidate and the engine looks the
-     token up at run time from the roster. */
-
-  {
-    title: 'The written assignments',
-    screen: '9_assignment_submission.html',
-    role: 'trainee', as: 'Emily Carter',
-    about: 'The candidate’s side: four assignments, each with the centre’s own criteria, its declaration and its deadline. Writes stubbed.',
-    settle: 6000,
-    stub: ['put'],
-    steps: [
-      { do: 'hold', ms: 979 },
-      /* Nothing is on screen until one of the four is chosen: #submitBtn
-         belongs to the assignment, not to the page. */
-      { do: 'click', on: '#picker button', ms: 1600 },
-      { do: 'scroll', to: 700, ms: 2240 },
-      { do: 'hold', ms: 1050 },
-      { do: 'move', to: '#submitBtn' },
-      { do: 'hold', ms: 1183 }
-    ]
-  },
-
-  {
-    title: 'Sent back, and one more go',
-    screen: '9_assignment_submission.html',
-    course: 'scratch',
-    role: 'trainee', as: 'Marta Kowalczyk',
-    params: { a: 'fol' },
-    about: 'The rung no demo course holds: a candidate at <b>Resubmission needed</b>, reading which criteria were not met and why, with their first submission read-only above the amber boxes. On the scratch course — run <code>node store/plant-assignment-rungs.mjs --plant</code> first. Writes stubbed, so Submit is moved to, not pressed.',
-    settle: 6000,
-    stub: ['put'],
-    steps: [
-      { do: 'hold', ms: 1050 },
-      { do: 'scroll', to: 500, ms: 2080 },
-      { do: 'hold', ms: 1183 },
-      { do: 'scroll', to: 1100, ms: 2240 },
-      { do: 'hold', ms: 1365 },
-      { do: 'scroll', to: 1900, ms: 2400 },
-      { do: 'hold', ms: 1183 },
-      { do: 'move', to: '#submitBtn' },
-      { do: 'hold', ms: 1050 },
-      /* And the end of it, on a candidate who is really finished. */
-      /* Emily's FOCUS ON THE LEARNER is the closed one. Without ?a= the screen
-         opens on whichever assignment the centre put first, which for this
-         course is Language Related Tasks -- a closing beat reading
-         "Not submitted". */
-      { do: 'goto', screen: '9_assignment_submission.html', course: 'demo', role: 'trainee', as: 'Emily Carter', params: { a: 'fol' }, ms: 6000 },
-      { do: 'scroll', to: 600, ms: 2240 },
-      { do: 'hold', ms: 1547 }
-    ]
-  },
-
-
-
-
-  /* ===================================== Chapter three \u00b7 The assessor == */
-
-  {
-    title: 'The assessor\u2019s link',
-    screen: 'invite.html',
-    course: 'finished', role: 'assessor',
-    about: 'Chapter three opens. The third card \u2014 read-only, and it says when it stops working: the course end plus fourteen days.',
-    settle: 1400,
-    steps: [
-      { do: 'chapter', num: 'Chapter three', text: 'The assessor', sub: 'One read-only link, and the pack is already assembled.', ms: 3000 },
-      { do: 'hold', ms: 800 },
-      { do: 'click', on: '#go', ms: 2200 }
-    ]
-  },
-
-  {
-    title: 'The assessor’s view',
-    screen: '12_assessor_pack.html',
-    course: 'finished', role: 'assessor',
-    about: 'Opened from the assessor’s own read-only link on the finished course. Scrolled, never printed — nothing is downloaded or sent.',
+    title: 'Feedback, said',
+    screen: '3_tutor_feedback.html',
+    course: 'start', params: { trainee: 'Sofia' }, day: 'Day 4',
+    about: 'Sofia taught on Friday and is waiting: her plan and self-evaluation are in, the feedback is not. The date and the level are already on the form. A point dictated, the criterion chips under it, one solid — tagged before on this course — and the code lands inside the sentence. <b>Writes stubbed</b>, so she keeps waiting for the next take.',
     settle: 2200,
+    stub: ['put'],
     steps: [
-      { do: 'hold', ms: 1050 },
-      { do: 'scroll', to: 900, ms: 2880 },
-      { do: 'hold', ms: 1183 },
-      { do: 'scroll', to: 2000, ms: 2880 },
-      { do: 'hold', ms: 1365 }
+      { do: 'hold', ms: 900 },
+      { do: 'click', on: 'button[data-list="lST"]', ms: 1200 },
+      { do: 'click', on: '#lST .pt:last-child .pt-text', ms: 900 },
+      { do: 'click', on: '.dictbtn', ms: 1500 },
+      { do: 'type', into: '#lST .pt:last-child .pt-text', ms: 4000, text: 'Set the task before handing out the text, and checked it with a quick question' },
+      { do: 'caption', text: 'Said, not typed.' },
+      { do: 'hold', ms: 1800 },
+      { do: 'move', to: '#lST .pt:last-child .suggest-row' },
+      { do: 'hold', ms: 1500 },
+      { do: 'click', on: '#lST .pt:last-child .suggest-chip', ms: 1800 },
+      { do: 'caption', text: 'It learns your centre.' },
+      { do: 'hold', ms: 3000 }
+    ]
+  },
+
+  {
+    title: 'Feedback, all at once',
+    screen: '3_tutor_feedback.html',
+    course: 'start', params: { trainee: 'Sofia' }, day: 'Day 4',
+    about: 'The exchange: Copy, talk it through elsewhere, Paste something back, every box fills, Return. Writes stubbed.',
+    settle: 2200,
+    stub: ['put'],
+    steps: [
+      { do: 'scroll', to: 300, ms: 1440 },
+      { do: 'click', on: '#xCopy', ms: 1800 },
+      { do: 'still', ms: 2400, want: 'The brief pasted into any model, and the trainer talking the lesson through', how: 'A dictation window with the copied brief in it. If it cannot be shown, cut straight from Copy to Paste something back.' },
+      { do: 'click', on: '#xPasteToggle', ms: 1400 },
+      { do: 'hold', ms: 1400 },
+      { do: 'caption', text: 'The rest of the form was already there.' },
+      { do: 'move', to: '#returnBtn' },
+      { do: 'hold', ms: 3200 }
+    ]
+  },
+
+  {
+    title: 'Stage 1, signed',
+    screen: '20_celta5.html',
+    course: 'start', params: { trainee: 'Sofia' }, day: 'Day 6',
+    about: 'The tutor’s side of Sofia’s CELTA 5: Stage 1 written, <b>Return to candidate</b>, the pad (drawn on camera). Then Deniz’s side — his Stage 1 is returned and unsigned on the demo — <b>Sign</b>, the pad, the green block; below it the teaching practice table already holding TP1 and TP2. <b>Writes stubbed</b> on both sides.',
+    settle: 2400,
+    stub: ['put'],
+    steps: [
+      { do: 'scroll', to: '#s1', ms: 2200 },
+      { do: 'hold', ms: 1400 },
+      { do: 'click', on: '[data-return="stage1"]', ms: 1800 },
+      { do: 'hold', ms: 4200 },
+      { do: 'caption', text: 'Signed on screen. Personal, and dated to the second.' },
+      { do: 'goto', screen: '20_celta5.html', course: 'start', role: 'trainee', as: 'Deniz Arslan', stub: ['put'], ms: 3000 },
+      { do: 'scroll', to: '#s1', ms: 2000 },
+      { do: 'click', on: '[data-sign="c1:signed"]', ms: 1800 },
+      { do: 'hold', ms: 3600 },
+      { do: 'scroll', to: '#tp', ms: 2200 },
+      { do: 'caption', text: 'Nothing here was typed twice.' },
+      { do: 'hold', ms: 3400 }
+    ]
+  },
+
+  /* ============================================== Part 3 · The middle == */
+
+  {
+    title: 'An assignment, marked and back',
+    screen: '10_tutor_assignment_marking.html',
+    course: 'visit', params: { trainee: 'Olivia', a: 'lfc' }, day: 'Day 9',
+    about: 'Olivia’s Lessons from the Classroom is really awaiting marking on the visit demo. Five criteria marked on camera, the outcome works itself out, a comment typed; <b>writes stubbed</b>. Then the double-marking table on the assessor pack, then Deniz’s record: two rounds, one outcome.',
+    settle: 5000,
+    stub: ['put'],
+    steps: [
+      { do: 'hold', ms: 900 },
+      { do: 'scroll', to: 700, ms: 2000 },
+      { do: 'click', on: '[data-crit="0"]', ms: 1000 },
+      { do: 'click', on: '[data-crit="1"]', ms: 900 },
+      { do: 'click', on: '[data-crit="2"]', ms: 900 },
+      { do: 'click', on: '[data-crit="3"]', ms: 900 },
+      { do: 'click', on: '[data-crit="4"]', ms: 1200 },
+      { do: 'move', to: '.derived' },
+      { do: 'hold', ms: 1400 },
+      { do: 'type', into: '#comment', ms: 2800, text: 'Honest about the lesson that did not work, and specific about what changed after it. Passed.' },
+      { do: 'hold', ms: 1000 },
+      { do: 'goto', screen: '12_assessor_pack.html', course: 'visit', role: 'assessor', ms: 3200 },
+      { do: 'scroll', to: 'text:Double-marking record', ms: 2400 },
+      { do: 'caption', text: 'Two markers. One script. No second copy anywhere.' },
+      { do: 'hold', ms: 3200 },
+      { do: 'goto', screen: '11_assignment_record.html', course: 'visit', role: 'trainee', as: 'Deniz Arslan', ms: 3000 },
+      { do: 'scroll', to: 500, ms: 2200 },
+      { do: 'hold', ms: 2600 }
+    ]
+  },
+
+  {
+    title: 'Stage 2, both halves',
+    screen: '20_celta5.html',
+    course: 'visit', params: { trainee: 'Olivia' }, day: 'Day 12',
+    about: 'The tutor’s view of Olivia’s CELTA 5 at Stage 2: her self-assessment column beside the tutor’s, 41 criteria, both signatures. Then the tables: seven TPs, three assignments, the observations. Read-only.',
+    settle: 2400,
+    steps: [
+      { do: 'scroll', to: '#s2', ms: 2400 },
+      { do: 'hold', ms: 1800 },
+      { do: 'scroll', to: 1900, ms: 2400 },
+      { do: 'hold', ms: 1400 },
+      { do: 'scroll', to: '#tp', ms: 2400 },
+      { do: 'caption', text: 'Same booklet. More of it full.' },
+      { do: 'hold', ms: 3600 }
+    ]
+  },
+
+  {
+    title: 'The planning grid',
+    screen: '21_tp_grid.html',
+    course: 'visit', role: 'trainee', as: 'Olivia Bennett', day: 'Day 15',
+    about: 'The group’s rows for TP7 and TP8 as Olivia sees them: hers editable, the others read, and two cells amber where two of them chose the same aim. Read-only in the take.',
+    settle: 12000,
+    stub: ['gridSet'],
+    steps: [
+      { do: 'hold', ms: 1400 },
+      { do: 'move', to: '.cell.clash' },
+      { do: 'hold', ms: 1200 },
+      { do: 'caption', text: 'Two of them chose grammar. The grid noticed first.' },
+      { do: 'hold', ms: 3600 }
+    ]
+  },
+
+  /* ================================================ Part 4 · The visit == */
+
+  {
+    title: 'The register, and the certificate',
+    screen: '25_volunteer_register.html',
+    course: 'visit', day: 'Day 17',
+    about: 'One tap on today’s block for the first student, the hours tick up, then the certificate: hers, already signed by the centre on the demo. <b>putCourse stubbed</b> so the tap does not stick.',
+    settle: 2200,
+    stub: ['putCourse'],
+    steps: [
+      { do: 'hold', ms: 1200 },
+      { do: 'click', on: '.who .seg.soon', ms: 1800 },
+      { do: 'caption', text: 'One tap. The hours did the rest.' },
+      { do: 'hold', ms: 2800 },
+      { do: 'goto', screen: '27_volunteer_certificate.html', course: 'visit', role: 'volunteer', as: 'Ayşe', ms: 3200 },
+      { do: 'hold', ms: 1200 },
+      { do: 'caption', text: 'Signed by the centre. Printed by the student.' },
+      { do: 'hold', ms: 4000 }
+    ]
+  },
+
+  {
+    title: 'The assessor’s link',
+    screen: '12_assessor_pack.html',
+    course: 'visit', role: 'assessor', day: 'Day 19',
+    about: 'The pack from the assessor’s own read-only key: the header line, the Handbook panel, the candidates chosen first, the double-marking record, the volunteer students, the course documents. Scrolled, never clicked into. Nothing is downloaded, exported or sent.',
+    settle: 2400,
+    steps: [
+      { do: 'hold', ms: 1400 },
+      { do: 'caption', text: 'Read-only. Ends with the course.' },
+      { do: 'hold', ms: 2400 },
+      { do: 'scroll', to: 900, ms: 2800 },
+      { do: 'hold', ms: 1200 },
+      { do: 'scroll', to: 'text:Volunteer students', ms: 2800 },
+      { do: 'caption', text: 'Everything the Handbook lists, and nothing was gathered.' },
+      { do: 'hold', ms: 3600 }
     ]
   },
 
   {
     title: 'Grades',
     screen: '13_grades_report.html',
-    course: 'finished',
-    about: 'Cambridge’s own form, and the trainer’s feedback offered back into it. Writes stubbed.',
-    settle: 2200,
+    course: 'visit', day: 'Day 19',
+    about: 'Cambridge’s own form: the provisional table, a candidate’s four sections, <b>Add from the TP records</b> and the trainer’s own point lands with its code. Writes stubbed.',
+    settle: 2400,
     stub: ['put', 'putCourse'],
     steps: [
-      { do: 'hold', ms: 1050 },
+      { do: 'hold', ms: 1200 },
       { do: 'scroll', to: 800, ms: 2400 },
-      { do: 'hold', ms: 1092 },
-      { do: 'scroll', to: 1700, ms: 2400 },
-      { do: 'hold', ms: 1819 }
+      { do: 'hold', ms: 1000 },
+      { do: 'click', on: 'text:Add from the TP records', ms: 1800 },
+      { do: 'hold', ms: 1600 },
+      { do: 'caption', text: 'That sentence was written in week two. It just came back.' },
+      { do: 'hold', ms: 3800 }
     ]
   },
 
+  /* ================================================== Part 5 · The end == */
+
   {
-    title: 'The final report',
-    screen: '16_final_report.html',
-    /* THE ASSESSOR, not a candidate. 16_final_report.html REFUSES a candidate's
-       link on purpose -- the final report reaches them from the centre after
-       the course, once the grade is confirmed. Opened as Olivia, the film's
-       closing shot was the door politely closing. */
-    course: 'finished', role: 'assessor',
-    /* This screen takes ?id=, not ?trainee=, and matches it against the id OR
-       the name -- so the name is enough and no token goes in this file. */
-    params: { id: 'Olivia Bennett' },
-    about: 'Down the whole document, then back up to the head of it. Ramy, 27 Sep 2026: \u201cend with the TOP side of the final report, the side that says Pass A \u2014 it goes down, shows the rest of it, and then it goes up again.\u201d A document you have seen the length of, resting on the thing it says.',
+    title: 'The final declaration',
+    screen: '20_celta5.html',
+    course: 'finished', role: 'trainee', as: 'Olivia Bennett', day: 'Day 20',
+    about: 'The five checks, the candidate’s signature, the tutor’s, both dated. <b>The finished course (c4) still needs its CELTA 5 dressed</b> — every stage signed, the declarations both sides — before this and the two scenes after it can be shot.',
     settle: 2400,
     steps: [
-      { do: 'hold', ms: 1100 },
-      { do: 'scroll', to: 1200, ms: 3000 },
-      { do: 'hold', ms: 900 },
-      { do: 'scroll', to: 'bottom', ms: 3400 },
-      { do: 'hold', ms: 1200 },
-      /* And back up, so the film rests where the report says what it says
-         rather than on its last line. */
-      { do: 'scroll', to: 0, ms: 3600 },
-      { do: 'hold', ms: 2600 }
+      { do: 'scroll', to: '#final', ms: 2600 },
+      { do: 'hold', ms: 1400 },
+      { do: 'caption', text: 'Twenty days. Two signatures.' },
+      { do: 'hold', ms: 3400 }
     ]
   },
 
-  /* ===================================================== And the ask == */
+  {
+    title: 'Cambridge’s booklet',
+    screen: '20_celta5.html',
+    course: 'finished', params: { trainee: 'Olivia' }, day: 'Day 20',
+    about: 'The July 2023 form drawn in the browser from the record: the cover, the confirmations, the three stages, every table full, every signature in ink. The line the film was made for; nothing moves under it.',
+    settle: 2400,
+    steps: [
+      { do: 'click', on: 'text:Cambridge', ms: 2200 },
+      { do: 'hold', ms: 2400 },
+      { do: 'caption', text: 'The record wrote itself.' },
+      { do: 'hold', ms: 6000 },
+      { do: 'still', ms: 3200, want: 'The booklet’s pages turning: Stage 1, Stage 2, Stage 3, the tables', how: 'Scroll the drawn PDF slowly on camera; the film holds this frame for it.' }
+    ]
+  },
 
   {
-    title: 'Connect Lite \u2014 the card',
+    title: 'Paper, if you want it',
+    screen: '20_celta5.html',
+    course: 'finished', params: { trainee: 'Olivia' }, day: 'Day 20',
+    about: 'A captured still of the print dialog over the booklet. The one printing beat in the film, as an option.',
+    settle: 1600,
+    steps: [
+      { do: 'still', ms: 4200, want: 'The print dialog over Cambridge’s booklet', how: 'Press Print on camera and capture the dialog; the film cannot drive it.' },
+      { do: 'caption', text: 'Print it, if a drawer needs it.' },
+      { do: 'hold', ms: 2200 }
+    ]
+  },
+
+  {
+    title: 'The next course',
+    screen: '14_owner.html',
+    course: 'finished', day: 'Day 20',
+    about: '<b>Start the next course from this</b> on the console: the cursor rests on it, and a still of the new course’s card — the wording, the rooms, the timetable shape carried, every switch off, an empty roster. Not clicked in the take: it would really make a course.',
+    settle: 3800,
+    steps: [
+      { do: 'hold', ms: 1000 },
+      { do: 'move', to: '[data-clone]' },
+      { do: 'hold', ms: 1600 },
+      { do: 'caption', text: 'The wording stays. The people change.' },
+      { do: 'still', ms: 3800, want: 'The new course’s card on the console, an empty roster, the switches all off', how: 'Clone once by hand, capture the card, delete the course.' }
+    ]
+  },
+
+  {
+    title: 'Close',
     screen: 'offer.html',
-    about: 'The last frame. Ramy, 27 Sep 2026: \u201cmaybe the final slide goes back to Connect \u2014 email me. It\u2019s a sales pitch. Make it a sales pitch.\u201d This is the card a centre is sent before they have bought anything: what it is, what it costs, his note in his own voice, and the three demo doors. It renders from <b>?k=</b> alone. <b>The film ends here</b> \u2014 nothing after it.',
+    course: 'start',
+    about: 'The card a centre receives: what Lite is, what it costs, the four doors. The last frame.',
     settle: 2600,
     steps: [
-      { do: 'hold', ms: 2600 },
-      { do: 'scroll', to: 700, ms: 3400 },
-      { do: 'hold', ms: 2600 },
-      { do: 'scroll', to: 0, ms: 2600 },
+      { do: 'hold', ms: 1800 },
+      { do: 'caption', text: 'One link, and a course happens inside it.' },
+      { do: 'hold', ms: 3000 },
+      { do: 'scroll', to: 600, ms: 3000 },
       { do: 'hold', ms: 3200 }
     ]
   },
