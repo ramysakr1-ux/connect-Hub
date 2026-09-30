@@ -79,6 +79,10 @@
   .courses{display:flex; flex-direction:column; gap:14px; margin-top:24px;}
   /* A standing demo course, pinned to a day by the demo clock (30 Sep 2026):
      gold, like the sync pill on its own screens. */
+  .filmrow.demos{display:grid; gap:10px;}
+  .filmrow.demos b{font-family:'Newsreader',Georgia,serif; font-size:1rem;}
+  .filmrow.demos textarea{width:100%; box-sizing:border-box; font:inherit; font-size:0.9rem; padding:9px 11px; border:1.5px solid var(--sand-line); border-radius:8px; background:var(--paper); color:var(--ink); resize:vertical;}
+  .filmrow.demos .acts{display:flex; gap:12px; align-items:center;}
   .centre.label{font-style:italic; color:var(--gold-deep, oklch(52% 0.098 70));}
   .chip.demo{background:oklch(52% 0.098 70); color:#fff; border-color:transparent; font-weight:700;}
   .filmrow.film-self{align-items:center; gap:12px;} .filmrow.film-self b{font-family:'Newsreader',Georgia,serif; font-size:1rem;} .filmrow.film-self code{font-size:0.78rem;}
@@ -154,7 +158,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609301644">
+<link rel="stylesheet" href="hub-house.css?v=202609301653">
 </head>
 <body>
 <div class="board">
@@ -178,8 +182,8 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609301644"></script>
-<script src="hub-store.js?v=202609301644"></script>
+<script src="hub-shared.js?v=202609301653"></script>
+<script src="hub-store.js?v=202609301653"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -286,6 +290,39 @@ function cardLink(c){
   return base() + 'offer.html?k=' + encodeURIComponent(c.tutorKey)
     + (film ? '&f=' + encodeURIComponent(film) : '')
     + (price ? '&p=' + encodeURIComponent(price) : '');
+}
+/* ONE EMAIL FOR THE TWO DEMOS AND THE FILM (Ramy, 30 Sep 2026: "I want to be
+   able to send all three, two demos and the film, in one email, and I want the
+   email to clarify that, along with a personal note from me"). The note is
+   his, typed once and kept in this browser; the two cards are the standing
+   demos' own; the film is the Link to the film box, and its line appears only
+   once that box is filled -- the engine's address carries keys and never goes
+   out. */
+const DEMO_NOTE_KEY = 'chub:demoNote';
+function demoNote(){ try { return (localStorage.getItem(DEMO_NOTE_KEY) || '').trim(); } catch (e) { return ''; } }
+function standingDemos(){
+  const byName = n => COURSES.find(c => c.name === n);
+  return { start: byName('Demo \u2014 the first week'), visit: byName('Demo \u2014 before the visit') };
+}
+function demosNote(){
+  const { start, visit } = standingDemos();
+  const film = filmLink(), note = demoNote();
+  return [
+    'Hi,',
+    '',
+    note || null, note ? '' : null,
+    'Here is Connect Lite \u2014 a CELTA course run from one link, with everything the candidates write and everything you write back in one place. Two courses to look around, and a film:',
+    '',
+    '1. The first week of a course \u2014 ' + cardLink(start),
+    '2. The last week, two days before the assessor\u2019s visit \u2014 ' + cardLink(visit),
+    film ? '3. The film, five minutes \u2014 ' + film : null,
+    '',
+    'Each card opens on what Lite is and what it costs, and then four ways into that course you can type in: as a tutor, as one of the candidates, as the assessor, and as a volunteer student. Both are demonstration courses that stay on the day they are on, so nothing you do there touches anybody\u2019s record.',
+    '',
+    'Any questions, just reply.',
+    '',
+    'Ramy',
+  ].filter(x => x !== null).join('\n');
 }
 async function noteFor(c){
   const film = filmLink();
@@ -436,6 +473,16 @@ $('app').innerHTML = `
         <button class="btn small quiet" type="button" data-copy="${esc(url)}">Copy its address</button>
       </div>`;
     })()}
+    ${(function(){
+      const { start, visit } = standingDemos();
+      if (!start || !visit) return '';
+      return `<div class="filmrow demos">
+        <b>Send the two demos and the film</b>
+        <span class="note">One message: your note, the first-week card, the before-the-visit card, and the film once its link is filled in below. Kept in this browser.</span>
+        <textarea id="demoNote" rows="3" placeholder="A line or two from you \u2014 who you are, why you are sending this.">${esc(demoNote())}</textarea>
+        <span class="acts"><button class="btn small" type="button" id="demosCopy">Copy the message</button><a class="linkbtn" id="demosMail" href="#">Email it</a></span>
+      </div>`;
+    })()}
     <div class="filmrow">
       <label for="filmLink">Link to the film</label>
       <input type="url" id="filmLink" placeholder="https://…" value="${esc(filmLink())}">
@@ -471,6 +518,7 @@ let COURSES = [], SHOW_URLS = false;
 document.addEventListener('input', e => {
   if (!e.target.closest) return;
   if (e.target.closest('#filmLink')) { try { localStorage.setItem(FILM_KEY, e.target.value.trim()); } catch (err) {} return; }
+  if (e.target.closest('#demoNote')) { try { localStorage.setItem(DEMO_NOTE_KEY, e.target.value); } catch (err) {} return; }
   if (e.target.closest('#priceText')) { try { localStorage.setItem(PRICE_KEY, e.target.value.trim()); } catch (err) {} }
 });
 $('app').addEventListener('click', async e => {
@@ -506,7 +554,7 @@ $('app').addEventListener('click', async e => {
       BUSY = false;
       return;
     }
-    if (e.target.closest('#filmLink') || e.target.closest('#priceText')) return;
+    if (e.target.closest('#filmLink') || e.target.closest('#priceText') || e.target.closest('#demoNote')) return;
     const note = e.target.closest('[data-note]');
     if (note) {
       const c = COURSES.filter(function(x){ return x.id === note.dataset.note; })[0];
@@ -520,6 +568,8 @@ $('app').addEventListener('click', async e => {
       if (c) window.open(cardLink(c), '_blank', 'noopener');
       return;
     }
+    if (e.target.closest('#demosCopy')) { const b = e.target.closest('#demosCopy'); await hubCopyButton(b, demosNote()); return; }
+    if (e.target.closest('#demosMail')) { e.preventDefault(); location.href = 'mailto:?subject=' + encodeURIComponent('Connect Lite \u2014 two courses to look around, and a film') + '&body=' + encodeURIComponent(demosNote()); return; }
     const mail = e.target.closest('[data-mail]');
     if (mail) {
       e.preventDefault();

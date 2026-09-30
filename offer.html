@@ -131,7 +131,7 @@
   }
   @media(max-width:420px){ .card{padding:24px 20px 22px;} h1{font-size:1.45rem;} .door b{min-width:0;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609301644">
+<link rel="stylesheet" href="hub-house.css?v=202609301653">
 </head>
 <body>
 
@@ -165,6 +165,10 @@
 
   <h2>See it working</h2>
   <p class="lede" style="font-size:0.88rem; color:var(--grey);">This is a real course, not a video. Type in it — nothing here touches anybody's record.</p>
+  <!-- A standing demo is fixed on one day of its course (the demo clock, 30
+       Sep 2026); the card says which, so the two demos a centre receives read
+       as two moments of one course and not as two copies of the same thing. -->
+  <p class="lede demo-moment" id="demoMoment" hidden style="font-size:0.88rem;"></p>
   <div class="doors">
     <div class="door">
       <b>As a tutor</b>
@@ -232,8 +236,8 @@
   </div>
 </div>
 
-<script src="hub-shared.js?v=202609301644"></script>
-<script src="hub-store.js?v=202609301644"></script>
+<script src="hub-shared.js?v=202609301653"></script>
+<script src="hub-store.js?v=202609301653"></script>
 <script>
 /* Everything course-specific comes from the one key in the URL. The card is
    complete and readable before any of it arrives -- what the store adds is the
@@ -294,6 +298,19 @@
   /* The volunteer's door opens on their own page, not the card: the page is
      the whole of what they get. */
   HubStore.call({ op: 'course', key: k }).then(function(c){
+    var sset = (c && c.settings) || {};
+    if (sset.demoToday && sset.start) {
+      var days = [], d = new Date(sset.start + 'T00:00:00Z'), end = new Date((sset.end || sset.demoToday) + 'T00:00:00Z');
+      for (; d <= end; d.setUTCDate(d.getUTCDate() + 1)) { var w = d.getUTCDay(); if (w && w !== 6) days.push(d.toISOString().slice(0, 10)); }
+      var n = days.indexOf(sset.demoToday) + 1, visit = sset.visitDate ? days.indexOf(sset.visitDate) + 1 : 0;
+      var el = document.getElementById('demoMoment');
+      if (n > 0 && el) {
+        var where = n <= 5 ? 'its first week' : n <= 10 ? 'its second week' : n <= 15 ? 'its third week' : 'its last week';
+        var vis = visit > n ? ', ' + (visit - n === 1 ? 'the day before' : (visit - n) + ' days before') + ' the assessor\u2019s visit' : '';
+        el.textContent = 'This course is fixed on day ' + n + ' of ' + days.length + ', ' + where + vis + '. It stays there, so what you see today is what you see next month.';
+        el.hidden = false;
+      }
+    }
     var st = ((c && c.volunteers) || {}).students || [];
     var first = st.filter(function(s){ return s && s.token; })[0];
     if (!first) return;
