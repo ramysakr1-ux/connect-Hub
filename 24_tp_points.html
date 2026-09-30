@@ -71,6 +71,30 @@
   .tbl .lang{color:var(--gold-deep); font-weight:700;}
   .tbl .ref{color:var(--grey); font-style:italic;}
   .tbl tr.mine{background:var(--sand-deep);}
+  /* A day at a time, a row per candidate, and the other two rows watermarked:
+     they are lessons to sit in on, not to plan (Ramy, 1 Oct 2026: "they are
+     there, but view only, and it will make it clear that this is not your
+     lesson -- big watermark"). */
+  .day{margin:22px 0 0;}
+  .dayline{margin:0 0 7px; font-size:0.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); font-weight:700;}
+  .dayline b{color:var(--ink); letter-spacing:.04em;}
+  .day-tbl td{vertical-align:top;}
+  .day-tbl td.slot{white-space:nowrap; font-variant-numeric:tabular-nums; color:var(--grey); width:108px;}
+  .day-tbl td.who{width:210px; font-weight:600;}
+  .day-tbl .yours{display:block; font-size:0.64rem; letter-spacing:.1em; text-transform:uppercase; font-weight:700; color:var(--teal); margin-top:2px;}
+  .day-tbl .aim{font-size:0.98rem;}
+  .day-tbl .aim.lang{color:var(--teal);}
+  .day-tbl .det{margin-top:5px;}
+  .day-tbl tr.mine td{border-left:3px solid var(--teal);}
+  .day-tbl tr.theirs td{color:var(--grey);}
+  /* The watermark sits in the Who column, where there is room for it: across
+     the lesson text it fought the words it was meant to qualify. */
+  .day-tbl tr.theirs td.who{position:relative;}
+  .day-tbl tr.theirs td.who::after{content:"NOT YOURS"; display:block; margin-top:10px;
+    transform:rotate(-8deg); transform-origin:left center;
+    font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.42rem; line-height:1;
+    color:oklch(45% 0.02 70 / .17); pointer-events:none; white-space:nowrap;}
+  @media (max-width:760px){ .day-tbl tr.theirs td.who::after{font-size:1.05rem;} }
   .warn{margin:10px 0 0; padding:10px 12px; border-radius:7px; background:oklch(94.5% 0.035 78); border:1px solid oklch(84% 0.08 78); border-left:4px solid var(--gold); font-size:0.82rem; line-height:1.5;}
   .ok{margin:10px 0 0; font-size:0.78rem; color:var(--grey);}
   .empty{background:var(--surface); border:1px dashed var(--sand-line); border-radius:10px; padding:26px 22px; color:var(--grey); font-size:0.9rem; line-height:1.6;}
@@ -136,20 +160,20 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} section.group{padding:12px 12px 14px;} }
   @media print{ .back,.relbar,#hubSync{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610010041">
-<link rel="stylesheet" href="hub-theme.css?v=202610010041">
+<link rel="stylesheet" href="hub-house.css?v=202610010046">
+<link rel="stylesheet" href="hub-theme.css?v=202610010046">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610010041"></script>
-<script src="hub-tracker.js?v=202610010041"></script>
-<script src="hub-rotation.js?v=202610010041"></script>
-<script src="hub-shared.js?v=202610010041"></script>
-<script src="hub-store.js?v=202610010041"></script>
-<script src="hub-sync.js?v=202610010041"></script>
+<script src="hub-due.js?v=202610010046"></script>
+<script src="hub-tracker.js?v=202610010046"></script>
+<script src="hub-rotation.js?v=202610010046"></script>
+<script src="hub-shared.js?v=202610010046"></script>
+<script src="hub-store.js?v=202610010046"></script>
+<script src="hub-sync.js?v=202610010046"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -364,26 +388,61 @@ function render(){
     if (!P || !P.released) { app.innerHTML = head + `<div class="empty">Your tutor has not released the teaching practice points yet.</div>`; return; }
     const me = rec('hub:me') || {};
     const rows = P.points || {};
-    const mine = rows[me.token] || {};
-    /* The rest of the group, marked as what it is. Ramy, 29 Sep 2026: a
-       candidate should see the other two's lessons "but it will state that
-       this is not your lesson, just for reference" -- they sit in on those
-       lessons, so knowing what is coming is part of the day. Names are not
-       carried to a candidate (the store sends the group's rows without them),
-       so the others are shown by their letter. */
-    const others = Object.keys(rows).filter(t => t !== me.token);
+    /* THE SHAPE IS RAMY'S OWN DOCUMENT (his TP1ABC.docx, read block by block on
+       30 Sep 2026 and rebuilt here on 1 Oct): a table per teaching day, ONE ROW
+       PER CANDIDATE -- slot, who, the lesson and what to get -- under a line
+       naming the course, the practice, the set and the day.
+
+       It used to be one row per practice, with "your lesson" in one column and
+       everybody else's stacked into the next, which is what made a single box
+       look like five lessons: "TP 1, and then you have reading, speaking,
+       functional language, vocab and listening. Five lessons in one box. Why?"
+       A candidate sits in on the other two lessons of their own day, so those
+       belong on the same table as rows -- marked plainly as not theirs. */
+    const sets = (P.sets || []).filter(x => Array.isArray(x) && x.length);
+    const flat = sets.reduce((a, b) => a.concat(b), []);
+    const LETTERS = 'ABCDEFGHIJKL';
+    const letterOf = t => LETTERS[flat.indexOf(t)] || '';
+    const mySet = sets.find(st => st.indexOf(me.token) !== -1) || (me.token ? [me.token] : []);
+    const mySetIndex = sets.indexOf(mySet);
+    const order = (st, tp) => { const n = st.length; if (!n) return st; const k = ((tp - 1) % n + n) % n; return st.slice(k).concat(st.slice(0, k)); };
+
+    /* The day and the hours come from the course's own timetable, so the table
+       says when as well as what. */
+    const tt = rec('connect_timetable_v1') || {};
+    const tpSlots = (tt.slots || []).filter(sl => sl && sl.kind === 'tp');
+    const dayFor = tp => ((tt.days || []).find(d => d && Number(d.tp) === tp && (mySetIndex < 0 || Number(d.setIndex || 0) === mySetIndex)) || {}).date || '';
+    const niceDay = d => { if (!d) return ''; try { return new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }); } catch (e) { return d; } };
+    const mins = (sl) => { const a = String(sl.from || '').match(/^(\d{1,2}):(\d{2})/), b = String(sl.to || '').match(/^(\d{1,2}):(\d{2})/); if (!a || !b) return 45; const d = (+b[1] * 60 + +b[2]) - (+a[1] * 60 + +a[2]); return d > 0 ? d : 45; };
+
+    const lesson = c => {
+      if (!c || !c.aim) return '<span class="dash">\u2014</span>';
+      const lang = R.LANGUAGE_FOCUS.indexOf(c.aim) >= 0;
+      return `<b class="aim${lang ? ' lang' : ''}">${esc(c.aim)}</b>`;
+    };
+
+    const tables = Array.from({ length: TPS }, (_, i) => i + 1).map(tp => {
+      const teaching = order(mySet, tp);
+      const date = dayFor(tp);
+      if (!teaching.some(t => ((rows[t] || {})['tp' + tp] || {}).aim)) return '';
+      const body = teaching.map((t, i) => {
+        const c = (rows[t] || {})['tp' + tp] || {};
+        const mine = t === me.token;
+        const sl = tpSlots[i] || {};
+        const when = sl.from ? esc(sl.from) + (sl.to ? '\u2013' + esc(sl.to) : '') : '\u2014';
+        const who = mine ? esc(me.name || 'You') : 'Candidate ' + esc(letterOf(t));
+        const det = matsRead(c, mine);
+        return `<tr class="${mine ? 'mine' : 'theirs'}"><td class="slot">${when}</td><td class="who">${who}${mine ? '<span class="yours">your lesson</span>' : ''}</td><td class="what">${lesson(c)}${det ? '<div class="det">' + det + '</div>' : ''}</td></tr>`;
+      }).join('');
+      return `<section class="day">
+        <p class="dayline">${esc(SETTINGS.courseName || 'CELTA')} \u00b7 <b>TP ${tp} \u00b7 ${esc(teaching.map(letterOf).join(''))}</b>${date ? ' \u00b7 ' + esc(niceDay(date)) : ''} \u00b7 ${teaching.length} \u00d7 ${mins(tpSlots[0] || {})} mins</p>
+        <div class="wrap"><table class="tbl day-tbl"><tr><th>Slot</th><th>Who</th><th>The lesson, and what to get</th></tr>${body}</table></div>
+      </section>`;
+    }).filter(Boolean).join('');
+
     app.innerHTML = head + `<section class="group"><h2>Group ${esc(P.group || '\u2014')}</h2>
-      <div class="wrap"><table class="tbl"><tr><th>Practice</th><th>Your lesson</th>${others.length ? '<th>Also teaching that day \u2014 not your lesson</th>' : ''}</tr>
-      ${Array.from({length:TPS},(_,i)=>i+1).map(tp => {
-        const c = mine['tp'+tp] || {};
-        const lang = R.LANGUAGE_FOCUS.indexOf(c.aim) >= 0;
-        const ref = others.map(t => (rows[t] || {})['tp'+tp] || {}).map(x => x.aim).filter(Boolean);
-        const m = matsRead(c, true);
-        const refCells = others.map(t => (rows[t] || {})['tp'+tp] || {});
-        return `<tr><td class="who">TP ${tp}</td><td${lang ? ' class="lang"' : ''}>${esc(c.aim || '\u2014')}${m ? '<br>' + m : ''}</td>${
-          others.length ? `<td class="ref">${refCells.filter(x => x.aim).map(x => esc(x.aim) + (matsRead(x, false) ? '<br>' + matsRead(x, false) : '')).join('<br>') || '\u2014'}</td>` : ''}</tr>`;
-      }).join('')}</table></div>
-      ${others.length ? '<p class="ok">The last column is what the rest of your group is teaching. You are watching those lessons, not planning them.</p>' : ''}</section>`;
+      <p class="ok">One table a day. Your own lesson is marked; the other two are the lessons you sit in on, not yours to plan.</p>
+      ${tables || '<div class="empty">No points released for your set yet.</div>'}</section>`;
     return;
   }
 
