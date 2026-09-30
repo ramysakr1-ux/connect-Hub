@@ -931,7 +931,10 @@
       note.innerHTML = '<b>Checking scene ' + n + ' of ' + SCENES.length + '…</b> ' + sc.title;
       /* A screen that never fires load would hang the walk silently. */
       var moved = false;
-      later(function () { if (!moved) { moved = true; out.push({ n: n, title: sc.title, missing: ['(screen did not load)'] }); nextScene(); } }, 12000);
+      /* Store-painted screens can take eighteen seconds on Apps Script; and a
+         row for a screen that never loaded still needs its `later` list, or
+         the report's own loop stops on it (30 Sep 2026). */
+      later(function () { if (!moved) { moved = true; out.push({ n: n, title: sc.title, missing: ['(screen did not load)'], later: [] }); nextScene(); } }, 25000);
       showScreen(sc, sc.screen, function () {
         if (moved) return;
         moved = true;
