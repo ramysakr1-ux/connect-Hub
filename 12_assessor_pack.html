@@ -95,8 +95,17 @@
   h2.sect{font-family:'Newsreader',Georgia,serif; font-size:1.18rem; font-weight:700; color:var(--ink);
     margin:38px 0 0; padding:0 0 7px; border-bottom:1px solid var(--ink-warm);
     display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap;}
-  h2.sect small{font-family:'Instrument Sans','Karla',sans-serif; font-size:0.68rem; font-weight:600; letter-spacing:.08em;
+  h2.sect small, details.sec > summary small{font-family:'Instrument Sans','Karla',sans-serif; font-size:0.68rem; font-weight:600; letter-spacing:.08em;
     text-transform:uppercase; color:var(--grey); margin-left:0; text-align:right;}
+  details.sec > summary{font-family:'Newsreader',Georgia,serif; font-size:1.18rem; font-weight:700; color:var(--ink);
+    margin:38px 0 0; padding:0 0 7px 22px; border-bottom:1px solid var(--ink-warm); cursor:pointer; list-style:none;
+    display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap; position:relative;}
+  details.sec > summary::-webkit-details-marker{display:none;}
+  details.sec > summary::before{content:"\25B8"; position:absolute; left:2px; top:0.28em; font-size:0.8em;
+    color:var(--gold-deep, oklch(52% 0.098 70)); transition:transform 160ms ease;}
+  details.sec[open] > summary::before{transform:rotate(90deg);}
+  details.sec > summary:hover{color:var(--teal);}
+  @media print{ details.sec > summary::before{display:none;} details.sec > summary{padding-left:0;} }
   /* Gold edges the card, as on every other screen (Ramy, 24 Sep 2026). */
   /* No box: the sheet is the box. Rows are ruled, as on a form. */
   .panel{background:none; border:none; border-radius:0; padding:0; box-shadow:none;}
@@ -232,7 +241,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610010036">
+<link rel="stylesheet" href="hub-house.css?v=202610010041">
 </head>
 <body>
 <div class="board">
@@ -263,14 +272,14 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202610010036"></script>
-<script src="hub-shared.js?v=202610010036"></script>
-<script src="assignment-defaults.js?v=202610010036"></script>
-<script src="hub-tracker.js?v=202610010036"></script>
-<script src="hub-rotation.js?v=202610010036"></script>
-<script src="hub-attendance.js?v=202610010036"></script>
-<script src="hub-store.js?v=202610010036"></script>
-<script src="hub-sync.js?v=202610010036"></script>
+<script src="observation-defaults.js?v=202610010041"></script>
+<script src="hub-shared.js?v=202610010041"></script>
+<script src="assignment-defaults.js?v=202610010041"></script>
+<script src="hub-tracker.js?v=202610010041"></script>
+<script src="hub-rotation.js?v=202610010041"></script>
+<script src="hub-attendance.js?v=202610010041"></script>
+<script src="hub-store.js?v=202610010041"></script>
+<script src="hub-sync.js?v=202610010041"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -671,7 +680,11 @@ function renderList(){
   const dm = doubleMarkingRows();
   /* Never more than the cohort -- see requiredSample in 7_candidate_tracker.html. */
   const n = PEOPLE.length, sample = Math.min(n, n<=9 ? 3 : n<=16 ? 4 : 5);
-  $('toolbar').innerHTML = `<a class="btn primary" href="7_candidate_tracker.html">Candidate tracker</a>${appianBtn('ghost')}<button class="btn-print" type="button" onclick="window.print()">Print / Save as PDF</button>`;
+  /* The grades sat behind a folded section, and Ramy went looking for them:
+     "I don't see the most important document for the assessor, which is the
+     provisional and final grades." They are one button now, beside the
+     tracker, at the top of the sheet. */
+  $('toolbar').innerHTML = `<a class="btn primary" href="7_candidate_tracker.html">Candidate tracker</a><a class="btn" href="13_grades_report.html">Grades</a>${appianBtn('ghost')}<button class="btn-print" type="button" onclick="window.print()">Print / Save as PDF</button>`;
   $('app').innerHTML = `
     ${checksHTML()}
     <!-- Handbook 14.1 opens its list with "Candidate portfolios - clearly
@@ -708,7 +721,7 @@ function renderList(){
          confusion: this heading said Candidates and held three links, above
          two sections that really were candidates. The people come first now,
          and this is named for what it is. -->
-    <h2 class="sect">The rest of the course <small>read-only, like everything else here</small></h2>
+    <h2 class="sect">The whole cohort at once <small>the same records, every candidate together</small></h2>
     <!-- A shortcut, not a second table. The assessor can already open the
          candidate tracker -- it is theirs as much as the tutors' -- and this
          rebuilt it here with teaching-practice counts, assignment chips and a
@@ -725,11 +738,15 @@ function renderList(){
 
     <h2 class="sect">Double-marking record <small>Handbook 9.2.3: ${sample} of each assignment for ${n} candidate${n===1?'':'s'}</small></h2>
     <div class="panel">${dm.length ? `<table><tr><th>Candidate</th><th>Assignment</th><th>First marker</th><th>Second marker</th><th>Double-marked</th><th>Outcome</th></tr>${dm.join('')}</table>` : '<div class="empty">Nothing has been double-marked yet. The quota above says how many of each assignment need to be.</div>'}</div>
-    <h2 class="sect">Assignment briefs <small>as the centre set them, in the centre’s order</small></h2>
-    <div class="panel">${briefs()}</div>
     ${volunteerStudents()}
-    ${courseDocuments()}`;
+    ${courseDocuments()}
+    <!-- Last, because nobody opens a pack to read the briefs (Ramy, 1 Oct
+         2026: "no one cares about the assignment briefs, put them at the
+         bottom"). They stay because 14.1 asks what the candidates were set. -->
+    <h2 class="sect">Assignment briefs <small>as the centre set them, in the centre’s order</small></h2>
+    <div class="panel">${briefs()}</div>`;
   if (window.hubStackTables) hubStackTables($('app'));
+  foldSections($('app'));
 }
 
 /* Handbook 14.1's list, for the parts Connect Lite does not hold itself: the
@@ -838,6 +855,36 @@ function volunteerStudents(){
       ${rows.map(({st, r}) => `<tr><td>${esc(st.name)}</td><td>${esc(st.level || '')}</td><td>${r.present} of ${days.length}</td><td>${r.partial || ''}</td><td>${fmtH(r.hours)}</td></tr>`).join('')}
       </table>
     </div>`;
+}
+
+/* Ramy, 1 Oct 2026: "most of this stuff should be collapsible." A pack is a
+   dozen sections and an assessor needs three of them open. Each heading and
+   the block under it become one <details>: the Handbook grid and the two
+   candidate lists open, the reference sections closed until asked for. Done to
+   the rendered page rather than to a dozen templates, so nothing about what is
+   on the page changes -- only whether it is unfolded. */
+/* Matched against the TITLE only -- the Handbook reference in the small print
+   sits on half the sections, and matching the whole heading left everything
+   open. */
+const OPEN_SECTIONS = /^(The course against the Handbook|Candidates you are observing|Every other candidate|Candidate portfolios)/i;
+function foldSections(root){
+  if (!root) return;
+  const heads = [...root.querySelectorAll('h2.sect')];
+  heads.forEach(h => {
+    const body = [];
+    let el = h.nextElementSibling;
+    while (el && el.tagName !== 'H2') { body.push(el); el = el.nextElementSibling; }
+    if (!body.length) return;
+    const d = document.createElement('details');
+    d.className = 'sec';
+    const title = (h.childNodes[0] && h.childNodes[0].textContent || h.textContent).trim();
+    if (OPEN_SECTIONS.test(title)) d.open = true;
+    const sum = document.createElement('summary');
+    sum.innerHTML = h.innerHTML;
+    h.replaceWith(d);
+    d.appendChild(sum);
+    body.forEach(b => d.appendChild(b));
+  });
 }
 
 function courseDocuments(){
