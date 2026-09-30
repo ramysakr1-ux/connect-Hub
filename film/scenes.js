@@ -65,11 +65,13 @@ var SCENES = [
     about: 'The comparison page as one animated scene, no keys, no store: four Drive windows descend, the Drive column fills with grey chips while Lite’s stops at five, the tallies land. Two captions, then a beat of black before the day stamps begin.',
     settle: 800,
     steps: [
-      { do: 'hold', ms: 12800 },
+      { do: 'hold', ms: 17200 },
       { do: 'caption', text: 'Most of this is finding the file.' },
-      { do: 'hold', ms: 15200 },
-      { do: 'caption', text: 'Same course. Same tutors. One of them had time to teach.' },
-      { do: 'hold', ms: 6200 }
+      { do: 'hold', ms: 20400 },
+      /* Tutors train; trainees teach. The line said the tutors had time to
+         teach, which is not what happens on a CELTA (Ramy, 30 Sep 2026). */
+      { do: 'caption', text: 'Same course. Same trainees. One of them spent the week filing.' },
+      { do: 'hold', ms: 8400 }
     ]
   },
 
@@ -78,27 +80,35 @@ var SCENES = [
   {
     title: 'The console',
     screen: '14_owner.html',
-    about: 'A held frame, no words. <b>Needs &amp;o=</b> (the owner key) on the film’s address. Read-only.',
+    about: 'The centre\u2019s console, announced. Ramy, 30 Sep 2026: the start "gets a bit back and forth\u2026 it\u2019s confusing what\u2019s happening", so each part now says whose world it is before it opens \u2014 and this one says what happens next: a link arrives. <b>Needs &amp;o=</b> (the owner key). Read-only.',
     settle: 3800,
-    steps: [{ do: 'hold', ms: 1540 }]
+    steps: [
+      { do: 'chapter', num: 'One', text: 'The centre sets a course up', sub: 'One console. One link out to the tutors, one to each candidate.', ms: 3600 },
+      { do: 'hold', ms: 1800 },
+      { do: 'caption', text: 'You will be sent a link. That is the whole of it.' },
+      { do: 'hold', ms: 3200 }
+    ]
   },
 
   {
     title: 'The card arrives',
     screen: 'invite.html',
     course: 'start', day: 'Day 0',
-    about: 'The tutor’s invitation card as the trainer receives it, then three cuts of the link sitting where a course already lives: a Classroom stream, a Drive folder, a plain tab with the Wi-Fi going off. The stills are made for the film, from the demo.',
+    about: 'The card, the fact that it keeps working with the network off, and the screen it opens. Ramy, 30 Sep 2026: the two cuts showing the link parked in a Classroom stream and a Drive folder \u2014 "it lives anywhere" \u2014 read as confusing and are cut. The Wi-Fi still is made for the film; stills/classroom-stream.png and stills/drive-folder.png are kept in the folder but no longer used.',
     settle: 1400,
     steps: [
-      { do: 'hold', ms: 1200 },
+      { do: 'hold', ms: 1600 },
       { do: 'caption', text: 'Nothing to install. Nothing to remember. Nothing to lose.' },
-      { do: 'hold', ms: 3200 },
-      { do: 'still', ms: 2600, img: 'stills/classroom-stream.png', want: 'The link inside a demo Classroom stream' },
-      { do: 'still', ms: 2600, img: 'stills/drive-folder.png', want: 'The link inside a demo Drive folder' },
-      { do: 'still', ms: 3400, img: 'stills/wifi-off.png', want: 'A plain tab, Wi-Fi switched off, the page still there' },
-      { do: 'caption', text: 'Works offline.' },
-      { do: 'hold', ms: 2600 },
-      { do: 'click', on: '#go', ms: 2200 }
+      { do: 'hold', ms: 3400 },
+      { do: 'still', ms: 4200, img: 'stills/wifi-off.png', want: 'A plain tab, Wi-Fi switched off, the page still there' },
+      { do: 'caption', text: 'Works offline, and catches up when you are back.' },
+      { do: 'hold', ms: 3000 },
+      /* And then the screen the link opens, so the card is not left hanging. */
+      { do: 'click', on: '#go', ms: 2400 },
+      { do: 'goto', screen: '5_tutor_dashboard.html', course: 'start', ms: 2600 },
+      { do: 'hold', ms: 2400 },
+      { do: 'caption', text: 'That link, and this is behind it.' },
+      { do: 'hold', ms: 3000 }
     ]
   },
 
@@ -106,12 +116,15 @@ var SCENES = [
     title: 'A course is set up',
     screen: '6_centre_admin_dashboard.html',
     course: 'start', day: 'Day 0',
-    about: 'Course admin: the centre, the dates, the clock, the three online rooms. Then the timetable: a spreadsheet PASTED in (a file chooser cannot be driven), the review, Apply, every day laid out. Then the roster with six links. <b>Writes stubbed</b> — the standing demo must not change.',
-    settle: 2000,
+    about: 'Course admin, shown as a room before anything is done in it \u2014 the film used to open straight onto the Settings tab, which read as a jump into somebody else\u2019s screen, and looked old because its four numbered steps were never seen (Ramy, 30 Sep 2026). Then the centre, the dates, the clock, the rooms; the timetable from a pasted spreadsheet (a file chooser cannot be driven); then the roster with six links. <b>Writes stubbed</b> \u2014 the standing demo must not change.',
+    settle: 2400,
     stub: ['putCourse', 'addTrainees', 'addTrainee'],
     steps: [
-      { do: 'click', on: '[data-tab="settings"]', ms: 1400 },
-      { do: 'hold', ms: 900 },
+      { do: 'hold', ms: 2200 },
+      { do: 'caption', text: 'Course admin. Four steps, once, at the start.' },
+      { do: 'hold', ms: 2800 },
+      { do: 'click', on: '[data-tab="settings"]', ms: 1600 },
+      { do: 'hold', ms: 1200 },
       { do: 'scroll', to: '#courseZone', ms: 1800 },
       { do: 'hold', ms: 1400 },
       { do: 'goto', screen: '23_timetable.html', course: 'start', stub: ['putCourse'], ms: 2600 },
@@ -139,11 +152,16 @@ var SCENES = [
     settle: 1800,
     stub: ['put'],
     steps: [
+      { do: 'chapter', num: 'Two', text: 'The candidates arrive', sub: 'Their own link, their own booklet, and the first thing Cambridge asks of them.', ms: 3400 },
       { do: 'hold', ms: 1400 },
       { do: 'goto', screen: '20_celta5.html', course: 'start', role: 'trainee', as: 'Selin Kaya', stub: ['put'], ms: 2600 },
-      { do: 'scroll', to: 420, ms: 2400 },
-      { do: 'hold', ms: 1200 },
-      { do: 'caption', text: 'This booklet is going to fill itself. Watch.' },
+      { do: 'scroll', to: 420, ms: 1800 },
+      { do: 'hold', ms: 600 },
+      /* It used to say "this booklet is going to fill itself -- watch", and
+         then nothing filled: the payoff is four minutes away, at Cambridge's
+         booklet. A caption may comment, but it must not promise something the
+         next shot does not do (Ramy, 30 Sep 2026). */
+      { do: 'caption', text: 'Cambridge\u2019s own words, on day one, in her own hands.' },
       { do: 'scroll', to: '[data-sig="conf:portfolio"]', ms: 2200 },
       { do: 'zoom', on: '[data-sig="conf:portfolio"]', scale: 1.5, ms: 900 },
       { do: 'click', on: '[data-sign="conf:portfolio"]', ms: 1800 },
@@ -159,11 +177,68 @@ var SCENES = [
 
   /* ============================================ Part 2 · The first week == */
 
+
+  {
+    title: 'The TP points arrive',
+    screen: '24_tp_points.html',
+    course: 'start', role: 'trainee', as: 'Olivia Bennett', day: 'Day 3',
+    about: 'The brief for tomorrow\u2019s lesson, released by the tutor at the end of today\u2019s session: Olivia\u2019s aim, the framework, the coursebook pages, the audio, with the other two lessons of the day beside hers. Read-only. Ramy, 30 Sep 2026: the points are released after a session, so the film no longer pretends they appear overnight.',
+    settle: 1800,
+    steps: [
+      { do: 'hold', ms: 1400 },
+      { do: 'scroll', to: 260, ms: 2000 },
+      { do: 'hold', ms: 1200 },
+      { do: 'caption', text: 'Released at the end of the session. Tomorrow\u2019s lesson, in one card.' },
+      { do: 'move', to: '.tbl .mats-read, .tbl' },
+      { do: 'hold', ms: 4200 }
+    ]
+  },
+
+  {
+    title: 'The plan',
+    screen: '1_trainee_plan_and_analysis.html',
+    course: 'start', role: 'trainee', as: 'Olivia Bennett', day: 'Day 3',
+    about: 'The longest scene, and deliberately \u2014 Ramy, 30 Sep 2026: "I don\u2019t see anything about the lesson plan\u2026 writing the lesson plan should be a nice part, and the language analysis." Olivia\u2019s next plan is BLANK on the demo (she teaches tomorrow; it is due today). The aim dictated, a lesson shape chosen, the stages appearing under it, the Language Analysis opened and read, a materials link pasted, the share switch to the volunteers going green. <b>Writes stubbed</b> so it stays blank for the next take.',
+    settle: 2000,
+    stub: ['put', 'shareMaterial'],
+    steps: [
+      { do: 'hold', ms: 1100 },
+      { do: 'click', on: '#fMain', ms: 900 },
+      { do: 'click', on: '.dictbtn', ms: 1500 },
+      { do: 'type', into: '#fMain', ms: 3800, text: 'By the end of the lesson learners will be better able to understand a short article about jobs, reading first for gist and then for detail.' },
+      { do: 'hold', ms: 1000 },
+      { do: 'click', on: '#fwBtn', ms: 1400 },
+      { do: 'hold', ms: 1400 },
+      { do: 'caption', text: 'The shape is given. The thinking is theirs.' },
+      { do: 'hold', ms: 2800 },
+      { do: 'zoom', on: '#fwBtn', scale: 1.4, ms: 900 },
+      { do: 'hold', ms: 2000 },
+      { do: 'zoom', out: true, ms: 900 },
+      /* The language analysis is half of what a CELTA plan IS, and the film
+         walked past it. It opens, and the film reads it. */
+      { do: 'scroll', to: '#laToggle', ms: 2200 },
+      { do: 'click', on: '#laToggle', ms: 1600 },
+      { do: 'hold', ms: 1600 },
+      { do: 'caption', text: 'Form, meaning, pronunciation. On the same page as the lesson.' },
+      { do: 'scroll', to: '#laSection', ms: 2400 },
+      { do: 'hold', ms: 3200 },
+      { do: 'scroll', to: '#fMatsLink', ms: 2200 },
+      { do: 'type', into: '#fMatsLink', ms: 1800, text: 'https://drive.google.com/file/d/demo-penguins-adapted/view' },
+      { do: 'hold', ms: 900 },
+      { do: 'zoom', on: '#fShareVol', scale: 1.5, ms: 900 },
+      { do: 'click', on: '#fShareVol', ms: 1800 },
+      { do: 'hold', ms: 1600 },
+      { do: 'caption', text: 'One switch, and tonight\u2019s reading is on every student\u2019s page.' },
+      { do: 'hold', ms: 3000 },
+      { do: 'zoom', out: true, ms: 1000 }
+    ]
+  },
+
   {
     title: 'A volunteer’s page',
     screen: '26_volunteer.html',
     course: 'start', role: 'volunteer', as: 'Omar', day: 'Day 1',
-    about: 'Omar has not agreed yet on the demo, so his link opens on the joining note. Turkish is chosen, <i>Kabul ediyorum</i>, and the page behind it: the next class in the course’s clock, <b>Join on Zoom</b>. <b>volunteerAgree stubbed</b> — he stays unagreed for the next take.',
+    about: 'The other end of that switch, which is why it now follows the plan rather than interrupting it (Ramy, 30 Sep 2026). Omar has not agreed yet on the demo, so his link opens on the joining note: Turkish is chosen, <i>Kabul ediyorum</i>, and behind it his page \u2014 the next class in the course\u2019s clock, the material the candidate just shared, <b>Join on Zoom</b>. <b>volunteerAgree stubbed</b> \u2014 he stays unagreed for the next take.',
     settle: 1800,
     stub: ['volunteerAgree'],
     steps: [
@@ -177,47 +252,6 @@ var SCENES = [
       { do: 'move', to: '.next .room' },
       { do: 'caption', text: 'One tap to the room.' },
       { do: 'hold', ms: 3000 }
-    ]
-  },
-
-  {
-    title: 'The TP points arrive',
-    screen: '24_tp_points.html',
-    course: 'start', role: 'trainee', as: 'Olivia Bennett', day: 'Day 3',
-    about: 'Olivia’s own lesson on the released points: aim, framework, the coursebook pages, the audio, with the other two lessons of the day beside hers for reference. Read-only.',
-    settle: 1800,
-    steps: [
-      { do: 'hold', ms: 1400 },
-      { do: 'scroll', to: 260, ms: 2000 },
-      { do: 'hold', ms: 1200 },
-      { do: 'caption', text: 'The pages, the audio, the aim. Already on the card when they wake up.' },
-      { do: 'move', to: '.tbl .mats-read, .tbl' },
-      { do: 'hold', ms: 4200 }
-    ]
-  },
-
-  {
-    title: 'The plan',
-    screen: '1_trainee_plan_and_analysis.html',
-    course: 'start', role: 'trainee', as: 'Olivia Bennett', day: 'Day 3',
-    about: 'Olivia’s next plan is BLANK on the demo (she teaches tomorrow; it is due today). The aim dictated, a lesson shape chosen, the stages appear, a Drive link pasted, the share switch to the volunteers goes green. <b>Writes stubbed</b> so it stays blank. Dictation needs Chrome with the microphone already permitted.',
-    settle: 2000,
-    stub: ['put', 'shareMaterial'],
-    steps: [
-      { do: 'hold', ms: 1100 },
-      { do: 'click', on: '#fMain', ms: 900 },
-      { do: 'click', on: '.dictbtn', ms: 1500 },
-      { do: 'type', into: '#fMain', ms: 3800, text: 'By the end of the lesson learners will be better able to understand a short article about jobs, reading first for gist and then for detail.' },
-      { do: 'hold', ms: 1000 },
-      { do: 'click', on: '#fwBtn', ms: 1400 },
-      { do: 'hold', ms: 1400 },
-      { do: 'caption', text: 'The shape is given. The thinking is theirs.' },
-      { do: 'hold', ms: 2600 },
-      { do: 'scroll', to: '#fMatsLink', ms: 2200 },
-      { do: 'type', into: '#fMatsLink', ms: 1800, text: 'https://drive.google.com/file/d/demo-penguins-adapted/view' },
-      { do: 'hold', ms: 900 },
-      { do: 'click', on: '#fShareVol', ms: 1600 },
-      { do: 'hold', ms: 2600 }
     ]
   },
 
@@ -248,10 +282,11 @@ var SCENES = [
     title: 'The trainer’s desk',
     screen: '5_tutor_dashboard.html',
     course: 'start', day: 'Day 4',
-    about: 'The counters and the rows: two waiting for feedback, one assignment to mark, and beside a name the time a plan was turned in. Read-only.',
+    about: 'The trainer\u2019s own screen, announced as one: the counters and the rows \u2014 two waiting for feedback, one assignment to mark, and beside a name the time a plan was turned in. Read-only.',
     settle: 1800,
     steps: [
-      { do: 'hold', ms: 1200 },
+      { do: 'chapter', num: 'Three', text: 'Now the trainer\u2019s screen', sub: 'Everything the course has turned in, waiting in one list.', ms: 3600 },
+      { do: 'hold', ms: 1600 },
       { do: 'move', to: '.qcard[data-tab="tp"]' },
       { do: 'hold', ms: 1600 },
       { do: 'caption', text: 'Nobody asked “did you get it?”' },
@@ -290,7 +325,7 @@ var SCENES = [
     title: 'Feedback, all at once',
     screen: '3_tutor_feedback.html',
     course: 'start', params: { trainee: 'Sofia' }, day: 'Day 4',
-    about: 'The exchange: Copy, talk it through elsewhere, Paste something back, every box fills, Return. Writes stubbed.',
+    about: 'The exchange: Copy, talk it through elsewhere, Paste something back, every box fills, Return \u2014 and then the finished thing, on the candidate\u2019s own screen, with the comments in it and a Print button under them (Ramy, 30 Sep 2026: "I want to see the finished PDF of the tutor feedback as well, with the comments"). Writes stubbed.',
     settle: 2200,
     stub: ['put'],
     steps: [
@@ -301,7 +336,17 @@ var SCENES = [
       { do: 'hold', ms: 1400 },
       { do: 'caption', text: 'The rest of the form was already there.' },
       { do: 'move', to: '#returnBtn' },
-      { do: 'hold', ms: 3200 }
+      { do: 'hold', ms: 2400 },
+      /* What the candidate opens: every teaching practice the tutor has
+         returned, the plan and the self-evaluation beside each one, and Print
+         at the foot of it. The document, not the form. */
+      { do: 'goto', screen: '4_feedback_returned.html', course: 'start', role: 'trainee', as: 'Sofia Kuznetsova', ms: 3200 },
+      { do: 'hold', ms: 2000 },
+      { do: 'caption', text: 'Her copy, the same evening. Printable, and hers to keep.' },
+      { do: 'scroll', to: 700, ms: 3000 },
+      { do: 'hold', ms: 2200 },
+      { do: 'scroll', to: 'bottom', ms: 3000 },
+      { do: 'hold', ms: 2600 }
     ]
   },
 
@@ -315,21 +360,18 @@ var SCENES = [
     steps: [
       { do: 'scroll', to: '#s1', ms: 2200 },
       { do: 'hold', ms: 1400 },
+      /* One signature in the whole film. It was drawn three times over and
+         Ramy counted five or six (Ramy, 30 Sep 2026: "I just wanted to show
+         it once"); the one that stays is Selin signing Cambridge\u2019s
+         confirmation, because that is a candidate\u2019s own hand on the record
+         Cambridge reads. Here the tutor returns the stage and the film moves
+         on. */
       { do: 'click', on: '[data-return="stage1"]', ms: 1800 },
-      { do: 'hold', ms: 700 },
-      { do: 'zoom', on: '.ink-pad', scale: 1.5, ms: 700 },
-      { do: 'draw', name: 'Jordan Blake', ms: 1500 },
-      { do: 'hold', ms: 1400 },
-      { do: 'zoom', out: true, ms: 1000 },
+      { do: 'hold', ms: 2600 },
       { do: 'caption', text: 'Signed on screen. Personal, and dated to the second.' },
       { do: 'goto', screen: '20_celta5.html', course: 'start', role: 'trainee', as: 'Deniz Arslan', stub: ['put'], ms: 3000 },
       { do: 'scroll', to: '#s1', ms: 2000 },
-      { do: 'click', on: '[data-sign="c1:signed"]', ms: 1800 },
-      { do: 'hold', ms: 700 },
-      { do: 'zoom', on: '.ink-pad', scale: 1.5, ms: 700 },
-      { do: 'draw', name: 'Deniz Arslan', ms: 1500 },
       { do: 'hold', ms: 1400 },
-      { do: 'zoom', out: true, ms: 1000 },
       { do: 'scroll', to: '#tp', ms: 2200 },
       { do: 'caption', text: 'Nothing here was typed twice.' },
       { do: 'hold', ms: 3400 }
@@ -428,11 +470,12 @@ var SCENES = [
     title: 'The assessor’s link',
     screen: '12_assessor_pack.html',
     course: 'visit', role: 'assessor', day: 'Day 19',
-    about: 'The pack from the assessor’s own read-only key: the header line, the Handbook panel, the candidates chosen first, the double-marking record, the volunteer students, the course documents. Scrolled, never clicked into. Nothing is downloaded, exported or sent.',
+    about: 'The assessor\u2019s own view, announced as one \u2014 Ramy could not tell it was in the film. Opened with the assessor\u2019s read-only key: the header line, the Handbook panel, the candidates chosen first, the double-marking record, the volunteer students, the course documents. Scrolled, never clicked into. Nothing is downloaded, exported or sent.',
     settle: 2400,
     steps: [
-      { do: 'hold', ms: 1400 },
-      { do: 'caption', text: 'Read-only. Ends with the course.' },
+      { do: 'chapter', num: 'Four', text: 'The assessor\u2019s visit', sub: 'A link of their own, read-only, that ends when the course does.', ms: 3600 },
+      { do: 'hold', ms: 1600 },
+      { do: 'caption', text: 'This is the assessor\u2019s screen. Nothing was assembled for it.' },
       { do: 'hold', ms: 2400 },
       { do: 'scroll', to: 900, ms: 2800 },
       { do: 'hold', ms: 1200 },
@@ -450,6 +493,7 @@ var SCENES = [
     settle: 2400,
     stub: ['put', 'putCourse'],
     steps: [
+      { do: 'chapter', num: 'Five', text: 'The end of the course', sub: 'The grades, Cambridge\u2019s booklet, and what the candidate is sent.', ms: 3400 },
       { do: 'hold', ms: 1200 },
       { do: 'scroll', to: 800, ms: 2400 },
       { do: 'hold', ms: 1000 },
@@ -488,7 +532,8 @@ var SCENES = [
     steps: [
       { do: 'click', on: '#cambridgePdf', ms: 2200 },
       { do: 'hold', ms: 2400 },
-      { do: 'caption', text: 'The record wrote itself.' },
+      /* Now it has: this is the shot the booklet was filling itself for. */
+      { do: 'caption', text: 'Nobody filled this in. The course did.' },
       { do: 'hold', ms: 6000 },
       { do: 'still', ms: 3200, want: 'The booklet’s pages turning: Stage 1, Stage 2, Stage 3, the tables', how: 'Scroll the drawn PDF slowly on camera; the film holds this frame for it.' }
     ]
@@ -523,17 +568,32 @@ var SCENES = [
   },
 
   {
-    title: 'Close',
-    screen: 'offer.html',
-    course: 'start',
-    about: 'The card a centre receives: what Lite is, what it costs, the four doors. The last frame.',
-    settle: 2600,
+    title: 'The report she is sent',
+    screen: '16_final_report.html',
+    course: 'finished', params: { id: 'Olivia Bennett' }, day: 'Day 20',
+    about: 'What the centre sends the candidate at the end: the confirmation line, the hours, the grade, the assessment areas, the overall comment, both tutors\u2019 signatures. Shot from the tutor\u2019s link because the room is shut to a candidate on purpose \u2014 Lite has no release step yet, and the page says so to a trainee. Read-only.',
+    settle: 5000,
     steps: [
       { do: 'hold', ms: 1800 },
-      { do: 'caption', text: 'One link, and a course happens inside it.' },
-      { do: 'hold', ms: 3000 },
-      { do: 'scroll', to: 600, ms: 3000 },
+      { do: 'zoom', on: '.name', scale: 1.7, ms: 1300 },
+      { do: 'caption', text: 'Four weeks, and it is hers.' },
+      { do: 'hold', ms: 2000 },
+      { do: 'zoom', out: true, ms: 1200 },
+      { do: 'scroll', to: 700, ms: 2800 },
+      { do: 'hold', ms: 2400 },
+      { do: 'scroll', to: 1500, ms: 2800 },
+      { do: 'caption', text: 'Nothing on it was written twice.' },
       { do: 'hold', ms: 3200 }
+    ]
+  },
+
+  {
+    title: 'Email me',
+    screen: 'film/end.html',
+    about: 'The last card, a page of the film\u2019s own: the mark, the one line, and the address \u2014 which arrives as <b>&amp;email=</b> on the film\u2019s own URL and is in no file, because this repository is public. Without it the address line is simply left out.',
+    settle: 600,
+    steps: [
+      { do: 'hold', ms: 9000 }
     ]
   },
 ];

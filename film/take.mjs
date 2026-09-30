@@ -28,6 +28,9 @@ const STORE = (readFileSync(join(HERE, 'hub-store.js'), 'utf8').match(/https:\/\
 const OWNER = readFileSync(join(HERE, '.owner-key'), 'utf8').trim();
 const arg = (n) => { const i = process.argv.indexOf(n); return i === -1 ? null : process.argv[i + 1]; };
 const SCENE = arg('--scene');
+/* The address on the last card. It is passed in, never stored: this repository
+   is public, and the film's own URL is where every other key lives too. */
+const EMAIL = arg('--email');
 
 const raw = async (b) => { for (let i = 0; i < 8; i++) { try { const r = await (await fetch(STORE, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(b) })).json(); if (r && (r.ok || r.error)) return r; } catch (e) {} await new Promise(res => setTimeout(res, 2500)); } throw new Error('the store would not answer'); };
 const courses = (await raw({ op: 'ownerCourses', owner: OWNER })).result.courses;
@@ -61,7 +64,9 @@ const errs = []; page.on('pageerror', e => errs.push(e.message));
 await page.setContent('<body style="margin:0;background:#fbfaf7"><i style="position:fixed;left:0;top:0;width:6px;height:6px;background:#ff00ff"></i></body>');
 await page.waitForTimeout(900);
 
-const url = `http://127.0.0.1:${port}/film/index.html?take=1&sk=${key('c6')}&vk=${key('c7')}&fk=${key('c4')}&o=${OWNER}` + (SCENE ? '&scene=' + SCENE : '');
+const url = `http://127.0.0.1:${port}/film/index.html?take=1&sk=${key('c6')}&vk=${key('c7')}&fk=${key('c4')}&o=${OWNER}`
+  + (SCENE ? '&scene=' + SCENE : '') + (EMAIL ? '&email=' + encodeURIComponent(EMAIL) : '');
+if (!EMAIL) console.log('no --email given, so the last card ends without an address');
 console.log('rolling' + (SCENE ? ' on scene ' + SCENE : '') + '…');
 await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 90000 });
 

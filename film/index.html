@@ -82,8 +82,16 @@
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:70px;
     transition:opacity 700ms ease;}
   .opening.gone{opacity:0; pointer-events:none;}
-  .opening h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:2.1rem; margin:0; color:var(--teal, #1e6b63);}
+  .opening .lockup{display:flex; align-items:center; gap:14px;}
+  .opening .tile{display:grid; place-items:center; width:52px; height:52px; border-radius:12px; background:#2b241a;}
+  .opening .pair{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:2.4rem; color:var(--teal, #1e6b63); line-height:1;}
+  .opening .pair .l{font-family:'Karla',sans-serif; font-size:0.78rem; font-weight:700; letter-spacing:.3em;
+    text-transform:uppercase; color:var(--grey, #6b6157); margin-left:10px; vertical-align:middle;}
   .opening p{margin:0; font-size:1rem; line-height:1.7; color:var(--grey, #6b6157); max-width:46ch;}
+  .opening .lede{font-size:1.15rem; color:var(--ink-warm, #46342a); margin-top:8px;}
+  .opening .next{font-size:0.98rem;}
+  .opening .credit{margin-top:18px; font-size:0.86rem;}
+  .opening .credit b{color:var(--ink-warm, #46342a);}
 
   /* A still frame for the two cuts that are not Lite at all -- the Classroom
      stream and the Drive folder. Until the captures exist it says so, rather
@@ -282,10 +290,24 @@
          so the day sits on screen even when no caption does, and changes only
          on a cut. Bottom left, small caps, the product's own label style. -->
     <div class="day" id="day"></div>
+    <!-- The first frame anybody sees. It carries Lite's own mark rather than
+         its name set in a serif, and Ramy's credit, and it says what the next
+         minute is -- because the shot after it is a Drive folder, and without
+         a word of warning a first-time viewer takes that FOR Lite
+         (Ramy, 30 Sep 2026). -->
     <div class="opening" id="opening">
-      <h1>Connect Lite</h1>
-      <p>A CELTA course, from the link being sent to the final report.</p>
-      <p style="font-size:0.88rem;">Nothing here needs clicking — sit back. The working demo is a separate link.</p>
+      <div class="lockup">
+        <span class="tile">
+          <svg viewBox="8 30 104 60" width="30" height="18" fill="none" aria-hidden="true">
+            <path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#d8a93a" stroke-width="13" stroke-linecap="round"></path>
+            <path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#fdfaf3" stroke-width="13" stroke-linecap="round"></path>
+          </svg>
+        </span>
+        <span class="pair"><span class="w">Connect</span><span class="l">Lite</span></span>
+      </div>
+      <p class="lede">A CELTA course, from the link being sent to the final report.</p>
+      <p class="next">First, the same course run two ways — a centre’s Google Drive, then this.</p>
+      <p class="credit">designed and built by <b>Ramy</b></p>
     </div>
   </div>
 </div>
@@ -825,7 +847,14 @@
       var own = screen.indexOf('film/') === 0;
       var url = own ? screen.slice(5) : '../' + screen;
       var q = [];
-      if (own) { who = {}; params = {}; }
+      /* The film's own pages get no keys -- but the last card needs the one
+         thing that is not in this repository: the address to write to. It
+         travels on the film's URL and is handed straight through. */
+      if (own) {
+        who = {}; params = {};
+        var mail = new URLSearchParams(location.search).get('email');
+        if (mail && screen.indexOf('end') !== -1) params = { email: mail };
+      }
       if (who.k) q.push('k=' + encodeURIComponent(who.k));
       if (who.t) q.push('t=' + encodeURIComponent(who.t));
       if (who.ak) q.push('ak=' + encodeURIComponent(who.ak));
@@ -1207,7 +1236,8 @@
        and the counter read. */
     var from = parseInt(new URLSearchParams(location.search).get('scene'), 10);
     play(from >= 1 && from <= SCENES.length ? from - 1 : 0);
-    later(function () { opening.classList.add('gone'); }, 3200);
+    /* Slower. It is the title card, and it was gone before it was read. */
+    later(function () { opening.classList.add('gone'); }, 6400);
   }
 })();
 </script>
