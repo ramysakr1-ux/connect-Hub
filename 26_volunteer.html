@@ -93,6 +93,10 @@
      (src/lib/fol/volunteer-signup-i18n.ts, English), because it has been
      read by a lawyer once already and this page is the same promise. */
   .consent{position:fixed; inset:0; z-index:40; background:oklch(23.5% 0.017 65 / .55); display:flex; align-items:flex-end; justify-content:center; padding:0;}
+  .consent .langs{display:flex; flex-wrap:wrap; gap:6px; margin:0 0 16px;}
+  .consent .langs button{font:inherit; font-size:0.78rem; font-weight:600; padding:5px 11px; border-radius:999px; cursor:pointer; border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink);}
+  .consent .langs button[aria-pressed="true"]{border-color:var(--teal); background:var(--teal); color:#fff;}
+  .consent .box[dir="rtl"]{text-align:right;} .consent .box[dir="rtl"] ul{padding:0 20px 0 0;}
   .consent .box{background:var(--paper); border-radius:18px 18px 0 0; width:min(560px, 100%); padding:26px 24px 30px; box-shadow:0 -12px 40px oklch(0% 0 0 / .18); max-height:92vh; overflow:auto; box-sizing:border-box;}
   .consent h2{font-family:'Newsreader',Georgia,serif; font-size:1.5rem; margin:0 0 4px;}
   .consent .intro{color:var(--grey); font-size:0.9rem; margin:0 0 14px;}
@@ -109,16 +113,17 @@
   .agreed button{background:none; border:0; padding:0; color:var(--teal); font:inherit; font-weight:700; cursor:pointer;}
   @media (max-width:480px){ .board{padding:16px 14px 50px;} .next{padding:16px 16px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609301005">
-<link rel="stylesheet" href="hub-theme.css?v=202609301005">
+<link rel="stylesheet" href="hub-house.css?v=202609301014">
+<link rel="stylesheet" href="hub-theme.css?v=202609301014">
 </head>
 <body class="hub-grid">
 <div class="board" id="app"></div>
 <div id="consent"></div>
-<script src="hub-shared.js?v=202609301005"></script>
-<script src="hub-attendance.js?v=202609301005"></script>
-<script src="hub-store.js?v=202609301005"></script>
-<script src="hub-sync.js?v=202609301005"></script>
+<script src="hub-shared.js?v=202609301014"></script>
+<script src="hub-attendance.js?v=202609301014"></script>
+<script src="hub-volunteer-i18n.js?v=202609301014"></script>
+<script src="hub-store.js?v=202609301014"></script>
+<script src="hub-sync.js?v=202609301014"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -230,7 +235,8 @@ function render(){
       <p class="days">${upcoming.slice(1, 9).map(d => `<span><b>${esc(shortDay(d))}</b> · ${esc(startT)}</span>`).join('')}${upcoming.length > 9 ? '<span>and ' + (upcoming.length - 9) + ' more to ' + esc(shortDay(upcoming[upcoming.length-1])) + '</span>' : ''}</p></div>` : ''}
     <div class="install-hint" id="installHint" hidden></div>
     <p class="foot">This link is yours. It stops working when the course ends.<br>If you cannot come to a class, just let your teacher know.</p>
-    ${agreedAt() ? `<p class="agreed">You agreed to the centre's note on ${esc(longDay(agreedAt().slice(0, 10)))}. <button type="button" id="readAgain">Read it again</button></p>` : ''}`;
+    <p class="foot"><a href="17_how_it_works.html?for=volunteer&amp;lang=${esc(LANG())}" lang="${esc(LANG())}">${esc(T().howLink)}</a></p>
+    ${agreedAt() ? `<p class="agreed" lang="${esc(LANG())}" dir="${I18N.isRtl(LANG()) ? 'rtl' : 'ltr'}">${esc(T().agreedOn.replace('{date}', longDay(agreedAt().slice(0, 10))))} <button type="button" id="readAgain">${esc(T().readAgain)}</button></p>` : ''}`;
   if (window.hubInstallHint) hubInstallHint($('installHint'), 'volunteer');
   if ($('readAgain')) $('readAgain').addEventListener('click', () => consent(true));
 }
@@ -247,6 +253,11 @@ function render(){
    nothing else. The register then shows the tutor who has agreed. If the
    store is not reachable at that moment, the device copy still stands and
    the stamp is retried on the next open. */
+/* Six languages for the two things they read in their own: Connect's six.
+   The page's own labels stay English -- it is an English class. */
+const I18N = window.hubVolunteerI18n || { languages: [], t: {}, pick: () => 'en', remember: () => {}, isRtl: () => false };
+const LANG = () => I18N.pick();
+const T = () => I18N.t[LANG()] || I18N.t.en || {};
 const CONSENT_KEY = 'chub:volunteerConsent:' + ((window.HubStore && HubStore.volunteerToken) ? HubStore.volunteerToken() : '');
 function agreedAt(){ const r = rec(CONSENT_KEY); return r && r.at ? r.at : ''; }
 function stamp(){
@@ -260,22 +271,21 @@ function stamp(){
 }
 function consent(readOnly){
   const host = $('consent'); if (!host) return;
-  host.innerHTML = `<div class="consent" role="dialog" aria-modal="true" aria-labelledby="cTitle"><div class="box">
-    <h2 id="cTitle">Before we begin</h2>
-    <p class="intro">Please note the following.</p>
-    <ul>
-      <li>The information you provide will be shared with the centre for teacher-training purposes.</li>
-      <li>Trainee teachers may reference it in their coursework. It will not be shared with any other party.</li>
-      <li>You may withdraw from the course at any time.</li>
-    </ul>
-    <p class="rec">I agree to being recorded, in sound or on video, during this sign-up and in lessons, for teacher-training purposes only.</p>
+  const L = LANG(), W = T();
+  host.innerHTML = `<div class="consent" role="dialog" aria-modal="true" aria-labelledby="cTitle"><div class="box" lang="${esc(L)}" dir="${I18N.isRtl(L) ? 'rtl' : 'ltr'}">
+    <div class="langs" role="group" aria-label="Language">${I18N.languages.map(l => `<button type="button" lang="${l.code}" data-lang="${l.code}" aria-pressed="${l.code === L}">${esc(l.native)}</button>`).join('')}</div>
+    <h2 id="cTitle">${esc(W.consentHeading)}</h2>
+    <p class="intro">${esc(W.consentIntro)}</p>
+    <ul>${(W.consentLines || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+    <p class="rec">${esc(W.recordingConsentLine)}</p>
     ${readOnly
-      ? `<button type="button" class="close" id="cClose">Close</button>`
-      : `<button type="button" class="agree" id="cAgree">I agree</button>
-         <p class="kept">Your agreement is kept on this device and noted on the course register${SETTINGS.centreName ? ' at ' + esc(SETTINGS.centreName) : ''}.</p>`}
+      ? `<button type="button" class="close" id="cClose">${esc(W.close)}</button>`
+      : `<button type="button" class="agree" id="cAgree">${esc(W.agreeLabel)}</button>
+         <p class="kept">${esc(W.keptNote)}</p>`}
   </div></div>`;
   document.body.style.overflow = 'hidden';
   const done = () => { host.innerHTML = ''; document.body.style.overflow = ''; };
+  host.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', () => { I18N.remember(b.dataset.lang); consent(readOnly); render(); }));
   if ($('cClose')) $('cClose').addEventListener('click', done);
   if ($('cAgree')) { $('cAgree').focus(); $('cAgree').addEventListener('click', () => {
     try { localStorage.setItem(CONSENT_KEY, JSON.stringify({ at: new Date().toISOString(), name: ME.name || '' })); } catch (e) {}
