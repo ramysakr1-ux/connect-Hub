@@ -136,22 +136,23 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} .days{grid-template-columns:1fr;} }
   @media print{ .back,.bar,#hubSync{display:none !important;} body{background:#fff;} .days{grid-template-columns:repeat(5,1fr);} .day{break-inside:avoid;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609301022">
-<link rel="stylesheet" href="hub-theme.css?v=202609301022">
+<link rel="stylesheet" href="hub-house.css?v=202609301114">
+<link rel="stylesheet" href="hub-theme.css?v=202609301114">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609301022"></script>
-<script src="hub-tracker.js?v=202609301022"></script>
-<script src="hub-rotation.js?v=202609301022"></script>
-<script src="hub-docx.js?v=202609301022"></script>
-<script src="hub-timetable-parse.js?v=202609301022"></script>
-<script src="hub-shared.js?v=202609301022"></script>
-<script src="hub-store.js?v=202609301022"></script>
-<script src="hub-sync.js?v=202609301022"></script>
+<script src="hub-due.js?v=202609301114"></script>
+<script src="hub-tracker.js?v=202609301114"></script>
+<script src="hub-rotation.js?v=202609301114"></script>
+<script src="hub-xlsx.js?v=202609301114"></script>
+<script src="hub-docx.js?v=202609301114"></script>
+<script src="hub-timetable-parse.js?v=202609301114"></script>
+<script src="hub-shared.js?v=202609301114"></script>
+<script src="hub-store.js?v=202609301114"></script>
+<script src="hub-sync.js?v=202609301114"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -783,10 +784,10 @@ function importHTML(){
   }
   if (!IMPORT_OPEN) return '';
   return `<div class="imp"><h3>Import from a sheet</h3>
-    <p>Paste from Excel or Google Sheets, or choose a Word, CSV or text file. One row per day, with columns for the date, the input sessions and any notes — a header row naming them helps but is not needed. Rows without a readable date are taken in order from the first course day.</p>
+    <p>Paste from Excel or Google Sheets, or choose an Excel, Word, CSV or text file. One row per day, with columns for the date, the input sessions and any notes — a header row naming them helps but is not needed. Rows without a readable date are taken in order from the first course day.</p>
     <textarea id="impPaste" placeholder="Paste the rows here"></textarea>
     <div class="row"><button class="btn" id="impRead">Read the paste</button>
-      <input type="file" id="impFile" accept=".docx,.csv,.tsv,.txt" style="font-size:0.78rem">
+      <input type="file" id="impFile" accept=".xlsx,.docx,.csv,.tsv,.txt" style="font-size:0.78rem">
       <button class="btn quiet" id="impClose">Close</button></div></div>`;
 }
 
@@ -803,7 +804,8 @@ function wireImport(){
   if ($('impFile')) $('impFile').addEventListener('change', async e => {
     const file = e.target.files[0]; e.target.value = ''; if (!file) return;
     try {
-      const rows = /\.docx$/i.test(file.name) && window.hubDocxBlocks
+      const rows = window.hubIsXlsx && window.hubIsXlsx(file) ? await window.hubXlsxRows(file)
+        : /\.docx$/i.test(file.name) && window.hubDocxBlocks
         ? window.hubTimetableParse.rowsFromBlocks(await window.hubDocxBlocks(file))
         : window.hubTimetableParse.rowsFromText(await file.text());
       review(rows, file.name);

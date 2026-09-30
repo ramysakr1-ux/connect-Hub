@@ -101,20 +101,21 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} .who{grid-template-columns:1fr; gap:6px;} .hrs{text-align:left;} }
   @media print{ .back,.bar,.panel,#hubSync,.seg{cursor:auto;} .bar,.panel,.back,#hubSync{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609301022">
-<link rel="stylesheet" href="hub-theme.css?v=202609301022">
+<link rel="stylesheet" href="hub-house.css?v=202609301114">
+<link rel="stylesheet" href="hub-theme.css?v=202609301114">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609301022"></script>
-<script src="hub-shared.js?v=202609301022"></script>
-<script src="hub-timetable-parse.js?v=202609301022"></script>
-<script src="hub-attendance.js?v=202609301022"></script>
-<script src="hub-store.js?v=202609301022"></script>
-<script src="hub-sync.js?v=202609301022"></script>
+<script src="hub-due.js?v=202609301114"></script>
+<script src="hub-shared.js?v=202609301114"></script>
+<script src="hub-timetable-parse.js?v=202609301114"></script>
+<script src="hub-xlsx.js?v=202609301114"></script>
+<script src="hub-attendance.js?v=202609301114"></script>
+<script src="hub-store.js?v=202609301114"></script>
+<script src="hub-sync.js?v=202609301114"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -282,25 +283,42 @@ function render(){
 
 function addHTML(){
   return `<div class="panel"><h3>Add students</h3>
-    <p>One at a time, or paste a list — one name a line, or a spreadsheet column. A second column is kept as a note (a phone number, a level, whatever you use).</p>
+    <p>One at a time, paste a list, or choose an Excel or CSV file — one name a line, or a spreadsheet column. A second column is kept as a note (a phone number, a level, whatever you use).</p>
     <div class="row"><input type="text" id="oneName" placeholder="Name"><button class="btn" id="addOne">Add</button></div>
     <p style="margin:12px 0 6px">Or paste:</p>
     <textarea id="paste" placeholder="Ayşe Demir&#10;Mehmet Yılmaz&#10;Elena Petrova"></textarea>
-    <div class="row" style="margin-top:8px"><button class="btn" id="addMany">Add the pasted list</button></div></div>`;
+    <div class="row" style="margin-top:8px"><button class="btn" id="addMany">Add the pasted list</button>
+      <input type="file" id="addFile" accept=".xlsx,.csv,.tsv,.txt" style="font-size:0.78rem" aria-label="Or choose a file"></div></div>`;
 }
 
 function addNames(rows){
   REG = REG || { students: [] };
   const have = new Set(students().map(s => s.name.trim().toLowerCase()));
+  /* A header row, when the sheet has one, says which column is which: the
+     name, a level (kept as the level when it is a CEFR code), and anything
+     else as the note. Without one: first column the name, second the note. */
+  let col = { name: 0, level: -1, note: 1 };
+  const head = rows[0] || [];
+  if (head.some(h => /^(name|student|volunteer|full name)$/i.test(String(h || '').trim()))) {
+    col = { name: -1, level: -1, note: -1 };
+    head.forEach((h, i) => {
+      const t = String(h || '').trim().toLowerCase();
+      if (col.name < 0 && /^(name|student|volunteer|full name)$/.test(t)) col.name = i;
+      else if (col.level < 0 && /^(level|cefr)$/.test(t)) col.level = i;
+      else if (col.note < 0 && t) col.note = i;
+    });
+    if (col.name < 0) col.name = 0;
+  }
   let added = 0;
   rows.forEach(r => {
-    const name = String(r[0] || '').trim();
+    const name = String(r[col.name] || '').trim();
     if (!name) return;
     /* A header row from a spreadsheet is not a person. */
     if (/^(name|student|volunteer|full name)$/i.test(name)) return;
     if (have.has(name.toLowerCase())) return;      // adding the same list twice is a mistake, not a second person
     have.add(name.toLowerCase());
-    REG.students.push({ name, note: String(r[1] || '').trim(), marks: {}, level: '', token: mintToken() });
+    const lvl = col.level >= 0 ? String(r[col.level] || '').trim().toUpperCase() : '';
+    REG.students.push({ name, note: col.note >= 0 ? String(r[col.note] || '').trim() : '', marks: {}, level: LEVELS.includes(lvl) ? lvl : '', token: mintToken() });
     added++;
   });
   REG.students.sort((a, b) => a.name.localeCompare(b.name));
@@ -318,6 +336,15 @@ function wire(){
     const text = $('paste').value;
     if (!text.trim()) { note = 'Nothing pasted yet.'; render(); return; }
     addNames(window.hubTimetableParse.rowsFromText(text));
+  });
+  /* An Excel file straight in (hub-xlsx.js reads the first sheet); CSV and
+     text go through the same reader as a paste. */
+  if ($('addFile')) $('addFile').addEventListener('change', async e => {
+    const file = e.target.files[0]; e.target.value = ''; if (!file) return;
+    try {
+      const rows = window.hubIsXlsx && window.hubIsXlsx(file) ? await window.hubXlsxRows(file) : window.hubTimetableParse.rowsFromText(await file.text());
+      addNames(rows);
+    } catch (err) { note = err && err.message ? err.message : 'That file could not be read.'; render(); }
   });
   document.querySelectorAll('[data-copy]').forEach(el => el.addEventListener('click', async () => {
     const st = students()[+el.dataset.copy]; if (!st || !st.token) return;
