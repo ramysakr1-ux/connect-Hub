@@ -53,6 +53,14 @@ const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, d
 const page = await ctx.newPage();
 const errs = []; page.on('pageerror', e => errs.push(e.message));
 
+/* The recorder starts when the context opens, before the film's page has
+   painted anything, and those first frames are an empty browser. They carry no
+   curtain cue, so the cut keeps them and the film opens on a dark frame. Give
+   the recorder a sand page with the cue on it to look at until the film is
+   there, and the cut drops the lot. */
+await page.setContent('<body style="margin:0;background:#fbfaf7"><i style="position:fixed;left:0;top:0;width:6px;height:6px;background:#ff00ff"></i></body>');
+await page.waitForTimeout(900);
+
 const url = `http://127.0.0.1:${port}/film/index.html?take=1&sk=${key('c6')}&vk=${key('c7')}&fk=${key('c4')}&o=${OWNER}` + (SCENE ? '&scene=' + SCENE : '');
 console.log('rolling' + (SCENE ? ' on scene ' + SCENE : '') + '…');
 await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 90000 });
