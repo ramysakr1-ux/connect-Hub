@@ -234,7 +234,7 @@ var SCENES = [
     screen: '5_tutor_dashboard.html',
     course: 'start', day: 'Day 4',
     about: 'The counters and the rows: two waiting for feedback, one assignment to mark, and beside a name the time a plan was turned in. Read-only.',
-    settle: 1800,
+    settle: 12000,
     steps: [
       { do: 'hold', ms: 1200 },
       { do: 'move', to: '.qcard[data-tab="tp"]' },
@@ -382,7 +382,7 @@ var SCENES = [
     screen: '25_volunteer_register.html',
     course: 'visit', day: 'Day 17',
     about: 'One tap on today’s block for the first student, the hours tick up, then the certificate: hers, already signed by the centre on the demo. <b>putCourse stubbed</b> so the tap does not stick.',
-    settle: 2200,
+    settle: 12000,
     stub: ['putCourse'],
     steps: [
       { do: 'hold', ms: 1200 },
@@ -455,7 +455,7 @@ var SCENES = [
     about: 'The July 2023 form drawn in the browser from the record: the cover, the confirmations, the three stages, every table full, every signature in ink. The line the film was made for; nothing moves under it.',
     settle: 2400,
     steps: [
-      { do: 'click', on: 'text:Cambridge', ms: 2200 },
+      { do: 'click', on: '#cambridgePdf', ms: 2200 },
       { do: 'hold', ms: 2400 },
       { do: 'caption', text: 'The record wrote itself.' },
       { do: 'hold', ms: 6000 },
