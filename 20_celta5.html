@@ -89,7 +89,7 @@
   .rating label.dis{cursor:default; opacity:.7;}
   /* Six columns do not fit a phone; the table scrolls in its own box and
      the page never scrolls sideways (design audit, 28 Sep 2026). */
-  .tablewrap{overflow-x:auto; -webkit-overflow-scrolling:touch; margin:8px 0 4px;}
+  .tablewrap{overflow-x:auto; -webkit-overflow-scrolling:touch; margin:12px 0 6px;}
   /* Cambridge's appendices: a reference, set quieter than the record itself. */
   .watbl{overflow-x:auto;}
   .watbl th small{display:block; font-weight:400; text-transform:none; letter-spacing:0; color:var(--grey); font-size:0.68rem; margin-top:2px;}
@@ -112,9 +112,21 @@
   .appeg::before{content:"\25E6"; position:absolute; left:-14px;}
   .gradetbl{overflow-x:auto; margin-top:10px;}
   .gradetbl td{vertical-align:top; font-size:0.84rem;}
-  table.grid{width:100%; border-collapse:collapse; margin:0; font-size:0.84rem;}
-  table.grid th{font-size:0.68rem; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); text-align:left; padding:6px 6px; border-bottom:1px solid var(--sand-line); font-weight:700;}
-  table.grid td{padding:6px 6px; border-bottom:1px solid var(--sand-line); vertical-align:top;}
+  /* The record's tables are the booklet's own, so they are set like a record
+     and not like a spreadsheet: ruled, not boxed; the head in small caps over
+     a firm rule; rows breathing; figures lining up. Ramy, 1 Oct 2026: "the
+     assessed teaching practice looks like a Word document. You can do better."
+     Nothing about what they hold changed -- only how they are set. */
+  table.grid{width:100%; border-collapse:collapse; margin:0; font-size:0.86rem;
+    font-variant-numeric:tabular-nums;}
+  table.grid th{font-family:'Instrument Sans','Karla',sans-serif; font-size:0.64rem; letter-spacing:.09em;
+    text-transform:uppercase; color:var(--grey); text-align:left; padding:0 10px 7px 0; font-weight:700;
+    border-bottom:1.5px solid var(--ink-warm); white-space:nowrap;}
+  table.grid td{padding:9px 10px 9px 0; border-bottom:1px solid var(--sand-line); vertical-align:top; line-height:1.45;}
+  table.grid tbody tr:last-child td{border-bottom:none;}
+  table.grid tbody tr:hover td{background:color-mix(in oklab, var(--sand-deep) 55%, transparent);}
+  table.grid td:first-child{font-weight:600; color:var(--ink);}
+  table.grid th:last-child, table.grid td:last-child{padding-right:0;}
   table.grid td.code{font-weight:700; width:34px; color:var(--gold-deep);}
   table.grid td.mark{width:96px; white-space:nowrap;}
   table.grid tr.topic td{background:var(--sand-deep); font-weight:700; font-size:0.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--grey);}
@@ -181,8 +193,8 @@
     textarea, input{border:0; background:none; padding:0;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610010053">
-<link rel="stylesheet" href="hub-theme.css?v=202610010053">
+<link rel="stylesheet" href="hub-house.css?v=202610010123">
+<link rel="stylesheet" href="hub-theme.css?v=202610010123">
 </head>
 <body class="hub-celta5">
 <div class="board">
@@ -195,17 +207,17 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202610010053"></script>
-<script src="hub-ink.js?v=202610010053"></script>
-<script src="assignment-defaults.js?v=202610010053"></script>
-<script src="celta5-text.js?v=202610010053"></script>
+<script src="celta5-pdf.js?v=202610010123"></script>
+<script src="hub-ink.js?v=202610010123"></script>
+<script src="assignment-defaults.js?v=202610010123"></script>
+<script src="celta5-text.js?v=202610010123"></script>
 <script src="celta5-appendix.js?v=202609302308"></script>
-<script src="celta5-criteria.js?v=202610010053"></script>
-<script src="hub-tracker.js?v=202610010053"></script>
-<script src="observation-defaults.js?v=202610010053"></script>
-<script src="hub-shared.js?v=202610010053"></script>
-<script src="hub-store.js?v=202610010053"></script>
-<script src="hub-sync.js?v=202610010053"></script>
+<script src="celta5-criteria.js?v=202610010123"></script>
+<script src="hub-tracker.js?v=202610010123"></script>
+<script src="observation-defaults.js?v=202610010123"></script>
+<script src="hub-shared.js?v=202610010123"></script>
+<script src="hub-store.js?v=202610010123"></script>
+<script src="hub-sync.js?v=202610010123"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -596,7 +608,12 @@ function render(){
         ${signature(fint, 'signed', { o:'fint', mine: tut, prefill: tutorName(), label:'Tutor’s name, to sign', button:'Sign' })}
       </div>
     </div>
-    ${tut || fint.gradeReview ? `<div class="half ${tut?'mine':''}" style="margin-top:14px"><h3>For the CELTA Grade Review <small>tutor comments on Stage 3 action points</small></h3>
+    <!-- Always on the page. Ramy, 1 Oct 2026: "I still don't see the part under
+         the final declaration... the part that should be filled out if someone
+         is a fail, anyone's portfolio going to Cambridge. Please bring it
+         back." It was there for a tutor and invisible to a candidate until a
+         tutor had written in it, which is how it went missing. -->
+    ${true ? `<div class="half ${tut?'mine':''}" style="margin-top:14px"><h3>For the CELTA Grade Review <small>tutor comments on Stage 3 action points</small></h3>
       <p class="note" style="margin:0 0 8px">Completed for every candidate whose portfolio goes to Cambridge English. State whether the candidate did or did not demonstrate effectiveness in the areas identified, referring to feedback in final lessons and/or written assignments.</p>
       ${field(fint, 'gradeReview', 'Tutor comments on the action points', { o:'fint', mine: tut })}
     </div>` : ''}

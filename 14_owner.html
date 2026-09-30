@@ -158,7 +158,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610010053">
+<link rel="stylesheet" href="hub-house.css?v=202610010123">
 </head>
 <body>
 <div class="board">
@@ -182,8 +182,8 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610010053"></script>
-<script src="hub-store.js?v=202610010053"></script>
+<script src="hub-shared.js?v=202610010123"></script>
+<script src="hub-store.js?v=202610010123"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -412,6 +412,16 @@ function render(courses, msg){
           <button class="btn small" type="button" data-copy="${esc(base() + 'invite.html?ak=' + encodeURIComponent(c.assessorKey))}">Copy</button>
           ${SHOW_URLS ? `<code>${esc(base() + 'invite.html?ak=' + encodeURIComponent(c.assessorKey))}</code>` : ''}
         </div>
+        <!-- A volunteer student's own link. It is not on the course row, so it
+             is fetched from the course when asked for -- and it is re-minted
+             whenever the demo is seeded again, which is exactly why copying it
+             out of a chat message was the wrong way round (Ramy, 1 Oct 2026:
+             "put the links in the cards"). -->
+        <div class="link">
+          <b>Volunteer link</b>
+          <span class="note">One of the volunteer students: their own page, the class to join, their attendance and the certificate.</span>
+          <button class="btn small" type="button" data-vol="${esc(c.id)}" data-key="${esc(c.tutorKey)}">Copy</button>
+        </div>
         <!-- Showing a course to somebody meant copying three links out of
              here one at a time and writing the same note around them again
              (Ramy, 26 Sep 2026: "could I ship them to people from there?").
@@ -577,6 +587,22 @@ $('app').addEventListener('click', async e => {
       if (!c) return;
       const subject = 'Connect Lite — ' + ((c.settings && c.settings.courseName) || c.name || c.id);
       location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(await noteFor(c));
+      return;
+    }
+    const v = e.target.closest('[data-vol]');
+    if (v) {
+      const was = v.textContent;
+      v.textContent = 'Finding…'; v.disabled = true;
+      try {
+        const c = await HubStore.call({ op: 'course', key: v.dataset.key });
+        const st = ((c && c.volunteers) || {}).students || [];
+        const first = st.filter(x => x && x.token)[0];
+        if (!first) { v.textContent = 'No volunteers yet'; v.disabled = false; setTimeout(() => { v.textContent = was; }, 2200); return; }
+        /* Put the label back before the copy helper takes over, or it
+           restores "Finding…" when it is done. */
+        v.disabled = false; v.textContent = was;
+        await hubCopyButton(v, base() + '26_volunteer.html?v=' + encodeURIComponent(first.token));
+      } catch (err) { v.textContent = 'Could not reach the course'; v.disabled = false; setTimeout(() => { v.textContent = was; }, 2600); }
       return;
     }
     const b = e.target.closest('[data-copy]');

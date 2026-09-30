@@ -190,7 +190,8 @@
   .btn{display:inline-block; text-decoration:none; font-family:'Karla',sans-serif; font-size:0.83rem; font-weight:700; padding:8px 16px; border-radius:20px; border:1.5px solid var(--sand-line); background:var(--card); color:var(--ink); cursor:pointer;}
   .btn.ghost{border-color:var(--teal); color:var(--teal); background:none;}
   .btn.primary{background:var(--teal); border-color:var(--teal); color:var(--paper);}
-  .toolbar{display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin:18px 0 0;}
+  .toolbar{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; margin:16px 0 0;}
+  .tools-right{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
   .empty{text-align:center; padding:40px 20px; color:var(--grey);}
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
@@ -241,7 +242,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610010053">
+<link rel="stylesheet" href="hub-house.css?v=202610010123">
 </head>
 <body>
 <div class="board">
@@ -272,14 +273,14 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202610010053"></script>
-<script src="hub-shared.js?v=202610010053"></script>
-<script src="assignment-defaults.js?v=202610010053"></script>
-<script src="hub-tracker.js?v=202610010053"></script>
-<script src="hub-rotation.js?v=202610010053"></script>
-<script src="hub-attendance.js?v=202610010053"></script>
-<script src="hub-store.js?v=202610010053"></script>
-<script src="hub-sync.js?v=202610010053"></script>
+<script src="observation-defaults.js?v=202610010123"></script>
+<script src="hub-shared.js?v=202610010123"></script>
+<script src="assignment-defaults.js?v=202610010123"></script>
+<script src="hub-tracker.js?v=202610010123"></script>
+<script src="hub-rotation.js?v=202610010123"></script>
+<script src="hub-attendance.js?v=202610010123"></script>
+<script src="hub-store.js?v=202610010123"></script>
+<script src="hub-sync.js?v=202610010123"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -684,7 +685,13 @@ function renderList(){
      "I don't see the most important document for the assessor, which is the
      provisional and final grades." They are one button now, beside the
      tracker, at the top of the sheet. */
-  $('toolbar').innerHTML = `<a class="btn primary" href="7_candidate_tracker.html">Candidate tracker</a><a class="btn" href="13_grades_report.html">Grades</a>${appianBtn('ghost')}<button class="btn-print" type="button" onclick="window.print()">Print / Save as PDF</button>`;
+  /* Ramy, 1 Oct 2026: "the top part is crowded... I don't think we need
+     candidate tracker and grades on top, move Appian to the right, print
+     should be somewhere else." So the masthead carries nothing that the page
+     already offers: the tracker and the grades live in The whole cohort at
+     once, where they belong, and the two things that are neither reading nor
+     navigation -- Appian and Print -- sit quietly at the right. */
+  $('toolbar').innerHTML = `<span class="tools-right">${appianBtn('ghost')}<button class="btn-print" type="button" onclick="window.print()">Print / Save as PDF</button></span>`;
   $('app').innerHTML = `
     ${checksHTML()}
     <!-- Handbook 14.1 opens its list with "Candidate portfolios - clearly
@@ -731,9 +738,9 @@ function renderList(){
          the candidates instead"). Same shape as the documents below -- a line
          and a link. -->
     <div class="panel">${n ? `
+      <div class="docrow"><span>Provisional and final grades, in Cambridge&rsquo;s own fields, to copy into Appian</span><a href="13_grades_report.html">Open the grades</a></div>
       <div class="docrow"><span>Every candidate &mdash; teaching practice, assignments and where each one stands</span><a href="7_candidate_tracker.html">Open the tracker</a></div>
       <div class="docrow"><span>The candidates&rsquo; own aims for the last two teaching practices, by group</span><a href="21_tp_grid.html">Open TP7&amp;8 grid</a></div>
-      <div class="docrow"><span>Provisional and final grades, in Cambridge&rsquo;s own fields, to copy into Appian</span><a href="13_grades_report.html">Open the grades</a></div>
     ` : '<div class="empty">No candidates on the course yet.</div>'}</div>
 
     <h2 class="sect">Double-marking record <small>Handbook 9.2.3: ${sample} of each assignment for ${n} candidate${n===1?'':'s'}</small></h2>
@@ -866,7 +873,7 @@ function volunteerStudents(){
 /* Matched against the TITLE only -- the Handbook reference in the small print
    sits on half the sections, and matching the whole heading left everything
    open. */
-const OPEN_SECTIONS = /^(The course against the Handbook|Candidates you are observing|Every other candidate|Candidate portfolios)/i;
+const OPEN_SECTIONS = /^(The course against the Handbook|Candidates you are observing|Every other candidate|Candidate portfolios|The whole cohort)/i;
 function foldSections(root){
   if (!root) return;
   const heads = [...root.querySelectorAll('h2.sect')];

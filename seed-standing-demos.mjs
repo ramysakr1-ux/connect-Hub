@@ -547,10 +547,14 @@ const SHARES = [
   [9, '21:00', 1, 'Comparatives: picture prompts', 'https://drive.google.com/file/d/demo-share-comparatives/view', 'handout'],
   [15, '20:30', 4, 'Making arrangements: role cards', 'https://drive.google.com/file/d/demo-share-rolecards/view', 'worksheet'],
 ];
+/* Six rows, one per candidate in a group -- and a course of twelve has two
+   groups, so it wraps rather than running off the end (found seeding c7 with
+   twelve, 1 Oct 2026). */
 const GRID = [
   ['Grammar', 'Speaking', 'Speakout B1 unit 7'], ['Vocabulary', 'Reading', 'Speakout B1 unit 8'], ['Grammar', 'Listening', 'Speakout B1 unit 9'],
   ['Functional language', 'Writing', 'Speakout B1 unit 7'], ['Reading', 'Grammar', 'Speakout B1 unit 10'], ['Speaking', 'Vocabulary', 'Speakout B1 unit 8'],
 ];
+const gridFor = ci => GRID[ci % GRID.length];
 
 /* the candidates' records */
 let written = 0;
@@ -581,8 +585,9 @@ if (WRITE) {
   }
   if (WHICH === 'visit') {
     for (const [ci, p] of people.entries()) {
-      await must('gridSet tp7', { op: 'gridSet', key: KEY, token: p.token, tp: '7', main: GRID[ci][0], sub: GRID[ci][1], material: GRID[ci][2], at: iso(13, '1' + (ci + 2) + ':' + (10 + ci * 7)) });
-      await must('gridSet tp8', { op: 'gridSet', key: KEY, token: p.token, tp: '8', main: GRID[ci][1], sub: GRID[ci][0], material: GRID[ci][2], at: iso(13, '1' + (ci + 2) + ':' + (40 + ci * 3)) });
+      const gr = gridFor(ci), hh = 10 + (ci % 8);
+      await must('gridSet tp7', { op: 'gridSet', key: KEY, token: p.token, tp: '7', main: gr[0], sub: gr[1], material: gr[2], at: iso(13, hh + ':' + String(10 + (ci * 7) % 50).padStart(2, '0')) });
+      await must('gridSet tp8', { op: 'gridSet', key: KEY, token: p.token, tp: '8', main: gr[1], sub: gr[0], material: gr[2], at: iso(13, hh + ':' + String(5 + (ci * 3) % 50).padStart(2, '0')) });
     }
     for (const g of GROUPS) await must(`gridRelease ${g}`, { op: 'gridRelease', key: KEY, group: g, released: true, due: iso(14, '17:00') });
   }
