@@ -14,6 +14,15 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
+## 30 Sep 2026 — a volunteer agrees once (versions 44, 45, 46)
+Version 44: `shareMaterial` / `unshareMaterial` (course kind `shared`, appended
+under the lock; a trainee cannot write a course record). Version 45: the
+volunteer boot sends `marks` + `level` — without them the student's page and
+certificate showed zero hours. Version 46, see
+`2026-09-30-volunteer-agrees-once.md`: `volunteerAgree`, the one write a
+volunteer may make (their own `agreed` stamp, set once), and `agreed` on the
+boot. All three verified from Node against c5.
+
 ## 30 Sep 2026 — the volunteer register and a volunteer's own link
 See `2026-09-30-volunteer-register-and-link.md`. Course kind `volunteers`
 (tutors + assessor only; a candidate gets null), a volunteer's link `?v=` that
