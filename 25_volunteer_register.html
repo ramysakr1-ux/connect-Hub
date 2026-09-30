@@ -75,6 +75,9 @@
   .seg{width:15px; height:17px; border-radius:3px; border:0; padding:0; cursor:pointer; background:oklch(88% 0.008 80);}
   .seg.here{background:var(--teal);}
   .seg.miss{background:oklch(88% 0.055 27);}
+  .seg.part{background:oklch(85% 0.09 78);}
+  .lvl select{font-family:inherit; font-size:0.74rem; padding:1px 4px; margin-left:8px; border:1px solid var(--sand-line); border-radius:5px; background:var(--paper); color:var(--grey);}
+  .lvltag{display:inline-block; margin-left:8px; font-size:0.72rem; font-weight:700; letter-spacing:.06em; color:var(--gold-deep); background:var(--box); padding:1px 7px; border-radius:999px;}
   .seg.soon{background:oklch(93% 0.006 80); cursor:default;}
   .seg:disabled{cursor:default;}
   /* Focus must not eat the fill. The block you just tapped came back white
@@ -93,19 +96,20 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} .who{grid-template-columns:1fr; gap:6px;} .hrs{text-align:left;} }
   @media print{ .back,.bar,.panel,#hubSync,.seg{cursor:auto;} .bar,.panel,.back,#hubSync{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609300919">
-<link rel="stylesheet" href="hub-theme.css?v=202609300919">
+<link rel="stylesheet" href="hub-house.css?v=202609300930">
+<link rel="stylesheet" href="hub-theme.css?v=202609300930">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609300919"></script>
-<script src="hub-shared.js?v=202609300919"></script>
-<script src="hub-timetable-parse.js?v=202609300919"></script>
-<script src="hub-store.js?v=202609300919"></script>
-<script src="hub-sync.js?v=202609300919"></script>
+<script src="hub-due.js?v=202609300930"></script>
+<script src="hub-shared.js?v=202609300930"></script>
+<script src="hub-timetable-parse.js?v=202609300930"></script>
+<script src="hub-attendance.js?v=202609300930"></script>
+<script src="hub-store.js?v=202609300930"></script>
+<script src="hub-sync.js?v=202609300930"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -146,10 +150,30 @@ function teachingDays(){
     const d = (+b[1]*60 + +b[2]) - (+a[1]*60 + +a[2]);
     return d > 0 ? n + d : n;
   }, 0);
-  return { days: tt.days.filter(d => d.tp).map(d => d.date), hoursPerDay: mins / 60 };
+  return { days: tt.days.filter(d => d.tp).map(d => d.date), hoursPerDay: mins / 60,
+           lessons: slots.length, lessonMinutes: slots.length ? Math.round(mins / slots.length) : 0 };
 }
 
 const students = () => (REG && Array.isArray(REG.students)) ? REG.students : [];
+const A = window.hubAttendance;
+const LEVELS = ['A1','A2','A2+','B1','B2','C1','C2'];
+
+/* A register written before the three tiers existed held `here: [dates]`,
+   which meant "in the room". They become marks of 'present', so nothing a
+   tutor recorded is lost and nobody's hours move (30 Sep 2026). */
+function migrateMarks(){
+  if (!REG || !Array.isArray(REG.students)) return false;
+  let changed = false;
+  REG.students.forEach(st => {
+    if (st.marks) return;
+    st.marks = {};
+    (st.here || []).forEach(d => { st.marks[d] = 'present'; });
+    delete st.here;
+    changed = true;
+  });
+  if (changed && IS_TUTOR) { try { localStorage.setItem(KEY, JSON.stringify(REG)); } catch(e) {} }
+  return changed;
+}
 
 /* EACH STUDENT'S OWN LINK. Minted here, in the tutor's browser, as
    "<courseId>-<20 hex>": the course half lets the store find the register
@@ -174,7 +198,10 @@ function mintMissing(){
   if (changed) { try { localStorage.setItem(KEY, JSON.stringify(REG)); } catch(e) {} }
   return changed;
 }
-const hoursOf = (st, perDay) => (st.here || []).length * perDay;
+/* Hours come from the shared engine, never from counting marks here: the
+   register, the student's page and the certificate all read the same file so
+   they cannot drift. */
+const recordOf = (st, days, lessons, lessonMinutes) => A.record(st.marks || {}, days, lessons, lessonMinutes);
 const fmtH = h => (Math.round(h * 100) / 100).toString().replace(/\.00$/, '');
 
 function persist(word){
@@ -211,21 +238,22 @@ function render(){
   }
 
   app.innerHTML = head + bar + `<div class="reg">${list.map((st, i) => {
-    const hrs = hoursOf(st, hoursPerDay);
+    const r = recordOf(st, days, lessons, lessonMinutes);
     return `<div class="who">
       <div>
-        <div class="nm">${esc(st.name)}${st.note ? '<small>' + esc(st.note) + '</small>' : ''}</div>
-        <div class="segs">${days.map(d => {
-          const here = (st.here || []).indexOf(d) >= 0;
-          const past = d < TODAY;
-          const cls = here ? 'here' : past ? 'miss' : 'soon';
-          const what = here ? 'In the room' : past ? 'Not marked' : 'Still to come';
+        <div class="nm">${esc(st.name)}${IS_TUTOR
+          ? `<span class="lvl"><select data-lvl="${i}"><option value="">Level</option>${LEVELS.map(l => `<option value="${l}"${st.level === l ? ' selected' : ''}>${l}</option>`).join('')}</select></span>`
+          : (st.level ? '<span class="lvltag">' + esc(st.level) + '</span>' : '')}${st.note ? '<small>' + esc(st.note) + '</small>' : ''}</div>
+        <div class="segs">${r.days.map(x => {
+          const past = x.date < TODAY;
+          const cls = x.tier === 'present' ? 'here' : x.tier === 'partial' ? 'part' : past ? 'miss' : 'soon';
+          const what = x.tier === 'absent' && !past ? 'Still to come' : A.describe(x.tier, lessons, lessonMinutes);
           return IS_TUTOR
-            ? `<button type="button" class="seg ${cls}" data-i="${i}" data-d="${esc(d)}" title="${dm(d)} — ${what}"></button>`
-            : `<span class="seg ${cls}" title="${dm(d)} — ${what}"></span>`;
+            ? `<button type="button" class="seg ${cls}" data-i="${i}" data-d="${esc(x.date)}" title="${dm(x.date)} — ${esc(what)}"></button>`
+            : `<span class="seg ${cls}" title="${dm(x.date)} — ${esc(what)}"></span>`;
         }).join('')}</div>
       </div>
-      <div class="hrs"><b>${fmtH(hrs)} h</b><small>${(st.here||[]).length} of ${days.length} days</small>
+      <div class="hrs"><b>${fmtH(r.hours)} h</b><small>${r.present} of ${days.length} days${r.partial ? ' · ' + r.partial + ' part' : ''}</small>
         ${IS_TUTOR ? `<div class="acts">${st.token
             ? `<button type="button" class="btn sm" data-copy="${i}">Copy their link</button><a class="btn quiet sm" href="27_volunteer_certificate.html?who=${encodeURIComponent(st.token)}">Certificate</a>`
             : `<span class="nolink" title="The course id has not arrived from the store yet">No link yet</span>`}<button type="button" class="btn quiet sm" data-rm="${i}">Remove</button></div>` : ''}</div>
@@ -233,10 +261,13 @@ function render(){
   }).join('')}</div>
   <p class="legend">
     <span><span class="seg here"></span>in the room</span>
+    <span><span class="seg part"></span>came for part of it</span>
     <span><span class="seg miss"></span>not marked, day has passed</span>
     <span><span class="seg soon"></span>still to come</span>
-    <span>${fmtH(hoursPerDay)} h a day · ${days.length} teaching days · ${fmtH(days.length * hoursPerDay)} h if somebody comes to all of them</span>
-  </p>`;
+    <span>Tap to change.</span>
+  </p>
+  <p class="legend">${lessons} lesson${lessons === 1 ? '' : 's'} of ${lessonMinutes} minutes a day · ${A.lessonsNeededForPresent(lessons)} of them counts as being in the room, and credits the whole ${fmtH(hoursPerDay)} hours · ${days.length} teaching days, ${fmtH(days.length * hoursPerDay)} h if somebody comes to all of them.</p>`;
+
   wire();
 }
 
@@ -260,7 +291,7 @@ function addNames(rows){
     if (/^(name|student|volunteer|full name)$/i.test(name)) return;
     if (have.has(name.toLowerCase())) return;      // adding the same list twice is a mistake, not a second person
     have.add(name.toLowerCase());
-    REG.students.push({ name, note: String(r[1] || '').trim(), here: [], token: mintToken() });
+    REG.students.push({ name, note: String(r[1] || '').trim(), marks: {}, level: '', token: mintToken() });
     added++;
   });
   REG.students.sort((a, b) => a.name.localeCompare(b.name));
@@ -295,11 +326,18 @@ function wire(){
      not is worse than an empty one, and a certificate is printed off it. */
   document.querySelectorAll('.seg[data-i]').forEach(el => el.addEventListener('click', () => {
     const st = students()[+el.dataset.i]; if (!st) return;
-    st.here = st.here || [];
-    const at = st.here.indexOf(el.dataset.d);
-    if (at >= 0) st.here.splice(at, 1); else st.here.push(el.dataset.d);
-    st.here.sort();
-    persist(at >= 0 ? 'Unmarked' : 'Marked');
+    st.marks = st.marks || {};
+    const next = A.nextMark(st.marks[el.dataset.d] || '');
+    if (next) st.marks[el.dataset.d] = next; else delete st.marks[el.dataset.d];
+    persist(next === 'present' ? 'In the room' : next === 'partial' ? 'Part of it' : 'Unmarked');
+  }));
+  /* The level this volunteer's class is at. Bare CEFR codes, the same list
+     Connect uses -- Ramy, 20 Aug 2026: "Elementary" and "A2" are the same
+     fact twice. It goes on their certificate. */
+  document.querySelectorAll('[data-lvl]').forEach(el => el.addEventListener('change', () => {
+    const st = students()[+el.dataset.lvl]; if (!st) return;
+    st.level = el.value;
+    persist(el.value ? 'Level ' + el.value : 'Level cleared');
   }));
 }
 

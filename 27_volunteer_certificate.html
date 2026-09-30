@@ -3,25 +3,34 @@
   Connect Lite — a volunteer student's certificate of attendance
   © 2026 Ramy Sakr. All rights reserved.
 
-  Ramy, 30 Sep 2026: "a nice certificate of attendance at the end, just to
-  encourage them to attend."
+  Ramy, 30 Sep 2026: "that certificate needs to look more like a certificate…
+  with the number of hours and the level mentioned on it. It could be sent as
+  a PDF, emailed, or printed. So work on the design." And: not a copy of
+  Connect's, which is a different thing for a different product.
 
-  WHAT IT IS. One page, printed. The centre's name and logo, the student's
-  name, the course, the dates, the hours they actually attended and how many
-  classes, and a line for the centre to sign. Nothing decorative that a
-  printer will turn into a grey smear, and no claim the register does not
-  support.
+  WHAT MAKES IT READ AS A CERTIFICATE AND NOT A RECEIPT
+  - Landscape. Every certificate anyone has ever been handed is landscape, and
+    a portrait page of facts reads as an invoice however it is set.
+  - One thing is large: the name. Everything else is support for it.
+  - A ruled border with corner marks, in gold, drawn in CSS so it prints
+    crisply at any size and needs no image.
+  - Centred, symmetrical, generous margins. Certificates are formal objects
+    and formality here is literally symmetry.
+  - Small caps and letter-spacing for the labels, a serif for the words that
+    matter. The hours and the level sit in the middle as two plain facts,
+    because they are what the document is FOR.
+  - Nothing that looks like software: no cards, no rounded boxes, no pills.
 
-  WHERE THE NUMBERS COME FROM. The register the tutor marked, counted against
-  the timetable's teaching days -- the same arithmetic as their own page and
-  the register, so the three can never disagree. It says HOURS ATTENDED, not
-  hours offered.
+  WHAT IT CLAIMS. Only what the register supports: hours ATTENDED, counted by
+  hub-attendance.js, the same file the register and the student's own page
+  read, so the three can never disagree. The level is the one recorded against
+  that student on the register.
 
-  WHO CAN OPEN IT. The student, on their own link, once they are over the
-  centre's threshold; and a tutor, for any student on the register, at any
-  time -- a centre sometimes has to print one early, and that is the centre's
-  call to make. A student below the threshold is told how many classes are
-  left rather than shown a certificate they have not earned.
+  PDF AND EMAIL. Print gives a PDF on every device -- that is the button.
+  Lite sends no email and never has; the honest answer is that you save the
+  PDF and send it yourself, and the page says so rather than offering a
+  button that does nothing. `mailto:` opens the centre's own mail with the
+  student named and the file to be attached by hand.
 -->
 <html lang="en">
 <head>
@@ -30,71 +39,86 @@
 <link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
 <title>Certificate of attendance</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;0,700;1,400&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --sand:oklch(98.8% 0.006 85); --sand-line:oklch(85.5% 0.02 80); --paper:oklch(99.5% 0.004 90);
-    --ink:oklch(23.5% 0.017 65); --teal:oklch(37.5% 0.058 195); --grey:oklch(51% 0.017 70);
-    --gold:oklch(63% 0.096 72); --gold-deep:oklch(52% 0.098 70); --faint:oklch(60% 0.012 80);
+    --sand:oklch(98.8% 0.006 85); --sand-line:oklch(85.5% 0.02 80); --paper:oklch(99.6% 0.003 90);
+    --ink:oklch(21% 0.016 65); --teal:oklch(37.5% 0.058 195); --grey:oklch(51% 0.017 70);
+    --gold:oklch(63% 0.096 72); --gold-deep:oklch(52% 0.098 70); --faint:oklch(62% 0.012 80);
   }
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
-  .board{max-width:860px; margin:0 auto; padding:22px 20px 60px;}
-  .bar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:0 0 16px;}
-  .btn{font-family:'Karla',sans-serif; font-size:0.86rem; font-weight:700; padding:10px 20px; border-radius:8px; border:0; background:var(--teal); color:#fff; cursor:pointer; text-decoration:none;}
+  .board{max-width:1120px; margin:0 auto; padding:22px 20px 60px;}
+  .bar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:0 0 18px;}
+  .btn{font-family:'Karla',sans-serif; font-size:0.86rem; font-weight:700; padding:10px 20px; border-radius:8px; border:0; background:var(--teal); color:#fff; cursor:pointer; text-decoration:none; display:inline-block;}
   .btn.quiet{background:none; color:var(--grey); border:1.5px solid var(--sand-line);}
-  .note{font-size:0.82rem; color:var(--grey); line-height:1.55;}
+  .note{font-size:0.82rem; color:var(--grey); line-height:1.55; max-width:52ch;}
 
-  .cert{background:var(--paper); border:1px solid var(--sand-line); border-radius:12px;
-    padding:52px 56px 44px; position:relative; overflow:hidden;}
-  .cert::before{content:''; position:absolute; inset:0; border:2px solid var(--gold); border-radius:12px; opacity:.35; pointer-events:none; margin:14px;}
-  .logo{height:46px; width:auto; display:block; margin:0 0 18px;}
-  .centre{font-size:0.78rem; letter-spacing:.16em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:0 0 30px;}
-  .kind{font-size:0.74rem; letter-spacing:.2em; text-transform:uppercase; color:var(--gold-deep); font-weight:700; margin:0 0 6px;}
-  h1{font-family:'Newsreader',Georgia,serif; font-size:2.1rem; font-weight:700; margin:0 0 26px; line-height:1.15;}
-  .awarded{font-size:0.9rem; color:var(--grey); margin:0 0 6px;}
-  .who{font-family:'Newsreader',Georgia,serif; font-size:2.4rem; font-weight:700; margin:0 0 4px; line-height:1.15;}
-  .rule{height:1px; background:var(--sand-line); margin:14px 0 24px;}
-  .body{font-size:1rem; line-height:1.75; max-width:56ch;}
-  .body b{font-weight:700;}
-  .facts{display:flex; gap:38px; flex-wrap:wrap; margin:28px 0 0;}
-  .fact .n{font-family:'Newsreader',Georgia,serif; font-size:1.7rem; font-weight:700; display:block; line-height:1.1;}
-  .fact .l{font-size:0.74rem; letter-spacing:.09em; text-transform:uppercase; color:var(--grey); font-weight:700;}
-  .sign{display:flex; gap:44px; flex-wrap:wrap; margin:44px 0 0; align-items:flex-end;}
-  .sign .slot{min-width:220px;}
-  .sign .line{height:1px; background:var(--ink); opacity:.45; margin:0 0 6px;}
-  .sign .l{font-size:0.74rem; letter-spacing:.09em; text-transform:uppercase; color:var(--grey); font-weight:700;}
-  .issued{font-size:0.78rem; color:var(--faint); margin:26px 0 0;}
+  /* THE CERTIFICATE ITSELF. Landscape, ruled, centred. A4 landscape is
+     297x210mm; the sheet keeps that ratio on screen so what you see is what
+     prints. */
+  .sheet{position:relative; background:var(--paper); aspect-ratio:297/210; width:100%;
+    box-shadow:0 1px 3px oklch(0% 0 0 / .07), 0 12px 32px oklch(0% 0 0 / .06);
+    display:flex; align-items:center; justify-content:center; overflow:hidden;}
+  /* Two rules, a hairline inside a heavier one: the oldest trick in
+     certificate setting and the cheapest way to say "this is a document". */
+  .rule-out{position:absolute; inset:3.2%; border:2px solid var(--gold); opacity:.55;}
+  .rule-in{position:absolute; inset:4.4%; border:1px solid var(--gold); opacity:.4;}
+  /* Corner marks. Four small right-angles that sit over the rules. */
+  .corner{position:absolute; width:26px; height:26px; border:0; opacity:.75;}
+  .corner i{position:absolute; background:var(--gold);}
+  .corner i.h{height:2px; width:26px; top:0;} .corner i.v{width:2px; height:26px; left:0;}
+  .c-tl{top:3.2%; left:3.2%;} .c-tr{top:3.2%; right:3.2%; transform:scaleX(-1);}
+  .c-bl{bottom:3.2%; left:3.2%; transform:scaleY(-1);} .c-br{bottom:3.2%; right:3.2%; transform:scale(-1);}
+
+  .inner{position:relative; text-align:center; padding:5.5% 9% 5%; width:100%; box-sizing:border-box;}
+  .logo{height:40px; width:auto; display:block; margin:0 auto 12px;}
+  .centre{font-size:0.72rem; letter-spacing:.26em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:0 0 20px;}
+  .kind{font-family:'Newsreader',Georgia,serif; font-size:1.05rem; font-style:italic; color:var(--gold-deep); margin:0 0 4px;}
+  .kind-rule{width:54px; height:1px; background:var(--gold); margin:10px auto 22px; opacity:.6;}
+  .awarded{font-size:0.82rem; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); font-weight:700; margin:0 0 10px;}
+  .who{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:clamp(1.9rem, 4.6vw, 3.1rem); line-height:1.08; margin:0 0 6px;}
+  .who-rule{width:min(58%, 420px); height:1px; background:var(--sand-line); margin:14px auto 20px;}
+  .body{font-family:'Newsreader',Georgia,serif; font-size:clamp(0.92rem, 1.35vw, 1.06rem); line-height:1.75; color:var(--ink); max-width:62ch; margin:0 auto;}
+  /* The two facts the document exists for. */
+  .facts{display:flex; justify-content:center; gap:clamp(30px, 6vw, 68px); margin:22px 0 0;}
+  .fact .n{font-family:'Newsreader',Georgia,serif; font-size:clamp(1.5rem, 3vw, 2.1rem); font-weight:700; display:block; line-height:1.05;}
+  .fact .l{font-size:0.66rem; letter-spacing:.16em; text-transform:uppercase; color:var(--grey); font-weight:700; display:block; margin-top:4px;}
+  .sign{display:flex; justify-content:center; gap:clamp(40px, 9vw, 110px); margin:clamp(24px, 4vh, 44px) 0 0;}
+  .sign .slot{min-width:190px;}
+  .sign .line{height:1px; background:var(--ink); opacity:.4; margin:0 0 7px;}
+  .sign .l{font-size:0.64rem; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); font-weight:700;}
+  .foot{position:absolute; left:0; right:0; bottom:3.6%; font-size:0.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--faint);}
+
   .empty{background:var(--paper); border:1px dashed var(--sand-line); border-radius:11px; padding:26px 24px; color:var(--grey); font-size:0.9rem; line-height:1.65;}
   .empty b{color:var(--ink);}
-  @media (max-width:560px){ .cert{padding:30px 24px 26px;} h1{font-size:1.6rem;} .who{font-size:1.8rem;} }
+  @media (max-width:640px){ .inner{padding:5% 6%;} .sign{flex-direction:column; align-items:center; gap:22px;} .sign .slot{min-width:min(240px,70vw);} }
   @media print{
-    .bar,#hubSync{display:none !important;}
+    .bar, #hubSync{display:none !important;}
     body{background:#fff;} .board{max-width:none; padding:0;}
-    .cert{border:0; border-radius:0; padding:40px 44px;}
-    .cert::before{margin:8px;}
-    @page{ margin:14mm; }
+    .sheet{box-shadow:none; aspect-ratio:auto; height:100vh; width:100%;}
+    @page{ size:A4 landscape; margin:0; }
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609300919">
-<link rel="stylesheet" href="hub-theme.css?v=202609300919">
+<link rel="stylesheet" href="hub-house.css?v=202609300930">
+<link rel="stylesheet" href="hub-theme.css?v=202609300930">
 </head>
 <body class="hub-grid">
 <div class="board" id="app"></div>
-<script src="hub-shared.js?v=202609300919"></script>
-<script src="hub-store.js?v=202609300919"></script>
-<script src="hub-sync.js?v=202609300919"></script>
+<script src="hub-shared.js?v=202609300930"></script>
+<script src="hub-attendance.js?v=202609300930"></script>
+<script src="hub-store.js?v=202609300930"></script>
+<script src="hub-sync.js?v=202609300930"></script>
 <script type="text/x-hub-app">
+const MODE = window.HubMode;
+/* A student's own, or a tutor printing one from the register. */
+if (window.hubVolunteerRoomOnly && hubVolunteerRoomOnly({ tutor: true }))
+  throw new Error('Connect Lite: stopping this page on purpose — the certificate belongs to a volunteer student.');
+const IS_TUTOR = MODE === 'tutor';
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const rec = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch(e) { return null; } };
-const MODE = window.HubMode;
-/* A student's own, or a tutor printing one from the register. A candidate was
-   told "this page needs a student", which is true and says nothing about
-   whose page it is (sweep, 30 Sep 2026). */
-if (window.hubVolunteerRoomOnly && hubVolunteerRoomOnly({ tutor: true }))
-  throw new Error('Connect Lite: stopping this page on purpose \u2014 the certificate belongs to a volunteer student.');
-const IS_TUTOR = MODE === 'tutor';
 
+const A = window.hubAttendance;
 const SETTINGS = rec('connect_course_settings') || {};
 const TT = rec('connect_timetable_v1') || {};
 const MON = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -102,14 +126,12 @@ const parse = s => { const m = String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/); 
 const longDate = iso => { const d = parse(iso); return d ? d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear() : ''; };
 const fmtH = h => (Math.round(h * 100) / 100).toString().replace(/\.00$/, '');
 
-/* The same arithmetic as the register and their own page, so the three can
-   never disagree: teaching days from the timetable, hours from that day's
-   teaching slots. */
+/* The same arithmetic as the register and the student's own page: one engine,
+   so the three cannot disagree about what somebody attended. */
 const tpSlots = (TT.slots || []).filter(s => s.kind === 'tp');
 const mins = sl => { const a = String(sl.from||'').match(/^(\d{1,2}):(\d{2})/), b = String(sl.to||'').match(/^(\d{1,2}):(\d{2})/); if (!a||!b) return 0; const d = (+b[1]*60 + +b[2]) - (+a[1]*60 + +a[2]); return d > 0 ? d : 0; };
-const hoursPerDay = tpSlots.reduce((n, sl) => n + mins(sl), 0) / 60;
+const LESSON_MIN = tpSlots.length ? Math.round(tpSlots.reduce((n, sl) => n + mins(sl), 0) / tpSlots.length) : 0;
 const days = (TT.days || []).filter(d => d.tp).map(d => d.date).sort();
-const TARGET = parseFloat(SETTINGS.volunteerCertificateHours) || 20;
 
 /* Whose certificate. A student opens their own on their own link; a tutor
    opens any by passing ?who=<their token> from the register. */
@@ -118,10 +140,10 @@ function subject(){
     const want = new URLSearchParams(location.search).get('who') || '';
     const reg = rec('connect_volunteers_v1') || {};
     const st = (reg.students || []).find(s => s && s.token === want);
-    return st ? { name: st.name, here: st.here || [] } : null;
+    return st || null;
   }
   const me = rec('hub:volunteer');
-  return me && me.name ? { name: me.name, here: me.here || [] } : null;
+  return (me && me.name) ? me : null;
 }
 
 function render(){
@@ -131,55 +153,63 @@ function render(){
     app.innerHTML = `<div class="empty">This page needs a student. ${IS_TUTOR ? 'Open it from the volunteer register, using the certificate button on their row.' : 'Open your own link from the centre.'}</div>`;
     return;
   }
-  const here = new Set(who.here);
-  const attended = days.filter(d => here.has(d)).length;
-  const hours = attended * hoursPerDay;
-  const earned = TARGET <= 0 || hours >= TARGET;
-  const left = Math.max(0, TARGET - hours);
-  const classesLeft = hoursPerDay ? Math.ceil(left / hoursPerDay - 1e-9) : 0;
+  /* A record written before the three tiers held a list of dates, all of them
+     "in the room". */
+  const marks = who.marks || (who.here || []).reduce((m, d) => { m[d] = 'present'; return m; }, {});
+  const r = A.record(marks, days, tpSlots.length, LESSON_MIN);
+  const cert = A.certificate(r.hours, SETTINGS.volunteerCertificateHours || 20, tpSlots.length, LESSON_MIN);
 
-  /* Not yet earned, and the reader is the student: tell them what is left.
-     A tutor may print one early -- a centre sometimes has to -- and is told
-     plainly that it is below the threshold. */
-  if (!earned && !IS_TUTOR) {
-    app.innerHTML = `<div class="empty"><b>Not quite yet.</b><br>Your certificate is ready at ${fmtH(TARGET)} hours of classes. You have ${fmtH(hours)} so far, so that is <b>${classesLeft} more ${classesLeft === 1 ? 'class' : 'classes'}</b>. It will appear here on its own.</div>`;
+  if (!cert.earned && !IS_TUTOR) {
+    app.innerHTML = `<div class="empty"><b>Not quite yet.</b><br>Your certificate is ready at ${fmtH(cert.target)} hours of classes. You have ${fmtH(r.hours)} so far, so that is <b>${cert.classesLeft} more ${cert.classesLeft === 1 ? 'class' : 'classes'}</b>. It will appear here on its own.</div>`;
     return;
   }
 
   const centre = SETTINGS.centreName || '';
   const course = SETTINGS.courseName || '';
-  const first = days.filter(d => here.has(d))[0] || '';
-  const last = days.filter(d => here.has(d)).slice(-1)[0] || '';
-  const span = (first && last) ? (first === last ? longDate(first) : longDate(first) + ' to ' + longDate(last)) : '';
+  const attendedDays = r.days.filter(x => x.tier === 'present').map(x => x.date);
+  const first = attendedDays[0] || '', last = attendedDays[attendedDays.length - 1] || '';
+  const span = (first && last) ? (first === last ? 'on ' + longDate(first) : 'between ' + longDate(first) + ' and ' + longDate(last)) : '';
+  const level = String(who.level || '').trim();
+
+  const mail = 'mailto:?subject=' + encodeURIComponent('Certificate of attendance — ' + who.name)
+    + '&body=' + encodeURIComponent('Dear ' + String(who.name).split(/\s+/)[0] + ',\n\nThank you for coming in to be taught on ' + (course || 'our course') + '. Your certificate of attendance is attached.\n\n' + (centre ? centre + '\n' : ''));
 
   app.innerHTML = `
     <div class="bar">
-      <button class="btn" id="print">Print or save as PDF</button>
+      <button class="btn" id="print">Print, or save as PDF</button>
+      <a class="btn quiet" href="${esc(mail)}">Email it</a>
       ${IS_TUTOR ? '<a class="btn quiet" href="25_volunteer_register.html">Back to the register</a>' : ''}
-      <span class="note">${earned ? 'One page. It prints without the buttons.' : 'Below the centre’s threshold — printing it is your call.'}</span>
+      <span class="note">${cert.earned ? 'Prints landscape on one page, without these buttons. Save it as a PDF and attach it — Lite does not send email itself.' : 'Below the centre’s threshold of ' + fmtH(cert.target) + ' hours. Printing it anyway is your call.'}</span>
     </div>
-    <div class="cert">
-      ${SETTINGS.logo ? `<img class="logo" src="${esc(SETTINGS.logo)}" alt="">` : ''}
-      <p class="centre">${esc(centre)}</p>
-      <p class="kind">Certificate of attendance</p>
-      <h1>With thanks</h1>
-      <p class="awarded">This certifies that</p>
-      <p class="who">${esc(who.name)}</p>
-      <div class="rule"></div>
-      <p class="body">attended English classes as a volunteer student on
-        <b>${esc(course || 'the course')}</b>${centre ? ' at <b>' + esc(centre) + '</b>' : ''}${span ? ', ' + (first === last ? 'on <b>' : 'from <b>') + esc(span) + '</b>' : ''}.
-        These classes were taught by teachers in training, and their learning
-        depended on people willing to come and be taught. Thank you.</p>
-      <div class="facts">
-        <div class="fact"><span class="n">${fmtH(hours)}</span><span class="l">hours attended</span></div>
-        <div class="fact"><span class="n">${attended}</span><span class="l">${attended === 1 ? 'class' : 'classes'}</span></div>
-        ${days.length ? `<div class="fact"><span class="n">${days.length}</span><span class="l">classes on the course</span></div>` : ''}
+    <div class="sheet">
+      <div class="rule-out"></div><div class="rule-in"></div>
+      <span class="corner c-tl"><i class="h"></i><i class="v"></i></span>
+      <span class="corner c-tr"><i class="h"></i><i class="v"></i></span>
+      <span class="corner c-bl"><i class="h"></i><i class="v"></i></span>
+      <span class="corner c-br"><i class="h"></i><i class="v"></i></span>
+      <div class="inner">
+        ${SETTINGS.logo ? `<img class="logo" src="${esc(SETTINGS.logo)}" alt="">` : ''}
+        <p class="centre">${esc(centre)}</p>
+        <p class="kind">Certificate of Attendance</p>
+        <div class="kind-rule"></div>
+        <p class="awarded">This is to certify that</p>
+        <h1 class="who">${esc(who.name)}</h1>
+        <div class="who-rule"></div>
+        <p class="body">attended English lessons${level ? ' at <b>' + esc(level) + '</b>' : ''} as a volunteer student
+          on ${esc(course || 'the course')}${centre ? ', at ' + esc(centre) : ''}${span ? ', ' + esc(span) : ''}.
+          These lessons were taught by teachers in training, whose learning depended on people
+          willing to come and be taught.</p>
+        <div class="facts">
+          <span class="fact"><span class="n">${fmtH(r.hours)}</span><span class="l">Hours attended</span></span>
+          ${level ? `<span class="fact"><span class="n">${esc(level)}</span><span class="l">Level</span></span>` : ''}
+          <span class="fact"><span class="n">${r.present}</span><span class="l">${r.present === 1 ? 'Class' : 'Classes'}</span></span>
+        </div>
+        <div class="sign">
+          <span class="slot"><span class="line"></span><span class="l">Signed for the centre</span></span>
+          <span class="slot"><span class="line"></span><span class="l">Date</span></span>
+        </div>
       </div>
-      <div class="sign">
-        <div class="slot"><div class="line"></div><span class="l">Signed for the centre</span></div>
-        <div class="slot"><div class="line"></div><span class="l">Date</span></div>
-      </div>
-      <p class="issued">Attendance recorded on the course register${SETTINGS.centreNumber ? ' · Cambridge centre ' + esc(SETTINGS.centreNumber) : ''}.</p>
+      <p class="foot">${esc(centre)}${SETTINGS.centreNumber ? ' · Cambridge centre ' + esc(SETTINGS.centreNumber) : ''} · attendance recorded on the course register</p>
     </div>`;
   if ($('print')) $('print').addEventListener('click', () => window.print());
 }

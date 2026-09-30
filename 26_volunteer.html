@@ -73,7 +73,7 @@
   .mat a{color:var(--teal); font-weight:700; font-size:0.8rem; text-decoration:none; margin-left:auto; white-space:nowrap;}
   .segs{display:flex; flex-wrap:wrap; gap:3px; margin:10px 0 8px;}
   .seg{width:17px; height:19px; border-radius:3px; background:oklch(93% 0.006 80);}
-  .seg.here{background:var(--teal);} .seg.miss{background:oklch(88% 0.055 27);}
+  .seg.here{background:var(--teal);} .seg.miss{background:oklch(88% 0.055 27);} .seg.part{background:oklch(85% 0.09 78);}
   .hrs{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;}
   .hrs b{font-family:'Newsreader',Georgia,serif; font-size:1.9rem;}
   .hrs span{color:var(--grey); font-size:0.84rem;}
@@ -90,14 +90,15 @@
   .empty{color:var(--grey); font-size:0.86rem; line-height:1.6;}
   @media (max-width:480px){ .board{padding:16px 14px 50px;} .next{padding:16px 16px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609300919">
-<link rel="stylesheet" href="hub-theme.css?v=202609300919">
+<link rel="stylesheet" href="hub-house.css?v=202609300930">
+<link rel="stylesheet" href="hub-theme.css?v=202609300930">
 </head>
 <body class="hub-grid">
 <div class="board" id="app"></div>
-<script src="hub-shared.js?v=202609300919"></script>
-<script src="hub-store.js?v=202609300919"></script>
-<script src="hub-sync.js?v=202609300919"></script>
+<script src="hub-shared.js?v=202609300930"></script>
+<script src="hub-attendance.js?v=202609300930"></script>
+<script src="hub-store.js?v=202609300930"></script>
+<script src="hub-sync.js?v=202609300930"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -133,9 +134,16 @@ const tpSlots = (TT.slots || []).filter(s => s.kind === 'tp');
 const mins = sl => { const a = String(sl.from||'').match(/^(\d{1,2}):(\d{2})/), b = String(sl.to||'').match(/^(\d{1,2}):(\d{2})/); if (!a||!b) return 0; const d = (+b[1]*60 + +b[2]) - (+a[1]*60 + +a[2]); return d > 0 ? d : 0; };
 const hoursPerDay = tpSlots.reduce((n, sl) => n + mins(sl), 0) / 60;
 const days = (TT.days || []).filter(d => d.tp).map(d => d.date).sort();
-const here = new Set(ME.here || []);
-const attended = days.filter(d => here.has(d)).length;
-const hours = attended * hoursPerDay;
+/* The same engine the register and the certificate use, so the three cannot
+   drift: a day counted present credits the WHOLE day, and a part-day is
+   recorded but credits nothing (Connect's rule, ported 30 Sep 2026). A
+   record written before the tiers held a list of dates, all 'in the room'. */
+const A = window.hubAttendance;
+const LESSON_MIN0 = tpSlots.length ? Math.round(tpSlots.reduce((n, sl) => n + mins(sl), 0) / tpSlots.length) : 0;
+const MARKS = ME.marks || (ME.here || []).reduce(function(m, d){ m[d] = 'present'; return m; }, {});
+const REC = A.record(MARKS, days, tpSlots.length, LESSON_MIN0);
+const attended = REC.present;
+const hours = REC.hours;
 const upcoming = days.filter(d => d >= TODAY);
 const next = upcoming[0] || '';
 const fmtH = h => (Math.round(h * 100) / 100).toString().replace(/\.00$/, '');
@@ -161,10 +169,8 @@ function room(){
    threshold per centre, and this is the same idea with a sensible default.
    Stated as a distance in CLASSES, because "two more classes" is a thing a
    person can act on and "seventy-nine percent" is not. */
-const TARGET = parseFloat(SETTINGS.volunteerCertificateHours) || 20;
-const left = Math.max(0, TARGET - hours);
-const classesLeft = hoursPerDay ? Math.ceil(left / hoursPerDay - 1e-9) : 0;
-const earned = hours >= TARGET && TARGET > 0;
+const CERT = A.certificate(hours, SETTINGS.volunteerCertificateHours || 20, tpSlots.length, LESSON_MIN0);
+const TARGET = CERT.target, classesLeft = CERT.classesLeft, earned = CERT.earned;
 
 function render(){
   const app = $('app');
@@ -193,8 +199,8 @@ function render(){
       ${SHARED.length ? SHARED.map(x => `<div class="mat"><div><b>${esc(x.name)}</b>${(x.by || x.kind) ? '<small>' + esc([x.by, x.kind].filter(Boolean).join(' \u00b7 ')) + '</small>' : ''}</div><a href="${esc(x.url)}" target="_blank" rel="noopener">Open</a></div>`).join('')
         : '<p class="empty">Nothing shared yet.</p>'}</div>
     <div class="card"><h3>Your attendance</h3>
-      <div class="segs">${days.map(d => `<span class="seg ${here.has(d) ? 'here' : d < TODAY ? 'miss' : ''}" title="${esc(shortDay(d))}"></span>`).join('')}</div>
-      <div class="hrs"><b>${fmtH(hours)} h</b><span>${attended} ${attended === 1 ? 'class' : 'classes'}${upcoming.length ? ' · ' + upcoming.length + ' still to come' : ''}</span></div>
+      <div class="segs">${REC.days.map(x => `<span class="seg ${x.tier === 'present' ? 'here' : x.tier === 'partial' ? 'part' : x.date < TODAY ? 'miss' : ''}" title="${esc(shortDay(x.date))}"></span>`).join('')}</div>
+      <div class="hrs"><b>${fmtH(hours)} h</b><span>${attended} ${attended === 1 ? 'class' : 'classes'}${REC.partial ? ' · ' + REC.partial + ' part of a class' : ''}${upcoming.length ? ' · ' + upcoming.length + ' still to come' : ''}</span></div>
       ${TARGET > 0 ? `<div class="track"><i style="width:${Math.min(100, Math.round(hours / TARGET * 100))}%"></i></div>
       <div class="cert">${earned
         ? `Your <b>certificate of attendance</b> is ready. <a class="certlink" href="27_volunteer_certificate.html">Open it</a> \u2014 print it or save it as a PDF.`
