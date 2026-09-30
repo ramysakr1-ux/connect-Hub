@@ -110,11 +110,16 @@
 
   /* The cursor. Drawn over the stage, moved with a transition so it glides
      rather than jumps; the click ring is a one-shot. */
-  .cursor{position:absolute; top:0; left:0; width:22px; height:22px; pointer-events:none;
+  /* The arrow's tip is at (2,1) inside its 22px box, and the box is what gets
+     moved -- so the point sat 2px right and 1px low of everything it aimed at.
+     The margin puts the tip itself on the target. */
+  .cursor{position:absolute; top:0; left:0; width:22px; height:22px; margin:-1px 0 0 -2px; pointer-events:none;
     transition:transform 620ms cubic-bezier(.33,.9,.25,1); z-index:6; opacity:0;}
   .cursor.on{opacity:1;}
   .cursor svg{display:block; filter:drop-shadow(0 2px 3px oklch(0% 0 0 / 0.35));}
-  .ring{position:absolute; top:0; left:0; width:34px; height:34px; margin:-6px 0 0 -6px;
+  /* Centred on the point, not hung off it: 34px wide wants half of that back,
+     and -6 left the ring 11px down and to the right of what was clicked. */
+  .ring{position:absolute; top:0; left:0; width:34px; height:34px; margin:-17px 0 0 -17px;
     border-radius:50%; border:2px solid var(--gold, #b98a3e); opacity:0; pointer-events:none; z-index:5;}
   .ring.pop{animation:pop 520ms ease-out;}
   @keyframes pop{0%{opacity:.9; transform:scale(.4);} 100%{opacity:0; transform:scale(1.5);}}
@@ -153,9 +158,14 @@
        is TIGHT and dense right at the glyph edge and only then spreads, so the
        letters keep their own edge without a box being drawn round them. */
     color:oklch(99% 0.004 85);
-    text-shadow:0 0 5px oklch(21% 0.02 65 / .95), 0 0 12px oklch(21% 0.02 65 / .92),
-      0 0 26px oklch(21% 0.02 65 / .8), 0 0 54px oklch(21% 0.02 65 / .6),
-      0 2px 3px oklch(21% 0.02 65 / .9);
+    /* TIGHT. The aura used to reach 54px at .6, which on cream screens left a
+       dark cloud about a hundred pixels deep behind every caption; compressed,
+       that reads as a smudge crossing the picture rather than as words on it
+       (Ramy, 30 Sep 2026). It now stops at ten, dense at the glyph edge and
+       gone a few pixels out, which keeps white legible on cream without
+       painting a shadow over the screen underneath. */
+    text-shadow:0 0 2px oklch(21% 0.02 65 / .95), 0 0 5px oklch(21% 0.02 65 / .85),
+      0 0 10px oklch(21% 0.02 65 / .6), 0 1px 2px oklch(21% 0.02 65 / .85);
     opacity:0; transform:translate(-50%, 0);
     transition:opacity 700ms ease;}
   /* IT KEEPS FLOATING WHILE IT GOES. The drift used to live on `.on`, so
@@ -578,7 +588,12 @@
       if (!el.offsetHeight) warn('type: ' + s.into + ' is hidden — open its panel first');
       var c = centreOf(el);
       moveTo(c.x, c.y);
+      /* Focus scrolls the field into view, so the hand was left where the
+         field USED to be. Measure again once the page has settled and follow
+         it. (preventScroll would keep the hand right and the field off
+         screen, which is worse for a film.) */
       el.focus();
+      later(function () { var c2 = centreOf(el); if (Math.abs(c2.y - c.y) > 2 || Math.abs(c2.x - c.x) > 2) moveTo(c2.x, c2.y); }, 120);
       var text = s.text, i = 0;
       var each = s.ms ? s.ms / text.length : 34;
       /* A date, time or colour field rejects every partial value as invalid,
