@@ -893,6 +893,30 @@ window.hubIsReference = function(s){
   /* What a timetable time reads as for THIS reader. Returns the course's own
      label always, and a local one only when the reader is somewhere that
      makes it a different time — a face-to-face centre never sees two clocks. */
+  /* THE DEMO CLOCK (30 Sep 2026). Ramy: "a demo for a course that has no end
+     date so it would last... one showing the beginning of the course and one
+     towards the end before the assessor visit." A course pinned to a day
+     (settings.demoToday, YYYY-MM-DD) reads THAT day as today on every screen
+     that decides anything by the date -- the timetable's marks, the
+     register's past/future blocks, the volunteer's next class, hub-due's
+     deadline states -- so a demo planted on day 6 is still on day 6 next
+     spring. The time of day stays real, so "your class is at 13:30" still
+     turns into "today" and "in an hour" naturally. Stamps on records (turned
+     in at, signed at) are never touched: they are history, and the seed
+     writes them consistent with the pinned day. Never set on a real course. */
+  window.hubDemoToday = function(){
+    try { var cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; var d = String(cs.demoToday || ''); return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : ''; }
+    catch (e) { return ''; }
+  };
+  window.hubToday = function(){
+    var d = window.hubDemoToday(); if (d) return d;
+    var n = new Date(); return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
+  };
+  window.hubNow = function(){
+    var d = window.hubDemoToday(); if (!d) return Date.now();
+    var n = new Date(), p = d.split('-');
+    return new Date(+p[0], +p[1] - 1, +p[2], n.getHours(), n.getMinutes(), n.getSeconds()).getTime();
+  };
   window.hubTimeFor = function(dateISO, hhmm, courseZone){
     var out = { course: String(hhmm || ''), local: '', differs: false, zone: courseZone || '' };
     var reader = window.hubReaderZone();

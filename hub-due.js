@@ -98,7 +98,7 @@
   function state(iso, now){
     var t = parse(iso);
     if (t === null) return { has:false, past:false, soon:false, due:'', text:'' };
-    now = now || Date.now();
+    now = now || (typeof window !== 'undefined' && window.hubNow ? window.hubNow() : Date.now());
     var ms = t - now, past = ms <= 0;
     return {
       has: true, at: t, past: past,
