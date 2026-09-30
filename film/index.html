@@ -60,6 +60,14 @@
      interactive thing; this is a picture of them. So the stage takes no
      clicks at all, and the opening card says so. */
   .stage iframe{width:var(--stage-w); height:var(--stage-h); border:0; display:block; pointer-events:none;}
+  /* The camera moves the picture, never the frame. transform-origin at the
+     top left keeps the arithmetic simple: a point (x,y) on the screen lands at
+     x*s+tx, and the clamp below never lets an edge come into view, so a push
+     in can never show a black border. */
+  .cam{position:absolute; inset:0; transform-origin:0 0; will-change:transform;
+    transition:transform 900ms cubic-bezier(.45,0,.2,1);}
+  .cam.snap{transition:none;}
+  @media (prefers-reduced-motion: reduce){ .cam{transition:none;} }
   .stagewrap{position:relative;}
   /* ?take=1 -- the recording. Only the stage, at its own size, no padding,
      no bar, no tabs, no note: a 1280x800 window records the film and nothing
@@ -240,11 +248,27 @@
 
 <div class="stagewrap">
   <div class="stage" id="stage">
-    <iframe id="screen" title="Connect Lite"></iframe>
-    <div class="still" id="still">
-      <img id="stillImg" alt="" hidden>
-      <div class="want" id="stillWant"></div>
-      <div class="how" id="stillHow"></div>
+    <!-- The camera. Everything that is PICTURE goes inside it and moves with
+         it -- the screen, a still, the hand and the ring it leaves. Everything
+         that is the film TALKING stays outside and never scales: the chapter
+         card, the curtain, the caption, the day stamp, the opening card. The
+         cursor being inside is what keeps it on target while pushed in: the
+         camera's own coordinates are the screen's, so nothing it aims at has
+         to be recalculated. -->
+    <div class="cam" id="cam">
+      <iframe id="screen" title="Connect Lite"></iframe>
+      <div class="still" id="still">
+        <img id="stillImg" alt="" hidden>
+        <div class="want" id="stillWant"></div>
+        <div class="how" id="stillHow"></div>
+      </div>
+      <div class="ring" id="ring"></div>
+      <div class="cursor" id="cursor">
+        <svg viewBox="0 0 22 22" width="22" height="22" aria-hidden="true">
+          <path d="M2 1 L2 17 L6.2 13.2 L9 19.6 L12 18.2 L9.2 12 L15 12 Z"
+                fill="#fdfcfa" stroke="#2b2118" stroke-width="1.4" stroke-linejoin="round"/>
+        </svg>
+      </div>
     </div>
     <div class="chapter" id="chapter">
       <div class="num" id="chapterNum"></div>
@@ -253,13 +277,6 @@
       <p class="sub" id="chapterSub"></p>
     </div>
     <div class="curtain" id="curtain"><i class="cue"></i><div class="mark">Connect <span>LITE</span></div></div>
-    <div class="ring" id="ring"></div>
-    <div class="cursor" id="cursor">
-      <svg viewBox="0 0 22 22" width="22" height="22" aria-hidden="true">
-        <path d="M2 1 L2 17 L6.2 13.2 L9 19.6 L12 18.2 L9.2 12 L15 12 Z"
-              fill="#fdfcfa" stroke="#2b2118" stroke-width="1.4" stroke-linejoin="round"/>
-      </svg>
-    </div>
     <div class="caption" id="caption"></div>
     <!-- The day stamp (spec, 28 Sep 2026): the calendar is the film's spine,
          so the day sits on screen even when no caption does, and changes only
@@ -306,6 +323,7 @@
   var still = document.getElementById('still');
   var chapter = document.getElementById('chapter');
   var curtain = document.getElementById('curtain');
+  var cam = document.getElementById('cam');
   var cursor = document.getElementById('cursor');
   var ring = document.getElementById('ring');
   var capEl = document.getElementById('caption');
@@ -458,6 +476,37 @@
     void ring.offsetWidth;
     ring.classList.add('pop');
   }
+  /* ---- the camera ------------------------------------------------------
+     camTo puts (x,y) in the middle of the frame at scale s, as near as the
+     clamp allows; camReset pulls back to the whole screen. Every move returns
+     a number, and an automatic pull-back only happens if nothing has moved the
+     camera since -- so a written zoom always beats the one a click asks for. */
+  var AUTO_ZOOM = 1.28;                 /* how far a click pushes in */
+  var camScale = 1, camSeq = 0;
+  var AUTO_ON = new URLSearchParams(location.search).get('zoom') !== '0';
+
+  function camTo(x, y, s, ms) {
+    s = Math.max(1, Math.min(2.2, s || 1));
+    var tx = Math.min(0, Math.max(1280 - 1280 * s, 640 - x * s));
+    var ty = Math.min(0, Math.max(800 - 800 * s, 400 - y * s));
+    cam.style.transitionDuration = (ms || 900) + 'ms';
+    cam.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + s + ')';
+    camScale = s;
+    return ++camSeq;
+  }
+  function camReset(ms) { return camTo(640, 400, 1, ms); }
+  function camSnap(x, y, s) {
+    cam.classList.add('snap');
+    camTo(x, y, s, 0);
+    requestAnimationFrame(function () { cam.classList.remove('snap'); });
+  }
+  /* A click or a keystroke pushes in a little and comes back on its own. */
+  function camGlance(x, y) {
+    if (!AUTO_ON || camScale >= AUTO_ZOOM) return;
+    var n = camTo(x, y, AUTO_ZOOM, 700);
+    later(function () { if (camSeq === n) camReset(1100); }, 1800);
+  }
+
   function centreOf(el) {
     /* A rect is already where the thing IS on screen -- the browser has taken
        the scroll off it. Taking the scroll off a second time put the cursor
@@ -543,6 +592,16 @@
          words. The caption fades on its own timer regardless. */
       return CAPTION_STEP;
     },
+    /* {do:'zoom', on:sel, scale:1.6, ms:900}  push in on something
+       {do:'zoom', out:true, ms:1100}          pull back to the whole screen */
+    zoom: function (s) {
+      if (s.out) { camReset(s.ms || 1100); return (s.ms || 1100) + 150; }
+      var el = find(s.on);
+      if (!el) { warn('zoom: no ' + s.on); return 200; }
+      var c = centreOf(el);
+      camTo(c.x, c.y, s.scale || 1.6, s.ms || 900);
+      return (s.ms || 900) + 150;
+    },
     move: function (s) {
       var el = find(s.to);
       if (!el) { warn('move: no ' + s.to); return 200; }
@@ -555,6 +614,7 @@
       if (!el) { warn('click: no ' + s.on); return 200; }
       var c = centreOf(el);
       moveTo(c.x, c.y);
+      camGlance(c.x, c.y);
       later(function () {
         popAt(c.x, c.y);
         /* A real click on a box puts the caret in it. el.click() does not move
@@ -593,7 +653,7 @@
          it. (preventScroll would keep the hand right and the field off
          screen, which is worse for a film.) */
       el.focus();
-      later(function () { var c2 = centreOf(el); if (Math.abs(c2.y - c.y) > 2 || Math.abs(c2.x - c.x) > 2) moveTo(c2.x, c2.y); }, 120);
+      later(function () { var c2 = centreOf(el); if (Math.abs(c2.y - c.y) > 2 || Math.abs(c2.x - c.x) > 2) moveTo(c2.x, c2.y); camGlance(c2.x, c2.y); }, 120);
       var text = s.text, i = 0;
       var each = s.ms ? s.ms / text.length : 34;
       /* A date, time or colour field rejects every partial value as invalid,
@@ -613,6 +673,7 @@
       return (s.ms || text.length * 34) + 400;
     },
     scroll: function (s) {
+      if (camScale > 1.3) camReset(700);
       var d = doc();
       /* A number, 'bottom', or a selector: the element's own top, less a
          little air, so a section heading lands where an eye expects it. */
@@ -642,6 +703,7 @@
       cursor.classList.remove('on');
       waiting = true;
       curtain.classList.add('on');
+      camSnap(640, 340, 1.06);
       showScreen(as, s.screen, function () { curtain.classList.remove('on'); waiting = false; });
       return (s.ms || 2200);
     },
@@ -745,6 +807,9 @@
        `goto` inside a scene keeps its own timing; its steps run to a budget
        the scene author set, and a curtain there would hide them. */
     curtain.classList.add('on');
+    /* The scene starts a touch in and pulls back as its screen arrives, so
+       every scene opens with a breath rather than a cut to a static page. */
+    camSnap(640, 260, 1.12);
     showScreen(SCENES[i], SCENES[i].screen, then);
   }
 
@@ -843,11 +908,11 @@
     /* Only up to the first goto: after it the scene is on another screen,
        and its controls are that screen's to wait for. */
     (sc.steps || []).some(function (s) { if (s.do === 'goto') return true; var sel = s.do === 'move' ? s.to : s.do === 'click' ? s.on : s.do === 'type' ? s.into : (s.do === 'scroll' && typeof s.to === 'string' && s.to !== 'bottom') ? s.to : null; if (typeof sel === 'string') { first = sel; return true; } return false; });
-    if (!first) { then(); return; }
+    if (!first) { camReset(1800); then(); return; }
     var t0 = performance.now();
     (function poll() {
       var ok = false; try { ok = !!find(first); } catch (e) {}
-      if (ok || performance.now() - t0 > 30000) { then(); return; }
+      if (ok || performance.now() - t0 > 30000) { camReset(1800); then(); return; }
       later(poll, 300);
     })();
   }
@@ -1118,7 +1183,7 @@
            here, and the film warns at play time if it is. */
         var missing = [], later_ = [], clickedYet = false;
         sc.steps.forEach(function (s) {
-          var sel = s.do === 'move' ? s.to : s.do === 'click' ? s.on : s.do === 'type' ? s.into : null;
+          var sel = s.do === 'move' ? s.to : (s.do === 'click' || s.do === 'zoom') ? s.on : s.do === 'type' ? s.into : null;
           if (typeof sel === 'string' && !find(sel)) {
             if (clickedYet) { if (later_.indexOf(sel) === -1) later_.push(sel); }
             else if (missing.indexOf(sel) === -1) missing.push(sel);

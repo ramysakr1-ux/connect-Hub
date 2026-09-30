@@ -34,6 +34,10 @@
                                       by make-stills.mjs); without one, a card
                                       saying what to capture
      {do:'draw',   name, ms}          draw a signature on the open pad, then Sign
+     {do:'zoom',   on:sel, scale, ms} push in on something
+     {do:'zoom',   out:true, ms}      pull back to the whole screen
+                                      (a click or a keystroke also pushes in a
+                                      little by itself; ?zoom=0 turns that off)
 
    A selector is CSS, or `text:Some words` to find a control by what it says.
 
@@ -141,10 +145,13 @@ var SCENES = [
       { do: 'hold', ms: 1200 },
       { do: 'caption', text: 'This booklet is going to fill itself. Watch.' },
       { do: 'scroll', to: '[data-sig="conf:portfolio"]', ms: 2200 },
+      { do: 'zoom', on: '[data-sig="conf:portfolio"]', scale: 1.5, ms: 900 },
       { do: 'click', on: '[data-sign="conf:portfolio"]', ms: 1800 },
-      { do: 'hold', ms: 900 },
+      { do: 'hold', ms: 700 },
+      { do: 'zoom', on: '.ink-pad', scale: 1.5, ms: 700 },
       { do: 'draw', name: 'Selin Kaya', ms: 1500 },
-      { do: 'hold', ms: 2600 },
+      { do: 'hold', ms: 1400 },
+      { do: 'zoom', out: true, ms: 1200 },
       { do: 'caption', text: 'Signed. Dated. Kept.' },
       { do: 'hold', ms: 3400 }
     ]
@@ -265,6 +272,7 @@ var SCENES = [
       { do: 'hold', ms: 900 },
       { do: 'click', on: 'button[data-list="lST"]', ms: 1200 },
       { do: 'click', on: '#lST .pt:last-child .pt-text', ms: 900 },
+      { do: 'zoom', on: '#lST .pt:last-child', scale: 1.7, ms: 900 },
       { do: 'click', on: '.dictbtn', ms: 1500 },
       { do: 'type', into: '#lST .pt:last-child .pt-text', ms: 4000, text: 'Set the task before handing out the text, and checked it with a quick question' },
       { do: 'caption', text: 'Said, not typed.' },
@@ -273,7 +281,8 @@ var SCENES = [
       { do: 'hold', ms: 1500 },
       { do: 'click', on: '#lST .pt:last-child .suggest-chip', ms: 1800 },
       { do: 'caption', text: 'It learns your centre.' },
-      { do: 'hold', ms: 3000 }
+      { do: 'hold', ms: 2200 },
+      { do: 'zoom', out: true, ms: 1200 }
     ]
   },
 
@@ -307,16 +316,20 @@ var SCENES = [
       { do: 'scroll', to: '#s1', ms: 2200 },
       { do: 'hold', ms: 1400 },
       { do: 'click', on: '[data-return="stage1"]', ms: 1800 },
-      { do: 'hold', ms: 900 },
+      { do: 'hold', ms: 700 },
+      { do: 'zoom', on: '.ink-pad', scale: 1.5, ms: 700 },
       { do: 'draw', name: 'Jordan Blake', ms: 1500 },
-      { do: 'hold', ms: 2400 },
+      { do: 'hold', ms: 1400 },
+      { do: 'zoom', out: true, ms: 1000 },
       { do: 'caption', text: 'Signed on screen. Personal, and dated to the second.' },
       { do: 'goto', screen: '20_celta5.html', course: 'start', role: 'trainee', as: 'Deniz Arslan', stub: ['put'], ms: 3000 },
       { do: 'scroll', to: '#s1', ms: 2000 },
       { do: 'click', on: '[data-sign="c1:signed"]', ms: 1800 },
-      { do: 'hold', ms: 900 },
+      { do: 'hold', ms: 700 },
+      { do: 'zoom', on: '.ink-pad', scale: 1.5, ms: 700 },
       { do: 'draw', name: 'Deniz Arslan', ms: 1500 },
-      { do: 'hold', ms: 2400 },
+      { do: 'hold', ms: 1400 },
+      { do: 'zoom', out: true, ms: 1000 },
       { do: 'scroll', to: '#tp', ms: 2200 },
       { do: 'caption', text: 'Nothing here was typed twice.' },
       { do: 'hold', ms: 3400 }
@@ -340,8 +353,9 @@ var SCENES = [
       { do: 'click', on: '[data-crit="2"]', ms: 900 },
       { do: 'click', on: '[data-crit="3"]', ms: 900 },
       { do: 'click', on: '[data-crit="4"]', ms: 1200 },
-      { do: 'move', to: '.derived' },
-      { do: 'hold', ms: 1400 },
+      { do: 'zoom', on: '.derived', scale: 1.8, ms: 1000 },
+      { do: 'hold', ms: 1600 },
+      { do: 'zoom', out: true, ms: 1000 },
       { do: 'type', into: '#comment', ms: 2800, text: 'Honest about the lesson that did not work, and specific about what changed after it. Passed.' },
       { do: 'hold', ms: 1000 },
       { do: 'goto', screen: '12_assessor_pack.html', course: 'visit', role: 'assessor', ms: 3200 },
@@ -381,9 +395,11 @@ var SCENES = [
     steps: [
       { do: 'hold', ms: 1400 },
       { do: 'move', to: '.cell.clash' },
+      { do: 'zoom', on: '.cell.clash', scale: 1.7, ms: 900 },
       { do: 'hold', ms: 1200 },
       { do: 'caption', text: 'Two of them chose grammar. The grid noticed first.' },
-      { do: 'hold', ms: 3600 }
+      { do: 'hold', ms: 2800 },
+      { do: 'zoom', out: true, ms: 1200 }
     ]
   },
 
@@ -438,9 +454,10 @@ var SCENES = [
       { do: 'scroll', to: 800, ms: 2400 },
       { do: 'hold', ms: 1000 },
       { do: 'click', on: 'text:Add from the TP records', ms: 1800 },
-      { do: 'hold', ms: 1600 },
+      { do: 'hold', ms: 1400 },
       { do: 'caption', text: 'That sentence was written in week two. It just came back.' },
-      { do: 'hold', ms: 3800 }
+      { do: 'hold', ms: 2800 },
+      { do: 'zoom', out: true, ms: 1200 }
     ]
   },
 
@@ -454,9 +471,11 @@ var SCENES = [
     settle: 2400,
     steps: [
       { do: 'scroll', to: '#final', ms: 2600 },
+      { do: 'zoom', on: '#final', scale: 1.35, ms: 1100 },
       { do: 'hold', ms: 1400 },
       { do: 'caption', text: 'Twenty days. Two signatures.' },
-      { do: 'hold', ms: 3400 }
+      { do: 'hold', ms: 2600 },
+      { do: 'zoom', out: true, ms: 1400 }
     ]
   },
 
