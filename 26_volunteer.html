@@ -115,17 +115,17 @@
   .agreed button{background:none; border:0; padding:0; color:var(--teal); font:inherit; font-weight:700; cursor:pointer;}
   @media (max-width:480px){ .board{padding:16px 14px 50px;} .next{padding:16px 16px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609301439">
-<link rel="stylesheet" href="hub-theme.css?v=202609301439">
+<link rel="stylesheet" href="hub-house.css?v=202609301531">
+<link rel="stylesheet" href="hub-theme.css?v=202609301531">
 </head>
 <body class="hub-grid">
 <div class="board" id="app"></div>
 <div id="consent"></div>
-<script src="hub-shared.js?v=202609301439"></script>
-<script src="hub-attendance.js?v=202609301439"></script>
-<script src="hub-volunteer-i18n.js?v=202609301439"></script>
-<script src="hub-store.js?v=202609301439"></script>
-<script src="hub-sync.js?v=202609301439"></script>
+<script src="hub-shared.js?v=202609301531"></script>
+<script src="hub-attendance.js?v=202609301531"></script>
+<script src="hub-volunteer-i18n.js?v=202609301531"></script>
+<script src="hub-store.js?v=202609301531"></script>
+<script src="hub-sync.js?v=202609301531"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -261,7 +261,14 @@ const I18N = window.hubVolunteerI18n || { languages: [], t: {}, pick: () => 'en'
 const LANG = () => I18N.pick();
 const T = () => I18N.t[LANG()] || I18N.t.en || {};
 const CONSENT_KEY = 'chub:volunteerConsent:' + ((window.HubStore && HubStore.volunteerToken) ? HubStore.volunteerToken() : '');
-function agreedAt(){ const r = rec(CONSENT_KEY); return r && r.at ? r.at : ''; }
+/* The store's word counts too (30 Sep 2026): a student who agreed on their
+   phone and then opens the link on a laptop is not asked twice. The register
+   row carries `agreed`, the boot sends it, and it becomes this device's copy. */
+function agreedAt(){
+  const r = rec(CONSENT_KEY); if (r && r.at) return r.at;
+  if (ME.agreed) { try { localStorage.setItem(CONSENT_KEY, JSON.stringify({ at: ME.agreed, name: ME.name || '', stamped: true })); } catch (e) {} return ME.agreed; }
+  return '';
+}
 function stamp(){
   if (!window.HubStore || !HubStore.call) return;
   const r = rec(CONSENT_KEY); if (!r || !r.at || r.stamped) return;

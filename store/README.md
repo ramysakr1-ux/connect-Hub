@@ -14,6 +14,13 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
+## 30 Sep 2026 — the demo clock (versions 48, 49)
+See `2026-09-30-demo-clock.md` and `2026-09-30-pinned-at.md`. `settings.demoToday`
+pins a course to a day: no assessor expiry (v48), the clock and the
+certificate threshold on the volunteer boot (v48), and `post` /
+`shareMaterial` / `gridSet` accept the moment a seed says they happened
+(v49). Built for the two standing demo courses (`seed-standing-demos.mjs`).
+
 ## 30 Sep 2026 — the certificate's signature (version 47)
 See `2026-09-30-certificate-signature.md`. One field: the volunteer boot sends
 `cert` (the centre's drawn signature, kept on their register row by a tutor),
