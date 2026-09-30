@@ -96,8 +96,16 @@ DAYS.slice(1).forEach((date, i) => { const tp = Math.floor(i / 2) + 1; if (tp > 
 const tpDay = (tp, setIndex) => TEACH[tp][setIndex];
 
 /* ---- the people ----------------------------------------------------------- */
-const PICK = [0, 1, 2, 3, 6, 7];                                // Olivia, Deniz, Sofia, Marcus, Hannah, Selin
-const CANDS = PICK.map(i => Object.assign({}, CANDIDATES[i], { group: '1' }));
+/* TWELVE, in two groups of six. Ramy, 1 Oct 2026: "why would you make the demo
+   course a course of six? Seed twelve." A CELTA group is four to six and a
+   course of twelve is two of them, each splitting into two teaching sets of
+   three that take alternate days -- which is what a centre looking at the demo
+   actually runs. Group 1 keeps the six who were there, so their links still
+   work; group 2 is the other six from the same cast. */
+const PICK = [0, 1, 2, 3, 6, 7, 4, 5, 8, 9, 10, 11];
+const CANDS = PICK.map((i, n) => Object.assign({}, CANDIDATES[i], { group: n < 6 ? '1' : '2' }));
+const GROUPS = ['1', '2'];
+const peopleIn = (g, people) => people.filter(p => String(CANDS.find(c => c.name === p.name) ? (CANDS.find(c => c.name === p.name).group) : '1') === g);
 const TUTORS = ['Jordan Blake', 'Diane Okonkwo'];
 const VOLUNTEERS = [
   { name: 'Ayşe Demir', level: 'B1', note: '', lang: 'tr' },
@@ -234,6 +242,13 @@ const SHAPE_BY_AIM = { Reading: SLOTS[0], Grammar: SLOTS[1], 'Functional languag
 const BOOK = { A2: { title: 'Speakout A2, 3rd edition', url: 'https://drive.google.com/file/d/demo-speakout-a2/view' }, B1: { title: 'Speakout B1, 3rd edition', url: 'https://drive.google.com/file/d/demo-speakout-b1/view' } };
 const AUDIO = 'https://drive.google.com/drive/folders/demo-coursebook-audio';
 function tppoints(people, rot) {
+  const rowsByGroup = {}, releasedByGroup = {}, setsByGroup = {};
+  GROUPS.forEach(g => {
+    const r = ROTS[g];
+    if (!r) return;
+    releasedByGroup[g] = true;
+    setsByGroup[g] = r.sets.map(st => st.map(q => q.token));
+  });
   const rows = {};
   people.forEach((p, idx) => {
     rows[p.token] = {};
@@ -242,7 +257,7 @@ function tppoints(people, rot) {
       const level = tp <= 4 ? 'A2' : 'B1';
       const shape = SHAPE_BY_AIM[aim] || SLOTS[1];
       const cell = { aim };
-      const setIndex = rot.sets.findIndex(s => s.some(q => q.token === p.token));
+      const setIndex = setOf(p.token);
       const day = tpDay(tp, setIndex);
       /* Materials go on the practices the course has reached, and the next one. */
       if (day <= PIN_DAY + 2) {
@@ -259,7 +274,12 @@ function tppoints(people, rot) {
       rows[p.token]['tp' + tp] = cell;
     }
   });
-  return { groups: { '1': rows }, released: { '1': true }, sets: { '1': rot.sets.map(s => s.map(p => p.token)) } };
+  GROUPS.forEach(g => {
+    if (!ROTS[g]) return;
+    rowsByGroup[g] = {};
+    people.filter(x => String(x.group) === g).forEach(x => { rowsByGroup[g][x.token] = rows[x.token]; });
+  });
+  return { groups: rowsByGroup, released: releasedByGroup, sets: setsByGroup };
 }
 
 /* ---- what has happened to each candidate by the pinned day -------------- */
@@ -462,16 +482,32 @@ if (WRITE) {
   const have = new Map(Object.values(roster.result.trainees || {}).filter(Boolean).map(t => [t.name, t]));
   const missing = CANDS.filter(c => !have.has(c.name));
   if (missing.length) {
-    const a = await must('addTrainees', { op: 'addTrainees', key: KEY, trainees: missing.map(c => ({ name: c.name, group: '1' })) });
+    const a = await must('addTrainees', { op: 'addTrainees', key: KEY, trainees: missing.map(c => ({ name: c.name, group: c.group || '1' })) });
     Object.values((a.result && a.result.trainees) || {}).filter(Boolean).forEach(t => have.set(t.name, t));
   }
   people = CANDS.map(c => Object.assign({}, c, { token: have.get(c.name).token }));
 } else {
   people = CANDS.map((c, i) => Object.assign({}, c, { token: 'dry' + i }));
 }
-const rot = R.rotate(people.map(p => ({ token: p.token, name: p.name })), { tps: TP_COUNT, groupOffset: 0 });
-const setOf = token => rot.sets.findIndex(s => s.some(q => q.token === token));
-console.log('sets: ' + rot.sets.map(s => s.map(p => p.name.split(' ')[0]).join(', ')).join('  |  '));
+/* One rotation PER GROUP, because a group is what splits into teaching sets:
+   six people become two sets of three taking alternate days, and a course of
+   twelve is two groups doing that side by side. Group 2 starts three aims
+   along, as the tutor page does, so the two groups are not teaching the same
+   thing on the same afternoon. */
+const ROTS = {};
+GROUPS.forEach((g, gi) => {
+  const mine = people.filter(p => String(p.group) === g).map(p => ({ token: p.token, name: p.name }));
+  if (mine.length) ROTS[g] = R.rotate(mine, { tps: TP_COUNT, groupOffset: gi * 3 });
+});
+const groupOf = token => (people.find(p => p.token === token) || {}).group || '1';
+const rot = {
+  rows: Object.assign({}, ...GROUPS.map(g => (ROTS[g] || { rows: {} }).rows)),
+  sets: GROUPS.flatMap(g => (ROTS[g] || { sets: [] }).sets),
+};
+/* Within the candidate's OWN group: 0 or 1, which is what the timetable's
+   alternate days are keyed on. */
+const setOf = token => { const g = groupOf(token); const r = ROTS[g]; return r ? r.sets.findIndex(s => s.some(q => q.token === token)) : 0; };
+GROUPS.forEach(g => { const r = ROTS[g]; if (r) console.log(`group ${g} sets: ` + r.sets.map(s => s.map(p => p.name.split(' ')[0]).join(', ')).join('  |  ')); });
 
 const settings = settingsFor(people.map(p => p.token));
 const vols = volunteers(course.id === '(dry run)' ? 'cX' : course.id);
@@ -548,7 +584,7 @@ if (WRITE) {
       await must('gridSet tp7', { op: 'gridSet', key: KEY, token: p.token, tp: '7', main: GRID[ci][0], sub: GRID[ci][1], material: GRID[ci][2], at: iso(13, '1' + (ci + 2) + ':' + (10 + ci * 7)) });
       await must('gridSet tp8', { op: 'gridSet', key: KEY, token: p.token, tp: '8', main: GRID[ci][1], sub: GRID[ci][0], material: GRID[ci][2], at: iso(13, '1' + (ci + 2) + ':' + (40 + ci * 3)) });
     }
-    await must('gridRelease', { op: 'gridRelease', key: KEY, group: '1', released: true, due: iso(14, '17:00') });
+    for (const g of GROUPS) await must(`gridRelease ${g}`, { op: 'gridRelease', key: KEY, group: g, released: true, due: iso(14, '17:00') });
   }
 } else {
   for (const [ci, p] of people.entries()) console.log(`${p.name.padEnd(18)} set ${setOf(p.token)} — aims: ${[1,2,3,4,5,6,7,8].map(tp => rot.rows[p.token]['tp' + tp]).join(' · ')}`);

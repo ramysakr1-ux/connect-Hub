@@ -82,7 +82,7 @@ await page.evaluate(({ dur }) => new Promise((done) => {
      through the finished film. Two fades, in at the start and out at the end,
      done on the gain node rather than the element's volume so they are smooth. */
   const m = document.getElementById('m');
-  const stream = v.captureStream();
+  const stream = v.captureStream(25);
   let gain = null, ac = null;
   if (m) {
     ac = new AudioContext();
@@ -91,7 +91,12 @@ await page.evaluate(({ dur }) => new Promise((done) => {
     ac.createMediaElementSource(m).connect(gain).connect(dest);
     stream.addTrack(dest.stream.getAudioTracks()[0]);
   }
-  const rec = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: 6000000 });
+  /* 25 frames a second and a calmer bitrate. The first cut came out at 50fps
+     and 4.4 Mbps -- 236 MB for seven minutes -- and it stalled after the first
+     scenes on an ordinary machine (Ramy, 1 Oct 2026: "the film is freezing, I
+     couldn't play it"). Nothing in a film of screens moves fast enough to need
+     50, and the cut is a third of the size at 25. */
+  const rec = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: 2200000 });
   let pending = Promise.resolve(), dropped = 0, kept = 0, lastT = 0;
   rec.ondataavailable = (e) => {
     if (!e.data || !e.data.size) return;
