@@ -180,7 +180,9 @@ window.hubObservationHours = function(records){
        1 Oct 2026: "don't say join the lesson") -- and `opts.when` puts the
        time beside it. */
     var lbl=function(r){ return opts.assessor ? 'Join the room' : (r.label||'Join'); };
-    return '<div class="online-rooms"><span class="or-lbl">'+(opts.assessor?'Your visit':'Online rooms')+'</span>'+rooms.map(function(r){
+    /* The assessor's strip carries no label: two pills that say what they are
+       need no heading over them (Ramy, 1 Oct 2026). */
+    return '<div class="online-rooms">'+(opts.assessor?'':'<span class="or-lbl">Online rooms</span>')+rooms.map(function(r){
       var g=String(r.group||''), who='';
       if(opts.assessor) who='';
       else if(g&&mine&&g===mine) who='<small>your group</small>';
