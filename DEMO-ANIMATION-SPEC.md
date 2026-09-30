@@ -1,6 +1,6 @@
 # Connect Lite — the film
 
-**Spec for the promotional film. Rewritten 28 September 2026 as a course told by the calendar.** The earlier journey spec (26–27 September) is in this file's git history; every decision it recorded that still stands is repeated below, so this file is the whole brief.
+**Spec for the promotional film. Rewritten 28 September 2026 as a course told by the calendar; restructured 30 September 2026 with the cold open, the two standing demos, and captions that comment.** The earlier journey spec (26–27 September) is in this file's git history; every decision it recorded that still stands is repeated below, so this file is the whole brief.
 
 Ramy, 28 Sep 2026, after the online rooms went live: *"we have a full course on our hand now … we will definitely need a new demo and a new film … so much has changed … a new concept is needed now."* This is the concept he chose.
 
@@ -36,6 +36,7 @@ Audience: **trainers and centre owners**, not trainees. Length: **about five min
 
 **Two new rules for this concept:**
 
+- **A caption comments; it never reads the screen.** Ramy, 30 Sep: *"I don't want the captions to read what's already there, but rather make a smart comment on what's on the screen."* A line earns its place by saying what the frame cannot, or by naming the benefit of the feature in view in two or three words (*Signed. Dated. Kept.* · *Works offline.* · *It learns your centre.*). The audience is centres and trainers.
 - **The day stamp is part of the caption pill**, set in the same small caps as the *Online rooms* label, and it changes only on a cut. A scene never straddles two days.
 - **The booklet is never shown twice the same way.** Each return to it shows one more thing filled — a stage signed, a table grown — so the viewer reads progress without a caption.
 
@@ -49,141 +50,166 @@ Audience: **trainers and centre owners**, not trainees. Length: **about five min
 
 ---
 
-## Part 1 · Before day one — 0:00–0:55
+## Cold open · The same course, twice — 0:00–0:35
+
+### A · The Drive column fills — no day stamp
+**Screen:** the comparison page (*The Same Course, Twice*), driven as one animated scene: the four Google Drive windows descend one under the other, one cut per folder level; then the Drive column's grey chips fill, one by one, while the Lite column stops at three.
+**Caption:** *Most of this is finding the file.*
+◆ Hold two seconds on the full Drive column beside the short Lite one.
+
+### B · The tallies — no day stamp
+**Screen:** the two totals land, then *fewer by*.
+**Caption:** *Same course. Same tutors. One of them had time to teach.*
+◆ Hold three seconds. Then cut to black for one beat; the day stamps begin.
+
+---
+
+## Part 1 · Before day one — 0:35–1:32 · *from the beginning demo*
 
 ### 0 · The console — silent
 **Screen:** the owner console (`14_owner.html`), the demo course's card at the top. Three and a half seconds. No caption, no cursor, no click.
 
-### 1 · The card arrives — *Day 0* — 0:04–0:22
+### 1 · The card arrives — *Day 0* — 0:39–0:55
 **Screen:** `invite.html`, the tutor's invitation card as the trainer receives it. Three cuts, each showing **the link itself inside the other product**: a demo Classroom stream; a demo Drive folder; a plain tab with the Wi-Fi going off and the page still there.
-**Captions:** *No download, no upload, no hunting for paper.* → *It still opens when the internet doesn't.*
+**Captions:** *Nothing to install. Nothing to remember. Nothing to lose.* → on Wi-Fi off: *Works offline.*
 ◆ Hold four seconds on Wi-Fi off, page still there.
 
-### 2 · A course is set up — *Day 0* — 0:22–0:40
-**Screen:** Course admin (`6_centre_admin_dashboard.html`). Settings: the centre, the dates, the rooms — three **Online rooms** rows filled, one ticked *The assessor joins this room*. Roster and links: a class list pasted → *Add all* → twelve rows, each with its own link.
-**Cursor:** the paste, the rows appearing, then down to the rooms and the tick.
-**Caption:** *No accounts, no passwords. The link is the account.*
-◆ Hold three seconds on the twelve links appearing.
+### 2 · A course is set up — *Day 0* — 0:55–1:16
+**Screen:** Course admin (`6_centre_admin_dashboard.html`). Settings: the centre, the dates, the course's clock, three **Online rooms** rows, one ticked *The assessor joins this room*. Then the timetable (`23_timetable.html`): **an Excel file chosen**, the review, *Apply*, the day shape, every day laid out with the rooms on it. Then the roster: a class list pasted → *Add all* → six rows, each with its own link.
+**Cursor:** the file chosen, the days appearing, then the paste and the links.
+**Captions:** on the timetable appearing: *The spreadsheet you already had, read once.* → on the links: *One link each. No accounts.*
+◆ Hold three seconds on the timetable filling. ◆ Hold three seconds on the links appearing.
 
-### 3 · The candidate reads Cambridge's words — *Day 0* — 0:40–0:55
-**Screen:** `index.html` as Emily Carter — the **rooms strip** under the title, her group's room first — then the **CELTA 5** card → `20_celta5.html`: *Read and confirm*, the portfolio requirements open, scrolled slowly, then the confirmation box, her name already there, **Confirm and sign** → **the pad** → a signature drawn → *Sign* → the green signed block with the ink.
-**Captions:** *The course opens with Cambridge's own words.* → *Signed, and kept.*
+### 3 · The candidate reads Cambridge's words — *Day 0* — 1:16–1:32
+**Screen:** `index.html` as a candidate — the **rooms strip** under the title, the timetable card with day one marked — then the **CELTA 5** card → `20_celta5.html`: *Read and confirm*, the portfolio requirements open, scrolled slowly, then the confirmation box, the name already there, **Confirm and sign** → **the pad** → a signature drawn → *Sign* → the green signed block with the ink.
+**Captions:** on the empty tables: *This booklet is going to fill itself. Watch.* → on the signed block: *Signed. Dated. Kept.*
 ◆ Hold on the pad as the ink is drawn. ◆ Hold three seconds on the signed block.
-*This is the first look at the booklet. Empty tables, one signature. Everything after fills it.*
+*First look at the booklet. Empty tables, one signature. Everything after fills it.*
 
 ---
 
-## Part 2 · The first week — 0:55–2:25
+## Part 2 · The first week — 1:32–3:35 · *from the beginning demo*
 
-### 4 · The plan — *Day 3* — 0:55–1:28
+### 4 · A volunteer's page — *Day 1* — 1:32–1:44
+**Screen:** `26_volunteer.html` on a phone frame, opened from a fresh link. The joining note slides up **in Turkish**; the language row; *Kabul ediyorum*. The page behind: *Your next class*, the course clock and the reader's, **Join on Zoom**.
+**Captions:** on the note: *Their language for the small print. English for the lesson.* → on Join: *One tap to the room.*
+◆ Hold on the Turkish note before the tap.
+
+### 5 · The TP points arrive — *Day 3* — 1:44–1:56
+**Screen:** the candidate's home, the TP points card → `24_tp_points.html` as the candidate: their own lesson highlighted — aim, framework, the coursebook pages attached, the audio link — with the other two lessons of the day beside it for reference.
+**Caption:** *The pages, the audio, the aim. Already on the card when they wake up.*
+◆ Hold three seconds on the materials line.
+
+### 6 · The plan — *Day 3* — 1:56–2:22
 **Screen:** `1_trainee_plan_and_analysis.html`.
-**Cursor:** click into *Main aim*; **Dictate** — the dot goes garnet — the aim writes itself as it is spoken; *Stop dictating*. **Lesson shape** → *Receptive skills* → six stages appear. The time budget fills to *45 of 45 · fits exactly*. A Drive link pasted → *Drive file attached*.
-**Captions:** *Click into a box and talk.* → *Worksheets stay on the trainee's own Drive. Nothing is uploaded.*
-◆ Hold on the words arriving. ◆ Hold on the stages appearing. ◆ Hold on *fits exactly*.
+**Cursor:** click into *Main aim*; **Dictate** — the dot goes garnet — the aim writes itself as it is spoken; *Stop dictating*. **Lesson shape** → *Receptive skills* → six stages appear. The time budget fills to *45 of 45 · fits exactly*. A Drive link pasted → *Drive file attached* → the **share switch** under it goes green: *shared with the volunteer students*.
+**Caption:** on the stages appearing: *The shape is given. The thinking is theirs.*
+◆ Hold on the words arriving. ◆ Hold on the stages appearing. ◆ Hold on the switch going green, silent.
 
-### 5 · The analysis sheet — *Day 3* — 1:28–1:42
-**Screen:** Language Analysis, empty. The **type** box opened — all three — then *Vocabulary*; the four items; the phonemic chart and a symbol landing.
-**Caption:** *The language analysis is part of the same document.*
-◆ Hold on the open menu. ◆ Hold on the symbol landing.
-
-### 6 · Taught, and written up — *Day 4* — 1:42–1:55
+### 7 · Taught, and written up — *Day 4* — 2:22–2:34
 **Screen:** *Turn in* → the confirm. Cut to `2_trainee_self_evaluation.html`: four boxes full, the fifth being dictated. Cut to `18_observation_tasks.html`: a filmed-lesson sheet, the notes typed, **Turn in** → the date lands on it.
-**Captions:** *Written before they read their tutor. That is the point of it.* → *Observation sheets, in the centre's own words, turned in the same way.*
+**Caption:** *Written before the feedback is read. That is the point of it.*
 ◆ Hold on the sheet's date landing.
 
-### 7 · The trainer's desk — *Day 4* — 1:55–2:05
-**Screen:** `5_tutor_dashboard.html` — the rooms strip, then the counters: **3 ready for your feedback · 2 waiting to be marked · 1 back with the candidate**.
-**Caption:** *Nothing to hunt for.*
+### 8 · The trainer's desk — *Day 4* — 2:34–2:42
+**Screen:** `5_tutor_dashboard.html` — the rooms strip, then the counters: **3 ready for your feedback · 2 waiting to be marked · 1 back with the candidate**, and under a name, *turned in* with its time.
+**Caption:** *Nobody asked "did you get it?"*
 ◆ Hold four seconds on the counters.
 
-### 8 · Feedback, said — *Day 4* — 2:05–2:25
-**Screen:** `3_tutor_feedback.html` for Zeynep Aydın. Click into *Strengths in teaching*, **Dictate**, a point arrives; the **criterion chips** under it, one with a solid edge — hover: *tagged 12 times on this course* — click, the code sits on the point. The star on an action point.
-**Captions:** *Say a point. It's written.* → *The solid chips are what your own tutors tag. It learns your centre.*
+### 9 · Feedback, said — *Day 4* — 2:42–3:00
+**Screen:** `3_tutor_feedback.html` for a candidate. The date and the level already on the form. Click into *Strengths in teaching*, **Dictate**, a point arrives; the **criterion chips** under it, one with a solid edge — hover: *tagged 12 times on this course* — click, the code sits on the point. The star on an action point.
+**Captions:** *Said, not typed.* → on the solid chip: *It learns your centre.*
 ◆ Hold four seconds, zoomed, on the solid chip and its tip.
 
-### 9 · Feedback, all at once — *Day 4* — 2:25–2:45
+### 10 · Feedback, all at once — *Day 4* — 3:00–3:15
 **Screen:** the same sheet, the **exchange** card. *Copy* → an outside model, the lesson talked through → *Paste something back* → **every box fills** → *Return to trainee*.
-**Caption:** *Or talk the whole lesson through somewhere else, and paste it all back.*
+**Caption:** *The rest of the form was already there.*
 ◆ **Hold five seconds on the paste landing.**
 
-### 10 · Stage 1, signed — *Day 6* — 2:45–3:00
+### 11 · Stage 1, signed — *Day 6* — 3:15–3:35
 **Screen:** `20_celta5.html` as the tutor: Stage 1, hours taught, strengths, action plan → **Return to candidate** → the pad, the tutor's saved signature already on it → *Sign*. Cut to the candidate's side: *Returned — to sign* → **Sign** → the pad → the green block. Then the **Teaching practice** table below, already holding TP1 with its grade.
-**Captions:** *Stage 1, returned and signed.* → *The tables fill themselves.*
+**Captions:** on the pad: *Signed on screen. Personal, and dated to the second.* → on the table: *Nothing here was typed twice.*
 ◆ Hold on both signatures on the page. ◆ Hold three seconds on the table.
 *Second look at the booklet: one stage signed, one table with a row.*
 
 ---
 
-## Part 3 · The middle — 3:00–3:50
+## Part 3 · The middle — 3:35–4:18 · *from the before-the-visit demo; the records carry their own dates*
 
-### 11 · The trainee reads it — *Day 7* — 3:00–3:12
-**Screen:** `4_feedback_returned.html` for Emily — the stack, the current sheet lifting, scrolled slowly. No codes, no printing.
-**Caption:** *Read-only. Not a word of their tutor's can be touched.*
+### 12 · An assignment, marked and back — *Day 9* — 3:35–3:55
+**Screen:** `10_tutor_assignment_marking.html`: the script with its sections, the criteria met, the outcome, *resubmission*. Cut to the **double-marking table** on the assessor pack, both markers' initials on one row. Cut to the candidate's `11_assignment_record.html`: two rounds, one outcome.
+**Caption:** on the double-marking row: *Two markers. One script. No second copy anywhere.*
+◆ Hold three seconds on the record's two rounds.
 
-### 12 · An assignment, marked and back — *Day 9* — 3:12–3:35
-**Screen:** `10_tutor_assignment_marking.html`, Anastasia Volkova, `?a=fol`: six criteria marked one at a time, the outcome deriving itself, the comment, *Save & return* moved to. Cut to `9_assignment_submission.html` on the **scratch** course as Marta Kowalczyk: the amber *Resubmission needed* banner, the two criteria not met with the tutor's words beside each.
-**Captions:** *Met, or not yet met. One judgement each.* → *One resubmission. The candidate can see exactly what to fix.*
-◆ Hold on the amber banner.
+### 13 · Stage 2, both halves — *Day 12* — 3:55–4:08
+**Screen:** `20_celta5.html`: the candidate's self-assessment column beside the tutor's, 41 criteria, the tutor's return, both signatures. Then the tables: four TPs, two assignments, three observations.
+**Caption:** *Same booklet. More of it full.*
+◆ Hold three seconds on the tables.
+*Third look at the booklet.*
 
-### 13 · Stage 2, both halves — *Day 12* — 3:35–3:50
-**Screen:** `20_celta5.html`: the 41-criteria grid, *You* and *Tutor* columns side by side, the candidate's S and N marks already in, the tutor's landing one after another; the tutor's summary; **Return** → the pad → the candidate's **Sign** → the pad. The **Written assignments** table below now holds FOL — *Pass*.
-**Caption:** *Both of you mark every criterion. Then it is signed.*
-◆ Hold on the two columns side by side. ◆ Hold on the assignments table.
-*Third look at the booklet: two stages signed, two tables growing.*
+### 14 · The planning grid — *Day 15* — 4:08–4:18
+**Screen:** `21_tp_grid.html` as a candidate: the group's rows for TP7 and TP8, their own row editable, two cells amber where two of them chose the same aim.
+**Caption:** *Two of them chose grammar. The grid noticed first.*
+◆ Hold on the amber cells.
 
 ---
 
-## Part 4 · The visit — 3:50–4:25 · *from `c4`, the finished course*
+## Part 4 · The visit — 4:18–5:04 · *from the before-the-visit demo*
 
-### 14 · The assessor's link — *Day 19* — 3:50–4:10
-**Screen:** `12_assessor_pack.html` from the assessor's own link. The header: **one room** in the strip — the one that was ticked on Day 0. Then candidates, standing, both grades; the portfolios; the **CELTA 5** block with its *signed* chips; **Open the CELTA 5** → the booklet read-only, ink on every signed line. Try to edit a grade — nothing moves.
-**Captions:** *The assessor gets a link, and the one room they need.* → *Read-only. Every signature is there.*
-◆ Hold three seconds on the single room. ◆ Hold on the grade that will not move.
+### 15 · The register, and the certificate — *Day 17* — 4:18–4:32
+**Screen:** `25_volunteer_register.html`: one row tapped, the block goes teal, the hours tick up, *Certificate*. Cut to `27_volunteer_certificate.html`: the sheet, the name, the level, the hours, the centre's signature already drawn on it.
+**Captions:** on the tap: *One tap. The hours did the rest.* → on the certificate: *Signed by the centre. Printed by the student.*
+◆ Hold four seconds on the certificate.
 
-### 15 · Grades — *Day 19* — 4:10–4:25
+### 16 · The assessor's link — *Day 19* — 4:32–4:50
+**Screen:** `12_assessor_pack.html` from the assessor key: the header's *this link stops working on…*, the Handbook panel, the candidates chosen first, the double-marking record, **Volunteer students**, the course documents. Scrolled, never clicked into.
+**Captions:** *Everything the Handbook lists, and nothing was gathered.* → on the header line: *Read-only. Ends with the course.*
+◆ Hold on the Handbook panel. Nothing is downloaded, exported or sent.
+
+### 17 · Grades — *Day 19* — 4:50–5:04
 **Screen:** `13_grades_report.html` — the provisional table, a candidate's four sections, the final grade box with Appian's two fields. *Add from the TP records* → the trainer's own point lands with its code.
-**Caption:** *Cambridge's own form. Into Appian by paste, not by retyping.*
-◆ Hold four seconds on the point landing.
+**Caption:** on the point landing: *That sentence was written in week two. It just came back.*
+◆ Hold three seconds on the landed point.
 
 ---
 
-## Part 5 · The end — 4:25–5:20 · *from `c4`*
+## Part 5 · The end — 5:04–5:45 · *from the finished course, kept for the film only*
 
-### 16 · The final declaration — *Day 20* — 4:25–4:40
-**Screen:** `20_celta5.html` as the candidate: the five checks ticked one by one, **Sign** → the pad → the green block; the tutor's *Accepted* signature beneath. Every table above it full: eight teaching practices, six observations, four assignments, the attendance.
-**Caption:** *Every table filled from the course itself. Nothing typed twice.*
-◆ Hold four seconds scrolling the full tables. ◆ Hold on the two signatures.
-*Fourth and last look at the booklet on screen.*
+### 18 · The final declaration — *Day 20* — 5:04–5:14
+**Screen:** `20_celta5.html`: the five checks, the candidate's signature, the tutor's, both dated.
+**Caption:** *Twenty days. Two signatures.*
 
-### 17 · Cambridge's booklet — *Day 20* — 4:40–5:00
-**Screen:** **Cambridge's booklet (PDF)** → the real July 2023 CELTA 5, page after page in Preview: the cover, the attendance, the Stage 1 page with the drawn signatures on the dotted lines, the Stage 2 grid with the crosses, the final declaration signed, the centre's confirmations page at the back. Flipping steadily.
-**Cursor:** the button, then nothing; the pages do the work.
-**Caption:** *The record wrote itself. This is Cambridge's own document.*
-◆ **Hold on the flip**, six seconds at least. Zoom on a signature line so the ink reads.
+### 19 · Cambridge's booklet — *Day 20* — 5:14–5:29
+**Screen:** *Cambridge's PDF* → the July 2023 form drawn in the browser, page by page: the cover, the confirmations, Stage 1, Stage 2, Stage 3, every table full, every signature in ink.
+**Caption:** *The record wrote itself.*
+◆ Hold. This is the line the film was made for; nothing moves under it.
+*Fourth and last look at the booklet.*
 
-### 18 · Paper, if you want it — *Day 20* — 5:00–5:10 · *a captured still*
-**Screen:** `4_feedback_returned.html`, eight sheets → *Print / Save as PDF* → the colour PDF flipping. Then the final report's PDF.
-**Caption:** *And if you want paper, one button prints the lot.*
-*The only place printing appears.*
+### 20 · Paper, if you want it — *Day 20* — 5:29–5:35 · *a captured still*
+**Screen:** the print dialog over the booklet, a still.
+**Caption:** *Print it, if a drawer needs it.*
 
-### 19 · The next course — *Day 20* — 5:10–5:16
-**Screen:** `14_owner.html` → **Start the next course from this** → the confirm → the new card lands at the top, gold-edged: the same centre, the same rooms, the same wording, no candidates yet.
-**Caption:** *Next course: one click, and the same course starts again.*
-◆ Hold on the new card landing.
+### 21 · The next course — *Day 20* — 5:35–5:41
+**Screen:** Course admin, *Start the next course from this* → the new course's card: the wording, the rooms and the timetable shape carried, every switch off, an empty roster.
+**Caption:** *The wording stays. The people change.*
 
-### 20 · Close — 5:16–5:24
-**Screen:** the tutor's invitation card from scene 1, at rest. The foot in frame; nothing zooms on it.
-**Caption:** *One link. The whole course.*
-
-**Running time ≈ 5:24.** Twenty-one scenes, of which scene 0 is a held frame and scene 18 a captured still. Against the journey cut: the observation sheet, the rooms, the four looks at the booklet, the Cambridge PDF and the clone are new; the tracker and the whole final-report scroll are gone (the booklet is now the document the film ends on; the final report's cover appears only inside scene 18's flip).
+### 22 · Close — 5:41–5:45
+**Screen:** the Connect Lite mark on the sand ground, the foot's credit.
+**Caption:** *One link, and a course happens inside it.*
 
 ---
 
 ## What the demo courses need before a frame is shot
 
-The film is shot from the demo, and as of 28 September the demo courses carry none of the last two days' work. The seed must add, on **`c3`** (running): the three online rooms with one ticked; course files and the shared candidate links; observation sheets with two filmed ones turned in; every candidate's CELTA 5 confirmed and Stage 1 returned and signed **with ink**, Emily's Stage 2 submitted. On **`c4`** (finished): every stage returned and signed with ink, the final declarations signed both sides, attendance filled, so scenes 14–17 can draw a complete booklet. The scratch course keeps its resubmission rung (`plant-assignment-rungs.mjs`).
+The film is shot from **three courses that never age**: the two standing demos Ramy will send to centres, and one finished course kept only to be filmed.
 
-Nothing is written to a demo course until Ramy says so. Then the seed, then `film/scenes.js` against the scene list above, then the `film/` page.
+- **The beginning demo** — pinned to **day 6**. Timetable built from an Excel file, rooms, the clock; six candidates with links; every CELTA 5 confirmed and signed with ink; TP points released for days 3–6 with pages and audio; plans and self-evaluations in for TP1–2; TP1 feedback returned, one point starred; Stage 1 returned and signed for at least one candidate; two observation sheets turned in; four volunteer students, one with the joining note agreed in Turkish, one not yet; shared materials on a lesson. Parts 1 and 2.
+- **The before-the-visit demo** — pinned to **day 17**, the assessor's visit on day 19. Everything above carried through: seven TPs returned, all four assignments through with one double-marked and one resubmitted, Stage 2 returned and signed, the planning grid released with a clash, volunteers with marks and one certificate earned and signed by the centre, provisional grades in, the assessor pack complete. Parts 3 and 4.
+- **The finished course** — every stage signed, the final declarations both sides, attendance filled, so scene 19 draws a complete booklet. Never sent to anyone. Part 5.
+
+**Pinning a course to a day is not built yet.** It needs `settings.demoToday` on the course, a shared `hubToday()` / `hubNow()` in hub-shared read by the timetable, the register, the volunteer page and hub-due, a *Demo · today is …* note on the sync pill, and the store's `assessorExpiry_` to skip a pinned course. Stamps on records stay real; the seed writes them consistent with the pinned day.
+
+Nothing is written to a demo course until Ramy says so. Then the clock, then the seed, then `film/scenes.js` against the scene list above, then the `film/` page.
 
 ## Build notes
 
