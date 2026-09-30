@@ -726,7 +726,9 @@
      first control exists fails for nothing. */
   function waitFirst(sc, then) {
     var first = null;
-    (sc.steps || []).some(function (s) { var sel = s.do === 'move' ? s.to : s.do === 'click' ? s.on : s.do === 'type' ? s.into : (s.do === 'scroll' && typeof s.to === 'string' && s.to !== 'bottom') ? s.to : null; if (typeof sel === 'string') { first = sel; return true; } return false; });
+    /* Only up to the first goto: after it the scene is on another screen,
+       and its controls are that screen's to wait for. */
+    (sc.steps || []).some(function (s) { if (s.do === 'goto') return true; var sel = s.do === 'move' ? s.to : s.do === 'click' ? s.on : s.do === 'type' ? s.into : (s.do === 'scroll' && typeof s.to === 'string' && s.to !== 'bottom') ? s.to : null; if (typeof sel === 'string') { first = sel; return true; } return false; });
     if (!first) { then(); return; }
     var t0 = performance.now();
     (function poll() {
@@ -975,7 +977,7 @@
       /* Store-painted screens can take eighteen seconds on Apps Script; and a
          row for a screen that never loaded still needs its `later` list, or
          the report's own loop stops on it (30 Sep 2026). */
-      later(function () { if (!moved) { moved = true; out.push({ n: n, title: sc.title, missing: ['(screen did not load)'], later: [] }); nextScene(); } }, 25000);
+      later(function () { if (!moved) { moved = true; out.push({ n: n, title: sc.title, missing: ['(screen did not load)'], later: [] }); nextScene(); } }, 120000);
       showScreen(sc, sc.screen, function () {
         if (moved) return;
         moved = true;
