@@ -149,7 +149,7 @@ var SCENES = [
     screen: '26_volunteer.html',
     course: 'start', role: 'volunteer', as: 'Omar', day: 'Day 1',
     about: 'Omar has not agreed yet on the demo, so his link opens on the joining note. Turkish is chosen, <i>Kabul ediyorum</i>, and the page behind it: the next class in the course’s clock, <b>Join on Zoom</b>. <b>volunteerAgree stubbed</b> — he stays unagreed for the next take.',
-    settle: 12000,
+    settle: 1800,
     stub: ['volunteerAgree'],
     steps: [
       { do: 'hold', ms: 1400 },
@@ -170,7 +170,7 @@ var SCENES = [
     screen: '24_tp_points.html',
     course: 'start', role: 'trainee', as: 'Olivia Bennett', day: 'Day 3',
     about: 'Olivia’s own lesson on the released points: aim, framework, the coursebook pages, the audio, with the other two lessons of the day beside hers for reference. Read-only.',
-    settle: 12000,
+    settle: 1800,
     steps: [
       { do: 'hold', ms: 1400 },
       { do: 'scroll', to: 260, ms: 2000 },
@@ -234,7 +234,7 @@ var SCENES = [
     screen: '5_tutor_dashboard.html',
     course: 'start', day: 'Day 4',
     about: 'The counters and the rows: two waiting for feedback, one assignment to mark, and beside a name the time a plan was turned in. Read-only.',
-    settle: 12000,
+    settle: 1800,
     steps: [
       { do: 'hold', ms: 1200 },
       { do: 'move', to: '.qcard[data-tab="tp"]' },
@@ -364,7 +364,7 @@ var SCENES = [
     screen: '21_tp_grid.html',
     course: 'visit', role: 'trainee', as: 'Olivia Bennett', day: 'Day 15',
     about: 'The group’s rows for TP7 and TP8 as Olivia sees them: hers editable, the others read, and two cells amber where two of them chose the same aim. Read-only in the take.',
-    settle: 12000,
+    settle: 1800,
     stub: ['gridSet'],
     steps: [
       { do: 'hold', ms: 1400 },
@@ -382,7 +382,7 @@ var SCENES = [
     screen: '25_volunteer_register.html',
     course: 'visit', day: 'Day 17',
     about: 'One tap on today’s block for the first student, the hours tick up, then the certificate: hers, already signed by the centre on the demo. <b>putCourse stubbed</b> so the tap does not stick.',
-    settle: 12000,
+    settle: 1800,
     stub: ['putCourse'],
     steps: [
       { do: 'hold', ms: 1200 },
