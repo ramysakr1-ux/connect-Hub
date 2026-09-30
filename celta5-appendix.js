@@ -1,16 +1,74 @@
-/* Connect Lite — Appendix 1 and Appendix 2 of Cambridge's CELTA 5
-   (July 2023), read out of the master PDF rather than retyped.
+/* Connect Lite — Cambridge's CELTA 5 (July 2023), read out of the master PDF
+   rather than retyped, and not paraphrased.
 
-   Appendix 1 is the notes that help a candidate prepare for a tutorial:
-   every one of the 41 criteria with Cambridge's own examples of what
-   meeting it looks like. Appendix 2 is the performance descriptors that
-   decide a passing grade at the end of the course. Both sit at the back
-   of the paper booklet, and until now neither reached a candidate here:
-   the booklet PDF is a tutor's and an assessor's button (Ramy, 30 Sep
-   2026: "they should be included at the bottom of this CELTA 5").
+   CONNECT_HUB_CELTA5_STAGE_TEXT holds the instruction blocks that head
+   Stage One, Stage Two and Stage Three, word for word off pages 13, 14 and
+   20. They are Cambridge's, and nothing here may be reworded, summarised
+   or added to — Ramy, 1 Oct 2026, after I had written a sentence of my own
+   into the Stage Two block: "the CELTA 5, don't meddle with it. Do not
+   change the wordings."
 
-   Kinds: app (a heading), lead, topic, crit {code,text}, eg, p, grades
-   {head, rows:[{label, cells}]}. Cambridge's words; do not paraphrase. */
+   CONNECT_HUB_CELTA5_APPENDIX holds Appendix 1 (the notes that help a
+   candidate prepare for a tutorial: every one of the 41 criteria with
+   Cambridge's own examples) and Appendix 2 (the performance descriptors).
+   Kinds: app, lead, topic, crit {code,text}, eg, p, grades {head, rows}. */
+window.CONNECT_HUB_CELTA5_STAGE_TEXT = {
+ "stage1": [
+  {
+   "kind": "p",
+   "text": "This form will be completed by your tutor in the first third of the course."
+  },
+  {
+   "kind": "p",
+   "text": "Some centres may hold a tutorial with you at the same time, but this is not obligatory."
+  },
+  {
+   "kind": "p",
+   "text": "Having read and agreed with the summary, sign and date the report."
+  }
+ ],
+ "stage2": [
+  {
+   "kind": "p",
+   "text": "With this record, a tutor will conduct a one-to-one tutorial with you."
+  },
+  {
+   "kind": "p",
+   "text": "Look at the list of criteria for teaching practice on the following pages. All of these criteria are taken from the CELTA Syllabus. In order to pass the course, you are required to demonstrate that you have met all of the criteria convincingly and consistently by the end of the course."
+  },
+  {
+   "kind": "p",
+   "text": "Before your tutorial, please read through your lesson plans, teaching practice feedback notes from tutors and any written work you have had marked and returned."
+  },
+  {
+   "kind": "p",
+   "text": "Then look at the list of criteria for teaching practice on the following pages (for further guidance on these criteria, see Appendix 1). In the column marked ‘You’, indicate the extent to which you feel you have demonstrated each of the criteria at this stage of the course by:"
+  },
+  {
+   "kind": "mark",
+   "text": "Putting ‘S+’ for ‘Above the Standard’ expected at this stage of the course"
+  },
+  {
+   "kind": "mark",
+   "text": "Putting ‘S’ for ‘Meets the Standard’ expected at this stage of the course"
+  },
+  {
+   "kind": "mark",
+   "text": "Putting ‘N’ for ‘Not to Standard’ in relation to the standard expected at this stage and therefore needs more work in order to pass the course"
+  },
+  {
+   "kind": "mark",
+   "text": "Putting ‘X’ for ‘Not Applicable’ at this stage in the course because you have not yet focused on teaching or planning skills associated with that criterion."
+  }
+ ],
+ "stage3": [
+  {
+   "kind": "p",
+   "text": "This record must be completed by tutors in the final third of the course for all candidates who: a) were not to standard at Stage 2; b) were at standard at Stage 2 but are not making the expected progress in the second half of the course; c) were above standard at Stage 2 but are not making the expected progress in the second half of the course. A tutorial must be given and the whole record completed."
+  }
+ ]
+};
+
 window.CONNECT_HUB_CELTA5_APPENDIX = [
  {
   "kind": "app",

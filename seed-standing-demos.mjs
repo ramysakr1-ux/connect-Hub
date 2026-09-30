@@ -352,7 +352,12 @@ async function candidateRecords(cand, ci, token, setIndex, rot, buildDoc, volunt
   }
   if (WHICH === 'visit') {
     const marksC = {}, marksT = {};
-    CRITERIA.forEach((code, i) => { marksC[code] = (i + ci) % 9 === 0 ? 'S+' : (i + ci) % 13 === 0 ? 'N' : 'S'; marksT[code] = (i + ci) % 11 === 0 ? 'S+' : (i + ci) % 17 === 0 ? 'N' : 'S'; });
+    /* The candidate's column is the only one with an X: Cambridge's fourth
+       mark, "Not Applicable at this stage in the course because you have not
+       yet focused on teaching or planning skills associated with that
+       criterion". At Stage 2 there are always a few. The tutor's column has
+       three marks, as the booklet says. */
+    CRITERIA.forEach((code, i) => { marksC[code] = (i + ci) % 7 === 0 ? 'X' : (i + ci) % 9 === 0 ? 'S+' : (i + ci) % 13 === 0 ? 'N' : 'S'; marksT[code] = (i + ci) % 11 === 0 ? 'S+' : (i + ci) % 17 === 0 ? 'N' : 'S'; });
     C.stage2 = { notesWA: 'FOL and LRT passed; LSRT submitted. I found the rationale section of FOL hard and rewrote it once.', notesOther: 'I am planning faster and my instructions are shorter.', overall: 'to', areas: cand.teachA.map(x => x[1]).join('\n'), marks: marksC, submittedAt: iso(12, '20:15') };
     T.stage2 = { hoursTaught: '3', notesWA: 'Three assignments passed' + (cand.assignments.fol === 'resub' ? ', FOL on resubmission' : '') + '. LfC due in week four.', notesOther: cand.tutorial, overall: /PASS [AB]/.test(cand.final) ? 'above' : 'to', summary: 'Action points from Stage 1 met. ' + cand.teachA[0][1] + ' remains the target for the last week.', marks: marksT, returnedAt: iso(13, '17:50'), signedBy: signed(TUTORS[1], 13, '17:50') };
     if (ci !== 5) C.stage2.signed = signed(cand.name, 13, '21:05'), C.stage2.agrees = true;

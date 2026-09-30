@@ -182,7 +182,7 @@ var SCENES = [
     screen: 'index.html',
     course: 'start', role: 'trainee', as: 'Selin Kaya', day: 'Day 0',
     about: 'Selin’s home — the rooms strip, the timetable card with day one marked — then the CELTA 5: <i>Read and confirm</i>, Cambridge’s own words scrolled, the confirmation box with her name in it, <b>Confirm and sign</b>, the pad. Selin was left unconfirmed on the demo for this beat; <b>writes stubbed</b> so she stays that way. The pad is drawn by the film.',
-    settle: 1800,
+    settle: 9000,
     stub: ['put'],
     steps: [
       { do: 'chapter', num: 'Three', text: 'Day one', sub: 'Each candidate’s own link, and the first thing Cambridge asks of them.', ms: 3400 },
@@ -542,7 +542,7 @@ var SCENES = [
     steps: [
       { do: 'chapter', num: 'Ten', text: 'The assessor’s visit', sub: 'A link of their own, read-only, that ends when the course does.', ms: 3400 },
       { do: 'hold', ms: 1400 },
-      { do: 'zoom', on: 'h1', scale: 1.6, ms: 1200 },
+      { do: 'zoom', on: '.eyebrow', scale: 1.8, ms: 1200 },
       { do: 'hold', ms: 1400 },
       { do: 'zoom', out: true, ms: 1000 },
       { do: 'caption', text: 'The assessor\u2019s own page. Nothing was assembled for it.' },
