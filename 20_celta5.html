@@ -90,6 +90,17 @@
   /* Six columns do not fit a phone; the table scrolls in its own box and
      the page never scrolls sideways (design audit, 28 Sep 2026). */
   .tablewrap{overflow-x:auto; -webkit-overflow-scrolling:touch; margin:8px 0 4px;}
+  /* Cambridge's appendices: a reference, set quieter than the record itself. */
+  .appx summary{cursor:pointer; font-weight:700; color:var(--teal); padding:6px 0;}
+  .appbody{max-width:78ch;}
+  .apph{font-family:'Newsreader',Georgia,serif; font-size:1.05rem; margin:18px 0 6px;}
+  .applead{font-weight:700; margin:14px 0 4px;}
+  .apptopic{font-size:0.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:14px 0 4px;}
+  .appcrit{margin:10px 0 2px;}
+  .appeg{margin:0 0 2px 18px; color:var(--grey); font-size:0.88rem; position:relative;}
+  .appeg::before{content:"\25E6"; position:absolute; left:-14px;}
+  .gradetbl{overflow-x:auto; margin-top:10px;}
+  .gradetbl td{vertical-align:top; font-size:0.84rem;}
   table.grid{width:100%; border-collapse:collapse; margin:0; font-size:0.84rem;}
   table.grid th{font-size:0.68rem; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); text-align:left; padding:6px 6px; border-bottom:1px solid var(--sand-line); font-weight:700;}
   table.grid td{padding:6px 6px; border-bottom:1px solid var(--sand-line); vertical-align:top;}
@@ -159,8 +170,8 @@
     textarea, input{border:0; background:none; padding:0;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609302306">
-<link rel="stylesheet" href="hub-theme.css?v=202609302306">
+<link rel="stylesheet" href="hub-house.css?v=202609302313">
+<link rel="stylesheet" href="hub-theme.css?v=202609302313">
 </head>
 <body class="hub-celta5">
 <div class="board">
@@ -173,16 +184,17 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202609302306"></script>
-<script src="hub-ink.js?v=202609302306"></script>
-<script src="assignment-defaults.js?v=202609302306"></script>
-<script src="celta5-text.js?v=202609302306"></script>
-<script src="celta5-criteria.js?v=202609302306"></script>
-<script src="hub-tracker.js?v=202609302306"></script>
-<script src="observation-defaults.js?v=202609302306"></script>
-<script src="hub-shared.js?v=202609302306"></script>
-<script src="hub-store.js?v=202609302306"></script>
-<script src="hub-sync.js?v=202609302306"></script>
+<script src="celta5-pdf.js?v=202609302313"></script>
+<script src="hub-ink.js?v=202609302313"></script>
+<script src="assignment-defaults.js?v=202609302313"></script>
+<script src="celta5-text.js?v=202609302313"></script>
+<script src="celta5-appendix.js?v=202609302308"></script>
+<script src="celta5-criteria.js?v=202609302313"></script>
+<script src="hub-tracker.js?v=202609302313"></script>
+<script src="observation-defaults.js?v=202609302313"></script>
+<script src="hub-shared.js?v=202609302313"></script>
+<script src="hub-store.js?v=202609302313"></script>
+<script src="hub-sync.js?v=202609302313"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -348,6 +360,32 @@ const table = (head, rows, empty) => rows.length
 
 /* ---- the page ------------------------------------------------------------ */
 function stageState(sub, ret, sig){ return sig ? ['Signed','good'] : ret ? ['Returned — to sign','attn'] : sub ? ['With your tutor','wait'] : ['Open','']; }
+/* The back of the booklet, which the paper version has and this page did not:
+   Appendix 1, Cambridge's own examples of what meeting each of the 41 criteria
+   looks like, and Appendix 2, the performance descriptors that decide a
+   passing grade. Everybody sees them -- the candidate most of all, since they
+   are the notes Cambridge wrote to help them prepare for the tutorial, and the
+   booklet PDF that used to be the only way to them is a tutor's and an
+   assessor's button (Ramy, 30 Sep 2026). Closed until opened, so the record
+   above stays the page. */
+function appendices(){
+  const A = window.CONNECT_HUB_CELTA5_APPENDIX || [];
+  if (!A.length) return '';
+  const grades = (g) => `<div class="gradetbl"><table class="grid"><thead><tr><th></th>${g.head.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${g.rows.map(r => `<tr><td class="code">${esc(r.label)}</td>${r.cells.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  const body = A.map(r =>
+      r.kind === 'app'   ? `<h3 class="apph">${esc(r.text)}</h3>`
+    : r.kind === 'lead'  ? `<p class="applead">${esc(r.text)}</p>`
+    : r.kind === 'topic' ? `<p class="apptopic">${esc(r.text)}</p>`
+    : r.kind === 'crit'  ? `<p class="appcrit"><b>${esc(r.code)}</b> ${esc(r.text)}</p>`
+    : r.kind === 'eg'    ? `<p class="appeg">${esc(r.text)}</p>`
+    : r.kind === 'grades'? grades(r)
+    : `<p class="note">${esc(r.text)}</p>`).join('');
+  return `<section class="part" id="appendix"><h2>Cambridge\u2019s appendices <small>what each criterion looks like, and the grade descriptors</small></h2>
+    <p class="note">The back of the paper booklet, in Cambridge\u2019s words. Appendix 1 is written to help you prepare for a tutorial; Appendix 2 is what a passing grade has to match at the end of the course.</p>
+    <details class="appx"><summary>Read the appendices</summary><div class="appbody">${body}</div></details>
+  </section>`;
+}
+
 function render(){
   if (!who) { $('app').innerHTML = '<p class="lede">Name a candidate in the link to open their CELTA 5.</p>'; return; }
   $('back').href = IS_TRAINEE ? 'index.html' + (KEYQ ? '?' + KEYQ : '') : '12_assessor_pack.html?' + KEYQ;
@@ -518,7 +556,9 @@ function render(){
       <p class="note" style="margin:0 0 8px">Completed for every candidate whose portfolio goes to Cambridge English. State whether the candidate did or did not demonstrate effectiveness in the areas identified, referring to feedback in final lessons and/or written assignments.</p>
       ${field(fint, 'gradeReview', 'Tutor comments on the action points', { o:'fint', mine: tut })}
     </div>` : ''}
-  </section>`;
+  </section>
+
+  ${appendices()}`;
   bind();
   const pdfBtn = $('cambridgePdf'); if (pdfBtn) pdfBtn.addEventListener('click', cambridgeBooklet);
 }
