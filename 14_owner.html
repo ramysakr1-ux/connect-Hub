@@ -80,6 +80,7 @@
   /* A standing demo course, pinned to a day by the demo clock (30 Sep 2026):
      gold, like the sync pill on its own screens. */
   .chip.demo{background:oklch(52% 0.098 70); color:#fff; border-color:transparent; font-weight:700;}
+  .filmrow.film-self{align-items:center; gap:12px;} .filmrow.film-self b{font-family:'Newsreader',Georgia,serif; font-size:1rem;} .filmrow.film-self code{font-size:0.78rem;}
   .course{position:relative; background:linear-gradient(180deg, var(--card-top) 0%, var(--card) 64%);
     border:1px solid var(--sand-line); border-radius:14px; padding:20px 22px 18px;
     box-shadow:inset 0 1px 0 var(--card-edge), 0 1px 2px var(--shade-near), 0 7px 16px -7px var(--shade-far);
@@ -152,7 +153,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609301547">
+<link rel="stylesheet" href="hub-house.css?v=202609301628">
 </head>
 <body>
 <div class="board">
@@ -176,8 +177,8 @@
 
 </div>
 
-<script src="hub-shared.js?v=202609301547"></script>
-<script src="hub-store.js?v=202609301547"></script>
+<script src="hub-shared.js?v=202609301628"></script>
+<script src="hub-store.js?v=202609301628"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -407,6 +408,27 @@ $('app').innerHTML = `
          so it rides along in every message rather than being looked up. It is
          kept in this browser only: there is nowhere on the course to put a
          thing that belongs to no course. -->
+    <!-- THE FILM ITSELF (30 Sep 2026). It is shot from real courses in this
+         store, and its address carries their keys, so the console -- which
+         holds every key -- is the one place that can write the address without
+         anybody pasting six things. Which course plays which part is read off
+         the courses' own names and marks, never off their ids. -->
+    ${(function(){
+      const byName = n => COURSES.find(c => c.name === n);
+      const start = byName('Demo \u2014 the first week'), visit = byName('Demo \u2014 before the visit'), scratch = byName('Film scratch \u2014 not a demo');
+      const demo = COURSES.find(c => c.courseName === 'CELTA \u2014 demo course');
+      const finished = COURSES.find(c => c.courseName === 'CELTA \u2014 C/1 2026' && !c.demoToday);
+      if (!start || !visit) return '';
+      const q = [demo && 'k=' + encodeURIComponent(demo.tutorKey), 'sk=' + encodeURIComponent(start.tutorKey), 'vk=' + encodeURIComponent(visit.tutorKey),
+                 finished && 'fk=' + encodeURIComponent(finished.tutorKey), scratch && 's=' + encodeURIComponent(scratch.tutorKey), ownerKey() && 'o=' + encodeURIComponent(ownerKey())].filter(Boolean).join('&');
+      const url = base() + 'film/?' + q;
+      return `<div class="filmrow film-self">
+        <b>The film</b>
+        <span class="note">Plays from the two standing demos, the finished course and the scratch course, with writes held back. Add <code>&amp;check=1</code> to test every scene before a take, <code>&amp;scene=N</code> to start at one.</span>
+        <a class="btn small" href="${esc(url)}" target="_blank" rel="noopener">Open the film</a>
+        <button class="btn small quiet" type="button" data-copy="${esc(url)}">Copy its address</button>
+      </div>`;
+    })()}
     <div class="filmrow">
       <label for="filmLink">Link to the film</label>
       <input type="url" id="filmLink" placeholder="https://…" value="${esc(filmLink())}">
