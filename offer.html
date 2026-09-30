@@ -131,7 +131,7 @@
   }
   @media(max-width:420px){ .card{padding:24px 20px 22px;} h1{font-size:1.45rem;} .door b{min-width:0;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609301531">
+<link rel="stylesheet" href="hub-house.css?v=202609301547">
 </head>
 <body>
 
@@ -168,7 +168,7 @@
   <div class="doors">
     <div class="door">
       <b>As a tutor</b>
-      <span class="note">The whole course: twelve candidates, their work, the grades and the reports.</span>
+      <span class="note" id="tutorNote">The whole course: the candidates, their work, the grades and the reports.</span>
       <a id="doorTutor" href="#">Open</a>
     </div>
     <div class="door">
@@ -180,6 +180,13 @@
       <b>As the assessor</b>
       <span class="note">Read-only. Everything a visit needs behind one link.</span>
       <a id="doorAssessor" href="#" aria-disabled="true">Open</a>
+    </div>
+    <!-- The fourth person on a course (30 Sep 2026): a volunteer student's own
+         page, shown only when the course has one on its register. -->
+    <div class="door" id="doorVolRow" hidden>
+      <b>As a volunteer student</b>
+      <span class="note" id="volNote">The page a student who comes in to be taught sees: the next class, the room, their attendance.</span>
+      <a id="doorVol" href="#" aria-disabled="true">Open</a>
     </div>
   </div>
 
@@ -225,8 +232,8 @@
   </div>
 </div>
 
-<script src="hub-shared.js?v=202609301531"></script>
-<script src="hub-store.js?v=202609301531"></script>
+<script src="hub-shared.js?v=202609301547"></script>
+<script src="hub-store.js?v=202609301547"></script>
 <script>
 /* Everything course-specific comes from the one key in the URL. The card is
    complete and readable before any of it arrives -- what the store adds is the
@@ -281,6 +288,19 @@
     a.href = invite('t', one.token); a.removeAttribute('aria-disabled');
     document.getElementById('candNote').textContent =
       one.name + '’s own view — their plan, their feedback, and nobody else’s.';
+    var words = ['','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'][list.length] || String(list.length);
+    document.getElementById('tutorNote').textContent = 'The whole course: ' + words + ' candidate' + (list.length === 1 ? '' : 's') + ', their work, the grades and the reports.';
+  }).catch(function(){});
+  /* The volunteer's door opens on their own page, not the card: the page is
+     the whole of what they get. */
+  HubStore.call({ op: 'course', key: k }).then(function(c){
+    var st = ((c && c.volunteers) || {}).students || [];
+    var first = st.filter(function(s){ return s && s.token; })[0];
+    if (!first) return;
+    var row = document.getElementById('doorVolRow'), a = document.getElementById('doorVol');
+    a.href = '26_volunteer.html?v=' + encodeURIComponent(first.token); a.removeAttribute('aria-disabled');
+    document.getElementById('volNote').textContent = first.name.split(' ')[0] + '’s page: the next class, the room to join, their attendance, and the certificate when it is earned.';
+    row.hidden = false;
   }).catch(function(){});
 })();
 </script>
