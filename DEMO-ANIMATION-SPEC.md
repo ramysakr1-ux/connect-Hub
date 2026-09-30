@@ -232,4 +232,4 @@ Nothing is written to a demo course until Ramy says so. Then the clock, then the
 - **The go** for the seed and the scenes.
 - **The price** for the card, and the tiers if there are tiers.
 - **The film's link** once it exists.
-- **The music** — pick one; the shortlist is in the chat.
+- **The music** — "Calm Emotional Piano Corporate" (Pixabay 157258, stock_music, 2:21), laid under the cut at a low level and looped. Cleanly licensed for commercial use with no credit needed. Rockot's "Corporate Ambient Piano" is the better character and its page says non-commercial; it needs the artist's permission first.
