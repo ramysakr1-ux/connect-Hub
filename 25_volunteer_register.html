@@ -98,24 +98,31 @@
   .empty{background:var(--surface); border:1px dashed var(--sand-line); border-radius:10px; padding:26px 22px; color:var(--grey); font-size:0.9rem; line-height:1.6;}
   .legend{font-size:0.76rem; color:var(--grey); margin:14px 0 0; line-height:1.7; display:flex; gap:0 16px; flex-wrap:wrap; align-items:center;}
   .legend .seg{cursor:default; margin-right:5px; vertical-align:-3px; display:inline-block;}
-  @media (max-width:560px){ .board{padding:18px 12px 60px;} .who{grid-template-columns:1fr; gap:6px;} .hrs{text-align:left;} }
+  .consent-count{font-size:0.84rem; color:var(--grey); line-height:1.6; margin:0 0 14px; padding:10px 14px;
+    background:var(--surface); border-left:3px solid var(--gold); border-radius:0 8px 8px 0; max-width:72ch;}
+  .consent-count b{color:var(--ink);}
+  /* On a phone a day block is a TAP TARGET, not a chart: a tutor marking the
+     register on their phone was aiming at 15 x 17px (sweep, 30 Sep 2026). */
+  @media (max-width:560px){ .board{padding:18px 12px 60px;} .who{grid-template-columns:1fr; gap:6px;} .hrs{text-align:left;}
+    .segs{gap:6px;} .seg{width:30px; height:30px; border-radius:6px;}
+    .legend .seg{width:15px; height:17px;} }
   @media print{ .back,.bar,.panel,#hubSync,.seg{cursor:auto;} .bar,.panel,.back,#hubSync{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609301239">
-<link rel="stylesheet" href="hub-theme.css?v=202609301239">
+<link rel="stylesheet" href="hub-house.css?v=202609301251">
+<link rel="stylesheet" href="hub-theme.css?v=202609301251">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202609301239"></script>
-<script src="hub-shared.js?v=202609301239"></script>
-<script src="hub-timetable-parse.js?v=202609301239"></script>
-<script src="hub-xlsx.js?v=202609301239"></script>
-<script src="hub-attendance.js?v=202609301239"></script>
-<script src="hub-store.js?v=202609301239"></script>
-<script src="hub-sync.js?v=202609301239"></script>
+<script src="hub-due.js?v=202609301251"></script>
+<script src="hub-shared.js?v=202609301251"></script>
+<script src="hub-timetable-parse.js?v=202609301251"></script>
+<script src="hub-xlsx.js?v=202609301251"></script>
+<script src="hub-attendance.js?v=202609301251"></script>
+<script src="hub-store.js?v=202609301251"></script>
+<script src="hub-sync.js?v=202609301251"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -237,6 +244,13 @@ function render(){
   const bar = IS_TUTOR ? `<div class="bar">
       <button class="btn" id="addOpen">${ADD_OPEN ? 'Close' : 'Add students'}</button>
       <span class="status">${esc(note)}</span></div>` + (ADD_OPEN ? addHTML() : '') : '';
+  /* Who has agreed to the centre's joining note, counted at the top. The
+     per-row lines say it one at a time, which means reading down a list of
+     twenty to learn that two have not opened their link at all. */
+  const waiting = list.filter(st => st.token && !st.agreed).length;
+  const consent = !IS_TUTOR || !list.length ? '' : `<p class="consent-count">${waiting
+    ? `<b>${waiting} of ${list.length}</b> ${waiting === 1 ? 'has' : 'have'} not yet agreed to the centre\u2019s joining note. It opens by itself the first time they open their own link, so this usually means the link has not been sent on.`
+    : `All ${list.length} ${list.length === 1 ? 'has' : 'have'} agreed to the centre\u2019s joining note.`}</p>`;
 
   if (!list.length) {
     app.innerHTML = head + bar + `<div class="empty">Nobody on the register yet.${IS_TUTOR ? ' Add them one at a time, or paste a list from a spreadsheet.' : ''}</div>`;
@@ -244,7 +258,7 @@ function render(){
     return;
   }
 
-  app.innerHTML = head + bar + `<div class="reg">${list.map((st, i) => {
+  app.innerHTML = head + bar + consent + `<div class="reg">${list.map((st, i) => {
     const r = recordOf(st, days, lessons, lessonMinutes);
     return `<div class="who">
       <div>

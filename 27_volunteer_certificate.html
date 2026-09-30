@@ -88,6 +88,14 @@
   /* spans by default, so the line needs display:block or it has no height to draw. */
   .sign .line{display:block; height:1px; background:var(--ink); opacity:.4; margin:0 0 7px;}
   .sign .l{font-size:0.64rem; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); font-weight:700;}
+  /* A signature drawn on screen (hub-ink), so a centre can hand over a signed
+     PDF without a printer between them and the student. The rule stays: the
+     ink sits ON it, as a pen would. */
+  .sign .slot{position:relative;}
+  .sign .inkwrap{position:absolute; left:0; right:0; bottom:8px; display:flex; justify-content:center; pointer-events:none;}
+  .sign .inkwrap svg.ink{height:46px; max-width:100%; color:var(--ink);}
+  .sign .typed{position:absolute; left:0; right:0; bottom:10px; text-align:center; font-family:'Newsreader',Georgia,serif; font-size:1.15rem;}
+  .sign .dated{position:absolute; left:0; right:0; bottom:10px; text-align:center; font-size:0.9rem;}
   .foot{position:absolute; left:0; right:0; bottom:3.6%; margin:0; text-align:center; font-size:0.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--faint);}
 
   .empty{background:var(--paper); border:1px dashed var(--sand-line); border-radius:11px; padding:26px 24px; color:var(--grey); font-size:0.9rem; line-height:1.65;}
@@ -100,15 +108,16 @@
     @page{ size:A4 landscape; margin:0; }
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609301239">
-<link rel="stylesheet" href="hub-theme.css?v=202609301239">
+<link rel="stylesheet" href="hub-house.css?v=202609301251">
+<link rel="stylesheet" href="hub-theme.css?v=202609301251">
 </head>
 <body class="hub-grid">
 <div class="board" id="app"></div>
-<script src="hub-shared.js?v=202609301239"></script>
-<script src="hub-attendance.js?v=202609301239"></script>
-<script src="hub-store.js?v=202609301239"></script>
-<script src="hub-sync.js?v=202609301239"></script>
+<script src="hub-shared.js?v=202609301251"></script>
+<script src="hub-attendance.js?v=202609301251"></script>
+<script src="hub-ink.js?v=202609301251"></script>
+<script src="hub-store.js?v=202609301251"></script>
+<script src="hub-sync.js?v=202609301251"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A student's own, or a tutor printing one from the register. */
@@ -118,6 +127,7 @@ const IS_TUTOR = MODE === 'tutor';
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const rec = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch(e) { return null; } };
+const tutorName = () => (localStorage.getItem('chub:tutorName') || '').trim();
 
 const A = window.hubAttendance;
 const SETTINGS = rec('connect_course_settings') || {};
@@ -172,6 +182,13 @@ function render(){
   const span = (first && last) ? (first === last ? 'on ' + longDate(first) : 'between ' + longDate(first) + ' and ' + longDate(last)) : '';
   const level = String(who.level || '').trim();
 
+  /* Signed for the centre: a tutor draws it once on this page and it is kept
+     on the student's own register row, so their copy is signed too. */
+  const sg = who.cert && who.cert.at ? who.cert : null;
+  const inkHTML = sg && sg.ink && window.hubInk ? `<span class="inkwrap">${window.hubInk.svg(sg.ink)}</span>`
+    : sg ? `<span class="typed">${esc(sg.name)}</span>` : '';
+  const dateHTML = sg ? `<span class="dated">${esc(longDate(String(sg.at).slice(0, 10)))}</span>` : '';
+
   const mail = 'mailto:?subject=' + encodeURIComponent('Certificate of attendance — ' + who.name)
     + '&body=' + encodeURIComponent('Dear ' + String(who.name).split(/\s+/)[0] + ',\n\nThank you for coming in to be taught on ' + (course || 'our course') + '. Your certificate of attendance is attached.\n\n' + (centre ? centre + '\n' : ''));
 
@@ -179,8 +196,9 @@ function render(){
     <div class="bar">
       <button class="btn" id="print">Print, or save as PDF</button>
       <a class="btn quiet" href="${esc(mail)}">Email it</a>
+      ${IS_TUTOR ? `<button class="btn quiet" id="sign">${sg ? 'Sign it again' : 'Sign it here'}</button>` : ''}
       ${IS_TUTOR ? '<a class="btn quiet" href="25_volunteer_register.html">Back to the register</a>' : ''}
-      <span class="note">${cert.earned ? 'Prints landscape on one page, without these buttons. Save it as a PDF and attach it — Lite does not send email itself.' : 'Below the centre’s threshold of ' + fmtH(cert.target) + ' hours. Printing it anyway is your call.'}</span>
+      <span class="note">${sg ? 'Signed by ' + esc(sg.name) + ' on ' + esc(longDate(String(sg.at).slice(0,10))) + '. ' : ''}${cert.earned ? 'Prints landscape on one page, without these buttons. Save it as a PDF and attach it — Lite does not send email itself.' : 'Below the centre’s threshold of ' + fmtH(cert.target) + ' hours. Printing it anyway is your call.'}</span>
     </div>
     <div class="sheet">
       <div class="rule-out"></div><div class="rule-in"></div>
@@ -206,13 +224,26 @@ function render(){
           <span class="fact"><span class="n">${r.present}</span><span class="l">${r.present === 1 ? 'Class' : 'Classes'}</span></span>
         </div>
         <div class="sign">
-          <span class="slot"><span class="line"></span><span class="l">Signed for the centre</span></span>
-          <span class="slot"><span class="line"></span><span class="l">Date</span></span>
+          <span class="slot">${inkHTML}<span class="line"></span><span class="l">Signed for the centre</span></span>
+          <span class="slot">${dateHTML}<span class="line"></span><span class="l">Date</span></span>
         </div>
       </div>
       <p class="foot">${esc(centre)}${SETTINGS.centreNumber ? ' · Cambridge centre ' + esc(SETTINGS.centreNumber) : ''} · attendance recorded on the course register</p>
     </div>`;
   if ($('print')) $('print').addEventListener('click', () => window.print());
+  if ($('sign')) $('sign').addEventListener('click', async () => {
+    const got = await window.hubInk.pad({ askName: true, name: tutorName(), title: 'Sign ' + who.name + '\u2019s certificate' });
+    if (!got || !got.name) return;
+    localStorage.setItem('chub:tutorName', got.name);
+    /* Written onto the register record, which is the one place this student's
+       row lives; hub-sync carries it to the course and to their own page. */
+    const reg = rec('connect_volunteers_v1') || { students: [] };
+    const row = (reg.students || []).find(x => x && x.token === who.token);
+    if (!row) return;
+    row.cert = { name: got.name, at: new Date().toISOString(), ink: got.ink || '' };
+    try { localStorage.setItem('connect_volunteers_v1', JSON.stringify(reg)); } catch(e) {}
+    render();
+  });
 }
 render();
 </script>

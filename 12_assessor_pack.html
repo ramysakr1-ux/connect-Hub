@@ -195,7 +195,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202609301239">
+<link rel="stylesheet" href="hub-house.css?v=202609301251">
 </head>
 <body>
 <div class="board">
@@ -226,13 +226,14 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202609301239"></script>
-<script src="hub-shared.js?v=202609301239"></script>
-<script src="assignment-defaults.js?v=202609301239"></script>
-<script src="hub-tracker.js?v=202609301239"></script>
-<script src="hub-rotation.js?v=202609301239"></script>
-<script src="hub-store.js?v=202609301239"></script>
-<script src="hub-sync.js?v=202609301239"></script>
+<script src="observation-defaults.js?v=202609301251"></script>
+<script src="hub-shared.js?v=202609301251"></script>
+<script src="assignment-defaults.js?v=202609301251"></script>
+<script src="hub-tracker.js?v=202609301251"></script>
+<script src="hub-rotation.js?v=202609301251"></script>
+<script src="hub-attendance.js?v=202609301251"></script>
+<script src="hub-store.js?v=202609301251"></script>
+<script src="hub-sync.js?v=202609301251"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -640,6 +641,7 @@ function renderList(){
     <div class="panel">${dm.length ? `<table><tr><th>Candidate</th><th>Assignment</th><th>First marker</th><th>Second marker</th><th>Double-marked</th><th>Outcome</th></tr>${dm.join('')}</table>` : '<div class="empty">Nothing has been double-marked yet. The quota above says how many of each assignment need to be.</div>'}</div>
     <h2 class="sect">Assignment briefs <small>as the centre set them, in the centre’s order</small></h2>
     <div class="panel">${briefs()}</div>
+    ${volunteerStudents()}
     ${courseDocuments()}`;
   if (window.hubStackTables) hubStackTables($('app'));
 }
@@ -701,6 +703,49 @@ const DOC_LABELS = [
 
    So the pack is the candidates: the ones the centre chose at the top, and
    everybody else under them, each opening the whole of their work. */
+
+/* THE VOLUNTEER STUDENTS. Handbook 14.1 puts the attendance registers in the
+   pack, and this is the register Lite keeps itself, so it belongs here rather
+   than behind a pasted link. It answers the question an assessor actually has
+   about teaching practice -- were there real learners, at the levels the
+   course claims, often enough to teach -- at a glance, without opening a
+   spreadsheet. Names are shown because a register without them is not a
+   register; the links that reach each student's page are NOT, because an
+   assessor has no business opening somebody's own page. */
+function volunteerStudents(){
+  const reg = rec('connect_volunteers_v1') || {};
+  const list = (reg.students || []).filter(s => s && s.name);
+  if (!list.length) return '';
+  const tt = rec('connect_timetable_v1') || {};
+  const A = window.hubAttendance;
+  const tpSlots = (tt.slots || []).filter(sl => sl.kind === 'tp');
+  const mins = sl => { const a = String(sl.from||'').match(/^(\d{1,2}):(\d{2})/), b = String(sl.to||'').match(/^(\d{1,2}):(\d{2})/); if (!a||!b) return 0; const d = (+b[1]*60 + +b[2]) - (+a[1]*60 + +a[2]); return d > 0 ? d : 0; };
+  const lessonMin = tpSlots.length ? Math.round(tpSlots.reduce((n, sl) => n + mins(sl), 0) / tpSlots.length) : 0;
+  const days = (tt.days || []).filter(d => d.tp).map(d => d.date).sort();
+  const fmtH = h => (Math.round(h * 100) / 100).toString().replace(/\.00$/, '');
+
+  const rows = list.map(st => {
+    const r = A ? A.record(st.marks || (st.here || []).reduce((m,d) => { m[d]='present'; return m; }, {}), days, tpSlots.length, lessonMin)
+                : { hours: 0, present: 0, partial: 0 };
+    return { st, r };
+  }).sort((a, b) => b.r.hours - a.r.hours);
+
+  /* The levels the volunteers are, which is the claim the timetable makes
+     about what is being taught. A level nobody has been given reads as blank
+     rather than as a guess. */
+  const levels = {};
+  list.forEach(st => { const l = String(st.level || '').trim(); if (l) levels[l] = (levels[l] || 0) + 1; });
+  const levelLine = Object.keys(levels).sort().map(l => l + ' (' + levels[l] + ')').join(', ');
+  const attended = rows.filter(x => x.r.present > 0).length;
+
+  return `<h2 class="sect">Volunteer students <small>Handbook 14.1 &middot; the centre's own register, ${list.length} on it</small></h2>
+    <div class="panel">
+      <div class="docrow"><span>${list.length} student${list.length===1?'':'s'} on the register, ${attended} with attendance recorded${levelLine ? ' &middot; levels: ' + esc(levelLine) : ''}</span><span>${days.length} teaching day${days.length===1?'':'s'}</span></div>
+      <table><tr><th>Student</th><th>Level</th><th>Classes attended</th><th>Part of a class</th><th>Hours</th></tr>
+      ${rows.map(({st, r}) => `<tr><td>${esc(st.name)}</td><td>${esc(st.level || '')}</td><td>${r.present} of ${days.length}</td><td>${r.partial || ''}</td><td>${fmtH(r.hours)}</td></tr>`).join('')}
+      </table>
+    </div>`;
+}
 
 function courseDocuments(){
   const docs = (SETTINGS && SETTINGS.docs) || {};
