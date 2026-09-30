@@ -14,6 +14,10 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
+## 30 Sep 2026 — the console marks a pinned demo (version 50)
+`ownerCourses` rows carry `demoToday`, so the owner console shows a gold
+"Demo · pinned to …" chip on a standing demo course. One field, no new op.
+
 ## 30 Sep 2026 — the demo clock (versions 48, 49)
 See `2026-09-30-demo-clock.md` and `2026-09-30-pinned-at.md`. `settings.demoToday`
 pins a course to a day: no assessor expiry (v48), the clock and the
