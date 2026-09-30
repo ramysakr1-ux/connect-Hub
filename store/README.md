@@ -14,6 +14,11 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
+## 30 Sep 2026 — the certificate's signature (version 47)
+See `2026-09-30-certificate-signature.md`. One field: the volunteer boot sends
+`cert` (the centre's drawn signature, kept on their register row by a tutor),
+so the student's own copy is signed too. No new op.
+
 ## 30 Sep 2026 — a volunteer agrees once (versions 44, 45, 46)
 Version 44: `shareMaterial` / `unshareMaterial` (course kind `shared`, appended
 under the lock; a trainee cannot write a course record). Version 45: the
