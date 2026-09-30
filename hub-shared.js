@@ -345,7 +345,9 @@ function hubRoomRefusal(title, who, mode){
     ? { href: '12_assessor_pack.html', label: 'Open your assessor pack' }
     : mode === 'tutor'
       ? { href: '5_tutor_dashboard.html', label: 'Back to your dashboard' }
-      : { href: 'index.html', label: 'Back to your course' };
+      : mode === 'volunteer'
+        ? { href: '26_volunteer.html', label: 'Back to your page' }
+        : { href: 'index.html', label: 'Back to your course' };
   document.documentElement.style.background = 'oklch(92.5% 0.012 85)';
   document.body.style.cssText = 'margin:0;background:oklch(92.5% 0.012 85);';
   document.body.innerHTML =
@@ -393,6 +395,33 @@ window.hubTutorRoomOnly = function(opts){
     mode === 'assessor'
       ? 'Your link is read-only. The returned feedback and the marked records are in your pack.'
       : 'This is where your tutors write up your teaching practice. What they return to you is on your own feedback page.', mode);
+};
+
+/* A VOLUNTEER STUDENT'S OWN PAGES (30 Sep 2026). A member of the public who
+   came in to be taught has exactly two: their own page and the certificate
+   printed from it. `hubVolunteerRoomOnly({ tutor: true })` lets a tutor in as
+   well, for the certificate, which a centre sometimes has to print from the
+   register. */
+window.hubVolunteerRoomOnly = function(opts){
+  var mode = window.HubMode;
+  if (mode === 'volunteer' || !mode) return false;
+  if (opts && opts.tutor && mode === 'tutor') return false;
+  return hubRoomRefusal('This room belongs to a volunteer student',
+    mode === 'tutor'
+      ? 'Each student who comes in to be taught has a link of their own, and this is what it opens. Their links are on the volunteer register.'
+      : 'Each student who comes in to be taught has a link of their own, and this is what it opens.', mode);
+};
+
+/* The course's own rooms, which a volunteer is not part of. They are not on
+   the course; they come in to be taught, and their own page carries the only
+   part of it they need. */
+window.hubNotVolunteerRoom = function(){
+  if (window.HubMode !== 'volunteer') return false;
+  /* The house voice for every refusal is "This room belongs to ...", and the
+     screen check reads it: a refusal worded any other way reads as the room
+     opening (sweep, 30 Sep 2026). */
+  return hubRoomRefusal('This room belongs to the course',
+    'Your own page has your classes, what your teachers have shared and your attendance.', 'volunteer');
 };
 
 /* The candidate's own writing screens. */

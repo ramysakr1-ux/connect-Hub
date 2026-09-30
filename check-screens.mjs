@@ -50,11 +50,26 @@ const ROOMS = {
   /* Guidance, not a room: it holds no course data and takes no key, because
      somebody reads it BEFORE their link works, or because theirs did not. */
   '17_how_it_works.html':            { trainee:'open',   tutor:'open',   assessor:'open'   },
+  /* The timetable and the teaching-practice points are the whole course's to
+     read; each reader is shown their own share of them by the store. */
+  '23_timetable.html':               { trainee:'open',   tutor:'open',   assessor:'open',   volunteer:'refuse' },
+  '24_tp_points.html':               { trainee:'open',   tutor:'open',   assessor:'open',   volunteer:'refuse' },
+  /* The volunteer register is the tutors' room; the assessor reads it, since
+     Handbook 14.1 lists attendance registers for the visit. */
+  '25_volunteer_register.html':      { trainee:'refuse', tutor:'open',   assessor:'open',   volunteer:'refuse' },
+  /* A volunteer student's own page, and the certificate printed from it. The
+     certificate is also the tutor's, to print one from the register. */
+  '26_volunteer.html':               { trainee:'refuse', tutor:'refuse', assessor:'refuse', volunteer:'open'   },
+  '27_volunteer_certificate.html':   { trainee:'refuse', tutor:'open',   assessor:'refuse', volunteer:'open'   },
 };
 const MODES = [
   { name:'trainee',  seed:{ 'hub:t':'check-t', 'hub:booted':'trainee:check-t' },  q:'?t=check-t' },
   { name:'tutor',    seed:{ 'hub:k':'check-k', 'hub:booted':'tutor:check-k' },    q:'?k=check-k' },
   { name:'assessor', seed:{ 'hub:a':'check-a', 'hub:booted':'assessor:check-a' }, q:'?ak=check-a' },
+  /* A volunteer student (30 Sep 2026): a member of the public on their own
+     link. Their token carries its course, the way the store mints it. */
+  { name:'volunteer', seed:{ 'hub:v':'check-volunteer', 'hub:booted':'volunteer:check-volunteer',
+                             'hub:volunteer':JSON.stringify({ name:'Check Student', here:[] }) }, q:'?v=check-volunteer' },
 ];
 const SETTINGS = JSON.stringify({ centreName:'Check Centre', centreNumber:'TR000', courseName:'CHECK', start:'2026-01-05', end:'2026-01-30' });
 const REFUSED = /This room belongs to/i;
