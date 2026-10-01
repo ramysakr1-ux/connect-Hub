@@ -18,7 +18,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610020208">
+<link rel="stylesheet" href="hub-tokens.css?v=202610020212">
 <style>
   :root{
     /* the pane -- the same four values the trainee landing's cards use */
@@ -152,7 +152,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610020208">
+<link rel="stylesheet" href="hub-house.css?v=202610020212">
 </head>
 <body>
 <div class="board">
@@ -176,8 +176,8 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610020208"></script>
-<script src="hub-store.js?v=202610020208"></script>
+<script src="hub-shared.js?v=202610020212"></script>
+<script src="hub-store.js?v=202610020212"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -300,20 +300,26 @@ const DEMO_NOTE_KEY = 'chub:demoNote';
 function demoNote(){ try { return (localStorage.getItem(DEMO_NOTE_KEY) || '').trim(); } catch (e) { return ''; } }
 function standingDemos(){
   const byName = n => COURSES.find(c => c.name === n);
-  return { start: byName('Demo \u2014 the first week'), visit: byName('Demo \u2014 before the visit') };
+  /* The finished course goes with them (Ramy, 2 Oct 2026: "all the demo
+     links"). It is the one that answers "and what do we have at the end?" --
+     the reports written, both halves of CELTA 5 signed, the certificates. It
+     has no demoToday, which is what tells it from the two pinned ones. */
+  return { start: byName('Demo \u2014 the first week'), visit: byName('Demo \u2014 before the visit'),
+           done: COURSES.find(c => c.courseName === 'CELTA \u2014 C/1 2026' && !c.demoToday) };
 }
 function demosNote(){
-  const { start, visit } = standingDemos();
+  const { start, visit, done } = standingDemos();
   const film = filmLink(), note = demoNote();
   return [
     'Hi,',
     '',
     note || null, note ? '' : null,
-    'Here is Connect Lite \u2014 a CELTA course run from one link, with everything the candidates write and everything you write back in one place. Two courses to look around, and a film:',
+    'Here is Connect Lite \u2014 a CELTA course run from one link, with everything the candidates write and everything you write back in one place. ' + (done ? 'Three courses' : 'Two courses') + ' to look around, and a film:',
     '',
     '1. The first week of a course \u2014 ' + cardLink(start),
     '2. The last week, two days before the assessor\u2019s visit \u2014 ' + cardLink(visit),
-    film ? '3. The film, five minutes \u2014 ' + film : null,
+    done ? '3. A course that has finished \u2014 the reports written, CELTA 5 signed, the certificates \u2014 ' + cardLink(done) : null,
+    film ? (done ? '4' : '3') + '. The film, eight minutes \u2014 ' + film : null,
     '',
     'Each card opens on what Lite is and what it costs, and then four ways into that course you can type in: as a tutor, as one of the candidates, as the assessor, and as a volunteer student. Both are demonstration courses that stay on the day they are on, so nothing you do there touches anybody\u2019s record.',
     '',
@@ -496,8 +502,8 @@ $('app').innerHTML = `
       const { start, visit } = standingDemos();
       if (!start || !visit) return '';
       return `<div class="filmrow demos">
-        <b>Send the two demos and the film</b>
-        <span class="note">One message: your note, the first-week card, the before-the-visit card, and the film once its link is filled in below. Kept in this browser.</span>
+        <b>Send the demos and the film</b>
+        <span class="note">One message: your note, the first-week card, the before-the-visit card, the finished course, and the film once its link is filled in below. Kept in this browser.</span>
         <textarea id="demoNote" rows="3" placeholder="A line or two from you \u2014 who you are, why you are sending this.">${esc(demoNote())}</textarea>
         <span class="acts"><button class="btn small" type="button" id="demosCopy">Copy the message</button><a class="linkbtn" id="demosMail" href="#">Email it</a></span>
       </div>`;
