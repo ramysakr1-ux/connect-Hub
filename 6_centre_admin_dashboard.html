@@ -788,7 +788,7 @@ try {
     if(Array.isArray(cs.courseLinks)) CAND_LINKS = cs.courseLinks.filter(l => l && (l.label || l.url));
     if(cs.volunteerContact){ document.getElementById('volContactName').value = cs.volunteerContact.name || ''; document.getElementById('volContactEmail').value = cs.volunteerContact.email || ''; }
     if(Array.isArray(cs.tutorContacts)) CONTACTS = cs.tutorContacts.filter(c => c && (c.name || c.email)).map(c => ({ name: c.name || '', email: c.email || '', group: c.group || '', role: c.role || '' }));
-    if(Array.isArray(cs.onlineRooms)) ROOMS = cs.onlineRooms.filter(r => r && (r.label || r.url)).map(r => ({ label: r.label || '', url: r.url || '', group: r.group || '', assessor: !!r.assessor }));
+    if(Array.isArray(cs.onlineRooms)) ROOMS = cs.onlineRooms.filter(r => r && (r.label || r.url)).map(r => ({ label: r.label || '', url: r.url || '', group: r.group || '', level: r.level || '', assessor: !!r.assessor }));
   }
 } catch(e) { console.error('Course admin: the settings did not all load — ' + (e && e.message || e)); }
 renderCandLinks();
@@ -951,15 +951,19 @@ function renderRooms(){
   document.getElementById('onlineRooms').innerHTML = rows.map((r, i) =>
     `<div><label>Room</label><input type="text" class="or-label" data-i="${i}" value="${esc(r.label)}" placeholder="What the button says"></div>
      <div><label>For</label>${whoSel(r, i)}</div>
+     <!-- Ramy, 1 Oct 2026: the timetable's rooms strip names a room by the
+          LEVEL of the class it holds -- "Teaching practice · B1" -- not by
+          the group. Optional; a room without one shows its group instead. -->
+     <div><label>Level</label><input type="text" class="or-level" data-i="${i}" value="${esc(r.level || '')}" placeholder="e.g. A2 or B1" style="max-width:120px"></div>
      <div class="wide"><label>Link</label><input type="url" class="or-url" data-i="${i}" value="${esc(r.url)}" placeholder="https://zoom.us/j/…">
        <label class="or-asl" style="display:flex;align-items:center;gap:9px;font-size:0.86rem;font-weight:500;letter-spacing:0;text-transform:none;margin-top:8px;cursor:pointer;"><input type="checkbox" class="or-assessor" data-i="${i}"${r.assessor ? ' checked' : ''}><span>The assessor joins this room</span></label></div>`).join('');
 }
 function readRooms(){
-  const labels = [...document.querySelectorAll('.or-label')], urls = [...document.querySelectorAll('.or-url')], grp = [...document.querySelectorAll('.or-group')], asr = [...document.querySelectorAll('.or-assessor')];
-  const all = labels.map((el, i) => ({ label: el.value.trim(), url: (urls[i] ? urls[i].value : '').trim(), group: (grp[i] ? grp[i].value : '').trim(), assessor: !!(asr[i] && asr[i].checked) }));
-  ROOMS = all; return all.filter(r => r.url).map(r => { const o = { label: r.label, url: r.url }; if (r.group) o.group = r.group; if (r.assessor) o.assessor = true; return o; });
+  const labels = [...document.querySelectorAll('.or-label')], urls = [...document.querySelectorAll('.or-url')], grp = [...document.querySelectorAll('.or-group')], asr = [...document.querySelectorAll('.or-assessor')], lvl = [...document.querySelectorAll('.or-level')];
+  const all = labels.map((el, i) => ({ label: el.value.trim(), url: (urls[i] ? urls[i].value : '').trim(), group: (grp[i] ? grp[i].value : '').trim(), level: (lvl[i] ? lvl[i].value : '').trim(), assessor: !!(asr[i] && asr[i].checked) }));
+  ROOMS = all; return all.filter(r => r.url).map(r => { const o = { label: r.label, url: r.url }; if (r.group) o.group = r.group; if (r.level) o.level = r.level; if (r.assessor) o.assessor = true; return o; });
 }
-document.getElementById('addOnlineRoom').addEventListener('click', () => { readRooms(); ROOMS.push({ label:'', url:'', group:'', assessor:false }); renderRooms(); });
+document.getElementById('addOnlineRoom').addEventListener('click', () => { readRooms(); ROOMS.push({ label:'', url:'', group:'', level:'', assessor:false }); renderRooms(); });
 
 function renderCandLinks(){
   if (!CAND_LINKS) CAND_LINKS = []; // the load block calls this before the var below is assigned

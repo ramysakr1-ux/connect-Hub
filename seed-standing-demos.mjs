@@ -138,7 +138,11 @@ const ROOMS = [
   { label: 'Input', url: 'https://zoom.us/j/81000000001', assessor: false },
   /* Two rooms, not three. Ramy, 30 Sep 2026: feedback and tutorials happen in
      the teaching practice room -- they do not need a door of their own. */
-  { label: 'Teaching practice', url: 'https://zoom.us/j/81000000002', assessor: true },
+  /* One teaching practice room per group, named on the timetable's strip by
+     the LEVEL of the class it holds (Ramy, 1 Oct 2026): group 1 teaches the
+     A2 class, group 2 the B1 class. */
+  { label: 'Teaching practice', url: 'https://zoom.us/j/81000000002', group: '1', level: 'A2', assessor: true },
+  { label: 'Teaching practice', url: 'https://zoom.us/j/81000000003', group: '2', level: 'B1', assessor: false },
 ];
 const COURSE_LINKS = [
   /* Ramy, 1 Oct 2026, reading the demo's own card: the Cambridge link is

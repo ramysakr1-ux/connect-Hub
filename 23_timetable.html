@@ -67,7 +67,21 @@
   .day .dh{display:flex; justify-content:space-between; align-items:baseline; gap:6px; border-bottom:1px solid var(--sand-line); padding:9px 11px 7px;}
   /* One row per slot: the time in its own narrow column so the clock reads
      straight down the day, whatever the content beside it does. */
-  .sl{display:grid; grid-template-columns:44px 1fr; gap:7px; padding:5px 11px; align-items:start; font-size:0.76rem; line-height:1.38; min-width:0;}
+  .sl{display:grid; grid-template-columns:44px 1fr; gap:7px; padding:3px 10px; align-items:start; font-size:0.76rem; line-height:1.32; min-width:0;}
+  /* The rooms strip (1 Oct 2026). */
+  .rooms{display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:0 0 16px; padding:11px 14px; border:1px solid var(--sand-line); border-radius:12px; background:var(--paper);}
+  .rooms .rl{font-size:0.64rem; letter-spacing:.12em; text-transform:uppercase; font-weight:700; color:var(--grey); margin-right:4px;}
+  .rooms .rm{display:inline-flex; flex-direction:column; gap:2px; text-decoration:none; padding:8px 14px; border-radius:9px; border:1.5px solid var(--sand-line); color:var(--teal); line-height:1.1;}
+  .rooms .rm b{font-size:0.88rem; font-weight:700;}
+  .rooms .rm small{font-size:0.64rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--grey);}
+  .rooms .rm:hover{border-color:var(--teal);}
+  .rooms .rm.live{background:var(--teal); border-color:var(--gold); color:var(--paper);}
+  .rooms .rm.live small{color:var(--paper); opacity:.85;}
+  .sl.tp .tpline{display:flex; flex-wrap:wrap; align-items:baseline; gap:0 8px;}
+  .sl.tp .tpline .lab{display:inline; margin-right:2px;}
+  .sl.tp .line.me .who{color:var(--teal); text-decoration:underline; text-underline-offset:2px;}
+  .sl.demo{color:var(--ink);}
+  @media print{ .rooms{display:none;} }
   .sl .t{color:var(--faint); font-size:0.66rem; font-weight:700; padding-top:2px; font-variant-numeric:tabular-nums;}
   .sl .t .lt{display:block; color:var(--teal); font-weight:600; font-size:0.62rem; margin-top:1px;}
   .zone .ingreen{color:var(--teal);}
@@ -76,7 +90,7 @@
   .day{transition:transform 160ms ease, box-shadow 160ms ease;}
   .day:hover{transform:translateY(-3px); box-shadow:0 10px 22px -14px oklch(30% 0.04 60 / .55);}
   @media (prefers-reduced-motion: reduce){ .day{transition:none;} .day:hover{transform:none;} }
-  .sl .lab{font-size:0.62rem; letter-spacing:.09em; text-transform:uppercase; color:var(--faint); font-weight:700; display:block;}
+  .sl .lab{font-size:0.62rem; letter-spacing:.09em; text-transform:uppercase; color:var(--faint); font-weight:700; display:block; line-height:1.4;}
   .sl.brk{color:var(--faint); font-style:italic; font-size:0.71rem; padding-top:2px; padding-bottom:2px;}
   .sl.fix{color:var(--grey);}
   .sl .dash{color:var(--faint);}
@@ -84,8 +98,7 @@
   .sl.tp .who{color:var(--gold-deep); font-weight:700;}
   /* One teaching line is a row of small parts that should break as a unit
      rather than mid-phrase: the letter, the group, the length, the door. */
-  .sl.tp .line{display:flex; flex-wrap:wrap; align-items:baseline; gap:0 6px; line-height:1.5;}
-  .sl.tp .line + .line{margin-top:1px;}
+  .sl.tp .line{display:inline-flex; align-items:baseline; gap:0 3px; line-height:1.4;}
   .sl.tp .mn{color:var(--grey); font-size:0.72rem; white-space:nowrap;}
   /* One meaning per colour, and a mark rather than a painted cell: the grid
      has to stay readable when nothing is wrong. */
@@ -282,7 +295,20 @@ function groups(){
      rotation came out identical for everybody (found on the scratch course,
      29 Sep 2026). */
   people.forEach(t => { const g = String(t.group || ''); (by[g] = by[g] || []).push({ token: t.id || t.token, name: t.name, group: g }); });
-  return Object.keys(by).sort().map(g => ({ group: g, people: by[g], sets: R.setsFor(by[g]) }));
+  if (Object.keys(by).length) return Object.keys(by).sort().map(g => ({ group: g, people: by[g], sets: R.setsFor(by[g]) }));
+  /* A CANDIDATE has no roster, so this came back empty and every teaching
+     slot on their timetable was a dash (found making the mock, 1 Oct 2026).
+     What they do get is their own group's two sets from the TP points
+     record (store v55 hands them before the points are released): tokens in
+     letter order, first set then second. That is all the letters need. */
+  const P = rec('connect_tp_points_v1') || {};
+  const me = rec('hub:me') || {};
+  if (Array.isArray(P.sets) && P.sets.length) {
+    let i = 0;
+    const sets = P.sets.map(st => (st || []).map(tok => ({ token: tok, name: '', group: String(P.group || me.group || ''), letter: R.LETTERS[i] || String(i + 1), idx: i++ })));
+    return [{ group: String(P.group || me.group || ''), people: sets.flat(), sets }];
+  }
+  return [];
 }
 
 /* Assignment deadlines, so a due date is a cell rather than something the
@@ -359,6 +385,7 @@ function skeleton(){
   }
   /* Day one is orientation and the demonstration class — no assessed practice
      (Ramy's unassessed slots). Teaching starts the next course day. */
+  if (days.length) days[0].first = true;
   const teaching = days.slice(1);
   const nSets = 2;
   for (let i = 0; i < teaching.length; i++) {
@@ -414,20 +441,34 @@ function cellHTML(day){
     if (slot.kind === 'break') return `<div class="sl brk">${t}<span>${esc(slot.label || 'Break')}</span></div>`;
     if (slot.kind === 'tp') {
       const i = tpSeen++;
+      /* Day one carries no assessed practice: a demonstration lesson of ninety
+         minutes across the first two slots, then forty-five minutes of
+         unassessed teaching (Ramy, 1 Oct 2026). */
+      /* The first course day, read from the timetable itself: a timetable
+         saved before this flag existed carries no `first` on its days. */
+      if (day.first || ((TT.days || [])[0] || {}).date === day.date) {
+        if (i === 0) return `<div class="sl fix demo"><span class="t">${esc(slot.from || '')}</span><span><span class="lab">Demonstration lesson</span>90 min</span></div>`;
+        if (i === 1) return '';
+        return `<div class="sl fix demo">${t}<span><span class="lab">Unassessed teaching</span>45 min</span></div>`;
+      }
       if (!day.tp || !teachers.length) return `<div class="sl fix">${t}<span class="dash">\u2014</span></div>`;
+      /* Ramy, 1 Oct 2026: "just TP1 A B C" -- the letter and its mark, no
+         group, no length, no door. The rooms are in the strip above the
+         weeks; a candidate's own letter is lifted. */
+      const meTok = (rec('hub:me') || {}).token || '';
       const who = teachers.map(g => {
         const p = g.order[i];
         if (!p) return '';
-        const link = roomLink(slot, g.group, true);
-        const m = mins(slot);
-        return `<span class="line">${markFor(p.token, day.tp, day.date)}<b class="who">${esc(p.letter)}</b>${teachers.length > 1 ? '<span class="gl">Group ' + esc(g.group || '\u2014') + '</span>' : ''}${m ? '<span class="mn">' + esc(m) + '</span>' : ''}${link}</span>`;
+        const link = '';
+        const m = '';
+        return `<span class="line${meTok && p.token === meTok ? ' me' : ''}">${markFor(p.token, day.tp, day.date)}<b class="who">${esc(p.letter)}</b></span>`;
       }).filter(Boolean).join('');
       if (!who) return `<div class="sl fix">${t}<span class="dash">\u2014</span></div>`;
-      return `<div class="sl tp">${t}<span><span class="lab">TP ${day.tp}</span>${who}</span></div>`;
+      return `<div class="sl tp">${t}<span class="tpline"><span class="lab">TP ${day.tp}</span>${who}</span></div>`;
     }
     if (slot.kind === 'input') {
       const v = cells[slot.key] || '';
-      const link = roomLink(slot, '');
+      const link = '';   /* the room is in the strip above the weeks (1 Oct 2026) */
       if (!EDIT) return (v || link) ? `<div class="sl">${t}<span><span class="lab">${esc(slot.label || 'Input')}</span>${esc(v)}${link ? '<br>' + link : ''}</span></div>` : `<div class="sl fix">${t}<span class="dash">\u2014</span></div>`;
       return `<div class="sl">${t}<span><span class="lab">${esc(slot.label || 'Input')}</span><input type="text" data-date="${esc(day.date)}" data-slot="${esc(slot.key)}" value="${esc(v)}" placeholder="\u2014">${link ? link : ''}</span></div>`;
     }
@@ -522,6 +563,34 @@ function markFor(token, tp, dateISO){
 
 /* A colour that means something has to say what it means, and only while it
    is on the page: a key to marks nobody can see is furniture. */
+/* THE ROOMS, ONCE, ABOVE THE WEEKS. Ramy, 1 Oct 2026: the join links inside
+   the cells were "too close to each other -- you could end up clicking the
+   wrong link", so the cells carry none, and the rooms stand in one strip
+   above the timetable, named by the LEVEL of the class they hold ("Teaching
+   practice · B1") rather than by group. Each shows the time of its slot
+   today, and the one whose slot is running is lit -- from ten minutes before
+   it starts until it ends, on the course's own clock -- "like Connect". The
+   landing page keeps its own strip too: two doors. */
+function roomsStrip(){
+  const rooms = (Array.isArray(SETTINGS.onlineRooms) ? SETTINGS.onlineRooms : []).filter(r => r && r.url && /^https?:\/\//i.test(r.url));
+  if (!rooms.length) return '';
+  const slots = (TT && TT.slots && TT.slots.length) ? TT.slots : DEFAULT_SLOTS;
+  const n0 = window.hubNow ? hubNow() : new Date();
+  const now = n0 instanceof Date ? n0 : new Date(n0);
+  const todayIsCourseDay = (TT.days || []).some(d => d.date === TODAY);
+  const hm = (h, m) => h * 60 + m;
+  const mins = str => { const m = /^(\d{1,2}):(\d{2})$/.exec(String(str || '')); return m ? hm(+m[1], +m[2]) : null; };
+  const nowMin = hm(now.getHours(), now.getMinutes());
+  const forRoom = r => slots.filter(sl => sl.room && String(sl.room).toLowerCase() === String(r.label || '').toLowerCase());
+  return `<div class="rooms"><span class="rl">Join</span>${rooms.map(r => {
+    const mine = forRoom(r);
+    const first = mine[0];
+    const live = todayIsCourseDay && mine.some(sl => { const a = mins(sl.from), b = mins(sl.to); return a != null && b != null && nowMin >= a - 10 && nowMin <= b; });
+    const where = r.level ? esc(r.level) : (r.group ? 'Group ' + esc(r.group) : '');
+    const when = first ? esc(first.from) + (mine.length > 1 ? ' \u2013 ' + esc(mine[mine.length - 1].to) : '') : '';
+    return `<a class="rm${live ? ' live' : ''}" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer"><b>${esc(r.label || 'Room')}${where ? ' \u00b7 ' + where : ''}</b><small>${live ? 'Live now' : when}</small></a>`;
+  }).join('')}</div>`;
+}
 function keyLine(){
   const seen = { done:0, watch:0, alarm:0 };
   Object.keys(STATE).forEach(t => {
@@ -688,7 +757,7 @@ function render(){
       <span class="status">${esc(note)}</span></div>
       <p class="legend" style="margin:0 0 14px">${pub ? 'Everyone on the course reads this timetable. Edits show at once.' : 'Only tutors can see it until you set it.'}</p>`
       + (PREVIEW ? '' : moveHTML() + slotsHTML() + importHTML()) : '';
-  app.innerHTML = head + zoneLine() + bar + weeks.map((w, i) => {
+  app.innerHTML = head + zoneLine() + bar + roomsStrip() + weeks.map((w, i) => {
     const a = parse(w[0].date), b = parse(w[w.length-1].date);
     return `<section class="wk"><h2>Week ${i+1} <small>${dm(a)} – ${dm(b)}</small></h2>
       <div class="days">${w.map(d => cellHTML(d)).join('')}</div></section>`;
