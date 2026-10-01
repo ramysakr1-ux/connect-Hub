@@ -14,6 +14,11 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
+## 1 Oct 2026 — a candidate's timetable gets the sets before release (version 55)
+`tpPointsFor_` hands an unreleased candidate their group's sets and their own
+token, never the points, so the timetable can draw its letters.
+See [2026-10-01-sets-before-release.md](2026-10-01-sets-before-release.md).
+
 ## 1 Oct 2026 — a volunteer writes to the centre, never a tutor (version 54)
 The volunteer boot drops `tutorContacts` (v51) and carries the one
 `volunteerContact` the centre names on Course admin.
