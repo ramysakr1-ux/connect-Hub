@@ -83,11 +83,11 @@ const exchange = base(`
   <div style="position:absolute;inset:0;background:#f7f7f8"></div>
   <div style="position:absolute;top:0;left:0;right:0;height:52px;background:#fff;border-bottom:1px solid #e5e5e5;display:flex;align-items:center;padding:0 22px;font-weight:500;color:#444">A model, any model</div>
   <div style="position:absolute;top:80px;left:200px;width:880px;">
-    <div style="background:#e9e9ee;border-radius:16px;padding:16px 20px;font-size:14px;line-height:1.55;color:#222;white-space:pre-wrap;font-family:Roboto,Arial,sans-serif">Teaching practice 2 — Sofia Kuznetsova — A2 — Grammar: present simple, time expressions
+    <div style="background:#e9e9ee;border-radius:16px;padding:16px 20px;font-size:14px;line-height:1.55;color:#222;white-space:pre-wrap;font-family:Roboto,Arial,sans-serif">Teaching practice 2 — Priya Raghunathan — A2 — Grammar: present simple, time expressions
 Plan: lead-in (5) · present: clarify and focus on TL (8) · controlled practice (8) · freer practice (7) · feedback and error correction (10)
 Self-evaluation: “The task was set before the handout went out… the clarification stage ran over.”
 Please write the feedback: strengths and action points for planning, strengths and action points for teaching, a line on the self-evaluation, an overall comment.</div>
-    <div style="margin-top:22px;display:flex;gap:14px;align-items:center;color:#666;font-size:14px"><span style="width:12px;height:12px;border-radius:50%;background:#c0392b;box-shadow:0 0 0 6px rgba(192,57,43,.18)"></span>Listening… “Right, so Sofia's lead-in was tight, she set the task before the paper, the clarification ran long…”</div>
+    <div style="margin-top:22px;display:flex;gap:14px;align-items:center;color:#666;font-size:14px"><span style="width:12px;height:12px;border-radius:50%;background:#c0392b;box-shadow:0 0 0 6px rgba(192,57,43,.18)"></span>Listening… “Right, so Priya's lead-in was tight, she set the task before the paper, the clarification ran long…”</div>
   </div>`);
 
 /* 5. the print dialog over the booklet */
@@ -97,7 +97,7 @@ const print = base(`
     <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#666">Cambridge English</div>
     <div style="font-size:26px;font-weight:700;margin-top:14px">CELTA 5</div>
     <div style="font-size:13px;color:#444;margin-top:4px">Candidate Record Booklet · July 2023</div>
-    <div style="margin-top:36px;font-size:13px;line-height:2.1"><b>Candidate name</b> &nbsp; Olivia Bennett<br><b>Centre</b> &nbsp; Elmswood English Centre &nbsp; <b>Centre number</b> &nbsp; TR999<br><b>Course number</b> &nbsp; 1 / 2026 &nbsp; <b>Dates</b> &nbsp; 10 August – 4 September 2026</div>
+    <div style="margin-top:36px;font-size:13px;line-height:2.1"><b>Candidate name</b> &nbsp; Aiko Tanaka<br><b>Centre</b> &nbsp; Elmswood English Centre &nbsp; <b>Centre number</b> &nbsp; TR999<br><b>Course number</b> &nbsp; 1 / 2026 &nbsp; <b>Dates</b> &nbsp; 10 August – 4 September 2026</div>
     <div style="margin-top:40px;border-top:1px solid #ddd;padding-top:16px;font-size:12px;color:#555;line-height:1.8">Stage 1 &nbsp; returned 14 August &nbsp; signed both sides<br>Stage 2 &nbsp; returned 26 August &nbsp; signed both sides<br>Stage 3 &nbsp; returned 3 September &nbsp; signed both sides<br>Final declaration &nbsp; 4 September &nbsp; signed both sides</div>
   </div>
   <div style="position:absolute;top:60px;right:120px;width:380px;background:#fff;border:1px solid #dadce0;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.18);font-size:14px">

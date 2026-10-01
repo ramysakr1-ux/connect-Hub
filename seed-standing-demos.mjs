@@ -81,9 +81,16 @@ const must = async (label, b) => { const r = await call(b); if (!r.ok) { console
 const START = '2026-03-02', END = '2026-03-27';
 const DAYS = (() => { const out = []; for (let d = new Date(START + 'T00:00:00Z'); d <= new Date(END + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + 1)) { const w = d.getUTCDay(); if (w && w !== 6) out.push(d.toISOString().slice(0, 10)); } return out; })();
 const DAY = i => DAYS[i - 1];                                  // 1-based course day
-const PIN_DAY = WHICH === 'start' ? 6 : 17;
+/* Ramy, 1 Oct 2026: "why is C1 TP8? It should be before the assessor visit,
+   so around TP6." He is right, and it was worse than a pin in the wrong
+   place: the visit fell on day 19 and the eighth teaching practice finished
+   on day 17, so the assessor arrived two days after the last lesson with
+   nothing to observe. The visit now falls on a TEACHING day (day 17, TP8),
+   and the before-the-visit demo sits on day 13 — TP6 just taught, TP7 next,
+   the visit four days out. */
+const PIN_DAY = WHICH === 'start' ? 6 : 13;
 const PIN = DAY(PIN_DAY);
-const VISIT_DAY = 19;
+const VISIT_DAY = 17;
 /* London is on GMT in March, so a course time is a UTC time. */
 const ts = (day, hhmm) => Date.parse(DAY(day) + 'T' + hhmm + ':00Z');
 const iso = (day, hhmm) => new Date(ts(day, hhmm)).toISOString();
@@ -518,11 +525,24 @@ const vols = volunteers(course.id === '(dry run)' ? 'cX' : course.id);
 const presentOn = day => vols.students.filter(s => s.marks[DAY(day)] === 'present').length + 4;   // four regulars the register does not hold
 
 /* course-level records */
+/* A short read is a failed read, so nothing carries on over one -- but the
+   store itself answers a `course` read in anything from three to eleven
+   seconds and occasionally hands back an empty result, and a single empty
+   answer used to stop a twelve-candidate seed dead three times in a row
+   (1 Oct 2026, recasting both demos). The read is therefore tried four times,
+   a few seconds apart, and only a record that is STILL short after all four
+   stops the seed. The guard is unchanged in what it refuses to believe. */
 const readBack = async (kind, expectKeys) => {
-  const r = await call({ op: 'course', key: KEY });
-  const got = r.result && r.result[kind];
-  const n = got ? Object.keys(got).length : 0;
-  if (n < expectKeys) { console.log(`   ${kind} read back with ${n} keys (expected ≥ ${expectKeys}) — STOPPING`); process.exit(1); }
+  let n = 0;
+  for (let i = 0; i < 4; i++) {
+    if (i) await new Promise(r => setTimeout(r, 4000));
+    const r = await call({ op: 'course', key: KEY });
+    const got = r.result && r.result[kind];
+    n = got ? Object.keys(got).length : 0;
+    if (n >= expectKeys) break;
+    console.log(`   ${kind} read back with ${n} keys (expected ≥ ${expectKeys}) — reading again`);
+  }
+  if (n < expectKeys) { console.log(`   ${kind} is still short after four reads — STOPPING`); process.exit(1); }
   console.log(`   ${kind}: ${n} keys`);
 };
 if (WRITE) {
@@ -575,8 +595,22 @@ if (WRITE) {
   await b.close();
 
   /* A re-run must not post twice: the stream appends, so what is already
-     there is skipped by its text. */
-  const already = new Set((((await call({ op: 'course', key: KEY })).result || {}).stream || []).map(p => p.text));
+     there is skipped by its text.
+     And the stream is the one record a reseed cannot simply overwrite, so it
+     accumulates. Ramy, 1 Oct 2026, asking why an announcement he had just
+     made sat third: two posts with a deadline still ahead were pinned above
+     it (his own rule, 28 Sep) -- but the demo was ALSO carrying a seeded post
+     dated five days after the pinned day, left behind by an earlier seed with
+     a later pin, plus his own real-clock test posts. A demo must never show a
+     post from its own future, so anything dated after the pinned day goes
+     before the day's posts are written. */
+  const streamNow = (((await call({ op: 'course', key: KEY })).result || {}).stream || []);
+  const cutoff = iso(PIN_DAY, '23:59');
+  for (const stale of streamNow.filter(p => p && String(p.at) > cutoff)) {
+    const r = await call({ op: 'unpost', key: KEY, id: stale.id });
+    console.log('   dropped a post dated after the pinned day: ' + String(stale.text).slice(0, 44) + (r.ok ? '' : ' (FAILED: ' + r.error + ')'));
+  }
+  const already = new Set(streamNow.filter(p => p && String(p.at) <= cutoff).map(p => p.text));
   for (const [day, hhmm, by, to, text, dueDay] of POSTS) {
     if (day > PIN_DAY || already.has(text)) continue;
     const body = { op: 'post', key: KEY, by, to, text, at: iso(day, hhmm) };
