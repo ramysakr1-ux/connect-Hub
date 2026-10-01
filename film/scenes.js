@@ -249,6 +249,11 @@ var SCENES = [
       /* Ramy, v6: "close the goddamn box after that." Choosing a shape is what
          closes it; the menu used to be opened and left. */
       { do: 'click', on: '#fwMenu .fw-item:nth-of-type(2)', ms: 1200 },
+      /* When stages are already named, choosing a shape asks "this renames
+         the stages, continue?" -- and the film left that box standing for the
+         rest of the scene (Ramy, v7: "what is it with you and open boxes").
+         Continue, if it is asked. */
+      { do: 'click', on: '.confirm-action', optional: true, ms: 1100 },
       { do: 'hold', ms: 700 },
       { do: 'caption', text: 'The shape is given. The thinking is theirs.' },
       { do: 'hold', ms: 1400 },
