@@ -79,6 +79,7 @@
   .rooms .rm.live small{color:var(--paper); opacity:.85;}
   .sl.tp .tpline{display:flex; flex-wrap:wrap; align-items:baseline; gap:0 8px;}
   .sl.tp .tpline .lab{display:inline; margin-right:2px;}
+  .sl.tp.first .tpline .lab{color:var(--ink-warm); letter-spacing:.06em;}
   .sl.tp .line.me .who{color:var(--teal); text-decoration:underline; text-underline-offset:2px;}
   .sl.demo{color:var(--ink);}
   @media print{ .rooms{display:none;} }
@@ -471,7 +472,13 @@ function cellHTML(day){
       const who = [...byLetter.entries()].map(([letter, tokens]) =>
         `<span class="line${meTok && tokens.indexOf(meTok) !== -1 ? ' me' : ''}">${worst(tokens)}<b class="who">${esc(letter)}</b></span>`).join('');
       if (!who) return `<div class="sl fix">${t}<span class="dash">\u2014</span></div>`;
-      return `<div class="sl tp">${t}<span class="tpline"><span class="lab">TP ${day.tp}</span>${who}</span></div>`;
+      /* Ramy, 1 Oct 2026: "we always use ABC one day, DEF the other... it's a
+         reference to which of the two subgroups is teaching on that day." So
+         the first teaching slot of a day names the SET -- "TP 1 · ABC" -- and
+         each slot below it carries its own letter. A set is called by its
+         members' letters, never "Day A" (hub-rotation.js). */
+      const setName = (i === 0 && teachers[0] && teachers[0].order) ? teachers[0].order.slice().sort((a, b) => String(a.letter).localeCompare(String(b.letter))).map(p => esc(p.letter)).join('') : '';
+      return `<div class="sl tp${i === 0 ? ' first' : ''}">${t}<span class="tpline"><span class="lab">TP ${day.tp}${setName ? ' \u00b7 ' + setName : ''}</span>${who}</span></div>`;
     }
     if (slot.kind === 'input') {
       const v = cells[slot.key] || '';
