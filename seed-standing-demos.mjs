@@ -168,7 +168,7 @@ function settingsFor(tokens) {
     courseNumber: '1 / 2026', notificationRef: 'TR999-C1/2026',
     tpCount: TP_COUNT, totalHours: 120, deliveryMode: 'f2f',
     tutorNames: TUTORS.join(', '),
-    tutorContacts: [{ name: TUTORS[0], email: 'jordan@elmswood.example', group: '' }, { name: TUTORS[1], email: 'diane@elmswood.example', group: '' }],
+    tutorContacts: [{ name: TUTORS[0], email: 'jordan@elmswood.example', group: '', role: 'main' }, { name: TUTORS[1], email: 'diane@elmswood.example', group: '' }],
     planDueNote: 'Plans by 17:00 the day before you teach.', selfDueNote: 'Self-evaluation before you read the feedback, please.',
     logo: LOGO, gradeForm: FINISHED.settings.gradeForm,
     timeZone: 'Europe/London', onlineRooms: ROOMS,
