@@ -456,13 +456,20 @@ function cellHTML(day){
          group, no length, no door. The rooms are in the strip above the
          weeks; a candidate's own letter is lifted. */
       const meTok = (rec('hub:me') || {}).token || '';
-      const who = teachers.map(g => {
-        const p = g.order[i];
-        if (!p) return '';
-        const link = '';
-        const m = '';
-        return `<span class="line${meTok && p.token === meTok ? ' me' : ''}">${markFor(p.token, day.tp, day.date)}<b class="who">${esc(p.letter)}</b></span>`;
-      }).filter(Boolean).join('');
+      /* ONE letter per slot. Every group runs the same rotation, so in a slot
+         group 1's D and group 2's D teach at once; printing "D D" said nothing
+         (Ramy, 1 Oct 2026: "what the hell is TP1 DD? ... if we have four
+         groups, is it going to be D D D D?"). The letter is shown once; its
+         mark is the worst across the people behind it -- an alarm beats a
+         watch beats a tick, and a tick only when everyone has one. A reader's
+         own letter is lifted whichever group they are in. Two groups of
+         different sizes can put different letters in one slot; then both
+         show, each once. */
+      const byLetter = new Map();
+      teachers.forEach(g => { const p = g.order[i]; if (!p) return; const k = String(p.letter); if (!byLetter.has(k)) byLetter.set(k, []); byLetter.get(k).push(p.token); });
+      const worst = tokens => { const ms = tokens.map(tok => markFor(tok, day.tp, day.date)); const pick = c => ms.find(x => x.indexOf('mk ' + c) !== -1) || ''; return pick('alarm') || pick('watch') || (ms.length && ms.every(x => x.indexOf('mk done') !== -1) ? ms[0] : ''); };
+      const who = [...byLetter.entries()].map(([letter, tokens]) =>
+        `<span class="line${meTok && tokens.indexOf(meTok) !== -1 ? ' me' : ''}">${worst(tokens)}<b class="who">${esc(letter)}</b></span>`).join('');
       if (!who) return `<div class="sl fix">${t}<span class="dash">\u2014</span></div>`;
       return `<div class="sl tp">${t}<span class="tpline"><span class="lab">TP ${day.tp}</span>${who}</span></div>`;
     }
