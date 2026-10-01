@@ -3,7 +3,8 @@
  * Written 23 Sep 2026, after the lesson plan design pass. That pass settled a
  * handful of rules and they have to be the same on every screen, so they live
  * here rather than being copied into sixteen <style> blocks. Linked AFTER each
- * screen's own styles, like hub-theme.css, so these win.
+ * screen's own styles, so these win; the palette they draw on is
+ * hub-tokens.css, linked FIRST (1 Oct 2026).
  *
  * The rules, and why each one exists:
  *
@@ -22,43 +23,43 @@
  *   the quiet things on the right -- never a sentence sandwiched between two
  *   buttons.
  *
- * EVERY var() HERE CARRIES A FALLBACK, and that is not tidiness. The base
- * palette is declared per screen, in each screen's own :root, and five
- * screens (8, 9, 10, 11, 15) never declared --gold or --gold-lifted, three
- * never declared --ink-warm. A var() with no fallback and no value makes the
- * whole declaration invalid, so `border:1.5px dashed var(--gold, oklch(63% 0.096 72))` simply did
- * not draw -- the dashed chip on the assignment wording screen came out with
- * no border at all. Declaring the palette in this file instead would be
- * worse: it loads last, so it would overwrite any screen that means to
- * differ.
+ *   A SHAPE PER JOB. 6px for a control, 10px for a strip or an inline panel,
+ *   12px for a full-width card (--r-control, --r-strip, --r-card). A pill
+ *   only where a thumb needs it: the join-room link and the volunteer page.
+ *
+ * NO var() HERE CARRIES A FALLBACK, and that is deliberate. The palette is
+ * declared once in hub-tokens.css, linked first on every screen, so a var()
+ * always resolves; the fallbacks this file used to carry had drifted from
+ * the declared values on six tokens (1 Oct 2026). The pill, mark and tone
+ * tokens below are declared here because they are rules about meaning.
  *
  * NOT the printed documents. Those are Cambridge-facing and keep their own
  * header colours (Ramy, 23 Sep 2026: "leave the printed documents alone").
  */
 
-:root{
-  /* The fill of every field, and the focus lift. It lived only as a fallback
-     repeated at fifteen call sites, which made it unchangeable in one place
-     and, once changed, a set of comments that disagreed with themselves. It
-     is declared here, where the rule that governs it lives, and the fallbacks
-     below still carry the same value so a screen that somehow loads without
-     this file looks the same.
-     90%, not 93.4%: at 93.4 a field sat under two points from the 95.2% card
-     behind it and the border was doing all the work of saying "type here"
-     (Ramy, 26 Sep 2026). */
-  --field:oklch(99% 0.004 90);
-  --field-focus:oklch(98.5% 0.008 84);
-  /* The placeholder, on that fill. --grey (51%) measured 4.25 against it --
-     it cleared 4.5 on the old, lighter field and stopped clearing it when the
-     field went darker, which is the kind of thing a tint change takes with it
-     quietly. 49% is the lightest that clears, at 4.66. --grey itself is
-     unchanged: it is right everywhere else, on the cards. */
-  --field-ph:oklch(49% 0.017 70);
-  --gold-deep:oklch(52% 0.098 70);
-  --gold-wash:oklch(94.5% 0.035 78);
-  --teal-lifted:oklch(44% 0.062 195);
-}
-
+/* ---- the paper header -------------------------------------------------
+   Was hub-theme.css (20 Sep 2026): the assignment screens (8-11) had been
+   built as a second design -- bare left headings in ink, pill tabs, 20px
+   buttons -- and Ramy said "there are two different designs here." These
+   give the screens that carried that file (8-11, 15, 18-27, each marked
+   body.hub-paper) the paper header card with a teal rule, an eyebrow, a
+   centred Newsreader title in teal, and 6px buttons. Folded in here on
+   1 Oct 2026 to drop a request per page; :where() keeps the specificity the
+   old file had, so nothing a screen set on purpose changes hands. */
+:where(body.hub-paper) body.hub-assign .board{ max-width:960px; }
+:where(body.hub-paper) .header{ border-top:2px solid var(--teal); text-align:center; padding:24px 26px 22px; }
+:where(body.hub-paper) .header h1{ font-family:'Newsreader',Georgia,serif; font-size:1.95rem; font-weight:700; color:var(--teal); line-height:1.2; margin:0; }
+:where(body.hub-paper) .header .eyebrow{ font-family:'Instrument Sans','Karla',sans-serif; font-weight:600; font-size:10px; letter-spacing:0.22em; color:var(--grey); text-transform:uppercase; margin:0 0 4px; }
+:where(body.hub-paper) .header .sub{ margin:10px auto 0; max-width:640px; font-size:0.88rem; color:var(--grey); line-height:1.6; }
+:where(body.hub-paper) .header .meta{ justify-content:center; }
+:where(body.hub-paper) .header .crit{ text-align:center; }
+:where(body.hub-paper) .header .note{ text-align:center; }
+:where(body.hub-paper) .header .outcome-badge{ margin:12px auto 0; }
+:where(body.hub-paper) .picker{ justify-content:center; }
+:where(body.hub-paper) .picker button{ border-radius:6px; }
+:where(body.hub-paper) .btn{ border-radius:6px; font-size:0.86rem; font-weight:600; }
+:where(body.hub-paper) .back{ color:var(--teal); }
+:where(body.hub-paper) #printBtn, :where(body.hub-paper) .actions button{ border-radius:6px; }
 /* ---- the three tones ---------------------------------------------------- */
 /* What a colour MEANS on a Lite screen, named once (sweep, 28 Sep 2026):
      act   -- gold:  your next step; the card with the gold edge
@@ -69,9 +70,9 @@
    (Ramy, 23 Sep 2026); the tones are states, and only states get a colour.
    Screens that paint a state read these tokens rather than picking a hue. */
 :root{
-  --tone-act: var(--gold-deep, oklch(52% 0.098 70));
-  --tone-stuck: var(--brick, oklch(45% 0.15 27));
-  --tone-done: var(--faint, oklch(54% 0.012 75));
+  --tone-act: var(--gold-deep);
+  --tone-stuck: var(--brick);
+  --tone-done: var(--faint);
 }
 
 /* ---- one pill, five tones ------------------------------------------------ */
@@ -90,7 +91,7 @@
    steps darker, so the pill reads against the sand and the words read
    against the pill. Loaded last, so these win over each screen's own. */
 :root{
-  --pill-neutral-bg: var(--box, oklch(91.2% 0.03 80)); --pill-neutral-line: var(--sand-line, oklch(85.5% 0.02 80)); --pill-neutral-text: oklch(45% 0.02 70);
+  --pill-neutral-bg: var(--box); --pill-neutral-line: var(--sand-line); --pill-neutral-text: oklch(45% 0.02 70);
   /* The same weight as the met/not-met marks and the lesson plan's stages:
      a wash of the hue, the hue as the text, a faint line. The four hues are
      unchanged -- green, blue, amber, red -- only their weight (1 Oct 2026). */
@@ -107,7 +108,7 @@
   padding:3px 10px; font-family:'Karla',sans-serif; font-size:0.72rem; font-weight:700; letter-spacing:0.01em; line-height:1.4;
   background:var(--pill-neutral-bg); color:var(--pill-neutral-text);
 }
-.chip.nd{ background:transparent; border-color:transparent; color:var(--faint, oklch(60% 0.012 80)); font-weight:600; }
+.chip.nd{ background:transparent; border-color:transparent; color:var(--faint); font-weight:600; }
 /* .task .st: the observation list's pills. The home's card lines are .st too
    but are TEXT, toned by colour, not pills -- so the list is scoped. */
 .chip.fine, .chip.above, .outcome.pass, .standing.tk-std, .standing.tk-above, .task .st.done{
@@ -122,17 +123,17 @@
 .cell .chip{ padding:3px 7px; letter-spacing:0; }
 
 /* ---- buttons ---------------------------------------------------------- */
-.btn-gold{background:var(--gold, oklch(63% 0.096 72)); color:var(--ink-warm, oklch(30% 0.042 58)); font-weight:700; border:none;}
-.btn-gold:hover{background:var(--gold-lifted, oklch(70% 0.12 72));}
+.btn-gold{background:var(--gold); color:var(--ink-warm); font-weight:700; border:none;}
+.btn-gold:hover{background:var(--gold-lifted);}
 /* A filled button LIFTS. It used to fade to 88% opacity on five screens,
    which greys the label as well as the fill, and four more filled buttons had
    no hover at all. Border lifts with the fill, or a dark edge rings a lighter
    face. Ramy, 24 Sep 2026. */
 .btn-teal:hover, .btn-submit:hover, .btn.primary:hover{
-  background:var(--teal-lifted, oklch(44% 0.062 195)); border-color:var(--teal-lifted, oklch(44% 0.062 195));}
-.btn-quiet{background:none; color:var(--grey, oklch(51% 0.017 70)); border:1.5px solid var(--sand-line, oklch(89.5% 0.012 82));}
-.btn-quiet:hover{border-color:var(--grey, oklch(51% 0.017 70)); color:var(--ink, oklch(23.5% 0.017 65));}
-.btn-add{background:none; border:1.5px dashed var(--gold, oklch(63% 0.096 72)); color:var(--gold-deep); font-weight:700;
+  background:var(--teal-lifted); border-color:var(--teal-lifted);}
+.btn-quiet{background:none; color:var(--grey); border:1.5px solid var(--sand-line);}
+.btn-quiet:hover{border-color:var(--grey); color:var(--ink);}
+.btn-add{background:none; border:1.5px dashed var(--gold); color:var(--gold-deep); font-weight:700;
   border-radius:20px; padding:9px 20px; font-family:'Karla',sans-serif; font-size:0.84rem; cursor:pointer;}
 .btn-add:hover{background:var(--gold-wash);}
 .btn-add:disabled{opacity:.5; cursor:not-allowed;}
@@ -140,10 +141,10 @@
    as a filled pill, which is (0,1,1) and beats a bare class -- the record and
    course-record screens came out with a filled background behind the link.
    Matching that specificity and loading last is what wins. */
-button.btn-print{background:none; border:none; color:var(--grey, oklch(51% 0.017 70)); font-family:'Karla',sans-serif;
+button.btn-print{background:none; border:none; color:var(--grey); font-family:'Karla',sans-serif;
   font-size:0.82rem; font-weight:600; cursor:pointer; padding:6px 2px;
-  text-decoration:underline; text-underline-offset:4px; text-decoration-color:var(--gold, oklch(63% 0.096 72));}
-button.btn-print:hover{color:var(--ink-warm, oklch(30% 0.042 58));}
+  text-decoration:underline; text-underline-offset:4px; text-decoration-color:var(--gold);}
+button.btn-print:hover{color:var(--ink-warm);}
 /* a link, but one thing: on a phone the grades report's toolbar broke it
    over five lines, one word each (walk, 28 Sep 2026) */
 button.btn-print, a.btn-print{white-space:nowrap;}
@@ -155,9 +156,9 @@ button.btn-print, a.btn-print{white-space:nowrap;}
 .house-sel select{appearance:none; -webkit-appearance:none; width:100%;
   font-family:'Karla',sans-serif; font-size:0.92rem; font-weight:600;
   padding:0 40px 0 14px; height:46px; min-height:46px;
-  border:1.5px solid var(--sand-line, oklch(89.5% 0.012 82)); border-left:4px solid var(--gold, oklch(63% 0.096 72)); border-radius:6px;
-  background:var(--field, oklch(99% 0.004 90)); color:var(--ink, oklch(23.5% 0.017 65)); cursor:pointer;}
-.house-sel select:hover{border-color:var(--gold, oklch(63% 0.096 72));}
+  border:1.5px solid var(--sand-line); border-left:4px solid var(--gold); border-radius:6px;
+  background:var(--field); color:var(--ink); cursor:pointer;}
+.house-sel select:hover{border-color:var(--gold);}
 .house-sel select:focus{outline:none; border-color:var(--gold-deep);}
 .house-sel::after{content:""; position:absolute; right:16px; top:50%; width:8px; height:8px;
   border-right:2px solid var(--gold-deep); border-bottom:2px solid var(--gold-deep);
@@ -173,14 +174,14 @@ button.btn-print, a.btn-print{white-space:nowrap;}
    Tabs on screens 5, 6 and 7 all carry `border-bottom:2px solid transparent`,
    which is what this colours; the tracker's filters have no border, so they
    take an underline of the same weight and offset instead. */
-.tab:not(.active):not(.on):hover{ border-bottom-color:var(--gold, oklch(63% 0.096 72)); }
-.filter:not(.on):hover{ text-decoration:underline; text-decoration-color:var(--gold, oklch(63% 0.096 72));
+.tab:not(.active):not(.on):hover{ border-bottom-color:var(--gold); }
+.filter:not(.on):hover{ text-decoration:underline; text-decoration-color:var(--gold);
   text-decoration-thickness:2px; text-underline-offset:5px; }
 /* The segmented controls in the tracker's candidate strip, the same way (Ramy,
    24 Sep 2026). They are 11px inside a bordered group, so the underline sits
    closer in than a tab's or it meets the group's own edge. The chosen segment
    keeps its fill and takes nothing on hover: the fill is what it is saying. */
-.sg:not(.on):hover{ text-decoration:underline; text-decoration-color:var(--gold, oklch(63% 0.096 72));
+.sg:not(.on):hover{ text-decoration:underline; text-decoration-color:var(--gold);
   text-decoration-thickness:2px; text-underline-offset:3px; }
 
 /* ---- the fixed bar on a phone ------------------------------------------- */
@@ -194,9 +195,8 @@ button.btn-print, a.btn-print{white-space:nowrap;}
   .actionbar{gap:10px 14px;}
   /* the dictation pill and the sync pill both sat a bar's height up, one
      from the right and one from the left, and on a phone they met in the
-     middle; the dictation pill goes a row higher. The dictation bar's own
-     rule is injected by the page at runtime, hence the !important. */
-  .dictbar{bottom:calc(var(--sync-bottom, 14px) + 46px) !important;}
+     middle; the dictation pill goes a row higher. */
+  .dictbar{bottom:calc(var(--sync-bottom, 14px) + 46px);}
   /* the tab strips on the dashboard and Course admin scrolled sideways and
      hid their last tab on a phone; they wrap instead */
   .tabs{flex-wrap:wrap; overflow-x:visible; gap:10px 20px;}
@@ -213,17 +213,17 @@ button.btn-print, a.btn-print{white-space:nowrap;}
     display:block !important; width:auto !important;}
   table.hub-stack > tbody > tr:first-child, table.hub-stack > tr:first-child{ display:none !important; }
   table.hub-stack > tbody > tr, table.hub-stack > tr{
-    border:1px solid var(--sand-line, oklch(89.5% 0.012 82)) !important;
-    border-left:4px solid var(--gold, oklch(63% 0.096 72)) !important;
+    border:1px solid var(--sand-line) !important;
+    border-left:4px solid var(--gold) !important;
     border-radius:6px; margin:0 0 10px; padding:9px 11px;
-    background:var(--surface, oklch(95.2% 0.018 84)));}
+    background:var(--surface);}
   table.hub-stack td, table.hub-stack th{
     border:0 !important; padding:5px 0 !important; text-align:left !important;}
   table.hub-stack td[data-l]::before{
     content:attr(data-l); display:block; margin-bottom:2px;
-    font-family:'Karla',sans-serif; font-size:0.66rem; font-weight:700;
-    letter-spacing:.07em; text-transform:uppercase;
-    color:var(--grey, oklch(51% 0.017 70));}
+    font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:600;
+    letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--grey);}
   table.hub-stack td[data-full]{ font-weight:700; }
   table.hub-stack td:empty{ display:none !important; }
   /* A cell centred its contents with auto margins; stacked, that leaves the
@@ -240,11 +240,11 @@ button.btn-print, a.btn-print{white-space:nowrap;}
    Printed documents keep their plain page: the print block below undoes it. */
 input[type=text], input[type=number], input[type=url], input[type=date], input[type=time], input[type=datetime-local],
 input[type=search], input[type=email], select, textarea, .house-sel select{
-  background:var(--field, oklch(99% 0.004 90)); color:var(--ink, oklch(23.5% 0.017 65));}
+  background:var(--field); color:var(--ink);}
 input[type=text]:focus, input[type=number]:focus, input[type=url]:focus, input[type=date]:focus, input[type=time]:focus,
 input[type=datetime-local]:focus, input[type=search]:focus, input[type=email]:focus, select:focus, textarea:focus{
-  outline:none; border-color:var(--gold, oklch(63% 0.096 72)); background:var(--field-focus, oklch(98.5% 0.008 84));}
-input::placeholder, textarea::placeholder{ color:var(--field-ph, oklch(49% 0.017 70)); opacity:1; }
+  outline:none; border-color:var(--gold); background:var(--field-focus);}
+input::placeholder, textarea::placeholder{ color:var(--field-ph); opacity:1; }
 /* Chrome gives ::placeholder a default opacity that would undo the colour. */
 @media print{ input, select, textarea{ background:transparent !important; } }
 
@@ -259,7 +259,7 @@ input::placeholder, textarea::placeholder{ color:var(--field-ph, oklch(49% 0.017
 /* ---- "you write this" -------------------------------------------------- */
 .aim-cue{font-size:0.72rem; font-style:italic; color:var(--gold-deep); margin:6px 0 0;
   display:flex; align-items:center; gap:6px; line-height:1.3;}
-.aim-cue::before{content:""; width:12px; height:1.5px; background:var(--gold, oklch(63% 0.096 72)); flex:none;}
+.aim-cue::before{content:""; width:12px; height:1.5px; background:var(--gold); flex:none;}
 .aim-cue.done{display:none;}
 
 @media print{ .btn-add,.btn-print,.aim-cue{display:none !important;} }
@@ -271,20 +271,19 @@ input::placeholder, textarea::placeholder{ color:var(--field-ph, oklch(49% 0.017
    A join link is a door to somewhere else, so it looks like a button; it
    opens in a new tab and the page stays where it was. */
 .online-rooms{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:18px 0 0;
-  padding:12px 14px; border:1px solid var(--sand-line, oklch(85.5% 0.02 80)); border-radius:10px;
-  background:var(--paper, oklch(98.5% 0.007 84));}
+  padding:12px 14px; border:1px solid var(--sand-line); border-radius:var(--r-strip);
+  background:var(--paper);}
 .online-rooms .or-lbl{font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:600;
-  letter-spacing:0.1em; text-transform:uppercase; color:var(--grey, oklch(50% 0.014 75)); margin-right:6px;}
+  letter-spacing:0.1em; text-transform:uppercase; color:var(--grey); margin-right:6px;}
 .online-rooms .or-join{display:inline-flex; align-items:center; gap:7px; font-family:'Karla',sans-serif;
   font-size:0.82rem; font-weight:700; padding:7px 14px; border-radius:999px; text-decoration:none;
-  border:1.5px solid var(--teal, oklch(38% 0.06 195)); color:var(--teal, oklch(38% 0.06 195)); background:transparent;
-  transition:background .12s ease, transform .12s ease;}
+  border:1.5px solid var(--teal); color:var(--teal); background:transparent;
+  transition:background .12s ease;}
 .online-rooms .or-join small{font-size:0.68rem; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; opacity:.75;}
-.online-rooms .or-join.mine{background:var(--teal, oklch(38% 0.06 195)); color:var(--paper, oklch(98.5% 0.007 84));}
-.online-rooms .or-join.mine:hover{background:var(--teal-lifted, oklch(44% 0.062 195));}
+.online-rooms .or-join.mine{background:var(--teal); color:var(--paper);}
+.online-rooms .or-join.mine:hover{background:var(--teal-lifted);}
 .online-rooms .or-join::before{content:""; width:7px; height:7px; border-radius:50%; background:currentColor; opacity:.8;}
-.online-rooms .or-join:hover{background:var(--sand-deep, oklch(93% 0.02 84)); transform:translateY(-1px);}
-.online-rooms .or-join:active{transform:none;}
+.online-rooms .or-join:hover{background:var(--sand-deep);}
 @media print{ .online-rooms{display:none !important;} }
 
 /* ---- the course stream -------------------------------------------------
@@ -294,55 +293,55 @@ input::placeholder, textarea::placeholder{ color:var(--field-ph, oklch(49% 0.017
    header / writing / reading and never green on green: a dark teal header
    band, the composer on the house's sand (where every input lives), the
    posts on paper. Nothing blinks, nothing sounds. */
-.stream{margin:18px 0 0; background:var(--paper, oklch(98.5% 0.007 84)); border:1px solid var(--sand-line, oklch(85.5% 0.02 80)); border-radius:12px; overflow:hidden; box-shadow:0 1px 2px var(--shade-near, rgba(40,30,15,0.06));}
-.stream .shead{display:flex; align-items:center; gap:12px; padding:11px 18px; background:var(--teal, oklch(38% 0.06 195)); color:var(--paper, oklch(98.5% 0.007 84));}
-.stream .shead h2{margin:0; font-family:'Newsreader',Georgia,serif; font-size:1.1rem; font-weight:600; color:var(--paper, oklch(98.5% 0.007 84)); letter-spacing:.01em;}
-.stream .shead .new{font-family:'Karla',sans-serif; font-size:0.7rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; background:var(--gold, oklch(63% 0.096 72)); color:var(--ink, oklch(22% 0.02 60)); border-radius:999px; padding:3px 9px;}
+.stream{margin:18px 0 0; background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-card); overflow:hidden; box-shadow:0 1px 2px var(--shade-near, rgba(40,30,15,0.06));}
+.stream .shead{display:flex; align-items:center; gap:12px; padding:11px 18px; background:var(--teal); color:var(--paper);}
+.stream .shead h2{margin:0; font-family:'Newsreader',Georgia,serif; font-size:1.1rem; font-weight:600; color:var(--paper); letter-spacing:.01em;}
+.stream .shead .new{font-family:'Karla',sans-serif; font-size:0.7rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; background:var(--gold); color:var(--ink); border-radius:999px; padding:3px 9px;}
 .stream .shead .new:empty{display:none;}
-.stream .shead .more{margin-left:auto; font-family:'Karla',sans-serif; font-size:0.78rem; font-weight:700; color:var(--paper, oklch(98.5% 0.007 84)); opacity:.8; background:none; border:0; cursor:pointer; padding:4px 0;}
-.stream .shead .more:hover{opacity:1;}
-.post{display:grid; grid-template-columns:38px 1fr; gap:12px; padding:14px 18px; border-top:1px solid var(--row-line, oklch(90% 0.016 82));}
+.stream .shead .more{margin-left:auto; font-family:'Karla',sans-serif; font-size:0.78rem; font-weight:700; color:var(--paper); background:none; border:0; cursor:pointer; padding:4px 0;}
+.stream .shead .more:hover{text-decoration:underline; text-underline-offset:3px;}
+.post{display:grid; grid-template-columns:38px 1fr; gap:12px; padding:14px 18px; border-top:1px solid var(--row-line);}
 .post:first-of-type{border-top:0;}
-.post .who, .stream .compose .who{width:38px; height:38px; border-radius:9px; background:var(--teal, oklch(38% 0.06 195)); color:var(--paper, oklch(98.5% 0.007 84)); display:inline-flex; align-items:center; justify-content:center; font-family:'Karla',sans-serif; font-size:0.82rem; font-weight:700; letter-spacing:.04em; flex:none;}
+.post .who, .stream .compose .who{width:38px; height:38px; border-radius:9px; background:var(--teal); color:var(--paper); display:inline-flex; align-items:center; justify-content:center; font-family:'Karla',sans-serif; font-size:0.82rem; font-weight:700; letter-spacing:.04em; flex:none;}
 .post .who:empty::before, .stream .compose .who:empty::before{content:"\00b7"; opacity:.6;}
-.post .top{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; font-size:0.8rem; color:var(--grey, oklch(50% 0.014 75));}
-.post .top b{color:var(--ink, oklch(22% 0.02 60)); font-size:0.88rem;}
-.post .top .to{font-size:0.68rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; border:1px solid var(--pill-neutral-line, oklch(85.5% 0.02 80)); background:var(--pill-neutral-bg, oklch(91.2% 0.03 80)); color:var(--pill-neutral-text, oklch(45% 0.02 70)); border-radius:999px; padding:2px 8px;}
-.post .top .to.mine{background:var(--pill-good-bg, oklch(94% 0.04 155)); border-color:var(--pill-good-line, oklch(84% 0.06 155)); color:var(--pill-good-text, oklch(34% 0.09 155));}
-.post .top .due{font-size:0.7rem; font-weight:700; letter-spacing:.04em; border-radius:999px; padding:2px 9px; background:var(--gold-wash, oklch(94.5% 0.035 78)); border:1px solid var(--amber-edge, oklch(84% 0.08 78)); color:var(--gold-deep, oklch(52% 0.098 70));}
-.post .top .due.past{background:transparent; border-color:var(--sand-line, oklch(85.5% 0.02 80)); color:var(--grey, oklch(50% 0.014 75)); font-weight:600;}
-.post .top .dot{width:7px; height:7px; border-radius:50%; background:var(--gold, oklch(63% 0.096 72)); align-self:center;}
-.post .body{margin:5px 0 0; font-size:0.92rem; line-height:1.6; color:var(--ink, oklch(22% 0.02 60)); white-space:pre-wrap; overflow-wrap:anywhere;}
-.post .body a{color:var(--teal, oklch(38% 0.06 195)); font-weight:600; text-decoration:none;}
+.post .top{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; font-size:0.8rem; color:var(--grey);}
+.post .top b{color:var(--ink); font-size:0.88rem;}
+.post .top .to{font-size:0.68rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; border:1px solid var(--pill-neutral-line); background:var(--pill-neutral-bg); color:var(--pill-neutral-text); border-radius:999px; padding:2px 8px;}
+.post .top .to.mine{background:var(--pill-good-bg); border-color:var(--pill-good-line); color:var(--pill-good-text);}
+.post .top .due{font-size:0.7rem; font-weight:700; letter-spacing:.04em; border-radius:999px; padding:2px 9px; background:var(--gold-wash); border:1px solid var(--amber-edge); color:var(--gold-deep);}
+.post .top .due.past{background:transparent; border-color:var(--sand-line); color:var(--grey); font-weight:600;}
+.post .top .dot{width:7px; height:7px; border-radius:50%; background:var(--gold); align-self:center;}
+.post .body{margin:5px 0 0; font-size:0.92rem; line-height:1.6; color:var(--ink); white-space:pre-wrap; overflow-wrap:anywhere;}
+.post .body a{color:var(--teal); font-weight:600; text-decoration:none;}
 .post .body a:hover{text-decoration:underline;}
-.post .rm{margin-left:auto; background:none; border:0; color:var(--grey, oklch(50% 0.014 75)); font-size:0.78rem; font-weight:700; cursor:pointer; padding:0 2px;}
-.post .rm:hover{color:var(--ink, oklch(22% 0.02 60));}
-.stream .empty{padding:14px 18px; margin:0; font-size:0.9rem; color:var(--grey, oklch(50% 0.014 75));}
+.post .rm{margin-left:auto; background:none; border:0; color:var(--grey); font-size:0.78rem; font-weight:700; cursor:pointer; padding:0 2px;}
+.post .rm:hover{color:var(--ink);}
+.stream .empty{padding:14px 18px; margin:0; font-size:0.9rem; color:var(--grey);}
 /* the composer: the tile sits centred on the text box (Ramy: "in the
    middle of the pill where the post is written"), the audience row under */
-.stream .compose{padding:16px 18px; background:var(--sand-deep, oklch(93% 0.02 84)); border-bottom:1px solid var(--sand-line, oklch(85.5% 0.02 80));}
+.stream .compose{padding:16px 18px; background:var(--sand-deep); border-bottom:1px solid var(--sand-line);}
 .stream .compose .row{display:flex; align-items:center; gap:12px;}
-.stream .compose textarea{flex:1; min-width:0; box-sizing:border-box; min-height:64px; font:inherit; font-size:0.92rem; line-height:1.5; padding:10px 12px; border:1.5px solid var(--sand-line, oklch(85.5% 0.02 80)); border-radius:8px; background:var(--paper, oklch(98.5% 0.007 84)); color:inherit; resize:vertical;}
-.stream .compose textarea:focus{outline:none; border-color:var(--teal, oklch(38% 0.06 195));}
+.stream .compose textarea{flex:1; min-width:0; box-sizing:border-box; min-height:64px; font:inherit; font-size:0.92rem; line-height:1.5; padding:10px 12px; border:1.5px solid var(--sand-line); border-radius:var(--r-control); background:var(--paper); color:inherit; resize:vertical;}
+.stream .compose textarea:focus{outline:none; border-color:var(--gold);}
 .stream .compose .bar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:10px 0 0 50px;}
 .stream .compose .bar[hidden]{display:none;}
 .stream .compose .bar .house-sel{min-width:190px;}
-.stream .compose .bar input[type=datetime-local]{font:inherit; font-size:0.86rem; padding:8px 10px; border:1.5px solid var(--sand-line, oklch(85.5% 0.02 80)); border-radius:8px; background:var(--paper, oklch(98.5% 0.007 84)); color:inherit;}
-.stream .compose .bar .bywhen{display:flex; align-items:center; gap:6px; font-size:0.78rem; color:var(--grey, oklch(50% 0.014 75));}
-.stream .compose .bar .hint{font-size:0.78rem; color:var(--grey, oklch(50% 0.014 75));}
-.stream .compose .bar .btn-post{margin-left:auto; font-family:'Karla',sans-serif; font-size:0.84rem; font-weight:700; padding:9px 18px; border-radius:8px; border:0; background:var(--teal, oklch(38% 0.06 195)); color:#fff; cursor:pointer;}
+.stream .compose .bar input[type=datetime-local]{font:inherit; font-size:0.86rem; padding:8px 10px; border:1.5px solid var(--sand-line); border-radius:var(--r-control); background:var(--paper); color:inherit;}
+.stream .compose .bar .bywhen{display:flex; align-items:center; gap:6px; font-size:0.78rem; color:var(--grey);}
+.stream .compose .bar .hint{font-size:0.78rem; color:var(--grey);}
+.stream .compose .bar .btn-post{margin-left:auto; font-family:'Karla',sans-serif; font-size:0.84rem; font-weight:700; padding:9px 18px; border-radius:var(--r-control); border:0; background:var(--teal); color:var(--paper); cursor:pointer;}
 .stream .compose .bar .btn-post:disabled{opacity:.45; cursor:not-allowed;}
-.stream .compose .bar .btn-post:not(:disabled):hover{background:var(--teal-lifted, oklch(44% 0.062 195));}
+.stream .compose .bar .btn-post:not(:disabled):hover{background:var(--teal-lifted);}
 /* the one more look: a stop, in the house's gold -- a decision waiting on you */
-.stream .check{margin:10px 0 0 50px; padding:14px 16px; border-radius:8px; background:var(--gold-wash, oklch(94.5% 0.035 78)); border:1px solid var(--amber-edge, oklch(84% 0.08 78)); border-left:4px solid var(--gold, oklch(63% 0.096 72));}
-.stream .check .ttl{font-family:'Newsreader',Georgia,serif; font-size:1.05rem; font-weight:600; color:var(--ink, oklch(22% 0.02 60)); margin:0 0 4px;}
-.stream .check .msg{font-size:0.9rem; line-height:1.5; color:var(--ink, oklch(22% 0.02 60));}
-.stream .check .msg b{color:var(--gold-deep, oklch(52% 0.098 70));}
+.stream .check{margin:10px 0 0 50px; padding:14px 16px; border-radius:var(--r-strip); background:var(--gold-wash); border:1px solid var(--amber-edge); border-left:4px solid var(--gold);}
+.stream .check .ttl{font-family:'Newsreader',Georgia,serif; font-size:1.05rem; font-weight:600; color:var(--ink); margin:0 0 4px;}
+.stream .check .msg{font-size:0.9rem; line-height:1.5; color:var(--ink);}
+.stream .check .msg b{color:var(--gold-deep);}
 .stream .check .acts{display:flex; gap:10px; align-items:center; justify-content:flex-end; flex-wrap:wrap; margin-top:10px;}
-.stream .check .btn-post{font-family:'Karla',sans-serif; font-size:0.84rem; font-weight:700; padding:9px 18px; border-radius:8px; border:0; background:var(--teal, oklch(38% 0.06 195)); color:#fff; cursor:pointer;}
-.stream .check .btn-post:not(:disabled):hover{background:var(--teal-lifted, oklch(44% 0.062 195));}
-.stream .check .btn-back{font-family:'Karla',sans-serif; font-size:0.84rem; font-weight:700; padding:9px 16px; border-radius:8px; background:none; color:var(--grey, oklch(50% 0.014 75)); border:1.5px solid var(--sand-line, oklch(85.5% 0.02 80)); cursor:pointer;}
-.stream .check .btn-back:hover{color:var(--ink, oklch(22% 0.02 60));}
+.stream .check .btn-post{font-family:'Karla',sans-serif; font-size:0.84rem; font-weight:700; padding:9px 18px; border-radius:var(--r-control); border:0; background:var(--teal); color:var(--paper); cursor:pointer;}
+.stream .check .btn-post:not(:disabled):hover{background:var(--teal-lifted);}
+.stream .check .btn-back{font-family:'Karla',sans-serif; font-size:0.84rem; font-weight:700; padding:9px 16px; border-radius:var(--r-control); background:none; color:var(--grey); border:1.5px solid var(--sand-line); cursor:pointer;}
+.stream .check .btn-back:hover{color:var(--ink);}
 @media (max-width:560px){ .post{grid-template-columns:32px 1fr; gap:10px; padding:12px 14px;} .post .who, .stream .compose .who{width:32px; height:32px; font-size:0.72rem;} .stream .compose{padding:12px 14px;} .stream .compose .bar, .stream .check{margin-left:0;} .stream .shead{padding:10px 14px;} }
 @media print{ .stream{display:none !important;} }
 
@@ -351,8 +350,8 @@ input::placeholder, textarea::placeholder{ color:var(--field-ph, oklch(49% 0.017
    the tutor dashboard rows, the tracker, the roster, the portfolio list. */
 .avi{display:inline-flex; align-items:center; justify-content:center; flex:none; width:28px; height:28px; border-radius:7px;
   font-family:'Karla',sans-serif; font-size:0.7rem; font-weight:700; letter-spacing:.04em; vertical-align:middle; margin-right:9px;}
-.avi-cand{background:var(--sand-deep, oklch(93% 0.02 84)); color:var(--ink, oklch(22% 0.02 60)); border:1px solid var(--sand-line, oklch(85.5% 0.02 80));}
-.avi-staff{background:var(--teal, oklch(38% 0.06 195)); color:var(--paper, oklch(98.5% 0.007 84));}
+.avi-cand{background:var(--sand-deep); color:var(--ink); border:1px solid var(--sand-line);}
+.avi-staff{background:var(--teal); color:var(--paper);}
 .avi:empty::before{content:"\00b7"; opacity:.6;}
 @media print{ .avi{display:none;} }
 
@@ -360,13 +359,13 @@ input::placeholder, textarea::placeholder{ color:var(--field-ph, oklch(49% 0.017
    A line, not a card: the tutors' names as mail links and the clock beside
    them. Opens the candidate's own mail app; Lite sends nothing. */
 .mailtutor[hidden]{display:none !important;}
-.mailtutor{display:flex; align-items:center; gap:8px 10px; flex-wrap:wrap; margin:12px 0 0; padding:10px 14px; border:1px dashed var(--sand-line, oklch(85.5% 0.02 80)); border-radius:10px; font-size:0.84rem; color:var(--grey, oklch(50% 0.014 75));}
+.mailtutor{display:flex; align-items:center; gap:8px 10px; flex-wrap:wrap; margin:12px 0 0; padding:10px 14px; border:1px dashed var(--sand-line); border-radius:var(--r-strip); font-size:0.84rem; color:var(--grey);}
 .mailtutor .ml-lbl{font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; margin-right:4px;}
-.mailtutor .ml-who{display:inline-flex; align-items:baseline; gap:6px; font-family:'Karla',sans-serif; font-weight:700; color:var(--teal, oklch(38% 0.06 195)); text-decoration:none; padding:4px 10px; border:1.5px solid var(--sand-line, oklch(85.5% 0.02 80)); border-radius:999px; background:var(--paper, oklch(98.5% 0.007 84));}
-.mailtutor .ml-who small{font-size:0.68rem; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--grey, oklch(50% 0.014 75));}
-.mailtutor .ml-who:hover{background:var(--sand-deep, oklch(93% 0.02 84));}
+.mailtutor .ml-who{display:inline-flex; align-items:baseline; gap:6px; font-family:'Karla',sans-serif; font-weight:700; color:var(--teal); text-decoration:none; padding:4px 10px; border:1.5px solid var(--sand-line); border-radius:999px; background:var(--paper);}
+.mailtutor .ml-who small{font-size:0.68rem; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--grey);}
+.mailtutor .ml-who:hover{background:var(--sand-deep);}
 .mailtutor .ml-time{margin-left:auto; font-size:0.8rem;}
-.mailtutor .ml-time.late{color:var(--gold-deep, oklch(52% 0.098 70)); font-weight:600;}
+.mailtutor .ml-time.late{color:var(--gold-deep); font-weight:600;}
 @media (max-width:560px){ .mailtutor .ml-time{margin-left:0; flex-basis:100%;} }
 @media print{ .mailtutor{display:none !important;} }
 
@@ -379,30 +378,30 @@ input::placeholder, textarea::placeholder{ color:var(--field-ph, oklch(49% 0.017
 /* Selectors doubled so a form's own `.fields label{display:block;
    text-transform:uppercase}` cannot flatten the switch (Course admin,
    28 Sep 2026). */
-.sw, label.sw, .fields label.sw, .fields .sw{display:inline-flex; align-items:center; gap:10px; cursor:pointer; user-select:none; font-family:'Karla',sans-serif; font-size:0.78rem; font-weight:700; letter-spacing:.03em; text-transform:none; color:var(--grey, oklch(50% 0.014 75)); margin:0;}
+.sw, label.sw, .fields label.sw, .fields .sw{display:inline-flex; align-items:center; gap:10px; cursor:pointer; user-select:none; font-family:'Karla',sans-serif; font-size:0.78rem; font-weight:700; letter-spacing:.03em; text-transform:none; color:var(--grey); margin:0;}
 .sw input{position:absolute; opacity:0; width:0; height:0;}
-.sw .track{position:relative; width:46px; height:26px; border-radius:999px; background:var(--sand-line, oklch(85.5% 0.02 80)); transition:background .18s ease; flex:none; box-shadow:inset 0 1px 2px rgba(0,0,0,.14);}
-.sw .track::after{content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:var(--paper, oklch(98.5% 0.007 84)); box-shadow:0 1px 2px rgba(0,0,0,.25); transition:transform .18s ease;}
-.sw input:checked + .track{background:var(--pill-good-text, oklch(34% 0.09 155));}
+.sw .track{position:relative; width:46px; height:26px; border-radius:999px; background:var(--sand-line); transition:background .18s ease; flex:none; box-shadow:inset 0 1px 2px rgba(0,0,0,.14);}
+.sw .track::after{content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:var(--paper); box-shadow:0 1px 2px rgba(0,0,0,.25); transition:transform .18s ease;}
+.sw input:checked + .track{background:var(--pill-good-text);}
 .sw input:checked + .track::after{transform:translateX(20px);}
-.sw input:focus-visible + .track{outline:2px solid var(--gold, oklch(63% 0.096 72)); outline-offset:2px;}
-.sw input:checked ~ .lbl{color:var(--pill-good-text, oklch(34% 0.09 155));}
+.sw input:focus-visible + .track{outline:2px solid var(--gold); outline-offset:2px;}
+.sw input:checked ~ .lbl{color:var(--pill-good-text);}
 .sw .lbl{min-width:150px; white-space:nowrap;}
-.visbar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:10px 0 0; font-size:0.8rem; color:var(--grey, oklch(50% 0.014 75));}
-.visbar button{font-family:'Karla',sans-serif; font-size:0.78rem; font-weight:700; padding:6px 12px; border-radius:8px; border:1.5px solid var(--sand-line, oklch(85.5% 0.02 80)); background:var(--paper, oklch(98.5% 0.007 84)); color:var(--ink, oklch(22% 0.02 60)); cursor:pointer;}
+.visbar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:10px 0 0; font-size:0.8rem; color:var(--grey);}
+.visbar button{font-family:'Karla',sans-serif; font-size:0.78rem; font-weight:700; padding:6px 12px; border-radius:var(--r-control); border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink); cursor:pointer;}
 @media (max-width:560px){ .sw .lbl{min-width:0;} }
 
 /* ---- "put Connect Lite on your phone" ----------------------------------
    Ramy, 28 Sep 2026: "it could just be a shortcut on a computer... what
    would it look like if they have Connect sitting on their computer or
    their phone?" One quiet line, once, never inside the installed app. */
-.install-hint{display:flex; align-items:center; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; padding:10px 14px; border:1px dashed var(--sand-line, oklch(85.5% 0.02 80)); border-radius:10px; font-size:0.84rem; color:var(--grey, oklch(50% 0.014 75));}
+.install-hint{display:flex; align-items:center; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; padding:10px 14px; border:1px dashed var(--sand-line); border-radius:var(--r-strip); font-size:0.84rem; color:var(--grey);}
 .install-hint[hidden]{display:none !important;}
-.install-hint b{color:var(--ink, oklch(22% 0.02 60)); font-weight:600;}
-.install-hint .btn-install{font-family:'Karla',sans-serif; font-size:0.8rem; font-weight:700; padding:7px 14px; border-radius:8px; border:0; background:var(--teal, oklch(38% 0.06 195)); color:#fff; cursor:pointer;}
-.install-hint .btn-install:hover{background:var(--teal-lifted, oklch(44% 0.062 195));}
-.install-hint .dismiss{margin-left:auto; background:none; border:0; color:var(--grey, oklch(50% 0.014 75)); font-size:0.8rem; font-weight:700; cursor:pointer;}
-.install-hint .dismiss:hover{color:var(--ink, oklch(22% 0.02 60));}
+.install-hint b{color:var(--ink); font-weight:600;}
+.install-hint .btn-install{font-family:'Karla',sans-serif; font-size:0.8rem; font-weight:700; padding:7px 14px; border-radius:var(--r-control); border:0; background:var(--teal); color:var(--paper); cursor:pointer;}
+.install-hint .btn-install:hover{background:var(--teal-lifted);}
+.install-hint .dismiss{margin-left:auto; background:none; border:0; color:var(--grey); font-size:0.8rem; font-weight:700; cursor:pointer;}
+.install-hint .dismiss:hover{color:var(--ink);}
 @media print{ .install-hint{display:none !important;} }
 
 /* ---- Met / Not met -------------------------------------------------------
@@ -425,8 +424,38 @@ input::placeholder, textarea::placeholder{ color:var(--field-ph, oklch(49% 0.017
        --mark-not-bg:color-mix(in oklab, oklch(45% 0.13 27) 10%, transparent);
        --mark-not-line:color-mix(in oklab, oklch(45% 0.13 27) 28%, transparent);
        --mark-not-text:oklch(45% 0.13 27); }
-.mark-met{background:var(--mark-met-bg, oklch(94% 0.018 195)); border-color:var(--mark-met-line, oklch(80% 0.04 195)); color:var(--mark-met-text, oklch(37.5% 0.058 195));}
-.mark-not{background:var(--mark-not-bg, oklch(95% 0.02 27)); border-color:var(--mark-not-line, oklch(82% 0.06 27)); color:var(--mark-not-text, oklch(45% 0.13 27));}
+.mark-met{background:var(--mark-met-bg); border-color:var(--mark-met-line); color:var(--mark-met-text);}
+.mark-not{background:var(--mark-not-bg); border-color:var(--mark-not-line); color:var(--mark-not-text);}
 /* the record's table cells (hub-shared's assignment record, on the record page, the portfolio and the course record) */
-td.mark.met{color:var(--mark-met-text, oklch(37.5% 0.058 195)); font-weight:700; background:var(--mark-met-bg, oklch(94% 0.018 195));}
-td.mark.not{color:var(--mark-not-text, oklch(45% 0.13 27)); font-weight:700; background:var(--mark-not-bg, oklch(95% 0.02 27));}
+td.mark.met{color:var(--mark-met-text); font-weight:700; background:var(--mark-met-bg);}
+td.mark.not{color:var(--mark-not-text); font-weight:700; background:var(--mark-not-bg);}
+
+/* ---- the dictation bar ------------------------------------------------
+   The plan, the self-evaluation and the tutor's feedback can be dictated
+   (Cmd-Shift-D). The bar's styles were a JS string injected by each of the
+   three screens, identical, in the August hexes -- a teal lighter and
+   greener than --teal. On tokens, here, once (1 Oct 2026). */
+.dictbar{position:fixed; bottom:88px; right:18px; z-index:600; display:flex; gap:8px; align-items:center;}
+.dictbar select{font-family:'Karla',sans-serif; font-size:0.8rem; padding:8px 10px; border:2px solid var(--sand-line); border-radius:20px; background:var(--field); color:var(--ink); cursor:pointer;}
+.dictbar select:focus{outline:none; border-color:var(--gold);}
+.dictbtn{display:flex; gap:8px; align-items:center; background:var(--field); color:var(--teal); border:2px solid var(--teal); padding:9px 18px; border-radius:20px; font-family:'Karla',sans-serif; font-size:0.86rem; font-weight:700; cursor:pointer;}
+.dictbtn:hover{background:var(--sand-deep);}
+.dictbtn .dot{width:9px; height:9px; border-radius:50%; background:var(--teal); display:inline-block;}
+.dictbtn.rec{background:var(--brick); color:var(--paper); border-color:var(--brick);}
+.dictbtn.rec .dot{background:var(--paper); animation:dictpulse 1s infinite;}
+@keyframes dictpulse{0%,100%{opacity:1} 50%{opacity:.35}}
+@media print{ .dictbar{display:none !important;} }
+
+/* ---- the plain button on the course screens ---------------------------
+   The observation tasks, CELTA 5, the TP grid, the timetable, the TP points,
+   the register and the certificate (body.hub-course) each declared the same
+   teal .btn and the same .quiet beside it, and drifted by a point of size or
+   radius. Once, here (C4 of the polish pass, 1 Oct 2026), at the weight and
+   size the paper header's .btn rule gave them anyway (0.86rem, 600) -- the
+   same button as screens 1-16. */
+.hub-course .btn{font-family:'Karla',sans-serif; font-size:0.86rem; font-weight:600; padding:9px 18px; border-radius:var(--r-control); border:0; background:var(--teal); color:var(--paper); cursor:pointer; text-decoration:none; display:inline-block; line-height:normal;}
+.hub-course .btn:not(.quiet):not(:disabled):hover{background:var(--teal-lifted);}
+.hub-course .btn.quiet{background:none; color:var(--grey); border:1.5px solid var(--sand-line);}
+.hub-course .btn.quiet:not(:disabled):hover{border-color:var(--grey); color:var(--ink);}
+.hub-course .btn.sm{padding:4px 10px; font-size:0.74rem;}
+.hub-course .btn:disabled{opacity:.5; cursor:not-allowed;}
