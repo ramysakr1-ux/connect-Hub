@@ -9,12 +9,21 @@
 (function(){
   var url = (window.HubStore && HubStore.url) || '';
   if (!url) return;
+  /* On a Lite screen the settings arrive from the store after this script has
+     run, so the demo test is asked again when the page's own script starts
+     (hub:ready) and a few times after. Mounted once. */
+  var mounted = false;
+  function tryMount(){ if (mounted) return; if (mount()) mounted = true; }
+  document.addEventListener('hub:ready', tryMount);
+  [1500, 4000, 9000, 16000].forEach(function (ms) { setTimeout(tryMount, ms); });
+  tryMount();
+  function mount(){
   var mode = (window.HubMode) || (window.HubStore && (HubStore.isTutor && HubStore.isTutor() ? 'tutor' : HubStore.isAssessor && HubStore.isAssessor() ? 'assessor' : HubStore.isTrainee && HubStore.isTrainee() ? 'trainee' : '')) || '';
   var page = (location.pathname.split('/').pop() || 'index.html').replace(/\.html$/, '');
   var cs = {}; try { cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
   var isOffer = page === 'offer';
   var isDemo = !!cs.demoToday;
-  if (!isOffer && !isDemo) return;
+  if (!isOffer && !isDemo) return false;
   var course = isDemo ? String(cs.courseName || '') : '';
   var KEY = 'chub:feedback:' + page;
   var already = ''; try { already = localStorage.getItem(KEY) || ''; } catch (e) {}
@@ -51,4 +60,6 @@
     try { fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(body), keepalive: true }).catch(function () {}); } catch (e) {}
   }
   paint(already || '', false);
+  return true;
+  }
 })();
