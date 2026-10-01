@@ -14,6 +14,11 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
+## 1 Oct 2026 — a volunteer writes to the centre, never a tutor (version 54)
+The volunteer boot drops `tutorContacts` (v51) and carries the one
+`volunteerContact` the centre names on Course admin.
+See [2026-10-01-volunteer-contact.md](2026-10-01-volunteer-contact.md).
+
 ## 1 Oct 2026 — a candidate may carry an email (version 53)
 
 Column F of the trainees sheet, optional everywhere; `addTrainee`, `addTrainees` and

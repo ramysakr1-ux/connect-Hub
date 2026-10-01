@@ -534,6 +534,17 @@
       </div>
     </div>
 
+    <!-- Ramy, 1 Oct 2026: a volunteer student never writes to a tutor —
+         "whoever is in charge of the volunteer students: whatever email is
+         entered in Course admin, that's the one they will see." One name,
+         one address, the centre's. -->
+    <h3 class="docsh">Volunteer students</h3>
+    <p class="note" style="margin-top:0;">Who looks after the volunteer students. Their page shows this one name and address under “If you cannot come, tell the centre” — never a tutor’s. Leave it empty and nothing shows.</p>
+    <div class="fields docs">
+      <div><label>Name</label><input type="text" id="volContactName" placeholder="e.g. Reception, or a person"></div>
+      <div class="wide"><label>Email</label><input type="email" id="volContactEmail" placeholder="volunteers@centre.org"></div>
+    </div>
+
     <h3 class="docsh">Online rooms</h3>
     <p class="note" style="margin-top:0;">Zoom, Meet or Teams links for an online or mixed-mode course, each room a button. Everyone — candidates, tutors, the assessor — sees every room and chooses theirs. Teaching practice and tutorials are suggested once per group, since each tutor holds their own. <b>For</b> is optional: name a teaching practice group and that group’s candidates see the room first, marked as theirs; nobody is kept out of it. The assessor sees only the rooms you tick for them — the ones they will sit in on the visit — and nothing else. Leave a link empty and it does not show.</p>
     <div id="onlineRooms" class="fields docs"></div>
@@ -775,6 +786,7 @@ try {
     if(cs.docs) DOC_FIELDS.forEach(k=>{ if(cs.docs[k]) document.getElementById(k).value = cs.docs[k]; });
     if(cs.logo){ courseLogo = cs.logo; applyLogoPreview(courseLogo); }
     if(Array.isArray(cs.courseLinks)) CAND_LINKS = cs.courseLinks.filter(l => l && (l.label || l.url));
+    if(cs.volunteerContact){ document.getElementById('volContactName').value = cs.volunteerContact.name || ''; document.getElementById('volContactEmail').value = cs.volunteerContact.email || ''; }
     if(Array.isArray(cs.tutorContacts)) CONTACTS = cs.tutorContacts.filter(c => c && (c.name || c.email)).map(c => ({ name: c.name || '', email: c.email || '', group: c.group || '', role: c.role || '' }));
     if(Array.isArray(cs.onlineRooms)) ROOMS = cs.onlineRooms.filter(r => r && (r.label || r.url)).map(r => ({ label: r.label || '', url: r.url || '', group: r.group || '', assessor: !!r.assessor }));
   }
@@ -825,6 +837,7 @@ document.getElementById('saveSettings').addEventListener('click', () => {
     courseLinks: readCandLinks(),
     onlineRooms: readRooms(),
     tutorContacts: readContacts(),
+    volunteerContact: (() => { const n = document.getElementById('volContactName').value.trim(), e = document.getElementById('volContactEmail').value.trim(); return e ? { name: n, email: e } : null; })(),
     logo: courseLogo
   }));
   // The assessor link expires at the end of the course's last day, which this

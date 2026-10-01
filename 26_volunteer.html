@@ -146,16 +146,22 @@ const TT = rec('connect_timetable_v1') || {};
 const SHARED = (rec('connect_shared_v1') || []).filter(x => x && x.url && x.name).slice().reverse();
 /* The teachers a volunteer can write to, from the course's own tutor
    contacts. A volunteer has no group, so they see all of them. */
+/* 1 Oct 2026. The block here used to list the course TUTORS with mail links.
+   Ramy: "we most definitely don't want to give the course tutors' emails to
+   the volunteer students. Absolutely not." Then: "if you already built that
+   email thingy, then leave it -- but it will be the centre, whoever is in
+   charge of the volunteer students: whatever email is entered in Course
+   admin, that's the one they will see." So: ONE address, the centre's, from
+   settings.volunteerContact, and never a tutor's. The store sends a
+   volunteer that one contact and nothing else (v54). */
 function mailBlock(){
   const host = document.getElementById('mailTutor'); if (!host) return;
-  const list = ((SETTINGS.tutorContacts) || []).filter(c => c && c.email);
-  /* The store's volunteer boot does not send tutorContacts yet (1 Oct 2026),
-     so this block waits rather than printing names nobody can write to. */
-  if (!list.length) return;
+  const c = SETTINGS.volunteerContact;
+  if (!c || !c.email) return;
   const subject = encodeURIComponent([SETTINGS.courseName || 'CELTA', 'volunteer student'].join(' \u2014 ') + (ME && ME.name ? ' \u2014 ' + ME.name : ''));
   const body = encodeURIComponent('Hello,\n\nI am a volunteer student on the course.\n\n');
-  host.innerHTML = `<span class="ml-lbl">If you cannot come, tell your teacher</span>`
-    + list.map(c => `<a class="ml-who" href="mailto:${esc(c.email)}?subject=${subject}&body=${body}">${esc(c.name || c.email)}<small>${c.role === 'main' ? 'main course tutor' : 'course tutor'}</small></a>`).join('')
+  host.innerHTML = `<span class="ml-lbl">If you cannot come, tell the centre</span>`
+    + `<a class="ml-who" href="mailto:${esc(c.email)}?subject=${subject}&body=${body}">${esc(c.name || c.email)}<small>looks after the volunteer students</small></a>`
     + `<span class="ml-time">A message is enough. Nobody minds, and the register stays right.</span>`;
   host.hidden = false;
 }
