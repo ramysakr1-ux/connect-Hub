@@ -269,6 +269,31 @@ var SCENES = [
       { do: 'hold', ms: 1300 }
     ]
   },
+  {
+    title: 'A volunteer’s page',
+    screen: '26_volunteer.html',
+    course: 'start', role: 'volunteer', as: 'Omar', day: 'Day 1',
+    about: 'The other end of the share switch, which is why it follows the plan — Ramy, 1 Oct 2026, note 16: the chapter runs plan, language analysis, turn in, VOLUNTEER STUDENTS, feedback. It was moved into the volunteer chapter for tidiness on 1 Oct and moved straight back: the payoff has to follow the share, not arrive four chapters later. The film now stays long enough to show the material itself sitting on the student\u2019s page (Ramy, 1 Oct 2026: "show where the material from the trainees has landed \u2014 it is very important"). Omar has not agreed yet on the demo, so his link opens on the joining note: Turkish is chosen, <i>Kabul ediyorum</i>, and behind it his page \u2014 the next class in the course\u2019s clock, the material the candidate just shared, <b>Join on Zoom</b>. <b>volunteerAgree stubbed</b> \u2014 he stays unagreed for the next take.',
+    settle: 1800,
+    stub: ['volunteerAgree'],
+    steps: [
+      { do: 'who', text: 'The volunteer student', sub: 'Omar Haddad', ms: 1500 },
+      { do: 'click', on: '.consent [data-lang="tr"]', ms: 1300 },
+      { do: 'caption', text: 'Their language for the small print. English for the lesson.' },
+      { do: 'hold', ms: 1400 },
+      { do: 'click', on: '#cAgree', ms: 1400 },
+      { do: 'hold', ms: 1000 },
+      /* Where the material went. The switch was thrown two scenes ago. */
+      { do: 'scroll', to: '.card .mat', ms: 1500 },
+      { do: 'zoom', on: '.card .mat', scale: 1.5, ms: 800 },
+      { do: 'caption', text: 'The reading her teacher shared is already here.' },
+      { do: 'hold', ms: 1600 },
+      { do: 'zoom', out: true, ms: 700 },
+      { do: 'move', to: '.next .room' },
+      { do: 'caption', text: 'One tap to the room.' },
+      { do: 'hold', ms: 1300 }
+    ]
+  },
 
 
   {
@@ -494,31 +519,6 @@ var SCENES = [
       { do: 'hold', ms: 3600 },
       { do: 'caption', text: 'Signed by the centre. Printed by the student.' },
       { do: 'hold', ms: 3400 }
-    ]
-  },
-  {
-    title: 'A volunteer’s page',
-    screen: '26_volunteer.html',
-    course: 'start', role: 'volunteer', as: 'Omar', day: 'Day 1',
-    about: 'The other end of the share switch, which is why it follows the plan. The film now stays long enough to show the material itself sitting on the student\u2019s page (Ramy, 1 Oct 2026: "show where the material from the trainees has landed \u2014 it is very important"). Omar has not agreed yet on the demo, so his link opens on the joining note: Turkish is chosen, <i>Kabul ediyorum</i>, and behind it his page \u2014 the next class in the course\u2019s clock, the material the candidate just shared, <b>Join on Zoom</b>. <b>volunteerAgree stubbed</b> \u2014 he stays unagreed for the next take.',
-    settle: 1800,
-    stub: ['volunteerAgree'],
-    steps: [
-      { do: 'who', text: 'The volunteer student', sub: 'Omar Haddad', ms: 1500 },
-      { do: 'click', on: '.consent [data-lang="tr"]', ms: 1300 },
-      { do: 'caption', text: 'Their language for the small print. English for the lesson.' },
-      { do: 'hold', ms: 1400 },
-      { do: 'click', on: '#cAgree', ms: 1400 },
-      { do: 'hold', ms: 1000 },
-      /* Where the material went. The switch was thrown two scenes ago. */
-      { do: 'scroll', to: '.card .mat', ms: 1500 },
-      { do: 'zoom', on: '.card .mat', scale: 1.5, ms: 800 },
-      { do: 'caption', text: 'The reading her teacher shared is already here.' },
-      { do: 'hold', ms: 1600 },
-      { do: 'zoom', out: true, ms: 700 },
-      { do: 'move', to: '.next .room' },
-      { do: 'caption', text: 'One tap to the room.' },
-      { do: 'hold', ms: 1300 }
     ]
   },
 
