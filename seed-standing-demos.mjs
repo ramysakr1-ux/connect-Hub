@@ -484,7 +484,7 @@ if (REUSE) {
   course = (oc.result.courses || []).find(c => c.id === REUSE);
   if (!course) { console.log('no course ' + REUSE); process.exit(1); }
 } else if (WRITE) {
-  const made = await call({ op: 'createCourse', owner: OWNER, name: NAME });
+  const made = await call({ op: 'createCourse', owner: OWNER, centreNumber: 'TR999', centreName: 'Elmswood English Centre', name: NAME });
   if (!made.ok) { console.log('could not make the course: ' + made.error); process.exit(1); }
   course = made.result;
   console.log('made ' + course.id + ' — ' + NAME);

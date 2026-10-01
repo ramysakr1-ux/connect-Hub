@@ -18,7 +18,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610012346">
+<link rel="stylesheet" href="hub-tokens.css?v=202610020004">
 <style>
   :root{
     /* the pane -- the same four values the trainee landing's cards use */
@@ -123,6 +123,7 @@
     color:var(--teal); cursor:pointer; padding:0;}
   .linkbtn:hover{text-decoration:underline;}
   .filmrow{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:14px 0 4px;}
+  .makerow[hidden]{display:none;}
   .filmrow label{font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--grey);}
   .filmrow input{flex:1 1 320px; min-width:240px; font-family:'Karla',sans-serif; font-size:0.86rem;
     padding:9px 12px; border:1.5px solid var(--sand-line); border-radius:6px;
@@ -151,7 +152,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610012346">
+<link rel="stylesheet" href="hub-house.css?v=202610020004">
 </head>
 <body>
 <div class="board">
@@ -175,8 +176,8 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610012346"></script>
-<script src="hub-store.js?v=202610012346"></script>
+<script src="hub-shared.js?v=202610020004"></script>
+<script src="hub-store.js?v=202610020004"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -219,6 +220,10 @@ function label(c){
   return c.courseName || c.centreName || c.name || c.id;
 }
 function status(msg){ const s = $('status'); if (s) s.textContent = msg || ''; }
+/* A Cambridge centre number: two letters and the digits, e.g. TR001. Typed by
+   the owner, upper-cased, and the Make button stays off until it is one. */
+function centreNumberTyped(){ const el = $('mkNumber'); if (!el) return ''; const v = el.value.trim().toUpperCase().replace(/\s+/g, ''); return /^[A-Z]{2}\d{3,5}$/.test(v) ? v : ''; }
+document.addEventListener('input', e => { if (e.target && e.target.id === 'mkNumber') { const go = $('makeGo'); if (go) go.disabled = !centreNumberTyped(); } });
 
 /* Two ways in, because one of them should not require editing a web address:
    open the owner link, or paste the key here (Ramy, 21 Sep 2026). */
@@ -354,7 +359,7 @@ function render(courses, msg){
       <div class="chead">
         <div>
           <h2>${esc(name)}</h2>
-          ${centre ? `<p class="centre">${esc(centre)}</p>` : ''}
+          ${centre || c.centreNumber ? `<p class="centre">${esc(centre)}${centre && c.centreNumber ? ' \u00b7 ' : ''}${c.centreNumber ? `<span title="Cambridge centre number, set when the course was made">${esc(c.centreNumber)}</span>` : ''}</p>` : ''}
           <!-- Three courses can share a centre's course name (the two standing
                demos are one course at two moments, and the finished course
                carries the same name), so the store's own label sits under it
@@ -451,6 +456,17 @@ $('app').innerHTML = `
         <button class="btn primary" id="makeBtn" type="button">Make a course</button>
       </div>
     </div>
+    <!-- A course cannot exist without a Cambridge centre number, and the owner
+         is the one who types it (Ramy, 1 Oct 2026: "that's the only way to
+         ensure this is actually a certified CELTA centre... it should not work
+         without a centre number"). The store refuses a course without one and
+         keeps it once set; Course admin shows it but cannot change it. -->
+    <div class="filmrow makerow" id="makeRow" hidden>
+      <input type="text" id="mkNumber" placeholder="Cambridge centre number, e.g. TR001" autocomplete="off" spellcheck="false" style="flex:0 1 300px;">
+      <input type="text" id="mkName" placeholder="Centre name (they can change this)" autocomplete="off">
+      <span class="acts"><button class="btn primary" id="makeGo" type="button" disabled>Make the course</button><button class="btn quiet" id="makeCancel" type="button">Cancel</button></span>
+      <span class="note">Only a course with a real centre number gets made, and the centre cannot edit it afterwards.</span>
+    </div>
     <!-- The film is the thing people ask for after two minutes of clicking,
          so it rides along in every message rather than being looked up. It is
          kept in this browser only: there is nowhere on the course to put a
@@ -535,22 +551,32 @@ $('app').addEventListener('click', async e => {
        walk, 21 Sep 2026). */
     const other = e.target.closest('#otherKeyBtn');
     if (other) { try { localStorage.removeItem(OWNER_STORE); } catch (err) {} gate(); return; }
-    const make = e.target.closest('#makeBtn');
+    if (e.target.closest('#makeBtn')) {
+      const row = $('makeRow'); if (!row) return;
+      row.hidden = !row.hidden;
+      if (!row.hidden) $('mkNumber').focus();
+      return;
+    }
+    if (e.target.closest('#makeCancel')) { const row = $('makeRow'); if (row) row.hidden = true; return; }
+    const make = e.target.closest('#makeGo');
     if (make) {
       if (BUSY) return;
+      const centreNumber = centreNumberTyped();
+      if (!centreNumber) { status('Type the Cambridge centre number first.'); $('mkNumber').focus(); return; }
+      const centreName = $('mkName').value.trim();
       BUSY = true; make.disabled = true; status('Making the course…');
       try {
         /* The store answers with the refreshed list, so the screen repaints from
            this one answer. Asking it again for the list would cost a second
            Apps Script round trip, and each of those is 1.5-13 s -- the wait Ramy
            called out on 21 Sep 2026 ("making the course takes a while"). */
-        const made = await call({ op: 'createCourse' });
+        const made = await call({ op: 'createCourse', centreNumber: centreNumber, centreName: centreName });
         /* The store appends, so the new course used to arrive at the BOTTOM,
            below the fold, while the status line asked you to copy a link it
            had not shown you (walk, 21 Sep 2026). It is drawn FIRST now, marked
            as new, and the screen goes to it. */
         NEW_ID = made.id;
-        showList(made.courses, 'Made ' + made.id + '. Copy its tutor link and send it to the centre.');
+        showList(made.courses, 'Made ' + made.id + ' for ' + centreNumber + '. Copy its tutor link and send it to the centre.');
         const card = document.querySelector('.course.minted');
         if (card) hubScrollIntoView(card, 'start');
       } catch (err) { status(err.message); make.disabled = false; }

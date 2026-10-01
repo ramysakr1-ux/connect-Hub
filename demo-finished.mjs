@@ -63,7 +63,7 @@ if (REUSE) {
   if (!course) { console.log('no course ' + REUSE); process.exit(1); }
   console.log('carrying on with ' + course.id);
 } else if (WRITE) {
-  const made = await call({ op: 'createCourse', owner: OWNER, name: COURSE.name });
+  const made = await call({ op: 'createCourse', owner: OWNER, centreNumber: 'TR999', centreName: 'Elmswood English Centre', name: COURSE.name });
   if (!made.ok) { console.log('could not make the course: ' + made.error); process.exit(1); }
   course = made.result.course || made.result;
   console.log('made ' + course.id + ' — ' + COURSE.name);

@@ -28,7 +28,7 @@ const ok = (c, m) => { console.log((c ? '  ok   ' : '  FAIL ') + m); if (!c) bad
 
 const made = [];
 const newCourse = async (name) => {
-  const r = await call({ op: 'createCourse', owner: OWNER, name });
+  const r = await call({ op: 'createCourse', owner: OWNER, centreNumber: 'TR999', centreName: 'Elmswood English Centre', name });
   if (!r.ok) throw new Error('could not create ' + name + ': ' + r.error);
   const c = r.result.course || r.result;
   if (KEEP.has(c.id)) throw new Error('refusing to touch ' + c.id);

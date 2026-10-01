@@ -92,7 +92,7 @@ if (!course) {
     console.log(`No scratch course yet. Run with --make.`);
     process.exit(0);
   }
-  const made = await call({ op: 'createCourse', owner: OWNER, name: NAME });
+  const made = await call({ op: 'createCourse', owner: OWNER, centreNumber: 'TR999', centreName: 'Elmswood English Centre', name: NAME });
   if (!made.ok) { console.error('could not create it: ' + made.error); process.exit(1); }
   course = made.result.course || made.result;
   if (KEEP.has(course.id)) { console.error('refusing: got ' + course.id); process.exit(1); }

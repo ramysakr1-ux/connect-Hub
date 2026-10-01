@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610012346">
+<link rel="stylesheet" href="hub-tokens.css?v=202610020004">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -161,6 +161,8 @@
     padding:10px 12px; border:1.5px solid var(--sand-line); border-radius:6px; background:var(--box);
     color:var(--ink); width:100%;}
   textarea{resize:vertical;}
+  input.locked{background:var(--sand-deep); color:var(--grey); cursor:default;}
+  .locked-hint{display:block; font-size:0.74rem; color:var(--grey); margin-top:4px;}
   input:focus, textarea:focus{outline:none; border-color:var(--teal);}
   .note{margin:12px 0 0; font-size:0.8rem; color:var(--grey); line-height:1.5;}
   /* Cambridge's own words beside the field they govern. Bold carries the VERB,
@@ -278,7 +280,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610012346">
+<link rel="stylesheet" href="hub-house.css?v=202610020004">
 </head>
 <body>
 <div class="board">
@@ -343,6 +345,7 @@
       <div>
         <label for="centreNumber">Centre number</label>
         <input type="text" id="centreNumber" placeholder="Cambridge centre number">
+        <small class="hint locked-hint" id="centreNumberHint" hidden>Set by Connect when the course was made.</small>
       </div>
       <div>
         <label for="courseName">Course name</label>
@@ -594,11 +597,11 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610012346"></script>
-<script src="hub-store.js?v=202610012346"></script>
-<script src="observation-defaults.js?v=202610012346"></script>
-<script src="hub-shared.js?v=202610012346"></script>
-<script src="hub-sync.js?v=202610012346"></script>
+<script src="assignment-defaults.js?v=202610020004"></script>
+<script src="hub-store.js?v=202610020004"></script>
+<script src="observation-defaults.js?v=202610020004"></script>
+<script src="hub-shared.js?v=202610020004"></script>
+<script src="hub-sync.js?v=202610020004"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -753,6 +756,9 @@ try {
     if(cs.demoToday) document.getElementById('demoToday').value = cs.demoToday;
     if(cs.centreName) document.getElementById('centreName').value = cs.centreName;
     if(cs.centreNumber) document.getElementById('centreNumber').value = cs.centreNumber;
+    /* Set by Connect when the course was made, and not the centre's to change
+       (Ramy, 1 Oct 2026): the store keeps the owner's number whatever is sent. */
+    if(cs.centreLocked){ const cn = document.getElementById('centreNumber'); cn.readOnly = true; cn.title = 'Set by Connect when the course was made'; cn.classList.add('locked'); const h = document.getElementById('centreNumberHint'); if (h) h.hidden = false; }
     if(cs.planDueNote) document.getElementById('planDueNote').value = cs.planDueNote;
     if(cs.selfDueNote) document.getElementById('selfDueNote').value = cs.selfDueNote;
     if(cs.courseName) document.getElementById('courseName').value = cs.courseName;
@@ -800,6 +806,7 @@ document.getElementById('saveSettings').addEventListener('click', () => {
     demoToday: document.getElementById('demoToday').value || '',
     centreName: document.getElementById('centreName').value,
     centreNumber: document.getElementById('centreNumber').value,
+    centreLocked: (function(){ try { return !!JSON.parse(localStorage.getItem('connect_course_settings') || '{}').centreLocked; } catch (e) { return false; } })(),
     planDueNote: document.getElementById('planDueNote').value.trim(),
     selfDueNote: document.getElementById('selfDueNote').value.trim(),
     courseName: document.getElementById('courseName').value,

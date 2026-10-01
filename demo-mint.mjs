@@ -368,7 +368,7 @@ if (process.env.COURSE) {
   console.log('Resuming the demo course ' + course.id + ' for: ' + LABEL);
 } else {
   console.log('Minting a demo course for: ' + LABEL);
-  made = await call({ op: 'createCourse', owner: OWNER });
+  made = await call({ op: 'createCourse', owner: OWNER, centreNumber: 'TR999', centreName: 'Elmswood English Centre' });
   course = (made.courses || []).slice(-1)[0] || {};
 }
 const K = course.tutorKey, AK = course.assessorKey;
