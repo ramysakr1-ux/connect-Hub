@@ -115,9 +115,9 @@ const GROUPS = ['1', '2'];
 const peopleIn = (g, people) => people.filter(p => String(CANDS.find(c => c.name === p.name) ? (CANDS.find(c => c.name === p.name).group) : '1') === g);
 const TUTORS = ['Jordan Blake', 'Diane Okonkwo'];
 const VOLUNTEERS = [
-  { name: 'Ayşe Demir', level: 'B1', note: '', lang: 'tr' },
+  { name: 'Ayşe Demir', level: 'B1', note: '', lang: 'tr', carried: 140 },
   { name: 'Mehmet Yılmaz', level: 'A2', note: '', lang: 'tr' },
-  { name: 'Elena Petrova', level: 'B1', note: '', lang: 'ru' },
+  { name: 'Elena Petrova', level: 'B1', note: '', lang: 'ru', carried: 62 },
   { name: 'Omar Haddad', level: 'A2', note: 'evenings only', lang: 'ar' },
   { name: 'Léa Dubois', level: 'B1', note: '', lang: 'en' },
 ];
@@ -179,7 +179,10 @@ function settingsFor(tokens) {
     logo: LOGO, gradeForm: FINISHED.settings.gradeForm,
     timeZone: 'Europe/London', onlineRooms: ROOMS,
     courseLinks: COURSE_LINKS,
-    volunteerCertificateHours: 20,
+    /* 160 hours across the centre (Ramy, 1 Oct 2026: "that's what we agreed on").
+       Ayşe carries hours in from earlier courses so the certificate scene is
+       true on the before-the-visit demo. */
+    volunteerCertificateHours: 160,
     visitDate: DAY(VISIT_DAY), assessorVisit: [], docs: {},
     appianUrl: '',
     demoToday: PIN,
@@ -443,6 +446,7 @@ function volunteers(courseId) {
       marks[DAY(d)] = (k + i) % 7 === 3 ? 'partial' : 'present';
     });
     const s = { name: v.name, note: v.note, level: v.level, token: tok, marks };
+    if (v.carried) s.carried = v.carried;
     if (i !== 3) s.agreed = iso(1, ['12:40', '13:05', '18:20', '', '12:55'][i] || '12:00');
     return s;
   });
