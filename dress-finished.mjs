@@ -40,12 +40,20 @@ const HERE = new URL('.', import.meta.url).pathname;
 const WRITE = process.argv.includes('--write');
 const STORE = (readFileSync(join(HERE, 'hub-store.js'), 'utf8').match(/https:\/\/script\.google\.com\/macros\/s\/[^'"]+/) || [])[0];
 const OWNER = readFileSync(join(HERE, '.owner-key'), 'utf8').trim();
-const call = async (b, tries = 6) => {
+/* An answer has to carry a result or an error: the store sometimes returns an
+   empty `ok` envelope, and treating "it parsed" as "it answered" is how the
+   callers came to throw on `.result` (1 Oct 2026). */
+const call = async (b, tries = 8) => {
   for (let i = 0; i < tries; i++) {
-    try { const r = await fetch(STORE, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(b) }); return JSON.parse(await r.text()); }
-    catch (e) { await new Promise(res => setTimeout(res, 4000)); }
+    try {
+      const r = await fetch(STORE, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(b) });
+      const j = JSON.parse(await r.text());
+      if (j && j.error) return j;
+      if (j && j.ok && j.result !== undefined) return j;
+    } catch (e) {}
+    await new Promise(res => setTimeout(res, 4000));
   }
-  return { ok: false, error: 'no JSON' };
+  return { ok: false, error: 'the store would not answer ' + b.op };
 };
 const must = async (label, b) => { const r = await call(b); if (!r.ok) { console.log('   ' + label + ' FAILED: ' + r.error); process.exitCode = 1; } return r; };
 

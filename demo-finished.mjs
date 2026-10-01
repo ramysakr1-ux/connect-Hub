@@ -37,13 +37,22 @@ const KEEP = new Set(['c1', 'c2', 'c3']);
 const HERE = new URL('.', import.meta.url).pathname;
 const STORE = (readFileSync(join(HERE, 'hub-store.js'), 'utf8').match(/https:\/\/script\.google\.com\/macros\/s\/[^'"]+/) || [])[0];
 const OWNER = readFileSync(join(HERE, '.owner-key'), 'utf8').trim();
-const call = async (b, tries = 6) => {
+/* The store sometimes answers `ok` with nothing in it. Parsing used to be the
+   only test, so an empty envelope came straight back and the caller threw on
+   `.result.something` (1 Oct 2026, recasting the finished course: addTrainee
+   answered ok and the next line read `a.result.token`). An answer now has to
+   carry a result or an error. */
+const call = async (b, tries = 8) => {
   for (let i = 0; i < tries; i++) {
-    const r = await fetch(STORE, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(b) });
-    const t = await r.text();
-    try { return JSON.parse(t); } catch (e) { await new Promise(res => setTimeout(res, 4000)); }
+    try {
+      const r = await fetch(STORE, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(b) });
+      const j = JSON.parse(await r.text());
+      if (j && j.error) return j;
+      if (j && j.ok && j.result !== undefined) return j;
+    } catch (e) {}
+    await new Promise(res => setTimeout(res, 4000));
   }
-  return { ok: false, error: 'no JSON' };
+  return { ok: false, error: 'the store would not answer ' + b.op };
 };
 
 /* ---- the course ---------------------------------------------------------- */
@@ -98,7 +107,7 @@ for (const c of CANDIDATES) {
   if (have.has(c.name)) { people.push(Object.assign({}, c, { token: have.get(c.name).token })); continue; }
   if (!WRITE) { people.push(Object.assign({}, c, { token: 'dry' })); continue; }
   const a = await call({ op: 'addTrainee', key: KEY, name: c.name, group: c.group });
-  if (!a.ok) { console.log('could not add ' + c.name + ': ' + a.error); process.exit(1); }
+  if (!a.ok || !a.result || !a.result.token) { console.log('could not add ' + c.name + ': ' + (a.error || 'the store gave back no token')); process.exit(1); }
   people.push(Object.assign({}, c, { token: a.result.token }));
 }
 console.log(people.length + ' candidates');
