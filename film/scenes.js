@@ -281,6 +281,9 @@ var SCENES = [
       { do: 'zoom', out: true, ms: 700 },
       { do: 'scroll', to: '#turnInBtn', ms: 1500 },
       { do: 'click', on: '#turnInBtn', ms: 1300 },
+      /* A plan with an empty procedure asks "turn in anyway?" -- and the film
+         left that box standing too (the frame scan of v8, 1 Oct 2026). */
+      { do: 'click', on: '.confirm-action', optional: true, ms: 1100 },
       { do: 'caption', text: 'Turned in. It is on her tutor\u2019s screen already.' },
       { do: 'hold', ms: 1300 }
     ]

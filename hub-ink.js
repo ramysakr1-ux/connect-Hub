@@ -25,7 +25,8 @@
   var W = 300, H = 100, SAVE = 'chub:ink';
   var css = document.createElement('style');
   css.textContent =
-    ".ink-overlay{position:fixed; inset:0; background:rgba(35,25,15,0.4); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;}"+
+    ".ink-overlay{position:fixed; inset:0; background:rgba(35,25,15,0.4); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px; animation:hubInkFadeIn 180ms ease-out;}"+
+    "@keyframes hubInkFadeIn{from{opacity:0} to{opacity:1}} @media (prefers-reduced-motion: reduce){.ink-overlay{animation:none}}"+
     ".ink-modal{background:var(--paper,#fdfcf9); color:var(--ink,#1f1a14); border-radius:10px; border-top:3px solid var(--teal,#1f6f6b); padding:20px 22px; max-width:460px; width:100%; box-shadow:0 8px 30px rgba(0,0,0,0.18); font-family:'Karla',sans-serif;}"+
     ".ink-modal h3{font-family:'Newsreader',Georgia,serif; font-size:1.1rem; margin:0 0 4px;}"+
     ".ink-modal .ink-sub{font-size:0.82rem; color:var(--grey,#6b625a); margin:0 0 12px; line-height:1.5;}"+

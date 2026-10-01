@@ -77,7 +77,8 @@ window.hubObservationHours = function(records){
 (function(){
   if(!document.getElementById('hub-shared-css')){
     var css=document.createElement('style'); css.id='hub-shared-css';
-    css.textContent=".confirm-overlay{position:fixed; inset:0; background:rgba(35,25,15,0.4); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;}"+
+    css.textContent=".confirm-overlay{position:fixed; inset:0; background:rgba(35,25,15,0.4); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px; animation:hubFadeIn 180ms ease-out;}"+
+      "@keyframes hubFadeIn{from{opacity:0} to{opacity:1}} @media (prefers-reduced-motion: reduce){.confirm-overlay{animation:none}}"+
       ".confirm-modal{background:var(--paper,#fdfcf9); border-radius:6px; border-top:3px solid var(--brick,#8c2f1f); padding:22px 24px; max-width:400px; width:100%; box-shadow:0 8px 30px rgba(0,0,0,0.18);}"+
       ".confirm-message{margin:0 0 18px; font-size:0.92rem; color:var(--ink,#2b2620); line-height:1.55;}"+
       ".confirm-actions{display:flex; justify-content:flex-end; gap:10px;}"+
