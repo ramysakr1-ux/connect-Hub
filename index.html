@@ -295,6 +295,9 @@
       <span class="grouplabel" id="tpLine">Teaching practice</span>
       <span class="herostate" id="tpState"></span>
     </div>
+    <!-- v56 (1 Oct 2026): how many volunteer students said they are coming to
+         the next class -- the planning number, from the day-before reminder. -->
+    <p class="coming" id="comingLine" hidden></p>
     <div class="rooms">
       <a class="room" id="roomPlan" href="1_trainee_plan_and_analysis.html">
         <h2>Lesson plan &amp; language analysis</h2>
@@ -712,6 +715,9 @@ line(document.getElementById('badgeProgress'), (function(){
      work still to do already has a gold card telling them so. */
   const ts = document.getElementById('tpState');
   if (ts) ts.textContent = NEXT === 'waiting' ? 'With your tutor' : '';
+  const cl = document.getElementById('comingLine');
+  let c = null; try { c = JSON.parse(localStorage.getItem('connect_coming_v1')); } catch (e) {}
+  if (cl && c && c.day && c.total) { const fd = d => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d); return m ? new Date(+m[1], +m[2]-1, +m[3]).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : d; }; cl.textContent = 'TP ' + c.tp + ', ' + fd(c.day) + ': ' + c.yes + ' volunteer student' + (c.yes === 1 ? '' : 's') + ' coming' + (c.noAnswer ? ', ' + c.noAnswer + ' not answered yet' : '') + '.'; cl.hidden = false; }
 })();
 
 /* ---- returned: read it, or start the next one ------------------------------ */

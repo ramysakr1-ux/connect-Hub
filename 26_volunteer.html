@@ -63,6 +63,13 @@
   .next .room{display:inline-block; margin-top:14px; background:#fff; color:var(--teal); font-weight:700; font-size:0.9rem; padding:10px 20px; border-radius:999px; text-decoration:none;}
   .next .tiny{font-size:0.78rem; opacity:.75; margin-top:10px; line-height:1.5;}
   .next.done{background:var(--box); color:var(--ink);}
+  .next .ask{display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:16px; padding-top:14px; border-top:1px solid rgba(255,255,255,.25);}
+  .next .ask .k{font-size:0.68rem; letter-spacing:.14em; text-transform:uppercase; opacity:.8; font-weight:700; margin-right:4px;}
+  .next .ask .yn{font:700 0.9rem 'Karla',sans-serif; padding:9px 18px; border-radius:999px; border:2px solid rgba(255,255,255,.6); background:transparent; color:#fff; cursor:pointer;}
+  .next .ask .yn.on{background:#fff; color:var(--teal); border-color:#fff;}
+  .next .ask small{flex-basis:100%; font-size:0.8rem; opacity:.85;}
+  .mailpref{font-size:0.8rem; color:var(--grey); margin:12px 0 0;}
+  .mailpref button{font:600 0.8rem 'Karla',sans-serif; background:none; border:none; color:var(--teal); text-decoration:underline; cursor:pointer; padding:0;}
   .next.done .k{opacity:1; color:var(--grey);}
   .card{background:var(--surface); border:1px solid var(--sand-line); border-radius:11px; padding:16px 18px; margin:0 0 14px;}
   .card h3{font-family:'Newsreader',Georgia,serif; font-size:1.1rem; margin:0 0 3px;}
@@ -231,6 +238,10 @@ function render(){
   const tutors = String(SETTINGS.tutorNames || '').split(/[,\n;]+/).map(x => x.trim()).filter(Boolean);
   const r = room();
   const startT = tpSlots.length ? tpSlots[0].from : '', endT = tpSlots.length ? tpSlots[tpSlots.length-1].to : '';
+  /* v56: are you coming? The answer for the next class, yes or no, kept on
+       their own row; the register and the trainees' card read it. */
+    const reply = next ? ((ME.replies || {})[next] || null) : null;
+    const askBlock = next ? `<div class="ask" id="ask"><span class="k">Are you coming?</span><button type="button" class="yn${reply && reply.coming === 'yes' ? ' on' : ''}" data-coming="yes">Yes</button><button type="button" class="yn${reply && reply.coming === 'no' ? ' on' : ''}" data-coming="no">No</button>${reply ? `<small>${reply.coming === 'yes' ? 'Thank you, see you then.' : 'Thank you for telling us.'}</small>` : ''}</div>` : '';
   const isToday = next === TODAY;
   const nextBlock = !days.length
     ? `<div class="next done"><div class="k">Your classes</div><h2>Nothing is scheduled yet</h2><div class="tiny">The centre has not set the timetable. This page fills in when it does.</div></div>`
@@ -239,7 +250,7 @@ function render(){
         <h2>${isToday ? 'Today, ' : (upcoming[0] && daysBetween(TODAY, next) === 1) ? 'Tomorrow, ' : ''}${esc(longDay(next))}</h2>
         <div class="when">${esc(timeFor(next, startT))} – ${esc(timeFor(next, endT))}${tpSlots.length > 1 ? ' · ' + tpSlots.length + ' short lessons' : ''}${ZONE && window.hubReaderZone && hubReaderZone() !== ZONE ? '<small>Course time is ' + esc(hubZoneName(ZONE)) + '.</small>' : ''}</div>
         ${r ? `<a class="room" href="${esc(r.url)}" target="_blank" rel="noopener">Join on ${/zoom/i.test(r.url) ? 'Zoom' : /meet\.google/i.test(r.url) ? 'Meet' : /teams/i.test(r.url) ? 'Teams' : 'the link'}</a>` : ''}
-        <div class="tiny">${tutors.length ? 'Your teachers are trainees, with ' + esc(tutors.join(' and ')) + ' watching. ' : ''}You do not need to prepare anything.</div></div>`
+        <div class="tiny">${tutors.length ? 'Your teachers are trainees, with ' + esc(tutors.join(' and ')) + ' watching. ' : ''}You do not need to prepare anything.</div>${askBlock}</div>`
     : `<div class="next done"><div class="k">Your classes</div><h2>The course has finished</h2><div class="tiny">Thank you for coming. Your attendance and hours are below.</div></div>`;
 
   app.innerHTML = `
@@ -275,13 +286,36 @@ function render(){
          (Ramy, 1 Oct 2026: "let's add an email section to the volunteer
          students... there is an email your tutor tab for the trainees"). -->
     <div class="mailtutor" id="mailTutor" hidden></div>
+    <p class="mailpref" id="mailpref">${ME.email ? (ME.notify === false ? 'You asked us not to email you about classes. <button type="button" data-notify="on">Start again</button>' : 'We email you the day before a class, and an hour before if you said yes. <button type="button" data-notify="off">Stop these emails</button>') : ''}</p>
     <p class="foot">This link is yours. It stops working when the course ends.</p>
     <p class="foot"><a href="17_how_it_works.html?for=volunteer&amp;lang=${esc(LANG())}" lang="${esc(LANG())}">${esc(T().howLink)}</a></p>
     ${agreedAt() ? `<p class="agreed" lang="${esc(LANG())}" dir="${I18N.isRtl(LANG()) ? 'rtl' : 'ltr'}">${esc(T().agreedOn.replace('{date}', longDay(agreedAt().slice(0, 10))))} <button type="button" id="readAgain">${esc(T().readAgain)}</button></p>` : ''}`;
   if (window.hubInstallHint) hubInstallHint($('installHint'), 'volunteer');
   if ($('readAgain')) $('readAgain').addEventListener('click', () => consent(true));
   mailBlock();
+  document.querySelectorAll('[data-coming]').forEach(b => b.addEventListener('click', () => answer(b.dataset.coming)));
+  document.querySelectorAll('[data-notify]').forEach(b => b.addEventListener('click', () => notify(b.dataset.notify === 'on')));
 }
+/* The answer, from a button on the page or from the link in the email
+   (?day=&coming=): one write to their own row, then the page repaints with
+   the thanks. */
+async function answer(coming, day){
+  const d = day || next; if (!d) return;
+  try { const r = await HubStore.call({ op: 'volunteerReply', day: d, coming }); ME.replies = r.replies || ME.replies || {}; try { localStorage.setItem('hub:volunteer', JSON.stringify(ME)); } catch (e) {} render(); }
+  catch (e) { alert(e.message || e); }
+}
+async function notify(on){
+  try { await HubStore.call({ op: 'volunteerNotify', on }); ME.notify = on; try { localStorage.setItem('hub:volunteer', JSON.stringify(ME)); } catch (e) {} render(); }
+  catch (e) { alert(e.message || e); }
+}
+(function fromTheLink(){
+  const q = new URLSearchParams(location.search);
+  const coming = q.get('coming'), day = q.get('day'), nt = q.get('notify');
+  if (!coming && !nt) return;
+  history.replaceState(null, '', location.pathname + '?v=' + encodeURIComponent(q.get('v') || ''));
+  const go = () => { if (coming === 'yes' || coming === 'no') answer(coming, day || undefined); if (nt === 'off') notify(false); };
+  if (window.HubStore && ME && ME.name) go(); else document.addEventListener('hub:ready', go);
+})();
 
 /* THE JOINING NOTE. Ramy, 30 Sep 2026: "we can always get them to sign
    something when they join... Disclaimer, it can also come from Connect."
@@ -314,7 +348,7 @@ function stamp(){
   const r = rec(CONSENT_KEY); if (!r || !r.at || r.stamped) return;
   /* call() resolves on success and throws on a refusal or a dead network;
      either way the device copy stands and this runs again next open. */
-  HubStore.call({ op: 'volunteerAgree', at: r.at }).then(() => {
+  HubStore.call({ op: 'volunteerAgree', at: r.at, lang: LANG() }).then(() => {
     r.stamped = true; try { localStorage.setItem(CONSENT_KEY, JSON.stringify(r)); } catch (e) {}
   }).catch(() => {});
 }

@@ -68,6 +68,9 @@
   .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
   .reg{background:var(--surface); border:1px solid var(--sand-line); border-left:5px solid var(--teal); border-radius:10px; padding:4px 0 6px;}
   .who{display:grid; grid-template-columns:1.1fr auto; gap:12px; align-items:center; padding:11px 16px; border-top:1px solid var(--sand-line);}
+  .mailrow{margin:6px 0 2px;} .mailrow .email{font:0.82rem 'Karla',sans-serif; width:min(100%, 280px); padding:5px 8px; border:1px solid var(--sand-line); border-radius:6px; background:var(--field, oklch(99% 0.004 90)); color:var(--ink);} .mailrow small{margin-left:8px; color:var(--grey); font-size:0.74rem;}
+  .reply{display:inline-block; font-size:0.78rem; font-weight:700; margin:4px 0 2px; color:var(--grey);} .reply.yes{color:var(--teal);} .reply.no{color:var(--brick);} .reply small{font-weight:500; color:var(--grey); margin-left:4px;}
+  .legend.coming{font-weight:500; color:var(--ink);}
   .who:first-child{border-top:0;}
   .nm{font-weight:700; font-size:0.94rem;}
   .nm small{display:block; font-weight:500; font-size:0.76rem; color:var(--grey); margin-top:2px;}
@@ -220,6 +223,8 @@ function mintMissing(){
 const recordOf = (st, days, lessons, lessonMinutes) => A.record(st.marks || {}, days, lessons, lessonMinutes);
 const fmtH = h => (Math.round(h * 100) / 100).toString().replace(/\.00$/, '');
 
+/* v56: who is coming to the next class, from the store's own count. */
+const COMING = (() => { try { const c = JSON.parse(localStorage.getItem('connect_coming_v1')); return c && c.day ? c : null; } catch (e) { return null; } })();
 function persist(word){
   REG = REG || { students: [] };
   try { localStorage.setItem(KEY, JSON.stringify(REG)); } catch(e) {}
@@ -270,6 +275,8 @@ function render(){
           : (st.level ? '<span class="lvltag">' + esc(st.level) + '</span>' : '')}${IS_TUTOR
           ? `<span class="carried"><input type="number" min="0" step="0.25" data-carried="${i}" value="${st.carried != null ? esc(st.carried) : ''}" placeholder="0" title="Hours this student already had at the centre, before this course"><small>h before</small></span>`
           : (st.carried ? '<small>' + esc(st.carried) + ' h before this course</small>' : '')}${st.note ? '<small>' + esc(st.note) + '</small>' : ''}</div>
+        ${IS_TUTOR ? `<div class="mailrow"><input type="email" class="email" data-email="${i}" value="${esc(st.email || '')}" placeholder="Email, for the reminders" title="The day before a class they are asked whether they are coming; an hour before, those who said yes are reminded.">${st.email && st.notify === false ? '<small>asked for no emails</small>' : ''}</div>` : ''}
+        ${COMING && st.token ? (() => { const r = (st.replies || {})[COMING.day]; return `<span class="reply ${r ? r.coming : 'none'}">${r ? (r.coming === 'yes' ? '✓ Coming' : '✗ Not coming') : '· No answer yet'} <small>${dm(COMING.day)}</small></span>`; })() : ''}
         ${st.token ? (st.agreed
           ? `<span class="agreed yes">✓ Agreed to the joining note, ${dm(String(st.agreed).slice(0, 10))}</span>`
           : `<span class="agreed no">Has not yet agreed to the joining note (it opens with their link)</span>`) : ''}
@@ -288,6 +295,7 @@ function render(){
             : `<span class="nolink" title="The course id has not arrived from the store yet">No link yet</span>`}<button type="button" class="btn quiet sm" data-rm="${i}">Remove</button></div>` : ''}</div>
     </div>`;
   }).join('')}</div>
+  ${COMING ? `<p class="legend coming"><b>${esc(dm(COMING.day))}, TP ${esc(COMING.tp)} at ${esc(COMING.from)}:</b> ${COMING.yes} coming · ${COMING.no} not · ${COMING.noAnswer} no answer yet. Asked the day before, by email.</p>` : ''}
   <p class="legend">
     <span><span class="seg here"></span>in the room</span>
     <span><span class="seg part"></span>came for part of it</span>
@@ -324,6 +332,7 @@ function addNames(rows){
       const t = String(h || '').trim().toLowerCase();
       if (col.name < 0 && /^(name|student|volunteer|full name)$/.test(t)) col.name = i;
       else if (col.level < 0 && /^(level|cefr)$/.test(t)) col.level = i;
+      else if (col.email == null && /^(e-?mail|email address)$/.test(t)) col.email = i;
       else if (col.note < 0 && t) col.note = i;
     });
     if (col.name < 0) col.name = 0;
@@ -337,7 +346,11 @@ function addNames(rows){
     if (have.has(name.toLowerCase())) return;      // adding the same list twice is a mistake, not a second person
     have.add(name.toLowerCase());
     const lvl = col.level >= 0 ? String(r[col.level] || '').trim().toUpperCase() : '';
-    REG.students.push({ name, note: col.note >= 0 ? String(r[col.note] || '').trim() : '', marks: {}, level: LEVELS.includes(lvl) ? lvl : '', token: mintToken() });
+    /* v56: an address, from its own column or from any cell shaped like one. */
+    const isMail = x => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(x || '').trim());
+    const email = col.email != null ? String(r[col.email] || '').trim() : (r.find(isMail) || '');
+    const note = col.note >= 0 ? String(r[col.note] || '').trim() : '';
+    REG.students.push({ name, note: isMail(note) ? '' : note, email: isMail(email) ? email : '', marks: {}, level: LEVELS.includes(lvl) ? lvl : '', token: mintToken() });
     added++;
   });
   REG.students.sort((a, b) => a.name.localeCompare(b.name));
@@ -394,6 +407,12 @@ function wire(){
      volunteer about thirty-six, so the number has to come forward. Lite has no
      identity across courses -- a volunteer is a token on one course -- so the
      centre carries it by hand, here, and the certificate adds it on. */
+  document.querySelectorAll('[data-email]').forEach(el => el.addEventListener('change', () => {
+    const st = students()[+el.dataset.email]; if (!st) return;
+    const v = el.value.trim();
+    if (v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { el.setCustomValidity('Not an email address'); el.reportValidity(); return; }
+    el.setCustomValidity(''); st.email = v; persist(v ? 'Email saved' : 'Email cleared');
+  }));
   document.querySelectorAll('[data-carried]').forEach(el => el.addEventListener('change', () => {
     const st = students()[+el.dataset.carried]; if (!st) return;
     const v = parseFloat(el.value);

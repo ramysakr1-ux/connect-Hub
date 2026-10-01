@@ -305,6 +305,9 @@
   <section class="stream" id="stream"></section>
   <div class="install-hint" id="installHint" hidden></div>
   <div class="queue" id="queue"></div>
+  <!-- v56 (1 Oct 2026): the planning number -- how many volunteer students
+       said they are coming to the next class. -->
+  <p class="coming" id="comingLine" hidden style="margin:0 0 14px;font-size:0.88rem;color:var(--ink-warm)"></p>
 
   <!-- Ramy, 28 Sep 2026: "the cards should also function as a tab… I don't
        think we need those tabs." The three cards ARE the tabs: a card's
@@ -685,6 +688,12 @@ nameInput.addEventListener('input', ()=>localStorage.setItem('chub:tutorName', n
 (function(){
   const host = document.getElementById('stream'); if (!host) return;
   const KEY = 'connect_course_stream_v1';
+  (function(){
+  const cl = document.getElementById('comingLine'); let c = null; try { c = JSON.parse(localStorage.getItem('connect_coming_v1')); } catch (e) {}
+  if (!cl || !c || !c.day || !c.total) return;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(c.day); const day = m ? new Date(+m[1], +m[2]-1, +m[3]).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : c.day;
+  cl.textContent = 'Volunteer students for TP ' + c.tp + ', ' + day + ': ' + c.yes + ' coming, ' + c.no + ' not, ' + c.noAnswer + ' not answered yet.'; cl.hidden = false;
+  })();
   const e = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
   const linkify = t => e(t).replace(/(https?:\/\/[^\s<]+)/g, m => `<a href="${m}" target="_blank" rel="noopener noreferrer">${m.replace(/^https?:\/\//,'').replace(/\/$/,'')}</a>`);
   const initials = n => hubInitials(n);

@@ -473,6 +473,9 @@
        candidate has no business holding a list of their names and who turned
        up when. Written whole by a tutor, like the timetable. */
     out['connect_volunteers_v1'] = course.volunteers ? JSON.stringify(course.volunteers) : null;
+    /* v56 (1 Oct 2026): how many volunteer students are coming to the next
+       class -- a count, no names -- for the home and the dashboard. */
+    out['connect_coming_v1'] = course.coming ? JSON.stringify(course.coming) : null;
     /* What the candidates have shared with the volunteer students (30 Sep
        2026). Everyone on the course reads it -- it is the candidates' own
        handouts, not anybody's private data -- and it is written through the
