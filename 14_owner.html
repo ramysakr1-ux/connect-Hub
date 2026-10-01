@@ -77,6 +77,10 @@
      link is THE action on this screen (it is the one you send), so it wears
      teal; the assessor link is the quiet one. */
   .courses{display:flex; flex-direction:column; gap:14px; margin-top:24px;}
+  .fbline{margin-top:34px; padding-top:18px; border-top:1px solid var(--sand-line);}
+  .fbline h2{font-family:'Newsreader',Georgia,serif; font-size:1.3rem; margin:0 0 6px;}
+  .fbline ul{margin:10px 0 0; padding-left:18px; font-size:0.9rem; line-height:1.5;}
+  .fbline li small{color:var(--grey); margin-left:6px;}
   /* A standing demo course, pinned to a day by the demo clock (30 Sep 2026):
      gold, like the sync pill on its own screens. */
   .filmrow.demos{display:grid; gap:10px;}
@@ -718,6 +722,7 @@ async function load(msg){
   try {
     const r = await call({ op: 'ownerCourses' });
     render(r.courses || [], msg);
+    feedbackLine();
   } catch (err) {
     if (/not yours/i.test(err.message)) { try { localStorage.removeItem(OWNER_STORE); } catch (e) {} gate('That key was not recognised — check you copied all of it.'); return; }
     /* Without this the screen is a dead end: the store's message and nothing to
@@ -725,6 +730,20 @@ async function load(msg){
        across repaints, so the button below is already wired. */
     $('app').innerHTML = `<div class="empty">${esc(err.message)} <button class="btn small" id="retryBtn" type="button" style="margin-left:8px;">Try again</button> <button class="btn small" id="otherKeyBtn" type="button" style="margin-left:8px;">Use a different key</button></div>`;
   }
+}
+/* v59 (1 Oct 2026): this week's thumbs from the demos and the offer page,
+   and the latest lines, under the courses. Read after the courses so a slow
+   sheet never holds the console up. */
+async function feedbackLine(){
+  try {
+    const r = await call({ op: 'feedbackSummary' });
+    const host = $('app'); if (!host || !r) return;
+    const w = r.week || { up: 0, down: 0, comments: 0 };
+    const box = document.createElement('section'); box.className = 'fbline';
+    box.innerHTML = `<h2>Feedback</h2><p class="lede">This week: <b>${w.up}</b> \uD83D\uDC4D \u00b7 <b>${w.down}</b> \uD83D\uDC4E \u00b7 <b>${w.comments}</b> comment${w.comments === 1 ? '' : 's'}${r.total ? ' \u00b7 ' + r.total + ' in all' : ''}. From the demos and the offer page; the sheet behind the store has every row.</p>`
+      + ((r.latest || []).length ? '<ul>' + r.latest.map(x => `<li>${x.thumb === 'up' ? '\uD83D\uDC4D' : '\uD83D\uDC4E'} ${esc(x.text)} <small>${esc([x.page, x.course, x.role].filter(Boolean).join(' \u00b7 '))} \u00b7 ${esc(String(x.at).slice(0, 10))}</small></li>`).join('') + '</ul>' : '');
+    host.appendChild(box);
+  } catch (e) {}
 }
 load();
 </script>
