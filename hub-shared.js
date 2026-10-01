@@ -276,7 +276,7 @@ window.hubObservationHours = function(records){
           input.addEventListener('keydown',function(e){ if(e.key==='Enter' && !actionBtn.disabled) actionBtn.click(); });
         }
         document.body.appendChild(overlay);
-        function cleanup(result){ overlay.remove(); document.removeEventListener('keydown',onKey); resolve(result); }
+        function cleanup(result){ overlay.style.transition='opacity 150ms ease-in'; overlay.style.opacity='0'; setTimeout(function(){ overlay.remove(); }, 160); document.removeEventListener('keydown',onKey); resolve(result); }
         function onKey(e){ if(e.key==='Escape') cleanup(false); }
         document.addEventListener('keydown',onKey);
         overlay.addEventListener('mousedown',function(e){ if(e.target===overlay) cleanup(false); });
