@@ -531,7 +531,9 @@
         history[n] = local[n];
       });
       if (kept) schedule('r:' + t.token + ':tpHistory', { op: 'put', token: t.token, kind: 'tpHistory', data: history });
-      roster.trainees[t.token] = { id: t.token, name: t.name, group: t.group, importedAt: t.created, tp: { plan: r.plan || null, selfeval: r.selfeval || null, feedback: r.feedback || null, history: history }, assignments: r.assignments || {}, tracker: r.tracker || {}, observations: r.observations || {}, links: r.links || [], staffLinks: r.staffLinks || [], celta5: r.celta5 || {}, celta5t: r.celta5t || {} };
+      /* v53: the address rides with the row for a tutor; the store already
+         leaves it off an assessor's roster, so nothing to strip here. */
+      roster.trainees[t.token] = { id: t.token, name: t.name, group: t.group, email: t.email || '', importedAt: t.created, tp: { plan: r.plan || null, selfeval: r.selfeval || null, feedback: r.feedback || null, history: history }, assignments: r.assignments || {}, tracker: r.tracker || {}, observations: r.observations || {}, links: r.links || [], staffLinks: r.staffLinks || [], celta5: r.celta5 || {}, celta5t: r.celta5t || {} };
     });
     out['connect_roster_v1'] = JSON.stringify(roster);
     return out;

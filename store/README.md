@@ -14,6 +14,14 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
+## 1 Oct 2026 — a candidate may carry an email (version 53)
+
+Column F of the trainees sheet, optional everywhere; `addTrainee`, `addTrainees` and
+`renameTrainee` take it, a tutor's roster carries it, the assessor's copy never does,
+and a candidate's own boot carries only their own. Earlier the same day: v51 sent the
+tutor contacts on a volunteer's boot, v52 the hours they carried in.
+See [2026-10-01-candidate-email.md](2026-10-01-candidate-email.md).
+
 ## 30 Sep 2026 — the console marks a pinned demo (version 50)
 `ownerCourses` rows carry `demoToday`, so the owner console shows a gold
 "Demo · pinned to …" chip on a standing demo course. One field, no new op.

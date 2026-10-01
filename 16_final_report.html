@@ -123,6 +123,12 @@
   <div class="bar">
     <a class="back" id="backLink" href="13_grades_report.html">&larr; Grades report</a>
     <button class="btn" type="button" onclick="window.print()">Print / Save as PDF</button>
+    <!-- v53 (1 Oct 2026): "build all" -- the report goes to the candidate by
+         the tutor's own mail app. Lite sends nothing: the button opens a
+         message to the address on the roster with the subject set, and the
+         tutor attaches the PDF they just saved. Shown only when the roster
+         holds an address for this candidate and this is a tutor's link. -->
+    <a class="btn" id="mailReport" hidden title="Opens your mail app with the candidate's address and the subject filled in. Save the report as a PDF first and attach it.">Email it to the candidate</a>
   </div>
   <div id="doc"></div>
 </div>
@@ -216,6 +222,16 @@ const id = params.get('id') || '';
 let cs = {}; try { cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
 let roster = { trainees: {} }; try { roster = JSON.parse(localStorage.getItem('connect_roster_v1')) || roster; } catch (e) {}
 const who = Object.values(roster.trainees || {}).find(t => t && (t.id === id || t.name === id));
+(function(){
+  const a = document.getElementById('mailReport');
+  if (!a || !who || !who.email || window.HubMode === 'assessor') return;
+  const course = cs.courseName || 'your CELTA course';
+  const first = String(who.name || '').trim().split(/\s+/)[0] || '';
+  const subject = encodeURIComponent('Your end-of-course report \u2014 ' + course);
+  const body = encodeURIComponent('Dear ' + first + ',\n\nPlease find attached your end-of-course report for ' + course + '.\n\n');
+  a.href = 'mailto:' + encodeURIComponent(who.email) + '?subject=' + subject + '&body=' + body;
+  a.hidden = false;
+})();
 if (window.HubMode === 'assessor') { const b = document.getElementById('backLink'); b.href = '12_assessor_pack.html'; b.innerHTML = '&larr; Assessor pack'; }
 
 const doc = document.getElementById('doc');

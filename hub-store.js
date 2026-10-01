@@ -107,10 +107,11 @@ window.HubStore = (function(){
        refuses if this course has tagging of its own, so this can only seed. */
     seedCritLearn: function(){ return call({ op: 'seedCritLearn' }); },
     roster: function(){ return call({ op: 'roster' }).then(function(r){ return r.trainees; }); },
-    addTrainee: function(name, group){ return call({ op: 'addTrainee', name: name, group: group }); },
+    /* v53 (1 Oct 2026): a candidate may carry an email. Optional everywhere. */
+    addTrainee: function(name, group, email){ return call({ op: 'addTrainee', name: name, group: group, email: email || '' }); },
     // A pasted class list in one call, rather than one call per name.
     addTrainees: function(list){ return call({ op: 'addTrainees', trainees: list }); },
-    renameTrainee: function(tok, name, group){ return call({ op: 'renameTrainee', token: tok, name: name, group: group }); },
+    renameTrainee: function(tok, name, group, email){ var b = { op: 'renameTrainee', token: tok, name: name, group: group }; if (email != null) b.email = email; return call(b); },
     removeTrainee: function(tok){ return call({ op: 'removeTrainee', token: tok }); },
     traineeLink: function(tok){ return base() + 'index.html?t=' + encodeURIComponent(tok); },
     /* The link a centre actually hands out. It opens the invitation card --

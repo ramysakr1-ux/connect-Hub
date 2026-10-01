@@ -25,7 +25,10 @@ const OUT = HERE + 'film/stills/';
 mkdirSync(OUT, { recursive: true });
 const STORE = (readFileSync(HERE + 'hub-store.js', 'utf8').match(/https:\/\/script\.google\.com\/macros\/s\/[^'"]+/) || [])[0];
 const OWNER = readFileSync(HERE + '.owner-key', 'utf8').trim();
-const call = async b => { for (let i = 0; i < 8; i++) { try { const r = await (await fetch(STORE, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(b) })).json(); if (r && (r.ok || r.error)) return r.result; } catch (e) {} await new Promise(r => setTimeout(r, 2500)); } throw new Error('store'); };
+/* An answer must carry a result: the store sometimes hands back an empty ok
+   envelope, and `.courses` of nothing stopped the whole film pipeline twice
+   (1 Oct 2026). */
+const call = async b => { for (let i = 0; i < 10; i++) { try { const r = await (await fetch(STORE, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(b) })).json(); if (r && r.error) throw new Error(r.error); if (r && r.ok && r.result !== undefined) return r.result; } catch (e) { if (/^Not |refused|read-only/.test(e.message)) throw e; } await new Promise(r => setTimeout(r, 3000)); } throw new Error('the store would not answer ' + b.op); };
 const { courses } = await call({ op: 'ownerCourses', owner: OWNER });
 const c4 = courses.find(c => c.id === 'c4');
 const roster = await call({ op: 'roster', key: c4.tutorKey });
@@ -43,7 +46,14 @@ await p.goto(`http://127.0.0.1:${s.address().port}/20_celta5.html?k=${c4.tutorKe
 await p.waitForTimeout(26000);
 console.log('drawing the booklet…');
 const b64 = await p.evaluate(async () => {
-  const a = await window.HubStore.call({ op: 'celta5Assets' });
+  /* The store sometimes answers with an empty envelope; ask again rather
+     than draw nothing (1 Oct 2026). */
+  let a = null;
+  for (let i = 0; i < 5 && !(a && a['celta5-master-july-2023.pdf']); i++) {
+    if (i) await new Promise(r => setTimeout(r, 3000));
+    try { const r = await window.HubStore.call({ op: 'celta5Assets' }); a = (r && r.assets) || r; } catch (e) {}
+  }
+  if (!(a && a['celta5-master-july-2023.pdf'])) throw new Error('the store never handed over the booklet assets');
   const b = window.hubCelta5Pdf.fromBase64;
   const assets = { master: b(a['celta5-master-july-2023.pdf']), regular: b(a['Arimo-Regular.ttf']), bold: b(a['Arimo-Bold.ttf']) };
   const input = window.hubCelta5Debug && window.hubCelta5Debug.input ? window.hubCelta5Debug.input() : null;

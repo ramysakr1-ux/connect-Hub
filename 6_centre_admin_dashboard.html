@@ -212,7 +212,9 @@
      each row's was as wide as its buttons, and the headings never sat over
      their columns. A fixed action column gives every one of them identical
      tracks (Ramy, 24 Sep 2026: "make sure the roster is the same"). */
-  .grid.roster{grid-template-columns:1.6fr 0.6fr 1.4fr 232px;}
+  .grid.roster{grid-template-columns:1.5fr 0.5fr 1.2fr 1.1fr 300px;}
+  .grid.roster .temail{width:100%; min-width:0; font-size:0.84rem; padding:5px 7px; border:1px solid var(--line); border-radius:7px; background:transparent; color:inherit;}
+  .grid.roster .temail:focus{outline:2px solid var(--teal); outline-offset:1px; background:var(--paper);}
   .ghead{padding:0 4px 9px; border-bottom:1px solid var(--sand-line); font-size:0.72rem; font-weight:700;
     letter-spacing:0.05em; text-transform:uppercase; color:var(--grey);}
   .grow{padding:13px 4px; border-bottom:1px solid var(--sand-line); font-size:0.9rem;}
@@ -264,8 +266,8 @@
 
   @media (max-width:780px){
     .fields{grid-template-columns:1fr;}
-    .grid.roster{grid-template-columns:minmax(0,1fr) 232px;}
-    .grid.roster > .col-group, .grid.roster > .col-status{display:none;}
+    .grid.roster{grid-template-columns:minmax(0,1fr) 300px;}
+    .grid.roster > .col-group, .grid.roster > .col-status, .grid.roster > .col-email{display:none;}
   }
   /* A phone. Three things (Ramy, 24 Sep 2026):
      the link rows put their paragraph in a third of the screen and left the
@@ -1139,6 +1141,23 @@ async function renderAssessorBlock(rotated){
    it, and everything else redraws from what is already here. */
 let ROSTER = null;
 
+/* v53 (1 Oct 2026). Lite sends nothing itself: "Email the link" opens the
+   centre's own mail app with the candidate's address and link already in the
+   message, one candidate at a time. For twelve at once, "Copy the list" puts
+   name, email and link on the clipboard as three columns, for a mail merge
+   in Gmail or Outlook. Ramy: "import names, emails?" -> "build all". */
+function mailLink(t){
+  const S = window.HubStore;
+  const course = (document.getElementById('courseName') || {}).value || 'your CELTA course';
+  const first = String(t.name || '').trim().split(/\s+/)[0] || '';
+  const subject = encodeURIComponent('Your link for ' + course);
+  const body = encodeURIComponent('Hello ' + first + ',\n\nHere is your link for ' + course + ':\n' + S.inviteFor('trainee', t.token) + '\n\nIt is yours alone. Your timetable, your plans, your feedback and your CELTA 5 are all behind it, so keep it where you can find it.\n');
+  return 'mailto:' + encodeURIComponent(t.email || '') + '?subject=' + subject + '&body=' + body;
+}
+function rosterList(trainees){
+  const S = window.HubStore;
+  return ['Name\tEmail\tLink'].concat(trainees.map(t => [t.name || '', t.email || '', S.inviteFor('trainee', t.token)].join('\t'))).join('\n');
+}
 async function renderStoreRoster(next){
   const box = document.getElementById('storeRoster'); if (!box) return;
   const S = window.HubStore;
@@ -1184,6 +1203,7 @@ async function renderStoreRoster(next){
     <div class="sectionhead">
       <h2>Course links</h2>
       <button class="linkbtn" type="button" id="toggleUrls">${SHOW_URLS ? 'Hide addresses' : 'Show addresses'}</button>
+      ${trainees.length ? `<button class="linkbtn" type="button" id="copyRosterList" title="Name, email and link as three columns, for a mail merge">Copy the list</button>` : ''}
     </div>
     <div class="linkcard">
       ${linkRow('Tutor link', 'Every tutor on the course opens this same link and lands on the same course — the same trainees, the same records. Keep it to tutors, and rotate it if it gets out: every copy in circulation stops working.', S.inviteFor('tutor', S.key()), 'tutor', 'storeRotateKey', 'Rotate')}
@@ -1199,13 +1219,14 @@ async function renderStoreRoster(next){
       <form id="storeAddForm" class="row">
         <input type="text" id="storeAddName" class="name" placeholder="Trainee's name" required>
         <input type="text" id="storeAddGroup" class="group" placeholder="Group" list="storeGroups">
+        <input type="email" id="storeAddEmail" class="name" placeholder="Email (optional)">
         <datalist id="storeGroups">${groups.map(g=>`<option value="${esc(g)}">`).join('')}</datalist>
         <button class="btn primary" type="submit">Add</button>
         <span id="storeAddStatus" class="muted" style="font-size:0.82rem;"></span>
       </form>
       <button class="linkbtn" type="button" id="toggleBulk" style="margin-top:12px;">Add several at once</button>
       <div class="bulkwrap" id="bulkWrap" style="display:none;">
-        <textarea id="storeBulkNames" rows="5" placeholder="One per line — a name on its own, or Name, Group&#10;e.g.&#10;Amara Okafor, A&#10;Daniel Kim, A&#10;Priya Sharma"></textarea>
+        <textarea id="storeBulkNames" rows="5" placeholder="One per line — a name on its own, or Name, Group, email in any order&#10;e.g.&#10;Amara Okafor, A, amara@example.org&#10;Daniel Kim, A&#10;Priya Sharma"></textarea>
         <div style="display:flex;align-items:center;gap:10px;margin-top:9px;">
           <button class="btn primary" type="button" id="storeBulkAddBtn">Add all</button>
           <span id="storeBulkStatus" class="muted" style="font-size:0.82rem;"></span>
@@ -1215,13 +1236,15 @@ async function renderStoreRoster(next){
 
     <div style="margin-top:14px;">
       ${overNote}
-      <div class="grid roster ghead"><div>Trainee</div><div class="col-group">Group</div><div class="col-status">Personal link</div><div></div></div>
+      <div class="grid roster ghead"><div>Trainee</div><div class="col-group">Group</div><div class="col-status">Personal link</div><div class="col-email">Email</div><div></div></div>
       ${trainees.length ? trainees.map(t=>`<div class="grid roster grow">
         <div class="name" style="display:flex;align-items:center;">${hubAvatar(t.name)}${esc(t.name)}</div>
         <div class="col-group muted">${esc(t.group||'—')}</div>
         <div class="col-status muted" style="font-size:0.8rem;">${SHOW_URLS ? `<code style="word-break:break-all;">${esc(S.inviteFor('trainee', t.token))}</code>` : 'Theirs alone — post it in Classroom'}</div>
+        <div class="col-email"><input type="email" class="temail" value="${esc(t.email || '')}" placeholder="email" data-email-for="${esc(t.token)}" title="The candidate’s email. Saved when you leave the box."></div>
         <div class="acts">
           <button class="btn small" type="button" data-copy="${esc(S.inviteFor('trainee', t.token))}">Copy</button>
+          ${t.email ? `<a class="btn small" href="${mailLink(t)}" title="Opens your mail app with their link in the message">Email the link</a>` : ''}
           <!-- One candidate's teaching practice record, to read or print on its
                own. Screen 15 prints the whole course and screen 11 one marked
                assignment; this was the gap between them (23 Sep 2026). -->
@@ -1298,6 +1321,7 @@ async function renderStoreRoster(next){
   document.getElementById('storeAddForm').addEventListener('submit', async e=>{
     e.preventDefault();
     const name = document.getElementById('storeAddName').value.trim(), group = document.getElementById('storeAddGroup').value.trim();
+    const email = (document.getElementById('storeAddEmail') || { value: '' }).value.trim();
     const st = document.getElementById('storeAddStatus');
     /* The field is `required`, which the browser satisfies with a space -- so
        clicking Add on whitespace put a NAMELESS trainee on the roster, with a
@@ -1306,7 +1330,7 @@ async function renderStoreRoster(next){
        said so; this is the same standard. */
     if (!name) { st.textContent = 'Type a name first.'; return; }
     st.textContent = 'Adding…';
-    try { const r = await S.addTrainee(name, group); renderStoreRoster(r.trainees); }
+    try { const r = await S.addTrainee(name, group, email); renderStoreRoster(r.trainees); }
     catch (err) { st.textContent = err.message; }
   });
 
@@ -1319,11 +1343,17 @@ async function renderStoreRoster(next){
   document.getElementById('storeBulkAddBtn').addEventListener('click', async () => {
     const tbox = document.getElementById('storeBulkNames');
     const status = document.getElementById('storeBulkStatus');
+    /* v53 (1 Oct 2026): a line may carry an email too, in any order -- the
+       address is whichever part looks like one, the name the first part that
+       does not, and the group whatever short token is left. */
+    const isMail = t => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t);
     const rows = tbox.value.split('\n').map(line => {
-      const parts = line.split(',');
-      const name = (parts[0] || '').trim();
-      const group = (parts.slice(1).join(',') || '').trim();
-      return { name, group };
+      const parts = line.split(/[,;\t]/).map(t => t.trim()).filter(Boolean);
+      const email = parts.find(isMail) || '';
+      const rest = parts.filter(t => t !== email);
+      const name = rest[0] || '';
+      const group = rest.slice(1).join(', ').trim();
+      return { name, group, email };
     }).filter(r => r.name);
     if (!rows.length) { status.textContent = 'Nothing to add -- paste at least one name.'; return; }
     if (!(await confirmModal(`Add ${rows.length} trainee${rows.length === 1 ? '' : 's'}?`, 'Add all'))) return;
@@ -1349,7 +1379,20 @@ async function renderStoreRoster(next){
    removeTrainee calls. The owner console had the identical bug, fixed an hour
    earlier; this is its sibling, found walking course admin on 21 Sep 2026. */
 let ROSTER_BUSY = false;
+/* An address typed into a row is saved when the box is left; the roster
+   repaints from the store's answer, so what shows is what was kept. */
+document.getElementById('storeRoster').addEventListener('change', async e=>{
+  const box = e.target.closest('[data-email-for]'); if (!box) return;
+  const email = box.value.trim();
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { box.setCustomValidity('Not an email address'); box.reportValidity(); return; }
+  box.setCustomValidity('');
+  box.disabled = true;
+  try { const res = await window.HubStore.renameTrainee(box.dataset.emailFor, null, null, email); renderStoreRoster(res.trainees); }
+  catch(err){ box.disabled = false; alert(err.message); }
+});
 document.getElementById('storeRoster').addEventListener('click', async e=>{
+  const l = e.target.closest('#copyRosterList');
+  if (l){ const list = Array.isArray(ROSTER) ? ROSTER : Object.values((ROSTER && ROSTER.trainees) || {}); await hubCopyButton(l, rosterList(list)); return; }
   const c = e.target.closest('[data-copy]');
   if (c){
     // Shared helper: clipboard, then execCommand, then the link on screen to
