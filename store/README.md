@@ -14,6 +14,13 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
+## 1 Oct 2026 — the volunteer reminders (version 56)
+Two mails from a half-hourly trigger — eighteen hours before the first practice
+to everyone with an address, an hour before to those who said yes — with
+yes/no links that land on the register and as a count on every boot; an
+opt-out; the assessor never sees an address.
+See [2026-10-01-volunteer-reminders.md](2026-10-01-volunteer-reminders.md).
+
 ## 1 Oct 2026 — a candidate's timetable gets the sets before release (version 55)
 `tpPointsFor_` hands an unreleased candidate their group's sets and their own
 token, never the points, so the timetable can draw its letters.
