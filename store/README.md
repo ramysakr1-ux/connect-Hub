@@ -14,6 +14,12 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
+## 2 Oct 2026 — the reminders' sender, and a gate that went out twice (versions 61, 62)
+`sendAs_` sends the volunteer reminders from `info@celtaconnect.com` when the
+account holds it as an alias; v61 was composed on a stale editor tab and
+reverted the centre-number gate, which v62 restores.
+See [2026-10-02-sender-and-a-reverted-gate.md](2026-10-02-sender-and-a-reverted-gate.md).
+
 ## 1 Oct 2026 — a course needs its Cambridge centre number (version 60)
 `createCourse` refuses without one, writes it locked into the course's
 settings, and `putCourse` keeps it whatever Course admin sends; the console's
