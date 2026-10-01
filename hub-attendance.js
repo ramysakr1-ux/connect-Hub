@@ -56,7 +56,11 @@
   function dayCredit(mark, lessonsInDay, lessonMinutes) {
     var total = (lessonsInDay || 0) * (lessonMinutes || 0);
     if (mark === 'present') return { tier: 'present', creditedMinutes: total };
-    if (mark === 'partial') return { tier: 'partial', creditedMinutes: 0 };
+    /* HALF A TICK. Ramy, 1 Oct 2026: "make partial half a tick." It used to
+       credit nothing at all, which made coming for part of a day worth the
+       same as not coming -- and these are people giving a centre their
+       evenings. Half the day, rounded to the minute. */
+    if (mark === 'partial') return { tier: 'partial', creditedMinutes: Math.round(total / 2) };
     return { tier: 'absent', creditedMinutes: 0 };
   }
 
@@ -83,19 +87,29 @@
     var need = lessonsNeededForPresent(lessonsInDay);
     var total = lessonsInDay * lessonMinutes;
     if (tier === 'present') return 'In the room — ' + need + ' of ' + lessonsInDay + ' lessons or more, credited the whole ' + (Math.round(total / 60 * 100) / 100) + ' hours';
-    if (tier === 'partial') return 'Came for part of it — recorded, but it credits no hours';
+    if (tier === 'partial') return 'Came for part of it — credits half the day, ' + (Math.round(total / 2 / 60 * 100) / 100) + ' hours';
     return 'Not marked';
   }
 
   /* Is the certificate earned, and how far off is it? Stated in CLASSES,
      because "two more classes" is a thing a person can act on. */
-  function certificate(hours, target, lessonsInDay, lessonMinutes) {
+  /* `carried` is what a student already had at this centre before this
+     course. Ramy, 1 Oct 2026: the certificate is "160 hours across the
+     centre", and a four-week course can only give a volunteer about 36 -- so
+     the hours have to come forward. Lite has no identity across courses (a
+     volunteer is a token on one course), so the centre types the figure into
+     the register and it is added here. */
+  function certificate(hours, target, lessonsInDay, lessonMinutes, carried) {
     target = parseFloat(target) || 0;
+    var before = parseFloat(carried) || 0;
+    var total = hours + before;
     var perDay = (lessonsInDay * lessonMinutes) / 60;
-    var left = Math.max(0, target - hours);
+    var left = Math.max(0, target - total);
     return {
       target: target,
-      earned: target > 0 && hours >= target,
+      carried: before,
+      total: Math.round(total * 100) / 100,
+      earned: target > 0 && total >= target,
       hoursLeft: Math.round(left * 100) / 100,
       classesLeft: perDay > 0 ? Math.ceil(left / perDay - 1e-9) : 0
     };

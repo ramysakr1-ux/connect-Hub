@@ -82,6 +82,9 @@
      tick says the link has not been opened, or the note was not agreed. */
   .agreed{display:block; font-size:0.72rem; color:var(--grey); margin-top:3px;}
   .agreed.yes{color:var(--teal);} .agreed.no{color:var(--faint);}
+  .carried input{width:62px; font-size:0.78rem; padding:2px 6px; border:1px solid var(--sand-line); border-radius:6px;
+    background:var(--paper); color:var(--ink); text-align:right; font-variant-numeric:tabular-nums;}
+  .carried small{color:var(--grey); font-size:0.7rem; margin-left:4px;}
   .lvltag{display:inline-block; margin-left:8px; font-size:0.72rem; font-weight:700; letter-spacing:.06em; color:var(--gold-deep); background:var(--box); padding:1px 7px; border-radius:999px;}
   .seg.soon{background:oklch(93% 0.006 80); cursor:default;}
   .seg:disabled{cursor:default;}
@@ -108,21 +111,21 @@
     .legend .seg{width:15px; height:17px;} }
   @media print{ .back,.bar,.panel,#hubSync,.seg{cursor:auto;} .bar,.panel,.back,#hubSync{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610011346">
-<link rel="stylesheet" href="hub-theme.css?v=202610011346">
+<link rel="stylesheet" href="hub-house.css?v=202610011353">
+<link rel="stylesheet" href="hub-theme.css?v=202610011353">
 </head>
 <body class="hub-grid">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610011346"></script>
-<script src="hub-shared.js?v=202610011346"></script>
-<script src="hub-timetable-parse.js?v=202610011346"></script>
-<script src="hub-xlsx.js?v=202610011346"></script>
-<script src="hub-attendance.js?v=202610011346"></script>
-<script src="hub-store.js?v=202610011346"></script>
-<script src="hub-sync.js?v=202610011346"></script>
+<script src="hub-due.js?v=202610011353"></script>
+<script src="hub-shared.js?v=202610011353"></script>
+<script src="hub-timetable-parse.js?v=202610011353"></script>
+<script src="hub-xlsx.js?v=202610011353"></script>
+<script src="hub-attendance.js?v=202610011353"></script>
+<script src="hub-store.js?v=202610011353"></script>
+<script src="hub-sync.js?v=202610011353"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -264,7 +267,9 @@ function render(){
       <div>
         <div class="nm">${esc(st.name)}${IS_TUTOR
           ? `<span class="lvl"><select data-lvl="${i}"><option value="">Level</option>${LEVELS.map(l => `<option value="${l}"${st.level === l ? ' selected' : ''}>${l}</option>`).join('')}</select></span>`
-          : (st.level ? '<span class="lvltag">' + esc(st.level) + '</span>' : '')}${st.note ? '<small>' + esc(st.note) + '</small>' : ''}</div>
+          : (st.level ? '<span class="lvltag">' + esc(st.level) + '</span>' : '')}${IS_TUTOR
+          ? `<span class="carried"><input type="number" min="0" step="0.25" data-carried="${i}" value="${st.carried != null ? esc(st.carried) : ''}" placeholder="0" title="Hours this student already had at the centre, before this course"><small>h before</small></span>`
+          : (st.carried ? '<small>' + esc(st.carried) + ' h before this course</small>' : '')}${st.note ? '<small>' + esc(st.note) + '</small>' : ''}</div>
         ${st.token ? (st.agreed
           ? `<span class="agreed yes">✓ Agreed to the joining note, ${dm(String(st.agreed).slice(0, 10))}</span>`
           : `<span class="agreed no">Has not yet agreed to the joining note (it opens with their link)</span>`) : ''}
@@ -384,6 +389,18 @@ function wire(){
   /* The level this volunteer's class is at. Bare CEFR codes, the same list
      Connect uses -- Ramy, 20 Aug 2026: "Elementary" and "A2" are the same
      fact twice. It goes on their certificate. */
+  /* Hours from earlier courses at this centre. The certificate is 160 hours
+     ACROSS THE CENTRE (Ramy, 1 Oct 2026) and a four-week course gives a
+     volunteer about thirty-six, so the number has to come forward. Lite has no
+     identity across courses -- a volunteer is a token on one course -- so the
+     centre carries it by hand, here, and the certificate adds it on. */
+  document.querySelectorAll('[data-carried]').forEach(el => el.addEventListener('change', () => {
+    const st = students()[+el.dataset.carried]; if (!st) return;
+    const v = parseFloat(el.value);
+    if (el.value === '' || isNaN(v) || v < 0) { delete st.carried; persist('Earlier hours cleared'); return; }
+    st.carried = Math.round(v * 100) / 100;
+    persist(st.carried + ' hours carried in');
+  }));
   document.querySelectorAll('[data-lvl]').forEach(el => el.addEventListener('change', () => {
     const st = students()[+el.dataset.lvl]; if (!st) return;
     st.level = el.value;
