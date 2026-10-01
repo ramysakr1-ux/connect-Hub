@@ -134,9 +134,13 @@ const ROOMS = [
   { label: 'Teaching practice', url: 'https://zoom.us/j/81000000002', assessor: true },
 ];
 const COURSE_LINKS = [
-  { label: 'CELTA syllabus and assessment guidelines', url: 'https://www.cambridgeenglish.org/Images/21816-celta-syllbus.pdf', card: 'Course files', show: true },
-  { label: 'Coursebook audio, both levels', url: 'https://drive.google.com/drive/folders/demo-coursebook-audio', card: 'Course files', show: true },
-  { label: 'Elmswood centre handbook', url: 'https://drive.google.com/drive/folders/demo-centre-handbook', card: 'Course files', show: true },
+  /* Ramy, 1 Oct 2026, reading the demo's own card: the Cambridge link is
+     Cambridge's and belongs there (candidates are told to read the syllabus);
+     the audio is not only audio, so it is media; and "centre handbook" said
+     nothing, so the shelf is named for what a centre actually keeps on it. */
+  { label: 'CELTA syllabus and assessment guidelines \u2014 Cambridge', url: 'https://www.cambridgeenglish.org/Images/21816-celta-syllbus.pdf', card: 'Course files', show: true },
+  { label: 'Coursebook audio and video, both levels', url: 'https://drive.google.com/drive/folders/demo-coursebook-audio', card: 'Course files', show: true },
+  { label: 'Digital library \u2014 the centre\u2019s own shelf: handbook, policies, reading', url: 'https://drive.google.com/drive/folders/demo-centre-handbook', card: 'Course files', show: true },
 ];
 const DOCS = {
   docTimetable: 'https://drive.google.com/drive/folders/demo-course-timetable',
