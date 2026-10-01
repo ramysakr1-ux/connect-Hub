@@ -400,7 +400,7 @@
   var KEY = new URLSearchParams(location.search).get('k') || '';
   var stage = document.getElementById('stage');
   var frame = document.getElementById('screen');
-  var still = document.getElementById('still');
+  var still = document.getElementById('still'), stillSeq = 0;
   var chapter = document.getElementById('chapter');
   var curtain = document.getElementById('curtain');
   var cam = document.getElementById('cam');
@@ -739,8 +739,15 @@
          field USED to be. Measure again once the page has settled and follow
          it. (preventScroll would keep the hand right and the field off
          screen, which is worse for a film.) */
-      el.focus();
-      later(function () { var c2 = centreOf(el); if (Math.abs(c2.y - c.y) > 2 || Math.abs(c2.x - c.x) > 2) moveTo(c2.x, c2.y); camGlance(c2.x, c2.y); }, 120);
+      /* focus() scrolls the field into view in one frame -- the snap at 0:58
+         in v14 (2 Oct 2026). Tween the page there first, then focus with
+         the scroll held, and the hand follows the measured spot. */
+      var fd = doc(), fr = el.getBoundingClientRect(), fvh = fd.documentElement.clientHeight || 800;
+      if (fr.top < 60 || fr.bottom > fvh - 60) {
+        var fFrom = fd.documentElement.scrollTop || fd.body.scrollTop || 0, fTo = Math.max(0, fFrom + fr.top - fvh / 2 + fr.height / 2), fT0 = performance.now();
+        (function ftick(t) { var k = Math.min(1, ((t || performance.now()) - fT0) / 420); var e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; fd.documentElement.scrollTop = fd.body.scrollTop = fFrom + (fTo - fFrom) * e; if (k < 1 && playing) requestAnimationFrame(ftick); })();
+      }
+      later(function () { try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); } var c2 = centreOf(el); if (Math.abs(c2.y - c.y) > 2 || Math.abs(c2.x - c.x) > 2) moveTo(c2.x, c2.y); camGlance(c2.x, c2.y); }, 460);
       var text = s.text, i = 0;
       var each = s.ms ? s.ms / text.length : 34;
       /* A date, time or colour field rejects every partial value as invalid,
@@ -792,7 +799,8 @@
       dipThen(function () {
         curtain.classList.add('on');
         camSnap(640, 340, 1.06);
-        showScreen(as, s.screen, function () { curtain.classList.remove('on'); undip(); waiting = false; });
+        /* the steps wait for the veil to lift (undip, 480ms), so nothing the scene does next happens under it */
+        showScreen(as, s.screen, function () { curtain.classList.remove('on'); undip(); later(function () { waiting = false; }, 500); });
       });
       return (s.ms || 2200);
     },
@@ -906,7 +914,13 @@
       document.getElementById('stillHow').textContent = s.img ? '' : (s.how || '');
       still.classList.add('on');
       cursor.classList.remove('on');
-      later(function () { still.classList.remove('on'); }, s.ms || 3000);
+      /* One still straight after another stays up: the old timer took the
+         still down at its ms and the next step put the next one up 200ms
+         later, so the screen behind flashed through between every two
+         booklet pages (v13, 2 Oct 2026). The still only comes down when no
+         later still has taken its place. */
+      var n = ++stillSeq;
+      later(function () { if (stillSeq === n) still.classList.remove('on'); }, (s.ms || 3000) + 350);
       return (s.ms || 3000) + 200;
     }
   };
@@ -932,6 +946,8 @@
 
     stubbed = [];
     waiting = false;
+    /* the scene's stills, decoded before they are needed, so one gives way to the next without a blank frame */
+    (SCENES[i].steps || []).forEach(function (st) { if (st.do === 'still' && st.img) { var pre = new Image(); pre.src = st.img; } });
     document.getElementById('offline').classList.remove('on');
     document.getElementById('whois').classList.remove('on');
     /* Up for the load, down when the screen is ready -- scene loads only. A
@@ -949,12 +965,20 @@
      fade and goes straight on. The stage is told, the camera layer fades. */
   var stageEl = document.getElementById('stage');
   function dipThen(fn) {
-    if (!stageEl.classList.contains('dip') && document.getElementById('screen').getAttribute('src')) {
-      stageEl.classList.add('dip');
-      setTimeout(fn, 360);
-    } else fn();
+    if (!document.getElementById('screen').getAttribute('src')) { fn(); return; }
+    /* Already dipped -- the last veil is still up or still fading out -- is
+       no reason to skip the wait: re-adding the class turns the fade round,
+       and 360ms later it is opaque either way. Going straight on here was
+       the one-frame cut to sand at 5:50 in v14 (2 Oct 2026). */
+    stageEl.classList.add('dip');
+    setTimeout(fn, 360);
   }
-  function undip() { setTimeout(function () { stageEl.classList.remove('dip'); }, 60); }
+  /* The veil lifts 480ms after the curtain, not 60: the cut pauses its
+     recorder under the curtain and takes a few hundred milliseconds to
+     resume, so a fade that started at once was never captured and every
+     page ARRIVED in one frame while every zoom ramped (v13, 2 Oct 2026:
+     "a few glitches"). A short sand beat, then the 340ms fade, on camera. */
+  function undip() { setTimeout(function () { stageEl.classList.remove('dip'); }, 480); }
 
   /* Point the frame at a screen, as whoever that scene is. Also the `goto`
      step, so one scene can follow a document from one side to the other --
@@ -1060,11 +1084,16 @@
     /* Only up to the first goto: after it the scene is on another screen,
        and its controls are that screen's to wait for. */
     (sc.steps || []).some(function (s) { if (s.do === 'goto') return true; var sel = s.do === 'move' ? s.to : s.do === 'click' ? s.on : s.do === 'type' ? s.into : (s.do === 'scroll' && typeof s.to === 'string' && s.to !== 'bottom') ? s.to : null; if (typeof sel === 'string') { first = sel; return true; } return false; });
-    if (!first) { camReset(1800); then(); return; }
+    /* The screen has booted and painted; it may still scroll itself a beat
+       later (the dashboard's arrival at 0:53 in v14 showed its foot for a
+       frame, then jumped to the top -- 2 Oct 2026). Put it at the top and
+       give it 600ms under the curtain, which the cut throws away anyway. */
+    function settled() { try { var d = doc(); d.documentElement.scrollTop = d.body.scrollTop = 0; } catch (e) {} later(function () { camReset(1800); then(); }, 600); }
+    if (!first) { settled(); return; }
     var t0 = performance.now();
     (function poll() {
       var ok = false; try { ok = !!find(first); } catch (e) {}
-      if (ok || performance.now() - t0 > 30000) { camReset(1800); then(); return; }
+      if (ok || performance.now() - t0 > 30000) { settled(); return; }
       later(poll, 300);
     })();
   }
@@ -1205,7 +1234,7 @@
       undip();
       startedAt = performance.now();
       tick();
-      runSteps(SCENES[i].steps, function () {
+      later(function () { runSteps(SCENES[i].steps, function () {
         /* Say what was caught. A scene that lists a write and never triggers
            it is fine; a scene that triggers one NOT in its list would have
            reached the store, and that is what this is watching for. */
@@ -1228,7 +1257,7 @@
           cursor.classList.remove('on');
           window.filmEnded = true;
         }
-      });
+      }); }, 500);
     });
   }
 
