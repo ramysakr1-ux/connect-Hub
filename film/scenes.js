@@ -198,6 +198,7 @@ var SCENES = [
     stub: ['put'],
     steps: [
       { do: 'chapter', num: 'Three', text: 'Day one', sub: 'Each candidate’s own link, and the first thing Cambridge asks of them.', ms: 2400 },
+      { do: 'who', text: 'The candidate', sub: 'Wei Zhang', ms: 1500 },
       { do: 'zoom', on: '#boardTitle', scale: 1.6, ms: 1000 },
       { do: 'hold', ms: 900 },
       { do: 'zoom', out: true, ms: 800 },
@@ -279,12 +280,14 @@ var SCENES = [
     stub: ['put'],
     steps: [
       { do: 'chapter', num: 'Four', text: 'Teaching practice', sub: 'The lesson taught, the self-evaluation written, the observation turned in.', ms: 2400 },
+      { do: 'who', text: 'The candidate', sub: 'Nour El-Sayed', ms: 1500 },
       { do: 'click', on: '#sWell', ms: 1200 },
       { do: 'type', into: '#sWell', ms: 2900, text: 'The task was set before the handout went out, and the pair check gave everyone an answer ready before I nominated.' },
       { do: 'hold', ms: 900 },
       { do: 'caption', text: 'Written before the feedback is read. That is the point of it.' },
       { do: 'hold', ms: 1300 },
       { do: 'goto', screen: '18_observation_tasks.html', course: 'start', role: 'trainee', as: 'Nour El-Sayed', params: { task: 'filmed2' }, stub: ['put'], ms: 2100 },
+      { do: 'caption', text: 'Cambridge asks for six hours of watching too. Each one has its own sheet.' },
       { do: 'click', on: 'textarea[data-f="r0"]', ms: 1200 },
       { do: 'type', into: 'textarea[data-f="r0"]', ms: 1800, text: 'Yes — the instruction came before the paper, and she checked it with one question.' },
       { do: 'click', on: '#turnIn', ms: 1400 },
@@ -329,7 +332,15 @@ var SCENES = [
       { do: 'zoom', out: true, ms: 800 },
       { do: 'scroll', to: 300, ms: 1800 },
       { do: 'caption', text: 'Seven lesson types, rotated. Nobody has to remember whose turn it is.' },
-      { do: 'hold', ms: 1600 }
+      { do: 'hold', ms: 1600 },
+      /* Ramy, 1 Oct 2026, note 18: "every room gets a door the viewer watched
+         being opened." The walk back to the menu was cut for length and then
+         put back, because the next scene's own note says it is entered through
+         this door. It is the walk only -- no beats standing still. */
+      { do: 'goto', screen: '5_tutor_dashboard.html', course: 'visit', ms: 1200 },
+      { do: 'click', on: '#courseMenuBtn', ms: 1200 },
+      { do: 'move', to: '#menuGrid' },
+      { do: 'hold', ms: 900 }
     ]
   },
   {

@@ -20,7 +20,21 @@ const WRITE = process.argv.includes('--write');
 if (!['c4', 'c6', 'c7'].includes(WHICH)) { console.log('name a demo course: c4, c6 or c7'); process.exit(1); }
 const STORE = (readFileSync(HERE + 'hub-store.js', 'utf8').match(/https:\/\/script\.google\.com\/macros\/s\/[^'"]+/) || [])[0];
 const OWNER = readFileSync(HERE + '.owner-key', 'utf8').trim();
-const call = async (b) => { for (let i = 0; i < 8; i++) { try { const r = await (await fetch(STORE, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(b) })).json(); if (r && (r.ok || r.error)) return r; } catch (e) {} await new Promise(res => setTimeout(res, 2500)); } throw new Error('the store would not answer'); };
+/* The store sometimes answers with neither a result nor an error -- it just
+   hands back an empty envelope -- and `ok` with no `result` used to come
+   straight back here and crash on `.result.courses` (1 Oct 2026, recasting
+   c4). An answer is only an answer when it carries one of the two. */
+const call = async (b) => {
+  for (let i = 0; i < 8; i++) {
+    try {
+      const r = await (await fetch(STORE, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(b) })).json();
+      if (r && r.error) return r;
+      if (r && r.ok && r.result !== undefined) return r;
+    } catch (e) {}
+    await new Promise(res => setTimeout(res, 3000));
+  }
+  throw new Error('the store would not answer ' + b.op);
+};
 
 const courses = (await call({ op: 'ownerCourses', owner: OWNER })).result.courses;
 const course = courses.find(c => c.id === WHICH);
