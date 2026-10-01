@@ -35,5 +35,9 @@ say stop sending me notifications".
 count moved; "maybe" and a tutor's attempt refused; notify off kept; the
 assessor's copy without addresses. The demo reply was then set back.
 
-**Not yet done here:** the trigger is NOT installed until `installReminderTrigger`
-is run once from the editor and MailApp authorised — Ramy's account, his click.
+**Installed 1 Oct 2026, 20:50**, from the project's Triggers page in the
+built-in browser (Add Trigger → sendVolunteerReminders, Head, time-driven,
+minutes timer, every 30 minutes). The editor's Run dropdown would not lay out
+in a hidden pane; the Triggers page did once the pane was shown. v58 adds an
+owner op `installReminders` that does the same from a key, if the web app
+ever holds the scriptapp scope.
