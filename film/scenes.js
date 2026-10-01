@@ -94,10 +94,10 @@ var SCENES = [
     about: 'The centre\u2019s console, announced. Ramy, 30 Sep 2026: the start "gets a bit back and forth\u2026 it\u2019s confusing what\u2019s happening", so each part now says whose world it is before it opens \u2014 and this one says what happens next: a link arrives. <b>Needs &amp;o=</b> (the owner key). Read-only.',
     settle: 3800,
     steps: [
-      { do: 'chapter', num: 'One', text: 'The link', sub: 'It arrives in an email. Everything else is behind it.', ms: 2700 },
+      { do: 'chapter', num: 'One', text: 'The link', sub: 'It arrives in an email. Everything else is behind it.', ms: 2400 },
       { do: 'hold', ms: 1100 },
       { do: 'caption', text: 'You will be sent a link. That is the whole of it.' },
-      { do: 'hold', ms: 1900 }
+      { do: 'hold', ms: 1600 }
     ]
   },
 
@@ -110,7 +110,7 @@ var SCENES = [
     steps: [
       { do: 'hold', ms: 1000 },
       { do: 'caption', text: 'Nothing to install. Nothing to remember. Nothing to lose.' },
-      { do: 'hold', ms: 1600 },
+      { do: 'hold', ms: 1300 },
       /* The card goes offline where it stands. The made still of a Wi-Fi-off
          tab was a second invitation and did not look like the real one
          (Ramy, 1 Oct 2026: "it does not look like the invitation that I sent
@@ -118,7 +118,7 @@ var SCENES = [
          card instead and the two captions run back to back over it. */
       { do: 'offline', ms: 2000 },
       { do: 'caption', text: 'Works offline, and catches up when you are back.' },
-      { do: 'hold', ms: 1900 },
+      { do: 'hold', ms: 1600 },
       { do: 'offline', off: true, ms: 900 },
       /* And then the screen the link opens, so the card is not left hanging. */
       { do: 'click', on: '#go', ms: 1900 },
@@ -132,7 +132,7 @@ var SCENES = [
       { do: 'type', into: '#tutorName', ms: 1400, text: 'Jordan Blake' },
       { do: 'hold', ms: 1000 },
       { do: 'caption', text: 'One link, and the whole course is behind it.' },
-      { do: 'hold', ms: 1900 }
+      { do: 'hold', ms: 1600 }
     ]
   },
 
@@ -144,7 +144,7 @@ var SCENES = [
     settle: 2400,
     stub: ['putCourse', 'addTrainees', 'addTrainee'],
     steps: [
-      { do: 'chapter', num: 'Two', text: 'Setting the course up', sub: 'Once, at the start: the centre, the timetable, the roster, and the centre’s own wording for the assignments.', ms: 2700 },
+      { do: 'chapter', num: 'Two', text: 'Setting the course up', sub: 'Once, at the start: the centre, the timetable, the roster, and the centre’s own wording for the assignments.', ms: 2400 },
       /* Ramy, 30 Sep 2026: "when you're on a page you should zoom in on the
          title, so people know where you are." Every room the film enters is
          named by its own heading before anything is done in it. */
@@ -179,13 +179,13 @@ var SCENES = [
       { do: 'click', on: '[data-tab="assignments"]', ms: 1300 },
       { do: 'hold', ms: 1000 },
       { do: 'caption', text: 'Cambridge sets four. The wording is the centre\u2019s.' },
-      { do: 'hold', ms: 1600 },
+      { do: 'hold', ms: 1300 },
       { do: 'goto', screen: '8_assignment_wording.html', course: 'start', params: { a: 'fol' }, stub: ['putCourse'], ms: 2100 },
       { do: 'scroll', to: 520, ms: 1300 },
       { do: 'caption', text: 'Your sections, your fields, your criteria.' },
-      { do: 'hold', ms: 1600 },
+      { do: 'hold', ms: 1300 },
       { do: 'caption', text: 'Or keep last course\u2019s. Nothing here has to be written twice.' },
-      { do: 'hold', ms: 1700 }
+      { do: 'hold', ms: 1400 }
     ]
   },
 
@@ -197,12 +197,12 @@ var SCENES = [
     settle: 9000,
     stub: ['put'],
     steps: [
-      { do: 'chapter', num: 'Three', text: 'Day one', sub: 'Each candidate’s own link, and the first thing Cambridge asks of them.', ms: 2700 },
+      { do: 'chapter', num: 'Three', text: 'Day one', sub: 'Each candidate’s own link, and the first thing Cambridge asks of them.', ms: 2400 },
       { do: 'zoom', on: '#boardTitle', scale: 1.6, ms: 1000 },
       { do: 'hold', ms: 900 },
       { do: 'zoom', out: true, ms: 800 },
       { do: 'caption', text: 'A candidate\u2019s own page. Her course, and nobody else\u2019s.' },
-      { do: 'hold', ms: 1800 },
+      { do: 'hold', ms: 1500 },
       { do: 'goto', screen: '20_celta5.html', course: 'start', role: 'trainee', as: 'Wei Zhang', stub: ['put'], ms: 1800 },
       { do: 'scroll', to: 420, ms: 1400 },
       /* It used to say "this booklet is going to fill itself -- watch", and
@@ -217,7 +217,7 @@ var SCENES = [
       { do: 'draw', name: 'Wei Zhang', ms: 1500 },
       { do: 'zoom', out: true, ms: 1000 },
       { do: 'caption', text: 'Signed. Dated. Kept.' },
-      { do: 'hold', ms: 1600 }
+      { do: 'hold', ms: 1300 }
     ]
   },
 
@@ -260,12 +260,12 @@ var SCENES = [
       { do: 'zoom', on: '#fShareVol', scale: 1.5, ms: 700 },
       { do: 'click', on: '#fShareVol', ms: 1300 },
       { do: 'caption', text: 'One click, and every material is with the students before the lesson has started.' },
-      { do: 'hold', ms: 1500 },
+      { do: 'hold', ms: 1200 },
       { do: 'zoom', out: true, ms: 700 },
       { do: 'scroll', to: '#turnInBtn', ms: 1500 },
       { do: 'click', on: '#turnInBtn', ms: 1300 },
       { do: 'caption', text: 'Turned in. It is on her tutor\u2019s screen already.' },
-      { do: 'hold', ms: 1600 }
+      { do: 'hold', ms: 1300 }
     ]
   },
 
@@ -278,12 +278,12 @@ var SCENES = [
     settle: 12000,
     stub: ['put'],
     steps: [
-      { do: 'chapter', num: 'Four', text: 'Teaching practice', sub: 'The lesson taught, the self-evaluation written, the observation turned in.', ms: 2700 },
+      { do: 'chapter', num: 'Four', text: 'Teaching practice', sub: 'The lesson taught, the self-evaluation written, the observation turned in.', ms: 2400 },
       { do: 'click', on: '#sWell', ms: 1200 },
       { do: 'type', into: '#sWell', ms: 2900, text: 'The task was set before the handout went out, and the pair check gave everyone an answer ready before I nominated.' },
       { do: 'hold', ms: 900 },
       { do: 'caption', text: 'Written before the feedback is read. That is the point of it.' },
-      { do: 'hold', ms: 1600 },
+      { do: 'hold', ms: 1300 },
       { do: 'goto', screen: '18_observation_tasks.html', course: 'start', role: 'trainee', as: 'Nour El-Sayed', params: { task: 'filmed2' }, stub: ['put'], ms: 2100 },
       { do: 'click', on: 'textarea[data-f="r0"]', ms: 1200 },
       { do: 'type', into: 'textarea[data-f="r0"]', ms: 1800, text: 'Yes — the instruction came before the paper, and she checked it with one question.' },
@@ -300,12 +300,12 @@ var SCENES = [
     about: 'The trainer\u2019s own screen, announced as one: the counters and the rows \u2014 two waiting for feedback, one assignment to mark, and beside a name the time a plan was turned in. Read-only.',
     settle: 1800,
     steps: [
-      { do: 'chapter', num: 'Five', text: 'Feedback', sub: 'Everything waiting in one list, written against the plan, and back the same evening.', ms: 2700 },
+      { do: 'chapter', num: 'Five', text: 'Feedback', sub: 'Everything waiting in one list, written against the plan, and back the same evening.', ms: 2400 },
       { do: 'hold', ms: 1000 },
       { do: 'move', to: '.qcard[data-tab="tp"]' },
       { do: 'hold', ms: 1000 },
       { do: 'caption', text: 'Nobody asked “did you get it?”' },
-      { do: 'hold', ms: 1600 },
+      { do: 'hold', ms: 1300 },
       { do: 'scroll', to: 420, ms: 1400 },
       { do: 'hold', ms: 1000 }
     ]
@@ -322,14 +322,14 @@ var SCENES = [
       { do: 'click', on: '#courseMenuBtn', ms: 1400 },
       { do: 'hold', ms: 1100 },
       { do: 'caption', text: 'One word, and everything a course needs once.' },
-      { do: 'hold', ms: 1600 },
+      { do: 'hold', ms: 1300 },
       { do: 'goto', screen: '24_tp_points.html', course: 'visit', ms: 2100 },
       { do: 'zoom', on: 'h1', scale: 1.6, ms: 900 },
       { do: 'hold', ms: 900 },
       { do: 'zoom', out: true, ms: 800 },
       { do: 'scroll', to: 300, ms: 1800 },
       { do: 'caption', text: 'Seven lesson types, rotated. Nobody has to remember whose turn it is.' },
-      { do: 'hold', ms: 2000 }
+      { do: 'hold', ms: 1600 }
     ]
   },
   {
@@ -345,7 +345,7 @@ var SCENES = [
       { do: 'zoom', on: '.cell.clash', scale: 1.7, ms: 700 },
       { do: 'hold', ms: 900 },
       { do: 'caption', text: 'Two of them chose grammar. The grid noticed first.' },
-      { do: 'hold', ms: 1700 },
+      { do: 'hold', ms: 1400 },
       { do: 'zoom', out: true, ms: 1000 }
     ]
   },
@@ -398,7 +398,7 @@ var SCENES = [
       { do: 'scroll', to: 700, ms: 2200 },
       { do: 'hold', ms: 1300 },
       { do: 'scroll', to: 'bottom', ms: 2200 },
-      { do: 'hold', ms: 1600 }
+      { do: 'hold', ms: 1300 }
     ]
   },
 
@@ -410,7 +410,7 @@ var SCENES = [
     settle: 5000,
     stub: ['put'],
     steps: [
-      { do: 'chapter', num: 'Six', text: 'Written assignments', sub: 'Marked against the centre’s own criteria, returned, resubmitted, recorded.', ms: 2700 },
+      { do: 'chapter', num: 'Six', text: 'Written assignments', sub: 'Marked against the centre’s own criteria, returned, resubmitted, recorded.', ms: 2400 },
       { do: 'scroll', to: 700, ms: 1500 },
       { do: 'click', on: '[data-crit="0"]', ms: 1000 },
       { do: 'click', on: '[data-crit="1"]', ms: 1000 },
@@ -425,7 +425,7 @@ var SCENES = [
       { do: 'goto', screen: '12_assessor_pack.html', course: 'visit', role: 'assessor', ms: 2200 },
       { do: 'scroll', to: 'text:Double-marking record', ms: 1800 },
       { do: 'caption', text: 'Two markers. One script. No second copy anywhere.' },
-      { do: 'hold', ms: 1700 }
+      { do: 'hold', ms: 1400 }
     ]
   },
 
@@ -437,7 +437,7 @@ var SCENES = [
     settle: 2400,
     stub: ['put'],
     steps: [
-      { do: 'chapter', num: 'Seven', text: 'The progress records', sub: 'Stage by stage, both halves of Cambridge’s booklet, signed on screen.', ms: 2700 },
+      { do: 'chapter', num: 'Seven', text: 'The progress records', sub: 'Stage by stage, both halves of Cambridge’s booklet, signed on screen.', ms: 2400 },
       { do: 'scroll', to: '#s1', ms: 1600 },
       { do: 'hold', ms: 900 },
       /* One signature in the whole film. It was drawn three times over and
@@ -447,14 +447,14 @@ var SCENES = [
          Cambridge reads. Here the tutor returns the stage and the film moves
          on. */
       { do: 'click', on: '[data-return="stage1"]', ms: 1400 },
-      { do: 'hold', ms: 1600 },
+      { do: 'hold', ms: 1300 },
       { do: 'caption', text: 'Signed on screen. Personal, and dated to the second.' },
       { do: 'goto', screen: '20_celta5.html', course: 'start', role: 'trainee', as: 'Mateo Fernández', stub: ['put'], ms: 2100 },
       { do: 'scroll', to: '#s1', ms: 1500 },
       { do: 'hold', ms: 900 },
       { do: 'scroll', to: '#tp', ms: 1600 },
       { do: 'caption', text: 'Nothing here was typed twice.' },
-      { do: 'hold', ms: 2000 }
+      { do: 'hold', ms: 1600 }
     ]
   },
 
@@ -503,11 +503,11 @@ var SCENES = [
       { do: 'scroll', to: '.card .mat', ms: 1500 },
       { do: 'zoom', on: '.card .mat', scale: 1.5, ms: 800 },
       { do: 'caption', text: 'The reading her teacher shared is already here.' },
-      { do: 'hold', ms: 1900 },
+      { do: 'hold', ms: 1600 },
       { do: 'zoom', out: true, ms: 700 },
       { do: 'move', to: '.next .room' },
       { do: 'caption', text: 'One tap to the room.' },
-      { do: 'hold', ms: 1600 }
+      { do: 'hold', ms: 1300 }
     ]
   },
 
@@ -518,7 +518,7 @@ var SCENES = [
     about: 'The assessor\u2019s own view, announced as one \u2014 Ramy could not tell it was in the film. Opened with the assessor\u2019s read-only key: the header line, the Handbook panel, the candidates chosen first, the double-marking record, the volunteer students, the course documents. Scrolled, never clicked into. Nothing is downloaded, exported or sent.',
     settle: 2400,
     steps: [
-      { do: 'chapter', num: 'Nine', text: 'The assessor’s visit', sub: 'A link of their own, read-only, that ends when the course does.', ms: 2700 },
+      { do: 'chapter', num: 'Nine', text: 'The assessor’s visit', sub: 'A link of their own, read-only, that ends when the course does.', ms: 2400 },
       { do: 'hold', ms: 900 },
       { do: 'zoom', on: '.eyebrow', scale: 1.8, ms: 1000 },
       { do: 'hold', ms: 900 },
@@ -529,7 +529,7 @@ var SCENES = [
       { do: 'hold', ms: 900 },
       { do: 'scroll', to: 'text:Volunteer students', ms: 2100 },
       { do: 'caption', text: 'Everything the Handbook lists, and nothing was gathered.' },
-      { do: 'hold', ms: 2200 }
+      { do: 'hold', ms: 1800 }
     ]
   },
 
@@ -541,7 +541,7 @@ var SCENES = [
     settle: 2400,
     stub: ['put', 'putCourse'],
     steps: [
-      { do: 'chapter', num: 'Ten', text: 'The end of the course', sub: 'The grades, Cambridge’s booklet, and what the candidate is sent.', ms: 2700 },
+      { do: 'chapter', num: 'Ten', text: 'The end of the course', sub: 'The grades, Cambridge’s booklet, and what the candidate is sent.', ms: 2400 },
       { do: 'hold', ms: 900 },
       { do: 'scroll', to: 800, ms: 1800 },
       { do: 'hold', ms: 900 },
@@ -550,12 +550,12 @@ var SCENES = [
       { do: 'zoom', on: '.prov, table', scale: 1.35, ms: 900 },
       { do: 'hold', ms: 1000 },
       { do: 'caption', text: 'Nobody typed these. They were earned one lesson at a time.' },
-      { do: 'hold', ms: 1500 },
+      { do: 'hold', ms: 1200 },
       { do: 'zoom', out: true, ms: 800 },
       { do: 'click', on: 'text:Add from the TP records', ms: 1400 },
       { do: 'hold', ms: 1400 },
       { do: 'caption', text: 'And the evidence is the feedback the tutors already wrote.' },
-      { do: 'hold', ms: 1500 }
+      { do: 'hold', ms: 1200 }
     ]
   },
 
@@ -568,7 +568,7 @@ var SCENES = [
     settle: 2400,
     steps: [
       { do: 'click', on: '#cambridgePdf', ms: 1800 },
-      { do: 'hold', ms: 1600 },
+      { do: 'hold', ms: 1300 },
       /* THE SHOT THE FILM WAS MADE FOR. Not a card describing the booklet --
          the booklet. These are pages of the real Cambridge July 2023 form,
          drawn from Aiko's finished record by celta5-pdf.js and photographed
@@ -602,7 +602,7 @@ var SCENES = [
       { do: 'hold', ms: 1100 },
       { do: 'scroll', to: 1500, ms: 1700 },
       { do: 'caption', text: 'Nothing on it was written twice.' },
-      { do: 'hold', ms: 1600 }
+      { do: 'hold', ms: 1300 }
     ]
   },
 
@@ -627,7 +627,7 @@ var SCENES = [
     about: 'The last card, a page of the film\u2019s own: the mark, the one line, and the address \u2014 which arrives as <b>&amp;email=</b> on the film\u2019s own URL and is in no file, because this repository is public. Without it the address line is simply left out.',
     settle: 600,
     steps: [
-      { do: 'hold', ms: 6000 }
+      { do: 'hold', ms: 4900 }
     ]
   },
 ];
