@@ -131,7 +131,7 @@
       if (prior) { var note = document.createElement('div'); note.className = 'ink-sub'; note.style.marginTop = '8px'; note.textContent = 'Your saved signature from this browser. Clear to draw it again.'; padEl.after(note); }
       window.addEventListener('resize', fit);
 
-      function done(v){ overlay.style.transition='opacity 150ms ease-in'; overlay.style.opacity='0'; setTimeout(function(){ overlay.remove(); }, 160); window.removeEventListener('resize', fit); document.removeEventListener('keydown', onKey); resolve(v); }
+      function done(v){ (window.hubFadeAway || function (el) { el.remove(); })(overlay); window.removeEventListener('resize', fit); document.removeEventListener('keydown', onKey); resolve(v); }
       function onKey(e){ if (e.key === 'Escape') done(null); }
       document.addEventListener('keydown', onKey);
       overlay.querySelector('.ink-clear').addEventListener('click', function(){ strokes = []; redraw(); });

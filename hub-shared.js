@@ -161,6 +161,19 @@ window.hubObservationHours = function(records){
      rooms come first and say "your group"; on the tutor and assessor screens
      (opts.all) every button shows its group. Lite does not know which tutor
      is which -- one tutor key -- so tutors pick theirs like everyone else. */
+  /* A thing that is leaving fades over 160 ms and goes when the fade has
+     ENDED -- not on a timer that could fire mid-fade. The fade starts on the
+     next frame so the transition is registered before the opacity moves
+     (1 Oct 2026: a timer-based fade was removed at opacity 0.74 and the frame
+     scan of the film still saw a cut). */
+  window.hubFadeAway=function(el, after){
+    if(!el){ if(after) after(); return; }
+    var gone=false; function go(){ if(gone) return; gone=true; try{ el.remove(); }catch(e){} if(after) after(); }
+    el.style.transition='opacity 160ms ease-in';
+    el.addEventListener('transitionend', go, { once:true });
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ el.style.opacity='0'; }); });
+    setTimeout(go, 420);
+  };
   window.hubOnlineRoomsHTML=function(settings, opts){
     opts=opts||{};
     var rooms=(settings&&Array.isArray(settings.onlineRooms)?settings.onlineRooms:[]).filter(function(r){ return r&&r.url&&/^https?:\/\//i.test(r.url); });
@@ -276,7 +289,7 @@ window.hubObservationHours = function(records){
           input.addEventListener('keydown',function(e){ if(e.key==='Enter' && !actionBtn.disabled) actionBtn.click(); });
         }
         document.body.appendChild(overlay);
-        function cleanup(result){ overlay.style.transition='opacity 150ms ease-in'; overlay.style.opacity='0'; setTimeout(function(){ overlay.remove(); }, 160); document.removeEventListener('keydown',onKey); resolve(result); }
+        function cleanup(result){ document.removeEventListener('keydown',onKey); hubFadeAway(overlay); resolve(result); }
         function onKey(e){ if(e.key==='Escape') cleanup(false); }
         document.addEventListener('keydown',onKey);
         overlay.addEventListener('mousedown',function(e){ if(e.target===overlay) cleanup(false); });
