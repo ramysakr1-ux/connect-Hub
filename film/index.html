@@ -64,7 +64,15 @@
      top left keeps the arithmetic simple: a point (x,y) on the screen lands at
      x*s+tx, and the clamp below never lets an edge come into view, so a push
      in can never show a black border. */
-  .cam{position:absolute; inset:0; transform-origin:0 0; will-change:transform;
+  /* The dip. The curtain itself never reaches the film (the cut drops every
+     frame that carries its cue), so a page change used to land as a hard cut.
+     Now the picture fades to the sand over a third of a second BEFORE the
+     curtain goes up and fades back in AFTER it comes down; those frames carry
+     no cue, so they stay in, and every change of screen is a breath. Ramy,
+     1 Oct 2026: "sometimes it's like cut, cut -- make sure there's a nice
+     transition between the pages." */
+  .stage.dip .cam{opacity:0;}
+  .cam{transition:opacity 340ms ease; position:absolute; inset:0; transform-origin:0 0; will-change:transform;
     transition:transform 900ms cubic-bezier(.45,0,.2,1);}
   .cam.snap{transition:none;}
   @media (prefers-reduced-motion: reduce){ .cam{transition:none;} }
@@ -776,9 +784,11 @@
       var as = { course: s.course || sc.course, role: s.role || 'tutor', as: s.as, params: s.params, stub: s.stub || sc.stub, settle: s.settle || sc.settle };
       cursor.classList.remove('on');
       waiting = true;
-      curtain.classList.add('on');
-      camSnap(640, 340, 1.06);
-      showScreen(as, s.screen, function () { curtain.classList.remove('on'); waiting = false; });
+      dipThen(function () {
+        curtain.classList.add('on');
+        camSnap(640, 340, 1.06);
+        showScreen(as, s.screen, function () { curtain.classList.remove('on'); undip(); waiting = false; });
+      });
       return (s.ms || 2200);
     },
     /* A full-screen title between the journeys. It holds, then fades out and
@@ -922,12 +932,24 @@
     /* Up for the load, down when the screen is ready -- scene loads only. A
        `goto` inside a scene keeps its own timing; its steps run to a budget
        the scene author set, and a curtain there would hide them. */
-    curtain.classList.add('on');
-    /* The scene starts a touch in and pulls back as its screen arrives, so
-       every scene opens with a breath rather than a cut to a static page. */
-    camSnap(640, 260, 1.12);
-    showScreen(SCENES[i], SCENES[i].screen, then);
+    dipThen(function () {
+      curtain.classList.add('on');
+      /* The scene starts a touch in and pulls back as its screen arrives, so
+         every scene opens with a breath rather than a cut to a static page. */
+      camSnap(640, 260, 1.12);
+      showScreen(SCENES[i], SCENES[i].screen, then);
+    });
   }
+  /* Fade the picture out, then do the thing; the first scene has nothing to
+     fade and goes straight on. The stage is told, the camera layer fades. */
+  var stageEl = document.getElementById('stage');
+  function dipThen(fn) {
+    if (!stageEl.classList.contains('dip') && document.getElementById('screen').getAttribute('src')) {
+      stageEl.classList.add('dip');
+      setTimeout(fn, 360);
+    } else fn();
+  }
+  function undip() { setTimeout(function () { stageEl.classList.remove('dip'); }, 60); }
 
   /* Point the frame at a screen, as whoever that scene is. Also the `goto`
      step, so one scene can follow a document from one side to the other --
@@ -1175,6 +1197,7 @@
   function play(i) {
     loadScene(i, function () {
       curtain.classList.remove('on');
+      undip();
       startedAt = performance.now();
       tick();
       runSteps(SCENES[i].steps, function () {

@@ -142,15 +142,15 @@ var SCENES = [
     course: 'start', day: 'Day 0',
     about: 'The whole of setting a course up, in one scene: Course admin shown as a room before anything is done in it \u2014 the film used to open straight onto the Settings tab, which read as a jump into somebody else\u2019s screen, and looked old because its four numbered steps were never seen (Ramy, 30 Sep 2026). Then the centre, the dates, the clock, the rooms; the timetable from a pasted spreadsheet (a file chooser cannot be driven); then the roster with six links. <b>Writes stubbed</b> \u2014 the standing demo must not change.',
     settle: 2400,
-    stub: ['putCourse', 'addTrainees', 'addTrainee'],
+    stub: ['putCourse', 'addTrainees', 'addTrainee', 'renameTrainee'],
     steps: [
       { do: 'chapter', num: 'Two', text: 'Setting the course up', sub: 'Once, at the start: the centre, the timetable, the roster, and the centre’s own wording for the assignments.', ms: 2400 },
       /* Ramy, 30 Sep 2026: "when you're on a page you should zoom in on the
          title, so people know where you are." Every room the film enters is
          named by its own heading before anything is done in it. */
-      { do: 'zoom', on: '#boardTitle', scale: 1.7, ms: 1000 },
-      { do: 'hold', ms: 1000 },
-      { do: 'zoom', out: true, ms: 800 },
+      /* No camera move here. Ramy, v4 note 9 and again on v6: the push-in on
+         this heading read as a push-in on the Observations tab beside it. */
+      { do: 'hold', ms: 900 },
       /* Settings first, then the people, then the timetable. It used to open
          on Settings and cut straight to the timetable, which is not the order
          anybody sets a course up in (Ramy, 30 Sep 2026). */
@@ -162,6 +162,14 @@ var SCENES = [
       { do: 'caption', text: 'The centre invites its candidates and its tutors. One link each.' },
       { do: 'move', to: '.roster .acts button[data-copy]' },
       { do: 'hold', ms: 1100 },
+      /* v53 (1 Oct 2026): an address beside a candidate, and the link goes
+         from the centre's own mail app. One row carries an address on the
+         demo already; a second is typed here (renameTrainee stubbed). */
+      { do: 'click', on: '.grid.roster.grow:nth-of-type(3) .temail', ms: 900 },
+      { do: 'type', into: '.grid.roster.grow:nth-of-type(3) .temail', ms: 1500, text: 'mateo.fernandez@example.org' },
+      { do: 'caption', text: 'An address, once. The link goes from your own mail app.' },
+      { do: 'move', to: '.roster a[href^="mailto:"]' },
+      { do: 'hold', ms: 2200 },
       { do: 'goto', screen: '23_timetable.html', course: 'start', stub: ['putCourse'], ms: 1800 },
       { do: 'click', on: '#importOpen', ms: 1200 },
       { do: 'type', into: '#impPaste', ms: 2300, text: 'Date\tSession 1\tSession 2\n02/03/2026\tWelcome and the portfolio\tDemonstration lesson\n03/03/2026\tThe lesson framework\tClassroom management' },
@@ -238,7 +246,10 @@ var SCENES = [
       { do: 'caption', text: 'Speak it or type it. Both land in the same box.' },
       { do: 'hold', ms: 900 },
       { do: 'click', on: '#fwBtn', ms: 1200 },
-      { do: 'hold', ms: 900 },
+      /* Ramy, v6: "close the goddamn box after that." Choosing a shape is what
+         closes it; the menu used to be opened and left. */
+      { do: 'click', on: '#fwMenu .fw-item:nth-of-type(2)', ms: 1200 },
+      { do: 'hold', ms: 700 },
       { do: 'caption', text: 'The shape is given. The thinking is theirs.' },
       { do: 'hold', ms: 1400 },
       /* The language analysis, shown rather than mentioned: open it, the three
@@ -291,7 +302,11 @@ var SCENES = [
       { do: 'zoom', out: true, ms: 700 },
       { do: 'move', to: '.next .room' },
       { do: 'caption', text: 'One tap to the room.' },
-      { do: 'hold', ms: 1300 }
+      { do: 'hold', ms: 1300 },
+      /* The centre's one address, never a tutor's (Ramy, 1 Oct 2026). */
+      { do: 'scroll', to: '#mailTutor', ms: 1300 },
+      { do: 'caption', text: 'Can\u2019t come? The centre hears, in one tap. Never a tutor\u2019s inbox.' },
+      { do: 'hold', ms: 2600 }
     ]
   },
 
@@ -328,7 +343,7 @@ var SCENES = [
     about: 'The trainer\u2019s own screen, announced as one: the counters and the rows \u2014 two waiting for feedback, one assignment to mark, and beside a name the time a plan was turned in. Read-only.',
     settle: 1800,
     steps: [
-      { do: 'chapter', num: 'Five', text: 'Feedback', sub: 'Everything waiting in one list, written against the plan, and back the same evening.', ms: 2400 },
+      { do: 'chapter', num: 'Five', text: 'Feedback', sub: 'Everything waiting in one list, written against the plan, and with the candidate the moment it is returned.', ms: 2400 },
       { do: 'hold', ms: 1000 },
       { do: 'move', to: '.qcard[data-tab="tp"]' },
       { do: 'hold', ms: 1000 },
@@ -380,7 +395,8 @@ var SCENES = [
       { do: 'move', to: '.cell.clash' },
       { do: 'zoom', on: '.cell.clash', scale: 1.7, ms: 700 },
       { do: 'hold', ms: 900 },
-      { do: 'caption', text: 'Two of them chose grammar. The grid noticed first.' },
+      { do: 'caption', text: 'Two chose grammar. Both cells turn gold and the group is told, before any tutor has to.' },
+      { do: 'scroll', to: '.clashnote', ms: 1100 },
       { do: 'hold', ms: 1400 },
       { do: 'zoom', out: true, ms: 1000 }
     ]
@@ -397,15 +413,20 @@ var SCENES = [
       { do: 'hold', ms: 900 },
       { do: 'click', on: 'button[data-list="lST"]', ms: 1200 },
       { do: 'click', on: '#lST .pt:last-child .pt-text', ms: 1200 },
-      { do: 'zoom', on: '#lST .pt:last-child', scale: 1.7, ms: 700 },
+      /* No push-in: the chips arriving under the sentence are the point, and
+         the camera hid them (Ramy, v6). */
       { do: 'click', on: '.dictbtn', ms: 1200 },
       { do: 'type', into: '#lST .pt:last-child .pt-text', ms: 3400, text: 'Set the task before handing out the text, and checked it with a quick question' },
       { do: 'caption', text: 'Spoken here, typed on the next one. The form does not care.' },
       { do: 'hold', ms: 1100 },
       { do: 'click', on: '#lST .pt:last-child .suggest-chip', ms: 1400 },
-      { do: 'caption', text: 'It learns your centre.' },
-      { do: 'hold', ms: 1300 },
-      { do: 'zoom', out: true, ms: 1000 }
+      { do: 'caption', text: 'It learns your centre and remembers your choices.' },
+      { do: 'hold', ms: 1600 },
+      /* And the whole list, behind the point's own criteria button. */
+      { do: 'click', on: '#lST .pt:last-child .crit-toggle', ms: 1300 },
+      { do: 'scroll', to: '#lST .pt:last-child .crit-panel', ms: 1200 },
+      { do: 'caption', text: 'Or pick from all forty-one, right there.' },
+      { do: 'hold', ms: 2000 }
     ]
   },
 
@@ -430,7 +451,7 @@ var SCENES = [
          at the foot of it. The document, not the form. */
       { do: 'goto', screen: '4_feedback_returned.html', course: 'start', role: 'trainee', as: 'Priya Raghunathan', ms: 2200 },
       { do: 'hold', ms: 1200 },
-      { do: 'caption', text: 'Her copy, the same evening. Printable, and hers to keep.' },
+      { do: 'caption', text: 'Returned. Hers to read and to keep, not to edit.' },
       { do: 'scroll', to: 700, ms: 2200 },
       { do: 'hold', ms: 1300 },
       { do: 'scroll', to: 'bottom', ms: 2200 },
@@ -457,11 +478,10 @@ var SCENES = [
       { do: 'hold', ms: 1000 },
       { do: 'zoom', out: true, ms: 800 },
       { do: 'type', into: '#comment', ms: 2400, text: 'Honest about the lesson that did not work, and specific about what changed after it. Passed.' },
-      { do: 'hold', ms: 900 },
-      { do: 'goto', screen: '12_assessor_pack.html', course: 'visit', role: 'assessor', ms: 2200 },
-      { do: 'scroll', to: 'text:Double-marking record', ms: 1800 },
+      /* The assessor's pack used to be cut to here for the double-marking
+         record; the assessor has a chapter of their own (Ramy, v6). */
       { do: 'caption', text: 'Two markers. One script. No second copy anywhere.' },
-      { do: 'hold', ms: 1400 }
+      { do: 'hold', ms: 2000 }
     ]
   },
 
@@ -511,7 +531,7 @@ var SCENES = [
       { do: 'zoom', on: 'table.mid, table', scale: 1.3, ms: 1100 },
       { do: 'hold', ms: 2600 },
       { do: 'caption', text: 'Classes, part-classes and hours, per student, as they happen.' },
-      { do: 'hold', ms: 3000 },
+      { do: 'hold', ms: 5200 },
       { do: 'zoom', out: true, ms: 1000 },
       { do: 'goto', screen: '27_volunteer_certificate.html', course: 'visit', role: 'volunteer', as: 'Ayşe', ms: 3200 },
       { do: 'who', text: 'The volunteer student', sub: 'Ayşe Demir', ms: 1900 },
@@ -638,7 +658,10 @@ var SCENES = [
     about: 'The last card, a page of the film\u2019s own: the mark, the one line, and the address \u2014 which arrives as <b>&amp;email=</b> on the film\u2019s own URL and is in no file, because this repository is public. Without it the address line is simply left out.',
     settle: 600,
     steps: [
-      { do: 'hold', ms: 4900 }
+      /* Long enough for the card's lines to land and the music to finish
+         fading well before the recorder stops (Ramy, v6: "a little glitchy
+         at the end"). */
+      { do: 'hold', ms: 8500 }
     ]
   },
 ];

@@ -117,7 +117,7 @@ export function feedbackState(cand, doc, slot) {
   return {
     f: {
       fTP: 'TP' + slot.n, fDate: doc.meta.date, fTutor: tutor, fLevel: slot.level, fTime: '45',
-      fStudents: '12', fMain: '', fSub: '', fGrade: grade,
+      fStudents: '12', fMain: focusMain(slot), fSub: focusSub(slot), fGrade: grade,
       tOverall: overallFor(cand, slot, grade),
       tSelf: 'An honest self-evaluation that names the same things I did, and says what you will do about them. That is what this document is for.',
       tLA: 'Accurate and usable. One more example of the negative form would finish it.',
@@ -144,6 +144,23 @@ function stageComment(i, grade) {
        : (i % 2 ? good[i % good.length] : weak[i % weak.length]);
 }
 
+/* The CELTA 5's teaching practice record reads the lesson focus off the
+   feedback (fMain / fSub). Ramy, 1 Oct 2026: show it -- "vocabulary and
+   speaking, grammar and reading" -- so the page reads as completed. The slot's
+   shape says what kind of lesson it was; the pair comes from that. */
+function focusMain(slot) {
+  const sh = String(slot.shape || ''); const f = String(slot.focus || '');
+  if (/receptive/i.test(sh)) return /listen/i.test(f) ? 'Listening' : 'Reading';
+  if (/productive/i.test(sh)) return /writ/i.test(f) ? 'Writing' : 'Speaking';
+  if (/vocab|lexis|lexical/i.test(sh + f)) return 'Vocabulary';
+  if (/function/i.test(sh + f)) return 'Functional language';
+  if (/ppp|test.teach|guided discovery|grammar|task/i.test(sh + f)) return 'Grammar';
+  return f || 'Grammar';
+}
+function focusSub(slot) {
+  const m = focusMain(slot);
+  return { Reading: 'Speaking', Listening: 'Vocabulary', Writing: 'Grammar', Speaking: 'Vocabulary', Vocabulary: 'Speaking', 'Functional language': 'Listening', Grammar: 'Speaking' }[m] || 'Speaking';
+}
 function overallFor(cand, slot, grade) {
   const first = cand.name.split(' ')[0];
   if (grade === 'Above standard') return `A very good lesson, ${first}. The aims were met, the learners produced the language, and you made two adjustments in the room that the plan did not contain. ${cand.teachA[0][1]} is the one thing still worth your attention.`;
