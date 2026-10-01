@@ -240,6 +240,21 @@
   /* Six pixels of a colour no screen uses, so the cut can tell a curtain frame
      from a picture without guessing. It never survives the cut. */
   .curtain .cue{position:absolute; left:0; top:0; width:6px; height:6px; background:#ff00ff;}
+  .offline{position:absolute; right:26px; top:22px; z-index:7; display:none; align-items:center; gap:8px;
+    background:oklch(21% 0.02 65 / .9); color:oklch(99% 0.004 85); border-radius:999px; padding:8px 14px;
+    font-size:0.76rem; font-weight:700; letter-spacing:.06em;}
+  .offline.on{display:inline-flex; animation:offpop 420ms ease-out;}
+  .offline .dot{width:9px; height:9px; border-radius:50%; background:oklch(62% 0.2 25); box-shadow:0 0 0 4px oklch(62% 0.2 25 / .25);}
+  @keyframes offpop{ from{ opacity:0; transform:translateY(-6px);} to{ opacity:1; transform:none;} }
+
+  .whois{position:absolute; left:50%; top:46%; transform:translate(-50%,-50%); z-index:8; opacity:0;
+    display:flex; flex-direction:column; align-items:center; gap:6px; text-align:center;
+    transition:opacity 420ms ease; pointer-events:none;}
+  .whois.on{opacity:1;}
+  .whois .k{font-family:'Instrument Sans','Karla',sans-serif; font-size:0.72rem; font-weight:700;
+    letter-spacing:.24em; text-transform:uppercase; color:oklch(51% 0.017 70);}
+  .whois b{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:2.6rem; color:oklch(30% 0.042 58);
+    text-shadow:0 0 22px oklch(99% 0.004 85 / .95), 0 0 56px oklch(99% 0.004 85 / .85);}
   .day{position:absolute; left:28px; top:24px; z-index:7; pointer-events:none;
     font-family:'Karla',sans-serif; font-size:0.72rem; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
     color:oklch(99% 0.004 85); background:oklch(21% 0.02 65 / .82); padding:7px 12px; border-radius:999px;
@@ -310,6 +325,13 @@
       <p class="sub" id="chapterSub"></p>
       <p class="credit">designed and built by <b>Ramy</b></p>
     </div>
+    <!-- The network, cut. A chip over the live screen, so the film can say
+         "offline" about the real card rather than about a mock of it. -->
+    <div class="offline" id="offline"><span class="dot"></span>Wi-Fi off</div>
+    <!-- Whose screen this is. Every change of person is announced, the way
+         chapters are (Ramy, 1 Oct 2026: "it should tell that this is the
+         trainee's... we need to have that name"). -->
+    <div class="whois" id="whois"><span class="k" id="whoisK"></span><b id="whoisN"></b></div>
     <div class="curtain" id="curtain"><i class="cue"></i><div class="mark">Connect <span>LITE</span></div></div>
     <div class="caption" id="caption"></div>
     <!-- The day stamp (spec, 28 Sep 2026): the calendar is the film's spine,
@@ -820,6 +842,46 @@
       }, 260);
       return total + 1900;
     },
+    /* {do:'offline'} puts the Wi-Fi-off chip over the live screen; {off:true}
+       takes it away. The page underneath is untouched -- Lite really does keep
+       working, and the film says so about the real card. */
+    /* {do:'choose', on:sel, value:'vocab'} -- a select, changed the way a
+       person changes one: the cursor goes to it, it opens visibly by taking
+       focus, and the page hears a real change event. */
+    choose: function (s) {
+      var el = find(s.on);
+      if (!el) { warn('choose: no ' + s.on); return 200; }
+      var c = centreOf(el);
+      moveTo(c.x, c.y);
+      later(function () {
+        popAt(c.x, c.y);
+        try { el.focus(); } catch (e) {}
+        el.value = s.value;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+      }, 560);
+      return (s.ms || 1400);
+    },
+
+    offline: function (s) {
+      var el = document.getElementById('offline');
+      if (s.off) { el.classList.remove('on'); return s.ms || 600; }
+      el.classList.add('on');
+      return s.ms || 2400;
+    },
+
+    /* {do:'who', text:'The trainer', sub:'Jordan Blake'} -- whose screen this
+       is, over the screen itself, before anything happens on it. */
+    who: function (s) {
+      var k = document.getElementById('whoisK'), n = document.getElementById('whoisN'), box = document.getElementById('whois');
+      k.textContent = s.text || '';
+      n.textContent = s.sub || '';
+      box.classList.add('on');
+      var hold = s.ms || 2200;
+      later(function () { box.classList.remove('on'); }, hold);
+      return hold + 500;
+    },
+
     still: function (s) {
       /* A still with an `img` is a frame made for the film (film/stills/);
          without one it is the placeholder card that says what to capture. */
@@ -855,6 +917,8 @@
 
     stubbed = [];
     waiting = false;
+    document.getElementById('offline').classList.remove('on');
+    document.getElementById('whois').classList.remove('on');
     /* Up for the load, down when the screen is ready -- scene loads only. A
        `goto` inside a scene keeps its own timing; its steps run to a budget
        the scene author set, and a curtain there would hide them. */

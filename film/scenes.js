@@ -70,7 +70,7 @@ var SCENES = [
       { do: 'hold', ms: 20400 },
       /* Tutors train; trainees teach. The line said the tutors had time to
          teach, which is not what happens on a CELTA (Ramy, 30 Sep 2026). */
-      { do: 'caption', text: 'Same course. Same trainees. One of them spent the week filing.' },
+      { do: 'caption', text: 'Same course. Same trainees. One of them spent it filing.' },
       { do: 'hold', ms: 8400 }
     ]
   },
@@ -97,17 +97,27 @@ var SCENES = [
     steps: [
       { do: 'hold', ms: 1600 },
       { do: 'caption', text: 'Nothing to install. Nothing to remember. Nothing to lose.' },
-      { do: 'hold', ms: 3400 },
-      { do: 'still', ms: 4200, img: 'stills/wifi-off.png', want: 'A plain tab, Wi-Fi switched off, the page still there' },
+      { do: 'hold', ms: 2600 },
+      /* The card goes offline where it stands. The made still of a Wi-Fi-off
+         tab was a second invitation and did not look like the real one
+         (Ramy, 1 Oct 2026: "it does not look like the invitation that I sent
+         — delete this second one"), so the offline mark goes on the live
+         card instead and the two captions run back to back over it. */
+      { do: 'offline', ms: 2600 },
       { do: 'caption', text: 'Works offline, and catches up when you are back.' },
-      { do: 'hold', ms: 3000 },
+      { do: 'hold', ms: 3200 },
+      { do: 'offline', off: true, ms: 900 },
       /* And then the screen the link opens, so the card is not left hanging. */
       { do: 'click', on: '#go', ms: 2400 },
       { do: 'goto', screen: '5_tutor_dashboard.html', course: 'start', ms: 3000 },
+      { do: 'who', text: 'The trainer', sub: 'Jordan Blake', ms: 2200 },
+      { do: 'zoom', on: '#courseName', scale: 1.6, ms: 1100 },
+      { do: 'hold', ms: 1300 },
+      { do: 'zoom', out: true, ms: 900 },
+      /* The first thing a trainer does on this screen: their name, which is
+         what signs their marking and their feedback. */
+      { do: 'type', into: '#tutorName', ms: 1600, text: 'Jordan Blake' },
       { do: 'hold', ms: 1600 },
-      { do: 'zoom', on: '#courseName', scale: 1.6, ms: 1200 },
-      { do: 'hold', ms: 1600 },
-      { do: 'zoom', out: true, ms: 1000 },
       { do: 'caption', text: 'One link, and the whole course is behind it.' },
       { do: 'hold', ms: 3200 }
     ]
@@ -213,64 +223,53 @@ var SCENES = [
     ]
   },
 
-  {
-    title: 'The TP points arrive',
-    screen: '24_tp_points.html',
-    course: 'start', role: 'trainee', as: 'Olivia Bennett', day: 'Day 3',
-    about: 'The brief for tomorrow\u2019s lesson, released by the tutor at the end of today\u2019s session: Olivia\u2019s aim, the framework, the coursebook pages, the audio, with the other two lessons of the day beside hers. Read-only. Ramy, 30 Sep 2026: the points are released after a session, so the film no longer pretends they appear overnight.',
-    settle: 12000,
-    steps: [
-      { do: 'chapter', num: 'Four', text: 'Planning a lesson', sub: 'The points released after a session, the plan written against them, the material shared with the class.', ms: 3400 },
-      { do: 'hold', ms: 1400 },
-      { do: 'scroll', to: 260, ms: 2000 },
-      { do: 'hold', ms: 1200 },
-      { do: 'caption', text: 'Released at the end of the session. Tomorrow\u2019s lesson, in one card.' },
-      { do: 'move', to: '.tbl .mats-read, .tbl' },
-      { do: 'hold', ms: 4200 }
-    ]
-  },
 
   {
     title: 'The plan',
     screen: '1_trainee_plan_and_analysis.html',
     course: 'start', role: 'trainee', as: 'Olivia Bennett', day: 'Day 3',
-    about: 'The longest scene, and deliberately \u2014 Ramy, 30 Sep 2026: "I don\u2019t see anything about the lesson plan\u2026 writing the lesson plan should be a nice part, and the language analysis." Olivia\u2019s next plan is BLANK on the demo (she teaches tomorrow; it is due today). The aim dictated, a lesson shape chosen, the stages appearing under it, the Language Analysis opened and read, a materials link pasted, the share switch to the volunteers going green. <b>Writes stubbed</b> so it stays blank for the next take.',
+    about: 'The chapter Ramy asked to be a nice part, rebuilt on his notes of 1 Oct 2026: the aim spoken OR typed (dictation is an option, not a replacement), the lesson shape, the stages appearing, then the LANGUAGE ANALYSIS as a real sequence \u2014 the three kinds, vocabulary chosen, a word typed, and the phonemic keyboard coming up. Then the material shared with the volunteer students, which is the point of the chapter, and the plan turned in. The caption over the analysis is gone: "I don\u2019t know what that means, just don\u2019t say anything here." <b>Writes stubbed</b> so the demo stays blank.',
     settle: 12000,
     stub: ['put', 'shareMaterial'],
     steps: [
-      { do: 'hold', ms: 1100 },
+      { do: 'who', text: 'The candidate', sub: 'Olivia Bennett', ms: 2200 },
       { do: 'click', on: '#fMain', ms: 900 },
-      { do: 'click', on: '.dictbtn', ms: 1500 },
-      { do: 'type', into: '#fMain', ms: 3800, text: 'By the end of the lesson learners will be better able to understand a short article about jobs, reading first for gist and then for detail.' },
-      { do: 'hold', ms: 1000 },
-      { do: 'click', on: '#fwBtn', ms: 1400 },
+      { do: 'click', on: '.dictbtn', ms: 1400 },
+      { do: 'type', into: '#fMain', ms: 3400, text: 'By the end of the lesson learners will be better able to understand a short article about jobs, reading first for gist and then for detail.' },
+      { do: 'caption', text: 'Speak it or type it. Both land in the same box.' },
       { do: 'hold', ms: 1400 },
+      { do: 'click', on: '#fwBtn', ms: 1400 },
+      { do: 'hold', ms: 1200 },
       { do: 'caption', text: 'The shape is given. The thinking is theirs.' },
+      { do: 'hold', ms: 2400 },
+      /* The language analysis, shown rather than mentioned: open it, the three
+         kinds, vocabulary, a word, and the phonemic keyboard. */
+      { do: 'scroll', to: '#laToggle', ms: 2000 },
+      { do: 'click', on: '#laToggle', ms: 1400 },
+      { do: 'scroll', to: '#laSection', ms: 2000 },
+      { do: 'hold', ms: 1200 },
+      /* The three kinds are a select on the analysis: grammar, vocabulary,
+         functional language. Vocabulary opens the table whose first column
+         wants stress and a phonemic transcription, and typing in it raises
+         the phonemic keyboard. */
+      { do: 'choose', on: '#typeSel', value: 'vocab', ms: 1600 },
+      { do: 'hold', ms: 1400 },
+      { do: 'type', into: '#vocabBody .v-item', ms: 1700, text: 'give up (phr v)' },
       { do: 'hold', ms: 2800 },
-      { do: 'zoom', on: '#fwBtn', scale: 1.4, ms: 900 },
-      { do: 'hold', ms: 2000 },
-      { do: 'zoom', out: true, ms: 900 },
-      /* The language analysis is half of what a CELTA plan IS, and the film
-         walked past it. It opens, and the film reads it. */
-      { do: 'scroll', to: '#laToggle', ms: 2200 },
-      { do: 'click', on: '#laToggle', ms: 1600 },
-      { do: 'hold', ms: 1600 },
-      { do: 'caption', text: 'Form, meaning, pronunciation. On the same page as the lesson.' },
-      { do: 'scroll', to: '#laSection', ms: 2400 },
-      { do: 'hold', ms: 3200 },
-      { do: 'scroll', to: '#fMatsLink', ms: 2200 },
-      { do: 'type', into: '#fMatsLink', ms: 1800, text: 'https://drive.google.com/file/d/demo-penguins-adapted/view' },
-      { do: 'hold', ms: 900 },
+      { do: 'caption', text: 'The phonemic keyboard is on the page, not in another app.' },
+      { do: 'hold', ms: 2800 },
+      /* The share: the point of the chapter. */
+      { do: 'scroll', to: '#fMatsLink', ms: 2000 },
+      { do: 'type', into: '#fMatsLink', ms: 1600, text: 'https://drive.google.com/file/d/demo-penguins-adapted/view' },
       { do: 'zoom', on: '#fShareVol', scale: 1.5, ms: 900 },
-      { do: 'click', on: '#fShareVol', ms: 1800 },
-      { do: 'hold', ms: 1600 },
-      { do: 'caption', text: 'One switch, and tonight\u2019s reading is on every student\u2019s page.' },
-      { do: 'hold', ms: 2600 },
-      { do: 'zoom', out: true, ms: 1000 },
-      { do: 'scroll', to: '#turnInBtn', ms: 2200 },
-      { do: 'click', on: '#turnInBtn', ms: 1800 },
+      { do: 'click', on: '#fShareVol', ms: 1600 },
+      { do: 'caption', text: 'One click, and every material is with the students before the lesson has started.' },
+      { do: 'hold', ms: 3000 },
+      { do: 'zoom', out: true, ms: 900 },
+      { do: 'scroll', to: '#turnInBtn', ms: 2000 },
+      { do: 'click', on: '#turnInBtn', ms: 1600 },
       { do: 'caption', text: 'Turned in. It is on her tutor\u2019s screen already.' },
-      { do: 'hold', ms: 3000 }
+      { do: 'hold', ms: 2600 }
     ]
   },
 
@@ -278,20 +277,25 @@ var SCENES = [
     title: 'A volunteer’s page',
     screen: '26_volunteer.html',
     course: 'start', role: 'volunteer', as: 'Omar', day: 'Day 1',
-    about: 'The other end of that switch, which is why it now follows the plan rather than interrupting it (Ramy, 30 Sep 2026). Omar has not agreed yet on the demo, so his link opens on the joining note: Turkish is chosen, <i>Kabul ediyorum</i>, and behind it his page \u2014 the next class in the course\u2019s clock, the material the candidate just shared, <b>Join on Zoom</b>. <b>volunteerAgree stubbed</b> \u2014 he stays unagreed for the next take.',
+    about: 'The other end of the share switch, which is why it follows the plan. The film now stays long enough to show the material itself sitting on the student\u2019s page (Ramy, 1 Oct 2026: "show where the material from the trainees has landed \u2014 it is very important"). Omar has not agreed yet on the demo, so his link opens on the joining note: Turkish is chosen, <i>Kabul ediyorum</i>, and behind it his page \u2014 the next class in the course\u2019s clock, the material the candidate just shared, <b>Join on Zoom</b>. <b>volunteerAgree stubbed</b> \u2014 he stays unagreed for the next take.',
     settle: 1800,
     stub: ['volunteerAgree'],
     steps: [
-      { do: 'hold', ms: 1400 },
+      { do: 'who', text: 'The volunteer student', sub: 'Omar Haddad', ms: 1900 },
       { do: 'click', on: '.consent [data-lang="tr"]', ms: 1600 },
-      { do: 'hold', ms: 1800 },
       { do: 'caption', text: 'Their language for the small print. English for the lesson.' },
-      { do: 'hold', ms: 2200 },
+      { do: 'hold', ms: 2400 },
       { do: 'click', on: '#cAgree', ms: 1800 },
       { do: 'hold', ms: 1600 },
+      /* Where the material went. The switch was thrown two scenes ago. */
+      { do: 'scroll', to: '.card .mat', ms: 2000 },
+      { do: 'zoom', on: '.card .mat', scale: 1.5, ms: 1000 },
+      { do: 'caption', text: 'The reading her teacher shared is already here.' },
+      { do: 'hold', ms: 3200 },
+      { do: 'zoom', out: true, ms: 900 },
       { do: 'move', to: '.next .room' },
       { do: 'caption', text: 'One tap to the room.' },
-      { do: 'hold', ms: 3000 }
+      { do: 'hold', ms: 2600 }
     ]
   },
 
@@ -319,23 +323,6 @@ var SCENES = [
     ]
   },
 
-  {
-    title: 'The planning grid',
-    screen: '21_tp_grid.html',
-    course: 'visit', role: 'trainee', as: 'Olivia Bennett', day: 'Day 15',
-    about: 'The group’s rows for TP7 and TP8 as Olivia sees them: hers editable, the others read, and two cells amber where two of them chose the same aim. Read-only in the take.',
-    settle: 1800,
-    stub: ['gridSet'],
-    steps: [
-      { do: 'hold', ms: 1400 },
-      { do: 'move', to: '.cell.clash' },
-      { do: 'zoom', on: '.cell.clash', scale: 1.7, ms: 900 },
-      { do: 'hold', ms: 1200 },
-      { do: 'caption', text: 'Two of them chose grammar. The grid noticed first.' },
-      { do: 'hold', ms: 2800 },
-      { do: 'zoom', out: true, ms: 1200 }
-    ]
-  },
 
   {
     title: 'The trainer’s desk',
@@ -375,10 +362,28 @@ var SCENES = [
       { do: 'scroll', to: 300, ms: 2400 },
       { do: 'caption', text: 'Seven lesson types, rotated. Nobody has to remember whose turn it is.' },
       { do: 'hold', ms: 3400 },
-      { do: 'goto', screen: '21_tp_grid.html', course: 'visit', ms: 3000 },
-      { do: 'hold', ms: 2000 },
-      { do: 'caption', text: 'And the last two, planned by the candidates themselves.' },
-      { do: 'hold', ms: 3000 }
+      { do: 'goto', screen: '5_tutor_dashboard.html', course: 'visit', ms: 2600 },
+      { do: 'click', on: '#courseMenuBtn', ms: 1600 },
+      { do: 'hold', ms: 1600 },
+      { do: 'move', to: '#menuGrid' },
+      { do: 'hold', ms: 1600 }
+    ]
+  },
+  {
+    title: 'The planning grid',
+    screen: '21_tp_grid.html',
+    course: 'visit', role: 'trainee', as: 'Olivia Bennett', day: 'Day 15',
+    about: 'Entered through the door the Course menu just opened. The group’s rows for TP7 and TP8 as Olivia sees them: hers editable, the others read, and two cells amber where two of them chose the same aim. Read-only in the take.',
+    settle: 1800,
+    stub: ['gridSet'],
+    steps: [
+      { do: 'who', text: 'The candidate', sub: 'Olivia Bennett', ms: 1900 },
+      { do: 'move', to: '.cell.clash' },
+      { do: 'zoom', on: '.cell.clash', scale: 1.7, ms: 900 },
+      { do: 'hold', ms: 1200 },
+      { do: 'caption', text: 'Two of them chose grammar. The grid noticed first.' },
+      { do: 'hold', ms: 2800 },
+      { do: 'zoom', out: true, ms: 1200 }
     ]
   },
 
@@ -396,7 +401,7 @@ var SCENES = [
       { do: 'zoom', on: '#lST .pt:last-child', scale: 1.7, ms: 900 },
       { do: 'click', on: '.dictbtn', ms: 1500 },
       { do: 'type', into: '#lST .pt:last-child .pt-text', ms: 4000, text: 'Set the task before handing out the text, and checked it with a quick question' },
-      { do: 'caption', text: 'Said, not typed.' },
+      { do: 'caption', text: 'Spoken here, typed on the next one. The form does not care.' },
       { do: 'hold', ms: 1800 },
       { do: 'move', to: '#lST .pt:last-child .suggest-row' },
       { do: 'hold', ms: 1500 },
@@ -522,14 +527,21 @@ var SCENES = [
     stub: ['putCourse'],
     steps: [
       { do: 'chapter', num: 'Nine', text: 'Volunteer students', sub: 'The people who make teaching practice possible: a register, their hours, and a certificate.', ms: 3400 },
-      { do: 'hold', ms: 1200 },
+      { do: 'who', text: 'The register', sub: 'kept by the centre', ms: 1900 },
       { do: 'click', on: '.who .seg.soon', ms: 1800 },
-      { do: 'caption', text: 'One tap. The hours did the rest.' },
-      { do: 'hold', ms: 2800 },
+      { do: 'caption', text: 'One tap a day. Nobody adds anything up.' },
+      { do: 'hold', ms: 3200 },
+      { do: 'zoom', on: 'table.mid, table', scale: 1.3, ms: 1100 },
+      { do: 'hold', ms: 2600 },
+      { do: 'caption', text: 'Classes, part-classes and hours, per student, as they happen.' },
+      { do: 'hold', ms: 3000 },
+      { do: 'zoom', out: true, ms: 1000 },
       { do: 'goto', screen: '27_volunteer_certificate.html', course: 'visit', role: 'volunteer', as: 'Ayşe', ms: 3200 },
-      { do: 'hold', ms: 1200 },
+      { do: 'who', text: 'The volunteer student', sub: 'Ayşe Demir', ms: 1900 },
+      { do: 'caption', text: 'And it adds up to this, without anybody writing it out.' },
+      { do: 'hold', ms: 3600 },
       { do: 'caption', text: 'Signed by the centre. Printed by the student.' },
-      { do: 'hold', ms: 4000 }
+      { do: 'hold', ms: 3400 }
     ]
   },
 
@@ -567,11 +579,17 @@ var SCENES = [
       { do: 'hold', ms: 1200 },
       { do: 'scroll', to: 800, ms: 2400 },
       { do: 'hold', ms: 1000 },
+      /* Ramy, 1 Oct 2026: spend this chapter on the provisional grades and
+         where they come from, not on the grading-meeting boxes. */
+      { do: 'zoom', on: '.prov, table', scale: 1.35, ms: 1100 },
+      { do: 'hold', ms: 2200 },
+      { do: 'caption', text: 'Nobody typed these. They were earned one lesson at a time.' },
+      { do: 'hold', ms: 3000 },
+      { do: 'zoom', out: true, ms: 1000 },
       { do: 'click', on: 'text:Add from the TP records', ms: 1800 },
-      { do: 'hold', ms: 1400 },
-      { do: 'caption', text: 'That sentence was written in week two. It just came back.' },
-      { do: 'hold', ms: 2800 },
-      { do: 'zoom', out: true, ms: 1200 }
+      { do: 'hold', ms: 2400 },
+      { do: 'caption', text: 'And the evidence is the feedback the tutors already wrote.' },
+      { do: 'hold', ms: 3000 }
     ]
   },
 
@@ -595,30 +613,28 @@ var SCENES = [
     title: 'Cambridge’s booklet',
     screen: '20_celta5.html',
     course: 'finished', params: { trainee: 'Olivia' }, day: 'Day 20',
-    about: 'The July 2023 form drawn in the browser from the record: the cover, the confirmations, the three stages, every table full, every signature in ink. The line the film was made for; nothing moves under it.',
+    about: 'The real pages, not a description of them. The July 2023 form drawn in the browser from the record: the cover, the confirmations, the three stages, every table full, every signature in ink. The line the film was made for; nothing moves under it.',
     settle: 2400,
     steps: [
       { do: 'click', on: '#cambridgePdf', ms: 2200 },
-      { do: 'hold', ms: 2400 },
-      /* Now it has: this is the shot the booklet was filling itself for. */
+      { do: 'hold', ms: 2600 },
+      /* THE SHOT THE FILM WAS MADE FOR. Not a card describing the booklet --
+         the booklet. These are pages of the real Cambridge July 2023 form,
+         drawn from Olivia's finished record by celta5-pdf.js and photographed
+         by film/booklet-pages.mjs. Ramy, 1 Oct 2026: "we have the original.
+         Show the original. This is the original that the centre will have in
+         the end, with all the information in it." */
       { do: 'caption', text: 'Nobody filled this in. The course did.' },
-      { do: 'hold', ms: 6000 },
-      { do: 'still', ms: 3200, want: 'The booklet’s pages turning: Stage 1, Stage 2, Stage 3, the tables', how: 'Scroll the drawn PDF slowly on camera; the film holds this frame for it.' }
+      { do: 'still', ms: 3600, img: 'stills/celta5-p01.png', want: 'The cover, filled in' },
+      { do: 'still', ms: 3000, img: 'stills/celta5-p02.png', want: 'Cambridge’s own words, confirmed' },
+      { do: 'still', ms: 3000, img: 'stills/celta5-p04.png', want: 'Stage 1, signed' },
+      { do: 'still', ms: 3400, img: 'stills/celta5-p07.png', want: 'Stage 2, both columns' },
+      { do: 'still', ms: 3000, img: 'stills/celta5-p10.png', want: 'The teaching practice record' },
+      { do: 'caption', text: 'Every box came from something somebody already wrote.' },
+      { do: 'still', ms: 3800, img: 'stills/celta5-p13.png', want: 'The final declaration, signed both sides' }
     ]
   },
 
-  {
-    title: 'Paper, if you want it',
-    screen: '20_celta5.html',
-    course: 'finished', params: { trainee: 'Olivia' }, day: 'Day 20',
-    about: 'A captured still of the print dialog over the booklet. The one printing beat in the film, as an option.',
-    settle: 1600,
-    steps: [
-      { do: 'still', ms: 4200, img: 'stills/print-dialog.png', want: 'The print dialog over Cambridge’s booklet', how: 'Press Print on camera and capture the dialog; the film cannot drive it.' },
-      { do: 'caption', text: 'Print it, if a drawer needs it.' },
-      { do: 'hold', ms: 2200 }
-    ]
-  },
 
   {
     title: 'The report she is sent',

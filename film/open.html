@@ -29,19 +29,22 @@
          --teal:#1f5b58; --garnet:#8a2f2a; --chip:#ece7db; --chip-ink:#6f675c; --work:#1f5b58; --work-ink:#fff; }
   html,body{height:100%;}
   body{margin:0; background:var(--sand); color:var(--ink); font-family:'Karla',system-ui,sans-serif; overflow:hidden;}
-  .wrap{width:1280px; height:800px; box-sizing:border-box; padding:34px 44px; display:grid; grid-template-columns:1fr 1fr; gap:26px; align-items:start;}
+  /* The Drive takes the frame. Ramy, 1 Oct 2026: "Google Drive should be a
+     little bigger, we can sort of see it, so people understand." It was
+     sharing the width with a column that is empty at this point in the film. */
+  .wrap{width:1280px; height:800px; box-sizing:border-box; padding:30px 54px; display:grid; grid-template-columns:1fr; gap:26px; align-items:start;}
   h2{font-family:'Newsreader',Georgia,serif; font-size:1.35rem; font-weight:700; margin:0 0 12px;}
   .col h2 b{font-weight:700;} .drive h2{color:var(--garnet);} .lite h2{color:var(--teal);}
   .eyebrow{font-size:0.7rem; letter-spacing:.16em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:0 0 4px;}
 
   /* Google Drive, as it looks */
-  .gd{background:#fff; color:#1f1f1f; font-family:'Roboto',Arial,sans-serif; font-size:13px; border:1px solid #dadce0; border-radius:8px; overflow:hidden;
+  .gd{background:#fff; color:#1f1f1f; font-family:'Roboto',Arial,sans-serif; font-size:15px; border:1px solid #dadce0; border-radius:8px; overflow:hidden;
     box-shadow:0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15); margin-bottom:10px;
     opacity:0; transform:translateY(14px); transition:opacity 700ms ease, transform 700ms ease;}
   .gd.on{opacity:1; transform:none;}
   .gd .crumbs{display:flex; align-items:center; gap:2px; padding:9px 14px; border-bottom:1px solid #e0e0e0; font-size:14px; color:#444746; white-space:nowrap;}
   .gd .crumbs span{padding:2px 6px;} .gd .crumbs span:last-child{color:#1f1f1f; font-weight:500;} .gd .crumbs i{color:#5f6368; font-style:normal;}
-  .gd .hd,.gd .row{display:grid; grid-template-columns:minmax(0,1fr) 100px 110px 64px; gap:10px; align-items:center; padding:7px 14px;}
+  .gd .hd,.gd .row{display:grid; grid-template-columns:minmax(0,1fr) 120px 130px 74px; gap:12px; align-items:center; padding:9px 18px;}
   .gd .hd{color:#444746; font-weight:500; font-size:12px; border-bottom:1px solid #e0e0e0;}
   .gd .row{border-bottom:1px solid #f1f3f4;} .gd .row:last-child{border-bottom:0;}
   .gd .nm{display:flex; align-items:center; gap:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
@@ -64,6 +67,11 @@
   .steps li.work{background:var(--work); color:var(--work-ink); font-weight:600;}
   .steps li i{font-family:ui-monospace,Menlo,monospace; font-size:0.68rem; color:var(--faint); text-align:right; font-style:normal;}
   .steps li.work i{color:var(--work-ink); opacity:.75;}
+  .opener{position:absolute; inset:0; z-index:5; display:grid; place-items:center; padding:60px;
+    background:var(--sand); transition:opacity 900ms ease;}
+  .opener.gone{opacity:0; pointer-events:none;}
+  .opener p{margin:0; max-width:24ch; text-align:center; font-family:'Newsreader',Georgia,serif;
+    font-weight:700; font-size:2.9rem; line-height:1.25; color:var(--ink);}
   .stage2, .stage3{position:absolute; inset:0; padding:34px 44px; box-sizing:border-box; opacity:0; transition:opacity 900ms ease; pointer-events:none;}
   .stage2.on, .stage3.on{opacity:1;}
   .stage2{display:grid; grid-template-columns:1fr 1fr; gap:26px; align-items:start;}
@@ -91,15 +99,15 @@
   <symbol id="gd-doc" viewBox="0 0 24 24"><path fill="#4285f4" d="M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path fill="#a1c2fa" d="M14 2v6h6"/><path fill="#fff" d="M8 12h8v1.3H8zM8 14.5h8v1.3H8zM8 17h5v1.3H8z"/></symbol>
 </svg>
 
+<!-- Ramy, 1 Oct 2026: "it should be one page saying, this is how most CELTA
+     centres run the course, and then the Google Drive." Without it the first
+     thing a viewer sees is a Drive folder and takes it for Lite. -->
+<div class="opener" id="opener"><p>This is how most CELTA centres run the course.</p></div>
 <div class="wrap" id="stage1">
   <div class="col drive">
     <p class="eyebrow">A CELTA course on Google Drive</p>
     <h2>Five folders down to one lesson plan</h2>
     <div class="stack" id="stack"></div>
-  </div>
-  <div class="col lite">
-    <p class="eyebrow">The same course on Connect Lite</p>
-    <h2>One link each. No folders.</h2>
   </div>
 </div>
 
@@ -147,6 +155,8 @@ const dLis = fill('dSteps', DRIVE), lLis = fill('lSteps', LITE);
    a viewer can read a chip before the next one lands. The film's own scene
    holds are stretched to match in scenes.js. */
 const PACE = 1.34;
+/* The opener holds, then lifts into the Drive. */
+setTimeout(function(){ var o = document.getElementById('opener'); if (o) o.classList.add('gone'); }, 3800);
 const at = (ms, fn) => setTimeout(fn, Math.round(ms * PACE));
 /* movement one: the descent */
 const stack = document.getElementById('stack');
