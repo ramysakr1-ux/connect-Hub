@@ -50,7 +50,13 @@ window.HubStore = (function(){
   // and answers with an HTML page instead of JSON. One retry after a pause.
   async function call(body, timeoutMs){
     var payload = Object.assign({}, body);
-    if (key() && payload.key == null) payload.key = key();
+    // An owner call carries its own credential and nothing else. The console
+    // used to pick up whatever link this browser had opened last -- an
+    // assessor key from a pack, say -- and the store, seeing the assessor key
+    // first, answered "The assessor link is read-only" to the owner (Ramy,
+    // 1 Oct 2026: "I'm trying to enter by console").
+    if (payload.owner) {}
+    else if (key() && payload.key == null) payload.key = key();
     else if (akey() && payload.a == null) payload.a = akey();
     else if (vtoken() && payload.v == null) payload.v = vtoken();
     // Apps Script answers the odd call with an HTML error page ("Sayfa
