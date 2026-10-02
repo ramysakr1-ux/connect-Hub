@@ -14,6 +14,11 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
+## 2 Oct 2026 — the manifest finally asks for mail (version 65)
+`appsscript.json` gains `script.send_mail` and `https://mail.google.com/`;
+Ramy pasted it, authorised the script (Run → Allow) and deployed v65 himself.
+First mail ever sent by the store: the card, 13:20. See the note below.
+
 ## 2 Oct 2026 — the card as an email (version 64)
 `sendCard`, owner only: the console builds the offer card as HTML and the
 store sends it from `lite@` (with a bcc); `sendAs_` carries `bcc` and the
