@@ -303,7 +303,23 @@ function cardLink(c){
    once that box is filled -- the engine's address carries keys and never goes
    out. */
 const DEMO_NOTE_KEY = 'chub:demoNote';
-function demoNote(){ try { return (localStorage.getItem(DEMO_NOTE_KEY) || '').trim(); } catch (e) { return ''; } }
+/* The standing letter (Ramy, 2 Oct 2026: "let's fix this so it goes
+   automatically without copy pasting, and if I need to change it, I would do
+   the edit"). It is the note until he types over it; what he types is kept in
+   this browser; clearing the box sends the card alone, and "Put the standard
+   note back" restores this. */
+const DEFAULT_DEMO_NOTE = [
+  'Hello,',
+  '',
+  'I run CELTA courses myself, and for years the paperwork lived in five places at once. Connect Lite is what I built to put it in one.',
+  '',
+  'Below is the card: what it does, and three real courses you can walk around as a tutor, a candidate or the assessor. Five minutes in the tutor\u2019s view will tell you more than I can in a paragraph.',
+  '',
+  'There is also a short film of a whole course, start to finish. I am not a filmmaker, as you will see in the first ten seconds, but it does show the thing working.',
+  '',
+  'If it looks like something your centre could use, reply and we\u2019ll talk. If not, no harm done, and I\u2019d still be glad to hear why.',
+].join('\n');
+function demoNote(){ try { const v = localStorage.getItem(DEMO_NOTE_KEY); return v === null ? DEFAULT_DEMO_NOTE : v.trim(); } catch (e) { return DEFAULT_DEMO_NOTE; } }
 function standingDemos(){
   const byName = n => COURSES.find(c => c.name === n);
   /* The finished course goes with them (Ramy, 2 Oct 2026: "all the demo
@@ -529,7 +545,8 @@ $('app').innerHTML = `
       return `<div class="filmrow demos">
         <b>Send the card</b>
         <span class="note">The email <i>is</i> the card: your note, then the three demo courses and the film as doors, and the price. Always the demos, never a real course \u2014 to show one particular course, use Email it on its row. Each door opens that course's own card. The note and the addresses are kept in this browser.</span>
-        <textarea id="demoNote" rows="3" placeholder="A line or two from you \u2014 who you are, why you are sending this.">${esc(demoNote())}</textarea>
+        <textarea id="demoNote" rows="7" placeholder="Empty sends the card alone, unsigned by a letter.">${esc(demoNote())}</textarea>
+        <span class="note">This is the letter on top of the card, in your hand. Edit it here and it stays edited. <button class="linkbtn" type="button" id="noteReset">Put the standard note back</button></span>
         <span class="sendrow"><input type="email" id="cardTo" placeholder="Their address" autocomplete="off"><input type="email" id="cardCopyTo" class="cc" placeholder="A copy to you (optional)" value="${esc(cardCopyTo())}"><button class="btn small" type="button" id="cardSend">Send the card</button></span>
         <span class="acts"><button class="btn small quiet" type="button" id="cardPreview">Preview</button><button class="btn small quiet" type="button" id="cardCopy">Copy the card to paste into Gmail</button><button class="linkbtn" type="button" id="demosCopy">Copy as plain text</button></span>
       </div>`;
@@ -631,6 +648,10 @@ $('app').addEventListener('click', async e => {
       return;
     }
     if (e.target.closest('#demosCopy')) { const b = e.target.closest('#demosCopy'); await hubCopyButton(b, demosNote()); return; }
+    if (e.target.closest('#noteReset')) {
+      try { localStorage.removeItem(DEMO_NOTE_KEY); } catch (err) {}
+      const t = $('demoNote'); if (t) t.value = DEFAULT_DEMO_NOTE; status('The standard note is back.'); return;
+    }
     if (e.target.closest('#cardPreview')) {
       const u = URL.createObjectURL(new Blob([cardHtml()], { type: 'text/html' }));
       window.open(u, '_blank', 'noopener'); setTimeout(() => URL.revokeObjectURL(u), 60000); return;
