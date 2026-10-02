@@ -14,6 +14,12 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
+## 2 Oct 2026 — the card as an email (version 64)
+`sendCard`, owner only: the console builds the offer card as HTML and the
+store sends it from `lite@` (with a bcc); `sendAs_` carries `bcc` and the
+plain-text part. Sending needs the owner to authorise mail once in the editor.
+See [2026-10-02-send-card.md](2026-10-02-send-card.md).
+
 ## 2 Oct 2026 — the reminders' sender, and a gate that went out twice (versions 61, 62)
 `sendAs_` sends the volunteer reminders from `info@celtaconnect.com` when the
 account holds it as an alias; v61 was composed on a stale editor tab and

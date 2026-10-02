@@ -75,7 +75,12 @@
   .filmrow.demos{display:grid; gap:10px;}
   .filmrow.demos b{font-family:'Newsreader',Georgia,serif; font-size:1rem;}
   .filmrow.demos textarea{width:100%; box-sizing:border-box; font:inherit; font-size:0.9rem; padding:9px 11px; border:1.5px solid var(--sand-line); border-radius:8px; background:var(--paper); color:var(--ink); resize:vertical;}
-  .filmrow.demos .acts{display:flex; gap:12px; align-items:center;}
+  .filmrow.demos .acts{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  /* The card goes out as the email (2 Oct 2026): an address, Send, and the
+     quieter ways round it -- preview, paste into Gmail, plain text. */
+  .filmrow.demos .sendrow{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+  .filmrow.demos .sendrow input{flex:1 1 220px; min-width:180px;}
+  .filmrow.demos .sendrow .cc{flex:0 1 220px; min-width:160px;}
   .centre.label{font-style:italic; color:var(--gold-deep);}
   .chip.demo{background:var(--gold-wash); color:var(--gold-deep); border-color:var(--amber-edge); font-weight:700;}
   .filmrow.film-self{align-items:center; gap:12px;} .filmrow.film-self b{font-family:'Newsreader',Georgia,serif; font-size:1rem;} .filmrow.film-self code{font-size:0.78rem;}
@@ -178,6 +183,7 @@
 
 <script src="hub-shared.js?v=202610021014"></script>
 <script src="hub-store.js?v=202610021014"></script>
+<script src="hub-card-mail.js?v=202610021014"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -331,6 +337,21 @@ function demosNote(){
     '',
     'Ramy',
   ].filter(x => x !== null).join('\n');
+}
+/* THE CARD AS THE EMAIL (Ramy, 2 Oct 2026: "I want the email to be the card").
+   hub-card-mail.js draws it; this gathers what goes on it. The doors are the
+   same links demosNote() lists, each to that course's offer card. */
+const CARD_CC_KEY = 'chub:cardCopyTo';
+function cardCopyTo(){ try { return (localStorage.getItem(CARD_CC_KEY) || '').trim(); } catch (e) { return ''; } }
+function cardSubject(){ return 'Connect Lite \u2014 ' + (standingDemos().done ? 'three' : 'two') + ' courses to look around, and a film'; }
+function cardHtml(){
+  const { start, visit, done } = standingDemos();
+  const doors = [
+    start && { label: 'The first week of a course', note: 'The first plans in, the first feedback going back.', href: cardLink(start) },
+    visit && { label: 'The last week, before the visit', note: 'Two days before the assessor arrives: grades provisional, the pack assembling itself.', href: cardLink(visit) },
+    done && { label: 'A course that has finished', note: 'The reports written, CELTA 5 signed, the certificates.', href: cardLink(done) },
+  ].filter(Boolean);
+  return hubCardMail({ note: demoNote(), film: filmLink(), price: priceText(), doors, site: base() });
 }
 async function noteFor(c){
   const film = filmLink();
@@ -506,10 +527,11 @@ $('app').innerHTML = `
       const { start, visit } = standingDemos();
       if (!start || !visit) return '';
       return `<div class="filmrow demos">
-        <b>Send the demos and the film</b>
-        <span class="note">One message: your note, the first-week card, the before-the-visit card, the finished course, and the film once its link is filled in below. Kept in this browser.</span>
+        <b>Send the card</b>
+        <span class="note">The email <i>is</i> the card: your note, the three courses and the film as doors, the price. Each door opens that course's own card. It goes out from lite@celtaconnect.com; the note and the addresses are kept in this browser.</span>
         <textarea id="demoNote" rows="3" placeholder="A line or two from you \u2014 who you are, why you are sending this.">${esc(demoNote())}</textarea>
-        <span class="acts"><button class="btn small" type="button" id="demosCopy">Copy the message</button><a class="linkbtn" id="demosMail" href="#">Email it</a></span>
+        <span class="sendrow"><input type="email" id="cardTo" placeholder="Their address" autocomplete="off"><input type="email" id="cardCopyTo" class="cc" placeholder="A copy to you (optional)" value="${esc(cardCopyTo())}"><button class="btn small" type="button" id="cardSend">Send the card</button></span>
+        <span class="acts"><button class="btn small quiet" type="button" id="cardPreview">Preview</button><button class="btn small quiet" type="button" id="cardCopy">Copy the card to paste into Gmail</button><button class="linkbtn" type="button" id="demosCopy">Copy as plain text</button></span>
       </div>`;
     })()}
     <div class="filmrow">
@@ -548,7 +570,8 @@ document.addEventListener('input', e => {
   if (!e.target.closest) return;
   if (e.target.closest('#filmLink')) { try { localStorage.setItem(FILM_KEY, e.target.value.trim()); } catch (err) {} return; }
   if (e.target.closest('#demoNote')) { try { localStorage.setItem(DEMO_NOTE_KEY, e.target.value); } catch (err) {} return; }
-  if (e.target.closest('#priceText')) { try { localStorage.setItem(PRICE_KEY, e.target.value.trim()); } catch (err) {} }
+  if (e.target.closest('#priceText')) { try { localStorage.setItem(PRICE_KEY, e.target.value.trim()); } catch (err) {} return; }
+  if (e.target.closest('#cardCopyTo')) { try { localStorage.setItem(CARD_CC_KEY, e.target.value.trim()); } catch (err) {} }
 });
 $('app').addEventListener('click', async e => {
     const urls = e.target.closest('#toggleUrls');
@@ -593,7 +616,7 @@ $('app').addEventListener('click', async e => {
       BUSY = false;
       return;
     }
-    if (e.target.closest('#filmLink') || e.target.closest('#priceText') || e.target.closest('#demoNote')) return;
+    if (e.target.closest('#filmLink') || e.target.closest('#priceText') || e.target.closest('#demoNote') || e.target.closest('#cardTo') || e.target.closest('#cardCopyTo')) return;
     const note = e.target.closest('[data-note]');
     if (note) {
       const c = COURSES.filter(function(x){ return x.id === note.dataset.note; })[0];
@@ -608,7 +631,33 @@ $('app').addEventListener('click', async e => {
       return;
     }
     if (e.target.closest('#demosCopy')) { const b = e.target.closest('#demosCopy'); await hubCopyButton(b, demosNote()); return; }
-    if (e.target.closest('#demosMail')) { e.preventDefault(); location.href = 'mailto:?subject=' + encodeURIComponent('Connect Lite \u2014 ' + (standingDemos().done ? 'three' : 'two') + ' courses to look around, and a film') + '&body=' + encodeURIComponent(demosNote()); return; }
+    if (e.target.closest('#cardPreview')) {
+      const u = URL.createObjectURL(new Blob([cardHtml()], { type: 'text/html' }));
+      window.open(u, '_blank', 'noopener'); setTimeout(() => URL.revokeObjectURL(u), 60000); return;
+    }
+    if (e.target.closest('#cardCopy')) {
+      /* Rich copy: pasted into a Gmail compose it keeps its tables, borders
+         and colours, so the card can also go from the Workspace mailbox by
+         hand. hubCopyButton is plain-text only, hence the clipboard call. */
+      const b = e.target.closest('#cardCopy'), was = b.textContent;
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([cardHtml()], { type: 'text/html' }), 'text/plain': new Blob([demosNote()], { type: 'text/plain' }) })]);
+        b.textContent = 'Copied \u2014 paste it into a new message';
+      } catch (err) { b.textContent = 'Could not copy \u2014 use Preview and copy from there'; }
+      setTimeout(() => { b.textContent = was; }, 2600); return;
+    }
+    if (e.target.closest('#cardSend')) {
+      const b = e.target.closest('#cardSend'), to = ($('cardTo').value || '').trim(), cc = ($('cardCopyTo').value || '').trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) { status('Type the address the card goes to.'); $('cardTo').focus(); return; }
+      if (!ownerKey()) { status('The owner key is missing \u2014 open the console from its own link.'); return; }
+      b.disabled = true; b.textContent = 'Sending\u2026'; status('');
+      try {
+        const r = await HubStore.call({ op: 'sendCard', owner: ownerKey(), to, copy: cc, subject: cardSubject(), html: cardHtml(), text: demosNote() });
+        status('Sent to ' + to + ' from ' + (r && r.from || 'the store') + (cc ? ', with a copy to ' + cc : '') + '.');
+        $('cardTo').value = '';
+      } catch (err) { status('Not sent: ' + (err && err.message || err)); }
+      b.disabled = false; b.textContent = 'Send the card'; return;
+    }
     const mail = e.target.closest('[data-mail]');
     if (mail) {
       e.preventDefault();
