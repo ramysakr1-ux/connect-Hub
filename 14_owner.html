@@ -80,6 +80,8 @@
      quieter ways round it -- preview, paste into Gmail, plain text. */
   .filmrow.demos .sendrow{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
   .filmrow.demos .sendrow input{flex:1 1 220px; min-width:180px;}
+  .priceon{display:inline-flex; align-items:center; gap:7px; font-size:0.78rem; color:var(--grey); cursor:pointer;}
+  .priceon input{accent-color:var(--teal); width:15px; height:15px; cursor:pointer;}
   .filmrow.demos .sendrow .kindsel{flex:0 0 152px;}
   .filmrow.demos .sendrow .kindsel select{font-size:0.86rem; padding:8px 26px 8px 10px;}
   .filmrow.demos .sendrow .cc{flex:0 1 220px; min-width:160px;}
@@ -376,10 +378,15 @@ function demosNote(){
 const CARD_CC_KEY = 'chub:cardCopyTo';
 /* Which card goes out (Ramy, 3 Oct 2026): the full one, or the film alone. */
 const CARD_KIND_KEY = 'chub:cardKind';
-function cardKind(){ try { return localStorage.getItem(CARD_KIND_KEY) === 'film' ? 'film' : ''; } catch (e) { return ''; } }
+function cardKind(){ try { var v = localStorage.getItem(CARD_KIND_KEY); return (v === 'film' || v === 'price') ? v : ''; } catch (e) { return ''; } }
+/* Whether the money rides along with the demos. A first message to a centre
+   that has not asked is sometimes better without it (Ramy, 3 Oct 2026). */
+const PRICE_ON_KEY = 'chub:priceOn';
+function priceOn(){ try { return localStorage.getItem(PRICE_ON_KEY) !== 'off'; } catch (e) { return true; } }
 function cardCopyTo(){ try { return (localStorage.getItem(CARD_CC_KEY) || '').trim(); } catch (e) { return ''; } }
 function cardSubject(){
   if (cardKind() === 'film') return 'Connect Lite \u2014 a film of a whole CELTA course';
+  if (cardKind() === 'price') return 'Connect Lite \u2014 what it costs';
   return 'Connect Lite \u2014 ' + (standingDemos().done ? 'three' : 'two') + ' courses to look around, and a film';
 }
 function cardHtml(){
@@ -390,7 +397,8 @@ function cardHtml(){
     done && { label: 'A course that has finished', note: 'The reports written, CELTA 5 signed, the certificates.', href: cardLink(done) },
   ].filter(Boolean);
   if (cardKind() === 'film') return hubCardMail({ note: demoNote(), film: filmLink(), site: base(), only: 'film' });
-  return hubCardMail({ note: demoNote(), film: filmLink(), price: priceText(), doors, site: base() });
+  if (cardKind() === 'price') return hubCardMail({ note: demoNote(), price: priceText(), site: base(), only: 'price' });
+  return hubCardMail({ note: demoNote(), film: filmLink(), price: priceText(), doors, site: base(), showPrice: priceOn() });
 }
 async function noteFor(c){
   const film = filmLink();
@@ -570,7 +578,7 @@ $('app').innerHTML = `
         <span class="note">The email <i>is</i> the card. <b>The full card</b> carries your note, the three demo courses and the film as doors, and the price \u2014 always the demos, never a real course; to show one particular course use Email it on its row. <b>Just the film</b> sends the film alone and ends by offering a demo link, for someone who has never seen Lite. The note and the addresses are kept in this browser.</span>
         <textarea id="demoNote" rows="7" placeholder="Empty sends the card alone, unsigned by a letter.">${esc(demoNote())}</textarea>
         <span class="note">This is the letter on top of the card, in your hand. Edit it here and it stays edited. <button class="linkbtn" type="button" id="noteReset">Put the standard note back</button></span>
-        <span class="sendrow"><span class="house-sel kindsel"><select id="cardKind"><option value="">The full card</option><option value="film"${cardKind() === 'film' ? ' selected' : ''}>Just the film</option></select></span><input type="email" id="cardTo" placeholder="Their address" autocomplete="off"><input type="email" id="cardCopyTo" class="cc" placeholder="A copy to you (optional)" value="${esc(cardCopyTo())}"><button class="btn small" type="button" id="cardSend">Send the card</button></span>
+        <span class="sendrow"><span class="house-sel kindsel"><select id="cardKind"><option value="">The full card</option><option value="film"${cardKind() === 'film' ? ' selected' : ''}>Just the film</option><option value="price"${cardKind() === 'price' ? ' selected' : ''}>Just the price</option></select></span><input type="email" id="cardTo" placeholder="Their address" autocomplete="off"><input type="email" id="cardCopyTo" class="cc" placeholder="A copy to you (optional)" value="${esc(cardCopyTo())}"><button class="btn small" type="button" id="cardSend">Send the card</button></span>
         <span class="acts"><button class="btn small quiet" type="button" id="cardPreview">Preview</button><button class="btn small quiet" type="button" id="cardCopy">Copy the card to paste into Gmail</button><button class="linkbtn" type="button" id="demosCopy">Copy as plain text</button></span>
       </div>`;
     })()}
@@ -581,6 +589,7 @@ $('app').innerHTML = `
       <label for="priceText">Price</label>
       <input type="text" id="priceText" placeholder="£240, or leave empty" value="${esc(priceText())}" style="flex:0 1 190px; min-width:140px;">
       <a class="btn small quiet" href="${esc(base() + 'price.html')}" target="_blank" rel="noopener">Open the price card</a>
+      <label class="priceon"><input type="checkbox" id="priceOn"${priceOn() ? ' checked' : ''}> the price goes on the full card</label>
       <span class="note">Both are kept in this browser. The <b>price</b> box is for a one-off quote: fill it and that figure replaces the published rates on the card. Leave it empty and the card states £300 and links to the rates in full.</span>
     </div>
     <div class="courses">${rows || '<div class="empty">No courses yet. Make the first one, then send its tutor link to the centre.</div>'}</div>
@@ -614,7 +623,8 @@ document.addEventListener('input', e => {
   if (e.target.closest('#demoNote')) { try { localStorage.setItem(DEMO_NOTE_KEY, e.target.value); } catch (err) {} return; }
   if (e.target.closest('#priceText')) { try { localStorage.setItem(PRICE_KEY, e.target.value.trim()); } catch (err) {} return; }
   if (e.target.closest('#cardCopyTo')) { try { localStorage.setItem(CARD_CC_KEY, e.target.value.trim()); } catch (err) {} return; }
-  if (e.target.closest('#cardKind')) { try { localStorage.setItem(CARD_KIND_KEY, e.target.value); } catch (err) {} status(e.target.value === 'film' ? 'The film alone goes out next.' : 'The full card goes out next.'); }
+  if (e.target.closest('#cardKind')) { try { localStorage.setItem(CARD_KIND_KEY, e.target.value); } catch (err) {} status(e.target.value === 'film' ? 'The film alone goes out next.' : e.target.value === 'price' ? 'The price alone goes out next.' : 'The full card goes out next.'); return; }
+  if (e.target.closest('#priceOn')) { try { localStorage.setItem(PRICE_ON_KEY, e.target.checked ? 'on' : 'off'); } catch (err) {} status(e.target.checked ? 'The full card carries the price.' : 'The full card goes without the price.'); }
 });
 $('app').addEventListener('click', async e => {
     const urls = e.target.closest('#toggleUrls');
@@ -659,7 +669,7 @@ $('app').addEventListener('click', async e => {
       BUSY = false;
       return;
     }
-    if (e.target.closest('#filmLink') || e.target.closest('#priceText') || e.target.closest('#demoNote') || e.target.closest('#cardTo') || e.target.closest('#cardCopyTo') || e.target.closest('#cardKind')) return;
+    if (e.target.closest('#filmLink') || e.target.closest('#priceText') || e.target.closest('#demoNote') || e.target.closest('#cardTo') || e.target.closest('#cardCopyTo') || e.target.closest('#cardKind') || e.target.closest('#priceOn')) return;
     const note = e.target.closest('[data-note]');
     if (note) {
       const c = COURSES.filter(function(x){ return x.id === note.dataset.note; })[0];
