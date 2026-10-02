@@ -25,7 +25,7 @@
 <title>Connect Lite — Assessor pack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610020905">
+<link rel="stylesheet" href="hub-tokens.css?v=202610021014">
 <style>
   :root{
     /* the control fill, for the shared confirm modal's Cancel button */
@@ -237,7 +237,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610020905">
+<link rel="stylesheet" href="hub-house.css?v=202610021014">
 </head>
 <body>
 <div class="board">
@@ -267,14 +267,14 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202610020905"></script>
-<script src="hub-shared.js?v=202610020905"></script>
-<script src="assignment-defaults.js?v=202610020905"></script>
-<script src="hub-tracker.js?v=202610020905"></script>
-<script src="hub-rotation.js?v=202610020905"></script>
-<script src="hub-attendance.js?v=202610020905"></script>
-<script src="hub-store.js?v=202610020905"></script>
-<script src="hub-sync.js?v=202610020905"></script>
+<script src="observation-defaults.js?v=202610021014"></script>
+<script src="hub-shared.js?v=202610021014"></script>
+<script src="assignment-defaults.js?v=202610021014"></script>
+<script src="hub-tracker.js?v=202610021014"></script>
+<script src="hub-rotation.js?v=202610021014"></script>
+<script src="hub-attendance.js?v=202610021014"></script>
+<script src="hub-store.js?v=202610021014"></script>
+<script src="hub-sync.js?v=202610021014"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -586,62 +586,6 @@ if (MODE === 'assessor') {
   $('accessLine').textContent = 'This page reads the course through the assessor link. Open it with the link the centre gave you.';
 }
 
-// ---- list view -------------------------------------------------------------------
-function personRow(tr){
-  const c = T.recordFor(tr), r = T.readCandidate(c), hist = T.tpHistory(tr);
-  const returned = Object.keys(hist).map(Number).filter(n=>n>=1&&n<=HUB_MAX_TP).sort((a,b)=>a-b);
-  const last = returned.length ? returned[returned.length-1] : 0;
-  const g = last ? G_STATE[c['tp'+last]] : null;
-  const cur = tr.tp && tr.tp.feedback; const curN = cur && cur.status!=='returned' ? T.tpNumberOf(cur) : 0;
-  const tpChips = `<span class="chip ${g?g.cls:'nd'}"><b>${returned.length} of ${TP_TOTAL}</b>${last ? 'TP'+last+' '+(g?g.t:'returned') : 'no TP returned'}</span>${curN ? `<span class="chip wait"><b>TP${curN}</b>in progress</span>` : ''}`;
-  const asg = ORDER.filter(k => k!=='a5' || a5InPlay(tr.assignments||{})).map(k => { const st = T.assignmentState((tr.assignments||{})[k]); const a = A_STATE[st.code] || A_STATE['']; return `<span class="chip ${a.cls}"><b>${esc(k.toUpperCase())}</b>${a.t}${st.dm?' · DM':''}</span>`; }).join('');
-  const chip = T.STATE_CHIP[r.state];
-  /* Handbook 14.2: at a regular assessment the assessor reads two portfolios in
-     full, and "in cases where there are more than two Fail candidates on the
-     course, the assessor should focus on borderline cases". The pack already
-     works each candidate's standing out, so it can say who those are rather
-     than leaving the assessor to find them. It marks, it does not choose: the
-     assessor picks the two. */
-  const flag = (tr.tracker && tr.tracker.withdrawn) ? ''
-    : r.state === 'notstd' ? '<div class="review">read in full — not to standard</div>'
-    : (r.potentialFail || r.letterIssued) ? '<div class="review">read in full — borderline</div>'
-    : r.ceiling ? '<div class="review">read in full — capped assignment</div>'
-    : '';
-  const q = 'trainee=' + encodeURIComponent(tr.id);
-  return `<tr>
-    <td><div class="name">${esc(tr.name)}</div><div class="sub">${esc(tr.group ? 'Group ' + tr.group : '')}${tr.tracker && tr.tracker.withdrawn ? ' · withdrawn' : ''}</div>${flag}</td>
-    <td><div class="chips">${tpChips}</div></td>
-    <td><div class="chips">${asg}</div></td>
-    <td><span class="standing ${chip.cls}">${esc(chip.text)}</span>${(function(){
-      /* BOTH grades, always. This showed the final if there was one and the
-         provisional only if there was not -- so the moment a final was agreed
-         the provisional vanished from the table. The provisional is what the
-         centre puts on the Appian grade form two or more days BEFORE the
-         assessment, and it is the first thing the assessor looks for; where
-         the two differ, the difference is the conversation (Ramy, 25 Sep 2026:
-         "this is a candidate tracker without the provisional, which is the
-         most important thing"). */
-      var g = (tr.tracker && tr.tracker.grades) || {}, out = '';
-
-      /* Two pills, read as a pair, and the report on its own line beneath
-         them -- it was welded onto the end of the final grade with a middot
-         (Ramy, 27 Sep 2026: "final report sitting right next to the grade,
-         maybe it should have its own pill"). */
-      if (g.provisional || g.final) {
-        out += '<div class="grades">';
-        if (g.provisional) out += `<span class="gpill">Prov <b>${esc(g.provisional)}</b></span>`;
-        if (g.final) out += `<span class="gpill fin">Final <b>${esc(g.final)}</b></span>`;
-        out += '</div>';
-      }
-      /* Withdrawn, Extension and Deferral are outcomes, not grades: there is
-         no final report on a course that ended without one. */
-      if (g.final && !['WITHDRAWN','EXTENSION','DEFERRAL'].includes(g.final))
-        out += `<a class="reportlink" href="16_final_report.html?id=${encodeURIComponent(tr.id)}">Final report</a>`;
-      return out;
-    })()}${r.ceiling ? `<div class="sub">cap: ${esc(r.ceiling.replace('SRT','LSRT'))}</div>` : ''}${r.letterIssued ? '<div class="sub" style="color:var(--red);">Fail letter issued</div>' : ''}</td>
-    <td style="white-space:nowrap;"><a class="btn ghost" href="12_assessor_pack.html?${q}">Open</a></td>
-  </tr>`;
-}
 function doubleMarkingRows(){
   const rows = [];
   PEOPLE.forEach(tr => {

@@ -246,8 +246,12 @@ await step('tutor: a course still on the superseded criteria adopts the correcte
   await T.p.goto(tutorUrl('5_tutor_dashboard.html'), { waitUntil: 'domcontentloaded' }); await settle(T.p, 3500);
 
   const after = Object.fromEntries(Object.entries(was).map(([k]) => [k, STORE.course.wording[k].criteria.length]));
-  must(JSON.stringify(after) === JSON.stringify({ lrt: 4, lsrt: 4, fol: 6, lfc: 5 }),
-    'store not healed: ' + JSON.stringify({ before, after }));
+  /* the counts the shipped defaults carry -- read off the page, so the step
+     cannot drift from the file it is testing (it did: 4/4/6/5 was 25 Sep's) */
+  const shipped = await T.p.evaluate(() => Object.fromEntries(Object.entries(window.CONNECT_HUB_DEFAULT_WORDING).map(([k, v]) => [k, (v.criteria || []).length])));
+  const expect = Object.fromEntries(Object.keys(was).map(k => [k, shipped[k]]));
+  must(JSON.stringify(after) === JSON.stringify(expect),
+    'store not healed: ' + JSON.stringify({ before, after, expect }));
   must(STORE.course.wording.lsrt.title === 'Language Skills Related Tasks', 'lsrt title still singular');
   must(STORE.course.wording.lrt.criteria[0].text === 'Analysing language correctly for teaching purposes',
     'lrt criterion 1 is not the syllabus wording: ' + STORE.course.wording.lrt.criteria[0].text);
@@ -681,7 +685,7 @@ await step('tutor: the final course report, from the grade just saved', async ()
   const body = await text(T.p);
   // The centre's own wording (its Pass A / Pass B templates and a real Pass report, 25 Sep 2026)
   must(/This is to confirm that\s+Amara Nwosu/.test(body), 'the cover does not confirm her: ' + body.slice(0, 200));
-  must(/attended 118 hours of a 120-hour initial teacher training course/.test(body) && /6 hours of classroom-based and online teaching practice/.test(body), 'hours or mode missing: ' + body.slice(0, 700));
+  must(/attended 118 hours of a 120-hour initial teacher training course/.test(body) && /1\.5 hours of assessed classroom-based and online teaching practice across 2 lessons/.test(body)   /* the hours are counted off her two returned TPs, 45 minutes each, since 1 Oct 2026 */, 'hours or mode missing: ' + body.slice(0, 700));
   must(/Ramy Sakr[\s\S]*Pelin Korkmaz[\s\S]*CELTA course Tutor/.test(body), 'signatures missing');
   must(/Preparing, planning and practising teaching\s+Grade: Pass/.test(body), 'the teaching area grade is not the final grade');
   must(/Written assignments\s+Grade: (Pass|Fail|\u2014|—)/.test(body), 'the assignments area is missing');
@@ -703,7 +707,10 @@ await step('assessor: the invitation card, then the pack, from a clean browser',
 });
 await step('assessor: the final report opens from the pack; the candidate is refused', async () => {
   await S.p.goto(`${BASE}12_assessor_pack.html?ak=${STORE.akey}`, { waitUntil: 'domcontentloaded' }); await settle(S.p, 3000);
-  const door = await S.p.$('a[href^="16_final_report.html"]'); must(door, 'no final-report door on the pack');
+  /* the pack is doors since 27 Sep 2026: the grades report is one of them,
+     and the final report opens from there */
+  await S.p.click('a[href="13_grades_report.html"]'); await settle(S.p, 3000);
+  const door = await S.p.$('a[href^="16_final_report.html"]'); must(door, 'no final-report door on the grades report');
   await door.click(); await settle(S.p, 3000);
   must(/This is to confirm that\s+Amara Nwosu/.test(await text(S.p)), 'the assessor could not open the report');
   await A.p.goto(`${BASE}16_final_report.html?id=${encodeURIComponent(amaraToken)}&t=${amaraToken}`, { waitUntil: 'domcontentloaded' }); await settle(A.p, 2500);

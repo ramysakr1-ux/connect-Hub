@@ -15,7 +15,11 @@ const raw = async (b) => {
   throw new Error('store unreachable');
 };
 const { courses } = (await raw({ op: 'ownerCourses', owner: OWNER })).result;
-const c5 = courses.find((c) => c.id === 'c5');
+/* The scratch course, by NAME: it is made and deleted as needed, so its id
+   is whatever slot was free (it was c5 for a week, then c3). The film's
+   scratch-course.mjs names it; SCRATCH=<id> overrides. (2 Oct 2026) */
+const c5 = courses.find((c) => process.env.SCRATCH ? c.id === process.env.SCRATCH : c.name === 'Film scratch \u2014 not a demo');
+if (!c5) { console.error('No scratch course: node store/scratch-course.mjs --make, then --reset --one'); process.exit(1); }
 const roster = (await raw({ op: 'roster', key: c5.tutorKey })).result || {};
 const tok = Object.values(roster.trainees || []).filter(Boolean)[0].token;
 const course = (await raw({ op: 'course', key: c5.tutorKey })).result || {};

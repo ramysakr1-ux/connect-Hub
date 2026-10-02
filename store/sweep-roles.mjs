@@ -15,10 +15,23 @@ const raw = async (b) => {
 };
 
 const { courses } = (await raw({ op: 'ownerCourses', owner: OWNER })).result;
-const c5 = courses.find((c) => c.id === 'c5');
+/* The scratch course, by NAME: it is made and deleted as needed, so its id
+   is whatever slot was free (it was c5 for a week, then c3). The film's
+   scratch-course.mjs names it; SCRATCH=<id> overrides. (2 Oct 2026) */
+const c5 = courses.find((c) => process.env.SCRATCH ? c.id === process.env.SCRATCH : c.name === 'Film scratch \u2014 not a demo');
+if (!c5) { console.error('No scratch course: node store/scratch-course.mjs --make, then --reset --one'); process.exit(1); }
 const roster = (await raw({ op: 'roster', key: c5.tutorKey })).result || {};
 const tok = Object.values(roster.trainees || []).filter(Boolean)[0].token;
-const reg = (await raw({ op: 'course', key: c5.tutorKey })).result.volunteers || { students: [] };
+let reg = (await raw({ op: 'course', key: c5.tutorKey })).result.volunteers || { students: [] };
+/* The scratch course is made empty; the volunteer checks need two students on
+   its register, so the sweep puts them there the way the register does -- a
+   token is the course id and twenty hex digits (2 Oct 2026). */
+if ((reg.students || []).length < 2) {
+  const hex = () => Array.from({ length: 10 }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');
+  reg = { students: [{ name: 'Sweep Student One', token: c5.id + '-' + hex(), here: [] }, { name: 'Sweep Student Two', token: c5.id + '-' + hex(), here: [] }] };
+  const put = await raw({ op: 'putCourse', key: c5.tutorKey, kind: 'volunteers', data: reg });
+  if (!put.ok) { console.error('could not put two students on the scratch register: ' + put.error); process.exit(1); }
+}
 const vtok = (reg.students[0] || {}).token;
 const other = (reg.students[1] || {}).name || 'NO-SECOND-STUDENT';
 const ak = c5.assessorKey;
@@ -31,7 +44,7 @@ const t = (await raw({ op: 'course', key: c5.tutorKey })).result || {};
 check('tutor sees every course kind', ['settings', 'wording', 'observations', 'stream', 'grid', 'timetable', 'tppoints', 'volunteers', 'shared'].every((k) => k in t));
 const cb = (await raw({ op: 'boot', token: tok })).result || {};
 check('candidate gets NO volunteer register', !(cb.course || {}).volunteers);
-check('candidate DOES get the shared materials', Array.isArray((cb.course || {}).shared));
+check('candidate DOES get the shared materials', 'shared' in (cb.course || {}));   // null until something is shared; the pages take either
 const ab = (await raw({ op: 'boot', a: ak })).result || {};
 check('assessor DOES get the register (Handbook 14.1)', !!(ab.course || {}).volunteers);
 const vb = (await raw({ op: 'boot', v: vtok })).result || {};
@@ -46,7 +59,7 @@ check('volunteer cannot write anything', (await raw({ op: 'putCourse', v: vtok, 
 check('volunteer cannot share a material', (await raw({ op: 'shareMaterial', v: vtok, name: 'x', url: 'https://x.example/y' })).ok === false);
 check('volunteer cannot call the course op', (await raw({ op: 'course', v: vtok })).ok === false);
 check('volunteer cannot read the roster', (await raw({ op: 'roster', v: vtok })).ok === false);
-check('unknown volunteer token refused', (await raw({ op: 'boot', v: 'c5-' + '0'.repeat(20) })).ok === false);
+check('unknown volunteer token refused', (await raw({ op: 'boot', v: c5.id + '-' + '0'.repeat(20) })).ok === false);
 check('token naming a course that does not exist refused', (await raw({ op: 'boot', v: 'c999-' + 'a'.repeat(20) })).ok === false);
 
 const probe = 'https://sweep.example/probe.pdf';

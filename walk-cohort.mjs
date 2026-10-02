@@ -456,8 +456,8 @@ await step('the grades report holds six, and each grade stays on its own person'
      the candidates, kept with the course so every tutor has them. */
   const courseHeads = await T.p.$$eval('#course .sec h3', hs => hs.map(h => h.textContent.trim()));
   must(JSON.stringify(courseHeads) === JSON.stringify([
-    'Teaching Practice','Teaching Practice Supervision and Feedback','Tutorials','Additional Comments'
-  ]), 'the course-level fields are not the form\'s four, in order: ' + JSON.stringify(courseHeads));
+    'Teaching Practice','Teaching Practice Supervision and Feedback','Tutorials','Additional Comments','Grading meeting'
+  ]), 'the course-level fields are not the form\'s five, in order: ' + JSON.stringify(courseHeads));
   await T.p.fill('#course textarea[data-coursefield="tutorials"]', 'Two tutorials each, week two and week four.');
   await T.p.click('#saveBtn'); await settle(T.p, 700);
   await T.p.reload({waitUntil:'networkidle'}); await settle(T.p, 900);
@@ -499,27 +499,36 @@ await step('the assessor pack holds all six, with the visit at the end of week f
   const body = await text(S.p);
   for (const c of COHORT) must(body.includes(c.name), 'missing from the assessor pack: ' + c.name);
   must(/6 on the course|6 candidates/i.test(body), 'the pack does not count six: ' + (body.match(/\d+ on the course/) || ['none'])[0]);
-  /* The standing column is the TP standard, and three candidates were graded
-     To standard in weeks 1-2. If it reads NOT STARTED for all six, the grade
-     never reached the record the pack reads. */
-  const standings = await S.p.evaluate(() => [...document.querySelectorAll('.standing')].map(e => e.textContent.trim()));
-  must(standings.filter(t => /TO STANDARD/i.test(t)).length === 3,
-    'standing column: ' + JSON.stringify(standings) + ' -- three should read TO STANDARD');
+  /* The pack stopped drawing its own candidate table on 27 Sep 2026 (Ramy:
+     "give the assessor a shortcut to the candidates instead"): one portfolio
+     door per candidate, and the grades and the tracker as doors of their own. */
+  const doors = await S.p.$$eval('a[href^="12_assessor_pack.html?trainee="]', as => as.length);
+  must(doors === 6, 'portfolio doors: ' + doors + ', expected one per candidate');
+  must(await S.p.$('a[href="13_grades_report.html"]'), 'no door to the grades report');
+  must(await S.p.$('a[href="7_candidate_tracker.html"]'), 'no door to the tracker');
   // the four briefs, and the link that expires fourteen days after the course
-  for (const k of ['FOL', 'LRT', 'LSRT', 'LFC']) must(body.includes(k), 'brief missing from the pack: ' + k);
-  must(/13 November 2026/.test(body), 'the expiry is not course end + 14 days: ' + (body.match(/stops working on [^\n]*/) || ['none'])[0]);
-  /* The provisional is what the centre files before the assessment, so it must
-     be on the table -- and it must not disappear when a final is agreed. */
-  must(/Provisional: PASS A/.test(body) && /Final: PASS A/.test(body),
-    'the pack does not show both grades: ' + (body.match(/Provisional[^\n]*|Final[^\n]*/g) || ['none']).join(' / '));
+  /* the briefs sit in a folded section, so they are read off the DOM, not the
+     visible text */
+  const briefHeads = await S.p.$$eval('.brief h3', hs => hs.map(h => h.textContent.trim()));
+  for (const k of ['FOL', 'LRT', 'LSRT', 'LFC']) must(briefHeads.some(h => h.startsWith(k + ' ')), 'brief missing from the pack: ' + k + ' (have ' + JSON.stringify(briefHeads) + ')');
+  /* the assessor's link ends with the course, not fourteen days after it (store, 29 Sep 2026) */
+  must(/stops working on 30 October 2026/.test(body), 'the expiry is not the course end: ' + (body.match(/stops working on [^\n]*/) || ['none'])[0]);
   await noSideScroll(S.p, 'Assessor pack, six candidates');
+  /* Both grades live on the grades report now, which the assessor opens
+     read-only: the provisional is what the centre files before the visit and
+     it must still be there once a final is agreed. */
+  await S.p.goto(`${BASE}13_grades_report.html?ak=${STORE.akey}`, { waitUntil: 'domcontentloaded' }); await settle(S.p, 3500);
+  const prov = await S.p.$eval('.cand:nth-of-type(1) .grow select.grade[data-grade="provisional"]', e => e.value);
+  const fin = await S.p.$eval('.cand:nth-of-type(1) .grow.final select.grade', e => e.value);
+  must(prov === 'PASS A' && fin === 'PASS A', 'the grades report does not show both grades: ' + JSON.stringify({ prov, fin }));
   return 'six candidates, four briefs, both grades, link expires 13 Nov';
 });
 
 await step('the assessor reads a final report, and it names the right tutors', async () => {
   const S = { p: PAGES.assessor };
+  /* the door is on the grades report, where the previous step left the page */
   const door = await S.p.$('a[href^="16_final_report.html"]');
-  must(door, 'no final-report door in the pack for a graded candidate');
+  must(door, 'no final-report door on the grades report for a graded candidate');
   await door.click(); await settle(S.p, 3000);
   const body = await text(S.p);
   must(/This is to confirm that/.test(body), 'the report did not open');

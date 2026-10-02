@@ -22,7 +22,7 @@
 // wrong for the scene. A scratch course has dates, starts empty, and can be
 // emptied again between takes.
 //
-// It never touches c1-c4. It finds its own course by name and refuses
+// It never touches a course that is somebody's (KEEP). It finds its own course by name and refuses
 // anything else.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -32,7 +32,11 @@ const STORE = (readFileSync(join(HERE, 'hub-store.js'), 'utf8').match(/https:\/\
 const OWNER = readFileSync(join(HERE, '.owner-key'), 'utf8').trim();
 
 const NAME = 'Film scratch — not a demo';
-const KEEP = new Set(['c1', 'c2', 'c3', 'c4']);
+/* The courses that are somebody's: C/18, C/17, the finished film course and
+   the two standing demos. c3 left this list on 2 Oct 2026 -- the old running
+   demo in that slot was deleted on 30 Sep and the slot is where a fresh
+   scratch course now lands. The name check above is the real guard. */
+const KEEP = new Set(['c1', 'c2', 'c4', 'c6', 'c7']);
 const MAKE = process.argv.includes('--make');
 const RESET = process.argv.includes('--reset');
 const ONE = process.argv.includes('--one');
