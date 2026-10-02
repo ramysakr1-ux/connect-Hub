@@ -41,10 +41,21 @@
       ? '<div style="font-family:' + SERIF + '; font-size:24px; font-weight:700; color:' + C.inkWarm + '; line-height:1.1;">' + esc(ctx.price) + '</div>' +
         '<div style="font-family:' + SANS + '; font-size:13px; color:' + C.grey + '; margin:2px 0 0;">per course, paid once</div>'
       : '<div style="font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.ink + ';">Ask me what it costs — reply to this and I will tell you the same day.</div>';
+    /* The letter (Ramy, 2 Oct 2026: "a nice message from me on top, with nice
+       font, with my signature, and the card sitting underneath it"). His note,
+       in the serif, signed; the card is the enclosure. No note, no letter. */
+    var letter = ctx.note
+      ? '<table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px; width:100%;"><tr><td style="padding:6px 8px 26px;">' +
+          '<div style="font-family:' + SERIF + '; font-size:17px; line-height:1.7; color:' + C.ink + ';">' + paras(ctx.note) + '</div>' +
+          '<div style="font-family:\'Instrument Serif\',Georgia,serif; font-style:italic; font-size:26px; color:' + C.inkWarm + '; margin:14px 0 0;">Ramy</div>' +
+          '<div style="font-family:' + SANS + '; font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:' + C.grey + '; margin:4px 0 0;">Connect Lite</div>' +
+        '</td></tr></table>'
+      : '';
     var html =
 '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Connect Lite — for your centre</title></head>' +
 '<body style="margin:0; padding:0; background:' + C.sand + ';">' +
 '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:' + C.sand + ';"><tr><td align="center" style="padding:28px 14px;">' +
+letter +
 '<table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px; width:100%; background:' + C.surface + '; border-left:5px solid ' + C.gold + '; border-radius:8px;">' +
 '<tr><td style="padding:28px 30px 26px;">' +
 
@@ -56,8 +67,6 @@
   '<h1 style="font-family:' + SERIF + '; font-weight:700; font-size:26px; line-height:1.2; color:' + C.teal + '; margin:0 0 8px;">Everything your candidates write, and everything you write back</h1>' +
   '<p style="font-family:' + SANS + '; font-size:14.5px; line-height:1.65; color:' + C.ink + '; margin:0;">The assessed paperwork of a CELTA course in one place — plans, language analyses, self-evaluations, the four written assignments, your feedback, the grades and the reports. No accounts, no passwords, nothing to install. A course is three links: one for your tutors, one for each candidate, one for the assessor.</p>' +
 
-  // his note, in his hand
-  (ctx.note ? '<div style="margin:22px 0 0; padding:16px 0 4px; border-top:1px solid ' + C.line + '; font-family:' + SERIF + '; font-size:15.5px; line-height:1.7; color:' + C.ink + ';">' + paras(ctx.note) + '</div>' : '') +
 
   '<h2 style="font-family:' + SERIF + '; font-weight:600; font-size:17px; color:' + C.inkWarm + '; margin:24px 0 4px;">See it working</h2>' +
   '<p style="font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.grey + '; margin:0 0 4px;">Real courses, not screenshots. Each one opens as a tutor, as a candidate, as the assessor and as a volunteer student — type in them; nothing you do there touches anybody’s record.</p>' +
@@ -69,9 +78,10 @@
     '<div style="font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.ink + '; margin:10px 0 0;"><b style="color:' + C.inkWarm + ';">Per course, not per candidate.</b> One price covers the whole course — up to 24 trainees, all of their tutors and your course administrator. Nothing recurring, nothing per seat, and no charge for the assessor’s access.</div>' +
   '</td></tr></table>' +
 
-  // sign-off
+  // sign-off, only when the card goes alone: the letter above signs otherwise
+  (ctx.note ? '' :
   '<p style="font-family:' + SANS + '; font-size:14px; line-height:1.6; color:' + C.ink + '; margin:22px 0 0;">Any questions, just reply.</p>' +
-  '<div style="font-family:\'Instrument Serif\',Georgia,serif; font-style:italic; font-size:21px; color:' + C.inkWarm + '; margin:10px 0 0;">Ramy</div>' +
+  '<div style="font-family:\'Instrument Serif\',Georgia,serif; font-style:italic; font-size:21px; color:' + C.inkWarm + '; margin:10px 0 0;">Ramy</div>') +
   '<div style="font-family:' + SANS + '; font-size:11px; color:' + C.grey + '; margin:16px 0 0; padding-top:14px; border-top:1px solid ' + C.line + ';">designed and built by <b>Ramy</b>' + (ctx.site ? ' · <a href="' + esc(ctx.site) + '" style="color:' + C.grey + ';">' + esc(ctx.site.replace(/^https?:\/\//, '').replace(/\/$/, '')) + '</a>' : '') + '</div>' +
 
 '</td></tr></table></td></tr></table></body></html>';
