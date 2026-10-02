@@ -18,7 +18,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610020212">
+<link rel="stylesheet" href="hub-tokens.css?v=202610020905">
 <style>
   :root{
     /* the pane -- the same four values the trainee landing's cards use */
@@ -152,7 +152,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610020212">
+<link rel="stylesheet" href="hub-house.css?v=202610020905">
 </head>
 <body>
 <div class="board">
@@ -176,8 +176,8 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610020212"></script>
-<script src="hub-store.js?v=202610020212"></script>
+<script src="hub-shared.js?v=202610020905"></script>
+<script src="hub-store.js?v=202610020905"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -304,8 +304,12 @@ function standingDemos(){
      links"). It is the one that answers "and what do we have at the end?" --
      the reports written, both halves of CELTA 5 signed, the certificates. It
      has no demoToday, which is what tells it from the two pinned ones. */
-  return { start: byName('Demo \u2014 the first week'), visit: byName('Demo \u2014 before the visit'),
-           done: COURSES.find(c => c.courseName === 'CELTA \u2014 C/1 2026' && !c.demoToday) };
+  const start = byName('Demo \u2014 the first week'), visit = byName('Demo \u2014 before the visit');
+  /* It is pinned too -- to its own last day, so that it never ages -- which
+     is what tells it from the two mid-course demos: its clock has reached
+     its end date. */
+  const done = COURSES.find(c => c !== start && c !== visit && c.courseName === 'CELTA \u2014 C/1 2026' && c.end && c.demoToday && c.demoToday >= c.end);
+  return { start, visit, done };
 }
 function demosNote(){
   const { start, visit, done } = standingDemos();
@@ -321,7 +325,7 @@ function demosNote(){
     done ? '3. A course that has finished \u2014 the reports written, CELTA 5 signed, the certificates \u2014 ' + cardLink(done) : null,
     film ? (done ? '4' : '3') + '. The film, eight minutes \u2014 ' + film : null,
     '',
-    'Each card opens on what Lite is and what it costs, and then four ways into that course you can type in: as a tutor, as one of the candidates, as the assessor, and as a volunteer student. Both are demonstration courses that stay on the day they are on, so nothing you do there touches anybody\u2019s record.',
+    'Each card opens on what Lite is and what it costs, and then four ways into that course you can type in: as a tutor, as one of the candidates, as the assessor, and as a volunteer student. ' + (done ? 'All three are' : 'Both are') + ' demonstration courses that stay on the day they are on, so nothing you do there touches anybody\u2019s record.',
     '',
     'Any questions, just reply.',
     '',
@@ -604,7 +608,7 @@ $('app').addEventListener('click', async e => {
       return;
     }
     if (e.target.closest('#demosCopy')) { const b = e.target.closest('#demosCopy'); await hubCopyButton(b, demosNote()); return; }
-    if (e.target.closest('#demosMail')) { e.preventDefault(); location.href = 'mailto:?subject=' + encodeURIComponent('Connect Lite \u2014 two courses to look around, and a film') + '&body=' + encodeURIComponent(demosNote()); return; }
+    if (e.target.closest('#demosMail')) { e.preventDefault(); location.href = 'mailto:?subject=' + encodeURIComponent('Connect Lite \u2014 ' + (standingDemos().done ? 'three' : 'two') + ' courses to look around, and a film') + '&body=' + encodeURIComponent(demosNote()); return; }
     const mail = e.target.closest('[data-mail]');
     if (mail) {
       e.preventDefault();
