@@ -608,12 +608,21 @@
        the screens are hand-written HTML and not every button has an id. */
     if (sel.indexOf('text:') === 0) {
       var want = sel.slice(5).toLowerCase();
-      var all = d.querySelectorAll('button, a, .btn, [role=button], summary, label, option');
+      /* Headings too, and summary/h2 carry their Handbook line with them:
+         "Volunteer students Handbook 14.1 - the centre's own register, 5 on
+         it" is 69 characters, so the old 60-character cap threw every section
+         of the assessor pack away, the scroll found nothing and the camera
+         snapped back to the top of the page (2 Oct 2026, seen in v16). The
+         cap is only there to stop a whole panel matching; 160 clears every
+         heading Lite writes and still cannot swallow a container. */
+      var all = d.querySelectorAll('button, a, .btn, [role=button], summary, label, option, h1, h2, h3, .sect');
+      var best = null;
       for (var i = 0; i < all.length; i++) {
         var t = (all[i].textContent || '').trim().toLowerCase();
-        if (t === want || (t.length < 60 && t.indexOf(want) === 0)) return all[i];
+        if (t === want) return all[i];
+        if (!best && t.length < 160 && t.indexOf(want) === 0) best = all[i];
       }
-      return null;
+      return best;
     }
     return d.querySelector(sel);
   }
@@ -773,8 +782,12 @@
          little air, so a section heading lands where an eye expects it. */
       var to = s.to === 'bottom' ? d.body.scrollHeight
              : typeof s.to === 'number' ? s.to
-             : (function () { var el = find(String(s.to)); if (!el) { warn('scroll: no ' + s.to); return 0; } return Math.max(0, el.getBoundingClientRect().top + (d.documentElement.scrollTop || d.body.scrollTop || 0) - 40); })();
+             : (function () { var el = find(String(s.to)); if (!el) { warn('scroll: no ' + s.to); return null; } return Math.max(0, el.getBoundingClientRect().top + (d.documentElement.scrollTop || d.body.scrollTop || 0) - 40); })();
       var from = d.documentElement.scrollTop || d.body.scrollTop || 0;
+      /* A target that is not on this screen holds the shot where it is. It
+         used to scroll to 0, which read as the camera being yanked back to
+         the header for no reason (2 Oct 2026). */
+      if (to === null) { to = from; }
       var ms = s.ms || 2000, t0 = performance.now();
       (function tick(t) {
         var k = Math.min(1, ((t || performance.now()) - t0) / ms);
