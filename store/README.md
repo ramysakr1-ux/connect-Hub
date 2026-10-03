@@ -14,6 +14,13 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
+## 3 Oct 2026 — the nightly backup, rebuilt (Head only, no new version)
+There was no backup: no code, no trigger, nothing in the account since
+2 September. `nightlyBackup()` copies the records Sheet into `CELTA hub backups`
+each night on a Day timer, keeps 30, and prunes only its own files. Not deployed
+— the trigger runs on Head and no request path changed.
+See [2026-10-03-nightly-backup.md](2026-10-03-nightly-backup.md).
+
 ## 2 Oct 2026 — the manifest finally asks for mail (version 65)
 `appsscript.json` gains `script.send_mail` and `https://mail.google.com/`;
 Ramy pasted it, authorised the script (Run → Allow) and deployed v65 himself.
