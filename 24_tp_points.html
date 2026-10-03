@@ -123,6 +123,14 @@
   .mats-read .mlink:hover{text-decoration:underline;}
   .mats-read.ref .mlink{color:var(--grey);}
   .mats-read .mref{color:var(--grey);}
+  /* Embedded audio: Drive's own little player in an iframe, or a native
+     <audio> where the link is a direct file. Sized to the player bar, not a
+     document preview. */
+  .auds{margin:7px 0 2px; display:flex; flex-direction:column; gap:7px;}
+  .aud{margin:0;}
+  .aud figcaption{font-size:0.72rem; font-weight:600; color:var(--grey); margin:0 0 3px;}
+  .aud iframe{width:100%; max-width:430px; height:72px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper); display:block;}
+  .aud audio{width:100%; max-width:430px; display:block;}
   @media (max-width:560px){ .mats .mrow{grid-template-columns:1fr; gap:3px;} .mats label{padding-top:0;} }
   .wrap{overflow-x:auto;}
   .ord{white-space:nowrap; letter-spacing:.12em;}
@@ -278,7 +286,8 @@ function matsPanel(g, t, tp, letter, name){
     <div class="mrow"><label>Coursebook</label><input type="url" data-m="bookUrl" value="${esc((c.book||{}).url || '')}" placeholder="https://\u2026 a link to the book"></div>
     <div class="mrow"><label>Materials</label><textarea data-m="bookRef" rows="3" placeholder="SpeakOut A1, SB p. 14, ex. 2a, 2b, 3a&#10;WB p. 9, ex. 1a, 1b&#10;One line each">${esc((c.book||{}).ref || '')}</textarea></div>
     <div class="mrow"><label>Page to open at</label><input type="number" min="1" data-m="bookPage" value="${esc((c.book||{}).page || '')}" placeholder="42"><small>Only works where the link is a direct PDF address; a Drive preview ignores it.</small></div>
-    <div class="mrow"><label>Audio</label><input type="url" data-m="audioUrl" value="${esc((c.audio||{}).url || '')}" placeholder="https://\u2026 wherever the audio lives"></div>
+    <div class="mrow"><label>Audio</label><div><textarea data-m="audioUrl" rows="3" placeholder="Track 1.14 | https://drive.google.com/file/d/\u2026&#10;Track 1.15 | https://\u2026&#10;One link per line; a name before a | labels it">${esc((c.audio||{}).url || '')}</textarea>
+      <p class="hint">Each line becomes a player on the candidate\u2019s card \u2014 a Drive link plays in place, a direct .mp3 gets its own controls. The file must be shared so anyone with the link can open it.</p></div></div>
     <div class="mrow"><label>Scanned pages</label><div>
       ${pages.length ? '<ul class="files">' + pages.map((f, i) => `<li><a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a> <button type="button" class="btn quiet sm" data-mrm="${i}">Remove</button></li>`).join('') + '</ul>' : '<p class="hint">Nothing attached yet.</p>'}
       <input type="file" id="matsFile" accept="application/pdf,image/*"${UPLOADING ? ' disabled' : ''}>
@@ -357,12 +366,34 @@ function matsRead(c, mine){
     ? `<a class="mlink" href="${esc(href)}" target="_blank" rel="noopener">${esc(ln)}</a>`
     : `<span class="mref">${esc(ln)}</span>`));
   (c.pages || []).forEach(f => got.push(`<a class="mlink" href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a>`));
-  if ((c.audio || {}).url) got.push(`<a class="mlink audio" href="${esc(c.audio.url)}" target="_blank" rel="noopener">Audio</a>`);
 
-  if (!says.length && !got.length) return '';
+  /* Audio: one line per track in the cell, each a player IN the card for the
+     candidate whose lesson it is (Ramy, 29 Sep and again 4 Oct 2026: "the
+     embedded audio link" / "audio files, embedded in the page"). On a
+     classmate's row the same tracks stay links: those lessons are to sit in
+     on, and six players a day would drown the page. */
+  const audioLines = String((c.audio || {}).url || '').split(/\n+/).map(x => x.trim()).filter(Boolean)
+    .map(line => { const bar = line.indexOf('|');
+      return bar > -1 ? { label: line.slice(0, bar).trim(), url: line.slice(bar + 1).trim() } : { label: '', url: line }; })
+    .filter(a => a.url);
+  let players = '';
+  if (audioLines.length && mine) {
+    players = `<span class="mats-read gets"><span class="glab">Audio</span></span><div class="auds">` + audioLines.map((a, i) => {
+      const name = esc(a.label || 'Track ' + (i + 1));
+      const m = a.url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^"' ]*?id=)([\w-]{20,})/) || a.url.match(/[?&]id=([\w-]{25,})/);
+      if (m) return `<figure class="aud"><figcaption>${name}</figcaption><iframe src="https://drive.google.com/file/d/${esc(m[1])}/preview" loading="lazy" allow="autoplay" title="${name}"></iframe></figure>`;
+      if (/\.(mp3|m4a|ogg|wav|aac)([?#]|$)/i.test(a.url)) return `<figure class="aud"><figcaption>${name}</figcaption><audio controls preload="none" src="${esc(a.url)}"></audio></figure>`;
+      return `<figure class="aud"><figcaption><a class="mlink" href="${esc(a.url)}" target="_blank" rel="noopener">${name}</a></figcaption></figure>`;
+    }).join('') + `</div>`;
+  } else if (audioLines.length) {
+    audioLines.forEach((a, i) => got.push(`<a class="mlink audio" href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.label || 'Audio' + (audioLines.length > 1 ? ' ' + (i + 1) : ''))}</a>`));
+  }
+
+  if (!says.length && !got.length && !players) return '';
   const cls = 'mats-read' + (mine ? '' : ' ref');
   return (says.length ? `<span class="${cls}">${says.join('<span class="sep">\u00b7</span>')}</span>` : '')
-       + (got.length ? `<span class="${cls} gets"><span class="glab">Materials</span>${got.join('<span class="sep">\u00b7</span>')}</span>` : '');
+       + (got.length ? `<span class="${cls} gets"><span class="glab">Materials</span>${got.join('<span class="sep">\u00b7</span>')}</span>` : '')
+       + players;
 }
 
 function render(){
