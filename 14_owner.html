@@ -337,7 +337,32 @@ const DEFAULT_DEMO_NOTE = [
   '',
   'If it looks like something your centre could use, just reply and we can talk. If not, no harm done, and I\u2019d still be glad to hear why.',
 ].join('\n');
-function demoNote(){ try { const v = localStorage.getItem(DEMO_NOTE_KEY); return v === null ? DEFAULT_DEMO_NOTE : v.trim(); } catch (e) { return DEFAULT_DEMO_NOTE; } }
+/* A letter per card (Ramy, 3 Oct 2026: "we need to adjust the language of the
+   email depending on which card we're sending"). The full card's letter sends
+   people to three demo courses; on the film card those courses are not there
+   yet, and on the price card nobody asked about them. Each is edited on its
+   own and kept under its own name, so changing one leaves the others alone. */
+const DEFAULT_NOTES = {
+  '': DEFAULT_DEMO_NOTE,
+  film: [
+    'Hello,',
+    '',
+    'I run CELTA courses myself, and for years the paperwork lived in five places at once. Connect Lite is what I built to bring it all into one. It\u2019s also designed to ease a problem every centre knows well: finding enough volunteer students, and keeping them coming back.',
+    '',
+    'Rather than describe it, I filmed it. Eight minutes, a whole course from the first lesson plan to the certificates. I\u2019m no filmmaker, as the first ten seconds will make clear, but it does show the thing working.',
+    '',
+    'If it looks useful, just reply and I\u2019ll send you demo links \u2014 real courses you can open and type in yourself.',
+  ].join('\n'),
+  price: [
+    'Hello,',
+    '',
+    'Here is what Connect Lite costs. There is not much to it: one price per course, everything included, and less when you buy several.',
+    '',
+    'If your centre needs something the card does not cover \u2014 an invoice in another currency, a purchase order, or a single course to try before you commit \u2014 just say and we will sort it out.',
+  ].join('\n'),
+};
+function noteKey(){ const k = cardKind(); return DEMO_NOTE_KEY + (k ? ':' + k : ''); }
+function demoNote(){ const d = DEFAULT_NOTES[cardKind()] || DEFAULT_NOTES['']; try { const v = localStorage.getItem(noteKey()); return v === null ? d : v.trim(); } catch (e) { return d; } }
 function standingDemos(){
   const byName = n => COURSES.find(c => c.name === n);
   /* The finished course goes with them (Ramy, 2 Oct 2026: "all the demo
@@ -577,7 +602,7 @@ $('app').innerHTML = `
         <b>Send the card</b>
         <span class="note">The email <i>is</i> the card. <b>The full card</b> carries your note, the three demo courses and the film as doors, and the price \u2014 always the demos, never a real course; to show one particular course use Email it on its row. <b>Just the film</b> sends the film alone and ends by offering a demo link, for someone who has never seen Lite. The note and the addresses are kept in this browser.</span>
         <textarea id="demoNote" rows="7" placeholder="Empty sends the card alone, unsigned by a letter.">${esc(demoNote())}</textarea>
-        <span class="note">This is the letter on top of the card, in your hand. Edit it here and it stays edited. <button class="linkbtn" type="button" id="noteReset">Put the standard note back</button></span>
+        <span class="note">The letter on top of the card, in your hand \u2014 each card has its own, so this changes with the choice on the left. Edit it here and it stays edited. <button class="linkbtn" type="button" id="noteReset">Put the standard note back</button></span>
         <span class="sendrow"><span class="house-sel kindsel"><select id="cardKind"><option value="">The full card</option><option value="film"${cardKind() === 'film' ? ' selected' : ''}>Just the film</option><option value="price"${cardKind() === 'price' ? ' selected' : ''}>Just the price</option></select></span><input type="email" id="cardTo" placeholder="Their address" autocomplete="off"><input type="email" id="cardCopyTo" class="cc" placeholder="A copy to you (optional)" value="${esc(cardCopyTo())}"><button class="btn small" type="button" id="cardSend">Send the card</button></span>
         <span class="acts"><button class="btn small quiet" type="button" id="cardPreview">Preview</button><button class="btn small quiet" type="button" id="cardCopy">Copy the card to paste into Gmail</button><button class="linkbtn" type="button" id="demosCopy">Copy as plain text</button></span>
       </div>`;
@@ -620,10 +645,16 @@ let COURSES = [], SHOW_URLS = false;
 document.addEventListener('input', e => {
   if (!e.target.closest) return;
   if (e.target.closest('#filmLink')) { try { localStorage.setItem(FILM_KEY, e.target.value.trim()); } catch (err) {} return; }
-  if (e.target.closest('#demoNote')) { try { localStorage.setItem(DEMO_NOTE_KEY, e.target.value); } catch (err) {} return; }
+  if (e.target.closest('#demoNote')) { try { localStorage.setItem(noteKey(), e.target.value); } catch (err) {} return; }
   if (e.target.closest('#priceText')) { try { localStorage.setItem(PRICE_KEY, e.target.value.trim()); } catch (err) {} return; }
   if (e.target.closest('#cardCopyTo')) { try { localStorage.setItem(CARD_CC_KEY, e.target.value.trim()); } catch (err) {} return; }
-  if (e.target.closest('#cardKind')) { try { localStorage.setItem(CARD_KIND_KEY, e.target.value); } catch (err) {} status(e.target.value === 'film' ? 'The film alone goes out next.' : e.target.value === 'price' ? 'The price alone goes out next.' : 'The full card goes out next.'); return; }
+  if (e.target.closest('#cardKind')) {
+    try { localStorage.setItem(CARD_KIND_KEY, e.target.value); } catch (err) {}
+    /* The letter on screen belongs to the card now chosen. */
+    const t = $('demoNote'); if (t) t.value = demoNote();
+    status(e.target.value === 'film' ? 'The film alone goes out next, with its own letter.' : e.target.value === 'price' ? 'The price alone goes out next, with its own letter.' : 'The full card goes out next, with its own letter.');
+    return;
+  }
   if (e.target.closest('#priceOn')) { try { localStorage.setItem(PRICE_ON_KEY, e.target.checked ? 'on' : 'off'); } catch (err) {} status(e.target.checked ? 'The full card carries the price.' : 'The full card goes without the price.'); }
 });
 $('app').addEventListener('click', async e => {
@@ -685,8 +716,8 @@ $('app').addEventListener('click', async e => {
     }
     if (e.target.closest('#demosCopy')) { const b = e.target.closest('#demosCopy'); await hubCopyButton(b, demosNote()); return; }
     if (e.target.closest('#noteReset')) {
-      try { localStorage.removeItem(DEMO_NOTE_KEY); } catch (err) {}
-      const t = $('demoNote'); if (t) t.value = DEFAULT_DEMO_NOTE; status('The standard note is back.'); return;
+      try { localStorage.removeItem(noteKey()); } catch (err) {}
+      const t = $('demoNote'); if (t) t.value = demoNote(); status('The standard note is back.'); return;
     }
     if (e.target.closest('#cardPreview')) {
       const u = URL.createObjectURL(new Blob([cardHtml()], { type: 'text/html' }));
