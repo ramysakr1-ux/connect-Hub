@@ -130,6 +130,10 @@
   .minted-line::before{content:""; width:8px; height:8px; border-radius:50%; background:var(--gold);}
   /* What this row is. The live course carries a green edge as well, because
      it is the one that must never be practised on. */
+  .section{font-family:'Newsreader',Georgia,serif; font-size:1.05rem; font-weight:600; color:var(--ink-warm);
+    margin:26px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--sand-line); display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;}
+  .section small{font-family:'Karla',sans-serif; font-size:0.76rem; font-weight:400; color:var(--grey);}
+  .section.live{color:var(--pill-good-text);}
   .kind{display:inline-block; vertical-align:middle; margin-left:9px; font-family:'Karla',sans-serif;
     font-size:0.64rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
     border-radius:999px; padding:3px 9px; border:1px solid;}
@@ -376,11 +380,15 @@ function noteKey(){ const k = cardKind(); return DEMO_NOTE_KEY + (k ? ':' + k : 
 function demoNote(){ const d = DEFAULT_NOTES[cardKind()] || DEFAULT_NOTES['']; try { const v = localStorage.getItem(noteKey()); return v === null ? d : v.trim(); } catch (e) { return d; } }
 function standingDemos(){
   const byName = n => COURSES.find(c => c.name === n);
+  const byShape = re => COURSES.find(c => c.demoToday && re.test(String(c.name || '')));
   /* The finished course goes with them (Ramy, 2 Oct 2026: "all the demo
      links"). It is the one that answers "and what do we have at the end?" --
      the reports written, both halves of CELTA 5 signed, the certificates. It
      has no demoToday, which is what tells it from the two pinned ones. */
-  const start = byName('Demo \u2014 the first week'), visit = byName('Demo \u2014 before the visit');
+  /* By shape, not by an exact label. These were matched on the full name
+     until renaming them (3 Oct 2026) silently emptied this row and the card
+     with it: a demo's label is his to change and must never be load-bearing. */
+  const start = byShape(/first week|week one/i), visit = byShape(/visit/i);
   /* It is pinned too -- to its own last day, so that it never ages -- which
      is what tells it from the two mid-course demos: its clock has reached
      its end date. */
@@ -425,6 +433,15 @@ function cardCopyTo(){ try { return (localStorage.getItem(CARD_CC_KEY) || '').tr
    three standing demos, my scratch course for filming, and C/17's grades,
    which is a page kept as a course because that is how the store holds it.
    Read from the store's own label, which only this console sees. */
+/* The console in three parts, so a real centre's course is never sitting in
+   the same run of cards as a demo (Ramy, 3 Oct 2026: "the live courses should
+   have their own section, so it's not all washed out together"). */
+const SECTIONS = [
+  { k: 'live',    t: 'Live courses',      w: 'real centres, real candidates' },
+  { k: 'demo',    t: 'Demos',             w: 'what a centre is sent \u2014 pinned to one day, never ageing' },
+  { k: 'scratch', t: 'Scratch',           w: 'for testing and filming \u2014 throw away freely' },
+  { k: 'record',  t: 'Records',           w: 'pages the store keeps as courses' },
+];
 function courseKind(c){
   const n = String(c.name || ''), cn = String(c.courseName || '');
   if (/scratch/i.test(n)) return { k: 'scratch', t: 'Scratch', w: 'For testing and for filming. Not a demo, not a real course \u2014 anything here can be thrown away.' };
@@ -471,15 +488,22 @@ function render(courses, msg){
   COURSES = courses || [];
   /* The one just made goes first, whatever order the store keeps. */
   const ordered = NEW_ID ? [...courses].sort((x, y) => (y.id === NEW_ID) - (x.id === NEW_ID)) : courses;
-  const rows = ordered.map(c => {
+  const card = (c) => {
     // A store that answered without a count used to print "undefined trainees".
     const n = Number(c.trainees) || 0;
     /* A course has no name until the centre gives it one on Course admin, so
        a freshly minted card used to be titled by its id -- "c4" -- with the
        id repeated in the chip beside it. */
-    const name = c.courseName || c.name || 'New course', centre = c.centreName || '';
-    const minted = c.id === NEW_ID;
+    /* A demo's own name is the centre's ("CELTA \u2014 C/1 2026", three times
+       over), which told this console nothing and must NOT change, because a
+       prospect has to see a real course. So on THIS page a demo leads with
+       the store's label \u2014 "Demo \u2014 the first week" \u2014 and the centre's name sits
+       under it (Ramy, 3 Oct 2026: "it should read as a demo, of course"). */
     const kind = courseKind(c);
+    const shown = c.name && !/^C\d+ \u00b7 /.test(c.name) && kind.k !== 'live' ? c.name : (c.courseName || c.name || 'New course');
+    const alt = (c.courseName && c.courseName !== shown) ? c.courseName : '';
+    const name = shown, centre = c.centreName || '';
+    const minted = c.id === NEW_ID;
     return `
     <div class="course c-${kind.k}${minted ? ' minted' : ''}">
       ${minted ? '<p class="minted-line">New — copy the tutor link and send it to the centre. They set the course up and add their own trainees.</p>' : ''}
@@ -492,7 +516,7 @@ function render(courses, msg){
                carries the same name), so the store's own label sits under it
                when it says something the name does not (Ramy, 30 Sep 2026:
                "there are 3 C1 courses"). -->
-          ${c.name && c.courseName && c.name !== c.courseName && !/^C\d+ \u00b7 /.test(c.name) ? `<p class="centre label">${esc(c.name)}</p>` : ''}
+          ${alt ? `<p class="centre label">Shown to the centre as \u201c${esc(alt)}\u201d</p>` : ''}
         </div>
         <span class="meta">
           <span class="chip">${n} candidate${n === 1 ? '' : 's'}</span>
@@ -559,7 +583,7 @@ function render(courses, msg){
           <a class="linkbtn" data-card="${esc(c.id)}" href="#">See the card</a>
         </div>
       </div>
-    </div>`; }).join('');
+    </div>`; };
 
   /* Every other screen's chip names a room, because a room holds any number of
    people. This one holds exactly one, and a console that says only "Owner"
@@ -605,7 +629,9 @@ $('app').innerHTML = `
          the courses' own names and marks, never off their ids. -->
     ${(function(){
       const byName = n => COURSES.find(c => c.name === n);
-      const start = byName('Demo \u2014 the first week'), visit = byName('Demo \u2014 before the visit'), scratch = byName('Film scratch \u2014 not a demo');
+      const byShape = re => COURSES.find(c => c.demoToday && re.test(String(c.name || '')));
+      const start = byShape(/first week|week one/i), visit = byShape(/visit/i);
+      const scratch = COURSES.find(c => /scratch/i.test(String(c.name || '')));
       const demo = COURSES.find(c => c.courseName === 'CELTA \u2014 demo course');
       const finished = COURSES.find(c => c.courseName === 'CELTA \u2014 C/1 2026' && !c.demoToday);
       if (!start || !visit) return '';
@@ -641,7 +667,12 @@ $('app').innerHTML = `
       <label class="priceon"><input type="checkbox" id="priceOn"${priceOn() ? ' checked' : ''}> the price goes on the full card</label>
       <span class="note">Both are kept in this browser. The <b>price</b> box is for a one-off quote: fill it and that figure replaces the published rates on the card. Leave it empty and the card states £300 and links to the rates in full.</span>
     </div>
-    <div class="courses">${rows || '<div class="empty">No courses yet. Make the first one, then send its tutor link to the centre.</div>'}</div>
+    ${COURSES.length ? SECTIONS.map(sec => {
+      const inIt = ordered.filter(c => courseKind(c).k === sec.k);
+      if (!inIt.length) return '';
+      return `<h2 class="section ${sec.k}">${esc(sec.t)}<small>${esc(sec.w)}</small></h2>`
+        + `<div class="courses">${inIt.map(card).join('')}</div>`;
+    }).join('') : '<div class="courses"><div class="empty">No courses yet. Make the first one, then send its tutor link to the centre.</div></div>'}
     <p id="status"></p>`;
   if (msg) status(msg);
   /* Every paint, not just the ones that go through showList: the FIRST paint
