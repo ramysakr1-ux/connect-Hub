@@ -84,6 +84,11 @@
 
   function gate(reason){
     shutdown();
+    /* A page may offer a front page for somebody who has no link at all
+       (index.html does, through hub-front.js, 3 Oct 2026). A link that has
+       STOPPED working carries a reason and always gets the plain refusal:
+       that is news, not an invitation. */
+    if (!reason && typeof window.hubNoLink === 'function') { window.hubNoLink(); return; }
     document.documentElement.style.background = 'oklch(92.5% 0.012 85)';
     document.body.style.cssText = 'margin:0;background:oklch(92.5% 0.012 85);';
     document.body.innerHTML =
