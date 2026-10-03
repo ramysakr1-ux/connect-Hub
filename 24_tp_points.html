@@ -275,7 +275,7 @@ function slotFor(set, tp, setIndex, pos){
   const ses = (set.sessions || {})[id];
   const sl = ses && (ses.slots || [])[pos];
   if (!sl || !(sl.type || sl.aim)) return null;
-  return { slot: sl, scaffold: ses.scaffold || '', id: id, pos: pos };
+  return { slot: sl, scaffold: ses.scaffold || '', context: ses.context || '', id: id, pos: pos };
 }
 function stamp(cell, found){
   const sl = found.slot;
@@ -293,6 +293,7 @@ function stamp(cell, found){
   out.stages = (sl.stages || []).filter(s => s && (s.name || s.todo))
     .map(s => ({ name: s.name || '', minutes: s.minutes || '', interaction: s.interaction || '', todo: s.todo || '', avoid: s.avoid || '' }));
   out.scaffold = found.scaffold;
+  if (found.context) out.context = found.context;
   out.from = found.id + '·' + (found.pos + 1);
   return out;
 }
@@ -567,7 +568,8 @@ function render(){
         return `<tr class="${mine ? 'mine' : 'theirs'}"><td class="slot">${when}</td><td class="who">${who}${mine ? '<span class="yours">your lesson</span>' : ''}</td><td class="what">${lesson(c)}${det ? '<div class="det">' + det + '</div>' : ''}</td></tr>`;
       }).join('');
       return `<section class="day">
-        <p class="dayline">${esc(SETTINGS.courseName || 'CELTA')} \u00b7 <b>TP ${tp} \u00b7 ${esc(teaching.map(letterOf).join(''))}</b>${date ? ' \u00b7 ' + esc(niceDay(date)) : ''} \u00b7 ${teaching.length} \u00d7 ${mins(tpSlots[0] || {})} mins</p>
+        <p class="dayline">${esc(SETTINGS.courseName || 'CELTA')} \u00b7 <b>TP ${tp} \u00b7 ${esc(teaching.map(letterOf).join(''))}</b>${date ? ' \u00b7 ' + esc(niceDay(date)) : ''} \u00b7 ${teaching.length} \u00d7 ${mins(tpSlots[0] || {})} mins${
+          (function(){ const c = teaching.map(t => ((rows[t] || {})['tp' + tp] || {}).context).find(Boolean); return c ? ' \u00b7 <b>' + esc(c) + '</b>' : ''; })()}</p>
         <div class="wrap"><table class="tbl day-tbl"><tr><th>Slot</th><th>Who</th><th>The lesson, and what to get</th></tr>${body}</table></div>
       </section>`;
     }).filter(Boolean).join('');
@@ -587,25 +589,36 @@ function render(){
      all-clear underneath because the checks had nothing to fail on (found
      testing on the scratch course, 29 Sep 2026). A rotation counts as built
      only when every candidate on the roster has a row. */
-  /* Without a set the rotation guarantees the range by construction — six
-     different types out of seven, so every family lands. With a set the
-     guarantee is gone: the spread is whatever the book's sessions contain, and
-     a candidate who sits in one teaching set only ever teaches that set's
-     slots. Handbook 9.1.2 asks for "a range of lessons covering all aspects of
-     language teaching", so this says plainly when a candidate never meets one
-     of the three families. It warns; it does not block. */
-  function rangeCheck(flat){
+  /* Where the variety has to be, and where it does not. Ramy, 4 Oct 2026,
+     correcting a check that cried wolf: "the first TPs they get different
+     aims ... a balance of language and skills. Once they start the second half
+     of the course, it's fine to repeat — maybe they did grammar in TP1 or TP2,
+     they can do grammar again." A failed lesson is MEANT to come back in the
+     same family, and anything a candidate has not met by TP 6 is theirs to
+     choose on TP 7 or 8. So the early repeat is a warning, and a family never
+     met is a note that says where to put it, not an alarm. The language-focus
+     MUST is checked separately and is unchanged. */
+  const HALF = Math.max(2, Math.ceil(TPS / 2));
+  function earlyRepeats(flat){
     const out = [];
     Object.keys(flat || {}).forEach(t => {
-      const types = [], fams = {};
-      for (let tp = 1; tp <= TPS; tp++) {
+      const seen = {}, again = [];
+      for (let tp = 1; tp <= HALF; tp++) {
         const a = flat[t]['tp' + tp];
         if (!a) continue;
-        if (types.indexOf(a) < 0) types.push(a);
-        const f = R.familyOf(a); if (f) fams[f] = 1;
+        if (seen[a]) again.push({ aim: a, first: seen[a], then: tp }); else seen[a] = tp;
       }
+      if (again.length) out.push({ token: t, again: again });
+    });
+    return out;
+  }
+  function familiesNotMet(flat){
+    const out = [];
+    Object.keys(flat || {}).forEach(t => {
+      const fams = {};
+      for (let tp = 1; tp <= TPS; tp++) { const f = R.familyOf(flat[t]['tp' + tp]); if (f) fams[f] = 1; }
       const missing = ['language', 'receptive', 'productive'].filter(f => !fams[f]);
-      if (missing.length) out.push({ token: t, types: types, missing: missing });
+      if (missing.length) out.push({ token: t, missing: missing });
     });
     return out;
   }
@@ -656,11 +669,10 @@ function render(){
         }).join('')}</tr>`).join('')}</table></div>
       ${noLang.length ? `<div class="warn"><b>Handbook 9.1.2:</b> a centre must include language-focus lessons for every candidate. ${noLang.length===1?'Candidate':'Candidates'} ${esc(noLang.join(', '))} ${noLang.length===1?'has':'have'} none in practices 1 to ${TPS}. Grammar, vocabulary and functional language are the language-focus types.</div>` : ''}
       ${clash.length ? `<div class="warn"><b>Same type, same day:</b> ${clash.map(c => 'TP ' + c.tp + ' — ' + esc(c.set) + ' — ' + esc(c.aim)).join('; ')}. They teach on the same day, so two of them would be teaching the same thing.</div>` : ''}
-      ${(function(){ const r = rangeCheck(flat); if (!r.length) return '';
-        const word = { language: 'language focus', receptive: 'receptive skills', productive: 'productive skills' };
-        return `<div class="warn"><b>Handbook 9.1.2:</b> candidates must have "practice in a range of lessons covering all aspects of language teaching". ${r.map(x =>
-          esc(letterOf(x.token)) + ' never teaches ' + x.missing.map(f => esc(word[f] || f)).join(' or ') +
-          ' (' + esc(x.types.join(', ')) + ')').join('; ')}. ${(P && P.set) ? 'The set decides the types, so the rotation can no longer spread them — change a slot in the set, or change a cell here.' : 'Change a cell to put the missing kind of lesson back.'}</div>`; })()}
+      ${(function(){ const r = earlyRepeats(flat); if (!r.length) return '';
+        return `<div class="warn"><b>The same aim twice in the first ${HALF}:</b> ${r.map(x =>
+          esc(letterOf(x.token)) + ' teaches ' + x.again.map(a => esc(a.aim) + ' at TP ' + a.first + ' and TP ' + a.then).join(', ')).join('; ')}.
+          Early practices are where the spread matters — a repeat later in the course is fine, and a lesson that was not to standard is meant to come back.</div>`; })()}
       ${OPEN && OPEN.split('|')[0] === g.group ? (function(){
         const [, t, tp] = OPEN.split('|');
         const who = lettered.find(x => x.token === t) || {};
@@ -668,7 +680,11 @@ function render(){
       })() : ''}
       ${after.length ? `<div class="sugg"><b>After a lesson that was not to standard</b> — the centre’s own recommendation, not a Cambridge rule.<ul>${
         after.map(a => `<li>${esc(letterOf(a.token))} was not to standard on TP ${a.failed} (${esc(a.failedAim)}). TP ${a.next} is ${esc(a.nextAim || 'not set')}; another ${esc(a.familyWord)} lesson would give them a second go at it — ${esc(a.suggest.join(', '))}.</li>`).join('')}</ul></div>` : ''}
-      ${(!noLang.length && !clash.length && !rangeCheck(flat).length && Object.keys(flat).length) ? `<p class="ok">Every candidate has at least one language-focus lesson, meets all three kinds of lesson, and nobody in a teaching set repeats a type on the same day.</p>` : ''}
+      ${(function(){ const n = familiesNotMet(flat); if (!n.length) return '';
+        const word = { language: 'a language-focus lesson', receptive: 'a receptive-skills lesson', productive: 'a productive-skills lesson' };
+        return `<div class="sugg"><b>Not met by TP ${TPS}</b> — a note, not a problem: practices 7 and 8 are the candidates’ own, and this is what they are for.<ul>${
+          n.map(x => `<li>${esc(letterOf(x.token))} has not taught ${x.missing.map(f => esc(word[f] || f)).join(' or ')}.</li>`).join('')}</ul></div>`; })()}
+      ${(!noLang.length && !clash.length && !earlyRepeats(flat).length && Object.keys(flat).length) ? `<p class="ok">Every candidate has a language-focus lesson, nobody repeats an aim in the first ${HALF} practices, and nobody in a teaching set teaches the same type on the same day.</p>` : ''}
     </section>`;
   }).join('');
 

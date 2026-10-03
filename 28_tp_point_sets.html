@@ -281,7 +281,14 @@ function sessionBody(id, ses){
     <label class="btn quiet sm" for="file-${id}">Import a document</label>
     <input type="file" id="file-${id}" data-imp="${id}" accept=".docx,.txt,.md,text/plain" hidden>
     <span class="hint" style="margin:0">A Word document written as <b>Slot: 1</b>, <b>Slot: 2</b>, <b>Slot: 3</b> fills all three at once &mdash; aims, pages and stages. Nothing is uploaded; the file is read here.</span></div>`;
-  const scaf = imp + `<div class="scaf"><label class="lab" for="scaf-${id}">Scaffolding</label>
+  /* One context across the day. Ramy, 4 Oct 2026: "at least two or three of
+     them teaching the same day could have a similar context." Three lessons
+     on consecutive pages of a unit usually share one anyway; naming it means
+     the candidates can see what the day is about and build on each other. */
+  const ctx = `<div class="scaf"><label class="lab" for="ctx-${id}">Context</label>
+    <input id="ctx-${id}" data-ctx="${id}" value="${esc(ses.context || '')}" placeholder="Families · daily routines · jobs" style="max-width:320px">
+    <span class="hint" style="margin:0">What the three lessons of this day are about.</span></div>`;
+  const scaf = imp + ctx + `<div class="scaf"><label class="lab" for="scaf-${id}">Scaffolding</label>
     <select id="scaf-${id}" data-scaf="${id}">${Object.keys(SCAFFOLD).map(k =>
       `<option value="${k}"${ses.scaffold === k ? ' selected' : ''}>${esc(SCAFFOLD[k].name)}</option>`).join('')}</select>
     <span class="hint" style="margin:0">${esc(SCAFFOLD[ses.scaffold] ? SCAFFOLD[ses.scaffold].blurb : '')}</span></div>`;
@@ -349,6 +356,9 @@ function wire(){
 
   document.querySelectorAll('[data-open]').forEach(el => el.onclick = () => {
     OPEN = OPEN === el.dataset.open ? null : el.dataset.open; render();
+  });
+  document.querySelectorAll('[data-ctx]').forEach(el => el.onchange = () => {
+    S.sessions[el.dataset.ctx].context = el.value.trim(); persist('Saved');
   });
   document.querySelectorAll('[data-scaf]').forEach(el => el.onchange = () => {
     S.sessions[el.dataset.scaf].scaffold = el.value; persist('Scaffolding changed');
