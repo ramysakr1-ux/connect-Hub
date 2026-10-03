@@ -15,6 +15,12 @@
  * that carries a reason and this hook is only for the reasonless case.
  *
  * It is one screen of writing. No store, no keys, nothing fetched.
+ *
+ * 3 Oct 2026, later the same day: the page still did not answer the question
+ * he actually asked -- a visitor learned what Lite DOES but never why the
+ * address says "lite." in front. The "Why it says Lite" block is that answer,
+ * and it says plainly that Connect itself is not open yet rather than
+ * promising a date.
  */
 (function () {
   var esc = function (s) { return String(s == null ? '' : s).replace(/[<&>"]/g, ' '); };
@@ -47,6 +53,11 @@
       + '<p class="fp-eyebrow">For a CELTA centre</p>'
       + '<h1>Everything your candidates write, and everything you write back</h1>'
       + '<p class="fp-lede">The assessed paperwork of a CELTA course in one place — plans, language analyses, self-evaluations, the four written assignments, your feedback, the grades and the reports. No accounts, no passwords, nothing to install. A course is three links: one for your tutors, one for each candidate, one for the assessor.</p>'
+
+      + '<div class="fp-why">'
+      + '<b>Why it says Lite</b>'
+      + '<p>Connect is the full system for a CELTA centre: admissions, timetables, every course and every role in one place. It is not open yet. Connect Lite is the small one that is — a single course, three links, nothing to set up and nothing to learn.</p>'
+      + '</div>'
 
       + '<h2>What it does</h2>'
       + '<ul class="fp-does">'
@@ -112,6 +123,9 @@
       '.fp-ask{margin:26px 0 0; padding:18px 20px; background:var(--gold-wash); border-radius:var(--r-strip);}',
       '.fp-ask b{font-family:Newsreader,Georgia,serif; font-size:1.05rem; color:var(--ink-warm);}',
       '.fp-ask p{font-size:0.88rem; line-height:1.6; margin:6px 0 0;}',
+      '.fp-why{margin:20px 0 0; padding:2px 0 2px 16px; border-left:2px solid var(--amber-edge);}',
+      '.fp-why b{display:block; font-family:Newsreader,Georgia,serif; font-size:0.98rem; color:var(--ink-warm); margin-bottom:3px;}',
+      '.fp-why p{font-size:0.88rem; line-height:1.65; color:var(--grey); margin:0;}',
       '.fp-have{margin:26px 0 0; padding:18px 0 0; border-top:1px solid var(--sand-line);}',
       '.fp-have b{font-size:0.9rem; color:var(--ink-warm);}',
       '.fp-have p{font-size:0.84rem; line-height:1.6; color:var(--grey); margin:5px 0 0;}',
