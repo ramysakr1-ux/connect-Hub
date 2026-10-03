@@ -63,6 +63,20 @@ day's work.
 **1,221,145 bytes** against the live Sheet's 1,226,646 — the whole thing, not
 a stub.
 
-**NOT deployed, on purpose.** The trigger runs against Head, and nothing on the
-`doPost` path changed, so the live `/exec` needs no new version and was left
-exactly as it was on v65. The next deploy carries this code along with it.
+**Deployed as version 66** (3 Oct, 12:00), on Ramy's instruction, so Head and
+the live store match. Deploy → Manage deployments → pencil → New version, never
+"New deployment". The active deployment was v65 of 2 Oct before this.
+
+**Proved the deploy changed nothing.** A read-only fingerprint of the live store
+was taken before and after and compared: the two JSON files are **identical**.
+Every course read byte-for-byte the same — c2 13,400, c4 30,002, c6 78,341,
+c7 104,548 — c2 read twice and agreeing, and a `putCourse` on the assessor key
+still refused with "Tutors only". Script: `c17-snapshot.mjs` in the session
+scratchpad.
+
+**C/17 is not a course on Lite.** Ramy, 3 Oct: "C17 does not run on Connect or
+Connect Lite. C17 is just, we only have a tracker and the provisional grades,
+and they live inside Classroom. And a few input sessions." The only C/17 thing
+in the store is `c2`, whose settings carry
+`courseName: "C/17 2026 — provisional grades"` — one page of grades, no roster,
+no candidates. It is byte-identical across this change.

@@ -14,11 +14,12 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
-## 3 Oct 2026 — the nightly backup, rebuilt (Head only, no new version)
+## 3 Oct 2026 — the nightly backup, rebuilt (version 66)
 There was no backup: no code, no trigger, nothing in the account since
 2 September. `nightlyBackup()` copies the records Sheet into `CELTA hub backups`
-each night on a Day timer, keeps 30, and prunes only its own files. Not deployed
-— the trigger runs on Head and no request path changed.
+each night on a Day timer, keeps 30, and prunes only its own files. No request
+path changed, and a before/after fingerprint of the live store came back
+identical on all four courses.
 See [2026-10-03-nightly-backup.md](2026-10-03-nightly-backup.md).
 
 ## 2 Oct 2026 — the manifest finally asks for mail (version 65)
