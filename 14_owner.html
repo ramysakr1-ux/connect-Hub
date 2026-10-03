@@ -128,6 +128,17 @@
   .minted-line{display:flex; align-items:center; gap:8px; margin:0 0 12px; font-size:0.82rem; font-weight:700;
     color:var(--gold-deep);}
   .minted-line::before{content:""; width:8px; height:8px; border-radius:50%; background:var(--gold);}
+  /* What this row is. The live course carries a green edge as well, because
+     it is the one that must never be practised on. */
+  .kind{display:inline-block; vertical-align:middle; margin-left:9px; font-family:'Karla',sans-serif;
+    font-size:0.64rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
+    border-radius:999px; padding:3px 9px; border:1px solid;}
+  .kind-live{background:var(--pill-good-bg); border-color:var(--pill-good-line); color:var(--pill-good-text);}
+  .kind-demo{background:var(--pill-neutral-bg); border-color:var(--pill-neutral-line); color:var(--pill-neutral-text);}
+  .kind-scratch{background:var(--pill-attn-bg); border-color:var(--pill-attn-line); color:var(--pill-attn-text);}
+  .kind-record{background:var(--pill-wait-bg); border-color:var(--pill-wait-line); color:var(--pill-wait-text);}
+  .course.c-live{border-left:4px solid var(--pill-good-line);}
+  .course.c-scratch{border-left:4px solid var(--pill-attn-line);}
   .linkbtn{font-family:'Karla',sans-serif; font-size:0.8rem; font-weight:600; border:none; background:none;
     color:var(--teal); cursor:pointer; padding:0;}
   .linkbtn:hover{text-decoration:underline;}
@@ -409,6 +420,18 @@ function cardKind(){ try { var v = localStorage.getItem(CARD_KIND_KEY); return (
 const PRICE_ON_KEY = 'chub:priceOn';
 function priceOn(){ try { return localStorage.getItem(PRICE_ON_KEY) !== 'off'; } catch (e) { return true; } }
 function cardCopyTo(){ try { return (localStorage.getItem(CARD_CC_KEY) || '').trim(); } catch (e) { return ''; } }
+/* What a row on this console IS (Ramy, 3 Oct 2026: "label them so I don't
+   mix them up"). Six rows that all look alike: one real centre's course, the
+   three standing demos, my scratch course for filming, and C/17's grades,
+   which is a page kept as a course because that is how the store holds it.
+   Read from the store's own label, which only this console sees. */
+function courseKind(c){
+  const n = String(c.name || ''), cn = String(c.courseName || '');
+  if (/scratch/i.test(n)) return { k: 'scratch', t: 'Scratch', w: 'For testing and for filming. Not a demo, not a real course \u2014 anything here can be thrown away.' };
+  if (c.demoToday || /^Demo \u2014|^Finished course/.test(n)) return { k: 'demo', t: 'Demo', w: 'A standing demo, pinned to one day so it never ages. This is what a centre is sent.' };
+  if (/grades/i.test(cn) || /grades/i.test(n)) return { k: 'record', t: 'Record, not a course', w: 'A page of its own that the store keeps as a course. No candidates, no teaching practice.' };
+  return { k: 'live', t: 'Live course', w: 'A real centre\u2019s course with real candidates. Do not practise on this one.' };
+}
 function cardSubject(){
   if (cardKind() === 'film') return 'Connect Lite \u2014 a film of a whole CELTA course';
   if (cardKind() === 'price') return 'Connect Lite \u2014 what it costs';
@@ -456,12 +479,13 @@ function render(courses, msg){
        id repeated in the chip beside it. */
     const name = c.courseName || c.name || 'New course', centre = c.centreName || '';
     const minted = c.id === NEW_ID;
+    const kind = courseKind(c);
     return `
-    <div class="course${minted ? ' minted' : ''}">
+    <div class="course c-${kind.k}${minted ? ' minted' : ''}">
       ${minted ? '<p class="minted-line">New — copy the tutor link and send it to the centre. They set the course up and add their own trainees.</p>' : ''}
       <div class="chead">
         <div>
-          <h2>${esc(name)}</h2>
+          <h2>${esc(name)} <span class="kind kind-${kind.k}" title="${esc(kind.w)}">${esc(kind.t)}</span></h2>
           ${centre || c.centreNumber ? `<p class="centre">${esc(centre)}${centre && c.centreNumber ? ' \u00b7 ' : ''}${c.centreNumber ? `<span title="Cambridge centre number, set when the course was made">${esc(c.centreNumber)}</span>` : ''}</p>` : ''}
           <!-- Three courses can share a centre's course name (the two standing
                demos are one course at two moments, and the finished course
