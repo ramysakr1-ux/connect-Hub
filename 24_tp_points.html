@@ -132,6 +132,29 @@
   .aud iframe{width:100%; max-width:430px; height:72px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper); display:block;}
   .aud audio{width:100%; max-width:430px; display:block;}
   @media (max-width:560px){ .mats .mrow{grid-template-columns:1fr; gap:3px;} .mats label{padding-top:0;} }
+  /* The set's own bar: what the course is teaching from, and the two doors —
+     write it, apply it. */
+  .setbar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:0 0 14px; padding:10px 14px;
+    background:var(--surface); border:1px solid var(--sand-line); border-radius:9px; font-size:0.86rem;}
+  .setbar.on{border-left:4px solid var(--gold);}
+  .setbar b{font-family:'Newsreader',Georgia,serif; font-size:1.02rem;}
+  .setbar .status{flex:1 1 220px;}
+  .setbar .btn.sm, .setbar .btn{font-size:0.74rem; padding:5px 11px;}
+  /* The procedure on a candidate's own row: a numbered spine, the stage and
+     its clock on one line, what to do under it. */
+  .proc{margin:9px 0 2px; padding:10px 12px; background:var(--sand-deep); border:1px solid var(--sand-line);
+    border-left:3px solid var(--teal); border-radius:8px;}
+  .proc .plab{font-size:0.66rem; letter-spacing:.07em; text-transform:uppercase; color:var(--faint); font-weight:700; margin:0 0 6px;}
+  .proc ol{margin:0; padding-left:19px; font-size:0.78rem; line-height:1.55;}
+  .proc li{margin:0 0 7px;}
+  .proc li:last-child{margin-bottom:0;}
+  .proc .pst{display:flex; gap:9px; align-items:baseline; flex-wrap:wrap;}
+  .proc .pst b{font-size:0.82rem;}
+  .proc .pmin{font-variant-numeric:tabular-nums; font-weight:700; color:var(--teal); font-size:0.72rem;}
+  .proc .pint{font-size:0.7rem; letter-spacing:.05em; text-transform:uppercase; color:var(--grey);}
+  .proc .pdo{color:var(--ink); margin:1px 0 0;}
+  .proc .pav{color:var(--brick); margin:2px 0 0; font-size:0.74rem;}
+  .proc .pclock{margin:7px 0 0; font-size:0.72rem; color:var(--grey); font-variant-numeric:tabular-nums;}
   .wrap{overflow-x:auto;}
   .ord{white-space:nowrap; letter-spacing:.12em;}
   /* On a phone six practices across cannot be a table: four columns simply
@@ -234,24 +257,94 @@ function taughtSoFar(people){
 /* Build or rebuild the rotation. The second group starts three places along,
    so two groups running in parallel never teach the same type on the same
    day. Anything a tutor has already changed is kept. */
+/* THE SET WINS (Ramy, 4 Oct 2026: "the set wins, rotator just deals the
+   slots"). A set — written on 28_tp_point_sets.html — says what each of a
+   session's three slots is: TP 3, second teaching set, slot 2. The rotation
+   still decides WHO takes which slot, because the teaching order already
+   rotates (ABC, then BCA, then CAB), and a candidate's place in that order IS
+   the slot number. Where there is no set, or no slot written for that place,
+   the rotation goes on generating the type exactly as it did before.
+
+   The slot is COPIED into the cell rather than referred to. Candidates are
+   handed their own cells by the store and never the whole record, so a cell
+   that only pointed at a set would reach them empty; copying also means an
+   edit to the set cannot silently rewrite a lesson somebody has already
+   planned. Re-applying the set is a deliberate press. */
+function slotFor(set, tp, setIndex, pos){
+  const id = tp + (setIndex === 0 ? 'A' : 'B');
+  const ses = (set.sessions || {})[id];
+  const sl = ses && (ses.slots || [])[pos];
+  if (!sl || !(sl.type || sl.aim)) return null;
+  return { slot: sl, scaffold: ses.scaffold || '', id: id, pos: pos };
+}
+function stamp(cell, found){
+  const sl = found.slot;
+  const out = Object.assign({}, cell);
+  if (sl.type) out.aim = sl.type;
+  if (sl.aim) out.point = sl.aim;
+  if (sl.sub) out.sub = sl.sub;
+  if (sl.shape) out.framework = sl.shape;
+  const book = Object.assign({}, out.book || {});
+  if (sl.pages) book.ref = sl.pages;
+  if (sl.page) book.page = sl.page;
+  if (!book.url && P && P.set && P.set.url) book.url = P.set.url;
+  if (book.url || book.ref || book.page) out.book = book;
+  if (sl.tracks) out.audio = Object.assign({}, out.audio || {}, { url: sl.tracks });
+  out.stages = (sl.stages || []).filter(s => s && (s.name || s.todo))
+    .map(s => ({ name: s.name || '', minutes: s.minutes || '', interaction: s.interaction || '', todo: s.todo || '', avoid: s.avoid || '' }));
+  out.scaffold = found.scaffold;
+  out.from = found.id + '·' + (found.pos + 1);
+  return out;
+}
+
+function sessionIds(){
+  const out = [];
+  for (let tp = 1; tp <= TPS; tp++) { out.push(tp + 'A'); out.push(tp + 'B'); }
+  return out;
+}
+function setBar(){
+  const s = P && P.set;
+  if (!s) return `<div class="setbar"><span class="status">No TP point set on this course — the rotation is generating the lesson types itself.</span>
+    <a class="btn quiet sm" href="28_tp_point_sets.html">Write a set</a></div>`;
+  const ids = sessionIds();
+  const written = ids.filter(id => { const ses = (s.sessions || {})[id]; return ses && (ses.slots || []).some(sl => sl && (sl.type || sl.aim)); }).length;
+  return `<div class="setbar on"><b>${esc(s.book || 'The set')}</b>${s.level ? ' · ' + esc(s.level) : ''}
+    <span class="status">${written} of ${ids.length} sessions written · the set decides the lesson, the rotation deals the slots.</span>
+    <a class="btn quiet sm" href="28_tp_point_sets.html">Write the set</a>
+    <button type="button" class="btn sm" id="applyset">Apply it</button></div>`;
+}
+function wireSetBar(){
+  const b = $('applyset');
+  if (b) b.addEventListener('click', () => {
+    if (confirm('Apply the set to the rotation? Every cell takes its lesson, pages and stages from the set. Cells you changed by hand are kept.')) build(true);
+  });
+}
+
 function build(keepEdits){
   const gs = groups();
-  const out = { groups: {}, released: (P && P.released) || {}, sets: {} };
+  const set = (P && P.set) || null;
+  const out = { groups: {}, released: (P && P.released) || {}, sets: {}, set: set };
   gs.forEach((g, i) => {
     const r = R.rotate(g.people, { tps: TPS, groupOffset: i * 3 });
     const rows = {};
-    Object.keys(r.rows).forEach(token => {
-      rows[token] = {};
-      for (let tp = 1; tp <= TPS; tp++) {
-        const was = keepEdits && P && P.groups && P.groups[g.group] && P.groups[g.group][token] && P.groups[g.group][token]['tp'+tp];
-        rows[token]['tp'+tp] = (was && was.edited) ? was : { aim: r.rows[token]['tp'+tp] };
-      }
-    });
+    Object.keys(r.rows).forEach(token => { rows[token] = {}; });
+    for (let tp = 1; tp <= TPS; tp++) {
+      r.sets.forEach((st, si) => {
+        R.orderFor(st, tp).forEach((p, pos) => {
+          const token = p.token;
+          const was = keepEdits && P && P.groups && P.groups[g.group] && P.groups[g.group][token] && P.groups[g.group][token]['tp'+tp];
+          if (was && was.edited) { rows[token]['tp'+tp] = was; return; }
+          const found = set && slotFor(set, tp, si, pos);
+          const cell = { aim: r.rows[token]['tp'+tp] };
+          rows[token]['tp'+tp] = found ? stamp(cell, found) : cell;
+        });
+      });
+    }
     out.groups[g.group] = rows;
     out.sets[g.group] = r.sets.map(s => s.map(p => p.token));
   });
   P = out;
-  persist('Rotation built');
+  persist(set ? 'Built from the set' : 'Rotation built');
 }
 
 function persist(word){
@@ -389,11 +482,31 @@ function matsRead(c, mine){
     audioLines.forEach((a, i) => got.push(`<a class="mlink audio" href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.label || 'Audio' + (audioLines.length > 1 ? ' ' + (i + 1) : ''))}</a>`));
   }
 
-  if (!says.length && !got.length && !players) return '';
+  /* The procedure, for the candidate whose lesson it is. Ramy, 4 Oct 2026:
+     they need "the procedure, what they're doing and how to do it, and
+     obviously timing as well, especially the first two TPs". A classmate's
+     row never shows it -- three procedures on one day's table would bury the
+     one that matters. The clock adds the stages up against the slot, because
+     a first lesson planned to fifty minutes in a forty-five minute slot is
+     the commonest way a first lesson goes wrong. */
+  let proc = '';
+  const stages = mine ? (c.stages || []).filter(s => s && (s.name || s.todo)) : [];
+  if (stages.length) {
+    const total = stages.reduce((n, s) => n + (parseInt(s.minutes, 10) || 0), 0);
+    proc = `<div class="proc"><div class="plab">The procedure${c.scaffold === 'guided' ? ' — the stages and the clock; the instructions are yours to write' : ''}</div>
+      <ol>${stages.map(s => `<li><div class="pst"><b>${esc(s.name || 'Stage')}</b>${
+        s.minutes ? `<span class="pmin">${esc(s.minutes)} min</span>` : ''}${
+        s.interaction ? `<span class="pint">${esc(s.interaction)}</span>` : ''}</div>${
+        s.todo ? `<div class="pdo">${esc(s.todo)}</div>` : ''}${
+        s.avoid ? `<div class="pav">Watch out for: ${esc(s.avoid)}</div>` : ''}</li>`).join('')}</ol>
+      ${total ? `<p class="pclock">${total} minutes of stages.</p>` : ''}</div>`;
+  }
+
+  if (!says.length && !got.length && !players && !proc) return '';
   const cls = 'mats-read' + (mine ? '' : ' ref');
   return (says.length ? `<span class="${cls}">${says.join('<span class="sep">\u00b7</span>')}</span>` : '')
        + (got.length ? `<span class="${cls} gets"><span class="glab">Materials</span>${got.join('<span class="sep">\u00b7</span>')}</span>` : '')
-       + players;
+       + players + proc;
 }
 
 function render(){
@@ -474,17 +587,41 @@ function render(){
      all-clear underneath because the checks had nothing to fail on (found
      testing on the scratch course, 29 Sep 2026). A rotation counts as built
      only when every candidate on the roster has a row. */
+  /* Without a set the rotation guarantees the range by construction — six
+     different types out of seven, so every family lands. With a set the
+     guarantee is gone: the spread is whatever the book's sessions contain, and
+     a candidate who sits in one teaching set only ever teaches that set's
+     slots. Handbook 9.1.2 asks for "a range of lessons covering all aspects of
+     language teaching", so this says plainly when a candidate never meets one
+     of the three families. It warns; it does not block. */
+  function rangeCheck(flat){
+    const out = [];
+    Object.keys(flat || {}).forEach(t => {
+      const types = [], fams = {};
+      for (let tp = 1; tp <= TPS; tp++) {
+        const a = flat[t]['tp' + tp];
+        if (!a) continue;
+        if (types.indexOf(a) < 0) types.push(a);
+        const f = R.familyOf(a); if (f) fams[f] = 1;
+      }
+      const missing = ['language', 'receptive', 'productive'].filter(f => !fams[f]);
+      if (missing.length) out.push({ token: t, types: types, missing: missing });
+    });
+    return out;
+  }
+
   const built = P && P.groups && gs.every(g => {
     const rows = P.groups[g.group] || {};
     return g.people.length && g.people.every(t => rows[t.token] && Object.keys(rows[t.token]).length);
   });
   if (!built) {
-    app.innerHTML = head + `<div class="relbar"><button class="btn" id="build">Build the rotation</button><span class="status">Works out the lesson type for every candidate across practices 1 to ${TPS}.</span></div>`;
+    app.innerHTML = head + setBar() + `<div class="relbar"><button class="btn" id="build">Build the rotation</button><span class="status">${(P && P.set) ? 'Deals the candidates into the set’s slots, and generates a type wherever the set is silent.' : 'Works out the lesson type for every candidate across practices 1 to ' + TPS + '.'}</span></div>`;
     $('build').addEventListener('click', () => build(false));
+    wireSetBar();
     return;
   }
 
-  app.innerHTML = head + `<div class="relbar"><button class="btn quiet" id="rebuild">Rebuild</button><span class="status">${esc(note)}</span></div>` + gs.map(g => {
+  app.innerHTML = head + setBar() + `<div class="relbar"><button class="btn quiet" id="rebuild">Rebuild</button><span class="status">${esc(note)}</span></div>` + gs.map(g => {
     const rows = (P.groups || {})[g.group] || {};
     const lettered = R.lettersFor(g.people);
     const sets = R.setsFor(g.people);
@@ -519,6 +656,11 @@ function render(){
         }).join('')}</tr>`).join('')}</table></div>
       ${noLang.length ? `<div class="warn"><b>Handbook 9.1.2:</b> a centre must include language-focus lessons for every candidate. ${noLang.length===1?'Candidate':'Candidates'} ${esc(noLang.join(', '))} ${noLang.length===1?'has':'have'} none in practices 1 to ${TPS}. Grammar, vocabulary and functional language are the language-focus types.</div>` : ''}
       ${clash.length ? `<div class="warn"><b>Same type, same day:</b> ${clash.map(c => 'TP ' + c.tp + ' — ' + esc(c.set) + ' — ' + esc(c.aim)).join('; ')}. They teach on the same day, so two of them would be teaching the same thing.</div>` : ''}
+      ${(function(){ const r = rangeCheck(flat); if (!r.length) return '';
+        const word = { language: 'language focus', receptive: 'receptive skills', productive: 'productive skills' };
+        return `<div class="warn"><b>Handbook 9.1.2:</b> candidates must have "practice in a range of lessons covering all aspects of language teaching". ${r.map(x =>
+          esc(letterOf(x.token)) + ' never teaches ' + x.missing.map(f => esc(word[f] || f)).join(' or ') +
+          ' (' + esc(x.types.join(', ')) + ')').join('; ')}. ${(P && P.set) ? 'The set decides the types, so the rotation can no longer spread them — change a slot in the set, or change a cell here.' : 'Change a cell to put the missing kind of lesson back.'}</div>`; })()}
       ${OPEN && OPEN.split('|')[0] === g.group ? (function(){
         const [, t, tp] = OPEN.split('|');
         const who = lettered.find(x => x.token === t) || {};
@@ -526,11 +668,12 @@ function render(){
       })() : ''}
       ${after.length ? `<div class="sugg"><b>After a lesson that was not to standard</b> — the centre’s own recommendation, not a Cambridge rule.<ul>${
         after.map(a => `<li>${esc(letterOf(a.token))} was not to standard on TP ${a.failed} (${esc(a.failedAim)}). TP ${a.next} is ${esc(a.nextAim || 'not set')}; another ${esc(a.familyWord)} lesson would give them a second go at it — ${esc(a.suggest.join(', '))}.</li>`).join('')}</ul></div>` : ''}
-      ${(!noLang.length && !clash.length && Object.keys(flat).length) ? `<p class="ok">Every candidate has at least one language-focus lesson, and nobody in a teaching set repeats a type on the same day.</p>` : ''}
+      ${(!noLang.length && !clash.length && !rangeCheck(flat).length && Object.keys(flat).length) ? `<p class="ok">Every candidate has at least one language-focus lesson, meets all three kinds of lesson, and nobody in a teaching set repeats a type on the same day.</p>` : ''}
     </section>`;
   }).join('');
 
   if ($('rebuild')) $('rebuild').addEventListener('click', () => { if (confirm('Rebuild the rotation? Cells you changed by hand are kept.')) build(true); });
+  wireSetBar();
   document.querySelectorAll('select[data-tp]').forEach(el => el.addEventListener('change', () => {
     const { g, t, tp } = el.dataset;
     P.groups[g] = P.groups[g] || {}; P.groups[g][t] = P.groups[g][t] || {};

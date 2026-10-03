@@ -14,6 +14,12 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
+## 4 Oct 2026 — a course's TP point set rides with the points (version 67)
+`tpPointsFor_` returns `set` to readers, so the lessons written once against a
+coursebook — sessions, slots, stages, timings — survive a read. Candidates are
+unaffected: the rotation stamps a slot's content into their own cells.
+See [2026-10-04-tp-point-sets.md](2026-10-04-tp-point-sets.md).
+
 ## 3 Oct 2026 — the nightly backup, rebuilt (version 66)
 There was no backup: no code, no trigger, nothing in the account since
 2 September. `nightlyBackup()` copies the records Sheet into `CELTA hub backups`

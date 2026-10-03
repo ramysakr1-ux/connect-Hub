@@ -526,6 +526,8 @@
           <div class="fw-menu" id="fwMenu" role="menu" hidden></div>
         </div>
         <p class="fw-hint">Choosing a shape names the stages; the aim of each one is yours to write. Everything stays editable — rename, delete or add stages as your lesson needs.</p>
+        <button type="button" class="btn-add" id="tpStart" hidden>Start from your TP point</button>
+        <p class="fw-hint" id="tpStartHint" hidden></p>
       </div>
       <div class="band-r">
         <div class="band-head"><p class="micro">Time budget</p><p class="budget-line" id="total"></p></div>
@@ -1027,6 +1029,79 @@ function fwRender(){
   note.textContent='Choosing a shape renames the stages. A stage whose name changes gives up its time and interaction pattern with it — they described the old stage. Anything you have typed in Procedure stays.';
   fwMenu.appendChild(note);
 }
+/* ---- starting from the TP point -------------------------------------------
+   Where the tutor's set has written the stages for this practice, the plan can
+   open with the stages already named, timed and given their interaction —
+   which is the scaffolding the first practices are supposed to have (Ramy,
+   4 Oct 2026: "especially the first two TPs").
+
+   What it does NOT fill is the aim of each stage or the procedure itself.
+   Those are the two things the candidate is assessed on (4b, 4e), and the
+   standing rule from 23 Sep 2026 — "it feels like cheating a little bit,
+   we're just giving them the stages" — draws the line exactly there. The
+   instructions stay readable on the TP points screen; they are not typed into
+   the plan on the candidate's behalf. */
+function tpPointStages(){
+  let me=null, P=null;
+  try{ me=JSON.parse(localStorage.getItem('hub:me')||'null'); }catch(e){}
+  try{ P=JSON.parse(localStorage.getItem('connect_tp_points_v1')||'null'); }catch(e){}
+  if(!me||!P) return null;
+  const n=tpNumberOf(($('fTP')||{}).value||'');
+  if(!n) return null;
+  /* A candidate is handed `points`; a tutor looking at the same screen has the
+     whole record under `groups`. */
+  let rows=P.points||null;
+  if(!rows && P.groups) Object.keys(P.groups).forEach(g=>{ if(!rows && P.groups[g][me.token]) rows=P.groups[g]; });
+  const cell=rows && rows[me.token] && rows[me.token]['tp'+n];
+  const stages=cell&&(cell.stages||[]).filter(s=>s&&(s.name||s.todo));
+  return stages&&stages.length?{n:n,stages:stages,cell:cell}:null;
+}
+function tpStartRender(){
+  const btn=$('tpStart'), hint=$('tpStartHint');
+  if(!btn) return;
+  const got=tpPointStages();
+  btn.hidden=!got; hint.hidden=!got;
+  if(got){
+    btn.textContent='Start from your TP point ('+got.stages.length+' stages)';
+    hint.textContent='Names, timings and interaction come across from what your tutor set for TP '+got.n+'. The aim of each stage and the procedure are yours to write.';
+  }
+}
+async function tpStartApply(){
+  const got=tpPointStages();
+  if(!got) return;
+  const filled=rows().some(rowIsTheirs);
+  if(filled && !await confirmModal('This renames the stages and replaces their timings and interaction patterns with the ones your tutor set. Anything you have typed in Procedure stays. Continue?','Replace anyway')) return;
+  const all=rows();
+  got.stages.forEach((st,i)=>{
+    const tr=all[i]||addRow('','','');
+    const nm=tr.querySelector('.t-stage');
+    nm.value=st.name||''; nm.dataset.auto='1';
+    tr.querySelector('.t-aim').value='';
+    tr.querySelector('.t-time').value=st.minutes?String(st.minutes):'';
+    tr.querySelector('.t-int').value=st.interaction||'';
+    tr.querySelectorAll('textarea').forEach(autoGrow);
+  });
+  all.slice(got.stages.length).forEach(tr=>{
+    const used=procText(tr.querySelector('.t-proc').value).trim()||tr.querySelector('.t-aim').value.trim();
+    if(!used) tr.remove();
+  });
+  /* The shape is matched loosely: a set imported from a centre's own document
+     says "Receptive skills - Reading" where the plan says "Receptive Skills
+     (reading or listening)". Setting the picker only names the shape on the
+     printed plan; it does not re-run the stage fill, which has just happened. */
+  if(got.cell&&got.cell.framework){
+    const want=String(got.cell.framework).toLowerCase();
+    const key=Object.keys(FRAMEWORKS).find(k=>FRAMEWORKS[k].name.toLowerCase()===want)
+      || Object.keys(FRAMEWORKS).find(k=>want.indexOf(k.replace('langpractice','language practice').replace('textbased','text-based'))>=0)
+      || (/receptive|reading|listening/.test(want)?'receptive':/productive|speaking|writing/.test(want)?'productive':/ppp|present/.test(want)?'ppp':/test\s*[-–]\s*teach/.test(want)?'ttt':'');
+    if(key&&FRAMEWORKS[key]){ fwSel.value=key; fwRender(); }
+  }
+  paintAll(); setStatus('Stages filled from your TP point. Write the aim of each one.'); dirty=true;
+}
+if($('tpStart')) $('tpStart').addEventListener('click',tpStartApply);
+if($('fTP')) $('fTP').addEventListener('change',tpStartRender);
+tpStartRender();
+
 function fwOpen(){ fwMenu.hidden=false; fwBtn.setAttribute('aria-expanded','true'); }
 function fwClose(){ fwMenu.hidden=true; fwBtn.setAttribute('aria-expanded','false'); }
 fwBtn.addEventListener('click',()=>{ fwMenu.hidden ? fwOpen() : fwClose(); });
