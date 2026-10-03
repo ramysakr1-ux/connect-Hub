@@ -19,6 +19,19 @@
 (function () {
   var esc = function (s) { return String(s == null ? '' : s).replace(/[<&>"]/g, ' '); };
 
+  /* The root is the front door, not a room. It is also the candidate's home,
+     which is why a tutor who clicked lite.celtaconnect.com used to be told
+     "This room belongs to the candidate" and left there (Ramy, 3 Oct 2026:
+     "why is it taking me to the trainee? The trainee is not emailing me").
+     Whoever arrives is sent to their own room instead; a candidate and a
+     stranger both stay, and the stranger gets the page below. */
+  window.hubFrontRoute = function () {
+    var where = { tutor: '5_tutor_dashboard.html', assessor: '12_assessor_pack.html', volunteer: '26_volunteer.html' }[window.HubMode];
+    if (!where) return false;
+    location.replace(where + location.search);
+    return true;
+  };
+
   window.hubNoLink = function () {
     document.title = 'Connect Lite — a CELTA course, run from one link';
     document.documentElement.style.background = 'var(--sand)';
