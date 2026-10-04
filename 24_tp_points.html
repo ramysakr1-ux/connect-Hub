@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610041055">
+<link rel="stylesheet" href="hub-tokens.css?v=202610041101">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -132,6 +132,8 @@
     font-weight:700; margin:0 0 1px;}
   .aud figcaption{font-size:0.72rem; font-weight:600; color:var(--grey); margin:0 0 3px;}
   .aud iframe{width:100%; max-width:430px; height:72px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper); display:block;}
+  .aud .audalt{display:inline-block; margin:3px 0 0; font-size:0.7rem; color:var(--grey); text-decoration:none;}
+  .aud .audalt:hover{color:var(--teal); text-decoration:underline;}
   .aud audio{width:100%; max-width:430px; display:block;}
   @media (max-width:560px){ .mats .mrow{grid-template-columns:1fr; gap:3px;} .mats label{padding-top:0;} }
   /* The set's own bar: what the course is teaching from, and the two doors —
@@ -235,19 +237,19 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} section.group{padding:12px 12px 14px;} }
   @media print{ .back,.relbar,#hubSync{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610041055">
+<link rel="stylesheet" href="hub-house.css?v=202610041101">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610041055"></script>
-<script src="hub-tracker.js?v=202610041055"></script>
-<script src="hub-rotation.js?v=202610041055"></script>
-<script src="hub-shared.js?v=202610041055"></script>
-<script src="hub-store.js?v=202610041055"></script>
-<script src="hub-sync.js?v=202610041055"></script>
+<script src="hub-due.js?v=202610041101"></script>
+<script src="hub-tracker.js?v=202610041101"></script>
+<script src="hub-rotation.js?v=202610041101"></script>
+<script src="hub-shared.js?v=202610041101"></script>
+<script src="hub-store.js?v=202610041101"></script>
+<script src="hub-sync.js?v=202610041101"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -577,7 +579,16 @@ function matsRead(c, mine){
     players = `<div class="auds"><div class="alab">Audio</div>` + audioLines.map((a, i) => {
       const name = esc(a.label || 'Track ' + (i + 1));
       const m = a.url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^"' ]*?id=)([\w-]{20,})/) || a.url.match(/[?&]id=([\w-]{25,})/);
-      if (m) return `<figure class="aud"><figcaption>${name}</figcaption><iframe src="https://drive.google.com/file/d/${esc(m[1])}/preview" loading="lazy" allow="autoplay" title="${name}"></iframe></figure>`;
+      /* Drive's own /preview is a whole page -- 367px of black with the file
+         name and a giant waveform -- and squeezing it into a bar cropped it
+         through the middle (Ramy, 4 Oct 2026: "is it supposed to look like
+         this, or did something get shifted?"). The download address serves the
+         bytes with the right content type, so the card plays the track in its
+         own controls instead, with the Drive link kept underneath for anyone
+         whose network blocks it. */
+      if (m) return `<figure class="aud"><figcaption>${name}</figcaption>
+        <audio controls preload="metadata" src="https://drive.usercontent.google.com/download?id=${esc(m[1])}&amp;export=download"></audio>
+        <a class="audalt" href="${esc(a.url)}" target="_blank" rel="noopener">open it in Drive</a></figure>`;
       if (/\.(mp3|m4a|ogg|wav|aac)([?#]|$)/i.test(a.url)) return `<figure class="aud"><figcaption>${name}</figcaption><audio controls preload="none" src="${esc(a.url)}"></audio></figure>`;
       return `<figure class="aud"><figcaption><a class="mlink" href="${esc(a.url)}" target="_blank" rel="noopener">${name}</a></figcaption></figure>`;
     }).join('') + `</div>`;
