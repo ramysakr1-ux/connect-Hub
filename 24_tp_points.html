@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610042243">
+<link rel="stylesheet" href="hub-tokens.css?v=202610042249">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -291,19 +291,19 @@
     body.printpages .pg figcaption{font-size:0.8rem; margin:0 0 4px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610042243">
+<link rel="stylesheet" href="hub-house.css?v=202610042249">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610042243"></script>
-<script src="hub-tracker.js?v=202610042243"></script>
-<script src="hub-rotation.js?v=202610042243"></script>
-<script src="hub-shared.js?v=202610042243"></script>
-<script src="hub-store.js?v=202610042243"></script>
-<script src="hub-sync.js?v=202610042243"></script>
+<script src="hub-due.js?v=202610042249"></script>
+<script src="hub-tracker.js?v=202610042249"></script>
+<script src="hub-rotation.js?v=202610042249"></script>
+<script src="hub-shared.js?v=202610042249"></script>
+<script src="hub-store.js?v=202610042249"></script>
+<script src="hub-sync.js?v=202610042249"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -494,10 +494,14 @@ function setBar(){
       applied ? `<span class="status">${esc(note)}</span>` : ''}</div>`;
 }
 function wireSetBar(){
+  /* NO CONFIRM. It guarded nothing -- applying is idempotent, and build(true)
+     keeps every cell a tutor changed by hand -- and it was the thing actually
+     stopping the work: a dialog that some browsers answer for you silently, so
+     the click landed, build() never ran, and the page still said Applied.
+     Ramy pressed it five times on 4 Oct 2026 against a rebuild that had never
+     happened. The button reports what it did; that is the safeguard. */
   const b = $('applyset');
-  if (b) b.addEventListener('click', () => {
-    if (confirm('Apply the set to the rotation? Every cell takes its lesson, pages and stages from the set. Cells you changed by hand are kept.')) build(true);
-  });
+  if (b) b.addEventListener('click', () => build(true));
 }
 
 function build(keepEdits){
@@ -1096,7 +1100,7 @@ function render(){
     </section>`;
   }).join('');
 
-  if ($('rebuild')) $('rebuild').addEventListener('click', () => { if (confirm('Rebuild the rotation? Cells you changed by hand are kept.')) build(true); });
+  if ($('rebuild')) $('rebuild').addEventListener('click', () => build(true));   // same: no confirm, see wireSetBar
   wireSetBar();
   document.querySelectorAll('select[data-tp]').forEach(el => el.addEventListener('change', () => {
     const { g, t, tp } = el.dataset;
