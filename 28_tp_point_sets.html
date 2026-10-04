@@ -35,7 +35,7 @@
 <title>Connect Lite — TP point sets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610050215">
+<link rel="stylesheet" href="hub-tokens.css?v=202610050224">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1020px; margin:0 auto; padding:26px 20px 90px;}
@@ -66,6 +66,34 @@
   .settab i{font-style:normal; font-size:0.72rem; font-weight:500; color:var(--grey);}
   .settab.on{border-color:var(--teal); border-bottom-width:3px; background:var(--box);}
   .settab.add{color:var(--teal); border-style:dashed; justify-content:center;}
+  /* THE LIBRARY CHOOSER. Ramy, 5 Oct 2026: "build the screen." Until now the
+     library was a file in the repo and a page describing it; nothing in Lite
+     read it, and putting a set on a course meant me running a node script with
+     the course key. This is the door. It lives in the sets room rather than a
+     room of its own: a centre taking a set is doing the same job as starting
+     one by hand, which is what the tab beside it does. */
+  .libwrap{background:var(--surface); border:1px solid var(--sand-line); border-left:5px solid var(--gold);
+    border-radius:10px; padding:15px 18px 17px; margin:0 0 18px;}
+  .libwrap h2{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.12rem; margin:0 0 3px;}
+  .libwrap .lede{margin:0 0 12px;}
+  .libfilter{display:flex; flex-wrap:wrap; gap:7px; margin:0 0 13px; align-items:center;}
+  .libfilter .lab{margin-right:3px;}
+  .lvchip{font-family:inherit; font-size:0.78rem; font-weight:600; cursor:pointer; padding:4px 11px;
+    border:1px solid var(--sand-line); border-radius:999px; background:var(--paper); color:var(--grey);}
+  .lvchip.on{border-color:var(--teal); color:var(--teal); background:var(--box);}
+  .libgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(252px,1fr)); gap:12px;}
+  .libcard{background:var(--paper); border:1px solid var(--sand-line); border-bottom-width:3px;
+    border-radius:9px; padding:12px 14px 13px; display:flex; flex-direction:column; gap:7px;}
+  .libcard .lv{font-size:0.66rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--gold-deep);}
+  .libcard b{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.04rem; line-height:1.25;}
+  .libcard .ed{font-size:0.78rem; color:var(--grey); margin:-4px 0 0;}
+  .libcard .ct{font-size:0.74rem; color:var(--faint); font-variant-numeric:tabular-nums;}
+  .libmix{display:flex; flex-wrap:wrap; gap:4px;}
+  .libmix span{font-size:0.68rem; background:var(--box); border-radius:999px; padding:2px 8px; color:var(--grey);}
+  .libcard .act{margin-top:auto; display:flex; align-items:center; gap:9px; flex-wrap:wrap;}
+  .libcard .have{font-size:0.74rem; color:var(--teal); font-weight:600;}
+  .libwarn{font-size:0.76rem; color:var(--ink-warm); background:var(--gold-wash);
+    border-left:2px solid var(--amber-edge); border-radius:0 6px 6px 0; padding:7px 10px; margin:11px 0 0;}
   .groupsel{display:flex; flex-wrap:wrap; gap:8px;}
   .gchip{display:inline-flex; align-items:center; gap:6px; font-size:0.82rem; padding:5px 11px;
     background:var(--paper); border:1px solid var(--sand-line); border-radius:999px; cursor:pointer;}
@@ -133,17 +161,17 @@
   }
   @media print{ .back,.acts,.xbtn,.paste{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610050215">
+<link rel="stylesheet" href="hub-house.css?v=202610050224">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610050215"></script>
-<script src="hub-rotation.js?v=202610050215"></script>
-<script src="hub-store.js?v=202610050215"></script>
-<script src="hub-sync.js?v=202610050215"></script>
+<script src="hub-shared.js?v=202610050224"></script>
+<script src="hub-rotation.js?v=202610050224"></script>
+<script src="hub-store.js?v=202610050224"></script>
+<script src="hub-sync.js?v=202610050224"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
@@ -255,6 +283,100 @@ function blankSet(){
   sessionIds().forEach(id => { sessions[id] = { scaffold: parseInt(id, 10) <= 2 ? 'full' : parseInt(id, 10) <= 4 ? 'guided' : 'bare', slots: [blankSlot(), blankSlot(), blankSlot()] }; });
   return { book: '', level: '', minutes: 45, sessions: sessions };
 }
+/* ---------------- the library ----------------
+   catalogue.json is the facts only, about a kilobyte, so opening the chooser
+   costs nothing. The set itself is lifted out of the master file at the moment
+   someone takes one, because that file is 400 KB and climbing and no tutor
+   should download it to browse.
+
+   A taken set is a COPY. It lands under a fresh local id and the course owns it
+   from then on: editing it here does not touch the library, and the library
+   being updated does not reach a course that already took it. That is on
+   purpose -- a centre's set is theirs to change. */
+const LIB_CATALOGUE = 'library/catalogue.json';
+const LIB_MASTER = 'library/tp-point-sets.json';
+let CAT = null, SHOWLIB = false, LVL = '', LIBNOTE = '', TAKING = '';
+
+async function openLibrary(){
+  SHOWLIB = true; LIBNOTE = ''; render();
+  if (CAT) return;
+  try {
+    const r = await fetch(LIB_CATALOGUE + '?v=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    CAT = await r.json();
+  } catch (e) {
+    CAT = [];
+    LIBNOTE = 'The library did not load — ' + ((e && e.message) || e) + '. Try again, or start a set by hand.';
+  }
+  render();
+}
+
+async function takeFromLibrary(libId){
+  const row = (CAT || []).find(x => x.id === libId);
+  if (!row || TAKING) return;
+  TAKING = libId; LIBNOTE = 'Fetching ' + row.book.split(',')[0] + '…'; render();
+  try {
+    const r = await fetch(LIB_MASTER + '?v=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const master = await r.json();
+    const got = master[libId];
+    if (!got) throw new Error('that set is not in the library file');
+    const id = newId();
+    /* `from` is the only trace kept: which library set this began as, and when.
+       It is what tells a later version of this screen that an update exists. */
+    LIB[id] = Object.assign(JSON.parse(JSON.stringify(got)),
+      { from: libId, taken: new Date().toISOString().slice(0, 10) });
+    CUR = id; S = LIB[id]; OPEN = null; SHOWLIB = false; TAKING = ''; LIBNOTE = '';
+    persist(row.book.split(',')[0] + ' is on the course');
+  } catch (e) {
+    TAKING = ''; LIBNOTE = 'Could not take that set — ' + ((e && e.message) || e); render();
+  }
+}
+
+/* The books this course already teaches from, so the chooser can say so rather
+   than letting someone add Roadmap twice without noticing. */
+const haveBooks = () => new Set(Object.values(LIB).map(x =>
+  String(x.book || x.name || '').split(',')[0].trim().toLowerCase()).filter(Boolean));
+const haveFrom = () => new Set(Object.values(LIB).map(x => x.from).filter(Boolean));
+
+function libraryPanel(){
+  if (!SHOWLIB) return '';
+  const rows = CAT || [];
+  const levels = [...new Set(rows.map(r => r.level).filter(Boolean))];
+  const shown = LVL ? rows.filter(r => r.level === LVL) : rows;
+  const books = haveBooks(), froms = haveFrom();
+  const body = !CAT ? '<p class="hint">Opening the library…</p>'
+    : !rows.length ? '<p class="hint">Nothing in the library to show.</p>'
+    : `<div class="libgrid">${shown.map(r => {
+        const title = r.book.split(',')[0].trim();
+        const ed = r.book.slice(title.length).replace(/^,\s*/, '');
+        const had = froms.has(r.id) || books.has(title.toLowerCase());
+        return `<article class="libcard">
+          <span class="lv">${esc(r.level)}</span>
+          <b>${esc(title)}</b>
+          ${ed ? `<p class="ed">${esc(ed)}</p>` : ''}
+          <p class="ct">${r.slots} lessons · ${r.scans} pages · ${r.tracks} recordings · ${r.days} printable days</p>
+          <div class="libmix">${(r.types || []).slice(0, 4).map(([k, n]) => `<span>${n} ${esc(k)}</span>`).join('')}</div>
+          <div class="act">
+            <button type="button" class="btn sm" data-take="${esc(r.id)}"${TAKING ? ' disabled' : ''}>${
+              TAKING === r.id ? 'Taking…' : had ? 'Take it again' : 'Take this set'}</button>
+            ${had ? '<span class="have">already on this course</span>'
+                  : `<span class="hint" style="margin:0">adds ${r.kb} KB</span>`}
+          </div></article>`;
+      }).join('')}</div>`;
+  const filter = levels.length < 2 ? '' : `<div class="libfilter"><span class="lab">Level</span>
+    <button type="button" class="lvchip${LVL ? '' : ' on'}" data-lvl="">All</button>
+    ${levels.map(l => `<button type="button" class="lvchip${LVL === l ? ' on' : ''}" data-lvl="${esc(l)}">${esc(l)}</button>`).join('')}</div>`;
+  return `<div class="libwrap">
+    <h2>Take a set from the library</h2>
+    <p class="lede">Teaching practice written against a real coursebook — twelve teaching days, three lessons a day, each staged and timed. The pages each lesson teaches from travel with it, so a candidate can teach without a copy of the book. Take the ones your course runs; a set you take is yours to change, and changing it here does not touch the library.</p>
+    ${filter}${body}
+    ${LIBNOTE ? `<p class="libwarn">${esc(LIBNOTE)}</p>` : ''}
+    <p class="libwarn">A set rides on the course record, which every candidate&rsquo;s browser downloads. Take the levels you actually teach and leave the rest.</p>
+    <div class="acts" style="margin-top:12px"><button type="button" class="btn quiet" id="libclose">Close the library</button></div>
+  </div>`;
+}
+
 function load(){
   const P = rec(KEY) || {};
   const holder = P.set || {};
@@ -300,9 +422,13 @@ function render(){
   if (!S || !Object.keys(LIB).length) {
     $('app').innerHTML = `<h1>TP point sets</h1>
       <p class="lede">A set is the course’s teaching practice points, written once against a coursebook: ${TPS} practices, each taught twice because the group teaches on alternate days, and three slots in each. The rotation then deals the candidates into the slots.</p>
-      <div class="empty"><p style="margin:0 0 12px">This course has no set yet.</p>
-      <button class="btn" id="make">Start a set</button></div>`;
-    $('make').onclick = () => { const id = newId(); LIB[id] = blankSet(); CUR = id; S = LIB[id]; persist('Set started'); };
+      ${libraryPanel()}
+      <div class="empty"><p style="margin:0 0 12px">This course has no set yet. Take one from the library, or start your own.</p>
+      <button class="btn" id="takelib">Open the library</button>
+      <button class="btn quiet" id="make">Start a set by hand</button></div>`;
+    wireLibrary();
+    const mk = $('make'); if (mk) mk.onclick = () => { const id = newId(); LIB[id] = blankSet(); CUR = id; S = LIB[id]; persist('Set started'); };
+    const tl = $('takelib'); if (tl) tl.onclick = openLibrary;
     return;
   }
   const names = setNames();
@@ -325,6 +451,7 @@ function render(){
   const gnames = groupNames();
   const tabs = `<div class="settabs">${ids.map(id => `<button type="button" class="settab${id === CUR ? ' on' : ''}" data-set="${id}">${esc(LIB[id].name || LIB[id].book || 'Untitled set')}${
       LIB[id].level ? `<i>${esc(LIB[id].level)}</i>` : ''}</button>`).join('')}
+    <button type="button" class="settab add" id="addlib">+ from the library</button>
     <button type="button" class="settab add" id="addset">+ another set</button></div>`;
   const usedBy = !gnames.length ? '' : `<div class="row"><label class="lab">Taught by</label><div class="groupsel">${
     gnames.map(g => { const on = (FOR[g] || ids[0]) === CUR;
@@ -334,6 +461,7 @@ function render(){
   $('app').innerHTML = `<h1>TP point sets</h1>
     <p class="lede">The lessons this course teaches, written once against the book. A set belongs to a tutor and their book; the rotation on the TP points screen deals its slots to whoever is teaching. Give a slot its stages and the candidate’s own plan can start from them.</p>
     ${tabs}
+    ${libraryPanel()}
     <div class="head">
       <div class="row"><label class="lab" for="setname">This set is</label><input id="setname" value="${esc(S.name || '')}" placeholder="Jordan’s group · Language Hub Elementary"></div>
       ${usedBy}
@@ -350,6 +478,13 @@ function render(){
     </div>
     <p class="status" id="status">${esc(note)}</p>`;
   wire();
+}
+
+function wireLibrary(){
+  const open = $('addlib');   if (open)  open.onclick  = openLibrary;
+  const shut = $('libclose'); if (shut)  shut.onclick  = () => { SHOWLIB = false; LIBNOTE = ''; render(); };
+  document.querySelectorAll('[data-lvl]').forEach(el => el.onclick = () => { LVL = el.getAttribute('data-lvl'); render(); });
+  document.querySelectorAll('[data-take]').forEach(el => el.onclick = () => takeFromLibrary(el.getAttribute('data-take')));
 }
 
 function sessionBody(id, ses){
@@ -439,6 +574,7 @@ function wire(){
   });
   const add = $('addset');
   if (add) add.onclick = () => { const id = newId(); LIB[id] = blankSet(); CUR = id; S = LIB[id]; OPEN = null; persist('Another set started'); };
+  wireLibrary();
   const drop = $('dropset');
   if (drop) drop.onclick = () => {
     if (!confirm('Remove this set? It has nothing written in it.')) return;

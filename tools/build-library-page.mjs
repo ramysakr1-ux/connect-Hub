@@ -30,6 +30,18 @@ function stats(S) {
   };
 }
 const ids = Object.keys(LIB).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+
+/* THE CATALOGUE THE SETS SCREEN READS. A tutor opening the chooser should not
+   pull the whole library down to look at it -- the master file is 400 KB and
+   growing with every set. This is the same facts the cards above show, about
+   2 KB, so the chooser renders instantly; the full set is fetched from the
+   master only at the moment someone takes one. `kb` is what that set will add
+   to the course record, which every candidate's browser downloads. */
+fs.writeFileSync(path.join(ROOT, 'library', 'catalogue.json'), JSON.stringify(
+  ids.map(id => { const S = LIB[id], t = stats(S);
+    return { id, level: S.level || '', book: S.book || S.name || '', minutes: S.minutes || 45,
+             slots: t.slots, stages: t.stages, scans: t.scans, tracks: t.tracks, days: t.days,
+             types: t.types, kb: Math.round(JSON.stringify(S).length / 1024) }; }), null, 1));
 const cards = ids.map(id => {
   const S = LIB[id], t = stats(S);
   return `<article class="setcard">
@@ -82,7 +94,7 @@ const html = `<!DOCTYPE html>
   <p class="eyebrow">Connect Lite</p>
   <h1>TP points library</h1>
   <p class="lede">Teaching practice written against a real coursebook — twelve teaching days, three lessons a day, each one staged and timed to 45 minutes.</p>
-  <p class="note">Tell us which levels your course runs and we put those sets on it. You take the ones you teach; nothing else goes on your course.</p>
+  <p class="note">Open the TP point sets screen on your course and take the levels you run. A set you take is yours to change, and nothing else goes on your course.</p>
   <div class="cards">
 ${cards}
   </div>
