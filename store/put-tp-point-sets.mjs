@@ -1,18 +1,25 @@
 /**
- * Connect Lite — drop the written TP point sets onto a course.
+ * Connect Lite — drop chosen TP point sets from the library onto one course.
  *
  *   node store/put-tp-point-sets.mjs --key <courseKey>              what it would write
  *   node store/put-tp-point-sets.mjs --key <courseKey> --write      write it
- *   node store/put-tp-point-sets.mjs --key <courseKey> --write --only s2
+ *   node store/put-tp-point-sets.mjs --key <courseKey> --write --only s2,s4
  *
- * The sets are the library: twelve sessions, three slots each, written against
- * a real coursebook, with the stages a candidate's own plan starts from. They
- * belong to a tutor and their book, not to a course, so they are kept here as
- * a file and put onto whichever course needs them.
+ * THE LIBRARY LIVES IN library/tp-point-sets.json, NOT IN A COURSE. A set is
+ * twelve sessions of three 45-minute slots, written against one coursebook
+ * edition, with the pages and the recordings attached. It belongs to a tutor
+ * and their book, not to a course.
  *
- *   s1  Jordan's group · Language Hub Elementary (A2).  Written 4 Oct 2026.
- *       Pages and audio attached for TP 1 and 2 only; the rest are references.
- *   s2  Roadmap A2+ (Pearson 2019), units 1 to 4.       Written 4 Oct 2026.
+ * Always pass --only. A course record is pushed to every browser that opens
+ * the course, so a centre's course carries the two or three sets its tutors
+ * teach from and nothing else. Four sets are already 300 KB; the library is
+ * heading for three sets a level across five levels, and no candidate's phone
+ * should be pulling down fourteen sets to read one.
+ *
+ *   s1  Language Hub Elementary, 1st ed (Macmillan 2019)        A2
+ *   s2  Roadmap A2+, 1st ed (Pearson 2019)                      B1 pre-int
+ *   s3  Straightforward Upper-Intermediate, 1st ed (Macmillan)  B2
+ *   s4  Speakout A1, 3rd ed (Pearson 2022)                      A1
  *
  * This writes `set.library` and leaves `set.setFor` alone -- which group
  * teaches from which set is the tutor's to say on the TP point sets screen,
@@ -43,9 +50,15 @@ const call = async (b, tries = 6) => {
   return { ok: false, error: 'no JSON' };
 };
 
-const FILE = JSON.parse(readFileSync(join(HERE, 'tp-point-sets.json'), 'utf8'));
-const lib = ONLY ? { [ONLY]: FILE[ONLY] } : FILE;
-if (ONLY && !FILE[ONLY]) { console.log('no set called ' + ONLY + ' in tp-point-sets.json'); process.exit(1); }
+const FILE = JSON.parse(readFileSync(join(ROOT, 'library', 'tp-point-sets.json'), 'utf8'));
+/* --only s2,s4 -- a centre takes the sets for the levels it teaches, not the
+   whole library. */
+const want = ONLY ? ONLY.split(',').map(x => x.trim()).filter(Boolean) : Object.keys(FILE);
+const missing = want.filter(id => !FILE[id]);
+if (missing.length) { console.log('no set called ' + missing.join(', ') + ' in the library. It holds: ' + Object.keys(FILE).join(', ')); process.exit(1); }
+if (!ONLY) console.log('No --only, so this would put the WHOLE library on one course. Name the sets the centre chose.\n');
+const lib = {};
+want.forEach(id => { lib[id] = FILE[id]; });
 
 const r = await call({ op: 'course', key: KEY });
 if (!r.ok) { console.log('cannot read that course: ' + r.error); process.exit(1); }
