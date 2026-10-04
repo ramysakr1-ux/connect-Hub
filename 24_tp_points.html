@@ -155,6 +155,22 @@
   .proc .pdo{color:var(--ink); margin:1px 0 0;}
   .proc .pav{color:var(--brick); margin:2px 0 0; font-size:0.74rem;}
   .proc .pclock{margin:7px 0 0; font-size:0.72rem; color:var(--grey); font-variant-numeric:tabular-nums;}
+  /* The reference, named part by part. The parts sit in a row that wraps, each
+     with its label above it, so the shape of a reference is something you look
+     at rather than something you are told. */
+  .src{margin:9px 0 2px; padding:10px 12px; background:var(--paper); border:1px solid var(--sand-line);
+    border-left:3px solid var(--gold); border-radius:8px;}
+  .src .plab{font-size:0.66rem; letter-spacing:.07em; text-transform:uppercase; color:var(--faint); font-weight:700; margin:0 0 7px;}
+  .srcpat{display:flex; flex-wrap:wrap; gap:7px; margin:0 0 8px;}
+  .srcpat span{display:flex; flex-direction:column; gap:2px; padding:5px 9px; background:var(--box);
+    border:1px solid var(--sand-line); border-radius:7px; font-size:0.62rem; letter-spacing:.07em;
+    text-transform:uppercase; color:var(--grey); font-weight:700;}
+  .srcpat i{font-style:normal; font-size:0.78rem; letter-spacing:0; text-transform:none; color:var(--ink); font-weight:500;}
+  .srcwhy{margin:0 0 6px; font-size:0.76rem; color:var(--grey); line-height:1.55;}
+  .srcrefs{margin:0 0 8px; padding-left:18px; font-size:0.78rem; line-height:1.6;}
+  .srcrefs li{margin:0 0 3px;}
+  .req{margin:7px 0 0; font-size:0.76rem; color:var(--grey); line-height:1.55;}
+  .req.first{color:var(--teal); font-weight:600;}
   .wrap{overflow-x:auto;}
   .ord{white-space:nowrap; letter-spacing:.12em;}
   /* On a phone six practices across cannot be a table: four columns simply
@@ -275,7 +291,7 @@ function slotFor(set, tp, setIndex, pos){
   const ses = (set.sessions || {})[id];
   const sl = ses && (ses.slots || [])[pos];
   if (!sl || !(sl.type || sl.aim)) return null;
-  return { slot: sl, scaffold: ses.scaffold || '', context: ses.context || '', id: id, pos: pos };
+  return { slot: sl, scaffold: ses.scaffold || '', context: ses.context || '', id: id, pos: pos, tp: tp };
 }
 function stamp(cell, found){
   const sl = found.slot;
@@ -294,6 +310,10 @@ function stamp(cell, found){
     .map(s => ({ name: s.name || '', minutes: s.minutes || '', interaction: s.interaction || '', todo: s.todo || '', avoid: s.avoid || '' }));
   out.scaffold = found.scaffold;
   if (found.context) out.context = found.context;
+  /* Sourcing is taught once, by being shown. The references ride on the first
+     two practices only; by TP 3 the candidate writes their own, which is the
+     same hand-over the aims and the procedure make (Ramy, 4 Oct 2026). */
+  if (found.tp <= 2 && P && P.set && P.set.sources) out.sources = P.set.sources;
   out.from = found.id + '·' + (found.pos + 1);
   return out;
 }
@@ -503,11 +523,27 @@ function matsRead(c, mine){
       ${total ? `<p class="pclock">${total} minutes of stages.</p>` : ''}</div>`;
   }
 
-  if (!says.length && !got.length && !players && !proc) return '';
+  /* Sourcing, taught by being taken apart. Ramy, 4 Oct 2026, asking for a
+     better way than pasting a reference at the bottom of the document: the
+     first two practices show the book's own reference with each part named
+     above it, so the pattern is visible rather than copied, and then the three
+     cases a candidate actually meets — the book, a page adapted from it, and
+     something found online. From TP 3 nothing appears and they write it. */
+  let sources = '';
+  const srcLines = mine ? String(c.sources || '').split(/\n+/).map(x => x.trim()).filter(Boolean) : [];
+  if (srcLines.length) {
+    sources = `<div class="src"><div class="plab">Sourcing your materials</div>
+      <div class="srcpat"><span>Author<i>Maggs, P. &amp; Smith, C.</i></span><span>Year<i>(2019)</i></span><span>Title<i>Language Hub Elementary Student’s Book</i></span><span>Publisher<i>Macmillan</i></span></div>
+      <p class="srcwhy">Every page you hand out says where it came from. That is the pattern — the book you are teaching from reads:</p>
+      <ul class="srcrefs">${srcLines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
+      <p class="srcwhy">A page you changed: the same reference, after the words <b>Adapted from</b>. Something you found online: the title, the site, the full address and the date you took it. Something you wrote: <b>own material</b>.</p></div>`;
+  }
+
+  if (!says.length && !got.length && !players && !proc && !sources) return '';
   const cls = 'mats-read' + (mine ? '' : ' ref');
   return (says.length ? `<span class="${cls}">${says.join('<span class="sep">\u00b7</span>')}</span>` : '')
        + (got.length ? `<span class="${cls} gets"><span class="glab">Materials</span>${got.join('<span class="sep">\u00b7</span>')}</span>` : '')
-       + players + proc;
+       + players + proc + sources;
 }
 
 function render(){
@@ -548,6 +584,22 @@ function render(){
     const niceDay = d => { if (!d) return ''; try { return new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }); } catch (e) { return d; } };
     const mins = (sl) => { const a = String(sl.from || '').match(/^(\d{1,2}):(\d{2})/), b = String(sl.to || '').match(/^(\d{1,2}):(\d{2})/); if (!a || !b) return 45; const d = (+b[1] * 60 + +b[2]) - (+a[1] * 60 + +a[2]); return d > 0 ? d : 45; };
 
+    /* What a practice asks for in writing, which is the centre's call and not
+       a fixed rule. The first practice is normally taught from the points
+       alone; after that some centres want the lesson plan first and the
+       language analysis a practice later, some the other way round (Ramy,
+       4 Oct 2026). Unset, it behaves as every course did before: plan from 2,
+       analysis from 3. */
+    const PLAN_FROM = parseInt(SETTINGS.planFrom, 10) || 2;
+    const ANALYSIS_FROM = parseInt(SETTINGS.analysisFrom, 10) || 3;
+    function dueLine(tp){
+      const plan = tp >= PLAN_FROM, ana = tp >= ANALYSIS_FROM;
+      if (plan && ana) return `<p class="req">A lesson plan and a language analysis sheet for this one.</p>`;
+      if (plan) return `<p class="req">A lesson plan for this one — the language analysis starts at TP ${ANALYSIS_FROM}.</p>`;
+      if (ana) return `<p class="req">A language analysis sheet for this one — the lesson plan starts at TP ${PLAN_FROM}.</p>`;
+      return `<p class="req first">Teach this one from the points above. Nothing to write: the lesson plan starts at TP ${PLAN_FROM} and the language analysis at TP ${ANALYSIS_FROM}.</p>`;
+    }
+
     const lesson = c => {
       if (!c || !c.aim) return '<span class="dash">\u2014</span>';
       const lang = R.LANGUAGE_FOCUS.indexOf(c.aim) >= 0;
@@ -571,6 +623,7 @@ function render(){
         <p class="dayline">${esc(SETTINGS.courseName || 'CELTA')} \u00b7 <b>TP ${tp} \u00b7 ${esc(teaching.map(letterOf).join(''))}</b>${date ? ' \u00b7 ' + esc(niceDay(date)) : ''} \u00b7 ${teaching.length} \u00d7 ${mins(tpSlots[0] || {})} mins${
           (function(){ const c = teaching.map(t => ((rows[t] || {})['tp' + tp] || {}).context).find(Boolean); return c ? ' \u00b7 <b>' + esc(c) + '</b>' : ''; })()}</p>
         <div class="wrap"><table class="tbl day-tbl"><tr><th>Slot</th><th>Who</th><th>The lesson, and what to get</th></tr>${body}</table></div>
+        ${dueLine(tp)}
       </section>`;
     }).filter(Boolean).join('');
 
