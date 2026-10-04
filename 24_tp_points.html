@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610041107">
+<link rel="stylesheet" href="hub-tokens.css?v=202610041114">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -215,6 +215,16 @@
     font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:2rem; letter-spacing:.06em;
     color:oklch(45% 0.02 70 / .22); pointer-events:none; white-space:nowrap;}
   @media (max-width:620px){ .pg iframe{height:430px;} .pg.ref iframe{height:300px;} }
+  /* The shorthand, spelled out: a definition list in columns, quiet enough to
+     ignore once you no longer need it. */
+  .gloss{margin:12px 0 0; padding:11px 13px; background:var(--paper); border:1px solid var(--sand-line);
+    border-radius:8px;}
+  .gloss dl{display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:2px 16px; margin:0;}
+  .gloss dt{grid-column:auto; font-weight:700; font-size:0.74rem; color:var(--ink); display:inline;}
+  .gloss dd{margin:0 0 3px; font-size:0.74rem; color:var(--grey); display:inline;}
+  .gloss dt::after{content:' \2014 ';}
+  .gloss dd::after{content:''; display:block;}
+  .gloss .glossnote{margin:7px 0 0; font-size:0.7rem; color:var(--faint);}
   .req{margin:7px 0 0; font-size:0.76rem; color:var(--grey); line-height:1.55;}
   .req.first{color:var(--teal); font-weight:600;}
   .wrap{overflow-x:auto;}
@@ -256,19 +266,19 @@
     details.proc{display:block;} details.proc > summary{display:none;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610041107">
+<link rel="stylesheet" href="hub-house.css?v=202610041114">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610041107"></script>
-<script src="hub-tracker.js?v=202610041107"></script>
-<script src="hub-rotation.js?v=202610041107"></script>
-<script src="hub-shared.js?v=202610041107"></script>
-<script src="hub-store.js?v=202610041107"></script>
-<script src="hub-sync.js?v=202610041107"></script>
+<script src="hub-due.js?v=202610041114"></script>
+<script src="hub-tracker.js?v=202610041114"></script>
+<script src="hub-rotation.js?v=202610041114"></script>
+<script src="hub-shared.js?v=202610041114"></script>
+<script src="hub-store.js?v=202610041114"></script>
+<script src="hub-sync.js?v=202610041114"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -526,6 +536,30 @@ function wireMats(){
 
 /* What a candidate reads under their lesson. The book link carries the page
    anchor when there is one, so a direct PDF opens where the lesson is. */
+/* The shorthand a TP point is written in, spelled out at the foot of the card.
+   Ramy, 4 Oct 2026: "they can also understand what it stands for at the bottom
+   of the page — at least for the first three TPs, and then we can take it off."
+   The list is Connect's own (ABBREVIATIONS_GLOSSARY in tp-density.ts) plus the
+   interaction codes this card and the candidate's plan actually print. */
+const GLOSSARY = [
+  ['SB', 'student’s book'], ['WB', 'workbook'], ['p.', 'page'], ['HO', 'handout'],
+  ['AK', 'answer key'], ['TL', 'target language'], ['MFP', 'meaning, form and pronunciation'],
+  ['CCQ', 'concept checking question'], ['ICQ', 'instruction checking question'],
+  ['ECDW', 'elicit, CCQ, drill, write'],
+  ['PW', 'pair work'], ['GW', 'group work'], ['PC', 'peer check'], ['Ind.', 'individually'],
+  ['OC', 'open class'], ['WC', 'whole class'], ['Ming.', 'mingle'],
+  ['T–S', 'teacher to students'], ['S–S', 'student to student'],
+  ['FB', 'feedback'], ['WCFB', 'whole class feedback'],
+  ['TTT', 'teacher talking time'], ['STT', 'student talking time'],
+];
+const GLOSSARY_UNTIL = 3;          // after the third practice they know it
+function glossary(tp){
+  if (tp > GLOSSARY_UNTIL) return '';
+  return `<div class="gloss"><div class="plab">What the shorthand means</div>
+    <dl>${GLOSSARY.map(g => `<dt>${esc(g[0])}</dt><dd>${esc(g[1])}</dd>`).join('')}</dl>
+    <p class="glossnote">This sits on your first ${GLOSSARY_UNTIL} practices only.</p></div>`;
+}
+
 /* "5", "5-7", "" — what a stage's time means as a span. */
 function minSpan(v){
   const m = String(v == null ? '' : v).match(/(\d+)\s*[-–—]\s*(\d+)/);
@@ -798,6 +832,7 @@ function render(){
         <div class="lessonline">${lesson(mineCell)}</div>
         ${matsRead(mineCell, true)}
         ${pageFigures(mineCell, true)}
+        ${glossary(tp)}
       </div>`;
 
       const others = teaching.map((t, i) => ({ t: t, i: i })).filter(x => x.t !== me.token).map(x => {
