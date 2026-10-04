@@ -18,6 +18,11 @@ BOOKS = {
   'SF_WB': (f'{D}/Upper- Intermediate /Straightforward/- Straightforward Upper-Intermediate. Workbook .pdf', 0),
   'SO_SB': (f'{D}/Beginner/Speakout 3rd ed A1/SO A1 SB.pdf', -1),
   'SO_WB': (f'{D}/Beginner/Speakout 3rd ed A1/SO A1 WB.pdf', -1),
+  # Ramy found this on 4 Oct and it is the one the TP points were written
+  # from: 1B is "Paintballing", first published 2007, ISBN 978-1-4050-1092-4,
+  # and its imprint licenses photocopies of pp. 211-258 -- the resource pages
+  # the second-edition copy in the library does not have at all.
+  'SF_TB': (f'{D}/Upper- Intermediate /Straightforward/Straightforward Upper-Intermediate Teacher’s Book — 1st edition 2007.pdf', 15),
 }
 _open = {}
 
@@ -35,7 +40,7 @@ def index(k, page):
 
 # The two Macmillan files are scans of paper; the other three are digital and
 # come out clean, so they are left exactly as the publisher set them.
-SCANNED = ('SF_SB', 'SF_WB')
+SCANNED = ('SF_SB', 'SF_WB', 'SF_TB')
 
 def render(k, page, dpi, quality, out):
     doc(k)[index(k, page)].get_pixmap(dpi=dpi).save(out, jpg_quality=quality)
