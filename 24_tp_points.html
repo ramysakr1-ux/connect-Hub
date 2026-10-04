@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610041740">
+<link rel="stylesheet" href="hub-tokens.css?v=202610041748">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -214,6 +214,7 @@
   .pg iframe{width:100%; height:620px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper); display:block;}
   .pg img{width:100%; height:auto; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper); display:block;}
   .pgopen{display:inline-block; margin:4px 0 0; font-size:0.72rem; font-weight:600; color:var(--teal); text-decoration:none;}
+  .printme.pdf{text-decoration:none; display:inline-block;}
   .pg.ref{position:relative; flex:1 1 240px; max-width:340px;}
   .pg.ref iframe{height:380px;}
   .pg.ref::after{content:"NOT YOURS"; position:absolute; left:50%; top:55%; transform:translate(-50%,-50%) rotate(-18deg);
@@ -290,19 +291,19 @@
     body.printpages .pg figcaption{font-size:0.8rem; margin:0 0 4px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610041740">
+<link rel="stylesheet" href="hub-house.css?v=202610041748">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610041740"></script>
-<script src="hub-tracker.js?v=202610041740"></script>
-<script src="hub-rotation.js?v=202610041740"></script>
-<script src="hub-shared.js?v=202610041740"></script>
-<script src="hub-store.js?v=202610041740"></script>
-<script src="hub-sync.js?v=202610041740"></script>
+<script src="hub-due.js?v=202610041748"></script>
+<script src="hub-tracker.js?v=202610041748"></script>
+<script src="hub-rotation.js?v=202610041748"></script>
+<script src="hub-shared.js?v=202610041748"></script>
+<script src="hub-store.js?v=202610041748"></script>
+<script src="hub-sync.js?v=202610041748"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -414,6 +415,11 @@ function stamp(cell, found){
      page a lesson is taught from does not change when the rotation deals
      somebody else into it. Files attached to a cell by hand are kept alongside
      them. */
+  /* the whole day's pages as one PDF, for a face-to-face course. It belongs to
+     the SESSION, not the slot -- every candidate teaching that day gets the
+     same file -- so it is carried across from the set when the cell is built. */
+  const ses = found.set && found.set.sessions && found.set.sessions[found.id];
+  if (ses && ses.dayPdf && ses.dayPdf.url) out.dayPdf = ses.dayPdf;
   if ((sl.files || []).length) {
     const own = (out.pages || []).filter(f => f && !f.fromSet);
     out.pages = sl.files.map(f => ({ name: f.name, url: f.url, fromSet: 1 })).concat(own);
@@ -920,7 +926,8 @@ function render(){
         .map(x => x.trim()).filter(x => /^(Reading|Listening|Grammar|Vocabulary|Speaking|Pronunciation|Functional language):/.test(x));
 
       const mineBlock = !mineCell ? '' : `<div class="mine-block">
-        <p class="whoami"><b>Your lesson</b>${slotTime(myIdx) ? ' · ' + slotTime(myIdx) : ''} · slot ${myIdx + 1} of ${teaching.length}<button type="button" class="printme" onclick="window.print()">Print this</button><button type="button" class="printme" onclick="printPages()">Print the pages</button></p>
+        <p class="whoami"><b>Your lesson</b>${slotTime(myIdx) ? ' · ' + slotTime(myIdx) : ''} · slot ${myIdx + 1} of ${teaching.length}<button type="button" class="printme" onclick="window.print()">Print this</button><button type="button" class="printme" onclick="printPages()">Print the pages</button>${
+          mineCell && mineCell.dayPdf && mineCell.dayPdf.url ? `<a class="printme pdf" href="${esc(mineCell.dayPdf.url)}" target="_blank" rel="noopener">The day’s pages as a PDF</a>` : ''}</p>
         <div class="lessonline">${lesson(mineCell)}</div>
         ${matsRead(mineCell, true)}
         ${pageFigures(mineCell, true)}
