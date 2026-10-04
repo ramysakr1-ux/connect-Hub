@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610041102">
+<link rel="stylesheet" href="hub-tokens.css?v=202610041104">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -111,6 +111,11 @@
   .mats .files li{display:flex; gap:8px; align-items:center; margin:0 0 4px;}
   .mats .files a{color:var(--teal); font-weight:600;}
   .mats .macts{display:flex; justify-content:flex-end; margin-top:8px;}
+  .aimrow{display:grid; grid-template-columns:96px 1fr; gap:10px; align-items:baseline; margin:0 0 4px;}
+  .aimrow .alab{font-size:0.66rem; letter-spacing:.07em; text-transform:uppercase; color:var(--faint); font-weight:700;}
+  .aimrow .aval{font-size:0.84rem; line-height:1.5;}
+  .aimrow .aval i{color:var(--grey);}
+  @media (max-width:560px){ .aimrow{grid-template-columns:1fr; gap:1px; margin-bottom:7px;} }
   .mats-read{display:block; margin-top:3px; font-size:0.75rem; line-height:1.6;}
   .mats-read .sep{color:var(--faint); margin:0 5px;}
   .mats-read .mpoint{color:var(--grey);}
@@ -237,19 +242,19 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} section.group{padding:12px 12px 14px;} }
   @media print{ .back,.relbar,#hubSync{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610041102">
+<link rel="stylesheet" href="hub-house.css?v=202610041104">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610041102"></script>
-<script src="hub-tracker.js?v=202610041102"></script>
-<script src="hub-rotation.js?v=202610041102"></script>
-<script src="hub-shared.js?v=202610041102"></script>
-<script src="hub-store.js?v=202610041102"></script>
-<script src="hub-sync.js?v=202610041102"></script>
+<script src="hub-due.js?v=202610041104"></script>
+<script src="hub-tracker.js?v=202610041104"></script>
+<script src="hub-rotation.js?v=202610041104"></script>
+<script src="hub-shared.js?v=202610041104"></script>
+<script src="hub-store.js?v=202610041104"></script>
+<script src="hub-sync.js?v=202610041104"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -535,16 +540,24 @@ function pageFigures(c, mine){
 
 function matsRead(c, mine){
   if (!c) return '';
-  /* Two lines, not one run of everything. What the lesson IS -- the sub aim,
-     the framework, the point -- reads as a sentence. What the candidate has
-     to go and GET sits on its own labelled line beneath it, a source per
-     line. Run together they wrapped into a paragraph where a page reference
-     and a framework looked like the same kind of thing (Ramy, 30 Sep 2026,
-     seeing his own TP 1 in it). */
-  const says = [];
-  if (c.sub) says.push(`<span class="msub">with ${esc(c.sub)}</span>`);
-  if (c.framework) says.push(`<span class="mframe">${esc(c.framework)}</span>`);
-  if (c.point) says.push(`<span class="mpoint">${esc(c.point)}</span>`);
+  /* NAMED ROWS, not a run-on sentence. Ramy, 4 Oct 2026: "main aim, and then
+     write down the aim. Sub aim, and then the sub aim. Clear headings —
+     especially at the beginning, they're all very flustered." The aim, the
+     sub aim and the shape used to run together behind middots, which read as
+     one sentence and left a candidate unsure which part was the aim they were
+     being shown how to write.
+
+     The main-aim row appears only where the aim is a written one: from TP 3
+     the field carries the lesson type, which is already the heading above. */
+  const rows = [];
+  if (mine) {
+    if (c.point && c.point !== c.aim) rows.push(['Main aim', esc(c.point)]);
+    if (c.sub) rows.push(['Sub aim', /^you decide$/i.test(c.sub.trim()) ? '<i>yours to choose</i>' : esc(c.sub)]);
+    if (c.framework) rows.push(['Lesson shape', esc(c.framework)]);
+  }
+  const says = mine ? [] : [
+    c.sub ? `<span class="msub">${/^you decide$/i.test(String(c.sub).trim()) ? 'sub aim theirs to choose' : 'with ' + esc(c.sub)}</span>` : ''
+  ].filter(Boolean);
 
   const b = c.book || {};
   const href = b.url ? (b.page && /\.pdf($|\?)/i.test(b.url) ? b.url + '#page=' + encodeURIComponent(b.page) : b.url) : '';
@@ -560,6 +573,7 @@ function matsRead(c, mine){
     ? `<a class="mlink" href="${esc(href)}" target="_blank" rel="noopener">${esc(ln)}</a>`
     : `<span class="mref">${esc(ln)}</span>`));
   (c.pages || []).forEach(f => got.push(`<a class="mlink" href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a>`));
+  const rowsHTML = rows.map(r => `<div class="aimrow"><span class="alab">${r[0]}</span><span class="aval">${r[1]}</span></div>`).join('');
 
   /* Audio: one line per track in the cell, each a player IN the card for the
      candidate whose lesson it is (Ramy, 29 Sep and again 4 Oct 2026: "the
@@ -643,9 +657,14 @@ function matsRead(c, mine){
       <p class="srcwhy">A page you changed: the same reference, after the words <b>Adapted from</b>. Something you found online: the title, the site, the full address and the date you took it. Something you wrote: <b>own material</b>.</p></div>`;
   }
 
-  if (!says.length && !got.length && !players && !proc && !sources) return '';
+  /* A classmate's block is a glance, not a document. Ramy, 4 Oct 2026: "they
+     don't have to see it in detail — listening, speaking, the page, the
+     exercises, that's enough." */
+  if (!mine) { proc = ''; sources = ''; }
+  if (!rowsHTML && !says.length && !got.length && !players && !proc && !sources) return '';
   const cls = 'mats-read' + (mine ? '' : ' ref');
-  return (says.length ? `<span class="${cls}">${says.join('<span class="sep">\u00b7</span>')}</span>` : '')
+  return rowsHTML
+       + (says.length ? `<span class="${cls}">${says.join('<span class="sep">\u00b7</span>')}</span>` : '')
        + (got.length ? `<span class="${cls} gets"><span class="glab">Materials</span>${got.join('<span class="sep">\u00b7</span>')}</span>` : '')
        + players + proc + sources;
 }
