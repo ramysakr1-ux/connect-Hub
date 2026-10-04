@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610041024">
+<link rel="stylesheet" href="hub-tokens.css?v=202610041038">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -196,19 +196,19 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} section.group{padding:12px 12px 14px;} }
   @media print{ .back,.relbar,#hubSync{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610041024">
+<link rel="stylesheet" href="hub-house.css?v=202610041038">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610041024"></script>
-<script src="hub-tracker.js?v=202610041024"></script>
-<script src="hub-rotation.js?v=202610041024"></script>
-<script src="hub-shared.js?v=202610041024"></script>
-<script src="hub-store.js?v=202610041024"></script>
-<script src="hub-sync.js?v=202610041024"></script>
+<script src="hub-due.js?v=202610041038"></script>
+<script src="hub-tracker.js?v=202610041038"></script>
+<script src="hub-rotation.js?v=202610041038"></script>
+<script src="hub-shared.js?v=202610041038"></script>
+<script src="hub-store.js?v=202610041038"></script>
+<script src="hub-sync.js?v=202610041038"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -306,6 +306,14 @@ function stamp(cell, found){
   if (!book.url && P && P.set && P.set.url) book.url = P.set.url;
   if (book.url || book.ref || book.page) out.book = book;
   if (sl.tracks) out.audio = Object.assign({}, out.audio || {}, { url: sl.tracks });
+  /* Scanned pages belong to the SLOT, not to whoever draws it this year: the
+     page a lesson is taught from does not change when the rotation deals
+     somebody else into it. Files attached to a cell by hand are kept alongside
+     them. */
+  if ((sl.files || []).length) {
+    const own = (out.pages || []).filter(f => f && !f.fromSet);
+    out.pages = sl.files.map(f => ({ name: f.name, url: f.url, fromSet: 1 })).concat(own);
+  }
   out.stages = (sl.stages || []).filter(s => s && (s.name || s.todo))
     .map(s => ({ name: s.name || '', minutes: s.minutes || '', interaction: s.interaction || '', todo: s.todo || '', avoid: s.avoid || '' }));
   out.scaffold = found.scaffold;
