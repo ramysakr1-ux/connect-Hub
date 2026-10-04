@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610041106">
+<link rel="stylesheet" href="hub-tokens.css?v=202610041107">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -240,21 +240,35 @@
     .tbl.ord.stack td{grid-template-columns:74px 1fr;}
   }
   @media (max-width:560px){ .board{padding:18px 12px 60px;} section.group{padding:12px 12px 14px;} }
-  @media print{ .back,.relbar,#hubSync{display:none !important;} body{background:#fff;} }
+  .printme{float:right; font-family:inherit; font-size:0.66rem; font-weight:700; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--teal); background:none; border:1px solid var(--sand-line);
+    border-radius:999px; padding:3px 10px; cursor:pointer;}
+  .printme:hover{border-color:var(--teal);}
+  /* Printing gives them their own lesson and nothing else: the other two, the
+     practices already taught and the chrome come off the page. The pages are
+     Drive previews and will not print from here -- the page link opens in
+     Drive, which has its own print. */
+  @media print{
+    .back,.relbar,#hubSync,.printme,.others,.day.past,.req,.lede,.ok{display:none !important;}
+    body{background:#fff;}
+    .mine-block{border:0; background:#fff; padding:0;}
+    .proc{background:#fff;}
+    details.proc{display:block;} details.proc > summary{display:none;}
+  }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610041106">
+<link rel="stylesheet" href="hub-house.css?v=202610041107">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610041106"></script>
-<script src="hub-tracker.js?v=202610041106"></script>
-<script src="hub-rotation.js?v=202610041106"></script>
-<script src="hub-shared.js?v=202610041106"></script>
-<script src="hub-store.js?v=202610041106"></script>
-<script src="hub-sync.js?v=202610041106"></script>
+<script src="hub-due.js?v=202610041107"></script>
+<script src="hub-tracker.js?v=202610041107"></script>
+<script src="hub-rotation.js?v=202610041107"></script>
+<script src="hub-shared.js?v=202610041107"></script>
+<script src="hub-store.js?v=202610041107"></script>
+<script src="hub-sync.js?v=202610041107"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -780,7 +794,7 @@ function render(){
         .map(x => x.trim()).filter(x => /^(Reading|Listening|Grammar|Vocabulary|Speaking|Pronunciation|Functional language):/.test(x));
 
       const mineBlock = !mineCell ? '' : `<div class="mine-block">
-        <p class="whoami"><b>Your lesson</b>${slotTime(myIdx) ? ' · ' + slotTime(myIdx) : ''} · slot ${myIdx + 1} of ${teaching.length}</p>
+        <p class="whoami"><b>Your lesson</b>${slotTime(myIdx) ? ' · ' + slotTime(myIdx) : ''} · slot ${myIdx + 1} of ${teaching.length}<button type="button" class="printme" onclick="window.print()">Print this</button></p>
         <div class="lessonline">${lesson(mineCell)}</div>
         ${matsRead(mineCell, true)}
         ${pageFigures(mineCell, true)}
@@ -815,7 +829,7 @@ function render(){
     app.innerHTML = head + `<section class="group"><h2>Group ${esc(P.group || '\u2014')}</h2>
       <p class="ok">Your lesson first, with the pages you are teaching from. What the other two are teaching is at the foot of the day.</p>
       ${tables || '<div class="empty">No points released for your set yet.</div>'}
-      ${hidden ? `<p class="later">${hidden === 1 ? 'One more practice opens' : 'The other ' + hidden + ' practices open'} as the course reaches ${hidden === 1 ? 'it' : 'them'}. You teach one at a time.</p>` : ''}</section>`;
+      </section>`;
     return;
   }
 
