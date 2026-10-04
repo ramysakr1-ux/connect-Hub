@@ -35,7 +35,7 @@
 <title>Connect Lite — TP point sets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610041748">
+<link rel="stylesheet" href="hub-tokens.css?v=202610041816">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1020px; margin:0 auto; padding:26px 20px 90px;}
@@ -54,6 +54,11 @@
   input:focus, select:focus, textarea:focus{outline:2px solid var(--teal); outline-offset:-1px;}
   textarea{line-height:1.5; resize:vertical;}
 
+  .files{list-style:none; margin:0 0 8px; padding:0;}
+  .files li{display:flex; gap:8px; align-items:center; margin:0 0 5px;}
+  .files li input{flex:1 1 auto; margin:0;}
+  .files li a{font-size:0.78rem; font-weight:600; color:var(--teal); text-decoration:none; white-space:nowrap;}
+  .filebtn{display:inline-block; cursor:pointer;}
   .settabs{display:flex; flex-wrap:wrap; gap:8px; margin:0 0 16px;}
   .settab{font-family:inherit; font-size:0.84rem; font-weight:600; text-align:left; cursor:pointer;
     background:var(--surface); border:1px solid var(--sand-line); border-radius:9px; padding:8px 13px;
@@ -128,17 +133,17 @@
   }
   @media print{ .back,.acts,.xbtn,.paste{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610041748">
+<link rel="stylesheet" href="hub-house.css?v=202610041816">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610041748"></script>
-<script src="hub-rotation.js?v=202610041748"></script>
-<script src="hub-store.js?v=202610041748"></script>
-<script src="hub-sync.js?v=202610041748"></script>
+<script src="hub-shared.js?v=202610041816"></script>
+<script src="hub-rotation.js?v=202610041816"></script>
+<script src="hub-store.js?v=202610041816"></script>
+<script src="hub-sync.js?v=202610041816"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
@@ -192,7 +197,17 @@ const SCAFFOLD = {
    their book — the candidates move between levels, the set stays put — so a
    course of twenty-four running four groups writes four of them and says which
    group teaches from which. */
+let UPLOADING = '';    // "sessionId|slot" while a scan is going up
 let LIB = {};          // id -> set
+/* putMaterial needs a token to resolve the course; the tutor key rides along
+   automatically (hub-store adds it), which is what buys the larger upload cap
+   since store v71. Any candidate's token will do -- the file lands in the
+   COURSE's materials folder, not theirs. */
+function anyToken(){
+  const roster = rec('connect_roster_v1') || {};
+  const who = Object.values(roster.trainees || {}).filter(Boolean)[0];
+  return who ? (who.id || who.token) : '';
+}
 let FOR = {};          // group -> set id
 let CUR = '';          // the set being edited
 let S = null;          // shorthand for LIB[CUR]
@@ -398,6 +413,16 @@ function slotBody(id, i, sl, scaffold){
     <div class="frow"><label class="lab">Audio</label><div>
       <textarea rows="2" data-sl="${id}|${i}|tracks" placeholder="Track 2.3 | https://drive.google.com/file/d/…&#10;One link per line; a name before a | labels it">${esc(sl.tracks)}</textarea>
       <p class="hint">These become players on the card of the candidate teaching this slot.</p></div></div>
+    <div class="frow"><label class="lab">Scans</label><div>
+      ${(sl.files || []).length ? `<ul class="files">${(sl.files || []).map((f, k) => `<li>
+        <input data-fnm="${id}|${i}|${k}" value="${esc(f.name || '')}" placeholder="Student’s Book p. 12">
+        <a href="${esc(f.url || '')}" target="_blank" rel="noopener">open</a>
+        <button type="button" class="xbtn" data-frm="${id}|${i}|${k}">Remove</button></li>`).join('')}</ul>` : ''}
+      <label class="btn quiet sm filebtn">${UPLOADING === id + '|' + i ? 'Attaching…' : 'Attach a page'}
+        <input type="file" accept="image/*,application/pdf" data-fup="${id}|${i}" hidden${UPLOADING ? ' disabled' : ''}></label>
+      <p class="hint">The page itself, so the candidate reads it in their card and can print it. Attach as many as the
+        lesson needs — the name is what they see, so say which book it came from when a lesson spans two
+        (<b>Student’s Book p. 40</b>, <b>Workbook p. 24</b>).</p></div></div>
     ${stages}
   </div>`;
 }
@@ -473,6 +498,52 @@ function wire(){
     const f = el.files && el.files[0];
     if (f) importInto(el.dataset.imp, f);
     el.value = '';
+  });
+  /* ---- scans on a slot ----
+     The page itself, attached once to the SET so every candidate who is dealt
+     this slot gets it, rather than a tutor attaching the same page three times
+     to three cells. `stamp()` on the TP points screen copies these onto each
+     candidate's cell marked fromSet, keeping anything attached by hand
+     alongside. putMaterial needs a token to resolve the course; hub-store adds
+     the tutor key by itself, which is what allows more than 2MB since v71. */
+  document.querySelectorAll('[data-fup]').forEach(el => el.onchange = async e => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const [id, i] = el.dataset.fup.split('|');
+    const tok = anyToken();
+    if (!tok) { alert('No candidate on the roster yet, so there is nowhere to put the file. Add the cohort first.'); return; }
+    if (file.size > 9 * 1024 * 1024) { alert('That file is over 9MB. Put it on your own Drive and paste the link into Pages instead.'); return; }
+    UPLOADING = id + '|' + i; render();
+    try {
+      const b64 = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(String(r.result).split(',')[1] || '');
+        r.onerror = () => rej(new Error('That file could not be read.'));
+        r.readAsDataURL(file);
+      });
+      const out = await window.HubStore.putMaterial(tok, file.name, file.type || 'application/octet-stream', b64);
+      const sl = S.sessions[id].slots[+i];
+      sl.files = (sl.files || []).concat([{ name: (file.name || '').replace(/\.[a-z0-9]+$/i, ''), url: out.url }]);
+      UPLOADING = '';
+      persist('Page attached');
+    } catch (err) {
+      UPLOADING = '';
+      alert(err && err.message ? err.message : 'That file could not be attached.');
+      render();
+    }
+  });
+  document.querySelectorAll('[data-fnm]').forEach(el => el.onchange = () => {
+    const [id, i, k] = el.dataset.fnm.split('|');
+    S.sessions[id].slots[+i].files[+k].name = el.value.trim();
+    persist('Renamed');
+  });
+  document.querySelectorAll('[data-frm]').forEach(el => el.onclick = () => {
+    const [id, i, k] = el.dataset.frm.split('|');
+    /* the reference goes; the file stays in Drive, because another slot or a
+       candidate's own cell may already be pointing at it */
+    S.sessions[id].slots[+i].files.splice(+k, 1);
+    persist('Page removed from this slot');
   });
   document.querySelectorAll('[data-pasted]').forEach(el => el.onclick = () => {
     const ref = el.dataset.pasted;
