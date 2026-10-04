@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610041124">
+<link rel="stylesheet" href="hub-tokens.css?v=202610041127">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -269,19 +269,19 @@
     details.proc{display:block;} details.proc > summary{display:none;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610041124">
+<link rel="stylesheet" href="hub-house.css?v=202610041127">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610041124"></script>
-<script src="hub-tracker.js?v=202610041124"></script>
-<script src="hub-rotation.js?v=202610041124"></script>
-<script src="hub-shared.js?v=202610041124"></script>
-<script src="hub-store.js?v=202610041124"></script>
-<script src="hub-sync.js?v=202610041124"></script>
+<script src="hub-due.js?v=202610041127"></script>
+<script src="hub-tracker.js?v=202610041127"></script>
+<script src="hub-rotation.js?v=202610041127"></script>
+<script src="hub-shared.js?v=202610041127"></script>
+<script src="hub-store.js?v=202610041127"></script>
+<script src="hub-sync.js?v=202610041127"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -451,8 +451,14 @@ function wireSetBar(){
 function build(keepEdits){
   const gs = groups();
   const lib = library();
-  const out = { groups: {}, released: (P && P.released) || {}, sets: {},
-                library: lib, setFor: (P && P.setFor) || {} };
+  /* Carry forward everything this version does not know about. A build used to
+     list the fields it kept, so an OLD page running against a NEWER record
+     silently dropped the fields it had never heard of -- on 4 Oct 2026 a
+     cached copy of this screen rebuilt a course and took the whole TP point
+     library with it. Whatever is on the record stays on the record. */
+  const out = Object.assign({}, P || {}, { groups: {}, sets: {},
+                released: (P && P.released) || {}, library: lib, setFor: (P && P.setFor) || {} });
+  delete out.set;                       // migrated into the library above
   let usedAny = false;
   gs.forEach((g, i) => {
     const set = setFor(g.group);
