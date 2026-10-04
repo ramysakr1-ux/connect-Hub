@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610041739">
+<link rel="stylesheet" href="hub-tokens.css?v=202610041740">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -290,19 +290,19 @@
     body.printpages .pg figcaption{font-size:0.8rem; margin:0 0 4px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610041739">
+<link rel="stylesheet" href="hub-house.css?v=202610041740">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610041739"></script>
-<script src="hub-tracker.js?v=202610041739"></script>
-<script src="hub-rotation.js?v=202610041739"></script>
-<script src="hub-shared.js?v=202610041739"></script>
-<script src="hub-store.js?v=202610041739"></script>
-<script src="hub-sync.js?v=202610041739"></script>
+<script src="hub-due.js?v=202610041740"></script>
+<script src="hub-tracker.js?v=202610041740"></script>
+<script src="hub-rotation.js?v=202610041740"></script>
+<script src="hub-shared.js?v=202610041740"></script>
+<script src="hub-store.js?v=202610041740"></script>
+<script src="hub-sync.js?v=202610041740"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -664,7 +664,12 @@ function pageFigures(c, mine){
        usercontent as an <img>: it renders, it prints, and it needs no plugin.
        Anything that is not an image falls back to the old preview frame. */
     const id = esc(m[1]);
-    const src = 'https://drive.usercontent.google.com/download?id=' + id + '&export=view';
+    /* TESTED against the live site, 4 Oct 2026, because the obvious URL fails:
+       drive.usercontent.google.com/download?export=view serves the AUDIO fine
+       but is refused for an <img>. The thumbnail endpoint is the one Drive
+       will hotlink, and sz=w1600 is capped at the file's own width, so a page
+       scanned at 150 dpi comes back at its full 1240x1755. */
+    const src = 'https://drive.google.com/thumbnail?id=' + id + '&sz=w1600';
     return `<figure class="pg${mine ? '' : ' ref'}"><figcaption>${esc(f.name || 'Page')}${mine ? '' : ' — not yours'}</figcaption>
       <img src="${src}" alt="${esc(f.name || 'Page')}" loading="lazy"
            onerror="this.onerror=null;this.insertAdjacentHTML('afterend','&lt;iframe src=&quot;https://drive.google.com/file/d/${id}/preview&quot; loading=&quot;lazy&quot;&gt;&lt;/iframe&gt;');this.remove();">
