@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610041129">
+<link rel="stylesheet" href="hub-tokens.css?v=202610041739">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -212,6 +212,8 @@
   .pg{margin:0; flex:1 1 320px; max-width:520px;}
   .pg figcaption{font-size:0.72rem; font-weight:600; color:var(--grey); margin:0 0 4px;}
   .pg iframe{width:100%; height:620px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper); display:block;}
+  .pg img{width:100%; height:auto; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper); display:block;}
+  .pgopen{display:inline-block; margin:4px 0 0; font-size:0.72rem; font-weight:600; color:var(--teal); text-decoration:none;}
   .pg.ref{position:relative; flex:1 1 240px; max-width:340px;}
   .pg.ref iframe{height:380px;}
   .pg.ref::after{content:"NOT YOURS"; position:absolute; left:50%; top:55%; transform:translate(-50%,-50%) rotate(-18deg);
@@ -262,28 +264,57 @@
      Drive previews and will not print from here -- the page link opens in
      Drive, which has its own print. */
   @media print{
-    .back,.relbar,#hubSync,.printme,.others,.day.past,.req,.lede,.ok{display:none !important;}
+    .back,.relbar,#hubSync,.printme,.others,.day.past,.req,.lede,.ok,.pgopen{display:none !important;}
     body{background:#fff;}
     .mine-block{border:0; background:#fff; padding:0;}
     .proc{background:#fff;}
     details.proc{display:block;} details.proc > summary{display:none;}
+    /* a page is a page: one per sheet, as large as the sheet allows, and never
+       split across two. A Drive preview frame cannot print at all, so it is
+       hidden rather than left as a grey rectangle. */
+    .pg{break-inside:avoid; page-break-inside:avoid; max-width:none; flex:1 1 100%;}
+    .pg img{width:100%; max-height:96vh; object-fit:contain; border:0;}
+    .pg iframe{display:none !important;}
+    .pgs{display:block;}
+    /* "Print the pages": the scans alone, one to a sheet, nothing else */
+    body.printpages .lessonline,
+    body.printpages .mats-read,
+    body.printpages .aimrows,
+    body.printpages .dayline,
+    body.printpages .whoami,
+    body.printpages .proc,
+    body.printpages .glossary,
+    body.printpages h1,
+    body.printpages .eyebrow{display:none !important;}
+    body.printpages .pg{break-after:page; page-break-after:always;}
+    body.printpages .pg figcaption{font-size:0.8rem; margin:0 0 4px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610041129">
+<link rel="stylesheet" href="hub-house.css?v=202610041739">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610041129"></script>
-<script src="hub-tracker.js?v=202610041129"></script>
-<script src="hub-rotation.js?v=202610041129"></script>
-<script src="hub-shared.js?v=202610041129"></script>
-<script src="hub-store.js?v=202610041129"></script>
-<script src="hub-sync.js?v=202610041129"></script>
+<script src="hub-due.js?v=202610041739"></script>
+<script src="hub-tracker.js?v=202610041739"></script>
+<script src="hub-rotation.js?v=202610041739"></script>
+<script src="hub-shared.js?v=202610041739"></script>
+<script src="hub-store.js?v=202610041739"></script>
+<script src="hub-sync.js?v=202610041739"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
+/* "Print the pages" puts the card into a mode where only the scans print, one
+   to a sheet. It has to come back out of that mode afterwards, or the screen
+   stays stripped for whoever looks next -- afterprint fires on cancel too. */
+function printPages(){
+  document.body.classList.add('printpages');
+  const off = () => { document.body.classList.remove('printpages'); window.removeEventListener('afterprint', off); };
+  window.addEventListener('afterprint', off);
+  setTimeout(() => { window.print(); setTimeout(off, 1500); }, 60);
+}
+window.printPages = printPages;
 /* A volunteer student is not on the course: their own page carries the
    part of the teaching practice points they need (sweep, 30 Sep 2026). */
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
@@ -626,8 +657,18 @@ function pageFigures(c, mine){
   const body = files.map(f => {
     const m = String(f.url).match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^"' ]*?id=)([\w-]{20,})/);
     if (!m) return '';
+    /* AN IMAGE, NOT AN IFRAME. Ramy, 4 Oct 2026: the print button "doesn't
+       print as a PDF" -- a cross-origin Drive /preview iframe never prints, so
+       the pages came out blank on paper, which is exactly what a face-to-face
+       course needs. The scans are JPEGs, so they are served straight from
+       usercontent as an <img>: it renders, it prints, and it needs no plugin.
+       Anything that is not an image falls back to the old preview frame. */
+    const id = esc(m[1]);
+    const src = 'https://drive.usercontent.google.com/download?id=' + id + '&export=view';
     return `<figure class="pg${mine ? '' : ' ref'}"><figcaption>${esc(f.name || 'Page')}${mine ? '' : ' — not yours'}</figcaption>
-      <iframe src="https://drive.google.com/file/d/${esc(m[1])}/preview" loading="lazy" title="${esc(f.name || 'Page')}"></iframe></figure>`;
+      <img src="${src}" alt="${esc(f.name || 'Page')}" loading="lazy"
+           onerror="this.onerror=null;this.insertAdjacentHTML('afterend','&lt;iframe src=&quot;https://drive.google.com/file/d/${id}/preview&quot; loading=&quot;lazy&quot;&gt;&lt;/iframe&gt;');this.remove();">
+      <a class="pgopen" href="https://drive.google.com/file/d/${id}/view" target="_blank" rel="noopener">Open in Drive</a></figure>`;
   }).filter(Boolean).join('');
   return body ? `<div class="pgs">${body}</div>` : '';
 }
@@ -874,7 +915,7 @@ function render(){
         .map(x => x.trim()).filter(x => /^(Reading|Listening|Grammar|Vocabulary|Speaking|Pronunciation|Functional language):/.test(x));
 
       const mineBlock = !mineCell ? '' : `<div class="mine-block">
-        <p class="whoami"><b>Your lesson</b>${slotTime(myIdx) ? ' · ' + slotTime(myIdx) : ''} · slot ${myIdx + 1} of ${teaching.length}<button type="button" class="printme" onclick="window.print()">Print this</button></p>
+        <p class="whoami"><b>Your lesson</b>${slotTime(myIdx) ? ' · ' + slotTime(myIdx) : ''} · slot ${myIdx + 1} of ${teaching.length}<button type="button" class="printme" onclick="window.print()">Print this</button><button type="button" class="printme" onclick="printPages()">Print the pages</button></p>
         <div class="lessonline">${lesson(mineCell)}</div>
         ${matsRead(mineCell, true)}
         ${pageFigures(mineCell, true)}
