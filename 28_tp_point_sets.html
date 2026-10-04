@@ -35,7 +35,7 @@
 <title>Connect Lite — TP point sets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610041122">
+<link rel="stylesheet" href="hub-tokens.css?v=202610041124">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1020px; margin:0 auto; padding:26px 20px 90px;}
@@ -128,17 +128,17 @@
   }
   @media print{ .back,.acts,.xbtn,.paste{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610041122">
+<link rel="stylesheet" href="hub-house.css?v=202610041124">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610041122"></script>
-<script src="hub-rotation.js?v=202610041122"></script>
-<script src="hub-store.js?v=202610041122"></script>
-<script src="hub-sync.js?v=202610041122"></script>
+<script src="hub-shared.js?v=202610041124"></script>
+<script src="hub-rotation.js?v=202610041124"></script>
+<script src="hub-store.js?v=202610041124"></script>
+<script src="hub-sync.js?v=202610041124"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
@@ -209,6 +209,11 @@ function groupNames(){
   return out.sort();
 }
 const newId = () => { let n = 1; while (LIB['s' + n]) n++; return 's' + n; };
+/* Has anything been written into it? An empty set can be removed; one with
+   lessons in it cannot, because nothing here should be able to throw work
+   away by accident. */
+const written = s => !!(s && Object.keys(s.sessions || {}).some(id =>
+  (s.sessions[id].slots || []).some(sl => sl && (sl.type || sl.aim || (sl.stages || []).length))));
 
 /* The twelve (or 2 x TPS) sessions, in the order they are taught: TP 1 on the
    first set's day, TP 1 on the second set's day, then TP 2, and so on. The
@@ -324,6 +329,7 @@ function render(){
     ${sessions}
     <div class="acts">
       <a class="btn quiet" href="24_tp_points.html">Apply it on the TP points screen</a>
+      ${Object.keys(LIB).length > 1 && !written(S) ? '<button type="button" class="btn quiet" id="dropset">Remove this set</button>' : ''}
     </div>
     <p class="status" id="status">${esc(note)}</p>`;
   wire();
@@ -406,6 +412,14 @@ function wire(){
   });
   const add = $('addset');
   if (add) add.onclick = () => { const id = newId(); LIB[id] = blankSet(); CUR = id; S = LIB[id]; OPEN = null; persist('Another set started'); };
+  const drop = $('dropset');
+  if (drop) drop.onclick = () => {
+    if (!confirm('Remove this set? It has nothing written in it.')) return;
+    delete LIB[CUR];
+    Object.keys(FOR).forEach(g => { if (FOR[g] === CUR) delete FOR[g]; });
+    CUR = Object.keys(LIB)[0] || ''; S = LIB[CUR] || null; OPEN = null;
+    persist('Set removed');
+  };
   const nm = $('setname');
   if (nm) nm.onchange = () => { S.name = nm.value.trim(); persist('Saved'); };
   document.querySelectorAll('[data-group]').forEach(el => el.onchange = () => {
