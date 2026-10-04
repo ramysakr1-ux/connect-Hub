@@ -141,6 +141,7 @@ return it. **Deployed as version 34**; version 37 adds the optional `due` on a p
 See `2026-09-27-materials-folders-live-in-one-place.md`. `matsRoot_()` and
 `MATS_ROOT`, so course folders stop landing at the root of My Drive, plus
 `tidyMaterialsFolders()` to file the ones already there. Saved in the editor;
+- `2026-10-04-upload-cap-by-caller.md` — v71: uploads capped by caller, trainee 2MB / tutor key 9MB (v69 and v70 got this wrong).
 **needs a new version deployed** for new folders to use it.
 
 ## 27 Sep 2026 — the owner key can be rotated

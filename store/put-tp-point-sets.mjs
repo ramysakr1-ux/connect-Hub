@@ -1,0 +1,73 @@
+/**
+ * Connect Lite — drop the written TP point sets onto a course.
+ *
+ *   node store/put-tp-point-sets.mjs --key <courseKey>              what it would write
+ *   node store/put-tp-point-sets.mjs --key <courseKey> --write      write it
+ *   node store/put-tp-point-sets.mjs --key <courseKey> --write --only s2
+ *
+ * The sets are the library: twelve sessions, three slots each, written against
+ * a real coursebook, with the stages a candidate's own plan starts from. They
+ * belong to a tutor and their book, not to a course, so they are kept here as
+ * a file and put onto whichever course needs them.
+ *
+ *   s1  Jordan's group · Language Hub Elementary (A2).  Written 4 Oct 2026.
+ *       Pages and audio attached for TP 1 and 2 only; the rest are references.
+ *   s2  Roadmap A2+ (Pearson 2019), units 1 to 4.       Written 4 Oct 2026.
+ *
+ * This writes `set.library` and leaves `set.setFor` alone -- which group
+ * teaches from which set is the tutor's to say on the TP point sets screen,
+ * and Apply on the TP points screen is what deals the slots. Everything else
+ * on the record is carried through untouched, because the store rebuilds a
+ * TP points record from named keys on read and drops what it is not handed.
+ */
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(HERE, '..');
+const arg = n => { const i = process.argv.indexOf(n); return i < 0 ? '' : (process.argv[i + 1] || ''); };
+const WRITE = process.argv.includes('--write');
+const KEY = arg('--key');
+const ONLY = arg('--only');
+if (!KEY) { console.log('say --key <courseKey>'); process.exit(1); }
+
+const STORE = (readFileSync(join(ROOT, 'hub-store.js'), 'utf8').match(/https:\/\/script\.google\.com\/macros\/s\/[^'"]+/) || [])[0];
+const call = async (b, tries = 6) => {
+  for (let i = 0; i < tries; i++) {
+    try {
+      const r = await fetch(STORE, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(b) });
+      return JSON.parse(await r.text());
+    } catch (e) { await new Promise(res => setTimeout(res, 4000)); }
+  }
+  return { ok: false, error: 'no JSON' };
+};
+
+const FILE = JSON.parse(readFileSync(join(HERE, 'tp-point-sets.json'), 'utf8'));
+const lib = ONLY ? { [ONLY]: FILE[ONLY] } : FILE;
+if (ONLY && !FILE[ONLY]) { console.log('no set called ' + ONLY + ' in tp-point-sets.json'); process.exit(1); }
+
+const r = await call({ op: 'course', key: KEY });
+if (!r.ok) { console.log('cannot read that course: ' + r.error); process.exit(1); }
+const recs = (r.result && (r.result.records || r.result)) || {};
+const P = recs.tppoints || {};
+const held = (P.set && P.set.library) || {};
+
+Object.keys(lib).forEach(id => {
+  const s = lib[id];
+  const slots = Object.keys(s.sessions || {}).reduce((a, k) => a + (s.sessions[k].slots || []).length, 0);
+  const stages = Object.keys(s.sessions || {}).reduce((a, k) =>
+    a + (s.sessions[k].slots || []).reduce((b, sl) => b + (sl.stages || []).length, 0), 0);
+  console.log(`  ${id}  ${s.name || s.book}  ${slots} slots, ${stages} stages${held[id] ? '  (replaces a set already there)' : ''}`);
+});
+console.log(`  sets already on the course and kept: ${Object.keys(held).filter(k => !lib[k]).join(', ') || 'none'}`);
+
+if (!WRITE) { console.log('\ndry run. Add --write.'); process.exit(0); }
+P.set = Object.assign({}, P.set, { library: Object.assign({}, held, lib) });
+const w = await call({ op: 'putCourse', key: KEY, kind: 'tppoints', data: P });
+console.log(w.ok ? '\nwritten. Open the TP points screen and Apply.' : '\nFAILED: ' + w.error);
+
+/* Read it back -- a write that answers ok can still have dropped a field. */
+const back = await call({ op: 'course', key: KEY });
+const got = ((((back.result && (back.result.records || back.result)) || {}).tppoints || {}).set || {}).library || {};
+console.log('read back: ' + (Object.keys(got).join(', ') || 'NOTHING — the set did not survive the write'));
