@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610041114">
+<link rel="stylesheet" href="hub-tokens.css?v=202610041122">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -147,6 +147,9 @@
     background:var(--surface); border:1px solid var(--sand-line); border-radius:9px; font-size:0.86rem;}
   .setbar.on{border-left:4px solid var(--gold);}
   .setbar b{font-family:'Newsreader',Georgia,serif; font-size:1.02rem;}
+  .setchip{display:inline-flex; flex-direction:column; gap:1px; padding:5px 11px; margin:0 8px 0 0;
+    background:var(--box); border:1px solid var(--sand-line); border-radius:8px;}
+  .setchip i{font-style:normal; font-size:0.72rem; color:var(--grey);}
   .setbar .status{flex:1 1 220px;}
   .setbar .btn.sm, .setbar .btn{font-size:0.74rem; padding:5px 11px;}
   /* The procedure on a candidate's own row: a numbered spine, the stage and
@@ -266,19 +269,19 @@
     details.proc{display:block;} details.proc > summary{display:none;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610041114">
+<link rel="stylesheet" href="hub-house.css?v=202610041122">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610041114"></script>
-<script src="hub-tracker.js?v=202610041114"></script>
-<script src="hub-rotation.js?v=202610041114"></script>
-<script src="hub-shared.js?v=202610041114"></script>
-<script src="hub-store.js?v=202610041114"></script>
-<script src="hub-sync.js?v=202610041114"></script>
+<script src="hub-due.js?v=202610041122"></script>
+<script src="hub-tracker.js?v=202610041122"></script>
+<script src="hub-rotation.js?v=202610041122"></script>
+<script src="hub-shared.js?v=202610041122"></script>
+<script src="hub-store.js?v=202610041122"></script>
+<script src="hub-sync.js?v=202610041122"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -361,7 +364,7 @@ function slotFor(set, tp, setIndex, pos){
   const ses = (set.sessions || {})[id];
   const sl = ses && (ses.slots || [])[pos];
   if (!sl || !(sl.type || sl.aim)) return null;
-  return { slot: sl, scaffold: ses.scaffold || '', context: ses.context || '', id: id, pos: pos, tp: tp };
+  return { slot: sl, scaffold: ses.scaffold || '', context: ses.context || '', id: id, pos: pos, tp: tp, set: set };
 }
 function stamp(cell, found){
   const sl = found.slot;
@@ -373,7 +376,7 @@ function stamp(cell, found){
   const book = Object.assign({}, out.book || {});
   if (sl.pages) book.ref = sl.pages;
   if (sl.page) book.page = sl.page;
-  if (!book.url && P && P.set && P.set.url) book.url = P.set.url;
+  if (!book.url && found.set && found.set.url) book.url = found.set.url;
   if (book.url || book.ref || book.page) out.book = book;
   if (sl.tracks) out.audio = Object.assign({}, out.audio || {}, { url: sl.tracks });
   /* Scanned pages belong to the SLOT, not to whoever draws it this year: the
@@ -391,7 +394,7 @@ function stamp(cell, found){
   /* Sourcing is taught once, by being shown. The references ride on the first
      two practices only; by TP 3 the candidate writes their own, which is the
      same hand-over the aims and the procedure make (Ramy, 4 Oct 2026). */
-  if (found.tp <= 2 && P && P.set && P.set.sources) out.sources = P.set.sources;
+  if (found.tp <= 2 && found.set && found.set.sources) out.sources = found.set.sources;
   out.from = found.id + '·' + (found.pos + 1);
   return out;
 }
@@ -401,16 +404,42 @@ function sessionIds(){
   for (let tp = 1; tp <= TPS; tp++) { out.push(tp + 'A'); out.push(tp + 'B'); }
   return out;
 }
+/* A COURSE HOLDS SEVERAL SETS. Ramy, 4 Oct 2026: "we will definitely need at
+   least four sets in case it's a course of 24." A set belongs to a tutor and
+   their book, not to a cohort's journey, so a course of twenty-four running
+   four groups has four of them, and each group teaches from its own. The old
+   single `set` is read as the library's first entry, so a course written
+   before this keeps working and is migrated the first time the editor saves. */
+function library(){
+  if (P && P.library && Object.keys(P.library).length) return P.library;
+  if (P && P.set) return { s1: P.set };
+  return {};
+}
+function setIdFor(group){
+  const lib = library(), ids = Object.keys(lib);
+  if (!ids.length) return '';
+  const chosen = (P && P.setFor && P.setFor[group]) || '';
+  return lib[chosen] ? chosen : ids[0];          // one set serves every group until told otherwise
+}
+const setFor = group => library()[setIdFor(group)] || null;
+const setName = s => (s && (s.name || s.book)) || 'The set';
+
 function setBar(){
-  const s = P && P.set;
-  if (!s) return `<div class="setbar"><span class="status">No TP point set on this course — the rotation is generating the lesson types itself.</span>
+  const lib = library(), ids = Object.keys(lib);
+  if (!ids.length) return `<div class="setbar"><span class="status">No TP point set on this course — the rotation is generating the lesson types itself.</span>
     <a class="btn quiet sm" href="28_tp_point_sets.html">Write a set</a></div>`;
-  const ids = sessionIds();
-  const written = ids.filter(id => { const ses = (s.sessions || {})[id]; return ses && (ses.slots || []).some(sl => sl && (sl.type || sl.aim)); }).length;
-  return `<div class="setbar on"><b>${esc(s.book || 'The set')}</b>${s.level ? ' · ' + esc(s.level) : ''}
-    <span class="status">${written} of ${ids.length} sessions written · the set decides the lesson, the rotation deals the slots.</span>
-    <a class="btn quiet sm" href="28_tp_point_sets.html">Write the set</a>
-    <button type="button" class="btn sm" id="applyset">Apply it</button></div>`;
+  const sess = sessionIds();
+  const gs = groups();
+  const line = ids.map(id => {
+    const s = lib[id];
+    const written = sess.filter(x => { const ses = (s.sessions || {})[x]; return ses && (ses.slots || []).some(sl => sl && (sl.type || sl.aim)); }).length;
+    const using = gs.filter(g => setIdFor(g.group) === id).map(g => g.group);
+    return `<span class="setchip"><b>${esc(setName(s))}</b>${s.level ? ' · ' + esc(s.level) : ''}
+      <i>${written} of ${sess.length} sessions${using.length ? ' · group ' + using.map(esc).join(', ') : ' · no group yet'}</i></span>`;
+  }).join('');
+  return `<div class="setbar on">${line}
+    <a class="btn quiet sm" href="28_tp_point_sets.html">${ids.length > 1 ? 'Write the sets' : 'Write the set'}</a>
+    <button type="button" class="btn sm" id="applyset">Apply ${ids.length > 1 ? 'them' : 'it'}</button></div>`;
 }
 function wireSetBar(){
   const b = $('applyset');
@@ -421,9 +450,13 @@ function wireSetBar(){
 
 function build(keepEdits){
   const gs = groups();
-  const set = (P && P.set) || null;
-  const out = { groups: {}, released: (P && P.released) || {}, sets: {}, set: set };
+  const lib = library();
+  const out = { groups: {}, released: (P && P.released) || {}, sets: {},
+                library: lib, setFor: (P && P.setFor) || {} };
+  let usedAny = false;
   gs.forEach((g, i) => {
+    const set = setFor(g.group);
+    if (set) usedAny = true;
     const r = R.rotate(g.people, { tps: TPS, groupOffset: i * 3 });
     const rows = {};
     Object.keys(r.rows).forEach(token => { rows[token] = {}; });
@@ -443,7 +476,7 @@ function build(keepEdits){
     out.sets[g.group] = r.sets.map(s => s.map(p => p.token));
   });
   P = out;
-  persist(set ? 'Built from the set' : 'Rotation built');
+  persist(usedAny ? (Object.keys(lib).length > 1 ? 'Built from the sets' : 'Built from the set') : 'Rotation built');
 }
 
 function persist(word){
@@ -916,7 +949,7 @@ function render(){
     return g.people.length && g.people.every(t => rows[t.token] && Object.keys(rows[t.token]).length);
   });
   if (!built) {
-    app.innerHTML = head + setBar() + `<div class="relbar"><button class="btn" id="build">Build the rotation</button><span class="status">${(P && P.set) ? 'Deals the candidates into the set’s slots, and generates a type wherever the set is silent.' : 'Works out the lesson type for every candidate across practices 1 to ' + TPS + '.'}</span></div>`;
+    app.innerHTML = head + setBar() + `<div class="relbar"><button class="btn" id="build">Build the rotation</button><span class="status">${Object.keys(library()).length ? 'Deals the candidates into their set’s slots, and generates a type wherever the set is silent.' : 'Works out the lesson type for every candidate across practices 1 to ' + TPS + '.'}</span></div>`;
     $('build').addEventListener('click', () => build(false));
     wireSetBar();
     return;

@@ -35,7 +35,7 @@
 <title>Connect Lite — TP point sets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610041114">
+<link rel="stylesheet" href="hub-tokens.css?v=202610041122">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1020px; margin:0 auto; padding:26px 20px 90px;}
@@ -54,6 +54,18 @@
   input:focus, select:focus, textarea:focus{outline:2px solid var(--teal); outline-offset:-1px;}
   textarea{line-height:1.5; resize:vertical;}
 
+  .settabs{display:flex; flex-wrap:wrap; gap:8px; margin:0 0 16px;}
+  .settab{font-family:inherit; font-size:0.84rem; font-weight:600; text-align:left; cursor:pointer;
+    background:var(--surface); border:1px solid var(--sand-line); border-radius:9px; padding:8px 13px;
+    color:var(--ink); display:flex; flex-direction:column; gap:1px;}
+  .settab i{font-style:normal; font-size:0.72rem; font-weight:500; color:var(--grey);}
+  .settab.on{border-color:var(--teal); border-bottom-width:3px; background:var(--box);}
+  .settab.add{color:var(--teal); border-style:dashed; justify-content:center;}
+  .groupsel{display:flex; flex-wrap:wrap; gap:8px;}
+  .gchip{display:inline-flex; align-items:center; gap:6px; font-size:0.82rem; padding:5px 11px;
+    background:var(--paper); border:1px solid var(--sand-line); border-radius:999px; cursor:pointer;}
+  .gchip.on{border-color:var(--teal); color:var(--teal); font-weight:600;}
+  .gchip input{width:auto; margin:0;}
   .sess{background:var(--surface); border:1px solid var(--sand-line); border-radius:10px; margin:0 0 10px; overflow:hidden;}
   .sess.open{border-left:5px solid var(--gold);}
   .shead{display:flex; align-items:center; gap:12px; flex-wrap:wrap; width:100%; text-align:left;
@@ -116,17 +128,17 @@
   }
   @media print{ .back,.acts,.xbtn,.paste{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610041114">
+<link rel="stylesheet" href="hub-house.css?v=202610041122">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610041114"></script>
-<script src="hub-rotation.js?v=202610041114"></script>
-<script src="hub-store.js?v=202610041114"></script>
-<script src="hub-sync.js?v=202610041114"></script>
+<script src="hub-shared.js?v=202610041122"></script>
+<script src="hub-rotation.js?v=202610041122"></script>
+<script src="hub-store.js?v=202610041122"></script>
+<script src="hub-sync.js?v=202610041122"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
@@ -175,9 +187,28 @@ const SCAFFOLD = {
             blurb: 'No stages. They choose the shape and plan it themselves.' },
 };
 
-let S = null;          // the set
+/* A COURSE HOLDS SEVERAL SETS. Ramy, 4 Oct 2026: "we will definitely need at
+   least four sets in case it's a course of 24." A set belongs to a tutor and
+   their book — the candidates move between levels, the set stays put — so a
+   course of twenty-four running four groups writes four of them and says which
+   group teaches from which. */
+let LIB = {};          // id -> set
+let FOR = {};          // group -> set id
+let CUR = '';          // the set being edited
+let S = null;          // shorthand for LIB[CUR]
 let OPEN = null;       // which session is open, e.g. "1A"
 let note = '';
+
+function groupNames(){
+  const roster = rec('connect_roster_v1') || {};
+  const out = [];
+  Object.values(roster.trainees || {}).filter(Boolean).forEach(t => {
+    const g = String(t.group || '');
+    if (g && out.indexOf(g) < 0) out.push(g);
+  });
+  return out.sort();
+}
+const newId = () => { let n = 1; while (LIB['s' + n]) n++; return 's' + n; };
 
 /* The twelve (or 2 x TPS) sessions, in the order they are taught: TP 1 on the
    first set's day, TP 1 on the second set's day, then TP 2, and so on. The
@@ -206,16 +237,24 @@ function blankSet(){
 }
 function load(){
   const P = rec(KEY) || {};
-  S = P.set || null;
-  if (S) sessionIds().forEach(id => {      // a course whose practice count grew
-    if (!S.sessions[id]) S.sessions[id] = { scaffold: 'bare', slots: [blankSlot(), blankSlot(), blankSlot()] };
-    while (S.sessions[id].slots.length < 3) S.sessions[id].slots.push(blankSlot());
+  LIB = (P.library && Object.keys(P.library).length) ? P.library : (P.set ? { s1: P.set } : {});
+  FOR = P.setFor || {};
+  CUR = LIB[CUR] ? CUR : Object.keys(LIB)[0] || '';
+  S = LIB[CUR] || null;
+  Object.keys(LIB).forEach(id => {
+    const s = LIB[id];
+    sessionIds().forEach(x => {            // a course whose practice count grew
+      if (!s.sessions[x]) s.sessions[x] = { scaffold: 'bare', slots: [blankSlot(), blankSlot(), blankSlot()] };
+      while (s.sessions[x].slots.length < 3) s.sessions[x].slots.push(blankSlot());
+    });
   });
 }
 function persist(word){
   const P = rec(KEY) || {};
-  S.updated = new Date().toISOString().slice(0, 10);
-  P.set = S;
+  if (S) S.updated = new Date().toISOString().slice(0, 10);
+  P.library = LIB;
+  P.setFor = FOR;
+  delete P.set;            // migrated: the library is the one place sets live
   try { localStorage.setItem(KEY, JSON.stringify(P)); } catch(e) {}
   note = word || 'Saved';
   render();
@@ -236,12 +275,12 @@ function render(){
     $('app').innerHTML = '<h1>TP point sets</h1><div class="empty">This is a tutor’s page. Your own teaching practice points are on your course home.</div>';
     return;
   }
-  if (!S) {
+  if (!S || !Object.keys(LIB).length) {
     $('app').innerHTML = `<h1>TP point sets</h1>
       <p class="lede">A set is the course’s teaching practice points, written once against a coursebook: ${TPS} practices, each taught twice because the group teaches on alternate days, and three slots in each. The rotation then deals the candidates into the slots.</p>
       <div class="empty"><p style="margin:0 0 12px">This course has no set yet.</p>
       <button class="btn" id="make">Start a set</button></div>`;
-    $('make').onclick = () => { S = blankSet(); persist('Set started'); };
+    $('make').onclick = () => { const id = newId(); LIB[id] = blankSet(); CUR = id; S = LIB[id]; persist('Set started'); };
     return;
   }
   const names = setNames();
@@ -260,9 +299,22 @@ function render(){
     </div>`;
   }).join('');
 
+  const ids = Object.keys(LIB);
+  const gnames = groupNames();
+  const tabs = `<div class="settabs">${ids.map(id => `<button type="button" class="settab${id === CUR ? ' on' : ''}" data-set="${id}">${esc(LIB[id].name || LIB[id].book || 'Untitled set')}${
+      LIB[id].level ? `<i>${esc(LIB[id].level)}</i>` : ''}</button>`).join('')}
+    <button type="button" class="settab add" id="addset">+ another set</button></div>`;
+  const usedBy = !gnames.length ? '' : `<div class="row"><label class="lab">Taught by</label><div class="groupsel">${
+    gnames.map(g => { const on = (FOR[g] || ids[0]) === CUR;
+      return `<label class="gchip${on ? ' on' : ''}"><input type="checkbox" data-group="${esc(g)}"${on ? ' checked' : ''}> Group ${esc(g)}</label>`; }).join('')}
+    <p class="hint" style="margin:5px 0 0">Which groups teach from this set. A course of twenty-four running four groups has four sets, one per tutor and book.</p></div></div>`;
+
   $('app').innerHTML = `<h1>TP point sets</h1>
-    <p class="lede">The lessons this course teaches, written once against the book. The set decides what each slot is; the rotation on the TP points screen decides who takes it. Give a slot its stages and the candidate’s own plan can start from them.</p>
+    <p class="lede">The lessons this course teaches, written once against the book. A set belongs to a tutor and their book; the rotation on the TP points screen deals its slots to whoever is teaching. Give a slot its stages and the candidate’s own plan can start from them.</p>
+    ${tabs}
     <div class="head">
+      <div class="row"><label class="lab" for="setname">This set is</label><input id="setname" value="${esc(S.name || '')}" placeholder="Jordan’s group · Language Hub Elementary"></div>
+      ${usedBy}
       <div class="row"><label class="lab" for="book">Coursebook</label><input id="book" value="${esc(S.book || '')}" placeholder="Language Hub Elementary"></div>
       <div class="row"><label class="lab" for="level">Level</label><input id="level" value="${esc(S.level || '')}" placeholder="A2 (elementary)"></div>
       <div class="row"><label class="lab" for="url">Link to the book</label><div><input id="url" type="url" value="${esc(S.url || '')}" placeholder="https://… wherever the book lives"><p class="hint">Every slot&rsquo;s card links here, so the link is written once. The page number in a slot opens a direct PDF address at that page.</p></div></div>
@@ -349,6 +401,18 @@ function wire(){
     dl.innerHTML = SHAPES.map(s => `<option value="${esc(s)}">`).join('');
     document.body.appendChild(dl);
   }
+  document.querySelectorAll('[data-set]').forEach(el => el.onclick = () => {
+    CUR = el.dataset.set; S = LIB[CUR]; OPEN = null; render();
+  });
+  const add = $('addset');
+  if (add) add.onclick = () => { const id = newId(); LIB[id] = blankSet(); CUR = id; S = LIB[id]; OPEN = null; persist('Another set started'); };
+  const nm = $('setname');
+  if (nm) nm.onchange = () => { S.name = nm.value.trim(); persist('Saved'); };
+  document.querySelectorAll('[data-group]').forEach(el => el.onchange = () => {
+    const g = el.dataset.group;
+    if (el.checked) FOR[g] = CUR; else if (FOR[g] === CUR) delete FOR[g];
+    persist(el.checked ? `Group ${g} teaches from this set` : `Group ${g} no longer uses this set`);
+  });
   const b = $('book'), l = $('level'), m = $('mins'), u = $('url');
   if (b) b.onchange = () => { S.book = b.value.trim(); persist('Saved'); };
   if (l) l.onchange = () => { S.level = l.value.trim(); persist('Saved'); };
