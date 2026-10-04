@@ -13,6 +13,7 @@ documents cite at pp. 223-233 are in neither file.
 """
 D = '/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books'
 BOOKS = {
+  'LH_SB': (f'{D}/Elementary/Language Hub/Language_Hub_Elementary_SBpdf.pdf', 5),
   'RM_SB': (f'{D}/Pre-Intermediate /Roadmap A2+/Roadmap_a2+_student_s_book.pdf', -4),
   'SF_SB': (f'{D}/Upper- Intermediate /Straightforward/- Straightforward Upper Intermediate. Student_s Book.pdf', 0),
   'SF_WB': (f'{D}/Upper- Intermediate /Straightforward/- Straightforward Upper-Intermediate. Workbook .pdf', 0),
