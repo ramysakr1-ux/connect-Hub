@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610041127">
+<link rel="stylesheet" href="hub-tokens.css?v=202610041129">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -269,19 +269,19 @@
     details.proc{display:block;} details.proc > summary{display:none;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610041127">
+<link rel="stylesheet" href="hub-house.css?v=202610041129">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610041127"></script>
-<script src="hub-tracker.js?v=202610041127"></script>
-<script src="hub-rotation.js?v=202610041127"></script>
-<script src="hub-shared.js?v=202610041127"></script>
-<script src="hub-store.js?v=202610041127"></script>
-<script src="hub-sync.js?v=202610041127"></script>
+<script src="hub-due.js?v=202610041129"></script>
+<script src="hub-tracker.js?v=202610041129"></script>
+<script src="hub-rotation.js?v=202610041129"></script>
+<script src="hub-shared.js?v=202610041129"></script>
+<script src="hub-store.js?v=202610041129"></script>
+<script src="hub-sync.js?v=202610041129"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -410,15 +410,22 @@ function sessionIds(){
    four groups has four of them, and each group teaches from its own. The old
    single `set` is read as the library's first entry, so a course written
    before this keeps working and is migrated the first time the editor saves. */
+/* The sets live INSIDE the record's `set` field, because the store rebuilds a
+   TP points record from named keys on read and would drop a `library` of its
+   own (found the hard way, 4 Oct 2026). A `set` that still has `sessions` is
+   the single set written before this, and reads as the library's first entry. */
 function library(){
-  if (P && P.library && Object.keys(P.library).length) return P.library;
-  if (P && P.set) return { s1: P.set };
+  const s = P && P.set;
+  if (!s) return {};
+  if (s.library && Object.keys(s.library).length) return s.library;
+  if (s.sessions) return { s1: s };
   return {};
 }
+const assigned = () => ((P && P.set && P.set.setFor) || {});
 function setIdFor(group){
   const lib = library(), ids = Object.keys(lib);
   if (!ids.length) return '';
-  const chosen = (P && P.setFor && P.setFor[group]) || '';
+  const chosen = assigned()[group] || '';
   return lib[chosen] ? chosen : ids[0];          // one set serves every group until told otherwise
 }
 const setFor = group => library()[setIdFor(group)] || null;
@@ -457,8 +464,8 @@ function build(keepEdits){
      cached copy of this screen rebuilt a course and took the whole TP point
      library with it. Whatever is on the record stays on the record. */
   const out = Object.assign({}, P || {}, { groups: {}, sets: {},
-                released: (P && P.released) || {}, library: lib, setFor: (P && P.setFor) || {} });
-  delete out.set;                       // migrated into the library above
+                released: (P && P.released) || {},
+                set: { library: lib, setFor: assigned() } });
   let usedAny = false;
   gs.forEach((g, i) => {
     const set = setFor(g.group);

@@ -35,7 +35,7 @@
 <title>Connect Lite — TP point sets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610041127">
+<link rel="stylesheet" href="hub-tokens.css?v=202610041129">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1020px; margin:0 auto; padding:26px 20px 90px;}
@@ -128,17 +128,17 @@
   }
   @media print{ .back,.acts,.xbtn,.paste{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610041127">
+<link rel="stylesheet" href="hub-house.css?v=202610041129">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610041127"></script>
-<script src="hub-rotation.js?v=202610041127"></script>
-<script src="hub-store.js?v=202610041127"></script>
-<script src="hub-sync.js?v=202610041127"></script>
+<script src="hub-shared.js?v=202610041129"></script>
+<script src="hub-rotation.js?v=202610041129"></script>
+<script src="hub-store.js?v=202610041129"></script>
+<script src="hub-sync.js?v=202610041129"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
@@ -242,8 +242,10 @@ function blankSet(){
 }
 function load(){
   const P = rec(KEY) || {};
-  LIB = (P.library && Object.keys(P.library).length) ? P.library : (P.set ? { s1: P.set } : {});
-  FOR = P.setFor || {};
+  const holder = P.set || {};
+  LIB = (holder.library && Object.keys(holder.library).length) ? holder.library
+      : (holder.sessions ? { s1: holder } : {});
+  FOR = holder.setFor || {};
   CUR = LIB[CUR] ? CUR : Object.keys(LIB)[0] || '';
   S = LIB[CUR] || null;
   Object.keys(LIB).forEach(id => {
@@ -257,9 +259,9 @@ function load(){
 function persist(word){
   const P = rec(KEY) || {};
   if (S) S.updated = new Date().toISOString().slice(0, 10);
-  P.library = LIB;
-  P.setFor = FOR;
-  delete P.set;            // migrated: the library is the one place sets live
+  /* Everything lives under `set`: the store rebuilds this record from named
+     keys when it reads it, so a sibling field would never come back. */
+  P.set = { library: LIB, setFor: FOR };
   try { localStorage.setItem(KEY, JSON.stringify(P)); } catch(e) {}
   note = word || 'Saved';
   render();
