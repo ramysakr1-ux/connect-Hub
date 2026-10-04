@@ -35,7 +35,7 @@
 <title>Connect Lite — TP point sets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610050231">
+<link rel="stylesheet" href="hub-tokens.css?v=202610050242">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1020px; margin:0 auto; padding:26px 20px 90px;}
@@ -72,6 +72,28 @@
      the course key. This is the door. It lives in the sets room rather than a
      room of its own: a centre taking a set is doing the same job as starting
      one by hand, which is what the tab beside it does. */
+  /* CUTTING THE COURSE'S OWN BOOK INTO PAGES. A set carries citations; the
+     pages are whoever's copy of the book attached them. A set from another
+     centre arrives with neither, and attaching 37 to 71 pages one upload at a
+     time is not something anyone will do. */
+  .pgwrap{background:var(--surface); border:1px solid var(--sand-line); border-left:5px solid var(--teal);
+    border-radius:10px; padding:14px 18px 16px; margin:0 0 18px;}
+  .pgwrap h2{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.08rem; margin:0 0 3px;}
+  .pgbook{display:flex; flex-wrap:wrap; gap:10px; align-items:center; padding:9px 0; border-top:1px solid var(--row-line);}
+  .pgbook .nm{font-weight:700; font-size:0.88rem; min-width:118px;}
+  .pgbook .st{font-size:0.78rem; color:var(--grey); font-variant-numeric:tabular-nums; flex:1 1 150px;}
+  .pgbook .st b{color:var(--teal);}
+  .pgcal{margin:11px 0 0; padding:12px 14px; background:var(--box); border-radius:8px;}
+  .pgcal .q{font-size:0.86rem; font-weight:700; margin:0 0 8px;}
+  .pgcal canvas{max-width:208px; width:100%; height:auto; border:1px solid var(--sand-line);
+    border-radius:4px; background:var(--paper); display:block; margin:0 0 9px;}
+  .pgnudge{display:flex; gap:7px; align-items:center; flex-wrap:wrap; font-size:0.82rem;}
+  .pgnudge button{font-family:inherit; font-size:0.82rem; font-weight:700; cursor:pointer; padding:3px 11px;
+    border:1px solid var(--sand-line); border-radius:6px; background:var(--paper); color:var(--ink);}
+  .pgbar{height:5px; background:var(--sand-deep); border-radius:999px; overflow:hidden; margin:8px 0 0;}
+  .pgbar i{display:block; height:100%; background:var(--teal); transition:width .2s;}
+  .pgnote{font-size:0.78rem; color:var(--ink-warm); background:var(--gold-wash);
+    border-left:2px solid var(--amber-edge); border-radius:0 6px 6px 0; padding:7px 10px; margin:10px 0 0;}
   .libwrap{background:var(--surface); border:1px solid var(--sand-line); border-left:5px solid var(--gold);
     border-radius:10px; padding:15px 18px 17px; margin:0 0 18px;}
   .libwrap h2{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.12rem; margin:0 0 3px;}
@@ -161,17 +183,18 @@
   }
   @media print{ .back,.acts,.xbtn,.paste{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610050231">
+<link rel="stylesheet" href="hub-house.css?v=202610050242">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610050231"></script>
-<script src="hub-rotation.js?v=202610050231"></script>
-<script src="hub-store.js?v=202610050231"></script>
-<script src="hub-sync.js?v=202610050231"></script>
+<script src="hub-shared.js?v=202610050242"></script>
+<script src="hub-rotation.js?v=202610050242"></script>
+<script src="hub-store.js?v=202610050242"></script>
+<script src="hub-sync.js?v=202610050242"></script>
+<script src="hub-pages.js?v=202610050231"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
@@ -427,6 +450,7 @@ function render(){
       <button class="btn" id="takelib">Open the library</button>
       <button class="btn quiet" id="make">Start a set by hand</button></div>`;
     wireLibrary();
+  wirePages();
     const mk = $('make'); if (mk) mk.onclick = () => { const id = newId(); LIB[id] = blankSet(); CUR = id; S = LIB[id]; persist('Set started'); };
     const tl = $('takelib'); if (tl) tl.onclick = openLibrary;
     return;
@@ -472,6 +496,7 @@ function render(){
       <div class="row"><label class="lab" for="sources">How to source it</label><div><textarea id="sources" rows="3" placeholder="Maggs, P. &amp; Smith, C. (2019) Language Hub Elementary Student&rsquo;s Book. Macmillan.&#10;Pathare, G. (2019) Language Hub Elementary Teacher&rsquo;s Book. Macmillan.&#10;One reference per line">${esc(S.sources || '')}</textarea><p class="hint">The references for this book, written correctly. They appear on the card for the first two practices only, taken apart so the candidate can see which part is which &mdash; after that they write their own.</p></div></div>
       <div class="row"><label class="lab" for="mins">A slot is</label><div class="pair" style="display:grid;grid-template-columns:110px 1fr;gap:9px;align-items:center"><input id="mins" type="number" min="15" max="120" value="${esc(S.minutes || 45)}"><span class="hint" style="margin:0">minutes. The stage clock in each slot counts against this.</span></div></div>
     </div>
+    ${pagesPanel()}
     ${sessions}
     <div class="acts">
       <a class="btn quiet" href="24_tp_points.html">Apply it on the TP points screen</a>
@@ -479,6 +504,125 @@ function render(){
     </div>
     <p class="status" id="status">${esc(note)}</p>`;
   wire();
+}
+
+/* ---------------- the course's own book ----------------
+   PG holds one run: which book, the opened PDF, the offset being calibrated,
+   and how far the attaching has got. It is deliberately not persisted -- a
+   half-finished run should die with the page rather than come back confusing. */
+let PG = null;
+
+function pagesPanel(){
+  if (!S || !window.HubPages) return '';
+  const need = window.HubPages.needs(S);
+  const srcs = Object.keys(need).filter(k => need[k].want.length || need[k].have.length);
+  if (!srcs.length) return '';
+  const rows = srcs.map(src => {
+    const n = need[src], name = window.HubPages.BOOKS[src] || src;
+    const busy = PG && PG.src === src;
+    const state = !n.want.length
+      ? `all ${n.have.length} pages attached`
+      : `<b>${n.want.length}</b> of ${n.want.length + n.have.length} pages still to attach`;
+    return `<div class="pgbook">
+      <span class="nm">${esc(name)}</span>
+      <span class="st">${state}</span>
+      ${n.want.length ? `<label class="btn quiet sm filebtn" for="pdf-${src}">${busy ? 'Choose a different PDF' : 'Point at your PDF'}</label>
+        <input type="file" id="pdf-${src}" data-pdf="${src}" accept="application/pdf,.pdf" hidden>` : ''}
+    </div>${busy ? calibrator() : ''}`;
+  }).join('');
+  return `<div class="pgwrap">
+    <h2>The pages this set teaches from</h2>
+    <p class="lede" style="margin:0 0 10px">Each lesson names the pages it teaches from, and the card carries them so a candidate can teach without the book in front of them. Point at your own copy and Lite cuts out the pages this set needs. The file stays on this computer; only the pages come out of it.</p>
+    ${rows}</div>`;
+}
+
+function calibrator(){
+  if (!PG) return '';
+  if (PG.error) return `<div class="pgcal"><p class="pgnote" style="margin:0">${esc(PG.error)}</p></div>`;
+  if (PG.running) {
+    const pct = Math.round((PG.at / PG.total) * 100);
+    return `<div class="pgcal"><p class="q">Cutting out page ${PG.page} &mdash; ${PG.at} of ${PG.total}</p>
+      <div class="pgbar"><i style="width:${pct}%"></i></div>
+      <p class="hint" style="margin:7px 0 0">Leave this page open until it finishes.</p></div>`;
+  }
+  if (!PG.doc) return `<div class="pgcal"><p class="q">Opening the file&hellip;</p></div>`;
+  return `<div class="pgcal">
+    <p class="q">Is this page ${PG.probe} of the book?</p>
+    <canvas id="pgcanvas"></canvas>
+    <div class="pgnudge">
+      <button type="button" id="pgback">&minus;</button>
+      <span>PDF page <b>${PG.probe + PG.offset}</b> of ${PG.doc.numPages}</span>
+      <button type="button" id="pgfwd">+</button>
+      <button type="button" class="btn sm" id="pggo" style="margin-left:6px">Yes &mdash; cut out all ${PG.pages.length} pages</button>
+      <button type="button" class="btn quiet sm" id="pgstop">Cancel</button>
+    </div>
+    <p class="hint" style="margin:8px 0 0">Nudge until the page on screen is the one the book calls ${PG.probe}. Every other page follows from it.</p>
+  </div>`;
+}
+
+async function drawProbe(){
+  if (!PG || !PG.doc || PG.running) return;
+  const cv = $('pgcanvas'); if (!cv) return;
+  const n = PG.probe + PG.offset;
+  if (n < 1 || n > PG.doc.numPages) { const c = cv.getContext('2d'); c.clearRect(0, 0, cv.width, cv.height); return; }
+  try {
+    const out = await window.HubPages.renderPage(PG.doc, n, 54);
+    cv.width = out.width; cv.height = out.height;
+    cv.getContext('2d').drawImage(out, 0, 0);
+  } catch (e) { /* a page that will not draw is not worth an alarm; the nudge still works */ }
+}
+
+async function startPdf(src, file){
+  PG = { src: src, file: file, doc: null, offset: 0, probe: 0, pages: [], running: false, at: 0, total: 0, error: '' };
+  render();
+  try {
+    const doc = await window.HubPages.open(file);
+    const need = window.HubPages.needs(S)[src];
+    PG.doc = doc;
+    PG.pages = need.want;
+    /* Calibrate on the lowest page the set actually wants, so what they are
+       looking at is a page this course teaches rather than a cover. */
+    PG.probe = need.want[0];
+    PG.offset = 0;
+    render(); drawProbe();
+  } catch (e) {
+    PG.error = (e && e.message) || 'that file could not be opened';
+    render();
+  }
+}
+
+async function runPdf(){
+  if (!PG || !PG.doc) return;
+  const tok = anyToken();
+  if (!tok) { PG.error = 'No candidate on the roster yet, so there is nowhere to put the pages. Add the cohort first.'; render(); return; }
+  PG.running = true; PG.at = 0; PG.total = PG.pages.length; render();
+  try {
+    const made = await window.HubPages.attach({
+      doc: PG.doc, src: PG.src, pages: PG.pages, offset: PG.offset, token: tok,
+      label: (S.book || S.name || 'Coursebook').split(',')[0].trim(),
+      onStep: st => { PG.at = st.i + (st.done ? 0 : 1); PG.page = st.page; render(); },
+    });
+    const n = window.HubPages.fill(S, PG.src, made);
+    PG = null;
+    persist(n + ' pages attached');
+  } catch (e) {
+    PG.running = false;
+    PG.error = (e && e.message) || 'the pages could not be attached';
+    render();
+  }
+}
+
+function wirePages(){
+  document.querySelectorAll('[data-pdf]').forEach(el => el.onchange = e => {
+    const file = e.target.files && e.target.files[0]; e.target.value = '';
+    if (file) startPdf(el.getAttribute('data-pdf'), file);
+  });
+  const b = $('pgback'), f = $('pgfwd'), g = $('pggo'), x = $('pgstop');
+  if (b) b.onclick = () => { PG.offset--; render(); drawProbe(); };
+  if (f) f.onclick = () => { PG.offset++; render(); drawProbe(); };
+  if (g) g.onclick = runPdf;
+  if (x) x.onclick = () => { PG = null; render(); };
+  if ($('pgcanvas')) drawProbe();
 }
 
 function wireLibrary(){
