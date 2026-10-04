@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610050224">
+<link rel="stylesheet" href="hub-tokens.css?v=202610050231">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -291,19 +291,19 @@
     body.printpages .pg figcaption{font-size:0.8rem; margin:0 0 4px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610050224">
+<link rel="stylesheet" href="hub-house.css?v=202610050231">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610050224"></script>
-<script src="hub-tracker.js?v=202610050224"></script>
-<script src="hub-rotation.js?v=202610050224"></script>
-<script src="hub-shared.js?v=202610050224"></script>
-<script src="hub-store.js?v=202610050224"></script>
-<script src="hub-sync.js?v=202610050224"></script>
+<script src="hub-due.js?v=202610050231"></script>
+<script src="hub-tracker.js?v=202610050231"></script>
+<script src="hub-rotation.js?v=202610050231"></script>
+<script src="hub-shared.js?v=202610050231"></script>
+<script src="hub-store.js?v=202610050231"></script>
+<script src="hub-sync.js?v=202610050231"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -411,6 +411,15 @@ function stamp(cell, found){
   if (!book.url && found.set && found.set.url) book.url = found.set.url;
   if (book.url || book.ref || book.page) out.book = book;
   if (sl.tracks) out.audio = Object.assign({}, out.audio || {}, { url: sl.tracks });
+  /* WHERE A TRACK NUMBER LEADS WHEN NOBODY HAS ATTACHED THE FILE. A set written
+     by another centre, or shared through Connect, carries the track NUMBER and
+     not our copy of the recording -- we tell you which track, you bring your
+     own audio. The set's "Link to the audio" is that centre's folder, and it
+     fills the cell the same way the set's book link fills book.url. */
+  if (found.set && found.set.audioUrl) {
+    out.audio = Object.assign({}, out.audio || {});
+    if (!out.audio.folder) out.audio.folder = found.set.audioUrl;
+  }
   /* Scanned pages belong to the SLOT, not to whoever draws it this year: the
      page a lesson is taught from does not change when the rotation deals
      somebody else into it. Files attached to a cell by hand are kept alongside
@@ -753,8 +762,20 @@ function matsRead(c, mine){
      on, and six players a day would drown the page. */
   const audioLines = String((c.audio || {}).url || '').split(/\n+/).map(x => x.trim()).filter(Boolean)
     .map(line => { const bar = line.indexOf('|');
-      return bar > -1 ? { label: line.slice(0, bar).trim(), url: line.slice(bar + 1).trim() } : { label: '', url: line }; })
-    .filter(a => a.url);
+      if (bar > -1) return { label: line.slice(0, bar).trim(), url: line.slice(bar + 1).trim() };
+      /* A line with no pipe used to be taken as a URL whatever it said, which
+         was safe while every line WAS one. A set that names "Track 2.1" and
+         carries no file now writes exactly that, so a line that is plainly not
+         an address is a label with no link, not a link called Track 2.1. */
+      return /^(https?:)?\/\//i.test(line) || /^[\w.-]+\.[a-z]{2,}\//i.test(line)
+        ? { label: '', url: line } : { label: line, url: '' }; })
+    /* A line with no link used to be thrown away here, so a slot that named
+       "Track 2.1" and had no file showed the candidate nothing at all -- no
+       player, no number, no clue which recording to find. Keep it: the number
+       IS the instruction. It plays if there is a file, points at the course's
+       audio folder if there is one, and otherwise simply says which track. */
+    .filter(a => a.url || a.label);
+  const folder = String((c.audio || {}).folder || '').trim();
   let players = '';
   if (audioLines.length && mine) {
     /* One block, its own label inside it. It used to be an empty labelled span
@@ -778,10 +799,16 @@ function matsRead(c, mine){
         <audio controls preload="metadata" src="https://drive.usercontent.google.com/download?id=${esc(m[1])}&amp;export=view"></audio>
         <a class="audalt" href="${esc(a.url)}" target="_blank" rel="noopener">open it in Drive</a></figure>`;
       if (/\.(mp3|m4a|ogg|wav|aac)([?#]|$)/i.test(a.url)) return `<figure class="aud"><figcaption>${name}</figcaption><audio controls preload="none" src="${esc(a.url)}"></audio></figure>`;
-      return `<figure class="aud"><figcaption><a class="mlink" href="${esc(a.url)}" target="_blank" rel="noopener">${name}</a></figcaption></figure>`;
+      if (a.url) return `<figure class="aud"><figcaption><a class="mlink" href="${esc(a.url)}" target="_blank" rel="noopener">${name}</a></figcaption></figure>`;
+      /* no file of its own: the number, and the way to the folder if there is one */
+      if (folder) return `<figure class="aud"><figcaption>${name} &middot; <a class="mlink" href="${esc(folder)}" target="_blank" rel="noopener">in the course audio</a></figcaption></figure>`;
+      return `<figure class="aud"><figcaption>${name} <span class="audalt">play it from your own copy of the audio</span></figcaption></figure>`;
     }).join('') + `</div>`;
   } else if (audioLines.length) {
-    audioLines.forEach((a, i) => got.push(`<a class="mlink audio" href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.label || 'Audio' + (audioLines.length > 1 ? ' ' + (i + 1) : ''))}</a>`));
+    audioLines.forEach((a, i) => { const nm = esc(a.label || 'Audio' + (audioLines.length > 1 ? ' ' + (i + 1) : ''));
+      const href = a.url || folder;
+      got.push(href ? `<a class="mlink audio" href="${esc(href)}" target="_blank" rel="noopener">${nm}</a>`
+                    : `<span class="mlink audio">${nm}</span>`); });
   }
 
   /* The procedure. Ramy, 4 Oct 2026: they need "the procedure, what they're
