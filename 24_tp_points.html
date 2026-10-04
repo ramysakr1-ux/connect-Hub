@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610041038">
+<link rel="stylesheet" href="hub-tokens.css?v=202610041049">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -128,6 +128,8 @@
      document preview. */
   .auds{margin:7px 0 2px; display:flex; flex-direction:column; gap:7px;}
   .aud{margin:0;}
+  .auds .alab{font-size:0.66rem; letter-spacing:.07em; text-transform:uppercase; color:var(--faint);
+    font-weight:700; margin:0 0 1px;}
   .aud figcaption{font-size:0.72rem; font-weight:600; color:var(--grey); margin:0 0 3px;}
   .aud iframe{width:100%; max-width:430px; height:72px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper); display:block;}
   .aud audio{width:100%; max-width:430px; display:block;}
@@ -169,6 +171,12 @@
   .srcwhy{margin:0 0 6px; font-size:0.76rem; color:var(--grey); line-height:1.55;}
   .srcrefs{margin:0 0 8px; padding-left:18px; font-size:0.78rem; line-height:1.6;}
   .srcrefs li{margin:0 0 3px;}
+  .day.past{opacity:.78;}
+  .day.past summary{cursor:pointer; list-style:none;}
+  .day.past summary::-webkit-details-marker{display:none;}
+  .day.past summary .dayline::after{content:' \2014 taught, tap to reopen'; color:var(--faint); letter-spacing:0; text-transform:none; font-weight:500;}
+  .later{margin:18px 0 0; padding:10px 12px; border-radius:7px; background:var(--sand-deep);
+    border:1px solid var(--sand-line); font-size:0.8rem; color:var(--grey);}
   .req{margin:7px 0 0; font-size:0.76rem; color:var(--grey); line-height:1.55;}
   .req.first{color:var(--teal); font-weight:600;}
   .wrap{overflow-x:auto;}
@@ -196,19 +204,19 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} section.group{padding:12px 12px 14px;} }
   @media print{ .back,.relbar,#hubSync{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610041038">
+<link rel="stylesheet" href="hub-house.css?v=202610041049">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610041038"></script>
-<script src="hub-tracker.js?v=202610041038"></script>
-<script src="hub-rotation.js?v=202610041038"></script>
-<script src="hub-shared.js?v=202610041038"></script>
-<script src="hub-store.js?v=202610041038"></script>
-<script src="hub-sync.js?v=202610041038"></script>
+<script src="hub-due.js?v=202610041049"></script>
+<script src="hub-tracker.js?v=202610041049"></script>
+<script src="hub-rotation.js?v=202610041049"></script>
+<script src="hub-shared.js?v=202610041049"></script>
+<script src="hub-store.js?v=202610041049"></script>
+<script src="hub-sync.js?v=202610041049"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -481,7 +489,12 @@ function matsRead(c, mine){
 
   const b = c.book || {};
   const href = b.url ? (b.page && /\.pdf($|\?)/i.test(b.url) ? b.url + '#page=' + encodeURIComponent(b.page) : b.url) : '';
-  const lines = String(b.ref || '').split(/\n+/).map(x => x.trim()).filter(Boolean);
+  let lines = String(b.ref || '').split(/\n+/).map(x => x.trim()).filter(Boolean);
+  /* "Class audio: track 2.6" written out beside a player that is already
+     labelled Track 2.6 says the same thing twice. The line stays for anybody
+     who gets a link instead of a player. */
+  const hasPlayer = mine && String((c.audio || {}).url || '').trim();
+  if (hasPlayer) lines = lines.filter(l => !/^class audio/i.test(l));
   const got = [];
   if (!lines.length && href) got.push(`<a class="mlink" href="${esc(href)}" target="_blank" rel="noopener">The coursebook</a>`);
   lines.forEach((ln, i) => got.push(i === 0 && href
@@ -500,7 +513,11 @@ function matsRead(c, mine){
     .filter(a => a.url);
   let players = '';
   if (audioLines.length && mine) {
-    players = `<span class="mats-read gets"><span class="glab">Audio</span></span><div class="auds">` + audioLines.map((a, i) => {
+    /* One block, its own label inside it. It used to be an empty labelled span
+       followed by a separate div, which left the word "Audio" stranded on a
+       line of its own above the player (Ramy, 4 Oct 2026: "it works but it's
+       not positioned right"). */
+    players = `<div class="auds"><div class="alab">Audio</div>` + audioLines.map((a, i) => {
       const name = esc(a.label || 'Track ' + (i + 1));
       const m = a.url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^"' ]*?id=)([\w-]{20,})/) || a.url.match(/[?&]id=([\w-]{25,})/);
       if (m) return `<figure class="aud"><figcaption>${name}</figcaption><iframe src="https://drive.google.com/file/d/${esc(m[1])}/preview" loading="lazy" allow="autoplay" title="${name}"></iframe></figure>`;
@@ -614,10 +631,31 @@ function render(){
       return `<b class="aim${lang ? ' lang' : ''}">${esc(c.aim)}</b>`;
     };
 
+    /* ONE PRACTICE AT A TIME. Ramy, 4 Oct 2026: "why is the candidate getting
+       all six TPs in one view? They're supposed to only see what they're
+       teaching for that TP." The one coming up is open; the ones already
+       taught fold away but stay reachable, because a candidate rereads what
+       they did before writing the next plan; the ones after the next are not
+       there at all. The timetable decides which is which, so nobody has to
+       release anything by hand. A course with no dates yet shows them all,
+       rather than showing nothing. */
+    const todayISO = (SETTINGS.demoToday || new Date().toISOString().slice(0, 10));
+    const dated = Array.from({ length: TPS }, (_, i) => i + 1).map(tp => ({ tp: tp, date: dayFor(tp) }));
+    const anyDates = dated.some(d => d.date);
+    const upcoming = dated.filter(d => d.date && d.date >= todayISO).map(d => d.tp);
+    const NEXT = upcoming.length ? upcoming[0] : (anyDates ? TPS : 0);
+    const state = tp => {
+      if (!anyDates) return 'open';
+      if (tp === NEXT) return 'open';
+      return tp < NEXT ? 'past' : 'later';
+    };
+    let hidden = 0;
+
     const tables = Array.from({ length: TPS }, (_, i) => i + 1).map(tp => {
       const teaching = order(mySet, tp);
       const date = dayFor(tp);
       if (!teaching.some(t => ((rows[t] || {})['tp' + tp] || {}).aim)) return '';
+      if (state(tp) === 'later') { hidden++; return ''; }
       const body = teaching.map((t, i) => {
         const c = (rows[t] || {})['tp' + tp] || {};
         const mine = t === me.token;
@@ -627,17 +665,22 @@ function render(){
         const det = matsRead(c, mine);
         return `<tr class="${mine ? 'mine' : 'theirs'}"><td class="slot">${when}</td><td class="who">${who}${mine ? '<span class="yours">your lesson</span>' : ''}</td><td class="what">${lesson(c)}${det ? '<div class="det">' + det + '</div>' : ''}</td></tr>`;
       }).join('');
-      return `<section class="day">
+      const past = state(tp) === 'past';
+      return `<section class="day${past ? ' past' : ''}">
+        ${past ? '<details><summary>' : ''}
         <p class="dayline">${esc(SETTINGS.courseName || 'CELTA')} \u00b7 <b>TP ${tp} \u00b7 ${esc(teaching.map(letterOf).join(''))}</b>${date ? ' \u00b7 ' + esc(niceDay(date)) : ''} \u00b7 ${teaching.length} \u00d7 ${mins(tpSlots[0] || {})} mins${
           (function(){ const c = teaching.map(t => ((rows[t] || {})['tp' + tp] || {}).context).find(Boolean); return c ? ' \u00b7 <b>' + esc(c) + '</b>' : ''; })()}</p>
+        ${past ? '</summary>' : ''}
         <div class="wrap"><table class="tbl day-tbl"><tr><th>Slot</th><th>Who</th><th>The lesson, and what to get</th></tr>${body}</table></div>
         ${dueLine(tp)}
+        ${past ? '</details>' : ''}
       </section>`;
     }).filter(Boolean).join('');
 
     app.innerHTML = head + `<section class="group"><h2>Group ${esc(P.group || '\u2014')}</h2>
       <p class="ok">One table a day. Your own lesson is marked; the other two are the lessons you sit in on, not yours to plan.</p>
-      ${tables || '<div class="empty">No points released for your set yet.</div>'}</section>`;
+      ${tables || '<div class="empty">No points released for your set yet.</div>'}
+      ${hidden ? `<p class="later">${hidden === 1 ? 'One more practice opens' : 'The other ' + hidden + ' practices open'} as the course reaches ${hidden === 1 ? 'it' : 'them'}. You teach one at a time.</p>` : ''}</section>`;
     return;
   }
 
