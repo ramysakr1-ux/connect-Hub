@@ -18,7 +18,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610051749">
+<link rel="stylesheet" href="hub-tokens.css?v=202610051756">
 <style>
   :root{
     /* the pane -- the same four values the trainee landing's cards use */
@@ -326,7 +326,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610051749">
+<link rel="stylesheet" href="hub-house.css?v=202610051756">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -350,10 +350,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610051749"></script>
-<script src="hub-store.js?v=202610051749"></script>
-<script src="hub-say.js?v=202610051749"></script>
-<script src="hub-card-mail.js?v=202610051749"></script>
+<script src="hub-shared.js?v=202610051756"></script>
+<script src="hub-store.js?v=202610051756"></script>
+<script src="hub-say.js?v=202610051756"></script>
+<script src="hub-card-mail.js?v=202610051756"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -1395,6 +1395,7 @@ function drawStats(S){
     </div>` : ''}
     ${bars}
     ${total && total < 10 ? `<p class="inempty">${total} final grade${total === 1 ? '' : 's'} so far \u2014 the spread stays shut until ten, because a chart of three people is those three people.</p>` : ''}
+    ${shape(S)}
     ${assignments(S)}
     ${attendance(S)}
     ${perCentre(S)}
@@ -1417,6 +1418,37 @@ function assignments(S){
       <div class="bar"><i>on resubmission</i><span class="t" style="width:${pc(a.passedOnResubmission || 0)}%"></span><b>${a.passedOnResubmission || 0}</b></div>
       <div class="bar fail"><i>not passed</i><span class="t" style="width:${pc(a.failed || 0)}%"></span><b>${a.failed || 0}</b></div>
     </div>`;
+}
+
+/* WHAT SHAPE THE COURSES ARE. Delivery mode is a real field -- Handbook 7.11
+   makes the final report state it, so Course admin asks for it. Full-time and
+   part-time are NOT recorded anywhere, so the split is read off the dates and
+   the line below says so rather than passing an inference off as a fact. */
+function shape(S){
+  const m = S.mode || {}, l = S.length || {}, c = S.cohort || {};
+  const modes = (m.f2f || 0) + (m.online || 0) + (m.mixed || 0);
+  const lens = (l.intensive || 0) + (l.extended || 0);
+  if (!modes && !lens && !c.courses) return '';
+  const avg = c.courses ? (c.candidates / c.courses) : 0;
+  const weeks = (l.weeks || []).slice().sort((a, b) => a - b);
+  const mid = weeks.length ? weeks[Math.floor(weeks.length / 2)] : 0;
+  const bar = (label, n, of, fail) => `<div class="bar${fail ? ' fail' : ''}"><i>${esc(label)}</i>
+    <span class="t" style="width:${of ? Math.round((n / of) * 100) : 0}%"></span><b>${n}</b></div>`;
+  return `<p class="statsub">The shape of a course</p>
+    <div class="statgrid">
+      ${c.courses ? `<div class="stat"><b>${avg.toFixed(1)}</b><span>candidates a course${
+        c.smallest != null ? ` \u2014 ${c.smallest} to ${c.largest}` : ''}</span></div>` : ''}
+      ${mid ? `<div class="stat"><b>${mid}</b><span>weeks, typically</span></div>` : ''}
+    </div>
+    ${lens ? `<div class="bars">
+      ${bar('intensive', l.intensive || 0, lens)}
+      ${bar('extended', l.extended || 0, lens)}
+    </div><p class="inempty" style="margin-top:6px">Full-time and part-time are not recorded, so this is read off the dates: six weeks or less is intensive.</p>` : ''}
+    ${modes ? `<div class="bars" style="margin-top:12px">
+      ${bar('face-to-face', m.f2f || 0, modes)}
+      ${bar('online', m.online || 0, modes)}
+      ${bar('mixed mode', m.mixed || 0, modes)}
+    </div>` : ''}`;
 }
 
 /* DAYS MISSED. A tutor records an absence on CELTA 5, one row a day, with
