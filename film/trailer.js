@@ -12,6 +12,17 @@
  * explains, the person who is frightened of software starts counting what they
  * would have to learn. It shows things happening and gets out.
  *
+ * SECOND PASS, 5 Oct 2026, after he watched it: "it's good, could be a little
+ * bit longer, but it doesn't show all the cool stuff. I want to show TP points.
+ * I want to show the phonemic chart. I want to show some of the cards the
+ * trainees get. All the cool things trainers and trainees have no idea could
+ * actually exist on a CELTA course. What the hell is this? What's that?"
+ *
+ * That is a different test from the one the first cut was written to. The first
+ * cut picked what was IMPRESSIVE; this one picks what is UNIMAGINABLE on a
+ * CELTA course as they have run it. A signature is impressive. A phonemic
+ * keyboard inside the lesson plan is unimaginable.
+ *
  * THE RULES THIS IS WRITTEN TO
  *  - No teaching. Not one caption that describes a feature.
  *  - Six words on screen, total, before the end card.
@@ -27,7 +38,7 @@
  * Run it with film/?reel=trailer&sk=…&vk=…&fk=…  — ?check=1 to prove every
  * selector before a take.
  */
-const SCENES = [
+const REEL = [
 
   /* Someone signing their name with their finger is the single most "that's
      not a website" thing Lite does, so it opens. No caption: a signature does
@@ -63,7 +74,6 @@ const SCENES = [
     steps: [
       { do: 'hold', ms: 500 },
       { do: 'click', on: '.dictbtn' },
-      { do: 'caption', text: 'Just talk.' },
       { do: 'type', into: '#lST .pt:last-child .pt-text',
         text: 'The instructions were clear and the demonstration was quick, so they were into the task inside a minute.', ms: 2600 },
       { do: 'hold', ms: 700 }
@@ -140,6 +150,57 @@ const SCENES = [
     ]
   },
 
+  /* THE ONE NOBODY EXPECTS. A phonemic keyboard, inside the lesson plan, on the
+     candidate's own screen. Every trainer in the room has watched a candidate
+     fight a transcription in Word; none of them has seen this. */
+  { title: 'The phonemic chart',
+    course: 'start', role: 'trainee', as: 'Wei Zhang',
+    screen: '1_trainee_plan_and_analysis.html',
+    about: 'The language analysis opens, and the phonemic keyboard comes up inside the plan.',
+    settle: 12000,
+    steps: [
+      { do: 'hold', ms: 500 },
+      { do: 'click', on: '#laToggle', ms: 1000 },
+      { do: 'scroll', to: '#ipaBar', ms: 1200 },
+      { do: 'zoom', on: '#ipaBar', scale: 1.4, ms: 700 },
+      { do: 'hold', ms: 1800 },
+      { do: 'zoom', out: true, ms: 700 }
+    ],
+    stub: ['put']
+  },
+
+  /* TP POINTS. A teaching practice written out as a lesson -- stages, timings,
+     interaction -- waiting for the candidate before they have asked. */
+  { title: 'TP points',
+    course: 'start', role: 'tutor',
+    screen: '5_tutor_dashboard.html',
+    about: 'Behind one word on the dashboard: the TP points, every practice staged and timed.',
+    settle: 12000,
+    steps: [
+      { do: 'hold', ms: 400 },
+      { do: 'click', on: '#courseMenuBtn', ms: 900 },
+      { do: 'hold', ms: 800 },
+      { do: 'goto', screen: '24_tp_points.html', course: 'start', role: 'tutor', ms: 1600 },
+      { do: 'scroll', to: 'bottom', ms: 2400 }
+    ]
+  },
+
+  /* THE CARD A CANDIDATE OPENS. Not a folder. Their own page, with what is
+     theirs today on it. */
+  { title: 'Her own card',
+    course: 'start', role: 'trainee', as: 'Wei Zhang',
+    screen: 'index.html',
+    about: 'The candidate’s home: her teaching practice, her state, what is back.',
+    settle: 12000,
+    steps: [
+      { do: 'hold', ms: 600 },
+      { do: 'zoom', on: '.tpgroup', scale: 1.25, ms: 800 },
+      { do: 'hold', ms: 1400 },
+      { do: 'zoom', out: true, ms: 700 },
+      { do: 'scroll', to: 'bottom', ms: 1800 }
+    ]
+  },
+
   /* The whole argument, once, and where to find it. */
   { title: 'The card',
     screen: 'film/end.html',
@@ -148,3 +209,27 @@ const SCENES = [
     steps: [ { do: 'hold', ms: 4200 } ]
   }
 ];
+
+/* THE RUNNING ORDER, set here rather than by where a shot happens to be written.
+   It alternates who the screen belongs to -- candidate, trainer, candidate --
+   so the reel never feels like a tour of one person's software, and it opens on
+   the two nobody expects (a signature drawn by hand; a phonemic keyboard inside
+   a lesson plan) rather than building to them. A trailer has no third act. */
+const ORDER = [
+  'Ink',
+  'The phonemic chart',
+  'Said, not typed',
+  'Her own card',
+  'TP points',
+  'In her language',
+  'It fills itself',
+  'Cambridge\u2019s own',
+  'The assessor',
+  'Signed',
+  'The card',
+];
+const SCENES = ORDER.map(t => {
+  const sc = REEL.find(x => x.title === t);
+  if (!sc) throw new Error('the running order names a shot that is not written: ' + t);
+  return sc;
+});

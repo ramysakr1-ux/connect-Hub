@@ -64,10 +64,14 @@ const errs = []; page.on('pageerror', e => errs.push(e.message));
 await page.setContent('<body style="margin:0;background:#fbfaf7"><i style="position:fixed;left:0;top:0;width:6px;height:6px;background:#ff00ff"></i></body>');
 await page.waitForTimeout(900);
 
+/* --reel trailer shoots the forty-second one instead of the film (5 Oct 2026).
+   Same engine, same courses, same camera; only the scene list differs. */
+const REEL = arg('--reel');
 const url = `http://127.0.0.1:${port}/film/index.html?take=1&sk=${key('c6')}&vk=${key('c7')}&fk=${key('c4')}&o=${OWNER}`
+  + (REEL ? '&reel=' + encodeURIComponent(REEL) : '')
   + (SCENE ? '&scene=' + SCENE : '') + (EMAIL ? '&email=' + encodeURIComponent(EMAIL) : '');
 if (!EMAIL) console.log('no --email given, so the last card ends without an address');
-console.log('rolling' + (SCENE ? ' on scene ' + SCENE : '') + '…');
+console.log('rolling' + (REEL ? ' the ' + REEL : '') + (SCENE ? ' on scene ' + SCENE : '') + '…');
 await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 90000 });
 
 const t0 = Date.now();
@@ -85,7 +89,7 @@ const warns = await page.evaluate(() => [...document.querySelectorAll('.warn')].
 const video = page.video();
 await page.close(); await ctx.close();        /* the file is only written on close */
 const made = await video.path();
-const name = 'lite-film-' + new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '').replace(/(\d{8})(\d{4})/, '$1-$2') + (SCENE ? '-scene' + SCENE : '') + '.webm';
+const name = 'lite-' + (REEL || 'film') + '-' + new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '').replace(/(\d{8})(\d{4})/, '$1-$2') + (SCENE ? '-scene' + SCENE : '') + '.webm';
 const out = join(takes, name);
 renameSync(made, out);
 await browser.close(); server.close();

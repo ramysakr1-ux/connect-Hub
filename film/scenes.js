@@ -88,18 +88,12 @@ var SCENES = [
     ]
   },
 
-  {
-    title: 'The console',
-    screen: '14_owner.html',
-    about: 'The centre\u2019s console, announced. Ramy, 30 Sep 2026: the start "gets a bit back and forth\u2026 it\u2019s confusing what\u2019s happening", so each part now says whose world it is before it opens \u2014 and this one says what happens next: a link arrives. <b>Needs &amp;o=</b> (the owner key). Read-only.',
-    settle: 3800,
-    steps: [
-      { do: 'chapter', num: 'One', text: 'The link', sub: 'It arrives in an email. Everything else is behind it.', ms: 2400 },
-      { do: 'hold', ms: 1100 },
-      { do: 'caption', text: 'You will be sent a link. That is the whole of it.' },
-      { do: 'hold', ms: 1600 }
-    ]
-  },
+
+  /* CUT 5 Oct 2026. Ramy left it blank on the reshoot form and asked me to
+     decide: it is the only beat in the film about HIM rather than about the
+     centre watching it, and a centre never opens the console. The card arrives
+     on its own now -- which is also how it arrives in life. */
+
 
   {
     title: 'The card arrives',
@@ -197,6 +191,68 @@ var SCENES = [
     ]
   },
 
+  /* ———— SHOT 5 OCT 2026, from Ramy's reshoot form ————
+     Everything below was built after the 2 Oct cut and has never been on
+     camera. Placed on the film's own calendar spine, so a viewer always knows
+     where they are in a course. */
+
+  /* The biggest thing built since the film: a teaching practice is a LESSON
+     now, and a centre takes twelve days of them from a library rather than
+     writing them from nothing. It belongs before day one, because the point is
+     that the course is ready before anybody arrives. */
+  {
+    title: 'TP point sets, from the library',
+    course: 'start',
+    day: 'Day 0',
+    screen: '28_tp_point_sets.html',
+    about: 'The library opens, a set is taken, and a practice reads as a lesson: stages, timings, interaction, watch notes.',
+    settle: 12000,
+    stub: ['putCourse', 'put'],
+    steps: [
+      { do: 'caption', text: 'Twelve teaching days, written against the book.' },
+      { do: 'click', on: '#takelib', ms: 1200 },
+      { do: 'hold', ms: 1600 },
+      { do: 'scroll', to: 'bottom', ms: 2200 },
+      { do: 'caption', text: 'Five levels. Take the ones your course runs.' },
+      { do: 'click', on: '#libclose', ms: 1000 },
+      { do: 'scroll', to: 'bottom', ms: 2400 },
+      { do: 'caption', text: 'Every lesson names the pages it teaches from.' },
+      { do: 'hold', ms: 1200 }
+    ]
+  },
+
+  {
+    title: 'The rooms on the timetable',
+    course: 'start',
+    day: 'Day 0',
+    screen: '23_timetable.html',
+    about: 'The rooms strip above the weeks, by level, and the TP letters on the cells.',
+    settle: 12000,
+    steps: [
+      { do: 'hold', ms: 700 },
+      { do: 'scroll', to: '.rooms', ms: 1400 },
+      { do: 'zoom', on: '.rooms', scale: 1.3, ms: 700 },
+      { do: 'caption', text: 'The room lights up ten minutes early.' },
+      { do: 'zoom', out: true, ms: 800 }
+    ]
+  },
+
+  {
+    title: 'The shelf',
+    course: 'start',
+    day: 'Day 0',
+    screen: '5_tutor_dashboard.html',
+    about: 'The demo lesson and the getting-to-know-you material, put on the course for everybody.',
+    settle: 12000,
+    steps: [
+      { do: 'hold', ms: 600 },
+      { do: 'scroll', to: '#shelf', ms: 1400 },
+      { do: 'caption', text: 'Put it on the shelf once. Everyone has it.' },
+      { do: 'hold', ms: 1400 }
+    ]
+  },
+
+
   {
     title: 'The candidate reads Cambridge’s words',
     screen: 'index.html',
@@ -288,10 +344,31 @@ var SCENES = [
       { do: 'hold', ms: 1300 }
     ]
   },
+
+  /* IMMEDIATELY after the plan, and it must stay there. The candidate shares a
+     reading, and the next shot is that reading already on the volunteer
+     student's page. Four chapters later it is a coincidence; here it is a
+     payoff. (Ramy's v4 note 16, which a length cut broke once already.) */
+  {
+    title: 'The switch',
+    course: 'start', role: 'trainee', as: 'Wei Zhang',
+    day: 'Day 3',
+    screen: '1_trainee_plan_and_analysis.html',
+    about: 'The share switch on the lesson plan: one click and the material is with the volunteer students.',
+    settle: 12000,
+    stub: ['put'],
+    steps: [
+      { do: 'scroll', to: '#shareVol', ms: 1200 },
+      { do: 'click', on: '#shareVol', ms: 1000 },
+      { do: 'caption', text: 'One click, and they have it before the lesson starts.' },
+      { do: 'hold', ms: 1400 }
+    ]
+  },
+
   {
     title: 'A volunteer’s page',
     screen: '26_volunteer.html',
-    course: 'start', role: 'volunteer', as: 'Omar', day: 'Day 1',
+    course: 'start', role: 'volunteer', as: 'Omar', day: 'Day 3',
     about: 'The other end of the share switch, which is why it follows the plan — Ramy, 1 Oct 2026, note 16: the chapter runs plan, language analysis, turn in, VOLUNTEER STUDENTS, feedback. It was moved into the volunteer chapter for tidiness on 1 Oct and moved straight back: the payoff has to follow the share, not arrive four chapters later. The film now stays long enough to show the material itself sitting on the student\u2019s page (Ramy, 1 Oct 2026: "show where the material from the trainees has landed \u2014 it is very important"). Omar has not agreed yet on the demo, so his link opens on the joining note: Turkish is chosen, <i>Kabul ediyorum</i>, and behind it his page \u2014 the next class in the course\u2019s clock, the material the candidate just shared, <b>Join on Zoom</b>. <b>volunteerAgree stubbed</b> \u2014 he stays unagreed for the next take.',
     settle: 1800,
     stub: ['volunteerAgree'],
@@ -317,6 +394,37 @@ var SCENES = [
       { do: 'hold', ms: 2600 }
     ]
   },
+
+  {
+    title: 'Who is coming tomorrow',
+    course: 'start', role: 'tutor',
+    day: 'Day 4',
+    screen: '25_volunteer_register.html',
+    about: 'The volunteer students answered the day-before reminder, and the register carries the count.',
+    settle: 12000,
+    steps: [
+      { do: 'hold', ms: 700 },
+      { do: 'scroll', to: 'bottom', ms: 2000 },
+      { do: 'caption', text: 'They were asked yesterday. You know before you plan.' },
+      { do: 'hold', ms: 1400 }
+    ]
+  },
+
+  {
+    title: 'The printed day',
+    course: 'start', role: 'tutor',
+    day: 'Day 4',
+    screen: '23_timetable.html',
+    about: 'A whole teaching day, its lessons and the pages they teach from, as one printed thing.',
+    settle: 12000,
+    steps: [
+      { do: 'hold', ms: 600 },
+      { do: 'scroll', to: '#ttPrint', ms: 1200 },
+      { do: 'caption', text: 'The day, and the pages it teaches from.' },
+      { do: 'hold', ms: 1500 }
+    ]
+  },
+
 
 
   {
@@ -644,6 +752,8 @@ var SCENES = [
       { do: 'hold', ms: 1300 }
     ]
   },
+
+
 
   {
     title: 'The next course',
