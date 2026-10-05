@@ -18,7 +18,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610051746">
+<link rel="stylesheet" href="hub-tokens.css?v=202610051749">
 <style>
   :root{
     /* the pane -- the same four values the trainee landing's cards use */
@@ -326,7 +326,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610051746">
+<link rel="stylesheet" href="hub-house.css?v=202610051749">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -350,10 +350,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610051746"></script>
-<script src="hub-store.js?v=202610051746"></script>
-<script src="hub-say.js?v=202610051746"></script>
-<script src="hub-card-mail.js?v=202610051746"></script>
+<script src="hub-shared.js?v=202610051749"></script>
+<script src="hub-store.js?v=202610051749"></script>
+<script src="hub-say.js?v=202610051749"></script>
+<script src="hub-card-mail.js?v=202610051749"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -1396,6 +1396,8 @@ function drawStats(S){
     ${bars}
     ${total && total < 10 ? `<p class="inempty">${total} final grade${total === 1 ? '' : 's'} so far \u2014 the spread stays shut until ten, because a chart of three people is those three people.</p>` : ''}
     ${assignments(S)}
+    ${attendance(S)}
+    ${perCentre(S)}
     ${months(S)}`;
 }
 
@@ -1415,6 +1417,42 @@ function assignments(S){
       <div class="bar"><i>on resubmission</i><span class="t" style="width:${pc(a.passedOnResubmission || 0)}%"></span><b>${a.passedOnResubmission || 0}</b></div>
       <div class="bar fail"><i>not passed</i><span class="t" style="width:${pc(a.failed || 0)}%"></span><b>${a.failed || 0}</b></div>
     </div>`;
+}
+
+/* DAYS MISSED. A tutor records an absence on CELTA 5, one row a day, with
+   whether the work was made up. What this says is how often candidates are out
+   of the room and how often the course catches them up -- a fact about courses,
+   not about anybody in it. */
+function attendance(S){
+  const a = S.attendance || {};
+  if (!a.absences) return '';
+  const p = S.candidates || {};
+  const share = p.total ? Math.round((a.candidatesWithAbsence / p.total) * 100) : 0;
+  const caught = a.absences ? Math.round((a.madeUp / a.absences) * 100) : 0;
+  return `<p class="statsub">Days missed</p>
+    <div class="statgrid">
+      <div class="stat"><b>${a.absences}</b><span>absences recorded</span></div>
+      <div class="stat"><b>${a.candidatesWithAbsence}</b><span>candidates missed a day${
+        p.total ? ` \u2014 ${share}%` : ''}</span></div>
+      <div class="stat"><b>${caught}%</b><span>of those days made up</span></div>
+    </div>`;
+}
+
+/* HOW MUCH EACH CENTRE RUNS, as a shape rather than a list. Five centres ran
+   one course, three ran two, one ran six. Volume is Connect's own business --
+   it is who to talk to and what to expect next year -- and it says nothing
+   about how anybody's candidates did. */
+function perCentre(S){
+  const d = S.perCentre || {};
+  const keys = Object.keys(d).map(Number).filter(n => n > 0).sort((a, b) => a - b);
+  if (!keys.length || (keys.length === 1 && d[keys[0]] === 1)) return '';
+  const top = Math.max(...keys.map(k => d[k]));
+  return `<p class="statsub">Courses per centre</p>
+    <div class="bars">${keys.map(k => `<div class="bar">
+      <i>${k} course${k === 1 ? '' : 's'}</i>
+      <span class="t" style="width:${Math.round((d[k] / top) * 100)}%"></span>
+      <b>${d[k]}</b></div>`).join('')}</div>
+    <p class="inempty" style="margin-top:6px">How many centres ran how many. No centre is named.</p>`;
 }
 
 /* Courses by the month they started, so a quiet September is visible as one.
