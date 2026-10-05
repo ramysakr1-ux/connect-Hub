@@ -18,7 +18,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610051652">
+<link rel="stylesheet" href="hub-tokens.css?v=202610051713">
 <style>
   :root{
     /* the pane -- the same four values the trainee landing's cards use */
@@ -90,6 +90,31 @@
   .intag.idea{background:var(--box); color:var(--grey);}
   .intag.set{background:var(--teal-pale,#e3efed); color:var(--teal);}
   .inempty{font-size:.9rem; color:var(--grey); margin:0;}
+  /* Reading a contributed set. The file in Drive is JSON; this is the set. It
+     follows the lesson plan's shape -- the aim, then the stages against the
+     clock -- so a set from somewhere else reads the way ours do. */
+  .readback{position:fixed; inset:0; z-index:9500; background:rgba(28,26,22,.42);
+    display:flex; align-items:flex-start; justify-content:center; padding:22px 16px; overflow:auto;}
+  .readbox{background:var(--paper); border-radius:13px; width:min(880px,100%); padding:22px 24px 26px;
+    box-shadow:0 20px 60px rgba(0,0,0,.3);}
+  .readbox h2{font-family:'Newsreader',Georgia,serif; font-size:1.45rem; margin:0 0 2px;}
+  .readbox .by{color:var(--teal); font-weight:600; font-size:.88rem; margin:0 0 2px;}
+  .readbox .ct{color:var(--grey); font-size:.8rem; margin:0 0 16px; font-variant-numeric:tabular-nums;}
+  .rsess{border-top:1px solid var(--sand-line); padding:13px 0 2px;}
+  .rsess .sh{font-size:.68rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase;
+    color:var(--gold-deep); margin:0 0 6px;}
+  .rslot{margin:0 0 15px;}
+  .rslot .ty{font-size:.66rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
+    background:var(--box); color:var(--grey); border-radius:999px; padding:3px 9px; margin-right:7px;}
+  .rslot .aim{font-size:.92rem; margin:7px 0 2px;}
+  .rslot .sub, .rslot .src{font-size:.8rem; color:var(--grey); margin:0;}
+  .rstage{display:grid; grid-template-columns:34px 1fr; gap:9px; font-size:.84rem;
+    padding:5px 0 5px 2px; border-top:1px dotted var(--sand-line);}
+  .rstage .mn{color:var(--teal); font-weight:700; font-variant-numeric:tabular-nums; text-align:right;}
+  .rstage .nm{font-weight:700;}
+  .rstage .ia{color:var(--faint); font-weight:400; font-size:.76rem; margin-left:6px;}
+  .rstage .av{color:var(--garnet,#8a2f3a); font-size:.8rem; display:block; margin-top:1px;}
+  .readbox .bare{font-size:.82rem; color:var(--faint); margin:4px 0 0;}
   /* A standing demo course, pinned to a day by the demo clock (30 Sep 2026):
      gold, like the sync pill on its own screens. */
   .filmrow.demos{display:grid; gap:10px;}
@@ -196,7 +221,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610051652">
+<link rel="stylesheet" href="hub-house.css?v=202610051713">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -220,10 +245,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610051652"></script>
-<script src="hub-store.js?v=202610051652"></script>
-<script src="hub-say.js?v=202610051652"></script>
-<script src="hub-card-mail.js?v=202610051652"></script>
+<script src="hub-shared.js?v=202610051713"></script>
+<script src="hub-store.js?v=202610051713"></script>
+<script src="hub-say.js?v=202610051713"></script>
+<script src="hub-card-mail.js?v=202610051713"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -1012,6 +1037,7 @@ function drawInbox(){
       <span class="intag ${cls}">${esc(tag)}</span>
       <div class="body">${head}<small class="meta">${esc(meta)}</small></div>
       <div class="acts">
+        ${sheet === 'contributions' ? `<button type="button" class="btn small" data-read="${esc(at)}">Read it</button>` : ''}
         ${state === 'done' ? '' : `<button type="button" class="btn small" data-in="done|${esc(sheet)}|${esc(at)}">Done</button>`}
         <button type="button" class="btn small" data-in="drop|${esc(sheet)}|${esc(at)}">Delete</button>
       </div></div>`;
@@ -1031,6 +1057,14 @@ function drawInbox(){
         [x.page, x.where, x.role, x.course, when(x.at)].filter(Boolean).join(' \u00b7 '),
         x.state)).join('') : ''}`;
 
+  box.querySelectorAll('[data-read]').forEach(b => b.onclick = async () => {
+    const row = (INBOX.contributions || []).find(c => String(c.at) === b.dataset.read);
+    if (!row || !row.file) { alert('That row has no file on it.'); return; }
+    b.disabled = true; b.textContent = 'Opening\u2026';
+    try { showSet(await call({ op: 'readContribution', file: row.file }), row); }
+    catch (e) { alert(e.message || e); }
+    b.disabled = false; b.textContent = 'Read it';
+  });
   box.querySelectorAll('[data-in]').forEach(b => b.onclick = async () => {
     const [what, sheet, at] = b.dataset.in.split('|');
     if (what === 'drop' && !confirm('Delete this row? It does not come back.')) return;
@@ -1041,6 +1075,54 @@ function drawInbox(){
       await inbox();
     } catch (e) { b.disabled = false; b.textContent = what === 'drop' ? 'Delete' : 'Done'; alert(e.message || e); }
   });
+}
+/* THE SET ITSELF, not the file. Ramy, 5 Oct 2026, having clicked through to a
+   Drive file and found JSON. A contributed set is read the way ours are read:
+   the aim, then the stages against the clock, with the watch notes where they
+   belong. */
+function showSet(got, row){
+  const S = (got && got.set) || {};
+  const ids = Object.keys(S.sessions || {}).sort();
+  let slots = 0, stages = 0;
+  ids.forEach(k => (S.sessions[k].slots || []).forEach(sl => {
+    if (sl.type || sl.aim) slots++; stages += (sl.stages || []).length;
+  }));
+
+  const stage = st => `<div class="rstage"><span class="mn">${st.minutes || ''}</span>
+      <span><span class="nm">${esc(st.name || '')}</span>${
+        st.interaction ? `<span class="ia">${esc(st.interaction)}</span>` : ''}
+        ${st.todo ? '<br>' + esc(st.todo) : ''}
+        ${st.avoid ? `<span class="av">watch: ${esc(st.avoid)}</span>` : ''}</span></div>`;
+
+  const slot = (sl, i) => `<div class="rslot">
+      <span class="ty">${esc(sl.type || 'no type')}</span><b>Lesson ${i + 1}</b>
+      ${sl.shape ? ` <small style="color:var(--grey)">${esc(sl.shape)}</small>` : ''}
+      <p class="aim">${esc(sl.aim || '')}</p>
+      ${sl.sub ? `<p class="sub">Sub aim: ${esc(sl.sub)}</p>` : ''}
+      ${sl.pages ? `<p class="src">${esc(sl.pages)}</p>` : ''}
+      ${sl.tracks ? `<p class="src">${esc(String(sl.tracks).split('\n').join(' \u00b7 '))}</p>` : ''}
+      ${(sl.stages || []).length ? (sl.stages || []).map(stage).join('')
+        : '<p class="bare">No stages — the trainee writes them.</p>'}
+    </div>`;
+
+  const back = document.createElement('div');
+  back.className = 'readback';
+  back.innerHTML = `<div class="readbox">
+    <h2>${esc(S.book || 'Untitled set')}</h2>
+    <p class="by">Contributed by ${esc(S.by || (row && row.by) || '')}</p>
+    <p class="ct">${esc(S.level || '')} \u00b7 ${slots} lessons \u00b7 ${stages} stages \u00b7 ${
+      esc(String(S.minutes || 45))} minutes a slot${got.name ? ' \u00b7 ' + esc(got.name) : ''}</p>
+    ${ids.map(k => `<section class="rsess"><p class="sh">TP ${esc(k)}${
+        S.sessions[k].context ? ' \u2014 ' + esc(S.sessions[k].context) : ''}</p>
+      ${(S.sessions[k].slots || []).map(slot).join('')}</section>`).join('')}
+    <div class="say-acts" style="margin-top:16px"><button type="button" class="btn" id="readclose">Close</button>
+      ${row && row.file ? `<a class="btn quiet" href="${esc(row.file)}" target="_blank" rel="noopener">The file in Drive</a>` : ''}</div>
+  </div>`;
+  document.body.appendChild(back);
+  const shut = () => back.remove();
+  back.onclick = e => { if (e.target === back) shut(); };
+  back.querySelector('#readclose').onclick = shut;
+  document.addEventListener('keydown', function off(e){ if (e.key === 'Escape') { shut(); document.removeEventListener('keydown', off); } });
 }
 load();
 </script>
