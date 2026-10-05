@@ -35,7 +35,7 @@
 <title>Connect Lite — TP point sets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610051617">
+<link rel="stylesheet" href="hub-tokens.css?v=202610051630">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1020px; margin:0 auto; padding:26px 20px 90px;}
@@ -194,18 +194,19 @@
   }
   @media print{ .back,.acts,.xbtn,.paste{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610051617">
+<link rel="stylesheet" href="hub-house.css?v=202610051630">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610051617"></script>
-<script src="hub-rotation.js?v=202610051617"></script>
-<script src="hub-store.js?v=202610051617"></script>
-<script src="hub-sync.js?v=202610051617"></script>
-<script src="hub-pages.js?v=202610051617"></script>
+<script src="hub-shared.js?v=202610051630"></script>
+<script src="hub-rotation.js?v=202610051630"></script>
+<script src="hub-store.js?v=202610051630"></script>
+<script src="hub-say.js?v=202610051630"></script>
+<script src="hub-sync.js?v=202610051630"></script>
+<script src="hub-pages.js?v=202610051630"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
@@ -330,7 +331,7 @@ function blankSet(){
 const LIB_CATALOGUE = 'library/catalogue.json';
 const LIB_MASTER = 'library/tp-point-sets.json';
 let CAT = null, SHOWLIB = false, LVL = '', LIBNOTE = '', TAKING = '';
-let SHOWOFFER = false, OFFERBY = '';
+let SHOWOFFER = false, OFFERBY = '', SENDING = false;
 
 /* OFFERING A SET TO THE POOL. Ramy, 5 Oct 2026: the Pool is open to everyone,
    contributed to or not, and contributing buys a credit line -- "Contributed
@@ -371,14 +372,39 @@ function offerFile(){
     };
   });
   out.covers = { pages: pages, tracks: tracks, days: days };
+  return out;
+}
+
+/* ONE CLICK, NOT TWO. Ramy, 5 Oct 2026: "people are lazy. Can we just click
+   contribute, and it goes somewhere in the library where no one else can see
+   it, and then I'll get a notification." So it posts (store v72): the set
+   lands in a folder only Connect can open and Ramy is told it is there.
+   The file is still written, but only when the post fails -- then there is
+   something in their hands and an address to send it to, rather than a lost
+   afternoon. */
+async function contributeSet(){
+  const out = offerFile();
+  SENDING = true; render();
+  try {
+    await HubStore.call({ op: 'contribute', set: out, by: out.by,
+      centre: (SETTINGS.centreName || '') + (SETTINGS.centreNumber ? ' (' + SETTINGS.centreNumber + ')' : '') });
+    SENDING = false; SHOWOFFER = false;
+    note = 'Sent to Connect, credited to ' + out.by + '. We read every one and write back.';
+  } catch (e) {
+    SENDING = false;
+    saveFile(out);
+    note = 'That did not send — ' + ((e && e.message) || e) + '. The set is in your downloads instead; email it to lite@celtaconnect.com.';
+  }
+  render();
+}
+
+function saveFile(out){
   const slug = (out.book || 'tp-points').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48);
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 1)], { type: 'application/json' }));
   a.download = (slug || 'tp-points') + '.json';
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-  note = 'Saved to your downloads. Send it to lite@celtaconnect.com.';
-  render();
 }
 
 function offerPanel(){
@@ -386,12 +412,8 @@ function offerPanel(){
   const slots = Object.keys(S.sessions || {}).reduce((a, k) => a + (S.sessions[k].slots || []).length, 0);
   const staged = Object.keys(S.sessions || {}).reduce((a, k) =>
     a + (S.sessions[k].slots || []).reduce((b, sl) => b + ((sl.stages || []).length ? 1 : 0), 0), 0);
-  const mailto = 'mailto:lite@celtaconnect.com'
-    + '?subject=' + encodeURIComponent('TP point set \u2014 ' + (S.book || 'untitled'))
-    + '&body=' + encodeURIComponent('The file is attached.\n\nCredit it to: ' + (OFFERBY.trim() || '')
-        + '\nLevel: ' + (S.level || '') + '\n');
   return `<div class="libwrap">
-    <h2>Offer this set to the Pool</h2>
+    <h2>Contribute this set to the Pool</h2>
     <p class="lede">The Pool is the library every centre on Lite can take from. Anyone may use it, whether they have put anything in or not &mdash; what offering a set buys is the credit on it, and your name travels with the lessons wherever they are taught.</p>
     <div class="row" style="max-width:420px"><label class="lab" for="offerby">Credit it to</label>
       <div><input id="offerby" value="${esc(OFFERBY)}" placeholder="Your centre, or your own name">
@@ -400,9 +422,9 @@ function offerPanel(){
     <p class="libwarn"><b>It stays yours.</b> Offering it lets Connect edit it and publish it in the library for other centres to teach from, credited as above. You can ask for it to be taken out at any time, and it is yours to go on using however you like.</p>
     <p class="libwarn"><b>It has to be yours to give.</b> Your own lessons &mdash; not stages copied out of a teacher&rsquo;s book. Naming the pages of a coursebook is fine and is how every set in the library works; copying the publisher&rsquo;s procedure is not, and a set that does will not go in.</p>
     <div class="acts" style="margin-top:12px">
-      <button type="button" class="btn" id="offerdl"${OFFERBY.trim() ? '' : ' disabled'}>Save the file</button>
+      <button type="button" class="btn" id="offerdl"${OFFERBY.trim() && !SENDING ? '' : ' disabled'}>${SENDING ? 'Sending…' : 'Contribute'}</button>
       <button type="button" class="btn quiet" id="offerclose">Close</button></div>
-    <p class="hint" style="margin:9px 0 0">Then send it to <b><a href="${mailto}">lite@celtaconnect.com</a></b> with the file attached &mdash; the link fills in the subject. Connect reads it, runs the library&rsquo;s checks over it and writes back.</p>
+    <p class="hint" style="margin:9px 0 0">It goes straight to Connect &mdash; nobody else can see it until it is in the library. We read every one and write back.</p>
   </div>`;
 }
 
@@ -588,7 +610,7 @@ function render(){
     ${sessions}
     <div class="acts">
       <a class="btn quiet" href="24_tp_points.html">Apply it on the TP points screen</a>
-      ${written(S) ? '<button type="button" class="btn quiet" id="offer">Offer this set to the Pool</button>' : ''}
+      ${written(S) ? '<button type="button" class="btn quiet" id="offer">Contribute this set</button>' : ''}
       ${Object.keys(LIB).length > 1 && !written(S) ? '<button type="button" class="btn quiet" id="dropset">Remove this set</button>' : ''}
     </div>
     <p class="status" id="status">${esc(note)}</p>`;
@@ -896,7 +918,12 @@ function slotBody(id, i, sl, scaffold){
       </details>
     </div></div>`;
 
-  return `<div class="slot">
+  /* hub-say puts its own small link in here, and what reaches Connect names
+     the lesson rather than just the screen. A set taken from the Pool is
+     somebody else's writing, so the people who find its mistakes are the ones
+     teaching from it. */
+  return `<div class="slot" data-say="${esc((S.book || 'set').split(',')[0])} · TP ${id} · slot ${i + 1}${
+      sl.type ? ' (' + esc(sl.type) + ')' : ''}" data-say-label="Something wrong with this lesson?">
     <h3>Slot ${i + 1} <small>the ${['first','second','third'][i] || (i + 1) + 'th'} trainee to teach</small></h3>
     <div class="frow"><label class="lab">Lesson type</label><div>
       <select data-sl="${id}|${i}|type"><option value="">— choose —</option>${TYPES.map(t =>
@@ -956,7 +983,7 @@ function wire(){
     const go = $('offerdl'); if (go) go.disabled = !OFFERBY.trim();
   };
   const offGo = $('offerdl');
-  if (offGo) offGo.onclick = () => offerFile();
+  if (offGo) offGo.onclick = () => contributeSet();
   const offX = $('offerclose');
   if (offX) offX.onclick = () => { SHOWOFFER = false; render(); };
   const drop = $('dropset');

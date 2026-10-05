@@ -20,7 +20,7 @@
  * VERSION is stamped by bump-assets.py with the same stamp as the ?v= links,
  * so each push retires the previous cache on activate.
  */
-const VERSION = 'lite-202610051617';
+const VERSION = 'lite-202610051630';
 const SHELL = [
   './', 'index.html', 'invite.html',
   '1_trainee_plan_and_analysis.html', '2_trainee_self_evaluation.html', '3_tutor_feedback.html',
@@ -30,6 +30,9 @@ const SHELL = [
   '13_grades_report.html', '14_owner.html', '15_course_record.html', '16_final_report.html',
   'hub-shared.js', 'hub-store.js', 'hub-sync.js', 'hub-tracker.js', 'hub-due.js', 'hub-exchange.js',
   'hub-crit-learn.js', 'hub-rotation.js', 'hub-timetable-parse.js', 'hub-docx.js', 'hub-xlsx.js', 'hub-attendance.js', 'hub-volunteer-i18n.js', 'hub-ink.js', 'hub-pages.js',
+  /* 5 Oct 2026: hub-say.js is on every screen, and the five after it had never
+     been in the shell at all -- offline, they 404'd. */
+  'hub-say.js', 'celta5-appendix.js', 'hub-card-mail.js', 'hub-feedback.js', 'hub-front.js', 'hub-shelf.js',
   '23_timetable.html', '24_tp_points.html', '28_tp_point_sets.html', '25_volunteer_register.html', '26_volunteer.html', '27_volunteer_certificate.html', 'manifest-volunteer.webmanifest',
   'offer.html',
   'assignment-defaults.js', 'hub-tokens.css', 'hub-house.css', 'hub-record.css',
