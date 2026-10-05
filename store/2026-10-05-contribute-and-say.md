@@ -49,3 +49,27 @@ somewhere else.
 `ping`, all six refusals above, a real `contribute` and a real `report` from
 node, and both again through the browser. **Two test rows are on the sheets and
 one test file is in the contributions folder, all marked "TEST — delete me".**
+
+---
+
+# v73 — the console reads both piles
+
+Deployed 5 October 2026 as **version 73**, hours after v72. Ramy: *"yes, put
+them on the console."*
+
+**`inbox`** (owner only) returns the newest 40 of each, plus the sheet's
+address. **`inboxRow`** marks one done or deletes it. A row is named by its
+**timestamp, not its position**, so marking one read cannot act on a different
+row because something was deleted in between.
+
+On `14_owner.html`, under the courses and the feedback line: **From the people
+using it**. A contribution leads with its book and its contributor and links
+the file; a report is one line with where it came from. `Done` fades it,
+`Delete` removes it after a confirm. The console also sets
+`data-say-pill="off"` — Ramy reads these, he does not need to send himself one.
+
+Checked: `inbox` without the owner key is refused ("Not yours to open"), the
+four v72 test rows were deleted through `inboxRow` (which is how the delete
+path was proved), and three seeded rows were drawn on the console and then
+deleted. **Both sheets are empty.** The two contributed files are still in the
+Drive folder — there is no op that deletes one, so they are Ramy's to bin.

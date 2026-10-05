@@ -18,7 +18,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610051630">
+<link rel="stylesheet" href="hub-tokens.css?v=202610051638">
 <style>
   :root{
     /* the pane -- the same four values the trainee landing's cards use */
@@ -70,6 +70,26 @@
   .fbline h2{font-family:'Newsreader',Georgia,serif; font-size:1.3rem; margin:0 0 6px;}
   .fbline ul{margin:10px 0 0; padding-left:18px; font-size:0.9rem; line-height:1.5;}
   .fbline li small{color:var(--grey); margin-left:6px;}
+  /* The two piles the people using Lite put there. A contribution is work
+     somebody did for the Pool, so it leads; a report is a line, so it is a
+     line. 5 Oct 2026. */
+  .inbox{margin-top:34px; padding-top:18px; border-top:1px solid var(--sand-line);}
+  .inbox h2{font-family:'Newsreader',Georgia,serif; font-size:1.3rem; margin:0 0 6px;}
+  .inbox .lede{margin:0 0 13px;}
+  .inrow{display:flex; gap:11px; align-items:flex-start; padding:11px 0; border-top:1px solid var(--sand-line);}
+  .inrow:first-of-type{border-top:0;}
+  .inrow.done{opacity:.52;}
+  .inrow .body{flex:1 1 auto; min-width:0;}
+  .inrow b{font-weight:700;}
+  .inrow .meta{display:block; font-size:.78rem; color:var(--grey); margin-top:2px;}
+  .inrow .acts{display:flex; gap:6px; flex:0 0 auto;}
+  .inrow .acts .btn{padding:4px 10px; font-size:.76rem;}
+  .intag{font-size:.64rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
+    padding:3px 8px; border-radius:999px; flex:0 0 auto; margin-top:2px;}
+  .intag.wrong{background:var(--garnet-pale,#f6e7e7); color:var(--garnet,#8a2f3a);}
+  .intag.idea{background:var(--box); color:var(--grey);}
+  .intag.set{background:var(--teal-pale,#e3efed); color:var(--teal);}
+  .inempty{font-size:.9rem; color:var(--grey); margin:0;}
   /* A standing demo course, pinned to a day by the demo clock (30 Sep 2026):
      gold, like the sync pill on its own screens. */
   .filmrow.demos{display:grid; gap:10px;}
@@ -176,9 +196,9 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610051630">
+<link rel="stylesheet" href="hub-house.css?v=202610051638">
 </head>
-<body>
+<body data-say-pill="off">
 <div class="board">
 
   <div class="chrome">
@@ -200,10 +220,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610051630"></script>
-<script src="hub-store.js?v=202610051630"></script>
-<script src="hub-say.js?v=202610051630"></script>
-<script src="hub-card-mail.js?v=202610051630"></script>
+<script src="hub-shared.js?v=202610051638"></script>
+<script src="hub-store.js?v=202610051638"></script>
+<script src="hub-say.js?v=202610051638"></script>
+<script src="hub-card-mail.js?v=202610051638"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -941,6 +961,7 @@ async function load(msg){
     const r = await call({ op: 'ownerCourses' });
     render(r.courses || [], msg);
     feedbackLine();
+    inbox();
   } catch (err) {
     if (/not yours/i.test(err.message)) { try { localStorage.removeItem(OWNER_STORE); } catch (e) {} gate('That key was not recognised — check you copied all of it.'); return; }
     /* Without this the screen is a dead end: the store's message and nothing to
@@ -962,6 +983,64 @@ async function feedbackLine(){
       + ((r.latest || []).length ? '<ul>' + r.latest.map(x => `<li>${x.thumb === 'up' ? '\uD83D\uDC4D' : '\uD83D\uDC4E'} ${esc(x.text)} <small>${esc([x.page, x.course, x.role].filter(Boolean).join(' \u00b7 '))} \u00b7 ${esc(String(x.at).slice(0, 10))}</small></li>`).join('') + '</ul>' : '');
     host.appendChild(box);
   } catch (e) {}
+}
+/* WHAT THE PEOPLE USING LITE SENT (store v73, 5 Oct 2026). Ramy asked for the
+   contributions and the reports on the console rather than only in the mail.
+   Read after the courses, like the feedback line, so a slow sheet never holds
+   the console up. Done marks the row; Delete removes it, which is how the test
+   rows went. */
+let INBOX = null;
+
+async function inbox(){
+  try {
+    const r = await call({ op: 'inbox' });
+    INBOX = r;
+    drawInbox();
+  } catch (e) { /* an older store has no inbox op; the console is still a console */ }
+}
+
+function drawInbox(){
+  const host = $('app'); if (!host || !INBOX) return;
+  let box = document.querySelector('.inbox');
+  if (!box) { box = document.createElement('section'); box.className = 'inbox'; host.appendChild(box); }
+  const C = INBOX.contributions || [], R = INBOX.reports || [];
+  const fresh = x => String(x.state || 'new') !== 'done';
+  const newC = C.filter(fresh).length, newR = R.filter(fresh).length;
+  const when = at => String(at || '').slice(0, 16).replace('T', ' ');
+
+  const row = (sheet, at, tag, cls, head, meta, state) => `<div class="inrow${state === 'done' ? ' done' : ''}">
+      <span class="intag ${cls}">${esc(tag)}</span>
+      <div class="body">${head}<small class="meta">${esc(meta)}</small></div>
+      <div class="acts">
+        ${state === 'done' ? '' : `<button type="button" class="btn small" data-in="done|${esc(sheet)}|${esc(at)}">Done</button>`}
+        <button type="button" class="btn small" data-in="drop|${esc(sheet)}|${esc(at)}">Delete</button>
+      </div></div>`;
+
+  box.innerHTML = `<h2>From the people using it</h2>
+    <p class="lede">${newC ? `<b>${newC}</b> set${newC === 1 ? '' : 's'} offered to the Pool` : 'No sets waiting'} \u00b7 ${
+      newR ? `<b>${newR}</b> thing${newR === 1 ? '' : 's'} said` : 'nothing said'
+    }. ${INBOX.sheet ? `<a href="${esc(INBOX.sheet)}" target="_blank" rel="noopener">The sheet behind the store</a> has every row.` : ''}</p>
+    ${C.length ? C.map(c => row('contributions', c.at, 'set', 'set',
+        `<b>${esc(c.book || 'Untitled')}</b> \u2014 contributed by <b>${esc(c.by || '')}</b>` +
+        (c.file ? ` \u00b7 <a href="${esc(c.file)}" target="_blank" rel="noopener">the file</a>` : ''),
+        [c.level, (c.lessons || 0) + ' lessons', (c.stages || 0) + ' stages', c.centre, when(c.at)].filter(Boolean).join(' \u00b7 '),
+        c.state)).join('') : '<p class="inempty">Nobody has offered a set yet.</p>'}
+    ${R.length ? '<div style="margin-top:16px"></div>' + R.map(x => row('reports', x.at,
+        x.kind === 'wrong' ? 'wrong' : 'idea', x.kind === 'wrong' ? 'wrong' : 'idea',
+        esc(x.text || ''),
+        [x.page, x.where, x.role, x.course, when(x.at)].filter(Boolean).join(' \u00b7 '),
+        x.state)).join('') : ''}`;
+
+  box.querySelectorAll('[data-in]').forEach(b => b.onclick = async () => {
+    const [what, sheet, at] = b.dataset.in.split('|');
+    if (what === 'drop' && !confirm('Delete this row? It does not come back.')) return;
+    b.disabled = true; b.textContent = what === 'drop' ? 'Deleting\u2026' : 'Saving\u2026';
+    try {
+      await call({ op: 'inboxRow', sheet, at, drop: what === 'drop' ? true : undefined,
+                   state: what === 'done' ? 'done' : undefined });
+      await inbox();
+    } catch (e) { b.disabled = false; b.textContent = what === 'drop' ? 'Delete' : 'Done'; alert(e.message || e); }
+  });
 }
 load();
 </script>
