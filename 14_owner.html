@@ -18,7 +18,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610051724">
+<link rel="stylesheet" href="hub-tokens.css?v=202610051728">
 <style>
   :root{
     /* the pane -- the same four values the trainee landing's cards use */
@@ -117,6 +117,32 @@
   .flash{animation:flash 1.4s ease-out;}
   @keyframes flash{from{box-shadow:0 0 0 3px var(--gold-deep);}to{box-shadow:0 0 0 3px transparent;}}
   @media (prefers-reduced-motion:reduce){ .flash{animation:none; outline:2px solid var(--gold-deep);} }
+  /* A section is a drawer now. Live is always open; the rest remember. */
+  details.sec > summary{list-style:none; cursor:pointer;}
+  details.sec > summary::-webkit-details-marker{display:none;}
+  details.sec > summary .section{display:flex; align-items:baseline; gap:9px;}
+  details.sec > summary .section::before{content:'\25B8'; color:var(--faint); font-size:.8rem;}
+  details.sec[open] > summary .section::before{content:'\25BE';}
+  details.sec.always > summary{cursor:default;}
+  details.sec.always > summary .section::before{content:none;}
+  .seccount{font-family:'Karla',sans-serif; font-size:.74rem; font-weight:700; color:var(--grey);
+    background:var(--box); border-radius:999px; padding:2px 9px;}
+  .findrow{display:flex; align-items:center; gap:9px; margin:0 0 12px;}
+  .findrow input{font:inherit; font-size:.88rem; padding:6px 11px; border:1px solid var(--sand-line);
+    border-radius:7px; background:var(--field,#fff); color:inherit; min-width:260px;}
+  .findrow .note{font-size:.78rem; color:var(--grey);}
+  /* A live course's Delete does not sit in the open beside Copy. */
+  .moreacts{position:relative; display:inline-block;}
+  .moreacts > button{font:700 .9rem/1 inherit; background:none; border:0; cursor:pointer;
+    color:var(--grey); padding:3px 9px; border-radius:6px;}
+  .moreacts > button:hover{background:var(--box); color:var(--ink);}
+  .moreacts .menu{position:absolute; right:0; top:100%; z-index:40; background:var(--paper);
+    border:1px solid var(--sand-line); border-radius:9px; padding:5px; min-width:190px;
+    box-shadow:0 10px 26px rgba(0,0,0,.14); display:none;}
+  .moreacts.on .menu{display:block;}
+  .moreacts .menu button{display:block; width:100%; text-align:left; font:600 .82rem/1 inherit;
+    background:none; border:0; padding:8px 10px; border-radius:6px; cursor:pointer; color:var(--garnet,#8a2f3a);}
+  .moreacts .menu button:hover{background:var(--box);}
   .inmore{font:600 .8rem/1 inherit; background:none; border:0; padding:9px 0 0; cursor:pointer;
     color:var(--teal); text-decoration:underline; text-underline-offset:3px;}
   /* Reading a contributed set. The file in Drive is JSON; this is the set. It
@@ -250,7 +276,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610051724">
+<link rel="stylesheet" href="hub-house.css?v=202610051728">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -274,10 +300,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610051724"></script>
-<script src="hub-store.js?v=202610051724"></script>
-<script src="hub-say.js?v=202610051724"></script>
-<script src="hub-card-mail.js?v=202610051724"></script>
+<script src="hub-shared.js?v=202610051728"></script>
+<script src="hub-store.js?v=202610051728"></script>
+<script src="hub-say.js?v=202610051728"></script>
+<script src="hub-card-mail.js?v=202610051728"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -562,7 +588,29 @@ async function noteFor(c){
 function render(courses, msg){
   COURSES = courses || [];
   /* The one just made goes first, whatever order the store keeps. */
-  const ordered = NEW_ID ? [...courses].sort((x, y) => (y.id === NEW_ID) - (x.id === NEW_ID)) : courses;
+  /* WHAT IS HAPPENING FIRST. Ramy, 5 Oct 2026, on twenty courses at once: a
+     course running today is what he came to the console for; one that has
+     finished is not. A course with no dates on it sits high because that is
+     somebody's unfinished setup, not because it is urgent. A freshly minted
+     course still goes above everything -- its links have not been sent yet. */
+  const TODAY = new Date().toISOString().slice(0, 10);
+  const when = c => {
+    if (c.start && c.end) {
+      if (c.start <= TODAY && TODAY <= c.end) return 0;   // running
+      if (TODAY < c.start) return 2;                      // still to come
+      return 3;                                           // over
+    }
+    return 1;                                             // not set up
+  };
+  const ordered = [...courses].sort((x, y) => {
+    const a = (y.id === NEW_ID) - (x.id === NEW_ID) || when(x) - when(y);
+    if (a) return a;
+    /* Inside a rank: a course still to come is sorted soonest first, because
+       the next one to start is the one that wants anything. Everything else
+       reads newest first. */
+    return when(x) === 2 ? String(x.start || '').localeCompare(String(y.start || ''))
+                         : String(y.start || '').localeCompare(String(x.start || ''));
+  });
   const card = (c) => {
     // A store that answered without a count used to print "undefined trainees".
     const n = Number(c.trainees) || 0;
@@ -609,7 +657,16 @@ function render(courses, msg){
                date and picks, notification reference, the assessor's document
                links, the roster and every record, both keys). -->
           <button class="btn quiet small" type="button" data-clone="${esc(c.id)}" data-label="${esc(label(c))}">Start the next course from this</button>
-          <button class="btn quiet small" type="button" data-delete="${esc(c.id)}" data-label="${esc(label(c))}" data-trainees="${n}">Delete</button>
+          ${kind.k === 'live'
+            /* A REAL CENTRE'S COURSE. Ramy, 5 Oct 2026: "the live courses should
+               be somehow protected, not just out there in the open." Deleting
+               still asks for the course id to be typed -- that guard is older
+               and stronger than this one -- but on a live course it should not
+               be one stray click away from Copy. Demos and scratch keep it in
+               the open, because throwing those away is the job. */
+            ? `<span class="moreacts"><button type="button" class="moretog" aria-label="More for this course">\u22ef</button>
+                 <span class="menu"><button type="button" data-delete="${esc(c.id)}" data-label="${esc(label(c))}" data-trainees="${n}">Delete this course</button></span></span>`
+            : `<button class="btn quiet small" type="button" data-delete="${esc(c.id)}" data-label="${esc(label(c))}" data-trainees="${n}">Delete</button>`}
         </span>
       </div>
       <!-- Both links go through the invitation card (invite.html), the same way
@@ -746,15 +803,32 @@ $('app').innerHTML = `
       <span class="note">Both are kept in this browser. The <b>price</b> box is for a one-off quote: fill it and that figure replaces the published rates on the card. Leave it empty and the card states £300 and links to the rates in full.</span>
     </div>
     </details>
-    ${COURSES.length ? SECTIONS.map(sec => {
-      const inIt = ordered.filter(c => courseKind(c).k === sec.k);
-      if (!inIt.length) return '';
-      return `<h2 class="section ${sec.k}">${esc(sec.t)}<small>${esc(sec.w)}</small></h2>`
-        + `<div class="courses">${inIt.map(card).join('')}</div>`;
-    }).join('') : '<div class="courses"><div class="empty">No courses yet. Make the first one, then send its tutor link to the centre.</div></div>'}
+    ${COURSES.length ? (function(){
+      const live = ordered.filter(c => courseKind(c).k === 'live');
+      /* THE FIND BOX, once there are enough live courses for scrolling to be
+         the problem. Four demos never needed one. */
+      const find = live.length > 6 ? `<div class="findrow">
+          <input type="search" id="findCourse" placeholder="Find a course \u2014 name, centre or number" autocomplete="off">
+          <span class="note" id="findNote"></span></div>` : '';
+      return SECTIONS.map(sec => {
+        const inIt = ordered.filter(c => courseKind(c).k === sec.k);
+        if (!inIt.length) return '';
+        /* Live is always open. The others are shut unless this browser was
+           left with them open -- except when there is no live course at all,
+           when a page of closed headers would look like nothing is there. */
+        const always = sec.k === 'live';
+        const open = always || !live.length && sec.k === 'demo' || secOpen(sec.k);
+        return `<details class="sec ${sec.k}${always ? ' always' : ''}" data-sec="${sec.k}"${open ? ' open' : ''}>
+          <summary><h2 class="section ${sec.k}">${esc(sec.t)}<small>${esc(sec.w)}</small>
+            <span class="seccount">${inIt.length}</span></h2></summary>
+          ${always ? find : ''}
+          <div class="courses">${inIt.map(card).join('')}</div></details>`;
+      }).join('');
+    })() : '<div class="courses"><div class="empty">No courses yet. Make the first one, then send its tutor link to the centre.</div></div>'}
     <p id="status"></p>`;
   if (msg) status(msg);
   wireSending();
+  wireSections();
   drawNeeds();
   /* Every paint, not just the ones that go through showList: the FIRST paint
      is load() -> render() and never touches showList, so hooking it there left
@@ -1051,6 +1125,46 @@ async function feedbackLine(){
    for. Open or shut is remembered, because somebody sending cards all morning
    should not reopen it every time. */
 const SEND_OPEN = 'hub:o:sending';
+/* Which drawers this browser was left with open. Live is never in here: it is
+   always open, because it is the reason the page exists. */
+const SEC_OPEN = 'hub:o:sec:';
+function secOpen(k){ try { return localStorage.getItem(SEC_OPEN + k) === '1'; } catch (e) { return false; } }
+
+function wireSections(){
+  document.querySelectorAll('details.sec[data-sec]').forEach(d => {
+    if (d.classList.contains('always')) {
+      /* a summary that cannot close should not swallow the click either */
+      d.querySelector('summary').addEventListener('click', e => e.preventDefault());
+      return;
+    }
+    d.ontoggle = () => { try { localStorage.setItem(SEC_OPEN + d.dataset.sec, d.open ? '1' : '0'); } catch (e) {} };
+  });
+
+  /* THE FIND BOX hides cards where they stand rather than repainting, so what
+     is typed keeps the cursor. */
+  const f = $('findCourse');
+  if (!f) return;
+  const note = $('findNote');
+  f.oninput = () => {
+    const q = f.value.trim().toLowerCase();
+    const cards = [...document.querySelectorAll('details.sec.live .course')];
+    let shown = 0;
+    cards.forEach(el => {
+      const hit = !q || el.textContent.toLowerCase().includes(q);
+      el.hidden = !hit;
+      if (hit) shown++;
+    });
+    if (note) note.textContent = !q ? '' : shown ? `${shown} of ${cards.length}` : 'none of them';
+  };
+}
+
+/* The one menu a live course keeps its Delete in. Opened one at a time, and a
+   click anywhere else shuts it. */
+document.addEventListener('click', e => {
+  const tog = e.target.closest && e.target.closest('.moretog');
+  document.querySelectorAll('.moreacts.on').forEach(m => { if (!tog || m !== tog.parentElement) m.classList.remove('on'); });
+  if (tog) { tog.parentElement.classList.toggle('on'); e.stopPropagation(); }
+});
 function wireSending(){
   const d = $('sendblock');
   if (!d) return;
