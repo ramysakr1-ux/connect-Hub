@@ -10,7 +10,7 @@
  * when they wrote it -- the screen, their role, their course, and on a screen
  * that says so (data-say on any element) the lesson they were looking at.
  *
- * It matters most for the Pool. A library of a thousand lessons that nobody
+ * It matters most for the library. A library of a thousand lessons that nobody
  * can correct goes stale, and the people who find the mistakes are the ones
  * teaching from them, not the ones who wrote them.
  *
