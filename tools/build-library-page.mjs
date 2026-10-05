@@ -23,9 +23,13 @@ function stats(S) {
   return {
     slots: slots.length,
     stages: slots.reduce((a, sl) => a + (sl.stages || []).length, 0),
-    scans: slots.reduce((a, sl) => a + (sl.files || []).length, 0),
-    tracks: slots.reduce((a, sl) => a + String(sl.tracks || '').split('\n').filter(Boolean).length, 0),
-    days: Object.values(S.sessions || {}).filter(x => x.dayPdf && x.dayPdf.url).length,
+    /* NAMED, not carried. Since 5 Oct 2026 the published library holds the
+       writing only -- the pages and the recordings stay on the course that
+       scanned them -- so `covers` carries the counts as numbers and the page
+       says what a set needs rather than what it hands over. */
+    scans: (S.covers || {}).pages ?? slots.reduce((a, sl) => a + (sl.files || []).length, 0),
+    tracks: (S.covers || {}).tracks ?? slots.reduce((a, sl) => a + String(sl.tracks || '').split('\n').filter(Boolean).length, 0),
+    days: (S.covers || {}).days ?? Object.values(S.sessions || {}).filter(x => x.dayPdf && x.dayPdf.url).length,
     types: Object.entries(types).sort((a, b) => b[1] - a[1]),
   };
 }
@@ -51,11 +55,11 @@ const cards = ids.map(id => {
     <p class="ct">${t.slots} lessons · ${t.stages} staged · every one 45 minutes</p>
     <div class="mix">${t.types.map(([k, n]) => `<span class="chip"><b>${n}</b> ${esc(k)}</span>`).join('')}</div>
     <div class="travels">
-      <span class="tv"><b>${t.scans}</b> pages</span>
-      <span class="tv"><b>${t.tracks}</b> recordings</span>
-      <span class="tv"><b>${t.days}</b> printable days</span>
+      <span class="tv"><b>${t.scans}</b> pages named</span>
+      <span class="tv"><b>${t.tracks}</b> recordings named</span>
+      <span class="tv"><b>${t.days}</b> teaching days</span>
     </div>
-    <p class="own">The pages each lesson needs travel with it, so a trainee can teach without a copy of the book.</p>
+    <p class="own">Every lesson names the pages it teaches from. Point Lite at your own copy of the book and it cuts them out for you.</p>
   </article>`;
 }).join('\n');
 
@@ -98,7 +102,7 @@ const html = `<!DOCTYPE html>
   <div class="cards">
 ${cards}
   </div>
-  <p class="foot">Every lesson arrives with the pages it teaches from, the recordings it plays, and the day's pages as one PDF to print. Your trainees get their own lesson on their own card, with the other two at the foot of the day to sit in on.</p>
+    <p class="foot">What travels is the writing: the aims, the staging, the timings, and which page and which recording each lesson uses. The book stays yours — point Lite at your own copy and it cuts out the pages, onto your own course, and prints the day. Your trainees get their own lesson on their own card, with the other two at the foot of the day to sit in on.</p>
 </div></body></html>`;
 const out = path.join(ROOT, 'library', 'index.html');
 fs.writeFileSync(out, html);
