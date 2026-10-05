@@ -53,7 +53,15 @@ for (const role of ROLES) {
       const gated = /This room belongs to|no longer opens|not on the course|Open your course link/i.test(body);
       const bad = errs.slice();
       if (blank) bad.push('page is blank');
-      console.log('  ' + (bad.length ? 'FAIL  ' : gated ? 'gated ' : 'ok    ') + s + (bad.length ? ' :: ' + bad.slice(0, 2).join(' | ') : ''));
+      /* A GATED SCREEN IS A FAILED CHECK, not a quiet note. Every screen listed
+         against a role is one that role's own link must open, so being turned
+         away means the link was wrong or the data behind it was missing -- and
+         for want of a volunteer student this check had been printing "gated"
+         beside the two volunteer screens since it was written, which reads like
+         coverage and is the opposite (found 5 Oct 2026, walking before the
+         first real course). */
+      if (gated) bad.push('gated — this link should open this screen');
+      console.log('  ' + (bad.length ? 'FAIL  ' : 'ok    ') + s + (bad.length ? ' :: ' + bad.slice(0, 2).join(' | ') : ''));
       if (bad.length) problems.push(role.name + ' ' + s + ': ' + bad.slice(0, 2).join(' | '));
     } catch (e) {
       console.log('  FAIL  ' + s + ' :: ' + String(e).slice(0, 100));
