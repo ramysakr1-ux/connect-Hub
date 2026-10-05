@@ -55,7 +55,17 @@
     var s = document.createElement('style');
     s.id = 'hub-say-css';
     s.textContent = [
-      '.say-pill{position:fixed; right:14px; bottom:14px; z-index:9000; font:600 0.78rem/1 inherit;',
+      /* Tucked INSIDE the page's column rather than hard against the viewport.
+         Ramy, 5 Oct 2026: "say something is now kind of sitting on the edge of
+         the frame, so it just doesn't look very nice ... move it a little bit.
+         Maybe inside." Once Course admin got its 1276px board, a pill pinned to
+         the window hung off in the margin beside the frame instead of belonging
+         to it. 50vw - 620px puts its right edge 18px inside a 1276px column
+         (half of it is 638px). Below that the board is full width inside the
+         page's own 20px padding, so the floor is 20+18: measured, the pill sits
+         18px in at every width rather than landing ON the edge, which is what
+         it did at 1280 and under. */
+      '.say-pill{position:fixed; right:max(38px, calc(50vw - 620px)); bottom:18px; z-index:9000; font:600 0.78rem/1 inherit;',
       '  background:var(--paper,#fff); color:var(--grey,#555); border:1px solid var(--sand-line,#ddd);',
       '  border-bottom-width:2px; border-radius:999px; padding:8px 13px; cursor:pointer;}',
       '.say-pill:hover{color:var(--teal,#0b6); border-color:var(--teal,#0b6);}',
