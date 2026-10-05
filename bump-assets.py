@@ -15,9 +15,10 @@ stamp = datetime.datetime.now().strftime("%Y%m%d%H%M")
 # that is older than the code expecting it. hub-pages.js joined the list on
 # 5 Oct 2026 for the same reason: it had shipped once and was never re-stamped,
 # so a tutor's browser could cut pages with yesterday's offset arithmetic.
-# FIVE MORE ARE STILL MISSING -- celta5-appendix.js, hub-card-mail.js,
-# hub-feedback.js, hub-front.js, hub-shelf.js -- and none of the six are in
-# sw.js's SHELL either.
+# The five that were missing -- celta5-appendix.js, hub-card-mail.js,
+# hub-feedback.js, hub-front.js, hub-shelf.js -- joined this list and sw.js's
+# SHELL on 5 Oct 2026. Nothing shared is unstamped now; a new shared file has
+# to be added in BOTH places, or it ships cached and never refreshed.
 assets = ["hub-shared.js", "hub-store.js", "hub-sync.js", "hub-tracker.js", "hub-due.js", "hub-rotation.js",
           "hub-exchange.js", "hub-crit-learn.js", "assignment-defaults.js", "observation-defaults.js", "hub-docx.js", "hub-xlsx.js", "hub-observation-parse.js", "hub-timetable-parse.js", "hub-rotation.js", "hub-attendance.js", "hub-volunteer-i18n.js", "celta5-text.js", "celta5-criteria.js", "celta5-pdf.js", "hub-ink.js",
           "hub-pages.js",
