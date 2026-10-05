@@ -13,7 +13,7 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610052129">
+<link rel="stylesheet" href="hub-tokens.css?v=202610052208">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -119,7 +119,7 @@
     .section-head input.label{flex:1 1 100%; order:-1;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610052129">
+<link rel="stylesheet" href="hub-house.css?v=202610052208">
 </head>
 <body class="hub-paper">
 <div class="board">
@@ -133,13 +133,13 @@
     <div class="editor" id="editor"></div>
   </div>
 </div>
-<script src="assignment-defaults.js?v=202610052129"></script>
-<script src="hub-due.js?v=202610052129"></script>
-<script src="hub-docx.js?v=202610052129"></script>
-<script src="hub-shared.js?v=202610052129"></script>
-<script src="hub-store.js?v=202610052129"></script>
-<script src="hub-say.js?v=202610052129"></script>
-<script src="hub-sync.js?v=202610052129"></script>
+<script src="assignment-defaults.js?v=202610052208"></script>
+<script src="hub-due.js?v=202610052208"></script>
+<script src="hub-docx.js?v=202610052208"></script>
+<script src="hub-shared.js?v=202610052208"></script>
+<script src="hub-store.js?v=202610052208"></script>
+<script src="hub-say.js?v=202610052208"></script>
+<script src="hub-sync.js?v=202610052208"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -203,7 +203,7 @@ function fieldSectionHTML(s, i){
     ${s.fields.map((f,fi)=>`
       <div class="field-row" data-fi="${fi}">
         <div class="fcol">
-          <input type="text" class="flabel" value="${esc(f.label)}" oninput="updateField(${i},${fi},'label',this.value)">
+          <input type="text" class="flabel" value="${esc(f.label)}" oninput="updateField(${i},${fi},'label',this.value)" placeholder="What the trainee is asked for">
           <textarea class="fhint" rows="1" oninput="updateField(${i},${fi},'hint',this.value)" placeholder="Guidance shown under the field">${esc(f.hint||'')}</textarea>
         </div>
         <button class="icon-btn danger" title="Remove field" onclick="removeField(${i},${fi})">\u2715</button>
@@ -226,16 +226,16 @@ function pickerSectionHTML(s, i){
     <div class="catwrap">
       ${cats.map((c,ci) => `
         <div class="catbox">
-          <input type="text" class="catlabel" value="${esc(c.label)}" oninput="updateCatLabel(${i},${ci},this.value)">
+          <input type="text" class="catlabel" value="${esc(c.label)}" oninput="updateCatLabel(${i},${ci},this.value)" placeholder="Name of this group">
           ${c.options.map((opt,oi)=>`
             <div class="chip-row">
-              <input type="text" value="${esc(opt)}" oninput="updateOption(${i},${ci},${oi},this.value)">
+              <input type="text" value="${esc(opt)}" oninput="updateOption(${i},${ci},${oi},this.value)" placeholder="One thing they can pick">
               <button class="icon-btn danger" title="Remove option" onclick="removeOption(${i},${ci},${oi})">\u2715</button>
             </div>`).join('')}
           <button class="addline" onclick="addOption(${i},${ci})">+ Add option</button>
           <div class="pickcount">
             <label><input type="checkbox" ${c.fixed?'checked':''} onchange="updateCatFixed(${i},${ci},this.checked)"> Everyone analyses these</label>
-            ${c.fixed ? '' : `<span>Trainee picks <input type="text" value="${c.pick}" oninput="updateCatPick(${i},${ci},this.value)"> from this group</span>`}
+            ${c.fixed ? '' : `<span>Trainee picks <input type="text" value="${c.pick}" oninput="updateCatPick(${i},${ci},this.value)" placeholder="how many"> from this group</span>`}
           </div>
           ${cats.length > 1 ? `<button class="addline" onclick="removeCat(${i},${ci})">Remove this group</button>` : ''}
         </div>`).join('')}
@@ -247,7 +247,7 @@ function pickerSectionHTML(s, i){
 function textSectionHTML(s, i){
   return `<div class="section" data-i="${i}">
     ${sectionHead(s,i,'Instructions')}
-    <textarea rows="3" oninput="updateSection(${i},'body',this.value)">${esc(s.body)}</textarea>
+    <textarea rows="3" oninput="updateSection(${i},'body',this.value)" placeholder="What the trainee has to do, in your own words.">${esc(s.body)}</textarea>
     <!-- Reference material: a letter, a text, a class profile. The trainee
          reads it and gets no box to write in. -->
     <label class="refline"><input type="checkbox" ${s.readonly===true?'checked':''} onchange="updateReadonly(${i},this.checked)"> Reference material \u2014 no answer box</label>
@@ -259,7 +259,7 @@ function declSectionHTML(s, i){
     ${sectionHead(s,i,'Declaration')}
     ${s.items.map((it,di)=>`
       <div class="chip-row">
-        <input type="text" value="${esc(it)}" oninput="updateDeclItem(${i},${di},this.value)">
+        <input type="text" value="${esc(it)}" oninput="updateDeclItem(${i},${di},this.value)" placeholder="One line the trainee signs up to">
         <button class="icon-btn danger" title="Remove" onclick="removeDeclItem(${i},${di})">\u2715</button>
       </div>`).join('')}
     <button class="addline" onclick="addDeclItem(${i})">+ Add checkbox</button>
@@ -274,7 +274,7 @@ function sectionHead(s, i, tag){
   return `<div class="section-head">
     <button class="icon-btn" title="Move up" onclick="moveSection(${i},-1)">\u2191</button>
     <button class="icon-btn" title="Move down" onclick="moveSection(${i},1)">\u2193</button>
-    <input type="text" class="label" value="${esc(s.label)}" oninput="updateSection(${i},'label',this.value)">
+    <input type="text" class="label" value="${esc(s.label)}" oninput="updateSection(${i},'label',this.value)" placeholder="Heading for this section">
     <span class="type-tag">${tag}</span>
     <button class="icon-btn danger" title="Remove section" onclick="removeSection(${i})">\u2715</button>
   </div>`;
@@ -286,8 +286,8 @@ function metaHTML(a){
   return `<div class="metabox">
     <div class="metarow">
       <label>Word count</label>
-      <input type="text" style="width:64px;" value="${a.wordMin||''}" oninput="updateMeta('wordMin',this.value)"> –
-      <input type="text" style="width:64px;" value="${a.wordMax||''}" oninput="updateMeta('wordMax',this.value)"> words
+      <input type="text" style="width:64px;" value="${a.wordMin||''}" oninput="updateMeta('wordMin',this.value)" placeholder="750"> –
+      <input type="text" style="width:64px;" value="${a.wordMax||''}" oninput="updateMeta('wordMax',this.value)" placeholder="1000"> words
       <span class="metahint">Handbook range: 750–1,000.</span>
     </div>
     <div class="metarow">
@@ -307,7 +307,7 @@ function metaHTML(a){
     <div class="metarow">
       <label>Resubmission</label>
       <input type="number" min="1" max="30" step="1" style="width:64px;" value="${a.resubDays||''}"
-             onchange="updateMeta('resubDays', this.value)"> days after you return it
+             onchange="updateMeta('resubDays', this.value)" placeholder="days"> days after you return it
       <span class="metahint">Counted from the day it goes back, because that differs for each trainee — and Handbook 9.2.3 wants the resubmission inside the course. Leave it empty and the resubmission stays open, as the Due row above does.</span>
     </div>
     <div class="metarow">
@@ -323,7 +323,7 @@ function metaHTML(a){
       <div style="flex:1;">
         ${(a.criteria||[]).map((c,ci)=>`
           <div class="chip-row" style="align-items:flex-start;">
-            <input type="text" style="flex:2;" value="${esc(c.text)}" oninput="updateCriterionText(${ci},this.value)">
+            <input type="text" style="flex:2;" value="${esc(c.text)}" oninput="updateCriterionText(${ci},this.value)" placeholder="The criterion, as the trainee will read it">
             <select style="flex:1;" onchange="updateCriterionSection(${ci},this.value)">
               <option value="" ${c.sectionIndex==null?'selected':''}>General (whole assignment)</option>
               ${a.sections.map((s,si)=>s.type==='declaration'||s.type==='picker'?'':`<option value="${si}" ${c.sectionIndex===si?'selected':''}>${esc(s.label)}</option>`).join('')}
@@ -456,7 +456,7 @@ function renderEditor(){
     return;
   }
   $('editor').innerHTML = `
-    <input type="text" style="font-family:'Newsreader',Georgia,serif; font-size:1.25rem; font-weight:700; border:none; background:transparent; padding:0 0 2px; margin-bottom:2px; width:100%;" value="${esc(a.title)}" oninput="updateTitle(this.value)">
+    <input type="text" style="font-family:'Newsreader',Georgia,serif; font-size:1.25rem; font-weight:700; border:none; background:transparent; padding:0 0 2px; margin-bottom:2px; width:100%;" value="${esc(a.title)}" placeholder="Name this assignment" oninput="updateTitle(this.value)">
     <p class="notice">Edit wording freely, and add, remove or reorder sections to match how you actually want this assignment to run.</p>
     ${CURRENT!=='a5' ? metaHTML(a) : ''}
     <div class="importrow">

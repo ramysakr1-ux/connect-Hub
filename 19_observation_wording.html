@@ -27,7 +27,7 @@
 <title>Connect Lite — Observation task wording</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610052129">
+<link rel="stylesheet" href="hub-tokens.css?v=202610052208">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);}
@@ -75,7 +75,7 @@
   .review .skipped{color:var(--brick); font-size:0.82rem;}
   @media(max-width:900px){ .layout{grid-template-columns:1fr;} .editor{padding:18px 16px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610052129">
+<link rel="stylesheet" href="hub-house.css?v=202610052208">
 </head>
 <body class="hub-paper">
 <div class="board">
@@ -100,13 +100,13 @@
     <div class="editor" id="editor"></div>
   </div>
 </div>
-<script src="observation-defaults.js?v=202610052129"></script>
-<script src="hub-docx.js?v=202610052129"></script>
-<script src="hub-observation-parse.js?v=202610052129"></script>
-<script src="hub-shared.js?v=202610052129"></script>
-<script src="hub-store.js?v=202610052129"></script>
-<script src="hub-say.js?v=202610052129"></script>
-<script src="hub-sync.js?v=202610052129"></script>
+<script src="observation-defaults.js?v=202610052208"></script>
+<script src="hub-docx.js?v=202610052208"></script>
+<script src="hub-observation-parse.js?v=202610052208"></script>
+<script src="hub-shared.js?v=202610052208"></script>
+<script src="hub-store.js?v=202610052208"></script>
+<script src="hub-say.js?v=202610052208"></script>
+<script src="hub-sync.js?v=202610052208"></script>
 <script type="text/x-hub-app">
 /* The centre's room. Same gate as the assignment wording editor: a link that
    cannot write the course does not get a form that says "Saved". */
@@ -141,9 +141,14 @@ function renderList(){
 }
 $('list').addEventListener('click', e => { const b = e.target.closest('button[data-id]'); if (!b) return; CURRENT = b.dataset.id; renderList(); renderEditor(); });
 
-const field = (name, value, opts) => `<div class="section"><h4>${opts.h}</h4>${opts.hint ? `<p class="hint">${opts.hint}</p>` : ''}${opts.area
-  ? `<textarea data-f="${name}" style="min-height:${opts.rows || 90}px">${esc(value)}</textarea>`
-  : `<input type="text" data-f="${name}" value="${esc(value)}">`}</div>`;
+/* The hint goes inside the box, not above it (Ramy, 5 Oct 2026: "instructions
+   should be written inside the pill ... as a watermark"). esc() leaves quotes
+   alone, which is safe in text but not in an attribute. */
+const attrEsc = s => String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+const field = (name, value, opts) => { const ph = opts.hint ? ` placeholder="${attrEsc(opts.hint)}"` : '';
+  return `<div class="section"><h4>${opts.h}</h4>${opts.area
+  ? `<textarea data-f="${name}" style="min-height:${opts.rows || 90}px"${ph}>${esc(value)}</textarea>`
+  : `<input type="text" data-f="${name}" value="${esc(value)}"${ph}>`}</div>`; };
 
 function renderEditor(){
   const f = findIn(DATA, CURRENT); if (!f) return; const t = f.t;
@@ -164,7 +169,7 @@ function renderEditor(){
   if (t.tp || t.brief) html += field('brief', t.brief || '', { h: 'Brief', hint: 'What the trainee is told before the lesson. Leave empty for none.', area: true, rows: 70 });
   if (t.shape === 'parts') {
     html += `<div class="section"><h4>Parts</h4><p class="hint">One part per letter. The lines under each part are its guidance, one per line; a line starting with ☐ shows as a box to tick.</p>` +
-      (t.parts||[]).map((p, i) => `<div class="part"><span class="letter">${esc(p.letter)}</span><input type="text" data-p="${i}" data-pf="title" value="${esc(p.title)}"><textarea data-p="${i}" data-pf="lines" style="min-height:70px">${esc((p.lines||[]).join('\n'))}</textarea></div>`).join('') + `</div>`;
+      (t.parts||[]).map((p, i) => `<div class="part"><span class="letter">${esc(p.letter)}</span><input type="text" data-p="${i}" data-pf="title" value="${esc(p.title)}" placeholder="What this part asks the trainee to do"><textarea data-p="${i}" data-pf="lines" style="min-height:70px" placeholder="One prompt per line. Start a line with ☐ for a tick box.">${esc((p.lines||[]).join('\n'))}</textarea></div>`).join('') + `</div>`;
   } else if (t.shape !== 'focus') {
     html += field('rows', (t.rows||[]).join('\n'), { h: t.shape === 'questions' ? 'Questions' : 'Observation focus', hint: 'One per line, in the order they appear. Add a line to add a row; delete one to drop it.', area: true, rows: Math.max(120, (t.rows||[]).length * 34) });
   }
