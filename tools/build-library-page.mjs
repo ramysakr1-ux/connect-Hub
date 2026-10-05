@@ -15,6 +15,39 @@ const ORDER = ['s4', 's1', 's2', 's3'];                   // by level, lowest fi
 const rank = id => { const l = (LIB[id].level || '').toLowerCase();
   return l.includes('beginner') ? 1 : l.includes('elementary') ? 2 : l.includes('pre') ? 3 : l.includes('upper') ? 5 : 4; };
 
+/* WHICH PAGES OF THE BOOK, for a pool that holds more than one set per book.
+   Ramy, 5 Oct 2026: two centres may both offer Speakout B1 and that is the
+   point -- so a card has to say how this one differs, or the second card is
+   dead weight. There are no unit numbers in a set (nothing records them), but
+   every slot names the pages it teaches from, and the pages ARE the answer to
+   the only question a centre asks: do my photocopies match?
+
+   A set teaches from the front of the book and then reaches into the reference
+   section at the back -- Grammar Bank, Vocabulary Bank. Printed as one range
+   that reads "pp. 9-138", which is the whole book and tells nobody anything.
+   So a jump of more than twenty pages starts a new range: "SB pp. 9-58 + 104-138". */
+const SRC_RANK = { SB: 1, WB: 2, TB: 3 };
+function span(slots) {
+  const bySrc = {};
+  slots.forEach(sl => (sl.files || []).forEach(f => {
+    if (!f || !f.page) return;
+    const k = f.src || '?';
+    (bySrc[k] = bySrc[k] || []).push(Number(f.page));
+  }));
+  return Object.entries(bySrc)
+    .sort((a, b) => (SRC_RANK[a[0]] || 9) - (SRC_RANK[b[0]] || 9) || a[0].localeCompare(b[0]))
+    .map(([src, pages]) => {
+      const sorted = [...new Set(pages)].filter(n => n > 0).sort((x, y) => x - y);
+      if (!sorted.length) return '';
+      const runs = [[sorted[0]]];
+      sorted.slice(1).forEach(n => {
+        const run = runs[runs.length - 1];
+        if (n - run[run.length - 1] > 20) runs.push([n]); else run.push(n);
+      });
+      return src + ' pp. ' + runs.map(r => r.length > 1 ? r[0] + '\u2013' + r[r.length - 1] : r[0]).join(' + ');
+    }).filter(Boolean).join(' \u00b7 ');
+}
+
 function stats(S) {
   const slots = [];
   Object.keys(S.sessions || {}).forEach(k => (S.sessions[k].slots || []).forEach(sl => slots.push(sl)));
@@ -31,6 +64,7 @@ function stats(S) {
     tracks: (S.covers || {}).tracks ?? slots.reduce((a, sl) => a + String(sl.tracks || '').split('\n').filter(Boolean).length, 0),
     days: (S.covers || {}).days ?? Object.values(S.sessions || {}).filter(x => x.dayPdf && x.dayPdf.url).length,
     types: Object.entries(types).sort((a, b) => b[1] - a[1]),
+    span: span(slots),
   };
 }
 const ids = Object.keys(LIB).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
@@ -44,7 +78,13 @@ const ids = Object.keys(LIB).sort((a, b) => rank(a) - rank(b) || a.localeCompare
 fs.writeFileSync(path.join(ROOT, 'library', 'catalogue.json'), JSON.stringify(
   ids.map(id => { const S = LIB[id], t = stats(S);
     return { id, level: S.level || '', book: S.book || S.name || '', minutes: S.minutes || 45,
+             /* WHO WROTE IT. A set from the pool carries `by` -- the contributor's
+                own name or their centre's, whichever they chose. Connect's own
+                five have no field and are Connect's, so that is the default; it
+                is never a guess at someone else's work. */
+             by: S.by || 'Connect',
              slots: t.slots, stages: t.stages, scans: t.scans, tracks: t.tracks, days: t.days,
+             span: t.span,
              types: t.types, kb: Math.round(JSON.stringify(S).length / 1024) }; }), null, 1));
 const cards = ids.map(id => {
   const S = LIB[id], t = stats(S);
@@ -52,7 +92,9 @@ const cards = ids.map(id => {
     <p class="lvl">${esc(S.level || '')}</p>
     <h3>${esc((S.book || '').split(',')[0])}</h3>
     <p class="bk">${esc(((S.book || '').split(',').slice(1).join(',') || '').trim())}</p>
+    <p class="by">Contributed by ${esc(S.by || 'Connect')}</p>
     <p class="ct">${t.slots} lessons · ${t.stages} staged · every one 45 minutes</p>
+    ${t.span ? `<p class="pg">${esc(t.span)}</p>` : ''}
     <div class="mix">${t.types.map(([k, n]) => `<span class="chip"><b>${n}</b> ${esc(k)}</span>`).join('')}</div>
     <div class="travels">
       <span class="tv"><b>${t.scans}</b> pages named</span>
@@ -83,7 +125,9 @@ const html = `<!DOCTYPE html>
   .setcard .lvl{font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--gold-deep); font-weight:700; margin:0 0 4px;}
   .setcard h3{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.2rem; margin:0 0 2px;}
   .setcard .bk{margin:0; font-size:.82rem; color:var(--grey);}
-  .setcard .ct{margin:3px 0 11px; font-size:.76rem; color:var(--faint); font-variant-numeric:tabular-nums;}
+  .setcard .by{margin:4px 0 0; font-size:.78rem; color:var(--teal); font-weight:600;}
+  .setcard .ct{margin:3px 0 2px; font-size:.76rem; color:var(--faint); font-variant-numeric:tabular-nums;}
+  .setcard .pg{margin:0 0 11px; font-size:.76rem; color:var(--grey); font-variant-numeric:tabular-nums;}
   .mix{display:flex; flex-wrap:wrap; gap:5px; margin:0 0 13px;}
   .chip{font-size:.7rem; background:var(--paper); border:1px solid var(--row-line);
     border-radius:999px; padding:3px 9px; color:var(--grey);}
