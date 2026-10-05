@@ -97,7 +97,39 @@ export function owner() {
 /* THE ENDPOINT DROPS THE SOCKET. An uncaught fetch throw ends a run mid-write,
    once with the whole payload already sent, so whether it landed could not be
    told from here. A dropped connection is transient like any other answer. */
+/* A SNAPSHOT BEFORE EVERY WRITE TO THE LIBRARY.
+ *
+ * 5 Oct 2026: a test page still holding the library's key saved itself over
+ * the whole library -- five sets, 180 lessons, 988 stages -- and it was an
+ * hour before a check reading "2 sets · 72 slots" gave it away. It was
+ * recoverable from git by luck, because the published copy had carried the
+ * Drive links until that same afternoon.
+ *
+ * Nothing here can stop a browser tab doing that. What it can do is make sure
+ * that every write THIS SIDE sends is preceded by a copy of what was there,
+ * so the worst case is four seconds old rather than a night old. The snapshot
+ * never blocks the write: a backup that stops you working gets removed.
+ */
+let _snapped = false;
+async function snapshotBeforeWrite(b) {
+  if (_snapped) return;                       // once a run is enough
+  if (process.env.LIBRARY_NO_SNAPSHOT) return;  // a restore has already taken one
+  if (b.op !== 'putCourse' || b.key !== LIBRARY) return;
+  _snapped = true;
+  try {
+    const { spawnSync } = await import('node:child_process');
+    const here = new URL('./backup-library.mjs', import.meta.url).pathname;
+    const r = spawnSync(process.execPath, [here], { encoding: 'utf8' });
+    const line = String(r.stdout || '').trim().split('\n')[0];
+    if (line) console.log('[snapshot] ' + line);
+    else if (r.stderr) console.log('[snapshot] not taken: ' + String(r.stderr).trim().split('\n')[0]);
+  } catch (e) {
+    console.log('[snapshot] not taken: ' + (e.message || e));
+  }
+}
+
 export async function call(b, tries = 4) {
+  await snapshotBeforeWrite(b);
   if (FILE) {
     if (b.op === 'course') return { ok: true, result: loose() };
     if (b.op === 'roster') return { ok: true, result: looseRoster() };
