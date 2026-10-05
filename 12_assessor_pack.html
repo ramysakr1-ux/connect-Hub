@@ -25,7 +25,7 @@
 <title>Connect Lite — Assessor pack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610052051">
+<link rel="stylesheet" href="hub-tokens.css?v=202610052104">
 <style>
   :root{
     /* the control fill, for the shared confirm modal's Cancel button */
@@ -237,7 +237,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610052051">
+<link rel="stylesheet" href="hub-house.css?v=202610052104">
 </head>
 <body>
 <div class="board">
@@ -267,15 +267,15 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202610052051"></script>
-<script src="hub-shared.js?v=202610052051"></script>
-<script src="assignment-defaults.js?v=202610052051"></script>
-<script src="hub-tracker.js?v=202610052051"></script>
-<script src="hub-rotation.js?v=202610052051"></script>
-<script src="hub-attendance.js?v=202610052051"></script>
-<script src="hub-store.js?v=202610052051"></script>
-<script src="hub-say.js?v=202610052051"></script>
-<script src="hub-sync.js?v=202610052051"></script>
+<script src="observation-defaults.js?v=202610052104"></script>
+<script src="hub-shared.js?v=202610052104"></script>
+<script src="assignment-defaults.js?v=202610052104"></script>
+<script src="hub-tracker.js?v=202610052104"></script>
+<script src="hub-rotation.js?v=202610052104"></script>
+<script src="hub-attendance.js?v=202610052104"></script>
+<script src="hub-store.js?v=202610052104"></script>
+<script src="hub-say.js?v=202610052104"></script>
+<script src="hub-sync.js?v=202610052104"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -707,9 +707,6 @@ const DOC_LABELS = [
      should be the first one, and then the course timetable, and then the
      rest." It is the assessor's own day; it leads. */
   ['docAssessTimetable', 'Assessment timetable'],
-  ['docTimetable',    'Course timetable'],
-  ['docTpSchedule',   'Teaching practice schedule'],
-  ['docRegisters',    'Attendance registers'],
   ['docAgreement',    'Candidate agreement'],
   /* The AI and plagiarism declaration the centre issues with the first
      assignment -- "Your own work" (Ramy, 24 Sep 2026). It is not on 14.1's
@@ -855,12 +852,29 @@ function courseDocuments(){
      what the centre HAS sent, not a checklist of what it has not (Ramy: "if
      nothing is filled in, then it makes sense that it will hide itself").
      The count says how many, so a half-filled pack still reads as partial. */
+  /* THREE OF THESE ARE NOT THE CENTRE'S TO SEND ANY MORE (5 Oct 2026).
+     The course timetable, the teaching practice schedule and the attendance
+     registers were boxes on Course admin because Connect had no timetable and
+     no register of its own. Lite has both, and the trainees and tutors have
+     been opening them for weeks -- only the assessor was still being handed a
+     pasted copy, and a centre that pasted nothing showed them no timetable at
+     all. Ramy, 5 Oct 2026: "the timetable, TP schedule, the registers are
+     already there, so we don't need to have them."
+     So they are doors now, the way the assessment timetable already was
+     ("a door, not a second copy"), and they are always present: there is no
+     course without a timetable. The register door points at this pack's own
+     Volunteer students panel, further down the same page. */
+  const builtIn = [
+    ['Course timetable', 'the day\u2019s shape and every session', '23_timetable.html', 'Open the timetable'],
+    ['Teaching practice schedule', 'the slots and the rotation, on the same timetable', '23_timetable.html', 'Open the timetable'],
+    ['Attendance registers', 'the centre\u2019s own register, kept in Lite', '25_volunteer_register.html', 'Open the register'],
+  ].map(([label, note, href, cta]) =>
+    `<div class="docrow"><span><b>${label}</b> <span class="sub">&mdash; ${note}</span></span><a href="${href}">${cta}</a></div>`);
   const provided = DOC_LABELS.filter(([k]) => docs[k]).length;
   const rows = DOC_LABELS.filter(([k]) => docs[k] && !(k === 'docAssessTimetable' && hasVisitTimetable)).map(([k,label]) =>
     `<div class="docrow"><span>${label}</span><a href="${esc(docs[k])}" target="_blank" rel="noopener noreferrer">Open</a></div>`);
-  if (!rows.length) return '';
-  return `<h2 class="sect">Course documents <small>Handbook 14.1 &middot; ${provided} of ${DOC_LABELS.length} provided by the centre</small></h2>
-    <div class="panel">${rows.join('')}</div>`;
+  return `<h2 class="sect">Course documents <small>Handbook 14.1 &middot; three kept in Lite${DOC_LABELS.length ? ', ' + provided + ' of ' + DOC_LABELS.length + ' provided by the centre' : ''}</small></h2>
+    <div class="panel">${builtIn.join('')}${rows.join('')}</div>`;
 }
 
 // ---- one trainee ---------------------------------------------------------------
