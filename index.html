@@ -25,7 +25,7 @@
 <title>Connect Lite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610052221">
+<link rel="stylesheet" href="hub-tokens.css?v=202610052234">
 <style>
   :root{
     /* The pane. A card on this page is a sheet of glass lying on the paper,
@@ -129,7 +129,16 @@
      that lightens toward the top, a bright hairline where the top edge catches
      the light, and two shadows under it. Depth, not hue: colour on this page
      answers "what now", and a page of coloured cards answers it five times. */
-  .rooms{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; grid-auto-rows:1fr;}
+  /* grid-auto-rows WAS 1fr on both grids, and 1fr on an implicit row means every
+     row takes the height of the tallest -- so one long card dragged the whole
+     home up to its height. On a real course the Course files card holds a
+     centre's input sessions, a dozen of them, and a two-line "Written
+     assignments" card was rendered 394px deep to match it. Ramy, 5 Oct 2026:
+     "the cards kind of expand somehow."
+     auto sizes each ROW to its own content; the cards sharing a row still
+     stretch to each other, which is the tidiness 1fr was reaching for, without
+     the tallest card on the page setting the height of all of them. */
+  .rooms{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; grid-auto-rows:auto;}
   /* The two that sit outside the frame, side by side. Full width and stacked
      was the obvious reading of "outside the frame" and it was wrong: two lines
      of text in a 1020px card leaves half the card empty, which is the slab the
@@ -142,7 +151,7 @@
   .room.files a:hover{text-decoration:underline;}
   .room.files li.nolink{color:var(--grey);}
   .room.files li.nolink small{font-size:0.74rem; font-style:italic; color:var(--faint);}
-  .solo{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; grid-auto-rows:1fr;}
+  .solo{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; grid-auto-rows:auto;}
   .room{display:block; text-decoration:none; color:inherit; font-family:'Karla',sans-serif;
     background:linear-gradient(180deg, var(--card-top) 0%, var(--card) 64%);
     border:1px solid var(--sand-line); border-radius:14px; padding:19px 21px;
@@ -238,7 +247,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610052221">
+<link rel="stylesheet" href="hub-house.css?v=202610052234">
 </head>
 <body>
 <div class="board">
@@ -400,15 +409,15 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202610052221"></script>
-<script src="observation-defaults.js?v=202610052221"></script>
-<script src="hub-shared.js?v=202610052221"></script>
-<script src="hub-store.js?v=202610052221"></script>
-<script src="hub-say.js?v=202610052221"></script>
-<script src="hub-shelf.js?v=202610052221"></script>
-<script src="hub-front.js?v=202610052221"></script>
-<script src="hub-sync.js?v=202610052221"></script>
-<script src="hub-feedback.js?v=202610052221"></script>
+<script src="hub-due.js?v=202610052234"></script>
+<script src="observation-defaults.js?v=202610052234"></script>
+<script src="hub-shared.js?v=202610052234"></script>
+<script src="hub-store.js?v=202610052234"></script>
+<script src="hub-say.js?v=202610052234"></script>
+<script src="hub-shelf.js?v=202610052234"></script>
+<script src="hub-front.js?v=202610052234"></script>
+<script src="hub-sync.js?v=202610052234"></script>
+<script src="hub-feedback.js?v=202610052234"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -670,7 +679,14 @@ line(document.getElementById('badgeCelta5'), (function(){
   const mine = (rec('chub:links') || []).filter(l => l && l.url).map(l => ({ label: l.label || l.url, url: l.url, card: l.card || '' }));
   /* Only what is switched on; a row with a name and no link yet shows as
      such, so the trainees see the course's input sessions whole. */
-  const links = mine.concat(((rec('connect_course_settings') || {}).courseLinks || []).filter(l => l && (l.url || l.label) && hubLinkShown(l)));
+  /* THE TIMETABLE IS NOT A LINK ANY MORE (5 Oct 2026). Lite keeps the course's
+     own timetable and every trainee has the room tile above for it, so a pasted
+     "Timetable" row put a second route to the same screen in this card. Ramy:
+     "everyone has to use a timetable, no choice, so we don't need links to it."
+     Dropped here rather than on Course admin so courses that already have the
+     row stop showing it without anybody editing them. */
+  const links = mine.concat(((rec('connect_course_settings') || {}).courseLinks || [])
+    .filter(l => l && (l.url || l.label) && hubLinkShown(l) && !hubLinkIsTimetable(l)));
   const host = document.getElementById('roomFiles'); if (!host || !links.length) return;
   const e = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
   const cards = [];
@@ -678,7 +694,15 @@ line(document.getElementById('badgeCelta5'), (function(){
   /* One link under its own name would read "Timetable / Timetable" (Ramy,
      28 Sep 2026, on the same repetition in the form) -- so a one-link card is
      the link, whole. */
-  host.outerHTML = cards.map(c => c.links.length === 1 && c.links[0].url && (c.links[0].label || '') === c.name
+  /* A CARD NOBODY CAN OPEN IS NOT A CARD. A row with a name and no link shows
+     as "no link yet", which is useful beside rows that DO open -- the trainees
+     see the shape of the course. A card where not one row has a link is a list
+     that does nothing, and it was the biggest thing on the trainee's home.
+     Ramy, 5 Oct 2026: "it's just a list of input sessions. You can't click on
+     anything. So what is it useful for?" */
+  const openable = cards.filter(c => c.links.some(l => l.url));
+  if (!openable.length) return;
+  host.outerHTML = openable.map(c => c.links.length === 1 && c.links[0].url && (c.links[0].label || '') === c.name
     ? `<a class="room files one" href="${e(c.links[0].url)}" target="_blank" rel="noopener noreferrer"><h2>${e(c.name)}</h2><span class="st">Opens in a new tab</span></a>`
     : `<div class="room files"><h2>${e(c.name)}</h2><ul>${c.links.map(l => l.url ? `<li><a href="${e(l.url)}" target="_blank" rel="noopener noreferrer">${e(l.label || l.url)}</a></li>` : `<li class="nolink">${e(l.label)} <small>no link yet</small></li>`).join('')}</ul></div>`).join('');
 })();
