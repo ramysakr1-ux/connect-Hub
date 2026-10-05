@@ -78,7 +78,7 @@ var SCENES = [
     about: 'The comparison page as one animated scene, no keys, no store: the claim, then the Drive column fills with grey chips while Lite’s stops at seven, then the tallies. Two captions, then a beat of black before the day stamps begin. The four descending Drive windows were cut 5 Oct 2026 — Ramy: "it isn’t very helping, it just makes it awkward" — and the holds came down six seconds with them.',
     settle: 800,
     steps: [
-      { do: 'hold', ms: 4500 },
+      { do: 'hold', ms: 9300 },
       { do: 'caption', text: 'Most of this is finding the file.' },
       { do: 'hold', ms: 12700 },
       /* Tutors train; trainees teach. The line said the tutors had time to
