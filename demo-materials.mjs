@@ -14,7 +14,7 @@
  * to the URL Drive gives back. Nothing is faked and nothing is hand-shared.
  *
  * The worksheet is built here rather than shipped as a binary, so the repo
- * carries no blobs and the text can follow the lesson each candidate planned.
+ * carries no blobs and the text can follow the lesson each trainee planned.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -82,7 +82,7 @@ for (const who of people) {
   const aim = String((plan.state.plan.mainAim || '')).replace(/\s+/g, ' ').trim().slice(0, 78);
   const file = pdf('Handout 1 — ' + who.name.split(' ')[0] + ', teaching practice ' + tp, [
     '# What this is',
-    'The worksheet the candidate wrote for this lesson, attached to the plan so',
+    'The worksheet the trainee wrote for this lesson, attached to the plan so',
     'the tutor opens it beside the procedure rather than hunting for it.',
     '',
     '# The lesson it belongs to',

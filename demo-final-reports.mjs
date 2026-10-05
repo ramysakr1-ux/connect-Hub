@@ -15,10 +15,10 @@
  * on after it; and a closing line. That shape is followed here, in sentences
  * of this course's own, not lifted from his.
  *
- * TWO: all twelve candidates had the same comment, the same strengths and the
+ * TWO: all twelve trainees had the same comment, the same strengths and the
  * same action points, so four identical reports would have been printed. Every
- * candidate is their own here, and each one is consistent with what that
- * candidate's teaching-practice records actually say.
+ * trainee is their own here, and each one is consistent with what that
+ * trainee's teaching-practice records actually say.
  *
  * THREE: seven of the eight criterion codes were wrong against CELTA 5.
  * "Instructions given before the handout and checked with a question" was
@@ -44,7 +44,7 @@ const call = async b => {
   return { ok: false, error: 'no JSON' };
 };
 
-/* Each candidate's own record. planS/planA/teachS/teachA are what the grades
+/* Each trainee's own record. planS/planA/teachS/teachA are what the grades
    report prints under the two assessment areas, with the criterion each one
    shows; `update` is the tutorial note; `overall` is the end-of-course report.
    Only the four who have finished carry an overall and their hours. */
@@ -82,7 +82,7 @@ const P = {
     update: 'The first tutorial set pace and stage timing as the targets. Both were met by TP5, and TP7 was graded above standard. The second tutorial confirmed a Pass A was in reach if the standard held, and it did.',
     overall: [
       'Madison was an energetic and very quick learner who set the tone for the group. She was punctual with every deadline, generous with her materials, and the first to volunteer for the parts of teaching practice that nobody else wanted.',
-      'Her development over the four weeks was the strongest on the course. From the fourth teaching practice onwards she was planning with very little guidance, adapting coursebook material rather than delivering it, and clarifying language on the board with an economy that other candidates began to copy. She taught confidently at both levels and her last two lessons were graded above standard. All four written assignments were passed at the first attempt, and her Lessons from the Classroom assignment showed a genuinely critical eye for her own teaching.',
+      'Her development over the four weeks was the strongest on the course. From the fourth teaching practice onwards she was planning with very little guidance, adapting coursebook material rather than delivering it, and clarifying language on the board with an economy that other trainees began to copy. She taught confidently at both levels and her last two lessons were graded above standard. All four written assignments were passed at the first attempt, and her Lessons from the Classroom assignment showed a genuinely critical eye for her own teaching.',
       'For her development after the course, Madison should keep watching the pace of her freer practice stages — she is inclined to close an activity while the learners are still using the language — and monitor from a little further away so that pair work carries on without her. Her language analysis is the part of her planning that still lags her teaching: form and phonology deserve the same attention she already gives to meaning.',
       'Madison is ready for her own classes and will be an immediate asset to a staffroom. We wish her every success.'
     ].join('\n\n'),
@@ -162,4 +162,4 @@ for (const who of people) {
   if (!out.ok) { console.log('   WRITE FAILED: ' + out.error); continue; }
   done++;
 }
-console.log('\n' + (WRITE ? done + ' candidates written' : 'dry run — nothing written'));
+console.log('\n' + (WRITE ? done + ' trainees written' : 'dry run — nothing written'));

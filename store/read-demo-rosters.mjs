@@ -1,5 +1,5 @@
 // READ ONLY. Who is on the demo courses, so the film's scenes can name a
-// real candidate instead of one from the spec's imagination. Writes nothing.
+// real trainee instead of one from the spec's imagination. Writes nothing.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 

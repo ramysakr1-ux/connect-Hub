@@ -113,7 +113,7 @@ window.HubStore = (function(){
        refuses if this course has tagging of its own, so this can only seed. */
     seedCritLearn: function(){ return call({ op: 'seedCritLearn' }); },
     roster: function(){ return call({ op: 'roster' }).then(function(r){ return r.trainees; }); },
-    /* v53 (1 Oct 2026): a candidate may carry an email. Optional everywhere. */
+    /* v53 (1 Oct 2026): a trainee may carry an email. Optional everywhere. */
     addTrainee: function(name, group, email){ return call({ op: 'addTrainee', name: name, group: group, email: email || '' }); },
     // A pasted class list in one call, rather than one call per name.
     addTrainees: function(list){ return call({ op: 'addTrainees', trainees: list }); },

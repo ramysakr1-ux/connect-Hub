@@ -30,7 +30,7 @@ const call=async b=>{ for(let i=0;i<6;i++){ const r=await fetch(STORE,{method:'P
 
 const ro=await call({op:'roster', key:K});
 const people=Object.values(ro.result.trainees||{}).sort((a,b)=>a.name.localeCompare(b.name));
-console.log(people.length+' candidates on the course'+(WRITE?'':'   (dry run -- nothing will be written)'));
+console.log(people.length+' trainees on the course'+(WRITE?'':'   (dry run -- nothing will be written)'));
 
 const br=await chromium.launch();
 const ctx=await br.newContext({viewport:{width:1280,height:900}});

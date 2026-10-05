@@ -1,5 +1,5 @@
 // READ ONLY. What the scratch course's roster rows actually look like, so a
-// reset can tell a removed candidate from a present one. Writes nothing.
+// reset can tell a removed trainee from a present one. Writes nothing.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 

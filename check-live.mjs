@@ -29,7 +29,7 @@ const vtok = ((course.volunteers || {}).students || [{}])[0].token;
 const BASE = 'https://lite.celtaconnect.com/';
 const ROLES = [
   { name: 'tutor',     q: 'k=' + c5.tutorKey,    screens: ['5_tutor_dashboard','6_centre_admin_dashboard','7_candidate_tracker','8_assignment_wording','13_grades_report','15_course_record','16_final_report','19_observation_wording','21_tp_grid','22_fail_letter','23_timetable','24_tp_points','25_volunteer_register','12_assessor_pack','3_tutor_feedback','10_tutor_assignment_marking','11_assignment_record','18_observation_tasks','20_celta5'] },
-  { name: 'candidate', q: 't=' + tok,            screens: ['index','1_trainee_plan_and_analysis','2_trainee_self_evaluation','4_feedback_returned','9_assignment_submission','18_observation_tasks','20_celta5','21_tp_grid','23_timetable','24_tp_points','7_candidate_tracker'] },
+  { name: 'trainee', q: 't=' + tok,            screens: ['index','1_trainee_plan_and_analysis','2_trainee_self_evaluation','4_feedback_returned','9_assignment_submission','18_observation_tasks','20_celta5','21_tp_grid','23_timetable','24_tp_points','7_candidate_tracker'] },
   { name: 'assessor',  q: 'ak=' + c5.assessorKey, screens: ['12_assessor_pack','7_candidate_tracker','13_grades_report','16_final_report','23_timetable','24_tp_points','25_volunteer_register','20_celta5'] },
   { name: 'volunteer', q: 'v=' + vtok,           screens: ['26_volunteer','27_volunteer_certificate'] },
 ];

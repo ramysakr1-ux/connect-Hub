@@ -8,13 +8,13 @@
  * the TPs and the assignments that have already been submitted." He was right,
  * and the end-of-course reports written an hour earlier were part of the
  * problem: the course stands at teaching practice three with one assignment
- * each, and four candidates carried a final grade, a report that mentioned
+ * each, and four trainees carried a final grade, a report that mentioned
  * TP6 and TP7, and a tutorial note about targets met "by the sixth teaching
  * practice". None of that had happened.
  *
  * A course three weeks in has no end-of-course report, so this strips them:
  * the final grade, the hours attended, the overall comment and any tutorial
- * note that claims a teaching practice the candidate has not taught. What it
+ * note that claims a teaching practice the trainee has not taught. What it
  * keeps is everything the records do support — the provisional standing, the
  * criterion-tagged strengths and action points, and the evidence note.
  *
@@ -45,7 +45,7 @@ const roster = await call({ op: 'roster', key: KEY });
 if (!roster.ok) { console.log('could not read the roster: ' + roster.error); process.exit(1); }
 const people = Object.values(roster.result.trainees || {}).sort((a, b) => a.name.localeCompare(b.name));
 
-/* The highest teaching practice this candidate has actually had returned. */
+/* The highest teaching practice this trainee has actually had returned. */
 const taught = who => Math.max(0, ...Object.keys((who.records || {}).tpHistory || {}).map(Number).filter(n => n > 0));
 /* An assignment counts as done when it is closed with a pass. */
 const done = who => Object.values((who.records || {}).assignments || {})
@@ -67,7 +67,7 @@ for (const who of people) {
   const overclaimed = claims.filter(n => n > tp);
   if (overclaimed.length) {
     notes.push('tutorial note claimed TP' + overclaimed.join(', TP') + ' of ' + tp + ' taught');
-    g.update = 'The first tutorial is recorded on this candidate’s tracker with the standing at that point and the action points agreed. The targets set there are the ones the teaching practices above are being read against.';
+    g.update = 'The first tutorial is recorded on this trainee’s tracker with the standing at that point and the action points agreed. The targets set there are the ones the teaching practices above are being read against.';
   }
 
   console.log(who.name.padEnd(20) + 'TP' + tp + ', ' + asg + ' assignment' + (asg === 1 ? '' : 's') + ' passed'
@@ -78,4 +78,4 @@ for (const who of people) {
   if (!out.ok) { console.log('   WRITE FAILED: ' + out.error); continue; }
   changed++;
 }
-console.log('\n' + changed + ' candidates ' + (WRITE ? 'corrected' : 'would be corrected'));
+console.log('\n' + changed + ' trainees ' + (WRITE ? 'corrected' : 'would be corrected'));

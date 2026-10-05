@@ -16,8 +16,8 @@
   var mode = !S ? '' : S.isTutor() ? 'tutor' : S.isAssessor() ? 'assessor' : S.isTrainee() ? 'trainee' : (S.isVolunteer && S.isVolunteer()) ? 'volunteer' : '';
   window.HubMode = mode;
   var TRAINEE_KEYS = { 'chub:plan':'plan', 'chub:selfeval':'selfeval', 'chub:feedback':'feedback', 'connect_assignment_submissions_v1':'assignments', 'chub:tpHistory':'tpHistory', 'chub:tracker':'tracker', 'connect_observations_v1':'observations', 'chub:links':'links', 'chub:celta5':'celta5', 'chub:celta5t':'celta5t' };
-  var TUTOR_ONLY = { feedback:1, tpHistory:1, tracker:1, links:1, celta5t:1 }; // links: a candidate's private links, the tutor's to write; celta5t: the tutors' half of the CELTA 5
-  // staffLinks -- about a candidate, for staff only -- has no trainee key at all: the store never hands it to a candidate's token
+  var TUTOR_ONLY = { feedback:1, tpHistory:1, tracker:1, links:1, celta5t:1 }; // links: a trainee's private links, the tutor's to write; celta5t: the tutors' half of the CELTA 5
+  // staffLinks -- about a trainee, for staff only -- has no trainee key at all: the store never hands it to a trainee's token
   var COURSE_KEYS = { 'connect_assignment_wording_v2':'wording', 'connect_course_settings':'settings', 'connect_observation_wording_v1':'observations', 'connect_timetable_v1':'timetable', 'connect_tp_points_v1':'tppoints', 'connect_volunteers_v1':'volunteers' };
   var origSet = localStorage.setItem.bind(localStorage), origRemove = localStorage.removeItem.bind(localStorage);
   var snapshot = {};   // tutor mode: token -> kind -> json, what the store holds
@@ -166,7 +166,7 @@
   function describe(job){
     var kind = job && job.kind;
     return ({ plan: 'a lesson plan', selfeval: 'a self-evaluation', feedback: 'tutor feedback',
-              tpHistory: 'the teaching practice record', assignments: 'assignment work', observations: 'observation tasks', links: 'a candidate\u2019s links', staffLinks: 'a staff-only link', celta5: 'the CELTA 5', celta5t: 'the CELTA 5',
+              tpHistory: 'the teaching practice record', assignments: 'assignment work', observations: 'observation tasks', links: 'a trainee\u2019s links', staffLinks: 'a staff-only link', celta5: 'the CELTA 5', celta5t: 'the CELTA 5',
               tracker: 'the tracker', settings: 'the course settings',
               wording: 'the assignment wording', roster: 'the roster' })[kind] || 'a change';
   }
@@ -293,7 +293,7 @@
   /* The store's roster, with this browser's own unconfirmed records laid over
      it -- one trainee's one record at a time.
      The boot used to leave the WHOLE roster alone if anything in it was
-     dirty: one pending write for one candidate, and every other candidate's
+     dirty: one pending write for one trainee, and every other trainee's
      records stayed as this browser last saw them. So the feedback screen for
      Defne opened locked on "Returned -- Reopen for edits" for a TP she had
      already filed away and moved on from, because Emily's return a minute
@@ -458,31 +458,31 @@
        the list whole. */
     out['connect_course_stream_v1'] = course.stream ? JSON.stringify(course.stream) : null;
     /* The TP7-TP8 planning grid (28 Sep 2026): the store shapes it per
-       reader -- a candidate gets their group's rows by name once released,
+       reader -- a trainee gets their group's rows by name once released,
        nothing before; tutors the whole thing. Written through gridSet /
        gridRelease, never put whole. */
     out['connect_tp_grid_v1'] = course.grid ? JSON.stringify(course.grid) : null;
     /* The timetable (29 Sep 2026): one record for the whole course, read by
        everyone on it, written by the course admin through putCourse like
        settings and wording. There is nothing per-reader about a timetable --
-       the same grid is what the candidate, the tutor and the assessor need to
+       the same grid is what the trainee, the tutor and the assessor need to
        be looking at. */
     out['connect_timetable_v1'] = course.timetable ? JSON.stringify(course.timetable) : null;
     /* The rotated teaching-practice points (29 Sep 2026): the store shapes it
-       per reader, the same rule as the planning grid -- a candidate gets their
+       per reader, the same rule as the planning grid -- a trainee gets their
        own group's points once released and nothing before, tutors and the
        assessor get the whole rotation. */
     out['connect_tp_points_v1'] = course.tppoints ? JSON.stringify(course.tppoints) : null;
     /* The volunteer register (30 Sep 2026). The store sends it to tutors and
        the assessor and nobody else: these are members of the public, and a
-       candidate has no business holding a list of their names and who turned
+       trainee has no business holding a list of their names and who turned
        up when. Written whole by a tutor, like the timetable. */
     out['connect_volunteers_v1'] = course.volunteers ? JSON.stringify(course.volunteers) : null;
     /* v56 (1 Oct 2026): how many volunteer students are coming to the next
        class -- a count, no names -- for the home and the dashboard. */
     out['connect_coming_v1'] = course.coming ? JSON.stringify(course.coming) : null;
-    /* What the candidates have shared with the volunteer students (30 Sep
-       2026). Everyone on the course reads it -- it is the candidates' own
+    /* What the trainees have shared with the volunteer students (30 Sep
+       2026). Everyone on the course reads it -- it is the trainees' own
        handouts, not anybody's private data -- and it is written through the
        store's shareMaterial op, never put whole. */
     out['connect_shared_v1'] = course.shared ? JSON.stringify(course.shared) : null;

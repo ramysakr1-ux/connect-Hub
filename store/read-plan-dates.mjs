@@ -27,7 +27,7 @@ const list = await call({ op: 'ownerCourses', owner: OWNER });
 const course = (list.result.courses || list.result).find((c) => c.id === courseId);
 const roster = await call({ op: 'roster', key: course.tutorKey });
 const people = (roster.result && roster.result.trainees) || [];
-console.log(`${courseId} — ${course.name}, ${people.length} candidates\n`);
+console.log(`${courseId} — ${course.name}, ${people.length} trainees\n`);
 
 const who = people[0];
 for (const kind of ['plan', 'tpHistory']) {

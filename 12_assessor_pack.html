@@ -5,7 +5,7 @@
 
   Ramy, 20 Sep 2026: "build the assessor link". The third link, read-only:
   everything the Hub holds for the course, laid out the way an assessor reads
-  it on the visit day -- candidates first, then the double-marking record and
+  it on the visit day -- trainees first, then the double-marking record and
   the briefs. Nothing on this page, or on the pages it opens, can be changed
   from the assessor's link (hub-sync.js drops every write in assessor mode).
 -->
@@ -25,7 +25,7 @@
 <title>Connect Lite — Assessor pack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610051144">
+<link rel="stylesheet" href="hub-tokens.css?v=202610051229">
 <style>
   :root{
     /* the control fill, for the shared confirm modal's Cancel button */
@@ -192,7 +192,7 @@
   .back:hover{text-decoration:underline;}
   .back[hidden]{display:none;}
   .panel{overflow-x:auto;}
-  /* candidate view */
+  /* trainee view */
   .cand-head{display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; padding:16px 18px;}
   .cand-head h1{font-family:'Newsreader',Georgia,serif; font-size:1.5rem; margin:0; color:var(--ink);}
   .facts{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px 18px; padding:6px 18px 16px;}
@@ -215,7 +215,7 @@
   /* .panel is overflow-x:auto so a wide table can scroll on screen; in print an
      overflow box is not fragmented across pages, so everything past the first
      page was clipped away (Ramy, 21 Sep 2026: "only prints the first page"). */
-  /* the candidates the assessor is steered to read in full, Handbook 14.2 */
+  /* the trainees the assessor is steered to read in full, Handbook 14.2 */
   /* a steer from 14.2 / 15.1 ("should focus on borderline cases"): gold, not brick */
   .review{margin-top:4px; font-family:'Instrument Sans','Karla',sans-serif; font-size:9.5px; font-weight:700;
     letter-spacing:0.1em; text-transform:uppercase; color:var(--gold);}
@@ -237,11 +237,11 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610051144">
+<link rel="stylesheet" href="hub-house.css?v=202610051229">
 </head>
 <body>
 <div class="board">
-  <a class="back" id="backLink" href="12_assessor_pack.html" hidden>&#8592; All candidates</a>
+  <a class="back" id="backLink" href="12_assessor_pack.html" hidden>&#8592; All trainees</a>
   <div class="header">
     <div style="display:flex;align-items:center;justify-content:center;gap:10px;">
       <span style="width:40px;height:40px;border-radius:9px;background:var(--ink-warm);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -267,14 +267,14 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202610051144"></script>
-<script src="hub-shared.js?v=202610051144"></script>
-<script src="assignment-defaults.js?v=202610051144"></script>
-<script src="hub-tracker.js?v=202610051144"></script>
-<script src="hub-rotation.js?v=202610051144"></script>
-<script src="hub-attendance.js?v=202610051144"></script>
-<script src="hub-store.js?v=202610051144"></script>
-<script src="hub-sync.js?v=202610051144"></script>
+<script src="observation-defaults.js?v=202610051229"></script>
+<script src="hub-shared.js?v=202610051229"></script>
+<script src="assignment-defaults.js?v=202610051229"></script>
+<script src="hub-tracker.js?v=202610051229"></script>
+<script src="hub-rotation.js?v=202610051229"></script>
+<script src="hub-attendance.js?v=202610051229"></script>
+<script src="hub-store.js?v=202610051229"></script>
+<script src="hub-sync.js?v=202610051229"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -368,7 +368,7 @@ const refLine = () => {
   const r = String(SETTINGS.notificationRef || '').trim();
   return r ? `<p class="access" style="font-weight:500;">Course notification reference <b>${esc(r)}</b> — Appian asks for this</p>` : '';
 };
-/* How many teaching practices this course gives each candidate (Course admin
+/* How many teaching practices this course gives each trainee (Course admin
    > Settings). Eight when unset, which is every course made before the field
    existed -- and eight is the most the records model, so it is also the cap.
    Without it the pack said "6 of 8" and drew eight blocks for a course that
@@ -419,7 +419,7 @@ function courseChecks(){
       '3.1 — at least 120 contact hours');
 
   /* Two things a timetable makes checkable that nothing else could: a
-     candidate teaches once a day, and a class takes no more than three hours
+     trainee teaches once a day, and a class takes no more than three hours
      of teaching practice in a day (Handbook 9.1.1 and §26). Both are about
      the SHAPE of the day, so before the timetable there was nothing to read. */
   if (tt && tt.slots && tt.slots.length) {
@@ -433,7 +433,7 @@ function courseChecks(){
     if (tpMins) say('must', 'Teaching practice in a day', tpMins <= 180 ? 'met' : 'short',
         (tpMins/60).toFixed(tpMins % 60 ? 2 : 0).replace('.00','') + ' hours a day across ' + tpSlots.length + ' lesson' + (tpSlots.length===1?'':'s'),
         '9.1.1 — a class takes no more than three hours of teaching practice in a day');
-    /* Once a day: the rotation gives each candidate one slot, but a tutor can
+    /* Once a day: the rotation gives each trainee one slot, but a tutor can
        change any of it, so this reads the teaching sets rather than trusting
        the shape. A set larger than the number of lessons means somebody has
        to teach twice, or somebody does not teach. */
@@ -448,13 +448,13 @@ function courseChecks(){
       });
       if (worst) say('must', 'Once a day each', worst <= tpSlots.length ? 'met' : 'short',
           worst <= tpSlots.length
-            ? tpSlots.length + ' lessons a day, ' + worst + ' teaching — each candidate teaches once'
+            ? tpSlots.length + ' lessons a day, ' + worst + ' teaching — each trainee teaches once'
             : which + ' has ' + worst + ' teaching on a day with ' + tpSlots.length + ' lesson' + (tpSlots.length===1?'':'s'),
-          '§26 — a candidate teaches on no more than one occasion a day');
+          '§26 — a trainee teaches on no more than one occasion a day');
     }
   }
   say('should', 'Teaching practices each', TP_TOTAL >= 8 ? 'met' : 'short',
-      TP_TOTAL + ' per candidate', '9.1.2 — a minimum of eight occasions');
+      TP_TOTAL + ' per trainee', '9.1.2 — a minimum of eight occasions');
 
   /* Six hours, two levels one below intermediate, 40 minutes twice, never over
      an hour -- all read off the feedback sheets the tutors already filled in. */
@@ -473,17 +473,17 @@ function courseChecks(){
   }).filter(c => c.taught);
   const shortOf = (pred) => perCand.filter(pred).map(c => c.name);
   if (perCand.length) {
-    /* A candidate with no minutes on any sheet is not "at six hours"; they are
+    /* A trainee with no minutes on any sheet is not "at six hours"; they are
        unknown, and the line says so rather than affirming a must (second
        audit, 29 Sep 2026: the old guard skipped them and read "met"). */
     const noSix = shortOf(c => c.mins && c.mins < 360), noMins = shortOf(c => !c.mins);
     say('must', 'Six hours of assessed teaching practice', noSix.length ? 'short' : noMins.length ? 'unknown' : 'met',
         noSix.length ? noSix.length + ' under six hours: ' + noSix.slice(0, 3).join(', ') + (noSix.length > 3 ? '…' : '')
-          : noMins.length ? noMins.length + ' with no lesson lengths recorded yet' : 'every candidate at six hours or more',
-        '9.1.1 — six hours of assessed teaching practice for each candidate');
+          : noMins.length ? noMins.length + ' with no lesson lengths recorded yet' : 'every trainee at six hours or more',
+        '9.1.1 — six hours of assessed teaching practice for each trainee');
     const oneLevel = shortOf(c => c.levels < 2);
     say('should', 'Two significantly different levels', oneLevel.length ? 'short' : 'met',
-        oneLevel.length ? oneLevel.length + ' taught at one level only' : 'every candidate at two levels or more',
+        oneLevel.length ? oneLevel.length + ' taught at one level only' : 'every trainee at two levels or more',
         '9.1.2 — at least two hours at two significantly different levels, one below intermediate');
     const noBelow = shortOf(c => !c.below);
     if (noBelow.length) say('should', 'A level below intermediate', 'short',
@@ -497,7 +497,7 @@ function courseChecks(){
   }
   /* 7.1 sets the cohort and the group size; both are "must". */
   const n = PEOPLE.length;
-  if (n) say('must', 'Candidates on the course', n >= 4 && n <= 24 ? 'met' : 'short',
+  if (n) say('must', 'Trainees on the course', n >= 4 && n <= 24 ? 'met' : 'short',
       n + ' on the roster', '7.1 — minimum four, maximum 24');
   const groups = {};
   PEOPLE.forEach(tr => { const g = tr.group || ''; if (g) groups[g] = (groups[g] || 0) + 1; });
@@ -506,7 +506,7 @@ function courseChecks(){
       bad.length ? bad.map(g => g + ' has ' + groups[g]).join(', ')
                  : (Object.keys(groups).length === 1 ? 'one group of ' + groups[Object.keys(groups)[0]]
                                                      : Object.keys(groups).length + ' groups, each 4 to 6'),
-      '7.1 — groups must consist of 4–6 candidates');
+      '7.1 — groups must consist of 4–6 trainees');
   return out;
 }
 function checksHTML(){
@@ -594,7 +594,7 @@ function doubleMarkingRows(){
       const sub = (tr.assignments||{})[k]; if (!sub || !sub.sub1) return;
       const m = sub.markers || {};
       /* ONLY what was actually double-marked. This listed every submitted
-         assignment on the course -- twelve candidates by four assignments,
+         assignment on the course -- twelve trainees by four assignments,
          forty-eight rows, most of them reading "second marker: -- ,
          double-marked: no" (Ramy, 27 Sep 2026: "this is not a double marking
          record, they're not all double marked"). Handbook 9.2.3 asks for a
@@ -624,7 +624,7 @@ function renderList(){
      provisional and final grades." They are one button now, beside the
      tracker, at the top of the sheet. */
   /* Ramy, 1 Oct 2026: "the top part is crowded... I don't think we need
-     candidate tracker and grades on top, move Appian to the right, print
+     trainee tracker and grades on top, move Appian to the right, print
      should be somewhere else." So the masthead carries nothing that the page
      already offers: the tracker and the grades live in The whole cohort at
      once, where they belong, and the two things that are neither reading nor
@@ -637,7 +637,7 @@ function renderList(){
          section 12.1.1", and 14.2 says that "the portfolio of at least
          one of the candidates observed doing teaching practice should be
          read". So the portfolios are not optional and they are not the
-         tracker: they are one door per candidate, named, and nothing else on
+         tracker: they are one door per trainee, named, and nothing else on
          the row. Read-only, like everything the assessor's link opens. -->
     ${(function(){
       /* Handbook 14.2: the assessor co-observes teaching practice and reads
@@ -650,44 +650,44 @@ function renderList(){
          everyone and say so rather than pretending a choice was made. */
       const chosen = (SETTINGS.assessorVisit || []).filter(id => PEOPLE.some(p => p.id === id));
       const row = tr => `<div class="docrow"><span>${hubAvatar(tr.name)}${esc(tr.name)}${tr.group ? ` <span class="sub">Group ${esc(tr.group)}</span>` : ''}</span><a href="12_assessor_pack.html?trainee=${encodeURIComponent(tr.id)}">Open portfolio</a></div>`;
-      if (!n) return '<h2 class="sect">Candidate portfolios</h2><div class="panel"><div class="empty">No candidates on the course yet.</div></div>';
-      if (!chosen.length) return `<h2 class="sect">Candidate portfolios <small>Handbook 14.1 &middot; the centre has not said which candidates you are observing</small></h2>
+      if (!n) return '<h2 class="sect">Candidate portfolios</h2><div class="panel"><div class="empty">No trainees on the course yet.</div></div>';
+      if (!chosen.length) return `<h2 class="sect">Candidate portfolios <small>Handbook 14.1 &middot; the centre has not said which trainees you are observing</small></h2>
         <div class="panel">${PEOPLE.map(row).join('')}</div>`;
       const first = PEOPLE.filter(p => chosen.includes(p.id));
       const rest = PEOPLE.filter(p => !chosen.includes(p.id));
-      return `<h2 class="sect">Candidates you are observing <small>Handbook 14.2 &middot; chosen by the centre</small></h2>
+      return `<h2 class="sect">Trainees you are observing <small>Handbook 14.2 &middot; chosen by the centre</small></h2>
         <div class="panel">${first.map(row).join('')}</div>
-        ${rest.length ? `<h2 class="sect">Every other candidate <small>read any of them — nothing here is closed to you</small></h2>
+        ${rest.length ? `<h2 class="sect">Every other trainee <small>read any of them — nothing here is closed to you</small></h2>
         <div class="panel">${rest.map(row).join('')}</div>` : ''}`;
     })()}
     <!-- Ramy, 1 Oct 2026: "what the assessor is observing should come first,
          and then the rest after that... what's the difference between
-         candidates and every other candidate?" There was none worth the
-         confusion: this heading said Candidates and held three links, above
-         two sections that really were candidates. The people come first now,
+         trainees and every other trainee?" There was none worth the
+         confusion: this heading said Trainees and held three links, above
+         two sections that really were trainees. The people come first now,
          and this is named for what it is. -->
-    <h2 class="sect">The whole cohort at once <small>the same records, every candidate together</small></h2>
+    <h2 class="sect">The whole cohort at once <small>the same records, every trainee together</small></h2>
     <!-- A shortcut, not a second table. The assessor can already open the
-         candidate tracker -- it is theirs as much as the tutors' -- and this
+         trainee tracker -- it is theirs as much as the tutors' -- and this
          rebuilt it here with teaching-practice counts, assignment chips and a
          standing: more crowded than the real one, and with a name that was
          not even clickable (Ramy, 27 Sep 2026: "why is the assessor getting
          this busy one... how about we just give the assessor a shortcut to
-         the candidates instead"). Same shape as the documents below -- a line
+         the trainees instead"). Same shape as the documents below -- a line
          and a link. -->
     <div class="panel">${n ? `
       <div class="docrow"><span>Provisional and final grades, in Cambridge&rsquo;s own fields, to copy into Appian</span><a href="13_grades_report.html">Open the grades</a></div>
-      <div class="docrow"><span>Every candidate &mdash; teaching practice, assignments and where each one stands</span><a href="7_candidate_tracker.html">Open the tracker</a></div>
-      <div class="docrow"><span>The candidates&rsquo; own aims for the last two teaching practices, by group</span><a href="21_tp_grid.html">Open TP7&amp;8 grid</a></div>
-    ` : '<div class="empty">No candidates on the course yet.</div>'}</div>
+      <div class="docrow"><span>Every trainee &mdash; teaching practice, assignments and where each one stands</span><a href="7_candidate_tracker.html">Open the tracker</a></div>
+      <div class="docrow"><span>The trainees&rsquo; own aims for the last two teaching practices, by group</span><a href="21_tp_grid.html">Open TP7&amp;8 grid</a></div>
+    ` : '<div class="empty">No trainees on the course yet.</div>'}</div>
 
-    <h2 class="sect">Double-marking record <small>Handbook 9.2.3: ${sample} of each assignment for ${n} candidate${n===1?'':'s'}</small></h2>
-    <div class="panel">${dm.length ? `<table><tr><th>Candidate</th><th>Assignment</th><th>First marker</th><th>Second marker</th><th>Double-marked</th><th>Outcome</th></tr>${dm.join('')}</table>` : '<div class="empty">Nothing has been double-marked yet. The quota above says how many of each assignment need to be.</div>'}</div>
+    <h2 class="sect">Double-marking record <small>Handbook 9.2.3: ${sample} of each assignment for ${n} trainee${n===1?'':'s'}</small></h2>
+    <div class="panel">${dm.length ? `<table><tr><th>Trainee</th><th>Assignment</th><th>First marker</th><th>Second marker</th><th>Double-marked</th><th>Outcome</th></tr>${dm.join('')}</table>` : '<div class="empty">Nothing has been double-marked yet. The quota above says how many of each assignment need to be.</div>'}</div>
     ${volunteerStudents()}
     ${courseDocuments()}
     <!-- Last, because nobody opens a pack to read the briefs (Ramy, 1 Oct
          2026: "no one cares about the assignment briefs, put them at the
-         bottom"). They stay because 14.1 asks what the candidates were set. -->
+         bottom"). They stay because 14.1 asks what the trainees were set. -->
     <h2 class="sect">Assignment briefs <small>as the centre set them, in the centre’s order</small></h2>
     <div class="panel">${briefs()}</div>`;
   if (window.hubStackTables) hubStackTables($('app'));
@@ -712,21 +712,21 @@ const DOC_LABELS = [
   ['docAgreement',    'Candidate agreement'],
   /* The AI and plagiarism declaration the centre issues with the first
      assignment -- "Your own work" (Ramy, 24 Sep 2026). It is not on 14.1's
-     list by that name, but it is what the candidates signed up to and the
+     list by that name, but it is what the trainees signed up to and the
      assignment screen's own declaration quotes it, so an assessor reading a
      submission should be able to open the sheet behind it.
 
      The BLANK sheet, not the signed copies. Ramy: "it doesn't have to be the
      signed one -- if you want to see the signed ones, you can go and check."
-     Each candidate's own declaration is already in their submission, on the
+     Each trainee's own declaration is already in their submission, on the
      assignment record in this pack. */
   ['docOwnWork',      "Your own work \u2014 the AI and plagiarism declaration, as issued"],
   /* Handbook 14.1: "Candidate descriptions - individual descriptions of the
-     candidates, with photos if possible. Candidates should be informed by the
+     candidates, with photos if possible. Trainees should be informed by the
      centre that this information will be shared." It is on 14.1's list and
      Lite had no box for it (found by reading 14.1 line by line, 27 Sep 2026).
      The consent is the centre's to obtain, which is why the label says so. */
-  ['docDescriptions', 'Candidate descriptions \u2014 candidates told these are shared'],
+  ['docDescriptions', 'Candidate descriptions \u2014 trainees told these are shared'],
   ['docApplications', 'Applications and interviews'],
   ['docPrevReport',   "Previous assessor's report"],
   ['docActionPlan',   'Action plan agreed with Cambridge'],
@@ -738,21 +738,21 @@ const DOC_LABELS = [
 ];
 /* NO "LESSON PLANS FOR THE DAY" SECTION, on purpose.
 
-   Handbook 14.1 asks the centre to make available "lesson plans for candidates
+   Handbook 14.1 asks the centre to make available "lesson plans for trainees
    teaching in teaching practice on the day of the assessment". A centre working
    from folders has to single those out, because the assessor cannot see the
-   rest. Lite is not in that position: EVERY plan of EVERY candidate is already
+   rest. Lite is not in that position: EVERY plan of EVERY trainee is already
    open to the assessor through their portfolio, on any day. Filtering to one
    day would show them less than they are entitled to, not more.
 
    It was built as a day-filtered list and cost two rounds of bugs — the data
-   said twelve candidates taught on one day, then six after the plans were
+   said twelve trainees taught on one day, then six after the plans were
    moved, then twelve again because a taught lesson keeps its date in a second
    place. Ramy, 27 Sep 2026: "it doesn't have to say who's teaching today ...
    they will click on them and they will see their TPs, whether they're
    teaching that day or not."
 
-   So the pack is the candidates: the ones the centre chose at the top, and
+   So the pack is the trainees: the ones the centre chose at the top, and
    everybody else under them, each opening the whole of their work. */
 
 /* THE VOLUNTEER STUDENTS. Handbook 14.1 puts the attendance registers in the
@@ -805,13 +805,13 @@ function volunteerStudents(){
 /* Ramy, 1 Oct 2026: "most of this stuff should be collapsible." A pack is a
    dozen sections and an assessor needs three of them open. Each heading and
    the block under it become one <details>: the Handbook grid and the two
-   candidate lists open, the reference sections closed until asked for. Done to
+   trainee lists open, the reference sections closed until asked for. Done to
    the rendered page rather than to a dozen templates, so nothing about what is
    on the page changes -- only whether it is unfolded. */
 /* Matched against the TITLE only -- the Handbook reference in the small print
    sits on half the sections, and matching the whole heading left everything
    open. */
-const OPEN_SECTIONS = /^(The course against the Handbook|Candidates you are observing|Every other candidate|Candidate portfolios|The whole cohort)/i;
+const OPEN_SECTIONS = /^(The course against the Handbook|Trainees you are observing|Every other trainee|Candidate portfolios|The whole cohort)/i;
 function foldSections(root){
   if (!root) return;
   const heads = [...root.querySelectorAll('h2.sect')];
@@ -862,7 +862,7 @@ function courseDocuments(){
     <div class="panel">${rows.join('')}</div>`;
 }
 
-// ---- one candidate ---------------------------------------------------------------
+// ---- one trainee ---------------------------------------------------------------
 function tpBlock(tr, n, c){
   const hist = T.tpHistory(tr); const fb = hist[n]; const f = fb && fb.state && fb.state.f;
   const cur = tr.tp && tr.tp.feedback; const isCur = cur && T.tpNumberOf(cur)===n && cur.status!=='returned';
@@ -870,7 +870,7 @@ function tpBlock(tr, n, c){
      things below want them: the in-progress line, the not-yet-taught line, and
      the plan document itself.
      Which TP it is used to demand the literal "TP" before the digit, so a
-     candidate whose tutor typed "4" rather than "TP4" lost the "plan turned in"
+     trainee whose tutor typed "4" rather than "TP4" lost the "plan turned in"
      marker -- the sixth place tonight where a number typed freely was read by
      one spelling only. First number wins, as on the dashboard and the home. */
   const plan = tr.tp && tr.tp.plan;
@@ -889,7 +889,7 @@ function tpBlock(tr, n, c){
     if (plan && planN===n) meta = `<span class="chip wait">${plan.status==='turned_in' ? 'plan turned in' : 'plan in draft'}</span> not yet taught`;
     else meta = `<span class="chip nd">not yet taught</span>`;
   }
-  /* Handbook 14.1 asks the centre for "lesson plans for candidates teaching in
+  /* Handbook 14.1 asks the centre for "lesson plans for trainees teaching in
      teaching practice on the day of the assessment". Once a TP has been taught
      its plan is already inside the returned feedback document; the one being
      taught on the day is not, and this page could only report that a plan
@@ -911,7 +911,7 @@ function assignmentBlock(tr, k){
 }
 /* Handbook 12.1.1: the observation write-ups are portfolio evidence. The
    filmed and live sheets are turned in and dated; the peer sheets are the
-   candidate's own notes and are only counted. The sheets themselves open on
+   trainee's own notes and are only counted. The sheets themselves open on
    their own page, read-only under this link. */
 function observationBlock(tr){
   const T0 = window.CONNECT_HUB_OBSERVATION_DEFAULTS || { peer:[], filmed:[], live:[] };
@@ -941,13 +941,13 @@ function celta5Block(tr){
   const stage = (n, ret, signed, sub) => `<div class="tp"><div class="tp-row"><span class="n">Stage ${n}</span><span class="meta">${ret ? '<span class="chip fine">returned</span>' : sub ? '<span class="chip wait">with the tutor</span>' : '<span class="chip nd">open</span>'} ${sig(signed)}</span></div></div>`;
   return `<div class="tp"><div class="tp-row"><span class="n">Confirmations</span><span class="meta">portfolio ${sig(conf.portfolio)} · appeals ${sig(conf.appeals)}</span></div></div>`
     + stage(1, t.stage1 && t.stage1.returnedAt, c.stage1 && c.stage1.signed) + stage(2, t.stage2 && t.stage2.returnedAt, c.stage2 && c.stage2.signed, c.stage2 && c.stage2.submittedAt) + stage(3, t.stage3 && t.stage3.returnedAt, c.stage3 && c.stage3.signed)
-    + `<div class="tp"><div class="tp-row"><span class="n">Final declaration</span><span class="meta">candidate ${sig(c.final && c.final.signed)} · tutor ${sig(t.final && t.final.signed)}</span></div></div>`
+    + `<div class="tp"><div class="tp-row"><span class="n">Final declaration</span><span class="meta">trainee ${sig(c.final && c.final.signed)} · tutor ${sig(t.final && t.final.signed)}</span></div></div>`
     + `<div class="tp"><div class="tp-row"><span class="n"></span><span class="meta"></span><a class="btn ghost" href="20_celta5.html?trainee=${encodeURIComponent(tr.id)}">Open the CELTA 5</a></div></div>`;
 }
 function renderOne(tr){
   const c = T.recordFor(tr), r = T.readCandidate(c), chip = T.STATE_CHIP[r.state], man = tr.tracker || {};
   $('backLink').hidden = false;
-  $('toolbar').innerHTML = `<a class="btn ghost" href="7_candidate_tracker.html">Candidate tracker</a>${appianBtn('ghost')}<button class="btn-print" type="button" onclick="window.print()">Print / Save as PDF</button>`;
+  $('toolbar').innerHTML = `<a class="btn ghost" href="7_candidate_tracker.html">Trainee tracker</a>${appianBtn('ghost')}<button class="btn-print" type="button" onclick="window.print()">Print / Save as PDF</button>`;
   const verdict = v => v==='NOTSTD' ? 'not to standard' : v==='STD' ? 'to standard' : v==='ABOVE' ? 'above standard' : 'not held';
   const facts = [
     ['Standing', chip.text.charAt(0)+chip.text.slice(1).toLowerCase() + (r.from ? ' — from ' + r.from : ''), r.state==='notstd' ? 'red' : ''],
@@ -965,19 +965,19 @@ function renderOne(tr){
       <div class="cand-head"><div style="display:flex;align-items:center;gap:12px;"><span class="avi avi-cand" style="width:40px;height:40px;font-size:0.9rem;border-radius:9px;">${esc(hubInitials(tr.name))}</span><div><h1>${esc(tr.name)}</h1><div class="sub">${esc(tr.group ? 'Group ' + tr.group : '')}</div></div></div><span class="standing ${chip.cls}">${esc(chip.text)}</span></div>
       <div class="facts">${facts.map(f=>`<div class="fact"><div class="k">${f[0]}</div><div class="v ${f[2]}">${esc(f[1])}</div></div>`).join('')}</div>
     </div>
-    <h2 class="sect">Teaching practice <small>the document the candidate received, as returned</small></h2>
+    <h2 class="sect">Teaching practice <small>the document the trainee received, as returned</small></h2>
     <div class="panel">${Array.from({length:TP_TOTAL},(_,i)=>i+1).map(n=>tpBlock(tr, n, c)).join('')}</div>
     <h2 class="sect">Assignments <small>in the centre’s order</small></h2>
     <div class="panel">${ORDER.filter(k => k!=='a5' || a5InPlay(tr.assignments||{})).map(k=>assignmentBlock(tr, k)).join('')}</div>
-    <h2 class="sect">Observations <small>the sheets, as the candidate wrote them</small></h2>
+    <h2 class="sect">Observations <small>the sheets, as the trainee wrote them</small></h2>
     <div class="panel">${observationBlock(tr)}</div>
     <h2 class="sect">CELTA 5 <small>the record booklet</small></h2>
     <div class="panel">${celta5Block(tr)}</div>
-    ${(tr.links || []).filter(l => l && l.url).length ? `<h2 class="sect">Private links <small>given to this candidate alone</small></h2>
+    ${(tr.links || []).filter(l => l && l.url).length ? `<h2 class="sect">Private links <small>given to this trainee alone</small></h2>
     <div class="panel">${(tr.links || []).filter(l => l && l.url).map(l => `<div class="tp"><div class="tp-row"><span class="n">${esc(l.label || l.url)}</span><span class="meta"></span><a class="btn ghost" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">Open</a></div></div>`).join('')}</div>` : ''}
-    ${(tr.staffLinks || []).filter(l => l && l.url).length ? `<h2 class="sect">Course files <small>application, interview notes, pre-course task \u2014 for the tutors and the assessor; the candidate does not see these</small></h2>
+    ${(tr.staffLinks || []).filter(l => l && l.url).length ? `<h2 class="sect">Course files <small>application, interview notes, pre-course task \u2014 for the tutors and the assessor; the trainee does not see these</small></h2>
     <div class="panel">${(tr.staffLinks || []).filter(l => l && l.url).map(l => `<div class="tp"><div class="tp-row"><span class="n">${esc(l.label || l.url)}</span><span class="meta"></span><a class="btn ghost" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">Open</a></div></div>`).join('')}</div>` : ''}`;
-  /* The candidate page carries the stored documents, whose plan tables stack
+  /* The trainee page carries the stored documents, whose plan tables stack
      the same way (24 Sep 2026). */
   if (window.hubStackTables) hubStackTables($('app'));
   $('app').addEventListener('click', e => {
@@ -992,7 +992,7 @@ if (MODE !== 'assessor' && MODE !== 'tutor') {
   $('app').innerHTML = '<div class="panel"><div class="empty">Nothing to show — this page needs the assessor link (or the tutor link) to read the course.</div></div>';
 } else if (WHO) {
   const tr = roster.trainees[WHO];
-  if (tr) renderOne(tr); else $('app').innerHTML = '<div class="panel"><div class="empty">No candidate with that link on the course.</div></div>';
+  if (tr) renderOne(tr); else $('app').innerHTML = '<div class="panel"><div class="empty">No trainee with that link on the course.</div></div>';
 } else renderList();
 </script>
 </body>

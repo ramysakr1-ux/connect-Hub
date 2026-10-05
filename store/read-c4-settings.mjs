@@ -25,7 +25,7 @@ const call = async (b) => {
 
 const list = await call({ op: 'ownerCourses', owner: OWNER });
 const c4 = (list.result.courses || list.result).find((c) => c.id === 'c4');
-console.log('ownerCourses name:', JSON.stringify(c4.name), ' candidates:', c4.trainees);
+console.log('ownerCourses name:', JSON.stringify(c4.name), ' trainees:', c4.trainees);
 
 for (let i = 1; i <= 3; i++) {
   const r = await call({ op: 'course', key: c4.tutorKey });
@@ -36,4 +36,4 @@ for (let i = 1; i <= 3; i++) {
 }
 
 const roster = await call({ op: 'roster', key: c4.tutorKey });
-console.log('roster:', roster.ok ? `${(roster.result.trainees || []).length} candidates` : 'FAIL ' + roster.error);
+console.log('roster:', roster.ok ? `${(roster.result.trainees || []).length} trainees` : 'FAIL ' + roster.error);

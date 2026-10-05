@@ -4,15 +4,15 @@
 //   node store/spread-plan-dates.mjs c4 --write
 //
 // WHY. The assessor pack builds "Lesson plans for the day" from the assessment
-// date (Handbook 14.1: "lesson plans for candidates teaching in teaching
+// date (Handbook 14.1: "lesson plans for trainees teaching in teaching
 // practice on the day of the assessment"). The code filters on exactly that
 // and is right. The DATA was wrong: every plan on the finished demo carried
-// the same date, so the section listed all twelve candidates as teaching on
+// the same date, so the section listed all twelve trainees as teaching on
 // one day. Ramy spotted it on 27 Sep 2026; it had been verified as working,
 // which it was not — twelve plans is the tell, not the proof.
 //
 // The course runs two groups in parallel, and a TP day is six lessons: three
-// in each group. So six candidates teach on the day of the visit and six on
+// in each group. So six trainees teach on the day of the visit and six on
 // the day before it, which is what the timetable model says a day looks like.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -61,8 +61,8 @@ const before = (() => { const d = new Date(visit + 'T12:00:00'); d.setUTCDate(d.
 
 /* Three from each group teach on the day; the rest taught the day before.
    THE CANDIDATES THE ASSESSOR IS THERE TO OBSERVE GO FIRST. Handbook 14.2 has
-   the assessor co-observing candidates in teaching practice during the visit,
-   so a chosen candidate who teaches the day BEFORE cannot be observed — the
+   the assessor co-observing trainees in teaching practice during the visit,
+   so a chosen trainee who teaches the day BEFORE cannot be observed — the
    pack would name three people to watch and offer plans for a day two of them
    are not teaching. The first pass at this put Marcus Ellery on the wrong day
    and the two halves of the pack disagreed (27 Sep 2026). */
@@ -78,7 +78,7 @@ const stranded = people.filter((p) => chosen.has(p.token) && !onTheDay.has(p.tok
 if (stranded.length) { console.error('observed but not teaching that day: ' + stranded.map((p) => p.name).join(', ')); process.exit(1); }
 
 console.log(`${courseId} — ${course.name}`);
-console.log(`  every plan currently carries ${visit} (${day[1].length} candidates)`);
+console.log(`  every plan currently carries ${visit} (${day[1].length} trainees)`);
 console.log(`  visit day ${visit}: ${[...people].filter(p => onTheDay.has(p.token)).map(p => p.name).join(', ')}`);
 console.log(`  moved to ${before}: ${[...people].filter(p => !onTheDay.has(p.token)).map(p => p.name).join(', ')}`);
 if (!WRITE) { console.log('\nRead only. Add --write.\n'); process.exit(0); }
@@ -108,4 +108,4 @@ for (const p of ((back.result && back.result.trainees) || [])) {
   if (d) (after[d] = after[d] || []).push(p.name);
 }
 console.log(`\n${moved} moved, ${kept} kept${failed ? `, ${failed} FAILED` : ''}`);
-for (const [d, who] of Object.entries(after).sort()) console.log(`  ${d}  ${who.length} candidate(s)`);
+for (const [d, who] of Object.entries(after).sort()) console.log(`  ${d}  ${who.length} trainee(s)`);

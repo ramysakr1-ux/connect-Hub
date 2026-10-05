@@ -13,7 +13,7 @@
  * Always pass --only. A course record is pushed to every browser that opens
  * the course, so a centre's course carries the two or three sets its tutors
  * teach from and nothing else. Four sets are already 300 KB; the library is
- * heading for three sets a level across five levels, and no candidate's phone
+ * heading for three sets a level across five levels, and no trainee's phone
  * should be pulling down fourteen sets to read one.
  *
  *   s1  Language Hub Elementary, 1st ed (Macmillan 2019)        A2

@@ -58,7 +58,7 @@ for (const id of ['c3', 'c4']) {
     ok(rd.ok, `the assessor key opens the course${rd.ok ? '' : ' — ' + rd.error}`);
   }
   const roster = await call({ op: 'roster', key: c.tutorKey });
-  ok(roster.ok && (roster.result.trainees || []).length === 12, `twelve candidates: ${roster.ok ? (roster.result.trainees || []).length : 'FAIL'}`);
+  ok(roster.ok && (roster.result.trainees || []).length === 12, `twelve trainees: ${roster.ok ? (roster.result.trainees || []).length : 'FAIL'}`);
   console.log('');
 }
 

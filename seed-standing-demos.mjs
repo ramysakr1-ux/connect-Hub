@@ -15,7 +15,7 @@
  * course, which demo-finished.mjs builds.
  *
  * THE COURSE. Elmswood English Centre (the invented demo centre, TR999),
- * "CELTA — C/1 2026", Monday 2 March to Friday 27 March 2026, six candidates
+ * "CELTA — C/1 2026", Monday 2 March to Friday 27 March 2026, six trainees
  * in one group, two tutors. Day 1 is orientation; teaching runs from day 2
  * with the two sets (ABC, DEF) taking alternate days, the same practice
  * number on consecutive days -- the timetable page's own skeleton. Day 19 is
@@ -33,7 +33,7 @@
  *
  * HOW THE DOCUMENTS ARE MADE. As in demo-finished.mjs: every returned teaching
  * practice's frozen document is built by the real feedback screen, headless,
- * so it stays the product's. The lesson content and the candidates come from
+ * so it stays the product's. The lesson content and the trainees come from
  * demo-finished-data.mjs through demo-lessons.mjs; the aims follow Lite's own
  * rotation (hub-rotation.js), so the TP points, the timetable and the plans
  * agree about who taught what on which day.
@@ -146,7 +146,7 @@ const ROOMS = [
 ];
 const COURSE_LINKS = [
   /* Ramy, 1 Oct 2026, reading the demo's own card: the Cambridge link is
-     Cambridge's and belongs there (candidates are told to read the syllabus);
+     Cambridge's and belongs there (trainees are told to read the syllabus);
      the audio is not only audio, so it is media; and "centre handbook" said
      nothing, so the shelf is named for what a centre actually keeps on it. */
   { label: 'CELTA syllabus and assessment guidelines \u2014 Cambridge', url: 'https://www.cambridgeenglish.org/Images/21816-celta-syllbus.pdf', card: 'Course files', show: true },
@@ -302,7 +302,7 @@ function tppoints(people, rot) {
   return { groups: rowsByGroup, released: releasedByGroup, sets: setsByGroup };
 }
 
-/* ---- what has happened to each candidate by the pinned day -------------- */
+/* ---- what has happened to each trainee by the pinned day -------------- */
 function plan(cand, ci, tp, aim, setIndex) {
   const level = tp <= 4 ? 'A2' : 'B1';
   const slot = Object.assign({}, SHAPE_BY_AIM[aim] || SLOTS[1], { n: tp, level });
@@ -392,7 +392,7 @@ async function candidateRecords(cand, ci, token, setIndex, rot, buildDoc, volunt
   }
   if (WHICH === 'visit') {
     const marksC = {}, marksT = {};
-    /* The candidate's column is the only one with an X: Cambridge's fourth
+    /* The trainee's column is the only one with an X: Cambridge's fourth
        mark, "Not Applicable at this stage in the course because you have not
        yet focused on teaching or planning skills associated with that
        criterion". At Stage 2 there are always a few. The tutor's column has
@@ -525,7 +525,7 @@ const rot = {
   rows: Object.assign({}, ...GROUPS.map(g => (ROTS[g] || { rows: {} }).rows)),
   sets: GROUPS.flatMap(g => (ROTS[g] || { sets: [] }).sets),
 };
-/* Within the candidate's OWN group: 0 or 1, which is what the timetable's
+/* Within the trainee's OWN group: 0 or 1, which is what the timetable's
    alternate days are keyed on. */
 const setOf = token => { const g = groupOf(token); const r = ROTS[g]; return r ? r.sets.findIndex(s => s.some(q => q.token === token)) : 0; };
 GROUPS.forEach(g => { const r = ROTS[g]; if (r) console.log(`group ${g} sets: ` + r.sets.map(s => s.map(p => p.name.split(' ')[0]).join(', ')).join('  |  ')); });
@@ -581,7 +581,7 @@ const SHARES = [
   [9, '21:00', 1, 'Comparatives: picture prompts', 'https://drive.google.com/file/d/demo-share-comparatives/view', 'handout'],
   [15, '20:30', 4, 'Making arrangements: role cards', 'https://drive.google.com/file/d/demo-share-rolecards/view', 'worksheet'],
 ];
-/* Six rows, one per candidate in a group -- and a course of twelve has two
+/* Six rows, one per trainee in a group -- and a course of twelve has two
    groups, so it wraps rather than running off the end (found seeding c7 with
    twelve, 1 Oct 2026). */
 const GRID = [
@@ -590,7 +590,7 @@ const GRID = [
 ];
 const gridFor = ci => GRID[ci % GRID.length];
 
-/* the candidates' records */
+/* the trainees' records */
 let written = 0;
 if (WRITE) {
   const b = await docBuilder(settings);
@@ -646,12 +646,12 @@ if (WRITE) {
 }
 
 if (WRITE) {
-  console.log(`\n${written} candidate records written.`);
+  console.log(`\n${written} trainee records written.`);
   const links = await call({ op: 'assessorLink', key: KEY });
   const ak = (links.result && (links.result.key || links.result.assessorKey)) || course.assessorKey || '';
   console.log(`\ncourse ${course.id} — ${NAME}`);
   console.log('  tutor        https://lite.celtaconnect.com/invite.html?k=' + KEY);
   if (ak) console.log('  assessor     https://lite.celtaconnect.com/invite.html?ak=' + ak);
-  console.log('  a candidate  https://lite.celtaconnect.com/invite.html?t=' + people[0].token + '  (' + people[0].name + ')');
+  console.log('  a trainee  https://lite.celtaconnect.com/invite.html?t=' + people[0].token + '  (' + people[0].name + ')');
   console.log('  a volunteer  https://lite.celtaconnect.com/26_volunteer.html?v=' + vols.students[0].token + '  (' + vols.students[0].name + ')');
 }

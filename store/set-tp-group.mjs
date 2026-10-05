@@ -1,10 +1,10 @@
-// Put every candidate on a course into one teaching-practice group.
+// Put every trainee on a course into one teaching-practice group.
 //
 //   node store/set-tp-group.mjs c1 A
 //   node store/set-tp-group.mjs c1 A --write
 //
 // WHY. Handbook 7.1: a TP group must consist of 4-6 candidates. C/18 2026 had
-// six candidates split three and three, so BOTH groups were short and the
+// six trainees split three and three, so BOTH groups were short and the
 // assessor pack's Handbook panel flagged it red (found opening the pack,
 // 29 Sep 2026). With six people the only arrangement that passes is one group
 // of six: 4+2, 5+1 and 3+3 all fail. Ramy, 29 Sep 2026: "one group of six."

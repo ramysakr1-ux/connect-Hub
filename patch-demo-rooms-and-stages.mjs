@@ -73,7 +73,7 @@ for (const id of DEMOS) {
     }
   } else console.log('  rooms: already two');
 
-  /* 2 and 3. every candidate's tutor half of the CELTA 5 */
+  /* 2 and 3. every trainee's tutor half of the CELTA 5 */
   const roster = await call({ op: 'roster', key: KEY });
   const people = Object.values(roster.result.trainees || {}).filter(Boolean);
   for (const p of people) {

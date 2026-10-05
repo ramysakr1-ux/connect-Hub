@@ -1,4 +1,4 @@
-// The candidate tracker, inside the Hub, fed by the Hub's own data.
+// The trainee tracker, inside the Hub, fed by the Hub's own data.
 //
 // Ramy, 20 Sep 2026: "The tracker we have on Classroom is very manual... The
 // one here should not be. The assignments should be just there... TP is the
@@ -60,7 +60,7 @@ window.HubTracker = (function(){
     { field:'stage2', label:'Stage 2', cycle:STAGE2_CYCLE, labels:STAGE2_LABEL },
     { field:'stage3', label:'Stage 3', cycle:STAGE2_CYCLE, labels:STAGE2_LABEL }
   ];
-  /* How many teaching practices this course gives each candidate, set by the
+  /* How many teaching practices this course gives each trainee, set by the
      centre on Course admin > Settings. Eight when unset, which is every course
      made before that field existed. */
   function tpTotal(){
@@ -134,13 +134,13 @@ window.HubTracker = (function(){
     /* Handbook 15.1 DEFINES a potential Fail: "the portfolios of all candidates
        identified as potential Fails, i.e., Pass/Fail at the provisional
        grading meeting". The grade was sitting in tracker.grades.provisional
-       and recordFor never read it, so a candidate the centre had just put on
+       and recordFor never read it, so a trainee the centre had just put on
        the Appian form as FAIL / PASS was a potential Fail nowhere in Lite
        (audit, 29 Sep 2026). */
     var grades = manual.grades || {};
     c.provisional = grades.provisional || '';
     c.finalGrade = grades.final || '';
-    /* 11.4.1 turns on two facts Lite already holds: whether the candidate
+    /* 11.4.1 turns on two facts Lite already holds: whether the trainee
        signed the CELTA 5's final declaration, and whether there is a portfolio. */
     c.finalDeclarationSigned = !!(tr && tr.celta5 && tr.celta5.final && tr.celta5.final.signed && tr.celta5.final.signed.at);
     var hist = tpHistory(tr);
@@ -195,7 +195,7 @@ window.HubTracker = (function(){
        "Pass/Fail at the provisional grading meeting") and Lite never used it.
        These are the triggers, each carrying the document it comes from; the
        back-to-back rule that used to sit here appears in NO Cambridge
-       document, and 14.3 points the other way ("candidates cannot be judged
+       document, and 14.3 points the other way ("trainees cannot be judged
        on the basis of their performance on any one particular occasion"), so
        it is now a watch signal below and not a Fail trigger. */
     var provisionalPassFail = /FAIL/.test(c.provisional) && /PASS/.test(c.provisional);
@@ -222,7 +222,7 @@ window.HubTracker = (function(){
     if (letterDue) failWhy.push('no Fail letter issued · ' + (lessonsLeft <= 0 ? 'no lessons left to teach' : lessonsLeft + ' lesson' + (lessonsLeft === 1 ? '' : 's') + ' left to teach') + ' — 10.2: one should be issued, ideally with at least two lessons left');
     /* letterAdvised used to fire on a single assignment awaiting its
        resubmission and say "a letter can go out now". 9.2.3 GUARANTEES that
-       resubmission ("candidates must have the opportunity... on one occasion
+       resubmission ("trainees must have the opportunity... on one occasion
        only") and 11.6 says one failed assignment still permits a Pass, so the
        advice cut against two sections. Removed (audit, 29 Sep 2026). */
     var letterAdvised = false;
@@ -254,7 +254,7 @@ window.HubTracker = (function(){
     var stage1Due = (graded >= bands.s1End && !c.stage1);
     var stage2Due = (graded >= secondHalfFrom() - 1 && !c.stage2);
     var recorded = graded > 0 || fails.length > 0 || resubs.length > 0 || !!c.stage2 || !!c.stage3;
-    /* 11.4.1: "If an unsuccessful candidate attends until the end of the
+    /* 11.4.1: "If an unsuccessful trainee attends until the end of the
        course and submits a portfolio for assessment (even if incomplete), the
        result is Fail rather than Withdrawn." Lite held the deciding fact --
        the signed final declaration -- and let a yes/no toggle override
@@ -262,7 +262,7 @@ window.HubTracker = (function(){
        now said out loud. */
     var withdrawnFlag = (c.withdrawn === true || c.withdrawn === 'true');
     var withdrawnQuery = (withdrawnFlag && c.finalDeclarationSigned)
-      ? 'marked withdrawn, but the CELTA 5 final declaration is signed — 11.4.1 makes that a Fail unless the candidate withdrew from assessment in writing'
+      ? 'marked withdrawn, but the CELTA 5 final declaration is signed — 11.4.1 makes that a Fail unless the trainee withdrew from assessment in writing'
       : null;
     var state = withdrawnFlag ? 'withdrawn'
       : !recorded ? 'none'

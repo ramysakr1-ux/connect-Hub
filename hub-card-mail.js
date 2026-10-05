@@ -8,7 +8,7 @@
  * This builds the FRONT of the card (offer.html) as an HTML email instead:
  * the mark, the headline, his note, the three demo courses and the film as
  * doors, the price, his name. Each door opens that course's offer card, which
- * is where the tutor / candidate / assessor doors live. The store sends it
+ * is where the tutor / trainee / assessor doors live. The store sends it
  * (op sendCard, v64) from lite@celtaconnect.com.
  *
  * Email HTML, so: tables, inline styles, hex colours (the tokens' oklch
@@ -51,7 +51,7 @@
             + '<a href="' + esc(ctx.film) + '" style="display:inline-block; padding:14px 34px; font-family:' + SANS + '; font-size:16px; font-weight:700; color:#ffffff; text-decoration:none;">Watch the film</a>'
             + '</td></tr></table>'
           : '')
-      + '<p style="font-family:' + SANS + '; font-size:14px; line-height:1.65; color:' + C.ink + '; margin:24px 0 0; padding-top:18px; border-top:1px solid ' + C.line + ';">Centres and trainers: email me for a demo link. You get three real courses to walk around — as a tutor, as one of the candidates, as the assessor — and you can type in all of them.</p>'
+      + '<p style="font-family:' + SANS + '; font-size:14px; line-height:1.65; color:' + C.ink + '; margin:24px 0 0; padding-top:18px; border-top:1px solid ' + C.line + ';">Centres and trainers: email me for a demo link. You get three real courses to walk around — as a tutor, as one of the trainees, as the assessor — and you can type in all of them.</p>'
       + '<div style="font-family:' + SANS + '; font-size:11px; color:' + C.grey + '; margin:18px 0 0; padding-top:14px; border-top:1px solid ' + C.line + ';">designed and built by <b>Ramy</b>' + (ctx.site ? ' · <a href="' + esc(ctx.site) + '" style="color:' + C.grey + ';">' + esc(ctx.site.replace(/^https?:\/\//, '').replace(/\/$/, '')) + '</a>' : '') + '</div>'
       + '</td></tr></table>';
     return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Connect Lite — the film</title></head>'
@@ -93,7 +93,7 @@
       + '</td></tr></table>'
       + rateRows()
       + '<p style="font-family:' + SANS + '; font-size:13.5px; line-height:1.65; color:' + C.ink + '; margin:16px 0 0;"><b style="color:' + C.inkWarm + ';">Volunteer students are not counted.</b> However many come, their register, their own pages, the day-before reminders and the signed certificates are in the price.</p>'
-      + '<p style="font-family:' + SANS + '; font-size:13.5px; line-height:1.65; color:' + C.ink + '; margin:16px 0 0;"><b style="color:' + C.inkWarm + ';">A course with one teaching practice group counts as half a course.</b> Six candidates or fewer is one group. Blocks do not expire, nothing recurs, and the length of a course \u2014 four weeks, five, or part-time over three months \u2014 makes no difference.</p>'
+      + '<p style="font-family:' + SANS + '; font-size:13.5px; line-height:1.65; color:' + C.ink + '; margin:16px 0 0;"><b style="color:' + C.inkWarm + ';">A course with one teaching practice group counts as half a course.</b> Six trainees or fewer is one group. Blocks do not expire, nothing recurs, and the length of a course \u2014 four weeks, five, or part-time over three months \u2014 makes no difference.</p>'
       + (ctx.site ? '<p style="font-family:' + SANS + '; font-size:13.5px; line-height:1.65; margin:14px 0 0;"><a href="' + esc(ctx.site) + 'price.html" style="color:' + C.teal + '; font-weight:700;">The rates in full</a>, to keep or print.</p>' : '')
       + '<div style="font-family:' + SANS + '; font-size:11px; color:' + C.grey + '; margin:18px 0 0; padding-top:14px; border-top:1px solid ' + C.line + ';">designed and built by <b>Ramy</b></div>'
       + '</td></tr></table>';
@@ -139,19 +139,19 @@ letter +
   '<span style="font-family:' + SANS + '; font-size:9px; font-weight:600; letter-spacing:0.24em; text-transform:uppercase; color:' + C.ink + '; margin-left:5px;">Lite</span></div>' +
 
   '<div style="font-family:' + SANS + '; font-size:10px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:' + C.grey + '; margin:0 0 6px;">For a CELTA centre</div>' +
-  '<h1 style="font-family:' + SERIF + '; font-weight:700; font-size:26px; line-height:1.2; color:' + C.teal + '; margin:0 0 8px;">Everything your candidates write, and everything you write back</h1>' +
-  '<p style="font-family:' + SANS + '; font-size:14.5px; line-height:1.65; color:' + C.ink + '; margin:0;">The assessed paperwork of a CELTA course in one place — plans, language analyses, self-evaluations, the four written assignments, your feedback, the grades and the reports. No accounts, no passwords, nothing to install. A course is three links: one for your tutors, one for each candidate, one for the assessor.</p>' +
+  '<h1 style="font-family:' + SERIF + '; font-weight:700; font-size:26px; line-height:1.2; color:' + C.teal + '; margin:0 0 8px;">Everything your trainees write, and everything you write back</h1>' +
+  '<p style="font-family:' + SANS + '; font-size:14.5px; line-height:1.65; color:' + C.ink + '; margin:0;">The assessed paperwork of a CELTA course in one place — plans, language analyses, self-evaluations, the four written assignments, your feedback, the grades and the reports. No accounts, no passwords, nothing to install. A course is three links: one for your tutors, one for each trainee, one for the assessor.</p>' +
 
 
   '<h2 style="font-family:' + SERIF + '; font-weight:600; font-size:17px; color:' + C.inkWarm + '; margin:24px 0 4px;">See it working</h2>' +
-  '<p style="font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.grey + '; margin:0 0 4px;">Real courses, not screenshots. Each one opens as a tutor, as a candidate, as the assessor and as a volunteer student — type in them; nothing you do there touches anybody’s record.</p>' +
+  '<p style="font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.grey + '; margin:0 0 4px;">Real courses, not screenshots. Each one opens as a tutor, as a trainee, as the assessor and as a volunteer student — type in them; nothing you do there touches anybody’s record.</p>' +
   '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid ' + C.line + ';">' + doors + '</table>' +
 
   // the price
   (ctx.showPrice === false ? '' :
   '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0 0;"><tr><td style="background:' + C.box + '; border-radius:8px; padding:16px 18px;">' +
     price +
-    '<div style="font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.ink + '; margin:10px 0 0;"><b style="color:' + C.inkWarm + ';">Per course, not per candidate.</b> One price covers the whole course — up to 24 trainees, all of their tutors and your course administrator. Nothing recurring, nothing per seat, and no charge for the assessor’s access.</div>' +
+    '<div style="font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.ink + '; margin:10px 0 0;"><b style="color:' + C.inkWarm + ';">Per course, not per trainee.</b> One price covers the whole course — up to 24 trainees, all of their tutors and your course administrator. Nothing recurring, nothing per seat, and no charge for the assessor’s access.</div>' +
   '</td></tr></table>') +
 
   // sign-off, only when the card goes alone: the letter above signs otherwise

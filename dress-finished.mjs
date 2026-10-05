@@ -7,12 +7,12 @@
  * Part five of the film (DEMO-ANIMATION-SPEC.md) is shot from the finished
  * course: the final declaration, Cambridge's booklet drawn from the record,
  * the print. That course (c4) was built by demo-finished.mjs with eight
- * returned practices, four marked assignments and grades per candidate, but
+ * returned practices, four marked assignments and grades per trainee, but
  * before the CELTA 5 existed in Lite -- so its booklet had no confirmations,
  * no stages, no signatures and no observation sheets, and scene 20 would have
- * drawn an empty form. This adds, for every candidate:
+ * drawn an empty form. This adds, for every trainee:
  *
- *   celta5    the candidate's half: both confirmations signed in ink on day
+ *   celta5    the trainee's half: both confirmations signed in ink on day
  *             one; Stage 1 and Stage 3 agreed and signed; Stage 2 written,
  *             submitted, agreed and signed; the final declaration, five
  *             checks and a signature.
@@ -81,9 +81,9 @@ if (!course) { console.log('no course labelled "Finished course — the film, pa
 const KEY = course.tutorKey;
 const roster = (await call({ op: 'roster', key: KEY })).result;
 const people = Object.values(roster.trainees || {}).filter(Boolean);
-console.log(course.id + ' — ' + course.name + ': ' + people.length + ' candidates');
+console.log(course.id + ' — ' + course.name + ': ' + people.length + ' trainees');
 
-/* ---- per candidate ----------------------------------------------------------- */
+/* ---- per trainee ----------------------------------------------------------- */
 function dress(p, i) {
   const cand = CANDIDATES.find(c => c.name === p.name) || CANDIDATES[i % CANDIDATES.length];
   const hist = (p.records && p.records.tpHistory) || {};

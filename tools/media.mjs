@@ -1,7 +1,7 @@
 import { call } from './st.mjs';
 /* WHAT A CANDIDATE ACTUALLY HAS ON THE CARD: pages, audio, video. A stage that
    says "play track 3.5" with no audio attached is the same fault as a stage
-   that names an unattached page -- the candidate is told to use something they
+   that names an unattached page -- the trainee is told to use something they
    have not got. */
 const TRACK = /\btrack\s*(\d+\.\d+)|\b(\d\.\d{1,2})\b(?=\s*(?:,|\.|and|$|\)))/gi;
 const VIDEO = /\bvideo\b|Caf[ée] Hub|Street Interviews|BBC|DVD/i;

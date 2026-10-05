@@ -1,4 +1,4 @@
-// The taught history said all twelve candidates taught on every TP day.
+// The taught history said all twelve trainees taught on every TP day.
 //
 //   node store/spread-tp-dates.mjs c4
 //   node store/spread-tp-dates.mjs c4 --write
@@ -14,7 +14,7 @@
 // a day. This moves TP8 for the six who are not teaching on the visit day.
 // ONLY TP8, and only for those six: every other TP is written back byte for
 // byte and checked afterwards, because a tpHistory is 280KB of a real
-// candidate's course and this is not the place to lose any of it.
+// trainee's course and this is not the place to lose any of it.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 

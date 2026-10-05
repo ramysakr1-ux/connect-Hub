@@ -4,7 +4,7 @@
  *   node swap-cast.mjs <c6|c7|c4> [--write]
  *
  * Ramy, 1 Oct 2026: "let's make the course international as well, different
- * names from all over the world — 12 candidates from everywhere, including
+ * names from all over the world — 12 trainees from everywhere, including
  * Asia." The names live in demo-finished-data.mjs and the seed writes every
  * record against them, but a course already on the store holds the OLD people
  * with their tokens. This removes anybody who is not in the current cast, so

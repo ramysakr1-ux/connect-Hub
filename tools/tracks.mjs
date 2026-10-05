@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { call } from './st.mjs';
 /* WHICH RECORDING EACH SLOT PLAYS, AND WHERE THAT FILE IS. Thirty-two slots
-   tell a candidate to play a track and none of them carries it. Every book
+   tell a trainee to play a track and none of them carries it. Every book
    numbers its audio differently, so each gets its own resolver -- and each was
    checked against a real filename before being written down:
      Language Hub   track 3.5   -> LH_Elementary_SB_Track_3.5.mp3

@@ -1,5 +1,5 @@
 /* Cambridge's fourth mark, on the demo: X, "Not Applicable at this stage",
-   in the candidate's own column at Stage 2. c7 only — c6 has no Stage 2. */
+   in the trainee's own column at Stage 2. c7 only — c6 has no Stage 2. */
 import { readFileSync } from 'node:fs';
 const HERE = '/Users/work/connect-Hub/';
 const STORE = (readFileSync(HERE + 'hub-store.js', 'utf8').match(/https:\/\/script\.google\.com\/macros\/s\/[^'"]+/) || [])[0];

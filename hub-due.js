@@ -15,12 +15,12 @@
  * 1. A DEADLINE IS AN INSTANT, not a wall-clock time. It is stored as an ISO
  *    string with an offset, taken from the tutor's own browser when they set
  *    it, and rendered in each reader's local time. A tutor setting 23:00 in
- *    Istanbul and a candidate reading it in London see the same moment, each
+ *    Istanbul and a trainee reading it in London see the same moment, each
  *    in their own clock. There is no timezone setting to get wrong, and
  *    nobody's phone being in the wrong place moves the deadline.
  *
  * 2. THE CHECK IS HONEST, NOT LOCKED. Lite is a static site: this runs in the
- *    browser, off the device's own clock, so a determined candidate could get
+ *    browser, off the device's own clock, so a determined trainee could get
  *    past it by changing their clock. Making it real means the Apps Script
  *    store refusing a late write, which is a separate job on the store. For a
  *    deadline that is a professional expectation rather than an exam
@@ -29,8 +29,8 @@
  *    can open it.
  *
  * 3. AN EXTENSION IS PER CANDIDATE and belongs to the tutor. It lives in that
- *    candidate's `tracker` record, which hub-sync lists as TUTOR_ONLY -- the
- *    tutor writes it, the candidate reads it and cannot write it back. Giving
+ *    trainee's `tracker` record, which hub-sync lists as TUTOR_ONLY -- the
+ *    tutor writes it, the trainee reads it and cannot write it back. Giving
  *    one person more time must never quietly give it to everyone.
  */
 (function(){
@@ -121,7 +121,7 @@
   }
 
   /* Days from when the tutor returned it, which is how a resubmission window
-     actually works: the return date differs per candidate, so a fixed date
+     actually works: the return date differs per trainee, so a fixed date
      cannot serve them all, and Handbook 9.2.3 wants the resubmission inside
      the span of the course. */
   function windowFrom(returnedAt, days){

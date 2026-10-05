@@ -4,11 +4,11 @@
 //   node store/scratch-course.mjs                  what it is now (read only)
 //   node store/scratch-course.mjs --make           create it, or put it back as it should be
 //   node store/scratch-course.mjs --reset          empty the roster, ready for another take
-//   node store/scratch-course.mjs --reset --one    empty it, then leave ONE candidate
+//   node store/scratch-course.mjs --reset --one    empty it, then leave ONE trainee
 //
 // --one is for working on scene 4 by itself. Played in order the film does
 // not need it: scene 3 pastes twelve people onto this course, and scene 4
-// cuts to one of them to show the centre's own wording as a candidate sees
+// cuts to one of them to show the centre's own wording as a trainee sees
 // it. But jumping straight to scene 4, or running the film's ?check=1, finds
 // an empty course -- so --one leaves somebody there. Scene 3 must still be
 // able to start from nothing, which is why this is a flag and not the
@@ -107,7 +107,7 @@ console.log(`\n${NAME}  (${course.id})`);
 
 if (MAKE) {
   // Dates FIRST, while the roster is empty: the store seals a course's window
-  // when its first candidate is added, and after that the start cannot move.
+  // when its first trainee is added, and after that the start cannot move.
   const s = await call({ op: 'putCourse', key: course.tutorKey, kind: 'settings', data: SETTINGS });
   console.log('settings: ' + (s.ok ? `${SETTINGS.start} → ${SETTINGS.end}` : 'FAILED ' + s.error));
 }
@@ -136,7 +136,7 @@ if (MAKE || RESET) {
   // reported "emptied 12" and left twelve on the course.
   if (ONE) {
     const add = await call({ op: 'addTrainee', key: course.tutorKey, name: KEEPER.name, group: KEEPER.group });
-    console.log(`one candidate: ${add.ok ? KEEPER.name : 'FAILED ' + add.error}`);
+    console.log(`one trainee: ${add.ok ? KEEPER.name : 'FAILED ' + add.error}`);
   }
 
   const check = await call({ op: 'roster', key: course.tutorKey });
@@ -153,5 +153,5 @@ if (MAKE || RESET) {
 const after = await call({ op: 'course', key: course.tutorKey });
 const cs = (after.result && after.result.settings) || {};
 const roster = await call({ op: 'roster', key: course.tutorKey });
-console.log(`now: ${cs.courseName || '(no name)'} · ${cs.start || '?'} → ${cs.end || '?'} · ${((roster.result && roster.result.trainees) || []).length} candidates`);
+console.log(`now: ${cs.courseName || '(no name)'} · ${cs.start || '?'} → ${cs.end || '?'} · ${((roster.result && roster.result.trainees) || []).length} trainees`);
 console.log(`\nfilm URL for scene 3 — add this to the film's own address:\n  &s=${course.tutorKey}\n`);

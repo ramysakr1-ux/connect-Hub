@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { call } from './st.mjs';
 const KEY = '5fade4f069614afd9b6e5a3a';
 /* The card parses "Track 1.26 | <drive url>", one per line, and builds a
-   player per track for the candidate whose lesson it is. */
+   player per track for the trainee whose lesson it is. */
 const plan = JSON.parse(fs.readFileSync('tracks-plan.json', 'utf8'));
 const urls = JSON.parse(fs.readFileSync('track-urls.json', 'utf8'));
 const cr = await call({ op:'course', key: KEY });

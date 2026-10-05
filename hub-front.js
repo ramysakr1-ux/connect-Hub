@@ -25,11 +25,11 @@
 (function () {
   var esc = function (s) { return String(s == null ? '' : s).replace(/[<&>"]/g, ' '); };
 
-  /* The root is the front door, not a room. It is also the candidate's home,
+  /* The root is the front door, not a room. It is also the trainee's home,
      which is why a tutor who clicked lite.celtaconnect.com used to be told
      "This room belongs to the candidate" and left there (Ramy, 3 Oct 2026:
      "why is it taking me to the trainee? The trainee is not emailing me").
-     Whoever arrives is sent to their own room instead; a candidate and a
+     Whoever arrives is sent to their own room instead; a trainee and a
      stranger both stay, and the stranger gets the page below. */
   window.hubFrontRoute = function () {
     var where = { tutor: '5_tutor_dashboard.html', assessor: '12_assessor_pack.html', volunteer: '26_volunteer.html' }[window.HubMode];
@@ -51,8 +51,8 @@
       '<div class="fp-card">'
       + '<div class="fp-mark">' + mark + '</div>'
       + '<p class="fp-eyebrow">For a CELTA centre</p>'
-      + '<h1>Everything your candidates write, and everything you write back</h1>'
-      + '<p class="fp-lede">The assessed paperwork of a CELTA course in one place — plans, language analyses, self-evaluations, the four written assignments, your feedback, the grades and the reports. No accounts, no passwords, nothing to install. A course is three links: one for your tutors, one for each candidate, one for the assessor.</p>'
+      + '<h1>Everything your trainees write, and everything you write back</h1>'
+      + '<p class="fp-lede">The assessed paperwork of a CELTA course in one place — plans, language analyses, self-evaluations, the four written assignments, your feedback, the grades and the reports. No accounts, no passwords, nothing to install. A course is three links: one for your tutors, one for each trainee, one for the assessor.</p>'
 
       + '<div class="fp-why">'
       + '<b>Why it says Lite</b>'
@@ -61,8 +61,8 @@
 
       + '<h2>What it does</h2>'
       + '<ul class="fp-does">'
-      + '<li><b>Plans, analyses and self-evaluations</b> come in from candidates and land on the tutor’s screen. No files, no email.</li>'
-      + '<li><b>Feedback</b> is written against the plan the candidate wrote, tagged with the CELTA 5 criteria, and returned the same day.</li>'
+      + '<li><b>Plans, analyses and self-evaluations</b> come in from trainees and land on the tutor’s screen. No files, no email.</li>'
+      + '<li><b>Feedback</b> is written against the plan the trainee wrote, tagged with the CELTA 5 criteria, and returned the same day.</li>'
       + '<li><b>Written assignments</b> carry your centre’s own wording and criteria, and the outcome follows the marks rather than a box.</li>'
       + '<li><b>Volunteer students</b> have a register, their own page in six languages, reminders the day before, and a signed certificate at the end.</li>'
       + '<li><b>The assessor’s pack, the Cambridge grade form and the end-of-course reports</b> assemble themselves from what is already there.</li>'
@@ -78,13 +78,13 @@
 
       + '<div class="fp-ask">'
       + '<b>Ask for a demo</b>'
-      + '<p>I will send you three real courses you can walk around — as a tutor, as one of the candidates, as the assessor — and you can type in all of them. Nothing you do there touches anybody’s record.</p>'
+      + '<p>I will send you three real courses you can walk around — as a tutor, as one of the trainees, as the assessor — and you can type in all of them. Nothing you do there touches anybody’s record.</p>'
       + '<a class="fp-btn wide" href="mailto:lite@celtaconnect.com?subject=' + encodeURIComponent('Connect Lite — a demo link, please') + '">Email me for a demo link</a>'
       + '</div>'
 
       + '<div class="fp-have">'
       + '<b>Already on a course?</b>'
-      + '<p>This page reads one course, through the link your centre sent you. Candidates have their own personal link, tutors share the tutor link, and an assessor has a read-only one. Open the page from that link and everything appears. Lost it? Your course administrator can send it again from the Roster.</p>'
+      + '<p>This page reads one course, through the link your centre sent you. Trainees have their own personal link, tutors share the tutor link, and an assessor has a read-only one. Open the page from that link and everything appears. Lost it? Your course administrator can send it again from the Roster.</p>'
       + '</div>'
 
       + '<div class="fp-foot"><span>designed and built by <b>Ramy</b></span><a href="mailto:lite@celtaconnect.com">lite@celtaconnect.com</a></div>'

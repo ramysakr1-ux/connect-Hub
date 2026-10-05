@@ -1,5 +1,5 @@
 /**
- * Build the finished demo course: twelve candidates, eight returned teaching
+ * Build the finished demo course: twelve trainees, eight returned teaching
  * practices each, four marked assignments each, grades and full end-of-course
  * reports.
  *
@@ -74,7 +74,7 @@ if (KEEP.has(course.id)) { console.log('refusing to touch ' + course.id); proces
 const KEY = course.tutorKey;
 
 /* The four assignments, from the product's own defaults. This was missing: the
-   course was built with twelve candidates' assignments all marked and closed
+   course was built with twelve trainees' assignments all marked and closed
    and NO wording behind them, so every assignment screen on the finished demo
    read "This assignment isn't set up yet" -- and the self-heal that fills a
    course's wording in deliberately refuses a course that has marks on it, so
@@ -110,7 +110,7 @@ for (const c of CANDIDATES) {
   if (!a.ok || !a.result || !a.result.token) { console.log('could not add ' + c.name + ': ' + (a.error || 'the store gave back no token')); process.exit(1); }
   people.push(Object.assign({}, c, { token: a.result.token }));
 }
-console.log(people.length + ' candidates');
+console.log(people.length + ' trainees');
 
 /* ---- dates: eight teaching practices across four weeks ------------------- */
 const start = new Date(COURSE.settings.start + 'T00:00:00Z');
@@ -415,5 +415,5 @@ if (WRITE) {
   console.log('\ncourse ' + course.id);
   console.log('  tutor     https://lite.celtaconnect.com/invite.html?k=' + KEY);
   if (links.ok) console.log('  assessor  https://lite.celtaconnect.com/invite.html?ak=' + (links.result.key || links.result.assessorKey || ''));
-  console.log('  a candidate  https://lite.celtaconnect.com/invite.html?t=' + people[0].token + '  (' + people[0].name + ')');
+  console.log('  a trainee  https://lite.celtaconnect.com/invite.html?t=' + people[0].token + '  (' + people[0].name + ')');
 }

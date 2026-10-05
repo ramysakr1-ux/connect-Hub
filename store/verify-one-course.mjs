@@ -5,7 +5,7 @@
  *   node store/verify-one-course.mjs
  *
  * Two rules, and a course has to break both to be two courses:
- *   HOW MANY  every candidate it has ever had is counted; purging one does not
+ *   HOW MANY  every trainee it has ever had is counted; purging one does not
  *             give the place back; 24 is the cap.
  *   HOW LONG  the dates are the centre's to set while nobody is on the course,
  *             and are sealed by the first candidate. After that the start
@@ -62,9 +62,9 @@ ok(r.ok, 'a first set of dates is accepted');
 r = await call({ op: 'putCourse', key: c.tutorKey, kind: 'settings', data: settings('2026-11-02', '2026-11-27') });
 ok(r.ok, 'and changed again, because the course has not started' + (r.ok ? '' : ': ' + r.error));
 
-console.log('\n2. the first candidate seals the window');
+console.log('\n2. the first trainee seals the window');
 const first = await call({ op: 'addTrainee', key: c.tutorKey, name: 'Seat One', group: '1' });
-ok(first.ok, 'a candidate is added' + (first.ok ? '' : ': ' + first.error));
+ok(first.ok, 'a trainee is added' + (first.ok ? '' : ': ' + first.error));
 r = await call({ op: 'putCourse', key: c.tutorKey, kind: 'settings', data: settings('2027-01-11', '2027-02-05') });
 ok(!r.ok && /start date cannot be changed/.test(r.error || ''), 'a new start date is refused: ' + (r.error || 'IT WAS ACCEPTED'));
 r = await call({ op: 'putCourse', key: c.tutorKey, kind: 'settings', data: settings('2026-11-02', '2027-02-05') });
@@ -74,9 +74,9 @@ ok(r.ok, 'a course running a week over is fine' + (r.ok ? '' : ': ' + r.error));
 
 console.log('\n3. a place used is a place gone');
 const seats = await call({ op: 'seats', owner: OWNER, course: c.id });
-ok(seats.ok && seats.result.seats.ever === 1, 'one candidate counted: ' + JSON.stringify((seats.result || {}).seats));
+ok(seats.ok && seats.result.seats.ever === 1, 'one trainee counted: ' + JSON.stringify((seats.result || {}).seats));
 const purge = await call({ op: 'purgeTrainee', key: c.tutorKey, token: first.result.token });
-ok(purge.ok, 'the candidate is purged');
+ok(purge.ok, 'the trainee is purged');
 const after = await call({ op: 'seats', owner: OWNER, course: c.id });
 ok(after.ok && after.result.seats.ever === 1, 'the count does not go back down: ' + after.result.seats.ever);
 
@@ -85,9 +85,9 @@ await call({ op: 'seats', owner: OWNER, course: c.id, ever: 23 });
 const twentyFour = await call({ op: 'addTrainee', key: c.tutorKey, name: 'Seat 24', group: '1' });
 ok(twentyFour.ok, 'the twenty-fourth is accepted');
 const twentyFive = await call({ op: 'addTrainee', key: c.tutorKey, name: 'Seat 25', group: '1' });
-ok(!twentyFive.ok && /up to 24 candidates/.test(twentyFive.error || ''), 'the twenty-fifth is refused: ' + (twentyFive.error || 'IT WAS ACCEPTED'));
+ok(!twentyFive.ok && /up to 24 trainees/.test(twentyFive.error || ''), 'the twenty-fifth is refused: ' + (twentyFive.error || 'IT WAS ACCEPTED'));
 const paste = await call({ op: 'addTrainees', key: c.tutorKey, trainees: [{ name: 'A' }, { name: 'B' }] });
-ok(!paste.ok && /up to 24 candidates/.test(paste.error || ''), 'and a pasted list cannot get round it: ' + (paste.error || 'IT WAS ACCEPTED'));
+ok(!paste.ok && /up to 24 trainees/.test(paste.error || ''), 'and a pasted list cannot get round it: ' + (paste.error || 'IT WAS ACCEPTED'));
 
 console.log('\n5. the owner can still put it right');
 const raised = await call({ op: 'seats', owner: OWNER, course: c.id, cap: 30 });

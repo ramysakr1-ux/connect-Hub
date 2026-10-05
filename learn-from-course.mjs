@@ -74,7 +74,7 @@ for (const who of people) {
     }
   }
 }
-console.log(points.length + ' tagged points on the course, from ' + people.length + ' candidates');
+console.log(points.length + ' tagged points on the course, from ' + people.length + ' trainees');
 if (!points.length) { console.log('nothing to learn from'); process.exit(0); }
 
 /* The page's own tokeniser, wording rule and model, rather than a second copy

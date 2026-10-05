@@ -1,4 +1,4 @@
-// READ ONLY. What stage every candidate's four assignments are at, so the film
+// READ ONLY. What stage every trainee's four assignments are at, so the film
 // can cut to somebody who is really at "Resubmission needed" instead of
 // pretending a stubbed save moved them there. Writes nothing.
 import { readFileSync } from 'node:fs';
@@ -23,7 +23,7 @@ const list = await call({ op: 'ownerCourses', owner: OWNER });
 const course = (list.result.courses || list.result).find((c) => c.id === courseId);
 const roster = await call({ op: 'roster', key: course.tutorKey });
 const people = (roster.result && roster.result.trainees) || [];
-console.log(`${courseId} — ${course.name}, ${people.length} candidates\n`);
+console.log(`${courseId} — ${course.name}, ${people.length} trainees\n`);
 
 for (const p of people) {
   const g = await call({ op: 'get', key: course.tutorKey, token: p.token, kind: 'assignments' });

@@ -7,12 +7,12 @@
   asked whether the tasks would be "something that the course admin can edit,
   or fixed" -- the wording is theirs, the shape is not. A centre can rewrite
   any question, retitle a task, change the brief; it cannot turn the peer grid
-  into something else, because the grid is what prints and what the candidate
+  into something else, because the grid is what prints and what the trainee
   fills in. Same arrangement as the assignment wording (8_assignment_wording).
 
   Saves as one record, `connect_observation_wording_v1`, the whole set: every
   task, edited or not. hub-sync carries it to the store as the course kind
-  `observations` (store v28), and the candidate's page reads that record when
+  `observations` (store v28), and the trainee's page reads that record when
   it exists and the shipped defaults when it does not. Whole-set because a
   partial record would make every reader merge, and a merge on a short read is
   how c4 lost its settings (27 Sep 2026).
@@ -27,7 +27,7 @@
 <title>Connect Lite — Observation task wording</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610051144">
+<link rel="stylesheet" href="hub-tokens.css?v=202610051229">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);}
@@ -75,14 +75,14 @@
   .review .skipped{color:var(--brick); font-size:0.82rem;}
   @media(max-width:900px){ .layout{grid-template-columns:1fr;} .editor{padding:18px 16px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610051144">
+<link rel="stylesheet" href="hub-house.css?v=202610051229">
 </head>
 <body class="hub-paper">
 <div class="board">
   <a class="back" href="6_centre_admin_dashboard.html">← Back to course admin</a>
   <p class="eyebrow">Course admin · observation tasks</p>
   <h1>Observation task wording</h1>
-  <p class="sub">The words are yours: retitle a task, rewrite a question, change the brief. The shape of each sheet — a grid for three teachers, one notes column, lettered parts — stays, because that is what the candidate fills in and what prints.</p>
+  <p class="sub">The words are yours: retitle a task, rewrite a question, change the brief. The shape of each sheet — a grid for three teachers, one notes column, lettered parts — stays, because that is what the trainee fills in and what prints.</p>
   <!-- Ramy, 27 Sep 2026: "should there be an option for them to just upload
        their own observation tasks and push into whatever we built here?"
        A Word or text file, read in the browser, sorted into the six shapes
@@ -100,12 +100,12 @@
     <div class="editor" id="editor"></div>
   </div>
 </div>
-<script src="observation-defaults.js?v=202610051144"></script>
-<script src="hub-docx.js?v=202610051144"></script>
-<script src="hub-observation-parse.js?v=202610051144"></script>
-<script src="hub-shared.js?v=202610051144"></script>
-<script src="hub-store.js?v=202610051144"></script>
-<script src="hub-sync.js?v=202610051144"></script>
+<script src="observation-defaults.js?v=202610051229"></script>
+<script src="hub-docx.js?v=202610051229"></script>
+<script src="hub-observation-parse.js?v=202610051229"></script>
+<script src="hub-shared.js?v=202610051229"></script>
+<script src="hub-store.js?v=202610051229"></script>
+<script src="hub-sync.js?v=202610051229"></script>
 <script type="text/x-hub-app">
 /* The centre's room. Same gate as the assignment wording editor: a link that
    cannot write the course does not get a form that says "Saved". */
@@ -149,8 +149,8 @@ function renderEditor(){
   const shapeNote = {
     grid: 'A grid: each focus below is answered for Teacher 1, 2 and 3. Done twice, for the a and b halves of the TP day.',
     single: 'One column: each question is answered once, across all the teachers watched. Done twice, a and b.',
-    focus: 'No set questions: the candidate writes one focus area per teacher, as agreed with them before the lesson. Only the title and brief are yours to change.',
-    notes: 'A notes column: each focus below gets the candidate’s notes. Opens with the lesson’s particulars (lesson, level, length, date watched) and is turned in.',
+    focus: 'No set questions: the trainee writes one focus area per teacher, as agreed with them before the lesson. Only the title and brief are yours to change.',
+    notes: 'A notes column: each focus below gets the trainee’s notes. Opens with the lesson’s particulars (lesson, level, length, date watched) and is turned in.',
     questions: 'Numbered questions with open answers. Opens with the lesson’s particulars and is turned in.',
     parts: 'Lettered parts, each with its own guidance lines. Opens with the lesson’s particulars and is turned in.'
   }[t.shape] || '';
@@ -158,9 +158,9 @@ function renderEditor(){
     <p class="notice">${isEdited(t) ? 'Your wording.' : 'The centre’s sheet, as it shipped.'}</p>
     <p class="fixed">${shapeNote}</p>`;
   html += field('title', t.title, { h: 'Title' });
-  if (t.id.startsWith('filmed')) html += field('recording', t.recording || '', { h: 'Recording line', hint: 'Which recording this sheet goes with, as the candidate sees it under the title.' });
+  if (t.id.startsWith('filmed')) html += field('recording', t.recording || '', { h: 'Recording line', hint: 'Which recording this sheet goes with, as the trainee sees it under the title.' });
   else if (!t.tp) html += field('sub', t.sub || '', { h: 'Subtitle', hint: 'Under the title.' });
-  if (t.tp || t.brief) html += field('brief', t.brief || '', { h: 'Brief', hint: 'What the candidate is told before the lesson. Leave empty for none.', area: true, rows: 70 });
+  if (t.tp || t.brief) html += field('brief', t.brief || '', { h: 'Brief', hint: 'What the trainee is told before the lesson. Leave empty for none.', area: true, rows: 70 });
   if (t.shape === 'parts') {
     html += `<div class="section"><h4>Parts</h4><p class="hint">One part per letter. The lines under each part are its guidance, one per line; a line starting with ☐ shows as a box to tick.</p>` +
       (t.parts||[]).map((p, i) => `<div class="part"><span class="letter">${esc(p.letter)}</span><input type="text" data-p="${i}" data-pf="title" value="${esc(p.title)}"><textarea data-p="${i}" data-pf="lines" style="min-height:70px">${esc((p.lines||[]).join('\n'))}</textarea></div>`).join('') + `</div>`;

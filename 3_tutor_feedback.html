@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610051144">
+<link rel="stylesheet" href="hub-tokens.css?v=202610051229">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -390,7 +390,7 @@
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610051144">
+<link rel="stylesheet" href="hub-house.css?v=202610051229">
 </head>
 <body>
 <div class="board">
@@ -539,11 +539,11 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202610051144"></script>
-<script src="hub-shared.js?v=202610051144"></script>
-<script src="hub-store.js?v=202610051144"></script>
-<script src="hub-crit-learn.js?v=202610051144"></script>
-<script src="hub-sync.js?v=202610051144"></script>
+<script src="hub-exchange.js?v=202610051229"></script>
+<script src="hub-shared.js?v=202610051229"></script>
+<script src="hub-store.js?v=202610051229"></script>
+<script src="hub-crit-learn.js?v=202610051229"></script>
+<script src="hub-sync.js?v=202610051229"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1061,7 +1061,7 @@ function showSeen(d){
   const rows=(p.rows||[]).filter(r=>(r.stage||'').trim()||(r.proc||'').trim());
   const cell=(cls,label,body)=>body?`<div class="${cls}"><dt>${label}</dt><dd>${body}</dd></div>`:'';
   /* The materials as something to OPEN, not only a list. The plan stores the
-     Drive link the candidate pasted and any file they attached (which the
+     Drive link the trainee pasted and any file they attached (which the
      store puts on Drive and hands back as a link); both were on the printed
      plan and neither was on this screen, so a tutor watching the lesson had
      the list of materials and no way to look at them (Ramy, 24 Sep 2026). */
@@ -1072,7 +1072,7 @@ function showSeen(d){
     const acts=[
       link?`<a class="mats-open" href="${esc(link)}" target="_blank" rel="noopener">Open the materials \u2197</a>`:'',
       f?(fUrl?`<a class="mats-open file" href="${esc(fUrl)}" target="_blank" rel="noopener"${f.dataUrl&&!f.url?` download="${esc(f.name)}"`:''}>${esc(f.name)} \u2197</a>`
-            :`<span class="mats-open file off" title="Held on the candidate\u2019s own device \u2014 not sent with the plan">${esc(f.name)}</span>`):''
+            :`<span class="mats-open file off" title="Held on the trainee\u2019s own device \u2014 not sent with the plan">${esc(f.name)}</span>`):''
     ].filter(Boolean).join(' ');
     const list=p.mats?bulletsHTML(p.mats):'';
     if(!list&&!acts) return '';
@@ -1301,7 +1301,7 @@ function legendHTML(d){
     </table>`;
 }
 
-/* The candidate's stage box holds "NAME: their aim for the stage" -- one
+/* The trainee's stage box holds "NAME: their aim for the stage" -- one
    field on the page, because the colon is what asks for the aim (23 Sep
    2026). On a document the name reads as a heading and the aim as prose, so
    the first colon is where they part. `r.aim` is the older shape, where the
@@ -1473,7 +1473,7 @@ $('returnBtn').addEventListener('click', async ()=>{
   saveFeedbackRecord({ label:draftLabel(), state:draftState(), status:'returned', returnedAt:Date.now(), docHTML:LAST_HTML });
   /* Returning is the moment the tutor has committed to these tags -- before
      that they are still editing. It runs alongside the return rather than in
-     front of it: a suggester that cannot save must never hold up a candidate's
+     front of it: a suggester that cannot save must never hold up a trainee's
      feedback. */
   try{ learnFromPoints(); }catch(e){}
   dirty=false;
@@ -1568,7 +1568,7 @@ const feedbackParams=new URLSearchParams(location.search);
 const TRAINEE_ID=feedbackParams.get('trainee')||'';
 function loadRoster(){ try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
 function saveRosterObj(r){ localStorage.setItem(ROSTER_KEY, JSON.stringify(r)); }
-/* The candidate this page is about, by name.
+/* The trainee this page is about, by name.
    Ramy, 23 Sep 2026: "instead of having things like trainee, trainer, we could
    actually have the names." A tutor on this screen is writing about one
    person, and the roster has known who since the page gained ?trainee=<id> --
@@ -1616,7 +1616,7 @@ function saveFeedbackRecord(patch){
          label reads "TP4 · Unit 12" or "Teaching practice 4 of 8", which strip
          to 412 and 48 -- out of range, so the returned TP was never filed into
          the history at all, and the tracker, the assessor pack and the
-         candidate's carry-forward all lost it. */
+         trainee's carry-forward all lost it. */
       const mTP=String((cur.state&&cur.state.f&&cur.state.f.fTP)||cur.label||'').match(/\d+/);
       const n=mTP?parseInt(mTP[0],10):0;
       if (n>=1&&n<=HUB_MAX_TP) { roster.trainees[TRAINEE_ID].tp.history=roster.trainees[TRAINEE_ID].tp.history||{}; roster.trainees[TRAINEE_ID].tp.history[n]=cur; }
@@ -1662,16 +1662,16 @@ function renderTurnStatus(){
     el.innerHTML='Returned — '+fmtDate(rec.returnedAt)+'. <button class="btn btn-gold" type="button" id="reopenBtn">Reopen for edits</button>';
     el.classList.add('show');
     $('returnBtn').style.display='none';
-    /* Reopening takes the feedback back off the candidate: their record reads
+    /* Reopening takes the feedback back off the trainee: their record reads
        the status, so a draft is one they can no longer open. Every other
        action with a consequence on this side of the course asks first --
        turning in, returning, Start next TP, returning an assignment unmarked
        -- and this one went through on a single click, silently, possibly
        while they were part way through reading it (tutor walk, 22 Sep 2026).
-       It has already been returned once, so this is not a slip the candidate
+       It has already been returned once, so this is not a slip the trainee
        never saw. */
     $('reopenBtn').addEventListener('click',async function(){
-      if(!(await confirmModal('Reopening takes this feedback back: until you return it again, '+traineeLabel('the candidate')+' cannot open it, even if they have already read it. Continue?','Reopen for edits'))) return;
+      if(!(await confirmModal('Reopening takes this feedback back: until you return it again, '+traineeLabel('the trainee')+' cannot open it, even if they have already read it. Continue?','Reopen for edits'))) return;
       saveFeedbackRecord({status:'draft'});
       renderTurnStatus();
     });
@@ -1701,7 +1701,7 @@ function renderTurnStatus(){
        Assigning the whole state made every one of them undefined, and the rows
        are filtered on being non-empty, so the tutor saw a bare "Their
        self-evaluation" heading with nothing under it -- and the document the
-       candidate got back had an empty Self-evaluation page (tutor walk,
+       trainee got back had an empty Self-evaluation page (tutor walk,
        21 Sep 2026). The fallback reads a flat record, should any exist. */
     if(selfRec&&selfRec.state) DOC.self=selfRec.state.self||selfRec.state;
     showSeen(DOC); prefill(DOC);

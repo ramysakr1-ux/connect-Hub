@@ -9,7 +9,7 @@
    Cambridge's own words. */
 window.HUB_MAX_TP = 12;
 
-/* WHICH observation sheets a candidate turns in, and what Cambridge asks of
+/* WHICH observation sheets a trainee turns in, and what Cambridge asks of
    the set. Four screens each held the literal list
    ['filmed1'..'filmed4','live1','live2'], so a centre that imported a
    different split -- three filmed and three live, which is what 10.1 actually
@@ -18,8 +18,8 @@ window.HUB_MAX_TP = 12;
    The set now comes from the course's own wording, falling back to the
    shipped sheets.
 
-   11.2 lists six hours of observation among what candidates "are required
-   to" do to meet the course requirements. 10.1, in its own verbs: candidates are given six hours' directed
+   11.2 lists six hours of observation among what trainees "are required
+   to" do to meet the course requirements. 10.1, in its own verbs: trainees are given six hours' directed
    observation; "All six hours CAN be live observation, but a centre MAY
    choose to provide up to three hours of filmed lessons", and "three hours of
    live online or face-to-face observation MUST be provided by the centre".
@@ -39,7 +39,7 @@ window.hubObservationSet = function(){
 window.hubObservationHours = function(records){
   var set = window.hubObservationSet(), w = records || {};
   /* A sheet that declares its own length counts at that length when the
-     candidate has not written one over it -- the two live sheets are 90
+     trainee has not written one over it -- the two live sheets are 90
      minutes each. */
   var declared = {};
   (function(){
@@ -63,7 +63,7 @@ window.hubObservationHours = function(records){
   var complete = (f.turnedIn + l.turnedIn) >= set.all.length && set.all.length > 0;
   if (f.minutes > 180) notes.push('over three hours of filmed observation \u2014 10.1 lets a centre provide up to three');
   if (complete && l.minutes < 180) notes.push('under three hours of live observation \u2014 10.1: three hours of live online or face-to-face observation must be provided');
-  if (complete && total < 360) notes.push('under six hours in total \u2014 11.2: candidates are required to observe experienced teachers for a total of six hours');
+  if (complete && total < 360) notes.push('under six hours in total \u2014 11.2: trainees are required to observe experienced teachers for a total of six hours');
   return { filmed: f, live: l, totalMinutes: total, turnedIn: f.turnedIn + l.turnedIn, of: set.all.length, notes: notes };
 };
 
@@ -140,7 +140,7 @@ window.hubObservationHours = function(records){
      dictation bar are both position:fixed and both were printing into the
      corner of every document the TP loop produces -- the lesson plan, the
      self-evaluation, the teaching practice record and the assignment record,
-     which are exactly the pages that go into the candidate's portfolio and in
+     which are exactly the pages that go into the trainee's portfolio and in
      front of the assessor. Only screens 12 and 13 had thought to hide the pill
      (print sweep, 21 Sep 2026). Done once here so a new screen cannot forget. */
   if(!document.getElementById('hub-print-css')){
@@ -163,7 +163,7 @@ window.hubObservationHours = function(records){
      it into a container and hide nothing by hand. */
   /* Ramy, 28 Sep 2026: "they should be able to access all rooms and choose
      theirs." Everyone sees every room. A room's optional "For" group never
-     hides it: on a candidate's home (opts.group = their group) their group's
+     hides it: on a trainee's home (opts.group = their group) their group's
      rooms come first and say "your group"; on the tutor and assessor screens
      (opts.all) every button shows its group. Lite does not know which tutor
      is which -- one tutor key -- so tutors pick theirs like everyone else. */
@@ -211,7 +211,7 @@ window.hubObservationHours = function(records){
   };
   /* An initials tile for a person (Ramy, 28 Sep 2026: "should trainees have
      avatars as well, with their initials, like the tutors? perhaps a
-     different colour?"). Staff are teal, candidates sand with ink initials,
+     different colour?"). Staff are teal, trainees sand with ink initials,
      so the two read apart at a glance; the colour never follows the person. */
   window.hubInitials=function(name){ return String(name||'').trim().split(/\s+/).slice(0,2).map(function(w){ return w[0]||''; }).join('').toUpperCase(); };
   window.hubAvatar=function(name, kind){
@@ -370,7 +370,7 @@ window.hubScrollIntoView = function(el, block){
    refusal below rather than the working screen: before this, a trainee or an
    assessor who reached the centre's setup got the full editable form and a
    Save that said "Saved" while hub-sync quietly dropped the write (walk,
-   21 Sep 2026) -- and the tutor's feedback screen and the candidate's
+   21 Sep 2026) -- and the tutor's feedback screen and the trainee's
    submission form were still open to everyone (walk, 22 Sep 2026). */
 function hubRoomRefusal(title, who, mode){
   var back = mode === 'assessor'
@@ -415,7 +415,7 @@ window.hubCentreRoomOnly = function(){
    screen that is the tutors' to WRITE but the assessor's to READ. The grades
    report is the one: agreeing the final grades and filing them is the
    assessor's own job, and that page has always had a read-only mode built for
-   them -- it was this guard, added on 22 Sep 2026 to keep a candidate out,
+   them -- it was this guard, added on 22 Sep 2026 to keep a trainee out,
    that swept the assessor out with them. Read-only is enforced separately, by
    the page's own RO flag and by the store, which refuses every write from an
    assessor key. */
@@ -456,14 +456,14 @@ window.hubNotVolunteerRoom = function(){
     'Your own page has your classes, what your teachers have shared and your attendance.', 'volunteer');
 };
 
-/* The candidate's own writing screens. */
+/* The trainee's own writing screens. */
 window.hubTraineeRoomOnly = function(){
   var mode = window.HubMode;
   if (mode === 'trainee' || !mode) return false;
-  return hubRoomRefusal('This room belongs to the candidate',
+  return hubRoomRefusal('This room belongs to the trainee',
     mode === 'assessor'
-      ? 'Your link is read-only. Submitted work is in the candidate portfolios and the assignment records.'
-      : 'This is the candidate\u2019s own submission form. What they have submitted is on your marking screen.', mode);
+      ? 'Your link is read-only. Submitted work is in the trainee portfolios and the assignment records.'
+      : 'This is the trainee\u2019s own submission form. What they have submitted is on your marking screen.', mode);
 };
 
 /* The three writing screens (plan, self-evaluation, tutor feedback) put their
@@ -578,7 +578,7 @@ window.hubCopyButton = async function(btn, text){
 window.HUB_WORDING_KEY = 'connect_assignment_wording_v2';
 
 // Assignment 5 (the plagiarism reflection) is a centre sanction, not one of
-// the four: it exists for a candidate only once a tutor has set it after a
+// the four: it exists for a trainee only once a tutor has set it after a
 // plagiarism finding. Ramy, 20 Sep 2026: "I don't want assignment five to be
 // visible... can we have it out of the way somehow?" Nothing lists it until
 // then; a submission of it already on file counts as set.
@@ -591,7 +591,7 @@ window.a5InPlay = function(subs){
 // (screen 8 sets it). ABSENT MEANS RELEASED -- every course that existed before
 // the toggle keeps all four open, and holding one back is a deliberate act.
 // Assignment 5 is not covered here: it has its own gate, a5InPlay.
-/* A course link the candidates may see: off only when switched off. The
+/* A course link the trainees may see: off only when switched off. The
    timetable is never switched (Ramy: "they should see it anyway"). */
 window.hubLinkIsTimetable = function(l){ return /timetable/i.test(String((l && l.label) || '') + ' ' + String((l && l.card) || '')); };
 window.hubLinkShown = function(l){ return !!l && (window.hubLinkIsTimetable(l) || l.show !== false); };
@@ -634,7 +634,7 @@ window.hubApplyCentre = function(){
   document.querySelectorAll('.hub-centre-logo').forEach(function(slot){
     /* No logo: the slot GOES. It used to stay, a dashed box reading "Centre
        logo" -- an instruction addressed to the centre, sitting on the
-       candidate's own lesson plan, self-evaluation and teaching practice
+       trainee's own lesson plan, self-evaluation and teaching practice
        record, where it reads as a broken image (walk, 21 Sep 2026). The
        letterhead in the printed document has always simply left the logo out;
        the on-screen header now does the same. Course admin's own upload box is
@@ -669,7 +669,7 @@ if (!window.HubStore) { if (document.readyState === 'loading') document.addEvent
   function submissionHTML(a, snap){
     if (!snap) return '<p class="readonly">Nothing submitted.</p>';
     let out = '';
-    /* The materials link the candidate gave, first, so a marker or an assessor
+    /* The materials link the trainee gave, first, so a marker or an assessor
        reading the record can open what the writing refers to (24 Sep 2026). */
     var ml = (snap && snap.materialsLink || '').trim();
     if (ml) out += '<p style="margin:0 0 10px;"><a href="' + esc(ml) + '" target="_blank" rel="noopener" style="display:inline-block;font-size:0.78rem;font-weight:700;padding:5px 12px;border-radius:16px;background:oklch(37.5% 0.058 195);color:#fff;text-decoration:none;">Open the materials \u2197</a></p>';
@@ -705,7 +705,7 @@ if (!window.HubStore) { if (document.readyState === 'loading') document.addEvent
         const cm1 = commentsRound1[i]; const cm2 = hasRound2 ? commentsRound2[i] : '';
         /* The comment goes with the mark whatever the mark is. It used to print
            only under "Not met", so a tutor's comment on a criterion they HAD met
-           was stored, shown to the candidate on their own screen, and missing
+           was stored, shown to the trainee on their own screen, and missing
            from this record -- the one Handbook 12.1.1 puts in the portfolio the
            assessor reads (walk, 21 Sep 2026). The marking screen offers the box
            on every criterion regardless of the mark, so the tutor has no way to
@@ -780,7 +780,7 @@ window.hubStackTables = function(root){
       return ((c.textContent || '').trim().split('\n')[0] || '').trim();
     });
     /* A row of <th> IS a header, however few rows follow it -- which is how
-       the assessor pack's two tables say so, and they can have one candidate
+       the assessor pack's two tables say so, and they can have one trainee
        on them. Everything else has to earn it by having rows to spare, because
        the stored documents mark their header row with a background colour on
        plain <td>s and a label/value grid's first row is data. */
@@ -818,13 +818,13 @@ window.hubStackTables = function(root){
  * they are not about that centre.
  *
  * 1. A picker with more than two groups, each with its own count, and a group
- *    the candidate does not choose. C/17's Language Related Tasks analyses
+ *    the trainee does not choose. C/17's Language Related Tasks analyses
  *    FOUR items -- one grammar structure chosen from three, one functional
  *    exponent that is fixed for everyone, and two vocabulary items chosen from
  *    three. The picker was hard-wired to exactly two categories sharing one
  *    pickCount, so that assignment could not be written down.
  *
- * 2. Reference material the candidate reads and does not write in: the letter
+ * 2. Reference material the trainee reads and does not write in: the letter
  *    the items come from, the three texts, the class profile, the submission
  *    rules. A text section always rendered a textarea, with one exception
  *    keyed on the LABEL being "Before you start" -- so the only read-only block
@@ -850,7 +850,7 @@ window.hubPickerCats = function(s){
   });
 };
 
-/* What a candidate ends up with from a picker, in the groups' own order.
+/* What a trainee ends up with from a picker, in the groups' own order.
  * A fixed group contributes its options whether or not anything was clicked,
  * which is what makes "everyone analyses this one" expressible. */
 window.hubPickedItems = function(s, picked){
@@ -863,7 +863,7 @@ window.hubPickedItems = function(s, picked){
   return out;
 };
 
-/* Reference material, not a question. True for a section the candidate reads
+/* Reference material, not a question. True for a section the trainee reads
  * and does not write in. The "Before you start" label keeps working so that
  * every assignment written before this stays as it was. */
 window.hubIsReference = function(s){

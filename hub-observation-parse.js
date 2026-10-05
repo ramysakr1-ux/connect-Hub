@@ -40,7 +40,7 @@
        tick  -- a run of box-marked options ("Tick the one that fits best");
                 a plain line among them is a group label
        grid  -- a table whose first row is headings and whose other rows are
-                numbered and empty: the candidate fills the cells in
+                numbered and empty: the trainee fills the cells in
        set   -- a one-column table headed by a short line: label, prompts, one answer
        items -- a one-column table with no heading: one answer per row
      Any other table is read cell by cell as the lines it contains. */

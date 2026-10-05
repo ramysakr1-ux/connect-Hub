@@ -6,7 +6,7 @@
  * Not a load check (that is check-screens.mjs). This is the 22 Sep 2026
  * lifecycle walk, rebuilt as a script: an EMPTY store, three clean browser
  * sessions, and each step creating the conditions for the next -- the tutor
- * sets the course up, the candidate opens her invitation, turns work in, the
+ * sets the course up, the trainee opens her invitation, turns work in, the
  * tutor returns it, marks an assignment, gives an extension, the assessor
  * opens the pack. Everything crosses the store; nothing is planted in
  * localStorage by hand, so the sync paths are what is being tested.
@@ -50,7 +50,7 @@ function handle(p){
     case 'get': { const t = tr(p.token); if (!t) return REFUSE; return { ok: true, result: { data: t.records[p.kind] ?? null } }; }
     case 'put': { const t = tr(p.token); if (!t) return REFUSE; if (STORE.refuse && p.kind === STORE.refuse) return { ok: false, error: 'The store refused this write' };
       /* A record is one Sheets cell, and a cell holds 50,000 characters. Since
-         store version 19 (26 Sep 2026) a candidate's history is one row per
+         store version 19 (26 Sep 2026) a trainee's history is one row per
          TP: a put of the whole map is split, an entry not sent is kept, and
          every read assembles the map. Any other record over the cell is
          refused with a readable error. Before that the history was one cell,
@@ -172,7 +172,7 @@ await step('tutor: settings saved to the store (TR073, the two turn-in lines)', 
   must(s.centreNumber === 'TR073' && s.planDueNote && s.selfDueNote && s.courseName === 'C/18 2026', 'store settings: ' + JSON.stringify(s).slice(0, 200));
   return 'store has ' + Object.keys(s).length + ' settings';
 });
-await step('tutor: a candidate added; her link is the invitation', async () => {
+await step('tutor: a trainee added; her link is the invitation', async () => {
   // the roster lives on the second tab
   const tab = await T.p.$('text=Roster and links'); must(tab, 'no Roster tab'); await tab.click(); await settle(T.p, 500);
   await T.p.click('#toggleAdd'); await settle(T.p, 400);
@@ -342,12 +342,12 @@ await step('trainee: her record opens the returned feedback, read-only, landscap
 
 /* ===== TWO MORE TPs, SAME CANDIDATE, SAME TUTOR BROWSER =====
    Found 26 Sep 2026 under the demo mint, against the live store: TP2 returned
-   to a candidate who already had TP1, and the store ended up holding
+   to a trainee who already had TP1, and the store ended up holding
    feedback:null (she had started TP3) and tpHistory:{1}. Returning writes the
    feedback AND files the TP into the roster's history, both through the 600 ms
    debounce; leave the page first and the beacon carries them, and a beacon
    with a ~100 KB document fails silently. Neither harness had ever returned
-   two TPs to one candidate from one tutor browser, so nothing caught it.
+   two TPs to one trainee from one tutor browser, so nothing caught it.
    These steps do, and they test the two halves of the fix separately: Return
    may not say "Returned" until the store has the document; and a tutor's boot
    keeps a filed document the store lacks and sends it, the way the trainee's
@@ -382,7 +382,7 @@ async function traineeStartsNextTP(filedTP){
   must(h[filedTP] && h[filedTP].docHTML, 'TP' + filedTP + ' not in the store history: {' + Object.keys(h) + '}');
   return Object.keys(h);
 }
-// The tutor's feedback screen for the candidate's current TP, filled and ready to return.
+// The tutor's feedback screen for the trainee's current TP, filled and ready to return.
 async function tutorFills(tp, strength){
   await T.p.goto(`${tutorUrl('3_tutor_feedback.html')}&trainee=${amaraToken}`, { waitUntil: 'domcontentloaded' }); await settle(T.p, 3000);
   const reads = await T.p.$eval('#fTP', n => n.value);
@@ -471,7 +471,7 @@ await step('tutor: TP2 re-returned while the store refuses the filing, given up 
 });
 /* ===== A TP the size of a real one, into a history that already holds one ===== */
 await step('store: a live-sized TP files into a history that already holds one, its own row', async () => {
-  /* A candidate's whole history used to be ONE record, one Sheets cell,
+  /* A trainee's whole history used to be ONE record, one Sheets cell,
      50,000 characters; a returned TP on the live demo course is 25-35 KB, so
      the second TP was refused every time -- feedback on the store, history
      still {1} -- and the refused put sat in the ledger holding every later
@@ -500,7 +500,7 @@ await step('trainee: Start next TP files TP2; the desk is clear', async () => {
    WHOLE roster alone because one record in it was pending. A fresh browser
    boots clean, which is why no walk had seen it. */
 let boraToken = '';
-await step('tutor: a second candidate; her feedback draft is one the store keeps failing to take', async () => {
+await step('tutor: a second trainee; her feedback draft is one the store keeps failing to take', async () => {
   // Planted in the STORE, as the course admin would add her: the sync path is the thing under test.
   boraToken = 'tbora' + Math.random().toString(36).slice(2, 8);
   STORE.trainees[boraToken] = { token: boraToken, name: 'Bora Demir', group: '', created: Date.now(), records: {} };
@@ -523,7 +523,7 @@ await step('tutor: her screen in the same browser opens on TP3, unlocked, with t
   must(reads === 'TP3', '#fTP reads ' + JSON.stringify(reads) + ', not TP3');
   must(!(await T.p.$eval('#fGrade', n => n.disabled)), 'the board is locked');
   const local = await T.p.evaluate(t => { const r = JSON.parse(localStorage.getItem('connect_roster_v1')); return ((r.trainees[t].tp || {}).feedback || {}).state; }, boraToken);
-  must(local && JSON.stringify(local).includes('A first note'), 'the boot threw away the other candidate\'s pending draft');
+  must(local && JSON.stringify(local).includes('A first note'), 'the boot threw away the other trainee\'s pending draft');
   const ledger = await T.p.evaluate(k => Object.keys(JSON.parse(localStorage.getItem('hub:pending:tutor:' + k) || '{}')), STORE.key);
   must(ledger.includes('r:' + boraToken + ':feedback'), 'her draft left the ledger: ' + ledger);
   // The store takes it again; the next page sends it and nothing is left pending.
@@ -644,15 +644,15 @@ await step('tutor: the tracker shows her, with the assignment states', async () 
 await step('tutor: a grade saved to the store', async () => {
   await T.p.goto(tutorUrl('13_grades_report.html'), { waitUntil: 'domcontentloaded' }); await settle(T.p, 3000);
   /* The Classroom shape (25 Sep 2026): the cohort in two tables at the top,
-     every candidate down the page. A grade chosen in the cohort table must
-     show on the candidate's own row, and the other way round. */
+     every trainee down the page. A grade chosen in the cohort table must
+     show on the trainee's own row, and the other way round. */
   const inTable = await T.p.$('.cohort select.grade[data-grade="final"]'); must(inTable, 'no final-grade select in the cohort table');
   await inTable.selectOption('PASS'); await settle(T.p, 300);
   const onRow = await T.p.$eval('.cand .grow.final select.grade', el => el.value);
-  must(onRow === 'PASS', 'the candidate row did not follow the cohort table: ' + onRow);
+  must(onRow === 'PASS', 'the trainee row did not follow the cohort table: ' + onRow);
   await T.p.selectOption('.cand .grow select.grade[data-grade="provisional"]', 'PASS / PASS B'); await settle(T.p, 300);
   const inTable2 = await T.p.$eval('.cohort select.grade[data-grade="provisional"]', el => el.value);
-  must(inTable2 === 'PASS / PASS B', 'the cohort table did not follow the candidate row: ' + inTable2);
+  must(inTable2 === 'PASS / PASS B', 'the cohort table did not follow the trainee row: ' + inTable2);
   // a strength, with its criterion code, and the section's copy button
   await T.p.click('.cand [data-sec="teachS"] [data-add]'); await settle(T.p, 300);
   await T.p.fill('.cand [data-sec="teachS"] .pt textarea', 'Establishes good rapport with the group from the outset');
@@ -705,7 +705,7 @@ await step('assessor: the invitation card, then the pack, from a clean browser',
   must(/Amara/.test(pk), 'pack does not list her'); must(/C\/18 2026/.test(pk), 'pack has no course name');
   must((await S.p.$$('textarea, input:not([type=hidden]):not([type=checkbox])')).length <= 2, 'assessor pack has editable fields');
 });
-await step('assessor: the final report opens from the pack; the candidate is refused', async () => {
+await step('assessor: the final report opens from the pack; the trainee is refused', async () => {
   await S.p.goto(`${BASE}12_assessor_pack.html?ak=${STORE.akey}`, { waitUntil: 'domcontentloaded' }); await settle(S.p, 3000);
   /* the pack is doors since 27 Sep 2026: the grades report is one of them,
      and the final report opens from there */
@@ -715,8 +715,8 @@ await step('assessor: the final report opens from the pack; the candidate is ref
   must(/This is to confirm that\s+Amara Nwosu/.test(await text(S.p)), 'the assessor could not open the report');
   await A.p.goto(`${BASE}16_final_report.html?id=${encodeURIComponent(amaraToken)}&t=${amaraToken}`, { waitUntil: 'domcontentloaded' }); await settle(A.p, 2500);
   const t = await text(A.p);
-  must(!/This is to confirm/.test(t), 'a candidate could open her own final report before release');
-  return 'assessor in, candidate refused';
+  must(!/This is to confirm/.test(t), 'a trainee could open her own final report before release');
+  return 'assessor in, trainee refused';
 });
 await step('assessor: the tutor room refuses', async () => {
   await S.p.goto(`${BASE}3_tutor_feedback.html?ak=${STORE.akey}`, { waitUntil: 'domcontentloaded' }); await settle(S.p, 2000);

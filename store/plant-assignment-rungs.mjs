@@ -1,4 +1,4 @@
-// The one rung of the assignment cycle no demo course holds: a candidate
+// The one rung of the assignment cycle no demo course holds: a trainee
 // sitting at "Resubmission needed", their tutor's per-criterion comments in
 // front of them and one attempt left.
 //
@@ -17,7 +17,7 @@
 //
 // -- and the film reads them where they are, writing nothing. The gap is the
 // middle of the story: nobody is at resubmission_needed, which is the rung
-// that shows a candidate what their tutor asked them to fix. That one is
+// that shows a trainee what their tutor asked them to fix. That one is
 // planted HERE, on the scratch course, because the scratch course is the one
 // course a take is allowed to write to (see scratch-course.mjs) and the demo
 // courses are what a prospect is sent.
@@ -73,7 +73,7 @@ if (KEEP.has(scratch.id)) { console.error('refusing to touch ' + scratch.id); pr
    course, so a film playing in order would show the same name on two courses
    at two different points of the same assignment. The keeper is deliberately
    none of the twelve (see scratch-course.mjs), so she is the same person
-   whether the course holds one candidate or thirteen. */
+   whether the course holds one trainee or thirteen. */
 const WHO = 'Marta Kowalczyk';
 const roster = await call({ op: 'roster', key: scratch.tutorKey });
 let people = (roster.result && roster.result.trainees) || [];
@@ -90,7 +90,7 @@ if (!who) {
 }
 
 console.log(`${NAME}  (${scratch.id})`);
-console.log(`  candidate: ${who.name}   (${people.length} on the course)`);
+console.log(`  trainee: ${who.name}   (${people.length} on the course)`);
 
 const existing = (who.records && who.records.assignments) || null;
 const inner = existing && (existing.data || existing);
@@ -146,7 +146,7 @@ if (marks.length < 2) { console.error('the source record has no first-round mark
 /* Sized against the wording this record will be READ against, not the one it
    was written against. The source course's fol had four criteria; the wording
    on the scratch course has six, and a mark sheet two criteria short shows a
-   candidate "Resubmission needed" with two of them never judged. Anything the
+   trainee "Resubmission needed" with two of them never judged. Anything the
    source does not cover is met -- only the flagged ones are turned down. */
 const readAgainst = await call({ op: 'course', key: scratch.tutorKey });
 const critCount = ((((readAgainst.result || {}).wording || {})[SOURCE.key] || {}).criteria || []).length;
@@ -154,10 +154,10 @@ if (!critCount) { console.error(`the scratch course's ${SOURCE.key} has no crite
 const rewound = [];
 for (let i = 0; i < critCount; i++) rewound[i] = marks[i] === false ? false : true;
 /* A resubmission is asked for because something was NOT met -- and the whole
-   point of this screen is that the candidate can read WHY. So the two turned
+   point of this screen is that the trainee can read WHY. So the two turned
    down are the last two that carry the tutor's comment, not simply the last
    two: turning down a criterion the source never wrote about would show a
-   candidate "Not met" and nothing to do about it. */
+   trainee "Not met" and nothing to do about it. */
 const srcComments = ((sub.criteriaComments || {}).sub1 || []);
 const commented = [];
 for (let i = 0; i < critCount; i++) if ((srcComments[i] || '').trim()) commented.push(i);

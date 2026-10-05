@@ -5,7 +5,7 @@
 //   node store/repair-course-wording.mjs c4 --write
 //
 // WHAT WENT WRONG. demo-finished.mjs built the finished demo course with
-// twelve candidates, four closed assignments each, and NO assignment wording
+// twelve trainees, four closed assignments each, and NO assignment wording
 // behind them -- its stubbed store answered `course()` with `wording: null` and
 // it never wrote one. So every assignment screen on that course read "This
 // assignment isn't set up yet", and the self-heal that fills a course's wording
@@ -135,7 +135,7 @@ if (!NEEDS_WORDING) console.log(`  wording is already there (${wordingN[0]} assi
 
 const roster = await call({ op: 'roster', key: course.tutorKey });
 const people = (roster.result && roster.result.trainees) || [];
-if (!people.length) { console.error('no candidates on ' + courseId); process.exit(1); }
+if (!people.length) { console.error('no trainees on ' + courseId); process.exit(1); }
 
 /* What each record would become. */
 function repair(inner) {
@@ -208,7 +208,7 @@ for (const p of people) {
 }
 
 if (!WRITE) {
-  console.log(`\nRead only. ${planned} change${planned === 1 ? '' : 's'} to make across ${work.length} candidates, plus the wording itself.`);
+  console.log(`\nRead only. ${planned} change${planned === 1 ? '' : 's'} to make across ${work.length} trainees, plus the wording itself.`);
   console.log('Add --write to do it.\n');
   process.exit(0);
 }

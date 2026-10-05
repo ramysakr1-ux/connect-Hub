@@ -1,6 +1,6 @@
 /**
  * Prove a record too big for one cell survives the round trip -- against the
- * LIVE store, on the demo course c3 only, with a candidate added for the run
+ * LIVE store, on the demo course c3 only, with a trainee added for the run
  * and purged after it.
  *
  *   node store/verify-chunks.mjs
@@ -24,7 +24,7 @@ const oc = await call({ op: 'ownerCourses', owner: OWNER });
 const c3 = (oc.result.courses || []).find(c => c.id === 'c3');
 if (!c3) { console.log('no course c3'); process.exit(1); }
 const added = await call({ op: 'addTrainee', key: c3.tutorKey, name: 'Chunk Probe', group: '9' });
-if (!added.ok) { console.log('could not add the probe candidate: ' + added.error); process.exit(1); }
+if (!added.ok) { console.log('could not add the probe trainee: ' + added.error); process.exit(1); }
 const token = added.result.token;
 /* beforeExit fires again after the await inside it resolves, so this has to
    latch: without the flag it purges once and then retries for ever. */
@@ -33,7 +33,7 @@ process.on('beforeExit', async () => {
   if (cleaned || process.env.KEEP) return;
   cleaned = true;
   const p = await call({ op: 'purgeTrainee', key: c3.tutorKey, token });
-  console.log(p.ok ? 'probe candidate purged' : 'purge failed: ' + p.error);
+  console.log(p.ok ? 'probe trainee purged' : 'purge failed: ' + p.error);
 });
 
 const big = { docHTML: '<h1>x</h1>' + 'y'.repeat(120000), state: { f: { fTP: 'TP1' } } };

@@ -6,7 +6,7 @@
  *   node demo-clear.mjs --demos         delete every course named "CELTA — demo course"
  *
  * Deleting a course kills its tutor link, its assessor link and every
- * candidate link at once. That is what "the demo expires" means in Lite:
+ * trainee link at once. That is what "the demo expires" means in Lite:
  * there is no per-link expiry to set, and a course you delete is the same
  * thing arrived at without new machinery.
  *

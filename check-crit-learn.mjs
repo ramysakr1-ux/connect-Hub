@@ -98,7 +98,7 @@ ok(cold.every(x => x.learned === 0), 'no learned part in any suggestion');
 ok(cold.some(x => x.code === '2a'), 'it offers 2a, which is the miss this exists to fix: ' + cold.map(x => x.code).join(', '));
 ok(!cold.some(x => x.code === '1d'), 'and it does not reach 1d on its own');
 
-console.log('\n2. a tutor tags it 1d, four times, on four candidates');
+console.log('\n2. a tutor tags it 1d, four times, on four trainees');
 await teach([
   { text: RAPPORT, codes: ['1d'], suggested: ['2a'] },
   { text: 'Warm and encouraging from the start; every learner was spoken to by name', codes: ['1d'], suggested: ['2a'] },

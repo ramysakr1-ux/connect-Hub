@@ -1,7 +1,7 @@
-// The malpractice assignment (a5) told a candidate to quote "the Cambridge AI
-// guidance" and a "candidate agreement", and said both were "in the resource
+// The malpractice assignment (a5) told a trainee to quote "the Cambridge AI
+// guidance" and a "trainee agreement", and said both were "in the resource
 // hub". No Cambridge document of that name exists in the centre's folder, and
-// Lite has no resource hub -- so the brief sent a candidate to look for two
+// Lite has no resource hub -- so the brief sent a trainee to look for two
 // documents nobody could hand them, in a place that is not there. Found in the
 // compliance audit, 29 Sep 2026; Ramy: "remove that AI sentence and keep the
 // centre policy one."
@@ -45,8 +45,8 @@ const call = async (body) => {
 
 /* The sentence to go, and the marking criterion that asked for it. A criterion
    that still asks for "Cambridge guidance" after the brief stops asking would
-   mark a candidate down for leaving out what they were never told to put in. */
-const OLD_BODY = 'Quote the relevant line from the Cambridge AI guidance and the candidate agreement you accepted when you set up your account.\nBoth documents are in the resource hub. You have already signed one of them.';
+   mark a trainee down for leaving out what they were never told to put in. */
+const OLD_BODY = 'Quote the relevant line from the Cambridge AI guidance and the trainee agreement you accepted when you set up your account.\nBoth documents are in the resource hub. You have already signed one of them.';
 const NEW_BODY = 'If you are not sure which clause, ask — the policy is the centre’s to hand you, and quoting the wrong line is not what this section is testing.';
 const OLD_CRIT = 'Quotes the specific centre policy and Cambridge guidance clause breached, and explains why it applies here.';
 const NEW_CRIT = 'Quotes the specific centre policy clause breached, and explains why it applies here.';

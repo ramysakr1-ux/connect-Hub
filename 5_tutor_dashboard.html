@@ -23,7 +23,7 @@
 <title>Connect Lite — Tutor dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610051144">
+<link rel="stylesheet" href="hub-tokens.css?v=202610051229">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -220,7 +220,7 @@
     .grow .st.obs::before{content:'Observations · '; color:var(--grey); font-weight:400;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610051144">
+<link rel="stylesheet" href="hub-house.css?v=202610051229">
 </head>
 <body>
 <div class="board">
@@ -265,7 +265,7 @@
       <a class="btn" href="23_timetable.html">Timetable</a>
       <a class="btn" id="timetableDoor" href="#" hidden target="_blank" rel="noopener noreferrer">The centre’s timetable</a>
       <a class="btn" id="inputDoor" href="#" hidden target="_blank" rel="noopener noreferrer">Input sessions</a>
-      <a class="btn" href="7_candidate_tracker.html">Candidate tracker</a>
+      <a class="btn" href="7_candidate_tracker.html">Trainee tracker</a>
       <!-- Ramy, 28 Sep 2026: the not-daily doors "don't belong at the
            bottom of the page… I just can't think where they should live."
            One more door, and it is a menu: the four things that belong to
@@ -309,22 +309,22 @@
 
 </div>
 
-<script src="hub-due.js?v=202610051144"></script>
-<script src="observation-defaults.js?v=202610051144"></script>
-<script src="hub-shared.js?v=202610051144"></script>
-<script src="hub-store.js?v=202610051144"></script>
+<script src="hub-due.js?v=202610051229"></script>
+<script src="observation-defaults.js?v=202610051229"></script>
+<script src="hub-shared.js?v=202610051229"></script>
+<script src="hub-store.js?v=202610051229"></script>
 <script src="hub-shelf.js?v=202610021600"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202610051144"></script>
-<script src="hub-sync.js?v=202610051144"></script>
-<script src="hub-tracker.js?v=202610051144"></script>
+<script src="assignment-defaults.js?v=202610051229"></script>
+<script src="hub-sync.js?v=202610051229"></script>
+<script src="hub-tracker.js?v=202610051229"></script>
 <script src="hub-feedback.js?v=202610011353"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
-   screens link here, but a candidate's link opened it and read the course and
+   screens link here, but a trainee's link opened it and read the course and
    centre off the header (walk, 22 Sep 2026). */
 if (window.hubTutorRoomOnly && hubTutorRoomOnly())
   throw new Error('Connect Lite: stopping this page on purpose \u2014 the tutors\u2019 room is not open to this link.');
@@ -345,7 +345,7 @@ function loadRoster(){ try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) 
 function saveRoster(r){ localStorage.setItem(ROSTER_KEY, JSON.stringify(r)); }
 
 /* Only a state that needs the tutor is coloured. Amber = waiting on you.
-   Brick = back with the candidate. Everything else is grey. */
+   Brick = back with the trainee. Everything else is grey. */
 function tpState(tr){
   const fb=tr.tp&&tr.tp.feedback, plan=tr.tp&&tr.tp.plan, self=tr.tp&&tr.tp.selfeval;
   if (fb && fb.status==='returned') return {label:'Returned', tone:'', act:false};
@@ -370,12 +370,12 @@ let TAB='tp', FILTER=null;
 function people(){
   return Object.values(loadRoster().trainees||{}).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
 }
-/* Which TP a candidate is on, for the middle column.
+/* Which TP a trainee is on, for the middle column.
    This used to demand the literal text "TP" followed by a digit. The field
    behind it, fTP on screen 3, is free text with "e.g. TP4" only as a
    placeholder, and everywhere else in Lite it is read by pulling the NUMBER out
    of whatever was typed -- hub-tracker's own tpNumberOf strips non-digits. So a
-   candidate whose tutor typed "4" showed an em dash here while the same record
+   trainee whose tutor typed "4" showed an em dash here while the same record
    read as TP4 on the tracker and on their own home page. Found walking the
    tutor role, 21 Sep 2026.
    First number wins, not every digit concatenated: a label like "TP4 · Unit 12"
@@ -427,14 +427,14 @@ function paintQueue(){
   const stuck=aRows.filter(r=>r.stage==='resubmission_needed'||r.stage==='returned_unmarked').length;
   /* Red is what the tutor has to do (Ramy, 28 Sep 2026): feedback to write
      and marking to do go garnet when there is any. An assignment back with a
-     candidate is theirs to do, so it is a small line in the wait tone. The
+     trainee is theirs to do, so it is a small line in the wait tone. The
      head count is never coloured. One of anything is not "1 assignments". */
   const card=(tab,title,n,one,many,tone,sub)=>`<button type="button" class="qcard ${TAB===tab?'on':''} ${n===0?'zero':''} ${tone&&n>0?tone:''}" data-tab="${tab}">
     <div class="t">${title}</div><div class="n">${n}</div><div class="l">${n===1?one:many}</div>${sub||''}</button>`;
   document.getElementById('queue').innerHTML =
     card('tp','Teaching practice',tpWaiting,'lesson ready for your feedback','lessons ready for your feedback','stuck') +
     card('assignments','Assignments',aWaiting,'waiting to be marked','waiting to be marked','stuck',
-      stuck ? `<div class="sub wait">${stuck} back with ${stuck===1?'a candidate':'candidates'}</div>` : '') +
+      stuck ? `<div class="sub wait">${stuck} back with ${stuck===1?'a trainee':'trainees'}</div>` : '') +
     card('trainees','Trainees',list.length,'on the course','on the course','');
 }
 
@@ -461,7 +461,7 @@ function paintCourseMenu(){
   paintCourseMenu();
 })();
 /* Rows under their TP group (Ramy, 28 Sep 2026: "they should be
-   categorised based on their TP groups"). Groups in order, a candidate
+   categorised based on their TP groups"). Groups in order, a trainee
    with no group last under its own heading; inside a group the order the
    caller chose, so what needs the tutor still comes first. */
 function byGroup(rows, of){
@@ -470,7 +470,7 @@ function byGroup(rows, of){
   return [...groups.entries()].sort((a, b) => (a[0] === '') - (b[0] === '') || a[0].localeCompare(b[0], undefined, { numeric: true }));
 }
 function groupHead(g, n){
-  return `<div class="grouphead"><b>${g ? 'Group ' + esc(g) : 'No group yet'}</b><span>${n} candidate${n === 1 ? '' : 's'}</span></div>`;
+  return `<div class="grouphead"><b>${g ? 'Group ' + esc(g) : 'No group yet'}</b><span>${n} trainee${n === 1 ? '' : 's'}</span></div>`;
 }
 function row(cols, cells){
   return `<div class="grid grow" style="grid-template-columns:${cols}">${cells}</div>`;
@@ -507,11 +507,11 @@ function paintRows(){
     /* Ramy, 28 Sep 2026: "categorised based on assignment: I click on FOL
        and inside it opens the two TP groups... tutors mark their own group
        and double marking should be easier." Four sections in the centre's
-       order, each a door; inside, the TP groups with EVERY candidate --
+       order, each a door; inside, the TP groups with EVERY trainee --
        the ones who have not submitted in grey, because those are the ones
        a tutor is looking for. Waiting-to-mark first within a group. A
        held-back assignment has no section: the list shows only what the
-       candidates can see. The open section is remembered in this browser. */
+       trainees can see. The open section is remembered in this browser. */
     const cols='1.5fr 1.3fr auto';
     let wording=null; try{ wording=JSON.parse(localStorage.getItem('connect_assignment_wording_v2')); }catch(e){}
     const keys=hubAssignmentOrder(wording).filter(k=>k!=='a5' && hubReleased(wording,k));
@@ -530,7 +530,7 @@ function paintRows(){
     const section=key=>{
       const rows=list.map(tr=>Object.assign({tr,key},stateOf(tr,key)));
       const waiting=rows.filter(r=>r.s.act).length, back=rows.filter(r=>r.stage==='resubmission_needed'||r.stage==='returned_unmarked').length, closed=rows.filter(r=>r.stage==='closed').length, none=rows.filter(r=>r.stage==='none').length;
-      const bits=[waiting?`<b class="brick">${waiting} waiting to be marked</b>`:'', back?`${back} back with ${back===1?'a candidate':'candidates'}`:'', closed?`${closed} closed`:'', none?`${none} not submitted`:''].filter(Boolean).join(' · ');
+      const bits=[waiting?`<b class="brick">${waiting} waiting to be marked</b>`:'', back?`${back} back with ${back===1?'a trainee':'trainees'}`:'', closed?`${closed} closed`:'', none?`${none} not submitted`:''].filter(Boolean).join(' · ');
       const isOpen=key===open;
       const body=!isOpen?'':byGroup(rows.sort((a,b)=>rank(a)-rank(b)), r=>r.tr.group).map(([g,rs])=>groupHead(g, rs.length)+rs.map(r=>{
         const closedOne=r.stage==='closed';
@@ -541,7 +541,7 @@ function paintRows(){
       }).join('')).join('');
       return `<div class="asec${isOpen?' open':''}"><button type="button" class="ahead" data-asg="${key}"><span class="code">${esc(ASSIGN_NAMES[key]||key)}</span><span class="full">${esc((ASSIGN_FULL[key]||key).replace(/^[A-Z0-9]+ — /,''))}</span><span class="bits">${bits}</span><span class="caret">${isOpen?'&#9662;':'&#9656;'}</span></button>${isOpen?`<div class="abody"><div class="grid ghead" style="grid-template-columns:${cols}"><div>Trainee</div><div>Status</div><div></div></div>${body}</div>`:''}</div>`;
     };
-    host.innerHTML = (keys.length ? keys.map(section).join('') : '<div class="empty">No assignments are switched on for the candidates yet.</div>')
+    host.innerHTML = (keys.length ? keys.map(section).join('') : '<div class="empty">No assignments are switched on for the trainees yet.</div>')
       + (a5Rows.length ? `<div class="asec open"><div class="ahead" style="cursor:default"><span class="code">A5</span><span class="full">Plagiarism Reflection</span><span class="bits">${a5Rows.length} set</span></div><div class="abody">${a5Rows.map(({tr,key,stage,s})=>row(cols,`<div class="nm">${hubAvatar(tr.name)}${esc(tr.name)}</div><div class="st ${s.tone}">${esc(s.label)}</div>${action(s.act?'Mark':stage==='closed'?'Open the record':'Open', s.act, (stage==='closed'?'11_assignment_record.html':'10_tutor_assignment_marking.html')+'?trainee='+encodeURIComponent(tr.id)+'&a=a5')}`)).join('')}</div></div>` : '');
     host.querySelectorAll('[data-asg]').forEach(b=>b.addEventListener('click',()=>{ try{ localStorage.setItem('chub:asgOpen', b.dataset.asg===open?'none':b.dataset.asg); }catch(e){} paintRows(); }));
     return;
@@ -591,7 +591,7 @@ function setupState(){
 function paintSetup(s){
   document.getElementById('queue').style.display = 'none';
   document.getElementById('queue').style.display = 'none';
-  /* Candidate tracker, Grades report and Course admin are three doors into
+  /* Trainee tracker, Grades report and Course admin are three doors into
      rooms with nothing in them yet (Ramy, 21 Sep 2026: "it should not have
      those on top, on the right"). The panel's own button is the one door
      worth opening today, so the row goes until there is a course to look at. */
@@ -647,18 +647,18 @@ try{
   if (cs){
     if (cs.courseName) document.getElementById('courseName').textContent = cs.courseName;
     if (window.hubOnlineRoomsHTML) document.getElementById('onlineRooms').innerHTML = hubOnlineRoomsHTML(cs, { all: true });
-    /* The timetable door: the centre's own link from Files for candidates,
+    /* The timetable door: the centre's own link from Files for trainees,
        found by its name; the button stays hidden when there is none. */
     const tt = (cs.courseLinks || []).find(l => l && l.url && hubLinkIsTimetable(l));
     const ttDoor = document.getElementById('timetableDoor'); if (tt && ttDoor) { ttDoor.href = tt.url; ttDoor.hidden = false; }
     /* Input sessions the same way: the first link filed under that card, or
-       named so -- the card itself lists the rest on the candidates' home. */
+       named so -- the card itself lists the rest on the trainees' home. */
     const inp = (cs.courseLinks || []).find(l => l && /input session/i.test((l.label || '') + ' ' + (l.card || '')));
     const inDoor = document.getElementById('inputDoor'); if (inp && inDoor) { inDoor.href = '6_centre_admin_dashboard.html#candLinks'; inDoor.removeAttribute('target'); inDoor.hidden = false; }
     const fmt=d=>{ try{ return new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}); }catch(e){ return d; } };
     const bits=[cs.centreName, cs.centreNumber].filter(Boolean);
     if (cs.start && cs.end) bits.push(fmt(cs.start)+' – '+fmt(cs.end));
-    const n=people().length; if (n) bits.push(n+' candidate'+(n===1?'':'s'));
+    const n=people().length; if (n) bits.push(n+' trainee'+(n===1?'':'s'));
     if (bits.length) document.getElementById('courseMeta').textContent = bits.join(' · ');
   }
 }catch(e){}
@@ -706,10 +706,10 @@ nameInput.addEventListener('input', ()=>localStorage.setItem('chub:tutorName', n
     const gs = groups(); const last = localStorage.getItem('chub:streamTo') || '';
     host.innerHTML = `<div class="shead"><h2>Course stream</h2><span class="new">${e(note)}</span>${posts.length > 5 ? `<button class="more" type="button">${showAll ? 'Fewer' : 'Older posts (' + (posts.length - 5) + ')'}</button>` : ''}</div>`
       + `<div class="compose"><div class="row"><span class="who" aria-hidden="true">${e(initials(nameInput.value))}</span><textarea id="streamText" placeholder="Tell the course something — a room change, a deadline, where to find a file. Links become clickable."></textarea></div>
-         ${pending ? (() => { const a = audience(pending.to); return `<div class="check" role="alert"><div class="ttl">Are you sure?</div><div class="msg">This post is going to <b>${e(a.name)}</b> — ${a.n} candidate${a.n === 1 ? '' : 's'}${pending.to ? '' : ', every group'}. They will see it on their home the moment you post.${pending.due && window.HubDue ? ` It counts down to <b>${e(HubDue.state(pending.due).due)}</b> and stays at the top of their stream until then.` : ''}</div><div class="acts"><button class="btn-back" type="button" id="streamBack">Cancel</button><button class="btn-post primary" type="button" id="streamConfirm"${busy ? ' disabled' : ''}>Post anyway</button></div></div>`; })() : ''}
+         ${pending ? (() => { const a = audience(pending.to); return `<div class="check" role="alert"><div class="ttl">Are you sure?</div><div class="msg">This post is going to <b>${e(a.name)}</b> — ${a.n} trainee${a.n === 1 ? '' : 's'}${pending.to ? '' : ', every group'}. They will see it on their home the moment you post.${pending.due && window.HubDue ? ` It counts down to <b>${e(HubDue.state(pending.due).due)}</b> and stays at the top of their stream until then.` : ''}</div><div class="acts"><button class="btn-back" type="button" id="streamBack">Cancel</button><button class="btn-post primary" type="button" id="streamConfirm"${busy ? ' disabled' : ''}>Post anyway</button></div></div>`; })() : ''}
          <div class="bar"${pending ? ' hidden' : ''}><div class="house-sel"><select id="streamTo"><option value="">The whole course</option>${gs.map(g => `<option value="${e(g)}"${g === last ? ' selected' : ''}>Group ${e(g)}</option>`).join('')}</select></div><label class="bywhen">By when <input type="datetime-local" id="streamDue" title="Optional — a date the post counts down to"></label><span class="hint">The whole course is the main course tutor’s; a group is its tutor’s.</span><button class="btn-post primary" type="button" id="streamPost"${busy ? ' disabled' : ''}>Post</button></div></div>`
       + list.map(p => `<article class="post" data-id="${e(p.id)}"><span class="who" aria-hidden="true">${e(initials(p.by))}</span><div><div class="top"><b>${e(p.by || 'Tutor')}</b><span class="to">${p.to ? 'Group ' + e(p.to) : 'Whole course'}</span><span>${e(when(p.at))}</span>${duePill(p)}<button class="rm" type="button" data-rm="${e(p.id)}" title="Delete this post">Delete</button></div><p class="body">${linkify(p.text)}</p></div></article>`).join('')
-      + (posts.length ? '' : '<p class="empty">Nothing posted yet. The candidates see this stream on their home.</p>');
+      + (posts.length ? '' : '<p class="empty">Nothing posted yet. The trainees see this stream on their home.</p>');
     const m = host.querySelector('.more'); if (m) m.addEventListener('click', () => { showAll = !showAll; draw(); });
     if (pending) { host.querySelector('#streamText').value = pending.text; host.querySelector('#streamText').readOnly = true; }
     host.querySelector('#streamPost').addEventListener('click', post);

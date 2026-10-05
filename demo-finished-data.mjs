@@ -32,10 +32,10 @@ export const COURSE = {
     tutorNames: 'Jordan Blake, Diane Okonkwo',
     planDueNote: '', selfDueNote: '', docs: {}, logo: LOGO,
     gradeForm: {
-      tp: 'Twelve candidates in two teaching practice groups of six; each candidate taught eight assessed lessons of forty-five minutes, four at A2 in the first half of the course and four at B1 in the second. Levels swapped after TP4. Each group had one tutor for its first four lessons and the other for its last four, so every candidate was observed by both.',
-      tpSup: 'Every lesson was followed by a feedback session of forty-five minutes with the observing tutor and the TP group. Written feedback was returned to the candidate the same day through Connect Lite, with strengths and action points in planning and in teaching, a comment on each stage of the plan, and a comment on the self-evaluation.',
-      tutorials: 'Two tutorials for each candidate, at the end of week two and the end of week three, each recorded on the candidate’s tracker with the standing at that point and the action points agreed.',
-      extra: 'One candidate did not meet the standard in teaching and the assessment areas are reported accordingly. Two candidates passed a written assignment on resubmission; one had an agreed extension on the second assignment for documented personal reasons. No other matters to report.',
+      tp: 'Twelve trainees in two teaching practice groups of six; each trainee taught eight assessed lessons of forty-five minutes, four at A2 in the first half of the course and four at B1 in the second. Levels swapped after TP4. Each group had one tutor for its first four lessons and the other for its last four, so every trainee was observed by both.',
+      tpSup: 'Every lesson was followed by a feedback session of forty-five minutes with the observing tutor and the TP group. Written feedback was returned to the trainee the same day through Connect Lite, with strengths and action points in planning and in teaching, a comment on each stage of the plan, and a comment on the self-evaluation.',
+      tutorials: 'Two tutorials for each trainee, at the end of week two and the end of week three, each recorded on the trainee’s tracker with the standing at that point and the action points agreed.',
+      extra: 'One trainee did not meet the standard in teaching and the assessment areas are reported accordingly. Two trainees passed a written assignment on resubmission; one had an agreed extension on the second assignment for documented personal reasons. No other matters to report.',
     },
   },
 };
@@ -61,7 +61,7 @@ export const SLOTS = [
     stages: ['Lead-in', 'Preparing to write / speak', 'Speaking / writing task', 'Feedback and error correction', 'Extension'] },
 ];
 
-/* One topic pack per candidate per slot: everybody in a teaching practice
+/* One topic pack per trainee per slot: everybody in a teaching practice
    group teaches the same kind of lesson on the same day, with their own text
    and their own target language, which is how a TP slot actually runs. */
 export const TOPICS = [
@@ -80,7 +80,7 @@ export const TOPICS = [
 ];
 
 /* Correctly-tagged sentences to draw on, grouped by what they are about, so a
-   candidate's profile can be built from the ones that are true of them.
+   trainee's profile can be built from the ones that are true of them.
    code, sentence. */
 export const BANK = {
   planStrength: {
@@ -136,8 +136,8 @@ export const CANDIDATES = [
     tutorial: 'Pace and stage timing were the targets at the first tutorial. Both were met by TP5, and TP5 onwards were graded above standard. The second tutorial confirmed a Pass A was within reach if the standard held. It held.',
     assignments: { fol: 'pass', lrt: 'pass', lsrt: 'pass', lfc: 'pass' },
     report: [
-      'Olivia was an outstanding member of the course and the candidate the rest of the group turned to. She met every deadline, came to each planning session with the work already done, and used feedback the way it is meant to be used — the point made on Tuesday was visible in Thursday’s lesson.',
-      'Her development was the strongest on the course. From the third teaching practice onwards she planned with very little guidance, adapting material rather than delivering it, and clarifying language on the board with an economy that other candidates began to copy. She taught confidently at both levels and five of her eight lessons were graded above standard. All four written assignments were passed at the first attempt, and her Lessons from the Classroom assignment showed a genuinely critical eye for her own teaching.',
+      'Olivia was an outstanding member of the course and the trainee the rest of the group turned to. She met every deadline, came to each planning session with the work already done, and used feedback the way it is meant to be used — the point made on Tuesday was visible in Thursday’s lesson.',
+      'Her development was the strongest on the course. From the third teaching practice onwards she planned with very little guidance, adapting material rather than delivering it, and clarifying language on the board with an economy that other trainees began to copy. She taught confidently at both levels and five of her eight lessons were graded above standard. All four written assignments were passed at the first attempt, and her Lessons from the Classroom assignment showed a genuinely critical eye for her own teaching.',
       'For her development after the course, Olivia should keep watching the pace of her freer practice stages — she is inclined to close an activity while learners are still using the language — and monitor from a little further away so that pair work carries on without her. In planning, her language analysis is the part that still lags her teaching: form and phonology deserve the attention she already gives to meaning.',
       'Olivia is ready for her own classes and will be an immediate asset to any staffroom. We wish her every success.',
     ] },
@@ -192,7 +192,7 @@ export const CANDIDATES = [
     tutorial: 'Consistent to standard throughout. The first tutorial set pace and concept checking as the targets; both improved, and TP7 was graded above standard.',
     assignments: { fol: 'pass', lrt: 'pass', lsrt: 'pass', lfc: 'pass' },
     report: [
-      'Burak was a steady, hard-working member of the group who never missed a deadline and never needed reminding. He asked good questions in input sessions and took the trouble to answer other candidates’ as well.',
+      'Burak was a steady, hard-working member of the group who never missed a deadline and never needed reminding. He asked good questions in input sessions and took the trouble to answer other trainees’ as well.',
       'His teaching was to standard from the first assessed lesson and to standard at both levels, with his seventh lesson graded above standard. His instructions were clear and checked, he elicited before he explained, and his monitoring fed the feedback stage rather than filling it. All four written assignments were passed at the first attempt.',
       'For his development after the course, Burak should hold the pace in freer practice — he closes activities while learners are still producing — and keep his feedback stages shorter. Writing his concept questions into the plan, with the answers he expects, would make his clarification stages tighter still.',
       'Burak is a dependable teacher who will settle quickly into a staffroom. We wish him every success.',

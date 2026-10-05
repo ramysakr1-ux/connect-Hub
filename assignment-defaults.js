@@ -14,9 +14,9 @@
 //
 //   1. "Use the white boxes" / "Use the blue boxes" -- on paper the two rounds
 //      are two colours of box in one document. Here they are two rounds the app
-//      runs and the candidate never picks, so the line says what the app does.
+//      runs and the trainee never picks, so the line says what the app does.
 //   2. "Attach it as Appendix 2, laid out as a handout" -- there are no
-//      appendices; a candidate attaches materials to the submission. The
+//      appendices; a trainee attaches materials to the submission. The
 //      appendix NUMBERS stay, because the briefs refer to them.
 //   3. "submitted through Google Classroom" becomes submitted here.
 //
@@ -26,7 +26,7 @@
 //   - "You must pass 3 of 4 assignments to be eligible for a PASS." This is
 //     the centre's wording and it is left alone, but the comment here used to
 //     say the Handbook "requires all four", which is backwards (audit, 29 Sep
-//     2026). 11.6 says a candidate who fails a SINGLE assignment may still be
+//     2026). 11.6 says a trainee who fails a SINGLE assignment may still be
 //     recommended a Pass, on sufficient evidence elsewhere, but is not
 //     eligible for Pass A; more than one failed means no Pass. 9.2.1's "all
 //     four" is about COMPLETING them, not passing. The centre's sentence is
@@ -58,9 +58,9 @@
 //     course whose criteria still match an entry in CONNECT_HUB_SUPERSEDED_WORDING
 //     onto the current shipped list -- and versions 1 and 2 there ARE the old
 //     nineteen. So a course holding the untouched nineteen with NO assignment
-//     record on any candidate (a fresh clone, say) is moved to the seventeen
+//     record on any trainee (a fresh clone, say) is moved to the seventeen
 //     at its next tutor boot; hub-sync's guard refuses the moment any
-//     candidate has an assignments record, so marked work is never touched.
+//     trainee has an assignments record, so marked work is never touched.
 //     That is the behaviour, stated plainly (second audit, 29 Sep 2026): the
 //     earlier version of this note claimed no course would move at all.
 //

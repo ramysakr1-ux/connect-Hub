@@ -3,14 +3,14 @@
  *
  *   node walk-cohort.mjs            SHOTS=<dir> node walk-cohort.mjs
  *
- * walk-roles.mjs proves the MECHANISM with one candidate: every store path,
- * every refusal, every lock. This proves the SHAPE, which one candidate cannot
+ * walk-roles.mjs proves the MECHANISM with one trainee: every store path,
+ * every refusal, every lock. This proves the SHAPE, which one trainee cannot
  * show -- Ramy, 25 Sep 2026: "aim for a course mimicking the next course, we'll
  * have a course of five or six... one trainer first half, second trainer second
  * half, but two trainers on the full course. Assessor pack. It's a four week
  * course."
  *
- * So: six candidates in two groups, four weeks, eight teaching practices each,
+ * So: six trainees in two groups, four weeks, eight teaching practices each,
  * a first-half tutor and a second-half tutor sharing ONE course key (Lite has
  * one tutor link per course by design), work spread unevenly across the cohort
  * the way a real course is, and the assessor arriving at the end to a pack that
@@ -167,7 +167,7 @@ await step('tutor: a four-week course, eight TPs each, two tutors named', async 
   return `${s.start} to ${s.end}, ${s.tpCount} TPs each, ${s.totalHours} hours`;
 });
 
-await step('tutor: six candidates in two groups', async () => {
+await step('tutor: six trainees in two groups', async () => {
   const tab = await T.p.$('text=Roster and links'); must(tab, 'no Roster tab'); await tab.click(); await settle(T.p, 600);
   for (const c of COHORT) {
     await T.p.click('#toggleAdd'); await settle(T.p, 350);
@@ -176,21 +176,21 @@ await step('tutor: six candidates in two groups', async () => {
     await T.p.click('#storeAddForm button[type="submit"]'); await settle(T.p, 2200);
   }
   const rows = Object.values(STORE.trainees);
-  must(rows.length === 6, 'store has ' + rows.length + ' candidates, expected 6');
+  must(rows.length === 6, 'store has ' + rows.length + ' trainees, expected 6');
   rows.forEach(r => { tokens[r.name] = r.token; });
   COHORT.forEach(c => must(tokens[c.name], 'missing from the store: ' + c.name));
   // every link is distinct -- six people, six invitations
   const links = new Set(Object.values(tokens));
-  must(links.size === 6, 'candidates share a link: ' + links.size + ' distinct tokens for 6 people');
+  must(links.size === 6, 'trainees share a link: ' + links.size + ' distinct tokens for 6 people');
   await noSideScroll(T.p, 'Course admin, roster of six');
-  return '6 candidates, 6 distinct links, 2 groups';
+  return '6 trainees, 6 distinct links, 2 groups';
 });
 
 await step('tutor: the roster reads cleanly at six, names not truncated', async () => {
   /* All three link kinds are invite.html -- the tutor's carries ?k=, the
-     assessor's ?ak=, a candidate's ?t= -- so count the ?t= ones. */
+     assessor's ?ak=, a trainee's ?t= -- so count the ?t= ones. */
   const shown = await T.p.evaluate(() => [...document.querySelectorAll('[data-copy]')].filter(b => /[?&]t=/.test(b.dataset.copy)).length);
-  must(shown === 6, 'candidate invitation links on the roster: ' + shown + ', expected 6');
+  must(shown === 6, 'trainee invitation links on the roster: ' + shown + ', expected 6');
   // A name that is cut off on screen is a name a tutor cannot check.
   const clipped = await T.p.evaluate(() => [...document.querySelectorAll('.board *')]
     .filter(el => el.children.length === 0 && el.textContent.trim())
@@ -221,7 +221,7 @@ await step('tutor: the four deadlines, spread across the four weeks', async () =
 });
 
 /* ===== weeks 1-2: the first tutor, and four of the six turn work in ===== */
-await step('six candidates open their own links; four turn in a plan', async () => {
+await step('six trainees open their own links; four turn in a plan', async () => {
   const workers = COHORT.slice(0, 4);
   for (const c of workers) {
     const A = await ctx('trainee');
@@ -242,7 +242,7 @@ await step('six candidates open their own links; four turn in a plan', async () 
   // and each plan belongs to its own person
   withPlans.forEach(t => {
     const nm = ((t.records.plan || {}).state || {}).name || '';
-    must(!nm || nm === t.name, `a plan is filed under the wrong candidate: ${nm} on ${t.name}`);
+    must(!nm || nm === t.name, `a plan is filed under the wrong trainee: ${nm} on ${t.name}`);
   });
   return '4 of 6 turned in, each under their own name';
 });
@@ -265,7 +265,7 @@ await step('tutor: the dashboard shows all six, four with work waiting', async (
   await T.p.goto(tutorUrl('5_tutor_dashboard.html'), { waitUntil: 'domcontentloaded' }); await settle(T.p, 3500);
   const body = await text(T.p);
   for (const c of COHORT) must(body.includes(c.name), 'missing from the dashboard: ' + c.name);
-  await noSideScroll(T.p, 'Tutor dashboard, six candidates');
+  await noSideScroll(T.p, 'Tutor dashboard, six trainees');
   return 'all six listed';
 });
 
@@ -337,7 +337,7 @@ await step(`weeks 3-4: ${TUTOR_2} takes over on the same course link`, async () 
 await step(`${TUTOR_2} marks an assignment and signs it as herself`, async () => {
   const T2 = { p: PAGES.tutor2 };
   const who = COHORT[0].name;
-  // she submits it first, as the candidate
+  // she submits it first, as the trainee
   const A = await ctx('trainee');
   await A.p.goto(`${BASE}9_assignment_submission.html?t=${tokens[who]}&a=${assignKey}`, { waitUntil: 'domcontentloaded' }); await settle(A.p, 3000);
   await A.p.evaluate(() => { const ta = document.querySelector('textarea:not([disabled])'); ta.value = 'My TP group is ten adults at B1. '.repeat(30); ta.dispatchEvent(new Event('input', { bubbles: true })); });
@@ -367,7 +367,7 @@ await step('the grades report holds six, and each grade stays on its own person'
   const rows = await T.p.$$('.cohort .gt:first-child tbody tr');
   must(rows.length === 6, 'provisional table rows: ' + rows.length + ', expected 6');
   const cards = await T.p.$$('.cand');
-  must(cards.length === 6, 'candidate sections: ' + cards.length + ', expected 6');
+  must(cards.length === 6, 'trainee sections: ' + cards.length + ', expected 6');
   // letters A..F, in roster order, on both the tables and the sections
   const letters = await T.p.evaluate(() => [...document.querySelectorAll('.cand .ltr')].map(e => e.textContent.trim()));
   must(letters.join('') === 'ABCDEF', 'letters drifted: ' + letters.join(''));
@@ -388,11 +388,11 @@ await step('the grades report holds six, and each grade stays on its own person'
      nothing else (Handbook June 2025, p43). A slash grade must reveal it; a
      clean grade must not have it at all. */
   const evShown = () => T.p.evaluate(() => [...document.querySelectorAll('.evwrap')].map(b => !b.hidden));
-  /* Both grades on this candidate are put back before the step ends -- step 12
+  /* Both grades on this trainee are put back before the step ends -- step 12
      reads them off the assessor pack, and this step now SAVES, so anything
      left behind here would travel. */
   const provWas = await T.p.$eval('.cand:nth-of-type(1) .grow select.grade[data-grade="provisional"]', e => e.value);
-  must((await evShown()).every(v => v === false), 'the evidence box shows on a candidate with no provisional grade');
+  must((await evShown()).every(v => v === false), 'the evidence box shows on a trainee with no provisional grade');
   await T.p.selectOption('.cand:nth-of-type(1) .grow select.grade[data-grade="provisional"]', 'PASS / PASS B'); await settle(T.p, 500);
   const after = await evShown();
   must(after[0] === true && after.slice(1).every(v => v === false), 'a slash provisional did not reveal the evidence box: ' + JSON.stringify(after));
@@ -418,7 +418,7 @@ await step('the grades report holds six, and each grade stays on its own person'
 
   /* The same three values on the final grade, where they close the door to
      the final course report: that document confirms attendance and states a
-     grade, and a candidate who withdrew has neither. */
+     grade, and a trainee who withdrew has neither. */
   const finOpts = await T.p.$$eval('.cand:nth-of-type(1) .grow.final select.grade option',
     os => os.map(o => o.value).filter(Boolean));
   ['WITHDRAWN','EXTENSION','DEFERRAL'].forEach(o =>
@@ -426,11 +426,11 @@ await step('the grades report holds six, and each grade stays on its own person'
   must(finOpts.length === 7, 'the final dropdown holds ' + finOpts.length + ' values, not 7');
   const frLabel = () => T.p.$eval('.cand:nth-of-type(1) .frbtn', e => e.textContent.trim());
   /* Put back whatever the earlier steps left here -- step 12 reads this
-     candidate's final grade off the assessor pack, and a walk step must not
+     trainee's final grade off the assessor pack, and a walk step must not
      quietly undo the one before it. */
   const finalWas = await T.p.$eval('.cand:nth-of-type(1) .grow.final select.grade', e => e.value);
   await T.p.selectOption('.cand:nth-of-type(1) .grow.final select.grade', 'PASS B'); await settle(T.p, 400);
-  must(/^Open the final report$/.test(await frLabel()), 'a graded candidate cannot open the final report: ' + await frLabel());
+  must(/^Open the final report$/.test(await frLabel()), 'a graded trainee cannot open the final report: ' + await frLabel());
   await T.p.selectOption('.cand:nth-of-type(1) .grow.final select.grade', 'WITHDRAWN'); await settle(T.p, 400);
   must(/not issued/.test(await frLabel()), 'the final report is still offered on a withdrawal: ' + await frLabel());
   /* The final grade's box: Appian's two fields, side by side, arriving with
@@ -453,7 +453,7 @@ await step('the grades report holds six, and each grade stays on its own person'
   await T.p.click('#saveBtn'); await settle(T.p, 700);
 
   /* The course-level half of the Cambridge form: four required fields, above
-     the candidates, kept with the course so every tutor has them. */
+     the trainees, kept with the course so every tutor has them. */
   const courseHeads = await T.p.$$eval('#course .sec h3', hs => hs.map(h => h.textContent.trim()));
   must(JSON.stringify(courseHeads) === JSON.stringify([
     'Teaching Practice','Teaching Practice Supervision and Feedback','Tutorials','Additional Comments','Grading meeting'
@@ -466,9 +466,9 @@ await step('the grades report holds six, and each grade stays on its own person'
   const heads = await T.p.$$eval('.cand:nth-of-type(1) .cols .sec h3', hs => hs.map(h => h.textContent.trim()));
   must(JSON.stringify(heads) === JSON.stringify([
     'Planning: Strengths','Planning: Areas for development','Teaching: Strengths','Teaching: Areas for development'
-  ]), 'the candidate headings are not the form\'s: ' + JSON.stringify(heads));
+  ]), 'the trainee headings are not the form\'s: ' + JSON.stringify(heads));
 
-  /* "It remembers what you wrote": the drawer offers this candidate's own TP
+  /* "It remembers what you wrote": the drawer offers this trainee's own TP
      feedback back, in the matching section, newest TP first — and a click puts
      it in the box with its criterion code. Defne Yılmaz is one of the three
      who had feedback returned in weeks 1-2. */
@@ -489,7 +489,7 @@ await step('the grades report holds six, and each grade stays on its own person'
   must(/Clear instructions, checked before the task/.test(added), 'the wrong text landed: ' + added);
   must(!(await drawer.evaluate(d => d.open)), 'the drawer stayed open over the point it just added');
 
-  await noSideScroll(T.p, 'Grades report, six candidates');
+  await noSideScroll(T.p, 'Grades report, six trainees');
   return 'A-F, three graded, each on the right person; evidence borderline-only; ten provisional and seven final values; the form\'s own headings, course fields kept; the TP drawer remembers what the tutor wrote';
 });
 
@@ -498,12 +498,12 @@ await step('the assessor pack holds all six, with the visit at the end of week f
   await S.p.goto(`${BASE}12_assessor_pack.html?ak=${STORE.akey}`, { waitUntil: 'domcontentloaded' }); await settle(S.p, 3500);
   const body = await text(S.p);
   for (const c of COHORT) must(body.includes(c.name), 'missing from the assessor pack: ' + c.name);
-  must(/6 on the course|6 candidates/i.test(body), 'the pack does not count six: ' + (body.match(/\d+ on the course/) || ['none'])[0]);
-  /* The pack stopped drawing its own candidate table on 27 Sep 2026 (Ramy:
-     "give the assessor a shortcut to the candidates instead"): one portfolio
-     door per candidate, and the grades and the tracker as doors of their own. */
+  must(/6 on the course|6 trainees/i.test(body), 'the pack does not count six: ' + (body.match(/\d+ on the course/) || ['none'])[0]);
+  /* The pack stopped drawing its own trainee table on 27 Sep 2026 (Ramy:
+     "give the assessor a shortcut to the trainees instead"): one portfolio
+     door per trainee, and the grades and the tracker as doors of their own. */
   const doors = await S.p.$$eval('a[href^="12_assessor_pack.html?trainee="]', as => as.length);
-  must(doors === 6, 'portfolio doors: ' + doors + ', expected one per candidate');
+  must(doors === 6, 'portfolio doors: ' + doors + ', expected one per trainee');
   must(await S.p.$('a[href="13_grades_report.html"]'), 'no door to the grades report');
   must(await S.p.$('a[href="7_candidate_tracker.html"]'), 'no door to the tracker');
   // the four briefs, and the link that expires fourteen days after the course
@@ -513,7 +513,7 @@ await step('the assessor pack holds all six, with the visit at the end of week f
   for (const k of ['FOL', 'LRT', 'LSRT', 'LFC']) must(briefHeads.some(h => h.startsWith(k + ' ')), 'brief missing from the pack: ' + k + ' (have ' + JSON.stringify(briefHeads) + ')');
   /* the assessor's link ends with the course, not fourteen days after it (store, 29 Sep 2026) */
   must(/stops working on 30 October 2026/.test(body), 'the expiry is not the course end: ' + (body.match(/stops working on [^\n]*/) || ['none'])[0]);
-  await noSideScroll(S.p, 'Assessor pack, six candidates');
+  await noSideScroll(S.p, 'Assessor pack, six trainees');
   /* Both grades live on the grades report now, which the assessor opens
      read-only: the provisional is what the centre files before the visit and
      it must still be there once a final is agreed. */
@@ -521,24 +521,24 @@ await step('the assessor pack holds all six, with the visit at the end of week f
   const prov = await S.p.$eval('.cand:nth-of-type(1) .grow select.grade[data-grade="provisional"]', e => e.value);
   const fin = await S.p.$eval('.cand:nth-of-type(1) .grow.final select.grade', e => e.value);
   must(prov === 'PASS A' && fin === 'PASS A', 'the grades report does not show both grades: ' + JSON.stringify({ prov, fin }));
-  return 'six candidates, four briefs, both grades, link expires 13 Nov';
+  return 'six trainees, four briefs, both grades, link expires 13 Nov';
 });
 
 await step('the assessor reads a final report, and it names the right tutors', async () => {
   const S = { p: PAGES.assessor };
   /* the door is on the grades report, where the previous step left the page */
   const door = await S.p.$('a[href^="16_final_report.html"]');
-  must(door, 'no final-report door on the grades report for a graded candidate');
+  must(door, 'no final-report door on the grades report for a graded trainee');
   await door.click(); await settle(S.p, 3000);
   const body = await text(S.p);
   must(/This is to confirm that/.test(body), 'the report did not open');
   must(new RegExp(TUTOR_1).test(body) && new RegExp(TUTOR_2).test(body), 'both tutors should sign the report');
   must(/120-hour/.test(body), 'the course hours are missing');
-  /* This candidate has submitted no written assignment at all, so the
+  /* This trainee has submitted no written assignment at all, so the
      assessment area must NOT claim they passed one. It did: the old test
      asked for fails and resubmissions-due and found neither. */
   must(/Written assignments\s+Grade: [\u2014—]/.test(body),
-    'the written assignments area claims a grade for a candidate who submitted nothing: ' + (body.match(/Written assignments[^\n]*/) || ['none'])[0]);
+    'the written assignments area claims a grade for a trainee who submitted nothing: ' + (body.match(/Written assignments[^\n]*/) || ['none'])[0]);
   await noSideScroll(S.p, 'Final report');
   return 'both tutors signed; assignments area honest about nothing submitted';
 });

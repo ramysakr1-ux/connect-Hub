@@ -11,10 +11,10 @@
 // visit date hides that section rather than breaking, which is the intended
 // behaviour, so this is a filling-in, not a repair.
 //
-// --observe is the MCT's choice of which candidates the assessor will observe
-// (Handbook 14.2). It is stored as a list of candidate TOKENS -- the pack keeps
+// --observe is the MCT's choice of which trainees the assessor will observe
+// (Handbook 14.2). It is stored as a list of trainee TOKENS -- the pack keeps
 // only the ids it can still find on the roster -- so names are given here and
-// resolved against the roster. A name that matches more than one candidate, or
+// resolved against the roster. A name that matches more than one trainee, or
 // none, stops the whole thing: three names are three people, and half a list
 // written to the course is worse than none.
 //
@@ -78,7 +78,7 @@ if (observe) {
     if (!hits.length) hits = people.filter((p) => p.name.toLowerCase().startsWith(lc));
     if (!hits.length) hits = people.filter((p) => p.name.toLowerCase().includes(lc));
     if (hits.length !== 1) {
-      console.error(`"${want}" matches ${hits.length} candidates${hits.length ? ': ' + hits.map((h) => h.name).join(', ') : ''} — writing nothing.`);
+      console.error(`"${want}" matches ${hits.length} trainees${hits.length ? ': ' + hits.map((h) => h.name).join(', ') : ''} — writing nothing.`);
       process.exit(1);
     }
     picks.push(hits[0]);

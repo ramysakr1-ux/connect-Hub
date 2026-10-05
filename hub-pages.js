@@ -57,7 +57,7 @@
   }
 
   /* Every page this set cites, by book. A file with a url is already attached;
-     one without is a page we owe the candidate. */
+     one without is a page we owe the trainee. */
   function needs(S) {
     const out = {};
     Object.keys(S.sessions || {}).forEach(k => (S.sessions[k].slots || []).forEach(sl => {

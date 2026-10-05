@@ -33,4 +33,4 @@ for(const who of Object.values(ro.result.trainees||{}).sort((a,b)=>a.name.locale
   if(WRITE){ const o=await call({op:'put',key:K,token:who.token,kind:'tracker',data:Object.assign({},rec,{grades:g})});
     if(!o.ok) console.log('   FAILED: '+o.error); }
 }
-console.log('\n'+n+(WRITE?' candidates aligned':' would change (dry run)'));
+console.log('\n'+n+(WRITE?' trainees aligned':' would change (dry run)'));

@@ -5,7 +5,7 @@
  *
  * Lite has no build and no server, so this is the whole of its test suite. It
  * exists because two bugs got through everything else on 23 Sep 2026: the
- * candidate tracker handed a trainee the tutor's editable grid when the URL
+ * trainee tracker handed a trainee the tutor's editable grid when the URL
  * lost its ?me=1, and the no-link page told first-time visitors their link had
  * expired. Both were one page load away from being obvious.
  *
@@ -137,7 +137,7 @@ for (const mode of MODES) {
       const refused = REFUSED.test(seen.text);
       if (want === 'refuse' && !refused) failures.push(`${where}: OPEN — this room should refuse this link`);
       if ((want === 'open' || want === 'own') && refused) failures.push(`${where}: REFUSED — this room should open for this link`);
-      if (want === 'own' && /yours to set/i.test(seen.text)) failures.push(`${where}: shows the TUTOR's view to a candidate`);
+      if (want === 'own' && /yours to set/i.test(seen.text)) failures.push(`${where}: shows the TUTOR's view to a trainee`);
       for (const e of errs) failures.push(`${where}: ${e}`);
     } catch (e) {
       failures.push(`${where}: did not load — ${String(e).slice(0, 90)}`);

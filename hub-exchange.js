@@ -23,11 +23,11 @@
  * interpreter. If a slot is missing it is left alone. If a heading is
  * unrecognised it is reported, not guessed. The tutor sees exactly what
  * landed before anything is saved, because a feedback sheet filled by a
- * machine and returned to a candidate unread is the one outcome this must
+ * machine and returned to a trainee unread is the one outcome this must
  * never produce.
  *
  * FORMAT IS NEVER TOUCHED. The plan goes out as text, the feedback comes back
- * as text; the document the candidate receives is built from the form as it
+ * as text; the document the trainee receives is built from the form as it
  * always was. This is a way of getting words into boxes, not a new document.
  */
 (function(){
@@ -83,7 +83,7 @@
   function planMarkdown(doc){
     var m = doc.meta || {}, p = doc.plan || {}, l = doc.la || {};
     var md = [];
-    md.push('# Lesson plan — ' + (m.name || 'candidate') + ', ' + (m.tp || 'TP'));
+    md.push('# Lesson plan — ' + (m.name || 'trainee') + ', ' + (m.tp || 'TP'));
     var meta = [];
     if (m.level) meta.push('Level: ' + m.level);
     if (m.date) meta.push('Date: ' + m.date);
@@ -157,7 +157,7 @@
     md.push('');
     md.push('# Feedback — fill in below');
     md.push('');
-    md.push('You are helping a CELTA tutor write feedback on the lesson plan above. The tutor will dictate; write what they say into the slots, in the second person to the candidate ("you"), concise and specific. Keep every heading exactly as it is. Leave a slot empty if there is nothing to say. One point per line in the four lists; start a point with a star (★) if the tutor wants it prioritised next time. For Grade write exactly one of: ' + GRADES.join(' / ') + '.');
+    md.push('You are helping a CELTA tutor write feedback on the lesson plan above. The tutor will dictate; write what they say into the slots, in the second person to the trainee ("you"), concise and specific. Keep every heading exactly as it is. Leave a slot empty if there is nothing to say. One point per line in the four lists; start a point with a star (★) if the tutor wants it prioritised next time. For Grade write exactly one of: ' + GRADES.join(' / ') + '.');
     md.push('');
     sl.forEach(function(s){
       md.push('## ' + s.heading);

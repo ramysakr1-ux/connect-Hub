@@ -43,8 +43,8 @@ console.log('READS');
 const t = (await raw({ op: 'course', key: c5.tutorKey })).result || {};
 check('tutor sees every course kind', ['settings', 'wording', 'observations', 'stream', 'grid', 'timetable', 'tppoints', 'volunteers', 'shared'].every((k) => k in t));
 const cb = (await raw({ op: 'boot', token: tok })).result || {};
-check('candidate gets NO volunteer register', !(cb.course || {}).volunteers);
-check('candidate DOES get the shared materials', 'shared' in (cb.course || {}));   // null until something is shared; the pages take either
+check('trainee gets NO volunteer register', !(cb.course || {}).volunteers);
+check('trainee DOES get the shared materials', 'shared' in (cb.course || {}));   // null until something is shared; the pages take either
 const ab = (await raw({ op: 'boot', a: ak })).result || {};
 check('assessor DOES get the register (Handbook 14.1)', !!(ab.course || {}).volunteers);
 const vb = (await raw({ op: 'boot', v: vtok })).result || {};
@@ -54,7 +54,7 @@ check('volunteer never sees another student', !JSON.stringify(vb).includes(other
 
 console.log('WRITES');
 check('assessor cannot write a course record', (await raw({ op: 'putCourse', a: ak, kind: 'settings', data: { x: 1 } })).ok === false);
-check('candidate cannot write a course record', (await raw({ op: 'putCourse', token: tok, kind: 'settings', data: { x: 1 } })).ok === false);
+check('trainee cannot write a course record', (await raw({ op: 'putCourse', token: tok, kind: 'settings', data: { x: 1 } })).ok === false);
 check('volunteer cannot write anything', (await raw({ op: 'putCourse', v: vtok, kind: 'settings', data: { x: 1 } })).ok === false);
 check('volunteer cannot share a material', (await raw({ op: 'shareMaterial', v: vtok, name: 'x', url: 'https://x.example/y' })).ok === false);
 check('volunteer cannot call the course op', (await raw({ op: 'course', v: vtok })).ok === false);
@@ -63,7 +63,7 @@ check('unknown volunteer token refused', (await raw({ op: 'boot', v: c5.id + '-'
 check('token naming a course that does not exist refused', (await raw({ op: 'boot', v: 'c999-' + 'a'.repeat(20) })).ok === false);
 
 const probe = 'https://sweep.example/probe.pdf';
-check('candidate CAN share a material', (await raw({ op: 'shareMaterial', token: tok, name: 'sweep probe', url: probe })).ok === true);
+check('trainee CAN share a material', (await raw({ op: 'shareMaterial', token: tok, name: 'sweep probe', url: probe })).ok === true);
 const sharedNow = (await raw({ op: 'course', key: c5.tutorKey })).result.shared || [];
 const mine = sharedNow.find((x) => x && x.url === probe);
 check('tutor CAN take it back', mine ? (await raw({ op: 'unshareMaterial', key: c5.tutorKey, id: mine.id })).ok === true : false);

@@ -9,27 +9,27 @@
  * where they may, and Lite already knows enough to do the rotation itself.
  *
  * THE STRUCTURE (Ramy, 29 Sep 2026, correcting me):
- *   A teaching practice group is 4-6 candidates. There are no sub-groups. The
+ *   A teaching practice group is 4-6 trainees. There are no sub-groups. The
  *   group splits into two TEACHING SETS which take alternate days -- ABC on
- *   one day, DEF on the next -- so each candidate teaches every other day and
+ *   one day, DEF on the next -- so each trainee teaches every other day and
  *   the whole group attends both. A course of twelve is two such groups, a
  *   course of twenty-four is four. Six per group is the ceiling (7.1).
  *
- * THE NAMING: letters are people, never days. Each candidate carries a letter
+ * THE NAMING: letters are people, never days. Each trainee carries a letter
  * within their own group; a teaching day is named by its date and by who
  * teaches on it ("TP 3 · ABC"), which is what Ramy writes on his own
  * timetables. `set` below is an internal handle so the software survives
  * somebody joining or leaving; it is never shown.
  *
  * THE ROTATION: seven aim types, six assessed practices before the last two
- * (which the candidates choose for themselves on the planning grid). Each
- * candidate starts at their own offset and steps one place per practice, so
+ * (which the trainees choose for themselves on the planning grid). Each
+ * trainee starts at their own offset and steps one place per practice, so
  *   - nobody in the group teaches the same type on the same day;
- *   - each candidate's six are six DIFFERENT types out of the seven, and the
+ *   - each trainee's six are six DIFFERENT types out of the seven, and the
  *     one they miss is the only one they miss;
  *   - because six of seven always includes at least two of the three
  *     language-focus types, the "must include language-focus lessons" is
- *     satisfied for every candidate by construction, not by luck;
+ *     satisfied for every trainee by construction, not by luck;
  *   - the second group starts three places along, so two groups running in
  *     parallel are never teaching the same thing on the same day.
  * Everything it decides is a proposal: the tutor edits any cell, and the
@@ -60,7 +60,7 @@
   const familyOf = (aim) => FAMILY[aim] || '';
   const aimsInFamily = (fam) => AIMS.filter((a) => FAMILY[a] === fam);
 
-  /* The letter is the candidate's place in their own group, by name, so it is
+  /* The letter is the trainee's place in their own group, by name, so it is
      stable for everyone else when one person leaves. */
   function lettersFor(people) {
     const sorted = people.slice().sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
@@ -78,8 +78,8 @@
   /* What a set is CALLED: its members' letters. "ABC", "DE". Never "Day A". */
   const setName = (set) => set.map((p) => p.letter).join('');
 
-  /* The aim for one candidate at one practice. `groupOffset` keeps two groups
-     apart; `idx` is the candidate's place; `tp` is 1-based. */
+  /* The aim for one trainee at one practice. `groupOffset` keeps two groups
+     apart; `idx` is the trainee's place; `tp` is 1-based. */
   function aimFor(idx, tp, groupOffset) {
     return AIMS[(idx + (tp - 1) + (groupOffset || 0)) % AIMS.length];
   }
@@ -123,7 +123,7 @@
      that pair a set teaches: 0 for the first, 1 for the second. */
   const dayOfSet = (setIndex) => setIndex;
 
-  /* Does every candidate get a language-focus lesson? This is the MUST, so it
+  /* Does every trainee get a language-focus lesson? This is the MUST, so it
      is checked rather than assumed -- a tutor's overrides can break what the
      rotation guaranteed, and then the centre needs telling. */
   function languageFocusCheck(rows, tps) {
@@ -137,7 +137,7 @@
     return out;   // tokens with no language-focus lesson; empty is the pass
   }
 
-  /* Two candidates in the same set teaching the same type on the same day.
+  /* Two trainees in the same set teaching the same type on the same day.
      The planning grid already warns about this for the last two practices;
      the rotation prevents it for the first six, and this is what proves it. */
   function clashes(rows, sets, tps) {

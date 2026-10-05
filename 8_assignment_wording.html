@@ -13,7 +13,7 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610051144">
+<link rel="stylesheet" href="hub-tokens.css?v=202610051229">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -119,7 +119,7 @@
     .section-head input.label{flex:1 1 100%; order:-1;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610051144">
+<link rel="stylesheet" href="hub-house.css?v=202610051229">
 </head>
 <body class="hub-paper">
 <div class="board">
@@ -133,12 +133,12 @@
     <div class="editor" id="editor"></div>
   </div>
 </div>
-<script src="assignment-defaults.js?v=202610051144"></script>
-<script src="hub-due.js?v=202610051144"></script>
-<script src="hub-docx.js?v=202610051144"></script>
-<script src="hub-shared.js?v=202610051144"></script>
-<script src="hub-store.js?v=202610051144"></script>
-<script src="hub-sync.js?v=202610051144"></script>
+<script src="assignment-defaults.js?v=202610051229"></script>
+<script src="hub-due.js?v=202610051229"></script>
+<script src="hub-docx.js?v=202610051229"></script>
+<script src="hub-shared.js?v=202610051229"></script>
+<script src="hub-store.js?v=202610051229"></script>
+<script src="hub-sync.js?v=202610051229"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -247,7 +247,7 @@ function textSectionHTML(s, i){
   return `<div class="section" data-i="${i}">
     ${sectionHead(s,i,'Instructions')}
     <textarea rows="3" oninput="updateSection(${i},'body',this.value)">${esc(s.body)}</textarea>
-    <!-- Reference material: a letter, a text, a class profile. The candidate
+    <!-- Reference material: a letter, a text, a class profile. The trainee
          reads it and gets no box to write in. -->
     <label class="refline"><input type="checkbox" ${s.readonly===true?'checked':''} onchange="updateReadonly(${i},this.checked)"> Reference material \u2014 no answer box</label>
   </div>`;
@@ -262,7 +262,7 @@ function declSectionHTML(s, i){
         <button class="icon-btn danger" title="Remove" onclick="removeDeclItem(${i},${di})">\u2715</button>
       </div>`).join('')}
     <button class="addline" onclick="addDeclItem(${i})">+ Add checkbox</button>
-    <p class="metahint" style="margin:6px 0 0;">Own work doesn\u2019t exclude joint preparation and discussion \u2014 but submitting an assignment substantially similar to another candidate\u2019s does count as a breach.</p>
+    <p class="metahint" style="margin:6px 0 0;">Own work doesn\u2019t exclude joint preparation and discussion \u2014 but submitting an assignment substantially similar to another trainee\u2019s does count as a breach.</p>
     <label style="display:flex; align-items:center; gap:8px; font-size:0.85rem; margin-top:12px; color:var(--ink);">
       <input type="checkbox" ${s.aiToggle?'checked':''} onchange="toggleAi(${i},this.checked)"> Include the \u201Cdid you use AI?\u201D question and link-to-conversation field
     </label>
@@ -331,7 +331,7 @@ function metaHTML(a){
           </div>`).join('')}
         <button class="addline" onclick="addCriterion()">+ Add criterion</button>
         ${syllabusPanel()}
-        <p class="metahint" style="margin:4px 0 0;">Shown to candidates alongside the instructions — Handbook 9.2.1: the criteria should be made explicit. Tying a criterion to a section lets it lock on resubmission once met, instead of reopening the whole assignment.</p>
+        <p class="metahint" style="margin:4px 0 0;">Shown to trainees alongside the instructions — Handbook 9.2.1: the criteria should be made explicit. Tying a criterion to a section lets it lock on resubmission once met, instead of reopening the whole assignment.</p>
       </div>
     </div>
   </div>`;
@@ -413,7 +413,7 @@ function addCriterion(){ (DATA[CURRENT].criteria=DATA[CURRENT].criteria||[]).pus
 /* FLOORS. Designing the assignments is the centre's job (9.2.1), so these are
    the centre's to write -- but 9.2.1 also says "the CELTA marking criteria for
    each assignment SHOULD be made explicit in assignment guidelines for
-   candidates", and 9.2.3 that candidates "SHOULD confirm in writing that the
+   trainees", and 9.2.3 that trainees "SHOULD confirm in writing that the
    written assignments are their own work". This editor had no floor anywhere:
    criteria to zero, the declaration deleted outright, its items to zero, and
    startBlank() handing over an assignment with none of the three in one click.
@@ -422,7 +422,7 @@ function addCriterion(){ (DATA[CURRENT].criteria=DATA[CURRENT].criteria||[]).pus
    none of them is silent. */
 function removeCriterion(ci){
   const c = DATA[CURRENT].criteria || [];
-  if (c.length <= 1) { alert('An assignment keeps at least one criterion.\n\nWith none, the marking screen can never pass it \u2014 a pass needs every criterion met. (Handbook 9.2.1 also says the criteria should be made explicit to candidates.)'); return; }
+  if (c.length <= 1) { alert('An assignment keeps at least one criterion.\n\nWith none, the marking screen can never pass it \u2014 a pass needs every criterion met. (Handbook 9.2.1 also says the criteria should be made explicit to trainees.)'); return; }
   const marked = countMarked();
   if (marked) { alert('Not while marking exists.\n\n' + marked + ' submission' + (marked === 1 ? ' has' : 's have') + ' criterion marks on this assignment, and marks are stored by POSITION \u2014 removing a criterion would move every later mark onto a different one.'); return; }
   c.splice(ci,1); renderEditor();
@@ -501,7 +501,7 @@ function catsOf(i){
   }
   return s.cats;
 }
-/* A key each group keeps for life: a candidate's picks are stored under it, so
+/* A key each group keeps for life: a trainee's picks are stored under it, so
    renaming or reordering groups must not move someone's answers. */
 function nextCatKey(cats){
   const used = cats.map(c => c.key);
@@ -526,7 +526,7 @@ function updateReadonly(i, on){ DATA[CURRENT].sections[i].readonly = !!on; rende
    That is not only a mislabelling. `sectionIndex` decides which section a
    resubmission LOCKS: screen 9 locks a section when every criterion tied to it
    was marked met, and screen 10 shows the tutor's per-criterion comments
-   beside it. A wrong number locks the part the candidate passed and leaves
+   beside it. A wrong number locks the part the trainee passed and leaves
    open the part they failed.
 
    Import and Add only ever append, so they cannot disturb an existing index;
@@ -547,7 +547,7 @@ function moveSection(i, dir){
 function removeSection(i){
   const secs = DATA[CURRENT].sections || [];
   if ((secs[i] || {}).type === 'declaration' && secs.filter(x => x && x.type === 'declaration').length <= 1) {
-    alert('The declaration stays.\n\nWithout this section the submission form has nothing to gate on, and would let work through with no confirmation at all. (Handbook 9.2.3 says candidates should confirm in writing that the work is their own.)\n\nYou can reword every line of it.');
+    alert('The declaration stays.\n\nWithout this section the submission form has nothing to gate on, and would let work through with no confirmation at all. (Handbook 9.2.3 says trainees should confirm in writing that the work is their own.)\n\nYou can reword every line of it.');
     return;
   }
   secs.splice(i,1);
@@ -560,7 +560,7 @@ function updateDeclItem(i, di, v){ DATA[CURRENT].sections[i].items[di] = v; }
 function addDeclItem(i){ DATA[CURRENT].sections[i].items.push('New declaration'); renderEditor(); }
 function removeDeclItem(i, di){
   const items = DATA[CURRENT].sections[i].items || [];
-  if (items.length <= 1) { alert('The declaration keeps at least one line \u2014 otherwise there is nothing for the candidate to confirm, and the submission gate passes on an empty list.'); return; }
+  if (items.length <= 1) { alert('The declaration keeps at least one line \u2014 otherwise there is nothing for the trainee to confirm, and the submission gate passes on an empty list.'); return; }
   items.splice(di,1); renderEditor();
 }
 function toggleAi(i, checked){ DATA[CURRENT].sections[i].aiToggle = checked; }
@@ -601,7 +601,7 @@ function startBlank(){
   const parts = NAMES[CURRENT].split('\u2014');
   /* A blank assignment still arrives with the three things Cambridge asks
      every assignment to carry: a word range inside 750-1,000 (9.2.1), at
-     least one criterion made explicit to candidates, and the own-work
+     least one criterion made explicit to trainees, and the own-work
      declaration. All of them are editable; none of them starts missing. */
   DATA[CURRENT] = {
     title: (parts[1] ? parts[1].trim() : 'New assignment'),

@@ -29,7 +29,7 @@
  *
  * The model is counts, so it merges by addition and stays small: for each code,
  * how many tagged points carried it and how often each word appeared in them,
- * capped at the commonest MAX_WORDS. A course of eight TPs by twelve candidates
+ * capped at the commonest MAX_WORDS. A course of eight TPs by twelve trainees
  * is about 1,100 tagged points and still a few tens of KB.
  */
 window.HubCritLearn = (function () {

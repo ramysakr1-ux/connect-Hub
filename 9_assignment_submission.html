@@ -15,7 +15,7 @@
 <title>Connect Lite — Assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610051144">
+<link rel="stylesheet" href="hub-tokens.css?v=202610051229">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -120,7 +120,7 @@
   .btn{font-family:'Karla',sans-serif; font-size:0.88rem; font-weight:700; padding:10px 22px; border-radius:var(--r-control); border:none; cursor:pointer;}
   .btn-submit{background:var(--teal); color:var(--paper);}
   .btn-submit:disabled{opacity:0.4; cursor:not-allowed;}
-  /* A phone. This is the candidate's own screen and the declaration is
+  /* A phone. This is the trainee's own screen and the declaration is
      compulsory before Submit lights, so four browser-default 13px boxes stood
      between her and handing in an assignment (Ramy, 24 Sep 2026). The boxes
      are scaled up and each one gets a full-width row to tap, the AI choice
@@ -145,7 +145,7 @@
   textarea.resub{ background:oklch(96% 0.04 70); border-color:oklch(82% 0.09 75); }
   textarea.resub:focus{ border-color:oklch(60% 0.12 70); }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610051144">
+<link rel="stylesheet" href="hub-house.css?v=202610051229">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -153,17 +153,17 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610051144"></script>
-<script src="hub-due.js?v=202610051144"></script>
-<script src="hub-shared.js?v=202610051144"></script>
-<script src="hub-store.js?v=202610051144"></script>
-<script src="hub-sync.js?v=202610051144"></script>
+<script src="assignment-defaults.js?v=202610051229"></script>
+<script src="hub-due.js?v=202610051229"></script>
+<script src="hub-shared.js?v=202610051229"></script>
+<script src="hub-store.js?v=202610051229"></script>
+<script src="hub-sync.js?v=202610051229"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
-   assessor who reached this page got the candidate's submission form with a
+   assessor who reached this page got the trainee's submission form with a
    live Submit button (walk, 22 Sep 2026). */
 if (window.hubTraineeRoomOnly && hubTraineeRoomOnly())
-  throw new Error('Connect Lite: stopping this page on purpose \u2014 the candidate\u2019s room is not open to this link.');
+  throw new Error('Connect Lite: stopping this page on purpose \u2014 the trainee\u2019s room is not open to this link.');
 
 const WORDING_KEY = 'connect_assignment_wording_v2';
 const SUB_KEY = 'connect_assignment_submissions_v1';
@@ -376,7 +376,7 @@ function render(){
           const chosen = c.fixed ? c.options : (picked[c.key] || []);
           // A fixed group is not a choice. Everyone analyses it, so its chips
           // show as taken and do nothing -- clearer than hiding it, because
-          // the candidate still has to know it is one of their four items.
+          // the trainee still has to know it is one of their four items.
           return `<div class="catbox"><h3>${esc(c.label)}</h3>
           <p class="cathint">${c.fixed ? 'Everyone analyses this one.' : ('Pick ' + c.pick + (c.pick === 1 ? '.' : '.'))}</p>
           ${c.options.map(opt => `<button type="button" class="chip ${chosen.includes(opt)?'picked':''} ${!c.fixed && !chosen.includes(opt) && chosen.length>=c.pick?'disabled':''}" data-role="chip" data-i="${i}" data-cat="${esc(c.key)}" data-val="${esc(opt)}" ${locked||c.fixed?'disabled':''}>${esc(opt)}</button>`).join('')}
@@ -439,7 +439,7 @@ function render(){
               <option value="proofreading" ${d.aiPurpose==='proofreading'?'selected':''}>Proofreading</option>
             </select></div>
         </div>`:''}
-        <p class="hint" style="margin:8px 0 0;">Own work doesn\u2019t exclude joint preparation and discussion \u2014 but submitting an assignment substantially similar to another candidate\u2019s does count as a breach. Unacknowledged AI use is treated as a fail on first submission.</p>
+        <p class="hint" style="margin:8px 0 0;">Own work doesn\u2019t exclude joint preparation and discussion \u2014 but submitting an assignment substantially similar to another trainee\u2019s does count as a breach. Unacknowledged AI use is treated as a fail on first submission.</p>
       </div>`;
     }
   });
@@ -481,7 +481,7 @@ function refreshGate(){
   // Its own element: the autosave's 'Saved' flash clears #status a moment later.
   /* This runs on every keystroke, through autosave. It used to carry its own
      copy of the reason and knew only one of the two -- so the declaration
-     message that render() put here was WIPED the moment the candidate typed a
+     message that render() put here was WIPED the moment the trainee typed a
      character, and they were back to a dead Submit button that said nothing.
      The reason is computed in one place now (walk, 21 Sep 2026). */
   const eh = $('emptyHint');
@@ -511,7 +511,7 @@ function duePillHTML(due, locked){
  *
  * First submission closes at the assignment's own due date; a resubmission
  * closes `resubDays` after the tutor returned it, because that day differs for
- * every candidate. An extension the tutor has given lives in this candidate's
+ * every trainee. An extension the tutor has given lives in this trainee's
  * tracker record -- TUTOR_ONLY, so it is read here and never written back --
  * and can only ever give time (hub-due.js). */
 function extensions(){
@@ -527,7 +527,7 @@ function dueFor(a, sub){
   return { ...HubDue.state(mine.iso), extended: mine.extended, resub };
 }
 
-/* Why Submit is refusing, in the candidate's words -- read by render() and by
+/* Why Submit is refusing, in the trainee's words -- read by render() and by
    refreshGate() on every keystroke, so the two can never disagree. Empty when
    there is nothing to refuse, or when the stage is closed and the button is
    gone for a reason the banner above already gives. */
@@ -535,7 +535,7 @@ function whyNotSubmit(a, sub){
   const openStage = sub.stage==='draft' || sub.stage==='resubmission_needed' || sub.stage==='returned_unmarked';
   if (!openStage) return '';
   const due = dueFor(a, sub);
-  /* Said first, because nothing else the candidate fixes will help. And said
+  /* Said first, because nothing else the trainee fixes will help. And said
      as a fact with a way forward, not a telling-off: the tutor can open it. */
   if (due.past) return (due.resub ? 'The resubmission window closed ' : 'Submission closed ')
     + due.due + '. Ask your tutor if you need it opened.';
@@ -552,7 +552,7 @@ function declOk(a){
       // EVERY item, not merely every one recorded. checks is written by index
       // as each box is ticked, so ticking only the first leaves it [true] --
       // length one, nothing false in it, and `some(c=>!c)` was perfectly happy.
-      // A candidate could declare the work their own, leave "All sources are
+      // A trainee could declare the work their own, leave "All sources are
       // referenced" untouched, and submit: the one gate DESIGN-HANDOFF-README
       // calls hard, open (trainee walk, 22 Sep 2026).
       if (!d || !d.checks || !s.items.every((_, ci) => d.checks[ci] === true)) ok = false;

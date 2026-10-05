@@ -9,7 +9,7 @@
  * writing. Trainers like to write a lot." So this leaves a course standing
  * that has been LIVED IN, end to end:
  *
- *   six candidates in two groups; three teaching practices each for the first
+ *   six trainees in two groups; three teaching practices each for the first
  *   three, two for the next two, one plus a plan awaiting feedback for the
  *   last -- every plan full, with its language analysis sheet; every feedback
  *   long, in every box, returned through the exchange the way a tutor who
@@ -20,7 +20,7 @@
  *   grades, and the final report ready to open.
  *
  * It drives the REAL pages against the REAL store, exactly as a tutor and a
- * candidate would, for the same reason the walks do: hand-writing store
+ * trainee would, for the same reason the walks do: hand-writing store
  * records means guessing at their shape, and a guess about that shape is what
  * cost an afternoon on 25 Sep.
  *
@@ -182,7 +182,7 @@ async function untilRec(name, what, test, tries = 15, gap = 5000) {
    Connect. MCT and ACT"). */
 const TUTOR_1 = 'Jordan Blake', TUTOR_2 = 'Diane Okonkwo';   // ACT a woman (Ramy, 26 Sep 2026)
 /* Twelve, in two teaching practice groups of six (Ramy, 26 Sep 2026: "make
-   it 12 candidates"), invented names in the mix his courses have -- American,
+   it 12 trainees"), invented names in the mix his courses have -- American,
    Turkish, Russian -- and NOT the names of anyone on a real course (his
    words, same day). Work is spread unevenly, the way a real course is. */
 const COHORT = [
@@ -337,7 +337,7 @@ function feedbackFor(name, tpIndex, grade) {
   };
 }
 
-/* A written assignment, at length -- roughly 850 words, the way a candidate
+/* A written assignment, at length -- roughly 850 words, the way a trainee
    writes one. */
 const FOL_TEXT = [
   'My teaching practice group is a class of twelve adults at A2 level. They are mixed in first language — Turkish, Arabic, Spanish and one Farsi speaker — and mixed in age, from a nineteen-year-old student to a retired engineer in his sixties. Most of them are learning English for work or for travel; two are preparing to join family abroad. This mix matters for the classroom because their reasons for learning shape what they are willing to do: the younger learners are happy to take risks in speaking, while the older learners prefer to see the language written down before they use it.',
@@ -350,7 +350,7 @@ const FOL_TEXT = [
 const RESUB_TEXT = FOL_TEXT.replace('What I have learned from this assignment', 'Having looked again at the first activity after my tutor’s comments, I have made the task more focused: instead of "what happened yesterday", the learner describes three specific incidents from one shift, each with a time expression, so that the past simple is required every time and the delayed correction has more to work with. The stress activity is unchanged.\n\nWhat I have learned from this assignment');
 
 /* ============================== the run ============================== */
-/* What a candidate's record says has already happened -- so a run that died
+/* What a trainee's record says has already happened -- so a run that died
    half way (four did, on 26 Sep 2026) picks up where the store is rather than
    minting a fifth course. COURSE=c3 reuses that course. */
 const numOf = v => { const m = String(v == null ? '' : v).match(/\d+/); return m ? parseInt(m[0], 10) : 0; };
@@ -419,19 +419,19 @@ await settle(p, 12000);
 {
   const roster = await call({ op: 'roster', key: K });
   for (const [id, t] of Object.entries((roster && roster.trainees) || {})) tokens[t.name] = t.token || id;
-  if (Object.keys(tokens).length < COHORT.length) throw new Error('only ' + Object.keys(tokens).length + ' of ' + COHORT.length + ' candidates reached the store');
+  if (Object.keys(tokens).length < COHORT.length) throw new Error('only ' + Object.keys(tokens).length + ' of ' + COHORT.length + ' trainees reached the store');
 }
-log(Object.keys(tokens).length + ' candidates added');
+log(Object.keys(tokens).length + ' trainees added');
 }
 /* Resuming: the roster is read back rather than made, and the course's settings re-saved. */
 if (RESUMING) {
   const roster = await call({ op: 'roster', key: K });
   for (const [id, t] of Object.entries((roster && roster.trainees) || {})) tokens[t.name] = t.token || id;
-  if (Object.keys(tokens).length < COHORT.length) explain(new Error('the reused course has ' + Object.keys(tokens).length + ' candidates, not ' + COHORT.length));
+  if (Object.keys(tokens).length < COHORT.length) explain(new Error('the reused course has ' + Object.keys(tokens).length + ' trainees, not ' + COHORT.length));
   await gotoSettled(p, url('6_centre_admin_dashboard.html', 'k=' + K), '#tutorNames'); await settle(p, 1000);
   await p.fill('#tutorNames', TUTOR_1 + ', ' + TUTOR_2); await p.fill('#courseStart', day(-11)); await p.fill('#courseEnd', day(11));
   await p.click('#saveSettings'); await settle(p, 3000); log('settings re-saved: ' + TUTOR_1 + ', ' + TUTOR_2 + '; ' + day(-11) + ' to ' + day(11));
-  log(Object.keys(tokens).length + ' candidates on the course');
+  log(Object.keys(tokens).length + ' trainees on the course');
 }
 
 /* ---- 3. the assignment keys and their deadlines -- both paths ------------
@@ -439,7 +439,7 @@ if (RESUMING) {
    just in time. A2 is the furthest out and carries the extension story
    (nobody submits it). A3 is open and carries the resubmission story. The
    first version had A1 nine days past, and the page refused every submission
-   -- correctly: a candidate cannot submit past a deadline, and neither can a
+   -- correctly: a trainee cannot submit past a deadline, and neither can a
    script. */
 await gotoSettled(p, url('8_assignment_wording.html', 'k=' + K), 'input[type="datetime-local"]'); await settle(p, 1500);
 const ORDER = await evalRetry(p, () => eval('hubAssignmentOrder(DATA).filter(k => k !== "a5")'));
@@ -541,7 +541,7 @@ async function returnFeedback(T, name, n, F) {
   const tp = T.p;
   await gotoSettled(tp, url('3_tutor_feedback.html', 'k=' + K + '&trainee=' + tokens[name]), '#fGrade');
   await tp.waitForFunction(nm => (document.body.innerText || '').includes(nm), name, { timeout: 40000 }).catch(() => {});
-  /* The brief is built from DOC, the candidate's plan as the screen holds it.
+  /* The brief is built from DOC, the trainee's plan as the screen holds it.
      Run five built it before the plan had arrived and got a brief of nothing.
      This wait is not tolerant: no plan, no feedback. */
   await tp.waitForFunction(() => { try { return typeof DOC !== 'undefined' && DOC && DOC.plan && (DOC.plan.rows || []).length > 0; } catch (e) { return false; } }, null, { timeout: 60000 });
@@ -725,10 +725,10 @@ await gotoSettled(p, url('13_grades_report.html', 'k=' + K), '.cand .grow select
 await p.waitForFunction(n => document.querySelectorAll('.cand').length >= n, COHORT.length, { timeout: 40000 });
 await settle(p, 2500);
 const COURSE_TEXT = {
-  tp: 'Twelve candidates in two teaching practice groups of six; each candidate teaches eight assessed lessons of forty-five minutes, four at A2 in the first half of the course and four at B1 in the second. Levels swap after TP4. Each group has one tutor for its first four lessons and the other tutor for its last four, so every candidate is observed by both.',
-  tpSup: 'Every lesson is followed by a feedback session of forty-five minutes with the observing tutor and the TP group. Written feedback is returned to the candidate on the same day, through Connect Lite, with strengths and action points in planning and in teaching, a comment on each stage of the plan, and a comment on the self-evaluation. Starred action points carry forward into the personal aims of the next plan.',
-  tutorials: 'Two tutorials for each candidate: the first at the end of week two, the second at the end of week three. The first round is this week and is recorded on each candidate’s tracker with the standing at that point and the action points agreed. Candidates whose standing is below the standard at the first tutorial are seen again in week three.',
-  extra: 'Two tutors on the whole course, one teaching practice group each, swapping groups after TP4, sharing one course record so that every document a candidate produces is seen by both. One candidate has passed the first written assignment on resubmission; one has a resubmission outstanding; one has an extension on the second. No cause for concern at the time of writing.',
+  tp: 'Twelve trainees in two teaching practice groups of six; each trainee teaches eight assessed lessons of forty-five minutes, four at A2 in the first half of the course and four at B1 in the second. Levels swap after TP4. Each group has one tutor for its first four lessons and the other tutor for its last four, so every trainee is observed by both.',
+  tpSup: 'Every lesson is followed by a feedback session of forty-five minutes with the observing tutor and the TP group. Written feedback is returned to the trainee on the same day, through Connect Lite, with strengths and action points in planning and in teaching, a comment on each stage of the plan, and a comment on the self-evaluation. Starred action points carry forward into the personal aims of the next plan.',
+  tutorials: 'Two tutorials for each trainee: the first at the end of week two, the second at the end of week three. The first round is this week and is recorded on each trainee’s tracker with the standing at that point and the action points agreed. Trainees whose standing is below the standard at the first tutorial are seen again in week three.',
+  extra: 'Two tutors on the whole course, one teaching practice group each, swapping groups after TP4, sharing one course record so that every document a trainee produces is seen by both. One trainee has passed the first written assignment on resubmission; one has a resubmission outstanding; one has an extension on the second. No cause for concern at the time of writing.',
 };
 for (const [k, v] of Object.entries(COURSE_TEXT)) await setVal(p, `#course textarea[data-coursefield="${k}"]`, v);
 const PROVS = ['PASS A', 'PASS / PASS B', 'PASS B', 'PASS', 'PASS B', 'PASS', 'PASS A', 'PASS B', 'PASS', 'FAIL / PASS', 'PASS', 'PASS B'];
@@ -782,7 +782,7 @@ console.log('\n' + '='.repeat(66));
 console.log('DEMO COURSE ' + made.id + '  (' + LABEL + ')');
 console.log('='.repeat(66));
 console.log('\nTutor — this is the one to send:\n  ' + url('invite.html', 'k=' + K));
-console.log('\nA candidate, ' + someone[0] + ', so they can see the other side:\n  ' + url('invite.html', 't=' + someone[1]));
+console.log('\nA trainee, ' + someone[0] + ', so they can see the other side:\n  ' + url('invite.html', 't=' + someone[1]));
 if (AK) console.log('\nAssessor, view only:\n  ' + url('invite.html', 'ak=' + AK));
 console.log('\nWhen you are done:  node demo-clear.mjs ' + made.id);
 console.log('Deleting it kills all three links at once.\n');

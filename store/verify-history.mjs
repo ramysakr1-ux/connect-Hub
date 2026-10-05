@@ -4,7 +4,7 @@
  *
  *   node store/verify-history.mjs
  *
- * Writes a history of two real-sized documents for one demo candidate, reads
+ * Writes a history of two real-sized documents for one demo trainee, reads
  * it back through the three reads the pages use (get, roster, me), then puts
  * a third entry alone and checks the first two were kept. Restores nothing:
  * c3 is the demo course and this is what it is for.
@@ -28,13 +28,13 @@ const ok = (cond, msg) => { console.log((cond ? '  ok   ' : '  FAIL ') + msg); i
 const oc = await call({ op: 'ownerCourses', owner: OWNER });
 const c3 = (oc.result.courses || []).find(c => c.id === 'c3');
 if (!c3) { console.log('no course c3 -- mint the demo course first'); process.exit(1); }
-/* Its own candidate, added for the run and purged after it -- a probe must not
+/* Its own trainee, added for the run and purged after it -- a probe must not
    write fake documents into a real record (it did, once: Emily Carter's TP1). */
-const added = await call({ op: 'addTrainee', key: c3.tutorKey, name: 'Probe Candidate', group: '9' });
-if (!added.ok) { console.log('could not add the probe candidate: ' + added.error); process.exit(1); }
+const added = await call({ op: 'addTrainee', key: c3.tutorKey, name: 'Probe Trainee', group: '9' });
+if (!added.ok) { console.log('could not add the probe trainee: ' + added.error); process.exit(1); }
 const who = { token: added.result.token, name: added.result.name };
-console.log('candidate: ' + who.name + ' (added for this run)');
-process.on('beforeExit', async () => { if (process.env.KEEP) return; const p = await call({ op: 'purgeTrainee', key: c3.tutorKey, token: who.token }); console.log(p.ok ? 'probe candidate purged' : 'purge failed: ' + p.error); });
+console.log('trainee: ' + who.name + ' (added for this run)');
+process.on('beforeExit', async () => { if (process.env.KEEP) return; const p = await call({ op: 'purgeTrainee', key: c3.tutorKey, token: who.token }); console.log(p.ok ? 'probe trainee purged' : 'purge failed: ' + p.error); });
 const doc = n => ({ label: 'TP' + n + ' · ' + who.name, status: 'returned', returnedAt: Date.now() - n * 864e5,
   state: { f: { fTP: 'TP' + n } }, docHTML: '<h1>Teaching practice ' + n + '</h1>' + 'x'.repeat(30000) });
 

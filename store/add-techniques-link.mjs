@@ -1,5 +1,5 @@
 // Put the Alternative Teaching Techniques page on a DEMO course's list of
-// files for candidates (Course admin → Settings → Files for candidates).
+// files for trainees (Course admin → Settings → Files for trainees).
 //
 //   node store/add-techniques-link.mjs c3            # shows what it would do
 //   node store/add-techniques-link.mjs c3 --write
@@ -9,7 +9,7 @@
 // write was my call, not his, and --remove took it back out of c3, c4, c5.
 //
 // Ramy, 27 Sep 2026: "add the alternative teaching techniques page as a
-// candidate link". Any centre gets the line on its next Save of Settings;
+// trainee link". Any centre gets the line on its next Save of Settings;
 // the demo courses do not press Save, so this does it for them. Refuses the
 // two real courses (c1 IH Istanbul, c2 C/17), and refuses a short read: the
 // settings record it writes back is the one it read plus one link, never
@@ -26,10 +26,10 @@ const [courseId] = process.argv.slice(2);
 const WRITE = process.argv.includes('--write');
 const REMOVE = process.argv.includes('--remove');
 if (!courseId) { console.error('Usage: node store/add-techniques-link.mjs <courseId> [--write]'); process.exit(1); }
-/* c2 is the C/17 provisional-grades course: no candidates, nothing to link.
+/* c2 is the C/17 provisional-grades course: no trainees, nothing to link.
    c1 is Ramy's real October course; it is written only on his word, which
    --asked records (27 Sep 2026: "add it to my October course"). */
-if (courseId === 'c2') { console.error('refusing c2 — the C/17 grades course has no candidates'); process.exit(1); }
+if (courseId === 'c2') { console.error('refusing c2 — the C/17 grades course has no trainees'); process.exit(1); }
 if (courseId === 'c1' && !process.argv.includes('--asked')) { console.error('refusing c1 — a real course; add --asked only when Ramy has asked for this write'); process.exit(1); }
 
 const call = async (b) => {

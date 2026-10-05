@@ -4,26 +4,26 @@
  *
  * Ramy: "I want the trainers to be able to share their demo lesson with the
  * trainees, that's all... perhaps GTKY activities too... trainees can do the
- * latter." So: one card on the tutor dashboard and on the candidate home. A
- * tutor puts up the demonstration lesson and any GTKY activity; a candidate
+ * latter." So: one card on the tutor dashboard and on the trainee home. A
+ * tutor puts up the demonstration lesson and any GTKY activity; a trainee
  * puts up a GTKY activity of their own. Everyone on the course sees the lot.
  *
  * It rides on the store's share list (op shareMaterial / unshareMaterial,
  * course kind `shared`, v44): a row is {id, at, name, url, by, tp, kind}. The
- * candidates' lesson materials use kind 'materials' and go to the volunteer
+ * trainees' lesson materials use kind 'materials' and go to the volunteer
  * students' page; these use 'demo' and 'gtky' and stay on the course -- the
  * volunteer page hides them. The store lets a tutor take back any row and a
- * candidate only their own; the buttons here follow the same rule, and the
+ * trainee only their own; the buttons here follow the same rule, and the
  * store is the one that enforces it.
  *
  * Links, not uploads: the demonstration lesson and the GTKY sheets already
- * live in a Drive, a Doc or a site, and a link is what a candidate needs.
+ * live in a Drive, a Doc or a site, and a link is what a trainee needs.
  */
 (function () {
   var KEY = 'connect_shared_v1';
   var GROUPS = [
     { kind: 'demo', title: 'The demonstration lesson', note: 'The plan and the materials of the lesson the tutors taught on day one.' },
-    { kind: 'gtky', title: 'Getting-to-know-you activities', note: 'Activities for a first lesson with a new class. Tutors and candidates can both put one here.' },
+    { kind: 'gtky', title: 'Getting-to-know-you activities', note: 'Activities for a first lesson with a new class. Tutors and trainees can both put one here.' },
   ];
   var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
   var read = function () { try { return (JSON.parse(localStorage.getItem(KEY)) || []).filter(function (x) { return x && x.url && x.name; }); } catch (e) { return []; } };

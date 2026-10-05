@@ -1,7 +1,7 @@
 import { call } from './st.mjs';
-/* A STAGE THAT NAMES A PAGE THE SLOT DOES NOT CARRY. 3A.1 told candidates to
+/* A STAGE THAT NAMES A PAGE THE SLOT DOES NOT CARRY. 3A.1 told trainees to
    use "Page 127, 3.2" while its citation named only p. 24, so the page never
-   reached the card or the printed day and the candidate was sent somewhere
+   reached the card or the printed day and the trainee was sent somewhere
    they had not been given. This finds every other instance: it reads the page
    numbers out of each stage's instructions and checks them against the pages
    actually attached to that slot. */

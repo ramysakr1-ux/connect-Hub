@@ -1,11 +1,11 @@
-// Put one assignment back to unmarked, leaving the candidate's own work alone.
+// Put one assignment back to unmarked, leaving the trainee's own work alone.
 //
 //   node store/unmark-assignment.mjs c3 "Anastasia" fol
 //   node store/unmark-assignment.mjs c3 "Anastasia" fol --write
 //
 // WHY. The film's take drove a real marking sheet and clicked all six criteria
 // on it (27 Sep 2026). The engine stubs the store's `put`, and the marks
-// reached the store anyway, so a candidate on the running demo has an
+// reached the store anyway, so a trainee on the running demo has an
 // assignment that reads as marked when nobody marked it. Ramy: "undo the
 // marks the film left on Anastasia."
 //
@@ -42,7 +42,7 @@ if (!course) { console.error('no course ' + courseId); process.exit(1); }
 const roster = await call({ op: 'roster', key: course.tutorKey });
 const people = (roster.result && roster.result.trainees) || [];
 const hits = people.filter((p) => p.name.toLowerCase().includes(who.toLowerCase()));
-if (hits.length !== 1) { console.error(`"${who}" matches ${hits.length} candidates`); process.exit(1); }
+if (hits.length !== 1) { console.error(`"${who}" matches ${hits.length} trainees`); process.exit(1); }
 const p = hits[0];
 
 const rec = (p.records || {}).assignments;

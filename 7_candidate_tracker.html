@@ -6,11 +6,11 @@
 <link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="brand/favicon.ico" sizes="32x32">
 <link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
-<title>Connect Lite — Candidate tracker</title>
+<title>Connect Lite — Trainee tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Newsreader:wght@600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610051144">
+<link rel="stylesheet" href="hub-tokens.css?v=202610051229">
 <style>
   /* design_handoff_candidate_tracker (Ramy, 20 Sep 2026), with the Hub's
      colour-coded chips in the cells -- "I like the chips that you created.
@@ -169,7 +169,7 @@
      double marking really need its own tab? Can it just be part of the
      candidate tracking?" Two thirds of that tab was a second copy of this
      screen -- which already badges DM with the second marker's initials in
-     every cell, names both markers in the strip under a candidate, and filters
+     every cell, names both markers in the strip under a trainee, and filters
      on Double marked. Only the course-level sample was its own, and it reads
      better beside the markers than beside the roster. Course admin is setup
      again: settings, roster, tutors, wording. */
@@ -211,7 +211,7 @@
 
   @media (max-width:900px){ .page{ padding:20px 16px 60px; } }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610051144">
+<link rel="stylesheet" href="hub-house.css?v=202610051229">
 </head>
 <body>
 <div class="page">
@@ -227,8 +227,8 @@
       <span class="hub-pair"><span class="word">Connect</span><span class="hub-word">Lite</span></span>
     </div>
     <div class="eyebrow" id="eyebrow"></div>
-    <h1>Candidate tracker</h1>
-    <div class="lede">Colour only marks what needs you. Everything that is fine stays quiet. Every cell is written by the thing that produced it — a submission, a mark sheet, the feedback you returned. Nothing on the grid is typed into it; only the Stage records, the Fail letter and withdrawal are yours to set, in the strip that opens under a candidate.</div>
+    <h1>Trainee tracker</h1>
+    <div class="lede">Colour only marks what needs you. Everything that is fine stays quiet. Every cell is written by the thing that produced it — a submission, a mark sheet, the feedback you returned. Nothing on the grid is typed into it; only the Stage records, the Fail letter and withdrawal are yours to set, in the strip that opens under a trainee.</div>
   </div>
   <div class="card">
     <div class="bar">
@@ -240,20 +240,20 @@
   </div>
   <div id="detail"></div>
 </div>
-<script src="hub-due.js?v=202610051144"></script>
-<script src="hub-shared.js?v=202610051144"></script>
-<script src="assignment-defaults.js?v=202610051144"></script>
-<script src="hub-tracker.js?v=202610051144"></script>
-<script src="hub-store.js?v=202610051144"></script>
-<script src="hub-sync.js?v=202610051144"></script>
+<script src="hub-due.js?v=202610051229"></script>
+<script src="hub-shared.js?v=202610051229"></script>
+<script src="assignment-defaults.js?v=202610051229"></script>
+<script src="hub-tracker.js?v=202610051229"></script>
+<script src="hub-store.js?v=202610051229"></script>
+<script src="hub-sync.js?v=202610051229"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
-// ?me=1: the candidate's own view. One row, built from this browser's own
+// ?me=1: the trainee's own view. One row, built from this browser's own
 // records (the paperwork and what the tutor returned), nothing editable.
 //
 // A TRAINEE LINK IS ALWAYS THIS VIEW, parameter or not. Without the second
-// test, a candidate who reached this page without ?me=1 -- a bookmark, a
+// test, a trainee who reached this page without ?me=1 -- a bookmark, a
 // trimmed URL, a back button -- fell through to the roster branch below and
 // got the TUTOR's grid: the whole-cohort chrome, copy written to the tutor
 // ("yours to set"), and RO false, so the Stage records, the Fail letter and
@@ -296,7 +296,7 @@ const TPS = Array.from({length:TP_TOTAL},(_,i)=>i+1).map(n=>({key:'tp'+n, n, lab
 // The handoff's vocabulary and colour buckets, over the Hub's own states.
 //
 // DUE and MISSING are not stored anywhere: they are the ABSENCE of a
-// submission, measured against a deadline, for one candidate. The line above
+// submission, measured against a deadline, for one trainee. The line above
 // this one used to say they never render because the Hub held no deadlines.
 // It does now (24 Sep 2026), so they do -- see dueChip().
 const A_STATE = {
@@ -313,12 +313,12 @@ const A_STATE = {
   RESLATE:   { t:'resubmit', cls:'wrong', name:'Resubmission required \u2014 the window has closed' }
 };
 
-/* The deadline a cell is really against, for THIS candidate -- their own
-   extension included, which is why an extended candidate reads "due" while the
+/* The deadline a cell is really against, for THIS trainee -- their own
+   extension included, which is why an extended trainee reads "due" while the
    rest of a late cohort reads "missing".
  *
- * Three days, not the twenty-four hours the candidate's own pill uses, and the
- * difference is deliberate: a candidate wants to know it is today, a tutor
+ * Three days, not the twenty-four hours the trainee's own pill uses, and the
+ * difference is deliberate: a trainee wants to know it is today, a tutor
  * scanning this board on Monday wants to know what is coming this week.
  *
  * Only the states where something is genuinely outstanding are touched. A
@@ -360,7 +360,7 @@ function people(){
   const roster = loadRoster();
   return Object.values(roster.trainees||{}).sort((a,b)=>(a.name||'').localeCompare(b.name||'')).map(tr=>{
     const c = T.recordFor(tr);
-    // The candidate's own row keeps the reflect-before-reading rule: the current
+    // The trainee's own row keeps the reflect-before-reading rule: the current
     // TP's grade stays hidden until their self-evaluation is in.
     if (ME) { const cur = tr.tp && tr.tp.feedback; const n = cur ? T.tpNumberOf(cur) : 0; const selfIn = !!(tr.tp && tr.tp.selfeval && tr.tp.selfeval.status==='turned_in'); if (n && !selfIn) { c['tp'+n] = ''; c['tp'+n+'_aim'] = ''; c['tp'+n+'_gated'] = true; } }
     const r = T.readCandidate(c);
@@ -379,7 +379,7 @@ function people(){
   });
 }
 /* Handbook 9.2.3: the sample follows the cohort -- three of each assignment up
-   to nine candidates, four up to sixteen, five up to twenty-four. Derived, not
+   to nine trainees, four up to sixteen, five up to twenty-four. Derived, not
    hard-coded: a wrong denominator on a compliance reading is worse than none.
    Assignment 5 is a centre sanction and is never in the sample, which is why
    ASSN drops it already. */
@@ -391,13 +391,13 @@ function people(){
 function requiredSample(cohort){ return Math.min(cohort, cohort <= 9 ? 3 : cohort <= 16 ? 4 : 5); }
 function paintDmStrip(all, isA){
   const box = $('dmStrip'); if (!box) return;
-  // The candidate's own view of the tracker is their record, not the centre's
+  // The trainee's own view of the tracker is their record, not the centre's
   // compliance, so the sample is staff and assessor only.
   if (ME || !isA || !all.length){ box.innerHTML = ''; box.className = ''; return; }
   const cohort = all.length, required = requiredSample(cohort);
   box.className = 'dmstrip';
   box.innerHTML =
-    `<p class="dmrule">Handbook 9.2.3: a minimum of two tutors <b>should</b> be involved in the marking, and a proportion of each assignment <b>must</b> be double-marked \u2014 three of each up to nine candidates, four up to sixteen, five up to twenty-four. With ${cohort} candidate${cohort===1?'':'s'} on this course the sample is ${required} of each.</p>` +
+    `<p class="dmrule">Handbook 9.2.3: a minimum of two tutors <b>should</b> be involved in the marking, and a proportion of each assignment <b>must</b> be double-marked \u2014 three of each up to nine trainees, four up to sixteen, five up to twenty-four. With ${cohort} trainee${cohort===1?'':'s'} on this course the sample is ${required} of each.</p>` +
     `<div class="dmq" style="--cols:${ASSN.length<=4?ASSN.length:Math.ceil(ASSN.length/2)}">` + ASSN.map(a=>{
       const n = all.filter(p=>p.asg[a.key].dm).length;
       // n>0 first: a card must never read "2 of 3 -- not marked yet". A
@@ -406,7 +406,7 @@ function paintDmStrip(all, isA){
       //
       // Otherwise it takes a MARKED assignment, not merely a submitted one.
       // Any non-empty code used to count, and WAIT, WAIT2 and UNMARKED are all
-      // states before a mark exists -- so one candidate submitting turned the
+      // states before a mark exists -- so one trainee submitting turned the
       // card amber and read "short of the sample" when nothing had been marked
       // at all, let alone double-marked. Colour on this screen means something
       // needs you, and that one needed nobody (tutor walk, 22 Sep 2026).
@@ -431,7 +431,7 @@ function paintDmStrip(all, isA){
 /* Two separate Cambridge sentences, two different verbs, so they are said
    separately and coloured differently. 9.2.3: "A minimum of two tutors SHOULD
    be involved in the marking of written assignments" -- a recommendation.
-   9.1.3: candidates "MUST be observed/assessed by a minimum of two tutors
+   9.1.3: trainees "MUST be observed/assessed by a minimum of two tutors
    during the course" -- a requirement, and about teaching practice, not
    marking. Lite asserted the first as "must" and never counted either
    (audit, 29 Sep 2026). */
@@ -447,7 +447,7 @@ function markersLine(all){
   bits.push(names.size >= 2
     ? `<span class="ok">${names.size} tutors have marked</span>`
     : `<span class="warn">${names.size === 1 ? 'one tutor has' : 'no tutor has'} marked so far \u2014 9.2.3 asks for a minimum of two (a <b>should</b>)</span>`);
-  if (short.length) bits.push(`<span class="warn">observed by one tutor only: ${short.map(esc).join(', ')} \u2014 9.1.3 says candidates <b>must</b> be observed by a minimum of two</span>`);
+  if (short.length) bits.push(`<span class="warn">observed by one tutor only: ${short.map(esc).join(', ')} \u2014 9.1.3 says trainees <b>must</b> be observed by a minimum of two</span>`);
   return `<p class="dmrule dmcount">${bits.join(' \u00b7 ')}</p>`;
 }
 
@@ -484,7 +484,7 @@ function render(){
       `<div class="band" style="grid-column:span ${s1}">Stage 1</div>` +
       (s2 > 0 ? `<div class="band" style="grid-column:span ${s2}">Stage 2</div>` : '') +
       `<div class="band" style="grid-column:span ${s3}">Stage 3</div><div></div></div>`; }
-  html += `<div class="grid colhead" style="grid-template-columns:${gridCols}"><div class="count">${shown.length} candidate${shown.length===1?'':'s'}</div>${cols.map(c=>`<div class="col"><b>${c.label}</b><span>mark / DM</span></div>`).join('')}<div class="tail-h">${isA?'Passed':'To std'}</div></div>`;
+  html += `<div class="grid colhead" style="grid-template-columns:${gridCols}"><div class="count">${shown.length} trainee${shown.length===1?'':'s'}</div>${cols.map(c=>`<div class="col"><b>${c.label}</b><span>mark / DM</span></div>`).join('')}<div class="tail-h">${isA?'Passed':'To std'}</div></div>`;
   html += shown.map(p=>{
     const risk = atRisk(p);
     const cells = cols.map(col=>{
@@ -539,7 +539,7 @@ function renderDetail(all){
     if (s.sub2At) trail.push([s.sub2At, 'Resubmitted']);
     if (s.marked2At) trail.push([s.marked2At, 'Resubmission marked' + (s.feedback&&s.feedback.outcome?' — '+s.feedback.outcome:'')]);
     if (ME) { actions.push([a.code==='FAILRES'||a.code==='UNMARKED' ? 'Open and resubmit' : a.code ? 'Open the assignment' : 'Start the assignment', `9_assignment_submission.html?a=${SEL.col}`, true]); if (['PASS','RES','FAIL'].includes(a.code)) actions.push(['Open the record', `11_assignment_record.html?a=${SEL.col}`, false]); }
-    else if (ASSESSOR) { if (['PASS','RES','FAIL','FAILRES'].includes(a.code)) actions.push(['Open the marked record', `11_assignment_record.html?${q}&a=${SEL.col}`, true]); actions.push(['Open the candidate\u2019s pack', `12_assessor_pack.html?${q}`, false]); }
+    else if (ASSESSOR) { if (['PASS','RES','FAIL','FAILRES'].includes(a.code)) actions.push(['Open the marked record', `11_assignment_record.html?${q}&a=${SEL.col}`, true]); actions.push(['Open the trainee\u2019s pack', `12_assessor_pack.html?${q}`, false]); }
     else {
     if (['WAIT','WAIT2'].includes(a.code)) actions.push(['Open the mark sheet', `10_tutor_assignment_marking.html?${q}&a=${SEL.col}`, true]);
     else if (['PASS','RES','FAIL','FAILRES'].includes(a.code)) actions.push(['Open the marked record', `11_assignment_record.html?${q}&a=${SEL.col}`, true]);
@@ -565,20 +565,20 @@ function renderDetail(all){
     if (t.at) trail.push([new Date(t.at).toISOString(), 'Feedback returned' + (t.tutor?' by '+t.tutor:'') + (t.g && t.g!=='un' ? ' — ' + st.name : '')]);
     const cur = p.tr.tp && p.tr.tp.feedback; const isCurrent = cur && T.tpNumberOf(cur)===n;
     /* Any teaching practice already returned, not only the one in flight.
-       4_feedback_returned.html shows the candidate's WHOLE record — every
+       4_feedback_returned.html shows the trainee's WHOLE record — every
        teaching practice filed by "Start next TP", the lot printable as one PDF
        — so the destination is the same either way, and requiring isCurrent
        only withheld the door: on a finished course, where nothing is current,
-       every cell offered a candidate nothing but Close while six returned
+       every cell offered a trainee nothing but Close while six returned
        documents sat behind the page (trainee walk, 22 Sep 2026). The tutor's
        branch below keeps isCurrent, because its door goes to the feedback
        SHEET, which only ever holds the current one. */
     if (ME) { if (t.g!=='nd' && t.g!=='un') actions.push(['Read the feedback', '4_feedback_returned.html', true]); }
-    else if (ASSESSOR) { if (t.fb) actions.push(['Open the TP document', `12_assessor_pack.html?${q}#tp${n}`, true]); actions.push(['Open the candidate\u2019s pack', `12_assessor_pack.html?${q}`, false]); }
+    else if (ASSESSOR) { if (t.fb) actions.push(['Open the TP document', `12_assessor_pack.html?${q}#tp${n}`, true]); actions.push(['Open the trainee\u2019s pack', `12_assessor_pack.html?${q}`, false]); }
     else if (t.g==='un') actions.push(['Sign off the feedback', `3_tutor_feedback.html?${q}`, true]);
     else if (t.g!=='nd' && isCurrent) actions.push(['Open the TP record', `3_tutor_feedback.html?${q}`, true]);
   }
-  // the candidate's standing, from the tracker's rules
+  // the trainee's standing, from the tracker's rules
   const r = p.r; const chip = T.STATE_CHIP[r.state]; const man0 = p.tr.tracker || {};
   facts.push(['Standing', chip.text.charAt(0)+chip.text.slice(1).toLowerCase() + (r.from?' — from '+r.from:''), r.state==='notstd'?'red':'']);
   // Grades are set on the Grades report (13); read here, never edited.
@@ -587,14 +587,14 @@ function renderDetail(all){
     facts.push(['Provisional grade', gr.provisional || 'not set', /FAIL/.test(gr.provisional || '') ? 'red' : '']);
     facts.push(['Final grade', gr.final || 'not set', gr.final==='FAIL' ? 'red' : '']);
   }
-  // The tutor's prompts stay the tutor's. A candidate sees their standing, a
+  // The tutor's prompts stay the tutor's. A trainee sees their standing, a
   // grade cap (11.6 is about them) and a letter once it has been issued --
   // never 'potential Fail' or 'a letter can go out' ahead of the letter itself.
   if (ME && r.letterIssued) facts.push(['Letter', 'Fail letter issued ' + String(man0.failLetter || ''), 'red']);
   if (!RO && r.potentialFail) facts.push(['Potential Fail', r.failWhy.join('; ') + (r.letterIssued?' · Fail letter issued':''), 'red']);
   if (r.ceiling) facts.push(['Grade cap', r.ceiling.replace('SRT','LSRT'), 'amb']);
   /* Cambridge's own verb decides the colour. 10.2 says Stage 3 "must be
-     completed" for a candidate who meets its triggers, so that is red; the
+     completed" for a trainee who meets its triggers, so that is red; the
      Fail letter "should" be issued, so it is amber and worded as Cambridge
      words it. The watch signal is the centre's own and says so. */
   if (!RO && r.stage3Why) facts.push(['Stage 3', 'must be completed — ' + r.stage3Why + ' (10.2)', 'red']);
@@ -604,7 +604,7 @@ function renderDetail(all){
   if (!RO && r.withdrawnQuery) facts.push(['Withdrawn', r.withdrawnQuery, 'red']);
   // The tutorials, the letter and withdrawal: one row each, set by choosing
   // a value, not by cycling a button (Ramy, 20 Sep 2026: "the stages look
-  // really messy"). The candidate's view prints the values as text.
+  // really messy"). The trainee's view prints the values as text.
   const man = p.tr.tracker || {};
   const seg = (field, options, cur) => RO
     ? `<span class="v ${cur ? 'set-'+cur : ''}">${(options.find(o=>o[0]===cur)||options[options.length-1])[1]}</span>`
@@ -648,7 +648,7 @@ $('detail').addEventListener('click', e=>{
   else tr.tracker[f] = v;
   saveRoster(roster); render();
 });
-(function(){ if (ASSESSOR) { document.getElementById('backLink').href='12_assessor_pack.html'; document.getElementById('backLink').innerHTML='&#8592; Assessor pack'; document.querySelector('.lede').textContent='Every candidate\u2019s teaching practice and assignments, read from what the tutors have returned and marked. Nothing here can be changed from this link; the Stage records and standing are as the tutors recorded them.'; }
+(function(){ if (ASSESSOR) { document.getElementById('backLink').href='12_assessor_pack.html'; document.getElementById('backLink').innerHTML='&#8592; Assessor pack'; document.querySelector('.lede').textContent='Every trainee\u2019s teaching practice and assignments, read from what the tutors have returned and marked. Nothing here can be changed from this link; the Stage records and standing are as the tutors recorded them.'; }
   if (ME) { document.getElementById('backLink').href='index.html'; document.getElementById('backLink').innerHTML='&#8592; Back'; document.querySelector('.lede').textContent='Every teaching practice and every assignment, read from what you have submitted and what your tutor has returned. Colour only marks what needs attention; everything that is fine stays quiet. The Stage records and the standing are your tutor\u2019s, as recorded.'; } try{ const cs = JSON.parse(localStorage.getItem('connect_course_settings')||'{}'); const parts=[ME ? 'Your progress' : ASSESSOR ? 'Assessor view' : '', cs.courseName, cs.centreName].filter(Boolean); $('eyebrow').textContent = parts.join(' · '); }catch(e){} })();
 render();
 </script>
