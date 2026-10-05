@@ -18,7 +18,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610051743">
+<link rel="stylesheet" href="hub-tokens.css?v=202610051746">
 <style>
   :root{
     /* the pane -- the same four values the trainee landing's cards use */
@@ -171,6 +171,14 @@
   .bar .t{height:11px; border-radius:999px; background:var(--teal); min-width:3px;}
   .bar.fail .t{background:var(--garnet,#8a2f3a);}
   .bar b{text-align:right; font-variant-numeric:tabular-nums;}
+  .statsub{font-size:.68rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase;
+    color:var(--gold-deep); margin:18px 0 8px;}
+  .months{display:flex; align-items:flex-end; gap:6px; height:76px; margin:0 0 6px;}
+  .months .m{flex:1 1 0; display:flex; flex-direction:column; justify-content:flex-end; gap:4px; min-width:0;}
+  .months .m .t{background:var(--teal); border-radius:3px 3px 0 0; min-height:2px;}
+  .months .m i{font-style:normal; font-size:.64rem; color:var(--grey); text-align:center;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .months .m b{font-size:.7rem; text-align:center; font-variant-numeric:tabular-nums; color:var(--grey);}
   .inmore{font:600 .8rem/1 inherit; background:none; border:0; padding:9px 0 0; cursor:pointer;
     color:var(--teal); text-decoration:underline; text-underline-offset:3px;}
   /* Reading a contributed set. The file in Drive is JSON; this is the set. It
@@ -318,7 +326,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610051743">
+<link rel="stylesheet" href="hub-house.css?v=202610051746">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -342,10 +350,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610051743"></script>
-<script src="hub-store.js?v=202610051743"></script>
-<script src="hub-say.js?v=202610051743"></script>
-<script src="hub-card-mail.js?v=202610051743"></script>
+<script src="hub-shared.js?v=202610051746"></script>
+<script src="hub-store.js?v=202610051746"></script>
+<script src="hub-say.js?v=202610051746"></script>
+<script src="hub-card-mail.js?v=202610051746"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -1386,7 +1394,46 @@ function drawStats(S){
       ${tile(S.volunteers || 0, 'volunteer students')}
     </div>` : ''}
     ${bars}
-    ${total && total < 10 ? `<p class="inempty">${total} final grade${total === 1 ? '' : 's'} so far \u2014 the spread stays shut until ten, because a chart of three people is those three people.</p>` : ''}`;
+    ${total && total < 10 ? `<p class="inempty">${total} final grade${total === 1 ? '' : 's'} so far \u2014 the spread stays shut until ten, because a chart of three people is those three people.</p>` : ''}
+    ${assignments(S)}
+    ${months(S)}`;
+}
+
+/* The written work, which the store was already counting and this was already
+   throwing away. Resubmission is the number worth watching: one fail may still
+   pass on a resubmission, two cannot (Handbook 11.6), so a centre whose
+   resubmission rate is climbing is a centre whose first drafts are going out
+   too early. */
+function assignments(S){
+  const a = S.assignments || {};
+  const n = (a.passed || 0) + (a.passedOnResubmission || 0) + (a.failed || 0);
+  if (!n) return '';
+  const pc = x => Math.round((x / n) * 100);
+  return `<p class="statsub">Written work</p>
+    <div class="bars">
+      <div class="bar"><i>passed</i><span class="t" style="width:${pc(a.passed || 0)}%"></span><b>${a.passed || 0}</b></div>
+      <div class="bar"><i>on resubmission</i><span class="t" style="width:${pc(a.passedOnResubmission || 0)}%"></span><b>${a.passedOnResubmission || 0}</b></div>
+      <div class="bar fail"><i>not passed</i><span class="t" style="width:${pc(a.failed || 0)}%"></span><b>${a.failed || 0}</b></div>
+    </div>`;
+}
+
+/* Courses by the month they started, so a quiet September is visible as one.
+   Twelve at most: beyond that the bars are too thin to read. */
+function months(S){
+  const by = S.byMonth || {};
+  const keys = Object.keys(by).sort().slice(-12);
+  if (keys.length < 2) return '';
+  const top = Math.max(...keys.map(k => by[k].courses));
+  const nice = k => {
+    const [y, m] = k.split('-');
+    return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][(+m) - 1] + ' ' + y.slice(2);
+  };
+  return `<p class="statsub">Courses started</p>
+    <div class="months">${keys.map(k => `<div class="m" title="${esc(nice(k))}: ${by[k].courses} course${
+      by[k].courses === 1 ? '' : 's'}, ${by[k].candidates} candidate${by[k].candidates === 1 ? '' : 's'}">
+      <b>${by[k].courses}</b>
+      <span class="t" style="height:${Math.max(2, Math.round((by[k].courses / top) * 54))}px"></span>
+      <i>${esc(nice(k))}</i></div>`).join('')}</div>`;
 }
 
 /* THE SET ITSELF, not the file. Ramy, 5 Oct 2026, having clicked through to a
