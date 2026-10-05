@@ -34,6 +34,13 @@ const FILE = process.argv[2];
 if (!FILE) { console.log('name a take: node film/cut.mjs film/takes/<file>.webm [music.mp3]'); process.exit(1); }
 const HERE_DIR = new URL('.', import.meta.url).pathname;
 const MUSIC = process.argv[3] || (existsSync(join(HERE_DIR, 'music.mp3')) ? join(HERE_DIR, 'music.mp3') : null);
+/* WHERE IN THE TRACK TO START. Ramy, 5 Oct 2026: "the music should get intense
+   with the scene." A track's build is a region, not a frame, so the way to put
+   a swell under the right shot is to slide the track, not to re-time the film.
+   Measured per second, the documentary track is sparse for twenty seconds,
+   climbs, and peaks at 0:63 -- so a 62-second trailer started three seconds in
+   hits its loudest moment on the last card. */
+const MUSIC_FROM = Number(process.argv[4] || 0);
 const OUT = FILE.replace(/\.webm$/, '-cut.webm');
 if (existsSync(OUT)) rmSync(OUT);
 
@@ -53,14 +60,15 @@ await page.exposeFunction('cutSay', (s) => console.log(s));
 
 await page.setContent(`<body style="margin:0;background:#111;color:#ccc;font:12px system-ui">
 <video id="v" crossorigin="anonymous" muted style="width:200px" src="http://127.0.0.1:${port}/take.webm"></video>
-${MUSIC ? `<audio id="m" crossorigin="anonymous" loop src="http://127.0.0.1:${port}/music.mp3"></audio>` : ''}
+${MUSIC ? `<audio id="m" crossorigin="anonymous" loop src="http://127.0.0.1:${port}/music.mp3"></audio>
+<script>window.__MUSIC_FROM = ${MUSIC_FROM};</script>` : ''}
 <canvas id="probe" width="8" height="8" style="display:none"></canvas>
 <p id="p">…</p></body>`);
 await page.waitForFunction(() => { const v = document.getElementById('v'); return v.readyState >= 2 && isFinite(v.duration); }, null, { timeout: 120000 });
 const dur = await page.evaluate(() => document.getElementById('v').duration);
 console.log('take ' + Math.floor(dur / 60) + ':' + String(Math.round(dur % 60)).padStart(2, '0') + ' — cutting the curtains out');
 
-console.log(MUSIC ? 'music: ' + MUSIC.split('/').pop() : 'no music track — the cut will be silent');
+console.log(MUSIC ? 'music: ' + MUSIC.split('/').pop() + (MUSIC_FROM ? ' from ' + MUSIC_FROM + 's' : '') : 'no music track — the cut will be silent');
 await page.evaluate(({ dur }) => new Promise((done) => {
   const v = document.getElementById('v');
   const pr = document.getElementById('probe'), pg = pr.getContext('2d');
@@ -82,6 +90,7 @@ await page.evaluate(({ dur }) => new Promise((done) => {
      through the finished film. Two fades, in at the start and out at the end,
      done on the gain node rather than the element's volume so they are smooth. */
   const m = document.getElementById('m');
+  const FROM = window.__MUSIC_FROM || 0;
   const stream = v.captureStream(25);
   let gain = null, ac = null;
   if (m) {
@@ -125,7 +134,7 @@ await page.evaluate(({ dur }) => new Promise((done) => {
     requestAnimationFrame(draw);
   };
   v.play().then(() => {
-    if (m && ac) { ac.resume(); m.play().catch(() => {}); gain.gain.setTargetAtTime(0.22, ac.currentTime, 0.9); }
+    if (m && ac) { ac.resume(); try { m.currentTime = FROM; } catch (e) {} m.play().catch(() => {}); gain.gain.setTargetAtTime(0.22, ac.currentTime, 0.9); }
     requestAnimationFrame(draw);
   });
 }), { dur });

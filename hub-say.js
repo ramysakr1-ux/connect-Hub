@@ -64,7 +64,7 @@
       '.say-here:hover{color:var(--teal,#0b6);}',
       '.say-back{position:fixed; inset:0; z-index:9001; background:rgba(28,26,22,.34);',
       '  display:flex; align-items:center; justify-content:center; padding:18px;}',
-      '.say-box{background:var(--paper,#fff); color:var(--ink,#222); border-radius:13px; padding:20px 22px;',
+      '.say-box{background:var(--surface,#f3f0ea); color:var(--ink,#222); border-radius:13px; padding:20px 22px;',
       '  width:min(460px,100%); max-height:92vh; overflow:auto; box-shadow:0 18px 50px rgba(0,0,0,.26);}',
       '.say-box h2{font-family:Newsreader,Georgia,serif; font-weight:600; font-size:1.25rem; margin:0 0 3px;}',
       '.say-box .sub{font-size:.84rem; color:var(--grey,#555); margin:0 0 14px;}',
