@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { call, LIBRARY } from './st.mjs';
 /* Slots that play a recording but whose TP point never names the track. The
    number has to come from the book page itself. */
-const plan = JSON.parse(fs.readFileSync('tracks-plan.json', 'utf8'));
+const plan = JSON.parse(fs.readFileSync(new URL('./tracks-plan.json', import.meta.url), 'utf8'));
 const have = new Set(Object.keys(plan));
 const r = await call({ op:'course', key:LIBRARY });
 const L = (((r.result && (r.result.records || r.result)) || {}).tppoints || {}).set.library;
@@ -45,4 +45,4 @@ out.forEach(o => {
   console.log(`      “…${o.why}”`);
 });
 console.log(`\n${out.length} slots play a recording with no track number in the TP point`);
-fs.writeFileSync('audio-gaps.json', JSON.stringify(out, null, 1));
+fs.writeFileSync(new URL('./audio-gaps.json', import.meta.url), JSON.stringify(out, null, 1));

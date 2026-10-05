@@ -70,6 +70,6 @@ for (const id of Object.keys(BOOK)) {
     console.log(`  ${x}·${i+1} [${sl.type.padEnd(19)}] ${rows.map(v => v.track + (v.file ? '' : ' ✗')).join(', ')}`);
   }));
 }
-fs.writeFileSync('tracks-plan.json', JSON.stringify(plan, null, 1));
+fs.writeFileSync(new URL('./tracks-plan.json', import.meta.url), JSON.stringify(plan, null, 1));
 console.log(`\n${Object.keys(plan).length} slots · ${want} track references · ${got} resolved to a file · ${want - got} not found`);
 if (miss.length) console.log('NOT FOUND: ' + miss.join(', '));
