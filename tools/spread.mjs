@@ -40,7 +40,13 @@ Object.keys(got).forEach(t => {
   if (dupFirstHalf) repeats++;
   if (never.length) missing++;
   console.log(`  ${(name[t]||t).padEnd(14)} ${ty.join(', ')}`);
-  console.log(`  ${''.padEnd(14)} first half: ${half.join(', ')}${dupFirstHalf ? '   ✗ REPEAT' : '  ✓'}` +
-              `   families: ${[...fam].join(' / ')}${never.length ? '   ✗ never meets ' + never.join(', ') : ''}`);
+  console.log(`  ${''.padEnd(14)} first half: ${half.join(', ')}${dupFirstHalf ? '   (a repeat)' : ''}` +
+              `   families: ${[...fam].join(' / ')}${never.length ? '   (no ' + never.join(', ') + ' yet)' : ''}`);
 });
-console.log(`\nfirst-half repeats: ${repeats} · trainees missing a family: ${missing}`);
+/* NOT A FAULT, and this used to read like one. Ramy, 5 Oct 2026: "we just give
+   them a mix of sort of skill and language lessons, different aims. First half
+   of the course, second half of the course, they can repeat a little bit. And
+   that's all. The last two TPs, they can always make up for anything that is
+   missing." So this counts and says what it sees; it does not accuse. */
+console.log(`\nfirst half: ${repeats} with a repeat · ${missing} with a family still to come` +
+            ` — both fine, and practices 7 and 8 are theirs to fill the gaps.`);
