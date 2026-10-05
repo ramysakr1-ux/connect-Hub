@@ -18,7 +18,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610051733">
+<link rel="stylesheet" href="hub-tokens.css?v=202610051743">
 <style>
   :root{
     /* the pane -- the same four values the trainee landing's cards use */
@@ -156,6 +156,21 @@
   .moreacts .menu button{display:block; width:100%; text-align:left; font:600 .82rem/1 inherit;
     background:none; border:0; padding:8px 10px; border-radius:6px; cursor:pointer; color:var(--garnet,#8a2f3a);}
   .moreacts .menu button:hover{background:var(--box);}
+  /* NUMBERS, NOT NAMES. The store counts and returns counts; this draws them. */
+  .stats{margin-top:30px; padding-top:18px; border-top:1px solid var(--sand-line);}
+  .stats h2{font-family:'Newsreader',Georgia,serif; font-size:1.3rem; margin:0 0 4px;}
+  .stats .lede{margin:0 0 14px;}
+  .statgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); gap:10px; margin:0 0 14px;}
+  .stat{background:var(--paper); border:1px solid var(--sand-line); border-bottom-width:2px;
+    border-radius:10px; padding:11px 13px;}
+  .stat b{display:block; font-size:1.5rem; font-weight:700; line-height:1.1; font-variant-numeric:tabular-nums;}
+  .stat span{font-size:.76rem; color:var(--grey);}
+  .bars{display:grid; gap:5px; max-width:520px;}
+  .bar{display:grid; grid-template-columns:96px 1fr 34px; align-items:center; gap:9px; font-size:.82rem;}
+  .bar i{font-style:normal; color:var(--grey);}
+  .bar .t{height:11px; border-radius:999px; background:var(--teal); min-width:3px;}
+  .bar.fail .t{background:var(--garnet,#8a2f3a);}
+  .bar b{text-align:right; font-variant-numeric:tabular-nums;}
   .inmore{font:600 .8rem/1 inherit; background:none; border:0; padding:9px 0 0; cursor:pointer;
     color:var(--teal); text-decoration:underline; text-underline-offset:3px;}
   /* Reading a contributed set. The file in Drive is JSON; this is the set. It
@@ -303,7 +318,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610051733">
+<link rel="stylesheet" href="hub-house.css?v=202610051743">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -327,10 +342,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610051733"></script>
-<script src="hub-store.js?v=202610051733"></script>
-<script src="hub-say.js?v=202610051733"></script>
-<script src="hub-card-mail.js?v=202610051733"></script>
+<script src="hub-shared.js?v=202610051743"></script>
+<script src="hub-store.js?v=202610051743"></script>
+<script src="hub-say.js?v=202610051743"></script>
+<script src="hub-card-mail.js?v=202610051743"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -1126,6 +1141,7 @@ async function load(msg){
     render(r.courses || [], msg);
     feedbackLine();
     inbox();
+    stats();
   } catch (err) {
     if (/not yours/i.test(err.message)) { try { localStorage.removeItem(OWNER_STORE); } catch (e) {} gate('That key was not recognised — check you copied all of it.'); return; }
     /* Without this the screen is a dead end: the store's message and nothing to
@@ -1331,6 +1347,48 @@ function drawInbox(){
     } catch (e) { b.disabled = false; b.textContent = what === 'drop' ? 'Delete' : 'Done'; alert(e.message || e); }
   });
 }
+/* NUMBERS ACROSS EVERY COURSE (store v75, 5 Oct 2026). Ramy: "it's not much of
+   a stat if it's only my courses ... nothing that is like snooping in their
+   business." The store does the counting and hands back counts; there is no op
+   that returns a name, and this draws nothing it was not given. Demos, scratch
+   courses and the records-kept-as-courses are not in it. */
+async function stats(){
+  try { drawStats((await call({ op: 'stats' }))); } catch (e) { /* an older store has none */ }
+}
+
+function drawStats(S){
+  const host = $('app'); if (!host || !S) return;
+  let box = document.querySelector('.stats');
+  if (!box) { box = document.createElement('section'); box.className = 'stats'; host.appendChild(box); }
+  const c = S.courses || {}, p = S.candidates || {};
+  const tile = (n, w) => `<div class="stat"><b>${n}</b><span>${w}</span></div>`;
+
+  /* A grade chart of one candidate is not a chart, it is that candidate. Below
+     ten graded, the distribution stays shut. */
+  const ORDER = ['PASS A', 'PASS B', 'PASS', 'FAIL', 'WITHDRAWN', 'EXTENSION', 'DEFERRAL'];
+  const g = S.grades && S.grades.final || {};
+  const total = Object.values(g).reduce((a, b) => a + b, 0);
+  const bars = total < 10 ? '' : `<div class="bars">${
+    ORDER.filter(k => g[k]).map(k => `<div class="bar${k === 'FAIL' ? ' fail' : ''}">
+      <i>${esc(k.toLowerCase())}</i>
+      <span class="t" style="width:${Math.round((g[k] / total) * 100)}%"></span>
+      <b>${g[k]}</b></div>`).join('')}</div>`;
+
+  box.innerHTML = `<h2>Across every course</h2>
+    <p class="lede">${c.total ? `Counts only \u2014 no centre is named and no outcome is attached to one. Demos and scratch courses are not in it.`
+      : 'Nothing yet: every course on the store today is a demo, a scratch course or a record. These fill as real centres run real courses.'}</p>
+    ${c.total ? `<div class="statgrid">
+      ${tile(c.total, 'courses')}
+      ${tile(S.centres || 0, (S.centres === 1 ? 'centre' : 'centres'))}
+      ${tile(c.running || 0, 'running today')}
+      ${tile(p.total || 0, 'candidates')}
+      ${tile(p.graded || 0, 'with a final grade')}
+      ${tile(S.volunteers || 0, 'volunteer students')}
+    </div>` : ''}
+    ${bars}
+    ${total && total < 10 ? `<p class="inempty">${total} final grade${total === 1 ? '' : 's'} so far \u2014 the spread stays shut until ten, because a chart of three people is those three people.</p>` : ''}`;
+}
+
 /* THE SET ITSELF, not the file. Ramy, 5 Oct 2026, having clicked through to a
    Drive file and found JSON. A contributed set is read the way ours are read:
    the aim, then the stages against the clock, with the watch notes where they
