@@ -34,7 +34,16 @@ const HERE = new URL('.', import.meta.url).pathname;
    their own view rather than the tutor's -- the exact distinction screen 7
    lost. Anything not listed is expected to open. */
 const ROOMS = {
-  'index.html':                      { trainee:'open',   tutor:'refuse', assessor:'refuse' },
+  /* THE FRONT DOOR, not a room (3 Oct 2026). A tutor, assessor or volunteer who
+     types lite.celtaconnect.com is SENT to their own room rather than refused
+     at this one, so "refuse" stopped being the right answer here -- and the
+     check kept reporting the redirect as a hole. `goes:` says where each link
+     must land, which is a stronger test than refusing was: it catches a tutor
+     being dropped in the trainee's room as well as a tutor being let in. */
+  'index.html':                      { trainee:'open',
+                                       tutor:'goes:5_tutor_dashboard.html',
+                                       assessor:'goes:12_assessor_pack.html',
+                                       volunteer:'goes:26_volunteer.html' },
   '1_trainee_plan_and_analysis.html':{ trainee:'open',   tutor:'refuse', assessor:'refuse' },
   '2_trainee_self_evaluation.html':  { trainee:'open',   tutor:'refuse', assessor:'refuse' },
   '3_tutor_feedback.html':           { trainee:'refuse', tutor:'open',   assessor:'refuse' },
@@ -115,7 +124,10 @@ for (const mode of MODES) {
     const ctx = await browser.newContext();
     const page = await ctx.newPage();
     const errs = [];
-    page.on('pageerror', e => { const t = String(e); if (!/stopping this page on purpose/.test(t)) errs.push('page error: ' + t.slice(0, 110)); });
+    /* Both throws are the page stopping itself on purpose: one refuses a link,
+       the other leaves for the room that link belongs to. */
+    page.on('pageerror', e => { const t = String(e);
+      if (!/stopping this page on purpose|leaving for your own room/.test(t)) errs.push('page error: ' + t.slice(0, 110)); });
     page.on('console', c => { if (c.type() === 'error') { const t = c.text(); if (!/ERR_UNSAFE_PORT|Failed to load resource|net::|ERR_CONNECTION/.test(t)) errs.push('console: ' + t.slice(0, 110)); } });
     await page.addInitScript(([seed, settings]) => {
       for (const [k, v] of Object.entries(seed)) localStorage.setItem(k, v);
@@ -134,6 +146,13 @@ for (const mode of MODES) {
       if (seen.appLeft > 0) failures.push(`${where}: the page's own script never ran`);
       if (NO_LINK.test(seen.text)) failures.push(`${where}: gated as if no link was given`);
       const want = (ROOMS[screen] || {})[mode.name];
+      if (want && want.slice(0, 5) === 'goes:') {
+        const landed = decodeURIComponent(page.url().split('?')[0].split('/').pop() || '');
+        if (landed !== want.slice(5)) failures.push(`${where}: went to ${landed || '(nowhere)'} — should go to ${want.slice(5)}`);
+        for (const e of errs) failures.push(`${where}: ${e}`);
+        await ctx.close();
+        continue;
+      }
       const refused = REFUSED.test(seen.text);
       if (want === 'refuse' && !refused) failures.push(`${where}: OPEN — this room should refuse this link`);
       if ((want === 'open' || want === 'own') && refused) failures.push(`${where}: REFUSED — this room should open for this link`);
