@@ -18,7 +18,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610051713">
+<link rel="stylesheet" href="hub-tokens.css?v=202610051724">
 <style>
   :root{
     /* the pane -- the same four values the trainee landing's cards use */
@@ -90,6 +90,35 @@
   .intag.idea{background:var(--box); color:var(--grey);}
   .intag.set{background:var(--teal-pale,#e3efed); color:var(--teal);}
   .inempty{font-size:.9rem; color:var(--grey); margin:0;}
+  /* WHAT NEEDS YOU, at the top. Ramy, 5 Oct 2026: "if we have like 20 courses
+     running it'd be a lot of scrolling up and down to find out which course if
+     there's something I need to do." So the console opens on the work, and the
+     machinery for sending Lite to people folds away under it. */
+  .needs{display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 12px;
+    margin:0 0 18px; padding:11px 15px; border-radius:10px;
+    background:var(--box); border:1px solid var(--sand-line);}
+  .needs b{font-size:.68rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase;
+    color:var(--gold-deep); margin-right:3px;}
+  .needs button{font:600 .86rem/1.35 inherit; background:none; border:0; padding:0; cursor:pointer;
+    color:var(--teal); text-decoration:underline; text-underline-offset:3px;}
+  .needs button:hover{color:var(--ink);}
+  .needs .sep{color:var(--faint);}
+  .needs.clear{background:none; border-color:transparent; padding-left:0; color:var(--grey); font-size:.86rem;}
+  .needs.clear b{color:var(--grey);}
+  .sending{margin:0 0 18px; border:1px solid var(--sand-line); border-radius:10px; background:var(--paper);}
+  .sending > summary{cursor:pointer; padding:11px 15px; font-weight:700; font-size:.9rem; list-style:none;}
+  .sending > summary::-webkit-details-marker{display:none;}
+  .sending > summary::before{content:'\25B8'; color:var(--faint); margin-right:9px; display:inline-block;}
+  .sending[open] > summary::before{transform:rotate(90deg);}
+  .sending > summary small{font-weight:400; color:var(--grey); margin-left:8px;}
+  .sending[open] > summary{border-bottom:1px solid var(--sand-line);}
+  .sending .filmrow{margin:0; border:0; border-radius:0;}
+  .sending .filmrow + .filmrow{border-top:1px solid var(--sand-line);}
+  .flash{animation:flash 1.4s ease-out;}
+  @keyframes flash{from{box-shadow:0 0 0 3px var(--gold-deep);}to{box-shadow:0 0 0 3px transparent;}}
+  @media (prefers-reduced-motion:reduce){ .flash{animation:none; outline:2px solid var(--gold-deep);} }
+  .inmore{font:600 .8rem/1 inherit; background:none; border:0; padding:9px 0 0; cursor:pointer;
+    color:var(--teal); text-decoration:underline; text-underline-offset:3px;}
   /* Reading a contributed set. The file in Drive is JSON; this is the set. It
      follows the lesson plan's shape -- the aim, then the stages against the
      clock -- so a set from somewhere else reads the way ours do. */
@@ -221,7 +250,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610051713">
+<link rel="stylesheet" href="hub-house.css?v=202610051724">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -245,10 +274,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610051713"></script>
-<script src="hub-store.js?v=202610051713"></script>
-<script src="hub-say.js?v=202610051713"></script>
-<script src="hub-card-mail.js?v=202610051713"></script>
+<script src="hub-shared.js?v=202610051724"></script>
+<script src="hub-store.js?v=202610051724"></script>
+<script src="hub-say.js?v=202610051724"></script>
+<script src="hub-card-mail.js?v=202610051724"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -551,7 +580,7 @@ function render(courses, msg){
     const name = shown, centre = c.centreName || '';
     const minted = c.id === NEW_ID;
     return `
-    <div class="course c-${kind.k}${minted ? ' minted' : ''}">
+    <div class="course c-${kind.k}${minted ? ' minted' : ''}" id="course-${esc(c.id)}">
       ${minted ? '<p class="minted-line">New — copy the tutor link and send it to the centre. They set the course up and add their own trainees.</p>' : ''}
       <div class="chead">
         <div>
@@ -664,6 +693,9 @@ $('app').innerHTML = `
       <span class="acts"><button class="btn primary" id="makeGo" type="button" disabled>Make the course</button><button class="btn quiet" id="makeCancel" type="button">Cancel</button></span>
       <span class="note">Only a course with a real centre number gets made, and the centre cannot edit it afterwards.</span>
     </div>
+    <div id="needs"></div>
+    <details class="sending" id="sendblock">
+      <summary>Sending Lite to someone<small>the film engine, the card, the film link and the price</small></summary>
     <!-- The film is the thing people ask for after two minutes of clicking,
          so it rides along in every message rather than being looked up. It is
          kept in this browser only: there is nowhere on the course to put a
@@ -713,6 +745,7 @@ $('app').innerHTML = `
       <label class="priceon"><input type="checkbox" id="priceOn"${priceOn() ? ' checked' : ''}> the price goes on the full card</label>
       <span class="note">Both are kept in this browser. The <b>price</b> box is for a one-off quote: fill it and that figure replaces the published rates on the card. Leave it empty and the card states £300 and links to the rates in full.</span>
     </div>
+    </details>
     ${COURSES.length ? SECTIONS.map(sec => {
       const inIt = ordered.filter(c => courseKind(c).k === sec.k);
       if (!inIt.length) return '';
@@ -721,6 +754,8 @@ $('app').innerHTML = `
     }).join('') : '<div class="courses"><div class="empty">No courses yet. Make the first one, then send its tutor link to the centre.</div></div>'}
     <p id="status"></p>`;
   if (msg) status(msg);
+  wireSending();
+  drawNeeds();
   /* Every paint, not just the ones that go through showList: the FIRST paint
      is load() -> render() and never touches showList, so hooking it there left
      the line reading "checking..." for ever (caught on the live console,
@@ -1009,12 +1044,77 @@ async function feedbackLine(){
     host.appendChild(box);
   } catch (e) {}
 }
+/* THE MACHINERY FOR SENDING LITE TO SOMEBODY, folded away. Ramy, 5 Oct 2026:
+   "the console is getting a bit crowded now, and we haven't even started yet."
+   Three tall blocks sat above the courses -- the film engine, the card, the
+   film link and the price -- and none of them is what you open the console
+   for. Open or shut is remembered, because somebody sending cards all morning
+   should not reopen it every time. */
+const SEND_OPEN = 'hub:o:sending';
+function wireSending(){
+  const d = $('sendblock');
+  if (!d) return;
+  try { d.open = localStorage.getItem(SEND_OPEN) === '1'; } catch (e) {}
+  d.ontoggle = () => { try { localStorage.setItem(SEND_OPEN, d.open ? '1' : '0'); } catch (e) {} };
+}
+
+/* WHAT NEEDS YOU, at the top, before anything else. Ramy, 5 Oct 2026: "if we
+   have like 20 courses running it'd be a lot of scrolling up and down to find
+   out which course if there's something I need to do."
+
+   Only things somebody has to DO go here. A demo that is behaving, a course
+   running quietly, a contribution already marked done: none of them are news.
+   When there is nothing, it says so in one quiet line -- an empty strip that
+   still looks like an alarm teaches you to ignore it. */
+function needsItems(){
+  const out = [];
+  if (INBOX) {
+    const fresh = a => (a || []).filter(x => String(x.state || 'new') !== 'done').length;
+    const c = fresh(INBOX.contributions), r = fresh(INBOX.reports);
+    if (c) out.push({ t: `${c} set${c === 1 ? '' : 's'} to read`, go: 'inbox' });
+    if (r) out.push({ t: `${r} thing${r === 1 ? '' : 's'} said`, go: 'inbox' });
+  }
+  (COURSES || []).forEach(x => {
+    if (courseKind(x).k !== 'live') return;          // demos and scratch are nobody's homework
+    const who = x.courseName || x.centreName || x.name;
+    if (!x.trainees) out.push({ t: `${who} has no trainees yet`, go: 'course:' + x.id });
+    else if (!x.start || !x.end) out.push({ t: `${who} has no dates yet`, go: 'course:' + x.id });
+  });
+  return out;
+}
+
+function drawNeeds(){
+  const host = $('needs');
+  if (!host) return;
+  const items = needsItems();
+  if (!items.length) {
+    host.className = 'needs clear';
+    /* INBOX is null until the piles have been read; saying "nothing waiting"
+       before looking would be a lie that arrives first and sticks. */
+    host.innerHTML = INBOX ? '<b>Needs you</b> nothing waiting.' : '<b>Needs you</b> looking\u2026';
+    return;
+  }
+  host.className = 'needs';
+  host.innerHTML = '<b>Needs you</b>' + items.map((x, i) =>
+    (i ? '<span class="sep">\u00b7</span>' : '') +
+    `<button type="button" data-go="${esc(x.go)}">${esc(x.t)}</button>`).join('');
+  host.querySelectorAll('[data-go]').forEach(b => b.onclick = () => {
+    const go = b.dataset.go;
+    const el = go === 'inbox' ? document.querySelector('.inbox')
+                              : document.getElementById(go.replace('course:', 'course-'));
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    el.classList.add('flash');
+    setTimeout(() => el.classList.remove('flash'), 1400);
+  });
+}
+
 /* WHAT THE PEOPLE USING LITE SENT (store v73, 5 Oct 2026). Ramy asked for the
    contributions and the reports on the console rather than only in the mail.
    Read after the courses, like the feedback line, so a slow sheet never holds
    the console up. Done marks the row; Delete removes it, which is how the test
    rows went. */
-let INBOX = null;
+let INBOX = null, INBOX_ALL = false;
 
 async function inbox(){
   try {
@@ -1029,6 +1129,12 @@ function drawInbox(){
   let box = document.querySelector('.inbox');
   if (!box) { box = document.createElement('section'); box.className = 'inbox'; host.appendChild(box); }
   const C = INBOX.contributions || [], R = INBOX.reports || [];
+  /* FIVE AT A TIME. Ramy, 5 Oct 2026: "if they start stacking up it'll be like
+     stacks of TP points, contributions." The sheet has every row and the
+     console is for the next few. */
+  const CAP = 5;
+  const showC = INBOX_ALL ? C : C.slice(0, CAP), showR = INBOX_ALL ? R : R.slice(0, CAP);
+  const hidden = (C.length - showC.length) + (R.length - showR.length);
   const fresh = x => String(x.state || 'new') !== 'done';
   const newC = C.filter(fresh).length, newR = R.filter(fresh).length;
   const when = at => String(at || '').slice(0, 16).replace('T', ' ');
@@ -1046,17 +1152,22 @@ function drawInbox(){
     <p class="lede">${newC ? `<b>${newC}</b> set${newC === 1 ? '' : 's'} offered to the Pool` : 'No sets waiting'} \u00b7 ${
       newR ? `<b>${newR}</b> thing${newR === 1 ? '' : 's'} said` : 'nothing said'
     }. ${INBOX.sheet ? `<a href="${esc(INBOX.sheet)}" target="_blank" rel="noopener">The sheet behind the store</a> has every row.` : ''}</p>
-    ${C.length ? C.map(c => row('contributions', c.at, 'set', 'set',
+    ${showC.length ? showC.map(c => row('contributions', c.at, 'set', 'set',
         `<b>${esc(c.book || 'Untitled')}</b> \u2014 contributed by <b>${esc(c.by || '')}</b>` +
         (c.file ? ` \u00b7 <a href="${esc(c.file)}" target="_blank" rel="noopener">the file</a>` : ''),
         [c.level, (c.lessons || 0) + ' lessons', (c.stages || 0) + ' stages', c.centre, when(c.at)].filter(Boolean).join(' \u00b7 '),
         c.state)).join('') : '<p class="inempty">Nobody has offered a set yet.</p>'}
-    ${R.length ? '<div style="margin-top:16px"></div>' + R.map(x => row('reports', x.at,
+    ${showR.length ? '<div style="margin-top:16px"></div>' + showR.map(x => row('reports', x.at,
         x.kind === 'wrong' ? 'wrong' : 'idea', x.kind === 'wrong' ? 'wrong' : 'idea',
         esc(x.text || ''),
         [x.page, x.where, x.role, x.course, when(x.at)].filter(Boolean).join(' \u00b7 '),
-        x.state)).join('') : ''}`;
+        x.state)).join('') : ''}
+    ${hidden ? `<button type="button" class="inmore" id="inmore">Show the other ${hidden}</button>`
+             : (INBOX_ALL && (C.length + R.length) > CAP ? '<button type="button" class="inmore" id="inless">Show fewer</button>' : '')}`;
 
+  drawNeeds();                       // the counts at the top come from this
+  const more = $('inmore'); if (more) more.onclick = () => { INBOX_ALL = true; drawInbox(); };
+  const less = $('inless'); if (less) less.onclick = () => { INBOX_ALL = false; drawInbox(); };
   box.querySelectorAll('[data-read]').forEach(b => b.onclick = async () => {
     const row = (INBOX.contributions || []).find(c => String(c.at) === b.dataset.read);
     if (!row || !row.file) { alert('That row has no file on it.'); return; }
