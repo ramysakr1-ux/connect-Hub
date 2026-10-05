@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610052135">
+<link rel="stylesheet" href="hub-tokens.css?v=202610052153">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -35,9 +35,23 @@
      the page with a frame"). The assessor pack's board is the house pattern and
      holds its back link and lockup inside, so this takes the same shape, filled
      with the card colour rather than paper: warm against the ground instead of
-     whiter than it. 1180 is the content width the two widest tables need, so the
-     board is that plus the padding either side. */
-  .board{max-width:1276px; width:100%; margin:20px auto 0; background:var(--surface);
+     whiter than it.
+
+     1180 TO MATCH THE REST OF LITE. It was 1276 -- 1180 of content plus the
+     padding -- and that made it the widest screen on the site bar the lesson
+     plan: the trainee's home is 1020, the tutor dashboard and the assessor's
+     pack 1080, the timetable and the grades report 1180. A course admin
+     arriving from the dashboard saw the frame jump 200px wider, which is what
+     Ramy noticed ("if it's too wide, it doesn't look nice ... keep things
+     consistent", 5 Oct 2026). It now sits with the timetable and the grades
+     report, the other two table-heavy screens, rather than alone.
+
+     Roster is the one to watch: its grid is 1.5fr 0.5fr 1.2fr 1.1fr 300px, so
+     the fixed column is untouched and the four flexible ones share 784px
+     instead of 880. It renders from the store and cannot be measured offline,
+     so this is arithmetic, not observation -- six real trainees on screen is
+     the test. */
+  .board{max-width:1180px; width:100%; margin:20px auto 0; background:var(--surface);
     border:1px solid var(--sand-line); border-radius:12px;
     padding:14px clamp(20px, 4vw, 48px) 48px;
     box-shadow:0 1px 3px rgba(40,30,15,0.05), 0 14px 44px -30px rgba(40,30,15,0.5);}
@@ -128,20 +142,16 @@
     font-size:10px; font-weight:700; background:var(--gold-lifted); color:var(--ink-warm);}
   .tab.done .dot{background:var(--teal); color:var(--paper);}
 
-  /* THE WRITING SITS IN THE MIDDLE OF THE BOARD, not against its left edge.
-     Ramy, 5 Oct 2026: "you put the frame in the middle ... but I meant the
-     writing should be in the middle of the card just like console", and
-     "roster and links are fine, for example."
-     The board is 1276px because Roster's two widest tables need 1180 of it.
-     Every other tab was being measured by that table: Settings had no width
-     at all and ran the full 1180, and Assignments and Observations were
-     capped at 720 but with no auto margin, so they hugged the left edge of a
-     card twice their width. auto margins centre whatever a panel's width is;
-     Roster sets none, so it still fills the board and is untouched. 1000px
-     for Settings is the console's own column (14_owner.html), which is the
-     one Ramy pointed at. */
-  .panel{padding:34px 0 0; margin-left:auto; margin-right:auto;}
-  .panel.settings{max-width:1000px;}
+  /* EVERY TAB FILLS THE BOARD AND SHARES THE TITLE'S LEFT EDGE.
+     Two tries at centring came before this and both read as indented, because
+     the title and the tabs are pinned left and a narrow column under them
+     cannot look centred -- it looks moved. Ramy, 5 Oct 2026: "it's like in the
+     middle, but then the rest is on the left ... this looks weird", and then
+     the fix: "have it like the whole page". So Assignments and Observations
+     lose their 720px cap, Settings fills at three to a line, Roster was always
+     full width, and nothing has an auto margin. The gap on the right is gone
+     because the content reaches it, not because it was re-distributed. */
+  .panel{padding:34px 0 0;}
   .panel h2{margin:0 0 4px; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.15rem;}
   .panel h2 .count{font-family:'Karla',sans-serif; font-size:0.85rem; font-weight:500; color:var(--grey);}
   .lede{margin:0 0 18px; font-size:0.85rem; color:var(--grey); line-height:1.6; max-width:640px;}
@@ -160,7 +170,21 @@
     border:none; color:var(--teal); cursor:pointer; padding:0;}
 
   /* ---- settings -------------------------------------------------------- */
-  .settings{max-width:620px;}
+  /* THE SETTINGS TAB FILLS THE BOARD, THREE TO A LINE.
+     Ramy, 5 Oct 2026, looking at it centred: "it kind of looks odd. Because
+     it's like in the middle, but then the rest is on the left ... maybe you
+     can have it like the whole page and have three pills per line instead."
+     He is right, and it beats both of my tries. The title and the tabs are
+     pinned to the board's left edge, so ANY narrow column centred under them
+     reads as indented rather than centred -- which is what 620px left-aligned
+     (a gap of 558 on the right) and 620px centred both did, differently.
+     Filling the width removes the gap instead of moving it, and three columns
+     is what 1178px wants: about 370px a field, which these inputs fit.
+     Scoped away from .docs on purpose: the documents, the online rooms and the
+     tutor contacts are .fields too, and three columns breaks their rows. */
+  .settings .fields:not(.docs){grid-template-columns:repeat(3,1fr);}
+  @media (max-width:1180px){ .settings .fields:not(.docs){grid-template-columns:1fr 1fr;} }
+  @media (max-width:780px){ .settings .fields:not(.docs){grid-template-columns:1fr;} }
   .docsh{margin:34px 0 6px; font-family:'Newsreader',Georgia,serif; font-size:1.15rem; font-weight:600;}
   .fields.docs{margin-top:14px;}
   .logo-row{display:flex; align-items:flex-start; gap:18px; padding-bottom:26px;}
@@ -305,7 +329,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610052135">
+<link rel="stylesheet" href="hub-house.css?v=202610052153">
 </head>
 <body>
 <div class="board">
@@ -610,7 +634,7 @@
 
   <!-- ================= Roster and links ================= -->
   <!-- ================= Observations ================= -->
-  <div class="panel" id="panel-observations" style="display:none;max-width:720px;">
+  <div class="panel" id="panel-observations" style="display:none;">
     <h2>Observation tasks</h2>
     <p class="lede">Fifteen sheets the trainees fill in: nine for their own teaching practice group, four for filmed lessons, two for live ones. The words are yours to change; the shape of each sheet is fixed, because it is what the trainee fills in and what prints.</p>
     <div id="observationRows"></div>
@@ -631,7 +655,7 @@
        opens the same link and lands on the same course. -->
 
   <!-- ================= Assignments ================= -->
-  <div class="panel" id="panel-assignments" style="display:none;max-width:720px;">
+  <div class="panel" id="panel-assignments" style="display:none;">
     <h2>Written assignments</h2>
     <!-- This said "wording only -- the layout, fields and structure are fixed",
          which stopped being true when the editor gained Add section, Add field,
@@ -660,12 +684,12 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610052135"></script>
-<script src="hub-store.js?v=202610052135"></script>
-<script src="hub-say.js?v=202610052135"></script>
-<script src="observation-defaults.js?v=202610052135"></script>
-<script src="hub-shared.js?v=202610052135"></script>
-<script src="hub-sync.js?v=202610052135"></script>
+<script src="assignment-defaults.js?v=202610052153"></script>
+<script src="hub-store.js?v=202610052153"></script>
+<script src="hub-say.js?v=202610052153"></script>
+<script src="observation-defaults.js?v=202610052153"></script>
+<script src="hub-shared.js?v=202610052153"></script>
+<script src="hub-sync.js?v=202610052153"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
