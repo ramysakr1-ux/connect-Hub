@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { call } from './st.mjs';
+import { call, LIBRARY } from './st.mjs';
 /* WHICH RECORDING EACH SLOT PLAYS, AND WHERE THAT FILE IS. Thirty-two slots
-   tell a trainee to play a track and none of them carries it. Every book
+   tell a candidate to play a track and none of them carries it. Every book
    numbers its audio differently, so each gets its own resolver -- and each was
    checked against a real filename before being written down:
      Language Hub   track 3.5   -> LH_Elementary_SB_Track_3.5.mp3
@@ -24,6 +24,14 @@ const BOOK = {
   s4: { dir: `${D}/Beginner/Speakout 3rd ed A1/Class_Audio`,
         find: (files, t) => { const [u, n] = t.split('.');
           return files.find(f => f.endsWith(`_Audio_${u}_${n.padStart(2,'0')}.mp3`)); } },
+  /* Set five numbers its audio the same way as set four, and also carries the
+     review tracks the unit-end pages play -- "R4.01" is Review 4's first, and
+     its file is ..._Audio_R4_01.mp3, so the unit part is taken as written.
+     THESE FILES ARE NOT IN Course books YET: they came out of the download and
+     want moving to Course books/Intermediate/Speakout 3rd ed B1 with the PDFs. */
+  s5: { dir: '/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/b1audio',
+        find: (files, t) => { const [u, n] = t.split('.');
+          return files.find(f => f.endsWith(`_Audio_${u}_${n.padStart(2,'0')}.mp3`)); } },
 };
 const listing = {};
 for (const [id, b] of Object.entries(BOOK)) {
@@ -36,13 +44,15 @@ for (const [id, b] of Object.entries(BOOK)) {
   walk(b.dir);
   listing[id] = out;
 }
-/* a track reference, in any of the four books' wordings */
-const TRACK = /(?:track|tapescript|audio)\s*(\d{1,2}\.\d{1,2})|(?:^|\s)(\d{1,2}\.\d{2})(?=\s|$|[,.)])/gi;
-const r = await call({ op:'course', key:'5fade4f069614afd9b6e5a3a' });
+/* a track reference, in any of the five books' wordings. The R is Speakout's
+   review audio -- "track R4.01" -- and without it the two recordings the unit
+   review plays were silently not looked for. */
+const TRACK = /(?:track|tapescript|audio)\s*(R?\d{1,2}\.\d{1,2})|(?:^|\s)(R?\d{1,2}\.\d{2})(?=\s|$|[,.)])/g;
+const r = await call({ op:'course', key:LIBRARY });
 const L = (((r.result && (r.result.records || r.result)) || {}).tppoints || {}).set.library;
 const plan = JSON.parse(fs.existsSync("tracks-plan.json") ? fs.readFileSync("tracks-plan.json","utf8") : "{}");
 let want = 0, got = 0, miss = [];
-for (const id of ['s1', 's2', 's3', 's4']) {
+for (const id of Object.keys(BOOK)) {
   console.log(`===== ${id}  ${L[id].book.split(',')[0]}`);
   Object.keys(L[id].sessions).sort().forEach(x => L[id].sessions[x].slots.forEach((sl, i) => {
     const blob = [sl.pages, ...(sl.stages || []).map(s => `${s.todo || ''} ${s.avoid || ''}`)].join(' \n ');

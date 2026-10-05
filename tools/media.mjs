@@ -1,11 +1,11 @@
-import { call } from './st.mjs';
+import { call, LIBRARY } from './st.mjs';
 /* WHAT A CANDIDATE ACTUALLY HAS ON THE CARD: pages, audio, video. A stage that
    says "play track 3.5" with no audio attached is the same fault as a stage
    that names an unattached page -- the trainee is told to use something they
    have not got. */
 const TRACK = /\btrack\s*(\d+\.\d+)|\b(\d\.\d{1,2})\b(?=\s*(?:,|\.|and|$|\)))/gi;
 const VIDEO = /\bvideo\b|Caf[ée] Hub|Street Interviews|BBC|DVD/i;
-const r = await call({ op:'course', key:'5fade4f069614afd9b6e5a3a' });
+const r = await call({ op:'course', key:LIBRARY });
 const L = (((r.result && (r.result.records || r.result)) || {}).tppoints || {}).set.library;
 const NAME = { s1:'Language Hub El (A2)', s2:'Roadmap A2+ (B1 pre)', s3:'Straightforward UI (B2)', s4:'Speakout A1 (A1)' };
 let T = { slots:0, pages:0, withAudio:0, needAudio:0, needVideo:0, hasVideo:0 };

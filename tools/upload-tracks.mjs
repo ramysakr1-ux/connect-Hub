@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { call } from './st.mjs';
-const KEY = '5fade4f069614afd9b6e5a3a';
+import { call, LIBRARY } from './st.mjs';
+const KEY = LIBRARY;
 const D = '/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books';
 const DIR = {
   s1: `${D}/Elementary/Language Hub/Language_Hub_Elementary_Class_Audio_www.frenglish.ru`,
