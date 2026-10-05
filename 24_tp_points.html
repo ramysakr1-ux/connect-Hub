@@ -12,9 +12,9 @@
   of letting them fall where they may. Ramy, 29 Sep 2026: "TP points that
   rotate automatically, depending on aims and different order for the
   teachers." The rotation lives in hub-rotation.js and is explained there; in
-  short, each candidate starts at their own place in the seven types and steps
+  short, each trainee starts at their own place in the seven types and steps
   one along each practice, so nobody in a teaching set teaches the same type on
-  the same day, each candidate's six practices are six different types, and
+  the same day, each trainee's six practices are six different types, and
   every one of them includes language focus by construction rather than by
   luck.
 
@@ -23,7 +23,7 @@
   override can break what the rotation guaranteed, the language-focus check
   runs against what is actually on the page, not against what was generated.
 
-  Released per group, the same way the planning grid is: the candidates see
+  Released per group, the same way the planning grid is: the trainees see
   their own group's points and nothing before release.
 -->
 <html lang="en">
@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610050242">
+<link rel="stylesheet" href="hub-tokens.css?v=202610051144">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -61,7 +61,7 @@
   .tbl .lang{color:var(--gold-deep); font-weight:700;}
   .tbl .ref{color:var(--grey); font-style:italic;}
   .tbl tr.mine{background:var(--sand-deep);}
-  /* A day at a time, a row per candidate, and the other two rows watermarked:
+  /* A day at a time, a row per trainee, and the other two rows watermarked:
      they are lessons to sit in on, not to plan (Ramy, 1 Oct 2026: "they are
      there, but view only, and it will make it clear that this is not your
      lesson -- big watermark"). */
@@ -152,7 +152,7 @@
   .setchip i{font-style:normal; font-size:0.72rem; color:var(--grey);}
   .setbar .status{flex:1 1 220px;}
   .setbar .btn.sm, .setbar .btn{font-size:0.74rem; padding:5px 11px;}
-  /* The procedure on a candidate's own row: a numbered spine, the stage and
+  /* The procedure on a trainee's own row: a numbered spine, the stage and
      its clock on one line, what to do under it. */
   .proc{margin:9px 0 2px; padding:10px 12px; background:var(--sand-deep); border:1px solid var(--sand-line);
     border-left:3px solid var(--teal); border-radius:8px;}
@@ -237,7 +237,7 @@
   .ord{white-space:nowrap; letter-spacing:.12em;}
   /* On a phone six practices across cannot be a table: four columns simply
      ran off the right edge and the dropdowns were too narrow to read a word
-     in ("Grammar" showed as "Gram"). Below 700px each candidate becomes a
+     in ("Grammar" showed as "Gram"). Below 700px each trainee becomes a
      card and each practice a full-width row that says which practice it is.
      More scrolling, nothing hidden, nothing guessed at. */
   @media (max-width:700px){
@@ -291,19 +291,19 @@
     body.printpages .pg figcaption{font-size:0.8rem; margin:0 0 4px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610050242">
+<link rel="stylesheet" href="hub-house.css?v=202610051144">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610050242"></script>
-<script src="hub-tracker.js?v=202610050242"></script>
-<script src="hub-rotation.js?v=202610050242"></script>
-<script src="hub-shared.js?v=202610050242"></script>
-<script src="hub-store.js?v=202610050242"></script>
-<script src="hub-sync.js?v=202610050242"></script>
+<script src="hub-due.js?v=202610051144"></script>
+<script src="hub-tracker.js?v=202610051144"></script>
+<script src="hub-rotation.js?v=202610051144"></script>
+<script src="hub-shared.js?v=202610051144"></script>
+<script src="hub-store.js?v=202610051144"></script>
+<script src="hub-sync.js?v=202610051144"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -327,7 +327,7 @@ const rec = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); }
 const SETTINGS = rec('connect_course_settings') || {};
 const KEY = 'connect_tp_points_v1';
 const R = window.hubRotation;
-/* The last two practices are the candidates' own, on the planning grid, so
+/* The last two practices are the trainees' own, on the planning grid, so
    the rotation covers everything before them. */
 const TOTAL = parseInt(SETTINGS.tpCount, 10) || 8;
 const TPS = Math.max(1, TOTAL - 2);
@@ -336,7 +336,7 @@ $('back').href = IS_TRAINEE ? 'index.html' : IS_TUTOR ? '5_tutor_dashboard.html'
 let P = rec(KEY) || null;
 let note = '';
 /* Which cell's materials are open, as "group|token|tp". Ramy, 29 Sep 2026:
-   a candidate should get "their TP points and scanned copies of the pages
+   a trainee should get "their TP points and scanned copies of the pages
    they are teaching and the embedded audio link". A grid of dropdowns cannot
    hold that, so a cell opens a panel of its own. */
 let OPEN = null, UPLOADING = false;
@@ -345,9 +345,9 @@ function groups(){
   const roster = rec('connect_roster_v1') || {};
   const people = Object.values(roster.trainees || {}).filter(Boolean);
   const by = {};
-  /* The roster in this browser keys a candidate by `id`, not `token` -- the
+  /* The roster in this browser keys a trainee by `id`, not `token` -- the
      store's own roster op says token, hub-sync writes id, and the planning
-     grid has always read id. Reading t.token gave every candidate the key
+     grid has always read id. Reading t.token gave every trainee the key
      `undefined`, so one shared row stood in for the whole group and the
      rotation came out identical for everybody (found on the scratch course,
      29 Sep 2026). */
@@ -355,7 +355,7 @@ function groups(){
   return Object.keys(by).sort().map(g => ({ group: g, people: by[g] }));
 }
 
-/* What each candidate has already taught and how it went, read from the
+/* What each trainee has already taught and how it went, read from the
    returned feedback the tracker already reads. { token: { 3: {grade,aim} } }.
    This is what the failed-lesson rule works on. */
 function taughtSoFar(people){
@@ -382,11 +382,11 @@ function taughtSoFar(people){
    slots"). A set — written on 28_tp_point_sets.html — says what each of a
    session's three slots is: TP 3, second teaching set, slot 2. The rotation
    still decides WHO takes which slot, because the teaching order already
-   rotates (ABC, then BCA, then CAB), and a candidate's place in that order IS
+   rotates (ABC, then BCA, then CAB), and a trainee's place in that order IS
    the slot number. Where there is no set, or no slot written for that place,
    the rotation goes on generating the type exactly as it did before.
 
-   The slot is COPIED into the cell rather than referred to. Candidates are
+   The slot is COPIED into the cell rather than referred to. Trainees are
    handed their own cells by the store and never the whole record, so a cell
    that only pointed at a set would reach them empty; copying also means an
    edit to the set cannot silently rewrite a lesson somebody has already
@@ -425,7 +425,7 @@ function stamp(cell, found){
      somebody else into it. Files attached to a cell by hand are kept alongside
      them. */
   /* the whole day's pages as one PDF, for a face-to-face course. It belongs to
-     the SESSION, not the slot -- every candidate teaching that day gets the
+     the SESSION, not the slot -- every trainee teaching that day gets the
      same file -- so it is carried across from the set when the cell is built. */
   const ses = found.set && found.set.sessions && found.set.sessions[found.id];
   if (ses && ses.dayPdf && ses.dayPdf.url) out.dayPdf = ses.dayPdf;
@@ -438,7 +438,7 @@ function stamp(cell, found){
   out.scaffold = found.scaffold;
   if (found.context) out.context = found.context;
   /* Sourcing is taught once, by being shown. The references ride on the first
-     two practices only; by TP 3 the candidate writes their own, which is the
+     two practices only; by TP 3 the trainee writes their own, which is the
      same hand-over the aims and the procedure make (Ramy, 4 Oct 2026). */
   if (found.tp <= 2 && found.set && found.set.sources) out.sources = found.set.sources;
   out.from = found.id + '·' + (found.pos + 1);
@@ -578,7 +578,7 @@ function cellOf(g, t, tp){
 
 /* The materials for one lesson. Three kinds, because a centre has three:
      pages   scanned pages, uploaded into the course's own Drive folder --
-             the same path a candidate's own materials already take;
+             the same path a trainee's own materials already take;
      book    a link to a coursebook that lives somewhere else, with the page
              and exercise reference as words. Lite cannot cut pages out of a
              PDF it does not host, and should not pretend to: the reference
@@ -596,7 +596,7 @@ function matsPanel(g, t, tp, letter, name){
     <div class="mrow"><label>Materials</label><textarea data-m="bookRef" rows="3" placeholder="SpeakOut A1, SB p. 14, ex. 2a, 2b, 3a&#10;WB p. 9, ex. 1a, 1b&#10;One line each">${esc((c.book||{}).ref || '')}</textarea></div>
     <div class="mrow"><label>Page to open at</label><input type="number" min="1" data-m="bookPage" value="${esc((c.book||{}).page || '')}" placeholder="42"><small>Only works where the link is a direct PDF address; a Drive preview ignores it.</small></div>
     <div class="mrow"><label>Audio</label><div><textarea data-m="audioUrl" rows="3" placeholder="Track 1.14 | https://drive.google.com/file/d/\u2026&#10;Track 1.15 | https://\u2026&#10;One link per line; a name before a | labels it">${esc((c.audio||{}).url || '')}</textarea>
-      <p class="hint">Each line becomes a player on the candidate\u2019s card \u2014 a Drive link plays in place, a direct .mp3 gets its own controls. The file must be shared so anyone with the link can open it.</p></div></div>
+      <p class="hint">Each line becomes a player on the trainee\u2019s card \u2014 a Drive link plays in place, a direct .mp3 gets its own controls. The file must be shared so anyone with the link can open it.</p></div></div>
     <div class="mrow"><label>Scanned pages</label><div>
       ${pages.length ? '<ul class="files">' + pages.map((f, i) => `<li><a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a> <button type="button" class="btn quiet sm" data-mrm="${i}">Remove</button></li>`).join('') + '</ul>' : '<p class="hint">Nothing attached yet.</p>'}
       <input type="file" id="matsFile" accept="application/pdf,image/*"${UPLOADING ? ' disabled' : ''}>
@@ -651,13 +651,13 @@ function wireMats(){
   if ($('matsClose')) $('matsClose').addEventListener('click', () => { OPEN = null; render(); });
 }
 
-/* What a candidate reads under their lesson. The book link carries the page
+/* What a trainee reads under their lesson. The book link carries the page
    anchor when there is one, so a direct PDF opens where the lesson is. */
 /* The shorthand a TP point is written in, spelled out at the foot of the card.
    Ramy, 4 Oct 2026: "they can also understand what it stands for at the bottom
    of the page — at least for the first three TPs, and then we can take it off."
    The list is Connect's own (ABBREVIATIONS_GLOSSARY in tp-density.ts) plus the
-   interaction codes this card and the candidate's plan actually print. */
+   interaction codes this card and the trainee's plan actually print. */
 const GLOSSARY = [
   ['SB', 'student’s book'], ['WB', 'workbook'], ['p.', 'page'], ['HO', 'handout'],
   ['AK', 'answer key'], ['TL', 'target language'], ['MFP', 'meaning, form and pronunciation'],
@@ -724,7 +724,7 @@ function matsRead(c, mine){
      write down the aim. Sub aim, and then the sub aim. Clear headings —
      especially at the beginning, they're all very flustered." The aim, the
      sub aim and the shape used to run together behind middots, which read as
-     one sentence and left a candidate unsure which part was the aim they were
+     one sentence and left a trainee unsure which part was the aim they were
      being shown how to write.
 
      The main-aim row appears only where the aim is a written one: from TP 3
@@ -756,7 +756,7 @@ function matsRead(c, mine){
   const rowsHTML = rows.map(r => `<div class="aimrow"><span class="alab">${r[0]}</span><span class="aval">${r[1]}</span></div>`).join('');
 
   /* Audio: one line per track in the cell, each a player IN the card for the
-     candidate whose lesson it is (Ramy, 29 Sep and again 4 Oct 2026: "the
+     trainee whose lesson it is (Ramy, 29 Sep and again 4 Oct 2026: "the
      embedded audio link" / "audio files, embedded in the page"). On a
      classmate's row the same tracks stay links: those lessons are to sit in
      on, and six players a day would drown the page. */
@@ -770,7 +770,7 @@ function matsRead(c, mine){
       return /^(https?:)?\/\//i.test(line) || /^[\w.-]+\.[a-z]{2,}\//i.test(line)
         ? { label: '', url: line } : { label: line, url: '' }; })
     /* A line with no link used to be thrown away here, so a slot that named
-       "Track 2.1" and had no file showed the candidate nothing at all -- no
+       "Track 2.1" and had no file showed the trainee nothing at all -- no
        player, no number, no clue which recording to find. Keep it: the number
        IS the instruction. It plays if there is a file, points at the course's
        audio folder if there is one, and otherwise simply says which track. */
@@ -813,7 +813,7 @@ function matsRead(c, mine){
 
   /* The procedure. Ramy, 4 Oct 2026: they need "the procedure, what they're
      doing and how to do it, and obviously timing as well". The other two
-     candidates' procedures are there as well -- he hands all three out on
+     trainees' procedures are there as well -- he hands all three out on
      paper so everybody can see how the day joins up -- but folded, and only
      where they are shown at the foot of the page.
 
@@ -843,7 +843,7 @@ function matsRead(c, mine){
      better way than pasting a reference at the bottom of the document: the
      first two practices show the book's own reference with each part named
      above it, so the pattern is visible rather than copied, and then the three
-     cases a candidate actually meets — the book, a page adapted from it, and
+     cases a trainee actually meets — the book, a page adapted from it, and
      something found online. From TP 3 nothing appears and they write it. */
   let sources = '';
   const srcLines = mine ? String(c.sources || '').split(/\n+/).map(x => x.trim()).filter(Boolean) : [];
@@ -869,10 +869,10 @@ function matsRead(c, mine){
 
 function render(){
   const app = $('app');
-  /* A candidate opens this to find out what they are teaching, not to read
+  /* A trainee opens this to find out what they are teaching, not to read
      about rotation (Ramy, 4 Oct 2026). The explanation stays for staff. */
   const head = `<p class="eyebrow">Teaching practice</p><h1>TP points</h1>${IS_TRAINEE ? '' :
-    `<p class="lede">The lesson type for each candidate, practices 1 to ${TPS}. It rotates so nobody in a teaching set teaches the same type on the same day and each candidate covers six different types. Change any cell; the check below reads what is on the page, not what was generated. The last two practices are the candidates\u2019 own on the planning grid.</p>`}`;
+    `<p class="lede">The lesson type for each trainee, practices 1 to ${TPS}. It rotates so nobody in a teaching set teaches the same type on the same day and each trainee covers six different types. Change any cell; the check below reads what is on the page, not what was generated. The last two practices are the trainees\u2019 own on the planning grid.</p>`}`;
 
   if (IS_TRAINEE) {
     if (!P || !P.released) { app.innerHTML = head + `<div class="empty">Your tutor has not released the teaching practice points yet.</div>`; return; }
@@ -880,14 +880,14 @@ function render(){
     const rows = P.points || {};
     /* THE SHAPE IS RAMY'S OWN DOCUMENT (his TP1ABC.docx, read block by block on
        30 Sep 2026 and rebuilt here on 1 Oct): a table per teaching day, ONE ROW
-       PER CANDIDATE -- slot, who, the lesson and what to get -- under a line
+       PER TRAINEE -- slot, who, the lesson and what to get -- under a line
        naming the course, the practice, the set and the day.
 
        It used to be one row per practice, with "your lesson" in one column and
        everybody else's stacked into the next, which is what made a single box
        look like five lessons: "TP 1, and then you have reading, speaking,
        functional language, vocab and listening. Five lessons in one box. Why?"
-       A candidate sits in on the other two lessons of their own day, so those
+       A trainee sits in on the other two lessons of their own day, so those
        belong on the same table as rows -- marked plainly as not theirs. */
     const sets = (P.sets || []).filter(x => Array.isArray(x) && x.length);
     const flat = sets.reduce((a, b) => a.concat(b), []);
@@ -927,10 +927,10 @@ function render(){
       return `<b class="aim${lang ? ' lang' : ''}">${esc(c.aim)}</b>`;
     };
 
-    /* ONE PRACTICE AT A TIME. Ramy, 4 Oct 2026: "why is the candidate getting
+    /* ONE PRACTICE AT A TIME. Ramy, 4 Oct 2026: "why is the trainee getting
        all six TPs in one view? They're supposed to only see what they're
        teaching for that TP." The one coming up is open; the ones already
-       taught fold away but stay reachable, because a candidate rereads what
+       taught fold away but stay reachable, because a trainee rereads what
        they did before writing the next plan; the ones after the next are not
        there at all. The timetable decides which is which, so nobody has to
        release anything by hand. A course with no dates yet shows them all,
@@ -972,7 +972,7 @@ function render(){
 
       const slotTime = i => { const sl = tpSlots[i] || {}; return sl.from ? esc(sl.from) + (sl.to ? '–' + esc(sl.to) : '') : ''; };
 
-      /* exercise lines a candidate is doing, pulled out so a shared page can
+      /* exercise lines a trainee is doing, pulled out so a shared page can
          show both sides of it. */
       const exOf = c => String((c.book || {}).ref || '').split(/\n+/)
         .map(x => x.trim()).filter(x => /^(Reading|Listening|Grammar|Vocabulary|Speaking|Pronunciation|Functional language):/.test(x));
@@ -990,7 +990,7 @@ function render(){
         const c = cellOfT(x.t);
         const shared = pageNums(c).filter(n => myPages.indexOf(n) >= 0);
         return `<div class="other-block">
-          <p class="whoami"><b>Candidate ${esc(letterOf(x.t))}</b>${slotTime(x.i) ? ' · ' + slotTime(x.i) : ''} · slot ${x.i + 1}<span class="nots">not yours</span></p>
+          <p class="whoami"><b>Trainee ${esc(letterOf(x.t))}</b>${slotTime(x.i) ? ' · ' + slotTime(x.i) : ''} · slot ${x.i + 1}<span class="nots">not yours</span></p>
           ${shared.length ? `<p class="shared">You are both on page ${esc(shared.join(' and '))}. They are doing ${exOf(c).map(e => esc(e)).join('; ') || 'their own exercises'} — you are doing ${exOf(mineCell || {}).map(e => esc(e)).join('; ') || 'yours'}.</p>` : ''}
           <div class="lessonline">${lesson(c)}</div>
           ${matsRead(c, false)}
@@ -1020,20 +1020,20 @@ function render(){
   }
 
   const gs = groups();
-  if (!gs.length) { app.innerHTML = head + `<div class="empty">No candidates on the roster yet.</div>`; return; }
+  if (!gs.length) { app.innerHTML = head + `<div class="empty">No trainees on the roster yet.</div>`; return; }
   /* "Has it been built?" is a question about CONTENT, not about whether a key
      exists. The store answers a course with no points as { groups:{} }, and an
      empty object is truthy -- so testing `P.groups` showed the grid instead of
      the build button, rendered every cell blank, and then printed the
      all-clear underneath because the checks had nothing to fail on (found
      testing on the scratch course, 29 Sep 2026). A rotation counts as built
-     only when every candidate on the roster has a row. */
+     only when every trainee on the roster has a row. */
   /* Where the variety has to be, and where it does not. Ramy, 4 Oct 2026,
      correcting a check that cried wolf: "the first TPs they get different
      aims ... a balance of language and skills. Once they start the second half
      of the course, it's fine to repeat — maybe they did grammar in TP1 or TP2,
      they can do grammar again." A failed lesson is MEANT to come back in the
-     same family, and anything a candidate has not met by TP 6 is theirs to
+     same family, and anything a trainee has not met by TP 6 is theirs to
      choose on TP 7 or 8. So the early repeat is a warning, and a family never
      met is a note that says where to put it, not an alarm. The language-focus
      MUST is checked separately and is unchanged. */
@@ -1067,7 +1067,7 @@ function render(){
     return g.people.length && g.people.every(t => rows[t.token] && Object.keys(rows[t.token]).length);
   });
   if (!built) {
-    app.innerHTML = head + setBar() + `<div class="relbar"><button class="btn" id="build">Build the rotation</button><span class="status">${Object.keys(library()).length ? 'Deals the candidates into their set’s slots, and generates a type wherever the set is silent.' : 'Works out the lesson type for every candidate across practices 1 to ' + TPS + '.'}</span></div>`;
+    app.innerHTML = head + setBar() + `<div class="relbar"><button class="btn" id="build">Build the rotation</button><span class="status">${Object.keys(library()).length ? 'Deals the trainees into their set’s slots, and generates a type wherever the set is silent.' : 'Works out the lesson type for every trainee across practices 1 to ' + TPS + '.'}</span></div>`;
     $('build').addEventListener('click', () => build(false));
     wireSetBar();
     return;
@@ -1089,15 +1089,15 @@ function render(){
        the call stays the centre's. */
     const after = R.afterFail(taughtSoFar(g.people), flat, TPS);
     const letterOf = t => (lettered.find(p => p.token === t) || {}).letter || '?';
-    return `<section class="group"><h2>Group ${esc(g.group || '—')} <small>${g.people.length} candidate${g.people.length===1?'':'s'}</small></h2>
-      <p class="sets">Teaching sets: ${sets.map(s => '<b>' + esc(R.setName(s)) + '</b>').filter(Boolean).join(' and ')} — they take alternate days, so each candidate teaches every other day.</p>
+    return `<section class="group"><h2>Group ${esc(g.group || '—')} <small>${g.people.length} trainee${g.people.length===1?'':'s'}</small></h2>
+      <p class="sets">Teaching sets: ${sets.map(s => '<b>' + esc(R.setName(s)) + '</b>').filter(Boolean).join(' and ')} — they take alternate days, so each trainee teaches every other day.</p>
       <div class="wrap"><table class="tbl ord stack"><tr><th>Teaching order</th>${Array.from({length:TPS},(_,i)=>`<th>TP ${i+1}</th>`).join('')}</tr>
         ${sets.filter(st => st.length).map(st => `<tr><td class="who">${esc(R.setName(st))}</td>${
           Array.from({length:TPS},(_,i)=>i+1).map(tp => `<td data-lab="TP ${tp}"><span class="ord">${esc(R.orderFor(st, tp).map(x => x.letter).join(' '))}</span></td>`).join('')}</tr>`).join('')}</table></div>
       <div class="relbar">${on
-        ? `<span class="chip on">Released</span><button class="btn quiet" data-rel="${esc(g.group)}" data-on="0">Take it back</button><span class="status">The candidates can see their own points.</span>`
+        ? `<span class="chip on">Released</span><button class="btn quiet" data-rel="${esc(g.group)}" data-on="0">Take it back</button><span class="status">The trainees can see their own points.</span>`
         : `<span class="chip">Not released</span><button class="btn" data-rel="${esc(g.group)}" data-on="1">Release to Group ${esc(g.group) || '—'}</button><span class="status">Only tutors can see it until it is released.</span>`}</div>
-      <div class="wrap"><table class="tbl stack"><tr><th>Candidate</th>${Array.from({length:TPS},(_,i)=>`<th>TP ${i+1}</th>`).join('')}</tr>
+      <div class="wrap"><table class="tbl stack"><tr><th>Trainee</th>${Array.from({length:TPS},(_,i)=>`<th>TP ${i+1}</th>`).join('')}</tr>
       ${lettered.map(p => `<tr><td class="who">${esc(p.letter)}<small>${esc(p.name||'')}</small></td>${
         Array.from({length:TPS},(_,i)=>i+1).map(tp => {
           const c = (rows[p.token] || {})['tp'+tp] || {};
@@ -1106,7 +1106,7 @@ function render(){
             R.AIMS.map(a => `<option value="${esc(a)}"${c.aim===a?' selected':''}>${esc(a)}</option>`).join('')}</select>
             <button type="button" class="mbtn${has?' has':''}" data-mats="${esc(MKEY(g.group, p.token, tp))}" title="Pages, coursebook and audio">${has ? 'Materials \u2713' : 'Materials'}</button></td>`;
         }).join('')}</tr>`).join('')}</table></div>
-      ${noLang.length ? `<div class="warn"><b>Handbook 9.1.2:</b> a centre must include language-focus lessons for every candidate. ${noLang.length===1?'Candidate':'Candidates'} ${esc(noLang.join(', '))} ${noLang.length===1?'has':'have'} none in practices 1 to ${TPS}. Grammar, vocabulary and functional language are the language-focus types.</div>` : ''}
+      ${noLang.length ? `<div class="warn"><b>Handbook 9.1.2:</b> a centre must include language-focus lessons for every trainee. ${noLang.length===1?'Trainee':'Trainees'} ${esc(noLang.join(', '))} ${noLang.length===1?'has':'have'} none in practices 1 to ${TPS}. Grammar, vocabulary and functional language are the language-focus types.</div>` : ''}
       ${clash.length ? `<div class="warn"><b>Same type, same day:</b> ${clash.map(c => 'TP ' + c.tp + ' — ' + esc(c.set) + ' — ' + esc(c.aim)).join('; ')}. They teach on the same day, so two of them would be teaching the same thing.</div>` : ''}
       ${(function(){ const r = earlyRepeats(flat); if (!r.length) return '';
         return `<div class="warn"><b>The same aim twice in the first ${HALF}:</b> ${r.map(x =>
@@ -1121,9 +1121,9 @@ function render(){
         after.map(a => `<li>${esc(letterOf(a.token))} was not to standard on TP ${a.failed} (${esc(a.failedAim)}). TP ${a.next} is ${esc(a.nextAim || 'not set')}; another ${esc(a.familyWord)} lesson would give them a second go at it — ${esc(a.suggest.join(', '))}.</li>`).join('')}</ul></div>` : ''}
       ${(function(){ const n = familiesNotMet(flat); if (!n.length) return '';
         const word = { language: 'a language-focus lesson', receptive: 'a receptive-skills lesson', productive: 'a productive-skills lesson' };
-        return `<div class="sugg"><b>Not met by TP ${TPS}</b> — a note, not a problem: practices 7 and 8 are the candidates’ own, and this is what they are for.<ul>${
+        return `<div class="sugg"><b>Not met by TP ${TPS}</b> — a note, not a problem: practices 7 and 8 are the trainees’ own, and this is what they are for.<ul>${
           n.map(x => `<li>${esc(letterOf(x.token))} has not taught ${x.missing.map(f => esc(word[f] || f)).join(' or ')}.</li>`).join('')}</ul></div>`; })()}
-      ${(!noLang.length && !clash.length && !earlyRepeats(flat).length && Object.keys(flat).length) ? `<p class="ok">Every candidate has a language-focus lesson, nobody repeats an aim in the first ${HALF} practices, and nobody in a teaching set teaches the same type on the same day.</p>` : ''}
+      ${(!noLang.length && !clash.length && !earlyRepeats(flat).length && Object.keys(flat).length) ? `<p class="ok">Every trainee has a language-focus lesson, nobody repeats an aim in the first ${HALF} practices, and nobody in a teaching set teaches the same type on the same day.</p>` : ''}
     </section>`;
   }).join('');
 

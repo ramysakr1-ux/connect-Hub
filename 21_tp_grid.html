@@ -10,12 +10,12 @@
   TP7 and TP8, the last two TPs" -- so the two are read off the course's
   TP count, not set anywhere.
 
-  One grid per TP group, one row per candidate, and for each of the two
-  teaching practices a main aim, a sub aim and the material. A candidate
+  One grid per TP group, one row per trainee, and for each of the two
+  teaching practices a main aim, a sub aim and the material. A trainee
   edits their own row and reads the group's; a tutor edits any row and
   releases per group; the assessor reads. Two things the paper sheet could
-  not do: a clash -- two candidates in a group picking the same main aim
-  for the same TP -- is marked amber, and each candidate's main aims from
+  not do: a clash -- two trainees in a group picking the same main aim
+  for the same TP -- is marked amber, and each trainee's main aims from
   the earlier teaching practices sit beside their name, read from the
   returned feedback, so they choose what they have not taught yet.
 -->
@@ -29,7 +29,7 @@
 <title>Connect Lite — TP planning grid</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610050242">
+<link rel="stylesheet" href="hub-tokens.css?v=202610051144">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -85,18 +85,18 @@
   @media (max-width:560px){ .board{padding:18px 12px 60px;} section.group{padding:12px 12px 14px;} .sofar{max-width:160px;} }
   @media print{ .back, .relbar, .check, #hubSync{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610050242">
+<link rel="stylesheet" href="hub-house.css?v=202610051144">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610050242"></script>
-<script src="hub-tracker.js?v=202610050242"></script>
-<script src="hub-shared.js?v=202610050242"></script>
-<script src="hub-store.js?v=202610050242"></script>
-<script src="hub-sync.js?v=202610050242"></script>
+<script src="hub-due.js?v=202610051144"></script>
+<script src="hub-tracker.js?v=202610051144"></script>
+<script src="hub-shared.js?v=202610051144"></script>
+<script src="hub-store.js?v=202610051144"></script>
+<script src="hub-sync.js?v=202610051144"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -113,7 +113,7 @@ const TOTAL = (function(){ const n = parseInt(SETTINGS.tpCount, 10); return (n >
 const TPS = [TOTAL - 1, TOTAL];
 const AIMS = ['Grammar', 'Vocabulary', 'Functional language', 'Reading', 'Listening', 'Speaking', 'Writing'];
 
-/* What a candidate has taught so far: the tracker's own reading of each
+/* What a trainee has taught so far: the tracker's own reading of each
    returned lesson's main aim (tp<n>_aim), so the grid and the tracker agree. */
 function soFar(tr){
   try {
@@ -145,16 +145,16 @@ function render(){
   const app = $('app');
   const groups = groupsOf();
   const head = `<p class="eyebrow">Teaching practice</p><h1>TP${TPS[0]} &amp; TP${TPS[1]} planning grid</h1>
-    <p class="lede">${IS_TRAINEE ? `The last two teaching practices are yours to plan. Choose a main aim and a sub aim for each, and say what material you will use, so your group and your tutors can see who is teaching what. Your row is yours; the others are your group’s to read.` : `The candidates’ own aims for the last two teaching practices, one grid per group. Release a group’s grid when you want them to start filling it in; you can edit any row.`}</p>`;
+    <p class="lede">${IS_TRAINEE ? `The last two teaching practices are yours to plan. Choose a main aim and a sub aim for each, and say what material you will use, so your group and your tutors can see who is teaching what. Your row is yours; the others are your group’s to read.` : `The trainees’ own aims for the last two teaching practices, one grid per group. Release a group’s grid when you want them to start filling it in; you can edit any row.`}</p>`;
   if (IS_TRAINEE && !released()) { app.innerHTML = head + `<div class="empty">Your tutor has not released the planning grid yet.</div>`; return; }
-  if (!groups.length) { app.innerHTML = head + `<div class="empty">No candidates on the roster yet.</div>`; return; }
+  if (!groups.length) { app.innerHTML = head + `<div class="empty">No trainees on the roster yet.</div>`; return; }
   app.innerHTML = head + groups.map(g => {
     const n = g.rows.length; const on = released(g.group);
     const clash = {}; TPS.forEach(tp => { const c = {}; g.rows.forEach(r => { const m = aimWord((r.plan['tp' + tp] || {}).main); if (m) c[m] = (c[m] || 0) + 1; }); clash[tp] = c; });
     const anyClash = TPS.some(tp => Object.values(clash[tp]).some(v => v > 1));
     const relbar = IS_TUTOR ? (pendingRelease && pendingRelease.group === g.group
-      ? `<div class="check" role="alert"><div class="ttl">Are you sure?</div><div class="msg">${pendingRelease.on ? `<b>Group ${esc(g.group) || '—'}</b> — ${n} candidate${n === 1 ? '' : 's'} — will see the grid on their home the moment you release it. Releasing is the main course tutor’s call.` : `The grid disappears from <b>Group ${esc(g.group) || '—'}</b>’s home. Nothing typed is lost; release it again to show it.`}</div>${pendingRelease.on ? `<div class="opts"><div><label class="f">Fill in by <span style="font-weight:500;text-transform:none;letter-spacing:0">(optional)</span></label><input type="datetime-local" id="relDue" value="${esc(window.HubDue ? HubDue.toLocalInput(((grid && grid.due) || {})[g.group] || '') : '')}"></div><label class="tick"><input type="checkbox" id="relPost" checked> Post it to the course stream</label>${tutorName() ? '' : `<div style="grid-column:1/-1"><label class="f">Your name, to sign the post</label><input type="text" id="relName" placeholder="Type your name"></div>`}</div>` : ''}<div class="acts"><button class="btn quiet" type="button" data-rel-cancel="1">Cancel</button><button class="btn primary" type="button" data-rel-go="${esc(g.group)}"${busy ? ' disabled' : ''}>${pendingRelease.on ? 'Release anyway' : 'Take it back'}</button></div></div>`
-      : `<div class="relbar">${on ? `<span class="chip fine">Released</span><button class="btn quiet" type="button" data-rel="${esc(g.group)}" data-on="0">Unrelease</button>` : `<span class="chip nd">Not released</span><button class="btn primary" type="button" data-rel="${esc(g.group)}" data-on="1">Release to Group ${esc(g.group) || '—'}</button>`}<span class="relnote">${on ? 'The candidates can see and fill their rows.' : 'Only tutors can see it until it is released.'}</span><span class="status">${esc(note)}</span></div>`) : (IS_TRAINEE ? `<div class="relbar"><span class="status">${esc(note)}</span></div>` : '');
+      ? `<div class="check" role="alert"><div class="ttl">Are you sure?</div><div class="msg">${pendingRelease.on ? `<b>Group ${esc(g.group) || '—'}</b> — ${n} trainee${n === 1 ? '' : 's'} — will see the grid on their home the moment you release it. Releasing is the main course tutor’s call.` : `The grid disappears from <b>Group ${esc(g.group) || '—'}</b>’s home. Nothing typed is lost; release it again to show it.`}</div>${pendingRelease.on ? `<div class="opts"><div><label class="f">Fill in by <span style="font-weight:500;text-transform:none;letter-spacing:0">(optional)</span></label><input type="datetime-local" id="relDue" value="${esc(window.HubDue ? HubDue.toLocalInput(((grid && grid.due) || {})[g.group] || '') : '')}"></div><label class="tick"><input type="checkbox" id="relPost" checked> Post it to the course stream</label>${tutorName() ? '' : `<div style="grid-column:1/-1"><label class="f">Your name, to sign the post</label><input type="text" id="relName" placeholder="Type your name"></div>`}</div>` : ''}<div class="acts"><button class="btn quiet" type="button" data-rel-cancel="1">Cancel</button><button class="btn primary" type="button" data-rel-go="${esc(g.group)}"${busy ? ' disabled' : ''}>${pendingRelease.on ? 'Release anyway' : 'Take it back'}</button></div></div>`
+      : `<div class="relbar">${on ? `<span class="chip fine">Released</span><button class="btn quiet" type="button" data-rel="${esc(g.group)}" data-on="0">Unrelease</button>` : `<span class="chip nd">Not released</span><button class="btn primary" type="button" data-rel="${esc(g.group)}" data-on="1">Release to Group ${esc(g.group) || '—'}</button>`}<span class="relnote">${on ? 'The trainees can see and fill their rows.' : 'Only tutors can see it until it is released.'}</span><span class="status">${esc(note)}</span></div>`) : (IS_TRAINEE ? `<div class="relbar"><span class="status">${esc(note)}</span></div>` : '');
     const rows = g.rows.map(r => {
       const editable = IS_TUTOR || (IS_TRAINEE && r.mine);
       const sf = r.tr ? soFar(r.tr) : '';
@@ -170,9 +170,9 @@ function render(){
     const dueIso = IS_TRAINEE ? (grid && grid.due) || '' : ((grid && grid.due) || {})[g.group] || '';
     const ds = window.HubDue ? HubDue.state(dueIso) : { has: false };
     const dueLine = (on && ds.has) ? `<p class="dueline${ds.past ? ' past' : ds.soon ? ' soon' : ''}">${ds.past ? `Was due <b>${esc(ds.due)}</b>` : `Fill in your row by <b>${esc(ds.due)}</b> — ${esc(ds.text)}`}</p>` : '';
-    const over = n > 6 ? `<p class="clashnote">A teaching practice group is at most six candidates. This one has ${n} \u2014 split it on Course admin.</p>` : '';
-    return `<section class="group" data-group="${esc(g.group)}"><h2>Group ${esc(g.group) || '—'} <small>${n} candidate${n === 1 ? '' : 's'}</small></h2>${over}${relbar}${dueLine}
-      <div class="tablewrap"><table class="grid"><thead><tr><th rowspan="2">Candidate</th>${TPS.map(tp => `<th class="tp" colspan="3">TP${tp}</th>`).join('')}</tr><tr>${TPS.map(() => `<th style="border-left:1px solid var(--sand-line)">Main aim</th><th>Sub aim</th><th>Material</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
+    const over = n > 6 ? `<p class="clashnote">A teaching practice group is at most six trainees. This one has ${n} \u2014 split it on Course admin.</p>` : '';
+    return `<section class="group" data-group="${esc(g.group)}"><h2>Group ${esc(g.group) || '—'} <small>${n} trainee${n === 1 ? '' : 's'}</small></h2>${over}${relbar}${dueLine}
+      <div class="tablewrap"><table class="grid"><thead><tr><th rowspan="2">Trainee</th>${TPS.map(tp => `<th class="tp" colspan="3">TP${tp}</th>`).join('')}</tr><tr>${TPS.map(() => `<th style="border-left:1px solid var(--sand-line)">Main aim</th><th>Sub aim</th><th>Material</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
       ${anyClash ? `<p class="clashnote">Two of you have the same main aim for the same teaching practice. Not a problem if the group means it — worth a word if not.</p>` : ''}
       <p class="aims">Main aim: ${AIMS.join(' · ')}. Sub aim: usually a skill for a language lesson, or language for a skills lesson.</p></section>`;
   }).join('');

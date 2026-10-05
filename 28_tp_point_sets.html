@@ -5,10 +5,10 @@
 
   A SET is what a coursebook gives a course: twelve sessions — TP 1 to 6, each
   taught twice because a group of six splits into two teaching sets on
-  alternate days — and three slots in each, because three candidates teach a
+  alternate days — and three slots in each, because three trainees teach a
   45-minute slot each within a session.
 
-  Ramy, 4 Oct 2026, on what a candidate needs: "enough information about their
+  Ramy, 4 Oct 2026, on what a trainee needs: "enough information about their
   aims, the page numbers, the procedure, what they're doing and how to do it,
   and obviously timing as well, especially the first two TPs." So a slot here
   carries the aim as an outcome, the pages as fields, the tracks, and the
@@ -22,7 +22,7 @@
   session after a sparse one, and only the person writing it knows that.
 
   The set does not teach anybody. It is applied to the rotation on the TP
-  points screen, which deals the candidates into the slots; the set decides
+  points screen, which deals the trainees into the slots; the set decides
   WHAT each slot is, the rotation decides WHO takes it.
 -->
 <html lang="en">
@@ -35,7 +35,7 @@
 <title>Connect Lite — TP point sets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610050242">
+<link rel="stylesheet" href="hub-tokens.css?v=202610051144">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1020px; margin:0 auto; padding:26px 20px 90px;}
@@ -90,6 +90,15 @@
   .pgnudge{display:flex; gap:7px; align-items:center; flex-wrap:wrap; font-size:0.82rem;}
   .pgnudge button{font-family:inherit; font-size:0.82rem; font-weight:700; cursor:pointer; padding:3px 11px;
     border:1px solid var(--sand-line); border-radius:6px; background:var(--paper); color:var(--ink);}
+  .pgnudge input{font-family:inherit; font-size:0.82rem; font-weight:700; width:66px; text-align:center;
+    padding:3px 6px; border:1px solid var(--sand-line); border-radius:6px; background:var(--field); color:var(--ink);}
+  /* Two folios that disagree are not a nudge away from right: the file is
+     missing pages and some other page would come out. Brick, by the house
+     rule that colour only marks what is wrong -- amber on .pgnote below is
+     for what wants doing. */
+  .pgwarn{font-size:0.8rem; color:var(--ink-warm); background:var(--surface); line-height:1.55;
+    border-left:3px solid var(--brick); border-radius:0 6px 6px 0; padding:8px 11px; margin:0 0 11px;}
+  .pgwarn b{color:var(--brick);}
   .pgbar{height:5px; background:var(--sand-deep); border-radius:999px; overflow:hidden; margin:8px 0 0;}
   .pgbar i{display:block; height:100%; background:var(--teal); transition:width .2s;}
   .pgnote{font-size:0.78rem; color:var(--ink-warm); background:var(--gold-wash);
@@ -183,18 +192,18 @@
   }
   @media print{ .back,.acts,.xbtn,.paste{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610050242">
+<link rel="stylesheet" href="hub-house.css?v=202610051144">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610050242"></script>
-<script src="hub-rotation.js?v=202610050242"></script>
-<script src="hub-store.js?v=202610050242"></script>
-<script src="hub-sync.js?v=202610050242"></script>
-<script src="hub-pages.js?v=202610050231"></script>
+<script src="hub-shared.js?v=202610051144"></script>
+<script src="hub-rotation.js?v=202610051144"></script>
+<script src="hub-store.js?v=202610051144"></script>
+<script src="hub-sync.js?v=202610051144"></script>
+<script src="hub-pages.js?v=202610051144"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
@@ -206,7 +215,7 @@ const rec = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); }
 const KEY = 'connect_tp_points_v1';
 const SETTINGS = rec('connect_course_settings') || {};
 const TOTAL = parseInt(SETTINGS.tpCount, 10) || 8;
-const TPS = Math.max(1, TOTAL - 2);        // the last two are the candidates' own
+const TPS = Math.max(1, TOTAL - 2);        // the last two are the trainees' own
 
 /* The seven types the rotation deals in, and the only ones the CELTA 5 can
    record. A slot names one of them so the grid, the tracker and the record
@@ -214,17 +223,17 @@ const TPS = Math.max(1, TOTAL - 2);        // the last two are the candidates' o
 const TYPES = (window.hubRotation && window.hubRotation.AIMS) ||
   ['Grammar','Vocabulary','Functional language','Reading','Listening','Speaking','Writing'];
 
-/* The shapes the candidate's own plan offers. Naming them here means a slot
+/* The shapes the trainee's own plan offers. Naming them here means a slot
    can say "receptive skills" and the plan can fill those stages in one press
-   rather than the candidate guessing which shape the tutor had in mind. */
+   rather than the trainee guessing which shape the tutor had in mind. */
 /* These are the six the plan offers, word for word. A shape the set can name
-   but the plan cannot fill would hand the candidate a lesson shape and then
+   but the plan cannot fill would hand the trainee a lesson shape and then
    refuse to give them its stages, so the two lists are the same list. */
 const SHAPES = ['Present – Practice – Produce (PPP)','Test – Teach – Test',
   'Text-Based Presentation of Language','Language Practice (follows a previous lesson)',
   'Receptive Skills (reading or listening)','Productive Skills (speaking or writing)'];
 
-/* The candidate's own plan writes interaction as these codes, so the set uses
+/* The trainee's own plan writes interaction as these codes, so the set uses
    them too — one vocabulary across the two screens means a stage can carry its
    pattern straight into the plan. */
 const INTERACTIONS = ['','T–S','S–T','S–S','PW','GW','Ind.','OC','Ming.'];
@@ -236,7 +245,7 @@ const INT_LABEL = { 'T–S':'Teacher to students', 'S–T':'Students to teacher'
    they build it. Set per session, not per practice number. */
 const SCAFFOLD = {
   full:   { name: 'Fully written — every stage, what to do, timings',
-            blurb: 'For a candidate who has never taught: the stages are written out and timed.' },
+            blurb: 'For a trainee who has never taught: the stages are written out and timed.' },
   guided: { name: 'Stages and timings — they write the instructions',
             blurb: 'The shape and the clock are given; what happens in each stage is theirs.' },
   bare:   { name: 'Aims and materials only — they build the lesson',
@@ -245,14 +254,14 @@ const SCAFFOLD = {
 
 /* A COURSE HOLDS SEVERAL SETS. Ramy, 4 Oct 2026: "we will definitely need at
    least four sets in case it's a course of 24." A set belongs to a tutor and
-   their book — the candidates move between levels, the set stays put — so a
+   their book — the trainees move between levels, the set stays put — so a
    course of twenty-four running four groups writes four of them and says which
    group teaches from which. */
 let UPLOADING = '';    // "sessionId|slot" while a scan is going up
 let LIB = {};          // id -> set
 /* putMaterial needs a token to resolve the course; the tutor key rides along
    automatically (hub-store adds it), which is what buys the larger upload cap
-   since store v71. Any candidate's token will do -- the file lands in the
+   since store v71. Any trainee's token will do -- the file lands in the
    COURSE's materials folder, not theirs. */
 function anyToken(){
   const roster = rec('connect_roster_v1') || {};
@@ -392,10 +401,10 @@ function libraryPanel(){
     ${levels.map(l => `<button type="button" class="lvchip${LVL === l ? ' on' : ''}" data-lvl="${esc(l)}">${esc(l)}</button>`).join('')}</div>`;
   return `<div class="libwrap">
     <h2>Take a set from the library</h2>
-    <p class="lede">Teaching practice written against a real coursebook — twelve teaching days, three lessons a day, each staged and timed. The pages each lesson teaches from travel with it, so a candidate can teach without a copy of the book. Take the ones your course runs; a set you take is yours to change, and changing it here does not touch the library.</p>
+    <p class="lede">Teaching practice written against a real coursebook — twelve teaching days, three lessons a day, each staged and timed. The pages each lesson teaches from travel with it, so a trainee can teach without a copy of the book. Take the ones your course runs; a set you take is yours to change, and changing it here does not touch the library.</p>
     ${filter}${body}
     ${LIBNOTE ? `<p class="libwarn">${esc(LIBNOTE)}</p>` : ''}
-    <p class="libwarn">A set rides on the course record, which every candidate&rsquo;s browser downloads. Take the levels you actually teach and leave the rest.</p>
+    <p class="libwarn">A set rides on the course record, which every trainee&rsquo;s browser downloads. Take the levels you actually teach and leave the rest.</p>
     <div class="acts" style="margin-top:12px"><button type="button" class="btn quiet" id="libclose">Close the library</button></div>
   </div>`;
 }
@@ -444,13 +453,12 @@ function render(){
   }
   if (!S || !Object.keys(LIB).length) {
     $('app').innerHTML = `<h1>TP point sets</h1>
-      <p class="lede">A set is the course’s teaching practice points, written once against a coursebook: ${TPS} practices, each taught twice because the group teaches on alternate days, and three slots in each. The rotation then deals the candidates into the slots.</p>
+      <p class="lede">A set is the course’s teaching practice points, written once against a coursebook: ${TPS} practices, each taught twice because the group teaches on alternate days, and three slots in each. The rotation then deals the trainees into the slots.</p>
       ${libraryPanel()}
       <div class="empty"><p style="margin:0 0 12px">This course has no set yet. Take one from the library, or start your own.</p>
       <button class="btn" id="takelib">Open the library</button>
       <button class="btn quiet" id="make">Start a set by hand</button></div>`;
     wireLibrary();
-  wirePages();
     const mk = $('make'); if (mk) mk.onclick = () => { const id = newId(); LIB[id] = blankSet(); CUR = id; S = LIB[id]; persist('Set started'); };
     const tl = $('takelib'); if (tl) tl.onclick = openLibrary;
     return;
@@ -483,7 +491,7 @@ function render(){
     <p class="hint" style="margin:5px 0 0">Which groups teach from this set. A course of twenty-four running four groups has four sets, one per tutor and book.</p></div></div>`;
 
   $('app').innerHTML = `<h1>TP point sets</h1>
-    <p class="lede">The lessons this course teaches, written once against the book. A set belongs to a tutor and their book; the rotation on the TP points screen deals its slots to whoever is teaching. Give a slot its stages and the candidate’s own plan can start from them.</p>
+    <p class="lede">The lessons this course teaches, written once against the book. A set belongs to a tutor and their book; the rotation on the TP points screen deals its slots to whoever is teaching. Give a slot its stages and the trainee’s own plan can start from them.</p>
     ${tabs}
     ${libraryPanel()}
     <div class="head">
@@ -493,7 +501,7 @@ function render(){
       <div class="row"><label class="lab" for="level">Level</label><input id="level" value="${esc(S.level || '')}" placeholder="A2 (elementary)"></div>
       <div class="row"><label class="lab" for="url">Link to the book</label><div><input id="url" type="url" value="${esc(S.url || '')}" placeholder="https://… wherever the book lives"><p class="hint">Every slot&rsquo;s card links here, so the link is written once. The page number in a slot opens a direct PDF address at that page.</p></div></div>
       <div class="row"><label class="lab" for="audiourl">Link to the audio</label><div><input id="audiourl" type="url" value="${esc(S.audioUrl || '')}" placeholder="https://\u2026 the folder your class audio lives in"><p class="hint">Where this book&rsquo;s recordings live &mdash; a Drive folder, the publisher&rsquo;s page, wherever. A slot that names a track without carrying the file points here, so the track number leads somewhere. Written once, like the book.</p></div></div>
-      <div class="row"><label class="lab" for="sources">How to source it</label><div><textarea id="sources" rows="3" placeholder="Maggs, P. &amp; Smith, C. (2019) Language Hub Elementary Student&rsquo;s Book. Macmillan.&#10;Pathare, G. (2019) Language Hub Elementary Teacher&rsquo;s Book. Macmillan.&#10;One reference per line">${esc(S.sources || '')}</textarea><p class="hint">The references for this book, written correctly. They appear on the card for the first two practices only, taken apart so the candidate can see which part is which &mdash; after that they write their own.</p></div></div>
+      <div class="row"><label class="lab" for="sources">How to source it</label><div><textarea id="sources" rows="3" placeholder="Maggs, P. &amp; Smith, C. (2019) Language Hub Elementary Student&rsquo;s Book. Macmillan.&#10;Pathare, G. (2019) Language Hub Elementary Teacher&rsquo;s Book. Macmillan.&#10;One reference per line">${esc(S.sources || '')}</textarea><p class="hint">The references for this book, written correctly. They appear on the card for the first two practices only, taken apart so the trainee can see which part is which &mdash; after that they write their own.</p></div></div>
       <div class="row"><label class="lab" for="mins">A slot is</label><div class="pair" style="display:grid;grid-template-columns:110px 1fr;gap:9px;align-items:center"><input id="mins" type="number" min="15" max="120" value="${esc(S.minutes || 45)}"><span class="hint" style="margin:0">minutes. The stage clock in each slot counts against this.</span></div></div>
     </div>
     ${pagesPanel()}
@@ -507,9 +515,15 @@ function render(){
 }
 
 /* ---------------- the course's own book ----------------
-   PG holds one run: which book, the opened PDF, the offset being calibrated,
+   PG holds one run: which book, the opened PDF, the folios being confirmed,
    and how far the attaching has got. It is deliberately not persisted -- a
-   half-finished run should die with the page rather than come back confusing. */
+   half-finished run should die with the page rather than come back confusing.
+
+   `step` is which question is on screen. 'low' and 'high' are the folios at
+   either end of what the set needs: one offset is not enough, because a
+   publisher's file can leave pages out of the middle and then everything after
+   them moves. 'break' is where that deeper run starts, and it is only reached
+   when the two folios disagree. */
 let PG = null;
 
 function pagesPanel(){
@@ -532,8 +546,30 @@ function pagesPanel(){
   }).join('');
   return `<div class="pgwrap">
     <h2>The pages this set teaches from</h2>
-    <p class="lede" style="margin:0 0 10px">Each lesson names the pages it teaches from, and the card carries them so a candidate can teach without the book in front of them. Point at your own copy and Lite cuts out the pages this set needs. The file stays on this computer; only the pages come out of it.</p>
+    <p class="lede" style="margin:0 0 10px">Each lesson names the pages it teaches from, and the card carries them so a trainee can teach without the book in front of them. Point at your own copy and Lite cuts out the pages this set needs. The file stays on this computer; only the pages come out of it.</p>
     ${rows}</div>`;
+}
+
+/* An offset read as a sentence. A file missing pages runs DEEPER from there; a
+   file with an insert bound in runs earlier. A signed number would hand the
+   tutor the arithmetic this panel exists to do for them. */
+function deeperBy(d){
+  const n = Math.abs(d);
+  return `${n} page${n === 1 ? '' : 's'} ${d > 0 ? 'deeper' : 'earlier'}`;
+}
+
+/* The PDF page the canvas is showing. A different sum in the break step: there
+   the offsets are settled and it is the page the deeper run starts at that moves. */
+function probePdf(){
+  if (!PG) return 0;
+  return PG.step === 'break' ? PG.from + PG.high.offset : PG.probe + PG.offset;
+}
+
+/* The lowest page the deeper run could start at. You cannot lose four pages
+   between p. 145 and p. 147, so if this comes out above the high folio the two
+   cannot both be right and one of them was read off the wrong page. */
+function firstBreak(){
+  return PG.low.page + Math.max(1, PG.low.offset - PG.high.offset + 1);
 }
 
 function calibrator(){
@@ -546,24 +582,77 @@ function calibrator(){
       <p class="hint" style="margin:7px 0 0">Leave this page open until it finishes.</p></div>`;
   }
   if (!PG.doc) return `<div class="pgcal"><p class="q">Opening the file&hellip;</p></div>`;
+  if (PG.step === 'break') return breakPanel();
+  const top = PG.pages[PG.pages.length - 1];
+  const more = PG.step === 'low' && top !== PG.probe;             /* a highest folio still to come */
+  const deep = PG.step === 'high' && PG.offset !== PG.low.offset; /* their answer, as it stands */
   return `<div class="pgcal">
-    <p class="q">Is this page ${PG.probe} of the book?</p>
+    <p class="q">${PG.step === 'high' ? 'And is this page' : 'Is this page'} ${PG.probe} of the book?</p>
     <canvas id="pgcanvas"></canvas>
     <div class="pgnudge">
       <button type="button" id="pgback">&minus;</button>
-      <span>PDF page <b>${PG.probe + PG.offset}</b> of ${PG.doc.numPages}</span>
+      <span>PDF page <b>${probePdf()}</b> of ${PG.doc.numPages}</span>
       <button type="button" id="pgfwd">+</button>
-      <button type="button" class="btn sm" id="pggo" style="margin-left:6px">Yes &mdash; cut out all ${PG.pages.length} pages</button>
+      <button type="button" class="btn sm" id="pggo" style="margin-left:6px">${
+        more ? `Yes &mdash; now check p. ${top}`
+             : deep ? `Yes &mdash; p. ${PG.probe} sits ${deeperBy(PG.low.offset - PG.offset)}`
+                    : `Yes &mdash; cut out all ${PG.pages.length} pages`}</button>
       <button type="button" class="btn quiet sm" id="pgstop">Cancel</button>
     </div>
-    <p class="hint" style="margin:8px 0 0">Nudge until the page on screen is the one the book calls ${PG.probe}. Every other page follows from it.</p>
+    <p class="hint" style="margin:8px 0 0">${PG.step === 'high'
+      ? `Nudge until this is the page the book calls ${PG.probe}. The highest page the set needs is checked as well as the lowest, because a publisher&rsquo;s file can leave pages out of the middle &mdash; and one offset taken on an early page would then cut the wrong page for the whole of the rest of the book.`
+      : `Nudge until the page on screen is the one the book calls ${PG.probe}.`}</p>
+  </div>`;
+}
+
+/* THE TWO FOLIOS DISAGREE, which means the file is missing pages between them
+   and nothing on screen says where: a scanned book has no text layer to read a
+   folio off, and the pages that go missing -- the Additional material at the
+   back -- are the ones with no page number printed on them anyway.
+
+   So name both pages and both offsets, and then the two honest ways on. Give
+   the page the deeper run starts at and every page can be cut bar the ones the
+   file simply has not got, which are named and left; or cut only the pages a
+   folio proves and leave the span between them alone. Cutting that span on one
+   offset is the thing this panel exists to prevent -- what comes out is a real
+   page, with real text, from the wrong part of the book. */
+function breakPanel(){
+  const lo = PG.low, hi = PG.high, d = lo.offset - hi.offset;
+  const said = `<p class="pgwarn">Those two pages do not agree. The book&rsquo;s p. ${lo.page} is PDF page ${lo.page + lo.offset}, but its p. ${hi.page} is PDF page ${hi.page + hi.offset} &mdash; <b>${deeperBy(d)}</b>. A publisher&rsquo;s file can leave pages out of the middle, and everything after them moves. Until we know where, a page between those two would come out a real page from the wrong part of the book.</p>`;
+  if (firstBreak() > hi.page) return `<div class="pgcal">${said}
+    <p class="hint" style="margin:0 0 11px">Those two cannot both be right, though &mdash; there is no room for ${deeperBy(d)} between p. ${lo.page} and p. ${hi.page}. One of the folios was read off the wrong page; the Additional material at the back of a book often carries no page number at all.</p>
+    <div class="pgnudge">
+      <button type="button" class="btn sm" id="pgagain">Start the folios again</button>
+      <button type="button" class="btn quiet sm" id="pgstop">Cancel</button>
+    </div></div>`;
+  const m = window.HubPages.map(lo.offset, PG.from, hi.offset);
+  const lost = PG.pages.filter(p => m.skips(p));
+  const held = PG.pages.filter(p => p > lo.page && p < hi.page);
+  return `<div class="pgcal">${said}
+    <p class="q">From which page does your file run ${deeperBy(d)}?</p>
+    <canvas id="pgcanvas"></canvas>
+    <div class="pgnudge">
+      <button type="button" id="pgback">&minus;</button>
+      <input id="pgfrom" type="number" min="${firstBreak()}" max="${hi.page}" value="${PG.from}">
+      <button type="button" id="pgfwd">+</button>
+      <span>&mdash; is PDF page <b>${probePdf()}</b> the one the book calls ${PG.from}?</span>
+    </div>
+    <p class="hint" style="margin:8px 0 0">Nudge down until the page on screen stops being the one named, then back up one: the lowest page that still matches is where the gap ends.${
+      m.absent.length ? ` Your file would then be missing pp. ${m.absent[0]}&ndash;${m.absent[m.absent.length - 1]}.` : ''}</p>
+    <div class="pgnudge" style="margin:11px 0 0">
+      <button type="button" class="btn sm" id="pggo">Cut the ${PG.pages.length - lost.length} pages it has</button>
+      ${held.length ? `<button type="button" class="btn quiet sm" id="pgsafe">Only the ${PG.pages.length - held.length} pages a folio proves</button>` : ''}
+      <button type="button" class="btn quiet sm" id="pgstop">Cancel</button>
+    </div>
+    ${lost.length ? `<p class="pgnote" style="margin:11px 0 0">This set wants p${lost.length > 1 ? 'p' : ''}. ${lost.join(', ')}, which your file has not got at all, so ${lost.length > 1 ? 'they are' : 'it is'} left for you to attach by hand from a paper copy.</p>` : ''}
+    ${held.length ? `<p class="hint" style="margin:7px 0 0">The quiet button leaves the ${held.length} page${held.length === 1 ? '' : 's'} between p. ${lo.page} and p. ${hi.page} alone rather than guess which side of the gap ${held.length === 1 ? 'it falls' : 'they fall'}.</p>` : ''}
   </div>`;
 }
 
 async function drawProbe(){
   if (!PG || !PG.doc || PG.running) return;
   const cv = $('pgcanvas'); if (!cv) return;
-  const n = PG.probe + PG.offset;
+  const n = probePdf();
   if (n < 1 || n > PG.doc.numPages) { const c = cv.getContext('2d'); c.clearRect(0, 0, cv.width, cv.height); return; }
   try {
     const out = await window.HubPages.renderPage(PG.doc, n, 54);
@@ -573,7 +662,8 @@ async function drawProbe(){
 }
 
 async function startPdf(src, file){
-  PG = { src: src, file: file, doc: null, offset: 0, probe: 0, pages: [], running: false, at: 0, total: 0, error: '' };
+  PG = { src: src, file: file, doc: null, step: 'low', probe: 0, offset: 0,
+    low: null, high: null, from: 0, pages: [], running: false, at: 0, total: 0, error: '' };
   render();
   try {
     const doc = await window.HubPages.open(file);
@@ -581,7 +671,8 @@ async function startPdf(src, file){
     PG.doc = doc;
     PG.pages = need.want;
     /* Calibrate on the lowest page the set actually wants, so what they are
-       looking at is a page this course teaches rather than a cover. */
+       looking at is a page this course teaches rather than a cover. The highest
+       page the set needs is the next question. */
     PG.probe = need.want[0];
     PG.offset = 0;
     render(); drawProbe();
@@ -591,20 +682,47 @@ async function startPdf(src, file){
   }
 }
 
-async function runPdf(){
+/* One "Yes" per folio. A whole file costs one extra press and no thought: the
+   offset carries over to the high page, so the page on screen is already the
+   right one and they only say so. */
+function confirmProbe(){
   if (!PG || !PG.doc) return;
+  if (PG.step === 'low') {
+    PG.low = { page: PG.probe, offset: PG.offset };
+    const top = PG.pages[PG.pages.length - 1];
+    if (top === PG.probe) return runPdf(window.HubPages.map(PG.offset));
+    PG.step = 'high'; PG.probe = top;
+    render(); drawProbe(); return;
+  }
+  if (PG.step === 'high') {
+    PG.high = { page: PG.probe, offset: PG.offset };
+    if (PG.high.offset === PG.low.offset) return runPdf(window.HubPages.map(PG.low.offset));
+    PG.step = 'break'; PG.from = PG.high.page;   /* the one page we know is deep */
+    render(); drawProbe(); return;
+  }
+  runPdf(window.HubPages.map(PG.low.offset, PG.from, PG.high.offset));
+}
+
+async function runPdf(m, pages){
+  if (!PG || !PG.doc) return;
+  const list = pages || PG.pages;
   const tok = anyToken();
-  if (!tok) { PG.error = 'No candidate on the roster yet, so there is nowhere to put the pages. Add the cohort first.'; render(); return; }
-  PG.running = true; PG.at = 0; PG.total = PG.pages.length; render();
+  if (!tok) { PG.error = 'No trainee on the roster yet, so there is nowhere to put the pages. Add the cohort first.'; render(); return; }
+  PG.running = true; PG.at = 0; PG.total = list.length; render();
   try {
-    const made = await window.HubPages.attach({
-      doc: PG.doc, src: PG.src, pages: PG.pages, offset: PG.offset, token: tok,
+    const out = await window.HubPages.attach({
+      doc: PG.doc, src: PG.src, pages: list, map: m, token: tok,
       label: (S.book || S.name || 'Coursebook').split(',')[0].trim(),
       onStep: st => { PG.at = st.i + (st.done ? 0 : 1); PG.page = st.page; render(); },
     });
-    const n = window.HubPages.fill(S, PG.src, made);
+    const n = window.HubPages.fill(S, PG.src, out.made);
+    /* Say what was left as well as what landed. A page the file has not got is
+       still the tutor's to attach, and a bare count would hide it. */
+    const left = out.skipped.length
+      ? ` — p${out.skipped.length > 1 ? 'p' : ''}. ${out.skipped.join(', ')} ${out.skipped.length > 1 ? 'are' : 'is'} not in that file`
+      : (list.length < PG.pages.length ? ` — ${PG.pages.length - list.length} left until the gap is known` : '');
     PG = null;
-    persist(n + ' pages attached');
+    persist(n + ' pages attached' + left);
   } catch (e) {
     PG.running = false;
     PG.error = (e && e.message) || 'the pages could not be attached';
@@ -617,10 +735,31 @@ function wirePages(){
     const file = e.target.files && e.target.files[0]; e.target.value = '';
     if (file) startPdf(el.getAttribute('data-pdf'), file);
   });
-  const b = $('pgback'), f = $('pgfwd'), g = $('pggo'), x = $('pgstop');
-  if (b) b.onclick = () => { PG.offset--; render(); drawProbe(); };
-  if (f) f.onclick = () => { PG.offset++; render(); drawProbe(); };
-  if (g) g.onclick = runPdf;
+  const b = $('pgback'), f = $('pgfwd'), g = $('pggo'), x = $('pgstop'),
+    sf = $('pgsafe'), fr = $('pgfrom'), ag = $('pgagain');
+  /* In the folio steps the nudge moves the offset; on the break it moves the
+     page the deeper run starts at. The same two buttons either way, because it
+     is the same act: move it until the page on screen is the one named. */
+  const nudge = d => {
+    if (PG.step === 'break') PG.from = Math.max(firstBreak(), Math.min(PG.high.page, PG.from + d));
+    else PG.offset += d;
+    render(); drawProbe();
+  };
+  if (b) b.onclick = () => nudge(-1);
+  if (f) f.onclick = () => nudge(1);
+  if (fr) fr.onchange = () => {
+    PG.from = Math.max(firstBreak(), Math.min(PG.high.page, parseInt(fr.value, 10) || PG.from));
+    render(); drawProbe();
+  };
+  if (g) g.onclick = confirmProbe;
+  /* Refuse the span rather than guess it: only the pages a folio proves. */
+  if (sf) sf.onclick = () => runPdf(
+    window.HubPages.map(PG.low.offset, PG.high.page, PG.high.offset),
+    PG.pages.filter(p => p <= PG.low.page || p >= PG.high.page));
+  if (ag) ag.onclick = () => {
+    PG.step = 'low'; PG.probe = PG.pages[0]; PG.offset = 0; PG.low = null; PG.high = null;
+    render(); drawProbe();
+  };
   if (x) x.onclick = () => { PG = null; render(); };
   if ($('pgcanvas')) drawProbe();
 }
@@ -640,7 +779,7 @@ function sessionBody(id, ses){
   /* One context across the day. Ramy, 4 Oct 2026: "at least two or three of
      them teaching the same day could have a similar context." Three lessons
      on consecutive pages of a unit usually share one anyway; naming it means
-     the candidates can see what the day is about and build on each other. */
+     the trainees can see what the day is about and build on each other. */
   const ctx = `<div class="scaf"><label class="lab" for="ctx-${id}">Context</label>
     <input id="ctx-${id}" data-ctx="${id}" value="${esc(ses.context || '')}" placeholder="Families · daily routines · jobs" style="max-width:320px">
     <span class="hint" style="margin:0">What the three lessons of this day are about.</span></div>`;
@@ -656,15 +795,15 @@ function slotBody(id, i, sl, scaffold){
   const over = total > cap;
   const stages = scaffold === 'bare' ? '' : `
     <div class="frow"><label class="lab">Procedure</label><div>
-      <table class="st"><thead><tr><th></th><th style="width:30%">Stage</th><th style="width:62px">Mins</th><th style="width:108px">Interaction</th><th>What to do${scaffold === 'guided' ? '' : ' · what to watch out for'}</th><th></th></tr></thead>
+      <table class="st"><thead><tr><th></th><th style="width:30%">Stage</th><th style="width:62px">Mins</th><th style="width:108px">Interaction</th><th>What to do · what to watch out for</th><th></th></tr></thead>
       <tbody>${(sl.stages || []).map((st, j) => `<tr>
         <td class="n">${j + 1}</td>
         <td><input data-st="${id}|${i}|${j}|name" value="${esc(st.name)}" placeholder="Lead-in"></td>
         <td><input type="number" min="0" max="90" data-st="${id}|${i}|${j}|minutes" value="${esc(st.minutes)}"></td>
         <td><select data-st="${id}|${i}|${j}|interaction" title="Interaction pattern">${INTERACTIONS.map(x =>
           `<option value="${esc(x)}"${st.interaction === x ? ' selected' : ''}>${esc(x ? x + ' · ' + INT_LABEL[x] : '—')}</option>`).join('')}</select></td>
-        <td><textarea rows="2" data-st="${id}|${i}|${j}|todo" placeholder="${scaffold === 'guided' ? 'One line of guidance' : 'What the candidate does in this stage'}">${esc(st.todo)}</textarea>
-          ${scaffold === 'full' ? `<textarea rows="1" data-st="${id}|${i}|${j}|avoid" placeholder="Watch out for… (optional)">${esc(st.avoid)}</textarea>` : ''}</td>
+        <td><textarea rows="2" data-st="${id}|${i}|${j}|todo" placeholder="${scaffold === 'guided' ? 'One line of guidance' : 'What the trainee does in this stage'}">${esc(st.todo)}</textarea>
+          <textarea rows="1" data-st="${id}|${i}|${j}|avoid" placeholder="Watch out for… (optional)">${esc(st.avoid)}</textarea></td>
         <td><button type="button" class="xbtn" data-strm="${id}|${i}|${j}">Remove</button></td></tr>`).join('')}
       </tbody></table>
       <div class="clock${over ? ' over' : ''}"><button type="button" class="btn quiet sm" data-stadd="${id}|${i}">Add a stage</button>
@@ -677,7 +816,7 @@ function slotBody(id, i, sl, scaffold){
     </div></div>`;
 
   return `<div class="slot">
-    <h3>Slot ${i + 1} <small>the ${['first','second','third'][i] || (i + 1) + 'th'} candidate to teach</small></h3>
+    <h3>Slot ${i + 1} <small>the ${['first','second','third'][i] || (i + 1) + 'th'} trainee to teach</small></h3>
     <div class="frow"><label class="lab">Lesson type</label><div>
       <select data-sl="${id}|${i}|type"><option value="">— choose —</option>${TYPES.map(t =>
         `<option value="${esc(t)}"${sl.type === t ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select>
@@ -686,13 +825,13 @@ function slotBody(id, i, sl, scaffold){
     <div class="frow"><label class="lab">Sub aim</label><input data-sl="${id}|${i}|sub" value="${esc(sl.sub)}" placeholder="Oral fluency in the same context"></div>
     <div class="frow"><label class="lab">Lesson shape</label><div>
       <input list="shapes" data-sl="${id}|${i}|shape" value="${esc(sl.shape)}" placeholder="Receptive Skills (reading or listening)">
-      <p class="hint">Named as the candidate’s own plan names it, so their stages can be filled in one press.</p></div></div>
+      <p class="hint">Named as the trainee’s own plan names it, so their stages can be filled in one press.</p></div></div>
     <div class="frow"><label class="lab">Pages</label><div class="pair">
       <textarea rows="2" data-sl="${id}|${i}|pages" placeholder="SB p. 12, ex. A–D&#10;WB p. 9, ex. 1a—one line each">${esc(sl.pages)}</textarea>
       <input type="number" min="1" data-sl="${id}|${i}|page" value="${esc(sl.page)}" placeholder="Open at p."></div></div>
     <div class="frow"><label class="lab">Audio</label><div>
       <textarea rows="2" data-sl="${id}|${i}|tracks" placeholder="Track 2.3 | https://drive.google.com/file/d/…&#10;One link per line; a name before a | labels it">${esc(sl.tracks)}</textarea>
-      <p class="hint">These become players on the card of the candidate teaching this slot.</p></div></div>
+      <p class="hint">These become players on the card of the trainee teaching this slot.</p></div></div>
     <div class="frow"><label class="lab">Scans</label><div>
       ${(sl.files || []).length ? `<ul class="files">${(sl.files || []).map((f, k) => `<li>
         <input data-fnm="${id}|${i}|${k}" value="${esc(f.name || '')}" placeholder="Student’s Book p. 12">
@@ -700,7 +839,7 @@ function slotBody(id, i, sl, scaffold){
         <button type="button" class="xbtn" data-frm="${id}|${i}|${k}">Remove</button></li>`).join('')}</ul>` : ''}
       <label class="btn quiet sm filebtn">${UPLOADING === id + '|' + i ? 'Attaching…' : 'Attach a page'}
         <input type="file" accept="image/*,application/pdf" data-fup="${id}|${i}" hidden${UPLOADING ? ' disabled' : ''}></label>
-      <p class="hint">The page itself, so the candidate reads it in their card and can print it. Attach as many as the
+      <p class="hint">The page itself, so the trainee reads it in their card and can print it. Attach as many as the
         lesson needs — the name is what they see, so say which book it came from when a lesson spans two
         (<b>Student’s Book p. 40</b>, <b>Workbook p. 24</b>).</p></div></div>
     ${stages}
@@ -720,6 +859,7 @@ function wire(){
   const add = $('addset');
   if (add) add.onclick = () => { const id = newId(); LIB[id] = blankSet(); CUR = id; S = LIB[id]; OPEN = null; persist('Another set started'); };
   wireLibrary();
+  wirePages();
   const drop = $('dropset');
   if (drop) drop.onclick = () => {
     if (!confirm('Remove this set? It has nothing written in it.')) return;
@@ -783,10 +923,10 @@ function wire(){
     el.value = '';
   });
   /* ---- scans on a slot ----
-     The page itself, attached once to the SET so every candidate who is dealt
+     The page itself, attached once to the SET so every trainee who is dealt
      this slot gets it, rather than a tutor attaching the same page three times
      to three cells. `stamp()` on the TP points screen copies these onto each
-     candidate's cell marked fromSet, keeping anything attached by hand
+     trainee's cell marked fromSet, keeping anything attached by hand
      alongside. putMaterial needs a token to resolve the course; hub-store adds
      the tutor key by itself, which is what allows more than 2MB since v71. */
   document.querySelectorAll('[data-fup]').forEach(el => el.onchange = async e => {
@@ -795,7 +935,7 @@ function wire(){
     if (!file) return;
     const [id, i] = el.dataset.fup.split('|');
     const tok = anyToken();
-    if (!tok) { alert('No candidate on the roster yet, so there is nowhere to put the file. Add the cohort first.'); return; }
+    if (!tok) { alert('No trainee on the roster yet, so there is nowhere to put the file. Add the cohort first.'); return; }
     if (file.size > 9 * 1024 * 1024) { alert('That file is over 9MB. Put it on your own Drive and paste the link into Pages instead.'); return; }
     UPLOADING = id + '|' + i; render();
     try {
@@ -824,7 +964,7 @@ function wire(){
   document.querySelectorAll('[data-frm]').forEach(el => el.onclick = () => {
     const [id, i, k] = el.dataset.frm.split('|');
     /* the reference goes; the file stays in Drive, because another slot or a
-       candidate's own cell may already be pointing at it */
+       trainee's own cell may already be pointing at it */
     S.sessions[id].slots[+i].files.splice(+k, 1);
     persist('Page removed from this slot');
   });
@@ -918,7 +1058,7 @@ function parseSlotText(body){
     if ((m = line.match(/^([A-Z][^:]{2,60}):\s*(.+)$/)) && !/^(students?|teacher|learners?|ss?|t|e\.?g|note|example|answer)\b/i.test(m[1])) {
       /* "Lead-in (to set the context)" — the parenthetical is the stage's aim.
          It goes into the guidance, never into the name, because the name is
-         the one thing that travels into the candidate's own plan. */
+         the one thing that travels into the trainee's own plan. */
       const par = m[1].match(/^(.+?)\s*\(([^)]{6,})\)\s*$/);
       stages.push({ name: (par ? par[1] : m[1]).trim(), minutes: '', interaction: '',
                     todo: (par ? par[2].trim().replace(/^./, c => c.toUpperCase()) + '. ' : '') + m[2].trim(), avoid: '' });

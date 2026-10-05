@@ -12,9 +12,15 @@ stamp = datetime.datetime.now().strftime("%Y%m%d%H%M")
 # fill). The service worker's own VERSION bump does eventually clear them, but
 # the ?v= is what makes it immediate, and an asset in one list and not the
 # other is the kind of thing nobody notices until a page runs against a file
-# that is older than the code expecting it.
+# that is older than the code expecting it. hub-pages.js joined the list on
+# 5 Oct 2026 for the same reason: it had shipped once and was never re-stamped,
+# so a tutor's browser could cut pages with yesterday's offset arithmetic.
+# FIVE MORE ARE STILL MISSING -- celta5-appendix.js, hub-card-mail.js,
+# hub-feedback.js, hub-front.js, hub-shelf.js -- and none of the six are in
+# sw.js's SHELL either.
 assets = ["hub-shared.js", "hub-store.js", "hub-sync.js", "hub-tracker.js", "hub-due.js", "hub-rotation.js",
           "hub-exchange.js", "hub-crit-learn.js", "assignment-defaults.js", "observation-defaults.js", "hub-docx.js", "hub-xlsx.js", "hub-observation-parse.js", "hub-timetable-parse.js", "hub-rotation.js", "hub-attendance.js", "hub-volunteer-i18n.js", "celta5-text.js", "celta5-criteria.js", "celta5-pdf.js", "hub-ink.js",
+          "hub-pages.js",
           "hub-tokens.css", "hub-house.css", "hub-record.css"]
 for f in glob.glob("*.html"):
     p = pathlib.Path(f); s = p.read_text(); orig = s

@@ -36,7 +36,7 @@ const ids = Object.keys(LIB).sort((a, b) => rank(a) - rank(b) || a.localeCompare
    growing with every set. This is the same facts the cards above show, about
    2 KB, so the chooser renders instantly; the full set is fetched from the
    master only at the moment someone takes one. `kb` is what that set will add
-   to the course record, which every candidate's browser downloads. */
+   to the course record, which every trainee's browser downloads. */
 fs.writeFileSync(path.join(ROOT, 'library', 'catalogue.json'), JSON.stringify(
   ids.map(id => { const S = LIB[id], t = stats(S);
     return { id, level: S.level || '', book: S.book || S.name || '', minutes: S.minutes || 45,
@@ -55,7 +55,7 @@ const cards = ids.map(id => {
       <span class="tv"><b>${t.tracks}</b> recordings</span>
       <span class="tv"><b>${t.days}</b> printable days</span>
     </div>
-    <p class="own">The pages each lesson needs travel with it, so a candidate can teach without a copy of the book.</p>
+    <p class="own">The pages each lesson needs travel with it, so a trainee can teach without a copy of the book.</p>
   </article>`;
 }).join('\n');
 
@@ -98,7 +98,7 @@ const html = `<!DOCTYPE html>
   <div class="cards">
 ${cards}
   </div>
-  <p class="foot">Every lesson arrives with the pages it teaches from, the recordings it plays, and the day's pages as one PDF to print. Your candidates get their own lesson on their own card, with the other two at the foot of the day to sit in on.</p>
+  <p class="foot">Every lesson arrives with the pages it teaches from, the recordings it plays, and the day's pages as one PDF to print. Your trainees get their own lesson on their own card, with the other two at the foot of the day to sit in on.</p>
 </div></body></html>`;
 const out = path.join(ROOT, 'library', 'index.html');
 fs.writeFileSync(out, html);

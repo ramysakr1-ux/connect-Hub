@@ -13,11 +13,23 @@
  * THE OFFSET IS THE WHOLE DIFFICULTY. A PDF's third page is almost never the
  * book's page 3 -- there are covers, a contents, a map of the book. Rather than
  * guess, we render one page and ask: is this page N? They nudge until it is,
- * and the gap is the offset for every other page.
+ * and the gap is the offset.
+ *
+ * ONE OFFSET IS NOT ENOUGH, and that cost us a day. A publisher's file can
+ * leave pages out of the MIDDLE, and then every page after them sits that much
+ * deeper. The Speakout B1 Student's Book, found 5 Oct 2026: its folio reads
+ * 145 on PDF page 145 and 150 on PDF page 146, so book pp. 146-149 -- the
+ * Additional material its own pairwork prompts send a class to -- are not in
+ * the file at all. Calibrated on one early page, asking for p. 150 rendered
+ * p. 146: a real page, with real text, from the wrong part of the book. No
+ * check above the PDF could have caught it, because a wrong page looks exactly
+ * like a right one. So the folio is confirmed at BOTH ends of what the set
+ * needs and the two offsets compared; `pageMap` below is what a disagreement
+ * turns into.
  *
  * Ramy, 5 Oct 2026, on sets travelling without our scans: "where do they lead
  * if we're not attaching anything?" This is the other half of that answer --
- * the book link tells a candidate where the page lives, this puts the page on
+ * the book link tells a trainee where the page lives, this puts the page on
  * the card. */
 (function () {
   'use strict';
@@ -64,6 +76,33 @@
     return out;
   }
 
+  /* WHAT A DISAGREEMENT TURNS INTO. Two folios that imply different offsets
+     mean the file is missing pages somewhere between them, so a map is a first
+     offset and, optionally, the book page a second and deeper one starts at.
+     The pages the file skips then fall out of the arithmetic: they are the
+     `gap` pages immediately below that break, and `skips` refuses them rather
+     than render the page that would come out instead.
+
+     Same shape as the server-side builder's SHIFTS and ABSENT in
+     tools/scanpages.py, read off the folios the same way. A file with an extra
+     insert bound in gives a negative gap: nothing is missing then, so `absent`
+     stays empty and only the offset moves. */
+  function pageMap(offset, from, deep) {
+    const shifted = typeof from === 'number' && typeof deep === 'number' && deep !== offset;
+    const gap = shifted ? offset - deep : 0;
+    const absent = [];
+    for (let p = from - gap; shifted && p < from; p++) absent.push(p);
+    return {
+      offset: offset,
+      deep: shifted ? deep : offset,
+      from: shifted ? from : null,
+      gap: gap,
+      absent: absent,
+      at: p => (shifted && p >= from ? deep : offset),
+      skips: p => absent.indexOf(p) >= 0,
+    };
+  }
+
   async function renderPage(doc, pdfPage, dpi) {
     const page = await doc.getPage(pdfPage);
     const vp = page.getViewport({ scale: (dpi || 150) / 72 });
@@ -76,6 +115,7 @@
   window.HubPages = {
     BOOKS: BOOKS,
     needs: needs,
+    map: pageMap,
     loadPdfJs: loadPdfJs,
     renderPage: renderPage,
     esc: esc,
@@ -87,15 +127,20 @@
       return js.getDocument({ data: buf }).promise;
     },
 
-    /* Cut and attach. `onStep` is told where it has got to so the page can draw
-       a progress line; attaching stops at the first upload that fails rather
-       than carrying on and leaving a set half done. */
+    /* Cut and attach. `map` is a pageMap, never a bare offset -- a page the
+       file does not have is named back as skipped rather than rendered, because
+       what would come out is a real page from the wrong part of the book and
+       nothing downstream could tell. `onStep` is told where it has got to so
+       the page can draw a progress line; attaching stops at the first upload
+       that fails rather than carrying on and leaving a set half done. */
     async attach(opts) {
-      const { doc, src, pages, offset, token, dpi, quality, label, onStep } = opts;
-      const made = {};
+      const { doc, src, pages, map, token, dpi, quality, label, onStep } = opts;
+      const made = {}, skipped = [];
       for (let i = 0; i < pages.length; i++) {
-        const bookPage = pages[i], pdfPage = bookPage + offset;
+        const bookPage = pages[i];
         if (onStep) onStep({ i: i, of: pages.length, page: bookPage });
+        if (map.skips(bookPage)) { skipped.push(bookPage); continue; }
+        const pdfPage = bookPage + map.at(bookPage);
         if (pdfPage < 1 || pdfPage > doc.numPages)
           throw new Error(`page ${bookPage} would be PDF page ${pdfPage}, which is outside this file`);
         const cv = await renderPage(doc, pdfPage, dpi || 150);
@@ -107,7 +152,7 @@
         made[bookPage] = { name: name.replace(/\.jpg$/, ''), url: out.url };
       }
       if (onStep) onStep({ i: pages.length, of: pages.length, done: true });
-      return made;
+      return { made: made, skipped: skipped };
     },
 
     /* Write what came back onto every slot that cites those pages. */

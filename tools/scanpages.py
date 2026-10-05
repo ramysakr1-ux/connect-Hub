@@ -24,16 +24,41 @@ BOOKS = {
   # and its imprint licenses photocopies of pp. 211-258 -- the resource pages
   # the second-edition copy in the library does not have at all.
   'SF_TB': (f'{D}/Upper- Intermediate /Straightforward/Straightforward Upper-Intermediate Teacher’s Book — 1st edition 2007.pdf', 15),
+  # Set five. These three still sit in Ramy's Downloads folder, not in Course
+  # books/Intermediate with every other book -- they want moving, and this path
+  # will break when they are.
+  'SOB1_SB': ('/Users/work/Downloads/B1 SpeakOut/SO B1 SB.pdf', -1),
+  'SOB1_WB': ('/Users/work/Downloads/B1 SpeakOut/SO B1 WB.pdf', -1),
 }
 _open = {}
+
+# A PUBLISHER'S FILE CAN BE MISSING PAGES IN THE MIDDLE, which moves every page
+# after them. The Speakout B1 Student's Book PDF has no Additional material:
+# its folio reads 145 on PDF page 145 and 150 on PDF page 146, so book pp.
+# 146-149 -- the pairwork prompts, the quiz answers and the jigsaw texts the
+# lessons point at -- are simply not in the file, and from p. 150 the offset is
+# four pages deeper. Without this, asking for p. 150 rendered p. 146: a real
+# page, with real text, from the wrong part of the book, which no check could
+# have caught. Every folio below was read off the page.
+ABSENT = {'SOB1_SB': [146, 147, 148, 149]}
+SHIFTS = {'SOB1_SB': [(150, -5)]}          # from this book page, use this offset
 
 def doc(k):
     if k not in _open:
         _open[k] = fitz.open(BOOKS[k][0])
     return _open[k]
 
+def offset(k, page):
+    off = BOOKS[k][1]
+    for frm, o in SHIFTS.get(k, []):
+        if page >= frm:
+            off = o
+    return off
+
 def index(k, page):
-    i = page + BOOKS[k][1]
+    if page in ABSENT.get(k, []):
+        raise ValueError(f'{k} p.{page} is not in that PDF at all -- the file skips it')
+    i = page + offset(k, page)
     d = doc(k)
     if i < 0 or i >= d.page_count:
         raise ValueError(f'{k} p.{page} is outside that PDF (index {i}, {d.page_count} pages)')
@@ -41,7 +66,7 @@ def index(k, page):
 
 # The two Macmillan files are scans of paper; the other three are digital and
 # come out clean, so they are left exactly as the publisher set them.
-SCANNED = ('SF_SB', 'SF_WB', 'SF_TB')
+SCANNED = ('SF_SB', 'SF_WB', 'SF_TB', 'SOB1_SB')
 
 def render(k, page, dpi, quality, out):
     doc(k)[index(k, page)].get_pixmap(dpi=dpi).save(out, jpg_quality=quality)
