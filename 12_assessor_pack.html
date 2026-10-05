@@ -25,7 +25,7 @@
 <title>Connect Lite — Assessor pack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610052116">
+<link rel="stylesheet" href="hub-tokens.css?v=202610052135">
 <style>
   :root{
     /* the control fill, for the shared confirm modal's Cancel button */
@@ -237,7 +237,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610052116">
+<link rel="stylesheet" href="hub-house.css?v=202610052135">
 </head>
 <body>
 <div class="board">
@@ -267,15 +267,15 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202610052116"></script>
-<script src="hub-shared.js?v=202610052116"></script>
-<script src="assignment-defaults.js?v=202610052116"></script>
-<script src="hub-tracker.js?v=202610052116"></script>
-<script src="hub-rotation.js?v=202610052116"></script>
-<script src="hub-attendance.js?v=202610052116"></script>
-<script src="hub-store.js?v=202610052116"></script>
-<script src="hub-say.js?v=202610052116"></script>
-<script src="hub-sync.js?v=202610052116"></script>
+<script src="observation-defaults.js?v=202610052135"></script>
+<script src="hub-shared.js?v=202610052135"></script>
+<script src="assignment-defaults.js?v=202610052135"></script>
+<script src="hub-tracker.js?v=202610052135"></script>
+<script src="hub-rotation.js?v=202610052135"></script>
+<script src="hub-attendance.js?v=202610052135"></script>
+<script src="hub-store.js?v=202610052135"></script>
+<script src="hub-say.js?v=202610052135"></script>
+<script src="hub-sync.js?v=202610052135"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -870,6 +870,20 @@ function courseDocuments(){
     ['Attendance registers', 'the centre\u2019s own register, kept in Lite', '25_volunteer_register.html', 'Open the register'],
   ].map(([label, note, href, cta]) =>
     `<div class="docrow"><span><b>${label}</b> <span class="sub">&mdash; ${note}</span></span><a href="${href}">${cta}</a></div>`);
+  /* THE CANDIDATE AGREEMENT, when the centre keeps it in Lite. Cambridge lists
+     it among the centre's responsibilities and names its sections; the trainees
+     read and sign it on 29_candidate_agreement. What an assessor wants here is
+     not the document so much as who has signed it, so the row says so and the
+     names follow. A centre that keeps its own agreement as a file still shows
+     the pasted link in the rows below, as before. */
+  const agr = (SETTINGS && SETTINGS.agreement) || {};
+  const writtenHere = ['agrAttendance','agrPlagiarism','agrComplaints','agrResubmissions']
+    .some(k => String(agr[k] || '').trim());
+  if (writtenHere) {
+    const signed = PEOPLE.filter(tr => tr.agreement && tr.agreement.at);
+    const names = signed.map(tr => esc(tr.name || '')).filter(Boolean).join(', ');
+    builtIn.push(`<div class="docrow"><span><b>Candidate agreement</b> <span class="sub">&mdash; written by the centre and signed on screen &middot; ${signed.length} of ${PEOPLE.length} signed${names ? ': ' + names : ''}</span></span><a href="29_candidate_agreement.html">Open the agreement</a></div>`);
+  }
   const provided = DOC_LABELS.filter(([k]) => docs[k]).length;
   const rows = DOC_LABELS.filter(([k]) => docs[k] && !(k === 'docAssessTimetable' && hasVisitTimetable)).map(([k,label]) =>
     `<div class="docrow"><span>${label}</span><a href="${esc(docs[k])}" target="_blank" rel="noopener noreferrer">Open</a></div>`);

@@ -65,6 +65,11 @@ const ROOMS = {
   '24_tp_points.html':               { trainee:'open',   tutor:'open',   assessor:'open',   volunteer:'refuse' },
   /* The volunteer register is the tutors' room; the assessor reads it, since
      Handbook 14.1 lists attendance registers for the visit. */
+  /* The candidate agreement is the whole course's to read: the trainee signs
+     it, a tutor fields questions about it, and the assessor is entitled to see
+     what was signed. Only the trainee's own link can sign, which the page gates
+     inside rather than at the door. */
+  '29_candidate_agreement.html':     { trainee:'open',   tutor:'open',   assessor:'open',   volunteer:'refuse' },
   '25_volunteer_register.html':      { trainee:'refuse', tutor:'open',   assessor:'open',   volunteer:'refuse' },
   /* A volunteer student's own page, and the certificate printed from it. The
      certificate is also the tutor's, to print one from the register. */

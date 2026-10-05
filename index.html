@@ -25,7 +25,7 @@
 <title>Connect Lite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610052116">
+<link rel="stylesheet" href="hub-tokens.css?v=202610052135">
 <style>
   :root{
     /* The pane. A card on this page is a sheet of glass lying on the paper,
@@ -238,7 +238,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610052116">
+<link rel="stylesheet" href="hub-house.css?v=202610052135">
 </head>
 <body>
 <div class="board">
@@ -339,6 +339,15 @@
       <p>The last two teaching practices are yours to plan: a main aim, a sub aim and the material for each, on one grid your whole group can see.</p>
       <span class="st" id="badgeGrid"></span>
     </a>
+    <!-- THE CANDIDATE AGREEMENT. Shown while the centre has one and this
+         trainee has not signed it, and kept on screen afterwards so they can
+         read back what they agreed to. Cambridge lists the agreement among the
+         centre's responsibilities (CELTA 5, celta5-text.js); the four sections
+         are written on Course admin. -->
+    <a class="room" id="roomAgreement" href="29_candidate_agreement.html" hidden>
+      <h2>Candidate agreement</h2>
+      <p id="agreementLine">What your centre asks of you and what you may ask of it &mdash; attendance, plagiarism, complaints and resubmissions. Read it and sign it.</p>
+    </a>
     <!-- The timetable is the course's own since 29 Sep 2026, not a link out.
          Everyone on the course reads the same one. -->
     <a class="room" id="roomTimetable" href="23_timetable.html" hidden>
@@ -391,15 +400,15 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202610052116"></script>
-<script src="observation-defaults.js?v=202610052116"></script>
-<script src="hub-shared.js?v=202610052116"></script>
-<script src="hub-store.js?v=202610052116"></script>
-<script src="hub-say.js?v=202610052116"></script>
-<script src="hub-shelf.js?v=202610052116"></script>
-<script src="hub-front.js?v=202610052116"></script>
-<script src="hub-sync.js?v=202610052116"></script>
-<script src="hub-feedback.js?v=202610052116"></script>
+<script src="hub-due.js?v=202610052135"></script>
+<script src="observation-defaults.js?v=202610052135"></script>
+<script src="hub-shared.js?v=202610052135"></script>
+<script src="hub-store.js?v=202610052135"></script>
+<script src="hub-say.js?v=202610052135"></script>
+<script src="hub-shelf.js?v=202610052135"></script>
+<script src="hub-front.js?v=202610052135"></script>
+<script src="hub-sync.js?v=202610052135"></script>
+<script src="hub-feedback.js?v=202610052135"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -583,6 +592,26 @@ line(document.getElementById('badgeCelta5'), (function(){
 })(), (function(){ const c = rec('chub:celta5') || {}, t = rec('chub:celta5t') || {}; const conf = c.confirms || {};
   const waiting = !(conf.portfolio && conf.portfolio.at) || ['stage1','stage2','stage3'].some(s => t[s] && t[s].returnedAt && !(c[s] && c[s].signed && c[s].signed.at)) || (t.final && t.final.signed && t.final.signed.at && !(c.final && c.final.signed && c.final.signed.at));
   return waiting ? 'act' : ''; })());
+
+/* The candidate agreement card: shown once the centre has written one (or
+   pasted its own), and it stays after signing so a trainee can read back what
+   they agreed to -- the line is what changes, not the card. */
+(function(){
+  const card = document.getElementById('roomAgreement'); if (!card) return;
+  const cs = rec('connect_course_settings') || {};
+  const agr = cs.agreement || {};
+  const own = String(((cs.docs || {}).docAgreement) || '').trim();
+  const has = own || ['agrAttendance','agrPlagiarism','agrComplaints','agrResubmissions']
+    .some(k => String(agr[k] || '').trim());
+  if (!has) return;
+  card.hidden = false;
+  let signed = null; try { signed = JSON.parse(localStorage.getItem('chub:agreement') || 'null'); } catch(e) {}
+  const line = document.getElementById('agreementLine');
+  if (signed && signed.at && line) {
+    let d = signed.at; try { d = new Date(signed.at).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}); } catch(e) {}
+    line.textContent = 'Signed ' + d + '. Open it to read back what you agreed to.';
+  }
+})();
 
 /* The timetable card: shown as soon as the course has one. A timetable is
    not released to anybody -- everyone on the course reads the same one
