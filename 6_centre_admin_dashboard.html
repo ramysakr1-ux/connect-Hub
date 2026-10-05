@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610052210">
+<link rel="stylesheet" href="hub-tokens.css?v=202610052221">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -341,7 +341,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610052210">
+<link rel="stylesheet" href="hub-house.css?v=202610052221">
 </head>
 <body>
 <div class="board">
@@ -700,12 +700,12 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610052210"></script>
-<script src="hub-store.js?v=202610052210"></script>
-<script src="hub-say.js?v=202610052210"></script>
-<script src="observation-defaults.js?v=202610052210"></script>
-<script src="hub-shared.js?v=202610052210"></script>
-<script src="hub-sync.js?v=202610052210"></script>
+<script src="assignment-defaults.js?v=202610052221"></script>
+<script src="hub-store.js?v=202610052221"></script>
+<script src="hub-say.js?v=202610052221"></script>
+<script src="observation-defaults.js?v=202610052221"></script>
+<script src="hub-shared.js?v=202610052221"></script>
+<script src="hub-sync.js?v=202610052221"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -979,7 +979,18 @@ function renderContacts(){
      don't have to get confused". Cambridge's own MCT and ACT never appear on a
      screen a trainee opens; one tutor is the main course tutor, the rest are
      course tutors, and that is all anybody else is told. */
-  const roleSel = (c, i) => `<div class="house-sel"><select class="tc-role" data-i="${i}"><option value=""${c.role ? '' : ' selected'}>Course tutor</option><option value="main"${c.role === 'main' ? ' selected' : ''}>Main course tutor</option></select></div>`;
+  /* Ramy, 5 Oct 2026: "for tutor roles, we should also have TP tutor and input
+     tutor." A CELTA course splits the teaching between them -- one tutor takes
+     a group's teaching practice and feedback, another runs the input sessions
+     -- and a trainee emailing about a lesson plan wants the first, while one
+     emailing about an input session wants the second. Two options said neither.
+     The value is what the trainee's home prints under the name; "" stays the
+     plain course tutor so every contact saved before today keeps reading as it
+     did. */
+  const ROLES = [['', 'Course tutor'], ['main', 'Main course tutor'],
+                 ['tp', 'Teaching practice tutor'], ['input', 'Input sessions tutor']];
+  const roleSel = (c, i) => `<div class="house-sel"><select class="tc-role" data-i="${i}">${
+    ROLES.map(([v, l]) => `<option value="${v}"${(c.role || '') === v ? ' selected' : ''}>${l}</option>`).join('')}</select></div>`;
   document.getElementById('tutorContacts').innerHTML = rows.map((c, i) =>
     `<div><label>Tutor</label><input type="text" class="tc-name" data-i="${i}" value="${esc(c.name)}" placeholder="Name"></div>
      <div><label>Role</label>${roleSel(c, i)}</div>
