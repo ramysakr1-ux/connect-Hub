@@ -18,13 +18,21 @@
  *
  * Links, not uploads: the demonstration lesson and the GTKY sheets already
  * live in a Drive, a Doc or a site, and a link is what a trainee needs.
+ *
+ * ONE SHELF, NOT TWO (Ramy, 6 Oct 2026, walking the tutor's dashboard): "I'm
+ * not sure we need a special getting-to-know-you activities button... can we
+ * just say one thing... one is enough, doesn't matter what's in there." So
+ * the two headed sections with their two buttons are one list with one
+ * button. New rows carry kind 'course'; the 'demo' and 'gtky' rows already
+ * on courses show in the same list. The volunteer students' page shows only
+ * kind 'materials', so nothing here reaches them -- their handouts come from
+ * the lesson plan's share switch.
  */
 (function () {
   var KEY = 'connect_shared_v1';
-  var GROUPS = [
-    { kind: 'demo', title: 'The demonstration lesson', note: 'The plan and the materials of the lesson the tutors taught on day one.' },
-    { kind: 'gtky', title: 'Getting-to-know-you activities', note: 'Activities for a first lesson with a new class. Tutors and trainees can both put one here.' },
-  ];
+  var KINDS = { demo: 1, gtky: 1, course: 1 };    // what belongs on this shelf
+  var ADD = 'course';                              // what a new share is filed as
+  var NOTE = 'The demonstration lesson, a getting-to-know-you activity, anything the course should have \u2014 a link, so everyone opens the same copy.';
   var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
   var read = function () { try { return (JSON.parse(localStorage.getItem(KEY)) || []).filter(function (x) { return x && x.url && x.name; }); } catch (e) { return []; } };
   var write = function (list) { try { localStorage.setItem(KEY, JSON.stringify(list || [])); } catch (e) {} };
@@ -32,39 +40,35 @@
   var when = function (iso) { var d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }); };
 
   /* opts: { role: 'tutor' | 'trainee', by: () => name, token: () => token | null,
-             canAdd: ['demo','gtky'] } */
+             canAdd: [...] -- anything non-empty means this person may share } */
   window.hubShelf = function (host, opts) {
     if (!host) return;
     var role = opts.role, canAdd = opts.canAdd || [], note = '', busy = false, open = null;
     var mine = function (x) { return role === 'tutor' || (opts.by && x.by === opts.by()); };
     function draw() {
-      var rows = read().filter(function (x) { return x.kind === 'demo' || x.kind === 'gtky'; });
-      var any = rows.length || canAdd.length;
+      var list = read().filter(function (x) { return KINDS[x.kind]; }).slice().reverse();
+      var may = !!(canAdd && canAdd.length);
+      var any = list.length || may;
       host.hidden = !any; if (!any) return;
-      host.innerHTML = '<div class="shead"><h2>From the course</h2><span class="new">' + esc(note) + '</span></div>'
-        + GROUPS.map(function (g) {
-          var list = rows.filter(function (x) { return x.kind === g.kind; }).slice().reverse();
-          var may = canAdd.indexOf(g.kind) !== -1;
-          if (!list.length && !may) return '';
-          return '<div class="shelf-group">'
-            + '<div class="shelf-head"><b>' + esc(g.title) + '</b><span class="shelf-note">' + esc(g.note) + '</span>'
-            + (may ? '<button class="shelf-add" type="button" data-open="' + g.kind + '">' + (open === g.kind ? 'Cancel' : (g.kind === 'demo' ? 'Put the lesson here' : 'Add an activity')) + '</button>' : '')
-            + '</div>'
-            + (open === g.kind ? '<form class="shelf-form" data-kind="' + g.kind + '">'
-                + '<input type="text" name="name" placeholder="' + (g.kind === 'demo' ? 'What to call it, e.g. Demo lesson — A2 Speaking' : 'What to call it, e.g. Find someone who…') + '" required maxlength="120">'
-                + '<input type="url" name="url" placeholder="The link — a Drive file, a Doc, a page" required>'
-                + '<button class="btn small" type="submit">Share with the course</button>'
-                + '<span class="shelf-hint">A link, so everyone opens the same copy. It is signed with your name.</span>'
-              + '</form>' : '')
-            + (list.length ? list.map(function (x) {
-                return '<div class="shelf-row"><a href="' + esc(x.url) + '" target="_blank" rel="noopener noreferrer">' + esc(x.name) + '</a>'
-                  + '<span class="shelf-meta">' + esc(x.by || '') + (x.at ? ' · ' + esc(when(x.at)) : '') + (host_(x.url) ? ' · ' + esc(host_(x.url)) : '') + '</span>'
-                  + (mine(x) ? '<button class="rm" type="button" data-rm="' + esc(x.id) + '">Take back</button>' : '')
-                  + '</div>';
-              }).join('') : (may && open !== g.kind ? '<p class="shelf-empty">Nothing here yet.</p>' : ''))
-            + '</div>';
-        }).join('');
-      host.querySelectorAll('[data-open]').forEach(function (b) { b.addEventListener('click', function () { open = open === b.dataset.open ? null : b.dataset.open; note = ''; draw(); var f = host.querySelector('.shelf-form input'); if (f) f.focus(); }); });
+      host.innerHTML = '<div class="shead"><h2>Shared with the course</h2><span class="new">' + esc(note) + '</span></div>'
+        + '<div class="shelf-group">'
+          + '<div class="shelf-head"><span class="shelf-note">' + NOTE + '</span>'
+          + (may ? '<button class="shelf-add" type="button" data-open="' + ADD + '">' + (open ? 'Cancel' : 'Share a link') + '</button>' : '')
+          + '</div>'
+          + (open ? '<form class="shelf-form" data-kind="' + ADD + '">'
+              + '<input type="text" name="name" placeholder="What to call it, e.g. Demo lesson \u2014 A2 Speaking" required maxlength="120">'
+              + '<input type="url" name="url" placeholder="The link \u2014 a Drive file, a Doc, a page" required>'
+              + '<button class="btn small" type="submit">Share with the course</button>'
+              + '<span class="shelf-hint">It is signed with your name.</span>'
+            + '</form>' : '')
+          + (list.length ? list.map(function (x) {
+              return '<div class="shelf-row"><a href="' + esc(x.url) + '" target="_blank" rel="noopener noreferrer">' + esc(x.name) + '</a>'
+                + '<span class="shelf-meta">' + esc(x.by || '') + (x.at ? ' · ' + esc(when(x.at)) : '') + (host_(x.url) ? ' · ' + esc(host_(x.url)) : '') + '</span>'
+                + (mine(x) ? '<button class="rm" type="button" data-rm="' + esc(x.id) + '">Take back</button>' : '')
+                + '</div>';
+            }).join('') : (may && !open ? '<p class="shelf-empty">Nothing here yet.</p>' : ''))
+        + '</div>';
+      host.querySelectorAll('[data-open]').forEach(function (b) { b.addEventListener('click', function () { open = open ? null : b.dataset.open; note = ''; draw(); var f = host.querySelector('.shelf-form input'); if (f) f.focus(); }); });
       host.querySelectorAll('.shelf-form').forEach(function (f) { f.addEventListener('submit', function (ev) { ev.preventDefault(); add(f); }); });
       host.querySelectorAll('[data-rm]').forEach(function (b) { b.addEventListener('click', function () { remove(b.dataset.rm); }); });
     }

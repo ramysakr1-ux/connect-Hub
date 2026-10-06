@@ -219,35 +219,58 @@ window.hubObservationHours = function(records){
     return '<span class="avi '+(kind==='staff'?'avi-staff':'avi-cand')+'" aria-hidden="true">'+e(window.hubInitials(name))+'</span>';
   };
 
-  /* The install hint: shown once per browser on the pages people live on,
-     never when already installed. Chrome/Edge hand us a real Install button
-     (beforeinstallprompt); iPhone gets the words for Share -> Add to Home
-     Screen; anything else gets the plain sentence. */
+  /* The install hint, on the pages people live on; never when already
+     installed. Chrome/Edge hand us a real Install button (beforeinstallprompt);
+     iPhone gets the words for Share -> Add to Home Screen; anything else gets
+     the plain sentence.
+
+     IT SHRINKS, IT DOES NOT LEAVE. Ramy, 6 Oct 2026, walking as a tutor: "Not
+     now is the only one that is clickable, but I'm afraid if I click on it, it
+     won't come back... it should just always be there, like a small coin, out
+     of the way but still kind of there... treat it as something important."
+     It used to vanish for a week on Not now. Now Not now folds the card into a
+     small chip in the same place, the chip stays on every visit until the app
+     is installed, and pressing it opens the card again.
+
+     ALREADY INSTALLED, OPENED IN A TAB. Chrome will not fire
+     beforeinstallprompt for an app that is installed, so the person who has
+     it and happens to open the link in a browser tab (Ramy, today) got the
+     sentence with nothing to press. navigator.getInstalledRelatedApps, with
+     the manifest listing itself under related_applications, tells us; then
+     the card says so and offers nothing to install. */
   window.hubInstallHint = function(host, who){
     if (!host) return;
     try {
       if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) return;
-      /* "Not now" holds for a week, then the line returns (Ramy, 28 Sep
-         2026); an actual install holds for good. */
-      var held = localStorage.getItem('chub:installHintDone');
-      if (held === 'installed') return;
-      if (held && Date.now() - Number(held) < 7 * 24 * 3600 * 1000) return;
+      if (localStorage.getItem('chub:installHintDone') === 'installed') return;
     } catch (e) { return; }
     var ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
-    var deferred = null;
+    var deferred = null, already = false;
+    var folded = (function(){ try { return !!localStorage.getItem('chub:installHintDone'); } catch (e) { return false; } })();
+    var MARK = '<svg viewBox="8 30 104 60" width="16" height="10" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="currentColor" stroke-width="13" stroke-linecap="round" opacity=".55"></path></svg>';
     var draw = function(){
-      var how = deferred ? '<button type="button" class="btn-install">Install Connect Lite</button>'
+      host.hidden = false;
+      host.classList.toggle('coin', folded);
+      if (folded) {
+        host.innerHTML = '<button type="button" class="install-chip">' + MARK + 'Put Connect Lite on your ' + (ios ? 'phone' : 'phone or computer') + '</button>';
+        host.querySelector('.install-chip').addEventListener('click', function(){ folded = false; draw(); });
+        return;
+      }
+      var how = already ? '<span>It is already installed here — this tab is the website. Open <b>Connect Lite</b> from your apps and it remembers your link.</span>'
+              : deferred ? '<button type="button" class="btn-install">Install Connect Lite</button>'
               : ios ? '<span>Tap <b>Share</b>, then <b>Add to Home Screen</b>.</span>'
               : '<span>In Chrome or Edge, use <b>Install</b> in the address bar; on a phone, <b>Add to Home Screen</b>.</span>';
       host.innerHTML = '<span><b>Put Connect Lite on your ' + (ios ? 'phone' : 'phone or computer') + '.</b> It opens like an app and remembers your link.</span>' + how + '<button type="button" class="dismiss">Not now</button>';
-      host.hidden = false;
-      var b = host.querySelector('.btn-install'); if (b) b.addEventListener('click', function(){ if (!deferred) return; deferred.prompt(); deferred.userChoice.then(function(r){ (r && r.outcome === 'accepted') ? installed() : done(); }); });
-      host.querySelector('.dismiss').addEventListener('click', done);
+      var b = host.querySelector('.btn-install'); if (b) b.addEventListener('click', function(){ if (!deferred) return; deferred.prompt(); deferred.userChoice.then(function(r){ if (r && r.outcome === 'accepted') installed(); }); });
+      host.querySelector('.dismiss').addEventListener('click', fold);
     };
-    var done = function(){ try { localStorage.setItem('chub:installHintDone', String(Date.now())); } catch (e) {} host.hidden = true; };
+    var fold = function(){ try { localStorage.setItem('chub:installHintDone', String(Date.now())); } catch (e) {} folded = true; draw(); };
     var installed = function(){ try { localStorage.setItem('chub:installHintDone', 'installed'); } catch (e) {} host.hidden = true; };
-    window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferred = e; draw(); });
+    window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferred = e; if (!folded) draw(); });
     window.addEventListener('appinstalled', installed);
+    try {
+      if (navigator.getInstalledRelatedApps) navigator.getInstalledRelatedApps().then(function(apps){ if (apps && apps.length) { already = true; if (!folded) draw(); } }, function(){});
+    } catch (e) {}
     draw();
   };
   window.hubBullets=function(el){
