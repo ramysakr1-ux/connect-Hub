@@ -87,8 +87,17 @@
         + '<button type="button" class="btn primary ink-ok" disabled>Sign</button></div></div>';
       overlay.querySelector('h3').textContent = opts.title || 'Sign';
       var nameRow = overlay.querySelector('.ink-name'), nameIn = nameRow.querySelector('input');
-      if (opts.askName) { nameIn.value = opts.name || ''; overlay.querySelector('.ink-sub').textContent = 'Draw your signature with a finger, a pen or the mouse; the typed name and the moment stay on the record underneath.'; }
-      else { nameRow.remove(); overlay.querySelector('.ink-sub').textContent = 'Signing as ' + (opts.name || '') + '. Draw your signature with a finger, a pen or the mouse; the typed name and the moment stay on the record underneath.'; }
+      /* "it's supposed to be on the trackpad, but I can't seem to do it on my
+         trackpad. Is there a trick to it?" (Ramy, 6 Oct 2026). There was, and
+         it was invisible: a stroke starts on pointerdown, so a finger SLID
+         across a trackpad draws nothing -- the click has to be held down the
+         whole way. Driven with a mouse it worked first time, which is why it
+         read as broken rather than as unsaid. The pad now says so, and names
+         the way out for anyone who cannot hold a click. */
+      var HOW = 'Draw it with a finger, a pen, or the mouse \u2014 on a laptop trackpad, hold the click down the whole way or nothing appears. '
+        + '\u201cTyped name only\u201d signs without a drawing; either way the typed name and the moment are what stay on the record.';
+      if (opts.askName) { nameIn.value = opts.name || ''; overlay.querySelector('.ink-sub').textContent = HOW; }
+      else { nameRow.remove(); overlay.querySelector('.ink-sub').textContent = 'Signing as ' + (opts.name || '') + '. ' + HOW; }
       var nameNow = function(){ return opts.askName ? nameIn.value.trim() : (opts.name || ''); };
       var answer = function(ink){ return opts.askName ? { name: nameNow(), ink: ink } : ink; };
       var padEl = overlay.querySelector('.ink-pad'), canvas = overlay.querySelector('canvas'), hint = overlay.querySelector('.ink-hint');
@@ -113,7 +122,7 @@
           ctx.stroke();
         });
         ok.disabled = !strokes.length || !nameNow();
-        hint.textContent = strokes.length ? '' : 'Sign here';
+        hint.textContent = strokes.length ? '' : 'Sign here \u2014 hold the click down';
       }
       function pt(e){
         var r = padEl.getBoundingClientRect();
