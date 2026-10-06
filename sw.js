@@ -20,7 +20,7 @@
  * VERSION is stamped by bump-assets.py with the same stamp as the ?v= links,
  * so each push retires the previous cache on activate.
  */
-const VERSION = 'lite-202610061429';
+const VERSION = 'lite-202610061434';
 const SHELL = [
   './', 'index.html', 'invite.html',
   '1_trainee_plan_and_analysis.html', '2_trainee_self_evaluation.html', '3_tutor_feedback.html',
@@ -83,8 +83,19 @@ self.addEventListener('fetch', function (e) {
     return;
   }
 
-  // Same origin: network first, kept copy when the network is not there.
-  e.respondWith(fetch(req).then(function (r) {
+  /* Same origin: network first, kept copy when the network is not there.
+
+     A PAGE IS FETCHED PAST THE BROWSER'S OWN CACHE. "Network first" was not
+     enough: fetch() consults the HTTP cache like any other request, and GitHub
+     Pages sends HTML with ten minutes on it, so a reload could be answered from
+     that cache without the network being touched at all. Ramy, 6 Oct 2026, four
+     pushes into a walkthrough: "I'm still looking at the old view... it's like I
+     can't see anything anymore." He was, and no amount of reloading would have
+     helped. Only documents are forced; the ?v= stamp already settles the shared
+     assets, and forcing those would cost a round trip each. */
+  var doc = req.mode === 'navigate'
+    || (req.headers.get('accept') || '').indexOf('text/html') !== -1;
+  e.respondWith(fetch(doc ? new Request(req, { cache: 'reload' }) : req).then(function (r) {
     if (r && r.ok) caches.open(VERSION).then(function (c) { c.put(req, r.clone()); });
     return r;
   }).catch(function () {
