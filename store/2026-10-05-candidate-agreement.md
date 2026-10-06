@@ -65,6 +65,28 @@ If the kind list is a whitelist object or array rather than a chain of `!==`,
 adding the string to it is the whole change. Paste the guard into the session
 and the exact patch can be written against it.
 
+**VERIFIED FROM THE CLIENT, 6 Oct 2026.** The browser sends exactly this, caught
+by pointing hub-store at a local server and signing on the real screen:
+
+```json
+{"op":"put","token":"<trainee token>","kind":"agreement",
+ "data":{"name":"Wei Chen","at":"2026-10-06T03:38:26.473Z","print":"1bhgpo8"}}
+```
+
+So anything still missing is on the store's side of the wire.
+
+**IT IS TWO EDITS, NOT ONE.** A first deploy left the assessor's row reading
+"0 of N" after a trainee had signed on another device. Keeping the record is
+half of it: a kind the store keeps but never returns is invisible to everybody
+but its author. critLearn needed both -- the `putCourse` guard AND the
+`case 'course'` return -- and this needs the same shape one level down.
+
+The surest way to find them: search `Code.gs` for **`celta5`**. It is the
+closest existing model -- a trainee's own record that the tutors and the
+assessor also read -- and `agreement` belongs beside it in every place it
+appears: the `put` guard, the trainee's own `me` read, and the read that builds
+each trainee's record for the roster that staff see.
+
 **Until it is deployed.** The client side is complete and harmless: a trainee
 can read and sign, and the signature is kept in their own browser. It simply
 does not travel — the assessor's row reads "0 of 12 signed" however many have
