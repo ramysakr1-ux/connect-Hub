@@ -94,7 +94,10 @@ const dir = mkdtempSync(join(tmpdir(), 'lite-check-'));
 /* Ramy's own C/17 course pages live in this repo too and are not Lite
    screens; they have no link, no rooms and nothing to assert. */
 const NOT_A_SCREEN = new Set(['celta-c17-timetable.html']);
-const files = readdirSync(HERE).filter(f => /\.(html|js|css)$/.test(f) && f !== 'check-screens.mjs');
+/* The manifests too (6 Oct 2026): the install hint asks the browser whether
+   the app is installed, and the browser answers by fetching the page's
+   manifest -- a 404 for it is a console error on every screen. */
+const files = readdirSync(HERE).filter(f => /\.(html|js|css|webmanifest)$/.test(f) && f !== 'check-screens.mjs');
 for (const f of files) copyFileSync(join(HERE, f), join(dir, f));
 const storePath = join(dir, 'hub-store.js');
 const store = readFileSync(storePath, 'utf8');
@@ -103,7 +106,7 @@ if (neutralised === store) { console.error('Could not neutralise hub-store.js â€
 writeFileSync(storePath, neutralised);
 
 /* 2. serve it. */
-const TYPES = { '.html':'text/html', '.js':'text/javascript', '.css':'text/css', '.svg':'image/svg+xml' };
+const TYPES = { '.html':'text/html', '.js':'text/javascript', '.css':'text/css', '.svg':'image/svg+xml', '.webmanifest':'application/manifest+json' };
 const server = createServer((req, res) => {
   const name = decodeURIComponent((req.url || '/').split('?')[0]).replace(/^\/+/, '') || 'index.html';
   try {

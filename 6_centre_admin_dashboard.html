@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610061713">
+<link rel="stylesheet" href="hub-tokens.css?v=202610061744">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -341,7 +341,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610061713">
+<link rel="stylesheet" href="hub-house.css?v=202610061744">
 </head>
 <body>
 <div class="board">
@@ -548,7 +548,7 @@
          and the four boxes stay empty; the trainees then sign against the
          link. Ramy, 5 Oct 2026: "centre should be able to upload their own
          agreement, obviously. If they choose to." -->
-    <h3 class="docsh">The candidate agreement</h3>
+    <h3 class="docsh" id="agreementBlock">The candidate agreement</h3>
     <p class="note" style="margin-top:0;">Cambridge asks the centre for <b>a candidate agreement detailing, for example: the attendance policy, plagiarism information, the complaints policy, any policies on resubmissions of written work</b>. Write it here and your trainees read and sign it when they join &mdash; or paste a link to your own below and they sign against that instead. Leave it all empty and nothing is asked of them.</p>
     <div class="fields docs">
       <div class="wide"><label for="agrAttendance">Attendance policy</label><textarea id="agrAttendance" rows="3" placeholder="What you expect, and what happens when someone misses a session. Cambridge asks for 100% attendance; say how yours is handled."></textarea></div>
@@ -699,12 +699,12 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610061713"></script>
-<script src="hub-store.js?v=202610061713"></script>
-<script src="hub-say.js?v=202610061713"></script>
-<script src="observation-defaults.js?v=202610061713"></script>
-<script src="hub-shared.js?v=202610061713"></script>
-<script src="hub-sync.js?v=202610061713"></script>
+<script src="assignment-defaults.js?v=202610061744"></script>
+<script src="hub-store.js?v=202610061744"></script>
+<script src="hub-say.js?v=202610061744"></script>
+<script src="observation-defaults.js?v=202610061744"></script>
+<script src="hub-shared.js?v=202610061744"></script>
+<script src="hub-sync.js?v=202610061744"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1577,6 +1577,22 @@ renderStoreRoster();
 })();
 /* The Input sessions door on the tutor dashboard lands on the links block. */
 if (location.hash === '#candLinks') { showTab('settings'); setTimeout(() => { const el = document.getElementById('candLinks'); if (el) el.scrollIntoView({ block: 'start' }); }, 300); }
+/* The welcome's doors (5_tutor_dashboard.html, 6 Oct 2026) name a tab, or a
+   place on the Settings tab: #settings #roster #assignments #observations,
+   #tutors (the names for the final report), #agreement (the candidate
+   agreement's four sections). */
+(function(){
+  const h = location.hash.slice(1);
+  const AT = { tutors: ['settings', 'tutorNames'], agreement: ['settings', 'agreementBlock'] };
+  if (document.getElementById('panel-' + h)) { showTab(h); return; }
+  if (AT[h]) {
+    showTab(AT[h][0]);
+    /* twice: once as the panel shows, once after the settings have painted
+       into it and moved everything down */
+    const go = () => { const el = document.getElementById(AT[h][1]); if (!el) return; el.scrollIntoView({ block: 'start', behavior: 'smooth' }); if (h === 'tutors' && el.focus) el.focus({ preventScroll: true }); };
+    setTimeout(go, 300); setTimeout(go, 1400);
+  }
+})();
 
 renderTitle();
 renderSetup();
