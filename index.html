@@ -25,7 +25,7 @@
 <title>Connect Lite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610062016">
+<link rel="stylesheet" href="hub-tokens.css?v=202610062029">
 <style>
   :root{
     /* The pane. A card on this page is a sheet of glass lying on the paper,
@@ -302,7 +302,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610062016">
+<link rel="stylesheet" href="hub-house.css?v=202610062029">
 </head>
 <body>
 <div class="board">
@@ -491,15 +491,15 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202610062016"></script>
-<script src="observation-defaults.js?v=202610062016"></script>
-<script src="hub-shared.js?v=202610062016"></script>
-<script src="hub-store.js?v=202610062016"></script>
-<script src="hub-say.js?v=202610062016"></script>
-<script src="hub-shelf.js?v=202610062016"></script>
-<script src="hub-front.js?v=202610062016"></script>
-<script src="hub-sync.js?v=202610062016"></script>
-<script src="hub-feedback.js?v=202610062016"></script>
+<script src="hub-due.js?v=202610062029"></script>
+<script src="observation-defaults.js?v=202610062029"></script>
+<script src="hub-shared.js?v=202610062029"></script>
+<script src="hub-store.js?v=202610062029"></script>
+<script src="hub-say.js?v=202610062029"></script>
+<script src="hub-shelf.js?v=202610062029"></script>
+<script src="hub-front.js?v=202610062029"></script>
+<script src="hub-sync.js?v=202610062029"></script>
+<script src="hub-feedback.js?v=202610062029"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -918,7 +918,22 @@ if (fbBack){
   if (window.hubInstallHint) hubInstallHint(document.getElementById('installHint'), 'trainee');
   /* From the course: what the tutors put up, and a place for this trainee's
      own GTKY activity. Signed with their name; the token says who they are. */
-  if (window.hubShelf) hubShelf(document.getElementById('shelf'), { role: 'trainee', by: () => name, token: () => (window.HubStore && HubStore.token && HubStore.token()) || null, canAdd: ['gtky'] });
+  /* Read only (6 Oct 2026). What the tutors put up for the class -- the
+     demonstration lesson, the first-day activities. A candidate shares their
+     own lesson handouts from the plan's switch, where the TP is stamped on
+     them; sharing from here would be a second, weaker way to do the same
+     thing. No canAdd, so there is no button and an empty shelf shows nothing
+     at all. */
+  /* Read only: a candidate shares their own lesson handouts from the plan's
+     switch, where the TP is stamped on them. But they READ more than the
+     tutors' shelf -- Ramy, 6 Oct 2026: "other than the tutors sharing with the
+     trainees, is that going to be other trainees sharing stuff? That's a good
+     idea. When A is teaching and they share something, the classmates get to
+     know." So the list is both: what the tutors put up for the class, and
+     every handout a classmate shared for their own teaching practice. */
+  if (window.hubShelf) hubShelf(document.getElementById('shelf'), { role: 'trainee', title: 'Shared with the class',
+    kinds: ['demo', 'gtky', 'course', 'materials'],
+    by: () => name, token: () => (window.HubStore && HubStore.token && HubStore.token()) || null, canAdd: [] });
   /* Email your tutor -- their group's tutor first, then the course's. */
   (function(){
     const host = document.getElementById('mailTutor'); if (!host) return;
@@ -1021,6 +1036,7 @@ if (fbBack){
      under it. The next practice is the one after the last one filed, which on
      day one is the first. TP_N stays as it is for the cards' own lines. */
   const HERO_TP = TP_N || (!beforeStart && !afterEnd && !tpDone && filed + 1 <= tpTotal ? filed + 1 : 0);
+  const ttReady = !!(TT && TT.days && TT.days.length && TT.published);
   const tpDay = (function(){ const d = (TT.days || []).find(x => x && Number(x.tp) === HERO_TP); return (d && ymd(d.date)) || ''; })();
   const tpTime = (function(){ const sl = (TT.slots || []).filter(x => x && x.kind === 'tp' && x.from)[0]; return sl ? sl.from : ''; })();
   const tpAim = (function(){
@@ -1040,7 +1056,13 @@ if (fbBack){
   if (C5T.final && C5T.final.signed && C5T.final.signed.at && !(C5.final && C5.final.signed && C5.final.signed.at))
     add('Your final declaration is ready to sign', '20_celta5.html');
   if (hasAgr && !signedAgr) add('Read and sign the candidate agreement', '29_candidate_agreement.html');
-  if (!confirmed) add('Read and sign the two confirmations in your CELTA 5', '20_celta5.html');
+  /* NOT BEFORE DAY ONE. Ramy, 6 Oct 2026: "the self-declaration should happen
+     on the first day of the course. I don't want them going through it yet
+     without really knowing what they're supposed to do." They are Cambridge's
+     confirmations about the portfolio and the appeals procedure; signing them
+     cold, a week before anybody has explained the course, is signing to be rid
+     of a notification. */
+  if (!confirmed && !beforeStart) add('Read and sign the two confirmations in your CELTA 5', '20_celta5.html');
   if (!beforeStart && !afterEnd && !tpDone) {
     if (NEXT === 'plan') add(HERO_TP ? 'Write your lesson plan for TP ' + HERO_TP : 'Write your lesson plan', '1_trainee_plan_and_analysis.html');
     if (NEXT === 'self') add(fbBack ? 'Write your self-evaluation — it opens your feedback' : 'Write your self-evaluation', '2_trainee_self_evaluation.html');
@@ -1074,8 +1096,17 @@ if (fbBack){
       + (n === 1 ? ' — tomorrow.' : n > 1 ? ' — ' + n + ' days from today.' : '.')
       + (waiting.length ? ' There is nothing to teach yet; these are the things to do before day one.'
                         : ' There is nothing to do yet — this page will tell you the moment there is.');
-    if (preTask) list = [{ text: 'Your pre-course task: ' + (preTask.label || preTask.card || 'open it'), href: preTask.url, out: true }].concat(list);
-    note = 'The cards below open as the course reaches them — your lesson plan when teaching practice begins, your feedback when your tutor returns it. You will not have to go looking.';
+    /* "Your pre-course task AND ANSWER KEY" (Ramy, 6 Oct 2026): the task itself
+       went to them when they were accepted; what is new here is the key. */
+    if (preTask) list = [{ text: 'Your pre-course task and answer key', href: preTask.url, out: true }].concat(list);
+    /* The timetable, when the centre has set one: day one is what they
+       actually want to know (Ramy: "if the timetable is ready it could imply,
+       check the timetable and see what's happening on day one. And if it's not
+       ready, it will say your timetable will be ready when the course
+       starts."). */
+    if (ttReady) list = list.concat([{ text: 'Look at your timetable — see what day one holds', href: '23_timetable.html' }]);
+    note = (ttReady ? '' : 'Your timetable will be here before the course starts. ')
+      + 'The cards below open as the course reaches them — your lesson plan when teaching practice begins, your feedback when your tutor returns it. You will not have to go looking.';
   } else if (list.length) {
     kind = 'Today';
     title = list[0].text;
@@ -1147,6 +1178,11 @@ if (fbBack){
     still('roomObs', 'Opens' + startsOn + ' — the observations are on your timetable');
     still('roomAssign', 'Opens when your tutor sets the first assignment');
     still('roomProgress', 'Opens when your first teaching practice comes back');
+    /* The booklet opens on day one with the two confirmations, so it waits
+       with the rest rather than inviting a signature a week early (Ramy,
+       6 Oct 2026: "which obviously means the CELTA 5 card will be ready from
+       day one"). */
+    still('roomCelta5', 'Opens' + startsOn + ' \u2014 the two confirmations are the first thing you do');
   } else {
     if (!everPlanned) still('roomSelf', 'Opens after you have turned in your first lesson plan');
     if (!everBack)    still('roomFeedback', 'Opens when your tutor returns your first teaching practice');

@@ -30,6 +30,13 @@
  * rows already on courses show in the same list and reach the students the
  * same way. A trainee's own lesson handouts are a different thing -- kind
  * 'materials', shared from the plan's switch with a TP on them.
+ *
+ * A TRAINEE ONLY READS IT (Ramy, 6 Oct 2026, seeing a Share with the students
+ * button on a candidate's home: "why are they sharing from here? I thought
+ * sharing with the students was with the lesson plan"). It is. This shelf is
+ * what the TUTORS put up for the class; a candidate shares their own handouts
+ * from the plan's switch, which stamps the TP on them. The button here is a
+ * tutor's, so a candidate's home passes no canAdd and gets the list alone.
  */
 (function () {
   var KEY = 'connect_shared_v1';
@@ -47,15 +54,20 @@
   window.hubShelf = function (host, opts) {
     if (!host) return;
     var role = opts.role, canAdd = opts.canAdd || [], note = '', busy = false, open = null;
+    /* A candidate's home passes 'materials' as well, so a classmate's handout
+       for their own teaching practice lands beside the tutors' shelf
+       (6 Oct 2026). The tutors' own dashboard does not: a candidate's handouts
+       are already on their plan. */
+    var kinds = {}; (opts.kinds || Object.keys(KINDS)).forEach(function (k) { kinds[k] = 1; });
     var mine = function (x) { return role === 'tutor' || (opts.by && x.by === opts.by()); };
     function draw() {
-      var list = read().filter(function (x) { return KINDS[x.kind]; }).slice().reverse();
+      var list = read().filter(function (x) { return kinds[x.kind || 'course']; }).slice().reverse();
       var may = !!(canAdd && canAdd.length);
       var any = list.length || may;
       host.hidden = !any; if (!any) return;
-      host.innerHTML = '<div class="shead"><h2>Shared with the students</h2><span class="new">' + esc(note) + '</span></div>'
+      host.innerHTML = '<div class="shead"><h2>' + esc(opts.title || 'Shared with the students') + '</h2><span class="new">' + esc(note) + '</span></div>'
         + '<div class="shelf-group">'
-          + '<div class="shelf-head"><span class="shelf-note">' + NOTE + '</span>'
+          + '<div class="shelf-head">' + (may ? '<span class="shelf-note">' + NOTE + '</span>' : '')
           + (may ? '<button class="shelf-add" type="button" data-open="' + ADD + '">' + (open ? 'Cancel' : 'Share with the students') + '</button>' : '')
           + '</div>'
           + (open ? '<form class="shelf-form" data-kind="' + ADD + '">'
@@ -66,7 +78,7 @@
             + '</form>' : '')
           + (list.length ? list.map(function (x) {
               return '<div class="shelf-row"><a href="' + esc(x.url) + '" target="_blank" rel="noopener noreferrer">' + esc(x.name) + '</a>'
-                + '<span class="shelf-meta">' + esc(x.by || '') + (x.at ? ' · ' + esc(when(x.at)) : '') + (host_(x.url) ? ' · ' + esc(host_(x.url)) : '') + '</span>'
+                + '<span class="shelf-meta">' + esc(x.by || '') + (x.tp ? ' · ' + esc(x.tp) : '') + (x.at ? ' · ' + esc(when(x.at)) : '') + (host_(x.url) ? ' · ' + esc(host_(x.url)) : '') + '</span>'
                 + (mine(x) ? '<button class="rm" type="button" data-rm="' + esc(x.id) + '">Take back</button>' : '')
                 + '</div>';
             }).join('') : (may && !open ? '<p class="shelf-empty">Nothing here yet.</p>' : ''))
