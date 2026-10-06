@@ -18,7 +18,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610062048">
+<link rel="stylesheet" href="hub-tokens.css?v=202610062114">
 <style>
   :root{
     /* the pane -- the same four values the trainee landing's cards use */
@@ -364,7 +364,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610062048">
+<link rel="stylesheet" href="hub-house.css?v=202610062114">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -388,10 +388,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610062048"></script>
-<script src="hub-store.js?v=202610062048"></script>
-<script src="hub-say.js?v=202610062048"></script>
-<script src="hub-card-mail.js?v=202610062048"></script>
+<script src="hub-shared.js?v=202610062114"></script>
+<script src="hub-store.js?v=202610062114"></script>
+<script src="hub-say.js?v=202610062114"></script>
+<script src="hub-card-mail.js?v=202610062114"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -437,7 +437,45 @@ function status(msg){ const s = $('status'); if (s) s.textContent = msg || ''; }
 /* A Cambridge centre number: two letters and the digits, e.g. TR001. Typed by
    the owner, upper-cased, and the Make button stays off until it is one. */
 function centreNumberTyped(){ const el = $('mkNumber'); if (!el) return ''; const v = el.value.trim().toUpperCase().replace(/\s+/g, ''); return /^[A-Z]{2}\d{3,5}$/.test(v) ? v : ''; }
-document.addEventListener('input', e => { if (e.target && e.target.id === 'mkNumber') { const go = $('makeGo'); if (go) go.disabled = !centreNumberTyped(); } });
+/* THE CENTRE BOOK. Ramy, 6 Oct 2026: "what if I misspell it or type it
+   wrong? It has to be attached to the number. If I write TR073, it should
+   automatically give me International House Istanbul."
+
+   Cambridge publishes no register anyone can query, so there is nothing to
+   validate against -- but there is no need to invent one. Connect already
+   knows every centre it has ever sold to, because Ramy typed the number and
+   the name when he minted the course. So the store keeps that pair, and this
+   fills the name in from the number.
+
+   It LEARNS rather than being maintained: the first course for a centre is
+   typed in full, and every course after it fills itself. The value is the
+   typo check -- TR073 fills "International House Istanbul", and TRO73 with a
+   letter O fills nothing at all, which is the mistake showing itself. */
+var CENTRES = {};
+function centreBookLoad(){
+  call({ op: 'centres' }).then(function(r){ CENTRES = (r && r.centres) || {}; centreBookFill(); }, function(){});
+}
+function centreBookFill(){
+  const num = centreNumberTyped(), nameEl = $('mkName'), note = $('mkNote');
+  const go = $('makeGo'); if (go) go.disabled = !num;
+  if (!note) return;
+  if (!num) { note.textContent = 'Only a course with a real centre number gets made, and the centre cannot edit it afterwards.'; return; }
+  const known = CENTRES[num];
+  if (known) {
+    /* Only fill an empty box, or one this filled before: a name typed over the
+       top is the owner correcting the book, and must not be overwritten. */
+    if (nameEl && (!nameEl.value.trim() || nameEl.dataset.filled === '1')) { nameEl.value = known; nameEl.dataset.filled = '1'; }
+    note.textContent = num + ' is ' + known + '. Type over the name to correct it \u2014 Connect will remember the correction.';
+  } else {
+    if (nameEl && nameEl.dataset.filled === '1') { nameEl.value = ''; delete nameEl.dataset.filled; }
+    note.textContent = 'Connect has not sold to ' + num + ' before. Type the centre\u2019s name and it will fill itself next time \u2014 if you expected it to be known, check the number.';
+  }
+}
+document.addEventListener('input', e => {
+  if (!e.target) return;
+  if (e.target.id === 'mkNumber') centreBookFill();
+  if (e.target.id === 'mkName') delete e.target.dataset.filled;
+});
 
 /* Two ways in, because one of them should not require editing a web address:
    open the owner link, or paste the key here (Ramy, 21 Sep 2026). */
@@ -854,9 +892,9 @@ $('app').innerHTML = `
          keeps it once set; Course admin shows it but cannot change it. -->
     <div class="filmrow makerow" id="makeRow" hidden>
       <input type="text" id="mkNumber" placeholder="Cambridge centre number, e.g. TR001" autocomplete="off" spellcheck="false" style="flex:0 1 300px;">
-      <input type="text" id="mkName" placeholder="Centre name (they can change this)" autocomplete="off">
+      <input type="text" id="mkName" placeholder="Centre name" autocomplete="off">
       <span class="acts"><button class="btn primary" id="makeGo" type="button" disabled>Make the course</button><button class="btn quiet" id="makeCancel" type="button">Cancel</button></span>
-      <span class="note">Only a course with a real centre number gets made, and the centre cannot edit it afterwards.</span>
+      <span class="note" id="mkNote">Only a course with a real centre number gets made, and the centre cannot edit it afterwards.</span>
     </div>
     <div id="needs"></div>
     <details class="sending" id="sendblock">
@@ -1010,6 +1048,9 @@ $('app').addEventListener('click', async e => {
            Apps Script round trip, and each of those is 1.5-13 s -- the wait Ramy
            called out on 21 Sep 2026 ("making the course takes a while"). */
         const made = await call({ op: 'createCourse', centreNumber: centreNumber, centreName: centreName });
+        /* the book learns from every course made: the pair goes back with the
+           answer, so the next course for this centre fills itself */
+        if (made && made.centres) CENTRES = made.centres;
         /* The store appends, so the new course used to arrive at the BOTTOM,
            below the fold, while the status line asked you to copy a link it
            had not shown you (walk, 21 Sep 2026). It is drawn FIRST now, marked
@@ -1209,6 +1250,7 @@ async function load(msg){
     feedbackLine();
     inbox();
     stats();
+    centreBookLoad();
   } catch (err) {
     if (/not yours/i.test(err.message)) { try { localStorage.removeItem(OWNER_STORE); } catch (e) {} gate('That key was not recognised — check you copied all of it.'); return; }
     /* Without this the screen is a dead end: the store's message and nothing to
