@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610062029">
+<link rel="stylesheet" href="hub-tokens.css?v=202610062048">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -341,7 +341,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610062029">
+<link rel="stylesheet" href="hub-house.css?v=202610062048">
 </head>
 <body>
 <div class="board">
@@ -640,7 +640,7 @@
     <button type="button" class="btn ghost" id="addOnlineRoom" style="margin-top:10px;">Add a room</button>
 
     <h3 class="docsh">Files for trainees</h3>
-    <p class="note" style="margin-top:0;">Links the trainees read: the timetable, CELTA 5, the input sessions, TP points, anything else. Each row has a switch: off, and the trainees do not see it — a cloned course arrives with every row off except the timetable. Each one becomes a line on their home screen, under the card you name — links with the same card name share a card, so “Input sessions” can hold twenty; a link with no card name is a card of its own. A row with a name and no link shows the trainees the name and “no link yet”; a bare suggestion with nothing typed is not saved.</p>
+    <p class="note" style="margin-top:0;">Links the trainees read: CELTA 5, the input sessions, TP points, anything else. <b>A row filed under the card &ldquo;Before the course&rdquo; is shown on each trainee&rsquo;s home before day one</b>, on the card that welcomes them &mdash; the pre-course task and its key, the getting-to-know-you activities &mdash; and moves down with the rest once the course starts. Each row has a switch: off, and the trainees do not see it — a cloned course arrives with every row off except the timetable. Each one becomes a line on their home screen, under the card you name — links with the same card name share a card, so “Input sessions” can hold twenty; a link with no card name is a card of its own. A row with a name and no link shows the trainees the name and “no link yet”; a bare suggestion with nothing typed is not saved.</p>
     <div id="candLinks" class="fields docs"></div>
     <button type="button" class="btn ghost" id="addCandLink" style="margin-top:10px;">Add a link</button>
 
@@ -699,12 +699,12 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610062029"></script>
-<script src="hub-store.js?v=202610062029"></script>
-<script src="hub-say.js?v=202610062029"></script>
-<script src="observation-defaults.js?v=202610062029"></script>
-<script src="hub-shared.js?v=202610062029"></script>
-<script src="hub-sync.js?v=202610062029"></script>
+<script src="assignment-defaults.js?v=202610062048"></script>
+<script src="hub-store.js?v=202610062048"></script>
+<script src="hub-say.js?v=202610062048"></script>
+<script src="observation-defaults.js?v=202610062048"></script>
+<script src="hub-shared.js?v=202610062048"></script>
+<script src="hub-sync.js?v=202610062048"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1092,7 +1092,22 @@ function renderCandLinks(){
      other, pasted by the centre.
      Declared here, not above: the settings load calls this before the script
      below it has run, so a top-level var would still be undefined. */
-  const SUG = [['Timetable', '', ''], ['CELTA 5', '', ''], ['TP points', '', '']];
+  /* BEFORE THE COURSE (6 Oct 2026). Ramy: "maybe there'd be a
+     getting-to-know-you, similar to Connect, so they can prepare for day one
+     -- take a look at the getting-to-know-you activities and the pre-course
+     task and the key... does Course admin understand that?" It did not: a row
+     named "pre-course" appeared on the trainees' welcome card and nothing here
+     said so. These two are suggested under a card of their own, and any row
+     filed under "Before the course" is what a candidate is shown on their home
+     BEFORE day one -- in the welcome card, and nowhere else until the course
+     starts.
+     The Timetable suggestion goes with them: Lite has kept the course's own
+     timetable since 29 Sep and a pasted row for it shows the trainees
+     nothing. */
+  const BEFORE_CARD = 'Before the course';
+  const SUG = [['Pre-course task and answer key', '', BEFORE_CARD],
+               ['Getting-to-know-you activities', '', BEFORE_CARD],
+               ['CELTA 5', '', ''], ['TP points', '', '']];
   /* Ramy, 28 Sep 2026: "the course ships a starting list" -- the standard
      input sessions as empty rows under their card, so the centre pastes
      links against names. Only on a course with no input sessions yet. */
@@ -1104,7 +1119,7 @@ function renderCandLinks(){
   /* Ramy, 27 Sep 2026: "you have an input session card and then they just go
      underneath that card." The third field names the card; the same name on
      several rows is one card with several lines. */
-  const cards = [...new Set(rows.map(l => l.card).concat(['Input sessions', 'TP points']).filter(Boolean))];
+  const cards = [...new Set(rows.map(l => l.card).concat([BEFORE_CARD, 'Input sessions', 'TP points']).filter(Boolean))];
   document.getElementById('candLinks').innerHTML = rows.map((l, i) =>
     `<div><label>Name</label><input type="text" class="cl-label" data-i="${i}" value="${esc(l.label)}" placeholder="What the trainee sees"></div>
      <div><label>Link</label><input type="text" class="cl-url" data-i="${i}" value="${esc(l.url)}" placeholder="https://…"></div>

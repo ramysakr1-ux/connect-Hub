@@ -25,7 +25,7 @@
 <title>Connect Lite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610062029">
+<link rel="stylesheet" href="hub-tokens.css?v=202610062048">
 <style>
   :root{
     /* The pane. A card on this page is a sheet of glass lying on the paper,
@@ -302,7 +302,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610062029">
+<link rel="stylesheet" href="hub-house.css?v=202610062048">
 </head>
 <body>
 <div class="board">
@@ -491,15 +491,15 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202610062029"></script>
-<script src="observation-defaults.js?v=202610062029"></script>
-<script src="hub-shared.js?v=202610062029"></script>
-<script src="hub-store.js?v=202610062029"></script>
-<script src="hub-say.js?v=202610062029"></script>
-<script src="hub-shelf.js?v=202610062029"></script>
-<script src="hub-front.js?v=202610062029"></script>
-<script src="hub-sync.js?v=202610062029"></script>
-<script src="hub-feedback.js?v=202610062029"></script>
+<script src="hub-due.js?v=202610062048"></script>
+<script src="observation-defaults.js?v=202610062048"></script>
+<script src="hub-shared.js?v=202610062048"></script>
+<script src="hub-store.js?v=202610062048"></script>
+<script src="hub-say.js?v=202610062048"></script>
+<script src="hub-shelf.js?v=202610062048"></script>
+<script src="hub-front.js?v=202610062048"></script>
+<script src="hub-sync.js?v=202610062048"></script>
+<script src="hub-feedback.js?v=202610062048"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -771,8 +771,18 @@ line(document.getElementById('badgeCelta5'), (function(){
      "everyone has to use a timetable, no choice, so we don't need links to it."
      Dropped here rather than on Course admin so courses that already have the
      row stop showing it without anybody editing them. */
-  const links = mine.concat(((rec('connect_course_settings') || {}).courseLinks || [])
-    .filter(l => l && (l.url || l.label) && hubLinkShown(l) && !hubLinkIsTimetable(l)));
+  /* Before day one the "Before the course" rows are in the welcome card at the
+     top, so they are not repeated down here: two copies of the same two links
+     on one screen is the clutter the hero exists to remove (6 Oct 2026). Once
+     the course starts the hero drops them and this card has them. */
+  const csNow = rec('connect_course_settings') || {};
+  const notYet = (function(){
+    const st = String(csNow.start || ''); const td = (window.hubToday && hubToday()) || '';
+    return /^\d{4}-\d{2}-\d{2}$/.test(st) && td && td < st;
+  })();
+  const links = mine.concat((csNow.courseLinks || [])
+    .filter(l => l && (l.url || l.label) && hubLinkShown(l) && !hubLinkIsTimetable(l)
+      && !(notYet && /^before the course$/i.test(String(l.card || '').trim()))));
   const host = document.getElementById('roomFiles'); if (!host || !links.length) return;
   const e = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
   const cards = [];
@@ -1025,8 +1035,20 @@ if (fbBack){
   const signedAgr = (function(){ const a = rec('chub:agreement'); return !!(a && a.at); })();
 
   /* ---- the pre-course task, if the centre has set one --------------------- */
-  const preTask = ((CS.courseLinks || []).filter(l => l && l.url && window.hubLinkShown && hubLinkShown(l)
-    && /pre.?course|before the course|pre.?task/i.test(String(l.label || '') + ' ' + String(l.card || ''))))[0];
+  /* WHAT THE CENTRE PUT THERE, IN THE CENTRE'S OWN WORDS. Course admin
+     suggests two rows under a card called "Before the course" -- the
+     pre-course task and its answer key, and the getting-to-know-you
+     activities -- and anything filed there is what a candidate meets before
+     day one. Matched on the card name first, and on the old keywords too, so
+     a course that already named a row "Pre-course task" keeps working.
+     Hard-coding the words here was wrong: the hero read "your pre-course task
+     and answer key" whatever the centre had actually called it. */
+  const beforeLinks = (CS.courseLinks || []).filter(l => l && l.url && window.hubLinkShown && hubLinkShown(l)
+    && /^before the course$/i.test(String(l.card || '').trim()));
+  const legacyPre = (CS.courseLinks || []).filter(l => l && l.url && window.hubLinkShown && hubLinkShown(l)
+    && beforeLinks.indexOf(l) === -1
+    && /pre.?course|getting.to.know|pre.?task/i.test(String(l.label || '') + ' ' + String(l.card || '')));
+  const preLinks = beforeLinks.concat(legacyPre);
 
   /* ---- when the next teaching practice is, from the timetable ------------- */
   const TT = rec('connect_timetable_v1') || {};
@@ -1096,9 +1118,7 @@ if (fbBack){
       + (n === 1 ? ' — tomorrow.' : n > 1 ? ' — ' + n + ' days from today.' : '.')
       + (waiting.length ? ' There is nothing to teach yet; these are the things to do before day one.'
                         : ' There is nothing to do yet — this page will tell you the moment there is.');
-    /* "Your pre-course task AND ANSWER KEY" (Ramy, 6 Oct 2026): the task itself
-       went to them when they were accepted; what is new here is the key. */
-    if (preTask) list = [{ text: 'Your pre-course task and answer key', href: preTask.url, out: true }].concat(list);
+    list = preLinks.map(l => ({ text: String(l.label || 'Before the course'), href: l.url, out: true })).concat(list);
     /* The timetable, when the centre has set one: day one is what they
        actually want to know (Ramy: "if the timetable is ready it could imply,
        check the timetable and see what's happening on day one. And if it's not
