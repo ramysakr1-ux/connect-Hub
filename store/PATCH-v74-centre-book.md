@@ -121,12 +121,45 @@ to:
 
 ---
 
+## 4 · the centre number's two shapes (a bug this found)
+
+`createCourse` accepts only two letters followed by digits:
+
+```js
+      if (!/^[A-Z]{2}\d{3,5}$/.test(centreNumber)) throw new Error('A course needs its Cambridge centre number, e.g. TR001');
+```
+
+A UK centre number is **plain digits** — `10294` is International House
+London, `00009` Teaching House Stratford-upon-Avon — and 141 of the 479
+centres on Cambridge's list are that shape. Every one of them would be
+refused. Cambridge also issues a trailing letter (`MX026b`, `CN800a`,
+`GE007b`). Replace that line with:
+
+```js
+      if (!/^([A-Z]{2})?\d{3,5}[A-Z]?$/.test(centreNumber)) throw new Error('A course needs its Cambridge centre number, e.g. TR001 or 10294');
+```
+
+The console's own check was widened to match and is already live.
+
 ## Seeding it from a list
 
-The book fills itself from here on, but it starts empty. To put a list in
-before selling — the centres already known from Connect, say — add the rows
-to the **centres** sheet of the data spreadsheet by hand: column A the number,
-column B the name. That is all either helper reads.
+The book fills itself from here on, but it starts empty. **`store/centres-seed.tsv`
+in this repository holds all 479 centres on Cambridge's list** (read off
+CELTATrainers.com on 6 Oct 2026), ready to paste.
+
+1. Deploy the four changes above. The first call to the console creates an
+   empty **centres** sheet in the data spreadsheet.
+2. Open that sheet, click **A1**, and paste the file's contents. It is
+   tab-separated with the header row already on it, so it lands in four
+   columns: number, name, first, courses.
+3. Reload the console. Type `TR073` and the name fills itself.
+
+TR073 — International House Istanbul — is in the file but **was not on
+CELTATrainers' list**, which jumps TR067 → TR076. It is seeded from Ramy's
+own CELTA 5s and assessor reports, which carry it on every page. Two other
+pairs from those records cross-check against the site exactly (TR054 →
+International Training Institute, TR013 → International House, Izmir), so
+both sources agree wherever they overlap.
 
 ## What to expect
 
