@@ -16,7 +16,7 @@
 <title>1 · Lesson Plan &amp; Language Analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610061349">
+<link rel="stylesheet" href="hub-tokens.css?v=202610061403">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -58,6 +58,12 @@
   .card.mats{border-left-color:var(--teal);}
   .shareVol{margin:10px 0 0; padding:10px 12px; border:1px dashed var(--sand-line); border-radius:9px;}
   .shareVol[hidden]{display:none !important;}
+  /* Ramy, 6 Oct 2026, having gone looking for a feature he designed and not
+     found it: it used to be hidden until there was something to share, so a
+     trainee who did not know it existed never would. It waits in view
+     instead, and says what it is waiting for. */
+  .shareVol.waiting{opacity:.62;}
+  .shareVol.waiting .sv-row{cursor:default;}
   .sv-row{display:flex; gap:10px; align-items:flex-start; cursor:pointer; font-size:0.86rem;}
   .sv-row input{margin-top:3px; flex:none;}
   .sv-row small{display:block; color:var(--grey); font-size:0.78rem; line-height:1.5; margin-top:2px;}
@@ -405,7 +411,7 @@
   .duenote::before{content:"\2022"; font-size:1.1em; line-height:0;}
   .fromtt{display:block; font-size:0.72rem; color:var(--grey); margin-top:3px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610061349">
+<link rel="stylesheet" href="hub-house.css?v=202610061403">
 </head>
 <body>
 <div class="board">
@@ -494,7 +500,7 @@
          volunteer students while planning, before they teach. The switch puts
          the link on the students' own page; it never sends a file anywhere the
          link does not already go. -->
-    <div class="shareVol" id="shareVol" hidden>
+    <div class="shareVol" id="shareVol">
       <label class="sv-row"><input type="checkbox" id="fShareVol">
         <span><b>Share this with the students</b><small id="shareVolNote">It appears on their own page for this lesson. They are told to look only if they want to.</small></span></label>
     </div>
@@ -633,12 +639,12 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202610061349"></script>
-<script src="hub-shared.js?v=202610061349"></script>
-<script src="hub-rotation.js?v=202610061349"></script>
-<script src="hub-store.js?v=202610061349"></script>
-<script src="hub-say.js?v=202610061349"></script>
-<script src="hub-sync.js?v=202610061349"></script>
+<script src="hub-due.js?v=202610061403"></script>
+<script src="hub-shared.js?v=202610061403"></script>
+<script src="hub-rotation.js?v=202610061403"></script>
+<script src="hub-store.js?v=202610061403"></script>
+<script src="hub-say.js?v=202610061403"></script>
+<script src="hub-sync.js?v=202610061403"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -766,16 +772,40 @@ function sharableMaterial(){
   if (MATS_FILE && MATS_FILE.url) return { url: MATS_FILE.url, name: MATS_FILE.name || 'Materials for the lesson' };
   return null;
 }
+/* setLocked() sweeps every input on the board and sets disabled to whether
+   the plan is turned in, so it re-enabled this checkbox a moment after the
+   waiting state disabled it. The switch now carries the lock in its own rule
+   rather than fighting that sweep (6 Oct 2026). */
+var SV_LOCKED = false;
+const SV_WAIT = 'Paste a materials link above, or attach a file, and you can share it with the students.';
+const SV_READY = 'It appears on their own page for this lesson. They are told to look only if they want to.';
 function renderShareVol(){
   const host = $('shareVol'); if (!host) return;
   const m = sharableMaterial();
-  host.hidden = !m;
-  if (!m) return;
+  const box = $('fShareVol'), note = $('shareVolNote');
+  host.classList.toggle('waiting', !m);
+  if (box) box.disabled = !m || SV_LOCKED;
+  if (!m) { if (box) box.checked = false; if (note) note.textContent = SV_WAIT; return; }
+  /* The note is also where the switch reports back ("Shared.", or why not), so
+     only the waiting line is ever written over -- a message from the last
+     click must survive the next keystroke in the link field. */
+  if (note && note.textContent === SV_WAIT) note.textContent = SV_READY;
   const shared = (rec0('connect_shared_v1') || []).some(x => x && x.url === m.url);
-  const box = $('fShareVol');
   if (box && box.checked !== shared) box.checked = shared;
 }
 function rec0(k){ try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch(e) { return null; } }
+
+/* And once at the start. The other two calls hang off loading a saved plan and
+   off the attached-file row, so a brand new plan -- the one case the waiting
+   state exists for -- reached neither.
+
+   IT HAS TO BE HERE, below `let MATS_FILE`. The first attempt put it up beside
+   the fMatsLink listener, 55 lines above that declaration: sharableMaterial()
+   reads MATS_FILE, which is still in its temporal dead zone there, so the call
+   threw a ReferenceError and took the whole of the rest of this script with it
+   -- no autosave, no Turn in, nothing (6 Oct 2026, caught by driving the page
+   rather than by reading it). */
+renderShareVol();
 
 function matsFileMeta(){
   if (!MATS_FILE) return null;
@@ -1911,7 +1941,15 @@ $('turnInBtn').addEventListener('click', async()=>{
   if(!d.meta.name.trim()) missing.push('your name');
   if(!d.plan.main.trim()) missing.push('the main aims');
   if(!d.plan.rows.some(r=>r.proc.trim())) missing.push('the procedure');
-  if(missing.length && !await confirmModal('You haven\'t filled in '+missing.join(', ')+'. Turn in anyway?','Turn in anyway')) return;
+  /* The sentence that used to sit beside the button now asks at the moment it
+     applies (Ramy, 6 Oct 2026: "turn in is turn in" -- and then yes to being
+     asked instead). One dialog, never two: when something is missing it says
+     so in the same breath. */
+  const LOCKS = 'Your tutor gets access to this plan, and you will not be able to edit it until they reopen it for you.';
+  const ask = missing.length
+    ? 'You haven\'t filled in ' + missing.join(', ') + '. ' + LOCKS + ' Turn in anyway?'
+    : LOCKS + ' Turn it in?';
+  if(!await confirmModal(ask, missing.length ? 'Turn in anyway' : 'Turn in')) return;
   /* The rendered document travels with the record, exactly as the tutor's
      feedback does. Handbook 14.1 asks the centre to give the assessor "lesson
      plans for trainees teaching in teaching practice on the day of the
@@ -2008,6 +2046,10 @@ function setLock(on){
     el.disabled = on;
   });
   $('prevBtn').disabled=on;
+  /* ...and then the share switch states its own case again, because the sweep
+     above has just overruled it in both directions. */
+  SV_LOCKED = on;
+  if (typeof renderShareVol === 'function') renderShareVol();
 }
 function renderTurnStatus(){
   const rec=loadPlanRecord();
