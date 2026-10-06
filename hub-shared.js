@@ -662,7 +662,7 @@ window.hubLetterheadHTML = function(eyebrow){
   var c = window.hubCentre(); if (!c.name && !c.logo) return '';
   var esc = function(t){ return String(t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
   return '<div style="display:flex;align-items:center;gap:12px;padding:0 0 12px;margin:0 0 16px;border-bottom:1px solid #e3ddd0;">'
-    + (c.logo ? '<img src="' + c.logo + '" alt="" style="width:44px;height:44px;object-fit:contain;border-radius:6px;flex-shrink:0;">' : '')
+    + (c.logo ? '<img src="' + c.logo + '" alt="" style="height:44px;width:auto;max-width:160px;object-fit:contain;flex-shrink:0;">' : '')
     + '<div><div style="font-family:Newsreader,Georgia,serif;font-size:16pt;font-weight:700;color:#1e4d4a;line-height:1.15;">' + esc(c.name) + '</div>'
     + (c.number || eyebrow ? '<div style="font-family:Karla,Calibri,Arial,sans-serif;font-size:8.5pt;letter-spacing:0.12em;text-transform:uppercase;color:#6b665c;margin-top:3px;">' + esc([c.number ? 'Cambridge centre ' + c.number : '', eyebrow].filter(Boolean).join(' \u00b7 ')) + '</div>' : '')
     + '</div></div>';
@@ -681,8 +681,13 @@ window.hubApplyCentre = function(){
        place the instruction belongs. */
     if (!c.logo) { slot.style.display = 'none'; return; }
     slot.style.display = '';
-    slot.innerHTML = '<img src="' + c.logo + '" alt="' + c.name.replace(/"/g,'&quot;') + ' logo" style="width:100%;height:100%;object-fit:contain;border-radius:6px;">';
+    /* The logo keeps its own shape: height fixed at the slot's, width follows
+       (7 Oct 2026, the IH wordmark came out a sliver in a 44px square and the
+       round mark on its own sat in a box). */
+    slot.innerHTML = '<img src="' + c.logo + '" alt="' + c.name.replace(/"/g,'&quot;') + ' logo" style="height:44px;width:auto;max-width:140px;object-fit:contain;display:block;">';
     slot.style.border = 'none';
+    slot.style.width = 'auto';
+    slot.style.borderRadius = '0';
   });
   document.querySelectorAll('.hub-centre-name').forEach(function(el){
     if (!c.name) return;
