@@ -65,8 +65,8 @@
   /* The rates, as a block an email can carry: a centre that asked what it
      costs gets the answer in the message, not behind a link. */
   function rateRows() {
-    var rows = [['One course', '\u00a3300', ''], ['Five courses', '\u00a31,250', '\u00a3250 each'],
-                ['Ten courses', '\u00a32,200', '\u00a3220 each'], ['Twenty courses', '\u00a34,000', '\u00a3200 each']];
+    var rows = [['One course', '\u00a3240', ''], ['Five courses', '\u00a31,000', '\u00a3200 each'],
+                ['Ten courses', '\u00a31,750', '\u00a3175 each'], ['Twenty courses', '\u00a33,200', '\u00a3160 each']];
     return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:14px 0 0;">'
       + rows.map(function (r, i) {
           var top = i ? 'border-top:1px solid ' + C.line + ';' : '';
@@ -88,7 +88,7 @@
       + '<h1 style="font-family:' + SERIF + '; font-weight:700; font-size:25px; line-height:1.22; color:' + C.teal + '; margin:0 0 10px;">One price, one course, everything in it</h1>'
       + '<p style="font-family:' + SANS + '; font-size:14.5px; line-height:1.65; color:' + C.ink + '; margin:0;">There is one thing to buy: a course. Every feature is in every course, and nothing is held back for a higher tier, because there isn\u2019t one.</p>'
       + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 0;"><tr><td style="background:' + C.box + '; border-radius:10px; padding:16px 18px;">'
-      + '<div style="font-family:' + SERIF + '; font-weight:700; font-size:30px; color:' + C.inkWarm + '; line-height:1;">' + esc(ctx.price || '\u00a3300') + '</div>'
+      + '<div style="font-family:' + SERIF + '; font-weight:700; font-size:30px; color:' + C.inkWarm + '; line-height:1;">' + esc(ctx.price || '\u00a3240') + '</div>'
       + '<div style="font-family:' + SANS + '; font-size:13px; color:' + C.grey + '; margin-top:3px;">per course, paid once</div>'
       + '</td></tr></table>'
       + rateRows()
@@ -110,7 +110,7 @@
     if (ctx.film) doors += door('The film', 'Eight minutes, start to finish — a course from the first plan to the certificates.', ctx.film, 'Watch');
     /* A quote on the link is the price; with none, the published figure and
        a way to the rates. showPrice:false leaves the money out altogether. */
-    var price = '<div style="font-family:' + SERIF + '; font-size:24px; font-weight:700; color:' + C.inkWarm + '; line-height:1.1;">' + esc(ctx.price || '\u00a3300') + '</div>' +
+    var price = '<div style="font-family:' + SERIF + '; font-size:24px; font-weight:700; color:' + C.inkWarm + '; line-height:1.1;">' + esc(ctx.price || '\u00a3240') + '</div>' +
       '<div style="font-family:' + SANS + '; font-size:13px; color:' + C.grey + '; margin:2px 0 0;">per course, paid once</div>' +
       (ctx.price ? '' : '<div style="font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.ink + '; margin:8px 0 0;">Less when you buy several, and a course with one teaching practice group counts as half.' +
         (ctx.site ? ' <a href="' + esc(ctx.site) + 'price.html" style="color:' + C.teal + '; font-weight:700;">The rates in full</a>.' : '') + '</div>');
