@@ -18,7 +18,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610061915">
+<link rel="stylesheet" href="hub-tokens.css?v=202610061933">
 <style>
   :root{
     /* the pane -- the same four values the trainee landing's cards use */
@@ -364,7 +364,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610061915">
+<link rel="stylesheet" href="hub-house.css?v=202610061933">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -388,10 +388,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610061915"></script>
-<script src="hub-store.js?v=202610061915"></script>
-<script src="hub-say.js?v=202610061915"></script>
-<script src="hub-card-mail.js?v=202610061915"></script>
+<script src="hub-shared.js?v=202610061933"></script>
+<script src="hub-store.js?v=202610061933"></script>
+<script src="hub-say.js?v=202610061933"></script>
+<script src="hub-card-mail.js?v=202610061933"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -513,9 +513,14 @@ async function firstTrainee(c){
    carries neither and cannot fall out of step with either. */
 function cardLink(c){
   const film = filmLink(), price = priceText();
+  /* The switch below the note decides whether the card talks money at all.
+     It used to reach only the emailed card; the web card the email opens
+     still showed the published figure (Ramy, 6 Oct 2026: "why does the card
+     show the price even though I did not tick the box?"). Off, the link
+     carries &np=1 and offer.html leaves the whole price block out. */
   return base() + 'offer.html?k=' + encodeURIComponent(c.tutorKey)
     + (film ? '&f=' + encodeURIComponent(film) : '')
-    + (price ? '&p=' + encodeURIComponent(price) : '');
+    + (!priceOn() ? '&np=1' : (price ? '&p=' + encodeURIComponent(price) : ''));
 }
 /* ONE EMAIL FOR THE TWO DEMOS AND THE FILM (Ramy, 30 Sep 2026: "I want to be
    able to send all three, two demos and the film, in one email, and I want the
@@ -904,7 +909,7 @@ $('app').innerHTML = `
       <label for="priceText">Price</label>
       <input type="text" id="priceText" placeholder="£240, or leave empty" value="${esc(priceText())}" style="flex:0 1 190px; min-width:140px;">
       <a class="btn small quiet" href="${esc(base() + 'price.html')}" target="_blank" rel="noopener">Open the price card</a>
-      <label class="priceon"><input type="checkbox" id="priceOn"${priceOn() ? ' checked' : ''}> the price goes on the full card</label>
+      <label class="priceon"><input type="checkbox" id="priceOn"${priceOn() ? ' checked' : ''}> the price goes on the card</label>
       <span class="note">Both are kept in this browser. The <b>price</b> box is for a one-off quote: fill it and that figure replaces the published rates on the card. Leave it empty and the card states £300 and links to the rates in full.</span>
     </div>
       </div>
@@ -972,7 +977,7 @@ document.addEventListener('input', e => {
     status(e.target.value === 'film' ? 'The film alone goes out next, with its own letter.' : e.target.value === 'price' ? 'The price alone goes out next, with its own letter.' : 'The full card goes out next, with its own letter.');
     return;
   }
-  if (e.target.closest('#priceOn')) { try { localStorage.setItem(PRICE_ON_KEY, e.target.checked ? 'on' : 'off'); } catch (err) {} status(e.target.checked ? 'The full card carries the price.' : 'The full card goes without the price.'); }
+  if (e.target.closest('#priceOn')) { try { localStorage.setItem(PRICE_ON_KEY, e.target.checked ? 'on' : 'off'); } catch (err) {} status(e.target.checked ? 'The card carries the price.' : 'The card goes without the price \u2014 the web card and the email both.'); }
 });
 $('app').addEventListener('click', async e => {
     const urls = e.target.closest('#toggleUrls');
