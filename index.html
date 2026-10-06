@@ -25,7 +25,7 @@
 <title>Connect Lite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610061744">
+<link rel="stylesheet" href="hub-tokens.css?v=202610061802">
 <style>
   :root{
     /* The pane. A card on this page is a sheet of glass lying on the paper,
@@ -76,6 +76,10 @@
   .title h1{margin:0; font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:2.1rem;
     line-height:1.15; color:var(--ink);}
   .title p{margin:7px 0 0; font-size:0.9rem; color:var(--grey); line-height:1.6; max-width:600px;}
+  .title .hello{margin:16px 0 0; max-width:600px; padding:12px 16px; background:var(--gold-wash); border-left:4px solid var(--gold);
+    border-radius:var(--r-strip); font-size:0.92rem; color:var(--ink); line-height:1.6; text-wrap:pretty;}
+  .title .hello b{color:var(--ink-warm);}
+  .title .hello a{color:var(--teal); font-weight:600;}
 
   /* ---- the teaching-practice frame --------------------------------------
      Three of these five cards are one thing: the teaching-practice cycle, in
@@ -247,7 +251,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610061744">
+<link rel="stylesheet" href="hub-house.css?v=202610061802">
 </head>
 <body>
 <div class="board">
@@ -268,6 +272,11 @@
   <div class="title">
     <h1 id="boardTitle">Your CELTA paperwork</h1>
     <p id="courseMeta">Your teaching practice and your written assignments, in the order you need them. Each form saves itself as you go — nothing reaches your tutor until you turn it in.</p>
+    <!-- The first visit (6 Oct 2026). Ramy: "Welcome, Aylin -- start with the
+         agreement, then the two confirmations in your CELTA 5... that
+         disappears once both are signed. Yes, the disappearing is good." It
+         is a note, not a page: the home is already the course. -->
+    <p class="hello" id="hello" hidden></p>
     <div id="onlineRooms"></div>
   </div>
 
@@ -409,15 +418,15 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202610061744"></script>
-<script src="observation-defaults.js?v=202610061744"></script>
-<script src="hub-shared.js?v=202610061744"></script>
-<script src="hub-store.js?v=202610061744"></script>
-<script src="hub-say.js?v=202610061744"></script>
-<script src="hub-shelf.js?v=202610061744"></script>
-<script src="hub-front.js?v=202610061744"></script>
-<script src="hub-sync.js?v=202610061744"></script>
-<script src="hub-feedback.js?v=202610061744"></script>
+<script src="hub-due.js?v=202610061802"></script>
+<script src="observation-defaults.js?v=202610061802"></script>
+<script src="hub-shared.js?v=202610061802"></script>
+<script src="hub-store.js?v=202610061802"></script>
+<script src="hub-say.js?v=202610061802"></script>
+<script src="hub-shelf.js?v=202610061802"></script>
+<script src="hub-front.js?v=202610061802"></script>
+<script src="hub-sync.js?v=202610061802"></script>
+<script src="hub-feedback.js?v=202610061802"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -620,6 +629,27 @@ line(document.getElementById('badgeCelta5'), (function(){
     let d = signed.at; try { d = new Date(signed.at).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}); } catch(e) {}
     line.textContent = 'Signed ' + d + '. Open it to read back what you agreed to.';
   }
+})();
+
+/* The first-visit note: the two things a candidate signs before anything
+   else -- the agreement, when the centre has written one, and the two
+   confirmations that open the CELTA 5. Gone the moment both are done. */
+(function(){
+  const el = document.getElementById('hello'); if (!el) return;
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+  const cs = rec('connect_course_settings') || {}, me = rec('hub:me') || {};
+  const agr = cs.agreement || {}, own = String(((cs.docs || {}).docAgreement) || '').trim();
+  const hasAgr = !!(own || ['agrAttendance','agrPlagiarism','agrComplaints','agrResubmissions'].some(k => String(agr[k] || '').trim()));
+  const signedAgr = (() => { const a = rec('chub:agreement'); return !!(a && a.at); })();
+  const conf = ((rec('chub:celta5') || {}).confirms) || {};
+  const confirmed = !!(conf.portfolio && conf.portfolio.at && conf.appeals && conf.appeals.at);
+  const todo = [];
+  if (hasAgr && !signedAgr) todo.push('<a href="29_candidate_agreement.html">the candidate agreement</a>');
+  if (!confirmed) todo.push('<a href="20_celta5.html">the two confirmations in your CELTA 5</a>');
+  if (!todo.length) return;
+  const first = String(me.name || '').trim().split(/\s+/)[0];
+  el.innerHTML = '<b>' + (first ? 'Welcome, ' + esc(first) + '.' : 'Welcome.') + '</b> This is your course: everything you write on it lives here, and nothing reaches your tutor until you turn it in. Start with ' + todo.join(', then ') + '. ' + (todo.length === 2 ? 'A few minutes each, and this note goes when both are done.' : 'A few minutes, and this note goes when it is done.');
+  el.hidden = false;
 })();
 
 /* The timetable card: shown as soon as the course has one. A timetable is

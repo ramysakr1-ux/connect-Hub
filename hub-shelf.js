@@ -19,20 +19,23 @@
  * Links, not uploads: the demonstration lesson and the GTKY sheets already
  * live in a Drive, a Doc or a site, and a link is what a trainee needs.
  *
- * ONE SHELF, NOT TWO (Ramy, 6 Oct 2026, walking the tutor's dashboard): "I'm
- * not sure we need a special getting-to-know-you activities button... can we
- * just say one thing... one is enough, doesn't matter what's in there." So
- * the two headed sections with their two buttons are one list with one
- * button. New rows carry kind 'course'; the 'demo' and 'gtky' rows already
- * on courses show in the same list. The volunteer students' page shows only
- * kind 'materials', so nothing here reaches them -- their handouts come from
- * the lesson plan's share switch.
+ * ONE SHELF, NOT TWO, AND IT GOES TO THE STUDENTS (Ramy, 6 Oct 2026, walking
+ * the tutor's dashboard): "I'm not sure we need a special getting-to-know-you
+ * activities button... this just could be one: share with the volunteer
+ * students. One is enough, doesn't matter what's in there." The demo lesson
+ * and the first-day activities are taught TO the volunteer students, so that
+ * is who a share here reaches: it appears on their page under "For your next
+ * class" (26_volunteer.html shows these kinds now) and stays on the course
+ * for the trainees too. New rows carry kind 'course'; the 'demo' and 'gtky'
+ * rows already on courses show in the same list and reach the students the
+ * same way. A trainee's own lesson handouts are a different thing -- kind
+ * 'materials', shared from the plan's switch with a TP on them.
  */
 (function () {
   var KEY = 'connect_shared_v1';
   var KINDS = { demo: 1, gtky: 1, course: 1 };    // what belongs on this shelf
   var ADD = 'course';                              // what a new share is filed as
-  var NOTE = 'The demonstration lesson, a getting-to-know-you activity, anything the course should have \u2014 a link, so everyone opens the same copy.';
+  var NOTE = 'The demonstration lesson, a getting-to-know-you activity, anything for the class \u2014 a link. The volunteer students see it on their page; so does everyone on the course.';
   var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
   var read = function () { try { return (JSON.parse(localStorage.getItem(KEY)) || []).filter(function (x) { return x && x.url && x.name; }); } catch (e) { return []; } };
   var write = function (list) { try { localStorage.setItem(KEY, JSON.stringify(list || [])); } catch (e) {} };
@@ -50,15 +53,15 @@
       var may = !!(canAdd && canAdd.length);
       var any = list.length || may;
       host.hidden = !any; if (!any) return;
-      host.innerHTML = '<div class="shead"><h2>Shared with the course</h2><span class="new">' + esc(note) + '</span></div>'
+      host.innerHTML = '<div class="shead"><h2>Shared with the students</h2><span class="new">' + esc(note) + '</span></div>'
         + '<div class="shelf-group">'
           + '<div class="shelf-head"><span class="shelf-note">' + NOTE + '</span>'
-          + (may ? '<button class="shelf-add" type="button" data-open="' + ADD + '">' + (open ? 'Cancel' : 'Share a link') + '</button>' : '')
+          + (may ? '<button class="shelf-add" type="button" data-open="' + ADD + '">' + (open ? 'Cancel' : 'Share with the students') + '</button>' : '')
           + '</div>'
           + (open ? '<form class="shelf-form" data-kind="' + ADD + '">'
               + '<input type="text" name="name" placeholder="What to call it, e.g. Demo lesson \u2014 A2 Speaking" required maxlength="120">'
               + '<input type="url" name="url" placeholder="The link \u2014 a Drive file, a Doc, a page" required>'
-              + '<button class="btn small" type="submit">Share with the course</button>'
+              + '<button class="btn small" type="submit">Share it</button>'
               + '<span class="shelf-hint">It is signed with your name.</span>'
             + '</form>' : '')
           + (list.length ? list.map(function (x) {
@@ -82,13 +85,13 @@
         var body = { op: 'shareMaterial', name: name, url: url, by: by, tp: '', kind: f.dataset.kind };
         if (opts.token && opts.token()) body.token = opts.token();
         var r = await window.HubStore.call(body);
-        write(r.shared || []); open = null; note = 'Shared with the course.';
+        write(r.shared || []); open = null; note = 'Shared with the students.';
       } catch (err) { note = 'Not shared — ' + (err && err.message || err); }
       busy = false; draw(); setTimeout(function () { note = ''; draw(); }, 2600);
     }
     async function remove(id) {
       if (busy) return;
-      var ok = window.confirmModal ? await confirmModal('Take this back from everyone on the course?', 'Take back') : confirm('Take this back?');
+      var ok = window.confirmModal ? await confirmModal('Take this back from the students and everyone on the course?', 'Take back') : confirm('Take this back?');
       if (!ok) return;
       busy = true; note = 'Taking back…'; draw();
       try {
