@@ -32,20 +32,41 @@ the course's own word and that page is read by language learners in five
 languages who have never heard it. A material shared before this still shows
 "TP6"; the fallback is deliberate.
 
-## The store half (NOT YET APPLIED)
+## The store half
 
 `shareMaterial` builds its row from named parameters, so `aim` is accepted and
 silently dropped until the row keeps it. Nothing breaks in the meantime — the
 card simply goes on showing the practice number.
 
-One field to add to the row `shareMaterial` appends, beside `tp` and `kind`:
+**The anchor.** This line appears exactly once in `Code.gs`, as the last line
+of the `item` object inside `case 'shareMaterial'`:
 
 ```js
-aim: String(b.aim || '').slice(0, 40),
+                   kind: String(req.kind || '').slice(0, 20) };
 ```
 
-**Paste the whole `shareMaterial` function here before changing it**, and take
-the replacement line by line number. On 6 Oct 2026 an instruction to add a
-field "right beside" another one was typed adjacent to it instead of after the
-comma — `celta5agreement:1` — and it destroyed two record kinds on every live
-course. Exact lines, never descriptions of where.
+**Replace that one line with these two:**
+
+```js
+                   kind: String(req.kind || '').slice(0, 20),
+                   aim: String(req.aim || '').slice(0, 40) };
+```
+
+The `};` moves to the end of the new line. Nothing else in the function
+changes, and no other op is touched.
+
+Then: Save → Deploy → Manage deployments → pencil → Version: **New version** →
+Deploy. Never "New deployment": that mints a new URL and every link in
+circulation keeps pointing at the old code.
+
+Once deployed, the volunteer boot already carries the share list
+(`shared: courseRead_(course.id, 'shared')`), so the aim reaches the card with
+no further change. Materials shared before the deploy keep showing their
+practice number; the fallback in `26_volunteer.html` is deliberate.
+
+**Why it is given as a whole line and not a description.** On the morning of
+6 Oct 2026 an instruction to add a field "right beside" another one was typed
+adjacent to it rather than after the comma — `celta5agreement:1` — which
+destroyed the `celta5` and `celta5t` record kinds on every live course and
+broke CELTA 5 saving until it was found. No data was lost, because the guard
+throws before `write_()` is called. Exact lines, never descriptions of where.
