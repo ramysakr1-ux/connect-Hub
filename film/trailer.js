@@ -40,8 +40,11 @@
  */
 const REEL = [
 
-  /* Someone signing their name with their finger is the single most "that's
-     not a website" thing Lite does, so it opens. No caption: a signature does
+  /* A signature writing itself, in a hand that is hers and nobody else's, is
+     the single most "that's not a website" thing Lite does, so it opens. It
+     used to be a finger on a pad; since 6 Oct 2026 the signature is written
+     from the name (hub-hand.js), the same every time she signs, and the
+     dialog writes it across the pad as it opens. No caption: a signature does
      not need one. */
   { title: 'Ink',
     /* The signing lives on the CELTA 5, not on the candidate's home — the first
@@ -50,14 +53,15 @@ const REEL = [
        on this screen, so her signature is one she has given before. */
     course: 'start', role: 'trainee', as: 'Wei Zhang',
     screen: '20_celta5.html',
-    about: 'The candidate signs Cambridge’s confirmation on the ink pad — the hand draws itself.',
+    about: 'The candidate signs Cambridge’s confirmation — her signature writes itself in her own hand, then Sign.',
     settle: 12000,
     steps: [
       { do: 'hold', ms: 600 },
       { do: 'scroll', to: '[data-sig="conf:portfolio"]', ms: 1200 },
       { do: 'zoom', on: '[data-sig="conf:portfolio"]', scale: 1.5, ms: 600 },
       { do: 'click', on: '[data-sign="conf:portfolio"]', ms: 1200 },
-      { do: 'draw', name: 'Wei Zhang', ms: 2000 },
+      { do: 'zoom', on: '.ink-pad', scale: 1.5, ms: 600 },
+      { do: 'sign', ms: 1800 },
       { do: 'zoom', out: true, ms: 800 },
       { do: 'hold', ms: 700 }
     ],

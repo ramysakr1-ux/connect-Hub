@@ -47,6 +47,16 @@
     ".ink-pad .ink-line{position:absolute; left:8%; right:8%; bottom:12%; border-bottom:1px dashed var(--sand-line,#cfc6b6);}"+
     ".ink-pad .ink-hint{position:absolute; left:0; right:0; bottom:4%; text-align:center; font-size:0.72rem; color:var(--grey,#8a8078);}"+
     ".ink-pad .hand{max-width:100%; overflow:hidden; text-overflow:clip;}"+
+    /* THE HAND WRITES ITSELF. When the name is already known -- every
+       candidate, a tutor who has signed before -- the dialog opens on a
+       finished signature, and a finished signature is a picture. Written left
+       to right over a second and a half it is a hand, and the moment of
+       signing looks like one (6 Oct 2026; also what the film's signing shot
+       is of, now that there is no pad to draw on). Not while a name is being
+       typed: the mark redraws on every keystroke and would flicker. */
+    ".ink-pad.write .hand{animation:hubInkWrite 1.5s cubic-bezier(.4,0,.3,1) both;}"+
+    "@keyframes hubInkWrite{from{clip-path:inset(-40% 100% -40% 0)} to{clip-path:inset(-40% -4% -40% 0)}}"+
+    "@media (prefers-reduced-motion: reduce){.ink-pad.write .hand{animation:none}}"+
     ".ink-bar{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:12px;}"+
     ".ink-bar .grow{flex:1;}"+
     ".ink-bar .btn{font-family:'Karla',sans-serif; font-size:0.84rem; font-weight:700; padding:9px 16px; border-radius:8px; border:0; background:var(--teal,#1f6f6b); color:#fff; cursor:pointer;}"+
@@ -109,6 +119,7 @@
         ok.disabled = !n || !spec;
         hint.textContent = n ? '' : 'Your signature appears here';
       }
+      if (!opts.askName) overlay.querySelector('.ink-pad').classList.add('write');
       document.body.appendChild(overlay);
       draw();
       if (opts.askName) { nameIn.addEventListener('input', draw); if (!nameIn.value) setTimeout(function(){ nameIn.focus(); }, 0); }

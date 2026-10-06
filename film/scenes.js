@@ -33,7 +33,8 @@
                                       frame made for the film (film/stills/,
                                       by make-stills.mjs); without one, a card
                                       saying what to capture
-     {do:'draw',   name, ms}          draw a signature on the open pad, then Sign
+     {do:'sign',   ms}                the signature dialog is open: let the
+                                      hand write itself, then press Sign
      {do:'zoom',   on:sel, scale, ms} push in on something
      {do:'zoom',   out:true, ms}      pull back to the whole screen
                                       (a click or a keystroke also pushes in a
@@ -257,7 +258,7 @@ var SCENES = [
     title: 'The candidate reads Cambridge’s words',
     screen: 'index.html',
     course: 'start', role: 'trainee', as: 'Wei Zhang', day: 'Day 0',
-    about: 'Wei’s home — the rooms strip, the timetable card with day one marked — then the CELTA 5: <i>Read and confirm</i>, Cambridge’s own words scrolled, the confirmation box with her name in it, <b>Confirm and sign</b>, the pad. Wei was left unconfirmed on the demo for this beat; <b>writes stubbed</b> so she stays that way. The pad is drawn by the film.',
+    about: 'Wei’s home — the rooms strip, the timetable card with day one marked — then the CELTA 5: <i>Read and confirm</i>, Cambridge’s own words scrolled, the confirmation box with her name in it, <b>Sign</b>, and her signature writes itself in her own hand before the film presses Sign. Wei was left unconfirmed on the demo for this beat; <b>writes stubbed</b> so she stays that way.',
     settle: 9000,
     stub: ['put'],
     steps: [
@@ -279,7 +280,7 @@ var SCENES = [
       { do: 'zoom', on: '[data-sig="conf:portfolio"]', scale: 1.5, ms: 700 },
       { do: 'click', on: '[data-sign="conf:portfolio"]', ms: 1400 },
       { do: 'zoom', on: '.ink-pad', scale: 1.5, ms: 700 },
-      { do: 'draw', name: 'Wei Zhang', ms: 1500 },
+      { do: 'sign', ms: 1700 },
       { do: 'zoom', out: true, ms: 1000 },
       { do: 'caption', text: 'Signed. Dated. Kept.' },
       { do: 'hold', ms: 1300 }
@@ -605,7 +606,7 @@ var SCENES = [
     title: 'Stage 1, signed',
     screen: '20_celta5.html',
     course: 'start', params: { trainee: 'Priya' }, day: 'Day 6',
-    about: 'The tutor’s side of Priya’s CELTA 5: Stage 1 written, <b>Return to candidate</b>, the pad (drawn by the film). Then Mateo’s side — his Stage 1 is returned and unsigned on the demo — <b>Sign</b>, the pad, the green block; below it the teaching practice table already holding TP1 and TP2. <b>Writes stubbed</b> on both sides.',
+    about: 'The tutor’s side of Priya’s CELTA 5: Stage 1 written, <b>Return to candidate</b>, the signature dialog with the tutor’s hand on it. Then Mateo’s side — his Stage 1 is returned and unsigned on the demo — <b>Sign</b>, the pad, the green block; below it the teaching practice table already holding TP1 and TP2. <b>Writes stubbed</b> on both sides.',
     settle: 2400,
     stub: ['put'],
     steps: [

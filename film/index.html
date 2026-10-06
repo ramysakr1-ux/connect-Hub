@@ -836,53 +836,30 @@
       later(function () { chapter.classList.remove('on'); }, hold);
       return hold + 700;
     },
-    /* Draw on the open signature pad (hub-ink), stroke by stroke with pointer
-       events from the top-left of the pad, so the ink appears as a hand would
-       leave it; type the name if the pad asks for one and it is empty; then
-       Sign. The stroke is the same shape every take -- nobody's, and legible
-       as a signature. {do:'draw', name:'Jordan Blake', ms} */
-    draw: function (s) {
+    /* Sign, the way it is done since 6 Oct 2026: there is no pad. Pressing
+       Sign on a screen opens hub-ink's dialog with the signature already
+       written from the person's name in their own hand, and the hand writes
+       itself across the pad (hub-ink's .write). This waits for the dialog,
+       lets the hand finish, and presses Sign. {do:'sign', ms} -- ms is the
+       time given to the writing; the press follows it. The old {do:'draw'}
+       drew a stroke on a canvas that is not there any more. */
+    sign: function (s) {
       var d = doc();
-      var padEl = d && d.querySelector('.ink-pad');
-      if (!padEl) { warn('draw: no signature pad is open'); return 200; }
-      /* hub-ink captures the pointer on pointerdown; a synthetic pointer is
-         not active, and Chrome throws before the stroke begins. The pad does
-         not need capture when the film is the hand. */
-      padEl.setPointerCapture = function () {}; padEl.releasePointerCapture = function () {};
-      var nameIn = d.querySelector('.ink-name input');
-      if (nameIn && !nameIn.value && s.name) setValue(nameIn, s.name);
-      /* The overlay is fixed, so its rect is already where the cursor goes:
-         the iframe sits at the stage's origin at its own size. */
-      var r = padEl.getBoundingClientRect();
-      var pts = [[0.08,0.62],[0.13,0.40],[0.18,0.66],[0.24,0.36],[0.29,0.60],[0.35,0.48],[0.41,0.70],[0.47,0.42],[0.53,0.62],[0.59,0.38],[0.65,0.66],[0.71,0.46],[0.78,0.62],[0.85,0.50],[0.91,0.58]];
-      var at = function (p) { return { x: r.left + p[0] * r.width, y: r.top + p[1] * r.height }; };
-      var fire = function (type, p) { var c = at(p); padEl.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerId: 1, pointerType: 'mouse', button: 0, buttons: 1, clientX: c.x, clientY: c.y })); moveTo(c.x, c.y); };
-      var total = s.ms || 1500, i = 0;
-      moveTo(at(pts[0]).x, at(pts[0]).y);
+      var overlay = d && d.querySelector('.ink-overlay');
+      if (!overlay) { warn('sign: no signature dialog is open'); return 200; }
+      var ok = overlay.querySelector('.ink-ok');
+      var write = s.ms || 1600;
       later(function () {
-        fire('pointerdown', pts[0]);
-        (function step() {
-          i++;
-          if (i >= pts.length) {
-            fire('pointerup', pts[pts.length - 1]);
-            later(function () {
-              var ok = d.querySelector('.ink-ok');
-              if (!ok) { warn('draw: the pad closed before Sign'); return; }
-              var b = ok.getBoundingClientRect();
-              moveTo(b.left + b.width / 2, b.top + b.height / 2);
-              later(function () {
-                if (ok.disabled) { warn('draw: Sign stayed disabled — no stroke was taken'); return; }
-                popAt(b.left + b.width / 2, b.top + b.height / 2);
-                ok.click();
-              }, 520);
-            }, 420);
-            return;
-          }
-          fire('pointermove', pts[i]);
-          later(step, total / pts.length);
-        })();
-      }, 260);
-      return total + 1900;
+        if (!d.contains(overlay)) { warn('sign: the dialog closed before Sign'); return; }
+        var b = ok.getBoundingClientRect();
+        moveTo(b.left + b.width / 2, b.top + b.height / 2);
+        later(function () {
+          if (ok.disabled) { warn('sign: Sign is disabled -- no name, so no hand'); return; }
+          popAt(b.left + b.width / 2, b.top + b.height / 2);
+          ok.click();
+        }, 560);
+      }, write);
+      return write + 1300;
     },
     /* {do:'offline'} puts the Wi-Fi-off chip over the live screen; {off:true}
        takes it away. The page underneath is untouched -- Lite really does keep

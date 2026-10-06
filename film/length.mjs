@@ -1,7 +1,8 @@
 /**
  * Connect Lite — how long the film runs, scene by scene.
  *
- *   node film/length.mjs
+ *   node film/length.mjs            the film
+ *   node film/length.mjs trailer    the trailer reel (film/trailer.js)
  *
  * The take is thirteen minutes of wall clock and the cut is what a viewer
  * sees, so "how long is the film?" used to mean shooting it. This models the
@@ -22,7 +23,8 @@
 import { readFileSync } from 'node:fs';
 
 const HERE = new URL('.', import.meta.url).pathname;
-const SCENES = new Function(readFileSync(HERE + 'scenes.js', 'utf8') + '\nreturn SCENES;')();
+const REEL = process.argv[2] === 'trailer' ? 'trailer.js' : 'scenes.js';
+const SCENES = new Function(readFileSync(HERE + REEL, 'utf8') + '\nreturn SCENES;')();
 
 const CAPTION_STEP = 1200;
 const dur = (s) => {
@@ -36,7 +38,7 @@ const dur = (s) => {
     case 'hold':    return s.ms || 2000;
     case 'goto':    return s.ms || 2200;
     case 'chapter': return (s.ms || 3400) + 700;
-    case 'draw':    return s.ms || 3000;
+    case 'sign':    return (s.ms || 1600) + 1300;
     case 'choose':  return s.ms || 1400;
     case 'offline': return s.ms || (s.off ? 600 : 2400);
     case 'who':     return (s.ms || 2200) + 500;

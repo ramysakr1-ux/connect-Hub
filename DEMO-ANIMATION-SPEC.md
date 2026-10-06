@@ -81,9 +81,9 @@ Audience: **trainers and centre owners**, not trainees. Length: **about five min
 ◆ Hold three seconds on the timetable filling. ◆ Hold three seconds on the links appearing.
 
 ### 3 · The candidate reads Cambridge's words — *Day 0* — 1:16–1:32
-**Screen:** `index.html` as a candidate — the **rooms strip** under the title, the timetable card with day one marked — then the **CELTA 5** card → `20_celta5.html`: *Read and confirm*, the portfolio requirements open, scrolled slowly, then the confirmation box, the name already there, **Confirm and sign** → **the pad** → a signature drawn → *Sign* → the green signed block with the ink.
+**Screen:** `index.html` as a candidate — the **rooms strip** under the title, the timetable card with day one marked — then the **CELTA 5** card → `20_celta5.html`: *Read and confirm*, the portfolio requirements open, scrolled slowly, then the confirmation box, the name already there, **Sign** → the signature dialog, where her signature **writes itself in her own hand** → *Sign* → the green signed block with the signature on it.
 **Captions:** on the empty tables: *This booklet is going to fill itself. Watch.* → on the signed block: *Signed. Dated. Kept.*
-◆ Hold on the pad as the ink is drawn. ◆ Hold three seconds on the signed block.
+◆ Hold on the hand writing. ◆ Hold three seconds on the signed block.
 *First look at the booklet. Empty tables, one signature. Everything after fills it.*
 
 ---
@@ -127,7 +127,7 @@ Audience: **trainers and centre owners**, not trainees. Length: **about five min
 ◆ **Hold five seconds on the paste landing.**
 
 ### 11 · Stage 1, signed — *Day 6* — 3:15–3:35
-**Screen:** `20_celta5.html` as the tutor: Stage 1, hours taught, strengths, action plan → **Return to candidate** → the pad, the tutor's saved signature already on it → *Sign*. Cut to the candidate's side: *Returned — to sign* → **Sign** → the pad → the green block. Then the **Teaching practice** table below, already holding TP1 with its grade.
+**Screen:** `20_celta5.html` as the tutor: Stage 1, hours taught, strengths, action plan → **Return to candidate** → the signature dialog, the tutor's own hand already on it → *Sign*. Cut to the candidate's side: *Returned — to sign* → **Sign** → the dialog → the green block. Then the **Teaching practice** table below, already holding TP1 with its grade.
 **Captions:** on the pad: *Signed on screen. Personal, and dated to the second.* → on the table: *Nothing here was typed twice.*
 ◆ Hold on both signatures on the page. ◆ Hold three seconds on the table.
 *Second look at the booklet: one stage signed, one table with a row.*
@@ -211,10 +211,16 @@ The film is shot from **three courses that never age**: the two standing demos R
 
 Nothing is written to a demo course until Ramy says so. Then the clock, then the seed, then `film/scenes.js` against the scene list above, then the `film/` page.
 
+## Where it stands — 6 Oct 2026
+
+- **The film as written runs 8:51** (`node film/length.mjs`), 27 scenes, after the reshoot list of 5 Oct put eight scenes built since the 2 Oct cut on the calendar spine — TP point sets from the library, the rooms on the timetable, the shelf, the switch, who is coming tomorrow, the printed day — and cut the owner console, the one beat about Ramy rather than the centre. The published `film/connect-lite-film.mp4` is the 2 Oct cut (8:10) and carries none of that; the reshoot has not been taken. The remaining length lever, if one is wanted, is the course-setup chapter (0:51).
+- **The trailer** (`film/trailer.js`, `film/?reel=trailer`) is written and not yet shot: eleven shots, two captions, six words, **1:09** as modelled (`node film/length.mjs trailer`). Ramy's second pass of 5 Oct chose what is *unimaginable* on a CELTA course over what is impressive — the phonemic keyboard inside the plan, the TP points staged and timed, a candidate's own card — and the running order alternates whose screen it is. It is what gets sent to buy the meeting; the film is for after.
+- **A take needs the owner key and the standing demos up (c6, c7, c4)**, so it is shot from Ramy's machine, not from a cloud session. What can be done without the store has been: every selector in both reels checked against the current pages, and the signing step rewritten for the signature that replaced the pad.
+
 ## Build notes
 
 - Dictation: Chrome or Edge on a computer, the microphone already permitted; if the button does not go garnet with the dot pulsing, stop the take.
-- **The pad draws itself (30 Sep 2026).** A `draw` step sends the pointer across the pad stroke by stroke, types the name where the pad asks for one, and presses *Sign*; scenes 5 and 13 carry it, so no hand is needed for a take. The ink is the same shape every time — nobody's, and legible as a signature. Proved on both scenes: the pad opens, the canvas takes the stroke, *Sign* enables, the pad closes and the signature stands on the screen behind it.
+- **The signature writes itself (6 Oct 2026; it replaced the pad of 30 Sep).** There is no ink pad any more: a signature is written from the person's name in a hand that is theirs alone (`hub-hand.js`, five open-licensed scripts that all write Turkish), set the first time they sign and the same every time after, and it cannot be changed. Pressing *Sign* opens `hub-ink`'s dialog with the signature on it, and when the name is already known the hand writes itself across the pad over a second and a half — that is the shot. The engine's `{do:'sign', ms}` waits for the dialog, gives the hand `ms`, and presses *Sign*; `draw` is gone from the engine and from both reels. Proved on the booklet with a dead store: the dialog opens, the hand writes, *Sign* is live, the signed block carries the hand.
 - **The five stills are made, not captured (30 Sep 2026).** `node film/make-stills.mjs` draws the Classroom stream, the Drive folder, the Wi-Fi-off tab, the exchange window and the print dialog as pages of the film's own, photographs them at 1280 x 800 into `film/stills/`, and takes the sixth for real: it clones the finished course, photographs the new card on the console, and deletes the clone. Invented centre, invented names. A `still` step names its `img`.
 - The rooms strip appears only when the course has rooms saved — seed them first or scenes 3, 7 and 14 show nothing there.
 - Scene 17 needs the store's assets (the July 2023 master and the two fonts) reachable from the tutor link the take uses; the assessor link can draw it too.
