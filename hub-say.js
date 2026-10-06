@@ -70,7 +70,7 @@
       '  background:var(--plum,#5d2450); color:var(--paper,#fff); border:0;',
       '  border-radius:999px; padding:11px 20px; cursor:pointer;',
       '  box-shadow:0 1px 2px rgba(0,0,0,.14);}',
-      '.say-pill:hover{background:var(--plum-lifted,#6f2c60);}',
+      '.say-pill:hover{background:var(--plum-lifted,#6f2c60);}',   /* one shade up, nothing else moves */
       '.say-pill:focus-visible{outline:3px solid var(--gold,#c89b4a); outline-offset:3px;}',
       '.say-here{font:600 0.72rem/1 inherit; background:none; border:0; padding:3px 0; margin:0;',
       '  color:var(--faint,#999); cursor:pointer; text-decoration:underline; text-underline-offset:3px;}',
@@ -194,7 +194,9 @@
     b.type = 'button';
     b.className = 'say-pill';
     b.textContent = 'Say something';
-    b.title = 'Tell Connect what is wrong, or what would be better';
+    /* No tooltip. Ramy, 6 Oct 2026, walking the tutor's screens: "the hover
+       is too much." The button says what it is; a second sentence popping
+       up under the pointer is a thing happening that nobody asked for. */
     b.onclick = function () { open(''); };
     host().appendChild(b);
   }
