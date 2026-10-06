@@ -65,7 +65,16 @@
          page's own 20px padding, so the floor is 20+18: measured, the pill sits
          18px in at every width rather than landing ON the edge, which is what
          it did at 1280 and under. */
-      '.say-pill{position:fixed; right:max(38px, calc(50vw - 620px)); bottom:18px; z-index:9000; font:600 0.78rem/1 inherit;',
+      /* Above the page's own bottom bar, never on top of it. --sync-bottom is
+         set by hubReserveForBar for exactly this: the sync pill landed on top
+         of Turn in on 23 Sep 2026 and got this variable, and this pill, written
+         on 5 Oct, sat straight back down on Save as PDF (Ramy, 6 Oct 2026). */
+      /* Bottom centre, the same place on every screen (Ramy, 6 Oct 2026:
+         "why don't we have Say something just at the bottom of the screen in
+         the middle, of every page"). It used to sit bottom-right, where it
+         landed on top of Save as PDF. place() below keeps it clear of a
+         page's own bottom bar as well. */
+      '.say-pill{position:fixed; left:50%; transform:translateX(-50%); bottom:var(--sync-bottom, 18px); z-index:9000; font:600 0.78rem/1 inherit;',
       '  background:var(--paper,#fff); color:var(--grey,#555); border:1px solid var(--sand-line,#ddd);',
       '  border-bottom-width:2px; border-radius:999px; padding:8px 13px; cursor:pointer;}',
       '.say-pill:hover{color:var(--teal,#0b6); border-color:var(--teal,#0b6);}',
@@ -187,7 +196,40 @@
     b.title = 'Tell Connect what is wrong, or what would be better';
     b.onclick = function () { open(''); };
     document.body.appendChild(b);
+    place();
   }
+
+  /* IT MUST NOT SIT ON ANOTHER BUTTON. Ramy, 6 Oct 2026, with a screenshot:
+     the pill was on top of "Save as PDF" on the lesson plan.
+
+     hub-shared's hubReserveForBar sets --sync-bottom for exactly this, and the
+     stylesheet above reads it -- but only three screens call it and it ignores
+     a sticky bar, so Course admin's own save row was still underneath. The
+     pill therefore measures for itself: anything sitting on the bottom edge of
+     the window, fixed or sticky, wide enough to be under the pill and short
+     enough to be a bar rather than a sheet, lifts it clear. */
+  function place() {
+    var b = document.querySelector('.say-pill');
+    if (!b) return;
+    b.style.bottom = '';
+    var vh = window.innerHeight, me = b.getBoundingClientRect(), lift = 0;
+    var all = document.body.querySelectorAll('div,footer,nav,section,form,aside');
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i];
+      if (el === b || el.contains(b)) continue;
+      var cs; try { cs = getComputedStyle(el); } catch (e) { continue; }
+      if (cs.position !== 'fixed' && cs.position !== 'sticky') continue;
+      if (cs.display === 'none' || cs.visibility === 'hidden' || cs.opacity === '0') continue;
+      var r = el.getBoundingClientRect();
+      if (!r.height || r.height > vh * 0.4) continue;      /* a sheet or an overlay is not a bar */
+      if (r.bottom < vh - 6 || r.top > vh) continue;       /* not on the bottom edge */
+      if (r.right < me.left || r.left > me.right) continue; /* not under the pill */
+      lift = Math.max(lift, Math.ceil(r.height + 14));
+    }
+    if (lift) b.style.bottom = lift + 'px';
+  }
+  var placing = 0;
+  function replace_() { clearTimeout(placing); placing = setTimeout(place, 120); }
 
   /* ANYTHING CAN NAME ITSELF. A lesson card carrying
      data-say="Speakout B1 · TP 2A · lesson 1" gets its own small link, and
@@ -217,6 +259,12 @@
   }
 
   window.hubSay = { open: open, hooks: hooks };
+  window.addEventListener('resize', replace_);
+  window.addEventListener('orientationchange', replace_);
+  document.addEventListener('hub:ready', replace_);
+  /* A bar that appears after the pill does -- a save row that only shows
+     once something is edited -- moves it too. */
+  if (window.ResizeObserver) { try { new ResizeObserver(replace_).observe(document.documentElement); } catch (e) {} }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
 })();
