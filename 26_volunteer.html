@@ -43,7 +43,7 @@
 <title>Connect Lite — My classes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610061137">
+<link rel="stylesheet" href="hub-tokens.css?v=202610061220">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:720px; margin:0 auto; padding:22px 20px 60px;}
@@ -68,10 +68,23 @@
   .card{background:var(--surface); border:1px solid var(--sand-line); border-radius:11px; padding:16px 18px; margin:0 0 14px;}
   .card h3{font-family:'Newsreader',Georgia,serif; font-size:1.1rem; margin:0 0 3px;}
   .card p.note{color:var(--grey); font-size:0.82rem; margin:0 0 12px; line-height:1.55;}
-  .mat{display:flex; gap:12px; align-items:center; background:var(--paper); border:1px solid var(--sand-line); border-radius:9px; padding:11px 13px; margin:0 0 8px;}
-  .mat b{display:block; font-size:0.88rem;}
-  .mat small{color:var(--grey); font-size:0.76rem;}
-  .mat a{color:var(--teal); font-weight:700; font-size:0.8rem; text-decoration:none; margin-left:auto; white-space:nowrap;}
+  /* A material is a card you press, not a row with a link in it (Ramy, 6 Oct
+     2026: "give them a nice frame, like a green frame... it reads what's
+     inside, click on it and then it opens the PDF"). The whole card is the
+     link, so a thumb on a phone cannot miss it. */
+  a.mat{display:flex; gap:12px; align-items:center; background:var(--paper); border:1.5px solid var(--teal);
+        border-left-width:5px; border-radius:10px; padding:13px 15px; margin:0 0 10px;
+        text-decoration:none; color:inherit; transition:background 120ms ease, border-color 120ms ease;}
+  a.mat:hover, a.mat:focus-visible{background:var(--sand-deep); border-color:var(--teal-lifted); outline:none;}
+  a.mat b{display:block; font-size:0.92rem; color:var(--ink);}
+  a.mat small{display:block; color:var(--grey); font-size:0.76rem; margin-top:2px;}
+  a.mat .go{color:var(--teal); font-weight:700; font-size:0.8rem; margin-left:auto; white-space:nowrap;}
+  .earlier{margin:14px 0 0; border-top:1px solid var(--sand-line); padding-top:12px;}
+  .earlier summary{cursor:pointer; font-size:0.82rem; font-weight:700; color:var(--grey); list-style:none;}
+  .earlier summary::-webkit-details-marker{display:none;}
+  .earlier summary::before{content:'\25b8 '; display:inline-block; transition:transform 120ms ease;}
+  .earlier[open] summary::before{transform:rotate(90deg);}
+  .earlier > a.mat:first-of-type{margin-top:12px;}
   .segs{display:flex; flex-wrap:wrap; gap:3px; margin:10px 0 8px;}
   .seg{width:17px; height:19px; border-radius:3px; background:oklch(93% 0.006 80);}
   .seg.here{background:var(--teal);} .seg.miss{background:oklch(88% 0.055 27);} .seg.part{background:oklch(85% 0.09 78);}
@@ -116,17 +129,17 @@
   .agreed button{background:none; border:0; padding:0; color:var(--teal); font:inherit; font-weight:700; cursor:pointer;}
   @media (max-width:480px){ .board{padding:16px 14px 50px;} .next{padding:16px 16px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610061137">
+<link rel="stylesheet" href="hub-house.css?v=202610061220">
 </head>
 <body class="hub-grid hub-paper">
 <div class="board" id="app"></div>
 <div id="consent"></div>
-<script src="hub-shared.js?v=202610061137"></script>
-<script src="hub-attendance.js?v=202610061137"></script>
-<script src="hub-volunteer-i18n.js?v=202610061137"></script>
-<script src="hub-store.js?v=202610061137"></script>
-<script src="hub-say.js?v=202610061137"></script>
-<script src="hub-sync.js?v=202610061137"></script>
+<script src="hub-shared.js?v=202610061220"></script>
+<script src="hub-attendance.js?v=202610061220"></script>
+<script src="hub-volunteer-i18n.js?v=202610061220"></script>
+<script src="hub-store.js?v=202610061220"></script>
+<script src="hub-say.js?v=202610061220"></script>
+<script src="hub-sync.js?v=202610061220"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -176,7 +189,33 @@ function mailBlock(){
 /* Ramy, 1 Oct 2026: a shared material names its teaching practice as well as
    its teacher -- "TP3 · Aiko Tanaka · handout" -- so the student knows which
    lesson it belongs to. The letter (A/B) rides along when the share has it. */
-const mat = x => { const tp = x.tp ? 'TP' + String(x.tp) + (x.set ? String(x.set).toUpperCase() : '') : ''; const line = [tp, x.by, x.kind].filter(Boolean).join(' \u00b7 '); return `<div class="mat"><div><b>${esc(x.name)}</b>${line ? '<small>' + esc(line) + '</small>' : ''}</div><a href="${esc(x.url)}" target="_blank" rel="noopener">Open</a></div>`; };
+/* What the card says is inside. A student is being handed a link and deserves
+   to know whether it is a PDF, a video or a form before they press it; the
+   store keeps no file type, so it is read off the address. */
+const fileKind = u => {
+  const s = String(u || '').toLowerCase();
+  if (/docs\.google\.com\/document/.test(s)) return 'Google Doc';
+  if (/docs\.google\.com\/presentation/.test(s)) return 'Slides';
+  if (/docs\.google\.com\/spreadsheets/.test(s)) return 'Sheet';
+  if (/docs\.google\.com\/forms|forms\.gle/.test(s)) return 'Form';
+  if (/\.pdf([?#]|$)/.test(s)) return 'PDF';
+  if (/\.(docx?|odt|pages)([?#]|$)/.test(s)) return 'Document';
+  if (/\.(pptx?|odp|key)([?#]|$)/.test(s)) return 'Slides';
+  if (/\.(jpe?g|png|gif|webp|heic|avif)([?#]|$)/.test(s)) return 'Picture';
+  if (/\.(mp4|mov|webm|m4v)([?#]|$)/.test(s)) return 'Video';
+  if (/\.(mp3|m4a|wav|ogg|aac)([?#]|$)/.test(s)) return 'Audio';
+  if (/youtube\.com|youtu\.be|vimeo\.com/.test(s)) return 'Video';
+  if (/drive\.google\.com/.test(s)) return 'Drive file';
+  return 'Link';
+};
+const mat = x => {
+  const tp = x.tp ? 'TP' + String(x.tp) + (x.set ? String(x.set).toUpperCase() : '') : '';
+  /* 'materials' is the store's own word for which shelf this is on, not
+     anything a student needs told. */
+  const kind = x.kind && x.kind !== 'materials' ? x.kind : '';
+  const line = [tp, x.by, kind, fileKind(x.url)].filter(Boolean).join(' \u00b7 ');
+  return `<a class="mat" href="${esc(x.url)}" target="_blank" rel="noopener noreferrer"><div><b>${esc(x.name)}</b>${line ? '<small>' + esc(line) + '</small>' : ''}</div><span class="go">Open \u2192</span></a>`;
+};
 const ZONE = SETTINGS.timeZone || '';
 
 const MON = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -267,7 +306,7 @@ function render(){
     <div class="card"><h3>For your next class</h3>
       <p class="note">Anything your teachers share for the lesson appears here. Have a look if you like — you do not have to.</p>
       ${SHARED.length ? SHARED.slice(0, 3).map(mat).join('') : '<p class="empty">Nothing shared yet.</p>'}
-      ${SHARED.length > 3 ? `<details class="earlier"><summary>Earlier classes — ${SHARED.length - 3} more</summary>${SHARED.slice(3).map(mat).join('')}</details>` : ''}</div>
+      ${SHARED.length > 3 ? `<details class="earlier"><summary>Everything else your teachers have shared — ${SHARED.length - 3} more</summary>${SHARED.slice(3).map(mat).join('')}</details>` : ''}</div>
     <div class="card"><h3>Your attendance</h3>
       <div class="segs">${REC.days.map(x => `<span class="seg ${x.tier === 'present' ? 'here' : x.tier === 'partial' ? 'part' : x.date < TODAY ? 'miss' : ''}" title="${esc(shortDay(x.date))}"></span>`).join('')}</div>
       <div class="hrs"><b>${fmtH(hours)} h</b><span>${attended} ${attended === 1 ? 'class' : 'classes'}${REC.partial ? ' · ' + REC.partial + ' part of a class' : ''}${upcoming.length ? ' · ' + upcoming.length + ' still to come' : ''}</span></div>

@@ -39,7 +39,7 @@
 <title>Connect Lite — Volunteer register</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610061137">
+<link rel="stylesheet" href="hub-tokens.css?v=202610061220">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -58,7 +58,6 @@
   .reg{background:var(--surface); border:1px solid var(--sand-line); border-left:5px solid var(--teal); border-radius:10px; padding:4px 0 6px;}
   .who{display:grid; grid-template-columns:1.1fr auto; gap:12px; align-items:center; padding:11px 16px; border-top:1px solid var(--sand-line);}
   .mailrow{margin:6px 0 2px;} .mailrow .email{font:0.82rem 'Karla',sans-serif; width:min(100%, 280px); padding:5px 8px; border:1px solid var(--sand-line); border-radius:6px; background:var(--field); color:var(--ink);} .mailrow small{margin-left:8px; color:var(--grey); font-size:0.74rem;}
-  .reply{display:inline-block; font-size:0.78rem; font-weight:700; margin:4px 0 2px; color:var(--grey);} .reply.yes{color:var(--teal);} .reply.no{color:var(--brick);} .reply small{font-weight:500; color:var(--grey); margin-left:4px;}
   .legend.coming{font-weight:500; color:var(--ink);}
   .who:first-child{border-top:0;}
   .nm{font-weight:700; font-size:0.94rem;}
@@ -103,21 +102,21 @@
     .legend .seg{width:15px; height:17px;} }
   @media print{ .back,.bar,.panel,#hubSync,.seg{cursor:auto;} .bar,.panel,.back,#hubSync{display:none !important;} body{background:#fff;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610061137">
+<link rel="stylesheet" href="hub-house.css?v=202610061220">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610061137"></script>
-<script src="hub-shared.js?v=202610061137"></script>
-<script src="hub-timetable-parse.js?v=202610061137"></script>
-<script src="hub-xlsx.js?v=202610061137"></script>
-<script src="hub-attendance.js?v=202610061137"></script>
-<script src="hub-store.js?v=202610061137"></script>
-<script src="hub-say.js?v=202610061137"></script>
-<script src="hub-sync.js?v=202610061137"></script>
+<script src="hub-due.js?v=202610061220"></script>
+<script src="hub-shared.js?v=202610061220"></script>
+<script src="hub-timetable-parse.js?v=202610061220"></script>
+<script src="hub-xlsx.js?v=202610061220"></script>
+<script src="hub-attendance.js?v=202610061220"></script>
+<script src="hub-store.js?v=202610061220"></script>
+<script src="hub-say.js?v=202610061220"></script>
+<script src="hub-sync.js?v=202610061220"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -264,8 +263,7 @@ function render(){
           : (st.level ? '<span class="lvltag">' + esc(st.level) + '</span>' : '')}${IS_TUTOR
           ? `<span class="carried"><input type="number" min="0" step="0.25" data-carried="${i}" value="${st.carried != null ? esc(st.carried) : ''}" placeholder="0" title="Hours this student already had at the centre, before this course"><small>h before</small></span>`
           : (st.carried ? '<small>' + esc(st.carried) + ' h before this course</small>' : '')}${st.note ? '<small>' + esc(st.note) + '</small>' : ''}</div>
-        ${IS_TUTOR ? `<div class="mailrow"><input type="email" class="email" data-email="${i}" value="${esc(st.email || '')}" placeholder="Email, for the reminders" title="The day before a class they are asked whether they are coming; an hour before, those who said yes are reminded.">${st.email && st.notify === false ? '<small>asked for no emails</small>' : ''}</div>` : ''}
-        ${COMING && st.token ? (() => { const r = (st.replies || {})[COMING.day]; return `<span class="reply ${r ? r.coming : 'none'}">${r ? (r.coming === 'yes' ? '✓ Coming' : '✗ Not coming') : '· No answer yet'} <small>${dm(COMING.day)}</small></span>`; })() : ''}
+        ${IS_TUTOR ? `<div class="mailrow"><input type="email" class="email" data-email="${i}" value="${esc(st.email || '')}" placeholder="Email, for the reminders">${st.email && st.notify === false ? '<small>asked for no emails</small>' : ''}</div>` : ''}
         ${st.token ? (st.agreed
           ? `<span class="agreed yes">✓ Agreed to the joining note, ${dm(String(st.agreed).slice(0, 10))}</span>`
           : `<span class="agreed no">Has not yet agreed to the joining note (it opens with their link)</span>`) : ''}
@@ -284,7 +282,7 @@ function render(){
             : `<span class="nolink" title="The course id has not arrived from the store yet">No link yet</span>`}<button type="button" class="btn quiet sm" data-rm="${i}">Remove</button></div>` : ''}</div>
     </div>`;
   }).join('')}</div>
-  ${COMING ? `<p class="legend coming"><b>${esc(dm(COMING.day))}, TP ${esc(COMING.tp)} at ${esc(COMING.from)}:</b> ${COMING.yes} coming · ${COMING.no} not · ${COMING.noAnswer} no answer yet. Asked the day before, by email.</p>` : ''}
+  ${COMING ? `<p class="legend coming"><b>Next class, ${esc(dm(COMING.day))} — TP ${esc(COMING.tp)} at ${esc(COMING.from)}:</b> expect about ${COMING.yes + COMING.noAnswer}. ${COMING.yes} said yes, ${COMING.no} said no, ${COMING.noAnswer} have not answered.</p>` : ''}
   <p class="legend">
     <span><span class="seg here"></span>in the room</span>
     <span><span class="seg part"></span>came for part of it</span>
