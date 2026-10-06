@@ -55,29 +55,23 @@
     var s = document.createElement('style');
     s.id = 'hub-say-css';
     s.textContent = [
-      /* Tucked INSIDE the page's column rather than hard against the viewport.
-         Ramy, 5 Oct 2026: "say something is now kind of sitting on the edge of
-         the frame, so it just doesn't look very nice ... move it a little bit.
-         Maybe inside." Once Course admin got its 1276px board, a pill pinned to
-         the window hung off in the margin beside the frame instead of belonging
-         to it. 50vw - 620px puts its right edge 18px inside a 1276px column
-         (half of it is 638px). Below that the board is full width inside the
-         page's own 20px padding, so the floor is 20+18: measured, the pill sits
-         18px in at every width rather than landing ON the edge, which is what
-         it did at 1280 and under. */
-      /* Above the page's own bottom bar, never on top of it. --sync-bottom is
-         set by hubReserveForBar for exactly this: the sync pill landed on top
-         of Turn in on 23 Sep 2026 and got this variable, and this pill, written
-         on 5 Oct, sat straight back down on Save as PDF (Ramy, 6 Oct 2026). */
-      /* Bottom centre, the same place on every screen (Ramy, 6 Oct 2026:
-         "why don't we have Say something just at the bottom of the screen in
-         the middle, of every page"). It used to sit bottom-right, where it
-         landed on top of Save as PDF. place() below keeps it clear of a
-         page's own bottom bar as well. */
-      '.say-pill{position:fixed; left:50%; transform:translateX(-50%); bottom:var(--sync-bottom, 18px); z-index:9000; font:600 0.78rem/1 inherit;',
-      '  background:var(--paper,#fff); color:var(--grey,#555); border:1px solid var(--sand-line,#ddd);',
-      '  border-bottom-width:2px; border-radius:999px; padding:8px 13px; cursor:pointer;}',
-      '.say-pill:hover{color:var(--teal,#0b6); border-color:var(--teal,#0b6);}',
+      /* IT IS NOT A FLOATING THING ANY MORE. Ramy, 6 Oct 2026: "I don't want
+         it hovering everywhere. I want it out of the way... if it's covering
+         anything, move it to the side. You make a call."
+
+         The call: nothing fixed. It sat bottom-right and covered Save as PDF;
+         it moved to bottom-centre and covered whatever was in the middle;
+         lifting it above a page's own bar fixed the bars and not the rest. A
+         fixed element on a page that already has its own bottom controls is a
+         collision looking for a screen. In the flow at the foot of the page it
+         cannot cover anything, on any screen, at any width, for ever. It is a
+         way to report something, not a tool anybody reaches for mid-task. */
+      '.say-pill{display:block; margin:34px auto 26px; font:600 0.8rem/1 inherit;',
+      '  background:var(--plum,#5d2450); color:var(--paper,#fff); border:0;',
+      '  border-radius:999px; padding:11px 20px; cursor:pointer;',
+      '  box-shadow:0 1px 2px rgba(0,0,0,.14);}',
+      '.say-pill:hover{background:var(--plum-lifted,#6f2c60);}',
+      '.say-pill:focus-visible{outline:3px solid var(--gold,#c89b4a); outline-offset:3px;}',
       '.say-here{font:600 0.72rem/1 inherit; background:none; border:0; padding:3px 0; margin:0;',
       '  color:var(--faint,#999); cursor:pointer; text-decoration:underline; text-underline-offset:3px;}',
       '.say-here:hover{color:var(--teal,#0b6);}',
@@ -202,41 +196,30 @@
     b.textContent = 'Say something';
     b.title = 'Tell Connect what is wrong, or what would be better';
     b.onclick = function () { open(''); };
-    document.body.appendChild(b);
-    place();
+    host().appendChild(b);
   }
 
-  /* IT MUST NOT SIT ON ANOTHER BUTTON. Ramy, 6 Oct 2026, with a screenshot:
-     the pill was on top of "Save as PDF" on the lesson plan.
-
-     hub-shared's hubReserveForBar sets --sync-bottom for exactly this, and the
-     stylesheet above reads it -- but only three screens call it and it ignores
-     a sticky bar, so Course admin's own save row was still underneath. The
-     pill therefore measures for itself: anything sitting on the bottom edge of
-     the window, fixed or sticky, wide enough to be under the pill and short
-     enough to be a bar rather than a sheet, lifts it clear. */
-  function place() {
-    var b = document.querySelector('.say-pill');
-    if (!b) return;
-    b.style.bottom = '';
-    var vh = window.innerHeight, me = b.getBoundingClientRect(), lift = 0;
-    var all = document.body.querySelectorAll('div,footer,nav,section,form,aside');
-    for (var i = 0; i < all.length; i++) {
-      var el = all[i];
-      if (el === b || el.contains(b)) continue;
-      var cs; try { cs = getComputedStyle(el); } catch (e) { continue; }
-      if (cs.position !== 'fixed' && cs.position !== 'sticky') continue;
-      if (cs.display === 'none' || cs.visibility === 'hidden' || cs.opacity === '0') continue;
-      var r = el.getBoundingClientRect();
-      if (!r.height || r.height > vh * 0.4) continue;      /* a sheet or an overlay is not a bar */
-      if (r.bottom < vh - 6 || r.top > vh) continue;       /* not on the bottom edge */
-      if (r.right < me.left || r.left > me.right) continue; /* not under the pill */
-      lift = Math.max(lift, Math.ceil(r.height + 14));
-    }
-    if (lift) b.style.bottom = lift + 'px';
+  /* WHERE IN THE FLOW. Not simply the end of <body>: ten screens centre their
+     board with body{display:flex; justify-content:center}, a flex ROW, so a
+     pill appended to the body there became a second column squeezed in beside
+     the board -- off the right edge at phone width, and under the action bar
+     (found by walk-with-data.mjs the first time it ran, 6 Oct 2026). So it goes
+     INSIDE the page's own container: the tallest element child of the body
+     that is in the flow, which on those screens is the board and everywhere
+     else is the page wrapper. The body's own bottom padding, which every
+     screen with a fixed bar already reserves, then keeps it clear of the bar.
+     If nothing has a height yet, the last in-flow child; failing that, body. */
+  function host() {
+    var best = null, tall = 0, last = null;
+    [].forEach.call(document.body.children, function (el) {
+      if (/^(SCRIPT|STYLE|LINK|TEMPLATE|NOSCRIPT)$/.test(el.tagName)) return;
+      var cs = getComputedStyle(el);
+      if (cs.display === 'none' || /^(fixed|absolute|sticky)$/.test(cs.position)) return;
+      last = el;
+      if (el.offsetHeight > tall) { tall = el.offsetHeight; best = el; }
+    });
+    return best || last || document.body;
   }
-  var placing = 0;
-  function replace_() { clearTimeout(placing); placing = setTimeout(place, 120); }
 
   /* ANYTHING CAN NAME ITSELF. A lesson card carrying
      data-say="Speakout B1 · TP 2A · lesson 1" gets its own small link, and
@@ -266,12 +249,6 @@
   }
 
   window.hubSay = { open: open, hooks: hooks };
-  window.addEventListener('resize', replace_);
-  window.addEventListener('orientationchange', replace_);
-  document.addEventListener('hub:ready', replace_);
-  /* A bar that appears after the pill does -- a save row that only shows
-     once something is edited -- moves it too. */
-  if (window.ResizeObserver) { try { new ResizeObserver(replace_).observe(document.documentElement); } catch (e) {} }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
 })();

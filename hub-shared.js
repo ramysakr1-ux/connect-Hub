@@ -485,7 +485,19 @@ window.hubReserveForBar = function(selector){
     var h = 0;
     try { h = getComputedStyle(bar).position === 'fixed' ? bar.getBoundingClientRect().height : 0; } catch(e){ return; }
     if (h > 0) {
-      document.documentElement.style.setProperty('--bar-reserve', Math.ceil(h + GAP) + 'px');
+      /* On a phone the dictation pill rides a row ABOVE the bar (hub-house.css,
+         max-width:560px), so the reserve has to clear that too, or the last
+         field's corner and the say-something pill scroll to a stop behind
+         Dictate (walk-with-data.mjs, 6 Oct 2026). The pill is built by the
+         page's own script, which has run by the hub:ready fit below. */
+      var lift = 0;
+      try {
+        var dict = document.querySelector('.dictbar');
+        if (dict && window.matchMedia && matchMedia('(max-width:560px)').matches) {
+          var dh = dict.getBoundingClientRect().height; if (dh > 0) lift = Math.ceil(dh + 46);
+        }
+      } catch (e) {}
+      document.documentElement.style.setProperty('--bar-reserve', Math.ceil(h + GAP + lift) + 'px');
       /* The sync pill is fixed to the bottom-left corner, which on a screen
          with an action bar is underneath it -- and on the plan, on top of
          Turn in (23 Sep 2026). It rides above the bar instead. */
