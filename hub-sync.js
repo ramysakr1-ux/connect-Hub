@@ -541,7 +541,18 @@
       if (kept) schedule('r:' + t.token + ':tpHistory', { op: 'put', token: t.token, kind: 'tpHistory', data: history });
       /* v53: the address rides with the row for a tutor; the store already
          leaves it off an assessor's roster, so nothing to strip here. */
-      roster.trainees[t.token] = { id: t.token, name: t.name, group: t.group, email: t.email || '', importedAt: t.created, tp: { plan: r.plan || null, selfeval: r.selfeval || null, feedback: r.feedback || null, history: history }, assignments: r.assignments || {}, tracker: r.tracker || {}, observations: r.observations || {}, links: r.links || [], staffLinks: r.staffLinks || [], celta5: r.celta5 || {}, celta5t: r.celta5t || {} };
+      /* THE FOURTH PLACE. Found 6 Oct 2026, after a trainee's signature was
+         confirmed sent, confirmed kept by the store, confirmed returned in
+         t.records.agreement -- and the assessor's pack still read "0 signed".
+         This function names, by hand, every kind the store is allowed to carry
+         onto the flattened object this page actually reads; a kind the store
+         returns under t.records but that is not named here is dropped right
+         here, before localStorage ever sees it. The store side (TRAINEE_WRITES,
+         TRAINEE_READS in Code.gs) was the first two places and both were right
+         days ago; nobody had reason to open this file as well, because every
+         kind added before today -- celta5, celta5t, staffLinks -- had been
+         added here in the same sitting as its store change. agreement was not. */
+      roster.trainees[t.token] = { id: t.token, name: t.name, group: t.group, email: t.email || '', importedAt: t.created, tp: { plan: r.plan || null, selfeval: r.selfeval || null, feedback: r.feedback || null, history: history }, assignments: r.assignments || {}, tracker: r.tracker || {}, observations: r.observations || {}, links: r.links || [], staffLinks: r.staffLinks || [], celta5: r.celta5 || {}, celta5t: r.celta5t || {}, agreement: r.agreement || {} };
     });
     out['connect_roster_v1'] = JSON.stringify(roster);
     return out;
