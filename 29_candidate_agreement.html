@@ -26,7 +26,7 @@
 <title>Candidate agreement</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610061106">
+<link rel="stylesheet" href="hub-tokens.css?v=202610061137">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -70,12 +70,12 @@
   <a class="back" id="back" href="index.html">&#8592; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610061106"></script>
-<script src="hub-store.js?v=202610061106"></script>
-<script src="hub-hand.js?v=202610061106"></script>
-<script src="hub-ink.js?v=202610061106"></script>
-<script src="hub-say.js?v=202610061106"></script>
-<script src="hub-sync.js?v=202610061106"></script>
+<script src="hub-shared.js?v=202610061137"></script>
+<script src="hub-store.js?v=202610061137"></script>
+<script src="hub-hand.js?v=202610061137"></script>
+<script src="hub-ink.js?v=202610061137"></script>
+<script src="hub-say.js?v=202610061137"></script>
+<script src="hub-sync.js?v=202610061137"></script>
 <script type="text/x-hub-app">
 /* A volunteer student is not on the course. They come in off the street to be
    taught, and what the centre asks of its TRAINEES -- attendance, plagiarism,
@@ -94,6 +94,11 @@ const now = () => new Date().toISOString();
 const when = iso => { try { return new Date(iso).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}); } catch(e){ return iso; } };
 
 const IS_TRAINEE = !!(window.HubStore && HubStore.isTrainee && HubStore.isTrainee());
+/* The name on a signature is the one the centre put on the roster, never one
+   typed into this page (Ramy, 6 Oct 2026: "there's no option to change it
+   there shouldn't be one"). A candidate's own boot leaves it in hub:me. */
+const ME = (function(){ try { return JSON.parse(localStorage.getItem('hub:me') || '{}') || {}; } catch(e){ return {}; } })();
+const MY_NAME = String(ME.name || '').trim();
 const KEY = 'chub:agreement';
 /* Staff open this with ?trainee=<id> from that trainee's own row in the pack,
    the same way the observation sheets and the marked assignments do (Ramy,
@@ -178,22 +183,25 @@ function render(){
     ? `<div class="ownfile"><b>Your centre keeps its agreement as its own document.</b> <a href="${esc(own)}" target="_blank" rel="noopener noreferrer">Open it</a>, read it, and sign below to record that you have.</div>`
     : '';
 
-  /* The signature. */
+  /* The signature. It is written from the roster's name and the candidate's
+     own token, so it is the same every time and there is nothing on this page
+     that could change it. A centre that rewrites the agreement asks for it
+     again (the fingerprint below) -- the same signature, a new date. */
   let sign;
   if (rec.at) {
     const stale = rec.print && rec.print !== fp;
     sign = `<div class="signbox"><h2>Signed</h2>
-      <div class="signed">${rec.ink && window.hubInk ? window.hubInk.svg(rec.ink) : ''}
+      <div class="signed">${rec.ink && window.hubInk ? window.hubInk.svg(rec.ink, '', rec.name) : ''}
         <div><b>${esc(rec.name)}</b> &mdash; signed ${esc(when(rec.at))}</div></div>
-      ${stale ? `<p class="lead" style="margin:12px 0 0">Your centre has changed the agreement since you signed it. Read it again and sign the new wording.</p>
-        <div class="row"><div><label class="f">Your name, to sign again</label><input type="text" id="signName" value="${esc(rec.name || '')}" placeholder="Type your name"></div>
-        <button class="btn" type="button" id="signBtn">Sign again</button></div>` : ''}</div>`;
+      ${stale ? `<p class="lead" style="margin:12px 0 0">Your centre has changed the agreement since you signed it. Read it again and sign the new wording; your signature is the same one.</p>
+        <div class="row"><button class="btn" type="button" id="signBtn">Sign the new wording</button></div>
+        <p class="status" id="status"></p>` : ''}</div>`;
   } else if (IS_TRAINEE) {
-    sign = `<div class="signbox"><h2>Sign it</h2>
+    sign = MY_NAME ? `<div class="signbox"><h2>Sign it</h2>
       <p class="lead">Signing records that you have read the agreement above and accept it. Your name and the date are kept with your course record; your tutor and the assessor can see that you signed and when.</p>
-      <div class="row"><div><label class="f">Your name, to sign</label><input type="text" id="signName" placeholder="Type your name"></div>
-      <button class="btn" type="button" id="signBtn">Read and sign</button></div>
-      <p class="status" id="status"></p></div>`;
+      <div class="row"><button class="btn" type="button" id="signBtn">Read and sign</button></div>
+      <p class="status" id="status"></p></div>`
+      : `<div class="signbox"><h2>Sign it</h2><p class="ro">Your course has not finished loading your name yet. Give it a moment and open this page again — your signature is written from the name your centre has for you, not one typed here.</p></div>`;
   } else if (TRAINEE_ID) {
     sign = `<div class="signbox"><h2>Not signed yet</h2><p class="ro">${WHO ? esc(WHO) : 'This trainee'} has not signed the agreement.</p></div>`;
   } else {
@@ -204,11 +212,11 @@ function render(){
 
   const btn = $('signBtn');
   if (btn) btn.addEventListener('click', async () => {
-    const input = $('signName'); const name = (input && input.value.trim()) || '';
-    if (!name) { const s = $('status'); if (s) s.textContent = 'Type your name to sign.'; return; }
+    const name = (record().name || MY_NAME || '').trim();
+    if (!name) { const st = $('status'); if (st) st.textContent = 'Your name has not loaded from the course yet.'; return; }
     let ink = '';
-    try { ink = await window.hubInk.pad({ name, title: 'Sign the candidate agreement' }); } catch(e) { ink = ''; }
-    if (ink === null) return;               // cancelled on the pad
+    try { ink = await window.hubInk.confirm({ name, title: 'Sign the candidate agreement' }); } catch(e) { ink = null; }
+    if (ink === null) return;               // cancelled
     const r = { name, at: now(), print: fp };
     if (ink) r.ink = ink;
     saveRecord(r);

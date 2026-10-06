@@ -20,7 +20,7 @@
  * VERSION is stamped by bump-assets.py with the same stamp as the ?v= links,
  * so each push retires the previous cache on activate.
  */
-const VERSION = 'lite-202610061106';
+const VERSION = 'lite-202610061137';
 const SHELL = [
   './', 'index.html', 'invite.html',
   '1_trainee_plan_and_analysis.html', '2_trainee_self_evaluation.html', '3_tutor_feedback.html',
@@ -29,7 +29,13 @@ const SHELL = [
   '10_tutor_assignment_marking.html', '11_assignment_record.html', '12_assessor_pack.html',
   '13_grades_report.html', '14_owner.html', '15_course_record.html', '16_final_report.html',
   'hub-shared.js', 'hub-store.js', 'hub-sync.js', 'hub-tracker.js', 'hub-due.js', 'hub-exchange.js',
-  'hub-crit-learn.js', 'hub-rotation.js', 'hub-timetable-parse.js', 'hub-docx.js', 'hub-xlsx.js', 'hub-attendance.js', 'hub-volunteer-i18n.js', 'hub-ink.js', 'hub-hand.js', 'hub-pages.js',
+  'hub-crit-learn.js', 'hub-rotation.js', 'hub-timetable-parse.js', 'hub-docx.js', 'hub-xlsx.js', 'hub-attendance.js', 'hub-volunteer-i18n.js', 'hub-ink.js', 'hub-hand.js',
+  /* The signature faces. They are in the SHELL but NOT in bump-assets.py's
+     list, and that is deliberate rather than the oversight that list warns
+     about: no HTML references them, so there is nothing for a ?v= to stamp.
+     hub-hand.js asks for them from its own @font-face, and it IS stamped,
+     so a change to which faces exist ships with the code that names them. */
+  'fonts/allura.ttf', 'fonts/caveat.ttf', 'fonts/parisienne.ttf', 'fonts/sacramento.ttf', 'fonts/zeyada.ttf', 'hub-pages.js',
   /* 5 Oct 2026: hub-say.js is on every screen, and the five after it had never
      been in the shell at all -- offline, they 404'd. */
   'hub-say.js', 'celta5-appendix.js', 'hub-card-mail.js', 'hub-feedback.js', 'hub-front.js', 'hub-shelf.js',

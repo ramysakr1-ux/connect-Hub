@@ -41,7 +41,7 @@
 <title>Connect Lite — CELTA 5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610061106">
+<link rel="stylesheet" href="hub-tokens.css?v=202610061137">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:980px; margin:0 auto; padding:26px 20px 80px;}
@@ -153,6 +153,7 @@
   details.read .body li.sub{margin-left:20px; list-style:circle;}
   details.read .body .tablewrap{overflow-x:auto; margin:0 0 10px;}
   details.read .body table.grid{font-size:0.78rem;}
+  .signas{font-weight:700; font-size:0.95rem; padding:7px 0 0;}
   .confirm{background:var(--sand-deep); border-radius:8px; padding:10px 12px; font-size:0.84rem; line-height:1.55; margin:8px 0 0;}
   .chk{display:flex; gap:10px; align-items:flex-start; font-size:0.88rem; line-height:1.5; margin:6px 0;}
   .chk input{margin-top:4px; accent-color:var(--teal);}
@@ -179,7 +180,7 @@
     textarea, input{border:0; background:none; padding:0;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610061106">
+<link rel="stylesheet" href="hub-house.css?v=202610061137">
 </head>
 <body class="hub-celta5 hub-paper hub-course">
 <div class="board">
@@ -192,19 +193,19 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202610061106"></script>
-<script src="hub-hand.js?v=202610061106"></script>
-<script src="hub-ink.js?v=202610061106"></script>
-<script src="assignment-defaults.js?v=202610061106"></script>
-<script src="celta5-text.js?v=202610061106"></script>
-<script src="celta5-appendix.js?v=202610061106"></script>
-<script src="celta5-criteria.js?v=202610061106"></script>
-<script src="hub-tracker.js?v=202610061106"></script>
-<script src="observation-defaults.js?v=202610061106"></script>
-<script src="hub-shared.js?v=202610061106"></script>
-<script src="hub-store.js?v=202610061106"></script>
-<script src="hub-say.js?v=202610061106"></script>
-<script src="hub-sync.js?v=202610061106"></script>
+<script src="celta5-pdf.js?v=202610061137"></script>
+<script src="hub-hand.js?v=202610061137"></script>
+<script src="hub-ink.js?v=202610061137"></script>
+<script src="assignment-defaults.js?v=202610061137"></script>
+<script src="celta5-text.js?v=202610061137"></script>
+<script src="celta5-appendix.js?v=202610061137"></script>
+<script src="celta5-criteria.js?v=202610061137"></script>
+<script src="hub-tracker.js?v=202610061137"></script>
+<script src="observation-defaults.js?v=202610061137"></script>
+<script src="hub-shared.js?v=202610061137"></script>
+<script src="hub-store.js?v=202610061137"></script>
+<script src="hub-say.js?v=202610061137"></script>
+<script src="hub-sync.js?v=202610061137"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -297,10 +298,18 @@ const election = (obj, key, opts) => {
 /* one signature: a typed name and the moment */
 const signature = (obj, key, opts) => {
   const s = obj[key];
-  if (s && s.at) return `<div class="signed${s.ink ? ' inked' : ''}">${s.ink ? window.hubInk.svg(s.ink) : ''}<div><b>${esc(s.name)}</b> — signed ${when(s.at)}</div></div>`;
+  if (s && s.at) return `<div class="signed${s.ink ? ' inked' : ''}">${s.ink ? window.hubInk.svg(s.ink, '', s.name) : ''}<div><b>${esc(s.name)}</b> — signed ${when(s.at)}</div></div>`;
   if (!opts.mine) return `<div class="ro empty" style="margin-top:12px">${opts.waiting || 'Not signed yet'}</div>`;
   if (opts.locked) return `<div class="ro empty" style="margin-top:12px">${opts.locked}</div>`;
-  return `<div class="sig"><div class="who"><label class="f">${opts.label || 'Your name, to sign'}</label><input type="text" data-sig="${opts.o}:${key}" value="${esc(opts.prefill || '')}" placeholder="Type your name"></div><button class="btn primary" type="button" data-sign="${opts.o}:${key}">${opts.button || 'Sign'}</button></div>`;
+  /* When the course already knows who this is -- every candidate, and a tutor
+     who has signed before -- the name is shown, not offered for typing. A
+     signature written from a name you can retype is a signature you can
+     change, and Ramy's rule is that there is no way to change one. */
+  const who = String(opts.prefill || '').trim();
+  const field = who
+    ? `<label class="f">Signing as</label><div class="signas">${esc(who)}</div><input type="hidden" data-sig="${opts.o}:${key}" value="${esc(who)}">`
+    : `<label class="f">${opts.label || 'Your name, to sign'}</label><input type="text" data-sig="${opts.o}:${key}" placeholder="Type your name">`;
+  return `<div class="sig"><div class="who">${field}</div><button class="btn primary" type="button" data-sign="${opts.o}:${key}">${opts.button || 'Sign'}</button></div>`;
 };
 const marksGrid = (candMarks, tutorMarks, opts) => {
   const topics = opts.topics; let last = '';
@@ -766,20 +775,20 @@ function bind(){
     const [o, key] = el.dataset.elect.split(':'); if (!isMineObj(o)) return;
     OBJ[o]()[key] = el.value === 'y'; save(o);
   }));
-  /* A signature is the typed name and the moment; the drawn ink, when the
-     signer draws one, rides along as a small path (hub-ink.js). */
+  /* A signature is the name and the moment; the mark that sits above it is
+     written from the signer, the same one every time (hub-hand.js). */
   app.querySelectorAll('[data-sign]').forEach(b => b.addEventListener('click', async () => {
     const [o, key] = b.dataset.sign.split(':'); if (!isMineObj(o)) return;
     const input = app.querySelector(`[data-sig="${o}:${key}"]`); const name = (input && input.value.trim()) || '';
     if (!name) { alert('Type your name to sign.'); return; }
-    const ink = await window.hubInk.pad({ name, title: b.textContent.trim() }); if (ink === null) return;
+    const ink = await window.hubInk.confirm({ name, title: b.textContent.trim() }); if (ink === null) return;
     const obj = OBJ[o](); obj[key] = ink ? { name, at: now(), ink } : { name, at: now() }; if (o === 'fint' && IS_TUTOR) localStorage.setItem('chub:tutorName', name);
     save(o); render();
   }));
   app.querySelectorAll('[data-submit]').forEach(b => b.addEventListener('click', () => { if (!IS_TRAINEE) return; C.stage2 = C.stage2 || {}; C.stage2.submittedAt = now(); saveC(); render(); }));
   app.querySelectorAll('[data-return]').forEach(b => b.addEventListener('click', async () => {
     if (!IS_TUTOR) return; const stage = b.dataset.return;
-    const got = await window.hubInk.pad({ askName: true, name: tutorName(), title: 'Sign and return ' + stage.replace('stage', 'Stage ') }); if (!got || !got.name) return;
+    const got = await window.hubInk.confirm({ askName: true, name: tutorName(), title: 'Sign and return ' + stage.replace('stage', 'Stage ') }); if (!got || !got.name) return;
     const name = got.name, ink = got.ink;
     localStorage.setItem('chub:tutorName', name); TT[stage] = TT[stage] || {}; TT[stage].returnedAt = now(); TT[stage].signedBy = ink ? { name, at: now(), ink } : { name, at: now() }; saveT(); render();
   }));

@@ -20,7 +20,9 @@
  *
  * window.hubCelta5Pdf.render(input, assets) -> Promise<Uint8Array>
  *   input:  the same shape Connect's renderCelta5ReplicaBuffer takes
- *   assets: { master: Uint8Array, regular: Uint8Array, bold: Uint8Array }
+ *   assets: { master: Uint8Array, regular: Uint8Array, bold: Uint8Array,
+ *             hands?: { <face>: Uint8Array } }  -- signature faces; without
+ *             them render() fetches fonts/<face>.ttf from the site itself
  */
 (function(){
   'use strict';
@@ -55,7 +57,27 @@
     page.drawSvgPath(ink, { x, y: fitzY(page, y1 - INK_H + 6, 0), scale, borderColor: rgb(0.1, 0.08, 0.06), borderWidth: 1.25 / scale, borderLineCap: cap });
     return w;
   }
+  /* A signature written from a name (hub-hand.js, 6 Oct 2026) travels in the
+     same `ink` field as a drawn one, as '@face,slant'. HANDS holds the faces
+     render() embedded for this booklet; without one the name still goes down
+     in the form's own type, which is what the booklet did before signatures
+     existed and is never wrong, only plainer. */
+  let HANDS = {};
+  function drawWritten(page, ink, name, x, y1, maxWidth){
+    const face = HANDS[String(ink).slice(1).split(',')[0]];
+    if (!face) return 0;
+    let size = 19;
+    while (size > 8 && face.widthOfTextAtSize(name, size) > maxWidth) size -= 0.5;
+    if (face.widthOfTextAtSize(name, size) > maxWidth) return 0;
+    page.drawText(name, { x, y: fitzY(page, y1, 0) + 1.5, size, font: face, color: rgb(0.1, 0.08, 0.06) });
+    return face.widthOfTextAtSize(name, size);
+  }
   function drawSigned(page, font, name, ink, x, y1, maxWidth){
+    if (ink && String(ink).charAt(0) === '@') {
+      const w = drawWritten(page, ink, name, x, y1, maxWidth);
+      if (w) { drawSignature(page, font, name, x + w + 10, y1, maxWidth - w - 10, 6.5, 5); return; }
+      drawSignature(page, font, name, x, y1, maxWidth); return;
+    }
     if (ink) { const w = drawInk(page, ink, x, y1, maxWidth); if (w) { drawSignature(page, font, name, x + w + 8, y1, maxWidth - w - 8, 6.5, 5); return; } }
     drawSignature(page, font, name, x, y1, maxWidth);
   }
@@ -311,6 +333,22 @@
     /* subset:false on purpose -- the subsetter drops composite glyphs and
        Turkish and other accented names lose letters (Connect, Aug 2026) */
     const fonts = { regular: await out.embedFont(assets.regular, { subset: false }), bold: await out.embedFont(assets.bold, { subset: false }) };
+    /* The signature faces. Only the ones this candidate's booklet actually
+       uses are fetched, and a face that will not load is not an error: the
+       name still goes down in the form's own type. */
+    HANDS = {};
+    const wanted = new Set();
+    (function walk(v){
+      if (!v) return;
+      if (typeof v === 'string') { if (v.charAt(0) === '@') wanted.add(v.slice(1).split(',')[0].replace(/[^a-z]/g, '')); return; }
+      if (typeof v === 'object') Object.keys(v).forEach(k => walk(v[k]));
+    })(input);
+    for (const face of wanted) {
+      try {
+        const bytes = (assets.hands && assets.hands[face]) || await (await fetch('fonts/' + face + '.ttf')).arrayBuffer();
+        HANDS[face] = await out.embedFont(bytes, { subset: false });
+      } catch (e) { /* plainer, never wrong */ }
+    }
     const obsCopies = copiesNeeded((input.observations || []).length, OBS_PER_PAGE);
     const tpCopies = copiesNeeded((input.assessedTp || []).length, TP_PER_PAGE);
     const { list, start } = buildPageList(master.getPageCount(), new Map([[PAGE_INDEX.observations, obsCopies], [PAGE_INDEX.assessedTp, tpCopies]]));
