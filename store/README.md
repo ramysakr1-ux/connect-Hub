@@ -14,6 +14,12 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
+**From 6 Oct 2026 the code is to live in `store/gas/` and be pushed with
+clasp** (`clasp push`, then `clasp deploy -i <the existing deployment id>`),
+so nobody pastes into the editor again. `HANDOVER-2026-10-06.md` at the repo
+root has the steps. Until the first `clasp pull` lands, the editor is still
+the source of truth and the patches below are how it got there.
+
 ## 4 Oct 2026 — a course's TP point set rides with the points (version 67)
 `tpPointsFor_` returns `set` to readers, so the lessons written once against a
 coursebook — sessions, slots, stages, timings — survive a read. Candidates are
