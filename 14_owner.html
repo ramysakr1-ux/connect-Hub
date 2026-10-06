@@ -18,7 +18,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610062219">
+<link rel="stylesheet" href="hub-tokens.css?v=202610062232">
 <style>
   :root{
     /* the pane -- the same four values the trainee landing's cards use */
@@ -364,7 +364,7 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610062219">
+<link rel="stylesheet" href="hub-house.css?v=202610062232">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -388,10 +388,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610062219"></script>
-<script src="hub-store.js?v=202610062219"></script>
-<script src="hub-say.js?v=202610062219"></script>
-<script src="hub-card-mail.js?v=202610062219"></script>
+<script src="hub-shared.js?v=202610062232"></script>
+<script src="hub-store.js?v=202610062232"></script>
+<script src="hub-say.js?v=202610062232"></script>
+<script src="hub-card-mail.js?v=202610062232"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -729,6 +729,34 @@ async function noteFor(c){
   ].filter(x => x !== null).join('\n');
 }
 
+/* THE MESSAGE FOR A REAL COURSE. Not the pitch: the centre has bought it and
+   is waiting for the link. It says the three things a tutor opening it cold
+   needs -- one link for the whole team, the first visit is a welcome that sets
+   the course up, keep it to the team -- in the same words the invitation card
+   and the welcome use, so the email and the page agree. Through the owner's
+   own mail client (mailto:), like the pitch, so it comes from him. */
+function tutorNoteFor(c){
+  const centre = c.centreName ? ' at ' + c.centreName : '';
+  return [
+    'Hi,',
+    '',
+    'Your CELTA course' + centre + ' is set up on Connect Lite. This is the tutor link:',
+    '',
+    base() + 'invite.html?k=' + encodeURIComponent(c.tutorKey),
+    '',
+    'It is one link for the whole teaching team: the course admin and every tutor open the same one. The first visit lands on a short welcome that takes you through setting the course up \u2014 the name and dates, the timetable, the tutors, the trainees, the TP points. Once the trainees are on it, each has a personal link of their own on the Roster and links tab, and that is what you send them.',
+    '',
+    'Keep this link to the teaching team. Anyone who has it can read and change every trainee\u2019s record. If it ever gets out, Course admin can rotate it and every old copy stops working.',
+    '',
+    'Any questions, just reply.',
+    '',
+    'Ramy',
+  ].join('\n');
+}
+function tutorSubject(c){
+  return 'Your CELTA course on Connect Lite \u2014 the tutor link' + (c.centreName ? ' (' + c.centreName + ')' : '');
+}
+
 function render(courses, msg){
   COURSES = courses || [];
   /* The one just made goes first, whatever order the store keeps. */
@@ -773,7 +801,7 @@ function render(courses, msg){
     const minted = c.id === NEW_ID;
     return `
     <div class="course c-${kind.k}${minted ? ' minted' : ''}" id="course-${esc(c.id)}">
-      ${minted ? '<p class="minted-line">New — copy the tutor link and send it to the centre. They set the course up and add their own trainees.</p>' : ''}
+      ${minted ? '<p class="minted-line">New — send the centre its tutor link: copy it, or email the message at the foot of this card. They set the course up and add their own trainees.</p>' : ''}
       <div class="chead">
         <div>
           <h2>${esc(name)} <span class="kind kind-${kind.k}" title="${esc(kind.w)}">${esc(kind.t)}</span></h2>
@@ -854,20 +882,33 @@ function render(courses, msg){
              "put the links in the cards"). -->
         <div class="link">
           <b>Volunteer link</b>
-          <span class="note">One of the volunteer students: their own page, the class to join, their attendance and the certificate.</span>
+          <span class="note">One of the volunteer students’ own links: their page, the class to join, their attendance and the certificate. A course has none until the centre puts students on its Volunteer register — the register makes each link as a student is added, and that is where the tutors send them from.</span>
           <button class="btn small" type="button" data-vol="${esc(c.id)}" data-key="${esc(c.tutorKey)}">Copy</button>
         </div>
         <!-- Showing a course to somebody meant copying three links out of
              here one at a time and writing the same note around them again
              (Ramy, 26 Sep 2026: "could I ship them to people from there?").
              This writes the note, with this course's real links in it. -->
-        <div class="link send">
-          <b>Send this course to someone</b>
-          <span class="note">This course, real or demo: a short note with one link that opens its card — what Lite is, what it costs, and the ways into this course. Copy the message, or send it as an email.</span>
+        <!-- TWO DIFFERENT EMAILS. A demo goes to somebody who has never seen
+             Lite, so its message is the pitch: the card, what it costs, the
+             doors in. A live course has been SOLD -- the centre is waiting for
+             its tutor link and a few words on what to do with it. The same
+             block sent the pitch for both until Ramy made a course, emailed
+             its link to himself and read "here's Connect Lite, everything your
+             trainees write... what it does, what it costs" (6 Oct 2026: "this
+             is not the link, this is a sales pitch"). -->
+        ${kind.k === 'live' ? `<div class="link send">
+          <b>Send the centre its tutor link</b>
+          <span class="note">A short message with the tutor link in it, for whoever runs the course at the centre — the course admin or the lead tutor. It says what the link is, what the first visit asks of them, and to keep it to the teaching team. Copy it, or send it as an email.</span>
+          <button class="btn small" type="button" data-note="${esc(c.id)}" data-what="tutor">Copy the message</button>
+          <a class="linkbtn" data-mail="${esc(c.id)}" data-what="tutor" href="#">Email it</a>
+        </div>` : `<div class="link send">
+          <b>Send this ${kind.k === 'demo' ? 'demo' : 'course'} to someone</b>
+          <span class="note">A short note with one link that opens its card — what Lite is, what it costs, and the ways into this course as a tutor, a trainee and the assessor. Copy the message, or send it as an email.</span>
           <button class="btn small" type="button" data-note="${esc(c.id)}">Copy the message</button>
           <a class="linkbtn" data-mail="${esc(c.id)}" href="#">Email it</a>
           <a class="linkbtn" data-card="${esc(c.id)}" href="#">See the card</a>
-        </div>`}
+        </div>`}`}
       </div>
     </div>`; };
 
@@ -1075,7 +1116,7 @@ $('app').addEventListener('click', async e => {
     const note = e.target.closest('[data-note]');
     if (note) {
       const c = COURSES.filter(function(x){ return x.id === note.dataset.note; })[0];
-      if (c) { note.textContent = 'Building\u2026'; await hubCopyButton(note, await noteFor(c)); }
+      if (c) { note.textContent = 'Building\u2026'; await hubCopyButton(note, note.dataset.what === 'tutor' ? tutorNoteFor(c) : await noteFor(c)); }
       return;
     }
     const card = e.target.closest('[data-card]');
@@ -1122,8 +1163,9 @@ $('app').addEventListener('click', async e => {
       e.preventDefault();
       const c = COURSES.filter(function(x){ return x.id === mail.dataset.mail; })[0];
       if (!c) return;
-      const subject = 'Connect Lite — ' + ((c.settings && c.settings.courseName) || c.name || c.id);
-      location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(await noteFor(c));
+      const tutor = mail.dataset.what === 'tutor';
+      const subject = tutor ? tutorSubject(c) : 'Connect Lite — ' + ((c.settings && c.settings.courseName) || c.name || c.id);
+      location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(tutor ? tutorNoteFor(c) : await noteFor(c));
       return;
     }
     const v = e.target.closest('[data-vol]');
@@ -1134,7 +1176,7 @@ $('app').addEventListener('click', async e => {
         const c = await HubStore.call({ op: 'course', key: v.dataset.key });
         const st = ((c && c.volunteers) || {}).students || [];
         const first = st.filter(x => x && x.token)[0];
-        if (!first) { v.textContent = 'No volunteers yet'; v.disabled = false; setTimeout(() => { v.textContent = was; }, 2200); return; }
+        if (!first) { v.textContent = 'None yet — the register makes them'; v.disabled = false; setTimeout(() => { v.textContent = was; }, 2200); return; }
         /* Put the label back before the copy helper takes over, or it
            restores "Finding…" when it is done. */
         v.disabled = false; v.textContent = was;
