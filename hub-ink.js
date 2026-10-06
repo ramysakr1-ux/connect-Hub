@@ -8,6 +8,14 @@
  * 300 x 100 box (a signature is a few KB, never an image), shown on the
  * screen and drawn onto Cambridge's booklet where the name went before.
  *
+ * Ramy, 6 Oct 2026: "Can we just make it so they type their name and then it
+ * turns into a signature?" So the pad now OPENS with the name already
+ * written, by hub-hand.js, and signing is one click. Drawing is still there
+ * for anyone who wants it, behind a button. A hand is derived from the
+ * SIGNER, not their name, so two people called Mehmet Yilmaz get two
+ * signatures, and a signer's own is the same every one of the seven times a
+ * candidate signs and the twenty-nine a tutor does.
+ *
  *   hubInk.pad({ name, title }) -> Promise<string | '' | null>
  *       the path ('' = sign with the typed name only, null = cancelled)
  *   hubInk.pad({ askName: true, name, title }) -> Promise<{name, ink} | null>
@@ -81,27 +89,37 @@
         + '<h3></h3><p class="ink-sub"></p>'
         + '<label class="ink-name"><span>Your name, to sign</span><input type="text" placeholder="Type your name"></label>'
         + '<div class="ink-pad"><canvas></canvas><div class="ink-line"></div><div class="ink-hint"></div></div>'
-        + '<div class="ink-bar"><button type="button" class="btn quiet ink-clear">Clear</button><span class="grow"></span>'
+        + '<div class="ink-bar"><button type="button" class="btn quiet ink-draw">Draw it myself</button><span class="grow"></span>'
         + '<button type="button" class="btn quiet ink-cancel">Cancel</button>'
         + '<button type="button" class="btn quiet ink-typed">Typed name only</button>'
         + '<button type="button" class="btn primary ink-ok" disabled>Sign</button></div></div>';
       overlay.querySelector('h3').textContent = opts.title || 'Sign';
       var nameRow = overlay.querySelector('.ink-name'), nameIn = nameRow.querySelector('input');
-      /* "it's supposed to be on the trackpad, but I can't seem to do it on my
-         trackpad. Is there a trick to it?" (Ramy, 6 Oct 2026). There was, and
-         it was invisible: a stroke starts on pointerdown, so a finger SLID
-         across a trackpad draws nothing -- the click has to be held down the
-         whole way. Driven with a mouse it worked first time, which is why it
-         read as broken rather than as unsaid. The pad now says so, and names
-         the way out for anyone who cannot hold a click. */
-      var HOW = 'Draw it with a finger, a pen, or the mouse \u2014 on a laptop trackpad, hold the click down the whole way or nothing appears. '
-        + '\u201cTyped name only\u201d signs without a drawing; either way the typed name and the moment are what stay on the record.';
+      /* The first answer to "I can't do it on my trackpad" was to explain how
+         to hold a click. That was the wrong answer: you cannot write with a
+         finger on a trackpad, and seventy-one signatures a course no two of
+         which match is worse than none. The name is written instead. */
+      var HOW = 'This is your signature. It is written from your name and stays the same every time you sign, '
+        + 'on this course and on Cambridge\u2019s booklet. Draw your own instead if you would rather.';
       if (opts.askName) { nameIn.value = opts.name || ''; overlay.querySelector('.ink-sub').textContent = HOW; }
       else { nameRow.remove(); overlay.querySelector('.ink-sub').textContent = 'Signing as ' + (opts.name || '') + '. ' + HOW; }
       var nameNow = function(){ return opts.askName ? nameIn.value.trim() : (opts.name || ''); };
       var answer = function(ink){ return opts.askName ? { name: nameNow(), ink: ink } : ink; };
       var padEl = overlay.querySelector('.ink-pad'), canvas = overlay.querySelector('canvas'), hint = overlay.querySelector('.ink-hint');
       var ok = overlay.querySelector('.ink-ok'), strokes = [], drawing = null, prior = saved(opts.name);
+      /* The seed decides whose hand this is. A candidate's own link carries
+         their token; staff have no token, so their course key and name make
+         one that is stable for them across every candidate they sign for. */
+      var seed = opts.seed || (function(){
+        try {
+          var S = window.HubStore;
+          if (S && S.token && S.token()) return S.token();
+          if (S && S.key && S.key()) return 'k:' + S.key() + ':' + (opts.name || '');
+        } catch (e) {}
+        return opts.name || '';
+      })();
+      var mode = prior ? 'drawn' : 'written', written = '';
+      function rewrite(){ written = (window.hubHand && mode === 'written') ? window.hubHand.path(nameNow(), seed) : ''; }
       document.body.appendChild(overlay);
 
       var ctx = canvas.getContext('2d');
@@ -115,6 +133,12 @@
         ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.setTransform(dpr * r.width / W, 0, 0, dpr * r.height / H, 0, 0);
         ctx.lineWidth = 2.6; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#1f1a14';
+        if (mode === 'written') {
+          if (written && typeof Path2D !== 'undefined') { try { ctx.stroke(new Path2D(written)); } catch (e) {} }
+          ok.disabled = !nameNow() || !written;
+          hint.textContent = written ? '' : 'Type your name and it is written here';
+          return;
+        }
         strokes.forEach(function(s){
           ctx.beginPath(); ctx.moveTo(s[0][0], s[0][1]);
           if (s.length === 1) ctx.lineTo(s[0][0], s[0][1]);
@@ -122,31 +146,40 @@
           ctx.stroke();
         });
         ok.disabled = !strokes.length || !nameNow();
-        hint.textContent = strokes.length ? '' : 'Sign here \u2014 hold the click down';
+        hint.textContent = strokes.length ? '' : 'Draw your signature \u2014 hold the click down as you go';
       }
       function pt(e){
         var r = padEl.getBoundingClientRect();
         return [Math.round(Math.max(0, Math.min(W, (e.clientX - r.left) / r.width * W)) * 10) / 10,
                 Math.round(Math.max(0, Math.min(H, (e.clientY - r.top) / r.height * H)) * 10) / 10];
       }
-      padEl.addEventListener('pointerdown', function(e){ if (e.button !== undefined && e.button !== 0) return; e.preventDefault(); padEl.setPointerCapture(e.pointerId); drawing = [pt(e)]; strokes.push(drawing); redraw(); });
+      padEl.addEventListener('pointerdown', function(e){ if (e.button !== undefined && e.button !== 0) return; if (mode === 'written') return; e.preventDefault(); padEl.setPointerCapture(e.pointerId); drawing = [pt(e)]; strokes.push(drawing); redraw(); });
       padEl.addEventListener('pointermove', function(e){ if (!drawing) return; e.preventDefault(); var p = pt(e), l = drawing[drawing.length - 1]; if (Math.abs(p[0] - l[0]) + Math.abs(p[1] - l[1]) < 1) return; drawing.push(p); redraw(); });
       function up(e){ if (!drawing) return; drawing = null; redraw(); }
       padEl.addEventListener('pointerup', up); padEl.addEventListener('pointercancel', up); padEl.addEventListener('pointerleave', up);
 
       if (prior) { strokes = fromPath(prior); hint.textContent = ''; }
+      rewrite();
       fit();
-      if (opts.askName) { nameIn.addEventListener('input', function(){ var p2 = saved(nameNow()); if (p2 && !strokes.length) { strokes = fromPath(p2); } redraw(); }); if (!nameIn.value) setTimeout(function(){ nameIn.focus(); }, 0); }
-      if (prior) { var note = document.createElement('div'); note.className = 'ink-sub'; note.style.marginTop = '8px'; note.textContent = 'Your saved signature from this browser. Clear to draw it again.'; padEl.after(note); }
+      if (opts.askName) { nameIn.addEventListener('input', function(){ rewrite(); redraw(); }); if (!nameIn.value) setTimeout(function(){ nameIn.focus(); }, 0); }
+      if (prior && mode === 'drawn') { var note = document.createElement('div'); note.className = 'ink-sub'; note.style.marginTop = '8px'; note.textContent = 'Your saved signature from this browser. Clear to draw it again.'; padEl.after(note); }
       window.addEventListener('resize', fit);
 
       function done(v){ (window.hubFadeAway || function (el) { el.remove(); })(overlay); window.removeEventListener('resize', fit); document.removeEventListener('keydown', onKey); resolve(v); }
       function onKey(e){ if (e.key === 'Escape') done(null); }
       document.addEventListener('keydown', onKey);
-      overlay.querySelector('.ink-clear').addEventListener('click', function(){ strokes = []; redraw(); });
+      overlay.querySelector('.ink-draw').addEventListener('click', function(e){
+        var b = e.currentTarget;
+        if (mode === 'written') { mode = 'drawn'; strokes = []; written = ''; b.textContent = 'Use the written one'; }
+        else { mode = 'written'; prior = null; rewrite(); b.textContent = 'Draw it myself'; }
+        redraw();
+      });
       overlay.querySelector('.ink-cancel').addEventListener('click', function(){ done(null); });
       overlay.querySelector('.ink-typed').addEventListener('click', function(){ if (!nameNow()) { nameIn.focus(); return; } done(answer('')); });
-      ok.addEventListener('click', function(){ var p = toPath(strokes); if (!p || !nameNow()) return; remember(nameNow(), p); done(answer(p)); });
+      ok.addEventListener('click', function(){
+        if (mode === 'written') { if (!written || !nameNow()) return; done(answer(written)); return; }
+        var p = toPath(strokes); if (!p || !nameNow()) return; remember(nameNow(), p); done(answer(p));
+      });
       overlay.addEventListener('mousedown', function(e){ if (e.target === overlay) done(null); });
     });
   }
