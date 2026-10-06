@@ -35,6 +35,7 @@ var SHEET_COURSE   = 'course';    // course | kind | json | updated  (settings, 
 var SHEET_FEEDBACK = 'feedback';
 var SHEET_OFFERS = 'contributions';
 var SHEET_REPORTS = 'reports';  // at | page | course | role | thumb | text   (v59: a thumb from a demo or the offer page; no names)
+var SHEET_CENTRES = 'centres';   // number | name | first seen | courses made   (v74)
 
 // Who may write what. A trainee owns their paperwork and submissions; a tutor
 // owns the marking, the feedback and the record. 'assignments' is shared:
@@ -620,6 +621,21 @@ case 'inbox': {
       return { week: { up: up, down: down, comments: comments }, total: rows.length, latest: latest.slice(0, 10) };
     }
 
+    /* v74: the centre book, for the console's number -> name fill. Owner only:
+       it is a list of who this account has sold to. */
+    case 'centres': {
+      requireOwner_(owner);
+      return { centres: centreBook_() };
+    }
+    /* v74: fill the book from a list, [[number, name], ...]. Owner only; a
+       number already in the book is never touched. */
+    case 'centresSeed': {
+      requireOwner_(owner);
+      var seedRows = Array.isArray(req.rows) ? req.rows.slice(0, 1000) : [];
+      var added = centresSeed_(seedRows);
+      return { added: added, centres: centreBook_() };
+    }
+
     // ---- the owner's own ops: provisioning, above any one course ----------
     // Ramy sells a course at a time and mints it here; a centre never creates
     // one. The owner secret opens no course's records -- it lists courses and
@@ -676,7 +692,10 @@ case 'inbox': {
       // centre number"). It is written into the course's settings as locked,
       // and putCourse keeps it whatever the centre sends afterwards.
       var centreNumber = String(req.centreNumber || '').trim().toUpperCase().replace(/\s+/g, '');
-      if (!/^[A-Z]{2}\d{3,5}$/.test(centreNumber)) throw new Error('A course needs its Cambridge centre number, e.g. TR001');
+      // v74: a UK centre number is plain digits (10294 is IH London) and
+      // Cambridge also issues a trailing letter (MX026b); the console's own
+      // check has the same shape.
+      if (!/^([A-Z]{2})?\d{3,5}[A-Z]?$/.test(centreNumber)) throw new Error('A course needs its Cambridge centre number, e.g. TR001 or 10294');
       var centreName = String(req.centreName || '').trim();
       var cid = nextCourseId_();
       // A name is not asked for (Ramy, 21 Sep 2026: "each course I build should
@@ -688,11 +707,13 @@ case 'inbox': {
       var seed = { centreNumber: centreNumber, centreLocked: true };
       if (centreName) seed.centreName = centreName;
       courseWrite_(cid, 'settings', seed);
+      /* v74: the book learns from every course made. */
+      try { centreRemember_(centreNumber, centreName); } catch (e) {}
       // The refreshed list rides back with the new course. Apps Script answers
       // in 1.5-13 s whatever it is asked, so the console's old make-then-list
       // pair cost two of those end to end -- which is what Ramy was waiting
       // through on 21 Sep 2026 ("making the course takes a while").
-      return { id: cid, name: cname, tutorKey: courseKey_('tutor', cid), assessorKey: courseKey_('assessor', cid), courses: ownerList_() };
+      return { id: cid, name: cname, tutorKey: courseKey_('tutor', cid), assessorKey: courseKey_('assessor', cid), courses: ownerList_(), centres: centreBook_() };
     }
     // The next course from this one (Ramy, 28 Sep 2026: "can we duplicate the
     // course at the end?"). What is the CENTRE's carries over -- name, number,
@@ -1361,6 +1382,11 @@ HEADERS[SHEET_COURSE]   = ['course', 'kind', 'json', 'updated'];
 HEADERS[SHEET_FEEDBACK] = ['at', 'page', 'course', 'role', 'thumb', 'text'];
 HEADERS[SHEET_OFFERS]   = ['at', 'by', 'book', 'level', 'lessons', 'stages', 'centre', 'file', 'state'];
 HEADERS[SHEET_REPORTS]  = ['at', 'kind', 'page', 'where', 'text', 'role', 'course', 'state'];
+/* v74 (6 Oct 2026): the centres Connect has sold to, number -> name. Written
+   when a course is made, read by the console to fill the name in. Not a
+   register of Cambridge's and never presented as one: it is this account's
+   own record of who it has sold to. */
+HEADERS[SHEET_CENTRES] = ['number', 'name', 'first', 'courses'];
 
 function spreadsheet_() {
   var props = PropertiesService.getScriptProperties();
@@ -1782,6 +1808,52 @@ function ownerList_() {
   });
   if (Object.keys(minted).length) props.setProperties(minted);
   return out;
+}
+
+/* v74: every centre this account has made a course for. */
+function centreBook_() {
+  var sh = sheet_(SHEET_CENTRES), last = sh.getLastRow();
+  var out = {};
+  if (last < 2) return out;
+  sh.getRange(2, 1, last - 1, 2).getValues().forEach(function (r) {
+    var n = String(r[0] || '').trim().toUpperCase();
+    if (n && String(r[1] || '').trim()) out[n] = String(r[1]).trim();
+  });
+  return out;
+}
+/* Remember a number and its centre. A name typed over an old one wins: the
+   owner correcting the book is the only way it is ever corrected. */
+function centreRemember_(number, name) {
+  number = String(number || '').trim().toUpperCase();
+  name = String(name || '').trim().slice(0, 120);
+  if (!number) return;
+  var sh = sheet_(SHEET_CENTRES), last = sh.getLastRow();
+  var rows = last >= 2 ? sh.getRange(2, 1, last - 1, 4).getValues() : [];
+  for (var i = 0; i < rows.length; i++) {
+    if (String(rows[i][0] || '').trim().toUpperCase() !== number) continue;
+    var made = (parseInt(rows[i][3], 10) || 0) + 1;
+    sh.getRange(i + 2, 2, 1, 3).setValues([[name || rows[i][1], rows[i][2] || new Date(), made]]);
+    return;
+  }
+  if (name) sh.appendRow([number, name, new Date(), 1]);
+}
+/* v74: a list of centres, appended in one go. The book normally learns one
+   course at a time; this is how it starts full, from Cambridge's public list
+   (store/centres-seed.tsv), without the owner pasting into the Sheet. A number
+   already in the book is left alone, so the seed can never overwrite a name
+   the owner typed. */
+function centresSeed_(rows) {
+  var book = centreBook_(), sh = sheet_(SHEET_CENTRES), add = [];
+  (rows || []).forEach(function (r) {
+    var n = String((r && r[0]) || '').trim().toUpperCase();
+    var name = String((r && r[1]) || '').trim().slice(0, 120);
+    if (!n || !name || book[n]) return;
+    if (!/^([A-Z]{2})?\d{3,5}[A-Z]?$/.test(n)) return;
+    book[n] = name;
+    add.push([n, name, '', 0]);
+  });
+  if (add.length) sh.getRange(sh.getLastRow() + 1, 1, add.length, 4).setValues(add);
+  return add.length;
 }
 
 function nextCourseId_() {

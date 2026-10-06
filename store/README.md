@@ -14,11 +14,26 @@ pointing at the old code.
 Changes are recorded here as patches, with the anchors they were applied to,
 so the editor's text and this folder can be reconciled.
 
-**From 6 Oct 2026 the code is to live in `store/gas/` and be pushed with
-clasp** (`clasp push`, then `clasp deploy -i <the existing deployment id>`),
-so nobody pastes into the editor again. `HANDOVER-2026-10-06.md` at the repo
-root has the steps. Until the first `clasp pull` lands, the editor is still
-the source of truth and the patches below are how it got there.
+**Since 7 Oct 2026 the code lives in `store/gas/Code.js`** (clasp's name for
+`Code.gs`), pulled with clasp and committed as the exact code that was
+deployed (store v73 = Apps Script version 87). From here a change is a diff
+to that file, and a deploy is, from `store/gas/`:
+
+    node --check Code.js
+    clasp push
+    clasp deploy -i AKfycbz5ESCtTg6kIDNCf7ynt1fB0tOSVusgOUiMub9-wEZunwQ2uTw2wzz1vmbHxzbvpG-eyA -d "v75 ..."
+
+Never a bare `clasp deploy`. If anything is ever edited in the Apps Script
+editor instead, `clasp pull` before the next change or the repo copy is stale.
+The patches below are how the editor's text got to v73.
+
+## 7 Oct 2026 — the centre book: a number fills in its centre (version 88, store v74)
+The first deploy from the repo with clasp. A `centres` sheet (number | name |
+first | courses) that learns from every course made; owner-only `centres` and
+`centresSeed` ops; `createCourse` returns the book and accepts a centre number
+in both of Cambridge's shapes (`TR073`, `10294`, `MX026b`). Seeded the same
+night with all 479 centres by `store/seed-centres.mjs`; TR073 fills
+*International House Istanbul*. Patch note: `PATCH-v74-centre-book.md`.
 
 ## 4 Oct 2026 — a course's TP point set rides with the points (version 67)
 `tpPointsFor_` returns `set` to readers, so the lessons written once against a
