@@ -66,11 +66,15 @@
          collision looking for a screen. In the flow at the foot of the page it
          cannot cover anything, on any screen, at any width, for ever. It is a
          way to report something, not a tool anybody reaches for mid-task. */
+      /* QUIET. It was garnet, then plum (Ramy, 6 Oct 2026: "a nice colour
+         different from the rest of the page") -- and then, seeing it on every
+         screen: "it's just too much... it doesn't need to be that bright."
+         A filled button at the foot of every page is a shout. Outlined,
+         grey, teal when the pointer is on it. */
       '.say-pill{display:block; margin:34px auto 26px; font:600 0.8rem/1 inherit;',
-      '  background:var(--plum,#5d2450); color:var(--paper,#fff); border:0;',
-      '  border-radius:999px; padding:11px 20px; cursor:pointer;',
-      '  box-shadow:0 1px 2px rgba(0,0,0,.14);}',
-      '.say-pill:hover{background:var(--plum-lifted,#6f2c60);}',   /* one shade up, nothing else moves */
+      '  background:none; color:var(--grey,#555); border:1px solid var(--sand-line,#ddd);',
+      '  border-radius:999px; padding:10px 18px; cursor:pointer;}',
+      '.say-pill:hover{color:var(--teal,#0b6); border-color:var(--teal,#0b6); background:none;}',
       '.say-pill:focus-visible{outline:3px solid var(--gold,#c89b4a); outline-offset:3px;}',
       '.say-here{font:600 0.72rem/1 inherit; background:none; border:0; padding:3px 0; margin:0;',
       '  color:var(--faint,#999); cursor:pointer; text-decoration:underline; text-underline-offset:3px;}',
