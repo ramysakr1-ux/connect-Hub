@@ -326,6 +326,17 @@ for (const role of ROLES) {
           }
           if (covered.length > 2) break;
         }
+        /* A THING THE PAGE SAID TO HIDE, STILL ON SCREEN. `hidden` is how
+           every screen here says "not yet", and the browser's own
+           [hidden]{display:none} lives in the user-agent sheet -- so any
+           author rule setting display beats it. `.room{display:block}` did
+           exactly that and un-hid four cards on the trainee's home for a
+           fortnight (6 Oct 2026). Cheap to check, and it would have caught
+           it the day it was written. */
+        const unhidden = [...body.querySelectorAll('[hidden]')]
+          .filter(el => el.offsetWidth > 0 && el.offsetHeight > 0)
+          .slice(0, 4)
+          .map(el => el.tagName.toLowerCase() + (el.id ? '#' + el.id : el.className ? '.' + String(el.className).split(' ')[0] : ''));
         /* doors that go nowhere */
         const dead = [...body.querySelectorAll('a')].filter(a => {
           const h = a.getAttribute('href');
@@ -335,7 +346,7 @@ for (const role of ROLES) {
           }
           return false;
         }).slice(0, 3).map(a => (a.textContent || '').trim().slice(0, 30));
-        return { len: text.length, head: text.slice(0, 70).replace(/\s+/g, ' '), over, covered, dead,
+        return { len: text.length, head: text.slice(0, 70).replace(/\s+/g, ' '), over, covered, dead, unhidden,
                  scrollW: document.documentElement.scrollWidth, vw };
       });
 
@@ -344,6 +355,7 @@ for (const role of ROLES) {
       if (seen.scrollW > seen.vw + 2) found.push(`${where}: runs ${seen.scrollW - seen.vw}px off the right edge${seen.over.length ? ' (' + seen.over.join(', ') + ')' : ''}`);
       for (const c of seen.covered) found.push(`${where}: ${c}`);
       for (const d of seen.dead) found.push(`${where}: a link that goes nowhere — "${d}"`);
+      for (const u of seen.unhidden) found.push(`${where}: ${u} is marked hidden and is on screen anyway`);
       if (SHOTS && VIEW === '1') { await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight)); await page.waitForTimeout(300); }
       if (SHOTS) await page.screenshot({ path: join(SHOTS, `${role}-${screen.replace('.html','')}${VIEW === '1' ? '-foot' : VIEW ? '-top' : ''}.png`), fullPage: !VIEW });
     } catch (e) {

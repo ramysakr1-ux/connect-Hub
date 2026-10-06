@@ -25,7 +25,7 @@
 <title>Connect Lite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610061933">
+<link rel="stylesheet" href="hub-tokens.css?v=202610062016">
 <style>
   :root{
     /* The pane. A card on this page is a sheet of glass lying on the paper,
@@ -72,7 +72,56 @@
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
   /* ---- title ------------------------------------------------------------ */
-  .title{border-top:2px solid var(--teal); padding-top:26px;}
+  .title{border-top:2px solid var(--teal); padding-top:26px;
+    display:flex; align-items:flex-start; justify-content:space-between; gap:18px 26px; flex-wrap:wrap;}
+  .titletext{flex:1 1 320px; min-width:0;}
+  .titledoors{display:flex; gap:9px; flex-wrap:wrap; flex:none;}
+  .tdoor{display:inline-flex; align-items:center; height:34px; padding:0 15px; font-family:'Karla',sans-serif;
+    font-size:0.82rem; font-weight:600; border-radius:var(--r-control); border:1.5px solid var(--sand-line);
+    background:var(--box); color:var(--ink); text-decoration:none; white-space:nowrap;}
+  .tdoor:hover{border-color:var(--teal); color:var(--teal);}
+  .tdoor[hidden]{display:none;}
+
+  /* ---- the hero: what today is for ------------------------------------- */
+  .hero{background:var(--teal); color:var(--paper); border-radius:var(--r-card); padding:22px 24px 20px; margin:22px 0 0;}
+  .hero[hidden]{display:none;}
+  .hero .k{font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:600;
+    letter-spacing:0.2em; text-transform:uppercase; opacity:.78; margin:0;}
+  .hero h2{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.5rem; line-height:1.22;
+    margin:6px 0 0; color:inherit; text-wrap:pretty;}
+  .hero .when{font-size:0.95rem; line-height:1.6; opacity:.93; margin:7px 0 0; text-wrap:pretty;}
+  .hero .when:empty{display:none;}
+  .hero .todo{list-style:none; margin:14px 0 0; padding:0; display:flex; flex-direction:column; gap:8px;}
+  .hero .todo:empty{display:none;}
+  .hero .todo li{position:relative; padding-left:18px; font-size:0.9rem; line-height:1.5; opacity:.95;}
+  .hero .todo li:before{content:""; position:absolute; left:1px; top:7px; width:6px; height:6px;
+    border-radius:50%; background:var(--gold-lifted);}
+  .hero .todo a{color:inherit; font-weight:700; text-decoration:underline; text-underline-offset:3px;}
+  .hero .go{display:inline-block; margin:17px 0 0; background:var(--paper); color:var(--teal);
+    font-family:'Karla',sans-serif; font-weight:700; font-size:0.9rem; padding:11px 22px;
+    border-radius:999px; text-decoration:none;}
+  .hero .go[hidden]{display:none;}
+  .hero .go:hover{background:var(--sand);}
+  .hero .tiny{font-size:0.8rem; line-height:1.55; opacity:.78; margin:14px 0 0; text-wrap:pretty;}
+  .hero .tiny:empty{display:none;}
+  /* finished, or nothing waiting: the same card, no longer shouting */
+  .hero.quiet{background:var(--box); color:var(--ink);}
+  .hero.quiet .k{color:var(--grey); opacity:1;}
+  .hero.quiet h2{color:var(--ink-warm);}
+  .hero.quiet .when, .hero.quiet .tiny{color:var(--grey); opacity:1;}
+  .hero.quiet .todo li:before{background:var(--gold);}
+  .hero.quiet .todo a{color:var(--teal);}
+  .hero.quiet .go{background:var(--teal); color:var(--paper);}
+  .hero.quiet .go:hover{background:var(--teal-lifted);}
+
+  /* ---- a card that is not its time yet ----------------------------------
+     Ramy, 6 Oct 2026: "some of them might be there, but they will be still,
+     and they will only be clickable when the time comes." Read, not clicked:
+     the trainee sees the shape of their course without being invited into a
+     room with nothing in it. */
+  .room.still{opacity:.62; cursor:default; box-shadow:none;}
+  .room.still:hover{box-shadow:none; border-color:var(--row-line); transform:none;}
+  .room.still .st{color:var(--faint); font-weight:600;}
   .title h1{margin:0; font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:2.1rem;
     line-height:1.15; color:var(--ink);}
   .title p{margin:7px 0 0; font-size:0.9rem; color:var(--grey); line-height:1.6; max-width:600px;}
@@ -248,10 +297,12 @@
        rows are what keeps a ROW of cards level; stacked there is no row to be
        level with, and 1fr just pads the short ones out to the tallest. */
     .rooms, .solo{grid-template-columns:1fr; grid-auto-rows:auto;}
+    .title{gap:14px;} .titledoors{width:100%;}
+    .hero{padding:20px 18px 18px;} .hero h2{font-size:1.3rem;}
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610061933">
+<link rel="stylesheet" href="hub-house.css?v=202610062016">
 </head>
 <body>
 <div class="board">
@@ -270,15 +321,40 @@
   </div>
 
   <div class="title">
-    <h1 id="boardTitle">Your CELTA paperwork</h1>
-    <p id="courseMeta">Your teaching practice and your written assignments, in the order you need them. Each form saves itself as you go — nothing reaches your tutor until you turn it in.</p>
-    <!-- The first visit (6 Oct 2026). Ramy: "Welcome, Aylin -- start with the
-         agreement, then the two confirmations in your CELTA 5... that
-         disappears once both are signed. Yes, the disappearing is good." It
-         is a note, not a page: the home is already the course. -->
-    <p class="hello" id="hello" hidden></p>
-    <div id="onlineRooms"></div>
+    <div class="titletext">
+      <h1 id="boardTitle">Your CELTA paperwork</h1>
+      <p id="courseMeta">Your teaching practice and your written assignments, in the order you need them. Each form saves itself as you go — nothing reaches your tutor until you turn it in.</p>
+    </div>
+    <!-- THE TIMETABLE IS A DOOR, NOT A CARD (Ramy, 6 Oct 2026: "the timetable
+         should be a tab, maybe on top, top right. It's not something that's
+         changing like the rest of the cards. It's not a card really, is it?").
+         The cards below are the trainee's own work, each with a state; the
+         timetable is a reference they consult, like the rooms strip. The
+         tutor's dashboard has carried it this way since 30 Sep. -->
+    <div class="titledoors" id="titleDoors">
+      <a class="tdoor" id="doorTimetable" href="23_timetable.html" hidden>Timetable</a>
+    </div>
   </div>
+  <div id="onlineRooms"></div>
+
+  <!-- THE HERO CARD (6 Oct 2026). Ramy: "they land, day one, just joined,
+       even before day one starts — they get the link, they join, they have
+       the pre-course task, and the two confirmations, they sign. And the card
+       tells them the course starts on whatever date. And this hero card
+       continues to tell them what they have to do today, the outstanding
+       today... one of the differences between this and using a Drive is that
+       when you land as a trainee you're not overwhelmed with all the
+       information. We will let you know when the time comes."
+       It never repeats the noticeboard, which is the course talking; this is
+       what the course is asking of this person, today. -->
+  <section class="hero" id="hero" hidden>
+    <p class="k" id="heroKind"></p>
+    <h2 id="heroTitle"></h2>
+    <p class="when" id="heroWhen"></p>
+    <ul class="todo" id="heroTodo"></ul>
+    <a class="go" id="heroGo" href="#" hidden></a>
+    <p class="tiny" id="heroTiny"></p>
+  </section>
 
   <!-- The course stream: short posts from the tutors to the whole course or
        to a TP group (Ramy, 28 Sep 2026: "the only thing missing now is an
@@ -366,12 +442,9 @@
       <h2>Candidate agreement</h2>
       <p id="agreementLine">What your centre asks of you and what you may ask of it &mdash; attendance, plagiarism, complaints and resubmissions. Read it and sign it.</p>
     </a>
-    <!-- The timetable is the course's own since 29 Sep 2026, not a link out.
-         Everyone on the course reads the same one. -->
-    <a class="room" id="roomTimetable" href="23_timetable.html" hidden>
-      <h2>Timetable</h2>
-      <p>Every day of the course — the input sessions, which teaching practice falls where and who is teaching it, and your assignment deadlines on the day they fall.</p>
-    </a>
+    <!-- The timetable moved to a door at the top of the page (6 Oct 2026):
+         it is a reference, not a piece of this trainee's work, and a card
+         among the cards made it look like another task. -->
     <!-- What each trainee is teaching, practice by practice. Shown once a
          tutor has released it to their group. -->
     <a class="room" id="roomPoints" href="24_tp_points.html" hidden>
@@ -385,7 +458,7 @@
       <span class="st" id="badgeCelta5"></span>
     </a>
     <div id="roomFiles" hidden></div>
-    <a class="room" href="7_candidate_tracker.html?me=1">
+    <a class="room" id="roomProgress" href="7_candidate_tracker.html?me=1">
       <h2>Your progress</h2>
       <p>Every teaching practice and every assignment on one grid, read from what your tutor has returned to you. The same view your tutor has of you.</p>
       <span class="st" id="badgeProgress"></span>
@@ -418,15 +491,15 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202610061933"></script>
-<script src="observation-defaults.js?v=202610061933"></script>
-<script src="hub-shared.js?v=202610061933"></script>
-<script src="hub-store.js?v=202610061933"></script>
-<script src="hub-say.js?v=202610061933"></script>
-<script src="hub-shelf.js?v=202610061933"></script>
-<script src="hub-front.js?v=202610061933"></script>
-<script src="hub-sync.js?v=202610061933"></script>
-<script src="hub-feedback.js?v=202610061933"></script>
+<script src="hub-due.js?v=202610062016"></script>
+<script src="observation-defaults.js?v=202610062016"></script>
+<script src="hub-shared.js?v=202610062016"></script>
+<script src="hub-store.js?v=202610062016"></script>
+<script src="hub-say.js?v=202610062016"></script>
+<script src="hub-shelf.js?v=202610062016"></script>
+<script src="hub-front.js?v=202610062016"></script>
+<script src="hub-sync.js?v=202610062016"></script>
+<script src="hub-feedback.js?v=202610062016"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -631,26 +704,9 @@ line(document.getElementById('badgeCelta5'), (function(){
   }
 })();
 
-/* The first-visit note: the two things a candidate signs before anything
-   else -- the agreement, when the centre has written one, and the two
-   confirmations that open the CELTA 5. Gone the moment both are done. */
-(function(){
-  const el = document.getElementById('hello'); if (!el) return;
-  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
-  const cs = rec('connect_course_settings') || {}, me = rec('hub:me') || {};
-  const agr = cs.agreement || {}, own = String(((cs.docs || {}).docAgreement) || '').trim();
-  const hasAgr = !!(own || ['agrAttendance','agrPlagiarism','agrComplaints','agrResubmissions'].some(k => String(agr[k] || '').trim()));
-  const signedAgr = (() => { const a = rec('chub:agreement'); return !!(a && a.at); })();
-  const conf = ((rec('chub:celta5') || {}).confirms) || {};
-  const confirmed = !!(conf.portfolio && conf.portfolio.at && conf.appeals && conf.appeals.at);
-  const todo = [];
-  if (hasAgr && !signedAgr) todo.push('<a href="29_candidate_agreement.html">the candidate agreement</a>');
-  if (!confirmed) todo.push('<a href="20_celta5.html">the two confirmations in your CELTA 5</a>');
-  if (!todo.length) return;
-  const first = String(me.name || '').trim().split(/\s+/)[0];
-  el.innerHTML = '<b>' + (first ? 'Welcome, ' + esc(first) + '.' : 'Welcome.') + '</b> This is your course: everything you write on it lives here, and nothing reaches your tutor until you turn it in. Start with ' + todo.join(', then ') + '. ' + (todo.length === 2 ? 'A few minutes each, and this note goes when both are done.' : 'A few minutes, and this note goes when it is done.');
-  el.hidden = false;
-})();
+/* The first-visit note of this morning became the hero card below: a note
+   under the title said the same thing a card can say better, and the hero
+   carries it as its "before the course" state (6 Oct 2026). */
 
 /* The timetable card: shown as soon as the course has one. A timetable is
    not released to anybody -- everyone on the course reads the same one
@@ -898,6 +954,205 @@ if (fbBack){
   }
   const bits = [cs && cs.centreName, me && me.group ? 'Group ' + me.group : ''].filter(Boolean);
   if (bits.length) document.getElementById('courseMeta').textContent = bits.join(' · ');
+})();
+
+/* ==========================================================================
+   THE HERO, AND THE CARDS THAT ARE NOT THEIR TIME YET
+   --------------------------------------------------------------------------
+   Ramy, 6 Oct 2026, on what a trainee meets when they open their link:
+
+     "They land, day one, just joined, even before day one starts. They get the
+      link, they join, and they have the pre-course task. They check it, some
+      information, whatever is there. And then they have the two confirmations,
+      they sign. And the card tells them the course starts on whatever date. So
+      it's a hero card. And this hero card continues to tell them what they have
+      to do today, the outstanding today...
+
+      The other cards will not be there. Some of them might be there, but they
+      will be still, and they will only be clickable when the time comes. One of
+      the differences between this and using a Drive is that when you land as a
+      trainee, you're not overwhelmed with all the information. We will let you
+      know when the time comes.
+
+      The other cards should also read something like, this card will be
+      activated on whatever day, or reference to the tutor or to the timetable,
+      so they don't think they're broken."
+
+   So: one card at the top that says what today is for, built from what the
+   course already knows -- the dates, the timetable, the TP points, the records.
+   No tutor types any of it. Below it the cards keep their places and their
+   descriptions, but a card whose moment has not come is STILL: not a link, and
+   its line names what has to happen first and who does it.
+
+   It never carries an announcement. The noticeboard is the course talking;
+   this is what the course is asking of this person.
+   ========================================================================== */
+(function(){
+  const host = document.getElementById('hero'); if (!host) return;
+  const CS = rec('connect_course_settings') || {};
+  const ME = rec('hub:me') || {};
+  const firstName = String(ME.name || '').trim().split(/\s+/)[0] || '';
+  const ymd = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : '';
+  const TODAY = (window.hubToday && hubToday()) || '';
+  const START = ymd(CS.start), END = ymd(CS.end);
+  const beforeStart = !!(START && TODAY && TODAY < START);
+  const afterEnd    = !!(END && TODAY && TODAY > END);
+  const dayName = d => { try { return new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' }); } catch (e) { return d; } };
+  const shortDay = d => { try { return new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'long' }); } catch (e) { return d; } };
+  const sleeps = d => { try { return Math.round((new Date(d + 'T12:00:00') - new Date(TODAY + 'T12:00:00')) / 864e5); } catch (e) { return 0; } };
+
+  /* ---- what the course is waiting for, most pressing first ---------------- */
+  const C5 = rec('chub:celta5') || {}, C5T = rec('chub:celta5t') || {};
+  const CONF = C5.confirms || {};
+  const confirmed = !!(CONF.portfolio && CONF.portfolio.at && CONF.appeals && CONF.appeals.at);
+  const AGR = CS.agreement || {}, ownAgr = String(((CS.docs || {}).docAgreement) || '').trim();
+  const hasAgr = !!(ownAgr || ['agrAttendance','agrPlagiarism','agrComplaints','agrResubmissions'].some(k => String(AGR[k] || '').trim()));
+  const signedAgr = (function(){ const a = rec('chub:agreement'); return !!(a && a.at); })();
+
+  /* ---- the pre-course task, if the centre has set one --------------------- */
+  const preTask = ((CS.courseLinks || []).filter(l => l && l.url && window.hubLinkShown && hubLinkShown(l)
+    && /pre.?course|before the course|pre.?task/i.test(String(l.label || '') + ' ' + String(l.card || ''))))[0];
+
+  /* ---- when the next teaching practice is, from the timetable ------------- */
+  const TT = rec('connect_timetable_v1') || {};
+  const PTS = rec('connect_tp_points_v1') || {};
+  /* TP_N reads the records, and on day one there are none -- so it is 0 and
+     the hero said "Write your lesson plan" with no practice named and no date
+     under it. The next practice is the one after the last one filed, which on
+     day one is the first. TP_N stays as it is for the cards' own lines. */
+  const HERO_TP = TP_N || (!beforeStart && !afterEnd && !tpDone && filed + 1 <= tpTotal ? filed + 1 : 0);
+  const tpDay = (function(){ const d = (TT.days || []).find(x => x && Number(x.tp) === HERO_TP); return (d && ymd(d.date)) || ''; })();
+  const tpTime = (function(){ const sl = (TT.slots || []).filter(x => x && x.kind === 'tp' && x.from)[0]; return sl ? sl.from : ''; })();
+  const tpAim = (function(){
+    if (!PTS.released) return '';
+    const mine = (PTS.points || {})[ME.token] || {};
+    return ((mine['tp' + HERO_TP] || {}).aim) || '';
+  })();
+
+  const waiting = [];
+  const add = (text, href) => waiting.push({ text: text, href: href });
+  if (ASG.tone === 'stuck') add(ASG.text, '9_assignment_submission.html');
+  if (fbBack && selfIn) add('Your teaching practice feedback is back — read it', '4_feedback_returned.html');
+  ['stage1','stage2','stage3'].forEach(function(key, i){
+    if (C5T[key] && C5T[key].returnedAt && !(C5[key] && C5[key].signed && C5[key].signed.at))
+      add('Stage ' + (i + 1) + ' of your CELTA 5 is back — sign it', '20_celta5.html');
+  });
+  if (C5T.final && C5T.final.signed && C5T.final.signed.at && !(C5.final && C5.final.signed && C5.final.signed.at))
+    add('Your final declaration is ready to sign', '20_celta5.html');
+  if (hasAgr && !signedAgr) add('Read and sign the candidate agreement', '29_candidate_agreement.html');
+  if (!confirmed) add('Read and sign the two confirmations in your CELTA 5', '20_celta5.html');
+  if (!beforeStart && !afterEnd && !tpDone) {
+    if (NEXT === 'plan') add(HERO_TP ? 'Write your lesson plan for TP ' + HERO_TP : 'Write your lesson plan', '1_trainee_plan_and_analysis.html');
+    if (NEXT === 'self') add(fbBack ? 'Write your self-evaluation — it opens your feedback' : 'Write your self-evaluation', '2_trainee_self_evaluation.html');
+  }
+  /* the planning grid's own row, when it is released and not filled */
+  (function(){
+    const g = rec('connect_tp_grid_v1'); if (!g || !g.released) return;
+    const mine = (g.rows || []).find(r => r.mine), row = (mine && mine.plan) || {};
+    const left = [tpTotal - 1, tpTotal].filter(n => { const r = row['tp' + n] || {}; return !(r.main && r.sub && r.material); });
+    if (left.length) add('Fill in your row on the TP' + (tpTotal - 1) + ' & TP' + tpTotal + ' planning grid', '21_tp_grid.html');
+  })();
+
+  /* ---- say it ------------------------------------------------------------- */
+  const k = document.getElementById('heroKind'), h = document.getElementById('heroTitle');
+  const w = document.getElementById('heroWhen'), ul = document.getElementById('heroTodo');
+  const go = document.getElementById('heroGo'), tiny = document.getElementById('heroTiny');
+  const esc2 = s2 => String(s2 == null ? '' : s2).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+  let kind = '', title = '', when = '', list = waiting.slice(), door = null, note = '', quiet = false;
+
+  if (afterEnd) {
+    quiet = true;
+    kind = 'The course is over';
+    title = 'That is your CELTA finished.';
+    when = 'It ended on ' + dayName(END) + '. Everything you wrote is still here, and this link keeps working — nothing to save or download unless you want to.';
+    list = waiting.slice(0, 2);
+  } else if (beforeStart) {
+    const n = sleeps(START);
+    kind = 'Before the course';
+    title = firstName ? 'Welcome, ' + firstName + '.' : 'Welcome.';
+    when = 'Your course starts on <b>' + esc2(dayName(START)) + '</b>'
+      + (n === 1 ? ' — tomorrow.' : n > 1 ? ' — ' + n + ' days from today.' : '.')
+      + (waiting.length ? ' There is nothing to teach yet; these are the things to do before day one.'
+                        : ' There is nothing to do yet — this page will tell you the moment there is.');
+    if (preTask) list = [{ text: 'Your pre-course task: ' + (preTask.label || preTask.card || 'open it'), href: preTask.url, out: true }].concat(list);
+    note = 'The cards below open as the course reaches them — your lesson plan when teaching practice begins, your feedback when your tutor returns it. You will not have to go looking.';
+  } else if (list.length) {
+    kind = 'Today';
+    title = list[0].text;
+    list = list.slice(1);
+    when = HERO_TP && tpDay
+      ? 'Teaching practice ' + HERO_TP + ' of ' + tpTotal + ' · <b>' + esc2(shortDay(tpDay)) + '</b>'
+        + (tpTime ? ', ' + esc2(tpTime) : '') + (tpAim ? ' · ' + esc2(tpAim) : '')
+      : '';
+  } else {
+    quiet = true;
+    kind = 'Today';
+    title = tpDone ? 'Everything is in.' : 'Nothing is waiting on you.';
+    when = tpDone
+      ? 'All ' + tpTotal + ' teaching practices are taught and written up. Your tutor has the rest.'
+      : (HERO_TP && tpDay
+          ? 'Your next teaching practice is <b>TP ' + HERO_TP + '</b>, ' + esc2(shortDay(tpDay))
+            + (tpTime ? ', ' + esc2(tpTime) : '') + (tpAim ? ' · ' + esc2(tpAim) : '') + '.'
+          : 'Your tutor will put the next thing here when it is ready.');
+  }
+
+  door = (waiting[0] && !beforeStart && !afterEnd) ? waiting[0]
+       : (beforeStart && waiting[0]) ? waiting[0] : null;
+
+  k.textContent = kind;
+  h.textContent = title;
+  w.innerHTML = when;
+  ul.innerHTML = list.map(it => '<li><a href="' + esc2(it.href) + '"'
+    + (it.out ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' + esc2(it.text) + '</a></li>').join('');
+  if (door) { go.href = door.href; go.textContent = beforeStart ? 'Start here' : 'Open it'; go.hidden = false; }
+  tiny.textContent = note;
+  host.classList.toggle('quiet', quiet);
+  host.hidden = false;
+
+  /* ---- the timetable, as a door at the top ------------------------------- */
+  (function(){
+    const d = document.getElementById('doorTimetable'); if (!d) return;
+    if (TT && TT.days && TT.days.length && TT.published) d.hidden = false;
+  })();
+
+  /* ---- a card that is not its time yet ----------------------------------
+     Not hidden: a trainee should be able to see the shape of their course.
+     Not clickable either, and the line says what has to happen first and who
+     does it, so nobody reads a quiet card as a broken one. */
+  function still(id, line2){
+    const card = document.getElementById(id);
+    if (!card || card.hidden) return;
+    card.classList.remove('act','stuck','done');
+    card.classList.add('still');
+    card.removeAttribute('href');
+    card.setAttribute('aria-disabled', 'true');
+    const st = card.querySelector('.st');
+    if (st) { st.className = 'st'; st.textContent = line2; }
+  }
+  const SUBS = rec('connect_assignment_submissions_v1') || {};
+  /* Once the course has ended nothing is still: a card saying "opens after you
+     turn in your first lesson plan" on a course that is over is a promise
+     nobody can keep. The cards simply show what they hold. */
+  if (afterEnd) return;
+  const started = !beforeStart;
+  const everPlanned = !!plan || planIn || selfIn || fbBack || filed > 0;
+  const everBack = fbBack || filed > 0;
+  const everMarked = Object.keys(SUBS).length > 0;
+  const startsOn = START ? ' on ' + shortDay(START) : ' when the course starts';
+
+  if (!started) {
+    still('roomPlan', 'Opens' + startsOn + ', with your first teaching practice');
+    still('roomSelf', 'Opens after you have turned in your first lesson plan');
+    still('roomFeedback', 'Opens when your tutor returns your first teaching practice');
+    still('roomObs', 'Opens' + startsOn + ' — the observations are on your timetable');
+    still('roomAssign', 'Opens when your tutor sets the first assignment');
+    still('roomProgress', 'Opens when your first teaching practice comes back');
+  } else {
+    if (!everPlanned) still('roomSelf', 'Opens after you have turned in your first lesson plan');
+    if (!everBack)    still('roomFeedback', 'Opens when your tutor returns your first teaching practice');
+    if (!ASG.total)   still('roomAssign', 'Opens when your tutor sets the first assignment');
+    if (!everBack && !everMarked) still('roomProgress', 'Opens when your first teaching practice or assignment comes back');
+  }
 })();
 
 </script>
