@@ -188,6 +188,13 @@
      rather put it somewhere of its own sets `data-say-pill="off"` on <body>. */
   function pill() {
     if (document.body.dataset.sayPill === 'off') return;
+    /* NOT TO A VOLUNTEER STUDENT. Ramy, 6 Oct 2026: "I don't think the
+       volunteer students need to have a Say something card." They are members
+       of the public who came in to be taught, not users of the product, and
+       asking them what is wrong with Lite asks the wrong person about the
+       wrong thing. Decided by the link in the browser rather than by a flag on
+       each page, so a volunteer screen written next year inherits it. */
+    try { if (window.HubStore && HubStore.isVolunteer && HubStore.isVolunteer()) return; } catch (e) {}
     if (document.querySelector('.say-pill')) return;
     var b = document.createElement('button');
     b.type = 'button';
