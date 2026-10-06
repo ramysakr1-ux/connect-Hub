@@ -16,7 +16,7 @@
 <title>1 · Lesson Plan &amp; Language Analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610061220">
+<link rel="stylesheet" href="hub-tokens.css?v=202610061236">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -405,7 +405,7 @@
   .duenote::before{content:"\2022"; font-size:1.1em; line-height:0;}
   .fromtt{display:block; font-size:0.72rem; color:var(--grey); margin-top:3px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610061220">
+<link rel="stylesheet" href="hub-house.css?v=202610061236">
 </head>
 <body>
 <div class="board">
@@ -631,12 +631,12 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202610061220"></script>
-<script src="hub-shared.js?v=202610061220"></script>
-<script src="hub-rotation.js?v=202610061220"></script>
-<script src="hub-store.js?v=202610061220"></script>
-<script src="hub-say.js?v=202610061220"></script>
-<script src="hub-sync.js?v=202610061220"></script>
+<script src="hub-due.js?v=202610061236"></script>
+<script src="hub-shared.js?v=202610061236"></script>
+<script src="hub-rotation.js?v=202610061236"></script>
+<script src="hub-store.js?v=202610061236"></script>
+<script src="hub-say.js?v=202610061236"></script>
+<script src="hub-sync.js?v=202610061236"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -704,7 +704,8 @@ if ($('fShareVol')) $('fShareVol').addEventListener('change', async () => {
          it the store refused with "Only a trainee or a tutor can share", the
          catch put the switch back, and nothing said why (30 Sep 2026). */
       const r = await window.HubStore.call({ op: 'shareMaterial', token: window.HubStore.token(),
-        name: m.name, url: m.url, by: ($('fName').value || '').trim(), tp: tp, kind: 'materials' });
+        name: m.name, url: m.url, by: ($('fName').value || '').trim(), tp: tp, kind: 'materials',
+        aim: aimForTP(tpNumberOf(tp)) });
       localStorage.setItem('connect_shared_v1', JSON.stringify(r.shared || []));
       say('Shared. The students see it on their own page.');
     } else {
@@ -1622,6 +1623,23 @@ function timetableDateFor(tpNumber){
 }
 
 /* "TP4", "tp 4", "4" -- the field is free text and always has been. */
+/* The one word for what a practice is: Grammar, Vocabulary, Functional
+   language, Reading, Listening, Speaking or Writing (hub-rotation.js's AIMS).
+   The rotation puts it on the trainee's own TP point cell, so this browser
+   already has it -- a volunteer's page does not, and never will, which is why
+   it rides along with the material instead (Ramy, 6 Oct 2026: "can it read
+   the lesson, like the main aim of the lesson instead?"). */
+function aimForTP(n){
+  if (!n) return '';
+  var me = null, P = null;
+  try { me = JSON.parse(localStorage.getItem('hub:me') || 'null'); } catch (e) {}
+  try { P = JSON.parse(localStorage.getItem('connect_tp_points_v1') || 'null'); } catch (e) {}
+  if (!me || !P) return '';
+  var rows = P.points || null;
+  if (!rows && P.groups) Object.keys(P.groups).forEach(function (g) { if (!rows && P.groups[g][me.token]) rows = P.groups[g]; });
+  var cell = rows && rows[me.token] && rows[me.token]['tp' + n];
+  return (cell && typeof cell.aim === 'string') ? cell.aim : '';
+}
 function tpNumberOf(text){
   var m = String(text || '').match(/(\d{1,2})/);
   return m ? +m[1] : 0;
