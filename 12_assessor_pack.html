@@ -25,7 +25,7 @@
 <title>Connect Lite — Assessor pack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610052234">
+<link rel="stylesheet" href="hub-tokens.css?v=202610060813">
 <style>
   :root{
     /* the control fill, for the shared confirm modal's Cancel button */
@@ -237,7 +237,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610052234">
+<link rel="stylesheet" href="hub-house.css?v=202610060813">
 </head>
 <body>
 <div class="board">
@@ -267,15 +267,15 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202610052234"></script>
-<script src="hub-shared.js?v=202610052234"></script>
-<script src="assignment-defaults.js?v=202610052234"></script>
-<script src="hub-tracker.js?v=202610052234"></script>
-<script src="hub-rotation.js?v=202610052234"></script>
-<script src="hub-attendance.js?v=202610052234"></script>
-<script src="hub-store.js?v=202610052234"></script>
-<script src="hub-say.js?v=202610052234"></script>
-<script src="hub-sync.js?v=202610052234"></script>
+<script src="observation-defaults.js?v=202610060813"></script>
+<script src="hub-shared.js?v=202610060813"></script>
+<script src="assignment-defaults.js?v=202610060813"></script>
+<script src="hub-tracker.js?v=202610060813"></script>
+<script src="hub-rotation.js?v=202610060813"></script>
+<script src="hub-attendance.js?v=202610060813"></script>
+<script src="hub-store.js?v=202610060813"></script>
+<script src="hub-say.js?v=202610060813"></script>
+<script src="hub-sync.js?v=202610060813"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -885,6 +885,11 @@ function courseDocuments(){
   if (writtenHere) {
     const signed = PEOPLE.filter(tr => tr.agreement && tr.agreement.at);
     const names = signed.map(tr => esc(tr.name || '')).filter(Boolean).join(', ');
+    /* No trainee named here: this is the WHOLE COURSE'S agreement, not one
+       person's, so the row stays a straight link rather than a per-trainee
+       door -- each trainee's own signed copy opens from their own row in the
+       pack below, or from the tracker, the way their other records do (Ramy,
+       6 Oct 2026, finding this link opened to nobody in particular). */
     builtIn.push(`<div class="docrow"><span><b>Candidate agreement</b> <span class="sub">&mdash; written by the centre and signed on screen &middot; ${signed.length} of ${PEOPLE.length} signed${names ? ': ' + names : ''}</span></span><a href="29_candidate_agreement.html">Open the agreement</a></div>`);
   }
   const provided = DOC_LABELS.filter(([k]) => docs[k]).length;
@@ -967,6 +972,11 @@ function observationBlock(tr){
     `<div class="tp"><div class="tp-row"><span class="n"></span><span class="meta"></span><a class="btn ghost" href="18_observation_tasks.html?trainee=${encodeURIComponent(tr.id)}">Open the sheets</a></div></div>`;
 }
 /* The CELTA 5 Record Booklet: where each stage stands, and the door. */
+function agreementRow(tr){
+  const a = tr.agreement || {};
+  if (!a.at) return '';
+  return `<div class="tp"><div class="tp-row"><span class="n">Candidate agreement</span><span class="meta">Signed ${esc(when(a.at))}</span><a class="btn ghost" href="29_candidate_agreement.html?trainee=${encodeURIComponent(tr.id)}">Open it</a></div></div>`;
+}
 function celta5Block(tr){
   const c = tr.celta5 || {}, t = tr.celta5t || {}; const conf = c.confirms || {};
   const sig = s => s && s.at ? '<span class="chip fine">signed</span>' : '<span class="chip nd">not signed</span>';
@@ -1003,6 +1013,8 @@ function renderOne(tr){
     <div class="panel">${ORDER.filter(k => k!=='a5' || a5InPlay(tr.assignments||{})).map(k=>assignmentBlock(tr, k)).join('')}</div>
     <h2 class="sect">Observations <small>the sheets, as the trainee wrote them</small></h2>
     <div class="panel">${observationBlock(tr)}</div>
+    ${agreementRow(tr) ? `<h2 class="sect">Candidate agreement</h2>
+    <div class="panel">${agreementRow(tr)}</div>` : ''}
     <h2 class="sect">CELTA 5 <small>the record booklet</small></h2>
     <div class="panel">${celta5Block(tr)}</div>
     ${(tr.links || []).filter(l => l && l.url).length ? `<h2 class="sect">Private links <small>given to this trainee alone</small></h2>

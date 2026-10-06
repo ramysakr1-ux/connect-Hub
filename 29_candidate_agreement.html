@@ -26,7 +26,7 @@
 <title>Candidate agreement</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610052234">
+<link rel="stylesheet" href="hub-tokens.css?v=202610060813">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -70,11 +70,11 @@
   <a class="back" id="back" href="index.html">&#8592; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610052234"></script>
-<script src="hub-store.js?v=202610052234"></script>
-<script src="hub-ink.js?v=202610052234"></script>
-<script src="hub-say.js?v=202610052234"></script>
-<script src="hub-sync.js?v=202610052234"></script>
+<script src="hub-shared.js?v=202610060813"></script>
+<script src="hub-store.js?v=202610060813"></script>
+<script src="hub-ink.js?v=202610060813"></script>
+<script src="hub-say.js?v=202610060813"></script>
+<script src="hub-sync.js?v=202610060813"></script>
 <script type="text/x-hub-app">
 /* A volunteer student is not on the course. They come in off the street to be
    taught, and what the centre asks of its TRAINEES -- attendance, plagiarism,
@@ -94,10 +94,39 @@ const when = iso => { try { return new Date(iso).toLocaleDateString('en-GB',{day
 
 const IS_TRAINEE = !!(window.HubStore && HubStore.isTrainee && HubStore.isTrainee());
 const KEY = 'chub:agreement';
+/* Staff open this with ?trainee=<id> from that trainee's own row in the pack,
+   the same way the observation sheets and the marked assignments do (Ramy,
+   6 Oct 2026: he signed as a trainee, saw it, and the assessor still could
+   not -- the link they clicked named no one, so the page had nothing to show
+   but its own empty browser). Without an id, a tutor or assessor still reads
+   the AGREEMENT ITSELF -- it is the whole course's words to read -- but there
+   is no one signature to show. */
+const P = new URLSearchParams(location.search);
+const TRAINEE_ID = P.get('trainee') || '';
+let WHO = '';
+if (!IS_TRAINEE && TRAINEE_ID) {
+  try {
+    const roster = JSON.parse(localStorage.getItem('connect_roster_v1') || '{}') || {};
+    WHO = ((roster.trainees || {})[TRAINEE_ID] || {}).name || '';
+  } catch (e) {}
+}
+if (!IS_TRAINEE && TRAINEE_ID) $('back').href = '12_assessor_pack.html';
 
 function settings(){ try { return JSON.parse(localStorage.getItem('connect_course_settings') || 'null') || {}; } catch(e){ return {}; } }
-function record(){ try { return JSON.parse(localStorage.getItem(KEY) || 'null') || {}; } catch(e){ return {}; } }
-function saveRecord(r){ try { localStorage.setItem(KEY, JSON.stringify(r)); } catch(e){} }
+/* The trainee's own browser is the record while they hold the link -- the
+   only copy, and theirs to add a signature to. Staff read the same signature
+   off the roster, which is where their write reaches the store from. Staff
+   with no trainee named have nobody's signature to show; that is not the
+   same as nobody having signed. */
+function record(){
+  if (IS_TRAINEE) { try { return JSON.parse(localStorage.getItem(KEY) || 'null') || {}; } catch(e){ return {}; } }
+  if (!TRAINEE_ID) return {};
+  try {
+    const roster = JSON.parse(localStorage.getItem('connect_roster_v1') || '{}') || {};
+    return ((roster.trainees || {})[TRAINEE_ID] || {}).agreement || {};
+  } catch (e) { return {}; }
+}
+function saveRecord(r){ if (!IS_TRAINEE) return; try { localStorage.setItem(KEY, JSON.stringify(r)); } catch(e){} }
 
 /* The four sections Cambridge names, in the order it names them. */
 const SECTIONS = [
@@ -129,11 +158,18 @@ function render(){
   const print = written.map(([k]) => agr[k]).join('\n') + '|' + own;
   const fp = fingerprint(print);
 
+  const lede = IS_TRAINEE
+    ? 'what the centre asks of you and what you may ask of it. Read it, then sign at the bottom.'
+    : WHO ? esc(WHO) + '\u2019s copy \u2014 read, and signed below if they have.'
+    : 'what the centre asks every trainee to read and sign on joining.';
   let head = `<div class="title"><h1>Candidate agreement</h1>
-    <p>${esc(cs.centreName || 'Your centre')}${cs.courseName ? ' &middot; ' + esc(cs.courseName) : ''} &mdash; what the centre asks of you and what you may ask of it. Read it, then sign at the bottom.</p></div>`;
+    <p>${esc(cs.centreName || 'Your centre')}${cs.courseName ? ' &middot; ' + esc(cs.courseName) : ''} &mdash; ${lede}</p></div>`;
 
   if (!written.length && !own) {
-    $('app').innerHTML = head + `<div class="empty">Your centre has not put its candidate agreement here yet. There is nothing for you to sign, and nothing is being asked of you. If you were expecting one, your course tutor will know.</div>`;
+    const msg = IS_TRAINEE
+      ? 'Your centre has not put its candidate agreement here yet. There is nothing for you to sign, and nothing is being asked of you. If you were expecting one, your course tutor will know.'
+      : 'The centre has not written a candidate agreement on this course, and has not linked one of its own.';
+    $('app').innerHTML = head + `<div class="empty">${msg}</div>`;
     return;
   }
 
@@ -157,8 +193,10 @@ function render(){
       <div class="row"><div><label class="f">Your name, to sign</label><input type="text" id="signName" placeholder="Type your name"></div>
       <button class="btn" type="button" id="signBtn">Read and sign</button></div>
       <p class="status" id="status"></p></div>`;
+  } else if (TRAINEE_ID) {
+    sign = `<div class="signbox"><h2>Not signed yet</h2><p class="ro">${WHO ? esc(WHO) : 'This trainee'} has not signed the agreement.</p></div>`;
   } else {
-    sign = `<div class="signbox"><h2>Not signed yet</h2><p class="ro">This trainee has not signed the agreement.</p></div>`;
+    sign = `<div class="signbox"><h2>Whose signature?</h2><p class="ro">Open this from a trainee's own row in the assessor's pack to see whether they have signed, and when.</p></div>`;
   }
 
   $('app').innerHTML = head + ownBlock + body + sign;
