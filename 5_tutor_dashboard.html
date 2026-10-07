@@ -23,7 +23,7 @@
 <title>Connect Lite — Tutor dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610071639">
+<link rel="stylesheet" href="hub-tokens.css?v=202610071644">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -272,7 +272,7 @@
     .grow .st.obs::before{content:'Observations · '; color:var(--grey); font-weight:400;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610071639">
+<link rel="stylesheet" href="hub-house.css?v=202610071644">
 </head>
 <body>
 <div class="board">
@@ -361,20 +361,20 @@
 
 </div>
 
-<script src="hub-due.js?v=202610071639"></script>
-<script src="observation-defaults.js?v=202610071639"></script>
-<script src="hub-shared.js?v=202610071639"></script>
-<script src="hub-store.js?v=202610071639"></script>
-<script src="hub-say.js?v=202610071639"></script>
-<script src="hub-shelf.js?v=202610071639"></script>
+<script src="hub-due.js?v=202610071644"></script>
+<script src="observation-defaults.js?v=202610071644"></script>
+<script src="hub-shared.js?v=202610071644"></script>
+<script src="hub-store.js?v=202610071644"></script>
+<script src="hub-say.js?v=202610071644"></script>
+<script src="hub-shelf.js?v=202610071644"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202610071639"></script>
-<script src="hub-sync.js?v=202610071639"></script>
-<script src="hub-tracker.js?v=202610071639"></script>
-<script src="hub-feedback.js?v=202610071639"></script>
+<script src="assignment-defaults.js?v=202610071644"></script>
+<script src="hub-sync.js?v=202610071644"></script>
+<script src="hub-tracker.js?v=202610071644"></script>
+<script src="hub-feedback.js?v=202610071644"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a trainee's link opened it and read the course and
@@ -669,31 +669,38 @@ function setupState(){
    the page it is done on. Ramy, 6 Oct 2026: the old three-step list "is
    outdated... I don't think it's being truthful." */
 function setupSteps(s){
+  /* FIVE STEPS, ONE DOOR EACH, matching what is built (Ramy, 8 Oct 2026:
+     "those seven things should be seven tabs... if you combine them then
+     it'd be five"). Settings and Roster and links are Course admin's tabs;
+     the timetable, the TP points and the volunteer register are pages of
+     their own. The agreement and the tutors live on Settings and are named
+     inside that step rather than as steps of their own. */
   const n = (k, one, many) => k + ' ' + (k === 1 ? one : many);
   const span = (a, b) => { try { const f = d => new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }); return f(a) + ' – ' + f(b) + ' ' + String(b).slice(0, 4); } catch (e) { return a + ' – ' + b; } };
+  const settingsLine = () => {
+    if (!(s.named && s.dated)) return 'The centre and the course, the dates, the candidate agreement, the tutors. The dates also decide when the assessor’s link stops working.';
+    const bits = [esc(s.cs.courseName) + ' · ' + esc(span(s.cs.start, s.cs.end))];
+    bits.push(s.agreement ? 'agreement written' : 'no agreement yet');
+    bits.push(s.tutors.length ? n(s.tutors.length, 'tutor', 'tutors') + ' named' : 'no tutors named yet');
+    if (s.logo) bits.push('your logo on every printed record');
+    return bits.join(' · ');
+  };
   return [
-    { done: s.named && s.dated, short: 'Name and dates', title: 'Name the course and set its dates', href: '6_centre_admin_dashboard.html#settings',
-      line: s.named && s.dated ? esc(s.cs.courseName) + ' · ' + esc(span(s.cs.start, s.cs.end)) + (s.logo ? ' · your logo on every printed record' : '')
-            : 'The centre, the course, when it runs. The dates also decide when the assessor’s link stops working.' },
+    { done: s.named && s.dated, short: 'Settings', title: 'Settings', href: '6_centre_admin_dashboard.html#settings', line: settingsLine() },
+    { done: s.trainees > 0, short: 'Roster and links', title: 'Roster and links', href: '6_centre_admin_dashboard.html#roster',
+      line: s.trainees ? n(s.trainees, 'trainee', 'trainees') + ' on the course' + (s.groups.length ? ' in ' + n(s.groups.length, 'group', 'groups') : '') + ', each with a personal link to be sent to them'
+            : 'Paste the class list in one go. Each one gets a personal link — no accounts, no passwords.' },
     { done: s.published, short: 'Timetable', title: 'The timetable', href: '23_timetable.html',
       line: s.published ? n(s.days, 'day', 'days') + ' laid out' + (s.rooms ? ', ' + n(s.rooms, 'online room', 'online rooms') + ' on them' : '') + ' — the course can see it'
             : s.days ? n(s.days, 'day', 'days') + ' drafted — not yet set for the course to see'
             : 'The spreadsheet you already have, read once. Or built here, day by day.' },
-    { done: s.tutors.length > 0, short: 'Tutors', title: 'Who teaches it', href: '6_centre_admin_dashboard.html#tutors',
-      line: s.tutors.length ? esc(s.tutors.join(', ')) : 'The tutors’ names, for the signatures on the final report.' },
-    { done: s.agreement, short: 'Agreement', title: 'The candidate agreement', href: '6_centre_admin_dashboard.html#agreement',
-      line: s.agreement ? 'Written — every trainee signs it from their own link'
-            : 'Attendance, plagiarism, the rest — or a link to the one your centre already has.' },
-    { done: s.trainees > 0, short: 'Trainees', title: 'The trainees', href: '6_centre_admin_dashboard.html#roster',
-      line: s.trainees ? n(s.trainees, 'trainee', 'trainees') + ' on the course' + (s.groups.length ? ' in ' + n(s.groups.length, 'group', 'groups') : '') + ', each with a personal link to be sent to them'
-            : 'Paste the class list in one go. Each one gets a personal link — no accounts, no passwords.' },
     { done: s.built, short: 'TP points', title: 'TP points', href: '24_tp_points.html',
       line: s.built ? 'Every practice staged and timed, for every trainee' + (s.setLib ? ', from ' + n(s.setLib, 'set', 'sets') : '')
             : s.setLib ? n(s.setLib, 'set', 'sets') + ' on the course — the rotation is not built yet'
             : 'Take a set from the library, or write your own; the rotation does the rest.' },
     { done: s.volunteers > 0, short: 'Volunteer students', title: 'The volunteer students', href: '25_volunteer_register.html',
       line: s.volunteers ? n(s.volunteers, 'student', 'students') + ' on the register, each with their own page'
-            : 'The people who come in to be taught. Their register, their reminders, their certificates.' },
+            : 'The people who come in to be taught. Their register, their reminders, their certificates.' }
   ];
 }
 function paintSetup(s){
@@ -712,7 +719,7 @@ function paintSetup(s){
     '<section class="welcome">' +
       '<p class="eyebrow">' + esc(s.cs.centreName || 'Connect Lite') + '</p>' +
       '<h2>' + (s.named ? 'Welcome to ' + esc(s.cs.courseName) : 'Welcome.') + '</h2>' +
-      '<p class="lede">This is your course. Seven things set it up, in the order a course happens; each ticks itself off here when it is done, each opens where it is done, and the button below goes to the next one.</p>' +
+      '<p class="lede">This is your course. Five things set it up, in the order a course happens: two tabs on Course admin and three pages of their own. Each ticks itself off here when it is done, each opens where it is done, and the button below goes to the next one.</p>' +
       '<label class="wname"><span>Your name</span><input id="welcomeName" type="text" value="' + esc(name) + '" placeholder="As it will sign your feedback" autocomplete="name"><small>Typed once. It signs your posts, your feedback and your marking.</small></label>' +
       '<ol class="steps">' + steps.map((st, i) =>
         '<li class="sstep' + (st.done ? ' done' : '') + '"><span class="sdot">' + (i + 1) + '</span>' +
