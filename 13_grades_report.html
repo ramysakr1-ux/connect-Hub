@@ -23,7 +23,7 @@
 <title>Connect Lite — Grades report</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610072151">
+<link rel="stylesheet" href="hub-tokens.css?v=202610072156">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -204,8 +204,50 @@
   .wordmark-spin{animation:wordmark-spin 90s linear infinite; transform-origin:50% 50%; transform-style:preserve-3d;}
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
+
+  /* ---- v2 (7 Oct 2026): the report's readiness -------------------------------
+     Screen only. Each letter in the jump bar carries a ring for how much of
+     that trainee's profile is written; each grade table carries the cohort's
+     spread; each trainee's head says when the final moved off the provisional,
+     because that is when the evidence sections must say why. The colours are
+     the grade selects' own. Print, Copy all and Appian copying are untouched.
+     Design: Magic Touches, 10a. */
+  .jump a{position:relative; overflow:visible;}
+  .jump a .gr-ring{position:absolute; inset:-4px; border-radius:50%; pointer-events:none;
+    background:conic-gradient(var(--gr-c, var(--gold)) calc(var(--gr-p, 0) * 1%), oklch(91% 0.012 82) 0);
+    -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px)); mask:radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+    transition:--gr-p .6s cubic-bezier(.2,.7,.2,1);}
+  .jump a.done .gr-ring{--gr-c:var(--teal);}
+  .jump a.gr-full .gr-ring{--gr-c:var(--teal);}
+  .jump a.gr-full{background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  .jump a:focus-visible{outline:2px solid var(--gold-lifted); outline-offset:5px;}
+  .jump .count b{color:var(--ink); font-weight:700;}
+  @property --gr-p{syntax:'<number>'; inherits:true; initial-value:0;}
+
+  .gr-spread{display:flex; height:8px; margin:0 20px 12px; border-radius:4px; overflow:hidden; background:oklch(91% 0.012 82); gap:2px;}
+  .gr-spread i{display:block; height:100%; min-width:6px; transition:flex-grow .5s cubic-bezier(.2,.7,.2,1);}
+  .gr-spread .fail{background:var(--brick);}
+  .gr-spread .set{background:var(--teal);}
+  .gr-spread .top{background:var(--gold-deep);}
+  .gr-spread .out{background:var(--grey);}
+  .gr-spread .none{background:oklch(91% 0.012 82);}
+  .gr-key{display:flex; flex-wrap:wrap; gap:4px 12px; margin:-6px 20px 12px; font-size:0.72rem; color:var(--grey);}
+  .gr-key span{display:inline-flex; align-items:center; gap:5px;}
+  .gr-key span i{width:8px; height:8px; border-radius:2px;}
+  .gr-key b{color:var(--ink); font-weight:700;}
+
+  .gr-move{display:inline-flex; align-items:center; gap:8px; padding:4px 11px; border-radius:999px; font-size:0.78rem; font-weight:700; white-space:nowrap;
+    background:var(--gold-wash); border:1px solid var(--amber-edge); color:var(--gold-deep);}
+  .gr-move.down{background:color-mix(in oklab, var(--brick) 8%, var(--paper)); border-color:color-mix(in oklab, var(--brick) 35%, transparent); color:var(--brick);}
+  .gr-move.same{background:none; border-color:var(--sand-line); color:var(--teal);}
+  .gr-move s{text-decoration:none; font-weight:500; opacity:.8;}
+  .gr-move small{font-weight:500; color:var(--grey);}
+  .gr-left{display:block; margin-top:4px; font-size:0.76rem; color:var(--grey);}
+  .gr-left b{color:var(--ink);}
+  @media(prefers-reduced-motion:reduce){ .jump a .gr-ring, .gr-spread i{transition:none;} }
+  @media print{ .gr-spread, .gr-key, .gr-move, .gr-left{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610072151">
+<link rel="stylesheet" href="hub-house.css?v=202610072156">
 </head>
 <body>
 <div class="board">
@@ -258,11 +300,11 @@
 
 </div>
 
-<script src="hub-tracker.js?v=202610072151"></script>
-<script src="hub-store.js?v=202610072151"></script>
-<script src="hub-say.js?v=202610072151"></script>
-<script src="hub-shared.js?v=202610072151"></script>
-<script src="hub-sync.js?v=202610072151"></script>
+<script src="hub-tracker.js?v=202610072156"></script>
+<script src="hub-store.js?v=202610072156"></script>
+<script src="hub-say.js?v=202610072156"></script>
+<script src="hub-shared.js?v=202610072156"></script>
+<script src="hub-sync.js?v=202610072156"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a trainee's link opened it and read the course and
@@ -894,6 +936,88 @@ window.addEventListener('beforeprint', buildPrintable);
     return;
   }
   paint(); paintState();
+})();
+
+/* ---- v2 (7 Oct 2026): the report's readiness -------------------------------
+   Reads DATA, ORDER, SECTIONS, FIELDS and EVIDENCE as the page keeps them;
+   writes nothing. Re-applied after every paint (a MutationObserver on the
+   three hosts) and 200ms after any input or change. */
+(function(){
+  const GR = ['FAIL','FAIL / PASS','PASS','PASS / PASS B','PASS B','PASS B / PASS A','PASS A'];
+  const rankP = g => GR.indexOf(g);
+  const rankF = g => ({ 'FAIL': 0, 'PASS': 2, 'PASS B': 4, 'PASS A': 6 })[g];
+  const filled = v => Array.isArray(v) ? v.some(it => it && String(it.text || '').trim()) : !!String(v || '').trim();
+  function parts(p){
+    const d = DATA[p.id] || {}, out = [];
+    out.push(['Provisional grade', !!d.provisional]);
+    SECTIONS.forEach(sec => out.push([sec.heading, filled(d[sec.key])]));
+    if (typeof wantsEvidence === 'function' && wantsEvidence(p, d.provisional)) out.push([EVIDENCE.heading, filled(d[EVIDENCE.key])]);
+    out.push(['Final grade', !!d.final]);
+    if (d.final) FIELDS.forEach(f => out.push([f.heading, filled(d[f.key])]));
+    out.push(['Hours attended', !!String(d.hoursAttended || '').trim()]);
+    return out;
+  }
+  function jump(){
+    const box = document.getElementById('jump'); if (!box) return;
+    let full = 0;
+    box.querySelectorAll('a[href^="#c"]').forEach(a => {
+      const i = +a.getAttribute('href').slice(2), p = ORDER[i]; if (!p) return;
+      const ps = parts(p), ok = ps.filter(x => x[1]).length, pct = Math.round(100 * ok / ps.length);
+      let ring = a.querySelector('.gr-ring');
+      if (!ring) { ring = document.createElement('span'); ring.className = 'gr-ring'; a.appendChild(ring); }
+      a.style.setProperty('--gr-p', pct);
+      a.classList.toggle('gr-full', pct === 100); if (pct === 100) full++;
+      const left = ps.filter(x => !x[1]).map(x => x[0]);
+      a.title = p.name + ' \u00b7 ' + ok + ' of ' + ps.length + ' written' + (left.length ? ' \u00b7 still to write: ' + left.join(', ') : ' \u00b7 ready');
+      a.setAttribute('aria-label', a.title);
+    });
+    const c = box.querySelector('.count');
+    if (c && !c.querySelector('.gr-full-n')) c.insertAdjacentHTML('beforeend', ' \u00b7 <b class="gr-full-n"></b> profiles complete');
+    const n = box.querySelector('.gr-full-n'); if (n) n.textContent = full + ' of ' + ORDER.length;
+  }
+  function spread(){
+    const host = document.getElementById('cohort'); if (!host) return;
+    host.querySelectorAll('.gt').forEach(gt => {
+      const kind = gt.classList.contains('fin') ? 'final' : 'provisional';
+      const cnt = { fail: 0, set: 0, top: 0, out: 0, none: 0 };
+      ORDER.forEach(p => { const g = (DATA[p.id] || {})[kind]; cnt[g ? gradeClass(g) || 'set' : 'none']++; });
+      const order = ['fail', 'set', 'top', 'out', 'none'];
+      const words = { fail: 'Fail', set: kind === 'final' ? 'Pass / Pass B' : 'Pass to Pass B', top: 'Pass A', out: 'Withdrawn / extension / deferral', none: 'Not set' };
+      const bar = '<div class="gr-spread" role="img" aria-label="' + order.filter(k => cnt[k]).map(k => cnt[k] + ' ' + words[k]).join(', ') + '">'
+        + order.filter(k => cnt[k]).map(k => '<i class="' + k + '" style="flex-grow:' + cnt[k] + '" title="' + cnt[k] + ' ' + words[k] + '"></i>').join('') + '</div>';
+      const key = '<div class="gr-key">' + order.filter(k => cnt[k] && k !== 'none').map(k => '<span><i class="' + k + '" style="background:var(--' + ({ fail: 'brick', set: 'teal', top: 'gold-deep', out: 'grey' })[k] + ')"></i><b>' + cnt[k] + '</b> ' + words[k] + '</span>').join('')
+        + (cnt.none ? '<span><b>' + cnt.none + '</b> not set</span>' : '') + '</div>';
+      const old = gt.querySelector('.gr-wrap');
+      const html = '<div class="gr-wrap">' + bar + key + '</div>';
+      if (old) { if (old.outerHTML !== html) old.outerHTML = html; }
+      else { const sc = gt.querySelector('p.sc'); if (sc) sc.insertAdjacentHTML('afterend', html); }
+    });
+  }
+  function moves(){
+    document.querySelectorAll('#cands section.cand').forEach(sec => {
+      const p = ORDER.find(x => x.id === sec.dataset.id); if (!p) return;
+      const d = DATA[p.id] || {}, head = sec.querySelector('.chead'); if (!head) return;
+      const a = rankP(d.provisional), b = rankF(d.final);
+      let html = '';
+      if (a >= 0 && b != null) {
+        const dir = b > a ? 'up' : b < a ? 'down' : 'same';
+        html = '<span class="gr-move ' + dir + '"><s>' + esc(d.provisional) + '</s> \u2192 ' + esc(d.final)
+          + (dir === 'same' ? '' : ' <small>' + (dir === 'up' ? '\u2191 the evidence sections say why' : '\u2193 the update says why') + '</small>') + '</span>';
+      }
+      const ps = parts(p), left = ps.filter(x => !x[1]).length;
+      html += '<span class="gr-left">' + (left ? '<b>' + left + '</b> of ' + ps.length + ' still to write' : 'Every part written') + '</span>';
+      let box = head.querySelector('.gr-head');
+      if (!box) { box = document.createElement('div'); box.className = 'gr-head'; head.appendChild(box); }
+      if (box.innerHTML !== html) box.innerHTML = html;
+    });
+  }
+  const apply = () => { try { jump(); spread(); moves(); } catch (e) {} };
+  let t = null; const soon = () => { clearTimeout(t); t = setTimeout(apply, 200); };
+  ['jump', 'cohort', 'cands'].forEach(id => { const el = document.getElementById(id); if (el) new MutationObserver(m => { if (m.some(r => [...r.addedNodes].some(n => n.nodeType === 1 && !(n.className && String(n.className).startsWith('gr-'))))) soon(); }).observe(el, { childList: true }); });
+  document.addEventListener('input', soon, true);
+  document.addEventListener('change', soon, true);
+  document.addEventListener('click', e => { if (e.target.closest('[data-add],[data-remove]')) soon(); }, true);
+  apply();
 })();
 </script>
 </body>
