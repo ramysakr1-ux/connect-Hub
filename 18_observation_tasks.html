@@ -51,7 +51,7 @@
 <title>Connect Lite — Observation tasks</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610072205">
+<link rel="stylesheet" href="hub-tokens.css?v=202610072216">
 <style>
   /* The palette lives on each screen, not in hub-house.css. */
   :root{
@@ -163,19 +163,44 @@
     padding:10px 13px; font-size:0.85rem; margin:0 0 16px;}
   h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.6rem; margin:0 0 4px;}
   .lede{color:var(--grey); font-size:0.88rem; line-height:1.6; margin:0 0 18px; max-width:66ch;}
+
+  /* ---- v2 (7 Oct 2026): how far each sheet has got ---------------------------
+     In the list, a hairline under each task fills as the sheet is answered:
+     gold while in progress, teal once complete or turned in. On an open sheet,
+     the bar carries a live meter, and turning in stamps the date on. Display
+     only; answering, saving and turning in are untouched. Design: Magic
+     Touches, 12b. */
+  .task{position:relative;}
+  .task .ob-line{position:absolute; left:64px; right:0; bottom:-1px; height:2px; border-radius:1px; background:transparent; overflow:hidden; pointer-events:none;}
+  .task .ob-line i{display:block; height:100%; background:var(--gold); border-radius:1px; transition:width .5s cubic-bezier(.2,.7,.2,1);}
+  .task .ob-line.full i{background:var(--teal);}
+  .ob-meter{display:inline-flex; align-items:center; gap:10px; font-size:0.8rem; color:var(--grey);}
+  .ob-meter .trk{width:120px; height:6px; border-radius:3px; background:oklch(91% 0.012 82); overflow:hidden;}
+  .ob-meter .trk i{display:block; height:100%; border-radius:3px; background:var(--gold); transition:width .4s cubic-bezier(.2,.7,.2,1);}
+  .ob-meter.full .trk i{background:var(--teal);}
+  .ob-meter b{color:var(--ink); font-variant-numeric:tabular-nums;}
+  .bar{flex-wrap:wrap;}
+  .bar .ob-meter{margin-left:auto;}
+  #turnIn.ob-ready{animation:ob-ready 1.6s ease-out 1;}
+  .turned.ob-new{animation:ob-stamp .55s cubic-bezier(.3,1.4,.5,1) both; transform-origin:12% 50%;}
+  @keyframes ob-ready{0%{box-shadow:0 0 0 0 oklch(70% 0.12 72 / .6);}100%{box-shadow:0 0 0 12px oklch(70% 0.12 72 / 0);}}
+  @keyframes ob-stamp{0%{opacity:0; transform:scale(1.08) rotate(-1.5deg);}60%{opacity:1; transform:scale(.99) rotate(.3deg);}100%{transform:none;}}
+  @media(prefers-reduced-motion:reduce){ .task .ob-line i, .ob-meter .trk i{transition:none;} #turnIn.ob-ready, .turned.ob-new{animation:none;} }
+  @media(max-width:600px){ .task .ob-line{left:0;} .bar .ob-meter{margin-left:0; width:100%;} }
+  @media print{ .ob-line, .ob-meter{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610072205">
+<link rel="stylesheet" href="hub-house.css?v=202610072216">
 </head>
 <body class="hub-obs hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="observation-defaults.js?v=202610072205"></script>
-<script src="hub-shared.js?v=202610072205"></script>
-<script src="hub-store.js?v=202610072205"></script>
-<script src="hub-say.js?v=202610072205"></script>
-<script src="hub-sync.js?v=202610072205"></script>
+<script src="observation-defaults.js?v=202610072216"></script>
+<script src="hub-shared.js?v=202610072216"></script>
+<script src="hub-store.js?v=202610072216"></script>
+<script src="hub-say.js?v=202610072216"></script>
+<script src="hub-sync.js?v=202610072216"></script>
 <script type="text/x-hub-app">
 /* A trainee's own work. A tutor or an assessor READS it -- they have to, it
    is portfolio evidence -- so the page is not refused them; the fields are
@@ -255,7 +280,7 @@ function row(t, sit){
   const k = recKey(t.id, sit);
   const label = sit ? `TP${t.tp}${sit}` : (t.tp ? 'TP'+t.tp : (posOf(t) ? (t.id.startsWith('filmed') ? 'Film ' : 'Live ') + posOf(t) : ''));
   const q = `?task=${encodeURIComponent(t.id)}${sit ? '&sit=' + sit : ''}${KEYQ ? '&' + KEYQ : ''}`;
-  return `<a class="task" href="${q}">
+  return `<a class="task" href="${q}" data-n="${answered(k)}" data-exp="${expectedOf(t)}" data-in="${turnsIn(t) && (WORK[k] || {}).turnedInAt ? 1 : 0}">
     <span class="tp">${esc(label)}</span>
     <span class="nm">${esc(t.title)}${subOf(t) ? `<small>${esc(subOf(t))}</small>` : ''}</span>
     ${statusOf(k, expectedOf(t), turnsIn(t))}
@@ -426,6 +451,45 @@ function sheet(t, sit){
 const id = P.get('task');
 if (id && findTask(id)) sheet(findTask(id), P.get('sit') || '');
 else list();
+
+/* ---- v2 (7 Oct 2026): how far each sheet has got -----------------------------
+   Layered on list() and sheet() through a MutationObserver on #app. Reads
+   WORK, answered(), expectedOf(), recKey() and TASKS as the page keeps them.
+   Stores nothing. */
+(function(){
+  const app = $('app'); if (!app) return;
+  let justTurned = false, wasFull = null;
+  const allTasks = () => Object.keys(TASKS).reduce((a, g) => a.concat(TASKS[g] || []), []);
+  function lines(){
+    app.querySelectorAll('a.task[data-exp]').forEach(a => {
+      const n = +a.dataset.n || 0, e = +a.dataset.exp || 0, done = a.dataset.in === '1' || (e && n >= e);
+      const pct = done ? 100 : e ? Math.min(100, Math.round(100 * n / e)) : (n ? 50 : 0);
+      if (a.querySelector('.ob-line')) return;
+      a.insertAdjacentHTML('beforeend', '<span class="ob-line' + (done ? ' full' : '') + '" aria-hidden="true"><i style="width:' + pct + '%"></i></span>');
+    });
+  }
+  function meter(){
+    const P = new URLSearchParams(location.search), id = P.get('task'); if (!id) return;
+    const t = allTasks().find(x => x.id === id); if (!t) return;
+    const k = recKey(t.id, P.get('sit') || ''), e = expectedOf(t), n = answered(k), full = !!e && n >= e;
+    const bar = app.querySelector('.bar'); if (!bar) return;
+    let m = bar.querySelector('.ob-meter');
+    if (!m) { m = document.createElement('span'); m.className = 'ob-meter'; m.setAttribute('aria-live', 'polite'); bar.appendChild(m); }
+    const pct = e ? Math.min(100, Math.round(100 * n / e)) : 0;
+    m.classList.toggle('full', full);
+    m.innerHTML = '<span class="trk"><i style="width:' + pct + '%"></i></span><span><b>' + n + '</b>' + (e ? ' of ' + e : '') + ' answered</span>';
+    const btn = $('turnIn');
+    if (btn && full && wasFull === false && !(WORK[k] || {}).turnedInAt) { btn.classList.remove('ob-ready'); void btn.offsetWidth; btn.classList.add('ob-ready'); }
+    wasFull = full;
+    if (justTurned) { const tb = app.querySelector('.turned'); if (tb) tb.classList.add('ob-new'); justTurned = false; }
+  }
+  const apply = () => { try { lines(); meter(); } catch (e) {} };
+  app.addEventListener('click', e => { if (e.target.closest('#turnIn')) { justTurned = true; wasFull = null; } }, true);
+  let t = null; const soon = () => { clearTimeout(t); t = setTimeout(meter, 120); };
+  app.addEventListener('input', soon); app.addEventListener('change', soon); app.addEventListener('click', e => { if (e.target.closest('.tick-o, input[type=checkbox], input[type=radio]')) soon(); });
+  new MutationObserver(() => { wasFull = justTurned ? wasFull : null; apply(); }).observe(app, { childList: true });
+  apply();
+})();
 </script>
 </body>
 </html>

@@ -27,7 +27,7 @@
 <title>Connect Lite — Observation task wording</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610072205">
+<link rel="stylesheet" href="hub-tokens.css?v=202610072216">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);}
@@ -74,8 +74,33 @@
   .review .found small{display:block; color:var(--grey); font-size:0.76rem;}
   .review .skipped{color:var(--brick); font-size:0.82rem;}
   @media(max-width:900px){ .layout{grid-template-columns:1fr;} .editor{padding:18px 16px;} }
+
+  /* ---- v2 (7 Oct 2026): what differs, field by field --------------------------
+     The list already says a task is "edited"; now each field says it. A field
+     whose text differs from the centre's sheet carries a gold "Changed" tag and
+     a "See the original" toggle that shows the shipped wording beneath it, read
+     only. A field typed in but not yet saved carries a quiet "not saved" mark,
+     and the Save button counts them. Display only; Save, Back to the centre's
+     sheet and the import are untouched. Design: Magic Touches, 13a. */
+  .section h4, .part{position:relative;}
+  .wd-tags{display:inline-flex; gap:8px; align-items:center; margin-left:10px; vertical-align:1px; text-transform:none; letter-spacing:0;}
+  .wd-chg{font-size:0.66rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:2px 8px; border-radius:999px; background:var(--gold-wash); border:1px solid var(--amber-edge); color:var(--gold-deep);}
+  .wd-uns{display:inline-flex; align-items:center; gap:5px; font-size:0.7rem; font-weight:600; color:var(--teal);}
+  .wd-uns::before{content:''; width:6px; height:6px; border-radius:50%; background:var(--teal);}
+  .wd-see{font:inherit; font-size:0.72rem; font-weight:600; color:var(--teal); background:none; border:0; padding:0; cursor:pointer;}
+  .wd-see:hover{text-decoration:underline; text-underline-offset:3px;}
+  .wd-see:focus-visible{outline:2px solid var(--gold-lifted); outline-offset:2px;}
+  .wd-orig{margin:8px 0 0; padding:9px 12px; background:var(--paper); border:1px dashed var(--sand-line); border-radius:6px; font-size:0.82rem; line-height:1.55; color:var(--ink-warm); white-space:pre-line;}
+  .wd-orig b{display:block; font-size:0.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--grey); margin-bottom:3px;}
+  .wd-orig.none{color:var(--grey); font-style:italic;}
+  .section.wd-changed{border-left-color:var(--gold-deep);}
+  .part .wd-tags{position:absolute; right:0; top:2px; margin:0;}
+  #saveOne{transition:box-shadow .2s ease;}
+  #saveOne.wd-dirty{box-shadow:0 0 0 3px oklch(70% 0.12 72 / .55);}
+  @media(prefers-reduced-motion:reduce){ #saveOne{transition:none;} }
+  @media(max-width:600px){ .part .wd-tags{position:static; margin:0 0 4px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610072205">
+<link rel="stylesheet" href="hub-house.css?v=202610072216">
 </head>
 <body class="hub-paper">
 <div class="board">
@@ -100,13 +125,13 @@
     <div class="editor" id="editor"></div>
   </div>
 </div>
-<script src="observation-defaults.js?v=202610072205"></script>
-<script src="hub-docx.js?v=202610072205"></script>
-<script src="hub-observation-parse.js?v=202610072205"></script>
-<script src="hub-shared.js?v=202610072205"></script>
-<script src="hub-store.js?v=202610072205"></script>
-<script src="hub-say.js?v=202610072205"></script>
-<script src="hub-sync.js?v=202610072205"></script>
+<script src="observation-defaults.js?v=202610072216"></script>
+<script src="hub-docx.js?v=202610072216"></script>
+<script src="hub-observation-parse.js?v=202610072216"></script>
+<script src="hub-shared.js?v=202610072216"></script>
+<script src="hub-store.js?v=202610072216"></script>
+<script src="hub-say.js?v=202610072216"></script>
+<script src="hub-sync.js?v=202610072216"></script>
 <script type="text/x-hub-app">
 /* The centre's room. Same gate as the assignment wording editor: a link that
    cannot write the course does not get a form that says "Saved". */
@@ -341,6 +366,63 @@ $('importFile').addEventListener('change', async e => {
 });
 
 renderList(); renderEditor();
+
+/* ---- v2 (7 Oct 2026): what differs, field by field ----------------------------
+   Compares each field as typed against the shipped default (DEFAULTS) and the
+   saved record (DATA), normalised the way Save normalises. Layered on
+   renderEditor() through a MutationObserver on #editor. Stores nothing. */
+(function(){
+  const ed = $('editor'); if (!ed) return;
+  const open = new Set();
+  const norm = (v, multi) => multi ? String(v || '').split('\n').map(x => x.trim()).filter(Boolean).join('\n') : String(v || '').trim();
+  const valOf = (t, el) => {
+    if (el.dataset.f) { const k = el.dataset.f; return k === 'rows' ? (t && t.rows || []).join('\n') : (t && t[k]) || ''; }
+    const p = t && (t.parts || [])[+el.dataset.p]; if (!p) return null;
+    return el.dataset.pf === 'lines' ? (p.lines || []).join('\n') : (p.title || '');
+  };
+  const multi = el => el.dataset.f === 'rows' || el.dataset.pf === 'lines';
+  function apply(){
+    const cur = findIn(DATA, CURRENT), def = findIn(DEFAULTS, CURRENT); if (!cur) return;
+    let dirty = 0;
+    ed.querySelectorAll('[data-f], [data-p]').forEach(el => {
+      const m = multi(el), now = norm(el.value, m);
+      const dv = def ? valOf(def.t, el) : null, sv = valOf(cur.t, el);
+      const changed = dv == null ? true : now !== norm(dv, m);
+      const unsaved = sv == null ? !!now : now !== norm(sv, m);
+      if (unsaved) dirty++;
+      const key = (el.dataset.f || ('p' + el.dataset.p + el.dataset.pf));
+      const host = el.dataset.f ? el.closest('.section') : el.closest('.part');
+      if (!host) return;
+      const anchor = el.dataset.f ? host.querySelector('h4') : host;
+      if (el.dataset.f) host.classList.toggle('wd-changed', changed);
+      if (el.dataset.pf === 'lines') return;   // a part's tag sits once, on its title row
+      const pChanged = el.dataset.pf === 'title' ? [...host.querySelectorAll('[data-p]')].some(x => { const xm = multi(x); const d = def ? valOf(def.t, x) : null; return d == null || norm(x.value, xm) !== norm(d, xm); }) : changed;
+      const pUnsaved = el.dataset.pf === 'title' ? [...host.querySelectorAll('[data-p]')].some(x => { const xm = multi(x); return norm(x.value, xm) !== norm(valOf(cur.t, x) || '', xm); }) : unsaved;
+      let tags = anchor.querySelector(':scope > .wd-tags');
+      const html = (pChanged ? '<span class="wd-chg">Changed</span>' : '') + (pUnsaved ? '<span class="wd-uns">not saved</span>' : '')
+        + (pChanged && def ? '<button type="button" class="wd-see" data-wd="' + key + '" aria-expanded="' + open.has(key) + '">' + (open.has(key) ? 'Hide the original' : 'See the original') + '</button>' : '');
+      if (!tags) { tags = document.createElement('span'); tags.className = 'wd-tags'; anchor.appendChild(tags); }
+      if (tags.innerHTML !== html) tags.innerHTML = html;
+      let orig = host.querySelector(':scope > .wd-orig');
+      if (pChanged && def && open.has(key)) {
+        let text;
+        if (el.dataset.pf === 'title') { const p = (def.t.parts || [])[+el.dataset.p] || {}; text = (p.title || '') + ((p.lines || []).length ? '\n' + p.lines.join('\n') : ''); }
+        else text = String(dv || '');
+        const oh = '<b>The centre\u2019s sheet</b>' + (text.trim() ? esc(text) : 'Empty on the centre\u2019s sheet.');
+        if (!orig) { orig = document.createElement('div'); orig.className = 'wd-orig'; host.appendChild(orig); }
+        orig.classList.toggle('none', !text.trim());
+        if (orig.innerHTML !== oh) orig.innerHTML = oh;
+      } else if (orig) orig.remove();
+    });
+    const btn = $('saveOne');
+    if (btn) { btn.classList.toggle('wd-dirty', dirty > 0); btn.textContent = dirty ? 'Save wording (' + dirty + ' change' + (dirty === 1 ? '' : 's') + ')' : 'Save wording'; }
+  }
+  ed.addEventListener('click', e => { const b = e.target.closest('.wd-see'); if (!b) return; const k = b.dataset.wd; open.has(k) ? open.delete(k) : open.add(k); apply(); });
+  ed.addEventListener('input', apply);
+  let last = null;
+  new MutationObserver(() => { if (CURRENT !== last) { open.clear(); last = CURRENT; } apply(); }).observe(ed, { childList: true });
+  apply();
+})();
 </script>
 </body>
 </html>
