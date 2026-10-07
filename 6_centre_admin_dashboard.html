@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610071536">
+<link rel="stylesheet" href="hub-tokens.css?v=202610071558">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -392,7 +392,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610071536">
+<link rel="stylesheet" href="hub-house.css?v=202610071558">
 </head>
 <body>
 <div class="board">
@@ -630,8 +630,8 @@
          link. Ramy, 5 Oct 2026: "centre should be able to upload their own
          agreement, obviously. If they choose to." -->
     <h3 class="docsh" id="agreementBlock">The candidate agreement</h3>
-    <p class="note" style="margin-top:0;">Cambridge requires every centre to give candidates an agreement <b>before the course begins</b>, and says what it must cover: what you expect of them and what happens if it is not met, and what they can expect from you &mdash; attendance and illness, refunds, deferrals, plagiarism and its penalties, facilities, special consideration, the tutors’ role, technology, complaints, the course mode, and how their personal information is kept and shared with Cambridge. One box each, in that order. When a trainee signs, they also declare whether they need special consideration, which Cambridge asks for in the same agreement. Your trainees read it and sign it on their first visit. <b>You need not start from nothing:</b> each box can take Connect’s wording, written from the Handbook, and the parts in [square brackets] are your centre’s own rules to fill in.</p>
-    <div style="margin:10px 0 2px;display:flex;gap:10px;flex-wrap:wrap;"><button type="button" class="btn ghost" data-agr-all="1">Use Connect’s wording for all the empty boxes</button><button type="button" class="btn ghost" data-agr-out="1" hidden>Take Connect’s wording out</button></div>
+    <p class="note" style="margin-top:0;">Cambridge requires every centre to give candidates an agreement <b>before the course begins</b>, and says what it must cover: what you expect of them and what happens if it is not met, and what they can expect from you &mdash; attendance and illness, refunds, deferrals, plagiarism and its penalties, facilities, special consideration, the tutors’ role, technology, complaints, the course mode, and how their personal information is kept and shared with Cambridge. One box each, in that order. When a trainee signs, they also confirm whether they have a special requirement, the declaration Cambridge asks for in the same agreement. Your trainees read it and sign it on their first visit. <b>You need not start from nothing:</b> each box can take Connect’s wording, written from the Handbook, and the parts in [square brackets] are your centre’s own rules to fill in.</p>
+    <div style="margin:10px 0 2px;display:flex;gap:10px;flex-wrap:wrap;"><button type="button" class="btn ghost" data-agr-all="1">Use Connect’s wording for all the empty boxes</button><button type="button" class="btn ghost" data-agr-out="1" hidden>Take Connect’s wording out</button><span id="agrBlanks" class="muted" style="font-size:0.82rem;color:var(--brick);font-weight:600;" hidden></span></div>
     <div class="fields docs agreement">
       <div class="wide"><label for="agrExpectations">What we expect of you, and what happens if it is not met <button class="connect-chip" type="button" data-agr="agrExpectations">Use Connect’s wording</button></label><textarea id="agrExpectations" rows="3" placeholder="Conduct, punctuality, deadlines, taking part — and the written warning that comes before any sanction."></textarea></div>
       <div class="wide"><label for="agrSpecialRequirements">Declaring special requirements <button class="connect-chip" type="button" data-agr="agrSpecialRequirements">Use Connect’s wording</button></label><textarea id="agrSpecialRequirements" rows="3" placeholder="Tell us at application, or as soon as it arises. Cambridge has a formal process and it needs notice."></textarea></div>
@@ -796,14 +796,14 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610071536"></script>
-<script src="hub-store.js?v=202610071536"></script>
-<script src="hub-say.js?v=202610071536"></script>
-<script src="agreement-defaults.js?v=202610071536"></script>
-<script src="observation-defaults.js?v=202610071536"></script>
-<script src="hub-shared.js?v=202610071536"></script>
-<script src="hub-due.js?v=202610071536"></script>
-<script src="hub-sync.js?v=202610071536"></script>
+<script src="assignment-defaults.js?v=202610071558"></script>
+<script src="hub-store.js?v=202610071558"></script>
+<script src="hub-say.js?v=202610071558"></script>
+<script src="agreement-defaults.js?v=202610071558"></script>
+<script src="observation-defaults.js?v=202610071558"></script>
+<script src="hub-shared.js?v=202610071558"></script>
+<script src="hub-due.js?v=202610071558"></script>
+<script src="hub-sync.js?v=202610071558"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -862,25 +862,25 @@ const AGREEMENT_FIELDS = ['agrExpectations','agrSpecialRequirements','agrPreCour
 /* 7 Oct 2026: Connect's wording on offer, one box or all four. A box with
    the centre's own words in it is asked before it is replaced; the rest just
    fill. Nothing reaches the trainees until Save, as before. */
-/* CONNECT'S WORDING, WITH THE CENTRE'S NAME IN IT. The defaults say "the
-   centre" and "[Your centre: ...]"; on a course whose name and number are
-   already set that read as a placeholder (Ramy, 8 Oct 2026: "shouldn't that
-   be filled in by the centre name that's already been added?"). So the
-   wording is filled at the moment it is dropped in: the name where the
-   prose says the centre, and on the blanks, which stay blanks. */
+/* CONNECT'S WORDING, WITH THE CENTRE'S NAME IN IT. The defaults are written
+   in the centre's own voice and carry {centre} only where a name reads
+   naturally; it is filled at the moment the wording is dropped in. A blank
+   the centre must fill reads "[<name> to add: ...]"; agrButtons counts the
+   ones still open (Ramy, 8 Oct 2026). */
 function connectWording(k){
   const D = window.CONNECT_HUB_AGREEMENT_DEFAULTS || {}; let t = D[k] || '';
-  const name = (document.getElementById('centreName').value || '').trim();
-  if (name) t = t.replace(/\[Your centre: /g, '[' + name + ': ')
-                .replace(/\bthe centre’s\b/g, name + '’s').replace(/\bthe centre's\b/g, name + '’s')
-                .replace(/\byour centre\b/gi, name).replace(/\bthe centre\b/g, name);
-  return t;
+  const name = (document.getElementById('centreName').value || '').trim() || 'the centre';
+  return t.replace(/\{centre\}/g, name);
 }
 function isConnects(k){ const v = document.getElementById(k).value.trim(); if (!v) return false; const D = window.CONNECT_HUB_AGREEMENT_DEFAULTS || {}; return v === connectWording(k).trim() || v === String(D[k] || '').trim(); }
 function agrButtons(){
   const out = document.querySelector('[data-agr-out]'); if (!out) return;
   const n = AGREEMENT_FIELDS.filter(isConnects).length;
   out.hidden = !n; out.textContent = 'Take Connect’s wording out' + (n ? ' of ' + n + ' box' + (n === 1 ? '' : 'es') : '');
+  /* The blanks still open: "[... to add: ...]" anywhere in the boxes. */
+  const blanks = AGREEMENT_FIELDS.reduce((a, k) => a + (document.getElementById(k).value.match(/\[[^\]]* to add: /g) || []).length, 0);
+  const bl = document.getElementById('agrBlanks');
+  if (bl) { bl.hidden = !blanks; bl.textContent = blanks ? blanks + ' blank' + (blanks === 1 ? '' : 's') + ' in square brackets still to fill \u2014 your trainees would see them as they are.' : ''; }
 }
 document.addEventListener('click', async (e) => {
   const one = e.target.closest('[data-agr]'), all = e.target.closest('[data-agr-all]'), out = e.target.closest('[data-agr-out]');

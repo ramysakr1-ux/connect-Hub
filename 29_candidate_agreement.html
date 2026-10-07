@@ -26,7 +26,7 @@
 <title>Candidate agreement</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610071536">
+<link rel="stylesheet" href="hub-tokens.css?v=202610071558">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -78,12 +78,12 @@
   <a class="back" id="back" href="index.html">&#8592; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610071536"></script>
-<script src="hub-store.js?v=202610071536"></script>
-<script src="hub-hand.js?v=202610071536"></script>
-<script src="hub-ink.js?v=202610071536"></script>
-<script src="hub-say.js?v=202610071536"></script>
-<script src="hub-sync.js?v=202610071536"></script>
+<script src="hub-shared.js?v=202610071558"></script>
+<script src="hub-store.js?v=202610071558"></script>
+<script src="hub-hand.js?v=202610071558"></script>
+<script src="hub-ink.js?v=202610071558"></script>
+<script src="hub-say.js?v=202610071558"></script>
+<script src="hub-sync.js?v=202610071558"></script>
 <script type="text/x-hub-app">
 /* A volunteer student is not on the course. They come in off the street to be
    taught, and what the centre asks of its TRAINEES -- attendance, plagiarism,
@@ -179,11 +179,11 @@ function fingerprint(s){
 function declForm(rec){
   const sp = (rec && rec.special) || {};
   const yes = sp.needs === true, no = sp.needs === false;
-  return `<div class="decl"><h3>Candidate declaration</h3>
-    <p>Do you need any special consideration or arrangement on this course &mdash; extra time, a particular seat or screen, anything for a medical condition or a specific learning difficulty? Saying so now lets the centre arrange it before day one.</p>
-    <label><input type="radio" name="decl" value="no"${no ? ' checked' : ''}> No, nothing I know of</label>
+  return `<div class="decl"><h3>Candidate declaration: special requirements</h3>
+    <p>Do you have a special requirement &mdash; a disability, a specific learning difficulty or a medical condition &mdash; for which you need an arrangement on this course, such as additional time? You will have told the centre at application; this confirms it, so that the arrangement is in place before you start. Cambridge does not grant arrangements once a course has begun.</p>
+    <label><input type="radio" name="decl" value="no"${no ? ' checked' : ''}> No</label>
     <label><input type="radio" name="decl" value="yes"${yes ? ' checked' : ''}> Yes &mdash; this:</label>
-    <textarea id="declText" rows="2" placeholder="What you need, in a line or two" ${yes ? '' : 'disabled'}>${esc(sp.text || '')}</textarea></div>`;
+    <textarea id="declText" rows="2" placeholder="The requirement, and the arrangement you need" ${yes ? '' : 'disabled'}>${esc(sp.text || '')}</textarea></div>`;
 }
 function readDecl(){
   const r = document.querySelector('input[name="decl"]:checked'); if (!r) return null;
@@ -192,7 +192,7 @@ function readDecl(){
 }
 function declLine(rec){
   const sp = rec && rec.special; if (!sp || typeof sp.needs !== 'boolean') return '';
-  return '<br><span class="ro">' + (sp.needs ? 'Declared a need for special consideration: ' + esc(sp.text || '(no detail given)') : 'Declared no need for special consideration.') + '</span>';
+  return '<br><span class="ro">' + (sp.needs ? 'Declared a special requirement: ' + esc(sp.text || '(no detail given)') : 'Declared no special requirement.') + '</span>';
 }
 document.addEventListener('change', e => { if (e.target && e.target.name === 'decl') { const t = document.getElementById('declText'); if (t) { t.disabled = e.target.value !== 'yes'; if (!t.disabled) t.focus(); } } });
 function render(){
@@ -261,7 +261,7 @@ function render(){
     /* The declaration comes first: Handbook 6.3 asks that the agreement carry
        a Candidate Declaration on special consideration, signed, so the
        centre can make reasonable adjustments before the course starts. */
-    if (IS_TRAINEE && !readDecl()) { const st = $('status'); if (st) st.textContent = 'Say first whether you need any special consideration on the course.'; const f = document.querySelector('.decl'); if (f) f.scrollIntoView({ block: 'center' }); return; }
+    if (IS_TRAINEE && !readDecl()) { const st = $('status'); if (st) st.textContent = 'Answer the declaration first: do you have a special requirement?'; const f = document.querySelector('.decl'); if (f) f.scrollIntoView({ block: 'center' }); return; }
     let ink = '';
     try { ink = await window.hubInk.confirm({ name, title: 'Sign the candidate agreement' }); } catch(e) { ink = null; }
     if (ink === null) return;               // cancelled

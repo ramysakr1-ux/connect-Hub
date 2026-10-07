@@ -20,7 +20,7 @@
  * VERSION is stamped by bump-assets.py with the same stamp as the ?v= links,
  * so each push retires the previous cache on activate.
  */
-const VERSION = 'lite-202610071536';
+const VERSION = 'lite-202610071558';
 const SHELL = [
   './', 'index.html', 'invite.html',
   '1_trainee_plan_and_analysis.html', '2_trainee_self_evaluation.html', '3_tutor_feedback.html',
@@ -46,6 +46,8 @@ const SHELL = [
   '30_precourse_key.html', '31_getting_to_know_you.html', 'precourse-key.js', 'gtky-bank.js',
   'offer.html',
   'assignment-defaults.js', 'agreement-defaults.js', 'hub-tokens.css', 'hub-house.css', 'hub-record.css',
+  /* 8 Oct 2026: the date picker, vendored so the shell has it offline. */
+  'assets/flatpickr.min.js', 'assets/flatpickr.min.css',
   'brand/favicon.svg', 'brand/favicon.ico', 'brand/apple-touch-icon.png',
 ];
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
