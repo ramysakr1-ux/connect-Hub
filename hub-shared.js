@@ -651,12 +651,26 @@ window.hubGtkyPlan = function(settings, tt){
     if (m) {
       var d = new Date(+m[1], +m[2] - 1, +m[3]);
       var name = d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
-      out.when = 'on ' + name + (slot && slot.from ? ' at ' + slot.from : '');
+      out.when = 'on ' + name + (slot && slot.from ? ' at ' + window.hubClock(slot.from) : '');
       out.fromTimetable = true;
     } else out.when = 'on the first day of the course';
     out.slot = 'the unassessed teaching slot';
   }
   return out;
+};
+/* THE CLOCK, 12-hour everywhere a time is printed (Ramy, 8 Oct 2026: "I'm
+   really bad with the 24-hour clock"). Times are stored as HH:MM and stay
+   so; this is only how they read. "9:05 AM", "1:30 PM"; a range shares its
+   AM or PM when both ends are in the same half: "1:30–2:15 PM". */
+window.hubClock = function(hhmm){
+  var m = String(hhmm || '').match(/^(\d{1,2}):(\d{2})/); if (!m) return String(hhmm || '');
+  var h = +m[1], mm = m[2], pm = h >= 12, h12 = h % 12 || 12;
+  return h12 + ':' + mm + ' ' + (pm ? 'PM' : 'AM');
+};
+window.hubClockRange = function(a, b){
+  var A = window.hubClock(a), B = window.hubClock(b); if (!A) return B; if (!B) return A;
+  var sa = A.slice(-2), sb = B.slice(-2);
+  return (sa === sb ? A.slice(0, -3) : A) + '\u2013' + B;
 };
 window.hubLinkIsTimetable = function(l){ return /timetable/i.test(String((l && l.label) || '') + ' ' + String((l && l.card) || '')); };
 /* The CELTA 5 and the TP points are Lite's own rooms now (20_celta5, 24_tp_points),
@@ -1040,7 +1054,7 @@ window.hubIsReference = function(s){
     var inst = window.hubZonedInstant(dateISO, hhmm, courseZone);
     if (inst == null) return out;
     var local;
-    try { local = new Date(inst).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit', timeZone: reader }); }
+    try { local = new Date(inst).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true, timeZone: reader }); }
     catch (e) { return out; }
     out.local = local;
     out.differs = local !== out.course;
@@ -1071,27 +1085,27 @@ window.hubIsReference = function(s){
   document.head.appendChild(js);
 
   var seen = [];
-  function wanted(el){ return el && el.tagName === 'INPUT' && (el.type === 'date' || el.type === 'datetime-local') && !el._fp && !el.disabled; }
+  function wanted(el){ return el && el.tagName === 'INPUT' && (el.type === 'date' || el.type === 'datetime-local' || el.type === 'time') && !el._fp && !el.disabled; }
   function dress(el){
     if (!window.flatpickr || !wanted(el)) return;
-    var withTime = el.type === 'datetime-local';
-    var fmt = withTime ? 'Y-m-d\\TH:i' : 'Y-m-d';
+    var withTime = el.type === 'datetime-local', onlyTime = el.type === 'time';
+    var fmt = onlyTime ? 'H:i' : withTime ? 'Y-m-d\\TH:i' : 'Y-m-d';
     var fp = window.flatpickr(el, {
-      dateFormat: fmt, enableTime: withTime, time_24hr: false, minuteIncrement: 5,
-      altInput: true, altFormat: withTime ? 'D j M Y, h:i K' : 'D j M Y', allowInput: false,
+      dateFormat: fmt, enableTime: withTime || onlyTime, noCalendar: onlyTime, time_24hr: false, minuteIncrement: 5,
+      altInput: true, altFormat: onlyTime ? 'h:i K' : withTime ? 'D j M Y, h:i K' : 'D j M Y', allowInput: false,
       locale: { firstDayOfWeek: 1 }, disableMobile: false, monthSelectorType: 'static',
       onChange: function(){ try { el.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {} },
       onOpen: function(){ sync(el); }
     });
     el._fp = fp; el._fpLast = el.value;
-    if (fp.altInput) { fp.altInput.placeholder = el.getAttribute('placeholder') || (withTime ? 'Pick a day and time' : 'Pick a day'); fp.altInput.setAttribute('aria-label', el.getAttribute('aria-label') || el.title || ''); }
+    if (fp.altInput) { fp.altInput.placeholder = el.getAttribute('placeholder') || (onlyTime ? 'Time' : withTime ? 'Pick a day and time' : 'Pick a day'); fp.altInput.setAttribute('aria-label', el.getAttribute('aria-label') || el.title || ''); }
     seen.push(el);
   }
   /* A page that sets a box's value from script (every settings load does)
      leaves the readable copy stale; so a value that changed under the picker
      is read back in, on open and once a second. */
   function sync(el){ var fp = el._fp; if (!fp) return; if (el.value !== el._fpLast) { el._fpLast = el.value; if (el.value) fp.setDate(el.value, false, fp.config.dateFormat); else fp.clear(false); } }
-  function sweep(root){ (root || document).querySelectorAll('input[type=date], input[type=datetime-local]').forEach(dress); }
+  function sweep(root){ (root || document).querySelectorAll('input[type=date], input[type=datetime-local], input[type=time]').forEach(dress); }
   function start(){
     sweep(document);
     try { new MutationObserver(function(){ sweep(document); }).observe(document.body, { childList: true, subtree: true }); } catch (e) {}
