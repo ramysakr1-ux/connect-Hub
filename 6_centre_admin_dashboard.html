@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610070429">
+<link rel="stylesheet" href="hub-tokens.css?v=202610071038">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -360,7 +360,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610070429">
+<link rel="stylesheet" href="hub-house.css?v=202610071038">
 </head>
 <body>
 <div class="board">
@@ -413,7 +413,7 @@
       <div>
         <h3>Centre logo</h3>
         <p>Appears on printed records. It is saved with the course, so every tutor, trainee and the assessor see it too. Any size: drop it anywhere on this tab, paste it, or upload it, and Lite shrinks it to what it needs.</p>
-        <button class="btn" id="logoUploadBtn" type="button">Upload</button>
+        <button class="btn" id="logoUploadBtn" type="button">Upload, or drop it here</button>
         <input type="file" id="logoFile" accept="image/*" style="display:none;">
         <p id="logoStatus" style="margin:8px 0 0; font-size:0.78rem; color:var(--grey);"></p>
       </div>
@@ -733,13 +733,13 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610070429"></script>
-<script src="hub-store.js?v=202610070429"></script>
-<script src="hub-say.js?v=202610070429"></script>
-<script src="agreement-defaults.js?v=202610070429"></script>
-<script src="observation-defaults.js?v=202610070429"></script>
-<script src="hub-shared.js?v=202610070429"></script>
-<script src="hub-sync.js?v=202610070429"></script>
+<script src="assignment-defaults.js?v=202610071038"></script>
+<script src="hub-store.js?v=202610071038"></script>
+<script src="hub-say.js?v=202610071038"></script>
+<script src="agreement-defaults.js?v=202610071038"></script>
+<script src="observation-defaults.js?v=202610071038"></script>
+<script src="hub-shared.js?v=202610071038"></script>
+<script src="hub-sync.js?v=202610071038"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -802,11 +802,23 @@ document.addEventListener('click', async (e) => {
   const one = e.target.closest('[data-agr]'), all = e.target.closest('[data-agr-all]');
   if (!one && !all) return;
   const D = window.CONNECT_HUB_AGREEMENT_DEFAULTS || {};
-  const keys = one ? [one.dataset.agr] : AGREEMENT_FIELDS;
-  const held = keys.filter(k => document.getElementById(k).value.trim() && document.getElementById(k).value.trim() !== (D[k] || '').trim());
-  if (held.length && !(await confirmModal(held.length === 1 ? 'That box has your own words in it. Replace them with Connect’s wording?' : `${held.length} of the boxes have your own words in them. Replace them with Connect’s wording?`, 'Replace'))) return;
-  keys.forEach(k => { const el = document.getElementById(k); if (D[k]) { el.value = D[k]; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; } });
-  (one ? document.getElementById(keys[0]) : document.getElementById('agrAttendance')).focus();
+  const val = k => document.getElementById(k).value.trim();
+  const fill = k => { const el = document.getElementById(k); if (D[k]) { el.value = D[k]; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; } };
+  if (one) {
+    /* One box: ask before writing over the centre's own words. */
+    const k = one.dataset.agr;
+    if (val(k) && val(k) !== (D[k] || '').trim() && !(await confirmModal('That box has your own words in it. Replace them with Connect’s wording?', 'Replace'))) return;
+    fill(k); document.getElementById(k).focus(); return;
+  }
+  /* All of them: fill only what is empty and leave every written box alone.
+     Before 8 Oct 2026 this asked to replace the lot, which on a course that
+     already held four sections and had just gained eight empty ones would
+     have written over the centre's own words to fill the gaps. */
+  const empty = AGREEMENT_FIELDS.filter(k => !val(k)), kept = AGREEMENT_FIELDS.length - empty.length;
+  empty.forEach(fill);
+  const st = document.getElementById('settingsStatus');
+  if (st) st.textContent = empty.length ? `Connect’s wording in ${empty.length} empty box${empty.length === 1 ? '' : 'es'}${kept ? `; ${kept} with your own words left as they were` : ''}. Click Save to keep it.` : 'Every box already has words in it; use the button on a box to replace just that one.';
+  if (empty.length) document.getElementById(empty[0]).focus();
 });
 /* docOwnWork left this list on 7 Oct 2026: the sheet was IH Istanbul's own, not Cambridge's, and the agreement's plagiarism section says the same thing (Ramy: "we said we would get rid of it"). */
 const DOC_FIELDS = ['docAgreement','docDescriptions','docApplications','docPrevReport','docActionPlan','docAssessTimetable','docWithdrawals','docMap'];
