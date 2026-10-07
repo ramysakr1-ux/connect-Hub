@@ -26,7 +26,7 @@
 <title>Getting to know you</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610072156">
+<link rel="stylesheet" href="hub-tokens.css?v=202610072205">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -55,6 +55,35 @@
   .btn:disabled{opacity:0.55; cursor:default;}
   .note{font-size:0.82rem; color:var(--grey);}
   .empty{background:var(--surface); border:1px dashed var(--sand-line); border-radius:10px; padding:26px 22px; margin-top:16px; color:var(--grey); font-size:0.95rem; line-height:1.6;}
+
+  /* ---- v2 (7 Oct 2026): three cards, dealt ----------------------------------
+     For the trainee: the three activities arrive as three numbered cards,
+     dealt one after another. Picking one stamps it "Your pick" and folds the
+     other two to their titles (a tap opens them again), so the page says what
+     it is for: one choice, made. The tutor's view of the whole pool is left
+     as it is. Display only. Design: Magic Touches, 12a. */
+  .gk .act{position:relative; animation:gk-deal .55s cubic-bezier(.2,.7,.2,1) both; animation-delay:calc(var(--gk-i, 0) * 110ms);}
+  .gk .act h2{display:flex; align-items:baseline; gap:10px;}
+  .gk .act h2 .gk-n{font-family:'Instrument Sans',sans-serif; font-size:10px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--gold-deep);}
+  .gk .act:hover{border-color:var(--sand-line-deep, oklch(78% 0.02 80)); box-shadow:0 14px 26px -20px oklch(30% 0.04 60 / .55);}
+  .gk .act{transition:box-shadow .2s ease, border-color .2s ease, opacity .3s ease;}
+  .gk .act .btn:not(.ghost){transition:transform .15s ease, box-shadow .15s ease;}
+  .gk .act .btn:not(.ghost):hover{transform:translateY(-1px); box-shadow:0 8px 16px -10px oklch(37.5% 0.058 195 / .8);}
+  .gk .act.chosen{background:var(--paper);}
+  .gk .act.chosen::after{content:'Your pick'; position:absolute; top:14px; right:16px; padding:5px 12px 4px; border:2px solid var(--gold-deep); border-radius:6px;
+    font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:0.95rem; color:var(--gold-deep); transform:rotate(-6deg); background:var(--paper);}
+  .gk .act.chosen.gk-new::after{animation:gk-stamp .5s cubic-bezier(.3,1.5,.5,1) both;}
+  .gk.gk-picked .act:not(.chosen){opacity:.82;}
+  .gk.gk-picked .act:not(.chosen):not(.gk-open) ol, .gk.gk-picked .act:not(.chosen):not(.gk-open) .online{display:none;}
+  .gk.gk-picked .act:not(.chosen):not(.gk-open) .meta{margin-bottom:0;}
+  .gk-peek{font:inherit; font-size:0.78rem; font-weight:600; color:var(--teal); background:none; border:0; padding:0; cursor:pointer;}
+  .gk-peek:hover{text-decoration:underline; text-underline-offset:3px;}
+  .gk .act .btn:focus-visible, .gk-peek:focus-visible, .chip:focus-visible{outline:2px solid var(--gold-lifted); outline-offset:2px;}
+  @keyframes gk-deal{from{opacity:0; transform:translateY(18px) rotate(-1.2deg);}to{opacity:1; transform:none;}}
+  @keyframes gk-stamp{0%{opacity:0; transform:scale(2) rotate(-14deg);}60%{opacity:1; transform:scale(.94) rotate(-5deg);}100%{transform:rotate(-6deg);}}
+  @media(prefers-reduced-motion:reduce){ .gk .act, .gk .act.chosen.gk-new::after{animation:none;} .gk .act, .gk .act .btn{transition:none;} }
+  @media(max-width:560px){ .gk .act.chosen::after{position:static; display:inline-block; margin:0 0 8px;} .gk .act.chosen{display:flex; flex-direction:column;} .gk .act.chosen::after{order:-1; align-self:flex-start;} }
+  @media print{ .gk .act{animation:none;} .gk.gk-picked .act:not(.chosen) ol{display:block;} .gk-peek{display:none;} }
 </style>
 </head>
 <body>
@@ -62,11 +91,11 @@
   <a class="back" id="back" href="index.html">&#8592; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610072156"></script>
-<script src="hub-store.js?v=202610072156"></script>
-<script src="hub-say.js?v=202610072156"></script>
-<script src="hub-sync.js?v=202610072156"></script>
-<script src="gtky-bank.js?v=202610072156"></script>
+<script src="hub-shared.js?v=202610072205"></script>
+<script src="hub-store.js?v=202610072205"></script>
+<script src="hub-say.js?v=202610072205"></script>
+<script src="hub-sync.js?v=202610072205"></script>
+<script src="gtky-bank.js?v=202610072205"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -166,6 +195,42 @@ function wire(){
 }
 render();
 document.addEventListener('hub:ready', () => { band = band || groupBand(MY_GROUP); render(); });
+
+/* ---- v2 (7 Oct 2026): three cards, dealt ------------------------------------
+   Trainee view only. Layered on render() through a MutationObserver on #app;
+   deals once per page load, stamps when a pick first appears. Stores nothing. */
+(function(){
+  const app = $('app'); if (!app || !IS_TRAINEE) return;
+  app.classList.add('gk');
+  let dealt = false, lastPick = null;
+  const open = new Set();
+  function apply(){
+    const acts = [...app.querySelectorAll('.act')];
+    if (!acts.length) return;
+    const chosen = app.querySelector('.act.chosen');
+    app.classList.toggle('gk-picked', !!chosen);
+    acts.forEach((a, i) => {
+      a.style.setProperty('--gk-i', dealt ? 0 : i);
+      if (dealt) a.style.animation = 'none';
+      const h = a.querySelector('h2');
+      if (h && !h.querySelector('.gk-n')) h.insertAdjacentHTML('afterbegin', '<span class="gk-n">' + (i + 1) + ' of ' + acts.length + '</span>');
+      a.classList.toggle('gk-open', open.has(a.id));
+      let peek = a.querySelector('.gk-peek');
+      if (chosen && a !== chosen) {
+        if (!peek) { const row = a.querySelector('.row'); (row || a).insertAdjacentHTML('afterbegin', '<button type="button" class="gk-peek" data-gk="' + a.id + '"></button>'); peek = a.querySelector('.gk-peek'); }
+        peek.textContent = open.has(a.id) ? 'Fold it away' : 'Read the steps';
+        peek.setAttribute('aria-expanded', String(open.has(a.id)));
+      } else if (peek) peek.remove();
+    });
+    const id = chosen ? chosen.id : null;
+    if (chosen && id !== lastPick && lastPick !== undefined && dealt) chosen.classList.add('gk-new');
+    lastPick = id;
+    if (!dealt) setTimeout(() => { dealt = true; }, 400 + acts.length * 110);
+  }
+  app.addEventListener('click', e => { const b = e.target.closest('.gk-peek'); if (!b) return; const id = b.dataset.gk; open.has(id) ? open.delete(id) : open.add(id); apply(); });
+  new MutationObserver(apply).observe(app, { childList: true });
+  apply();
+})();
 
 </script>
 </body>

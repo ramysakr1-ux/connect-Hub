@@ -29,7 +29,7 @@
 <title>Connect Lite — TP planning grid</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610072156">
+<link rel="stylesheet" href="hub-tokens.css?v=202610072205">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -84,20 +84,46 @@
   .empty{padding:20px; color:var(--grey); font-size:0.9rem;}
   @media (max-width:560px){ .board{padding:18px 12px 60px;} section.group{padding:12px 12px 14px;} .sofar{max-width:160px;} }
   @media print{ .back, .relbar, .check, #hubSync{display:none !important;} body{background:#fff;} }
+
+  /* ---- v2 (7 Oct 2026): the group's aims at a glance ------------------------
+     Above each group's table, one line per TP: the main aims the group has
+     chosen, as chips, two of the same in gold (the clash the note below
+     already names), and how many have not chosen. Each row that has all six
+     cells filled gets a quiet tick by the name. Display only; the cells, the
+     saving and the release are untouched. Design: Magic Touches, 11a. */
+  .ag-map{display:grid; grid-template-columns:auto minmax(0,1fr); gap:8px 14px; align-items:center; margin:14px 0 0; padding:12px 14px; background:var(--paper); border:1px solid var(--sand-line); border-radius:8px;}
+  .ag-map .tp{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:0.95rem;}
+  .ag-chips{display:flex; flex-wrap:wrap; gap:6px; align-items:center;}
+  .ag-chip{display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; font-size:0.78rem; font-weight:600;
+    background:var(--sand-deep); border:1px solid var(--sand-line); color:var(--ink); transition:transform .15s ease, box-shadow .15s ease; cursor:default;}
+  .ag-chip b{font-family:'Newsreader',Georgia,serif; font-weight:700; color:var(--gold-deep);}
+  .ag-chip.clash{background:var(--gold-wash); border-color:var(--gold); color:var(--ink-warm);}
+  .ag-chip:hover{transform:translateY(-1px); box-shadow:0 6px 12px -8px oklch(30% 0.04 60 / .5);}
+  .ag-none{font-size:0.76rem; color:var(--grey);}
+  .ag-none.all{color:var(--teal);}
+  td.cell.ag-lit .house-sel select, td.cell.ag-lit .ro{box-shadow:inset 0 0 0 2px var(--teal);}
+  .nm .ag-ok{display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; margin-left:8px; border-radius:50%;
+    background:var(--teal); color:var(--paper); font-size:10px; font-weight:700; animation:ag-in .35s cubic-bezier(.3,1.5,.5,1) both;}
+  .ag-count{font-size:0.78rem; color:var(--grey); margin-left:8px; font-family:'Karla',sans-serif; font-weight:500;}
+  .ag-count b{color:var(--ink);}
+  @keyframes ag-in{from{transform:scale(.4); opacity:0;}to{transform:none; opacity:1;}}
+  @media(prefers-reduced-motion:reduce){ .ag-chip{transition:none;} .nm .ag-ok{animation:none;} }
+  @media(max-width:560px){ .ag-map{grid-template-columns:1fr; gap:4px;} .ag-map .tp{margin-top:6px;} }
+  @media print{ .ag-map, .ag-count{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610072156">
+<link rel="stylesheet" href="hub-house.css?v=202610072205">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610072156"></script>
-<script src="hub-tracker.js?v=202610072156"></script>
-<script src="hub-shared.js?v=202610072156"></script>
-<script src="hub-store.js?v=202610072156"></script>
-<script src="hub-say.js?v=202610072156"></script>
-<script src="hub-sync.js?v=202610072156"></script>
+<script src="hub-due.js?v=202610072205"></script>
+<script src="hub-tracker.js?v=202610072205"></script>
+<script src="hub-shared.js?v=202610072205"></script>
+<script src="hub-store.js?v=202610072205"></script>
+<script src="hub-say.js?v=202610072205"></script>
+<script src="hub-sync.js?v=202610072205"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -228,6 +254,57 @@ function wire(){
 function tutorName(){ return (localStorage.getItem('chub:tutorName') || '').trim(); }
 function setStatus(){ document.querySelectorAll('.status').forEach(s => s.textContent = note); }
 render();
+
+/* ---- v2 (7 Oct 2026): the group's aims at a glance --------------------------
+   Layered on render(): a MutationObserver on #app re-applies after every
+   render, reading the cells as drawn. Hovering a chip lights the cells that
+   chose it. Stores nothing. */
+(function(){
+  const app = document.getElementById('app'); if (!app) return;
+  const cellVal = td => { const el = td && td.querySelector('select, input'); if (el) return (el.value || '').trim();
+    const ro = td && td.querySelector('.ro'); return ro && !ro.classList.contains('empty') ? ro.textContent.trim() : ''; };
+  function apply(){
+    app.querySelectorAll('section.group').forEach(sec => {
+      const rows = [...sec.querySelectorAll('table.grid tbody tr')]; if (!rows.length) return;
+      const tps = [...new Set([...sec.querySelectorAll('td.cell[data-tp]')].map(td => td.dataset.tp))];
+      const lines = tps.map(tp => {
+        const c = {}; let none = 0;
+        rows.forEach(tr => { const v = cellVal(tr.querySelector('td.cell[data-tp="' + tp + '"][data-f="main"]')); if (v) c[v] = (c[v] || 0) + 1; else none++; });
+        const chips = Object.keys(c).sort((a, b) => c[b] - c[a] || a.localeCompare(b)).map(a =>
+          '<span class="ag-chip' + (c[a] > 1 ? ' clash' : '') + '" data-ag-tp="' + esc(tp) + '" data-ag-aim="' + esc(a) + '" title="' + c[a] + ' chose ' + esc(a) + '">' + esc(a) + (c[a] > 1 ? ' <b>\u00d7' + c[a] + '</b>' : '') + '</span>').join('');
+        return '<span class="tp">TP' + esc(tp) + '</span><div class="ag-chips">' + chips
+          + '<span class="ag-none' + (none ? '' : ' all') + '">' + (none ? none + ' not chosen yet' : 'every main aim chosen') + '</span></div>';
+      }).join('');
+      const html = '<div class="ag-map" aria-label="Main aims chosen in this group">' + lines + '</div>';
+      const old = sec.querySelector('.ag-map');
+      if (old) { if (old.outerHTML !== html) old.outerHTML = html; }
+      else { const tw = sec.querySelector('.tablewrap'); if (tw) tw.insertAdjacentHTML('beforebegin', html); }
+      let full = 0;
+      rows.forEach(tr => {
+        const cells = [...tr.querySelectorAll('td.cell')], ok = cells.length && cells.every(td => cellVal(td));
+        if (ok) full++;
+        const nm = tr.querySelector('.nm'); if (!nm) return;
+        const tick = nm.querySelector('.ag-ok');
+        if (ok && !tick) nm.insertAdjacentHTML('beforeend', '<span class="ag-ok" title="Every cell filled" aria-label="Every cell filled">\u2713</span>');
+        if (!ok && tick) tick.remove();
+      });
+      const h2 = sec.querySelector('h2'); if (!h2) return;
+      let cnt = h2.querySelector('.ag-count');
+      if (!cnt) { cnt = document.createElement('span'); cnt.className = 'ag-count'; h2.appendChild(cnt); }
+      cnt.innerHTML = '\u00b7 <b>' + full + ' of ' + rows.length + '</b> rows complete';
+    });
+  }
+  app.addEventListener('mouseover', e => {
+    const chip = e.target.closest('.ag-chip'); app.querySelectorAll('.ag-lit').forEach(x => x.classList.remove('ag-lit'));
+    if (!chip) return;
+    const sec = chip.closest('section.group');
+    sec.querySelectorAll('td.cell[data-tp="' + chip.dataset.agTp + '"][data-f="main"]').forEach(td => { if (cellVal(td) === chip.dataset.agAim) td.classList.add('ag-lit'); });
+  });
+  let t = null; const soon = () => { clearTimeout(t); t = setTimeout(apply, 120); };
+  new MutationObserver(m => { if (m.some(r => [...r.addedNodes].some(n => n.nodeType === 1 && !String(n.className || '').startsWith('ag-')))) soon(); }).observe(app, { childList: true });
+  app.addEventListener('change', soon, true); app.addEventListener('input', soon, true);
+  apply();
+})();
 </script>
 </body>
 </html>

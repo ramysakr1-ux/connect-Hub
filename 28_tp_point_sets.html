@@ -35,7 +35,7 @@
 <title>Connect Lite — TP point sets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610072156">
+<link rel="stylesheet" href="hub-tokens.css?v=202610072205">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1020px; margin:0 auto; padding:26px 20px 90px;}
@@ -193,20 +193,46 @@
     table.st td.n{display:none;}
   }
   @media print{ .back,.acts,.xbtn,.paste{display:none !important;} body{background:#fff;} }
+
+  /* ---- v2 (7 Oct 2026): the set at a glance ---------------------------------
+     A map above the sessions: one column per TP, a row per teaching set
+     (A, B), and in each cell three bars for its three slots, teal once a
+     slot has stages. Click a cell to open that session. The open one is
+     ringed gold. Display only; the sessions, saving and the library are
+     untouched. Design: Magic Touches, 11c. */
+  .sm-map{margin:0 0 14px; padding:14px 16px 12px; background:var(--paper); border:1px solid var(--sand-line); border-radius:10px;}
+  .sm-top{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:0 0 10px;}
+  .sm-top b{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.1rem; color:var(--teal-deep);}
+  .sm-top span{font-size:0.76rem; color:var(--grey);}
+  .sm-grid{display:grid; grid-template-columns:22px repeat(var(--sm-n, 6), minmax(0,1fr)); gap:5px 5px; align-items:center;}
+  .sm-grid .h{font-size:0.66rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); text-align:center;}
+  .sm-grid .r{font-size:0.7rem; font-weight:700; color:var(--grey);}
+  .sm-cell{display:flex; gap:2px; height:22px; padding:3px; border:1px solid var(--sand-line); border-radius:6px; background:var(--surface); cursor:pointer;
+    transition:transform .15s ease, border-color .15s ease;}
+  .sm-cell i{flex:1; border-radius:2px; background:oklch(91% 0.012 82); transition:background-color .3s ease;}
+  .sm-cell i.on{background:var(--teal);}
+  .sm-cell.full{border-color:color-mix(in oklab, var(--teal) 45%, transparent);}
+  .sm-cell:hover{transform:translateY(-1px); border-color:var(--teal);}
+  .sm-cell.open{box-shadow:0 0 0 2px var(--gold);}
+  .sm-cell:focus-visible{outline:2px solid var(--gold-lifted); outline-offset:2px;}
+  .sess{scroll-margin-top:16px;}
+  @media(prefers-reduced-motion:reduce){ .sm-cell, .sm-cell i{transition:none;} }
+  @media(max-width:560px){ .sm-cell{height:18px; padding:2px;} .sm-grid{gap:4px 3px;} }
+  @media print{ .sm-map{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610072156">
+<link rel="stylesheet" href="hub-house.css?v=202610072205">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610072156"></script>
-<script src="hub-rotation.js?v=202610072156"></script>
-<script src="hub-store.js?v=202610072156"></script>
-<script src="hub-say.js?v=202610072156"></script>
-<script src="hub-sync.js?v=202610072156"></script>
-<script src="hub-pages.js?v=202610072156"></script>
+<script src="hub-shared.js?v=202610072205"></script>
+<script src="hub-rotation.js?v=202610072205"></script>
+<script src="hub-store.js?v=202610072205"></script>
+<script src="hub-say.js?v=202610072205"></script>
+<script src="hub-sync.js?v=202610072205"></script>
+<script src="hub-pages.js?v=202610072205"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
@@ -1238,6 +1264,52 @@ function parseDoc(text){
 
 load();
 render();
+
+/* ---- v2 (7 Oct 2026): the set at a glance -----------------------------------
+   Layered on render() through a MutationObserver on #app. Reads S, OPEN and
+   sessionIds() as the page keeps them; opening goes through the session's own
+   button, so the page's handler does the work. Stores nothing. */
+(function(){
+  const app = document.getElementById('app'); if (!app) return;
+  function apply(){
+    if (!S || !S.sessions || typeof sessionIds !== 'function') return;
+    const firstSess = app.querySelector('.sess'); if (!firstSess) return;
+    const ids = sessionIds();
+    const tps = [...new Set(ids.map(id => parseInt(id, 10)))].sort((a, b) => a - b);
+    const letters = [...new Set(ids.map(id => id.slice(-1)))].sort();
+    const names = typeof setNames === 'function' ? setNames() : [];
+    let done = 0, all = 0;
+    const cell = id => {
+      const ses = S.sessions[id]; if (!ses) return '<span></span>';
+      const slots = ses.slots || [];
+      const on = slots.map(sl => (sl.stages || []).length > 0);
+      done += on.filter(Boolean).length; all += slots.length;
+      const n = on.filter(Boolean).length, tp = parseInt(id, 10), letter = id.slice(-1);
+      const who = names[letter === 'A' ? 0 : 1] || letter;
+      const tip = 'TP ' + tp + ' \u00b7 ' + who + ' \u00b7 ' + n + ' of ' + slots.length + ' slots staged';
+      return '<button type="button" class="sm-cell' + (n === slots.length && n ? ' full' : '') + (OPEN === id ? ' open' : '') + '" data-sm="' + esc(id) + '" title="' + esc(tip) + '" aria-label="' + esc(tip) + '">'
+        + on.map(x => '<i class="' + (x ? 'on' : '') + '"></i>').join('') + '</button>';
+    };
+    let grid = '<span></span>' + tps.map(tp => '<span class="h">TP ' + tp + '</span>').join('');
+    letters.forEach(l => { grid += '<span class="r" title="' + esc(names[l === 'A' ? 0 : 1] || l) + '">' + esc(l) + '</span>' + tps.map(tp => cell(tp + l)).join(''); });
+    const html = '<div class="sm-map"><div class="sm-top"><b>' + done + ' of ' + all + ' slots staged</b><span>Each cell is one session: three slots, teal once a slot has its stages. Click to open it.</span></div>'
+      + '<div class="sm-grid" style="--sm-n:' + tps.length + '">' + grid + '</div></div>';
+    const old = app.querySelector('.sm-map');
+    if (old) { if (old.outerHTML !== html) old.outerHTML = html; }
+    else firstSess.insertAdjacentHTML('beforebegin', html);
+  }
+  app.addEventListener('click', e => {
+    const c = e.target.closest('.sm-cell[data-sm]'); if (!c) return;
+    const id = c.dataset.sm, btn = app.querySelector('button.shead[data-open="' + id + '"]'); if (!btn) return;
+    if (OPEN !== id) btn.click();
+    requestAnimationFrame(() => { const b = app.querySelector('button.shead[data-open="' + id + '"]'); const sess = b && b.closest('.sess');
+      if (sess) window.scrollTo({ top: sess.getBoundingClientRect().top + window.scrollY - 16, behavior: 'smooth' }); });
+  });
+  let t = null; const soon = () => { clearTimeout(t); t = setTimeout(apply, 150); };
+  new MutationObserver(soon).observe(app, { childList: true });
+  app.addEventListener('input', soon, true); app.addEventListener('change', soon, true);
+  apply();
+})();
 </script>
 </body>
 </html>

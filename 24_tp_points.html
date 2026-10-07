@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610072156">
+<link rel="stylesheet" href="hub-tokens.css?v=202610072205">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -290,21 +290,45 @@
     body.printpages .pg{break-after:page; page-break-after:always;}
     body.printpages .pg figcaption{font-size:0.8rem; margin:0 0 4px;}
   }
+
+  /* ---- v2 (7 Oct 2026): the families, visible ------------------------------
+     The rotation is about three families (language focus, receptive skills,
+     productive skills) and the notes below the table talk in them, but the
+     table showed only the type. Each select now carries its family as a left
+     edge, each trainee three pips for the families they have met in TP 1 to
+     TPS, and the group a one-line key. Focusing a select rings the others in
+     that TP column, so the same-day check can be read by eye. Display only;
+     the rotation, the warnings and saving are untouched. Design: Magic
+     Touches, 11b. */
+  .tbl select.fm{border-left:4px solid var(--sand-line); padding-left:6px; transition:border-color .2s ease, box-shadow .15s ease;}
+  .tbl select.fm-language{border-left-color:var(--gold-deep);}
+  .tbl select.fm-receptive{border-left-color:var(--teal);}
+  .tbl select.fm-productive{border-left-color:var(--ink-warm);}
+  .tbl td.fm-col select{box-shadow:0 0 0 2px oklch(70% 0.12 72 / .45);}
+  .tbl td.fm-col select.fm-same{box-shadow:0 0 0 2px var(--gold);}
+  .fm-pips{display:flex; gap:3px; margin-top:5px;}
+  .fm-pips i{width:16px; height:5px; border-radius:3px; background:oklch(91% 0.012 82); transition:background-color .3s ease;}
+  .fm-pips i.on.language{background:var(--gold-deep);} .fm-pips i.on.receptive{background:var(--teal);} .fm-pips i.on.productive{background:var(--ink-warm);}
+  .fm-key{display:flex; flex-wrap:wrap; gap:4px 16px; margin:6px 0 10px; font-size:0.74rem; color:var(--grey);}
+  .fm-key span{display:inline-flex; align-items:center; gap:6px;}
+  .fm-key i{width:4px; height:14px; border-radius:2px;}
+  @media(prefers-reduced-motion:reduce){ .tbl select.fm, .fm-pips i{transition:none;} }
+  @media print{ .fm-key, .fm-pips{display:none;} .tbl select.fm{border-left-width:1px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610072156">
+<link rel="stylesheet" href="hub-house.css?v=202610072205">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610072156"></script>
-<script src="hub-tracker.js?v=202610072156"></script>
-<script src="hub-rotation.js?v=202610072156"></script>
-<script src="hub-shared.js?v=202610072156"></script>
-<script src="hub-store.js?v=202610072156"></script>
-<script src="hub-say.js?v=202610072156"></script>
-<script src="hub-sync.js?v=202610072156"></script>
+<script src="hub-due.js?v=202610072205"></script>
+<script src="hub-tracker.js?v=202610072205"></script>
+<script src="hub-rotation.js?v=202610072205"></script>
+<script src="hub-shared.js?v=202610072205"></script>
+<script src="hub-store.js?v=202610072205"></script>
+<script src="hub-say.js?v=202610072205"></script>
+<script src="hub-sync.js?v=202610072205"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -1148,6 +1172,47 @@ function render(){
 }
 
 render();
+
+/* ---- v2 (7 Oct 2026): the families, visible ---------------------------------
+   Layered on render() through a MutationObserver on #app; R.familyOf is the
+   page's own. Stores nothing. */
+(function(){
+  const app = document.getElementById('app'); if (!app || typeof R === 'undefined' || !R || !R.familyOf) return;
+  const FAM = ['language', 'receptive', 'productive'];
+  const WORD = { language: 'Language focus', receptive: 'Receptive skills', productive: 'Productive skills' };
+  const fam = v => { try { return v ? R.familyOf(v) : ''; } catch (e) { return ''; } };
+  function apply(){
+    app.querySelectorAll('section.group').forEach(sec => {
+      const sels = [...sec.querySelectorAll('select[data-tp][data-t]')]; if (!sels.length) return;
+      sels.forEach(el => { const f = fam(el.value); el.classList.add('fm'); FAM.forEach(k => el.classList.toggle('fm-' + k, f === k)); el.title = f ? WORD[f] : ''; });
+      const byT = {}; sels.forEach(el => { if (+el.dataset.tp <= TPS) (byT[el.dataset.t] = byT[el.dataset.t] || []).push(fam(el.value)); });
+      sec.querySelectorAll('tr').forEach(tr => {
+        const el = tr.querySelector('select[data-t]'); if (!el) return;
+        const who = tr.querySelector('td.who'); if (!who) return;
+        const met = byT[el.dataset.t] || [];
+        const html = FAM.map(k => '<i class="' + k + (met.includes(k) ? ' on' : '') + '" title="' + WORD[k] + (met.includes(k) ? '' : ' \u2014 not met yet') + '"></i>').join('');
+        let p = who.querySelector('.fm-pips');
+        if (!p) { p = document.createElement('div'); p.className = 'fm-pips'; who.appendChild(p); }
+        if (p.innerHTML !== html) p.innerHTML = html;
+      });
+      if (!sec.querySelector('.fm-key')) {
+        const tbl = sels[0].closest('.wrap');
+        if (tbl) tbl.insertAdjacentHTML('beforebegin', '<div class="fm-key">' + FAM.map(k => '<span><i style="background:var(--' + ({ language: 'gold-deep', receptive: 'teal', productive: 'ink-warm' })[k] + ')"></i>' + WORD[k] + '</span>').join('') + '<span>Under each name: the families met by TP ' + TPS + '.</span></div>');
+      }
+    });
+  }
+  function ring(el){
+    app.querySelectorAll('.fm-col').forEach(x => x.classList.remove('fm-col')); app.querySelectorAll('.fm-same').forEach(x => x.classList.remove('fm-same'));
+    if (!el) return;
+    const sec = el.closest('section.group');
+    sec.querySelectorAll('select[data-tp="' + el.dataset.tp + '"][data-t]').forEach(o => { if (o === el) return; o.closest('td').classList.add('fm-col'); if (o.value && o.value === el.value) o.classList.add('fm-same'); });
+  }
+  app.addEventListener('focusin', e => { if (e.target.matches('select[data-tp][data-t]')) ring(e.target); });
+  app.addEventListener('focusout', e => { if (e.target.matches('select[data-tp][data-t]')) ring(null); });
+  app.addEventListener('change', e => { if (e.target.matches('select[data-tp][data-t]')) { apply(); if (document.activeElement === e.target) ring(e.target); } }, true);
+  new MutationObserver(apply).observe(app, { childList: true });
+  apply();
+})();
 </script>
 </body>
 </html>
