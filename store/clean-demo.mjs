@@ -64,7 +64,7 @@ const IS_DEMO = /^(Demo — |Finished course — )/;
 /* A settings object has fourteen-odd fields. Eight is well under anything real
    and well over anything an Apps Script hiccup returns. */
 const FLOOR = 8;
-const AGREEMENT_FIELDS = ['agrAttendance', 'agrPlagiarism', 'agrComplaints', 'agrResubmissions'];
+const AGREEMENT_FIELDS = ['agrExpectations', 'agrSpecialRequirements', 'agrPreCourse', 'agrAttendance', 'agrPlagiarism', 'agrResubmissions', 'agrDeferrals', 'agrFees', 'agrSpecialConsideration', 'agrFromUs', 'agrComplaints', 'agrMode'];
 
 const once = async (b) => {
   const r = await fetch(STORE, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(b) });

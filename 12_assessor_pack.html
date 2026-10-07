@@ -25,7 +25,7 @@
 <title>Connect Lite — Assessor pack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610070419">
+<link rel="stylesheet" href="hub-tokens.css?v=202610070429">
 <style>
   :root{
     /* the control fill, for the shared confirm modal's Cancel button */
@@ -237,7 +237,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610070419">
+<link rel="stylesheet" href="hub-house.css?v=202610070429">
 </head>
 <body>
 <div class="board">
@@ -267,15 +267,15 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202610070419"></script>
-<script src="hub-shared.js?v=202610070419"></script>
-<script src="assignment-defaults.js?v=202610070419"></script>
-<script src="hub-tracker.js?v=202610070419"></script>
-<script src="hub-rotation.js?v=202610070419"></script>
-<script src="hub-attendance.js?v=202610070419"></script>
-<script src="hub-store.js?v=202610070419"></script>
-<script src="hub-say.js?v=202610070419"></script>
-<script src="hub-sync.js?v=202610070419"></script>
+<script src="observation-defaults.js?v=202610070429"></script>
+<script src="hub-shared.js?v=202610070429"></script>
+<script src="assignment-defaults.js?v=202610070429"></script>
+<script src="hub-tracker.js?v=202610070429"></script>
+<script src="hub-rotation.js?v=202610070429"></script>
+<script src="hub-attendance.js?v=202610070429"></script>
+<script src="hub-store.js?v=202610070429"></script>
+<script src="hub-say.js?v=202610070429"></script>
+<script src="hub-sync.js?v=202610070429"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -418,6 +418,21 @@ function courseChecks(){
         : hours ? hours + ' contact hours'
         : fromTimetable.hours + ' contact hours, from the timetable (' + fromTimetable.days + ' days)',
       '3.1 — at least 120 contact hours');
+
+  /* 13.5: the assessment in the second half of the course, as near the end as
+     possible, and not on the last day. Date-only strings compared as such;
+     the midpoint is worked out in UTC so no clock moves a day. */
+  (function(){
+    const v = String(SETTINGS.visitDate || '').slice(0, 10), s0 = String(SETTINGS.start || '').slice(0, 10), e0 = String(SETTINGS.end || '').slice(0, 10);
+    const cite = '13.5 — in the second half of the course, as near the end as possible, not the last day';
+    if (!v) { say('should', 'Assessment date', 'unknown', 'not set yet', cite); return; }
+    if (!s0 || !e0) { say('should', 'Assessment date', 'unknown', v + ', but the course dates are not set', cite); return; }
+    const ms = x => Date.UTC(+x.slice(0,4), +x.slice(5,7) - 1, +x.slice(8,10));
+    const mid = (ms(s0) + ms(e0)) / 2;
+    const last = v === e0, late = ms(v) >= mid;
+    say('should', 'Assessment date', last ? 'short' : late ? 'met' : 'short',
+        last ? v + ' is the last day of the course; the Handbook says avoid it' : late ? v + ', in the second half of the course' : v + ', in the first half of the course', cite);
+  })();
 
   /* Two things a timetable makes checkable that nothing else could: a
      trainee teaches once a day, and a class takes no more than three hours
@@ -729,6 +744,8 @@ const DOC_LABELS = [
   /* Added 27 Sep 2026 -- 14.1 asks for all three and Lite had no box for any
      of them. The map is only for a face-to-face visit where the assessor is
      not local, so it is the one that is legitimately blank most of the time. */
+  /* 14.2: the assessor checks the documentation of any trainee who withdrew. */
+  ['docWithdrawals',     'Withdrawal letters'],
   ['docMap',             'Map and accommodation'],
 ];
 /* NO "LESSON PLANS FOR THE DAY" SECTION, on purpose.
@@ -878,8 +895,7 @@ function courseDocuments(){
      names follow. A centre that keeps its own agreement as a file still shows
      the pasted link in the rows below, as before. */
   const agr = (SETTINGS && SETTINGS.agreement) || {};
-  const writtenHere = ['agrAttendance','agrPlagiarism','agrComplaints','agrResubmissions']
-    .some(k => String(agr[k] || '').trim());
+  const writtenHere = Object.keys(agr).some(k => /^agr/.test(k) && String(agr[k] || '').trim());
   if (writtenHere) {
     const signed = PEOPLE.filter(tr => tr.agreement && tr.agreement.at);
     const names = signed.map(tr => esc(tr.name || '')).filter(Boolean).join(', ');
