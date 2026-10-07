@@ -1047,3 +1047,54 @@ window.hubIsReference = function(s){
     return out;
   };
 })();
+
+
+/* ---- THE DATE PICKER (8 Oct 2026) ------------------------------------------
+   The browser's own calendar cannot be styled and looks like a spreadsheet
+   dropped on the page (Ramy: "can we make it prettier somehow"). flatpickr,
+   vendored under assets/ so the shell caches it and nothing is fetched from
+   anyone else's server, is put on every date and date-time box, dressed in
+   the house colours (hub-house.css, .flatpickr-*). The box's own value stays
+   exactly what the page reads -- YYYY-MM-DD, or YYYY-MM-DDTHH:MM -- and the
+   picker shows a readable copy beside it. On a phone the native picker is
+   kept: it is the better one there. If the script does not load, nothing
+   changes: the native box is still a native box. */
+(function(){
+  if (typeof document === 'undefined' || !document.currentScript) return;
+  var src = document.currentScript.getAttribute('src') || '';
+  var stamp = (src.match(/\?v=([0-9]+)/) || [])[1];
+  var q = stamp ? '?v=' + stamp : '';
+  var css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'assets/flatpickr.min.css' + q;
+  document.head.appendChild(css);
+  var js = document.createElement('script'); js.src = 'assets/flatpickr.min.js' + q; js.defer = true;
+  js.onload = function(){ start(); };
+  document.head.appendChild(js);
+
+  var seen = [];
+  function wanted(el){ return el && el.tagName === 'INPUT' && (el.type === 'date' || el.type === 'datetime-local') && !el._fp && !el.disabled; }
+  function dress(el){
+    if (!window.flatpickr || !wanted(el)) return;
+    var withTime = el.type === 'datetime-local';
+    var fmt = withTime ? 'Y-m-d\\TH:i' : 'Y-m-d';
+    var fp = window.flatpickr(el, {
+      dateFormat: fmt, enableTime: withTime, time_24hr: true, minuteIncrement: 5,
+      altInput: true, altFormat: withTime ? 'D j M Y, H:i' : 'D j M Y', allowInput: false,
+      locale: { firstDayOfWeek: 1 }, disableMobile: false, monthSelectorType: 'static',
+      onChange: function(){ try { el.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {} },
+      onOpen: function(){ sync(el); }
+    });
+    el._fp = fp; el._fpLast = el.value;
+    if (fp.altInput) { fp.altInput.placeholder = el.getAttribute('placeholder') || (withTime ? 'Pick a day and time' : 'Pick a day'); fp.altInput.setAttribute('aria-label', el.getAttribute('aria-label') || el.title || ''); }
+    seen.push(el);
+  }
+  /* A page that sets a box's value from script (every settings load does)
+     leaves the readable copy stale; so a value that changed under the picker
+     is read back in, on open and once a second. */
+  function sync(el){ var fp = el._fp; if (!fp) return; if (el.value !== el._fpLast) { el._fpLast = el.value; if (el.value) fp.setDate(el.value, false, fp.config.dateFormat); else fp.clear(false); } }
+  function sweep(root){ (root || document).querySelectorAll('input[type=date], input[type=datetime-local]').forEach(dress); }
+  function start(){
+    sweep(document);
+    try { new MutationObserver(function(){ sweep(document); }).observe(document.body, { childList: true, subtree: true }); } catch (e) {}
+    setInterval(function(){ seen.forEach(sync); }, 1000);
+  }
+})();
