@@ -10,7 +10,7 @@ touching anything.
 
 ## Rules that stand (Ramy's words where quoted)
 
-- **Never touch a live course without asking.** `c1` is the scratch course.
+- **Never touch a live course without asking.** **`c5` is the LIVE course**: C/18 2026 at International House Istanbul (TR073), from 12 October 2026, the only live course on the store. Nothing scripted ever reads or writes it; everything on it goes through the page. `c1` is the scratch course.
   `c3` is the TP point library and must never be touched. There are real
   courses alongside them.
 - **localhost talks to the LIVE store.** "Never seed a test course there — it
