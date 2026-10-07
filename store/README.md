@@ -27,6 +27,13 @@ Never a bare `clasp deploy`. If anything is ever edited in the Apps Script
 editor instead, `clasp pull` before the next change or the repo copy is stale.
 The patches below are how the editor's text got to v73.
 
+## 8 Oct 2026 — a clone carries the centre's newer settings (version 89, store v75)
+`cloneCourse` keeps what is the centre's: now also the agreement, Connect's
+pre-course switch and its two overrides, the tutor and volunteer contacts, the
+online rooms, the time zone, and the centre's own agreement link; a copied
+file row loses its show-from day. Dates, names, the assessment, the roster and
+the keys still start fresh.
+
 ## 7 Oct 2026 — the centre book: a number fills in its centre (version 88, store v74)
 The first deploy from the repo with clasp. A `centres` sheet (number | name |
 first | courses) that learns from every course made; owner-only `centres` and

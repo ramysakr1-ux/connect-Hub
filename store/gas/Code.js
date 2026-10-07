@@ -732,14 +732,24 @@ case 'inbox': {
       sheet_(SHEET_COURSES).appendRow([nid, nname, new Date()]);
       var s = courseRead_(fromId, 'settings') || {};
       var keep = {};
-      ['centreName', 'centreNumber', 'centreLocked', 'logo', 'tutorNames', 'planDueNote', 'selfDueNote', 'tpCount', 'totalHours', 'deliveryMode', 'appianUrl', 'courseLinks'].forEach(function (k) { if (s[k] !== undefined && s[k] !== '') keep[k] = s[k]; });
+      /* v75 (8 Oct 2026): the settings added since this list was written are
+         the centre's as much as the logo is -- the agreement, Connect's
+         pre-course switch and its two overrides, the tutor and volunteer
+         contacts, the online rooms, the time zone -- and a clone started
+         without them (Ramy: "does it also duplicate all the settings?").
+         Still fresh: the dates, the course name and number, the assessment,
+         the notification reference, the assessor's documents, the roster. */
+      ['centreName', 'centreNumber', 'centreLocked', 'logo', 'tutorNames', 'planDueNote', 'selfDueNote', 'tpCount', 'totalHours', 'deliveryMode', 'appianUrl', 'courseLinks',
+       'agreement', 'preCourseConnect', 'gtkyWhen', 'gtkyMinutes', 'tutorContacts', 'volunteerContact', 'onlineRooms', 'timeZone', 'planFrom', 'analysisFrom', 'volunteerCertificateHours'].forEach(function (k) { if (s[k] !== undefined && s[k] !== '' && s[k] !== null) keep[k] = s[k]; });
+      /* Of the assessor's documents only the centre's own agreement link is the centre's. */
+      if (s.docs && s.docs.docAgreement) keep.docs = { docAgreement: s.docs.docAgreement };
       keep.clonedFrom = fromId;
       // Ramy, 28 Sep 2026: "anything connected to a time that carries over
       // requires a switch from the tutor before the trainees see it" -- the
       // carried links arrive hidden (the timetable excepted: "they should see
       // it anyway"), and so does each assignment's wording. The pages show a
       // candidate only what is switched on.
-      if (Array.isArray(keep.courseLinks)) keep.courseLinks = keep.courseLinks.map(function (l) { if (!l) return l; var c = {}; for (var k2 in l) c[k2] = l[k2]; if (!/timetable/i.test(String(l.label || '') + ' ' + String(l.card || ''))) c.show = false; else delete c.show; return c; });
+      if (Array.isArray(keep.courseLinks)) keep.courseLinks = keep.courseLinks.map(function (l) { if (!l) return l; var c = {}; for (var k2 in l) c[k2] = l[k2]; delete c.showFrom; /* v75: a show-from day belongs to the course that is over */ if (!/timetable/i.test(String(l.label || '') + ' ' + String(l.card || ''))) c.show = false; else delete c.show; return c; });
       courseWrite_(nid, 'settings', keep);
       var w = courseRead_(fromId, 'wording');
       if (w && typeof w === 'object') { for (var wk in w) { if (w[wk] && typeof w[wk] === 'object' && !Array.isArray(w[wk])) w[wk].released = false; } }
