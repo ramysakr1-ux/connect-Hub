@@ -26,7 +26,7 @@
 <title>Candidate agreement</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610071305">
+<link rel="stylesheet" href="hub-tokens.css?v=202610071328">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -39,6 +39,7 @@
   .title h1{margin:0; font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.9rem; line-height:1.15;}
   .title p{margin:7px 0 0; font-size:0.9rem; color:var(--grey); line-height:1.55;}
   .sec{background:var(--surface); border:1px solid var(--sand-line); border-radius:10px; padding:20px 22px; margin-top:16px;}
+  .sec.c0{border-left:4px solid var(--teal);} .sec.c1{border-left:4px solid var(--gold);} .sec.c2{border-left:4px solid var(--brick);}
   .sec h2{margin:0 0 8px; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.1rem;}
   .sec p.body{margin:0; font-size:0.9rem; line-height:1.65; white-space:pre-wrap;}
   .empty{background:var(--surface); border:1px dashed var(--sand-line); border-radius:10px;
@@ -62,6 +63,13 @@
   .signed svg{display:block;}
   .ro{font-size:0.88rem; color:var(--grey);}
   .status{font-size:0.8rem; color:var(--grey);}
+  .decl{margin:14px 0 4px; padding:14px 16px; background:var(--paper); border:1px solid var(--sand-line); border-left:4px solid var(--gold); border-radius:8px;}
+  .decl h3{margin:0 0 6px; font-family:'Newsreader',Georgia,serif; font-size:1.02rem; font-weight:600;}
+  .decl p{margin:0 0 10px; font-size:0.88rem; line-height:1.55; color:var(--ink-warm);}
+  .decl label{display:block; font-size:0.9rem; margin:4px 0; cursor:pointer;}
+  .decl input[type=radio]{margin-right:8px;}
+  .decl textarea{width:100%; margin-top:6px; font:inherit; font-size:0.9rem; padding:8px 10px; border:1.5px solid var(--sand-line); border-radius:8px; background:var(--field);}
+  .decl textarea:disabled{opacity:0.55;}
   @media print{ body{background:#fff; padding:0;} .back,.signbox .row,.btn{display:none;} }
 </style>
 </head>
@@ -70,12 +78,12 @@
   <a class="back" id="back" href="index.html">&#8592; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610071305"></script>
-<script src="hub-store.js?v=202610071305"></script>
-<script src="hub-hand.js?v=202610071305"></script>
-<script src="hub-ink.js?v=202610071305"></script>
-<script src="hub-say.js?v=202610071305"></script>
-<script src="hub-sync.js?v=202610071305"></script>
+<script src="hub-shared.js?v=202610071328"></script>
+<script src="hub-store.js?v=202610071328"></script>
+<script src="hub-hand.js?v=202610071328"></script>
+<script src="hub-ink.js?v=202610071328"></script>
+<script src="hub-say.js?v=202610071328"></script>
+<script src="hub-sync.js?v=202610071328"></script>
 <script type="text/x-hub-app">
 /* A volunteer student is not on the course. They come in off the street to be
    taught, and what the centre asks of its TRAINEES -- attendance, plagiarism,
@@ -148,6 +156,7 @@ const SECTIONS = [
   ['agrFromUs', 'What you can expect from us'],
   ['agrComplaints', 'If you have a concern or a complaint'],
   ['agrMode', 'Your course mode'],
+  ['agrData', 'Your personal information'],
 ];
 
 /* A signature is against the words that were on the screen when it was given.
@@ -161,14 +170,39 @@ function fingerprint(s){
   return h.toString(36);
 }
 
+/* THE CANDIDATE DECLARATION. Handbook 6.3: the agreement "should include a
+   Candidate Declaration where candidates are asked to confirm if they require
+   special consideration (e.g., extended time allowance/special arrangements
+   etc.)". One question, answered at signing, kept on the signing record as
+   `special` so the tutors and the assessor read it where they read the
+   signature (Ramy, 8 Oct 2026: "everything in one agreement, one signature"). */
+function declForm(rec){
+  const sp = (rec && rec.special) || {};
+  const yes = sp.needs === true, no = sp.needs === false;
+  return `<div class="decl"><h3>Candidate declaration</h3>
+    <p>Do you need any special consideration or arrangement on this course &mdash; extra time, a particular seat or screen, anything for a medical condition or a specific learning difficulty? Saying so now lets the centre arrange it before day one.</p>
+    <label><input type="radio" name="decl" value="no"${no ? ' checked' : ''}> No, nothing I know of</label>
+    <label><input type="radio" name="decl" value="yes"${yes ? ' checked' : ''}> Yes &mdash; this:</label>
+    <textarea id="declText" rows="2" placeholder="What you need, in a line or two" ${yes ? '' : 'disabled'}>${esc(sp.text || '')}</textarea></div>`;
+}
+function readDecl(){
+  const r = document.querySelector('input[name="decl"]:checked'); if (!r) return null;
+  const t = (document.getElementById('declText') || {}).value || '';
+  return r.value === 'yes' ? { needs: true, text: String(t).trim() } : { needs: false, text: '' };
+}
+function declLine(rec){
+  const sp = rec && rec.special; if (!sp || typeof sp.needs !== 'boolean') return '';
+  return '<br><span class="ro">' + (sp.needs ? 'Declared a need for special consideration: ' + esc(sp.text || '(no detail given)') : 'Declared no need for special consideration.') + '</span>';
+}
+document.addEventListener('change', e => { if (e.target && e.target.name === 'decl') { const t = document.getElementById('declText'); if (t) { t.disabled = e.target.value !== 'yes'; if (!t.disabled) t.focus(); } } });
 function render(){
   const cs = settings();
   const agr = cs.agreement || {};
   const own = String(((cs.docs || {}).docAgreement) || '').trim();
   const written = SECTIONS.filter(([k]) => String(agr[k] || '').trim());
   const rec = record();
-  const body = written.map(([k, label]) =>
-    `<div class="sec"><h2>${esc(label)}</h2><p class="body">${esc(agr[k])}</p></div>`).join('');
+  const body = written.map(([k, label], i) =>
+    `<div class="sec c${i % 3}"><h2>${esc(label)}</h2><p class="body">${esc(agr[k])}</p></div>`).join('');
   const print = written.map(([k]) => agr[k]).join('\n') + '|' + own;
   const fp = fingerprint(print);
 
@@ -200,13 +234,15 @@ function render(){
     const stale = rec.print && rec.print !== fp;
     sign = `<div class="signbox"><h2>Signed</h2>
       <div class="signed">${rec.ink && window.hubInk ? window.hubInk.svg(rec.ink, '', rec.name) : ''}
-        <div><b>${esc(rec.name)}</b> &mdash; signed ${esc(when(rec.at))}</div></div>
+        <div><b>${esc(rec.name)}</b> &mdash; signed ${esc(when(rec.at))}${declLine(rec)}</div></div>
       ${stale ? `<p class="lead" style="margin:12px 0 0">Your centre has changed the agreement since you signed it. Read it again and sign the new wording; your signature is the same one.</p>
+        ${IS_TRAINEE ? declForm(rec) : ''}
         <div class="row"><button class="btn" type="button" id="signBtn">Sign the new wording</button></div>
         <p class="status" id="status"></p>` : ''}</div>`;
   } else if (IS_TRAINEE) {
     sign = MY_NAME ? `<div class="signbox"><h2>Sign it</h2>
-      <p class="lead">Signing records that you have read the agreement above and accept it. Your name and the date are kept with your course record; your tutor and the assessor can see that you signed and when.</p>
+      <p class="lead">Signing records that you have read the agreement above and accept it, including how your information is kept and shared with Cambridge. Your name and the date are kept with your course record; your tutor and the assessor can see that you signed and when.</p>
+      ${declForm(rec)}
       <div class="row"><button class="btn" type="button" id="signBtn">Read and sign</button></div>
       <p class="status" id="status"></p></div>`
       : `<div class="signbox"><h2>Sign it</h2><p class="ro">Your course has not finished loading your name yet. Give it a moment and open this page again — your signature is written from the name your centre has for you, not one typed here.</p></div>`;
@@ -222,11 +258,16 @@ function render(){
   if (btn) btn.addEventListener('click', async () => {
     const name = (record().name || MY_NAME || '').trim();
     if (!name) { const st = $('status'); if (st) st.textContent = 'Your name has not loaded from the course yet.'; return; }
+    /* The declaration comes first: Handbook 6.3 asks that the agreement carry
+       a Candidate Declaration on special consideration, signed, so the
+       centre can make reasonable adjustments before the course starts. */
+    if (IS_TRAINEE && !readDecl()) { const st = $('status'); if (st) st.textContent = 'Say first whether you need any special consideration on the course.'; const f = document.querySelector('.decl'); if (f) f.scrollIntoView({ block: 'center' }); return; }
     let ink = '';
     try { ink = await window.hubInk.confirm({ name, title: 'Sign the candidate agreement' }); } catch(e) { ink = null; }
     if (ink === null) return;               // cancelled
     const r = { name, at: now(), print: fp };
     if (ink) r.ink = ink;
+    const d = readDecl(); if (d) r.special = d;
     saveRecord(r);
     render();
   });

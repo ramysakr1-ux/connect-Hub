@@ -25,7 +25,7 @@
 <title>Connect Lite — Assessor pack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610071305">
+<link rel="stylesheet" href="hub-tokens.css?v=202610071328">
 <style>
   :root{
     /* the control fill, for the shared confirm modal's Cancel button */
@@ -237,7 +237,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610071305">
+<link rel="stylesheet" href="hub-house.css?v=202610071328">
 </head>
 <body>
 <div class="board">
@@ -267,15 +267,15 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202610071305"></script>
-<script src="hub-shared.js?v=202610071305"></script>
-<script src="assignment-defaults.js?v=202610071305"></script>
-<script src="hub-tracker.js?v=202610071305"></script>
-<script src="hub-rotation.js?v=202610071305"></script>
-<script src="hub-attendance.js?v=202610071305"></script>
-<script src="hub-store.js?v=202610071305"></script>
-<script src="hub-say.js?v=202610071305"></script>
-<script src="hub-sync.js?v=202610071305"></script>
+<script src="observation-defaults.js?v=202610071328"></script>
+<script src="hub-shared.js?v=202610071328"></script>
+<script src="assignment-defaults.js?v=202610071328"></script>
+<script src="hub-tracker.js?v=202610071328"></script>
+<script src="hub-rotation.js?v=202610071328"></script>
+<script src="hub-attendance.js?v=202610071328"></script>
+<script src="hub-store.js?v=202610071328"></script>
+<script src="hub-say.js?v=202610071328"></script>
+<script src="hub-sync.js?v=202610071328"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -899,12 +899,17 @@ function courseDocuments(){
   if (writtenHere) {
     const signed = PEOPLE.filter(tr => tr.agreement && tr.agreement.at);
     const names = signed.map(tr => esc(tr.name || '')).filter(Boolean).join(', ');
+    /* Handbook 6.3's Candidate Declaration rides on the signature: a trainee
+       who declared a need for special consideration is named here, because
+       the adjustment is the centre's to make and the assessor's to know of. */
+    const needs = signed.filter(tr => tr.agreement.special && tr.agreement.special.needs === true);
+    const needsLine = needs.length ? ' &middot; special consideration declared by ' + needs.map(tr => esc(tr.name || '') + (tr.agreement.special.text ? ' (' + esc(tr.agreement.special.text) + ')' : '')).join(', ') : '';
     /* No trainee named here: this is the WHOLE COURSE'S agreement, not one
        person's, so the row stays a straight link rather than a per-trainee
        door -- each trainee's own signed copy opens from their own row in the
        pack below, or from the tracker, the way their other records do (Ramy,
        6 Oct 2026, finding this link opened to nobody in particular). */
-    builtIn.push(`<div class="docrow"><span><b>Candidate agreement</b> <span class="sub">&mdash; written by the centre and signed on screen &middot; ${signed.length} of ${PEOPLE.length} signed${names ? ': ' + names : ''}</span></span><a href="29_candidate_agreement.html">Open the agreement</a></div>`);
+    builtIn.push(`<div class="docrow"><span><b>Candidate agreement</b> <span class="sub">&mdash; written by the centre and signed on screen &middot; ${signed.length} of ${PEOPLE.length} signed${names ? ': ' + names : ''}${needsLine}</span></span><a href="29_candidate_agreement.html">Open the agreement</a></div>`);
   }
   const provided = DOC_LABELS.filter(([k]) => docs[k]).length;
   const rows = DOC_LABELS.filter(([k]) => docs[k] && !(k === 'docAssessTimetable' && hasVisitTimetable)).map(([k,label]) =>

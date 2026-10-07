@@ -9,7 +9,10 @@
 // pre-course familiarisation, attendance/illness, refunds, deferrals and
 // extensions, plagiarism and its penalties, facilities and resources, special
 // consideration, the conduct and role of tutors, technological requirements,
-// online-delivery issues, what to do with a concern, and the course mode.
+// online-delivery issues, what to do with a concern, the course mode, and
+// (same section, last paragraphs) the security of personal information, its
+// sharing with Cambridge, and a signed Candidate Declaration on special
+// consideration -- which 29_candidate_agreement takes at signing.
 // Since the 7 Oct 2026 audit the agreement has a section for each, in the
 // Handbook's order, so a centre that fills them all meets 6.3; the booklet's
 // four are among them. Connect has had a full
@@ -65,5 +68,8 @@ window.CONNECT_HUB_AGREEMENT_DEFAULTS = {
     'Separately from all of the above, you have a right of appeal to Cambridge about an assessment decision. Your tutor will point you to the Appeals Procedure.',
   agrMode:
     'Your course is delivered face to face, online, or as a mix of the two. Which one you are on affects your contact hours, where your teaching practice happens, and what you need to provide yourself.\n\n' +
-    '[Your centre: the mode this course is on, what it means in contact hours, whether input is live or through a platform, and for online delivery what the candidate must have — a quiet space to teach from and confidence with the technology.]'
+    '[Your centre: the mode this course is on, what it means in contact hours, whether input is live or through a platform, and for online delivery what the candidate must have — a quiet space to teach from and confidence with the technology.]',
+  agrData:
+    'Your course record lives on Connect Lite: your lesson plans, self-evaluations, feedback, assignments and CELTA 5, under a private link that is yours alone. Your tutors and, during the visit, the Cambridge assessor read it; nobody else can, and the link does not expire while the course runs. The centre keeps the record for six months after the course, as Cambridge requires, and then it is deleted unless you ask for a copy first.\n\n' +
+    'Cambridge English receives your name, your grades and your end-of-course report, which is how your certificate is issued; signing this agreement is your agreement to that. [Your centre: anything else you hold about a candidate, where it is kept, and who at the centre can see it.]'
 };
