@@ -1116,3 +1116,56 @@ window.hubIsReference = function(s){
     setInterval(function(){ seen.forEach(sync); }, 1000);
   }
 })();
+
+/* THE BRAND, ALWAYS THERE (Ramy, 8 Oct 2026: "we're going to use this logo
+   everywhere where it says Connect Lite and next to my credit... this is a
+   branding, so it's always going to be there"). A screen that does not
+   already carry the mark and the credit gets them as one quiet line at its
+   foot: the tile, Connect LITE, designed and built by Ramy. A screen with its
+   own credit (the landings, the cards, the console) keeps its own; a page can
+   opt out with data-brand="off" on <body>. Never on paper -- the printed
+   documents are Cambridge's and the trainee's, not ours. */
+window.hubLockup = function(size){
+  var s = size || 18;
+  return '<span class="hub-lockup"><span class="hub-lockup-tile" style="width:' + s + 'px;height:' + s + 'px;border-radius:' + Math.round(s * 0.23) + 'px">'
+    + '<svg viewBox="8 30 104 60" width="' + Math.round(s * 0.66) + '" height="' + Math.round(s * 0.4) + '" fill="none" aria-hidden="true">'
+    + '<path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"></path>'
+    + '<path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"></path></svg></span>'
+    + '<span class="hub-lockup-c">Connect</span><span class="hub-lockup-l">Lite</span></span>';
+};
+(function(){
+  /* The wordmark's two faces, for the screens whose own font link never
+     asked for them. */
+  if (!document.querySelector('link[href*="Instrument+Serif"]') && !document.getElementById('hub-brand-fonts')) {
+    var fl = document.createElement('link'); fl.id = 'hub-brand-fonts'; fl.rel = 'stylesheet';
+    fl.href = 'https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500&display=swap';
+    document.head.appendChild(fl);
+  }
+  if (!document.getElementById('hub-brand-css')) {
+    var c = document.createElement('style'); c.id = 'hub-brand-css';
+    c.textContent = ".hub-lockup{display:inline-flex; align-items:center; gap:7px; vertical-align:middle;}"
+      + ".hub-lockup-tile{display:inline-flex; align-items:center; justify-content:center; flex:none; background:oklch(30% 0.042 58);}"
+      + ".hub-lockup-c{font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:17px; line-height:.85; color:oklch(63% 0.096 72);}"
+      + ".hub-lockup-l{font-family:'Instrument Sans','Karla',sans-serif; font-weight:500; font-size:8px; letter-spacing:.24em; text-transform:uppercase; color:inherit; margin-left:-3px;}"
+      + ".hub-brand-foot{display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; margin:28px auto 22px; padding:0 16px;"
+      +   " font-family:'Karla',sans-serif; font-size:11px; color:oklch(50% 0.09 62);}"
+      + ".hub-brand-foot .hub-lockup{color:var(--ink, oklch(23.5% 0.017 65));}"
+      + ".hub-brand-foot b{font-weight:700;}"
+      + "@media print{.hub-brand-foot{display:none !important;}}";
+    document.head.appendChild(c);
+  }
+  function foot(){
+    var b = document.body; if (!b || b.dataset.brand === 'off') return;
+    if (document.querySelector('.hub-brand-foot, .hub-credit, .credit, .fp-foot')) return;
+    var f = document.createElement('footer'); f.className = 'hub-brand-foot';
+    f.innerHTML = window.hubLockup(18) + '<span>designed and built by <b>Ramy</b></span>';
+    /* A screen whose body is a centred row (the assignment page, say) would
+       put the footer beside its column, not under it: give it a line of its
+       own. */
+    var cs = getComputedStyle(b);
+    if (/flex/.test(cs.display) && !/column/.test(cs.flexDirection)) { b.style.flexWrap = 'wrap'; f.style.flexBasis = '100%'; }
+    else if (/grid/.test(cs.display)) { f.style.gridColumn = '1 / -1'; }
+    b.appendChild(f);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', foot); else foot();
+})();

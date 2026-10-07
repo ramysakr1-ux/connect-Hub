@@ -90,7 +90,7 @@
       + '<p>This page reads one course, through the link your centre sent you. Trainees have their own personal link, tutors share the tutor link, and an assessor has a read-only one. Open the page from that link and everything appears. Lost it? Your course administrator can send it again from the Roster.</p>'
       + '</div>'
 
-      + '<div class="fp-foot"><span>designed and built by <b>Ramy</b></span><a href="mailto:lite@celtaconnect.com">lite@celtaconnect.com</a></div>'
+      + '<div class="fp-foot"><span>' + (window.hubLockup ? hubLockup(16) + ' ' : '') + 'designed and built by <b>Ramy</b></span><a href="mailto:lite@celtaconnect.com">lite@celtaconnect.com</a></div>'
       + '</div>';
 
     var css = document.createElement('style');

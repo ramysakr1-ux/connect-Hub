@@ -22,6 +22,12 @@
             tealDeep:'#0b3a3b', goldWash:'#f6ead3', amber:'#e5c98f', goldDeep:'#8a6534', paper:'#fffdf9',
             onTealGold:'#d9b47a', onTealMeta:'#d7e6e5' };
   var MAIL = 'lite@celtaconnect.com';
+  /* The tile, as an image: an email cannot draw the mark, and the brand is
+     always there (Ramy, 8 Oct 2026). The published icon, from the live site
+     whatever page built the mail, with the word as its alt text so a client
+     that blocks images still says whose it is. */
+  var ICON = 'https://lite.celtaconnect.com/brand/icon-192.png';
+  function tile(px){ return '<img src="' + ICON + '" width="' + px + '" height="' + px + '" alt="Connect" style="display:inline-block; vertical-align:middle; border:0; border-radius:' + Math.round(px * 0.22) + 'px;">'; }
   var SERIF = "'Newsreader',Georgia,'Times New Roman',serif", SANS = "'Karla',Helvetica,Arial,sans-serif";
   var esc = function(s){ return (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
   var paras = function(t){ return String(t || '').trim().split(/\n{2,}/).map(function(p){ return '<p style="margin:0 0 10px;">' + esc(p).replace(/\n/g, '<br>') + '</p>'; }).join(''); };
@@ -46,8 +52,8 @@
     return '<table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px; width:100%; background:' + C.paper + '; border-radius:18px; border-collapse:separate; overflow:hidden;">'
       + '<tr><td bgcolor="' + C.tealDeep + '" style="background:' + C.tealDeep + '; padding:26px 30px 30px; border-radius:18px 18px 0 0;">'
       +   '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;"><tr>'
-      +     '<td style="vertical-align:middle;"><span style="font-family:\'Instrument Serif\',Georgia,serif; font-style:italic; font-size:21px; color:' + C.onTealGold + ';">Connect</span>'
-      +     '<span style="font-family:' + SANS + '; font-size:9px; font-weight:600; letter-spacing:0.24em; text-transform:uppercase; color:' + C.paper + '; margin-left:5px;">Lite</span></td>'
+      +     '<td style="vertical-align:middle;">' + tile(28) + '<span style="font-family:\'Instrument Serif\',Georgia,serif; font-style:italic; font-size:21px; color:' + C.onTealGold + '; margin-left:9px; vertical-align:middle;">Connect</span>'
+      +     '<span style="font-family:' + SANS + '; font-size:9px; font-weight:600; letter-spacing:0.24em; text-transform:uppercase; color:' + C.paper + '; margin-left:5px; vertical-align:middle;">Lite</span></td>'
       +     '<td align="right" style="vertical-align:middle;"><span style="font-family:' + SANS + '; font-size:10px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:' + C.onTealGold + '; border:1px solid ' + C.onTealGold + '; border-radius:999px; padding:4px 10px; white-space:nowrap;">' + esc(chip) + '</span></td>'
       +   '</tr></table>'
       +   '<h1 style="font-family:' + SERIF + '; font-weight:700; font-size:28px; line-height:1.12; color:' + C.paper + '; margin:0;">' + esc(headline) + '</h1>'
@@ -60,7 +66,10 @@
     return '<p style="font-family:' + SANS + '; font-size:13.5px; line-height:1.6; color:' + C.ink + '; margin:18px 0 0;">' + esc(lead) + ' <a href="mailto:' + MAIL + '" style="color:' + C.teal + '; font-weight:700; text-decoration:none;">' + MAIL + '</a></p>';
   }
   function credit(ctx){
-    return '<div style="font-family:' + SANS + '; font-size:11px; color:#8a6534; margin:16px 0 0; padding-top:14px; border-top:1px solid ' + C.line + ';">designed and built by <b>Ramy</b>' + (ctx.site ? ' · <a href="' + esc(ctx.site) + '" style="color:#8a6534; text-decoration:none;">' + esc(ctx.site.replace(/^https?:\/\//, '').replace(/\/$/, '')) + '</a>' : '') + '</div>';
+    return '<div style="font-family:' + SANS + '; font-size:11px; color:#8a6534; margin:16px 0 0; padding-top:14px; border-top:1px solid ' + C.line + ';">' + tile(16)
+      + '<span style="font-family:\'Instrument Serif\',Georgia,serif; font-style:italic; font-size:14px; color:' + C.gold + '; margin:0 4px 0 7px; vertical-align:middle;">Connect</span>'
+      + '<span style="font-family:' + SANS + '; font-size:7px; font-weight:600; letter-spacing:0.24em; text-transform:uppercase; color:' + C.ink + '; margin-right:8px; vertical-align:middle;">Lite</span>'
+      + '<span style="vertical-align:middle;">designed and built by <b>Ramy</b>' + (ctx.site ? ' · <a href="' + esc(ctx.site) + '" style="color:#8a6534; text-decoration:none;">' + esc(ctx.site.replace(/^https?:\/\//, '').replace(/\/$/, '')) + '</a>' : '') + '</span></div>';
   }
   function page(title, letter, card){
     return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>' + esc(title) + '</title></head>'
