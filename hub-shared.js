@@ -1077,8 +1077,8 @@ window.hubIsReference = function(s){
     var withTime = el.type === 'datetime-local';
     var fmt = withTime ? 'Y-m-d\\TH:i' : 'Y-m-d';
     var fp = window.flatpickr(el, {
-      dateFormat: fmt, enableTime: withTime, time_24hr: true, minuteIncrement: 5,
-      altInput: true, altFormat: withTime ? 'D j M Y, H:i' : 'D j M Y', allowInput: false,
+      dateFormat: fmt, enableTime: withTime, time_24hr: false, minuteIncrement: 5,
+      altInput: true, altFormat: withTime ? 'D j M Y, h:i K' : 'D j M Y', allowInput: false,
       locale: { firstDayOfWeek: 1 }, disableMobile: false, monthSelectorType: 'static',
       onChange: function(){ try { el.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {} },
       onOpen: function(){ sync(el); }
