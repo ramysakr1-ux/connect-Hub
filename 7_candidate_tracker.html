@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Newsreader:wght@600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610072111">
+<link rel="stylesheet" href="hub-tokens.css?v=202610072151">
 <style>
   /* design_handoff_candidate_tracker (Ramy, 20 Sep 2026), with the Hub's
      colour-coded chips in the cells -- "I like the chips that you created.
@@ -210,8 +210,29 @@
   .qcard.idle .n{ color:var(--faint); }
 
   @media (max-width:900px){ .page{ padding:20px 16px 60px; } }
+
+  /* ---- v8 (7 Oct 2026): reading the grid ------------------------------------
+     A crosshair under the cursor (the row and the column it sits in), a thin
+     bar under each column heading that says how that column stands across the
+     cohort, and the detail strip opening rather than appearing. Colour keeps
+     the page's rule: only what needs you is coloured; fine is the quiet line.
+     Display only. Design: Magic Touches, 8a. */
+  .row{transition:background-color .12s ease;}
+  .row.tk-row{background:var(--sand-deep, oklch(94.8% 0.01 85));}
+  .row.risk.tk-row{background:oklch(95% 0.02 40);}
+  .cell.tk-col{background:color-mix(in oklab, var(--teal) 5%, transparent);}
+  .col.tk-col b{color:var(--deep);}
+  .tk-bar{display:flex; height:4px; margin:6px auto 0; width:min(80%, 92px); border-radius:2px; overflow:hidden; background:oklch(91% 0.012 82);}
+  .tk-bar i{display:block; height:100%;}
+  .tk-bar .wrong{background:var(--red);} .tk-bar .work{background:var(--amb);} .tk-bar .wait{background:var(--blu);}
+  .tk-bar .fine{background:var(--line);}
+  .detail{animation:tk-open .32s cubic-bezier(.2,.7,.2,1) both; transform-origin:50% 0;}
+  @keyframes tk-open{from{opacity:0; transform:translateY(-8px) scaleY(.98);}to{opacity:1; transform:none;}}
+  @media(prefers-reduced-motion:reduce){ .row{transition:none;} .detail{animation:none;} }
+  @media(hover:none){ .row.tk-row{background:none;} .cell.tk-col{background:none;} }
+  @media print{ .tk-bar{display:none;} .row.tk-row, .cell.tk-col{background:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610072111">
+<link rel="stylesheet" href="hub-house.css?v=202610072151">
 </head>
 <body>
 <div class="page">
@@ -240,13 +261,13 @@
   </div>
   <div id="detail"></div>
 </div>
-<script src="hub-due.js?v=202610072111"></script>
-<script src="hub-shared.js?v=202610072111"></script>
-<script src="assignment-defaults.js?v=202610072111"></script>
-<script src="hub-tracker.js?v=202610072111"></script>
-<script src="hub-store.js?v=202610072111"></script>
-<script src="hub-say.js?v=202610072111"></script>
-<script src="hub-sync.js?v=202610072111"></script>
+<script src="hub-due.js?v=202610072151"></script>
+<script src="hub-shared.js?v=202610072151"></script>
+<script src="assignment-defaults.js?v=202610072151"></script>
+<script src="hub-tracker.js?v=202610072151"></script>
+<script src="hub-store.js?v=202610072151"></script>
+<script src="hub-say.js?v=202610072151"></script>
+<script src="hub-sync.js?v=202610072151"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
@@ -652,6 +673,57 @@ $('detail').addEventListener('click', e=>{
 (function(){ if (ASSESSOR) { document.getElementById('backLink').href='12_assessor_pack.html'; document.getElementById('backLink').innerHTML='&#8592; Assessor pack'; document.querySelector('.lede').textContent='Every trainee\u2019s teaching practice and assignments, read from what the tutors have returned and marked. Nothing here can be changed from this link; the Stage records and standing are as the tutors recorded them.'; }
   if (ME) { document.getElementById('backLink').href='index.html'; document.getElementById('backLink').innerHTML='&#8592; Back'; document.querySelector('.lede').textContent='Every teaching practice and every assignment, read from what you have submitted and what your tutor has returned. Colour only marks what needs attention; everything that is fine stays quiet. The Stage records and the standing are your tutor\u2019s, as recorded.'; } try{ const cs = JSON.parse(localStorage.getItem('connect_course_settings')||'{}'); const parts=[ME ? 'Your progress' : ASSESSOR ? 'Assessor view' : '', cs.courseName, cs.centreName].filter(Boolean); $('eyebrow').textContent = parts.join(' · '); }catch(e){} })();
 render();
+
+/* ---- v8 (7 Oct 2026): crosshair + column bars ---------------------------------
+   Layered on render(): a MutationObserver on #gridwrap re-applies after every
+   render. Reads the chips' own classes; stores nothing. */
+(function(){
+  const wrap = document.getElementById('gridwrap'); if (!wrap) return;
+  const TONES = ['wrong', 'work', 'wait'];
+  const NAMES = { wrong: 'needs attention', work: 'to do', wait: 'waiting' };
+  function bars(){
+    const head = wrap.querySelector('.grid.colhead'); if (!head) return;
+    const heads = [...head.querySelectorAll('.col')];
+    const rows = [...wrap.querySelectorAll('.grid.row')];
+    heads.forEach((h, i) => {
+      if (h.querySelector('.tk-bar')) return;
+      const counts = { wrong: 0, work: 0, wait: 0, fine: 0, nd: 0 };
+      rows.forEach(r => {
+        const c = r.querySelectorAll('.cell')[i]; const chip = c && c.querySelector('.chip'); if (!chip) return;
+        const k = TONES.find(t => chip.classList.contains(t)) || (chip.classList.contains('nd') ? 'nd' : 'fine');
+        counts[k]++;
+      });
+      const n = rows.length || 1;
+      const seg = k => counts[k] ? '<i class="' + k + '" style="width:' + (counts[k] / n * 100).toFixed(2) + '%"></i>' : '';
+      const tip = [...TONES, 'fine'].filter(k => counts[k]).map(k => counts[k] + ' ' + (NAMES[k] || 'fine')).join(' \u00b7 ') || 'nothing yet';
+      h.insertAdjacentHTML('beforeend', '<span class="tk-bar" title="' + tip + '" aria-label="' + tip + '">' + seg('wrong') + seg('work') + seg('wait') + seg('fine') + '</span>');
+    });
+  }
+  let lastRow = null, lastCol = null;
+  function clear(){
+    if (lastRow) lastRow.classList.remove('tk-row');
+    if (lastCol) wrap.querySelectorAll('.tk-col').forEach(el => el.classList.remove('tk-col'));
+    lastRow = lastCol = null;
+  }
+  wrap.addEventListener('mouseover', e => {
+    const cell = e.target.closest('.cell'), row = e.target.closest('.grid.row');
+    if (!row) { clear(); return; }
+    if (row !== lastRow) { if (lastRow) lastRow.classList.remove('tk-row'); row.classList.add('tk-row'); lastRow = row; }
+    const col = cell ? cell.dataset.col : null;
+    if (col !== lastCol) {
+      wrap.querySelectorAll('.tk-col').forEach(el => el.classList.remove('tk-col'));
+      if (col) {
+        wrap.querySelectorAll('.cell[data-col="' + col + '"]').forEach(el => el.classList.add('tk-col'));
+        const cells = [...row.querySelectorAll('.cell')], i = cells.indexOf(cell);
+        const h = wrap.querySelectorAll('.grid.colhead .col')[i]; if (h) h.classList.add('tk-col');
+      }
+      lastCol = col;
+    }
+  });
+  wrap.addEventListener('mouseleave', clear);
+  new MutationObserver(() => { lastRow = lastCol = null; bars(); }).observe(wrap, { childList: true });
+  bars();
+})();
 </script>
 </body>
 </html>
