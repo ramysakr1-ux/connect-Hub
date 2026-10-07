@@ -18,7 +18,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610072232">
+<link rel="stylesheet" href="hub-tokens.css?v=202610072259">
 <style>
   :root{
     /* the pane -- the same four values the trainee landing's cards use */
@@ -363,8 +363,28 @@
   .wordmark-spin{animation:wordmark-spin 90s linear infinite; transform-origin:50% 50%; transform-style:preserve-3d;}
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 
+
+  /* ---- v4 (7 Oct 2026): a course is born ------------------------------------
+     The card just made lands with a gold ring (twice, then still), and under
+     its line the three steps of what happens next, the middle one lit. Same
+     words, same buttons. Design: Magic Touches, 4d. */
+  .course.minted{animation:v4-land .7s cubic-bezier(.2,.7,.2,1) both, v4-ring 1.4s ease-out .5s 2;}
+  .v4-steps{list-style:none; counter-reset:v4; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:0 0 14px; padding:0;}
+  .v4-steps li{counter-increment:v4; position:relative; padding:10px 12px 10px 38px; border-radius:10px; background:var(--paper); border:1px solid var(--sand-line);
+    font-size:0.8rem; font-weight:600; line-height:1.35; color:var(--grey);}
+  .v4-steps li::before{content:counter(v4); position:absolute; left:11px; top:50%; transform:translateY(-50%); width:20px; height:20px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; background:var(--box); color:var(--ink-warm);}
+  .v4-steps li.done{color:var(--teal-deep); border-color:oklch(78% 0.04 195);}
+  .v4-steps li.done::before{content:'\2713'; background:var(--teal); color:var(--paper);}
+  .v4-steps li.now{color:var(--ink); border:2px solid var(--gold); background:var(--gold-wash); padding:9px 11px 9px 37px;}
+  .v4-steps li.now::before{background:var(--gold-lifted); color:var(--ink-warm); animation:v4-dot 2s ease-out infinite;}
+  @keyframes v4-land{from{opacity:0; transform:translateY(-18px) scale(.98);}to{opacity:1; transform:none;}}
+  @keyframes v4-ring{0%{box-shadow:0 0 0 0 oklch(70% 0.12 72 / .6);}100%{box-shadow:0 0 0 16px oklch(70% 0.12 72 / 0);}}
+  @keyframes v4-dot{0%{box-shadow:0 0 0 0 oklch(70% 0.12 72 / .55);}70%{box-shadow:0 0 0 8px oklch(70% 0.12 72 / 0);}100%{box-shadow:0 0 0 0 oklch(70% 0.12 72 / 0);}}
+  @media(prefers-reduced-motion:reduce){ .course.minted, .v4-steps li.now::before{animation:none !important;} }
+  @media(max-width:640px){ .v4-steps{grid-template-columns:1fr;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610072232">
+<link rel="stylesheet" href="hub-house.css?v=202610072259">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -388,10 +408,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610072232"></script>
-<script src="hub-store.js?v=202610072232"></script>
-<script src="hub-say.js?v=202610072232"></script>
-<script src="hub-card-mail.js?v=202610072232"></script>
+<script src="hub-shared.js?v=202610072259"></script>
+<script src="hub-store.js?v=202610072259"></script>
+<script src="hub-say.js?v=202610072259"></script>
+<script src="hub-card-mail.js?v=202610072259"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -801,7 +821,7 @@ function render(courses, msg){
     const minted = c.id === NEW_ID;
     return `
     <div class="course c-${kind.k}${minted ? ' minted' : ''}" id="course-${esc(c.id)}">
-      ${minted ? '<p class="minted-line">New — send the centre its tutor link: copy it, or email the message at the foot of this card. They set the course up and add their own trainees.</p>' : ''}
+      ${minted ? '<p class="minted-line">New — send the centre its tutor link: copy it, or email the message at the foot of this card. They set the course up and add their own trainees.</p><ol class="v4-steps" aria-label="What happens next"><li class="done">Course made</li><li class="now">Send the tutor link</li><li>The centre sets it up and adds its trainees</li></ol>' : ''}
       <div class="chead">
         <div>
           <h2>${esc(name)} <span class="kind kind-${kind.k}" title="${esc(kind.w)}">${esc(kind.t)}</span></h2>

@@ -15,7 +15,7 @@
 <title>Connect Lite — Assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610072232">
+<link rel="stylesheet" href="hub-tokens.css?v=202610072259">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -144,8 +144,25 @@
   .copyfirst{ font-family:'Karla',sans-serif; font-size:0.78rem; font-weight:600; margin-top:8px; padding:5px 11px; border-radius:6px; border:1px solid var(--sand-line); background:var(--box); color:var(--teal); cursor:pointer; }
   textarea.resub{ background:oklch(96% 0.04 70); border-color:oklch(82% 0.09 75); }
   textarea.resub:focus{ border-color:oklch(60% 0.12 70); }
+
+  /* ---- v3 (7 Oct 2026): word meter + submit pulse ---- */
+  .wm{display:inline-flex; align-items:center; gap:10px; font-family:'Karla',sans-serif; font-size:0.82rem; color:var(--grey);}
+  .wm-track{position:relative; width:180px; height:8px; border-radius:999px; background:var(--box); overflow:visible;}
+  .wm-band{position:absolute; top:-3px; bottom:-3px; border-radius:4px; background:color-mix(in oklab, var(--teal) 14%, transparent); box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--teal) 35%, transparent);}
+  .wm-fill{position:absolute; left:0; top:0; bottom:0; border-radius:999px; background:var(--gold-lifted); transition:width .35s cubic-bezier(.2,.7,.2,1), background-color .3s;}
+  .wm-mark{position:absolute; top:50%; width:14px; height:14px; margin:-7px 0 0 -7px; border-radius:50%; background:var(--paper); border:2.5px solid var(--gold-deep);
+    box-shadow:0 2px 4px oklch(30% 0.04 60 / .25); transition:left .35s cubic-bezier(.2,.7,.2,1), border-color .3s;}
+  .wm-txt b{font-family:'Newsreader',Georgia,serif; font-size:1rem; color:var(--ink);}
+  .wm.under .wm-txt{color:var(--gold-deep);}
+  .wm.in .wm-fill{background:var(--teal);} .wm.in .wm-mark{border-color:var(--teal);} .wm.in .wm-txt{color:var(--teal-deep);}
+  .wm.over .wm-fill{background:var(--brick);} .wm.over .wm-mark{border-color:var(--brick);} .wm.over .wm-txt, .wm.over .wm-txt b{color:var(--brick);}
+  #submitBtn.av3-ready{animation:av3-ready 1.6s ease-out 1;}
+  @keyframes av3-ready{0%{box-shadow:0 0 0 0 oklch(70% 0.12 72 / .6);}100%{box-shadow:0 0 0 12px oklch(70% 0.12 72 / 0);}}
+  @media(prefers-reduced-motion:reduce){ .wm-fill, .wm-mark{transition:none;} #submitBtn.av3-ready{animation:none;} }
+  @media(max-width:560px){ .wm{flex-wrap:wrap; gap:6px;} .wm-track{width:100%;} }
+  @media print{ .wm-track{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610072232">
+<link rel="stylesheet" href="hub-house.css?v=202610072259">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -153,12 +170,12 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610072232"></script>
-<script src="hub-due.js?v=202610072232"></script>
-<script src="hub-shared.js?v=202610072232"></script>
-<script src="hub-store.js?v=202610072232"></script>
-<script src="hub-say.js?v=202610072232"></script>
-<script src="hub-sync.js?v=202610072232"></script>
+<script src="assignment-defaults.js?v=202610072259"></script>
+<script src="hub-due.js?v=202610072259"></script>
+<script src="hub-shared.js?v=202610072259"></script>
+<script src="hub-store.js?v=202610072259"></script>
+<script src="hub-say.js?v=202610072259"></script>
+<script src="hub-sync.js?v=202610072259"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the trainee's submission form with a
@@ -456,8 +473,27 @@ function render(){
 
   $('app').innerHTML = html;
   const wc = $('wcCounter');
-  if (wc) { const n = countWords(); wc.textContent = `${n} of ${a.wordMin}\u2013${a.wordMax} words`; wc.style.color = wordCountOk(a) ? '' : 'var(--brick)'; }
+  if (wc) wcMeter(wc, a);
   bindInputs();
+}
+
+/* ---- v3 (7 Oct 2026): the word meter ------------------------------------
+   The counter as a track: the centre's band (wordMin to wordMax) drawn on
+   it, the count as a fill and a marker. Same numbers, same words, same rule
+   (wordCountOk); the colour says which side of the band you are on. */
+let SUBMIT_WAS_OFF = true;
+function wcMeter(el, a){
+  const n = countWords(), lo = +a.wordMin || 0, hi = +a.wordMax || 0;
+  const top = Math.max(hi * 1.15, n, 1), pc = v => Math.min(100, (v / top) * 100).toFixed(2) + '%';
+  const state = n > hi && hi ? 'over' : n >= lo ? 'in' : 'under';
+  el.className = 'wm ' + state;
+  el.style.color = '';
+  el.setAttribute('role', 'meter'); el.setAttribute('aria-valuemin', '0'); el.setAttribute('aria-valuemax', String(hi || lo)); el.setAttribute('aria-valuenow', String(n));
+  el.setAttribute('aria-label', n + ' of ' + lo + '\u2013' + hi + ' words');
+  el.innerHTML = '<span class="wm-track" aria-hidden="true"><span class="wm-band" style="left:' + pc(lo) + ';width:calc(' + pc(hi) + ' - ' + pc(lo) + ')"></span>'
+    + '<span class="wm-fill" style="width:' + pc(n) + '"></span><span class="wm-mark" style="left:' + pc(n) + '"></span></span>'
+    + '<span class="wm-txt"><b>' + n + '</b> of ' + lo + '\u2013' + hi + ' words'
+    + (state === 'under' ? ' \u00b7 ' + (lo - n) + ' to go' : state === 'over' ? ' \u00b7 ' + (n - hi) + ' over' : ' \u00b7 in range') + '</span>';
 }
 
 function countWords(){
@@ -474,11 +510,13 @@ function refreshGate(){
   const a = WORDING[CURRENT];
   if (!a) return;
   const wc = $('wcCounter');
-  if (wc) { const n = countWords(); wc.textContent = `${n} of ${a.wordMin}–${a.wordMax} words`; wc.style.color = wordCountOk(a) ? '' : 'var(--brick)'; }
+  if (wc) wcMeter(wc, a);
   const sub = subFor(CURRENT);
   const btn = $('submitBtn');
   const openStage = sub.stage==='draft' || sub.stage==='resubmission_needed' || sub.stage==='returned_unmarked';
   if (btn) btn.disabled = !(declOk(a) && hasWriting() && openStage && !dueFor(a, sub).past);
+  /* v3: one gold pulse the moment Submit becomes pressable (7 Oct 2026) */
+  if (btn) { if (!btn.disabled && SUBMIT_WAS_OFF) { btn.classList.remove('av3-ready'); void btn.offsetWidth; btn.classList.add('av3-ready'); } SUBMIT_WAS_OFF = btn.disabled; }
   // Its own element: the autosave's 'Saved' flash clears #status a moment later.
   /* This runs on every keystroke, through autosave. It used to carry its own
      copy of the reason and knew only one of the two -- so the declaration

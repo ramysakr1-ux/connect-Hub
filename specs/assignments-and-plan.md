@@ -1,96 +1,221 @@
-<!DOCTYPE html>
-<!--
-  Connect Lite — mark a written assignment (tutor)
-  © 2026 Ramy Sakr. All rights reserved.
--->
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
-<link rel="icon" href="brand/favicon.ico" sizes="32x32">
-<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
-<title>Connect Lite — Mark assignment</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610072259">
-<style>
-  *{box-sizing:border-box;}
-  a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
-  body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:32px 16px 80px; display:flex; justify-content:center;}
-  .board{max-width:760px; width:100%;}
-  .back{display:inline-block; margin-bottom:16px; font-size:0.85rem; font-weight:600; text-decoration:none;}
-  .back:hover{text-decoration:underline;}
-  .picker{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px;}
-  .picker button{font-family:'Karla',sans-serif; font-size:0.82rem; font-weight:600; padding:7px 14px; border-radius:16px;
-    border:1.5px solid var(--sand-line); background:var(--card); color:var(--ink); cursor:pointer;}
-  .picker button.active{background:var(--teal); border-color:var(--teal); color:var(--paper);}
-  .header{background:var(--surface); border-radius:6px; margin-bottom:20px; border-top:2px solid var(--teal); padding:22px 26px;}
-  .header h1{font-family:'Newsreader',Georgia,serif; font-size:1.6rem; margin:0;}
-  .duerow{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:12px;
-    padding:10px 14px; border-radius:6px; background:var(--box); border:1.5px solid var(--sand-line);}
-  .duerow.past{background:oklch(96% 0.03 27); border-color:oklch(45% 0.15 27);}
-  .duerow .dueline{flex:1; min-width:220px; font-size:0.84rem; font-weight:600; color:var(--ink-warm);}
-  .duerow.past .dueline{color:oklch(45% 0.15 27);}
-  .duerow .dueacts{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
-  .duerow input{font-family:'Karla',sans-serif; font-size:0.82rem; padding:6px 10px;
-    border:1.5px solid var(--sand-line); border-radius:6px; background:var(--field);}
-  .stage-pill{display:inline-block; font-size:0.78rem; font-weight:700; padding:3px 10px; border-radius:10px; margin-top:8px;}
-  .stage-pill.submitted{background:oklch(90% 0.05 260); color:oklch(40% 0.1 260);}
-  .stage-pill.resubmitted{background:oklch(93% 0.06 60); color:oklch(40% 0.1 60);}
-  .stage-pill.closed{background:oklch(93% 0.05 145); color:oklch(35% 0.08 145);}
-  .stage-pill.draft{background:var(--sand-deep); color:var(--grey);}
-  /* Gold edges the assignment card -- the same rule as the exchange card below and the trainee's screen. */
-  .card{background:var(--surface); border-radius:6px; padding:18px 22px; margin-bottom:16px; border-left:5px solid var(--gold);}
-  .card h2{font-family:'Newsreader',Georgia,serif; font-size:1.05rem; margin:0 0 8px;}
-  .roundlabel{font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--teal); margin:0 0 6px;}
-  .readonly{white-space:pre-wrap; font-size:0.88rem; line-height:1.6; background:var(--field); border:1.5px solid var(--sand-line); border-radius:6px; padding:10px 12px; margin-bottom:10px;}
-  textarea, select, input[type=text]{width:100%; font-family:'Karla',sans-serif; font-size:0.9rem; padding:9px 12px; border:1.5px solid var(--sand-line);
-    border-radius:6px; background:var(--box); color:var(--ink); line-height:1.55; resize:vertical;}
-  .xchg{margin:14px 0 4px; padding:12px 14px; border:1.5px solid var(--gold); border-left-width:5px; border-radius:6px; background:var(--box);}
-  .xchg-acts{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
-  #xText{width:100%; font-family:ui-monospace,Menlo,monospace; font-size:0.8rem; line-height:1.5; padding:10px 12px; border:1.5px solid var(--sand-line); border-radius:6px; background:var(--field);}
-  .mats-open{display:inline-block; font-size:0.78rem; font-weight:700; padding:5px 12px; border-radius:16px;
-    background:var(--teal); color:var(--paper); text-decoration:none;}
-  .outcomes{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;}
-  .outcomes button{font-family:'Karla',sans-serif; font-size:0.85rem; font-weight:600; padding:8px 16px; border-radius:16px;
-    border:1.5px solid var(--sand-line); background:var(--card); cursor:pointer;}
-  .outcomes button.active{background:var(--teal); border-color:var(--teal); color:var(--paper);}
-  .critrow{display:flex; align-items:flex-start; justify-content:space-between; gap:14px; padding:10px 0; border-bottom:1px solid var(--sand-line);}
-  .critrow:last-child{border-bottom:none;}
-  .critrow .txt{font-size:0.87rem; line-height:1.5; flex:1;}
-  .critline{display:flex; align-items:flex-start; justify-content:space-between; gap:14px;}
-  /* A phone. The criterion was squeezed into a narrow column beside its pill
-     and wrapped to four lines, and the pill itself was 26px tall -- half a
-     thumb (Ramy, 24 Sep 2026). The pill drops under the text and becomes
-     something you can actually hit, and the two buttons at the foot stop
-     sharing a line and wrapping their own labels. */
-  @media(max-width:560px){
-    .critline{flex-direction:column; align-items:stretch; gap:8px;}
-    .crit-toggle{width:100%; min-height:44px;}
-    .mats-open{display:inline-flex; align-items:center; min-height:44px;}
-    .actions{flex-direction:column; align-items:stretch; gap:8px;}
-    .actions .btn{width:100%; min-height:46px;}
-  }
-  .crit-toggle{font-family:'Karla',sans-serif; font-size:0.78rem; font-weight:700; padding:5px 12px; border-radius:14px; border:1.5px solid var(--sand-line);
-    background:var(--card); color:var(--grey); cursor:pointer; flex:none; white-space:nowrap;}
-  .crit-toggle.met{background:var(--mark-met-bg); border-color:var(--mark-met-line); color:var(--mark-met-text);}
-  .crit-toggle.not{background:var(--mark-not-bg); border-color:var(--mark-not-line); color:var(--mark-not-text);}
-  .derived{font-size:0.9rem; font-weight:700; padding:8px 14px; border-radius:8px; margin:12px 0; display:inline-block;}
-  .derived.pending{background:var(--sand-deep); color:var(--grey);}
-  .derived.pass{background:var(--mark-met-bg); color:var(--mark-met-text);}
-  .derived.fail{background:var(--mark-not-bg); color:var(--mark-not-text);}
-  .row label{display:block; font-size:0.75rem; font-weight:700; color:var(--teal); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px;}
-  /* Room between the two markers (Ramy, 28 Sep 2026: "second marker is
-     squashed between first marker and the placeholder"). */
-  .row + .row{margin-top:16px;}
-  .actions{display:flex; justify-content:flex-end; gap:10px; margin-top:16px;}
-  .btn{font-family:'Karla',sans-serif; font-size:0.88rem; font-weight:700; padding:10px 22px; border-radius:var(--r-control); border:none; cursor:pointer;}
-  .btn-teal{background:var(--teal); color:var(--paper);}
-  .btn-teal:disabled{opacity:0.4; cursor:not-allowed;}
-  .btn-sand{background:var(--sand-deep); color:var(--ink);}
-  .note{font-size:0.8rem; color:var(--grey); margin:0 0 14px;}
+# Assignments and the lesson plan: complete build spec
 
+Repo: `ramysakr1-ux/connect-Hub` @ `main`, read 7 Oct 2026.
+Design: `Magic Touches.dc.html`, turn 3 (3a, 3b, 3c). Drop-ins in this folder:
+- `9_assignment_submission.html`
+- `10_tutor_assignment_marking.html`
+- `1_trainee_plan_and_analysis.html`
+
+All three changes are display only. No storage key is read differently, nothing new is written, and no rule changes (`wordCountOk`, `declOk`, `outcomeFor`, the turn-in gate). Sections 1–3 cover every element, state, hover, focus, motion, phone and print rule, and the logic. The appendices hold the exact code, copied verbatim from the drop-ins. Where the two differ, the appendix wins.
+
+**Shared language.** These match 2b (the feedback writer strip):
+- Karla for body text, Newsreader for numbers.
+- `hub-tokens.css` colours. 3b also uses the page's `--mark-met-*` and `--mark-not-*` tokens from `hub-house.css`.
+- A gold "ready" pulse is `0 0 0 0 → 0 0 0 12px` from `oklch(70% 0.12 72 / .6)` over 1.6s, played once.
+- Reduced motion turns every animation and transition off.
+
+---
+
+## 1. Word meter (`9_assignment_submission.html`, 3a)
+
+### What changes
+- `#wcCounter` keeps its id and its place in `.header .meta`, beside the due pill.
+- Both places that wrote its text, in `render()` and `refreshGate()`, now call `wcMeter(wc, a)`.
+- `refreshGate()` also tracks `SUBMIT_WAS_OFF` and adds `.av3-ready` to `#submitBtn` on the one keystroke where it goes from disabled to enabled.
+- A CSS block goes before `</style>`.
+
+### `wcMeter(el, a)`
+- **Count:** `n = countWords()` (unchanged). `lo = wordMin`, `hi = wordMax`.
+- **Scale:** `top = max(hi × 1.15, n, 1)`. Every position is `min(100, v/top × 100)%`.
+- **State:**
+
+  | State | When | Text after the count |
+  |---|---|---|
+  | `under` | `n < lo` | "· N to go" |
+  | `in` | `lo ≤ n ≤ hi` | "· in range" |
+  | `over` | `n > hi` | "· N over" |
+
+  The three states agree with `wordCountOk`.
+- **Markup:** `.wm.{state}` (the span itself), `role="meter"` with aria value min, max, now and label. Inside it:
+  - `.wm-track`, holding `.wm-band`, `.wm-fill` and `.wm-mark`.
+  - `.wm-txt`, reading "**n** of lo–hi words · …".
+
+### Styles
+
+| Element | Spec |
+|---|---|
+| `.wm` | inline-flex, centred, gap 10, Karla 0.82rem, `--grey` |
+| `.wm-track` | 180 × 8, radius 999, `--box` |
+| `.wm-band` | absolute, 3px over the track top and bottom, radius 4. Fill `color-mix(--teal 14%)`, inset 1px ring `color-mix(--teal 35%)` |
+| `.wm-fill` | from the left to `n`, radius 999, `--gold-lifted`. Transitions: width .35s `cubic-bezier(.2,.7,.2,1)`, colour .3s |
+| `.wm-mark` | a 14px circle centred on `n`, `--paper`, 2.5px `--gold-deep` border, shadow `0 2px 4px oklch(30% 0.04 60 / .25)`. Transition: left .35s |
+| `.wm-txt b` | Newsreader 1rem, `--ink` |
+| under | text `--gold-deep` |
+| in | fill `--teal`, mark border `--teal`, text `--teal-deep` |
+| over | fill, mark and text (including the number) in `--brick` |
+| `#submitBtn.av3-ready` | the gold pulse, once |
+| ≤560px | wraps, gap 6, the track goes full width |
+| print | the track is hidden and the text line prints |
+
+---
+
+## 2. Tally strip (`10_tutor_assignment_marking.html`, 3b)
+
+### What changes
+- The criteria card in `render()` gains `${mv2HTML(crit, marks)}` directly under its `h2`, above `deadlineWarn`. It uses the same `crit` and `marks` the rows below are drawn from.
+- The function and a document-level click handler sit just above `outcomeFor`.
+- A CSS block goes before `</style>`.
+
+### Markup
+- `.mv2` holds `.mv2-segs` and `p.mv2-n`.
+- Each segment is `button.mv2-seg.{met|not|}` with `data-mv2=i`, showing `i+1`.
+  - `title`: "{n}. {criterion text}"
+  - `aria-label`: "Criterion n: Met / Not met / not yet marked"
+- The counts read "**m** met · **k** not met · **r** to mark".
+
+### Styles
+
+| Element | Spec |
+|---|---|
+| `.mv2` | margin 4 0 16 |
+| `.mv2-segs` | grid, `grid-auto-flow:column`, `grid-auto-columns:minmax(0,1fr)`, gap 4 |
+| `.mv2-seg` | height 28, radius 6, Karla 700 11px, `--box` fill, 1.5px `--sand-line`, `--grey`. Transitions: transform .15s, background and border .2s |
+| `.met` | `--mark-met-bg` / `--mark-met-line` / `--mark-met-text` (the toggle's own colours) |
+| `.not` | `--mark-not-bg` / `--mark-not-line` / `--mark-not-text` |
+| hover | lifts 2px |
+| focus-visible | 2px `--teal` outline, offset 2 |
+| `.mv2-n` | flex, gap 16, wraps, margin-top 10, 0.82rem `--grey` |
+| `.mv2-n b` | Newsreader 1.05rem `--ink`, margin-right 3. Met in `--mark-met-text`, not met in `--mark-not-text` |
+| print | hidden |
+
+### Behaviour
+- **Click:** finds `.crit-toggle[data-crit=i]` and its `.critrow`, then `window.scrollTo` to 80px above it (smooth; no `scrollIntoView`). The row gets `.mv2-hit` for 1.4s: a 3px gold ring and a `--gold-wash` background, both fading to nothing.
+- **Updates:** the strip re-renders with the card on every toggle, because `render()` already repaints.
+- **Never shown:** on an assignment with no criteria.
+
+---
+
+## 3. Plan shape (`1_trainee_plan_and_analysis.html`, 3c)
+
+### What changes
+- `<div class="pv2" id="pv2">` goes at the start of the action bar's `.rhs`.
+- A CSS block goes before `</style>`.
+- An IIFE goes at the end of the app script. It uses the page's own `rows()` and `procText()`.
+
+### The six checks, in page order
+
+| Label | Ticked when |
+|---|---|
+| Aims | `#fMain` has text |
+| Problems | any field in `#probGrid` has text |
+| Class | `#fProfile` has text |
+| Materials | `#fMats` or `#fMatsLink` has text |
+| Stages n/N | every row's `.t-proc` (through `procText`) has text, and there is at least one row |
+| Time | `#total` reads "fits exactly" or "spare". If `#total.over`, the label becomes "Time over" in the brick state. |
+
+### Stage dots
+- One 9px square (radius 3) per row.
+- Unwritten: `--box`.
+- Written: the row's own `--hue`, which `paintRow` sets, so the dots match the spine. `--teal` if a row has no hue.
+- Background transition .3s.
+
+### Styles
+
+| Element | Spec |
+|---|---|
+| `.pv2` | flex, gap 12, Karla 0.78rem, `--grey` |
+| `.chk` | gap 10 |
+| each check | an 8px ring (1.5px `--sand-line`) before the label |
+| `.ok` | label `--teal-deep`, ring filled `--teal` |
+| `.over` | label and ring `--brick` |
+| `#turnInBtn.pv2-ready` | the gold pulse, once, when all six turn ticked |
+| ≤1000px | only the dots and "Stages n/N" show |
+| ≤640px | the strip hides |
+| print | hidden |
+
+### Repaints
+- `input`, `change`, `click` and `keyup` on the document (capture), debounced to 150ms.
+- A `MutationObserver` on `.board` (childList and subtree) catches rows added or removed and framework swaps.
+- At load, and again at 800ms after draft restore.
+
+---
+
+## 4. Also in this round: "What worked" on the feedback envelope (1b)
+
+This one is in `design_handoff_magic_touches/4_feedback_returned.html`. The opening panel now shows "What worked · N" (from `lSP` and `lST`, the first three, with "and N more…") beside "★ Carried into TP n" (starred `lAP` and `lAT`). Each point is shown with its criteria codes as small chips. The spec in that folder is updated with every value.
+
+---
+
+## 5. Test
+
+1. **3a:**
+   - Type into an FOL with a 750–1000 band: the marker moves, the line counts down "N to go", and the meter turns teal at 750 and brick past 1000.
+   - Tick the declaration with writing in: Submit gives one gold pulse. Untick and re-tick: it pulses again.
+2. **3a print:** the line prints, the track doesn't.
+3. **3b:**
+   - Mark criteria: segments recolour and the counts update.
+   - Clicking segment 5 scrolls to criterion 5 and flashes it.
+   - Resubmission marking shows the strip for round 2's marks.
+4. **3c:**
+   - On a fresh plan, everything is unticked and no stages are written.
+   - Pick a framework: the dots appear grey. Write a stage: its dot takes the stage hue.
+   - Go over the lesson length: "Time over" turns brick.
+   - With all six done, Turn in pulses once.
+5. **Widths:** 3c at 1000px shows only the dots and stages; at 640px it hides.
+6. **Reduced motion:** no pulses, flashes or slides.
+
+---
+
+## Appendix A: `9_assignment_submission.html` v3 CSS (verbatim)
+```css
+  /* ---- v3 (7 Oct 2026): word meter + submit pulse ---- */
+  .wm{display:inline-flex; align-items:center; gap:10px; font-family:'Karla',sans-serif; font-size:0.82rem; color:var(--grey);}
+  .wm-track{position:relative; width:180px; height:8px; border-radius:999px; background:var(--box); overflow:visible;}
+  .wm-band{position:absolute; top:-3px; bottom:-3px; border-radius:4px; background:color-mix(in oklab, var(--teal) 14%, transparent); box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--teal) 35%, transparent);}
+  .wm-fill{position:absolute; left:0; top:0; bottom:0; border-radius:999px; background:var(--gold-lifted); transition:width .35s cubic-bezier(.2,.7,.2,1), background-color .3s;}
+  .wm-mark{position:absolute; top:50%; width:14px; height:14px; margin:-7px 0 0 -7px; border-radius:50%; background:var(--paper); border:2.5px solid var(--gold-deep);
+    box-shadow:0 2px 4px oklch(30% 0.04 60 / .25); transition:left .35s cubic-bezier(.2,.7,.2,1), border-color .3s;}
+  .wm-txt b{font-family:'Newsreader',Georgia,serif; font-size:1rem; color:var(--ink);}
+  .wm.under .wm-txt{color:var(--gold-deep);}
+  .wm.in .wm-fill{background:var(--teal);} .wm.in .wm-mark{border-color:var(--teal);} .wm.in .wm-txt{color:var(--teal-deep);}
+  .wm.over .wm-fill{background:var(--brick);} .wm.over .wm-mark{border-color:var(--brick);} .wm.over .wm-txt, .wm.over .wm-txt b{color:var(--brick);}
+  #submitBtn.av3-ready{animation:av3-ready 1.6s ease-out 1;}
+  @keyframes av3-ready{0%{box-shadow:0 0 0 0 oklch(70% 0.12 72 / .6);}100%{box-shadow:0 0 0 12px oklch(70% 0.12 72 / 0);}}
+  @media(prefers-reduced-motion:reduce){ .wm-fill, .wm-mark{transition:none;} #submitBtn.av3-ready{animation:none;} }
+  @media(max-width:560px){ .wm{flex-wrap:wrap; gap:6px;} .wm-track{width:100%;} }
+  @media print{ .wm-track{display:none;} }
+```
+
+## Appendix B: `9_assignment_submission.html` v3 JS (verbatim)
+```js
+/* ---- v3 (7 Oct 2026): the word meter ------------------------------------
+   The counter as a track: the centre's band (wordMin to wordMax) drawn on
+   it, the count as a fill and a marker. Same numbers, same words, same rule
+   (wordCountOk); the colour says which side of the band you are on. */
+let SUBMIT_WAS_OFF = true;
+function wcMeter(el, a){
+  const n = countWords(), lo = +a.wordMin || 0, hi = +a.wordMax || 0;
+  const top = Math.max(hi * 1.15, n, 1), pc = v => Math.min(100, (v / top) * 100).toFixed(2) + '%';
+  const state = n > hi && hi ? 'over' : n >= lo ? 'in' : 'under';
+  el.className = 'wm ' + state;
+  el.style.color = '';
+  el.setAttribute('role', 'meter'); el.setAttribute('aria-valuemin', '0'); el.setAttribute('aria-valuemax', String(hi || lo)); el.setAttribute('aria-valuenow', String(n));
+  el.setAttribute('aria-label', n + ' of ' + lo + '\u2013' + hi + ' words');
+  el.innerHTML = '<span class="wm-track" aria-hidden="true"><span class="wm-band" style="left:' + pc(lo) + ';width:calc(' + pc(hi) + ' - ' + pc(lo) + ')"></span>'
+    + '<span class="wm-fill" style="width:' + pc(n) + '"></span><span class="wm-mark" style="left:' + pc(n) + '"></span></span>'
+    + '<span class="wm-txt"><b>' + n + '</b> of ' + lo + '\u2013' + hi + ' words'
+    + (state === 'under' ? ' \u00b7 ' + (lo - n) + ' to go' : state === 'over' ? ' \u00b7 ' + (n - hi) + ' over' : ' \u00b7 in range') + '</span>';
+}
+```
+
+Gate addition in `refreshGate()`:
+```js
+  /* v3: one gold pulse the moment Submit becomes pressable (7 Oct 2026) */
+  if (btn) { if (!btn.disabled && SUBMIT_WAS_OFF) { btn.classList.remove('av3-ready'); void btn.offsetWidth; btn.classList.add('av3-ready'); } SUBMIT_WAS_OFF = btn.disabled; }
+```
+
+## Appendix C: `10_tutor_assignment_marking.html` v3 CSS (verbatim)
+```css
   /* ---- v3 (7 Oct 2026): the tally strip ---- */
   .mv2{margin:4px 0 16px;}
   .mv2-segs{display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); gap:4px;}
@@ -107,8 +232,28 @@
   @keyframes mv2-hit{0%{box-shadow:0 0 0 3px oklch(70% 0.12 72 / .7); background:var(--gold-wash);}100%{box-shadow:0 0 0 3px oklch(70% 0.12 72 / 0); background:transparent;}}
   @media(prefers-reduced-motion:reduce){ .mv2-seg{transition:none;} .critrow.mv2-hit{animation:none;} }
   @media print{ .mv2{display:none;} }
+```
+
+## Appendix D: `10_tutor_assignment_marking.html` v3 JS (verbatim)
+```js
+/* ---- v3 (7 Oct 2026): the tally strip ---- */
+  .mv2{margin:4px 0 16px;}
+  .mv2-segs{display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); gap:4px;}
+  .mv2-seg{height:28px; padding:0; border-radius:6px; cursor:pointer; font:700 11px 'Karla',sans-serif;
+    background:var(--box); border:1.5px solid var(--sand-line); color:var(--grey); transition:transform .15s ease, background-color .2s, border-color .2s;}
+  .mv2-seg.met{background:var(--mark-met-bg); border-color:var(--mark-met-line); color:var(--mark-met-text);}
+  .mv2-seg.not{background:var(--mark-not-bg); border-color:var(--mark-not-line); color:var(--mark-not-text);}
+  .mv2-seg:hover{transform:translateY(-2px);}
+  .mv2-seg:focus-visible{outline:2px solid var(--teal); outline-offset:2px;}
+  .mv2-n{display:flex; gap:16px; flex-wrap:wrap; margin:10px 0 0; font-size:0.82rem; color:var(--grey);}
+  .mv2-n b{font-family:'Newsreader',Georgia,serif; font-size:1.05rem; color:var(--ink); margin-right:3px;}
+  .mv2-n .met b{color:var(--mark-met-text);} .mv2-n .not b{color:var(--mark-not-text);}
+  .critrow.mv2-hit{animation:mv2-hit 1.4s ease-out 1; border-radius:8px;}
+  @keyframes mv2-hit{0%{box-shadow:0 0 0 3px oklch(70% 0.12 72 / .7); background:var(--gold-wash);}100%{box-shadow:0 0 0 3px oklch(70% 0.12 72 / 0); background:transparent;}}
+  @media(prefers-reduced-motion:reduce){ .mv2-seg{transition:none;} .critrow.mv2-hit{animation:none;} }
+  @media print{ .mv2{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610072259">
+<link rel="stylesheet" href="hub-house.css?v=202610072021">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -116,13 +261,13 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610072259"></script>
-<script src="hub-exchange.js?v=202610072259"></script>
-<script src="hub-due.js?v=202610072259"></script>
-<script src="hub-shared.js?v=202610072259"></script>
-<script src="hub-store.js?v=202610072259"></script>
-<script src="hub-say.js?v=202610072259"></script>
-<script src="hub-sync.js?v=202610072259"></script>
+<script src="assignment-defaults.js?v=202610072021"></script>
+<script src="hub-exchange.js?v=202610072021"></script>
+<script src="hub-due.js?v=202610072021"></script>
+<script src="hub-shared.js?v=202610072021"></script>
+<script src="hub-store.js?v=202610072021"></script>
+<script src="hub-say.js?v=202610072021"></script>
+<script src="hub-sync.js?v=202610072021"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -598,150 +743,61 @@ document.addEventListener('click', e => {
   window.scrollTo({ top: row.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
   row.classList.remove('mv2-hit'); void row.offsetWidth; row.classList.add('mv2-hit');
 });
+```
 
-function outcomeFor(round, allMet, sub){
-  if (round === 'sub2') return allMet ? 'Pass (on resubmission)' : 'Fail (on resubmission)';
-  if (allMet) return 'Pass';
-  return sub.usedResubmission ? 'Fail' : 'Resubmission needed';
-}
+## Appendix E: `1_trainee_plan_and_analysis.html` v3 CSS (verbatim)
+```css
+  /* ---- v3 (7 Oct 2026): the plan's shape, in the action bar ----
+     Six checks in the order of the page, and the stages as dots in their own
+     hue once written. Turn in gives one gold pulse when all six are in.
+     Display only: the rules for turning in are unchanged. */
+  .pv2{display:flex; align-items:center; gap:12px; font-family:'Karla',sans-serif; font-size:0.78rem; color:var(--grey);}
+  .pv2 .chk{display:inline-flex; gap:10px;}
+  .pv2 .chk span{display:inline-flex; align-items:center; gap:4px; white-space:nowrap;}
+  .pv2 .chk span:before{content:''; width:8px; height:8px; border-radius:50%; border:1.5px solid var(--sand-line);}
+  .pv2 .chk span.ok{color:var(--teal-deep);} .pv2 .chk span.ok:before{background:var(--teal); border-color:var(--teal);}
+  .pv2 .chk span.over{color:var(--brick);} .pv2 .chk span.over:before{background:var(--brick); border-color:var(--brick);}
+  .pv2 .stg{display:inline-flex; gap:3px; align-items:center;}
+  .pv2 .stg i{width:9px; height:9px; border-radius:3px; background:var(--box); transition:background-color .3s;}
+  #turnInBtn.pv2-ready{animation:pv2-ready 1.6s ease-out 1;}
+  @keyframes pv2-ready{0%{box-shadow:0 0 0 0 oklch(70% 0.12 72 / .6);}100%{box-shadow:0 0 0 12px oklch(70% 0.12 72 / 0);}}
+  @media(prefers-reduced-motion:reduce){ .pv2 .stg i{transition:none;} #turnInBtn.pv2-ready{animation:none;} }
+  @media(max-width:1000px){ .pv2 .chk span:not(.lead){display:none;} }
+  @media(max-width:640px){ .pv2{display:none;} }
+  @media print{ .pv2{display:none;} }
+```
 
-function doReturnUnmarked(){
-  const sub = subFor(CURRENT);
-  const comment = $('comment').value;
-  if (!sub.feedback) sub.feedback = { outcome:'', generalComment1:'', generalComment2:'' };
-  const round = sub.stage==='resubmitted' ? 'sub2' : 'sub1';
-  // Returned unmarked does NOT spend the one resubmission (Handbook 9.2.3;
-  // DESIGN-HANDOFF-README's core rule). It used to set resubmission_needed,
-  // and the trainee's next submit then counted as their resubmission -- so an
-  // incomplete first attempt sent back for a missing section cost them their
-  // only second chance (Hub walk, 20 Sep 2026). The round stays what it was:
-  // the trainee edits what they sent, declares again, and submits it again.
-  if (round==='sub2') {
-    sub.feedback.generalComment2 = 'Returned unmarked: ' + comment;
-    sub.stage = 'resubmission_needed';
-    sub.draft = Object.assign({}, sub.sub2 || {}, { decl:{} });
-    sub.round2Seeded = true;
-  } else {
-    sub.feedback.generalComment1 = 'Returned unmarked: ' + comment;
-    sub.stage = 'returned_unmarked';
-    sub.draft = Object.assign({}, sub.sub1 || {}, { decl:{} });
+## Appendix F: `1_trainee_plan_and_analysis.html` v3 JS (verbatim)
+```js
+/* ---- v3 (7 Oct 2026): the plan's shape strip ------------------------------
+   Reads the page; stores nothing. Repaints 150ms after any edit. */
+(function(){
+  const host = document.getElementById('pv2'); if (!host || typeof rows !== 'function') return;
+  const val = id => { const el = document.getElementById(id); return el ? String(el.value || '').trim() : ''; };
+  let was = false;
+  function paint(){
+    const all = rows();
+    const written = all.map(tr => procText(tr.querySelector('.t-proc').value).trim() !== '');
+    const nW = written.filter(Boolean).length;
+    const prob = [...document.querySelectorAll('#probGrid textarea, #probGrid input')].some(el => String(el.value || '').trim());
+    const tot = document.getElementById('total'), over = !!(tot && tot.classList.contains('over'));
+    const fits = !!(tot && /fits exactly|spare/.test(tot.textContent || ''));
+    const C = [
+      ['Aims', !!val('fMain')], ['Problems', prob], ['Class', !!val('fProfile')],
+      ['Materials', !!(val('fMats') || val('fMatsLink'))], ['Stages ' + nW + '/' + all.length, all.length > 0 && nW === all.length],
+      [over ? 'Time over' : 'Time', fits, over]
+    ];
+    const ready = C.every(c => c[1]);
+    host.innerHTML = '<span class="stg" title="' + nW + ' of ' + all.length + ' stages written">'
+      + all.map((tr, i) => '<i style="' + (written[i] ? 'background:' + (getComputedStyle(tr).getPropertyValue('--hue').trim() || 'var(--teal)') : '') + '"></i>').join('') + '</span>'
+      + '<span class="chk">' + C.map((c, i) => '<span class="' + (c[2] ? 'over' : c[1] ? 'ok' : '') + (i === 4 ? ' lead' : '') + '">' + c[0] + '</span>').join('') + '</span>';
+    const btn = document.getElementById('turnInBtn');
+    if (btn) { if (ready && !was) { btn.classList.remove('pv2-ready'); void btn.offsetWidth; btn.classList.add('pv2-ready'); } if (!ready) btn.classList.remove('pv2-ready'); }
+    was = ready;
   }
-  sub.criteriaMarks[round] = [];
-  sub.feedback.outcome = 'Returned unmarked';
-  saveSubs();
-  render();
-}
-
-renderPicker();
-render();
-/* ---- the exchange for a marked assignment (hub-exchange.js) ----
-   Slots: one per criterion (first line Met / Not met, then the comment), and
-   the general comment. The OUTCOME is never a slot: outcomeFor() derives it
-   from the marks under the Handbook's rule, and an AI must not be able to
-   award a pass. */
-function xSlotsFor(a){
-  const crit = (a.criteria||[]);
-  return crit.map((c,i)=>({ id:'crit'+i, heading:'Criterion '+(i+1)+' \u2014 '+String(c.text||'').slice(0,80) }))
-    .concat([{ id:'comment', heading:'General comment' }]);
-}
-function xWho(){
-  /* NAMES maps assignment keys to labels; a person's name lives on the roster. */
-  const tr = TRAINEE_ID && loadRoster().trainees[TRAINEE_ID];
-  return (tr && tr.name) || 'trainee';
-}
-function xSubmissionMd(a, sub, round){
-  const snap = round==='sub2' ? sub.sub2 : sub.sub1;
-  const md = [];
-  md.push('# Assignment \u2014 ' + xWho() + ', ' + (a.title||CURRENT.toUpperCase()) + (round==='sub2' ? ' (resubmission)' : ''));
-  md.push('');
-  const div = document.createElement('div'); div.innerHTML = summarize(a, snap);
-  // the on-screen summary, as text: each label becomes a heading, each body a paragraph
-  div.querySelectorAll('.roundlabel, .readonly').forEach(n => {
-    if (n.classList.contains('roundlabel')) md.push('### ' + n.textContent.trim());
-    else { md.push(n.textContent.trim()); md.push(''); }   /* textContent: innerText is empty on a node that is not in the page */
-  });
-  return md.join('\n');
-}
-function xBrief(a, sub, round){
-  const sl = xSlotsFor(a);
-  const md = [xSubmissionMd(a, sub, round), '---', '', '# Marking \u2014 fill in below', '',
-    'You are helping a CELTA tutor mark the written assignment above against its criteria. The tutor will dictate. Under each criterion write, on the first line, exactly "Met" or "Not met", then the tutor\u2019s comment to the trainee (second person, specific). Keep every heading exactly as it is. Leave a criterion empty if the tutor has not decided.', ''];
-  sl.forEach(s => { md.push('## ' + s.heading); md.push(''); md.push(''); });
-  md.push('<!-- lite:slots ' + JSON.stringify(sl.map(s=>[s.id,s.heading])) + ' -->');
-  return md.join('\n');
-}
-function wireExchange(){
-  const card = $('xchg'); if (!card || !window.HubExchange) return;
-  const a = WORDING[CURRENT], sub = subFor(CURRENT);
-  const round = sub.stage==='resubmitted' ? 'sub2' : 'sub1';
-  let PENDING = null;
-  $('xCopy').addEventListener('click', ()=> hubCopyButton($('xCopy'), xBrief(a, sub, round)));
-  $('xPasteToggle').addEventListener('click', ()=>{ const open = $('xPaste').style.display==='none'; $('xPaste').style.display = open?'':'none'; $('xPasteToggle').textContent = open ? 'Hide' : 'Paste something back'; if (open) $('xText').focus(); });
-  let readTimer = null;
-  $('xText').addEventListener('input', ()=>{ clearTimeout(readTimer); readTimer = setTimeout(readNow, 250); });
-  document.addEventListener('paste', (e)=>{
-    const t = e.target; if (t && t.closest && t.closest('input, textarea, [contenteditable]')) return;
-    const txt = (e.clipboardData||window.clipboardData).getData('text/plain');
-    /* A model that bolds its headings writes a reply with no '#' in it, and
-       this gate swallowed the paste silently even though the reader handles
-       bold (24 Sep 2026). Same two shapes the reader accepts. */
-    if (!txt) return;
-    if (!/^\s*#/m.test(txt) && !/^\s*(?:\*\*|__).+(?:\*\*|__)\s*:?\s*$/m.test(txt)) return;
-    e.preventDefault(); if ($('xPaste').style.display==='none') $('xPasteToggle').click();
-    $('xText').value = txt; readNow(); $('xchg').scrollIntoView({block:'start', behavior:'smooth'});
-  });
-  function readNow(){
-    const txt = $('xText').value; if (!txt.trim()) return;
-    const man = xSlotsFor(a); const byName = {}; man.forEach(m => byName[m.heading.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()] = m.id);
-    man.forEach(m => { const mm = m.heading.match(/^(Criterion \d+)/); if (mm) byName[mm[1].toLowerCase()] = m.id; });
-    const norm = h => String(h||'').toLowerCase().replace(/[\u2018\u2019\u201c\u201d"']/g,'').replace(/[^a-z0-9]+/g,' ').trim();
-    let body = txt.replace(/<!--\s*lite:slots[\s\S]*?-->/g,''); const at = body.search(/^\s*#\s+Marking\b/m); if (at>=0) body = body.slice(at);
-    const found = {}, unplaced = [];
-    /* Same two habits as the feedback form: a model may render the slots as
-       H3, or number them. Both were landing nothing here (24 Sep 2026). */
-    let secs = HubExchange.sections(body);
-    const named = ss => ss.some(sec => byName[norm(sec.heading)] || byName[norm((HubExchange.deNumber||(x=>x))(sec.heading))]);
-    if (!named(secs)) secs = HubExchange.sections(body, true);   // the model bolded its headings
-    const useLevel = HubExchange.bestLevel ? HubExchange.bestLevel(secs, byName) : 2;
-    const dn = HubExchange.deNumber || (x => x);
-    secs.forEach(sec => {
-      if (sec.level !== useLevel) return;
-      let id = byName[norm(sec.heading)] || byName[norm(dn(sec.heading))]
-            || byName[norm(dn(sec.heading).split(/\s[\u2014\-\u2013]\s/)[0])];
-      if (!id) { if (sec.text) unplaced.push(sec.heading); return; }
-      if (!sec.text) return;
-      if (id === 'comment') { found[id] = { text: sec.text }; return; }
-      const ls = sec.text.split(/\r?\n/).map(l=>l.replace(/^\s*[\u2022\-*]\s*/,'').trim()).filter(Boolean);
-      const first = norm(ls[0]||''); let mark = null;
-      if (/^not met\b/.test(first)) mark = false; else if (/^met\b/.test(first)) mark = true;
-      found[id] = { mark, text: (mark===null ? ls : ls.slice(1)).join('\n') };
-    });
-    const done = $('xDone'); done.style.display = '';
-    const ids = Object.keys(found);
-    if (!ids.length) { done.textContent = 'Nothing in that landed \u2014 the headings ("Criterion 1 \u2014 \u2026", "General comment") need to be kept.'; return; }
-    /* the form as it was, for Undo */
-    const before = { marks: (sub.criteriaMarks[round]||[]).slice(), comments: [...document.querySelectorAll('[data-crit-comment]')].map(el=>el.value), general: ($('comment')||{}).value || '' };
-    sub.criteriaMarks[round] = sub.criteriaMarks[round] || []; sub.criteriaComments[round] = sub.criteriaComments[round] || [];
-    document.querySelectorAll('[data-crit-comment]').forEach(el => { sub.criteriaComments[round][+el.dataset.critComment] = el.value; });
-    if (!sub.feedback) sub.feedback = { outcome:'', generalComment1:'', generalComment2:'' };
-    const gk = round==='sub2' ? 'generalComment2' : 'generalComment1';
-    if (!found.comment && before.general) sub.feedback[gk] = before.general;
-    ids.forEach(id => {
-      if (id === 'comment') { sub.feedback[gk] = found[id].text; return; }
-      const i = +id.slice(4);
-      if (found[id].mark !== null) sub.criteriaMarks[round][i] = found[id].mark;
-      if (found[id].text) sub.criteriaComments[round][i] = found[id].text;
-    });
-    saveSubs(); render();
-    const names = {}; man.forEach(m => names[m.id] = m.heading);
-    const d2 = $('xDone'); d2.style.display = '';
-    d2.innerHTML = 'Filled ' + ids.length + ': ' + ids.map(id => esc(names[id]||id)).join(', ') + '.' + (unplaced.length ? ' Not placed: ' + unplaced.map(esc).join(', ') + '.' : '') + ' <button type="button" class="example-btn" id="xUndo">Undo</button>';
-    $('xUndo').addEventListener('click', ()=>{
-      sub.criteriaMarks[round] = before.marks; before.comments.forEach((v,i)=>{ sub.criteriaComments[round][i] = v; });
-      sub.feedback[gk] = before.general; saveSubs(); render(); const d3 = $('xDone'); if (d3) { d3.style.display=''; d3.textContent = 'Put back as it was.'; }
-    });
-  }
-}
-</script>
-</body>
-</html>
+  let t = null; const soon = () => { clearTimeout(t); t = setTimeout(paint, 150); };
+  ['input', 'change', 'click', 'keyup'].forEach(ev => document.addEventListener(ev, soon, true));
+  new MutationObserver(soon).observe(document.querySelector('.board') || document.body, { childList: true, subtree: true });
+  paint(); setTimeout(paint, 800);
+})();
+```

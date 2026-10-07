@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610072232">
+<link rel="stylesheet" href="hub-tokens.css?v=202610072259">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -93,6 +93,45 @@
   .grade-select.above{background:var(--gold); border-color:var(--gold); color:var(--ink-warm);}
   .grade-select.to{background:var(--teal); border-color:var(--teal); color:var(--paper);}
   .grade-select.not{background:var(--brick); border-color:var(--brick); color:var(--paper);}
+
+  /* ---- v2 (7 Oct 2026): grade tiles, the shape of the feedback ------------
+     Ramy: "anything regarding the meaty bits". The grade as three tiles you
+     press (the select stays, hidden, and stays the source of the value), and
+     a strip in the action bar that shows the feedback's shape as it is
+     written: points per list, stars, which criteria topics it touches, and
+     whether it is ready to return. Display only. Design: Magic Touches, 2b. */
+  .gv2{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; max-width:560px; margin:10px auto 0;}
+  .gv2 button{display:flex; flex-direction:column; align-items:center; gap:4px; padding:14px 10px 12px; border-radius:10px; cursor:pointer;
+    background:var(--field); border:2px solid var(--sand-line); color:var(--ink); font-family:'Karla',sans-serif;
+    transition:transform .15s ease, border-color .15s, background-color .15s, box-shadow .15s;}
+  .gv2 b{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.7rem; line-height:1;}
+  .gv2 span{font-size:0.78rem; font-weight:700;}
+  .gv2 button:hover{transform:translateY(-2px); border-color:var(--sand-line-deep, oklch(78% 0.02 80)); box-shadow:0 10px 20px -14px oklch(30% 0.04 60 / .5);}
+  .gv2 button:focus-visible{outline:2px solid var(--teal); outline-offset:3px;}
+  .gv2 .above.on{background:var(--gold); border-color:var(--gold); color:var(--ink-warm);}
+  .gv2 .to.on{background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  .gv2 .not.on{background:var(--brick); border-color:var(--brick); color:var(--paper);}
+  .gv2 button.on{box-shadow:0 12px 22px -14px oklch(30% 0.04 60 / .6);}
+  .gv2 + .house-sel{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;}
+  .card.grade{position:relative;}
+
+  .sv2{display:flex; align-items:center; gap:14px; font-family:'Karla',sans-serif; font-size:0.78rem; color:var(--grey);}
+  .sv2 .n{display:inline-flex; align-items:baseline; gap:4px;}
+  .sv2 .n b{font-family:'Newsreader',Georgia,serif; font-size:1.05rem; color:var(--ink);}
+  .sv2 .n.good b{color:var(--teal);} .sv2 .n.act b{color:var(--garnet, oklch(42% 0.13 27));} .sv2 .n.star b{color:var(--gold-deep);}
+  .sv2 .topics{display:inline-flex; gap:3px; align-items:flex-end; height:22px;} 
+  .sv2 .topics i{width:7px; border-radius:2px; background:var(--box); transition:height .3s cubic-bezier(.2,.7,.2,1), background-color .3s;}
+  .sv2 .topics i.on{background:var(--teal);}
+  .sv2 .ready{display:inline-flex; gap:8px;}
+  .sv2 .ready span{display:inline-flex; align-items:center; gap:4px;}
+  .sv2 .ready span:before{content:''; width:8px; height:8px; border-radius:50%; border:1.5px solid var(--sand-line);}
+  .sv2 .ready span.ok{color:var(--teal-deep);} .sv2 .ready span.ok:before{background:var(--teal); border-color:var(--teal);}
+  #returnBtn.fv2-ready{box-shadow:0 0 0 0 oklch(70% 0.12 72 / .6); animation:sv2-ready 1.6s ease-out 1;}
+  @keyframes sv2-ready{0%{box-shadow:0 0 0 0 oklch(70% 0.12 72 / .6);}100%{box-shadow:0 0 0 12px oklch(70% 0.12 72 / 0);}}
+  @media(prefers-reduced-motion:reduce){ .gv2 button, .sv2 .topics i{transition:none;} #returnBtn.fv2-ready{animation:none;} }
+  @media(max-width:900px){ .sv2 .topics, .sv2 .ready{display:none;} }
+  @media(max-width:600px){ .sv2{display:none;} .gv2 b{font-size:1.4rem;} }
+  @media print{ .gv2, .sv2{display:none;} }
 
   /* ---- point rows: the criteria tag sits inside the comment box, at the cursor ---- */
   .pt{padding:12px 0; border-bottom:1px dashed var(--sand-line);}
@@ -390,7 +429,7 @@
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610072232">
+<link rel="stylesheet" href="hub-house.css?v=202610072259">
 </head>
 <body>
 <div class="board">
@@ -470,6 +509,11 @@
 
   <div class="card grade" style="text-align:center;">
     <h2 style="text-align:center;">Lesson grade at this stage of the course</h2>
+    <div class="gv2" id="gv2" role="radiogroup" aria-label="Lesson grade">
+      <button type="button" class="above" data-v="Above standard" role="radio" aria-checked="false"><b>S+</b><span>Above standard</span></button>
+      <button type="button" class="to" data-v="To standard" role="radio" aria-checked="false"><b>S</b><span>To standard</span></button>
+      <button type="button" class="not" data-v="Not to standard" role="radio" aria-checked="false"><b>N</b><span>Not to standard</span></button>
+    </div>
     <div class="house-sel" style="max-width:280px;margin:0 auto;"><select id="fGrade" class="grade-select">
       <option value="">— choose —</option>
       <option value="Above standard">Above standard</option>
@@ -532,17 +576,18 @@
     <span class="barhint">Returning locks it and lets the trainee read it, alongside their plan and self-evaluation.</span>
   </div>
   <div class="rhs">
+    <div class="sv2" id="sv2" aria-live="polite"></div>
     <span class="status" id="status"></span>
     <button class="btn-print" type="button" id="pdfBtn">Print / Save as PDF</button>
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202610072232"></script>
-<script src="hub-shared.js?v=202610072232"></script>
-<script src="hub-store.js?v=202610072232"></script>
-<script src="hub-say.js?v=202610072232"></script>
-<script src="hub-crit-learn.js?v=202610072232"></script>
-<script src="hub-sync.js?v=202610072232"></script>
+<script src="hub-exchange.js?v=202610072259"></script>
+<script src="hub-shared.js?v=202610072259"></script>
+<script src="hub-store.js?v=202610072259"></script>
+<script src="hub-say.js?v=202610072259"></script>
+<script src="hub-crit-learn.js?v=202610072259"></script>
+<script src="hub-sync.js?v=202610072259"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1009,6 +1054,46 @@ $('fGrade').addEventListener('change', e=>{
   else if(v==='Not to standard') e.target.classList.add('not');
   dirty=true;
 });
+
+/* ---- v2 (7 Oct 2026): grade tiles + the shape strip -----------------------
+   The select is still the value: a tile sets it and fires its change event,
+   so the record, the draft and the colouring above all run as before. The
+   tiles and the strip read the page; nothing new is stored. */
+(function(){
+  const sel = $('fGrade'), tiles = $('gv2'), strip = $('sv2'); if (!sel || !tiles || !strip) return;
+  tiles.addEventListener('click', e => {
+    const b = e.target.closest('[data-v]'); if (!b || sel.disabled) return;
+    sel.value = sel.value === b.dataset.v ? '' : b.dataset.v;
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+    paint();
+  });
+  const filled = id => [...document.querySelectorAll('#' + id + ' .pt')].filter(r => (r.querySelector('.pt-text') || {}).textContent && r.querySelector('.pt-text').textContent.trim()).length;
+  let wasReady = false;
+  function paint(){
+    tiles.querySelectorAll('[data-v]').forEach(b => { const on = b.dataset.v === sel.value; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); b.disabled = sel.disabled; });
+    const good = filled('lSP') + filled('lST'), act = filled('lAP') + filled('lAT');
+    const stars = document.querySelectorAll('#lAP .star.on, #lAT .star.on').length;
+    const per = { '1':0, '2':0, '3':0, '4':0, '5':0 };
+    document.querySelectorAll('#lSP .tag[data-c], #lAP .tag[data-c], #lST .tag[data-c], #lAT .tag[data-c]').forEach(t => { const k = String(t.dataset.c).charAt(0); if (k in per) per[k]++; });
+    const max = Math.max(1, ...Object.values(per));
+    const overall = !!($('tOverall') && $('tOverall').value.trim());
+    const ready = !!sel.value && good > 0 && act > 0 && overall;
+    strip.innerHTML =
+      '<span class="n good" title="Strengths"><b>' + good + '</b>strength' + (good === 1 ? '' : 's') + '</span>'
+      + '<span class="n act" title="Action points"><b>' + act + '</b>action point' + (act === 1 ? '' : 's') + '</span>'
+      + '<span class="n star" title="Starred: carried into the next plan"><b>' + stars + '</b>\u2605</span>'
+      + '<span class="topics" title="' + Object.keys(per).map(k => 'Topic ' + k + ': ' + per[k]).join(' \u00b7 ') + '">'
+      + Object.keys(per).map(k => '<i class="' + (per[k] ? 'on' : '') + '" style="height:' + (per[k] ? 6 + Math.round(16 * per[k] / max) : 4) + 'px"></i>').join('') + '</span>'
+      + '<span class="ready"><span class="' + (sel.value ? 'ok' : '') + '">Grade</span><span class="' + (overall ? 'ok' : '') + '">Overall</span></span>';
+    const btn = $('returnBtn');
+    if (btn) { if (ready && !wasReady) { btn.classList.remove('fv2-ready'); void btn.offsetWidth; btn.classList.add('fv2-ready'); } if (!ready) btn.classList.remove('fv2-ready'); }
+    wasReady = ready;
+  }
+  let t = null; const soon = () => { clearTimeout(t); t = setTimeout(paint, 150); };
+  ['input', 'click', 'change', 'keyup'].forEach(ev => document.addEventListener(ev, soon, true));
+  new MutationObserver(soon).observe(document.querySelector('.board') || document.body, { childList: true, subtree: true });
+  paint(); setTimeout(paint, 800);
+})();
 
 /* ================= your comments against their stages and analysis ================= */
 const TCOMM={};
@@ -1646,7 +1731,7 @@ function fmtDate(ts){
   if(!ts) return '';
   const d=new Date(ts), today=d.toDateString()===new Date().toDateString();
   return (today?'today':d.toLocaleDateString([],{day:'numeric',month:'short'}))+' at '+
-    d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
 }
 function setLock(on){
   locked=on;

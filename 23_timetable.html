@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610072232">
+<link rel="stylesheet" href="hub-tokens.css?v=202610072259">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -116,6 +116,51 @@
   .day .dm{font-size:0.74rem; color:var(--grey);}
   .due{color:var(--gold-deep); font-weight:600; font-size:0.72rem; padding:4px 11px;}
   .due.late{color:var(--brick);}
+
+  /* ---- v2 (7 Oct 2026): the course ribbon, the now line, due pills -------
+     Ramy: "anything regarding the meaty bits". Three things the page already
+     knows and did not show: where in the course today is, what is happening
+     in the room right now, and how far off each deadline is. Display only --
+     nothing here writes to the store. Design: Magic Touches.dc.html, 2a. */
+  .tv2-rib{margin:0 0 18px; padding:16px 18px 14px; background:var(--paper); border:1px solid var(--sand-line); border-radius:12px;}
+  .tv2-rib .top{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:0 0 12px;}
+  .tv2-rib .top b{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.35rem; color:var(--teal-deep);}
+  .tv2-rib .top b em{font-style:normal; color:var(--gold-deep);}
+  .tv2-rib .top span{font-size:0.78rem; color:var(--grey);}
+  .tv2-segs{display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); gap:4px;}
+  .tv2-seg{position:relative; height:30px; padding:0; border:0; border-radius:5px; background:var(--box); cursor:pointer;
+    font:700 10px 'Karla',sans-serif; color:var(--grey); transition:transform .15s ease, background-color .2s;}
+  .tv2-seg.wk1{margin-left:0;} .tv2-seg.mon{box-shadow:inset 2px 0 0 var(--sand-line);}
+  .tv2-seg.past{background:var(--teal); color:var(--paper);}
+  .tv2-seg.today{background:var(--gold-lifted); color:var(--ink-warm); animation:tv2-pulse 2.2s ease-out infinite;}
+  .tv2-seg:hover{transform:translateY(-2px); background:var(--teal-lifted); color:var(--paper);}
+  .tv2-seg.today:hover{background:var(--gold); color:var(--ink-warm);}
+  .tv2-seg:focus-visible{outline:2px solid var(--gold-lifted); outline-offset:2px;}
+  /* a TP day has a tick under it, a deadline a gold dot */
+  .tv2-seg .tp, .tv2-seg .du{position:absolute; left:50%; transform:translateX(-50%); bottom:-8px; height:3px; border-radius:2px;}
+  .tv2-seg .tp{width:60%; background:var(--teal-lifted);}
+  .tv2-seg .du{width:5px; height:5px; border-radius:50%; bottom:-10px; background:var(--gold-deep);}
+  .tv2-seg .tp + .du{bottom:-15px;}
+  .tv2-key{display:flex; gap:16px; flex-wrap:wrap; margin:18px 0 0; font-size:0.72rem; color:var(--grey);}
+  .tv2-key i{display:inline-block; vertical-align:middle; margin-right:5px;}
+  .tv2-key .k-tp{width:12px; height:3px; border-radius:2px; background:var(--teal-lifted);}
+  .tv2-key .k-du{width:6px; height:6px; border-radius:50%; background:var(--gold-deep);}
+  /* the now line, on today's card only */
+  .day.today .dh .tv2-clock{font-family:'Karla',sans-serif; font-size:0.7rem; font-weight:700; color:var(--gold-deep); font-variant-numeric:tabular-nums;}
+  .day.today .sl.tv2-past{opacity:.45;}
+  .day.today .sl.tv2-now{position:relative; background:var(--gold-wash); box-shadow:inset 3px 0 0 var(--gold);}
+  .day.today .sl.tv2-now .t{color:var(--gold-deep);}
+  .day.today .sl.tv2-now .t:after{content:'Now'; display:block; margin-top:2px; font-size:0.58rem; letter-spacing:.1em; text-transform:uppercase; color:var(--gold-deep);}
+  .day.today .sl{transition:opacity .4s ease, background-color .4s ease;}
+  /* how far off a deadline is */
+  .due .tv2-in{display:inline-block; margin-left:6px; padding:1px 7px; border-radius:999px; font-size:0.64rem; font-weight:700;
+    background:var(--gold-wash); color:var(--gold-deep); border:1px solid var(--amber-edge); vertical-align:1px;}
+  .due .tv2-in.soon{background:var(--gold-lifted); border-color:var(--gold-lifted); color:var(--ink-warm);}
+  .due.late .tv2-in{display:none;}
+  @keyframes tv2-pulse{0%{box-shadow:0 0 0 0 oklch(70% 0.12 72 / .55);}70%{box-shadow:0 0 0 8px oklch(70% 0.12 72 / 0);}100%{box-shadow:0 0 0 0 oklch(70% 0.12 72 / 0);}}
+  @media(prefers-reduced-motion:reduce){ .tv2-seg, .day.today .sl{animation:none !important; transition:none !important;} }
+  @media(max-width:640px){ .tv2-seg{height:24px; font-size:0;} .tv2-rib{padding:14px 12px 12px;} }
+  @media print{ .tv2-rib{display:none;} .day.today .sl.tv2-past{opacity:1;} .day.today .sl.tv2-now{background:none; box-shadow:none;} .day.today .sl.tv2-now .t:after{content:none;} .due .tv2-in{display:none;} }
   .due.asbtn{display:block; width:100%; text-align:left; font-family:inherit; background:none; border:0;
     border-top:1px dashed var(--sand-line); cursor:pointer;}
   .due.asbtn:hover{background:var(--sand-deep);}
@@ -158,23 +203,23 @@
     h1{font-size:1.4rem;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610072232">
+<link rel="stylesheet" href="hub-house.css?v=202610072259">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610072232"></script>
-<script src="hub-tracker.js?v=202610072232"></script>
-<script src="hub-rotation.js?v=202610072232"></script>
-<script src="hub-xlsx.js?v=202610072232"></script>
-<script src="hub-docx.js?v=202610072232"></script>
-<script src="hub-timetable-parse.js?v=202610072232"></script>
-<script src="hub-shared.js?v=202610072232"></script>
-<script src="hub-store.js?v=202610072232"></script>
-<script src="hub-say.js?v=202610072232"></script>
-<script src="hub-sync.js?v=202610072232"></script>
+<script src="hub-due.js?v=202610072259"></script>
+<script src="hub-tracker.js?v=202610072259"></script>
+<script src="hub-rotation.js?v=202610072259"></script>
+<script src="hub-xlsx.js?v=202610072259"></script>
+<script src="hub-docx.js?v=202610072259"></script>
+<script src="hub-timetable-parse.js?v=202610072259"></script>
+<script src="hub-shared.js?v=202610072259"></script>
+<script src="hub-store.js?v=202610072259"></script>
+<script src="hub-say.js?v=202610072259"></script>
+<script src="hub-sync.js?v=202610072259"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -427,7 +472,7 @@ function cellHTML(day){
        sees two times; an online course with join links on the timetable is
        read from elsewhere by definition, and that is who this is for. */
     const tf = (window.hubTimeFor && ZONE) ? window.hubTimeFor(day.date, slot.from, ZONE) : null;
-    const t = `<span class="t">${esc(hubClock(slot.from || ''))}${(tf && tf.differs) ? '<span class="lt">' + esc(tf.local) + '</span>' : ''}</span>`;
+    const t = `<span class="t" data-from="${esc(slot.from || '')}" data-to="${esc(slot.to || '')}">${esc(hubClock(slot.from || ''))}${(tf && tf.differs) ? '<span class="lt">' + esc(tf.local) + '</span>' : ''}</span>`;
     if (slot.kind === 'break') return `<div class="sl brk">${t}<span>${esc(slot.label || 'Break')}</span></div>`;
     if (slot.kind === 'tp') {
       const i = tpSeen++;
@@ -980,6 +1025,73 @@ function save(word){
 ['wheel','touchstart','pointerdown','keydown'].forEach(function(ev){
   document.addEventListener(ev, function(){ SCROLLED = true; }, { once: true, passive: true });
 });
+
+/* ---- v2 (7 Oct 2026): ribbon, now line, due pills -----------------------
+   Layered on whatever render() last drew, so render stays the one source.
+   A MutationObserver on the page re-applies after every render; the guards
+   below mean its own additions never trigger another pass. */
+(function(){
+  const host = document.getElementById('app'); if (!host) return;
+  const p2 = n => String(n).padStart(2, '0');
+  const mins = s => { const m = /^(\d{1,2}):(\d{2})/.exec(String(s || '')); return m ? +m[1] * 60 + +m[2] : null; };
+  const nowD = () => { const n = window.hubNow ? hubNow() : new Date(); return n instanceof Date ? n : new Date(n); };
+  const daysBetween = (a, b) => Math.round((Date.parse(b + 'T12:00:00') - Date.parse(a + 'T12:00:00')) / 864e5);
+  const jump = date => { const el = document.getElementById('d-' + date); if (!el) return; window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' }); };
+
+  function ribbon(){
+    const days = (TT && TT.days) || []; if (!days.length || host.querySelector('.tv2-rib')) return;
+    const firstWk = host.querySelector('.wk'); if (!firstWk) return;
+    const idx = days.findIndex(d => d.date === TODAY);
+    const before = days[0] && TODAY < days[0].date, after = days[days.length - 1] && TODAY > days[days.length - 1].date;
+    const head = idx >= 0 ? 'Day <em>' + (idx + 1) + '</em> of ' + days.length
+      : before ? 'Starts in <em>' + daysBetween(TODAY, days[0].date) + '</em> day' + (daysBetween(TODAY, days[0].date) === 1 ? '' : 's')
+      : after ? 'The course is finished' : days.length + ' days';
+    const tps = days.filter(d => d.tp).length;
+    const sub = days.length + ' days \u00b7 ' + tps + ' with teaching practice';
+    const segs = days.map((d, i) => {
+      const dt = new Date(d.date + 'T12:00:00'), mon = dt.getDay() === 1 && i > 0;
+      const cls = ['tv2-seg', d.date < TODAY ? 'past' : '', d.date === TODAY ? 'today' : '', mon ? 'mon' : ''].filter(Boolean).join(' ');
+      const due = (typeof DUES !== 'undefined' && DUES[d.date] && DUES[d.date].length) ? DUES[d.date].map(x => x.title).join(', ') : '';
+      const tip = 'Day ' + (i + 1) + ' \u00b7 ' + dt.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) + (d.tp ? ' \u00b7 TP ' + d.tp : '') + (due ? ' \u00b7 ' + due + ' due' : '');
+      return '<button type="button" class="' + cls + '" data-go="' + esc(d.date) + '" title="' + esc(tip) + '" aria-label="' + esc(tip) + '">' + (i + 1)
+        + (d.tp ? '<span class="tp"></span>' : '') + (due ? '<span class="du"></span>' : '') + '</button>';
+    }).join('');
+    firstWk.insertAdjacentHTML('beforebegin', '<div class="tv2-rib"><div class="top"><b>' + head + '</b><span>' + sub + '</span></div>'
+      + '<div class="tv2-segs">' + segs + '</div>'
+      + '<div class="tv2-key"><span><i class="k-tp"></i>teaching practice</span><span><i class="k-du"></i>a deadline</span></div></div>');
+    host.querySelector('.tv2-segs').addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) jump(b.dataset.go); });
+  }
+
+  function nowLine(){
+    const card = host.querySelector('.day.today'); if (!card) return;
+    const n = nowD(), m = n.getHours() * 60 + n.getMinutes();
+    const dh = card.querySelector('.dh');
+    let clock = dh && dh.querySelector('.tv2-clock');
+    if (dh && !clock) { clock = document.createElement('span'); clock.className = 'tv2-clock'; dh.appendChild(clock); }
+    if (clock) clock.textContent = hubClock(p2(n.getHours()) + ':' + p2(n.getMinutes()));
+    card.querySelectorAll('.sl').forEach(row => {
+      const t = row.querySelector('.t[data-from]');
+      const a = t ? mins(t.dataset.from) : null, b = t ? mins(t.dataset.to) : null;
+      row.classList.toggle('tv2-now', a != null && b != null && m >= a && m < b);
+      row.classList.toggle('tv2-past', b != null && m >= b);
+    });
+  }
+
+  function duePills(){
+    host.querySelectorAll('.day .due').forEach(el => {
+      if (el.querySelector('.tv2-in')) return;
+      const day = el.closest('.day'); const date = day && day.id.replace(/^d-/, ''); if (!date || date < TODAY) return;
+      const n = daysBetween(TODAY, date);
+      el.insertAdjacentHTML('beforeend', '<span class="tv2-in' + (n <= 2 ? ' soon' : '') + '">' + (n === 0 ? 'today' : n === 1 ? 'tomorrow' : 'in ' + n + ' days') + '</span>');
+    });
+  }
+
+  let q = null;
+  const apply = () => { q = null; try { ribbon(); nowLine(); duePills(); } catch (e) {} };
+  new MutationObserver(() => { if (!q) q = requestAnimationFrame(apply); }).observe(host, { childList: true });
+  apply();
+  setInterval(nowLine, 30000);
+})();
 
 render();
 </script>

@@ -16,7 +16,7 @@
 <title>1 · Lesson Plan &amp; Language Analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610072232">
+<link rel="stylesheet" href="hub-tokens.css?v=202610072259">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -410,8 +410,27 @@
     border:1.5px solid var(--gold); border-radius:20px; padding:5px 13px; line-height:1.3;}
   .duenote::before{content:"\2022"; font-size:1.1em; line-height:0;}
   .fromtt{display:block; font-size:0.72rem; color:var(--grey); margin-top:3px;}
+
+  /* ---- v3 (7 Oct 2026): the plan's shape, in the action bar ----
+     Six checks in the order of the page, and the stages as dots in their own
+     hue once written. Turn in gives one gold pulse when all six are in.
+     Display only: the rules for turning in are unchanged. */
+  .pv2{display:flex; align-items:center; gap:12px; font-family:'Karla',sans-serif; font-size:0.78rem; color:var(--grey);}
+  .pv2 .chk{display:inline-flex; gap:10px;}
+  .pv2 .chk span{display:inline-flex; align-items:center; gap:4px; white-space:nowrap;}
+  .pv2 .chk span:before{content:''; width:8px; height:8px; border-radius:50%; border:1.5px solid var(--sand-line);}
+  .pv2 .chk span.ok{color:var(--teal-deep);} .pv2 .chk span.ok:before{background:var(--teal); border-color:var(--teal);}
+  .pv2 .chk span.over{color:var(--brick);} .pv2 .chk span.over:before{background:var(--brick); border-color:var(--brick);}
+  .pv2 .stg{display:inline-flex; gap:3px; align-items:center;}
+  .pv2 .stg i{width:9px; height:9px; border-radius:3px; background:var(--box); transition:background-color .3s;}
+  #turnInBtn.pv2-ready{animation:pv2-ready 1.6s ease-out 1;}
+  @keyframes pv2-ready{0%{box-shadow:0 0 0 0 oklch(70% 0.12 72 / .6);}100%{box-shadow:0 0 0 12px oklch(70% 0.12 72 / 0);}}
+  @media(prefers-reduced-motion:reduce){ .pv2 .stg i{transition:none;} #turnInBtn.pv2-ready{animation:none;} }
+  @media(max-width:1000px){ .pv2 .chk span:not(.lead){display:none;} }
+  @media(max-width:640px){ .pv2{display:none;} }
+  @media print{ .pv2{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610072232">
+<link rel="stylesheet" href="hub-house.css?v=202610072259">
 </head>
 <body>
 <div class="board">
@@ -634,17 +653,18 @@
     <button class="btn-submit" id="turnInBtn">Turn in</button>
   </div>
   <div class="rhs">
+    <div class="pv2" id="pv2" aria-live="polite"></div>
     <span class="status" id="status"></span>
     <button class="btn-print" type="button" id="pdfBtn">Print / Save as PDF</button>
   </div>
 </div>
 
-<script src="hub-due.js?v=202610072232"></script>
-<script src="hub-shared.js?v=202610072232"></script>
-<script src="hub-rotation.js?v=202610072232"></script>
-<script src="hub-store.js?v=202610072232"></script>
-<script src="hub-say.js?v=202610072232"></script>
-<script src="hub-sync.js?v=202610072232"></script>
+<script src="hub-due.js?v=202610072259"></script>
+<script src="hub-shared.js?v=202610072259"></script>
+<script src="hub-rotation.js?v=202610072259"></script>
+<script src="hub-store.js?v=202610072259"></script>
+<script src="hub-say.js?v=202610072259"></script>
+<script src="hub-sync.js?v=202610072259"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -2275,6 +2295,38 @@ if (window.hubReserveForBar) hubReserveForBar('.actionbar');
   paint();
 })();
 
+
+/* ---- v3 (7 Oct 2026): the plan's shape strip ------------------------------
+   Reads the page; stores nothing. Repaints 150ms after any edit. */
+(function(){
+  const host = document.getElementById('pv2'); if (!host || typeof rows !== 'function') return;
+  const val = id => { const el = document.getElementById(id); return el ? String(el.value || '').trim() : ''; };
+  let was = false;
+  function paint(){
+    const all = rows();
+    const written = all.map(tr => procText(tr.querySelector('.t-proc').value).trim() !== '');
+    const nW = written.filter(Boolean).length;
+    const prob = [...document.querySelectorAll('#probGrid textarea, #probGrid input')].some(el => String(el.value || '').trim());
+    const tot = document.getElementById('total'), over = !!(tot && tot.classList.contains('over'));
+    const fits = !!(tot && /fits exactly|spare/.test(tot.textContent || ''));
+    const C = [
+      ['Aims', !!val('fMain')], ['Problems', prob], ['Class', !!val('fProfile')],
+      ['Materials', !!(val('fMats') || val('fMatsLink'))], ['Stages ' + nW + '/' + all.length, all.length > 0 && nW === all.length],
+      [over ? 'Time over' : 'Time', fits, over]
+    ];
+    const ready = C.every(c => c[1]);
+    host.innerHTML = '<span class="stg" title="' + nW + ' of ' + all.length + ' stages written">'
+      + all.map((tr, i) => '<i style="' + (written[i] ? 'background:' + (getComputedStyle(tr).getPropertyValue('--hue').trim() || 'var(--teal)') : '') + '"></i>').join('') + '</span>'
+      + '<span class="chk">' + C.map((c, i) => '<span class="' + (c[2] ? 'over' : c[1] ? 'ok' : '') + (i === 4 ? ' lead' : '') + '">' + c[0] + '</span>').join('') + '</span>';
+    const btn = document.getElementById('turnInBtn');
+    if (btn) { if (ready && !was) { btn.classList.remove('pv2-ready'); void btn.offsetWidth; btn.classList.add('pv2-ready'); } if (!ready) btn.classList.remove('pv2-ready'); }
+    was = ready;
+  }
+  let t = null; const soon = () => { clearTimeout(t); t = setTimeout(paint, 150); };
+  ['input', 'change', 'click', 'keyup'].forEach(ev => document.addEventListener(ev, soon, true));
+  new MutationObserver(soon).observe(document.querySelector('.board') || document.body, { childList: true, subtree: true });
+  paint(); setTimeout(paint, 800);
+})();
 </script>
 </body>
 </html>
