@@ -115,7 +115,8 @@
       + rateRows()
       + '<p style="font-family:' + SANS + '; font-size:13.5px; line-height:1.65; color:' + C.ink + '; margin:16px 0 0;"><b style="color:' + C.inkWarm + ';">Volunteer students are not counted.</b> However many come, their register, their own pages, the day-before reminders and the signed certificates are in the price.</p>'
       + '<p style="font-family:' + SANS + '; font-size:13.5px; line-height:1.65; color:' + C.ink + '; margin:16px 0 0;"><b style="color:' + C.inkWarm + ';">A course with one teaching practice group counts as half a course.</b> Six trainees or fewer is one group. Blocks do not expire, nothing recurs, and the length of a course \u2014 four weeks, five, or part-time over three months \u2014 makes no difference.</p>'
-      + (ctx.site ? '<p style="font-family:' + SANS + '; font-size:13.5px; line-height:1.65; margin:14px 0 0;"><a href="' + esc(ctx.site) + 'price.html" style="color:' + C.teal + '; font-weight:700;">The rates in full</a>, to keep or print.</p>' : '')
+      /* No "rates in full" link: the rates page came down (Ramy, 7 Oct 2026:
+         the rates are not public). This email IS the rates. */
       + contact('Questions:')
       + credit(ctx);
     return page('Connect Lite \u2014 what it costs', letter, frame('What it costs', 'One price, one course, everything in it', '', sheet));
