@@ -16,7 +16,7 @@
 <title>2 · Self-evaluation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610072028">
+<link rel="stylesheet" href="hub-tokens.css?v=202610072111">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -154,8 +154,49 @@
     color:var(--gold-deep); background:var(--gold-wash);
     border:1.5px solid var(--gold); border-radius:20px; padding:5px 13px; line-height:1.3;}
   .duenote::before{content:"\2022"; font-size:1.1em; line-height:0;}
+
+  /* ---- v5 (7 Oct 2026): the reflection's shape -----------------------------
+     Six steps in the action bar, one per question, each a door to its card and
+     ticked once written; the carried action points as gold cards that turn
+     teal when answered; and, when the feedback is back and sealed, one line
+     beside Turn in saying that this is what opens it. Display only.
+     Design: Magic Touches, 5a. */
+  .sv5{display:flex; align-items:center; gap:4px; font-family:'Karla',sans-serif;}
+  .sv5 button{display:inline-flex; align-items:center; gap:5px; height:28px; padding:0 9px 0 5px; border-radius:999px; cursor:pointer;
+    border:1.5px solid var(--sand-line); background:var(--paper); color:var(--grey); font:600 0.74rem 'Karla',sans-serif; transition:transform .15s ease, border-color .15s, background-color .2s, color .2s;}
+  .sv5 button i{width:18px; height:18px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-style:normal; font-size:10px; font-weight:700; background:var(--box); color:var(--ink-warm);}
+  .sv5 button.ok{border-color:oklch(78% 0.04 195); color:var(--teal-deep);}
+  .sv5 button.ok i{background:var(--teal); color:var(--paper);}
+  .sv5 button:hover{transform:translateY(-2px); border-color:var(--teal);}
+  .sv5 button:focus-visible{outline:2px solid var(--gold-lifted); outline-offset:2px;}
+  .sv5 .sep{width:8px; height:1.5px; background:var(--sand-line);}
+  .card.sv5-hit{animation:sv5-hit 1.4s ease-out 1;}
+  /* the carried points */
+  .ap-row.sv5-carried{padding:12px 12px 12px 10px; border-radius:10px; background:var(--gold-wash); box-shadow:inset 0 0 0 1.5px var(--amber-edge); transition:background-color .3s, box-shadow .3s;}
+  .ap-row.sv5-carried .n{background:var(--gold-lifted);}
+  .ap-row.sv5-carried .n::after{content:'\2605'; position:absolute; font-size:9px; transform:translate(10px,-10px); color:var(--gold-deep);}
+  .ap-row.sv5-carried .ap-did{border-color:var(--gold);}
+  .ap-row.sv5-answered{background:color-mix(in oklab, var(--teal) 6%, var(--paper)); box-shadow:inset 0 0 0 1.5px oklch(78% 0.04 195);}
+  .ap-row.sv5-answered .n{background:var(--teal); color:var(--paper);}
+  .ap-row.sv5-answered .n::after{content:none;}
+  .ap-row.sv5-answered .ap-did{border-color:oklch(78% 0.04 195);}
+  .ap-row .n{position:relative;}
+  /* the sealed feedback, beside Turn in */
+  .sv5-env{display:inline-flex; align-items:center; gap:7px; padding:6px 12px; border-radius:999px; background:var(--gold-wash); border:1.5px solid var(--gold);
+    font:700 0.78rem 'Karla',sans-serif; color:var(--ink-warm);}
+  .sv5-env[hidden]{display:none;}
+  .sv5-env b{width:16px; height:16px; border-radius:50%; background:var(--gold); display:inline-block; animation:sv5-glow 2.4s ease-in-out infinite;}
+  .sv5-env + .barhint{display:none;}
+  #turnInBtn.sv5-ready{animation:sv5-ready 1.6s ease-out 1;}
+  @keyframes sv5-ready{0%{box-shadow:0 0 0 0 oklch(70% 0.12 72 / .6);}100%{box-shadow:0 0 0 12px oklch(70% 0.12 72 / 0);}}
+  @keyframes sv5-glow{0%,100%{box-shadow:0 0 0 0 oklch(70% 0.12 72 / .5);}50%{box-shadow:0 0 0 6px oklch(70% 0.12 72 / 0);}}
+  @keyframes sv5-hit{0%{box-shadow:0 0 0 3px oklch(70% 0.12 72 / .7);}100%{box-shadow:0 0 0 3px oklch(70% 0.12 72 / 0);}}
+  @media(prefers-reduced-motion:reduce){ .sv5 button, .ap-row{transition:none;} .sv5-env b, #turnInBtn.sv5-ready, .card.sv5-hit{animation:none;} }
+  @media(max-width:1000px){ .sv5 button span, .sv5 .sep{display:none;} .sv5 button{padding:0 5px;} }
+  @media(max-width:640px){ .sv5{display:none;} }
+  @media print{ .sv5, .sv5-env{display:none !important;} .ap-row.sv5-carried, .ap-row.sv5-answered{background:none; box-shadow:none; padding:0;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610072028">
+<link rel="stylesheet" href="hub-house.css?v=202610072111">
 </head>
 <body>
 <div class="board">
@@ -223,19 +264,21 @@
 <div class="actionbar">
   <div class="lhs">
     <button class="btn-submit" id="turnInBtn">Turn in</button>
+    <span class="sv5-env" id="sv5Env" hidden></span>
     <span class="barhint">Your tutor gets access to your self-evaluation. You won't be able to edit it until they reopen it for you.</span>
   </div>
   <div class="rhs">
+    <div class="sv5" id="sv5" aria-live="polite"></div>
     <span class="status" id="status"></span>
     <button class="btn-print" type="button" id="pdfBtn">Print / Save as PDF</button>
   </div>
 </div>
 
-<script src="hub-due.js?v=202610072028"></script>
-<script src="hub-shared.js?v=202610072028"></script>
-<script src="hub-store.js?v=202610072028"></script>
-<script src="hub-say.js?v=202610072028"></script>
-<script src="hub-sync.js?v=202610072028"></script>
+<script src="hub-due.js?v=202610072111"></script>
+<script src="hub-shared.js?v=202610072111"></script>
+<script src="hub-store.js?v=202610072111"></script>
+<script src="hub-say.js?v=202610072111"></script>
+<script src="hub-sync.js?v=202610072111"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -749,6 +792,62 @@ if (window.hubReserveForBar) hubReserveForBar('.actionbar');
   paint();
 })();
 
+
+/* ---- v5 (7 Oct 2026): the reflection's shape --------------------------------
+   Reads the page; stores nothing. Repaints 150ms after any edit. */
+(function(){
+  const host = document.getElementById('sv5'); if (!host) return;
+  const v = id => { const el = document.getElementById(id); return el ? String(el.value || '').trim() : ''; };
+  const rec = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
+  const hist = rec('chub:tpHistory') || {};
+  const hadTP = Object.keys(hist).some(n => hist[n]);
+  /* the six questions, in page order, each pointed at its card */
+  const STEPS = [
+    ['sWell', 'Went to plan'], ['sNot', 'Didn\u2019t'], ['sLearn', 'Evidence'], ['sDiff', 'Differently'], ['apList', 'Action points'], ['sNext', 'Next TP']
+  ];
+  function apDone(){
+    const rows = [...document.querySelectorAll('#apList .ap-row')];
+    let carried = 0, answered = 0;
+    rows.forEach(r => {
+      const p = String((r.querySelector('.ap-prev') || {}).value || '').trim(), d = String((r.querySelector('.ap-did') || {}).value || '').trim();
+      r.classList.toggle('sv5-carried', !!p);
+      r.classList.toggle('sv5-answered', !!p && !!d);
+      if (p) { carried++; if (d) answered++; }
+    });
+    /* the first TP has nothing to carry: the step is not owed */
+    return carried ? answered === carried : !hadTP;
+  }
+  let was = false;
+  function paint(){
+    const done = STEPS.map(([id]) => id === 'apList' ? apDone() : !!v(id));
+    host.innerHTML = STEPS.map(([id, l], i) => (i ? '<span class="sep"></span>' : '')
+      + '<button type="button" class="' + (done[i] ? 'ok' : '') + '" data-to="' + id + '" title="' + l + '"><i>' + (done[i] ? '\u2713' : (i + 1)) + '</i><span>' + l + '</span></button>').join('');
+    const ready = done.every(Boolean);
+    const btn = document.getElementById('turnInBtn');
+    if (btn) { if (ready && !was) { btn.classList.remove('sv5-ready'); void btn.offsetWidth; btn.classList.add('sv5-ready'); } if (!ready) btn.classList.remove('sv5-ready'); }
+    was = ready;
+    /* the feedback is back and waiting on this */
+    const fb = rec('chub:feedback'), me = rec('chub:selfeval');
+    const env = document.getElementById('sv5Env');
+    if (env) {
+      const waiting = !!(fb && fb.status === 'returned' && fb.docHTML && !(me && me.status === 'turned_in'));
+      const tutor = String((fb && fb.state && fb.state.f && fb.state.f.fTutor) || '').trim().split(/\s+/)[0];
+      env.hidden = !waiting;
+      if (waiting) env.innerHTML = '<b aria-hidden="true"></b>' + (tutor ? tutor + '\u2019s' : 'Your tutor\u2019s') + ' feedback is waiting \u2014 turning this in opens it';
+    }
+  }
+  host.addEventListener('click', e => {
+    const b = e.target.closest('[data-to]'); if (!b) return;
+    const el = document.getElementById(b.dataset.to); const card = el && el.closest('.card'); if (!card) return;
+    window.scrollTo({ top: card.getBoundingClientRect().top + window.scrollY - 24, behavior: 'smooth' });
+    card.classList.remove('sv5-hit'); void card.offsetWidth; card.classList.add('sv5-hit');
+    const f = card.querySelector('textarea, input'); if (f) setTimeout(() => { try { f.focus({ preventScroll: true }); } catch (e) {} }, 400);
+  });
+  let t = null; const soon = () => { clearTimeout(t); t = setTimeout(paint, 150); };
+  ['input', 'change', 'click', 'keyup'].forEach(ev => document.addEventListener(ev, soon, true));
+  new MutationObserver(soon).observe(document.getElementById('apList') || document.body, { childList: true, subtree: true });
+  paint(); setTimeout(paint, 800);
+})();
 </script>
 </body>
 </html>
