@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610071038">
+<link rel="stylesheet" href="hub-tokens.css?v=202610071050">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -360,7 +360,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610071038">
+<link rel="stylesheet" href="hub-house.css?v=202610071050">
 </head>
 <body>
 <div class="board">
@@ -733,13 +733,13 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610071038"></script>
-<script src="hub-store.js?v=202610071038"></script>
-<script src="hub-say.js?v=202610071038"></script>
-<script src="agreement-defaults.js?v=202610071038"></script>
-<script src="observation-defaults.js?v=202610071038"></script>
-<script src="hub-shared.js?v=202610071038"></script>
-<script src="hub-sync.js?v=202610071038"></script>
+<script src="assignment-defaults.js?v=202610071050"></script>
+<script src="hub-store.js?v=202610071050"></script>
+<script src="hub-say.js?v=202610071050"></script>
+<script src="agreement-defaults.js?v=202610071050"></script>
+<script src="observation-defaults.js?v=202610071050"></script>
+<script src="hub-shared.js?v=202610071050"></script>
+<script src="hub-sync.js?v=202610071050"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1196,6 +1196,23 @@ function readRooms(){
 }
 document.getElementById('addOnlineRoom').addEventListener('click', () => { readRooms(); ROOMS.push({ label:'', url:'', group:'', level:'', assessor:false }); renderRooms(); });
 
+/* Connect's own input sessions, where Lite hosts the page. A declaration, so
+   the first render (called from the settings load, before the script below
+   it has run) can see it. */
+function connectPageUrl(l){
+  const CONNECT_PAGES = {
+    'lesson framework': 'lesson-framework', 'writing the lesson plan': 'writing-the-lesson-plan',
+    'eliciting and ccqs': 'eliciting-and-ccqs', 'concept checking and instructions': 'eliciting-and-ccqs',
+    'functional language': 'functional-language', 'connected speech': 'connected-speech',
+    'phonology: sounds and the chart': 'phonology-sounds', 'phonology: sounds': 'phonology-sounds',
+    'teaching productive skills': 'teaching-productive-skills', 'productive skills': 'teaching-productive-skills',
+    'guided to less-guided practice': 'guided-to-less-guided-practice', 'practice': 'guided-to-less-guided-practice',
+    'drama in the elt classroom': 'drama-in-the-elt-classroom', 'alternative teaching techniques': 'alternative-teaching-techniques',
+    'activity evaluation sheet': 'activity-evaluation-sheet', 'life after celta': 'life-after-celta', 'developing as a teacher': 'life-after-celta'
+  };
+  const key = String((l && l.label) || '').toLowerCase().replace(/&/g, 'and').replace(/[\u2013\u2014-]+/g, '-').replace(/\s+/g, ' ').trim();
+  const f = CONNECT_PAGES[key]; return f ? location.href.replace(/[^/]*$/, '') + f + '/' : '';
+}
 function renderCandLinks(){
   if (!CAND_LINKS) CAND_LINKS = []; // the load block calls this before the var below is assigned
   /* Ramy, 28 Sep 2026: the cards are Timetable, CELTA 5, Input sessions and
@@ -1225,7 +1242,14 @@ function renderCandLinks(){
   /* Ramy, 28 Sep 2026: "the course ships a starting list" -- the standard
      input sessions as empty rows under their card, so the centre pastes
      links against names. Only on a course with no input sessions yet. */
-  const INPUT_SESSIONS = ['Lesson shapes and staging', 'Classroom management', 'Concept checking and instructions', 'Presenting grammar', 'Teaching vocabulary', 'Phonology: sounds and the chart', 'Phonology: stress and intonation', 'Receptive skills: reading', 'Receptive skills: listening', 'Productive skills: speaking', 'Productive skills: writing', 'Functional language', 'Error correction and feedback', 'Materials and adapting the coursebook', 'Analysing language for teaching', 'Learner needs and Focus on the Learner', 'Teaching at low levels', 'Test-teach-test and task-based learning', 'Developing as a teacher'];
+  const INPUT_SESSIONS = ['Lesson framework', 'Classroom management', 'Concept checking and instructions', 'Presenting grammar', 'Teaching vocabulary', 'Phonology: sounds and the chart', 'Phonology: stress and intonation', 'Receptive skills: reading', 'Receptive skills: listening', 'Productive skills: speaking', 'Productive skills: writing', 'Functional language', 'Error correction and feedback', 'Materials and adapting the coursebook', 'Analysing language for teaching', 'Learner needs and Focus on the Learner', 'Teaching at low levels', 'Test-teach-test and task-based learning', 'Developing as a teacher'];
+  /* 8 Oct 2026: a row whose name matches a page Lite hosts (connectPageUrl)
+     gets a button that fills in the link, the way the agreement boxes take
+     Connect's wording (Ramy: "it should be an option to choose Connect for
+     all of them"). Nothing is filled until the button is clicked, and a
+     pasted link of the centre's own is never replaced without asking.
+     "Lesson shapes and staging" became "Lesson framework" the same day, to
+     match the page. */
   const hasInput = CAND_LINKS.some(l => /input session/i.test((l.card || '') + ' ' + (l.label || '')));
   const have = CAND_LINKS.map(l => l.label), haveUrl = CAND_LINKS.map(l => l.url);
   const rows = CAND_LINKS.concat(SUG.filter(([label, url]) => !have.includes(label) && !(url && haveUrl.includes(url))).map(([label, url, card]) => ({ label, url, card })))
@@ -1236,7 +1260,7 @@ function renderCandLinks(){
   const cards = [...new Set(rows.map(l => l.card).concat([BEFORE_CARD, 'Input sessions', 'TP points']).filter(Boolean))];
   document.getElementById('candLinks').innerHTML = rows.map((l, i) =>
     `<div><label>Name</label><input type="text" class="cl-label" data-i="${i}" value="${esc(l.label)}" placeholder="What the trainee sees"></div>
-     <div><label>Link</label><input type="text" class="cl-url" data-i="${i}" value="${esc(l.url)}" placeholder="https://…"></div>
+     <div><label>Link${connectPageUrl(l) && l.url !== connectPageUrl(l) ? ` <button class="btn small quiet" type="button" data-connect-page="${i}" style="padding:0 2px;font-size:0.72rem;text-transform:none;letter-spacing:0;vertical-align:baseline;">Use Connect’s page</button>` : ''}</label><input type="text" class="cl-url" data-i="${i}" value="${esc(l.url)}" placeholder="https://…"></div>
      <div class="wide" style="display:flex;gap:14px;align-items:end;flex-wrap:wrap;"><div style="flex:1;min-width:200px;"><label>Card <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0;">— only to put several links on one card; empty means its own card</span></label><input type="text" class="cl-card" data-i="${i}" value="${esc(l.card || '')}" list="cardNames" placeholder="${esc(l.label ? 'Its own card: ' + l.label : 'Its own card, under the label')}"></div>
        ${hubLinkIsTimetable(l) ? '<span class="muted" style="font-size:0.78rem;padding-bottom:10px;">Lite keeps the course\u2019s own timetable \u2014 the trainees open it from their home, so this row no longer shows them anything. You can delete it.</span>' : `<label class="sw" style="padding-bottom:8px;"><input type="checkbox" class="cl-show" data-i="${i}"${l.show === false ? '' : ' checked'}><span class="track"></span><span class="lbl">${l.show === false ? 'Hidden from trainees' : 'Trainees can see it'}</span></label>`}</div>`).join('') +
     `<datalist id="cardNames">${cards.map(c => `<option value="${esc(c)}">`).join('')}</datalist>`;
@@ -1252,6 +1276,16 @@ function readCandLinks(){
   CAND_LINKS = all;
   return all.filter(l => l.url || (l.label && l.card)).map(l => { const o = { label: l.label, url: l.url, card: l.card }; if (!l.show && !hubLinkIsTimetable(l)) o.show = false; return o; });
 }
+document.getElementById('candLinks').addEventListener('click', async e => {
+  const b = e.target.closest('[data-connect-page]'); if (!b) return;
+  readCandLinks();
+  const i = +b.dataset.connectPage, l = CAND_LINKS[i]; if (!l) return;
+  const url = connectPageUrl(l);
+  if (!url) return;
+  if (l.url && l.url !== url && !(await confirmModal('That row already has a link of your own. Replace it with Connect’s page?', 'Replace'))) return;
+  l.url = url; l.show = true; renderCandLinks();
+  const st = document.getElementById('settingsStatus'); if (st) st.textContent = 'Connect’s page is in the link. Click Save to keep it.';
+});
 document.getElementById('candLinks').addEventListener('change', e => { const sw = e.target.closest('.cl-show'); if (!sw) return; sw.parentElement.querySelector('.lbl').textContent = sw.checked ? 'Trainees can see it' : 'Hidden from trainees'; });
 document.getElementById('addCandLink').addEventListener('click', () => {
   readCandLinks();
