@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610071618">
+<link rel="stylesheet" href="hub-tokens.css?v=202610071625">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -241,6 +241,13 @@
   .setcard > .docsh{margin-top:0;}
   .setcard .docsh{margin-top:0;}
   .setcard .logo-row{padding-bottom:18px;}
+  /* 8 Oct 2026: every tab's page is the same card (Ramy: "the page for each
+     tab looks different... I just want it to look pretty and consistent").
+     Inside a card the old link card drops its own frame, and headings sit
+     at the top. */
+  .setcard > h2, .setcard > .sectionhead{margin-top:0;}
+  .setcard .linkcard{border:none; border-radius:0; background:transparent; margin-bottom:0;}
+  .setcard .linkrow{padding-left:0; padding-right:0;}
   .saverow{margin-top:26px;}
   .fields.docs{margin-top:14px;}
   .logo-row{display:flex; align-items:flex-start; gap:18px; padding-bottom:26px;}
@@ -392,7 +399,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610071618">
+<link rel="stylesheet" href="hub-house.css?v=202610071625">
 </head>
 <body>
 <div class="board">
@@ -746,9 +753,11 @@
   <!-- ================= Roster and links ================= -->
   <!-- ================= Observations ================= -->
   <div class="panel" id="panel-observations" style="display:none;">
+    <section class="setcard">
     <h2>Observation tasks</h2>
     <p class="lede">Fifteen sheets the trainees fill in: nine for their own teaching practice group, four for filmed lessons, two for live ones. The words are yours to change; the shape of each sheet is fixed, because it is what the trainee fills in and what prints.</p>
     <div id="observationRows"></div>
+    </section>
   </div>
 
   <div class="panel" id="panel-roster" style="display:none;">
@@ -767,6 +776,7 @@
 
   <!-- ================= Assignments ================= -->
   <div class="panel" id="panel-assignments" style="display:none;">
+    <section class="setcard">
     <h2>Written assignments</h2>
     <!-- This said "wording only -- the layout, fields and structure are fixed",
          which stopped being true when the editor gained Add section, Add field,
@@ -780,6 +790,7 @@
       <div class="arow" data-key="lfc"><div><span class="code">LFC</span><div class="title2">Lessons from the Classroom</div></div><a class="btn ghost" href="8_assignment_wording.html?a=lfc" style="text-decoration:none;">Edit wording</a></div>
       <div class="arow" data-key="a5"><div><span class="code">A5</span><div class="title2">Plagiarism Reflection</div><div class="aside">Centre sanction — not part of the four</div></div><a class="btn ghost" href="8_assignment_wording.html?a=a5" style="text-decoration:none;">Edit wording</a></div>
     </div>
+    </section>
   </div>
 
   <!-- ================= Double-marking ================= -->
@@ -795,14 +806,14 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610071618"></script>
-<script src="hub-store.js?v=202610071618"></script>
-<script src="hub-say.js?v=202610071618"></script>
-<script src="agreement-defaults.js?v=202610071618"></script>
-<script src="observation-defaults.js?v=202610071618"></script>
-<script src="hub-shared.js?v=202610071618"></script>
-<script src="hub-due.js?v=202610071618"></script>
-<script src="hub-sync.js?v=202610071618"></script>
+<script src="assignment-defaults.js?v=202610071625"></script>
+<script src="hub-store.js?v=202610071625"></script>
+<script src="hub-say.js?v=202610071625"></script>
+<script src="agreement-defaults.js?v=202610071625"></script>
+<script src="observation-defaults.js?v=202610071625"></script>
+<script src="hub-shared.js?v=202610071625"></script>
+<script src="hub-due.js?v=202610071625"></script>
+<script src="hub-sync.js?v=202610071625"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1685,6 +1696,7 @@ async function renderStoreRoster(next){
   })();
 
   box.innerHTML = `
+    <section class="setcard">
     <div class="sectionhead">
       <h2>Course links</h2>
       <button class="linkbtn" type="button" id="toggleUrls">${SHOW_URLS ? 'Hide addresses' : 'Show addresses'}</button>
@@ -1694,7 +1706,9 @@ async function renderStoreRoster(next){
       ${linkRow('Tutor link', 'Every tutor on the course opens this same link and lands on the same course — the same trainees, the same records. Keep it to tutors, and rotate it if it gets out: every copy in circulation stops working.', S.inviteFor('tutor', S.key()), 'tutor', 'storeRotateKey', 'Rotate')}
       <div id="assessorBlock" class="linkrow"><div class="body"><b>Assessor link</b><p>Loading…</p></div></div>
     </div>
+    </section>
 
+    <section class="setcard">
     <div class="sectionhead" style="margin-bottom:4px;">
       <h2>Trainees <span class="count">${trainees.length || ''}</span></h2>
       <button class="btn primary" type="button" id="toggleAdd">Add trainee</button>
@@ -1738,7 +1752,8 @@ async function renderStoreRoster(next){
           <button class="btn quiet small" type="button" data-remove="${esc(t.token)}" data-name="${esc(t.name)}">Remove</button>
         </div>
       </div><div class="plinks" id="plinks-${esc(t.token)}" hidden></div>`).join('') : '<div class="empty">No trainees on the course yet — add the first one above.</div>'}
-    </div>`;
+    </div>
+    </section>`;
 
   renderAssessorBlock();
 

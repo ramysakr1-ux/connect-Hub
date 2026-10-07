@@ -292,7 +292,8 @@ for (const role of ROLES) {
     page.on('console', c => { if (c.type() === 'error') { const t = c.text();
       if (!/ERR_UNSAFE_PORT|Failed to load resource|net::|ERR_CONNECTION|ServiceWorker/.test(t)) errs.push('console: ' + t.slice(0, 120)); } });
     try {
-      await page.goto(`http://127.0.0.1:${PORT}/${screen}${PARAMS[screen] || ''}`, { waitUntil: 'domcontentloaded' });
+      /* HASH='#roster' opens a tab or anchor on the screens walked (8 Oct 2026). */
+      await page.goto(`http://127.0.0.1:${PORT}/${screen}${PARAMS[screen] || ''}${process.env.HASH || ''}`, { waitUntil: 'domcontentloaded' });
       await page.evaluate(seed => { localStorage.clear();
         for (const k of Object.keys(seed)) localStorage.setItem(k, typeof seed[k] === 'string' ? seed[k] : JSON.stringify(seed[k]));
       }, SEED[role]);
