@@ -42,9 +42,17 @@
   'use strict';
 
   var FACES = ['allura', 'caveat', 'parisienne', 'sacramento', 'zeyada'];
+  /* THE TUTORS' HAND (8 Oct 2026). Ramy, of the signatures on C/17's final
+     reports: "really cool, you can do something like that". They were Great
+     Vibes in a dark navy ink, #141e50, matched letter for letter. A tutor's
+     seed (staff: 'k:' + course key + name) writes in it; trainees keep the
+     five above, dealt from their token, so no signature already on a record
+     changes. ALL is every face a spec may name. */
+  var STAFF = 'greatvibes', ALL = FACES.concat([STAFF]);
+  var INK = { greatvibes: '#141e50' };
   /* Each face sits differently on a line, and a signature has to look like it
      was written on the one the form draws. Measured on screen, not guessed. */
-  var FIT = { allura: 1.00, caveat: 0.82, parisienne: 0.94, sacramento: 0.92, zeyada: 0.86 };
+  var FIT = { allura: 1.00, caveat: 0.82, parisienne: 0.94, sacramento: 0.92, zeyada: 0.86, greatvibes: 1.00 };
 
   function hash32(str){
     var h = 2166136261, i;
@@ -59,6 +67,7 @@
   function spec(seed){
     var k = String(seed == null ? '' : seed);
     if (!k) return '';
+    if (k.indexOf('k:') === 0) return '@' + STAFF + ',0';
     var face = FACES[Math.floor(trait(k, 'face') * FACES.length) % FACES.length];
     var slant = Math.round(trait(k, 'slant') * 10) - 5;      /* -5 to +4 degrees */
     return '@' + face + ',' + slant;
@@ -67,7 +76,7 @@
   function parse(s){
     if (!written(s)) return null;
     var bits = String(s).slice(1).split(','), face = bits[0];
-    if (FACES.indexOf(face) === -1) face = FACES[0];
+    if (ALL.indexOf(face) === -1) face = FACES[0];
     var slant = parseFloat(bits[1]); if (!isFinite(slant)) slant = 0;
     return { face: face, slant: Math.max(-8, Math.min(8, slant)) };
   }
@@ -77,7 +86,7 @@
   function css(){
     if (injected || typeof document === 'undefined') return;
     injected = true;
-    var rules = FACES.map(function(f){
+    var rules = ALL.map(function(f){
       return "@font-face{font-family:'hand-" + f + "';src:url('fonts/" + f + ".ttf') format('truetype');font-display:swap;}";
     }).join('');
     var el = document.createElement('style');
@@ -95,10 +104,11 @@
     css();
     return '<span class="hand' + (cls ? ' ' + cls : '') + '" style="font-family:\'hand-' + p.face + '\',cursive;'
       + 'font-size:calc(2.6rem * ' + FIT[p.face] + ');'
+      + (INK[p.face] ? 'color:' + INK[p.face] + ';' : '')
       + (p.slant ? 'transform:skewX(' + (-p.slant) + 'deg);' : '')
       + '" aria-label="Signature">' + esc(name) + '</span>';
   }
 
-  window.hubHand = { spec: spec, html: html, face: face, written: written, parse: parse, css: css, FACES: FACES };
+  window.hubHand = { spec: spec, html: html, face: face, written: written, parse: parse, css: css, FACES: FACES, ALL: ALL, INK: INK };
   if (typeof module !== 'undefined' && module.exports) module.exports = window.hubHand;
 })();

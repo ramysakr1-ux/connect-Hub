@@ -64,12 +64,14 @@
      existed and is never wrong, only plainer. */
   let HANDS = {};
   function drawWritten(page, ink, name, x, y1, maxWidth){
-    const face = HANDS[String(ink).slice(1).split(',')[0]];
+    const faceName = String(ink).slice(1).split(',')[0], face = HANDS[faceName];
     if (!face) return 0;
+    /* The tutors' face writes in the C/17 navy (hub-hand.js, 8 Oct 2026). */
+    const inkColour = faceName === 'greatvibes' ? rgb(0.078, 0.118, 0.314) : rgb(0.1, 0.08, 0.06);
     let size = 19;
     while (size > 8 && face.widthOfTextAtSize(name, size) > maxWidth) size -= 0.5;
     if (face.widthOfTextAtSize(name, size) > maxWidth) return 0;
-    page.drawText(name, { x, y: fitzY(page, y1, 0) + 1.5, size, font: face, color: rgb(0.1, 0.08, 0.06) });
+    page.drawText(name, { x, y: fitzY(page, y1, 0) + 1.5, size, font: face, color: inkColour });
     return face.widthOfTextAtSize(name, size);
   }
   function drawSigned(page, font, name, ink, x, y1, maxWidth){

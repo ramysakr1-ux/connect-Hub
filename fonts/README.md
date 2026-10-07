@@ -20,6 +20,7 @@ face's own licence, with its own copyright line, is in `OFL-<face>.txt`.
 | `parisienne.ttf` | Parisienne | 2012 Brian J. Bonislawsky, Astigmatic (AOETI) | **whole** |
 | `sacramento.ttf` | Sacramento | 2012 Brian J. Bonislawsky, Astigmatic (AOETI) | **whole** |
 | `zeyada.ttf` | Zeyada | 2010 Kimberly Geswein | subset |
+| `greatvibes.ttf` | Great Vibes | 2015 The Great Vibes Pro Project Authors | subset, `--layout-features='*'`; the tutors' face since 8 Oct 2026, in #141e50 |
 
 ## Why two of them are not subsetted
 

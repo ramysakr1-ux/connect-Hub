@@ -20,7 +20,7 @@
  * VERSION is stamped by bump-assets.py with the same stamp as the ?v= links,
  * so each push retires the previous cache on activate.
  */
-const VERSION = 'lite-202610071844';
+const VERSION = 'lite-202610071917';
 const SHELL = [
   './', 'index.html', 'invite.html',
   '1_trainee_plan_and_analysis.html', '2_trainee_self_evaluation.html', '3_tutor_feedback.html',
@@ -35,7 +35,7 @@ const SHELL = [
      about: no HTML references them, so there is nothing for a ?v= to stamp.
      hub-hand.js asks for them from its own @font-face, and it IS stamped,
      so a change to which faces exist ships with the code that names them. */
-  'fonts/allura.ttf', 'fonts/caveat.ttf', 'fonts/parisienne.ttf', 'fonts/sacramento.ttf', 'fonts/zeyada.ttf', 'hub-pages.js',
+  'fonts/allura.ttf', 'fonts/caveat.ttf', 'fonts/parisienne.ttf', 'fonts/sacramento.ttf', 'fonts/zeyada.ttf', 'fonts/greatvibes.ttf', 'hub-pages.js',
   /* 5 Oct 2026: hub-say.js is on every screen, and the five after it had never
      been in the shell at all -- offline, they 404'd. */
   'hub-say.js', 'celta5-appendix.js', 'hub-card-mail.js', 'hub-feedback.js', 'hub-front.js', 'hub-shelf.js',
