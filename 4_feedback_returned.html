@@ -13,7 +13,7 @@
 <title>Feedback returned</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610072216">
+<link rel="stylesheet" href="hub-tokens.css?v=202610072232">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -114,6 +114,18 @@
   .fv2-open.fresh{animation:fv2-in .8s cubic-bezier(.2,.7,.2,1) both;}
   .fv2-open.fresh .fv2-stars{animation:fv2-in .6s cubic-bezier(.2,.7,.2,1) .55s both;}
   .fv2-open.fresh ~ .doc.current{animation:fv2-in .7s cubic-bezier(.2,.7,.2,1) .75s both;}
+  /* What worked: the strengths, beside the starred points (Ramy, 7 Oct 2026) */
+  .fv2-pair{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); gap:14px; margin:20px 0 0;}
+  .fv2-pair .fv2-stars{margin:0;}
+  .fv2-good{padding:18px 20px; border-radius:12px; background:var(--paper); border:1px solid oklch(78% 0.04 195);}
+  .fv2-good p{margin:0 0 8px; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--teal);}
+  .fv2-good ul{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:8px;}
+  .fv2-good li{font-size:14px; line-height:1.55; color:var(--ink-warm);}
+  .fv2-good .more{font-size:12.5px; color:var(--grey);}
+  .fv2-code{display:inline-block; margin-left:6px; padding:0 6px; border-radius:5px; font-size:0.72rem; font-weight:700; vertical-align:1px;
+    background:color-mix(in oklab, var(--teal) 10%, var(--paper)); color:var(--teal);}
+  .fv2-stars .fv2-code{background:color-mix(in oklab, var(--gold) 16%, var(--paper)); color:var(--gold-deep);}
+  .fv2-open.fresh .fv2-good{animation:fv2-in .6s cubic-bezier(.2,.7,.2,1) .45s both;}
   @keyframes fv2-float{0%,100%{transform:translateY(0) rotate(-2deg);}50%{transform:translateY(-8px) rotate(-1deg);}}
   @keyframes fv2-glow{0%,100%{box-shadow:0 0 0 0 oklch(70% 0.12 72 / .5);}50%{box-shadow:0 0 0 18px oklch(70% 0.12 72 / 0);}}
   @keyframes fv2-in{from{opacity:0; transform:translateY(24px);}to{opacity:1; transform:none;}}
@@ -125,7 +137,7 @@
   .wordmark-spin{animation:wordmark-spin 90s linear infinite; transform-origin:50% 50%; transform-style:preserve-3d;}
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610072216">
+<link rel="stylesheet" href="hub-house.css?v=202610072232">
 </head>
 <body>
 <div class="board">
@@ -141,10 +153,10 @@
   </div>
   <div id="content"></div>
 </div>
-<script src="hub-shared.js?v=202610072216"></script>
-<script src="hub-store.js?v=202610072216"></script>
-<script src="hub-say.js?v=202610072216"></script>
-<script src="hub-sync.js?v=202610072216"></script>
+<script src="hub-shared.js?v=202610072232"></script>
+<script src="hub-store.js?v=202610072232"></script>
+<script src="hub-say.js?v=202610072232"></script>
+<script src="hub-sync.js?v=202610072232"></script>
 <script type="text/x-hub-app">
 function rec(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
 
@@ -261,18 +273,32 @@ if(currentOpen){
      grade is still in the feedback itself, where it belongs. */
   const g0 = v2Grade(V2_F.fGrade), g = g0 && !g0.n ? g0 : null;
   const L = (fb.state && fb.state.lists) || {};
-  const stars = Object.keys(L).reduce((a, k) => a.concat((L[k] || []).filter(it => it && it.star)), [])
-    .map(it => { const d = document.createElement('div'); d.innerHTML = it.html || ''; return d.textContent.trim(); }).filter(Boolean);
+  /* a point is its words plus the criteria tagged in it (the .tag[data-c]
+     spans the writer inserts), shown as small codes after the words */
+  const point = it => { const d = document.createElement('div'); d.innerHTML = (it && it.html) || '';
+    const codes = [...d.querySelectorAll('[data-c]')].map(t => t.getAttribute('data-c')).filter(Boolean);
+    d.querySelectorAll('[data-c]').forEach(t => t.remove());
+    return { text: d.textContent.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim(), codes: codes }; };
+  const fromLists = (ids, keep) => ids.reduce((a, k) => a.concat((L[k] || []).filter(keep)), []).map(point).filter(p => p.text);
+  /* strengths are lSP and lST, action points lAP and lAT (3_tutor_feedback.html) */
+  const good = fromLists(['lSP', 'lST'], it => !!it);
+  const stars = fromLists(['lAP', 'lAT'], it => it && it.star);
+  const line = p => '<li>' + v2esc(p.text) + p.codes.map(c => '<span class="fv2-code">' + v2esc(c) + '</span>').join('') + '</li>';
+  const GOOD_MAX = 3;
   let fresh = false; const key = 'chub:fbOpened:' + (V2_N || 'x');
   try { fresh = localStorage.getItem(key) !== '1'; localStorage.setItem(key, '1'); } catch (e) {}
-  if (g || stars.length) {
+  if (g || stars.length || good.length) {
     const nextN = V2_N ? (parseInt(V2_N, 10) + 1) : 0;
     content.insertAdjacentHTML('beforeend', '<section class="fv2-open' + (fresh ? ' fresh' : '') + '">'
       + '<div class="row"><div><p class="kk">' + (V2_N ? 'Teaching practice ' + v2esc(V2_N) : 'Teaching practice') + (V2_TUTOR ? ' \u00b7 returned by ' + v2esc(V2_TUTOR) : '') + '</p>'
       + '<h2>Before you read it all</h2></div>'
       + (g ? '<div class="fv2-stamp' + (g.n ? ' n' : '') + '" role="img" aria-label="' + v2esc(g.word) + '"><b>' + v2esc(g.mark) + '</b><span>' + v2esc(g.word) + '</span></div>' : '')
       + '</div>'
-      + (stars.length ? '<div class="fv2-stars"><p>\u2605 Carried into ' + (nextN && nextN <= HUB_MAX_TP ? 'TP' + nextN : 'your next TP') + '</p><ul>' + stars.map(s => '<li>' + v2esc(s) + '</li>').join('') + '</ul></div>' : '')
+      + ((good.length || stars.length) ? '<div class="fv2-pair">'
+        + (good.length ? '<div class="fv2-good"><p>What worked \u00b7 ' + good.length + '</p><ul>' + good.slice(0, GOOD_MAX).map(line).join('')
+            + (good.length > GOOD_MAX ? '<li class="more">and ' + (good.length - GOOD_MAX) + ' more in the feedback below</li>' : '') + '</ul></div>' : '')
+        + (stars.length ? '<div class="fv2-stars"><p>\u2605 Carried into ' + (nextN && nextN <= HUB_MAX_TP ? 'TP' + nextN : 'your next TP') + '</p><ul>' + stars.map(line).join('') + '</ul></div>' : '')
+        + '</div>' : '')
       + '</section>');
   }
 }

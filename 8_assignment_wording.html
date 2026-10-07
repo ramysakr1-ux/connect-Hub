@@ -13,7 +13,7 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610072216">
+<link rel="stylesheet" href="hub-tokens.css?v=202610072232">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -118,8 +118,28 @@
     .section-head{flex-wrap:wrap;}
     .section-head input.label{flex:1 1 100%; order:-1;}
   }
+
+  /* ---- v2 (7 Oct 2026): what is yours, and what is not saved ------------------
+     The same language as the observation wording editor (13a). In the list, an
+     assignment whose wording differs from Connect's shipped version says
+     "edited". In the editor, a section that matches no section of the shipped
+     version carries a gold "Changed" tag, and while anything typed has not
+     been saved the Save button says so and wears a gold ring. Display only;
+     Save, the switches that save at once, ordering and the syllabus check are
+     untouched. Design: Magic Touches, 13b. */
+  .list button .aw-ed{font-weight:500; font-size:0.72rem; color:var(--gold-deep); margin-left:4px;}
+  .list button.active .aw-ed{color:oklch(88% 0.06 80);}
+  .aw-chg{flex:none; font-family:'Karla',sans-serif; font-size:0.64rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:2px 8px; border-radius:999px;
+    background:var(--gold-wash); border:1px solid var(--amber-edge); color:var(--gold-deep); white-space:nowrap;}
+  .section.aw-changed{border-left-color:var(--gold-deep);}
+  .aw-state{display:inline-flex; align-items:center; gap:6px; font-size:0.8rem; font-weight:600; color:var(--teal);}
+  .aw-state::before{content:''; width:7px; height:7px; border-radius:50%; background:var(--teal);}
+  .actions .btn.aw-dirty{box-shadow:0 0 0 3px oklch(70% 0.12 72 / .55);}
+  .actions .btn{transition:box-shadow .2s ease;}
+  .aw-title-tag{margin-left:10px; vertical-align:2px;}
+  @media(prefers-reduced-motion:reduce){ .actions .btn{transition:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610072216">
+<link rel="stylesheet" href="hub-house.css?v=202610072232">
 </head>
 <body class="hub-paper">
 <div class="board">
@@ -133,13 +153,13 @@
     <div class="editor" id="editor"></div>
   </div>
 </div>
-<script src="assignment-defaults.js?v=202610072216"></script>
-<script src="hub-due.js?v=202610072216"></script>
-<script src="hub-docx.js?v=202610072216"></script>
-<script src="hub-shared.js?v=202610072216"></script>
-<script src="hub-store.js?v=202610072216"></script>
-<script src="hub-say.js?v=202610072216"></script>
-<script src="hub-sync.js?v=202610072216"></script>
+<script src="assignment-defaults.js?v=202610072232"></script>
+<script src="hub-due.js?v=202610072232"></script>
+<script src="hub-docx.js?v=202610072232"></script>
+<script src="hub-shared.js?v=202610072232"></script>
+<script src="hub-store.js?v=202610072232"></script>
+<script src="hub-say.js?v=202610072232"></script>
+<script src="hub-sync.js?v=202610072232"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -443,7 +463,8 @@ function renderProseBanner(){
   el.style.borderColor = ok ? 'var(--sand-line)' : 'var(--brick)';
   el.style.borderLeftColor = ok ? 'var(--gold)' : 'var(--brick)';
   el.style.color = ok ? 'var(--ink)' : 'var(--brick)';
-  el.textContent = `${proseCount} of 4 core assignments marked continuous prose — the syllabus and the CELTA 5 say two <b>must</b> be in prose (Handbook 9.2.1 says should).`;
+  /* innerHTML: the sentence carries its own <b>; the only value in it is a count. */
+  el.innerHTML = `${Number(proseCount) || 0} of 4 core assignments marked continuous prose — the syllabus and the CELTA 5 say two <b>must</b> be in prose (Handbook 9.2.1 says should).`;
 }
 
 function renderEditor(){
@@ -625,6 +646,59 @@ $('list').addEventListener('click', e => {
 });
 
 renderList(); renderEditor(); renderProseBanner();
+
+/* ---- v2 (7 Oct 2026): what is yours, and what is not saved ---------------------
+   Compares DATA (edited in memory as you type) with DEFAULT_DATA (Connect's
+   shipped wording) and with the saved record in localStorage. The release
+   switch, due date and order are the course's settings, not wording, so they
+   are left out of "edited". Re-applies on input and after every render.
+   Stores nothing. */
+(function(){
+  const list = $('list'), ed = $('editor'); if (!list || !ed) return;
+  const SETTINGS_KEYS = ['dueAt', 'released'];
+  const wording = a => { if (!a) return ''; const c = JSON.parse(JSON.stringify(a)); SETTINGS_KEYS.forEach(k => delete c[k]);
+    (c.criteria || []).forEach((x, i) => { if (typeof x === 'string') c.criteria[i] = { text: x, sectionIndex: null }; }); return JSON.stringify(c); };
+  const saved = () => { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || null; } catch (e) { return null; } };
+  const normC = a => { if (!a) return 'null'; const c = JSON.parse(JSON.stringify(a)); (c.criteria || []).forEach((x, i) => { if (typeof x === 'string') c.criteria[i] = { text: x, sectionIndex: null }; }); return JSON.stringify(c); };
+  const sameAsSaved = key => { const sv = saved(); const base = sv ? sv[key] : (DEFAULT_DATA || {})[key]; return normC(DATA[key]) === normC(base); };
+  function marks(){
+    list.querySelectorAll('button[data-a]').forEach(b => {
+      const k = b.dataset.a, ed2 = DATA[k] && DEFAULT_DATA && DEFAULT_DATA[k] && wording(DATA[k]) !== wording(DEFAULT_DATA[k]);
+      let m = b.querySelector('.aw-ed');
+      if (ed2 && !m) b.insertAdjacentHTML('beforeend', '<span class="aw-ed">\u00b7 edited</span>');
+      if (!ed2 && m) m.remove();
+    });
+    const a = DATA[CURRENT], d = DEFAULT_DATA && DEFAULT_DATA[CURRENT];
+    if (a) {
+      const shipped = ((d && d.sections) || []).map(x => JSON.stringify(x));
+      ed.querySelectorAll('.section[data-i]').forEach(sec => {
+        const sx = a.sections[+sec.dataset.i]; if (!sx) return;
+        const changed = !d || shipped.indexOf(JSON.stringify(sx)) < 0;
+        sec.classList.toggle('aw-changed', changed);
+        const head = sec.querySelector('.section-head'); if (!head) return;
+        let t = head.querySelector('.aw-chg');
+        if (changed && !t) { t = document.createElement('span'); t.className = 'aw-chg'; t.textContent = 'Changed'; t.title = 'Differs from Connect\u2019s shipped wording'; head.appendChild(t); }
+        if (!changed && t) t.remove();
+      });
+    }
+    const btn = ed.querySelector('.actions .btn'); const note = $('savedNote');
+    if (btn && a) {
+      const dirty = !sameAsSaved(CURRENT);
+      btn.classList.toggle('aw-dirty', dirty);
+      btn.textContent = dirty ? 'Save assignment \u2014 not saved yet' : 'Save assignment';
+      let st = ed.querySelector('.aw-state');
+      if (dirty && !st && note) { st = document.createElement('span'); st.className = 'aw-state'; st.textContent = 'Changes not saved'; note.insertAdjacentElement('afterend', st); }
+      if (!dirty && st) st.remove();
+    }
+  }
+  let t = null; const soon = () => { clearTimeout(t); t = setTimeout(marks, 120); };
+  ed.addEventListener('input', soon); ed.addEventListener('change', soon); ed.addEventListener('click', soon);
+  list.addEventListener('click', soon);
+  const own = n => n.nodeType === 1 && /^aw-/.test(String(n.className || ''));
+  new MutationObserver(m => { if (m.some(r => [...r.addedNodes].some(n => n.nodeType === 1 && !own(n)))) soon(); }).observe(ed, { childList: true, subtree: true });
+  new MutationObserver(m => { if (m.some(r => [...r.addedNodes].some(n => n.nodeType === 1 && !own(n)))) soon(); }).observe(list, { childList: true });
+  marks();
+})();
 </script>
 </body>
 </html>

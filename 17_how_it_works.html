@@ -25,7 +25,7 @@
 <title>How Connect Lite works</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610072216">
+<link rel="stylesheet" href="hub-tokens.css?v=202610072232">
 <style>
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
     padding:0 20px 90px;}
@@ -112,6 +112,24 @@
      .hub-credit is styled everywhere else; the same rule, written here. */
   .foot .hub-credit{display:inline; margin-left:0; font-family:'Karla',sans-serif; font-size:11px; letter-spacing:0.01em; color:var(--gold-deep); opacity:.8; white-space:nowrap;}
   @media (max-width:640px){ h1{font-size:1.55rem;} section.card{padding:18px 18px 20px;} }
+
+  /* ---- v2 (7 Oct 2026): where you are on the page ------------------------------
+     The jump row stays at the top as you read and lights the section you are
+     in; an answer in Questions opens with a short slide instead of a jump.
+     Display only; the role filtering and the volunteer languages are
+     untouched. Design: Magic Touches, 14a. */
+  .jump{position:sticky; top:0; z-index:10; padding:10px 0; margin-top:16px; background:color-mix(in oklab, var(--sand) 92%, transparent); backdrop-filter:blur(6px);}
+  .jump a{transition:border-color .15s, background-color .2s, color .2s;}
+  .jump a.hw-on{background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  .jump a:focus-visible{outline:2px solid var(--gold-lifted); outline-offset:2px;}
+  section.card{scroll-margin-top:68px;}
+  details.q[open] > .a{animation:hw-open .28s cubic-bezier(.2,.7,.2,1) both;}
+  details.q > summary{transition:color .15s;}
+  details.q > summary:hover{color:var(--teal);}
+  @keyframes hw-open{from{opacity:0; transform:translateY(-6px);}to{opacity:1; transform:none;}}
+  @media(prefers-reduced-motion:reduce){ .jump a{transition:none;} details.q[open] > .a{animation:none;} }
+  @media(max-width:600px){ .jump{flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;} .jump a{flex:none;} }
+  @media print{ .jump{position:static; display:none;} }
 </style>
 </head>
 <body>
@@ -265,7 +283,7 @@
 
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 </div>
-<script src="hub-volunteer-i18n.js?v=202610072216"></script>
+<script src="hub-volunteer-i18n.js?v=202610072232"></script>
 <script>
 /* The volunteer section, in the reader's language. ?for=volunteer shows only
    this section (their page links here); ?lang=xx picks the language they
@@ -317,6 +335,26 @@
   });
   var p = document.querySelector('.title p');
   if (p) p.textContent = 'Your part of it. A whole CELTA course runs on Connect Lite, with no accounts and no passwords; your link is your way in, and the only thing you have to keep.';
+})();
+</script>
+<script>
+/* ---- v2 (7 Oct 2026): where you are on the page --------------------------------
+   Scroll-spy on the jump row: the section nearest the top (below the sticky
+   row) lights its pill. Hidden sections (role filtering) are skipped.
+   Stores nothing. */
+(function(){
+  var jump = document.querySelector('.jump'); if (!jump) return;
+  var pills = Array.prototype.slice.call(jump.querySelectorAll('a[href^="#"]'));
+  function spy(){
+    var y = jump.getBoundingClientRect().bottom + 24, cur = null;
+    pills.forEach(function (p) { var s = document.getElementById(p.getAttribute('href').slice(1)); if (!s || s.hidden || p.hidden) return; if (s.getBoundingClientRect().top <= y) cur = p; });
+    if (!cur) cur = pills.filter(function (p) { return !p.hidden; })[0];
+    pills.forEach(function (p) { var on = p === cur; p.classList.toggle('hw-on', on); if (on) p.setAttribute('aria-current', 'location'); else p.removeAttribute('aria-current'); });
+    if (cur && jump.scrollWidth > jump.clientWidth) { var l = cur.offsetLeft - 12; if (l < jump.scrollLeft || cur.offsetLeft + cur.offsetWidth > jump.scrollLeft + jump.clientWidth) jump.scrollTo({ left: l, behavior: 'smooth' }); }
+  }
+  var raf = 0; window.addEventListener('scroll', function () { if (!raf) raf = requestAnimationFrame(function () { raf = 0; spy(); }); }, { passive: true });
+  window.addEventListener('resize', spy); window.addEventListener('hashchange', function () { setTimeout(spy, 50); });
+  setTimeout(spy, 0);
 })();
 </script>
 </body>

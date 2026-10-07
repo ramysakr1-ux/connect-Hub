@@ -22,7 +22,7 @@
 <title>Pre-course task: the answer key</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610072216">
+<link rel="stylesheet" href="hub-tokens.css?v=202610072232">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -46,6 +46,27 @@
   .task .a.none{color:var(--grey); font-style:italic; border-left-color:var(--sand-line);}
   .empty{background:var(--surface); border:1px dashed var(--sand-line); border-radius:10px; padding:26px 22px; margin-top:16px; color:var(--grey); font-size:0.95rem; line-height:1.6;}
   @media print{ body{background:#fff; padding:0;} .back,.tools{display:none;} .task{border-color:#ccc;} }
+
+  /* ---- v2 (7 Oct 2026): try it first -------------------------------------------
+     For the trainee, each answer starts covered, with "Show the answer" to
+     lift it, so the key can be used the way it is meant: try, then check. A
+     count says how many have been checked, and "Show all" lifts the lot. Tutors
+     and assessors see every answer as before; print always shows every
+     answer. Nothing is stored. Design: Magic Touches, 14b. */
+  .pk .task .a{transition:filter .25s ease, opacity .25s ease;}
+  .pk .task.pk-cov .a{filter:blur(6px); opacity:.55; user-select:none; pointer-events:none;}
+  .pk .task.pk-cov .a.none{filter:none; opacity:1; pointer-events:auto;}
+  .pk-show{font:inherit; font-size:0.8rem; font-weight:600; color:var(--teal); background:var(--paper); border:1.5px solid var(--sand-line); border-radius:999px; padding:5px 12px; cursor:pointer; margin-top:10px;
+    transition:border-color .15s, transform .15s;}
+  .pk-show:hover{border-color:var(--teal); transform:translateY(-1px);}
+  .pk-show:focus-visible, .pk-all:focus-visible{outline:2px solid var(--gold-lifted); outline-offset:2px;}
+  .pk .task.pk-seen h3::after{content:'\2713'; margin-left:8px; color:var(--teal);}
+  .pk-count{font-size:0.82rem; color:var(--grey);}
+  .pk-count b{color:var(--ink); font-variant-numeric:tabular-nums;}
+  .pk-bar{display:inline-block; width:90px; height:5px; margin-left:8px; vertical-align:2px; border-radius:3px; background:oklch(91% 0.012 82); overflow:hidden;}
+  .pk-bar i{display:block; height:100%; background:var(--teal); border-radius:3px; transition:width .35s cubic-bezier(.2,.7,.2,1);}
+  @media(prefers-reduced-motion:reduce){ .pk .task .a, .pk-show, .pk-bar i{transition:none;} }
+  @media print{ .pk .task.pk-cov .a{filter:none; opacity:1;} .pk-show, .pk-count{display:none;} .pk .task.pk-seen h3::after{content:none;} }
 </style>
 </head>
 <body>
@@ -53,11 +74,11 @@
   <a class="back" id="back" href="index.html">&#8592; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610072216"></script>
-<script src="hub-store.js?v=202610072216"></script>
-<script src="hub-say.js?v=202610072216"></script>
-<script src="hub-sync.js?v=202610072216"></script>
-<script src="precourse-key.js?v=202610072216"></script>
+<script src="hub-shared.js?v=202610072232"></script>
+<script src="hub-store.js?v=202610072232"></script>
+<script src="hub-say.js?v=202610072232"></script>
+<script src="hub-sync.js?v=202610072232"></script>
+<script src="precourse-key.js?v=202610072232"></script>
 <script type="text/x-hub-app">
 /* A volunteer student is not on the course and has no pre-course task. */
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
@@ -90,6 +111,41 @@ function render(){
 }
 render();
 document.addEventListener('hub:ready', render);
+
+/* ---- v2 (7 Oct 2026): try it first ----------------------------------------------
+   Trainee view only. Layered on render() through a MutationObserver on #app;
+   which answers are lifted lives in memory for this visit. Stores nothing. */
+(function(){
+  const app = $('app'); if (!app || !IS_TRAINEE) return;
+  app.classList.add('pk');
+  const seen = new Set(); let all = false;
+  function apply(){
+    const tasks = [...app.querySelectorAll('.task')]; if (!tasks.length) return;
+    const keyed = tasks.filter(t => !t.querySelector('.a.none'));
+    tasks.forEach(t => {
+      const none = !!t.querySelector('.a.none'), open = all || none || seen.has(t.id);
+      t.classList.toggle('pk-cov', !open); t.classList.toggle('pk-seen', !none && seen.has(t.id));
+      let b = t.querySelector('.pk-show');
+      if (!open && !b) { t.insertAdjacentHTML('beforeend', '<button type="button" class="pk-show" data-pk="' + t.id + '">Show the answer</button>'); }
+      if (open && b) b.remove();
+    });
+    const tools = app.querySelector('.tools');
+    if (tools) {
+      let c = tools.querySelector('.pk-count'), btn = tools.querySelector('.pk-all');
+      if (!btn) { tools.insertAdjacentHTML('afterbegin', '<button type="button" class="btn pk-all"></button>'); btn = tools.querySelector('.pk-all'); }
+      btn.textContent = all ? 'Cover them again' : 'Show all the answers';
+      if (!c) { tools.insertAdjacentHTML('beforeend', '<span class="pk-count" aria-live="polite"></span>'); c = tools.querySelector('.pk-count'); }
+      const n = keyed.filter(t => seen.has(t.id)).length;
+      c.innerHTML = '<b>' + n + '</b> of ' + keyed.length + ' checked<span class="pk-bar"><i style="width:' + (keyed.length ? Math.round(100 * n / keyed.length) : 0) + '%"></i></span>';
+    }
+  }
+  app.addEventListener('click', e => {
+    const s = e.target.closest('.pk-show'); if (s) { seen.add(s.dataset.pk); apply(); return; }
+    if (e.target.closest('.pk-all')) { all = !all; if (all) app.querySelectorAll('.task').forEach(t => { if (!t.querySelector('.a.none')) seen.add(t.id); }); else seen.clear(); apply(); }
+  });
+  new MutationObserver(m => { if (m.some(r => [...r.addedNodes].some(n => n.nodeType === 1 && !/^pk-/.test(String(n.className || ''))))) apply(); }).observe(app, { childList: true });
+  apply();
+})();
 </script>
 </body>
 </html>

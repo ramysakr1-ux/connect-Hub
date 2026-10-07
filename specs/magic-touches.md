@@ -15,7 +15,6 @@ Every other state of both screens is untouched. Sections 1–4 cover every eleme
 
 **Not built from the design.** These are things the store doesn't hold; nothing is invented to fill them.
 - **1a:** no done ticks on the pre-course cards, because Lite doesn't record that the task was checked or an activity picked.
-- **1b:** no "What worked" card, because the strengths list key in `fb.state.lists` isn't fixed. Only starred items are read.
 - **1c:**
   - No observation-hours stat, since the trainee's observation store isn't read on the home page.
   - No "first vs last" pairing on one criterion. Only "Where you started" is shown, which is TP1's first starred point.
@@ -180,7 +179,7 @@ This replaces both of the old grey `.empty` sentences.
 | `.fv2-env + .doc` | margin-top 28 |
 
 ### State B: opening (`currentOpen`)
-- **Placement:** the panel `.fv2-open` goes in before the front sheet. It is only drawn when there is a grade or at least one starred point.
+- **Placement:** the panel `.fv2-open` goes in before the front sheet. It is only drawn when there is a grade, a strength or a starred point.
 - **Panel:** margin 0 0 26, padding 26/28, `--paper`, 1px `--sand-line`, radius 16.
 - **`.row`:** flex, space-between, gap 20.
   - Left: `.kk` "Teaching practice N · returned by {fTutor}", then `h2` "Before you read it all" (Newsreader 700, `clamp(26px,3.4vw,36px)`, `--teal-deep`).
@@ -189,10 +188,17 @@ This replaces both of the old grey `.empty` sentences.
   - `b`: Newsreader 700, 34px.
   - `span`: Instrument Sans 700, 9px, tracking 0.14em, uppercase, max-width 86px.
   - `role="img"` with the grade word as its label.
-- **Stars `.fv2-stars`:** margin-top 20, padding 18/20, radius 12, `--gold-wash`, 2px `--gold`.
+- **What worked + Stars (`.fv2-pair`):** a grid, `repeat(auto-fit,minmax(min(100%,260px),1fr))`, gap 14, margin-top 20. It holds the two cards below, side by side and stacking when narrow.
+- **A point:** each item is a list entry's `html` with its `[data-c]` criteria tags lifted out. The words come first, then each code as `.fv2-code`: inline-block, margin-left 6, padding 0 6, radius 5, 0.72rem 700. Code chips are teal on a 10% teal mix in What worked, and gold-deep on a 16% gold mix in Stars.
+- **What worked `.fv2-good`:**
+  - Card: padding 18/20, radius 12, `--paper`, 1px `oklch(78% 0.04 195)`.
+  - Label: "What worked · N", Instrument Sans 700, 10px, tracking 0.14em, uppercase, `--teal`.
+  - Items: from `lSP` and `lST` (planning strengths, then teaching), the first three. When there are more, a fourth line reads "and N more in the feedback below" (12.5px `--grey`). No bullets, gap 8, 14px, line-height 1.55, `--ink-warm`.
+  - First open: rises with `fv2-in` (.6s, delay .45s).
+- **Stars `.fv2-stars`:** margin 0 inside the pair (otherwise margin-top 20), padding 18/20, radius 12, `--gold-wash`, 2px `--gold`.
   - Label: "★ Carried into TP{N+1}", or "your next TP" past `HUB_MAX_TP`. Instrument Sans 700, 10px, tracking 0.14em, `--gold-deep`.
   - Each `li`: 14px, line-height 1.55, `--ink-warm`, with a ★ marker in `--gold-deep`.
-  - The items are every `it.star` across `fb.state.lists`, as text (HTML stripped).
+  - The items are the starred entries in `lAP` and `lAT`, each shown with its codes.
 - **First open only:**
   - **Trigger:** `chub:fbOpened:{N}` is not yet `'1'`, so the panel gets `.fresh`. The flag is then set.
   - **Panel:** `fv2-in`, .8s (rises 24px).
@@ -277,7 +283,7 @@ Nothing that a record depends on is written.
    - The envelope shows with the tutor's first name and "for {name}".
    - The button opens screen 2, and earlier sheets sit below.
 4. **Self-evaluation turned in, first open:**
-   - The panel rises and the stamp lands, with the starred points carried into TP N+1.
+   - The panel rises and the stamp lands. "What worked" (up to three strengths, each with its codes) sits beside the starred points carried into TP N+1.
    - Reloading shows the panel still, with no motion.
 5. **Grade N:** the stamp is ink-warm, not teal.
 6. **Print screen 4:** no envelope, the panel prints plainly, and the documents are unchanged.
@@ -529,6 +535,18 @@ Nothing that a record depends on is written.
   .fv2-stars ul{margin:0; padding:0 0 0 18px; display:flex; flex-direction:column; gap:6px;}
   .fv2-stars li{font-size:14px; line-height:1.55; color:var(--ink-warm);}
   .fv2-stars li::marker{content:'\2605  '; color:var(--gold-deep);}
+  /* What worked: the strengths, beside the starred points (Ramy, 7 Oct 2026) */
+  .fv2-pair{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); gap:14px; margin:20px 0 0;}
+  .fv2-pair .fv2-stars{margin:0;}
+  .fv2-good{padding:18px 20px; border-radius:12px; background:var(--paper); border:1px solid oklch(78% 0.04 195);}
+  .fv2-good p{margin:0 0 8px; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--teal);}
+  .fv2-good ul{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:8px;}
+  .fv2-good li{font-size:14px; line-height:1.55; color:var(--ink-warm);}
+  .fv2-good .more{font-size:12.5px; color:var(--grey);}
+  .fv2-code{display:inline-block; margin-left:6px; padding:0 6px; border-radius:5px; font-size:0.72rem; font-weight:700; vertical-align:1px;
+    background:color-mix(in oklab, var(--teal) 10%, var(--paper)); color:var(--teal);}
+  .fv2-stars .fv2-code{background:color-mix(in oklab, var(--gold) 16%, var(--paper)); color:var(--gold-deep);}
+  .fv2-open.fresh .fv2-good{animation:fv2-in .6s cubic-bezier(.2,.7,.2,1) .45s both;}
   .fv2-open.fresh .fv2-stamp{animation:fv2-stamp .7s cubic-bezier(.2,.7,.2,1) .3s both;}
   .fv2-open.fresh{animation:fv2-in .8s cubic-bezier(.2,.7,.2,1) both;}
   .fv2-open.fresh .fv2-stars{animation:fv2-in .6s cubic-bezier(.2,.7,.2,1) .55s both;}
@@ -586,18 +604,32 @@ if(currentHeld){
 if(currentOpen){
   const g = v2Grade(V2_F.fGrade);
   const L = (fb.state && fb.state.lists) || {};
-  const stars = Object.keys(L).reduce((a, k) => a.concat((L[k] || []).filter(it => it && it.star)), [])
-    .map(it => { const d = document.createElement('div'); d.innerHTML = it.html || ''; return d.textContent.trim(); }).filter(Boolean);
+  /* a point is its words plus the criteria tagged in it (the .tag[data-c]
+     spans the writer inserts), shown as small codes after the words */
+  const point = it => { const d = document.createElement('div'); d.innerHTML = (it && it.html) || '';
+    const codes = [...d.querySelectorAll('[data-c]')].map(t => t.getAttribute('data-c')).filter(Boolean);
+    d.querySelectorAll('[data-c]').forEach(t => t.remove());
+    return { text: d.textContent.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim(), codes: codes }; };
+  const fromLists = (ids, keep) => ids.reduce((a, k) => a.concat((L[k] || []).filter(keep)), []).map(point).filter(p => p.text);
+  /* strengths are lSP and lST, action points lAP and lAT (3_tutor_feedback.html) */
+  const good = fromLists(['lSP', 'lST'], it => !!it);
+  const stars = fromLists(['lAP', 'lAT'], it => it && it.star);
+  const line = p => '<li>' + v2esc(p.text) + p.codes.map(c => '<span class="fv2-code">' + v2esc(c) + '</span>').join('') + '</li>';
+  const GOOD_MAX = 3;
   let fresh = false; const key = 'chub:fbOpened:' + (V2_N || 'x');
   try { fresh = localStorage.getItem(key) !== '1'; localStorage.setItem(key, '1'); } catch (e) {}
-  if (g || stars.length) {
+  if (g || stars.length || good.length) {
     const nextN = V2_N ? (parseInt(V2_N, 10) + 1) : 0;
     content.insertAdjacentHTML('beforeend', '<section class="fv2-open' + (fresh ? ' fresh' : '') + '">'
       + '<div class="row"><div><p class="kk">' + (V2_N ? 'Teaching practice ' + v2esc(V2_N) : 'Teaching practice') + (V2_TUTOR ? ' \u00b7 returned by ' + v2esc(V2_TUTOR) : '') + '</p>'
       + '<h2>Before you read it all</h2></div>'
       + (g ? '<div class="fv2-stamp' + (g.n ? ' n' : '') + '" role="img" aria-label="' + v2esc(g.word) + '"><b>' + v2esc(g.mark) + '</b><span>' + v2esc(g.word) + '</span></div>' : '')
       + '</div>'
-      + (stars.length ? '<div class="fv2-stars"><p>\u2605 Carried into ' + (nextN && nextN <= HUB_MAX_TP ? 'TP' + nextN : 'your next TP') + '</p><ul>' + stars.map(s => '<li>' + v2esc(s) + '</li>').join('') + '</ul></div>' : '')
+      + ((good.length || stars.length) ? '<div class="fv2-pair">'
+        + (good.length ? '<div class="fv2-good"><p>What worked \u00b7 ' + good.length + '</p><ul>' + good.slice(0, GOOD_MAX).map(line).join('')
+            + (good.length > GOOD_MAX ? '<li class="more">and ' + (good.length - GOOD_MAX) + ' more in the feedback below</li>' : '') + '</ul></div>' : '')
+        + (stars.length ? '<div class="fv2-stars"><p>\u2605 Carried into ' + (nextN && nextN <= HUB_MAX_TP ? 'TP' + nextN : 'your next TP') + '</p><ul>' + stars.map(line).join('') + '</ul></div>' : '')
+        + '</div>' : '')
       + '</section>');
   }
 }
