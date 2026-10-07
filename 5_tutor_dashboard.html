@@ -23,7 +23,7 @@
 <title>Connect Lite — Tutor dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610071917">
+<link rel="stylesheet" href="hub-tokens.css?v=202610071923">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -147,7 +147,7 @@
   .wname input:focus{outline:none; border-color:var(--teal); background:#fff; box-shadow:0 0 0 3px rgba(31,111,107,0.12);}
   .wname small{display:block; margin-top:5px; font-size:0.78rem; color:var(--grey);}
   .welcome.join{margin-bottom:22px;}
-  body.joining .chrome .right input, body.joining #headSig{display:none !important;}
+  body.joining .chrome .right input{display:none !important;}
   .welcome.join .wgo{display:flex; gap:16px; align-items:center; flex-wrap:wrap;}
   .welcome .linkbtn{background:none; border:none; padding:0; font:inherit; font-size:0.85rem; font-weight:600; color:var(--teal); cursor:pointer; text-decoration:underline; text-decoration-color:var(--sand-line); text-underline-offset:3px;}
   .welcome .linkbtn:hover{text-decoration-color:var(--teal);}
@@ -291,7 +291,7 @@
     .grow .st.obs::before{content:'Observations · '; color:var(--grey); font-weight:400;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610071917">
+<link rel="stylesheet" href="hub-house.css?v=202610071923">
 </head>
 <body>
 <div class="board">
@@ -380,22 +380,22 @@
 
 </div>
 
-<script src="hub-due.js?v=202610071917"></script>
-<script src="observation-defaults.js?v=202610071917"></script>
-<script src="hub-shared.js?v=202610071917"></script>
-<script src="hub-store.js?v=202610071917"></script>
-<script src="hub-say.js?v=202610071917"></script>
-<script src="hub-hand.js?v=202610071917"></script>
-<script src="hub-ink.js?v=202610071917"></script>
-<script src="hub-shelf.js?v=202610071917"></script>
+<script src="hub-due.js?v=202610071923"></script>
+<script src="observation-defaults.js?v=202610071923"></script>
+<script src="hub-shared.js?v=202610071923"></script>
+<script src="hub-store.js?v=202610071923"></script>
+<script src="hub-say.js?v=202610071923"></script>
+<script src="hub-hand.js?v=202610071923"></script>
+<script src="hub-ink.js?v=202610071923"></script>
+<script src="hub-shelf.js?v=202610071923"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202610071917"></script>
-<script src="hub-sync.js?v=202610071917"></script>
-<script src="hub-tracker.js?v=202610071917"></script>
-<script src="hub-feedback.js?v=202610071917"></script>
+<script src="assignment-defaults.js?v=202610071923"></script>
+<script src="hub-sync.js?v=202610071923"></script>
+<script src="hub-tracker.js?v=202610071923"></script>
+<script src="hub-feedback.js?v=202610071923"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a trainee's link opened it and read the course and
@@ -800,7 +800,7 @@ function paintJoin(s){
     '<div class="wgo"><button class="btn primary" type="button" id="joinGo">Take me to the page</button>' +
     '<button class="linkbtn" type="button" id="joinSetup">Setting this course up yourself? See the setup steps</button></div>';
   const j = document.getElementById('joinName');
-  j.addEventListener('input', () => { nameInput.value = j.value; try { localStorage.setItem('chub:tutorName', j.value); } catch (e) {} drawSig(document.getElementById('joinSig'), j.value); drawSig(document.getElementById('headSig'), j.value); });
+  j.addEventListener('input', () => { nameInput.value = j.value; try { localStorage.setItem('chub:tutorName', j.value); } catch (e) {} drawSig(document.getElementById('joinSig'), j.value); });
   drawSig(document.getElementById('joinSig'), j.value);
   if (!stored) setTimeout(() => { try { j.focus({ preventScroll: true }); } catch (e) {} }, 60);
   document.getElementById('joinGo').addEventListener('click', () => { try { localStorage.setItem('chub:welcomed', '1'); } catch (e) {} document.body.classList.remove('joining'); (window.hubFadeAway || (el => el.remove()))(host); });
@@ -871,8 +871,10 @@ try{
 if (window.hubInstallHint) hubInstallHint(document.getElementById('installHint'), 'tutor');
 const nameInput=document.getElementById('tutorName');
 nameInput.value = localStorage.getItem('chub:tutorName') || '';
-nameInput.addEventListener('input', ()=>{ localStorage.setItem('chub:tutorName', nameInput.value); drawSig(document.getElementById('headSig'), nameInput.value); });
-(function(){ const h = document.createElement('span'); h.id = 'headSig'; h.className = 'wsig head'; nameInput.insertAdjacentElement('afterend', h); drawSig(h, nameInput.value); })();
+/* The header's box is a plain name; the signature is shown where the name is
+   first typed, on the welcome card (8 Oct 2026). Typing here keeps the
+   signature kept against the new name, so the CELTA 5 still signs with a click. */
+nameInput.addEventListener('input', ()=>{ localStorage.setItem('chub:tutorName', nameInput.value); try { if (nameInput.value.trim()) localStorage.setItem('chub:tutorSigKept', nameInput.value.trim()); } catch (e) {} });
 
 /* ---- the course stream ----------------------------------------------------
    Posts go to the store one at a time (op 'post'); the store appends under
