@@ -94,7 +94,8 @@ const SETTINGS = { centreName:'Elmswood English Centre', centreNumber:'TR999', c
   agreement:{ agrAttendance:'We expect 100% attendance.', agrPlagiarism:'Your own work, always.' },
   docs:{}, courseLinks:[], onlineRooms:[{label:'Teaching practice',url:'https://meet.google.com/x'}],
   tutorContacts:[], volunteerContact:{ name:'Reception', email:'r@x.com' } };
-/* SETTINGS_JSON='{"demoToday":"2026-02-27","preCourseConnect":true}' merges
+/* WIDTH=1100 walks at that viewport width instead of a phone's 390.
+   SETTINGS_JSON='{"demoToday":"2026-02-27","preCourseConnect":true}' merges
    into the seeded settings, so a run can stand on another day of the course
    or with another switch set without editing this file (8 Oct 2026, to see
    the welcome card before day one with Connect's pre-course set on). */
@@ -233,7 +234,7 @@ const REFUSED = /This room belongs to|Open your course link|This link no longer 
 const NOBODY = /Name a (candidate|trainee) in the link|isn[’']t set up yet/i;
 if (process.env.DOORS) {
   for (const role of ROLES) {
-    const ctx = await browser.newContext({ viewport: { width: 390, height: 860 } });
+    const ctx = await browser.newContext({ viewport: { width: parseInt(process.env.WIDTH, 10) || 390, height: 860 } });
     const page = await ctx.newPage();
     await page.goto(`http://127.0.0.1:${PORT}/${LANDING[role][0]}`, { waitUntil: 'domcontentloaded' });
     await page.evaluate(seed => { localStorage.clear();
@@ -284,7 +285,7 @@ for (const role of ROLES) {
     if (want === 'refuse' || want.startsWith('goes:')) continue;   // check-screens owns those
     const where = `${role} · ${screen}`;
     if (ONLY && !ONLY.test(where)) continue;
-    const ctx = await browser.newContext({ viewport: { width: 390, height: 860 }, deviceScaleFactor: 1 });
+    const ctx = await browser.newContext({ viewport: { width: parseInt(process.env.WIDTH, 10) || 390, height: 860 }, deviceScaleFactor: 1 });
     const page = await ctx.newPage();
     const errs = [];
     page.on('pageerror', e => { const t = String(e); if (!/stopping this page on purpose/.test(t)) errs.push('threw: ' + t.slice(0, 120)); });
