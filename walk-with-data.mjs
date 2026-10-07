@@ -94,6 +94,11 @@ const SETTINGS = { centreName:'Elmswood English Centre', centreNumber:'TR999', c
   agreement:{ agrAttendance:'We expect 100% attendance.', agrPlagiarism:'Your own work, always.' },
   docs:{}, courseLinks:[], onlineRooms:[{label:'Teaching practice',url:'https://meet.google.com/x'}],
   tutorContacts:[], volunteerContact:{ name:'Reception', email:'r@x.com' } };
+/* SETTINGS_JSON='{"demoToday":"2026-02-27","preCourseConnect":true}' merges
+   into the seeded settings, so a run can stand on another day of the course
+   or with another switch set without editing this file (8 Oct 2026, to see
+   the welcome card before day one with Connect's pre-course set on). */
+if (process.env.SETTINGS_JSON) Object.assign(SETTINGS, JSON.parse(process.env.SETTINGS_JSON));
 
 /* The timetable's shape (23_timetable.html): `slots` is the DAY'S template --
    no dates on it -- and `days` carries the dates. Sixteen dated slots here

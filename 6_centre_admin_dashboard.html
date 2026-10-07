@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610071231">
+<link rel="stylesheet" href="hub-tokens.css?v=202610071248">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -367,7 +367,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610071231">
+<link rel="stylesheet" href="hub-house.css?v=202610071248">
 </head>
 <body>
 <div class="board">
@@ -550,6 +550,22 @@
     Teaching practices each is how many every trainee teaches on this course — eight if you leave it
     empty. It is what lets a trainee's own page know when they have finished rather than going on
     asking for another lesson plan.</p>
+    </section>
+    <section class="setcard">
+    <!-- 8 Oct 2026. Ramy: "pre-course task, and I think this should be its own
+         section... pill off and on. On means they receive an email with an
+         invitation to Connect Lite and they log in with their link, they have
+         their hero card, and it tells them about the pre-course task answer
+         key and the getting-to-know-you that they're supposed to do on day
+         one." One switch. On, the trainee's welcome card carries Lite's own
+         two pages and says what to do; off, the centre's own links on the
+         Before the course card under Files for trainees do the job, as before.
+         The pages: 30_precourse_key.html and 31_getting_to_know_you.html. -->
+    <h3 class="docsh">Before the course</h3>
+    <p class="note" style="margin-top:0;">On, and Connect handles the time before day one: the trainee’s welcome card tells them to check their pre-course task against the answer key, which opens two days before the start, and to pick one of three getting-to-know-you activities for the level they teach, to run for about ten minutes on the first afternoon. Off, and you paste your own links under Files for trainees.</p>
+    <div class="fields" style="margin-top:14px;">
+      <div class="wide"><label class="sw" style="padding:4px 0;"><input type="checkbox" id="preCourseConnect"><span class="track"></span><span class="lbl" id="preCourseLbl">Connect’s pre-course set is off</span></label></div>
+    </div>
     </section>
     <section class="setcard">
     <!-- Handbook 14.1: the centre gives the assessor "a maximum of two links
@@ -740,13 +756,13 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610071231"></script>
-<script src="hub-store.js?v=202610071231"></script>
-<script src="hub-say.js?v=202610071231"></script>
-<script src="agreement-defaults.js?v=202610071231"></script>
-<script src="observation-defaults.js?v=202610071231"></script>
-<script src="hub-shared.js?v=202610071231"></script>
-<script src="hub-sync.js?v=202610071231"></script>
+<script src="assignment-defaults.js?v=202610071248"></script>
+<script src="hub-store.js?v=202610071248"></script>
+<script src="hub-say.js?v=202610071248"></script>
+<script src="agreement-defaults.js?v=202610071248"></script>
+<script src="observation-defaults.js?v=202610071248"></script>
+<script src="hub-shared.js?v=202610071248"></script>
+<script src="hub-sync.js?v=202610071248"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -955,6 +971,7 @@ try {
     if(cs.agreement) AGREEMENT_FIELDS.forEach(k=>{ if(cs.agreement[k]) document.getElementById(k).value = cs.agreement[k]; });
     if(cs.docs) DOC_FIELDS.forEach(k=>{ if(cs.docs[k]) document.getElementById(k).value = cs.docs[k]; });
     if(cs.logo){ courseLogo = cs.logo; applyLogoPreview(courseLogo); }
+    document.getElementById('preCourseConnect').checked = !!cs.preCourseConnect; preCourseLabel();
     if(Array.isArray(cs.courseLinks)) CAND_LINKS = cs.courseLinks.filter(l => l && (l.label || l.url));
     if(cs.volunteerContact){ document.getElementById('volContactName').value = cs.volunteerContact.name || ''; document.getElementById('volContactEmail').value = cs.volunteerContact.email || ''; }
     if(Array.isArray(cs.tutorContacts)) CONTACTS = cs.tutorContacts.filter(c => c && (c.name || c.email)).map(c => ({ name: c.name || '', email: c.email || '', group: c.group || '', role: c.role || '' }));
@@ -1059,6 +1076,7 @@ document.getElementById('saveSettings').addEventListener('click', () => {
     assessorVisit: [...document.querySelectorAll('.avpick:checked')].map(b=>b.value),
     agreement: AGREEMENT_FIELDS.reduce((o,k)=>{ const v = document.getElementById(k).value.trim(); if (v) o[k] = v; return o; }, {}),
     docs: DOC_FIELDS.reduce((o,k)=>{ const v = document.getElementById(k).value.trim(); if (v) o[k] = v; return o; }, {}),
+    preCourseConnect: document.getElementById('preCourseConnect').checked,
     courseLinks: readCandLinks(),
     onlineRooms: readRooms(),
     tutorContacts: readContacts(),
@@ -1203,6 +1221,8 @@ function readRooms(){
 }
 document.getElementById('addOnlineRoom').addEventListener('click', () => { readRooms(); ROOMS.push({ label:'', url:'', group:'', level:'', assessor:false }); renderRooms(); });
 
+function preCourseLabel(){ const on = document.getElementById('preCourseConnect').checked; document.getElementById('preCourseLbl').textContent = on ? 'Connect\u2019s pre-course set is on' : 'Connect\u2019s pre-course set is off'; }
+document.getElementById('preCourseConnect').addEventListener('change', () => { preCourseLabel(); readCandLinks(); renderCandLinks(); });
 function renderCandLinks(){
   if (!CAND_LINKS) CAND_LINKS = []; // the load block calls this before the var below is assigned
   /* Ramy, 28 Sep 2026: the cards are Timetable, CELTA 5, Input sessions and
@@ -1226,9 +1246,13 @@ function renderCandLinks(){
      timetable since 29 Sep and a pasted row for it shows the trainees
      nothing. */
   const BEFORE_CARD = 'Before the course';
-  const SUG = [['Pre-course task and answer key', '', BEFORE_CARD],
-               ['Getting-to-know-you activities', '', BEFORE_CARD],
-               ['CELTA 5', '', ''], ['TP points', '', '']];
+  /* With Connect's pre-course set switched on (its own card, above), the two
+     Before the course rows are Connect's job and are not suggested here; a
+     row the centre typed stays whatever the switch says. */
+  const connectPre = !!(document.getElementById('preCourseConnect') || {}).checked;
+  const SUG = (connectPre ? [] : [['Pre-course task and answer key', '', BEFORE_CARD],
+               ['Getting-to-know-you activities', '', BEFORE_CARD]]).concat(
+              [['CELTA 5', '', ''], ['TP points', '', '']]);
   /* Ramy, 28 Sep 2026: "the course ships a starting list" -- the standard
      input sessions as empty rows under their card, so the centre pastes
      links against names. Only on a course with no input sessions yet. */

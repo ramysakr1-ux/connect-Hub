@@ -25,7 +25,7 @@
 <title>Getting to know you</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610071231">
+<link rel="stylesheet" href="hub-tokens.css?v=202610071248">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -61,11 +61,11 @@
   <a class="back" id="back" href="index.html">&#8592; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610071231"></script>
-<script src="hub-store.js?v=202610071231"></script>
-<script src="hub-say.js?v=202610071231"></script>
-<script src="hub-sync.js?v=202610071231"></script>
-<script src="gtky-bank.js?v=202610071231"></script>
+<script src="hub-shared.js?v=202610071248"></script>
+<script src="hub-store.js?v=202610071248"></script>
+<script src="hub-say.js?v=202610071248"></script>
+<script src="hub-sync.js?v=202610071248"></script>
+<script src="gtky-bank.js?v=202610071248"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -74,43 +74,63 @@ function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace
 const rec = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch(e){ return null; } };
 const IS_TRAINEE = !!(window.HubStore && HubStore.isTrainee && HubStore.isTrainee());
 const ME = rec('hub:me') || {};
-const MY_NAME = String(ME.name || '').trim(), MY_GROUP = String(ME.group || '').trim();
+const MY_NAME = String(ME.name || '').trim(), MY_GROUP = String(ME.group || '').trim(), MY_TOKEN = String(ME.token || (HubStore.token && HubStore.token()) || '');
 if (!IS_TRAINEE) $('back').href = (window.HubStore && HubStore.isAssessor && HubStore.isAssessor()) ? '12_assessor_pack.html' : '5_tutor_dashboard.html';
 const BANK = window.CONNECT_HUB_GTKY || [];
 const HIGH = { pre:1, inter:1, upper:1 };
 const BAND_NAME = { low: 'Beginner and elementary', high: 'Pre-intermediate and above' };
-/* The group's level, from the TP point set the centre gave it, if any:
-   A1/A2 are the low band, A2+ and up the high one (Connect's two-band rule). */
+/* The group's level, from the TP point set the centre gave it: A1/A2 are the
+   low band, A2+ and up the high one (Connect's two-band rule). */
 function bandFromLevel(level){ const m = String(level || '').toUpperCase().match(/\b([ABC][12])(\+?)/); if (!m) return ''; const code = m[1] + m[2]; return code === 'A1' || code === 'A2' ? 'low' : 'high'; }
 function groupBand(g){ const P = rec('connect_tp_points_v1') || {}; const set = (P.set || {}); const id = (set.setFor || {})[g]; const S = id && (set.library || {})[id]; return S ? bandFromLevel(S.level || S.book) : ''; }
 function settings(){ return rec('connect_course_settings') || {}; }
 function mode(){ const m = String(settings().deliveryMode || 'f2f'); return m === 'online' ? 'online' : 'f2f'; }
+function roster(){ const r = rec('connect_roster_v1') || {}; return Object.values(r.trainees || {}); }
 function shared(){ return (rec('connect_shared_v1') || []).filter(x => (x.kind || '') === 'gtky'); }
-function pickFor(g){ return shared().find(x => new RegExp('\\u2014 Group ' + g.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$').test(String(x.name || ''))) || null; }
+/* A pick is a shared row named "<activity> — <trainee>". */
+const SEP = ' — ';
+function pickOf(name){ return shared().find(x => String(x.name || '').endsWith(SEP + name)) || null; }
+function activityOf(row){ const n = String((row && row.name) || ''); const i = n.lastIndexOf(SEP); return i > 0 ? n.slice(0, i) : n; }
+/* THREE EACH. Every trainee is offered three from the pool for their band and
+   the course's mode, their own three, stable for them: dealt from the pool by
+   a hash of their token, stepping through it so two trainees in the same
+   group rarely get the same three (Ramy, 8 Oct 2026: "they have three that
+   were chosen depending on the level, and they will choose one of them"). */
+function hash(str){ let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h; }
+/* The step can share a factor with the pool's size (27 in 54 visits two
+   activities and comes round again), so the walk is bounded and a short cycle
+   is finished one at a time from where it stopped. */
+function offered(pool, seed){ if (pool.length <= 3) return pool.slice(); const out = [], n = pool.length, start = hash(seed) % n, step = 1 + (hash(seed + '|') % (n - 1)); let i = start; for (let k = 0; k < n && out.length < 3; k++, i += step) { const a = pool[i % n]; if (out.indexOf(a) < 0) out.push(a); } for (let j = start; out.length < 3; j++) { const a = pool[j % n]; if (out.indexOf(a) < 0) out.push(a); } return out; }
 let band = '', busy = false, note = '';
+function minutesLine(){ const n = roster().length; return 'About ten minutes each on the first afternoon' + (n ? ', so ' + n + ' of you fill about ' + (n * 8) + '–' + (n * 10) + ' minutes' : '') + '.'; }
 function render(){
   const g = MY_GROUP, m = mode();
   if (!band) band = groupBand(g) || (IS_TRAINEE ? '' : 'high');
-  const pick = g ? pickFor(g) : null;
+  const mine = IS_TRAINEE ? pickOf(MY_NAME) : null;
   const head = `<div class="title"><h1>Getting to know you</h1>
-    <p>One short activity for your group's first afternoon with your students, after the demonstration lesson. Unassessed, and no tutor in the room. Read the ones that fit, agree with your group, and pick one here; your tutor sees the pick on the shelf.</p></div>`;
-  const pickBox = g
-    ? (pick ? `<div class="pick"><b>Group ${esc(g)} has picked: ${esc(String(pick.name).replace(/ \u2014 Group .*$/, ''))}</b><br><span class="note">by ${esc(pick.by || 'a trainee')}. To change it, the person who picked takes it back below and someone picks again.</span></div>`
-            : `<div class="pick"><b>Group ${esc(g)} has not picked yet.</b><br><span class="note">Anyone in the group can pick for everyone; one pick is the group's.</span></div>`)
-    : (IS_TRAINEE ? '<div class="pick"><b>You are not in a group yet.</b><br><span class="note">Your tutor puts you in one; until then, read.</span></div>' : '<div class="pick"><b>The bank, as the trainees see it.</b><br><span class="note">A group’s pick shows on the shelf on your dashboard.</span></div>');
-  const bands = `<div class="bands"><span>Level of your students:</span>
+    <p>${IS_TRAINEE ? 'One short activity to run with your students on the first afternoon, after the demonstration lesson. Unassessed, no tutor in the room. Here are three for the level you teach: read them, pick one, and that is all you need to do before day one. ' + esc(minutesLine()) : 'What the trainees see before day one: three activities each from Connect’s bank for the level they teach, and a pick. The picks land on the shelf on your dashboard. ' + esc(minutesLine())}</p></div>`;
+  const pickBox = IS_TRAINEE
+    ? (mine ? `<div class="pick"><b>Your pick: ${esc(activityOf(mine))}</b><br><span class="note">Your tutor and your group see it on the shelf. Changed your mind? Take it back below and pick again.</span></div>`
+            : `<div class="pick"><b>You have not picked yet.</b><br><span class="note">Pick one of the three. You can change it until day one.</span></div>`)
+    : (function(){ const picks = shared(); return picks.length
+        ? `<div class="pick"><b>${picks.length} pick${picks.length === 1 ? '' : 's'} so far</b><br><span class="note">${picks.map(x => esc(String(x.name || ''))).join(' &middot; ')}</span></div>`
+        : '<div class="pick"><b>No picks yet.</b><br><span class="note">Each trainee picks from their own link; the picks show here and on your shelf.</span></div>'; })();
+  const bands = `<div class="bands"><span>${IS_TRAINEE ? 'Level of your students:' : 'Level:'}</span>
     <button class="chip${band === 'low' ? ' on' : ''}" type="button" data-band="low">${BAND_NAME.low}</button>
     <button class="chip${band === 'high' ? ' on' : ''}" type="button" data-band="high">${BAND_NAME.high}</button>
     <span>&middot; ${m === 'online' ? 'online course' : 'in the room'}</span></div>`;
-  if (!band) { $('app').innerHTML = head + pickBox + bands + '<div class="empty">Choose the level of your students above and the activities that fit appear.</div>'; wire(); return; }
-  const fits = BANK.filter(a => (band === 'high') === !!HIGH[a.level] && (a.mode === 'both' || a.mode === m));
-  const list = fits.map(a => { const mine = pick && String(pick.name || '').indexOf(a.name + ' \u2014 ') === 0;
-    return `<div class="act${mine ? ' chosen' : ''}" id="${esc(a.slug)}"><h2>${esc(a.name)}</h2><p class="meta">${esc(a.meta)}</p>
+  if (!band) { $('app').innerHTML = head + pickBox + bands + '<div class="empty">Choose the level of your students above and your three appear.</div>'; wire(); return; }
+  const pool = BANK.filter(a => (band === 'high') === !!HIGH[a.level] && (a.mode === 'both' || a.mode === m));
+  const show = IS_TRAINEE ? offered(pool, MY_TOKEN || MY_NAME || 'x') : pool;
+  /* A pick made from an earlier three (the level changed) stays visible. */
+  if (mine && !show.some(a => a.name === activityOf(mine))) { const a = BANK.find(x => x.name === activityOf(mine)); if (a) show.unshift(a); }
+  const list = show.map(a => { const isMine = mine && activityOf(mine) === a.name;
+    return `<div class="act${isMine ? ' chosen' : ''}" id="${esc(a.slug)}"><h2>${esc(a.name)}</h2><p class="meta">${esc(a.meta)}</p>
       <ol>${a.steps.map(s => '<li>' + esc(s) + '</li>').join('')}</ol>
       ${m === 'online' && a.onlineNote ? `<p class="online">${esc(a.onlineNote)}</p>` : ''}
-      ${IS_TRAINEE && g ? `<div class="row">${mine
-          ? (pick.by === MY_NAME ? `<button class="btn ghost" type="button" data-unpick="${esc(pick.id)}"${busy ? ' disabled' : ''}>Take the pick back</button>` : '<span class="note">Your group’s pick.</span>')
-          : (pick ? '<span class="note">The group has picked another; it can be taken back by whoever picked it.</span>' : `<button class="btn" type="button" data-pick="${esc(a.slug)}"${busy ? ' disabled' : ''}>Pick this for Group ${esc(g)}</button>`)}</div>` : ''}
+      ${IS_TRAINEE ? `<div class="row">${isMine
+          ? `<button class="btn ghost" type="button" data-unpick="${esc(mine.id)}"${busy ? ' disabled' : ''}>Take it back</button><span class="note">Your pick.</span>`
+          : (mine ? '<span class="note">Take your pick back to choose this instead.</span>' : `<button class="btn" type="button" data-pick="${esc(a.slug)}"${busy ? ' disabled' : ''}>Pick this one</button>`)}</div>` : ''}
     </div>`; }).join('');
   $('app').innerHTML = head + pickBox + bands + (note ? `<p class="note" style="margin:12px 0 0;">${esc(note)}</p>` : '') + list;
   wire();
@@ -121,21 +141,19 @@ async function pickIt(slug){
   if (!MY_NAME) { note = 'Your name is missing — open your own link again.'; render(); return; }
   busy = true; note = 'Picking…'; render();
   try {
-    const body = { op: 'shareMaterial', name: a.name + ' \u2014 Group ' + MY_GROUP, url: location.href.split('#')[0] + '#' + a.slug, by: MY_NAME, tp: '', kind: 'gtky' };
+    const body = { op: 'shareMaterial', name: a.name + SEP + MY_NAME, url: location.href.split('#')[0] + '#' + a.slug, by: MY_NAME, tp: '', kind: 'gtky' };
     if (HubStore.token && HubStore.token()) body.token = HubStore.token();
-    const r = await HubStore.call(body); write(r.shared || []); note = 'Picked for Group ' + MY_GROUP + '. Your tutor and your group see it on the shelf.';
+    const r = await HubStore.call(body); write(r.shared || []); note = 'Picked. Your tutor sees it on the shelf.';
   } catch (err) { note = 'Not picked — ' + (err && err.message || err); }
   busy = false; render(); setTimeout(() => { note = ''; render(); }, 3000);
 }
 async function unpick(id){
   if (busy) return;
-  const ok = window.confirmModal ? await confirmModal('Take the pick back, so the group can choose again?', 'Take back') : confirm('Take the pick back?');
-  if (!ok) return;
-  busy = true; note = 'Taking back…'; render();
+  busy = true; note = 'Taking it back…'; render();
   try {
     const body = { op: 'unshareMaterial', id: id };
     if (HubStore.token && HubStore.token()) body.token = HubStore.token();
-    const r = await HubStore.call(body); write(r.shared || []); note = 'Taken back.';
+    const r = await HubStore.call(body); write(r.shared || []); note = 'Taken back. Pick again.';
   } catch (err) { note = 'Not taken back — ' + (err && err.message || err); }
   busy = false; render(); setTimeout(() => { note = ''; render(); }, 2600);
 }
@@ -146,6 +164,7 @@ function wire(){
 }
 render();
 document.addEventListener('hub:ready', () => { band = band || groupBand(MY_GROUP); render(); });
+
 </script>
 </body>
 </html>

@@ -25,7 +25,7 @@
 <title>Connect Lite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610071231">
+<link rel="stylesheet" href="hub-tokens.css?v=202610071248">
 <style>
   :root{
     /* The pane. A card on this page is a sheet of glass lying on the paper,
@@ -302,7 +302,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610071231">
+<link rel="stylesheet" href="hub-house.css?v=202610071248">
 </head>
 <body>
 <div class="board">
@@ -491,15 +491,15 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202610071231"></script>
-<script src="observation-defaults.js?v=202610071231"></script>
-<script src="hub-shared.js?v=202610071231"></script>
-<script src="hub-store.js?v=202610071231"></script>
-<script src="hub-say.js?v=202610071231"></script>
-<script src="hub-shelf.js?v=202610071231"></script>
-<script src="hub-front.js?v=202610071231"></script>
-<script src="hub-sync.js?v=202610071231"></script>
-<script src="hub-feedback.js?v=202610071231"></script>
+<script src="hub-due.js?v=202610071248"></script>
+<script src="observation-defaults.js?v=202610071248"></script>
+<script src="hub-shared.js?v=202610071248"></script>
+<script src="hub-store.js?v=202610071248"></script>
+<script src="hub-say.js?v=202610071248"></script>
+<script src="hub-shelf.js?v=202610071248"></script>
+<script src="hub-front.js?v=202610071248"></script>
+<script src="hub-sync.js?v=202610071248"></script>
+<script src="hub-feedback.js?v=202610071248"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -1118,7 +1118,19 @@ if (fbBack){
       + (n === 1 ? ' — tomorrow.' : n > 1 ? ' — ' + n + ' days from today.' : '.')
       + (waiting.length ? ' There is nothing to teach yet; these are the things to do before day one.'
                         : ' There is nothing to do yet — this page will tell you the moment there is.');
-    list = preLinks.map(l => ({ text: String(l.label || 'Before the course'), href: l.url, out: true })).concat(list);
+    /* Connect's pre-course set (Course admin, Before the course, 8 Oct 2026):
+       the two pages of Lite's own and one sentence on what to do. */
+    /* Short on purpose (Ramy, 8 Oct 2026: "too much writing"): one line on
+       the card, and what each thing is lives on the item itself. */
+    const keyOpens = (function(){ const m = String(START || '').match(/^(\d{4})-(\d{2})-(\d{2})/); if (!m) return ''; const d = new Date(Date.UTC(+m[1], +m[2]-1, +m[3])); d.setUTCDate(d.getUTCDate() - 2); return d.toISOString().slice(0, 10); })();
+    const preSet = CS.preCourseConnect
+      ? [{ text: 'Check your pre-course task against the answer key' + (keyOpens && TODAY && TODAY < keyOpens ? ' (it opens ' + shortDay(keyOpens) + ')' : ''), href: '30_precourse_key.html' },
+         { text: 'Pick your getting-to-know-you activity (ten minutes, on the first afternoon)', href: '31_getting_to_know_you.html' }]
+      : [];
+    if (preSet.length) when = 'Your course starts on <b>' + esc2(dayName(START)) + '</b>'
+      + (n === 1 ? ' — tomorrow.' : n > 1 ? ' — ' + n + ' days from today.' : '.')
+      + ' Before then:';
+    list = preSet.concat(preLinks.map(l => ({ text: String(l.label || 'Before the course'), href: l.url, out: true }))).concat(list);
     /* The timetable, when the centre has set one: day one is what they
        actually want to know (Ramy: "if the timetable is ready it could imply,
        check the timetable and see what's happening on day one. And if it's not
@@ -1148,6 +1160,7 @@ if (fbBack){
   }
 
   door = (waiting[0] && !beforeStart && !afterEnd) ? waiting[0]
+       : (beforeStart && CS.preCourseConnect) ? { href: '30_precourse_key.html' }
        : (beforeStart && waiting[0]) ? waiting[0] : null;
 
   k.textContent = kind;
