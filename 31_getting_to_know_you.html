@@ -2,7 +2,8 @@
 <!--
   Connect Lite — getting-to-know-you activities, and the group's pick
   © 2026 Ramy Sakr. All rights reserved.
-  The first afternoon of a course, after the demonstration lesson: each
+  Day one of a course, after the demonstration lesson (or the day and slot
+  the centre names; hubGtkyPlan in hub-shared.js): each
   teaching practice group runs one short getting-to-know-you activity with
   its students, unassessed, no tutor in the room. This page is the bank the
   activities come from -- Connect's ninety, in two level bands, for a room or
@@ -25,7 +26,7 @@
 <title>Getting to know you</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610071328">
+<link rel="stylesheet" href="hub-tokens.css?v=202610071438">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -61,11 +62,11 @@
   <a class="back" id="back" href="index.html">&#8592; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610071328"></script>
-<script src="hub-store.js?v=202610071328"></script>
-<script src="hub-say.js?v=202610071328"></script>
-<script src="hub-sync.js?v=202610071328"></script>
-<script src="gtky-bank.js?v=202610071328"></script>
+<script src="hub-shared.js?v=202610071438"></script>
+<script src="hub-store.js?v=202610071438"></script>
+<script src="hub-say.js?v=202610071438"></script>
+<script src="hub-sync.js?v=202610071438"></script>
+<script src="gtky-bank.js?v=202610071438"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -102,13 +103,14 @@ function hash(str){ let h = 2166136261; for (let i = 0; i < str.length; i++) { h
    is finished one at a time from where it stopped. */
 function offered(pool, seed){ if (pool.length <= 3) return pool.slice(); const out = [], n = pool.length, start = hash(seed) % n, step = 1 + (hash(seed + '|') % (n - 1)); let i = start; for (let k = 0; k < n && out.length < 3; k++, i += step) { const a = pool[i % n]; if (out.indexOf(a) < 0) out.push(a); } for (let j = start; out.length < 3; j++) { const a = pool[j % n]; if (out.indexOf(a) < 0) out.push(a); } return out; }
 let band = '', busy = false, note = '';
-function minutesLine(){ const n = roster().length; return 'About ten minutes each on the first afternoon' + (n ? ', so ' + n + ' of you fill about ' + (n * 8) + '–' + (n * 10) + ' minutes' : '') + '.'; }
+function plan(){ return window.hubGtkyPlan ? hubGtkyPlan(settings(), rec('connect_timetable_v1')) : { when: 'on the first day', minutes: 0, slotMinutes: 45 }; }
+function minutesLine(){ const p = plan(); return p.minutes ? 'About ' + p.minutes + ' minutes each, ' + p.when + (p.slot ? ', in ' + p.slot : '') + '.' : 'The ' + p.slotMinutes + ' minutes of unassessed teaching ' + p.when + ' are shared between the group, so each of you has a few.'; }
 function render(){
   const g = MY_GROUP, m = mode();
   if (!band) band = groupBand(g) || (IS_TRAINEE ? '' : 'high');
   const mine = IS_TRAINEE ? pickOf(MY_NAME) : null;
   const head = `<div class="title"><h1>Getting to know you</h1>
-    <p>${IS_TRAINEE ? 'One short activity to run with your students on the first afternoon, after the demonstration lesson. Unassessed, no tutor in the room. Here are three for the level you teach: read them, pick one, and that is all you need to do before day one. ' + esc(minutesLine()) : 'What the trainees see before day one: three activities each from Connect’s bank for the level they teach, and a pick. The picks land on the shelf on your dashboard. ' + esc(minutesLine())}</p></div>`;
+    <p>${IS_TRAINEE ? 'One short activity to run with your students, after the demonstration lesson. Unassessed, no tutor in the room. Here are three for the level you teach: read them, pick one, and that is all you need to do before day one. ' + esc(minutesLine()) : 'What the trainees see before day one: three activities each from Connect’s bank for the level they teach, and a pick. The picks land on the shelf on your dashboard. ' + esc(minutesLine())}</p></div>`;
   const pickBox = IS_TRAINEE
     ? (mine ? `<div class="pick"><b>Your pick: ${esc(activityOf(mine))}</b><br><span class="note">Your tutor and your group see it on the shelf. Changed your mind? Take it back below and pick again.</span></div>`
             : `<div class="pick"><b>You have not picked yet.</b><br><span class="note">Pick one of the three. You can change it until day one.</span></div>`)

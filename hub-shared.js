@@ -632,6 +632,32 @@ window.a5InPlay = function(subs){
 // Assignment 5 is not covered here: it has its own gate, a5InPlay.
 /* A course link the trainees may see: off only when switched off. The
    timetable is never switched (Ramy: "they should see it anyway"). */
+/* WHEN THE GETTING-TO-KNOW-YOU RUNS, AND FOR HOW LONG. Day one on the
+   timetable is the demonstration lesson and then forty-five minutes of
+   unassessed teaching (23_timetable), which is where the activities go; so
+   the day and the hour are read off the timetable, and the centre may type
+   over either on Course admin (settings.gtkyWhen, settings.gtkyMinutes).
+   Ramy, 8 Oct 2026: "not necessarily the first afternoon... this should be
+   editable, but also connected to the timetable". A trainee's browser holds
+   no roster, so the minutes are only ever stated when the centre set them;
+   otherwise the page says the slot is shared. */
+window.hubGtkyPlan = function(settings, tt){
+  var cs = settings || {}, T = tt || {};
+  var out = { when: String(cs.gtkyWhen || '').trim(), minutes: parseInt(cs.gtkyMinutes, 10) || 0, slotMinutes: 45, fromTimetable: false, slot: '' };
+  if (!out.when) {
+    var day = (T.days || [])[0], tp = (T.slots || []).filter(function(sl){ return sl && sl.kind === 'tp'; });
+    var slot = tp[2] || tp[tp.length - 1] || null;
+    var m = day && String(day.date || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) {
+      var d = new Date(+m[1], +m[2] - 1, +m[3]);
+      var name = d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+      out.when = 'on ' + name + (slot && slot.from ? ' at ' + slot.from : '');
+      out.fromTimetable = true;
+    } else out.when = 'on the first day of the course';
+    out.slot = 'the unassessed teaching slot';
+  }
+  return out;
+};
 window.hubLinkIsTimetable = function(l){ return /timetable/i.test(String((l && l.label) || '') + ' ' + String((l && l.card) || '')); };
 /* The CELTA 5 and the TP points are Lite's own rooms now (20_celta5, 24_tp_points),
    so a bare row by that name shows the trainees nothing; a row the centre LINKED

@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610071328">
+<link rel="stylesheet" href="hub-tokens.css?v=202610071438">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -373,7 +373,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610071328">
+<link rel="stylesheet" href="hub-house.css?v=202610071438">
 </head>
 <body>
 <div class="board">
@@ -568,9 +568,11 @@
          Before the course card under Files for trainees do the job, as before.
          The pages: 30_precourse_key.html and 31_getting_to_know_you.html. -->
     <h3 class="docsh">Before the course</h3>
-    <p class="note" style="margin-top:0;">On, and Connect handles the time before day one: the trainee’s welcome card tells them to check their pre-course task against the answer key, which opens two days before the start, and to pick one of three getting-to-know-you activities for the level they teach, to run for about ten minutes on the first afternoon. Off, and you paste your own links under Files for trainees.</p>
+    <p class="note" style="margin-top:0;">On, and Connect handles the time before day one: the trainee’s welcome card tells them to check their pre-course task against the answer key, which opens two days before the start, and to pick one of three getting-to-know-you activities for the level they teach. When they run it, and for how long, is read off the timetable &mdash; the unassessed teaching slot on day one &mdash; unless you say otherwise below. Off, and you paste your own links under Files for trainees.</p>
     <div class="fields" style="margin-top:14px;">
       <div class="wide"><label class="sw" style="padding:4px 0;"><input type="checkbox" id="preCourseConnect"><span class="track"></span><span class="lbl" id="preCourseLbl">Connect’s pre-course set is off</span></label></div>
+      <div><label for="gtkyWhen">When they run their activity <span class="hint">leave empty to follow the timetable</span></label><input type="text" id="gtkyWhen" maxlength="120" placeholder="from the timetable"></div>
+      <div><label for="gtkyMinutes">Minutes each <span class="hint">leave empty and the slot is shared</span></label><input type="number" id="gtkyMinutes" min="3" max="45" placeholder="e.g. 8"></div>
     </div>
     </section>
     <section class="setcard">
@@ -764,14 +766,14 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610071328"></script>
-<script src="hub-store.js?v=202610071328"></script>
-<script src="hub-say.js?v=202610071328"></script>
-<script src="agreement-defaults.js?v=202610071328"></script>
-<script src="observation-defaults.js?v=202610071328"></script>
-<script src="hub-shared.js?v=202610071328"></script>
-<script src="hub-due.js?v=202610071328"></script>
-<script src="hub-sync.js?v=202610071328"></script>
+<script src="assignment-defaults.js?v=202610071438"></script>
+<script src="hub-store.js?v=202610071438"></script>
+<script src="hub-say.js?v=202610071438"></script>
+<script src="agreement-defaults.js?v=202610071438"></script>
+<script src="observation-defaults.js?v=202610071438"></script>
+<script src="hub-shared.js?v=202610071438"></script>
+<script src="hub-due.js?v=202610071438"></script>
+<script src="hub-sync.js?v=202610071438"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -981,6 +983,19 @@ try {
     if(cs.docs) DOC_FIELDS.forEach(k=>{ if(cs.docs[k]) document.getElementById(k).value = cs.docs[k]; });
     if(cs.logo){ courseLogo = cs.logo; applyLogoPreview(courseLogo); }
     document.getElementById('preCourseConnect').checked = !!cs.preCourseConnect; preCourseLabel();
+    if(cs.gtkyWhen) document.getElementById('gtkyWhen').value = cs.gtkyWhen;
+    if(cs.gtkyMinutes) document.getElementById('gtkyMinutes').value = cs.gtkyMinutes;
+    /* The placeholders say what the timetable gives, so an empty box is a known answer. */
+    (function(){ try {
+      const plan = window.hubGtkyPlan ? hubGtkyPlan({}, JSON.parse(localStorage.getItem('connect_timetable_v1') || 'null')) : null;
+      if (plan) document.getElementById('gtkyWhen').placeholder = plan.when;
+      /* Forty-five minutes shared between the biggest group (Ramy, 8 Oct 2026:
+         "it's 45 minutes for all of them, for all five or all six"). */
+      const roster = JSON.parse(localStorage.getItem('connect_roster_v1') || '{}') || {};
+      const byGroup = {}; Object.values(roster.trainees || {}).forEach(t => { const g = String((t && t.group) || ''); byGroup[g] = (byGroup[g] || 0) + 1; });
+      const biggest = Math.max(0, ...Object.values(byGroup));
+      if (biggest) document.getElementById('gtkyMinutes').placeholder = 'e.g. ' + Math.max(3, Math.floor(45 / biggest)) + ' — 45 shared by ' + biggest;
+    } catch(e) {} })();
     if(Array.isArray(cs.courseLinks)) CAND_LINKS = cs.courseLinks.filter(l => l && (l.label || l.url));
     if(cs.volunteerContact){ document.getElementById('volContactName').value = cs.volunteerContact.name || ''; document.getElementById('volContactEmail').value = cs.volunteerContact.email || ''; }
     if(Array.isArray(cs.tutorContacts)) CONTACTS = cs.tutorContacts.filter(c => c && (c.name || c.email)).map(c => ({ name: c.name || '', email: c.email || '', group: c.group || '', role: c.role || '' }));
@@ -1086,6 +1101,8 @@ document.getElementById('saveSettings').addEventListener('click', () => {
     agreement: AGREEMENT_FIELDS.reduce((o,k)=>{ const v = document.getElementById(k).value.trim(); if (v) o[k] = v; return o; }, {}),
     docs: DOC_FIELDS.reduce((o,k)=>{ const v = document.getElementById(k).value.trim(); if (v) o[k] = v; return o; }, {}),
     preCourseConnect: document.getElementById('preCourseConnect').checked,
+    gtkyWhen: document.getElementById('gtkyWhen').value.trim(),
+    gtkyMinutes: (function(){ const n = parseInt(document.getElementById('gtkyMinutes').value, 10); return n > 0 ? n : ''; })(),
     courseLinks: readCandLinks(),
     onlineRooms: readRooms(),
     tutorContacts: readContacts(),
