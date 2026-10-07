@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610071248">
+<link rel="stylesheet" href="hub-tokens.css?v=202610071305">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -244,7 +244,7 @@
      type="text"; this keeps the next one that forgets inside the design. */
   /* number and url too: Teaching practices each, Course hours and the Appian
      address were bare browser boxes among the house ones (walk, 28 Sep 2026) */
-  input:not([type]), input[type="text"], input[type="email"], input[type="date"], input[type="number"], input[type="url"], textarea{font-family:'Karla',sans-serif; font-size:0.92rem;
+  input:not([type]), input[type="text"], input[type="email"], input[type="date"], input[type="datetime-local"], input[type="number"], input[type="url"], textarea{font-family:'Karla',sans-serif; font-size:0.92rem;
     padding:10px 12px; border:1.5px solid var(--sand-line); border-radius:6px; background:var(--box);
     color:var(--ink); width:100%;}
   textarea{resize:vertical;}
@@ -367,7 +367,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610071248">
+<link rel="stylesheet" href="hub-house.css?v=202610071305">
 </head>
 <body>
 <div class="board">
@@ -667,7 +667,7 @@
     <h3 class="docsh">Files for trainees</h3>
     <p class="note" style="margin-top:0;">Links the trainees read: CELTA 5, the input sessions, TP points, anything else. <b>A row filed under the card &ldquo;Before the course&rdquo; is shown on each trainee&rsquo;s home before day one</b>, on the card that welcomes them &mdash; the pre-course task and its key, the getting-to-know-you activities &mdash; and moves down with the rest once the course starts. Each row has a switch: off, and the trainees do not see it — a cloned course arrives with every row off except the timetable. Each one becomes a line on their home screen, under the card you name — links with the same card name share a card, so “Input sessions” can hold twenty; a link with no card name is a card of its own. A row with a name and no link shows the trainees the name and “no link yet”; a bare suggestion with nothing typed is not saved.</p>
     <div id="candLinks" class="fields docs"></div>
-    <button type="button" class="btn ghost" id="addCandLink" style="margin-top:10px;">Add a link</button>
+    <button type="button" class="btn ghost" id="addInputSession" style="margin-top:10px;">Add an input session</button> <button type="button" class="btn ghost" id="addCandLink" style="margin-top:10px;">Add a link</button>
     </section>
     <section class="setcard">
     <!-- 7 Oct 2026: one section, last on the tab, for everything that is the
@@ -756,13 +756,14 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610071248"></script>
-<script src="hub-store.js?v=202610071248"></script>
-<script src="hub-say.js?v=202610071248"></script>
-<script src="agreement-defaults.js?v=202610071248"></script>
-<script src="observation-defaults.js?v=202610071248"></script>
-<script src="hub-shared.js?v=202610071248"></script>
-<script src="hub-sync.js?v=202610071248"></script>
+<script src="assignment-defaults.js?v=202610071305"></script>
+<script src="hub-store.js?v=202610071305"></script>
+<script src="hub-say.js?v=202610071305"></script>
+<script src="agreement-defaults.js?v=202610071305"></script>
+<script src="observation-defaults.js?v=202610071305"></script>
+<script src="hub-shared.js?v=202610071305"></script>
+<script src="hub-due.js?v=202610071305"></script>
+<script src="hub-sync.js?v=202610071305"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1250,9 +1251,11 @@ function renderCandLinks(){
      Before the course rows are Connect's job and are not suggested here; a
      row the centre typed stays whatever the switch says. */
   const connectPre = !!(document.getElementById('preCourseConnect') || {}).checked;
-  const SUG = (connectPre ? [] : [['Pre-course task and answer key', '', BEFORE_CARD],
-               ['Getting-to-know-you activities', '', BEFORE_CARD]]).concat(
-              [['CELTA 5', '', ''], ['TP points', '', '']]);
+  /* CELTA 5 and TP points are no longer suggested: Lite keeps both itself
+     since late September, and a row by that name shows the trainees nothing
+     (hubLinkIsNative). */
+  const SUG = connectPre ? [] : [['Pre-course task and answer key', '', BEFORE_CARD],
+               ['Getting-to-know-you activities', '', BEFORE_CARD]];
   /* Ramy, 28 Sep 2026: "the course ships a starting list" -- the standard
      input sessions as empty rows under their card, so the centre pastes
      links against names. Only on a course with no input sessions yet. */
@@ -1261,30 +1264,67 @@ function renderCandLinks(){
   const hasInput = CAND_LINKS.some(l => /input session/i.test((l.card || '') + ' ' + (l.label || '')));
   const have = CAND_LINKS.map(l => l.label), haveUrl = CAND_LINKS.map(l => l.url);
   const rows = CAND_LINKS.concat(SUG.filter(([label, url]) => !have.includes(label) && !(url && haveUrl.includes(url))).map(([label, url, card]) => ({ label, url, card })))
-    .concat(hasInput ? [] : INPUT_SESSIONS.map(label => ({ label, url: '', card: 'Input sessions', show: true })));
+    .concat(hasInput ? [] : INPUT_SESSIONS.map(label => ({ label, url: '', card: 'Input sessions', show: false })));
   /* Ramy, 27 Sep 2026: "you have an input session card and then they just go
      underneath that card." The third field names the card; the same name on
      several rows is one card with several lines. */
   const cards = [...new Set(rows.map(l => l.card).concat([BEFORE_CARD, 'Input sessions', 'TP points']).filter(Boolean))];
-  document.getElementById('candLinks').innerHTML = rows.map((l, i) =>
-    `<div><label>Name</label><input type="text" class="cl-label" data-i="${i}" value="${esc(l.label)}" placeholder="What the trainee sees"></div>
+  /* THREE SECTIONS (Ramy, 8 Oct 2026: "files for trainees should have three
+     sections: pre-course, and then CELTA 5 and TP points, and then input
+     sessions"). Before the course; the input sessions, held back until their
+     day; and anything else. The CELTA 5 and the TP points are Lite's own
+     rooms, so they are named in the third section's note rather than being
+     rows. Row numbers stay global: readCandLinks reads the DOM in order. */
+  const isBefore = l => /^before the course$/i.test(String(l.card || '').trim());
+  const isInput = l => /input session/i.test(String(l.card || '') + ' ' + String(l.label || ''));
+  const groups = [
+    ['Before the course', connectPre
+        ? 'Connect’s pre-course set is on (the card above), so nothing is needed here. Add a row only for something of your own on top.'
+        : 'What a trainee meets before day one: the pre-course task and its key, the getting-to-know-you activities, in your own documents.', rows.filter(isBefore)],
+    ['Input sessions', 'Hidden from the trainees until you switch one on, or from the day and time you set. A session with a name and no link shows them the name and “no link yet” once it is on.', rows.filter(l => !isBefore(l) && isInput(l))],
+    ['Everything else', 'The timetable, the CELTA 5 and the TP points are Lite’s own and need no row. Anything else the trainees read goes here, each on its own card unless you name one.', rows.filter(l => !isBefore(l) && !isInput(l))],
+  ];
+  const whenLabel = l => {
+    if (l.show !== false) return 'Trainees can see it';
+    if (l.showFrom && window.HubDue) { const st = HubDue.state(l.showFrom); return st.past ? 'Shown since ' + HubDue.toLocalInput(l.showFrom).replace('T', ' ') : 'Hidden until ' + HubDue.toLocalInput(l.showFrom).replace('T', ' '); }
+    return 'Hidden from trainees';
+  };
+  let gi = 0;
+  const row = l => { const i = gi++; return `<div><label>Name</label><input type="text" class="cl-label" data-i="${i}" value="${esc(l.label)}" placeholder="What the trainee sees"></div>
      <div><label>Link</label><input type="text" class="cl-url" data-i="${i}" value="${esc(l.url)}" placeholder="https://…"></div>
-     <div class="wide" style="display:flex;gap:14px;align-items:end;flex-wrap:wrap;"><div style="flex:1;min-width:200px;"><label>Card <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0;">— only to put several links on one card; empty means its own card</span></label><input type="text" class="cl-card" data-i="${i}" value="${esc(l.card || '')}" list="cardNames" placeholder="${esc(l.label ? 'Its own card: ' + l.label : 'Its own card, under the label')}"></div>
-       ${hubLinkIsTimetable(l) ? '<span class="muted" style="font-size:0.78rem;padding-bottom:10px;">Lite keeps the course\u2019s own timetable \u2014 the trainees open it from their home, so this row no longer shows them anything. You can delete it.</span>' : `<label class="sw" style="padding-bottom:8px;"><input type="checkbox" class="cl-show" data-i="${i}"${l.show === false ? '' : ' checked'}><span class="track"></span><span class="lbl">${l.show === false ? 'Hidden from trainees' : 'Trainees can see it'}</span></label>`}</div>`).join('') +
+     <div class="wide" style="display:flex;gap:14px;align-items:end;flex-wrap:wrap;">${isBefore(l) || isInput(l)
+       ? `<input type="hidden" class="cl-card" data-i="${i}" value="${esc(l.card || (isInput(l) ? 'Input sessions' : BEFORE_CARD))}">`
+       : `<div style="flex:1;min-width:200px;"><label>Card <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0;">— only to put several links on one card; empty means its own card</span></label><input type="text" class="cl-card" data-i="${i}" value="${esc(l.card || '')}" list="cardNames" placeholder="${esc(l.label ? 'Its own card: ' + l.label : 'Its own card, under the label')}"></div>`}
+       ${hubLinkIsTimetable(l) ? '<span class="muted" style="font-size:0.78rem;padding-bottom:10px;">Lite keeps the course’s own timetable — the trainees open it from their home, so this row no longer shows them anything. You can delete it.</span>'
+         : (window.hubLinkIsNative && hubLinkIsNative(l)) ? `<span class="muted" style="font-size:0.78rem;padding-bottom:10px;">Lite keeps the ${/tp/i.test(l.label) ? 'TP points' : 'CELTA 5'} itself — this row shows the trainees nothing. You can delete it.</span>`
+         : `<label class="sw" style="padding-bottom:8px;"><input type="checkbox" class="cl-show" data-i="${i}"${l.show === false ? '' : ' checked'}><span class="track"></span><span class="lbl">${esc(whenLabel(l))}</span></label>${isBefore(l) ? '' : `<div style="padding-bottom:4px;"><label>Or from <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0;">a day and time</span></label><input type="datetime-local" class="cl-from" data-i="${i}" value="${l.showFrom && window.HubDue ? esc(HubDue.toLocalInput(l.showFrom)) : ''}" style="min-width:200px;"></div>`}`}</div>`; };
+  document.getElementById('candLinks').innerHTML = groups.map(([title, note, list]) =>
+    `<div class="wide" style="margin-top:${title === 'Before the course' ? '0' : '18px'};"><h3 class="docsh" style="margin:0 0 2px;font-size:0.98rem;">${esc(title)}</h3><p class="note" style="margin:0 0 6px;">${note}</p></div>` + list.map(row).join('')).join('') +
     `<datalist id="cardNames">${cards.map(c => `<option value="${esc(c)}">`).join('')}</datalist>`;
 }
 function readCandLinks(){
   const labels = [...document.querySelectorAll('.cl-label')], urls = [...document.querySelectorAll('.cl-url')], cards = [...document.querySelectorAll('.cl-card')];
-  const all = labels.map((el, i) => { const row = el.closest('div').parentElement; const sw = document.querySelector(`.cl-show[data-i="${i}"]`); return { label: el.value.trim(), url: (urls[i] ? urls[i].value : '').trim(), card: (cards[i] ? cards[i].value : '').trim(), show: sw ? sw.checked : true }; });
+  const all = labels.map((el, i) => { const row = el.closest('div').parentElement; const sw = document.querySelector(`.cl-show[data-i="${i}"]`); const fr = document.querySelector(`.cl-from[data-i="${i}"]`); return { label: el.value.trim(), url: (urls[i] ? urls[i].value : '').trim(), card: (cards[i] ? cards[i].value : '').trim(), show: sw ? sw.checked : true, showFrom: fr && fr.value && window.HubDue ? HubDue.fromLocalInput(fr.value) : '' }; });
   /* Every row stays on screen as typed. Saved: any row with a link, and any
      row under a card with a label (an input session that has no link yet
      shows the trainees its name and "no link yet" -- Ramy, 28 Sep 2026:
      "see the input sessions already on the course, and the ones that need a
      link"). The bare suggestions with nothing typed are not saved. */
   CAND_LINKS = all;
-  return all.filter(l => l.url || (l.label && l.card)).map(l => { const o = { label: l.label, url: l.url, card: l.card }; if (!l.show && !hubLinkIsTimetable(l)) o.show = false; return o; });
+  return all.filter(l => l.url || (l.label && l.card)).map(l => { const o = { label: l.label, url: l.url, card: l.card }; if (!l.show && !hubLinkIsTimetable(l)) o.show = false; if (l.showFrom) o.showFrom = l.showFrom; return o; });
 }
-document.getElementById('candLinks').addEventListener('change', e => { const sw = e.target.closest('.cl-show'); if (!sw) return; sw.parentElement.querySelector('.lbl').textContent = sw.checked ? 'Trainees can see it' : 'Hidden from trainees'; });
+document.getElementById('candLinks').addEventListener('change', e => {
+  const sw = e.target.closest('.cl-show'), fr = e.target.closest('.cl-from'); if (!sw && !fr) return;
+  const i = (sw || fr).dataset.i, S = document.querySelector(`.cl-show[data-i="${i}"]`), F = document.querySelector(`.cl-from[data-i="${i}"]`);
+  const iso = F && F.value && window.HubDue ? HubDue.fromLocalInput(F.value) : '';
+  const lbl = S && S.parentElement.querySelector('.lbl'); if (!lbl) return;
+  lbl.textContent = S.checked ? 'Trainees can see it' : iso ? (HubDue.state(iso).past ? 'Shown since ' : 'Hidden until ') + F.value.replace('T', ' ') : 'Hidden from trainees';
+});
+document.getElementById('addInputSession').addEventListener('click', () => {
+  readCandLinks(); CAND_LINKS.push({ label:'', url:'', card:'Input sessions', show:false }); renderCandLinks();
+  const last = [...document.querySelectorAll('.cl-card')].filter(c => /input session/i.test(c.value)).pop();
+  if (last) { const i = last.dataset.i; const el = document.querySelector(`.cl-label[data-i="${i}"]`); if (el) el.focus(); }
+});
 document.getElementById('addCandLink').addEventListener('click', () => {
   readCandLinks();
   /* a new row joins the card of the row above it, which is what "add another input session" means */

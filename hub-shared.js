@@ -633,7 +633,21 @@ window.a5InPlay = function(subs){
 /* A course link the trainees may see: off only when switched off. The
    timetable is never switched (Ramy: "they should see it anyway"). */
 window.hubLinkIsTimetable = function(l){ return /timetable/i.test(String((l && l.label) || '') + ' ' + String((l && l.card) || '')); };
-window.hubLinkShown = function(l){ return !!l && (window.hubLinkIsTimetable(l) || l.show !== false); };
+/* The CELTA 5 and the TP points are Lite's own rooms now (20_celta5, 24_tp_points),
+   so a bare row by that name shows the trainees nothing; a row the centre LINKED
+   under that name is theirs and stays (8 Oct 2026). */
+window.hubLinkIsNative = function(l){ return !!l && !l.url && /^(celta ?5|tp points)$/i.test(String(l.label || '').trim()); };
+/* Shown when switched on, or from the moment the centre set (showFrom, an
+   instant, the noticeboard's publishAt rule): an input session held back
+   until its day (Ramy, 8 Oct 2026: "the default should be that trainees
+   cannot see it... shown depending on the date and time, or triggered
+   manually"). */
+window.hubLinkShown = function(l){
+  if (!l) return false;
+  if (window.hubLinkIsTimetable(l)) return true;
+  if (l.show !== false) return true;
+  return !!(l.showFrom && window.HubDue && HubDue.state(l.showFrom).past);
+};
 window.hubReleased = function(wording, key){
   return !(wording && wording[key] && wording[key].released === false);
 };
