@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610071734">
+<link rel="stylesheet" href="hub-tokens.css?v=202610071747">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -399,7 +399,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610071734">
+<link rel="stylesheet" href="hub-house.css?v=202610071747">
 </head>
 <body>
 <div class="board">
@@ -806,14 +806,14 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610071734"></script>
-<script src="hub-store.js?v=202610071734"></script>
-<script src="hub-say.js?v=202610071734"></script>
-<script src="agreement-defaults.js?v=202610071734"></script>
-<script src="observation-defaults.js?v=202610071734"></script>
-<script src="hub-shared.js?v=202610071734"></script>
-<script src="hub-due.js?v=202610071734"></script>
-<script src="hub-sync.js?v=202610071734"></script>
+<script src="assignment-defaults.js?v=202610071747"></script>
+<script src="hub-store.js?v=202610071747"></script>
+<script src="hub-say.js?v=202610071747"></script>
+<script src="agreement-defaults.js?v=202610071747"></script>
+<script src="observation-defaults.js?v=202610071747"></script>
+<script src="hub-shared.js?v=202610071747"></script>
+<script src="hub-due.js?v=202610071747"></script>
+<script src="hub-sync.js?v=202610071747"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -882,7 +882,18 @@ function connectWording(k){
   const name = (document.getElementById('centreName').value || '').trim() || 'the centre';
   return t.replace(/\{centre\}/g, name);
 }
-function isConnects(k){ const v = document.getElementById(k).value.trim(); if (!v) return false; const D = window.CONNECT_HUB_AGREEMENT_DEFAULTS || {}; return v === connectWording(k).trim() || v === String(D[k] || '').trim(); }
+/* A box holds Connect's wording if it matches the current wording, the raw
+   default, or carries one of Connect's own square-bracket blanks -- "[... to
+   add: ...]", "[Your centre: ...]", "[<name>: ...]" -- which a centre's own
+   writing never does. Earlier versions of the wording are recognised that
+   way (8 Oct 2026: a course filled before the rewrite had no way back). */
+function isConnects(k){
+  const v = document.getElementById(k).value.trim(); if (!v) return false;
+  const D = window.CONNECT_HUB_AGREEMENT_DEFAULTS || {};
+  if (v === connectWording(k).trim() || v === String(D[k] || '').trim()) return true;
+  const name = (document.getElementById('centreName').value || '').trim();
+  return /\[[^\]]* to add: /.test(v) || /\[Your centre: /.test(v) || (!!name && v.indexOf('[' + name + ': ') >= 0);
+}
 function agrButtons(){
   const out = document.querySelector('[data-agr-out]'); if (!out) return;
   const n = AGREEMENT_FIELDS.filter(isConnects).length;
