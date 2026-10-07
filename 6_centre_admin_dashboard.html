@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610071611">
+<link rel="stylesheet" href="hub-tokens.css?v=202610071618">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -392,7 +392,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610071611">
+<link rel="stylesheet" href="hub-house.css?v=202610071618">
 </head>
 <body>
 <div class="board">
@@ -795,14 +795,14 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610071611"></script>
-<script src="hub-store.js?v=202610071611"></script>
-<script src="hub-say.js?v=202610071611"></script>
-<script src="agreement-defaults.js?v=202610071611"></script>
-<script src="observation-defaults.js?v=202610071611"></script>
-<script src="hub-shared.js?v=202610071611"></script>
-<script src="hub-due.js?v=202610071611"></script>
-<script src="hub-sync.js?v=202610071611"></script>
+<script src="assignment-defaults.js?v=202610071618"></script>
+<script src="hub-store.js?v=202610071618"></script>
+<script src="hub-say.js?v=202610071618"></script>
+<script src="agreement-defaults.js?v=202610071618"></script>
+<script src="observation-defaults.js?v=202610071618"></script>
+<script src="hub-shared.js?v=202610071618"></script>
+<script src="hub-due.js?v=202610071618"></script>
+<script src="hub-sync.js?v=202610071618"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1530,6 +1530,25 @@ function loadRoster(){ try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) 
    normal action, reading the URL is the rare one. */
 let SHOW_URLS = false;
 
+/* EMAIL THE LINK, for the tutor and the assessor rows as for the trainees'
+   (Ramy, 8 Oct 2026: "copy, email, rotate, like we have"). Through the
+   centre's own mail app, Lite sends nothing itself. The tutor link goes to
+   the addresses on Contacts, the assessor link to whoever the centre types. */
+function roleMail(kind, url){
+  const course = (document.getElementById('courseName') || {}).value.trim() || 'the CELTA course';
+  const centre = (document.getElementById('centreName') || {}).value.trim() || 'the centre';
+  let to = '', subject, body;
+  if (kind === 'tutor') {
+    let cs = {}; try { cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
+    to = (cs.tutorContacts || []).map(c => c && c.email).filter(Boolean).join(',');
+    subject = 'The tutor link for ' + course;
+    body = 'Hello,\n\nHere is the tutor link for ' + course + ' at ' + centre + ':\n' + url + '\n\nIt is one link for the whole teaching team: everyone opens the same one and lands on the same course. Keep it to the team; anyone who has it can read and change every trainee\u2019s record. If it ever gets out, Course admin can rotate it and every old copy stops working.\n\n';
+  } else {
+    subject = 'Assessor link for ' + course + ' at ' + centre;
+    body = 'Hello,\n\nHere is your link for the assessment of ' + course + ' at ' + centre + ':\n' + url + '\n\nIt opens the assessor pack: the course against the Handbook, the candidate portfolios, the double-marking record and the course documents. It is read-only, and it works until the end of the last day of the course.\n\n';
+  }
+  return 'mailto:' + encodeURIComponent(to) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+}
 function linkRow(name, note, url, kind, rotateId, rotateLabel){
   return `<div class="linkrow">
     <div class="body">
@@ -1539,6 +1558,7 @@ function linkRow(name, note, url, kind, rotateId, rotateLabel){
     </div>
     <div class="acts">
       <button class="btn small" type="button" data-copy="${esc(url)}">Copy</button>
+      <a class="btn small" href="${roleMail(kind, url)}" title="Opens your mail app with the link in the message">Email the link</a>
       <button class="btn quiet small" type="button" id="${rotateId}">${esc(rotateLabel)}</button>
     </div>
   </div>`;
