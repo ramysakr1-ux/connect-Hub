@@ -159,6 +159,10 @@ const SEED = {
    browser, to walk a screen as somebody arriving for the first time (8 Oct
    2026: a tutor joining a course that someone else set up). */
 if (process.env.SEED_DROP) for (const role of Object.keys(SEED)) for (const k of process.env.SEED_DROP.split(',')) delete SEED[role][k.trim()];
+/* SEED_JSON='{"trainee":{"chub:feedback":{...}}}' adds or replaces keys in a
+   role's browser, to stand a screen in a state the seed does not reach (8 Oct
+   2026: a returned teaching practice, sealed and opened, for screen 4). */
+if (process.env.SEED_JSON) { const add = JSON.parse(process.env.SEED_JSON); for (const role of Object.keys(add)) Object.assign(SEED[role] || (SEED[role] = {}), add[role]); }
 
 /* ---- who may open what, from check-screens' own matrix ----------------- */
 const matrix = readFileSync(join(HERE, 'check-screens.mjs'), 'utf8');
