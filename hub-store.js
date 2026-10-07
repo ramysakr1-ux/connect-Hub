@@ -85,7 +85,10 @@ window.HubStore = (function(){
   return {
     url: URL, token: token, key: key, assessorKey: akey, volunteerToken: vtoken,
     isVolunteer: function(){ return !!vtoken() && !key() && !akey() && !token(); },
-    volunteerLinkFor: function(v){ return base() + '26_volunteer.html?v=' + encodeURIComponent(v); },
+    /* A volunteer's link opens their invitation card first, as every other
+       link does (the link cards, 7 Oct 2026); the card's button opens their
+       page, and 26_volunteer.html?v= still works on its own. */
+    volunteerLinkFor: function(v){ return base() + 'invite.html?v=' + encodeURIComponent(v); },
     isTutor: function(){ return !!key(); }, isAssessor: function(){ return !!akey() && !key(); }, isTrainee: function(){ return !!token() && !key() && !akey(); },
     call: call,
     ping: function(){ return call({ op: 'ping' }); },
@@ -126,7 +129,7 @@ window.HubStore = (function(){
        work and are what the card's button uses; this is the front door, not a
        gate (23 Sep 2026, for a course being run through Google Classroom). */
     inviteFor: function(kind, v){
-      var q = kind === 'tutor' ? 'k=' : kind === 'assessor' ? 'ak=' : 't=';
+      var q = kind === 'tutor' ? 'k=' : kind === 'assessor' ? 'ak=' : kind === 'volunteer' ? 'v=' : 't=';
       return base() + 'invite.html?' + q + encodeURIComponent(v);
     },
     tutorLink: function(){ return base() + '5_tutor_dashboard.html?k=' + encodeURIComponent(key()); },

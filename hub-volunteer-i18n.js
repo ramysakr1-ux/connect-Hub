@@ -18,6 +18,8 @@
  *   how*, kept*, agreedOn, readAgain, close -- written for Lite, 30 Sep 2026,
  *                not native-reviewed in any of the five. Plain sentences on
  *                purpose, so a reviewer's pass is short.
+ *   invite*   -- the volunteer's invitation card (invite.html?v=), written
+ *                7 Oct 2026, not native-reviewed in any of the five.
  *
  * Shape: hubVolunteerI18n.languages -> [{code, native, english, rtl}];
  *        hubVolunteerI18n.t[code]   -> the strings;
@@ -201,6 +203,24 @@
       howLink: 'Як працює ваша сторінка'
     }
   };
+
+  /* The invitation card's three lines (7 Oct 2026). Unreviewed translations,
+     like the how* strings above. */
+  var invite = {
+    en: { inviteWhat: 'Your page for the classes: the next one to come to, which days you came, and your certificate at the end.',
+          inviteKeepB: 'This link is just for you.', inviteKeep: 'Open it on your phone before each class.', inviteGo: 'Open my page' },
+    tr: { inviteWhat: 'Dersler için sayfanız: gelmeniz gereken bir sonraki ders, hangi günler geldiğiniz ve sonunda katılım belgeniz.',
+          inviteKeepB: 'Bu bağlantı yalnızca sizin için.', inviteKeep: 'Her dersten önce telefonunuzda açın.', inviteGo: 'Sayfamı aç' },
+    ar: { inviteWhat: 'صفحتك للدروس: الدرس التالي الذي تحضره، والأيام التي حضرتها، وشهادتك في النهاية.',
+          inviteKeepB: 'هذا الرابط لك وحدك.', inviteKeep: 'افتحه على هاتفك قبل كل درس.', inviteGo: 'افتح صفحتي' },
+    ru: { inviteWhat: 'Ваша страница для занятий: следующее занятие, дни, когда вы приходили, и ваш сертификат в конце.',
+          inviteKeepB: 'Эта ссылка только для вас.', inviteKeep: 'Открывайте её на телефоне перед каждым занятием.', inviteGo: 'Открыть мою страницу' },
+    fa: { inviteWhat: 'صفحهٔ شما برای کلاس‌ها: کلاس بعدی که باید بیایید، روزهایی که آمده‌اید، و گواهی شما در پایان.',
+          inviteKeepB: 'این پیوند فقط برای شماست.', inviteKeep: 'پیش از هر کلاس آن را روی گوشی خود باز کنید.', inviteGo: 'صفحهٔ من را باز کن' },
+    uk: { inviteWhat: 'Ваша сторінка для занять: наступне заняття, дні, коли ви приходили, і ваш сертифікат наприкінці.',
+          inviteKeepB: 'Це посилання лише для вас.', inviteKeep: 'Відкривайте його на телефоні перед кожним заняттям.', inviteGo: 'Відкрити мою сторінку' }
+  };
+  Object.keys(invite).forEach(function (c) { if (t[c]) Object.keys(invite[c]).forEach(function (k) { t[c][k] = invite[c][k]; }); });
 
   function has(code){ return !!t[code]; }
   function remembered(){ try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } }

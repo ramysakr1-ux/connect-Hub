@@ -581,9 +581,13 @@ window.hubCopyButton = async function(btn, text){
   var stale = document.querySelectorAll('.copy-fallback');
   for (var i = 0; i < stale.length; i++) stale[i].remove();
   if(await window.hubCopy(text)){
-    btn.textContent='Copied';
+    /* "Copied ✓" for 1.8s, and the row it sits in lit while it lasts (the
+       link cards, 7 Oct 2026); a page with no .copied style just sees the
+       word change, as before. */
+    btn.textContent='Copied \u2713';
+    btn.classList.add('copied'); if (host !== btn) host.classList.add('copied');
     clearTimeout(btn._copyT);
-    btn._copyT=setTimeout(function(){ btn.textContent=back; },1500);
+    btn._copyT=setTimeout(function(){ btn.textContent=back; btn.classList.remove('copied'); host.classList.remove('copied'); },1800);
     return true;
   }
   var wrap=document.createElement('div');

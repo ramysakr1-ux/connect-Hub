@@ -27,105 +27,137 @@
 <title>Connect Lite — your course link</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610072316">
+<link rel="stylesheet" href="hub-tokens.css?v=202610072345">
 <style>
+  /* THE WELCOME FAMILY (1a, the link cards, Ramy's pick 7 Oct 2026): a teal
+     panel with the big mark drifting behind it, then a paper sheet. The same
+     family as the tutor's setup welcome, so the first thing anyone opens and
+     the first thing the course shows them look like one place. */
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
     min-height:100vh; display:flex; align-items:flex-start; justify-content:center; padding:6vh 18px 40px;}
-  /* Gold edges the card, as on every screen (Ramy, 24 Sep 2026); the printed card keeps its plain page below. */
-  .card{background:var(--surface); border-left:5px solid var(--gold); border-radius:8px; max-width:540px; width:100%;
-    padding:30px 34px 28px;} /* the top line went when the left edge came (24 Sep 2026): two edges made a corner */
+  .card{position:relative; background:var(--paper); border-radius:18px; overflow:hidden; max-width:460px; width:100%;
+    box-shadow:0 24px 48px -28px oklch(25% 0.04 195 / .45);
+    transition:transform .3s cubic-bezier(.2,.7,.2,1), box-shadow .3s cubic-bezier(.2,.7,.2,1);
+    animation:lc-in .6s cubic-bezier(.2,.7,.2,1) both;}
+  .card:hover{transform:translateY(-4px); box-shadow:0 32px 56px -26px oklch(25% 0.04 195 / .55);}
+  @keyframes lc-in{from{opacity:0; transform:translateY(18px);}to{opacity:1; transform:none;}}
+  @keyframes lc-drift{0%,100%{transform:rotate(-8deg) scale(1);}50%{transform:rotate(-4deg) scale(1.04);}}
+
+  .panel{position:relative; overflow:hidden; background:var(--teal-deep); color:var(--paper); padding:26px 30px 30px;}
+  .panel .big{position:absolute; right:-150px; top:-70px; width:460px; height:auto; opacity:.13; pointer-events:none;
+    animation:lc-drift 18s ease-in-out infinite;}
+  .panel .glow{position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(120% 90% at 0% 100%, oklch(70% 0.12 72 / .16), transparent 55%);}
+  .panel > *:not(.big):not(.glow){position:relative;}
 
   /* The mark is the same on every screen and does not change (Ramy, 1 Sep 2026). */
-  .mark{display:flex; align-items:center; gap:9px; margin-bottom:26px;}
-  .mark .tile{width:30px; height:30px; border-radius:7px; background:var(--ink-warm);
-    display:inline-flex; align-items:center; justify-content:center; flex:none;}
-  .mark .word{display:inline-flex; align-items:baseline; gap:4px;}
-  .mark .word .c{font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:21px;
-    line-height:0.85; color:var(--gold);}
-  .mark .word .l{font-family:'Instrument Sans','Karla',sans-serif; font-weight:500; font-size:9px;
-    letter-spacing:0.24em; text-transform:uppercase;}
+  .top{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:26px;}
+  .word{display:inline-flex; align-items:baseline; gap:5px;}
+  .word .c{font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:21px; line-height:0.85; color:var(--gold-lifted);}
+  .word .l{font-family:'Instrument Sans','Karla',sans-serif; font-weight:500; font-size:9px; letter-spacing:0.24em;
+    text-transform:uppercase; color:var(--paper);}
+  .chip{font-family:'Instrument Sans','Karla',sans-serif; font-weight:700; font-size:10px; letter-spacing:.16em;
+    text-transform:uppercase; padding:5px 11px; border-radius:999px; border:1px solid oklch(80% 0.1 75 / .6); color:oklch(80% 0.1 75);}
 
-  .eyebrow{font-family:'Instrument Sans','Karla',sans-serif; font-weight:600; font-size:10px;
-    letter-spacing:0.22em; text-transform:uppercase; color:var(--grey); margin:0 0 5px;}
-  h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.75rem; line-height:1.2;
-    margin:0 0 4px; color:var(--teal);}
-  .meta{font-size:0.84rem; color:var(--grey); line-height:1.6; margin:0;}
+  .eyebrow{font-family:'Instrument Sans','Karla',sans-serif; font-weight:600; font-size:11px; letter-spacing:.24em;
+    text-transform:uppercase; color:oklch(80% 0.1 75); margin:0 0 6px;}
+  h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:32px; line-height:1.08; margin:0;
+    color:var(--paper); text-wrap:balance;}
+  .meta{font-size:13.5px; line-height:1.5; color:oklch(91% 0.018 190); margin:8px 0 0;}
   .meta:empty{display:none;}
+  .forwho{font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:26px; line-height:1.1;
+    color:oklch(80% 0.11 75); margin:20px 0 0;}
+  .forwho[hidden]{display:none;}
 
-  .forwhom{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;
-    margin:20px 0 0; padding:12px 16px; background:var(--box); border-radius:6px;}
-  .forwhom .lab{font-size:0.68rem; font-weight:700; letter-spacing:0.09em; text-transform:uppercase;
-    color:var(--gold); flex:none;}
-  .forwhom .who{font-family:'Newsreader',Georgia,serif; font-size:1.05rem; font-weight:700;
-    color:var(--ink-warm);}
-  .forwhom.anon .who{font-family:'Karla',sans-serif; font-size:0.9rem; font-weight:600;}
-
-  .what{font-size:0.92rem; line-height:1.7; color:var(--ink); margin:18px 0 0;}
-
+  .sheet{padding:22px 30px 24px;}
+  .what{font-size:14.5px; line-height:1.65; color:var(--ink); margin:0; text-wrap:pretty;}
   /* Not a warning box in brick: this is the ordinary condition of the link,
      not an error, and a red panel on an invitation reads as something having
-     gone wrong. Gold rule, plain words. */
-  .keep{margin:18px 0 0; padding:14px 0 0; border-top:1px solid var(--sand-line);
-    font-size:0.84rem; line-height:1.65; color:var(--grey);}
+     gone wrong. A rule, plain words. */
+  .keep{margin:16px 0 0; padding:12px 0 0; border-top:1px solid var(--sand-line);
+    font-size:13px; line-height:1.6; color:var(--grey);}
   .keep b{color:var(--ink-warm);}
+  .langs{font-size:12.5px; color:var(--grey); margin:10px 0 0; line-height:1.9;}
+  .langs[hidden]{display:none;}
+  .langs button{font:inherit; color:var(--teal); background:none; border:none; padding:0 2px; cursor:pointer;
+    border-bottom:1px solid transparent;}
+  .langs button:hover{border-bottom-color:var(--teal);}
+  .langs button[aria-pressed="true"]{color:var(--ink-warm); font-weight:700;}
+  .langs button:focus-visible{outline:2px solid var(--gold-lifted); outline-offset:3px; border-radius:3px;}
 
-  .go{display:block; width:100%; text-align:center; margin:24px 0 0;
-    background:var(--teal); color:var(--paper); font-family:'Karla',sans-serif;
-    font-size:1rem; font-weight:700; padding:15px 24px; border-radius:26px;
-    border:none; cursor:pointer; text-decoration:none;}
-  .go:hover{background:oklch(44% 0.062 195);}
+  .go{display:flex; align-items:center; justify-content:center; gap:10px; height:50px; margin:20px 0 0;
+    border-radius:999px; background:var(--teal); color:var(--paper); font-family:'Karla',sans-serif;
+    font-size:15.5px; font-weight:700; text-decoration:none;
+    box-shadow:0 10px 24px -12px oklch(37.5% 0.058 195 / .8); transition:background .2s;}
+  .go:hover{background:var(--teal-lifted); color:var(--paper);}
+  .go:focus-visible{outline:2px solid var(--gold-lifted); outline-offset:3px;}
 
-  .foot{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
-    margin:18px 0 0;}
-  .credit{font-family:'Karla',sans-serif; font-size:11px; color:oklch(50% 0.09 62); opacity:.8;}
+  .foot{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:16px 0 0;}
+  .credit{font-family:'Karla',sans-serif; font-size:11px; color:oklch(50% 0.09 62);}
   .credit b{font-weight:700;}
+  .foot .btn-print{font-family:'Karla',sans-serif; font-size:11px; font-weight:500; color:var(--grey); background:none;
+    border:none; padding:0; cursor:pointer;}
+  .foot .btn-print:hover{color:var(--teal);}
 
+  @media(max-width:420px){
+    .panel{padding:24px 20px 26px;} .sheet{padding:20px 20px 22px;}
+    h1{font-size:26px;} .forwho{font-size:22px;}
+  }
+  @media(prefers-reduced-motion:reduce){ .card, .panel .big{animation:none !important;} .card, .go{transition:none !important;} }
   @media print{
     body{background:#fff; padding:0; display:block;}
-    .card{border-radius:0; border-left:none; max-width:none; padding:0.4in;}
-    .go{background:none !important; color:var(--teal) !important; border:2px solid var(--teal);
-      border-radius:6px; font-size:0.9rem;}
-    .btn-print{display:none !important;}
+    .card{border-radius:0; max-width:none; box-shadow:none !important; animation:none; transform:none !important;}
+    .panel{background:none; color:var(--teal); padding:0.4in 0.4in 0;}
+    .panel .big, .panel .glow{display:none;}
+    .word .l, h1{color:var(--teal);}
+    .chip, .eyebrow, .forwho{color:var(--gold-deep); border-color:var(--gold-deep);}
+    .meta{color:var(--grey);}
+    .sheet{padding:18px 0.4in 0.4in;}
+    .go{background:none !important; color:var(--teal) !important; border:2px solid var(--teal); box-shadow:none;}
+    .btn-print, .langs{display:none !important;}
   }
-  @media(max-width:420px){ .card{padding:24px 20px 22px;} h1{font-size:1.45rem;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610072316">
+<link rel="stylesheet" href="hub-house.css?v=202610072345">
 </head>
-<body>
+<!-- No "Say something" here: hub-say puts its pill inside the tallest block,
+     which on this page is the card itself, and an invitation is a door rather
+     than a room. The pill is on every screen behind it, one click on. -->
+<body data-say-pill="off">
 <div class="card">
-  <div class="mark">
-    <span class="tile"><svg viewBox="8 30 104 60" width="20" height="12" fill="none" aria-hidden="true">
-      <path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"></path>
-      <path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"></path>
-    </svg></span>
-    <span class="word"><span class="c">Connect</span><span class="l">Lite</span></span>
+  <div class="panel">
+    <svg class="big" viewBox="8 30 104 60" fill="none" aria-hidden="true">
+      <path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="9" stroke-linecap="round"></path>
+      <path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="9" stroke-linecap="round"></path>
+    </svg>
+    <span class="glow" aria-hidden="true"></span>
+    <div class="top">
+      <span class="word"><span class="c">Connect</span><span class="l">Lite</span></span>
+      <span class="chip" id="chip" aria-hidden="true"></span>
+    </div>
+    <p class="eyebrow" id="eyebrow">Course invitation</p>
+    <h1 id="courseName">Your CELTA course</h1>
+    <p class="meta" id="courseMeta"></p>
+    <p class="forwho" id="forWho" hidden></p>
   </div>
 
-  <p class="eyebrow" id="eyebrow">Course invitation</p>
-  <h1 id="courseName">Your CELTA course</h1>
-  <p class="meta" id="courseMeta"></p>
-
-  <div class="forwhom anon" id="forWhom" hidden>
-    <span class="lab" id="forLab">For</span>
-    <span class="who" id="forWho"></span>
-  </div>
-
-  <p class="what" id="what"></p>
-  <p class="keep" id="keep"></p>
-
-  <a class="go" id="go" href="#">Open</a>
-
-  <div class="foot">
-    <span class="credit">designed and built by <b>Ramy</b></span>
-    <button class="btn-print" type="button" id="printBtn">Print / Save as PDF</button>
+  <div class="sheet">
+    <p class="what" id="what"></p>
+    <p class="keep" id="keep"></p>
+    <p class="langs" id="langs" hidden></p>
+    <a class="go" id="go" href="#">Open</a>
+    <div class="foot">
+      <span class="credit">designed and built by <b>Ramy</b></span>
+      <button class="btn-print" type="button" id="printBtn">Print / Save as PDF</button>
+    </div>
   </div>
 </div>
 
-<script src="hub-shared.js?v=202610072316"></script>
-<script src="hub-store.js?v=202610072316"></script>
-<script src="hub-say.js?v=202610072316"></script>
-<script src="hub-sync.js?v=202610072316"></script>
+<script src="hub-shared.js?v=202610072345"></script>
+<script src="hub-store.js?v=202610072345"></script>
+<script src="hub-say.js?v=202610072345"></script>
+<script src="hub-sync.js?v=202610072345"></script>
+<script src="hub-volunteer-i18n.js?v=202610072345"></script>
 <script>
 (function(){
   var $ = function(id){ return document.getElementById(id); };
@@ -134,79 +166,137 @@
   /* Role from the URL, not from the store. The card has to be right on a phone
      on a bad connection before Apps Script has answered anything -- and the
      destination has to work even if it never does. */
-  var ROLE = p.get('k') ? 'tutor' : p.get('ak') ? 'assessor' : p.get('t') ? 'trainee' : '';
+  var ROLE = p.get('k') ? 'tutor' : p.get('ak') ? 'assessor' : p.get('t') ? 'trainee' : p.get('v') ? 'volunteer' : '';
   if (!ROLE) return;   // hub-sync's own gate explains a link-less visit
 
+  /* THE WORDING, tightened (the link cards, 7 Oct 2026). One sentence on what
+     the link opens, one on how to hold it. The assessor's line names the rule,
+     not a feeling about it: the link runs to the end of the last day of the
+     course (Ramy, 29 Sep 2026; Cambridge sets no expiry of its own), so an
+     assessor reading the card can tell whether theirs is still good. */
   var COPY = {
     trainee: {
-      eyebrow: 'Course invitation',
-      lab: 'For',
-      what: 'This link opens your own space on the course. Your lesson plans and language analysis, your self-evaluations, the feedback your tutors return to you, and your written assignments all live behind it.',
-      keep: '<b>This link is yours alone.</b> Anyone who opens it is you — they can read your feedback and submit work in your name. Keep it to yourself, and open it on your own devices only.',
+      chip: 'Trainee', eyebrow: 'Course invitation',
+      what: 'Your own space on the course: your lesson plans and language analysis, your self-evaluations, the feedback your tutors return, and your written assignments.',
+      keepB: 'This link is yours alone.', keep: 'Whoever opens it is you, and can read your feedback and submit work in your name. Keep it to yourself and your own devices.',
       go: 'Open my workspace'
     },
     tutor: {
-      eyebrow: 'Tutor access',
-      lab: 'For',
-      what: 'This link opens the course as the tutors see it: every trainee’s plans and self-evaluations, the feedback sheets, the assignment marking, and the trainee tracker.',
-      keep: '<b>Every tutor on the course opens this same link.</b> Keep it to the teaching team — anyone who has it can read and change every trainee’s record. If it gets out, your course admin can rotate it, and every copy in circulation stops working.',
+      chip: 'Tutors', eyebrow: 'Tutor access', forWho: 'For the teaching team',
+      what: 'The course as the tutors see it: every trainee’s plans and self-evaluations, the feedback sheets, the assignment marking and the tracker.',
+      keepB: 'Every tutor opens this same link.', keep: 'Keep it to the teaching team. If it gets out, course admin can change it, and every old copy stops working.',
       go: 'Open the course'
     },
     assessor: {
-      eyebrow: 'Assessor access',
-      lab: 'For',
-      what: 'This link opens the assessment pack for the course: each trainee’s teaching practice record, their grades, and their written assignments, gathered in one place.',
-      /* "after the course ends" was once vague, then wrong for a while: the
-         rule was the end date plus fourteen days. Ramy, 29 Sep 2026: the assessor link ends when the COURSE ends.
-     The old window was the end date plus fourteen days, ours, chosen to match
-     the assessor's two-week reporting deadline (Handbook 15.2) -- Cambridge
-     sets no expiry of its own. He weighed the real end (the final grades reach
-     the assessor and they approve, about 48 hours) and decided against
-     carrying a fortnight for it: "the assessor can always get another link,
-     it's not really like a biggie." The link runs to the end of the last day
-     of the course.
-         An assessor reading the card has to be able to tell whether theirs is
-         still good, so the card names the rule, not a feeling about it. */
-      keep: '<b>Read-only, and yours for this assessment.</b> Nothing you do here changes the course record. The link works to the end of the last day of the course, and should not be passed on.',
+      chip: 'Assessor', eyebrow: 'Assessor access', forWho: 'For the Cambridge assessor',
+      what: 'The assessment pack: each trainee’s teaching practice record, their grades and their written assignments, in one place.',
+      keepB: 'Read-only, and yours for this assessment.', keep: 'Nothing you do here changes the record. The link works to the end of the last day of the course.',
       go: 'Open the assessment pack'
+    },
+    /* The fourth card (7 Oct 2026). Until now a volunteer student's link
+       opened their page bare. Their what / keep / go come in their own
+       language when they pick one (hub-volunteer-i18n.js, invite* strings). */
+    volunteer: {
+      chip: 'Volunteer', eyebrow: 'Free English classes',
+      what: 'Your page for the classes: the next one to come to, which days you came, and your certificate at the end.',
+      keepB: 'This link is just for you.', keep: 'Open it on your phone before each class.',
+      go: 'Open my page'
     }
   }[ROLE];
 
   var DEST = ROLE === 'tutor' ? '5_tutor_dashboard.html?k=' + encodeURIComponent(p.get('k'))
            : ROLE === 'assessor' ? '12_assessor_pack.html?ak=' + encodeURIComponent(p.get('ak'))
+           : ROLE === 'volunteer' ? '26_volunteer.html?v=' + encodeURIComponent(p.get('v'))
            : 'index.html?t=' + encodeURIComponent(p.get('t'));
 
+  $('chip').textContent = COPY.chip;
   $('eyebrow').textContent = COPY.eyebrow;
-  $('forLab').textContent = COPY.lab;
-  $('what').textContent = COPY.what;
-  $('keep').innerHTML = COPY.keep;
-  $('go').textContent = COPY.go;
   $('go').setAttribute('href', DEST);
   $('printBtn').addEventListener('click', function(){ window.print(); });
+
+  function words(w, rtl){
+    $('what').textContent = w.what;
+    $('keep').innerHTML = '';
+    var b = document.createElement('b'); b.textContent = w.keepB;
+    $('keep').appendChild(b); $('keep').appendChild(document.createTextNode(' ' + w.keep));
+    $('go').textContent = w.go + (rtl ? ' \u2190' : ' \u2192');   // the arrow points the way the line reads
+  }
+  words(COPY);
+
+  /* The volunteer's languages: Connect's six. English is the card's own
+     language; the others re-word the three lines a student has to understand,
+     and the choice is remembered so their page opens in it too. */
+  var I18N = ROLE === 'volunteer' && window.hubVolunteerI18n;
+  if (I18N) {
+    var lang = I18N.pick(p.get('lang'));
+    var paintLangs = function(){
+      var t = I18N.t[lang] || {};
+      var rtl = I18N.isRtl(lang);
+      words({
+        what: t.inviteWhat || COPY.what, keepB: t.inviteKeepB || COPY.keepB,
+        keep: t.inviteKeep || COPY.keep, go: t.inviteGo || COPY.go
+      }, rtl);
+      ['what', 'keep'].forEach(function(id){ $(id).dir = rtl ? 'rtl' : 'ltr'; });
+      $('go').dir = rtl ? 'rtl' : 'ltr';
+      var others = I18N.languages.filter(function(l){ return l.code !== lang && I18N.has(l.code) && (I18N.t[l.code] || {}).inviteWhat; });
+      $('langs').innerHTML = '';
+      $('langs').appendChild(document.createTextNode(lang === 'en' ? 'Also in ' : ''));
+      others.forEach(function(l, i){
+        if (i) $('langs').appendChild(document.createTextNode(' · '));
+        var btn = document.createElement('button');
+        btn.type = 'button'; btn.textContent = l.native; btn.lang = l.code;
+        btn.setAttribute('aria-pressed', 'false');
+        btn.addEventListener('click', function(){ lang = l.code; I18N.remember(lang); paintLangs(); });
+        $('langs').appendChild(btn);
+      });
+      $('langs').hidden = !others.length;
+    };
+    paintLangs();
+  }
 
   /* Course, centre and name, whenever this browser learns them -- from what it
      already holds on a second visit, and again when the boot answers. Never a
      blank line: a row with nothing to say is hidden rather than empty. */
   function read(k){ try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  var DOW = ['Sundays','Mondays','Tuesdays','Wednesdays','Thursdays','Fridays','Saturdays'];
+  /* "Mondays to Fridays, 6–8:15 PM": the class days and times, from the
+     timetable the volunteer's boot carries. No timetable, no line. */
+  function classTimes(){
+    var tt = read('connect_timetable_v1') || {};
+    var slots = (tt.slots || []).filter(function(s){ return s && s.kind === 'tp'; });
+    var seen = {};
+    (tt.days || []).forEach(function(d){ if (d && d.tp && d.date) seen[new Date(d.date + 'T12:00:00').getDay()] = true; });
+    var wd = Object.keys(seen).map(Number).sort();
+    if (!wd.length) return '';
+    var run = wd.length > 2 && wd[wd.length - 1] - wd[0] === wd.length - 1;
+    var days = run ? DOW[wd[0]] + ' to ' + DOW[wd[wd.length - 1]] : wd.map(function(n){ return DOW[n]; }).join(', ');
+    if (!slots.length) return days;
+    var from = slots[0].from, to = slots[slots.length - 1].to;
+    var when = window.hubClockRange ? hubClockRange(from, to) : from + '–' + to;
+    return days + (when ? ', ' + when : '');
+  }
   function paint(){
     var cs = read('connect_course_settings') || {};
-    if (cs.courseName) { $('courseName').textContent = cs.courseName; document.title = cs.courseName + ' — Connect Lite'; }
-    var bits = [cs.centreName, cs.centreNumber].filter(Boolean);
-    var when = (window.hubCourseDates ? hubCourseDates(cs) : '') ||
-      (cs.start && cs.end ? fmt(cs.start) + ' – ' + fmt(cs.end) : '');
-    if (when) bits.push(when);
+    var bits;
+    if (ROLE === 'volunteer') {
+      $('courseName').textContent = 'English with the CELTA trainees';
+      document.title = 'English with the CELTA trainees — Connect Lite';
+      bits = [cs.centreName, classTimes()].filter(Boolean);
+    } else {
+      if (cs.courseName) { $('courseName').textContent = cs.courseName; document.title = cs.courseName + ' — Connect Lite'; }
+      bits = [cs.centreName, cs.centreNumber].filter(Boolean);
+      var when = (window.hubCourseDates ? hubCourseDates(cs) : '') ||
+        (cs.start && cs.end ? fmt(cs.start) + ' – ' + fmt(cs.end) : '');
+      if (when) bits.push(when);
+    }
     $('courseMeta').textContent = bits.join(' · ');
 
     var name = '';
     if (ROLE === 'trainee') { try { name = localStorage.getItem('hub:name') || ''; } catch (e) {} }
-    var who = ROLE === 'trainee' ? name
-            : ROLE === 'tutor' ? 'The teaching team'
-            : 'The Cambridge assessor';
-    if (who) {
-      $('forWho').textContent = who;
-      $('forWhom').classList.toggle('anon', ROLE !== 'trainee' || !name);
-      $('forWhom').hidden = false;
-    }
+    if (ROLE === 'volunteer') { name = ((read('hub:volunteer') || {}).name || ''); }
+    var who = COPY.forWho || (name ? 'For ' + name : '');
+    $('forWho').textContent = who;
+    $('forWho').hidden = !who;
   }
   function fmt(iso){
     var d = new Date(iso + 'T00:00:00');
