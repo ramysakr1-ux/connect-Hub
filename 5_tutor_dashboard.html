@@ -23,7 +23,7 @@
 <title>Connect Lite — Tutor dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610071825">
+<link rel="stylesheet" href="hub-tokens.css?v=202610071844">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -146,6 +146,15 @@
     border:1.5px solid var(--sand-line); border-radius:var(--r-control); background:var(--field); color:var(--ink);}
   .wname input:focus{outline:none; border-color:var(--gold); background:var(--field-focus);}
   .wname small{display:block; margin-top:5px; font-size:0.78rem; color:var(--grey);}
+  .welcome.join{margin-bottom:22px;}
+  .welcome.join .wgo{display:flex; gap:16px; align-items:center; flex-wrap:wrap;}
+  .welcome .linkbtn{background:none; border:none; padding:0; font:inherit; font-size:0.85rem; font-weight:600; color:var(--teal); cursor:pointer; text-decoration:underline; text-decoration-color:var(--sand-line); text-underline-offset:3px;}
+  .welcome .linkbtn:hover{text-decoration-color:var(--teal);}
+  .wsig{display:flex; align-items:center; gap:14px; margin-top:12px; padding:8px 12px; background:var(--paper); border:1px solid var(--sand-line); border-radius:8px;}
+  .wsig[hidden]{display:none !important;}
+  .wsig-mark{flex:0 0 auto; font-size:1.5rem; line-height:1; color:var(--ink); max-width:60%; overflow:hidden;}
+  .wsig-note{font-size:0.76rem; color:var(--grey); line-height:1.4;}
+  .wsig.head{display:inline-flex; margin:0 0 0 8px; padding:2px 8px; vertical-align:middle;} .wsig.head .wsig-note{display:none;} .wsig.head .wsig-mark{font-size:1.05rem;}
   .steps{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0;}
   .sstep{display:grid; grid-template-columns:22px 1fr; gap:12px 14px; align-items:start; padding:12px 0; border-top:1px solid var(--row-line);}
   .sstep:first-child{border-top:0;}
@@ -274,7 +283,7 @@
     .grow .st.obs::before{content:'Observations · '; color:var(--grey); font-weight:400;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610071825">
+<link rel="stylesheet" href="hub-house.css?v=202610071844">
 </head>
 <body>
 <div class="board">
@@ -363,20 +372,22 @@
 
 </div>
 
-<script src="hub-due.js?v=202610071825"></script>
-<script src="observation-defaults.js?v=202610071825"></script>
-<script src="hub-shared.js?v=202610071825"></script>
-<script src="hub-store.js?v=202610071825"></script>
-<script src="hub-say.js?v=202610071825"></script>
-<script src="hub-shelf.js?v=202610071825"></script>
+<script src="hub-due.js?v=202610071844"></script>
+<script src="observation-defaults.js?v=202610071844"></script>
+<script src="hub-shared.js?v=202610071844"></script>
+<script src="hub-store.js?v=202610071844"></script>
+<script src="hub-say.js?v=202610071844"></script>
+<script src="hub-hand.js?v=202610071844"></script>
+<script src="hub-ink.js?v=202610071844"></script>
+<script src="hub-shelf.js?v=202610071844"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202610071825"></script>
-<script src="hub-sync.js?v=202610071825"></script>
-<script src="hub-tracker.js?v=202610071825"></script>
-<script src="hub-feedback.js?v=202610071825"></script>
+<script src="assignment-defaults.js?v=202610071844"></script>
+<script src="hub-sync.js?v=202610071844"></script>
+<script src="hub-tracker.js?v=202610071844"></script>
+<script src="hub-feedback.js?v=202610071844"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a trainee's link opened it and read the course and
@@ -713,6 +724,19 @@ function setupSteps(s){
             : 'The people who come in to be taught. Their register, their reminders, their certificates.' }
   ];
 }
+/* THE TUTOR'S SIGNATURE, SHOWN WHERE THE NAME IS TYPED (Ramy, 8 Oct 2026:
+   "something you do as soon as you land... and then every time there's a
+   signature it's already there"). Drawn from the name, so it is the same
+   one the CELTA 5 carries; kept against that name in this browser, so a
+   later signature by the same name needs no dialog. */
+function drawSig(host, name){
+  if (!host) return;
+  const n = String(name || '').trim(), spec = n && window.hubInk && hubInk.mine ? hubInk.mine(n) : '';
+  if (!spec || !window.hubHand) { host.innerHTML = ''; host.hidden = true; return; }
+  host.hidden = false;
+  host.innerHTML = '<span class="wsig-mark">' + hubHand.html(spec, n) + '</span><span class="wsig-note">Your signature, written from your name. It is the one on the CELTA 5 and everything you sign here.</span>';
+  try { localStorage.setItem('chub:tutorSigKept', n); } catch (e) {}
+}
 function paintSetup(s){
   document.body.classList.add('firstrun');
   const steps = setupSteps(s), done = steps.filter(x => x.done).length;
@@ -734,7 +758,7 @@ function paintSetup(s){
          time what this page is and how it will turn into their dashboard"). */
       '<p class="wnow"><b>This is your course\u2019s home page.</b> For now it sets the course up. The moment the trainees are on it, it becomes your working list: the teaching practices waiting for your feedback, the assignments waiting to be marked, what is due today.</p>' +
       '<p class="lede">Seven things set it up: Course admin\u2019s four tabs, then three pages of their own. Two come ready. Each ticks itself off here when it is done, each opens where it is done, and the button below goes to the next one.</p>' +
-      '<label class="wname"><span>Your name</span><input id="welcomeName" type="text" value="' + esc(name) + '" placeholder="As it will sign your feedback" autocomplete="name"><small>Typed once. It signs your posts, your feedback and your marking.</small></label>' +
+      '<label class="wname"><span>Your name</span><input id="welcomeName" type="text" value="' + esc(name) + '" placeholder="As it will sign your feedback" autocomplete="name"><small>Typed once. It signs your posts, your feedback and your marking.</small><span class="wsig" id="welcomeSig"></span></label>' +
       '<ol class="steps">' + steps.map((st, i) =>
         '<li class="sstep' + (st.done ? ' done' : '') + '"><span class="sdot">' + (i + 1) + '</span>' +
         '<div><a class="sgo" href="' + st.href + '"><b>' + st.title + '</b></a><p>' + st.line + '</p></div></li>').join('') + '</ol>' +
@@ -746,8 +770,29 @@ function paintSetup(s){
   /* one name, two fields: the welcome's is the one on screen now, the header's
      is what every other screen reads */
   const w = document.getElementById('welcomeName');
-  w.addEventListener('input', () => { nameInput.value = w.value; localStorage.setItem('chub:tutorName', w.value); });
+  w.addEventListener('input', () => { nameInput.value = w.value; localStorage.setItem('chub:tutorName', w.value); drawSig(document.getElementById('welcomeSig'), w.value); });
+  drawSig(document.getElementById('welcomeSig'), w.value);
   if (!name) setTimeout(() => { try { w.focus({ preventScroll: true }); } catch (e) {} }, 60);
+}
+function paintJoin(s){
+  let host = document.getElementById('joinWelcome');
+  const seen = (function(){ try { return localStorage.getItem('chub:welcomed') === '1'; } catch (e) { return false; } })();
+  if (isSetter(s) || seen) { if (host) host.remove(); return; }
+  if (!host) { host = document.createElement('section'); host.id = 'joinWelcome'; host.className = 'welcome join'; const at = document.getElementById('setupTodo'); at.parentNode.insertBefore(host, at); }
+  const stored = (function(){ try { return localStorage.getItem('chub:tutorName') || ''; } catch (e) { return ''; } })();
+  host.innerHTML =
+    '<p class="eyebrow">' + esc(s.cs.centreName || 'Connect Lite') + '</p>' +
+    '<h2>Welcome' + (s.named ? ' to ' + esc(s.cs.courseName) : '') + '</h2>' +
+    '<p class="wnow"><b>This is the tutors\u2019 page for the course.</b> Everything waiting for you lands here: the teaching practices waiting for your feedback, the assignments waiting to be marked, the noticeboard, and the trainees\u2019 records, one click each. The course is set up by its main course tutor; you simply work in it.</p>' +
+    '<label class="wname"><span>Your name</span><input id="joinName" type="text" value="' + esc(stored) + '" placeholder="As it will sign your feedback" autocomplete="name"><small>Typed once in this browser. It signs your posts, your feedback and your marking.</small><span class="wsig" id="joinSig"></span></label>' +
+    '<div class="wgo"><button class="btn primary" type="button" id="joinGo">Take me to the page</button>' +
+    '<button class="linkbtn" type="button" id="joinSetup">Setting this course up yourself? See the setup steps</button></div>';
+  const j = document.getElementById('joinName');
+  j.addEventListener('input', () => { nameInput.value = j.value; try { localStorage.setItem('chub:tutorName', j.value); } catch (e) {} drawSig(document.getElementById('joinSig'), j.value); drawSig(document.getElementById('headSig'), j.value); });
+  drawSig(document.getElementById('joinSig'), j.value);
+  if (!stored) setTimeout(() => { try { j.focus({ preventScroll: true }); } catch (e) {} }, 60);
+  document.getElementById('joinGo').addEventListener('click', () => { try { localStorage.setItem('chub:welcomed', '1'); } catch (e) {} (window.hubFadeAway || (el => el.remove()))(host); });
+  document.getElementById('joinSetup').addEventListener('click', () => { try { localStorage.setItem('chub:setsUp', '1'); localStorage.removeItem('chub:joined'); } catch (e) {} host.remove(); paint(); });
 }
 function paintTodo(s){
   const left = setupSteps(s).filter(x => !x.done);
@@ -755,9 +800,26 @@ function paintTodo(s){
   el.hidden = !left.length;
   if (left.length) el.innerHTML = 'Still to set up: ' + left.map(x => '<a href="' + x.href + '">' + x.short + '</a>').join(' · ');
 }
+/* THE ONE SETTING IT UP, OR A TUTOR WHO JOINED (Ramy, 8 Oct 2026: "it only
+   takes one tutor to set up the course, the MCT... when the second tutor
+   arrives they don't need to see that card"). Every tutor opens the same
+   link, so this browser is the only thing to go by. The setter is whoever
+   opened the course before it had a name, or has seen the setup steps here
+   (chub:setsUp); a browser that already carried a tutor's name before this
+   rule counts as the setter too, so nobody mid-setup loses their steps. A
+   browser that first opens a named course with no name in it is a tutor
+   joining (chub:joined): they get a short welcome, once, then the page. */
+function isSetter(s){
+  const ls = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
+  if (ls('chub:setsUp') === '1') return true;
+  if (ls('chub:joined') === '1') return false;
+  return !s.named || !!ls('chub:tutorName');
+}
 function paint(){
   const s = setupState();
-  if (!s.ready) { paintSetup(s); return; }
+  if (!s.ready && isSetter(s)) { try { localStorage.setItem('chub:setsUp', '1'); } catch (e) {} paintSetup(s); return; }
+  if (!isSetter(s)) { try { localStorage.setItem('chub:joined', '1'); } catch (e) {} }
+  paintJoin(s);
   document.body.classList.remove('firstrun');
   document.getElementById('queue').style.display = '';
   document.querySelector('.titleacts').style.display = '';
@@ -797,7 +859,8 @@ try{
 if (window.hubInstallHint) hubInstallHint(document.getElementById('installHint'), 'tutor');
 const nameInput=document.getElementById('tutorName');
 nameInput.value = localStorage.getItem('chub:tutorName') || '';
-nameInput.addEventListener('input', ()=>localStorage.setItem('chub:tutorName', nameInput.value));
+nameInput.addEventListener('input', ()=>{ localStorage.setItem('chub:tutorName', nameInput.value); drawSig(document.getElementById('headSig'), nameInput.value); });
+(function(){ const h = document.createElement('span'); h.id = 'headSig'; h.className = 'wsig head'; nameInput.insertAdjacentElement('afterend', h); drawSig(h, nameInput.value); })();
 
 /* ---- the course stream ----------------------------------------------------
    Posts go to the store one at a time (op 'post'); the store appends under

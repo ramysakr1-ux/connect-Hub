@@ -155,6 +155,10 @@ const SEED = {
   volunteer: { ...COMMON, ...booted('volunteer','c1-v1'),
                'hub:v':'c1-v1', 'hub:volunteer': VOLUNTEERS.students[0] }
 };
+/* SEED_DROP='chub:tutorName,hub:me' leaves those keys out of every role's
+   browser, to walk a screen as somebody arriving for the first time (8 Oct
+   2026: a tutor joining a course that someone else set up). */
+if (process.env.SEED_DROP) for (const role of Object.keys(SEED)) for (const k of process.env.SEED_DROP.split(',')) delete SEED[role][k.trim()];
 
 /* ---- who may open what, from check-screens' own matrix ----------------- */
 const matrix = readFileSync(join(HERE, 'check-screens.mjs'), 'utf8');

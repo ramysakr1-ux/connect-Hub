@@ -136,5 +136,17 @@
     });
   }
 
-  window.hubInk = { confirm: confirmSign, pad: confirmSign, svg: svg, W: W, H: H };
+  /* A tutor's own signature, from their name, the same seed the dialog uses
+     for staff (the course key and the name), so the mark shown on the
+     landing page is exactly the one that lands on the CELTA 5 (8 Oct 2026). */
+  function mine(name){
+    var n = String(name || '').trim(); if (!n || !window.hubHand) return '';
+    var seed = n;
+    try { var S = window.HubStore; if (S && S.key && S.key()) seed = 'k:' + S.key() + ':' + n; } catch (e) {}
+    return window.hubHand.spec(seed);
+  }
+  /* The signature the tutor saw and kept on their landing, if it is still
+     the name they sign with: then a later signature needs no dialog. */
+  function kept(name){ try { var k = localStorage.getItem('chub:tutorSigKept'); return !!k && k === String(name || '').trim(); } catch (e) { return false; } }
+  window.hubInk = { confirm: confirmSign, pad: confirmSign, svg: svg, mine: mine, kept: kept, W: W, H: H };
 })();
