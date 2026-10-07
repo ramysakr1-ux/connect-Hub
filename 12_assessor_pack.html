@@ -25,7 +25,7 @@
 <title>Connect Lite — Assessor pack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610070320">
+<link rel="stylesheet" href="hub-tokens.css?v=202610070334">
 <style>
   :root{
     /* the control fill, for the shared confirm modal's Cancel button */
@@ -237,7 +237,7 @@
   @media print{ .back,.toolbar,#hubSync{display:none !important;} body{background:#fff; padding:0;} .doc[hidden]{display:block;}
     .panel{overflow:visible !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610070320">
+<link rel="stylesheet" href="hub-house.css?v=202610070334">
 </head>
 <body>
 <div class="board">
@@ -267,15 +267,15 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202610070320"></script>
-<script src="hub-shared.js?v=202610070320"></script>
-<script src="assignment-defaults.js?v=202610070320"></script>
-<script src="hub-tracker.js?v=202610070320"></script>
-<script src="hub-rotation.js?v=202610070320"></script>
-<script src="hub-attendance.js?v=202610070320"></script>
-<script src="hub-store.js?v=202610070320"></script>
-<script src="hub-say.js?v=202610070320"></script>
-<script src="hub-sync.js?v=202610070320"></script>
+<script src="observation-defaults.js?v=202610070334"></script>
+<script src="hub-shared.js?v=202610070334"></script>
+<script src="assignment-defaults.js?v=202610070334"></script>
+<script src="hub-tracker.js?v=202610070334"></script>
+<script src="hub-rotation.js?v=202610070334"></script>
+<script src="hub-attendance.js?v=202610070334"></script>
+<script src="hub-store.js?v=202610070334"></script>
+<script src="hub-say.js?v=202610070334"></script>
+<script src="hub-sync.js?v=202610070334"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -613,7 +613,13 @@ function briefs(){
   return ORDER.filter(k => k!=='a5' || PEOPLE.some(tr=>a5InPlay(tr.assignments||{}))).map(k => {
     const w = WORDING && WORDING[k]; if (!w) return '';
     const crit = (w.criteria||[]).map(c => `<li>${esc(typeof c==='string' ? c : c.text)}</li>`).join('');
-    return `<div class="brief"><h3>${esc(k.toUpperCase())} — ${esc(w.title||'')}</h3><div class="sub">${w.wordMin ? esc(w.wordMin + '–' + w.wordMax + ' words') : ''}${w.format ? ' · ' + esc(w.format) : ''}</div>${crit ? `<ul>${crit}</ul>` : ''}</div>`;
+    /* The declaration at the foot of the brief -- "Your own work" -- is what
+       every submission is signed against, and the Course documents row above
+       sends the assessor here to read it (7 Oct 2026). Found by its type, so
+       it does not matter which part of the wording holds it. */
+    const decl = [].concat(...Object.values(w).filter(Array.isArray)).find(b => b && b.type === 'declaration');
+    const declItems = decl && Array.isArray(decl.items) ? decl.items.map(t => `<li>${esc(t)}</li>`).join('') : '';
+    return `<div class="brief"><h3>${esc(k.toUpperCase())} — ${esc(w.title||'')}</h3><div class="sub">${w.wordMin ? esc(w.wordMin + '–' + w.wordMax + ' words') : ''}${w.format ? ' · ' + esc(w.format) : ''}</div>${crit ? `<ul>${crit}</ul>` : ''}${declItems ? `<div class="sub" style="margin-top:6px;"><b>${esc(decl.label || 'Declaration')}</b> — signed on every submission</div><ul>${declItems}</ul>` : ''}</div>`;
   }).join('');
 }
 function renderList(){
@@ -689,7 +695,7 @@ function renderList(){
     <!-- Last, because nobody opens a pack to read the briefs (Ramy, 1 Oct
          2026: "no one cares about the assignment briefs, put them at the
          bottom"). They stay because 14.1 asks what the trainees were set. -->
-    <h2 class="sect">Assignment briefs <small>as the centre set them, in the centre’s order</small></h2>
+    <h2 class="sect" id="briefs">Assignment briefs <small>as the centre set them, in the centre’s order</small></h2>
     <div class="panel">${briefs()}</div>`;
   if (window.hubStackTables) hubStackTables($('app'));
   foldSections($('app'));
@@ -871,6 +877,13 @@ function courseDocuments(){
        writes the real ones, on its own form, so the specimen the centre used to
        paste was a picture of the thing the assessor can simply open. */
     ['End-of-course report', 'the form Lite writes every trainee\u2019s on', '16_final_report.html', 'Open the report'],
+    /* "Your own work": the AI and plagiarism declaration is not a sheet of its
+       own in Lite -- it is the last step of every assignment brief and every
+       submission is signed against it, so the assessor reads it where the
+       trainees did (Ramy, 7 Oct 2026, asking which of the pack's documents
+       Connect's own wording could stand in for). A centre that issues a
+       separate sheet can still paste it below. */
+    ['Your own work', 'the declaration at the foot of every assignment brief, signed on every submission', '#briefs', 'Read the briefs'],
   ].map(([label, note, href, cta]) =>
     `<div class="docrow"><span><b>${label}</b> <span class="sub">&mdash; ${note}</span></span><a href="${href}">${cta}</a></div>`);
   /* THE CANDIDATE AGREEMENT, when the centre keeps it in Lite. Cambridge lists
@@ -895,7 +908,7 @@ function courseDocuments(){
   const provided = DOC_LABELS.filter(([k]) => docs[k]).length;
   const rows = DOC_LABELS.filter(([k]) => docs[k] && !(k === 'docAssessTimetable' && hasVisitTimetable)).map(([k,label]) =>
     `<div class="docrow"><span>${label}</span><a href="${esc(docs[k])}" target="_blank" rel="noopener noreferrer">Open</a></div>`);
-  return `<h2 class="sect">Course documents <small>Handbook 14.1 &middot; three kept in Lite${DOC_LABELS.length ? ', ' + provided + ' of ' + DOC_LABELS.length + ' provided by the centre' : ''}</small></h2>
+  return `<h2 class="sect">Course documents <small>Handbook 14.1 &middot; ${builtIn.length} kept in Lite${DOC_LABELS.length ? ', ' + provided + ' of ' + DOC_LABELS.length + ' provided by the centre' : ''}</small></h2>
     <div class="panel">${builtIn.join('')}${rows.join('')}</div>`;
 }
 
