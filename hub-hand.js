@@ -103,7 +103,9 @@
     var p = parse(s); if (!p || !String(name || '').trim()) return '';
     css();
     return '<span class="hand' + (cls ? ' ' + cls : '') + '" style="font-family:\'hand-' + p.face + '\',cursive;'
-      + 'font-size:calc(2.6rem * ' + FIT[p.face] + ');'
+      /* The size class is honoured: the inline size used to override .sm and
+         .lg, so a signature drew at full size in a small signed row (8 Oct 2026). */
+      + 'font-size:calc(' + (/\bsm\b/.test(cls || '') ? '1.6rem' : /\blg\b/.test(cls || '') ? '3.2rem' : '2.6rem') + ' * ' + FIT[p.face] + ');'
       + (INK[p.face] ? 'color:' + INK[p.face] + ';' : '')
       + (p.slant ? 'transform:skewX(' + (-p.slant) + 'deg);' : '')
       + '" aria-label="Signature">' + esc(name) + '</span>';
