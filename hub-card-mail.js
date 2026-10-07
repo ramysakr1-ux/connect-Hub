@@ -108,7 +108,8 @@
       + rates.map(function (r, i) {
           var top = i ? 'border-top:1px solid ' + C.line + ';' : '';
           var each = r.n > 1 ? money(r.total / r.n) + ' each' : '';
-          return '<tr><td style="padding:8px 0; ' + top + ' font-family:' + SANS + '; font-size:14px; font-weight:600; color:' + C.ink + ';">' + esc(r.label) + '</td>'
+          return '<tr><td style="padding:8px 0; ' + top + ' font-family:' + SANS + '; font-size:14px; font-weight:600; color:' + C.ink + ';">' + esc(r.label)
+            + (r.note ? '<span style="display:block; font-weight:400; font-size:12px; color:' + C.grey + ';">' + esc(r.note) + '</span>' : '') + '</td>'
             + '<td align="right" style="padding:8px 0; ' + top + ' font-family:' + SANS + '; font-size:14px; font-weight:700; color:' + C.inkWarm + '; white-space:nowrap;">' + money(r.total)
             + (each ? '<span style="display:block; font-weight:400; font-size:12px; color:' + C.grey + ';">' + each + '</span>' : '') + '</td></tr>';
         }).join('')
@@ -121,13 +122,19 @@
      cards; the rates come by email). Sent when someone asks. */
   function priceDoc(letter, ctx) {
     var rates = (ctx.rates || []).filter(function (r) { return r && r.total > 0 && r.n > 0; });
+    /* "From £120 a course" (Ramy, 8 Oct 2026: "we can always advertise this
+       as starts from a hundred and twenty pounds"). A course with one teaching
+       practice group counts as half, so its price is half the one-course
+       figure -- worked out, never typed, so it cannot drift from it. */
+    var small = rates.length ? rates[0].total / 2 : 0;
+    var table = rates.length ? [{ label: 'One small course', note: 'one teaching practice group', n: 1, total: small }].concat(rates) : [];
     var sheet = '<p style="font-family:' + SANS + '; font-size:14.5px; line-height:1.65; color:' + C.ink + '; margin:0;">There is one thing to buy: a course. Every feature is in every course, and nothing is held back for a higher tier, because there isn\u2019t one.</p>'
       + (rates.length
           ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 0;"><tr><td style="background:' + C.goldWash + '; border:1px solid ' + C.amber + '; border-radius:12px; padding:16px 18px;">'
-            + '<div style="font-family:' + SERIF + '; font-weight:700; font-size:30px; color:' + C.inkWarm + '; line-height:1;">' + money(rates[0].total) + '</div>'
-            + '<div style="font-family:' + SANS + '; font-size:13px; color:' + C.grey + '; margin-top:3px;">per course, paid once</div>'
+            + '<div style="font-family:' + SERIF + '; font-weight:700; font-size:30px; color:' + C.inkWarm + '; line-height:1;"><span style="font-size:18px; font-weight:600;">From </span>' + money(small) + '</div>'
+            + '<div style="font-family:' + SANS + '; font-size:13px; color:' + C.grey + '; margin-top:3px;">a course, paid once \u00b7 ' + money(rates[0].total) + ' for a full course</div>'
             + '</td></tr></table>'
-            + rateRows(rates)
+            + rateRows(table)
           : '')
       + '<p style="font-family:' + SANS + '; font-size:13.5px; line-height:1.65; color:' + C.ink + '; margin:16px 0 0;"><b style="color:' + C.inkWarm + ';">Volunteer students are not counted.</b> However many come, their register, their own pages, the day-before reminders and the signed certificates are in the price.</p>'
       + '<p style="font-family:' + SANS + '; font-size:13.5px; line-height:1.65; color:' + C.ink + '; margin:16px 0 0;"><b style="color:' + C.inkWarm + ';">A course with one teaching practice group counts as half a course.</b> Six trainees or fewer is one group. Blocks do not expire, nothing recurs, and the length of a course \u2014 four weeks, five, or part-time over three months \u2014 makes no difference.</p>'
