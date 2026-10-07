@@ -20,7 +20,7 @@ stamp = datetime.datetime.now().strftime("%Y%m%d%H%M")
 # SHELL on 5 Oct 2026. Nothing shared is unstamped now; a new shared file has
 # to be added in BOTH places, or it ships cached and never refreshed.
 assets = ["hub-shared.js", "hub-store.js", "hub-sync.js", "hub-tracker.js", "hub-due.js", "hub-rotation.js",
-          "hub-exchange.js", "hub-crit-learn.js", "assignment-defaults.js", "observation-defaults.js", "hub-docx.js", "hub-xlsx.js", "hub-observation-parse.js", "hub-timetable-parse.js", "hub-rotation.js", "hub-attendance.js", "hub-volunteer-i18n.js", "celta5-text.js", "celta5-criteria.js", "celta5-pdf.js", "hub-ink.js", "hub-hand.js",
+          "hub-exchange.js", "hub-crit-learn.js", "assignment-defaults.js", "agreement-defaults.js", "observation-defaults.js", "hub-docx.js", "hub-xlsx.js", "hub-observation-parse.js", "hub-timetable-parse.js", "hub-rotation.js", "hub-attendance.js", "hub-volunteer-i18n.js", "celta5-text.js", "celta5-criteria.js", "celta5-pdf.js", "hub-ink.js", "hub-hand.js",
           "hub-pages.js",
           # added 5 Oct 2026: hub-say.js is new; the other five had been
           # shipping unstamped since they were written

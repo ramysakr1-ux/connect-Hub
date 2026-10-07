@@ -20,7 +20,7 @@
  * VERSION is stamped by bump-assets.py with the same stamp as the ?v= links,
  * so each push retires the previous cache on activate.
  */
-const VERSION = 'lite-202610070255';
+const VERSION = 'lite-202610070305';
 const SHELL = [
   './', 'index.html', 'invite.html',
   '1_trainee_plan_and_analysis.html', '2_trainee_self_evaluation.html', '3_tutor_feedback.html',
@@ -43,7 +43,7 @@ const SHELL = [
   /* 5 Oct 2026: the candidate agreement, read and signed once at the start. */
   '29_candidate_agreement.html',
   'offer.html',
-  'assignment-defaults.js', 'hub-tokens.css', 'hub-house.css', 'hub-record.css',
+  'assignment-defaults.js', 'agreement-defaults.js', 'hub-tokens.css', 'hub-house.css', 'hub-record.css',
   'brand/favicon.svg', 'brand/favicon.ico', 'brand/apple-touch-icon.png',
 ];
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
