@@ -70,6 +70,11 @@ const ROOMS = {
      what was signed. Only the trainee's own link can sign, which the page gates
      inside rather than at the door. */
   '29_candidate_agreement.html':     { trainee:'open',   tutor:'open',   assessor:'open',   volunteer:'refuse' },
+  /* 8 Oct 2026: the pre-course task's answer key and the getting-to-know-you
+     bank are the course's pages -- a trainee's to use, a tutor's and the
+     assessor's to read, never a volunteer's. */
+  '30_precourse_key.html':           { trainee:'open',   tutor:'open',   assessor:'open',   volunteer:'refuse' },
+  '31_getting_to_know_you.html':     { trainee:'open',   tutor:'open',   assessor:'open',   volunteer:'refuse' },
   '25_volunteer_register.html':      { trainee:'refuse', tutor:'open',   assessor:'open',   volunteer:'refuse' },
   /* A volunteer student's own page, and the certificate printed from it. The
      certificate is also the tutor's, to print one from the register. */

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<!--
+  Connect Lite — the pre-course task's answer key
+  © 2026 Ramy Sakr. All rights reserved.
+  The centre sends a candidate Cambridge's pre-course task as a document when
+  they sign up, and the candidate works through it on paper. This page is the
+  key: each task's question with its answer, to check their own work against.
+  Nothing of theirs is saved (Ramy, 8 Oct 2026: "they don't have to be saved
+  in Lite... they're only checking the answers"). A course page, not a public
+  one: it opens from a course link, never to a volunteer student, and a
+  trainee sees the answers from two days before the course starts -- Connect's
+  rule, so the task gets done before the key arrives. Tutors and the assessor
+  read it at any time.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="brand/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<title>Pre-course task: the answer key</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hub-tokens.css?v=202610071107">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
+    padding:36px 20px 90px; display:flex; justify-content:center;}
+  .board{max-width:820px; width:100%;}
+  a{color:var(--teal);} a:hover{color:var(--ink-warm);}
+  .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
+  .back:hover{text-decoration:underline;}
+  .title{border-top:2px solid var(--teal); padding-top:22px;}
+  .title h1{margin:0; font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.9rem; line-height:1.15;}
+  .title p{margin:7px 0 0; font-size:0.9rem; color:var(--grey); line-height:1.55;}
+  .tools{margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  .btn{font:inherit; font-size:0.82rem; font-weight:600; padding:8px 14px; border-radius:8px; border:1.5px solid var(--sand-line); background:var(--field); color:var(--ink); cursor:pointer;}
+  .sec{margin-top:26px;}
+  .sec h2{margin:0 0 4px; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.25rem;}
+  .sec .count{font-size:0.78rem; color:var(--grey); letter-spacing:0.08em; text-transform:uppercase; margin:0 0 10px;}
+  .task{background:var(--surface); border:1px solid var(--sand-line); border-radius:10px; padding:16px 20px; margin-top:12px; page-break-inside:avoid;}
+  .task h3{margin:0 0 6px; font-family:'Instrument Sans','Karla',sans-serif; font-size:0.78rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--teal);}
+  .task .q{margin:0; font-size:0.92rem; line-height:1.6; white-space:pre-wrap; color:var(--ink-warm);}
+  .task .a{margin:10px 0 0; padding:10px 14px; border-left:3px solid var(--gold); background:var(--field); font-size:0.92rem; line-height:1.65; white-space:pre-wrap;}
+  .task .a.none{color:var(--grey); font-style:italic; border-left-color:var(--sand-line);}
+  .empty{background:var(--surface); border:1px dashed var(--sand-line); border-radius:10px; padding:26px 22px; margin-top:16px; color:var(--grey); font-size:0.95rem; line-height:1.6;}
+  @media print{ body{background:#fff; padding:0;} .back,.tools{display:none;} .task{border-color:#ccc;} }
+</style>
+</head>
+<body>
+<div class="board">
+  <a class="back" id="back" href="index.html">&#8592; Back</a>
+  <div id="app"></div>
+</div>
+<script src="hub-shared.js?v=202610071107"></script>
+<script src="hub-store.js?v=202610071107"></script>
+<script src="hub-say.js?v=202610071107"></script>
+<script src="hub-sync.js?v=202610071107"></script>
+<script src="precourse-key.js?v=202610071107"></script>
+<script type="text/x-hub-app">
+/* A volunteer student is not on the course and has no pre-course task. */
+if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
+  throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
+const $ = id => document.getElementById(id);
+function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+const IS_TRAINEE = !!(window.HubStore && HubStore.isTrainee && HubStore.isTrainee());
+function settings(){ try { return JSON.parse(localStorage.getItem('connect_course_settings') || 'null') || {}; } catch(e){ return {}; } }
+/* Two days before the start, date-only, the way every reading of a course
+   date is done here (hubToday honours a demo's pinned day). */
+function opensOn(start){ const m = String(start || '').match(/^(\d{4})-(\d{2})-(\d{2})/); if (!m) return ''; const d = new Date(Date.UTC(+m[1], +m[2]-1, +m[3])); d.setUTCDate(d.getUTCDate() - 2); return d.toISOString().slice(0, 10); }
+function longDate(iso){ const m = String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/); if (!m) return iso; return new Date(Date.UTC(+m[1], +m[2]-1, +m[3])).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric', timeZone:'UTC' }); }
+if (!IS_TRAINEE) $('back').href = (window.HubStore && HubStore.isAssessor && HubStore.isAssessor()) ? '12_assessor_pack.html' : '5_tutor_dashboard.html';
+
+function render(){
+  const cs = settings();
+  const KEY = window.CONNECT_HUB_PRECOURSE_KEY || [];
+  const n = KEY.reduce((a, s) => a + s.items.length, 0);
+  const head = `<div class="title"><h1>Pre-course task: the answer key</h1>
+    <p>${esc(cs.centreName || 'Your centre')}${cs.courseName ? ' &middot; ' + esc(cs.courseName) : ''} &mdash; ${n} tasks in ${KEY.length} sections. Check your own answers against it; nothing you write is kept here. The task itself is the document your centre sent you.</p></div>`;
+  const opens = opensOn(cs.start), today = (window.hubToday && hubToday()) || new Date().toISOString().slice(0, 10);
+  if (IS_TRAINEE && opens && today < opens) {
+    $('app').innerHTML = head + `<div class="empty"><b>The key opens on ${esc(longDate(opens))}</b>, two days before the course starts${cs.start ? ' on ' + esc(longDate(cs.start)) : ''}. Finish the task before then; the answers are more use once you have tried.</div>`;
+    return;
+  }
+  const body = KEY.map(s => `<div class="sec"><h2>${esc(s.title)}</h2><p class="count">${s.items.length} task${s.items.length === 1 ? '' : 's'}</p>
+    ${s.items.map(t => `<div class="task" id="task-${t.n}"><h3>Task ${t.n}</h3><p class="q">${esc(t.prompt)}</p>
+      ${t.answer ? `<div class="a">${esc(t.answer)}</div>` : '<div class="a none">Your own answer. The booklet gives no key for this one.</div>'}</div>`).join('')}</div>`).join('');
+  $('app').innerHTML = head + `<div class="tools"><button class="btn" type="button" onclick="window.print()">Print / Save as PDF</button></div>` + body;
+}
+render();
+document.addEventListener('hub:ready', render);
+</script>
+</body>
+</html>
