@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610070305">
+<link rel="stylesheet" href="hub-tokens.css?v=202610070320">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -207,6 +207,7 @@
      a wide wordmark is wide and a round mark is round. It was a 60px square
      with object-fit:cover, which cropped a wide logo to its middle and put a
      round one in a box (Ramy, 7 Oct 2026: "a circle inside a square"). */
+  .logo-row.dropping .logo-slot{border-color:var(--teal); background:var(--surface);}
   .logo-slot.filled{width:auto; max-width:220px; border:none; border-radius:0;}
   .logo-slot.filled img{height:60px; width:auto; max-width:220px; object-fit:contain; display:block;}
   .logo-row h3{margin:0 0 4px; font-size:0.88rem; font-weight:700;}
@@ -347,7 +348,7 @@
     .tab{min-height:46px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610070305">
+<link rel="stylesheet" href="hub-house.css?v=202610070320">
 </head>
 <body>
 <div class="board">
@@ -397,7 +398,7 @@
       <div class="logo-slot" id="logoSlot">Centre<br>logo</div>
       <div>
         <h3>Centre logo</h3>
-        <p>Appears on printed records. Under 500KB — it is saved with the course, so every tutor, trainee and the assessor see it too.</p>
+        <p>Appears on printed records. It is saved with the course, so every tutor, trainee and the assessor see it too. Any size: drop it anywhere on this tab, paste it, or upload it, and Lite shrinks it to what it needs.</p>
         <button class="btn" id="logoUploadBtn" type="button">Upload</button>
         <input type="file" id="logoFile" accept="image/*" style="display:none;">
         <p id="logoStatus" style="margin:8px 0 0; font-size:0.78rem; color:var(--grey);"></p>
@@ -707,13 +708,13 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610070305"></script>
-<script src="hub-store.js?v=202610070305"></script>
-<script src="hub-say.js?v=202610070305"></script>
-<script src="agreement-defaults.js?v=202610070305"></script>
-<script src="observation-defaults.js?v=202610070305"></script>
-<script src="hub-shared.js?v=202610070305"></script>
-<script src="hub-sync.js?v=202610070305"></script>
+<script src="assignment-defaults.js?v=202610070320"></script>
+<script src="hub-store.js?v=202610070320"></script>
+<script src="hub-say.js?v=202610070320"></script>
+<script src="agreement-defaults.js?v=202610070320"></script>
+<script src="observation-defaults.js?v=202610070320"></script>
+<script src="hub-shared.js?v=202610070320"></script>
+<script src="hub-sync.js?v=202610070320"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -919,20 +920,69 @@ renderRooms();
 renderContacts();
 
 document.getElementById('logoUploadBtn').addEventListener('click', ()=>document.getElementById('logoFile').click());
-document.getElementById('logoFile').addEventListener('change', e=>{
-  const file = e.target.files[0]; if(!file) return;
-  /* It said "stored in the browser, not uploaded anywhere", which was not true:
-     the logo rides inside connect_course_settings, and hub-sync carries that
-     key to the store as `settings` -- it HAS to, or the letterhead could never
-     reach a trainee's or the assessor's browser. Telling a centre their file
-     stays local when it goes to the sheet is the one kind of wrong worth
-     fixing on sight (walk, 21 Sep 2026). Size still matters, and now for the
-     real reason: it travels with every boot of the course. */
-  if (file.size > 500*1024) { document.getElementById('logoStatus').textContent = 'That image is over 500KB \u2014 pick something smaller. It is saved with the course and travels to every screen, so it needs to stay light.'; return; }
+/* 7 Oct 2026: the box takes a pasted or dropped image as well as a chosen
+   file (Ramy: "give me a logo I can paste"). All three land in takeLogoFile,
+   so the size rule and the status line are the same whichever way it came. */
+function takeLogoFile(file){
+  const status = document.getElementById('logoStatus');
+  if(!file || !/^image\//.test(file.type || '')) { status.textContent = 'That is not an image. PNG, JPG, SVG, GIF or WebP.'; return; }
+  /* 7 Oct 2026: any logo, any size, and Lite shrinks it (Ramy: "it would
+     just shrink to the size of whatever you deem right"). The biggest it is
+     ever shown is 72px high on the final report, so 320px high is already
+     over four times that and crisp on a retina print; 1000px wide caps a
+     very long wordmark. The logo rides inside the course's settings with
+     every boot, which is why it was refused over 500KB before -- now it is
+     brought under that instead. An SVG is kept as it is: it is already small
+     and scales itself. Nothing is ever enlarged. */
+  const MAX_H = 320, MAX_W = 1000, BUDGET = 400 * 1024;
+  const done = (dataUrl, w, h, note) => {
+    courseLogo = dataUrl; applyLogoPreview(courseLogo);
+    status.textContent = (file.name ? file.name + ', ' : '') + w + ' \u00d7 ' + h + ' pixels' + (note ? ', ' + note : '') + '. Click Save to keep it, or give it another.';
+  };
   const reader = new FileReader();
-  reader.onload = () => { courseLogo = reader.result; applyLogoPreview(courseLogo); document.getElementById('logoStatus').textContent = 'Logo ready — click Save to keep it.'; };
+  reader.onload = () => {
+    const raw = reader.result;
+    if (file.type === 'image/svg+xml') {
+      if (file.size > BUDGET) { status.textContent = 'That SVG is over 400KB, which is unusual for a logo. Export it smaller, or as a PNG.'; return; }
+      const probe = new Image(); probe.onload = () => done(raw, probe.naturalWidth, probe.naturalHeight, 'vector'); probe.onerror = () => done(raw, '?', '?', 'vector'); probe.src = raw; return;
+    }
+    const img = new Image();
+    img.onload = () => {
+      const W = img.naturalWidth, H = img.naturalHeight;
+      const k = Math.min(1, MAX_H / H, MAX_W / W);
+      const w = Math.max(1, Math.round(W * k)), h = Math.max(1, Math.round(H * k));
+      if (k === 1 && file.size <= BUDGET) { done(raw, W, H, ''); return; }
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      const ctx = c.getContext('2d'); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, w, h);
+      let out = c.toDataURL('image/png');
+      /* A photograph-like logo can stay heavy as a PNG; JPEG on white brings it
+         under budget at the cost of transparency, which such a logo never had. */
+      if (out.length > BUDGET) { ctx.globalCompositeOperation = 'destination-over'; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); out = c.toDataURL('image/jpeg', 0.86); }
+      done(out, w, h, k < 1 ? 'shrunk from ' + W + ' \u00d7 ' + H : 'repacked');
+    };
+    img.onerror = () => { status.textContent = 'That image could not be read. Try a PNG or JPG.'; };
+    img.src = raw;
+  };
   reader.readAsDataURL(file);
+}
+document.getElementById('logoFile').addEventListener('change', e=>{ takeLogoFile(e.target.files[0]); e.target.value = ''; });
+/* Paste: anywhere on the Settings panel, so long as the cursor is not in a
+   text box (a pasted sentence must still land in its box). */
+document.getElementById('panel-settings').addEventListener('paste', e=>{
+  const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  const item = Array.from((e.clipboardData || {}).items || []).find(i => i.kind === 'file' && /^image\//.test(i.type));
+  if (!item) return;
+  e.preventDefault(); takeLogoFile(item.getAsFile());
 });
+/* Drop: onto the logo row. */
+(function(){
+  const row = document.querySelector('.logo-row'), panel = document.getElementById('panel-settings'); if (!row || !panel) return;
+  const hasFile = e => e.dataTransfer && Array.from(e.dataTransfer.types || []).indexOf('Files') >= 0;
+  ['dragenter','dragover'].forEach(ev => panel.addEventListener(ev, e => { if (!hasFile(e)) return; e.preventDefault(); row.classList.add('dropping'); }));
+  ['dragleave','drop'].forEach(ev => panel.addEventListener(ev, e => { if (!hasFile(e)) return; e.preventDefault(); row.classList.remove('dropping'); }));
+  panel.addEventListener('drop', e => { const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) takeLogoFile(f); });
+})();
 document.getElementById('saveSettings').addEventListener('click', () => {
   localStorage.setItem('connect_course_settings', JSON.stringify({
     start: document.getElementById('courseStart').value,
