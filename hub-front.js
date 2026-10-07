@@ -73,8 +73,9 @@
       + '<a class="fp-btn" href="film/watch.html">Watch the film</a>'
       + '</div>'
 
-      /* No figure on the front either (Ramy, 7 Oct 2026): it said £300 here
-         and £240 on the card. The rates go out by email. */
+      /* No figure on the front either (Ramy, 7 Oct 2026): the front page and
+         the card had come to name two different prices. The rates go out by
+         email, from the console. */
       + '<h2>How it’s priced</h2>'
       + '<p class="fp-lede fp-small">Priced per course, not per trainee. Packages get cheaper the more you take, and a finished course can be duplicated and run again. Email <a href="mailto:lite@celtaconnect.com">lite@celtaconnect.com</a> for the rates.</p>'
 

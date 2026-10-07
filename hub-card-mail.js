@@ -88,16 +88,20 @@
 
 
   /* The rates, as a block an email can carry: a centre that asked what it
-     costs gets the answer in the message, not behind a link. */
-  function rateRows() {
-    var rows = [['One course', '\u00a3240', ''], ['Five courses', '\u00a31,000', '\u00a3200 each'],
-                ['Ten courses', '\u00a31,750', '\u00a3175 each'], ['Twenty courses', '\u00a33,200', '\u00a3160 each']];
+     costs gets the answer in the message, not behind a link. NO FIGURE LIVES
+     IN THIS FILE (Ramy, 7 Oct 2026: the rates are not public, and the code
+     is): the console passes the four package totals it keeps in the owner's
+     browser, and each "each" is worked out from its total, so the headline,
+     the table and the per-course prices can never disagree. */
+  function money(n){ return '\u00a3' + Math.round(n).toLocaleString('en-GB'); }
+  function rateRows(rates) {
     return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:14px 0 0;">'
-      + rows.map(function (r, i) {
+      + rates.map(function (r, i) {
           var top = i ? 'border-top:1px solid ' + C.line + ';' : '';
-          return '<tr><td style="padding:8px 0; ' + top + ' font-family:' + SANS + '; font-size:14px; font-weight:600; color:' + C.ink + ';">' + r[0] + '</td>'
-            + '<td align="right" style="padding:8px 0; ' + top + ' font-family:' + SANS + '; font-size:14px; font-weight:700; color:' + C.inkWarm + '; white-space:nowrap;">' + r[1]
-            + (r[2] ? '<span style="display:block; font-weight:400; font-size:12px; color:' + C.grey + ';">' + r[2] + '</span>' : '') + '</td></tr>';
+          var each = r.n > 1 ? money(r.total / r.n) + ' each' : '';
+          return '<tr><td style="padding:8px 0; ' + top + ' font-family:' + SANS + '; font-size:14px; font-weight:600; color:' + C.ink + ';">' + esc(r.label) + '</td>'
+            + '<td align="right" style="padding:8px 0; ' + top + ' font-family:' + SANS + '; font-size:14px; font-weight:700; color:' + C.inkWarm + '; white-space:nowrap;">' + money(r.total)
+            + (each ? '<span style="display:block; font-weight:400; font-size:12px; color:' + C.grey + ';">' + each + '</span>' : '') + '</td></tr>';
         }).join('')
       + '</table>';
   }
@@ -107,12 +111,15 @@
   /* The ONLY place a figure appears (Ramy, 7 Oct 2026: no price on the
      cards; the rates come by email). Sent when someone asks. */
   function priceDoc(letter, ctx) {
+    var rates = (ctx.rates || []).filter(function (r) { return r && r.total > 0 && r.n > 0; });
     var sheet = '<p style="font-family:' + SANS + '; font-size:14.5px; line-height:1.65; color:' + C.ink + '; margin:0;">There is one thing to buy: a course. Every feature is in every course, and nothing is held back for a higher tier, because there isn\u2019t one.</p>'
-      + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 0;"><tr><td style="background:' + C.goldWash + '; border:1px solid ' + C.amber + '; border-radius:12px; padding:16px 18px;">'
-      + '<div style="font-family:' + SERIF + '; font-weight:700; font-size:30px; color:' + C.inkWarm + '; line-height:1;">' + esc(ctx.price || '\u00a3240') + '</div>'
-      + '<div style="font-family:' + SANS + '; font-size:13px; color:' + C.grey + '; margin-top:3px;">per course, paid once</div>'
-      + '</td></tr></table>'
-      + rateRows()
+      + (rates.length
+          ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 0;"><tr><td style="background:' + C.goldWash + '; border:1px solid ' + C.amber + '; border-radius:12px; padding:16px 18px;">'
+            + '<div style="font-family:' + SERIF + '; font-weight:700; font-size:30px; color:' + C.inkWarm + '; line-height:1;">' + money(rates[0].total) + '</div>'
+            + '<div style="font-family:' + SANS + '; font-size:13px; color:' + C.grey + '; margin-top:3px;">per course, paid once</div>'
+            + '</td></tr></table>'
+            + rateRows(rates)
+          : '')
       + '<p style="font-family:' + SANS + '; font-size:13.5px; line-height:1.65; color:' + C.ink + '; margin:16px 0 0;"><b style="color:' + C.inkWarm + ';">Volunteer students are not counted.</b> However many come, their register, their own pages, the day-before reminders and the signed certificates are in the price.</p>'
       + '<p style="font-family:' + SANS + '; font-size:13.5px; line-height:1.65; color:' + C.ink + '; margin:16px 0 0;"><b style="color:' + C.inkWarm + ';">A course with one teaching practice group counts as half a course.</b> Six trainees or fewer is one group. Blocks do not expire, nothing recurs, and the length of a course \u2014 four weeks, five, or part-time over three months \u2014 makes no difference.</p>'
       /* No "rates in full" link: the rates page came down (Ramy, 7 Oct 2026:
@@ -122,8 +129,8 @@
     return page('Connect Lite \u2014 what it costs', letter, frame('What it costs', 'One price, one course, everything in it', '', sheet));
   }
 
-  /* ctx: { note, film, doors, site, only, showPrice } -- ctx.price is read by
-     priceDoc only; the full card carries no figure (7 Oct 2026). */
+  /* ctx: { note, film, doors, site, only, showPrice, rates } -- rates are
+     read by priceDoc only; the full card carries no figure (7 Oct 2026). */
   window.hubCardMail = function(ctx){
     var doors = (ctx.doors || []).map(function(d){ return door(d.label, d.note, d.href, 'Open'); }).join('');
     if (ctx.film) doors += door('The film', 'Eight minutes, start to finish — a course from the first plan to the certificates.', ctx.film, 'Watch');

@@ -18,7 +18,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610072353">
+<link rel="stylesheet" href="hub-tokens.css?v=202610080005">
 <style>
   :root{
     /* the pane -- the same four values the trainee landing's cards use */
@@ -372,6 +372,8 @@
   .filmrow input[type="checkbox"]{flex:0 0 auto; min-width:0; width:15px; height:15px;
     padding:0; border-radius:3px; accent-color:var(--teal);}
   .filmrow .note{font-size:0.74rem; color:var(--grey);}
+  .filmrow .rates{display:inline-flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .filmrow .rates input{flex:0 0 132px; min-width:0; width:132px;}
 
   .empty{padding:34px 4px; font-size:0.9rem; color:var(--grey); line-height:1.65;}
   .gate{max-width:560px; padding:16vh 0 0;}
@@ -414,7 +416,7 @@
   @media(prefers-reduced-motion:reduce){ .course.minted, .v4-steps li.now::before{animation:none !important;} }
   @media(max-width:640px){ .v4-steps{grid-template-columns:1fr;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610072353">
+<link rel="stylesheet" href="hub-house.css?v=202610080005">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -438,10 +440,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610072353"></script>
-<script src="hub-store.js?v=202610072353"></script>
-<script src="hub-say.js?v=202610072353"></script>
-<script src="hub-card-mail.js?v=202610072353"></script>
+<script src="hub-shared.js?v=202610080005"></script>
+<script src="hub-store.js?v=202610080005"></script>
+<script src="hub-say.js?v=202610080005"></script>
+<script src="hub-card-mail.js?v=202610080005"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -570,7 +572,22 @@ function gate(msg){
    link rides along when there is one: it is the thing people ask for after
    they have clicked around for two minutes. */
 const FILM_KEY = 'chub:filmlink';
-const PRICE_KEY = 'chub:price';
+/* THE RATES live here and nowhere else (Ramy, 7 Oct 2026: "they shouldn't
+   stay public", and "we need to be consistent with the money"). Lite's code
+   is public, so no figure is written into it: the four package totals are
+   typed once in this console and kept in this browser, and the price email
+   works everything else out from them. */
+const RATES_KEY = 'chub:rates';
+const RATE_ROWS = [['one', 1, 'One course'], ['five', 5, 'Five courses'], ['ten', 10, 'Ten courses'], ['twenty', 20, 'Twenty courses']];
+function ratesSaved(){ try { return JSON.parse(localStorage.getItem(RATES_KEY)) || {}; } catch (e) { return {}; } }
+function rateNum(v){ const n = Number(String(v == null ? '' : v).replace(/[^0-9.]/g, '')); return n > 0 ? n : 0; }
+/* All four, or none: a price email with a gap in its table is worse than
+   the console saying so. */
+function ratesList(){
+  const r = ratesSaved();
+  const list = RATE_ROWS.map(([k, n, label]) => ({ label, n, total: rateNum(r[k]) }));
+  return list.every(x => x.total > 0) ? list : null;
+}
 /* The film used to be a bare .webm file and the box held its address. The
    file left the repository on 2 Oct 2026 when the film became an MP4 behind
    its own page, so every console still holding the old address sent cards
@@ -586,7 +603,6 @@ function filmLink(){
     return v;
   } catch (e) { return ''; }
 }
-function priceText(){ try { return (localStorage.getItem(PRICE_KEY) || '').trim(); } catch (e) { return ''; } }
 /* The owner's own listing does not carry the trainees -- it carries how many
    -- so the trainee link is fetched when the button is pressed rather than
    on every draw. A course with nobody on it says so instead of pretending. */
@@ -759,8 +775,8 @@ function cardHtml(){
     done && { label: 'A course that has finished', note: 'The reports written, CELTA 5 signed, the certificates.', href: cardLink(done) },
   ].filter(Boolean);
   if (cardKind() === 'film') return hubCardMail({ note: demoNote(), film: filmLink(), site: base(), only: 'film' });
-  if (cardKind() === 'price') return hubCardMail({ note: demoNote(), price: priceText(), site: base(), only: 'price' });
-  return hubCardMail({ note: demoNote(), film: filmLink(), price: priceText(), doors, site: base(), showPrice: priceOn() });
+  if (cardKind() === 'price') return hubCardMail({ note: demoNote(), rates: ratesList(), site: base(), only: 'price' });
+  return hubCardMail({ note: demoNote(), film: filmLink(), doors, site: base(), showPrice: priceOn() });
 }
 async function noteFor(c){
   const film = filmLink();
@@ -1061,14 +1077,16 @@ $('app').innerHTML = `
       </div>`;
     })()}
     <div class="filmrow">
-      <b>The film link and the quote</b>
+      <b>The film link and the rates</b>
       <label for="filmLink">Link to the film</label>
       <input type="url" id="filmLink" placeholder="https://…" value="${esc(filmLink())}">
       ${filmLink() ? `<a class="btn small" href="${esc(filmLink())}" target="_blank" rel="noopener">Open the film</a>` : ''}
-      <label for="priceText">Quote for the price email (optional)</label>
-      <input type="text" id="priceText" placeholder="£240, or leave empty" value="${esc(priceText())}" style="flex:0 1 190px; min-width:140px;">
+      <span class="rates" role="group" aria-label="The rates, in pounds">
+        <label>Rates, in pounds</label>
+        ${RATE_ROWS.map(([k, n, label]) => `<input type="text" inputmode="numeric" data-rate="${k}" aria-label="${esc(label)}" placeholder="${esc(label)}" value="${esc(ratesSaved()[k] || '')}">`).join('')}
+      </span>
       <label class="priceon"><input type="checkbox" id="priceOn"${priceOn() ? ' checked' : ''}> the card says how it\u2019s priced</label>
-      <span class="note">Both are kept in this browser. The card never shows a figure (7 Oct 2026); untick the box and it leaves pricing out altogether. The <b>quote</b> goes only in <b>Just the price</b>: fill it and that figure heads the rates there.</span>
+      <span class="note">Kept in this browser, never in Lite\u2019s code. The <b>rates</b> are what each package costs in all; <b>Just the price</b> heads with the one-course figure and works out each package\u2019s price per course, so the figures always agree. The card never shows a figure; untick the box and it leaves pricing out altogether.</span>
     </div>
       </div>
     </details>
@@ -1126,7 +1144,8 @@ document.addEventListener('input', e => {
   if (!e.target.closest) return;
   if (e.target.closest('#filmLink')) { try { localStorage.setItem(FILM_KEY, e.target.value.trim()); } catch (err) {} return; }
   if (e.target.closest('#demoNote')) { try { localStorage.setItem(noteKey(), e.target.value); } catch (err) {} return; }
-  if (e.target.closest('#priceText')) { try { localStorage.setItem(PRICE_KEY, e.target.value.trim()); } catch (err) {} return; }
+  const rt = e.target.closest('[data-rate]');
+  if (rt) { const r = ratesSaved(); r[rt.dataset.rate] = rt.value.trim(); try { localStorage.setItem(RATES_KEY, JSON.stringify(r)); } catch (err) {} return; }
   if (e.target.closest('#cardCopyTo')) { try { localStorage.setItem(CARD_CC_KEY, e.target.value.trim()); } catch (err) {} return; }
   if (e.target.closest('#cardKind')) {
     try { localStorage.setItem(CARD_KIND_KEY, e.target.value); } catch (err) {}
@@ -1183,7 +1202,7 @@ $('app').addEventListener('click', async e => {
       BUSY = false;
       return;
     }
-    if (e.target.closest('#filmLink') || e.target.closest('#priceText') || e.target.closest('#demoNote') || e.target.closest('#cardTo') || e.target.closest('#cardCopyTo') || e.target.closest('#cardKind') || e.target.closest('#priceOn')) return;
+    if (e.target.closest('#filmLink') || e.target.closest('[data-rate]') || e.target.closest('#demoNote') || e.target.closest('#cardTo') || e.target.closest('#cardCopyTo') || e.target.closest('#cardKind') || e.target.closest('#priceOn')) return;
     const note = e.target.closest('[data-note]');
     if (note) {
       const c = COURSES.filter(function(x){ return x.id === note.dataset.note; })[0];
@@ -1201,6 +1220,11 @@ $('app').addEventListener('click', async e => {
     if (e.target.closest('#noteReset')) {
       try { localStorage.removeItem(noteKey()); } catch (err) {}
       const t = $('demoNote'); if (t) t.value = demoNote(); status('The standard note is back.'); return;
+    }
+    /* The price card without its four rates would go out with no figures in
+       it -- the one card whose job is the figures. */
+    if ((e.target.closest('#cardPreview') || e.target.closest('#cardCopy') || e.target.closest('#cardSend')) && cardKind() === 'price' && !ratesList()) {
+      status('Type the four rates first, under The film link and the rates.'); const f = document.querySelector('[data-rate]'); if (f) f.focus(); return;
     }
     if (e.target.closest('#cardPreview')) {
       const u = URL.createObjectURL(new Blob([cardHtml()], { type: 'text/html' }));
