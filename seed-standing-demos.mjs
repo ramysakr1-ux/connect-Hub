@@ -186,6 +186,9 @@ function settingsFor(tokens) {
     visitDate: DAY(VISIT_DAY), assessorVisit: [], docs: {},
     appianUrl: '',
     demoToday: PIN,
+    /* The demos' links open on the ticket (Ramy, 8 Oct 2026: "switch demos
+       to ticket"), so a re-plant keeps it. */
+    cardStyle: 'ticket',
   };
   if (WHICH === 'visit') { s.docs = DOCS; s.assessorVisit = [tokens[0], tokens[3]]; }
   return s;
