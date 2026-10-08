@@ -32,7 +32,7 @@
 <title>Connect Lite — for your centre</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610080750">
+<link rel="stylesheet" href="hub-tokens.css?v=202610080829">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -186,7 +186,7 @@
   @media(max-width:420px){ body[data-card="ticket"] .panel{padding:22px 20px 6px;} body[data-card="ticket"] .t-stub{padding:14px 20px 20px;} }
   @media print{ body[data-card="ticket"] .card{filter:none;} body[data-card="ticket"] .t-perf{background:none;} body[data-card="ticket"] .t-stub{background:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610080750">
+<link rel="stylesheet" href="hub-house.css?v=202610080829">
 </head>
 <body data-say-pill="off">
 
@@ -270,19 +270,19 @@
   <div class="doors">
     <div class="door">
       <b>As a trainee</b>
-      <span class="note" id="candNote">One person's own view — their plan, their feedback, and nobody else's.</span>
+      <span class="note" id="candNote">One trainee’s own space: their lesson plans and language analysis, their self-evaluations, the feedback their tutors return, and their written assignments.</span>
       <a id="doorCand" href="#" aria-disabled="true">Open</a>
     </div>
     <div class="door">
       <b>As the assessor</b>
-      <span class="note">Read-only. Everything a visit needs behind one link.</span>
+      <span class="note">Read-only: each trainee’s teaching practice record, their grades and their written assignments, in one place.</span>
       <a id="doorAssessor" href="#" aria-disabled="true">Open</a>
     </div>
     <!-- The fourth person on a course (30 Sep 2026): a volunteer student's own
          page, shown only when the course has one on its register. -->
     <div class="door" id="doorVolRow" hidden>
       <b>As a volunteer student</b>
-      <span class="note" id="volNote">The page a student who comes in to be taught sees: the next class, the room, their attendance.</span>
+      <span class="note" id="volNote">A volunteer student’s page for the classes: the next one to come to, the days they came, and their certificate at the end.</span>
       <a id="doorVol" href="#" aria-disabled="true">Open</a>
     </div>
   </div>
@@ -321,10 +321,10 @@
   </div>
 </div>
 
-<script src="hub-shared.js?v=202610080750"></script>
-<script src="hub-store.js?v=202610080750"></script>
-<script src="hub-say.js?v=202610080750"></script>
-<script src="hub-feedback.js?v=202610080750"></script>
+<script src="hub-shared.js?v=202610080829"></script>
+<script src="hub-store.js?v=202610080829"></script>
+<script src="hub-say.js?v=202610080829"></script>
+<script src="hub-feedback.js?v=202610080829"></script>
 <script>
 /* Everything course-specific comes from the one key in the URL. The card is
    complete and readable before any of it arrives -- what the store adds is the
@@ -386,12 +386,14 @@
     var a = document.getElementById('doorCand');
     a.href = invite('t', one.token); a.removeAttribute('aria-disabled');
     document.getElementById('candNote').textContent =
-      one.name + '’s own view — their plan, their feedback, and nobody else’s.';
+      String(one.name).split(' ')[0] + '’s own space: their lesson plans and language analysis, their self-evaluations, the feedback their tutors return, and their written assignments.';   // the ticket's words, 8 Oct 2026
     var words = ['','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'][list.length] || String(list.length);
     document.getElementById('goNote').textContent = 'The whole course: ' + words + ' trainee' + (list.length === 1 ? '' : 's') + ', their work, the grades and the reports.';
   }).catch(function(){});
-  /* The volunteer's door opens on their own page, not the card: the page is
-     the whole of what they get. */
+  /* The volunteer's door opens on their ticket, like the trainee's and the
+     assessor's (Ramy, 8 Oct 2026: "add volunteer link to all the demo
+     tickets"); the ticket's button opens their page. It used to skip the
+     card and open the page itself. */
   HubStore.call({ op: 'course', key: k }).then(function(c){
     var sset = (c && c.settings) || {};
     if (!CARD) document.body.dataset.card = sset.cardStyle === 'ticket' ? 'ticket' : 'welcome';
@@ -411,8 +413,8 @@
     var first = st.filter(function(s){ return s && s.token; })[0];
     if (!first) return;
     var row = document.getElementById('doorVolRow'), a = document.getElementById('doorVol');
-    a.href = '26_volunteer.html?v=' + encodeURIComponent(first.token); a.removeAttribute('aria-disabled');
-    document.getElementById('volNote').textContent = first.name.split(' ')[0] + '’s page: the next class, the room to join, their attendance, and the certificate when it is earned.';
+    a.href = invite('v', first.token); a.removeAttribute('aria-disabled');
+    document.getElementById('volNote').textContent = first.name.split(' ')[0] + '’s page for the classes: the next one to come to, the days they came, and their certificate at the end.';   // the ticket's words
     row.hidden = false;
   }).catch(function(){});
 })();

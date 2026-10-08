@@ -194,7 +194,7 @@
     var li = function(t){ return '<li style="margin:0 0 3px;">' + esc(t) + '</li>'; };
     var sheet =
       '<h2 style="font-family:' + SERIF + '; font-weight:600; font-size:17px; color:' + C.inkWarm + '; margin:0 0 4px;">See it working</h2>' +
-      '<p style="font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.grey + '; margin:0 0 4px;">Real courses. Open one as a tutor, a trainee, the assessor or a volunteer, and type in it.</p>' +
+      '<p style="font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.grey + '; margin:0 0 4px;">Real courses. Open one as a tutor, a trainee, the assessor or a volunteer student, and type in it.</p>' +
       '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px ' + (STYLE === 'ticket' ? 'dashed ' : 'solid ') + C.line + '; margin-top:' + (STYLE === 'ticket' ? '14px' : '0') + ';">' + doors + '</table>' +
       /* How it is priced, never what (Ramy, 7 Oct 2026). On the ticket it goes
          on the stub instead (below). */
