@@ -1774,14 +1774,32 @@ function ownerList_() {
   var list = courses_();
   if (!list.length) return [];
 
-  var settings = {};
+  // v77 (8 Oct 2026): a course whose settings outgrew one cell (a centre's
+  // logo is enough) keeps them as settings#0, #1, ... and this list used to
+  // read only the plain row -- so c5 showed with no centre name and could
+  // not show as a ticket book. The pieces are joined here, as courseRead_
+  // joins them, in one pass over the sheet.
+  var settings = {}, plainS = {}, partsS = {};
   var csh = sheet_(SHEET_COURSE), clast = csh.getLastRow();
   if (clast >= 2) {
     csh.getRange(2, 1, clast - 1, 3).getValues().forEach(function (r) {
-      if (String(r[1]) !== 'settings') return;
-      try { settings[String(r[0])] = JSON.parse(r[2]) || {}; } catch (e) {}
+      var id = String(r[0]), k = String(r[1]);
+      if (k === 'settings') { plainS[id] = r[2]; return; }
+      var ix = chunkIndex_(k, 'settings');
+      if (ix >= 0) { (partsS[id] = partsS[id] || [])[ix] = r[2]; }
     });
   }
+  Object.keys(plainS).concat(Object.keys(partsS)).forEach(function (id) {
+    if (settings[id]) return;
+    var json = (plainS[id] !== undefined && String(plainS[id]) !== '') ? String(plainS[id]) : null;
+    if (json === null && partsS[id]) {
+      var ps = partsS[id], whole = true;
+      for (var j = 0; j < ps.length; j++) if (ps[j] === undefined) { whole = false; break; }
+      if (whole) json = ps.join('');
+    }
+    if (json === null) return;
+    try { settings[id] = JSON.parse(json) || {}; } catch (e) {}
+  });
 
   var counts = {};
   var tsh = sheet_(SHEET_TRAINEES), tlast = tsh.getLastRow();

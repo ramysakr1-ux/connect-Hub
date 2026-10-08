@@ -27,6 +27,13 @@ Never a bare `clasp deploy`. If anything is ever edited in the Apps Script
 editor instead, `clasp pull` before the next change or the repo copy is stale.
 The patches below are how the editor's text got to v73.
 
+## 8 Oct 2026 — the console reads settings split across cells (version 91, store v77)
+
+`ownerList_()` read only a plain `settings` row, so a course whose settings
+had outgrown one cell (c5, once its logo was in: 61,126 characters of logo
+alone) was listed with no course name, no centre and no card style. It now
+joins `settings#0`, `#1`, ... in one pass, as `courseRead_` does. Read-only.
+
 ## 8 Oct 2026 — the console learns each course's card style (version 90, store v76)
 
 `ownerList_()` adds `cardStyle` ('ticket' or '') to each course it hands the
