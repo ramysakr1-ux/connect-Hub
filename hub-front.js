@@ -70,7 +70,7 @@
 
       + '<div class="fp-film">'
       + '<div><b>See a whole course, start to finish</b><span>From the first lesson plan to the certificates. A real course, not a mock-up.</span></div>'
-      + '<a class="fp-btn" href="film/watch.html">Watch the film</a>'
+      + '<a class="fp-btn" href="film/course-journey.html">Watch the film</a>'
       + '</div>'
 
       /* No figure on the front either (Ramy, 7 Oct 2026): the front page and

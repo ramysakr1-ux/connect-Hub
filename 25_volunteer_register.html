@@ -39,7 +39,7 @@
 <title>Connect Lite — Volunteer register</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610080829">
+<link rel="stylesheet" href="hub-tokens.css?v=202610081000">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -130,21 +130,21 @@
   @media(max-width:560px){ .vr9-coming{grid-template-columns:1fr auto;} .vr9-coming .split{grid-column:1 / -1;} .vr9-coming .num{border:0; padding:0;} .vr9-now small{margin-left:0; flex-basis:100%;} }
   @media print{ .vr9-now{display:none;} .seg.vr9-today{box-shadow:none;} .vr9-coming{border:1px solid #bbb;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610080829">
+<link rel="stylesheet" href="hub-house.css?v=202610081000">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610080829"></script>
-<script src="hub-shared.js?v=202610080829"></script>
-<script src="hub-timetable-parse.js?v=202610080829"></script>
-<script src="hub-xlsx.js?v=202610080829"></script>
-<script src="hub-attendance.js?v=202610080829"></script>
-<script src="hub-store.js?v=202610080829"></script>
-<script src="hub-say.js?v=202610080829"></script>
-<script src="hub-sync.js?v=202610080829"></script>
+<script src="hub-due.js?v=202610081000"></script>
+<script src="hub-shared.js?v=202610081000"></script>
+<script src="hub-timetable-parse.js?v=202610081000"></script>
+<script src="hub-xlsx.js?v=202610081000"></script>
+<script src="hub-attendance.js?v=202610081000"></script>
+<script src="hub-store.js?v=202610081000"></script>
+<script src="hub-say.js?v=202610081000"></script>
+<script src="hub-sync.js?v=202610081000"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -289,8 +289,8 @@ function render(){
         <div class="nm">${esc(st.name)}${IS_TUTOR
           ? `<span class="lvl"><select data-lvl="${i}"><option value="">Level</option>${LEVELS.map(l => `<option value="${l}"${st.level === l ? ' selected' : ''}>${l}</option>`).join('')}</select></span>`
           : (st.level ? '<span class="lvltag">' + esc(st.level) + '</span>' : '')}${IS_TUTOR
-          ? `<span class="carried"><input type="number" min="0" step="0.25" data-carried="${i}" value="${st.carried != null ? esc(st.carried) : ''}" placeholder="0" title="Hours this student already had at the centre, before this course"><small>h before</small></span>`
-          : (st.carried ? '<small>' + esc(st.carried) + ' h before this course</small>' : '')}${st.note ? '<small>' + esc(st.note) + '</small>' : ''}</div>
+          ? `<span class="carried"><input type="number" min="0" step="0.25" data-carried="${i}" value="${st.carried != null ? esc(st.carried) : ''}" placeholder="0" title="Hours this student already had at this level at the centre, before this course"><small>h at this level before</small></span>`
+          : (st.carried ? '<small>' + esc(st.carried) + ' h at this level before this course</small>' : '')}${st.note ? '<small>' + esc(st.note) + '</small>' : ''}</div>
         ${IS_TUTOR ? `<div class="mailrow"><input type="email" class="email" data-email="${i}" value="${esc(st.email || '')}" placeholder="Email, for the reminders">${st.email && st.notify === false ? '<small>asked for no emails</small>' : ''}</div>` : ''}
         ${st.token ? (st.agreed
           ? `<span class="agreed yes">✓ Agreed to the joining note, ${dm(String(st.agreed).slice(0, 10))}</span>`
@@ -435,10 +435,26 @@ function wire(){
     st.carried = Math.round(v * 100) / 100;
     persist(st.carried + ' hours carried in');
   }));
-  document.querySelectorAll('[data-lvl]').forEach(el => el.addEventListener('change', () => {
+  /* MOVING UP A LEVEL is the centre's call (Ramy, 8 Oct 2026), and the
+     certificate is 160 hours AT A LEVEL. So a change from one level to
+     another asks first, and the count at the new level starts today: the
+     hours before it, and anything carried in, stayed with the old level and
+     go into the student's history. Setting a level for the first time is
+     not a move. */
+  document.querySelectorAll('[data-lvl]').forEach(el => el.addEventListener('change', async () => {
     const st = students()[+el.dataset.lvl]; if (!st) return;
-    st.level = el.value;
-    persist(el.value ? 'Level ' + el.value : 'Level cleared');
+    const was = st.level || '', now = el.value;
+    if (was && now && was !== now) {
+      const ok = window.confirmModal
+        ? await window.confirmModal('Move ' + st.name + ' from ' + was + ' to ' + now + '? Their count at ' + now + ' starts today; the hours at ' + was + ' stay on their record.', 'Move to ' + now)
+        : confirm('Move ' + st.name + ' from ' + was + ' to ' + now + '?');
+      if (!ok) { el.value = was; return; }
+      st.levels = (st.levels || []).concat([{ level: was, until: TODAY, carried: st.carried || 0 }]);
+      st.levelFrom = TODAY;
+      delete st.carried;
+    }
+    st.level = now;
+    persist(now ? 'Level ' + now + (was && was !== now ? ', from today' : '') : 'Level cleared');
   }));
 }
 

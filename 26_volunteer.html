@@ -43,7 +43,7 @@
 <title>Connect Lite — My classes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610080829">
+<link rel="stylesheet" href="hub-tokens.css?v=202610081000">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:720px; margin:0 auto; padding:22px 20px 60px;}
@@ -168,17 +168,17 @@
   @keyframes v4-sheen{from{left:-50%;}to{left:120%;}}
   @media(prefers-reduced-motion:reduce){ .next.v4 *, .cert.earned::after, .track i{animation:none !important; transition:none !important;} .cert.earned::after{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610080829">
+<link rel="stylesheet" href="hub-house.css?v=202610081000">
 </head>
 <body class="hub-grid hub-paper">
 <div class="board" id="app"></div>
 <div id="consent"></div>
-<script src="hub-shared.js?v=202610080829"></script>
-<script src="hub-attendance.js?v=202610080829"></script>
-<script src="hub-volunteer-i18n.js?v=202610080829"></script>
-<script src="hub-store.js?v=202610080829"></script>
-<script src="hub-say.js?v=202610080829"></script>
-<script src="hub-sync.js?v=202610080829"></script>
+<script src="hub-shared.js?v=202610081000"></script>
+<script src="hub-attendance.js?v=202610081000"></script>
+<script src="hub-volunteer-i18n.js?v=202610081000"></script>
+<script src="hub-store.js?v=202610081000"></script>
+<script src="hub-say.js?v=202610081000"></script>
+<script src="hub-sync.js?v=202610081000"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -316,7 +316,11 @@ function room(){
    threshold per centre, and this is the same idea with a sensible default.
    Stated as a distance in CLASSES, because "two more classes" is a thing a
    person can act on and "seventy-nine percent" is not. */
-const CERT = A.certificate(hours, SETTINGS.volunteerCertificateHours || 160, tpSlots.length, LESSON_MIN0, ME.carried);
+/* The certificate counts the hours AT THE STUDENT'S LEVEL (8 Oct 2026): what
+   they carried in at it, plus this course's days since they moved up to it. */
+const LEVEL = String(ME.level || '').trim();
+const REC_L = ME.levelFrom ? A.record(A.atLevel(MARKS, ME.levelFrom), days, tpSlots.length, LESSON_MIN0) : REC;
+const CERT = A.certificate(REC_L.hours, SETTINGS.volunteerCertificateHours || 160, tpSlots.length, LESSON_MIN0, ME.carried);
 const TARGET = CERT.target, classesLeft = CERT.classesLeft, earned = CERT.earned;
 
 function render(){
@@ -358,10 +362,13 @@ function render(){
     <div class="card"><h3>Your attendance</h3>
       <div class="segs">${REC.days.map(x => `<span class="seg ${x.tier === 'present' ? 'here' : x.tier === 'partial' ? 'part' : x.date < TODAY ? 'miss' : ''}" title="${esc(shortDay(x.date))}"></span>`).join('')}</div>
       <div class="hrs"><b>${fmtH(hours)} h</b><span>${attended} ${attended === 1 ? 'class' : 'classes'}${REC.partial ? ' · ' + REC.partial + ' part of a class' : ''}${upcoming.length ? ' · ' + upcoming.length + ' still to come' : ''}</span></div>
-      ${TARGET > 0 ? `<div class="track"><i style="width:${Math.min(100, Math.round(hours / TARGET * 100))}%"></i></div><p class="trk-l"><b>${fmtH(Math.min(hours, TARGET))}</b> of ${fmtH(TARGET)} hours towards your certificate</p>
+      ${TARGET > 0 ? `<div class="track"><i style="width:${Math.min(100, Math.round(CERT.total / TARGET * 100))}%"></i></div><p class="trk-l"><b>${fmtH(Math.min(CERT.total, TARGET))}</b> of ${fmtH(TARGET)} hours${LEVEL ? ' at ' + esc(LEVEL) : ''} towards your certificate${CERT.carried ? ', ' + fmtH(CERT.carried) + ' of them from earlier courses' : ''}</p>`
+      /* The bar counts what the certificate counts: this course AND the hours
+         carried in from earlier ones (8 Oct 2026; it showed this course alone,
+         "33.77 of 160", beside a certificate already earned). */ + `
       <div class="cert${earned ? ' earned' : ''}">${earned
-        ? `Your <b>certificate of attendance</b> is ready. <a class="certlink" href="27_volunteer_certificate.html">Open it</a> \u2014 print it or save it as a PDF.`
-        : `Your <b>certificate of attendance</b> is ready at ${fmtH(TARGET)} hours. That is <b>${classesLeft} more ${classesLeft === 1 ? 'class' : 'classes'}</b>. It is signed by the centre and yours to keep.`}</div>` : ''}
+        ? `Your <b>certificate of attendance</b> for ${fmtH(TARGET)} hours${LEVEL ? ' at ' + esc(LEVEL) : ''} is ready. <a class="certlink" href="27_volunteer_certificate.html">Open it</a> \u2014 print it or save it as a PDF.`
+        : `Your <b>certificate of attendance</b> comes when you complete ${fmtH(TARGET)} hours${LEVEL ? ' at ' + esc(LEVEL) : ''}. That is <b>${classesLeft} more ${classesLeft === 1 ? 'class' : 'classes'}</b>. It is signed by the centre and yours to keep.`}</div>` : ''}
     </div>
     ${upcoming.length > 1 ? `<div class="card"><h3>The rest of the course</h3>
       <p class="days">${upcoming.slice(1, 9).map(d => `<span><b>${esc(shortDay(d))}</b> · ${esc(window.hubClock ? hubClock(startT) : startT)}</span>`).join('')}${upcoming.length > 9 ? '<span>and ' + (upcoming.length - 9) + ' more to ' + esc(shortDay(upcoming[upcoming.length-1])) + '</span>' : ''}</p></div>` : ''}

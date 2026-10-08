@@ -27,6 +27,14 @@ Never a bare `clasp deploy`. If anything is ever edited in the Apps Script
 editor instead, `clasp pull` before the next change or the repo copy is stale.
 The patches below are how the editor's text got to v73.
 
+## 8 Oct 2026 — the certificate per level, signed by the centre (version 93, store v79)
+
+The volunteer's certificate of attendance is now 160 hours AT A LEVEL (a
+level's 200 less twenty per cent leeway), signed for the centre rather than
+by a tutor. A volunteer's boot gains `levelFrom` (the day the centre moved
+them up; the count at the new level starts there) and the settings list
+gains `certSigner` ({name, role, ink}, set on Course admin). Read-only.
+
 ## 8 Oct 2026 — a volunteer's link carries the card style (version 92, store v78)
 
 A volunteer's boot sends a short list of the course's settings, never the

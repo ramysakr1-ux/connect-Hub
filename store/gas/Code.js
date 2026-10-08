@@ -879,7 +879,7 @@ case 'inbox': {
            before this course. The certificate is 160 hours ACROSS the centre and
            one course gives about thirty-six, so the figure the register carries
            has to reach their own page too. */
-        return { volunteer: { name: vol.name, here: vol.here || [], marks: vol.marks || null, level: vol.level || '', note: vol.note || '', agreed: vol.agreed || '', cert: vol.cert || null, carried: vol.carried || 0,
+        return { volunteer: { name: vol.name, here: vol.here || [], marks: vol.marks || null, level: vol.level || '', note: vol.note || '', agreed: vol.agreed || '', cert: vol.cert || null, carried: vol.carried || 0, levelFrom: vol.levelFrom || '' /* v79: the day they moved up, the count at the level starts there */,
                               /* v56: the reminders (1 Oct 2026) -- their answers by day, and whether they still want mail */
                               replies: vol.replies || {}, email: vol.email || '', notify: vol.notify === false ? false : true, nextClass: nextClass_(course.id) },
                  course: { settings: { centreName: vset.centreName, courseName: vset.courseName,
@@ -892,6 +892,9 @@ case 'inbox': {
                                        /* v78 (8 Oct 2026): which card the link opens on, so a volunteer
                                           on a ticket course gets the ticket like everyone else. */
                                        cardStyle: vset.cardStyle === 'ticket' ? 'ticket' : '',
+                                       /* v79 (8 Oct 2026): who signs the volunteers' certificates for the
+                                          centre -- a name, a role and the signature it prints. */
+                                       certSigner: (vset.certSigner && vset.certSigner.name) ? { name: vset.certSigner.name, role: vset.certSigner.role || '', ink: vset.certSigner.ink || '' } : null,
                                        /* v54 (1 Oct 2026): the tutor contacts are NOT sent to a volunteer.
                                           Ramy: "we most definitely don't want to give the course tutors'
                                           emails to the volunteer students. Absolutely not." A volunteer

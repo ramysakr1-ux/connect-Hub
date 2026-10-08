@@ -115,6 +115,30 @@
     };
   }
 
+  /* PER LEVEL (Ramy, 8 Oct 2026). The certificate of attendance is 160 hours
+     AT A LEVEL -- a level's 200 hours less twenty per cent leeway -- so the
+     count is the hours at the student's current level: what they carried in
+     at that level, plus this course's days from the day they moved up (if the
+     centre moved them up during this course). `levelFrom` is that day; the
+     days before it belonged to the level they left. */
+  function atLevel(marks, levelFrom) {
+    if (!levelFrom) return marks || {};
+    var out = {};
+    Object.keys(marks || {}).forEach(function (d) { if (d >= levelFrom) out[d] = marks[d]; });
+    return out;
+  }
+  /* The day the hours at the level reached the target: the certificate's
+     date. '' when they have not. */
+  function completedOn(marks, days, lessonsInDay, lessonMinutes, carried, target) {
+    var total = parseFloat(carried) || 0; target = parseFloat(target) || 0;
+    if (!target) return '';
+    for (var i = 0; i < (days || []).length; i++) {
+      total += (dayCredit((marks || {})[days[i]], lessonsInDay, lessonMinutes).creditedMinutes || 0) / 60;
+      if (total >= target - 1e-9) return days[i];
+    }
+    return '';
+  }
+
   /* The next mark when a tutor taps one: nothing, in the room, part of it,
      and back. Three taps to get where you started, so nothing is trapped. */
   function nextMark(mark) {
@@ -123,7 +147,8 @@
 
   var api = { TICK_MINUTES: TICK_MINUTES, PARTIAL_MINUTES: PARTIAL_MINUTES,
               lessonsNeededForPresent: lessonsNeededForPresent, dayCredit: dayCredit,
-              record: record, describe: describe, certificate: certificate, nextMark: nextMark };
+              record: record, describe: describe, certificate: certificate, nextMark: nextMark,
+              atLevel: atLevel, completedOn: completedOn };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.hubAttendance = api;
 })(typeof window !== 'undefined' ? window : globalThis);
