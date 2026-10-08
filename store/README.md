@@ -27,6 +27,12 @@ Never a bare `clasp deploy`. If anything is ever edited in the Apps Script
 editor instead, `clasp pull` before the next change or the repo copy is stale.
 The patches below are how the editor's text got to v73.
 
+## 8 Oct 2026 — a volunteer's link carries the card style (version 92, store v78)
+
+A volunteer's boot sends a short list of the course's settings, never the
+tutors' contacts. `cardStyle` joins that list, so a volunteer on a ticket
+course gets the ticket like everyone else. Read-only.
+
 ## 8 Oct 2026 — the console reads settings split across cells (version 91, store v77)
 
 `ownerList_()` read only a plain `settings` row, so a course whose settings
