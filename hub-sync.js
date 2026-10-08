@@ -230,7 +230,21 @@
   function payloadFor(job){ var pl = Object.assign({}, job); if (key()) pl.key = key(); return pl; }
   function key(){ return S.key(); }
   function schedule(id, job){ queue[id] = job; remember(id, job); clearTimeout(timer); timer = setTimeout(flush, 600); status('Saving…', 'busy'); }
+  /* One flush at a time. Each flush used to start the moment it was asked,
+     so a Return clicked while the last autosave was still on its way sent the
+     returned record alongside the draft, and Apps Script finished them in
+     whichever order it liked: the draft landed second and the store kept it,
+     while both answered ok and the pill said "Saved to the course" (Ramy's
+     walkthrough, practice course, 8 Oct 2026). Now a flush waits for the one
+     in flight, then takes whatever is queued by then -- the later write is
+     always the later arrival. */
+  var inflight = Promise.resolve();
   function flush(){
+    var run = inflight.then(flushOnce, flushOnce);
+    inflight = run.catch(function(){});
+    return run;
+  }
+  function flushOnce(){
     var jobs = queue; queue = {}; clearTimeout(timer); timer = null;
     var keys = Object.keys(jobs);
     if (!keys.length) return Promise.resolve();
