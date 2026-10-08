@@ -12,6 +12,7 @@ second-edition Teacher's Book to p. 189, so the photocopiables Ramy's own
 documents cite at pp. 223-233 are in neither file.
 """
 D = '/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books'
+D_MAT = '/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course Materials'
 BOOKS = {
   'LH_SB': (f'{D}/Elementary/Language Hub/Language_Hub_Elementary_SBpdf.pdf', 5),
   'RM_SB': (f'{D}/Pre-Intermediate /Roadmap A2+/Roadmap_a2+_student_s_book.pdf', -4),
@@ -24,11 +25,10 @@ BOOKS = {
   # and its imprint licenses photocopies of pp. 211-258 -- the resource pages
   # the second-edition copy in the library does not have at all.
   'SF_TB': (f'{D}/Upper- Intermediate /Straightforward/Straightforward Upper-Intermediate Teacher’s Book — 1st edition 2007.pdf', 15),
-  # Set five. These three still sit in Ramy's Downloads folder, not in Course
-  # books/Intermediate with every other book -- they want moving, and this path
-  # will break when they are.
-  'SOB1_SB': ('/Users/work/Downloads/B1 SpeakOut/SO B1 SB.pdf', -1),
-  'SOB1_WB': ('/Users/work/Downloads/B1 SpeakOut/SO B1 WB.pdf', -1),
+  # Set five. The B1 books live in Course Materials, not Course books with
+  # every other book (Downloads/B1 SpeakOut was cleared on 8 Oct 2026).
+  'SOB1_SB': (f'{D_MAT}/B1- Materials /SO B1 SB.pdf', -1),
+  'SOB1_WB': (f'{D_MAT}/B1- Materials /SO B1 WB.pdf', -1),
 }
 _open = {}
 
