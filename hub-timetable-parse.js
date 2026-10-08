@@ -26,10 +26,13 @@
  * notes). Without one it falls back to position: date, input 1, input 2,
  * notes. Anything it cannot place is reported rather than guessed at.
  *
- * WHAT IT DOES NOT TOUCH. The teaching practice column is read but never
- * allowed to overwrite what Lite works out from the course itself, unless the
- * sheet gives a practice number outright. The course knows its own practices;
- * a pasted sheet is a claim about them.
+ * TEACHING PRACTICE. When the sheet has a TP column (a week grid always has
+ * one), the sheet decides the practice days: a blank TP cell is a day with no
+ * practice, and each practice's first day goes to the first set, its second to
+ * the second (Ramy, 9 Oct 2026: "the sheet decides"). Lite's own rotation
+ * assumes a TP every day from day two; a real course has demo lessons and
+ * days without teaching, and the sheet is where those are written. Without a
+ * TP column, a number found in the row is taken and nothing else changes.
  *
  * MATCHING ROWS TO DAYS. By date when the row carries one it can read, and
  * by position otherwise — the first row is the first course day. That way a
@@ -219,6 +222,7 @@
     if (grid) rows = grid;
     const map = headerMap(rows[0]);
     const body = map ? rows.slice(1) : rows;
+    const tpColumn = !!(grid || (map && map.tp !== undefined));
     /* No header: is the first column dates? Sniff it rather than assume. A
        sheet whose first column is the morning session was losing that whole
        column, because the positional fallback threw column 0 away as a date
@@ -251,13 +255,12 @@
       /* When the sheet has a TP column (a grid always does), only that column
          counts: the other cells can name a practice ("syllabus planning TP7 &
          TP8") on a day with none. Without one, the whole row is searched. */
-      const tpColumn = grid || (map && map.tp !== undefined);
       const tp = readTp(at('tp')) || (tpColumn ? null : readTp(r.map(clean).join(' ')));
       if (tp) row.tp = tp;
       if (!row.a && !row.b && !row.notes && !row.tp) { unmatched.push(r.map(clean).filter(Boolean).join(' ')); return; }
       found.push(row);
     });
-    return { found, unmatched, byDate, byPosition, header: !!map, grid: !!grid };
+    return { found, unmatched, byDate, byPosition, header: !!map, grid: !!grid, tpColumn };
   }
 
   const api = { parse, rowsFromText, rowsFromBlocks, csvRows, gridRows, sheetCsvUrl, readDate, readTp, headerMap, splitCsv, clean };

@@ -983,16 +983,37 @@ function wireImport(){
   if ($('impCancel')) $('impCancel').addEventListener('click', () => { REVIEW = null; render(); });
   if ($('impApply')) $('impApply').addEventListener('click', () => {
     const by = {}; TT.days.forEach(d => { by[d.date] = d; });
+    /* The two inputs go into the day's input slots. Since the day shape (30
+       Sep 2026) a day keeps its sessions in cells, keyed by slot, and the
+       importer was still writing the old a/b fields, which nothing reads:
+       "Put it in did not put it in" (Ramy, 9 Oct 2026). A course with one
+       input slot gets both, joined. */
+    const ins = (TT.slots || []).filter(x => x.kind === 'input');
     REVIEW.found.forEach(f => {
       const day = by[f.date]; if (!day) return;
-      if (f.a) day.a = f.a;
-      if (f.b) day.b = f.b;
+      day.cells = day.cells || {};
+      [f.a, f.b].forEach((v, i) => {
+        if (!v || !ins.length) return;
+        const slot = ins[Math.min(i, ins.length - 1)].key;
+        day.cells[slot] = i > 0 && ins.length === 1 && day.cells[slot] ? day.cells[slot] + ' \u00b7 ' + v : v;
+      });
       if (f.notes) day.notes = f.notes;
-      /* A practice number the sheet states outright wins; one Lite worked out
-         for itself is left alone, because the course knows its own practices
-         and a pasted sheet is a claim about them. */
-      if (f.tp) day.tp = f.tp;
+      if (!REVIEW.tpColumn && f.tp) day.tp = f.tp;
     });
+    /* A sheet with a TP column decides the practice days (Ramy, 9 Oct 2026,
+       "the sheet decides"): a blank TP cell is a day without practice, and a
+       practice's first day is the first set's, its second the second set's --
+       ABC then DEF on his sheet. Lite's own rotation put a TP on every day
+       from day two, so a demo lesson day and two days without teaching came
+       out as TP 5 and TP 7, and every set after them was the wrong one. */
+    if (REVIEW.tpColumn) {
+      const times = {};
+      REVIEW.found.slice().sort((x, y) => (x.date < y.date ? -1 : 1)).forEach(f => {
+        const day = by[f.date]; if (!day) return;
+        if (f.tp) { const n = times[f.tp] || 0; day.tp = f.tp; day.setIndex = n % 2; times[f.tp] = n + 1; }
+        else { delete day.tp; delete day.setIndex; }
+      });
+    }
     REVIEW = null; IMPORT_OPEN = false;
     save('Imported');
     render();
@@ -1011,7 +1032,10 @@ function build(keep){
   if (!sk) { note = 'The course needs a start and an end date first.'; render(); return; }
   if (keep && TT && TT.days) {
     const old = {}; TT.days.forEach(d => { old[d.date] = d; });
-    sk.days.forEach(d => { const o = old[d.date]; if (o) { d.a = o.a || ''; d.b = o.b || ''; d.notes = o.notes || ''; } });
+    /* Keep what each day already says: its cells (the day shape, 30 Sep
+       2026) and its notes. This still copied the old a/b fields, so a rebuild
+       that was meant to keep the sessions dropped every one of them. */
+    sk.days.forEach(d => { const o = old[d.date]; if (o) { d.notes = o.notes || ''; if (o.cells) d.cells = Object.assign({}, o.cells); else { delete d.cells; d.a = o.a || ''; d.b = o.b || ''; } } });
   }
   TT = sk; save('Built');
 }
