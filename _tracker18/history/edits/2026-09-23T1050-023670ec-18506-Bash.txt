@@ -1,0 +1,28 @@
+S=/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker2; cd $S && python3 - <<'PY'
+import io
+p='Code.js'; s=io.open(p,encoding='utf-8').read()
+before = s.count('Logger.log')
+s = s.replace("""  var live = rosterIds_();
+  Logger.log('roster can produce %s ids: %s', Object.keys(live).length, Object.keys(live).join(', '));
+  var sh = sheet_();
+  var last = sh.getLastRow();
+  Logger.log('tracker sheet "%s" has %s row(s) of data', sh.getName(), Math.max(0, last - 1));
+  if (last < 2) return 'No rows.';""",
+"""  var live = rosterIds_();
+  var sh = sheet_();
+  var last = sh.getLastRow();
+  if (last < 2) return 'No rows.';""", 1)
+s = s.replace("""    var id = String(rows[i][0] || '');
+    if (!id) continue;
+    if (live[id]) { Logger.log('keep   %s', id); continue; }
+    Logger.log('ORPHAN %s — removing row %s', id, i + 2);""",
+"""    var id = String(rows[i][0] || '');
+    if (!id || live[id]) continue;""", 1)
+s = s.replace("""  var out = doomed.length ? 'Removed:\\n  ' + doomed.join('\\n  ') : 'No orphans — every row matches a candidate.';
+  Logger.log(out);
+  return out;""",
+"""  return doomed.length ? 'Removed:\\n  ' + doomed.join('\\n  ') : 'No orphans — every row matches a candidate.';""", 1)
+io.open(p,'w',encoding='utf-8').write(s)
+print("Logger.log calls: %d -> %d (the one left is dataSheetUrl's, original)" % (before, s.count('Logger.log')))
+PY
+node --check Code.js && grep -n "Logger.log" Code.js

@@ -1,0 +1,55 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+
+old = """var letterIssued = !!(c.failLetter && String(c.failLetter).trim());
+var letterDue = potentialFail && !letterIssued;"""
+new = """var letterIssued = !!(c.failLetter && String(c.failLetter).trim());
+var letterDue = potentialFail && !letterIssued;
+// Ramy, 12 Sep 2026: "a letter could be issued earlier. It doesn't have to
+// wait for a stage three. It should be issued as soon as they fail the
+// assignment." One fail does not make a potential Fail (11.6), so this is an
+// offer rather than an instruction -- but the moment it is useful is now,
+// while there are still lessons left to respond in.
+var letterAdvised = !potentialFail && fails.length === 1 && !letterIssued;"""
+assert old in s; s = s.replace(old, new)
+
+old = """potentialFail: potentialFail, failWhy: failWhy, letterDue: letterDue, letterIssued: letterIssued,"""
+new = """potentialFail: potentialFail, failWhy: failWhy, letterDue: letterDue, letterAdvised: letterAdvised, letterIssued: letterIssued,"""
+assert old in s; s = s.replace(old, new)
+
+old = """if (r.letterDue) letters.push({ name: p.name, why: r.failWhy });"""
+new = """if (r.letterDue) letters.push({ name: p.name, why: r.failWhy.concat(['letter required']) });
+else if (r.letterAdvised) advised.push({ name: p.name, why: [r.fails[0] + ' failed — a letter can go out now'] });"""
+assert old in s; s = s.replace(old, new)
+
+old = """var notToStandard = [], letters = [], ceilings = [], stage3Due = [], aboveList = [], hints = [];"""
+new = """var notToStandard = [], letters = [], advised = [], ceilings = [], stage3Due = [], aboveList = [], hints = [];"""
+assert old in s; s = s.replace(old, new)
+
+old = """fill('letterBox', 'attention', 'Fail letter required', letters,
+'Handbook 10.2: a potential Fail candidate should be issued with a Fail letter making the possible Fail outcome clear and drawing attention to the action points in the CELTA 5 — ideally with at least two lessons left to teach. Tick it on the candidate once it has gone out.');"""
+new = """fill('letterBox', 'attention', 'Fail letter required', letters,
+'Handbook 10.2: a potential Fail candidate should be issued with a Fail letter making the possible Fail outcome clear and drawing attention to the action points in the CELTA 5 — ideally with at least two lessons left to teach. Tick it on the candidate once it has gone out.');
+fill('advisedBox', 'attention amber', 'Fail letter worth issuing now', advised,
+'A letter does not have to wait for a Stage 3 tutorial. Sent as soon as an assignment is failed, it gives the candidate the most time to respond to the action points — and a Pass is still open on other evidence (11.6).');"""
+assert old in s; s = s.replace(old, new)
+
+old = """<div class="attention" id="letterBox" style="display:none"></div>"""
+new = """<div class="attention" id="letterBox" style="display:none"></div>
+<div class="attention amber" id="advisedBox" style="display:none"></div>"""
+assert old in s; s = s.replace(old, new)
+open(p,"w").write(s); print("ok", len(s))
+PY
+python3 -c "
+import re
+s=open('/tmp/tracker-live/index.html').read()
+open('/tmp/check.js','w').write(re.findall(r'<script>(.*?)</script>', s, re.S)[-1])" && node --check /tmp/check.js && echo "JS OK"
+python3 - <<'PY'
+s=open("/tmp/tracker-live/index.html").read()
+h=open("/Users/work/CELTA connect-code prompt/public/__tracker-preview.html").read()
+i=h.index("<script>\nvar __ROSTER"); j=h.index("</script>",i)+len("</script>\n")
+k=s.index("<script>")
+s=s[:k]+h[i:j]+s[k:]
+if 'name="viewport"' not in s: s=s.replace("<head>",'<head><meta name="viewport" content="width=device-width, initial-scale=1">',1)
+open("/Users/work/CELTA connect-code prompt/public/__tracker-preview.html","w").write(s); print("harness refreshed")
+PY

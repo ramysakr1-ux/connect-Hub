@@ -1,0 +1,29 @@
+S=/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker2; cd $S && python3 - <<'PY'
+import io
+p='Code.js'; s=io.open(p,encoding='utf-8').read()
+old = """function saveField(id, field, value) {
+if (FIELDS.indexOf(field) === -1) throw new Error('Unknown field: ' + field);"""
+new = """/** Every id the current roster can produce. */
+function rosterIds_() {
+var out = {};
+getRoster().forEach(function (r) { out[slug_(r.group + '-' + r.name)] = true; });
+return out;
+}
+
+function saveField(id, field, value) {
+if (FIELDS.indexOf(field) === -1) throw new Error('Unknown field: ' + field);
+// The id comes from the PAGE, derived from the roster it rendered with. Rename
+// a candidate and an open tab still holds the old one, so a grade typed there
+// found no row and APPENDED one under the pre-rename id -- a row nothing maps
+// to and nobody will ever read. Found on the 23 Sep 2026 walk: one orphan,
+// b1-christoph-deniz-jones, written hours after that rename, holding a main
+// aim somebody thought they had recorded.
+//
+// Refusing is the kind thing. The alternative is writing it somewhere it will
+// never be seen, which looks identical to success.
+if (!rosterIds_()[String(id)]) throw new Error('STALE_ROSTER');"""
+assert old in s; s = s.replace(old, new, 1)
+io.open(p,'w',encoding='utf-8').write(s)
+print("saveField now refuses an id the roster cannot produce")
+PY
+node --check Code.js && echo "Code.js parses"; grep -n "saveField\|withFailureHandler" index.html | head -6

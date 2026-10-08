@@ -1,0 +1,27 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+old = """var TP_GRADES = [
+{ key: 'ABOVE', label: 'Above standard', short: 'Above std' },
+{ key: 'STD', label: 'To standard', short: 'To std' },
+{ key: 'NOTSTD', label: 'Not to standard', short: 'Not to std' }
+];"""
+new = """// On the badge it is the code -- NS, S, AS -- because eight of them sit in a
+// row and the words do not fit. The grid you choose from spells them out.
+var TP_GRADES = [
+{ key: 'ABOVE', label: 'Above standard', short: 'AS' },
+{ key: 'STD', label: 'To standard', short: 'S' },
+{ key: 'NOTSTD', label: 'Not to standard', short: 'NS' }
+];"""
+assert old in s; s = s.replace(old, new)
+open(p,"w").write(s); print("ok")
+PY
+python3 - <<'PY'
+s=open("/tmp/tracker-live/index.html").read()
+h=open("/Users/work/CELTA connect-code prompt/public/__tracker-preview.html").read()
+i=h.index("<script>\n/* PREVIEW ONLY"); j=h.index("</script>",i)+len("</script>\n")
+k=s.index("<script>")
+s=s[:k]+h[i:j]+s[k:]
+s=s.replace("Live &mdash; synced with the shared sheet","PREVIEW — not connected, nothing you click here is saved").replace("Live — synced with the shared sheet","PREVIEW — not connected, nothing you click here is saved")
+if 'name="viewport"' not in s: s=s.replace("<head>",'<head><meta name="viewport" content="width=device-width, initial-scale=1">',1)
+open("/Users/work/CELTA connect-code prompt/public/__tracker-preview.html","w").write(s); print("preview refreshed")
+PY

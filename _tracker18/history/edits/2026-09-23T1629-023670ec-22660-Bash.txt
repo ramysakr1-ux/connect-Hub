@@ -1,0 +1,24 @@
+cd /private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker2 && python3 - <<'PY'
+import io
+p = "index.html"; s = io.open(p, encoding="utf-8").read()
+s = s.replace('<div class="attention amber" id="hubImportBox" style="display:none"></div>',
+              '<div class="attention amber" id="newCourseBox" style="display:none"></div>', 1)
+s = s.replace("function hubImportHide(){ var b = document.getElementById('hubImportBox'); b.style.display = 'none'; b.innerHTML = ''; }",
+              "function newCourseHide(){ var b = document.getElementById('newCourseBox'); b.style.display = 'none'; b.innerHTML = ''; }\nfunction newCourseShow(html){ var b = document.getElementById('newCourseBox'); b.innerHTML = html; b.style.display = ''; b.scrollIntoView({ block: 'nearest' }); }", 1)
+
+# The control lives INSIDE the collapsed roster disclosure, not the toolbar.
+# Ramy, 23 Sep 2026: "just make sure nothing happens to this course" -- C/17 is
+# mid-course with an assessment on the 29th, so the one destructive action in
+# the tracker should take a deliberate click to even reach.
+a = '''<form class="r-add r-newgroup" id="newGroupForm"><input placeholder="New group (e.g. A2)" required><button type="submit">Add group</button></form>'''
+b = '''<form class="r-add r-newgroup" id="newGroupForm"><input placeholder="New group (e.g. A2)" required><button type="submit">Add group</button></form>
+<div class="newcourse">
+<button class="btn danger" type="button" id="newCourseBtn">Start a new course&hellip;</button>
+<span class="newcourse-note">Clears every grade and takes a fresh roster. For the next course, not this one.</span>
+</div>'''
+assert s.count(a) == 1
+s = s.replace(a, b, 1)
+io.open(p, "w", encoding="utf-8").write(s)
+print("box repurposed, control added inside the roster panel")
+PY
+grep -n "newCourseBtn\|newcourse-note" index.html | head

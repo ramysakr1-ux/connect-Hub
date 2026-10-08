@@ -1,0 +1,30 @@
+cd /private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker2 && python3 - <<'PY'
+import io
+p = "index.html"; s = io.open(p, encoding="utf-8").read()
+subs = [
+ ('<div class="masthead"><div class="course-tag">COURSE C17/2026</div></div>',
+  '<div class="masthead"><div class="course-tag" id="courseTag">COURSE C17/2026</div></div>'),
+ ("var lines = ['C17/2026 Candidate Tracker — summary'];",
+  "var lines = [COURSE_CODE + ' Candidate Tracker — summary'];"),
+ ("var CANDIDATES = {};",
+  "// Filled from the server on load; the masthead, the page title and the\n// copied summary all read it, so starting a new course renames the tracker\n// everywhere at once instead of in three hardcoded places.\nvar COURSE_CODE = 'C17/2026';\nvar CANDIDATES = {};"),
+ ("function loadAndRender(){\nsetSync('Loading live data…', true);",
+  """function loadAndRender(){
+setSync('Loading live data…', true);
+google.script.run.withSuccessHandler(function(meta){
+  if (meta && meta.courseCode) {
+    COURSE_CODE = meta.courseCode;
+    document.getElementById('courseTag').textContent = 'COURSE ' + COURSE_CODE;
+    document.title = COURSE_CODE + ' Candidate Tracker';
+  }
+}).getMeta();"""),
+ (".r-add { display:flex; gap:6px; }",
+  ".r-add { display:flex; gap:6px; }\n.newcourse { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }\n.newcourse-note { font-size:.8rem; color:var(--grey); }"),
+]
+for a, b in subs:
+    assert s.count(a) == 1, a[:50]
+    s = s.replace(a, b, 1)
+io.open(p, "w", encoding="utf-8").write(s)
+print("all five applied")
+PY
+node -e "const h=require('fs').readFileSync('index.html','utf8'); new Function(h.match(/<script>([\s\S]*?)<\/script>/)[1]); console.log('page script parses')"

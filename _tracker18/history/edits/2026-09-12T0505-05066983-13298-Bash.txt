@@ -1,0 +1,194 @@
+cd /tmp/tracker-live && cp index.html /tmp/index.live.bak && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+
+# ---------- 1. CSS ----------
+old = """.tp-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:6px; }
+.tp-cell { text-align:center; }"""
+new = """.tp-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:6px; }
+.tp-cell { text-align:center; position:relative; }
+.badge .aim { display:block; font-size:9.5px; font-weight:600; margin-top:2px; opacity:.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* Grade and main aim in one grid: rows are the three grades, columns the
+   seven aims, and one tap on the cell where they meet sets both and closes. */
+.tp-pop { position:absolute; z-index:30; top:100%; left:50%; transform:translateX(-50%); margin-top:6px; background:var(--card); border:1px solid var(--line); border-radius:10px; box-shadow:0 10px 28px rgba(22,41,77,.16); padding:10px 12px 11px; }
+.tp-pop.edge-l { left:0; transform:none; }
+.tp-pop.edge-r { left:auto; right:0; transform:none; }
+.tp-pop table { border-collapse:separate; border-spacing:3px; }
+.tp-pop th { font-size:9px; font-weight:700; letter-spacing:.03em; color:var(--grey); text-transform:uppercase; padding:0 2px 2px; }
+.tp-pop th.rh { text-align:right; font-size:9.5px; text-transform:none; letter-spacing:0; padding-right:5px; white-space:nowrap; }
+.tp-pop td .m { display:block; width:42px; height:28px; border:1px solid var(--line); border-radius:6px; background:#FAFBFC; cursor:pointer; }
+.tp-pop td .m:hover { border-color:var(--teal); background:#F2F7FB; }
+.tp-pop tr.g-NOTSTD td .m.on { background:#FBEAE9; border-color:#E9B9B6; }
+.tp-pop tr.g-STD td .m.on { background:#E4F0F8; border-color:#A9CDE6; }
+.tp-pop tr.g-ABOVE td .m.on { background:#F1E9F5; border-color:#D3B9E0; }
+.tp-pop .pop-foot { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:7px; font-size:10.5px; color:var(--grey); }
+.tp-pop .clear { cursor:pointer; color:var(--rose); font-weight:600; }
+.tp-cover { font-size:11px; color:var(--grey); margin-top:9px; }
+.tp-cover b { color:var(--slate); font-weight:600; }"""
+assert old in s; s = s.replace(old, new)
+
+# ---------- 2. constants ----------
+old = """var TP_CYCLE = ['', 'S', 'S+', 'AS'];
+var TP_CLASS = { '': '', 'S': 'set-S', 'S+': 'set-Splus', 'AS': 'set-AS' };"""
+new = """// A TP is graded on the same three-point scale as Stage 2, and carries the
+// main aim of the lesson. Grades already in the sheet from the older S / S+ /
+// AS scale still read correctly: S and S+ are to standard, AS is above.
+var TP_GRADES = [
+{ key: 'ABOVE', label: 'Above standard', short: 'Above std' },
+{ key: 'STD', label: 'To standard', short: 'To std' },
+{ key: 'NOTSTD', label: 'Not to standard', short: 'Not to std' }
+];
+var TP_LEGACY = { 'S': 'STD', 'S+': 'STD', 'AS': 'ABOVE' };
+function tpGrade(v){
+v = TP_LEGACY[v] || v || '';
+for (var i=0;i<TP_GRADES.length;i++) if (TP_GRADES[i].key === v) return TP_GRADES[i];
+return null;
+}
+var AIMS = [
+{ key: 'Grammar', short: 'Gram' }, { key: 'Vocabulary', short: 'Vocab' }, { key: 'Functions', short: 'Func' },
+{ key: 'Reading', short: 'Read' }, { key: 'Listening', short: 'List' }, { key: 'Speaking', short: 'Speak' },
+{ key: 'Writing', short: 'Writ' }
+];
+var openPop = null;
+function closePop(){ if (openPop) { openPop.remove(); openPop = null; } }
+document.addEventListener('click', function(e){ if (openPop && !openPop.contains(e.target) && !e.target.closest('.tp-cell')) closePop(); });"""
+assert old in s; s = s.replace(old, new)
+
+# ---------- 3. the TP grid ----------
+old = """var tpGrid = document.createElement('div'); tpGrid.className='tp-grid';
+for (var i=0;i<8;i++){
+(function(i){
+var fkey = 'tp'+(i+1);
+var cell = document.createElement('div'); cell.className='tp-cell';
+var lbl = document.createElement('div'); lbl.className='tp-lbl'; lbl.textContent='TP'+(i+1);
+var b = document.createElement('div');
+function refresh(){ b.className='badge '+(TP_CLASS[c[fkey]]||''); b.textContent = c[fkey] || '–'; }
+refresh();
+b.addEventListener('click', function(){
+var idx = TP_CYCLE.indexOf(c[fkey]||'');
+c[fkey] = TP_CYCLE[(idx+1)%TP_CYCLE.length];
+refresh(); saveField(id, fkey, c[fkey]);
+});
+cell.appendChild(lbl); cell.appendChild(b); tpGrid.appendChild(cell);
+})(i);
+}
+body.appendChild(tpGrid);"""
+new = """var tpGrid = document.createElement('div'); tpGrid.className='tp-grid';
+var cover = document.createElement('div'); cover.className='tp-cover';
+// Which aims this candidate has taught, and which are still to come: the
+// question you actually ask when handing out the next TP.
+function refreshCover(){
+var taught = {}, n = 0;
+for (var k=1;k<=8;k++) if (c['tp'+k+'_aim']) { taught[c['tp'+k+'_aim']] = true; n++; }
+if (n === 0) { cover.innerHTML = ''; return; }
+var missing = [];
+AIMS.forEach(function(a){ if (!taught[a.key]) missing.push(a.key); });
+cover.innerHTML = missing.length ? '<b>Not yet taught:</b> ' + missing.join(', ') : '<b>Every aim covered.</b>';
+}
+for (var i=0;i<8;i++){
+(function(i){
+var fkey = 'tp'+(i+1), akey = 'tp'+(i+1)+'_aim';
+var cell = document.createElement('div'); cell.className='tp-cell';
+var lbl = document.createElement('div'); lbl.className='tp-lbl'; lbl.textContent='TP'+(i+1);
+var b = document.createElement('div');
+function refresh(){
+var g = tpGrade(c[fkey]);
+b.className = 'badge ' + (g ? 'set-'+g.key : '');
+b.innerHTML = '<span>' + (g ? g.short : '–') + '</span>' + (c[akey] ? '<span class="aim">'+c[akey]+'</span>' : '');
+refreshCover();
+}
+refresh();
+b.addEventListener('click', function(e){
+e.stopPropagation();
+var mine = openPop && openPop.parentNode === cell;
+closePop();
+if (mine) return;
+var pop = document.createElement('div');
+pop.className = 'tp-pop' + (i % 8 < 2 ? ' edge-l' : (i % 8 > 5 ? ' edge-r' : ''));
+var cur = tpGrade(c[fkey]), curAim = c[akey] || '';
+var html = '<table><tr><th></th>';
+AIMS.forEach(function(a){ html += '<th>'+a.short+'</th>'; });
+html += '</tr>';
+TP_GRADES.forEach(function(g){
+html += '<tr class="g-'+g.key+'"><th class="rh">'+g.label+'</th>';
+AIMS.forEach(function(a){
+var on = cur && cur.key===g.key && curAim===a.key;
+html += '<td><span class="m'+(on?' on':'')+'" data-g="'+g.key+'" data-a="'+a.key+'"></span></td>';
+});
+html += '</tr>';
+});
+html += '</table><div class="pop-foot"><span>Tap where the grade meets the aim</span><span class="clear">Clear</span></div>';
+pop.innerHTML = html;
+pop.addEventListener('click', function(ev){
+var m = ev.target.closest('.m');
+if (m) {
+c[fkey] = m.getAttribute('data-g'); c[akey] = m.getAttribute('data-a');
+saveField(id, fkey, c[fkey]); saveField(id, akey, c[akey]);
+refresh(); closePop(); return;
+}
+if (ev.target.classList.contains('clear')) {
+c[fkey] = ''; c[akey] = '';
+saveField(id, fkey, ''); saveField(id, akey, '');
+refresh(); closePop();
+}
+});
+cell.appendChild(pop); openPop = pop;
+});
+cell.appendChild(lbl); cell.appendChild(b); tpGrid.appendChild(cell);
+})(i);
+}
+body.appendChild(tpGrid);
+body.appendChild(cover);"""
+assert old in s; s = s.replace(old, new)
+
+# ---------- 4. badge colours reuse the Stage 2 set ----------
+old = """.badge.set-S { background:#EAF1F8; border:1px solid #BFD6EA; color:var(--slate); }
+.badge.set-Splus { background:#E4F0F8; border:1px solid #A9CDE6; color:var(--teal); }
+.badge.set-AS { background:#FBF1DC; border:1px solid #E8CE8E; color:var(--gold); }
+"""
+assert old in s; s = s.replace(old, "")
+
+# ---------- 5. Copy summary carries the TPs ----------
+old = """lines.push('  '+name+': '+(w ? 'WITHDRAWN' : (c.stage2 ? STAGE2_LABEL[c.stage2] : 'in progress')));"""
+new = """lines.push('  '+name+': '+(w ? 'WITHDRAWN' : (c.stage2 ? STAGE2_LABEL[c.stage2] : 'in progress')));
+var tps = [];
+for (var k=1;k<=8;k++){
+var g = tpGrade(c['tp'+k]);
+if (g || c['tp'+k+'_aim']) tps.push('TP'+k+' '+(g ? g.label : '–')+(c['tp'+k+'_aim'] ? ' ('+c['tp'+k+'_aim']+')' : ''));
+}
+if (tps.length) lines.push('    '+tps.join(' · '));"""
+assert old in s; s = s.replace(old, new)
+
+# ---------- 6. the strip says how it works now ----------
+old = """Click a candidate to open their record, then click any badge to set it. Each click cycles to the next value and saves straight away."""
+new = """Click a candidate to open their record. A TP opens a grid — tap where the grade meets the main aim and it saves both. Every other badge cycles on click."""
+assert old in s; s = s.replace(old, new)
+
+open(p,"w").write(s)
+print("index.html patched:", len(s), "bytes")
+
+# ---------- Code.js ----------
+p="Code.js"; s=open(p).read()
+old = "var FIELDS = ['exp','stage1','stage3','tp1','tp2','tp3','tp4','tp5','tp6','tp7','tp8','stage2','srt_r','srt_dm','fol_r','fol_dm','lrt_r','lrt_dm','lfc_r','lfc_dm','failLetter','withdrawn'];"
+new = """// A field's column is its position in this list, so new fields are APPENDED --
+// inserting one mid-list would shift every grade already in the sheet.
+var FIELDS = ['exp','stage1','stage3','tp1','tp2','tp3','tp4','tp5','tp6','tp7','tp8','stage2','srt_r','srt_dm','fol_r','fol_dm','lrt_r','lrt_dm','lfc_r','lfc_dm','failLetter','withdrawn','tp1_aim','tp2_aim','tp3_aim','tp4_aim','tp5_aim','tp6_aim','tp7_aim','tp8_aim'];"""
+assert old in s; s = s.replace(old, new)
+old = """if (sh.getLastRow() === 0) {
+sh.getRange(1, 1, 1, HEADER.length).setValues([HEADER]).setFontWeight('bold');
+sh.setFrozenRows(1);
+}
+return sh;"""
+new = """if (sh.getLastRow() === 0) {
+sh.getRange(1, 1, 1, HEADER.length).setValues([HEADER]).setFontWeight('bold');
+sh.setFrozenRows(1);
+} else {
+// A sheet written before a column existed gets the new headers labelled.
+var have = sh.getRange(1, 1, 1, HEADER.length).getValues()[0], changed = false;
+for (var i = 0; i < HEADER.length; i++) if (String(have[i] || '') !== HEADER[i]) { have[i] = HEADER[i]; changed = true; }
+if (changed) sh.getRange(1, 1, 1, HEADER.length).setValues([have]).setFontWeight('bold');
+}
+return sh;"""
+assert old in s; s = s.replace(old, new)
+open(p,"w").write(s)
+print("Code.js patched:", len(s), "bytes")
+PY

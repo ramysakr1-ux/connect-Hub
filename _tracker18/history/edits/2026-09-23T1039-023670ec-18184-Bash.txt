@@ -1,0 +1,51 @@
+S=/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker2; cd $S && python3 - <<'PY'
+import io
+p='index.html'; s=io.open(p,encoding='utf-8').read()
+
+# levelFor sits beside groupLabel and shares its reasoning.
+old = """function groupLabel(key){
+  var keys = Object.keys(CANDIDATES);
+  if (keys.length !== 2) return key;
+  var other = keys.filter(function(k){ return k !== key; })[0];
+  return key + '/' + other;
+}"""
+new = """function otherGroup(key){
+  var keys = Object.keys(CANDIDATES);
+  if (keys.length !== 2) return '';
+  return keys.filter(function(k){ return k !== key; })[0] || '';
+}
+function groupLabel(key){
+  var other = otherGroup(key);
+  return other ? key + '/' + other : key;
+}
+/* Which level this group is teaching at TP n. They swap after TP4 -- the same
+   SECOND_HALF_FROM the fail-letter and Stage rules already use, so the two
+   halves of the course cannot drift apart here. Ramy, 23 Sep 2026: "after TP4
+   they swap levels, so the tracker should show both levels." */
+function levelAt(groupKey, tpNumber){
+  var other = otherGroup(groupKey);
+  if (!other) return '';
+  return tpNumber < SECOND_HALF_FROM ? groupKey : other;
+}"""
+assert old in s; s = s.replace(old, new, 1)
+
+old2 = "var lbl = document.createElement('div'); lbl.className='tp-lbl'; lbl.textContent='TP'+(i+1);"
+new2 = """var lbl = document.createElement('div'); lbl.className='tp-lbl';
+var lvl = levelAt(groupKey, i+1);
+lbl.textContent = 'TP'+(i+1) + (lvl ? ' \\u00b7 ' + lvl : '');
+if (lvl && (i+1) === SECOND_HALF_FROM) lbl.className += ' tp-swap';"""
+assert old2 in s; s = s.replace(old2, new2, 1)
+
+# a quiet mark on the TP where the level changes
+old3 = ".tp-cell .tp-lbl { font-size:10px; color:var(--grey); margin-bottom:4px; }"
+new3 = """.tp-cell .tp-lbl { font-size:10px; color:var(--grey); margin-bottom:4px; }
+.tp-cell .tp-lbl.tp-swap { color:var(--ink); font-weight:600; }"""
+assert old3 in s; s = s.replace(old3, new3, 1)
+io.open(p,'w',encoding='utf-8').write(s)
+print("TP labels now carry the level; the swap TP is marked")
+PY
+node -e "
+const h=require('fs').readFileSync('index.html','utf8');
+const b=h.match(/<script>([\s\S]*?)<\/script>/)[1];
+new Function(b); console.log('index.html script parses');
+"

@@ -1,0 +1,126 @@
+cd "/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker" && python3 - <<'PY'
+import io,re
+p='Code.js'; s=io.open(p,encoding='utf-8').read()
+
+# 1. ROSTER_SEED on the passport spellings
+s = s.replace("['B1', 'Christoph Deniz Jones']", "['B1', 'Christopher Douglas Deniz Jones']")
+s = s.replace("['B1', 'Maryam Hosseini']", "['B1', 'Seyedeh Maryam Hosseini']")
+s = s.replace("['B1', 'Tunç Pekmen']", "['B1', 'Tunç Hüseyin Pekmen']")
+
+# 2. saveRoster: carry the grades through a rename
+old = """/** Replaces the whole roster. Grades are keyed by name and are never touched. */
+function saveRoster(rows) {
+var lock = LockService.getScriptLock();
+lock.waitLock(10000);
+try {
+var sh = rosterSheet_();
+var last = sh.getLastRow();
+if (last >= 2) sh.getRange(2, 1, last - 1, 2).clearContent();
+var clean = (rows || [])"""
+
+new = """/** The client's id for a candidate. Must match slug() in index.html. */
+function slug_(s) {
+return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
+/**
+ * Replaces the whole roster.
+ *
+ * A candidate's grades are keyed by slug(group + '-' + name), so correcting a
+ * spelling here used to leave the grades behind under the old id -- the row
+ * stayed in the sheet and the renamed candidate came back empty. The comment
+ * that used to sit here said grades were "keyed by name and never touched",
+ * which was half true and the wrong half: they are keyed by name, which is
+ * exactly why they have to move. Rows are paired by position, so a rename in
+ * place carries its grades and a reordered or resized roster does not pretend
+ * to know better.
+ */
+function saveRoster(rows) {
+var lock = LockService.getScriptLock();
+lock.waitLock(10000);
+try {
+var sh = rosterSheet_();
+var last = sh.getLastRow();
+var before = last >= 2 ? sh.getRange(2, 1, last - 1, 2).getValues() : [];
+if (last >= 2) sh.getRange(2, 1, last - 1, 2).clearContent();
+var clean = (rows || [])"""
+assert old in s; s = s.replace(old, new)
+
+old2 = """if (clean.length) sh.getRange(2, 1, clean.length, 2).setValues(clean);
+} finally {
+lock.releaseLock();
+}
+return true;
+}
+"""
+new2 = """if (clean.length) sh.getRange(2, 1, clean.length, 2).setValues(clean);
+
+var renames = [];
+before.filter(function (r) { return String(r[0]).trim() && String(r[1]).trim(); })
+.forEach(function (r, i) {
+if (i >= clean.length) return;
+var from = slug_(String(r[0]).trim() + '-' + String(r[1]).trim());
+var to = slug_(clean[i][0] + '-' + clean[i][1]);
+if (from !== to) renames.push([from, to]);
+});
+if (renames.length) renameIds_(renames);
+} finally {
+lock.releaseLock();
+}
+return true;
+}
+
+/**
+ * Repoints grade rows at new ids. Called under the roster lock. A rename onto
+ * an id that already has a row is left alone rather than merged or clobbered:
+ * two candidates' grades are not ours to reconcile.
+ */
+function renameIds_(pairs) {
+var sh = sheet_();
+var last = sh.getLastRow();
+if (last < 2) return 0;
+var col = sh.getRange(2, 1, last - 1, 1);
+var ids = col.getValues();
+var taken = {};
+ids.forEach(function (row) { taken[String(row[0])] = true; });
+var moved = 0;
+pairs.forEach(function (pair) {
+if (taken[pair[1]]) return;
+for (var i = 0; i < ids.length; i++) {
+if (String(ids[i][0]) !== pair[0]) continue;
+ids[i][0] = pair[1];
+taken[pair[1]] = true;
+moved++;
+break;
+}
+});
+if (moved) col.setValues(ids);
+return moved;
+}
+
+/**
+ * One-off, 23 Sep 2026: three candidates were entered on a short form of their
+ * name and the application forms spell them in full. Run once; running it
+ * again finds nothing to do.
+ */
+function fixC17PassportNames() {
+var was = getRoster();
+var fixes = {
+'Christoph Deniz Jones': 'Christopher Douglas Deniz Jones',
+'Maryam Hosseini': 'Seyedeh Maryam Hosseini',
+'Tunç Pekmen': 'Tunç Hüseyin Pekmen'
+};
+var now = was.map(function (r) {
+return { group: r.group, name: fixes[r.name] || r.name };
+});
+saveRoster(now);
+return now.map(function (r, i) {
+return (was[i].name === r.name ? '   ' : '  -> ') + r.group + '  ' + r.name;
+}).join('\\n');
+}
+"""
+assert old2 in s; s = s.replace(old2, new2, 1)
+io.open(p,'w',encoding='utf-8').write(s)
+print("patched")
+PY
+grep -n "Christopher Douglas\|Seyedeh Maryam\|Hüseyin" Code.js

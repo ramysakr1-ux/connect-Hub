@@ -1,0 +1,118 @@
+cd /private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker2 && python3 - <<'PY'
+import io
+p = "Code.js"
+s = io.open(p, encoding="utf-8").read()
+
+# 1. the course code becomes data, not three hardcoded strings
+a = """function doGet() {
+return HtmlService.createHtmlOutputFromFile('index').setTitle('C17/2026 Candidate Tracker').addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}"""
+b = """var DEFAULT_COURSE_CODE = 'C17/2026';
+
+/**
+ * The course this tracker is currently holding.
+ *
+ * Was hardcoded in three places -- the page title, the masthead and the copied
+ * summary -- which was fine while the tracker only ever held C17/2026. Starting
+ * a new course has to change it, and a value in three places changes in two.
+ */
+function courseCode() {
+return PropertiesService.getScriptProperties().getProperty('COURSE_CODE') || DEFAULT_COURSE_CODE;
+}
+
+function getMeta() {
+return { courseCode: courseCode() };
+}
+
+function doGet() {
+return HtmlService.createHtmlOutputFromFile('index').setTitle(courseCode() + ' Candidate Tracker').addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}"""
+assert s.count(a) == 1
+s = s.replace(a, b, 1)
+
+# 2. preview + the guarded writer, appended
+s = s.rstrip() + """
+
+/**
+ * What starting a new course would destroy. READ-ONLY -- nothing is written.
+ *
+ * Separate from startNewCourse on purpose: the page can call this freely to
+ * show the damage before anyone commits to it, and no accidental call can
+ * cost anything.
+ */
+function previewNewCourse() {
+var sh = sheet_();
+var last = sh.getLastRow();
+var gradeRows = 0;
+if (last >= 2) {
+var rows = sh.getRange(2, 1, last - 1, HEADER.length).getValues();
+gradeRows = rows.filter(function (r) { return String(r[0] || '').trim(); }).length;
+}
+return { courseCode: courseCode(), gradeRows: gradeRows, candidates: getRoster().length };
+}
+
+/**
+ * Clears the course and takes a new roster in one go.
+ *
+ * Guarded three ways, because this is the only call in the tracker that
+ * destroys work that cannot be recovered:
+ *
+ *   1. `confirmCode` must equal the CURRENT course code. The page asks the
+ *      person to type it, and the check is repeated here -- a client-side
+ *      confirmation is a courtesy, not a lock.
+ *   2. The new roster must be non-empty and free of duplicate group+name
+ *      pairs. Two identical pairs share one id, so their grades would collide
+ *      from the first lesson -- the same collision that stranded a row on
+ *      23 Sep 2026, arriving by a different door.
+ *   3. Everything happens under the script lock, so a second tab cannot be
+ *      writing a grade into the course being cleared.
+ *
+ * Deliberately does NOT go through saveRoster: that pairs old and new rows by
+ * position to carry grades through a rename, which is exactly wrong here.
+ * There is nothing to carry -- the grades are going.
+ */
+function startNewCourse(newCode, rows, confirmCode) {
+var current = courseCode();
+if (String(confirmCode || '').trim() !== current) {
+throw new Error('To start a new course, type the current course code exactly: ' + current);
+}
+var code = String(newCode || '').trim();
+if (!code) throw new Error('The new course needs a code, e.g. C18/2026');
+
+var clean = (rows || [])
+.filter(function (r) { return r && String(r.group).trim() && String(r.name).trim(); })
+.map(function (r) { return [String(r.group).trim(), String(r.name).trim()]; });
+if (!clean.length) throw new Error('No candidates in that list');
+
+var seen = {}, dupes = [];
+clean.forEach(function (r) {
+var k = slug_(r[0] + '-' + r[1]);
+if (seen[k]) dupes.push(r[0] + ' / ' + r[1]); else seen[k] = true;
+});
+if (dupes.length) throw new Error('Two candidates would share one record: ' + dupes.join('; '));
+
+var lock = LockService.getScriptLock();
+lock.waitLock(10000);
+var cleared = 0;
+try {
+var sh = sheet_();
+var last = sh.getLastRow();
+if (last >= 2) {
+cleared = last - 1;
+sh.getRange(2, 1, last - 1, HEADER.length).clearContent();
+}
+var rs = rosterSheet_();
+var rlast = rs.getLastRow();
+if (rlast >= 2) rs.getRange(2, 1, rlast - 1, 2).clearContent();
+rs.getRange(2, 1, clean.length, 2).setValues(clean);
+PropertiesService.getScriptProperties().setProperty('COURSE_CODE', code);
+} finally {
+lock.releaseLock();
+}
+return { courseCode: code, candidates: clean.length, clearedRows: cleared };
+}
+"""
+io.open(p, "w", encoding="utf-8").write(s)
+print("Code.js: courseCode(), getMeta(), previewNewCourse(), startNewCourse()")
+PY
+node -e "new Function(require('fs').readFileSync('Code.js','utf8')); console.log('Code.js parses')"

@@ -1,0 +1,39 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+
+# ---------- roster comes from the sheet ----------
+old = """var CANDIDATES = {
+B1: ['Christoph Deniz Jones', 'Maedeh Ahmadizadeh', 'Maryam Hosseini', 'Tunç Pekmen', 'Süer Okan Sevindir'],
+A1: ['Ali Altay Özbüber', 'Şeyda Taşkıner', 'Maryam Moumivand', 'Ali Behnami', 'Sima Piroutzade']
+};"""
+new = """// Filled from the sheet's Roster tab on load -- any number of groups, any
+// number of candidates in each. Kept as an object of group -> names so the
+// rest of the page is unchanged.
+var CANDIDATES = {};
+var ROSTER = [];
+function rosterToGroups(rows){
+var out = {};
+rows.forEach(function(r){ (out[r.group] = out[r.group] || []).push(r.name); });
+return out;
+}"""
+assert old in s; s = s.replace(old, new)
+
+# ---------- load roster alongside data ----------
+old = """function loadAndRender(){
+setSync('Loading live data…', true);
+google.script.run
+.withSuccessHandler(function(data){
+DATA = data || {};"""
+new = """function loadAndRender(){
+setSync('Loading live data…', true);
+google.script.run
+.withSuccessHandler(function(rows){
+ROSTER = rows || [];
+CANDIDATES = rosterToGroups(ROSTER);
+google.script.run
+.withSuccessHandler(function(data){
+DATA = data || {};"""
+assert old in s; s = s.replace(old, new)
+open(p,"w").write(s)
+PY
+awk '/^function loadAndRender/,/^}$/' index.html

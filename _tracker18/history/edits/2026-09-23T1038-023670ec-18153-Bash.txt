@@ -1,0 +1,32 @@
+S=/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker2; cd $S && python3 - <<'PY'
+import io
+p='index.html'; s=io.open(p,encoding='utf-8').read()
+
+helper = """
+/* The levels swap partway through the course: the group that starts on B1
+   finishes on A1, and the other way round. "Group B1" alone named only the
+   half of the course you happened to be thinking of (Ramy, 23 Sep 2026).
+   Only meaningful with exactly two groups -- with one, or three, there is no
+   swap to describe, so the key stands alone. */
+function groupLabel(key){
+  var keys = Object.keys(CANDIDATES);
+  if (keys.length !== 2) return key;
+  var other = keys.filter(function(k){ return k !== key; })[0];
+  return key + '/' + other;
+}
+"""
+anchor = "function buildGroup(key, names){"
+assert anchor in s
+s = s.replace(anchor, helper.lstrip() + '\n' + anchor, 1)
+s = s.replace("head.innerHTML = '<h2>Group '+key+'</h2><span class=\"n\">'+names.length+' candidates</span><span class=\"car\">&#9656;</span>';",
+              "head.innerHTML = '<h2>Group '+groupLabel(key)+'</h2><span class=\"n\">'+names.length+' candidates</span><span class=\"car\">&#9656;</span>';", 1)
+s = s.replace("lines.push('', 'Group '+key);", "lines.push('', 'Group '+groupLabel(key));", 1)
+io.open(p,'w',encoding='utf-8').write(s)
+print("groupLabel added; heading and summary use it")
+PY
+node -e "
+const h=require('fs').readFileSync('index.html','utf8');
+const m=h.match(/<script>([\s\S]*?)<\/script>/g)||[];
+m.forEach((b,i)=>{try{new Function(b.replace(/^<script[^>]*>/,'').replace(/<\/script>$/,''))}catch(e){console.log('block',i,'SYNTAX:',e.message)}});
+console.log('index.html script blocks:', m.length, '— checked');
+"

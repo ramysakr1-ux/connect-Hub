@@ -1,0 +1,89 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+s = s.replace("""refreshSt(); refreshChip(); saveField(id, st.field, c[st.field]);""",
+              """refreshSt(); refreshChip(); renderDash(); saveField(id, st.field, c[st.field]);""")
+s = s.replace("""refreshAssign(); saveField(id, lc+'_r', c[lc+'_r']);""",
+              """refreshAssign(); refreshChip(); renderDash(); saveField(id, lc+'_r', c[lc+'_r']);""")
+
+old = """function buildGroup(key, names){"""
+new = """// Groups and candidates, editable. Ramy, 12 Sep 2026: the tracker has to work
+// "with any number of trainees and any number of TP groups", so nothing about
+// the course is baked into this page any more.
+function renderRoster(){
+var box = document.getElementById('rosterBody');
+if (!box) return;
+box.innerHTML = '';
+Object.keys(CANDIDATES).forEach(function(key){
+var g = document.createElement('div'); g.className = 'r-group';
+g.innerHTML = '<div class="r-head"><b>Group ' + key + '</b><span class="r-del" data-group="' + key + '">Remove group</span></div>';
+var ul = document.createElement('div'); ul.className = 'r-names';
+CANDIDATES[key].forEach(function(n){
+var row = document.createElement('div'); row.className = 'r-name';
+row.innerHTML = '<span>' + n + '</span><span class="r-del" data-group="' + key + '" data-name="' + n + '">&times;</span>';
+ul.appendChild(row);
+});
+var add = document.createElement('form'); add.className = 'r-add';
+add.innerHTML = '<input placeholder="Add a candidate to ' + key + '" required><button type="submit">Add</button>';
+add.addEventListener('submit', function(e){
+e.preventDefault();
+var v = add.querySelector('input').value.trim(); if (!v) return;
+saveRoster(ROSTER.concat([{ group: key, name: v }]));
+});
+g.appendChild(ul); g.appendChild(add);
+box.appendChild(g);
+});
+Array.prototype.forEach.call(box.querySelectorAll('.r-del'), function(x){
+x.addEventListener('click', function(){
+var grp = x.getAttribute('data-group'), nm = x.getAttribute('data-name');
+var what = nm ? nm : 'Group ' + grp + ' and everyone in it';
+if (!confirm('Remove ' + what + ' from the tracker? Grades already saved stay in the sheet and come back if you add them again.')) return;
+saveRoster(ROSTER.filter(function(r){ return nm ? !(r.group === grp && r.name === nm) : r.group !== grp; }));
+});
+});
+}
+
+function buildGroup(key, names){"""
+assert old in s; s = s.replace(old, new, 1)
+
+old = """document.getElementById('search').addEventListener('input', buildAllGroups);"""
+new = """document.getElementById('newGroupForm').addEventListener('submit', function(e){
+e.preventDefault();
+var inp = this.querySelector('input'), v = inp.value.trim();
+if (!v || CANDIDATES[v]) { inp.value = ''; return; }
+// A group with nobody in it has nothing to write to the sheet, so the first
+// candidate is what creates it. Held on screen until then.
+CANDIDATES[v] = []; inp.value = ''; renderRoster(); buildAllGroups();
+});
+document.getElementById('search').addEventListener('input', buildAllGroups);"""
+assert old in s; s = s.replace(old, new)
+
+old = """.tp-cover b { color:var(--slate); font-weight:600; }"""
+new = """.tp-cover b { color:var(--slate); font-weight:600; }
+.roster-panel { border:1px solid var(--line); background:var(--card); border-radius:10px; padding:10px 14px; margin-bottom:14px; }
+.roster-panel summary { cursor:pointer; font-size:12.5px; font-weight:600; color:var(--navy2); }
+.r-group { margin-top:12px; }
+.r-head { display:flex; align-items:baseline; justify-content:space-between; font-size:12.5px; color:var(--navy); padding-bottom:4px; border-bottom:1px solid var(--line); }
+.r-names { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
+.r-name { display:flex; align-items:center; gap:7px; font-size:12px; border:1px solid var(--line); border-radius:20px; padding:4px 10px; background:#FAFBFC; }
+.r-del { cursor:pointer; color:var(--rose); font-size:11px; font-weight:700; }
+.r-add { display:flex; gap:6px; }
+.r-add input { flex:1; min-width:120px; border:1px solid var(--line); border-radius:7px; padding:6px 9px; font-size:12px; background:#fff; color:var(--ink); }
+.r-add button { border:1px solid var(--line); background:#fff; color:var(--navy2); font-size:12px; font-weight:600; padding:6px 12px; border-radius:7px; cursor:pointer; }
+.r-add button:hover { border-color:var(--teal); }
+.r-newgroup { margin-top:16px; padding-top:12px; border-top:1px solid var(--line); }"""
+assert old in s; s = s.replace(old, new)
+
+old = """buildAllGroups();
+renderDash();
+})"""
+assert s.count(old) == 1
+s = s.replace(old, """buildAllGroups();
+renderDash();
+renderRoster();
+})""")
+open(p,"w").write(s); print("re-applied:", len(s))
+PY
+grep -c "renderRoster" index.html; python3 -c "
+import re
+s=open('/tmp/tracker-live/index.html').read()
+open('/tmp/check.js','w').write(re.findall(r'<script>(.*?)</script>', s, re.S)[-1])" && node --check /tmp/check.js && echo "JS OK"

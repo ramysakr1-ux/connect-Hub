@@ -1,0 +1,94 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+old = """function renderDash(){
+var allIds = [];
+Object.keys(CANDIDATES).forEach(function(key){ CANDIDATES[key].forEach(function(name){ allIds.push(slug(key+'-'+name)); }); });
+var total = allIds.length, withdrawn=0, above=0, toStd=0, notToStd=0;
+allIds.forEach(function(id){
+var c = DATA[id]; if (!c) return;
+var w = c.withdrawn===true || c.withdrawn==='true';
+if (w) withdrawn++;
+else if (c.stage2==='ABOVE') above++;
+else if (c.stage2==='STD') toStd++;
+else if (c.stage2==='NOTSTD') notToStd++;
+});
+var inProgress = total - withdrawn - toStd - above - notToStd;
+var stats = [
+{ n:total, l:'Total candidates' },
+{ n:toStd+above, l:'Reached standard', cls:'good' },
+{ n:notToStd, l:'Not yet to standard', cls: notToStd?'warn':'' },
+{ n:withdrawn, l:'Withdrawn', cls: withdrawn?'warn':'' },
+{ n:inProgress, l:'Still in progress' }
+];
+document.getElementById('dash').innerHTML = stats.map(function(s){
+return '<div class="stat '+(s.cls||'')+'"><div class="n">'+s.n+'</div><div class="l">'+s.l+'</div></div>';
+}).join('');
+}"""
+new = """function renderDash(){
+var people = [];
+Object.keys(CANDIDATES).forEach(function(key){
+CANDIDATES[key].forEach(function(name){ people.push({ name: name, c: DATA[slug(key+'-'+name)] || {} }); });
+});
+
+var count = { withdrawn:0, risk:0, watch:0, above:0, ontrack:0, none:0 };
+var tpGraded = 0, tpNotStd = 0, aRecorded = 0, aFail = 0, aResub = 0;
+var needs = [], watching = [];
+people.forEach(function(p){
+var r = readCandidate(p.c);
+count[r.state]++;
+tpGraded += r.graded; tpNotStd += r.notStd;
+aFail += r.fails.length; aResub += r.resubs.length;
+ASSIGNMENTS.forEach(function(code){ if (p.c[code.toLowerCase()+'_r']) aRecorded++; });
+if (r.state === 'risk') needs.push({ name: p.name, why: r.risk });
+else if (r.state === 'watch') watching.push({ name: p.name, why: r.watch });
+});
+
+var stats = [
+{ n: people.length, l: 'Total candidates' },
+{ n: count.ontrack + count.above, l: count.above ? 'On track (' + count.above + ' above standard)' : 'On track', cls: 'good' + ((count.ontrack+count.above) ? ' on-good' : '') },
+{ n: count.watch, l: 'Watch', cls: count.watch ? 'amber on-amber' : '' },
+{ n: count.risk, l: 'Needs attention', cls: count.risk ? 'warn on-warn' : '' },
+{ n: count.withdrawn + count.none, l: count.withdrawn ? count.withdrawn + ' withdrawn, ' + count.none + ' not started' : 'Not started yet' }
+];
+document.getElementById('dash').innerHTML = stats.map(function(s){
+return '<div class="stat '+(s.cls||'')+'"><div class="n">'+s.n+'</div><div class="l">'+s.l+'</div></div>';
+}).join('');
+
+// The counting behind the colours, so a number can always be checked.
+var strip = document.getElementById('dashStrip');
+strip.innerHTML =
+'<span><b>' + tpGraded + '</b> of ' + (people.length * 8) + ' TPs graded' + (tpNotStd ? ', <b>' + tpNotStd + '</b> not to standard' : '') + '</span>' +
+'<span><b>' + aRecorded + '</b> of ' + (people.length * ASSIGNMENTS.length) + ' assignments marked' +
+(aResub ? ', <b>' + aResub + '</b> on resubmission' : '') + (aFail ? ', <b>' + aFail + '</b> failed' : '') + '</span>';
+
+// Who, and why -- the panel is only worth having if it says what to do next.
+var box = document.getElementById('attention');
+var line = function(list){ return list.map(function(p){ return '<span class="who">'+p.name+'</span> — '+p.why.join('; '); }).join(' · '); };
+if (needs.length) {
+box.className = 'attention';
+box.innerHTML = '<span class="hd">Needs attention</span>' + line(needs) + (watching.length ? '<br><span class="hd" style="margin-top:8px">Watch</span>' + line(watching) : '');
+box.style.display = '';
+} else if (watching.length) {
+box.className = 'attention amber';
+box.innerHTML = '<span class="hd">Watch</span>' + line(watching);
+box.style.display = '';
+} else {
+box.style.display = 'none';
+}
+}"""
+assert old in s; s = s.replace(old, new)
+
+# the two new containers
+old = """<div class="dash" id="dash"></div>"""
+new = """<div class="dash" id="dash"></div>
+<div class="dash-strip" id="dashStrip"></div>
+<div class="attention" id="attention" style="display:none"></div>"""
+assert old in s; s = s.replace(old, new)
+
+open(p,"w").write(s); print("renderDash rewritten", len(s))
+PY
+node --check <(python3 -c "
+import re,sys
+s=open('/tmp/tracker-live/index.html').read()
+parts=re.findall(r'<script>(.*?)</script>', s, re.S)
+sys.stdout.write(parts[-1])") 2>&1 | head -5; echo "syntax: $?"

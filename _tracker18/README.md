@@ -1,24 +1,30 @@
-# C18/2026 Candidate Tracker (Apps Script)
+# The candidate tracker (Apps Script) — C/17's, restored for C/18
 
-Rebuilt 8 Oct 2026 after the C/17 tracker's Apps Script project was deleted
-(its web app answered 404; the project was gone from Drive and clasp). Its
-rules survived in `hub-tracker.js` (ported there 20 Sep 2026) and its sheet
-layout in the C/17 data sheet; this is the tracker rebuilt on both.
+On 8 Oct 2026 the C/17 tracker's Apps Script project was found deleted (its
+web app answered 404). Its code was recovered from the session logs:
 
-**Keep the source here.** The last one lived only in Google and was lost.
+- `history/index-2026-09-07.html` — the page as first pasted into Apps Script
+- `history/Code-2026-09-12.js` — the server file as printed on 12 Sep
+- `history/edits/` — every later edit, as logged (12 Sep → 27 Sep)
+- `history/replay.py` — replays those edits, in order, in a sandbox
+  (no clasp, no git, no writes outside the two files). Five edits fail on
+  replay exactly as they failed when first run; the replay output says so.
 
-- Script: `12mjqQF58FtQAeK1aCQPUvna4HKgDiPfIIltk9N8OvI5gfNARR7FEKkYn`
-- Web app (deployment): `AKfycbzgWOkURwyfR_0rKXf82milZ5Lfm4VsuhX91hc2voDNUWHsnAdJnYx5d5YMSSrPhI9w`
-  — opened by `c17-candidate-tracker/index.html` (the Classroom button page)
-- Data sheet: `1e-m_PWv3i6qdFZenCFBk5OJggGUhAjHO7jsod3PEG6s` ("C18/2026 Candidate Tracker (data)", C/18 folder)
+`index.html` and `Code.js` here are that replay's result, plus the C/18
+changes only: course code C18/2026, the C/18 data sheet as the default,
+the C/18 names as the roster seed, and `COURSE_LEVELS = ['B1','A1']` (both
+groups B1 for TP1–4, A1 from TP5; null restores C/17's swapping levels).
 
-## Change it
+**Keep the source here.** The last one lived only in Google.
 
-    # Index.html = Index.src.html with __LOGO__ replaced by ih-small.png as a data URI
-    python3 -c "import base64;s=open('Index.src.html').read();open('Index.html','w').write(s.replace('__LOGO__','data:image/png;base64,'+base64.b64encode(open('ih-small.png','rb').read()).decode()))"
-    node test.mjs                                   # server in a VM + the page in Chromium; must be all passed
+- Script `12mjqQF58FtQAeK1aCQPUvna4HKgDiPfIIltk9N8OvI5gfNARR7FEKkYn`
+- Deployment `AKfycbzgWOkURwyfR_0rKXf82milZ5Lfm4VsuhX91hc2voDNUWHsnAdJnYx5d5YMSSrPhI9w`
+  (opened by `c17-candidate-tracker/index.html`, Classroom's button page)
+- Data sheet `1e-m_PWv3i6qdFZenCFBk5OJggGUhAjHO7jsod3PEG6s` (C/18 folder)
+
+    node test.mjs        # Code.js in a VM + index.html in Chromium
     npx @google/clasp@latest push --force
     npx @google/clasp@latest deploy -i AKfycbzgWOkURwyfR_0rKXf82milZ5Lfm4VsuhX91hc2voDNUWHsnAdJnYx5d5YMSSrPhI9w -d "what changed"
 
-Always `deploy -i <that id>`: a bare `deploy` mints a new URL and the button
-page goes stale.
+Never a bare `clasp deploy`: it mints a new URL and the button page goes stale.
+The project file must be called `index.html` (lower case): `doGet` serves 'index'.

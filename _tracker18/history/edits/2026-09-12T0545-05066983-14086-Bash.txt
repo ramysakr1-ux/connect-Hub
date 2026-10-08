@@ -1,0 +1,30 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+old = """var AIMS = [
+{ key: 'Grammar', short: 'Gram' }, { key: 'Vocabulary', short: 'Vocab' }, { key: 'Functions', short: 'Func' },
+{ key: 'Reading', short: 'Read' }, { key: 'Listening', short: 'List' }, { key: 'Speaking', short: 'Speak' },
+{ key: 'Writing', short: 'Writ' }
+];"""
+new = """// The syllabus's own categories and its own words: Topic 2 is Grammar (2.2),
+// Lexis (2.3) -- not "vocabulary" -- and Phonology (2.4); Topic 3 is Reading,
+// Listening, Speaking and Writing, with language functions under Speaking
+// (3.3.3) and kept separate here because a CELTA TP is routinely planned
+// around them. Cambridge publishes no column codes, so the headers are the
+// ordinary staffroom ones.
+var AIMS = [
+{ key: 'Grammar', short: 'GR' }, { key: 'Lexis', short: 'LEX' }, { key: 'Phonology', short: 'PHON' },
+{ key: 'Functions', short: 'FUNC' },
+{ key: 'Reading', short: 'R' }, { key: 'Listening', short: 'L' }, { key: 'Speaking', short: 'S' },
+{ key: 'Writing', short: 'W' }
+];"""
+assert old in s; s = s.replace(old, new)
+open(p,"w").write(s); print("aims ->", "LEX" in s)
+PY
+python3 - <<'PY'
+s=open("/tmp/tracker-live/index.html").read()
+h=open("/Users/work/CELTA connect-code prompt/public/__tracker-preview.html").read()
+i=h.index("<script>\nvar __ROSTER"); j=h.index("</script>",i)+len("</script>\n")
+k=s.index("<script>"); s=s[:k]+h[i:j]+s[k:]
+if 'name="viewport"' not in s: s=s.replace("<head>",'<head><meta name="viewport" content="width=device-width, initial-scale=1">',1)
+open("/Users/work/CELTA connect-code prompt/public/__tracker-preview.html","w").write(s); print("harness refreshed")
+PY

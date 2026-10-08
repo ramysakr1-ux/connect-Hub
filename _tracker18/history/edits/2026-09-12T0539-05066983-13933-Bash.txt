@@ -1,0 +1,65 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+
+old = """var GIVEN_CYCLE = ['', 'GIVEN', 'NOTGIVEN'];
+var GIVEN_LABEL = { '': '–', GIVEN: 'Given', NOTGIVEN: 'Not given' };"""
+new = """// Handbook 10.2, and Ramy 12 Sep 2026: the Stage 1 RECORD is compulsory for
+// every candidate in the first third; the Stage 1 tutorial is not ("some
+// centres may hold a tutorial at the same time, but this is not obligatory").
+// So Stage 1 is a record completed or not, with no verdict and no tutorial
+// claim. Stage 2 is record AND tutorial, for everyone. Stage 3 is conditional.
+var GIVEN_CYCLE = ['', 'GIVEN'];
+var GIVEN_LABEL = { '': '–', GIVEN: 'Record completed', NOTGIVEN: 'Record completed' };"""
+assert old in s; s = s.replace(old, new)
+
+old = """var STAGES = ["""
+new = """// Stage 2 is ordinarily at the halfway point (10.2), so a candidate who has
+// taught half their TPs without one is overdue.
+var STAGE2_DUE_AFTER = 4;
+var STAGES = ["""
+assert old in s; s = s.replace(old, new)
+
+old = """var recorded = graded > 0 || fails.length > 0 || resubs.length > 0 || !!c.stage2 || !!c.stage3;"""
+new = """// The two compulsory records, flagged when they are missing rather than when
+// something has gone wrong -- an empty Stage 1 is the commonest thing an
+// assessor finds and the easiest to fix while the course is still running.
+var stage1Due = (graded > 0 && !c.stage1);
+var stage2Due = (graded >= STAGE2_DUE_AFTER && !c.stage2);
+
+var recorded = graded > 0 || fails.length > 0 || resubs.length > 0 || !!c.stage2 || !!c.stage3;"""
+assert old in s; s = s.replace(old, new)
+
+old = """stage3Why: stage3Why, stage2Hint: stage2Hint"""
+new = """stage3Why: stage3Why, stage2Hint: stage2Hint, stage1Due: stage1Due, stage2Due: stage2Due"""
+assert old in s; s = s.replace(old, new)
+
+old = """var notToStandard = [], letters = [], advised = [], ceilings = [], stage3Due = [], aboveList = [], hints = [];"""
+new = """var notToStandard = [], letters = [], advised = [], ceilings = [], stage3Due = [], aboveList = [], hints = [];
+var stage1Missing = [], stage2Missing = [];"""
+assert old in s; s = s.replace(old, new)
+
+old = """if (r.stage2Hint) hints.push({ name: p.name, why: [r.stage2Hint] });"""
+new = """if (r.stage2Hint) hints.push({ name: p.name, why: [r.stage2Hint] });
+if (r.stage1Due) stage1Missing.push({ name: p.name, why: ['no Stage 1 record'] });
+if (r.stage2Due) stage2Missing.push({ name: p.name, why: [r.graded + ' TPs taught, no Stage 2 record'] });"""
+assert old in s; s = s.replace(old, new)
+
+old = """fill('hintBox', 'attention amber', 'Stage 2 not yet recorded', hints);"""
+new = """fill('hintBox', 'attention amber', 'Stage 2 not yet recorded', hints);
+fill('stage1Box', 'attention amber', 'Stage 1 record outstanding', stage1Missing,
+'Handbook 10.2: the Stage 1 record is completed by the tutor in the first third of the course for every candidate. A tutorial alongside it is optional.');
+fill('stage2Box', 'attention amber', 'Stage 2 record and tutorial outstanding', stage2Missing,
+'Handbook 10.2: Stage 2 is carried out for every candidate, with a one-to-one tutorial, ordinarily at the halfway point.');"""
+assert old in s; s = s.replace(old, new)
+
+old = """<div class="attention amber" id="hintBox" style="display:none"></div>"""
+new = """<div class="attention amber" id="hintBox" style="display:none"></div>
+<div class="attention amber" id="stage2Box" style="display:none"></div>
+<div class="attention amber" id="stage1Box" style="display:none"></div>"""
+assert old in s; s = s.replace(old, new)
+open(p,"w").write(s); print("ok", len(s))
+PY
+python3 -c "
+import re
+s=open('/tmp/tracker-live/index.html').read()
+open('/tmp/check.js','w').write(re.findall(r'<script>(.*?)</script>', s, re.S)[-1])" && node --check /tmp/check.js && echo "JS OK"

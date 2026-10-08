@@ -1,0 +1,44 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+
+old = """.tp-pop { position:absolute; z-index:30; top:100%; left:50%; transform:translateX(-50%); margin-top:6px; background:var(--card); border:1px solid var(--line); border-radius:10px; box-shadow:0 10px 28px rgba(22,41,77,.16); padding:10px 12px 11px; }
+.tp-pop.edge-l { left:0; transform:none; }
+.tp-pop.edge-r { left:auto; right:0; transform:none; }"""
+new = """.tp-pop { position:absolute; z-index:30; top:100%; left:0; margin-top:6px; background:var(--card); border:1px solid var(--line); border-radius:10px; box-shadow:0 10px 28px rgba(22,41,77,.16); padding:10px 12px 11px; }"""
+assert old in s; s = s.replace(old, new)
+
+old = """.tp-cover b { color:var(--slate); font-weight:600; }"""
+new = """.tp-cover b { color:var(--slate); font-weight:600; }
+@media (max-width:560px) {
+.tp-pop { padding:8px 9px 9px; }
+.tp-pop td .m { width:31px; height:26px; }
+.tp-pop th { font-size:8.5px; }
+.tp-pop th.rh { font-size:9px; padding-right:3px; }
+.tp-pop .pop-foot { font-size:9.5px; }
+}"""
+assert old in s; s = s.replace(old, new)
+
+old = """var pop = document.createElement('div');
+pop.className = 'tp-pop' + (i % 8 < 2 ? ' edge-l' : (i % 8 > 5 ? ' edge-r' : ''));"""
+new = """var pop = document.createElement('div');
+pop.className = 'tp-pop';"""
+assert old in s; s = s.replace(old, new)
+
+old = """cell.appendChild(pop); openPop = pop;"""
+new = """cell.appendChild(pop); openPop = pop;
+// Centred under its own TP where there is room, nudged inside the window
+// where there isn't -- the eight cells wrap to four a row on a phone, so
+// which cell sits at an edge is not something a fixed rule can know.
+var r = cell.getBoundingClientRect(), w = pop.offsetWidth, vw = document.documentElement.clientWidth;
+var want = r.left + r.width/2 - w/2;
+pop.style.left = (Math.max(8, Math.min(want, vw - w - 8)) - r.left) + 'px';"""
+assert old in s; s = s.replace(old, new)
+open(p,"w").write(s); print("positioning patched", len(s))
+PY
+python3 - <<'PY'
+s=open("/tmp/tracker-live/index.html").read()
+stub=open("/Users/work/CELTA connect-code prompt/public/__tracker-preview.html").read()
+i=stub.find("<script>\nvar __DATA"); j=stub.find("</script>",i)+len("</script>\n")
+open("/Users/work/CELTA connect-code prompt/public/__tracker-preview.html","w").write(s.replace("<script>\nvar CANDIDATES", stub[i:j]+"<script>\nvar CANDIDATES",1))
+print("harness refreshed")
+PY

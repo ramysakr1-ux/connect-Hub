@@ -1,0 +1,29 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+old = """var AIMS = [
+{ key: 'Grammar', short: 'GR' }, { key: 'Lexis', short: 'LEX' }, { key: 'Phonology', short: 'PHON' },
+{ key: 'Functions', short: 'FUNC' },
+{ key: 'Reading', short: 'R' }, { key: 'Listening', short: 'L' }, { key: 'Speaking', short: 'S' },
+{ key: 'Writing', short: 'W' }
+];"""
+new = """// Ramy's own headers, 12 Sep 2026 -- the staffroom words rather than the
+// syllabus's ("vocabulary" for lexis, "pronunciation" for phonology). Systems
+// first, then the four skills in the syllabus's order (Topic 3: reading,
+// listening, speaking, writing).
+var AIMS = [
+{ key: 'Grammar', short: 'GR' }, { key: 'Functional language', short: 'FL' },
+{ key: 'Vocabulary', short: 'VOCAB' }, { key: 'Pronunciation', short: 'PRON' },
+{ key: 'Reading', short: 'R' }, { key: 'Listening', short: 'L' },
+{ key: 'Speaking', short: 'S' }, { key: 'Writing', short: 'W' }
+];"""
+assert old in s; s = s.replace(old, new)
+open(p,"w").write(s); print("aims set")
+PY
+python3 - <<'PY'
+s=open("/tmp/tracker-live/index.html").read()
+h=open("/Users/work/CELTA connect-code prompt/public/__tracker-preview.html").read()
+i=h.index("<script>\nvar __ROSTER"); j=h.index("</script>",i)+len("</script>\n")
+k=s.index("<script>"); s=s[:k]+h[i:j]+s[k:]
+if 'name="viewport"' not in s: s=s.replace("<head>",'<head><meta name="viewport" content="width=device-width, initial-scale=1">',1)
+open("/Users/work/CELTA connect-code prompt/public/__tracker-preview.html","w").write(s); print("harness refreshed")
+PY

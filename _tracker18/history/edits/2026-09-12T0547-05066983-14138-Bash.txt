@@ -1,0 +1,16 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+old = """{ key: 'Vocabulary', short: 'VOCAB' }, { key: 'Pronunciation', short: 'PRON' },"""
+new = """{ key: 'Lexis', short: 'LEX' }, { key: 'Pronunciation', short: 'PRON' },"""
+assert old in s; s = s.replace(old, new)
+s = s.replace("""// Ramy's own headers, 12 Sep 2026 -- the staffroom words rather than the
+// syllabus's ("vocabulary" for lexis, "pronunciation" for phonology). Systems
+// first, then the four skills in the syllabus's order (Topic 3: reading,
+// listening, speaking, writing).""",
+"""// Ramy's headers, 12 Sep 2026: Lexis (the syllabus's own word, 2.3) and
+// Pronunciation (the staffroom's, for the syllabus's Phonology, 2.4). Systems
+// first, then the four skills in the syllabus's order (Topic 3: reading,
+// listening, speaking, writing).""")
+open(p,"w").write(s); print("LEX set")
+PY
+grep -n "key: 'Grammar'" -A 3 index.html | head -5; npx --yes @google/clasp@latest push --force 2>&1 | tail -3

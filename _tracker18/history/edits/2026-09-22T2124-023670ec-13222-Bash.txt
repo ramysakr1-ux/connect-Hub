@@ -1,0 +1,42 @@
+cd "/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker" && python3 - <<'PY'
+import io,re
+p='Code.js'; s=io.open(p,encoding='utf-8').read()
+start = s.index('/**\n * One-off, 23 Sep 2026')
+end = s.index('function resetAll()')
+new = """/**
+ * One-off, 23 Sep 2026: three candidates were entered on a short form of their
+ * name and the application forms spell them in full. Run once; running it
+ * again finds nothing to do.
+ */
+function fixC17PassportNames() {
+var fixes = {
+'Christoph Deniz Jones': 'Christopher Douglas Deniz Jones',
+'Maryam Hosseini': 'Seyedeh Maryam Hosseini',
+'Tun\\u00e7 Pekmen': 'Tun\\u00e7 H\\u00fcseyin Pekmen'
+};
+var key = function (n) { return String(n).replace(/\\s+/g, ' ').trim(); };
+var lookup = {};
+Object.keys(fixes).forEach(function (k) { lookup[key(k)] = fixes[k]; });
+
+var was = getRoster();
+Logger.log('read ' + was.length + ' from the roster');
+was.forEach(function (r) { Logger.log('  [' + r.group + '] "' + r.name + '" match=' + !!lookup[key(r.name)]); });
+
+var changed = 0;
+var now = was.map(function (r) {
+var to = lookup[key(r.name)];
+if (!to || to === r.name) return r;
+changed++;
+return { group: r.group, name: to };
+});
+Logger.log('changing ' + changed);
+if (changed) saveRoster(now);
+Logger.log('done');
+return changed;
+}
+
+"""
+io.open(p,'w',encoding='utf-8').write(s[:start] + new + s[end:])
+print("rewritten")
+PY
+cd "/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker" && node -e 'new Function(require("fs").readFileSync("Code.js","utf8")); console.log("parses")' && npx --yes @google/clasp@latest push --force 2>&1 | tail -2

@@ -1,0 +1,32 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+s=open("index.html").read()
+stub = """<script>
+var __ROSTER = [
+{group:'B1',name:'Christoph Deniz Jones'},{group:'B1',name:'Maedeh Ahmadizadeh'},{group:'B1',name:'Maryam Hosseini'},
+{group:'B1',name:'Tunc Pekmen'},{group:'B1',name:'Suer Okan Sevindir'},
+{group:'A1',name:'Ali Altay Ozbuber'},{group:'A1',name:'Seyda Taskiner'},{group:'A1',name:'Maryam Moumivand'}
+];
+var __DATA = {
+'b1-christoph-deniz-jones': { tp1:'S', tp2:'STD', tp3:'ABOVE', tp3_aim:'Reading', tp4:'ABOVE', stage2:'ABOVE', srt_r:'PASS' },
+'b1-maedeh-ahmadizadeh': { tp1:'NOTSTD', tp2:'NOTSTD', tp2_aim:'Grammar' },
+'b1-maryam-hosseini': { tp1:'STD', tp2:'STD', stage2:'STD', tp5:'NOTSTD', srt_r:'FAIL' },
+'b1-tunc-pekmen': { tp1:'ABOVE', stage2:'ABOVE', tp6:'NOTSTD', stage3:'STD', failLetter:'11 Sep' },
+'b1-suer-okan-sevindir': { withdrawn:true },
+'a1-ali-altay-ozbuber': { tp1:'STD', srt_r:'FAIL', fol_r:'FAIL' },
+'a1-seyda-taskiner': { tp1:'STD', tp2:'STD', stage2:'STD' }
+};
+window.google = { script: { run: (function(){ var ok=function(){}; var api = {
+withSuccessHandler: function(f){ ok=f; return api; }, withFailureHandler: function(){ return api; },
+getRoster: function(){ setTimeout(function(){ ok(JSON.parse(JSON.stringify(__ROSTER))); }, 30); },
+saveRoster: function(rows){ __ROSTER = rows; setTimeout(function(){ ok(true); }, 20); },
+getData: function(){ setTimeout(function(){ ok(JSON.parse(JSON.stringify(__DATA))); }, 40); },
+saveField: function(id,f,v){ (__DATA[id]=__DATA[id]||{})[f]=v; setTimeout(function(){ ok(true); },20); },
+resetAll: function(){ __DATA={}; setTimeout(function(){ ok(true); },20); } }; return api; })() } };
+</script>
+"""
+i = s.index("<script>")
+s = s[:i] + stub + s[i:]
+if 'name="viewport"' not in s: s = s.replace("<head>", '<head><meta name="viewport" content="width=device-width, initial-scale=1">', 1)
+open("/Users/work/CELTA connect-code prompt/public/__tracker-preview.html","w").write(s)
+print("harness ok, stub at", i)
+PY

@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+:root { --navy: #16294D; --navy2: #1F3864; --teal: #2E75B6; --slate: #5B7A99; --gold: #B8860B; --rose: #A5433F; --ink: #1A1A1A; --grey: #64707D; --line: #DDE3EA; --paper: #FAFBFC; --card: #FFFFFF; }
+* { box-sizing: border-box; }
+html, body { margin:0; background:var(--paper); font-family:-apple-system,"Segoe UI",Calibri,Roboto,Arial,sans-serif; color:var(--ink); }
+body { padding: 28px 16px 70px; }
+.wrap { max-width: 1040px; margin: 0 auto; }
+.masthead { display:flex; align-items:center; justify-content:flex-end; margin-bottom:12px; }
+.course-tag { font-size:11px; letter-spacing:.04em; color:var(--navy2); background:#EAF1F8; border:1px solid #CFE0EE; padding:5px 11px; border-radius:20px; font-weight:600; }
+h1 { font-size:27px; margin:4px 0 16px; color:var(--navy); letter-spacing:-0.01em; }
+.info-strip { display:flex; align-items:flex-start; gap:10px; background:#FBF3E4; border:1px solid #EAD9AE; border-radius:8px; padding:11px 14px; font-size:12.5px; line-height:1.55; color:#6B4E12; }
+.info-strip .dot { width:7px; height:7px; border-radius:50%; background:var(--gold); flex:none; margin-top:6px; }
+.info-strip b { font-weight:700; }
+.sync-note { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--grey); margin:16px 0 18px; }
+.sync-dot { width:7px; height:7px; border-radius:50%; background:#7BC49A; flex:none; }
+.sync-dot.busy { background: var(--gold); }
+.dash { display:grid; grid-template-columns:repeat(auto-fit, minmax(148px, 1fr)); gap:10px; margin-bottom:30px; }
+.stat { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
+.stat .n { font-size:26px; font-weight:700; color:var(--navy); line-height:1; }
+.stat .l { font-size:11.5px; color:var(--grey); margin-top:6px; }
+.stat.warn .n { color:var(--rose); }
+.stat.good .n { color:var(--teal); }
+.stat.amber .n { color:var(--gold); }
+.stat.above .n { color:#7A4E96; }
+/* The colour is the point: a card only takes a tint when its own number is
+   above zero, so an empty risk column stays quiet instead of crying wolf. */
+.stat.on-warn { background:#FDF5F4; border-color:#E9B9B6; }
+.stat.on-amber { background:#FEFAF1; border-color:#E8CE8E; }
+.stat.on-good { background:#F4F9FC; border-color:#BFD6EA; }
+.stat.on-above { background:#F8F4FA; border-color:#D3B9E0; }
+.dash-strip { display:flex; flex-wrap:wrap; gap:8px 22px; font-size:11.5px; color:var(--grey); margin:-20px 0 14px; }
+.dash-strip b { color:var(--navy2); font-weight:700; }
+.attention { border:1px solid #E9B9B6; background:#FDF5F4; border-radius:9px; padding:11px 14px; margin-bottom:10px; font-size:12.5px; color:#7B3A37; line-height:1.6; }
+.attention:last-of-type { margin-bottom:26px; }
+.attention.amber { border-color:#E8CE8E; background:#FEFAF1; color:#6B4E12; }
+.attention .who { font-weight:700; }
+.attention .hd { display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; font-weight:700; margin-bottom:5px; opacity:.8; }
+.attention .note { margin-top:7px; font-size:11px; opacity:.8; line-height:1.5; }
+.attention.above { border-color:#D3B9E0; background:#F8F4FA; color:#5D3B73; }
+.toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+.search { flex:1; min-width:180px; border:1px solid var(--line); border-radius:8px; padding:9px 12px; font-size:13px; background:var(--card); }
+.btn { border:1px solid var(--line); background:var(--card); color:var(--navy2); font-size:12.5px; font-weight:600; padding:8px 13px; border-radius:8px; cursor:pointer; }
+.btn:hover { border-color:var(--teal); }
+.btn.danger { color:var(--rose); border-color:#E9B9B6; background:#FDF6F5; }
+.btn.danger:hover { color:#fff; background:var(--rose); border-color:var(--rose); }
+.btn.danger.armed { color:#fff; background:var(--rose); border-color:var(--rose); }
+.group { margin-bottom:26px; }
+.group-head { display:flex; align-items:baseline; gap:10px; padding:6px 2px 10px; border-bottom:2px solid var(--navy2); cursor:pointer; user-select:none; }
+.group-head h2 { font-size:16px; color:var(--navy); margin:0; }
+.group-head .n { font-size:12px; color:var(--grey); }
+.group-head .car { margin-left:auto; color:var(--teal); font-size:12px; transition:transform .15s; }
+.group.collapsed .group-head .car { transform:rotate(-90deg); }
+.group.collapsed .roster { display:none; }
+.roster { display:flex; flex-direction:column; gap:10px; margin-top:12px; }
+.cand { background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+.cand-head { display:flex; align-items:center; gap:12px; padding:13px 16px; cursor:pointer; }
+.cand-head .avatar { width:30px; height:30px; border-radius:50%; background:var(--navy2); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex:none; }
+.cand-head .name { font-weight:700; color:var(--navy); font-size:14.5px; flex:1; }
+.cand-head .status-chip { font-size:10.5px; font-weight:700; letter-spacing:.03em; padding:3px 9px; border-radius:20px; background:#EEF2F5; color:var(--grey); }
+.cand-head .car { color:var(--teal); font-size:12px; transition:transform .15s; }
+.cand.open .car { transform:rotate(90deg); }
+.cand-body { display:none; padding:4px 16px 18px; border-top:1px solid var(--line); }
+.cand.open .cand-body { display:block; }
+.sec-label { font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--teal); font-weight:700; margin:18px 0 8px; }
+.tp-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:6px; }
+.tp-cell { text-align:center; }
+.badge .aim { display:block; font-size:9.5px; font-weight:600; margin-top:2px; opacity:.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* Grade and main aim in one grid: rows are the three grades, columns the
+   seven aims, and one tap on the cell where they meet sets both and closes. */
+/* Not a floating box any more. It sits in the flow under the whole TP row,
+   the full width of the card, and says which TP it belongs to -- so it can
+   never be clipped by an edge, whichever TP you opened. Ramy, 12 Sep 2026:
+   "TP1 is too much to the left when you open that box, so I can't see the
+   grades." */
+.tp-pop { margin:10px 0 2px; background:#FCFDFE; border:1px solid var(--line); border-radius:10px; padding:11px 13px 12px; }
+.tp-pop .pop-which { font-size:12.5px; font-weight:700; color:var(--navy); margin-bottom:9px; }
+.tp-pop .pop-which span { font-weight:400; color:var(--grey); }
+.tp-pop .pop-lbl { font-size:9.5px; font-weight:700; letter-spacing:.05em; color:var(--grey); text-transform:uppercase; margin:2px 0 6px; }
+.tp-pop .pop-lbl.second { margin-top:12px; padding-top:11px; border-top:1px solid var(--line); }
+.tp-pop .pop-row { display:flex; flex-wrap:wrap; gap:6px; }
+.tp-pop .pchip { font-size:12px; font-weight:600; padding:6px 11px; border-radius:20px; border:1px solid var(--line); background:#fff; color:var(--grey); cursor:pointer; user-select:none; white-space:nowrap; }
+.tp-pop .pchip:hover { border-color:var(--teal); }
+.tp-pop .pchip.on.g-NOTSTD { background:#FBEAE9; border-color:#E9B9B6; color:var(--rose); }
+.tp-pop .pchip.on.g-STD { background:#E4F0F8; border-color:#A9CDE6; color:var(--teal); }
+.tp-pop .pchip.on.g-ABOVE { background:#F1E9F5; border-color:#D3B9E0; color:#7A4E96; }
+.tp-pop .pchip.on.aim { background:#EEF2F5; border-color:#C3CDD6; color:var(--navy); }
+.tp-pop .pop-foot { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:7px; font-size:10.5px; color:var(--grey); }
+.tp-pop .clear { cursor:pointer; color:var(--rose); font-weight:600; }
+.tp-cover { font-size:11px; color:var(--grey); margin-top:9px; }
+.tp-cover b { color:var(--slate); font-weight:600; }
+.roster-panel { border:1px solid var(--line); background:var(--card); border-radius:10px; padding:10px 14px; margin-bottom:14px; }
+.roster-panel summary { cursor:pointer; font-size:12.5px; font-weight:600; color:var(--navy2); }
+.r-group { margin-top:12px; }
+.r-head { display:flex; align-items:baseline; justify-content:space-between; font-size:12.5px; color:var(--navy); padding-bottom:4px; border-bottom:1px solid var(--line); }
+.r-names { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
+.r-name { display:flex; align-items:center; gap:7px; font-size:12px; border:1px solid var(--line); border-radius:20px; padding:4px 10px; background:#FAFBFC; }
+.r-name input { border:0; background:transparent; font:inherit; color:inherit; padding:0; min-width:60px; border-bottom:1px dashed transparent; }
+.r-name input:hover { border-bottom-color:var(--line); }
+.r-name input:focus { outline:none; border-bottom-color:var(--teal); }
+.r-del { cursor:pointer; color:var(--rose); font-size:11px; font-weight:700; }
+.r-add { display:flex; gap:6px; }
+.newcourse { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
+.newcourse-note { font-size:.8rem; color:var(--grey); }
+.r-add input { flex:1; min-width:120px; border:1px solid var(--line); border-radius:7px; padding:6px 9px; font-size:12px; background:#fff; color:var(--ink); }
+.r-add button { border:1px solid var(--line); background:#fff; color:var(--navy2); font-size:12px; font-weight:600; padding:6px 12px; border-radius:7px; cursor:pointer; }
+.r-add button:hover { border-color:var(--teal); }
+.r-newgroup { margin-top:16px; padding-top:12px; border-top:1px solid var(--line); }
+@media (max-width:560px) {
+.tp-pop { padding:10px 11px 11px; }
+.tp-pop .pop-row { gap:5px; }
+.tp-pop .pchip { font-size:11.5px; padding:5px 9px; }
+.tp-pop .pop-foot { font-size:9.5px; gap:8px; }
+}
+.tp-cell .tp-lbl { font-size:10px; color:var(--grey); margin-bottom:4px; }
+.tp-cell .tp-lbl.tp-swap { color:var(--ink); font-weight:600; }
+.badge { display:inline-block; min-width:100%; border:1px dashed var(--line); border-radius:7px; padding:6px 4px; font-size:11.5px; font-weight:700; cursor:pointer; user-select:none; color:var(--grey); background:#FAFBFC; transition:all .1s; }
+.badge:hover { border-color:var(--teal); }
+.badge.set-PASS { background:#E3F3EE; border:1px solid #A9DAC7; color:#22795A; }
+.badge.set-RES { background:#FBF1DC; border:1px solid #E8CE8E; color:var(--gold); }
+.badge.set-FAIL { background:#FBEAE9; border:1px solid #E9B9B6; color:var(--rose); }
+.badge.set-GIVEN { background:#E3F3EE; border:1px solid #A9DAC7; color:#22795A; }
+.badge.set-NOTGIVEN { background:#EEF2F5; border:1px solid #D3DBE2; color:var(--grey); }
+.badge.set-NOTSTD { background:#FBEAE9; border:1px solid #E9B9B6; color:var(--rose); }
+.badge.set-STD { background:#E4F0F8; border:1px solid #A9CDE6; color:var(--teal); }
+.badge.set-ABOVE { background:#F1E9F5; border:1px solid #D3B9E0; color:#7A4E96; }
+.stage-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.assign-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.assign-cell { border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
+.assign-cell .a-name { font-size:11px; font-weight:700; color:var(--navy); margin-bottom:6px; }
+.assign-cell .a-row { display:flex; align-items:center; justify-content:space-between; gap:6px; }
+.dm-toggle { font-size:9.5px; font-weight:700; letter-spacing:.03em; border:1px solid var(--line); border-radius:5px; padding:3px 7px; cursor:pointer; color:var(--grey); background:#fff; }
+.dm-toggle.on { background:var(--teal); border-color:var(--teal); color:#fff; box-shadow:0 1px 3px rgba(46,117,182,0.4); }
+.withdraw-row { margin-top:18px; display:flex; align-items:center; gap:8px; }
+.withdraw-row .wd-toggle { font-size:11px; font-weight:700; padding:5px 11px; border-radius:20px; border:1px solid var(--line); cursor:pointer; color:var(--grey); background:#fff; }
+.withdraw-row .wd-toggle.on { background:#FBEAE9; border-color:#E9B9B6; color:var(--rose); }
+.wm { position:fixed; right:14px; bottom:11px; z-index:20; pointer-events:none; font-size:10.5px; letter-spacing:.01em; color:rgba(100,112,125,0.6); }
+.wm b { font-weight:600; color:rgba(100,112,125,0.9); }
+.loading { text-align:center; padding:60px 0; color:var(--grey); font-size:13px; }
+@media (max-width:720px) { .dash { grid-template-columns:repeat(2,1fr); } .tp-grid { grid-template-columns:repeat(4,1fr); } .assign-grid { grid-template-columns:repeat(2,1fr); } .stage-grid { grid-template-columns:repeat(1,1fr); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="masthead"><div class="course-tag" id="courseTag">COURSE C18/2026</div></div>
+<h1>Candidate Tracker</h1>
+<div class="info-strip"><span class="dot"></span><span>Groups <b>ABC</b> and <b>DEF</b>, both <b>B1</b> for TP1–4 and <b>A1</b> for TP5–8. Click a candidate to open their record. A TP opens a panel underneath for its grade and its main aim; every other badge cycles on click. Everything saves straight away, and the summary above reads the TPs, the assignments and Stages 2 and 3 together.</span></div>
+<div class="sync-note"><span class="sync-dot" id="syncDot"></span><span id="syncText">Loading live data&hellip;</span></div>
+<div class="dash" id="dash"></div>
+<div class="dash-strip" id="dashStrip"></div>
+<div class="attention" id="attention" style="display:none"></div>
+<div class="attention" id="letterBox" style="display:none"></div>
+<div class="attention amber" id="advisedBox" style="display:none"></div>
+<div class="attention" id="ceilingBox" style="display:none"></div>
+<div class="attention amber" id="watchBox" style="display:none"></div>
+<div class="attention amber" id="hintBox" style="display:none"></div>
+<div class="attention amber" id="stage2Box" style="display:none"></div>
+<div class="attention amber" id="stage1Box" style="display:none"></div>
+<div class="attention amber" id="newCourseBox" style="display:none"></div>
+<div class="attention above" id="aboveBox" style="display:none"></div>
+<div class="toolbar">
+<input class="search" id="search" placeholder="Filter by name&hellip;">
+<div style="display:flex; gap:8px;">
+<button class="btn" id="exportBtn">Copy summary</button>
+<button class="btn danger" id="resetBtn">Reset all</button>
+</div>
+</div>
+<details class="roster-panel" id="rosterPanel">
+<summary>Groups and candidates</summary>
+<div id="rosterBody"></div>
+<form class="r-add r-newgroup" id="newGroupForm"><input placeholder="New group (e.g. A2)" required><button type="submit">Add group</button></form>
+<div class="newcourse">
+<button class="btn danger" type="button" id="newCourseBtn">Start a new course&hellip;</button>
+<span class="newcourse-note">Clears every grade and takes a fresh roster. For the next course, not this one.</span>
+</div>
+</details>
+<div id="groups"><div class="loading">Loading candidates&hellip;</div></div>
+</div>
+<div class="wm">designed and built by <b>Ramy</b></div>
+<script>
+// Filled from the sheet's Roster tab on load -- any number of groups, any
+// number of candidates in each. Kept as an object of group -> names so the
+// rest of the page is unchanged.
+// Filled from the server on load; the masthead, the page title and the
+// copied summary all read it, so starting a new course renames the tracker
+// everywhere at once instead of in three hardcoded places.
+var COURSE_CODE = 'C18/2026';
+var CANDIDATES = {};
+var ROSTER = [];
+function rosterToGroups(rows){
+var out = {};
+rows.forEach(function(r){ (out[r.group] = out[r.group] || []).push(r.name); });
+return out;
+}
+var ASSIGNMENTS = ['SRT', 'FOL', 'LRT', 'LFC'];
+// A TP is graded on the same three-point scale as Stage 2, and carries the
+// main aim of the lesson. Grades already in the sheet from the older S / S+ /
+// AS scale still read correctly: S and S+ are to standard, AS is above.
+// On the badge it is the code -- NS, S, AS -- because eight of them sit in a
+// row and the words do not fit. The grid you choose from spells them out.
+var TP_GRADES = [
+{ key: 'ABOVE', label: 'Above standard', short: 'AS' },
+{ key: 'STD', label: 'To standard', short: 'S' },
+{ key: 'NOTSTD', label: 'Not to standard', short: 'NS' }
+];
+var TP_LEGACY = { 'S': 'STD', 'S+': 'STD', 'AS': 'ABOVE' };
+function tpGrade(v){
+v = TP_LEGACY[v] || v || '';
+for (var i=0;i<TP_GRADES.length;i++) if (TP_GRADES[i].key === v) return TP_GRADES[i];
+return null;
+}
+// The syllabus's own categories and its own words: Topic 2 is Grammar (2.2),
+// Lexis (2.3) -- not "vocabulary" -- and Phonology (2.4); Topic 3 is Reading,
+// Listening, Speaking and Writing, with language functions under Speaking
+// (3.3.3) and kept separate here because a CELTA TP is routinely planned
+// around them. Cambridge publishes no column codes, so the headers are the
+// ordinary staffroom ones.
+// Ramy's headers, 12 Sep 2026: Lexis (the syllabus's own word, 2.3) and
+// Pronunciation (the staffroom's, for the syllabus's Phonology, 2.4). Systems
+// first, then the four skills in the syllabus's order (Topic 3: reading,
+// listening, speaking, writing).
+var AIMS = [
+{ key: 'Grammar', short: 'GR' }, { key: 'Functional language', short: 'FL' },
+{ key: 'Lexis', short: 'LEX' }, { key: 'Pronunciation', short: 'PRON' },
+{ key: 'Reading', short: 'R' }, { key: 'Listening', short: 'L' },
+{ key: 'Speaking', short: 'SP' }, { key: 'Writing', short: 'WR' }
+];
+var openPop = null;
+function closePop(){ if (openPop) { openPop.remove(); openPop = null; } }
+document.addEventListener('click', function(e){ if (openPop && !openPop.contains(e.target) && !e.target.closest('.tp-cell')) closePop(); });
+// The panel lives under the grid now, so a badge click elsewhere closes it.
+var ASSIGN_CYCLE = ['', 'PASS', 'RES', 'FAIL'];
+var ASSIGN_LABEL = { '': '–', PASS: 'PASS', RES: 'PASS on RES', FAIL: 'FAIL' };
+// Stages 1 and 3 are a tutorial given or not; Stage 2 is a graded lesson.
+// Shapes taken from the C13/2026 candidate profiles sheet.
+// Handbook 10.2, and Ramy 12 Sep 2026: the Stage 1 RECORD is compulsory for
+// every candidate in the first third; the Stage 1 tutorial is not ("some
+// centres may hold a tutorial at the same time, but this is not obligatory").
+// So Stage 1 is a record completed or not, with no verdict and no tutorial
+// claim. Stage 2 is record AND tutorial, for everyone. Stage 3 is conditional.
+var GIVEN_CYCLE = ['', 'GIVEN'];
+var GIVEN_LABEL = { '': '–', GIVEN: 'Record completed', NOTGIVEN: 'Record completed' };
+var STAGE2_CYCLE = ['', 'NOTSTD', 'STD', 'ABOVE'];
+var STAGE2_LABEL = { '': '–', NOTSTD: 'Not to standard', STD: 'To standard', ABOVE: 'Above standard' };
+// CELTA 5 gives Stage 3 the same "Overall progress -- Tutor's assessment"
+// box as Stage 2 (above / to / not to standard), so it is graded here the
+// same way rather than merely given or not. Blank means no Stage 3 tutorial,
+// which for most candidates is the correct and expected state.
+// Stage 2 is ordinarily at the halfway point (10.2), so a candidate who has
+// taught half their TPs without one is overdue.
+var STAGE2_DUE_AFTER = 4;
+var STAGES = [
+{ field: 'stage1', label: 'Stage 1', cycle: GIVEN_CYCLE, labels: GIVEN_LABEL },
+{ field: 'stage2', label: 'Stage 2', cycle: STAGE2_CYCLE, labels: STAGE2_LABEL },
+{ field: 'stage3', label: 'Stage 3', cycle: STAGE2_CYCLE, labels: STAGE2_LABEL }
+];
+// Stage 2 sits mid-course, so "the second half of the course" is TP5 onwards.
+var SECOND_HALF_FROM = 5;
+function slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+var DATA = {};
+var openState = {};
+function setSync(text, busy){
+document.getElementById('syncText').textContent = text;
+document.getElementById('syncDot').className = 'sync-dot' + (busy ? ' busy' : '');
+}
+/* The Roster tab and the Tracker tab can drift apart without anything saying
+   so -- grade rows are keyed by slug(group + '-' + name), so a rename, a tab
+   left open, or a hand edit can leave a row belonging to nobody. That is not
+   hypothetical: on 23 Sep 2026 one row sat under a pre-rename id holding a
+   main aim somebody thought they had recorded, and finding it meant reading
+   the raw sheet.
+   
+   So this runs on every load, and says nothing at all when the two agree. */
+function runHealthCheck(){
+  google.script.run.withSuccessHandler(function(res){
+    var bar = document.getElementById('healthBar');
+    if (!res || !res.problems || !res.problems.length) { if (bar) bar.remove(); return; }
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'healthBar';
+      bar.style.cssText = 'margin:0 0 14px;padding:12px 16px;border:1px solid #E0B4AE;border-left:4px solid #A33227;'
+        + 'border-radius:8px;background:#FBF1EF;font-size:13px;line-height:1.55;';
+      var host = document.querySelector('.wrap') || document.body;
+      host.insertBefore(bar, host.firstChild);
+    }
+    /* Said generally, because this covers two unlike faults: a record belonging
+       to nobody (grades are keyed to name and group, so a rename or a tab left
+       open can strand one) and a cell holding something that is not a grade.
+       The first draft explained only the rename, which read as a non-sequitur
+       above "TP4 holds BANANA" (tested 23 Sep 2026). */
+    bar.innerHTML = '<b>Something in the sheet does not match the tracker</b><br>'
+      + '<span style="color:var(--grey);">Nothing has been lost \u2014 everything below is still in the sheet, and the '
+      + 'tracker is simply telling you it cannot read it. Grades are keyed to a candidate\u2019s name and group, so a '
+      + 'rename or a page left open is the usual cause.</span>'
+      + '<ul style="margin:8px 0 0;padding-left:18px;">'
+      + res.problems.map(function(p){ return '<li>' + String(p).replace(/[<&]/g,' ') + '</li>'; }).join('')
+      + '</ul>';
+  }).withFailureHandler(function(){ /* an older deployment has no healthCheck: say nothing */ })
+  .healthCheck();
+}
+
+function saveField(id, field, value){
+setSync('Saving…', true);
+google.script.run
+.withSuccessHandler(function(){ setSync('Saved ✓', false); })
+.withFailureHandler(function(err){
+/* STALE_ROSTER: this tab was rendered before somebody renamed a candidate,
+   so the id it is writing under no longer exists. The store refuses it
+   rather than filing the grade in a row nothing points at. Say so plainly
+   and offer the one thing that fixes it -- "check your connection" would
+   send the tutor looking in entirely the wrong place. */
+if (String(err && err.message || '').indexOf('STALE_ROSTER') !== -1) {
+  setSync('This page is out of date — someone renamed a candidate. Reload before grading.', true);
+  var bar = document.getElementById('syncText');
+  if (bar && !document.getElementById('staleReload')) {
+    var b = document.createElement('button');
+    b.id = 'staleReload'; b.textContent = 'Reload';
+    b.style.cssText = 'margin-left:8px;font:inherit;cursor:pointer;border:1px solid var(--line);border-radius:6px;background:#fff;padding:1px 8px;';
+    b.addEventListener('click', function(){ location.reload(); });
+    bar.parentNode.appendChild(b);
+  }
+  return;
+}
+setSync('Could not save — check your connection', true); console.error(err);
+})
+.saveField(id, field, value);
+}
+// Everything the record says about one candidate, read together: the teaching
+// practice, the four assignments and the Stage 2 review. Ramy, 12 Sep 2026 --
+// "it should be an indication of both TPs, assignments, and stage two."
+//
+// A candidate is judged on where they stand NOW, not on their worst day: it is
+// the LATEST graded TP that decides, and an earlier not-to-standard becomes a
+// watch rather than a risk once the next one is to standard. That is how a
+// course tutor actually reads a profile, and it is what stops week one from
+// condemning somebody for the rest of the course.
+function readCandidate(c){
+var latest = null, latestN = 0, graded = 0, notStd = 0, above = 0, notStdAt = [], run = 0, backToBack = null;
+for (var k = 1; k <= 8; k++) {
+var g = tpGrade(c['tp'+k]);
+if (!g) continue;
+graded++; latest = g; latestN = k;
+if (g.key === 'NOTSTD') {
+notStd++; notStdAt.push(k); run++;
+// Ramy, 12 Sep 2026: "if someone is not to standard more than once back to
+// back, then they are not to standard for stage two." Two in a row is a
+// pattern rather than a bad day, and it is what a Stage 2 judgement rests
+// on. The tracker says so; it never writes the Stage 2 verdict itself --
+// that is the tutor's, given in a tutorial.
+if (run >= 2 && !backToBack) backToBack = [k-1, k];
+} else { run = 0; }
+if (g.key === 'ABOVE') above++;
+}
+
+var fails = [], resubs = [];
+ASSIGNMENTS.forEach(function(code){
+var v = c[code.toLowerCase()+'_r'] || '';
+if (v === 'FAIL') fails.push(code);
+else if (v === 'RES') resubs.push(code);
+});
+
+// Handbook 11.6: fail one written assignment and a Pass may still be
+// recommended on other evidence, but not Pass A; fail more than one and a
+// Pass is not available at all.
+var ceiling = fails.length > 1
+? fails.join(', ') + ' failed — not eligible for a Pass (11.6)'
+: fails.length === 1
+? fails[0] + ' failed — a Pass is still open on other evidence, but not Pass A (11.6)'
+: null;
+
+// Where they stand FOR THIS STAGE. A tutorial is the formal judgement and
+// the later one is the more current, so Stage 3 outranks Stage 2, which
+// outranks any single lesson. Between tutorials the latest TP is the best
+// evidence there is.
+var standard = null, from = '';
+if (c.stage3) { standard = c.stage3; from = 'Stage 3'; }
+else if (c.stage2) { standard = c.stage2; from = 'Stage 2'; }
+else if (latest) { standard = latest.key; from = 'TP' + latestN; }
+
+// Potential Fail -- the Handbook's own term, and what a Fail letter attaches
+// to (10.2): "issued sufficiently in advance of the end of the course,
+// ideally with at least two lessons left to teach".
+//
+// Ramy, 12 Sep 2026: go with Cambridge's rule rather than the stricter one,
+// "but it could be flagged". So ONE failed assignment does not make a
+// candidate a potential Fail -- 11.6 keeps a Pass open on other evidence --
+// it only caps the grade, and that is reported in its own box. More than one
+// fail removes the Pass entirely, which is a potential Fail by definition.
+//
+// Ramy, 14 Sep 2026: "failing one TP does not trigger a fail letter. Where
+// do you get that from?" Nowhere -- a single lesson is not a judgement. A
+// potential Fail rests on a tutorial verdict (Stage 2 or 3 not to standard),
+// on the back-to-back pattern he set on 12 Sep, or on losing the Pass to
+// assignment fails. One not-to-standard lesson on its own shows on the
+// status chip as where they stand today and nothing more.
+var failWhy = [];
+if (standard === 'NOTSTD' && from.indexOf('Stage') === 0) failWhy.push(from + ' not to standard');
+if (backToBack && backToBack[1] >= SECOND_HALF_FROM) failWhy.push('TP' + backToBack[0] + ' and TP' + backToBack[1] + ' not to standard back to back');
+if (fails.length > 1) failWhy.push(fails.join(' and ') + ' failed — not eligible for a Pass');
+var potentialFail = failWhy.length > 0;
+var letterIssued = !!(c.failLetter && String(c.failLetter).trim());
+var letterDue = potentialFail && !letterIssued;
+// Ramy, 12 Sep 2026: "a letter could be issued earlier. It doesn't have to
+// wait for a stage three. It should be issued as soon as they fail the
+// assignment." One fail does not make a potential Fail (11.6), so this is an
+// offer rather than an instruction -- but the moment it is useful is now,
+// while there are still lessons left to respond in.
+var letterAdvised = !potentialFail && fails.length === 1 && !letterIssued;
+
+// Stage 3, Handbook 10.2 and CELTA 5: required in the final third for anyone
+// not to standard at Stage 2, or at/above standard at Stage 2 who is not
+// making the expected progress since. A failed assignment and a back-to-back
+// pair are both evidence of exactly that. A recorded Stage 3 answers it.
+var lateNotStd = notStdAt.filter(function(k){ return k >= SECOND_HALF_FROM; });
+var stage3Why = null;
+if (!c.stage3) {
+if (c.stage2 === 'NOTSTD') stage3Why = 'not to standard at Stage 2';
+else if (c.stage2 && (lateNotStd.length || fails.length)) {
+// A failed assignment after Stage 2 is evidence of not making the expected
+// progress, which is trigger (b)/(c) whether the fail is one or several.
+stage3Why = (c.stage2 === 'ABOVE' ? 'above standard' : 'to standard') + ' at Stage 2, then ' +
+(lateNotStd.length ? 'TP' + lateNotStd.join(' and TP') + ' not to standard' : fails.join(' and ') + ' failed');
+}
+else if (backToBack) stage3Why = 'TP' + backToBack[0] + ' and TP' + backToBack[1] + ' not to standard back to back';
+else if (fails.length > 1) stage3Why = fails.join(' and ') + ' failed — not eligible for a Pass';
+}
+
+// Stage 2 not yet recorded, and the teaching already says what it will be.
+var stage2Hint = (!c.stage2 && backToBack)
+? 'TP' + backToBack[0] + ' and TP' + backToBack[1] + ' not to standard back to back — Stage 2 should be recorded as not to standard'
+: null;
+
+// The two compulsory records, flagged when they are missing rather than when
+// something has gone wrong -- an empty Stage 1 is the commonest thing an
+// assessor finds and the easiest to fix while the course is still running.
+var stage1Due = (graded > 0 && !c.stage1);
+var stage2Due = (graded >= STAGE2_DUE_AFTER && !c.stage2);
+
+var recorded = graded > 0 || fails.length > 0 || resubs.length > 0 || !!c.stage2 || !!c.stage3;
+var state = (c.withdrawn === true || c.withdrawn === 'true') ? 'withdrawn'
+: !recorded ? 'none'
+: standard === 'NOTSTD' ? 'notstd'
+: standard === 'ABOVE' ? 'above'
+: standard === 'STD' ? 'std'
+: 'none';
+return {
+state: state, from: from, graded: graded, notStd: notStd, above: above,
+fails: fails, resubs: resubs, ceiling: ceiling,
+potentialFail: potentialFail, failWhy: failWhy, letterDue: letterDue, letterAdvised: letterAdvised, letterIssued: letterIssued,
+stage3Why: stage3Why, stage2Hint: stage2Hint, stage1Due: stage1Due, stage2Due: stage2Due
+};
+}
+
+// The three words the CELTA 5 uses, and nothing invented alongside them.
+var STATE_CHIP = {
+withdrawn: { text:'WITHDRAWN', bg:'#EEF2F5', color:'var(--grey)' },
+notstd:    { text:'NOT TO STANDARD', bg:'#FBEAE9', color:'var(--rose)' },
+std:       { text:'TO STANDARD', bg:'#E4F0F8', color:'var(--teal)' },
+above:     { text:'ABOVE STANDARD', bg:'#F1E9F5', color:'#7A4E96' },
+none:      { text:'NOT STARTED', bg:'#EEF2F5', color:'var(--grey)' }
+};
+function statusFor(c){ return STATE_CHIP[readCandidate(c).state]; }
+function buildCandidate(name, groupKey){
+var id = slug(groupKey + '-' + name);
+var c = DATA[id] || (DATA[id] = {});
+var initials = name.split(' ').map(function(w){return w[0];}).slice(0,2).join('');
+var wrap = document.createElement('div');
+wrap.className = 'cand' + (openState[id] ? ' open' : '');
+var head = document.createElement('div');
+head.className = 'cand-head';
+head.innerHTML = '<div class="avatar">'+initials+'</div><div class="name">'+name+'</div><div class="status-chip"></div><div class="car">&#9656;</div>';
+var chipEl = head.querySelector('.status-chip');
+function refreshChip(){
+var s = statusFor(c);
+chipEl.textContent = s.text; chipEl.style.background = s.bg; chipEl.style.color = s.color;
+}
+refreshChip();
+head.addEventListener('click', function(){ openState[id] = !openState[id]; wrap.classList.toggle('open'); });
+wrap.appendChild(head);
+var body = document.createElement('div');
+body.className = 'cand-body';
+var stLabel = document.createElement('div'); stLabel.className='sec-label'; stLabel.textContent='Stages';
+body.appendChild(stLabel);
+var stGrid = document.createElement('div'); stGrid.className='stage-grid';
+STAGES.forEach(function(st){
+var cell = document.createElement('div'); cell.className='assign-cell';
+cell.innerHTML = '<div class="a-name">'+st.label+'</div><div class="a-row"><div class="badge" style="min-width:auto; padding:5px 10px;"></div></div>';
+var b = cell.querySelector('.badge');
+function refreshSt(){
+var v = c[st.field] || '';
+b.className = 'badge ' + (v ? 'set-'+v : '');
+b.style.minWidth='auto'; b.style.padding='5px 10px';
+b.textContent = st.labels[v] || st.labels[''];
+}
+refreshSt();
+b.addEventListener('click', function(){
+var idx = st.cycle.indexOf(c[st.field]||'');
+c[st.field] = st.cycle[(idx+1)%st.cycle.length];
+refreshSt(); refreshChip(); renderDash(); saveField(id, st.field, c[st.field]);
+});
+stGrid.appendChild(cell);
+});
+body.appendChild(stGrid);
+var tpLabel = document.createElement('div'); tpLabel.className='sec-label'; tpLabel.textContent='TP Grades';
+body.appendChild(tpLabel);
+var tpGrid = document.createElement('div'); tpGrid.className='tp-grid';
+var cover = document.createElement('div'); cover.className='tp-cover';
+// Which aims this candidate has taught, and which are still to come: the
+// question you actually ask when handing out the next TP.
+function refreshCover(){
+var taught = {}, n = 0;
+for (var k=1;k<=8;k++) if (c['tp'+k+'_aim']) { taught[c['tp'+k+'_aim']] = true; n++; }
+if (n === 0) { cover.innerHTML = ''; return; }
+var missing = [];
+AIMS.forEach(function(a){ if (!taught[a.key]) missing.push(a.key); });
+cover.innerHTML = missing.length ? '<b>Not yet taught:</b> ' + missing.join(', ') : '<b>Every aim covered.</b>';
+}
+for (var i=0;i<8;i++){
+(function(i){
+var fkey = 'tp'+(i+1), akey = 'tp'+(i+1)+'_aim';
+var cell = document.createElement('div'); cell.className='tp-cell';
+var lbl = document.createElement('div'); lbl.className='tp-lbl';
+var lvl = levelAt(groupKey, i+1);
+lbl.textContent = 'TP'+(i+1) + (lvl ? ' \u00b7 ' + lvl : '');
+if (lvl && (i+1) === SECOND_HALF_FROM) lbl.className += ' tp-swap';
+var b = document.createElement('div');
+function refresh(){
+var g = tpGrade(c[fkey]);
+b.className = 'badge ' + (g ? 'set-'+g.key : '');
+var aim = null;
+for (var q = 0; q < AIMS.length; q++) if (AIMS[q].key === c[akey]) aim = AIMS[q];
+b.innerHTML = '<span>' + (g ? g.short : '–') + '</span>' + (aim ? '<span class="aim">' + aim.short + '</span>' : '');
+refreshCover();
+}
+refresh();
+b.addEventListener('click', function(e){
+e.stopPropagation();
+var mine = openPop && openPop.dataset.tp === String(i + 1) && openPop.parentNode === tpGrid.parentNode;
+closePop();
+if (mine) return;
+var pop = document.createElement('div');
+pop.className = 'tp-pop';
+pop.dataset.tp = String(i + 1);
+// Grade and aim on their own rows: either can be set alone, and changing
+// one later does not mean re-picking the other. Ramy, 12 Sep 2026 -- with a
+// single grid "it's hard to choose what grade the lesson aim received".
+// It still closes itself once both are on the record.
+function render(){
+var cur = tpGrade(c[fkey]), curAim = c[akey] || '';
+pop.innerHTML = '';
+var which = document.createElement('div'); which.className = 'pop-which';
+which.innerHTML = 'TP' + (i + 1) + (cur || curAim
+? ' <span>— ' + (cur ? cur.label : 'no grade yet') + (curAim ? ', ' + curAim.toLowerCase() : '') + '</span>'
+: ' <span>— not graded yet</span>');
+pop.appendChild(which);
+var gl = document.createElement('div'); gl.className = 'pop-lbl'; gl.textContent = 'Grade';
+pop.appendChild(gl);
+var gr = document.createElement('div'); gr.className = 'pop-row';
+TP_GRADES.forEach(function(g){
+gr.appendChild(chip(g.label, !!cur && cur.key === g.key, 'g-' + g.key, function(){ set(fkey, cur && cur.key === g.key ? '' : g.key); }));
+});
+pop.appendChild(gr);
+var al = document.createElement('div'); al.className = 'pop-lbl second'; al.textContent = 'Main aim';
+pop.appendChild(al);
+var ar = document.createElement('div'); ar.className = 'pop-row';
+AIMS.forEach(function(a){
+ar.appendChild(chip(a.key, curAim === a.key, 'aim', function(){ set(akey, curAim === a.key ? '' : a.key); }));
+});
+pop.appendChild(ar);
+var foot = document.createElement('div'); foot.className = 'pop-foot';
+foot.innerHTML = '<span></span><span class="clear">Clear both</span>';
+foot.querySelector('.clear').addEventListener('click', function(ev){
+ev.stopPropagation();
+c[fkey] = ''; c[akey] = '';
+saveField(id, fkey, ''); saveField(id, akey, '');
+refresh(); renderDash(); closePop();
+});
+pop.appendChild(foot);
+}
+function chip(label, on, cls, onClick){
+var el = document.createElement('div');
+el.className = 'pchip' + (on ? ' on' : '') + (cls ? ' ' + cls : '');
+el.textContent = label;
+el.addEventListener('click', function(ev){ ev.stopPropagation(); onClick(); });
+return el;
+}
+function set(key, value){
+c[key] = value;
+saveField(id, key, value);
+refresh(); renderDash();
+// Both on the record: nothing left to say, so it gets out of the way.
+if (c[fkey] && c[akey]) { closePop(); return; }
+render();
+}
+render();
+// Straight after the grid, so the eight badges stay visible above it.
+tpGrid.parentNode.insertBefore(pop, tpGrid.nextSibling);
+openPop = pop;
+// Centred under its own TP where there is room, nudged inside the window
+// where there isn't. The inset is generous on purpose: TP1 and TP8 sit at the
+// ends of the row, and a grid flush against the edge of the page reads as if
+// it has been cut off.
+
+});
+cell.appendChild(lbl); cell.appendChild(b); tpGrid.appendChild(cell);
+})(i);
+}
+body.appendChild(tpGrid);
+body.appendChild(cover);
+var aLabel = document.createElement('div'); aLabel.className='sec-label'; aLabel.textContent='Assignments';
+body.appendChild(aLabel);
+var aGrid = document.createElement('div'); aGrid.className='assign-grid';
+ASSIGNMENTS.forEach(function(code){
+var lc = code.toLowerCase();
+var cell = document.createElement('div'); cell.className='assign-cell';
+cell.innerHTML = '<div class="a-name">'+code+'</div><div class="a-row"><div class="badge" style="min-width:auto; padding:5px 10px;"></div><div class="dm-toggle">DM</div></div>';
+var rBadge = cell.querySelector('.badge');
+var dmBtn = cell.querySelector('.dm-toggle');
+function refreshAssign(){
+var rVal = c[lc+'_r'] || '';
+rBadge.className = 'badge '+(rVal ? 'set-'+rVal : '');
+rBadge.style.minWidth='auto'; rBadge.style.padding='5px 10px';
+rBadge.textContent = ASSIGN_LABEL[rVal];
+var dmOn = c[lc+'_dm']===true || c[lc+'_dm']==='true';
+dmBtn.className = 'dm-toggle'+(dmOn?' on':'');
+}
+refreshAssign();
+rBadge.addEventListener('click', function(){
+var cur = c[lc+'_r'] || '';
+var idx = ASSIGN_CYCLE.indexOf(cur);
+c[lc+'_r'] = ASSIGN_CYCLE[(idx+1)%ASSIGN_CYCLE.length];
+refreshAssign(); refreshChip(); renderDash(); saveField(id, lc+'_r', c[lc+'_r']);
+});
+dmBtn.addEventListener('click', function(){
+var dmOn = c[lc+'_dm']===true || c[lc+'_dm']==='true';
+c[lc+'_dm'] = !dmOn;
+refreshAssign(); saveField(id, lc+'_dm', c[lc+'_dm']);
+});
+aGrid.appendChild(cell);
+});
+body.appendChild(aGrid);
+var wRow = document.createElement('div'); wRow.className='withdraw-row';
+wRow.innerHTML = '<div class="wd-toggle fl"></div><div class="wd-toggle"></div>';
+var flBtn = wRow.querySelector('.wd-toggle.fl');
+// The Fail letter is a portfolio document (12.1.1, Section A), so what is
+// recorded is the date it went out, not merely that somebody meant to.
+function refreshFl(){
+var on = !!(c.failLetter && String(c.failLetter).trim());
+flBtn.className = 'wd-toggle fl' + (on ? ' on' : '');
+flBtn.textContent = on ? 'Fail letter issued ' + c.failLetter : 'Mark Fail letter issued';
+}
+refreshFl();
+flBtn.addEventListener('click', function(){
+var on = !!(c.failLetter && String(c.failLetter).trim());
+c.failLetter = on ? '' : new Date().toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+refreshFl(); refreshChip(); renderDash(); saveField(id, 'failLetter', c.failLetter);
+});
+var wdBtn = wRow.querySelectorAll('.wd-toggle')[1];
+function refreshWd(){
+var on = c.withdrawn===true || c.withdrawn==='true';
+wdBtn.className='wd-toggle'+(on?' on':'');
+wdBtn.textContent = on ? 'Withdrawn' : 'Mark as withdrawn';
+}
+refreshWd();
+wdBtn.addEventListener('click', function(){
+var on = c.withdrawn===true || c.withdrawn==='true';
+c.withdrawn = !on;
+refreshWd(); refreshChip(); renderDash(); saveField(id,'withdrawn', c.withdrawn);
+});
+body.appendChild(wRow);
+wrap.appendChild(body);
+return wrap;
+}
+// Groups and candidates, editable. Ramy, 12 Sep 2026: the tracker has to work
+// "with any number of trainees and any number of TP groups", so nothing about
+// the course is baked into this page any more.
+function renderRoster(){
+var box = document.getElementById('rosterBody');
+if (!box) return;
+box.innerHTML = '';
+Object.keys(CANDIDATES).forEach(function(key){
+var g = document.createElement('div'); g.className = 'r-group';
+g.innerHTML = '<div class="r-head"><b>Group ' + key + '</b><span class="r-del" data-group="' + key + '">Remove group</span></div>';
+var ul = document.createElement('div'); ul.className = 'r-names';
+CANDIDATES[key].forEach(function(n){
+var row = document.createElement('div'); row.className = 'r-name';
+// A spelling was only ever fixable by removing the name and adding it back,
+// which is a different candidate as far as the grades are concerned. The
+// name is a field now, and the server moves the grades with it.
+var inp = document.createElement('input');
+inp.value = n; inp.size = Math.max(n.length, 4); inp.setAttribute('aria-label', 'Name');
+inp.addEventListener('input', function(){ inp.size = Math.max(inp.value.length, 4); });
+inp.addEventListener('change', function(){
+var v = inp.value.trim();
+if (!v || v === n) { inp.value = n; inp.size = Math.max(n.length, 4); return; }
+if (!confirm('Rename ' + n + ' to ' + v + '? Grades already saved move with the name.')) {
+inp.value = n; inp.size = Math.max(n.length, 4); return;
+}
+saveRoster(ROSTER.map(function(r){
+return (r.group === key && r.name === n) ? { group: key, name: v } : r;
+}));
+});
+var del = document.createElement('span'); del.className = 'r-del';
+del.setAttribute('data-group', key); del.setAttribute('data-name', n); del.innerHTML = '&times;';
+row.appendChild(inp); row.appendChild(del);
+ul.appendChild(row);
+});
+var add = document.createElement('form'); add.className = 'r-add';
+add.innerHTML = '<input placeholder="Add a candidate to ' + key + '" required><button type="submit">Add</button>';
+add.addEventListener('submit', function(e){
+e.preventDefault();
+var v = add.querySelector('input').value.trim(); if (!v) return;
+saveRoster(ROSTER.concat([{ group: key, name: v }]));
+});
+g.appendChild(ul); g.appendChild(add);
+box.appendChild(g);
+});
+Array.prototype.forEach.call(box.querySelectorAll('.r-del'), function(x){
+x.addEventListener('click', function(){
+var grp = x.getAttribute('data-group'), nm = x.getAttribute('data-name');
+var what = nm ? nm : 'Group ' + grp + ' and everyone in it';
+if (!confirm('Remove ' + what + ' from the tracker? Grades already saved stay in the sheet and come back if you add them again.')) return;
+saveRoster(ROSTER.filter(function(r){ return nm ? !(r.group === grp && r.name === nm) : r.group !== grp; }));
+});
+});
+}
+
+/* The levels swap partway through the course: the group that starts on B1
+   finishes on A1, and the other way round. "Group B1" alone named only the
+   half of the course you happened to be thinking of (Ramy, 23 Sep 2026).
+   Only meaningful with exactly two groups -- with one, or three, there is no
+   swap to describe, so the key stands alone. */
+/* C/18 (8 Oct 2026): both groups teach B1 for TP1-4 and A1 from TP5, so the
+   levels belong to the course, not to the group names. Set to null and the
+   C/17 behaviour above -- groups named by level, swapping -- comes back. */
+var COURSE_LEVELS = ['B1', 'A1'];
+function otherGroup(key){
+  var keys = Object.keys(CANDIDATES);
+  if (keys.length !== 2) return '';
+  return keys.filter(function(k){ return k !== key; })[0] || '';
+}
+function groupLabel(key){
+  if (COURSE_LEVELS) return key;
+  var other = otherGroup(key);
+  return other ? key + '/' + other : key;
+}
+/* Which level this group is teaching at TP n. They swap after TP4 -- the same
+   SECOND_HALF_FROM the fail-letter and Stage rules already use, so the two
+   halves of the course cannot drift apart here. Ramy, 23 Sep 2026: "after TP4
+   they swap levels, so the tracker should show both levels." */
+function levelAt(groupKey, tpNumber){
+  if (COURSE_LEVELS) return tpNumber < SECOND_HALF_FROM ? COURSE_LEVELS[0] : COURSE_LEVELS[1];
+  var other = otherGroup(groupKey);
+  if (!other) return '';
+  return tpNumber < SECOND_HALF_FROM ? groupKey : other;
+}
+
+function buildGroup(key, names){
+var g = document.createElement('div'); g.className='group'; g.id='group-'+key;
+var head = document.createElement('div'); head.className='group-head';
+head.innerHTML = '<h2>Group '+groupLabel(key)+'</h2><span class="n">'+names.length+' candidates</span><span class="car">&#9656;</span>';
+head.addEventListener('click', function(){ g.classList.toggle('collapsed'); });
+g.appendChild(head);
+var roster = document.createElement('div'); roster.className='roster';
+names.forEach(function(n){ roster.appendChild(buildCandidate(n, key)); });
+g.appendChild(roster);
+return g;
+}
+function buildAllGroups(){
+var groupsEl = document.getElementById('groups');
+groupsEl.innerHTML = '';
+var q = (document.getElementById('search').value || '').toLowerCase();
+Object.keys(CANDIDATES).forEach(function(key){
+var names = CANDIDATES[key].filter(function(n){ return n.toLowerCase().indexOf(q) !== -1; });
+if (names.length || !q) groupsEl.appendChild(buildGroup(key, q ? names : CANDIDATES[key]));
+});
+}
+function renderDash(){
+var people = [];
+Object.keys(CANDIDATES).forEach(function(key){
+CANDIDATES[key].forEach(function(name){ people.push({ name: name, c: DATA[slug(key+'-'+name)] || {} }); });
+});
+
+var count = { withdrawn:0, notstd:0, std:0, above:0, none:0 };
+var tpGraded = 0, tpNotStd = 0, tpAbove = 0, aRecorded = 0, aFail = 0;
+var notToStandard = [], letters = [], advised = [], ceilings = [], stage3Due = [], aboveList = [], hints = [];
+var stage1Missing = [], stage2Missing = [];
+people.forEach(function(p){
+var r = readCandidate(p.c);
+count[r.state]++;
+tpGraded += r.graded; tpNotStd += r.notStd; tpAbove += r.above; aFail += r.fails.length;
+ASSIGNMENTS.forEach(function(code){ if (p.c[code.toLowerCase()+'_r']) aRecorded++; });
+if (r.state === 'withdrawn') return;
+if (r.state === 'notstd') notToStandard.push({ name: p.name, why: [r.from + ' not to standard'] });
+if (r.state === 'above') aboveList.push({ name: p.name, why: ['above standard at ' + r.from] });
+if (r.letterDue) letters.push({ name: p.name, why: r.failWhy });
+else if (r.letterAdvised) advised.push({ name: p.name, why: [r.fails[0] + ' failed'] });
+if (r.ceiling) ceilings.push({ name: p.name, why: [r.ceiling], hard: r.fails.length > 1 });
+if (r.stage3Why) stage3Due.push({ name: p.name, why: [r.stage3Why] });
+if (r.stage2Hint) hints.push({ name: p.name, why: [r.stage2Hint] });
+if (r.stage1Due) stage1Missing.push({ name: p.name, why: ['no Stage 1 record'] });
+if (r.stage2Due) stage2Missing.push({ name: p.name, why: [r.graded + ' TPs taught, no Stage 2 record'] });
+});
+
+var stats = [
+{ n: people.length, l: 'Candidates' },
+{ n: count.std, l: 'To standard', cls: count.std ? 'good on-good' : '' },
+{ n: count.above, l: 'Above standard', cls: count.above ? 'above on-above' : '' },
+{ n: count.notstd, l: 'Not to standard', cls: count.notstd ? 'warn on-warn' : '' },
+{ n: stage3Due.length, l: 'Stage 3 required', cls: stage3Due.length ? 'amber on-amber' : '' },
+{ n: count.withdrawn, l: 'Withdrawn' }
+];
+document.getElementById('dash').innerHTML = stats.map(function(s){
+return '<div class="stat '+(s.cls||'')+'"><div class="n">'+s.n+'</div><div class="l">'+s.l+'</div></div>';
+}).join('');
+
+document.getElementById('dashStrip').innerHTML =
+'<span>Where each candidate stands <b>for this stage of the course</b></span>' +
+'<span><b>' + tpGraded + '</b> of ' + (people.length * 8) + ' TPs graded' +
+(tpAbove ? ', <b>' + tpAbove + '</b> above standard' : '') + (tpNotStd ? ', <b>' + tpNotStd + '</b> not to standard' : '') + '</span>' +
+'<span><b>' + aRecorded + '</b> of ' + (people.length * ASSIGNMENTS.length) + ' assignments marked' + (aFail ? ', <b>' + aFail + '</b> failed' : '') + '</span>' +
+(count.none ? '<span><b>' + count.none + '</b> with nothing recorded yet</span>' : '');
+
+// Names grouped under the reason they share. Eight candidates each followed
+// by the same five words is a wall; the reason said once, with the names after
+// it, is a sentence -- and on a phone it is the difference between a paragraph
+// and a line.
+var line = function(list){
+var order = [], byReason = {};
+list.forEach(function(p){
+var key = p.why.join('; ');
+if (!byReason[key]) { byReason[key] = []; order.push(key); }
+byReason[key].push(p.name);
+});
+return order.map(function(key){
+var names = byReason[key].map(function(n){ return '<span class="who">' + n + '</span>'; });
+return names.length === 1
+? names[0] + ' — ' + key
+: key.charAt(0).toUpperCase() + key.slice(1) + ' — ' + names.join(' · ');
+}).join('<br>');
+};
+var fill = function(elId, cls, head, list, tail){
+var box = document.getElementById(elId);
+if (!list.length) { box.style.display = 'none'; return; }
+box.className = cls;
+box.innerHTML = '<span class="hd">' + head + '</span>' + line(list) + (tail ? '<div class="note">' + tail + '</div>' : '');
+box.style.display = '';
+};
+fill('attention', 'attention', 'Not to standard — needs more work in order to pass the course', notToStandard);
+fill('letterBox', 'attention', 'Fail letter required', letters,
+'Handbook 10.2: a potential Fail candidate should be issued with a Fail letter making the possible Fail outcome clear and drawing attention to the action points in the CELTA 5 — ideally with at least two lessons left to teach. Tick it on the candidate once it has gone out.');
+fill('advisedBox', 'attention amber', 'Fail letter worth issuing now', advised,
+'A letter does not have to wait for a Stage 3 tutorial. Sent as soon as an assignment is failed, it gives the candidate the most time to respond to the action points — and a Pass is still open on other evidence (11.6).');
+// Amber while a Pass is still open on other evidence (11.6); red only once
+// somebody has failed more than one and cannot pass at all.
+fill('ceilingBox', 'attention' + (ceilings.some(function(x){ return x.hard; }) ? '' : ' amber'),
+'Written assignments — final grade capped', ceilings);
+fill('watchBox', 'attention amber', 'Stage 3 record required — final third of the course', stage3Due);
+fill('hintBox', 'attention amber', 'Stage 2 not yet recorded', hints);
+fill('stage1Box', 'attention amber', 'Stage 1 record outstanding', stage1Missing,
+'Handbook 10.2: the Stage 1 record is completed by the tutor in the first third of the course for every candidate. A tutorial alongside it is optional.');
+fill('stage2Box', 'attention amber', 'Stage 2 record and tutorial outstanding', stage2Missing,
+'Handbook 10.2: Stage 2 is carried out for every candidate, with a one-to-one tutorial, ordinarily at the halfway point.');
+fill('aboveBox', 'attention above', 'Above standard — evidence for Pass B or Pass A', aboveList,
+'Handbook 10.2, note 2: where a higher grade looks possible, consider a Stage 3 tutorial to make the criteria for it explicit.');
+}
+
+document.getElementById('newGroupForm').addEventListener('submit', function(e){
+e.preventDefault();
+var inp = this.querySelector('input'), v = inp.value.trim();
+if (!v || CANDIDATES[v]) { inp.value = ''; return; }
+// A group with nobody in it has nothing to write to the sheet, so the first
+// candidate is what creates it. Held on screen until then.
+CANDIDATES[v] = []; inp.value = ''; renderRoster(); buildAllGroups();
+});
+document.getElementById('search').addEventListener('input', buildAllGroups);
+var resetBtn = document.getElementById('resetBtn');
+var resetArmed = false;
+var resetTimer = null;
+function disarmReset(){
+resetArmed = false;
+resetBtn.classList.remove('armed');
+resetBtn.textContent = 'Reset all';
+if (resetTimer) { clearTimeout(resetTimer); resetTimer = null; }
+}
+resetBtn.addEventListener('click', function(){
+if (!resetArmed) {
+resetArmed = true;
+resetBtn.classList.add('armed');
+resetBtn.textContent = 'Click again to erase everything';
+resetTimer = setTimeout(disarmReset, 5000);
+return;
+}
+disarmReset();
+var ok = confirm('ERASE EVERY CANDIDATE RECORD?\n\nThis clears all stages, TP grades, assignment results and withdrawal marks for all 10 candidates.\n\nIt affects every trainer using this tracker, not just you, and it cannot be undone. Only do this at the very end of the course.\n\nOK to erase, or Cancel to go back.');
+if (!ok) return;
+setSync('Resetting…', true);
+google.script.run.withSuccessHandler(function(){ DATA = {}; loadAndRender(); }).resetAll();
+});
+document.getElementById('exportBtn').addEventListener('click', function(){
+var lines = [COURSE_CODE + ' Candidate Tracker — summary'];
+Object.keys(CANDIDATES).forEach(function(key){
+lines.push('', 'Group '+groupLabel(key));
+CANDIDATES[key].forEach(function(name){
+var id = slug(key+'-'+name);
+var c = DATA[id] || {};
+var w = c.withdrawn===true || c.withdrawn==='true';
+lines.push('  '+name+': '+(w ? 'WITHDRAWN' : (c.stage2 ? STAGE2_LABEL[c.stage2] : 'in progress')));
+var tps = [];
+for (var k=1;k<=8;k++){
+var g = tpGrade(c['tp'+k]);
+if (g || c['tp'+k+'_aim']) tps.push('TP'+k+' '+(g ? g.label : '–')+(c['tp'+k+'_aim'] ? ' ('+c['tp'+k+'_aim']+')' : ''));
+}
+if (tps.length) lines.push('    '+tps.join(' · '));
+});
+});
+var text = lines.join('\n');
+navigator.clipboard.writeText(text).then(function(){ alert('Summary copied to clipboard.'); }).catch(function(){ alert(text); });
+});
+
+// ---- Import from Connect Hub --------------------------------------------
+// Ramy, 20 Sep 2026: "add the import Hub file button to the tracker." A tutor
+// who marks in Connect Hub (ramysakr1-ux.github.io/connect-Hub) exports a
+// return file for the trainee; the same file carries everything this sheet
+// records -- the TP's grade and main aim, each assignment's outcome and
+// whether it was double-marked -- so it need not be keyed in twice. Nothing is
+// written until the tutor sees the list and clicks Apply.
+// Diacritics dropped and Turkish dotless i folded, so a name typed plainly
+// in the Hub still finds its roster row.
+function hubNorm(n){ return String(n || '').replace(/\u0131/g, 'i').replace(/\u0130/g, 'i').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim(); }
+/** What a Hub file would write, as [{field, value, text}] -- pure, so it can be tested. */
+function newCourseHide(){ var b = document.getElementById('newCourseBox'); b.style.display = 'none'; b.innerHTML = ''; }
+function newCourseShow(html){ var b = document.getElementById('newCourseBox'); b.innerHTML = html; b.style.display = ''; b.scrollIntoView({ block: 'nearest' }); }
+
+// ---- starting a new course ------------------------------------------------
+//
+// Ramy, 23 Sep 2026, asked for this and in the same breath: "just make sure
+// nothing happens to this course." C/17 is mid-course with an assessment on
+// the 29th, so every part of this is built to be hard to fire by accident and
+// honest about what it destroys:
+//
+//   * the button lives inside the collapsed roster panel, not the toolbar;
+//   * the damage is counted and shown BEFORE anything is typed, by a
+//     read-only server call that cannot write;
+//   * the confirmation is the CURRENT course code, typed exactly -- to clear
+//     C17/2026 you have to type C17/2026, which no stray keystroke does;
+//   * the server checks that code again, because a client-side confirmation
+//     is a courtesy rather than a lock.
+
+/** Two columns out of Sheets or Excel: group then candidate, tab separated. */
+function parseRosterPaste(text) {
+  var rows = [], problems = [], extras = 0;
+  String(text || '').split(/\r?\n/).forEach(function (line, i) {
+    if (!line.trim()) return;
+    // Sheets and Excel both put TABS on the clipboard, so a line with a tab is
+    // split on tabs ALONE -- commas belong to the name ("Jones, Christopher")
+    // far more often than they separate columns. Only a line with no tab at
+    // all falls back to comma/semicolon, which is a CSV saved out and reopened.
+    var sep = line.indexOf('\t') >= 0 ? /\t/ : /,|;/;
+    var cells = line.split(sep).map(function (c) { return c.replace(/^["\s]+|["\s]+$/g, ''); }).filter(function (c) { return c !== ''; });
+    if (!cells.length) return;
+    // A header row, however it is worded.
+    if (i === 0 && /^(group|level|class)$/i.test(cells[0]) && /^(candidate|name|trainee)$/i.test(cells[1] || '')) return;
+    if (cells.length < 2) { problems.push('Line ' + (i + 1) + ' has only "' + cells[0] + '" -- each line needs a group and a name'); return; }
+    // The name is the SECOND cell, never a join of the rest: a sheet often
+    // carries notes or an email to the right of the name, and gluing those on
+    // silently corrupts it. Anything further right is reported, not used.
+    if (cells.length > 2) extras++;
+    rows.push({ group: cells[0], name: cells[1] });
+  });
+  var seen = {};
+  rows.forEach(function (r) {
+    var k = slug(r.group + '-' + r.name);
+    if (seen[k]) problems.push('Two candidates would share one record: ' + r.group + ' / ' + r.name);
+    seen[k] = true;
+  });
+  if (extras) problems.push(extras + ' line' + (extras === 1 ? ' has' : 's have') + ' more than two columns -- only the group and the name are used, check the preview');
+  return { rows: rows, problems: problems };
+}
+
+function newCoursePanel(preview) {
+  var esc = function (t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); };
+  newCourseShow(
+    '<b>Start a new course</b>' +
+    '<div style="margin:6px 0 10px;">This clears <b>' + preview.gradeRows + '</b> candidate record' + (preview.gradeRows === 1 ? '' : 's') +
+    ' and all ' + preview.candidates + ' name' + (preview.candidates === 1 ? '' : 's') + ' from <b>' + esc(preview.courseCode) + '</b>. It cannot be undone.</div>' +
+    '<div style="margin-bottom:6px;">Paste two columns from Sheets or Excel &mdash; group, then candidate:</div>' +
+    '<textarea id="ncPaste" rows="7" style="width:100%; font-family:ui-monospace,Menlo,monospace; font-size:.85rem;" placeholder="B1&#9;Christopher Douglas Deniz Jones&#10;B1&#9;Maedeh Ahmadizadeh&#10;A1&#9;Ali Behnami"></textarea>' +
+    '<div id="ncPreview" style="margin:8px 0;"></div>' +
+    '<div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">' +
+      '<label>New course code <input id="ncCode" placeholder="C18/2026" style="width:120px;"></label>' +
+      '<label>Type <b>' + esc(preview.courseCode) + '</b> to confirm <input id="ncConfirm" placeholder="' + esc(preview.courseCode) + '" style="width:140px;"></label>' +
+    '</div>' +
+    '<button class="btn danger" type="button" id="ncGo" disabled>Clear ' + esc(preview.courseCode) + ' and start the new course</button> ' +
+    '<button class="btn" type="button" onclick="newCourseHide()">Cancel</button>'
+  );
+
+  var paste = document.getElementById('ncPaste'), code = document.getElementById('ncCode'),
+      confirm = document.getElementById('ncConfirm'), go = document.getElementById('ncGo'),
+      out = document.getElementById('ncPreview');
+  var parsed = { rows: [], problems: [] };
+
+  function refresh() {
+    parsed = parseRosterPaste(paste.value);
+    var groups = {}; parsed.rows.forEach(function (r) { groups[r.group] = (groups[r.group] || 0) + 1; });
+    var names = Object.keys(groups);
+    out.innerHTML = parsed.rows.length
+      ? '<b>' + parsed.rows.length + '</b> candidate' + (parsed.rows.length === 1 ? '' : 's') + ' in ' + names.length + ' group' + (names.length === 1 ? '' : 's') + ': ' +
+        names.map(function (g) { return esc(g) + ' (' + groups[g] + ')'; }).join(', ') +
+        (parsed.problems.length ? '<div style="margin-top:6px; font-weight:600;">' + parsed.problems.map(esc).join('<br>') + '</div>' : '')
+      : (paste.value.trim() ? '<span style="font-weight:600;">Nothing readable in that paste.</span>' : '');
+    if (parsed.problems.length) out.innerHTML += '';
+    go.disabled = !(parsed.rows.length && !parsed.problems.length && code.value.trim() && confirm.value.trim() === preview.courseCode);
+  }
+  paste.addEventListener('input', refresh);
+  code.addEventListener('input', refresh);
+  confirm.addEventListener('input', refresh);
+
+  go.addEventListener('click', function () {
+    go.disabled = true; go.textContent = 'Working…';
+    google.script.run
+      .withSuccessHandler(function (res) {
+        newCourseShow('<b>' + esc(res.courseCode) + ' is ready.</b> ' + res.candidates + ' candidates, ' + res.clearedRows +
+          ' old record' + (res.clearedRows === 1 ? '' : 's') + ' cleared. <button class="btn" type="button" onclick="location.reload()">Reload</button>');
+      })
+      .withFailureHandler(function (err) {
+        go.disabled = false; go.textContent = 'Clear ' + preview.courseCode + ' and start the new course';
+        out.innerHTML = '<span style="font-weight:600;">' + esc(err && err.message ? err.message : err) + '</span>';
+      })
+      .startNewCourse(code.value.trim(), parsed.rows, confirm.value.trim());
+  });
+}
+
+document.getElementById('newCourseBtn').addEventListener('click', function () {
+  newCourseShow('Checking what is on the record…');
+  google.script.run
+    .withSuccessHandler(newCoursePanel)
+    .withFailureHandler(function (err) { newCourseShow('Could not read the record: ' + (err && err.message ? err.message : err) + ' <button class="btn" type="button" onclick="newCourseHide()">Close</button>'); })
+    .previewNewCourse();
+});
+
+function loadAndRender(){
+setSync('Loading live data…', true);
+google.script.run.withSuccessHandler(function(meta){
+  if (meta && meta.courseCode) {
+    COURSE_CODE = meta.courseCode;
+    document.getElementById('courseTag').textContent = 'COURSE ' + COURSE_CODE;
+    document.title = COURSE_CODE + ' Candidate Tracker';
+  }
+}).getMeta();
+google.script.run
+.withSuccessHandler(function(rows){
+ROSTER = rows || [];
+CANDIDATES = rosterToGroups(ROSTER);
+google.script.run
+.withSuccessHandler(function(data){
+DATA = data || {};
+setSync('Live — synced with the shared sheet', false);
+buildAllGroups();
+renderDash();
+renderRoster();
+runHealthCheck();
+})
+.withFailureHandler(function(err){
+setSync('Could not load data — refresh to retry', true);
+console.error(err);
+})
+.getData();
+})
+.withFailureHandler(function(err){
+setSync('Could not load the roster — refresh to retry', true);
+console.error(err);
+})
+.getRoster();
+}
+
+// Adding a group or a candidate writes the roster back and redraws. Grades
+// are keyed by group and name, so renaming someone starts them a fresh record
+// -- deliberately: a rename in the middle of a course is nearly always a new
+// person, and silently inheriting somebody else's grades would be worse.
+function saveRoster(rows, then){
+setSync('Saving…', true);
+google.script.run
+.withSuccessHandler(function(){
+ROSTER = rows; CANDIDATES = rosterToGroups(rows);
+setSync('Saved ✓', false);
+buildAllGroups(); renderDash(); renderRoster();
+if (then) then();
+})
+.withFailureHandler(function(err){ setSync('Could not save the roster', true); console.error(err); })
+.saveRoster(rows);
+}
+loadAndRender();
+</script>
+</body>
+</html>

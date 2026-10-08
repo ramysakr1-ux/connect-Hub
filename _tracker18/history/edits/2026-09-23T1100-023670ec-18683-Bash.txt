@@ -1,0 +1,20 @@
+S=/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker2; cd $S && python3 - <<'PY'
+import io
+p='index.html'; s=io.open(p,encoding='utf-8').read()
+old = """    bar.innerHTML = '<b>The tracker and the roster disagree</b><br>'
+      + '<span style="color:var(--grey);">Grades are keyed to a candidate\\u2019s name and group, so a rename or a page left '
+      + 'open can leave a record belonging to nobody. Nothing has been lost \\u2014 these rows are still in the sheet.</span>'"""
+new = """    /* Said generally, because this covers two unlike faults: a record belonging
+       to nobody (grades are keyed to name and group, so a rename or a tab left
+       open can strand one) and a cell holding something that is not a grade.
+       The first draft explained only the rename, which read as a non-sequitur
+       above "TP4 holds BANANA" (tested 23 Sep 2026). */
+    bar.innerHTML = '<b>Something in the sheet does not match the tracker</b><br>'
+      + '<span style="color:var(--grey);">Nothing has been lost \\u2014 everything below is still in the sheet, and the '
+      + 'tracker is simply telling you it cannot read it. Grades are keyed to a candidate\\u2019s name and group, so a '
+      + 'rename or a page left open is the usual cause.</span>'"""
+assert old in s; s = s.replace(old, new, 1)
+io.open(p,'w',encoding='utf-8').write(s)
+print("copy generalised")
+PY
+node -e "const h=require('fs').readFileSync('index.html','utf8'); new Function(h.match(/<script>([\s\S]*?)<\/script>/)[1]); console.log('parses');" && npx --yes @google/clasp@latest push --force 2>&1 | tail -1 && npx --yes @google/clasp@latest create-version "Self-check copy covers both kinds of fault" 2>&1 | tail -1 && npx --yes @google/clasp@latest deploy -i AKfycbxJ2uJ0cx9NkUdQjo0jqO0VElJ-GR3r6vfICrsPrKTfZo4wlIxSW7WpQdoYmwgFAbdE -V 28 -d "Self-check" 2>&1 | tail -1

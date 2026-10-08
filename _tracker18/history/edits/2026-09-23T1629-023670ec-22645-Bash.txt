@@ -1,0 +1,51 @@
+cd /private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker2 && python3 - <<'PY'
+import io, re
+p = "index.html"
+s = io.open(p, encoding="utf-8").read()
+orig = len(s)
+
+# --- 1. the dead import comes out -----------------------------------------
+a = '''<button class="btn" id="hubImportBtn" title="A tutor's return file from Connect Hub: TP grade and aim, assignment outcomes, double marking">Import Hub file</button>
+<input type="file" id="hubImportFile" accept="application/json" style="display:none">
+'''
+assert s.count(a) == 1, "import button markup"
+s = s.replace(a, "", 1)
+
+# its handlers and helpers
+for name in ["hubChanges", "hubImportPropose", "hubImportApply", "hubMatchCandidate", "hubAimFor"]:
+    m = re.search(r"\nfunction " + name + r"\(", s)
+    assert m, name
+    i = m.start() + 1
+    depth = 0; j = s.index("{", i)
+    k = j
+    while True:
+        if s[k] == "{": depth += 1
+        elif s[k] == "}":
+            depth -= 1
+            if depth == 0: break
+        k += 1
+    s = s[:i] + s[k + 2:]
+    print("removed function", name)
+
+for one_liner in [
+  "function hubImportShow(html){ var b = document.getElementById('hubImportBox'); b.innerHTML = html; b.style.display = ''; }\n",
+  "function hubImportHide(){ document.getElementById('hubImportBox').style.display = 'none'; }\n",
+]:
+    if one_liner in s:
+        s = s.replace(one_liner, "", 1); print("removed", one_liner.split("(")[0][9:])
+
+a2 = """document.getElementById('hubImportBtn').addEventListener('click', function(){ document.getElementById('hubImportFile').click(); });
+"""
+if a2 in s: s = s.replace(a2, "", 1); print("removed import button handler")
+
+m = re.search(r"document\.getElementById\('hubImportFile'\)\.addEventListener\('change', function\(e\)\{.*?\n\}\);\n", s, re.S)
+if m: s = s[:m.start()] + s[m.end():]; print("removed file-input handler")
+
+for const in ["HUB_GRADE", "HUB_ASSIGN"]:
+    m = re.search(r"\nvar " + const + r" = \{.*?\};\n", s, re.S)
+    if m: s = s[:m.start()+1] + s[m.end():]; print("removed", const)
+
+io.open(p, "w", encoding="utf-8").write(s)
+print(f"\n{orig - len(s)} characters removed")
+PY
+grep -c "hubImport\|HUB_GRADE\|HUB_ASSIGN\|hubChanges\|hubAimFor\|hubMatchCandidate" index.html 2>/dev/null || cd /private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker2 && grep -c "hubImport\|HUB_GRADE\|HUB_ASSIGN\|hubChanges\|hubAimFor\|hubMatchCandidate" index.html

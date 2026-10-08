@@ -1,0 +1,71 @@
+cd "/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/c07c05ec-4b23-44c0-a366-c6e1436fd694/scratchpad/tracker-check" && echo "=== dashboard fail count"; grep -n "aFail" index.html | head -4; python3 - <<'PY'
+p="index.html"; s=open(p).read()
+# badge colour for the new state
+old = """.badge.set-FAIL { background:#FBEAE9; border:1px solid #E9B9B6; color:var(--rose); }"""
+new = """.badge.set-FAIL { background:#FBEAE9; border:1px solid #E9B9B6; color:var(--rose); }
+.badge.set-FAILRES { background:#FFF6EC; border:1px dashed #E9B9B6; color:var(--rose); }"""
+assert old in s; s=s.replace(old,new,1)
+# the cycle and its words
+old = """var ASSIGN_CYCLE = ['', 'PASS', 'RES', 'FAIL'];
+var ASSIGN_LABEL = { '': '–', PASS: 'PASS', RES: 'PASS on RES', FAIL: 'FAIL' };"""
+new = """// Handbook p28: a candidate may resubmit an assignment that does not meet
+// the criteria "on one occasion only", and the outcome is recorded as "Pass
+// (on resubmission)" or Fail. So a first-submission fail is not yet a Fail --
+// it is a resubmission pending. Ramy, 15 Sep 2026: add the fourth state. The
+// amber letter offer still fires on the first fail (his rule of the 12th);
+// the 11.6 grade caps count only a Fail that stands after the resubmission.
+var ASSIGN_CYCLE = ['', 'PASS', 'FAILRES', 'RES', 'FAIL'];
+var ASSIGN_LABEL = { '': '–', PASS: 'PASS', FAILRES: 'FAIL · resub pending', RES: 'PASS on RES', FAIL: 'FAIL' };"""
+assert old in s; s=s.replace(old,new,1)
+# reading: final fails vs pending
+old = """var fails = [], resubs = [];
+ASSIGNMENTS.forEach(function(code){
+var v = c[code.toLowerCase()+'_r'] || '';
+if (v === 'FAIL') fails.push(code);
+else if (v === 'RES') resubs.push(code);
+});"""
+new = """var fails = [], resubs = [], pending = [];
+ASSIGNMENTS.forEach(function(code){
+var v = c[code.toLowerCase()+'_r'] || '';
+if (v === 'FAIL') fails.push(code);
+else if (v === 'FAILRES') pending.push(code);
+else if (v === 'RES') resubs.push(code);
+});"""
+assert old in s; s=s.replace(old,new,1)
+# the amber offer: first fail, whether or not the resubmission is in yet
+old = """var letterAdvised = !potentialFail && fails.length === 1 && !letterIssued;"""
+new = """var letterAdvised = !potentialFail && !letterIssued && (fails.length + pending.length) >= 1 && fails.length <= 1;"""
+assert old in s; s=s.replace(old,new,1)
+old = """else if (r.letterAdvised) advised.push({ name: p.name, why: [r.fails[0] + ' failed'] });"""
+new = """else if (r.letterAdvised) advised.push({ name: p.name, why: [(r.fails[0] || r.pending[0]) + ' failed' + (r.fails[0] ? '' : ' — resubmission pending')] });"""
+assert old in s; s=s.replace(old,new,1)
+old = """fails: fails, resubs: resubs, ceiling: ceiling,"""
+new = """fails: fails, resubs: resubs, pending: pending, ceiling: ceiling,"""
+assert old in s; s=s.replace(old,new,1)
+# Stage 1: the Handbook's own timing, the first third
+old = """var stage1Due = (graded > 0 && !c.stage1);"""
+new = """// Handbook 10.2: the Stage 1 record is completed "in the first third of the
+// course". Three of eight lessons is that third; before it the record is
+// simply not yet due. Ramy, 15 Sep 2026: flag it only after TP3.
+var stage1Due = (graded >= 3 && !c.stage1);"""
+assert old in s; s=s.replace(old,new,1)
+open(p,"w").write(s); print("edited")
+PY
+node -e '
+const fs=require("fs"),vm=require("vm");const html=fs.readFileSync("index.html","utf8");
+const js=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]).join("\n");
+const noop=()=>{};const el=()=>new Proxy({style:{},classList:{add:noop,remove:noop,toggle:noop},addEventListener:noop,appendChild:noop,querySelectorAll:()=>[],querySelector:()=>null,setAttribute:noop,dataset:{}},{get:(t,k)=>k in t?t[k]:noop});
+const ctx={window:{},document:{getElementById:el,querySelector:el,querySelectorAll:()=>[],addEventListener:noop,createElement:el,body:el()},google:{script:{run:new Proxy({},{get:()=>()=>new Proxy({},{get:()=>()=>({})})})}},console,setTimeout:noop,localStorage:{getItem:()=>null,setItem:noop}};
+vm.createContext(ctx);try{vm.runInContext(js,ctx);}catch(e){}
+const rc=ctx.readCandidate;
+const cases=[
+ ["one first-sub fail, resub pending",  {tp3:"STD",lrt_r:"FAILRES"},                 r=>!r.potentialFail&&r.letterAdvised&&!r.ceiling],
+ ["two resubs pending",                 {tp3:"STD",lrt_r:"FAILRES",fol_r:"FAILRES"},  r=>!r.potentialFail&&r.letterAdvised&&!r.ceiling],
+ ["one final fail",                     {tp3:"STD",lrt_r:"FAIL"},                     r=>!r.potentialFail&&r.letterAdvised&&/not Pass A/.test(r.ceiling||"")],
+ ["two final fails",                    {tp3:"STD",lrt_r:"FAIL",fol_r:"FAIL"},        r=>r.potentialFail&&!r.letterAdvised&&/not eligible/.test(r.ceiling||"")],
+ ["passed on resubmission",             {tp3:"STD",lrt_r:"RES"},                      r=>!r.potentialFail&&!r.letterAdvised&&!r.ceiling],
+ ["Stage 1 missing after TP2",          {tp1:"STD",tp2:"STD"},                        r=>!r.stage1Due],
+ ["Stage 1 missing after TP3",          {tp1:"STD",tp2:"STD",tp3:"STD"},              r=>r.stage1Due],
+];
+let bad=0;for(const [name,c,check] of cases){const r=rc(Object.assign({name:"x"},c));const ok=check(r);if(!ok)bad++;console.log(`${ok?"ok ":"!! "} ${name.padEnd(34)} pf=${r.potentialFail} advised=${r.letterAdvised} stage1Due=${r.stage1Due} ceiling=${r.ceiling??"-"}`);}
+if(bad){process.exit(1);}console.log("all cases as intended");' && npx -y @google/clasp@latest push --force 2>&1 | tail -1 && npx -y @google/clasp@latest version "Resubmission pending state; Stage 1 flagged after TP3" 2>&1 | tail -1 && npx -y @google/clasp@latest deploy -i AKfycbxJ2uJ0cx9NkUdQjo0jqO0VElJ-GR3r6vfICrsPrKTfZo4wlIxSW7WpQdoYmwgFAbdE -V 16 -d "Resubmission pending state; Stage 1 flagged after TP3" 2>&1 | tail -1 && npx -y @google/clasp@latest deployments 2>&1 | grep AKfycbxJ2u

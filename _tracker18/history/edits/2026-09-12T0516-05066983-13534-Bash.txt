@@ -1,0 +1,111 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+
+# ---- Stage 3 carries a verdict, like Stage 2 does in CELTA 5 (footer 24) ----
+old = """var STAGES = [
+{ field: 'stage1', label: 'Stage 1', cycle: GIVEN_CYCLE, labels: GIVEN_LABEL },
+{ field: 'stage2', label: 'Stage 2', cycle: STAGE2_CYCLE, labels: STAGE2_LABEL },
+{ field: 'stage3', label: 'Stage 3', cycle: GIVEN_CYCLE, labels: GIVEN_LABEL }
+];"""
+new = """// CELTA 5 gives Stage 3 the same "Overall progress -- Tutor's assessment"
+// box as Stage 2 (above / to / not to standard), so it is graded here the
+// same way rather than merely given or not. Blank means no Stage 3 tutorial,
+// which for most candidates is the correct and expected state.
+var STAGES = [
+{ field: 'stage1', label: 'Stage 1', cycle: GIVEN_CYCLE, labels: GIVEN_LABEL },
+{ field: 'stage2', label: 'Stage 2', cycle: STAGE2_CYCLE, labels: STAGE2_LABEL },
+{ field: 'stage3', label: 'Stage 3', cycle: STAGE2_CYCLE, labels: STAGE2_LABEL }
+];
+// Stage 2 sits mid-course, so "the second half of the course" is TP5 onwards.
+var SECOND_HALF_FROM = 5;"""
+assert old in s; s = s.replace(old, new)
+
+# ---- the reading of one candidate, in CELTA 5's own terms ----
+start = s.index("function readCandidate(c){")
+end = s.index("var STATE_CHIP = {")
+new_fn = """function readCandidate(c){
+var latest = null, latestN = 0, graded = 0, notStd = 0, above = 0, lateNotStd = [];
+for (var k = 1; k <= 8; k++) {
+var g = tpGrade(c['tp'+k]);
+if (!g) continue;
+graded++; latest = g; latestN = k;
+if (g.key === 'NOTSTD') { notStd++; if (k >= SECOND_HALF_FROM) lateNotStd.push(k); }
+if (g.key === 'ABOVE') above++;
+}
+
+// Where they stand FOR THIS STAGE of the course. A tutorial is the formal
+// judgement and the later one is the more current, so Stage 3 outranks
+// Stage 2, which outranks any single lesson; between tutorials the latest
+// TP is the best evidence there is.
+var standard = null, from = '';
+if (c.stage3) { standard = c.stage3; from = 'Stage 3'; }
+else if (c.stage2) { standard = c.stage2; from = 'Stage 2'; }
+else if (latest) { standard = latest.key; from = 'TP' + latestN; }
+
+// The written assignments cap the GRADE; they do not change the standard.
+// Handbook eligibility: fail more than one and a Pass is not available at
+// all; fail exactly one and a Pass may still be recommended, but not Pass A.
+var fails = [], resubs = [];
+ASSIGNMENTS.forEach(function(code){
+var v = c[code.toLowerCase()+'_r'] || '';
+if (v === 'FAIL') fails.push(code);
+else if (v === 'RES') resubs.push(code);
+});
+var ceiling = fails.length > 1
+? { level: 'nopass', text: fails.join(', ') + ' failed — not eligible for a Pass' }
+: fails.length === 1
+? { level: 'nopassa', text: fails[0] + ' failed — a Pass is still open, but not Pass A' }
+: null;
+
+// CELTA 5, Stage Three Progress Record: the record "must be completed by
+// tutors in the final third of the course" for candidates who a) were not
+// to standard at Stage 2, b) were at standard at Stage 2 but are not making
+// the expected progress in the second half, or c) were above standard at
+// Stage 2 and likewise. Stage 2 is the trigger, so nothing is claimed until
+// a Stage 2 verdict exists, and a recorded Stage 3 answers it.
+var stage3Why = null;
+if (c.stage2 && !c.stage3) {
+if (c.stage2 === 'NOTSTD') stage3Why = 'not to standard at Stage 2';
+else if (lateNotStd.length) {
+stage3Why = (c.stage2 === 'ABOVE' ? 'above standard' : 'to standard') + ' at Stage 2, then TP' +
+lateNotStd.join(' and TP') + ' not to standard';
+}
+}
+
+var why = [];
+if (standard === 'NOTSTD') why.push(from + ' not to standard');
+var recorded = graded > 0 || fails.length > 0 || resubs.length > 0 || !!c.stage2 || !!c.stage3;
+var state = (c.withdrawn === true || c.withdrawn === 'true') ? 'withdrawn'
+: !recorded ? 'none'
+: standard === 'NOTSTD' ? 'notstd'
+: standard === 'ABOVE' ? 'above'
+: standard === 'STD' ? 'std'
+: 'none';
+return {
+state: state, from: from, why: why, graded: graded, notStd: notStd,
+fails: fails, resubs: resubs, ceiling: ceiling, stage3Why: stage3Why
+};
+}
+
+"""
+s = s[:start] + new_fn + s[end:]
+
+old = """var STATE_CHIP = {
+withdrawn: { text:'WITHDRAWN', bg:'#EEF2F5', color:'var(--grey)' },
+risk:      { text:'NEEDS ATTENTION', bg:'#FBEAE9', color:'var(--rose)' },
+watch:     { text:'WATCH', bg:'#FBF1DC', color:'var(--gold)' },
+above:     { text:'ABOVE STANDARD', bg:'#F1E9F5', color:'#7A4E96' },
+ontrack:   { text:'ON TRACK', bg:'#E4F0F8', color:'var(--teal)' },
+none:      { text:'NOT STARTED', bg:'#EEF2F5', color:'var(--grey)' }
+};"""
+new = """// The three words the CELTA 5 uses, and nothing invented alongside them.
+var STATE_CHIP = {
+withdrawn: { text:'WITHDRAWN', bg:'#EEF2F5', color:'var(--grey)' },
+notstd:    { text:'NOT TO STANDARD', bg:'#FBEAE9', color:'var(--rose)' },
+std:       { text:'TO STANDARD', bg:'#E4F0F8', color:'var(--teal)' },
+above:     { text:'ABOVE STANDARD', bg:'#F1E9F5', color:'#7A4E96' },
+none:      { text:'NOT STARTED', bg:'#EEF2F5', color:'var(--grey)' }
+};"""
+assert old in s; s = s.replace(old, new)
+open(p,"w").write(s); print("readCandidate rewritten", len(s))
+PY

@@ -1,0 +1,18 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+s=open("index.html").read()
+stub = """<script>
+var __ROSTER = [{group:'B1',name:'Christoph Deniz Jones'},{group:'B1',name:'Maedeh Ahmadizadeh'}];
+var __DATA = { 'b1-christoph-deniz-jones': { tp1:'S', tp1_aim:'Pronunciation', tp2:'S' } };
+window.google = { script: { run: (function(){ var ok=function(){}; var api = {
+withSuccessHandler: function(f){ ok=f; return api; }, withFailureHandler: function(){ return api; },
+getRoster: function(){ setTimeout(function(){ ok(JSON.parse(JSON.stringify(__ROSTER))); }, 30); },
+saveRoster: function(rows){ __ROSTER = rows; setTimeout(function(){ ok(true); }, 20); },
+getData: function(){ setTimeout(function(){ ok(JSON.parse(JSON.stringify(__DATA))); }, 40); },
+saveField: function(id,f,v){ (__DATA[id]=__DATA[id]||{})[f]=v; setTimeout(function(){ ok(true); },20); },
+resetAll: function(){ __DATA={}; setTimeout(function(){ ok(true); },20); } }; return api; })() } };
+</script>
+"""
+i = s.index("<script>"); s = s[:i] + stub + s[i:]
+if 'name="viewport"' not in s: s = s.replace("<head>", '<head><meta name="viewport" content="width=device-width, initial-scale=1">', 1)
+open("/Users/work/CELTA connect-code prompt/public/__tracker-preview.html","w").write(s); print("harness ok")
+PY

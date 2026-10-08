@@ -1,0 +1,140 @@
+set +e; cd /private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/c07c05ec-4b23-44c0-a366-c6e1436fd694/scratchpad/tracker && python3 - <<'PY'
+import pathlib
+p = pathlib.Path("index.html"); s = p.read_text()
+def rep(old, new):
+    global s; assert s.count(old) == 1, old[:60]; s = s.replace(old, new)
+rep('<button class="btn" id="exportBtn">Copy summary</button>',
+    '<button class="btn" id="hubImportBtn" title="A tutor\'s return file from Connect Hub: TP grade and aim, assignment outcomes, double marking">Import Hub file</button>\n<input type="file" id="hubImportFile" accept="application/json" style="display:none">\n<button class="btn" id="exportBtn">Copy summary</button>')
+rep('<div class="attention amber" id="stage1Box" style="display:none"></div>',
+    '<div class="attention amber" id="stage1Box" style="display:none"></div>\n<div class="attention amber" id="hubImportBox" style="display:none"></div>')
+code = r'''
+// ---- Import from Connect Hub --------------------------------------------
+// Ramy, 20 Sep 2026: "add the import Hub file button to the tracker." A tutor
+// who marks in Connect Hub (ramysakr1-ux.github.io/connect-Hub) exports a
+// return file for the trainee; the same file carries everything this sheet
+// records -- the TP's grade and main aim, each assignment's outcome and
+// whether it was double-marked -- so it need not be keyed in twice. Nothing is
+// written until the tutor sees the list and clicks Apply.
+var HUB_ASSIGN = { fol:'fol', lrt:'lrt', lsrt:'srt', lfc:'lfc' };
+var HUB_GRADE = { 'Above standard':'ABOVE', 'To standard':'STD', 'Not to standard':'NOTSTD' };
+function hubAimFor(text){
+  var t = String(text || '').toLowerCase();
+  if (!t) return '';
+  var rules = [
+    [/function/, 'Functional language'], [/grammar|tense|modal|conditional|passive|article/, 'Grammar'],
+    [/lexis|lexic|vocab|word/, 'Lexis'], [/pron|phonolog|stress|intonation|sound/, 'Pronunciation'],
+    [/reading|read\b/, 'Reading'], [/listening|listen/, 'Listening'],
+    [/speaking|speak|fluency|conversation/, 'Speaking'], [/writing|write/, 'Writing']
+  ];
+  for (var i = 0; i < rules.length; i++) if (rules[i][0].test(t)) return rules[i][1];
+  return '';
+}
+function hubNorm(n){ return String(n || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim(); }
+function hubMatchCandidate(name){
+  var want = hubNorm(name);
+  if (!want) return null;
+  for (var i = 0; i < ROSTER.length; i++) if (hubNorm(ROSTER[i].name) === want) return ROSTER[i].name;
+  return null;
+}
+/** What a Hub file would write, as [{field, value, text}] -- pure, so it can be tested. */
+function hubChanges(data){
+  var out = [];
+  var fb = data && data.tp && data.tp.feedback;
+  if (fb && fb.status === 'returned' && fb.state && fb.state.f) {
+    var f = fb.state.f;
+    var n = parseInt(String(f.fTP || '').replace(/\D/g, ''), 10);
+    if (n >= 1 && n <= 8) {
+      var g = HUB_GRADE[String(f.fGrade || '').trim()];
+      var aim = hubAimFor(f.fMain);
+      if (g) out.push({ field:'tp' + n, value:g, text:'TP' + n + ' → ' + tpGrade(g).label + (aim ? ', ' + aim.toLowerCase() : '') });
+      if (aim) out.push({ field:'tp' + n + '_aim', value:aim, text:'' });
+      if (!g) out.push({ field:'', value:'', text:'TP' + n + ': no grade in the file (the tutor returned it without one)' });
+    }
+  }
+  var subs = (data && data.assignments) || {};
+  Object.keys(HUB_ASSIGN).forEach(function(k){
+    var sub = subs[k]; if (!sub) return;
+    var code = HUB_ASSIGN[k], label = code.toUpperCase();
+    var outcome = (sub.feedback && sub.feedback.outcome) || '';
+    var state = '';
+    if (sub.stage === 'closed') {
+      if (outcome === 'Pass') state = 'PASS';
+      else if (outcome === 'Pass (on resubmission)') state = 'RES';
+      else if (/^Fail/.test(outcome)) state = 'FAIL';
+    } else if (sub.stage === 'resubmission_needed') state = 'FAILRES';
+    if (state) out.push({ field:code + '_r', value:state, text:label + ' → ' + ASSIGN_LABEL[state] });
+    if (sub.markers && sub.markers.doubleMarked) out.push({ field:code + '_dm', value:true, text:label + ' double-marked (' + [sub.markers.first, sub.markers.second].filter(Boolean).join(', ') + ')' });
+  });
+  return out;
+}
+function hubImportShow(html){ var b = document.getElementById('hubImportBox'); b.innerHTML = html; b.style.display = ''; }
+function hubImportHide(){ var b = document.getElementById('hubImportBox'); b.style.display = 'none'; b.innerHTML = ''; }
+function hubImportApply(id, changes){
+  var c = DATA[id] = DATA[id] || {};
+  changes.forEach(function(ch){ if (!ch.field) return; c[ch.field] = ch.value; saveField(id, ch.field, ch.value); });
+  buildAllGroups(); renderDash();
+  hubImportShow('<b>Imported for ' + id + ':</b> ' + changes.filter(function(ch){ return ch.field && ch.text; }).map(function(ch){ return ch.text; }).join(' · ') + ' <button class="btn" type="button" onclick="hubImportHide()">Close</button>');
+}
+function hubImportPropose(data){
+  var changes = hubChanges(data);
+  var real = changes.filter(function(ch){ return ch.field; });
+  var notes = changes.filter(function(ch){ return !ch.field; }).map(function(ch){ return ch.text; });
+  if (!real.length) { hubImportShow('Nothing in this file to record' + (notes.length ? ' — ' + notes.join('; ') : '') + '. <button class="btn" type="button" onclick="hubImportHide()">Close</button>'); return; }
+  var matched = hubMatchCandidate(data.traineeName);
+  var opts = ROSTER.map(function(r){ return '<option value="' + r.name.replace(/"/g, '&quot;') + '"' + (r.name === matched ? ' selected' : '') + '>' + r.name + ' (' + r.group + ')</option>'; }).join('');
+  var lines = real.filter(function(ch){ return ch.text; }).map(function(ch){ return '<li>' + ch.text + '</li>'; }).join('');
+  hubImportShow('<b>Connect Hub file' + (data.traineeName ? ' from ' + data.traineeName : '') + '</b>' +
+    (matched ? '' : ' — no candidate of that name on the roster, choose who this is:') +
+    ' <select id="hubImportWho">' + opts + '</select>' +
+    '<ul style="margin:8px 0 8px 18px; padding:0;">' + lines + '</ul>' +
+    (notes.length ? '<div style="margin-bottom:8px;">' + notes.join('<br>') + '</div>' : '') +
+    '<button class="btn" type="button" id="hubImportApplyBtn">Apply to the record</button> ' +
+    '<button class="btn" type="button" onclick="hubImportHide()">Cancel</button>');
+  document.getElementById('hubImportApplyBtn').addEventListener('click', function(){
+    var id = document.getElementById('hubImportWho').value;
+    if (!id) return;
+    hubImportApply(id, real);
+  });
+}
+document.getElementById('hubImportBtn').addEventListener('click', function(){ document.getElementById('hubImportFile').click(); });
+document.getElementById('hubImportFile').addEventListener('change', function(e){
+  var file = e.target.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(){
+    var data = null;
+    try { data = JSON.parse(reader.result); } catch (err) { hubImportShow('That file isn’t valid — could not read it. <button class="btn" type="button" onclick="hubImportHide()">Close</button>'); return; }
+    if (!data || (data.schema !== 'connect-hub-return-v1' && data.schema !== 'connect-hub-export-v1')) { hubImportShow('That doesn’t look like a Connect Hub file (a tutor’s return file or a trainee’s export). <button class="btn" type="button" onclick="hubImportHide()">Close</button>'); return; }
+    hubImportPropose(data);
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+'''
+# insert before loadAndRender definition
+anchor = "function loadAndRender(){"
+assert s.count(anchor) == 1
+s = s.replace(anchor, code + "\n" + anchor)
+p.write_text(s); print("ok index")
+PY
+# pure-logic test of hubChanges with a node harness
+python3 - <<'PY'
+import re, pathlib, subprocess, json
+s = pathlib.Path("index.html").read_text()
+script = re.search(r"<script>(.*?)</script>", s, re.S).group(1)
+# pull only the pieces we need: TP_GRADES/tpGrade/ASSIGN_LABEL + hub functions
+def grab(start, end):
+    i = script.index(start); j = script.index(end, i); return script[i:j]
+harness = grab("var ASSIGNMENTS = ['SRT'", "var openPop = null;") + "\n" + grab("var ASSIGN_CYCLE", "var GIVEN_CYCLE") + "\nvar ROSTER=[{group:'B1',name:'Amara Okafor'},{group:'A1',name:'Şeyda Taşkıner'}];\n" + grab("var HUB_ASSIGN", "function hubImportShow")
+harness += r'''
+var file = { schema:'connect-hub-return-v1', traineeName:'amara okafor', tp:{ feedback:{ status:'returned', state:{ f:{ fTP:'TP4', fGrade:'To standard', fMain:'Grammar' } } } },
+  assignments:{ fol:{stage:'closed', feedback:{outcome:'Pass'}, markers:{first:'Jordan Blake', second:'', doubleMarked:false}}, lrt:{stage:'closed', feedback:{outcome:'Pass (on resubmission)'}, markers:{first:'Jordan Blake', second:'Marcus Webb', doubleMarked:true}}, lsrt:{stage:'resubmission_needed', feedback:{outcome:'Resubmission needed'}}, lfc:{stage:'submitted'} } };
+console.log(JSON.stringify(hubChanges(file)));
+console.log(hubMatchCandidate('Seyda Taskiner'), '|', hubMatchCandidate('Nobody'));
+console.log(hubAimFor('Speaking for fluency'), hubAimFor('Present perfect for experience'), hubAimFor('Functional language: giving advice'), hubAimFor(''));
+'''
+pathlib.Path("/tmp/hub_harness.js").write_text(harness)
+r = subprocess.run(["node", "/tmp/hub_harness.js"], capture_output=True, text=True); print(r.stdout, r.stderr[:400])
+r2 = subprocess.run(["node", "--check", "/tmp/hub_harness.js"], capture_output=True, text=True); print("harness check", r2.returncode)
+pathlib.Path("/tmp/idx_check.js").write_text(script)
+r3 = subprocess.run(["node", "--check", "/tmp/idx_check.js"], capture_output=True, text=True); print("full script check", r3.returncode, r3.stderr[:200])
+PY

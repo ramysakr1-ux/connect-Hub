@@ -1,0 +1,28 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+old = """@media (max-width:560px) {
+.tp-pop { padding:8px 9px 9px; }
+.tp-pop td .m { width:31px; height:26px; }
+.tp-pop th { font-size:8.5px; }
+.tp-pop th.rh { font-size:9px; padding-right:3px; }
+.tp-pop .pop-foot { font-size:9.5px; }
+}"""
+new = """@media (max-width:560px) {
+.tp-pop { padding:8px 8px 9px; }
+.tp-pop table { border-spacing:2px; }
+.tp-pop td .m { width:27px; height:26px; }
+.tp-pop th { font-size:8px; }
+.tp-pop th.rh { font-size:8.5px; padding-right:2px; }
+.tp-pop .pop-foot { font-size:9px; gap:8px; }
+}"""
+assert old in s; s = s.replace(old, new)
+open(p,"w").write(s); print("tightened")
+PY
+python3 - <<'PY'
+s=open("/tmp/tracker-live/index.html").read()
+h=open("/Users/work/CELTA connect-code prompt/public/__tracker-preview.html").read()
+i=h.index("<script>\nvar __ROSTER"); j=h.index("</script>",i)+len("</script>\n")
+k=s.index("<script>"); s=s[:k]+h[i:j]+s[k:]
+if 'name="viewport"' not in s: s=s.replace("<head>",'<head><meta name="viewport" content="width=device-width, initial-scale=1">',1)
+open("/Users/work/CELTA connect-code prompt/public/__tracker-preview.html","w").write(s); print("harness refreshed")
+PY

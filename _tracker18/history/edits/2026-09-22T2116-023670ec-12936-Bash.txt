@@ -1,0 +1,78 @@
+cd "/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker" && python3 - <<'PY'
+import io
+p='Code.js'; s=io.open(p,encoding='utf-8').read()
+
+old = """var renames = [];
+before.filter(function (r) { return String(r[0]).trim() && String(r[1]).trim(); })
+.forEach(function (r, i) {
+if (i >= clean.length) return;
+var from = slug_(String(r[0]).trim() + '-' + String(r[1]).trim());
+var to = slug_(clean[i][0] + '-' + clean[i][1]);
+if (from !== to) renames.push([from, to]);
+});
+if (renames.length) renameIds_(renames);"""
+
+new = """// Rows are paired by position, which is right for a rename in place and
+// wrong for an add or a remove -- removing the first name shifts everyone
+// up and makes the whole roster look renamed. So a pair only counts when
+// the old id has genuinely left the roster and the new id has genuinely
+// just arrived; after a removal every "pair" fails both tests and nothing
+// moves.
+var wasRows = before.filter(function (r) { return String(r[0]).trim() && String(r[1]).trim(); });
+var wasIds = {}, nowIds = {};
+wasRows.forEach(function (r) { wasIds[slug_(String(r[0]).trim() + '-' + String(r[1]).trim())] = true; });
+clean.forEach(function (r) { nowIds[slug_(r[0] + '-' + r[1])] = true; });
+var renames = [];
+wasRows.forEach(function (r, i) {
+if (i >= clean.length) return;
+var from = slug_(String(r[0]).trim() + '-' + String(r[1]).trim());
+var to = slug_(clean[i][0] + '-' + clean[i][1]);
+if (from !== to && !nowIds[from] && !wasIds[to]) renames.push([from, to]);
+});
+if (renames.length) renameIds_(renames);"""
+assert old in s; s = s.replace(old, new)
+io.open(p,'w',encoding='utf-8').write(s)
+
+p='index.html'; h=io.open(p,encoding='utf-8').read()
+
+# CSS: the name becomes an editable field inside the pill
+oldcss = ".r-name { display:flex; align-items:center; gap:7px; font-size:12px; border:1px solid var(--line); border-radius:20px; padding:4px 10px; background:#FAFBFC; }"
+newcss = (".r-name { display:flex; align-items:center; gap:7px; font-size:12px; border:1px solid var(--line); border-radius:20px; padding:4px 10px; background:#FAFBFC; }\n"
+".r-name input { border:0; background:transparent; font:inherit; color:inherit; padding:0; min-width:60px; border-bottom:1px dashed transparent; }\n"
+".r-name input:hover { border-bottom-color:var(--line); }\n"
+".r-name input:focus { outline:none; border-bottom-color:var(--teal); }")
+assert oldcss in h; h = h.replace(oldcss, newcss)
+
+# The row: a span you cannot correct becomes a field you can
+oldrow = """CANDIDATES[key].forEach(function(n){
+var row = document.createElement('div'); row.className = 'r-name';
+row.innerHTML = '<span>' + n + '</span><span class="r-del" data-group="' + key + '" data-name="' + n + '">&times;</span>';
+ul.appendChild(row);
+});"""
+newrow = """CANDIDATES[key].forEach(function(n){
+var row = document.createElement('div'); row.className = 'r-name';
+// A spelling was only ever fixable by removing the name and adding it back,
+// which is a different candidate as far as the grades are concerned. The
+// name is a field now, and the server moves the grades with it.
+var inp = document.createElement('input');
+inp.value = n; inp.size = Math.max(n.length, 4); inp.setAttribute('aria-label', 'Name');
+inp.addEventListener('input', function(){ inp.size = Math.max(inp.value.length, 4); });
+inp.addEventListener('change', function(){
+var v = inp.value.trim();
+if (!v || v === n) { inp.value = n; inp.size = Math.max(n.length, 4); return; }
+if (!confirm('Rename ' + n + ' to ' + v + '? Grades already saved move with the name.')) {
+inp.value = n; inp.size = Math.max(n.length, 4); return;
+}
+saveRoster(ROSTER.map(function(r){
+return (r.group === key && r.name === n) ? { group: key, name: v } : r;
+}));
+});
+var del = document.createElement('span'); del.className = 'r-del';
+del.setAttribute('data-group', key); del.setAttribute('data-name', n); del.innerHTML = '&times;';
+row.appendChild(inp); row.appendChild(del);
+ul.appendChild(row);
+});"""
+assert oldrow in h; h = h.replace(oldrow, newrow)
+io.open(p,'w',encoding='utf-8').write(h)
+print("both patched")
+PY

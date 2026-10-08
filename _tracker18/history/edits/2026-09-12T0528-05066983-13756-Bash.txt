@@ -1,0 +1,54 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+
+old = """var failWhy = [];
+if (standard === 'NOTSTD') failWhy.push(from + ' not to standard');
+if (backToBack) failWhy.push('TP' + backToBack[0] + ' and TP' + backToBack[1] + ' not to standard back to back');
+if (fails.length) failWhy.push(fails.join(' and ') + (fails.length > 1 ? ' failed' : ' failed'));
+var potentialFail = failWhy.length > 0;"""
+new = """//
+// Ramy, 12 Sep 2026: go with Cambridge's rule rather than the stricter one,
+// "but it could be flagged". So ONE failed assignment does not make a
+// candidate a potential Fail -- 11.6 keeps a Pass open on other evidence --
+// it only caps the grade, and that is reported in its own box. More than one
+// fail removes the Pass entirely, which is a potential Fail by definition.
+var failWhy = [];
+if (standard === 'NOTSTD') failWhy.push(from + ' not to standard');
+if (backToBack) failWhy.push('TP' + backToBack[0] + ' and TP' + backToBack[1] + ' not to standard back to back');
+if (fails.length > 1) failWhy.push(fails.join(' and ') + ' failed — not eligible for a Pass');
+var potentialFail = failWhy.length > 0;"""
+assert old in s; s = s.replace(old, new)
+
+old = """else if (c.stage2 && (lateNotStd.length || fails.length)) {
+stage3Why = (c.stage2 === 'ABOVE' ? 'above standard' : 'to standard') + ' at Stage 2, then ' +
+(lateNotStd.length ? 'TP' + lateNotStd.join(' and TP') + ' not to standard' : fails.join(' and ') + ' failed');
+}
+else if (backToBack) stage3Why = 'TP' + backToBack[0] + ' and TP' + backToBack[1] + ' not to standard back to back';
+else if (fails.length) stage3Why = fails.join(' and ') + ' failed';"""
+new = """else if (c.stage2 && (lateNotStd.length || fails.length)) {
+// A failed assignment after Stage 2 is evidence of not making the expected
+// progress, which is trigger (b)/(c) whether the fail is one or several.
+stage3Why = (c.stage2 === 'ABOVE' ? 'above standard' : 'to standard') + ' at Stage 2, then ' +
+(lateNotStd.length ? 'TP' + lateNotStd.join(' and TP') + ' not to standard' : fails.join(' and ') + ' failed');
+}
+else if (backToBack) stage3Why = 'TP' + backToBack[0] + ' and TP' + backToBack[1] + ' not to standard back to back';
+else if (fails.length > 1) stage3Why = fails.join(' and ') + ' failed — not eligible for a Pass';"""
+assert old in s; s = s.replace(old, new)
+
+# the ceiling box is a flag, not an alarm, while no one has lost the Pass
+old = """if (r.ceiling) ceilings.push({ name: p.name, why: [r.ceiling] });"""
+new = """if (r.ceiling) ceilings.push({ name: p.name, why: [r.ceiling], hard: r.fails.length > 1 });"""
+assert old in s; s = s.replace(old, new)
+
+old = """fill('ceilingBox', 'attention', 'Written assignments — final grade capped', ceilings);"""
+new = """// Amber while a Pass is still open on other evidence (11.6); red only once
+// somebody has failed more than one and cannot pass at all.
+fill('ceilingBox', 'attention' + (ceilings.some(function(x){ return x.hard; }) ? '' : ' amber'),
+'Written assignments — final grade capped', ceilings);"""
+assert old in s; s = s.replace(old, new)
+open(p,"w").write(s); print("ok", len(s))
+PY
+python3 -c "
+import re
+s=open('/tmp/tracker-live/index.html').read()
+open('/tmp/check.js','w').write(re.findall(r'<script>(.*?)</script>', s, re.S)[-1])" && node --check /tmp/check.js && echo "JS OK"

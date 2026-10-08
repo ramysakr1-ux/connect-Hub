@@ -1,0 +1,55 @@
+cd "/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker" && python3 - <<'PY'
+import io
+h = io.open('index.html',encoding='utf-8').read()
+stub = """<script>
+window.__sent = null;
+var __roster = [{group:'B1',name:'Christoph Deniz Jones'},{group:'B1',name:'Maedeh Ahmadizadeh'},
+                {group:'B1',name:'Maryam Hosseini'},{group:'A1',name:'Ali Behnami'}];
+var __data = {'b1-christoph-deniz-jones':{tp1:'PASS'},'b1-maryam-hosseini':{tp1:'FAIL'}};
+window.google = { script: { run: (function(){
+  function chain(){ var ok=function(){},fail=function(){};
+    var api = { withSuccessHandler:function(f){ ok=f; return api; },
+                withFailureHandler:function(f){ fail=f; return api; },
+                getRoster:function(){ setTimeout(function(){ ok(__roster); },0); },
+                getData:function(){ setTimeout(function(){ ok(__data); },0); },
+                saveField:function(){ setTimeout(ok,0); },
+                resetAll:function(){ setTimeout(ok,0); },
+                saveRoster:function(rows){ window.__sent = rows; setTimeout(ok,0); } };
+    return api; }
+  return new Proxy({}, { get:function(t,k){ var c=chain(); return typeof c[k]==='function'?c[k].bind(c):c[k]; } });
+})() } };
+</script>
+"""
+i = h.index('<script>', h.index('</body>')-60000)
+# put the stub immediately before the app's own script block
+i = h.rindex('<script>')
+io.open('/tmp/tracker-test.html','w',encoding='utf-8').write(h[:i] + stub + h[i:])
+print('harness written, stub before offset', i)
+PY
+cat > /tmp/client.test.mjs <<'EOF'
+import { chromium } from 'playwright';
+const b = await chromium.launch(); const p = await b.newPage();
+p.on('dialog', d => d.accept());
+const errs=[]; p.on('pageerror', e=>errs.push(String(e)));
+await p.goto('file:///tmp/tracker-test.html');
+await p.waitForTimeout(700);
+await p.evaluate(() => document.getElementById('rosterPanel').open = true);
+await p.waitForTimeout(200);
+const inputs = await p.$$eval('.r-name input', ns => ns.map(n=>n.value));
+console.log('  rename fields on screen:', JSON.stringify(inputs));
+const ok = await p.evaluate(() => {
+  const n = [...document.querySelectorAll('.r-name input')].find(x=>x.value==='Christoph Deniz Jones');
+  if (!n) return 'field not found';
+  n.value = 'Christopher Douglas Deniz Jones';
+  n.dispatchEvent(new Event('change', {bubbles:true}));
+  return 'fired';
+});
+console.log('  change:', ok);
+await p.waitForTimeout(300);
+const sent = await p.evaluate(() => window.__sent);
+console.log('  roster sent to the server:');
+(sent||[]).forEach(r=>console.log('    '+r.group+'  '+r.name));
+console.log(errs.length ? '  ERRORS: '+errs.join(' | ') : '  no page errors');
+await b.close();
+EOF
+node /tmp/client.test.mjs

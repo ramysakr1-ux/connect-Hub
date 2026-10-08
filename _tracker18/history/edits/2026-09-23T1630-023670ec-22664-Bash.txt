@@ -1,0 +1,112 @@
+cd /private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker2 && python3 - <<'PY'
+import io
+p = "index.html"; s = io.open(p, encoding="utf-8").read()
+
+js = r"""
+// ---- starting a new course ------------------------------------------------
+//
+// Ramy, 23 Sep 2026, asked for this and in the same breath: "just make sure
+// nothing happens to this course." C/17 is mid-course with an assessment on
+// the 29th, so every part of this is built to be hard to fire by accident and
+// honest about what it destroys:
+//
+//   * the button lives inside the collapsed roster panel, not the toolbar;
+//   * the damage is counted and shown BEFORE anything is typed, by a
+//     read-only server call that cannot write;
+//   * the confirmation is the CURRENT course code, typed exactly -- to clear
+//     C17/2026 you have to type C17/2026, which no stray keystroke does;
+//   * the server checks that code again, because a client-side confirmation
+//     is a courtesy rather than a lock.
+
+/** Two columns out of Sheets or Excel: group then candidate, tab separated. */
+function parseRosterPaste(text) {
+  var rows = [], problems = [];
+  String(text || '').split(/\r?\n/).forEach(function (line, i) {
+    if (!line.trim()) return;
+    // Sheets and Excel both put TABS on the clipboard. Commas and semicolons
+    // are accepted too, for a CSV saved out and reopened.
+    var cells = line.split(/\t|,|;/).map(function (c) { return c.replace(/^["\s]+|["\s]+$/g, ''); }).filter(function (c) { return c !== ''; });
+    if (!cells.length) return;
+    // A header row, however it is worded.
+    if (i === 0 && /^(group|level|class)$/i.test(cells[0]) && /^(candidate|name|trainee)$/i.test(cells[1] || '')) return;
+    if (cells.length < 2) { problems.push('Line ' + (i + 1) + ' has only "' + cells[0] + '" -- each line needs a group and a name'); return; }
+    rows.push({ group: cells[0], name: cells.slice(1).join(' ') });
+  });
+  var seen = {};
+  rows.forEach(function (r) {
+    var k = slug(r.group + '-' + r.name);
+    if (seen[k]) problems.push('Two candidates would share one record: ' + r.group + ' / ' + r.name);
+    seen[k] = true;
+  });
+  return { rows: rows, problems: problems };
+}
+
+function newCoursePanel(preview) {
+  var esc = function (t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); };
+  newCourseShow(
+    '<b>Start a new course</b>' +
+    '<div style="margin:6px 0 10px;">This clears <b>' + preview.gradeRows + '</b> candidate record' + (preview.gradeRows === 1 ? '' : 's') +
+    ' and all ' + preview.candidates + ' name' + (preview.candidates === 1 ? '' : 's') + ' from <b>' + esc(preview.courseCode) + '</b>. It cannot be undone.</div>' +
+    '<div style="margin-bottom:6px;">Paste two columns from Sheets or Excel &mdash; group, then candidate:</div>' +
+    '<textarea id="ncPaste" rows="7" style="width:100%; font-family:ui-monospace,Menlo,monospace; font-size:.85rem;" placeholder="B1&#9;Christopher Douglas Deniz Jones&#10;B1&#9;Maedeh Ahmadizadeh&#10;A1&#9;Ali Behnami"></textarea>' +
+    '<div id="ncPreview" style="margin:8px 0;"></div>' +
+    '<div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">' +
+      '<label>New course code <input id="ncCode" placeholder="C18/2026" style="width:120px;"></label>' +
+      '<label>Type <b>' + esc(preview.courseCode) + '</b> to confirm <input id="ncConfirm" placeholder="' + esc(preview.courseCode) + '" style="width:140px;"></label>' +
+    '</div>' +
+    '<button class="btn danger" type="button" id="ncGo" disabled>Clear ' + esc(preview.courseCode) + ' and start the new course</button> ' +
+    '<button class="btn" type="button" onclick="newCourseHide()">Cancel</button>'
+  );
+
+  var paste = document.getElementById('ncPaste'), code = document.getElementById('ncCode'),
+      confirm = document.getElementById('ncConfirm'), go = document.getElementById('ncGo'),
+      out = document.getElementById('ncPreview');
+  var parsed = { rows: [], problems: [] };
+
+  function refresh() {
+    parsed = parseRosterPaste(paste.value);
+    var groups = {}; parsed.rows.forEach(function (r) { groups[r.group] = (groups[r.group] || 0) + 1; });
+    var names = Object.keys(groups);
+    out.innerHTML = parsed.rows.length
+      ? '<b>' + parsed.rows.length + '</b> candidate' + (parsed.rows.length === 1 ? '' : 's') + ' in ' + names.length + ' group' + (names.length === 1 ? '' : 's') + ': ' +
+        names.map(function (g) { return esc(g) + ' (' + groups[g] + ')'; }).join(', ') +
+        (parsed.problems.length ? '<div style="margin-top:6px; font-weight:600;">' + parsed.problems.map(esc).join('<br>') + '</div>' : '')
+      : (paste.value.trim() ? '<span style="font-weight:600;">Nothing readable in that paste.</span>' : '');
+    if (parsed.problems.length) out.innerHTML += '';
+    go.disabled = !(parsed.rows.length && !parsed.problems.length && code.value.trim() && confirm.value.trim() === preview.courseCode);
+  }
+  paste.addEventListener('input', refresh);
+  code.addEventListener('input', refresh);
+  confirm.addEventListener('input', refresh);
+
+  go.addEventListener('click', function () {
+    go.disabled = true; go.textContent = 'Working…';
+    google.script.run
+      .withSuccessHandler(function (res) {
+        newCourseShow('<b>' + esc(res.courseCode) + ' is ready.</b> ' + res.candidates + ' candidates, ' + res.clearedRows +
+          ' old record' + (res.clearedRows === 1 ? '' : 's') + ' cleared. <button class="btn" type="button" onclick="location.reload()">Reload</button>');
+      })
+      .withFailureHandler(function (err) {
+        go.disabled = false; go.textContent = 'Clear ' + preview.courseCode + ' and start the new course';
+        out.innerHTML = '<span style="font-weight:600;">' + esc(err && err.message ? err.message : err) + '</span>';
+      })
+      .startNewCourse(code.value.trim(), parsed.rows, confirm.value.trim());
+  });
+}
+
+document.getElementById('newCourseBtn').addEventListener('click', function () {
+  newCourseShow('Checking what is on the record…');
+  google.script.run
+    .withSuccessHandler(newCoursePanel)
+    .withFailureHandler(function (err) { newCourseShow('Could not read the record: ' + (err && err.message ? err.message : err) + ' <button class="btn" type="button" onclick="newCourseHide()">Close</button>'); })
+    .previewNewCourse();
+});
+"""
+
+anchor = "\nfunction loadAndRender(){"
+assert s.count(anchor) == 1
+s = s.replace(anchor, js + anchor, 1)
+io.open(p, "w", encoding="utf-8").write(s)
+print("new-course flow added")
+PY
+node -e "const h=require('fs').readFileSync('index.html','utf8'); const m=h.match(/<script>([\s\S]*?)<\/script>/); new Function(m[1]); console.log('page script parses')"

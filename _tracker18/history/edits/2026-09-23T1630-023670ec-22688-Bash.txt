@@ -1,0 +1,38 @@
+cd /private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker2 && python3 - > /tmp/pt.mjs <<'PY'
+import io, re
+s = io.open("index.html", encoding="utf-8").read()
+# lift the real functions out of the page, not a copy of them
+for name in ["slug", "parseRosterPaste"]:
+    m = re.search(r"\nfunction " + name + r"\s*\(", s)
+    i = m.start() + 1
+    j = s.index("{", i); k = j; d = 0
+    while True:
+        if s[k] == "{": d += 1
+        elif s[k] == "}":
+            d -= 1
+            if d == 0: break
+        k += 1
+    print(s[i:k+1])
+PY
+cat >> /tmp/pt.mjs <<'EOF'
+
+const cases = [
+  ["Sheets: two columns, tab separated", "B1\tChristopher Douglas Deniz Jones\nB1\tMaedeh Ahmadizadeh\nA1\tAli Behnami"],
+  ["with a header row",                  "group\tcandidate\nB1\tTunç Hüseyin Pekmen\nA1\tŞeyda Taşkıner"],
+  ["header worded differently",          "Level,Name\nB1,Sima Piroutzade"],
+  ["blank lines and trailing spaces",    "\nB1\t Ali Altay Özbüber \n\n A1\tMaryam Moumivand\n\n"],
+  ["CSV with quotes",                    '"B1","Süer Okan Sevindir"\n"A1","Seyedeh Maryam Hosseini"'],
+  ["extra columns to the right",         "B1\tChristopher Jones\tnotes\tmore"],
+  ["names only, no group",               "Christopher Jones\nMaedeh Ahmadizadeh"],
+  ["a duplicate",                        "B1\tAli Behnami\nB1\tAli Behnami"],
+  ["same name, different groups",        "B1\tAli Behnami\nA1\tAli Behnami"],
+  ["empty",                              "   \n  \n"],
+];
+for (const [label, text] of cases) {
+  const r = parseRosterPaste(text);
+  console.log(`${label}`);
+  console.log(`   ${r.rows.length} row(s): ${r.rows.map(x => x.group + "/" + x.name).join(" | ") || "-"}`);
+  if (r.problems.length) console.log(`   refused: ${r.problems.join(" ; ")}`);
+}
+EOF
+node /tmp/pt.mjs; rm -f /tmp/pt.mjs

@@ -1,0 +1,22 @@
+cd /Users/work/connect-Hub/_tracker-test && python3 - <<'PY'
+import io
+p="run.mjs"; s=io.open(p,encoding='utf-8').read()
+old = 'const SRC = process.env.TRACKER_SRC || "../../CELTA connect-code prompt/../tracker/Code.js";'
+new = '''// The tracker is a standalone Apps Script with no fixed home on disk, so the
+// path is given rather than guessed:
+//
+//   npx @google/clasp clone 14ZHkyw5TRKcJIfbXd4rZvPF-8FX4_eD5h4uxsvxaq9cAP-ttsrEeNhwZ
+//   TRACKER_SRC=/path/to/that/Code.js node run.mjs
+//
+// Reading from a clone rather than a copy kept here is the point: the test is
+// only worth anything run against the source that is actually deployed.
+const SRC = process.env.TRACKER_SRC;
+if (!SRC) {
+  console.error("Set TRACKER_SRC to a clasp clone's Code.js -- see the comment above, or README.md");
+  process.exit(2);
+}'''
+assert s.count(old) == 1
+io.open(p,'w',encoding='utf-8').write(s.replace(old, new, 1))
+print("path made explicit")
+PY
+node run.mjs; echo "exit without the var: $?"; echo "--- with it ---"; TRACKER_SRC=/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker2/Code.js node run.mjs | tail -3

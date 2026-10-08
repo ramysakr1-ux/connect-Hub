@@ -1,0 +1,44 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+# Fail-letter tick next to Withdrawn, storing the date it went out.
+old = """var wRow = document.createElement('div'); wRow.className='withdraw-row';
+wRow.innerHTML = '<div class="wd-toggle"></div>';
+var wdBtn = wRow.querySelector('.wd-toggle');"""
+new = """var wRow = document.createElement('div'); wRow.className='withdraw-row';
+wRow.innerHTML = '<div class="wd-toggle fl"></div><div class="wd-toggle"></div>';
+var flBtn = wRow.querySelector('.wd-toggle.fl');
+// The Fail letter is a portfolio document (12.1.1, Section A), so what is
+// recorded is the date it went out, not merely that somebody meant to.
+function refreshFl(){
+var on = !!(c.failLetter && String(c.failLetter).trim());
+flBtn.className = 'wd-toggle fl' + (on ? ' on' : '');
+flBtn.textContent = on ? 'Fail letter issued ' + c.failLetter : 'Mark Fail letter issued';
+}
+refreshFl();
+flBtn.addEventListener('click', function(){
+var on = !!(c.failLetter && String(c.failLetter).trim());
+c.failLetter = on ? '' : new Date().toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+refreshFl(); refreshChip(); renderDash(); saveField(id, 'failLetter', c.failLetter);
+});
+var wdBtn = wRow.querySelectorAll('.wd-toggle')[1];"""
+assert old in s; s = s.replace(old, new)
+
+old = """c.withdrawn = !on;
+refreshWd(); refreshChip(); saveField(id,'withdrawn', c.withdrawn);"""
+new = """c.withdrawn = !on;
+refreshWd(); refreshChip(); renderDash(); saveField(id,'withdrawn', c.withdrawn);"""
+assert old in s; s = s.replace(old, new)
+
+# every badge that changes a judgement should move the panel too
+s = s.replace("""refresh(); closePop(); return;""", """refresh(); renderDash(); closePop(); return;""")
+s = s.replace("""refresh(); closePop();
+}
+});""", """refresh(); renderDash(); closePop();
+}
+});""")
+open(p,"w").write(s); print("fail letter + live panel:", len(s))
+PY
+grep -n "renderDash()" index.html | head -12; python3 -c "
+import re
+s=open('/tmp/tracker-live/index.html').read()
+open('/tmp/check.js','w').write(re.findall(r'<script>(.*?)</script>', s, re.S)[-1])" && node --check /tmp/check.js && echo "JS OK"

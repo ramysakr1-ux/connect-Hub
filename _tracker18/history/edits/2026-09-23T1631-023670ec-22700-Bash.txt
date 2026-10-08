@@ -1,0 +1,70 @@
+cd /private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker2 && python3 - <<'PY'
+import io
+p = "index.html"; s = io.open(p, encoding="utf-8").read()
+a = """    // Sheets and Excel both put TABS on the clipboard. Commas and semicolons
+    // are accepted too, for a CSV saved out and reopened.
+    var cells = line.split(/\\t|,|;/).map(function (c) { return c.replace(/^["\\s]+|["\\s]+$/g, ''); }).filter(function (c) { return c !== ''; });
+    if (!cells.length) return;
+    // A header row, however it is worded.
+    if (i === 0 && /^(group|level|class)$/i.test(cells[0]) && /^(candidate|name|trainee)$/i.test(cells[1] || '')) return;
+    if (cells.length < 2) { problems.push('Line ' + (i + 1) + ' has only "' + cells[0] + '" -- each line needs a group and a name'); return; }
+    rows.push({ group: cells[0], name: cells.slice(1).join(' ') });"""
+b = """    // Sheets and Excel both put TABS on the clipboard, so a line with a tab is
+    // split on tabs ALONE -- commas belong to the name ("Jones, Christopher")
+    // far more often than they separate columns. Only a line with no tab at
+    // all falls back to comma/semicolon, which is a CSV saved out and reopened.
+    var sep = line.indexOf('\\t') >= 0 ? /\\t/ : /,|;/;
+    var cells = line.split(sep).map(function (c) { return c.replace(/^["\\s]+|["\\s]+$/g, ''); }).filter(function (c) { return c !== ''; });
+    if (!cells.length) return;
+    // A header row, however it is worded.
+    if (i === 0 && /^(group|level|class)$/i.test(cells[0]) && /^(candidate|name|trainee)$/i.test(cells[1] || '')) return;
+    if (cells.length < 2) { problems.push('Line ' + (i + 1) + ' has only "' + cells[0] + '" -- each line needs a group and a name'); return; }
+    // The name is the SECOND cell, never a join of the rest: a sheet often
+    // carries notes or an email to the right of the name, and gluing those on
+    // silently corrupts it. Anything further right is reported, not used.
+    if (cells.length > 2) extras++;
+    rows.push({ group: cells[0], name: cells[1] });"""
+assert s.count(a) == 1
+s = s.replace(a, b, 1)
+
+a2 = "  var rows = [], problems = [];"
+assert s.count(a2) == 1
+s = s.replace(a2, "  var rows = [], problems = [], extras = 0;", 1)
+
+a3 = """  return { rows: rows, problems: problems };
+}"""
+b3 = """  if (extras) problems.push(extras + ' line' + (extras === 1 ? ' has' : 's have') + ' more than two columns -- only the group and the name are used, check the preview');
+  return { rows: rows, problems: problems };
+}"""
+assert s.count(a3) == 1
+s = s.replace(a3, b3, 1)
+io.open(p, "w", encoding="utf-8").write(s)
+print("parser fixed")
+PY
+python3 - > /tmp/pt2.mjs <<'PY'
+import io, re
+s = io.open("/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker2/index.html", encoding="utf-8").read()
+for name in ["slug", "parseRosterPaste"]:
+    m = re.search(r"\nfunction " + name + r"\s*\(", s); i = m.start()+1
+    j = s.index("{", i); k = j; d = 0
+    while True:
+        if s[k] == "{": d += 1
+        elif s[k] == "}":
+            d -= 1
+            if d == 0: break
+        k += 1
+    print(s[i:k+1])
+PY
+cat >> /tmp/pt2.mjs <<'EOF'
+for (const [label, text] of [
+  ["extra columns to the right", "B1\tChristopher Jones\tnotes\tmore"],
+  ["name containing a comma",    "B1\tJones, Christopher"],
+  ["CSV fallback (no tabs)",     '"B1","Süer Okan Sevindir"'],
+  ["normal paste",               "B1\tMaedeh Ahmadizadeh\nA1\tAli Behnami"],
+]) {
+  const r = parseRosterPaste(text);
+  console.log(`${label}\n   ${r.rows.map(x => `[${x.group}] ${x.name}`).join(" | ") || "-"}`);
+  if (r.problems.length) console.log(`   note: ${r.problems.join(" ; ")}`);
+}
+EOF
+node /tmp/pt2.mjs; rm -f /tmp/pt2.mjs

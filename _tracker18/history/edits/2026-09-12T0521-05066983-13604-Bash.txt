@@ -1,0 +1,65 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="Code.js"; s=open(p).read()
+old = """function resetAll() {"""
+new = """// ---- Roster -------------------------------------------------------------
+// Ramy, 12 Sep 2026: "it should obviously be something that could be used with
+// any number of trainees and any number of TP groups." The names used to be a
+// literal in index.html, so a new course meant editing and redeploying the
+// page. They live in the sheet now, on their own tab, which also means a tutor
+// can fix a spelling there and the app follows.
+var ROSTER_TAB = 'Roster';
+var ROSTER_HEADER = ['group', 'candidate'];
+var ROSTER_SEED = [
+['B1', 'Christoph Deniz Jones'], ['B1', 'Maedeh Ahmadizadeh'], ['B1', 'Maryam Hosseini'],
+['B1', 'Tunç Pekmen'], ['B1', 'Süer Okan Sevindir'],
+['A1', 'Ali Altay Özbüber'], ['A1', 'Şeyda Taşkıner'], ['A1', 'Maryam Moumivand'],
+['A1', 'Ali Behnami'], ['A1', 'Sima Piroutzade']
+];
+
+function rosterSheet_() {
+var ss = spreadsheet_();
+var sh = ss.getSheetByName(ROSTER_TAB);
+if (!sh) {
+sh = ss.insertSheet(ROSTER_TAB);
+sh.getRange(1, 1, 1, ROSTER_HEADER.length).setValues([ROSTER_HEADER]).setFontWeight('bold');
+sh.setFrozenRows(1);
+// Seeded once, with the course this tracker was built for, so an existing
+// tracker keeps its groups and nobody has to retype them.
+sh.getRange(2, 1, ROSTER_SEED.length, 2).setValues(ROSTER_SEED);
+}
+return sh;
+}
+
+/** [{ group, name }] in sheet order -- the client keeps that order. */
+function getRoster() {
+var sh = rosterSheet_();
+var last = sh.getLastRow();
+if (last < 2) return [];
+return sh.getRange(2, 1, last - 1, 2).getValues()
+.filter(function (r) { return String(r[0]).trim() && String(r[1]).trim(); })
+.map(function (r) { return { group: String(r[0]).trim(), name: String(r[1]).trim() }; });
+}
+
+/** Replaces the whole roster. Grades are keyed by name and are never touched. */
+function saveRoster(rows) {
+var lock = LockService.getScriptLock();
+lock.waitLock(10000);
+try {
+var sh = rosterSheet_();
+var last = sh.getLastRow();
+if (last >= 2) sh.getRange(2, 1, last - 1, 2).clearContent();
+var clean = (rows || [])
+.filter(function (r) { return r && String(r.group).trim() && String(r.name).trim(); })
+.map(function (r) { return [String(r.group).trim(), String(r.name).trim()]; });
+if (clean.length) sh.getRange(2, 1, clean.length, 2).setValues(clean);
+} finally {
+lock.releaseLock();
+}
+return true;
+}
+
+function resetAll() {"""
+assert old in s; s = s.replace(old, new, 1)
+open(p,"w").write(s); print("Code.js:", len(s))
+PY
+node --check Code.js && echo "Code.js OK"

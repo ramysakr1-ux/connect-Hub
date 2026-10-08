@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+:root { --navy: #16294D; --navy2: #1F3864; --teal: #2E75B6; --slate: #5B7A99; --gold: #B8860B; --rose: #A5433F; --ink: #1A1A1A; --grey: #64707D; --line: #DDE3EA; --paper: #FAFBFC; --card: #FFFFFF; }
+* { box-sizing: border-box; }
+html, body { margin:0; background:var(--paper); font-family:-apple-system,"Segoe UI",Calibri,Roboto,Arial,sans-serif; color:var(--ink); }
+body { padding: 28px 16px 70px; }
+.wrap { max-width: 1040px; margin: 0 auto; }
+.masthead { display:flex; align-items:center; justify-content:flex-end; margin-bottom:12px; }
+.course-tag { font-size:11px; letter-spacing:.04em; color:var(--navy2); background:#EAF1F8; border:1px solid #CFE0EE; padding:5px 11px; border-radius:20px; font-weight:600; }
+h1 { font-size:27px; margin:4px 0 16px; color:var(--navy); letter-spacing:-0.01em; }
+.info-strip { display:flex; align-items:flex-start; gap:10px; background:#FBF3E4; border:1px solid #EAD9AE; border-radius:8px; padding:11px 14px; font-size:12.5px; line-height:1.55; color:#6B4E12; }
+.info-strip .dot { width:7px; height:7px; border-radius:50%; background:var(--gold); flex:none; margin-top:6px; }
+.info-strip b { font-weight:700; }
+.sync-note { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--grey); margin:16px 0 18px; }
+.sync-dot { width:7px; height:7px; border-radius:50%; background:#7BC49A; flex:none; }
+.sync-dot.busy { background: var(--gold); }
+.dash { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:30px; }
+.stat { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
+.stat .n { font-size:26px; font-weight:700; color:var(--navy); line-height:1; }
+.stat .l { font-size:11.5px; color:var(--grey); margin-top:6px; }
+.stat.warn .n { color:var(--rose); }
+.stat.good .n { color:var(--teal); }
+.toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+.search { flex:1; min-width:180px; border:1px solid var(--line); border-radius:8px; padding:9px 12px; font-size:13px; background:var(--card); }
+.btn { border:1px solid var(--line); background:var(--card); color:var(--navy2); font-size:12.5px; font-weight:600; padding:8px 13px; border-radius:8px; cursor:pointer; }
+.btn:hover { border-color:var(--teal); }
+.btn.danger { color:var(--rose); border-color:#E9B9B6; background:#FDF6F5; }
+.btn.danger:hover { color:#fff; background:var(--rose); border-color:var(--rose); }
+.btn.danger.armed { color:#fff; background:var(--rose); border-color:var(--rose); }
+.group { margin-bottom:26px; }
+.group-head { display:flex; align-items:baseline; gap:10px; padding:6px 2px 10px; border-bottom:2px solid var(--navy2); cursor:pointer; user-select:none; }
+.group-head h2 { font-size:16px; color:var(--navy); margin:0; }
+.group-head .n { font-size:12px; color:var(--grey); }
+.group-head .car { margin-left:auto; color:var(--teal); font-size:12px; transition:transform .15s; }
+.group.collapsed .group-head .car { transform:rotate(-90deg); }
+.group.collapsed .roster { display:none; }
+.roster { display:flex; flex-direction:column; gap:10px; margin-top:12px; }
+.cand { background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+.cand-head { display:flex; align-items:center; gap:12px; padding:13px 16px; cursor:pointer; }
+.cand-head .avatar { width:30px; height:30px; border-radius:50%; background:var(--navy2); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex:none; }
+.cand-head .name { font-weight:700; color:var(--navy); font-size:14.5px; flex:1; }
+.cand-head .status-chip { font-size:10.5px; font-weight:700; letter-spacing:.03em; padding:3px 9px; border-radius:20px; background:#EEF2F5; color:var(--grey); }
+.cand-head .car { color:var(--teal); font-size:12px; transition:transform .15s; }
+.cand.open .car { transform:rotate(90deg); }
+.cand-body { display:none; padding:4px 16px 18px; border-top:1px solid var(--line); }
+.cand.open .cand-body { display:block; }
+.sec-label { font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--teal); font-weight:700; margin:18px 0 8px; }
+.tp-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:6px; }
+.tp-cell { text-align:center; }
+.tp-cell .tp-lbl { font-size:10px; color:var(--grey); margin-bottom:4px; }
+.badge { display:inline-block; min-width:100%; border:1px dashed var(--line); border-radius:7px; padding:6px 4px; font-size:11.5px; font-weight:700; cursor:pointer; user-select:none; color:var(--grey); background:#FAFBFC; transition:all .1s; }
+.badge:hover { border-color:var(--teal); }
+.badge.set-S { background:#EAF1F8; border:1px solid #BFD6EA; color:var(--slate); }
+.badge.set-Splus { background:#E4F0F8; border:1px solid #A9CDE6; color:var(--teal); }
+.badge.set-AS { background:#FBF1DC; border:1px solid #E8CE8E; color:var(--gold); }
+.badge.set-PASS { background:#E3F3EE; border:1px solid #A9DAC7; color:#22795A; }
+.badge.set-RES { background:#FBF1DC; border:1px solid #E8CE8E; color:var(--gold); }
+.badge.set-FAIL { background:#FBEAE9; border:1px solid #E9B9B6; color:var(--rose); }
+.badge.set-GIVEN { background:#E3F3EE; border:1px solid #A9DAC7; color:#22795A; }
+.badge.set-NOTGIVEN { background:#EEF2F5; border:1px solid #D3DBE2; color:var(--grey); }
+.badge.set-NOTSTD { background:#FBEAE9; border:1px solid #E9B9B6; color:var(--rose); }
+.badge.set-STD { background:#E4F0F8; border:1px solid #A9CDE6; color:var(--teal); }
+.badge.set-ABOVE { background:#F1E9F5; border:1px solid #D3B9E0; color:#7A4E96; }
+.stage-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.assign-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.assign-cell { border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
+.assign-cell .a-name { font-size:11px; font-weight:700; color:var(--navy); margin-bottom:6px; }
+.assign-cell .a-row { display:flex; align-items:center; justify-content:space-between; gap:6px; }
+.dm-toggle { font-size:9.5px; font-weight:700; letter-spacing:.03em; border:1px solid var(--line); border-radius:5px; padding:3px 7px; cursor:pointer; color:var(--grey); background:#fff; }
+.dm-toggle.on { background:var(--teal); border-color:var(--teal); color:#fff; box-shadow:0 1px 3px rgba(46,117,182,0.4); }
+.withdraw-row { margin-top:18px; display:flex; align-items:center; gap:8px; }
+.withdraw-row .wd-toggle { font-size:11px; font-weight:700; padding:5px 11px; border-radius:20px; border:1px solid var(--line); cursor:pointer; color:var(--grey); background:#fff; }
+.withdraw-row .wd-toggle.on { background:#FBEAE9; border-color:#E9B9B6; color:var(--rose); }
+.wm { position:fixed; right:14px; bottom:11px; z-index:20; pointer-events:none; font-size:10.5px; letter-spacing:.01em; color:rgba(100,112,125,0.6); }
+.wm b { font-weight:600; color:rgba(100,112,125,0.9); }
+.loading { text-align:center; padding:60px 0; color:var(--grey); font-size:13px; }
+@media (max-width:720px) { .dash { grid-template-columns:repeat(2,1fr); } .tp-grid { grid-template-columns:repeat(4,1fr); } .assign-grid { grid-template-columns:repeat(2,1fr); } .stage-grid { grid-template-columns:repeat(1,1fr); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="masthead"><div class="course-tag">COURSE C17/2026</div></div>
+<h1>Candidate Tracker</h1>
+<div class="info-strip"><span class="dot"></span><span>Groups <b>B1</b> and <b>A1</b>. Click a candidate to open their record, then click any badge to set it. Each click cycles to the next value and saves straight away.</span></div>
+<div class="sync-note"><span class="sync-dot" id="syncDot"></span><span id="syncText">Loading live data&hellip;</span></div>
+<div class="dash" id="dash"></div>
+<div class="toolbar">
+<input class="search" id="search" placeholder="Filter by name&hellip;">
+<div style="display:flex; gap:8px;">
+<button class="btn" id="exportBtn">Copy summary</button>
+<button class="btn danger" id="resetBtn">Reset all</button>
+</div>
+</div>
+<div id="groups"><div class="loading">Loading candidates&hellip;</div></div>
+</div>
+<div class="wm">designed and built by <b>Ramy</b></div>
+<script>
+var CANDIDATES = {
+B1: ['Christoph Deniz Jones', 'Maedeh Ahmadizadeh', 'Maryam Hosseini', 'Tunç Pekmen', 'Süer Okan Sevindir'],
+A1: ['Ali Altay Özbüber', 'Şeyda Taşkıner', 'Maryam Moumivand', 'Ali Behnami', 'Sima Piroutzade']
+};
+var ASSIGNMENTS = ['SRT', 'FOL', 'LRT', 'LFC'];
+var TP_CYCLE = ['', 'S', 'S+', 'AS'];
+var TP_CLASS = { '': '', 'S': 'set-S', 'S+': 'set-Splus', 'AS': 'set-AS' };
+var ASSIGN_CYCLE = ['', 'PASS', 'RES', 'FAIL'];
+var ASSIGN_LABEL = { '': '–', PASS: 'PASS', RES: 'PASS on RES', FAIL: 'FAIL' };
+// Stages 1 and 3 are a tutorial given or not; Stage 2 is a graded lesson.
+// Shapes taken from the C13/2026 candidate profiles sheet.
+var GIVEN_CYCLE = ['', 'GIVEN', 'NOTGIVEN'];
+var GIVEN_LABEL = { '': '–', GIVEN: 'Given', NOTGIVEN: 'Not given' };
+var STAGE2_CYCLE = ['', 'NOTSTD', 'STD', 'ABOVE'];
+var STAGE2_LABEL = { '': '–', NOTSTD: 'Not to standard', STD: 'To standard', ABOVE: 'Above standard' };
+var STAGES = [
+{ field: 'stage1', label: 'Stage 1', cycle: GIVEN_CYCLE, labels: GIVEN_LABEL },
+{ field: 'stage2', label: 'Stage 2', cycle: STAGE2_CYCLE, labels: STAGE2_LABEL },
+{ field: 'stage3', label: 'Stage 3', cycle: GIVEN_CYCLE, labels: GIVEN_LABEL }
+];
+function slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+var DATA = {};
+var openState = {};
+function setSync(text, busy){
+document.getElementById('syncText').textContent = text;
+document.getElementById('syncDot').className = 'sync-dot' + (busy ? ' busy' : '');
+}
+function saveField(id, field, value){
+setSync('Saving…', true);
+google.script.run
+.withSuccessHandler(function(){ setSync('Saved ✓', false); })
+.withFailureHandler(function(err){ setSync('Could not save — check your connection', true); console.error(err); })
+.saveField(id, field, value);
+}
+function statusFor(c){
+if (c.withdrawn === true || c.withdrawn === 'true') return { text:'WITHDRAWN', bg:'#FBEAE9', color:'var(--rose)' };
+if (c.stage2 === 'ABOVE') return { text:'ABOVE STANDARD', bg:'#F1E9F5', color:'#7A4E96' };
+if (c.stage2 === 'STD') return { text:'TO STANDARD', bg:'#E4F0F8', color:'var(--teal)' };
+if (c.stage2 === 'NOTSTD') return { text:'NOT TO STANDARD', bg:'#FBEAE9', color:'var(--rose)' };
+return { text:'IN PROGRESS', bg:'#EEF2F5', color:'var(--grey)' };
+}
+function buildCandidate(name, groupKey){
+var id = slug(groupKey + '-' + name);
+var c = DATA[id] || (DATA[id] = {});
+var initials = name.split(' ').map(function(w){return w[0];}).slice(0,2).join('');
+var wrap = document.createElement('div');
+wrap.className = 'cand' + (openState[id] ? ' open' : '');
+var head = document.createElement('div');
+head.className = 'cand-head';
+head.innerHTML = '<div class="avatar">'+initials+'</div><div class="name">'+name+'</div><div class="status-chip"></div><div class="car">&#9656;</div>';
+var chipEl = head.querySelector('.status-chip');
+function refreshChip(){
+var s = statusFor(c);
+chipEl.textContent = s.text; chipEl.style.background = s.bg; chipEl.style.color = s.color;
+}
+refreshChip();
+head.addEventListener('click', function(){ openState[id] = !openState[id]; wrap.classList.toggle('open'); });
+wrap.appendChild(head);
+var body = document.createElement('div');
+body.className = 'cand-body';
+var stLabel = document.createElement('div'); stLabel.className='sec-label'; stLabel.textContent='Stages';
+body.appendChild(stLabel);
+var stGrid = document.createElement('div'); stGrid.className='stage-grid';
+STAGES.forEach(function(st){
+var cell = document.createElement('div'); cell.className='assign-cell';
+cell.innerHTML = '<div class="a-name">'+st.label+'</div><div class="a-row"><div class="badge" style="min-width:auto; padding:5px 10px;"></div></div>';
+var b = cell.querySelector('.badge');
+function refreshSt(){
+var v = c[st.field] || '';
+b.className = 'badge ' + (v ? 'set-'+v : '');
+b.style.minWidth='auto'; b.style.padding='5px 10px';
+b.textContent = st.labels[v] || st.labels[''];
+}
+refreshSt();
+b.addEventListener('click', function(){
+var idx = st.cycle.indexOf(c[st.field]||'');
+c[st.field] = st.cycle[(idx+1)%st.cycle.length];
+refreshSt(); refreshChip(); saveField(id, st.field, c[st.field]);
+});
+stGrid.appendChild(cell);
+});
+body.appendChild(stGrid);
+var tpLabel = document.createElement('div'); tpLabel.className='sec-label'; tpLabel.textContent='TP Grades';
+body.appendChild(tpLabel);
+var tpGrid = document.createElement('div'); tpGrid.className='tp-grid';
+for (var i=0;i<8;i++){
+(function(i){
+var fkey = 'tp'+(i+1);
+var cell = document.createElement('div'); cell.className='tp-cell';
+var lbl = document.createElement('div'); lbl.className='tp-lbl'; lbl.textContent='TP'+(i+1);
+var b = document.createElement('div');
+function refresh(){ b.className='badge '+(TP_CLASS[c[fkey]]||''); b.textContent = c[fkey] || '–'; }
+refresh();
+b.addEventListener('click', function(){
+var idx = TP_CYCLE.indexOf(c[fkey]||'');
+c[fkey] = TP_CYCLE[(idx+1)%TP_CYCLE.length];
+refresh(); saveField(id, fkey, c[fkey]);
+});
+cell.appendChild(lbl); cell.appendChild(b); tpGrid.appendChild(cell);
+})(i);
+}
+body.appendChild(tpGrid);
+var aLabel = document.createElement('div'); aLabel.className='sec-label'; aLabel.textContent='Assignments';
+body.appendChild(aLabel);
+var aGrid = document.createElement('div'); aGrid.className='assign-grid';
+ASSIGNMENTS.forEach(function(code){
+var lc = code.toLowerCase();
+var cell = document.createElement('div'); cell.className='assign-cell';
+cell.innerHTML = '<div class="a-name">'+code+'</div><div class="a-row"><div class="badge" style="min-width:auto; padding:5px 10px;"></div><div class="dm-toggle">DM</div></div>';
+var rBadge = cell.querySelector('.badge');
+var dmBtn = cell.querySelector('.dm-toggle');
+function refreshAssign(){
+var rVal = c[lc+'_r'] || '';
+rBadge.className = 'badge '+(rVal ? 'set-'+rVal : '');
+rBadge.style.minWidth='auto'; rBadge.style.padding='5px 10px';
+rBadge.textContent = ASSIGN_LABEL[rVal];
+var dmOn = c[lc+'_dm']===true || c[lc+'_dm']==='true';
+dmBtn.className = 'dm-toggle'+(dmOn?' on':'');
+}
+refreshAssign();
+rBadge.addEventListener('click', function(){
+var cur = c[lc+'_r'] || '';
+var idx = ASSIGN_CYCLE.indexOf(cur);
+c[lc+'_r'] = ASSIGN_CYCLE[(idx+1)%ASSIGN_CYCLE.length];
+refreshAssign(); saveField(id, lc+'_r', c[lc+'_r']);
+});
+dmBtn.addEventListener('click', function(){
+var dmOn = c[lc+'_dm']===true || c[lc+'_dm']==='true';
+c[lc+'_dm'] = !dmOn;
+refreshAssign(); saveField(id, lc+'_dm', c[lc+'_dm']);
+});
+aGrid.appendChild(cell);
+});
+body.appendChild(aGrid);
+var wRow = document.createElement('div'); wRow.className='withdraw-row';
+wRow.innerHTML = '<div class="wd-toggle"></div>';
+var wdBtn = wRow.querySelector('.wd-toggle');
+function refreshWd(){
+var on = c.withdrawn===true || c.withdrawn==='true';
+wdBtn.className='wd-toggle'+(on?' on':'');
+wdBtn.textContent = on ? 'Withdrawn' : 'Mark as withdrawn';
+}
+refreshWd();
+wdBtn.addEventListener('click', function(){
+var on = c.withdrawn===true || c.withdrawn==='true';
+c.withdrawn = !on;
+refreshWd(); refreshChip(); saveField(id,'withdrawn', c.withdrawn);
+});
+body.appendChild(wRow);
+wrap.appendChild(body);
+return wrap;
+}
+function buildGroup(key, names){
+var g = document.createElement('div'); g.className='group'; g.id='group-'+key;
+var head = document.createElement('div'); head.className='group-head';
+head.innerHTML = '<h2>Group '+key+'</h2><span class="n">'+names.length+' candidates</span><span class="car">&#9656;</span>';
+head.addEventListener('click', function(){ g.classList.toggle('collapsed'); });
+g.appendChild(head);
+var roster = document.createElement('div'); roster.className='roster';
+names.forEach(function(n){ roster.appendChild(buildCandidate(n, key)); });
+g.appendChild(roster);
+return g;
+}
+function buildAllGroups(){
+var groupsEl = document.getElementById('groups');
+groupsEl.innerHTML = '';
+var q = (document.getElementById('search').value || '').toLowerCase();
+Object.keys(CANDIDATES).forEach(function(key){
+var names = CANDIDATES[key].filter(function(n){ return n.toLowerCase().indexOf(q) !== -1; });
+if (names.length || !q) groupsEl.appendChild(buildGroup(key, q ? names : CANDIDATES[key]));
+});
+}
+function renderDash(){
+var allIds = [];
+Object.keys(CANDIDATES).forEach(function(key){ CANDIDATES[key].forEach(function(name){ allIds.push(slug(key+'-'+name)); }); });
+var total = allIds.length, withdrawn=0, above=0, toStd=0, notToStd=0;
+allIds.forEach(function(id){
+var c = DATA[id]; if (!c) return;
+var w = c.withdrawn===true || c.withdrawn==='true';
+if (w) withdrawn++;
+else if (c.stage2==='ABOVE') above++;
+else if (c.stage2==='STD') toStd++;
+else if (c.stage2==='NOTSTD') notToStd++;
+});
+var inProgress = total - withdrawn - toStd - above - notToStd;
+var stats = [
+{ n:total, l:'Total candidates' },
+{ n:toStd+above, l:'Reached standard', cls:'good' },
+{ n:notToStd, l:'Not yet to standard', cls: notToStd?'warn':'' },
+{ n:withdrawn, l:'Withdrawn', cls: withdrawn?'warn':'' },
+{ n:inProgress, l:'Still in progress' }
+];
+document.getElementById('dash').innerHTML = stats.map(function(s){
+return '<div class="stat '+(s.cls||'')+'"><div class="n">'+s.n+'</div><div class="l">'+s.l+'</div></div>';
+}).join('');
+}
+document.getElementById('search').addEventListener('input', buildAllGroups);
+var resetBtn = document.getElementById('resetBtn');
+var resetArmed = false;
+var resetTimer = null;
+function disarmReset(){
+resetArmed = false;
+resetBtn.classList.remove('armed');
+resetBtn.textContent = 'Reset all';
+if (resetTimer) { clearTimeout(resetTimer); resetTimer = null; }
+}
+resetBtn.addEventListener('click', function(){
+if (!resetArmed) {
+resetArmed = true;
+resetBtn.classList.add('armed');
+resetBtn.textContent = 'Click again to erase everything';
+resetTimer = setTimeout(disarmReset, 5000);
+return;
+}
+disarmReset();
+var ok = confirm('ERASE EVERY CANDIDATE RECORD?\n\nThis clears all stages, TP grades, assignment results and withdrawal marks for all 10 candidates.\n\nIt affects every trainer using this tracker, not just you, and it cannot be undone. Only do this at the very end of the course.\n\nOK to erase, or Cancel to go back.');
+if (!ok) return;
+setSync('Resetting…', true);
+google.script.run.withSuccessHandler(function(){ DATA = {}; loadAndRender(); }).resetAll();
+});
+document.getElementById('exportBtn').addEventListener('click', function(){
+var lines = ['C17/2026 Candidate Tracker — summary'];
+Object.keys(CANDIDATES).forEach(function(key){
+lines.push('', 'Group '+key);
+CANDIDATES[key].forEach(function(name){
+var id = slug(key+'-'+name);
+var c = DATA[id] || {};
+var w = c.withdrawn===true || c.withdrawn==='true';
+lines.push('  '+name+': '+(w ? 'WITHDRAWN' : (c.stage2 ? STAGE2_LABEL[c.stage2] : 'in progress')));
+});
+});
+var text = lines.join('\n');
+navigator.clipboard.writeText(text).then(function(){ alert('Summary copied to clipboard.'); }).catch(function(){ alert(text); });
+});
+function loadAndRender(){
+setSync('Loading live data…', true);
+google.script.run
+.withSuccessHandler(function(data){
+DATA = data || {};
+setSync('Live — synced with the shared sheet', false);
+buildAllGroups();
+renderDash();
+})
+.withFailureHandler(function(err){
+setSync('Could not load data — refresh to retry', true);
+console.error(err);
+})
+.getData();
+}
+loadAndRender();
+</script>
+</body>
+</html>

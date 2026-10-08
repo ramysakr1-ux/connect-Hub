@@ -1,0 +1,93 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+start = s.index("function renderDash(){")
+end = s.index("document.getElementById('search').addEventListener")
+new_fn = '''function renderDash(){
+var people = [];
+Object.keys(CANDIDATES).forEach(function(key){
+CANDIDATES[key].forEach(function(name){ people.push({ name: name, c: DATA[slug(key+'-'+name)] || {} }); });
+});
+
+var count = { withdrawn:0, notstd:0, std:0, above:0, none:0 };
+var tpGraded = 0, tpNotStd = 0, tpAbove = 0, aRecorded = 0, aFail = 0;
+var notToStandard = [], letters = [], ceilings = [], stage3Due = [], aboveList = [], hints = [];
+people.forEach(function(p){
+var r = readCandidate(p.c);
+count[r.state]++;
+tpGraded += r.graded; tpNotStd += r.notStd; tpAbove += r.above; aFail += r.fails.length;
+ASSIGNMENTS.forEach(function(code){ if (p.c[code.toLowerCase()+'_r']) aRecorded++; });
+if (r.state === 'withdrawn') return;
+if (r.state === 'notstd') notToStandard.push({ name: p.name, why: [r.from + ' not to standard'] });
+if (r.state === 'above') aboveList.push({ name: p.name, why: ['above standard at ' + r.from] });
+if (r.letterDue) letters.push({ name: p.name, why: r.failWhy });
+if (r.ceiling) ceilings.push({ name: p.name, why: [r.ceiling] });
+if (r.stage3Why) stage3Due.push({ name: p.name, why: [r.stage3Why] });
+if (r.stage2Hint) hints.push({ name: p.name, why: [r.stage2Hint] });
+});
+
+var stats = [
+{ n: people.length, l: 'Candidates' },
+{ n: count.std, l: 'To standard', cls: count.std ? 'good on-good' : '' },
+{ n: count.above, l: 'Above standard', cls: count.above ? 'above' : '' },
+{ n: count.notstd, l: 'Not to standard', cls: count.notstd ? 'warn on-warn' : '' },
+{ n: stage3Due.length, l: 'Stage 3 required', cls: stage3Due.length ? 'amber on-amber' : '' },
+{ n: count.withdrawn, l: 'Withdrawn' }
+];
+document.getElementById('dash').innerHTML = stats.map(function(s){
+return '<div class="stat '+(s.cls||'')+'"><div class="n">'+s.n+'</div><div class="l">'+s.l+'</div></div>';
+}).join('');
+
+document.getElementById('dashStrip').innerHTML =
+'<span>Where each candidate stands <b>for this stage of the course</b></span>' +
+'<span><b>' + tpGraded + '</b> of ' + (people.length * 8) + ' TPs graded' +
+(tpAbove ? ', <b>' + tpAbove + '</b> above standard' : '') + (tpNotStd ? ', <b>' + tpNotStd + '</b> not to standard' : '') + '</span>' +
+'<span><b>' + aRecorded + '</b> of ' + (people.length * ASSIGNMENTS.length) + ' assignments marked' + (aFail ? ', <b>' + aFail + '</b> failed' : '') + '</span>' +
+(count.none ? '<span><b>' + count.none + '</b> with nothing recorded yet</span>' : '');
+
+var line = function(list){ return list.map(function(p){ return '<span class="who">'+p.name+'</span> — '+p.why.join('; '); }).join(' · '); };
+var fill = function(elId, cls, head, list, tail){
+var box = document.getElementById(elId);
+if (!list.length) { box.style.display = 'none'; return; }
+box.className = cls;
+box.innerHTML = '<span class="hd">' + head + '</span>' + line(list) + (tail ? '<div class="note">' + tail + '</div>' : '');
+box.style.display = '';
+};
+fill('attention', 'attention', 'Not to standard — needs more work in order to pass the course', notToStandard);
+fill('letterBox', 'attention', 'Fail letter required', letters,
+'Handbook 10.2: a potential Fail candidate should be issued with a Fail letter making the possible Fail outcome clear and drawing attention to the action points in the CELTA 5 — ideally with at least two lessons left to teach. Tick it on the candidate once it has gone out.');
+fill('ceilingBox', 'attention', 'Written assignments — final grade capped', ceilings);
+fill('watchBox', 'attention amber', 'Stage 3 record required — final third of the course', stage3Due);
+fill('hintBox', 'attention amber', 'Stage 2 not yet recorded', hints);
+fill('aboveBox', 'attention above', 'Above standard — evidence for Pass B or Pass A', aboveList,
+'Handbook 10.2, note 2: where a higher grade looks possible, consider a Stage 3 tutorial to make the criteria for it explicit.');
+}
+
+'''
+s = s[:start] + new_fn + s[end:]
+
+old = """<div class="attention" id="attention" style="display:none"></div>
+<div class="attention" id="ceilingBox" style="display:none"></div>
+<div class="attention amber" id="watchBox" style="display:none"></div>"""
+new = """<div class="attention" id="attention" style="display:none"></div>
+<div class="attention" id="letterBox" style="display:none"></div>
+<div class="attention" id="ceilingBox" style="display:none"></div>
+<div class="attention amber" id="watchBox" style="display:none"></div>
+<div class="attention amber" id="hintBox" style="display:none"></div>
+<div class="attention above" id="aboveBox" style="display:none"></div>"""
+assert old in s; s = s.replace(old, new)
+
+old = """.dash { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:30px; }"""
+new = """.dash { display:grid; grid-template-columns:repeat(auto-fit, minmax(148px, 1fr)); gap:10px; margin-bottom:30px; }"""
+assert old in s; s = s.replace(old, new)
+
+old = """.attention .hd { display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; font-weight:700; margin-bottom:5px; opacity:.8; }"""
+new = """.attention .hd { display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; font-weight:700; margin-bottom:5px; opacity:.8; }
+.attention .note { margin-top:7px; font-size:11px; opacity:.8; line-height:1.5; }
+.attention.above { border-color:#D3B9E0; background:#F8F4FA; color:#5D3B73; }"""
+assert old in s; s = s.replace(old, new)
+open(p,"w").write(s); print("renderDash:", len(s))
+PY
+python3 -c "
+import re
+s=open('/tmp/tracker-live/index.html').read()
+open('/tmp/check.js','w').write(re.findall(r'<script>(.*?)</script>', s, re.S)[-1])" && node --check /tmp/check.js && echo "JS OK"

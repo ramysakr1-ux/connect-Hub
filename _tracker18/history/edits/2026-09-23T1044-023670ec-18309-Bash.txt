@@ -1,0 +1,33 @@
+S=/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker2; cd $S && python3 - <<'PY'
+import io
+p='Code.js'; s=io.open(p,encoding='utf-8').read()
+helper = '''
+/**
+ * One-off, 23 Sep 2026: remove grade rows the roster can no longer produce.
+ * The walk found one -- b1-christoph-deniz-jones, left behind when that
+ * candidate was renamed and then written to again by a tab that had not been
+ * reloaded. saveField refuses such a write now, so this is a tidy-up rather
+ * than a recurring chore. Returns what it removed so nothing is deleted
+ * silently.
+ */
+function removeOrphanRows() {
+  var live = rosterIds_();
+  var sh = sheet_();
+  var last = sh.getLastRow();
+  if (last < 2) return 'No rows.';
+  var rows = sh.getRange(2, 1, last - 1, HEADER.length).getValues();
+  var doomed = [];
+  for (var i = rows.length - 1; i >= 0; i--) {
+    var id = String(rows[i][0] || '');
+    if (!id || live[id]) continue;
+    var carried = rows[i].slice(2).filter(function (v) { return v !== '' && v !== null; }).length;
+    doomed.push(id + '  (' + carried + ' value' + (carried === 1 ? '' : 's') + ')');
+    sh.deleteRow(i + 2);
+  }
+  return doomed.length ? 'Removed:\\n  ' + doomed.join('\\n  ') : 'No orphans — every row matches a candidate.';
+}
+'''
+io.open(p,'w',encoding='utf-8').write(s.rstrip() + '\n' + helper)
+print("removeOrphanRows added")
+PY
+node --check Code.js && npx --yes @google/clasp@latest push --force 2>&1 | tail -2 && npx --yes @google/clasp@latest create-version "A stale tab can no longer file a grade under a renamed candidate" 2>&1 | tail -1

@@ -1,0 +1,16 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+old = """<div id="groups"><div class="loading">Loading candidates&hellip;</div></div>"""
+new = """<details class="roster-panel" id="rosterPanel">
+<summary>Groups and candidates</summary>
+<div id="rosterBody"></div>
+<form class="r-add r-newgroup" id="newGroupForm"><input placeholder="New group (e.g. A2)" required><button type="submit">Add group</button></form>
+</details>
+<div id="groups"><div class="loading">Loading candidates&hellip;</div></div>"""
+assert old in s; s = s.replace(old, new)
+open(p,"w").write(s); print("panel added")
+PY
+grep -c "rosterBody\|newGroupForm\|renderRoster" index.html; python3 -c "
+import re
+s=open('/tmp/tracker-live/index.html').read()
+open('/tmp/check.js','w').write(re.findall(r'<script>(.*?)</script>', s, re.S)[-1])" && node --check /tmp/check.js && echo "JS OK"

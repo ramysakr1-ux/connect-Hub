@@ -1,0 +1,57 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+
+old = """{ n: count.withdrawn + count.none, l: count.withdrawn ? count.withdrawn + ' withdrawn, ' + count.none + ' not started' : 'Not started yet' }"""
+new = """{ n: count.withdrawn, l: 'Withdrawn' }"""
+assert old in s; s = s.replace(old, new)
+
+old = """'<span><b>' + aRecorded + '</b> of ' + (people.length * ASSIGNMENTS.length) + ' assignments marked' +
+(aResub ? ', <b>' + aResub + '</b> on resubmission' : '') + (aFail ? ', <b>' + aFail + '</b> failed' : '') + '</span>';"""
+new = """'<span><b>' + aRecorded + '</b> of ' + (people.length * ASSIGNMENTS.length) + ' assignments marked' +
+(aResub ? ', <b>' + aResub + '</b> on resubmission' : '') + (aFail ? ', <b>' + aFail + '</b> failed' : '') + '</span>' +
+(count.none ? '<span><b>' + count.none + '</b> with nothing recorded yet</span>' : '');"""
+assert old in s; s = s.replace(old, new)
+
+old = """var box = document.getElementById('attention');
+var line = function(list){ return list.map(function(p){ return '<span class="who">'+p.name+'</span> — '+p.why.join('; '); }).join(' · '); };
+if (needs.length) {
+box.className = 'attention';
+box.innerHTML = '<span class="hd">Needs attention</span>' + line(needs) + (watching.length ? '<br><span class="hd" style="margin-top:8px">Watch</span>' + line(watching) : '');
+box.style.display = '';
+} else if (watching.length) {
+box.className = 'attention amber';
+box.innerHTML = '<span class="hd">Watch</span>' + line(watching);
+box.style.display = '';
+} else {
+box.style.display = 'none';
+}"""
+new = """var line = function(list){ return list.map(function(p){ return '<span class="who">'+p.name+'</span> — '+p.why.join('; '); }).join(' · '); };
+var fill = function(elId, cls, head, list){
+var box = document.getElementById(elId);
+if (!list.length) { box.style.display = 'none'; return; }
+box.className = cls;
+box.innerHTML = '<span class="hd">' + head + '</span>' + line(list);
+box.style.display = '';
+};
+fill('attention', 'attention', 'Needs attention', needs);
+fill('watchBox', 'attention amber', 'Watch', watching);"""
+assert old in s; s = s.replace(old, new)
+
+old = """<div class="attention" id="attention" style="display:none"></div>"""
+new = """<div class="attention" id="attention" style="display:none"></div>
+<div class="attention amber" id="watchBox" style="display:none"></div>"""
+assert old in s; s = s.replace(old, new)
+
+s = s.replace(""".attention { border:1px solid #E9B9B6; background:#FDF5F4; border-radius:9px; padding:11px 14px; margin-bottom:26px; font-size:12.5px; color:#7B3A37; line-height:1.6; }""",
+""".attention { border:1px solid #E9B9B6; background:#FDF5F4; border-radius:9px; padding:11px 14px; margin-bottom:10px; font-size:12.5px; color:#7B3A37; line-height:1.6; }
+.attention:last-of-type { margin-bottom:26px; }""")
+open(p,"w").write(s); print("polished", len(s))
+PY
+python3 - <<'PY'
+s=open("/tmp/tracker-live/index.html").read()
+h=open("/Users/work/CELTA connect-code prompt/public/__tracker-preview.html").read()
+i=h.find("<script>\nvar __DATA"); j=h.find("</script>",i)+len("</script>\n")
+s=s.replace("<script>\nvar CANDIDATES", h[i:j]+"<script>\nvar CANDIDATES",1)
+if 'name="viewport"' not in s: s=s.replace("<head>",'<head><meta name="viewport" content="width=device-width, initial-scale=1">',1)
+open("/Users/work/CELTA connect-code prompt/public/__tracker-preview.html","w").write(s); print("harness refreshed")
+PY

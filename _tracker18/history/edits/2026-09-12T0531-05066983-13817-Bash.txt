@@ -1,0 +1,38 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+s=open("index.html").read()
+stub = """<script>
+/* PREVIEW ONLY — your real roster and the grades in the sheet as of this morning.
+   Nothing here is connected: clicking saves nothing anywhere. */
+var __ROSTER = [
+{group:'B1',name:'Christoph Deniz Jones'},{group:'B1',name:'Maedeh Ahmadizadeh'},{group:'B1',name:'Maryam Hosseini'},
+{group:'B1',name:'Tunç Pekmen'},{group:'B1',name:'Süer Okan Sevindir'},
+{group:'A1',name:'Ali Altay Özbüber'},{group:'A1',name:'Şeyda Taşkıner'},{group:'A1',name:'Maryam Moumivand'},
+{group:'A1',name:'Ali Behnami'},{group:'A1',name:'Sima Piroutzade'}
+];
+var __DATA = {
+'b1-christoph-deniz-jones': { tp2:'S+' },
+'b1-maedeh-ahmadizadeh': { tp1:'S', tp2:'S' },
+'b1-maryam-hosseini': { tp1:'S', tp2:'S' },
+'b1-tun-pekmen': { tp1:'S', tp2:'S' },
+'b1-s-er-okan-sevindir': { tp1:'S', tp2:'S' },
+'a1-ali-altay-zb-ber': { tp1:'S' },
+'a1-eyda-ta-k-ner': { tp1:'S' },
+'a1-sima-piroutzade': { tp1:'S' }
+};
+window.google = { script: { run: (function(){ var ok=function(){}; var api = {
+withSuccessHandler: function(f){ ok=f; return api; }, withFailureHandler: function(){ return api; },
+getRoster: function(){ setTimeout(function(){ ok(JSON.parse(JSON.stringify(__ROSTER))); }, 30); },
+saveRoster: function(rows){ __ROSTER = rows; setTimeout(function(){ ok(true); }, 20); },
+getData: function(){ setTimeout(function(){ ok(JSON.parse(JSON.stringify(__DATA))); }, 40); },
+saveField: function(id,f,v){ (__DATA[id]=__DATA[id]||{})[f]=v; setTimeout(function(){ ok(true); },20); },
+resetAll: function(){ __DATA={}; setTimeout(function(){ ok(true); },20); } }; return api; })() } };
+</script>
+"""
+i = s.index("<script>")
+s = s[:i] + stub + s[i:]
+s = s.replace("Live &mdash; synced with the shared sheet", "PREVIEW — not connected, nothing you click here is saved")
+s = s.replace("Live — synced with the shared sheet", "PREVIEW — not connected, nothing you click here is saved")
+if 'name="viewport"' not in s: s = s.replace("<head>", '<head><meta name="viewport" content="width=device-width, initial-scale=1">', 1)
+open("/Users/work/CELTA connect-code prompt/public/__tracker-preview.html","w").write(s)
+print("preview built"); print("sync text replaced:", "PREVIEW —" in s)
+PY

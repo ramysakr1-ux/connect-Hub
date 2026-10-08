@@ -1,0 +1,17 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+
+old = """if (fails.length) risk.push(fails.join(' and ') + (fails.length > 1 ? ' failed' : ' failed'));
+if (resubs.length >= 2) watch.push(resubs.length + ' assignments passed on resubmission');"""
+new = """// Only a FAIL is a flag. Ramy, 12 Sep 2026: "pass on resubmission is not
+// something that should be flagged" -- it is a pass, and the candidate did
+// the work twice to earn it.
+if (fails.length) risk.push(fails.join(' and ') + ' failed');"""
+assert old in s; s = s.replace(old, new)
+
+old = """(aResub ? ', <b>' + aResub + '</b> on resubmission' : '') + (aFail ? ', <b>' + aFail + '</b> failed' : '') + '</span>' +"""
+new = """(aFail ? ', <b>' + aFail + '</b> failed' : '') + '</span>' +"""
+assert old in s; s = s.replace(old, new)
+open(p,"w").write(s); print("patched")
+PY
+grep -n "resubs" index.html | head; npx --yes @google/clasp@latest push --force 2>&1 | tail -4

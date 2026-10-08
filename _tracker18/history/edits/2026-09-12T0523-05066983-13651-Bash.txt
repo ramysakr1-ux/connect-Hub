@@ -1,0 +1,102 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+start = s.index("function readCandidate(c){")
+end = s.index("// The three words the CELTA 5 uses")
+new_fn = '''function readCandidate(c){
+var latest = null, latestN = 0, graded = 0, notStd = 0, above = 0, notStdAt = [], run = 0, backToBack = null;
+for (var k = 1; k <= 8; k++) {
+var g = tpGrade(c['tp'+k]);
+if (!g) continue;
+graded++; latest = g; latestN = k;
+if (g.key === 'NOTSTD') {
+notStd++; notStdAt.push(k); run++;
+// Ramy, 12 Sep 2026: "if someone is not to standard more than once back to
+// back, then they are not to standard for stage two." Two in a row is a
+// pattern rather than a bad day, and it is what a Stage 2 judgement rests
+// on. The tracker says so; it never writes the Stage 2 verdict itself --
+// that is the tutor's, given in a tutorial.
+if (run >= 2 && !backToBack) backToBack = [k-1, k];
+} else { run = 0; }
+if (g.key === 'ABOVE') above++;
+}
+
+var fails = [], resubs = [];
+ASSIGNMENTS.forEach(function(code){
+var v = c[code.toLowerCase()+'_r'] || '';
+if (v === 'FAIL') fails.push(code);
+else if (v === 'RES') resubs.push(code);
+});
+
+// Handbook 11.6: fail one written assignment and a Pass may still be
+// recommended on other evidence, but not Pass A; fail more than one and a
+// Pass is not available at all.
+var ceiling = fails.length > 1
+? fails.join(', ') + ' failed — not eligible for a Pass (11.6)'
+: fails.length === 1
+? fails[0] + ' failed — a Pass is still open on other evidence, but not Pass A (11.6)'
+: null;
+
+// Where they stand FOR THIS STAGE. A tutorial is the formal judgement and
+// the later one is the more current, so Stage 3 outranks Stage 2, which
+// outranks any single lesson. Between tutorials the latest TP is the best
+// evidence there is.
+var standard = null, from = '';
+if (c.stage3) { standard = c.stage3; from = 'Stage 3'; }
+else if (c.stage2) { standard = c.stage2; from = 'Stage 2'; }
+else if (latest) { standard = latest.key; from = 'TP' + latestN; }
+
+// Potential Fail -- the Handbook's own term, and what a Fail letter attaches
+// to (10.2): "issued sufficiently in advance of the end of the course,
+// ideally with at least two lessons left to teach".
+var failWhy = [];
+if (standard === 'NOTSTD') failWhy.push(from + ' not to standard');
+if (backToBack) failWhy.push('TP' + backToBack[0] + ' and TP' + backToBack[1] + ' not to standard back to back');
+if (fails.length) failWhy.push(fails.join(' and ') + (fails.length > 1 ? ' failed' : ' failed'));
+var potentialFail = failWhy.length > 0;
+var letterIssued = !!(c.failLetter && String(c.failLetter).trim());
+var letterDue = potentialFail && !letterIssued;
+
+// Stage 3, Handbook 10.2 and CELTA 5: required in the final third for anyone
+// not to standard at Stage 2, or at/above standard at Stage 2 who is not
+// making the expected progress since. A failed assignment and a back-to-back
+// pair are both evidence of exactly that. A recorded Stage 3 answers it.
+var lateNotStd = notStdAt.filter(function(k){ return k >= SECOND_HALF_FROM; });
+var stage3Why = null;
+if (!c.stage3) {
+if (c.stage2 === 'NOTSTD') stage3Why = 'not to standard at Stage 2';
+else if (c.stage2 && (lateNotStd.length || fails.length)) {
+stage3Why = (c.stage2 === 'ABOVE' ? 'above standard' : 'to standard') + ' at Stage 2, then ' +
+(lateNotStd.length ? 'TP' + lateNotStd.join(' and TP') + ' not to standard' : fails.join(' and ') + ' failed');
+}
+else if (backToBack) stage3Why = 'TP' + backToBack[0] + ' and TP' + backToBack[1] + ' not to standard back to back';
+else if (fails.length) stage3Why = fails.join(' and ') + ' failed';
+}
+
+// Stage 2 not yet recorded, and the teaching already says what it will be.
+var stage2Hint = (!c.stage2 && backToBack)
+? 'TP' + backToBack[0] + ' and TP' + backToBack[1] + ' not to standard back to back — Stage 2 should be recorded as not to standard'
+: null;
+
+var recorded = graded > 0 || fails.length > 0 || resubs.length > 0 || !!c.stage2 || !!c.stage3;
+var state = (c.withdrawn === true || c.withdrawn === 'true') ? 'withdrawn'
+: !recorded ? 'none'
+: standard === 'NOTSTD' ? 'notstd'
+: standard === 'ABOVE' ? 'above'
+: standard === 'STD' ? 'std'
+: 'none';
+return {
+state: state, from: from, graded: graded, notStd: notStd, above: above,
+fails: fails, resubs: resubs, ceiling: ceiling,
+potentialFail: potentialFail, failWhy: failWhy, letterDue: letterDue, letterIssued: letterIssued,
+stage3Why: stage3Why, stage2Hint: stage2Hint
+};
+}
+
+'''
+s = s[:start] + new_fn + s[end:]
+open(p,"w").write(s); print("readCandidate:", len(s))
+PY
+python3 -c "
+import re
+s=open('/tmp/tracker-live/index.html').read()
+open('/tmp/check.js','w').write(re.findall(r'<script>(.*?)</script>', s, re.S)[-1])" && node --check /tmp/check.js && echo "JS OK"

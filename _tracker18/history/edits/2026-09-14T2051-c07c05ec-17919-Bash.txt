@@ -1,0 +1,21 @@
+cd "/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/c07c05ec-4b23-44c0-a366-c6e1436fd694/scratchpad/tracker" && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+old = """var failWhy = [];
+if (standard === 'NOTSTD') failWhy.push(from + ' not to standard');
+if (backToBack) failWhy.push('TP' + backToBack[0] + ' and TP' + backToBack[1] + ' not to standard back to back');"""
+new = """//
+// Ramy, 14 Sep 2026: "failing one TP does not trigger a fail letter. Where
+// do you get that from?" Nowhere -- a single lesson is not a judgement. A
+// potential Fail rests on a tutorial verdict (Stage 2 or 3 not to standard),
+// on the back-to-back pattern he set on 12 Sep, or on losing the Pass to
+// assignment fails. One not-to-standard lesson on its own shows on the
+// status chip as where they stand today and nothing more.
+var failWhy = [];
+if (standard === 'NOTSTD' && from.indexOf('Stage') === 0) failWhy.push(from + ' not to standard');
+if (backToBack) failWhy.push('TP' + backToBack[0] + ' and TP' + backToBack[1] + ' not to standard back to back');"""
+assert old in s; s = s.replace(old, new, 1); open(p,"w").write(s); print("index.html: one not-to-standard TP no longer makes a potential Fail")
+PY
+node -e '
+const fs=require("fs");const html=fs.readFileSync("index.html","utf8");
+const scripts=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
+for(const [i,js] of scripts.entries()){try{new Function(js);console.log("script block",i+1,"parses");}catch(e){console.log("script block",i+1,"SYNTAX ERROR:",e.message);process.exit(1);}}'

@@ -1,0 +1,72 @@
+S=/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker2; cd $S && python3 - <<'PY'
+import io
+p='Code.js'; s=io.open(p,encoding='utf-8').read()
+check = '''
+/**
+ * Does the Tracker tab still agree with the Roster tab?
+ *
+ * Grade rows are keyed by slug(group + '-' + name), so the two tabs can drift
+ * apart without anything complaining: a rename, a stale browser tab, a hand
+ * edit. On 23 Sep 2026 exactly that had happened -- one row under a
+ * pre-rename id, holding a main aim somebody believed they had recorded, and
+ * nothing in the tracker said so. It took reading the raw sheet to find.
+ *
+ * Called by the page at boot and silent when healthy, because a check nobody
+ * runs is not a check.
+ */
+function healthCheck() {
+  var problems = [];
+
+  var roster = getRoster();
+  var live = {}, seenName = {};
+  roster.forEach(function (r) {
+    var id = slug_(r.group + '-' + r.name);
+    if (live[id]) problems.push('Two candidates share a row: ' + r.group + ' / ' + r.name);
+    live[id] = true;
+    var nk = (r.group + '|' + r.name).toLowerCase();
+    if (seenName[nk]) problems.push('Listed twice on the roster: ' + r.group + ' / ' + r.name);
+    seenName[nk] = true;
+  });
+
+  var sh = sheet_();
+  var last = sh.getLastRow();
+  var rows = last >= 2 ? sh.getRange(2, 1, last - 1, HEADER.length).getValues() : [];
+
+  var TP_OK = { 'ABOVE': 1, 'STD': 1, 'NOTSTD': 1, 'S': 1, 'S+': 1, 'AS': 1, '': 1 };
+  var ASSIGN_OK = { 'PASS': 1, 'FAILRES': 1, 'RES': 1, 'FAIL': 1, '': 1 };
+  var STAGE2_OK = { 'NOTSTD': 1, 'STD': 1, 'ABOVE': 1, '': 1 };
+  var GIVEN_OK = { 'GIVEN': 1, 'NOTGIVEN': 1, '': 1 };
+
+  var seenId = {};
+  rows.forEach(function (row) {
+    var id = String(row[0] || '').trim();
+    if (!id) return;
+    if (seenId[id]) problems.push('Two grade rows for the same candidate: ' + id);
+    seenId[id] = true;
+    if (!live[id]) problems.push('A grade row belongs to nobody on the roster: ' + id);
+
+    var get = function (field) { return String(row[FIELDS.indexOf(field) + 2] || '').trim(); };
+    for (var n = 1; n <= 8; n++) {
+      var g = get('tp' + n);
+      if (!TP_OK[g]) problems.push(id + ': TP' + n + ' holds "' + g + '", which is not a grade');
+    }
+    ['srt', 'fol', 'lrt', 'lfc'].forEach(function (a) {
+      var v = get(a + '_r');
+      if (!ASSIGN_OK[v]) problems.push(id + ': ' + a.toUpperCase() + ' holds "' + v + '", which is not an outcome');
+    });
+    if (!STAGE2_OK[get('stage2')]) problems.push(id + ': Stage 2 holds "' + get('stage2') + '"');
+    if (!GIVEN_OK[get('stage1')]) problems.push(id + ': Stage 1 holds "' + get('stage1') + '"');
+    if (!GIVEN_OK[get('stage3')]) problems.push(id + ': Stage 3 holds "' + get('stage3') + '"');
+  });
+
+  Object.keys(live).forEach(function (id) {
+    if (!seenId[id]) return; // no row yet is normal -- nobody has been graded
+  });
+
+  return { problems: problems, candidates: roster.length, rows: rows.length };
+}
+'''
+io.open(p,'w',encoding='utf-8').write(s.rstrip() + '\n' + check)
+print("healthCheck added")
+PY
+node --check Code.js && echo "Code.js parses"

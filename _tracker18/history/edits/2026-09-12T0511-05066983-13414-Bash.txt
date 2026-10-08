@@ -1,0 +1,89 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+
+# ---------- CSS ----------
+old = """.stat.warn .n { color:var(--rose); }
+.stat.good .n { color:var(--teal); }"""
+new = """.stat.warn .n { color:var(--rose); }
+.stat.good .n { color:var(--teal); }
+.stat.amber .n { color:var(--gold); }
+.stat.above .n { color:#7A4E96; }
+/* The colour is the point: a card only takes a tint when its own number is
+   above zero, so an empty risk column stays quiet instead of crying wolf. */
+.stat.on-warn { background:#FDF5F4; border-color:#E9B9B6; }
+.stat.on-amber { background:#FEFAF1; border-color:#E8CE8E; }
+.stat.on-good { background:#F4F9FC; border-color:#BFD6EA; }
+.dash-strip { display:flex; flex-wrap:wrap; gap:8px 22px; font-size:11.5px; color:var(--grey); margin:-20px 0 14px; }
+.dash-strip b { color:var(--navy2); font-weight:700; }
+.attention { border:1px solid #E9B9B6; background:#FDF5F4; border-radius:9px; padding:11px 14px; margin-bottom:26px; font-size:12.5px; color:#7B3A37; line-height:1.6; }
+.attention.amber { border-color:#E8CE8E; background:#FEFAF1; color:#6B4E12; }
+.attention .who { font-weight:700; }
+.attention .hd { display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; font-weight:700; margin-bottom:5px; opacity:.8; }"""
+assert old in s; s = s.replace(old, new)
+
+# ---------- the composite reading of one candidate ----------
+old = """function statusFor(c){
+if (c.withdrawn === true || c.withdrawn === 'true') return { text:'WITHDRAWN', bg:'#FBEAE9', color:'var(--rose)' };
+if (c.stage2 === 'ABOVE') return { text:'ABOVE STANDARD', bg:'#F1E9F5', color:'#7A4E96' };
+if (c.stage2 === 'STD') return { text:'TO STANDARD', bg:'#E4F0F8', color:'var(--teal)' };
+if (c.stage2 === 'NOTSTD') return { text:'NOT TO STANDARD', bg:'#FBEAE9', color:'var(--rose)' };
+return { text:'IN PROGRESS', bg:'#EEF2F5', color:'var(--grey)' };
+}"""
+new = """// Everything the record says about one candidate, read together: the teaching
+// practice, the four assignments and the Stage 2 review. Ramy, 12 Sep 2026 --
+// "it should be an indication of both TPs, assignments, and stage two."
+//
+// A candidate is judged on where they stand NOW, not on their worst day: it is
+// the LATEST graded TP that decides, and an earlier not-to-standard becomes a
+// watch rather than a risk once the next one is to standard. That is how a
+// course tutor actually reads a profile, and it is what stops week one from
+// condemning somebody for the rest of the course.
+function readCandidate(c){
+var risk = [], watch = [], strong = false;
+
+var latest = null, latestN = 0, graded = 0, notStd = 0, above = 0, earlyNotStd = [];
+for (var k = 1; k <= 8; k++) {
+var g = tpGrade(c['tp'+k]);
+if (!g) continue;
+graded++; latest = g; latestN = k;
+if (g.key === 'NOTSTD') { notStd++; earlyNotStd.push(k); }
+if (g.key === 'ABOVE') above++;
+}
+if (latest && latest.key === 'NOTSTD') risk.push('TP'+latestN+' not to standard');
+else if (notStd > 0) watch.push(notStd === 1 ? 'TP'+earlyNotStd[0]+' was not to standard' : notStd+' TPs not to standard');
+if (graded > 0 && above === graded) strong = true;
+
+var fails = [], resubs = [];
+ASSIGNMENTS.forEach(function(code){
+var v = c[code.toLowerCase()+'_r'] || '';
+if (v === 'FAIL') fails.push(code);
+else if (v === 'RES') resubs.push(code);
+});
+if (fails.length) risk.push(fails.join(' and ') + (fails.length > 1 ? ' failed' : ' failed'));
+if (resubs.length >= 2) watch.push(resubs.length + ' assignments passed on resubmission');
+
+if (c.stage2 === 'NOTSTD') risk.push('Stage 2 not to standard');
+if (c.stage2 === 'ABOVE') strong = true;
+
+var recorded = graded > 0 || fails.length > 0 || resubs.length > 0 || !!c.stage2;
+var state = (c.withdrawn === true || c.withdrawn === 'true') ? 'withdrawn'
+: risk.length ? 'risk'
+: watch.length ? 'watch'
+: !recorded ? 'none'
+: strong ? 'above' : 'ontrack';
+return { state: state, risk: risk, watch: watch, graded: graded, notStd: notStd, fails: fails, resubs: resubs };
+}
+
+var STATE_CHIP = {
+withdrawn: { text:'WITHDRAWN', bg:'#EEF2F5', color:'var(--grey)' },
+risk:      { text:'NEEDS ATTENTION', bg:'#FBEAE9', color:'var(--rose)' },
+watch:     { text:'WATCH', bg:'#FBF1DC', color:'var(--gold)' },
+above:     { text:'ABOVE STANDARD', bg:'#F1E9F5', color:'#7A4E96' },
+ontrack:   { text:'ON TRACK', bg:'#E4F0F8', color:'var(--teal)' },
+none:      { text:'NOT STARTED', bg:'#EEF2F5', color:'var(--grey)' }
+};
+function statusFor(c){ return STATE_CHIP[readCandidate(c).state]; }"""
+assert old in s; s = s.replace(old, new)
+
+open(p,"w").write(s); print("part 1 ok", len(s))
+PY

@@ -1,0 +1,11 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+old = """if (r.letterDue) letters.push({ name: p.name, why: r.failWhy.concat(['letter required']) });"""
+new = """if (r.letterDue) letters.push({ name: p.name, why: r.failWhy });"""
+assert old in s; s = s.replace(old, new)
+old = """else if (r.letterAdvised) advised.push({ name: p.name, why: [r.fails[0] + ' failed — a letter can go out now'] });"""
+new = """else if (r.letterAdvised) advised.push({ name: p.name, why: [r.fails[0] + ' failed'] });"""
+assert old in s; s = s.replace(old, new)
+open(p,"w").write(s); print("tidied")
+PY
+npx --yes @google/clasp@latest push --force 2>&1 | tail -4; rm -f "/Users/work/CELTA connect-code prompt/public/__tracker-preview.html" /tmp/check.js; cd "/Users/work/CELTA connect-code prompt" && git status --short | head -2; echo clean

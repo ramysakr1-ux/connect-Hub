@@ -1,0 +1,34 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+old = """.tp-pop { position:absolute; z-index:30; top:100%; left:0; margin-top:6px; background:var(--card); border:1px solid var(--line); border-radius:10px; box-shadow:0 10px 28px rgba(22,41,77,.16); padding:10px 12px 11px; }"""
+new = """/* An absolutely positioned box shrinks to its containing block, and a TP cell
+   is about 90px wide -- so the width is set here rather than left to the chips. */
+.tp-pop { position:absolute; z-index:30; top:100%; left:0; margin-top:6px; width:332px; max-width:calc(100vw - 32px); background:var(--card); border:1px solid var(--line); border-radius:10px; box-shadow:0 10px 28px rgba(22,41,77,.16); padding:10px 12px 11px; }"""
+assert old in s; s = s.replace(old, new)
+old = """.tp-pop { padding:9px 10px 10px; }"""
+new = """.tp-pop { padding:9px 10px 10px; width:288px; }"""
+assert old in s; s = s.replace(old, new)
+old = """.tp-pop .pop-row { display:flex; flex-wrap:wrap; gap:6px; max-width:320px; }"""
+if old in s: s = s.replace(old, """.tp-pop .pop-row { display:flex; flex-wrap:wrap; gap:6px; }""")
+old = """.tp-pop .pop-row { max-width:270px; gap:5px; }"""
+if old in s: s = s.replace(old, """.tp-pop .pop-row { gap:5px; }""")
+old = """b.innerHTML = '<span>' + (g ? g.short : '–') + '</span>' + (c[akey] ? '<span class="aim">'+c[akey]+'</span>' : '');"""
+if old in s:
+    s = s.replace(old, """var aim = null;
+for (var q = 0; q < AIMS.length; q++) if (AIMS[q].key === c[akey]) aim = AIMS[q];
+b.innerHTML = '<span>' + (g ? g.short : '–') + '</span>' + (aim ? '<span class="aim">' + aim.short + '</span>' : '');""")
+    print("badge patched")
+open(p,"w").write(s); print("done")
+PY
+python3 -c "
+import re
+s=open('/tmp/tracker-live/index.html').read()
+open('/tmp/check.js','w').write(re.findall(r'<script>(.*?)</script>', s, re.S)[-1])" && node --check /tmp/check.js && echo "JS OK"
+python3 - <<'PY'
+s=open("/tmp/tracker-live/index.html").read()
+h=open("/Users/work/CELTA connect-code prompt/public/__tracker-preview.html").read()
+i=h.index("<script>\nvar __ROSTER"); j=h.index("</script>",i)+len("</script>\n")
+k=s.index("<script>"); s=s[:k]+h[i:j]+s[k:]
+if 'name="viewport"' not in s: s=s.replace("<head>",'<head><meta name="viewport" content="width=device-width, initial-scale=1">',1)
+open("/Users/work/CELTA connect-code prompt/public/__tracker-preview.html","w").write(s); print("harness refreshed")
+PY

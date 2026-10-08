@@ -1,0 +1,62 @@
+S=/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker2; cd $S && python3 - <<'PY'
+import io
+p='index.html'; s=io.open(p,encoding='utf-8').read()
+old = """google.script.run
+.withSuccessHandler(function(data){
+DATA = data || {};
+setSync('Live — synced with the shared sheet', false);
+buildAllGroups();
+renderDash();
+renderRoster();
+})"""
+new = """google.script.run
+.withSuccessHandler(function(data){
+DATA = data || {};
+setSync('Live — synced with the shared sheet', false);
+buildAllGroups();
+renderDash();
+renderRoster();
+runHealthCheck();
+})"""
+assert old in s; s = s.replace(old, new, 1)
+
+anchor = "function saveField(id, field, value){"
+health = """/* The Roster tab and the Tracker tab can drift apart without anything saying
+   so -- grade rows are keyed by slug(group + '-' + name), so a rename, a tab
+   left open, or a hand edit can leave a row belonging to nobody. That is not
+   hypothetical: on 23 Sep 2026 one row sat under a pre-rename id holding a
+   main aim somebody thought they had recorded, and finding it meant reading
+   the raw sheet.
+   
+   So this runs on every load, and says nothing at all when the two agree. */
+function runHealthCheck(){
+  google.script.run.withSuccessHandler(function(res){
+    var bar = document.getElementById('healthBar');
+    if (!res || !res.problems || !res.problems.length) { if (bar) bar.remove(); return; }
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'healthBar';
+      bar.style.cssText = 'margin:0 0 14px;padding:12px 16px;border:1px solid #E0B4AE;border-left:4px solid #A33227;'
+        + 'border-radius:8px;background:#FBF1EF;font-size:13px;line-height:1.55;';
+      var host = document.querySelector('.wrap') || document.body;
+      host.insertBefore(bar, host.firstChild);
+    }
+    bar.innerHTML = '<b>The tracker and the roster disagree</b><br>'
+      + '<span style="color:var(--grey);">Grades are keyed to a candidate\\u2019s name and group, so a rename or a page left '
+      + 'open can leave a record belonging to nobody. Nothing has been lost \\u2014 these rows are still in the sheet.</span>'
+      + '<ul style="margin:8px 0 0;padding-left:18px;">'
+      + res.problems.map(function(p){ return '<li>' + String(p).replace(/[<&]/g,' ') + '</li>'; }).join('')
+      + '</ul>';
+  }).withFailureHandler(function(){ /* an older deployment has no healthCheck: say nothing */ })
+  .healthCheck();
+}
+
+""" + anchor
+assert anchor in s; s = s.replace(anchor, health, 1)
+io.open(p,'w',encoding='utf-8').write(s)
+print("wired: runs on every load, silent when healthy")
+PY
+node -e "
+const h=require('fs').readFileSync('index.html','utf8');
+new Function(h.match(/<script>([\s\S]*?)<\/script>/)[1]); console.log('index.html parses');
+"; grep -n "class=\"wrap\"" index.html | head -2

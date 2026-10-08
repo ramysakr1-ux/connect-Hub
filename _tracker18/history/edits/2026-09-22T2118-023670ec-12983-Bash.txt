@@ -1,0 +1,27 @@
+cd "/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker" && python3 - <<'PY'
+import io
+h = io.open('index.html',encoding='utf-8').read()
+stub = """<script>
+window.__sent = null;
+var __roster = [{group:'B1',name:'Christoph Deniz Jones'},{group:'B1',name:'Maedeh Ahmadizadeh'},
+                {group:'B1',name:'Maryam Hosseini'},{group:'A1',name:'Ali Behnami'}];
+var __data = {'b1-christoph-deniz-jones':{tp1:'PASS'},'b1-maryam-hosseini':{tp1:'FAIL'}};
+window.google = { script: { run: (function(){
+  function chain(){ var ok=function(){};
+    var api = { withSuccessHandler:function(f){ ok=f; return api; },
+                withFailureHandler:function(){ return api; },
+                getRoster:function(){ setTimeout(function(){ ok(__roster); },0); },
+                getData:function(){ setTimeout(function(){ ok(__data); },0); },
+                saveField:function(){ setTimeout(ok,0); },
+                resetAll:function(){ setTimeout(ok,0); },
+                saveRoster:function(rows){ window.__sent = rows; setTimeout(ok,0); } };
+    return api; }
+  return new Proxy({}, { get:function(t,k){ var c=chain(); return typeof c[k]==='function'?c[k].bind(c):c[k]; } });
+})() } };
+</script>
+"""
+i = h.rindex('<script>')
+io.open('/tmp/tracker-test.html','w',encoding='utf-8').write(h[:i] + stub + h[i:])
+print('harness written')
+PY
+cd "/Users/work/CELTA connect-code prompt" && node /tmp/client.test.mjs

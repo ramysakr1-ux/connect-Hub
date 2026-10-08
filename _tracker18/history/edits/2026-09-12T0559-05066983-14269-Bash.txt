@@ -1,0 +1,116 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+
+# --- CSS: chip rows instead of a matrix ---
+old = """.tp-pop table { border-collapse:separate; border-spacing:3px; }
+.tp-pop th { font-size:9px; font-weight:700; letter-spacing:.03em; color:var(--grey); text-transform:uppercase; padding:0 2px 2px; }
+.tp-pop th.rh { text-align:right; font-size:9.5px; text-transform:none; letter-spacing:0; padding-right:5px; white-space:nowrap; }
+.tp-pop td .m { display:block; width:42px; height:28px; border:1px solid var(--line); border-radius:6px; background:#FAFBFC; cursor:pointer; }
+.tp-pop td .m:hover { border-color:var(--teal); background:#F2F7FB; }
+.tp-pop tr.g-NOTSTD td .m.on { background:#FBEAE9; border-color:#E9B9B6; }
+.tp-pop tr.g-STD td .m.on { background:#E4F0F8; border-color:#A9CDE6; }
+.tp-pop tr.g-ABOVE td .m.on { background:#F1E9F5; border-color:#D3B9E0; }"""
+new = """.tp-pop .pop-lbl { font-size:9.5px; font-weight:700; letter-spacing:.05em; color:var(--grey); text-transform:uppercase; margin:2px 0 6px; }
+.tp-pop .pop-lbl.second { margin-top:12px; padding-top:11px; border-top:1px solid var(--line); }
+.tp-pop .pop-row { display:flex; flex-wrap:wrap; gap:6px; max-width:320px; }
+.tp-pop .pchip { font-size:12px; font-weight:600; padding:6px 11px; border-radius:20px; border:1px solid var(--line); background:#fff; color:var(--grey); cursor:pointer; user-select:none; white-space:nowrap; }
+.tp-pop .pchip:hover { border-color:var(--teal); }
+.tp-pop .pchip.on.g-NOTSTD { background:#FBEAE9; border-color:#E9B9B6; color:var(--rose); }
+.tp-pop .pchip.on.g-STD { background:#E4F0F8; border-color:#A9CDE6; color:var(--teal); }
+.tp-pop .pchip.on.g-ABOVE { background:#F1E9F5; border-color:#D3B9E0; color:#7A4E96; }
+.tp-pop .pchip.on.aim { background:#EEF2F5; border-color:#C3CDD6; color:var(--navy); }"""
+assert old in s; s = s.replace(old, new)
+
+old = """@media (max-width:560px) {
+.tp-pop { padding:8px 8px 9px; }
+.tp-pop table { border-spacing:2px; }
+.tp-pop td .m { width:27px; height:26px; }
+.tp-pop th { font-size:8px; }
+.tp-pop th.rh { font-size:8.5px; padding-right:2px; }
+.tp-pop .pop-foot { font-size:9px; gap:8px; }
+}"""
+new = """@media (max-width:560px) {
+.tp-pop { padding:9px 10px 10px; }
+.tp-pop .pop-row { max-width:270px; gap:5px; }
+.tp-pop .pchip { font-size:11.5px; padding:5px 9px; }
+.tp-pop .pop-foot { font-size:9.5px; gap:8px; }
+}"""
+assert old in s; s = s.replace(old, new)
+
+# --- the picker itself ---
+start = s.index("var cur = tpGrade(c[fkey]), curAim = c[akey] || '';")
+end = s.index("cell.appendChild(pop); openPop = pop;")
+new_body = """// Grade and aim on their own rows: either can be set alone, and changing
+// one later does not mean re-picking the other. Ramy, 12 Sep 2026 -- with a
+// single grid "it's hard to choose what grade the lesson aim received".
+// It still closes itself once both are on the record.
+function render(){
+var cur = tpGrade(c[fkey]), curAim = c[akey] || '';
+pop.innerHTML = '';
+var gl = document.createElement('div'); gl.className = 'pop-lbl'; gl.textContent = 'Grade';
+pop.appendChild(gl);
+var gr = document.createElement('div'); gr.className = 'pop-row';
+TP_GRADES.forEach(function(g){
+gr.appendChild(chip(g.label, !!cur && cur.key === g.key, 'g-' + g.key, function(){ set(fkey, cur && cur.key === g.key ? '' : g.key); }));
+});
+pop.appendChild(gr);
+var al = document.createElement('div'); al.className = 'pop-lbl second'; al.textContent = 'Main aim';
+pop.appendChild(al);
+var ar = document.createElement('div'); ar.className = 'pop-row';
+AIMS.forEach(function(a){
+ar.appendChild(chip(a.key, curAim === a.key, 'aim', function(){ set(akey, curAim === a.key ? '' : a.key); }));
+});
+pop.appendChild(ar);
+var foot = document.createElement('div'); foot.className = 'pop-foot';
+foot.innerHTML = '<span></span><span class="clear">Clear both</span>';
+foot.querySelector('.clear').addEventListener('click', function(ev){
+ev.stopPropagation();
+c[fkey] = ''; c[akey] = '';
+saveField(id, fkey, ''); saveField(id, akey, '');
+refresh(); renderDash(); closePop();
+});
+pop.appendChild(foot);
+}
+function chip(label, on, cls, onClick){
+var el = document.createElement('div');
+el.className = 'pchip' + (on ? ' on' : '') + (cls ? ' ' + cls : '');
+el.textContent = label;
+el.addEventListener('click', function(ev){ ev.stopPropagation(); onClick(); });
+return el;
+}
+function set(key, value){
+c[key] = value;
+saveField(id, key, value);
+refresh(); renderDash();
+// Both on the record: nothing left to say, so it gets out of the way.
+if (c[fkey] && c[akey]) { closePop(); return; }
+render();
+}
+render();
+"""
+s = s[:start] + new_body + s[end:]
+
+# --- a more generous, card-aware clamp ---
+old = """var EDGE = 20;
+var r = cell.getBoundingClientRect(), w = pop.offsetWidth, vw = document.documentElement.clientWidth;
+var want = r.left + r.width/2 - w/2;
+pop.style.left = (Math.max(EDGE, Math.min(want, vw - w - EDGE)) - r.left) + 'px';"""
+new = """// Centred under its own TP where there is room. Where there isn't -- TP1 and
+// TP8 at the ends of the row -- it is held inside the candidate's card with a
+// clear margin, so it never reads as clipped by the edge of the page.
+var EDGE = 14;
+var r = cell.getBoundingClientRect(), w = pop.offsetWidth;
+var host = cell.closest('.cand-body') || document.body;
+var h = host.getBoundingClientRect();
+var minL = Math.max(EDGE, h.left + EDGE);
+var maxL = Math.min(document.documentElement.clientWidth - w - EDGE, h.right - w - EDGE);
+if (maxL < minL) maxL = minL;
+var want = r.left + r.width/2 - w/2;
+pop.style.left = (Math.max(minL, Math.min(want, maxL)) - r.left) + 'px';"""
+assert old in s; s = s.replace(old, new)
+open(p,"w").write(s); print("picker rebuilt", len(s))
+PY
+python3 -c "
+import re
+s=open('/tmp/tracker-live/index.html').read()
+open('/tmp/check.js','w').write(re.findall(r'<script>(.*?)</script>', s, re.S)[-1])" && node --check /tmp/check.js && echo "JS OK"

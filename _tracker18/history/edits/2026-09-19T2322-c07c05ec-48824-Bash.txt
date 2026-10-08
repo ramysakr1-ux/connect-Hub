@@ -1,0 +1,26 @@
+set +e; cd /private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/c07c05ec-4b23-44c0-a366-c6e1436fd694/scratchpad/tracker && python3 - <<'PY'
+import pathlib, re
+p = pathlib.Path("index.html"); s = p.read_text()
+lines = s.split("\n")
+n1 = [i for i,l in enumerate(lines) if l.startswith("function hubNorm(n)")]; assert len(n1) == 1
+lines[n1[0]] = "// Diacritics dropped and Turkish dotless i folded, so a name typed plainly\n// in the Hub still finds its roster row.\nfunction hubNorm(n){ return String(n || '').replace(/\\u0131/g, 'i').replace(/\\u0130/g, 'i').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().replace(/\\s+/g, ' ').trim(); }"
+n2 = [i for i,l in enumerate(lines) if "[/function/, 'Functional language']" in l]; assert len(n2) == 1
+lines[n2[0]] = "    [/function/, 'Functional language'], [/grammar|tense|modal|conditional|passive|article|perfect|past|present|future|used to|comparative|superlative|gerund|infinitive|reported|clause|verb|noun|adjective|adverb|preposition|question form/, 'Grammar'],"
+p.write_text("\n".join(lines)); print("ok edits")
+PY
+python3 - <<'PY'
+import re, pathlib, subprocess, sys
+s = pathlib.Path("index.html").read_text()
+script = re.search(r"<script>(.*?)</script>", s, re.S).group(1)
+def grab(a, b):
+    i = script.index(a); j = script.index(b, i); return script[i:j]
+h = grab("var ASSIGNMENTS = ['SRT'", "var openPop = null;") + "\n" + grab("var ASSIGN_CYCLE", "var GIVEN_CYCLE") + "\nvar ROSTER=[{group:'B1',name:'Amara Okafor'},{group:'A1',name:'Şeyda Taşkıner'}];\n" + grab("var HUB_ASSIGN", "function hubImportShow")
+h += "console.log(hubMatchCandidate('Seyda Taskiner'), '|', hubMatchCandidate('AMARA  okafor'), '|', hubMatchCandidate('Nobody'));\nconsole.log([hubAimFor('Present perfect for experience'), hubAimFor('Reading for gist'), hubAimFor('Vocabulary: describing character'), hubAimFor('Should and ought to for advice')].join(' / '));\n"
+pathlib.Path("/tmp/hub_harness.js").write_text(h)
+r = subprocess.run(["node", "/tmp/hub_harness.js"], capture_output=True, text=True); print(r.stdout, r.stderr[:300])
+pathlib.Path("/tmp/idx_check.js").write_text(script); r3 = subprocess.run(["node", "--check", "/tmp/idx_check.js"], capture_output=True, text=True); print("full script check", r3.returncode); sys.exit(r3.returncode or ("Şeyda" not in r.stdout))
+PY
+[ $? -eq 0 ] || { echo "HARNESS FAILED"; exit 1; }
+npx -y @google/clasp@latest push --force 2>&1 | tail -1
+npx -y @google/clasp@latest version "Import Hub file: name matching folds diacritics; grammar keywords" 2>&1 | tail -1
+npx -y @google/clasp@latest deploy -i AKfycbxJ2uJ0cx9NkUdQjo0jqO0VElJ-GR3r6vfICrsPrKTfZo4wlIxSW7WpQdoYmwgFAbdE -V 21 2>&1 | tail -2

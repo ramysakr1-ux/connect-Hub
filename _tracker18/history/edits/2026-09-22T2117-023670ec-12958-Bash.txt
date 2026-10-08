@@ -1,0 +1,52 @@
+cd "/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker" && cat > /tmp/srv.test.mjs <<'EOF'
+import fs from 'fs';
+const code = fs.readFileSync(process.argv[2]+'/Code.js','utf8');
+
+function makeSheet(rows, width){
+  const s = { rows };
+  s.getLastRow = () => s.rows.length;
+  s.setFrozenRows = ()=>{}; s.getRange = (r,c,nr=1,nc=1) => ({
+    getValues: () => Array.from({length:nr},(_,i)=>Array.from({length:nc},(_,j)=>{
+      const row = s.rows[r-1+i]||[]; return row[c-1+j] ?? ''; })),
+    setValues: (v) => { v.forEach((rw,i)=>{ const t=s.rows[r-1+i]||(s.rows[r-1+i]=[]);
+      rw.forEach((val,j)=>t[c-1+j]=val); }); },
+    setValue: (val) => { const t=s.rows[r-1]||(s.rows[r-1]=[]); t[c-1]=val; },
+    clearContent: () => { for(let i=0;i<nr;i++){ const t=s.rows[r-1+i]; if(t) for(let j=0;j<nc;j++) t[c-1+j]=''; } },
+    setFontWeight(){ return this; }
+  });
+  return s;
+}
+
+// roster: 3 candidates; tracker: grades for all three
+const roster = makeSheet([['group','candidate'],['B1','Christoph Deniz Jones'],['B1','Maedeh Ahmadizadeh'],['B1','Maryam Hosseini']]);
+const HEADERLEN = 32;
+const tracker = makeSheet([
+  Array(HEADERLEN).fill('x'),
+  ['b1-christoph-deniz-jones','d','PASS'],
+  ['b1-maedeh-ahmadizadeh','d','PASS B'],
+  ['b1-maryam-hosseini','d','FAIL'],
+]);
+const ss = { getSheetByName:(n)=> n==='Roster'?roster:tracker, insertSheet:()=>{throw new Error('no')}, getUrl:()=>'', getId:()=>'x' };
+const sandbox = {
+  SpreadsheetApp:{ openById:()=>ss, create:()=>ss },
+  PropertiesService:{ getScriptProperties:()=>({getProperty:()=>'id',setProperty(){}}) },
+  LockService:{ getScriptLock:()=>({waitLock(){},releaseLock(){}}) },
+  Logger:{log(){}}, HtmlService:{}, Session:{}, Date,
+};
+const fn = new Function(...Object.keys(sandbox), code + '; return {getRoster,saveRoster,slug_};');
+const api = fn(...Object.values(sandbox));
+
+const ids = () => tracker.rows.slice(1).map(r=>r[0]+' = '+r[2]).join('\n    ');
+console.log('  before:\n    '+ids());
+
+// 1. a rename in place
+api.saveRoster([{group:'B1',name:'Christopher Douglas Deniz Jones'},{group:'B1',name:'Maedeh Ahmadizadeh'},{group:'B1',name:'Seyedeh Maryam Hosseini'}]);
+console.log('  after two renames:\n    '+ids());
+
+// 2. a removal must move nothing
+const snapshot = ids();
+api.saveRoster([{group:'B1',name:'Maedeh Ahmadizadeh'},{group:'B1',name:'Seyedeh Maryam Hosseini'}]);
+console.log('  after removing the first name:\n    '+ids());
+console.log(ids()===snapshot ? '  PASS removal moved no grades' : '  FAIL removal disturbed grades');
+EOF
+node /tmp/srv.test.mjs "$PWD"

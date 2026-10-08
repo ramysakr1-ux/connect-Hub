@@ -1,0 +1,23 @@
+cd /tmp/tracker-live && python3 - <<'PY'
+s=open("index.html").read()
+stub="""<script>
+var __DATA = {
+'b1-christoph-deniz-jones': { tp1:'S', tp2:'STD', tp3:'ABOVE', tp3_aim:'Reading', srt_r:'PASS', fol_r:'PASS' },
+'b1-maedeh-ahmadizadeh': { tp1:'NOTSTD', tp1_aim:'Grammar', tp2:'STD', tp2_aim:'Speaking', srt_r:'RES', fol_r:'RES' },
+'b1-maryam-hosseini': { tp1:'STD', tp2:'NOTSTD', tp2_aim:'Vocabulary', srt_r:'FAIL' },
+'b1-tun-pekmen': { tp1:'ABOVE', tp1_aim:'Writing', tp2:'ABOVE', tp2_aim:'Listening', stage2:'ABOVE' },
+'b1-s-er-okan-sevindir': { withdrawn:true },
+'a1-ali-altay-zb-ber': { tp1:'STD', stage2:'NOTSTD' }
+};
+window.google = { script: { run: (function(){ var ok=function(){}; var api = {
+withSuccessHandler: function(f){ ok=f; return api; }, withFailureHandler: function(){ return api; },
+getData: function(){ setTimeout(function(){ ok(JSON.parse(JSON.stringify(__DATA))); }, 40); },
+saveField: function(id,f,v){ (__DATA[id]=__DATA[id]||{})[f]=v; setTimeout(function(){ ok(true); },20); },
+resetAll: function(){ __DATA={}; setTimeout(function(){ ok(true); },20); } }; return api; })() } };
+</script>
+"""
+s=s.replace("<script>\nvar CANDIDATES", stub+"<script>\nvar CANDIDATES",1)
+if 'name="viewport"' not in s: s=s.replace("<head>",'<head><meta name="viewport" content="width=device-width, initial-scale=1">',1)
+open("/Users/work/CELTA connect-code prompt/public/__tracker-preview.html","w").write(s)
+print("harness ok")
+PY

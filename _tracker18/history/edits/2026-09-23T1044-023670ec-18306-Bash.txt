@@ -1,0 +1,44 @@
+S=/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/023670ec-6b2e-479a-b3aa-d7920070f574/scratchpad/tracker2; cd $S && python3 - <<'PY'
+import io
+p='index.html'; s=io.open(p,encoding='utf-8').read()
+old = """function saveField(id, field, value){
+setSync('Saving…', true);
+google.script.run
+.withSuccessHandler(function(){ setSync('Saved ✓', false); })
+.withFailureHandler(function(err){ setSync('Could not save — check your connection', true); console.error(err); })
+.saveField(id, field, value);
+}"""
+new = """function saveField(id, field, value){
+setSync('Saving…', true);
+google.script.run
+.withSuccessHandler(function(){ setSync('Saved ✓', false); })
+.withFailureHandler(function(err){
+/* STALE_ROSTER: this tab was rendered before somebody renamed a candidate,
+   so the id it is writing under no longer exists. The store refuses it
+   rather than filing the grade in a row nothing points at. Say so plainly
+   and offer the one thing that fixes it -- "check your connection" would
+   send the tutor looking in entirely the wrong place. */
+if (String(err && err.message || '').indexOf('STALE_ROSTER') !== -1) {
+  setSync('This page is out of date — someone renamed a candidate. Reload before grading.', true);
+  var bar = document.getElementById('syncText');
+  if (bar && !document.getElementById('staleReload')) {
+    var b = document.createElement('button');
+    b.id = 'staleReload'; b.textContent = 'Reload';
+    b.style.cssText = 'margin-left:8px;font:inherit;cursor:pointer;border:1px solid var(--line);border-radius:6px;background:#fff;padding:1px 8px;';
+    b.addEventListener('click', function(){ location.reload(); });
+    bar.parentNode.appendChild(b);
+  }
+  return;
+}
+setSync('Could not save — check your connection', true); console.error(err);
+})
+.saveField(id, field, value);
+}"""
+assert old in s; s = s.replace(old, new, 1)
+io.open(p,'w',encoding='utf-8').write(s)
+print("client explains a stale roster and offers Reload")
+PY
+grep -n "syncText" index.html | head -3; node -e "
+const h=require('fs').readFileSync('index.html','utf8');
+new Function(h.match(/<script>([\s\S]*?)<\/script>/)[1]); console.log('index.html parses');
+"

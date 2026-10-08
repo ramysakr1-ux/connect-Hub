@@ -1,0 +1,58 @@
+cd "/private/tmp/claude-502/-Users-work-CELTA-connect-code-prompt/c07c05ec-4b23-44c0-a366-c6e1436fd694/scratchpad/tracker-check" && python3 - <<'PY'
+p="index.html"; s=open(p).read()
+
+# 1. the fourth Stage 3 trigger: above standard at Stage 2, then merely to standard
+old = """var lateNotStd = notStdAt.filter(function(k){ return k >= SECOND_HALF_FROM; });
+var stage3Why = null;
+if (!c.stage3) {
+if (c.stage2 === 'NOTSTD') stage3Why = 'not to standard at Stage 2';
+else if (c.stage2 && (lateNotStd.length || fails.length)) {"""
+new = """var lateNotStd = notStdAt.filter(function(k){ return k >= SECOND_HALF_FROM; });
+// Handbook 10.2's fourth trigger, which the CELTA 5's own (c) folds in: a
+// candidate who "received indications that they might gain Pass B or Pass A"
+// but has "not maintained their progress". Above standard at Stage 2 is that
+// indication; a second-half lesson that is merely to standard is progress not
+// maintained. Checked against the Handbook 15 Sep 2026.
+var lateOnlyStd = [];
+if (c.stage2 === 'ABOVE') for (var k2 = SECOND_HALF_FROM; k2 <= 8; k2++) { var g2 = tpGrade(c['tp'+k2]); if (g2 && g2.key === 'STD') lateOnlyStd.push(k2); }
+var stage3Why = null;
+if (!c.stage3) {
+if (c.stage2 === 'NOTSTD') stage3Why = 'not to standard at Stage 2';
+else if (c.stage2 === 'ABOVE' && lateOnlyStd.length && !lateNotStd.length && !fails.length)
+stage3Why = 'above standard at Stage 2, then TP' + lateOnlyStd.join(' and TP') + ' only to standard — progress not maintained';
+else if (c.stage2 && (lateNotStd.length || fails.length)) {"""
+assert old in s; s = s.replace(old, new, 1)
+
+# 2. the letter window: "ideally with at least two lessons left to teach"
+old = """var letterIssued = !!(c.failLetter && String(c.failLetter).trim());
+var letterDue = potentialFail && !letterIssued;"""
+new = """var letterIssued = !!(c.failLetter && String(c.failLetter).trim());
+var letterDue = potentialFail && !letterIssued;
+// Handbook 10.2: the letter should go out "ideally with at least two lessons
+// left to teach". The box quoted that and then listed a letter with one
+// lesson left exactly like one with five. Now every due letter says how many
+// lessons are left, and the last two are named for what they are.
+var lessonsLeft = 8 - graded;
+if (letterDue) failWhy.push(lessonsLeft <= 2
+? (lessonsLeft <= 0 ? 'no lessons left to teach — issue it today' : lessonsLeft + ' lesson' + (lessonsLeft === 1 ? '' : 's') + ' left to teach — the window is closing')
+: lessonsLeft + ' lessons left to teach');"""
+assert old in s; s = s.replace(old, new, 1)
+open(p,"w").write(s); print("edited")
+PY
+node -e '
+const fs=require("fs"),vm=require("vm");const html=fs.readFileSync("index.html","utf8");
+const js=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]).join("\n");
+const noop=()=>{};const el=()=>new Proxy({style:{},classList:{add:noop,remove:noop,toggle:noop},addEventListener:noop,appendChild:noop,querySelectorAll:()=>[],querySelector:()=>null,setAttribute:noop,dataset:{}},{get:(t,k)=>k in t?t[k]:noop});
+const ctx={window:{},document:{getElementById:el,querySelector:el,querySelectorAll:()=>[],addEventListener:noop,createElement:el,body:el()},google:{script:{run:new Proxy({},{get:()=>()=>new Proxy({},{get:()=>()=>({})})})}},console,setTimeout:noop,localStorage:{getItem:()=>null,setItem:noop}};
+vm.createContext(ctx);try{vm.runInContext(js,ctx);}catch(e){}
+const rc=ctx.readCandidate;
+const cases=[
+ ["Sima: TP3 NS, no Stage 2",              {tp1:"S",tp2:"STD",tp3:"NOTSTD"},                       {potentialFail:false, stage3:null}],
+ ["above at S2, TP6 only to standard",     {tp4:"ABOVE",stage2:"ABOVE",tp6:"STD"},                  {potentialFail:false, stage3:"above standard at Stage 2, then TP6 only to standard — progress not maintained"}],
+ ["above at S2, TP6 above",                {tp4:"ABOVE",stage2:"ABOVE",tp6:"ABOVE"},                {potentialFail:false, stage3:null}],
+ ["above at S2, TP6 NS",                   {tp4:"ABOVE",stage2:"ABOVE",tp6:"NOTSTD"},               {potentialFail:false, stage3:"above standard at Stage 2, then TP6 not to standard"}],
+ ["S2 NS with 7 taught (1 left)",          {tp1:"S",tp2:"S",tp3:"S",tp4:"S",tp5:"S",tp6:"S",tp7:"S",stage2:"NOTSTD"}, {potentialFail:true, why:"1 lesson left to teach — the window is closing"}],
+ ["S2 NS with 4 taught (4 left)",          {tp1:"S",tp2:"S",tp3:"S",tp4:"S",stage2:"NOTSTD"},        {potentialFail:true, why:"4 lessons left to teach"}],
+];
+let bad=0;for(const [name,c,exp] of cases){const r=rc(Object.assign({name:"x"},c));let ok=r.potentialFail===exp.potentialFail;if("stage3" in exp)ok=ok&&r.stage3Why===exp.stage3;if(exp.why)ok=ok&&r.failWhy.includes(exp.why);if(!ok)bad++;console.log(`${ok?"ok ":"!! "} ${name.padEnd(38)} pf=${r.potentialFail} stage3=${r.stage3Why??"-"} | ${r.failWhy.join("; ")||"-"}`);}
+if(bad){console.log(bad,"wrong");process.exit(1);}console.log("all cases as intended");' && npx -y @google/clasp@latest push --force 2>&1 | tail -1 && npx -y @google/clasp@latest version "Fourth Stage 3 trigger; lessons left on each due letter" 2>&1 | tail -1
