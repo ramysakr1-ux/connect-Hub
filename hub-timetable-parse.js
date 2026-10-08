@@ -248,9 +248,11 @@
       }
       if (!date) { unmatched.push(r.map(clean).filter(Boolean).join(' ')); return; }
       const row = { date: date, a: at('input1'), b: at('input2'), notes: at('notes') };
-      /* From a grid, only the TP column counts: its notes can name a
-         practice ("syllabus planning TP7 & TP8") on a day with none. */
-      const tp = readTp(at('tp')) || (grid ? null : readTp(r.map(clean).join(' ')));
+      /* When the sheet has a TP column (a grid always does), only that column
+         counts: the other cells can name a practice ("syllabus planning TP7 &
+         TP8") on a day with none. Without one, the whole row is searched. */
+      const tpColumn = grid || (map && map.tp !== undefined);
+      const tp = readTp(at('tp')) || (tpColumn ? null : readTp(r.map(clean).join(' ')));
       if (tp) row.tp = tp;
       if (!row.a && !row.b && !row.notes && !row.tp) { unmatched.push(r.map(clean).filter(Boolean).join(' ')); return; }
       found.push(row);
