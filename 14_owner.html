@@ -18,7 +18,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610080652">
+<link rel="stylesheet" href="hub-tokens.css?v=202610080750">
 <style>
   :root{
     /* the pane -- the same four values the trainee landing's cards use */
@@ -415,8 +415,38 @@
   @keyframes v4-dot{0%{box-shadow:0 0 0 0 oklch(70% 0.12 72 / .55);}70%{box-shadow:0 0 0 8px oklch(70% 0.12 72 / 0);}100%{box-shadow:0 0 0 0 oklch(70% 0.12 72 / 0);}}
   @media(prefers-reduced-motion:reduce){ .course.minted, .v4-steps li.now::before{animation:none !important;} }
   @media(max-width:640px){ .v4-steps{grid-template-columns:1fr;} }
+
+  /* ---- 1b, THE TICKET BOOK (Ramy, 8 Oct 2026) ------------------------------
+     A course whose links open on the ticket: paper, a teal top edge, and
+     four tickets, each the copy target. */
+  .course.tb{background:var(--paper); border-radius:16px; padding:20px 22px 22px; border-top:6px solid var(--teal);
+    box-shadow:0 18px 30px -22px oklch(30% 0.04 60 / .35); overflow:visible;}
+  .course.tb:hover{transform:none; box-shadow:0 18px 30px -22px oklch(30% 0.04 60 / .35);}
+  .tb-head{display:flex; align-items:baseline; justify-content:space-between; gap:14px; flex-wrap:wrap;}
+  .tb-head h2{margin:0; font-family:'Newsreader',Georgia,serif; font-size:24px; font-weight:700; line-height:1.15; color:var(--ink);}
+  .tb-centre{font-size:12.5px; color:var(--grey);}
+  .tb-alt{color:var(--gold-deep); margin:2px 0 0;}
+  .tb-line{margin:6px 0 14px; font-size:12.5px; color:var(--grey);}
+  .tb-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .tk{position:relative; display:flex; flex-direction:column; border-radius:10px; background:var(--surface);
+    border:1px solid var(--sand-line); border-left:4px solid var(--tone); transition:transform .2s, box-shadow .2s;}
+  .tk:hover{transform:translateY(-2px) rotate(-.5deg); box-shadow:0 10px 18px -12px oklch(30% 0.04 60 / .5);}
+  @media(prefers-reduced-motion:reduce){ .tk{transition:none;} .tk:hover{transform:none;} }
+  .tk-btn{all:unset; box-sizing:border-box; display:flex; flex-direction:column; gap:3px; width:100%; padding:14px 14px 12px; cursor:pointer; text-align:left;}
+  .tk-btn:focus-visible{outline:2px solid var(--gold-lifted); outline-offset:2px; border-radius:8px;}
+  .tk-btn i{font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:20px; line-height:1.1; color:var(--tone);}
+  .tk-note{font-size:12px; line-height:1.45; color:var(--grey);}
+  .tk-state{margin-top:6px; font-family:'Instrument Sans','Karla',sans-serif; font-weight:700; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--grey);}
+  .tk-btn.copied .tk-state{color:var(--teal);}
+  .tk-acts{display:flex; gap:14px; padding:0 14px 12px;}
+  .tk code{display:block; padding:0 14px 10px; font-size:0.7rem; word-break:break-all; color:var(--grey);}
+  .tb-foot{margin:14px 0 0; display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .tb-foot .tb-acts{margin-left:auto; display:inline-flex; align-items:center; gap:10px;}
+  .course.tb.c-live{border-top-color:var(--pill-good-line);}
+  .course.tb.minted{outline:2px solid var(--gold);}
+  @media(max-width:640px){ .tb-grid{grid-template-columns:1fr;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610080652">
+<link rel="stylesheet" href="hub-house.css?v=202610080750">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -440,10 +470,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610080652"></script>
-<script src="hub-store.js?v=202610080652"></script>
-<script src="hub-say.js?v=202610080652"></script>
-<script src="hub-card-mail.js?v=202610080652"></script>
+<script src="hub-shared.js?v=202610080750"></script>
+<script src="hub-store.js?v=202610080750"></script>
+<script src="hub-say.js?v=202610080750"></script>
+<script src="hub-card-mail.js?v=202610080750"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -623,18 +653,53 @@ async function firstTrainee(c){
    costs, a note in his own voice, and the three doors into this very course --
    and it takes the course from ?k= and the film from &f=, so the message
    carries neither and cannot fall out of step with either. */
+const CARD_PREVIEW = (new URLSearchParams(location.search).get('card') || '').toLowerCase();
+function ticketBook(c, kind, name, centre, alt, n, minted){
+  const tutorLink = base() + 'invite.html?k=' + encodeURIComponent(c.tutorKey);
+  const assessorLink = base() + 'invite.html?ak=' + encodeURIComponent(c.assessorKey);
+  const tk = (tone, attrs, title, note, state, extra) =>
+    `<div class="tk" style="--tone:${tone}"><button type="button" class="tk-btn" ${attrs}><i>${title}</i><span class="tk-note">${note}</span><b class="tk-state">${state}</b></button>${extra || ''}</div>`;
+  const live = kind.k === 'live';
+  return `
+    <div class="course tb c-${kind.k}${minted ? ' minted' : ''}" id="course-${esc(c.id)}">
+      ${minted ? '<p class="minted-line">New \u2014 send the centre its tutor link: copy it, or email the message on the last ticket. They set the course up and add their own trainees.</p><ol class="v4-steps" aria-label="What happens next"><li class="done">Course made</li><li class="now">Send the tutor link</li><li>The centre sets it up and adds its trainees</li></ol>' : ''}
+      <div class="tb-head">
+        <h2>${esc(name)} <span class="kind kind-${kind.k}" title="${esc(kind.w)}">${esc(kind.t)}</span></h2>
+        <span class="tb-centre">${esc(centre)}${centre && c.centreNumber ? ' \u00b7 ' : ''}${esc(c.centreNumber || '')}</span>
+      </div>
+      ${alt ? `<p class="clabel tb-alt">Shown to the centre as \u201c${esc(alt)}\u201d</p>` : ''}
+      <p class="tb-line">The course\u2019s tickets. Each copies a link that opens its card.</p>
+      <div class="tb-grid">
+        ${tk('var(--teal)', `data-copy="${esc(tutorLink)}"`, 'The teaching team', 'Send it to the centre. Their tutors and course admin all use it.', 'Copy the card', SHOW_URLS ? `<code>${esc(tutorLink)}</code>` : '')}
+        ${tk('var(--ink-warm)', `data-copy="${esc(assessorLink)}"`, 'The assessor', 'Read-only, for the visit. The centre can find and change it too.', 'Copy the card', SHOW_URLS ? `<code>${esc(assessorLink)}</code>` : '')}
+        ${tk('var(--teal-lifted)', `data-vol="${esc(c.id)}" data-key="${esc(c.tutorKey)}"`, 'A volunteer', 'One student\u2019s own page: the next class, their days, their certificate.', 'Copy the card')}
+        ${live
+          ? tk('var(--gold)', `data-note="${esc(c.id)}" data-what="tutor"`, 'The centre', 'A short message with the tutor link in it, for whoever runs the course at the centre.', 'Copy the message',
+              `<span class="tk-acts"><a class="linkbtn" data-mail="${esc(c.id)}" data-what="tutor" href="#">Email it</a></span>`)
+          : tk('var(--gold)', `data-note="${esc(c.id)}"`, 'Someone new', 'The offer card: what Lite is, how it\u2019s priced, four ways in.', 'Copy the message',
+              `<span class="tk-acts"><a class="linkbtn" data-mail="${esc(c.id)}" href="#">Email it</a><a class="linkbtn" data-card="${esc(c.id)}" href="#">See the card</a></span>`)}
+      </div>
+      <p class="cchips tb-foot">
+        <span class="chip faint"><code>${esc(c.id)}</code>${c.created ? ' \u00b7 made ' + esc(niceDate(c.created)) : ''}</span>
+        <span class="chip faint">${n ? n + ' trainee' + (n === 1 ? '' : 's') : '0 trainees yet'}</span>
+        <span class="chip faint mats-line" data-mats="${esc(c.id)}"><span class="note">Materials: checking\u2026</span></span>
+        ${c.demoToday ? `<span class="chip demo" title="settings.demoToday">Demo \u00b7 pinned to ${esc(niceDate(c.demoToday))}</span>` : ''}
+        <span class="tb-acts">
+          <button class="btn quiet small" type="button" data-clone="${esc(c.id)}" data-label="${esc(label(c))}">Start the next course from this</button>
+          ${live
+            ? `<span class="moreacts"><button type="button" class="moretog" aria-label="More for this course">\u22ef</button>
+                 <span class="menu"><button type="button" data-delete="${esc(c.id)}" data-label="${esc(label(c))}" data-trainees="${n}">Delete this course</button></span></span>`
+            : `<button class="btn quiet small" type="button" data-delete="${esc(c.id)}" data-label="${esc(label(c))}" data-trainees="${n}">Delete</button>`}
+        </span>
+      </p>
+    </div>`;
+}
 function cardLink(c){
   const film = filmLink();
-  /* The switch below the note decides whether the card talks money at all.
-     It used to reach only the emailed card; the web card the email opens
-     still showed the published figure (Ramy, 6 Oct 2026: "why does the card
-     show the price even though I did not tick the box?"). Off, the link
-     carries &np=1 and offer.html leaves the whole price block out. */
   /* No figure travels on the link any more (7 Oct 2026): the card says how
-     Lite is priced and the quote goes in the price mail. */
+     Lite is priced, never what, so the old price switch (&np=) is retired. */
   return base() + 'offer.html?k=' + encodeURIComponent(c.tutorKey)
-    + (film ? '&f=' + encodeURIComponent(film) : '')
-    + (!priceOn() ? '&np=1' : '');
+    + (film ? '&f=' + encodeURIComponent(film) : '');
 }
 /* ONE EMAIL FOR THE TWO DEMOS AND THE FILM (Ramy, 30 Sep 2026: "I want to be
    able to send all three, two demos and the film, in one email, and I want the
@@ -654,7 +719,7 @@ const DEFAULT_DEMO_NOTE = [
   '',
   'I run CELTA courses myself, and for years the paperwork lived in five places at once. Connect Lite is what I built to bring it all into one. It\u2019s also designed to ease a problem every centre knows well: finding enough volunteer students, and keeping them coming back.',
   '',
-  'Below you\u2019ll find the card, which sets out what Connect Lite does, along with three real courses you can explore as a tutor, a trainee or the assessor. Five minutes in the tutor\u2019s view will tell you more than I could in a paragraph.',
+  'Below you\u2019ll find the card, which sets out what Connect Lite does, along with three real courses you can explore as a tutor, a trainee, the assessor or a volunteer student. Five minutes in the tutor\u2019s view will tell you more than I could in a paragraph.',
   '',
   'There\u2019s also a short film that follows a whole course from start to finish. I\u2019m no filmmaker, as the first ten seconds will make clear, but it does show the platform at work.',
   '',
@@ -672,7 +737,7 @@ const DEFAULT_NOTES = {
     '',
     'I run CELTA courses myself, and for years the paperwork lived in five places at once. Connect Lite is what I built to bring it all into one. It\u2019s also designed to ease a problem every centre knows well: finding enough volunteer students, and keeping them coming back.',
     '',
-    'Rather than describe it, I filmed it. Eight minutes, a whole course from the first lesson plan to the certificates. I\u2019m no filmmaker, as the first ten seconds will make clear, but it does show the thing working.',
+    'Rather than describe it, I filmed it. A short film, a whole course from the first lesson plan to the certificates. I\u2019m no filmmaker, as the first ten seconds will make clear, but it does show the thing working.',
     '',
     'If it looks useful, just reply and I\u2019ll send you demo links \u2014 real courses you can open and type in yourself.',
   ].join('\n'),
@@ -715,7 +780,7 @@ function demosNote(){
     '1. The first week of a course \u2014 ' + cardLink(start),
     '2. The last week, two days before the assessor\u2019s visit \u2014 ' + cardLink(visit),
     done ? '3. A course that has finished \u2014 the reports written, CELTA 5 signed, the certificates \u2014 ' + cardLink(done) : null,
-    film ? (done ? '4' : '3') + '. The film, eight minutes \u2014 ' + film : null,
+    film ? (done ? '4' : '3') + '. The film \u2014 ' + film : null,
     '',
     'Each card opens on what Lite is and how it\u2019s priced, and then four ways into that course you can type in: as a tutor, as one of the trainees, as the assessor, and as a volunteer student. ' + (done ? 'All three are' : 'Both are') + ' demonstration courses that stay on the day they are on, so nothing you do there touches anybody\u2019s record.',
     '',
@@ -731,10 +796,12 @@ const CARD_CC_KEY = 'chub:cardCopyTo';
 /* Which card goes out (Ramy, 3 Oct 2026): the full one, or the film alone. */
 const CARD_KIND_KEY = 'chub:cardKind';
 function cardKind(){ try { var v = localStorage.getItem(CARD_KIND_KEY); return (v === 'film' || v === 'price') ? v : ''; } catch (e) { return ''; } }
+/* Which look the emailed card wears: the welcome (1a) or the ticket (1b),
+   8 Oct 2026. Kept in this browser beside the kind. */
+const CARD_STYLE_KEY = 'chub:cardStyle';
+function cardStyle(){ try { return localStorage.getItem(CARD_STYLE_KEY) === 'ticket' ? 'ticket' : 'welcome'; } catch (e) { return 'welcome'; } }
 /* Whether the money rides along with the demos. A first message to a centre
    that has not asked is sometimes better without it (Ramy, 3 Oct 2026). */
-const PRICE_ON_KEY = 'chub:priceOn';
-function priceOn(){ try { return localStorage.getItem(PRICE_ON_KEY) !== 'off'; } catch (e) { return true; } }
 function cardCopyTo(){ try { return (localStorage.getItem(CARD_CC_KEY) || '').trim(); } catch (e) { return ''; } }
 /* What a row on this console IS (Ramy, 3 Oct 2026: "label them so I don't
    mix them up"). Six rows that all look alike: one real centre's course, the
@@ -774,9 +841,9 @@ function cardHtml(){
     visit && { label: 'The last week, before the visit', note: 'Two days before the assessor arrives: grades provisional, the pack assembling itself.', href: cardLink(visit) },
     done && { label: 'A course that has finished', note: 'The reports written, CELTA 5 signed, the certificates.', href: cardLink(done) },
   ].filter(Boolean);
-  if (cardKind() === 'film') return hubCardMail({ note: demoNote(), film: filmLink(), site: base(), only: 'film' });
-  if (cardKind() === 'price') return hubCardMail({ note: demoNote(), rates: ratesList(), site: base(), only: 'price' });
-  return hubCardMail({ note: demoNote(), film: filmLink(), doors, site: base(), showPrice: priceOn() });
+  if (cardKind() === 'film') return hubCardMail({ note: demoNote(), film: filmLink(), site: base(), only: 'film', cardStyle: cardStyle() });
+  if (cardKind() === 'price') return hubCardMail({ note: demoNote(), rates: ratesList(), site: base(), only: 'price', cardStyle: cardStyle() });
+  return hubCardMail({ note: demoNote(), film: filmLink(), doors, site: base(), cardStyle: cardStyle() });
 }
 async function noteFor(c){
   const film = filmLink();
@@ -787,9 +854,9 @@ async function noteFor(c){
     '',
     cardLink(c),
     '',
-    'That opens a page with what it does and how it\u2019s priced, and three ways into a real course you can type in: as a tutor, as one of the trainees, and as the assessor. Nothing you do there touches anybody\u2019s record.',
+    'That opens a page with what it does and how it\u2019s priced, and four ways into a real course you can type in: as a tutor, as one of the trainees, as the assessor and as a volunteer student. Nothing you do there touches anybody\u2019s record.',
     film ? '' : null,
-    film ? 'There is an eight-minute film on the same page if you would rather watch it first.' : null,
+    film ? 'There is a short film on the same page if you would rather watch it first.' : null,
     '',
     'Any questions, just reply.',
     '',
@@ -867,6 +934,10 @@ function render(courses, msg){
     const alt = (c.courseName && c.courseName !== shown) ? c.courseName : '';
     const name = shown, centre = c.centreName || '';
     const minted = c.id === NEW_ID;
+    /* THE TICKET BOOK (1b, Ramy, 8 Oct 2026): a course whose links open on the
+       ticket gets its console card as tickets too. &card=ticket on the
+       console's own address previews it on every course. */
+    if (!kind.lib && (CARD_PREVIEW === 'ticket' || (CARD_PREVIEW !== 'welcome' && c.cardStyle === 'ticket'))) return ticketBook(c, kind, name, centre, alt, n, minted);
     return `
     <div class="course c-${kind.k}${minted ? ' minted' : ''}" id="course-${esc(c.id)}">
       <!-- THE CONSOLE CARD in the welcome family (1a, the link cards, Ramy's
@@ -992,7 +1063,7 @@ function render(courses, msg){
         </div>` : `<div class="link send">
           <span class="badge" aria-hidden="true">\u00a3</span>
           <b>Send this ${kind.k === 'demo' ? 'demo' : 'course'}</b>
-          <span class="note">The offer card: what Lite is, how it\u2019s priced, three ways in.</span>
+          <span class="note">The offer card: what Lite is, how it\u2019s priced, four ways in.</span>
           <button class="btn small" type="button" data-note="${esc(c.id)}">Copy the message</button>
           <span class="acts"><a class="linkbtn" data-mail="${esc(c.id)}" href="#">Email it</a><a class="linkbtn" data-card="${esc(c.id)}" href="#">See the card</a></span>
         </div>`}`}
@@ -1072,7 +1143,7 @@ $('app').innerHTML = `
         <span class="note">The email <i>is</i> the card. <b>The full card</b> carries your note, the three demo courses and the film as doors, and how Lite is priced (never a figure) \u2014 always the demos, never a real course; to show one particular course use Email it on its row. <b>Just the film</b> sends the film alone and ends by offering a demo link, for someone who has never seen Lite. <b>Just the price</b> is the only one with figures in it, for someone who has asked. The note and the addresses are kept in this browser.</span>
         <textarea id="demoNote" rows="7" placeholder="Empty sends the card alone, unsigned by a letter.">${esc(demoNote())}</textarea>
         <span class="note">The letter on top of the card, in your hand \u2014 each card has its own, so this changes with the choice on the left. Edit it here and it stays edited. <button class="linkbtn" type="button" id="noteReset">Put the standard note back</button></span>
-        <span class="sendrow"><span class="house-sel kindsel"><select id="cardKind"><option value="">The full card</option><option value="film"${cardKind() === 'film' ? ' selected' : ''}>Just the film</option><option value="price"${cardKind() === 'price' ? ' selected' : ''}>Just the price</option></select></span><input type="email" id="cardTo" placeholder="Their address" autocomplete="off"><input type="email" id="cardCopyTo" class="cc" placeholder="A copy to you (optional)" value="${esc(cardCopyTo())}"><button class="btn small" type="button" id="cardSend">Send the card</button></span>
+        <span class="sendrow"><span class="house-sel kindsel"><select id="cardKind"><option value="">The full card</option><option value="film"${cardKind() === 'film' ? ' selected' : ''}>Just the film</option><option value="price"${cardKind() === 'price' ? ' selected' : ''}>Just the price</option></select></span><span class="house-sel kindsel"><select id="cardStyleSel" aria-label="How the card looks"><option value="welcome">Welcome look</option><option value="ticket"${cardStyle() === 'ticket' ? ' selected' : ''}>Ticket look</option></select></span><input type="email" id="cardTo" placeholder="Their address" autocomplete="off"><input type="email" id="cardCopyTo" class="cc" placeholder="A copy to you (optional)" value="${esc(cardCopyTo())}"><button class="btn small" type="button" id="cardSend">Send the card</button></span>
         <span class="acts"><button class="btn small quiet" type="button" id="cardPreview">Preview</button><button class="btn small quiet" type="button" id="cardCopy">Copy the card to paste into Gmail</button><button class="linkbtn" type="button" id="demosCopy">Copy as plain text</button></span>
       </div>`;
     })()}
@@ -1085,8 +1156,7 @@ $('app').innerHTML = `
         <label>Rates, in pounds</label>
         ${RATE_ROWS.map(([k, n, label]) => `<input type="text" inputmode="numeric" data-rate="${k}" aria-label="${esc(label)}" placeholder="${esc(label)}" value="${esc(ratesSaved()[k] || '')}">`).join('')}
       </span>
-      <label class="priceon"><input type="checkbox" id="priceOn"${priceOn() ? ' checked' : ''}> the card says how it\u2019s priced</label>
-      <span class="note">Kept in this browser, never in Lite\u2019s code. The <b>rates</b> are what each package costs in all; <b>Just the price</b> heads with the one-course figure and works out each package\u2019s price per course, so the figures always agree. The card never shows a figure; untick the box and it leaves pricing out altogether.</span>
+      <span class="note">Kept in this browser, never in Lite\u2019s code. The <b>rates</b> are what each package costs in all; <b>Just the price</b> heads with the one-course figure and works out each package\u2019s price per course, so the figures always agree. The card never shows a figure.</span>
     </div>
       </div>
     </details>
@@ -1147,6 +1217,11 @@ document.addEventListener('input', e => {
   const rt = e.target.closest('[data-rate]');
   if (rt) { const r = ratesSaved(); r[rt.dataset.rate] = rt.value.trim(); try { localStorage.setItem(RATES_KEY, JSON.stringify(r)); } catch (err) {} return; }
   if (e.target.closest('#cardCopyTo')) { try { localStorage.setItem(CARD_CC_KEY, e.target.value.trim()); } catch (err) {} return; }
+  if (e.target.closest('#cardStyleSel')) {
+    try { localStorage.setItem(CARD_STYLE_KEY, e.target.value); } catch (err) {}
+    status(e.target.value === 'ticket' ? 'The card goes out as the ticket.' : 'The card goes out in the welcome look.');
+    return;
+  }
   if (e.target.closest('#cardKind')) {
     try { localStorage.setItem(CARD_KIND_KEY, e.target.value); } catch (err) {}
     /* The letter on screen belongs to the card now chosen. */
@@ -1154,7 +1229,6 @@ document.addEventListener('input', e => {
     status(e.target.value === 'film' ? 'The film alone goes out next, with its own letter.' : e.target.value === 'price' ? 'The price alone goes out next, with its own letter.' : 'The full card goes out next, with its own letter.');
     return;
   }
-  if (e.target.closest('#priceOn')) { try { localStorage.setItem(PRICE_ON_KEY, e.target.checked ? 'on' : 'off'); } catch (err) {} status(e.target.checked ? 'The card carries the price.' : 'The card goes without the price \u2014 the web card and the email both.'); }
 });
 $('app').addEventListener('click', async e => {
     const urls = e.target.closest('#toggleUrls');
@@ -1202,11 +1276,12 @@ $('app').addEventListener('click', async e => {
       BUSY = false;
       return;
     }
-    if (e.target.closest('#filmLink') || e.target.closest('[data-rate]') || e.target.closest('#demoNote') || e.target.closest('#cardTo') || e.target.closest('#cardCopyTo') || e.target.closest('#cardKind') || e.target.closest('#priceOn')) return;
+    if (e.target.closest('#filmLink') || e.target.closest('[data-rate]') || e.target.closest('#demoNote') || e.target.closest('#cardTo') || e.target.closest('#cardCopyTo') || e.target.closest('#cardKind') || e.target.closest('#cardStyleSel')) return;
     const note = e.target.closest('[data-note]');
     if (note) {
       const c = COURSES.filter(function(x){ return x.id === note.dataset.note; })[0];
-      if (c) { note.textContent = 'Building\u2026'; await hubCopyButton(note, note.dataset.what === 'tutor' ? tutorNoteFor(c) : await noteFor(c)); }
+      const nl = note.querySelector('.tk-state') || note;
+      if (c) { if (!note.dataset.copyLabel) note.dataset.copyLabel = nl.textContent; nl.textContent = 'Building\u2026'; await hubCopyButton(note, note.dataset.what === 'tutor' ? tutorNoteFor(c) : await noteFor(c)); }
       return;
     }
     const card = e.target.closest('[data-card]');
@@ -1265,18 +1340,19 @@ $('app').addEventListener('click', async e => {
     }
     const v = e.target.closest('[data-vol]');
     if (v) {
-      const was = v.textContent;
-      v.textContent = 'Finding…'; v.disabled = true;
+      const vl = v.querySelector('.tk-state') || v;   // a ticket says it on its state line
+      const was = vl.textContent;
+      vl.textContent = 'Finding…'; v.disabled = true;
       try {
         const c = await HubStore.call({ op: 'course', key: v.dataset.key });
         const st = ((c && c.volunteers) || {}).students || [];
         const first = st.filter(x => x && x.token)[0];
-        if (!first) { v.textContent = 'None yet — the register makes them'; v.disabled = false; setTimeout(() => { v.textContent = was; }, 2200); return; }
+        if (!first) { vl.textContent = 'None yet — the register makes them'; v.disabled = false; setTimeout(() => { vl.textContent = was; }, 2200); return; }
         /* Put the label back before the copy helper takes over, or it
            restores "Finding…" when it is done. */
-        v.disabled = false; v.textContent = was;
+        v.disabled = false; vl.textContent = was;
         await hubCopyButton(v, base() + 'invite.html?v=' + encodeURIComponent(first.token));
-      } catch (err) { v.textContent = 'Could not reach the course'; v.disabled = false; setTimeout(() => { v.textContent = was; }, 2600); }
+      } catch (err) { vl.textContent = 'Could not reach the course'; v.disabled = false; setTimeout(() => { vl.textContent = was; }, 2600); }
       return;
     }
     const b = e.target.closest('[data-copy]');

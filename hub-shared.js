@@ -571,9 +571,13 @@ window.hubCopy = async function(text){
 /* The button-shaped version: says "Copied", and when it cannot, shows the link
    instead of pretending. Pass the button and what should land on the clipboard. */
 window.hubCopyButton = async function(btn, text){
-  if(!btn.dataset.copyLabel) btn.dataset.copyLabel = btn.textContent;
+  /* A ticket (the console's ticket book, 1b) is a whole button with a small
+     state line inside it: only that line says "Copied", or the ticket's name
+     and note would be wiped. */
+  var lbl = (btn.querySelector && btn.querySelector('.tk-state')) || btn;
+  if(!btn.dataset.copyLabel) btn.dataset.copyLabel = lbl.textContent;
   var back = btn.dataset.copyLabel;
-  var host = btn.closest('.link') || btn.parentElement || btn;
+  var host = btn.closest('.link, .tk') || btn.parentElement || btn;
   /* Every revealed link goes, not just this row's: they are one per row, so
      copying the tutor link and then the assessor link left both on screen at
      once, and a link revealed earlier outlived a later successful copy. Only
@@ -584,10 +588,10 @@ window.hubCopyButton = async function(btn, text){
     /* "Copied ✓" for 1.8s, and the row it sits in lit while it lasts (the
        link cards, 7 Oct 2026); a page with no .copied style just sees the
        word change, as before. */
-    btn.textContent='Copied \u2713';
+    lbl.textContent='Copied \u2713';
     btn.classList.add('copied'); if (host !== btn) host.classList.add('copied');
     clearTimeout(btn._copyT);
-    btn._copyT=setTimeout(function(){ btn.textContent=back; btn.classList.remove('copied'); host.classList.remove('copied'); },1800);
+    btn._copyT=setTimeout(function(){ lbl.textContent=back; btn.classList.remove('copied'); host.classList.remove('copied'); },1800);
     return true;
   }
   var wrap=document.createElement('div');

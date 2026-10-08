@@ -52,11 +52,11 @@
       + '<div class="fp-mark">' + mark + '</div>'
       + '<p class="fp-eyebrow">For a CELTA centre</p>'
       + '<h1>Everything your trainees write, and everything you write back</h1>'
-      + '<p class="fp-lede">The assessed paperwork of a CELTA course in one place — plans, language analyses, self-evaluations, the four written assignments, your feedback, the grades and the reports. No accounts, no passwords, nothing to install. A course is three links: one for your tutors, one for each trainee, one for the assessor.</p>'
+      + '<p class="fp-lede">The assessed paperwork of a CELTA course in one place — plans, language analyses, self-evaluations, the four written assignments, your feedback, the grades and the reports. No accounts, no passwords, nothing to install. A course is four kinds of link: one for your tutors, one for each trainee, one for the assessor and one for each volunteer student.</p>'
 
       + '<div class="fp-why">'
       + '<b>Why it says Lite</b>'
-      + '<p>Connect is the full system for a CELTA centre: admissions, timetables, every course and every role in one place. It is not open yet. Connect Lite is the small one that is — a single course, three links, nothing to set up and nothing to learn.</p>'
+      + '<p>Connect is the full system for a CELTA centre: admissions, timetables, every course and every role in one place. It is not open yet. Connect Lite is the small one that is — a single course, a handful of links, nothing to set up and nothing to learn.</p>'
       + '</div>'
 
       + '<h2>What it does</h2>'
@@ -69,7 +69,7 @@
       + '</ul>'
 
       + '<div class="fp-film">'
-      + '<div><b>See a whole course in eight minutes</b><span>From the first lesson plan to the certificates. A real course, not a mock-up.</span></div>'
+      + '<div><b>See a whole course, start to finish</b><span>From the first lesson plan to the certificates. A real course, not a mock-up.</span></div>'
       + '<a class="fp-btn" href="film/watch.html">Watch the film</a>'
       + '</div>'
 
@@ -81,7 +81,7 @@
 
       + '<div class="fp-ask">'
       + '<b>Ask for a demo</b>'
-      + '<p>I will send you three real courses you can walk around — as a tutor, as one of the trainees, as the assessor — and you can type in all of them. Nothing you do there touches anybody’s record.</p>'
+      + '<p>I will send you three real courses you can walk around — as a tutor, as one of the trainees, as the assessor and as a volunteer student — and you can type in all of them. Nothing you do there touches anybody’s record.</p>'
       + '<a class="fp-btn wide" href="mailto:lite@celtaconnect.com?subject=' + encodeURIComponent('Connect Lite — a demo link, please') + '">Email me for a demo link</a>'
       + '</div>'
 

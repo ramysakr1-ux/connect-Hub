@@ -1809,6 +1809,9 @@ function ownerList_() {
     return {
       id: c.id, name: c.name, created: c.created,
       centreName: s.centreName || '', centreNumber: s.centreNumber || '', courseName: s.courseName || '',
+      // v76 (8 Oct 2026): which card the course's links open on, so the
+      // console can show the course as a ticket book when it is the ticket.
+      cardStyle: s.cardStyle === 'ticket' ? 'ticket' : '',
       start: s.start || '', end: s.end || '',
       demoToday: s.demoToday || '',     // v50: the console marks a pinned demo course
       trainees: counts[c.id] || 0,

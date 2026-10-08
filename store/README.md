@@ -27,6 +27,14 @@ Never a bare `clasp deploy`. If anything is ever edited in the Apps Script
 editor instead, `clasp pull` before the next change or the repo copy is stale.
 The patches below are how the editor's text got to v73.
 
+## 8 Oct 2026 — the console learns each course's card style (version 90, store v76)
+
+`ownerList_()` adds `cardStyle` ('ticket' or '') to each course it hands the
+owner console, read from the course's settings, so a course whose links open
+on the ticket (1b) shows in the console as a ticket book. Read-only; nothing
+else changes. Course admin writes `settings.cardStyle` itself, and a clone
+already carries it (v75 keeps the centre's newer settings).
+
 ## 8 Oct 2026 — a clone carries the centre's newer settings (version 89, store v75)
 `cloneCourse` keeps what is the centre's: now also the agreement, Connect's
 pre-course switch and its two overrides, the tutor and volunteer contacts, the

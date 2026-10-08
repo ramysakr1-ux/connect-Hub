@@ -32,14 +32,18 @@
   var esc = function(s){ return (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
   var paras = function(t){ return String(t || '').trim().split(/\n{2,}/).map(function(p){ return '<p style="margin:0 0 10px;">' + esc(p).replace(/\n/g, '<br>') + '</p>'; }).join(''); };
 
+  var STYLE = 'welcome';   // set per call from ctx.cardStyle: 'welcome' (1a) or 'ticket' (1b)
   function door(label, note, href, verb){
+    var rule = '1px ' + (STYLE === 'ticket' ? 'dashed ' : 'solid ') + C.line;
+    var btn = STYLE === 'ticket'
+      ? '<a href="' + esc(href) + '" style="font-family:' + SANS + '; font-size:12.5px; font-weight:700; color:' + C.paper + '; text-decoration:none; background:' + C.tealDeep + '; border-radius:8px; padding:7px 14px; display:inline-block;">' + esc(verb) + '</a>'
+      : '<a href="' + esc(href) + '" style="font-family:' + SANS + '; font-size:13px; font-weight:700; color:' + C.teal + '; text-decoration:none; border:1.5px solid ' + C.teal + '; border-radius:20px; padding:6px 14px; display:inline-block;">' + esc(verb) + '</a>';
     return '<tr>' +
-      '<td style="padding:13px 0; border-bottom:1px solid ' + C.line + '; vertical-align:top;">' +
+      '<td style="padding:13px 0; border-bottom:' + rule + '; vertical-align:top;">' +
         '<div style="font-family:' + SANS + '; font-size:14px; font-weight:700; color:' + C.inkWarm + '; margin:0 0 3px;">' + esc(label) + '</div>' +
         '<div style="font-family:' + SANS + '; font-size:13px; line-height:1.55; color:' + C.grey + ';">' + esc(note) + '</div>' +
       '</td>' +
-      '<td style="padding:13px 0 13px 16px; border-bottom:1px solid ' + C.line + '; vertical-align:middle; white-space:nowrap;" align="right">' +
-        '<a href="' + esc(href) + '" style="font-family:' + SANS + '; font-size:13px; font-weight:700; color:' + C.teal + '; text-decoration:none; border:1.5px solid ' + C.teal + '; border-radius:20px; padding:6px 14px; display:inline-block;">' + esc(verb) + '</a>' +
+      '<td style="padding:13px 0 13px 16px; border-bottom:' + rule + '; vertical-align:middle; white-space:nowrap;" align="right">' + btn +
       '</td></tr>';
   }
 
@@ -61,6 +65,31 @@
       + '</td></tr>'
       + '<tr><td style="padding:20px 30px 24px;">' + sheet + '</td></tr>'
       + '</table>';
+  }
+  /* THE TICKET in email (1b, 8 Oct 2026). No seal and no perforation -- an
+     email client keeps neither -- so the face is paper under a 6px gold edge
+     and the stub is set off by a dashed line. */
+  function frameTicket(chip, headline, sub, face, stub){
+    return '<table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px; width:100%; background:' + C.paper + '; border-radius:16px; border-collapse:separate; overflow:hidden;">'
+      + '<tr><td style="background:' + C.paper + '; border-top:6px solid ' + C.gold + '; padding:24px 30px 22px; border-radius:16px 16px 0 0;">'
+      +   '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 20px;"><tr>'
+      +     '<td style="vertical-align:middle;">' + tile(28) + '<span style="font-family:\'Instrument Serif\',Georgia,serif; font-style:italic; font-size:21px; color:' + C.gold + '; margin-left:9px; vertical-align:middle;">Connect</span>'
+      +     '<span style="font-family:' + SANS + '; font-size:9px; font-weight:600; letter-spacing:0.24em; text-transform:uppercase; color:' + C.ink + '; margin-left:5px; vertical-align:middle;">Lite</span></td>'
+      +     '<td align="right" style="vertical-align:middle; font-family:' + SANS + '; font-size:10px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:' + C.grey + '; white-space:nowrap;">' + esc(chip) + '</td>'
+      +   '</tr></table>'
+      +   '<h1 style="font-family:' + SERIF + '; font-weight:700; font-size:25px; line-height:1.15; color:' + C.tealDeep + '; margin:0;">' + esc(headline) + '</h1>'
+      +   (sub ? '<p style="font-family:' + SANS + '; font-size:14px; line-height:1.6; color:' + C.grey + '; margin:10px 0 18px;">' + esc(sub) + '</p>' : '<div style="height:16px; line-height:16px;">&nbsp;</div>')
+      +   face
+      + '</td></tr>'
+      + '<tr><td bgcolor="' + C.surface + '" style="background:' + C.surface + '; border-top:2px dashed ' + C.line + '; padding:16px 30px 22px; border-radius:0 0 16px 16px;">' + stub + '</td></tr>'
+      + '</table>';
+  }
+  /* One call for both frames: the welcome card puts everything on its sheet;
+     the ticket puts what the stub carries under the dashed line. */
+  function wrap(ctx, chip, headline, sub, sheet, stub){
+    return STYLE === 'ticket'
+      ? frameTicket(chip, headline, sub, sheet, stub + credit(ctx).replace('margin:16px 0 0; padding-top:14px; border-top:1px solid ' + C.line + ';', 'margin:14px 0 0;'))
+      : frame(chip, headline, sub, sheet + stub + credit(ctx));
   }
   function contact(lead){
     return '<p style="font-family:' + SANS + '; font-size:13.5px; line-height:1.6; color:' + C.ink + '; margin:18px 0 0;">' + esc(lead) + ' <a href="mailto:' + MAIL + '" style="color:' + C.teal + '; font-weight:700; text-decoration:none;">' + MAIL + '</a></p>';
@@ -90,9 +119,9 @@
             + '<a href="' + esc(ctx.film) + '" style="display:inline-block; padding:14px 34px; font-family:' + SANS + '; font-size:16px; font-weight:700; color:#ffffff; text-decoration:none;">Watch the film &rarr;</a>'
             + '</td></tr></table>'
           : '')
-      + '<p style="font-family:' + SANS + '; font-size:14px; line-height:1.65; color:' + C.ink + '; margin:22px 0 0; padding-top:16px; border-top:1px solid ' + C.line + ';">Centres and trainers: email <a href="mailto:' + MAIL + '" style="color:' + C.teal + '; font-weight:700; text-decoration:none;">' + MAIL + '</a> for the rates and a demo link. You get three real courses to walk around — as a tutor, as one of the trainees, as the assessor — and you can type in all of them.</p>'
-      + credit(ctx);
-    return page('Connect Lite — the film', letter, frame('A film, eight minutes', 'A CELTA course, from the link being sent to the final report', '', sheet));
+      ;
+    var ask = '<p style="font-family:' + SANS + '; font-size:14px; line-height:1.65; color:' + C.ink + '; margin:' + (STYLE === 'ticket' ? '0' : '22px 0 0; padding-top:16px; border-top:1px solid ' + C.line) + ';">Centres and trainers: email <a href="mailto:' + MAIL + '" style="color:' + C.teal + '; font-weight:700; text-decoration:none;">' + MAIL + '</a> for the rates and a demo link. You get three real courses to walk around — as a tutor, as one of the trainees, as the assessor and as a volunteer student — and you can type in all of them.</p>';
+    return page('Connect Lite — the film', letter, wrap(ctx, 'A short film', 'A CELTA course, from the link being sent to the final report', '', sheet, ask));
   }
 
 
@@ -140,16 +169,16 @@
       + '<p style="font-family:' + SANS + '; font-size:13.5px; line-height:1.65; color:' + C.ink + '; margin:16px 0 0;"><b style="color:' + C.inkWarm + ';">A course with one teaching practice group counts as half a course.</b> Six trainees or fewer is one group. Blocks do not expire, nothing recurs, and the length of a course \u2014 four weeks, five, or part-time over three months \u2014 makes no difference.</p>'
       /* No "rates in full" link: the rates page came down (Ramy, 7 Oct 2026:
          the rates are not public). This email IS the rates. */
-      + contact('Questions:')
-      + credit(ctx);
-    return page('Connect Lite \u2014 what it costs', letter, frame('What it costs', 'One price, one course, everything in it', '', sheet));
+      ;
+    return page('Connect Lite \u2014 what it costs', letter, wrap(ctx, 'What it costs', 'One price, one course, everything in it', '', sheet, STYLE === 'ticket' ? contact('Questions:').replace('margin:18px 0 0;', 'margin:0;') : contact('Questions:')));
   }
 
-  /* ctx: { note, film, doors, site, only, showPrice, rates } -- rates are
+  /* ctx: { note, film, doors, site, only, rates } -- rates are
      read by priceDoc only; the full card carries no figure (7 Oct 2026). */
   window.hubCardMail = function(ctx){
+    STYLE = ctx.cardStyle === 'ticket' ? 'ticket' : 'welcome';
     var doors = (ctx.doors || []).map(function(d){ return door(d.label, d.note, d.href, 'Open'); }).join('');
-    if (ctx.film) doors += door('The film', 'Eight minutes, start to finish — a course from the first plan to the certificates.', ctx.film, 'Watch');
+    if (ctx.film) doors += door('The film', 'Start to finish: a course from the first plan to the certificates.', ctx.film, 'Watch');
     /* The letter (Ramy, 2 Oct 2026: "a nice message from me on top, with nice
        font, with my signature, and the card sitting underneath it"). His note,
        in the serif, signed; the card is the enclosure. No note, no letter. */
@@ -166,11 +195,10 @@
     var sheet =
       '<h2 style="font-family:' + SERIF + '; font-weight:600; font-size:17px; color:' + C.inkWarm + '; margin:0 0 4px;">See it working</h2>' +
       '<p style="font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.grey + '; margin:0 0 4px;">Real courses. Open one as a tutor, a trainee, the assessor or a volunteer, and type in it.</p>' +
-      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid ' + C.line + ';">' + doors + '</table>' +
-      /* How it is priced, never what (Ramy, 7 Oct 2026). showPrice:false, the
-         console's switch, leaves the box out altogether. */
-      (ctx.showPrice === false ? '' :
-      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:18px 0 0;"><tr><td style="background:' + C.goldWash + '; border:1px solid ' + C.amber + '; border-radius:12px; padding:16px 18px;">' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px ' + (STYLE === 'ticket' ? 'dashed ' : 'solid ') + C.line + '; margin-top:' + (STYLE === 'ticket' ? '14px' : '0') + ';">' + doors + '</table>' +
+      /* How it is priced, never what (Ramy, 7 Oct 2026). On the ticket it goes
+         on the stub instead (below). */
+      (STYLE === 'ticket' ? '' : '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:18px 0 0;"><tr><td style="background:' + C.goldWash + '; border:1px solid ' + C.amber + '; border-radius:12px; padding:16px 18px;">' +
         '<div style="font-family:' + SERIF + '; font-size:20px; font-weight:700; color:' + C.inkWarm + '; line-height:1.2; margin:0 0 6px;">Priced per course, not per trainee</div>' +
         '<ul style="margin:0; padding-left:18px; font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.ink + ';">' +
           li('Packages from one course to twenty: the more you take, the less each costs.') +
@@ -179,12 +207,17 @@
         '</ul>' +
       '</td></tr></table>') +
       // sign-off, only when the card goes alone: the letter above signs otherwise
-      (ctx.note ? '' : '<div style="font-family:\'Instrument Serif\',Georgia,serif; font-style:italic; font-size:24px; color:' + C.inkWarm + '; margin:18px 0 0;">Ramy</div>') +
-      contact('For the rates and demo links:') +
-      credit(ctx);
+      (ctx.note ? '' : '<div style="font-family:\'Instrument Serif\',Georgia,serif; font-style:italic; font-size:24px; color:' + C.inkWarm + '; margin:18px 0 0;">Ramy</div>');
+    var stub = STYLE === 'ticket'
+      ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>'
+        + '<td style="vertical-align:bottom;"><div style="font-family:' + SERIF + '; font-weight:700; font-size:21px; color:' + C.inkWarm + '; line-height:1.2;">Per course, not per trainee</div>'
+        + '<div style="font-family:' + SANS + '; font-size:12.5px; line-height:1.5; color:' + C.grey + '; margin-top:3px;">The more courses, the less each costs.<br>Duplicate one and run it again.</div></td>'
+        + '<td align="right" style="vertical-align:bottom; padding-left:16px; white-space:nowrap;"><a href="mailto:' + MAIL + '" style="font-family:' + SANS + '; font-size:12px; font-weight:600; color:' + C.goldDeep + '; text-decoration:none;">' + MAIL + '</a></td>'
+        + '</tr></table>'
+      : contact('For the rates and demo links:');
     var html = page('Connect Lite — for your centre', letter,
-      frame('For a centre', 'Everything your trainees write, and everything you write back',
-        'A CELTA course’s assessed paperwork in one place. No accounts, no passwords, nothing to install. A course is three links.', sheet));
+      wrap(ctx, ctx.cardStyle === 'ticket' ? 'For a CELTA centre' : 'For a centre', 'Everything your trainees write, and everything you write back',
+        'A CELTA course’s assessed paperwork in one place. No accounts, no passwords, nothing to install. A course runs on four kinds of link.', sheet, stub));
     return html;
   };
 })();
