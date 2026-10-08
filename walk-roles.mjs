@@ -30,7 +30,9 @@ const STORE = { course: { settings: null, wording: null }, trainees: {}, key: 't
   // Faults the walk can switch on: `refuse` names a record kind whose put the
   // store turns down (ok:false, the way the Apps Script refuses), `slow` is a
   // delay in ms on every put (the Apps Script takes 1.5-13 s to answer).
-  refuse: '', slow: 0, html: '', overCell: [] };
+  // `lagDraft` holds a tutor's feedback DRAFT that long before the store
+  // applies it, so a later write can land first (see the last step).
+  refuse: '', slow: 0, html: '', lagDraft: 0, overCell: [] };
 const CELL = 50000;
 const tooLarge = (kind, n) => ({ ok: false, error: `Too large to store: ${kind} is ${n} characters and a record holds ${CELL}` });
 const REFUSE = { ok: false, error: 'This link is not on a course' };
@@ -79,7 +81,14 @@ function handle(p){
 }
 const storeServer = createServer((req, res) => {
   let body = ''; req.on('data', c => body += c); req.on('end', () => {
-    let p = {}, out; try { p = JSON.parse(body || '{}'); out = (p.op === 'put' && STORE.html && p.kind === STORE.html) ? null : handle(p); } catch (e) { out = { ok: false, error: String(e.message) }; }
+    let p = {}, out, bad = null; try { p = JSON.parse(body || '{}'); } catch (e) { bad = { ok: false, error: String(e.message) }; }
+    const apply = () => { if (bad) return bad; try { return (p.op === 'put' && STORE.html && p.kind === STORE.html) ? null : handle(p); } catch (e) { return { ok: false, error: String(e.message) }; } };
+    /* Apps Script runs two calls side by side and finishes them in whichever
+       order it likes. `STORE.lagDraft` applies a feedback draft only after that
+       many ms, so anything sent behind it -- a Return -- lands first, and the
+       draft lands on top of it. */
+    const lag = !bad && STORE.lagDraft && p.op === 'put' && p.kind === 'feedback' && p.data && p.data.status === 'draft' ? STORE.lagDraft : 0;
+    if (!lag) out = apply();
     /* Apps Script answers the odd call with an HTML error page instead of JSON
        (title "Hata"; 1 in 3 during a bad minute on 20 Sep 2026), which
        hub-store reads as transient: the write stays in the ledger and is sent
@@ -91,7 +100,8 @@ const storeServer = createServer((req, res) => {
       }
       res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); res.end(JSON.stringify(out));
     };
-    if (STORE.slow && p.op === 'put') setTimeout(answer, STORE.slow); else answer();
+    if (lag) setTimeout(() => { out = apply(); answer(); }, lag);
+    else if (STORE.slow && p.op === 'put') setTimeout(answer, STORE.slow); else answer();
   });
 });
 await new Promise(r => storeServer.listen(0, r));
@@ -773,6 +783,30 @@ await step('tutor: a course with work already marked is left on its own criteria
   STORE.course.wording = keep;
   must(JSON.stringify(after) === JSON.stringify(before), 'marked work had its criteria swapped under it: ' + JSON.stringify({ before, after }));
   return 'left alone: ' + Object.entries(after).map(([k, v]) => `${k} ${v}`).join(', ');
+});
+
+/* ===== A RETURN CLICKED WHILE THE LAST AUTOSAVE IS STILL ON ITS WAY =====
+   Ramy's walkthrough, practice course, 8 Oct 2026: he finished Bora's
+   feedback, clicked Return, the page said Returned and the pill said Saved --
+   and the store held the DRAFT. The autosave was still in flight, the return
+   went out beside it, and Apps Script finished the draft second. hub-sync now
+   sends one flush at a time; before that, this step failed. */
+await step('tutor: TP3 returned while the last autosave is still on its way; the return lands last', async () => {
+  await tutorFills('TP3', 'Good pace');
+  STORE.lagDraft = 3000;
+  try {
+    await T.p.evaluate(() => { const t = document.getElementById('tOverall'); t.value += '\nOne last line, typed just before Return.'; t.dispatchEvent(new Event('input', { bubbles: true })); });
+    await settle(T.p, 900);   // the debounce has fired: the draft is with the store, not yet applied
+    await T.p.click('#returnBtn'); await settle(T.p, 300); const c = await T.p.$('.confirm-action'); if (c) await c.click();
+    await returned();
+    await settle(T.p, 3500);  // and the held draft has been applied by now, if it was going to be
+  } finally { STORE.lagDraft = 0; }
+  const fb = STORE.trainees[amaraToken].records.feedback || {};
+  must(fb.status === 'returned', 'the store holds the feedback as ' + JSON.stringify(fb.status) + ': the draft landed on top of the return');
+  must(JSON.stringify(fb.state || {}).includes('One last line'), 'the returned feedback is missing the last line typed');
+  const h = STORE.trainees[amaraToken].records.tpHistory || {};
+  must(h[3] && h[3].docHTML, 'TP3 did not file: history {' + Object.keys(h) + '}');
+  return 'feedback returned on the store, TP3 filed, the late draft did not win';
 });
 
 console.log(`\n${passed} of ${n} steps passed; ${STORE.calls.length} store calls.`);
