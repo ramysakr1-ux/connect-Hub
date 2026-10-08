@@ -28,8 +28,6 @@ throws(() => ctx.startNewCourse('C17/2026', 'C19/2026', 'A\tX'), /CONFIRM_MISMAT
 throws(() => ctx.startNewCourse('C18/2026', '', 'A\tX'), /NO_NEW_CODE/, 'no new code');
 throws(() => ctx.startNewCourse('C18/2026', 'C19/2026', ''), /EMPTY_ROSTER/, 'empty roster');
 ok(ctx.getData().rows['abc-billur-manav'].tp1 === 'STD', 'guards wrote nothing');
-// C/17's real data still reads, rules and all (read from the archive values)
-const c17 = JSON.parse(readFileSync('c17rows.json', 'utf8'));
 console.log('server checks', pass, 'passed,', fail, 'failed');
 
 // ---- the page ----
