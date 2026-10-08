@@ -328,7 +328,10 @@ function render(){
   const first = String(ME.name || '').trim().split(/\s+/)[0] || '';
   const tutors = String(SETTINGS.tutorNames || '').split(/[,\n;]+/).map(x => x.trim()).filter(Boolean);
   const r = room();
-  const startT = tpSlots.length ? tpSlots[0].from : '', endT = tpSlots.length ? tpSlots[tpSlots.length-1].to : '';
+  /* The next class's own times: the day's shape can change partway through
+     a course (9 Oct 2026). */
+  const nextSlots = next && window.hubSlotsFor ? hubSlotsFor(TT, next).filter(s => s.kind === 'tp') : tpSlots;
+  const startT = nextSlots.length ? nextSlots[0].from : '', endT = nextSlots.length ? nextSlots[nextSlots.length-1].to : '';
   /* v56: are you coming? The answer for the next class, yes or no, kept on
        their own row; the register and the trainees' card read it. */
     const reply = next ? ((ME.replies || {})[next] || null) : null;
@@ -339,7 +342,7 @@ function render(){
     : next
     ? `<div class="next v4${reply && reply.coming === 'yes' ? ' going' : ''}"><svg class="v4-mark" viewBox="8 30 104 60" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="9" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="9" stroke-linecap="round"></path></svg><div class="k">Your next class</div>
         <h2>${isToday ? 'Today, ' : (upcoming[0] && daysBetween(TODAY, next) === 1) ? 'Tomorrow, ' : ''}${esc(longDay(next))}</h2>
-        <div class="when">${esc(timeFor(next, startT))} – ${esc(timeFor(next, endT))}${tpSlots.length > 1 ? ' · ' + tpSlots.length + ' short lessons' : ''}${ZONE && window.hubReaderZone && hubReaderZone() !== ZONE ? '<small>Course time is ' + esc(hubZoneName(ZONE)) + '.</small>' : ''}</div>
+        <div class="when">${esc(timeFor(next, startT))} – ${esc(timeFor(next, endT))}${nextSlots.length > 1 ? ' · ' + nextSlots.length + ' short lessons' : ''}${ZONE && window.hubReaderZone && hubReaderZone() !== ZONE ? '<small>Course time is ' + esc(hubZoneName(ZONE)) + '.</small>' : ''}</div>
         ${r ? `<a class="room" href="${esc(r.url)}" target="_blank" rel="noopener">Join on ${/zoom/i.test(r.url) ? 'Zoom' : /meet\.google/i.test(r.url) ? 'Meet' : /teams/i.test(r.url) ? 'Teams' : 'the link'}</a>` : ''}
         <div class="tiny">${tutors.length ? 'Your teachers are trainees, with ' + esc(tutors.join(' and ')) + ' watching. ' : ''}You do not need to prepare anything.</div>${askBlock}</div>`
     : `<div class="next done"><div class="k">Your classes</div><h2>The course has finished</h2><div class="tiny">Thank you for coming. Your attendance and hours are below.</div></div>`;

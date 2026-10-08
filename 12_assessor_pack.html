@@ -341,7 +341,7 @@ function visitWhen(){
   let times = '';
   try {
     const tt = rec('connect_timetable_v1') || {};
-    const slots = (tt.slots || []).filter(sl => sl && sl.kind === 'tp' && sl.from);
+    const slots = (window.hubSlotsFor ? hubSlotsFor(tt, d) : (tt.slots || [])).filter(sl => sl && sl.kind === 'tp' && sl.from);
     if (slots.length) {
       const from = slots[0].from, to = slots[slots.length - 1].to || '';
       times = ' \u00b7 ' + (to ? hubClockRange(from, to) : hubClock(from));
@@ -424,15 +424,19 @@ function courseChecks(){
   const tt = rec('connect_timetable_v1') || null;
   const fromTimetable = (function(){
     if (!tt || !tt.days || !tt.days.length || !tt.slots || !tt.slots.length) return null;
-    const mins = tt.slots.reduce((n, sl) => {
+    const dayMins = slots => (slots || []).reduce((n, sl) => {
       if (sl.kind === 'break') return n;
       const a = String(sl.from||'').match(/^(\d{1,2}):(\d{2})/), b = String(sl.to||'').match(/^(\d{1,2}):(\d{2})/);
       if (!a || !b) return n;
       const d = (+b[1]*60 + +b[2]) - (+a[1]*60 + +a[2]);
       return d > 0 ? n + d : n;
     }, 0);
-    if (!mins) return null;
-    return { perDay: mins, days: tt.days.length, hours: Math.round(mins * tt.days.length / 60) };
+    /* Each day by its own shape (9 Oct 2026): a course whose afternoon
+       changes, or a part-time one with a long Saturday, does not have one
+       length of day. */
+    const total = tt.days.reduce((n, d) => n + dayMins(window.hubSlotsFor ? hubSlotsFor(tt, d.date) : tt.slots), 0);
+    if (!total) return null;
+    return { perDay: Math.round(total / tt.days.length), days: tt.days.length, hours: Math.round(total / 60) };
   })();
   const hours = parseInt(SETTINGS.totalHours, 10) || 0;
   const shown = hours || (fromTimetable ? fromTimetable.hours : 0);
@@ -466,7 +470,11 @@ function courseChecks(){
      of teaching practice in a day (Handbook 9.1.1 and §26). Both are about
      the SHAPE of the day, so before the timetable there was nothing to read. */
   if (tt && tt.slots && tt.slots.length) {
-    const tpSlots = tt.slots.filter(sl => sl.kind === 'tp');
+    /* The heaviest teaching day the timetable has: with more than one shape
+       (9 Oct 2026), the rule is about the longest. */
+    const tpOf = slots => (slots || []).filter(sl => sl.kind === 'tp');
+    const lenOf = slots => tpOf(slots).reduce((n, sl) => { const a = String(sl.from||'').match(/^(\d{1,2}):(\d{2})/), b = String(sl.to||'').match(/^(\d{1,2}):(\d{2})/); if (!a || !b) return n; const d = (+b[1]*60 + +b[2]) - (+a[1]*60 + +a[2]); return d > 0 ? n + d : n; }, 0);
+    const tpSlots = [tt.slots].concat((tt.shapes || []).map(sh => sh && sh.slots)).filter(Boolean).reduce((best, sl) => lenOf(sl) > lenOf(best) ? sl : best, tt.slots).filter(sl => sl.kind === 'tp');
     const tpMins = tpSlots.reduce((n, sl) => {
       const a = String(sl.from||'').match(/^(\d{1,2}):(\d{2})/), b = String(sl.to||'').match(/^(\d{1,2}):(\d{2})/);
       if (!a || !b) return n;

@@ -680,6 +680,39 @@ window.hubClockRange = function(a, b){
   var sa = A.slice(-2), sb = B.slice(-2);
   return (sa === sb ? A.slice(0, -3) : A) + '\u2013' + B;
 };
+/* THE DAY'S SHAPE FOR A DATE (9 Oct 2026). A timetable has one usual day
+   (`slots`) and may have more shapes (`shapes`), each used from a date, on
+   certain weekdays, or both: C/18's teaching practice moves from 3 PM to 2 PM
+   from 26 Oct (Ramy: "the second half of the course is changing the time"),
+   and a part-time course can have a long Saturday and a short Tuesday. The
+   most particular shape wins: one tied to weekdays beats one that is not, then
+   the later start date, then the later one in the list. Every page that reads
+   a time off the timetable asks this, so they all agree. */
+window.hubShapeFor = function(tt, dateISO){
+  var T = tt || {}, m = String(dateISO || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  var dow = m ? new Date(+m[1], +m[2] - 1, +m[3]).getDay() : -1, iso = m ? m[0] : '';
+  var best = null, bestKey = '';
+  (Array.isArray(T.shapes) ? T.shapes : []).forEach(function(sh, i){
+    if (!sh || !Array.isArray(sh.slots) || !sh.slots.length) return;
+    if (sh.from && (!iso || iso < sh.from)) return;
+    var days = Array.isArray(sh.days) ? sh.days : [];
+    if (days.length && days.indexOf(dow) === -1) return;
+    if (!sh.from && !days.length) return;          // a shape used nowhere
+    var key = (days.length ? '1' : '0') + (sh.from || '0000-00-00') + ('000' + i).slice(-4);
+    if (key > bestKey) { bestKey = key; best = sh; }
+  });
+  return best;
+};
+window.hubSlotsFor = function(tt, dateISO){
+  var sh = window.hubShapeFor(tt, dateISO);
+  return sh ? sh.slots : ((tt && Array.isArray(tt.slots)) ? tt.slots : []);
+};
+/* Which weekdays the course meets on (0 = Sunday). Full-time is Monday to
+   Friday, the default; a part-time course ticks only its own days. */
+window.hubMeets = function(tt){
+  var m = tt && Array.isArray(tt.meets) ? tt.meets.filter(function(n){ return n >= 0 && n <= 6; }) : [];
+  return m.length ? m : [1, 2, 3, 4, 5];
+};
 window.hubLinkIsTimetable = function(l){ return /timetable/i.test(String((l && l.label) || '') + ' ' + String((l && l.card) || '')); };
 /* The CELTA 5 and the TP points are Lite's own rooms now (20_celta5, 24_tp_points),
    so a bare row by that name shows the trainees nothing; a row the centre LINKED

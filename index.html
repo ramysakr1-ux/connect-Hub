@@ -1132,7 +1132,7 @@ if (fbBack){
   const HERO_TP = TP_N || (!beforeStart && !afterEnd && !tpDone && filed + 1 <= tpTotal ? filed + 1 : 0);
   const ttReady = !!(TT && TT.days && TT.days.length && TT.published);
   const tpDay = (function(){ const d = (TT.days || []).find(x => x && Number(x.tp) === HERO_TP); return (d && ymd(d.date)) || ''; })();
-  const tpTime = (function(){ const sl = (TT.slots || []).filter(x => x && x.kind === 'tp' && x.from)[0]; return sl ? hubClock(sl.from) : ''; })();
+  const tpTime = (function(){ const day = (TT.days || []).find(x => x && Number(x.tp) === HERO_TP); const sl = ((window.hubSlotsFor && day ? hubSlotsFor(TT, day.date) : TT.slots) || []).filter(x => x && x.kind === 'tp' && x.from)[0]; return sl ? hubClock(sl.from) : ''; })();
   const tpAim = (function(){
     if (!PTS.released) return '';
     const mine = (PTS.points || {})[ME.token] || {};
@@ -1267,7 +1267,7 @@ if (fbBack){
          is none. The demo clock (hubToday) may say a different day from the
          machine, so the gap between them is taken off: the countdown agrees
          with "N days from today" in the line under it. */
-      const first = (TT.slots || []).map(x => x && x.from).filter(x => /^\d{1,2}:\d{2}/.test(String(x || ''))).sort()[0] || '09:00';
+      const first = ((window.hubSlotsFor ? hubSlotsFor(TT, START) : TT.slots) || []).map(x => x && x.from).filter(x => /^\d{1,2}:\d{2}/.test(String(x || ''))).sort()[0] || '09:00';
       const hhmm = first.length === 4 ? '0' + first : first.slice(0, 5);
       const now = new Date(), realYmd = now.getFullYear() + '-' + p2(now.getMonth() + 1) + '-' + p2(now.getDate());
       const shift = TODAY ? Date.parse(TODAY + 'T12:00:00') - Date.parse(realYmd + 'T12:00:00') : 0;

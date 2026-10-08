@@ -109,6 +109,18 @@
   .room{color:var(--teal); text-decoration:none; font-weight:600; font-size:0.71rem;}
   .room:hover{text-decoration:underline;}
   .slots{width:100%; border-collapse:collapse; font-size:0.78rem;}
+  /* More than one day shape (9 Oct 2026): a tab per shape, when and where
+     each applies, and the days the course meets. */
+  .meets, .shwhen{display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center; font-size:0.8rem; margin:0 0 12px;}
+  .meets label, .shwhen label{display:inline-flex; gap:5px; align-items:center; cursor:pointer;}
+  .meets .ml, .shwhen .ml{font-size:0.64rem; letter-spacing:.1em; text-transform:uppercase; font-weight:700; color:var(--grey); margin-right:2px;}
+  .shwhen input[type=text], .shwhen input[type=date]{font-family:inherit; font-size:0.8rem; padding:5px 8px; border:1px solid var(--sand-line); border-radius:var(--r-control); background:var(--field); color:var(--ink);}
+  .shtabs{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 12px; padding-bottom:10px; border-bottom:1px solid var(--sand-line);}
+  .shtab{font-family:inherit; font-size:0.78rem; font-weight:700; padding:6px 12px; border-radius:999px; border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink); cursor:pointer;}
+  .shtab.on{background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  .shtab:not(.on):hover{border-color:var(--teal);}
+  .imp .hint{font-size:0.78rem; color:var(--grey); margin:0 0 10px; line-height:1.5;}
+  .shchange{font-size:0.82rem; color:var(--ink); background:var(--gold-wash); border:1px solid var(--amber-edge); border-left:4px solid var(--gold); border-radius:var(--r-strip); padding:9px 13px; margin:0 0 12px; line-height:1.55;}
   .slots th{text-align:left; font-size:0.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--grey); padding:4px 6px; border-bottom:1px solid var(--sand-line);}
   .slots td{padding:3px 6px; border-bottom:1px solid var(--sand-line);}
   .slots input, .slots select{font-family:inherit; font-size:0.76rem; width:100%; padding:3px 5px; border:1px solid var(--sand-line); border-radius:5px; background:var(--paper); color:var(--ink);}
@@ -272,6 +284,8 @@ let note = '', busy = false;
 const ymd = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 const parse = s => { const m = String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(+m[1], +m[2]-1, +m[3]) : null; };
 const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DOWL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const dm = d => d.getDate() + ' ' + MON[d.getMonth()];
 const TODAY = window.hubToday ? hubToday() : ymd(new Date());   // the demo clock, when the course is pinned
@@ -415,10 +429,13 @@ function skeleton(){
   const s = parse(SETTINGS.start), e = parse(SETTINGS.end);
   if (!s || !e) return null;
   const tpCount = parseInt(SETTINGS.tpCount, 10) || 8;
+  const MEETS = window.hubMeets ? hubMeets(TT) : [1, 2, 3, 4, 5];
   const days = [];
   for (let d = new Date(s); d <= e; d.setDate(d.getDate()+1)) {
     const dow = d.getDay();
-    if (dow === 0 || dow === 6) continue;          // weekends are not course days
+    /* The days the course meets: Monday to Friday unless the course says
+       otherwise -- a part-time course ticks its own (9 Oct 2026). */
+    if (MEETS.indexOf(dow) === -1) continue;
     days.push({ date: ymd(d), cells:{}, notes:'' });
   }
   /* Day one is orientation and the demonstration class — no assessed practice
@@ -432,18 +449,28 @@ function skeleton(){
     teaching[i].tp = tp;
     teaching[i].setIndex = i % nSets;
   }
-  return { days, slots: (TT && TT.slots && TT.slots.length ? TT.slots : DEFAULT_SLOTS).map(x => Object.assign({}, x)), published: !!(TT && TT.published), built: new Date().toISOString() };
+  const out = { days, slots: (TT && TT.slots && TT.slots.length ? TT.slots : DEFAULT_SLOTS).map(x => Object.assign({}, x)), published: !!(TT && TT.published), built: new Date().toISOString() };
+  if (TT && Array.isArray(TT.shapes) && TT.shapes.length) out.shapes = TT.shapes;
+  if (TT && Array.isArray(TT.meets) && TT.meets.length) out.meets = TT.meets;
+  return out;
 }
 
 /* One day, laid out from the shape. Times down the left; breaks quiet,
    because they are the day's rhythm and not its content; the three teaching
    practice slots carrying the rotating order, so a trainee reads the time
    they teach rather than working it out from a letter. */
+/* The slots a day is laid out from: its own shape when one applies to it
+   (hub-shared.js hubShapeFor), otherwise the usual day. */
+function slotsOf(day){
+  const s = window.hubSlotsFor ? hubSlotsFor(TT, day && day.date) : (TT && TT.slots);
+  return (s && s.length) ? s : DEFAULT_SLOTS;
+}
+
 function cellHTML(day){
   const d = parse(day.date);
   const isToday = day.date === TODAY;
   const dueHere = (DUES[day.date] || []);
-  const slots = (TT && TT.slots && TT.slots.length) ? TT.slots : DEFAULT_SLOTS;
+  const slots = slotsOf(day);
   const cells = day.cells || {};
 
   /* Who teaches which of the day's practice slots. The set that teaches today
@@ -625,7 +652,7 @@ function markFor(token, tp, dateISO){
 function roomsStrip(){
   const rooms = (Array.isArray(SETTINGS.onlineRooms) ? SETTINGS.onlineRooms : []).filter(r => r && r.url && /^https?:\/\//i.test(r.url));
   if (!rooms.length) return '';
-  const slots = (TT && TT.slots && TT.slots.length) ? TT.slots : DEFAULT_SLOTS;
+  const slots = slotsOf({ date: TODAY });
   const n0 = window.hubNow ? hubNow() : new Date();
   const now = n0 instanceof Date ? n0 : new Date(n0);
   const todayIsCourseDay = (TT.days || []).some(d => d.date === TODAY);
@@ -808,9 +835,22 @@ function render(){
       <span class="status">${esc(note)}</span></div>
       <p class="legend" style="margin:0 0 14px">${pub ? 'Everyone on the course reads this timetable. Edits show at once.' : 'Only tutors can see it until you set it.'}</p>`
       + (PREVIEW ? '' : moveHTML() + slotsHTML() + importHTML()) : '';
+  /* Where a dated shape takes over, the week it starts in says so above its
+     days, in words: "From Monday 26 October the day changes" and the new
+     teaching practice hours (Ramy, 9 Oct 2026). A shape tied to weekdays
+     (part-time) changes every week by design and is not announced. */
+  const changeNote = (w) => w.map(d => {
+    const i = TT.days.indexOf(d);
+    if (i <= 0 || !window.hubShapeFor) return '';
+    const sh = hubShapeFor(TT, d.date);
+    if (!sh || sh === hubShapeFor(TT, TT.days[i - 1].date) || !sh.from || (sh.days || []).length) return '';
+    const tp = (sh.slots || []).filter(x => x.kind === 'tp' && x.from);
+    const when = parse(d.date);
+    return `<p class="shchange">From <b>${DOWL[when.getDay()]} ${when.getDate()} ${MONL[when.getMonth()]}</b> the day changes${sh.name ? ' (' + esc(sh.name) + ')' : ''}${tp.length ? ': teaching practice ' + esc(hubClockRange(tp[0].from, tp[tp.length - 1].to || tp[tp.length - 1].from)) : ''}.</p>`;
+  }).join('');
   app.innerHTML = head + zoneLine() + bar + roomsStrip() + weeks.map((w, i) => {
     const a = parse(w[0].date), b = parse(w[w.length-1].date);
-    return `<section class="wk"><h2>Week ${i+1} <small>${dm(a)} – ${dm(b)}</small></h2>
+    return `<section class="wk"><h2>Week ${i+1} <small>${dm(a)} – ${dm(b)}</small></h2>${changeNote(w)}
       <div class="days">${w.map(d => cellHTML(d)).join('')}</div></section>`;
   }).join('') + keyLine() + `<p class="legend">Teaching practice runs the same number on two days, one teaching set each: the letters name the trainees teaching that day. ${GROUPS.map(g => 'Group ' + esc(g.group || '—') + ': ' + g.sets.map(R.setName).filter(Boolean).join(' and ')).join('. ')}.</p>`;
   if ($('rebuild')) $('rebuild').addEventListener('click', () => { if (confirm('Rebuild the shape from the course dates? Input sessions and notes you have typed are kept where the day still exists.')) build(true); });
@@ -862,46 +902,116 @@ const KINDS = [['input','Input, typed per day'],['tp','Teaching practice lesson'
                ['break','Break or lunch'],['prep','TP preparation'],
                ['plan','Lesson planning'],['feedback','TP feedback']];
 
+let SHAPE_AT = -1;   // which shape the editor shows: -1 the usual day, else TT.shapes[i]
+
+/* The slots the editor is working on, made real the first time they are. */
+function editSlots(){
+  if (SHAPE_AT >= 0 && TT.shapes && TT.shapes[SHAPE_AT]) return TT.shapes[SHAPE_AT].slots;
+  if (!TT.slots || !TT.slots.length) TT.slots = DEFAULT_SLOTS.map(x => Object.assign({}, x));
+  return TT.slots;
+}
+const shapeName = sh => sh.name || (sh.from ? 'From ' + dm(parse(sh.from)) : '') + ((sh.days || []).length ? ((sh.from ? ', ' : '') + (sh.days || []).slice().sort().map(n => DOW[n] + 's').join(' and ')) : '') || 'New shape';
+/* Where a shape is used, counted off the days themselves, so the editor
+   says exactly what the timetable will do. */
+function shapeWhere(sh){
+  const used = (TT.days || []).filter(d => window.hubShapeFor && hubShapeFor(TT, d.date) === sh);
+  if (!sh.from && !(sh.days || []).length) return 'Not used on any day yet: give it a start date, tick the weekdays it is for, or both.';
+  if (!used.length) return 'No course day falls under it yet.';
+  return 'Used on ' + used.length + ' day' + (used.length === 1 ? '' : 's') + ', ' + dm(parse(used[0].date)) + (used.length > 1 ? ' to ' + dm(parse(used[used.length - 1].date)) : '') + '. Everything typed into a day is kept: a copied slot keeps its name, so the day’s sessions stay where they were.';
+}
+
 function slotsHTML(){
   if (!SLOTS_OPEN) return '';
-  const slots = (TT.slots && TT.slots.length) ? TT.slots : DEFAULT_SLOTS;
-  return `<div class="imp"><h3>The day\u2019s shape</h3>
-    <p>Set once for the course; every day is laid out from it. The teaching practice slots are one lesson each \u2014 three of them means three trainees teach a day, and the order rotates. The room is one of the course\u2019s online rooms, named by its label so it is still typed once on Course admin.</p>
+  const shapes = Array.isArray(TT.shapes) ? TT.shapes : [];
+  if (SHAPE_AT >= shapes.length) SHAPE_AT = -1;
+  const cur = SHAPE_AT >= 0 ? shapes[SHAPE_AT] : null;
+  const slots = editSlots();
+  const meets = window.hubMeets ? hubMeets(TT) : [1,2,3,4,5];
+  const WEEK = [1,2,3,4,5,6,0];
+  return `<div class="imp"><h3>The day’s shape</h3>
+    <p>Every day is laid out from a shape. The usual day is used everywhere unless another shape takes a day: one from a date (the afternoon moves after the level change, say) or on certain weekdays (a part-time course’s long Saturday). The teaching practice slots are one lesson each — three of them means three trainees teach a day, and the order rotates. The room is one of the course’s online rooms, by its name.</p>
+    <div class="meets"><span class="ml">The course meets on</span>${WEEK.map(n => `<label><input type="checkbox" data-meet="${n}"${meets.indexOf(n) !== -1 ? ' checked' : ''}> ${DOW[n]}</label>`).join('')}</div>
+    <div class="shtabs"><button type="button" class="shtab${cur ? '' : ' on'}" data-shape="-1">The usual day</button>${shapes.map((sh, i) => `<button type="button" class="shtab${SHAPE_AT === i ? ' on' : ''}" data-shape="${i}">${esc(shapeName(sh))}</button>`).join('')}<button type="button" class="btn quiet sm" id="shapeAdd">Add a shape</button></div>
+    ${cur ? `<div class="shwhen"><label><span class="ml">Name</span><input type="text" id="shName" value="${esc(cur.name || '')}" placeholder="e.g. After the level change"></label>
+      <label><span class="ml">From</span><input type="date" id="shFrom" value="${esc(cur.from || '')}"></label>
+      <span class="ml">On</span>${WEEK.map(n => `<label><input type="checkbox" data-shday="${n}"${(cur.days || []).indexOf(n) !== -1 ? ' checked' : ''}> ${DOW[n]}</label>`).join('')}</div>
+      <p class="hint">${esc(shapeWhere(cur))} Leave the weekdays empty to use it on every day from the date.</p>`
+      : (shapes.length ? `<p class="hint">Every day the other shapes do not take.</p>` : '')}
     <div class="wrap"><table class="slots"><tr><th>From</th><th>To</th><th>What it is</th><th>Name</th><th>Room</th><th></th></tr>
     ${slots.map((sl, i) => `<tr>
       <td><input type="time" data-sl="${i}" data-k="from" value="${esc(sl.from||'')}"></td>
       <td><input type="time" data-sl="${i}" data-k="to" value="${esc(sl.to||'')}"></td>
       <td><select data-sl="${i}" data-k="kind">${KINDS.map(([v,l]) => `<option value="${v}"${sl.kind===v?' selected':''}>${esc(l)}</option>`).join('')}</select></td>
       <td><input type="text" data-sl="${i}" data-k="label" value="${esc(sl.label||'')}" placeholder="e.g. Input: teaching receptive skills"></td>
-      <td><input type="text" data-sl="${i}" data-k="room" value="${esc(sl.room||'')}" placeholder="\u2014"></td>
+      <td><input type="text" data-sl="${i}" data-k="room" value="${esc(sl.room||'')}" placeholder="—"></td>
       <td><button class="btn quiet sm" data-slrm="${i}">Remove</button></td></tr>`).join('')}
     </table></div>
     <div class="row"><button class="btn" id="slotAdd">Add a slot</button>
-      <button class="btn quiet" id="slotReset">Back to the default day</button>
+      ${cur ? '<button class="btn quiet" id="shapeRemove">Remove this shape</button>' : '<button class="btn quiet" id="slotReset">Back to the default day</button>'}
       <button class="btn quiet" id="slotsClose">Close</button></div></div>`;
 }
+
+const ask = (text, verb) => window.confirmModal ? confirmModal(text, verb) : Promise.resolve(confirm(text));
 
 function wireSlots(){
   if (!IS_TUTOR) return;
   if ($('slotsOpen')) $('slotsOpen').addEventListener('click', () => { SLOTS_OPEN = !SLOTS_OPEN; render(); });
   if ($('slotsClose')) $('slotsClose').addEventListener('click', () => { SLOTS_OPEN = false; render(); });
+  document.querySelectorAll('[data-shape]').forEach(el => el.addEventListener('click', () => { SHAPE_AT = +el.dataset.shape; render(); }));
+  /* A new shape starts as a copy of the one on screen, keys and all, so the
+     sessions typed into each day carry straight across: only the times and
+     the slots that differ need touching (Ramy: "then I'm doing the whole
+     thing manually now"). */
+  if ($('shapeAdd')) $('shapeAdd').addEventListener('click', () => {
+    const copy = editSlots().map(x => Object.assign({}, x));
+    TT.shapes = Array.isArray(TT.shapes) ? TT.shapes : [];
+    TT.shapes.push({ name: '', from: '', days: [], slots: copy });
+    SHAPE_AT = TT.shapes.length - 1;
+    save('Shape added — give it a date'); render();
+  });
+  if ($('shapeRemove')) $('shapeRemove').addEventListener('click', async () => {
+    if (!(await ask('Remove this shape? The days it covered go back to the usual day.', 'Remove'))) return;
+    TT.shapes.splice(SHAPE_AT, 1); if (!TT.shapes.length) delete TT.shapes;
+    SHAPE_AT = -1; save('Shape removed'); render();
+  });
+  const cur = () => (SHAPE_AT >= 0 && TT.shapes) ? TT.shapes[SHAPE_AT] : null;
+  if ($('shName')) { let t = null; const fire = () => { const c = cur(); if (!c) return; c.name = $('shName').value.trim(); save('Saved'); };
+    $('shName').addEventListener('input', () => { clearTimeout(t); t = setTimeout(fire, 700); }); $('shName').addEventListener('blur', () => { clearTimeout(t); fire(); render(); }); }
+  if ($('shFrom')) $('shFrom').addEventListener('change', () => { const c = cur(); if (!c) return; c.from = $('shFrom').value || ''; save('Saved'); render(); });
+  document.querySelectorAll('[data-shday]').forEach(el => el.addEventListener('change', () => {
+    const c = cur(); if (!c) return;
+    const n = +el.dataset.shday, days = (c.days || []).filter(x => x !== n);
+    if (el.checked) days.push(n);
+    c.days = days.sort(); save('Saved'); render();
+  }));
+  /* The days the course meets decide which dates are course days at all, so
+     changing them lays the days out again -- keeping what is typed on any
+     day that still exists, as "Rebuild the shape" does. */
+  document.querySelectorAll('[data-meet]').forEach(el => el.addEventListener('change', async () => {
+    const was = window.hubMeets ? hubMeets(TT) : [1,2,3,4,5];
+    const n = +el.dataset.meet, next = was.filter(x => x !== n);
+    if (el.checked) next.push(n);
+    next.sort();
+    if (!next.length) { render(); return; }
+    const names = next.map(x => DOW[x]).join(', ');
+    if (!(await ask('Lay the course days out again on ' + names + '? Sessions and notes typed on a day that is still a course day are kept; the teaching practices are dealt again.', 'Rebuild'))) { render(); return; }
+    TT.meets = next;
+    build(true);
+  }));
   if ($('slotAdd')) $('slotAdd').addEventListener('click', () => {
-    TT.slots = (TT.slots || DEFAULT_SLOTS).slice();
-    TT.slots.push({ key: 's' + Date.now().toString(36), from:'', to:'', kind:'input', label:'Input', room:'' });
+    editSlots().push({ key: 's' + Date.now().toString(36), from:'', to:'', kind:'input', label:'Input', room:'' });
     save('Added'); render();
   });
-  if ($('slotReset')) $('slotReset').addEventListener('click', () => {
-    if (!confirm('Back to the default day? Anything typed into a slot that no longer exists stops showing.')) return;
+  if ($('slotReset')) $('slotReset').addEventListener('click', async () => {
+    if (!(await ask('Back to the default day? Anything typed into a slot that no longer exists stops showing.', 'Reset'))) return;
     TT.slots = DEFAULT_SLOTS.map(x => Object.assign({}, x)); save('Shape reset'); render();
   });
   document.querySelectorAll('[data-slrm]').forEach(el => el.addEventListener('click', () => {
-    TT.slots = (TT.slots || DEFAULT_SLOTS).slice();
-    TT.slots.splice(+el.dataset.slrm, 1); save('Removed'); render();
+    editSlots().splice(+el.dataset.slrm, 1); save('Removed'); render();
   }));
   document.querySelectorAll('[data-sl]').forEach(el => {
     const fire = () => {
-      TT.slots = (TT.slots || DEFAULT_SLOTS).slice();
-      const sl = TT.slots[+el.dataset.sl]; if (!sl) return;
+      const sl = editSlots()[+el.dataset.sl]; if (!sl) return;
       sl[el.dataset.k] = el.value;
       save('Saved');
       if (el.dataset.k === 'kind') render();
@@ -988,9 +1098,9 @@ function wireImport(){
        importer was still writing the old a/b fields, which nothing reads:
        "Put it in did not put it in" (Ramy, 9 Oct 2026). A course with one
        input slot gets both, joined. */
-    const ins = (TT.slots || []).filter(x => x.kind === 'input');
     REVIEW.found.forEach(f => {
       const day = by[f.date]; if (!day) return;
+      const ins = slotsOf(day).filter(x => x.kind === 'input');
       day.cells = day.cells || {};
       [f.a, f.b].forEach((v, i) => {
         if (!v || !ins.length) return;

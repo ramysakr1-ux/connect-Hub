@@ -995,7 +995,10 @@ function render(){
       const mineCell = myIdx >= 0 ? cellOfT(teaching[myIdx]) : null;
       const myPages = mineCell ? pageNums(mineCell) : [];
 
-      const slotTime = i => { const sl = tpSlots[i] || {}; return sl.from ? esc(sl.to ? hubClockRange(sl.from, sl.to) : hubClock(sl.from)) : ''; };
+      /* That practice's own day decides the times (9 Oct 2026): the shape can
+         change partway through a course. */
+      const daySlots = date && window.hubSlotsFor ? hubSlotsFor(tt, date).filter(sl => sl && sl.kind === 'tp') : tpSlots;
+      const slotTime = i => { const sl = daySlots[i] || {}; return sl.from ? esc(sl.to ? hubClockRange(sl.from, sl.to) : hubClock(sl.from)) : ''; };
 
       /* exercise lines a trainee is doing, pulled out so a shared page can
          show both sides of it. */

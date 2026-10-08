@@ -380,9 +380,26 @@
     var run = wd.length > 2 && wd[wd.length - 1] - wd[0] === wd.length - 1;
     var days = run ? DOW[wd[0]] + ' to ' + DOW[wd[wd.length - 1]] : wd.map(function(n){ return DOW[n]; }).join(', ');
     if (!slots.length) return days;
-    var from = slots[0].from, to = slots[slots.length - 1].to;
-    var when = window.hubClockRange ? hubClockRange(from, to) : from + '–' + to;
-    return days + (when ? ', ' + when : '');
+    var rangeOf = function(sl){
+      var tp = (sl || []).filter(function(s){ return s && s.kind === 'tp'; });
+      if (!tp.length) return '';
+      var from = tp[0].from, to = tp[tp.length - 1].to;
+      return window.hubClockRange ? hubClockRange(from, to) : from + '\u2013' + to;
+    };
+    /* The class time can change partway through a course (C/18 moves from
+       3 PM to 2 PM on 26 Oct), so the times are read day by day and a
+       change is said: "3:00–5:30 PM until 23 Oct, then 2:00–4:30 PM". */
+    var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var runs = [];
+    (tt.days || []).filter(function(d){ return d && d.tp && d.date; }).forEach(function(d){
+      var r = rangeOf(window.hubSlotsFor ? hubSlotsFor(tt, d.date) : tt.slots);
+      if (!runs.length || runs[runs.length - 1].r !== r) runs.push({ r: r, last: d.date });
+      else runs[runs.length - 1].last = d.date;
+    });
+    runs = runs.filter(function(x){ return x.r; });
+    if (runs.length <= 1) { var when = runs.length ? runs[0].r : rangeOf(slots); return days + (when ? ', ' + when : ''); }
+    var short = function(iso){ var p = iso.split('-'); return (+p[2]) + ' ' + MON[+p[1] - 1]; };
+    return days + ', ' + runs.map(function(x, i){ return x.r + (i < runs.length - 1 ? ' until ' + short(x.last) : ''); }).join(', then ');
   }
   function paint(){
     var raw = read('connect_course_settings');
