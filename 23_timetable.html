@@ -180,6 +180,9 @@
   .imp p{font-size:0.8rem; color:var(--grey); margin:0 0 10px; line-height:1.55;}
   .imp textarea{font-family:ui-monospace,Menlo,monospace; font-size:0.76rem; width:100%; min-height:90px; padding:8px 10px; border:1px solid var(--sand-line); border-radius:7px; background:var(--paper); color:var(--ink);}
   .imp .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px;}
+  .imp .link{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:0 0 12px;}
+  .imp .link input{flex:1 1 260px; min-width:0; font-size:0.8rem; padding:8px 10px; border:1px solid var(--sand-line); border-radius:7px; background:var(--field); color:var(--ink);}
+  .imp .linkerr{font-size:0.78rem; color:var(--brick); margin:-4px 0 12px; line-height:1.5;}
   .review{background:var(--surface); border:1px solid var(--sand-line); border-left:5px solid var(--gold); border-radius:10px; padding:16px 18px; margin:0 0 18px;}
   .review h3{font-family:'Newsreader',Georgia,serif; font-size:1.1rem; margin:0 0 6px;}
   .review .n{font-size:0.82rem; color:var(--grey); line-height:1.55; margin:0 0 10px;}
@@ -914,6 +917,12 @@ function wireSlots(){
    from the page. What arrives is shown before anything is replaced, the same
    as the observation importer: a file it has never seen is a first draft. */
 let IMPORT_OPEN = false, REVIEW = null;
+/* The link import (8 Oct 2026): Ramy, "then I will be able to import the
+   timetable that we have on Google Classroom". The sheet must be shared
+   "anyone with the link": Google refuses a page a private sheet, and the
+   page cannot tell a private sheet from a wrong address, so it says both. */
+let LINK_VALUE = '', LINK_ERR = '';
+const LINK_SHARE = 'Lite could not open that sheet. In Google Sheets, click Share, set General access to "Anyone with the link" (Viewer), and try again.';
 
 function importHTML(){
   if (REVIEW) {
@@ -928,7 +937,10 @@ function importHTML(){
   }
   if (!IMPORT_OPEN) return '';
   return `<div class="imp"><h3>Import from a sheet</h3>
-    <p>Paste from Excel or Google Sheets, or choose an Excel, Word, CSV or text file. One row per day, with columns for the date, the input sessions and any notes — a header row naming them helps but is not needed. Rows without a readable date are taken in order from the first course day.</p>
+    <p>Give a Google Sheets link, paste from Excel or Google Sheets, or choose an Excel, Word, CSV or text file. One row per day, with columns for the date, the input sessions and any notes, or a week grid with the dates across the top of each week and rows for input, TP and assignments. A header row naming the columns helps but is not needed. Rows without a readable date are taken in order from the first course day.</p>
+    <div class="link"><input type="url" id="impLink" placeholder="Google Sheets link" value="${esc(LINK_VALUE)}" autocomplete="off">
+      <button class="btn" id="impLinkRead">Read the link</button></div>
+    ${LINK_ERR ? `<p class="linkerr">${esc(LINK_ERR)}</p>` : ''}
     <textarea id="impPaste" placeholder="Paste the rows here"></textarea>
     <div class="row"><button class="btn" id="impRead">Read the paste</button>
       <input type="file" id="impFile" accept=".xlsx,.docx,.csv,.tsv,.txt" style="font-size:0.78rem">
@@ -939,7 +951,20 @@ function wireImport(){
   if (!IS_TUTOR) return;
   const open = $('importOpen');
   if (open) open.addEventListener('click', () => { IMPORT_OPEN = !IMPORT_OPEN; REVIEW = null; render(); });
-  if ($('impClose')) $('impClose').addEventListener('click', () => { IMPORT_OPEN = false; render(); });
+  if ($('impClose')) $('impClose').addEventListener('click', () => { IMPORT_OPEN = false; LINK_ERR = ''; render(); });
+  if ($('impLinkRead')) $('impLinkRead').addEventListener('click', async () => {
+    LINK_VALUE = $('impLink').value.trim(); LINK_ERR = '';
+    const url = window.hubTimetableParse.sheetCsvUrl(LINK_VALUE);
+    if (!url) { LINK_ERR = 'That is not a Google Sheets link. Copy it from the address bar of the open sheet.'; render(); return; }
+    const btn = $('impLinkRead'); btn.disabled = true; btn.textContent = 'Reading…';
+    try {
+      const res = await fetch(url, { credentials: 'omit' });
+      const type = res.headers.get('content-type') || '';
+      if (!res.ok || /html/i.test(type)) throw new Error('not shared');
+      const rows = window.hubTimetableParse.csvRows(await res.text());
+      LINK_ERR = ''; review(rows, 'The sheet at that link');
+    } catch (err) { LINK_ERR = LINK_SHARE; render(); }
+  });
   if ($('impRead')) $('impRead').addEventListener('click', () => {
     const text = $('impPaste').value;
     if (!text.trim()) { note = 'Nothing pasted yet.'; render(); return; }
