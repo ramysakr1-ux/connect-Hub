@@ -753,6 +753,29 @@ window.hubApplyCentre = function(){
     else el.textContent = c.name;
   });
 };
+/* THE RULE (Ramy, 8 Oct 2026): "the assessor, trainee, trainer sort of
+   landing pages should show the centre name and the centre logo." Each of
+   those pages writes its centre line (name, number, dates); this puts the
+   logo in front of it, in the logo's own shape, 28px high and up to 84 wide.
+   Call it AFTER the line's text is set -- setting textContent clears it. */
+window.hubCentreLogo = function(el){
+  if (!el) return;
+  var c = window.hubCentre();
+  var old = el.querySelector && el.querySelector('img.hub-centre-mark');
+  if (!c.logo || !/^(data:image\/|https:\/\/)/.test(String(c.logo))) { if (old) old.remove(); el.classList.remove('hub-with-logo'); return; }
+  if (!document.getElementById('hub-centre-mark-css')) {
+    var st = document.createElement('style'); st.id = 'hub-centre-mark-css';
+    st.textContent = '.hub-with-logo{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}'
+      + '.hub-centre-mark{height:28px; width:auto; max-width:84px; object-fit:contain; display:block; flex:none;}';
+    document.head.appendChild(st);
+  }
+  var img = old || document.createElement('img');
+  img.className = 'hub-centre-mark'; img.alt = ''; if (img.getAttribute('src') !== c.logo) img.src = c.logo;
+  if (!old) el.insertBefore(img, el.firstChild);
+  el.classList.add('hub-with-logo');
+  // a centred line (the assessor's pack) stays centred with its logo
+  try { if (getComputedStyle(el).textAlign === 'center') el.style.justifyContent = 'center'; } catch (e) {}
+};
 document.addEventListener('hub:ready', window.hubApplyCentre);
 if (!window.HubStore) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', window.hubApplyCentre); else window.hubApplyCentre(); }
 
