@@ -18,6 +18,11 @@
  *      through WebAudio (looped with a three-second crossfade at the seam and
  *      faded out over the last four seconds, as the page's own music does).
  * film/flatten.mjs then makes it a plain, moov-first MP4.
+ *
+ * UPRIGHT (TikTok, Instagram Reels): VERTICAL=1 DECOR=<1080x1920 png> lays
+ * each frame into that branded frame, the film across the middle at full
+ * width. FRAMES=<dir> keeps the frames, and PASS2=1 FRAMES=<dir> reuses them,
+ * so one capture gives both the landscape and the upright file.
  */
 import { readFileSync, writeFileSync, appendFileSync, rmSync, existsSync, renameSync, statSync, mkdtempSync, mkdirSync, readdirSync } from 'node:fs';
 import { createServer } from 'node:http';
@@ -71,9 +76,9 @@ if (process.env.PASS2) {
 // ---- 2. the file -------------------------------------------------------------
 const server = createServer((rq, rs) => {
   const u = rq.url.split('?')[0];
-  const f = u === '/music.mp3' ? MUSIC : u.startsWith('/f/') ? join(dir, u.slice(3)) : null;
+  const f = u === '/music.mp3' ? MUSIC : u === '/decor.png' ? process.env.DECOR : u.startsWith('/f/') ? join(dir, u.slice(3)) : null;
   if (!f || !existsSync(f)) { rs.writeHead(404); rs.end(); return; }
-  rs.writeHead(200, { 'Content-Type': f.endsWith('.mp3') ? 'audio/mpeg' : 'image/jpeg', 'Access-Control-Allow-Origin': '*' }); rs.end(readFileSync(f));
+  rs.writeHead(200, { 'Content-Type': f.endsWith('.mp3') ? 'audio/mpeg' : f.endsWith('.png') ? 'image/png' : 'image/jpeg', 'Access-Control-Allow-Origin': '*' }); rs.end(readFileSync(f));
 });
 await new Promise(r => server.listen(0, r));
 const port = server.address().port;
@@ -81,8 +86,9 @@ b = await chromium.launch({ channel: 'chrome', args: ['--autoplay-policy=no-user
 page = await (await b.newContext({ viewport: { width: 400, height: 300 } })).newPage();
 await page.exposeFunction('mp4Chunk', (b64) => { appendFileSync(OUT, Buffer.from(b64, 'base64')); });
 await page.exposeFunction('mp4Say', (s) => console.log(s));
-await page.setContent('<canvas id="c" width="1920" height="1080" style="width:192px"></canvas>');
-await page.evaluate(([N, FPS, BASE, DBG]) => new Promise(async (done, fail) => {
+const VERT = !!process.env.VERTICAL;
+await page.setContent(VERT ? '<canvas id="c" width="1080" height="1920" style="width:108px"></canvas>' : '<canvas id="c" width="1920" height="1080" style="width:192px"></canvas>');
+await page.evaluate(([N, FPS, BASE, DBG, VERT]) => new Promise(async (done, fail) => {
   try {
     const name = i => BASE + '/f/' + String(i).padStart(6, '0') + '.jpg';
     const load = i => fetch(name(i)).then(r => r.blob()).then(b => createImageBitmap(b));
@@ -90,7 +96,10 @@ await page.evaluate(([N, FPS, BASE, DBG]) => new Promise(async (done, fail) => {
     for (let i = 0; i < 90; i++) want(i);
     window.mp4Say('pass 2: loading frames');
     const c = document.getElementById('c'), g = c.getContext('2d', { alpha: false });
-    g.drawImage(await ahead.get(0), 0, 0);
+    /* upright: the branded frame once, then each picture across the middle */
+    const decor = VERT ? await fetch(BASE + '/decor.png').then(r => r.blob()).then(b => createImageBitmap(b)) : null;
+    const put = (bmp) => { if (VERT) { g.drawImage(decor, 0, 0); g.drawImage(bmp, 0, 656, 1080, 608); } else g.drawImage(bmp, 0, 0); };
+    put(await ahead.get(0));
     const ac = new AudioContext();
     const track = await ac.decodeAudioData(await (await fetch(BASE + '/music.mp3')).arrayBuffer());
     const dest = ac.createMediaStreamDestination();
@@ -139,7 +148,7 @@ await page.evaluate(([N, FPS, BASE, DBG]) => new Promise(async (done, fail) => {
         // The previous frame's bitmap is released only now: a canvas paints
         // lazily, and closing a bitmap straight after drawImage left every
         // recorded frame as the first one.
-        const bmp = await ahead.get(i); g.drawImage(bmp, 0, 0); ahead.delete(i);
+        const bmp = await ahead.get(i); put(bmp); ahead.delete(i);
         if (prev && prev.close) prev.close(); prev = bmp;
         vtrack.requestFrame();
         for (let j = i + 1; j < i + 90; j++) want(j);
@@ -151,7 +160,7 @@ await page.evaluate(([N, FPS, BASE, DBG]) => new Promise(async (done, fail) => {
     } catch (e) { window.mp4Say('tick failed: ' + (e && e.message || e)); fail(e); } };
     tick();
   } catch (e) { fail(e); }
-}), [N, FPS, 'http://127.0.0.1:' + port, !!process.env.DBG]);
+}), [N, FPS, 'http://127.0.0.1:' + port, !!process.env.DBG, VERT]);
 await b.close(); server.close();
 if (!process.env.FRAMES) rmSync(dir, { recursive: true, force: true });
 
