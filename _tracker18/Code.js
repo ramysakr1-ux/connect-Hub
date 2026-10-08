@@ -134,8 +134,8 @@ return true;
 var ROSTER_TAB = 'Roster';
 var ROSTER_HEADER = ['group', 'candidate'];
 var ROSTER_SEED = [
-['ABC', 'Billur Manav'], ['ABC', 'Iris Ersoy'], ['ABC', 'Kian Pakravanan'],
-['DEF', 'Koray Yeşilyayla'], ['DEF', 'Hiba Alimam'], ['DEF', 'Ebru Rifai']
+['C18', 'Billur Manav'], ['C18', 'Iris Ersoy'], ['C18', 'Kian Pakravanan'],
+['C18', 'Koray Yeşilyayla'], ['C18', 'Hiba Alimam'], ['C18', 'Ebru Rifai']
 ];
 
 function rosterSheet_() {

@@ -147,7 +147,6 @@ h1 { font-size:27px; margin:4px 0 16px; color:var(--navy); letter-spacing:-0.01e
 <div class="wrap">
 <div class="masthead"><div class="course-tag" id="courseTag">COURSE C18/2026</div></div>
 <h1>Candidate Tracker</h1>
-<div class="info-strip"><span class="dot"></span><span>Groups <b>ABC</b> and <b>DEF</b>, both <b>B1</b> for TP1–4 and <b>A1</b> for TP5–8. Click a candidate to open their record. A TP opens a panel underneath for its grade and its main aim; every other badge cycles on click. Everything saves straight away, and the summary above reads the TPs, the assignments and Stages 2 and 3 together.</span></div>
 <div class="sync-note"><span class="sync-dot" id="syncDot"></span><span id="syncText">Loading live data&hellip;</span></div>
 <div class="dash" id="dash"></div>
 <div class="dash-strip" id="dashStrip"></div>
@@ -742,8 +741,14 @@ function otherGroup(key){
   if (keys.length !== 2) return '';
   return keys.filter(function(k){ return k !== key; })[0] || '';
 }
+/* With the levels set for the course and one TP group (C/18), the heading is
+   just the order -- "B1 first, then A1" (Ramy, 8 Oct 2026). */
+function groupHeading(key){
+  if (COURSE_LEVELS && Object.keys(CANDIDATES).length === 1) return COURSE_LEVELS[0] + ' first, then ' + COURSE_LEVELS[1];
+  return 'Group ' + groupLabel(key);
+}
 function groupLabel(key){
-  if (COURSE_LEVELS) return key;
+  if (COURSE_LEVELS) return key + ' \u00b7 ' + COURSE_LEVELS[0] + ' first, then ' + COURSE_LEVELS[1];
   var other = otherGroup(key);
   return other ? key + '/' + other : key;
 }
@@ -761,7 +766,7 @@ function levelAt(groupKey, tpNumber){
 function buildGroup(key, names){
 var g = document.createElement('div'); g.className='group'; g.id='group-'+key;
 var head = document.createElement('div'); head.className='group-head';
-head.innerHTML = '<h2>Group '+groupLabel(key)+'</h2><span class="n">'+names.length+' candidates</span><span class="car">&#9656;</span>';
+head.innerHTML = '<h2>'+groupHeading(key)+'</h2><span class="n">'+names.length+' candidates</span><span class="car">&#9656;</span>';
 head.addEventListener('click', function(){ g.classList.toggle('collapsed'); });
 g.appendChild(head);
 var roster = document.createElement('div'); roster.className='roster';
@@ -903,7 +908,7 @@ google.script.run.withSuccessHandler(function(){ DATA = {}; loadAndRender(); }).
 document.getElementById('exportBtn').addEventListener('click', function(){
 var lines = [COURSE_CODE + ' Candidate Tracker — summary'];
 Object.keys(CANDIDATES).forEach(function(key){
-lines.push('', 'Group '+groupLabel(key));
+lines.push('', groupHeading(key));
 CANDIDATES[key].forEach(function(name){
 var id = slug(key+'-'+name);
 var c = DATA[id] || {};
