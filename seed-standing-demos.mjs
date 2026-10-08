@@ -189,6 +189,8 @@ function settingsFor(tokens) {
     /* The demos' links open on the ticket (Ramy, 8 Oct 2026: "switch demos
        to ticket"), so a re-plant keeps it. */
     cardStyle: 'ticket',
+    /* Who signs the volunteers' certificates for the (invented) centre, 8 Oct 2026. */
+    certSigner: { name: 'Helen Ward', role: 'Director of Studies', ink: '@greatvibes,0' },
   };
   if (WHICH === 'visit') { s.docs = DOCS; s.assessorVisit = [tokens[0], tokens[3]]; }
   return s;
