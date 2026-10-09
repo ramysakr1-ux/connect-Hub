@@ -26,7 +26,11 @@
   function status(text, kind){
     /* A pinned demo course says so on the pill, so nobody reading a demo
        wonders why "today" is a Tuesday in March. */
-    try { var cs0 = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; if (cs0.demoToday && kind === 'ok') { text += ' \u00b7 Demo, today is ' + cs0.demoToday; kind = 'demo'; } } catch (e) {}
+    /* On a phone the pill says it in fewer words (10 Oct 2026: the bars at the
+       foot of the plan took a quarter of an iPhone's screen). */
+    var narrow = false; try { narrow = window.matchMedia('(max-width:560px)').matches; } catch (e) {}
+    if (narrow && text === 'Live \u2014 saved to the course as you go') text = 'Saved as you go';
+    try { var cs0 = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; if (cs0.demoToday && kind === 'ok') { text += narrow ? ' \u00b7 Demo ' + cs0.demoToday : ' \u00b7 Demo, today is ' + cs0.demoToday; kind = 'demo'; } } catch (e) {}
     if (!pill){ pill = document.createElement('div'); pill.id = 'hubSync'; pill.style.cssText = 'position:fixed;left:14px;bottom:var(--sync-bottom,14px);z-index:900;font:600 11px/1 Karla,sans-serif;padding:7px 11px;border-radius:999px;background:oklch(37.5% 0.058 195);color:#fff;opacity:.85;pointer-events:none;transition:opacity .3s;'; document.body.appendChild(pill); }
     pill.textContent = text; pill.style.background = kind === 'error' ? 'oklch(45% 0.15 27)' : kind === 'busy' ? 'oklch(51% 0.017 70)' : 'oklch(37.5% 0.058 195)';
     pill.style.opacity = '.85';
