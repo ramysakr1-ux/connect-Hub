@@ -254,6 +254,14 @@
   .tile.ghost{position:fixed; z-index:50; pointer-events:none; opacity:.92; box-shadow:0 14px 28px -12px oklch(30% 0.04 60 / .65); cursor:grabbing;}
   .tile.lifted{opacity:.35;}
   .tile.locked{cursor:default;}
+  .tile .rm{display:inline-block; margin-left:6px; font-size:0.6rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--teal); opacity:.8;}
+  .tile .join{display:none; margin-left:6px; padding:1px 8px; border-radius:999px; background:var(--teal); color:var(--paper); font-size:0.64rem; font-weight:700; text-decoration:none; vertical-align:1px;}
+  .tile.joinable .join{display:inline-block;} .tile.joinable .rm{display:none;}
+  .tile.joinable{box-shadow:0 0 0 2px var(--teal); z-index:2;}
+  .tile .join:hover{background:var(--teal-lifted);}
+  .tile.sm .rm{display:none;}
+  .k-tp.mine .rm{color:var(--gold-lifted);}
+  @media print{ .tile .join, .tile .rm{display:none !important;} }
   .tile.locked:after{content:'\1F512'; position:absolute; top:3px; right:5px; font-size:0.6rem; opacity:.55;}
   .tgrid .dt[data-close]{cursor:pointer;}
   .tgrid .dt[data-close]:hover .dm{text-decoration:underline; text-underline-offset:2px;}
@@ -788,9 +796,24 @@ function tileHTML(day, x, B, tpIdx, teachers){
     if (!x.t && x.k === 'input' && !EDIT) return '';
     if (!x.t) { cls.push('empty'); title = esc(KIND_LABEL[x.k] || ''); }
   }
+  /* THE ROOM A TILE JOINS (9 Oct 2026, the handoff's §9). A TP or input tile
+     is in the course's "Teaching practice" or "Input" room unless it names
+     another of the course's rooms; any tile can carry a link of its own. The
+     room is named on the tile, and a Join button shows from fifteen minutes
+     before it starts until it ends, on the course's own clock (nowLine). */
+  const room = joinFor(x, (rec('hub:me') || {}).group);
+  if (room) cls.push('online');
+  const joinHTML = room ? `<span class="rm">${esc(room.label)}</span><a class="join" href="${esc(room.url)}" target="_blank" rel="noopener noreferrer">Join</a>` : '';
   const tip = (x.k === 'tp' ? 'TP ' + (day.tp || '') : (x.t || KIND_LABEL[x.k] || '')) + ' · ' + hubClockRange(x.s, x.e) + (x.k === 'input' && TUTORS[+x.by] ? ' · ' + TUTORS[+x.by] : '');
   return `<div class="${cls.join(' ')}" data-id="${esc(x.id)}" data-date="${esc(day.date)}" data-from="${esc(x.s)}" data-to="${esc(x.e)}" style="top:${top}px;height:${h}px" title="${esc(tip)}">`
-    + `<div class="tt">${title}</div><div class="tm">${esc(hubClockRange(x.s, x.e))}</div>${EDIT ? '<span class="rs" data-rs="1"></span>' : ''}</div>`;
+    + `<div class="tt">${title}</div><div class="tm">${esc(hubClockRange(x.s, x.e))}${joinHTML}</div>${EDIT ? '<span class="rs" data-rs="1"></span>' : ''}</div>`;
+}
+function roomLabelOf(x){ return x.room || (x.k === 'tp' ? 'Teaching practice' : x.k === 'input' ? 'Input' : ''); }
+function joinFor(x, group){
+  if (x.url && /^https?:\/\//i.test(x.url) && x.url !== 'https://') return { label: 'Online', url: x.url };
+  const lbl = roomLabelOf(x); if (!lbl) return null;
+  const r = roomFor({ room: lbl }, group);
+  return r ? { label: r.label || lbl, url: r.url } : null;
 }
 
 /* One day: its header, its tiles on the shared clock, its deadlines as red
@@ -1561,6 +1584,8 @@ function closePop(){
       if (was.x.s !== x.s || was.x.e !== x.e) what.push('now ' + hubClockRange(x.s, x.e));
       if (String(was.x.by) !== String(x.by)) what.push(TUTORS[+x.by] ? 'taught by ' + TUTORS[+x.by] : 'no tutor named');
       if (was.tp !== day.tp || was.set !== day.setIndex) what.push('TP ' + (day.tp || '—'));
+      if (x.url === 'https://') delete x.url;
+      if ((was.x.room || '') !== (x.room || '') || (was.x.url || '') !== (x.url || '')) what.push(x.url ? 'joins its own link' : x.room ? 'in the ' + x.room + ' room' : 'in the usual room');
       /* locking is the tutors' own tool, like pinning: not news for the course */
       if (!what.length) { save('Saved'); render(); document.querySelectorAll('.ttpop, .ttmenu').forEach(el => { el.hidden = true; }); return; }
       CHANGES.push({ at: new Date().toISOString(), key: 'tile:' + o.id, text: '“' + tileName(was.x, day) + '” on ' + dayName(o.date) + ': ' + what.join(', ') });
@@ -1595,6 +1620,8 @@ function openTile(date, id){
       : `<label>Name<input id="tT" value="${esc(x.t || '')}" placeholder="${esc(KIND_LABEL[x.k] || '')}"></label>`}
     ${x.k === 'input' && TUTORS.length ? `<label>Who teaches it<select id="tBy"><option value="">—</option>${TUTORS.map((n, i) => `<option value="${i}"${String(x.by) === String(i) ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>` : ''}
     <div class="two"><label>From<input id="tS" type="time" value="${esc(x.s)}"></label><label>To<input id="tE" type="time" value="${esc(x.e)}"></label></div>
+    ${(() => { const rooms = (Array.isArray(SETTINGS.onlineRooms) ? SETTINGS.onlineRooms : []).filter(r => r && r.url); const labels = [...new Set(rooms.map(r => String(r.label || '').trim()).filter(Boolean))]; const cur = x.url ? '__url' : (x.room || ''); const dflt = roomLabelOf(Object.assign({}, x, { room: '' }));
+      return (labels.length || x.url) ? `<label>Online room<select id="tRoom"><option value=""${cur === '' ? ' selected' : ''}>${esc(dflt ? 'The ' + dflt + ' room' : 'None')}</option>${labels.map(l => `<option value="${esc(l)}"${cur === l ? ' selected' : ''}>${esc(l)}</option>`).join('')}<option value="__url"${cur === '__url' ? ' selected' : ''}>A link of its own</option></select></label>${cur === '__url' ? `<label>Link<input id="tUrl" type="url" value="${esc(x.url || '')}" placeholder="https://…"></label>` : ''}` : ''; })()}
     <label class="lock"><input type="checkbox" id="tLock"${x.locked ? ' checked' : ''}> Locked — can’t be dragged</label>
     <div class="acts"><button type="button" class="btn quiet del" id="tDel">Remove</button><button type="button" class="btn" id="tOk">Done</button></div>`;
   el.hidden = false;
@@ -1614,10 +1641,17 @@ function openTile(date, id){
     if ($('tTp')) { const n = parseInt($('tTp').value, 10); if (n > 0) day.tp = n; }
     if ($('tSet')) day.setIndex = +$('tSet').value;
     if ($('tLock').checked) x.locked = true; else delete x.locked;
+    if ($('tRoom')) {
+      const v = $('tRoom').value;
+      if (v === '__url') { delete x.room; if (!x.url) x.url = 'https://'; }
+      else { delete x.url; if (v) x.room = v; else delete x.room; }
+      if ($('tUrl')) x.url = $('tUrl').value.trim() || 'https://';
+      if ((v === '__url') !== !!$('tUrl')) { const keep = OPEN_TILE; OPEN_TILE = null; save('Saved'); render(); openTile(date, id); UNDO.pop(); if (keep) OPEN_TILE.before = keep.before; return; }
+    }
     const s = toMin($('tS').value), e = toMin($('tE').value);
     if (s != null && e != null) { x.s = toHM(s); x.e = toHM(Math.max(s + 5, e)); settle(day, x); }
   };
-  ['tK', 'tTp', 'tSet', 'tBy', 'tS', 'tE', 'tLock'].forEach(i => { if ($(i)) $(i).addEventListener('change', apply); });
+  ['tK', 'tTp', 'tSet', 'tBy', 'tS', 'tE', 'tLock', 'tRoom', 'tUrl'].forEach(i => { if ($(i)) $(i).addEventListener('change', apply); });
   if ($('tT')) { $('tT').addEventListener('input', apply); $('tT').addEventListener('keydown', e => { if (e.key === 'Enter') { apply(); closePop(); } }); }
   $('tOk').addEventListener('click', () => { apply(); closePop(); });
   $('tDel').addEventListener('click', () => {
@@ -2083,6 +2117,7 @@ function save(word, change){
       const a = t ? mins(t.dataset.from) : null, b = t ? mins(t.dataset.to) : null;
       row.classList.toggle('tv2-now', a != null && b != null && m >= a && m < b);
       row.classList.toggle('tv2-past', b != null && m >= b);
+      if (row.classList.contains('tile')) row.classList.toggle('joinable', a != null && b != null && m >= a - 15 && m < b);
     });
     /* the line across today's column at the time it is now */
     const bar = card.querySelector('.nowbar'), body = bar && bar.parentElement;
