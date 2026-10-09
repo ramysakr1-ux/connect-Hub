@@ -239,8 +239,16 @@
     body.forEach((r) => {
       const at = (k) => (col[k] === undefined ? '' : clean(r[col[k]] || ''));
       const iso = readDate(at('date'), year);
-      let date = '';
+      let date = '', outside = '';
       if (iso && (!days || !days.length || days.some((d) => d.date === iso))) { date = iso; byDate++; }
+      /* A date the sheet states that is not a course day (stage 3, 9 Oct
+         2026): put on the nearest course day, and the review asks rather
+         than placing it silently by position. */
+      else if (iso && days && days.length) {
+        const ds = days.map((d) => d.date);
+        date = iso > ds[ds.length - 1] ? ds[ds.length - 1] : iso < ds[0] ? ds[0] : ds.filter((d) => d <= iso).pop();
+        outside = iso;
+      }
       else if (days && days.length) {
         /* No readable date: the next course day in order. A row that is
            plainly a heading ("Week 2") consumes no day. */
@@ -252,6 +260,7 @@
       }
       if (!date) { unmatched.push(r.map(clean).filter(Boolean).join(' ')); return; }
       const row = { date: date, a: at('input1'), b: at('input2'), notes: at('notes') };
+      if (outside) row.outside = outside;
       /* When the sheet has a TP column (a grid always does), only that column
          counts: the other cells can name a practice ("syllabus planning TP7 &
          TP8") on a day with none. Without one, the whole row is searched. */
@@ -263,7 +272,117 @@
     return { found, unmatched, byDate, byPosition, header: !!map, grid: !!grid, tpColumn };
   }
 
-  const api = { parse, rowsFromText, rowsFromBlocks, csvRows, gridRows, sheetCsvUrl, readDate, readTp, headerMap, splitCsv, clean };
+  /* ---- STAGE 3: WHAT EACH CELL MEANS, AND WHAT TO ASK (9 Oct 2026) ------
+     The timetable-system handoff (specs/timetable-system/ §5): every cell has
+     a meaning, and anything the reader is unsure of becomes a question rather
+     than a guess. interpret() takes parse()'s result and the course, and
+     returns the review: one line per cell as written, what Lite understood,
+     and the questions. Nothing is written until every question is answered. */
+  const KIND_WORDS = [
+    ['task', /\b(work on|finalis|file completion|assignment time|marking)/i],
+    ['plan', /\b(planning)\b/i],
+    ['event', /\b(tutorials?|consultation|orientation|welcome|course close|closing|demo(nstration)?|observations?|filmed|assessor|meeting|getting to know|gtky)\b/i]
+  ];
+  /* What a CELTA input is usually called. A cell matching none of these, and
+     no remembered term, is asked about. */
+  const INPUT_WORDS = /(phonolog|pronunc|stress|intonation|connected speech|sounds|vocab|lexi|grammar|tense|aspect|modal|condition|receptive|productive|reading|listening|speaking|writing|skills|literacy|functional|function|language|analys|context|elicit|concept|ccq|monitor|error|correction|feedback|manag|lesson|framework|ppp|guided discovery|test.?teach|ttt|task.?based|drill|teaching|present|learner|young learners|exam|course ?book|materials|board|instruction|rapport|motivation|professional|development|introduc|intro\b|orientation|syllabus|discourse|dictionar|games?|songs?|authentic|text)/i;
+  const KINDS = { input: 'Input session', plan: 'Lesson planning', event: 'Whole group', task: 'Assignment time' };
+  const normTerm = (s) => clean(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const CODE = { fol: 'fol', lrt: 'lrt', lsrt: 'lsrt', lsa: 'lsrt', srt: 'lsrt', lfc: 'lfc' };
+  const hm = (h, m) => String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  /* A clock time written in a cell. A sheet writes 24-hour times; an hour
+     under eight is read as the afternoon, since no CELTA day starts at 2 AM. */
+  const toClock = (h, m, ap) => { h = +h; if (ap) { if (/p/i.test(ap) && h < 12) h += 12; if (/a/i.test(ap) && h === 12) h = 0; } else if (h < 8) h += 12; return h < 24 && +m < 60 ? hm(h, m) : ''; };
+  function timesIn(text) {
+    const t = clean(text);
+    let m = t.match(/(\d{1,2})[:.](\d{2})\s*(am|pm)?\s*(?:[–—-]|to)\s*(\d{1,2})[:.](\d{2})\s*(am|pm)?/i);
+    if (m) {
+      const s = toClock(m[1], m[2], m[3] || m[6]), e = toClock(m[4], m[5], m[6]);
+      if (s && e && e > s) return { s, e, title: clean(t.replace(m[0], '').replace(/\(\s*\)/g, '').replace(/(\s*·\s*)+$/, '').replace(/^(\s*·\s*)+/, '').replace(/\s*·\s*·\s*/g, ' · ')) };
+    }
+    m = t.match(/\(?\b(\d{1,2})[:.](\d{2})\s*(am|pm)?\)?/i);
+    if (m) {
+      const s = toClock(m[1], m[2], m[3]);
+      if (s) return { s, title: clean(t.replace(m[0], '').replace(/\(\s*\)/g, '').replace(/(\s*·\s*)+$/, '').replace(/^(\s*·\s*)+/, '').replace(/\s*·\s*·\s*/g, ' · ')) };
+    }
+    return null;
+  }
+  const label = (iso) => { const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/); if (!m) return iso; const d = new Date(+m[1], +m[2] - 1, +m[3]); return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()] + ' ' + d.getDate() + ' ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]; };
+  /* Deadlines named in a note: "Assignment 3 in · 11:00", "LRT due", "By
+     18:00 · Assignment 1 in". A resubmission or an "out" is a note. */
+  function deadlinesIn(notes, ctx) {
+    const out = [];
+    const pieces = String(notes || '').split(/;\s*|(?=\b(?:assignment\s*\d|fol|lrt|lsrt|lsa|lfc)\b)/i).map((x) => x.trim()).filter(Boolean);
+    pieces.forEach((piece, i) => {
+      if (/resub|\bout\b/i.test(piece)) return;
+      const m = piece.match(/\b(?:assignment\s*(\d)|(fol|lrt|lsrt|lsa|srt|lfc))\b[^;]*?\b(in|due|deadline)\b/i);
+      if (!m) return;
+      const key = m[1] ? (ctx.order || [])[+m[1] - 1] : CODE[m[2].toLowerCase()];
+      const own = piece.match(/(\d{1,2})[:.](\d{2})/);
+      const before = (pieces[i - 1] || '').match(/by\s*(\d{1,2})[:.](\d{2})\W*$/i);
+      const time = own ? toClock(own[1], own[2]) : before ? toClock(before[1], before[2]) : '';
+      out.push({ text: clean(piece.replace(/(\s*·\s*)+$/, '')), key: key || '', n: m[1] ? +m[1] : 0, time });
+    });
+    return out;
+  }
+  function interpret(res, ctx) {
+    ctx = ctx || {};
+    const days = ctx.days || [], vocab = ctx.vocab || {}, titles = ctx.titles || {};
+    const lines = [], questions = [];
+    const seen = {};
+    (res.found || []).forEach((f, fi) => {
+      const row = 'r' + fi;
+      const first = seen[f.date] === undefined; if (first) seen[f.date] = fi;
+      if (f.outside) {
+        const last = days.length ? days[days.length - 1].date : '', start = days.length ? days[0].date : '';
+        questions.push({ id: row + ':outside', row, kind: 'outside',
+          text: 'This row is dated ' + label(f.outside) + (f.outside > last ? ', after the last course day, ' + label(last) : f.outside < start ? ', before the first course day, ' + label(start) : ', which is not a course day') + '. What should happen?',
+          answers: [{ label: 'Put it on ' + label(f.date), value: 'move' }, { label: 'Ignore this row', value: 'skip' }] });
+      }
+      if (!first) questions.push({ id: row + ':dup', row, kind: 'dup', text: 'Two rows are for ' + label(f.date) + '. How should they go in?',
+        answers: [{ label: 'Both, this row’s sessions after the first’s', value: 'both' }, { label: 'Keep the first row', value: 'first' }, { label: 'Keep this row instead', value: 'second' }] });
+      ['a', 'b'].forEach((col) => {
+        const raw = clean(f[col]); if (!raw) return;
+        const times = timesIn(raw);
+        const title = times ? times.title || raw : raw;
+        const term = normTerm(title);
+        let kind = vocab[term] || '', how = vocab[term] ? 'remembered' : '';
+        if (!kind) for (const [k, re] of KIND_WORDS) if (re.test(title)) { kind = k; how = 'words'; break; }
+        if (!kind && INPUT_WORDS.test(title)) { kind = 'input'; how = 'words'; }
+        const line = { row, date: f.date, col, raw, title, kind: kind || '', times, how };
+        if (!kind) {
+          /* one question per term: the answer goes for every cell that says it */
+          line.q = 'term:' + term;
+          if (!questions.some((q) => q.id === line.q)) questions.push({ id: line.q, row, kind: 'term', term, text: '“' + title + '”: what kind of session is this?',
+            answers: Object.keys(KINDS).map((k) => ({ label: KINDS[k], value: k })).concat([{ label: 'Leave it out', value: 'skip' }]), remember: true });
+        }
+        if (/\btbc\b|to be confirmed/i.test(raw)) {
+          line.tbc = row + ':' + col + ':tbc';
+          questions.push({ id: line.tbc, row, kind: 'tbc', text: '“' + title + '” is not confirmed yet. What should Lite do?',
+            answers: [{ label: 'Put it in, marked “to be confirmed”', value: 'keep' }, { label: 'Leave it out', value: 'skip' }] });
+        }
+        lines.push(line);
+      });
+      if (f.tp) lines.push({ row, date: f.date, col: 'tp', raw: 'TP ' + f.tp, kind: 'tp', title: 'TP ' + f.tp });
+      if (f.notes) {
+        const line = { row, date: f.date, col: 'notes', raw: f.notes, kind: 'note', title: f.notes, dues: [] };
+        deadlinesIn(f.notes, ctx).forEach((d, di) => {
+          const id = row + ':due' + di;
+          const name = d.key ? (titles[d.key] || d.key.toUpperCase()) : '';
+          line.dues.push(id);
+          questions.push(Object.assign({ id, row, kind: 'due', date: f.date }, d.key
+            ? { key: d.key, time: d.time, text: '“' + d.text + '” on ' + label(f.date) + ': is this ' + name + '’s deadline?',
+                answers: [{ label: 'Yes: ' + name + ' due ' + label(f.date) + (d.time ? ', ' + d.time : ''), value: 'yes' }, { label: 'No, it’s a note', value: 'no' }] }
+            : { time: d.time, text: '“' + d.text + '” on ' + label(f.date) + ': which assignment is due?',
+                answers: (ctx.order || []).map((k) => ({ label: titles[k] || k.toUpperCase(), value: 'key:' + k })).concat([{ label: 'None, it’s a note', value: 'no' }]) }));
+        });
+        lines.push(line);
+      }
+    });
+    return { lines, questions };
+  }
+
+  const api = { parse, interpret, timesIn, deadlinesIn, normTerm, KINDS, rowsFromText, rowsFromBlocks, csvRows, gridRows, sheetCsvUrl, readDate, readTp, headerMap, splitCsv, clean };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.hubTimetableParse = api;
 })(typeof window !== 'undefined' ? window : globalThis);
