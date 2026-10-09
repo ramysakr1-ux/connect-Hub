@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610100020">
+<link rel="stylesheet" href="hub-tokens.css?v=202610100033">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -209,10 +209,15 @@
   .tile:hover .rs:after, .tile.dragging .rs:after{opacity:.35;}
   .tile.empty .tt{font-weight:600; opacity:.55; font-style:italic;}
   .k-input{background:oklch(94.5% 0.03 195); border-color:oklch(80% 0.05 195); color:var(--teal-deep);}
+  /* The input tutors' eight colours: hub-shared.js HUB_TUTOR_COLOURS, written out here so the board paints before any script runs. */
   .k-input.by-0{background:oklch(95% 0.04 62); border-color:oklch(83% 0.08 60); color:oklch(42% 0.11 52);}
   .k-input.by-1{background:oklch(94.5% 0.03 245); border-color:oklch(82% 0.06 245); color:oklch(40% 0.1 250);}
   .k-input.by-2{background:oklch(94.5% 0.04 150); border-color:oklch(80% 0.06 150); color:oklch(38% 0.08 150);}
   .k-input.by-3{background:oklch(94.5% 0.03 320); border-color:oklch(82% 0.05 320); color:oklch(40% 0.09 320);}
+  .k-input.by-4{background:oklch(95% 0.035 355); border-color:oklch(83% 0.07 355); color:oklch(42% 0.12 355);}
+  .k-input.by-5{background:oklch(95% 0.045 115); border-color:oklch(83% 0.08 115); color:oklch(40% 0.08 115);}
+  .k-input.by-6{background:oklch(94.5% 0.03 280); border-color:oklch(80% 0.07 280); color:oklch(40% 0.12 280);}
+  .k-input.by-7{background:oklch(95% 0.035 225); border-color:oklch(80% 0.07 225); color:oklch(40% 0.1 230);}
   .k-tp{background:var(--gold-wash); border-color:var(--amber-edge); color:var(--ink-warm);}
   .k-tp .who{display:inline-flex; align-items:center; gap:2px; min-width:16px; margin-left:4px; padding:0 4px; border-radius:4px; background:var(--gold-lifted); color:var(--ink-warm);}
   .k-tp .who.me{background:var(--teal); color:var(--paper);}
@@ -398,23 +403,23 @@
     h1{font-size:1.4rem;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610100020">
+<link rel="stylesheet" href="hub-house.css?v=202610100033">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610100020"></script>
-<script src="hub-tracker.js?v=202610100020"></script>
-<script src="hub-rotation.js?v=202610100020"></script>
-<script src="hub-xlsx.js?v=202610100020"></script>
-<script src="hub-docx.js?v=202610100020"></script>
-<script src="hub-timetable-parse.js?v=202610100020"></script>
-<script src="hub-shared.js?v=202610100020"></script>
-<script src="hub-store.js?v=202610100020"></script>
-<script src="hub-say.js?v=202610100020"></script>
-<script src="hub-sync.js?v=202610100020"></script>
+<script src="hub-due.js?v=202610100033"></script>
+<script src="hub-tracker.js?v=202610100033"></script>
+<script src="hub-rotation.js?v=202610100033"></script>
+<script src="hub-xlsx.js?v=202610100033"></script>
+<script src="hub-docx.js?v=202610100033"></script>
+<script src="hub-timetable-parse.js?v=202610100033"></script>
+<script src="hub-shared.js?v=202610100033"></script>
+<script src="hub-store.js?v=202610100033"></script>
+<script src="hub-say.js?v=202610100033"></script>
+<script src="hub-sync.js?v=202610100033"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -705,6 +710,9 @@ const toHM = n => String(Math.floor(n / 60)).padStart(2, '0') + ':' + String(n %
 const byStart = (a, b) => (toMin(a.s) || 0) - (toMin(b.s) || 0);
 const newId = () => 's' + Math.random().toString(36).slice(2, 8);
 const TUTORS = String(SETTINGS.tutorNames || '').split(/[,\n;]+/).map(x => x.trim()).filter(Boolean);
+/* Each tutor's colour, chosen in Course admin or the next free one (hub-shared.js). */
+const TUTOR_COLOUR = window.hubTutorColours(TUTORS, SETTINGS.tutorColours);
+const tcol = i => (TUTOR_COLOUR[+i] !== undefined ? TUTOR_COLOUR[+i] : +i % 8);
 
 /* The slots a day is laid out from, for the code that still thinks in slots
    (the rooms strip). */
@@ -781,7 +789,7 @@ function tileHTML(day, x, B, tpIdx, teachers){
   const cls = ['tile', 'k-' + x.k];
   if (h < 30) cls.push('sm');
   if (x.locked) cls.push('locked');
-  if (x.k === 'input' && x.by !== undefined && x.by !== '' && x.by !== null) cls.push('by-' + (+x.by % 4));
+  if (x.k === 'input' && x.by !== undefined && x.by !== '' && x.by !== null) cls.push('by-' + tcol(x.by));
   let title = '';
   if (x.k === 'tp') {
     /* "You teach" is the candidate's own view. A tutor's device that once
@@ -1160,7 +1168,7 @@ function render(){
   let ruler = '';
   for (let m = Math.ceil(B.from / 60) * 60; m <= B.to; m += 60) ruler += `<span style="top:${(m - B.from) * PXM}px">${esc(hubClock(toHM(m)).replace(':00', ''))}</span>`;
   const used = new Set(); (TT.days || []).forEach(d => (d.sessions || []).forEach(x => { if (x.k === 'input' && x.by !== undefined && x.by !== '' && TUTORS[+x.by]) used.add(+x.by); }));
-  const key = `<div class="tkey">${[...used].sort().map(i => `<span><i class="tile k-input by-${i % 4}"></i>Input · ${esc(TUTORS[i])}</span>`).join('')}${used.size ? '' : '<span><i class="tile k-input"></i>Input</span>'}<span><i class="tile k-tp"></i>Teaching practice</span><span><i class="tile k-plan"></i>Lesson planning</span><span><i class="tile k-feedback"></i>Feedback &amp; reflection</span><span><i class="tile k-event"></i>Whole group</span><span><i class="tile k-task"></i>Assignments &amp; admin</span><span><i class="due"></i>A deadline</span></div>`;
+  const key = `<div class="tkey">${[...used].sort().map(i => `<span><i class="tile k-input by-${tcol(i)}"></i>Input · ${esc(TUTORS[i])}</span>`).join('')}${used.size ? '' : '<span><i class="tile k-input"></i>Input</span>'}<span><i class="tile k-tp"></i>Teaching practice</span><span><i class="tile k-plan"></i>Lesson planning</span><span><i class="tile k-feedback"></i>Feedback &amp; reflection</span><span><i class="tile k-event"></i>Whole group</span><span><i class="tile k-task"></i>Assignments &amp; admin</span><span><i class="due"></i>A deadline</span></div>`;
   app.innerHTML = head + updatedHTML() + zoneLine() + bar + roomsStrip() + key + weeks.map((w, i) => {
     const a = parse(w[0].date), b = parse(w[w.length-1].date);
     return `<section class="wk"><h2>Week ${i+1} <small>${dm(a)} – ${dm(b)}</small></h2>${changeNote(w)}

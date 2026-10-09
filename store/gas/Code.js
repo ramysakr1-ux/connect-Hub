@@ -740,7 +740,7 @@ case 'inbox': {
          without them (Ramy: "does it also duplicate all the settings?").
          Still fresh: the dates, the course name and number, the assessment,
          the notification reference, the assessor's documents, the roster. */
-      ['centreName', 'centreNumber', 'centreLocked', 'logo', 'tutorNames', 'planDueNote', 'selfDueNote', 'tpCount', 'totalHours', 'deliveryMode', 'appianUrl', 'courseLinks',
+      ['centreName', 'centreNumber', 'centreLocked', 'logo', 'tutorNames', 'tutorColours', 'planDueNote', 'selfDueNote', 'tpCount', 'totalHours', 'deliveryMode', 'appianUrl', 'courseLinks',
        'agreement', 'preCourseConnect', 'gtkyWhen', 'gtkyMinutes', 'tutorContacts', 'volunteerContact', 'onlineRooms', 'timeZone', 'clock', 'planFrom', 'analysisFrom', 'volunteerCertificateHours'].forEach(function (k) { if (s[k] !== undefined && s[k] !== '' && s[k] !== null) keep[k] = s[k]; });
       /* Of the assessor's documents only the centre's own agreement link is the centre's. */
       if (s.docs && s.docs.docAgreement) keep.docs = { docAgreement: s.docs.docAgreement };

@@ -690,6 +690,41 @@ window.hubClockRange = function(a, b){
   var sa = A.slice(-2), sb = B.slice(-2);
   return (sa === sb ? A.slice(0, -3) : A) + '\u2013' + B;
 };
+/* THE INPUT TUTORS' COLOURS (Ramy, 10 Oct 2026: "what if there are four
+   different tutors doing input sessions?" -- build the picker). Eight colours,
+   and none of them is one that already means something on the board: teal is
+   an input with no tutor, gold teaching practice, amber a plan not in, garnet
+   a lesson not to standard. The first four are the board's colours since 30
+   Sep, unchanged. Course admin may pick one per tutor (settings.tutorColours,
+   name -> palette index); a tutor nobody picked for takes the next colour
+   nobody has, so up to eight tutors never share one. */
+window.HUB_TUTOR_COLOURS = [
+  { name: 'Orange', bg: 'oklch(95% 0.04 62)',    bd: 'oklch(83% 0.08 60)',  fg: 'oklch(42% 0.11 52)' },
+  { name: 'Blue',   bg: 'oklch(94.5% 0.03 245)', bd: 'oklch(82% 0.06 245)', fg: 'oklch(40% 0.1 250)' },
+  { name: 'Green',  bg: 'oklch(94.5% 0.04 150)', bd: 'oklch(80% 0.06 150)', fg: 'oklch(38% 0.08 150)' },
+  { name: 'Purple', bg: 'oklch(94.5% 0.03 320)', bd: 'oklch(82% 0.05 320)', fg: 'oklch(40% 0.09 320)' },
+  { name: 'Pink',   bg: 'oklch(95% 0.035 355)',  bd: 'oklch(83% 0.07 355)', fg: 'oklch(42% 0.12 355)' },
+  { name: 'Olive',  bg: 'oklch(95% 0.045 115)',  bd: 'oklch(83% 0.08 115)', fg: 'oklch(40% 0.08 115)' },
+  { name: 'Indigo', bg: 'oklch(94.5% 0.03 280)', bd: 'oklch(80% 0.07 280)', fg: 'oklch(40% 0.12 280)' },
+  { name: 'Sky',    bg: 'oklch(95% 0.035 225)',  bd: 'oklch(80% 0.07 225)', fg: 'oklch(40% 0.1 230)' }
+];
+/* Every tutor's colour, in the order the names are typed. */
+window.hubTutorColours = function(names, chosen){
+  var P = window.HUB_TUTOR_COLOURS.length, pick = chosen && typeof chosen === 'object' ? chosen : {};
+  var out = [], taken = {};
+  (names || []).forEach(function(n, i){ var c = pick[n]; if (c !== undefined && c !== '' && +c >= 0 && +c < P) { out[i] = +c; taken[+c] = true; } });
+  /* Everyone else keeps their usual colour (their place in the list) unless a
+     chosen one took it; only then do they move, to the first colour free. So
+     choosing orange for one tutor swaps two colours instead of moving everyone. */
+  (names || []).forEach(function(n, i){ if (out[i] === undefined && i < P && !taken[i]) { out[i] = i; taken[i] = true; } });
+  (names || []).forEach(function(n, i){
+    if (out[i] !== undefined) return;
+    var c = 0; while (c < P && taken[c]) c++;
+    if (c >= P) c = i % P;
+    out[i] = c; taken[c] = true;
+  });
+  return out;
+};
 /* A moment (a Date, milliseconds or ISO) on the course's clock: "2:32 PM" or
    "14:32". Every "saved at", "posted at" and "due at" goes through here, so a
    course on the 24-hour clock never meets a stray AM or PM. */
