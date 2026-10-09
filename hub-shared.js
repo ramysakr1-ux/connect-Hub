@@ -1216,7 +1216,12 @@ window.hubIsReference = function(s){
   document.head.appendChild(js);
 
   var seen = [];
-  function wanted(el){ return el && el.tagName === 'INPUT' && (el.type === 'date' || el.type === 'datetime-local' || el.type === 'time') && !el._fp && !el.disabled; }
+  /* On a phone or tablet flatpickr keeps the native picker by adding a box of
+     its own (.flatpickr-mobile) -- itself a date box. Dressing that one adds
+     another, and the observer below dresses that: on every iPhone, iPad and
+     Android the page locked up the moment it showed a date (10 Oct 2026, the
+     tablet check, lesson plan). Its own boxes are never dressed. */
+  function wanted(el){ return el && el.tagName === 'INPUT' && (el.type === 'date' || el.type === 'datetime-local' || el.type === 'time') && !el._fp && !el.disabled && !el.classList.contains('flatpickr-mobile'); }
   function dress(el){
     if (!window.flatpickr || !wanted(el)) return;
     var withTime = el.type === 'datetime-local', onlyTime = el.type === 'time';
