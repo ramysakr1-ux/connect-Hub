@@ -176,6 +176,98 @@
   .due.asbtn{display:block; width:100%; text-align:left; font-family:inherit; background:none; border:0;
     border-top:1px dashed var(--sand-line); cursor:pointer;}
   .due.asbtn:hover{background:var(--sand-deep);}
+  /* ---- THE BOARD (stage 1 of the timetable system, 9 Oct 2026) -----------
+     Every day a column of tiles on one shared clock: a tile's height is its
+     length. The handoff's board (specs/timetable-system/) in Lite's palette. */
+  .tgrid{--gutter:54px; display:grid; gap:8px; align-items:start;}
+  .tgrid .ruler{position:relative; margin-top:52px;}
+  .tgrid .ruler span{position:absolute; right:6px; transform:translateY(-50%); font-size:0.62rem; font-weight:700; color:var(--faint); font-variant-numeric:tabular-nums; white-space:nowrap;}
+  .tgrid .day{padding:0; border-radius:var(--r-card); transition:none;}
+  .tgrid .day:hover{transform:none; box-shadow:none;}
+  .tgrid .day.today{border-color:var(--gold); border-width:2px;}
+  .tgrid .dh{height:52px; box-sizing:border-box; align-items:center; padding:0 6px 0 10px; gap:6px;}
+  .tgrid .dh .dt{flex:1; min-width:0; line-height:1.15;}
+  .tgrid .dh small{display:block; font-size:0.6rem; letter-spacing:.08em; text-transform:uppercase; font-weight:700; color:var(--faint); margin-top:1px;}
+  .tgrid .dh .tv2-clock{margin-left:auto;}
+  .tgrid .body{position:relative; margin:0 5px;}
+  .tgrid .hr{position:absolute; left:-5px; right:-5px; border-top:1px dashed oklch(85.5% 0.02 80 / .7);}
+  .pin{font-size:0.6rem; font-weight:700; color:var(--gold-deep); background:var(--gold-wash); border:1px solid var(--amber-edge); border-radius:999px; padding:2px 6px; white-space:nowrap;}
+  .more{font:inherit; font-size:1rem; line-height:1; width:28px; height:28px; border-radius:var(--r-control); border:1px solid transparent; background:none; color:var(--grey); cursor:pointer; flex:none;}
+  .more:hover{border-color:var(--sand-line); background:var(--paper); color:var(--ink);}
+  .tile{position:absolute; left:0; right:0; box-sizing:border-box; border-radius:7px; border:1px solid var(--sand-line); padding:4px 7px 5px; overflow:hidden; user-select:none;
+        transition:box-shadow .15s ease, opacity .4s ease; font-size:0.74rem;}
+  body.editing .tile{cursor:grab; touch-action:manipulation;}
+  .tile:hover{z-index:2; box-shadow:0 8px 18px -12px oklch(30% 0.04 60 / .55);}
+  .tile.dragging{cursor:grabbing; z-index:5; box-shadow:0 14px 26px -12px oklch(30% 0.04 60 / .6);}
+  .tile .tt{font-weight:700; line-height:1.25; overflow-wrap:anywhere;}
+  .tile .tm{font-size:0.62rem; font-weight:600; color:var(--grey); font-variant-numeric:tabular-nums; margin-top:1px;}
+  .tile.sm{padding:1px 7px; display:flex; align-items:center; gap:6px;}
+  .tile.sm .tt{font-size:0.66rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .tile.sm .tm{margin:0; white-space:nowrap;}
+  .tile .rs{position:absolute; left:0; right:0; bottom:0; height:8px; cursor:ns-resize; touch-action:none;}
+  .tile .rs:after{content:''; position:absolute; left:50%; bottom:2px; width:22px; height:3px; margin-left:-11px; border-radius:2px; background:currentColor; opacity:0; transition:opacity .15s;}
+  .tile:hover .rs:after, .tile.dragging .rs:after{opacity:.35;}
+  .tile.empty .tt{font-weight:600; opacity:.55; font-style:italic;}
+  .k-input{background:oklch(94.5% 0.03 195); border-color:oklch(80% 0.05 195); color:var(--teal-deep);}
+  .k-input.by-0{background:oklch(95% 0.04 62); border-color:oklch(83% 0.08 60); color:oklch(42% 0.11 52);}
+  .k-input.by-1{background:oklch(94.5% 0.03 245); border-color:oklch(82% 0.06 245); color:oklch(40% 0.1 250);}
+  .k-input.by-2{background:oklch(94.5% 0.04 150); border-color:oklch(80% 0.06 150); color:oklch(38% 0.08 150);}
+  .k-input.by-3{background:oklch(94.5% 0.03 320); border-color:oklch(82% 0.05 320); color:oklch(40% 0.09 320);}
+  .k-tp{background:var(--gold-wash); border-color:var(--amber-edge); color:var(--ink-warm);}
+  .k-tp .who{display:inline-flex; align-items:center; gap:2px; min-width:16px; margin-left:4px; padding:0 4px; border-radius:4px; background:var(--gold-lifted); color:var(--ink-warm);}
+  .k-tp .who.me{background:var(--teal); color:var(--paper);}
+  .k-tp.mine{background:var(--ink-warm); border-color:var(--ink-warm); color:var(--paper);}
+  .k-tp.mine .tm{color:oklch(90% 0.02 80);}
+  .k-plan{background:var(--box); color:var(--ink-warm);}
+  .k-feedback, .k-reflect{background:var(--paper); color:var(--ink);}
+  .k-reflect .tt{font-weight:600;}
+  .k-event{background:var(--paper); border:1.5px dashed var(--teal-lifted); color:var(--teal-deep);}
+  .k-task{background:var(--sand-deep); color:var(--ink-warm);}
+  .k-break, .k-lunch{background:repeating-linear-gradient(135deg, transparent 0 5px, oklch(85.5% 0.02 80 / .45) 5px 6px); border-style:dashed; color:var(--faint);}
+  .k-break .tt, .k-lunch .tt{font-weight:600; font-style:italic;}
+  .tgrid .due{position:absolute; left:0; right:0; z-index:3; height:17px; box-sizing:border-box; padding:0 7px; border-radius:4px; background:var(--brick); color:var(--paper);
+              font-size:0.6rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase; line-height:17px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; border:0;}
+  .tgrid .due.late{background:oklch(35% 0.12 27);}
+  .tgrid .due.asbtn{display:block; width:auto; text-align:left; cursor:pointer; border-top:0;}
+  .tgrid .due .tv2-in{background:var(--paper); border:0; color:var(--brick); margin-left:5px; text-transform:none; letter-spacing:0;}
+  .tgrid .nowbar{position:absolute; left:-5px; right:-5px; height:2px; background:var(--gold); z-index:4; pointer-events:none;}
+  .tgrid .nowbar:before{content:''; position:absolute; left:-1px; top:-3px; width:8px; height:8px; border-radius:50%; background:var(--gold);}
+  .tile.tv2-past{opacity:.45;}
+  .tile.tv2-now{box-shadow:0 0 0 2px var(--gold); z-index:2;}
+  .tgrid .notes{padding:7px 9px 8px; border-top:1px solid var(--sand-line); font-size:0.7rem; line-height:1.45; color:var(--grey);}
+  .tgrid .notes input{width:100%; box-sizing:border-box; font:inherit; font-size:0.72rem; padding:4px 6px; border:1px solid var(--sand-line); border-radius:var(--r-control); background:var(--field); color:var(--ink);}
+  .addtile{display:block; width:calc(100% - 10px); margin:5px; font:inherit; font-size:0.7rem; font-weight:700; padding:5px; border-radius:var(--r-control); border:1px dashed var(--sand-line); background:none; color:var(--grey); cursor:pointer;}
+  .addtile:hover{border-color:var(--teal); color:var(--teal);}
+  .tkey{display:flex; flex-wrap:wrap; gap:6px 14px; font-size:0.72rem; color:var(--grey); margin:0 0 16px;}
+  .tkey i{position:static; display:inline-block; width:12px; height:12px; padding:0; border-radius:3px; vertical-align:-2px; margin-right:5px;}
+  .tkey i.due{background:var(--brick); border-radius:2px; height:6px; vertical-align:2px;}
+  /* the tile editor and the day menu */
+  .ttpop, .ttmenu{position:fixed; z-index:40; background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); box-shadow:0 18px 40px -18px oklch(30% 0.04 60 / .55); font-family:'Karla',sans-serif;}
+  .ttpop{width:290px; padding:14px;}
+  .ttpop label{display:block; font-size:0.6rem; letter-spacing:.1em; text-transform:uppercase; font-weight:700; color:var(--grey); margin:0 0 10px;}
+  .ttpop input, .ttpop select{display:block; width:100%; box-sizing:border-box; margin-top:4px; font:inherit; font-size:0.84rem; padding:7px 9px; border:1px solid var(--sand-line); border-radius:var(--r-control); background:var(--field); color:var(--ink); text-transform:none; letter-spacing:0; font-weight:500;}
+  .ttpop .two{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .ttpop .acts{display:flex; justify-content:space-between; gap:8px;}
+  .ttpop .del{color:var(--brick);}
+  .ttmenu{min-width:250px; padding:6px;}
+  .ttmenu h4{margin:6px 10px 4px; font-size:0.6rem; letter-spacing:.12em; text-transform:uppercase; color:var(--grey);}
+  .ttmenu button{display:block; width:100%; text-align:left; font:inherit; font-size:0.84rem; padding:8px 10px; border:0; border-radius:var(--r-control); background:none; color:var(--ink); cursor:pointer;}
+  .ttmenu button:hover{background:var(--sand-deep);}
+  .ttmenu button small{display:block; font-size:0.7rem; color:var(--grey);}
+  .ttmenu hr{border:0; border-top:1px solid var(--sand-line); margin:6px 4px;}
+  /* a phone: a week is a row of days to swipe through */
+  @media (max-width:760px){
+    .tgrid{display:grid; grid-template-columns:none !important; grid-auto-flow:column; grid-auto-columns:86%; overflow-x:auto; scroll-snap-type:x mandatory; padding-bottom:6px;}
+    .tgrid .ruler{display:none;}
+    .tgrid .day{scroll-snap-align:start;}
+  }
+  @media print{
+    @page{size:landscape;}
+    .tkey, .addtile, .more, .pin, .tile .rs, .tgrid .nowbar{display:none !important;}
+    .tgrid{gap:4px;}
+    .tile{box-shadow:none !important; opacity:1 !important;}
+  }
+  @media (prefers-reduced-motion: reduce){ .tile{transition:none;} }
   .bar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:0 0 18px;}
   .status{font-size:0.8rem; color:var(--grey);}
   .chip{font-size:0.72rem; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--box); color:var(--grey);}
@@ -291,27 +383,35 @@ const dm = d => d.getDate() + ' ' + MON[d.getMonth()];
 const TODAY = window.hubToday ? hubToday() : ymd(new Date());   // the demo clock, when the course is pinned
 
 /* A timetable built before the day shape existed carried two input strings on
-   the day itself (`a`, `b`). They become the first two input slots, in order,
-   so nothing typed is lost when the shape arrives. */
+   the day itself (`a`, `b`); one from before stage 1 (9 Oct 2026) carried a
+   shape and cells. Both become sessions, written back once by a tutor --
+   a trainee's browser converts for itself and writes nothing (the 30 Sep
+   lesson: a migration that is only held, not written, leaves the store
+   behind and every other page reading the old shape). */
 function migrate(){
   if (!TT || !TT.days) return;
   let changed = false;
   if (!TT.slots || !TT.slots.length) { TT.slots = DEFAULT_SLOTS.map(x => Object.assign({}, x)); changed = true; }
   const ins = TT.slots.filter(x => x.kind === 'input');
   TT.days.forEach(d => {
-    if (d.cells) return;
+    if (d.cells || Array.isArray(d.sessions)) return;
     d.cells = {};
     [d.a, d.b].forEach((v, i) => { if (v && ins[i]) d.cells[ins[i].key] = v; });
     delete d.a; delete d.b;
     changed = true;
   });
-  /* The migration has to be WRITTEN, not just held. It ran on every render and
-     saved nothing, so the timetable screen looked right from its own memory
-     while the store still had a timetable with no day shape in it -- and the
-     assessor pack, which reads the store on a different page, could not work
-     out the contact hours it was supposed to (found checking the new Handbook
-     checks live, 30 Sep 2026). Only a tutor can write a course record, so a
-     trainee's browser migrates for itself and writes nothing. */
+  if (TT.days.some(d => !Array.isArray(d.sessions))) {
+    const first = (TT.days[0] || {}).date;
+    TT.days.forEach(d => {
+      if (Array.isArray(d.sessions)) return;
+      const sh = window.hubShapeFor ? hubShapeFor(TT, d.date) : null;
+      d.sessions = sessionsFromSlots(d, sh ? sh.slots : TT.slots, d.cells, d.first || d.date === first);
+      delete d.cells;
+    });
+    delete TT.shapes;
+    TT.v = 3;
+    changed = true;
+  }
   if (changed && IS_TUTOR) { try { localStorage.setItem(KEY, JSON.stringify(TT)); } catch (e) {} }
 }
 
@@ -449,125 +549,166 @@ function skeleton(){
     teaching[i].tp = tp;
     teaching[i].setIndex = i % nSets;
   }
-  const out = { days, slots: (TT && TT.slots && TT.slots.length ? TT.slots : DEFAULT_SLOTS).map(x => Object.assign({}, x)), published: !!(TT && TT.published), built: new Date().toISOString() };
-  if (TT && Array.isArray(TT.shapes) && TT.shapes.length) out.shapes = TT.shapes;
+  const slots = (TT && TT.slots && TT.slots.length ? TT.slots : DEFAULT_SLOTS).map(x => Object.assign({}, x));
+  days.forEach(d => { d.sessions = sessionsFromSlots(d, slots, {}, !!d.first); delete d.cells; });
+  const out = { v: 3, days, slots, published: !!(TT && TT.published), built: new Date().toISOString() };
   if (TT && Array.isArray(TT.meets) && TT.meets.length) out.meets = TT.meets;
   return out;
 }
 
-/* One day, laid out from the shape. Times down the left; breaks quiet,
-   because they are the day's rhythm and not its content; the three teaching
-   practice slots carrying the rotating order, so a trainee reads the time
-   they teach rather than working it out from a letter. */
-/* The slots a day is laid out from: its own shape when one applies to it
-   (hub-shared.js hubShapeFor), otherwise the usual day. */
+/* THE TIMETABLE AS SESSIONS (stage 1 of the timetable system, 9 Oct 2026).
+   Ramy: "a flexible sort of tiles that would just adapt to whatever shape
+   thrown at it". The design is the Connect handoff (specs/timetable-system/)
+   with Lite's look and its live layer: every day holds its own SESSIONS, each
+   with a kind and its own times, so a course whose afternoon moves, a part-
+   time Saturday and an odd day like a demo lesson are all just sessions at
+   different times. There is no shape to set up any more.
+
+   A session: { id, s:'HH:MM', e:'HH:MM', k, t, by?, room? }
+     k  input · tp · plan · feedback · reflect · event · task · break · lunch
+     t  what it is called ("Phonology 2"); a TP lesson's is worked out
+     by the input tutor, as an index into the course's tutor names (colour)
+   The day keeps `tp` and `setIndex` (which practice, whose turn), as before:
+   the TP tiles are that practice's lessons in time order, and the rotation
+   deals the letters onto them. Every other page reads the day's times through
+   hubSlotsFor (hub-shared.js), which turns sessions into slots, so nothing
+   outside this screen had to learn the new shape. */
+const PXM = 1.3;   // pixels per minute on the board
+const KIND_LABEL = { input:'Input', tp:'Teaching practice', plan:'Lesson planning', feedback:'TP feedback', reflect:'Reflection', event:'Whole group', task:'Assignments & admin', break:'Break', lunch:'Lunch' };
+const KIND_ORDER = ['input','tp','plan','feedback','reflect','event','task','break','lunch'];
+const toMin = hm => { const m = /^(\d{1,2}):(\d{2})/.exec(String(hm || '')); return m ? +m[1] * 60 + +m[2] : null; };
+const toHM = n => String(Math.floor(n / 60)).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0');
+const byStart = (a, b) => (toMin(a.s) || 0) - (toMin(b.s) || 0);
+const newId = () => 's' + Math.random().toString(36).slice(2, 8);
+const TUTORS = String(SETTINGS.tutorNames || '').split(/[,\n;]+/).map(x => x.trim()).filter(Boolean);
+
+/* The slots a day is laid out from, for the code that still thinks in slots
+   (the rooms strip). */
 function slotsOf(day){
   const s = window.hubSlotsFor ? hubSlotsFor(TT, day && day.date) : (TT && TT.slots);
   return (s && s.length) ? s : DEFAULT_SLOTS;
 }
 
-function cellHTML(day){
-  const d = parse(day.date);
-  const isToday = day.date === TODAY;
-  const dueHere = (DUES[day.date] || []);
-  const slots = slotsOf(day);
-  const cells = day.cells || {};
-
-  /* Who teaches which of the day's practice slots. The set that teaches today
-     is the one this day was given; within it the order steps one place each
-     practice (hub-rotation.js), and slot 1, 2, 3 take them in that order. */
-  const teachers = [];
-  if (day.tp) {
-    GROUPS.forEach(gr => {
-      const set = gr.sets[day.setIndex] || [];
-      if (set.length) teachers.push({ group: gr.group, order: R.orderFor(set, day.tp) });
-    });
+/* A day's sessions from a slot list -- how a timetable from before stage 1
+   is converted, and how a new course's days are first laid out. What a day
+   had typed into a slot (`cells`) becomes that session's name; a day with no
+   practice gets no TP tiles; day one gets its demonstration lesson (ninety
+   minutes across the first two TP slots) and the unassessed teaching. */
+function sessionsFromSlots(day, slots, cells, isFirst){
+  cells = cells || {};
+  const out = [], tps = (slots || []).filter(sl => sl.kind === 'tp' && sl.from && sl.to);
+  if (isFirst && tps.length) {
+    out.push({ id:'demo', s: tps[0].from, e: (tps[1] || tps[0]).to, k:'event', t:'Demonstration lesson', room: tps[0].room || '' });
+    if (tps[2]) out.push({ id:'unassessed', s: tps[2].from, e: tps[2].to, k:'event', t:'Unassessed teaching', room: tps[2].room || '' });
   }
-  let tpSeen = 0;
+  (slots || []).forEach(sl => {
+    if (!sl.from || !sl.to) return;
+    const base = { id: sl.key || newId(), s: sl.from, e: sl.to };
+    if (sl.room) base.room = sl.room;
+    if (sl.kind === 'tp') { if (!isFirst && day.tp) out.push(Object.assign(base, { k:'tp', t:'' })); return; }
+    if (sl.kind === 'break') { out.push(Object.assign(base, { k: /lunch/i.test(sl.label || '') ? 'lunch' : 'break', t: sl.label || 'Break' })); return; }
+    if (sl.kind === 'input') { out.push(Object.assign(base, { k:'input', t: cells[sl.key] || '' })); return; }
+    const k = (sl.kind === 'plan' || sl.kind === 'prep') ? 'plan' : sl.kind === 'feedback' ? (/reflect/i.test(sl.label || '') ? 'reflect' : 'feedback') : sl.kind === 'event' || sl.kind === 'task' ? sl.kind : 'event';
+    out.push(Object.assign(base, { k, t: cells[sl.key] || sl.label || KIND_LABEL[k] }));
+  });
+  return out.sort(byStart);
+}
 
-  /* On an input slot the label is the only clue about which room it is, so it
-     is shown. On a teaching slot the group is already named on the same line,
-     so repeating "Teaching practice" five times down one day says nothing and
-     pushes the line into a wrap (Ramy, seeing it live, 29 Sep 2026). There it
-     is just the door. */
-  const roomLink = (slot, group, short) => {
-    const r = roomFor(slot, group);
-    if (!r) return '';
-    return `<a class="room" href="${esc(r.url)}" target="_blank" rel="noopener">${short ? 'Join' : esc(r.label || 'Room')}</a>`;
-  };
+/* The usual day: the slots a new day is laid out from. Kept current on every
+   save from a teaching day (save()), so it is whatever the course looks like
+   now, and pages that only want "the" TP times still have them. */
+function template(){ return (TT && TT.slots && TT.slots.length) ? TT.slots : DEFAULT_SLOTS; }
 
-  const body = slots.map(slot => {
-    /* The course's own clock, and the reader's beside it when they are
-       somewhere that makes it a different time. A face-to-face centre never
-       sees two times; an online course with join links on the timetable is
-       read from elsewhere by definition, and that is who this is for. */
-    const tf = (window.hubTimeFor && ZONE) ? window.hubTimeFor(day.date, slot.from, ZONE) : null;
-    const t = `<span class="t" data-from="${esc(slot.from || '')}" data-to="${esc(slot.to || '')}">${esc(hubClock(slot.from || ''))}${(tf && tf.differs) ? '<span class="lt">' + esc(tf.local) + '</span>' : ''}</span>`;
-    if (slot.kind === 'break') return `<div class="sl brk">${t}<span>${esc(slot.label || 'Break')}</span></div>`;
-    if (slot.kind === 'tp') {
-      const i = tpSeen++;
-      /* Day one carries no assessed practice: a demonstration lesson of ninety
-         minutes across the first two slots, then forty-five minutes of
-         unassessed teaching (Ramy, 1 Oct 2026). */
-      /* The first course day, read from the timetable itself: a timetable
-         saved before this flag existed carries no `first` on its days. */
-      if (day.first || ((TT.days || [])[0] || {}).date === day.date) {
-        if (i === 0) return `<div class="sl fix demo"><span class="t">${esc(hubClock(slot.from || ''))}</span><span><span class="lab">Demonstration lesson</span>90 min</span></div>`;
-        if (i === 1) return '';
-        return `<div class="sl fix demo">${t}<span><span class="lab">Unassessed teaching</span>45 min</span></div>`;
-      }
-      if (!day.tp || !teachers.length) return `<div class="sl fix">${t}<span class="dash">\u2014</span></div>`;
-      /* Ramy, 1 Oct 2026: "just TP1 A B C" -- the letter and its mark, no
-         group, no length, no door. The rooms are in the strip above the
-         weeks; a trainee's own letter is lifted. */
-      const meTok = (rec('hub:me') || {}).token || '';
-      /* ONE letter per slot. Every group runs the same rotation, so in a slot
-         group 1's D and group 2's D teach at once; printing "D D" said nothing
-         (Ramy, 1 Oct 2026: "what the hell is TP1 DD? ... if we have four
-         groups, is it going to be D D D D?"). The letter is shown once; its
-         mark is the worst across the people behind it -- an alarm beats a
-         watch beats a tick, and a tick only when everyone has one. A reader's
-         own letter is lifted whichever group they are in. Two groups of
-         different sizes can put different letters in one slot; then both
-         show, each once. */
-      const byLetter = new Map();
-      teachers.forEach(g => { const p = g.order[i]; if (!p) return; const k = String(p.letter); if (!byLetter.has(k)) byLetter.set(k, []); byLetter.get(k).push(p.token); });
-      const worst = tokens => { const ms = tokens.map(tok => markFor(tok, day.tp, day.date)); const pick = c => ms.find(x => x.indexOf('mk ' + c) !== -1) || ''; return pick('alarm') || pick('watch') || (ms.length && ms.every(x => x.indexOf('mk done') !== -1) ? ms[0] : ''); };
-      const who = [...byLetter.entries()].map(([letter, tokens]) =>
-        `<span class="line${meTok && tokens.indexOf(meTok) !== -1 ? ' me' : ''}">${worst(tokens)}<b class="who">${esc(letter)}</b></span>`).join('');
-      if (!who) return `<div class="sl fix">${t}<span class="dash">\u2014</span></div>`;
-      /* Ramy, 1 Oct 2026: "we always use ABC one day, DEF the other... it's a
-         reference to which of the two subgroups is teaching on that day." So
-         the first teaching slot of a day names the SET -- "TP 1 · ABC" -- and
-         each slot below it carries its own letter. A set is called by its
-         members' letters, never "Day A" (hub-rotation.js). */
-      const setName = (i === 0 && teachers[0] && teachers[0].order) ? teachers[0].order.slice().sort((a, b) => String(a.letter).localeCompare(String(b.letter))).map(p => esc(p.letter)).join('') : '';
-      return `<div class="sl tp${i === 0 ? ' first' : ''}">${t}<span class="tpline"><span class="lab">TP ${day.tp}${setName ? ' \u00b7 ' + setName : ''}</span>${who}</span></div>`;
-    }
-    if (slot.kind === 'input') {
-      const v = cells[slot.key] || '';
-      const link = '';   /* the room is in the strip above the weeks (1 Oct 2026) */
-      if (!EDIT) return (v || link) ? `<div class="sl">${t}<span><span class="lab">${esc(slot.label || 'Input')}</span>${esc(v)}${link ? '<br>' + link : ''}</span></div>` : `<div class="sl fix">${t}<span class="dash">\u2014</span></div>`;
-      return `<div class="sl">${t}<span><span class="lab">${esc(slot.label || 'Input')}</span><input type="text" data-date="${esc(day.date)}" data-slot="${esc(slot.key)}" value="${esc(v)}" placeholder="\u2014">${link ? link : ''}</span></div>`;
-    }
-    /* prep / plan / feedback: named appointments, nothing to type */
-    return `<div class="sl fix">${t}<span><span class="lab">${esc(slot.label || '')}</span></span></div>`;
+/* A practice needs its lessons on the board. A day given a practice with no TP
+   tiles takes them from the nearest teaching day before it, else the usual
+   day; a day without one loses its TP tiles. */
+function ensureTp(day){
+  day.sessions = day.sessions || [];
+  if (day.sessions.some(x => x.k === 'tp')) return;
+  const i = TT.days.indexOf(day);
+  const near = TT.days.slice(0, Math.max(0, i)).reverse().concat(TT.days.slice(i + 1)).find(d => d.tp && (d.sessions || []).some(x => x.k === 'tp'));
+  const from = near ? near.sessions.filter(x => x.k === 'tp').map(x => ({ s:x.s, e:x.e, room:x.room })) : template().filter(sl => sl.kind === 'tp').map(sl => ({ s:sl.from, e:sl.to, room:sl.room }));
+  from.forEach(x => day.sessions.push({ id:newId(), s:x.s, e:x.e, k:'tp', t:'', room: x.room || 'Teaching practice' }));
+  day.sessions.sort(byStart);
+}
+function dropTp(day){ day.sessions = (day.sessions || []).filter(x => x.k !== 'tp'); }
+
+/* The span every day is drawn on: the course's earliest start to its latest
+   end, to the half hour, so the weeks line up with each other. */
+function bounds(){
+  let a = 24 * 60, b = 0;
+  (TT.days || []).forEach(d => (d.sessions || []).forEach(x => { const s = toMin(x.s), e = toMin(x.e); if (s != null && e != null) { a = Math.min(a, s); b = Math.max(b, e); } }));
+  if (b <= a) { a = 9 * 60; b = 17 * 60; }
+  return { from: Math.floor(a / 30) * 30, to: Math.ceil(b / 30) * 30 };
+}
+
+/* Who teaches which of the day's lessons: the set whose day it is, in the
+   rotation's order for this practice. */
+function teachersOf(day){
+  const out = [];
+  if (!day.tp) return out;
+  GROUPS.forEach(gr => { const set = gr.sets[day.setIndex] || []; if (set.length) out.push({ group: gr.group, order: R.orderFor(set, day.tp) }); });
+  return out;
+}
+
+function tileHTML(day, x, B, tpIdx, teachers){
+  const s = toMin(x.s), e = toMin(x.e); if (s == null || e == null) return '';
+  const top = (s - B.from) * PXM, h = Math.max(12, (e - s) * PXM - 2);
+  const cls = ['tile', 'k-' + x.k];
+  if (h < 30) cls.push('sm');
+  if (x.k === 'input' && x.by !== undefined && x.by !== '' && x.by !== null) cls.push('by-' + (+x.by % 4));
+  let title = '';
+  if (x.k === 'tp') {
+    const meTok = (rec('hub:me') || {}).token || '';
+    const byLetter = new Map();
+    teachers.forEach(g => { const p = g.order[tpIdx]; if (!p) return; const k = String(p.letter); if (!byLetter.has(k)) byLetter.set(k, []); byLetter.get(k).push(p.token); });
+    const worst = tokens => { const ms = tokens.map(tok => markFor(tok, day.tp, day.date)); const pick = c => ms.find(m => m.indexOf('mk ' + c) !== -1) || ''; return pick('alarm') || pick('watch') || (ms.length && ms.every(m => m.indexOf('mk done') !== -1) ? ms[0] : ''); };
+    const mine = !!meTok && [...byLetter.values()].some(t => t.indexOf(meTok) !== -1);
+    if (mine) cls.push('mine');
+    const setName = (tpIdx === 0 && teachers[0]) ? teachers[0].order.slice().sort((a, b) => String(a.letter).localeCompare(String(b.letter))).map(p => esc(p.letter)).join('') : '';
+    const who = [...byLetter.entries()].map(([letter, tokens]) => `<span class="who${meTok && tokens.indexOf(meTok) !== -1 ? ' me' : ''}">${worst(tokens)}${esc(letter)}</span>`).join('');
+    title = day.tp ? (mine ? 'You teach · ' : '') + `TP ${day.tp}${setName ? ' · ' + setName : ''}${who}` : 'Teaching practice';
+  } else {
+    title = esc(x.t || '');
+    /* An unnamed input is a slot nobody has filled: a tutor sees where it is,
+       the course sees nothing there. */
+    if (!x.t && x.k === 'input' && !EDIT) return '';
+    if (!x.t) { cls.push('empty'); title = esc(KIND_LABEL[x.k] || ''); }
+  }
+  const tip = (x.k === 'tp' ? 'TP ' + (day.tp || '') : (x.t || KIND_LABEL[x.k] || '')) + ' · ' + hubClockRange(x.s, x.e) + (x.k === 'input' && TUTORS[+x.by] ? ' · ' + TUTORS[+x.by] : '');
+  return `<div class="${cls.join(' ')}" data-id="${esc(x.id)}" data-date="${esc(day.date)}" data-from="${esc(x.s)}" data-to="${esc(x.e)}" style="top:${top}px;height:${h}px" title="${esc(tip)}">`
+    + `<div class="tt">${title}</div><div class="tm">${esc(hubClockRange(x.s, x.e))}</div>${EDIT ? '<span class="rs" data-rs="1"></span>' : ''}</div>`;
+}
+
+/* One day: its header, its tiles on the shared clock, its deadlines as red
+   bars at the time they fall, its notes underneath. */
+function dayHTML(day, B, idx){
+  const d = parse(day.date), isToday = day.date === TODAY;
+  const ses = (day.sessions || []).slice().sort(byStart);
+  const teachers = teachersOf(day);
+  const tpTiles = ses.filter(x => x.k === 'tp');
+  const H = (B.to - B.from) * PXM;
+  let hours = '';
+  for (let m = Math.ceil(B.from / 60) * 60; m <= B.to; m += 60) hours += `<div class="hr" style="top:${(m - B.from) * PXM}px"></div>`;
+  const dueHere = (DUES[day.date] || []);
+  const dues = dueHere.map((x, i) => {
+    const local = window.HubDue && x.due ? HubDue.toLocalInput(x.due).slice(11, 16) : '';
+    const at = toMin(local);
+    const top = Math.min(H - 18, Math.max(0, at == null ? 0 : (at - B.from) * PXM)) + i * 19;
+    const late = x.past && x.missing;
+    const body = `${esc(x.title)} due${local ? ' · ' + esc(hubClock(local)) : ''}${late ? ' · ' + (IS_TRAINEE ? 'yours is not in' : x.missing + ' of ' + x.total + ' not in') : ''}`;
+    return EDIT ? `<button type="button" class="due asbtn${late ? ' late' : ''}" data-move="${esc(x.key)}" style="top:${top}px" title="Move this deadline">${body}</button>`
+                : `<div class="due${late ? ' late' : ''}" style="top:${top}px">${body}</div>`;
   }).join('');
-
   const notes = EDIT
-    ? `<div class="sl note">${'<span class="t"></span>'}<span><span class="lab">Notes</span><input type="text" data-date="${esc(day.date)}" data-f="notes" value="${esc(day.notes||'')}" placeholder="\u2014"></span></div>`
-    : (day.notes ? `<div class="sl note"><span class="t"></span><span>${esc(day.notes)}</span></div>` : '');
-
+    ? `<div class="notes"><input type="text" data-date="${esc(day.date)}" data-f="notes" value="${esc(day.notes || '')}" placeholder="Notes"></div>`
+    : (day.notes ? `<div class="notes">${esc(day.notes)}</div>` : '');
   return `<div class="day${isToday ? ' today' : ''}" id="d-${esc(day.date)}">
-    <div class="dh"><span class="dow">${DOW[d.getDay()]}</span><span class="dm">${dm(d)}${isToday ? ' \u00b7 today' : ''}</span></div>
-    ${body}
-    ${dueHere.map(x => {
-      const late = x.past && x.missing;
-      const body = `${esc(x.title)} due${late ? ' \u00b7 ' + (IS_TRAINEE ? 'yours is not in' : x.missing + ' of ' + x.total + ' not in') : ''}`;
-      return EDIT
-        ? `<button type="button" class="due asbtn${late ? ' late' : ''}" data-move="${esc(x.key)}" title="Move this deadline">${body}</button>`
-        : `<div class="due${late ? ' late' : ''}">${body}</div>`;
-    }).join('')}
+    <div class="dh"><div class="dt"><span class="dow">${DOW[d.getDay()]}</span> <span class="dm">${dm(d)}${isToday ? ' · today' : ''}</span><small>Day ${idx + 1}</small></div>
+      ${EDIT && day.pinned ? '<span class="pin" title="Copying a day’s shape leaves this one alone">Pinned</span>' : ''}
+      ${EDIT ? `<button type="button" class="more" data-menu="${esc(day.date)}" aria-label="Options for this day">⋯</button>` : ''}</div>
+    <div class="body" style="height:${H}px" data-start="${B.from}">${hours}${ses.map(x => tileHTML(day, x, B, tpTiles.indexOf(x), teachers)).join('')}${dues}${isToday ? '<div class="nowbar" hidden></div>' : ''}</div>
+    ${EDIT ? `<button type="button" class="addtile" data-add="${esc(day.date)}">+ Add a tile</button>` : ''}
     ${notes}
   </div>`;
 }
@@ -790,6 +931,7 @@ function render(){
   ZONE = SETTINGS.timeZone || '';
   STATE = stateMap();
   GROUPS = groups(); DUES = dues(); ROOMS = roomsByLabel(); EDIT = IS_TUTOR && !PREVIEW;
+  document.body.classList.toggle('editing', EDIT);
   document.addEventListener('click', (e) => { if (e.target && e.target.id === 'ttPrint') window.print(); });
   const app = $('app');
   /* Ramy, 30 Sep 2026: "we should be able to print the timetable" -- and a
@@ -829,38 +971,45 @@ function render(){
       ${pub ? `<span class="chip on">The course can see it</span><button class="btn quiet" id="unpublish">Take it back</button>`
             : `<span class="chip">Not set yet</span><button class="btn" id="publish">Set it for the course</button>`}
       <button class="btn quiet" id="preview">${PREVIEW ? 'Back to editing' : 'See what they see'}</button>
-      <button class="btn quiet" id="rebuild">Rebuild the shape</button>
-      <button class="btn quiet" id="slotsOpen">The day’s shape</button>
+      ${EDIT ? `<button class="btn quiet" id="ttUndo"${UNDO.length ? '' : ' disabled'}>Undo</button>` : ''}
+      <button class="btn quiet" id="daysOpen">The course’s days</button>
       <button class="btn quiet" id="importOpen">Import from a sheet</button>
       <span class="status">${esc(note)}</span></div>
       <p class="legend" style="margin:0 0 14px">${pub ? 'Everyone on the course reads this timetable. Edits show at once.' : 'Only tutors can see it until you set it.'}</p>`
-      + (PREVIEW ? '' : moveHTML() + slotsHTML() + importHTML()) : '';
-  /* Where a dated shape takes over, the week it starts in says so above its
-     days, in words: "From Monday 26 October the day changes" and the new
-     teaching practice hours (Ramy, 9 Oct 2026). A shape tied to weekdays
-     (part-time) changes every week by design and is not announced. */
+      + (EDIT ? `<p class="legend" style="margin:-8px 0 14px">Drag a tile to move it, or its bottom edge to change its length. Click a tile to change it. ⋯ on a day copies its shape to other days.</p>` : '')
+      + (PREVIEW ? '' : moveHTML() + daysPanelHTML() + importHTML()) : '';
+  /* Where teaching practice starts at a different time from the teaching day
+     before it, the week says so above its days, in words: "From Monday 26
+     October teaching practice starts at 2:00 PM" (Ramy, 9 Oct 2026: "the
+     second half of the course is changing the time"). Worked out from the
+     sessions, so nobody declares it. */
+  const tpStart = d => { const t = (d.sessions || []).filter(x => x.k === 'tp').sort(byStart)[0]; return d.tp && t ? t.s : ''; };
   const changeNote = (w) => w.map(d => {
-    const i = TT.days.indexOf(d);
-    if (i <= 0 || !window.hubShapeFor) return '';
-    const sh = hubShapeFor(TT, d.date);
-    if (!sh || sh === hubShapeFor(TT, TT.days[i - 1].date) || !sh.from || (sh.days || []).length) return '';
-    const tp = (sh.slots || []).filter(x => x.kind === 'tp' && x.from);
+    const i = TT.days.indexOf(d), here = tpStart(d);
+    if (i <= 0 || !here) return '';
+    const prev = TT.days.slice(0, i).reverse().find(x => tpStart(x));
+    if (!prev || tpStart(prev) === here) return '';
     const when = parse(d.date);
-    return `<p class="shchange">From <b>${DOWL[when.getDay()]} ${when.getDate()} ${MONL[when.getMonth()]}</b> the day changes${sh.name ? ' (' + esc(sh.name) + ')' : ''}${tp.length ? ': teaching practice ' + esc(hubClockRange(tp[0].from, tp[tp.length - 1].to || tp[tp.length - 1].from)) : ''}.</p>`;
+    return `<p class="shchange">From <b>${DOWL[when.getDay()]} ${when.getDate()} ${MONL[when.getMonth()]}</b> teaching practice starts at <b>${esc(hubClock(here))}</b>.</p>`;
   }).join('');
-  app.innerHTML = head + zoneLine() + bar + roomsStrip() + weeks.map((w, i) => {
+  const B = bounds(), H = (B.to - B.from) * PXM;
+  let ruler = '';
+  for (let m = Math.ceil(B.from / 60) * 60; m <= B.to; m += 60) ruler += `<span style="top:${(m - B.from) * PXM}px">${esc(hubClock(toHM(m)).replace(':00', ''))}</span>`;
+  const used = new Set(); (TT.days || []).forEach(d => (d.sessions || []).forEach(x => { if (x.k === 'input' && x.by !== undefined && x.by !== '' && TUTORS[+x.by]) used.add(+x.by); }));
+  const key = `<div class="tkey">${[...used].sort().map(i => `<span><i class="tile k-input by-${i % 4}"></i>Input · ${esc(TUTORS[i])}</span>`).join('')}${used.size ? '' : '<span><i class="tile k-input"></i>Input</span>'}<span><i class="tile k-tp"></i>Teaching practice</span><span><i class="tile k-plan"></i>Lesson planning</span><span><i class="tile k-feedback"></i>Feedback &amp; reflection</span><span><i class="tile k-event"></i>Whole group</span><span><i class="tile k-task"></i>Assignments &amp; admin</span><span><i class="due"></i>A deadline</span></div>`;
+  app.innerHTML = head + zoneLine() + bar + roomsStrip() + key + weeks.map((w, i) => {
     const a = parse(w[0].date), b = parse(w[w.length-1].date);
     return `<section class="wk"><h2>Week ${i+1} <small>${dm(a)} – ${dm(b)}</small></h2>${changeNote(w)}
-      <div class="days">${w.map(d => cellHTML(d)).join('')}</div></section>`;
+      <div class="tgrid" style="grid-template-columns:var(--gutter) repeat(${w.length}, minmax(0,1fr))"><div class="ruler" style="height:${H}px">${ruler}</div>${w.map(d => dayHTML(d, B, TT.days.indexOf(d))).join('')}</div></section>`;
   }).join('') + keyLine() + `<p class="legend">Teaching practice runs the same number on two days, one teaching set each: the letters name the trainees teaching that day. ${GROUPS.map(g => 'Group ' + esc(g.group || '—') + ': ' + g.sets.map(R.setName).filter(Boolean).join(' and ')).join('. ')}.</p>`;
-  if ($('rebuild')) $('rebuild').addEventListener('click', () => { if (confirm('Rebuild the shape from the course dates? Input sessions and notes you have typed are kept where the day still exists.')) build(true); });
   if ($('preview')) $('preview').addEventListener('click', () => { PREVIEW = !PREVIEW; render(); });
   if ($('publish')) $('publish').addEventListener('click', () => { TT.published = true; save('Set \u2014 the course can see it'); render(); });
   if ($('unpublish')) $('unpublish').addEventListener('click', () => { TT.published = false; save('Taken back'); render(); });
   wireEdits();
   wireImport();
-  wireSlots();
+  wireDays();
   wireMove();
+  wireBoard();
   /* Twenty full days stacked on a phone is a long way to scroll to reach this
      afternoon, so a narrow screen opens on today.
      It has to survive a RE-RENDER. Replacing the grid's innerHTML puts the
@@ -883,6 +1032,9 @@ function render(){
        the day it was aiming at. offsetTop is the document position rather
        than a viewport one, so the second pass corrects rather than compounds. */
     if (t) {
+      /* A phone shows a week as a row of days to swipe through: land on
+         today's column as well as its week. */
+      if (t.parentElement) t.parentElement.scrollLeft = t.offsetLeft - t.parentElement.offsetLeft;
       const land = () => {
         const head = document.querySelector('.wk h2');
         const off = head ? head.offsetHeight + 8 : 0;
@@ -894,131 +1046,244 @@ function render(){
   }
 }
 
-/* The day's shape, editable. One list for the whole course: change a time
-   here and every day follows, which is the point of having a shape at all.
-   `kind` is what the slot is; `room` names one of the course's online rooms
-   by label, so a room is still typed once on Course admin. */
-const KINDS = [['input','Input, typed per day'],['tp','Teaching practice lesson'],
-               ['break','Break or lunch'],['prep','TP preparation'],
-               ['plan','Lesson planning'],['feedback','TP feedback']];
-
-let SHAPE_AT = -1;   // which shape the editor shows: -1 the usual day, else TT.shapes[i]
-
-/* The slots the editor is working on, made real the first time they are. */
-function editSlots(){
-  if (SHAPE_AT >= 0 && TT.shapes && TT.shapes[SHAPE_AT]) return TT.shapes[SHAPE_AT].slots;
-  if (!TT.slots || !TT.slots.length) TT.slots = DEFAULT_SLOTS.map(x => Object.assign({}, x));
-  return TT.slots;
-}
-const shapeName = sh => sh.name || (sh.from ? 'From ' + dm(parse(sh.from)) : '') + ((sh.days || []).length ? ((sh.from ? ', ' : '') + (sh.days || []).slice().sort().map(n => DOW[n] + 's').join(' and ')) : '') || 'New shape';
-/* Where a shape is used, counted off the days themselves, so the editor
-   says exactly what the timetable will do. */
-function shapeWhere(sh){
-  const used = (TT.days || []).filter(d => window.hubShapeFor && hubShapeFor(TT, d.date) === sh);
-  if (!sh.from && !(sh.days || []).length) return 'Not used on any day yet: give it a start date, tick the weekdays it is for, or both.';
-  if (!used.length) return 'No course day falls under it yet.';
-  return 'Used on ' + used.length + ' day' + (used.length === 1 ? '' : 's') + ', ' + dm(parse(used[0].date)) + (used.length > 1 ? ' to ' + dm(parse(used[used.length - 1].date)) : '') + '. Everything typed into a day is kept: a copied slot keeps its name, so the day’s sessions stay where they were.';
-}
-
-function slotsHTML(){
-  if (!SLOTS_OPEN) return '';
-  const shapes = Array.isArray(TT.shapes) ? TT.shapes : [];
-  if (SHAPE_AT >= shapes.length) SHAPE_AT = -1;
-  const cur = SHAPE_AT >= 0 ? shapes[SHAPE_AT] : null;
-  const slots = editSlots();
-  const meets = window.hubMeets ? hubMeets(TT) : [1,2,3,4,5];
-  const WEEK = [1,2,3,4,5,6,0];
-  return `<div class="imp"><h3>The day’s shape</h3>
-    <p>Every day is laid out from a shape. The usual day is used everywhere unless another shape takes a day: one from a date (the afternoon moves after the level change, say) or on certain weekdays (a part-time course’s long Saturday). The teaching practice slots are one lesson each — three of them means three trainees teach a day, and the order rotates. The room is one of the course’s online rooms, by its name.</p>
-    <div class="meets"><span class="ml">The course meets on</span>${WEEK.map(n => `<label><input type="checkbox" data-meet="${n}"${meets.indexOf(n) !== -1 ? ' checked' : ''}> ${DOW[n]}</label>`).join('')}</div>
-    <div class="shtabs"><button type="button" class="shtab${cur ? '' : ' on'}" data-shape="-1">The usual day</button>${shapes.map((sh, i) => `<button type="button" class="shtab${SHAPE_AT === i ? ' on' : ''}" data-shape="${i}">${esc(shapeName(sh))}</button>`).join('')}<button type="button" class="btn quiet sm" id="shapeAdd">Add a shape</button></div>
-    ${cur ? `<div class="shwhen"><label><span class="ml">Name</span><input type="text" id="shName" value="${esc(cur.name || '')}" placeholder="e.g. After the level change"></label>
-      <label><span class="ml">From</span><input type="date" id="shFrom" value="${esc(cur.from || '')}"></label>
-      <span class="ml">On</span>${WEEK.map(n => `<label><input type="checkbox" data-shday="${n}"${(cur.days || []).indexOf(n) !== -1 ? ' checked' : ''}> ${DOW[n]}</label>`).join('')}</div>
-      <p class="hint">${esc(shapeWhere(cur))} Leave the weekdays empty to use it on every day from the date.</p>`
-      : (shapes.length ? `<p class="hint">Every day the other shapes do not take.</p>` : '')}
-    <div class="wrap"><table class="slots"><tr><th>From</th><th>To</th><th>What it is</th><th>Name</th><th>Room</th><th></th></tr>
-    ${slots.map((sl, i) => `<tr>
-      <td><input type="time" data-sl="${i}" data-k="from" value="${esc(sl.from||'')}"></td>
-      <td><input type="time" data-sl="${i}" data-k="to" value="${esc(sl.to||'')}"></td>
-      <td><select data-sl="${i}" data-k="kind">${KINDS.map(([v,l]) => `<option value="${v}"${sl.kind===v?' selected':''}>${esc(l)}</option>`).join('')}</select></td>
-      <td><input type="text" data-sl="${i}" data-k="label" value="${esc(sl.label||'')}" placeholder="e.g. Input: teaching receptive skills"></td>
-      <td><input type="text" data-sl="${i}" data-k="room" value="${esc(sl.room||'')}" placeholder="—"></td>
-      <td><button class="btn quiet sm" data-slrm="${i}">Remove</button></td></tr>`).join('')}
-    </table></div>
-    <div class="row"><button class="btn" id="slotAdd">Add a slot</button>
-      ${cur ? '<button class="btn quiet" id="shapeRemove">Remove this shape</button>' : '<button class="btn quiet" id="slotReset">Back to the default day</button>'}
-      <button class="btn quiet" id="slotsClose">Close</button></div></div>`;
-}
-
+/* THE COURSE'S DAYS. Which weekdays it meets: full-time is Monday to Friday,
+   a part-time course ticks its own. Changing them lays the days out again,
+   keeping every session and note on a day that is still a course day. */
+let DAYS_OPEN = false;
 const ask = (text, verb) => window.confirmModal ? confirmModal(text, verb) : Promise.resolve(confirm(text));
 
-function wireSlots(){
+function daysPanelHTML(){
+  if (!DAYS_OPEN) return '';
+  const meets = window.hubMeets ? hubMeets(TT) : [1,2,3,4,5];
+  return `<div class="imp"><h3>The course’s days</h3>
+    <p>The weekdays the course meets. A part-time course ticks only its own; the teaching practices are dealt again over the days that are left, and everything already on a day that is still a course day stays where it is.</p>
+    <div class="meets"><span class="ml">The course meets on</span>${[1,2,3,4,5,6,0].map(n => `<label><input type="checkbox" data-meet="${n}"${meets.indexOf(n) !== -1 ? ' checked' : ''}> ${DOW[n]}</label>`).join('')}</div>
+    <p class="hint">To change a day’s times, drag its tiles, or set one day as you want it and use ⋯ on that day → “Use this day’s shape for…”.</p>
+    <div class="row"><button class="btn quiet" id="relay">Lay the days out again</button><button class="btn quiet" id="daysClose">Close</button></div></div>`;
+}
+
+function wireDays(){
   if (!IS_TUTOR) return;
-  if ($('slotsOpen')) $('slotsOpen').addEventListener('click', () => { SLOTS_OPEN = !SLOTS_OPEN; render(); });
-  if ($('slotsClose')) $('slotsClose').addEventListener('click', () => { SLOTS_OPEN = false; render(); });
-  document.querySelectorAll('[data-shape]').forEach(el => el.addEventListener('click', () => { SHAPE_AT = +el.dataset.shape; render(); }));
-  /* A new shape starts as a copy of the one on screen, keys and all, so the
-     sessions typed into each day carry straight across: only the times and
-     the slots that differ need touching (Ramy: "then I'm doing the whole
-     thing manually now"). */
-  if ($('shapeAdd')) $('shapeAdd').addEventListener('click', () => {
-    const copy = editSlots().map(x => Object.assign({}, x));
-    TT.shapes = Array.isArray(TT.shapes) ? TT.shapes : [];
-    TT.shapes.push({ name: '', from: '', days: [], slots: copy });
-    SHAPE_AT = TT.shapes.length - 1;
-    save('Shape added — give it a date'); render();
+  if ($('daysOpen')) $('daysOpen').addEventListener('click', () => { DAYS_OPEN = !DAYS_OPEN; render(); });
+  if ($('daysClose')) $('daysClose').addEventListener('click', () => { DAYS_OPEN = false; render(); });
+  if ($('relay')) $('relay').addEventListener('click', async () => {
+    if (await ask('Lay the course days out again from the course dates? Sessions and notes on a day that is still a course day are kept; the teaching practices are dealt again.', 'Rebuild')) build(true);
   });
-  if ($('shapeRemove')) $('shapeRemove').addEventListener('click', async () => {
-    if (!(await ask('Remove this shape? The days it covered go back to the usual day.', 'Remove'))) return;
-    TT.shapes.splice(SHAPE_AT, 1); if (!TT.shapes.length) delete TT.shapes;
-    SHAPE_AT = -1; save('Shape removed'); render();
-  });
-  const cur = () => (SHAPE_AT >= 0 && TT.shapes) ? TT.shapes[SHAPE_AT] : null;
-  if ($('shName')) { let t = null; const fire = () => { const c = cur(); if (!c) return; c.name = $('shName').value.trim(); save('Saved'); };
-    $('shName').addEventListener('input', () => { clearTimeout(t); t = setTimeout(fire, 700); }); $('shName').addEventListener('blur', () => { clearTimeout(t); fire(); render(); }); }
-  if ($('shFrom')) $('shFrom').addEventListener('change', () => { const c = cur(); if (!c) return; c.from = $('shFrom').value || ''; save('Saved'); render(); });
-  document.querySelectorAll('[data-shday]').forEach(el => el.addEventListener('change', () => {
-    const c = cur(); if (!c) return;
-    const n = +el.dataset.shday, days = (c.days || []).filter(x => x !== n);
-    if (el.checked) days.push(n);
-    c.days = days.sort(); save('Saved'); render();
-  }));
-  /* The days the course meets decide which dates are course days at all, so
-     changing them lays the days out again -- keeping what is typed on any
-     day that still exists, as "Rebuild the shape" does. */
   document.querySelectorAll('[data-meet]').forEach(el => el.addEventListener('change', async () => {
     const was = window.hubMeets ? hubMeets(TT) : [1,2,3,4,5];
     const n = +el.dataset.meet, next = was.filter(x => x !== n);
     if (el.checked) next.push(n);
     next.sort();
     if (!next.length) { render(); return; }
-    const names = next.map(x => DOW[x]).join(', ');
-    if (!(await ask('Lay the course days out again on ' + names + '? Sessions and notes typed on a day that is still a course day are kept; the teaching practices are dealt again.', 'Rebuild'))) { render(); return; }
+    if (!(await ask('Lay the course days out again on ' + next.map(x => DOW[x]).join(', ') + '? Sessions and notes on a day that is still a course day are kept; the teaching practices are dealt again.', 'Rebuild'))) { render(); return; }
     TT.meets = next;
     build(true);
   }));
-  if ($('slotAdd')) $('slotAdd').addEventListener('click', () => {
-    editSlots().push({ key: 's' + Date.now().toString(36), from:'', to:'', kind:'input', label:'Input', room:'' });
-    save('Added'); render();
+}
+
+/* ---- the board, edited in place (tutors) ---------------------------------
+   A tile's bottom edge changes its length and everything after it on that day
+   moves with it; dragging a tile moves it and pushes down whatever it lands
+   on; a click opens the tile. On a phone a tap opens it -- dragging there
+   would fight the finger scrolling between days. Undo is one step back. */
+const UNDO = [];
+const dayOfDate = date => (TT.days || []).find(d => d.date === date);
+function remember(){ UNDO.push(JSON.stringify(TT.days)); if (UNDO.length > 40) UNDO.shift(); }
+function undo(){ if (!UNDO.length) return; TT.days = JSON.parse(UNDO.pop()); closePop(); save('Undone'); render(); }
+
+/* Overlaps are solved by pushing down: whatever a tile lands on moves later,
+   and so on to the end of the day. */
+function settle(day, keep){
+  /* the tile just placed keeps its spot over one that starts at the same time */
+  day.sessions.sort((a, b) => byStart(a, b) || (a === keep ? -1 : b === keep ? 1 : 0));
+  for (let i = 1; i < day.sessions.length; i++) {
+    const prev = day.sessions[i - 1], t = day.sessions[i];
+    if (toMin(t.s) < toMin(prev.e)) {
+      if (t === keep && toMin(prev.s) >= toMin(t.s)) continue;
+      const shift = toMin(prev.e) - toMin(t.s);
+      t.s = toHM(toMin(t.s) + shift); t.e = toHM(toMin(t.e) + shift);
+    }
+  }
+}
+
+let DRAG = null;
+function placeTiles(day){
+  const B = bounds();
+  day.sessions.forEach(x => {
+    const el = document.querySelector(`.tile[data-date="${day.date}"][data-id="${x.id}"]`); if (!el) return;
+    const s = toMin(x.s), e = toMin(x.e);
+    el.style.top = ((s - B.from) * PXM) + 'px'; el.style.height = Math.max(12, (e - s) * PXM - 2) + 'px';
+    const tm = el.querySelector('.tm'); if (tm) tm.textContent = hubClockRange(x.s, x.e);
   });
-  if ($('slotReset')) $('slotReset').addEventListener('click', async () => {
-    if (!(await ask('Back to the default day? Anything typed into a slot that no longer exists stops showing.', 'Reset'))) return;
-    TT.slots = DEFAULT_SLOTS.map(x => Object.assign({}, x)); save('Shape reset'); render();
+}
+function wireBoard(){
+  if (wireBoard.done) return; wireBoard.done = true;
+  document.addEventListener('pointerdown', e => {
+    if (!EDIT || e.button !== 0) return;
+    const tile = e.target.closest('.tile'); if (!tile) return;
+    const day = dayOfDate(tile.dataset.date); if (!day) return;
+    const x = day.sessions.find(s => s.id === tile.dataset.id); if (!x) return;
+    const resize = !!e.target.dataset.rs;
+    DRAG = { day, x, y: e.clientY, resize, touch: e.pointerType === 'touch' && !resize, moved: false, before: JSON.stringify(TT.days),
+             s: toMin(x.s), e: toMin(x.e), orig: JSON.parse(JSON.stringify(day.sessions)), el: tile };
+    if (!DRAG.touch) e.preventDefault();
   });
-  document.querySelectorAll('[data-slrm]').forEach(el => el.addEventListener('click', () => {
-    editSlots().splice(+el.dataset.slrm, 1); save('Removed'); render();
-  }));
-  document.querySelectorAll('[data-sl]').forEach(el => {
-    const fire = () => {
-      const sl = editSlots()[+el.dataset.sl]; if (!sl) return;
-      sl[el.dataset.k] = el.value;
-      save('Saved');
-      if (el.dataset.k === 'kind') render();
-    };
-    if (el.tagName === 'SELECT') el.addEventListener('change', fire);
-    else { let t = null; el.addEventListener('input', () => { clearTimeout(t); t = setTimeout(fire, 700); }); el.addEventListener('blur', () => { clearTimeout(t); fire(); }); }
+  document.addEventListener('pointermove', e => {
+    if (!DRAG || DRAG.touch) return;
+    const dy = e.clientY - DRAG.y;
+    if (!DRAG.moved && Math.abs(dy) < 4) return;
+    DRAG.moved = true; DRAG.el.classList.add('dragging');
+    const delta = Math.round(dy / PXM / 5) * 5;
+    const day = DRAG.day;
+    day.sessions = JSON.parse(JSON.stringify(DRAG.orig));
+    const x = day.sessions.find(s => s.id === DRAG.x.id);
+    if (DRAG.resize) {
+      const end = Math.max(DRAG.s + 5, DRAG.e + delta), shift = end - DRAG.e;
+      x.e = toHM(end);
+      day.sessions.forEach(o => { if (o !== x && toMin(o.s) >= DRAG.e) { o.s = toHM(toMin(o.s) + shift); o.e = toHM(toMin(o.e) + shift); } });
+    } else {
+      const len = DRAG.e - DRAG.s, s = Math.max(6 * 60, Math.min(23 * 60 - len, DRAG.s + delta));
+      x.s = toHM(s); x.e = toHM(s + len);
+      settle(day, x);
+    }
+    placeTiles(day);
   });
+  document.addEventListener('pointerup', e => {
+    if (!DRAG) return;
+    const was = DRAG; DRAG = null;
+    if (was.moved) { UNDO.push(was.before); was.day.sessions.sort(byStart); save('Moved'); render(); return; }
+    if (!was.resize) openTile(was.day.date, was.x.id);
+  });
+  document.addEventListener('click', e => {
+    if (!EDIT) return;
+    const m = e.target.closest('[data-menu]'); if (m) { e.stopPropagation(); openMenu(m.dataset.menu, m); return; }
+    const a = e.target.closest('[data-add]');
+    if (a) {
+      const day = dayOfDate(a.dataset.add); if (!day) return;
+      remember();
+      day.sessions = day.sessions || [];
+      const end = day.sessions.length ? Math.max(...day.sessions.map(x => toMin(x.e) || 0)) : 11 * 60;
+      const x = { id: newId(), s: toHM(end), e: toHM(Math.min(23 * 60, end + 30)), k: 'event', t: '' };
+      day.sessions.push(x); save('Added'); render(); openTile(day.date, x.id); return;
+    }
+    if (e.target.id === 'ttUndo') { undo(); return; }
+    if (!e.target.closest('.ttpop, .ttmenu, .tile')) closePop();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closePop();
+    if (EDIT && (e.metaKey || e.ctrlKey) && e.key === 'z' && !e.target.closest('input, textarea, select')) { e.preventDefault(); undo(); }
+  });
+}
+
+function pop(cls){
+  let el = document.querySelector('.' + cls);
+  if (!el) { el = document.createElement('div'); el.className = cls; el.hidden = true; document.body.appendChild(el); }
+  return el;
+}
+function closePop(){ document.querySelectorAll('.ttpop, .ttmenu').forEach(el => { el.hidden = true; }); }
+function placeNear(el, anchor){
+  const r = (anchor || document.body).getBoundingClientRect(), w = el.offsetWidth || 300;
+  const left = r.right + 8 + w > window.innerWidth ? Math.max(8, r.left - w - 8) : r.right + 8;
+  el.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, left)) + 'px';
+  el.style.top = Math.max(8, Math.min(window.innerHeight - el.offsetHeight - 8, r.top)) + 'px';
+}
+
+/* One tile, opened: what it is, its name, whose input it is, its times. A TP
+   tile names the practice and which set teaches -- that is the day's, so it
+   changes every lesson of the day at once. */
+function openTile(date, id){
+  closePop();
+  const day = dayOfDate(date); if (!day) return;
+  const x = (day.sessions || []).find(s => s.id === id); if (!x) return;
+  remember();
+  const el = pop('ttpop');
+  const sets = (GROUPS[0] && GROUPS[0].sets) || [];
+  el.innerHTML = `<label>What it is<select id="tK">${KIND_ORDER.map(k => `<option value="${k}"${x.k === k ? ' selected' : ''}>${esc(KIND_LABEL[k])}</option>`).join('')}</select></label>
+    ${x.k === 'tp'
+      ? `<div class="two"><label>Practice<input id="tTp" type="number" min="1" max="20" value="${esc(day.tp || '')}" placeholder="—"></label>
+         <label>Who teaches<select id="tSet">${sets.length ? sets.map((st, i) => `<option value="${i}"${+day.setIndex === i ? ' selected' : ''}>${esc(R.setName(st) || (i ? 'Second set' : 'First set'))}</option>`).join('') : `<option value="0">First set</option><option value="1"${+day.setIndex === 1 ? ' selected' : ''}>Second set</option>`}</select></label></div>`
+      : `<label>Name<input id="tT" value="${esc(x.t || '')}" placeholder="${esc(KIND_LABEL[x.k] || '')}"></label>`}
+    ${x.k === 'input' && TUTORS.length ? `<label>Who teaches it<select id="tBy"><option value="">—</option>${TUTORS.map((n, i) => `<option value="${i}"${String(x.by) === String(i) ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>` : ''}
+    <div class="two"><label>From<input id="tS" type="time" value="${esc(x.s)}"></label><label>To<input id="tE" type="time" value="${esc(x.e)}"></label></div>
+    <div class="acts"><button type="button" class="btn quiet del" id="tDel">Remove</button><button type="button" class="btn" id="tOk">Done</button></div>`;
+  el.hidden = false;
+  placeNear(el, document.querySelector(`.tile[data-date="${date}"][data-id="${id}"]`));
+  const apply = (rerender) => {
+    const k = $('tK').value;
+    if (k !== x.k) {
+      x.k = k;
+      if (k === 'tp') { x.t = ''; if (!day.tp) { const prev = TT.days.slice(0, TT.days.indexOf(day)).reverse().find(d => d.tp); day.tp = prev ? prev.tp : 1; day.setIndex = 0; } }
+      if (k !== 'input') delete x.by;
+      if (k === 'tp' || k === 'input') x.room = k === 'tp' ? 'Teaching practice' : 'Input';
+      if (!day.sessions.some(s => s.k === 'tp')) { delete day.tp; delete day.setIndex; }
+      save('Saved'); render(); openTile(date, id); UNDO.pop(); return;
+    }
+    if ($('tT')) x.t = $('tT').value;
+    if ($('tBy')) { if ($('tBy').value === '') delete x.by; else x.by = +$('tBy').value; }
+    if ($('tTp')) { const n = parseInt($('tTp').value, 10); if (n > 0) day.tp = n; }
+    if ($('tSet')) day.setIndex = +$('tSet').value;
+    const s = toMin($('tS').value), e = toMin($('tE').value);
+    if (s != null && e != null) { x.s = toHM(s); x.e = toHM(Math.max(s + 5, e)); settle(day, x); }
+    save('Saved');
+    if (rerender) render();
+  };
+  ['tK', 'tTp', 'tSet', 'tBy', 'tS', 'tE'].forEach(i => { if ($(i)) $(i).addEventListener('change', () => apply(true)); });
+  if ($('tT')) { let t = null; $('tT').addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => apply(true), 500); }); $('tT').addEventListener('keydown', e => { if (e.key === 'Enter') { apply(true); closePop(); } }); }
+  $('tOk').addEventListener('click', () => { apply(true); closePop(); });
+  $('tDel').addEventListener('click', () => {
+    day.sessions = day.sessions.filter(s => s !== x);
+    if (!day.sessions.some(s => s.k === 'tp')) { delete day.tp; delete day.setIndex; }
+    closePop(); save('Removed'); render();
+  });
+  const f = $('tT') || $('tTp'); if (f) f.focus();
+}
+
+/* The day menu: use this day's shape for other days, and pin a day so that
+   copying leaves it alone. */
+function openMenu(date, anchor){
+  closePop();
+  const day = dayOfDate(date); if (!day) return;
+  const d = parse(date), wd = DOWL[d.getDay()];
+  const el = pop('ttmenu');
+  el.innerHTML = `<h4>Use this day’s shape for</h4>
+    <button type="button" data-copy="all">Every day<small>The whole course, except pinned days</small></button>
+    <button type="button" data-copy="from">Every day from here<small>${esc(dm(d))} to the end, except pinned days</small></button>
+    <button type="button" data-copy="dow">Every ${esc(wd)}<small>The same weekday all course, except pinned days</small></button>
+    <hr><button type="button" data-pin="1">${day.pinned ? 'Unpin this day' : 'Pin this day'}<small>${day.pinned ? 'Copying a shape will change it again' : 'Copying a shape leaves it as it is — for an odd day like a demo lesson'}</small></button>`;
+  el.hidden = false;
+  const r = anchor.getBoundingClientRect();
+  el.style.left = Math.max(8, Math.min(window.innerWidth - el.offsetWidth - 8, r.right - el.offsetWidth)) + 'px';
+  el.style.top = Math.min(window.innerHeight - el.offsetHeight - 8, r.bottom + 6) + 'px';
+  el.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => copyShape(date, b.dataset.copy)));
+  el.querySelector('[data-pin]').addEventListener('click', () => { remember(); day.pinned = !day.pinned; if (!day.pinned) delete day.pinned; closePop(); save(day.pinned ? 'Pinned' : 'Unpinned'); render(); });
+}
+
+/* The shape is the times and the kinds. What a day SAYS stays its own: each
+   tile takes the next name of its kind from the day it lands on (Monday's
+   "Phonology 2" stays Monday's), and a TP tile only lands on a day that has a
+   practice -- a day without one keeps having none. */
+function copyShape(date, how){
+  const src = dayOfDate(date); if (!src) return;
+  const di = TT.days.indexOf(src), wd = parse(date).getDay();
+  const targets = TT.days.filter((d, i) => i !== di && (how === 'all' || (how === 'from' && i > di) || (how === 'dow' && parse(d.date).getDay() === wd)));
+  const changed = targets.filter(d => !d.pinned), kept = targets.length - changed.length;
+  remember();
+  changed.forEach(d => {
+    const pools = {};
+    (d.sessions || []).slice().sort(byStart).forEach(x => { (pools[x.k] = pools[x.k] || []).push(x); });
+    const out = [];
+    (src.sessions || []).slice().sort(byStart).forEach(x => {
+      if (x.k === 'tp' && !d.tp) return;
+      const n = { id: newId(), s: x.s, e: x.e, k: x.k, t: x.k === 'tp' ? '' : (x.k === 'input' ? '' : x.t) };
+      if (x.room) n.room = x.room;
+      const own = x.k === 'tp' ? null : (pools[x.k] || []).shift();
+      if (own) { n.t = own.t; if (own.by !== undefined) n.by = own.by; if (own.room) n.room = own.room; }
+      out.push(n);
+    });
+    if (d.tp && !out.some(x => x.k === 'tp')) { d.sessions = out; ensureTp(d); }
+    else d.sessions = out;
+  });
+  closePop(); save('Shape used on ' + changed.length + ' day' + (changed.length === 1 ? '' : 's') + (kept ? ' · ' + kept + ' pinned day' + (kept === 1 ? '' : 's') + ' left alone' : '')); render();
 }
 
 /* Import. Ramy, 29 Sep 2026: "is it possible to just import a timetable the
@@ -1093,35 +1358,38 @@ function wireImport(){
   if ($('impCancel')) $('impCancel').addEventListener('click', () => { REVIEW = null; render(); });
   if ($('impApply')) $('impApply').addEventListener('click', () => {
     const by = {}; TT.days.forEach(d => { by[d.date] = d; });
-    /* The two inputs go into the day's input slots. Since the day shape (30
-       Sep 2026) a day keeps its sessions in cells, keyed by slot, and the
-       importer was still writing the old a/b fields, which nothing reads:
-       "Put it in did not put it in" (Ramy, 9 Oct 2026). A course with one
-       input slot gets both, joined. */
+    /* The two inputs go into the day's first two input sessions (since stage 1,
+       9 Oct 2026, a day keeps sessions); a day with one input session gets
+       both, joined, and a day with none gets one at the usual day's time.
+       Before that the importer wrote fields nothing read: "Put it in did not
+       put it in" (Ramy, 9 Oct 2026). */
     REVIEW.found.forEach(f => {
       const day = by[f.date]; if (!day) return;
-      const ins = slotsOf(day).filter(x => x.kind === 'input');
-      day.cells = day.cells || {};
+      day.sessions = day.sessions || [];
+      const ins = day.sessions.filter(x => x.k === 'input').sort(byStart);
       [f.a, f.b].forEach((v, i) => {
-        if (!v || !ins.length) return;
-        const slot = ins[Math.min(i, ins.length - 1)].key;
-        day.cells[slot] = i > 0 && ins.length === 1 && day.cells[slot] ? day.cells[slot] + ' \u00b7 ' + v : v;
+        if (!v) return;
+        if (ins[i]) { ins[i].t = v; return; }
+        if (ins.length) { ins[ins.length - 1].t = (ins[ins.length - 1].t ? ins[ins.length - 1].t + ' · ' : '') + v; return; }
+        const sl = template().filter(x => x.kind === 'input')[0] || { from: '11:00', to: '12:15', room: 'Input' };
+        const x = { id: newId(), s: sl.from, e: sl.to, k: 'input', t: v, room: sl.room || 'Input' };
+        day.sessions.push(x); ins.push(x);
       });
       if (f.notes) day.notes = f.notes;
-      if (!REVIEW.tpColumn && f.tp) day.tp = f.tp;
+      if (!REVIEW.tpColumn && f.tp) { day.tp = f.tp; ensureTp(day); }
+      settle(day);
     });
     /* A sheet with a TP column decides the practice days (Ramy, 9 Oct 2026,
        "the sheet decides"): a blank TP cell is a day without practice, and a
        practice's first day is the first set's, its second the second set's --
-       ABC then DEF on his sheet. Lite's own rotation put a TP on every day
-       from day two, so a demo lesson day and two days without teaching came
-       out as TP 5 and TP 7, and every set after them was the wrong one. */
+       ABC then DEF on his sheet. The day's TP tiles follow: a teaching day
+       gets its lessons, a day without practice loses them. */
     if (REVIEW.tpColumn) {
       const times = {};
       REVIEW.found.slice().sort((x, y) => (x.date < y.date ? -1 : 1)).forEach(f => {
         const day = by[f.date]; if (!day) return;
-        if (f.tp) { const n = times[f.tp] || 0; day.tp = f.tp; day.setIndex = n % 2; times[f.tp] = n + 1; }
-        else { delete day.tp; delete day.setIndex; }
+        if (f.tp) { const n = times[f.tp] || 0; day.tp = f.tp; day.setIndex = n % 2; times[f.tp] = n + 1; ensureTp(day); }
+        else { delete day.tp; delete day.setIndex; dropTp(day); }
       });
     }
     REVIEW = null; IMPORT_OPEN = false;
@@ -1145,9 +1413,16 @@ function build(keep){
     /* Keep what each day already says: its cells (the day shape, 30 Sep
        2026) and its notes. This still copied the old a/b fields, so a rebuild
        that was meant to keep the sessions dropped every one of them. */
-    sk.days.forEach(d => { const o = old[d.date]; if (o) { d.notes = o.notes || ''; if (o.cells) d.cells = Object.assign({}, o.cells); else { delete d.cells; d.a = o.a || ''; d.b = o.b || ''; } } });
-  }
-  TT = sk; save('Built');
+    sk.days.forEach(d => {
+      const o = old[d.date]; if (!o) return;
+      d.notes = o.notes || '';
+      if (o.pinned) d.pinned = true;
+      if (Array.isArray(o.sessions)) d.sessions = JSON.parse(JSON.stringify(o.sessions));
+    });
+    TT = sk;
+    TT.days.forEach(d => { if (d.tp) ensureTp(d); else dropTp(d); });
+  } else TT = sk;
+  save('Built');
 }
 
 function wireEdits(){
@@ -1169,6 +1444,13 @@ function wireEdits(){
 /* Written whole, through the ordinary course-record queue in hub-sync: the
    same path settings and wording take, so it is ledgered and retried. */
 function save(word){
+  /* The usual day follows the board: the slots of the first teaching day, so a
+     new day is laid out like the course as it is now, and a page that only
+     wants "the" TP times (a volunteer's hours) still has them. */
+  if (TT && TT.days && window.hubSessionSlots) {
+    const d = TT.days.find(x => x.tp && (x.sessions || []).some(s => s.k === 'tp')) || TT.days.find(x => (x.sessions || []).length);
+    if (d) TT.slots = hubSessionSlots(d.sessions);
+  }
   try { localStorage.setItem(KEY, JSON.stringify(TT)); } catch(e) {}
   note = word || 'Saved';
   const st = document.querySelector('.status'); if (st) st.textContent = note;
@@ -1195,11 +1477,16 @@ function save(word){
   const mins = s => { const m = /^(\d{1,2}):(\d{2})/.exec(String(s || '')); return m ? +m[1] * 60 + +m[2] : null; };
   const nowD = () => { const n = window.hubNow ? hubNow() : new Date(); return n instanceof Date ? n : new Date(n); };
   const daysBetween = (a, b) => Math.round((Date.parse(b + 'T12:00:00') - Date.parse(a + 'T12:00:00')) / 864e5);
-  const jump = date => { const el = document.getElementById('d-' + date); if (!el) return; window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' }); };
+  const jump = date => {
+    const el = document.getElementById('d-' + date); if (!el) return;
+    /* on a phone the week is a row of days: bring the day across as well as down */
+    if (el.parentElement && el.parentElement.scrollWidth > el.parentElement.clientWidth) el.parentElement.scrollTo({ left: el.offsetLeft - el.parentElement.offsetLeft, behavior: 'smooth' });
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' });
+  };
 
   function ribbon(){
     const days = (TT && TT.days) || []; if (!days.length || host.querySelector('.tv2-rib')) return;
-    const firstWk = host.querySelector('.wk'); if (!firstWk) return;
+    const firstWk = host.querySelector('.tkey') || host.querySelector('.wk'); if (!firstWk) return;
     const idx = days.findIndex(d => d.date === TODAY);
     const before = days[0] && TODAY < days[0].date, after = days[days.length - 1] && TODAY > days[days.length - 1].date;
     const head = idx >= 0 ? 'Day <em>' + (idx + 1) + '</em> of ' + days.length
@@ -1228,12 +1515,15 @@ function save(word){
     let clock = dh && dh.querySelector('.tv2-clock');
     if (dh && !clock) { clock = document.createElement('span'); clock.className = 'tv2-clock'; dh.appendChild(clock); }
     if (clock) clock.textContent = hubClock(p2(n.getHours()) + ':' + p2(n.getMinutes()));
-    card.querySelectorAll('.sl').forEach(row => {
-      const t = row.querySelector('.t[data-from]');
+    card.querySelectorAll('.sl, .tile[data-from]').forEach(row => {
+      const t = row.dataset.from ? row : row.querySelector('.t[data-from]');
       const a = t ? mins(t.dataset.from) : null, b = t ? mins(t.dataset.to) : null;
       row.classList.toggle('tv2-now', a != null && b != null && m >= a && m < b);
       row.classList.toggle('tv2-past', b != null && m >= b);
     });
+    /* the line across today's column at the time it is now */
+    const bar = card.querySelector('.nowbar'), body = bar && bar.parentElement;
+    if (bar && body) { const y = (m - (+body.dataset.start || 0)) * PXM; bar.hidden = y < 0 || y > body.offsetHeight; bar.style.top = y + 'px'; }
   }
 
   function duePills(){

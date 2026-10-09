@@ -703,9 +703,21 @@ window.hubShapeFor = function(tt, dateISO){
   });
   return best;
 };
+/* Since stage 1 of the timetable system (9 Oct 2026) a day keeps its own
+   SESSIONS, each with a kind and its own times. This hands them to the rest of
+   Lite as slots, so every page that asks "what are this day's times?" gets
+   the day's own answer without knowing the new shape. */
+window.hubSessionSlots = function(sessions){
+  var KIND = { input:'input', tp:'tp', plan:'plan', feedback:'feedback', reflect:'feedback', prep:'prep', 'break':'break', lunch:'break', event:'event', task:'task' };
+  var LABEL = { input:'Input', tp:'Teaching practice', plan:'Lesson planning', feedback:'TP feedback', reflect:'Reflection', 'break':'Break', lunch:'Lunch', event:'', task:'' };
+  return (sessions || []).filter(function(x){ return x && x.s && x.e; }).slice().sort(function(a, b){ return a.s < b.s ? -1 : a.s > b.s ? 1 : 0; })
+    .map(function(x){ return { key: x.id, from: x.s, to: x.e, kind: KIND[x.k] || 'event', label: x.t || LABEL[x.k] || '', room: x.room || (x.k === 'tp' ? 'Teaching practice' : '') }; });
+};
 window.hubSlotsFor = function(tt, dateISO){
-  var sh = window.hubShapeFor(tt, dateISO);
-  return sh ? sh.slots : ((tt && Array.isArray(tt.slots)) ? tt.slots : []);
+  var T = tt || {}, iso = String(dateISO || '').slice(0, 10), days = Array.isArray(T.days) ? T.days : [];
+  for (var i = 0; i < days.length; i++) if (days[i] && days[i].date === iso && Array.isArray(days[i].sessions)) return window.hubSessionSlots(days[i].sessions);
+  var sh = window.hubShapeFor(T, dateISO);
+  return sh ? sh.slots : (Array.isArray(T.slots) ? T.slots : []);
 };
 /* Which weekdays the course meets on (0 = Sunday). Full-time is Monday to
    Friday, the default; a part-time course ticks only its own days. */
