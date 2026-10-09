@@ -27,6 +27,17 @@ Never a bare `clasp deploy`. If anything is ever edited in the Apps Script
 editor instead, `clasp pull` before the next change or the repo copy is stale.
 The patches below are how the editor's text got to v73.
 
+## 9 Oct 2026 — a clone carries the timetable's days (store v80, version TBC)
+
+`cloneCourse` also copies the source course's timetable days, without their
+dates: each open day's sessions, its practice (`tp`, `setIndex`) and notes, in
+order, under `timetable.carried = { from, days }`, with the usual day (`slots`)
+and the weekdays the course meets. Closed days, pins, the draft and the
+course's change notices stay behind. The new course's timetable page offers
+"Start from <course>" beside "Build a fresh one" and lays the days onto its
+own dates, day 1 on day 1. The reply's `copied` gains `timetableDays`.
+Writes only to the NEW course; the source is read.
+
 ## 8 Oct 2026 — the certificate per level, signed by the centre (version 93, store v79)
 
 The volunteer's certificate of attendance is now 160 hours AT A LEVEL (a

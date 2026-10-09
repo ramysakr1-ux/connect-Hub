@@ -373,6 +373,10 @@
   .imp .linkerr{font-size:0.78rem; color:var(--brick); margin:-4px 0 12px; line-height:1.5;}
   .review{background:var(--surface); border:1px solid var(--sand-line); border-left:5px solid var(--gold); border-radius:10px; padding:16px 18px; margin:0 0 18px;}
   .review h3{font-family:'Newsreader',Georgia,serif; font-size:1.1rem; margin:0 0 6px;}
+  .carried{background:var(--gold-wash); border-radius:10px; padding:18px 20px; margin:0 0 18px; display:flex; flex-direction:column; gap:8px;}
+  .carried h3{margin:0; font-family:'Newsreader', Georgia, serif; font-size:1.25rem; font-weight:600;}
+  .carried p{margin:0; color:var(--ink); max-width:62ch; line-height:1.5;}
+  .carried .bar{margin:4px 0 0;}
   .review .n{font-size:0.82rem; color:var(--grey); line-height:1.55; margin:0 0 10px;}
   .review .found{background:var(--paper); border:1px solid var(--sand-line); border-radius:7px; padding:7px 10px; margin:0 0 6px; font-size:0.79rem;}
   .review .skipped{font-size:0.78rem; color:var(--brick); margin:8px 0 0;}
@@ -1095,10 +1099,20 @@ function render(){
     return;
   }
   if (!TT || !TT.days || !TT.days.length) {
+    const noDates = !SETTINGS.start || !SETTINGS.end;
+    const carried = TT && TT.carried && Array.isArray(TT.carried.days) && TT.carried.days.length ? TT.carried : null;
+    /* A course started from the last one brings that course's days with it,
+       without their dates (store v80, 9 Oct 2026: Ramy, "duplicate the
+       previous course"). Either start from them or build a fresh one. */
     app.innerHTML = head + (IS_TUTOR
-      ? `<div class="bar"><button class="btn" id="build"${(!SETTINGS.start || !SETTINGS.end) ? ' disabled' : ''}>Build the timetable</button><span class="status">${(!SETTINGS.start || !SETTINGS.end) ? 'Set the course start and end dates on Course admin first.' : 'Lays out every weekday from the start to the end, with the teaching practices along it. Everything stays editable.'}</span></div>`
+      ? (carried
+        ? `<div class="carried"><h3>Start from ${esc(carried.from)}’s timetable</h3>
+            <p>${carried.days.length} days came across with this course: their sessions, their times, the teaching practices and the notes. They go onto this course’s dates in order, day 1 on day 1. Everything stays editable.</p>
+            <div class="bar"><button class="btn" id="fromCarried"${noDates ? ' disabled' : ''}>Start from ${esc(carried.from)}</button><button class="btn quiet" id="build"${noDates ? ' disabled' : ''}>Build a fresh one</button><span class="status">${noDates ? 'Set the course start and end dates on Course admin first.' : ''}</span></div></div>`
+        : `<div class="bar"><button class="btn" id="build"${noDates ? ' disabled' : ''}>Build the timetable</button><span class="status">${noDates ? 'Set the course start and end dates on Course admin first.' : 'Lays out every weekday from the start to the end, with the teaching practices along it. Everything stays editable.'}</span></div>`)
       : `<div class="empty">The timetable has not been set up yet.</div>`);
-    if ($('build')) $('build').addEventListener('click', build);
+    if ($('build')) $('build').addEventListener('click', () => build());
+    if ($('fromCarried')) $('fromCarried').addEventListener('click', startFromCarried);
     return;
   }
   /* Weeks are Monday to Friday runs, so a four-week course reads as four
@@ -2063,6 +2077,36 @@ function build(keep, change){
     TT.days.forEach(d => { if (d.closed) { delete d.tp; delete d.setIndex; } else if (d.tp) ensureTp(d); else dropTp(d); });
   } else TT = Object.assign(sk, TT && TT.updates ? { updates: TT.updates } : {});
   save('Built', change);
+}
+
+/* The last course's days onto this course's dates, in order. A course longer
+   than the last one keeps the usual day on the days past its end, without a
+   practice; a shorter one leaves the last course's final days behind, and the
+   note says how many. */
+function startFromCarried(){
+  const c = TT && TT.carried; if (!c) return;
+  const sk = skeleton();
+  if (!sk) { note = 'The course needs a start and an end date first.'; render(); return; }
+  const from = c.days, slots = (TT.slots && TT.slots.length) ? TT.slots : DEFAULT_SLOTS;
+  /* a day past the last course's end looks like its last day, with the
+     names left for the tutor and no practice */
+  const lastO = from[from.length - 1] || {};
+  const tail = Array.isArray(lastO.sessions) ? lastO.sessions.filter(x => x.k !== 'tp').map(x => Object.assign({}, x, ['input', 'task', 'event'].indexOf(x.k) !== -1 ? { k: 'input', t: '' } : {})) : null;
+  sk.days.forEach((d, i) => {
+    const o = from[i];
+    if (!o) { delete d.tp; delete d.setIndex; if (tail) d.sessions = tail.map(x => Object.assign({}, x, { id: newId() })); else dropTp(d); return; }
+    d.notes = o.notes || '';
+    d.sessions = Array.isArray(o.sessions) ? JSON.parse(JSON.stringify(o.sessions)) : sessionsFromSlots(o, slots, o.cells || {}, i === 0);
+    if (o.tp) { d.tp = o.tp; d.setIndex = o.setIndex || 0; } else { delete d.tp; delete d.setIndex; }
+    delete d.first;
+  });
+  const extra = Math.max(0, sk.days.length - from.length), left = Math.max(0, from.length - sk.days.length);
+  TT = sk;
+  save('Built', { text: 'Started from ' + c.from + '’s timetable' });
+  note = 'Started from ' + c.from + ': ' + Math.min(from.length, TT.days.length) + ' days laid onto this course’s dates'
+    + (extra ? '; ' + extra + ' day' + (extra === 1 ? '' : 's') + ' past its end look like its last day, without a practice' : '')
+    + (left ? '; ' + c.from + '’s last ' + left + ' day' + (left === 1 ? '' : 's') + ' did not fit' : '') + '.';
+  render();
 }
 
 function wireEdits(){

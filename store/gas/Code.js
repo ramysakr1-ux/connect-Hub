@@ -719,7 +719,8 @@ case 'inbox': {
     // course at the end?"). What is the CENTRE's carries over -- name, number,
     // logo, tutors, the standing instructions, TPs each, hours, mode, the
     // Appian address, the candidates' shared links, the assignment wording,
-    // the observation sheets. What is THIS course's starts fresh -- dates,
+    // the observation sheets, the timetable's days without their dates (v80).
+    // What is THIS course's starts fresh -- dates,
     // the assessment date and picks, the notification reference, the assessor's
     // document links, the roster and every record, and both keys.
     case 'cloneCourse': {
@@ -755,6 +756,27 @@ case 'inbox': {
       if (w && typeof w === 'object') { for (var wk in w) { if (w[wk] && typeof w[wk] === 'object' && !Array.isArray(w[wk])) w[wk].released = false; } }
       if (w) courseWrite_(nid, 'wording', w);
       var o = courseRead_(fromId, 'observations'); if (o) courseWrite_(nid, 'observations', o);
+      /* v80 (9 Oct 2026): the timetable travels, without its dates (Ramy:
+         "duplicate the previous course"). A course's days belong to its own
+         calendar, so they come across in order -- day 1, day 2, ... -- with
+         their sessions, practices and notes, and the new course's timetable
+         page lays them onto its own dates when the tutor asks it to. A closed
+         day (a holiday) belonged to that calendar and stays behind; so do
+         the pins, the draft and the changes the old course was told about. */
+      var ttSrc = courseRead_(fromId, 'timetable');
+      var ttDays = ttSrc && Array.isArray(ttSrc.days) ? ttSrc.days.filter(function (d) { return d && !d.closed; }) : [];
+      if (ttDays.length) {
+        var carried = ttDays.map(function (d) {
+          var c = { notes: String(d.notes || '') };
+          if (Array.isArray(d.sessions)) c.sessions = d.sessions;
+          else if (d.cells) c.cells = d.cells;
+          if (d.tp) { c.tp = d.tp; c.setIndex = d.setIndex || 0; }
+          return c;
+        });
+        var ttNew = { v: ttSrc.v || 3, slots: ttSrc.slots || [], carried: { from: String(s.courseName || fromId), days: carried } };
+        if (Array.isArray(ttSrc.meets) && ttSrc.meets.length) ttNew.meets = ttSrc.meets;
+        courseWrite_(nid, 'timetable', ttNew);
+      }
             /* v73: the noticeboard travels (Ramy, 6 Oct 2026: "like Google
          Classroom"). Every post comes across as a draft -- no group, no
          date, no publishAt -- that the new course's tutors post when the
@@ -765,7 +787,7 @@ case 'inbox': {
         return { id: newKey_().slice(0, 12), at: new Date().toISOString(), by: String(p.by || ''), to: '', text: p.text, draft: true, from: String(s.courseName || fromId) };
       }) : [];
       if (stCarried.length) courseWrite_(nid, 'stream', stCarried);
-      return { id: nid, name: nname, from: fromId, copied: { settings: Object.keys(keep).length, wording: !!w, observations: !!o }, tutorKey: courseKey_('tutor', nid), assessorKey: courseKey_('assessor', nid), courses: ownerList_() };
+      return { id: nid, name: nname, from: fromId, copied: { settings: Object.keys(keep).length, wording: !!w, observations: !!o, timetableDays: ttDays.length }, tutorKey: courseKey_('tutor', nid), assessorKey: courseKey_('assessor', nid), courses: ownerList_() };
     }
     // ---- shared assets: Cambridge's CELTA 5 master and the two fonts -------
     // Kept on the owner's Drive, never on the public site (the master is
