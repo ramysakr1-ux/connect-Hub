@@ -27,7 +27,7 @@ Never a bare `clasp deploy`. If anything is ever edited in the Apps Script
 editor instead, `clasp pull` before the next change or the repo copy is stale.
 The patches below are how the editor's text got to v73.
 
-## 9 Oct 2026 — a clone carries the timetable's days (store v80, version TBC)
+## 9 Oct 2026 — a clone carries the timetable's days (version 94, store v80)
 
 `cloneCourse` also copies the source course's timetable days, without their
 dates: each open day's sessions, its practice (`tp`, `setIndex`) and notes, in
