@@ -56,6 +56,10 @@
       agreedOn: 'You agreed to the centre’s note on {date}.',
       howTitle: 'How your page works',
       howSub: 'You are being taught by teachers in training. Thank you. Here is how your page works.',
+      /* The last line said "just tell your teacher", in every language: the
+         one thing a volunteer must not do (Ramy: volunteers never email
+         tutors). Not coming is the No under "Are you coming?", which is in
+         English on the page, so every language names it in English (9 Oct 2026). */
       howItems: [
         'Your link is your page. Keep it; nobody else needs it. It stops working when the course ends.',
         'Your next class is at the top, with the time in the course’s own clock and in yours. Press Join to go into the online room. You do not need to prepare anything.',
@@ -63,7 +67,7 @@
         'Your attendance is marked by the tutor, not by you. A class counts when you were there for most of it. Your hours add up on your page.',
         'When your hours reach the centre’s number, your certificate of attendance appears on your page. Print it, or save it as a PDF, and the centre signs it.',
         'Add the page to your phone: Add to Home Screen in Safari, or Install in Chrome. Then it opens like an app.',
-        'If you cannot come to a class, just tell your teacher.'
+        'If you cannot come to a class, press No under “Are you coming?” at the top of your page.'
       ],
       howLink: 'How your page works'
     },
@@ -90,7 +94,7 @@
         'Devamınızı siz değil, eğitmen işaretler. Dersin çoğunda oradaysanız ders sayılır. Saatleriniz sayfanızda toplanır.',
         'Saatleriniz merkezin belirlediği sayıya ulaşınca katılım belgeniz sayfanızda görünür. Yazdırın ya da PDF olarak kaydedin; merkez imzalar.',
         'Sayfayı telefonunuza ekleyin: Safari’de Ana Ekrana Ekle, Chrome’da Yükle. Sonra bir uygulama gibi açılır.',
-        'Bir derse gelemeyecekseniz öğretmeninize haber vermeniz yeterli.'
+        'Bir derse gelemeyecekseniz, sayfanızın en üstündeki “Are you coming?” sorusunun altında No düğmesine basın.'
       ],
       howLink: 'Sayfanız nasıl çalışır'
     },
@@ -117,7 +121,7 @@
         'يسجّل المدرّب حضورك، لا أنت. يُحتسب الدرس إذا حضرت معظمه. تتجمع ساعاتك على صفحتك.',
         'عندما تبلغ ساعاتك العدد الذي حدده المركز، تظهر شهادة الحضور على صفحتك. اطبعها أو احفظها بصيغة PDF، ويوقّعها المركز.',
         'أضف الصفحة إلى هاتفك: «إضافة إلى الشاشة الرئيسية» في Safari، أو «تثبيت» في Chrome. بعدها تُفتح كتطبيق.',
-        'إذا لم تستطع الحضور إلى درس، أخبر معلمك فقط.'
+        'إذا لم تستطع الحضور إلى درس، اضغط No تحت “Are you coming?” في أعلى صفحتك.'
       ],
       howLink: 'كيف تعمل صفحتك'
     },
@@ -144,7 +148,7 @@
         'Посещаемость отмечает тьютор, а не вы. Занятие засчитывается, если вы были на большей его части. Ваши часы суммируются на странице.',
         'Когда ваши часы достигнут числа, установленного центром, на странице появится сертификат о посещении. Распечатайте его или сохраните в PDF; центр его подпишет.',
         'Добавьте страницу на телефон: «На экран Домой» в Safari или «Установить» в Chrome. Тогда она открывается как приложение.',
-        'Если вы не можете прийти на занятие, просто скажите преподавателю.'
+        'Если вы не можете прийти на занятие, нажмите No под вопросом «Are you coming?» вверху вашей страницы.'
       ],
       howLink: 'Как работает ваша страница'
     },
@@ -171,7 +175,7 @@
         'حضور شما را مربی ثبت می‌کند، نه شما. اگر بیشترِ کلاس را حاضر بوده باشید، آن کلاس حساب می‌شود. ساعت‌هایتان در صفحه‌تان جمع می‌شود.',
         'وقتی ساعت‌هایتان به عددی که مرکز تعیین کرده برسد، گواهی حضور در صفحه‌تان ظاهر می‌شود. آن را چاپ کنید یا به‌صورت PDF ذخیره کنید؛ مرکز آن را امضا می‌کند.',
         'صفحه را به تلفن خود اضافه کنید: «افزودن به صفحه‌ی اصلی» در Safari یا «نصب» در Chrome. سپس مانند یک برنامه باز می‌شود.',
-        'اگر نمی‌توانید به کلاسی بیایید، فقط به معلم خود بگویید.'
+        'اگر نمی‌توانید به کلاسی بیایید، در بالای صفحه‌تان زیر «Are you coming?» دکمهٔ No را بزنید.'
       ],
       howLink: 'صفحه‌ی شما چگونه کار می‌کند'
     },
@@ -198,7 +202,7 @@
         'Відвідуваність відмічає тьютор, а не ви. Заняття зараховується, якщо ви були на більшій його частині. Ваші години підсумовуються на сторінці.',
         'Коли ваші години сягнуть числа, встановленого центром, на сторінці з’явиться сертифікат про відвідування. Роздрукуйте його або збережіть у PDF; центр його підпише.',
         'Додайте сторінку на телефон: «На Початковий екран» у Safari або «Встановити» в Chrome. Тоді вона відкривається як застосунок.',
-        'Якщо ви не можете прийти на заняття, просто скажіть викладачеві.'
+        'Якщо ви не можете прийти на заняття, натисніть No під питанням «Are you coming?» угорі вашої сторінки.'
       ],
       howLink: 'Як працює ваша сторінка'
     }
