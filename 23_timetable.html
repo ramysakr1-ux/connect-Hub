@@ -780,7 +780,10 @@ function tileHTML(day, x, B, tpIdx, teachers){
   if (x.k === 'input' && x.by !== undefined && x.by !== '' && x.by !== null) cls.push('by-' + (+x.by % 4));
   let title = '';
   if (x.k === 'tp') {
-    const meTok = (rec('hub:me') || {}).token || '';
+    /* "You teach" is the candidate's own view. A tutor's device that once
+       opened a candidate link still remembers that candidate, and the tutor's
+       board marked their lessons as the tutor's (9 Oct 2026). */
+    const meTok = IS_TRAINEE ? ((rec('hub:me') || {}).token || '') : '';
     const byLetter = new Map();
     teachers.forEach(g => { const p = g.order[tpIdx]; if (!p) return; const k = String(p.letter); if (!byLetter.has(k)) byLetter.set(k, []); byLetter.get(k).push(p.token); });
     const worst = tokens => { const ms = tokens.map(tok => markFor(tok, day.tp, day.date)); const pick = c => ms.find(m => m.indexOf('mk ' + c) !== -1) || ''; return pick('alarm') || pick('watch') || (ms.length && ms.every(m => m.indexOf('mk done') !== -1) ? ms[0] : ''); };
@@ -791,10 +794,10 @@ function tileHTML(day, x, B, tpIdx, teachers){
     title = day.tp ? (mine ? 'You teach · ' : '') + `TP ${day.tp}${setName ? ' · ' + setName : ''}${who}` : 'Teaching practice';
   } else {
     title = esc(x.t || '');
-    /* An unnamed input is a slot nobody has filled: a tutor sees where it is,
-       the course sees nothing there. */
-    if (!x.t && x.k === 'input' && !EDIT) return '';
-    if (!x.t) { cls.push('empty'); title = esc(KIND_LABEL[x.k] || ''); }
+    /* An unnamed input is a slot nobody has named yet. The tutor sees it as a
+       slot to fill; the course sees "Input", because a morning with nothing
+       on it reads as a free morning (Ramy, 9 Oct 2026: "show them as Input"). */
+    if (!x.t) { if (EDIT) cls.push('empty'); title = esc(KIND_LABEL[x.k] || ''); }
   }
   /* THE ROOM A TILE JOINS (9 Oct 2026, the handoff's §9). A TP or input tile
      is in the course's "Teaching practice" or "Input" room unless it names
@@ -1151,7 +1154,11 @@ function render(){
   }).join('') + keyLine() + `<p class="legend">Teaching practice runs the same number on two days, one teaching set each: the letters name the trainees teaching that day. ${GROUPS.map(g => 'Group ' + esc(g.group || '—') + ': ' + g.sets.map(R.setName).filter(Boolean).join(' and ')).join('. ')}.</p>`;
   if ($('preview')) $('preview').addEventListener('click', () => { PREVIEW = !PREVIEW; render(); });
   if ($('publish')) $('publish').addEventListener('click', () => { TT.published = true; CHANGES = []; LIVE = pickLive(TT); save('Set \u2014 the course can see it'); render(); });
-  if ($('unpublish')) $('unpublish').addEventListener('click', () => { TT.published = false; CHANGES = []; save('Taken back'); render(); });
+  /* One press hid the timetable from every candidate (9 Oct 2026): it asks. */
+  if ($('unpublish')) $('unpublish').addEventListener('click', async () => {
+    if (!(await ask('Take the timetable back from the course? Candidates and tutors stop seeing it until you set it for the course again.', 'Take it back'))) return;
+    TT.published = false; CHANGES = []; save('Taken back'); render();
+  });
   wireStatus(); wireUpdated();
   wireEdits();
   wireImport();
@@ -1591,6 +1598,10 @@ function closePop(){
       CHANGES.push({ at: new Date().toISOString(), key: 'tile:' + o.id, text: '“' + tileName(was.x, day) + '” on ' + dayName(o.date) + ': ' + what.join(', ') });
       save('Saved'); render();
     }
+    /* Opening a tile records a step before anything changes; closed as it
+       was, that step is nothing, and Undo lit up for a tile only looked at
+       (found walking the timetable, 9 Oct 2026). */
+    else if (x && UNDO.length && UNDO[UNDO.length - 1] === snap()) { UNDO.pop(); if ($('ttUndo')) $('ttUndo').disabled = !UNDO.length; }
   }
   document.querySelectorAll('.ttpop, .ttmenu').forEach(el => { el.hidden = true; });
 }
@@ -1852,6 +1863,7 @@ function reviewHTML(){
   }).join('');
   return `<div class="review rv3"><h3>Import a timetable</h3>
     <p class="n">${esc(r.from)} · ${r.found.length} day${r.found.length === 1 ? '' : 's'} read · <span class="good">${understood} understood</span> · <span class="${open.length ? 'need' : 'good'}">${open.length} need${open.length === 1 ? 's' : ''} you</span>${r.unmatched.length ? ' · ' + r.unmatched.length + ' line' + (r.unmatched.length === 1 ? '' : 's') + ' not used' : ''}</p>
+    ${(r.shapes || []).length ? `<p class="n shapes">${r.shapes.map(x => `<b>${x.from ? 'From ' + esc(dayName(x.from)) : 'The day'}:</b> ` + x.slots.map(sl => esc(sl.label) + ' ' + esc(hubClock(sl.from))).join(' · ')).join('<br>')}</p>` : ''}
     ${r.questions.length ? `<div class="rfilter"><button type="button" class="shtab${r.filter === 'all' ? ' on' : ''}" data-rfilter="all">All rows</button><button type="button" class="shtab${r.filter === 'needs' ? ' on' : ''}" data-rfilter="needs">Needs you${open.length ? ' · ' + open.length : ''}</button></div>` : ''}
     <div class="rtable"><div class="rhead"><span>In your sheet</span><span>Lite understood</span></div>${body || '<p class="hint">Nothing needs you.</p>'}</div>
     <div class="acts"><button class="btn quiet" id="impCancel">Keep what I have</button><span class="rhint">${open.length ? 'Answer ' + open.length + ' more to continue' : 'Everything is understood'}</span><button class="btn" id="impApply"${open.length ? ' disabled' : ''}>Put it in</button></div></div>`;
@@ -1888,13 +1900,15 @@ function applyReview(){
   });
   const rows = r.found.map((f, i) => ({ f, row: 'r' + i })).filter(x => !skipRow[x.row] && by[x.f.date]);
   let sessions = 0, timed = 0;
-  const filled = {};
   /* Times the sheet wrote stay where the sheet put them: a break they cover
      goes, anything else they overlap moves after them. */
   const fitAround = (day, fixed) => {
     if (!fixed.size) { settle(day); return; }
     const inside = x => [...fixed].some(f => toMin(f.s) <= toMin(x.s) && toMin(f.e) >= toMin(x.e));
-    day.sessions = day.sessions.filter(x => fixed.has(x) || !((x.k === 'break' || x.k === 'lunch') && inside(x)));
+    const sameStart = x => [...fixed].some(f => toMin(f.s) === toMin(x.s));
+    /* a break it covers goes; so does a slot it starts in or covers whole
+       (not a lesson: those are the TP column's) */
+    day.sessions = day.sessions.filter(x => fixed.has(x) || x.locked || !((x.k === 'break' || x.k === 'lunch') ? inside(x) : x.k !== 'tp' && (sameStart(x) || inside(x))));
     const placed = day.sessions.filter(x => fixed.has(x));
     day.sessions.filter(x => !fixed.has(x)).sort(byStart).forEach(t => {
       let st = toMin(t.s); const len = toMin(t.e) - st;
@@ -1903,32 +1917,82 @@ function applyReview(){
     });
     day.sessions = placed.sort(byStart);
   };
+  /* THE SHEET DECIDES THE DAY (9 Oct 2026). Ramy's C/18 import put every
+     input on Lite's own 10:00, kept Lite's own TP times and an empty second
+     input at 11:15, and let a 12:30 session push the afternoon to 18:30. Now:
+     a day the sheet writes out takes the sheet's shape (shapesIn: the day as a
+     sentence, and the day it changes from); the label times move the input
+     and the lessons ("Input 11:00", "TP 15:00 · 15:50 · 16:45"); a session
+     with its own time takes the place of whatever starts then ("Analysing
+     language and context (12:30)" on the day nothing has been taught yet takes
+     the 12:30 feedback slot) and lasts as long as that slot; and an input slot
+     the sheet left empty is not kept. */
+  const shapeFor = date => (r.shapes || []).filter(x => !x.from || x.from <= date).sort((a, b) => (a.from || '') < (b.from || '') ? -1 : 1).pop() || null;
+  /* what this import has already written on each day, so a second row for
+     the same day ("Both") adds to the first rather than starting it again */
+  const written = {};
   rows.forEach(({ f, row }) => {
     const day = by[f.date];
     const fixed = new Set();
     day.sessions = day.sessions || [];
+    const firstTouch = !written[f.date];
+    const done = written[f.date] = written[f.date] || new Set();
+    const shape = shapeFor(f.date);
+    if (shape && firstTouch) {
+      const locked = day.sessions.filter(x => x.locked);
+      const tp = r.tpColumn ? f.tp : day.tp;
+      day.sessions = sessionsFromSlots({ tp }, shape.slots.map(sl => Object.assign({}, sl, { room: sl.kind === 'tp' ? 'Teaching practice' : sl.kind === 'input' ? 'Input' : '' })), {}, false).concat(locked);
+    }
+    /* the lesson times on the label: the TP block, or the day's own lessons */
+    const tpAt = (f.tpAt || []).map(toMin).filter(n => n != null);
+    if (tpAt.length && firstTouch) {
+      const tiles = day.sessions.filter(x => x.k === 'tp').sort(byStart);
+      if (tiles.length === 1 && tpAt.length > 1) {
+        const block = tiles[0], end = toMin(block.e);
+        day.sessions = day.sessions.filter(x => x !== block);
+        tpAt.forEach((st, i) => { const next = i + 1 < tpAt.length ? tpAt[i + 1] : end; const e = Math.min(st + 45, next, Math.max(end, st + 45)); day.sessions.push({ id: newId(), s: toHM(st), e: toHM(e), k: 'tp', t: '', room: block.room || 'Teaching practice' }); });
+        day.sessions.sort(byStart);
+      } else tiles.forEach((x, i) => { if (tpAt[i] == null) return; const len = toMin(x.e) - toMin(x.s); x.s = toHM(tpAt[i]); x.e = toHM(tpAt[i] + len); });
+      /* the lessons are where the sheet says: the rest of the day moves round them */
+      day.sessions.filter(x => x.k === 'tp').forEach(x => fixed.add(x));
+    }
+    /* where a timed session starts in a slot, it lasts that slot (the shape's
+       TP block counts on a day with no lessons in it) */
+    const slotEnd = st => {
+      const own = day.sessions.find(x => toMin(x.s) === st && x.k !== 'break' && x.k !== 'lunch');
+      if (own) return toMin(own.e);
+      const sl = shape && shape.slots.find(x => toMin(x.from) === st);
+      return sl ? toMin(sl.to) : st + 45;
+    };
     const lines = r.lines.filter(l => l.row === row && (l.col === 'a' || l.col === 'b'));
-    const ins = day.sessions.filter(x => x.k === 'input' || x.imported).sort(byStart);
+    const ins = day.sessions.filter(x => x.k === 'input' && !done.has(x)).sort(byStart);
+    if (!shape && firstTouch && f.inputAt && ins[0]) { const len = toMin(ins[0].e) - toMin(ins[0].s); ins[0].s = f.inputAt; ins[0].e = toHM(toMin(f.inputAt) + len); fixed.add(ins[0]); }
+    let n = 0;
     lines.forEach(l => {
       const k = lineKind(r, l); if (!k || k === 'skip') return;
-      const n = filled[f.date] = (filled[f.date] || 0);
-      let x = ins[n];
-      if (!x) {
-        const after = day.sessions.length ? Math.max(...day.sessions.filter(s => s.k !== 'break' && s.k !== 'lunch').map(s => toMin(s.e) || 0)) : 11 * 60;
-        const sl = template().filter(s => s.kind === 'input')[n] || null;
-        const s0 = sl ? toMin(sl.from) : after, e0 = sl ? toMin(sl.to) : after + 45;
-        x = { id: newId(), s: toHM(s0), e: toHM(e0), k: 'input' }; day.sessions.push(x); ins.push(x);
+      const t = l.title + (l.tbc && r.answers[l.tbc] === 'keep' && !/tbc|to be confirmed/i.test(l.title) ? ' (to be confirmed)' : '');
+      let x;
+      if (l.times) {
+        const st = toMin(l.times.s);
+        x = { id: newId(), s: l.times.s, e: l.times.e || toHM(slotEnd(st)), k, t };
+        day.sessions.push(x); fixed.add(x); done.add(x); timed++;
+      } else {
+        x = ins[n++];
+        if (!x) {
+          const after = day.sessions.length ? Math.max(...day.sessions.filter(s => s.k !== 'break' && s.k !== 'lunch').map(s => toMin(s.e) || 0)) : 11 * 60;
+          x = { id: newId(), s: toHM(after), e: toHM(after + 45), k: 'input' }; day.sessions.push(x);
+        }
+        x.k = k; x.t = t; done.add(x);
       }
-      filled[f.date]++;
-      x.k = k; x.imported = true;
-      x.t = l.title + (l.tbc && r.answers[l.tbc] === 'keep' && !/tbc|to be confirmed/i.test(l.title) ? ' (to be confirmed)' : '');
       if (k !== 'input') delete x.by;
-      if (l.times) { const len = toMin(x.e) - toMin(x.s); x.s = l.times.s; x.e = l.times.e || toHM(toMin(l.times.s) + len); fixed.add(x); timed++; }
       sessions++;
     });
-    if (f.notes) day.notes = r.answers[row + ':dup'] === 'both' && day.notes && filled[f.date] ? day.notes + ' · ' + f.notes : f.notes;
+    /* an input slot the sheet left empty goes, when the sheet wrote the day */
+    if (f.a || f.b) day.sessions = day.sessions.filter(x => !(x.k === 'input' && !x.t && !x.locked));
+    /* the sheet's own demonstration lesson replaces the one Lite lays on day one */
+    if ([...done].some(x => /\bdemo(nstration)?\b/i.test(x.t || ''))) day.sessions = day.sessions.filter(x => done.has(x) || x.locked || x.id !== 'demo');
+    if (f.notes) day.notes = r.answers[row + ':dup'] === 'both' && day.notes && !firstTouch ? day.notes + ' · ' + f.notes : f.notes;
     if (!r.tpColumn && f.tp) { day.tp = f.tp; ensureTp(day); }
-    day.sessions.forEach(s => { delete s.imported; });
     fitAround(day, fixed);
   });
   if (r.tpColumn) {
@@ -1959,7 +2023,7 @@ function applyReview(){
   /* the terms to remember, on the course */
   const kept = [];
   r.questions.filter(q => q.kind === 'term' && r.remember[q.term]).forEach(q => { const s = rec('connect_course_settings') || {}; s.importTerms = Object.assign({}, s.importTerms, { [q.term]: r.answers[q.id] }); try { localStorage.setItem('connect_course_settings', JSON.stringify(s)); } catch (e) {} SETTINGS.importTerms = s.importTerms; kept.push(q.term); });
-  BUILT = { days: rows.length, sessions, timed, dues, kept, from: r.from };
+  BUILT = { days: rows.length, sessions, timed, dues, kept, from: r.from, shapes: (r.shapes || []).map(x => x.from) };
   REVIEW = null; IMPORT_OPEN = false;
   save('Imported', { text: 'Imported from a sheet: ' + rows.length + ' day' + (rows.length === 1 ? '' : 's') + ' updated', effects: [timed ? timed + ' session' + (timed === 1 ? '' : 's') + ' at the times the sheet wrote' : ''].concat(dues.map(d => 'Deadline set: ' + d)).filter(Boolean) });
   render();
@@ -1973,7 +2037,7 @@ function builtHTML(){
   return `<div class="built"><div><h3>Timetable built from the sheet</h3><p>From now on, edit the timetable here. Changes to the sheet won’t reach it; you can import again at any time.</p></div>
     <div class="facts">
       <div><b>${b.days} day${b.days === 1 ? '' : 's'}</b><span>${b.sessions} session${b.sessions === 1 ? '' : 's'} put in</span></div>
-      <div><b>Times</b><span>${b.timed ? b.timed + ' at the times the sheet wrote; the rest keep the day’s own' : 'Each day keeps its own times'}</span></div>
+      <div><b>Times</b><span>${b.shapes && b.shapes.length ? 'The day as the sheet writes it' + (b.shapes.filter(Boolean).length ? ', changing on ' + b.shapes.filter(Boolean).map(d => esc(dayName(d))).join(', ') : '') + (b.timed ? '; ' + b.timed + ' at their own times' : '') : b.timed ? b.timed + ' at the times the sheet wrote; the rest keep the day’s own' : 'Each day keeps its own times'}</span></div>
       <div><b>Deadlines</b><span>${b.dues.length ? b.dues.map(esc).join('<br>') : 'None set from the sheet'}</span></div>
       <div><b>Remembered</b><span>${b.kept.length ? b.kept.length + ' new term' + (b.kept.length === 1 ? '' : 's') + ', used next time' : 'Nothing new'}</span></div>
     </div><button class="btn quiet" id="builtClose">Close</button></div>`;

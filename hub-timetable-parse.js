@@ -117,13 +117,21 @@
     return null;
   }
 
-  /* A week grid, as one row per day: [Date, Input, TP, Notes]. A row with
-     dates in three or more of its cells starts a week; the labelled rows under
-     it fill that week's days, column by column, until the next row of dates.
-     The TP cell gives its practice number to the TP column, and whatever else
-     it says ("Demo lesson 1", "Assessor's visit") goes to the notes beside the
-     assignments, so nothing on the sheet is dropped. Answers null when the
-     rows are not a grid. */
+  /* A week grid, as one row per day: [Date, Input, Session 2, TP, Notes,
+     InputAt, TpAt]. A row with dates in three or more of its cells starts a
+     week; the labelled rows under it fill that week's days, column by column,
+     until the next row of dates. The TP cell gives its practice number to the
+     TP column; whatever else it says goes on as written -- a piece with its own
+     time ("Demo lesson 1 · 15:00", "filmed observations (14:00)") is a session
+     that day and goes to Session 2, and the rest ("No TP", "feedback same
+     day") goes to the notes beside the assignments, so nothing on the sheet is
+     dropped.
+     THE LABELS CARRY TIMES (9 Oct 2026). "Input 11:00" and "TP 15:00 · 15:50 ·
+     16:45" say when that week's input starts and when each lesson starts; they
+     were read as a row name and the times thrown away, so every input landed
+     on Lite's own 10:00 and the lessons on its own times. They go to InputAt
+     and TpAt, per day, because a later week can change them ("TP 14:00 ·
+     14:50 · 15:45" from week 3). Answers null when the rows are not a grid. */
   function gridRows(rows, year) {
     let weeks = 0, cols = null;
     const days = [], byDate = {};
@@ -132,7 +140,7 @@
       if (dated.length >= 3) {
         weeks++;
         cols = r.map((c, i) => (i > 0 ? readDate(c, year) : ''));
-        cols.forEach((d) => { if (d && !byDate[d]) { byDate[d] = { date: d, input: [], tp: [], notes: [] }; days.push(byDate[d]); } });
+        cols.forEach((d) => { if (d && !byDate[d]) { byDate[d] = { date: d, input: [], tp: [], notes: [], inputAt: '', tpAt: [] }; days.push(byDate[d]); } });
         return;
       }
       if (!cols) return;
@@ -140,20 +148,117 @@
       const key = HEAD.input1.test(label) || HEAD.input2.test(label) ? 'input'
         : HEAD.tp.test(label) ? 'tp' : HEAD.notes.test(label) ? 'notes' : null;
       if (!key) return;
-      cols.forEach((d, i) => { const v = clean(r[i]); if (d && v) byDate[d][key].push(v); });
+      const at = clocksIn(label);
+      cols.forEach((d, i) => {
+        if (!d) return;
+        if (key === 'input' && at.length && !byDate[d].inputAt) byDate[d].inputAt = at[0];
+        if (key === 'tp' && at.length && !byDate[d].tpAt.length) byDate[d].tpAt = at;
+        const v = clean(r[i]); if (v) byDate[d][key].push(v);
+      });
     });
     if (!weeks || !days.length) return null;
-    return [['Date', 'Input', 'TP', 'Notes']].concat(days.map((d) => {
+    return [['Date', 'Input', 'Session 2', 'TP', 'Notes', 'InputAt', 'TpAt']].concat(days.map((d) => {
       /* The number comes from a part that is only "TP 7": "No TP · syllabus
          planning TP7 & TP8" names practices on a day that has none. */
       const tpCell = d.tp.join(' · ');
       const parts = tpCell.split(/\s*·\s*/).filter(Boolean);
       const own = parts.find((p) => /^TP\s*\d{1,2}$/i.test(p));
       const tpNo = own ? readTp(own) : null;
-      const extra = parts.filter((p) => p !== own && !/^[A-Z]{3}$/.test(p));
-      const notes = (tpNo ? extra : (tpCell ? [tpCell] : [])).concat(d.notes);
-      return [d.date, d.input.join(' · '), tpNo ? 'TP ' + tpNo : '', notes.join(' · ')];
+      const rest = pieces(parts.filter((p) => p !== own && !/^[A-Z]{3}$/.test(p)).join(' · '));
+      const timed = rest.filter((g) => g.timed).map((g) => g.text);
+      const notes = rest.filter((g) => !g.timed).map((g) => g.text).concat(d.notes);
+      return [d.date, d.input.join(' · '), timed.join(' · '), tpNo ? 'TP ' + tpNo : '', notes.join(' · '), d.inputAt, d.tpAt.join(' ')];
     }));
+  }
+
+  /* Every clock time written in a label or a cell, in order, as HH:MM. */
+  function clocksIn(text) {
+    const out = [];
+    String(text || '').replace(/(\d{1,2})[:.](\d{2})\s*(am|pm)?/gi, (all, h, m, ap) => { const c = toClock(h, m, ap); if (c) out.push(c); return all; });
+    return out;
+  }
+
+  /* A cell, as the sessions it holds. "Classroom management · Analysing
+     language and context (12:30)" is two sessions: the first at the row's
+     time, the second at its own. A piece carrying a time starts a session of
+     its own; pieces without one run together ("Phonology 1 · Word and
+     sentence stress" is one input with a subtitle); a piece that is only a
+     time ("Demo lesson 2 · 14:00") belongs to the piece before it. */
+  function pieces(text) {
+    const out = [];
+    clean(text).split(/\s*·\s*/).filter(Boolean).forEach((p) => {
+      const bare = /^\(?\d{1,2}[:.]\d{2}\s*(am|pm)?(\s*[–—-]\s*\d{1,2}[:.]\d{2}\s*(am|pm)?)?\)?$/i.test(p);
+      const timed = !!timesIn(p);
+      const last = out[out.length - 1];
+      if (bare && last && !last.timed) { last.text += ' (' + p.replace(/[()]/g, '') + ')'; last.timed = true; return; }
+      if (!timed && last && !last.timed) { last.text += ' · ' + p; return; }
+      out.push({ text: p, timed });
+    });
+    return out;
+  }
+
+  /* THE DAY'S SHAPE, when the sheet writes it out (9 Oct 2026). Ramy's C/18
+     sheet says, above the grid: "Weeks 1–2: input 11:00–12:15 · break · TP
+     feedback on yesterday 12:30–13:15 · lunch 13:15–14:15 · lesson planning
+     14:15–15:00 · TP 15:00–17:30 · reflection 17:30–18:00. From Demo lesson 2
+     (Fri 23 Oct): input 11:00–12:15 · ..." That is the whole day, and the day
+     changes half way through the course. A sentence with three or more time
+     ranges is read as a shape; a date before its colon is the day it starts
+     from; a part with no time ("break") fills the gap between its neighbours.
+     Answers [{ from: 'YYYY-MM-DD' or '', slots: [{kind, label, from, to}] }]. */
+  function shapesIn(rows, year) {
+    const out = [];
+    (rows || []).forEach((r) => {
+      const text = (r || []).map(clean).filter(Boolean).join(' ');
+      if (rangesIn(text).length < 3) return;
+      text.split(/\.\s+(?=[A-Z])/).forEach((sentence) => {
+        if (rangesIn(sentence).length < 3) return;
+        const colon = sentence.indexOf(':'), first = sentence.search(/\d{1,2}[:.]\d{2}/);
+        const head = colon > 0 && colon < first ? sentence.slice(0, colon) : '';
+        const body = head ? sentence.slice(colon + 1) : sentence;
+        const segs = body.replace(/\.\s*$/, '').split(/\s*·\s*/).map(clean).filter(Boolean).map((seg) => {
+          const rg = rangesIn(seg)[0];
+          const name = clean(seg.replace(/(\d{1,2})[:.](\d{2})\s*(am|pm)?\s*(?:[–—-]|to)\s*(\d{1,2})[:.](\d{2})\s*(am|pm)?/i, ''));
+          return { name, from: rg ? rg.s : '', to: rg ? rg.e : '' };
+        });
+        const slots = [];
+        segs.forEach((g, i) => {
+          let from = g.from, to = g.to;
+          if (!from) {
+            const prev = segs.slice(0, i).reverse().find((x) => x.to), next = segs.slice(i + 1).find((x) => x.from);
+            if (!prev || !next || prev.to >= next.from) return;
+            from = prev.to; to = next.from;
+          }
+          slots.push({ kind: shapeKind(g.name), label: shapeLabel(g.name), from, to });
+        });
+        if (slots.length >= 3) out.push({ from: readDate(head, year), slots });
+      });
+    });
+    return out;
+  }
+  function rangesIn(text) {
+    const out = [];
+    String(text || '').replace(/(\d{1,2})[:.](\d{2})\s*(am|pm)?\s*(?:[–—-]|to)\s*(\d{1,2})[:.](\d{2})\s*(am|pm)?/gi, (all, h1, m1, a1, h2, m2, a2) => {
+      const s = toClock(h1, m1, a1 || a2), e = toClock(h2, m2, a2); if (s && e && e > s) out.push({ s, e }); return all;
+    });
+    return out;
+  }
+  function shapeKind(name) {
+    if (/\bTP\b|teaching practice/i.test(name) && !/feedback/i.test(name)) return 'tp';
+    if (/lunch|break/i.test(name)) return 'break';
+    if (/feedback|reflect/i.test(name)) return 'feedback';
+    if (/planning/i.test(name)) return 'plan';
+    if (/input/i.test(name)) return 'input';
+    return 'event';
+  }
+  /* What the tile says: the sheet's own words, with a capital, and the two a
+     tile always calls by their own name. */
+  function shapeLabel(name) {
+    if (/lunch/i.test(name)) return 'Lunch';
+    if (/^break$/i.test(name)) return 'Break';
+    if (/^reflection$/i.test(name)) return 'Reflection';
+    const n = clean(name);
+    return n ? n.charAt(0).toUpperCase() + n.slice(1) : '';
   }
 
   const HEAD = {
@@ -161,7 +266,9 @@
     input1: /^(input ?1|input|session ?1|morning|am)\b/i,
     input2: /^(input ?2|session ?2|afternoon|pm)\b/i,
     tp: /^(tp|teaching practice|practice)\b/i,
-    notes: /^(notes?|other|assignments?|out)\b/i
+    notes: /^(notes?|other|assignments?|out)\b/i,
+    inputAt: /^inputat$/i,
+    tpAt: /^tpat$/i
   };
 
   /* Which column is which. Returns null when the first row is not a header,
@@ -217,9 +324,13 @@
     opts = opts || {};
     const year = opts.year || (days && days.length ? +String(days[0].date).slice(0, 4) : new Date().getFullYear());
     rows = (rows || []).filter((r) => r && r.some((c) => clean(c)));
-    if (!rows.length) return { found: [], unmatched: [], byDate: 0, byPosition: 0, header: false };
+    if (!rows.length) return { found: [], unmatched: [], byDate: 0, byPosition: 0, header: false, shapes: [] };
+    const shapes = shapesIn(rows, year);
     const grid = gridRows(rows, year);
     if (grid) rows = grid;
+    /* a sentence describing the day is not a day: a sheet without a grid
+       would otherwise give it a course day by position */
+    else if (shapes.length) rows = rows.filter((r) => !(r.filter((c) => clean(c)).length === 1 && rangesIn(r.join(' ')).length >= 3));
     const map = headerMap(rows[0]);
     const body = map ? rows.slice(1) : rows;
     const tpColumn = !!(grid || (map && map.tp !== undefined));
@@ -261,6 +372,8 @@
       if (!date) { unmatched.push(r.map(clean).filter(Boolean).join(' ')); return; }
       const row = { date: date, a: at('input1'), b: at('input2'), notes: at('notes') };
       if (outside) row.outside = outside;
+      if (at('inputAt')) row.inputAt = at('inputAt');
+      if (at('tpAt')) row.tpAt = at('tpAt').split(/\s+/).filter(Boolean);
       /* When the sheet has a TP column (a grid always does), only that column
          counts: the other cells can name a practice ("syllabus planning TP7 &
          TP8") on a day with none. Without one, the whole row is searched. */
@@ -269,7 +382,7 @@
       if (!row.a && !row.b && !row.notes && !row.tp) { unmatched.push(r.map(clean).filter(Boolean).join(' ')); return; }
       found.push(row);
     });
-    return { found, unmatched, byDate, byPosition, header: !!map, grid: !!grid, tpColumn };
+    return { found, unmatched, byDate, byPosition, header: !!map, grid: !!grid, tpColumn, shapes };
   }
 
   /* ---- STAGE 3: WHAT EACH CELL MEANS, AND WHAT TO ASK (9 Oct 2026) ------
@@ -278,10 +391,13 @@
      than a guess. interpret() takes parse()'s result and the course, and
      returns the review: one line per cell as written, what Lite understood,
      and the questions. Nothing is written until every question is answered. */
+  /* Planning and assignment time are what a cell IS, so they are read from
+     how it starts: "Intro to coursebook & lesson planning" is an input that
+     mentions planning, and it went in as a planning session (9 Oct 2026). */
   const KIND_WORDS = [
-    ['task', /\b(work on|finalis|file completion|assignment time|marking)/i],
-    ['plan', /\b(planning)\b/i],
-    ['event', /\b(tutorials?|consultation|orientation|welcome|course close|closing|demo(nstration)?|observations?|filmed|assessor|meeting|getting to know|gtky)\b/i]
+    ['task', /^(work on|finalis|file completion|assignment time|marking)/i],
+    ['plan', /^((supervised|syllabus|independent|guided)\s+)?(lesson\s+)?planning\b/i],
+    ['event', /\b(tutorials?|consultation|orientation|welcome|course close|closing|demo(nstration)?|debrief|observations?|filmed|assessor|meeting|getting to know|gtky)\b/i]
   ];
   /* What a CELTA input is usually called. A cell matching none of these, and
      no remembered term, is asked about. */
@@ -341,10 +457,12 @@
       }
       if (!first) questions.push({ id: row + ':dup', row, kind: 'dup', text: 'Two rows are for ' + label(f.date) + '. How should they go in?',
         answers: [{ label: 'Both, this row’s sessions after the first’s', value: 'both' }, { label: 'Keep the first row', value: 'first' }, { label: 'Keep this row instead', value: 'second' }] });
-      ['a', 'b'].forEach((col) => {
-        const raw = clean(f[col]); if (!raw) return;
+      ['a', 'b'].forEach((col) => pieces(f[col]).forEach(({ text: raw }) => {
         const times = timesIn(raw);
-        const title = times ? times.title || raw : raw;
+        /* a tile's name starts with a capital, whatever the cell did ("demo
+           debrief 16:45" is the tile "Demo debrief") */
+        const said = times ? times.title || raw : raw;
+        const title = said.charAt(0).toUpperCase() + said.slice(1);
         const term = normTerm(title);
         let kind = vocab[term] || '', how = vocab[term] ? 'remembered' : '';
         if (!kind) for (const [k, re] of KIND_WORDS) if (re.test(title)) { kind = k; how = 'words'; break; }
@@ -362,7 +480,7 @@
             answers: [{ label: 'Put it in, marked “to be confirmed”', value: 'keep' }, { label: 'Leave it out', value: 'skip' }] });
         }
         lines.push(line);
-      });
+      }));
       if (f.tp) lines.push({ row, date: f.date, col: 'tp', raw: 'TP ' + f.tp, kind: 'tp', title: 'TP ' + f.tp });
       if (f.notes) {
         const line = { row, date: f.date, col: 'notes', raw: f.notes, kind: 'note', title: f.notes, dues: [] };
@@ -382,7 +500,7 @@
     return { lines, questions };
   }
 
-  const api = { parse, interpret, timesIn, deadlinesIn, normTerm, KINDS, rowsFromText, rowsFromBlocks, csvRows, gridRows, sheetCsvUrl, readDate, readTp, headerMap, splitCsv, clean };
+  const api = { parse, interpret, timesIn, deadlinesIn, normTerm, KINDS, rowsFromText, rowsFromBlocks, csvRows, gridRows, sheetCsvUrl, readDate, readTp, headerMap, splitCsv, clean, pieces, shapesIn, clocksIn };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.hubTimetableParse = api;
 })(typeof window !== 'undefined' ? window : globalThis);
