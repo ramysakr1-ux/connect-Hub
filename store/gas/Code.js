@@ -741,7 +741,7 @@ case 'inbox': {
          Still fresh: the dates, the course name and number, the assessment,
          the notification reference, the assessor's documents, the roster. */
       ['centreName', 'centreNumber', 'centreLocked', 'logo', 'tutorNames', 'planDueNote', 'selfDueNote', 'tpCount', 'totalHours', 'deliveryMode', 'appianUrl', 'courseLinks',
-       'agreement', 'preCourseConnect', 'gtkyWhen', 'gtkyMinutes', 'tutorContacts', 'volunteerContact', 'onlineRooms', 'timeZone', 'planFrom', 'analysisFrom', 'volunteerCertificateHours'].forEach(function (k) { if (s[k] !== undefined && s[k] !== '' && s[k] !== null) keep[k] = s[k]; });
+       'agreement', 'preCourseConnect', 'gtkyWhen', 'gtkyMinutes', 'tutorContacts', 'volunteerContact', 'onlineRooms', 'timeZone', 'clock', 'planFrom', 'analysisFrom', 'volunteerCertificateHours'].forEach(function (k) { if (s[k] !== undefined && s[k] !== '' && s[k] !== null) keep[k] = s[k]; });
       /* Of the assessor's documents only the centre's own agreement link is the centre's. */
       if (s.docs && s.docs.docAgreement) keep.docs = { docAgreement: s.docs.docAgreement };
       keep.clonedFrom = fromId;
@@ -907,6 +907,8 @@ case 'inbox': {
                  course: { settings: { centreName: vset.centreName, courseName: vset.courseName,
                                        start: vset.start, end: vset.end, logo: vset.logo,
                                        timeZone: vset.timeZone, onlineRooms: vset.onlineRooms || [],
+                                       /* v81: the course's clock, 12- or 24-hour (Ramy, 10 Oct 2026) */
+                                       clock: vset.clock || '',
                                        tutorNames: vset.tutorNames || '',
                                        /* v48: the demo clock, and the centre's own certificate threshold
                                           (which never reached the student's page before: it fell back to 20). */

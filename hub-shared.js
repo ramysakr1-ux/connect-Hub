@@ -666,19 +666,39 @@ window.hubGtkyPlan = function(settings, tt){
   }
   return out;
 };
-/* THE CLOCK, 12-hour everywhere a time is printed (Ramy, 8 Oct 2026: "I'm
-   really bad with the 24-hour clock"). Times are stored as HH:MM and stay
-   so; this is only how they read. "9:05 AM", "1:30 PM"; a range shares its
-   AM or PM when both ends are in the same half: "1:30–2:15 PM". */
+/* THE CLOCK, the course's choice (Ramy, 10 Oct 2026: "two options for the
+   clock ... the course admin can decide if they want to go with the 24 or the
+   12-hour clock"). Course admin, Clock: 12-hour, the default since 8 Oct
+   ("I'm really bad with the 24-hour clock"), or 24-hour. Times are stored as
+   HH:MM either way; this is only how they read. 12-hour: "9:05 AM", "1:30 PM",
+   and a range shares its AM or PM when both ends are in the same half:
+   "1:30–2:15 PM". 24-hour: "09:05", "13:30", "13:30–14:15". */
+window.hubClockIs24 = function(){
+  try { var cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; return String(cs.clock || '') === '24'; }
+  catch (e) { return false; }
+};
 window.hubClock = function(hhmm){
   var m = String(hhmm || '').match(/^(\d{1,2}):(\d{2})/); if (!m) return String(hhmm || '');
-  var h = +m[1], mm = m[2], pm = h >= 12, h12 = h % 12 || 12;
+  var h = +m[1], mm = m[2];
+  if (window.hubClockIs24()) return (h < 10 ? '0' : '') + h + ':' + mm;
+  var pm = h >= 12, h12 = h % 12 || 12;
   return h12 + ':' + mm + ' ' + (pm ? 'PM' : 'AM');
 };
 window.hubClockRange = function(a, b){
   var A = window.hubClock(a), B = window.hubClock(b); if (!A) return B; if (!B) return A;
+  if (window.hubClockIs24()) return A + '\u2013' + B;
   var sa = A.slice(-2), sb = B.slice(-2);
   return (sa === sb ? A.slice(0, -3) : A) + '\u2013' + B;
+};
+/* A moment (a Date, milliseconds or ISO) on the course's clock: "2:32 PM" or
+   "14:32". Every "saved at", "posted at" and "due at" goes through here, so a
+   course on the 24-hour clock never meets a stray AM or PM. */
+window.hubTimeOf = function(when, timeZone){
+  var d = when instanceof Date ? when : new Date(when); if (isNaN(d)) return '';
+  var h24 = window.hubClockIs24();
+  var o = h24 ? { hour: '2-digit', minute: '2-digit', hour12: false } : { hour: 'numeric', minute: '2-digit', hour12: true };
+  if (timeZone) o.timeZone = timeZone;
+  try { return d.toLocaleTimeString(h24 ? 'en-GB' : 'en-US', o); } catch (e) { return ''; }
 };
 /* THE DAY'S SHAPE FOR A DATE (9 Oct 2026). A timetable has one usual day
    (`slots`) and may have more shapes (`shapes`), each used from a date, on
@@ -1130,7 +1150,7 @@ window.hubIsReference = function(s){
     var inst = window.hubZonedInstant(dateISO, hhmm, courseZone);
     if (inst == null) return out;
     var local;
-    try { local = new Date(inst).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true, timeZone: reader }); }
+    try { local = window.hubTimeOf(new Date(inst), reader); if (!local) return out; }
     catch (e) { return out; }
     out.local = local;
     out.differs = local !== out.course;

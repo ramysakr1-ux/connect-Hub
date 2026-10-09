@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610092308">
+<link rel="stylesheet" href="hub-tokens.css?v=202610100020">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -457,7 +457,7 @@
   .certsig-ink i{font-size:0.82rem; color:var(--grey);}
   .certsig-ink svg{height:46px; max-width:240px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610092308">
+<link rel="stylesheet" href="hub-house.css?v=202610100020">
 </head>
 <body>
 <div class="board">
@@ -548,6 +548,13 @@
         <label for="courseZone">Time zone the timetable is in</label>
         <div class="house-sel"><select id="courseZone"></select></div>
         <p class="hintline">Anyone reading the timetable abroad sees their own clock beside it.</p>
+      </div>
+      <!-- THE CLOCK (Ramy, 10 Oct 2026): the course chooses how its times read.
+           12-hour is the default; hub-shared.js hubClock reads this. -->
+      <div>
+        <label for="courseClock">Clock</label>
+        <div class="house-sel"><select id="courseClock"><option value="12">12-hour · 1:30 PM</option><option value="24">24-hour · 13:30</option></select></div>
+        <p class="hintline">How every time on the course reads: the timetable, TP points, plans, feedback and the stream.</p>
       </div>
       <div>
         <label for="tpCount">Teaching practices per trainee</label>
@@ -885,16 +892,16 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610092308"></script>
-<script src="hub-store.js?v=202610092308"></script>
-<script src="hub-say.js?v=202610092308"></script>
-<script src="agreement-defaults.js?v=202610092308"></script>
-<script src="observation-defaults.js?v=202610092308"></script>
-<script src="hub-shared.js?v=202610092308"></script>
-<script src="hub-due.js?v=202610092308"></script>
-<script src="hub-sync.js?v=202610092308"></script>
-<script src="hub-hand.js?v=202610092308"></script>
-<script src="hub-ink.js?v=202610092308"></script>
+<script src="assignment-defaults.js?v=202610100020"></script>
+<script src="hub-store.js?v=202610100020"></script>
+<script src="hub-say.js?v=202610100020"></script>
+<script src="agreement-defaults.js?v=202610100020"></script>
+<script src="observation-defaults.js?v=202610100020"></script>
+<script src="hub-shared.js?v=202610100020"></script>
+<script src="hub-due.js?v=202610100020"></script>
+<script src="hub-sync.js?v=202610100020"></script>
+<script src="hub-hand.js?v=202610100020"></script>
+<script src="hub-ink.js?v=202610100020"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1155,6 +1162,7 @@ try {
     if(cs.analysisFrom) document.getElementById('analysisFrom').value = cs.analysisFrom;
     if(cs.totalHours) document.getElementById('totalHours').value = cs.totalHours;
     fillZones(cs.timeZone || '');
+    { const c = document.getElementById('courseClock'); if (c) c.value = cs.clock === '24' ? '24' : '12'; }
     if(cs.deliveryMode) document.getElementById('deliveryMode').value = cs.deliveryMode;
     if(cs.tutorNames) document.getElementById('tutorNames').value = cs.tutorNames;
     if(cs.appianUrl) document.getElementById('appianUrl').value = cs.appianUrl;
@@ -1285,6 +1293,7 @@ function saveSettings(how){
     analysisFrom: (function(){ const n = parseInt(document.getElementById('analysisFrom').value, 10); return (n >= 1 && n <= HUB_MAX_TP) ? n : ''; })(),
     totalHours: (function(){ const n = parseInt(document.getElementById('totalHours').value, 10); return n > 0 ? n : ''; })(),
     timeZone: (document.getElementById('courseZone') || {}).value || '',
+    clock: (document.getElementById('courseClock') || {}).value === '24' ? '24' : '12',
     deliveryMode: document.getElementById('deliveryMode').value || 'f2f',
     tutorNames: document.getElementById('tutorNames').value.trim(),
     appianUrl: document.getElementById('appianUrl').value.trim(),
@@ -1309,7 +1318,7 @@ function saveSettings(how){
   // form has just written, so the held copy's expiry line is now stale.
   ASSESSOR_LINK = null;
   const cn = document.getElementById('courseName').value.trim();
-  const at = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  const at = window.hubTimeOf(new Date());
   document.getElementById('settingsStatus').textContent = (how === 'auto' ? 'Saved automatically at ' + at : 'Saved at ' + at) + (cn ? ' \u2014 ' + cn + '.' : '.');
   renderTitle(); renderSetup();
 }
