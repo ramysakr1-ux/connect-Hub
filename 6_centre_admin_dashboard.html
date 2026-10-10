@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610102332">
+<link rel="stylesheet" href="hub-tokens.css?v=202610102338">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -310,6 +310,7 @@
   .addbox input{width:auto;}
   .addbox input.name{min-width:240px; flex:1;}
   .addbox input.group{width:110px;}
+  .addbox .house-sel.group{width:150px; flex:none;}
   /* The paste boxes: the rule sits above the box as a line of its own and the
      placeholder holds only the example lines. It all lived in the placeholder
      before, which wrapped mid-sentence in a 440px box and cut the last example
@@ -477,7 +478,7 @@
   .tcol-opt input:checked + span{box-shadow:0 0 0 2px var(--paper), 0 0 0 4px var(--teal);}
   .tcol-opt input:focus-visible + span{outline:2px solid var(--gold-lifted); outline-offset:3px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610102332">
+<link rel="stylesheet" href="hub-house.css?v=202610102338">
 </head>
 <body>
 <div class="board">
@@ -925,16 +926,16 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610102332"></script>
-<script src="hub-store.js?v=202610102332"></script>
-<script src="hub-say.js?v=202610102332"></script>
-<script src="agreement-defaults.js?v=202610102332"></script>
-<script src="observation-defaults.js?v=202610102332"></script>
-<script src="hub-shared.js?v=202610102332"></script>
-<script src="hub-due.js?v=202610102332"></script>
-<script src="hub-sync.js?v=202610102332"></script>
-<script src="hub-hand.js?v=202610102332"></script>
-<script src="hub-ink.js?v=202610102332"></script>
+<script src="assignment-defaults.js?v=202610102338"></script>
+<script src="hub-store.js?v=202610102338"></script>
+<script src="hub-say.js?v=202610102338"></script>
+<script src="agreement-defaults.js?v=202610102338"></script>
+<script src="observation-defaults.js?v=202610102338"></script>
+<script src="hub-shared.js?v=202610102338"></script>
+<script src="hub-due.js?v=202610102338"></script>
+<script src="hub-sync.js?v=202610102338"></script>
+<script src="hub-hand.js?v=202610102338"></script>
+<script src="hub-ink.js?v=202610102338"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1959,16 +1960,19 @@ async function renderStoreRoster(next){
     <div class="addbox" id="addBox" style="display:none;">
       <form id="storeAddForm" class="row">
         <input type="text" id="storeAddName" class="name" placeholder="Trainee's name" required>
-        <input type="text" id="storeAddGroup" class="group" placeholder="Group" list="storeGroups">
+        <!-- GROUPS ARE A FIXED MENU, 1 TO 4 (Ramy, 10 Oct 2026). It was free text,
+             so a test trainee went in as "Group A" and read like somebody's A day:
+             letters are people inside a group. Six to a group, four groups at
+             most -- a course of twenty-four. The first group with room is chosen. -->
+        <div class="house-sel group"><select id="storeAddGroup" aria-label="Group">${['1','2','3','4'].map(g => { const n = trainees.filter(t => String(t.group) === g).length; return `<option value="${g}"${g === (['1','2','3','4'].find(x => trainees.filter(t => String(t.group) === x).length < 6) || '1') ? ' selected' : ''}>Group ${g}${n ? ' · ' + n : ''}${n >= 6 ? ' (full)' : ''}</option>`; }).join('')}</select></div>
         <input type="email" id="storeAddEmail" class="name" placeholder="Email (optional)">
-        <datalist id="storeGroups">${groups.map(g=>`<option value="${esc(g)}">`).join('')}</datalist>
         <button class="btn primary" type="submit">Add</button>
         <span id="storeAddStatus" class="muted" style="font-size:0.82rem;"></span>
       </form>
       <button class="linkbtn" type="button" id="toggleBulk" style="margin-top:12px;">Add several at once</button>
       <div class="bulkwrap" id="bulkWrap" style="display:none;">
-        <p class="bulkhint">One trainee a line: a name on its own, or name, group and email in any order.</p>
-        <textarea id="storeBulkNames" rows="4" placeholder="Amara Okafor, A, amara@example.org&#10;Daniel Kim, A&#10;Priya Sharma"></textarea>
+        <p class="bulkhint">One trainee a line: a name, then the group (1 to 4) and an email if you have them. Leave the group out and Lite fills group 1, then 2.</p>
+        <textarea id="storeBulkNames" rows="4" placeholder="Amara Okafor, 1, amara@example.org&#10;Daniel Kim, 1&#10;Priya Sharma"></textarea>
         <div style="display:flex;align-items:center;gap:10px;margin-top:9px;">
           <button class="btn primary" type="button" id="storeBulkAddBtn">Add all</button>
           <span id="storeBulkStatus" class="muted" style="font-size:0.82rem;"></span>
@@ -2116,6 +2120,16 @@ async function renderStoreRoster(next){
       return { name, group, email };
     }).filter(r => r.name);
     if (!rows.length) { status.textContent = 'Nothing to add -- paste at least one name.'; return; }
+    /* groups are 1 to 4 ("Group 2" and "G2" read as 2); anything else is said, not guessed */
+    const bad = rows.filter(r => r.group && !/^(group\s*|g\s*)?[1-4]$/i.test(r.group));
+    if (bad.length) { status.textContent = 'Groups are numbered 1 to 4. Check: ' + bad.map(r => r.name + ' (' + r.group + ')').join('; '); return; }
+    const count = {}; ['1','2','3','4'].forEach(g => { count[g] = (Array.isArray(ROSTER) ? ROSTER : []).filter(t => String(t.group) === g).length; });
+    rows.forEach(r => { if (r.group) { r.group = r.group.replace(/\D/g, ''); count[r.group]++; } });
+    for (const r of rows.filter(x => !x.group)) {
+      const g = ['1','2','3','4'].find(x => count[x] < 6);
+      if (!g) { status.textContent = 'Four groups of six is the most a course holds. Nothing was added.'; return; }
+      r.group = g; count[g]++;
+    }
     if (!(await tpStartedGuard(rows.length))) { status.textContent = 'Not added: teaching practice has started.'; return; }
     if (!(await confirmModal(`Add ${rows.length} trainee${rows.length === 1 ? '' : 's'}?`, 'Add all'))) return;
     status.textContent = `Adding ${rows.length}…`;
