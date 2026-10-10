@@ -71,11 +71,25 @@
      so a trainee added later still gets a letter. Read here rather than at
      each caller, because five screens work out the sets and a candidate's
      timetable must agree with the tutor's. */
+  /* AND IT MUST SURVIVE A STALE TAB. The same evening the order vanished from
+     C/18's settings -- a screen opened before it existed saved the whole
+     settings record back -- and the letters fell back to name order while the
+     sets already dealt still said ABC = Billur, Iris, Kian. So when settings
+     carry no order, the sets as they were last dealt are the order: they live
+     with the TP points, which only the TP points screen writes. (A tutor's copy
+     keys them by group; the copy a trainee is handed is their group's bare
+     list.) */
   function fixedOrder() {
     try {
       const ls = root.localStorage;
       const s = ls && JSON.parse(ls.getItem('connect_course_settings') || 'null');
-      return (s && Array.isArray(s.letterOrder)) ? s.letterOrder.map(String) : null;
+      if (s && Array.isArray(s.letterOrder) && s.letterOrder.length) return s.letterOrder.map(String);
+      const p = ls && JSON.parse(ls.getItem('connect_tp_points_v1') || 'null');
+      const sets = p && p.sets;
+      if (!sets) return null;
+      const flat = [];
+      (Array.isArray(sets) ? [sets] : Object.values(sets)).forEach(g => (g || []).forEach(set => (set || []).forEach(t => flat.push(String(t)))));
+      return flat.length ? flat : null;
     } catch (e) { return null; }
   }
   function lettersFor(people) {
