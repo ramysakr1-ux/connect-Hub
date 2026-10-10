@@ -61,9 +61,27 @@
   const aimsInFamily = (fam) => AIMS.filter((a) => FAMILY[a] === fam);
 
   /* The letter is the trainee's place in their own group, by name, so it is
-     stable for everyone else when one person leaves. */
+     stable for everyone else when one person leaves.
+
+     A COURSE CAN FIX ITS OWN LETTERS. Ramy, 10 Oct 2026: C/18's teaching sets
+     were decided outside Lite -- ABC is Billur, Iris and Kian, DEF is Koray,
+     Hiba and Ebru -- and alphabetical order put Ebru and Hiba on ABC's days.
+     So the course settings may carry `letterOrder`, the trainees' tokens in
+     letter order, and it wins; anyone it does not name follows in name order,
+     so a trainee added later still gets a letter. Read here rather than at
+     each caller, because five screens work out the sets and a candidate's
+     timetable must agree with the tutor's. */
+  function fixedOrder() {
+    try {
+      const ls = root.localStorage;
+      const s = ls && JSON.parse(ls.getItem('connect_course_settings') || 'null');
+      return (s && Array.isArray(s.letterOrder)) ? s.letterOrder.map(String) : null;
+    } catch (e) { return null; }
+  }
   function lettersFor(people) {
-    const sorted = people.slice().sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+    const order = fixedOrder();
+    const at = (p) => { const i = order ? order.indexOf(String(p.token)) : -1; return i < 0 ? 1e9 : i; };
+    const sorted = people.slice().sort((a, b) => (at(a) - at(b)) || String(a.name || '').localeCompare(String(b.name || '')));
     return sorted.map((p, i) => Object.assign({}, p, { letter: LETTERS[i] || String(i + 1), idx: i }));
   }
 
