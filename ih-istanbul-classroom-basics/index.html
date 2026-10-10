@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google Classroom – The Basics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f7fa; --paper:#ffffff; --ink:#1c2b3a; --sub:#5b6b7c; --line:#d9e2ec;
+    --navy:#1F497D; --navy-deep:#163a63; --navy-soft:#e3ebf5;
+    --teal:#2a8c82; --teal-deep:#1f6f66; --teal-soft:#dff1ee;
+    --amber:#c98a1c; --amber-soft:#fbf0d8;
+    --red:#b8433a; --gold:#caa23a;
+    --shadow:0 10px 30px rgba(28,43,58,.08);
+    --g-green:#1e8e3e; --g-green-soft:#e6f4ea; --g-blue:#1a73e8; --g-blue-soft:#e8f0fe; --g-grey:#5f6368; --g-line:#dadce0;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;background:var(--bg);font-family:'Nunito',sans-serif;color:var(--ink);}
+  .topbar{position:sticky;top:0;z-index:20;background:rgba(244,247,250,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:8px 14px;}
+  .topbar .logo{height:36px;width:auto;flex:0 0 auto;}
+  nav.sticky-nav{display:flex;gap:6px;overflow-x:auto;flex:1;scrollbar-width:none;}
+  nav.sticky-nav::-webkit-scrollbar{display:none;}
+  nav.sticky-nav a{flex:0 0 auto;text-decoration:none;font-size:.7rem;font-weight:800;color:var(--navy);background:#fff;border:1.3px solid var(--line);padding:6px 11px;border-radius:999px;white-space:nowrap;}
+  nav.sticky-nav a.active{background:var(--navy);color:#fff;border-color:transparent;}
+
+  .hero{padding:34px 20px 34px;text-align:center;}
+  .hero h1{font-family:'Playfair Display',serif;font-weight:700;font-size:2.1rem;margin:0 0 .2em;color:var(--navy-deep);}
+  .hero p{margin:0;color:var(--sub);font-size:1rem;}
+
+  .wrap{max-width:960px;margin:0 auto;padding:0 20px 70px;}
+  section{scroll-margin-top:70px;margin-bottom:26px;}
+  .card{background:var(--paper);border-radius:16px;padding:24px 26px;box-shadow:var(--shadow);border:1px solid var(--line);border-left:6px solid var(--accent,var(--navy));}
+  .title{display:flex;align-items:center;gap:12px;margin:0 0 14px;}
+  .num{width:38px;height:38px;border-radius:50%;background:var(--accent,var(--navy));color:#fff;font-weight:800;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+  .title h2{font-family:'Playfair Display',serif;font-size:1.45rem;color:var(--navy-deep);margin:0;}
+
+  .stepper{display:flex;gap:6px;align-items:center;margin:0 0 10px;}
+  .stepper span{width:24px;height:24px;border-radius:50%;background:var(--line);color:var(--sub);font-weight:800;font-size:.72rem;display:flex;align-items:center;justify-content:center;}
+  .stepper span.on{background:var(--accent,var(--navy));color:#fff;}
+  .stepper span.done{background:var(--teal-soft);color:var(--teal-deep);}
+  .say{background:var(--accent-soft,var(--navy-soft));border-radius:12px;padding:12px 16px;font-size:1.02rem;font-weight:700;color:var(--navy-deep);margin-bottom:12px;min-height:3.1em;line-height:1.45;}
+  .say b{color:var(--ink);}
+  .btn-row{display:flex;gap:10px;margin-top:14px;align-items:center;}
+  .btn{background:var(--accent,var(--navy));color:#fff;border:none;padding:10px 22px;border-radius:999px;font-weight:800;font-size:.88rem;cursor:pointer;font-family:'Nunito';}
+  .btn.secondary{background:#fff;color:var(--navy);border:1.5px solid var(--line);}
+  .btn:disabled{opacity:.35;cursor:default;}
+
+  /* ---------- Classroom, as a trainee sees it ---------- */
+  .gc{border:1px solid var(--g-line);border-radius:14px;background:#fff;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.05);min-height:300px;}
+  .gc-top{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--g-line);}
+  .gc-top .icon{width:26px;height:26px;border-radius:6px;background:var(--g-green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem;}
+  .gc-top .cname{font-weight:800;font-size:.95rem;color:#202124;}
+  .gc-top .cname small{display:block;font-weight:600;font-size:.68rem;color:var(--g-grey);}
+  .gc-tabs{display:flex;gap:4px;padding:0 14px;border-bottom:1px solid var(--g-line);}
+  .gc-tab{padding:9px 14px;font-weight:800;font-size:.8rem;color:var(--g-grey);border-bottom:3px solid transparent;}
+  .gc-tab.on{color:var(--g-green);border-bottom-color:var(--g-green);}
+  .gc-body{padding:14px;}
+  .gc-post{background:#fff;border:1px solid var(--g-line);border-radius:10px;padding:12px 14px;margin:8px 0;font-size:.86rem;display:flex;align-items:center;gap:12px;}
+  .gc-post .av{width:34px;height:34px;border-radius:50%;background:var(--g-green-soft);color:var(--g-green);display:flex;align-items:center;justify-content:center;font-size:1rem;flex:0 0 auto;}
+  .gc-post .who{font-weight:800;}
+  .gc-post .who small{display:block;font-weight:600;color:var(--g-grey);font-size:.72rem;}
+  .gc-post.ann .av{background:var(--g-blue-soft);color:var(--g-blue);}
+  .hot{box-shadow:0 0 0 3px var(--gold) !important;border-color:var(--gold) !important;position:relative;}
+  .hot::after{content:'👆';position:absolute;right:-6px;bottom:-14px;font-size:1.3rem;}
+
+  .gc-assign{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;}
+  @media(max-width:720px){.gc-assign{grid-template-columns:1fr;}}
+  .gc-assign h4{margin:0 0 3px;font-size:1.15rem;color:#202124;}
+  .gc-assign .meta{font-size:.74rem;color:var(--g-grey);font-weight:700;margin-bottom:8px;}
+  .gc-assign .instr{font-size:.84rem;line-height:1.5;color:#3c4043;border-top:1px solid var(--g-line);padding-top:10px;}
+  .gc-cc{font-size:.76rem;color:var(--g-grey);font-weight:700;border-top:1px solid var(--g-line);margin-top:12px;padding-top:8px;}
+  .gc-file{display:flex;align-items:center;gap:10px;border:1px solid var(--g-line);border-radius:8px;padding:7px 10px;margin:6px 0;font-size:.8rem;font-weight:700;background:#fff;}
+  .gc-file .ft{width:24px;height:30px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:800;color:#fff;flex:0 0 auto;}
+  .ft.doc{background:#4285f4;} .ft.pdf{background:#d93025;} .ft.slides{background:#f4b400;} .ft.link{background:#5f6368;}
+  .gc-file small{display:block;font-weight:600;color:var(--g-grey);font-size:.68rem;}
+  .gc-file.mine{border-color:var(--g-green);}
+  .gc-work{border:1px solid var(--g-line);border-radius:12px;padding:12px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.06);}
+  .gc-work .head{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:.95rem;margin-bottom:8px;}
+  .gc-work .status{font-size:.74rem;font-weight:800;color:var(--g-green);}
+  .gc-work .status.ret{color:var(--g-blue);}
+  .gc-btn{display:block;width:100%;text-align:center;border-radius:6px;padding:8px;font-weight:800;font-size:.82rem;margin-top:8px;border:1px solid var(--g-line);background:#fff;color:var(--g-blue);}
+  .gc-btn.primary{background:var(--g-blue);color:#fff;border-color:var(--g-blue);}
+  .gc-menu{border:1px solid var(--g-line);border-radius:8px;background:#fff;margin-top:6px;box-shadow:0 4px 14px rgba(0,0,0,.12);overflow:hidden;}
+  .gc-menu div{padding:8px 12px;font-size:.82rem;font-weight:700;}
+  .gc-menu div.on{background:var(--g-blue-soft);color:var(--g-blue);}
+  .gc-private{margin-top:12px;border:1px solid var(--g-line);border-radius:12px;padding:10px 12px;background:#fff;}
+  .gc-private .lab{font-size:.8rem;font-weight:800;color:#202124;margin-bottom:6px;}
+  .gc-private .box{border:1px solid var(--g-line);border-radius:18px;padding:7px 12px;font-size:.8rem;color:#9aa0a6;font-weight:600;display:flex;justify-content:space-between;align-items:center;}
+  .gc-private .box.typed{color:#202124;}
+  .gc-private .send{color:var(--g-blue);font-weight:800;}
+  .gc-private .c{font-size:.8rem;margin-top:8px;}
+  .gc-private .c b{display:block;font-size:.76rem;}
+
+  .dialog-wrap{background:rgba(32,33,36,.45);border-radius:10px;padding:26px 14px;display:flex;justify-content:center;}
+  .dialog{background:#fff;border-radius:10px;padding:18px 20px;max-width:360px;box-shadow:0 8px 30px rgba(0,0,0,.25);}
+  .dialog h5{margin:0 0 8px;font-size:1.05rem;}
+  .dialog p{margin:0 0 6px;font-size:.84rem;color:#3c4043;}
+  .dialog .acts{display:flex;justify-content:flex-end;gap:14px;margin-top:12px;font-weight:800;font-size:.84rem;color:var(--g-blue);}
+
+  /* a Google Doc */
+  .doc{border:1px solid var(--g-line);border-radius:10px;overflow:hidden;background:#f8f9fa;}
+  .doc-bar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:#fff;border-bottom:1px solid var(--g-line);font-size:.82rem;font-weight:800;}
+  .doc-bar .ic{width:20px;height:26px;border-radius:3px;background:#4285f4;}
+  .doc-bar small{font-weight:600;color:var(--g-grey);margin-left:auto;}
+  .doc-page{background:#fff;margin:14px auto;max-width:520px;padding:18px 22px;box-shadow:0 1px 4px rgba(0,0,0,.12);font-size:.8rem;line-height:1.55;}
+  .doc-page h6{margin:0 0 8px;font-size:.9rem;color:#1f3864;}
+  .doc-page .row{display:grid;grid-template-columns:120px 1fr;border:1px solid #c9d3e0;}
+  .doc-page .row div{padding:5px 8px;}
+  .doc-page .row div:first-child{background:#eef2f7;font-weight:800;color:#1f3864;}
+  .doc-page .typing{border-right:2px solid var(--g-blue);animation:blink 1s steps(2) infinite;}
+  @keyframes blink{50%{border-color:transparent;}}
+  .doc-page .green{background:#e6f4ea;border:1px solid #9fd5ad;}
+  .comment{float:right;width:160px;margin:0 -8px 6px 10px;background:#fff8e1;border:1px solid #f2d27a;border-radius:6px;padding:6px 8px;font-size:.72rem;}
+  .comment b{display:block;}
+
+  .gc-due{float:right;text-align:right;font-size:.8rem;font-weight:800;color:#202124;padding:2px 6px;border-radius:6px;}
+  .gc-due small{display:block;font-weight:700;color:var(--g-grey);font-size:.72rem;}
+  .gc-side{display:grid;grid-template-columns:200px 1fr;gap:14px;}
+  @media(max-width:720px){.gc-side{grid-template-columns:1fr;}}
+  .gc-up{border:1px solid var(--g-line);border-radius:10px;padding:10px 12px;background:#fff;font-size:.8rem;}
+  .gc-up b{display:block;font-size:.86rem;margin-bottom:6px;}
+  .gc-up .d{color:var(--g-grey);font-weight:700;font-size:.74rem;margin-top:6px;}
+  .gc-up .t{color:var(--g-blue);font-weight:800;}
+  .gc-list{border:1px solid var(--g-line);border-radius:10px;background:#fff;overflow:hidden;}
+  .gc-list .r{display:grid;grid-template-columns:1fr 140px 90px;gap:8px;padding:9px 12px;border-bottom:1px solid var(--g-line);font-size:.8rem;font-weight:700;align-items:center;}
+  .gc-list .r:last-child{border-bottom:none;}
+  .gc-list .r.h{background:#f8f9fa;color:var(--g-grey);font-size:.72rem;text-transform:uppercase;letter-spacing:.03em;}
+  .st{font-size:.72rem;font-weight:800;}
+  .st.as{color:var(--g-green);} .st.ti{color:var(--g-grey);} .st.mi{color:#d93025;}
+  .tt{border:1px solid #e2d9cb;border-radius:12px;background:#faf7f2;overflow:hidden;font-size:.76rem;}
+  .tt-legend{display:flex;gap:12px;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid #e2d9cb;font-weight:700;color:#5b4a36;}
+  .tt-legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px;border:1px solid rgba(0,0,0,.12);}
+  .tt-grid{display:grid;grid-template-columns:62px 1fr .8fr 1.5fr 1.05fr;}
+  .tt-grid > div{padding:6px;border-bottom:1px solid #ece4d8;}
+  .tt-h{font-size:.62rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#7a6a55;background:#f3eee6;}
+  .tt-d{font-weight:800;color:#2d2418;line-height:1.15;}
+  .tt-d small{display:block;font-weight:600;color:#8a7a64;font-size:.62rem;}
+  .tc{border-radius:7px;padding:6px 7px;font-weight:700;border:1px solid;}
+  .tc.ramy{background:#fdebd7;border-color:#e9c9a4;color:#7a4e1f;}
+  .tc.nar{background:#e3f1fb;border-color:#b8d6ee;color:#2a5d82;}
+  .tc.tp{background:#f5efe4;border-color:#ddd0bb;color:#4d3f2c;}
+  .tc.plan{background:#e9dccb;border-color:#d6c4ab;color:#4d3f2c;}
+  .slot{display:inline-block;border:1px solid #cdbfa9;border-radius:999px;padding:0 6px;font-size:.62rem;margin-left:3px;background:#fff;}
+  .tt-n{font-size:.68rem;color:#6b5b45;line-height:1.5;}
+  .tt-n .dl{color:#c0392b;font-weight:800;} .tt-n .out{color:#2a6fb0;font-weight:800;}
+  .tt-banner{background:#4e3b2c;color:#fff;padding:9px 12px;font-weight:800;font-size:.78rem;}
+  .tt-banner small{display:block;font-weight:600;opacity:.85;font-size:.7rem;}
+  .tt .hot{position:relative;}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:720px){.two{grid-template-columns:1fr;}.tt-grid{grid-template-columns:52px 1fr 1fr;}.tt-grid .wide-only{display:none;}}
+  .grp{font-size:.72rem;font-weight:800;color:var(--g-grey);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
+  .note{display:flex;gap:10px;align-items:flex-start;background:var(--amber-soft);border-radius:12px;padding:12px 14px;margin-top:14px;font-size:.9rem;line-height:1.5;}
+  .note .ic{font-size:1.2rem;}
+  footer.foot{text-align:center;color:var(--sub);font-size:.76rem;margin-top:30px;}
+  @media print{.topbar,.btn-row{display:none !important;}.card{box-shadow:none;break-inside:avoid;}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <svg class="logo" viewBox="0 0 220 60" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="International House Istanbul">
+    <circle cx="30" cy="30" r="28" fill="#3B44B5"/>
+    <text x="30" y="43" text-anchor="middle" font-family="Nunito,Arial,sans-serif" font-weight="800" font-size="34" fill="#fff">ih</text>
+    <text x="68" y="22" font-family="Nunito,Arial,sans-serif" font-weight="800" font-size="17" fill="#111">International</text>
+    <text x="68" y="40" font-family="Nunito,Arial,sans-serif" font-weight="800" font-size="17" fill="#111">House</text>
+    <text x="68" y="56" font-family="Nunito,Arial,sans-serif" font-weight="600" font-size="14" fill="#333">Istanbul</text>
+  </svg>
+  <nav class="sticky-nav" id="nav"></nav>
+</div>
+
+<div class="hero">
+  <h1>Google Classroom: the basics</h1>
+  <p>The things you'll do every day on the course. Click Next to see each one.</p>
+</div>
+
+<div class="wrap" id="walks"></div>
+<div class="wrap" style="padding-top:0"><footer class="foot">CELTA C/18 · IH Istanbul</footer></div>
+
+<script>
+// ---- pieces of the trainee's screen ----
+const top_='<div class="gc-top"><div class="icon">C</div><div class="cname">CELTA C/18<small>October 12 – November 6 2026</small></div></div>';
+const tabs=(on)=>'<div class="gc-tabs">'+['Stream','Classwork','People'].map(t=>'<div class="gc-tab'+(t===on?' on':'')+'">'+t+'</div>').join('')+'</div>';
+const shell=(on,body)=>'<div class="gc">'+top_+(on?tabs(on):'')+'<div class="gc-body">'+body+'</div></div>';
+const yourCopy=(hot)=>'<div class="gc-file mine'+(hot?' hot':'')+'"><span class="ft doc">DOC</span><div>Your name – Lesson Plan, LA &amp; Self-Evaluation<small>Google Docs</small></div></div>';
+const feedbackCopy='<div class="gc-file mine"><span class="ft doc">DOC</span><div>Your name – TP Tutor Feedback<small>Google Docs</small></div></div>';
+const mats='<div class="gc-file"><span class="ft slides">SL</span><div>TP3 – your name – slides<small>Google Slides</small></div></div>'+
+  '<div class="gc-file"><span class="ft pdf">PDF</span><div>TP3 – your name – handout<small>PDF</small></div></div>';
+const post=(title,left,work,extra)=>shell('', '<div class="gc-assign"><div><h4>'+title+'</h4><div class="meta">Your tutor · Oct 14</div>'+left+'<div class="gc-cc">💬 Class comments</div></div><div>'+work+(extra||'')+'</div></div>');
+const work=(status,files,btns,cls)=>'<div class="gc-work"><div class="head">Your work <span class="status '+(cls||'')+'">'+status+'</span></div>'+files+btns+'</div>';
+const add=(hot)=>'<div class="gc-btn'+(hot?' hot':'')+'">+ Add or create</div>';
+const turnIn=(hot,label)=>'<div class="gc-btn primary'+(hot?' hot':'')+'">'+(label||'Turn in')+'</div>';
+const tpInstr='<div class="instr">Plan, language analysis and materials ready before your lesson. Self-evaluation after it, then turn in.</div>';
+const priv=(state,hot)=>{
+  if(state==='empty') return '<div class="gc-private"><div class="lab">🔒 Private comments</div><div class="box'+(hot?' hot':'')+'">Add comment to your tutor…</div></div>';
+  if(state==='typed') return '<div class="gc-private"><div class="lab">🔒 Private comments</div><div class="box typed'+(hot?' hot':'')+'">Could you check my stage 3 timing? <span class="send">➤</span></div></div>';
+  return '<div class="gc-private"><div class="lab">🔒 Private comments</div><div class="c"><b>You</b>Could you check my stage 3 timing?</div><div class="c"><b>Your tutor</b>Looks fine. Keep the feedback short.</div><div class="box" style="margin-top:8px">Add comment to your tutor…</div></div>';
+};
+const doc=(title,inner,saved)=>'<div class="doc"><div class="doc-bar"><span class="ic"></span>'+title+'<small>'+(saved||'Saved to Drive ✓')+'</small></div><div class="doc-page">'+inner+'</div></div>';
+
+
+// ---- a few rows of the C/18 timetable ----
+const ttLegend=(hot)=>'<div class="tt-legend'+(hot?' hot':'')+'"><span><i style="background:#fdebd7"></i>Input · Ramy</span><span><i style="background:#e3f1fb"></i>Input · Narges</span><span><i style="background:#f5efe4"></i>Teaching practice &amp; feedback</span><span><i style="background:#e9dccb"></i>Lesson planning</span></div>';
+const ttHead='<div class="tt-h">Date</div><div class="tt-h">11:00 – 12:15 · Input</div><div class="tt-h wide-only">14:15 – 15:00 · Planning</div><div class="tt-h">15:00 – 17:30 · Teaching practice</div><div class="tt-h wide-only">Notes</div>';
+const ttRow=(d,day,input,cls,tp,notes,hl)=>'<div class="tt-d">'+d+'<small>'+day+'</small></div><div><div class="tc '+cls+'">'+input+'</div></div><div class="wide-only"><div class="tc plan">Lesson planning</div></div><div><div class="tc tp'+(hl==='tp'?' hot':'')+'">'+tp+'</div></div><div class="tt-n wide-only'+(hl==='notes'?' hot':'')+'">'+notes+'</div>';
+const slots=(a,b,c)=>'<span class="slot">'+a+' a</span><span class="slot">'+b+' b</span><span class="slot">'+c+' c</span>';
+const tt=(legendHot,rows)=>'<div class="tt">'+ttLegend(legendHot)+'<div class="tt-grid">'+ttHead+rows+'</div></div>';
+const wk1=(hl)=>ttRow('Tue 13 Oct','Day 2','Classroom management','ramy','TP 1 · ABC '+slots('15:00','15:50','16:45'),'TP points 2 ABC out<br><span class="out">LRT out</span>',hl)+
+  ttRow('Wed 14 Oct','Day 3','Receptive skills','nar','TP 1 · DEF '+slots('15:00','15:50','16:45'),'TP points 2 DEF out<br><span class="out">LSRT out</span>',hl);
+// ---- the six walk-throughs ----
+const walks=[
+ {id:'open',title:'Open it',accent:'#1F497D',soft:'#e3ebf5',steps:[
+   {say:'Everything new shows up in the <b>Stream</b>: each TP the evening before, each assignment when it goes out. Click the post.',
+    mock:shell('Stream','<div class="gc-post ann"><span class="av">📣</span><div><span class="who">Your tutor<small>Announcement · Oct 13</small></span>Room change for tomorrow: B1 is in Room 3.</div></div>'+
+      '<div class="gc-post hot"><span class="av">📋</span><div><span class="who">Your tutor posted a new assignment: Teaching Practice 3<small>Oct 13, 6:00 PM</small></span></div></div>')},
+   {say:'Click it and it opens. On the right is <b>Your work</b>, everything that’s yours on this post.',
+    mock:post('Teaching Practice 3',tpInstr,work('Assigned',yourCopy()+feedbackCopy,add()+turnIn())).replace('class="gc-work"','class="gc-work hot"')}
+ ]},
+ {id:'timetable',title:'Read the timetable',accent:'#8a5a2b',soft:'#f6ebdd',steps:[
+   {say:'The timetable is at the top of <b>Classwork</b>, under <b>Timetable – CELTA 5</b>. Each <b>row is a day</b>, each <b>column is a time</b>.',
+    mock:tt(false,wk1(''))},
+   {say:'The <b>colours</b> tell you what kind of session it is: orange and blue are inputs, beige is teaching practice and feedback, brown is lesson planning.',
+    mock:tt(true,wk1(''))},
+   {say:'<b>TP 1 · ABC</b> means TP1 for group ABC. The three times are the three lessons that afternoon: <b>a</b>, <b>b</b> and <b>c</b>.',
+    mock:tt(false,wk1('tp'))},
+   {say:'<b>Notes</b>, on the right: what goes out that day, and the deadlines in <b>red</b>.',
+    mock:tt(false,wk1('notes'))},
+   {say:'From <b>Mon 26 Oct</b>, after Demo lesson 2, the day changes: TP is 14:00 – 16:30 and your feedback is at the end of the day.',
+    mock:'<div class="tt"><div class="tt-banner hot">From Monday 26 October, teaching practice is 14:00 – 16:30<small>Lessons at 14:00 · 14:50 · 15:45. Lesson planning 12:30 – 13:15, lunch 13:15 – 14:00, reflection 16:45 – 17:00, and feedback on the day\u2019s TP 17:00 – 18:00.</small></div></div>'}
+ ]},
+ {id:'deadlines',title:'See your deadlines',accent:'#c98a1c',soft:'#fbf0d8',steps:[
+   {say:'Every assignment shows its <b>deadline at the top right</b> of the post: the day <b>and</b> the time.',
+    mock:shell('', '<div class="gc-assign"><div><div class="gc-due hot">Due Oct 23, 11:00 AM<small>100 points</small></div><h4>Assignment 3 – LSRT</h4><div class="meta">Your tutor · Oct 13</div><div class="instr">Write your answers in your copy, then turn in.</div><div class="gc-cc">💬 Class comments</div></div><div>'+work('Assigned','<div class="gc-file mine"><span class="ft doc">DOC</span><div>Your name – Language Skills Related Tasks – LSRT<small>Google Docs</small></div></div>',add()+turnIn())+'</div></div>')},
+   {say:'Some assignments have <b>a different deadline for each TP group</b>, so it\u2019s never due on a day you teach. You only see <b>your group\u2019s post</b>: go by the date on it.',
+    mock:shell('','<div class="two"><div><div class="grp">Group DEF sees</div><div class="gc-post"><span class="av">📋</span><div><span class="who">Assignment 2 – LRT · DEF<small>Due Oct 26, 11:00 AM</small></span></div></div></div><div><div class="grp">Group ABC sees</div><div class="gc-post"><span class="av">📋</span><div><span class="who">Assignment 2 – LRT · ABC<small>Due Oct 27, 11:00 AM</small></span></div></div></div></div><div class="tt" style="margin-top:12px"><div class="tt-grid" style="grid-template-columns:90px 1fr 1fr">'+
+      '<div class="tt-h">Date</div><div class="tt-h">Teaching practice</div><div class="tt-h">Notes</div>'+
+      '<div class="tt-d">Mon 26 Oct</div><div><div class="tc tp">TP 5 · ABC</div></div><div class="tt-n hot"><span class="dl">LRT in · DEF · 11:00</span></div>'+
+      '<div class="tt-d">Tue 27 Oct</div><div><div class="tc tp">TP 5 · DEF</div></div><div class="tt-n hot"><span class="dl">LRT in · ABC · 11:00</span></div></div></div>')},
+   {say:'On the <b>Stream</b>, the <b>Upcoming</b> box tells you what\u2019s due next.',
+    mock:shell('Stream','<div class="gc-side"><div class="gc-up hot"><b>Upcoming</b><div class="d">Due Friday</div><div class="t">11:00 AM – Assignment 3 – LSRT</div><div class="d">Due Tuesday</div><div class="t">11:00 AM – Assignment 2 – LRT</div></div><div><div class="gc-post"><span class="av">📋</span><div><span class="who">Your tutor posted a new assignment: Teaching Practice 5<small>Oct 22, 6:00 PM</small></span></div></div></div></div>')},
+   {say:'<b>View your work</b> (top of Classwork) lists everything with its deadline. <b>Missing</b> in red means the deadline has passed and it isn\u2019t turned in.',
+    mock:shell('Classwork','<div class="gc-list hot"><div class="r h"><span>View your work</span><span>Due</span><span>Status</span></div>'+
+      '<div class="r"><span>Assignment 4 – LFC</span><span>Oct 30, 6:00 PM</span><span class="st as">Assigned</span></div>'+
+      '<div class="r"><span>Teaching Practice 2</span><span>–</span><span class="st ti">Turned in</span></div>'+
+      '<div class="r"><span>Assignment 3 – LSRT</span><span>Oct 23, 11:00 AM</span><span class="st mi">Missing</span></div></div>')},
+   {say:'A <b>TP</b> has no due date on it. <b>Its times are in the instructions</b>: plan ready by 15:00, self-evaluation by 18:00. Read them on every TP, because they change after Demo lesson 2.',
+    mock:post('Teaching Practice 3','<div class="instr hot" style="padding:10px;border-radius:8px">Plan, language analysis and materials ready <b>by 15:00</b>. Self-evaluation <b>by 18:00</b>, then turn in.</div>',work('Assigned',yourCopy()+feedbackCopy,add()+turnIn()))}
+ ]},
+ {id:'write',title:'Write in your own copy',accent:'#2a8c82',soft:'#dff1ee',steps:[
+   {say:'Your own copy is <b>already there</b>, with your name on it. You don’t download anything. Click it.',
+    mock:post('Teaching Practice 3',tpInstr,work('Assigned',yourCopy(true)+feedbackCopy,add()+turnIn()))},
+   {say:'It opens as a Google Doc. Write straight into it. It <b>saves itself</b>, and your tutor can read it while you work.',
+    mock:doc('Your name – Lesson Plan, LA &amp; Self-Evaluation','<h6>Teaching Practice 3</h6><div class="row"><div>Main aim</div><div>To give learners practice in <span class="typing">listening for gist</span></div></div><div class="row"><div>Sub-aim</div><div></div></div>','Saving…')},
+   {say:'After your lesson, your <b>self-evaluation goes in the same document</b>. One copy for the whole TP.',
+    mock:doc('Your name – Lesson Plan, LA &amp; Self-Evaluation','<h6>Self-evaluation</h6><div class="row"><div>What went well?</div><div>The lead-in got everyone <span class="typing">talking</span></div></div><div class="row"><div>What would you change?</div><div></div></div>')}
+ ]},
+ {id:'upload',title:'Upload your materials',accent:'#1F497D',soft:'#e3ebf5',steps:[
+   {say:'Slides, a handout, a video link? On that TP’s post, click <b>+ Add or create</b>.',
+    mock:post('Teaching Practice 3',tpInstr,work('Assigned',yourCopy()+feedbackCopy,add(true)+turnIn()))},
+   {say:'Choose where it is: <b>Google Drive</b> (slides you made in Drive), <b>Link</b> (YouTube, a website) or <b>File</b> (from your laptop).',
+    mock:post('Teaching Practice 3',tpInstr,work('Assigned',yourCopy()+feedbackCopy,'<div class="gc-btn">+ Add or create</div><div class="gc-menu"><div class="on">Google Drive</div><div class="on">Link</div><div class="on">File</div><div style="color:#9aa0a6">New Docs · Slides · Sheets</div></div>'))},
+   {say:'Your files appear under your copy. Name them clearly: <b>TP3 – your name – handout</b>.',
+    mock:post('Teaching Practice 3',tpInstr,work('Assigned',yourCopy()+feedbackCopy+mats,add()+turnIn()))},
+   {say:'<b>Don’t turn in yet.</b> Your tutor looks at your plan and materials here before your lesson.',
+    mock:post('Teaching Practice 3',tpInstr,work('Assigned',yourCopy()+feedbackCopy+mats,add()+'<div class="gc-btn primary" style="opacity:.35">Turn in &nbsp;✋ not yet</div>'))}
+ ]},
+ {id:'turnin',title:'Turn in',accent:'#2a8c82',soft:'#dff1ee',steps:[
+   {say:'Finished? For a TP, that’s <b>after your self-evaluation</b>. For an assignment, before the deadline. Click <b>Turn in</b>.',
+    mock:post('Teaching Practice 3',tpInstr,work('Assigned',yourCopy()+feedbackCopy+mats,add()+turnIn(true)))},
+   {say:'Classroom checks with you. Click <b>Turn in</b> again.',
+    mock:shell('','<div class="dialog-wrap"><div class="dialog"><h5>Turn in your work?</h5><p>4 attachments will be submitted for “Teaching Practice 3”.</p><div class="acts"><span style="color:#5f6368">Cancel</span><span class="hot" style="padding:2px 8px;border-radius:4px">Turn in</span></div></div></div>')},
+   {say:'Done: it says <b>Turned in</b>. Your tutor can see it’s finished.',
+    mock:post('Teaching Practice 3',tpInstr,work('Turned in',yourCopy()+feedbackCopy+mats,'<div class="gc-btn">Unsubmit</div>'))},
+   {say:'Spotted a mistake? Click <b>Unsubmit</b>, fix it, and <b>Turn in</b> again.',
+    mock:post('Teaching Practice 3',tpInstr,work('Turned in',yourCopy()+feedbackCopy+mats,'<div class="gc-btn hot">Unsubmit</div>'))}
+ ]},
+ {id:'message',title:'Message your tutor',accent:'#1F497D',soft:'#e3ebf5',steps:[
+   {say:'Under Your work there’s <b>Private comments</b>. Only your tutors see these.',
+    mock:post('Teaching Practice 3',tpInstr,work('Assigned',yourCopy()+feedbackCopy,add()+turnIn()),priv('empty',true))},
+   {say:'Type your question and press ➤.',
+    mock:post('Teaching Practice 3',tpInstr,work('Assigned',yourCopy()+feedbackCopy,add()+turnIn()),priv('typed',true))},
+   {say:'Your tutor’s reply comes back here, and in your email. <b>Class comments</b> on the left are seen by <b>everyone</b>.',
+    mock:post('Teaching Practice 3',tpInstr,work('Assigned',yourCopy()+feedbackCopy,add()+turnIn()),priv('reply'))}
+ ]},
+ {id:'resubmit',title:'Resubmit an assignment',accent:'#2a8c82',soft:'#dff1ee',steps:[
+   {say:'When your tutor has marked an assignment, it says <b>Returned</b>. Open your copy to see the comments.',
+    mock:post('Assignment 2 – LRT','<div class="instr">Write your answers in your copy. Use the green boxes for a resubmission.</div>',
+      work('Returned','<div class="gc-file mine hot"><span class="ft doc">DOC</span><div>Your name – Language Related Tasks – LRT<small>Google Docs</small></div></div>','<div class="gc-btn primary">Resubmit</div>','ret'))},
+   {say:'Write your changes in the <b>green resubmission boxes</b>. <b>Don’t delete or resolve</b> your tutor’s comments.',
+    mock:doc('Your name – Language Related Tasks – LRT','<div class="comment"><b>Your tutor</b>Check the form: is it a gerund here?</div><h6>Part 2 · First submission</h6><div class="row"><div>Form</div><div>to + infinitive</div></div><h6 style="margin-top:10px">Resubmission</h6><div class="row green"><div>Form</div><div>verb + <span class="typing">-ing (gerund)</span></div></div>')},
+   {say:'Then click <b>Resubmit</b>, the same as turning in. Done.',
+    mock:post('Assignment 2 – LRT','<div class="instr">Write your answers in your copy. Use the green boxes for a resubmission.</div>',
+      work('Returned','<div class="gc-file mine"><span class="ft doc">DOC</span><div>Your name – Language Related Tasks – LRT<small>Google Docs</small></div></div>','<div class="gc-btn primary hot">Resubmit</div>','ret'))}
+ ]}
+];
+
+// ---- build ----
+const host=document.getElementById('walks'), nav=document.getElementById('nav');
+walks.forEach((w,wi)=>{
+  const s=document.createElement('section'); s.id=w.id;
+  s.innerHTML='<div class="card" style="--accent:'+w.accent+';--accent-soft:'+w.soft+'">'+
+    '<div class="title"><span class="num">'+(wi+1)+'</span><h2>'+w.title+'</h2></div>'+
+    '<div class="stepper"></div><div class="say"></div><div class="mock"></div>'+
+    '<div class="btn-row"><button class="btn secondary back">◀ Back</button><button class="btn next">Next ▶</button></div></div>';
+  host.appendChild(s);
+  const a=document.createElement('a'); a.href='#'+w.id; a.textContent=(wi+1)+' · '+w.title; nav.appendChild(a);
+  const st=s.querySelector('.stepper'); w.steps.forEach((_,i)=>{const d=document.createElement('span');d.textContent=i+1;st.appendChild(d);});
+  let k=0;
+  const draw=()=>{s.querySelector('.say').innerHTML=w.steps[k].say; s.querySelector('.mock').innerHTML=w.steps[k].mock;
+    [...st.children].forEach((d,i)=>d.className=i<k?'done':(i===k?'on':''));
+    s.querySelector('.back').disabled=k===0; s.querySelector('.next').disabled=k===w.steps.length-1;};
+  s.querySelector('.next').onclick=()=>{if(k<w.steps.length-1){k++;draw();}};
+  s.querySelector('.back').onclick=()=>{if(k>0){k--;draw();}};
+  draw();
+});
+const links=[...nav.querySelectorAll('a')];
+window.addEventListener('scroll',()=>{let cur=links[0];links.forEach(a=>{const t=document.querySelector(a.getAttribute('href'));if(t&&t.getBoundingClientRect().top<120)cur=a;});links.forEach(a=>a.classList.toggle('active',a===cur));});
+</script>
+</body>
+</html>
