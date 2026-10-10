@@ -649,6 +649,46 @@ window.HUB_WORDING_KEY = 'connect_assignment_wording_v2';
    no criteria takes them from the standard wording here; whatever the course
    did set (its title, its deadline, its release) stays. Nothing is written
    back; the next save from the wording editor carries it to the store. */
+/* A DEADLINE PER TEACHING SET (10 Oct 2026). Ramy: "what we're going to do is
+   identical to C18" -- and on C/18 the LRT is due Monday for DEF and Tuesday
+   for ABC, because nobody hands in on a day they teach. An assignment may
+   carry `dueSets`, { '<group>': [first set's instant, second set's] }; an
+   empty entry falls back to the assignment's own deadline. An extension still
+   sits on top of whichever applies (HubDue.forPerson).
+
+   hubSetIndexOf: which teaching set a trainee is in -- 0 or 1 -- read from
+   the sets the TP points screen stored when it dealt the rotation, which is
+   what a trainee's own page holds too; failing that, worked out from the
+   roster the way the rotation does. -1 when it cannot be told. */
+window.hubSetIndexOf = function(token, group){
+  var g = String(group == null ? '' : group);
+  try {
+    var pts = JSON.parse(localStorage.getItem('connect_tp_points_v1') || 'null');
+    /* a tutor's record keys the sets by group; the copy a trainee is handed
+       carries only their own group's, as a bare list */
+    var sets = pts && pts.sets && (Array.isArray(pts.sets) ? pts.sets : pts.sets[g]);
+    if (sets && sets.length) for (var i = 0; i < sets.length; i++) if ((sets[i] || []).indexOf(token) >= 0) return i;
+  } catch (e) {}
+  try {
+    var roster = JSON.parse(localStorage.getItem('connect_roster_v1') || 'null');
+    var people = Object.values((roster && roster.trainees) || {}).filter(function(t){ return t && String(t.group || '') === g; })
+      .map(function(t){ return { token: t.id || t.token, name: t.name }; });
+    if (people.length && window.hubRotation) {
+      var ss = window.hubRotation.setsFor(people);
+      for (var j = 0; j < ss.length; j++) if (ss[j].some(function(p){ return p.token === token; })) return j;
+    }
+  } catch (e) {}
+  return -1;
+};
+/* The deadline that applies to one trainee before any extension. */
+window.hubDueFor = function(a, token, group){
+  if (!a) return '';
+  var base = a.dueAt || a.due || '';
+  var g = a.dueSets && a.dueSets[String(group == null ? '' : group)];
+  if (!g) return base;
+  var i = window.hubSetIndexOf(token, group);
+  return (i >= 0 && g[i]) || base;
+};
 /* ONE DEADLINE, TWO NAMES (10 Oct 2026). The assignment screens -- the wording
    editor, the trainee's submission, marking, the tracker -- keep a deadline as
    `dueAt` (24 Sep); the timetable, the dashboard's deadline strip and the demo

@@ -13,7 +13,7 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610102023">
+<link rel="stylesheet" href="hub-tokens.css?v=202610102107">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -89,6 +89,13 @@
   .metarow{display:flex; align-items:center; gap:8px; font-size:0.85rem;}
   .metarow label{font-weight:700; width:110px; flex:none;}
   .metahint{font-size:0.76rem; color:var(--grey); font-weight:400;}
+  .metarow.dsets{align-items:flex-start; flex-wrap:wrap;}
+  .metarow.dsets label{padding-top:9px;}
+  .dslist{display:flex; flex-direction:column; gap:6px; flex:1; min-width:240px;}
+  .dsrow{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .dsname{min-width:150px;} .dsname small{color:var(--grey); font-weight:400;}
+  .metarow.dsets .metahint{flex-basis:100%; margin-left:118px;}
+  @media (max-width:640px){ .metarow.dsets .metahint{margin-left:0;} }
   .sylbox{margin:8px 0 0; border:1px solid var(--sand-line); border-radius:8px; background:var(--surface); padding:0 10px;}
   .sylbox summary{cursor:pointer; font-size:0.78rem; font-weight:600; padding:8px 0;}
   .sylbody{padding:0 0 10px;}
@@ -146,7 +153,7 @@
   .aw-title-tag{margin-left:10px; vertical-align:2px;}
   @media(prefers-reduced-motion:reduce){ .actions .btn{transition:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610102023">
+<link rel="stylesheet" href="hub-house.css?v=202610102107">
 </head>
 <body class="hub-paper">
 <div class="board">
@@ -160,13 +167,14 @@
     <div class="editor" id="editor"></div>
   </div>
 </div>
-<script src="assignment-defaults.js?v=202610102023"></script>
-<script src="hub-due.js?v=202610102023"></script>
-<script src="hub-docx.js?v=202610102023"></script>
-<script src="hub-shared.js?v=202610102023"></script>
-<script src="hub-store.js?v=202610102023"></script>
-<script src="hub-say.js?v=202610102023"></script>
-<script src="hub-sync.js?v=202610102023"></script>
+<script src="assignment-defaults.js?v=202610102107"></script>
+<script src="hub-due.js?v=202610102107"></script>
+<script src="hub-rotation.js?v=202610102107"></script>
+<script src="hub-docx.js?v=202610102107"></script>
+<script src="hub-shared.js?v=202610102107"></script>
+<script src="hub-store.js?v=202610102107"></script>
+<script src="hub-say.js?v=202610102107"></script>
+<script src="hub-sync.js?v=202610102107"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -332,6 +340,7 @@ function metaHTML(a){
       <button type="button" class="btn-quiet" style="padding:0 14px;min-height:42px;font-size:0.78rem;" onclick="updateDue('')">Clear</button>
       <span class="metahint">Submission closes then. Leave it empty and it stays open. A tutor can give one trainee longer without moving it for everyone.</span>
     </div>
+    ${dueSetsHTML(a)}
     <div class="metarow">
       <label>Resubmission</label>
       <input type="number" min="1" max="30" step="1" style="width:64px;" value="${a.resubDays||''}"
@@ -426,6 +435,36 @@ function updateMeta(key,v){
 /* Stored as an instant, not as the text in the box: see hub-due.js. Takes
    effect at once like the release switch -- a date left waiting for Save is a
    date someone thinks they set. */
+/* A DEADLINE PER TEACHING SET (10 Oct 2026). On C/18 the LRT is due Monday
+   for DEF and Tuesday for ABC -- nobody hands in on a day they teach. Each
+   group's two sets get their own date here; an empty one keeps the Due above.
+   Stored as dueSets: { '<group>': [first set, second set] } (hubDueFor). */
+function dueSetsHTML(a){
+  const R = window.hubRotation;
+  const roster = (() => { try { return JSON.parse(localStorage.getItem('connect_roster_v1')) || {}; } catch (e) { return {}; } })();
+  const by = {};
+  Object.values(roster.trainees || {}).filter(Boolean).forEach(t => { const g = String(t.group || ''); (by[g] = by[g] || []).push({ token: t.id || t.token, name: t.name }); });
+  const groups = Object.keys(by).sort().filter(g => by[g].length > 1);
+  if (!R || !groups.length) return '';
+  const rows = groups.map(g => {
+    const sets = R.setsFor(by[g]);
+    const cur = ((a.dueSets || {})[g]) || [];
+    return sets.map((set, i) => !set.length ? '' : `<div class="dsrow"><span class="dsname"><b>${esc(R.setName(set))}</b>${groups.length > 1 ? ' · Group ' + esc(g) : ''} <small>${esc(set.map(p => String(p.name || '').split(' ')[0]).join(', '))}</small></span>
+      <input type="datetime-local" value="${cur[i] ? HubDue.toLocalInput(cur[i]) : ''}" onchange="updateDueSet('${esc(g)}', ${i}, this.value)">
+      ${cur[i] ? `<button type="button" class="btn-quiet" style="padding:0 12px;min-height:38px;font-size:0.76rem;" onclick="updateDueSet('${esc(g)}', ${i}, '')">Clear</button>` : ''}</div>`).join('');
+  }).join('');
+  return `<div class="metarow dsets"><label>Due by set</label><div class="dslist">${rows}</div>
+    <span class="metahint">Only where the two teaching sets hand in on different days. Leave a set empty and it keeps the Due above. Each trainee sees their own set’s date.</span></div>`;
+}
+function updateDueSet(g, i, v){
+  const a = DATA[CURRENT];
+  const ds = Object.assign({}, a.dueSets || {});
+  const row = (ds[g] || ['', '']).slice();
+  row[i] = v ? HubDue.fromLocalInput(v) : '';
+  if (row.some(Boolean)) ds[g] = row; else delete ds[g];
+  if (Object.keys(ds).length) a.dueSets = ds; else delete a.dueSets;
+  persist(); renderEditor();
+}
 function updateDue(v){
   DATA[CURRENT].dueAt = v ? HubDue.fromLocalInput(v) : '';
   DATA[CURRENT].due = DATA[CURRENT].dueAt;   // the timetable and the dashboard read `due` (hubWordingFilled)
@@ -664,7 +703,7 @@ renderList(); renderEditor(); renderProseBanner();
    Stores nothing. */
 (function(){
   const list = $('list'), ed = $('editor'); if (!list || !ed) return;
-  const SETTINGS_KEYS = ['dueAt', 'due', 'released'];
+  const SETTINGS_KEYS = ['dueAt', 'due', 'dueSets', 'released'];
   const wording = a => { if (!a) return ''; const c = JSON.parse(JSON.stringify(a)); SETTINGS_KEYS.forEach(k => delete c[k]);
     (c.criteria || []).forEach((x, i) => { if (typeof x === 'string') c.criteria[i] = { text: x, sectionIndex: null }; }); return JSON.stringify(c); };
   const saved = () => { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || null; } catch (e) { return null; } };

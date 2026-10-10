@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610102023">
+<link rel="stylesheet" href="hub-tokens.css?v=202610102107">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -405,24 +405,24 @@
     h1{font-size:1.4rem;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610102023">
+<link rel="stylesheet" href="hub-house.css?v=202610102107">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610102023"></script>
-<script src="hub-tracker.js?v=202610102023"></script>
-<script src="hub-rotation.js?v=202610102023"></script>
-<script src="hub-xlsx.js?v=202610102023"></script>
-<script src="hub-docx.js?v=202610102023"></script>
-<script src="hub-timetable-parse.js?v=202610102023"></script>
-<script src="assignment-defaults.js?v=202610102023"></script>
-<script src="hub-shared.js?v=202610102023"></script>
-<script src="hub-store.js?v=202610102023"></script>
-<script src="hub-say.js?v=202610102023"></script>
-<script src="hub-sync.js?v=202610102023"></script>
+<script src="hub-due.js?v=202610102107"></script>
+<script src="hub-tracker.js?v=202610102107"></script>
+<script src="hub-rotation.js?v=202610102107"></script>
+<script src="hub-xlsx.js?v=202610102107"></script>
+<script src="hub-docx.js?v=202610102107"></script>
+<script src="hub-timetable-parse.js?v=202610102107"></script>
+<script src="assignment-defaults.js?v=202610102107"></script>
+<script src="hub-shared.js?v=202610102107"></script>
+<script src="hub-store.js?v=202610102107"></script>
+<script src="hub-say.js?v=202610102107"></script>
+<script src="hub-sync.js?v=202610102107"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -629,27 +629,53 @@ function dues(){
        (30 Sep 2026). It is the same fault the assessor expiry had in
        September: a date named to a person is a day, and a day is worked out
        in the clock they are reading it in. */
-    const iso = dayOf(a.due);
-    if (!iso) return;
-    let missing = 0, mineIn = null;
+    /* A DEADLINE PER TEACHING SET (10 Oct 2026, hubDueFor in hub-shared.js).
+       A trainee sees only their own set's date. A tutor sees one bar per date,
+       named by the letters of the sets due that day when the dates differ --
+       "LRT · DEF" on the Monday, "LRT · ABC" on the Tuesday. A bar that
+       belongs to one set is not dragged: the date lives on the assignment's
+       screen, where both sets' dates sit side by side. */
+    const base = a.dueAt || a.due || '';
+    const perSet = !!(a.dueSets && Object.keys(a.dueSets).length);
+    const subOf = tr => ((tr.records && tr.records.assignments) || (IS_TRAINEE ? rec('connect_assignment_submissions_v1') : null) || {})[k];
+    const inHand = sub => !!(sub && (sub.submittedAt || sub.submitted || sub.turnedIn));
+    const push = (when, title, missing, total, fixed) => {
+      const iso = dayOf(when);
+      if (!iso) return;
+      (out[iso] = out[iso] || []).push({ key: k, due: when, title, past: iso < TODAY, missing, total, fixed });
+    };
+    const title = a.title || k.toUpperCase();
+    if (IS_TRAINEE) {
+      const mine = window.hubDueFor ? hubDueFor(a, me.token, me.group) : base;
+      const meRow = people.find(tr => (tr.id || tr.token) === me.token);
+      const mineIn = meRow ? inHand(subOf(meRow)) : inHand((rec('connect_assignment_submissions_v1') || {})[k]);
+      push(mine, title, mineIn ? 0 : 1, 1, true);
+      return;
+    }
+    if (!perSet || !people.length) {
+      push(base, title, people.filter(tr => !inHand(subOf(tr))).length, people.length, false);
+      return;
+    }
+    const buckets = {};
     people.forEach(tr => {
-      const token = tr.id || tr.token;
-      const subs = (tr.records && tr.records.assignments) || (IS_TRAINEE ? rec('connect_assignment_submissions_v1') : null) || {};
-      const sub = subs[k];
-      const inHand = !!(sub && (sub.submittedAt || sub.submitted || sub.turnedIn));
-      if (IS_TRAINEE) { if (token === me.token) mineIn = inHand; return; }
-      if (!inHand) missing++;
+      const when = window.hubDueFor ? hubDueFor(a, tr.id || tr.token, tr.group) : base;
+      if (when) (buckets[when] = buckets[when] || []).push(tr);
     });
-    (out[iso] = out[iso] || []).push({
-      key: k,
-      due: a.due,
-      title: a.title || k.toUpperCase(),
-      past: iso < TODAY,
-      missing: IS_TRAINEE ? (mineIn === false ? 1 : 0) : missing,
-      total: IS_TRAINEE ? 1 : people.length
+    const many = Object.keys(buckets).length > 1;
+    Object.keys(buckets).forEach(when => {
+      const trs = buckets[when];
+      push(when, many ? title + ' · ' + lettersOf(trs) : title, trs.filter(tr => !inHand(subOf(tr))).length, trs.length, many);
     });
   });
   return out;
+  /* the trainees' letters, as the TP points screen gives them out */
+  function lettersOf(trs){
+    const by = {};
+    people.forEach(t => { const g = String(t.group || ''); (by[g] = by[g] || []).push({ token: t.id || t.token, name: t.name }); });
+    const L = {};
+    Object.values(by).forEach(ps => (window.hubRotation ? hubRotation.lettersFor(ps) : []).forEach(p => { L[p.token] = p.letter; }));
+    return trs.map(t => L[t.id || t.token] || '').join('');
+  }
 }
 
 /* The skeleton: every weekday from the start to the end, with the teaching
@@ -869,7 +895,7 @@ function dayHTML(day, B, idx){
     const top = Math.min(H - 18, Math.max(0, at == null ? 0 : (at - B.from) * PXM)) + i * 19;
     const late = x.past && x.missing;
     const body = `${esc(x.title)} due${local ? ' · ' + esc(hubClock(local)) : ''}${late ? ' · ' + (IS_TRAINEE ? 'yours is not in' : x.missing + ' of ' + x.total + ' not in') : ''}`;
-    return EDIT ? `<button type="button" class="due asbtn${late ? ' late' : ''}" data-move="${esc(x.key)}" style="top:${top}px" title="Move this deadline">${body}</button>`
+    return (EDIT && !x.fixed) ? `<button type="button" class="due asbtn${late ? ' late' : ''}" data-move="${esc(x.key)}" style="top:${top}px" title="Move this deadline">${body}</button>`
                 : `<div class="due${late ? ' late' : ''}" style="top:${top}px">${body}</div>`;
   }).join('');
   const notes = EDIT
