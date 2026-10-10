@@ -20,7 +20,7 @@
  * VERSION is stamped by bump-assets.py with the same stamp as the ?v= links,
  * so each push retires the previous cache on activate.
  */
-const VERSION = 'lite-202610100411';
+const VERSION = 'lite-202610100419';
 const SHELL = [
   './', 'index.html', 'invite.html',
   '1_trainee_plan_and_analysis.html', '2_trainee_self_evaluation.html', '3_tutor_feedback.html',
@@ -57,7 +57,9 @@ self.addEventListener('install', function (e) {
     // One at a time and each on its own, so a single missing file does not
     // stop the rest of the shell being kept.
     return SHELL.reduce(function (p, path) {
-      return p.then(function () { return cache.add(path).catch(function () {}); });
+      // Past the browser's own cache: a shell filled from it right after a
+      // push kept the page from before the push (10 Oct 2026).
+      return p.then(function () { return cache.add(new Request(path, { cache: 'reload' })).catch(function () {}); });
     }, Promise.resolve());
   }).then(function () { return self.skipWaiting(); }));
 });
@@ -99,7 +101,15 @@ self.addEventListener('fetch', function (e) {
      assets, and forcing those would cost a round trip each. */
   var doc = req.mode === 'navigate'
     || (req.headers.get('accept') || '').indexOf('text/html') !== -1;
-  e.respondWith(fetch(doc ? new Request(req, { cache: 'reload' }) : req).then(function (r) {
+  /* 10 Oct 2026: a page opened in the minutes after a push still came up as
+     the version before it, twice in one afternoon. A page is now fetched by
+     its address with no-store -- nothing kept anywhere on the way is
+     offered -- and a navigation keeps its redirects for the browser to
+     follow (GitHub sends /film on to /film/). */
+  var net = doc
+    ? fetch(req.url, { cache: 'no-store', credentials: 'same-origin', redirect: req.mode === 'navigate' ? 'manual' : 'follow' })
+    : fetch(req);
+  e.respondWith(net.then(function (r) {
     if (r && r.ok) caches.open(VERSION).then(function (c) { c.put(req, r.clone()); });
     return r;
   }).catch(function () {
