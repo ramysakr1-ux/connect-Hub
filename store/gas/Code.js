@@ -741,7 +741,7 @@ case 'inbox': {
          Still fresh: the dates, the course name and number, the assessment,
          the notification reference, the assessor's documents, the roster. */
       ['centreName', 'centreNumber', 'centreLocked', 'logo', 'tutorNames', 'tutorColours', 'planDueNote', 'selfDueNote', 'tpCount', 'totalHours', 'deliveryMode', 'appianUrl', 'courseLinks',
-       'agreement', 'preCourseConnect', 'gtkyWhen', 'gtkyMinutes', 'tutorContacts', 'volunteerContact', 'onlineRooms', 'timeZone', 'clock', 'planFrom', 'analysisFrom', 'volunteerCertificateHours'].forEach(function (k) { if (s[k] !== undefined && s[k] !== '' && s[k] !== null) keep[k] = s[k]; });
+       'agreement', 'preCourseConnect', 'gtkyWhen', 'gtkyMinutes', 'tutorContacts', 'volunteerContact', 'onlineRooms', 'timeZone', 'clock', 'ttLayout', 'planFrom', 'analysisFrom', 'volunteerCertificateHours'].forEach(function (k) { if (s[k] !== undefined && s[k] !== '' && s[k] !== null) keep[k] = s[k]; });
       /* Of the assessor's documents only the centre's own agreement link is the centre's. */
       if (s.docs && s.docs.docAgreement) keep.docs = { docAgreement: s.docs.docAgreement };
       keep.clonedFrom = fromId;
@@ -753,7 +753,15 @@ case 'inbox': {
       if (Array.isArray(keep.courseLinks)) keep.courseLinks = keep.courseLinks.map(function (l) { if (!l) return l; var c = {}; for (var k2 in l) c[k2] = l[k2]; delete c.showFrom; /* v75: a show-from day belongs to the course that is over */ if (!/timetable/i.test(String(l.label || '') + ' ' + String(l.card || ''))) c.show = false; else delete c.show; return c; });
       courseWrite_(nid, 'settings', keep);
       var w = courseRead_(fromId, 'wording');
-      if (w && typeof w === 'object') { for (var wk in w) { if (w[wk] && typeof w[wk] === 'object' && !Array.isArray(w[wk])) w[wk].released = false; } }
+      /* v83 (10 Oct 2026): an assignment's DATES belong to the course that is
+         over -- its due date, its per-set dates, its fixed resubmission time
+         and the day it goes out -- and came across already in the past. They
+         stay behind; who sets it and the resubmission days are the centre's
+         and travel. The timetable's layout travels with the settings above. */
+      if (w && typeof w === 'object') { for (var wk in w) { if (w[wk] && typeof w[wk] === 'object' && !Array.isArray(w[wk])) {
+        w[wk].released = false;
+        ['dueAt', 'due', 'dueSets', 'resubDueAt', 'outAt', 'releaseAt'].forEach(function (f) { delete w[wk][f]; });
+      } } }
       if (w) courseWrite_(nid, 'wording', w);
       var o = courseRead_(fromId, 'observations'); if (o) courseWrite_(nid, 'observations', o);
       /* v80 (9 Oct 2026): the timetable travels, without its dates (Ramy:
