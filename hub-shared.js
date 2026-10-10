@@ -504,6 +504,19 @@ window.hubTraineeRoomOnly = function(){
    The reserve now follows the bar's real height. It is published as a custom
    property rather than set inline, so the print rule's `body{padding:0}` still
    wins and nothing reserves a strip on paper. */
+/* On a phone the dictation language reads UK / US / AU, so the pill, the
+   language and Dictate fit on one row above the bar (10 Oct 2026). The full
+   name stays as the option's title. The bar is built by each screen's own
+   script, which has run by hub:ready. */
+(function(){
+  function shorten(){
+    try { if (!window.matchMedia || !matchMedia('(max-width:560px)').matches) return; } catch (e) { return; }
+    var SHORT = { 'en-GB':'UK', 'en-US':'US', 'en-AU':'AU' };
+    document.querySelectorAll('.dictbar select option').forEach(function(o){ if (SHORT[o.value] && o.textContent !== SHORT[o.value]) { o.title = o.textContent; o.textContent = SHORT[o.value]; } });
+    var sel = document.querySelector('.dictbar select'); if (sel) sel.setAttribute('aria-label', 'Dictation language');
+  }
+  document.addEventListener('hub:ready', function(){ shorten(); setTimeout(shorten, 0); });
+})();
 window.hubReserveForBar = function(selector){
   var bar = document.querySelector(selector || '.actionbar');
   if (!bar) return;
@@ -521,7 +534,8 @@ window.hubReserveForBar = function(selector){
       try {
         var dict = document.querySelector('.dictbar');
         if (dict && window.matchMedia && matchMedia('(max-width:560px)').matches) {
-          var dh = dict.getBoundingClientRect().height; if (dh > 0) lift = Math.ceil(dh + 46);
+          /* it shares the sync pill's row now, just above the bar (10 Oct 2026) */
+          var dh = dict.getBoundingClientRect().height; if (dh > 0) lift = Math.ceil(dh);
         }
       } catch (e) {}
       document.documentElement.style.setProperty('--bar-reserve', Math.ceil(h + GAP + lift) + 'px');
