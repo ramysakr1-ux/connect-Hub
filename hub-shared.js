@@ -751,14 +751,34 @@ window.hubGtkyPlan = function(settings, tt){
   if (!out.when) {
     var day = (T.days || [])[0], tp = (T.slots || []).filter(function(sl){ return sl && sl.kind === 'tp'; });
     var slot = tp[2] || tp[tp.length - 1] || null;
+    /* THE COURSE'S OWN SESSION (11 Oct 2026). This assumed Lite's default
+       first day -- the third TP slot, "the unassessed teaching slot". C/18's
+       is Student interviews at that hour, and its getting-to-know-you with the
+       students on Day 1 is that ("the interview is in a way our getting to know
+       you activity ... we're just going by what's on the timetable"). So the
+       first session in the course called getting to know you, GTKY or
+       interview wins, in the timetable's own words -- never the orientation's
+       GTKY, which is the trainees meeting each other -- then a first day's
+       "unassessed" slot, then the default words. */
+    var gt = null;
+    (T.days || []).some(function(dd){ return (dd && !dd.closed && Array.isArray(dd.sessions) ? dd.sessions : []).some(function(x){
+      var t = String(x && x.t || '');
+      /* a session with the students, never an input ("jobs and interviews") */
+      if (/^(input|plan|feedback|reflect|task|break|lunch)$/.test(String(x && x.k || ''))) return false;
+      if (/getting to know|gtky|interview/i.test(t) && !/orientation|welcome/i.test(t)) { gt = { day: dd, s: x }; return true; }
+      return false; }); });
+    if (!gt && day && Array.isArray(day.sessions)) { var un = day.sessions.filter(function(x){ return x && /unassessed/i.test(String(x.t || '')); })[0]; if (un) gt = { day: day, s: un }; }
+    if (gt) day = gt.day;
+    var at = gt ? gt.s : null;
     var m = day && String(day.date || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (m) {
       var d = new Date(+m[1], +m[2] - 1, +m[3]);
       var name = d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
-      out.when = 'on ' + name + (slot && slot.from ? ' at ' + window.hubClock(slot.from) : '');
+      var from = at ? at.s : (slot && slot.from);
+      out.when = 'on ' + name + (from ? ' at ' + window.hubClock(from) : '');
       out.fromTimetable = true;
     } else out.when = 'on the first day of the course';
-    out.slot = 'the unassessed teaching slot';
+    out.slot = at ? String(at.t) : 'the unassessed teaching slot';
   }
   return out;
 };
