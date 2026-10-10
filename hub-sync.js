@@ -669,6 +669,25 @@
 
   // First time on this link in this browser: nothing to show yet, so wait.
   status('Loading from the course\u2026', 'busy');
+  /* CHECKING YOUR LINK (10 Oct 2026). Until the store answers, the page's own
+     empty frame was on screen -- a made-up trainee link showed "Your CELTA
+     paperwork" for several seconds before it was refused, as if it had
+     worked. The frame is covered until the answer: lifted for a link that
+     opens, replaced by the refusal for one that does not (gate rewrites the
+     body), lifted too if the course cannot be reached, so the page and its
+     red pill show. */
+  var cover = null;
+  try {
+    cover = document.createElement('div');
+    cover.id = 'hubChecking'; cover.setAttribute('role', 'status'); cover.setAttribute('aria-live', 'polite');
+    cover.style.cssText = 'position:fixed;inset:0;z-index:2147482000;background:oklch(92.5% 0.012 85);display:flex;align-items:center;justify-content:center;transition:opacity .25s;font-family:Karla,Helvetica,sans-serif;color:oklch(51% 0.017 70);';
+    cover.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:14px;">'
+      + '<span style="width:34px;height:34px;border-radius:8px;background:oklch(30% 0.042 58);display:inline-flex;align-items:center;justify-content:center;">'
+      + '<svg viewBox="8 30 104 60" width="22" height="13" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"></path></svg></span>'
+      + '<span style="font-size:0.95rem;">Checking your link\u2026</span></div>';
+    (document.body || document.documentElement).appendChild(cover);
+  } catch (e) { cover = null; }
+  var uncover = function(){ if (!cover) return; var c = cover; cover = null; c.style.opacity = '0'; setTimeout(function(){ if (c.parentNode) c.parentNode.removeChild(c); }, 260); };
   bootWithRetries().then(function(boot){
     var p = plan(boot);
     if (p['connect_roster_v1'] != null) p['connect_roster_v1'] = mergeRoster(p['connect_roster_v1']);
@@ -679,5 +698,5 @@
     if (err && err.refused) { gate(err.message); return 'gated'; }
     status('Could not reach the course \u2014 ' + (err && err.message || err), 'error');
   })
-    .then(function(gated){ if (gated !== 'gated') start(); });
+    .then(function(gated){ if (gated !== 'gated') { uncover(); start(); } });
 })();
