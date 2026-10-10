@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610102111">
+<link rel="stylesheet" href="hub-tokens.css?v=202610102115">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -405,24 +405,24 @@
     h1{font-size:1.4rem;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610102111">
+<link rel="stylesheet" href="hub-house.css?v=202610102115">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610102111"></script>
-<script src="hub-tracker.js?v=202610102111"></script>
-<script src="hub-rotation.js?v=202610102111"></script>
-<script src="hub-xlsx.js?v=202610102111"></script>
-<script src="hub-docx.js?v=202610102111"></script>
-<script src="hub-timetable-parse.js?v=202610102111"></script>
-<script src="assignment-defaults.js?v=202610102111"></script>
-<script src="hub-shared.js?v=202610102111"></script>
-<script src="hub-store.js?v=202610102111"></script>
-<script src="hub-say.js?v=202610102111"></script>
-<script src="hub-sync.js?v=202610102111"></script>
+<script src="hub-due.js?v=202610102115"></script>
+<script src="hub-tracker.js?v=202610102115"></script>
+<script src="hub-rotation.js?v=202610102115"></script>
+<script src="hub-xlsx.js?v=202610102115"></script>
+<script src="hub-docx.js?v=202610102115"></script>
+<script src="hub-timetable-parse.js?v=202610102115"></script>
+<script src="assignment-defaults.js?v=202610102115"></script>
+<script src="hub-shared.js?v=202610102115"></script>
+<script src="hub-store.js?v=202610102115"></script>
+<script src="hub-say.js?v=202610102115"></script>
+<script src="hub-sync.js?v=202610102115"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -639,10 +639,11 @@ function dues(){
     const perSet = !!(a.dueSets && Object.keys(a.dueSets).length);
     const subOf = tr => ((tr.records && tr.records.assignments) || (IS_TRAINEE ? rec('connect_assignment_submissions_v1') : null) || {})[k];
     const inHand = sub => !!(sub && (sub.submittedAt || sub.submitted || sub.turnedIn));
-    const push = (when, title, missing, total, fixed) => {
+    const push = (when, title, missing, total, fixed, who) => {
       const iso = dayOf(when);
       if (!iso) return;
-      (out[iso] = out[iso] || []).push({ key: k, due: when, title, past: iso < TODAY, missing, total, fixed });
+      (out[iso] = out[iso] || []).push({ key: k, due: when, title, past: iso < TODAY, missing, total, fixed,
+        who: (who || []).map(tr => ({ token: tr.id || tr.token, group: tr.group })) });
     };
     const title = a.title || k.toUpperCase();
     if (IS_TRAINEE) {
@@ -653,7 +654,7 @@ function dues(){
       return;
     }
     if (!perSet || !people.length) {
-      push(base, title, people.filter(tr => !inHand(subOf(tr))).length, people.length, false);
+      push(base, title, people.filter(tr => !inHand(subOf(tr))).length, people.length, false, people);
       return;
     }
     const buckets = {};
@@ -664,17 +665,23 @@ function dues(){
     const many = Object.keys(buckets).length > 1;
     Object.keys(buckets).forEach(when => {
       const trs = buckets[when];
-      push(when, many ? title + ' · ' + lettersOf(trs) : title, trs.filter(tr => !inHand(subOf(tr))).length, trs.length, many);
+      push(when, many ? title + ' · ' + lettersOf(trs) : title, trs.filter(tr => !inHand(subOf(tr))).length, trs.length, many, trs);
     });
   });
   return out;
-  /* the trainees' letters, as the TP points screen gives them out */
+  /* Who a bar is for: the letters of the set, as the TP points screen gives
+     them out -- or "Group A" for a whole group, so a group with no date of
+     its own does not glue its letters onto another group's ("DEFA"). */
   function lettersOf(trs){
     const by = {};
     people.forEach(t => { const g = String(t.group || ''); (by[g] = by[g] || []).push({ token: t.id || t.token, name: t.name }); });
     const L = {};
     Object.values(by).forEach(ps => (window.hubRotation ? hubRotation.lettersFor(ps) : []).forEach(p => { L[p.token] = p.letter; }));
-    return trs.map(t => L[t.id || t.token] || '').join('');
+    const mine = {};
+    trs.forEach(t => { const g = String(t.group || ''); (mine[g] = mine[g] || []).push(t.id || t.token); });
+    const groups = Object.keys(by);
+    return Object.keys(mine).sort().map(g => (groups.length > 1 && mine[g].length === by[g].length)
+      ? 'Group ' + (g || '—') : mine[g].map(t => L[t] || '').join('')).join(' · ');
   }
 }
 
@@ -1380,7 +1387,12 @@ function checksHTML(){
   Object.keys(DUES).forEach(date => {
     const d = TT.days.find(x => x.date === date);
     if (d && d.closed) DUES[date].forEach(x => lines.push(['bad', `${x.title} is due on ${dayName(date)}, a closed day`]));
-    else if (d && d.tp) DUES[date].forEach(x => lines.push(['note', `${x.title} is due on ${dayName(date)}, a teaching-practice day`]));
+    /* only when somebody it is due for teaches that day: with a deadline per
+       teaching set, the set handing in is the one NOT teaching (C/18's LRT) */
+    else if (d && d.tp) DUES[date].forEach(x => {
+      const teaching = (x.who || []).some(t => window.hubSetIndexOf && hubSetIndexOf(t.token, t.group) === Number(d.setIndex || 0));
+      if (teaching || !(x.who || []).length) lines.push(['note', `${x.title} is due on ${dayName(date)}, a day they teach`]);
+    });
   });
   const un = Array.isArray(TT.unplaced) ? TT.unplaced : [];
   return `<div class="tchecks"><div class="cl"><span class="dot ${lines.some(l => l[0] === 'bad') || un.length ? 'bad' : 'ok'}"></span>${n} sessions on ${open.length} day${open.length === 1 ? '' : 's'}${un.length ? ` · <b>${un.length === 1 ? '1 day’s' : un.length + ' days’'} sessions don’t fit</b>` : ''}${lines.length ? '' : ' · no clashes'}</div>
