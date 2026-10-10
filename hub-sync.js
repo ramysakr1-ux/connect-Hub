@@ -11,6 +11,9 @@
 // Each page's app script is a <script type="text/x-hub-app"> block; it is
 // run once the preload has finished.
 (function(){
+  /* A card drawn as a preview inside Course admin (invite.html ?preview=):
+     no link, no boot, no gate, no writes. */
+  if (window.HUB_PREVIEW) { window.HubMode = ''; return; }
   var S = window.HubStore;
   // Assessor mode (Ramy, 20 Sep 2026): boots like a tutor, writes nothing.
   var mode = !S ? '' : S.isTutor() ? 'tutor' : S.isAssessor() ? 'assessor' : S.isTrainee() ? 'trainee' : (S.isVolunteer && S.isVolunteer()) ? 'volunteer' : '';

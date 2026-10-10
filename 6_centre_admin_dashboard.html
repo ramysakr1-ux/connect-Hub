@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610102243">
+<link rel="stylesheet" href="hub-tokens.css?v=202610102247">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -437,6 +437,16 @@
   .cs-opt:has(input:checked){border-color:var(--teal); box-shadow:0 0 0 1px var(--teal);}
   .cs-opt input{position:absolute; opacity:0; pointer-events:none;}
   .cs-opt:has(input:focus-visible){outline:2px solid var(--gold-lifted); outline-offset:2px;}
+  /* THE REAL CARD, on hover (Ramy, 10 Oct 2026: "hover on the ticket or
+     welcome and then it will get a little bigger so people can actually see
+     what it looks like"). The course's own card as a trainee gets it,
+     drawn by invite.html in preview mode. A tap shows it on a phone. */
+  .cardstyle-field{position:relative;}
+  .cs-prev{position:absolute; z-index:30; left:0; top:calc(100% - 18px); width:340px; max-width:100%; height:500px; overflow:hidden; border-radius:14px;
+           background:var(--sand); box-shadow:0 0 0 1px var(--sand-line), 0 24px 48px -20px oklch(25% 0.04 60 / .55); pointer-events:none;}
+  .cs-prev[hidden]{display:none;}
+  .cs-prev iframe{border:0; width:425px; height:625px; transform:scale(.8); transform-origin:0 0; display:block;}
+  .cs-prev .cs-cap{position:absolute; left:0; right:0; bottom:0; padding:7px 12px; font-size:0.72rem; font-weight:700; color:var(--grey); background:oklch(98.8% 0.006 85 / .92); border-top:1px solid var(--sand-line);}
   .cs-txt{display:flex; flex-direction:column; line-height:1.2;}
   .cs-txt b{font-size:0.86rem; color:var(--ink);} .cs-txt small{font-size:0.72rem; color:var(--grey);}
   .cs-thumb{position:relative; display:block; width:40px; height:50px; border-radius:5px; overflow:hidden; background:var(--paper);
@@ -467,7 +477,7 @@
   .tcol-opt input:checked + span{box-shadow:0 0 0 2px var(--paper), 0 0 0 4px var(--teal);}
   .tcol-opt input:focus-visible + span{outline:2px solid var(--gold-lifted); outline-offset:3px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610102243">
+<link rel="stylesheet" href="hub-house.css?v=202610102247">
 </head>
 <body>
 <div class="board">
@@ -593,7 +603,7 @@
             <span class="cs-thumb cs-ticket" aria-hidden="true"><i></i><u></u><u></u><em></em><s></s></span>
             <span class="cs-txt"><b>Ticket</b><small>Paper and a seal</small></span></label>
         </div>
-        <p class="hintline">Every link this course sends opens on this card first.</p>
+        <p class="hintline">Every link this course sends opens on this card first. Point at a look to see the real card.</p>
       </div>
       <!-- Which practice each document starts at. The first practice is
            normally taught from the TP points alone, and centres differ after
@@ -915,16 +925,16 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610102243"></script>
-<script src="hub-store.js?v=202610102243"></script>
-<script src="hub-say.js?v=202610102243"></script>
-<script src="agreement-defaults.js?v=202610102243"></script>
-<script src="observation-defaults.js?v=202610102243"></script>
-<script src="hub-shared.js?v=202610102243"></script>
-<script src="hub-due.js?v=202610102243"></script>
-<script src="hub-sync.js?v=202610102243"></script>
-<script src="hub-hand.js?v=202610102243"></script>
-<script src="hub-ink.js?v=202610102243"></script>
+<script src="assignment-defaults.js?v=202610102247"></script>
+<script src="hub-store.js?v=202610102247"></script>
+<script src="hub-say.js?v=202610102247"></script>
+<script src="agreement-defaults.js?v=202610102247"></script>
+<script src="observation-defaults.js?v=202610102247"></script>
+<script src="hub-shared.js?v=202610102247"></script>
+<script src="hub-due.js?v=202610102247"></script>
+<script src="hub-sync.js?v=202610102247"></script>
+<script src="hub-hand.js?v=202610102247"></script>
+<script src="hub-ink.js?v=202610102247"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1370,6 +1380,38 @@ function scheduleSave(){ clearTimeout(SAVE_T); const st = document.getElementByI
 /* Typing, switching, picking a date, a file arriving: all of it. The logo
    and the agreement buttons set values from script, so they call it too. */
 (function(){ const panel = document.getElementById('panel-settings'); ['input', 'change'].forEach(ev => panel.addEventListener(ev, scheduleSave)); })();
+
+/* The card preview: the course's own trainee card in the look pointed at.
+   One frame per look, made on first use and kept, so a second hover is instant. */
+(function(){
+  const field = document.querySelector('.cardstyle-field'); if (!field) return;
+  const frames = {};
+  let shown = '';
+  function show(look, opt){
+    if (shown === look) return;
+    hide(); shown = look;
+    let box = frames[look];
+    if (!box) {
+      box = document.createElement('div'); box.className = 'cs-prev'; box.setAttribute('aria-hidden', 'true');
+      box.innerHTML = `<iframe title="" tabindex="-1" src="invite.html?preview=trainee&card=${look}"></iframe><div class="cs-cap">${look === 'ticket' ? 'Ticket' : 'Welcome'} · a trainee’s link, as they open it</div>`;
+      frames[look] = box; field.appendChild(box);
+    }
+    box.hidden = false;
+    /* under the look pointed at, but never past the page's edge */
+    box.style.left = Math.max(0, Math.min(opt.offsetLeft, field.clientWidth - box.offsetWidth)) + 'px';
+  }
+  function hide(){ shown = ''; Object.values(frames).forEach(b => { b.hidden = true; }); }
+  field.querySelectorAll('.cs-opt').forEach(opt => {
+    const look = (opt.querySelector('input') || {}).value;
+    opt.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') show(look, opt); });
+    opt.addEventListener('pointerleave', e => { if (e.pointerType !== 'touch') hide(); });
+    opt.addEventListener('focusin', () => show(look, opt));
+    opt.addEventListener('focusout', hide);
+    /* a phone has no hover: a tap chooses the look and shows it until the next tap elsewhere */
+    opt.addEventListener('pointerup', e => { if (e.pointerType === 'touch') show(look, opt); });
+  });
+  document.addEventListener('pointerdown', e => { if (shown && e.pointerType === 'touch' && !e.target.closest('.cs-opt')) hide(); });
+})();
 
 /* ---- Files for trainees ----------------------------------------------- */
 /* Suggested lines to start with, so the field says what it is for; a line
