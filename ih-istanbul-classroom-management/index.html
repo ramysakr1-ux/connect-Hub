@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CELTA Input Session – Classroom Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f7fa; --paper:#ffffff; --ink:#1c2b3a; --sub:#5b6b7c; --line:#d9e2ec;
+    --navy:#1F497D; --navy-deep:#163a63; --navy-soft:#e3ebf5;
+    --teal:#2a8c82; --teal-deep:#1f6f66; --teal-soft:#dff1ee;
+    --amber:#c98a1c; --amber-soft:#fbf0d8;
+    --red:#b8433a; --red-soft:#f8e1de;
+    --purple:#7a4a9c; --purple-soft:#efe3f5;
+    --gold:#caa23a;
+    --shadow:0 10px 30px rgba(28,43,58,.08);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;background:var(--bg);font-family:'Nunito',sans-serif;color:var(--ink);}
+  .watermark{position:fixed;bottom:16px;right:16px;font-weight:800;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:var(--teal);opacity:.35;padding:5px 13px;border-radius:999px;pointer-events:none;z-index:30;}
+  .progress-bar{position:sticky;top:0;z-index:20;height:4px;background:var(--line);}
+  .progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--navy),var(--teal));transition:width .1s;}
+  .topbar{position:sticky;top:4px;z-index:20;background:rgba(244,247,250,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:8px 14px;}
+  .topbar .logo{height:36px;width:auto;flex:0 0 auto;}
+  nav.sticky-nav{display:flex;gap:6px;overflow-x:auto;flex:1;scrollbar-width:none;}
+  nav.sticky-nav::-webkit-scrollbar{display:none;}
+  nav.sticky-nav a{flex:0 0 auto;text-decoration:none;font-size:.66rem;font-weight:800;color:var(--navy);background:#fff;border:1.3px solid var(--line);padding:6px 10px;border-radius:999px;white-space:nowrap;}
+  nav.sticky-nav a.active{background:var(--navy);color:#fff;border-color:transparent;}
+  .print-btn{flex:0 0 auto;border:1.5px solid var(--teal);background:#fff;color:var(--teal-deep);font-weight:800;font-size:.72rem;padding:7px 14px;border-radius:999px;cursor:pointer;}
+
+  .hero{padding:34px 20px 52px;text-align:center;}
+  .hero h1{font-family:'Playfair Display',serif;font-weight:700;font-size:2.1rem;margin:0 0 .2em;color:var(--navy-deep);}
+  .hero p{margin:0;color:var(--sub);font-size:.96rem;}
+
+  .wrap{max-width:940px;margin:0 auto;padding:0 20px 70px;}
+  section{padding-top:70px;margin-top:-40px;scroll-margin-top:100px;}
+  section:first-of-type{padding-top:10px;}
+  .card{background:var(--paper);border-radius:16px;padding:26px 28px;box-shadow:var(--shadow);border:1px solid var(--line);border-left:6px solid var(--accent,var(--navy));margin-bottom:6px;}
+  .stage-title{font-family:'Playfair Display',serif;font-size:1.36rem;color:var(--navy-deep);margin:0 0 6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .badge{font-size:.64rem;font-weight:800;background:var(--accent-soft,var(--navy-soft));color:var(--accent,var(--navy));padding:4px 10px;border-radius:999px;letter-spacing:.05em;text-transform:uppercase;}
+  .lead{color:var(--sub);margin:0 0 16px;font-size:.95rem;line-height:1.55;}
+  .lead b{color:var(--ink);}
+  .btn{background:var(--accent,var(--navy));color:#fff;border:none;padding:10px 20px;border-radius:999px;font-weight:800;font-size:.85rem;cursor:pointer;font-family:'Nunito';}
+  .btn.secondary{background:#fff;color:var(--navy);border:1.5px solid var(--line);}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center;}
+  .feedback{font-weight:800;font-size:.9rem;min-height:1.2em;}
+  .feedback.good{color:var(--teal-deep);} .feedback.bad{color:var(--red);}
+  .divider{display:flex;align-items:center;gap:12px;margin:30px 0 16px;color:var(--line);}
+  .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--line);}
+  .divider span{font-family:'Playfair Display';font-style:italic;color:var(--sub);font-size:.9rem;}
+  footer.note{text-align:center;color:var(--sub);font-size:.76rem;margin-top:30px;}
+
+  /* flip cards */
+  .flip-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;}
+  @media(max-width:700px){.flip-grid{grid-template-columns:1fr;}}
+  .flip-card{border-radius:14px;border:2px solid var(--c);overflow:hidden;cursor:pointer;background:#fff;transition:.2s;}
+  .flip-card:hover{transform:translateY(-2px);}
+  .flip-front{padding:13px 15px;background:var(--c-soft);font-family:'Playfair Display';font-weight:700;color:var(--c);font-size:1rem;line-height:1.35;}
+  .flip-back{display:none;padding:12px 15px;font-size:.86rem;line-height:1.55;border-top:2px dashed var(--c);}
+  .flip-card.open .flip-back{display:block;}
+  .flip-card.open .flip-front{background:#fff;}
+
+  /* would you rather */
+  .wyr{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:stretch;margin:14px 0 6px;}
+  @media(max-width:700px){.wyr{grid-template-columns:1fr;}}
+  .wyr .opt{border-radius:16px;padding:20px 18px;font-weight:800;font-size:1.02rem;line-height:1.4;display:flex;align-items:center;justify-content:center;text-align:center;min-height:120px;cursor:pointer;border:2.5px solid transparent;transition:.15s;}
+  .wyr .opt.a{background:var(--navy-soft);color:var(--navy-deep);}
+  .wyr .opt.b{background:var(--amber-soft);color:#7a5410;}
+  .wyr .opt.picked{border-color:var(--gold);transform:scale(1.02);box-shadow:var(--shadow);}
+  .wyr .or{display:flex;align-items:center;justify-content:center;font-family:'Playfair Display';font-style:italic;color:var(--sub);font-size:1.1rem;}
+  .wyr-say{font-size:.86rem;color:var(--sub);font-weight:700;min-height:1.3em;}
+
+  /* speaking-time calculator */
+  .calc{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px;}
+  @media(max-width:700px){.calc{grid-template-columns:1fr;}}
+  .calc label{font-weight:800;font-size:.84rem;color:var(--navy-deep);display:block;margin-bottom:4px;}
+  .calc input[type=range]{width:100%;accent-color:var(--teal);}
+  .calc .val{font-weight:800;color:var(--teal-deep);}
+  .bars{margin-top:16px;display:flex;flex-direction:column;gap:12px;}
+  .barrow .lab{font-weight:800;font-size:.86rem;margin-bottom:4px;display:flex;justify-content:space-between;}
+  .bar{height:30px;border-radius:999px;background:var(--bg);border:1px solid var(--line);overflow:hidden;}
+  .bar i{display:block;height:100%;border-radius:999px;transition:width .4s;}
+  .bar.open i{background:linear-gradient(90deg,#d98b7f,var(--red));}
+  .bar.pair i{background:linear-gradient(90deg,#7cc4bb,var(--teal));}
+  .big{font-family:'Playfair Display';font-size:1.25rem;color:var(--navy-deep);margin-top:10px;font-weight:700;}
+
+  /* wheel */
+  .wheel-wrap{display:grid;grid-template-columns:300px 1fr;gap:22px;align-items:center;margin-top:8px;}
+  @media(max-width:760px){.wheel-wrap{grid-template-columns:1fr;justify-items:center;}}
+  .wheel-box{position:relative;width:300px;height:300px;}
+  .wheel{width:300px;height:300px;border-radius:50%;transition:transform 3.2s cubic-bezier(.17,.67,.2,1);box-shadow:var(--shadow);border:6px solid #fff;}
+  .pointer{position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:24px solid var(--navy-deep);z-index:2;}
+  .hub{position:absolute;inset:0;margin:auto;width:70px;height:70px;border-radius:50%;background:#fff;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--navy);font-size:.8rem;cursor:pointer;}
+  .landed{background:var(--bg);border-radius:14px;padding:16px 18px;min-height:150px;}
+  .landed .t{font-family:'Playfair Display';font-size:1.3rem;color:var(--navy-deep);font-weight:700;margin-bottom:8px;}
+  .landed ul{margin:0;padding-left:18px;font-size:.9rem;line-height:1.6;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;}
+  .chip{font-size:.72rem;font-weight:800;padding:5px 10px;border-radius:999px;background:#fff;border:1.5px solid var(--line);color:var(--sub);}
+  .chip.done{background:var(--teal-soft);border-color:var(--teal);color:var(--teal-deep);}
+
+  /* yes / no / maybe */
+  .ynm{display:flex;flex-direction:column;gap:10px;margin-top:6px;}
+  .ynm-row{border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;background:#fff;}
+  .ynm-row .s{font-weight:700;font-size:.92rem;line-height:1.45;}
+  .ynm-btns{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .ynm-btns button{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:5px 14px;font-weight:800;font-size:.78rem;cursor:pointer;font-family:'Nunito';color:var(--sub);}
+  .ynm-btns button.mine{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .ynm-btns button.reveal{margin-left:auto;color:var(--teal-deep);border-color:var(--teal);}
+  .ynm-ans{display:none;margin-top:8px;font-size:.86rem;line-height:1.5;background:var(--teal-soft);border-radius:10px;padding:8px 12px;color:var(--teal-deep);}
+  .ynm-row.shown .ynm-ans{display:block;}
+  .ynm-ans b{color:var(--ink);}
+
+  /* match game */
+  .match{display:grid;grid-template-columns:1.25fr 1fr;gap:16px;margin-top:6px;}
+  @media(max-width:760px){.match{grid-template-columns:1fr;}}
+  .quote{background:var(--bg);border-radius:14px;padding:16px 18px;min-height:140px;font-size:.96rem;line-height:1.6;}
+  .quote .n{font-size:.72rem;font-weight:800;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+  .quote .ln{margin:3px 0;}
+  .quote .who{display:inline-block;min-width:26px;font-weight:800;color:var(--navy);}
+  .defs{display:flex;flex-direction:column;gap:6px;}
+  .def{border:1.5px solid var(--line);border-radius:10px;padding:7px 11px;font-size:.84rem;font-weight:700;cursor:pointer;background:#fff;transition:.12s;}
+  .def:hover{border-color:var(--teal);}
+  .def.used{opacity:.35;cursor:default;text-decoration:line-through;}
+  .def.wrong{animation:shake .3s;border-color:var(--red);}
+  .def.right{background:var(--teal-soft);border-color:var(--teal);}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
+  .score{display:flex;gap:14px;align-items:center;margin-top:12px;font-weight:800;}
+  .score .pill{background:var(--navy-soft);color:var(--navy-deep);padding:5px 12px;border-radius:999px;font-size:.82rem;}
+  .why{margin-top:10px;font-size:.88rem;line-height:1.5;color:var(--teal-deep);font-weight:700;min-height:1.4em;}
+
+  /* fix the instruction */
+  .fix-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0;}
+  @media(max-width:700px){.fix-grid{grid-template-columns:1fr;}}
+  .fix{border-radius:14px;border:2px solid var(--line);background:#fff;overflow:hidden;cursor:pointer;}
+  .fix .bad{padding:12px 14px;font-size:.92rem;font-weight:700;color:#7a2f28;background:var(--red-soft);}
+  .fix .bad::before{content:'✗ ';}
+  .fix .good{display:none;padding:12px 14px;font-size:.92rem;font-weight:800;color:var(--teal-deep);background:var(--teal-soft);}
+  .fix .good::before{content:'✓ ';}
+  .fix .tip{display:none;padding:0 14px 12px;font-size:.8rem;color:var(--sub);background:var(--teal-soft);}
+  .fix.open .good,.fix.open .tip{display:block;}
+  .ramble{background:var(--bg);border-left:4px solid var(--red);border-radius:10px;padding:12px 16px;font-style:italic;line-height:1.6;margin:12px 0;}
+  .write-area{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Nunito';font-size:.92rem;color:var(--ink);resize:vertical;background:#fff;min-height:110px;}
+  .write-area:focus{outline:none;border-color:var(--teal);}
+  .model{display:none;margin-top:12px;background:var(--teal-soft);border-radius:12px;padding:12px 16px;line-height:1.7;font-size:.92rem;}
+  .model.open{display:block;}
+  .model ol{margin:4px 0 6px;padding-left:20px;}
+
+  /* checklist */
+  .checks{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  @media(max-width:700px){.checks{grid-template-columns:1fr;}}
+  .checks li{background:var(--bg);border-radius:12px;padding:12px 14px;font-size:.9rem;line-height:1.5;display:flex;gap:10px;align-items:flex-start;cursor:pointer;border:1.5px solid transparent;}
+  .checks li .box{width:20px;height:20px;border-radius:6px;border:2px solid var(--teal);flex:0 0 auto;margin-top:1px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.8rem;}
+  .checks li.on{border-color:var(--teal);background:var(--teal-soft);}
+  .checks li.on .box{background:var(--teal);}
+  .checks li b{color:var(--navy-deep);}
+
+  @media print{.topbar,.progress-bar,.watermark,.btn-row,.print-btn{display:none !important;}.card{box-shadow:none;break-inside:avoid;}.flip-back,.ynm-ans,.fix .good,.fix .tip,.model{display:block !important;}}
+</style>
+</head>
+<body>
+<div class="watermark">Ramy</div>
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+<div class="topbar">
+  <svg class="logo" viewBox="0 0 220 60" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="International House Istanbul">
+    <circle cx="30" cy="30" r="28" fill="#3B44B5"/>
+    <text x="30" y="43" text-anchor="middle" font-family="Nunito,Arial,sans-serif" font-weight="800" font-size="34" fill="#fff">ih</text>
+    <text x="68" y="22" font-family="Nunito,Arial,sans-serif" font-weight="800" font-size="17" fill="#111">International</text>
+    <text x="68" y="40" font-family="Nunito,Arial,sans-serif" font-weight="800" font-size="17" fill="#111">House</text>
+    <text x="68" y="56" font-family="Nunito,Arial,sans-serif" font-weight="600" font-size="14" fill="#333">Istanbul</text>
+  </svg>
+  <nav class="sticky-nav" id="stickyNav">
+    <a href="#s1">1 · Would you rather?</a>
+    <a href="#s2">2 · Who's talking?</a>
+    <a href="#s3">3 · Spin the wheel</a>
+    <a href="#s4">4 · Yes, no or maybe</a>
+    <a href="#s5">5 · Spot the problem</a>
+    <a href="#s6">6 · Grade your language</a>
+    <a href="#s7">7 · Into TP</a>
+  </nav>
+  <button class="print-btn" onclick="window.print()">🖨 Print</button>
+</div>
+
+<div class="hero">
+  <h1>Classroom Management</h1>
+  <p>Everything you do so that the learners can get on with learning</p>
+</div>
+
+<div class="wrap">
+
+  <!-- 1 -->
+  <section id="s1">
+    <div class="card" style="--accent:var(--navy);--accent-soft:var(--navy-soft);">
+      <div class="stage-title">Would you rather…? <span class="badge">Pick one, then tell your partner why</span></div>
+      <p class="lead">Think back to teachers you've had: at school, in language classes, anywhere. Which teacher would you rather have?</p>
+      <div class="wyr" id="wyr"></div>
+      <div class="wyr-say" id="wyrSay"></div>
+      <div class="btn-row"><button class="btn" id="wyrNext">Next dilemma ▶</button><span class="feedback" id="wyrCount"></span></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>why pairs and groups</span></div>
+
+  <!-- 2 -->
+  <section id="s2">
+    <div class="card" style="--accent:var(--teal);--accent-soft:var(--teal-soft);">
+      <div class="stage-title">Who's talking? <span class="badge">Move the sliders</span></div>
+      <p class="lead">A speaking activity. The teacher can ask each student one by one in <b>open class</b>, or put everyone in <b>pairs</b>. How long does each student actually get to speak?</p>
+      <div class="calc">
+        <div><label>Students in the class: <span class="val" id="nVal"></span></label><input type="range" id="n" min="4" max="20" value="12"></div>
+        <div><label>Minutes for the activity: <span class="val" id="mVal"></span></label><input type="range" id="m" min="4" max="20" value="10"></div>
+      </div>
+      <div class="bars">
+        <div class="barrow"><div class="lab"><span>👩‍🏫 Open class, one at a time</span><span id="openTxt"></span></div><div class="bar open"><i id="openBar"></i></div></div>
+        <div class="barrow"><div class="lab"><span>👥 Pairs</span><span id="pairTxt"></span></div><div class="bar pair"><i id="pairBar"></i></div></div>
+      </div>
+      <div class="big" id="times"></div>
+      <p class="lead" style="margin-top:14px">Open class assumes the teacher takes half the time asking, prompting and responding. In pairs, each student speaks about half the time.</p>
+      <div class="stage-title" style="font-size:1.05rem;margin-top:16px">So why pairs and groups? <span class="badge">Tap each one</span></div>
+      <div class="flip-grid" id="advGrid"></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>what it covers</span></div>
+
+  <!-- 3 -->
+  <section id="s3">
+    <div class="card" style="--accent:var(--purple);--accent-soft:var(--purple-soft);">
+      <div class="stage-title">Spin the wheel <span class="badge">In your group</span></div>
+      <p class="lead">Good classroom management covers all of these, and probably more. Spin, then discuss: <b>why does it matter?</b> Think about how it feels to be the student, and the teachers you've had.</p>
+      <div class="wheel-wrap">
+        <div class="wheel-box"><div class="pointer"></div><div class="wheel" id="wheel"></div><div class="hub" id="spin">SPIN</div></div>
+        <div class="landed" id="landed"><div class="t">Spin to start</div><div style="color:var(--sub);font-size:.9rem">Thirteen areas. Can your group get through them all?</div></div>
+      </div>
+      <div class="chips" id="areaChips"></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>what do you think?</span></div>
+
+  <!-- 4 -->
+  <section id="s4">
+    <div class="card" style="--accent:var(--navy);--accent-soft:var(--navy-soft);">
+      <div class="stage-title">Yes, no or maybe? <span class="badge">Decide, then reveal</span></div>
+      <p class="lead">Agree with your partner first. Then reveal what most experienced teachers would say. Some of them really do depend.</p>
+      <div class="ynm" id="ynm"></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>how teachers get in the way</span></div>
+
+  <!-- 5 -->
+  <section id="s5">
+    <div class="card" style="--accent:var(--red);--accent-soft:var(--red-soft);">
+      <div class="stage-title">Spot the problem <span class="badge">Match it</span></div>
+      <p class="lead">Fourteen real moments from real classrooms. Why is each one a problem? Pick the label that fits.</p>
+      <div class="match">
+        <div><div class="quote" id="quote"></div><div class="why" id="why"></div></div>
+        <div class="defs" id="defs"></div>
+      </div>
+      <div class="score"><span class="pill" id="scorePill">0 / 14</span><span class="feedback" id="matchFb"></span></div>
+      <div class="btn-row"><button class="btn secondary" id="matchReset">Start again</button></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>say less, say it clearly</span></div>
+
+  <!-- 6 -->
+  <section id="s6">
+    <div class="card" style="--accent:var(--teal);--accent-soft:var(--teal-soft);">
+      <div class="stage-title">Grade your language <span class="badge">Tap to fix</span></div>
+      <p class="lead"><b>Imperatives, direct questions, natural speech.</b> No idioms, no baby language, no shouting. Tap each one to see a clearer version.</p>
+      <div class="fix-grid" id="fixGrid"></div>
+      <div class="stage-title" style="font-size:1.05rem;margin-top:18px">Your turn: rescue this teacher <span class="badge">Rewrite it</span></div>
+      <div class="ramble">“Well, what I'm gonna do is I'm gonna ask you to get into pairs, but before that there are some things we've gotta work out. So just jot down if you've got a pen, could you write this, then when we've finished that we're going to do the next thing which involves…”</div>
+      <p class="lead" style="margin-bottom:6px">The task: learners read five questions, then ask a partner and write down the answers. Write the instructions in short steps, and add one question to check they've understood.</p>
+      <textarea class="write-area" placeholder="Step 1 …"></textarea>
+      <div class="btn-row"><button class="btn" id="modelBtn">Compare with a model</button></div>
+      <div class="model" id="model">
+        <ol>
+          <li>“Work with your partner.” <i>(gesture: you two, you two)</i></li>
+          <li>“Read the five questions. Don't write.” <i>(hold up the handout)</i></li>
+          <li>“Ask your partner the questions. Write <b>their</b> answers.”</li>
+          <li>“Five minutes.” <i>(show five fingers)</i></li>
+        </ol>
+        Check: “Are you writing your answers, or your partner's?” <b>(My partner's.)</b> Then <b>demonstrate</b> the first question with one student before everyone starts.
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"><span>this afternoon</span></div>
+
+  <!-- 7 -->
+  <section id="s7">
+    <div class="card" style="--accent:var(--navy);--accent-soft:var(--navy-soft);">
+      <div class="stage-title">Take it into TP <span class="badge">Tick what you'll try</span></div>
+      <p class="lead">Pick the ones you'll try first, and watch for them in your peers' lessons too.</p>
+      <ul class="checks" id="checks"></ul>
+    </div>
+  </section>
+
+  <footer class="note">CELTA C/18 · IH Istanbul · Input session: Classroom management</footer>
+</div>
+
+<script>
+// ---------- 1. Would you rather ----------
+const wyr=[
+  ['A teacher who knows everybody’s name by the second lesson','A teacher whose lessons always finish exactly on time'],
+  ['A teacher who corrects every mistake you make','A teacher who lets you talk and corrects at the end'],
+  ['A teacher who explains everything perfectly','A teacher who makes you work it out with a partner'],
+  ['A teacher who stands at the front the whole lesson','A teacher who moves around and sits with groups'],
+  ['A teacher who praises you a lot','A teacher who praises you rarely, but means it'],
+  ['A teacher who never stops talking, but is funny','A teacher who barely talks, but gets everyone talking']
+];
+let w=0;
+function drawWyr(){const [a,b]=wyr[w];const el=document.getElementById('wyr');
+  el.innerHTML='<div class="opt a">'+a+'</div><div class="or">or</div><div class="opt b">'+b+'</div>';
+  el.querySelectorAll('.opt').forEach(o=>o.onclick=()=>{el.querySelectorAll('.opt').forEach(x=>x.classList.remove('picked'));o.classList.add('picked');
+    document.getElementById('wyrSay').textContent='Now tell your partner why. What did that teacher actually do?';});
+  document.getElementById('wyrSay').textContent=''; document.getElementById('wyrCount').textContent=(w+1)+' / '+wyr.length;}
+document.getElementById('wyrNext').onclick=()=>{w=(w+1)%wyr.length;drawWyr();};
+drawWyr();
+
+// ---------- 2. Who's talking ----------
+const fmt=s=>{s=Math.round(s);return s<60?s+' seconds':Math.floor(s/60)+' min'+(s%60?' '+(s%60)+' s':'');};
+function calc(){const n=+document.getElementById('n').value, m=+document.getElementById('m').value;
+  document.getElementById('nVal').textContent=n; document.getElementById('mVal').textContent=m;
+  const open=m*60*0.5/n, pair=m*60*0.5;
+  document.getElementById('openTxt').textContent=fmt(open)+' each'; document.getElementById('pairTxt').textContent=fmt(pair)+' each';
+  document.getElementById('openBar').style.width=(open/pair*100)+'%'; document.getElementById('pairBar').style.width='100%';
+  document.getElementById('times').textContent='In pairs, every student speaks '+Math.round(pair/open)+' times as much.';}
+['n','m'].forEach(id=>document.getElementById(id).oninput=calc); calc();
+const adv=[
+  ['More speaking for everyone','Student talking time (STT) goes up, a lot. You’ve just seen by how much.'],
+  ['Safer for shy learners','Shy or less confident learners will often speak in a pair or a small group when they wouldn’t in front of the class.'],
+  ['No waiting your turn','Nobody sits silently while the teacher works round the room one by one.'],
+  ['You get to listen','You’re free to monitor: listen, note errors, and plan what to work on afterwards.'],
+  ['Learners take control','They use the language their own way, and help each other, instead of waiting for the teacher.'],
+  ['It’s how people really talk','Nobody chats in a group of twelve. Pairs and small groups are what real conversation sounds like.']
+];
+const advGrid=document.getElementById('advGrid');
+adv.forEach((x,i)=>{const c=document.createElement('div');c.className='flip-card';c.style.setProperty('--c',i%2?'#2a8c82':'#1F497D');c.style.setProperty('--c-soft',i%2?'#dff1ee':'#e3ebf5');
+  c.innerHTML='<div class="flip-front">'+x[0]+'</div><div class="flip-back">'+x[1]+'</div>';c.onclick=()=>c.classList.toggle('open');advGrid.appendChild(c);});
+
+// ---------- 3. Wheel ----------
+const areas=[
+  ['Seating & where you stand',['Where are you when you give instructions? When they’re working?','Horseshoe, groups, rows: what does each one make easy?','Can everyone see the board, and each other?']],
+  ['Eye contact',['When do you need it, and when should you look away?','Who are you looking at most? Who are you ignoring?']],
+  ['Voice',['Can the back of the room hear you?','When should your voice be loud, and when quiet?']],
+  ['Board, pictures & handouts',['When does the handout go out: before or after the instructions?','Is your board planned, tidy and readable from the back?']],
+  ['Names',['How fast can you learn them?','What changes when you use a learner’s name?']],
+  ['Praise & encouragement',['What does “good” mean if you say it every time?','How else can you show a learner they did well?']],
+  ['Rapport',['What makes a group want to work for you?','What kills it in the first five minutes?']],
+  ['Timing & pace',['What happens when a stage runs over?','How do you know when learners are ready to move on?']],
+  ['Correction',['Now or later? Who corrects: you, them, or a partner?','What does correction feel like as a learner?']],
+  ['Instructions',['How short can you make them?','How do you know they’ve understood, without asking “Do you understand?”']],
+  ['Variety',['Same activity type all lesson: what happens?','How do you change the energy in the room?']],
+  ['Monitoring',['What are you listening for?','When do you step in, and when do you stay out of the way?']],
+  ['Stopping an activity',['How do you get a noisy room’s attention without shouting?','How do you warn them it’s nearly time?']]
+];
+const cols=['#1F497D','#2a8c82','#c98a1c','#7a4a9c','#b8433a','#3b6ea8','#5aa197'];
+const wheel=document.getElementById('wheel'); const seg=360/areas.length;
+wheel.style.background='conic-gradient('+areas.map((a,i)=>cols[i%cols.length]+' '+(i*seg)+'deg '+((i+1)*seg)+'deg').join(',')+')';
+const chips=document.getElementById('areaChips'); const done=new Set();
+areas.forEach((a,i)=>{const c=document.createElement('span');c.className='chip';c.textContent=a[0];c.id='chip'+i;chips.appendChild(c);});
+let rot=0, spinning=false;
+document.getElementById('spin').onclick=()=>{ if(spinning) return; spinning=true;
+  let idx; const left=areas.map((_,i)=>i).filter(i=>!done.has(i)); idx=(left.length?left:areas.map((_,i)=>i))[Math.floor(Math.random()*(left.length||areas.length))];
+  const target=360-(idx*seg+seg/2); rot+=360*4+((target-rot%360)+360)%360; wheel.style.transform='rotate('+rot+'deg)';
+  setTimeout(()=>{ spinning=false; done.add(idx); document.getElementById('chip'+idx).classList.add('done');
+    const a=areas[idx]; document.getElementById('landed').innerHTML='<div class="t">'+a[0]+'</div><ul>'+a[1].map(q=>'<li>'+q+'</li>').join('')+'</ul>'+(done.size===areas.length?'<div style="margin-top:10px;font-weight:800;color:var(--teal-deep)">All thirteen. Well done!</div>':''); },3300);
+};
+
+// ---------- 4. Yes / no / maybe ----------
+const ynm=[
+  ['It’s a good idea to point at students when you want them to speak.','No','Pointing can feel rude, and in some cultures it is. Use their <b>name</b>, or an open hand.'],
+  ['You should keep eye contact with the students at every stage of the lesson.','No','Yes while you give instructions and feedback. <b>Look away</b> when they’re talking to each other, or they’ll talk to you instead.'],
+  ['You should plan your whiteboard in advance.','Yes','Decide what goes where before the lesson. A messy board makes a messy lesson.'],
+  ['If you’re talking to one student, you should walk up to them.','No','Stay further away. The student speaks up, and the whole class hears.'],
+  ['Capital letters on the board are a good idea because they’re easier to read.','No','They’re harder to read, and they hide which words really take a capital. Write normally.'],
+  ['Students understand you better if you speak slowly and use “baby language”.','No','Grade your language, but keep it <b>natural</b>: “close… phone… please” teaches nothing.'],
+  ['If a student doesn’t hear what another student said, you should repeat it for them.','Maybe','Usually <b>no</b>: ask the student to say it again, louder. If you always repeat, they stop listening to each other.'],
+  ['You should be extra polite when asking students to move chairs or change groups.','No','Be friendly and <b>clear</b>. “Would you mind possibly moving…” just confuses. “Ahmet, sit here, please.”'],
+  ['The teacher should keep their voice at the same level at every stage.','No','Louder to get attention and give instructions, quieter when you join a pair.'],
+  ['Students should be allowed to use their dictionaries whenever they want.','Maybe','It depends on the stage. Not during a gist task. Often fine when they’re checking a word afterwards.'],
+  ['The best way to check instructions is to ask “Do you understand?”','No','Everyone says yes. Ask a short question about the task instead: <b>“Are you writing or speaking?”</b>'],
+  ['If a student doesn’t want to do an exercise, you should just say “OK then.”','Maybe','Find out why first. Too hard? Too easy? Tired? Then decide.']
+];
+const ynmEl=document.getElementById('ynm');
+ynm.forEach(([s,a,why],i)=>{const r=document.createElement('div');r.className='ynm-row';
+  r.innerHTML='<div class="s">'+(i+1)+'. '+s+'</div><div class="ynm-btns"><button>Yes</button><button>No</button><button>Maybe</button><button class="reveal">Reveal</button></div><div class="ynm-ans"><b>'+a+'.</b> '+why+'</div>';
+  const bs=r.querySelectorAll('.ynm-btns button');
+  [0,1,2].forEach(k=>bs[k].onclick=()=>{[0,1,2].forEach(j=>bs[j].classList.toggle('mine',j===k));});
+  bs[3].onclick=()=>r.classList.toggle('shown'); ynmEl.appendChild(r);});
+
+// ---------- 5. Spot the problem ----------
+const defs=['Too much teacher talking time (TTT)','Echoing','“Helpful” sentence completion','Complicated, unclear instructions','Not checking instructions','Asking “Do you understand?”','Fear of genuine feedback','Not enough authority / over-politeness','The running commentary','No confidence in yourself, the learners or the task','Over-helping, over-organising','Flying with the fastest','Not really listening','Weak rapport'];
+const quotes=[
+  {l:[['T','Did you like my lesson?'],['S','Yes.']],d:6,w:'Of course they say yes. Ask something they can answer honestly: “Which activity helped you most?”'},
+  {l:[['T','I try to be nice, but my classes always seem so dull.']],d:9,w:'Nice isn’t enough. Trust the learners with a real challenge.'},
+  {l:[['S','I think that smoking is…'],['T','…a bad thing. Yes, I agree. When I went into the pub…']],d:2,w:'The teacher finished the learner’s sentence, then took over the conversation.'},
+  {l:[['T','So, if you don’t mind, it would be very nice if you could just stop the activity if you feel that’s OK.']],d:7,w:'Nobody stops. “OK, stop now, please.”'},
+  {l:[['T','Well, what I’m gonna do is I’m gonna ask you to get into pairs, but before that there are some things we’ve gotta work out…']],d:3,w:'Too long, too many steps at once. You’ll rewrite this one in part 6.'},
+  {l:[['T','My instructions were clear, but all the students did different things, and none of them did what I asked.']],d:4,w:'Clear to the teacher isn’t clear to the class. Check before they start.'},
+  {l:[['S','I went to the cinema.'],['T','You went to the cinema. Good. You went to the cinema.']],d:1,w:'Repeating everything adds nothing, and learners stop listening to each other.'},
+  {l:[['T','Yes, now you can ask her your question. Mmm, that’s a good question. What do you think? What’s your answer going to be, Silvia? Yes, go on, tell her…']],d:10,w:'The teacher is running the pair work for them. Step back and let them talk.'},
+  {l:[['T','Do you understand?'],['S','Yes…']],d:5,w:'“Yes” tells you nothing. Ask about the task instead.'},
+  {l:[['T','When nothing else is happening I open my mouth. I’ve no idea what I say most of the time, but it stops those horrible silences.']],d:0,w:'Silence is often thinking time. Let them think.'},
+  {l:[['T','I wonder why they look so bored?']],d:13,w:'Something in the atmosphere isn’t working. Names, interest in their answers, variety.'},
+  {l:[['S','I am feeling bad. My grandfather he die last week and I am…'],['T','No, not die. Say died, because it’s in the past.']],d:12,w:'The teacher heard the grammar, not the message. Respond to the person first.'},
+  {l:[['T','So now what I’m gonna do is I’m gonna move my chair over here and sit down and get comfortable, and now I’m gonna tear up these pieces of paper…']],d:8,w:'Learners don’t need a commentary on what you’re doing. Just do it.'},
+  {l:[['T','So, what’s the answer?'],['S1','Only on Tuesdays, unless it’s raining.'],['T','Yes, very good, so everyone got that.']],d:11,w:'One fast learner answered. That doesn’t mean everyone got it.'}
+];
+let order=[],qi=0,score=0,tries=0;
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function startMatch(){order=shuffle(quotes.map((_,i)=>i));qi=0;score=0;tries=0;
+  const D=document.getElementById('defs');D.innerHTML='';
+  defs.forEach((t,i)=>{const d=document.createElement('div');d.className='def';d.textContent=t;d.dataset.i=i;d.onclick=()=>pick(d);D.appendChild(d);});
+  document.getElementById('why').textContent='';document.getElementById('matchFb').textContent='';drawQuote();}
+function drawQuote(){if(qi>=order.length){document.getElementById('quote').innerHTML='<div class="n">Done</div><div style="font-family:Playfair Display;font-size:1.3rem;color:var(--navy-deep)">All fourteen matched.</div>';document.getElementById('matchFb').textContent=score+' first time out of 14';document.getElementById('matchFb').className='feedback good';return;}
+  const q=quotes[order[qi]];document.getElementById('quote').innerHTML='<div class="n">Moment '+(qi+1)+' of 14</div>'+q.l.map(([w,t])=>'<div class="ln"><span class="who">'+w+':</span> '+t+'</div>').join('');
+  document.getElementById('scorePill').textContent=qi+' / 14';tries=0;}
+function pick(d){if(d.classList.contains('used')||qi>=order.length)return;const q=quotes[order[qi]];
+  if(+d.dataset.i===q.d){if(tries===0)score++;d.classList.add('right');document.getElementById('why').textContent='✓ '+q.w;
+    setTimeout(()=>{d.classList.remove('right');d.classList.add('used');qi++;drawQuote();},1500);}
+  else{tries++;d.classList.remove('wrong');void d.offsetWidth;d.classList.add('wrong');document.getElementById('why').textContent='Not that one. Try again.';}}
+document.getElementById('matchReset').onclick=startMatch; startMatch();
+
+// ---------- 6. Grade your language ----------
+const fixes=[
+  ['Could you open your books at page 12?','Turn to page 12, please.','Imperatives are clearer than polite questions.'],
+  ['Can you tell me where the cat is?','Where’s the cat?','Direct questions, not embedded ones.'],
+  ['Go through the exercise at the foot of the page.','Do exercise 3, at the bottom of the page.','No idioms or phrasal verbs in instructions.'],
+  ['Close… mobile… phone… please.','Please put your phones away.','Grade it, but keep it natural English.'],
+  ['WOULD. YOU. LIKE. TO. WORK. WITH. A. PARTNER?','Work with a partner.','They aren’t deaf. Normal volume, normal speed, fewer words.'],
+  ['OK, so basically what you need to do now is kind of read it and then we’ll maybe talk about it.','Read the text. You have two minutes.','Cut the filler. One instruction, then the time.']
+];
+const fixGrid=document.getElementById('fixGrid');
+fixes.forEach(f=>{const c=document.createElement('div');c.className='fix';c.innerHTML='<div class="bad">'+f[0]+'</div><div class="good">'+f[1]+'</div><div class="tip">'+f[2]+'</div>';c.onclick=()=>c.classList.toggle('open');fixGrid.appendChild(c);});
+document.getElementById('modelBtn').onclick=()=>document.getElementById('model').classList.toggle('open');
+
+// ---------- 7. Into TP ----------
+const tips=[
+  ['Learn their names','and use them instead of pointing.'],
+  ['Plan your board','before the lesson.'],
+  ['Instructions in short steps','Demonstrate, then check with a question, not “Do you understand?”'],
+  ['Handouts after instructions','not before, or nobody listens.'],
+  ['Pairs before open class','Let them try it with a partner first.'],
+  ['Monitor, then get out of the way','Listen, note, step back.'],
+  ['Stop clearly','“One more minute… OK, stop now, please.”'],
+  ['Don’t echo','Ask them to say it again, louder, for everyone.']
+];
+const checks=document.getElementById('checks');
+tips.forEach(t=>{const li=document.createElement('li');li.innerHTML='<span class="box">✓</span><div><b>'+t[0]+'</b> '+t[1]+'</div>';li.onclick=()=>li.classList.toggle('on');checks.appendChild(li);});
+
+// ---------- progress + nav ----------
+const fill=document.getElementById('progressFill'); const links=[...document.querySelectorAll('#stickyNav a')];
+window.addEventListener('scroll',()=>{const h=document.documentElement; fill.style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';
+  let cur=links[0]; links.forEach(a=>{const s=document.querySelector(a.getAttribute('href')); if(s && s.getBoundingClientRect().top<140) cur=a;});
+  links.forEach(a=>a.classList.toggle('active',a===cur));});
+</script>
+</body>
+</html>
