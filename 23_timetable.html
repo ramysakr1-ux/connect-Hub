@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610102250">
+<link rel="stylesheet" href="hub-tokens.css?v=202610102301">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -296,6 +296,9 @@
   .tset .ml{font-weight:700; min-width:130px; color:var(--ink-warm);}
   .tset label{display:inline-flex; gap:6px; align-items:center; cursor:pointer;}
   .tset .opts{display:flex; flex-direction:column; gap:4px;}
+  .ibrow{display:flex; flex-wrap:wrap; gap:6px; align-items:center;}
+  .ibrow select{font:inherit; font-size:0.82rem; padding:4px 6px; border:1px solid var(--sand-line); border-radius:var(--r-control); background:var(--field); color:var(--ink);}
+  .tset .opts .row{margin-top:4px;}
   .tsw{display:inline-flex; gap:6px; align-items:center;}
   .tsw i{position:static; display:inline-block; width:14px; height:14px; padding:0; border-radius:4px;}
   .tgrid.across .tile .tm .own{color:var(--brick); font-weight:700;}
@@ -475,24 +478,24 @@
     h1{font-size:1.4rem;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610102250">
+<link rel="stylesheet" href="hub-house.css?v=202610102301">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610102250"></script>
-<script src="hub-tracker.js?v=202610102250"></script>
-<script src="hub-rotation.js?v=202610102250"></script>
-<script src="hub-xlsx.js?v=202610102250"></script>
-<script src="hub-docx.js?v=202610102250"></script>
-<script src="hub-timetable-parse.js?v=202610102250"></script>
-<script src="assignment-defaults.js?v=202610102250"></script>
-<script src="hub-shared.js?v=202610102250"></script>
-<script src="hub-store.js?v=202610102250"></script>
-<script src="hub-say.js?v=202610102250"></script>
-<script src="hub-sync.js?v=202610102250"></script>
+<script src="hub-due.js?v=202610102301"></script>
+<script src="hub-tracker.js?v=202610102301"></script>
+<script src="hub-rotation.js?v=202610102301"></script>
+<script src="hub-xlsx.js?v=202610102301"></script>
+<script src="hub-docx.js?v=202610102301"></script>
+<script src="hub-timetable-parse.js?v=202610102301"></script>
+<script src="assignment-defaults.js?v=202610102301"></script>
+<script src="hub-shared.js?v=202610102301"></script>
+<script src="hub-store.js?v=202610102301"></script>
+<script src="hub-say.js?v=202610102301"></script>
+<script src="hub-sync.js?v=202610102301"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1533,11 +1536,70 @@ function settingsPanelHTML(){
     <div class="tset"><span class="ml">Clock</span><span>${esc(clock)}</span></div>
     <div class="tset"><span class="ml">Time zone</span><span>${esc(zone)}</span></div>
     <div class="tset"><span class="ml">Tutors’ colours</span>${tutors}</div>
+    ${inputByHTML()}
     <p class="hint">The clock, the time zone and the tutors’ colours are the whole course’s: change them on <a href="6_centre_admin_dashboard.html#ttSettings">Course admin › Settings</a>.</p>
     <div class="row"><button class="btn quiet" id="setClose">Close</button></div></div>`;
 }
+/* WHO TEACHES THE INPUTS, BY DATES (10 Oct 2026). Ramy: "more than one input
+   ... for the same trainer at the same time ... instead of choosing one at a
+   time". C/18 is Ramy for the first half and Narges for the second, so the
+   course says who from which day (TT.inputBy, by name: [{from, by}]), and one
+   press gives every input tile in each run that tutor -- their colour. A tile
+   can still be changed by itself afterwards. */
+function inputByHTML(){
+  if (!TUTORS.length) return '';
+  const open = (TT.days || []).filter(d => !d.closed);
+  const rows = Array.isArray(TT.inputBy) && TT.inputBy.length ? TT.inputBy : [{ from: (open[0] || {}).date || '', by: TUTORS[0] }];
+  const dayOpts = cur => open.map(d => `<option value="${esc(d.date)}"${d.date === cur ? ' selected' : ''}>${esc(dayName(d.date))}</option>`).join('');
+  const tutOpts = cur => TUTORS.map(n => `<option value="${esc(n)}"${n === cur ? ' selected' : ''}>${esc(n)}</option>`).join('');
+  return `<div class="tset"><span class="ml">Who teaches the inputs</span><div class="opts">
+      ${rows.map((r, i) => `<div class="ibrow">From <select data-ib-from="${i}">${dayOpts(r.from)}</select> <select data-ib-by="${i}">${tutOpts(r.by)}</select>${i ? ` <button type="button" class="linkbtn" data-ib-del="${i}">Remove</button>` : ''}</div>`).join('')}
+      <button type="button" class="linkbtn" id="ibAdd">+ Another tutor from a later day</button>
+      <div class="row"><button type="button" class="btn quiet" id="ibApply">Give the input sessions these tutors</button></div>
+    </div></div>
+    <p class="hint">Each tutor teaches the inputs from their day until the next tutor’s. One press colours every input tile in those days; a single tile can still be changed by clicking it.</p>`;
+}
+function inputByRows(){
+  const open = (TT.days || []).filter(d => !d.closed);
+  return (Array.isArray(TT.inputBy) && TT.inputBy.length ? TT.inputBy : [{ from: (open[0] || {}).date || '', by: TUTORS[0] }]).map(r => Object.assign({}, r));
+}
+function wireInputBy(){
+  const keep = rows => { TT.inputBy = rows; save('Saved'); render(); };
+  document.querySelectorAll('[data-ib-from],[data-ib-by]').forEach(el => el.addEventListener('change', () => {
+    const rows = inputByRows(), i = +(el.dataset.ibFrom || el.dataset.ibBy);
+    if (el.dataset.ibFrom !== undefined) rows[i].from = el.value; else rows[i].by = el.value;
+    keep(rows);
+  }));
+  document.querySelectorAll('[data-ib-del]').forEach(el => el.addEventListener('click', () => { const rows = inputByRows(); rows.splice(+el.dataset.ibDel, 1); keep(rows); }));
+  if ($('ibAdd')) $('ibAdd').addEventListener('click', () => {
+    const rows = inputByRows(), open = (TT.days || []).filter(d => !d.closed), last = rows[rows.length - 1];
+    const later = open.find(d => d.date > (last.from || '')) || open[open.length - 1];
+    rows.push({ from: later ? later.date : '', by: TUTORS[Math.min(rows.length, TUTORS.length - 1)] });
+    keep(rows);
+  });
+  if ($('ibApply')) $('ibApply').addEventListener('click', async () => {
+    const ranges = inputByRows().filter(r => r.from && TUTORS.indexOf(r.by) !== -1).sort((a, b) => a.from < b.from ? -1 : 1);
+    if (!ranges.length) return;
+    let n = 0, differ = 0;
+    const plan = [];
+    (TT.days || []).forEach(d => {
+      if (d.closed) return;
+      const r = ranges.filter(x => x.from <= d.date).pop(); if (!r) return;
+      const i = TUTORS.indexOf(r.by);
+      (d.sessions || []).forEach(x => { if (x.k !== 'input') return; n++; if (x.by !== undefined && x.by !== '' && x.by !== null && +x.by !== i) differ++; plan.push([x, i]); });
+    });
+    if (!n) { note = 'No input sessions in those days'; render(); return; }
+    if (differ && !(await ask(differ + ' of these ' + n + ' input sessions already name a different tutor. Give them these tutors too?', 'Change them'))) return;
+    remember();
+    plan.forEach(([x, i]) => { x.by = i; });
+    TT.inputBy = ranges;
+    save('Saved', { key: 'inputBy', text: 'Who teaches the inputs: ' + ranges.map(r => r.by + ' from ' + dayName(r.from)).join(', then '), effects: [n + ' input sessions'] });
+    render();
+  });
+}
 function wireSettings(){
   if (!IS_TUTOR) return;
+  wireInputBy();
   if ($('setOpen')) $('setOpen').addEventListener('click', () => { SET_OPEN = !SET_OPEN; render(); });
   if ($('setClose')) $('setClose').addEventListener('click', () => { SET_OPEN = false; render(); });
   document.querySelectorAll('input[name="ttLayout"]').forEach(el => el.addEventListener('change', () => {
