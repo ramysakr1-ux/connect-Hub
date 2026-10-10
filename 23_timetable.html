@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610102229">
+<link rel="stylesheet" href="hub-tokens.css?v=202610102233">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -291,6 +291,12 @@
      size themselves and carry their times). Words that do not fit get smaller
      (fitAcross), never a bigger tile. */
   .tgrid.across .tile{position:relative; left:auto; right:auto; top:auto; height:64px; box-sizing:border-box; overflow:hidden; padding:6px 9px; display:flex; flex-direction:column; justify-content:center; font-size:0.76rem;}
+  .tset{display:flex; flex-wrap:wrap; gap:6px 16px; align-items:center; margin:0 0 8px; font-size:0.84rem;}
+  .tset .ml{font-weight:700; min-width:130px; color:var(--ink-warm);}
+  .tset label{display:inline-flex; gap:6px; align-items:center; cursor:pointer;}
+  .tset .opts{display:flex; flex-direction:column; gap:4px;}
+  .tsw{display:inline-flex; gap:6px; align-items:center;}
+  .tsw i{position:static; display:inline-block; width:14px; height:14px; padding:0; border-radius:4px;}
   .tgrid.across .tile.clip .tt{display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:4; overflow:hidden;}
   .tgrid.across .tile .tm .own{color:var(--brick); font-weight:700;}
   .tgrid.across .k-tp.mine .tm .own{color:var(--gold-lifted);}
@@ -469,24 +475,24 @@
     h1{font-size:1.4rem;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610102229">
+<link rel="stylesheet" href="hub-house.css?v=202610102233">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610102229"></script>
-<script src="hub-tracker.js?v=202610102229"></script>
-<script src="hub-rotation.js?v=202610102229"></script>
-<script src="hub-xlsx.js?v=202610102229"></script>
-<script src="hub-docx.js?v=202610102229"></script>
-<script src="hub-timetable-parse.js?v=202610102229"></script>
-<script src="assignment-defaults.js?v=202610102229"></script>
-<script src="hub-shared.js?v=202610102229"></script>
-<script src="hub-store.js?v=202610102229"></script>
-<script src="hub-say.js?v=202610102229"></script>
-<script src="hub-sync.js?v=202610102229"></script>
+<script src="hub-due.js?v=202610102233"></script>
+<script src="hub-tracker.js?v=202610102233"></script>
+<script src="hub-rotation.js?v=202610102233"></script>
+<script src="hub-xlsx.js?v=202610102233"></script>
+<script src="hub-docx.js?v=202610102233"></script>
+<script src="hub-timetable-parse.js?v=202610102233"></script>
+<script src="assignment-defaults.js?v=202610102233"></script>
+<script src="hub-shared.js?v=202610102233"></script>
+<script src="hub-store.js?v=202610102233"></script>
+<script src="hub-say.js?v=202610102233"></script>
+<script src="hub-sync.js?v=202610102233"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1423,12 +1429,13 @@ function render(){
             : `<span class="chip">Not set yet</span><button class="btn" id="publish">Set it for the course</button>`}
       <button class="btn quiet" id="preview">${PREVIEW ? 'Back to editing' : 'See what they see'}</button>
       ${EDIT ? `<button class="btn quiet" id="ttUndo"${UNDO.length ? '' : ' disabled'}>Undo</button>` : ''}
+      <button class="btn quiet" id="setOpen">Timetable settings</button>
       <button class="btn quiet" id="daysOpen">The course’s days</button>
       <button class="btn quiet" id="importOpen">Import from a sheet</button>
       <span class="status">${esc(note)}</span></div>
       ${pub ? statusHTML() : '<p class="legend" style="margin:0 0 14px">Only tutors can see it until you set it.</p>'}${checksHTML()}`
       + (EDIT ? `<p class="legend" style="margin:-8px 0 14px">${ACROSS() ? 'Drag a tile to another slot or day to move it. Click a tile to change it, its times too.' : 'Drag a tile to move it, or its bottom edge to change its length. Click a tile to change it.'} ⋯ on a day copies its shape to other days.</p>` : '')
-      + (PREVIEW ? '' : moveHTML() + daysPanelHTML() + builtHTML() + importHTML()) : '';
+      + (PREVIEW ? '' : moveHTML() + settingsPanelHTML() + daysPanelHTML() + builtHTML() + importHTML()) : '';
   /* Where teaching practice starts at a different time from the teaching day
      before it, the week says so above its days, in words: "From Monday 26
      October teaching practice starts at 2:00 PM" (Ramy, 9 Oct 2026: "the
@@ -1470,6 +1477,7 @@ function render(){
   wireEdits();
   wireImport();
   wireDays();
+  wireSettings();
   wireMove();
   wireBoard();
   fitAcross();
@@ -1517,6 +1525,44 @@ const ask = (text, verb) => window.confirmModal ? confirmModal(text, verb) : Pro
 const clone = o => JSON.parse(JSON.stringify(o));
 const dayName = date => { const d = parse(date); return d ? DOW[d.getDay()] + ' ' + dm(d) : date; };
 const tileName = (x, day) => x.k === 'tp' ? 'TP ' + ((day && day.tp) || '') : (x.t || (x.k === 'input' ? 'Empty input slot' : KIND_LABEL[x.k]) || 'Tile');
+
+/* TIMETABLE SETTINGS (10 Oct 2026). Ramy: the layout is "part of the
+   settings of the timetable" -- so the timetable has its own settings, and
+   every one of them is reachable from here. The layout is set here or on
+   Course admin (one setting, settings.ttLayout), and locks on the course's
+   first day. The clock, the time zone and the tutors' colours are the whole
+   course's, so they are shown here and changed on Course admin. */
+let SET_OPEN = false;
+function settingsPanelHTML(){
+  if (!SET_OPEN) return '';
+  const h = ACROSS(), started = !!SETTINGS.start && TODAY >= SETTINGS.start;
+  const zone = SETTINGS.timeZone || (Intl.DateTimeFormat().resolvedOptions().timeZone || '');
+  const clock = SETTINGS.clock === '24' ? '24-hour · 13:30' : '12-hour · 1:30 PM';
+  const tutors = TUTORS.length ? TUTORS.map((n, i) => `<span class="tsw"><i class="tile k-input by-${tcol(i)}"></i>${esc(n)}</span>`).join('') : '<span class="hint">No tutors named yet</span>';
+  return `<div class="imp"><h3>Timetable settings</h3>
+    <div class="tset"><span class="ml">Layout</span><div class="opts">
+      <label><input type="radio" name="ttLayout" value="v"${h ? '' : ' checked'}${started ? ' disabled' : ''}> Down the page · the days side by side</label>
+      <label><input type="radio" name="ttLayout" value="h"${h ? ' checked' : ''}${started ? ' disabled' : ''}> Across the page · a row for each day</label></div></div>
+    <p class="hint">${started ? 'The course has started, so its timetable stays ' + (h ? 'across' : 'down') + ' the page to the end.' : 'For everyone on the course. It cannot change once the course has started' + (SETTINGS.start ? ' (' + esc(dayName(SETTINGS.start)) + ')' : '') + '.'}</p>
+    <div class="tset"><span class="ml">Clock</span><span>${esc(clock)}</span></div>
+    <div class="tset"><span class="ml">Time zone</span><span>${esc(zone)}</span></div>
+    <div class="tset"><span class="ml">Tutors’ colours</span>${tutors}</div>
+    <p class="hint">The clock, the time zone and the tutors’ colours are the whole course’s: change them on <a href="6_centre_admin_dashboard.html#ttSettings">Course admin › Settings</a>.</p>
+    <div class="row"><button class="btn quiet" id="setClose">Close</button></div></div>`;
+}
+function wireSettings(){
+  if (!IS_TUTOR) return;
+  if ($('setOpen')) $('setOpen').addEventListener('click', () => { SET_OPEN = !SET_OPEN; render(); });
+  if ($('setClose')) $('setClose').addEventListener('click', () => { SET_OPEN = false; render(); });
+  document.querySelectorAll('input[name="ttLayout"]').forEach(el => el.addEventListener('change', () => {
+    const s = rec('connect_course_settings') || {};
+    s.ttLayout = el.value === 'h' ? 'h' : 'v';
+    try { localStorage.setItem('connect_course_settings', JSON.stringify(s)); } catch (e) {}
+    SETTINGS.ttLayout = s.ttLayout;
+    note = s.ttLayout === 'h' ? 'The timetable now reads across the page, for everyone on the course' : 'The timetable now reads down the page, for everyone on the course';
+    render();
+  }));
+}
 
 function daysPanelHTML(){
   if (!DAYS_OPEN) return '';
