@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610102233">
+<link rel="stylesheet" href="hub-tokens.css?v=202610102243">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -467,7 +467,7 @@
   .tcol-opt input:checked + span{box-shadow:0 0 0 2px var(--paper), 0 0 0 4px var(--teal);}
   .tcol-opt input:focus-visible + span{outline:2px solid var(--gold-lifted); outline-offset:3px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610102233">
+<link rel="stylesheet" href="hub-house.css?v=202610102243">
 </head>
 <body>
 <div class="board">
@@ -915,16 +915,16 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610102233"></script>
-<script src="hub-store.js?v=202610102233"></script>
-<script src="hub-say.js?v=202610102233"></script>
-<script src="agreement-defaults.js?v=202610102233"></script>
-<script src="observation-defaults.js?v=202610102233"></script>
-<script src="hub-shared.js?v=202610102233"></script>
-<script src="hub-due.js?v=202610102233"></script>
-<script src="hub-sync.js?v=202610102233"></script>
-<script src="hub-hand.js?v=202610102233"></script>
-<script src="hub-ink.js?v=202610102233"></script>
+<script src="assignment-defaults.js?v=202610102243"></script>
+<script src="hub-store.js?v=202610102243"></script>
+<script src="hub-say.js?v=202610102243"></script>
+<script src="agreement-defaults.js?v=202610102243"></script>
+<script src="observation-defaults.js?v=202610102243"></script>
+<script src="hub-shared.js?v=202610102243"></script>
+<script src="hub-due.js?v=202610102243"></script>
+<script src="hub-sync.js?v=202610102243"></script>
+<script src="hub-hand.js?v=202610102243"></script>
+<script src="hub-ink.js?v=202610102243"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1337,7 +1337,7 @@ function saveSettings(how){
     deliveryMode: document.getElementById('deliveryMode').value || 'f2f',
     tutorNames: document.getElementById('tutorNames').value.trim(),
     /* only the colours somebody chose; the rest are worked out (hub-shared.js hubTutorColours) */
-    tutorColours: (function(){ const o = {}; tutorNamesTyped().forEach(n => { if (TUTOR_COLOURS[n] !== undefined) o[n] = TUTOR_COLOURS[n]; }); return o; })(),
+    tutorColours: (function(){ const o = {}; tutorsForColours().forEach(n => { if (TUTOR_COLOURS[n] !== undefined) o[n] = TUTOR_COLOURS[n]; }); return o; })(),
     appianUrl: document.getElementById('appianUrl').value.trim(),
     visitDate: document.getElementById('visitDate').value,
     notificationRef: document.getElementById('notificationRef').value.trim(),
@@ -1386,9 +1386,11 @@ var HELD_BEFORE = [];
    them anyway. var, not const: the settings load above calls this first. */
 var TUTOR_COLOURS = TUTOR_COLOURS || {};
 function tutorNamesTyped(){ return (document.getElementById('tutorNames').value || '').split(/[,\n;]+/).map(s => s.trim()).filter(Boolean); }
+/* Everyone the timetable will know: the signatures, then the contacts (hubTutorNames). */
+function tutorsForColours(){ return window.hubTutorNames({ tutorNames: tutorNamesTyped().join(', '), tutorContacts: [...document.querySelectorAll('.tc-name')].map(el => ({ name: el.value })) }); }
 function renderTutorColours(){
   const host = document.getElementById('tutorColours'); if (!host) return;
-  const names = tutorNamesTyped(), P = window.HUB_TUTOR_COLOURS || [];
+  const names = tutorsForColours(), P = window.HUB_TUTOR_COLOURS || [];
   const cols = window.hubTutorColours(names, TUTOR_COLOURS);
   const hint = document.getElementById('tutorColoursHint'); if (hint) hint.hidden = !names.length;
   host.innerHTML = names.map((n, i) => `<div class="tcol-row"><span class="tcol-name">${esc(n)}</span><span class="tcol-sw" role="radiogroup" aria-label="${esc(n)}’s colour">${P.map((c, j) =>
@@ -1396,6 +1398,8 @@ function renderTutorColours(){
 }
 document.getElementById('tutorColours').addEventListener('change', e => { const r = e.target.closest('input[type=radio]'); if (!r) return; TUTOR_COLOURS[r.dataset.name] = +r.value; renderTutorColours(); });
 document.getElementById('tutorNames').addEventListener('input', renderTutorColours);
+/* a name typed under "Add a tutor" gets its colour row as it is typed */
+document.addEventListener('input', e => { if (e.target && e.target.classList && e.target.classList.contains('tc-name')) renderTutorColours(); });
 var CONTACTS = CONTACTS || [];
 function renderContacts(){
   if (!CONTACTS) CONTACTS = [];
@@ -1436,6 +1440,7 @@ function renderContacts(){
      ${whoSel(c, i)}
      <input type="email" class="tc-email" data-i="${i}" value="${esc(c.email)}" placeholder="name@centre.org">
    </div>`).join('') + (groups.length ? '' : '<div class="wide"><small class="muted">The whole course is the only choice until trainees are on the Roster; then each group appears.</small></div>');
+  renderTutorColours();   // the contacts' names have colour rows too
 }
 function readContacts(){
   const names = [...document.querySelectorAll('.tc-name')], emails = [...document.querySelectorAll('.tc-email')], grp = [...document.querySelectorAll('.tc-group')], rol = [...document.querySelectorAll('.tc-role')];
@@ -1443,7 +1448,10 @@ function readContacts(){
   /* `role` was read on load but never written back here, so "Main course
      tutor" could be chosen and never stuck (1 Oct 2026, found when the demo's
      volunteer page labelled both tutors "course tutor"). */
-  CONTACTS = all; return all.filter(c => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email)).map(c => { const o = { name: c.name, email: c.email }; if (c.group) o.group = c.group; if (c.role) o.role = c.role; return o; });
+  /* A tutor with a name and no email yet is still a tutor (10 Oct 2026): kept,
+     so the timetable knows them; only a real address is kept as an address. */
+  const ok = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+  CONTACTS = all; return all.filter(c => c.name || ok(c.email)).map(c => { const o = { name: c.name }; if (ok(c.email)) o.email = c.email; if (c.group) o.group = c.group; if (c.role) o.role = c.role; return o; });
 }
 document.getElementById('addTutorContact').addEventListener('click', () => { readContacts(); CONTACTS.push({ name:'', email:'', group:'' }); renderContacts(); });
 document.getElementById('toggleTutorBulk').addEventListener('click', e => {

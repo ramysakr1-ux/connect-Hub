@@ -806,6 +806,19 @@ window.HUB_TUTOR_COLOURS = [
   { name: 'Indigo', bg: 'oklch(94.5% 0.03 280)', bd: 'oklch(80% 0.07 280)', fg: 'oklch(40% 0.12 280)' },
   { name: 'Sky',    bg: 'oklch(95% 0.035 225)',  bd: 'oklch(80% 0.07 225)', fg: 'oklch(40% 0.1 230)' }
 ];
+/* THE COURSE'S TUTORS, from both lists on Course admin (10 Oct 2026). Ramy
+   added Narges under "Add a tutor" and the timetable never knew her: it read
+   only the signatures field. The signatures come first, in their order (an
+   input tile names its tutor by place in this list, so the order must not
+   move); anyone in the contacts who is not already there follows. */
+window.hubTutorNames = function(cs){
+  cs = cs || {};
+  var out = [];
+  var add = function(n){ n = String(n || '').trim(); if (n && !out.some(function(x){ return x.toLowerCase() === n.toLowerCase(); })) out.push(n); };
+  String(cs.tutorNames || '').split(/[,\n;]+/).forEach(add);
+  (Array.isArray(cs.tutorContacts) ? cs.tutorContacts : []).forEach(function(c){ if (c) add(c.name); });
+  return out;
+};
 /* Every tutor's colour, in the order the names are typed. */
 window.hubTutorColours = function(names, chosen){
   var P = window.HUB_TUTOR_COLOURS.length, pick = chosen && typeof chosen === 'object' ? chosen : {};
