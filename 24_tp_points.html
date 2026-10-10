@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610102338">
+<link rel="stylesheet" href="hub-tokens.css?v=202610102343">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -329,20 +329,20 @@
   @media(prefers-reduced-motion:reduce){ .tbl select.fm, .fm-pips i{transition:none;} }
   @media print{ .fm-key, .fm-pips{display:none;} .tbl select.fm{border-left-width:1px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610102338">
+<link rel="stylesheet" href="hub-house.css?v=202610102343">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610102338"></script>
-<script src="hub-tracker.js?v=202610102338"></script>
-<script src="hub-rotation.js?v=202610102338"></script>
-<script src="hub-shared.js?v=202610102338"></script>
-<script src="hub-store.js?v=202610102338"></script>
-<script src="hub-say.js?v=202610102338"></script>
-<script src="hub-sync.js?v=202610102338"></script>
+<script src="hub-due.js?v=202610102343"></script>
+<script src="hub-tracker.js?v=202610102343"></script>
+<script src="hub-rotation.js?v=202610102343"></script>
+<script src="hub-shared.js?v=202610102343"></script>
+<script src="hub-store.js?v=202610102343"></script>
+<script src="hub-say.js?v=202610102343"></script>
+<script src="hub-sync.js?v=202610102343"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -1140,7 +1140,10 @@ function render(){
     const after = R.afterFail(taughtSoFar(g.people), flat, TPS);
     const letterOf = t => (lettered.find(p => p.token === t) || {}).letter || '?';
     return `<section class="group"><h2>Group ${esc(g.group || '—')} <small>${g.people.length} trainee${g.people.length===1?'':'s'}</small></h2>
-      <p class="sets">Teaching sets: ${sets.map(s => '<b>' + esc(R.setName(s)) + '</b>').filter(Boolean).join(' and ')} — they take alternate days, so each trainee teaches every other day.</p>
+      <p class="sets">${(function(){ const named = sets.filter(st => st.length).map(st => '<b>' + esc(R.setName(st)) + '</b>');
+        /* a group with only one set filled (a lone test trainee) has one teaching day, not "A and —" */
+        return named.length > 1 ? 'Teaching sets: ' + named.join(' and ') + ' — they take alternate days, so each trainee teaches every other day.'
+                                : 'Teaching set: ' + (named[0] || '—') + ' — one teaching day; the other set has nobody in it yet.'; })()}</p>
       ${lettered.length > 1 ? `<details class="letters"><summary>Change who is in each set</summary>
         <p class="hint">A, B and C teach on the first day, D, E and F on the next. A letter nobody has is a free place. Choosing a letter that is taken swaps the two trainees.</p>
         <div class="lrow">${lettered.map(p => `<label>${esc(p.name || '')} <select data-letter="${esc(g.group)}" data-lt="${esc(p.token)}">${
