@@ -110,6 +110,10 @@ window.HubStore = (function(){
     get: function(kind, tok){ return call({ op: 'get', token: tok || token(), kind: kind }).then(function(r){ return r.data; }); },
     put: function(kind, data, tok){ return call({ op: 'put', token: tok || token(), kind: kind, data: data }); },
     course: function(){ return call({ op: 'course' }); },
+    /* A TP point's track, through the store (v84): Drive refuses Lite's pages
+       now. A tutor's or assessor's key speaks for itself; a trainee sends their
+       token. */
+    audio: function(id){ var b = { op: 'audio', id: id }; if (!key() && !akey() && token()) b.token = token(); return call(b, 60000); },
     putCourse: function(kind, data){ return call({ op: 'putCourse', kind: kind, data: data }); },
     /* A centre's next course starts from what its last one taught the criteria
        suggester. The store decides whether there is anything to take: it

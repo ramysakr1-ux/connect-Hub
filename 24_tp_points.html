@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610102343">
+<link rel="stylesheet" href="hub-tokens.css?v=202610102355">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -154,6 +154,10 @@
   .aud .audalt{display:inline-block; margin:3px 0 0; font-size:0.7rem; color:var(--grey); text-decoration:none;}
   .aud .audalt:hover{color:var(--teal); text-decoration:underline;}
   .aud audio{width:100%; max-width:430px; display:block;}
+  .audplay{font:inherit; font-size:0.8rem; font-weight:700; padding:8px 14px; border-radius:999px; border:1px solid var(--sand-line); background:var(--paper); color:var(--ink-warm); cursor:pointer;}
+  .audplay:hover{border-color:var(--teal); color:var(--teal);}
+  .audplay[disabled]{cursor:progress; color:var(--grey);}
+  .audwrap .auderr{display:block; margin-top:4px; font-size:0.72rem; color:var(--brick);}
   @media (max-width:560px){ .mats .mrow{grid-template-columns:1fr; gap:3px;} .mats label{padding-top:0;} }
   /* The set's own bar: what the course is teaching from, and the two doors —
      write it, apply it. */
@@ -329,20 +333,20 @@
   @media(prefers-reduced-motion:reduce){ .tbl select.fm, .fm-pips i{transition:none;} }
   @media print{ .fm-key, .fm-pips{display:none;} .tbl select.fm{border-left-width:1px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610102343">
+<link rel="stylesheet" href="hub-house.css?v=202610102355">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610102343"></script>
-<script src="hub-tracker.js?v=202610102343"></script>
-<script src="hub-rotation.js?v=202610102343"></script>
-<script src="hub-shared.js?v=202610102343"></script>
-<script src="hub-store.js?v=202610102343"></script>
-<script src="hub-say.js?v=202610102343"></script>
-<script src="hub-sync.js?v=202610102343"></script>
+<script src="hub-due.js?v=202610102355"></script>
+<script src="hub-tracker.js?v=202610102355"></script>
+<script src="hub-rotation.js?v=202610102355"></script>
+<script src="hub-shared.js?v=202610102355"></script>
+<script src="hub-store.js?v=202610102355"></script>
+<script src="hub-say.js?v=202610102355"></script>
+<script src="hub-sync.js?v=202610102355"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -365,6 +369,26 @@ const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g
 const rec = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch(e) { return null; } };
 const SETTINGS = rec('connect_course_settings') || {};
 const KEY = 'connect_tp_points_v1';
+/* THE TRACKS, THROUGH THE STORE (10 Oct 2026). One fetch per track per visit:
+   the bytes become a blob the page keeps, so a second play is instant. */
+const AUDIO_URLS = new Map();
+document.addEventListener('click', async e => {
+  const b = e.target.closest && e.target.closest('.audplay'); if (!b) return;
+  const wrap = b.closest('.audwrap'), id = wrap && wrap.dataset.drive; if (!id) return;
+  const show = url => { wrap.innerHTML = `<audio controls autoplay src="${url}"></audio>`; };
+  if (AUDIO_URLS.has(id)) { show(AUDIO_URLS.get(id)); return; }
+  b.disabled = true; b.textContent = 'Getting the track…';
+  try {
+    const r = await window.HubStore.audio(id);
+    const bin = atob(r.b64), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const url = URL.createObjectURL(new Blob([bytes], { type: r.mime || 'audio/mpeg' }));
+    AUDIO_URLS.set(id, url); show(url);
+  } catch (err) {
+    b.disabled = false; b.textContent = '\u25B6 Play the track';
+    if (!wrap.querySelector('.auderr')) wrap.insertAdjacentHTML('beforeend', '<span class="auderr">It would not load just now. Try again, or open it in Drive.</span>');
+  }
+});
 const R = window.hubRotation;
 /* The last two practices are the trainees' own, on the planning grid, so
    the rotation covers everything before them. */
@@ -841,8 +865,12 @@ function matsRead(c, mine){
          `content-disposition: attachment` and the browser saves the file
          instead of playing it (Ramy, 4 Oct 2026: "I downloaded the audio file,
          by the way"). */
+      /* 10 Oct 2026: Drive now refuses a track asked for by another site's
+         page (403), so the player stood at 0:00. Pressing play fetches the
+         track through the course's store (HubStore.audio) and plays it from
+         memory, in the same controls (wireAudio below). */
       if (m) return `<figure class="aud"><figcaption>${name}</figcaption>
-        <audio controls preload="metadata" src="https://drive.usercontent.google.com/download?id=${esc(m[1])}&amp;export=view"></audio>
+        <div class="audwrap" data-drive="${esc(m[1])}"><button type="button" class="audplay">\u25B6 Play the track</button></div>
         <a class="audalt" href="${esc(a.url)}" target="_blank" rel="noopener">open it in Drive</a></figure>`;
       if (/\.(mp3|m4a|ogg|wav|aac)([?#]|$)/i.test(a.url)) return `<figure class="aud"><figcaption>${name}</figcaption><audio controls preload="none" src="${esc(a.url)}"></audio></figure>`;
       if (a.url) return `<figure class="aud"><figcaption><a class="mlink" href="${esc(a.url)}" target="_blank" rel="noopener">${name}</a></figcaption></figure>`;

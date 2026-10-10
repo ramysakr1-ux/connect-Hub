@@ -290,7 +290,7 @@ function handle_(req) {
 
   // A request carrying the assessor key never writes, even with a trainee's
   // token alongside it: the link is read-only by definition.
-  if (assessor && !/^(ping|boot|me|get|course|roster|celta5Assets)$/.test(op)) throw new Error('The assessor link is read-only');
+  if (assessor && !/^(ping|boot|me|get|course|roster|celta5Assets|audio)$/.test(op)) throw new Error('The assessor link is read-only');
 
   // A VOLUNTEER STUDENT'S OWN LINK (30 Sep 2026). The token carries its
   // course -- "c5-<20 hex>" -- so nothing has to be scanned and the random
@@ -844,6 +844,25 @@ case 'inbox': {
       // would ever find, on the centre's own storage (23 Sep 2026).
       removed.materials = trashMaterials_(did);
       return { deleted: did, removed: removed, courses: ownerList_() };
+    }
+    /* v84 (10 Oct 2026): A TRACK THROUGH THE STORE. Drive now answers 403 to a
+       track asked for by another site's page (any cross-site media request),
+       so the TP points' players stood at 0:00 on Lite. The store reads the
+       file from the owner's Drive and hands it over; the page plays it from
+       memory, and Drive never sees Lite asking. Only a track this course's TP
+       points name, and for a trainee only once their group's points are
+       released, so the store is not a way into anybody's Drive. */
+    case 'audio': {
+      if (!course) throw new Error('Open your course link first');
+      var aid = String(req.id || '').replace(/[^\w-]/g, '');
+      if (aid.length < 20) throw new Error('Which track?');
+      var tpa = courseRead_(course.id, 'tppoints') || {};
+      var scopeA = reader ? tpa : (me && (tpa.released || {})[String(me.group || '')] ? (tpa.groups || {})[String(me.group || '')] : null);
+      if (!scopeA || JSON.stringify(scopeA).indexOf(aid) === -1) throw new Error('That track is not on this course');
+      var fa = DriveApp.getFileById(aid);
+      if (fa.getSize() > 15 * 1024 * 1024) throw new Error('That track is too large to play here');
+      var ba = fa.getBlob();
+      return { id: aid, mime: ba.getContentType() || 'audio/mpeg', b64: Utilities.base64Encode(ba.getBytes()) };
     }
     case 'materials': {
       requireOwner_(owner);
