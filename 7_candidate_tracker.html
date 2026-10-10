@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Newsreader:wght@600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610100419">
+<link rel="stylesheet" href="hub-tokens.css?v=202610100426">
 <style>
   /* design_handoff_candidate_tracker (Ramy, 20 Sep 2026), with the Hub's
      colour-coded chips in the cells -- "I like the chips that you created.
@@ -69,6 +69,15 @@
   .filter.on{ font-weight:700; color:var(--deep); }
   .filter .n{ font-size:10px; font-weight:700; }
   .gridwrap{ padding:4px 16px 14px; overflow-x:auto; }
+  /* MORE TO THE RIGHT (10 Oct 2026). On a phone the grid scrolls sideways
+     inside its box and the last assignments and the total sat off-screen
+     with nothing to say so. While there is more to the right, the right edge
+     fades into the card; it goes once you reach the end. */
+  .gridbox{ position:relative; }
+  .gridbox::after{ content:''; position:absolute; top:0; right:0; bottom:0; width:44px; pointer-events:none;
+    background:linear-gradient(to right, transparent, var(--card)); opacity:0; transition:opacity .2s; }
+  .gridbox.more::after{ opacity:1; }
+  @media (prefers-reduced-motion:reduce){ .gridbox::after{ transition:none; } }
   .grid{ display:grid; align-items:center; --who-col:210px; --cell-min:0px; --tail-col:58px; }
   .bands{ padding-top:10px; }
   .band{ font-size:9px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--mut2); text-align:center; padding-bottom:5px; border-bottom:1px solid oklch(91% 0.012 82); margin:0 4px; }
@@ -232,7 +241,7 @@
   @media(hover:none){ .row.tk-row{background:none;} .cell.tk-col{background:none;} }
   @media print{ .tk-bar{display:none;} .row.tk-row, .cell.tk-col{background:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610100419">
+<link rel="stylesheet" href="hub-house.css?v=202610100426">
 </head>
 <body>
 <div class="page">
@@ -257,17 +266,17 @@
       <div class="filters" id="filters"></div>
     </div>
     <div id="dmStrip"></div>
-    <div class="gridwrap" id="gridwrap"></div>
+    <div class="gridbox" id="gridbox"><div class="gridwrap" id="gridwrap"></div></div>
   </div>
   <div id="detail"></div>
 </div>
-<script src="hub-due.js?v=202610100419"></script>
-<script src="hub-shared.js?v=202610100419"></script>
-<script src="assignment-defaults.js?v=202610100419"></script>
-<script src="hub-tracker.js?v=202610100419"></script>
-<script src="hub-store.js?v=202610100419"></script>
-<script src="hub-say.js?v=202610100419"></script>
-<script src="hub-sync.js?v=202610100419"></script>
+<script src="hub-due.js?v=202610100426"></script>
+<script src="hub-shared.js?v=202610100426"></script>
+<script src="assignment-defaults.js?v=202610100426"></script>
+<script src="hub-tracker.js?v=202610100426"></script>
+<script src="hub-store.js?v=202610100426"></script>
+<script src="hub-say.js?v=202610100426"></script>
+<script src="hub-sync.js?v=202610100426"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
@@ -673,6 +682,15 @@ $('detail').addEventListener('click', e=>{
 (function(){ if (ASSESSOR) { document.getElementById('backLink').href='12_assessor_pack.html'; document.getElementById('backLink').innerHTML='&#8592; Assessor pack'; document.querySelector('.lede').textContent='Every trainee\u2019s teaching practice and assignments, read from what the tutors have returned and marked. Nothing here can be changed from this link; the Stage records and standing are as the tutors recorded them.'; }
   if (ME) { document.getElementById('backLink').href='index.html'; document.getElementById('backLink').innerHTML='&#8592; Back'; document.querySelector('.lede').textContent='Every teaching practice and every assignment, read from what you have submitted and what your tutor has returned. Colour only marks what needs attention; everything that is fine stays quiet. The Stage records and the standing are your tutor\u2019s, as recorded.'; } try{ const cs = JSON.parse(localStorage.getItem('connect_course_settings')||'{}'); const parts=[ME ? 'Your progress' : ASSESSOR ? 'Assessor view' : '', cs.courseName, cs.centreName].filter(Boolean); $('eyebrow').textContent = parts.join(' · '); }catch(e){} })();
 render();
+
+(function(){
+  const box = document.getElementById('gridbox'), wrap = document.getElementById('gridwrap'); if (!box || !wrap) return;
+  const edge = () => box.classList.toggle('more', wrap.scrollWidth - wrap.clientWidth - wrap.scrollLeft > 2);
+  wrap.addEventListener('scroll', edge, { passive: true });
+  window.addEventListener('resize', edge);
+  new MutationObserver(edge).observe(wrap, { childList: true, subtree: true });
+  edge();
+})();
 
 /* ---- v8 (7 Oct 2026): crosshair + column bars ---------------------------------
    Layered on render(): a MutationObserver on #gridwrap re-applies after every
