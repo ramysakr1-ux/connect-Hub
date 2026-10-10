@@ -13,7 +13,7 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610102115">
+<link rel="stylesheet" href="hub-tokens.css?v=202610102156">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -153,7 +153,7 @@
   .aw-title-tag{margin-left:10px; vertical-align:2px;}
   @media(prefers-reduced-motion:reduce){ .actions .btn{transition:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610102115">
+<link rel="stylesheet" href="hub-house.css?v=202610102156">
 </head>
 <body class="hub-paper">
 <div class="board">
@@ -167,14 +167,14 @@
     <div class="editor" id="editor"></div>
   </div>
 </div>
-<script src="assignment-defaults.js?v=202610102115"></script>
-<script src="hub-due.js?v=202610102115"></script>
-<script src="hub-rotation.js?v=202610102115"></script>
-<script src="hub-docx.js?v=202610102115"></script>
-<script src="hub-shared.js?v=202610102115"></script>
-<script src="hub-store.js?v=202610102115"></script>
-<script src="hub-say.js?v=202610102115"></script>
-<script src="hub-sync.js?v=202610102115"></script>
+<script src="assignment-defaults.js?v=202610102156"></script>
+<script src="hub-due.js?v=202610102156"></script>
+<script src="hub-rotation.js?v=202610102156"></script>
+<script src="hub-docx.js?v=202610102156"></script>
+<script src="hub-shared.js?v=202610102156"></script>
+<script src="hub-store.js?v=202610102156"></script>
+<script src="hub-say.js?v=202610102156"></script>
+<script src="hub-sync.js?v=202610102156"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -334,6 +334,7 @@ function metaHTML(a){
       </select>
       <span class="metahint">Held back hides it from every trainee's assignment list. Anyone who has already submitted keeps theirs.</span>
     </div>
+    ${outHTML(a)}
     <div class="metarow">
       <label>Due</label>
       <input type="datetime-local" value="${HubDue.toLocalInput(a.dueAt)}" onchange="updateDue(this.value)">
@@ -344,8 +345,10 @@ function metaHTML(a){
     <div class="metarow">
       <label>Resubmission</label>
       <input type="number" min="1" max="30" step="1" style="width:64px;" value="${a.resubDays||''}"
-             onchange="updateMeta('resubDays', this.value)" placeholder="days"> days after you return it
-      <span class="metahint">Counted from the day it goes back, because that differs for each trainee — and Handbook 9.2.3 wants the resubmission inside the course. Leave it empty and the resubmission stays open, as the Due row above does.</span>
+             onchange="updateMeta('resubDays', this.value)" placeholder="days"> days after you return it, or by
+      <input type="datetime-local" value="${HubDue.toLocalInput(a.resubDueAt)}" onchange="updateResubDue(this.value)">
+      ${a.resubDueAt ? `<button type="button" class="btn-quiet" style="padding:0 14px;min-height:42px;font-size:0.78rem;" onclick="updateResubDue('')">Clear</button>` : ''}
+      <span class="metahint">Days are counted from the day it goes back, because that differs for each trainee. A date is one closing time for everyone, as C/18 does on Classroom, and it wins over the days. Handbook 9.2.3 wants the resubmission inside the course. Leave both empty and the resubmission stays open, as the Due row above does.</span>
     </div>
     <div class="metarow">
       <label>Format</label>
@@ -468,6 +471,40 @@ function updateDueSet(g, i, v){
 function updateDue(v){
   DATA[CURRENT].dueAt = v ? HubDue.fromLocalInput(v) : '';
   DATA[CURRENT].due = DATA[CURRENT].dueAt;   // the timetable and the dashboard read `due` (hubWordingFilled)
+  persist(); renderEditor();
+}
+/* WHEN IT GOES OUT, AND WHO SETS IT (10 Oct 2026). Ramy: "if input sessions
+   are color-coded, then assignments out should also be color-coded ... which
+   trainer is setting up the assignment in case there's more than one input a
+   day." The timetable puts "… out" on the day in that tutor's colour. It does
+   not release the assignment: the Trainees row above still decides that. */
+function outHTML(a){
+  let names = [];
+  try { names = String((JSON.parse(localStorage.getItem('connect_course_settings')) || {}).tutorNames || '').split(/[,\n;]+/).map(x => x.trim()).filter(Boolean); } catch (e) {}
+  const by = a.setBy || '';
+  if (by && names.indexOf(by) === -1) names.push(by);
+  return `<div class="metarow">
+      <label>Goes out</label>
+      <input type="datetime-local" value="${HubDue.toLocalInput(a.outAt)}" onchange="updateOut(this.value)">
+      ${a.outAt ? `<button type="button" class="btn-quiet" style="padding:0 14px;min-height:42px;font-size:0.78rem;" onclick="updateOut('')">Clear</button>` : ''}
+      <select onchange="updateMeta('setBy', this.value); persist();" aria-label="Who sets it">
+        <option value="">Set by…</option>${names.map(n => `<option value="${esc(n)}"${n === by ? ' selected' : ''}>${esc(n)}</option>`).join('')}
+      </select>
+      <span class="metahint">The day it is handed out and the tutor who sets it. The timetable marks it on that day in the tutor’s colour.${names.length ? '' : ' Add the tutors’ names on Course admin to pick one.'}</span>
+    </div>`;
+}
+function updateOut(v){
+  const a = DATA[CURRENT];
+  if (v) a.outAt = HubDue.fromLocalInput(v); else delete a.outAt;
+  persist(); renderEditor();
+}
+/* A FIXED RESUBMISSION DATE (10 Oct 2026). Classroom gives C/18 one closing
+   time for every LSRT resubmission -- Thu 29 Oct, 11:00 -- where Lite only
+   counted days from each return. Stored as an instant like dueAt; where it is
+   set it wins over resubDays (HubDue.resubFor), and the timetable shows it. */
+function updateResubDue(v){
+  const a = DATA[CURRENT];
+  if (v) a.resubDueAt = HubDue.fromLocalInput(v); else delete a.resubDueAt;
   persist(); renderEditor();
 }
 /* A switch, not a text field: it takes effect at once, like the order arrows,
@@ -703,7 +740,7 @@ renderList(); renderEditor(); renderProseBanner();
    Stores nothing. */
 (function(){
   const list = $('list'), ed = $('editor'); if (!list || !ed) return;
-  const SETTINGS_KEYS = ['dueAt', 'due', 'dueSets', 'released'];
+  const SETTINGS_KEYS = ['dueAt', 'due', 'dueSets', 'resubDueAt', 'outAt', 'setBy', 'released'];
   const wording = a => { if (!a) return ''; const c = JSON.parse(JSON.stringify(a)); SETTINGS_KEYS.forEach(k => delete c[k]);
     (c.criteria || []).forEach((x, i) => { if (typeof x === 'string') c.criteria[i] = { text: x, sectionIndex: null }; }); return JSON.stringify(c); };
   const saved = () => { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || null; } catch (e) { return null; } };

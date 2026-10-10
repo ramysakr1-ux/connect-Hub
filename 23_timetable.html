@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610102115">
+<link rel="stylesheet" href="hub-tokens.css?v=202610102156">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -235,6 +235,16 @@
   .tgrid .due{position:absolute; left:0; right:0; z-index:3; height:17px; box-sizing:border-box; padding:0 7px; border-radius:4px; background:var(--brick); color:var(--paper);
               font-size:0.6rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase; line-height:17px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; border:0;}
   .tgrid .due.late{background:oklch(35% 0.12 27);}
+  /* an assignment going out wears its tutor's colour, like their input (10 Oct 2026) */
+  .tgrid .due.out{background:oklch(94.5% 0.03 195); color:var(--teal-deep); border:1px solid oklch(80% 0.05 195); text-transform:none; letter-spacing:0; line-height:15px;}
+  .tgrid .due.out.by-0{background:oklch(95% 0.04 62); border-color:oklch(83% 0.08 60); color:oklch(42% 0.11 52);}
+  .tgrid .due.out.by-1{background:oklch(94.5% 0.03 245); border-color:oklch(82% 0.06 245); color:oklch(40% 0.1 250);}
+  .tgrid .due.out.by-2{background:oklch(94.5% 0.04 150); border-color:oklch(80% 0.06 150); color:oklch(38% 0.08 150);}
+  .tgrid .due.out.by-3{background:oklch(94.5% 0.03 320); border-color:oklch(82% 0.05 320); color:oklch(40% 0.09 320);}
+  .tgrid .due.out.by-4{background:oklch(95% 0.035 355); border-color:oklch(83% 0.07 355); color:oklch(42% 0.12 355);}
+  .tgrid .due.out.by-5{background:oklch(95% 0.045 115); border-color:oklch(83% 0.08 115); color:oklch(40% 0.08 115);}
+  .tgrid .due.out.by-6{background:oklch(94.5% 0.03 280); border-color:oklch(80% 0.07 280); color:oklch(40% 0.12 280);}
+  .tgrid .due.out.by-7{background:oklch(95% 0.035 225); border-color:oklch(80% 0.07 225); color:oklch(40% 0.1 230);}
   .tgrid .due.asbtn{display:block; width:auto; text-align:left; cursor:pointer; border-top:0;}
   .tgrid .due .tv2-in{background:var(--paper); border:0; color:var(--brick); margin-left:5px; text-transform:none; letter-spacing:0;}
   .tgrid .nowbar{position:absolute; left:-5px; right:-5px; height:2px; background:var(--gold); z-index:4; pointer-events:none;}
@@ -248,6 +258,43 @@
   .tkey{display:flex; flex-wrap:wrap; gap:6px 14px; font-size:0.72rem; color:var(--grey); margin:0 0 16px;}
   .tkey i{position:static; display:inline-block; width:12px; height:12px; padding:0; border-radius:3px; vertical-align:-2px; margin-right:5px;}
   .tkey i.due{background:var(--brick); border-radius:2px; height:6px; vertical-align:2px;}
+  /* ---- THE TIMETABLE ACROSS (10 Oct 2026): a day is a row, its slots are
+     columns with the time written once above the week; every tile a slot wide,
+     growing with its words (settings.ttLayout 'h', chosen on Course admin). */
+  .tscroll{overflow-x:auto; border:1px solid var(--sand-line); border-radius:var(--r-card); background:var(--surface);}
+  .tgrid.across{display:block; --dcol:112px; min-width:calc(var(--dcol) + var(--ncols) * 100px);}
+  .tgrid.across .hrow{display:grid; column-gap:6px; padding:6px 8px 6px 0; position:relative; align-items:stretch; border:0; border-bottom:1px solid var(--sand-line); border-radius:0; background:none; overflow:visible; min-width:0;}
+  .tgrid.across .hrow:last-child{border-bottom:0;}
+  .tgrid.across .thead{background:var(--sand-deep); padding-top:8px; padding-bottom:8px;}
+  .tgrid.across .ch{font-size:0.76rem; font-variant-numeric:tabular-nums; color:var(--ink-warm); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .tgrid.across .ch span{color:var(--grey); font-weight:500;}
+  .tgrid.across .dh{grid-column:1; position:sticky; left:0; z-index:4; height:auto; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start; gap:5px;
+                    padding:4px 8px 4px 12px; border:0; border-right:1px solid var(--sand-line); background:var(--surface);}
+  .tgrid.across .thead .dh{background:var(--sand-deep);}
+  .tgrid.across .dh .dt{flex:none;}
+  .tgrid.across .dh .tv2-clock{margin-left:0;}
+  .tgrid.across .day.today, .tgrid.across .day.today .dh{background:var(--gold-wash);}
+  .tgrid.across .day.today .dh{box-shadow:inset 3px 0 0 var(--gold);}
+  .tgrid.across .dacts{display:flex; gap:4px; align-items:center; flex-wrap:wrap;}
+  .tgrid.across .addtile{width:auto; margin:0; padding:3px 8px;}
+  .tgrid.across .tile{position:relative; left:auto; right:auto; top:auto; min-height:56px; padding:7px 9px; display:flex; flex-direction:column; justify-content:center; font-size:0.76rem;}
+  .tgrid.across .tile .tm .own{color:var(--brick); font-weight:700;}
+  .tgrid.across .k-tp.mine .tm .own{color:var(--gold-lifted);}
+  .tgrid.across .k-tp .who{margin:0 1px; padding:0 3px; min-width:0;}
+  .tgrid.across .flags{display:flex; flex-wrap:wrap; gap:4px; align-items:flex-start; padding:0 0 4px; z-index:3; pointer-events:none;}
+  .tgrid.across .flags .due{position:static; display:inline-block; width:auto; max-width:none; pointer-events:auto;}
+  .tgrid.across .notes{border-top:0; padding:5px 2px 0;}
+  .tgrid.across .day.closed{background:none;}
+  .tgrid.across .closedmsg{position:static; align-self:center; padding:14px; border-radius:6px; text-align:center;
+                           background:repeating-linear-gradient(135deg, oklch(92% 0.012 80) 0 6px, oklch(95% 0.01 80) 6px 12px);}
+  .tgrid.across .day.drop-clean{background:color-mix(in oklch, var(--teal) 6%, transparent);}
+  .tgrid.across .day.drop-shift{background:oklch(95.5% 0.05 85 / .6);}
+  .tgrid.across .day.drop-block{background:color-mix(in oklch, var(--brick) 6%, transparent);}
+  .tgrid.across .drophint{left:auto; right:8px; bottom:2px; max-width:60%;}
+  .dropcell{position:absolute; top:4px; bottom:4px; border:2px dashed var(--teal); border-radius:8px; pointer-events:none; z-index:5;}
+  .dropcell.shift{border-color:var(--gold);} .dropcell.block{border-color:var(--brick);}
+  @media (max-width:760px){ .tgrid.across{display:block; --dcol:84px; overflow-x:visible; scroll-snap-type:none; padding-bottom:0;} }
+  @media print{ .tscroll{overflow:visible; border-color:#bbb;} .tgrid.across{min-width:0;} .tgrid.across .dh{position:static;} .tgrid.across .hrow{break-inside:avoid; page-break-inside:avoid;} }
   /* ---- stage 2: drop colours, draft, checks, closed days ----------------- */
   .tgrid .day.drop-clean .body{background:color-mix(in oklch, var(--teal) 7%, transparent);} .tgrid .day.drop-clean{border-color:var(--teal-lifted);}
   .tgrid .day.drop-shift .body{background:oklch(95.5% 0.05 85 / .8);} .tgrid .day.drop-shift{border-color:var(--gold);}
@@ -405,24 +452,24 @@
     h1{font-size:1.4rem;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610102115">
+<link rel="stylesheet" href="hub-house.css?v=202610102156">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610102115"></script>
-<script src="hub-tracker.js?v=202610102115"></script>
-<script src="hub-rotation.js?v=202610102115"></script>
-<script src="hub-xlsx.js?v=202610102115"></script>
-<script src="hub-docx.js?v=202610102115"></script>
-<script src="hub-timetable-parse.js?v=202610102115"></script>
-<script src="assignment-defaults.js?v=202610102115"></script>
-<script src="hub-shared.js?v=202610102115"></script>
-<script src="hub-store.js?v=202610102115"></script>
-<script src="hub-say.js?v=202610102115"></script>
-<script src="hub-sync.js?v=202610102115"></script>
+<script src="hub-due.js?v=202610102156"></script>
+<script src="hub-tracker.js?v=202610102156"></script>
+<script src="hub-rotation.js?v=202610102156"></script>
+<script src="hub-xlsx.js?v=202610102156"></script>
+<script src="hub-docx.js?v=202610102156"></script>
+<script src="hub-timetable-parse.js?v=202610102156"></script>
+<script src="assignment-defaults.js?v=202610102156"></script>
+<script src="hub-shared.js?v=202610102156"></script>
+<script src="hub-store.js?v=202610102156"></script>
+<script src="hub-say.js?v=202610102156"></script>
+<script src="hub-sync.js?v=202610102156"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -646,6 +693,22 @@ function dues(){
         who: (who || []).map(tr => ({ token: tr.id || tr.token, group: tr.group })) });
     };
     const title = a.title || k.toUpperCase();
+    /* A FIXED RESUBMISSION DATE (resubDueAt, 10 Oct 2026). Classroom gives
+       C/18 one closing time for every LSRT resubmission, so the timetable
+       shows it: to a tutor always, as the course's date, counting who still
+       owes one once it has passed; to a trainee only while they have one to
+       resubmit. Not dragged -- it is set on the assignment's screen. */
+    if (a.resubDueAt) {
+      const owes = sub => !!(sub && sub.stage === 'resubmission_needed');
+      const sentBack = sub => owes(sub) || !!(sub && (sub.stage === 'resubmitted' || sub.usedResubmission));
+      if (IS_TRAINEE) {
+        const meRow = people.find(tr => (tr.id || tr.token) === me.token);
+        if (owes(meRow ? subOf(meRow) : (rec('connect_assignment_submissions_v1') || {})[k])) push(a.resubDueAt, title + ' resubmission', 1, 1, true);
+      } else {
+        const back = people.filter(tr => sentBack(subOf(tr)));
+        push(a.resubDueAt, title + ' resubmissions', back.filter(tr => owes(subOf(tr))).length, back.length, true, []);
+      }
+    }
     if (IS_TRAINEE) {
       const mine = window.hubDueFor ? hubDueFor(a, me.token, me.group) : base;
       const meRow = people.find(tr => (tr.id || tr.token) === me.token);
@@ -683,6 +746,25 @@ function dues(){
     return Object.keys(mine).sort().map(g => (groups.length > 1 && mine[g].length === by[g].length)
       ? 'Group ' + (g || '—') : mine[g].map(t => L[t] || '').join('')).join(' · ');
   }
+}
+
+/* WHEN AN ASSIGNMENT GOES OUT, in the colour of the tutor who sets it
+   (outAt, setBy: on the assignment's own page). Ramy, 10 Oct 2026: "if input
+   sessions are color-coded, then assignments out should also be
+   color-coded ... in case there's more than one input a day." */
+function outs(){
+  const w = rec('connect_assignment_wording_v2') || {}, out = {};
+  Object.keys(w).forEach(k => {
+    const a = w[k]; if (!a || typeof a !== 'object' || !a.outAt) return;
+    const iso = dayOf(a.outAt); if (!iso) return;
+    const i = TUTORS.indexOf(String(a.setBy || ''));
+    (out[iso] = out[iso] || []).push({ key: k, at: a.outAt, title: a.title || k.toUpperCase(), by: i === -1 ? '' : TUTORS[i], col: i === -1 ? null : tcol(i) });
+  });
+  return out;
+}
+function outFlag(o, style){
+  const local = window.HubDue ? HubDue.toLocalInput(o.at).slice(11, 16) : '';
+  return `<div class="due out${o.col != null ? ' by-' + o.col : ''}"${style ? ` style="${style}"` : ''} title="${esc(o.title + ' goes out' + (o.by ? ' · set by ' + o.by : ''))}">${esc(o.title)} out${local ? ' · ' + esc(hubClock(local)) : ''}</div>`;   // the tutor is the colour, not a name (Ramy); named in the tooltip
 }
 
 /* The skeleton: every weekday from the start to the end, with the teaching
@@ -819,9 +901,9 @@ function teachersOf(day){
   return out;
 }
 
-function tileHTML(day, x, B, tpIdx, teachers){
+function tileHTML(day, x, B, tpIdx, teachers, place){
   const s = toMin(x.s), e = toMin(x.e); if (s == null || e == null) return '';
-  const top = (s - B.from) * PXM, h = Math.max(12, (e - s) * PXM - 2);
+  const top = place ? 0 : (s - B.from) * PXM, h = place ? 99 : Math.max(12, (e - s) * PXM - 2);
   const cls = ['tile', 'k-' + x.k];
   if (h < 30) cls.push('sm');
   if (x.locked) cls.push('locked');
@@ -840,6 +922,15 @@ function tileHTML(day, x, B, tpIdx, teachers){
     const setName = (tpIdx === 0 && teachers[0]) ? teachers[0].order.slice().sort((a, b) => String(a.letter).localeCompare(String(b.letter))).map(p => esc(p.letter)).join('') : '';
     const who = [...byLetter.entries()].map(([letter, tokens]) => `<span class="who${meTok && tokens.indexOf(meTok) !== -1 ? ' me' : ''}">${worst(tokens)}${esc(letter)}</span>`).join('');
     title = day.tp ? (mine ? 'You teach · ' : '') + `TP ${day.tp}${setName ? ' · ' + setName : ''}${who}` : 'Teaching practice';
+    /* Across (the horizontal board): every TP tile names the practice and the
+       whole set, the letter teaching in that slot lit -- "TP 1 · A̲BC", then
+       "TP 1 · AB̲C" (Ramy, 10 Oct 2026). */
+    if (place && day.tp && teachers[0]) {
+      const letters = teachers[0].order.map(p => String(p.letter)).sort();
+      byLetter.forEach((t, l) => { if (letters.indexOf(l) === -1) letters.push(l); });
+      title = (mine ? 'You teach · ' : '') + `TP ${day.tp} · ` + letters.map(l => byLetter.has(l)
+        ? `<span class="who${meTok && byLetter.get(l).indexOf(meTok) !== -1 ? ' me' : ''}">${worst(byLetter.get(l))}${esc(l)}</span>` : esc(l)).join('');
+    }
   } else {
     title = esc(x.t || '');
     /* An unnamed input is a slot nobody has named yet. The tutor sees it as a
@@ -864,6 +955,15 @@ function tileHTML(day, x, B, tpIdx, teachers){
      45-minute tiles. Not on the one-line tiles (a break, TP preparation),
      where it pushed the name out. The whole range is in the tooltip. */
   const lt = localRange(day.date, x.s, x.e), ls = (lt && cls.indexOf('sm') === -1) ? localStart(day.date, x.s) : '';
+  /* Across, the time is the column's, written once above the week; a tile
+     says its own only when it runs differently (Ramy, 10 Oct 2026: "we don't
+     need to write the time inside the tiles unless they're different"). */
+  if (place) {
+    const own = place.exact ? '' : esc(hubClockRange(x.s, x.e));
+    const tm = own || ls || joinHTML ? `<div class="tm">${own ? '<span class="own">' + own + '</span>' : ''}${ls ? ' <span class="lt">' + esc(ls) + '</span>' : ''}${joinHTML}</div>` : '';
+    return `<div class="${cls.join(' ')}" data-id="${esc(x.id)}" data-date="${esc(day.date)}" data-from="${esc(x.s)}" data-to="${esc(x.e)}" style="grid-column:${place.a + 2} / ${place.b + 3};grid-row:${place.row}" title="${esc(tip + (lt ? ' · ' + lt + ' your time' : ''))}">`
+      + `<div class="tt">${title}</div>${tm}</div>`;
+  }
   return `<div class="${cls.join(' ')}" data-id="${esc(x.id)}" data-date="${esc(day.date)}" data-from="${esc(x.s)}" data-to="${esc(x.e)}" style="top:${top}px;height:${h}px" title="${esc(tip + (lt ? ' · ' + lt + ' your time' : ''))}">`
     + `<div class="tt">${title}</div><div class="tm">${esc(hubClockRange(x.s, x.e))}${ls ? ' <span class="lt">' + esc(ls) + '</span>' : ''}${joinHTML}</div>${EDIT ? '<span class="rs" data-rs="1"></span>' : ''}</div>`;
 }
@@ -904,6 +1004,9 @@ function dayHTML(day, B, idx){
     const body = `${esc(x.title)} due${local ? ' · ' + esc(hubClock(local)) : ''}${late ? ' · ' + (IS_TRAINEE ? 'yours is not in' : x.missing + ' of ' + x.total + ' not in') : ''}`;
     return (EDIT && !x.fixed) ? `<button type="button" class="due asbtn${late ? ' late' : ''}" data-move="${esc(x.key)}" style="top:${top}px" title="Move this deadline">${body}</button>`
                 : `<div class="due${late ? ' late' : ''}" style="top:${top}px">${body}</div>`;
+  }).join('') + (OUTS[day.date] || []).map((o, j) => {
+    const at = toMin(window.HubDue ? HubDue.toLocalInput(o.at).slice(11, 16) : '');
+    return outFlag(o, 'top:' + (Math.min(H - 18, Math.max(0, at == null ? 0 : (at - B.from) * PXM)) + (dueHere.length + j) * 19) + 'px');
   }).join('');
   const notes = EDIT
     ? `<div class="notes"><input type="text" data-date="${esc(day.date)}" data-f="notes" value="${esc(day.notes || '')}" placeholder="Notes"></div>`
@@ -919,6 +1022,97 @@ function dayHTML(day, B, idx){
     ${EDIT ? `<button type="button" class="addtile" data-add="${esc(day.date)}">+ Add a tile</button>` : ''}
     ${notes}
   </div>`;
+}
+
+/* ---- THE TIMETABLE ACROSS (10 Oct 2026) ----------------------------------
+   Ramy: the board down the page was "confusing. Especially with the time being
+   different inside the cards and on the left of the cards". Across, a day is
+   a row and the day's slots are columns: the time is written once, above the
+   week, every tile is a slot wide, and a tile grows with its words rather
+   than its minutes. A course picks across or down on Course admin
+   (settings.ttLayout 'h'), once, before it starts.
+
+   THE COLUMNS are worked out per week, because a course's afternoon can move
+   (C/18 teaches at 3:00 for two weeks, then at 2:00): the shape most of the
+   week's days share, plus a column for anything no column takes, so nothing
+   is ever left off the board. A session sits in the columns it mostly fills;
+   one that runs differently from its column says its own time. */
+const ACROSS = () => SETTINGS.ttLayout === 'h';
+const spansOf = d => (d.sessions || []).filter(x => x.k !== 'break' && toMin(x.s) != null && toMin(x.e) != null).sort(byStart);
+function placeDay(day, cols){
+  const used = new Set(), at = [], miss = [];
+  spansOf(day).forEach(x => {
+    const s = toMin(x.s), e = toMin(x.e);
+    const hit = cols.map((c, i) => i).filter(i => {
+      if (used.has(i)) return false;
+      const a = toMin(cols[i].s), b = toMin(cols[i].e), ov = Math.min(e, b) - Math.max(s, a);
+      return ov > 0 && (ov >= (b - a) / 2 || ov >= (e - s) / 2);
+    });
+    if (!hit.length) { miss.push(x); return; }
+    const a = hit[0]; let b = a; while (hit.indexOf(b + 1) !== -1) b++;
+    for (let i = a; i <= b; i++) used.add(i);
+    at.push({ x, a, b, exact: toMin(cols[a].s) === s && toMin(cols[b].e) === e });
+  });
+  return { at, miss };
+}
+function weekCols(w){
+  const open = w.filter(d => !d.closed);
+  const count = {};
+  open.forEach(d => { const sig = spansOf(d).map(x => x.s + '-' + x.e).join(','); if (sig) count[sig] = (count[sig] || 0) + 1; });
+  const best = Object.keys(count).sort((a, b) => count[b] - count[a] || b.split(',').length - a.split(',').length)[0];
+  let cols = best ? best.split(',').map(p => { const [s, e] = p.split('-'); return { s, e }; })
+    : template().filter(sl => sl.from && sl.to && (sl.kind !== 'break' || /lunch/i.test(sl.label || ''))).map(sl => ({ s: sl.from, e: sl.to }));
+  for (let guard = 0; guard < 60; guard++) {
+    let miss = null;
+    open.some(d => { const m = placeDay(d, cols).miss[0]; if (m) miss = m; return !!m; });
+    if (!miss) break;
+    cols = cols.concat([{ s: miss.s, e: miss.e }]).sort((a, b) => toMin(a.s) - toMin(b.s) || toMin(a.e) - toMin(b.e));
+  }
+  return cols;
+}
+/* The column a moment falls in: the one it is inside, else the last to have
+   started, else the first. For a deadline's flag. */
+function colAt(m, cols){
+  let i = cols.findIndex(c => m >= toMin(c.s) && m < toMin(c.e));
+  if (i === -1) { cols.forEach((c, k) => { if (toMin(c.s) <= m) i = k; }); }
+  return Math.max(0, i);
+}
+function weekAcross(w, n){
+  const cols = weekCols(w);
+  const places = new Map(w.map(d => [d, d.closed ? { at: [], miss: [] } : placeDay(d, cols)]));
+  /* a column only lunch ever fills is a narrow one (Ramy: "we could make lunch smaller") */
+  const narrow = cols.map((c, i) => { let any = false, other = false; places.forEach(p => p.at.forEach(t => { if (i >= t.a && i <= t.b) { any = true; if (t.x.k !== 'lunch') other = true; } })); return any && !other; });
+  const tpl = 'var(--dcol) ' + cols.map((c, i) => narrow[i] ? 'minmax(64px,.55fr)' : 'minmax(104px,1fr)').join(' ');
+  const head = `<div class="hrow thead" style="grid-template-columns:${tpl}"><div class="dh"></div>${cols.map(c => `<div class="ch" data-s="${esc(c.s)}" data-e="${esc(c.e)}"><b>${esc(hubClock(c.s))}</b><span>–${esc(hubClock(c.e))}</span></div>`).join('')}</div>`;
+  return `<div class="tscroll"><div class="tgrid across" style="--ncols:${cols.length}">${head}${w.map(d => rowAcross(d, cols, tpl, places.get(d), TT.days.indexOf(d))).join('')}</div></div>`;
+}
+function rowAcross(day, cols, tpl, place, idx){
+  const d = parse(day.date), isToday = day.date === TODAY;
+  const dh = `<div class="dh"><div class="dt"${EDIT ? ` data-close="${esc(day.date)}" title="${day.closed ? 'Reopen this day' : 'Close this day (a holiday, a snow day)'}"` : ''}><span class="dow">${DOW[d.getDay()]}</span> <span class="dm">${dm(d)}${isToday ? ' · today' : ''}</span><small>${day.closed ? 'No course' : 'Day ' + (idx + 1)}</small></div>`
+    + (EDIT && !day.closed ? `<div class="dacts">${pinned(day.date) ? '<span class="pin" title="Copying a day’s shape leaves this one alone">Pinned</span>' : ''}<button type="button" class="more" data-menu="${esc(day.date)}" aria-label="Options for this day">⋯</button><button type="button" class="addtile" data-add="${esc(day.date)}" title="Add a tile at the end of the day">+ Add</button></div>` : '') + '</div>';
+  if (day.closed) return `<div class="hrow day closed" id="d-${esc(day.date)}" style="grid-template-columns:${tpl}">${dh}<div class="closedmsg" style="grid-column:2 / -1">${EDIT ? 'Closed · click the date to reopen' : 'No course today'}</div></div>`;
+  const dues = DUES[day.date] || [];
+  const byCol = {};
+  dues.forEach(x => {
+    const local = window.HubDue && x.due ? HubDue.toLocalInput(x.due).slice(11, 16) : '';
+    const late = x.past && x.missing;
+    const body = `${esc(x.title)} due${local ? ' · ' + esc(hubClock(local)) : ''}${late ? ' · ' + (IS_TRAINEE ? 'yours is not in' : x.missing + ' of ' + x.total + ' not in') : ''}`;
+    const c = colAt(toMin(local) == null ? 0 : toMin(local), cols);
+    (byCol[c] = byCol[c] || []).push((EDIT && !x.fixed) ? `<button type="button" class="due asbtn${late ? ' late' : ''}" data-move="${esc(x.key)}" title="Move this deadline">${body}</button>` : `<div class="due${late ? ' late' : ''}">${body}</div>`);
+  });
+  (OUTS[day.date] || []).forEach(o => {
+    const c = colAt(toMin(window.HubDue ? HubDue.toLocalInput(o.at).slice(11, 16) : '') || 0, cols);
+    (byCol[c] = byCol[c] || []).unshift(outFlag(o));
+  });
+  const flagRow = Object.keys(byCol).length ? 1 : 0, tileRow = flagRow + 1;
+  const flags = Object.keys(byCol).map(c => `<div class="flags" style="grid-column:${+c + 2} / -1;grid-row:1">${byCol[c].join('')}</div>`).join('');
+  const teachers = teachersOf(day);
+  const tps = (day.sessions || []).filter(x => x.k === 'tp').sort(byStart);
+  const tiles = place.at.map(t => tileHTML(day, t.x, null, tps.indexOf(t.x), teachers, { a: t.a, b: t.b, exact: t.exact, row: tileRow })).join('');
+  const notes = EDIT
+    ? `<div class="notes" style="grid-column:2 / -1;grid-row:${tileRow + 1}"><input type="text" data-date="${esc(day.date)}" data-f="notes" value="${esc(day.notes || '')}" placeholder="Notes"></div>`
+    : (day.notes ? `<div class="notes" style="grid-column:2 / -1;grid-row:${tileRow + 1}">${esc(day.notes)}</div>` : '');
+  return `<div class="hrow day${isToday ? ' today' : ''}" id="d-${esc(day.date)}" style="grid-template-columns:${tpl}">${dh.replace('<div class="dh">', `<div class="dh" style="grid-row:1 / span ${tileRow + 1}">`)}${flags}${tiles}${notes}</div>`;
 }
 
 /* LIVE COLOUR. Ramy, 29 Sep 2026: "this timetable is alive, so colour should
@@ -1128,7 +1322,7 @@ function mins(slot){
   return n > 0 ? n + ' min' : '';
 }
 
-let GROUPS = [], DUES = {}, ROOMS = {}, ZONE = '', STATE = {}, EDIT = false;
+let GROUPS = [], DUES = {}, OUTS = {}, ROOMS = {}, ZONE = '', STATE = {}, EDIT = false;
 /* A tutor can look at the timetable the way the course sees it. Without this
    they only ever see input boxes and can never check what they have
    published (Ramy, 29 Sep 2026: "there's the course admin view, and then
@@ -1143,7 +1337,7 @@ function render(){
   else if (!PREVIEW && WORK) { TT = WORK; WORK = null; }
   ZONE = SETTINGS.timeZone || '';
   STATE = stateMap();
-  GROUPS = groups(); DUES = dues(); ROOMS = roomsByLabel(); EDIT = IS_TUTOR && !PREVIEW;
+  GROUPS = groups(); DUES = dues(); OUTS = outs(); ROOMS = roomsByLabel(); EDIT = IS_TUTOR && !PREVIEW;
   document.body.classList.toggle('editing', EDIT);
   document.addEventListener('click', (e) => { if (e.target && e.target.id === 'ttPrint') window.print(); });
   const app = $('app');
@@ -1199,7 +1393,7 @@ function render(){
       <button class="btn quiet" id="importOpen">Import from a sheet</button>
       <span class="status">${esc(note)}</span></div>
       ${pub ? statusHTML() : '<p class="legend" style="margin:0 0 14px">Only tutors can see it until you set it.</p>'}${checksHTML()}`
-      + (EDIT ? `<p class="legend" style="margin:-8px 0 14px">Drag a tile to move it, or its bottom edge to change its length. Click a tile to change it. ⋯ on a day copies its shape to other days.</p>` : '')
+      + (EDIT ? `<p class="legend" style="margin:-8px 0 14px">${ACROSS() ? 'Drag a tile to another slot or day to move it. Click a tile to change it, its times too.' : 'Drag a tile to move it, or its bottom edge to change its length. Click a tile to change it.'} ⋯ on a day copies its shape to other days.</p>` : '')
       + (PREVIEW ? '' : moveHTML() + daysPanelHTML() + builtHTML() + importHTML()) : '';
   /* Where teaching practice starts at a different time from the teaching day
      before it, the week says so above its days, in words: "From Monday 26
@@ -1226,6 +1420,7 @@ function render(){
   const key = `<div class="tkey">${[...used].sort().map(i => `<span><i class="tile k-input by-${tcol(i)}"></i>Input · ${esc(TUTORS[i])}</span>`).join('')}${used.size ? '' : '<span><i class="tile k-input"></i>Input</span>'}<span><i class="tile k-tp"></i>Teaching practice</span><span><i class="tile k-plan"></i>Lesson planning</span><span><i class="tile k-feedback"></i>Feedback &amp; reflection</span><span><i class="tile k-event"></i>Whole group</span><span><i class="tile k-task"></i>Assignments &amp; admin</span><span><i class="due"></i>A deadline</span></div>`;
   app.innerHTML = head + updatedHTML() + zoneLine() + bar + roomsStrip() + key + weeks.map((w, i) => {
     const a = parse(w[0].date), b = parse(w[w.length-1].date);
+    if (ACROSS()) return `<section class="wk"><h2>Week ${i+1} <small>${dm(a)} – ${dm(b)}</small></h2>${changeNote(w)}${weekAcross(w, i)}</section>`;
     return `<section class="wk"><h2>Week ${i+1} <small>${dm(a)} – ${dm(b)}</small></h2>${changeNote(w)}
       <div class="tgrid" style="grid-template-columns:var(--gutter) repeat(${w.length}, minmax(0,1fr))"><div class="ruler" style="height:${H}px">${ruler}</div>${w.map(d => dayHTML(d, B, TT.days.indexOf(d))).join('')}</div></section>`;
   }).join('') + keyLine() + `<p class="legend">Teaching practice runs the same number on two days, one teaching set each: the letters name the trainees teaching that day. ${GROUPS.map(g => 'Group ' + esc(g.group || '—') + ': ' + g.sets.map(R.setName).filter(Boolean).join(' and ')).join('. ')}.</p>`;
@@ -1266,7 +1461,7 @@ function render(){
     if (t) {
       /* A phone shows a week as a row of days to swipe through: land on
          today's column as well as its week. */
-      if (t.parentElement) t.parentElement.scrollLeft = t.offsetLeft - t.parentElement.offsetLeft;
+      if (t.parentElement && !ACROSS()) t.parentElement.scrollLeft = t.offsetLeft - t.parentElement.offsetLeft;
       const land = () => {
         const head = document.querySelector('.wk h2');
         const off = head ? head.offsetHeight + 8 : 0;
@@ -1481,9 +1676,9 @@ function settle(day, keep){
 }
 
 /* What dropping `x` (from `fromDay`) on `day` at `start` would do. */
-function evaluate(x, fromDay, day, start){
+function evaluate(x, fromDay, day, start, endAt){
   if (day.closed) return { kind: 'block', why: 'This day is closed' };
-  const len = toMin(x.e) - toMin(x.s), end = start + len;
+  const len = toMin(x.e) - toMin(x.s), end = endAt != null ? endAt : start + len;
   if (day === fromDay) {
     const copy = clone(day.sessions), me = copy.find(s => s.id === x.id);
     me.s = toHM(start); me.e = toHM(end);
@@ -1513,11 +1708,25 @@ function placeTiles(day){
     const tm = el.querySelector('.tm'); if (tm) tm.textContent = hubClockRange(x.s, x.e);
   });
 }
-function clearTints(){ document.querySelectorAll('.tgrid .day').forEach(el => { el.classList.remove('drop-clean', 'drop-shift', 'drop-block', 'drop-hover'); const h = el.querySelector('.drophint'); if (h) h.remove(); }); }
+function clearTints(){ document.querySelectorAll('.tgrid .day').forEach(el => { el.classList.remove('drop-clean', 'drop-shift', 'drop-block', 'drop-hover'); el.querySelectorAll('.drophint, .dropcell').forEach(h => h.remove()); }); }
 function dayUnder(x, y){
   const els = document.elementsFromPoint(x, y);
   const col = els.find(el => el.classList && el.classList.contains('day') && el.id && el.id.indexOf('d-') === 0);
   return col ? col.id.slice(2) : '';
+}
+/* Across, a drop lands in a slot: the column under the pointer, read off the
+   week's own headings. A tile one slot wide takes that slot's times; a wider
+   one keeps its length from the slot's start. */
+function slotUnder(row, clientX, x){
+  const heads = [...row.closest('.tgrid').querySelectorAll('.thead .ch')];
+  let i = heads.findIndex(h => { const r = h.getBoundingClientRect(); return clientX >= r.left && clientX < r.right; });
+  if (i === -1) i = clientX < (heads[0] ? heads[0].getBoundingClientRect().left : 0) ? 0 : heads.length - 1;
+  const h = heads[i]; if (!h) return null;
+  const s = toMin(h.dataset.s), e = toMin(h.dataset.e), len = toMin(x.e) - toMin(x.s);
+  const tile = document.querySelector(`.tile[data-date="${x._date}"][data-id="${x.id}"]`);
+  const gc = String((tile && tile.style.gridColumn) || '').split('/').map(n => parseInt(n, 10));
+  const wide = gc.length === 2 && gc[1] - gc[0] > 1;
+  return { i, start: s, end: wide ? s + len : e, head: h };
 }
 function startFor(col, clientY, grabOffset){
   const body = col.querySelector('.body'); const r = body.getBoundingClientRect();
@@ -1570,6 +1779,22 @@ function wireBoard(){
       if (col && date !== DRAG.from) { const r = evaluateDue(DRAG.due, date); col.classList.add('drop-hover'); hint(col, r); DRAG.target = { date, r }; } else DRAG.target = null;
       return;
     }
+    if (ACROSS()) {
+      DRAG.ghost.style.left = (e.clientX - DRAG.grabX) + 'px'; DRAG.ghost.style.top = (e.clientY - DRAG.grab) + 'px';
+      clearTints();
+      const slot = col ? slotUnder(col, e.clientX, Object.assign({ _date: DRAG.day.date }, DRAG.x)) : null;
+      if (!slot) { DRAG.target = null; return; }
+      const tm = DRAG.ghost.querySelector('.tm') || DRAG.ghost.appendChild(Object.assign(document.createElement('div'), { className: 'tm' }));
+      tm.textContent = hubClockRange(toHM(slot.start), toHM(slot.end));
+      col.closest('.tgrid').querySelectorAll('.day').forEach(c => { const d = dayOfDate(c.id.slice(2)); if (!d) return; const r = evaluate(DRAG.x, DRAG.day, d, slot.start, slot.end); if (!(d === DRAG.day && r.kind === 'clean' && slot.start === DRAG.s && slot.end === DRAG.e)) c.classList.add('drop-' + r.kind); });
+      const d = dayOfDate(date), r = evaluate(DRAG.x, DRAG.day, d, slot.start, slot.end);
+      col.classList.add('drop-hover'); hint(col, r);
+      const hr = slot.head.getBoundingClientRect(), rr = col.getBoundingClientRect();
+      const cell = document.createElement('div'); cell.className = 'dropcell ' + r.kind;
+      cell.style.left = (hr.left - rr.left) + 'px'; cell.style.width = hr.width + 'px'; col.appendChild(cell);
+      DRAG.target = { date, start: slot.start, end: slot.end, r };
+      return;
+    }
     let start = DRAG.s;
     if (col) {
       start = Math.max(6 * 60, Math.min(23 * 60 - (DRAG.e - DRAG.s), startFor(col, e.clientY, DRAG.grab)));
@@ -1607,7 +1832,7 @@ function wireBoard(){
     UNDO.push(was.before);
     const to = dayOfDate(t.date), x = was.day.sessions.find(s => s.id === was.x.id);
     const len = toMin(x.e) - toMin(x.s);
-    x.s = toHM(t.start); x.e = toHM(t.start + len);
+    x.s = toHM(t.start); x.e = toHM(t.end != null ? t.end : t.start + len);
     if (to !== was.day) { was.day.sessions = was.day.sessions.filter(s => s !== x); to.sessions = (to.sessions || []).concat([x]); to.sessions.sort(byStart); }
     else settle(to, x);
     save('Moved', { text: '“' + tileName(x, to) + '” ' + (to !== was.day ? 'moved from ' + dayName(was.day.date) + ' to ' + dayName(to.date) + ', ' : 'on ' + dayName(to.date) + ' moved to ') + hubClockRange(x.s, x.e), effects: t.r.effects || [] });
@@ -1637,7 +1862,7 @@ function wireBoard(){
 }
 function hint(col, r){
   if (r.kind === 'clean') return;
-  const body = col.querySelector('.body'); if (!body) return;
+  const body = col.querySelector('.body') || (ACROSS() ? col : null); if (!body) return;
   const h = document.createElement('div'); h.className = 'drophint ' + r.kind;
   h.textContent = r.kind === 'block' ? r.why : (r.effects || []).slice(0, 3).join(' · ') + ((r.effects || []).length > 3 ? ' · …' : '');
   body.appendChild(h);
@@ -2307,7 +2532,7 @@ function save(word, change){
   }
 
   function duePills(){
-    host.querySelectorAll('.day .due').forEach(el => {
+    host.querySelectorAll('.day .due:not(.out)').forEach(el => {
       if (el.querySelector('.tv2-in')) return;
       const day = el.closest('.day'); const date = day && day.id.replace(/^d-/, ''); if (!date || date < TODAY) return;
       const n = daysBetween(TODAY, date);

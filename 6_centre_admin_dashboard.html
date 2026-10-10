@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610102115">
+<link rel="stylesheet" href="hub-tokens.css?v=202610102156">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -467,7 +467,7 @@
   .tcol-opt input:checked + span{box-shadow:0 0 0 2px var(--paper), 0 0 0 4px var(--teal);}
   .tcol-opt input:focus-visible + span{outline:2px solid var(--gold-lifted); outline-offset:3px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610102115">
+<link rel="stylesheet" href="hub-house.css?v=202610102156">
 </head>
 <body>
 <div class="board">
@@ -565,6 +565,15 @@
         <label for="courseClock">Clock</label>
         <div class="house-sel"><select id="courseClock"><option value="12">12-hour · 1:30 PM</option><option value="24">24-hour · 13:30</option></select></div>
         <p class="hintline">How every time on the course reads: the timetable, TP points, plans, feedback and the stream.</p>
+      </div>
+      <!-- THE TIMETABLE'S LAYOUT (Ramy, 10 Oct 2026): "admin can choose if they
+           want a horizontal timetable or a vertical timetable ... Once it's set,
+           it's set for the whole course ... It does not change halfway through
+           the course." So it locks on the course's first day. -->
+      <div>
+        <label for="courseLayout">Timetable layout</label>
+        <div class="house-sel"><select id="courseLayout"><option value="v">Down the page · the days side by side</option><option value="h">Across the page · a row for each day</option></select></div>
+        <p class="hintline" id="courseLayoutHint">How the timetable reads for everyone on the course. It cannot change once the course has started.</p>
       </div>
       <div>
         <label for="tpCount">Teaching practices per trainee</label>
@@ -906,16 +915,16 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610102115"></script>
-<script src="hub-store.js?v=202610102115"></script>
-<script src="hub-say.js?v=202610102115"></script>
-<script src="agreement-defaults.js?v=202610102115"></script>
-<script src="observation-defaults.js?v=202610102115"></script>
-<script src="hub-shared.js?v=202610102115"></script>
-<script src="hub-due.js?v=202610102115"></script>
-<script src="hub-sync.js?v=202610102115"></script>
-<script src="hub-hand.js?v=202610102115"></script>
-<script src="hub-ink.js?v=202610102115"></script>
+<script src="assignment-defaults.js?v=202610102156"></script>
+<script src="hub-store.js?v=202610102156"></script>
+<script src="hub-say.js?v=202610102156"></script>
+<script src="agreement-defaults.js?v=202610102156"></script>
+<script src="observation-defaults.js?v=202610102156"></script>
+<script src="hub-shared.js?v=202610102156"></script>
+<script src="hub-due.js?v=202610102156"></script>
+<script src="hub-sync.js?v=202610102156"></script>
+<script src="hub-hand.js?v=202610102156"></script>
+<script src="hub-ink.js?v=202610102156"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1177,6 +1186,14 @@ try {
     if(cs.totalHours) document.getElementById('totalHours').value = cs.totalHours;
     fillZones(cs.timeZone || '');
     { const c = document.getElementById('courseClock'); if (c) c.value = cs.clock === '24' ? '24' : '12'; }
+    { const c = document.getElementById('courseLayout'), h = document.getElementById('courseLayoutHint');
+      if (c) {
+        c.value = cs.ttLayout === 'h' ? 'h' : 'v';
+        const today = window.hubToday ? hubToday() : new Date().toISOString().slice(0, 10);
+        const started = !!cs.start && today >= cs.start;
+        c.disabled = started;
+        if (h && started) h.textContent = 'The course has started, so its timetable stays ' + (c.value === 'h' ? 'across the page' : 'down the page') + ' to the end.';
+      } }
     if(cs.deliveryMode) document.getElementById('deliveryMode').value = cs.deliveryMode;
     if(cs.tutorNames) document.getElementById('tutorNames').value = cs.tutorNames;
     TUTOR_COLOURS = (cs.tutorColours && typeof cs.tutorColours === 'object') ? Object.assign({}, cs.tutorColours) : {}; renderTutorColours();
@@ -1286,7 +1303,13 @@ document.getElementById('panel-settings').addEventListener('paste', e=>{
    is saved a moment after it stops changing; the button stays for whoever
    wants to press it. One routine, so the two cannot drift. */
 function saveSettings(how){
-  localStorage.setItem('connect_course_settings', JSON.stringify({
+  /* MERGED, NOT REPLACED (10 Oct 2026). This wrote the record afresh from the
+     form, so whatever another screen keeps in the course's settings went with
+     every save here -- C/18's letter order (TP points, settings.letterOrder)
+     vanished that way the evening it was set. The form's own fields still
+     overwrite; everything else is kept. */
+  const kept = (() => { try { return JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) { return {}; } })();
+  localStorage.setItem('connect_course_settings', JSON.stringify(Object.assign(kept, {
     start: document.getElementById('courseStart').value,
     end: document.getElementById('courseEnd').value,
     demoToday: document.getElementById('demoToday').value || '',
@@ -1309,6 +1332,8 @@ function saveSettings(how){
     totalHours: (function(){ const n = parseInt(document.getElementById('totalHours').value, 10); return n > 0 ? n : ''; })(),
     timeZone: (document.getElementById('courseZone') || {}).value || '',
     clock: (document.getElementById('courseClock') || {}).value === '24' ? '24' : '12',
+    /* across ('h') or down ('v'): 23_timetable.html ACROSS() */
+    ttLayout: (document.getElementById('courseLayout') || {}).value === 'h' ? 'h' : 'v',
     deliveryMode: document.getElementById('deliveryMode').value || 'f2f',
     tutorNames: document.getElementById('tutorNames').value.trim(),
     /* only the colours somebody chose; the rest are worked out (hub-shared.js hubTutorColours) */
@@ -1330,7 +1355,7 @@ function saveSettings(how){
     certSigner: (() => { const n = document.getElementById('certSignerName').value.trim(); return n ? { name: n, role: document.getElementById('certSignerRole').value.trim(), ink: (certSigner && certSigner.ink) || '' } : null; })(),
     volunteerContact: (() => { const n = document.getElementById('volContactName').value.trim(), e = document.getElementById('volContactEmail').value.trim(); return e ? { name: n, email: e } : null; })(),
     logo: courseLogo
-  }));
+  })));
   // The assessor link expires at the end of the course's last day, which this
   // form has just written, so the held copy's expiry line is now stale.
   ASSESSOR_LINK = null;

@@ -1372,7 +1372,7 @@ window.CONNECT_HUB_ADOPT_CORRECTED_CRITERIA = function(wording){
         // Untouched end to end: give the course the whole shipped assignment,
         // keeping only what the centre set on this course.
         next = JSON.parse(JSON.stringify(now[k]));
-        ['dueAt','resubDays','releaseAt'].forEach(function(f){ if (a[f] !== undefined) next[f] = a[f]; });
+        ['dueAt','due','dueSets','resubDays','resubDueAt','outAt','setBy','releaseAt','released'].forEach(function(f){ if (a[f] !== undefined) next[f] = a[f]; });
       } else {
         next = JSON.parse(JSON.stringify(a));
         next.criteria = now[k].criteria.map(function(c){ return { text: c.text, sectionIndex: null }; });

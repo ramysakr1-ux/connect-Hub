@@ -130,10 +130,18 @@
     return new Date(t + n * DAY).toISOString();
   }
 
+  /* The resubmission deadline for one trainee's returned assignment. A fixed
+     date on the assignment (resubDueAt) wins: Classroom gives C/18 one closing
+     time for everyone (Ramy, 10 Oct 2026). Otherwise the days from the return. */
+  function resubFor(a, sub){
+    if (a && parse(a.resubDueAt) !== null) return a.resubDueAt;
+    return windowFrom(sub && (sub.marked1At || sub.returnedAt), a && a.resubDays);
+  }
+
   window.HubDue = {
     parse: parse, state: state, fmt: fmt, left: left,
     fromLocalInput: fromLocalInput, toLocalInput: toLocalInput,
-    forPerson: forPerson, windowFrom: windowFrom,
+    forPerson: forPerson, windowFrom: windowFrom, resubFor: resubFor,
     DAY: DAY, HOUR: HOUR, MIN: MIN
   };
 })();
