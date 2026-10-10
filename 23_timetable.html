@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610102156">
+<link rel="stylesheet" href="hub-tokens.css?v=202610102210">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -225,6 +225,7 @@
   .k-tp .who.me{background:var(--teal); color:var(--paper);}
   .k-tp.mine{background:var(--ink-warm); border-color:var(--ink-warm); color:var(--paper);}
   .k-tp.mine .tm{color:oklch(90% 0.02 80);}
+  .k-demo{background:var(--gold-wash); border-color:var(--amber-edge); color:var(--ink-warm);}
   .k-plan{background:var(--box); color:var(--ink-warm);}
   .k-feedback, .k-reflect{background:var(--paper); color:var(--ink);}
   .k-reflect .tt{font-weight:600;}
@@ -277,7 +278,12 @@
   .tgrid.across .day.today .dh{box-shadow:inset 3px 0 0 var(--gold);}
   .tgrid.across .dacts{display:flex; gap:4px; align-items:center; flex-wrap:wrap;}
   .tgrid.across .addtile{width:auto; margin:0; padding:3px 8px;}
-  .tgrid.across .tile{position:relative; left:auto; right:auto; top:auto; min-height:56px; padding:7px 9px; display:flex; flex-direction:column; justify-content:center; font-size:0.76rem;}
+  /* ACROSS, EVERY TILE IS ONE SIZE (Ramy, 10 Oct 2026: "If we have a horizontal
+     one, then the tiles are fixed. And so is the time." Down the page the tiles
+     size themselves and carry their times). Words that do not fit get smaller
+     (fitAcross), never a bigger tile. */
+  .tgrid.across .tile{position:relative; left:auto; right:auto; top:auto; height:64px; box-sizing:border-box; overflow:hidden; padding:6px 9px; display:flex; flex-direction:column; justify-content:center; font-size:0.76rem;}
+  .tgrid.across .tile.clip .tt{display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:4; overflow:hidden;}
   .tgrid.across .tile .tm .own{color:var(--brick); font-weight:700;}
   .tgrid.across .k-tp.mine .tm .own{color:var(--gold-lifted);}
   .tgrid.across .k-tp .who{margin:0 1px; padding:0 3px; min-width:0;}
@@ -362,6 +368,7 @@
   .und .mark.ok{color:var(--teal);} .und .mark.q{color:var(--gold-deep);}
   .kchip{flex:none; font-size:0.58rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:2px 6px; border-radius:4px; background:var(--box); color:var(--ink-warm);}
   .kchip.k-input{background:oklch(94.5% 0.03 195); color:var(--teal-deep);} .kchip.k-tp{background:var(--ink-warm); color:var(--paper);}
+  .kchip.k-demo{background:var(--gold-wash); color:var(--ink-warm);}
   .kchip.k-event{background:var(--paper); border:1px dashed var(--teal-lifted); color:var(--teal-deep);} .kchip.k-task{background:var(--sand-deep);}
   .kchip.k-note{background:var(--surface); color:var(--grey);} .kchip.k-skip{background:var(--sand-deep); color:var(--faint);}
   .kchip.k-q{background:var(--gold-lifted); color:var(--ink-warm);}
@@ -452,24 +459,24 @@
     h1{font-size:1.4rem;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610102156">
+<link rel="stylesheet" href="hub-house.css?v=202610102210">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610102156"></script>
-<script src="hub-tracker.js?v=202610102156"></script>
-<script src="hub-rotation.js?v=202610102156"></script>
-<script src="hub-xlsx.js?v=202610102156"></script>
-<script src="hub-docx.js?v=202610102156"></script>
-<script src="hub-timetable-parse.js?v=202610102156"></script>
-<script src="assignment-defaults.js?v=202610102156"></script>
-<script src="hub-shared.js?v=202610102156"></script>
-<script src="hub-store.js?v=202610102156"></script>
-<script src="hub-say.js?v=202610102156"></script>
-<script src="hub-sync.js?v=202610102156"></script>
+<script src="hub-due.js?v=202610102210"></script>
+<script src="hub-tracker.js?v=202610102210"></script>
+<script src="hub-rotation.js?v=202610102210"></script>
+<script src="hub-xlsx.js?v=202610102210"></script>
+<script src="hub-docx.js?v=202610102210"></script>
+<script src="hub-timetable-parse.js?v=202610102210"></script>
+<script src="assignment-defaults.js?v=202610102210"></script>
+<script src="hub-shared.js?v=202610102210"></script>
+<script src="hub-store.js?v=202610102210"></script>
+<script src="hub-say.js?v=202610102210"></script>
+<script src="hub-sync.js?v=202610102210"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -821,8 +828,12 @@ function skeleton(){
    hubSlotsFor (hub-shared.js), which turns sessions into slots, so nothing
    outside this screen had to learn the new shape. */
 const PXM = 1.3;   // pixels per minute on the board
-const KIND_LABEL = { input:'Input', tp:'Teaching practice', plan:'Lesson planning', feedback:'TP feedback', reflect:'Reflection', event:'Whole group', task:'Assignments & admin', break:'Break', lunch:'Lunch' };
-const KIND_ORDER = ['input','tp','plan','feedback','reflect','event','task','break','lunch'];
+/* DEMO & OBSERVATION (10 Oct 2026, Ramy's ground rules: colour comes from
+   what a session is, never set by hand). Demo lessons, student interviews,
+   getting to know you and filmed observations sit where teaching practice
+   sits and wear its gold, without being TP lessons: no letters, no marks. */
+const KIND_LABEL = { input:'Input', tp:'Teaching practice', demo:'Demo & observation', plan:'Lesson planning', feedback:'TP feedback', reflect:'Reflection', event:'Whole group', task:'Assignments & admin', break:'Break', lunch:'Lunch' };
+const KIND_ORDER = ['input','tp','demo','plan','feedback','reflect','event','task','break','lunch'];
 const toMin = hm => { const m = /^(\d{1,2}):(\d{2})/.exec(String(hm || '')); return m ? +m[1] * 60 + +m[2] : null; };
 const toHM = n => String(Math.floor(n / 60)).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0');
 const byStart = (a, b) => (toMin(a.s) || 0) - (toMin(b.s) || 0);
@@ -848,7 +859,7 @@ function sessionsFromSlots(day, slots, cells, isFirst){
   cells = cells || {};
   const out = [], tps = (slots || []).filter(sl => sl.kind === 'tp' && sl.from && sl.to);
   if (isFirst && tps.length) {
-    out.push({ id:'demo', s: tps[0].from, e: (tps[1] || tps[0]).to, k:'event', t:'Demonstration lesson', room: tps[0].room || '' });
+    out.push({ id:'demo', s: tps[0].from, e: (tps[1] || tps[0]).to, k:'demo', t:'Demonstration lesson', room: tps[0].room || '' });
     if (tps[2]) out.push({ id:'unassessed', s: tps[2].from, e: tps[2].to, k:'event', t:'Unassessed teaching', room: tps[2].room || '' });
   }
   (slots || []).forEach(sl => {
@@ -1086,6 +1097,19 @@ function weekAcross(w, n){
   const head = `<div class="hrow thead" style="grid-template-columns:${tpl}"><div class="dh"></div>${cols.map(c => `<div class="ch" data-s="${esc(c.s)}" data-e="${esc(c.e)}"><b>${esc(hubClock(c.s))}</b><span>–${esc(hubClock(c.e))}</span></div>`).join('')}</div>`;
   return `<div class="tscroll"><div class="tgrid across" style="--ncols:${cols.length}">${head}${w.map(d => rowAcross(d, cols, tpl, places.get(d), TT.days.indexOf(d))).join('')}</div></div>`;
 }
+/* The words in a fixed tile: as large as fit, down to a floor, never a
+   bigger tile. Again whenever the width changes or the fonts arrive. */
+function fitAcross(){
+  document.querySelectorAll('.tgrid.across .tile').forEach(t => {
+    const tt = t.querySelector('.tt'); if (!tt) return;
+    let px = 12.2; tt.style.fontSize = px + 'px'; t.classList.remove('clip');
+    while (t.scrollHeight > t.clientHeight + 1 && px > 8.6) { px -= 0.4; tt.style.fontSize = px + 'px'; }
+    /* still too long at the smallest size: it ends in "…", the whole name on hover */
+    if (t.scrollHeight > t.clientHeight + 1) t.classList.add('clip');
+  });
+}
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitAcross);
+window.addEventListener('resize', () => { clearTimeout(fitAcross.t); fitAcross.t = setTimeout(fitAcross, 120); });
 function rowAcross(day, cols, tpl, place, idx){
   const d = parse(day.date), isToday = day.date === TODAY;
   const dh = `<div class="dh"><div class="dt"${EDIT ? ` data-close="${esc(day.date)}" title="${day.closed ? 'Reopen this day' : 'Close this day (a holiday, a snow day)'}"` : ''}><span class="dow">${DOW[d.getDay()]}</span> <span class="dm">${dm(d)}${isToday ? ' · today' : ''}</span><small>${day.closed ? 'No course' : 'Day ' + (idx + 1)}</small></div>`
@@ -1417,7 +1441,7 @@ function render(){
   let ruler = '';
   for (let m = Math.ceil(B.from / 60) * 60; m <= B.to; m += 60) ruler += `<span style="top:${(m - B.from) * PXM}px">${esc(hubClock(toHM(m)).replace(':00', ''))}</span>`;
   const used = new Set(); (TT.days || []).forEach(d => (d.sessions || []).forEach(x => { if (x.k === 'input' && x.by !== undefined && x.by !== '' && TUTORS[+x.by]) used.add(+x.by); }));
-  const key = `<div class="tkey">${[...used].sort().map(i => `<span><i class="tile k-input by-${tcol(i)}"></i>Input · ${esc(TUTORS[i])}</span>`).join('')}${used.size ? '' : '<span><i class="tile k-input"></i>Input</span>'}<span><i class="tile k-tp"></i>Teaching practice</span><span><i class="tile k-plan"></i>Lesson planning</span><span><i class="tile k-feedback"></i>Feedback &amp; reflection</span><span><i class="tile k-event"></i>Whole group</span><span><i class="tile k-task"></i>Assignments &amp; admin</span><span><i class="due"></i>A deadline</span></div>`;
+  const key = `<div class="tkey">${[...used].sort().map(i => `<span><i class="tile k-input by-${tcol(i)}"></i>Input · ${esc(TUTORS[i])}</span>`).join('')}${used.size ? '' : '<span><i class="tile k-input"></i>Input</span>'}<span><i class="tile k-tp"></i>Teaching practice</span><span><i class="tile k-demo"></i>Demo &amp; observation</span><span><i class="tile k-plan"></i>Lesson planning</span><span><i class="tile k-feedback"></i>Feedback &amp; reflection</span><span><i class="tile k-event"></i>Whole group</span><span><i class="tile k-task"></i>Assignments &amp; admin</span><span><i class="due"></i>A deadline</span></div>`;
   app.innerHTML = head + updatedHTML() + zoneLine() + bar + roomsStrip() + key + weeks.map((w, i) => {
     const a = parse(w[0].date), b = parse(w[w.length-1].date);
     if (ACROSS()) return `<section class="wk"><h2>Week ${i+1} <small>${dm(a)} – ${dm(b)}</small></h2>${changeNote(w)}${weekAcross(w, i)}</section>`;
@@ -1437,6 +1461,7 @@ function render(){
   wireDays();
   wireMove();
   wireBoard();
+  fitAcross();
   /* Twenty full days stacked on a phone is a long way to scroll to reach this
      afternoon, so a narrow screen opens on today.
      It has to survive a RE-RENDER. Replacing the grid's innerHTML puts the
@@ -2116,7 +2141,7 @@ function wireImport(){
    every question is answered; "Remember" keeps a term's answer for the
    centre's next import. The reading itself is hub-timetable-parse.js
    (interpret), so it is tested away from the page. */
-const KIND_CHIP = { input: 'Input', plan: 'Planning', event: 'Whole group', task: 'Assignments', tp: 'TP', note: 'Note', skip: 'Left out' };
+const KIND_CHIP = { input: 'Input', plan: 'Planning', demo: 'Demo & observation', event: 'Whole group', task: 'Assignments', tp: 'TP', note: 'Note', skip: 'Left out' };
 const DEFAULT_TITLES = { fol: 'Focus on the Learner', lrt: 'Language Related Tasks', lsrt: 'Language Skills Related Tasks', lfc: 'Lessons from the Classroom' };
 
 function review(rows, from){

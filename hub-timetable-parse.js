@@ -395,14 +395,18 @@
      how it starts: "Intro to coursebook & lesson planning" is an input that
      mentions planning, and it went in as a planning session (9 Oct 2026). */
   const KIND_WORDS = [
-    ['task', /^(work on|finalis|file completion|assignment time|marking)/i],
+    ['task', /^(work on|finali[sz]|file completion|assignment time|marking)/i],
     ['plan', /^((supervised|syllabus|independent|guided)\s+)?(lesson\s+)?planning\b/i],
-    ['event', /\b(tutorials?|consultation|orientation|welcome|course close|closing|demo(nstration)?|debrief|observations?|filmed|assessor|meeting|getting to know|gtky)\b/i]
+    /* Whole group first: a debrief is talk about the demo, not the demo ("Demo
+       lesson debrief + LFC"), and an orientation with its GTKY is the welcome. */
+    ['event', /\b(debrief|tutorials?|consultation|orientation|welcome|course close|closing|assessor|meeting)\b/i],
+    /* the demo lessons, the interviews and the filmed observations: Demo & observation (10 Oct 2026) */
+    ['demo', /\b(demo(nstration)?|filmed|observations?|interviews?|getting to know|gtky)\b/i]
   ];
   /* What a CELTA input is usually called. A cell matching none of these, and
      no remembered term, is asked about. */
   const INPUT_WORDS = /(phonolog|pronunc|stress|intonation|connected speech|sounds|vocab|lexi|grammar|tense|aspect|modal|condition|receptive|productive|reading|listening|speaking|writing|skills|literacy|functional|function|language|analys|context|elicit|concept|ccq|monitor|error|correction|feedback|manag|lesson|framework|ppp|guided discovery|test.?teach|ttt|task.?based|drill|teaching|present|learner|young learners|exam|course ?book|materials|board|instruction|rapport|motivation|professional|development|introduc|intro\b|orientation|syllabus|discourse|dictionar|games?|songs?|authentic|text)/i;
-  const KINDS = { input: 'Input session', plan: 'Lesson planning', event: 'Whole group', task: 'Assignment time' };
+  const KINDS = { input: 'Input session', plan: 'Lesson planning', demo: 'Demo & observation', event: 'Whole group', task: 'Assignment time' };
   const normTerm = (s) => clean(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
   const CODE = { fol: 'fol', lrt: 'lrt', lsrt: 'lsrt', lsa: 'lsrt', srt: 'lsrt', lfc: 'lfc' };
   const hm = (h, m) => String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');

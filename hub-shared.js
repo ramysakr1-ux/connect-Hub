@@ -859,8 +859,8 @@ window.hubShapeFor = function(tt, dateISO){
    Lite as slots, so every page that asks "what are this day's times?" gets
    the day's own answer without knowing the new shape. */
 window.hubSessionSlots = function(sessions){
-  var KIND = { input:'input', tp:'tp', plan:'plan', feedback:'feedback', reflect:'feedback', prep:'prep', 'break':'break', lunch:'break', event:'event', task:'task' };
-  var LABEL = { input:'Input', tp:'Teaching practice', plan:'Lesson planning', feedback:'TP feedback', reflect:'Reflection', 'break':'Break', lunch:'Lunch', event:'', task:'' };
+  var KIND = { input:'input', tp:'tp', demo:'event', plan:'plan', feedback:'feedback', reflect:'feedback', prep:'prep', 'break':'break', lunch:'break', event:'event', task:'task' };
+  var LABEL = { input:'Input', tp:'Teaching practice', plan:'Lesson planning', feedback:'TP feedback', reflect:'Reflection', 'break':'Break', lunch:'Lunch', demo:'', event:'', task:'' };
   return (sessions || []).filter(function(x){ return x && x.s && x.e; }).slice().sort(function(a, b){ return a.s < b.s ? -1 : a.s > b.s ? 1 : 0; })
     .map(function(x){ return { key: x.id, from: x.s, to: x.e, kind: KIND[x.k] || 'event', label: x.t || LABEL[x.k] || '', room: x.room || (x.k === 'tp' ? 'Teaching practice' : x.k === 'input' ? 'Input' : '') }; });
 };
