@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610102301">
+<link rel="stylesheet" href="hub-tokens.css?v=202610102318">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -477,7 +477,7 @@
   .tcol-opt input:checked + span{box-shadow:0 0 0 2px var(--paper), 0 0 0 4px var(--teal);}
   .tcol-opt input:focus-visible + span{outline:2px solid var(--gold-lifted); outline-offset:3px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610102301">
+<link rel="stylesheet" href="hub-house.css?v=202610102318">
 </head>
 <body>
 <div class="board">
@@ -925,16 +925,16 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610102301"></script>
-<script src="hub-store.js?v=202610102301"></script>
-<script src="hub-say.js?v=202610102301"></script>
-<script src="agreement-defaults.js?v=202610102301"></script>
-<script src="observation-defaults.js?v=202610102301"></script>
-<script src="hub-shared.js?v=202610102301"></script>
-<script src="hub-due.js?v=202610102301"></script>
-<script src="hub-sync.js?v=202610102301"></script>
-<script src="hub-hand.js?v=202610102301"></script>
-<script src="hub-ink.js?v=202610102301"></script>
+<script src="assignment-defaults.js?v=202610102318"></script>
+<script src="hub-store.js?v=202610102318"></script>
+<script src="hub-say.js?v=202610102318"></script>
+<script src="agreement-defaults.js?v=202610102318"></script>
+<script src="observation-defaults.js?v=202610102318"></script>
+<script src="hub-shared.js?v=202610102318"></script>
+<script src="hub-due.js?v=202610102318"></script>
+<script src="hub-sync.js?v=202610102318"></script>
+<script src="hub-hand.js?v=202610102318"></script>
+<script src="hub-ink.js?v=202610102318"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -2061,6 +2061,23 @@ async function renderStoreRoster(next){
     try { await S.rotateKey(); history.replaceState(null, '', location.pathname); renderStoreRoster(); } catch(err){ alert(err.message); }
   });
 
+  /* NOBODY JOINS AFTER TEACHING PRACTICE HAS STARTED (Ramy, 10 Oct 2026:
+     "people are not supposed to join the course late ... not after a TP has
+     already started"). Lite splits each group into its two teaching sets by
+     head count, so a trainee added once TP has begun moves someone already
+     teaching to the other set -- their days, their order, their deadlines --
+     without a word. So it says no, and why. "Add anyway" stays for the rare
+     case someone means it (a test trainee, a transfer agreed with Cambridge):
+     any rule Lite applies can be overridden by a person on purpose. */
+  async function tpStartedGuard(n){
+    let first = '';
+    try { const tt = JSON.parse(localStorage.getItem('connect_timetable_v1')) || {}; first = (tt.days || []).filter(d => d && d.tp && !d.closed).map(d => d.date).sort()[0] || ''; } catch (e) {}
+    const today = window.hubToday ? hubToday() : new Date().toISOString().slice(0, 10);
+    if (!first || today < first) return true;
+    const when = new Date(first + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+    return confirmModal(`Teaching practice has started (TP 1 ${today === first ? 'is today' : 'was ' + when}). Adding ${n === 1 ? 'a trainee' : n + ' trainees'} now would move people between teaching sets, so trainees don’t join after the first TP. Add anyway only if you mean to: a test trainee, or a move agreed with Cambridge.`, 'Add anyway');
+  }
+
   document.getElementById('storeAddForm').addEventListener('submit', async e=>{
     e.preventDefault();
     const name = document.getElementById('storeAddName').value.trim(), group = document.getElementById('storeAddGroup').value.trim();
@@ -2072,6 +2089,7 @@ async function renderStoreRoster(next){
        21 Sep 2026). The bulk box next to it has always dropped empty lines and
        said so; this is the same standard. */
     if (!name) { st.textContent = 'Type a name first.'; return; }
+    if (!(await tpStartedGuard(1))) { st.textContent = 'Not added: teaching practice has started.'; return; }
     st.textContent = 'Adding…';
     try { const r = await S.addTrainee(name, group, email); renderStoreRoster(r.trainees); }
     catch (err) { st.textContent = err.message; }
@@ -2099,6 +2117,7 @@ async function renderStoreRoster(next){
       return { name, group, email };
     }).filter(r => r.name);
     if (!rows.length) { status.textContent = 'Nothing to add -- paste at least one name.'; return; }
+    if (!(await tpStartedGuard(rows.length))) { status.textContent = 'Not added: teaching practice has started.'; return; }
     if (!(await confirmModal(`Add ${rows.length} trainee${rows.length === 1 ? '' : 's'}?`, 'Add all'))) return;
     status.textContent = `Adding ${rows.length}…`;
     try {
