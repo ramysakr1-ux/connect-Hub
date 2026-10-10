@@ -99,6 +99,11 @@
 
   function gate(reason){
     shutdown();
+    /* The heading is neutral and the store's reason, under it, says which:
+       "not on the course" (a link that never was), "no longer opens the
+       course" (a volunteer taken off the register), an expired assessor link.
+       It said "This link no longer opens the course" for all of them, which is
+       wrong for a link that never worked (bug walk, 10 Oct 2026). */
     /* A page may offer a front page for somebody who has no link at all
        (index.html does, through hub-front.js, 3 Oct 2026). A link that has
        STOPPED working carries a reason and always gets the plain refusal:
@@ -118,7 +123,7 @@
       + '<span style="font-family:Instrument Serif,Georgia,serif;font-style:italic;font-size:21px;line-height:0.85;color:oklch(63% 0.096 72);">Connect</span>'
       + '<span style="font-family:Instrument Sans,Karla,sans-serif;font-weight:500;font-size:9px;letter-spacing:0.24em;text-transform:uppercase;">Lite</span>'
       + '</span></div>'
-      + '<h1 style="font-family:Newsreader,Georgia,serif;font-weight:700;font-size:1.9rem;line-height:1.2;margin:0 0 10px;">' + (reason ? 'This link no longer opens the course' : 'Open your course link') + '</h1>'
+      + '<h1 style="font-family:Newsreader,Georgia,serif;font-weight:700;font-size:1.9rem;line-height:1.2;margin:0 0 10px;">' + (reason ? 'The course could not be opened from this link' : 'Open your course link') + '</h1>'
       + (reason ? '<p style="font-size:0.92rem;line-height:1.65;color:oklch(46% 0.17 25);margin:0 0 14px;">' + String(reason).replace(/[<&]/g, ' ') + '</p>' : '')
       + '<p style="font-size:0.92rem;line-height:1.65;color:oklch(51% 0.017 70);margin:0;">This page reads one course, through the link your centre sent you. Trainees have their own personal link, tutors share the tutor link, and an assessor has a read-only one. Open the page from that link and everything appears.</p>'
       + '<p style="font-size:0.92rem;line-height:1.65;color:oklch(51% 0.017 70);margin:14px 0 0;">Lost it? Your course admin can send it again from the Roster and links tab.</p>'

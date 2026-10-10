@@ -238,7 +238,7 @@ let opened = 0;
    nobody named ("name a candidate in the link"). */
 const LANDING = { tutor: ['5_tutor_dashboard.html', '6_centre_admin_dashboard.html'],
                   trainee: ['index.html'], assessor: ['12_assessor_pack.html'], volunteer: ['26_volunteer.html'] };
-const REFUSED = /This room belongs to|Open your course link|This link no longer opens/i;
+const REFUSED = /This room belongs to|Open your course link|This link no longer opens|could not be opened from this link/i;
 const NOBODY = /Name a (candidate|trainee) in the link|isn[’']t set up yet/i;
 if (process.env.DOORS) {
   for (const role of ROLES) {

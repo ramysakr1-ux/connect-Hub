@@ -50,7 +50,7 @@ for (const role of ROLES) {
       await page.waitForTimeout(6500);
       const body = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
       const blank = body.trim().length < 40;
-      const gated = /This room belongs to|no longer opens|not on the course|Open your course link/i.test(body);
+      const gated = /This room belongs to|no longer opens|not on the course|could not be opened from this link|Open your course link/i.test(body);
       const bad = errs.slice();
       if (blank) bad.push('page is blank');
       /* A GATED SCREEN IS A FAILED CHECK, not a quiet note. Every screen listed
