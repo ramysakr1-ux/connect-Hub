@@ -795,7 +795,9 @@ window.hubClockRange = function(a, b){
    name -> palette index); a tutor nobody picked for takes the next colour
    nobody has, so up to eight tutors never share one. */
 window.HUB_TUTOR_COLOURS = [
-  { name: 'Orange', bg: 'oklch(95% 0.04 62)',    bd: 'oklch(83% 0.08 60)',  fg: 'oklch(42% 0.11 52)' },
+  /* Coral, not orange (10 Oct 2026): the orange sat beside teaching practice's
+     gold, and a tutor's colour must never read as TP. */
+  { name: 'Coral',  bg: 'oklch(94% 0.05 32)',    bd: 'oklch(82% 0.1 32)',  fg: 'oklch(46% 0.14 32)' },
   { name: 'Blue',   bg: 'oklch(94.5% 0.03 245)', bd: 'oklch(82% 0.06 245)', fg: 'oklch(40% 0.1 250)' },
   { name: 'Green',  bg: 'oklch(94.5% 0.04 150)', bd: 'oklch(80% 0.06 150)', fg: 'oklch(38% 0.08 150)' },
   { name: 'Purple', bg: 'oklch(94.5% 0.03 320)', bd: 'oklch(82% 0.05 320)', fg: 'oklch(40% 0.09 320)' },
@@ -859,8 +861,8 @@ window.hubShapeFor = function(tt, dateISO){
    Lite as slots, so every page that asks "what are this day's times?" gets
    the day's own answer without knowing the new shape. */
 window.hubSessionSlots = function(sessions){
-  var KIND = { input:'input', tp:'tp', demo:'event', plan:'plan', feedback:'feedback', reflect:'feedback', prep:'prep', 'break':'break', lunch:'break', event:'event', task:'task' };
-  var LABEL = { input:'Input', tp:'Teaching practice', plan:'Lesson planning', feedback:'TP feedback', reflect:'Reflection', 'break':'Break', lunch:'Lunch', demo:'', event:'', task:'' };
+  var KIND = { input:'input', tp:'tp', demo:'event', assessor:'event', plan:'plan', feedback:'feedback', reflect:'feedback', prep:'prep', 'break':'break', lunch:'break', event:'event', task:'task' };
+  var LABEL = { input:'Input', tp:'Teaching practice', plan:'Lesson planning', feedback:'TP feedback', reflect:'Reflection', 'break':'Break', lunch:'Lunch', demo:'', assessor:'', event:'', task:'' };
   return (sessions || []).filter(function(x){ return x && x.s && x.e; }).slice().sort(function(a, b){ return a.s < b.s ? -1 : a.s > b.s ? 1 : 0; })
     .map(function(x){ return { key: x.id, from: x.s, to: x.e, kind: KIND[x.k] || 'event', label: x.t || LABEL[x.k] || '', room: x.room || (x.k === 'tp' ? 'Teaching practice' : x.k === 'input' ? 'Input' : '') }; });
 };
