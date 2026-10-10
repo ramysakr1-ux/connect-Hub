@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610102247">
+<link rel="stylesheet" href="hub-tokens.css?v=202610102250">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -286,18 +286,18 @@
   .tgrid.across .day.today .dh{box-shadow:inset 3px 0 0 var(--gold);}
   .tgrid.across .dacts{display:flex; gap:4px; align-items:center; flex-wrap:wrap;}
   .tgrid.across .addtile{width:auto; margin:0; padding:3px 8px;}
-  /* ACROSS, EVERY TILE IS ONE SIZE (Ramy, 10 Oct 2026: "If we have a horizontal
-     one, then the tiles are fixed. And so is the time." Down the page the tiles
-     size themselves and carry their times). Words that do not fit get smaller
-     (fitAcross), never a bigger tile. */
-  .tgrid.across .tile{position:relative; left:auto; right:auto; top:auto; height:64px; box-sizing:border-box; overflow:hidden; padding:6px 9px; display:flex; flex-direction:column; justify-content:center; font-size:0.76rem;}
+  /* ACROSS, THE TILES GROW WITH THEIR WORDS (Ramy, 10 Oct 2026, settled after
+     trying a fixed size with shrinking words: one readable size for every word).
+     Every tile starts one height; a long title makes its day's row taller, and
+     every tile in that row grows with it, so the row still lines up. The time
+     stays in the headings either way. */
+  .tgrid.across .tile{position:relative; left:auto; right:auto; top:auto; min-height:58px; box-sizing:border-box; padding:7px 9px; display:flex; flex-direction:column; justify-content:center; font-size:0.76rem;}
   .tset{display:flex; flex-wrap:wrap; gap:6px 16px; align-items:center; margin:0 0 8px; font-size:0.84rem;}
   .tset .ml{font-weight:700; min-width:130px; color:var(--ink-warm);}
   .tset label{display:inline-flex; gap:6px; align-items:center; cursor:pointer;}
   .tset .opts{display:flex; flex-direction:column; gap:4px;}
   .tsw{display:inline-flex; gap:6px; align-items:center;}
   .tsw i{position:static; display:inline-block; width:14px; height:14px; padding:0; border-radius:4px;}
-  .tgrid.across .tile.clip .tt{display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:4; overflow:hidden;}
   .tgrid.across .tile .tm .own{color:var(--brick); font-weight:700;}
   .tgrid.across .k-tp.mine .tm .own{color:var(--gold-lifted);}
   .tgrid.across .k-tp .who{margin:0 1px; padding:0 3px; min-width:0;}
@@ -475,24 +475,24 @@
     h1{font-size:1.4rem;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610102247">
+<link rel="stylesheet" href="hub-house.css?v=202610102250">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610102247"></script>
-<script src="hub-tracker.js?v=202610102247"></script>
-<script src="hub-rotation.js?v=202610102247"></script>
-<script src="hub-xlsx.js?v=202610102247"></script>
-<script src="hub-docx.js?v=202610102247"></script>
-<script src="hub-timetable-parse.js?v=202610102247"></script>
-<script src="assignment-defaults.js?v=202610102247"></script>
-<script src="hub-shared.js?v=202610102247"></script>
-<script src="hub-store.js?v=202610102247"></script>
-<script src="hub-say.js?v=202610102247"></script>
-<script src="hub-sync.js?v=202610102247"></script>
+<script src="hub-due.js?v=202610102250"></script>
+<script src="hub-tracker.js?v=202610102250"></script>
+<script src="hub-rotation.js?v=202610102250"></script>
+<script src="hub-xlsx.js?v=202610102250"></script>
+<script src="hub-docx.js?v=202610102250"></script>
+<script src="hub-timetable-parse.js?v=202610102250"></script>
+<script src="assignment-defaults.js?v=202610102250"></script>
+<script src="hub-shared.js?v=202610102250"></script>
+<script src="hub-store.js?v=202610102250"></script>
+<script src="hub-say.js?v=202610102250"></script>
+<script src="hub-sync.js?v=202610102250"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1113,19 +1113,6 @@ function weekAcross(w, n){
   const head = `<div class="hrow thead" style="grid-template-columns:${tpl}"><div class="dh"></div>${cols.map(c => `<div class="ch" data-s="${esc(c.s)}" data-e="${esc(c.e)}"><b>${esc(hubClock(c.s))}</b><wbr><span>–${esc(hubClock(c.e))}</span></div>`).join('')}</div>`;
   return `<div class="tscroll"><div class="tgrid across" style="--ncols:${cols.length}">${head}${w.map(d => rowAcross(d, cols, tpl, places.get(d), TT.days.indexOf(d))).join('')}</div></div>`;
 }
-/* The words in a fixed tile: as large as fit, down to a floor, never a
-   bigger tile. Again whenever the width changes or the fonts arrive. */
-function fitAcross(){
-  document.querySelectorAll('.tgrid.across .tile').forEach(t => {
-    const tt = t.querySelector('.tt'); if (!tt) return;
-    let px = 12.2; tt.style.fontSize = px + 'px'; t.classList.remove('clip');
-    while (t.scrollHeight > t.clientHeight + 1 && px > 8.6) { px -= 0.4; tt.style.fontSize = px + 'px'; }
-    /* still too long at the smallest size: it ends in "…", the whole name on hover */
-    if (t.scrollHeight > t.clientHeight + 1) t.classList.add('clip');
-  });
-}
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitAcross);
-window.addEventListener('resize', () => { clearTimeout(fitAcross.t); fitAcross.t = setTimeout(fitAcross, 120); });
 function rowAcross(day, cols, tpl, place, idx){
   const d = parse(day.date), isToday = day.date === TODAY;
   const dh = `<div class="dh"><div class="dt"${EDIT ? ` data-close="${esc(day.date)}" title="${day.closed ? 'Reopen this day' : 'Close this day (a holiday, a snow day)'}"` : ''}><span class="dow">${DOW[d.getDay()]}</span> <span class="dm">${dm(d)}${isToday ? ' · today' : ''}</span><small>${day.closed ? 'No course' : 'Day ' + (idx + 1)}</small></div>`
@@ -1480,7 +1467,6 @@ function render(){
   wireSettings();
   wireMove();
   wireBoard();
-  fitAcross();
   /* Twenty full days stacked on a phone is a long way to scroll to reach this
      afternoon, so a narrow screen opens on today.
      It has to survive a RE-RENDER. Replacing the grid's innerHTML puts the
