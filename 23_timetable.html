@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610100346">
+<link rel="stylesheet" href="hub-tokens.css?v=202610100403">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -201,6 +201,8 @@
   .tile.dragging{cursor:grabbing; z-index:5; box-shadow:0 14px 26px -12px oklch(30% 0.04 60 / .6);}
   .tile .tt{font-weight:700; line-height:1.25; overflow-wrap:anywhere;}
   .tile .tm{font-size:0.62rem; font-weight:600; color:var(--grey); font-variant-numeric:tabular-nums; margin-top:1px;}
+  .tile .tm .lt{color:var(--teal); font-weight:700; white-space:nowrap;}
+  .k-tp.mine .tm .lt{color:oklch(88% 0.06 170);}
   .tile.sm{padding:1px 7px; display:flex; align-items:center; gap:6px;}
   .tile.sm .tt{font-size:0.66rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .tile.sm .tm{margin:0; white-space:nowrap;}
@@ -403,23 +405,23 @@
     h1{font-size:1.4rem;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610100346">
+<link rel="stylesheet" href="hub-house.css?v=202610100403">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610100346"></script>
-<script src="hub-tracker.js?v=202610100346"></script>
-<script src="hub-rotation.js?v=202610100346"></script>
-<script src="hub-xlsx.js?v=202610100346"></script>
-<script src="hub-docx.js?v=202610100346"></script>
-<script src="hub-timetable-parse.js?v=202610100346"></script>
-<script src="hub-shared.js?v=202610100346"></script>
-<script src="hub-store.js?v=202610100346"></script>
-<script src="hub-say.js?v=202610100346"></script>
-<script src="hub-sync.js?v=202610100346"></script>
+<script src="hub-due.js?v=202610100403"></script>
+<script src="hub-tracker.js?v=202610100403"></script>
+<script src="hub-rotation.js?v=202610100403"></script>
+<script src="hub-xlsx.js?v=202610100403"></script>
+<script src="hub-docx.js?v=202610100403"></script>
+<script src="hub-timetable-parse.js?v=202610100403"></script>
+<script src="hub-shared.js?v=202610100403"></script>
+<script src="hub-store.js?v=202610100403"></script>
+<script src="hub-say.js?v=202610100403"></script>
+<script src="hub-sync.js?v=202610100403"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -820,8 +822,26 @@ function tileHTML(day, x, B, tpIdx, teachers){
   if (room) cls.push('online');
   const joinHTML = room ? `<span class="rm">${esc(room.label)}</span><a class="join" href="${esc(room.url)}" target="_blank" rel="noopener noreferrer">Join</a>` : '';
   const tip = (x.k === 'tp' ? 'TP ' + (day.tp || '') : (x.t || KIND_LABEL[x.k] || '')) + ' · ' + hubClockRange(x.s, x.e) + (x.k === 'input' && TUTORS[+x.by] ? ' · ' + TUTORS[+x.by] : '');
-  return `<div class="${cls.join(' ')}" data-id="${esc(x.id)}" data-date="${esc(day.date)}" data-from="${esc(x.s)}" data-to="${esc(x.e)}" style="top:${top}px;height:${h}px" title="${esc(tip)}">`
-    + `<div class="tt">${title}</div><div class="tm">${esc(hubClockRange(x.s, x.e))}${joinHTML}</div>${EDIT ? '<span class="rs" data-rs="1"></span>' : ''}</div>`;
+  /* THE READER'S OWN TIME, in green (29 Sep 2026; lost when the grid became
+     tiles on 9 Oct, while the line above the grid still promised it -- put
+     back 10 Oct). Only when the reader is somewhere that makes it a
+     different time. The start only, beside the course's own times, as the
+     old grid had it: a line of its own pushed the last line out of the
+     45-minute tiles. Not on the one-line tiles (a break, TP preparation),
+     where it pushed the name out. The whole range is in the tooltip. */
+  const lt = localRange(day.date, x.s, x.e), ls = (lt && cls.indexOf('sm') === -1) ? localStart(day.date, x.s) : '';
+  return `<div class="${cls.join(' ')}" data-id="${esc(x.id)}" data-date="${esc(day.date)}" data-from="${esc(x.s)}" data-to="${esc(x.e)}" style="top:${top}px;height:${h}px" title="${esc(tip + (lt ? ' · ' + lt + ' your time' : ''))}">`
+    + `<div class="tt">${title}</div><div class="tm">${esc(hubClockRange(x.s, x.e))}${ls ? ' <span class="lt">' + esc(ls) + '</span>' : ''}${joinHTML}</div>${EDIT ? '<span class="rs" data-rs="1"></span>' : ''}</div>`;
+}
+function localRange(date, from, to){
+  if (!ZONE || !window.hubTimeFor) return '';
+  const a = hubTimeFor(date, from, ZONE); if (!a || !a.differs) return '';
+  const z = hubTimeFor(date, to, ZONE);
+  return hubClockRange(a.local, (z && z.local) || '');
+}
+function localStart(date, from){
+  const a = (ZONE && window.hubTimeFor) ? hubTimeFor(date, from, ZONE) : null;
+  return (a && a.differs) ? hubClock(a.local) : '';
 }
 function roomLabelOf(x){ return x.room || (x.k === 'tp' ? 'Teaching practice' : x.k === 'input' ? 'Input' : ''); }
 function joinFor(x, group){
@@ -1061,7 +1081,7 @@ function zoneLine(){
      tells them apart is the colour (Ramy, 30 Sep 2026). So the sentence names
      the colour, and the word "green" is itself green, which is the only way a
      sentence about a colour is worth reading. */
-  return `<p class="zone">Times are the course\u2019s own clock in <b>${esc(window.hubZoneName(ZONE))}</b>. The <b class="ingreen">green</b> time under each is yours in <b>${esc(window.hubZoneName(reader))}</b>.</p>`;
+  return `<p class="zone">Times are the course\u2019s own clock in <b>${esc(window.hubZoneName(ZONE))}</b>. The <b class="ingreen">green</b> time beside each is when it starts for you in <b>${esc(window.hubZoneName(reader))}</b>.</p>`;
 }
 
 /* "45 min" from a slot's own two times, so changing a time changes the label

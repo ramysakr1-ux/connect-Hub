@@ -1202,11 +1202,21 @@ window.hubIsReference = function(s){
     if (!courseZone || !reader || courseZone === reader) return out;
     var inst = window.hubZonedInstant(dateISO, hhmm, courseZone);
     if (inst == null) return out;
+    /* `local` is HH:MM on the 24-hour clock, like `course`, so the two
+       compare and a page formats both the same way (hubClock). It was handed
+       back already formatted ("4:30 PM"), and the volunteer's page formatted
+       it again: hubClock read the "4:30" and printed "4:30 AM" for a class at
+       half past four in the afternoon (10 Oct 2026). */
     var local;
-    try { local = window.hubTimeOf(new Date(inst), reader); if (!local) return out; }
-    catch (e) { return out; }
+    try {
+      var parts = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: reader }).formatToParts(new Date(inst));
+      var hh = (parts.find(function(x){ return x.type === 'hour'; }) || {}).value, mi = (parts.find(function(x){ return x.type === 'minute'; }) || {}).value;
+      if (!hh || !mi) return out;
+      local = hh + ':' + mi;
+    } catch (e) { return out; }
+    var pad = function(x){ var m = String(x).match(/^(\d{1,2}):(\d{2})/); return m ? (m[1].length < 2 ? '0' : '') + m[1] + ':' + m[2] : String(x); };
     out.local = local;
-    out.differs = local !== out.course;
+    out.differs = local !== pad(out.course);
     return out;
   };
 })();
