@@ -46,7 +46,10 @@ for (const [file, q, label] of PAGES) {
   const r = await page.evaluate(() => {
     const over = document.documentElement.scrollWidth - document.documentElement.clientWidth;
     const clipped = [...document.querySelectorAll('td, .day, .mat, .who, .seg, .sl, .cert, .fact')]
-      .filter((el) => el.getBoundingClientRect().right > window.innerWidth + 2).length;
+      .filter((el) => el.getBoundingClientRect().right > window.innerWidth + 2)
+      /* Inside a box that scrolls sideways on purpose (the timetable's week
+         grid, 9 Oct) a day past the edge is the next swipe, not clipped. */
+      .filter((el) => { for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) { if (/(auto|scroll)/.test(getComputedStyle(a).overflowX)) return false; } return true; }).length;
     const tiny = [...document.querySelectorAll('button, a')]
       .filter((el) => { const b = el.getBoundingClientRect(); return b.width > 0 && b.height > 0 && b.height < 22; }).length;
     return { over, clipped, tiny, h: document.body.scrollHeight };

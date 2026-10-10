@@ -13,7 +13,7 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610100426">
+<link rel="stylesheet" href="hub-tokens.css?v=202610101203">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -104,6 +104,9 @@
      drops to its own line instead of squeezing the input off the edge. */
   @media(max-width:900px){
     .layout{grid-template-columns:1fr;}
+    /* the one column may shrink to the screen: the editor's widest field
+       had grown it, and the list beside it, 63px past a phone (10 Oct 2026) */
+    .layout > *{min-width:0;}
     .list{display:flex; flex-wrap:wrap; gap:6px;}
     .list-row{flex:1 1 200px;}
     .editor{padding:18px 16px;}
@@ -115,6 +118,10 @@
     .metarow .metahint{padding-left:0;}
     .chip-row{flex-wrap:wrap;}
     .chip-row > input[type=text]{flex:1 1 100% !important;} /* the criteria row sets flex inline */
+    /* A criterion's section menu is as wide as its longest choice (~360px);
+       it and the box holding it may narrow to the screen (10 Oct 2026). */
+    .metarow > div{flex:1 1 100%; min-width:0;}
+    .chip-row > select{flex:1 1 100%; min-width:0; max-width:100%;}
     .section-head{flex-wrap:wrap;}
     .section-head input.label{flex:1 1 100%; order:-1;}
   }
@@ -139,7 +146,7 @@
   .aw-title-tag{margin-left:10px; vertical-align:2px;}
   @media(prefers-reduced-motion:reduce){ .actions .btn{transition:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610100426">
+<link rel="stylesheet" href="hub-house.css?v=202610101203">
 </head>
 <body class="hub-paper">
 <div class="board">
@@ -153,13 +160,13 @@
     <div class="editor" id="editor"></div>
   </div>
 </div>
-<script src="assignment-defaults.js?v=202610100426"></script>
-<script src="hub-due.js?v=202610100426"></script>
-<script src="hub-docx.js?v=202610100426"></script>
-<script src="hub-shared.js?v=202610100426"></script>
-<script src="hub-store.js?v=202610100426"></script>
-<script src="hub-say.js?v=202610100426"></script>
-<script src="hub-sync.js?v=202610100426"></script>
+<script src="assignment-defaults.js?v=202610101203"></script>
+<script src="hub-due.js?v=202610101203"></script>
+<script src="hub-docx.js?v=202610101203"></script>
+<script src="hub-shared.js?v=202610101203"></script>
+<script src="hub-store.js?v=202610101203"></script>
+<script src="hub-say.js?v=202610101203"></script>
+<script src="hub-sync.js?v=202610101203"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -177,6 +184,7 @@ const DEFAULT_DATA = window.CONNECT_HUB_DEFAULT_WORDING;
 let DATA = null;
 try { DATA = JSON.parse(localStorage.getItem(STORE_KEY)); } catch(e) {}
 if (!DATA) DATA = JSON.parse(JSON.stringify(DEFAULT_DATA));
+if (window.hubWordingFilled) hubWordingFilled(DATA);   // an assignment holding only a deadline
 Object.keys(DATA).forEach(k => {
   const a = DATA[k]; if (!a || !a.criteria) return;
   a.criteria = a.criteria.map(c => typeof c === 'string' ? {text:c, sectionIndex:null} : c);
@@ -420,6 +428,7 @@ function updateMeta(key,v){
    date someone thinks they set. */
 function updateDue(v){
   DATA[CURRENT].dueAt = v ? HubDue.fromLocalInput(v) : '';
+  DATA[CURRENT].due = DATA[CURRENT].dueAt;   // the timetable and the dashboard read `due` (hubWordingFilled)
   persist(); renderEditor();
 }
 /* A switch, not a text field: it takes effect at once, like the order arrows,
@@ -655,7 +664,7 @@ renderList(); renderEditor(); renderProseBanner();
    Stores nothing. */
 (function(){
   const list = $('list'), ed = $('editor'); if (!list || !ed) return;
-  const SETTINGS_KEYS = ['dueAt', 'released'];
+  const SETTINGS_KEYS = ['dueAt', 'due', 'released'];
   const wording = a => { if (!a) return ''; const c = JSON.parse(JSON.stringify(a)); SETTINGS_KEYS.forEach(k => delete c[k]);
     (c.criteria || []).forEach((x, i) => { if (typeof x === 'string') c.criteria[i] = { text: x, sectionIndex: null }; }); return JSON.stringify(c); };
   const saved = () => { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || null; } catch (e) { return null; } };

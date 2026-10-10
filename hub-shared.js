@@ -641,6 +641,44 @@ window.hubCopyButton = async function(btn, text){
 // document into the editor.
 // Schema: connect-hub-wording-v1.
 window.HUB_WORDING_KEY = 'connect_assignment_wording_v2';
+/* AN ASSIGNMENT WITH ONLY A DEADLINE (10 Oct 2026). The timetable's import
+   from a sheet wrote {title, due} for an assignment the course had no wording
+   for yet, and every page treated that as the course's wording: the wording
+   editor and the trainee's submission page threw on the missing criteria, and
+   the standard wording never filled in. An assignment that has no sections or
+   no criteria takes them from the standard wording here; whatever the course
+   did set (its title, its deadline, its release) stays. Nothing is written
+   back; the next save from the wording editor carries it to the store. */
+/* ONE DEADLINE, TWO NAMES (10 Oct 2026). The assignment screens -- the wording
+   editor, the trainee's submission, marking, the tracker -- keep a deadline as
+   `dueAt` (24 Sep); the timetable, the dashboard's deadline strip and the demo
+   seed as `due` (29 Sep). Neither saw the other's: a deadline moved on the
+   timetable never reached the trainee, and one set in the wording editor never
+   showed on the timetable. Every writer now sets both; here, a course that
+   holds only one has the other filled from it, so every reader agrees. */
+window.hubWordingFilled = function(w){
+  var D = window.CONNECT_HUB_DEFAULT_WORDING;
+  if (!w || typeof w !== 'object') return w;
+  Object.keys(w).forEach(function(k){
+    var a = w[k];
+    if (a && typeof a === 'object') {
+      if (a.dueAt == null && a.due != null) a.dueAt = a.due;
+      else if (a.due == null && a.dueAt != null) a.due = a.dueAt;
+    }
+  });
+  if (!D) return w;
+  Object.keys(w).forEach(function(k){
+    var a = w[k], d = D[k];
+    if (!a || typeof a !== 'object' || !d) return;
+    if (Array.isArray(a.criteria) && Array.isArray(a.sections)) return;
+    var full = JSON.parse(JSON.stringify(d));
+    Object.keys(a).forEach(function(f){ if (a[f] != null) full[f] = a[f]; });
+    if (!Array.isArray(full.criteria)) full.criteria = JSON.parse(JSON.stringify(d.criteria || []));
+    if (!Array.isArray(full.sections)) full.sections = JSON.parse(JSON.stringify(d.sections || []));
+    w[k] = full;
+  });
+  return w;
+};
 
 // Assignment 5 (the plagiarism reflection) is a centre sanction, not one of
 // the four: it exists for a trainee only once a tutor has set it after a
@@ -1186,6 +1224,16 @@ window.hubIsReference = function(s){
   window.hubDemoToday = function(){
     try { var cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; var d = String(cs.demoToday || ''); return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : ''; }
     catch (e) { return ''; }
+  };
+  /* A DATE, AS THE DAY IT NAMES (10 Oct 2026). A course's start and end and a
+     TP's date are stored as bare dates, "2026-03-02", and new Date() reads a
+     bare date as midnight in London: anywhere west of London that is still
+     the evening before, so a course starting 2 March read "1 March" on the
+     course record, the dashboard and the CELTA 5. A bare date is read here as
+     that day wherever the reader is; anything with a time is left as it is. */
+  window.hubDateOf = function(s){
+    var m = String(s == null ? '' : s).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    return m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(s);
   };
   window.hubToday = function(){
     var d = window.hubDemoToday(); if (d) return d;

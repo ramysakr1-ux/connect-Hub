@@ -86,7 +86,8 @@ const STORE_URL = `http://127.0.0.1:${storeServer.address().port}/exec`;
 
 /* ---------------- the site, pointed at it ---------------- */
 const dir = mkdtempSync(join(tmpdir(), 'lite-cohort-'));
-const files = readdirSync(HERE).filter(f => /\.(html|js|css)$/.test(f) && !/^(check-screens|walk-roles|walk-cohort)\.mjs$/.test(f));
+// .webmanifest too, or every screen's install link 404s into the console (10 Oct 2026).
+const files = readdirSync(HERE).filter(f => /\.(html|js|css|webmanifest)$/.test(f) && !/^(check-screens|walk-roles|walk-cohort)\.mjs$/.test(f));
 for (const f of files) copyFileSync(join(HERE, f), join(dir, f));
 const sp = join(dir, 'hub-store.js'); const src = readFileSync(sp, 'utf8');
 const pointed = src.replace(/((?:var|const|let)\s+URL\s*=\s*)(['"]).*?\2/, `$1"${STORE_URL}"`);
@@ -324,8 +325,17 @@ await step(`weeks 3-4: ${TUTOR_2} takes over on the same course link`, async () 
      handover is a different browser with a different name, not a new link. */
   const T2 = await ctx('tutor2');
   await T2.p.goto(tutorUrl('5_tutor_dashboard.html'), { waitUntil: 'domcontentloaded' }); await settle(T2.p, 3500);
-  const field = await T2.p.$('#tutorName'); must(field, 'no tutor-name field on the dashboard');
-  await field.fill(TUTOR_2); await settle(T2.p, 600);
+  /* Since 7 Oct a tutor joining a course someone else set up lands on a
+     welcome that asks for the name (#joinName) and hides the dashboard's own
+     box until "Take me to the page" -- so that is what she does. */
+  const join = await T2.p.$('#joinName');
+  if (join && await join.isVisible()) {
+    await join.fill(TUTOR_2); await settle(T2.p, 400);
+    await T2.p.click('#joinGo'); await settle(T2.p, 900);
+  } else {
+    const field = await T2.p.$('#tutorName'); must(field, 'no tutor-name field on the dashboard');
+    await field.fill(TUTOR_2); await settle(T2.p, 600);
+  }
   const body = await text(T2.p);
   for (const c of COHORT) must(body.includes(c.name), `${TUTOR_2} cannot see ${c.name}`);
   const first = await T.p.evaluate(() => localStorage.getItem('chub:tutorName'));

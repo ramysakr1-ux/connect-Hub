@@ -109,7 +109,8 @@ const STORE_URL = `http://127.0.0.1:${storeServer.address().port}/exec`;
 
 /* ---------------- the site, pointed at it ---------------- */
 const dir = mkdtempSync(join(tmpdir(), 'lite-walk-'));
-const files = readdirSync(HERE).filter(f => /\.(html|js|css)$/.test(f) && !/^(check-screens|walk-roles)\.mjs$/.test(f));
+// .webmanifest too: without them every screen's install link 404'd into the console (10 Oct 2026).
+const files = readdirSync(HERE).filter(f => /\.(html|js|css|webmanifest)$/.test(f) && !/^(check-screens|walk-roles)\.mjs$/.test(f));
 for (const f of files) copyFileSync(join(HERE, f), join(dir, f));
 const sp = join(dir, 'hub-store.js'); const src = readFileSync(sp, 'utf8');
 const pointed = src.replace(/((?:var|const|let)\s+URL\s*=\s*)(['"]).*?\2/, `$1"${STORE_URL}"`);

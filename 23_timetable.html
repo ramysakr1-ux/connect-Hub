@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610100426">
+<link rel="stylesheet" href="hub-tokens.css?v=202610101203">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -405,23 +405,24 @@
     h1{font-size:1.4rem;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610100426">
+<link rel="stylesheet" href="hub-house.css?v=202610101203">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610100426"></script>
-<script src="hub-tracker.js?v=202610100426"></script>
-<script src="hub-rotation.js?v=202610100426"></script>
-<script src="hub-xlsx.js?v=202610100426"></script>
-<script src="hub-docx.js?v=202610100426"></script>
-<script src="hub-timetable-parse.js?v=202610100426"></script>
-<script src="hub-shared.js?v=202610100426"></script>
-<script src="hub-store.js?v=202610100426"></script>
-<script src="hub-say.js?v=202610100426"></script>
-<script src="hub-sync.js?v=202610100426"></script>
+<script src="hub-due.js?v=202610101203"></script>
+<script src="hub-tracker.js?v=202610101203"></script>
+<script src="hub-rotation.js?v=202610101203"></script>
+<script src="hub-xlsx.js?v=202610101203"></script>
+<script src="hub-docx.js?v=202610101203"></script>
+<script src="hub-timetable-parse.js?v=202610101203"></script>
+<script src="assignment-defaults.js?v=202610101203"></script>
+<script src="hub-shared.js?v=202610101203"></script>
+<script src="hub-store.js?v=202610101203"></script>
+<script src="hub-say.js?v=202610101203"></script>
+<script src="hub-sync.js?v=202610101203"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1065,6 +1066,7 @@ function wireMove(){
     const local = window.HubDue ? HubDue.toLocalInput(a.due) : '';
     const time = local ? local.slice(11, 16) : '23:59';
     a.due = window.HubDue ? HubDue.fromLocalInput(sel.value + 'T' + time) : sel.value;
+    a.dueAt = a.due;   // the assignment screens read `dueAt` (hubWordingFilled)
     try { localStorage.setItem('connect_assignment_wording_v2', JSON.stringify(w)); } catch (e) {}
     MOVING = null; note = 'Deadline moved'; render();
   });
@@ -1610,6 +1612,7 @@ function moveDue(key, date){
   const local = window.HubDue ? HubDue.toLocalInput(a.due) : '';
   const time = local ? local.slice(11, 16) : '23:59';
   a.due = window.HubDue ? HubDue.fromLocalInput(date + 'T' + time) : date;
+  a.dueAt = a.due;   // the assignment screens read `dueAt` (hubWordingFilled)
   try { localStorage.setItem('connect_assignment_wording_v2', JSON.stringify(w)); } catch (e) {}
   note = (a.title || key.toUpperCase()) + ' is now due ' + dayName(date) + ' — deadlines are on the assignment, so the course sees this at once';
   render();
@@ -2050,10 +2053,15 @@ function applyReview(){
   r.questions.filter(q => q.kind === 'due' && !skipRow[q.row]).forEach(q => {
     const a = r.answers[q.id]; const key = a === 'yes' ? q.key : String(a || '').indexOf('key:') === 0 ? a.slice(4) : '';
     if (!key) return;
-    const w = rec('connect_assignment_wording_v2') || {};
-    w[key] = w[key] || { title: r.titles[key] };
+    /* A course with no wording yet starts from the standard wording, not
+       from a bare deadline: {title, due} alone broke the wording editor and
+       the trainee's submission page (10 Oct 2026). */
+    const D = window.CONNECT_HUB_DEFAULT_WORDING;
+    const w = rec('connect_assignment_wording_v2') || (D ? JSON.parse(JSON.stringify(D)) : {});
+    w[key] = w[key] || (D && D[key] ? JSON.parse(JSON.stringify(D[key])) : { title: r.titles[key] });
     const time = q.time || '23:59';
     w[key].due = window.HubDue ? HubDue.fromLocalInput(q.date + 'T' + time) : q.date;
+    w[key].dueAt = w[key].due;   // the assignment screens read `dueAt` (hubWordingFilled)
     try { localStorage.setItem('connect_assignment_wording_v2', JSON.stringify(w)); } catch (e) {}
     /* one date per assignment (Lite has no per-group deadlines): a sheet that
        gives one for each set ends up with the later one, and the summary says so */
