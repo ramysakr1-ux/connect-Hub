@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610102318">
+<link rel="stylesheet" href="hub-tokens.css?v=202610102328">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -329,20 +329,20 @@
   @media(prefers-reduced-motion:reduce){ .tbl select.fm, .fm-pips i{transition:none;} }
   @media print{ .fm-key, .fm-pips{display:none;} .tbl select.fm{border-left-width:1px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610102318">
+<link rel="stylesheet" href="hub-house.css?v=202610102328">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610102318"></script>
-<script src="hub-tracker.js?v=202610102318"></script>
-<script src="hub-rotation.js?v=202610102318"></script>
-<script src="hub-shared.js?v=202610102318"></script>
-<script src="hub-store.js?v=202610102318"></script>
-<script src="hub-say.js?v=202610102318"></script>
-<script src="hub-sync.js?v=202610102318"></script>
+<script src="hub-due.js?v=202610102328"></script>
+<script src="hub-tracker.js?v=202610102328"></script>
+<script src="hub-rotation.js?v=202610102328"></script>
+<script src="hub-shared.js?v=202610102328"></script>
+<script src="hub-store.js?v=202610102328"></script>
+<script src="hub-say.js?v=202610102328"></script>
+<script src="hub-sync.js?v=202610102328"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -583,7 +583,14 @@ function build(keepEdits){
       });
     }
     out.groups[g.group] = rows;
-    out.sets[g.group] = r.sets.map(s => s.map(p => p.token));
+    /* By place, gaps kept: [A, null, C] when B has left, so the others keep
+       their letters and days when the points are dealt again (hub-rotation). */
+    out.sets[g.group] = r.sets.map((s, si) => {
+      const a = [null, null, null];
+      s.forEach(p => { const k = p.idx - si * 3; if (k >= 0 && k < 3) a[k] = p.token; else a.push(p.token); });
+      while (a.length && a[a.length - 1] === null) a.pop();
+      return a;
+    });
   });
   P = out;
   persist(usedAny ? (Object.keys(lib).length > 1 ? 'Built from the sets' : 'Built from the set') : 'Rotation built');
@@ -930,8 +937,9 @@ function render(){
        belong on the same table as rows -- marked plainly as not theirs. */
     const sets = (P.sets || []).filter(x => Array.isArray(x) && x.length);
     const flat = sets.reduce((a, b) => a.concat(b), []);
-    const LETTERS = 'ABCDEFGHIJKL';
-    const letterOf = t => LETTERS[flat.indexOf(t)] || '';
+    /* fixed places (hub-rotation): the first set is A B C, the second D E F,
+       so a set of two on the second day is D and E, not C and D */
+    const letterOf = t => { for (let si = 0; si < sets.length; si++) { const i = sets[si].indexOf(t); if (i >= 0) return 'ABCDEF'[si * 3 + i] || String(si * 3 + i + 1); } return ''; };
     const mySet = sets.find(st => st.indexOf(me.token) !== -1) || (me.token ? [me.token] : []);
     const mySetIndex = sets.indexOf(mySet);
     const order = (st, tp) => { const n = st.length; if (!n) return st; const k = ((tp - 1) % n + n) % n; return st.slice(k).concat(st.slice(0, k)); };
@@ -999,7 +1007,7 @@ function render(){
     const pageNums = c => { const out = []; String((c.book || {}).ref || '').replace(/\bpp?\.?\s*(\d{1,3})/gi, (_, n) => { out.push(n); return _; }); return out; };
 
     const tables = Array.from({ length: TPS }, (_, i) => i + 1).map(tp => {
-      const teaching = order(mySet, tp);
+      const teaching = order(mySet.filter(Boolean), tp);
       const date = dayFor(tp);
       if (!teaching.some(t => ((rows[t] || {})['tp' + tp] || {}).aim)) return '';
       if (state(tp) === 'later') { hidden++; return ''; }
@@ -1134,9 +1142,9 @@ function render(){
     return `<section class="group"><h2>Group ${esc(g.group || '—')} <small>${g.people.length} trainee${g.people.length===1?'':'s'}</small></h2>
       <p class="sets">Teaching sets: ${sets.map(s => '<b>' + esc(R.setName(s)) + '</b>').filter(Boolean).join(' and ')} — they take alternate days, so each trainee teaches every other day.</p>
       ${lettered.length > 1 ? `<details class="letters"><summary>Change who is in each set</summary>
-        <p class="hint">Letters go in order and the first ${sets[0].length} teach on the first day. Lite gives them out in name order until you choose them here; choosing a letter that is taken swaps the two trainees.</p>
+        <p class="hint">A, B and C teach on the first day, D, E and F on the next. A letter nobody has is a free place. Choosing a letter that is taken swaps the two trainees.</p>
         <div class="lrow">${lettered.map(p => `<label>${esc(p.name || '')} <select data-letter="${esc(g.group)}" data-lt="${esc(p.token)}">${
-          lettered.map((_, i) => `<option value="${i}"${i === p.idx ? ' selected' : ''}>${esc(R.LETTERS[i] || String(i + 1))}</option>`).join('')}</select></label>`).join('')}</div>
+          R.LETTERS.split('').map((L, i) => `<option value="${i}"${i === p.idx ? ' selected' : ''}>${esc(L)}${lettered.some(o => o.idx === i && o.token !== p.token) ? '' : i === p.idx ? '' : ' · free'}</option>`).join('')}</select></label>`).join('')}</div>
       </details>` : ''}
       <div class="wrap"><table class="tbl ord stack"><tr><th>Teaching order</th>${Array.from({length:TPS},(_,i)=>`<th>TP ${i+1}</th>`).join('')}</tr>
         ${sets.filter(st => st.length).map(st => `<tr><td class="who">${esc(R.setName(st))}</td>${
@@ -1183,13 +1191,18 @@ function render(){
     const g = el.dataset.letter, t = el.dataset.lt, ni = +el.value;
     const grp = groups().find(x => x.group === g);
     if (!grp) return;
+    /* places, not an order: settings.slotOf (token -> letter). Moving to a free
+       letter just moves; a taken one swaps the two. */
     const lettered = R.lettersFor(grp.people);
-    const order = lettered.map(p => p.token);
-    const oi = order.indexOf(t);
-    if (oi < 0 || ni === oi || ni < 0 || ni >= order.length) return;
-    order[oi] = order[ni]; order[ni] = t;                       // the trainee who had that letter takes the old one
+    const at = {}; lettered.forEach(p => { at[p.token] = p.idx; });
+    const oi = at[t];
+    if (oi === undefined || ni === oi || ni < 0 || ni >= R.LETTERS.length) return;
+    const other = Object.keys(at).find(k => at[k] === ni);
+    if (other) at[other] = oi;
+    at[t] = ni;
     const S = rec('connect_course_settings') || {};
-    S.letterOrder = (Array.isArray(S.letterOrder) ? S.letterOrder : []).filter(x => order.indexOf(x) < 0).concat(order);
+    S.slotOf = Object.assign({}, S.slotOf || {});
+    Object.keys(at).forEach(k => { S.slotOf[k] = R.LETTERS[at[k]] || ''; });
     try { localStorage.setItem('connect_course_settings', JSON.stringify(S)); }
     catch (e) { note = 'Not saved — ' + ((e && e.message) || e); render(); return; }
     build(true);

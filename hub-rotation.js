@@ -79,33 +79,75 @@
      with the TP points, which only the TP points screen writes. (A tutor's copy
      keys them by group; the copy a trainee is handed is their group's bare
      list.) */
-  function fixedOrder() {
-    try {
-      const ls = root.localStorage;
-      const s = ls && JSON.parse(ls.getItem('connect_course_settings') || 'null');
-      if (s && Array.isArray(s.letterOrder) && s.letterOrder.length) return s.letterOrder.map(String);
-      const p = ls && JSON.parse(ls.getItem('connect_tp_points_v1') || 'null');
-      const sets = p && p.sets;
-      if (!sets) return null;
-      const flat = [];
-      (Array.isArray(sets) ? [sets] : Object.values(sets)).forEach(g => (g || []).forEach(set => (set || []).forEach(t => flat.push(String(t)))));
-      return flat.length ? flat : null;
-    } catch (e) { return null; }
+  /* LETTERS ARE FIXED PLACES (Ramy, 10 Oct 2026). A group has six places, A B C
+     on the first day and D E F on the next -- the shape a TP point set is
+     written in -- and a group of five simply leaves F empty. Lite used to split
+     a group by head count, so four people were AB and CD and a fifth joining
+     made it ABC and DE: the old C moved to the other day, with their order and
+     their deadlines, and nobody was told. Now four are AB and DE, and anyone
+     joining takes a free place in the smaller set: nobody already placed moves.
+     Where a person sits is read, first to last, from the places a tutor chose
+     (settings.slotOf, token -> letter), the old letter order, the sets as last
+     dealt, and only for a group never placed, from name order. */
+  const SLOTS = 6;
+  function readJSON(k){ try { const ls = root.localStorage; return ls ? JSON.parse(ls.getItem(k) || 'null') : null; } catch (e) { return null; } }
+  function knownPlaces(people){
+    const toks = people.map((p) => String(p.token));
+    const here = (t) => toks.indexOf(String(t)) !== -1;
+    const out = {};
+    const s = readJSON('connect_course_settings');
+    if (s && s.slotOf && typeof s.slotOf === 'object') {
+      Object.keys(s.slotOf).forEach((t) => { const i = LETTERS.indexOf(String(s.slotOf[t])); if (here(t) && i >= 0 && Object.values(out).indexOf(i) === -1) out[t] = i; });
+      if (Object.keys(out).length) return out;
+    }
+    let sets = null;
+    if (s && Array.isArray(s.letterOrder) && s.letterOrder.length) {
+      const o = s.letterOrder.map(String).filter(here), h = Math.ceil(o.length / 2);
+      if (o.length) sets = [o.slice(0, h), o.slice(h)];
+    }
+    if (!sets) {
+      const p = readJSON('connect_tp_points_v1'), all = p && p.sets;
+      const pairs = !all ? [] : Array.isArray(all) ? [all] : Object.values(all);
+      let best = null, score = 0;
+      pairs.forEach((pr) => { const n = (pr || []).reduce((a, set) => a.concat(set || []), []).filter(Boolean).map(String).filter(here).length; if (n > score) { score = n; best = pr; } });
+      /* the dealt sets keep their gaps ([A, null, C] once B has left): read each
+         person's place where it stands, so nobody slides into a free one */
+      if (best) { [0, 1].forEach((si) => (best[si] || []).forEach((t, i) => { if (t && here(t) && i < 3) out[String(t)] = si * 3 + i; })); return out; }
+    }
+    if (sets) sets.forEach((set, si) => set.forEach((t, i) => { if (i < 3) out[t] = si * 3 + i; }));
+    return out;
   }
   function lettersFor(people) {
-    const order = fixedOrder();
-    const at = (p) => { const i = order ? order.indexOf(String(p.token)) : -1; return i < 0 ? 1e9 : i; };
-    const sorted = people.slice().sort((a, b) => (at(a) - at(b)) || String(a.name || '').localeCompare(String(b.name || '')));
-    return sorted.map((p, i) => Object.assign({}, p, { letter: LETTERS[i] || String(i + 1), idx: i }));
+    const known = knownPlaces(people);
+    const taken = {};
+    Object.keys(known).forEach((t) => { taken[known[t]] = true; });
+    const place = Object.assign({}, known);
+    const byName = (a, b) => String(a.name || '').localeCompare(String(b.name || ''));
+    const rest = people.filter((p) => place[String(p.token)] === undefined).slice().sort(byName);
+    let over = SLOTS;
+    if (!Object.keys(known).length) {
+      /* a group never placed: name order, the first half on the first day */
+      const h = Math.ceil(Math.min(rest.length, SLOTS) / 2);
+      rest.forEach((p, i) => { place[String(p.token)] = i < h ? i : i - h < 3 ? 3 + (i - h) : over++; });
+    } else {
+      /* a newcomer takes the first free place in the smaller set */
+      rest.forEach((p) => {
+        const n0 = [0, 1, 2].filter((i) => taken[i]).length, n1 = [3, 4, 5].filter((i) => taken[i]).length;
+        const order = n0 <= n1 ? [0, 1, 2, 3, 4, 5] : [3, 4, 5, 0, 1, 2];
+        let i = order.find((k) => !taken[k]);
+        if (i === undefined) i = over++;
+        taken[i] = true; place[String(p.token)] = i;
+      });
+    }
+    return people.map((p) => { const i = place[String(p.token)]; return Object.assign({}, p, { letter: LETTERS[i] || String(i + 1), idx: i }); })
+      .sort((a, b) => a.idx - b.idx);
   }
 
-  /* Two teaching sets that take alternate days. Six splits 3 and 3, five
-     splits 3 and 2, four splits 2 and 2 -- the first set is never smaller,
-     because it teaches first. */
+  /* Two teaching sets that take alternate days: A B C, then D E F. A place
+     past F (a seventh person, which 7.1 does not allow) goes with the second. */
   function setsFor(people) {
     const lettered = lettersFor(people);
-    const half = Math.ceil(lettered.length / 2);
-    return [lettered.slice(0, half), lettered.slice(half)];
+    return [lettered.filter((p) => p.idx < 3), lettered.filter((p) => p.idx >= 3)];
   }
   /* What a set is CALLED: its members' letters. "ABC", "DE". Never "Day A". */
   const setName = (set) => set.map((p) => p.letter).join('');
