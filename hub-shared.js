@@ -525,24 +525,28 @@ window.hubReserveForBar = function(selector){
     var h = 0;
     try { h = getComputedStyle(bar).position === 'fixed' ? bar.getBoundingClientRect().height : 0; } catch(e){ return; }
     if (h > 0) {
-      /* On a phone the dictation pill rides a row ABOVE the bar (hub-house.css,
-         max-width:560px), so the reserve has to clear that too, or the last
-         field's corner and the say-something pill scroll to a stop behind
-         Dictate (walk-with-data.mjs, 6 Oct 2026). The pill is built by the
-         page's own script, which has run by the hub:ready fit below. */
-      var lift = 0;
-      try {
-        var dict = document.querySelector('.dictbar');
-        if (dict && window.matchMedia && matchMedia('(max-width:560px)').matches) {
-          /* it shares the sync pill's row now, just above the bar (10 Oct 2026) */
-          var dh = dict.getBoundingClientRect().height; if (dh > 0) lift = Math.ceil(dh);
-        }
-      } catch (e) {}
-      document.documentElement.style.setProperty('--bar-reserve', Math.ceil(h + GAP + lift) + 'px');
+      var root = document.documentElement;
       /* The sync pill is fixed to the bottom-left corner, which on a screen
          with an action bar is underneath it -- and on the plan, on top of
          Turn in (23 Sep 2026). It rides above the bar instead. */
-      document.documentElement.style.setProperty('--sync-bottom', Math.ceil(h + 14) + 'px');
+      root.style.setProperty('--sync-bottom', Math.ceil(h + 14) + 'px');
+      /* The reserve clears whatever floats above the bar, measured where it
+         actually sits once --sync-bottom is set: the dictation controls and
+         the sync pill. Worked out by width before -- the phone's row was
+         counted and a tablet's was not, so on an iPad in Chrome, Dictate sat
+         on the last line of the page, the credit (10 Oct 2026; the phone
+         case was walk-with-data.mjs, 6 Oct). */
+      var need = h + GAP;
+      try {
+        var vh = window.innerHeight;
+        [document.querySelector('.dictbar'), document.getElementById('hubSync')].forEach(function(el){
+          if (!el) return;
+          var r = el.getBoundingClientRect(); if (!r.height) return;
+          if (el.id === 'hubSync' && getComputedStyle(el).opacity === '0') return;
+          need = Math.max(need, vh - r.top + 14);
+        });
+      } catch (e) {}
+      root.style.setProperty('--bar-reserve', Math.ceil(need) + 'px');
     } else {
       document.documentElement.style.removeProperty('--bar-reserve');
       document.documentElement.style.removeProperty('--sync-bottom');
