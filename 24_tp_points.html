@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610111049">
+<link rel="stylesheet" href="hub-tokens.css?v=202610111248">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -231,6 +231,7 @@
   .pg figcaption{font-size:0.72rem; font-weight:600; color:var(--grey); margin:0 0 4px;}
   .pg iframe{width:100%; height:620px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper); display:block;}
   .pg img{width:100%; height:auto; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper); display:block;}
+  .pg img.forprint{display:none;}
   .pgopen{display:inline-block; margin:4px 0 0; font-size:0.72rem; font-weight:600; color:var(--teal); text-decoration:none;}
   .printme.pdf{text-decoration:none; display:inline-block;}
   .pg.ref{position:relative; flex:1 1 240px; max-width:340px;}
@@ -279,9 +280,9 @@
     border-radius:999px; padding:3px 10px; cursor:pointer;}
   .printme:hover{border-color:var(--teal);}
   /* Printing gives them their own lesson and nothing else: the other two, the
-     practices already taught and the chrome come off the page. The pages are
-     Drive previews and will not print from here -- the page link opens in
-     Drive, which has its own print. */
+     practices already taught and the chrome come off the page. On screen the
+     pages are Drive's viewer; on paper the viewer is hidden and the page's
+     image prints in its place. */
   @media print{
     .back,.relbar,#hubSync,.printme,.others,.day.past,.req,.lede,.ok,.pgopen{display:none !important;}
     body{background:#fff;}
@@ -292,7 +293,7 @@
        split across two. A Drive preview frame cannot print at all, so it is
        hidden rather than left as a grey rectangle. */
     .pg{break-inside:avoid; page-break-inside:avoid; max-width:none; flex:1 1 100%;}
-    .pg img{width:100%; max-height:96vh; object-fit:contain; border:0;}
+    .pg img, .pg img.forprint{display:block; width:100%; max-height:96vh; object-fit:contain; border:0;}
     .pg iframe{display:none !important;}
     .pgs{display:block;}
     /* "Print the pages": the scans alone, one to a sheet, nothing else */
@@ -333,20 +334,20 @@
   @media(prefers-reduced-motion:reduce){ .tbl select.fm, .fm-pips i{transition:none;} }
   @media print{ .fm-key, .fm-pips{display:none;} .tbl select.fm{border-left-width:1px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610111049">
+<link rel="stylesheet" href="hub-house.css?v=202610111248">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610111049"></script>
-<script src="hub-tracker.js?v=202610111049"></script>
-<script src="hub-rotation.js?v=202610111049"></script>
-<script src="hub-shared.js?v=202610111049"></script>
-<script src="hub-store.js?v=202610111049"></script>
-<script src="hub-say.js?v=202610111049"></script>
-<script src="hub-sync.js?v=202610111049"></script>
+<script src="hub-due.js?v=202610111248"></script>
+<script src="hub-tracker.js?v=202610111248"></script>
+<script src="hub-rotation.js?v=202610111248"></script>
+<script src="hub-shared.js?v=202610111248"></script>
+<script src="hub-store.js?v=202610111248"></script>
+<script src="hub-say.js?v=202610111248"></script>
+<script src="hub-sync.js?v=202610111248"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -780,9 +781,17 @@ function pageFigures(c, mine){
        will hotlink, and sz=w1600 is capped at the file's own width, so a page
        scanned at 150 dpi comes back at its full 1240x1755. */
     const src = 'https://drive.google.com/thumbnail?id=' + id + '&sz=w1600';
+    /* THE FRAME ON SCREEN, THE PICTURE ON PAPER (11 Oct 2026). Ramy: "the scan
+       copies ... were sitting inside some kind of a frame ... you can move it
+       around with the cursor. It was very clear." The 4 Oct switch to a flat
+       <img> fixed printing and took the viewer away with it. Both now: Drive's
+       own viewer for reading on screen, where the page scrolls and zooms in
+       place, and the image for the printer, which never prints a frame. The
+       image is not lazy: a hidden lazy image is never fetched, and would print
+       blank. */
     return `<figure class="pg${mine ? '' : ' ref'}"><figcaption>${esc(f.name || 'Page')}${mine ? '' : ' — not yours'}</figcaption>
-      <img src="${src}" alt="${esc(f.name || 'Page')}" loading="lazy"
-           onerror="this.onerror=null;this.insertAdjacentHTML('afterend','&lt;iframe src=&quot;https://drive.google.com/file/d/${id}/preview&quot; loading=&quot;lazy&quot;&gt;&lt;/iframe&gt;');this.remove();">
+      <iframe src="https://drive.google.com/file/d/${id}/preview" loading="lazy" title="${esc(f.name || 'Page')}"></iframe>
+      <img class="forprint" src="${src}" alt="${esc(f.name || 'Page')}" onerror="this.remove();">
       <a class="pgopen" href="https://drive.google.com/file/d/${id}/view" target="_blank" rel="noopener">Open in Drive</a></figure>`;
   }).filter(Boolean).join('');
   return body ? `<div class="pgs">${body}</div>` : '';
