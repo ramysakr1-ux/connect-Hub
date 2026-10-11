@@ -462,10 +462,13 @@ above:     { text:'ABOVE STANDARD', bg:'#F1E9F5', color:'#7A4E96' },
 none:      { text:'NOT STARTED', bg:'#EEF2F5', color:'var(--grey)' }
 };
 function statusFor(c){ return STATE_CHIP[readCandidate(c).state]; }
-function buildCandidate(name, groupKey){
+function buildCandidate(name, groupKey, place){
 var id = slug(groupKey + '-' + name);
 var c = DATA[id] || (DATA[id] = {});
-var initials = name.split(' ').map(function(w){return w[0];}).slice(0,2).join('');
+// The chip beside the name is the trainee's teaching-set letter, A to F in
+// roster order (ABC teach the A day, DEF the B day) -- Ramy, 11 Oct 2026:
+// "next to the name, instead of the initials, let's use the letters a b c d e f".
+var initials = 'ABCDEF'.charAt(place || 0) || name.split(' ').map(function(w){return w[0];}).slice(0,2).join('');
 var wrap = document.createElement('div');
 wrap.className = 'cand' + (openState[id] ? ' open' : '');
 var head = document.createElement('div');
@@ -770,7 +773,7 @@ head.innerHTML = '<h2>'+groupHeading(key)+'</h2><span class="n">'+names.length+'
 head.addEventListener('click', function(){ g.classList.toggle('collapsed'); });
 g.appendChild(head);
 var roster = document.createElement('div'); roster.className='roster';
-names.forEach(function(n){ roster.appendChild(buildCandidate(n, key)); });
+names.forEach(function(n, i){ roster.appendChild(buildCandidate(n, key, i)); });
 g.appendChild(roster);
 return g;
 }

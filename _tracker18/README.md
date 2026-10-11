@@ -23,7 +23,7 @@ groups B1 for TP1–4, A1 from TP5; null restores C/17's swapping levels).
 - Data sheet `1e-m_PWv3i6qdFZenCFBk5OJggGUhAjHO7jsod3PEG6s` (C/18 folder)
 
     node test.mjs        # Code.js in a VM + index.html in Chromium
-    npx @google/clasp@latest push --force
+    npx @google/clasp@latest -P "$PWD/.clasp.json" push --force   # .claspignore keeps history/ out; the 11 Oct push without it put two old files in the project
     npx @google/clasp@latest deploy -i AKfycbzgWOkURwyfR_0rKXf82milZ5Lfm4VsuhX91hc2voDNUWHsnAdJnYx5d5YMSSrPhI9w -d "what changed"
 
 Never a bare `clasp deploy`: it mints a new URL and the button page goes stale.
