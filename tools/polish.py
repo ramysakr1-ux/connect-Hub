@@ -70,6 +70,22 @@ def flatten_edge(a, side, span_frac=0.10):
     if ref < 60: return False
     dip = bs < ref - 15
     if dip.sum() < 8 or bs.min() > 0.85 * ref: return False
+    # A DIP THAT TOUCHES THE EDGE IS THE GUTTER ITSELF -- the curve of the page
+    # into the spine, staples and all. Lightening it left the seam showing
+    # (Empower B1 p. 10, seen on Lite, 11 Oct 2026); it is cut off instead, and
+    # only a dip that sits inside the page (Roadmap's stripe) is lifted.
+    lead = 0
+    while lead < len(dip) and dip[lead]: lead += 1
+    if lead == 0 and len(dip) > 2 and dip[1] and dip[2]: lead = 2          # a one-pixel white border before it
+    while lead < len(dip) and dip[lead]: lead += 1
+    # Only a SIDE is cut, at most 5% of the width, and only when the strip is
+    # grey: a dark header or a photograph along the top or bottom of a page
+    # dipped the same way and was cut off on seventy pages (11 Oct 2026).
+    if lead >= 8 and horizontal and lead <= int(W * 0.05):
+        cols = idx[:lead]
+        strip = a[:, min(cols):max(cols) + 1, :]
+        if float((strip.max(axis=2) - strip.min(axis=2)).mean()) < 40:
+            return ('cut', min(lead + 3, n))
     for j, i in enumerate(idx):
         if not dip[j]: continue
         f = min(2.2, max(1.0, ref / max(bs[j], 1.0)))
@@ -136,9 +152,20 @@ def polish(path, book=None, page=None, out=None, quality=None):
             did.append(f'deskew {best[1]:+.2f} -> {best_s:.2f}')
 
     # the shadow towards the gutter, lifted before any band is measured
-    lifted = [sd for sd in ('left', 'right', 'top', 'bottom') if flatten_edge(a, sd)]
-    if lifted:
-        img = Image.fromarray(a.astype(np.uint8)); g = a.mean(axis=2); did.append('shadow ' + ','.join(lifted))
+    lifted, cut = [], {}
+    for sd in ('left', 'right', 'top', 'bottom'):
+        r_ = flatten_edge(a, sd)
+        if r_ is True: lifted.append(sd)
+        elif r_: cut[sd] = r_[1]
+    if lifted or cut:
+        img = Image.fromarray(a.astype(np.uint8))
+        if cut:
+            H, W = a.shape[:2]
+            img = img.crop((cut.get('left', 0), cut.get('top', 0), W - cut.get('right', 0), H - cut.get('bottom', 0)))
+            a = np.asarray(img, dtype=np.float32)
+        g = a.mean(axis=2)
+        if lifted: did.append('shadow ' + ','.join(lifted))
+        if cut: did.append('gutter ' + ','.join(f'{k}{v}' for k, v in cut.items()))
 
     # bands
     sat = a.max(axis=2) - a.min(axis=2)
