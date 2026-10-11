@@ -13,168 +13,289 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610112313">
+<link rel="stylesheet" href="hub-tokens.css?v=202610112339">
 <style>
+  /* ---- The assignment editor, v2 (11 Oct 2026) -------------------------------
+     From the designer's handoff "Assignment editor v2". The page behind Edit
+     wording on Course admin; Course admin itself is unchanged. What it stores
+     is unchanged too (plus `savedAt`); this is how the page is laid out and read.
+     The rule that matters most: a section's edge is coloured by its TYPE, and
+     gold is kept for one thing only, wording that is no longer Connect's.
+     The desk is a step darker than the house's and the cards are paper, as
+     the design draws them, so the cards stand off it. Local to this page. */
   *{box-sizing:border-box;}
-  a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
-  body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:36px 20px 80px;
-    display:flex; justify-content:center;}
-  .board{max-width:1040px; width:100%;}
-  .back{display:inline-block; margin-bottom:16px; font-size:0.85rem; text-decoration:none; font-weight:600;}
+  a{color:var(--teal);} a:hover{color:var(--ink-warm);}
+  body{margin:0; font-family:'Karla',sans-serif; font-size:15px; line-height:1.6; color:var(--ink); background:var(--sand-deep); -webkit-font-smoothing:antialiased;}
+  .board{max-width:1180px; margin:0 auto; padding:28px 20px 120px;}
+  button{font-family:inherit; color:inherit;}
+  .lnk{background:none; border:none; padding:2px 4px; margin:0 -4px; border-radius:6px; font-size:0.82rem; font-weight:600; color:var(--teal); cursor:pointer;}
+  .xbtn{background:none; border:none; width:28px; height:28px; border-radius:6px; color:oklch(70% 0.014 80); font-size:0.95rem; cursor:pointer; flex:none;}
+  .xbtn:hover{color:var(--brick);}
+
+  /* the top line: back, and one pill per assignment */
+  .topline{display:flex; align-items:center; justify-content:space-between; gap:16px; margin:0 0 18px; flex-wrap:wrap;}
+  .back{font-size:0.85rem; font-weight:600; text-decoration:none;}
   .back:hover{text-decoration:underline;}
-  h1{font-family:'Newsreader',Georgia,serif; font-size:1.6rem; margin:0 0 4px;}
-  .sub{color:var(--grey); font-size:0.9rem; margin:0 0 24px; max-width:640px; line-height:1.55;}
-  .layout{display:grid; grid-template-columns:220px 1fr; gap:20px; align-items:start;}
-  .list{background:var(--card); border-radius:10px; padding:8px; box-shadow:0 1px 2px rgba(0,0,0,0.03);}
-  .list button{display:block; width:100%; text-align:left; background:none; border:none; border-radius:8px;
-    padding:12px 14px; font-family:'Karla',sans-serif; font-size:0.88rem; font-weight:600; color:var(--ink); cursor:pointer;}
-  .list button.active{background:var(--teal); color:var(--paper);}
-  .list button:not(.active):hover{background:var(--sand);}
-  .list button.missing{color:var(--grey); font-weight:500;}
-  .editor{background:var(--card); border-radius:10px; padding:24px 28px; box-shadow:0 1px 2px rgba(0,0,0,0.03);}
-  .editor h2{font-family:'Newsreader',Georgia,serif; font-size:1.25rem; margin:0 0 2px;}
-  .notice{font-size:0.8rem; color:var(--grey); margin:0 0 18px; line-height:1.5;}
-  .empty{color:var(--grey); text-align:center; padding:40px 20px;}
-  .empty .btn{margin-top:14px;}
+  .switcher{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .apill{height:32px; padding:0 13px; border-radius:999px; font-size:0.8rem; font-weight:700; letter-spacing:.03em; display:inline-flex; align-items:center; gap:7px;
+    cursor:pointer; background:var(--paper); color:var(--ink); border:1px solid var(--sand-line);}
+  .apill.active{background:var(--teal); color:var(--paper); border-color:var(--teal);}
+  .apill.missing{color:var(--grey); font-weight:600;}
+  .apill.sanction{margin-left:6px;}
+  .apill .edot{width:6px; height:6px; border-radius:50%; background:var(--gold-deep);}
+  .apill.active .edot{background:var(--gold-lifted);}
 
-  /* Gold edges the assignment card: every section of the wording, and the settings box above them. */
-  .section{border:1.5px solid var(--sand-line); border-left:5px solid var(--gold); border-radius:8px; padding:16px 18px; margin-bottom:14px; background:var(--surface);}
-  .section-head{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
-  .section-head input.label{flex:1; font-family:'Karla',sans-serif; font-size:0.95rem; font-weight:700;
-    border:1.5px solid transparent; border-radius:6px; padding:5px 8px; background:transparent; color:var(--ink);}
-  .section-head input.label:hover, .section-head input.label:focus{border-color:var(--sand-line); background:var(--card); outline:none;}
-  .section-head .type-tag{font-size:0.68rem; text-transform:uppercase; letter-spacing:.05em; color:var(--grey);
-    background:var(--sand); padding:3px 8px; border-radius:10px; white-space:nowrap;}
-  .icon-btn{border:none; background:none; cursor:pointer; color:var(--grey); font-size:1rem; padding:4px 6px; border-radius:6px; line-height:1;}
-  .icon-btn:hover{background:var(--sand); color:var(--ink);}
-  .icon-btn.danger:hover{color:var(--brick);}
+  /* the header: what this is, whose wording it is, and the mode */
+  .ehead{display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:22px; flex-wrap:wrap;}
+  .ehead .who{min-width:0; flex:1 1 420px;}
+  .aw-eyebrow{margin:0 0 6px; font-size:0.7rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--grey);}
+  .ehead input.h1{display:block; width:100%; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:2rem; line-height:1.1; letter-spacing:-0.01em; color:var(--ink);
+    margin:0 0 0 -9px; padding:2px 8px; border:1.5px solid transparent; border-radius:8px; background:transparent;}
+  .ehead input.h1:hover{border-color:var(--sand-line);}
+  .ehead input.h1:focus{background:var(--field);}
+  .stateline{margin:8px 0 0; font-size:0.88rem; color:var(--grey); display:flex; align-items:center; gap:9px; flex-wrap:wrap;}
+  .stateline .sep{color:oklch(80% 0.012 80);}
+  .stateline .whose{display:inline-flex; align-items:center; gap:6px; font-weight:600;}
+  .stateline .whose::before{content:''; width:7px; height:7px; border-radius:50%; background:currentColor;}
+  .stateline .mine{color:var(--gold-deep);} .stateline .connect{color:var(--teal);}
+  .stateline .short{color:var(--brick); font-weight:600;}
+  .modes{display:inline-flex; padding:3px; border-radius:9px; background:oklch(90.5% 0.014 84); flex:none;}
+  .modes button{height:34px; padding:0 16px; border-radius:7px; border:none; font-size:0.84rem; font-weight:600; background:none; color:var(--grey); cursor:pointer;}
+  .modes button.on{background:var(--paper); color:var(--ink); box-shadow:0 1px 2px oklch(0% 0 0 / .08);}
 
-  textarea, input[type=text]{width:100%;}
-  textarea, input[type=text], input[type=number], input[type=datetime-local], select{font-family:'Karla',sans-serif; font-size:0.88rem; line-height:1.5; padding:9px 11px;
-    border:1.5px solid var(--sand-line); border-radius:6px; background:var(--box); color:var(--ink); resize:vertical;}
-  select, input[type=number], input[type=datetime-local]{min-height:42px;}
-  input[type=datetime-local]{height:42px;} /* its calendar icon adds 2px otherwise */ /* the text box's height, so a row of mixed controls sits level */
-  .field-row{display:flex; gap:8px; align-items:flex-start; margin-bottom:8px;}
-  .field-row .fcol{flex:1; display:flex; flex-direction:column; gap:5px;}
-  .field-row input.flabel{font-weight:600; font-size:0.85rem;}
-  .field-row textarea.fhint{font-size:0.82rem; color:var(--grey); min-height:38px;}
-  .addline{font-family:'Karla',sans-serif; font-size:0.82rem; font-weight:600; color:var(--teal); background:none;
-    border:1.5px dashed var(--sand-line); border-radius:6px; padding:8px 12px; cursor:pointer; width:100%; text-align:left;}
+  /* the two columns */
+  .ewrap{display:grid; grid-template-columns:250px minmax(0,1fr); gap:22px; align-items:start;}
+  .rail{position:sticky; top:20px; display:flex; flex-direction:column; gap:14px;}
+  .rail.open{position:static;}
+  .rcard{background:var(--paper); border:1px solid var(--sand-line); border-radius:12px; padding:12px 14px;}
+  .rcard.brief{padding:12px 8px 10px;}
+  .rlabel{margin:0 0 6px; font-size:0.68rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--grey);}
+  .rcard.brief .rlabel{margin:0 6px 8px;}
+  .orow{display:flex; align-items:center; gap:9px; padding:7px 8px 7px 6px; border-radius:8px; text-decoration:none; color:var(--ink); cursor:pointer;}
+  .orow:hover{background:var(--sand-deep); color:var(--ink);}
+  .orow.on{background:var(--sand-deep); font-weight:700;}
+  .orow .bar{width:3px; height:20px; border-radius:2px; flex:none;}
+  .orow .n{width:18px; font-size:0.74rem; font-weight:700; color:var(--grey); font-variant-numeric:tabular-nums; flex:none;}
+  .orow .l{flex:1; min-width:0; font-size:0.83rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .orow .cdot{width:7px; height:7px; border-radius:50%; background:var(--gold-deep); flex:none;}
+  .railadd{display:block; margin:8px 6px 0; padding-top:8px; border-top:1px dashed var(--sand-line); font-size:0.82rem; font-weight:600; text-decoration:none;}
+  a.rcard.crit{display:block; text-decoration:none; color:var(--ink);}
+  a.rcard.crit:hover{border-color:var(--teal); color:var(--ink);}
+  .rcount{font-size:0.86rem; font-weight:700;}
+  .rsyl{font-size:0.78rem; margin-top:2px; display:flex; align-items:center; gap:6px; color:var(--teal);}
+  .rsyl::before{content:''; width:6px; height:6px; border-radius:50%; background:currentColor; flex:none;}
+  .rsyl.short{color:var(--gold-deep);} .rsyl.own{color:var(--grey);}
+  .kv{display:flex; justify-content:space-between; gap:10px; font-size:0.82rem; margin-top:7px;}
+  .kv span:first-child{color:var(--grey);} .kv span:last-child{font-weight:600; text-align:right;}
+  .kv .yes{color:var(--teal);} .kv .no{color:var(--gold-deep);}
+  .rcard .lnk.more{margin-top:10px;}
 
-  /* auto-fit: a picker can have three groups now, not two */
-  .catwrap{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-top:6px;}
-  @media(max-width:640px){ .catwrap{grid-template-columns:1fr;} }
-  .catbox{background:var(--card); border-radius:8px; padding:12px;}
-  .catbox input.catlabel{font-weight:700; margin-bottom:8px;}
-  .chip-row{display:flex; align-items:center; gap:6px; margin-bottom:6px;}
-  .chip-row input{flex:1; font-size:0.85rem;}
-  .pickcount{display:flex; align-items:center; gap:8px; margin:12px 0 0; font-size:0.82rem; color:var(--grey); flex-wrap:wrap;}
-  .pickcount input[type=text]{width:52px; flex:none; text-align:center;}
-  .pickcount label{display:inline-flex; align-items:center; gap:6px;}
-  .refline{display:inline-flex; align-items:center; gap:6px; margin:10px 0 0; font-size:0.82rem; color:var(--grey);}
+  /* "Change dates": the course's settings for this assignment, inside the rail */
+  .meta{margin-top:12px; padding-top:12px; border-top:1px dashed var(--sand-line); display:flex; flex-direction:column; gap:14px;}
+  .mf{display:flex; flex-direction:column; gap:5px;}
+  .mf > label, .mf > .ml{font-size:0.76rem; font-weight:700; color:var(--ink);}
+  .mf .mh{font-size:0.72rem; color:var(--grey); line-height:1.45; margin:0;}
+  .mf .mh.bad{color:var(--brick); font-weight:600;}
+  .mf .line{display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:0.8rem;}
+  .meta input[type=text], .meta input[type=number], .meta input[type=datetime-local], .meta select{font-family:'Karla',sans-serif; font-size:0.82rem; padding:6px 8px; min-height:36px;
+    border:1.5px solid var(--sand-line); border-radius:6px; color:var(--ink); max-width:100%;}
+  .meta input[type=datetime-local]{width:100%;}
+  .meta select{width:100%;}
+  .meta input.num{width:58px; text-align:center;}
+  .dsrow{display:flex; flex-direction:column; gap:3px; padding:6px 0; border-top:1px solid var(--row-line);}
+  .dsrow:first-child{border-top:none; padding-top:0;}
+  .dsname{font-size:0.78rem;} .dsname small{color:var(--grey);}
+  .meta .clear{font-size:0.74rem; align-self:flex-start;}
 
-  .addsection{display:flex; gap:8px; margin-top:6px; align-items:stretch;}
-  .addsection .house-sel{flex:0 1 340px;}
-  .addsection .btn-add{white-space:nowrap;}
-  .btn{font-family:'Karla',sans-serif; font-size:0.85rem; font-weight:700; padding:10px 20px; border-radius:var(--r-control);
-    border:1.5px solid var(--teal); background:var(--teal); color:var(--paper); cursor:pointer;}
-  .btn:not(.secondary):hover{background:var(--teal-lifted); border-color:var(--teal-lifted);}
-  .btn.secondary{background:none; color:var(--teal);}
-  .actions{display:flex; justify-content:space-between; align-items:center; margin-top:20px;}
-  .saved{font-size:0.8rem; color:var(--grey);}
-  .importrow{display:flex; align-items:center; gap:10px; margin-bottom:16px;}
-  .importnote{font-size:0.78rem; color:var(--grey);}
-  .banner{font-size:0.82rem; font-weight:600; padding:9px 14px; border-radius:8px; border:1.5px solid; border-left-width:5px; margin-bottom:16px;}
-  .metabox{background:var(--surface); border:1.5px solid var(--sand-line); border-left:5px solid var(--gold); border-radius:8px; padding:14px 16px; margin-bottom:16px; display:flex; flex-direction:column; gap:10px;}
-  .metarow{display:flex; align-items:center; gap:8px; font-size:0.85rem;}
-  .metarow label{font-weight:700; width:110px; flex:none;}
-  .metahint{font-size:0.76rem; color:var(--grey); font-weight:400;}
-  .metarow.dsets{align-items:flex-start; flex-wrap:wrap;}
-  .metarow.dsets label{padding-top:9px;}
-  .dslist{display:flex; flex-direction:column; gap:6px; flex:1; min-width:240px;}
-  .dsrow{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
-  .dsname{min-width:150px;} .dsname small{color:var(--grey); font-weight:400;}
-  .metarow.dsets .metahint{flex-basis:100%; margin-left:118px;}
-  @media (max-width:640px){ .metarow.dsets .metahint{margin-left:0;} }
-  .sylbox{margin:8px 0 0; border:1px solid var(--sand-line); border-radius:8px; background:var(--surface); padding:0 10px;}
+  /* the document column */
+  .doc{display:flex; flex-direction:column; gap:14px; min-width:0;}
+  .sec{background:var(--paper); border:1px solid var(--sand-line); border-left:4px solid var(--edge, oklch(80% 0.012 80)); border-radius:12px; padding:16px 20px 18px; scroll-margin-top:24px;
+    transition:border-color .15s ease, box-shadow .15s ease;}
+  .sec.t-text{--edge:oklch(80% 0.012 80); --chip-bg:oklch(94.8% 0.01 85); --chip-ink:oklch(51% 0.017 70);}
+  .sec.t-picker, .sec.t-fields{--edge:var(--teal); --chip-bg:oklch(92% 0.02 195); --chip-ink:var(--teal);}
+  .sec.t-declaration{--edge:var(--ink-warm); --chip-bg:oklch(93% 0.01 65); --chip-ink:var(--ink-warm);}
+  .sec.aw-changed{--edge:var(--gold-deep);}
+  .sec.focus{border-color:var(--teal); border-left-color:var(--edge); box-shadow:0 0 0 3px color-mix(in oklab, var(--teal) 14%, transparent);}
+  .shead{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+  .shead .n{width:22px; font-size:0.74rem; font-weight:700; color:var(--grey); font-variant-numeric:tabular-nums; flex:none;}
+  .sec input.slabel{flex:1; min-width:0; font-family:'Newsreader',Georgia,serif; font-size:1.15rem; font-weight:600; color:var(--ink);
+    border:1.5px solid transparent; border-radius:6px; padding:3px 8px; background:transparent;}
+  .sec input.slabel:hover{border-color:var(--sand-line);}
+  .sec input.slabel:focus{background:var(--field);}
+  .tchip, .aw-chg{font-size:0.66rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:3px 9px; border-radius:999px; white-space:nowrap; flex:none;}
+  .tchip{background:var(--chip-bg); color:var(--chip-ink);}
+  .aw-chg{background:var(--gold-wash); border:1px solid var(--amber-edge); color:var(--gold-deep);}
+  .dots{width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center; border-radius:7px; border:none; background:none;
+    color:var(--grey); font-size:1rem; font-weight:700; letter-spacing:.06em; cursor:pointer; flex:none; line-height:1;}
+  .dots:hover{background:var(--sand-deep);}
+
+  :where(.sec) textarea, :where(.sec) input[type=text]{font-family:'Karla',sans-serif; color:var(--ink); border:1.5px solid var(--row-line); min-width:0;}
+  .sec textarea.body{display:block; width:100%; resize:vertical; font-size:0.9rem; line-height:1.6; padding:11px 13px; border-radius:8px;}
+  .sec .intro{display:block; width:100%; font-size:0.86rem; color:var(--grey); padding:7px 10px; border-radius:6px; margin:0 0 12px; border-color:transparent; background:transparent;}
+  .sec .intro:hover{border-color:var(--row-line);}
+  .sfoot{margin-top:8px; font-size:0.8rem; display:flex; gap:14px; align-items:center; flex-wrap:wrap; color:var(--grey);}
+  .sfoot .sp{flex:1;}
+  .orig{margin-top:10px; padding:10px 13px; border-radius:8px; background:var(--sand-deep); font-size:0.86rem; line-height:1.6; white-space:pre-wrap; color:var(--ink-warm);}
+  .orig .ol{display:block; font-size:0.66rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--grey); margin-bottom:4px; white-space:normal;}
+
+  .cats{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px;}
+  .cat{background:oklch(96.8% 0.014 82); border-radius:10px; padding:12px 13px;}
+  .cathead{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;}
+  .cat input.catlabel{flex:1; font-size:0.86rem; font-weight:700; padding:3px 6px; margin-left:-6px; border-color:transparent; background:transparent; border-radius:6px;}
+  .cat input.catlabel:hover{border-color:var(--row-line);}
+  .cat select.rule{font-family:'Karla',sans-serif; font-size:0.7rem; font-weight:700; color:var(--grey); border:1px solid transparent; background:transparent; border-radius:6px; padding:2px 2px; cursor:pointer; flex:none;}
+  .cat select.rule:hover{border-color:var(--row-line);}
+  .opt{display:flex; align-items:center; gap:6px; margin-bottom:6px;}
+  .opt input{flex:1; font-size:0.86rem; padding:7px 10px; border-radius:6px;}
+  .cat .catfoot{display:flex; justify-content:space-between; gap:8px; margin-top:4px;}
+  .cat .catfoot .lnk.quiet{color:var(--grey); font-weight:500;}
+  .frows{display:flex; flex-direction:column; gap:6px;}
+  .frow{display:grid; grid-template-columns:220px minmax(0,1fr) 28px; gap:8px; align-items:center;}
+  .frow input{font-size:0.86rem; padding:8px 10px; border-radius:6px;}
+  .frow input.flabel{font-weight:600;}
+  .frow input.fhint{font-size:0.84rem; color:var(--grey);}
+  .drows{display:flex; flex-direction:column; gap:6px;}
+  .drow{display:flex; align-items:center; gap:10px;}
+  .drow .box{width:18px; height:18px; border:1.5px solid oklch(80% 0.012 80); border-radius:4px; flex:none;}
+  .drow input{flex:1; font-size:0.88rem; padding:8px 10px; border-radius:6px;}
+  .switch{display:inline-flex; align-items:center; gap:8px; color:var(--grey); cursor:pointer; background:none; border:none; padding:2px 4px; border-radius:6px; font-size:0.82rem;}
+  .switch .track{width:28px; height:16px; border-radius:999px; background:oklch(80% 0.012 80); position:relative; display:inline-block; transition:background .15s ease;}
+  .switch .track::after{content:''; position:absolute; top:2px; left:2px; width:12px; height:12px; border-radius:50%; background:var(--paper); transition:left .15s ease;}
+  .switch.on .track{background:var(--teal);} .switch.on .track::after{left:14px;}
+
+  .addcard{border:1.5px dashed var(--sand-line); border-radius:12px; padding:14px 18px 16px;}
+  .addcard .al{margin:0 0 10px; font-size:0.8rem; font-weight:600; color:var(--grey);}
+  .kinds{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px;}
+  .kind{padding:10px 12px; border-radius:9px; background:var(--paper); border:1px solid var(--row-line); cursor:pointer; display:flex; gap:10px; align-items:flex-start; text-align:left;}
+  .kind:hover{border-color:var(--teal);}
+  .kind .bar{width:3px; height:30px; border-radius:2px; flex:none; margin-top:2px;}
+  .kind b{display:block; font-size:0.84rem;} .kind small{display:block; font-size:0.76rem; color:var(--grey); line-height:1.4; font-weight:400;}
+  .importline{margin:12px 0 0; font-size:0.78rem; color:var(--grey); display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+
+  .critcard{background:var(--paper); border:1px solid var(--sand-line); border-radius:12px; padding:18px 20px 20px; margin-top:10px; scroll-margin-top:24px;}
+  .critcard .ch{display:flex; align-items:baseline; justify-content:space-between; gap:14px; margin-bottom:4px; flex-wrap:wrap;}
+  .critcard h2{font-family:'Newsreader',Georgia,serif; font-size:1.2rem; font-weight:600; margin:0;}
+  .critcard .ch span{font-size:0.8rem; color:var(--grey);}
+  .crows{display:flex; flex-direction:column; gap:6px; margin-top:12px;}
+  .crow{display:grid; grid-template-columns:30px minmax(0,1fr) 90px 30px; gap:10px; align-items:center;}
+  .crow .n{font-size:0.78rem; font-weight:700; color:var(--grey); font-variant-numeric:tabular-nums;}
+  .crow input{font-size:0.88rem; padding:9px 11px; border:1.5px solid var(--row-line); border-radius:6px; min-width:0;}
+  .crow .tie{grid-column:2 / 3; margin:-2px 0 4px 2px; font-size:0.74rem; color:var(--grey);}
+  .stag{font-size:0.78rem; color:var(--grey); display:inline-flex; align-items:center; gap:6px; white-space:nowrap;}
+  .stag::before{content:''; width:6px; height:6px; border-radius:50%; background:var(--teal); flex:none;}
+  .stag.own::before{background:none; border:1.5px solid oklch(80% 0.012 80); width:4px; height:4px;}
+  .cfoot{display:flex; align-items:center; gap:16px; margin-top:12px; font-size:0.82rem; flex-wrap:wrap; color:var(--grey);}
+  .cfoot .short{color:var(--gold-deep); font-weight:600;}
+  .sylbox{margin:12px 0 0; border:1px solid var(--row-line); border-radius:8px; background:var(--sand-deep); padding:0 12px;}
   .sylbox summary{cursor:pointer; font-size:0.78rem; font-weight:600; padding:8px 0;}
-  .sylbody{padding:0 0 10px;}
-  .syllist{margin:0; padding-left:20px; font-size:0.78rem; line-height:1.55;}
+  .sylbody{padding:0 0 10px; font-size:0.78rem; color:var(--grey);}
+  .sylbody p{margin:0 0 8px;}
+  .syllist{margin:0 0 8px; padding-left:20px; line-height:1.55; color:var(--ink);}
   .syllist li.only{font-weight:600;}
   .syllist li.only::after{content:' \2014 not on this course'; font-weight:400; opacity:.7;}
-  .list-row{ display:flex; align-items:center; gap:4px; }
-  .list-row > button:first-child{ flex:1; }
-  .order-arrows{ display:inline-flex; flex-direction:column; gap:1px; }
-  .order-arrows button{ font-family:inherit; font-size:0.7rem; line-height:1; padding:2px 5px; border:1px solid var(--sand-line); background:var(--box); border-radius:4px; cursor:pointer; color:var(--grey); }
-  .order-arrows button:disabled{ opacity:.35; cursor:default; }
-  /* Tablet: the list folds to a row above the editor, and each field's hint
-     drops to its own line instead of squeezing the input off the edge. */
+
+  .emptycard{background:var(--paper); border:1px solid var(--sand-line); border-radius:12px; padding:40px 24px; text-align:center; color:var(--grey);}
+  .emptycard .acts{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:14px;}
+
+  /* the menu behind every ··· */
+  .menu{position:absolute; z-index:60; min-width:190px; max-width:280px; background:var(--paper); border:1px solid var(--sand-line); border-radius:10px; padding:5px;
+    box-shadow:0 10px 28px oklch(30% 0.04 58 / .14);}
+  .menu[hidden]{display:none;}
+  .menu button{display:block; width:100%; text-align:left; background:none; border:none; border-radius:7px; padding:8px 10px; font-size:0.84rem; cursor:pointer; color:var(--ink);}
+  .menu button:disabled{color:oklch(75% 0.012 80); cursor:default;}
+  .menu button.danger{color:var(--brick);}
+  .menu hr{border:none; border-top:1px solid var(--row-line); margin:4px 2px;}
+  .menu .mlabel{font-size:0.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--grey); padding:6px 10px 4px;}
+  .menu select{width:calc(100% - 12px); margin:0 6px 6px; font-family:'Karla',sans-serif; font-size:0.82rem; padding:6px 8px; border:1.5px solid var(--sand-line); border-radius:6px;}
+
+  /* As the candidate sees it */
+  .preview{max-width:760px; margin:0 auto; background:var(--paper); border:1px solid var(--sand-line); border-radius:14px; padding:36px 44px 40px;}
+  .preview .pe{margin:0 0 8px; font-size:0.7rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--grey);}
+  .preview h2{font-family:'Newsreader',Georgia,serif; font-size:1.9rem; font-weight:600; margin:0 0 4px; line-height:1.1;}
+  .preview .pm{margin:0 0 26px; font-size:0.88rem; color:var(--grey);}
+  .psec{padding:18px 0; border-top:1px solid var(--row-line);}
+  .psec h3{font-family:'Newsreader',Georgia,serif; font-size:1.15rem; font-weight:600; margin:0 0 8px;}
+  .psec .pb{font-size:0.92rem; line-height:1.65; white-space:pre-wrap;}
+  .psec .pb.grey{color:var(--grey);}
+  .pwrite{margin-top:10px; height:92px; border:1.5px dashed var(--sand-line); border-radius:8px; background:var(--sand); display:flex; align-items:center; justify-content:center;
+    font-size:0.82rem; color:oklch(70% 0.014 80); font-style:italic;}
+  .pcats{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-top:6px;}
+  .pcat b{display:block; font-size:0.88rem;} .pcat small{color:var(--grey); font-size:0.76rem;}
+  .pcat ul{margin:6px 0 0; padding-left:18px; font-size:0.88rem; line-height:1.6;}
+  .pfield{margin-top:12px;} .pfield b{font-size:0.9rem;} .pfield .ph{font-size:0.82rem; color:var(--grey);}
+  .pfield .pwrite{height:56px; margin-top:6px;}
+  .pdecl{font-size:0.9rem; line-height:1.7;}
+  .pcrit{margin:0; padding-left:20px; font-size:0.9rem; line-height:1.65;}
+
+  /* the save bar */
+  .savebar{position:fixed; left:0; right:0; bottom:0; z-index:50; background:var(--paper); border-top:1px solid var(--sand-line); box-shadow:0 -8px 24px oklch(30% 0.04 58 / .06);}
+  .savebar .in{max-width:1180px; margin:0 auto; padding:12px 20px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;}
+  .savebar .what{font-size:0.86rem; color:var(--grey); display:inline-flex; align-items:center; gap:8px; min-width:0;}
+  .savebar .what::before{content:''; width:7px; height:7px; border-radius:50%; background:oklch(80% 0.012 80); flex:none;}
+  .savebar.dirty .what{color:var(--ink);}
+  .savebar.dirty .what::before{background:var(--gold);}
+  .savebar .acts{display:flex; align-items:center; gap:8px;}
+  .savebar .discard{height:38px; padding:0 14px; border-radius:7px; border:none; background:none; font-size:0.84rem; font-weight:600; color:var(--grey); cursor:pointer;}
+  .savebar .discard:disabled{opacity:.45; cursor:default;}
+  .btn{font-family:'Karla',sans-serif; height:38px; padding:0 20px; border-radius:7px; border:1.5px solid var(--teal); background:var(--teal); color:var(--paper); font-size:0.86rem; font-weight:700; cursor:pointer;}
+  .btn:hover{background:var(--teal-lifted); border-color:var(--teal-lifted);}
+  .btn.ghost{background:none; color:var(--teal);}
+  .btn.aw-dirty{box-shadow:0 0 0 3px oklch(70% 0.12 72 / .55);}
+  .btn{transition:box-shadow .2s ease;}
+  @media(prefers-reduced-motion:reduce){ .btn, .sec, .switch .track, .switch .track::after{transition:none;} }
+
+  /* Tablet and phone: the rail folds above the document, as the list did. */
   @media(max-width:900px){
-    .layout{grid-template-columns:1fr;}
-    /* the one column may shrink to the screen: the editor's widest field
-       had grown it, and the list beside it, 63px past a phone (10 Oct 2026) */
-    .layout > *{min-width:0;}
-    .list{display:flex; flex-wrap:wrap; gap:6px;}
-    .list-row{flex:1 1 200px;}
-    .editor{padding:18px 16px;}
-    .metarow{flex-wrap:wrap;}
-    .metarow .metahint{flex-basis:100%; padding-left:118px;}
+    .ewrap{grid-template-columns:1fr;}
+    .ewrap > *{min-width:0;}
+    .rail{position:static;}
+    .rcard.brief .orows{max-height:240px; overflow:auto;}
+    .preview{padding:26px 20px 30px;}
   }
   @media(max-width:640px){
-    .metarow label{width:100%;}
-    .metarow .metahint{padding-left:0;}
-    .chip-row{flex-wrap:wrap;}
-    .chip-row > input[type=text]{flex:1 1 100% !important;} /* the criteria row sets flex inline */
-    /* A criterion's section menu is as wide as its longest choice (~360px);
-       it and the box holding it may narrow to the screen (10 Oct 2026). */
-    .metarow > div{flex:1 1 100%; min-width:0;}
-    .chip-row > select{flex:1 1 100%; min-width:0; max-width:100%;}
-    .section-head{flex-wrap:wrap;}
-    .section-head input.label{flex:1 1 100%; order:-1;}
+    .board{padding:20px 16px 150px;}
+    .ehead input.h1{font-size:1.6rem;}
+    .sec{padding:14px 14px 16px;}
+    .shead{flex-wrap:wrap;}
+    .sec input.slabel{flex:1 1 100%; order:-1;}
+    .shead .n{order:-2; width:auto;}
+    .frow{grid-template-columns:minmax(0,1fr) 28px;}
+    .frow input.fhint{grid-column:1 / 2;}
+    .crow{grid-template-columns:24px minmax(0,1fr) 30px;}
+    .crow .stag{grid-column:2 / 3; grid-row:2;}
+    .crow .tie{grid-column:2 / 3;}
+    .savebar .in{padding:10px 16px; gap:8px;}
+    .savebar .what{font-size:0.8rem;}
+    .savebar .acts{margin-left:auto;}
   }
-
-  /* ---- v2 (7 Oct 2026): what is yours, and what is not saved ------------------
-     The same language as the observation wording editor (13a). In the list, an
-     assignment whose wording differs from Connect's shipped version says
-     "edited". In the editor, a section that matches no section of the shipped
-     version carries a gold "Changed" tag, and while anything typed has not
-     been saved the Save button says so and wears a gold ring. Display only;
-     Save, the switches that save at once, ordering and the syllabus check are
-     untouched. Design: Magic Touches, 13b. */
-  .list button .aw-ed{font-weight:500; font-size:0.72rem; color:var(--gold-deep); margin-left:4px;}
-  .list button.active .aw-ed{color:oklch(88% 0.06 80);}
-  .aw-chg{flex:none; font-family:'Karla',sans-serif; font-size:0.64rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:2px 8px; border-radius:999px;
-    background:var(--gold-wash); border:1px solid var(--amber-edge); color:var(--gold-deep); white-space:nowrap;}
-  .section.aw-changed{border-left-color:var(--gold-deep);}
-  .aw-state{display:inline-flex; align-items:center; gap:6px; font-size:0.8rem; font-weight:600; color:var(--teal);}
-  .aw-state::before{content:''; width:7px; height:7px; border-radius:50%; background:var(--teal);}
-  .actions .btn.aw-dirty{box-shadow:0 0 0 3px oklch(70% 0.12 72 / .55);}
-  .actions .btn{transition:box-shadow .2s ease;}
-  .aw-title-tag{margin-left:10px; vertical-align:2px;}
-  @media(prefers-reduced-motion:reduce){ .actions .btn{transition:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610112313">
+<link rel="stylesheet" href="hub-house.css?v=202610112339">
 </head>
 <body class="hub-paper">
 <div class="board">
-  <a class="back" href="6_centre_admin_dashboard.html">← Back to course admin</a>
-  <div class="header" style="background:var(--surface); border-radius:6px; margin-bottom:22px;"><p class="eyebrow">Course admin · assignment wording</p><h1>Edit assignment</h1>
-  <p class="sub">Rework this assignment as your own: rewrite instructions, add or remove sections, reorder them, and — for tasks with a pick-your-item step like LRT — edit the item choices trainees choose from. Changes only affect your centre.</p>
+  <div class="topline">
+    <a class="back" href="6_centre_admin_dashboard.html">Back to course admin</a>
+    <div class="switcher" id="switcher"></div>
   </div>
-  <div class="banner" id="proseBanner"></div>
-  <div class="layout">
-    <div class="list" id="list"></div>
-    <div class="editor" id="editor"></div>
-  </div>
+  <div class="ehead" id="ehead"></div>
+  <div id="body"></div>
 </div>
-<script src="assignment-defaults.js?v=202610112313"></script>
-<script src="hub-due.js?v=202610112313"></script>
-<script src="hub-rotation.js?v=202610112313"></script>
-<script src="hub-docx.js?v=202610112313"></script>
-<script src="hub-shared.js?v=202610112313"></script>
-<script src="hub-store.js?v=202610112313"></script>
-<script src="hub-say.js?v=202610112313"></script>
-<script src="hub-sync.js?v=202610112313"></script>
+<div class="savebar" id="savebar"><div class="in">
+  <span class="what" id="saveWhat"></span>
+  <div class="acts">
+    <button type="button" class="discard" id="discardBtn" onclick="discardChanges()">Discard</button>
+    <button type="button" class="btn" id="saveBtn" onclick="persist()">Save for this course</button>
+  </div>
+</div></div>
+<div class="menu" id="menu" hidden></div>
+<script src="assignment-defaults.js?v=202610112339"></script>
+<script src="hub-due.js?v=202610112339"></script>
+<script src="hub-rotation.js?v=202610112339"></script>
+<script src="hub-docx.js?v=202610112339"></script>
+<script src="hub-shared.js?v=202610112339"></script>
+<script src="hub-store.js?v=202610112339"></script>
+<script src="hub-say.js?v=202610112339"></script>
+<script src="hub-sync.js?v=202610112339"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -183,249 +304,605 @@
 if (window.hubCentreRoomOnly && hubCentreRoomOnly())
   // Deliberate: this halts the rest of the block. The message is written for
   // whoever finds it in a console, so it does not read as a crash.
-  throw new Error('Connect Lite: stopping this page on purpose \u2014 the centre\u2019s room is not open to this link.');
+  throw new Error('Connect Lite: stopping this page on purpose — the centre’s room is not open to this link.');
 
 const STORE_KEY = 'connect_assignment_wording_v2';
 
 const DEFAULT_DATA = window.CONNECT_HUB_DEFAULT_WORDING;
 
+function normaliseAll(w){
+  if (window.hubWordingFilled) hubWordingFilled(w);   // an assignment holding only a deadline
+  Object.keys(w).forEach(k => {
+    const a = w[k]; if (!a || !a.criteria) return;
+    a.criteria = a.criteria.map(c => typeof c === 'string' ? {text:c, sectionIndex:null} : c);
+  });
+  return w;
+}
 let DATA = null;
 try { DATA = JSON.parse(localStorage.getItem(STORE_KEY)); } catch(e) {}
 if (!DATA) DATA = JSON.parse(JSON.stringify(DEFAULT_DATA));
-if (window.hubWordingFilled) hubWordingFilled(DATA);   // an assignment holding only a deadline
-Object.keys(DATA).forEach(k => {
-  const a = DATA[k]; if (!a || !a.criteria) return;
-  a.criteria = a.criteria.map(c => typeof c === 'string' ? {text:c, sectionIndex:null} : c);
-});
+normaliseAll(DATA);
 
-let ORDER = ['fol','lrt','lsrt','lfc','a5']; // recomputed from the wording in renderList (DATA is declared below)
-const NAMES = { lrt:'LRT \u2014 Language Related Tasks', lsrt:'LSRT \u2014 Language Skills Related Tasks', fol:'FOL \u2014 Focus on the Learner', lfc:'LFC \u2014 Lessons from the Classroom', a5:'Assignment 5' };
+let ORDER = ['fol','lrt','lsrt','lfc','a5'];
+const NAMES = { lrt:'LRT — Language Related Tasks', lsrt:'LSRT — Language Skills Related Tasks', fol:'FOL — Focus on the Learner', lfc:'LFC — Lessons from the Classroom', a5:'Assignment 5' };
+const CODES = { lrt:'LRT', lsrt:'LSRT', fol:'FOL', lfc:'LFC', a5:'A5' };
 
-// Course admin's rows open the editor on that assignment (?a=key); the picker still switches.
+// Course admin's rows open the editor on that assignment (?a=key); the pills still switch.
 let CURRENT = (function(){ const q = new URLSearchParams(location.search).get('a'); return /^(fol|lrt|lsrt|lfc|a5)$/.test(q||'') ? q : 'lrt'; })();
+let MODE = 'edit';          // 'edit' | 'preview'
+let FOCUS = null;           // the section being worked on
+let SHOW_META = false;      // "Change dates" open in the rail
+const OPEN_ORIG = new Set(); // sections showing Connect's original under them
 const $ = id => document.getElementById(id);
 
-function persist(){
-  localStorage.setItem(STORE_KEY, JSON.stringify(DATA));
-  const s = $('savedNote'); if (s) { s.textContent = 'Saved'; setTimeout(()=>{ if (s) s.textContent=''; }, 1400); }
+/* ---- what is saved, what is Connect's, what is yours ------------------------
+   The 7 Oct comparison, reused: DATA (edited in memory as you type) against
+   DEFAULT_DATA (Connect's shipped wording) and against the record saved for
+   this course. Dates, release and who sets it are the course's settings, not
+   wording, so they never make an assignment "yours". */
+const SETTINGS_KEYS = ['dueAt', 'due', 'dueSets', 'resubDueAt', 'outAt', 'setBy', 'released', 'savedAt'];
+const clone = x => JSON.parse(JSON.stringify(x));
+const normC = a => { if (!a) return 'null'; const c = clone(a); (c.criteria || []).forEach((x, i) => { if (typeof x === 'string') c.criteria[i] = { text: x, sectionIndex: null }; }); return JSON.stringify(c); };
+const wording = a => { if (!a) return ''; const c = JSON.parse(normC(a)); SETTINGS_KEYS.forEach(k => delete c[k]); return JSON.stringify(c); };
+function savedRecord(){ try { return JSON.parse(localStorage.getItem(STORE_KEY)) || null; } catch (e) { return null; } }
+function base(){ const s = savedRecord(); return normaliseAll(s || clone(DEFAULT_DATA || {})); }
+function isEdited(k){ return !!(DATA[k] && DEFAULT_DATA && DEFAULT_DATA[k] && wording(DATA[k]) !== wording(DEFAULT_DATA[k])) || !!(DATA[k] && DEFAULT_DATA && !DEFAULT_DATA[k]); }
+function sectionChanged(k, i){
+  const a = DATA[k], d = DEFAULT_DATA && DEFAULT_DATA[k];
+  if (!a || !a.sections[i]) return false;
+  if (!d) return true;
+  const shipped = (d.sections || []).map(x => JSON.stringify(x));
+  return shipped.indexOf(JSON.stringify(a.sections[i])) < 0;
 }
+/* Connect's own version of a section: the shipped one of the same kind with
+   the same heading, or failing that the one in the same place. */
+function originalOf(i){
+  const a = DATA[CURRENT], d = DEFAULT_DATA && DEFAULT_DATA[CURRENT];
+  if (!a || !d) return null;
+  const s = a.sections[i]; if (!s) return null;
+  const norm = t => String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+  return (d.sections || []).find(x => x.type === s.type && norm(x.label) === norm(s.label))
+      || ((d.sections || [])[i] && d.sections[i].type === s.type ? d.sections[i] : null);
+}
+/* What has not been saved, named the way the save bar says it. */
+function changeUnits(k){
+  const a = DATA[k], b = base()[k];
+  if (!a) return [];
+  if (!b) return ['the whole assignment'];
+  if (normC(a) === normC(b)) return [];
+  const u = [];
+  if ((a.title || '') !== (b.title || '')) u.push('the title');
+  const as = a.sections || [], bs = b.sections || [];
+  for (let i = 0; i < Math.max(as.length, bs.length); i++) {
+    if (JSON.stringify(as[i]) === JSON.stringify(bs[i])) continue;
+    u.push(i < as.length ? 'section ' + (i + 1) : 'a removed section');
+  }
+  if (JSON.stringify(a.criteria || []) !== JSON.stringify(b.criteria || [])) u.push('the criteria');
+  if ((a.wordMin || 0) !== (b.wordMin || 0) || (a.wordMax || 0) !== (b.wordMax || 0)) u.push('the word range');
+  if ((a.format || '') !== (b.format || '')) u.push('the format');
+  if ((a.resubDays || 0) !== (b.resubDays || 0)) u.push('the resubmission days');
+  if (!u.length) u.push('a setting');
+  return [...new Set(u)];
+}
+function allUnsaved(){
+  const out = {};
+  Object.keys(DATA).forEach(k => { if (k === '_order' || !DATA[k] || typeof DATA[k] !== 'object' || Array.isArray(DATA[k])) return; const u = changeUnits(k); if (u.length) out[k] = u; });
+  return out;
+}
+const andList = xs => xs.length <= 1 ? (xs[0] || '') : xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1];
 
-function renderList(){
+/* SAVE writes the whole wording for the course, as it always has; hub-sync
+   carries it to the store. Each assignment that changed takes the time. */
+function persist(){
+  const unsaved = allUnsaved(), now = new Date().toISOString();
+  Object.keys(unsaved).forEach(k => { DATA[k].savedAt = now; });
+  localStorage.setItem(STORE_KEY, JSON.stringify(DATA));
+  refreshMarks();
+  const w = $('saveWhat'); if (w) { w.textContent = 'Saved for this course'; }
+}
+/* The switches that take effect at once -- release, the dates, who sets it,
+   the order -- write only themselves. (They used to write the whole record,
+   so moving a due date quietly saved every half-finished edit with it.) */
+function persistSettings(){
+  const rec = savedRecord();
+  if (!rec) {
+    // nothing saved on this course yet: Connect's wording with this one's settings
+    const b = normaliseAll(clone(DEFAULT_DATA || {}));
+    if (DATA._order) b._order = DATA._order.slice();
+    if (DATA[CURRENT] && !b[CURRENT]) b[CURRENT] = clone(DATA[CURRENT]);
+    else if (DATA[CURRENT]) SETTINGS_KEYS.forEach(k => { if (k !== 'savedAt' && DATA[CURRENT][k] !== undefined) b[CURRENT][k] = clone(DATA[CURRENT][k]); });
+    localStorage.setItem(STORE_KEY, JSON.stringify(b));
+  } else {
+    if (DATA._order) rec._order = DATA._order.slice(); else delete rec._order;
+    const a = DATA[CURRENT];
+    if (a && !rec[CURRENT]) rec[CURRENT] = clone(a);
+    else if (a) SETTINGS_KEYS.forEach(k => { if (k === 'savedAt') return; if (a[k] === undefined) delete rec[CURRENT][k]; else rec[CURRENT][k] = clone(a[k]); });
+    localStorage.setItem(STORE_KEY, JSON.stringify(rec));
+  }
+}
+async function discardChanges(){
+  const unsaved = allUnsaved(), n = Object.values(unsaved).reduce((t, u) => t + u.length, 0);
+  if (!n) return;
+  const ok = await confirmModal('Throw away ' + n + ' change' + (n === 1 ? '' : 's') + ' not yet saved? The wording goes back to what was last saved for this course.', 'Discard');
+  if (!ok) return;
+  DATA = base(); OPEN_ORIG.clear();
+  render();
+}
+window.addEventListener('beforeunload', e => { if (Object.keys(allUnsaved()).length) { e.preventDefault(); e.returnValue = ''; } });
+
+/* ---- the assignment pills ---------------------------------------------------- */
+function renderSwitcher(){
   ORDER = hubAssignmentOrder(DATA);
-  const core = ORDER.filter(k => k !== 'a5');
-  $('list').innerHTML = ORDER.map(key => {
+  $('switcher').innerHTML = ORDER.map(key => {
     const has = !!DATA[key];
-    const pos = core.indexOf(key);
-    const arrows = key === 'a5' ? '' : `<span class="order-arrows"><button type="button" title="Earlier in the course" data-move="${key}" data-dir="-1" ${pos<=0?'disabled':''}>\u2191</button><button type="button" title="Later in the course" data-move="${key}" data-dir="1" ${pos>=core.length-1?'disabled':''}>\u2193</button></span>`;
     const held = has && key !== 'a5' && !hubReleased(DATA, key);
-    return `<div class="list-row"><button class="${key===CURRENT?'active':''} ${has?'':'missing'}" data-a="${key}">${NAMES[key]}${has?'':' \u2014 not built yet'}${held?' \u2014 held back':''}</button>${arrows}</div>`;
+    const title = NAMES[key] + (has ? '' : ' — not built yet') + (held ? ' — held back' : '') + (key === 'a5' ? ' — a centre sanction, not one of the four' : '');
+    return `<button type="button" class="apill${key===CURRENT?' active':''}${has?'':' missing'}${key==='a5'?' sanction':''}" data-a="${key}" title="${esc(title)}">${CODES[key]}<span class="edot" ${isEdited(key)?'':'hidden'}></span></button>`;
   }).join('');
 }
-// The centre's order: move one of the four up or down; Assignment 5 stays last.
+$('switcher').addEventListener('click', e => {
+  const b = e.target.closest('[data-a]'); if (!b || b.dataset.a === CURRENT) return;
+  CURRENT = b.dataset.a; FOCUS = null; SHOW_META = false; OPEN_ORIG.clear();
+  try { const q = new URLSearchParams(location.search); q.set('a', CURRENT); history.replaceState(null, '', '?' + q.toString()); } catch (err) {}   // keeps the course key
+  render(); window.scrollTo(0, 0);
+});
+// The centre's order: move one of the four earlier or later; Assignment 5 stays last.
 function moveAssignment(key, dir){
   const core = hubAssignmentOrder(DATA).filter(k => k !== 'a5');
   const i = core.indexOf(key), j = i + dir;
   if (i < 0 || j < 0 || j >= core.length) return;
   core.splice(i, 1); core.splice(j, 0, key);
   DATA._order = core;
-  persist(); renderList();
+  persistSettings(); render();
 }
 
-function fieldSectionHTML(s, i){
-  return `<div class="section" data-i="${i}">
-    ${sectionHead(s,i,'Item fields')}
-    <textarea class="intro" rows="2" oninput="updateSection(${i},'intro',this.value)" placeholder="Intro line shown above the fields (optional)">${esc(s.intro||'')}</textarea>
-    <div style="margin-top:10px;">
-    ${s.fields.map((f,fi)=>`
-      <div class="field-row" data-fi="${fi}">
-        <div class="fcol">
-          <input type="text" class="flabel" value="${esc(f.label)}" oninput="updateField(${i},${fi},'label',this.value)" placeholder="What the trainee is asked for">
-          <textarea class="fhint" rows="1" oninput="updateField(${i},${fi},'hint',this.value)" placeholder="Guidance shown under the field">${esc(f.hint||'')}</textarea>
-        </div>
-        <button class="icon-btn danger" title="Remove field" onclick="removeField(${i},${fi})">\u2715</button>
-      </div>`).join('')}
+/* ---- the header -------------------------------------------------------------- */
+function proseCount(){ return ['fol','lrt','lsrt','lfc'].filter(k => DATA[k] && DATA[k].format === 'prose').length; }
+function savedLine(){
+  const b = base()[CURRENT];
+  const at = b && b.savedAt ? new Date(b.savedAt) : null;
+  if (!at || !isFinite(at.getTime())) {
+    const rec = savedRecord();
+    return rec && rec[CURRENT] && DEFAULT_DATA && DEFAULT_DATA[CURRENT] && wording(rec[CURRENT]) !== wording(DEFAULT_DATA[CURRENT]) ? 'Saved on this course' : 'Never edited on this course';
+  }
+  const hm = at.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+  const day = d => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const diff = Math.round((day(new Date()) - day(at)) / 86400000);
+  if (diff === 0) return 'Last saved today, ' + hm;
+  if (diff === 1) return 'Last saved yesterday, ' + hm;
+  return 'Last saved ' + at.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' }) + ', ' + hm;
+}
+function stateHTML(){
+  const a = DATA[CURRENT]; if (!a) return '<span>Not set up on this course yet</span>';
+  const m = a.sections.length, mine = a.sections.filter((s, i) => sectionChanged(CURRENT, i)).length;
+  const edited = isEdited(CURRENT);
+  const parts = [
+    edited ? '<span class="whose mine">Your wording</span>' : '<span class="whose connect">Connect’s wording</span>',
+    `<span>${mine ? mine + ' of ' + m + ' sections are yours' : edited ? 'Every section as shipped' : m + ' section' + (m === 1 ? '' : 's') + ', as shipped'}</span>`,
+    `<span>${esc(savedLine())}</span>`
+  ];
+  /* The course-wide prose rule, which had its own banner: said here only when
+     it is not met. The syllabus and the CELTA 5 say two MUST be in prose. */
+  const pc = proseCount();
+  if (CURRENT !== 'a5' && pc < 2) parts.push(`<span class="short" title="The syllabus and the CELTA 5 say two of the four must be in continuous prose (Handbook 9.2.1 says should).">Only ${pc} of the four in continuous prose; two must be</span>`);
+  return parts.join('<span class="sep">·</span>');
+}
+function renderHead(){
+  const a = DATA[CURRENT];
+  const title = a ? a.title : (NAMES[CURRENT].split('—')[1] || NAMES[CURRENT]).trim();
+  $('ehead').innerHTML = `<div class="who">
+      <p class="aw-eyebrow">Course admin · written assignments · ${CODES[CURRENT]}</p>
+      ${a ? `<input type="text" class="h1" value="${esc(title)}" placeholder="Name this assignment" aria-label="Assignment title" oninput="updateTitle(this.value)">`
+          : `<input type="text" class="h1" value="${esc(title)}" readonly aria-label="Assignment title">`}
+      <p class="stateline" id="stateline">${stateHTML()}</p>
     </div>
-    <button class="addline" onclick="addField(${i})">+ Add field</button>
-  </div>`;
+    ${a ? `<div class="modes" role="tablist">
+      <button type="button" role="tab" class="${MODE==='edit'?'on':''}" aria-selected="${MODE==='edit'}" onclick="setMode('edit')">Edit</button>
+      <button type="button" role="tab" class="${MODE==='preview'?'on':''}" aria-selected="${MODE==='preview'}" onclick="setMode('preview')">As the candidate sees it</button>
+    </div>` : ''}`;
 }
+function setMode(m){ MODE = m; closeMenu(); render(); }
 
-/* A picker's groups are edited through hubPickerCats, so this one editor reads
-   both shapes: the old catA/catB with a shared pickCount, and the newer `cats`
-   array where each group has its own count and a group can be fixed. Editing a
-   catA/catB section converts it to `cats` on the first change -- the two shapes
-   say the same thing when there are two groups, and carrying one of them is
-   simpler than carrying both (25 Sep 2026). */
-function pickerSectionHTML(s, i){
-  const cats = hubPickerCats(s);
-  return `<div class="section" data-i="${i}">
-    ${sectionHead(s,i,'Pick items')}
-    <div class="catwrap">
-      ${cats.map((c,ci) => `
-        <div class="catbox">
-          <input type="text" class="catlabel" value="${esc(c.label)}" oninput="updateCatLabel(${i},${ci},this.value)" placeholder="Name of this group">
-          ${c.options.map((opt,oi)=>`
-            <div class="chip-row">
-              <input type="text" value="${esc(opt)}" oninput="updateOption(${i},${ci},${oi},this.value)" placeholder="One thing they can pick">
-              <button class="icon-btn danger" title="Remove option" onclick="removeOption(${i},${ci},${oi})">\u2715</button>
-            </div>`).join('')}
-          <button class="addline" onclick="addOption(${i},${ci})">+ Add option</button>
-          <div class="pickcount">
-            <label><input type="checkbox" ${c.fixed?'checked':''} onchange="updateCatFixed(${i},${ci},this.checked)"> Everyone analyses these</label>
-            ${c.fixed ? '' : `<span>Trainee picks <input type="text" value="${c.pick}" oninput="updateCatPick(${i},${ci},this.value)" placeholder="how many"> from this group</span>`}
-          </div>
-          ${cats.length > 1 ? `<button class="addline" onclick="removeCat(${i},${ci})">Remove this group</button>` : ''}
-        </div>`).join('')}
-    </div>
-    <button class="addline" onclick="addCat(${i})">+ Add a group</button>
-  </div>`;
+/* ---- the rail ---------------------------------------------------------------- */
+const EDGE = { text:'oklch(80% 0.012 80)', picker:'var(--teal)', fields:'var(--teal)', declaration:'var(--ink-warm)' };
+function railHTML(a){
+  const syl = sylState();
+  const crit = (a.criteria || []).length;
+  const sylLine = !syl ? '<div class="rsyl own">The centre’s own criteria</div>'
+    : syl.all ? `<div class="rsyl">Covers syllabus ${esc(syl.ref)}</div>`
+    : `<div class="rsyl short">Syllabus ${esc(syl.ref)} names ${syl.n}; ${syl.here} ${syl.here === 1 ? 'is' : 'are'} here</div>`;
+  const rel = hubReleased(DATA, CURRENT);
+  const due = a.dueAt ? HubDue.fmt(a.dueAt) : 'Not set';
+  const dueSets = a.dueSets && Object.keys(a.dueSets).length;
+  const resub = a.resubDueAt ? 'By ' + HubDue.fmt(a.resubDueAt) : a.resubDays ? a.resubDays + ' day' + (a.resubDays === 1 ? '' : 's') : 'Open';
+  const words = (a.wordMin || a.wordMax) ? `${(a.wordMin || 0).toLocaleString('en-GB')}–${(a.wordMax || 0).toLocaleString('en-GB')}` : 'Not set';
+  return `<aside class="rail${SHOW_META ? ' open' : ''}" id="rail">
+    <nav class="rcard brief" aria-label="The brief">
+      <p class="rlabel">The brief</p>
+      <div class="orows">${a.sections.map((s, i) => `<a class="orow${FOCUS === i ? ' on' : ''}" href="#sec-${i}" data-go="${i}">
+        <span class="bar" style="background:${sectionChanged(CURRENT, i) ? 'var(--gold-deep)' : EDGE[s.type] || EDGE.text}"></span>
+        <span class="n">${i + 1}</span><span class="l">${esc(s.label || 'Untitled section')}</span>
+        <span class="cdot" ${sectionChanged(CURRENT, i) ? '' : 'hidden'}></span></a>`).join('')}</div>
+      <a class="railadd" href="#addcard" data-go="add">+ Add a section</a>
+    </nav>
+    <a class="rcard crit" href="#critcard" data-go="crit">
+      <p class="rlabel">Marked against</p>
+      <div class="rcount" id="rcount">${crit} criteri${crit === 1 ? 'on' : 'a'}</div>
+      <span id="rsyl">${sylLine}</span>
+    </a>
+    ${CURRENT === 'a5' ? '' : `<div class="rcard">
+      <p class="rlabel">This course</p>
+      <div class="kv"><span>Words</span><span>${words}</span></div>
+      <div class="kv"><span>Due</span><span>${esc(due)}${dueSets ? '<br><small style="font-weight:500;color:var(--grey);">differs by set</small>' : ''}</span></div>
+      <div class="kv"><span>Resubmit within</span><span>${esc(resub)}</span></div>
+      <div class="kv"><span>Candidates</span><span class="${rel ? 'yes' : 'no'}">${rel ? 'Released' : 'Not released yet'}</span></div>
+      <button type="button" class="lnk more" onclick="toggleMeta()" aria-expanded="${SHOW_META}">${SHOW_META ? 'Done' : 'Change dates'}</button>
+      ${SHOW_META ? metaHTML(a) : ''}
+    </div>`}
+  </aside>`;
 }
-
-function textSectionHTML(s, i){
-  return `<div class="section" data-i="${i}">
-    ${sectionHead(s,i,'Instructions')}
-    <textarea rows="3" oninput="updateSection(${i},'body',this.value)" placeholder="What the trainee has to do, in your own words.">${esc(s.body)}</textarea>
-    <!-- Reference material: a letter, a text, a class profile. The trainee
-         reads it and gets no box to write in. -->
-    <label class="refline"><input type="checkbox" ${s.readonly===true?'checked':''} onchange="updateReadonly(${i},this.checked)"> Reference material \u2014 no answer box</label>
-  </div>`;
-}
-
-function declSectionHTML(s, i){
-  return `<div class="section" data-i="${i}">
-    ${sectionHead(s,i,'Declaration')}
-    ${s.items.map((it,di)=>`
-      <div class="chip-row">
-        <input type="text" value="${esc(it)}" oninput="updateDeclItem(${i},${di},this.value)" placeholder="One line the trainee signs up to">
-        <button class="icon-btn danger" title="Remove" onclick="removeDeclItem(${i},${di})">\u2715</button>
-      </div>`).join('')}
-    <button class="addline" onclick="addDeclItem(${i})">+ Add checkbox</button>
-    <p class="metahint" style="margin:6px 0 0;">Own work doesn\u2019t exclude joint preparation and discussion \u2014 but submitting an assignment substantially similar to another trainee\u2019s does count as a breach.</p>
-    <label style="display:flex; align-items:center; gap:8px; font-size:0.85rem; margin-top:12px; color:var(--ink);">
-      <input type="checkbox" ${s.aiToggle?'checked':''} onchange="toggleAi(${i},this.checked)"> Include the \u201Cdid you use AI?\u201D question and link-to-conversation field
-    </label>
-  </div>`;
-}
-
-function sectionHead(s, i, tag){
-  return `<div class="section-head">
-    <button class="icon-btn" title="Move up" onclick="moveSection(${i},-1)">\u2191</button>
-    <button class="icon-btn" title="Move down" onclick="moveSection(${i},1)">\u2193</button>
-    <input type="text" class="label" value="${esc(s.label)}" oninput="updateSection(${i},'label',this.value)" placeholder="Heading for this section">
-    <span class="type-tag">${tag}</span>
-    <button class="icon-btn danger" title="Remove section" onclick="removeSection(${i})">\u2715</button>
-  </div>`;
-}
+function toggleMeta(){ SHOW_META = !SHOW_META; render(); }
 
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+/* The settings that used to sit in a gold box above the wording. They are
+   the course's, not the brief's, so they live with "This course". */
 function metaHTML(a){
-  return `<div class="metabox">
-    <div class="metarow">
-      <label>Word count</label>
-      <input type="text" style="width:64px;" value="${a.wordMin||''}" oninput="updateMeta('wordMin',this.value)" placeholder="750"> –
-      <input type="text" style="width:64px;" value="${a.wordMax||''}" oninput="updateMeta('wordMax',this.value)" placeholder="1000"> words
-      <span class="metahint">Handbook range: 750–1,000.</span>
-    </div>
-    <div class="metarow">
-      <label>Trainees</label>
-      <select onchange="updateReleased(this.value)">
+  const core = hubAssignmentOrder(DATA).filter(k => k !== 'a5'), pos = core.indexOf(CURRENT);
+  const pc = proseCount();
+  return `<div class="meta">
+    <div class="mf"><span class="ml">Word count</span>
+      <div class="line"><input type="text" class="num" value="${a.wordMin||''}" oninput="updateMeta('wordMin',this.value)" placeholder="750" aria-label="Fewest words"> to
+      <input type="text" class="num" value="${a.wordMax||''}" oninput="updateMeta('wordMax',this.value)" placeholder="1000" aria-label="Most words"> words</div>
+      <p class="mh">Handbook range: 750–1,000.</p></div>
+    <div class="mf"><label for="mRel">Candidates</label>
+      <select id="mRel" onchange="updateReleased(this.value)">
         <option value="yes" ${hubReleased(DATA, CURRENT) ? 'selected' : ''}>Can open it now</option>
         <option value="no" ${hubReleased(DATA, CURRENT) ? '' : 'selected'}>Held back for now</option>
       </select>
-      <span class="metahint">Held back hides it from every trainee's assignment list. Anyone who has already submitted keeps theirs.</span>
-    </div>
+      <p class="mh">Held back hides it from every trainee’s assignment list. Anyone who has already submitted keeps theirs.</p></div>
     ${outHTML(a)}
-    <div class="metarow">
-      <label>Due</label>
-      <input type="datetime-local" value="${HubDue.toLocalInput(a.dueAt)}" onchange="updateDue(this.value)">
-      <button type="button" class="btn-quiet" style="padding:0 14px;min-height:42px;font-size:0.78rem;" onclick="updateDue('')">Clear</button>
-      <span class="metahint">Submission closes then. Leave it empty and it stays open. A tutor can give one trainee longer without moving it for everyone.</span>
-    </div>
+    <div class="mf"><label for="mDue">Due</label>
+      <input id="mDue" type="datetime-local" value="${HubDue.toLocalInput(a.dueAt)}" onchange="updateDue(this.value)">
+      ${a.dueAt ? `<button type="button" class="lnk clear" onclick="updateDue('')">Clear</button>` : ''}
+      <p class="mh">Submission closes then. Leave it empty and it stays open. A tutor can give one trainee longer without moving it for everyone.</p></div>
     ${dueSetsHTML(a)}
-    <div class="metarow">
-      <label>Resubmission</label>
-      <input type="number" min="1" max="30" step="1" style="width:64px;" value="${a.resubDays||''}"
-             onchange="updateMeta('resubDays', this.value)" placeholder="days"> days after you return it, or by
-      <input type="datetime-local" value="${HubDue.toLocalInput(a.resubDueAt)}" onchange="updateResubDue(this.value)">
-      ${a.resubDueAt ? `<button type="button" class="btn-quiet" style="padding:0 14px;min-height:42px;font-size:0.78rem;" onclick="updateResubDue('')">Clear</button>` : ''}
-      <span class="metahint">Days are counted from the day it goes back, because that differs for each trainee. A date is one closing time for everyone, as C/18 does on Classroom, and it wins over the days. Handbook 9.2.3 wants the resubmission inside the course. Leave both empty and the resubmission stays open, as the Due row above does.</span>
-    </div>
-    <div class="metarow">
-      <label>Format</label>
-      <select onchange="updateMeta('format',this.value)">
+    <div class="mf"><span class="ml">Resubmission</span>
+      <div class="line"><input type="number" class="num" min="1" max="30" step="1" value="${a.resubDays||''}" onchange="updateMeta('resubDays', this.value)" placeholder="days" aria-label="Days after it is returned"> days after you return it, or by</div>
+      <input type="datetime-local" value="${HubDue.toLocalInput(a.resubDueAt)}" onchange="updateResubDue(this.value)" aria-label="One resubmission date for everyone">
+      ${a.resubDueAt ? `<button type="button" class="lnk clear" onclick="updateResubDue('')">Clear</button>` : ''}
+      <p class="mh">Days are counted from the day it goes back, because that differs for each trainee. A date is one closing time for everyone, and it wins over the days. Handbook 9.2.3 wants the resubmission inside the course. Leave both empty and it stays open.</p></div>
+    <div class="mf"><label for="mFmt">Format</label>
+      <select id="mFmt" onchange="updateMeta('format',this.value)">
         <option value="prose" ${a.format==='prose'?'selected':''}>Continuous prose</option>
         <option value="structured" ${a.format==='structured'?'selected':''}>Structured (sections/tables)</option>
       </select>
-      <span class="metahint">at least 2 of the 4 must be in continuous prose (syllabus; CELTA 5 p12) \u2014 Handbook 9.2.1 says \u201cshould\u201d.</span>
-    </div>
-    <div class="metarow" style="align-items:flex-start;">
-      <label style="margin-top:6px;">Marking criteria</label>
-      <div style="flex:1;">
-        ${(a.criteria||[]).map((c,ci)=>`
-          <div class="chip-row" style="align-items:flex-start;">
-            <input type="text" style="flex:2;" value="${esc(c.text)}" oninput="updateCriterionText(${ci},this.value)" placeholder="The criterion, as the trainee will read it">
-            <select style="flex:1;" onchange="updateCriterionSection(${ci},this.value)">
-              <option value="" ${c.sectionIndex==null?'selected':''}>General (whole assignment)</option>
-              ${a.sections.map((s,si)=>s.type==='declaration'||s.type==='picker'?'':`<option value="${si}" ${c.sectionIndex===si?'selected':''}>${esc(s.label)}</option>`).join('')}
+      <p class="mh${pc < 2 ? ' bad' : ''}" id="proseLine">${pc} of the four are in continuous prose. The syllabus and the CELTA 5 say two must be (Handbook 9.2.1 says should).</p></div>
+    ${pos > -1 ? `<div class="mf"><span class="ml">Order in the course</span>
+      <div class="line">${['First','Second','Third','Fourth'][pos] || (pos + 1)} of the four
+        <button type="button" class="lnk" style="margin-left:6px;" onclick="moveAssignment('${CURRENT}',-1)" ${pos <= 0 ? 'disabled' : ''}>Earlier</button>
+        <button type="button" class="lnk" onclick="moveAssignment('${CURRENT}',1)" ${pos >= core.length - 1 ? 'disabled' : ''}>Later</button></div></div>` : ''}
+  </div>`;
+}
+
+/* ---- the document ------------------------------------------------------------ */
+const TYPE_TAG = { text:'Instructions', picker:'Pick your items', fields:'Fields to fill', declaration:'Declaration' };
+function rowsFor(t){ t = String(t || ''); return Math.min(12, Math.max(3, Math.ceil(t.length / 110) + (t.match(/\n/g) || []).length)); }
+function sectionHead(s, i){
+  const ch = sectionChanged(CURRENT, i);
+  return `<div class="shead">
+    <span class="n">${i + 1}</span>
+    <input type="text" class="slabel" value="${esc(s.label)}" oninput="updateSection(${i},'label',this.value)" placeholder="Heading for this section" aria-label="Heading of section ${i + 1}">
+    <span class="tchip">${TYPE_TAG[s.type] || TYPE_TAG.text}</span>
+    <span class="aw-chg" ${ch ? '' : 'hidden'} title="Differs from Connect’s shipped wording">Changed</span>
+    <button type="button" class="dots" title="Move or remove" aria-label="More for section ${i + 1}" onclick="openSectionMenu(this, ${i})">···</button>
+  </div>`;
+}
+function restoreFoot(i, withOriginal){
+  const o = originalOf(i), ch = sectionChanged(CURRENT, i);
+  if (!ch || !o) return '';
+  return `${withOriginal ? `<button type="button" class="lnk" onclick="toggleOrig(${i})">${OPEN_ORIG.has(i) ? 'Hide Connect’s original' : 'See Connect’s original'}</button>` : ''}
+    <button type="button" class="lnk" onclick="restoreSection(${i})">Restore it</button>`;
+}
+function textSectionHTML(s, i){
+  const o = originalOf(i);
+  return `${sectionHead(s, i)}
+    <textarea class="body" rows="${rowsFor(s.body)}" oninput="updateSection(${i},'body',this.value)" placeholder="What the trainee reads, in your own words.">${esc(s.body)}</textarea>
+    <div class="sfoot" data-foot="${i}">${restoreFoot(i, true)}<span class="sp"></span>
+      <span>${s.readonly === true ? 'They read this. No answer box.' : 'They answer under this.'}</span></div>
+    ${OPEN_ORIG.has(i) && o ? `<div class="orig"><span class="ol">Connect’s original · ${esc(o.label)}</span>${esc(o.body)}</div>` : ''}`;
+}
+/* A picker's groups are edited through hubPickerCats, so this one editor reads
+   both shapes: the old catA/catB with a shared pickCount, and the newer `cats`
+   array where each group has its own count and a group can be fixed. Editing a
+   catA/catB section converts it to `cats` on the first change (25 Sep 2026). */
+function pickerSectionHTML(s, i){
+  const cats = hubPickerCats(s);
+  return `${sectionHead(s, i)}
+    <input type="text" class="intro" value="${esc(s.intro || '')}" oninput="updateSection(${i},'intro',this.value)" placeholder="A line above the groups (optional)" aria-label="Intro line">
+    <div class="cats">
+      ${cats.map((c, ci) => {
+        const most = Math.max(c.options.length, c.pick || 1, 1);
+        return `<div class="cat">
+          <div class="cathead">
+            <input type="text" class="catlabel" value="${esc(c.label)}" oninput="updateCatLabel(${i},${ci},this.value)" placeholder="Name of this group" aria-label="Group name">
+            <select class="rule" onchange="updateCatRule(${i},${ci},this.value)" aria-label="How many they pick" title="Everyone analyses these, or the trainee picks some">
+              <option value="all" ${c.fixed ? 'selected' : ''}>everyone</option>
+              ${Array.from({ length: most }, (_, n) => `<option value="${n + 1}" ${!c.fixed && (c.pick || 1) === n + 1 ? 'selected' : ''}>pick ${n + 1}</option>`).join('')}
             </select>
-            <button class="icon-btn danger" title="Remove" onclick="removeCriterion(${ci})">\u2715</button>
-          </div>`).join('')}
-        <button class="addline" onclick="addCriterion()">+ Add criterion</button>
-        ${syllabusPanel()}
-        <p class="metahint" style="margin:4px 0 0;">Shown to trainees alongside the instructions — Handbook 9.2.1: the criteria should be made explicit. Tying a criterion to a section lets it lock on resubmission once met, instead of reopening the whole assignment.</p>
-      </div>
+          </div>
+          ${c.options.map((opt, oi) => `<div class="opt">
+            <input type="text" value="${esc(opt)}" oninput="updateOption(${i},${ci},${oi},this.value)" placeholder="One thing they can pick" aria-label="Option">
+            <button type="button" class="xbtn" title="Remove this item" onclick="removeOption(${i},${ci},${oi})">×</button></div>`).join('')}
+          <div class="catfoot"><button type="button" class="lnk" onclick="addOption(${i},${ci})">+ item</button>
+            ${cats.length > 1 ? `<button type="button" class="lnk quiet" onclick="removeCat(${i},${ci})">Remove group</button>` : ''}</div>
+        </div>`; }).join('')}
+    </div>
+    <div class="sfoot"><button type="button" class="lnk" onclick="addCat(${i})">+ Add a group</button><span class="sp"></span>${restoreFoot(i, false)}</div>`;
+}
+function fieldSectionHTML(s, i){
+  return `${sectionHead(s, i)}
+    <input type="text" class="intro" value="${esc(s.intro || '')}" oninput="updateSection(${i},'intro',this.value)" placeholder="A line above the fields (optional)" aria-label="Intro line">
+    <div class="frows">${s.fields.map((f, fi) => `<div class="frow">
+      <input type="text" class="flabel" value="${esc(f.label)}" oninput="updateField(${i},${fi},'label',this.value)" placeholder="What the trainee is asked for" aria-label="Field">
+      <input type="text" class="fhint" value="${esc(f.hint || '')}" oninput="updateField(${i},${fi},'hint',this.value)" placeholder="Guidance shown under the field" aria-label="Guidance">
+      <button type="button" class="xbtn" title="Remove this field" onclick="removeField(${i},${fi})">×</button></div>`).join('')}</div>
+    <div class="sfoot"><button type="button" class="lnk" onclick="addField(${i})">+ Add a field</button><span class="sp"></span>${restoreFoot(i, false)}</div>`;
+}
+function declSectionHTML(s, i){
+  return `${sectionHead(s, i)}
+    <div class="drows">${s.items.map((it, di) => `<div class="drow"><span class="box"></span>
+      <input type="text" value="${esc(it)}" oninput="updateDeclItem(${i},${di},this.value)" placeholder="One line the trainee signs up to" aria-label="Declaration line">
+      <button type="button" class="xbtn" title="Remove this line" onclick="removeDeclItem(${i},${di})">×</button></div>`).join('')}</div>
+    <div class="sfoot">
+      <button type="button" class="lnk" onclick="addDeclItem(${i})">+ Add a line</button>
+      <button type="button" class="switch${s.aiToggle ? ' on' : ''}" role="switch" aria-checked="${!!s.aiToggle}" onclick="toggleAi(${i}, ${!s.aiToggle})"><span class="track"></span>Ask whether AI tools were used</button>
+      <span class="sp"></span>${restoreFoot(i, false)}</div>
+    <p class="sfoot" style="margin:10px 0 0; font-size:0.76rem;">Own work doesn’t exclude joint preparation and discussion, but submitting an assignment substantially similar to another trainee’s does count as a breach.</p>`;
+}
+function sectionHTML(s, i){
+  const inner = s.type === 'fields' ? fieldSectionHTML(s, i) : s.type === 'picker' ? pickerSectionHTML(s, i) : s.type === 'declaration' ? declSectionHTML(s, i) : textSectionHTML(s, i);
+  return `<section class="sec t-${s.type === 'fields' || s.type === 'picker' || s.type === 'declaration' ? s.type : 'text'}${sectionChanged(CURRENT, i) ? ' aw-changed' : ''}${FOCUS === i ? ' focus' : ''}" id="sec-${i}" data-i="${i}">${inner}</section>`;
+}
+const KINDS = [
+  { kind:'text',   name:'Instructions',       what:'What to do, with a box they answer in.', edge:EDGE.text },
+  { kind:'read',   name:'A text to work from', what:'A letter, an article, a transcript.',     edge:EDGE.text },
+  { kind:'picker', name:'Pick your items',     what:'Groups of options, pick n.',              edge:EDGE.picker },
+  { kind:'fields', name:'Fields to fill',      what:'Labelled boxes they write in.',           edge:EDGE.fields },
+  { kind:'declaration', name:'Declaration',    what:'Lines they tick before they turn it in.', edge:EDGE.declaration },
+];
+function addCardHTML(){
+  return `<div class="addcard" id="addcard">
+    <p class="al">Add a section</p>
+    <div class="kinds">${KINDS.map(k => `<button type="button" class="kind" onclick="addSection('${k.kind}')"><span class="bar" style="background:${k.edge}"></span><span><b>${k.name}</b><small>${k.what}</small></span></button>`).join('')}</div>
+    <div class="importline">
+      <button type="button" class="lnk" onclick="$('importFile').click()">Import from a file</button>
+      <input type="file" id="importFile" accept=".docx,.txt,.md" style="display:none;" onchange="handleImport(this.files[0])">
+      <span>Word, plain text or Markdown. Each paragraph becomes a section you can then edit.</span>
     </div>
   </div>`;
 }
 
+/* ---- Marked against ---------------------------------------------------------- */
 /* WHAT THE SYLLABUS ITSELF SAYS, beside what this centre uses. Designing the
    assignments is the centre's job (9.2.1) and these criteria are the centre's
    to set -- but they had been described in the code as "the syllabus's own
-   words", which they are not: nineteen against Cambridge's seventeen, two
-   promoted from the syllabus's DESIGN column, and two reworded so they ask
-   more than Cambridge does (audit, 29 Sep 2026).
-
-   So the syllabus's set is shown, never imposed. Adopting it is one click and
-   it is REFUSED once any marking exists, because criteriaMarks are positional
-   -- replacing the list would move every mark already made. */
+   words", which they are not (audit, 29 Sep 2026). So the syllabus's set is
+   shown, never imposed. Adopting it is one click and it is REFUSED once any
+   marking exists, because criteriaMarks are positional. */
 function syllabusCriteria(){ return (window.CONNECT_HUB_SYLLABUS_CRITERIA || {})[CURRENT] || null; }
-function syllabusPanel(){
-  const syl = syllabusCriteria(); if (!syl) return '';
+const SYL_REF = { fol:'2.1', lrt:'2.2', lsrt:'2.3', lfc:'2.4' };
+/* Compare on letters and digits only, so "sub-skills" and "subskills" are
+   the same criterion and only a real difference in wording shows. */
+const normT = t => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '');
+function sylState(){
+  const syl = syllabusCriteria(); if (!syl || !DATA[CURRENT]) return null;
   const mine = (DATA[CURRENT].criteria || []).map(c => (typeof c === 'string' ? c : c.text) || '');
-  /* Compare on letters and digits only, so "sub-skills" and "subskills" are
-     the same criterion and only a real difference in wording shows. */
-  const norm = t => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '');
-  const same = mine.length === syl.length && syl.every((t, i) => norm(t) === norm(mine[i]));
-  if (same) return `<p class="metahint" style="margin:8px 0 0;">These are the syllabus's own words for assignment ${esc(SYL_REF[CURRENT])}, unchanged.</p>`;
-  const missing = syl.filter(t => !mine.some(m => norm(m) === norm(t)));
-  const extra = mine.filter(m => !syl.some(t => norm(t) === norm(m)));
-  return `<details class="sylbox"><summary>The syllabus has ${syl.length} for assignment ${esc(SYL_REF[CURRENT])}; this course uses ${mine.length}</summary>
+  const here = syl.filter(t => mine.some(m => normT(m) === normT(t))).length;
+  const same = mine.length === syl.length && syl.every((t, i) => normT(t) === normT(mine[i]));
+  return { syl, mine, ref: SYL_REF[CURRENT], n: syl.length, here, all: here === syl.length, same };
+}
+const WORDS = ['none','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty'];
+const word = n => WORDS[n] || String(n);
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+function sylFootHTML(){
+  const st = sylState(); if (!st) return '<span>The centre’s own criteria. The syllabus sets none for this one.</span>';
+  if (st.all) return `<span>Syllabus ${esc(st.ref)} names ${word(st.n)}. ${st.n === 1 ? 'It is here.' : (st.n === 2 ? 'Both' : 'All ' + word(st.n)) + ' are here.'}</span>`;
+  return `<span class="short">Syllabus ${esc(st.ref)} names ${word(st.n)}. ${cap(word(st.here))} ${st.here === 1 ? 'is' : 'are'} here.</span>`;
+}
+function syllabusPanel(){
+  const st = sylState(); if (!st || st.same) return '';
+  const missing = st.syl.filter(t => !st.mine.some(m => normT(m) === normT(t)));
+  const extra = st.mine.filter(m => !st.syl.some(t => normT(t) === normT(m)));
+  return `<details class="sylbox"><summary>The syllabus has ${st.n} for assignment ${esc(st.ref)}; this course uses ${st.mine.length}</summary>
     <div class="sylbody">
-      <p class="metahint" style="margin:0 0 8px;">Designing the four assignments is the centre's job (Handbook 9.2.1), so these may differ on purpose. What matters is not calling them Cambridge's when they are not.</p>
-      <ol class="syllist">${syl.map(t => `<li${missing.some(x => x === t) ? ' class="only"' : ''}>${esc(t)}</li>`).join('')}</ol>
-      ${extra.length ? `<p class="metahint" style="margin:8px 0 0;"><b>Only on this course:</b> ${extra.map(esc).join(' \u00b7 ')}</p>` : ''}
-      <button class="addline" onclick="adoptSyllabus()">Use the syllabus's ${syl.length} instead</button>
+      <p>Designing the four assignments is the centre's job (Handbook 9.2.1), so these may differ on purpose. What matters is not calling them Cambridge's when they are not.</p>
+      <ol class="syllist">${st.syl.map(t => `<li${missing.indexOf(t) > -1 ? ' class="only"' : ''}>${esc(t)}</li>`).join('')}</ol>
+      ${extra.length ? `<p><b>Only on this course:</b> ${extra.map(esc).join(' · ')}</p>` : ''}
+      <button type="button" class="lnk" onclick="adoptSyllabus()">Use the syllabus's ${st.n} instead</button>
     </div></details>`;
 }
-const SYL_REF = { fol:'2.1', lrt:'2.2', lsrt:'2.3', lfc:'2.4' };
-function adoptSyllabus(){
-  const syl = syllabusCriteria(); if (!syl) return;
-  const marked = countMarked();
-  if (marked) { alert('Not while marking exists.\n\n' + marked + ' submission' + (marked === 1 ? ' has' : 's have') + ' criterion marks on this assignment, and marks are stored by POSITION \u2014 replacing the list would move every one of them onto a different criterion.\n\nThis can be changed on a course where nothing has been marked yet.'); return; }
-  if (!confirm('Replace this assignment\u2019s ' + (DATA[CURRENT].criteria || []).length + ' criteria with the syllabus\u2019s ' + syl.length + '?\n\nAny wording of your own on them is lost, and criteria tied to a section become general.')) return;
-  DATA[CURRENT].criteria = syl.map(t => ({ text: t, sectionIndex: null }));
-  renderEditor();
+function critTag(text){
+  const syl = syllabusCriteria(), ref = SYL_REF[CURRENT];
+  const k = syl ? syl.findIndex(t => normT(t) === normT(text)) : -1;
+  return k > -1 ? `<span class="stag" title="The syllabus's own words">${esc(ref)} ${'abcdefghijklmnopqrstuvwxyz'.charAt(k)}</span>` : `<span class="stag own" title="Not in the syllabus's words">this course</span>`;
 }
-function countMarked(){
-  try {
-    const subs = JSON.parse(localStorage.getItem('connect_assignment_submissions_v1') || 'null');
-    const roster = JSON.parse(localStorage.getItem('connect_roster_v1') || 'null');
-    const all = [];
-    if (subs && subs[CURRENT]) all.push(subs[CURRENT]);
-    if (roster && roster.trainees) Object.values(roster.trainees).forEach(t => { const x = (t.assignments || {})[CURRENT]; if (x) all.push(x); });
-    return all.filter(x => { const cm = x.criteriaMarks || {}; return (cm.sub1 || []).some(v => v != null) || (cm.sub2 || []).some(v => v != null); }).length;
-  } catch (e) { return 0; }
+function critCardHTML(a){
+  const tieable = a.sections.map((s, si) => ({ s, si })).filter(x => x.s.type !== 'declaration' && x.s.type !== 'picker');
+  return `<div class="critcard" id="critcard">
+    <div class="ch"><h2>Marked against</h2><span>What the tutor ticks, criterion by criterion. The word count is a submission rule, not a criterion.</span></div>
+    <div class="crows">${(a.criteria || []).map((c, ci) => {
+      const tied = c.sectionIndex != null && a.sections[c.sectionIndex] && tieable.some(x => x.si === c.sectionIndex);
+      return `<div class="crow">
+        <span class="n">${ci + 1}</span>
+        <input type="text" value="${esc(c.text)}" oninput="updateCriterionText(${ci},this.value)" placeholder="The criterion, as the trainee will read it" aria-label="Criterion ${ci + 1}">
+        <span data-tag="${ci}">${critTag(c.text)}</span>
+        <button type="button" class="dots" title="Tie to a section, or remove" aria-label="More for criterion ${ci + 1}" onclick="openCritMenu(this, ${ci})">···</button>
+        ${tied ? `<span class="tie">Tied to section ${c.sectionIndex + 1}, ${esc(a.sections[c.sectionIndex].label)}</span>` : ''}
+      </div>`; }).join('')}</div>
+    <div class="cfoot"><button type="button" class="lnk" onclick="addCriterion()">+ Add a criterion</button><span id="sylfoot">${sylFootHTML()}</span></div>
+    ${syllabusPanel()}
+    <p class="cfoot" style="font-size:0.76rem;">Shown to trainees alongside the instructions (Handbook 9.2.1: the criteria should be made explicit). Tying a criterion to a section lets that section lock on resubmission once it is met, instead of reopening the whole assignment.</p>
+  </div>`;
 }
+
+/* ---- As the candidate sees it ------------------------------------------------ */
+function md(t){ return esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>'); }
+function longDate(iso){
+  const t = HubDue.parse ? HubDue.parse(iso) : Date.parse(iso); if (t == null || !isFinite(t)) return '';
+  const d = new Date(t);
+  return d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' }) + ', ' + d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+}
+function previewHTML(a){
+  const meta = [];
+  if (a.wordMin || a.wordMax) meta.push(`${(a.wordMin || 0).toLocaleString('en-GB')}–${(a.wordMax || 0).toLocaleString('en-GB')} words`);
+  if (a.dueAt) meta.push('due ' + longDate(a.dueAt) + (a.dueSets && Object.keys(a.dueSets).length ? ' (each teaching set sees its own date)' : ''));
+  const secs = a.sections.map(s => {
+    let body = '';
+    if (s.type === 'picker') {
+      const cats = hubPickerCats(s);
+      body = (s.intro ? `<div class="pb grey">${md(s.intro)}</div>` : '') + `<div class="pcats">${cats.map(c => `<div class="pcat"><b>${esc(c.label)}</b><small>${c.fixed ? 'Everyone analyses these' : 'Pick ' + (c.pick || 1)}</small><ul>${c.options.map(o => `<li>${esc(o)}</li>`).join('')}</ul></div>`).join('')}</div>`;
+    } else if (s.type === 'fields') {
+      body = (s.intro ? `<div class="pb grey">${md(s.intro)}</div>` : '') + s.fields.map(f => `<div class="pfield"><b>${esc(f.label)}</b>${f.hint ? `<div class="ph">${esc(f.hint)}</div>` : ''}<div class="pwrite">the candidate writes here</div></div>`).join('');
+    } else if (s.type === 'declaration') {
+      body = `<div class="pdecl">${s.items.map(it => `☐ ${esc(it)}`).join('<br>')}${s.aiToggle ? '<br><br>○ Used AI   ○ Did not use AI<br><span style="color:var(--grey);font-size:0.84rem;">If they used it: a link to the conversation, and what it was for.</span>' : ''}</div>`;
+    } else {
+      body = `<div class="pb">${md(s.body)}</div>${s.readonly === true ? '' : '<div class="pwrite">the candidate writes here</div>'}`;
+    }
+    return `<div class="psec"><h3>${esc(s.label)}</h3>${body}</div>`;
+  }).join('');
+  const crit = (a.criteria || []).length ? `<div class="psec"><h3>How it is marked</h3><ol class="pcrit">${a.criteria.map(c => `<li>${esc(c.text)}</li>`).join('')}</ol></div>` : '';
+  return `<div class="preview">
+    <p class="pe">Written assignment · ${CODES[CURRENT]}</p>
+    <h2>${esc(a.title)}</h2>
+    <p class="pm">${meta.map(esc).join(' · ') || ' '}</p>
+    ${secs}${crit}
+  </div>`;
+}
+
+/* ---- one render -------------------------------------------------------------- */
+function render(){
+  closeMenu();
+  renderSwitcher(); renderHead();
+  const a = DATA[CURRENT];
+  if (!a) {
+    $('body').innerHTML = `<div class="emptycard">
+      <p>${CURRENT==='a5' ? 'Assignment 5 hasn’t been set up on this course yet.' : 'This assignment isn’t set up yet.'}</p>
+      <div class="acts"><button type="button" class="btn" onclick="startBlank()">Start from a blank assignment</button>
+      <button type="button" class="btn ghost" onclick="$('importFile').click()">Import from a file</button>
+      <input type="file" id="importFile" accept=".docx,.txt,.md" style="display:none;" onchange="handleImport(this.files[0])"></div></div>`;
+    refreshMarks(); return;
+  }
+  if (MODE === 'preview') { $('body').innerHTML = previewHTML(a); refreshMarks(); return; }
+  $('body').innerHTML = `<div class="ewrap">${railHTML(a)}
+    <div class="doc" id="doc">${a.sections.map(sectionHTML).join('')}${addCardHTML()}${critCardHTML(a)}</div></div>`;
+  refreshMarks();
+}
+
+/* What changes as you type, without a re-render: the CHANGED chips and gold
+   edges, the brief's dots and labels, the header, the pills and the save bar. */
+function refreshMarks(){
+  const a = DATA[CURRENT];
+  document.querySelectorAll('#switcher [data-a]').forEach(b => { const d = b.querySelector('.edot'); if (d) d.hidden = !isEdited(b.dataset.a); });
+  const sl = $('stateline'); if (sl) sl.innerHTML = stateHTML();
+  if (a && MODE === 'edit') {
+    document.querySelectorAll('#doc .sec[data-i]').forEach(sec => {
+      const i = +sec.dataset.i, ch = sectionChanged(CURRENT, i);
+      sec.classList.toggle('aw-changed', ch);
+      const chip = sec.querySelector('.aw-chg'); if (chip) chip.hidden = !ch;
+      const row = document.querySelector(`.orow[data-go="${i}"]`);
+      if (row) {
+        row.querySelector('.cdot').hidden = !ch;
+        row.querySelector('.bar').style.background = ch ? 'var(--gold-deep)' : (EDGE[(a.sections[i] || {}).type] || EDGE.text);
+        row.querySelector('.l').textContent = (a.sections[i] || {}).label || 'Untitled section';
+      }
+      /* the Restore links come and go with the chip */
+      const foot = sec.querySelector('.sfoot');
+      const has = !!sec.querySelector('[onclick^="restoreSection"]');
+      if (foot && has !== (ch && !!originalOf(i))) {
+        const ta = sec.querySelector('textarea.body');
+        if (ta) { foot.innerHTML = restoreFoot(i, true) + '<span class="sp"></span>' + `<span>${a.sections[i].readonly === true ? 'They read this. No answer box.' : 'They answer under this.'}</span>`; }
+        else { const sp = foot.querySelector('.sp'); while (sp && sp.nextSibling) sp.nextSibling.remove(); if (sp) sp.insertAdjacentHTML('afterend', restoreFoot(i, false)); }
+      }
+    });
+    const rc = $('rcount'); if (rc) { const n = (a.criteria || []).length; rc.textContent = n + ' criteri' + (n === 1 ? 'on' : 'a'); }
+    const sf = $('sylfoot'); if (sf) sf.innerHTML = sylFootHTML();
+    const rs = $('rsyl'); if (rs) { const st = sylState(); rs.innerHTML = !st ? '<div class="rsyl own">The centre’s own criteria</div>' : st.all ? `<div class="rsyl">Covers syllabus ${esc(st.ref)}</div>` : `<div class="rsyl short">Syllabus ${esc(st.ref)} names ${st.n}; ${st.here} ${st.here === 1 ? 'is' : 'are'} here</div>`; }
+    (a.criteria || []).forEach((c, ci) => { const t = document.querySelector(`[data-tag="${ci}"]`); if (t) t.innerHTML = critTag(c.text); });
+  }
+  const unsaved = allUnsaved();
+  const keys = Object.keys(unsaved), n = keys.reduce((t, k) => t + unsaved[k].length, 0);
+  const bar = $('savebar'), what = $('saveWhat'), btn = $('saveBtn');
+  bar.classList.toggle('dirty', n > 0);
+  btn.classList.toggle('aw-dirty', n > 0);
+  $('discardBtn').disabled = n === 0;
+  if (!n) what.textContent = isEdited(CURRENT) || !a ? 'Everything saved' : 'Nothing to save — this is Connect’s wording, untouched';
+  else {
+    const here = unsaved[CURRENT] || [];
+    const others = keys.filter(k => k !== CURRENT).map(k => unsaved[k].length + ' on ' + CODES[k]);
+    const lead = here.length ? andList(here) : '';
+    what.textContent = `${n} change${n === 1 ? '' : 's'} not yet saved — ` + [lead, andList(others)].filter(Boolean).join(', and ');
+  }
+}
+let markT = null;
+function soon(){ clearTimeout(markT); markT = setTimeout(refreshMarks, 120); }
+document.addEventListener('input', e => { if (e.target.closest('#body, #ehead')) soon(); });
+document.addEventListener('change', e => { if (e.target.closest('#body, #ehead')) soon(); });
+
+/* The section being worked on takes a teal ring, and its row in the brief goes bold. */
+function setFocus(i){
+  FOCUS = i;
+  document.querySelectorAll('#doc .sec').forEach(s => s.classList.toggle('focus', +s.dataset.i === i));
+  document.querySelectorAll('.orow').forEach(r => r.classList.toggle('on', +r.dataset.go === i && r.dataset.go !== undefined));
+}
+document.addEventListener('focusin', e => { const s = e.target.closest && e.target.closest('#doc .sec'); if (s) setFocus(+s.dataset.i); });
+document.addEventListener('click', e => {
+  const go = e.target.closest('[data-go]'); if (!go) return;
+  e.preventDefault();
+  const v = go.dataset.go;
+  const el = v === 'add' ? $('addcard') : v === 'crit' ? $('critcard') : $('sec-' + v);
+  if (!el) return;
+  window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 24, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  if (v !== 'add' && v !== 'crit') setFocus(+v);
+});
+
+/* ---- the ··· menus ----------------------------------------------------------- */
+let MENU_FOR = null;
+function placeMenu(btn){
+  const m = $('menu'); m.hidden = false;
+  const r = btn.getBoundingClientRect(), w = m.offsetWidth;
+  m.style.top = (r.bottom + window.scrollY + 4) + 'px';
+  m.style.left = Math.max(8, Math.min(r.right + window.scrollX - w, document.documentElement.clientWidth - w - 8)) + 'px';
+  const first = m.querySelector('button:not(:disabled), select'); if (first) first.focus();
+}
+function closeMenu(){ const m = $('menu'); if (m) { m.hidden = true; m.innerHTML = ''; } MENU_FOR = null; }
+function openSectionMenu(btn, i){
+  if (MENU_FOR === 's' + i) { closeMenu(); return; }
+  const a = DATA[CURRENT], s = a.sections[i], last = a.sections.length - 1;
+  const m = $('menu');
+  m.innerHTML = `<button type="button" onclick="closeMenu(); moveSection(${i},-1)" ${i === 0 ? 'disabled' : ''}>Move up</button>
+    <button type="button" onclick="closeMenu(); moveSection(${i},1)" ${i === last ? 'disabled' : ''}>Move down</button>
+    ${s.type === 'text' ? `<hr><button type="button" onclick="closeMenu(); updateReadonly(${i}, ${s.readonly !== true})">${s.readonly === true ? 'Give it an answer box' : 'Make it reading only, no answer box'}</button>` : ''}
+    <hr><button type="button" class="danger" onclick="closeMenu(); removeSection(${i})">Remove this section</button>`;
+  MENU_FOR = 's' + i; placeMenu(btn);
+}
+function openCritMenu(btn, ci){
+  if (MENU_FOR === 'c' + ci) { closeMenu(); return; }
+  const a = DATA[CURRENT], c = a.criteria[ci];
+  const m = $('menu');
+  m.innerHTML = `<div class="mlabel">Tied to</div>
+    <select onchange="updateCriterionSection(${ci},this.value); render();" aria-label="Section this criterion is tied to">
+      <option value="" ${c.sectionIndex == null ? 'selected' : ''}>General (whole assignment)</option>
+      ${a.sections.map((s, si) => s.type === 'declaration' || s.type === 'picker' ? '' : `<option value="${si}" ${c.sectionIndex === si ? 'selected' : ''}>${si + 1}. ${esc(s.label)}</option>`).join('')}
+    </select>
+    <hr><button type="button" class="danger" onclick="closeMenu(); removeCriterion(${ci})">Remove this criterion</button>`;
+  MENU_FOR = 'c' + ci; placeMenu(btn);
+}
+document.addEventListener('mousedown', e => { if (MENU_FOR && !e.target.closest('#menu') && !e.target.closest('.dots')) closeMenu(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && MENU_FOR) closeMenu(); });
+window.addEventListener('resize', () => { if (MENU_FOR) closeMenu(); });
+
+/* ---- the writes (unchanged in what they store) ------------------------------- */
 function updateMeta(key,v){
   /* 9.2.1: "The word length of each assignment is set by the centre within the
      range of 750-1,000 words." The centre sets it; the range is shown as a
@@ -433,11 +910,9 @@ function updateMeta(key,v){
   DATA[CURRENT][key] = (key==='wordMin'||key==='wordMax') ? (parseInt(v,10)||0)
     : key==='resubDays' ? (parseInt(v,10)||0)
     : v;
-  renderProseBanner();
+  if (key === 'format') { const p = $('proseLine'); if (p) { const pc = proseCount(); p.textContent = pc + ' of the four are in continuous prose. The syllabus and the CELTA 5 say two must be (Handbook 9.2.1 says should).'; p.classList.toggle('bad', pc < 2); } }
+  soon();
 }
-/* Stored as an instant, not as the text in the box: see hub-due.js. Takes
-   effect at once like the release switch -- a date left waiting for Save is a
-   date someone thinks they set. */
 /* A DEADLINE PER TEACHING SET (10 Oct 2026). On C/18 the LRT is due Monday
    for DEF and Tuesday for ABC -- nobody hands in on a day they teach. Each
    group's two sets get their own date here; an empty one keeps the Due above.
@@ -453,12 +928,15 @@ function dueSetsHTML(a){
     const sets = R.setsFor(by[g]);
     const cur = ((a.dueSets || {})[g]) || [];
     return sets.map((set, i) => !set.length ? '' : `<div class="dsrow"><span class="dsname"><b>${esc(R.setName(set))}</b>${groups.length > 1 ? ' · Group ' + esc(g) : ''} <small>${esc(set.map(p => String(p.name || '').split(' ')[0]).join(', '))}</small></span>
-      <input type="datetime-local" value="${cur[i] ? HubDue.toLocalInput(cur[i]) : ''}" onchange="updateDueSet('${esc(g)}', ${i}, this.value)">
-      ${cur[i] ? `<button type="button" class="btn-quiet" style="padding:0 12px;min-height:38px;font-size:0.76rem;" onclick="updateDueSet('${esc(g)}', ${i}, '')">Clear</button>` : ''}</div>`).join('');
+      <input type="datetime-local" value="${cur[i] ? HubDue.toLocalInput(cur[i]) : ''}" onchange="updateDueSet('${esc(g)}', ${i}, this.value)" aria-label="Due for ${esc(R.setName(set))}">
+      ${cur[i] ? `<button type="button" class="lnk clear" onclick="updateDueSet('${esc(g)}', ${i}, '')">Clear</button>` : ''}</div>`).join('');
   }).join('');
-  return `<div class="metarow dsets"><label>Due by set</label><div class="dslist">${rows}</div>
-    <span class="metahint">Only where the two teaching sets hand in on different days. Leave a set empty and it keeps the Due above. Each trainee sees their own set’s date.</span></div>`;
+  return `<div class="mf"><span class="ml">Due by set</span><div>${rows}</div>
+    <p class="mh">Only where the two teaching sets hand in on different days. Leave a set empty and it keeps the Due above. Each trainee sees their own set’s date.</p></div>`;
 }
+/* Stored as an instant, not as the text in the box: see hub-due.js. Takes
+   effect at once like the release switch -- a date left waiting for Save is a
+   date someone thinks they set. */
 function updateDueSet(g, i, v){
   const a = DATA[CURRENT];
   const ds = Object.assign({}, a.dueSets || {});
@@ -466,137 +944,90 @@ function updateDueSet(g, i, v){
   row[i] = v ? HubDue.fromLocalInput(v) : '';
   if (row.some(Boolean)) ds[g] = row; else delete ds[g];
   if (Object.keys(ds).length) a.dueSets = ds; else delete a.dueSets;
-  persist(); renderEditor();
+  persistSettings(); render();
 }
 function updateDue(v){
   DATA[CURRENT].dueAt = v ? HubDue.fromLocalInput(v) : '';
   DATA[CURRENT].due = DATA[CURRENT].dueAt;   // the timetable and the dashboard read `due` (hubWordingFilled)
-  persist(); renderEditor();
+  persistSettings(); render();
 }
-/* WHEN IT GOES OUT, AND WHO SETS IT (10 Oct 2026). Ramy: "if input sessions
-   are color-coded, then assignments out should also be color-coded ... which
-   trainer is setting up the assignment in case there's more than one input a
-   day." The timetable puts "… out" on the day in that tutor's colour. It does
-   not release the assignment: the Trainees row above still decides that. */
+/* WHEN IT GOES OUT, AND WHO SETS IT (10 Oct 2026). The timetable puts "… out"
+   on the day in that tutor's colour. It does not release the assignment: the
+   Candidates row still decides that. */
 function outHTML(a){
   let names = [];
   try { names = hubTutorNames(JSON.parse(localStorage.getItem('connect_course_settings')) || {}); } catch (e) {}
   const by = a.setBy || '';
   if (by && names.indexOf(by) === -1) names.push(by);
-  return `<div class="metarow">
-      <label>Goes out</label>
-      <input type="datetime-local" value="${HubDue.toLocalInput(a.outAt)}" onchange="updateOut(this.value)">
-      ${a.outAt ? `<button type="button" class="btn-quiet" style="padding:0 14px;min-height:42px;font-size:0.78rem;" onclick="updateOut('')">Clear</button>` : ''}
-      <select onchange="updateMeta('setBy', this.value); persist();" aria-label="Who sets it">
+  return `<div class="mf"><label for="mOut">Goes out</label>
+      <input id="mOut" type="datetime-local" value="${HubDue.toLocalInput(a.outAt)}" onchange="updateOut(this.value)">
+      ${a.outAt ? `<button type="button" class="lnk clear" onclick="updateOut('')">Clear</button>` : ''}
+      <select onchange="updateSetBy(this.value)" aria-label="Who sets it">
         <option value="">Set by…</option>${names.map(n => `<option value="${esc(n)}"${n === by ? ' selected' : ''}>${esc(n)}</option>`).join('')}
       </select>
-      <span class="metahint">The day it is handed out and the tutor who sets it. The timetable marks it on that day in the tutor’s colour.${names.length ? '' : ' Add the tutors’ names on Course admin to pick one.'}</span>
-    </div>`;
+      <p class="mh">The day it is handed out and the tutor who sets it. The timetable marks it on that day in the tutor’s colour.${names.length ? '' : ' Add the tutors’ names on Course admin to pick one.'}</p></div>`;
 }
+function updateSetBy(v){ DATA[CURRENT].setBy = v; persistSettings(); soon(); }
 function updateOut(v){
   const a = DATA[CURRENT];
   if (v) a.outAt = HubDue.fromLocalInput(v); else delete a.outAt;
-  persist(); renderEditor();
+  persistSettings(); render();
 }
-/* A FIXED RESUBMISSION DATE (10 Oct 2026). Classroom gives C/18 one closing
-   time for every LSRT resubmission -- Thu 29 Oct, 11:00 -- where Lite only
-   counted days from each return. Stored as an instant like dueAt; where it is
-   set it wins over resubDays (HubDue.resubFor), and the timetable shows it. */
+/* A FIXED RESUBMISSION DATE (10 Oct 2026). Where it is set it wins over
+   resubDays (HubDue.resubFor), and the timetable shows it. */
 function updateResubDue(v){
   const a = DATA[CURRENT];
   if (v) a.resubDueAt = HubDue.fromLocalInput(v); else delete a.resubDueAt;
-  persist(); renderEditor();
+  persistSettings(); render();
 }
-/* A switch, not a text field: it takes effect at once, like the order arrows,
-   rather than waiting for Save. */
+/* A switch, not a text field: it takes effect at once, rather than waiting for Save. */
 function updateReleased(v){
   DATA[CURRENT].released = (v === 'yes');
-  persist(); renderList(); renderEditor();
+  persistSettings(); render();
 }
 function updateCriterionText(ci,v){ DATA[CURRENT].criteria[ci].text=v; }
 function updateCriterionSection(ci,v){ DATA[CURRENT].criteria[ci].sectionIndex = v===''? null : parseInt(v,10); }
-function addCriterion(){ (DATA[CURRENT].criteria=DATA[CURRENT].criteria||[]).push({text:'New criterion', sectionIndex:null}); renderEditor(); }
+function addCriterion(){
+  (DATA[CURRENT].criteria=DATA[CURRENT].criteria||[]).push({text:'', sectionIndex:null}); render();
+  const rows = document.querySelectorAll('.crow input'); if (rows.length) rows[rows.length - 1].focus();
+}
+function adoptSyllabus(){
+  const syl = syllabusCriteria(); if (!syl) return;
+  const marked = countMarked();
+  if (marked) { alert('Not while marking exists.\n\n' + marked + ' submission' + (marked === 1 ? ' has' : 's have') + ' criterion marks on this assignment, and marks are stored by POSITION — replacing the list would move every one of them onto a different criterion.\n\nThis can be changed on a course where nothing has been marked yet.'); return; }
+  if (!confirm('Replace this assignment’s ' + (DATA[CURRENT].criteria || []).length + ' criteria with the syllabus’s ' + syl.length + '?\n\nAny wording of your own on them is lost, and criteria tied to a section become general.')) return;
+  DATA[CURRENT].criteria = syl.map(t => ({ text: t, sectionIndex: null }));
+  render();
+}
+function countMarked(){
+  try {
+    const subs = JSON.parse(localStorage.getItem('connect_assignment_submissions_v1') || 'null');
+    const roster = JSON.parse(localStorage.getItem('connect_roster_v1') || 'null');
+    const all = [];
+    if (subs && subs[CURRENT]) all.push(subs[CURRENT]);
+    if (roster && roster.trainees) Object.values(roster.trainees).forEach(t => { const x = (t.assignments || {})[CURRENT]; if (x) all.push(x); });
+    return all.filter(x => { const cm = x.criteriaMarks || {}; return (cm.sub1 || []).some(v => v != null) || (cm.sub2 || []).some(v => v != null); }).length;
+  } catch (e) { return 0; }
+}
 /* FLOORS. Designing the assignments is the centre's job (9.2.1), so these are
-   the centre's to write -- but 9.2.1 also says "the CELTA marking criteria for
-   each assignment SHOULD be made explicit in assignment guidelines for
-   trainees", and 9.2.3 that trainees "SHOULD confirm in writing that the
-   written assignments are their own work". This editor had no floor anywhere:
-   criteria to zero, the declaration deleted outright, its items to zero, and
-   startBlank() handing over an assignment with none of the three in one click.
-   Marking an assignment with no criteria also yields allMet=false forever, so
-   it could never pass (audit, 29 Sep 2026). Each floor explains itself and
-   none of them is silent. */
+   the centre's to write -- but 9.2.1 also says the marking criteria SHOULD be
+   made explicit to trainees, and 9.2.3 that trainees SHOULD confirm in writing
+   that the work is their own. Marking an assignment with no criteria yields
+   allMet=false forever, so it could never pass (audit, 29 Sep 2026). Each
+   floor explains itself and none of them is silent. */
 function removeCriterion(ci){
   const c = DATA[CURRENT].criteria || [];
-  if (c.length <= 1) { alert('An assignment keeps at least one criterion.\n\nWith none, the marking screen can never pass it \u2014 a pass needs every criterion met. (Handbook 9.2.1 also says the criteria should be made explicit to trainees.)'); return; }
+  if (c.length <= 1) { alert('An assignment keeps at least one criterion.\n\nWith none, the marking screen can never pass it — a pass needs every criterion met. (Handbook 9.2.1 also says the criteria should be made explicit to trainees.)'); return; }
   const marked = countMarked();
-  if (marked) { alert('Not while marking exists.\n\n' + marked + ' submission' + (marked === 1 ? ' has' : 's have') + ' criterion marks on this assignment, and marks are stored by POSITION \u2014 removing a criterion would move every later mark onto a different one.'); return; }
-  c.splice(ci,1); renderEditor();
-}
-function renderProseBanner(){
-  const core=['fol','lrt','lsrt','lfc'];
-  const proseCount = core.filter(k=>DATA[k] && DATA[k].format==='prose').length;
-  const el=$('proseBanner');
-  if(!el) return;
-  const ok = proseCount>=2;
-  /* Met: the house's quiet sand with the gold edge every assignment card
-     carries -- it was a teal wash with teal text ("that green is a bit too
-     much", Ramy, 24 Sep 2026). Not met keeps brick: the syllabus and the CELTA 5
-     both say two MUST be in prose (the Handbook's 9.2.1 says should), so this
-     one is a requirement, not a recommendation. */
-  el.style.background = ok ? 'var(--gold-wash)' : 'oklch(93% 0.05 40)';
-  el.style.borderColor = ok ? 'var(--sand-line)' : 'var(--brick)';
-  el.style.borderLeftColor = ok ? 'var(--gold)' : 'var(--brick)';
-  el.style.color = ok ? 'var(--ink)' : 'var(--brick)';
-  /* innerHTML: the sentence carries its own <b>; the only value in it is a count. */
-  el.innerHTML = `${Number(proseCount) || 0} of 4 core assignments marked continuous prose — the syllabus and the CELTA 5 say two <b>must</b> be in prose (Handbook 9.2.1 says should).`;
-}
-
-function renderEditor(){
-  const a = DATA[CURRENT];
-  if (!a){
-    $('editor').innerHTML = `<div class="empty">
-      <p>${CURRENT==='a5' ? 'Assignment 5 hasn\u2019t been imported yet.' : 'This assignment isn\u2019t set up yet.'}</p>
-      <button class="btn" onclick="startBlank()">Start from a blank assignment</button>
-    </div>`;
-    return;
-  }
-  $('editor').innerHTML = `
-    <input type="text" style="font-family:'Newsreader',Georgia,serif; font-size:1.25rem; font-weight:700; border:none; background:transparent; padding:0 0 2px; margin-bottom:2px; width:100%;" value="${esc(a.title)}" placeholder="Name this assignment" oninput="updateTitle(this.value)">
-    <p class="notice">Edit wording freely, and add, remove or reorder sections to match how you actually want this assignment to run.</p>
-    ${CURRENT!=='a5' ? metaHTML(a) : ''}
-    <div class="importrow">
-      <button type="button" class="btn btn-quiet" onclick="$('importFile').click()">\u2B06 Import from a file</button>
-      <input type="file" id="importFile" accept=".docx,.txt,.md" style="display:none;" onchange="handleImport(this.files[0])">
-      <span class="importnote">Plain text or Markdown — blank-line-separated paragraphs become sections you can then edit.</span>
-    </div>
-    <div id="sections"></div>
-    <div class="addsection">
-      <div class="house-sel"><select id="newType">
-        <option value="text">Instructions section</option>
-        <option value="fields">Item fields (a repeatable analysis block)</option>
-        <option value="picker">Pick-your-items step (two categories)</option>
-        <option value="declaration">Plagiarism & AI declaration</option>
-      </select></div>
-      <button type="button" class="btn-add" onclick="addSection()">+ Add section</button>
-    </div>
-    <div class="actions">
-      <span class="saved" id="savedNote"></span>
-      <button class="btn" onclick="persist()">Save assignment</button>
-    </div>`;
-  $('sections').innerHTML = a.sections.map((s,i) => {
-    if (s.type==='fields') return fieldSectionHTML(s,i);
-    if (s.type==='picker') return pickerSectionHTML(s,i);
-    if (s.type==='declaration') return declSectionHTML(s,i);
-    return textSectionHTML(s,i);
-  }).join('');
+  if (marked) { alert('Not while marking exists.\n\n' + marked + ' submission' + (marked === 1 ? ' has' : 's have') + ' criterion marks on this assignment, and marks are stored by POSITION — removing a criterion would move every later mark onto a different one.'); return; }
+  c.splice(ci,1); render();
 }
 
 function updateTitle(v){ DATA[CURRENT].title = v; }
 function updateSection(i, key, v){ DATA[CURRENT].sections[i][key] = v; }
 function updateField(i, fi, key, v){ DATA[CURRENT].sections[i].fields[fi][key] = v; }
-function addField(i){ DATA[CURRENT].sections[i].fields.push({label:'New field', hint:''}); renderEditor(); }
-function removeField(i, fi){ DATA[CURRENT].sections[i].fields.splice(fi,1); renderEditor(); }
+function addField(i){ DATA[CURRENT].sections[i].fields.push({label:'New field', hint:''}); render(); }
+function removeField(i, fi){ DATA[CURRENT].sections[i].fields.splice(fi,1); render(); }
 /* Normalise a picker to the `cats` array before changing it, and drop the old
    catA/catB/pickCount fields so the section has one shape, not two. Called by
    every mutation below, so an untouched section keeps whatever it had. */
@@ -616,28 +1047,24 @@ function nextCatKey(cats){
 }
 function updateCatLabel(i, ci, v){ catsOf(i)[ci].label = v; }
 function updateOption(i, ci, oi, v){ catsOf(i)[ci].options[oi] = v; }
-function addOption(i, ci){ catsOf(i)[ci].options.push('New item'); renderEditor(); }
-function removeOption(i, ci, oi){ catsOf(i)[ci].options.splice(oi,1); renderEditor(); }
+function addOption(i, ci){ catsOf(i)[ci].options.push('New item'); render(); }
+function removeOption(i, ci, oi){ catsOf(i)[ci].options.splice(oi,1); render(); }
 function updateCatPick(i, ci, v){ catsOf(i)[ci].pick = parseInt(v,10) || 1; }
-function updateCatFixed(i, ci, on){ catsOf(i)[ci].fixed = !!on; renderEditor(); }
-function addCat(i){ const c = catsOf(i); c.push({ key: nextCatKey(c), label: 'New group', options: ['New item'], pick: 1, fixed: false }); renderEditor(); }
-function removeCat(i, ci){ const c = catsOf(i); if (c.length > 1) c.splice(ci,1); renderEditor(); }
-function updateReadonly(i, on){ DATA[CURRENT].sections[i].readonly = !!on; renderEditor(); }
-/* A criterion is tied to a section by its POSITION (`sectionIndex`), and the
-   two operations that change positions used to leave those numbers alone. So
-   reordering or deleting a section silently re-pointed every criterion after
-   it: on LRT, removing "Before you start" moved both criteria from "Analyse
-   each item" to the Declaration -- a section the criterion dropdown does not
-   even offer (walk, 21 Sep 2026).
-
-   That is not only a mislabelling. `sectionIndex` decides which section a
-   resubmission LOCKS: screen 9 locks a section when every criterion tied to it
-   was marked met, and screen 10 shows the tutor's per-criterion comments
-   beside it. A wrong number locks the part the trainee passed and leaves
-   open the part they failed.
-
-   Import and Add only ever append, so they cannot disturb an existing index;
-   these two are the whole problem. */
+function updateCatFixed(i, ci, on){ catsOf(i)[ci].fixed = !!on; render(); }
+/* The rule beside a group's name: "everyone" is fixed, "pick n" is the count. */
+function updateCatRule(i, ci, v){
+  const c = catsOf(i)[ci];
+  if (v === 'all') c.fixed = true; else { c.fixed = false; c.pick = parseInt(v, 10) || 1; }
+  render();
+}
+function addCat(i){ const c = catsOf(i); c.push({ key: nextCatKey(c), label: 'New group', options: ['New item'], pick: 1, fixed: false }); render(); }
+function removeCat(i, ci){ const c = catsOf(i); if (c.length > 1) c.splice(ci,1); render(); }
+function updateReadonly(i, on){ DATA[CURRENT].sections[i].readonly = !!on; render(); }
+/* A criterion is tied to a section by its POSITION (`sectionIndex`), and
+   `sectionIndex` decides which section a resubmission LOCKS: screen 9 locks a
+   section when every criterion tied to it was marked met. Reordering or
+   deleting a section must carry the ties with it (walk, 21 Sep 2026). Import
+   and Add only ever append, so they cannot disturb an existing index. */
 function retieCriteria(remap){
   const crit = DATA[CURRENT].criteria || [];
   crit.forEach(c => { if (c.sectionIndex != null) c.sectionIndex = remap(c.sectionIndex); });
@@ -649,7 +1076,11 @@ function moveSection(i, dir){
   [arr[i], arr[j]] = [arr[j], arr[i]];
   // the two that swapped places swap their criteria with them
   retieCriteria(n => n === i ? j : n === j ? i : n);
-  renderEditor();
+  const oi = OPEN_ORIG.has(i), oj = OPEN_ORIG.has(j);
+  OPEN_ORIG.delete(i); OPEN_ORIG.delete(j); if (oi) OPEN_ORIG.add(j); if (oj) OPEN_ORIG.add(i);
+  FOCUS = j;
+  render();
+  const el = $('sec-' + j); if (el) el.scrollIntoView({ block:'nearest' });
 }
 function removeSection(i){
   const secs = DATA[CURRENT].sections || [];
@@ -661,16 +1092,26 @@ function removeSection(i){
   /* A criterion tied to the section that just went becomes general rather than
      pointing at whatever slid into its place. */
   retieCriteria(n => n === i ? null : n > i ? n - 1 : n);
-  renderEditor();
+  OPEN_ORIG.clear(); FOCUS = null;
+  render();
+}
+function toggleOrig(i){ if (OPEN_ORIG.has(i)) OPEN_ORIG.delete(i); else OPEN_ORIG.add(i); render(); }
+/* Restore puts Connect's shipped section back in place; criteria ties stay,
+   because the section keeps its position. Not saved until Save. */
+function restoreSection(i){
+  const o = originalOf(i); if (!o) return;
+  DATA[CURRENT].sections[i] = clone(o);
+  OPEN_ORIG.delete(i);
+  render();
 }
 function updateDeclItem(i, di, v){ DATA[CURRENT].sections[i].items[di] = v; }
-function addDeclItem(i){ DATA[CURRENT].sections[i].items.push('New declaration'); renderEditor(); }
+function addDeclItem(i){ DATA[CURRENT].sections[i].items.push(''); render(); const rows = document.querySelectorAll(`#sec-${i} .drow input`); if (rows.length) rows[rows.length - 1].focus(); }
 function removeDeclItem(i, di){
   const items = DATA[CURRENT].sections[i].items || [];
-  if (items.length <= 1) { alert('The declaration keeps at least one line \u2014 otherwise there is nothing for the trainee to confirm, and the submission gate passes on an empty list.'); return; }
-  items.splice(di,1); renderEditor();
+  if (items.length <= 1) { alert('The declaration keeps at least one line — otherwise there is nothing for the trainee to confirm, and the submission gate passes on an empty list.'); return; }
+  items.splice(di,1); render();
 }
-function toggleAi(i, checked){ DATA[CURRENT].sections[i].aiToggle = checked; }
+function toggleAi(i, checked){ DATA[CURRENT].sections[i].aiToggle = checked; render(); }
 /* Word files too (27 Sep 2026): hub-docx.js turns a .docx into the same
    plain text -- one paragraph per line, Word headings as "# " lines with a
    blank line before them -- so the section rule below sees them as sections. */
@@ -678,34 +1119,38 @@ async function handleImport(file){
   if(!file) return;
   let text = '';
   try { text = await window.hubFileText(file); } catch (err) { alert(err && err.message ? err.message : 'That file could not be read.'); return; }
-  await (async ()=>{
-    const blocks = text.split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean);
-    const sections = blocks.map(b=>{
-      const lines = b.split('\n');
-      const heading = /^#{1,3}\s+/.test(lines[0]) ? lines.shift().replace(/^#{1,3}\s+/,'') : lines[0].slice(0,60);
-      return { type:'text', label: heading || 'Imported section', body: lines.join('\n').trim() || b };
-    });
-    if (!sections.length) { alert('Could not find any text to import from that file.'); return; }
-    if (!DATA[CURRENT]) DATA[CURRENT] = { title: file.name.replace(/\.[^.]+$/,''), sections: [] };
-    const ok = await confirmModal(`Found ${sections.length} section${sections.length===1?'':'s'} in this file. They\u2019ll be added to the END of ${NAMES[CURRENT]} as new instruction sections \u2014 existing sections (including any \u201Cpick your items\u201D step and its categories) are left exactly as they are. Continue?`, 'Add sections');
-    if (!ok) return;
-    DATA[CURRENT].sections = DATA[CURRENT].sections.concat(sections);
-    renderList(); renderEditor();
-  })();
+  const blocks = text.split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean);
+  const sections = blocks.map(b=>{
+    const lines = b.split('\n');
+    const heading = /^#{1,3}\s+/.test(lines[0]) ? lines.shift().replace(/^#{1,3}\s+/,'') : lines[0].slice(0,60);
+    return { type:'text', label: heading || 'Imported section', body: lines.join('\n').trim() || b };
+  });
+  if (!sections.length) { alert('Could not find any text to import from that file.'); return; }
+  const ok = await confirmModal(`Found ${sections.length} section${sections.length===1?'':'s'} in this file. They’ll be added to the END of ${NAMES[CURRENT]} as new instruction sections — existing sections (including any “Pick your items” step and its groups) are left exactly as they are. Continue?`, 'Add sections');
+  if (!ok) return;
+  if (!DATA[CURRENT]) DATA[CURRENT] = { title: file.name.replace(/\.[^.]+$/,''), sections: [] };
+  DATA[CURRENT].sections = DATA[CURRENT].sections.concat(sections);
+  render();
 }
-function addSection(){
-  const type = $('newType').value;
+/* The five kinds of section. "A text to work from" is an instructions section
+   the candidate only reads: `readonly: true`, no answer box. */
+function addSection(kind){
   const arr = DATA[CURRENT].sections;
-  if (type==='text') arr.push({ type:'text', label:'New section', body:'' });
-  else if (type==='fields') arr.push({ type:'fields', label:'New fields block', intro:'', fields:[{label:'New field', hint:''}] });
-  else if (type==='picker') arr.push({ type:'picker', label:'Pick your items', cats:[{key:'A', label:'Group A', options:['Item 1','Item 2'], pick:1, fixed:false}, {key:'B', label:'Group B', options:['Item 1','Item 2'], pick:1, fixed:false}] });
-  else if (type==='declaration') arr.push({ type:'declaration', label:'Declaration', items:['This is my own work.', 'All sources are referenced, in the format (Author, Year, p. ##).'], aiToggle:true });
-  renderEditor();
+  if (kind==='text') arr.push({ type:'text', label:'New section', body:'' });
+  else if (kind==='read') arr.push({ type:'text', label:'The text', body:'', readonly:true });
+  else if (kind==='fields') arr.push({ type:'fields', label:'New fields block', intro:'', fields:[{label:'New field', hint:''}] });
+  else if (kind==='picker') arr.push({ type:'picker', label:'Pick your items', cats:[{key:'A', label:'Group A', options:['Item 1','Item 2'], pick:1, fixed:false}, {key:'B', label:'Group B', options:['Item 1','Item 2'], pick:1, fixed:false}] });
+  else if (kind==='declaration') arr.push({ type:'declaration', label:'Declaration', items:['This is my own work.', 'All sources are referenced, in the format (Author, Year, p. ##).'], aiToggle:true });
+  else return;
+  const i = arr.length - 1;
+  FOCUS = i; render();
+  const el = $('sec-' + i);
+  if (el) { el.scrollIntoView({ block:'center' }); const lab = el.querySelector('input.slabel'); if (lab) { lab.focus({ preventScroll:true }); lab.select(); } }
 }
 function startBlank(){
   const marked = countMarked();
   if (marked) { alert('Not while marking exists.\n\n' + marked + ' submission' + (marked === 1 ? ' has' : 's have') + ' criterion marks on this assignment; a blank assignment would leave those marks pointing at criteria that no longer exist.'); return; }
-  const parts = NAMES[CURRENT].split('\u2014');
+  const parts = NAMES[CURRENT].split('—');
   /* A blank assignment still arrives with the three things Cambridge asks
      every assignment to carry: a word range inside 750-1,000 (9.2.1), at
      least one criterion made explicit to trainees, and the own-work
@@ -719,71 +1164,12 @@ function startBlank(){
       { type:'declaration', label:'Before you submit', items:['This assignment is my own work.'], aiToggle:true }
     ]
   };
-  renderList(); renderEditor();
+  render();
 }
 
-$('list').addEventListener('click', e => {
-  const mv = e.target.closest('[data-move]'); if (mv){ moveAssignment(mv.dataset.move, +mv.dataset.dir); return; }
-  const btn = e.target.closest('button');
-  if (!btn) return;
-  CURRENT = btn.dataset.a;
-  renderList(); renderEditor(); renderProseBanner();
-});
-
-renderList(); renderEditor(); renderProseBanner();
-
-/* ---- v2 (7 Oct 2026): what is yours, and what is not saved ---------------------
-   Compares DATA (edited in memory as you type) with DEFAULT_DATA (Connect's
-   shipped wording) and with the saved record in localStorage. The release
-   switch, due date and order are the course's settings, not wording, so they
-   are left out of "edited". Re-applies on input and after every render.
-   Stores nothing. */
-(function(){
-  const list = $('list'), ed = $('editor'); if (!list || !ed) return;
-  const SETTINGS_KEYS = ['dueAt', 'due', 'dueSets', 'resubDueAt', 'outAt', 'setBy', 'released'];
-  const wording = a => { if (!a) return ''; const c = JSON.parse(JSON.stringify(a)); SETTINGS_KEYS.forEach(k => delete c[k]);
-    (c.criteria || []).forEach((x, i) => { if (typeof x === 'string') c.criteria[i] = { text: x, sectionIndex: null }; }); return JSON.stringify(c); };
-  const saved = () => { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || null; } catch (e) { return null; } };
-  const normC = a => { if (!a) return 'null'; const c = JSON.parse(JSON.stringify(a)); (c.criteria || []).forEach((x, i) => { if (typeof x === 'string') c.criteria[i] = { text: x, sectionIndex: null }; }); return JSON.stringify(c); };
-  const sameAsSaved = key => { const sv = saved(); const base = sv ? sv[key] : (DEFAULT_DATA || {})[key]; return normC(DATA[key]) === normC(base); };
-  function marks(){
-    list.querySelectorAll('button[data-a]').forEach(b => {
-      const k = b.dataset.a, ed2 = DATA[k] && DEFAULT_DATA && DEFAULT_DATA[k] && wording(DATA[k]) !== wording(DEFAULT_DATA[k]);
-      let m = b.querySelector('.aw-ed');
-      if (ed2 && !m) b.insertAdjacentHTML('beforeend', '<span class="aw-ed">\u00b7 edited</span>');
-      if (!ed2 && m) m.remove();
-    });
-    const a = DATA[CURRENT], d = DEFAULT_DATA && DEFAULT_DATA[CURRENT];
-    if (a) {
-      const shipped = ((d && d.sections) || []).map(x => JSON.stringify(x));
-      ed.querySelectorAll('.section[data-i]').forEach(sec => {
-        const sx = a.sections[+sec.dataset.i]; if (!sx) return;
-        const changed = !d || shipped.indexOf(JSON.stringify(sx)) < 0;
-        sec.classList.toggle('aw-changed', changed);
-        const head = sec.querySelector('.section-head'); if (!head) return;
-        let t = head.querySelector('.aw-chg');
-        if (changed && !t) { t = document.createElement('span'); t.className = 'aw-chg'; t.textContent = 'Changed'; t.title = 'Differs from Connect\u2019s shipped wording'; head.appendChild(t); }
-        if (!changed && t) t.remove();
-      });
-    }
-    const btn = ed.querySelector('.actions .btn'); const note = $('savedNote');
-    if (btn && a) {
-      const dirty = !sameAsSaved(CURRENT);
-      btn.classList.toggle('aw-dirty', dirty);
-      btn.textContent = dirty ? 'Save assignment \u2014 not saved yet' : 'Save assignment';
-      let st = ed.querySelector('.aw-state');
-      if (dirty && !st && note) { st = document.createElement('span'); st.className = 'aw-state'; st.textContent = 'Changes not saved'; note.insertAdjacentElement('afterend', st); }
-      if (!dirty && st) st.remove();
-    }
-  }
-  let t = null; const soon = () => { clearTimeout(t); t = setTimeout(marks, 120); };
-  ed.addEventListener('input', soon); ed.addEventListener('change', soon); ed.addEventListener('click', soon);
-  list.addEventListener('click', soon);
-  const own = n => n.nodeType === 1 && /^aw-/.test(String(n.className || ''));
-  new MutationObserver(m => { if (m.some(r => [...r.addedNodes].some(n => n.nodeType === 1 && !own(n)))) soon(); }).observe(ed, { childList: true, subtree: true });
-  new MutationObserver(m => { if (m.some(r => [...r.addedNodes].some(n => n.nodeType === 1 && !own(n)))) soon(); }).observe(list, { childList: true });
-  marks();
-})();
+render();
+/* The sync pill and the dictation controls ride above the save bar, not on it. */
+if (window.hubReserveForBar) hubReserveForBar('#savebar');
 </script>
 </body>
 </html>
