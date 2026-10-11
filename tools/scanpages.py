@@ -1,5 +1,6 @@
 import fitz, sys, json, os
 from clean import clean
+from polish import polish
 """Render book pages: single 150 dpi JPEGs for the card, or one 300 dpi PDF
 for the printer.
 
@@ -111,13 +112,19 @@ def render(k, page, dpi, quality, out, floor=82):
     if k in SPREADS:
         r = pg.rect; right = spread_side(k, page)
         clip = fitz.Rect(r.x0 + (r.width / 2 if right else 0), r.y0, r.x0 + (r.width if right else r.width / 2), r.y1)
-        pg.get_pixmap(dpi=dpi, clip=clip).save(out, jpg_quality=quality); return
+        pg.get_pixmap(dpi=dpi, clip=clip).save(out, jpg_quality=quality)
+        if k in SCANNED:
+            clean(out, out, quality=max(quality, floor))
+        polish(out, k, page, out, quality=max(quality, floor)); return
     pg.get_pixmap(dpi=dpi).save(out, jpg_quality=quality)
     if k in SCANNED:
         # The card keeps its floor of 82; a day PDF passes its own step's quality,
         # or stepping down never shrank a scanned page (11 Oct 2026: New Total
         # English days stayed at 8-13 MB through every step).
         clean(out, out, quality=max(quality, floor))
+    # Every page, at every dpi: straightened, scanner edge off, pirate stamp
+    # painted out (polish.py, 11 Oct 2026 -- the library audit's scan standard).
+    polish(out, k, page, out, quality=max(quality, floor))
 
 def main():
     mode, spec, out = sys.argv[1], json.loads(sys.argv[2]), sys.argv[3]
