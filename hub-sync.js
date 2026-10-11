@@ -32,6 +32,10 @@
     /* On a phone the pill says it in fewer words (10 Oct 2026: the bars at the
        foot of the plan took a quarter of an iPhone's screen). */
     var narrow = false; try { narrow = window.matchMedia('(max-width:560px)').matches; } catch (e) {}
+    /* A page whose work waits for its own Save button says so instead of
+       "saved as you go" (the assignment editor, 11 Oct 2026): <body
+       data-sync-ok="..." data-sync-ok-short="...">. */
+    if (text === 'Live \u2014 saved to the course as you go' && document.body && document.body.dataset.syncOk) text = narrow ? (document.body.dataset.syncOkShort || document.body.dataset.syncOk) : document.body.dataset.syncOk;
     if (narrow && text === 'Live \u2014 saved to the course as you go') text = 'Saved as you go';
     try { var cs0 = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; if (cs0.demoToday && kind === 'ok') { text = narrow ? (text === 'Saved as you go' ? 'Saved' : text) + ' \u00b7 Demo ' + cs0.demoToday : text + ' \u00b7 Demo, today is ' + cs0.demoToday; kind = 'demo'; } } catch (e) {}
     /* Until the page has measured its bar (hubReserveForBar, once the app has
