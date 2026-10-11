@@ -13,7 +13,7 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610120001">
+<link rel="stylesheet" href="hub-tokens.css?v=202610120009">
 <style>
   /* ---- The assignment editor, v2 (11 Oct 2026) -------------------------------
      From the designer's handoff "Assignment editor v2". The page behind Edit
@@ -171,6 +171,8 @@
   .kind:hover{border-color:var(--teal);}
   .kind .bar{width:3px; height:30px; border-radius:2px; flex:none; margin-top:2px;}
   .kind b{display:block; font-size:0.84rem;} .kind small{display:block; font-size:0.76rem; color:var(--grey); line-height:1.4; font-weight:400;}
+  .importnote{background:var(--paper); border:1px solid var(--sand-line); border-left:4px solid var(--teal); border-radius:12px; padding:12px 16px; font-size:0.86rem; line-height:1.55;}
+  .importnote .lnk{margin-left:8px;}
   .importline{margin:12px 0 0; font-size:0.78rem; color:var(--grey); display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
 
   .critcard{background:var(--paper); border:1px solid var(--sand-line); border-radius:12px; padding:18px 20px 20px; margin-top:10px; scroll-margin-top:24px;}
@@ -288,7 +290,7 @@
     .savebar .acts{margin-left:auto;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610120001">
+<link rel="stylesheet" href="hub-house.css?v=202610120009">
 </head>
 <body class="hub-paper" data-sync-ok="Connected to the course &mdash; wording is kept when you press Save" data-sync-ok-short="Connected">
 <div class="board">
@@ -307,14 +309,14 @@
   </div>
 </div></div>
 <div class="menu" id="menu" hidden></div>
-<script src="assignment-defaults.js?v=202610120001"></script>
-<script src="hub-due.js?v=202610120001"></script>
-<script src="hub-rotation.js?v=202610120001"></script>
-<script src="hub-docx.js?v=202610120001"></script>
-<script src="hub-shared.js?v=202610120001"></script>
-<script src="hub-store.js?v=202610120001"></script>
-<script src="hub-say.js?v=202610120001"></script>
-<script src="hub-sync.js?v=202610120001"></script>
+<script src="assignment-defaults.js?v=202610120009"></script>
+<script src="hub-due.js?v=202610120009"></script>
+<script src="hub-rotation.js?v=202610120009"></script>
+<script src="hub-docx.js?v=202610120009"></script>
+<script src="hub-shared.js?v=202610120009"></script>
+<script src="hub-store.js?v=202610120009"></script>
+<script src="hub-say.js?v=202610120009"></script>
+<script src="hub-sync.js?v=202610120009"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -351,6 +353,7 @@ let CURRENT = (function(){ const q = new URLSearchParams(location.search).get('a
 let MODE = 'edit';          // 'edit' | 'preview'
 let FOCUS = null;           // the section being worked on
 let SHOW_META = false;      // "Change dates" open in the rail
+let IMPORT_NOTE = null;    // what the last import did, said once at the top of the document
 let BRIEF_OPEN = false;     // the outline, unfolded (phones only; it is always open wider)
 function toggleBrief(){ BRIEF_OPEN = !BRIEF_OPEN; render(); }
 const OPEN_ORIG = new Set(); // sections showing Connect's original under them
@@ -382,8 +385,16 @@ function originalOf(i){
   if (!a || !d) return null;
   const s = a.sections[i]; if (!s) return null;
   const norm = t => String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
-  return (d.sections || []).find(x => x.type === s.type && norm(x.label) === norm(s.label))
-      || ((d.sections || [])[i] && d.sections[i].type === s.type ? d.sections[i] : null);
+  const byLabel = (d.sections || []).find(x => x.type === s.type && norm(x.label) === norm(s.label));
+  if (byLabel) return byLabel;
+  /* Same place, same kind -- but only if the words are recognisably the same
+     section reworded, not a centre's own brief that happens to sit there. */
+  const p = (d.sections || [])[i];
+  if (!p || p.type !== s.type) return null;
+  const words = x => new Set(String(JSON.stringify(x.body || x.items || x.fields || x.cats || '')).toLowerCase().match(/[a-z]{3,}/g) || []);
+  const A = words(s), B = words(p); if (!A.size || !B.size) return null;
+  let both = 0; A.forEach(w => { if (B.has(w)) both++; });
+  return both / Math.max(A.size, B.size) >= 0.5 ? p : null;
 }
 /* What has not been saved, named the way the save bar says it. */
 function changeUnits(k){
@@ -470,7 +481,7 @@ function renderSwitcher(){
 }
 $('switcher').addEventListener('click', e => {
   const b = e.target.closest('[data-a]'); if (!b || b.dataset.a === CURRENT) return;
-  CURRENT = b.dataset.a; FOCUS = null; SHOW_META = false; OPEN_ORIG.clear();
+  CURRENT = b.dataset.a; FOCUS = null; SHOW_META = false; OPEN_ORIG.clear(); IMPORT_NOTE = null;
   try { const q = new URLSearchParams(location.search); q.set('a', CURRENT); history.replaceState(null, '', '?' + q.toString()); } catch (err) {}   // keeps the course key
   render(); window.scrollTo(0, 0);
 });
@@ -706,8 +717,8 @@ function addCardHTML(){
     <div class="kinds">${KINDS.map(k => `<button type="button" class="kind" onclick="addSection('${k.kind}')"><span class="bar" style="background:${k.edge}"></span><span><b>${k.name}</b><small>${k.what}</small></span></button>`).join('')}</div>
     <div class="importline">
       <button type="button" class="lnk" onclick="$('importFile').click()">Import from a file</button>
-      <input type="file" id="importFile" accept=".docx,.txt,.md" style="display:none;" onchange="handleImport(this.files[0])">
-      <span>Word, plain text or Markdown. Each paragraph becomes a section you can then edit.</span>
+      <input type="file" id="importFile" accept=".docx,.txt,.md" style="display:none;" onchange="handleImport(this.files[0]); this.value=''">
+      <span>Your own brief, from Word, plain text or Markdown. Each heading starts a section. You choose whether it replaces this wording or goes after it.</span>
     </div>
   </div>`;
 }
@@ -811,6 +822,12 @@ function previewHTML(a){
   </div>`;
 }
 
+function importNoteHTML(){
+  const n = IMPORT_NOTE; if (!n) return '';
+  return `<div class="importnote" role="status"><b>${n.replaced ? 'The wording now comes from' : 'Added from'} ${esc(n.file)}:</b> ${n.n} section${n.n === 1 ? '' : 's'}${n.replaced ? ', for reading, then one answer box and the declaration' : ', each with an answer box'}. Nothing is saved yet.
+    ${n.replaced ? ` The criteria are still the ones that were here, now general rather than tied to a section. <a href="#critcard" data-go="crit">Check them</a> before you save.` : ''}
+    <button type="button" class="lnk" onclick="IMPORT_NOTE = null; render();">Close</button></div>`;
+}
 /* ---- one render -------------------------------------------------------------- */
 function render(){
   closeMenu();
@@ -821,12 +838,12 @@ function render(){
       <p>${CURRENT==='a5' ? 'Assignment 5 hasn’t been set up on this course yet.' : 'This assignment isn’t set up yet.'}</p>
       <div class="acts"><button type="button" class="btn" onclick="startBlank()">Start from a blank assignment</button>
       <button type="button" class="btn ghost" onclick="$('importFile').click()">Import from a file</button>
-      <input type="file" id="importFile" accept=".docx,.txt,.md" style="display:none;" onchange="handleImport(this.files[0])"></div></div>`;
+      <input type="file" id="importFile" accept=".docx,.txt,.md" style="display:none;" onchange="handleImport(this.files[0]); this.value=''"></div></div>`;
     refreshMarks(); return;
   }
   if (MODE === 'preview') { $('body').innerHTML = previewHTML(a); refreshMarks(); return; }
   $('body').innerHTML = `<div class="ewrap">${railHTML(a)}
-    <div class="doc" id="doc">${a.sections.map(sectionHTML).join('')}${addCardHTML()}${critCardHTML(a)}</div></div>`;
+    <div class="doc" id="doc">${importNoteHTML()}${a.sections.map(sectionHTML).join('')}${addCardHTML()}${critCardHTML(a)}</div></div>`;
   refreshMarks();
 }
 
@@ -873,7 +890,7 @@ function refreshMarks(){
   else {
     const here = unsaved[CURRENT] || [];
     const others = keys.filter(k => k !== CURRENT).map(k => unsaved[k].length + ' on ' + CODES[k]);
-    const lead = here.length ? andList(here) : '';
+    const lead = here.length > 4 ? here.slice(0, 3).join(', ') + ' and ' + (here.length - 3) + ' more' : here.length ? andList(here) : '';
     what.textContent = `${n} change${n === 1 ? '' : 's'} not yet saved — ` + [lead, andList(others)].filter(Boolean).join(', and ');
   }
 }
@@ -1161,11 +1178,96 @@ async function handleImport(file){
     return { type:'text', label: heading || 'Imported section', body: lines.join('\n').trim() || b };
   });
   if (!sections.length) { alert('Could not find any text to import from that file.'); return; }
-  const ok = await confirmModal(`Found ${sections.length} section${sections.length===1?'':'s'} in this file. They’ll be added to the END of ${NAMES[CURRENT]} as new instruction sections — existing sections (including any “Pick your items” step and its groups) are left exactly as they are. Continue?`, 'Add sections');
-  if (!ok) return;
-  if (!DATA[CURRENT]) DATA[CURRENT] = { title: file.name.replace(/\.[^.]+$/,''), sections: [] };
-  DATA[CURRENT].sections = DATA[CURRENT].sections.concat(sections);
-  render();
+  const n = sections.length, what = `${n} section${n===1?'':'s'}`;
+  const a = DATA[CURRENT];
+
+  /* Nothing here yet: the file becomes the assignment, with the floors a
+     blank one starts with (a word range, a criterion, the declaration). */
+  if (!a) {
+    const ok = await confirmModal(`Found ${what} in this file. They become ${NAMES[CURRENT]} on this course, with one answer box at the end and the own-work declaration. Continue?`, 'Use this file');
+    if (!ok) return;
+    DATA[CURRENT] = {
+      title: file.name.replace(/\.[^.]+$/,''), wordMin: 750, wordMax: 1000,
+      criteria: [{ text: 'Using written language that is clear, accurate and appropriate to the task', sectionIndex: null }],
+      sections: replacedSections(sections, null)
+    };
+    IMPORT_NOTE = { file: file.name, n, replaced: true };
+    render(); window.scrollTo(0, 0); return;
+  }
+
+  /* REPLACE OR ADD (12 Oct 2026). Ramy: "if a center doesn't want to use
+     Connect's assignments ... they can just upload theirs." Replace swaps the
+     wording for the file's; Add puts the file's sections after what is here.
+     Replace is refused once a candidate has started this assignment: answers
+     are stored by the section's POSITION, so swapping the sections under a
+     draft would put every answer beside the wrong heading. */
+  const started = countStarted();
+  const choice = await chooseModal(
+    `Found ${what} in this file.\n\nReplace: the file's sections take the place of this assignment's wording. They are for reading, with one answer box at the end. The declaration stays and the criteria stay; check the criteria before you save.\n\nAdd: the file's sections go after the ones already here, each with an answer box.`
+      + (started ? `\n\nReplace is not available: ${started} candidate${started === 1 ? ' has' : 's have'} already started this assignment, and their answers are kept by section.` : ''),
+    [ started ? null : { key: 'replace', label: 'Replace the wording', primary: true },
+      { key: 'add', label: 'Add to the end', primary: !!started } ].filter(Boolean));
+  if (!choice) return;
+  if (choice === 'add') {
+    a.sections = a.sections.concat(sections);
+    IMPORT_NOTE = { file: file.name, n, replaced: false };
+  } else {
+    a.sections = replacedSections(sections, a.sections);
+    // the old ties pointed at sections that have gone: every criterion becomes general
+    (a.criteria || []).forEach(c => { if (c && typeof c === 'object') c.sectionIndex = null; });
+    IMPORT_NOTE = { file: file.name, n, replaced: true };
+  }
+  OPEN_ORIG.clear(); FOCUS = null;
+  render(); window.scrollTo(0, 0);
+}
+/* The file's sections for reading, one answer box after them, then the
+   declaration this assignment already has (or Lite's own). */
+function replacedSections(imported, old){
+  const decl = (old || []).filter(x => x && x.type === 'declaration').map(clone);
+  return imported.map(x => Object.assign({}, x, { readonly: true }))
+    .concat([{ type:'text', label:'Your assignment', body:'Write your assignment here, following the brief above.' }])
+    .concat(decl.length ? decl : [{ type:'declaration', label:'Declaration', items:['This assignment is my own work.'], aiToggle:true }]);
+}
+/* Candidates who have written anything on this assignment, draft or sent. */
+function countStarted(){
+  const wrote = x => {
+    if (!x || typeof x !== 'object') return false;
+    return ['draft', 'sub1', 'sub2', null].some(k => {
+      const r = k ? x[k] : x; if (!r || typeof r !== 'object') return false;
+      const t = Object.values(r.text || {}).some(v => String(v || '').trim());
+      const f = Object.values(r.fields || {}).some(v => String(v || '').trim());
+      return t || f || (r.stage && r.stage !== 'draft');
+    }) || (x.stage && x.stage !== 'draft');
+  };
+  try {
+    const subs = JSON.parse(localStorage.getItem('connect_assignment_submissions_v1') || 'null');
+    const roster = JSON.parse(localStorage.getItem('connect_roster_v1') || 'null');
+    const all = [];
+    if (subs && subs[CURRENT]) all.push(subs[CURRENT]);
+    if (roster && roster.trainees) Object.values(roster.trainees).forEach(t => { const x = ((t || {}).assignments || {})[CURRENT]; if (x) all.push(x); });
+    return all.filter(wrote).length;
+  } catch (e) { return 0; }
+}
+/* A choice of two or more, in the house's confirm dialog. Resolves with the
+   chosen key, or null for Cancel / Escape / a click outside. */
+function chooseModal(message, choices){
+  return new Promise(resolve => {
+    const ov = document.createElement('div'); ov.className = 'confirm-overlay';
+    ov.innerHTML = '<div class="confirm-modal" role="alertdialog" aria-modal="true" style="border-top-color:var(--teal); max-width:460px;"><p class="confirm-message" style="white-space:pre-line;"></p><div class="confirm-actions" style="flex-wrap:wrap;"><button type="button" class="confirm-cancel">Cancel</button></div></div>';
+    ov.querySelector('.confirm-message').textContent = message;
+    const acts = ov.querySelector('.confirm-actions');
+    choices.slice().sort((x, y) => (x.primary ? 1 : 0) - (y.primary ? 1 : 0)).forEach(c => { const b = document.createElement('button'); b.type = 'button'; b.textContent = c.label;
+      b.className = c.primary ? 'confirm-action' : 'confirm-cancel';
+      if (c.primary) b.style.cssText = 'background:var(--teal); border-color:var(--teal); color:var(--paper);';
+      b.addEventListener('click', () => done(c.key)); acts.appendChild(b); });
+    function done(k){ document.removeEventListener('keydown', esc); ov.remove(); resolve(k); }
+    function esc(e){ if (e.key === 'Escape') done(null); }
+    ov.querySelector('.confirm-cancel').addEventListener('click', () => done(null));
+    ov.addEventListener('click', e => { if (e.target === ov) done(null); });
+    document.addEventListener('keydown', esc);
+    document.body.appendChild(ov);
+    const first = acts.querySelector('button:last-child'); if (first) first.focus();
+  });
 }
 /* The five kinds of section. "A text to work from" is an instructions section
    the candidate only reads: `readonly: true`, no answer box. */
