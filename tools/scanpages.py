@@ -51,6 +51,9 @@ BOOKS = {
   'EFU_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books/Upper- Intermediate /English File (3rd edition)/English File Upper Int WB.pdf', 0),
   'NTP_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books/Pre-Intermediate /New Total English/New_Total_Eng_Pre-Intermediate_SB.pdf', 0),
   'NTP_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books/Pre-Intermediate /New Total English/New_Total_Eng_Pre-Intermediate_WB.pdf', -4),
+  'EFP_TB': (f'{D}/Pre-Intermediate /English File/English File Pre-Intermediate TB (1).pdf', -1),   # printed = index + 1: folio 249 sits at index 248, 'At an art gallery' (p. 211) at 210 -- checked 11 Oct 2026 after the cards had carried the next worksheet along
+  'EFU_TB': (f'{D}/Upper- Intermediate /English File (3rd edition)/English File Upper Int TB .pdf', 0),   # folio 188 at index 188
+  'NTP_TB': (f'{D}/Pre-Intermediate /New Total English/NTE_Pre-Intermediate_TB.pdf', 0),   # folio 125 at index 125
 }
 _open = {}
 
