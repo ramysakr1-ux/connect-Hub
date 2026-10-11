@@ -106,7 +106,7 @@ def index(k, page):
 SCANNED = ('SF_SB', 'SF_WB', 'SF_TB', 'SOB1_SB', 'LHU_SB', 'LHU_WB', 'NTI_SB', 'NTI_WB', 'EB2_SB', 'EB2_WB', 'NTP_SB', 'NTP_WB')
 SPREADS = ('SOE_WB', 'NTI_SB', 'NTP_SB',)
 
-def render(k, page, dpi, quality, out):
+def render(k, page, dpi, quality, out, floor=82):
     pg = doc(k)[index(k, page)]
     if k in SPREADS:
         r = pg.rect; right = spread_side(k, page)
@@ -114,7 +114,10 @@ def render(k, page, dpi, quality, out):
         pg.get_pixmap(dpi=dpi, clip=clip).save(out, jpg_quality=quality); return
     pg.get_pixmap(dpi=dpi).save(out, jpg_quality=quality)
     if k in SCANNED:
-        clean(out, out, quality=max(quality, 82))
+        # The card keeps its floor of 82; a day PDF passes its own step's quality,
+        # or stepping down never shrank a scanned page (11 Oct 2026: New Total
+        # English days stayed at 8-13 MB through every step).
+        clean(out, out, quality=max(quality, floor))
 
 def main():
     mode, spec, out = sys.argv[1], json.loads(sys.argv[2]), sys.argv[3]
@@ -128,11 +131,11 @@ def main():
         print(f'{len(spec)} page(s) in {out}')
     elif mode == 'pdf':
         CAP = 8 * 1024 * 1024      # the store takes 9 MB from a tutor; leave headroom
-        for dpi, q in ((300, 80), (300, 72), (300, 60), (250, 65), (200, 60)):
+        for dpi, q in ((300, 80), (300, 72), (300, 60), (250, 65), (200, 60), (200, 50), (150, 55)):
             pdf, tmp = fitz.open(), []
             for i, (k, p) in enumerate(spec):
                 f = f'/tmp/_sp{i}.jpg'
-                render(k, p, dpi, q, f)
+                render(k, p, dpi, q, f, floor=q)
                 tmp.append(f)
                 img = fitz.open(f)
                 r = img[0].rect
