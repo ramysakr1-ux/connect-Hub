@@ -13,7 +13,7 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610112345">
+<link rel="stylesheet" href="hub-tokens.css?v=202610112351">
 <style>
   /* ---- The assignment editor, v2 (11 Oct 2026) -------------------------------
      From the designer's handoff "Assignment editor v2". The page behind Edit
@@ -269,7 +269,7 @@
     .savebar .acts{margin-left:auto;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610112345">
+<link rel="stylesheet" href="hub-house.css?v=202610112351">
 </head>
 <body class="hub-paper" data-sync-ok="Connected to the course &mdash; wording is kept when you press Save" data-sync-ok-short="Connected">
 <div class="board">
@@ -288,14 +288,14 @@
   </div>
 </div></div>
 <div class="menu" id="menu" hidden></div>
-<script src="assignment-defaults.js?v=202610112345"></script>
-<script src="hub-due.js?v=202610112345"></script>
-<script src="hub-rotation.js?v=202610112345"></script>
-<script src="hub-docx.js?v=202610112345"></script>
-<script src="hub-shared.js?v=202610112345"></script>
-<script src="hub-store.js?v=202610112345"></script>
-<script src="hub-say.js?v=202610112345"></script>
-<script src="hub-sync.js?v=202610112345"></script>
+<script src="assignment-defaults.js?v=202610112351"></script>
+<script src="hub-due.js?v=202610112351"></script>
+<script src="hub-rotation.js?v=202610112351"></script>
+<script src="hub-docx.js?v=202610112351"></script>
+<script src="hub-shared.js?v=202610112351"></script>
+<script src="hub-store.js?v=202610112351"></script>
+<script src="hub-say.js?v=202610112351"></script>
+<script src="hub-sync.js?v=202610112351"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -428,7 +428,14 @@ async function discardChanges(){
   DATA = base(); OPEN_ORIG.clear();
   render();
 }
-window.addEventListener('beforeunload', e => { if (Object.keys(allUnsaved()).length) { e.preventDefault(); e.returnValue = ''; } });
+/* Warn on leaving only once someone has edited here. On a first visit the
+   course arrives after the page has drawn and hub-sync reloads it; the
+   record then differs from what this page had in memory, and without the
+   flag that reload asked "Leave site?" (11 Oct 2026). */
+let TOUCHED = false;
+['input', 'change'].forEach(t => document.addEventListener(t, e => { if (e.target.closest && e.target.closest('#body, #ehead')) TOUCHED = true; }, true));
+document.addEventListener('click', e => { if (e.target.closest && e.target.closest('#body button, #ehead button')) TOUCHED = true; }, true);
+window.addEventListener('beforeunload', e => { if (TOUCHED && Object.keys(allUnsaved()).length) { e.preventDefault(); e.returnValue = ''; } });
 
 /* ---- the assignment pills ---------------------------------------------------- */
 function renderSwitcher(){
