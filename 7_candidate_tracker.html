@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Newsreader:wght@600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610111527">
+<link rel="stylesheet" href="hub-tokens.css?v=202610111654">
 <style>
   /* design_handoff_candidate_tracker (Ramy, 20 Sep 2026), with the Hub's
      colour-coded chips in the cells -- "I like the chips that you created.
@@ -241,7 +241,7 @@
   @media(hover:none){ .row.tk-row{background:none;} .cell.tk-col{background:none;} }
   @media print{ .tk-bar{display:none;} .row.tk-row, .cell.tk-col{background:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610111527">
+<link rel="stylesheet" href="hub-house.css?v=202610111654">
 </head>
 <body>
 <div class="page">
@@ -270,13 +270,14 @@
   </div>
   <div id="detail"></div>
 </div>
-<script src="hub-due.js?v=202610111527"></script>
-<script src="hub-shared.js?v=202610111527"></script>
-<script src="assignment-defaults.js?v=202610111527"></script>
-<script src="hub-tracker.js?v=202610111527"></script>
-<script src="hub-store.js?v=202610111527"></script>
-<script src="hub-say.js?v=202610111527"></script>
-<script src="hub-sync.js?v=202610111527"></script>
+<script src="hub-due.js?v=202610111654"></script>
+<script src="hub-shared.js?v=202610111654"></script>
+<script src="hub-rotation.js?v=202610111654"></script>
+<script src="assignment-defaults.js?v=202610111654"></script>
+<script src="hub-tracker.js?v=202610111654"></script>
+<script src="hub-store.js?v=202610111654"></script>
+<script src="hub-say.js?v=202610111654"></script>
+<script src="hub-sync.js?v=202610111654"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
@@ -487,7 +488,27 @@ const toMark = p => ASSN.filter(a=>['WAIT','WAIT2'].includes(p.asg[a.key].code))
 const dmCount = p => ASSN.filter(a=>p.asg[a.key].dm).length;
 const atRisk = p => !ME && p.r.potentialFail;
 
+/* The chip beside a name is the trainee's teaching-set letter, A to F, as the
+   TP points screen deals them out (hub-rotation lettersFor, per group) -- Ramy,
+   11 Oct 2026: "next to the name, instead of the initials, let's use the
+   letters a b c d e f". Initials stay only where no letter is known, which is
+   the trainee's own row (their roster entry has no token on this side). */
+let LETTER_OF = null;
+function lettersMap(){
+  const by = {};
+  Object.values(loadRoster().trainees||{}).forEach(t => { const g = String(t.group||''); (by[g] = by[g] || []).push({ token: t.id || t.token, name: t.name }); });
+  const L = {};
+  Object.values(by).forEach(ps => (window.hubRotation ? hubRotation.lettersFor(ps) : []).forEach(p => { L[p.token] = p.letter; }));
+  return L;
+}
+function letterChip(tr){
+  if (!LETTER_OF) LETTER_OF = lettersMap();
+  const l = ME ? '' : (LETTER_OF[tr.id || tr.token] || '');
+  return l ? `<span class="avi avi-cand" aria-hidden="true">${esc(l)}</span>` : (window.hubAvatar ? hubAvatar(tr.name) : '');
+}
+
 function render(){
+  LETTER_OF = null;
   const all = people();
   const counts = { 'Everyone':0, 'To mark': all.reduce((n,p)=>n+toMark(p),0), 'Double marked': all.reduce((n,p)=>n+dmCount(p),0), 'At risk': all.filter(atRisk).length };
   const countCls = { 'To mark':'var(--blu)', 'Double marked':'var(--purp)', 'At risk':'var(--red)' };
@@ -542,7 +563,7 @@ function render(){
        it from the stage bands, which is what got it wrong first time. */
     const tailOf = Math.max(1, TP_TOTAL - 2);
     const toStd = TPS.slice(0,tailOf).filter(t=>['STD','ABOVE'].includes(p.tps[t.key].g)).length;
-    return `<div class="grid row ${risk?'risk':''}" style="grid-template-columns:${gridCols}"><div class="who"><div class="nm">${window.hubAvatar ? hubAvatar(p.tr.name) : ''}${esc(p.tr.name)}</div>${risk?'<div class="flag">at risk</div>':''}</div>${cells}<div class="tail">${isA?passed+'/4':toStd+'/'+tailOf}</div></div>`;
+    return `<div class="grid row ${risk?'risk':''}" style="grid-template-columns:${gridCols}"><div class="who"><div class="nm">${letterChip(p.tr)}${esc(p.tr.name)}</div>${risk?'<div class="flag">at risk</div>':''}</div>${cells}<div class="tail">${isA?passed+'/4':toStd+'/'+tailOf}</div></div>`;
   }).join('');
   const leg = isA ? ['DUE','MISSING','WAIT','FAILRES','WAIT2','UNMARKED','FAIL','PASS','RES'].map(k=>A_STATE[k]) : ['un','NOTSTD','STD','ABOVE'].map(k=>T_STATE[k]);
   html += `<div class="legend">${leg.map(s=>`<div class="it"><span class="chip ${s.cls}">${s.t}</span><span class="lb">${s.name}</span></div>`).join('')}<p class="legend-note">Inside a chip: <b>/ —</b> not double marked · <b>/ DM JB</b> the second marker’s initials</p></div>`;
