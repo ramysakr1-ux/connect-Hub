@@ -13,7 +13,7 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610112351">
+<link rel="stylesheet" href="hub-tokens.css?v=202610112356">
 <style>
   /* ---- The assignment editor, v2 (11 Oct 2026) -------------------------------
      From the designer's handoff "Assignment editor v2". The page behind Edit
@@ -78,6 +78,7 @@
   .orow .n{width:18px; font-size:0.74rem; font-weight:700; color:var(--grey); font-variant-numeric:tabular-nums; flex:none;}
   .orow .l{flex:1; min-width:0; font-size:0.83rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .orow .cdot{width:7px; height:7px; border-radius:50%; background:var(--gold-deep); flex:none;}
+  .brieftoggle{display:none;}
   .railadd{display:block; margin:8px 6px 0; padding-top:8px; border-top:1px dashed var(--sand-line); font-size:0.82rem; font-weight:600; text-decoration:none;}
   a.rcard.crit{display:block; text-decoration:none; color:var(--ink);}
   a.rcard.crit:hover{border-color:var(--teal); color:var(--ink);}
@@ -253,12 +254,30 @@
     .preview{padding:26px 20px 30px;}
   }
   @media(max-width:640px){
+    /* PHONES (11 Oct 2026, Ramy: "fold the outline on phones"). The outline
+       folds to one tappable line so the wording comes first, and the
+       criteria and the course's settings move under the document. The rail
+       stops being a box of its own so its cards can take their places. */
+    .ewrap{display:flex; flex-direction:column; align-items:stretch; gap:14px;}
+    .rail{display:contents;}
+    .rcard.brief{order:0; padding:0;}
+    .doc{order:1;}
+    .rcard.crit, .rcard.course{order:2;}
+    .rcard.brief > .rlabel{display:none;}
+    .brieftoggle{display:flex; align-items:center; gap:10px; width:100%; min-height:48px; padding:10px 14px; background:none; border:none; border-radius:12px; cursor:pointer; text-align:left;}
+    .brieftoggle .rlabel{margin:0;}
+    .brieftoggle .bcount{flex:1; font-size:0.84rem; color:var(--ink); font-weight:600;}
+    .brieftoggle .chev{width:8px; height:8px; border-right:2px solid var(--grey); border-bottom:2px solid var(--grey); transform:rotate(45deg); margin:-4px 4px 0 0; transition:transform .15s ease;}
+    .rcard.brief.open .chev{transform:rotate(-135deg); margin-top:4px;}
+    .rcard.brief:not(.open) .orows, .rcard.brief:not(.open) .railadd{display:none;}
+    .rcard.brief.open .orows{max-height:none; padding:0 8px;}
+    .rcard.brief.open .railadd{margin:4px 14px 0; padding:8px 0 12px;}
     .board{padding:20px 16px 150px;}
     .ehead input.h1{font-size:1.6rem;}
     .sec{padding:14px 14px 16px;}
     .shead{flex-wrap:wrap;}
-    .sec input.slabel{flex:1 1 100%; order:-1;}
-    .shead .n{order:-2; width:auto;}
+    .sec input.slabel{flex:1 1 calc(100% - 32px); order:-1;}   /* the number and the heading share the first line */
+    .shead .n{order:-2; width:22px;}
     .frow{grid-template-columns:minmax(0,1fr) 28px;}
     .frow input.fhint{grid-column:1 / 2;}
     .crow{grid-template-columns:24px minmax(0,1fr) 30px;}
@@ -269,7 +288,7 @@
     .savebar .acts{margin-left:auto;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610112351">
+<link rel="stylesheet" href="hub-house.css?v=202610112356">
 </head>
 <body class="hub-paper" data-sync-ok="Connected to the course &mdash; wording is kept when you press Save" data-sync-ok-short="Connected">
 <div class="board">
@@ -288,14 +307,14 @@
   </div>
 </div></div>
 <div class="menu" id="menu" hidden></div>
-<script src="assignment-defaults.js?v=202610112351"></script>
-<script src="hub-due.js?v=202610112351"></script>
-<script src="hub-rotation.js?v=202610112351"></script>
-<script src="hub-docx.js?v=202610112351"></script>
-<script src="hub-shared.js?v=202610112351"></script>
-<script src="hub-store.js?v=202610112351"></script>
-<script src="hub-say.js?v=202610112351"></script>
-<script src="hub-sync.js?v=202610112351"></script>
+<script src="assignment-defaults.js?v=202610112356"></script>
+<script src="hub-due.js?v=202610112356"></script>
+<script src="hub-rotation.js?v=202610112356"></script>
+<script src="hub-docx.js?v=202610112356"></script>
+<script src="hub-shared.js?v=202610112356"></script>
+<script src="hub-store.js?v=202610112356"></script>
+<script src="hub-say.js?v=202610112356"></script>
+<script src="hub-sync.js?v=202610112356"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -332,6 +351,8 @@ let CURRENT = (function(){ const q = new URLSearchParams(location.search).get('a
 let MODE = 'edit';          // 'edit' | 'preview'
 let FOCUS = null;           // the section being worked on
 let SHOW_META = false;      // "Change dates" open in the rail
+let BRIEF_OPEN = false;     // the outline, unfolded (phones only; it is always open wider)
+function toggleBrief(){ BRIEF_OPEN = !BRIEF_OPEN; render(); }
 const OPEN_ORIG = new Set(); // sections showing Connect's original under them
 const $ = id => document.getElementById(id);
 
@@ -524,8 +545,9 @@ function railHTML(a){
   const resub = a.resubDueAt ? 'By ' + HubDue.fmt(a.resubDueAt) : a.resubDays ? a.resubDays + ' day' + (a.resubDays === 1 ? '' : 's') : 'Open';
   const words = (a.wordMin || a.wordMax) ? `${(a.wordMin || 0).toLocaleString('en-GB')}–${(a.wordMax || 0).toLocaleString('en-GB')}` : 'Not set';
   return `<aside class="rail${SHOW_META ? ' open' : ''}" id="rail">
-    <nav class="rcard brief" aria-label="The brief">
+    <nav class="rcard brief${BRIEF_OPEN ? ' open' : ''}" aria-label="The brief">
       <p class="rlabel">The brief</p>
+      <button type="button" class="brieftoggle" aria-expanded="${BRIEF_OPEN}" onclick="toggleBrief()"><span class="rlabel">The brief</span><span class="bcount">${a.sections.length} section${a.sections.length === 1 ? '' : 's'}${a.sections.some((s, i) => sectionChanged(CURRENT, i)) ? ' \u00b7 ' + a.sections.filter((s, i) => sectionChanged(CURRENT, i)).length + ' yours' : ''}</span><span class="chev" aria-hidden="true"></span></button>
       <div class="orows">${a.sections.map((s, i) => `<a class="orow${FOCUS === i ? ' on' : ''}" href="#sec-${i}" data-go="${i}">
         <span class="bar" style="background:${sectionChanged(CURRENT, i) ? 'var(--gold-deep)' : EDGE[s.type] || EDGE.text}"></span>
         <span class="n">${i + 1}</span><span class="l">${esc(s.label || 'Untitled section')}</span>
@@ -537,7 +559,7 @@ function railHTML(a){
       <div class="rcount" id="rcount">${crit} criteri${crit === 1 ? 'on' : 'a'}</div>
       <span id="rsyl">${sylLine}</span>
     </a>
-    ${CURRENT === 'a5' ? '' : `<div class="rcard">
+    ${CURRENT === 'a5' ? '' : `<div class="rcard course">
       <p class="rlabel">This course</p>
       <div class="kv"><span>Words</span><span>${words}</span></div>
       <div class="kv"><span>Due</span><span>${esc(due)}${dueSets ? '<br><small style="font-weight:500;color:var(--grey);">differs by set</small>' : ''}</span></div>
@@ -832,6 +854,8 @@ function refreshMarks(){
         else { const sp = foot.querySelector('.sp'); while (sp && sp.nextSibling) sp.nextSibling.remove(); if (sp) sp.insertAdjacentHTML('afterend', restoreFoot(i, false)); }
       }
     });
+    const bc = document.querySelector('.brieftoggle .bcount');
+    if (bc) { const m = a.sections.length, y = a.sections.filter((s, i) => sectionChanged(CURRENT, i)).length; bc.textContent = m + ' section' + (m === 1 ? '' : 's') + (y ? ' \u00b7 ' + y + ' yours' : ''); }
     const rc = $('rcount'); if (rc) { const n = (a.criteria || []).length; rc.textContent = n + ' criteri' + (n === 1 ? 'on' : 'a'); }
     const sf = $('sylfoot'); if (sf) sf.innerHTML = sylFootHTML();
     const rs = $('rsyl'); if (rs) { const st = sylState(); rs.innerHTML = !st ? '<div class="rsyl own">The centre’s own criteria</div>' : st.all ? `<div class="rsyl">Covers syllabus ${esc(st.ref)}</div>` : `<div class="rsyl short">Syllabus ${esc(st.ref)} names ${st.n}; ${st.here} ${st.here === 1 ? 'is' : 'are'} here</div>`; }
@@ -867,6 +891,8 @@ document.addEventListener('click', e => {
   const go = e.target.closest('[data-go]'); if (!go) return;
   e.preventDefault();
   const v = go.dataset.go;
+  // on a phone the outline folds first, so the jump is measured on the page as it will be
+  if (BRIEF_OPEN && matchMedia('(max-width:640px)').matches) { BRIEF_OPEN = false; const nav = document.querySelector('.rcard.brief'); if (nav) { nav.classList.remove('open'); const t = nav.querySelector('.brieftoggle'); if (t) t.setAttribute('aria-expanded', 'false'); } }
   const el = v === 'add' ? $('addcard') : v === 'crit' ? $('critcard') : $('sec-' + v);
   if (!el) return;
   window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 24, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
