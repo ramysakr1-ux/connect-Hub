@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610111332">
+<link rel="stylesheet" href="hub-tokens.css?v=202610111527">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -152,6 +152,15 @@
   .aud figcaption{font-size:0.72rem; font-weight:600; color:var(--grey); margin:0 0 3px;}
   .aud iframe{width:100%; max-width:430px; height:72px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper); display:block;}
   .aud .audalt{display:inline-block; margin:3px 0 0; font-size:0.7rem; color:var(--grey); text-decoration:none;}
+  /* Download and Copy link beside every track and the day's PDF (Ramy, 11 Oct
+     2026): the way a recording gets into a trainee's own plan, slides or
+     submission. The copy button reads "Copied" for a moment. */
+  .audlinks{display:inline-flex; flex-wrap:wrap; gap:0 12px; align-items:baseline;}
+  .audlinks .audalt{margin:3px 0 0; font-size:0.7rem; color:var(--grey); text-decoration:none;}
+  .audlinks a.audalt:hover,.audlinks .copylink:hover{color:var(--teal);}
+  .copylink{background:none; border:0; padding:0; font:inherit; cursor:pointer;}
+  .copylink.done{color:var(--teal); font-weight:600;}
+  .pdflinks{margin-left:10px;}
   .aud .audalt:hover{color:var(--teal); text-decoration:underline;}
   .aud audio{width:100%; max-width:430px; display:block;}
   .audplay{font:inherit; font-size:0.8rem; font-weight:700; padding:8px 14px; border-radius:999px; border:1px solid var(--sand-line); background:var(--paper); color:var(--ink-warm); cursor:pointer;}
@@ -285,7 +294,7 @@
      pages are Drive's viewer; on paper the viewer is hidden and the page's
      image prints in its place. */
   @media print{
-    .back,.relbar,#hubSync,.printme,.others,.day.past,.req,.lede,.ok,.pgopen,.say-pill,.hub-brand-foot{display:none !important;}
+    .back,.relbar,#hubSync,.printme,.others,.day.past,.req,.lede,.ok,.pgopen,.say-pill,.hub-brand-foot,.audlinks{display:none !important;}
     /* a play button means nothing on paper: the track's number stays */
     .auds button,.auds a{display:none !important;}
     .pg.pgfail .pgnote{display:block;}
@@ -351,20 +360,20 @@
   @media(prefers-reduced-motion:reduce){ .tbl select.fm, .fm-pips i{transition:none;} }
   @media print{ .fm-key, .fm-pips{display:none;} .tbl select.fm{border-left-width:1px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610111332">
+<link rel="stylesheet" href="hub-house.css?v=202610111527">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610111332"></script>
-<script src="hub-tracker.js?v=202610111332"></script>
-<script src="hub-rotation.js?v=202610111332"></script>
-<script src="hub-shared.js?v=202610111332"></script>
-<script src="hub-store.js?v=202610111332"></script>
-<script src="hub-say.js?v=202610111332"></script>
-<script src="hub-sync.js?v=202610111332"></script>
+<script src="hub-due.js?v=202610111527"></script>
+<script src="hub-tracker.js?v=202610111527"></script>
+<script src="hub-rotation.js?v=202610111527"></script>
+<script src="hub-shared.js?v=202610111527"></script>
+<script src="hub-store.js?v=202610111527"></script>
+<script src="hub-say.js?v=202610111527"></script>
+<script src="hub-sync.js?v=202610111527"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -422,6 +431,14 @@ function printPages(btn){
   });
 }
 window.printPages = printPages;
+/* Copy link: the clipboard where the page may use it, a selected box where it may not. */
+document.addEventListener('click', function(e){
+  const b = e.target.closest && e.target.closest('.copylink'); if (!b) return;
+  const text = b.dataset.copy || '';
+  const done = () => { const was = b.textContent; b.textContent = 'Copied'; b.classList.add('done'); setTimeout(() => { b.textContent = was; b.classList.remove('done'); }, 1800); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => window.prompt('Copy this link:', text));
+  else window.prompt('Copy this link:', text);
+});
 /* A volunteer student is not on the course: their own page carries the
    part of the teaching practice points they need (sweep, 30 Sep 2026). */
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
@@ -953,7 +970,7 @@ function matsRead(c, mine){
          memory, in the same controls (wireAudio below). */
       if (m) return `<figure class="aud"><figcaption>${name}</figcaption>
         <div class="audwrap" data-drive="${esc(m[1])}"><button type="button" class="audplay">\u25B6 Play the track</button></div>
-        <a class="audalt" href="${esc(a.url)}" target="_blank" rel="noopener">open it in Drive</a></figure>`;
+        <span class="audlinks"><a class="audalt" href="${esc(a.url)}" target="_blank" rel="noopener">open it in Drive</a><a class="audalt" href="https://drive.google.com/uc?export=download&amp;id=${esc(m[1])}">Download</a><button type="button" class="audalt copylink" data-copy="${esc(a.url)}">Copy link</button></span></figure>`;
       if (/\.(mp3|m4a|ogg|wav|aac)([?#]|$)/i.test(a.url)) return `<figure class="aud"><figcaption>${name}</figcaption><audio controls preload="none" src="${esc(a.url)}"></audio></figure>`;
       if (a.url) return `<figure class="aud"><figcaption><a class="mlink" href="${esc(a.url)}" target="_blank" rel="noopener">${name}</a></figcaption></figure>`;
       /* no file of its own: the number, and the way to the folder if there is one */
@@ -1151,7 +1168,7 @@ function render(){
 
       const mineBlock = !mineCell ? '' : `<div class="mine-block">
         <p class="whoami"><b>Your lesson</b>${slotTime(myIdx) ? ' · ' + slotTime(myIdx) : ''} · slot ${myIdx + 1} of ${teaching.length}<button type="button" class="printme" onclick="printTP(this)">Print my TP point</button><button type="button" class="printme" onclick="printPages(this)">Print my pages</button>${
-          mineCell && mineCell.dayPdf && mineCell.dayPdf.url ? `<a class="printme pdf" href="${esc(mineCell.dayPdf.url)}" target="_blank" rel="noopener">The day’s pages (PDF)</a>` : ''}</p>
+          mineCell && mineCell.dayPdf && mineCell.dayPdf.url ? `<a class="printme pdf" href="${esc(mineCell.dayPdf.url)}" target="_blank" rel="noopener">The day’s pages (PDF)</a><span class="audlinks pdflinks"><a class="audalt" href="https://drive.google.com/uc?export=download&amp;id=${esc((mineCell.dayPdf.url.match(/\/d\/([\w-]{20,})/) || [])[1] || '')}">Download the PDF</a><button type="button" class="audalt copylink" data-copy="${esc(mineCell.dayPdf.url)}">Copy link</button></span>` : ''}</p>
         <div class="lessonline">${lesson(mineCell)}</div>
         ${matsRead(mineCell, true)}
         ${pageFigures(mineCell, true)}
