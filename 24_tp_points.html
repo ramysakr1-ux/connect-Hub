@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610111248">
+<link rel="stylesheet" href="hub-tokens.css?v=202610111254">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -334,20 +334,20 @@
   @media(prefers-reduced-motion:reduce){ .tbl select.fm, .fm-pips i{transition:none;} }
   @media print{ .fm-key, .fm-pips{display:none;} .tbl select.fm{border-left-width:1px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610111248">
+<link rel="stylesheet" href="hub-house.css?v=202610111254">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610111248"></script>
-<script src="hub-tracker.js?v=202610111248"></script>
-<script src="hub-rotation.js?v=202610111248"></script>
-<script src="hub-shared.js?v=202610111248"></script>
-<script src="hub-store.js?v=202610111248"></script>
-<script src="hub-say.js?v=202610111248"></script>
-<script src="hub-sync.js?v=202610111248"></script>
+<script src="hub-due.js?v=202610111254"></script>
+<script src="hub-tracker.js?v=202610111254"></script>
+<script src="hub-rotation.js?v=202610111254"></script>
+<script src="hub-shared.js?v=202610111254"></script>
+<script src="hub-store.js?v=202610111254"></script>
+<script src="hub-say.js?v=202610111254"></script>
+<script src="hub-sync.js?v=202610111254"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -814,8 +814,17 @@ function matsRead(c, mine){
     if (c.sub) rows.push(['Sub aim', /^you decide$/i.test(c.sub.trim()) ? '<i>yours to choose</i>' : esc(c.sub)]);
     if (c.framework) rows.push(['Lesson shape', esc(c.framework)]);
   }
+  /* "with Vocabulary" reads for a one-word sub aim (TP 3 on); a TP 1-2 sub aim
+     is written out in full, and came out as "with To clarify six adverbs..."
+     on a classmate's glance (11 Oct 2026). A written one says what it is. */
+  const subLine = sub => {
+    const t = String(sub).trim();
+    if (/^you decide$/i.test(t)) return 'sub aim theirs to choose';
+    if (/^to\s/i.test(t)) return 'Sub aim: ' + esc(t.charAt(0).toLowerCase() + t.slice(1));
+    return 'with ' + esc(t);
+  };
   const says = mine ? [] : [
-    c.sub ? `<span class="msub">${/^you decide$/i.test(String(c.sub).trim()) ? 'sub aim theirs to choose' : 'with ' + esc(c.sub)}</span>` : ''
+    c.sub ? `<span class="msub">${subLine(c.sub)}</span>` : ''
   ].filter(Boolean);
 
   const b = c.book || {};
