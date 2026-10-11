@@ -189,6 +189,31 @@
     return set.slice(shift).concat(set.slice(0, shift));
   }
 
+  /* THE ORDER FOLLOWS THE DEAL (11 Oct 2026). Each dealt cell remembers the
+     slot it came from ("2A·3"), and the slot IS the time: a set's lessons are
+     written in teaching order, the grammar after the text it is drawn from. A
+     tutor who deals a day by hand -- C/18's own deal, so that every trainee has
+     two language and two skills lessons before the level changes -- moves a
+     trainee to another slot, and the timetable went on naming whoever the
+     rotation would have put there. So: when every member of the set holds a
+     different slot of that practice, that is the order; otherwise the
+     rotation's. `cellOf(token, tp)` returns the trainee's cell or nothing.
+     Works on lettered people and on bare tokens alike. */
+  function orderDealt(set, tp, cellOf) {
+    const base = orderFor(set, tp);
+    if (typeof cellOf !== 'function' || !base.length) return base;
+    const n = base.length;
+    const pos = base.map((p) => {
+      const c = cellOf(p && typeof p === 'object' ? p.token : p, tp);
+      const m = c && /\u00b7(\d+)$/.exec(String(c.from || ''));
+      return m ? +m[1] - 1 : -1;
+    });
+    if (pos.some((x) => x < 0 || x >= n) || new Set(pos).size !== n) return base;
+    const out = new Array(n);
+    base.forEach((p, i) => { out[pos[i]] = p; });
+    return out;
+  }
+
   /* BOTH sets teach every practice, on consecutive days: "TP 1 · ABC" on one
      day and "TP 1 · DEF" on the next, then TP 2 the same way. The practice
      number does not alternate -- the DAY does. (Read off Ramy's own C/17
@@ -261,7 +286,7 @@
   }
 
   const api = { AIMS, LANGUAGE_FOCUS, LETTERS, FAMILY, FAMILY_WORD, familyOf, aimsInFamily,
-                lettersFor, setsFor, setName, aimFor, rotate, orderFor, dayOfSet,
+                lettersFor, setsFor, setName, aimFor, rotate, orderFor, orderDealt, dayOfSet,
                 languageFocusCheck, clashes, afterFail };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.hubRotation = api;

@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610111016">
+<link rel="stylesheet" href="hub-tokens.css?v=202610111049">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -333,20 +333,20 @@
   @media(prefers-reduced-motion:reduce){ .tbl select.fm, .fm-pips i{transition:none;} }
   @media print{ .fm-key, .fm-pips{display:none;} .tbl select.fm{border-left-width:1px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610111016">
+<link rel="stylesheet" href="hub-house.css?v=202610111049">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610111016"></script>
-<script src="hub-tracker.js?v=202610111016"></script>
-<script src="hub-rotation.js?v=202610111016"></script>
-<script src="hub-shared.js?v=202610111016"></script>
-<script src="hub-store.js?v=202610111016"></script>
-<script src="hub-say.js?v=202610111016"></script>
-<script src="hub-sync.js?v=202610111016"></script>
+<script src="hub-due.js?v=202610111049"></script>
+<script src="hub-tracker.js?v=202610111049"></script>
+<script src="hub-rotation.js?v=202610111049"></script>
+<script src="hub-shared.js?v=202610111049"></script>
+<script src="hub-store.js?v=202610111049"></script>
+<script src="hub-say.js?v=202610111049"></script>
+<script src="hub-sync.js?v=202610111049"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -970,7 +970,8 @@ function render(){
     const letterOf = t => { for (let si = 0; si < sets.length; si++) { const i = sets[si].indexOf(t); if (i >= 0) return 'ABCDEF'[si * 3 + i] || String(si * 3 + i + 1); } return ''; };
     const mySet = sets.find(st => st.indexOf(me.token) !== -1) || (me.token ? [me.token] : []);
     const mySetIndex = sets.indexOf(mySet);
-    const order = (st, tp) => { const n = st.length; if (!n) return st; const k = ((tp - 1) % n + n) % n; return st.slice(k).concat(st.slice(0, k)); };
+    /* the rotation's order, or the dealt one where a tutor dealt the day by hand (hub-rotation orderDealt) */
+    const order = (st, tp) => R.orderDealt(st, tp, (t, n) => (rows[t] || {})['tp' + n]);
 
     /* The day and the hours come from the course's own timetable, so the table
        says when as well as what. */
@@ -1179,7 +1180,7 @@ function render(){
       </details>` : ''}
       <div class="wrap"><table class="tbl ord stack"><tr><th>Teaching order</th>${Array.from({length:TPS},(_,i)=>`<th>TP ${i+1}</th>`).join('')}</tr>
         ${sets.filter(st => st.length).map(st => `<tr><td class="who">${esc(R.setName(st))}</td>${
-          Array.from({length:TPS},(_,i)=>i+1).map(tp => `<td data-lab="TP ${tp}"><span class="ord">${esc(R.orderFor(st, tp).map(x => x.letter).join(' '))}</span></td>`).join('')}</tr>`).join('')}</table></div>
+          Array.from({length:TPS},(_,i)=>i+1).map(tp => `<td data-lab="TP ${tp}"><span class="ord">${esc(R.orderDealt(st, tp, (t, n) => (rows[t] || {})['tp' + n]).map(x => x.letter).join(' '))}</span></td>`).join('')}</tr>`).join('')}</table></div>
       <div class="relbar">${on
         ? `<span class="chip on">Released</span><button class="btn quiet" data-rel="${esc(g.group)}" data-on="0">Take it back</button><span class="status">The trainees can see their own points.</span>`
         : `<span class="chip">Not released</span><button class="btn" data-rel="${esc(g.group)}" data-on="1">Release to Group ${esc(g.group) || '—'}</button><span class="status">Only tutors can see it until it is released.</span>`}</div>
@@ -1241,7 +1242,22 @@ function render(){
   document.querySelectorAll('select[data-tp]').forEach(el => el.addEventListener('change', () => {
     const { g, t, tp } = el.dataset;
     P.groups[g] = P.groups[g] || {}; P.groups[g][t] = P.groups[g][t] || {};
-    P.groups[g][t]['tp'+tp] = { aim: el.value, edited: true };
+    /* A TYPE CHOSEN BY HAND BRINGS ITS LESSON (11 Oct 2026). This kept the word
+       and nothing else, so a trainee moved from the rotation's Reading to the
+       day's Vocabulary got a cell reading "Vocabulary" with no aim, no pages
+       and no stages -- the set's slot was written and sitting right there.
+       Where the trainee's own day has a slot of that type, the cell is stamped
+       from it, `from` included, and the order follows (orderDealt). */
+    const cell = { aim: el.value };
+    const set = setFor(g);
+    const si = ((P.sets && P.sets[g]) || []).findIndex(st => (st || []).indexOf(t) !== -1);
+    let found = null;
+    if (set && si >= 0 && el.value) {
+      const ses = (set.sessions || {})[tp + (si === 0 ? 'A' : 'B')];
+      const pos = ((ses && ses.slots) || []).findIndex(sl => sl && sl.type === el.value);
+      if (pos >= 0) found = slotFor(set, +tp, si, pos);
+    }
+    P.groups[g][t]['tp'+tp] = Object.assign(found ? stamp(cell, found) : cell, { edited: true });
     persist('Saved');
   }));
   document.querySelectorAll('button[data-mats]').forEach(el => el.addEventListener('click', () => {
