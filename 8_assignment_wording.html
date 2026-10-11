@@ -13,7 +13,7 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610120023">
+<link rel="stylesheet" href="hub-tokens.css?v=202610120027">
 <style>
   /* ---- The assignment editor, v2 (11 Oct 2026) -------------------------------
      From the designer's handoff "Assignment editor v2". The page behind Edit
@@ -290,7 +290,7 @@
     .savebar .acts{margin-left:auto;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610120023">
+<link rel="stylesheet" href="hub-house.css?v=202610120027">
 </head>
 <body class="hub-paper" data-sync-ok="Connected to the course &mdash; wording is kept when you press Save" data-sync-ok-short="Connected">
 <div class="board">
@@ -309,14 +309,14 @@
   </div>
 </div></div>
 <div class="menu" id="menu" hidden></div>
-<script src="assignment-defaults.js?v=202610120023"></script>
-<script src="hub-due.js?v=202610120023"></script>
-<script src="hub-rotation.js?v=202610120023"></script>
-<script src="hub-docx.js?v=202610120023"></script>
-<script src="hub-shared.js?v=202610120023"></script>
-<script src="hub-store.js?v=202610120023"></script>
-<script src="hub-say.js?v=202610120023"></script>
-<script src="hub-sync.js?v=202610120023"></script>
+<script src="assignment-defaults.js?v=202610120027"></script>
+<script src="hub-due.js?v=202610120027"></script>
+<script src="hub-rotation.js?v=202610120027"></script>
+<script src="hub-docx.js?v=202610120027"></script>
+<script src="hub-shared.js?v=202610120027"></script>
+<script src="hub-store.js?v=202610120027"></script>
+<script src="hub-say.js?v=202610120027"></script>
+<script src="hub-sync.js?v=202610120027"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1211,11 +1211,27 @@ function sectionsFromText(text){
   }
   return out.filter(x => x.body || x.label);
 }
+/* A brief usually opens with its own title ("Focus on the Learner"), which
+   the page already shows above it, so the candidate read it twice (12 Oct
+   2026). A heading among the first two that repeats the assignment's title
+   (or its long name) goes; the text under it stays, as "Before you start",
+   joined to any text that came before it. */
+function dropTitleHeading(secs, title){
+  const k = t => String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, '').replace(/s$/, '');
+  const names = [title, (NAMES[CURRENT] || '').split('—').pop()].map(k).filter(Boolean);
+  const i = secs.slice(0, 2).findIndex(x => names.indexOf(k(x.label)) > -1);
+  if (i < 0) return secs;
+  const hit = secs[i], prev = i > 0 ? secs[i - 1] : null;
+  if (prev && prev.label === 'Before you start') { if (hit.body) prev.body = prev.body ? prev.body + '\n\n' + hit.body : hit.body; secs.splice(i, 1); }
+  else if (hit.body) hit.label = 'Before you start';
+  else secs.splice(i, 1);
+  return secs;
+}
 async function handleImport(file){
   if(!file) return;
   let text = '';
   try { text = await window.hubFileText(file); } catch (err) { alert(err && err.message ? err.message : 'That file could not be read.'); return; }
-  const sections = sectionsFromText(text);
+  const sections = dropTitleHeading(sectionsFromText(text), DATA[CURRENT] ? DATA[CURRENT].title : '');
   if (!sections.length) { alert('Could not find any text to import from that file.'); return; }
   const n = sections.length, what = `${n} section${n===1?'':'s'}`;
   const a = DATA[CURRENT];
