@@ -92,7 +92,11 @@ window.HubStore = (function(){
     isTutor: function(){ return !!key(); }, isAssessor: function(){ return !!akey() && !key(); }, isTrainee: function(){ return !!token() && !key() && !akey(); },
     call: call,
     ping: function(){ return call({ op: 'ping' }); },
-    boot: function(){ return call({ op: 'boot', token: token() || undefined }); },
+    /* THE BOOT GETS A MINUTE (11 Oct 2026). The library course carries thirteen
+       sets -- 1.5 MB -- and the store takes about thirty seconds to send it, so
+       the 20-second limit aborted every try and the page sat on "Checking your
+       link" for good. Only the first load is this big; every other call keeps 20 s. */
+    boot: function(){ return call({ op: 'boot', token: token() || undefined }, 60000); },
     assessorLink: function(){ return call({ op: 'assessorLink' }); },
     rotateAssessorKey: function(){ return call({ op: 'rotateAssessorKey' }); },
     assessorLinkFor: function(k){ return base() + '12_assessor_pack.html?ak=' + encodeURIComponent(k); },
