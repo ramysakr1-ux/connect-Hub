@@ -13,7 +13,7 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610120032">
+<link rel="stylesheet" href="hub-tokens.css?v=202610120037">
 <style>
   /* ---- The assignment editor, v2 (11 Oct 2026) -------------------------------
      From the designer's handoff "Assignment editor v2". The page behind Edit
@@ -292,10 +292,15 @@
     .crow > .tie{grid-column:2; grid-row:3;}
     .savebar .in{padding:10px 16px; gap:8px;}
     .savebar .what{font-size:0.8rem;}
-    .savebar .acts{margin-left:auto;}
+    .savebar .acts{margin-left:auto; width:100%;}
+    /* the course pill rides in the save bar, left of Discard, instead of
+       floating over the brief (12 Oct 2026) */
+    .savebar .acts .btn, .savebar .acts .discard{flex:none; white-space:nowrap;}
+    #hubSync.inbar{position:static !important; margin-right:auto; flex:0 1 auto; min-width:0; max-width:calc(100% - 272px);
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610120032">
+<link rel="stylesheet" href="hub-house.css?v=202610120037">
 </head>
 <body class="hub-paper" data-sync-ok="Connected to the course &mdash; wording is kept when you press Save" data-sync-ok-short="Connected">
 <div class="board">
@@ -314,14 +319,14 @@
   </div>
 </div></div>
 <div class="menu" id="menu" hidden></div>
-<script src="assignment-defaults.js?v=202610120032"></script>
-<script src="hub-due.js?v=202610120032"></script>
-<script src="hub-rotation.js?v=202610120032"></script>
-<script src="hub-docx.js?v=202610120032"></script>
-<script src="hub-shared.js?v=202610120032"></script>
-<script src="hub-store.js?v=202610120032"></script>
-<script src="hub-say.js?v=202610120032"></script>
-<script src="hub-sync.js?v=202610120032"></script>
+<script src="assignment-defaults.js?v=202610120037"></script>
+<script src="hub-due.js?v=202610120037"></script>
+<script src="hub-rotation.js?v=202610120037"></script>
+<script src="hub-docx.js?v=202610120037"></script>
+<script src="hub-shared.js?v=202610120037"></script>
+<script src="hub-store.js?v=202610120037"></script>
+<script src="hub-say.js?v=202610120037"></script>
+<script src="hub-sync.js?v=202610120037"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1367,6 +1372,21 @@ function startBlank(){
 render();
 /* The sync pill and the dictation controls ride above the save bar, not on it. */
 if (window.hubReserveForBar) hubReserveForBar('#savebar');
+/* On a phone there is no margin for the pill to float in: above the save
+   bar it sat on the brief. There it goes into the bar itself, in the empty
+   space left of Discard, and back to the corner if the screen widens. */
+(function(){
+  const mq = window.matchMedia('(max-width:640px)');
+  function place(){
+    const pill = document.getElementById('hubSync'), acts = document.querySelector('#savebar .acts');
+    if (!pill || !acts) return;
+    if (mq.matches) { if (pill.parentNode !== acts) acts.insertBefore(pill, acts.firstChild); pill.classList.add('inbar'); }
+    else if (pill.parentNode !== document.body) { pill.classList.remove('inbar'); document.body.appendChild(pill); }
+  }
+  new MutationObserver(place).observe(document.body, { childList: true });
+  if (mq.addEventListener) mq.addEventListener('change', place); else if (mq.addListener) mq.addListener(place);
+  place();
+})();
 </script>
 </body>
 </html>
