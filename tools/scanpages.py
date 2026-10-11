@@ -28,8 +28,9 @@ BOOKS = {
   'SF_TB': (f'{D}/Upper- Intermediate /Straightforward/Straightforward Upper-Intermediate Teacher’s Book — 1st edition 2007.pdf', 15),
   # Set five. The B1 books live in Course Materials, not Course books with
   # every other book (Downloads/B1 SpeakOut was cleared on 8 Oct 2026).
-  'SOB1_SB': (f'{D_MAT}/B1- Materials /SO B1 SB.pdf', -1),
-  'SOB1_WB': (f'{D_MAT}/B1- Materials /SO B1 WB.pdf', -1),
+  # Speakout B1 moved to the shelf on 11 Oct 2026: B1- Materials now holds Empower B1 (C/18's book)
+  'SOB1_SB': (f'{D}/Intermediate/Speakout B1 (3rd ed)/SO B1 SB.pdf', -1),
+  'SOB1_WB': (f'{D}/Intermediate/Speakout B1 (3rd ed)/SO B1 WB.pdf', -1),
   # Set six (Empower B1, 10 Oct 2026): SB and WB printed page = index - 1; TB printed page = index + 16.
   'EMP_SB': (f'{D}/Pre-Intermediate /Empower /Empower_B1_Pre-Intermediate Students\' Book.pdf', 1),
   'EMP_WB': (f'{D}/Pre-Intermediate /Empower /Empower_B1_Pre-Intermediate_Workbook.pdf', 1),

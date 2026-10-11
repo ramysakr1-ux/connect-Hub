@@ -206,7 +206,7 @@ function files(id, all, IM, AU) {
     `${have.filter(r => r.m.folios.includes(+r.f.page)).length} of ${have.length} pages confirmed by their printed number; the others print none a machine can read.`);
   /* A spine shadow or the scanner bed is a GREY band along most of a side; a
      photograph that runs to the edge is dark too, but coloured and patchy. */
-  const bandSides = r => Object.entries(r.m.band || {}).filter(([, b]) => b.dark >= 0.7 && b.grey >= 0.8).map(([s]) => s);
+  const bandSides = r => Object.entries(r.m.band || {}).filter(([, b]) => b.dark >= 0.7 && b.grey >= 0.8 && (b.inner == null || b.inner > r.m.paper - 50)).map(([s]) => s);
   check(id, 'FIX', 'Scans', 'Clean edges: no spine shadow or scanner bed down a side',
     have.filter(r => bandSides(r).length).map(r => `${r.w} ${r.f.name} (${bandSides(r).join(', ')})`));
   check(id, 'FIX', 'Scans', 'White paper, not grey or yellow', have.filter(r => r.m.paper < 225).map(r => `${r.w} ${r.f.name} (paper ${Math.round(r.m.paper)})`));

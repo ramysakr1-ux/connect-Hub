@@ -30,6 +30,21 @@ def edges(g):
     return {'left': float(g[:, :sw].mean()), 'right': float(g[:, -sw:].mean()),
             'top': float(g[:sh, :].mean()), 'bottom': float(g[-sh:, :].mean())}
 
+def bands(a, paper_v):
+    """Per side: how much of a 2% strip is dark along its length, how much of
+    that darkness is colourless (a scanner bed or a spine shadow is grey; a
+    photograph running to the edge is not), and how bright the page is just
+    inside the strip (a band is thin; a photograph goes on). audit.mjs calls
+    it a band when dark >= .7, grey >= .8 and inner is paper again."""
+    lum = a.mean(axis=2); sat = a.max(axis=2) - a.min(axis=2); h, w = lum.shape
+    sw, sh = max(4, int(w * 0.02)), max(4, int(h * 0.02)); out = {}
+    for side, (l, s, ax, inner) in {'left': (lum[:, :sw], sat[:, :sw], 0, lum[:, sw:sw*3]), 'right': (lum[:, -sw:], sat[:, -sw:], 0, lum[:, -sw*3:-sw]),
+                                     'top': (lum[:sh, :], sat[:sh, :], 1, lum[sh:sh*3, :]), 'bottom': (lum[-sh:, :], sat[-sh:, :], 1, lum[-sh*3:-sh, :])}.items():
+        line = l.mean(axis=1 - ax); dark = line < paper_v - 50
+        grey = float((s.mean(axis=1 - ax)[dark] < 40).mean()) if dark.any() else 0.0
+        out[side] = {'dark': round(float(dark.mean()), 2), 'grey': round(grey, 2), 'inner': round(float(inner.mean()), 1)}
+    return out
+
 def paper(g):
     """The commonest bright value is the paper (the same reading clean.py uses)."""
     h = np.bincount(g[g > 120].astype(np.uint8).ravel(), minlength=256)
@@ -87,9 +102,10 @@ def images(src, out_path):
         except Exception as e:
             done[f[:-4]] = {'error': str(e)}; continue
         lines = texts.get(p, [])
+        pv = paper(g)
         done[f[:-4]] = {
             'w': img.width, 'h': img.height, 'std': float(g.std()),
-            'paper': paper(g), 'edges': edges(g), 'blur': blur(g), 'skew': skew(g),
+            'paper': pv, 'edges': edges(g), 'band': bands(np.asarray(img.convert('RGB'), dtype=np.float32), pv), 'blur': blur(g), 'skew': skew(g),
             'folios': folios(lines), 'words': len(lines),
             'watermark': sorted({m.group(0) for _, _, t in lines for m in [WATERMARK.search(t)] if m and not re.fullmatch(r'pdf', m.group(0), re.I)} |
                                 {t.strip() for _, _, t in lines if re.search(r'download|\.ir\b|www\.', t, re.I)}),
