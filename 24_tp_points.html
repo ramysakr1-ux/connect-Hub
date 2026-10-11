@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610111315">
+<link rel="stylesheet" href="hub-tokens.css?v=202610111327">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -232,6 +232,7 @@
   .pg iframe{width:100%; height:620px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper); display:block;}
   .pg img{width:100%; height:auto; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper); display:block;}
   .pg img.forprint{display:none;}
+  .pgnote{display:none; font-size:0.8rem; color:var(--grey); margin:6px 0 0;}
   .pgopen{display:inline-block; margin:4px 0 0; font-size:0.72rem; font-weight:600; color:var(--teal); text-decoration:none;}
   .printme.pdf{text-decoration:none; display:inline-block;}
   .pg.ref{position:relative; flex:1 1 240px; max-width:340px;}
@@ -284,8 +285,15 @@
      pages are Drive's viewer; on paper the viewer is hidden and the page's
      image prints in its place. */
   @media print{
-    .back,.relbar,#hubSync,.printme,.others,.day.past,.req,.lede,.ok,.pgopen{display:none !important;}
+    .back,.relbar,#hubSync,.printme,.others,.day.past,.req,.lede,.ok,.pgopen,.say-pill,.hub-brand-foot{display:none !important;}
+    /* a play button means nothing on paper: the track's number stays */
+    .auds button,.auds a{display:none !important;}
+    .pg.pgfail .pgnote{display:block;}
     body{background:#fff;}
+    /* the board's 80px kept for the Say something pill, and the group's own
+       padding and margin, spilled onto a blank last sheet */
+    .board{padding-bottom:0 !important;}
+    section.group{padding:0 !important; margin:0 !important; border:0 !important; background:#fff !important;}
     .mine-block{border:0; background:#fff; padding:0;}
     .proc{background:#fff;}
     details.proc{display:block;} details.proc > summary{display:none;}
@@ -293,7 +301,9 @@
        split across two. A Drive preview frame cannot print at all, so it is
        hidden rather than left as a grey rectangle. */
     .pg{break-inside:avoid; page-break-inside:avoid; max-width:none; flex:1 1 100%;}
-    .pg img, .pg img.forprint{display:block; width:100%; max-height:96vh; object-fit:contain; border:0;}
+    /* 90vh, not 96: with its caption above it, a page at 96 spilled the last
+       one onto an extra blank sheet */
+    .pg img, .pg img.forprint{display:block; width:100%; max-height:90vh; object-fit:contain; border:0;}
     .pg iframe{display:none !important;}
     .pgs{display:block;}
     /* "Print the pages": the scans alone, one to a sheet, nothing else */
@@ -304,9 +314,16 @@
     body.printpages .whoami,
     body.printpages .proc,
     body.printpages .glossary,
+    body.printpages .gloss,
+    body.printpages .aimrow,
+    body.printpages .auds,
+    body.printpages .src,
+    body.printpages .group > h2,
     body.printpages h1,
     body.printpages .eyebrow{display:none !important;}
-    body.printpages .pg{break-after:page; page-break-after:always;}
+    /* a break BEFORE every page but the first: a break after the last one
+       left a blank sheet at the end */
+    body.printpages .pg + .pg{break-before:page; page-break-before:always;}
     body.printpages .pg figcaption{font-size:0.8rem; margin:0 0 4px;}
   }
 
@@ -334,30 +351,75 @@
   @media(prefers-reduced-motion:reduce){ .tbl select.fm, .fm-pips i{transition:none;} }
   @media print{ .fm-key, .fm-pips{display:none;} .tbl select.fm{border-left-width:1px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610111315">
+<link rel="stylesheet" href="hub-house.css?v=202610111327">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610111315"></script>
-<script src="hub-tracker.js?v=202610111315"></script>
-<script src="hub-rotation.js?v=202610111315"></script>
-<script src="hub-shared.js?v=202610111315"></script>
-<script src="hub-store.js?v=202610111315"></script>
-<script src="hub-say.js?v=202610111315"></script>
-<script src="hub-sync.js?v=202610111315"></script>
+<script src="hub-due.js?v=202610111327"></script>
+<script src="hub-tracker.js?v=202610111327"></script>
+<script src="hub-rotation.js?v=202610111327"></script>
+<script src="hub-shared.js?v=202610111327"></script>
+<script src="hub-store.js?v=202610111327"></script>
+<script src="hub-say.js?v=202610111327"></script>
+<script src="hub-sync.js?v=202610111327"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
    to a sheet. It has to come back out of that mode afterwards, or the screen
    stays stripped for whoever looks next -- afterprint fires on cancel too. */
-function printPages(){
-  document.body.classList.add('printpages');
-  const off = () => { document.body.classList.remove('printpages'); window.removeEventListener('afterprint', off); };
-  window.addEventListener('afterprint', off);
-  setTimeout(() => { window.print(); setTimeout(off, 1500); }, 60);
+/* A PAGE THAT DID NOT COME IS ASKED FOR AGAIN (11 Oct 2026). Drive's image
+   address refuses some requests when a page asks for many at once, and the
+   image used to remove itself -- so "Print my pages" printed two of Hiba's four
+   pages and said nothing. Now it is asked for once more, then fetched through
+   the store; only if that fails too does its figure say so, in a note that
+   prints in its place. */
+function pgRetry(img){
+  const n = +(img.dataset.tries || 0);
+  const fail = () => { const f = img.closest('figure'); if (f) f.classList.add('pgfail'); img.dataset.failed = '1'; };
+  if (img.dataset.via === 'store') return fail();
+  if (n < 1) {
+    img.dataset.tries = n + 1;
+    const base = img.src.replace(/&r=\d+$/, '');
+    setTimeout(() => { img.src = base + '&r=' + (n + 1); }, 800);
+    return;
+  }
+  /* Twice refused: the store reads the file from Drive itself (the op that
+     plays the tracks serves any file this trainee's points name), which
+     Google does not throttle the way it throttles the image address --
+     on 11 Oct one of Hiba's pages was refused five times running. */
+  const id = img.dataset.id;
+  if (!id || !window.HubStore || !HubStore.audio) return fail();
+  img.dataset.via = 'store';
+  HubStore.audio(id).then(r => { if (r && r.b64) img.src = 'data:' + (r.mime || 'image/jpeg') + ';base64,' + r.b64; else fail(); }, fail);
+}
+window.pgRetry = pgRetry;
+/* Printing waits for the pages: up to twenty seconds for every page image of
+   your own lesson to arrive (or to have given up), the button saying so. */
+function whenPagesReady(btn, then){
+  const imgs = [...document.querySelectorAll('.mine-block img.forprint')];
+  const ready = () => imgs.every(i => i.dataset.failed || (i.complete && i.naturalWidth > 0));
+  if (ready()) return then();
+  const label = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = 'Getting your pages…'; btn.disabled = true; }
+  const t0 = Date.now();
+  const tick = () => {
+    if (ready() || Date.now() - t0 > 20000) { if (btn) { btn.textContent = label; btn.disabled = false; } then(); }
+    else setTimeout(tick, 300);
+  };
+  tick();
+}
+function printTP(btn){ whenPagesReady(btn, () => window.print()); }
+window.printTP = printTP;
+function printPages(btn){
+  whenPagesReady(btn, () => {
+    document.body.classList.add('printpages');
+    const off = () => { document.body.classList.remove('printpages'); window.removeEventListener('afterprint', off); };
+    window.addEventListener('afterprint', off);
+    setTimeout(() => { window.print(); setTimeout(off, 1500); }, 60);
+  });
 }
 window.printPages = printPages;
 /* A volunteer student is not on the course: their own page carries the
@@ -792,7 +854,8 @@ function pageFigures(c, mine){
        where you are, so in Istanbul its pop-out button spoke Turkish. */
     return `<figure class="pg${mine ? '' : ' ref'}"><figcaption>${esc(f.name || 'Page')}${mine ? '' : ' — not yours'}</figcaption>
       <iframe src="https://drive.google.com/file/d/${id}/preview?hl=en" loading="lazy" title="${esc(f.name || 'Page')}"></iframe>
-      <img class="forprint" src="${src}" alt="${esc(f.name || 'Page')}" onerror="this.remove();">
+      <img class="forprint" src="${src}" data-id="${id}" alt="${esc(f.name || 'Page')}" onerror="pgRetry(this)">
+      <p class="pgnote">${esc(f.name || 'This page')} did not load. Print it from Drive: ${esc('drive.google.com/file/d/' + m[1] + '/view')}</p>
       <a class="pgopen" href="https://drive.google.com/file/d/${id}/view" target="_blank" rel="noopener">Open in Drive</a></figure>`;
   }).filter(Boolean).join('');
   return body ? `<div class="pgs">${body}</div>` : '';
@@ -938,11 +1001,22 @@ function matsRead(c, mine){
      above it, so the pattern is visible rather than copied, and then the three
      cases a trainee actually meets — the book, a page adapted from it, and
      something found online. From TP 3 nothing appears and they write it. */
+  /* THE PATTERN IS THE TRAINEE'S OWN BOOK (11 Oct 2026). It was written out
+     once for Language Hub Elementary and showed on every course, so a C/18
+     trainee teaching from Empower B1 was shown Maggs & Smith (2019) above her
+     own Empower references. The parts are now read off the first reference:
+     "Author (Year) Title. Publisher." -- and a reference that does not split
+     that way shows no pattern rather than a wrong one. */
+  const srcPattern = line => {
+    const m = /^(.+?)\s*\((\d{4}[a-z]?)\)\s*(.+?)\.\s+([^.]+?)\.?$/.exec(String(line || '').trim());
+    if (!m) return '';
+    return `<div class="srcpat"><span>Author<i>${esc(m[1])}</i></span><span>Year<i>(${esc(m[2])})</i></span><span>Title<i>${esc(m[3])}</i></span><span>Publisher<i>${esc(m[4])}</i></span></div>`;
+  };
   let sources = '';
   const srcLines = mine ? String(c.sources || '').split(/\n+/).map(x => x.trim()).filter(Boolean) : [];
   if (srcLines.length) {
     sources = `<div class="src"><div class="plab">Sourcing your materials</div>
-      <div class="srcpat"><span>Author<i>Maggs, P. &amp; Smith, C.</i></span><span>Year<i>(2019)</i></span><span>Title<i>Language Hub Elementary Student’s Book</i></span><span>Publisher<i>Macmillan</i></span></div>
+      ${srcPattern(srcLines[0])}
       <p class="srcwhy">Every page you hand out says where it came from. That is the pattern — the book you are teaching from reads:</p>
       <ul class="srcrefs">${srcLines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
       <p class="srcwhy">A page you changed: the same reference, after the words <b>Adapted from</b>. Something you found online: the title, the site, the full address and the date you took it. Something you wrote: <b>own material</b>.</p></div>`;
@@ -1076,7 +1150,7 @@ function render(){
         .map(x => x.trim()).filter(x => /^(Reading|Listening|Grammar|Vocabulary|Speaking|Pronunciation|Functional language):/.test(x));
 
       const mineBlock = !mineCell ? '' : `<div class="mine-block">
-        <p class="whoami"><b>Your lesson</b>${slotTime(myIdx) ? ' · ' + slotTime(myIdx) : ''} · slot ${myIdx + 1} of ${teaching.length}<button type="button" class="printme" onclick="window.print()">Print my TP point</button><button type="button" class="printme" onclick="printPages()">Print my pages</button>${
+        <p class="whoami"><b>Your lesson</b>${slotTime(myIdx) ? ' · ' + slotTime(myIdx) : ''} · slot ${myIdx + 1} of ${teaching.length}<button type="button" class="printme" onclick="printTP(this)">Print my TP point</button><button type="button" class="printme" onclick="printPages(this)">Print my pages</button>${
           mineCell && mineCell.dayPdf && mineCell.dayPdf.url ? `<a class="printme pdf" href="${esc(mineCell.dayPdf.url)}" target="_blank" rel="noopener">The day’s pages (PDF)</a>` : ''}</p>
         <div class="lessonline">${lesson(mineCell)}</div>
         ${matsRead(mineCell, true)}
