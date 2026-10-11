@@ -25,7 +25,7 @@
 <title>Connect Lite — Assessor pack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610112302">
+<link rel="stylesheet" href="hub-tokens.css?v=202610112313">
 <style>
   :root{
     /* the control fill, for the shared confirm modal's Cancel button */
@@ -202,6 +202,8 @@
   .tp{border-bottom:1px solid var(--sand-line); padding:14px 18px;}
   .tp:last-child{border-bottom:none;}
   .tp-row{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
+  .tp.folded .tp-row .n{color:var(--grey); font-size:0.95rem;}
+  .tp.folded{padding-top:10px; padding-bottom:10px;}
   .tp-row .n{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.05rem; color:var(--ink); min-width:44px;}
   .tp-row .meta{font-size:0.82rem; color:var(--grey); flex:1; min-width:200px;}
   .tp-row .meta b{color:var(--ink); font-weight:600;}
@@ -264,7 +266,7 @@
   @media(max-width:560px){ .ap9{padding:22px 18px 18px; border-radius:12px;} .ap9-stats div{min-width:0; flex:1 1 120px;} }
   @media print{ .ap9{display:none !important;} .panel.ap9-obs{border-left:0; background:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610112302">
+<link rel="stylesheet" href="hub-house.css?v=202610112313">
 </head>
 <body>
 <div class="board">
@@ -294,15 +296,15 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202610112302"></script>
-<script src="hub-shared.js?v=202610112302"></script>
-<script src="assignment-defaults.js?v=202610112302"></script>
-<script src="hub-tracker.js?v=202610112302"></script>
-<script src="hub-rotation.js?v=202610112302"></script>
-<script src="hub-attendance.js?v=202610112302"></script>
-<script src="hub-store.js?v=202610112302"></script>
-<script src="hub-say.js?v=202610112302"></script>
-<script src="hub-sync.js?v=202610112302"></script>
+<script src="observation-defaults.js?v=202610112313"></script>
+<script src="hub-shared.js?v=202610112313"></script>
+<script src="assignment-defaults.js?v=202610112313"></script>
+<script src="hub-tracker.js?v=202610112313"></script>
+<script src="hub-rotation.js?v=202610112313"></script>
+<script src="hub-attendance.js?v=202610112313"></script>
+<script src="hub-store.js?v=202610112313"></script>
+<script src="hub-say.js?v=202610112313"></script>
+<script src="hub-sync.js?v=202610112313"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -737,7 +739,7 @@ function renderList(){
          portfolio on the course. Where the centre has chosen nobody, show
          everyone and say so rather than pretending a choice was made. */
       const chosen = (SETTINGS.assessorVisit || []).filter(id => PEOPLE.some(p => p.id === id));
-      const row = tr => `<div class="docrow"><span>${hubAvatar(tr.name)}${esc(tr.name)}${tr.group ? ` <span class="sub">Group ${esc(tr.group)}</span>` : ''}</span><a href="12_assessor_pack.html?trainee=${encodeURIComponent(tr.id)}">Open portfolio</a></div>`;
+      const row = tr => `<div class="docrow"><span>${letterChip(tr)}${esc(tr.name)}${tr.group ? ` <span class="sub">Group ${esc(tr.group)}</span>` : ''}</span><a href="12_assessor_pack.html?trainee=${encodeURIComponent(tr.id)}">Open portfolio</a></div>`;
       if (!n) return '<h2 class="sect">Candidate portfolios</h2><div class="panel"><div class="empty">No trainees on the course yet.</div></div>';
       if (!chosen.length) return `<h2 class="sect">Candidate portfolios <small>Handbook 14.1 &middot; the centre has not said which trainees you are observing</small></h2>
         <div class="panel">${PEOPLE.map(row).join('')}</div>`;
@@ -986,6 +988,53 @@ function courseDocuments(){
 }
 
 // ---- one trainee ---------------------------------------------------------------
+/* The trainee's letter and teaching set, as the TP points deal them and the
+   tracker and the roster show them (Ramy, 11 Oct 2026: "use the letter"). Asked
+   per group of the roster; initials only when no rotation answers. */
+let LETTERS_CACHE = null;
+function letterInfo(tr){
+  if (!LETTERS_CACHE) {
+    LETTERS_CACHE = {};
+    const byG = {};
+    Object.values(roster.trainees || {}).forEach(t => { const g = String(t.group || ''); (byG[g] = byG[g] || []).push({ token: t.id || t.token, name: t.name }); });
+    if (window.hubRotation && hubRotation.lettersFor) Object.entries(byG).forEach(([g, ps]) => hubRotation.lettersFor(ps).forEach(p => { LETTERS_CACHE[p.token] = Object.assign({ g }, p); }));
+  }
+  const p = LETTERS_CACHE[tr.id || tr.token];
+  if (!p || !p.letter) return { letter: hubInitials(tr.name), set: '' };
+  const mates = Object.values(LETTERS_CACHE).filter(q => q.g === p.g && q.idx != null && (q.idx < 3) === (p.idx < 3) && q.idx <= 5);
+  const set = p.idx <= 5 ? mates.sort((a, b) => a.idx - b.idx).map(q => q.letter).join('') : '';
+  return { letter: p.letter, set };
+}
+const letterChip = (tr, big) => `<span class="avi avi-cand"${big ? ' style="width:40px;height:40px;font-size:0.95rem;border-radius:9px;"' : ''} aria-hidden="true">${esc(letterInfo(tr).letter)}</span>`;
+/* Early in a course most of the portfolio is lines saying nothing has happened
+   yet (Ramy, 11 Oct 2026: "tidy the page"). A TP with nothing to show -- not
+   returned, not in progress, no plan turned in for it -- folds into one line
+   with its neighbours; so does an assignment with nothing submitted. Each TP
+   keeps its anchor, so a deep link to #tp5 still lands. */
+function tpIsEmpty(tr, n){
+  const fb = T.tpHistory(tr)[n]; if (fb) return false;
+  const cur = tr.tp && tr.tp.feedback; if (cur && T.tpNumberOf(cur) === n && cur.status !== 'returned') return false;
+  const plan = tr.tp && tr.tp.plan;
+  const pm = plan && String(plan.label || (plan.state && plan.state.meta && plan.state.meta.tp) || '').match(/\d+/);
+  return !(pm && parseInt(pm[0], 10) === n);
+}
+function tpSection(tr, c){
+  const out = []; let run = [];
+  const flush = () => { if (!run.length) return;
+    const label = run.length === 1 ? 'TP' + run[0] : 'TP' + run[0] + ' to TP' + run[run.length - 1];
+    out.push(`<div class="tp folded">${run.map(n => `<span id="tp${n}"></span>`).join('')}<div class="tp-row"><span class="n">${label}</span><span class="meta"><span class="chip nd">not yet taught</span></span></div></div>`); run = []; };
+  for (let n = 1; n <= TP_TOTAL; n++) { if (tpIsEmpty(tr, n)) run.push(n); else { flush(); out.push(tpBlock(tr, n, c)); } }
+  flush();
+  const anyReturned = Object.keys(T.tpHistory(tr) || {}).length > 0;
+  if (anyReturned) out.push(`<div class="tp"><div class="tp-row"><span class="n"></span><span class="meta">Just the teaching practice, to read or print on its own</span><a class="btn ghost" href="4_feedback_returned.html?trainee=${encodeURIComponent(tr.id)}">Print the TP record only</a></div></div>`);
+  return out.join('');
+}
+function assignmentSection(tr){
+  const keys = ORDER.filter(k => k !== 'a5' || a5InPlay(tr.assignments || {}));
+  const empty = k => { const sub = (tr.assignments || {})[k] || {}; return !sub.sub1At && !T.assignmentState(sub).round; };
+  const done = keys.filter(k => !empty(k)), none = keys.filter(empty);
+  return done.map(k => assignmentBlock(tr, k)).join('') + (none.length ? `<div class="tp folded"><div class="tp-row"><span class="n">${none.map(k => esc(k.toUpperCase())).join(' · ')}</span><span class="meta"><span class="chip nd">nothing submitted yet</span></span></div></div>` : '');
+}
 function tpBlock(tr, n, c){
   const hist = T.tpHistory(tr); const fb = hist[n]; const f = fb && fb.state && fb.state.f;
   const cur = tr.tp && tr.tp.feedback; const isCur = cur && T.tpNumberOf(cur)===n && cur.status!=='returned';
@@ -1090,13 +1139,13 @@ function renderOne(tr){
   ];
   $('app').innerHTML = `
     <div class="panel">
-      <div class="cand-head"><div style="display:flex;align-items:center;gap:12px;"><span class="avi avi-cand" style="width:40px;height:40px;font-size:0.9rem;border-radius:9px;">${esc(hubInitials(tr.name))}</span><div><h1>${esc(tr.name)}</h1><div class="sub">${esc(tr.group ? 'Group ' + tr.group : '')}</div></div></div><span class="standing ${chip.cls}">${esc(chip.text)}</span></div>
+      <div class="cand-head"><div style="display:flex;align-items:center;gap:12px;">${letterChip(tr, true)}<div><h1>${esc(tr.name)}</h1><div class="sub">${esc([tr.group ? 'Group ' + tr.group : '', letterInfo(tr).set ? 'Teaching set ' + letterInfo(tr).set : ''].filter(Boolean).join(' · '))}</div></div></div><span class="standing ${chip.cls}">${esc(chip.text)}</span></div>
       <div class="facts">${facts.map(f=>`<div class="fact"><div class="k">${f[0]}</div><div class="v ${f[2]}">${esc(f[1])}</div></div>`).join('')}</div>
     </div>
     <h2 class="sect">Teaching practice <small>the document the trainee received, as returned</small></h2>
-    <div class="panel">${Array.from({length:TP_TOTAL},(_,i)=>i+1).map(n=>tpBlock(tr, n, c)).join('')}<div class="tp"><div class="tp-row"><span class="n"></span><span class="meta">Just the teaching practice, to read or print on its own</span><a class="btn ghost" href="4_feedback_returned.html?trainee=${encodeURIComponent(tr.id)}">Print the TP record only</a></div></div></div>
+    <div class="panel">${tpSection(tr, c)}</div>
     <h2 class="sect">Assignments <small>in the centre’s order</small></h2>
-    <div class="panel">${ORDER.filter(k => k!=='a5' || a5InPlay(tr.assignments||{})).map(k=>assignmentBlock(tr, k)).join('')}</div>
+    <div class="panel">${assignmentSection(tr)}</div>
     <h2 class="sect">Observations <small>the sheets, as the trainee wrote them</small></h2>
     <div class="panel">${observationBlock(tr)}</div>
     ${agreementRow(tr) ? `<h2 class="sect">Candidate agreement</h2>
