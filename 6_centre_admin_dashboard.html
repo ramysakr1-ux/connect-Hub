@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610112252">
+<link rel="stylesheet" href="hub-tokens.css?v=202610112302">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -300,8 +300,9 @@
   .linkrow b{font-size:0.88rem;}
   .linkrow p{margin:3px 0 0; font-size:0.8rem; color:var(--grey); line-height:1.5;}
   .linkrow code{display:block; margin-top:8px; font-size:0.74rem; word-break:break-all; color:var(--grey);}
-  .linkrow .acts{display:flex; align-items:center; gap:8px; flex-shrink:0;}
-  .linkrow .acts .btn{min-width:70px; justify-content:center; text-align:center;} /* the same width as the roster's, so both sets of rows read alike */
+  .linkrow .acts{display:flex; align-items:center; gap:8px; flex-shrink:0; flex-wrap:wrap; max-width:330px; justify-content:flex-end;}
+  .linkrow .acts .btn{min-width:70px; justify-content:center; text-align:center;}
+  .linkrow .acts .pillbtn[data-copy]{min-width:100px;} /* the same pills as the trainee rows, so the tab reads as one */
 
   /* ---- add trainee ------------------------------------------------------ */
   .addbox{margin:14px 0 6px; padding:16px 18px; border:1px solid var(--sand-line); border-left:5px solid var(--gold); border-radius:10px;
@@ -330,22 +331,38 @@
      at 300px they spilled left over the email box (Ramy, 8 Oct 2026: "the
      copy pill covers the email"). The email column takes the width the
      one-line "Personal link" note does not need. */
-  .grid.roster{grid-template-columns:minmax(0,1.5fr) minmax(0,0.5fr) minmax(0,1fr) minmax(0,1.3fr) 380px;}
+  .grid.roster{grid-template-columns:minmax(0,1.5fr) minmax(0,1.3fr) 214px 128px;}
   /* minmax(0,…): every row is its own grid, and a long name widened its
      row's first track, so one row's columns sat off the others' at
      laptop-half widths. Between a phone and a full screen the one-line
      "Personal link" note gives its room to the name and the email, unless
      the addresses are showing. */
-  @media (min-width:781px) and (max-width:1100px){
-    #rosterRows:not(.urls) .grid.roster{grid-template-columns:minmax(0,1.5fr) minmax(0,0.5fr) minmax(0,1.3fr) 380px;}
-    #rosterRows:not(.urls) .grid.roster > .col-status{display:none;}
-  }
-  .grid.roster .temail{width:100%; min-width:0; font-size:0.84rem; padding:5px 7px; border:1px solid var(--line); border-radius:7px; background:transparent; color:inherit;}
-  .grid.roster .temail:focus{outline:2px solid var(--teal); outline-offset:1px; background:var(--paper);}
+  .grid.roster .temail{width:100%; min-width:0; font-size:0.86rem; padding:8px 11px; border:1px solid var(--sand-line); border-radius:8px; background:var(--field); color:inherit;}
+  .grid.roster .temail::placeholder{color:var(--field-ph);}
+  .grid.roster .temail:focus{outline:2px solid var(--teal); outline-offset:1px; background:var(--field-focus);}
+  .rnote{margin:2px 0 14px; font-size:0.84rem; color:var(--grey); line-height:1.5;}
+  .rset{margin:20px 4px 2px; font-size:0.7rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--gold-deep);}
+  .rset:first-of-type{margin-top:8px;}
+  .grow .name{display:flex; align-items:center; gap:10px; min-width:0;}
+  .grow .name .nm{display:flex; flex-direction:column; min-width:0; font-weight:600;}
+  .grow .name .addr{font-size:0.72rem; font-weight:400; color:var(--grey); word-break:break-all; margin-top:3px;}
+  .grow .name .avi{flex:none;}
+  .grow:hover{background:var(--sand-deep);}
+  .pillbtn{display:inline-flex; align-items:center; justify-content:center; min-height:34px; padding:0 14px; border-radius:999px;
+    border:1px solid var(--sand-line); background:none; color:var(--teal); font-family:inherit; font-size:0.66rem; font-weight:700;
+    letter-spacing:.06em; text-transform:uppercase; line-height:1; text-decoration:none; cursor:pointer; white-space:nowrap;}
+  .pillbtn:hover{border-color:var(--teal);}
+  .pillbtn.off{color:var(--grey); opacity:.55; cursor:default;}
+  .pillbtn.off:hover{border-color:var(--sand-line);}
+  .pillbtn.copied{color:#fff; background:var(--teal); border-color:var(--teal);}
+  .grow .acts.col-link{justify-content:flex-start; align-items:center; gap:6px; flex-wrap:wrap;}
+  /* where the browser blocks copying, the link appears to copy by hand: below
+     the pills, the full width of the column, never squeezing them */
+  .grow .acts .copy-fallback, .linkrow .acts .copy-fallback{flex:1 1 100%; order:9;}
+  .grow .acts.col-link .pillbtn[data-copy]{min-width:100px;}
   .ghead{padding:0 4px 9px; border-bottom:1px solid var(--sand-line); font-size:0.72rem; font-weight:700;
     letter-spacing:0.05em; text-transform:uppercase; color:var(--grey);}
-  .grow{padding:13px 4px; border-bottom:1px solid var(--sand-line); font-size:0.9rem;}
-  .grow .name{font-weight:500;}
+  .grow{padding:11px 8px; border-bottom:1px solid var(--row-line); font-size:0.9rem; border-radius:6px;}
   .grow .acts{display:flex; gap:6px; justify-content:flex-end;}
   /* One width for the three, so the buttons stack into columns down the
      roster instead of three ragged edges. */
@@ -354,7 +371,7 @@
      link" stays on one line, and a trainee with no email keeps an empty slot
      its width, so Copy sits in the same place on every row. */
   .grow .acts .btn.quiet{min-width:60px;}
-  .grow .acts .mail, .grow .acts .mailslot{flex:none; width:106px; white-space:nowrap;}
+  .grow .acts.more{gap:2px;}
   .muted{color:var(--grey);}
   .amber{color:var(--gold-deep);}
   .brick{color:var(--tone-stuck);}
@@ -397,8 +414,9 @@
 
   @media (max-width:780px){
     .fields{grid-template-columns:1fr;}
-    .grid.roster{grid-template-columns:minmax(0,1fr) 380px;}
-    .grid.roster > .col-group, .grid.roster > .col-status, .grid.roster > .col-email{display:none;}
+    .grid.roster{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+    .grid.roster.ghead{display:none;}
+    .grow .acts.col-link, .grow .acts.more{justify-content:flex-start;}
   }
   /* A phone. Three things (Ramy, 24 Sep 2026):
      the link rows put their paragraph in a third of the screen and left the
@@ -413,14 +431,14 @@
     .grid.roster{grid-template-columns:1fr;}
     .grid.roster.ghead{display:none;}
     .grow{padding:14px 4px;}
-    .grow .name{font-size:0.98rem; margin-bottom:10px;}
-    .grow .acts{justify-content:flex-start; gap:12px; flex-wrap:wrap;}
-    .grow .acts .mailslot{display:none;}
+    .grow .name{font-size:0.98rem; margin-bottom:4px;}
+    .grow .acts{justify-content:flex-start; gap:10px; flex-wrap:wrap;}
+    .pillbtn{min-height:44px;}
     .addbox input.name{min-width:0; flex:1 1 100%;}
     /* The two that undo something sit at the far end, away from the ones you
        press every day: Rotate stops every copy of a link that is already out,
        and Remove takes a trainee off the course. */
-    .linkrow .acts > :last-child, .grow .acts > :last-child{margin-left:auto;}
+    .linkrow .acts > :last-child, .grow .acts.more > :last-child{margin-left:auto;}
     .btn, .btn.small{min-height:44px; display:inline-flex; align-items:center; justify-content:center;}
     .linkbtn{min-height:40px; display:inline-flex; align-items:center;}
     .tabs{gap:18px;}
@@ -478,7 +496,7 @@
   .tcol-opt input:checked + span{box-shadow:0 0 0 2px var(--paper), 0 0 0 4px var(--teal);}
   .tcol-opt input:focus-visible + span{outline:2px solid var(--gold-lifted); outline-offset:3px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610112252">
+<link rel="stylesheet" href="hub-house.css?v=202610112302">
 </head>
 <body>
 <div class="board">
@@ -926,16 +944,17 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610112252"></script>
-<script src="hub-store.js?v=202610112252"></script>
-<script src="hub-say.js?v=202610112252"></script>
-<script src="agreement-defaults.js?v=202610112252"></script>
-<script src="observation-defaults.js?v=202610112252"></script>
-<script src="hub-shared.js?v=202610112252"></script>
-<script src="hub-due.js?v=202610112252"></script>
-<script src="hub-sync.js?v=202610112252"></script>
-<script src="hub-hand.js?v=202610112252"></script>
-<script src="hub-ink.js?v=202610112252"></script>
+<script src="assignment-defaults.js?v=202610112302"></script>
+<script src="hub-store.js?v=202610112302"></script>
+<script src="hub-say.js?v=202610112302"></script>
+<script src="agreement-defaults.js?v=202610112302"></script>
+<script src="observation-defaults.js?v=202610112302"></script>
+<script src="hub-shared.js?v=202610112302"></script>
+<script src="hub-rotation.js?v=202610112302"></script>
+<script src="hub-due.js?v=202610112302"></script>
+<script src="hub-sync.js?v=202610112302"></script>
+<script src="hub-hand.js?v=202610112302"></script>
+<script src="hub-ink.js?v=202610112302"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1811,8 +1830,8 @@ function linkRow(name, note, url, kind, rotateId, rotateLabel){
       ${SHOW_URLS ? `<code>${esc(url)}</code>` : ''}
     </div>
     <div class="acts">
-      <button class="btn small" type="button" data-copy="${esc(url)}">Copy</button>
-      <a class="btn small" href="${roleMail(kind, url)}" title="Opens your mail app with the link in the message">Email the link</a>
+      <button class="pillbtn" type="button" data-copy="${esc(url)}">Copy link</button>
+      <a class="pillbtn" href="${roleMail(kind, url)}" title="Opens your mail app with the link in the message">Email it</a>
       <button class="btn quiet small" type="button" id="${rotateId}">${esc(rotateLabel)}</button>
     </div>
   </div>`;
@@ -1885,6 +1904,32 @@ let ROSTER = null;
    message, one trainee at a time. For twelve at once, "Copy the list" puts
    name, email and link on the clipboard as three columns, for a mail merge
    in Gmail or Outlook. Ramy: "import names, emails?" -> "build all". */
+/* The roster in the order the course runs: by group, then teaching set (the
+   letters the TP points deal and the tracker shows -- hub-rotation lettersFor,
+   per group). One group of six reads "Teaching set ABC / DEF"; more than one
+   group heads each. With no rotation to ask, it is one list by name. */
+function rosterSets(list){
+  const byG = {};
+  list.forEach(t => { const g = String(t.group || '1'); (byG[g] = byG[g] || []).push(t); });
+  const gs = Object.keys(byG).sort();
+  const out = [];
+  gs.forEach(g => {
+    let people = byG[g].map(t => Object.assign({}, t));
+    if (window.hubRotation && hubRotation.lettersFor) {
+      const L = {}; hubRotation.lettersFor(people.map(t => ({ token: t.token, name: t.name }))).forEach(p => { L[p.token] = p; });
+      people.forEach(t => { const p = L[t.token]; if (p) { t.letter = p.letter; t.idx = p.idx; } });
+      people.sort((a, b) => (a.idx == null ? 99 : a.idx) - (b.idx == null ? 99 : b.idx));
+    }
+    const sets = [[], []], rest = [];
+    people.forEach(t => (t.idx == null || t.idx > 5 ? rest : sets[t.idx < 3 ? 0 : 1]).push(t));
+    const gHead = gs.length > 1 ? 'Group ' + g : '';
+    const named = sets.filter(x => x.length);
+    if (named.length > 1) named.forEach((x, i) => out.push({ head: (gHead ? gHead + ' · ' : '') + 'Teaching set ' + x.map(t => t.letter).join(''), people: x }));
+    else if (named.length) out.push({ head: gHead, people: named[0] });
+    if (rest.length) out.push({ head: named.length ? (gHead ? gHead + ' · ' : '') + 'Not in a set yet' : gHead, people: rest });
+  });
+  return out;
+}
 function mailLink(t){
   const S = window.HubStore;
   const course = (document.getElementById('courseName') || {}).value || 'your CELTA course';
@@ -1982,25 +2027,34 @@ async function renderStoreRoster(next){
 
     <div style="margin-top:14px;" id="rosterRows" class="${SHOW_URLS ? 'urls' : ''}">
       ${overNote}
-      <div class="grid roster ghead"><div>Trainee</div><div class="col-group">Group</div><div class="col-status">Personal link</div><div class="col-email">Email</div><div></div></div>
-      ${trainees.length ? trainees.map(t=>`<div class="grid roster grow">
-        <div class="name" style="display:flex;align-items:center;">${hubAvatar(t.name)}${esc(t.name)}</div>
-        <div class="col-group muted">${esc(t.group||'—')}</div>
-        <div class="col-status muted" style="font-size:0.8rem;">${SHOW_URLS ? `<code style="word-break:break-all;">${esc(S.inviteFor('trainee', t.token))}</code>` : 'Theirs alone — post it in Classroom'}</div>
-        <div class="col-email"><input type="email" class="temail" value="${esc(t.email || '')}" placeholder="email" data-email-for="${esc(t.token)}" title="The trainee’s email. Saved when you leave the box."></div>
-        <div class="acts">
-          <button class="btn small" type="button" data-copy="${esc(S.inviteFor('trainee', t.token))}">Copy</button>
-          ${t.email ? `<a class="btn small mail" href="${mailLink(t)}" title="Opens your mail app with their link in the message">Email the link</a>` : '<span class="mailslot" aria-hidden="true"></span>'}
+      <!-- THE ROSTER, REDRAWN (Ramy, 11 Oct 2026: "any chance we can make this
+           whole page look a little better?"). Grouped the way the course runs:
+           by group, then by teaching set, each trainee under the letter the TP
+           points and the tracker give them. The note every row repeated
+           ("Theirs alone -- post it in Classroom") is said once, above. The
+           email box looks like a box. The trainee's link is two matching pills,
+           Copy link and Email it (greyed until there is an address); Links and
+           Remove sit apart at the end, the one that undoes something last. -->
+      ${trainees.length ? `<p class="rnote">Each trainee’s personal link is theirs alone. Copy it into Classroom, or email it once their address is in.</p>
+      <div class="grid roster ghead"><div>Trainee</div><div class="col-email">Email</div><div class="col-link">Personal link</div><div></div></div>` : ''}
+      ${trainees.length ? rosterSets(trainees).map(sec => `${sec.head ? `<div class="rset">${esc(sec.head)}</div>` : ''}${sec.people.map(t=>`<div class="grid roster grow">
+        <div class="name"><span class="avi avi-cand" aria-hidden="true">${esc(t.letter || hubInitials(t.name))}</span><span class="nm">${esc(t.name)}${SHOW_URLS ? `<code class="addr">${esc(S.inviteFor('trainee', t.token))}</code>` : ''}</span></div>
+        <div class="col-email"><input type="email" class="temail" value="${esc(t.email || '')}" placeholder="Add their email" data-email-for="${esc(t.token)}" title="The trainee’s email. Saved when you leave the box."></div>
+        <div class="acts col-link">
+          <button class="pillbtn" type="button" data-copy="${esc(S.inviteFor('trainee', t.token))}">Copy link</button>
+          ${t.email ? `<a class="pillbtn mail" href="${mailLink(t)}" title="Opens your mail app with their link in the message">Email it</a>` : '<span class="pillbtn off" title="Add their email first">Email it</span>'}
+        </div>
+        <div class="acts more">
           <!-- No door to the trainee's work here. This row had "Record" (the
                returned TPs only); Ramy, 11 Oct 2026: "is that supposed to show
                everything?", then, seeing it would be a second door to the
                portfolio: one room, one door. The roster is setup -- names,
                links, emails. A trainee's work opens from the tutor dashboard's
                Portfolio, and printing just their TPs is a door inside it. -->
-          <button class="btn quiet small" type="button" data-links="${esc(t.token)}">Links${(privateLinksOf(t.token).length + staffLinksOf(t.token).length) ? ' \u00b7 ' + (privateLinksOf(t.token).length + staffLinksOf(t.token).length) : ''}</button>
+          <button class="btn quiet small" type="button" data-links="${esc(t.token)}">Links${(privateLinksOf(t.token).length + staffLinksOf(t.token).length) ? ' · ' + (privateLinksOf(t.token).length + staffLinksOf(t.token).length) : ''}</button>
           <button class="btn quiet small" type="button" data-remove="${esc(t.token)}" data-name="${esc(t.name)}">Remove</button>
         </div>
-      </div><div class="plinks" id="plinks-${esc(t.token)}" hidden></div>`).join('') : '<div class="empty">No trainees on the course yet — add the first one above.</div>'}
+      </div><div class="plinks" id="plinks-${esc(t.token)}" hidden></div>`).join('')}`).join('') : '<div class="empty">No trainees on the course yet — add the first one above.</div>'}
     </div>
     </section>`;
 
