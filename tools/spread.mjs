@@ -14,8 +14,13 @@ const TPS = 6;   // the set covers practices 1 to 6; 7 and 8 are the candidates'
    page says id, and the page's groups() reads id -- either is the same person
    here because we build the list ourselves. */
 const ros = await call({ op:'roster', key:LIBRARY });
-const people = (((ros.result || {}).trainees) || []).filter(Boolean)
+let people = (((ros.result || {}).trainees) || []).filter(Boolean)
   .map(t => ({ token: t.token || t.id, name: t.name, group: String(t.group || '') }));
+/* The library course has no trainees (one roster row exists so the store will
+   take uploads). A roster of one always teaches slot 1, so every A-day's first
+   lesson looked like one person's whole first half. Deal the set to a full
+   group of six instead, which is who it is written for. */
+if (people.length < 6) people = 'ABCDEF'.split('').map(l => ({ token: 'x' + l, name: 'Trainee ' + l, group: '1' }));
 const typeAt = (tp, si, pos) => {
   const ses = S.sessions[`${tp}${si === 0 ? 'A' : 'B'}`];
   const sl = ses && ses.slots[pos];

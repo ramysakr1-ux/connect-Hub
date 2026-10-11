@@ -9,12 +9,14 @@ import json, io, importlib.util, fitz, subprocess
 spec = importlib.util.spec_from_file_location('sp', 'scanpages.py')
 sp = importlib.util.module_from_spec(spec); spec.loader.exec_module(sp)
 PRE = {'s1': 'LH', 's2': 'RM', 's3': 'SF', 's4': 'SO', 's5': 'SOB1'}
+# sets registered later carry their book prefix in pagemap.mjs SETS (read off the SB key, e.g. 'EMP_SB' -> 'EMP')
 
 m = json.loads(subprocess.run(['node', '-e', '''
-import { buildMap } from "./pagemap.mjs";
+import { buildMap, SETS } from "./pagemap.mjs";
 const { map } = await buildMap();
-console.log(JSON.stringify(map));
+console.log(JSON.stringify({ map, SETS }));
 '''], capture_output=True, text=True).stdout)
+SETS = m['SETS']; m = m['map']
 
 docs = {}
 def blank(bk, p):
@@ -33,7 +35,7 @@ bad = {}
 for sid, slots in m.items():
     for k, lst in slots.items():
         for src, p in lst:
-            bk = f'{PRE[sid]}_{src}'
+            bk = f'{PRE[sid]}_{src}' if sid in PRE else f"{SETS[sid]['SB'].rsplit('_', 1)[0]}_{src}"
             why = blank(bk, int(p))
             if why: bad.setdefault(f'{sid} {k.replace("|","·")}', []).append(f'{src} p.{p} {why}')
 if not bad:

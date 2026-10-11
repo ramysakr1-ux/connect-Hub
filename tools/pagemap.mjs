@@ -11,6 +11,14 @@ export const SETS = {
   s3: { SB: 'SF_SB', WB: 'SF_WB', TB: 'SF_TB', sbName: 'Student’s Book' },
   s4: { SB: 'SO_SB', WB: 'SO_WB', sbName: 'Student’s Book' },
   s5: { SB: 'SOB1_SB', WB: 'SOB1_WB', sbName: 'Student’s Book' },
+  s6: { SB: 'EMP_SB', WB: 'EMP_WB', TB: 'EMP_TB', sbName: 'Student’s Book' },
+  s7: { SB: 'EFP_SB', WB: 'EFP_WB', sbName: 'Student’s Book' },
+  s8: { SB: 'SOE_SB', WB: 'SOE_WB', TB: 'SOE_TB', sbName: 'Student’s Book' },
+  s9: { SB: 'LHU_SB', WB: 'LHU_WB', sbName: 'Student’s Book' },
+  s10: { SB: 'NTI_SB', WB: 'NTI_WB', sbName: 'Student’s Book' },
+  s11: { SB: 'EB2_SB', WB: 'EB2_WB', TB: 'EB2_TB', sbName: 'Student’s Book' },
+  s12: { SB: 'EFU_SB', WB: 'EFU_WB', sbName: 'Student’s Book' },
+  s13: { SB: 'NTP_SB', WB: 'NTP_WB', sbName: 'Student’s Book' },
 };
 /* THE PHOTOCOPIABLES, FOUND. Ramy's Straightforward documents send candidates
    to pp. 223, 224, 228 and 233. Those sit past the Student's Book's last page
@@ -96,7 +104,7 @@ export async function buildMap() {
   const L = (await readCourse(LIBRARY)).rec.set.library;
   const map = {}, dropped = [];
   for (const id of Object.keys(SETS)) {
-    const S = L[id]; map[id] = {};
+    const S = L[id]; if (!S) continue; map[id] = {};
     Object.keys(S.sessions).sort().forEach(x => S.sessions[x].slots.forEach((sl, i) => {
       const k = `${x}|${i}`;
       let got = pagesOf(sl.pages, TB_WORKSHEETS_FROM[id]).map(([s, p]) =>

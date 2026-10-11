@@ -29,6 +29,28 @@ BOOKS = {
   # every other book (Downloads/B1 SpeakOut was cleared on 8 Oct 2026).
   'SOB1_SB': (f'{D_MAT}/B1- Materials /SO B1 SB.pdf', -1),
   'SOB1_WB': (f'{D_MAT}/B1- Materials /SO B1 WB.pdf', -1),
+  # Set six (Empower B1, 10 Oct 2026): SB and WB printed page = index - 1; TB printed page = index + 16.
+  'EMP_SB': (f'{D}/Pre-Intermediate /Empower /Empower_B1_Pre-Intermediate Students\' Book.pdf', 1),
+  'EMP_WB': (f'{D}/Pre-Intermediate /Empower /Empower_B1_Pre-Intermediate_Workbook.pdf', 1),
+  'EMP_TB': (f'{D}/Pre-Intermediate /Empower /Empower_B1_Pre-Intermediate_Teachers\' Book.pdf', -16),
+  # Sets seven to thirteen (overnight build, 11 Oct 2026). Offsets read off the printed folios; see the build's books.json for the proof.
+  # A SPREAD book (two printed pages per PDF page) is listed in SPREADS below: index = (N + off) // 2, left half when N + off is even.
+  'EFP_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books/Pre-Intermediate /English File/English File Pre-Intermediate. SB.pdf', 0),
+  'EFP_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books/Pre-Intermediate /English File/English File Pre-Intermediate WB.pdf', 0),
+  'SOE_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books/Elementary/Speakout 2nd ed Elementary/Speakout_2ndEd_Elementary_SB.pdf', -1),
+  'SOE_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books/Elementary/Speakout 2nd ed Elementary/Speakout_2ed_Elementary_WB.pdf', 0),
+  'SOE_TB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books/Elementary/Speakout 2nd ed Elementary/Speakout_2ndEd_Elementary_TB.pdf', 0),
+  'LHU_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books/Upper- Intermediate /Language Hub/Language_Hub_Upper_Intermediate_Students_Book.pdf', 5),
+  'LHU_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books/Upper- Intermediate /Language Hub/Language_Hub_Upper_Intermediate_Workbook.pdf', -1),
+  'NTI_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books/Intermediate/New Total English/New_Total_English_Intermediate_SB.pdf', 2),
+  'NTI_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books/Intermediate/New Total English/New_Total_English_Intermediate_WB.pdf', -1),
+  'EB2_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books/Upper- Intermediate /Empower B2/Empower_B2_Upper_Intermediate_SB.pdf', 1),
+  'EB2_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books/Upper- Intermediate /Empower B2/Empower_B2_Upper_Intermediate_WB.pdf', 0),
+  'EB2_TB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books/Upper- Intermediate /Empower B2/Empower_B2_Upper Intermediate_Teacher\'s Book_PDF.PDF', -1),
+  'EFU_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books/Upper- Intermediate /English File (3rd edition)/English File Upper-Int SB.pdf', 0),
+  'EFU_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books/Upper- Intermediate /English File (3rd edition)/English File Upper Int WB.pdf', 0),
+  'NTP_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books/Pre-Intermediate /New Total English/New_Total_Eng_Pre-Intermediate_SB.pdf', 0),
+  'NTP_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course books/Pre-Intermediate /New Total English/New_Total_Eng_Pre-Intermediate_WB.pdf', -4),
 }
 _open = {}
 
@@ -55,10 +77,22 @@ def offset(k, page):
             off = o
     return off
 
+# A SPREAD SCAN WHOSE OFFSET DRIFTS (a unit opener scanned on its own, a repeated page): an explicit map read off
+# the printed folios, tools/spreadmaps.json {BOOK: {page: [index, side]}}, wins over the offset arithmetic (11 Oct 2026).
+import json as _json, os as _os
+SPREADMAPS = _json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'spreadmaps.json'))) if _os.path.exists(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'spreadmaps.json')) else {}
+def spread_side(k, page):
+    m = SPREADMAPS.get(k, {}).get(str(page))
+    if m: return m[1]
+    return (page + offset(k, page)) % 2
 def index(k, page):
     if page in ABSENT.get(k, []):
         raise ValueError(f'{k} p.{page} is not in that PDF at all -- the file skips it')
+    m = SPREADMAPS.get(k, {}).get(str(page))
+    if m: return m[0]
+    if k in SPREADMAPS: raise ValueError(f'{k} p.{page} is not in that PDF at all -- the file skips it')
     i = page + offset(k, page)
+    if k in SPREADS: i //= 2
     d = doc(k)
     if i < 0 or i >= d.page_count:
         raise ValueError(f'{k} p.{page} is outside that PDF (index {i}, {d.page_count} pages)')
@@ -66,10 +100,16 @@ def index(k, page):
 
 # The two Macmillan files are scans of paper; the other three are digital and
 # come out clean, so they are left exactly as the publisher set them.
-SCANNED = ('SF_SB', 'SF_WB', 'SF_TB', 'SOB1_SB')
+SCANNED = ('SF_SB', 'SF_WB', 'SF_TB', 'SOB1_SB', 'LHU_SB', 'LHU_WB', 'NTI_SB', 'NTI_WB', 'EB2_SB', 'EB2_WB', 'NTP_SB', 'NTP_WB')
+SPREADS = ('SOE_WB', 'NTI_SB', 'NTP_SB',)
 
 def render(k, page, dpi, quality, out):
-    doc(k)[index(k, page)].get_pixmap(dpi=dpi).save(out, jpg_quality=quality)
+    pg = doc(k)[index(k, page)]
+    if k in SPREADS:
+        r = pg.rect; right = spread_side(k, page)
+        clip = fitz.Rect(r.x0 + (r.width / 2 if right else 0), r.y0, r.x0 + (r.width if right else r.width / 2), r.y1)
+        pg.get_pixmap(dpi=dpi, clip=clip).save(out, jpg_quality=quality); return
+    pg.get_pixmap(dpi=dpi).save(out, jpg_quality=quality)
     if k in SCANNED:
         clean(out, out, quality=max(quality, 82))
 
