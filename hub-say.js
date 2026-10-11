@@ -86,6 +86,7 @@
       '.say-box h2{font-family:Newsreader,Georgia,serif; font-weight:600; font-size:1.25rem; margin:0 0 3px;}',
       '.say-box .sub{font-size:.84rem; color:var(--grey,#555); margin:0 0 14px;}',
       '.say-box .where{font-size:.76rem; color:var(--faint,#999); margin:0 0 12px;}',
+      '.say-box .say-to{font-size:.8rem; line-height:1.45; color:var(--ink,#222); background:var(--gold-wash,#f6efdc); border-left:3px solid var(--gold,#b8892f); border-radius:6px; padding:8px 10px; margin:-6px 0 14px;}',
       '.say-kinds{display:flex; gap:7px; margin:0 0 11px;}',
       '.say-kind{font:600 .8rem/1 inherit; cursor:pointer; padding:7px 13px; border-radius:999px;',
       '  border:1px solid var(--sand-line,#ddd); background:none; color:var(--grey,#555);}',
@@ -100,6 +101,14 @@
   }
 
   var KIND = 'wrong', WHERE = '', BUSY = false;
+
+  function whoTo() {
+    var S = window.HubStore || {};
+    var learner = (S.token && S.token()) || (S.volunteerToken && S.volunteerToken());
+    var staff = (S.key && S.key()) || (S.assessorKey && S.assessorKey());
+    if (learner && !staff) return 'This goes to <b>Connect</b>, the team that makes Lite — <b>not to your tutor</b> or your centre. Anything about your course, ask your tutor.';
+    return 'This goes to <b>Connect</b>, the team that makes Lite — not to anyone on your course.';
+  }
 
   function close() {
     var b = document.querySelector('.say-back');
@@ -117,6 +126,9 @@
       '<div class="say-box" role="dialog" aria-label="Say something">' +
         '<h2>Your opinion matters</h2>' +
         '<p class="sub">Connect reads every one of these. No name, no address — just tell us.</p>' +
+        /* WHO IT GOES TO (11 Oct 2026). Ramy: a trainee could take this for a
+           way to tell their tutor something. It is not, and the box says so. */
+        '<p class="say-to">' + whoTo() + '</p>' +
         (WHERE ? '<p class="where">About: <b>' + esc(WHERE) + '</b></p>' : '') +
         '<div class="say-kinds">' +
           '<button type="button" class="say-kind" data-kind="wrong">Something is wrong</button>' +
