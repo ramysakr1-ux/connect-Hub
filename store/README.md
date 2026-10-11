@@ -27,6 +27,15 @@ Never a bare `clasp deploy`. If anything is ever edited in the Apps Script
 editor instead, `clasp pull` before the next change or the repo copy is stale.
 The patches below are how the editor's text got to v73.
 
+## 11 Oct 2026 — a chunk never starts with =, + or ' (version 99, store v85)
+
+A record over 50,000 characters is sliced into cells; a slice that began with
+`=` was read by Sheets as a formula and its text was lost (the library, 17:42
+that day; recovered from the pre-write snapshot). `courseWriteRaw_` now moves
+the cut back a character so no slice starts with `=`, `+` or `'`. Reads are
+unchanged. Patch: `2026-10-11-chunk-starts.md`. Deployed from `store/gas/`
+with clasp; verified with a forced boundary on `=` on the scratch course.
+
 ## 9 Oct 2026 — a clone carries the timetable's days (version 94, store v80)
 
 `cloneCourse` also copies the source course's timetable days, without their

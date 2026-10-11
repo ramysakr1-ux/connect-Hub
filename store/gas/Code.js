@@ -1702,7 +1702,19 @@ function courseWriteRaw_(courseId, kind, data) {
   var pieces = null;
   if (json.length > CELL_LIMIT) {
     pieces = [];
-    for (var p = 0; p < json.length; p += CELL_LIMIT) pieces.push(json.slice(p, p + CELL_LIMIT));
+    /* A piece must never START with =, + or ': setValues reads such a cell as a
+       formula (or strips the quote as a text prefix), the cell becomes an error
+       and 50,000 characters are gone -- the read then fails to parse and the
+       course answers with the empty default. It happened to the library on
+       11 Oct 2026 (piece #7 began "=drivesdk", the tail of a Drive link). The
+       cut moves back a character or two instead; the read joins the pieces in
+       order whatever their lengths, so nothing else changes. */
+    for (var p = 0; p < json.length;) {
+      var end = Math.min(p + CELL_LIMIT, json.length);
+      while (end < json.length && end > p + 1 && "=+'".indexOf(json.charAt(end)) >= 0) end--;
+      pieces.push(json.slice(p, end));
+      p = end;
+    }
     if (pieces.length > 40) throw new Error("Too large to store: " + kind + " is " + json.length + " characters");
   }
   var last = sh.getLastRow();
