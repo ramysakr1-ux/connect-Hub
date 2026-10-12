@@ -27,6 +27,15 @@ Never a bare `clasp deploy`. If anything is ever edited in the Apps Script
 editor instead, `clasp pull` before the next change or the repo copy is stale.
 The patches below are how the editor's text got to v73.
 
+## 12 Oct 2026 — a course's folder says whose it is (version 100, store v86)
+
+A course's materials folder was "Connect Lite materials — " and the console's
+name for the course. It is now named centre · centre number · course, from
+Course admin's settings (`materialsFolderName_`), and renamed to match at the
+course's next upload, so it follows a course renamed in Course admin. The
+folder is still remembered by id, so no link changes. The two folders that
+existed were renamed by hand the same day. Deployed from `store/gas/` with clasp.
+
 ## 11 Oct 2026 — a chunk never starts with =, + or ' (version 99, store v85)
 
 A record over 50,000 characters is sliced into cells; a slice that began with

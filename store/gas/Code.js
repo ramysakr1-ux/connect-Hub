@@ -2033,11 +2033,31 @@ function materialsFolder_(course){
   var props = PropertiesService.getScriptProperties();
   var propKey = 'MATS_FOLDER_' + course.id;
   var id = props.getProperty(propKey);
-  if (id) { try { return DriveApp.getFolderById(id); } catch (e) { /* deleted or moved: make a new one */ } }
-  var name = 'Connect Lite materials — ' + (course.name || course.id);
+  var name = materialsFolderName_(course);
+  if (id) {
+    try {
+      var had = DriveApp.getFolderById(id);
+      if (had.getName() !== name) had.setName(name);
+      return had;
+    } catch (e) { /* deleted or moved: make a new one */ }
+  }
   var folder = matsRoot_().createFolder(name);
   props.setProperty(propKey, folder.getId());
   return folder;
+}
+
+/**
+ * Ramy, 12 Oct 2026: every course has its own folder, and the name says whose
+ * it is -- centre, centre number, course -- so a folder still reads a year on.
+ * The name follows Course admin: a course renamed there is renamed here at its
+ * next upload. The id is what is remembered, so links never change.
+ */
+function materialsFolderName_(course){
+  var set = {};
+  try { set = courseRead_(course.id, 'settings') || {}; } catch (e) {}
+  var parts = [set.centreName, set.centreNumber, set.courseName || course.name || course.id]
+    .map(function (x) { return String(x || '').trim(); }).filter(Boolean);
+  return parts.join(' · ');
 }
 
 /**
