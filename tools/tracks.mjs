@@ -11,7 +11,7 @@ import { call, LIBRARY } from './st.mjs';
      Straightforward tapescript 1.26 -> "Audio files/.../CD 1/26 26.wma"  (CD.track)
    Straightforward is the odd one: 73 .wma files, which no browser plays, so
    they are transcoded to mp3 with VLC on the way through. */
-const D = '/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect/Do not delete/Course books';
+const D = '/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect Lite/Do not delete/Course books';
 const BOOK = {
   s1: { dir: `${D}/Elementary/Language Hub/Language_Hub_Elementary_Class_Audio_www.frenglish.ru`,
         find: (files, t) => files.find(f => f === `LH_Elementary_SB_Track_${t}.mp3`) },

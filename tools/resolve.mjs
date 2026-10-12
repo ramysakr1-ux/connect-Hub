@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 /* Fill in the file for any track the plan does not yet have one for. Same four
    resolvers, each checked against a real filename. */
-const D = '/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect/Do not delete/Course books';
+const D = '/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect Lite/Do not delete/Course books';
 const BOOK = {
   s1: { dir: `${D}/Elementary/Language Hub/Language_Hub_Elementary_Class_Audio_www.frenglish.ru`,
         find: (f, t) => f.find(x => x === `LH_Elementary_SB_Track_${t}.mp3`) },

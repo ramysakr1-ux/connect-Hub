@@ -3,7 +3,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { call, LIBRARY } from './st.mjs';
 const KEY = LIBRARY;
-const D = '/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect/Do not delete/Course books';
+const D = '/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect Lite/Do not delete/Course books';
 const DIR = {
   s1: `${D}/Elementary/Language Hub/Language_Hub_Elementary_Class_Audio_www.frenglish.ru`,
   s2: `${D}/Pre-Intermediate /Roadmap A2+/Roadmap_A2P_SB_audio`,

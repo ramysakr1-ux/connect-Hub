@@ -12,7 +12,7 @@ Straightforward's Student's Book runs to printed p. 175 and its
 second-edition Teacher's Book to p. 189, so the photocopiables Ramy's own
 documents cite at pp. 223-233 are in neither file.
 """
-D = '/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect/Do not delete/Course books'
+D = '/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect Lite/Do not delete/Course books'
 D_MAT = '/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Course Materials'
 BOOKS = {
   'LH_SB': (f'{D}/Elementary/Language Hub/Language_Hub_Elementary_SBpdf.pdf', 5),
@@ -37,22 +37,22 @@ BOOKS = {
   'EMP_TB': (f'{D}/Pre-Intermediate /Empower /Empower_B1_Pre-Intermediate_Teachers\' Book.pdf', -16),
   # Sets seven to thirteen (overnight build, 11 Oct 2026). Offsets read off the printed folios; see the build's books.json for the proof.
   # A SPREAD book (two printed pages per PDF page) is listed in SPREADS below: index = (N + off) // 2, left half when N + off is even.
-  'EFP_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect/Do not delete/Course books/Pre-Intermediate /English File/English File Pre-Intermediate. SB.pdf', 0),
-  'EFP_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect/Do not delete/Course books/Pre-Intermediate /English File/English File Pre-Intermediate WB.pdf', 0),
-  'SOE_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect/Do not delete/Course books/Elementary/Speakout 2nd ed Elementary/Speakout_2ndEd_Elementary_SB.pdf', -1),
-  'SOE_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect/Do not delete/Course books/Elementary/Speakout 2nd ed Elementary/Speakout_2ed_Elementary_WB.pdf', 0),
-  'SOE_TB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect/Do not delete/Course books/Elementary/Speakout 2nd ed Elementary/Speakout_2ndEd_Elementary_TB.pdf', 0),
-  'LHU_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect/Do not delete/Course books/Upper- Intermediate /Language Hub/Language_Hub_Upper_Intermediate_Students_Book.pdf', 5),
-  'LHU_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect/Do not delete/Course books/Upper- Intermediate /Language Hub/Language_Hub_Upper_Intermediate_Workbook.pdf', -1),
-  'NTI_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect/Do not delete/Course books/Intermediate/New Total English/New_Total_English_Intermediate_SB.pdf', 2),
-  'NTI_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect/Do not delete/Course books/Intermediate/New Total English/New_Total_English_Intermediate_WB.pdf', -1),
-  'EB2_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect/Do not delete/Course books/Upper- Intermediate /Empower B2/Empower_B2_Upper_Intermediate_SB.pdf', 1),
-  'EB2_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect/Do not delete/Course books/Upper- Intermediate /Empower B2/Empower_B2_Upper_Intermediate_WB.pdf', 0),
-  'EB2_TB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect/Do not delete/Course books/Upper- Intermediate /Empower B2/Empower_B2_Upper Intermediate_Teacher\'s Book_PDF.PDF', -1),
-  'EFU_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect/Do not delete/Course books/Upper- Intermediate /English File (3rd edition)/English File Upper-Int SB.pdf', 0),
-  'EFU_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect/Do not delete/Course books/Upper- Intermediate /English File (3rd edition)/English File Upper Int WB.pdf', 0),
-  'NTP_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect/Do not delete/Course books/Pre-Intermediate /New Total English/New_Total_Eng_Pre-Intermediate_SB.pdf', 0),
-  'NTP_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect/Do not delete/Course books/Pre-Intermediate /New Total English/New_Total_Eng_Pre-Intermediate_WB.pdf', -4),
+  'EFP_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect Lite/Do not delete/Course books/Pre-Intermediate /English File/English File Pre-Intermediate. SB.pdf', 0),
+  'EFP_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect Lite/Do not delete/Course books/Pre-Intermediate /English File/English File Pre-Intermediate WB.pdf', 0),
+  'SOE_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect Lite/Do not delete/Course books/Elementary/Speakout 2nd ed Elementary/Speakout_2ndEd_Elementary_SB.pdf', -1),
+  'SOE_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect Lite/Do not delete/Course books/Elementary/Speakout 2nd ed Elementary/Speakout_2ed_Elementary_WB.pdf', 0),
+  'SOE_TB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect Lite/Do not delete/Course books/Elementary/Speakout 2nd ed Elementary/Speakout_2ndEd_Elementary_TB.pdf', 0),
+  'LHU_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect Lite/Do not delete/Course books/Upper- Intermediate /Language Hub/Language_Hub_Upper_Intermediate_Students_Book.pdf', 5),
+  'LHU_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect Lite/Do not delete/Course books/Upper- Intermediate /Language Hub/Language_Hub_Upper_Intermediate_Workbook.pdf', -1),
+  'NTI_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect Lite/Do not delete/Course books/Intermediate/New Total English/New_Total_English_Intermediate_SB.pdf', 2),
+  'NTI_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect Lite/Do not delete/Course books/Intermediate/New Total English/New_Total_English_Intermediate_WB.pdf', -1),
+  'EB2_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect Lite/Do not delete/Course books/Upper- Intermediate /Empower B2/Empower_B2_Upper_Intermediate_SB.pdf', 1),
+  'EB2_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect Lite/Do not delete/Course books/Upper- Intermediate /Empower B2/Empower_B2_Upper_Intermediate_WB.pdf', 0),
+  'EB2_TB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect Lite/Do not delete/Course books/Upper- Intermediate /Empower B2/Empower_B2_Upper Intermediate_Teacher\'s Book_PDF.PDF', -1),
+  'EFU_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect Lite/Do not delete/Course books/Upper- Intermediate /English File (3rd edition)/English File Upper-Int SB.pdf', 0),
+  'EFU_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect Lite/Do not delete/Course books/Upper- Intermediate /English File (3rd edition)/English File Upper Int WB.pdf', 0),
+  'NTP_SB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect Lite/Do not delete/Course books/Pre-Intermediate /New Total English/New_Total_Eng_Pre-Intermediate_SB.pdf', 0),
+  'NTP_WB': ('/Users/work/Library/CloudStorage/GoogleDrive-ramysakr1@gmail.com/My Drive/Connect Lite/Do not delete/Course books/Pre-Intermediate /New Total English/New_Total_Eng_Pre-Intermediate_WB.pdf', -4),
   'EFP_TB': (f'{D}/Pre-Intermediate /English File/English File Pre-Intermediate TB (1).pdf', -1),   # printed = index + 1: folio 249 sits at index 248, 'At an art gallery' (p. 211) at 210 -- checked 11 Oct 2026 after the cards had carried the next worksheet along
   'EFU_TB': (f'{D}/Upper- Intermediate /English File (3rd edition)/English File Upper Int TB .pdf', 0),   # folio 188 at index 188
   'NTP_TB': (f'{D}/Pre-Intermediate /New Total English/NTE_Pre-Intermediate_TB.pdf', 0),   # folio 125 at index 125
