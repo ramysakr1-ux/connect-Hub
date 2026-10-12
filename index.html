@@ -25,7 +25,7 @@
 <title>Connect Lite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610122059">
+<link rel="stylesheet" href="hub-tokens.css?v=202610122140">
 <style>
   :root{
     /* The pane. A card on this page is a sheet of glass lying on the paper,
@@ -373,7 +373,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610122059">
+<link rel="stylesheet" href="hub-house.css?v=202610122140">
 </head>
 <body>
 <div class="board">
@@ -562,15 +562,15 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 30 104 60" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-lockup-c">Connect</span><span class="hub-lockup-l">Lite</span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202610122059"></script>
-<script src="observation-defaults.js?v=202610122059"></script>
-<script src="hub-shared.js?v=202610122059"></script>
-<script src="hub-store.js?v=202610122059"></script>
-<script src="hub-say.js?v=202610122059"></script>
-<script src="hub-shelf.js?v=202610122059"></script>
-<script src="hub-front.js?v=202610122059"></script>
-<script src="hub-sync.js?v=202610122059"></script>
-<script src="hub-feedback.js?v=202610122059"></script>
+<script src="hub-due.js?v=202610122140"></script>
+<script src="observation-defaults.js?v=202610122140"></script>
+<script src="hub-shared.js?v=202610122140"></script>
+<script src="hub-store.js?v=202610122140"></script>
+<script src="hub-say.js?v=202610122140"></script>
+<script src="hub-shelf.js?v=202610122140"></script>
+<script src="hub-front.js?v=202610122140"></script>
+<script src="hub-sync.js?v=202610122140"></script>
+<script src="hub-feedback.js?v=202610122140"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -1144,11 +1144,24 @@ if (fbBack){
   })();
   const myTpDays = (TT.days || []).filter(d => d && d.tp && !d.closed && ymd(d.date) && (mySetIdx < 0 || Number(d.setIndex || 0) === mySetIdx));
   const clockTP = (function(){ const d = myTpDays.find(x => ymd(x.date) >= TODAY); return d ? Number(d.tp) : 0; })();
-  const HERO_TP = TP_N || (function(){ if (beforeStart || afterEnd || tpDone) return 0; const n = Math.max(filed + 1, clockTP || 0); return n <= tpTotal ? n : 0; })();
+  /* A MISSED PRACTICE COMES FIRST (12 Oct 2026). Ramy: a missed TP is taught
+     later in the course and the order is kept. Their tutor marks it on the TP
+     points page; until its make-up day has gone by, it is the next one. */
+  const MAKEUP = (function(){
+    if (!PTS.released) return null;
+    const mine = (PTS.points || {})[ME.token] || {};
+    for (let n = filed + 1; n <= tpTotal; n++) {
+      const c = mine['tp' + n];
+      if (c && c.missed && !(c.makeup && c.makeup.date && c.makeup.date < TODAY)) return { tp: n, date: (c.makeup && c.makeup.date) || '', from: (c.makeup && c.makeup.from) || '' };
+    }
+    return null;
+  })();
+  const HERO_TP = TP_N || (MAKEUP && !beforeStart && !afterEnd ? MAKEUP.tp : 0) || (function(){ if (beforeStart || afterEnd || tpDone) return 0; const n = Math.max(filed + 1, clockTP || 0); return n <= tpTotal ? n : 0; })();
+  const IS_MAKEUP = !!MAKEUP && HERO_TP === MAKEUP.tp;
   const ttReady = !!(TT && TT.days && TT.days.length && TT.published);
   const heroDay = myTpDays.find(x => Number(x.tp) === HERO_TP) || (TT.days || []).find(x => x && Number(x.tp) === HERO_TP);
-  const tpDay = (heroDay && ymd(heroDay.date)) || '';
-  const tpTime = (function(){ const day = heroDay; const sl = ((window.hubSlotsFor && day ? hubSlotsFor(TT, day.date) : TT.slots) || []).filter(x => x && x.kind === 'tp' && x.from)[0]; return sl ? hubClock(sl.from) : ''; })();
+  const tpDay = IS_MAKEUP ? MAKEUP.date : ((heroDay && ymd(heroDay.date)) || '');
+  const tpTime = IS_MAKEUP ? (MAKEUP.from ? hubClock(MAKEUP.from) : '') : (function(){ const day = heroDay; const sl = ((window.hubSlotsFor && day ? hubSlotsFor(TT, day.date) : TT.slots) || []).filter(x => x && x.kind === 'tp' && x.from)[0]; return sl ? hubClock(sl.from) : ''; })();
   const tpAim = (function(){
     if (!PTS.released) return '';
     const mine = (PTS.points || {})[ME.token] || {};
@@ -1254,9 +1267,9 @@ if (fbBack){
     title = list[0].text;
     list = list.slice(1);
     when = HERO_TP && tpDay
-      ? 'Teaching practice ' + HERO_TP + ' of ' + tpTotal + ' · <b>' + esc2(shortDay(tpDay)) + '</b>'
+      ? 'Teaching practice ' + HERO_TP + ' of ' + tpTotal + (IS_MAKEUP ? ', your make-up' : '') + ' · <b>' + esc2(shortDay(tpDay)) + '</b>'
         + (tpTime ? ', ' + esc2(tpTime) : '') + (tpAim ? ' · ' + esc2(tpAim) : '')
-      : '';
+      : (IS_MAKEUP ? 'Teaching practice ' + HERO_TP + ' of ' + tpTotal + ', your make-up · your tutor will set the day' : '');
   } else {
     quiet = true;
     kind = 'Today';
@@ -1264,8 +1277,9 @@ if (fbBack){
     when = tpDone
       ? 'All ' + tpTotal + ' teaching practices are taught and written up. Your tutor has the rest.'
       : (HERO_TP && tpDay
-          ? 'Your next teaching practice is <b>TP ' + HERO_TP + '</b>, ' + esc2(shortDay(tpDay))
+          ? 'Your next teaching practice is <b>TP ' + HERO_TP + '</b>' + (IS_MAKEUP ? ', your make-up' : '') + ', ' + esc2(shortDay(tpDay))
             + (tpTime ? ', ' + esc2(tpTime) : '') + (tpAim ? ' · ' + esc2(tpAim) : '') + '.'
+          : IS_MAKEUP ? 'Your next teaching practice is <b>TP ' + HERO_TP + '</b>, your make-up. Your tutor will set the day.'
           : 'Your tutor will put the next thing here when it is ready.');
   }
 

@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610122059">
+<link rel="stylesheet" href="hub-tokens.css?v=202610122140">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -308,6 +308,8 @@
   .tgrid.across .flags .due{position:static; display:inline-block; flex:none; width:auto; max-width:none; pointer-events:auto;}
   .tgrid.across .flags.end{flex-wrap:nowrap; justify-content:flex-end;}
   .tgrid.across .notes{border-top:0; padding:5px 2px 0;}
+  .tgrid .notes .mkup{display:block; margin-top:3px; font-weight:700; color:var(--brick);}
+  .tgrid .notes .mkup:first-child{margin-top:0;}
   .tgrid.across .day.closed{background:none;}
   .tgrid.across .closedmsg{position:static; align-self:center; padding:14px; border-radius:6px; text-align:center;
                            background:repeating-linear-gradient(135deg, oklch(92% 0.012 80) 0 6px, oklch(95% 0.01 80) 6px 12px);}
@@ -478,24 +480,24 @@
     h1{font-size:1.4rem;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610122059">
+<link rel="stylesheet" href="hub-house.css?v=202610122140">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610122059"></script>
-<script src="hub-tracker.js?v=202610122059"></script>
-<script src="hub-rotation.js?v=202610122059"></script>
-<script src="hub-xlsx.js?v=202610122059"></script>
-<script src="hub-docx.js?v=202610122059"></script>
-<script src="hub-timetable-parse.js?v=202610122059"></script>
-<script src="assignment-defaults.js?v=202610122059"></script>
-<script src="hub-shared.js?v=202610122059"></script>
-<script src="hub-store.js?v=202610122059"></script>
-<script src="hub-say.js?v=202610122059"></script>
-<script src="hub-sync.js?v=202610122059"></script>
+<script src="hub-due.js?v=202610122140"></script>
+<script src="hub-tracker.js?v=202610122140"></script>
+<script src="hub-rotation.js?v=202610122140"></script>
+<script src="hub-xlsx.js?v=202610122140"></script>
+<script src="hub-docx.js?v=202610122140"></script>
+<script src="hub-timetable-parse.js?v=202610122140"></script>
+<script src="assignment-defaults.js?v=202610122140"></script>
+<script src="hub-shared.js?v=202610122140"></script>
+<script src="hub-store.js?v=202610122140"></script>
+<script src="hub-say.js?v=202610122140"></script>
+<script src="hub-sync.js?v=202610122140"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -928,6 +930,30 @@ function bounds(){
    read once a render: a tutor's copy keys the rows by group, a trainee's
    carries their group's as `points`. */
 let TPP = null;
+/* MAKE-UPS (12 Oct 2026). Ramy: a missed TP is taught later in the course,
+   in order -- often in a free slot or on two days back to back. The tutor
+   marks it on the TP points page with a day and a time; the day says so here,
+   under its notes, so the room and the rest of the set know. A tutor sees the
+   name, a trainee sees their own as theirs and anyone else's by letter. */
+function makeupNote(date){
+  if (TPP === null) TPP = rec('connect_tp_points_v1') || {};
+  const meTok = IS_TRAINEE ? ((rec('hub:me') || {}).token || '') : '';
+  const out = [];
+  GROUPS.forEach(gr => {
+    const rows = (TPP.groups && TPP.groups[gr.group]) || TPP.points || {};
+    gr.people.forEach(p => {
+      const cells = rows[p.token] || {};
+      Object.keys(cells).forEach(k => {
+        const c = cells[k], m = c && c.missed && c.makeup;
+        if (!m || m.date !== date) return;
+        const mine = p.token === meTok;
+        const who = mine ? '' : ' · ' + esc(p.name || ('Trainee ' + p.letter)) + (p.name && p.letter ? ' (' + esc(p.letter) + ')' : '');
+        out.push({ at: m.from || '', html: `<span class="mkup${mine ? ' me' : ''}">${mine ? 'Your make-up' : 'Make-up'} · TP ${esc(k.replace('tp', ''))}${who}${m.from ? ' · ' + esc(hubClock(m.from)) : ''}</span>` });
+      });
+    });
+  });
+  return out.sort((a, b) => String(a.at).localeCompare(String(b.at))).map(x => x.html).join('');
+}
 function teachersOf(day){
   const out = [];
   if (!day.tp) return out;
@@ -1048,9 +1074,10 @@ function dayHTML(day, B, idx){
     const at = toMin(window.HubDue ? HubDue.toLocalInput(o.at).slice(11, 16) : '');
     return outFlag(o, 'top:' + (Math.min(H - 18, Math.max(0, at == null ? 0 : (at - B.from) * PXM)) + (dueHere.length + j) * 19) + 'px');
   }).join('');
+  const mk = makeupNote(day.date);
   const notes = EDIT
-    ? `<div class="notes"><input type="text" data-date="${esc(day.date)}" data-f="notes" value="${esc(day.notes || '')}" placeholder="Notes"></div>`
-    : (day.notes ? `<div class="notes">${esc(day.notes)}</div>` : '');
+    ? `<div class="notes"><input type="text" data-date="${esc(day.date)}" data-f="notes" value="${esc(day.notes || '')}" placeholder="Notes">${mk}</div>`
+    : ((day.notes || mk) ? `<div class="notes">${esc(day.notes || '')}${mk}</div>` : '');
   if (day.closed) return `<div class="day closed" id="d-${esc(day.date)}">
     <div class="dh"><div class="dt"${EDIT ? ` data-close="${esc(day.date)}" title="Reopen this day"` : ''}><span class="dow">${DOW[d.getDay()]}</span> <span class="dm">${dm(d)}</span><small>No course</small></div></div>
     <div class="body" style="height:${H}px"><div class="closedmsg">${EDIT ? 'Closed<br><span>click the date to reopen</span>' : 'No course today'}</div></div></div>`;
@@ -1149,9 +1176,10 @@ function rowAcross(day, cols, tpl, place, idx){
   const teachers = teachersOf(day);
   const tps = (day.sessions || []).filter(x => x.k === 'tp').sort(byStart);
   const tiles = place.at.map(t => tileHTML(day, t.x, null, tps.indexOf(t.x), teachers, { a: t.a, b: t.b, exact: t.exact, row: tileRow })).join('');
+  const mk = makeupNote(day.date);
   const notes = EDIT
-    ? `<div class="notes" style="grid-column:2 / -1;grid-row:${tileRow + 1}"><input type="text" data-date="${esc(day.date)}" data-f="notes" value="${esc(day.notes || '')}" placeholder="Notes"></div>`
-    : (day.notes ? `<div class="notes" style="grid-column:2 / -1;grid-row:${tileRow + 1}">${esc(day.notes)}</div>` : '');
+    ? `<div class="notes" style="grid-column:2 / -1;grid-row:${tileRow + 1}"><input type="text" data-date="${esc(day.date)}" data-f="notes" value="${esc(day.notes || '')}" placeholder="Notes">${mk}</div>`
+    : ((day.notes || mk) ? `<div class="notes" style="grid-column:2 / -1;grid-row:${tileRow + 1}">${esc(day.notes || '')}${mk}</div>` : '');
   return `<div class="hrow day${isToday ? ' today' : ''}" id="d-${esc(day.date)}" style="grid-template-columns:${tpl}">${dh.replace('<div class="dh">', `<div class="dh" style="grid-row:1 / span ${tileRow + 1}">`)}${flags}${tiles}${notes}</div>`;
 }
 

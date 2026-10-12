@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610122059">
+<link rel="stylesheet" href="hub-tokens.css?v=202610122140">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -121,6 +121,15 @@
     border:1px solid var(--sand-line); border-radius:6px; background:var(--paper); color:var(--ink);}
   .mats input:focus, .mats textarea:focus{outline:2px solid var(--teal); outline-offset:-1px;}
   .mats .hint{font-size:0.73rem; color:var(--grey); margin:4px 0 0; line-height:1.5;}
+  /* A MISSED PRACTICE (12 Oct 2026). Ramy: a missed TP is taught later in
+     the course and the order is kept -- "it'll just get stacked up on their
+     cards". The cell says so on the grid, and the trainee's card says when. */
+  .mats .mkrow .chk{display:flex; gap:8px; align-items:center; text-transform:none; letter-spacing:0; font-size:0.82rem; font-weight:600; color:var(--ink); padding-top:4px;}
+  .mats .mkrow .chk input{width:auto;}
+  .mats .mkwhen{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;}
+  .mats .mkwhen input{width:auto; min-width:150px;}
+  .mkup{display:block; margin-top:3px; font-size:0.64rem; font-weight:700; letter-spacing:.03em; color:var(--brick); line-height:1.3;}
+  .makeup{margin:0 0 9px; padding:8px 11px; border-left:3px solid var(--brick); background:var(--paper); border-radius:0 7px 7px 0; font-size:0.86rem; color:var(--ink);}
   .mats .files{list-style:none; margin:0 0 6px; padding:0; font-size:0.79rem;}
   .mats .files li{display:flex; gap:8px; align-items:center; margin:0 0 4px;}
   .mats .files a{color:var(--teal); font-weight:600;}
@@ -377,20 +386,20 @@
   @media(prefers-reduced-motion:reduce){ .tbl select.fm, .fm-pips i{transition:none;} }
   @media print{ .fm-key, .fm-pips{display:none;} .tbl select.fm{border-left-width:1px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610122059">
+<link rel="stylesheet" href="hub-house.css?v=202610122140">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610122059"></script>
-<script src="hub-tracker.js?v=202610122059"></script>
-<script src="hub-rotation.js?v=202610122059"></script>
-<script src="hub-shared.js?v=202610122059"></script>
-<script src="hub-store.js?v=202610122059"></script>
-<script src="hub-say.js?v=202610122059"></script>
-<script src="hub-sync.js?v=202610122059"></script>
+<script src="hub-due.js?v=202610122140"></script>
+<script src="hub-tracker.js?v=202610122140"></script>
+<script src="hub-rotation.js?v=202610122140"></script>
+<script src="hub-shared.js?v=202610122140"></script>
+<script src="hub-store.js?v=202610122140"></script>
+<script src="hub-say.js?v=202610122140"></script>
+<script src="hub-sync.js?v=202610122140"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -701,7 +710,7 @@ function build(keepEdits){
           if (was && was.edited) { rows[token]['tp'+tp] = was; return; }
           const found = set && slotFor(set, tp, si, pos);
           const cell = { aim: r.rows[token]['tp'+tp] };
-          rows[token]['tp'+tp] = found ? stamp(cell, found) : cell;
+          rows[token]['tp'+tp] = Object.assign(found ? stamp(cell, found) : cell, keptMakeup(was));
         });
       });
     }
@@ -740,6 +749,10 @@ function persist(word){
 }
 
 const MKEY = (g, t, tp) => g + '|' + t + '|' + tp;
+/* A missed practice survives the points being dealt again or the type being
+   changed by hand: it is about the trainee, not about the lesson. */
+const shortDate = d => { try { return new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }); } catch (e) { return d; } };
+const keptMakeup = was => (was && was.missed) ? (was.makeup ? { missed: true, makeup: was.makeup } : { missed: true }) : {};
 function cellOf(g, t, tp){
   P.groups = P.groups || {}; P.groups[g] = P.groups[g] || {}; P.groups[g][t] = P.groups[g][t] || {};
   return (P.groups[g][t]['tp' + tp] = P.groups[g][t]['tp' + tp] || {});
@@ -757,7 +770,13 @@ function cellOf(g, t, tp){
 function matsPanel(g, t, tp, letter, name){
   const c = cellOf(g, t, tp);
   const pages = c.pages || [];
+  const mk = c.makeup || {};
   return `<div class="mats"><h4>TP ${tp} \u00b7 ${esc(letter)}${name ? ' \u00b7 ' + esc(name) : ''} \u2014 what they are teaching</h4>
+    <div class="mrow mkrow"><label>Make-up</label><div>
+      <label class="chk"><input type="checkbox" data-mk="missed"${c.missed ? ' checked' : ''}> Missed it, teaches it later</label>
+      ${c.missed ? `<div class="mkwhen"><input type="date" data-mk="date" value="${esc(mk.date || '')}" aria-label="Make-up day"><input type="time" data-mk="from" value="${esc(mk.from || '')}" aria-label="Make-up time"></div>
+      <p class="hint">This lesson stays open on ${name ? esc(name.split(' ')[0]) + '\u2019s' : 'their'} card, with the make-up day on it, and the timetable shows it on that day. Leave the day empty until you know it. They still teach in order: this one comes before TP ${+tp + 1}.</p>` : ''}
+    </div></div>
     <div class="mrow"><label>Sub aim</label><input type="text" data-m="sub" value="${esc(c.sub || '')}" placeholder="Lexis, speaking \u2014 the second focus"></div>
     <div class="mrow"><label>Lesson shape</label><input type="text" data-m="framework" value="${esc(c.framework || '')}" placeholder="Receptive skills, PPP, Test-Teach-Test\u2026"></div>
     <div class="mrow"><label>Main aim</label><textarea data-m="point" rows="2" placeholder="The lesson in a line. The full aims and the stage-by-stage suggestions go in the document you attach below.">${esc(c.point || '')}</textarea></div>
@@ -796,6 +815,20 @@ function wireMats(){
     el.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(fire, 700); });
     el.addEventListener('blur', () => { clearTimeout(timer); fire(); });
   });
+  /* The make-up is not an edit to the lesson, so it does not set `edited`:
+     dealing the points again still refreshes the lesson, and build() carries
+     the make-up across on its own. */
+  document.querySelectorAll('[data-mk]').forEach(el => el.addEventListener('change', () => {
+    const k = el.dataset.mk;
+    if (k === 'missed') {
+      if (el.checked) c.missed = true; else { delete c.missed; delete c.makeup; }
+      persist(el.checked ? 'Marked as missed' : 'No longer missed');
+      return;
+    }
+    c.makeup = Object.assign({}, c.makeup || {}, { [k]: el.value });
+    if (!c.makeup.date && !c.makeup.from) delete c.makeup;
+    persist('Make-up saved');
+  }));
   document.querySelectorAll('[data-mrm]').forEach(el => el.addEventListener('click', () => {
     (c.pages || []).splice(+el.dataset.mrm, 1); c.edited = true; persist('Removed');
   }));
@@ -1146,8 +1179,13 @@ function render(){
     const anyDates = dated.some(d => d.date);
     const upcoming = dated.filter(d => d.date && d.date >= todayISO).map(d => d.tp);
     const NEXT = upcoming.length ? upcoming[0] : (anyDates ? TPS : 0);
+    /* A missed practice stays open until its make-up day has gone by: it is
+       still theirs to teach, and it comes before the next one. */
+    const myMissed = tp => { const c = ((rows[me.token] || {})['tp' + tp]) || {}; return c.missed ? (c.makeup || {}) : null; };
+    const stillOwed = tp => { const m = myMissed(tp); return !!m && !(m.date && m.date < todayISO); };
     const state = tp => {
       if (!anyDates) return 'open';
+      if (stillOwed(tp)) return 'open';
       if (tp === NEXT) return 'open';
       return tp < NEXT ? 'past' : 'later';
     };
@@ -1186,8 +1224,13 @@ function render(){
       const exOf = c => String((c.book || {}).ref || '').split(/\n+/)
         .map(x => x.trim()).filter(x => /^(Reading|Listening|Grammar|Vocabulary|Speaking|Pronunciation|Functional language):/.test(x));
 
+      const mk = myMissed(tp);
+      const mkLine = !mk ? '' : `<p class="makeup"><b>Missed${date ? ' on ' + esc(niceDay(date)) : ''}.</b> ${mk.date
+        ? 'Your make-up is ' + esc(niceDay(mk.date)) + (mk.from ? ', ' + esc(hubClock(mk.from)) : '') + '.'
+        : 'Your tutor will set the day for the make-up.'} You teach this one before TP ${tp + 1}.</p>`;
       const mineBlock = !mineCell ? '' : `<div class="mine-block">
-        <p class="whoami"><b>Your lesson</b>${slotTime(myIdx) ? ' · ' + slotTime(myIdx) : ''} · slot ${myIdx + 1} of ${teaching.length}<button type="button" class="printme" onclick="printTP(this)">Print my TP point</button><button type="button" class="printme" onclick="printPages(this)">Print my pages</button>${
+        ${mkLine}
+        <p class="whoami"><b>Your lesson</b>${mk ? ' · your make-up' : (slotTime(myIdx) ? ' · ' + slotTime(myIdx) : '') + ' · slot ' + (myIdx + 1) + ' of ' + teaching.length}<button type="button" class="printme" onclick="printTP(this)">Print my TP point</button><button type="button" class="printme" onclick="printPages(this)">Print my pages</button>${
           mineCell && mineCell.dayPdf && mineCell.dayPdf.url ? `<a class="printme pdf" href="${esc(mineCell.dayPdf.url)}" target="_blank" rel="noopener">The day’s pages (PDF)</a><span class="audlinks pdflinks"><button type="button" class="audalt copylink" data-copy="${esc(mineCell.dayPdf.url)}" aria-live="polite">Copy link</button><a class="audalt" href="https://drive.google.com/uc?export=download&amp;id=${esc((mineCell.dayPdf.url.match(/\/d\/([\w-]{20,})/) || [])[1] || '')}">Download</a></span>` : ''}</p>
         <div class="lessonline">${lesson(mineCell)}</div>
         ${matsRead(mineCell, true)}
@@ -1321,7 +1364,8 @@ function render(){
           const has = !!(c.point || c.sub || c.framework || (c.pages||[]).length || (c.book||{}).url || (c.book||{}).ref || (c.audio||{}).url);
           return `<td data-lab="TP ${tp}"><select data-g="${esc(g.group)}" data-t="${esc(p.token)}" data-tp="${tp}">${
             R.AIMS.map(a => `<option value="${esc(a)}"${c.aim===a?' selected':''}>${esc(a)}</option>`).join('')}</select>
-            <button type="button" class="mbtn${has?' has':''}" data-mats="${esc(MKEY(g.group, p.token, tp))}" title="Pages, coursebook and audio">${has ? 'Materials \u2713' : 'Materials'}</button></td>`;
+            <button type="button" class="mbtn${has?' has':''}" data-mats="${esc(MKEY(g.group, p.token, tp))}" title="Pages, coursebook and audio, and a make-up if they missed it">${has ? 'Materials \u2713' : 'Materials'}</button>${
+            c.missed ? `<span class="mkup">Missed \u00b7 ${(c.makeup || {}).date ? 'make-up ' + esc(shortDate(c.makeup.date)) : 'make-up day not set'}</span>` : ''}</td>`;
         }).join('')}</tr>`).join('')}</table></div>
       ${noLang.length ? `<div class="warn"><b>Handbook 9.1.2:</b> a centre must include language-focus lessons for every trainee. ${noLang.length===1?'Trainee':'Trainees'} ${esc(noLang.join(', '))} ${noLang.length===1?'has':'have'} none in TP 1 to ${TPS}. Grammar, vocabulary and functional language are the language-focus types.</div>` : ''}
       ${clash.length ? `<div class="warn"><b>Same type, same day:</b> ${clash.map(c => 'TP ' + c.tp + ' — ' + esc(c.set) + ' — ' + esc(c.aim)).join('; ')}. They teach on the same day, so two of them would be teaching the same thing.</div>` : ''}
@@ -1387,7 +1431,7 @@ function render(){
       const pos = ((ses && ses.slots) || []).findIndex(sl => sl && sl.type === el.value);
       if (pos >= 0) found = slotFor(set, +tp, si, pos);
     }
-    P.groups[g][t]['tp'+tp] = Object.assign(found ? stamp(cell, found) : cell, { edited: true });
+    P.groups[g][t]['tp'+tp] = Object.assign(found ? stamp(cell, found) : cell, { edited: true }, keptMakeup(P.groups[g][t]['tp'+tp]));
     persist('Saved');
   }));
   document.querySelectorAll('button[data-mats]').forEach(el => el.addEventListener('click', () => {
