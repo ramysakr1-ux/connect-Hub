@@ -112,6 +112,9 @@ Lite is worked on from two places, with GitHub between them.
 
 ### The look
 
+- The design system is the Artifact **"Connect Lite"**
+  (https://claude.ai/artifact/QeJQvYTHG7YQ4JmK5NNGod). Read its README before
+  building a screen; the values come from the two files below.
 - `hub-tokens.css` is the one palette, linked first on every screen;
   `hub-house.css` is linked last and wins. Gold carries structure; teal is the
   action; the field fill is near-white.
