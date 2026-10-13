@@ -47,6 +47,29 @@ GATE = '''<script src="../../hub-store.js"></script>
 })();
 </script>'''
 
+# Every film starts closed and can be hidden again (Ramy, 14 Oct 2026).
+FILM_JS = '''<script>
+(function(){
+  document.querySelectorAll('.film[data-src]').forEach(function(f){
+    var btn = f.querySelector('.film-btn'); if (!btn) return;
+    function close(){ f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
+    btn.addEventListener('click', function(){
+      f.classList.remove('closed'); f.innerHTML = '';
+      var i = document.createElement('iframe'); i.src = f.dataset.src + (f.dataset.src.indexOf('?') === -1 ? '?' : '&') + 'autoplay=1'; i.title = f.dataset.title || 'Film';
+      i.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture'; i.allowFullscreen = true; f.appendChild(i);
+      var acts = document.createElement('p'); acts.className = 'film-acts';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = 'Hide the film'; c.addEventListener('click', close);
+      acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
+    });
+  });
+})();
+</script>'''
+
+def films_closed(page):
+    """<div class="film"><iframe src=... title=...></iframe></div> becomes a closed frame with a button."""
+    return re.sub(r'<div class="film"><iframe src="([^"]+)" title="([^"]+)"[^>]*></iframe></div>',
+                  lambda m: '<div class="film closed" data-src="%s" data-title="%s"><button type="button" class="btn teal film-btn">Watch the film</button></div>' % (m.group(1), m.group(2)), page)
+
 def notes_block(slug):
     """The trainer's side: hidden until the gate opens it."""
     return ('\n\n  <section id="trainer" class="trainer-notes" hidden>\n    <div class="card">\n'
@@ -153,7 +176,7 @@ def build(r):
     nav = '\n'.join('    <a href="#%s">%s</a>' % (h, t) for h, t in r['nav'])
     sources = ('\n\n  <p class="sources"><b>Sources.</b> ' + r['sources'] + '</p>') if r.get('sources') else ''
     page = HEAD.format(title=r['title'], sub=r['sub'], eyebrow=r.get('eyebrow', 'Input session · CELTA'),
-                       css=r['css'].strip('\n'), nav=nav) + body.strip('\n') + notes_block(r['slug']) + sources + '\n\n' + FOOT + '\n</div>\n\n' + script + '\n' + GATE + '\n</body>\n</html>\n'
+                       css=r['css'].strip('\n'), nav=nav) + films_closed(body.strip('\n')) + notes_block(r['slug']) + sources + '\n\n' + FOOT + '\n</div>\n\n' + script + '\n' + FILM_JS + '\n' + GATE + '\n</body>\n</html>\n'
     for bad in ('Nunito', 'Playfair', 'progressFill', 'class="watermark"', 'International House Istanbul'):
         assert bad not in page.replace(sources, '').replace(notes_block(r['slug']), ''), f"{r['slug']}: {bad} still in the page"
     out = HERE / r['slug'] / 'index.html'
@@ -1758,7 +1781,9 @@ def hand(slug):
     if 'class="tn-link"' not in page:
         page = page.replace('    <button class="print-btn"', '    <a href="#trainer" class="tn-link" hidden>Trainer notes</a>\n    <button class="print-btn"', 1)
     page = re.sub(r"\n<script src=\"\.\./\.\./hub-store\.js\"></script>\n<script>\n\(function\(\)\{\n  if \(!window\.HubStore.*?</script>", '', page, count=1, flags=re.S)
-    page = page.replace('\n</body>', '\n' + GATE + '\n</body>', 1)
+    page = films_closed(page)
+    page = re.sub(r"\n<script>\n\(function\(\)\{\n  document\.querySelectorAll\('\.film\[data-src\]'\).*?</script>", '', page, count=1, flags=re.S)
+    page = page.replace('\n</body>', '\n' + FILM_JS + '\n' + GATE + '\n</body>', 1)
     assert page.count('id="trainer"') == 1 and page.count('hub-store.js') == 1, slug
     p.write_text(page, encoding='utf-8')
     print('patched', p.relative_to(ROOT), len(page))

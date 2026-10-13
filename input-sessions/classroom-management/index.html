@@ -437,6 +437,22 @@ window.addEventListener('scroll',()=>{
   let cur=links[0]; links.forEach(a=>{const s=document.querySelector(a.getAttribute('href')); if(s && s.getBoundingClientRect().top<140) cur=a;});
   links.forEach(a=>a.classList.toggle('active',a===cur));});
 </script>
+<script>
+(function(){
+  document.querySelectorAll('.film[data-src]').forEach(function(f){
+    var btn = f.querySelector('.film-btn'); if (!btn) return;
+    function close(){ f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
+    btn.addEventListener('click', function(){
+      f.classList.remove('closed'); f.innerHTML = '';
+      var i = document.createElement('iframe'); i.src = f.dataset.src + (f.dataset.src.indexOf('?') === -1 ? '?' : '&') + 'autoplay=1'; i.title = f.dataset.title || 'Film';
+      i.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture'; i.allowFullscreen = true; f.appendChild(i);
+      var acts = document.createElement('p'); acts.className = 'film-acts';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = 'Hide the film'; c.addEventListener('click', close);
+      acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
+    });
+  });
+})();
+</script>
 <script src="../../hub-store.js"></script>
 <script>
 (function(){
