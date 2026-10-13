@@ -52,6 +52,11 @@
   .pill.now{color:var(--paper); background:var(--teal); border-color:var(--teal);}
   @media(max-width:640px){ .next{grid-template-columns:1fr;} }
   .back{display:inline-block; margin:0 0 16px; font-size:.84rem; font-weight:600; color:var(--teal); text-decoration:none;} .back:hover{text-decoration:underline; text-underline-offset:3px;}
+  .libcard{background:var(--surface); border:1px solid var(--sand-line); border-left:5px solid var(--teal); border-radius:var(--r-card); padding:18px 20px 6px; margin:0 0 24px;}
+  .libcard.centre{border-left-color:var(--gold);}
+  .cardhead{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.25rem; margin:0 0 4px;}
+  .cardlede{margin:0 0 14px; font-size:.86rem; color:var(--grey); line-height:1.55;}
+  .libcard .family h2{font-size:1.05rem;}
   .family{margin:0 0 26px;}
   .family h2{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.2rem; margin:0 0 2px;}
   .family .fl{margin:0 0 12px; font-size:.86rem; color:var(--grey);}
@@ -105,6 +110,15 @@
     </div>
   </div>
 
+  <section class="libcard centre" id="centreCard" hidden>
+    <h2 class="cardhead" id="centreHead">Your centre&rsquo;s input sessions</h2>
+    <p class="cardlede">Links the centre has added. They open where the centre keeps them.</p>
+    <div class="cards" id="centreCards"></div>
+  </section>
+
+  <section class="libcard" id="connectCard" hidden>
+    <h2 class="cardhead">Connect&rsquo;s input sessions</h2>
+    <p class="cardlede">Connect&rsquo;s own sessions, built into the library. Tutors see all of them.</p>
   <div class="family">
     <h2>Loop input</h2>
     <p class="fl">The session is staged like the lesson it teaches. You do it as a student, then take it apart.</p>
@@ -168,15 +182,13 @@
     </div>
   </div>
 
-  <!-- The centre's own input sessions (14 Oct 2026): the links a centre
-       pastes on Course admin under an "Input sessions" card. They are the
-       centre's, not Connect's, and the family says so: named after the
-       centre, each card opens the centre's link in a new tab. -->
-  <div class="family" id="centreFamily" hidden>
-    <h2 id="centreFamilyHead">From your centre</h2>
-    <p class="fl">The centre's own sessions, as links. They open where the centre keeps them.</p>
-    <div class="cards" id="centreCards"></div>
-  </div>
+  </section>
+
+  <section class="libcard" id="myCard" hidden>
+    <h2 class="cardhead">Your input sessions</h2>
+    <p class="cardlede">The sessions on your timetable, as they are given. Each one stays open once it has been given.</p>
+    <div class="cards" id="myCards"></div>
+  </section>
 
   <footer class="hub-brand-foot">
     <span class="hub-lockup"><span class="hub-lockup-tile"><svg viewBox="8 30 104 60" width="12" height="7" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"/></svg></span><span class="hub-lockup-c">Connect</span><span class="hub-lockup-l">Lite</span></span>
@@ -186,96 +198,134 @@
 
 <script src="../hub-store.js"></script>
 <script>
-/* The course strip. The timetable comes from this browser's copy of the
-   course (hub-sync writes it at every boot of the home or the dashboard) or,
-   failing that, from the store with the link the browser holds. A session on
-   the timetable is matched to a page on the shelf by the words in its title;
-   a title none of the rules know is listed without a door. */
+/* The library, by who is looking (Ramy, 14 Oct 2026). Two cards: the centre's
+   own input sessions, then Connect's. A tutor sees Connect's whole library as
+   a reference. A trainee sees only the sessions on their timetable that have
+   been given so far, newest first: nothing from the future, and nothing the
+   course does not have. No link, no cards. */
 (function(){
   var RULES = [
     [/stress/, 'word-and-sentence-stress'], [/connected speech|intonation/, 'connected-speech'],
     [/phonolog|phonemic|sounds|the chart/, 'phonology-sounds'],
     [/error correction|oral error|monitoring/, 'error-correction'], [/concept check|ccq|elicit/, 'eliciting-and-ccqs'],
     [/classroom management|instructions and grouping/, 'classroom-management'], [/functional/, 'functional-language'],
-    [/framework|lesson shape/, 'lesson-framework'], [/\bppp\b|presenting grammar|presentation.?practice/, 'ppp'], [/text.based/, 'text-based-teaching'],
+    [/framework|lesson shape/, 'lesson-framework'], [/\bppp\b|presenting grammar|presentation.?practice/, 'ppp'],
+    [/text.based/, 'text-based-teaching'],
     [/guided|drill|controlled practice/, 'guided-to-less-guided-practice'], [/speaking/, 'teaching-speaking'],
     [/exam/, 'teaching-exam-classes'], [/lesson plan/, 'writing-the-lesson-plan'], [/writing/, 'teaching-writing'],
     [/alternative|third conditional/, 'alternative-teaching-techniques'],
     [/receptive|reading|listening/, 'receptive-skills'], [/life after|jobs|interview|professional development/, 'life-after-celta'],
     [/drama|games/, 'drama-in-the-elt-classroom'], [/literacy/, 'teaching-literacy'], [/productive/, 'teaching-productive-skills']
   ];
-  function slugFor(title){ var t = String(title || '').toLowerCase(); for (var i = 0; i < RULES.length; i++) if (RULES[i][0].test(t)) return RULES[i][1]; return ''; }
+  function $(id){ return document.getElementById(id); }
+  function slugFor(t){ var s = String(t || '').toLowerCase(); for (var i = 0; i < RULES.length; i++) if (RULES[i][0].test(s)) return RULES[i][1]; return ''; }
   function rd(k){ try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
   function iso(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function dateOf(s){ var m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; }
   function dayName(s, long){ var d = dateOf(s); return d ? d.toLocaleDateString('en-GB', long ? { weekday: 'long', day: 'numeric', month: 'long' } : { weekday: 'short', day: 'numeric' }) : ''; }
   function esc(x){ return String(x == null ? '' : x).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  var NAMES = {}; document.querySelectorAll('a.s[href]').forEach(function(a){ var h3 = a.querySelector('h3'); NAMES[a.getAttribute('href').replace(/\/$/, '')] = h3 ? h3.textContent : ''; });
-
-  function paint(tt, settings){
-    var days = (tt && Array.isArray(tt.days)) ? tt.days : [];
-    var today = (settings && /^\d{4}-\d{2}-\d{2}$/.test(String(settings.demoToday || ''))) ? settings.demoToday : iso(new Date());
-    var inputs = [];
-    days.forEach(function(d){ if (!d || !d.date) return; (d.sessions || []).forEach(function(x){ if (x && x.k === 'input' && x.t) inputs.push({ date: d.date, s: x.s || '', t: x.t, slug: slugFor(x.t) }); }); });
-    if (!inputs.length) return;
-    inputs.sort(function(a, b){ return (a.date + a.s) < (b.date + b.s) ? -1 : 1; });
-    var next = inputs.filter(function(x){ return x.date >= today; })[0] || null;
-    var strip = document.getElementById('courseStrip'); strip.hidden = false;
+  var NAMES = {};
+  document.querySelectorAll('#connectCard a.s[href]').forEach(function(a){ var h3 = a.querySelector('h3'); NAMES[a.getAttribute('href').replace(/\/$/, '')] = h3 ? h3.textContent : ''; });
+  function today(cs){ var d = String((cs && cs.demoToday) || ''); return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : iso(new Date()); }
+  function shownLink(l){ return !!(l && l.url && (l.show !== false || (l.showFrom && new Date(l.showFrom).getTime() <= Date.now()))); }
+  function centreLinks(cs){ return ((cs && cs.courseLinks) || []).filter(function(l){ return shownLink(l) && /input session/i.test(String(l.card || '') + ' ' + String(l.label || '')); }); }
+  function inputsOf(tt){
+    var out = [];
+    ((tt && tt.days) || []).forEach(function(d){ if (!d || !d.date) return; (d.sessions || []).forEach(function(x){ if (x && x.k === 'input' && x.t) out.push({ date: d.date, s: x.s || '', t: x.t, slug: slugFor(x.t) }); }); });
+    out.sort(function(a, b){ return (a.date + a.s) < (b.date + b.s) ? -1 : 1; });
+    return out;
+  }
+  function weekOf(now){
+    var nd = dateOf(now), mon = new Date(nd); mon.setDate(nd.getDate() - ((nd.getDay() + 6) % 7));
+    var sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    return { mon: iso(mon), sun: iso(sun), monDate: mon };
+  }
+  function paintCentre(cs){
+    var links = centreLinks(cs);
+    if (!links.length) { $('centreCard').hidden = true; return; }
+    var name = String((cs && cs.centreName) || '').trim();
+    $('centreHead').textContent = name ? name + ': input sessions' : 'Your centre’s input sessions';
+    $('centreCards').innerHTML = links.map(function(l){
+      return '<a class="s ext" href="' + esc(l.url) + '" target="_blank" rel="noopener noreferrer"><p class="k">' + esc(name || 'Your centre') + '</p><h3>' + esc(l.label || l.url) + '</h3><p class="m">Opens in a new tab</p></a>';
+    }).join('');
+    $('centreCard').hidden = false;
+  }
+  function setStrip(show, tone, title, line, slug){
+    var strip = $('courseStrip');
+    if (!show) { strip.hidden = true; return; }
+    strip.hidden = false;
+    $('nextTone').textContent = tone; $('nextTitle').textContent = title; $('nextLine').textContent = line;
+    var open = $('nextOpen');
+    if (slug) { open.href = slug + '/'; open.hidden = false; } else { open.hidden = true; }
+  }
+  /* Tutors and assessors: the whole Connect library, with the course strip and
+     a pill on each card for when it comes on this course. */
+  function paintTutor(tt, cs){
+    var list = inputsOf(tt), now = today(cs);
+    if (!list.length) { setStrip(false); return; }
+    var next = list.filter(function(x){ return x.date >= now; })[0] || null;
     if (next) {
-      document.getElementById('nextTone').textContent = (next.date === today ? 'Today' : 'Next') + ' \u00b7 ' + dayName(next.date, true) + (next.s ? ' \u00b7 ' + next.s : '');
-      document.getElementById('nextTitle').textContent = next.t;
-      var open = document.getElementById('nextOpen');
-      if (next.slug && NAMES[next.slug] != null) { open.href = next.slug + '/'; open.hidden = false; document.getElementById('nextLine').textContent = (NAMES[next.slug] && NAMES[next.slug] !== next.t ? 'On the shelf as ' + NAMES[next.slug] + '. ' : '') + 'Open it here and work through it; print the handout if you need paper.'; }
-      else document.getElementById('nextLine').textContent = 'This session is not on the shelf; your tutor brings it.';
-    } else {
-      document.getElementById('nextTone').textContent = 'Input sessions';
-      document.getElementById('nextTitle').textContent = 'The course\u2019s input sessions are done';
-      document.getElementById('nextLine').textContent = 'Every session stays on the shelf below.';
-    }
-    /* this week: Monday to Sunday round today, or round the next session if today is outside the course */
-    var anchor = dateOf((next && (today < inputs[0].date || today > inputs[inputs.length - 1].date)) ? next.date : today);
-    var mon = new Date(anchor); mon.setDate(anchor.getDate() - ((anchor.getDay() + 6) % 7)); var sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-    var week = inputs.filter(function(x){ return x.date >= iso(mon) && x.date <= iso(sun); });
-    var list = document.getElementById('weekList');
-    document.getElementById('weekHead').textContent = (iso(mon) <= today && today <= iso(sun)) ? 'This week' : 'The week of ' + mon.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
-    list.innerHTML = week.length ? week.map(function(x){
-      var cls = x.date < today ? 'done' : x.date === today ? 'now' : '';
+      var ok = next.slug && NAMES[next.slug] != null;
+      setStrip(true, (next.date === now ? 'Today' : 'Next') + ' · ' + dayName(next.date, true) + (next.s ? ' · ' + next.s : ''),
+        next.t, ok ? 'Open it here, or print the handout.' : 'Not in the library; your tutor brings it.', ok ? next.slug : '');
+    } else setStrip(true, 'Input sessions', 'The course’s input sessions are done', 'Every session stays in the library below.', '');
+    var w = weekOf(now);
+    var week = list.filter(function(x){ return x.date >= w.mon && x.date <= w.sun; });
+    $('weekHead').textContent = (w.mon <= now && now <= w.sun) ? 'This week' : 'The week of ' + w.monDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+    $('weekList').innerHTML = week.length ? week.map(function(x){
+      var cls = x.date < now ? 'done' : x.date === now ? 'now' : '';
       var name = x.slug && NAMES[x.slug] != null ? '<a href="' + esc(x.slug) + '/">' + esc(x.t) + '</a>' : esc(x.t);
       return '<li class="' + cls + '"><span>' + name + '</span><span>' + esc(dayName(x.date)) + '</span></li>';
     }).join('') : '<li><span class="none">No input sessions this week.</span></li>';
-    /* the cards: when each session comes on this course */
     var bySlug = {};
-    inputs.forEach(function(x){ if (!x.slug) return; var cur = bySlug[x.slug]; if (!cur || (cur.date < today && x.date >= cur.date)) bySlug[x.slug] = x; });
-    document.querySelectorAll('a.s[href]').forEach(function(a){
+    list.forEach(function(x){ if (!x.slug) return; var cur = bySlug[x.slug]; if (!cur || (cur.date < now && x.date >= cur.date)) bySlug[x.slug] = x; });
+    document.querySelectorAll('#connectCard a.s[href]').forEach(function(a){
+      a.querySelectorAll('.pill[data-d]').forEach(function(old){ old.remove(); });
       var x = bySlug[a.getAttribute('href').replace(/\/$/, '')]; if (!x) return;
       var m = a.querySelector('.m'); if (!m) return;
-      var pill = document.createElement('span'); pill.className = 'pill ' + (x.date < today ? '' : x.date === today ? 'now' : 'wait');
-      pill.textContent = x.date < today ? 'Done \u00b7 ' + dayName(x.date) : x.date === today ? 'Today' : dayName(x.date) + ' ' + dateOf(x.date).toLocaleDateString('en-GB', { month: 'short' });
+      var pill = document.createElement('span'); pill.className = 'pill ' + (x.date < now ? '' : x.date === now ? 'now' : 'wait'); pill.setAttribute('data-d', '1');
+      pill.textContent = x.date < now ? 'Done · ' + dayName(x.date) : x.date === now ? 'Today' : dayName(x.date);
       m.appendChild(pill);
     });
   }
-
-  /* the way back: the room this browser's link opens */
-  var back = document.getElementById('backHome');
-  if (back && window.HubStore) back.href = HubStore.isTutor() ? '../5_tutor_dashboard.html' : HubStore.isAssessor() ? '../12_assessor_pack.html' : '../index.html';
-  function shown(l){ return l && l.url && (l.show !== false || (l.showFrom && new Date(l.showFrom).getTime() <= Date.now())); }
-  function centre(settings){
-    var links = ((settings && settings.courseLinks) || []).filter(function(l){ return shown(l) && /input session/i.test(String(l.card || '') + ' ' + String(l.label || '')); });
-    if (!links.length) return;
-    var name = String((settings && settings.centreName) || '').trim();
-    document.getElementById('centreFamilyHead').textContent = name ? 'From ' + name : 'From your centre';
-    document.getElementById('centreCards').innerHTML = links.map(function(l){
-      return '<a class="s ext" href="' + esc(l.url) + '" target="_blank" rel="noopener noreferrer"><p class="k">' + esc(name || 'Your centre') + '</p><h3>' + esc(l.label || l.url) + '</h3><p class="m">Opens in a new tab</p></a>';
-    }).join('');
-    document.getElementById('centreFamily').hidden = false;
+  /* A trainee: only what their timetable has given so far, newest first. The
+     session they are on today, or the last one given, is the strip. Nothing
+     after today is shown, and nothing that is not on the course. */
+  function paintTrainee(tt, cs){
+    var now = today(cs);
+    var released = inputsOf(tt).filter(function(x){ return x.date <= now && x.slug && NAMES[x.slug] != null; }).reverse();
+    $('myCards').innerHTML = released.length ? released.map(function(x){
+      var pill = x.date === now ? 'Today' : dayName(x.date);
+      return '<a class="s" href="' + esc(x.slug) + '/"><p class="k">' + esc(dayName(x.date, true)) + (x.s ? ' · ' + esc(x.s) : '') + '</p><h3>' + esc(NAMES[x.slug]) + '</h3><p class="m"><span class="pill ' + (x.date === now ? 'now' : 'wait') + '">' + esc(pill) + '</span></p></a>';
+    }).join('') : '<p class="cardlede">No input sessions have been given on your course yet.</p>';
+    var last = released[0];
+    if (!last) { setStrip(false); return; }
+    setStrip(true, (last.date === now ? 'Today' : 'Last session') + ' · ' + dayName(last.date, true) + (last.s ? ' · ' + last.s : ''),
+      NAMES[last.slug], 'Open it again whenever you need it.', last.slug);
+    var w = weekOf(now);
+    var week = released.filter(function(x){ return x.date >= w.mon && x.date <= w.sun; }).reverse();
+    $('weekHead').textContent = 'This week';
+    $('weekList').innerHTML = week.length ? week.map(function(x){
+      var cls = x.date === now ? 'now' : 'done';
+      return '<li class="' + cls + '"><span><a href="' + esc(x.slug) + '/">' + esc(NAMES[x.slug]) + '</a></span><span>' + esc(dayName(x.date)) + '</span></li>';
+    }).join('') : '<li><span class="none">No input sessions given this week yet.</span></li>';
   }
+  function run(tt, cs, who){
+    $('connectCard').hidden = true; $('myCard').hidden = true; $('centreCard').hidden = true;
+    if (who === 'tutor' || who === 'assessor') { $('connectCard').hidden = false; paintCentre(cs); paintTutor(tt, cs); return; }
+    if (who === 'trainee') { paintCentre(cs); $('myCard').hidden = false; paintTrainee(tt, cs); return; }
+    setStrip(false);
+    $('myCards').innerHTML = '<p class="cardlede">Open your course link to see the input sessions on your timetable.</p>';
+    $('myCard').hidden = false;
+  }
+  var back = $('backHome');
+  if (back && window.HubStore) back.href = HubStore.isTutor() ? '../5_tutor_dashboard.html' : HubStore.isAssessor() ? '../12_assessor_pack.html' : '../index.html';
+  var who = !window.HubStore ? 'none' : HubStore.isTutor() ? 'tutor' : HubStore.isAssessor() ? 'assessor' : HubStore.token() ? 'trainee' : 'none';
   var tt = rd('connect_timetable_v1'), cs = rd('connect_course_settings');
-  if (cs) centre(cs);
-  if (tt && Array.isArray(tt.days)) { paint(tt, cs || {}); return; }
-  if (!window.HubStore) return;
-  if (!(HubStore.key() || HubStore.token() || HubStore.assessorKey())) return;
-  HubStore.course().then(function(c){ if (!c) return; if (!cs) centre(c.settings || {}); if (c.timetable) paint(c.timetable, c.settings || {}); }).catch(function(){});
+  run(tt, cs || {}, who);
+  if (who !== 'none') HubStore.course().then(function(c){ if (c) run(c.timetable || tt, c.settings || cs || {}, who); }).catch(function(){});
 })();
 </script>
+
 </body>
 </html>
