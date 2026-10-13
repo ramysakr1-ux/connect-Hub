@@ -42,6 +42,7 @@ GATE = '''<script src="../../hub-store.js"></script>
     var s = document.getElementById('trainer'); if (s) s.hidden = false;
     var a = document.querySelector('nav.sticky-nav a.tn-link'); if (a) a.hidden = false;
     var b = document.querySelector('.print-btn'); if (b) b.textContent = 'Print with the trainer notes';
+    var r = document.getElementById('roleLabel'); if (r) r.textContent = 'Tutor';
   }).catch(function(){});
 })();
 </script>'''
@@ -81,6 +82,14 @@ HEAD = '''<!DOCTYPE html>
 </head>
 <body>
 <div class="wrap">
+
+  <div class="chrome">
+    <a class="lockup" href="../index.html" title="The library">
+      <span class="tile"><svg viewBox="8 30 104 60" width="20" height="12" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"/></svg></span>
+      <span class="hub-pair"><span class="word">Connect</span><span class="hub-word">Lite</span></span>
+    </a>
+    <div class="role" id="roleLabel">Trainee</div>
+  </div>
 
   <header class="header">
     <p class="eyebrow">{eyebrow}</p>
@@ -1727,9 +1736,22 @@ RECIPES.append(dict(
 # ---- the two pages built by hand take the same notes and gate --------------
 HAND = ('teaching-literacy', 'teaching-productive-skills')
 
+CHROME = '''  <div class="chrome">
+    <a class="lockup" href="../index.html" title="The library">
+      <span class="tile"><svg viewBox="8 30 104 60" width="20" height="12" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"/></svg></span>
+      <span class="hub-pair"><span class="word">Connect</span><span class="hub-word">Lite</span></span>
+    </a>
+    <div class="role" id="roleLabel">Trainee</div>
+  </div>
+
+'''
+
 def hand(slug):
     p = HERE / slug / 'index.html'
     page = p.read_text(encoding='utf-8')
+    if '<div class="chrome">' not in page:
+        page = page.replace('<div class="wrap">\n\n  <header class="header">', '<div class="wrap">\n\n' + CHROME + '  <header class="header">', 1)
+        assert '<div class="chrome">' in page, slug + ': no header to put the chrome before'
     page = re.sub(r"\s*<!-- The trainer's notes\. Hidden until the tutor-link gate exists\. -->\s*<section id=\"trainer\" hidden>.*?</section>", '', page, count=1, flags=re.S)
     page = re.sub(r"\n\n  <section id=\"trainer\" class=\"trainer-notes\" hidden>.*?</section>", '', page, count=1, flags=re.S)
     page = page.replace('\n  <footer class="hub-brand-foot">', notes_block(slug) + '\n\n  <footer class="hub-brand-foot">', 1)
