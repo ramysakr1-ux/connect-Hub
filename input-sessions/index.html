@@ -46,6 +46,7 @@
   .side li.done{color:var(--faint);} .side li.done a{color:var(--faint); font-weight:500;}
   .side li.now span:last-child{color:var(--teal); font-weight:700;}
   .side .none{margin:0; font-size:.84rem; color:var(--grey);}
+  .s.ext .k{color:var(--teal);} .s.ext .m{color:var(--grey);}
   .pill{display:inline-flex; align-items:center; font-family:'Karla',sans-serif; font-size:.68rem; font-weight:700; padding:2px 9px; border-radius:999px; border:1px solid var(--sand-line); color:var(--grey); background:var(--paper);}
   .pill.wait{color:var(--teal); border-color:color-mix(in oklab, var(--teal) 35%, var(--paper));}
   .pill.now{color:var(--paper); background:var(--teal); border-color:var(--teal);}
@@ -167,6 +168,16 @@
     </div>
   </div>
 
+  <!-- The centre's own input sessions (14 Oct 2026): the links a centre
+       pastes on Course admin under an "Input sessions" card. They are the
+       centre's, not Connect's, and the family says so: named after the
+       centre, each card opens the centre's link in a new tab. -->
+  <div class="family" id="centreFamily" hidden>
+    <h2 id="centreFamilyHead">From your centre</h2>
+    <p class="fl">The centre's own sessions, as links. They open where the centre keeps them.</p>
+    <div class="cards" id="centreCards"></div>
+  </div>
+
   <footer class="hub-brand-foot">
     <span class="hub-lockup"><span class="hub-lockup-tile"><svg viewBox="8 30 104 60" width="12" height="7" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"/></svg></span><span class="hub-lockup-c">Connect</span><span class="hub-lockup-l">Lite</span></span>
     <span>designed and built by <b>Ramy</b></span>
@@ -247,11 +258,23 @@
   /* the way back: the room this browser's link opens */
   var back = document.getElementById('backHome');
   if (back && window.HubStore) back.href = HubStore.isTutor() ? '../5_tutor_dashboard.html' : HubStore.isAssessor() ? '../12_assessor_pack.html' : '../index.html';
+  function shown(l){ return l && l.url && (l.show !== false || (l.showFrom && new Date(l.showFrom).getTime() <= Date.now())); }
+  function centre(settings){
+    var links = ((settings && settings.courseLinks) || []).filter(function(l){ return shown(l) && /input session/i.test(String(l.card || '') + ' ' + String(l.label || '')); });
+    if (!links.length) return;
+    var name = String((settings && settings.centreName) || '').trim();
+    document.getElementById('centreFamilyHead').textContent = name ? 'From ' + name : 'From your centre';
+    document.getElementById('centreCards').innerHTML = links.map(function(l){
+      return '<a class="s ext" href="' + esc(l.url) + '" target="_blank" rel="noopener noreferrer"><p class="k">' + esc(name || 'Your centre') + '</p><h3>' + esc(l.label || l.url) + '</h3><p class="m">Opens in a new tab</p></a>';
+    }).join('');
+    document.getElementById('centreFamily').hidden = false;
+  }
   var tt = rd('connect_timetable_v1'), cs = rd('connect_course_settings');
+  if (cs) centre(cs);
   if (tt && Array.isArray(tt.days)) { paint(tt, cs || {}); return; }
   if (!window.HubStore) return;
   if (!(HubStore.key() || HubStore.token() || HubStore.assessorKey())) return;
-  HubStore.course().then(function(c){ if (c && c.timetable) paint(c.timetable, c.settings || {}); }).catch(function(){});
+  HubStore.course().then(function(c){ if (!c) return; if (!cs) centre(c.settings || {}); if (c.timetable) paint(c.timetable, c.settings || {}); }).catch(function(){});
 })();
 </script>
 </body>
