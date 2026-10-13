@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  Connect Lite — input session: Writing the lesson plan
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy's own session, first written for Google Classroom in IH Istanbul's
+  look. This is the same session on Lite's desk: the house header, nav,
+  cards and foot come from ../session.css; the parts below are this page's
+  own. The script is the source's, untouched. Built by _house.py; edit the
+  recipe there, not this file.
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="../../brand/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../brand/apple-touch-icon.png">
+<title>Writing the lesson plan — Connect Lite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,600;0,700;1,600&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../hub-tokens.css">
+<link rel="stylesheet" href="../session.css">
+<style>
+  section{background:var(--surface); border-left:5px solid var(--gold); border-radius:var(--r-control); padding:20px 22px 22px; margin:0 0 14px;}
+  @media(max-width:560px){ section{padding:16px 16px;} }
+  h2{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.3rem; margin:0 0 8px; line-height:1.25;}
+  .lead{color:var(--grey); font-size:.92rem; margin:0 0 14px; line-height:1.55; max-width:none;}
+  .criteria{display:flex; flex-wrap:wrap; gap:6px; margin:0 0 14px;}
+  .criteria span{display:inline-flex; align-items:center; border-radius:999px; border:1px solid var(--sand-line); padding:3px 10px; font-size:.72rem; font-weight:700; background:var(--box); color:oklch(45% 0.02 70);}
+  .scorebar{display:flex; justify-content:space-between; align-items:center; gap:10px; background:var(--paper); border:1px solid var(--sand-line); border-left:4px solid var(--gold); padding:8px 14px; border-radius:var(--r-control); margin:0 0 12px; font-size:.84rem; font-weight:600; position:sticky; top:46px; z-index:5;}
+  .scorebar button{font-family:'Karla',sans-serif; font-size:.78rem; font-weight:600; cursor:pointer; background:none; color:var(--grey); border:1.5px solid var(--sand-line); border-radius:var(--r-control); padding:5px 10px; min-height:32px;}
+  .scorebar button:hover{color:var(--ink); border-color:var(--grey);}
+  .card{background:var(--paper); border:1px solid var(--sand-line); border-left:1px solid var(--sand-line); border-radius:var(--r-strip); padding:0; margin:0 0 10px; transition:border-color .12s ease;}
+  .card .cat{display:inline-block; margin:12px 0 0 16px; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold-deep); font-weight:600;}
+  .card .body{padding:8px 16px 0; font-size:.95rem; white-space:pre-line; line-height:1.55;}
+  .card .btns{display:flex; gap:8px; padding:12px 16px 14px; flex-wrap:wrap;}
+  .card .btns button, .srow button{font-family:'Karla',sans-serif; font-size:.82rem; font-weight:700; cursor:pointer; border:1.5px solid var(--sand-line); background:var(--field); color:var(--grey); border-radius:999px; padding:6px 14px; min-height:34px; transition:border-color .12s ease;}
+  .card .btns button:hover:not(:disabled), .srow button:hover:not(:disabled){border-color:var(--gold);}
+  .card .btns button.pick-ok, .srow button.pick-ok{background:color-mix(in oklab, var(--teal) 11%, transparent); border-color:color-mix(in oklab, var(--teal) 30%, transparent); color:var(--teal);}
+  .card .btns button.pick-no, .srow button.pick-no{background:color-mix(in oklab, var(--brick) 10%, transparent); border-color:color-mix(in oklab, var(--brick) 28%, transparent); color:var(--brick);}
+  .card .btns button:disabled, .srow button:disabled{cursor:default;}
+  .card .fb{display:none; padding:11px 16px; font-size:.88rem; border-top:1px solid var(--row-line); line-height:1.55;}
+  .card .fb.on{display:block;}
+  .card .fb.ok{color:var(--ink);} .card .fb.no{color:var(--ink);}
+  .card .fb b{display:block; margin-bottom:2px; color:var(--teal);} .card .fb.no b{color:var(--brick);}
+  .row{display:grid; grid-template-columns:1fr 200px; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid var(--row-line); font-size:.92rem;}
+  .row:last-of-type{border-bottom:none;}
+  .row select{appearance:none; -webkit-appearance:none; font-family:'Karla',sans-serif; font-size:.88rem; font-weight:600; color:var(--ink); padding:7px 28px 7px 10px; border:1.5px solid var(--sand-line); border-left:4px solid var(--gold); border-radius:var(--r-control); background:var(--field); width:100%; min-height:38px;
+    background-image:linear-gradient(45deg, transparent 50%, var(--gold-deep) 50%), linear-gradient(135deg, var(--gold-deep) 50%, transparent 50%); background-position:calc(100% - 15px) 55%, calc(100% - 10px) 55%; background-size:5px 5px; background-repeat:no-repeat;}
+  .row select.ok{border-color:var(--teal); background-color:color-mix(in oklab, var(--teal) 9%, var(--field));}
+  .row select.no{border-color:var(--brick); background-color:color-mix(in oklab, var(--brick) 8%, var(--field));}
+  @media(max-width:560px){ .row{grid-template-columns:1fr; gap:6px;} }
+  .srow{display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid var(--row-line);}
+  .srow .d{font-size:.92rem; line-height:1.5;}
+  .srow .c{display:flex; gap:8px; flex-wrap:wrap;}
+  .snote{display:none; font-size:.86rem; color:var(--grey); padding:0 0 10px; border-bottom:1px solid var(--row-line); margin-top:-4px;}
+  .snote.on{display:block;}
+  @media(max-width:560px){ .srow{grid-template-columns:1fr; gap:6px;} }
+  .recap{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  @media(max-width:640px){ .recap{grid-template-columns:1fr;} }
+  .recap div{background:var(--paper); border:1px solid var(--sand-line); border-top:3px solid var(--gold); border-radius:var(--r-strip); padding:12px 14px;}
+  .recap h3{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.05rem; margin:0 0 6px;}
+  .recap ul{margin:0; padding-left:18px; font-size:.88rem; line-height:1.55;}
+  @media print{ .scorebar, .card .btns, .srow .c{display:none !important;} .card .fb, .snote{display:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="header">
+    <p class="eyebrow">Input session · CELTA</p>
+    <h1>Writing the lesson plan</h1>
+    <p class="sub">Four decisions you make on every plan: your aims, your procedure, your interaction patterns, and what could go wrong.</p>
+  </header>
+
+  <nav class="sticky-nav" id="stickyNav">
+    <a href="#s1">1 · Aims</a>
+    <a href="#s2">2 · Procedure</a>
+    <a href="#s3">3 · Interaction</a>
+    <a href="#s4">4 · Anticipated problems</a>
+    <a href="#s5">Recap</a>
+    <button class="print-btn" onclick="window.print()">Print the handout</button>
+  </nav>
+
+  <section id="s1">
+    <h2>Aims</h2>
+    <p class="lead">An aim isn't good because it starts with the right words. It's good because someone reading it knows exactly what you're teaching and in what context. Decide on each one.</p>
+    <div class="criteria">
+      <span>Skill or language named</span><span>Context given</span><span>Specific, not general</span><span>Vocabulary aims list examples</span>
+    </div>
+    <div class="scorebar"><span>Aims: <span id="s1">0</span> of <span id="t1">0</span></span><button data-reset="1">Start again</button></div>
+    <div id="aimWrap"></div>
+  </section>
+
+  <section id="s2">
+    <h2>Procedure</h2>
+    <p class="lead">You are not writing notes to yourself. You're writing so that someone else could pick up your plan and teach the stage without you in the room, which is why it's bullet points, imperatives, and clear at every line who is doing what.</p>
+    <div class="criteria">
+      <span>Bullet points, not prose</span><span>Imperative verbs</span><span>Clear what the teacher does</span><span>Clear what students do</span><span>Timed</span>
+    </div>
+    <div class="scorebar"><span>Procedure: <span id="s2">0</span> of <span id="t2">0</span></span><button data-reset="2">Start again</button></div>
+    <div id="procWrap"></div>
+  </section>
+
+  <section id="s3">
+    <h2>Interaction patterns</h2>
+    <p class="lead">Match each one to the pattern you'd write in the column.</p>
+    <div id="intWrap"></div>
+  </section>
+
+  <section id="s4">
+    <h2>Anticipated problems</h2>
+    <p class="lead">Two sheets, two jobs. Classroom management, tasks, materials, technology and timing go on the lesson plan. Anything about meaning, form or pronunciation goes on the Language Analysis sheet.</p>
+    <div class="scorebar"><span>Sorting: <span id="s3">0</span> of <span id="t3">0</span></span><button data-reset="3">Start again</button></div>
+    <div id="clsWrap"></div>
+  </section>
+
+  <section id="s5">
+    <h2>Recap</h2>
+    <div class="recap">
+      <div><h3>Aims</h3><ul>
+        <li>Name the skill or the language exactly</li>
+        <li>Always give the context</li>
+        <li>Vocabulary aims list the actual items</li>
+        <li>Personal aims come from your last action points</li>
+      </ul></div>
+      <div><h3>Procedure</h3><ul>
+        <li>Bullet points, imperative verbs</li>
+        <li>Write the instruction out, don't summarise it</li>
+        <li>Clear who does what, and for how long</li>
+        <li>A colleague could teach from it</li>
+      </ul></div>
+      <div><h3>Interaction</h3><ul>
+        <li>One pattern per stage, honestly recorded</li>
+        <li>Ind &middot; PW &middot; GW &middot; T&ndash;S &middot; S&ndash;S &middot; OC &middot; OCFB</li>
+      </ul></div>
+      <div><h3>Anticipated problems</h3><ul>
+        <li>Lesson plan: management, tasks, tech, timing</li>
+        <li>LA sheet: meaning, form, pronunciation</li>
+        <li>Every problem gets a real solution</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <p class="sources"><b>Sources.</b> The aims, procedures and problems to judge are the tutor's own, written for this course's lesson plan and language analysis sheets.</p>
+
+  <footer class="hub-brand-foot">
+    <span class="hub-lockup"><span class="hub-lockup-tile"><svg viewBox="8 30 104 60" width="12" height="7" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"/></svg></span><span class="hub-lockup-c">Connect</span><span class="hub-lockup-l">Lite</span></span>
+    <span>designed and built by <b>Ramy</b></span>
+  </footer>
+</div>
+
+<script>
+const DATA = {"aims": [{"cat": "Main aim", "text": "To provide practice in reading for gist and for specific information, in the context of an article about people who work from home.", "good": true, "why": "The skill is named, both sub-skills are specified, and there's a real context. You could plan the lesson from this."}, {"cat": "Main aim", "text": "To improve students' speaking.", "good": false, "why": "Which speaking? Fluency or accuracy? About what? No context, no specifics \u2014 this could describe almost any lesson."}, {"cat": "Main aim", "text": "By the end of the lesson, students will have practised using the future perfect to talk about achievements before a point in the future, in the context of life in 2050.", "good": true, "why": "The language is named exactly, its use is specified, and the context is there."}, {"cat": "Main aim", "text": "To teach vocabulary.", "good": false, "why": "Which vocabulary? How many items? In what context? A vocabulary aim needs examples of the actual target items."}, {"cat": "Main aim", "text": "To clarify and practise six items of vocabulary for describing personality (outgoing, reserved, stubborn, easy-going, blunt, laid-back), in the context of describing people you work with.", "good": true, "why": "Vocabulary aims need examples \u2014 this lists the actual items, says how many, and gives the context."}, {"cat": "Main aim", "text": "To practise the present perfect.", "good": false, "why": "The language is clear, but there's no context and no indication of which use of the present perfect. Half an aim."}, {"cat": "Main aim", "text": "To do the listening activity on page 42 of the coursebook.", "good": false, "why": "That's an activity, not an aim. An aim says what students will be able to do, not which page you'll open."}, {"cat": "Subsidiary aim", "text": "To give students practice in speaking for fluency while comparing their predictions with a partner.", "good": true, "why": "A second skill, clearly named, and tied to what actually happens in the lesson."}, {"cat": "Subsidiary aim", "text": "To also do some speaking.", "good": false, "why": "Vague on every count \u2014 no skill focus, no context, nothing you could plan around."}, {"cat": "Subsidiary aim", "text": "To review and consolidate time expressions used with the future perfect (by then, by 2050, by the time).", "good": true, "why": "Names the language, gives examples, and clearly supports the main aim."}, {"cat": "Personal aim", "text": "By the end of the lesson, I will have lost three kilos.", "good": false, "why": "Admirable. Not a teaching aim. Personal aims are about your teaching, not your life."}, {"cat": "Personal aim", "text": "To find a girlfriend during the freer practice stage.", "good": false, "why": "Also not a teaching aim. Also possibly a safeguarding conversation. Try again."}, {"cat": "Personal aim", "text": "To be a better teacher.", "good": false, "why": "The right category, but far too vague \u2014 there's nothing here you could actually do or be observed doing."}, {"cat": "Personal aim", "text": "To reduce my TTT by setting each task in one sentence and checking with an ICQ instead of repeating myself (action point from TP4).", "good": true, "why": "Specific, observable, and it comes straight from a previous action point \u2014 exactly what a personal aim is for."}, {"cat": "Personal aim", "text": "To nominate quieter students by name in open-class feedback rather than taking the first hand up (action point from TP3).", "good": true, "why": "Concrete behaviour, tied to a previous action point, and your tutor can see whether you did it."}], "procedure": [{"text": "I'll explain the task and then they'll do it in pairs.", "good": false, "why": "Written to yourself, not to a reader. What is the task? What are the instructions? How long? A colleague couldn't run this."}, {"text": "\u2022 Set the task: \u201cRead and find three differences between the two cities.\u201d\n\u2022 ICQ: \u201cHow many differences? Are you reading every word?\u201d\n\u2022 Ss read alone (3 min).\n\u2022 Ss compare answers in pairs.\n\u2022 OCFB \u2014 nominate three Ss.", "good": true, "why": "Imperative, bulleted, timed. The instruction is written out, and it's clear at every point who is doing what."}, {"text": "Students will discuss the questions and then we will have some feedback together as a class before moving on to the next part of the lesson.", "good": false, "why": "This is prose describing the lesson. No instructions, no timing, no interaction pattern \u2014 and \u201cthe questions\u201d are never specified."}, {"text": "\u2022 Hand out the gap-fill.\n\u2022 Demo item 1 on the board with the class.\n\u2022 Ss complete alone (4 min), then check in pairs.\n\u2022 Project answer key; deal with items 3 and 7 only.", "good": true, "why": "Every line is an instruction someone else could follow, and it's specific about what gets covered in feedback."}, {"text": "Monitor and help.", "good": false, "why": "Monitor for what? Help with what? A reader learns nothing about what should happen in this stage."}, {"text": "\u2022 Monitor for use of the target language.\n\u2022 Note two correct and two incorrect examples on your paper for the correction stage.", "good": true, "why": "Same stage as above, but now it says what you're monitoring for and what you'll do with what you find."}], "interaction": [{"desc": "Students compare answers with the person next to them.", "answer": "PW"}, {"desc": "Each student completes a gap-fill on their own.", "answer": "Ind"}, {"desc": "You ask a question to the whole class and take answers from several students.", "answer": "OC"}, {"desc": "Students discuss a topic in threes or fours before reporting back.", "answer": "GW"}, {"desc": "You go through the answers together and correct errors on the board.", "answer": "OCFB"}], "classify": [{"desc": "Students may struggle to open the shared document in breakout rooms.", "onPlan": true, "note": "A task and technology issue \u2014 lesson plan."}, {"desc": "Students may confuse the present perfect with the past simple.", "onPlan": false, "note": "A language problem \u2014 LA sheet, with a meaning solution there."}, {"desc": "Weaker students may finish the reading task early and lose focus.", "onPlan": true, "note": "Pacing and task design \u2014 lesson plan, with a fast-finisher solution."}, {"desc": "Students may find the /\u03b8/ in \u201cthink\u201d difficult to produce.", "onPlan": false, "note": "A pronunciation problem \u2014 LA sheet."}, {"desc": "Groups may be uneven if a student is absent.", "onPlan": true, "note": "Classroom management \u2014 lesson plan."}, {"desc": "Students may use L1 during the freer speaking task.", "onPlan": true, "note": "Classroom management \u2014 lesson plan, with a monitoring solution."}, {"desc": "Students may not know which meaning of \u2018run\u2019 is intended here.", "onPlan": false, "note": "A meaning problem with the target language \u2014 LA sheet."}, {"desc": "The freer practice stage may overrun if feedback takes too long.", "onPlan": true, "note": "Timing \u2014 lesson plan, with a plan for what to cut."}]};
+const totals = {1:DATA.aims.length, 2:DATA.procedure.length, 3:DATA.classify.length};
+const scores = {1:0,2:0,3:0};
+Object.keys(totals).forEach(k=>document.getElementById('t'+k).textContent=totals[k]);
+
+function bump(k){ scores[k]++; document.getElementById('s'+k).textContent = scores[k]; }
+
+/* Aims + Procedure share the same card pattern */
+function buildCards(items, mount, group, labels, showCat){
+  const wrap = document.getElementById(mount);
+  wrap.innerHTML = '';
+  items.forEach(item => {
+    const c = document.createElement('div');
+    c.className = 'card';
+    c.innerHTML =
+      (showCat ? '<span class="cat">'+item.cat+'</span>' : '') +
+      '<div class="body">'+item.text+'</div>' +
+      '<div class="btns"><button data-v="1">'+labels[0]+'</button><button data-v="0">'+labels[1]+'</button></div>' +
+      '<div class="fb"></div>';
+    const btns = c.querySelectorAll('.btns button');
+    const fb = c.querySelector('.fb');
+    btns.forEach(b => b.addEventListener('click', () => {
+      if(b.disabled) return;
+      btns.forEach(x=>x.disabled=true);
+      const said = b.dataset.v === '1';
+      const right = said === item.good;
+      b.classList.add(said ? 'pick-ok' : 'pick-no');
+      fb.classList.add('on', right ? 'ok' : 'no');
+      fb.innerHTML = '<b>' + (right ? 'Yes.' : (item.good ? 'This one works.' : 'Needs work.')) + '</b>' + item.why;
+      if(right) bump(group);
+    }));
+    wrap.appendChild(c);
+  });
+}
+
+function buildInteraction(){
+  const wrap = document.getElementById('intWrap');
+  wrap.innerHTML = '';
+  const opts = ['Ind','PW','GW','T–S','S–S','OC','OCFB'];
+  DATA.interaction.forEach(m => {
+    const r = document.createElement('div');
+    r.className = 'row';
+    r.innerHTML = '<div>'+m.desc+'</div><select><option value="">Choose…</option>'+
+      opts.map(o=>'<option value="'+o+'">'+o+'</option>').join('')+'</select>';
+    const sel = r.querySelector('select');
+    sel.addEventListener('change', ()=>{
+      sel.classList.remove('ok','no');
+      if(!sel.value) return;
+      sel.classList.add(sel.value===m.answer ? 'ok' : 'no');
+    });
+    wrap.appendChild(r);
+  });
+}
+
+function buildClassify(){
+  const wrap = document.getElementById('clsWrap');
+  wrap.innerHTML = '';
+  DATA.classify.forEach(item => {
+    const r = document.createElement('div');
+    r.className = 'srow';
+    r.innerHTML = '<div class="d">'+item.desc+'</div>'+
+      '<div class="c"><button data-v="1">Lesson plan</button><button data-v="0">LA sheet</button></div>';
+    const note = document.createElement('div');
+    note.className = 'snote';
+    wrap.appendChild(r); wrap.appendChild(note);
+    const btns = r.querySelectorAll('button');
+    btns.forEach(b => b.addEventListener('click', ()=>{
+      if(b.disabled) return;
+      btns.forEach(x=>x.disabled=true);
+      const said = b.dataset.v === '1';
+      const right = said === item.onPlan;
+      b.classList.add(right ? 'pick-ok' : 'pick-no');
+      note.classList.add('on');
+      note.textContent = (right ? 'Right — ' : 'The other one — ') + item.note;
+      if(right) bump(3);
+    }));
+  });
+}
+
+function renderAll(){
+  buildCards(DATA.aims, 'aimWrap', 1, ['Clear aim','Needs work'], true);
+  buildCards(DATA.procedure, 'procWrap', 2, ['Ready to teach from','Needs work'], false);
+  buildInteraction();
+  buildClassify();
+}
+renderAll();
+
+document.querySelectorAll('[data-reset]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const g = btn.dataset.reset;
+    scores[g] = 0; document.getElementById('s'+g).textContent = 0;
+    if(g==='1') buildCards(DATA.aims,'aimWrap',1,['Clear aim','Needs work'],true);
+    if(g==='2') buildCards(DATA.procedure,'procWrap',2,['Ready to teach from','Needs work'],false);
+    if(g==='3') buildClassify();
+  });
+});
+</script>
+</body>
+</html>

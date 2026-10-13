@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  Connect Lite — input session: Teaching writing
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy's own session, first written for Google Classroom in IH Istanbul's
+  look. This is the same session on Lite's desk: the house header, nav,
+  cards and foot come from ../session.css; the parts below are this page's
+  own. The script is the source's, untouched. Built by _house.py; edit the
+  recipe there, not this file.
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="../../brand/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../brand/apple-touch-icon.png">
+<title>Teaching writing — Connect Lite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,600;0,700;1,600&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../hub-tokens.css">
+<link rel="stylesheet" href="../session.css">
+<style>
+  .wrap .wrap{max-width:none; padding:18px 20px 20px; margin:0 0 14px; background:var(--surface); border-left:5px solid var(--gold); border-radius:var(--r-control);}
+  @media(max-width:560px){ .wrap .wrap{padding:14px 14px 16px;} }
+  section{margin:0 0 24px;}
+  .section-label{display:block; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.25rem; margin:0 0 10px; line-height:1.25;}
+  .wrap p.intro, .sort-instructions, .pacing-intro{color:var(--grey); font-size:.92rem; margin:0 0 14px; line-height:1.55;}
+  .note-card{background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:14px 16px; margin:0 0 12px; font-size:.9rem; line-height:1.6;}
+  .note-card h4{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.05rem; margin:0 0 6px;}
+  .note-card ul{margin:6px 0 0; padding-left:20px;}
+  .note-card.flag{border-left:4px solid var(--gold);}
+  .sort-bank, .stage-tray, .seq-bank{display:flex; flex-wrap:wrap; gap:8px; margin:0 0 16px; min-height:44px;}
+  .sort-chip, .stage-card, .seq-chip{background:var(--field); border:1.5px solid var(--sand-line); padding:8px 12px; border-radius:var(--r-control); font-weight:500; font-size:.88rem; cursor:pointer; user-select:none; transition:border-color .12s ease, opacity .2s; min-height:38px; display:inline-flex; align-items:center;}
+  .sort-chip:hover, .stage-card:hover, .seq-chip:hover{border-color:var(--gold);}
+  .sort-chip.selected, .stage-card.selected{border-color:var(--gold); background:var(--field-focus); outline:2px solid var(--gold-wash);}
+  .sort-chip.placed, .stage-card.placed{display:none;}
+  .seq-chip.used{opacity:.3; pointer-events:none;}
+  .sort-zones, .zone-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(170px,1fr)); gap:10px;}
+  .sort-zone, .zone{min-height:90px; border-radius:var(--r-strip); border:1.5px dashed var(--sand-line); background:var(--paper); padding:10px; cursor:pointer; transition:border-color .12s ease;}
+  .sort-zone:hover, .zone:hover{border-color:var(--gold);}
+  .sort-zone-title, .zone-title{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1rem; margin:0 0 6px; text-align:center;}
+  .sort-zone .dropped, .zone .dropped-card{background:color-mix(in oklab, var(--teal) 10%, transparent); border:1px solid color-mix(in oklab, var(--teal) 26%, transparent); color:var(--teal); padding:6px 9px; border-radius:var(--r-control); font-size:.82rem; font-weight:600; margin:0 0 6px; text-align:left;}
+  .zone.correct{border-style:solid; border-color:var(--teal);}
+  .sort-zone.wrong, .zone.wrong{animation:shake .35s; border-color:var(--brick);}
+  @keyframes shake{0%,100%{transform:translateX(0);} 25%{transform:translateX(-5px);} 75%{transform:translateX(5px);}}
+  .sort-progress, .progress-note, .seq-feedback{font-weight:600; font-size:.86rem; color:var(--gold-deep); margin:12px 0 0;}
+  .sort-reset, .reset-btn, .seq-reset-btn, .seq-check-btn, .seq-reveal-btn, .reveal-btn, .flaw-toggle, .pacing-reveal-btn{display:inline-flex; align-items:center; justify-content:center; font-family:'Karla',sans-serif;
+    font-size:.84rem; font-weight:600; padding:8px 16px; border-radius:var(--r-control); cursor:pointer; background:none; color:var(--grey); border:1.5px solid var(--sand-line); min-height:38px; margin-top:10px; box-shadow:none;}
+  .sort-reset:hover, .reset-btn:hover, .seq-reset-btn:hover, .reveal-btn:hover, .flaw-toggle:hover, .pacing-reveal-btn:hover, .seq-reveal-btn:hover{border-color:var(--grey); color:var(--ink);}
+  .seq-check-btn{background:var(--teal); color:var(--paper); border-color:var(--teal);}
+  .seq-check-btn:hover{background:var(--teal-lifted); border-color:var(--teal-lifted);}
+  .reveal-box, .flaw-fix, .pacing-answer, .seq-answer{display:none; margin-top:12px; padding:12px 16px; background:var(--gold-wash); border:1px solid var(--amber-edge); border-radius:var(--r-strip); font-size:.88rem; line-height:1.6;}
+  .reveal-box.open, .flaw-fix.open, .pacing-answer.open, .seq-answer.open{display:block;}
+  .reveal-box ul, .seq-answer ol{margin:6px 0 0; padding-left:20px;}
+  .reveal-box strong, .seq-answer strong{color:var(--gold-deep);}
+  @media(max-width:560px){ .sort-zones, .zone-grid{grid-template-columns:1fr 1fr;} }
+  @media print{ .reveal-box, .flaw-fix, .pacing-answer, .seq-answer, .sort-reset, .reset-btn, .reveal-btn, .flaw-toggle, .seq-btn-row, .pacing-reveal-btn{display:none !important;} }
+
+  .letter-card{background:var(--paper); border:1px solid var(--sand-line); border-top:3px solid var(--gold); border-radius:var(--r-strip); padding:20px 24px; max-width:460px; margin:0 auto 14px;
+    font-family:'Newsreader',Georgia,serif; font-style:italic; font-size:1.08rem; line-height:1.7;}
+  .dictation-line{background:var(--paper); border:1px solid var(--sand-line); padding:9px 14px; border-radius:var(--r-control); margin:0 0 6px; font-size:.92rem; opacity:.18; transition:opacity .3s;}
+  .dictation-line.shown{opacity:1;}
+  .dictation-btn-row{display:flex; gap:10px; flex-wrap:wrap; margin:0 0 12px;}
+  .dictation-btn-row button{margin-top:0;}
+  .term-display{background:var(--paper); border:1.5px solid var(--sand-line); border-radius:var(--r-strip); padding:26px; text-align:center; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.8rem; color:var(--teal); max-width:420px; margin:0 auto 10px;}
+  .term-def{font-size:.9rem; color:var(--grey); margin:0 0 10px; text-align:center;}
+  @media print{ .dictation-line{opacity:1;} .term-display, .term-def{display:none;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="header">
+    <p class="eyebrow">Input session · CELTA</p>
+    <h1>Teaching writing</h1>
+    <p class="sub">Finding the words. A mystery present and a thank-you letter, attitudes to writing, what we think about before we write, product and process, a wall dictation, parallel writing, and the road from controlled to freer.</p>
+  </header>
+
+  <nav class="sticky-nav" id="stickyNav">
+    <a href="#s1">1 · Warm-up</a>
+    <a href="#s2">2 · The letter</a>
+    <a href="#s3">3 · Attitudes</a>
+    <a href="#s4">4 · Before we write</a>
+    <a href="#s5">5 · Product or process</a>
+    <a href="#s6">6 · Dictation</a>
+    <a href="#s7">7 · Parallel writing</a>
+    <a href="#s8">8 · Controlled to freer</a>
+    <a href="#s9">9 · Wrap-up</a>
+    <button class="print-btn" onclick="window.print()">Print the handout</button>
+  </nav>
+
+  <section id="s1">
+    <span class="section-label">1 · Warm-up: the mystery present</span>
+    <div class="wrap">
+      <div class="note-card">
+        <h4>A live activity, no screen needed</h4>
+        Each trainee writes, on a scrap of paper, an interesting present they could give someone in the room — without saying who it's for (online: type it in the chat instead). Collect all the "presents" and redistribute them so nobody gets their own back (online: copy/paste the chat messages and reassign them anonymously, or use breakout room pairs). Ask: what do you do when you receive a present? Elicit: <em>say thank you.</em> Since nobody knows who their present is from, they're going to write a thank-you letter to find out.
+      </div>
+    </div>
+  </section>
+
+  <section id="s2">
+    <span class="section-label">2 · The thank-you letter</span>
+    <div class="wrap">
+      <p class="intro">Show the model letter below. Ask: how does it start? What other features does it have? Is the present actually named — or only implied?</p>
+      <div class="letter-card">
+        Dear Priya,<br><br>
+        Thank you for your fabulous present. When I got it, I couldn't stop laughing. Although I don't smoke, I always have your marvellous gift on the living room table so everyone can use it. It's a lovely present and reminds me of you.<br><br>
+        I hope to see you soon.<br><br>
+        Best wishes<br>
+        Sofia.
+      </div>
+      <div class="note-card">
+        <h4>Task</h4>
+        Trainees write their own thank-you letter for the present they received — implying what it is, never naming it outright. Then everyone mingles, holding their letters up, reading others' letters aloud until they can "deliver" theirs to the person whose present they described (online: post letters in the chat, or read them aloud in breakout room pairs/trios and swap until everyone finds their match).
+      </div>
+    </div>
+  </section>
+
+  <section id="s3">
+    <span class="section-label">3 · Attitudes to writing</span>
+    <div class="wrap">
+      <p class="intro">Tap each word, then tap Positive or Negative to sort it.</p>
+      <div class="sort-bank" id="attBank"></div>
+      <div class="sort-zones" id="attZones"></div>
+      <p class="sort-progress" id="attProgress">0 / 8 sorted</p>
+      <button class="sort-reset" id="attReset">Reset</button>
+    </div>
+  </section>
+
+  <section id="s4">
+    <span class="section-label">4 · What do we think about before we write?</span>
+    <div class="wrap">
+      <div class="note-card flag">
+        <h4>A live activity, with your own copy of the strip</h4>
+        This is where the session uses a short SpongeBob cartoon strip: trainees order the panels and discuss his attitude to writing (what was the task? what's the purpose?). I can't reproduce the strip here since it's copyrighted — bring your printed panels for this part, then come back to this page to brainstorm and check the list below.
+      </div>
+      <p class="intro">Brainstorm as a group first: what do we need to think about before we write anything? Then reveal the checklist.</p>
+      <button class="reveal-btn" id="considerBtn">Reveal the checklist</button>
+      <div class="reveal-box" id="considerBox">
+        <strong>Considerations in writing</strong>
+        <ul>
+          <li>Audience</li>
+          <li>Purpose</li>
+          <li>Content</li>
+          <li>Genre</li>
+          <li>Organisation &amp; layout</li>
+          <li>Register</li>
+          <li>Coherence and cohesion</li>
+          <li>Grammar</li>
+          <li>Vocabulary &amp; lexical cohesion</li>
+          <li>Punctuation</li>
+          <li>Spelling</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="s5">
+    <span class="section-label">5 · Product or process writing</span>
+    <div class="wrap">
+      <p class="intro">Tap each statement, then tap Product or Process.</p>
+      <div class="sort-bank" id="ppBank"></div>
+      <div class="sort-zones" id="ppZones"></div>
+      <p class="sort-progress" id="ppProgress">0 / 10 sorted</p>
+      <button class="sort-reset" id="ppReset">Reset</button>
+    </div>
+  </section>
+
+  <section id="s6">
+    <span class="section-label">6 · Wall dictation: Ali and Fatma</span>
+    <div class="wrap">
+      <p class="intro">Run this as a running dictation (post the text on a wall outside, students run back and forth to relay it) or reveal it here line by line as a reading text (online: share it line by line on screen, or drop it into a breakout room for one student to relay to their group by voice).</p>
+      <div class="dictation-btn-row">
+        <button class="reveal-btn" id="dictNextBtn">Reveal next line</button>
+        <button class="sort-reset" id="dictResetBtn">Hide all</button>
+      </div>
+      <div id="dictLines"></div>
+      <div class="note-card" style="margin-top:16px;">
+        <h4>Comprehension questions (make full questions from the prompts)</h4>
+        <ul>
+          <li>Where / Ali and Fatma from?</li>
+          <li>Where / live?</li>
+          <li>Where / work?</li>
+          <li>like television?</li>
+          <li>like football?</li>
+          <li>drink beer?</li>
+        </ul>
+      </div>
+      <button class="reveal-btn" id="dictAnsBtn">Reveal answer key</button>
+      <div class="reveal-box" id="dictAnsBox">
+        <strong>Answer key</strong>
+        <ul>
+          <li>Where are Ali and Fatma from? They're from Ankara.</li>
+          <li>Where do they live? They live in Istanbul.</li>
+          <li>Where do they work? They work for Efes, the beer factory.</li>
+          <li>Do they like television? Yes, they do.</li>
+          <li>Do they like football? The text says volleyball, not football; check students catch this.</li>
+          <li>Do they drink beer? No, they don't. They don't like it.</li>
+        </ul>
+        <em>Optional speaking follow-up: turn this into an information gap. One student has the Ali &amp; Fatma text, their partner has only the questions (online: send the text to one student privately via chat, or place them in separate breakout rooms briefly before pairing them up).</em>
+      </div>
+    </div>
+  </section>
+
+  <section id="s7">
+    <span class="section-label">7 · Now you write: parallel writing</span>
+    <div class="wrap">
+      <div class="note-card">
+        <h4>Task</h4>
+        Using the Ali &amp; Fatma text as a model, write a paragraph about Joe and Barbara from these prompts:
+        <ul>
+          <li>Joe and Barbara / from London</li>
+          <li>live / Birmingham</li>
+          <li>work / Cadbury's / chocolate factory</li>
+          <li>Joe and Barbara / like / music / tennis</li>
+          <li>not eat chocolate</li>
+          <li>not like it</li>
+        </ul>
+      </div>
+      <button class="reveal-btn" id="parallelBtn">Reveal a model answer</button>
+      <div class="reveal-box" id="parallelBox">
+        Joe and Barbara are from London, but they live in Birmingham. They work for Cadbury's, the chocolate factory. Joe and Barbara like music and tennis. They don't eat chocolate. They don't like it!
+      </div>
+    </div>
+  </section>
+
+  <section id="s8">
+    <span class="section-label">8 · Controlled, semi-controlled, freer</span>
+    <div class="wrap">
+      <p class="intro">Tap each example, then tap the zone it belongs to on the control-to-freedom continuum.</p>
+      <div class="sort-bank" id="subBank"></div>
+      <div class="sort-zones" id="subZones"></div>
+      <p class="sort-progress" id="subProgress">0 / 5 sorted</p>
+      <button class="sort-reset" id="subReset">Reset</button>
+    </div>
+  </section>
+
+  <section id="s9">
+    <span class="section-label">9 · Wrap-up: backs to the board</span>
+    <div class="wrap">
+      <p class="intro">One trainee sits with their back to the board. Tap "New term" to show a word to everyone else, who must describe it (without saying the word) until the guesser gets it (online: the "guesser" turns their camera off or looks away from the screen while everyone else describes the word in the chat or out loud).</p>
+      <div class="term-display" id="termDisplay">Tap "New term" to begin</div>
+      <div class="term-def" id="termDef"></div>
+      <div style="text-align:center;">
+        <button class="reveal-btn" id="termBtn">New term</button>
+      </div>
+    </div>
+  </section>
+
+  <p class="sources"><b>Sources.</b> The Ali and Fatma text, the Joe and Barbara parallel-writing task and the product-process contrast are from the tutor's CELTA input materials; the thank-you letter activity is the tutor's own.</p>
+
+  <footer class="hub-brand-foot">
+    <span class="hub-lockup"><span class="hub-lockup-tile"><svg viewBox="8 30 104 60" width="12" height="7" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"/></svg></span><span class="hub-lockup-c">Connect</span><span class="hub-lockup-l">Lite</span></span>
+    <span>designed and built by <b>Ramy</b></span>
+  </footer>
+</div>
+
+<script>
+function makeSorter(bankId, zonesId, progressId, resetId, items, zoneNames){
+  const bank = document.getElementById(bankId);
+  const zones = document.getElementById(zonesId);
+  const progress = document.getElementById(progressId);
+  let selected = null;
+  let correctCount = 0;
+
+  function shuffle(arr){
+    const a = [...arr];
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  }
+
+  function build(){
+    bank.innerHTML = '';
+    zones.innerHTML = '';
+    correctCount = 0;
+    selected = null;
+    progress.textContent = `0 / ${items.length} sorted`;
+
+    shuffle(items).forEach((it, idx) => {
+      const chip = document.createElement('div');
+      chip.className = 'sort-chip';
+      chip.textContent = it.text;
+      chip.dataset.zone = it.zone;
+      chip.addEventListener('click', () => {
+        if(chip.classList.contains('placed')) return;
+        document.querySelectorAll(`#${bankId} .sort-chip`).forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+        selected = chip;
+      });
+      bank.appendChild(chip);
+    });
+
+    zoneNames.forEach(name => {
+      const z = document.createElement('div');
+      z.className = 'sort-zone';
+      z.innerHTML = `<div class="sort-zone-title">${name}</div>`;
+      z.addEventListener('click', () => {
+        if(!selected) return;
+        if(selected.dataset.zone === name){
+          const d = document.createElement('div');
+          d.className = 'dropped';
+          d.textContent = selected.textContent;
+          z.appendChild(d);
+          selected.classList.add('placed');
+          selected.classList.remove('selected');
+          selected = null;
+          correctCount++;
+          progress.textContent = `${correctCount} / ${items.length} sorted`;
+        } else {
+          z.classList.add('wrong');
+          setTimeout(() => z.classList.remove('wrong'), 350);
+        }
+      });
+      zones.appendChild(z);
+    });
+  }
+  document.getElementById(resetId).addEventListener('click', build);
+  build();
+}
+
+// Section 3: Attitudes to writing
+makeSorter('attBank', 'attZones', 'attProgress', 'attReset',
+  [
+    {text:"Time to reflect", zone:"Positive"},
+    {text:"Able to practise & use a wider range of lexis & structures", zone:"Positive"},
+    {text:"Controlled practice of language items", zone:"Positive"},
+    {text:"Possible to draft, correct, re-write", zone:"Positive"},
+    {text:"Boring", zone:"Negative"},
+    {text:"Lonely", zone:"Negative"},
+    {text:"Difficult", zone:"Negative"},
+    {text:"Can't think of anything to say", zone:"Negative"}
+  ],
+  ["Positive", "Negative"]
+);
+
+// Section 5: Sub-skills continuum
+makeSorter('subBank', 'subZones', 'subProgress', 'subReset',
+  [
+    {text:"Replacing pronouns", zone:"Controlled"},
+    {text:"Some parallel writing", zone:"Controlled"},
+    {text:"Use model text and add own ideas", zone:"Semi-controlled"},
+    {text:"Stem sentences", zone:"Semi-controlled"},
+    {text:"Story writing", zone:"Freer"}
+  ],
+  ["Controlled", "Semi-controlled", "Freer"]
+);
+
+// Section 6: Product vs process
+makeSorter('ppBank', 'ppZones', 'ppProgress', 'ppReset',
+  [
+    {text:"Imitate model text", zone:"Product"},
+    {text:"Organisation of ideas more important than the ideas themselves", zone:"Product"},
+    {text:"One draft", zone:"Product"},
+    {text:"Features highlighted, including controlled practice of those features", zone:"Product"},
+    {text:"Individual", zone:"Product"},
+    {text:"Text as a resource for comparison", zone:"Process"},
+    {text:"Ideas as a starting point", zone:"Process"},
+    {text:"More than one draft", zone:"Process"},
+    {text:"More global: purpose, theme, reader in mind", zone:"Process"},
+    {text:"Collaborative, with emphasis on the creative process", zone:"Process"}
+  ],
+  ["Product", "Process"]
+);
+
+// Section 4: Considerations checklist reveal
+document.getElementById('considerBtn').addEventListener('click', () => {
+  document.getElementById('considerBox').classList.toggle('open');
+});
+
+// Section 7: Wall dictation
+const dictationLines = [
+  "Ali and Fatma are from Ankara,",
+  "but they live in Istanbul.",
+  "They work for Efes, the beer factory.",
+  "Ali and Fatma like television and volleyball.",
+  "They don't drink beer.",
+  "They don't like it!"
+];
+const dictLinesEl = document.getElementById('dictLines');
+dictationLines.forEach(line => {
+  const el = document.createElement('div');
+  el.className = 'dictation-line';
+  el.textContent = line;
+  dictLinesEl.appendChild(el);
+});
+let dictIdx = 0;
+document.getElementById('dictNextBtn').addEventListener('click', () => {
+  const lines = dictLinesEl.querySelectorAll('.dictation-line');
+  if(dictIdx < lines.length){
+    lines[dictIdx].classList.add('shown');
+    dictIdx++;
+  }
+});
+document.getElementById('dictResetBtn').addEventListener('click', () => {
+  dictLinesEl.querySelectorAll('.dictation-line').forEach(l => l.classList.remove('shown'));
+  dictIdx = 0;
+});
+document.getElementById('dictAnsBtn').addEventListener('click', () => {
+  document.getElementById('dictAnsBox').classList.toggle('open');
+});
+
+// Section 8: Parallel writing model answer
+document.getElementById('parallelBtn').addEventListener('click', () => {
+  document.getElementById('parallelBox').classList.toggle('open');
+});
+
+// Section 9: Backs to the board
+const terms = [
+  {word: "Audience", def: "Who the text is written for."},
+  {word: "Purpose", def: "Why the text is being written; the goal behind it."},
+  {word: "Register", def: "How formal or informal the language is."},
+  {word: "Genre", def: "The type or category of text (letter, report, story...)."},
+  {word: "Coherence", def: "Whether the text makes logical sense as a whole."},
+  {word: "Cohesion", def: "The grammatical/lexical links that connect sentences (linkers, pronouns...)."},
+  {word: "Draft", def: "A version of a text that will likely be revised further."},
+  {word: "Controlled practice", def: "Writing practice with very little room for personal choice."},
+  {word: "Freer writing", def: "Writing with few restrictions, closer to real communication."},
+  {word: "Product writing", def: "An approach focused on the end result and imitating a model."},
+  {word: "Process writing", def: "An approach focused on drafting, redrafting, and the writing journey."},
+  {word: "Mingle", def: "A classroom activity where students move around talking to different partners."}
+];
+const termDisplay = document.getElementById('termDisplay');
+const termDef = document.getElementById('termDef');
+document.getElementById('termBtn').addEventListener('click', () => {
+  const t = terms[Math.floor(Math.random() * terms.length)];
+  termDisplay.textContent = t.word;
+  termDef.textContent = t.def;
+});
+</script>
+</body>
+</html>

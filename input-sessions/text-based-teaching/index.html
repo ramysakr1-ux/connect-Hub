@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  Connect Lite — input session: Text-based teaching
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy's own session, first written for Google Classroom in IH Istanbul's
+  look. This is the same session on Lite's desk: the house header, nav,
+  cards and foot come from ../session.css; the parts below are this page's
+  own. The script is the source's, untouched. Built by _house.py; edit the
+  recipe there, not this file.
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="../../brand/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../brand/apple-touch-icon.png">
+<title>Text-based teaching — Connect Lite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,600;0,700;1,600&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../hub-tokens.css">
+<link rel="stylesheet" href="../session.css">
+<style>
+  section{margin:0 0 26px;}
+  .section-tag{display:block; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--gold-deep); font-weight:600; margin:0 0 4px;}
+  h2{font-family:'Newsreader',Georgia,serif; font-size:1.3rem; font-weight:600; margin:0 0 10px; line-height:1.25;}
+  .prompt{font-size:.95rem; margin:0 0 10px;}
+  .hint{font-size:.84rem; color:var(--grey); font-style:italic;}
+  textarea.notes{width:100%; min-height:70px; margin-top:6px; padding:10px 12px; border-radius:var(--r-control); border:1.5px solid var(--sand-line); background:var(--field);
+    font-family:'Karla',sans-serif; font-size:.9rem; color:var(--ink); resize:vertical; line-height:1.5;}
+  textarea.notes:focus{outline:none; border-color:var(--gold); background:var(--field-focus);}
+  textarea.notes::placeholder{color:var(--field-ph); opacity:1;}
+  .reflect-box{background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:14px 16px; font-size:.92rem;}
+  .reveal-card{background:var(--paper); border:1.5px solid var(--sand-line); border-radius:var(--r-strip); padding:26px 22px; text-align:center;
+    font-family:'Newsreader',Georgia,serif; font-size:1.3rem; font-weight:600; cursor:pointer; user-select:none; transition:border-color .12s ease;}
+  .reveal-card:hover{border-color:var(--gold);}
+  .reveal-card.open{border-color:var(--teal);}
+  .reveal-card .answer{display:none; font-family:'Karla',sans-serif; font-size:.92rem; font-weight:400; margin-top:12px; line-height:1.6; color:var(--teal);}
+  .reveal-card.open .answer{display:block;}
+  .reveal-card .tap{font-family:'Karla',sans-serif; font-size:.72rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); margin-top:10px;}
+  .reveal-card.open .tap{display:none;}
+  .match-status{font-size:.8rem; font-weight:600; color:var(--gold-deep); margin:0 0 12px;}
+  .match-grid{display:grid; grid-template-columns:1fr 1.35fr; gap:10px 16px;}
+  .match-col-label{font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); font-weight:600; margin-bottom:2px;}
+  .match-col{display:flex; flex-direction:column; gap:8px;}
+  .match-col > div:not(.match-col-label){display:flex; flex-direction:column; gap:8px;}
+  .match-item{border:1.5px solid var(--sand-line); background:var(--field); border-radius:var(--r-control); padding:10px 12px; font-size:.9rem; cursor:pointer; transition:border-color .12s ease, background .12s ease;}
+  .match-item:hover{border-color:var(--gold);}
+  .match-item.term{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1rem;}
+  .match-item.def{color:var(--ink); font-size:.88rem;}
+  .match-item.selected{border-color:var(--gold); background:var(--field-focus);}
+  .match-item.correct{background:color-mix(in oklab, var(--teal) 11%, transparent); border-color:color-mix(in oklab, var(--teal) 30%, transparent); color:var(--teal); cursor:default;}
+  .match-item.wrong{animation:shake .3s ease; border-color:var(--brick);}
+  @keyframes shake{0%,100%{transform:translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);}}
+  .passage{font-size:.97rem; line-height:1.75;}
+  .passage strong{color:var(--teal);}
+  .tf-item{border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:12px 14px; margin-bottom:8px; background:var(--paper);}
+  .tf-statement{font-size:.92rem; margin-bottom:8px;}
+  .tf-buttons{display:flex; gap:8px;}
+  .tf-buttons button{font-family:'Karla',sans-serif; font-weight:700; font-size:.8rem; padding:5px 14px; border-radius:999px; border:1.5px solid var(--sand-line); background:var(--field); cursor:pointer; color:var(--grey); min-height:34px;}
+  .tf-buttons button:hover{border-color:var(--gold);}
+  .tf-buttons button:disabled{cursor:default;}
+  .tf-buttons button.picked-correct{background:color-mix(in oklab, var(--teal) 11%, transparent); border-color:color-mix(in oklab, var(--teal) 30%, transparent); color:var(--teal);}
+  .tf-buttons button.picked-wrong{background:color-mix(in oklab, var(--brick) 10%, transparent); border-color:color-mix(in oklab, var(--brick) 28%, transparent); color:var(--brick);}
+  .tf-feedback{display:none; margin-top:9px; font-size:.86rem; color:var(--grey); border-top:1px solid var(--row-line); padding-top:9px;}
+  .tf-feedback.show{display:block;}
+  .debrief-pool{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;}
+  .debrief-chip{border:1.5px solid var(--gold); background:var(--field); color:var(--gold-deep); font-weight:600; font-size:.88rem; padding:9px 14px; border-radius:var(--r-control); cursor:pointer; transition:background .12s ease;}
+  .debrief-chip:hover{background:var(--gold-wash);}
+  .debrief-chip.used{opacity:.3; pointer-events:none;}
+  .debrief-order{display:flex; flex-direction:column; gap:8px; min-height:56px;}
+  .debrief-slot{border:1.5px dashed var(--sand-line); border-radius:var(--r-control); padding:10px 14px; font-size:.9rem; color:var(--grey); display:flex; align-items:center; gap:10px;}
+  .debrief-slot.filled{border-style:solid; border-color:var(--teal); background:color-mix(in oklab, var(--teal) 9%, transparent); color:var(--ink); font-weight:600;}
+  .debrief-slot .num{font-family:'Newsreader',Georgia,serif; font-weight:700; color:var(--teal); width:18px;}
+  .debrief-status{margin-top:12px; font-size:.86rem; font-weight:600;}
+  .debrief-status.ok{color:var(--teal);}
+  .debrief-status.pending{color:var(--grey);}
+  .reset-btn{margin-top:10px; background:none; border:none; color:var(--grey); font:600 .82rem 'Karla',sans-serif; text-decoration:underline; text-underline-offset:4px; text-decoration-color:var(--gold); cursor:pointer; padding:0;}
+  .reset-btn:hover{color:var(--ink-warm);}
+  @media(max-width:600px){ .match-grid{grid-template-columns:1fr;} }
+  @media print{ .tf-feedback, .reveal-card .answer, .debrief-order, .debrief-status, .reset-btn{display:none !important;} .reveal-card.open .tap{display:block;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="header">
+    <p class="eyebrow">Input session · Loop input · 45 minutes</p>
+    <h1>Text-based teaching</h1>
+    <p class="sub">Taught the way you will teach it. The session is staged exactly like the lesson framework it teaches: do the tasks first, and the debrief at the end is where it gets named.</p>
+  </header>
+
+  <nav class="sticky-nav" id="stickyNav">
+    <a href="#leadin">Lead-in</a>
+    <a href="#whatis">What is it?</a>
+    <a href="#predict">Predict</a>
+    <a href="#read">Read</a>
+    <a href="#detail">Detail</a>
+    <a href="#debrief">Debrief</a>
+    <button class="print-btn" onclick="window.print()">Print the handout</button>
+  </nav>
+
+  <!-- LEAD-IN -->
+  <section id="leadin">
+    <span class="section-tag">Lead-in · 2 minutes</span>
+    <h2>Quick show of hands</h2>
+    <div class="card">
+      <div class="prompt">Think of the last coursebook lesson you did as a student. Did it start from a grammar point, or from a text?</div>
+      <div class="reflect-box">
+        Jot a one-line reaction if you like. This is just for you; nothing is checked.
+        <textarea class="notes" placeholder="e.g. It started with a reading, and the grammar came out of that..."></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHAT MAKES A LESSON TEXT-BASED -->
+  <section id="whatis">
+    <span class="section-tag">Stage 0 · What makes a lesson text-based?</span>
+    <h2>Before we go further</h2>
+    <div class="card">
+      <div class="reveal-card" onclick="this.classList.toggle('open')">
+        What makes a lesson text-based?
+        <div class="answer">A lesson where a reading or listening text supplies both the topic and the source of the target language — rather than a grammar point being chosen first and a text built to fit it.</div>
+        <div class="tap">Tap to reveal</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PREDICT -->
+  <section id="predict">
+    <span class="section-tag">Stage 1</span>
+    <h2>How do you think a text-based lesson should be staged?</h2>
+    <div class="card">
+      <div class="prompt">Discuss with your partner, about a minute. No wrong answers yet.</div>
+      <textarea class="notes" placeholder="Your prediction: what order do you think the stages come in, and why?"></textarea>
+    </div>
+  </section>
+
+  <!-- READ THE TEXT -->
+  <section id="read">
+    <span class="section-tag">Stage 2 · Read the text and check if your ideas were right or wrong</span>
+    <h2>Staging a text-based lesson</h2>
+    <div class="card">
+      <div class="passage">
+        A text-based lesson starts from a text — a reading or a listening — chosen for its content and its language together, not from a grammar point chosen first. It opens with a lead-in that creates interest in the topic, often a prediction task from a title or image. A <strong>gist task</strong> comes next, testing global understanding only: skim reading under a time limit, or hearing the audio once. Only once gist is secure does a <strong>detail task</strong> follow, prompting a closer, slower pass. From there the lesson turns to language: target items are lifted straight from the text itself, wherever they occur, rather than pre-selected — sometimes several different items, not just one. Meaning is usually checked with CCQs the teacher asks live, or with a short guided-discovery task on a handout where students work out meaning from context themselves before the teacher confirms it — either way, meaning comes before form. Form is then boarded: the teacher elicits it from students where possible, filling gaps rather than presenting the whole rule from scratch, since some of it is often visible in the text already. Pronunciation gets the same direct attention as in any other framework — the teacher models the item, marks stress and weak forms on the board or a handout, and drills chorally then individually; it is not left implicit just because the item came from a text. The lesson closes with a <strong>follow-on task</strong> that responds to the text's content — a discussion, a role play, or a piece of writing. The text drives the topic and supplies the language, but clarifying that language — meaning, form and pronunciation — still takes real, direct teaching time; it does not happen automatically just because students met the item while reading.
+      </div>
+    </div>
+  </section>
+
+  <!-- DETAIL QUESTIONS -->
+  <section id="detail">
+    <span class="section-tag">Stage 3</span>
+    <h2>Detail questions</h2>
+    <div class="card">
+      <div class="prompt hint" style="margin-bottom:14px;">More time now. Answer these from the text, then check with your partner.</div>
+      <div id="tfList"></div>
+    </div>
+  </section>
+
+  <!-- DEBRIEF -->
+  <section id="debrief">
+    <span class="section-tag">Debrief · put the stages back in order</span>
+    <h2>Order the stages</h2>
+    <div class="card">
+      <div class="prompt">Click each stage in the order you just experienced it. This is a loop input: the session modelled text-based teaching instead of only describing it.</div>
+      <div class="debrief-pool" id="debriefPool"></div>
+      <div class="debrief-order" id="debriefOrder"></div>
+      <div class="debrief-status pending" id="debriefStatus">0 of 4 placed. Click the one that comes next.</div>
+      <button class="reset-btn" onclick="resetDebrief()">Reset order</button>
+    </div>
+  </section>
+
+  <footer class="hub-brand-foot">
+    <span class="hub-lockup"><span class="hub-lockup-tile"><svg viewBox="8 30 104 60" width="12" height="7" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"/></svg></span><span class="hub-lockup-c">Connect</span><span class="hub-lockup-l">Lite</span></span>
+    <span>designed and built by <b>Ramy</b></span>
+  </footer>
+</div>
+
+<script>
+  // ---- True/False ----
+  const tfItems = [
+    {s:"The target language is chosen before the text.", t:false, fb:"False — target language is lifted from the text itself, wherever it occurs, not pre-selected before the text is chosen."},
+    {s:"A gist task should be timed, to keep students reading fast.", t:true, fb:"True — gist reading is skim reading under a time limit (or hearing audio once), testing global understanding only."},
+    {s:"Students should look up every unknown word before reading for gist.", t:false, fb:"False — that would defeat the point of a gist task, which tests overall understanding, not every word."},
+    {s:"Detail tasks come before gist tasks.", t:false, fb:"False — gist comes first, and only once that's secure does a closer, slower detail task follow."},
+    {s:"Meaning is always checked with a teacher-led CCQ, never a handout task.", t:false, fb:"False — meaning can be checked with live CCQs or a guided-discovery handout task; either way, meaning comes before form."},
+    {s:"Form should always be given by the teacher, never elicited from students.", t:false, fb:"False — the teacher elicits form from students where possible, filling gaps rather than presenting the whole rule from scratch."},
+    {s:"Pronunciation can be skipped since students met the item in written or spoken text already.", t:false, fb:"False — pronunciation still gets direct attention: modelling, marking stress and weak forms, and drilling."},
+    {s:"The follow-on task should relate to the text's content.", t:true, fb:"True — the lesson closes with a follow-on task that responds to the text's content, such as a discussion, role play, or piece of writing."},
+    {s:"A text-based lesson can only use one language item from the text.", t:false, fb:"False — sometimes several different language items are drawn from the text, not just one."}
+  ];
+  const tfList = document.getElementById('tfList');
+  tfItems.forEach((item)=>{
+    const wrap = document.createElement('div');
+    wrap.className = 'tf-item';
+    wrap.innerHTML = `
+      <div class="tf-statement">${item.s}</div>
+      <div class="tf-buttons">
+        <button data-val="true">True</button>
+        <button data-val="false">False</button>
+      </div>
+      <div class="tf-feedback">${item.fb}</div>
+    `;
+    const buttons = wrap.querySelectorAll('.tf-buttons button');
+    buttons.forEach(btn=>{
+      btn.onclick = ()=>{
+        const chosen = btn.dataset.val === "true";
+        const correct = chosen === item.t;
+        buttons.forEach(b=>{
+          b.classList.remove('picked-correct','picked-wrong');
+          b.disabled = true;
+        });
+        btn.classList.add(correct ? 'picked-correct' : 'picked-wrong');
+        if(!correct){
+          buttons.forEach(b=>{ if((b.dataset.val==="true")===item.t) b.classList.add('picked-correct'); });
+        }
+        wrap.querySelector('.tf-feedback').classList.add('show');
+      };
+    });
+    tfList.appendChild(wrap);
+  });
+
+  // ---- Debrief ordering ----
+  function shuffled(arr){ return arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(v=>v[1]); }
+  const debriefStages = shuffled([
+    "Read the text, check ideas",
+    "Lead-in",
+    "Detail check",
+    "Predict the staging"
+  ]);
+  const correctDebriefOrder = ["Lead-in","Predict the staging","Read the text, check ideas","Detail check"];
+  let debriefPlaced = [];
+
+  const debriefPool = document.getElementById('debriefPool');
+  const debriefOrderEl = document.getElementById('debriefOrder');
+
+  function renderDebrief(){
+    debriefPool.innerHTML = '';
+    debriefStages.forEach(name=>{
+      const chip = document.createElement('div');
+      chip.className = 'debrief-chip' + (debriefPlaced.includes(name) ? ' used' : '');
+      chip.textContent = name;
+      chip.onclick = ()=>{
+        if(debriefPlaced.includes(name)) return;
+        debriefPlaced.push(name);
+        renderDebrief();
+      };
+      debriefPool.appendChild(chip);
+    });
+    debriefOrderEl.innerHTML = '';
+    for(let i=0;i<4;i++){
+      const slot = document.createElement('div');
+      slot.className = 'debrief-slot' + (debriefPlaced[i] ? ' filled' : '');
+      slot.innerHTML = `<span class="num">${i+1}</span> ${debriefPlaced[i] || 'Click the one that comes next'}`;
+      debriefOrderEl.appendChild(slot);
+    }
+    const status = document.getElementById('debriefStatus');
+    if(debriefPlaced.length < 4){
+      status.textContent = debriefPlaced.length + " of 4 placed. Click the one that comes next.";
+      status.className = 'debrief-status pending';
+    } else {
+      const ok = debriefPlaced.every((v,i)=> v===correctDebriefOrder[i]);
+      status.textContent = ok
+        ? "That's the order — text-based teaching, modelled: lead-in, predict the staging, read to check, then detail check."
+        : "Not quite that order — reset and try again, thinking about when you'd first meet the text.";
+      status.className = 'debrief-status ' + (ok ? 'ok' : 'pending');
+    }
+  }
+  function resetDebrief(){
+    debriefPlaced = [];
+    renderDebrief();
+  }
+  renderDebrief();
+</script>
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  Connect Lite — input session: Teaching exam classes
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy's own session, first written for Google Classroom in IH Istanbul's
+  look. This is the same session on Lite's desk: the house header, nav,
+  cards and foot come from ../session.css; the parts below are this page's
+  own. The script is the source's, untouched. Built by _house.py; edit the
+  recipe there, not this file.
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="../../brand/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../brand/apple-touch-icon.png">
+<title>Teaching exam classes — Connect Lite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,600;0,700;1,600&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../hub-tokens.css">
+<link rel="stylesheet" href="../session.css">
+<style>
+  .ladder{display:flex; flex-direction:column-reverse; gap:8px; margin:12px 0;}
+  .rung{border-radius:var(--r-strip); padding:12px 16px; cursor:pointer; border:1.5px solid var(--sand-line); background:var(--paper); transition:border-color .12s ease; display:flex; align-items:center; gap:14px;}
+  .rung:hover{border-color:var(--gold);}
+  .rung.open{border-color:var(--teal);}
+  .rung .lvl{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.2rem; color:var(--paper); background:var(--teal); border-radius:var(--r-control); padding:6px 12px; min-width:52px; text-align:center;}
+  .rung .rtext{flex:1;}
+  .rung .rname{font-weight:600;}
+  .rung .rdetail{display:none; font-size:.86rem; color:var(--ink); margin-top:6px; line-height:1.5;}
+  .rung.open .rdetail{display:block;}
+  .exam-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:12px 0;}
+  @media(max-width:800px){ .exam-grid{grid-template-columns:repeat(2,1fr);} }
+  @media(max-width:560px){ .exam-grid{grid-template-columns:1fr;} }
+  .exam-card{border-radius:var(--r-strip); border:1.5px solid var(--sand-line); background:var(--paper); cursor:pointer; overflow:hidden; transition:border-color .12s ease;}
+  .exam-card:hover{border-color:var(--gold);}
+  .exam-card.open{border-color:var(--teal);}
+  .exam-front{padding:14px 14px 12px; text-align:center;}
+  .exam-front .acro{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.3rem; color:var(--teal);}
+  .exam-front .full{font-size:.78rem; color:var(--grey); margin-top:2px;}
+  .exam-front .lvltag{display:inline-block; margin-top:8px; font-size:.68rem; font-weight:700; background:var(--box); border:1px solid var(--sand-line); color:oklch(45% 0.02 70); padding:2px 9px; border-radius:999px;}
+  .exam-back{display:none; padding:12px 14px; font-size:.84rem; line-height:1.6; border-top:1px solid var(--row-line);}
+  .exam-back b{color:var(--teal);}
+  .exam-card.open .exam-back{display:block;}
+  .scenario{background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:14px 16px; margin:10px 0;}
+  .scenario .sc-text{font-size:.92rem; margin-bottom:8px; font-style:italic;}
+  .examiner-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:12px 0;}
+  @media(max-width:640px){ .examiner-grid{grid-template-columns:1fr;} }
+  .examiner-panel{border-radius:var(--r-strip); border:1.5px solid var(--sand-line); overflow:hidden; background:var(--paper); transition:border-color .12s ease;}
+  .examiner-panel:hover{border-color:var(--gold);}
+  .examiner-panel.open{border-color:var(--teal);}
+  .examiner-head{padding:14px 16px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .examiner-head h4{margin:0; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.05rem; color:var(--ink);}
+  .examiner-head .chev{width:8px; height:8px; border-right:2px solid var(--gold-deep); border-bottom:2px solid var(--gold-deep); transform:rotate(45deg); transition:transform .2s; flex:none; margin-right:4px;}
+  .examiner-panel.open .chev{transform:rotate(225deg);}
+  .examiner-body{display:none; padding:0 16px 14px; font-size:.88rem; line-height:1.65;}
+  .examiner-body p{margin:0 0 6px;}
+  .examiner-panel.open .examiner-body{display:block;}
+  .examiner-body ul{margin:8px 0 0; padding-left:18px;}
+  .certificate{text-align:center; border:2px dashed var(--gold); border-radius:var(--r-card); padding:26px 22px; background:var(--gold-wash);}
+  .certificate h3{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.4rem; color:var(--teal); margin:0 0 6px;}
+  .certificate p{color:var(--ink); font-size:.92rem; margin:0; max-width:52ch; margin-inline:auto;}
+  .card > ul{font-size:.92rem; line-height:1.7; padding-left:20px;}
+  @media print{ .rung .rdetail{display:block !important;} .exam-back{display:block !important;} .examiner-body{display:block !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="header">
+    <p class="eyebrow">Input session · CELTA</p>
+    <h1>Teaching exam classes</h1>
+    <p class="sub">Young learners to C2: Cambridge, IELTS, TOEFL and PTE, which exam to recommend, and how to become an examiner yourself.</p>
+  </header>
+
+  <nav class="sticky-nav" id="stickyNav">
+    <a href="#s1">1 · The CEFR ladder</a>
+    <a href="#s2">2 · Acronyms</a>
+    <a href="#s3">3 · The exams</a>
+    <a href="#s4">4 · Which exam?</a>
+    <a href="#s5">5 · Be an examiner</a>
+    <a href="#s6">6 · Wrap-up</a>
+    <button class="print-btn" onclick="window.print()">Print the handout</button>
+  </nav>
+
+  <!-- 1: CEFR LADDER -->
+  <section id="s1">
+    <div class="card">
+      <div class="stage-title">Climb the CEFR ladder <span class="badge">Explore</span><span class="time">8 min</span></div>
+      <p class="lead">Every exam in this session sits somewhere on this ladder. Click a rung to see what a learner at that level can actually do.</p>
+      <div class="ladder" id="ladder"></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>the names</span></div>
+
+  <!-- 2: ACRONYM MATCH -->
+  <section id="s2">
+    <div class="card">
+      <div class="stage-title">Decode the acronyms <span class="badge">Match the pills</span><span class="time">8 min</span></div>
+      <p class="lead">Exam names love an acronym. Click one on the left, then its full name on the right.</p>
+      <div class="pill-match-wrap"><div class="pill-col" id="acroLeft"></div><div class="pill-col" id="acroRight"></div></div>
+      <div class="feedback" id="acroFeedback"></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>the exams</span></div>
+
+  <!-- 3: EXAM EXPLORER -->
+  <section id="s3">
+    <div class="card">
+      <div class="stage-title">The exams <span class="badge">Choose your own path</span><span class="time">15 min</span></div>
+      <p class="lead">Wander at your own pace. Click any card to open it: level, age group, skills tested, format, and one fact worth knowing. Come back to any you like.</p>
+      <div class="exam-grid" id="examGrid"></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>apply it</span></div>
+
+  <!-- 4: WHICH EXAM -->
+  <section id="s4">
+    <div class="card">
+      <div class="stage-title">Which exam would you recommend? <span class="badge">Scenarios</span><span class="time">8 min</span></div>
+      <p class="lead">Real questions students ask you in the corridor. What would you suggest?</p>
+      <div id="scenarioArea"></div>
+      <div class="btn-row">
+        <button class="btn teal" onclick="checkScenarios()">Check my recommendations</button>
+        <span class="feedback" id="scenarioFeedback"></span>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"><span>your future</span></div>
+
+  <!-- 5: BE AN EXAMINER -->
+  <section id="s5">
+    <div class="card">
+      <div class="stage-title">Being an examiner <span class="badge">Your choice</span><span class="time">10 min</span></div>
+      <p class="lead">Teaching exam classes is one path. Marking and examining them is another; many CELTA and DELTA-qualified teachers do both. Click whichever role interests you.</p>
+      <div class="examiner-grid" id="examinerGrid"></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>wrap-up</span></div>
+
+  <!-- 6: WRAP-UP -->
+  <section id="s6">
+    <div class="card">
+      <div class="stage-title">Wrap-up</div>
+      <div class="certificate">
+                <h3>Certificate of exam awareness</h3>
+        <p>This confirms that you can now tell your KET from your CAE, your IELTS band from your TOEFL score, and that you might fancy a go at examining one day.</p>
+      </div>
+      <p class="lead" style="margin-top:18px;"><b>Before you go, discuss:</b></p>
+      <ul>
+        <li>Which exam would you feel most confident teaching tomorrow?</li>
+        <li>Which one do you want to find out more about?</li>
+        <li>Would you ever consider training as an examiner, for speaking or for writing?</li>
+      </ul>
+    </div>
+  </section>
+
+  <p class="sources"><b>Sources.</b> Exam facts are from Cambridge English, IELTS, ETS and Pearson's own published descriptions of each exam.</p>
+
+  <footer class="hub-brand-foot">
+    <span class="hub-lockup"><span class="hub-lockup-tile"><svg viewBox="8 30 104 60" width="12" height="7" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"/></svg></span><span class="hub-lockup-c">Connect</span><span class="hub-lockup-l">Lite</span></span>
+    <span>designed and built by <b>Ramy</b></span>
+  </footer>
+</div>
+
+<script>
+function toggleOpen(el, group){
+  const wasOpen = el.classList.contains('open');
+  if(group) group.forEach(x=>x.classList.remove('open'));
+  el.classList.toggle('open', !wasOpen);
+}
+
+// ---------- 1. CEFR ladder ----------
+const cefr = [
+  {lvl:'A1', name:'Beginner', c:'#8a9a2a', d:'Can understand and use very basic phrases, introduce themselves, and ask simple questions. Cambridge: pre-A1 Starters sits just below this.'},
+  {lvl:'A2', name:'Elementary', c:'#2a8c82', d:'Can communicate in simple, routine tasks on familiar topics. Cambridge: Movers, Flyers and A2 Key (KET) sit here.'},
+  {lvl:'B1', name:'Intermediate', c:'#1F497D', d:'Can deal with most situations while travelling, describe experiences and give reasons for opinions. Cambridge: B1 Preliminary (PET). IELTS/TOEFL/PTE candidates often start scoring in this range.'},
+  {lvl:'B2', name:'Upper-Intermediate', c:'#7a4a9c', d:'Can interact fluently with native speakers, produce clear detailed text. Cambridge: B2 First (FCE) — the most widely taken Cambridge exam.'},
+  {lvl:'C1', name:'Advanced', c:'#c98a1c', d:'Can use language flexibly for social, academic and professional purposes. Cambridge: C1 Advanced (CAE) — accepted by many universities and employers.'},
+  {lvl:'C2', name:'Proficiency', c:'#b8433a', d:'Can understand virtually everything and express themselves spontaneously with precision. Cambridge: C2 Proficiency (CPE) — near-native level.'}
+];
+const ladderEl = document.getElementById('ladder');
+cefr.forEach(l=>{
+  const r = document.createElement('div');
+  r.className='rung'; r.style.setProperty('--c', l.c);
+  r.innerHTML = '<div class="lvl">'+l.lvl+'</div><div class="rtext"><div class="rname">'+l.name+'</div><div class="rdetail">'+l.d+'</div></div>';
+  r.onclick = ()=> r.classList.toggle('open');
+  ladderEl.appendChild(r);
+});
+
+// ---------- 2. acronym matching ----------
+const acronyms = [
+  {t:'CEFR', d:'Common European Framework of Reference for Languages'},
+  {t:'YLE', d:'Young Learners English (Starters, Movers, Flyers)'},
+  {t:'KET', d:'Key English Test — now called A2 Key'},
+  {t:'PET', d:'Preliminary English Test — now called B1 Preliminary'},
+  {t:'FCE', d:'First Certificate in English — now called B2 First'},
+  {t:'CAE', d:'Certificate in Advanced English — now called C1 Advanced'},
+  {t:'CPE', d:'Certificate of Proficiency in English — now called C2 Proficiency'},
+  {t:'IELTS', d:'International English Language Testing System'},
+  {t:'TOEFL', d:'Test of English as a Foreign Language'},
+  {t:'PTE', d:'Pearson Test of English'},
+  {t:'TKT', d:'Teaching Knowledge Test'}
+];
+function buildPillMatch(items,leftId,rightId,fbId,keyL,keyR){
+  const L=document.getElementById(leftId), R=document.getElementById(rightId), fb=document.getElementById(fbId);
+  let selL=null, selR=null, done=0;
+  const shuffled = items.map((it,i)=>({text:it[keyR], idx:i})).sort(()=>Math.random()-0.5);
+  items.forEach((it,i)=>{ const p=document.createElement('div'); p.className='pill'; p.textContent=it[keyL]; p.dataset.i=i;
+    p.onclick=()=>{ if(p.classList.contains('matched'))return; L.querySelectorAll('.pill').forEach(x=>x.classList.remove('selected')); p.classList.add('selected'); selL=p; go(); }; L.appendChild(p); });
+  shuffled.forEach(s=>{ const p=document.createElement('div'); p.className='pill'; p.textContent=s.text; p.dataset.i=s.idx;
+    p.onclick=()=>{ if(p.classList.contains('matched'))return; R.querySelectorAll('.pill').forEach(x=>x.classList.remove('selected')); p.classList.add('selected'); selR=p; go(); }; R.appendChild(p); });
+  function go(){
+    if(!selL||!selR)return;
+    if(selL.dataset.i===selR.dataset.i){ selL.classList.replace('selected','matched'); selR.classList.replace('selected','matched'); done++;
+      fb.textContent = done===items.length ? 'All eleven matched' : done+' / '+items.length+' matched'; fb.className='feedback good'; selL=selR=null; }
+    else { selL.classList.add('wrong'); selR.classList.add('wrong'); const a=selL,b=selR; selL=selR=null;
+      setTimeout(()=>{ a.classList.remove('selected','wrong'); b.classList.remove('selected','wrong'); },500); }
+  }
+}
+buildPillMatch(acronyms,'acroLeft','acroRight','acroFeedback','t','d');
+
+// ---------- 3. exam explorer ----------
+const exams = [
+  {acro:'YLE', full:'Starters · Movers · Flyers', c:'#8a9a2a', csoft:'#f1f5df', level:'Pre-A1 – A2', age:'6–12', skills:'Listening, Reading & Writing, Speaking', format:'Paper or computer', fact:'No pass or fail: candidates earn 1 to 5 shields, so every child feels successful.'},
+  {acro:'A2 Key', full:'KET — Key English Test', c:'#2a8c82', csoft:'#dff1ee', level:'A2', age:'12+', skills:'Reading & Writing, Listening, Speaking', format:'Paper or computer', fact:'Often a learner\u2019s first "proper" international exam.'},
+  {acro:'B1 Preliminary', full:'PET — Preliminary English Test', c:'#1F497D', csoft:'#e3ebf5', level:'B1', age:'14+', skills:'Reading, Writing, Listening, Speaking', format:'Paper or computer', fact:'A common target for school-leaver exchange programmes.'},
+  {acro:'B2 First', full:'FCE — First Certificate in English', c:'#7a4a9c', csoft:'#efe3f5', level:'B2', age:'16+', skills:'Reading, Writing, Listening, Use of English, Speaking', format:'Paper or computer', fact:'The most widely taken Cambridge exam in the world.'},
+  {acro:'C1 Advanced', full:'CAE — Certificate in Advanced English', c:'#c98a1c', csoft:'#fbf0d8', level:'C1', age:'16+', skills:'Reading, Writing, Listening, Use of English, Speaking', format:'Paper or computer', fact:'Accepted by thousands of universities and employers worldwide.'},
+  {acro:'C2 Proficiency', full:'CPE — Certificate of Proficiency', c:'#b8433a', csoft:'#f8e1de', level:'C2', age:'18+', skills:'Reading, Writing, Listening, Use of English, Speaking', format:'Paper or computer', fact:'Near-native level: some questions trip up native speakers too.'},
+  {acro:'IELTS', full:'International English Language Testing System', c:'#1F497D', csoft:'#e3ebf5', level:'B1–C2 (band 0–9)', age:'16+', skills:'Listening, Reading, Writing, Speaking (face-to-face)', format:'Paper, computer, or Academic/General Training', fact:'The Speaking test is a real face-to-face conversation with an examiner; no computer involved.'},
+  {acro:'TOEFL iBT', full:'Test of English as a Foreign Language', c:'#b8433a', csoft:'#f8e1de', level:'B1–C2 (score 0–120)', age:'16+', skills:'Reading, Listening, Speaking, Writing — all on computer', format:'Computer-based', fact:'Speaking answers are recorded and sent off for scoring; you never talk to a live examiner.'},
+  {acro:'PTE Academic', full:'Pearson Test of English', c:'#7a4a9c', csoft:'#efe3f5', level:'A2–C2 (score 10–90)', age:'16+', skills:'All 4 skills, fully computer-based and AI-scored', format:'Computer-based', fact:'Results are often ready in under 48 hours, the fastest of the major exams.'}
+];
+const grid = document.getElementById('examGrid');
+exams.forEach(e=>{
+  const card = document.createElement('div');
+  card.className='exam-card'; card.style.setProperty('--c', e.c); card.style.setProperty('--c-soft', e.csoft);
+  card.innerHTML = '<div class="exam-front"><div class="acro">'+e.acro+'</div><div class="full">'+e.full+'</div><div class="lvltag">'+e.level+'</div></div>'+
+    '<div class="exam-back"><b>Age:</b> '+e.age+'<br><b>Skills:</b> '+e.skills+'<br><b>Format:</b> '+e.format+'<br><b>Fun fact:</b> '+e.fact+'</div>';
+  card.onclick = ()=> card.classList.toggle('open');
+  grid.appendChild(card);
+});
+
+// ---------- 4. scenarios ----------
+const scenarios = [
+  {text:'"I\u2019m 9 and I want to learn English through games, nothing scary."', options:['YLE (Starters/Movers)','C2 Proficiency','PTE Academic'], answer:'YLE (Starters/Movers)'},
+  {text:'"I want to study for a Bachelor\u2019s degree in the United States."', options:['A2 Key','TOEFL iBT','YLE'], answer:'TOEFL iBT'},
+  {text:'"I need a fast result. I have a visa deadline in one week and I\u2019m comfortable on a computer."', options:['PTE Academic','C2 Proficiency','B1 Preliminary'], answer:'PTE Academic'},
+  {text:'"I\u2019m B2 and I want a widely recognised certificate that doesn\u2019t expire."', options:['B2 First','IELTS','A2 Key'], answer:'B2 First'},
+  {text:'"I\u2019m moving to the UK for a skilled worker visa and need an official score, face-to-face speaking is fine."', options:['IELTS','TOEFL iBT','YLE'], answer:'IELTS'}
+];
+const scArea = document.getElementById('scenarioArea');
+scenarios.forEach((s,i)=>{
+  const d = document.createElement('div'); d.className='scenario';
+  let opts = '<option value="">Choose an exam</option>'+s.options.map(o=>'<option value="'+o+'">'+o+'</option>').join('');
+  d.innerHTML = '<div class="sc-text">'+s.text+'</div><select class="blank" id="sc'+i+'">'+opts+'</select>';
+  scArea.appendChild(d);
+});
+function checkScenarios(){
+  let ok=0; scenarios.forEach((s,i)=>{ const sel=document.getElementById('sc'+i); const r = sel.value===s.answer;
+    sel.classList.remove('ok','no'); if(sel.value) sel.classList.add(r?'ok':'no'); ok+=r; });
+  const fb=document.getElementById('scenarioFeedback'); fb.textContent = ok+' / '+scenarios.length+' correct'; fb.className='feedback '+(ok===scenarios.length?'good':'bad');
+}
+
+// ---------- 5. examiner panels ----------
+const examinerRoles = [
+  {title:'Speaking Examiner', c:'#1F497D', csoft:'#e3ebf5', body:'<p>In Cambridge exams, speaking is usually assessed by two examiners: an <b>Interlocutor</b>, who manages the conversation and asks the questions, and an <b>Assessor</b>, who sits silently and scores. IELTS speaking is one examiner, face-to-face, following a structured script.</p><ul><li>Requirements: a recognised teaching qualification (CELTA is enough to apply) and usually 3 years\u2019 relevant experience</li><li>You apply through an approved centre (British Council, Cambridge-authorised centre, IDP)</li><li>Full paid training, followed by standardisation: practice sessions scored against a benchmark until you\u2019re reliably consistent</li><li>You sit in on live exams before being signed off to examine alone</li><li>Ongoing: examiners are re-standardised regularly to keep everyone marking to the same standard</li></ul>'},
+  {title:'Writing / Other Examiner', c:'#7a4a9c', csoft:'#efe3f5', body:'<p>Writing (and Reading/Listening, where relevant) is usually marked remotely, online, often from home, a popular route for teachers who want flexible, exam-season income.</p><ul><li>Same starting point: a teaching qualification and relevant experience</li><li>Apply via Cambridge Assessment English, IELTS partners, or ETS/Pearson depending on the exam</li><li>Training focuses on applying the mark scheme consistently: lots of sample scripts, lots of moderation</li><li>You\u2019ll periodically re-mark "seeded" scripts with known scores to prove you\u2019re still calibrated</li><li>TKT (Teaching Knowledge Test) can be a useful extra credential if you want to broaden into assessment-related roles</li></ul>'}
+];
+const exGrid = document.getElementById('examinerGrid');
+const panels = [];
+examinerRoles.forEach(r=>{
+  const p = document.createElement('div'); p.className='examiner-panel'; p.style.setProperty('--c', r.c); p.style.setProperty('--c-soft', r.csoft);
+  p.innerHTML = '<div class="examiner-head"><h4>'+r.title+'</h4><span class="chev"></span></div><div class="examiner-body">'+r.body+'</div>';
+  p.querySelector('.examiner-head').onclick = ()=> p.classList.toggle('open');
+  exGrid.appendChild(p); panels.push(p);
+});
+
+// ---------- nav ----------
+const navLinks=document.querySelectorAll('.sticky-nav a'), allSections=document.querySelectorAll('section[id]');
+function onScroll(){ const d=document.documentElement; const st=d.scrollTop||document.body.scrollTop; const sh=d.scrollHeight-d.clientHeight;
+  let cur=allSections[0]?allSections[0].id:''; allSections.forEach(s=>{ if(s.getBoundingClientRect().top<=150) cur=s.id; });
+  navLinks.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+cur)); }
+document.addEventListener('scroll',onScroll); onScroll();
+</script>
+</body>
+</html>

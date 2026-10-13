@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  Connect Lite — input session: Word and sentence stress
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy's own session, first written for Google Classroom in IH Istanbul's
+  look. This is the same session on Lite's desk: the house header, nav,
+  cards and foot come from ../session.css; the parts below are this page's
+  own. The script is the source's, untouched. Built by _house.py; edit the
+  recipe there, not this file.
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="../../brand/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../brand/apple-touch-icon.png">
+<title>Word and sentence stress — Connect Lite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,600;0,700;1,600&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../hub-tokens.css">
+<link rel="stylesheet" href="../session.css">
+<style>
+  .instr{color:var(--grey); font-size:.92rem; margin:0 0 12px; line-height:1.55;}
+  .chant-line{font-family:'Newsreader',Georgia,serif; font-size:1.25rem; margin:6px 0; line-height:1.6;}
+  .stress{color:var(--teal); font-weight:700;}
+  .dim{color:var(--grey); font-size:.9em;}
+  details.reveal{background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:10px 14px; margin:12px 0 6px;}
+  details.reveal > summary{cursor:pointer; font-weight:600; color:var(--teal); font-size:.9rem; list-style:none;}
+  details.reveal > summary::-webkit-details-marker{display:none;}
+  details.reveal > summary::before{content:''; display:inline-block; width:7px; height:7px; border-right:1.5px solid var(--gold-deep); border-bottom:1.5px solid var(--gold-deep); transform:rotate(-45deg); margin:0 10px 2px 2px; transition:transform .15s;}
+  details.reveal[open] > summary::before{transform:rotate(45deg);}
+  details.reveal .content{margin-top:8px; font-size:.9rem; line-height:1.6;}
+  .legend{display:flex; gap:16px; flex-wrap:wrap; font-size:.82rem; color:var(--grey); margin:0 0 12px; align-items:center;}
+  .legend span{display:inline-flex; align-items:center; gap:6px;}
+  .legend .dot{display:inline-block; border-radius:50%;}
+  .word-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:8px;}
+  .word-card{background:var(--paper); border:1.5px solid var(--sand-line); border-radius:var(--r-strip); padding:10px 12px; transition:border-color .12s ease;}
+  .word-card:hover{border-color:var(--gold);}
+  .word-card[open]{border-color:var(--teal);}
+  .word-card summary{cursor:pointer; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.05rem; list-style:none;}
+  .word-card summary::-webkit-details-marker{display:none;}
+  .bubbles{margin-top:8px;}
+  .syll-row{display:flex; gap:10px; align-items:flex-end;}
+  .syll{display:flex; flex-direction:column; align-items:center; gap:4px; min-width:32px;}
+  .circle{border-radius:50%;}
+  .circle.primary{width:16px; height:16px; background:var(--teal);}
+  .circle.secondary{width:11px; height:11px; background:var(--gold);}
+  .circle.unstressed{width:7px; height:7px; background:var(--sand-line);}
+  .syll .txt{font-size:.82rem; color:var(--ink);}
+  .rose-line{font-family:'Newsreader',Georgia,serif; font-size:1.15rem; margin:12px 0 0;}
+  .paris-block{background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:12px 14px; margin:0 0 10px;}
+  .paris-block .qline{font-size:.95rem;}
+  .paris-block .aline{font-size:.95rem; color:var(--grey); margin:4px 0 0;}
+  .paris-block details.reveal{margin:8px 0 0;}
+  .quiz-word{background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:12px 14px; margin:0 0 10px;}
+  .quiz-word h3{font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--gold-deep); font-weight:600; margin:0 0 4px;}
+  .quiz-sentence{font-size:.95rem; margin:0 0 8px;}
+  .quiz-options{display:flex; gap:8px; flex-wrap:wrap;}
+  .opt-btn{background:var(--field); border:1.5px solid var(--sand-line); padding:6px 14px; border-radius:999px; font-family:'Karla',sans-serif; font-weight:700; font-size:.82rem; cursor:pointer; color:var(--grey); min-height:34px; transition:border-color .12s ease;}
+  .opt-btn:hover{border-color:var(--gold);}
+  .opt-btn.correct{background:color-mix(in oklab, var(--teal) 11%, transparent); border-color:color-mix(in oklab, var(--teal) 30%, transparent); color:var(--teal);}
+  .opt-btn.incorrect{background:color-mix(in oklab, var(--brick) 10%, transparent); border-color:color-mix(in oklab, var(--brick) 28%, transparent); color:var(--brick);}
+  .opt-btn[disabled]{cursor:default;}
+  .quiz-feedback{margin-top:8px; font-size:.86rem; color:var(--grey);}
+  /* the lead-in table */
+  .hm{display:grid; grid-template-columns:150px 1fr; gap:6px 12px; align-items:center; padding:7px 0; border-top:1px solid var(--row-line); font-size:.9rem;}
+  .hm:first-child{border-top:0;}
+  .hm .who{font-weight:600;}
+  .hm .picks{display:flex; gap:6px; flex-wrap:wrap;}
+  .hm .pick{background:var(--field); border:1.5px solid var(--sand-line); border-radius:999px; padding:4px 11px; font-family:'Karla',sans-serif; font-weight:600; font-size:.78rem; color:var(--grey); cursor:pointer; min-height:32px;}
+  .hm .pick:hover{border-color:var(--gold);}
+  .hm .pick.on{background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  @media(max-width:560px){ .hm{grid-template-columns:1fr; gap:4px;} .word-grid{grid-template-columns:1fr 1fr;} }
+  @media print{ details.reveal, .quiz-feedback{display:none !important;} .word-card .bubbles{display:none;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="header">
+    <p class="eyebrow">Input session · Phonology 2 of 3</p>
+    <h1>Word and sentence stress</h1>
+    <p class="sub">Where the weight falls, and what it changes. The rhythm of English, primary and secondary stress, one sentence with seven meanings, five questions about Paris, and nouns that turn into verbs.</p>
+  </header>
+
+  <nav class="sticky-nav" id="stickyNav">
+    <a href="#s0">Lead-in</a>
+    <a href="#s1">1 · Rhythm</a>
+    <a href="#s2">2 · Word stress</a>
+    <a href="#s3">3 · Contrastive</a>
+    <a href="#s4">4 · Attitudinal</a>
+    <a href="#s5">5 · Noun or verb</a>
+    <button class="print-btn" onclick="window.print()">Print the handout</button>
+  </nav>
+
+  <section id="s0">
+<div class="card">
+<div class="stage-title">Lead-in: one line, nine readings <span class="badge">Watch twice</span><span class="time">8 min</span></div>
+<p class="lead">Nine actors, one line from <i>Hamlet</i>, and a disagreement about where the stress goes. First time through, tick the word each one lands on. Second time, in pairs: what does the line mean each time, and which reading would you choose?</p>
+<div class="film"><iframe src="https://www.youtube-nocookie.com/embed/iQULEW2JwHE?rel=0&modestbranding=1" title="Shakespeare Live! From the RSC: To be, or not to be" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>
+<p class="film-link">From <i>Shakespeare Live! From the RSC</i> (BBC Two, 23 April 2016). If the frame stays black, <a href="https://www.youtube.com/watch?v=iQULEW2JwHE" target="_blank" rel="noopener">watch it on YouTube</a>; the RSC's own <a href="https://www.youtube.com/watch?v=6gZtW-U6qG4" target="_blank" rel="noopener">short cut</a> has the ending.</p>
+<div id="hamlet"></div>
+<div class="btn-row"><button class="btn secondary" onclick="toggleReveal('hamletKey',this)">Reveal</button></div>
+<div class="reveal-block" id="hamletKey"><h4>What the sketch does</h4>Each actor is handed a different word and a different reading: a contrast, a doubt, a question of identity. The Prince of Wales ends it by landing on <b>question</b>, the one word nobody else had used. One line, nine meanings, and the stress did all the work. That is the whole of this session: in English, where the weight falls is part of what you mean.</div>
+</div>
+</section>
+<div class="divider"><span>rhythm</span></div>
+<section id="s1">
+<div class="card">
+<div class="stage-title">The rhythm of English <span class="badge">Say it aloud</span></div>
+  <p class="instr">Say each line below out loud. However many extra words you pack in, try to keep the beat exactly the same length, like a drumbeat with more or fewer notes squeezed between the same four hits.</p>
+  <p class="chant-line"><span class="stress">YOU</span> &nbsp; <span class="stress">ME</span> &nbsp; <span class="stress">HIM</span> &nbsp; <span class="stress">HER</span></p>
+  <p class="chant-line"><span class="stress">YOU</span> <span class="dim">and</span> <span class="stress">ME</span> <span class="dim">and</span> <span class="stress">HIM</span> <span class="dim">and</span> <span class="stress">HER</span></p>
+  <p class="chant-line"><span class="stress">YOU</span> <span class="dim">and then</span> <span class="stress">ME</span> <span class="dim">and then</span> <span class="stress">HIM</span> <span class="dim">and then</span> <span class="stress">HER</span></p>
+  <p class="chant-line"><span class="stress">YOU</span> <span class="dim">and then it's</span> <span class="stress">ME</span> <span class="dim">and then it's</span> <span class="stress">HIM</span> <span class="dim">and then it's</span> <span class="stress">HER</span></p>
+
+  <details class="reveal">
+    <summary>Click to reveal: why does the rhythm stay the same?</summary>
+    <div class="content">English is a <b>stress-timed</b> language &mdash; the stressed words fall at roughly equal intervals of time, no matter how many extra words are squeezed in between. The stressed words here (you, me, him, her) are <b>content words</b>. The words that get squashed to keep the rhythm even (and, then, it's) are <b>grammar words</b>. This is one reason natural English speech sounds so different from reading each word separately.</div>
+  </details>
+
+  </div></section>
+<section id="s2">
+<div class="card">
+<div class="stage-title">Word stress: primary and secondary <span class="badge">Click each word</span></div>
+  <p class="instr">Say each word to yourself first. Where do you think the strongest stress falls? Some longer words also have a lighter, secondary stress somewhere else. Click each word to check.</p>
+  <div class="legend">
+    <span><span class="dot" style="width:16px;height:16px;background:var(--teal);"></span> primary stress</span>
+    <span><span class="dot" style="width:11px;height:11px;background:var(--gold);"></span> secondary stress</span>
+    <span><span class="dot" style="width:7px;height:7px;background:var(--sand-line);"></span> unstressed</span>
+  </div>
+  <div class="word-grid" id="wordGrid"></div>
+
+  </div></section>
+<section id="s3">
+<div class="card">
+<div class="stage-title">Contrastive stress: one sentence, seven meanings <span class="badge">Say it seven ways</span></div>
+  <p class="instr">Say the sentence below seven times, stressing a different word each time. Before you check, ask yourself: what does stressing <i>that</i> word seem to imply?</p>
+  <div id="rosesBlock"></div>
+
+  </div></section>
+<section id="s4">
+<div class="card">
+<div class="stage-title">Attitudinal stress: are you flying to Paris on Tuesday? <span class="badge">Decide, then reveal</span></div>
+  <p class="instr">The same question, asked five times, but each time the answer corrects something different. Read each exchange and decide which word in the question is being stressed before you reveal it.</p>
+  <div id="parisBlock"></div>
+
+  </div></section>
+<section id="s5">
+<div class="card">
+<div class="stage-title">Noun or verb? Choose the stress <span class="badge">Quiz</span></div>
+  <p class="instr">Some words are spelled the same whether they're a noun or a verb, but the stress moves. For each sentence, pick which syllable you think is stressed.</p>
+  <div id="quizBlock"></div>
+</div></section>
+
+  <p class="sources"><b>Sources.</b> The film is <i>Shakespeare Live! From the RSC</i> (BBC and the Royal Shakespeare Company, 2016). The rhythm chant, the countries, the roses sentence and the Paris question are classic CELTA input material; the noun-or-verb quiz is the tutor's own.</p>
+
+  <footer class="hub-brand-foot">
+    <span class="hub-lockup"><span class="hub-lockup-tile"><svg viewBox="8 30 104 60" width="12" height="7" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"/></svg></span><span class="hub-lockup-c">Connect</span><span class="hub-lockup-l">Lite</span></span>
+    <span>designed and built by <b>Ramy</b></span>
+  </footer>
+</div>
+
+<script>
+// ---------- the lead-in ----------
+function toggleReveal(id,btn){ const el=document.getElementById(id); el.classList.toggle('shown'); btn.textContent = el.classList.contains('shown') ? 'Hide' : 'Reveal'; }
+var ACTORS = ['Paapa Essiedu','Tim Minchin','Benedict Cumberbatch','David Tennant','Rory Kinnear','Ian McKellen','Harriet Walter','Judi Dench','The Prince of Wales'];
+var WORDS_HAMLET = ['To be','not','that','is','the question'];
+var hm = document.getElementById('hamlet');
+ACTORS.forEach(function(a){
+  var row = document.createElement('div'); row.className = 'hm';
+  row.innerHTML = '<div class="who">' + a + '</div><div class="picks">' + WORDS_HAMLET.map(function(w){ return '<button class="pick" type="button">' + w + '</button>'; }).join('') + '</div>';
+  row.querySelectorAll('.pick').forEach(function(b){ b.onclick = function(){ row.querySelectorAll('.pick').forEach(function(x){ x.classList.toggle('on', x === b && !x.classList.contains('on')); }); }; });
+  hm.appendChild(row);
+});
+// ---------- 2. Word stress bubbles ----------
+var WORDS = [
+  { word:'Australia', syll:['aus','tra','lia'], stress:[0,1,0] },
+  { word:'Hungary', syll:['Hun','ga','ry'], stress:[1,0,0] },
+  { word:'Brazil', syll:['Bra','zil'], stress:[0,1] },
+  { word:'Japan', syll:['Ja','pan'], stress:[0,1] },
+  { word:'Italy', syll:['It','a','ly'], stress:[1,0,0] },
+  { word:'London', syll:['Lon','don'], stress:[1,0] },
+  { word:'Pakistan', syll:['Pak','i','stan'], stress:[2,0,1] },
+  { word:'Germany', syll:['Ger','ma','ny'], stress:[1,0,0] },
+  { word:'Chicago', syll:['Chi','ca','go'], stress:[0,1,0] },
+  { word:'Montreal', syll:['Mon','tre','al'], stress:[2,0,1] },
+  { word:'Torquay', syll:['Tor','quay'], stress:[0,1] },
+  { word:'Turkey', syll:['Tur','key'], stress:[1,0] },
+  { word:'India', syll:['In','di','a'], stress:[1,0,0] },
+  { word:'Switzerland', syll:['Swit','zer','land'], stress:[1,0,0] },
+  { word:'America', syll:['A','mer','i','ca'], stress:[0,1,0,0] },
+  { word:'Slovakia', syll:['Slo','va','ki','a'], stress:[0,1,0,0] },
+];
+var STRESS_CLASS = {0:'unstressed', 1:'primary', 2:'secondary'};
+
+var wordGrid = document.getElementById('wordGrid');
+WORDS.forEach(function(w){
+  var det = document.createElement('details');
+  det.className = 'word-card';
+  var summary = document.createElement('summary');
+  summary.textContent = w.word;
+  det.appendChild(summary);
+  var body = document.createElement('div');
+  body.className = 'bubbles';
+  var row = document.createElement('div');
+  row.className = 'syll-row';
+  w.syll.forEach(function(s, i){
+    var cell = document.createElement('div'); cell.className = 'syll';
+    var circle = document.createElement('div'); circle.className = 'circle ' + STRESS_CLASS[w.stress[i]];
+    var txt = document.createElement('div'); txt.className = 'txt'; txt.textContent = s;
+    cell.appendChild(circle); cell.appendChild(txt);
+    row.appendChild(cell);
+  });
+  body.appendChild(row);
+  det.appendChild(body);
+  wordGrid.appendChild(det);
+});
+
+// ---------- 3. Roses ----------
+var WORDS_ROSES = ['I', "didn't", 'buy', 'you', 'ten', 'red', 'roses'];
+var ROSES_MEANING = [
+  'implies someone else bought them',
+  'a strong denial: I did not do this',
+  'implies I did something else with them: stole them, found them, was given them',
+  'implies I bought them for someone else',
+  'implies a different number',
+  'implies a different colour',
+  'implies a different flower, or a different gift altogether',
+];
+var rosesBlock = document.getElementById('rosesBlock');
+WORDS_ROSES.forEach(function(_, idx){
+  var p = document.createElement('p'); p.className = 'rose-line';
+  WORDS_ROSES.forEach(function(w, i){
+    var span = document.createElement('span');
+    span.textContent = (i>0?' ':'') + w;
+    if (i === idx) span.className = 'stress';
+    p.appendChild(span);
+  });
+  rosesBlock.appendChild(p);
+  var det = document.createElement('details'); det.className = 'reveal';
+  var sum = document.createElement('summary'); sum.textContent = 'Click to reveal what this implies';
+  var content = document.createElement('div'); content.className = 'content'; content.innerHTML = ROSES_MEANING[idx];
+  det.appendChild(sum); det.appendChild(content);
+  rosesBlock.appendChild(det);
+});
+
+// ---------- 4. Paris dialogue ----------
+var PARIS = [
+  { q:['ARE',' you flying to Paris on Tuesday?'], stressedFirst:true, a:'Yes, of course I am. Stop worrying.', reveal:'The stress is on <b>ARE</b>: an emphatic, confirming answer to reassure someone who doubts it.' },
+  { q:['Are ','YOU',' flying to Paris on Tuesday?'], a:'No, John is.', reveal:'The stress is on <b>YOU</b>: the answer corrects <i>who</i> is flying.' },
+  { q:['Are you ','FLYING',' to Paris on Tuesday?'], a:'No, taking the train.', reveal:"The stress is on <b>FLYING</b>: the answer corrects <i>how</i> they\u2019re travelling." },
+  { q:['Are you flying to ','PARIS',' on Tuesday?'], a:'No, Prague.', reveal:"The stress is on <b>PARIS</b>: the answer corrects <i>where</i> they\u2019re going." },
+  { q:['Are you flying to Paris on ','TUESDAY','?'], a:'No, on Wednesday.', reveal:'The stress is on <b>TUESDAY</b>: the answer corrects <i>when</i>.' },
+];
+var parisBlock = document.getElementById('parisBlock');
+PARIS.forEach(function(ex){
+  var div = document.createElement('div'); div.className = 'paris-block';
+  var q = document.createElement('div'); q.className = 'qline';
+  q.innerHTML = '<b>A:</b> ' + ex.q.map(function(part, i){
+    var isStress = (i % 2 === 1) || (ex.stressedFirst && i===0);
+    return isStress ? '<span class="stress">'+part+'</span>' : part;
+  }).join('');
+  var a = document.createElement('div'); a.className = 'aline';
+  a.innerHTML = '<b>B:</b> ' + ex.a;
+  div.appendChild(q); div.appendChild(a);
+  var det = document.createElement('details'); det.className = 'reveal';
+  var sum = document.createElement('summary'); sum.textContent = 'Click to reveal which word is stressed, and why';
+  var content = document.createElement('div'); content.className = 'content'; content.innerHTML = ex.reveal;
+  det.appendChild(sum); det.appendChild(content);
+  div.appendChild(det);
+  parisBlock.appendChild(div);
+});
+
+// ---------- 5. Noun/verb quiz ----------
+var QUIZ = [
+  { word:'record', sentence:"I bought a new ___.", correct:'A', a:'REcord', b:'reCORD', explain:'A noun: stress the <b>first</b> syllable, <b>RE</b>cord.' },
+  { word:'record', sentence:"Please ___ the lesson.", correct:'B', a:'REcord', b:'reCORD', explain:'A verb: stress the <b>second</b> syllable, re<b>CORD</b>.' },
+  { word:'present', sentence:"Here's your ___.", correct:'A', a:'PREsent', b:'preSENT', explain:'A noun: stress the <b>first</b> syllable, <b>PRE</b>sent.' },
+  { word:'present', sentence:"I'd like to ___ my idea.", correct:'B', a:'PREsent', b:'preSENT', explain:'A verb: stress the <b>second</b> syllable, pre<b>SENT</b>.' },
+  { word:'contract', sentence:"Sign the ___.", correct:'A', a:'CONtract', b:'conTRACT', explain:'A noun: stress the <b>first</b> syllable, <b>CON</b>tract.' },
+  { word:'contract', sentence:"They will ___ a builder.", correct:'B', a:'CONtract', b:'conTRACT', explain:'A verb: stress the <b>second</b> syllable, con<b>TRACT</b>.' },
+  { word:'object', sentence:"What's that ___ on the desk?", correct:'A', a:'OBject', b:'obJECT', explain:'A noun: stress the <b>first</b> syllable, <b>OB</b>ject.' },
+  { word:'object', sentence:"I ___ to that decision.", correct:'B', a:'OBject', b:'obJECT', explain:'A verb: stress the <b>second</b> syllable, ob<b>JECT</b>.' },
+];
+var quizBlock = document.getElementById('quizBlock');
+QUIZ.forEach(function(q, qi){
+  var wrap = document.createElement('div'); wrap.className = 'quiz-word';
+  var h3 = document.createElement('h3'); h3.textContent = q.word.toUpperCase();
+  var sent = document.createElement('div'); sent.className = 'quiz-sentence'; sent.textContent = q.sentence;
+  var opts = document.createElement('div'); opts.className = 'quiz-options';
+  var feedback = document.createElement('div'); feedback.className = 'quiz-feedback';
+  ['A','B'].forEach(function(key){
+    var btn = document.createElement('button'); btn.className = 'opt-btn';
+    btn.textContent = key === 'A' ? q.a : q.b;
+    btn.addEventListener('click', function(){
+      var buttons = opts.querySelectorAll('.opt-btn');
+      buttons.forEach(function(b){ b.disabled = true; });
+      if (key === q.correct) {
+        btn.classList.add('correct');
+        feedback.innerHTML = q.explain;
+      } else {
+        btn.classList.add('incorrect');
+        Array.prototype.forEach.call(buttons, function(b){
+          if (b.textContent === (q.correct==='A'?q.a:q.b)) b.classList.add('correct');
+        });
+        feedback.innerHTML = 'Not quite. ' + q.explain;
+      }
+    });
+    opts.appendChild(btn);
+  });
+  wrap.appendChild(h3); wrap.appendChild(sent); wrap.appendChild(opts); wrap.appendChild(feedback);
+  quizBlock.appendChild(wrap);
+});
+</script>
+</body>
+</html>

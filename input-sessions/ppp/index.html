@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  Connect Lite — input session: Presentation, Practice, Production
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy's own session, first written for Google Classroom in IH Istanbul's
+  look. This is the same session on Lite's desk: the house header, nav,
+  cards and foot come from ../session.css; the parts below are this page's
+  own. The script is the source's, untouched. Built by _house.py; edit the
+  recipe there, not this file.
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="../../brand/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../brand/apple-touch-icon.png">
+<title>Presentation, Practice, Production — Connect Lite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,600;0,700;1,600&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../hub-tokens.css">
+<link rel="stylesheet" href="../session.css">
+<style>
+  section{margin:0 0 26px;}
+  .section-tag{display:block; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--gold-deep); font-weight:600; margin:0 0 4px;}
+  h2{font-family:'Newsreader',Georgia,serif; font-size:1.3rem; font-weight:600; margin:0 0 10px; line-height:1.25;}
+  .prompt{font-size:.95rem; margin:0 0 10px;}
+  .hint{font-size:.84rem; color:var(--grey); font-style:italic;}
+  textarea.notes{width:100%; min-height:70px; margin-top:6px; padding:10px 12px; border-radius:var(--r-control); border:1.5px solid var(--sand-line); background:var(--field);
+    font-family:'Karla',sans-serif; font-size:.9rem; color:var(--ink); resize:vertical; line-height:1.5;}
+  textarea.notes:focus{outline:none; border-color:var(--gold); background:var(--field-focus);}
+  textarea.notes::placeholder{color:var(--field-ph); opacity:1;}
+  .reflect-box{background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:14px 16px; font-size:.92rem;}
+  .reveal-card{background:var(--paper); border:1.5px solid var(--sand-line); border-radius:var(--r-strip); padding:26px 22px; text-align:center;
+    font-family:'Newsreader',Georgia,serif; font-size:1.3rem; font-weight:600; cursor:pointer; user-select:none; transition:border-color .12s ease;}
+  .reveal-card:hover{border-color:var(--gold);}
+  .reveal-card.open{border-color:var(--teal);}
+  .reveal-card .answer{display:none; font-family:'Karla',sans-serif; font-size:.92rem; font-weight:400; margin-top:12px; line-height:1.6; color:var(--teal);}
+  .reveal-card.open .answer{display:block;}
+  .reveal-card .tap{font-family:'Karla',sans-serif; font-size:.72rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); margin-top:10px;}
+  .reveal-card.open .tap{display:none;}
+  .match-status{font-size:.8rem; font-weight:600; color:var(--gold-deep); margin:0 0 12px;}
+  .match-grid{display:grid; grid-template-columns:1fr 1.35fr; gap:10px 16px;}
+  .match-col-label{font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); font-weight:600; margin-bottom:2px;}
+  .match-col{display:flex; flex-direction:column; gap:8px;}
+  .match-col > div:not(.match-col-label){display:flex; flex-direction:column; gap:8px;}
+  .match-item{border:1.5px solid var(--sand-line); background:var(--field); border-radius:var(--r-control); padding:10px 12px; font-size:.9rem; cursor:pointer; transition:border-color .12s ease, background .12s ease;}
+  .match-item:hover{border-color:var(--gold);}
+  .match-item.term{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1rem;}
+  .match-item.def{color:var(--ink); font-size:.88rem;}
+  .match-item.selected{border-color:var(--gold); background:var(--field-focus);}
+  .match-item.correct{background:color-mix(in oklab, var(--teal) 11%, transparent); border-color:color-mix(in oklab, var(--teal) 30%, transparent); color:var(--teal); cursor:default;}
+  .match-item.wrong{animation:shake .3s ease; border-color:var(--brick);}
+  @keyframes shake{0%,100%{transform:translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);}}
+  .passage{font-size:.97rem; line-height:1.75;}
+  .passage strong{color:var(--teal);}
+  .tf-item{border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:12px 14px; margin-bottom:8px; background:var(--paper);}
+  .tf-statement{font-size:.92rem; margin-bottom:8px;}
+  .tf-buttons{display:flex; gap:8px;}
+  .tf-buttons button{font-family:'Karla',sans-serif; font-weight:700; font-size:.8rem; padding:5px 14px; border-radius:999px; border:1.5px solid var(--sand-line); background:var(--field); cursor:pointer; color:var(--grey); min-height:34px;}
+  .tf-buttons button:hover{border-color:var(--gold);}
+  .tf-buttons button:disabled{cursor:default;}
+  .tf-buttons button.picked-correct{background:color-mix(in oklab, var(--teal) 11%, transparent); border-color:color-mix(in oklab, var(--teal) 30%, transparent); color:var(--teal);}
+  .tf-buttons button.picked-wrong{background:color-mix(in oklab, var(--brick) 10%, transparent); border-color:color-mix(in oklab, var(--brick) 28%, transparent); color:var(--brick);}
+  .tf-feedback{display:none; margin-top:9px; font-size:.86rem; color:var(--grey); border-top:1px solid var(--row-line); padding-top:9px;}
+  .tf-feedback.show{display:block;}
+  .debrief-pool{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;}
+  .debrief-chip{border:1.5px solid var(--gold); background:var(--field); color:var(--gold-deep); font-weight:600; font-size:.88rem; padding:9px 14px; border-radius:var(--r-control); cursor:pointer; transition:background .12s ease;}
+  .debrief-chip:hover{background:var(--gold-wash);}
+  .debrief-chip.used{opacity:.3; pointer-events:none;}
+  .debrief-order{display:flex; flex-direction:column; gap:8px; min-height:56px;}
+  .debrief-slot{border:1.5px dashed var(--sand-line); border-radius:var(--r-control); padding:10px 14px; font-size:.9rem; color:var(--grey); display:flex; align-items:center; gap:10px;}
+  .debrief-slot.filled{border-style:solid; border-color:var(--teal); background:color-mix(in oklab, var(--teal) 9%, transparent); color:var(--ink); font-weight:600;}
+  .debrief-slot .num{font-family:'Newsreader',Georgia,serif; font-weight:700; color:var(--teal); width:18px;}
+  .debrief-status{margin-top:12px; font-size:.86rem; font-weight:600;}
+  .debrief-status.ok{color:var(--teal);}
+  .debrief-status.pending{color:var(--grey);}
+  .reset-btn{margin-top:10px; background:none; border:none; color:var(--grey); font:600 .82rem 'Karla',sans-serif; text-decoration:underline; text-underline-offset:4px; text-decoration-color:var(--gold); cursor:pointer; padding:0;}
+  .reset-btn:hover{color:var(--ink-warm);}
+  @media(max-width:600px){ .match-grid{grid-template-columns:1fr;} }
+  @media print{ .tf-feedback, .reveal-card .answer, .debrief-order, .debrief-status, .reset-btn{display:none !important;} .reveal-card.open .tap{display:block;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="header">
+    <p class="eyebrow">Input session · Loop input · 45 minutes</p>
+    <h1>Presentation, Practice, Production</h1>
+    <p class="sub">Taught the way you will teach it. This session is staged exactly like the lesson framework it teaches: do the tasks first, and the debrief at the end is where it gets named.</p>
+  </header>
+
+  <nav class="sticky-nav" id="stickyNav">
+    <a href="#leadin">Lead-in</a>
+    <a href="#whatisppp">What is PPP?</a>
+    <a href="#match">Terms</a>
+    <a href="#predict">Predict</a>
+    <a href="#read">Read</a>
+    <a href="#detail">Detail</a>
+    <a href="#debrief">Debrief</a>
+    <button class="print-btn" onclick="window.print()">Print the handout</button>
+  </nav>
+
+  <!-- LEAD-IN -->
+  <section id="leadin">
+    <span class="section-tag">Lead-in · 2 minutes</span>
+    <h2>Quick show of hands</h2>
+    <div class="card">
+      <div class="prompt">Who learned a language mostly by being told the rule first, then practising it? Did that work for you?</div>
+      <div class="reflect-box">
+        Jot a one-line reaction if you like. This is just for you; nothing is checked.
+        <textarea class="notes" placeholder="e.g. It worked for grammar, but not for pronunciation..."></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHAT IS PPP -->
+  <section id="whatisppp">
+    <span class="section-tag">Stage 0 · What is PPP?</span>
+    <h2>Before we go further</h2>
+    <div class="card">
+      <div class="reveal-card" onclick="this.classList.toggle('open')">
+        What does PPP stand for?
+        <div class="answer">Presentation, Practice, Production — three stages, always run in that order, moving from teacher-given accuracy work through to freer, learner-led fluency work.</div>
+        <div class="tap">Tap to reveal</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MATCH THE TERMS -->
+  <section id="match">
+    <span class="section-tag">Stage 1 · Match each term to its meaning</span>
+    <h2>Match the terms</h2>
+    <div class="card">
+      <div class="match-status" id="matchStatus">0 of 5 matched</div>
+      <div class="match-grid">
+        <div class="match-col">
+          <div class="match-col-label">Term</div>
+          <div id="termCol"></div>
+        </div>
+        <div class="match-col">
+          <div class="match-col-label">Meaning</div>
+          <div id="defCol"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PREDICT -->
+  <section id="predict">
+    <span class="section-tag">Stage 2</span>
+    <h2>How do you think a PPP lesson should be staged?</h2>
+    <div class="card">
+      <div class="prompt">Discuss with your partner, about a minute. No wrong answers yet.</div>
+      <textarea class="notes" placeholder="Your prediction: what order do you think Presentation, Practice, and Production come in, and why?"></textarea>
+    </div>
+  </section>
+
+  <!-- READ THE TEXT -->
+  <section id="read">
+    <span class="section-tag">Stage 3 · Read the text and check if your ideas were right or wrong</span>
+    <h2>Staging a PPP lesson</h2>
+    <div class="card">
+      <div class="passage">
+        A PPP lesson opens with the target language given directly, not discovered. The teacher sets up a clear context, models the form once or twice, and checks meaning with CCQs — all before students produce anything themselves. Form comes next, usually a short board summary, then pronunciation: stress, weak forms, drilling chorally and individually. Practice follows in two distinct phases. <strong>Controlled practice</strong> comes first — gap-fills, substitution drills, matching — with one right answer and the teacher correcting closely as students work. <strong>Freer, or production, practice</strong> comes last: students use the language to say something of their own, the teacher monitors without interrupting, and feedback on errors is saved for the end. The three stages always run in that order — presentation, then practice, then production — because accuracy work has to come before fluency work in this framework.
+      </div>
+    </div>
+  </section>
+
+  <!-- DETAIL QUESTIONS -->
+  <section id="detail">
+    <span class="section-tag">Stage 4</span>
+    <h2>Detail questions</h2>
+    <div class="card">
+      <div class="prompt hint" style="margin-bottom:14px;">More time now. Answer these from the text, then check with your partner.</div>
+      <div id="tfList"></div>
+    </div>
+  </section>
+
+  <!-- DEBRIEF -->
+  <section id="debrief">
+    <span class="section-tag">Debrief · put the stages back in order</span>
+    <h2>Order the stages</h2>
+    <div class="card">
+      <div class="prompt">Click each stage in the order you just experienced it. This is a loop input: the session modelled PPP instead of only describing it.</div>
+      <div class="debrief-pool" id="debriefPool"></div>
+      <div class="debrief-order" id="debriefOrder"></div>
+      <div class="debrief-status pending" id="debriefStatus">0 of 4 placed. Click the one that comes next.</div>
+      <button class="reset-btn" onclick="resetDebrief()">Reset order</button>
+    </div>
+  </section>
+
+  <footer class="hub-brand-foot">
+    <span class="hub-lockup"><span class="hub-lockup-tile"><svg viewBox="8 30 104 60" width="12" height="7" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"/></svg></span><span class="hub-lockup-c">Connect</span><span class="hub-lockup-l">Lite</span></span>
+    <span>designed and built by <b>Ramy</b></span>
+  </footer>
+</div>
+
+<script>
+  // ---- Matching ----
+  const pairs = [
+    {term:"Presentation", def:"The teacher gives the target language directly, with context, model and CCQs."},
+    {term:"Controlled practice", def:"Accuracy-focused practice with one right answer, teacher corrects closely."},
+    {term:"Production", def:"Freer, fluency-focused practice using the learner's own ideas."},
+    {term:"Drilling", def:"Students repeat a word or sentence, chorally then individually, for pronunciation."},
+    {term:"MFP", def:"Meaning, form, pronunciation — covered in that order before any practice begins."}
+  ];
+  function shuffled(arr){ return arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(v=>v[1]); }
+  const termOrder = pairs.map((p,i)=>i);
+  const defOrder = shuffled(pairs.map((p,i)=>i));
+  let selectedTerm = null;
+  let matchedCount = 0;
+
+  const termCol = document.getElementById('termCol');
+  const defCol = document.getElementById('defCol');
+
+  termOrder.forEach(i=>{
+    const el = document.createElement('div');
+    el.className = 'match-item term';
+    el.textContent = pairs[i].term;
+    el.dataset.i = i;
+    el.onclick = ()=> selectTerm(el, i);
+    termCol.appendChild(el);
+  });
+  defOrder.forEach(i=>{
+    const el = document.createElement('div');
+    el.className = 'match-item def';
+    el.textContent = pairs[i].def;
+    el.dataset.i = i;
+    el.onclick = ()=> selectDef(el, i);
+    defCol.appendChild(el);
+  });
+
+  function selectTerm(el, i){
+    if(el.classList.contains('correct')) return;
+    document.querySelectorAll('.match-item.term').forEach(t=>t.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedTerm = {el, i};
+  }
+  function selectDef(el, i){
+    if(el.classList.contains('correct') || !selectedTerm) return;
+    if(selectedTerm.i === i){
+      selectedTerm.el.classList.remove('selected');
+      selectedTerm.el.classList.add('correct');
+      el.classList.add('correct');
+      matchedCount++;
+      document.getElementById('matchStatus').textContent = matchedCount + " of 5 matched";
+      selectedTerm = null;
+    } else {
+      el.classList.add('wrong');
+      selectedTerm.el.classList.add('wrong');
+      setTimeout(()=>{
+        el.classList.remove('wrong');
+        selectedTerm.el.classList.remove('wrong');
+      },300);
+    }
+  }
+
+  // ---- True/False ----
+  const tfItems = [
+    {s:"Students work out the rule themselves before the teacher confirms it.", t:false, fb:"False — in PPP the teacher gives the language directly at the presentation stage; it isn't discovered by students."},
+    {s:"Practice always splits into controlled, then freer.", t:true, fb:"True — controlled practice (one right answer) always comes before freer, production practice."},
+    {s:"Feedback on errors during production is usually immediate, not delayed.", t:false, fb:"False — the teacher monitors without interrupting during production, and error feedback is saved for the end."},
+    {s:"Pronunciation is covered as part of presentation, not skipped.", t:true, fb:"True — pronunciation (stress, weak forms, drilling) is covered as part of presentation, right after form."},
+    {s:"PPP suits a class where everyone already knows the target form.", t:false, fb:"False — PPP is built for presenting language that's new to the class, not for language they already know."},
+    {s:"The three stages can run in any order.", t:false, fb:"False — the text is explicit: the order is fixed because accuracy work has to come before fluency work."}
+  ];
+  const tfList = document.getElementById('tfList');
+  tfItems.forEach((item,idx)=>{
+    const wrap = document.createElement('div');
+    wrap.className = 'tf-item';
+    wrap.innerHTML = `
+      <div class="tf-statement">${item.s}</div>
+      <div class="tf-buttons">
+        <button data-val="true">True</button>
+        <button data-val="false">False</button>
+      </div>
+      <div class="tf-feedback">${item.fb}</div>
+    `;
+    const buttons = wrap.querySelectorAll('.tf-buttons button');
+    buttons.forEach(btn=>{
+      btn.onclick = ()=>{
+        const chosen = btn.dataset.val === "true";
+        const correct = chosen === item.t;
+        buttons.forEach(b=>{
+          b.classList.remove('picked-correct','picked-wrong');
+          b.disabled = true;
+        });
+        btn.classList.add(correct ? 'picked-correct' : 'picked-wrong');
+        if(!correct){
+          buttons.forEach(b=>{ if((b.dataset.val==="true")===item.t) b.classList.add('picked-correct'); });
+        }
+        wrap.querySelector('.tf-feedback').classList.add('show');
+      };
+    });
+    tfList.appendChild(wrap);
+  });
+
+  // ---- Debrief ordering ----
+  const debriefStages = shuffled([
+    "Read the text, check ideas",
+    "Pre-teach terms",
+    "Detail check",
+    "Predict the staging"
+  ]);
+  const correctDebriefOrder = ["Pre-teach terms","Predict the staging","Read the text, check ideas","Detail check"];
+  let debriefPlaced = [];
+
+  const debriefPool = document.getElementById('debriefPool');
+  const debriefOrderEl = document.getElementById('debriefOrder');
+
+  function renderDebrief(){
+    debriefPool.innerHTML = '';
+    debriefStages.forEach(name=>{
+      const chip = document.createElement('div');
+      chip.className = 'debrief-chip' + (debriefPlaced.includes(name) ? ' used' : '');
+      chip.textContent = name;
+      chip.onclick = ()=>{
+        if(debriefPlaced.includes(name)) return;
+        debriefPlaced.push(name);
+        renderDebrief();
+      };
+      debriefPool.appendChild(chip);
+    });
+    debriefOrderEl.innerHTML = '';
+    for(let i=0;i<4;i++){
+      const slot = document.createElement('div');
+      slot.className = 'debrief-slot' + (debriefPlaced[i] ? ' filled' : '');
+      slot.innerHTML = `<span class="num">${i+1}</span> ${debriefPlaced[i] || 'Click the one that comes next'}`;
+      debriefOrderEl.appendChild(slot);
+    }
+    const status = document.getElementById('debriefStatus');
+    if(debriefPlaced.length < 4){
+      status.textContent = debriefPlaced.length + " of 4 placed. Click the one that comes next.";
+      status.className = 'debrief-status pending';
+    } else {
+      const ok = debriefPlaced.every((v,i)=> v===correctDebriefOrder[i]);
+      status.textContent = ok
+        ? "That is the order. PPP, modelled: pre-teach terms, predict the staging, read to check, then detail check."
+        : "Not quite that order. Reset and try again, thinking about when you would check the meaning of new terms.";
+      status.className = 'debrief-status ' + (ok ? 'ok' : 'pending');
+    }
+  }
+  function resetDebrief(){
+    debriefPlaced = [];
+    renderDebrief();
+  }
+  renderDebrief();
+</script>
+</body>
+</html>
