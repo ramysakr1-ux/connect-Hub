@@ -161,7 +161,7 @@
       <div class="stage-title">Lead-in <span class="badge">Stage 1</span><span class="time">2 min</span></div>
       <div class="reveal" id="openCard"><h3>What is a productive skill?</h3><p class="hint">Click to reveal</p><p class="ans">Speaking or writing.</p></div>
       <p class="lead">Then watch this: probably the most universally recognisable attitude to writing there is.</p>
-      <div class="film closed" data-src="https://www.youtube-nocookie.com/embed/w4NsjnL4ieA?end=107&rel=0&modestbranding=1" data-title="SpongeBob writes an essay"><button type="button" class="btn teal film-btn">Watch the film</button></div>
+      <div class="film closed" data-src="https://www.youtube-nocookie.com/embed/w4NsjnL4ieA?end=108&rel=0&modestbranding=1" data-title="SpongeBob writes an essay"><button type="button" class="btn teal film-btn">Watch the film</button></div>
       <p class="film-link">If the frame stays black, <a href="https://www.youtube.com/watch?v=w4NsjnL4ieA" target="_blank" rel="noopener">watch it on YouTube</a>; stop once he has written the first word.</p>
       <p class="lead" style="margin:10px 0 0"><b>What was his attitude to writing? Would anyone say the same thing about speaking?</b> Quick discussion, a minute.</p>
     </div>
@@ -260,11 +260,12 @@
 
 
 
+
   <section id="trainer" class="trainer-notes" hidden>
     <div class="card">
       <div class="stage-title">Trainer notes <span class="badge">Tutor only</span></div>
 <h4>Before</h4>
-<p>Sound for the SpongeBob clip (it stops at 1:47, after he has written his first word). A loop input: do not name the five stages until the debrief. Nothing to print.</p>
+<p>Sound for the SpongeBob clip (it stops at 1:48, after he has written his first word). A loop input: do not name the five stages until the debrief. Nothing to print.</p>
 <h4>Running it</h4>
 <table class="tn-time"><tr><th>Min</th><th>Stage</th><th>What you do</th></tr><tr><td>2</td><td>Lead-in</td><td>The reveal, the clip, the question. One minute of talk, no more.</td></tr><tr><td>3</td><td>Preparing</td><td>Both prompts, a minute alone, then a partner. Point out afterwards that nobody was given any language first.</td></tr><tr><td>8</td><td>Useful language</td><td>Eight terms, click to reveal; the tag says which skill. The counter at the top tells you where they are.</td></tr><tr><td>7</td><td>The task types</td><td>Ten cards in two lanes. Pairs pick one for the opinion and one for the piece of writing from Stage 2, and say why.</td></tr><tr><td>8</td><td>Read and check</td><td>Silent read, then: were your ideas right? Where does writing go its own way? (The last paragraph.)</td></tr><tr><td>8</td><td>Detail, and the feedback split</td><td>Five questions, then six scenarios: task achievement or language feedback.</td></tr><tr><td>7</td><td>Debrief</td><td>Order the five stages. Then the table: four rows the same, one different.</td></tr><tr><td>2</td><td>Wrap-up</td><td>One sentence each: the difference between speaking and writing in one word. (Redraft.)</td></tr></table>
 <h4>The key</h4>
@@ -409,7 +410,39 @@ document.addEventListener('scroll', onScroll); onScroll();
 </script>
 <script>
 (function(){
-  /* A film with an end time in its address (end=107) is cut there by the
+  /* A film with an end time in its address (end=108) is cut there by the
+     page itself: YouTube's own end parameter ran on into the rest of the
+     video and then into the next one (14 Oct 2026). The player is asked to
+     report its clock; at the end time, or when it ends by itself, the frame
+     closes, so nothing follows. */
+  var open = null;
+  window.addEventListener('message', function(e){
+    if (!open || !open.iframe || e.source !== open.iframe.contentWindow) return;
+    var d; try { d = JSON.parse(e.data); } catch (x) { return; }
+    if (!d || d.event !== 'infoDelivery' || !d.info) return;
+    var t = d.info.currentTime, st = d.info.playerState;
+    if ((open.end && t != null && t >= open.end) || st === 0) open.close();
+  });
+  document.querySelectorAll('.film[data-src]').forEach(function(f){
+    var btn = f.querySelector('.film-btn'); if (!btn) return;
+    var end = (f.dataset.src.match(/[?&]end=(\d+)/) || [])[1];
+    function close(){ try { if (open && open.iframe) open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'stopVideo', args: [] }), '*'); } catch (x) {} open = null; f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
+    btn.addEventListener('click', function(){
+      f.classList.remove('closed'); f.innerHTML = '';
+      var i = document.createElement('iframe'); i.src = f.dataset.src + (f.dataset.src.indexOf('?') === -1 ? '?' : '&') + 'autoplay=1&enablejsapi=1&origin=' + encodeURIComponent(location.origin); i.title = f.dataset.title || 'Film';
+      i.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture'; i.allowFullscreen = true; f.appendChild(i);
+      open = { iframe: i, end: end ? +end : 0, close: close };
+      i.addEventListener('load', function(){ try { i.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (x) {} });
+      var acts = document.createElement('p'); acts.className = 'film-acts';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = 'Hide the film'; c.addEventListener('click', close);
+      acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
+    });
+  });
+})();
+</script>
+<script>
+(function(){
+  /* A film with an end time in its address (end=108) is cut there by the
      page itself: YouTube's own end parameter ran on into the rest of the
      video and then into the next one (14 Oct 2026). The player is asked to
      report its clock; at the end time, or when it ends by itself, the frame

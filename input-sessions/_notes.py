@@ -467,7 +467,7 @@ NOTES['drama-in-the-elt-classroom'] = '''
 
 NOTES['teaching-productive-skills'] = '''
 <h4>Before</h4>
-<p>Sound for the SpongeBob clip (it stops at 1:47, after he has written his first word). A loop input: do not name the five stages until the debrief. Nothing to print.</p>
+<p>Sound for the SpongeBob clip (it stops at 1:48, after he has written his first word). A loop input: do not name the five stages until the debrief. Nothing to print.</p>
 <h4>Running it</h4>
 ''' + T([
     (2, 'Lead-in', 'The reveal, the clip, the question. One minute of talk, no more.'),

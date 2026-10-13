@@ -50,7 +50,7 @@ GATE = '''<script src="../../hub-store.js"></script>
 # Every film starts closed and can be hidden again (Ramy, 14 Oct 2026).
 FILM_JS = '''<script>
 (function(){
-  /* A film with an end time in its address (end=107) is cut there by the
+  /* A film with an end time in its address (end=108) is cut there by the
      page itself: YouTube's own end parameter ran on into the rest of the
      video and then into the next one (14 Oct 2026). The player is asked to
      report its clock; at the end time, or when it ends by itself, the frame
