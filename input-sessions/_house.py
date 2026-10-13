@@ -15,6 +15,8 @@ is particular to the page. Nothing in a script is rewritten except the
 line that fed the progress bar, which no longer exists.
 """
 import re, sys, pathlib
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from _notes import NOTES   # the trainer's side of each session, one block per slug
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -24,6 +26,31 @@ FOOT = '''  <footer class="hub-brand-foot">
     <span class="hub-lockup"><span class="hub-lockup-tile"><svg viewBox="8 30 104 60" width="12" height="7" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"/></svg></span><span class="hub-lockup-c">Connect</span><span class="hub-lockup-l">Lite</span></span>
     <span>designed and built by <b>Ramy</b></span>
   </footer>'''
+
+# The tutor-link gate (Ramy, 13 Oct 2026: "trainer notes that only trainers
+# can see", checked "against the store, not a URL flag"). hub-store.js reads
+# ?k= from the link or the key this browser already holds; the store's ping
+# answers tutor:true only for a key that opens a course. Nothing else on the
+# page talks to the store.
+GATE = '''<script src="../../hub-store.js"></script>
+<script>
+(function(){
+  if (!window.HubStore || !HubStore.isTutor()) return;
+  HubStore.ping().then(function(r){
+    if (!r || !r.tutor) return;
+    document.body.classList.add('tutor');
+    var s = document.getElementById('trainer'); if (s) s.hidden = false;
+    var a = document.querySelector('nav.sticky-nav a.tn-link'); if (a) a.hidden = false;
+    var b = document.querySelector('.print-btn'); if (b) b.textContent = 'Print with the trainer notes';
+  }).catch(function(){});
+})();
+</script>'''
+
+def notes_block(slug):
+    """The trainer's side: hidden until the gate opens it."""
+    return ('\n\n  <section id="trainer" class="trainer-notes" hidden>\n    <div class="card">\n'
+            '      <div class="stage-title">Trainer notes <span class="badge">Tutor only</span></div>\n'
+            + NOTES[slug].strip() + '\n    </div>\n  </section>')
 
 HEAD = '''<!DOCTYPE html>
 <html lang="en">
@@ -63,6 +90,7 @@ HEAD = '''<!DOCTYPE html>
 
   <nav class="sticky-nav" id="stickyNav">
 {nav}
+    <a href="#trainer" class="tn-link" hidden>Trainer notes</a>
     <button class="print-btn" onclick="window.print()">Print the handout</button>
   </nav>
 
@@ -116,9 +144,9 @@ def build(r):
     nav = '\n'.join('    <a href="#%s">%s</a>' % (h, t) for h, t in r['nav'])
     sources = ('\n\n  <p class="sources"><b>Sources.</b> ' + r['sources'] + '</p>') if r.get('sources') else ''
     page = HEAD.format(title=r['title'], sub=r['sub'], eyebrow=r.get('eyebrow', 'Input session · CELTA'),
-                       css=r['css'].strip('\n'), nav=nav) + body.strip('\n') + sources + '\n\n' + FOOT + '\n</div>\n\n' + script + '\n</body>\n</html>\n'
+                       css=r['css'].strip('\n'), nav=nav) + body.strip('\n') + notes_block(r['slug']) + sources + '\n\n' + FOOT + '\n</div>\n\n' + script + '\n' + GATE + '\n</body>\n</html>\n'
     for bad in ('Nunito', 'Playfair', 'progressFill', 'class="watermark"', 'International House Istanbul'):
-        assert bad not in page.replace(sources, ''), f"{r['slug']}: {bad} still in the page"
+        assert bad not in page.replace(sources, '').replace(notes_block(r['slug']), ''), f"{r['slug']}: {bad} still in the page"
     out = HERE / r['slug'] / 'index.html'
     out.parent.mkdir(exist_ok=True)
     out.write_text(page, encoding='utf-8')
@@ -1180,7 +1208,9 @@ RECIPES.append(dict(
   th, td{border:1px solid var(--sand-line); padding:8px 12px; text-align:left; vertical-align:top; background:var(--paper);}
   th{background:var(--gold-wash); color:var(--gold-deep); font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; letter-spacing:.1em; text-transform:uppercase; font-weight:600;}
   @media(max-width:780px){ .grid2, .match{grid-template-columns:1fr;} .frame{font-size:.95rem; line-height:2.3;} }
-  @media print{ .hidden{display:block !important;} .tutor, .note, .key{display:none !important;} .ladder li{opacity:1;} .flip .val{display:block; color:#000;} .board{background:none; color:#000; border:1px solid #999;} }
+  /* The teal asides are the tutor's; a trainee link never shows them (13 Oct 2026). */
+  .tutor{display:none;} body.tutor .tutor{display:block;}
+  @media print{ .hidden{display:block !important;} .tutor, .note, .key{display:none !important;} body.tutor .tutor, body.tutor .key{display:block !important;} .ladder li{opacity:1;} .flip .val{display:block; color:#000;} .board{background:none; color:#000; border:1px solid #999;} }
 """,
     body=[
         ('<p class="lead">Books closed, nothing on the board. Put the picture up and tell the story — don\'t read it out. Six minutes, no longer.</p>', '<p class="lead">Books closed, nothing on the board. Put the picture up and tell the story; don\'t read it out. Six minutes, no longer.</p>'),
@@ -1692,8 +1722,31 @@ RECIPES.append(dict(
     script=[("document.querySelectorAll('#nv a')", "document.querySelectorAll('#stickyNav a')")],
 ))
 
+
+
+# ---- the two pages built by hand take the same notes and gate --------------
+HAND = ('teaching-literacy', 'teaching-productive-skills')
+
+def hand(slug):
+    p = HERE / slug / 'index.html'
+    page = p.read_text(encoding='utf-8')
+    page = re.sub(r"\s*<!-- The trainer's notes\. Hidden until the tutor-link gate exists\. -->\s*<section id=\"trainer\" hidden>.*?</section>", '', page, count=1, flags=re.S)
+    page = re.sub(r"\n\n  <section id=\"trainer\" class=\"trainer-notes\" hidden>.*?</section>", '', page, count=1, flags=re.S)
+    page = page.replace('\n  <footer class="hub-brand-foot">', notes_block(slug) + '\n\n  <footer class="hub-brand-foot">', 1)
+    if 'class="tn-link"' not in page:
+        page = page.replace('    <button class="print-btn"', '    <a href="#trainer" class="tn-link" hidden>Trainer notes</a>\n    <button class="print-btn"', 1)
+    page = re.sub(r"\n<script src=\"\.\./\.\./hub-store\.js\"></script>\n<script>\n\(function\(\)\{\n  if \(!window\.HubStore.*?</script>", '', page, count=1, flags=re.S)
+    page = page.replace('\n</body>', '\n' + GATE + '\n</body>', 1)
+    assert page.count('id="trainer"') == 1 and page.count('hub-store.js') == 1, slug
+    p.write_text(page, encoding='utf-8')
+    print('patched', p.relative_to(ROOT), len(page))
+
+
 if __name__ == '__main__':
     want = sys.argv[1:]
     for r in RECIPES:
         if not want or r['slug'] in want:
             build(r)
+    for slug in HAND:
+        if not want or slug in want:
+            hand(slug)
