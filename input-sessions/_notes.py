@@ -42,7 +42,7 @@ NOTES['error-correction'] = '''
 <p>Check the sound for the lead-in film (the Mitchell and Webb sketch, 3 minutes). The two practice tables print from the handout; a printed copy per pair saves the typing.</p>
 <h4>Running it</h4>
 ''' + T([
-    (3, 'Lead-in', 'Play the film. One question after it: when is a correction worth making, and when does it just make the other person stop talking? That question is the session.'),
+    (3, 'Lead-in', 'Read the two viewing questions aloud before you press play. After the film, pairs compare; take one or two answers to each. The errors are small and the correcting is relentless: that contrast is the session.'),
     (7, 'Attitudes', 'Each trainee ranks the nine alone, then compares in threes. No key. Draw out the two that split a room: "You’ll never learn if you are not corrected" and "Making a mistake means you’ve learnt it wrongly".'),
     (8, 'The decision flow', 'Part A in pairs on screen; the order is type, deal or not, when, who, technique. Part B the same. Ask which decision they skip in TP: usually "who": the teacher always does it.'),
     (7, 'Match the errors', 'Individually, then check. The eight are a mix on purpose: three grammar, three pronunciation, two vocabulary. Ask which ones a student could self-correct if pointed at, and which need telling.'),
