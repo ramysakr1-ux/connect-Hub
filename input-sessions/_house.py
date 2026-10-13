@@ -113,6 +113,7 @@ HEAD = '''<!DOCTYPE html>
     </a>
     <div class="role" id="roleLabel">Trainee</div>
   </div>
+  <a class="back" href="../index.html">Back to the library</a>
 
   <header class="header">
     <p class="eyebrow">{eyebrow}</p>
@@ -253,7 +254,7 @@ RECIPES.append(dict(
     body=[
         ('<button class="btn" style="background:linear-gradient(135deg,var(--blue),#5a8fc0);" onclick="checkErrorMatch()">Check answers</button>',
          '<button class="btn teal" onclick="checkErrorMatch()">Check answers</button>'),
-        ('<div class="divider"><span>H/O 1</span></div>\n\n', '<section id="s0">\n    <div class="card">\n      <div class="stage-title">Lead-in <span class="badge">Watch</span><span class="time">3 min</span></div>\n      <p class="lead">Before you watch, read the two questions. Then watch the sketch with them in mind.</p>\n      <ol class="lead">\n        <li>What errors do the speakers make?</li>\n        <li>What do you think of the correction technique?</li>\n      </ol>\n      <div class="film"><iframe src="https://www.youtube-nocookie.com/embed/c3y0CD2CoCs?rel=0&modestbranding=1" title="That Mitchell and Webb Look: Grammar Nazi" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>\n      <p class="film-link">If the frame stays black, <a href="https://youtu.be/c3y0CD2CoCs" target="_blank" rel="noopener">watch it on YouTube</a>.</p>\n      <p class="lead" style="margin-top:10px">After watching, compare your answers with a partner.</p>\n    </div>\n  </section>\n\n  <div class="divider"><span>attitudes</span></div>\n\n'),
+        ('<div class="divider"><span>H/O 1</span></div>\n\n', '<section id="s0">\n    <div class="card">\n      <div class="stage-title">Lead-in <span class="badge">Watch</span></div>\n      <p class="lead">Before you watch, read the two questions. Then watch the sketch with them in mind.</p>\n      <ol class="lead">\n        <li>What errors do the speakers make?</li>\n        <li>What do you think of the correction technique?</li>\n      </ol>\n      <div class="film"><iframe src="https://www.youtube-nocookie.com/embed/c3y0CD2CoCs?rel=0&modestbranding=1" title="That Mitchell and Webb Look: Grammar Nazi" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>\n      <p class="film-link">If the frame stays black, <a href="https://youtu.be/c3y0CD2CoCs" target="_blank" rel="noopener">watch it on YouTube</a>.</p>\n      <p class="lead" style="margin-top:10px">After watching, compare your answers with a partner.</p>\n    </div>\n  </section>\n\n  <div class="divider"><span>attitudes</span></div>\n\n'),
         ('<span>H/O 2 — flowchart</span>', '<span>the flowchart</span>'),
         ('<span>H/O 2</span>', '<span>types of error</span>'),
         ('<span>H/O 3</span>', '<span>techniques</span>'),
@@ -1805,6 +1806,7 @@ CHROME = '''  <div class="chrome">
     </a>
     <div class="role" id="roleLabel">Trainee</div>
   </div>
+  <a class="back" href="../index.html">Back to the library</a>
 
 '''
 
@@ -1814,6 +1816,9 @@ def hand(slug):
     if '<div class="chrome">' not in page:
         page = page.replace('<div class="wrap">\n\n  <header class="header">', '<div class="wrap">\n\n' + CHROME + '  <header class="header">', 1)
         assert '<div class="chrome">' in page, slug + ': no header to put the chrome before'
+    if 'class="back"' not in page:
+        page = page.replace('    <div class="role" id="roleLabel">Trainee</div>\n  </div>\n', '    <div class="role" id="roleLabel">Trainee</div>\n  </div>\n  <a class="back" href="../index.html">Back to the library</a>\n', 1)
+        assert 'class="back"' in page, slug + ': no chrome to put the back link under'
     page = re.sub(r"\s*<!-- The trainer's notes\. Hidden until the tutor-link gate exists\. -->\s*<section id=\"trainer\" hidden>.*?</section>", '', page, count=1, flags=re.S)
     page = re.sub(r"\n\n  <section id=\"trainer\" class=\"trainer-notes\" hidden>.*?</section>", '', page, count=1, flags=re.S)
     page = page.replace('\n  <footer class="hub-brand-foot">', notes_block(slug) + '\n\n  <footer class="hub-brand-foot">', 1)

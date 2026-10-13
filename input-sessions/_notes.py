@@ -9,8 +9,13 @@
 # turns it on. Written in the same voice as the pages: plain sentences, one
 # idea each, no arrows.
 
-def T(rows):
-    """A timing table: (minutes, stage, what you do)."""
+def T(rows, mins=True):
+    """The running table: (minutes, stage, what you do). Ramy, 14 Oct 2026: the
+    minutes stay only where the page itself gives them; a session whose page
+    carries no times gets the stages and what to do, and no invented clock."""
+    if not mins:
+        return '<table class="tn-time"><tr><th>Stage</th><th>What you do</th></tr>' + ''.join(
+            '<tr><td>%s</td><td>%s</td></tr>' % (r[1], r[2]) for r in rows) + '</table>'
     return '<table class="tn-time"><tr><th>Min</th><th>Stage</th><th>What you do</th></tr>' + ''.join(
         '<tr><td>%s</td><td>%s</td><td>%s</td></tr>' % r for r in rows) + '</table>'
 
@@ -41,7 +46,7 @@ NOTES['error-correction'] = '''
 <h4>Before</h4>
 <p>Check the sound for the lead-in film (the Mitchell and Webb sketch, 3 minutes). The two practice tables print from the handout; a printed copy per pair saves the typing.</p>
 <h4>Running it</h4>
-''' + T([
+''' + T(mins=False, rows=[
     (3, 'Lead-in', 'Read the two viewing questions aloud before you press play. After the film, pairs compare; take one or two answers to each. The errors are small and the correcting is relentless: that contrast is the session.'),
     (7, 'Attitudes', 'Each trainee ranks the nine alone, then compares in threes. No key. Draw out the two that split a room: "You’ll never learn if you are not corrected" and "Making a mistake means you’ve learnt it wrongly".'),
     (8, 'The decision flow', 'Part A in pairs on screen; the order is type, deal or not, when, who, technique. Part B the same. Ask which decision they skip in TP: usually "who": the teacher always does it.'),
@@ -74,7 +79,7 @@ NOTES['classroom-management'] = '''
 <h4>Before</h4>
 <p>Groups of three with one device each for the wheel; the rest is whole class on the screen. Nothing to print.</p>
 <h4>Running it</h4>
-''' + T([
+''' + T(mins=False, rows=[
     (6, 'Would you rather', 'Six dilemmas, fast. Pick one, tell your partner why, next. The point is that they already have a theory of good teaching; this session gives it names.'),
     (8, 'Who is talking', 'Set the sliders to their TP class: the real number of students, the real minutes. Watch the bar. Then the six cards: ask them to predict the six reasons before clicking.'),
     (12, 'The wheel', 'Threes. Each group spins and talks for two minutes per area; they will get through five or six, not thirteen. Collect one line per group at the end.'),
@@ -96,7 +101,7 @@ NOTES['functional-language'] = '''
 <h4>Before</h4>
 <p>The three exponents on the board before they arrive: "Can you pass me the sugar, please?", "You should stay in bed.", "If only I’d been more romantic with her." The Wordwall link in part 6 is a phone version of the matching; use it if the room has phones and the page is on the projector.</p>
 <h4>Running it</h4>
-''' + T([
+''' + T(mins=False, rows=[
     (10, 'Exponent 1, together', 'Analyse the sugar sentence as a class: form as a chunk (not a grammar label), function, phonology, CCQs, context. Reveal the key and compare line by line. This is the model for the other two.'),
     (12, 'Exponents 2 and 3', 'Pairs: one takes "You should stay in bed", the other "If only I’d been more romantic", then they teach each other. Keys are at the end of the page (parts 10 and 11), not beside the task, on purpose.'),
     (5, 'The functions', 'Twelve functions; for each, one exponent they know and one other way of saying it. Thirty seconds a function, out loud, no writing.'),
@@ -181,7 +186,7 @@ NOTES['guided-to-less-guided-practice'] = '''
 <h4>Before</h4>
 <p>Sound for the film (the Pink Panther dialect-coach scene, 2 minutes). The nine techniques in part 2 are yours to demonstrate live in Your turn, so have the sentence ready: "I’m going to the cinema" does for all nine. Jazz chant: a beat, your hand on the table.</p>
 <h4>Running it</h4>
-''' + T([
+''' + T(mins=False, rows=[
     (6, 'Cued dialogue', 'Pairs, before anything else. They build the phone call from the cues and act it. Then the question: how much help did the cues give you? That is less-guided practice, felt before it is named.'),
     (5, 'The film', 'Watch, then the question on the page. They will laugh; then ask what the coach did that worked (chunks, repetition, no explanation) and what did not (no meaning).'),
     (5, 'Why drill', 'Groups write first, then reveal. Add your own: confidence, and the sound of the sentence in the mouth before the brain is asked for it.'),
@@ -248,7 +253,7 @@ NOTES['teaching-writing'] = '''
 <h4>Before</h4>
 <p>Scraps of paper for the mystery present; the model letter is on the page. Part 4 needs the SpongeBob cartoon strip from your own materials: it is copyrighted, so it is not on the page. A wall for the running dictation, or do it on screen line by line. Online: the page carries the online version of each step in brackets.</p>
 <h4>Running it</h4>
-''' + T([
+''' + T(mins=False, rows=[
     (8, 'The mystery present', 'Live, no screen. Everyone writes a present for someone in the room, you redistribute, elicit "say thank you", and they will write a thank-you letter to find the giver.'),
     (12, 'The thank-you letter', 'Show the model. Ask what the features are, and whether the present is named (it is only implied). They write; then the mingle: letters held up, read aloud, delivered.'),
     (6, 'Attitudes', 'Sort the eight on screen in pairs. Ask which attitude their students will have.'),
@@ -271,7 +276,7 @@ NOTES['lesson-framework'] = '''
 <h4>Before</h4>
 <p>Ten parts, sixty minutes; parts 7 to 10 are optional and the page says which to drop. The coursebook pages in part 10 are Speakout; have the book in the room. Nothing to print.</p>
 <h4>Running it</h4>
-''' + T([
+''' + T(mins=False, rows=[
     (5, 'The decision tree', 'Walk it from the top with one lesson they have taught this week. Language or skills, text or no text.'),
     (8, 'The six shapes', 'Read the six cards aloud fast; this is reference, not teaching. Ask which they have taught and which they have not.'),
     (7, 'Card sort', 'Six stages, six shapes, pairs on screen.'),
@@ -340,7 +345,7 @@ NOTES['word-and-sentence-stress'] = '''
 <h4>Before</h4>
 <p>Sound for the Hamlet sketch (4 minutes; it is a fan upload, so check it still plays, and the RSC’s own short cut is the fallback link under the frame). Nothing to print; the chant and the roses sentence are on screen.</p>
 <h4>Running it</h4>
-''' + T([
+''' + T(mins=False, rows=[
     (8, 'Lead-in', 'Watch once: tick the word each actor lands on. Watch again in pairs: what does the line mean each time, which would you choose. Then the reveal. If you want a word-by-word key for the nine, add it after one viewing; the page does not claim one.'),
     (6, 'Rhythm', 'Clap the four beats and say the four lines over them, faster each time. The reveal names stress timing.'),
     (8, 'Word stress', 'Sixteen countries; say each before clicking. Pakistan and Montreal carry a secondary stress; make them hear it.'),
@@ -403,7 +408,7 @@ NOTES['writing-the-lesson-plan'] = '''
 <h4>Before</h4>
 <p>Their own lesson plan template and language analysis sheet open beside the page; every judgement on the page is about those two documents. Nothing to print.</p>
 <h4>Running it</h4>
-''' + T([
+''' + T(mins=False, rows=[
     (12, 'Aims', 'The four criteria on screen. Each aim: Ready to teach from, or Needs work; the feedback says why. Do the first two together, the rest in pairs.'),
     (12, 'Procedure', 'Same again. The one to stop on: a procedure a colleague could not teach from.'),
     (6, 'Interaction patterns', 'Match each description to the pattern. Ind, PW, GW, T-S, S-S, OC, OCFB.'),
@@ -422,7 +427,7 @@ NOTES['life-after-celta'] = '''
 <h4>Before</h4>
 <p>The links were checked when the page was written; open two or three before the session to make sure they still are. The Istanbul table is local; if you run this elsewhere, swap part 4 for your own city. Their CELTA report is their reference: say so early.</p>
 <h4>Running it</h4>
-''' + T([
+''' + T(mins=False, rows=[
     (5, 'Where next', 'Three minutes in pairs on the four questions. The tip on the page is the frame for the whole session: CELTA gets you in, the next two years make you good.'),
     (8, 'CV and letter', 'Read the ten-second list aloud. Ask them to write the levels, books and hours they taught before they leave the room.'),
     (10, 'Where the jobs are', 'The boards by region. Two minutes on one board each, then report what it asks for.'),
@@ -444,7 +449,7 @@ NOTES['drama-in-the-elt-classroom'] = '''
 <h4>Before</h4>
 <p>Space: chairs to the walls. The Activity Evaluation Sheet open on a device per trainee; they fill it in after each set. Music for From Seed to Plant if you have it. Say at the start that nobody has to do anything they do not want to; the See-saw and Blind need trust, so watch them.</p>
 <h4>Running it</h4>
-''' + T([
+''' + T(mins=False, rows=[
     (6, 'Drama in ELT', 'Reveal the quotations; read three aloud. Ask which they believe.'),
     (16, 'Warm-ups', 'Shake hands as if (five or six of the eleven), Mirroring, the See-saw with you as a spotter, Eels in the grotto if the room allows, Blind in pairs.'),
     (18, 'Getting started', 'Miming a monster on two volunteers, then pairs. Listen and mime with Rod the frog: teach the actions, tell the story, they join in. The Hokey Pokey to finish, everybody.'),
