@@ -28,6 +28,28 @@
   .top{margin:4px 0 24px;}
   .top h1{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.95rem; margin:0 0 6px; letter-spacing:-.01em;}
   .top .lede{margin:0; color:var(--grey); max-width:64ch; font-size:.95rem; line-height:1.6;}
+  /* the course strip: what is next on this course, and this week (14 Oct 2026) */
+  .next{display:grid; grid-template-columns:1.6fr 1fr; gap:14px; margin:0 0 28px;}
+  .next[hidden]{display:none;}
+  .act{background:var(--gold-wash); border:1px solid var(--amber-edge); border-left:4px solid var(--gold); border-radius:var(--r-card); padding:18px 20px;}
+  .act .tone{font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; font-weight:600; color:var(--gold-deep); margin:0 0 6px;}
+  .act h2{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.3rem; margin:0 0 4px;}
+  .act p{margin:0; font-size:.86rem; color:var(--grey); line-height:1.55;}
+  .act .btn{margin-top:12px;}
+  .side{background:var(--surface); border:1px solid var(--sand-line); border-left:5px solid var(--teal); border-radius:var(--r-control); padding:16px 18px;}
+  .side h3{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.05rem; margin:0 0 8px;}
+  .side ul{margin:0; padding:0; list-style:none;}
+  .side li{display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-top:1px solid var(--row-line); font-size:.84rem;}
+  .side li:first-child{border-top:0;}
+  .side li a{color:var(--teal); text-decoration:none; font-weight:600;} .side li a:hover{text-decoration:underline; text-underline-offset:3px;}
+  .side li span:last-child{color:var(--grey); font-variant-numeric:tabular-nums; white-space:nowrap;}
+  .side li.done{color:var(--faint);} .side li.done a{color:var(--faint); font-weight:500;}
+  .side li.now span:last-child{color:var(--teal); font-weight:700;}
+  .side .none{margin:0; font-size:.84rem; color:var(--grey);}
+  .pill{display:inline-flex; align-items:center; font-family:'Karla',sans-serif; font-size:.68rem; font-weight:700; padding:2px 9px; border-radius:999px; border:1px solid var(--sand-line); color:var(--grey); background:var(--paper);}
+  .pill.wait{color:var(--teal); border-color:color-mix(in oklab, var(--teal) 35%, var(--paper));}
+  .pill.now{color:var(--paper); background:var(--teal); border-color:var(--teal);}
+  @media(max-width:640px){ .next{grid-template-columns:1fr;} }
   .family{margin:0 0 26px;}
   .family h2{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.2rem; margin:0 0 2px;}
   .family .fl{margin:0 0 12px; font-size:.86rem; color:var(--grey);}
@@ -56,6 +78,23 @@
   <div class="top">
     <h1>Input sessions</h1>
     <p class="lede">Twenty-one sessions, each one built to be done rather than read: tasks first, the names at the end. Open one, work through it on a laptop or a phone, and print the handout when you need paper.</p>
+  </div>
+
+  <!-- The course strip (14 Oct 2026): what is next and this week, read from
+       the course's timetable (its input sessions, by title) when this
+       browser holds a link. Without a link, or on a course with no
+       timetable yet, the shelf is the shelf. -->
+  <div class="next" id="courseStrip" hidden>
+    <div class="act">
+      <p class="tone" id="nextTone"></p>
+      <h2 id="nextTitle"></h2>
+      <p id="nextLine"></p>
+      <a class="btn gold" id="nextOpen" href="#" hidden>Open the session</a>
+    </div>
+    <div class="side">
+      <h3 id="weekHead">This week</h3>
+      <ul id="weekList"></ul>
+    </div>
   </div>
 
   <div class="family">
@@ -126,5 +165,84 @@
     <span>designed and built by <b>Ramy</b></span>
   </footer>
 </div>
+
+<script src="../hub-store.js"></script>
+<script>
+/* The course strip. The timetable comes from this browser's copy of the
+   course (hub-sync writes it at every boot of the home or the dashboard) or,
+   failing that, from the store with the link the browser holds. A session on
+   the timetable is matched to a page on the shelf by the words in its title;
+   a title none of the rules know is listed without a door. */
+(function(){
+  var RULES = [
+    [/stress/, 'word-and-sentence-stress'], [/connected speech|intonation/, 'connected-speech'],
+    [/phonolog|phonemic|sounds|the chart/, 'phonology-sounds'],
+    [/error correction|oral error|monitoring/, 'error-correction'], [/concept check|ccq|elicit/, 'eliciting-and-ccqs'],
+    [/classroom management|instructions and grouping/, 'classroom-management'], [/functional/, 'functional-language'],
+    [/framework|lesson shape/, 'lesson-framework'], [/\bppp\b|presenting grammar|presentation.?practice/, 'ppp'], [/text.based/, 'text-based-teaching'],
+    [/guided|drill|controlled practice/, 'guided-to-less-guided-practice'], [/speaking/, 'teaching-speaking'],
+    [/exam/, 'teaching-exam-classes'], [/lesson plan/, 'writing-the-lesson-plan'], [/writing/, 'teaching-writing'],
+    [/alternative|third conditional/, 'alternative-teaching-techniques'],
+    [/receptive|reading|listening/, 'receptive-skills'], [/life after|jobs|interview|professional development/, 'life-after-celta'],
+    [/drama|games/, 'drama-in-the-elt-classroom'], [/literacy/, 'teaching-literacy'], [/productive/, 'teaching-productive-skills']
+  ];
+  function slugFor(title){ var t = String(title || '').toLowerCase(); for (var i = 0; i < RULES.length; i++) if (RULES[i][0].test(t)) return RULES[i][1]; return ''; }
+  function rd(k){ try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+  function iso(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function dateOf(s){ var m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; }
+  function dayName(s, long){ var d = dateOf(s); return d ? d.toLocaleDateString('en-GB', long ? { weekday: 'long', day: 'numeric', month: 'long' } : { weekday: 'short', day: 'numeric' }) : ''; }
+  function esc(x){ return String(x == null ? '' : x).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var NAMES = {}; document.querySelectorAll('a.s[href]').forEach(function(a){ var h3 = a.querySelector('h3'); NAMES[a.getAttribute('href').replace(/\/$/, '')] = h3 ? h3.textContent : ''; });
+
+  function paint(tt, settings){
+    var days = (tt && Array.isArray(tt.days)) ? tt.days : [];
+    var today = (settings && /^\d{4}-\d{2}-\d{2}$/.test(String(settings.demoToday || ''))) ? settings.demoToday : iso(new Date());
+    var inputs = [];
+    days.forEach(function(d){ if (!d || !d.date) return; (d.sessions || []).forEach(function(x){ if (x && x.k === 'input' && x.t) inputs.push({ date: d.date, s: x.s || '', t: x.t, slug: slugFor(x.t) }); }); });
+    if (!inputs.length) return;
+    inputs.sort(function(a, b){ return (a.date + a.s) < (b.date + b.s) ? -1 : 1; });
+    var next = inputs.filter(function(x){ return x.date >= today; })[0] || null;
+    var strip = document.getElementById('courseStrip'); strip.hidden = false;
+    if (next) {
+      document.getElementById('nextTone').textContent = (next.date === today ? 'Today' : 'Next') + ' \u00b7 ' + dayName(next.date, true) + (next.s ? ' \u00b7 ' + next.s : '');
+      document.getElementById('nextTitle').textContent = next.t;
+      var open = document.getElementById('nextOpen');
+      if (next.slug && NAMES[next.slug] != null) { open.href = next.slug + '/'; open.hidden = false; document.getElementById('nextLine').textContent = 'On the shelf as ' + NAMES[next.slug] + '.'; }
+      else document.getElementById('nextLine').textContent = 'This session is not on the shelf; your tutor brings it.';
+    } else {
+      document.getElementById('nextTone').textContent = 'Input sessions';
+      document.getElementById('nextTitle').textContent = 'The course\u2019s input sessions are done';
+      document.getElementById('nextLine').textContent = 'Every session stays on the shelf below.';
+    }
+    /* this week: Monday to Sunday round today, or round the next session if today is outside the course */
+    var anchor = dateOf((next && (today < inputs[0].date || today > inputs[inputs.length - 1].date)) ? next.date : today);
+    var mon = new Date(anchor); mon.setDate(anchor.getDate() - ((anchor.getDay() + 6) % 7)); var sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    var week = inputs.filter(function(x){ return x.date >= iso(mon) && x.date <= iso(sun); });
+    var list = document.getElementById('weekList');
+    document.getElementById('weekHead').textContent = (iso(mon) <= today && today <= iso(sun)) ? 'This week' : 'The week of ' + mon.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+    list.innerHTML = week.length ? week.map(function(x){
+      var cls = x.date < today ? 'done' : x.date === today ? 'now' : '';
+      var name = x.slug && NAMES[x.slug] != null ? '<a href="' + esc(x.slug) + '/">' + esc(x.t) + '</a>' : esc(x.t);
+      return '<li class="' + cls + '"><span>' + name + '</span><span>' + esc(dayName(x.date)) + '</span></li>';
+    }).join('') : '<li><span class="none">No input sessions this week.</span></li>';
+    /* the cards: when each session comes on this course */
+    var bySlug = {};
+    inputs.forEach(function(x){ if (!x.slug) return; var cur = bySlug[x.slug]; if (!cur || (cur.date < today && x.date >= cur.date)) bySlug[x.slug] = x; });
+    document.querySelectorAll('a.s[href]').forEach(function(a){
+      var x = bySlug[a.getAttribute('href').replace(/\/$/, '')]; if (!x) return;
+      var m = a.querySelector('.m'); if (!m) return;
+      var pill = document.createElement('span'); pill.className = 'pill ' + (x.date < today ? '' : x.date === today ? 'now' : 'wait');
+      pill.textContent = x.date < today ? 'Done \u00b7 ' + dayName(x.date) : x.date === today ? 'Today' : dayName(x.date) + ' ' + dateOf(x.date).toLocaleDateString('en-GB', { month: 'short' });
+      m.appendChild(pill);
+    });
+  }
+
+  var tt = rd('connect_timetable_v1'), cs = rd('connect_course_settings');
+  if (tt && Array.isArray(tt.days)) { paint(tt, cs || {}); return; }
+  if (!window.HubStore) return;
+  if (!(HubStore.key() || HubStore.token() || HubStore.assessorKey())) return;
+  HubStore.course().then(function(c){ if (c && c.timetable) paint(c.timetable, c.settings || {}); }).catch(function(){});
+})();
+</script>
 </body>
 </html>
