@@ -263,7 +263,7 @@ NOTES['teaching-writing'] = '''
 <p>On the page: the three sorts (attitudes, product and process, controlled to freer), the considerations list, the dictation answers (the volleyball catch is in there), and the parallel-writing model.</p>
 <h4>Watch for</h4>
 <ul>
-<li>The page is written in your voice ("Each trainee writes…"). Trainees can read it; it does no harm, but the activities are yours to run, not theirs to read ahead.</li>
+<li>The page gives the trainee each activity as a student would get it. The running of it (collecting and redistributing the presents, posting the dictation text on the wall, your copy of the SpongeBob strip) is yours, above.</li>
 <li>The mingle needs the room. Online it is chat and breakout rooms, as the page says.</li>
 </ul>'''
 
@@ -310,7 +310,7 @@ NOTES['alternative-teaching-techniques'] = '''
 <p>On the page: the CCQs, the form gap-fill, the cut-up matches, possible endings for the stems, and how to read the twist.</p>
 <h4>Watch for</h4>
 <ul>
-<li>The trainees seeing your asides. The teal boxes on the page are for you; the tutor-link gate hides them from a trainee link.</li>
+<li>The teal asides on the page (the one rule, while you tell it, how to get it across, teach less than this, while they work) are yours; a trainee link never shows them. The page itself now reads as the lesson the class gets.</li>
 <li>Step 1 overrunning. Ten minutes of story is a lecture.</li>
 <li>"If she would have stayed": it will come; board it at the end, not in the middle of the ranking.</li>
 </ul>'''
