@@ -55,6 +55,8 @@
   .libcard{background:var(--surface); border:1px solid var(--sand-line); border-left:5px solid var(--teal); border-radius:var(--r-card); padding:18px 20px 6px; margin:0 0 24px;}
   .libcard.centre{border-left-color:var(--gold);}
   .cardhead{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.25rem; margin:0 0 4px;}
+  .cardhead.centre-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .cardhead img{height:28px; width:auto; max-width:84px; object-fit:contain; display:block; flex:none;}
   .cardlede{margin:0 0 14px; font-size:.86rem; color:var(--grey); line-height:1.55;}
   .libcard .family h2{font-size:1.05rem;}
   .family{margin:0 0 26px;}
@@ -117,7 +119,7 @@
   </section>
 
   <section class="libcard" id="connectCard" hidden>
-    <h2 class="cardhead">Connect&rsquo;s input sessions</h2>
+    <h2 class="cardhead">Connect input sessions</h2>
     <p class="cardlede">Connect&rsquo;s own sessions, built into the library. Tutors see all of them.</p>
   <div class="family">
     <h2>Loop input</h2>
@@ -244,7 +246,11 @@
     var links = centreLinks(cs);
     if (!links.length) { $('centreCard').hidden = true; return; }
     var name = String((cs && cs.centreName) || '').trim();
-    $('centreHead').textContent = name ? name + ': input sessions' : 'Your centre’s input sessions';
+    var head = $('centreHead');
+    head.textContent = name || 'Your centre';
+    var logo = String((cs && cs.logo) || '');
+    if (/^(data:image\/|https:\/\/)/.test(logo)) { var img = document.createElement('img'); img.src = logo; img.alt = ''; head.insertBefore(img, head.firstChild); }
+    head.classList.add('centre-head');
     $('centreCards').innerHTML = links.map(function(l){
       return '<a class="s ext" href="' + esc(l.url) + '" target="_blank" rel="noopener noreferrer"><p class="k">' + esc(name || 'Your centre') + '</p><h3>' + esc(l.label || l.url) + '</h3><p class="m">Opens in a new tab</p></a>';
     }).join('');
