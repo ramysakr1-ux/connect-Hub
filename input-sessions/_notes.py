@@ -150,7 +150,7 @@ NOTES['ppp'] = '''
     (3, 'What is PPP?', 'The reveal card gives the three words; that is all they get for now.'),
     (8, 'Match the terms', 'Pairs. Five terms. When they finish, ask: what did I just do? (Pre-taught vocabulary.) Say nothing more.'),
     (3, 'Predict', 'A minute in pairs, then two predictions on the board.'),
-    (12, 'Read', 'Silently, against your watch. Then: were your predictions right? That is the gist check.'),
+    (12, 'Read', 'Silently, one minute against your watch, for the gist. Then: were your predictions right? That is the gist check.'),
     (8, 'Detail', 'Six true-or-false, individually, then pairs, then click. Number 6 is the one to argue about.'),
     (9, 'Debrief', 'Order the stages. Then the question: which stages of a PPP lesson did this session just model, and which did it skip (production: they will notice there was no freer stage, and that is a fair criticism of a short input).'),
 ]) + '''
@@ -170,7 +170,7 @@ NOTES['text-based-teaching'] = '''
     (2, 'Lead-in', 'Hands up. Grammar point first, or text first, in the last coursebook lesson they had as a student.'),
     (3, 'What makes a lesson text-based?', 'The reveal card. Then move on.'),
     (3, 'Predict', 'Pairs, a minute. Two orders on the board.'),
-    (14, 'Read', 'The text is long on purpose; it carries the whole shape. Silently, four minutes. Then check the predictions.'),
+    (14, 'Read', 'The text is long on purpose; it carries the whole shape. Silently, one minute for the gist: a skim, not a full read. Then check the predictions.'),
     (10, 'Detail', 'Nine true-or-false. Individually, pairs, click. Numbers 6 and 7 (form elicited, pronunciation not skipped) are the ones trainees get wrong in TP.'),
     (10, 'Debrief', 'Order the four stages. Then ask them to map the text onto a TP: which coursebook page they teach next, and where the language would be lifted from.'),
     (3, 'Close', 'One difference between this and PPP, in one sentence each.'),
@@ -392,7 +392,7 @@ NOTES['receptive-skills'] = '''
     (2, 'Lead-in', 'The reveal card: what is a receptive skill.'),
     (5, 'Pre-teach', 'Match the six terms in pairs. Say nothing about why you are doing this.'),
     (3, 'Predict', 'Pairs: how should a receptive skills lesson be taught. Two ideas on the board.'),
-    (12, 'Read', 'Start the three-minute timer, silent gist read. Check the predictions.'),
+    (12, 'Read', 'Start the one-minute timer, silent gist read. Check the predictions.'),
     (10, 'Detail', 'Twelve true-or-false, individually, pairs, reveal. Numbers 1 and 3 are the ones they argue.'),
     (10, 'Debrief', 'Order the seven stages. Then ask them what you did between stages (peer check before whole-class feedback, every time).'),
     (3, 'Task types', 'The bank by stage, as reference. Reading and listening: what changes.'),
@@ -401,7 +401,7 @@ NOTES['receptive-skills'] = '''
 <p>At the foot of the page (Answer key): the six terms, the twelve true-or-false with a line of reasoning each, and the stage order.</p>
 <h4>Watch for</h4>
 <ul>
-<li>The gist read taken slowly. The timer is the point; stop them at three minutes.</li>
+<li>The gist read taken slowly. The timer is the point; stop them at one minute.</li>
 <li>"Pre-teach vocabulary" heard as "teach all the hard words". Only the words the tasks depend on.</li>
 </ul>'''
 

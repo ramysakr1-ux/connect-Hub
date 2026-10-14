@@ -1635,10 +1635,13 @@ RECIPES.append(dict(
   @media print{ .timer, .count{display:none;} .reveal .ans, .why, .key.hidden, .ob, .mt{display:none !important;} }
 """,
     body=[
+        ('A gist read, so a time limit: three minutes, silently, for the main ideas.', 'A gist read, so a time limit: one minute, silently, for the main ideas.'),
+        ('<div class="clock" id="clock">3:00</div>', '<div class="clock" id="clock">1:00</div>'),
+        ('Start the 3-minute gist read', 'Start the 1-minute gist read'),
         ('<p class="lead" style="font-size:14px">Pairs with: Speakout B2, TP1.1 — Identity &amp; personality</p>', '<p class="lead" style="font-size:.86rem">Pairs with: Speakout B2, TP1.1, Identity and personality.</p>'),
         ('<div class="tip"><b>The shape to remember</b>Lead-in → pre-teach the essential words → gist task → peer check → detail task → peer check → a speaking or writing task that grows out of the text.', '<div class="tip"><b>The shape to remember</b>Lead-in, pre-teach the essential words, gist task, peer check, detail task, peer check, then a speaking or writing task that grows out of the text.'),
     ],
-    script=[("document.querySelectorAll('#nv a')", "document.querySelectorAll('#stickyNav a')")],
+    script=[("left = 180, tick = null;", "left = 60, tick = null;"), ("tick = null; left = 180; show();", "tick = null; left = 60; show();"), ("document.querySelectorAll('#nv a')", "document.querySelectorAll('#stickyNav a')")],
 ))
 
 # ---- Writing the lesson plan -------------------------------------------------
