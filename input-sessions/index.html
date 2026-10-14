@@ -114,7 +114,7 @@
 
   <section class="libcard centre" id="centreCard" hidden>
     <h2 class="cardhead" id="centreHead">Your centre&rsquo;s input sessions</h2>
-    <p class="cardlede">Links the centre has added. They open where the centre keeps them.</p>
+    <p class="cardlede" id="centreLede">Links the centre has added. They open where the centre keeps them.</p>
     <div class="cards" id="centreCards"></div>
   </section>
 
@@ -215,14 +215,14 @@
   var NAMES = {};
   document.querySelectorAll('#connectCard a.s[href]').forEach(function(a){ var h3 = a.querySelector('h3'); NAMES[a.getAttribute('href').replace(/\/$/, '')] = h3 ? h3.textContent : ''; });
   function shownLink(l){ return !!(l && l.url && (l.show !== false || (l.showFrom && new Date(l.showFrom).getTime() <= Date.now()))); }
-  function centreLinks(cs){ return ((cs && cs.courseLinks) || []).filter(function(l){ return shownLink(l) && /input session/i.test(String(l.card || '') + ' ' + String(l.label || '')); }); }
+  function centreLinks(cs, tt, who){ return ((cs && cs.courseLinks) || []).filter(function(l){ return shownLink(l) && L.isInputLink(l) && (who === 'tutor' || who === 'assessor' || L.linkOpen(l, tt, cs)); }); }
   function weekOf(now){
     var nd = dateOf(now), mon = new Date(nd); mon.setDate(nd.getDate() - ((nd.getDay() + 6) % 7));
     var sun = new Date(mon); sun.setDate(mon.getDate() + 6);
     return { mon: iso(mon), sun: iso(sun), monDate: mon };
   }
-  function paintCentre(cs){
-    var links = centreLinks(cs);
+  function paintCentre(cs, tt, who){
+    var links = centreLinks(cs, tt, who);
     if (!links.length) { $('centreCard').hidden = true; return; }
     var name = String((cs && cs.centreName) || '').trim();
     var head = $('centreHead');
@@ -233,6 +233,9 @@
     $('centreCards').innerHTML = links.map(function(l){
       return '<a class="s ext" href="' + esc(l.url) + '" target="_blank" rel="noopener noreferrer"><p class="k">' + esc(name || 'Your centre') + '</p><h3>' + esc(l.label || l.url) + '</h3><p class="m">Opens in a new tab</p></a>';
     }).join('');
+    $('centreLede').textContent = (who === 'tutor' || who === 'assessor')
+      ? 'Links the centre has added. Trainees see each one on the day the timetable gives that session; you see them all. They open where the centre keeps them.'
+      : (tt && L.inputsOf(tt).length ? 'Each opens on the day the timetable gives that session, and stays here after. It opens where the centre keeps it.' : 'Links the centre has added. They open where the centre keeps them.');
     $('centreCard').hidden = false;
   }
   function setStrip(show, tone, title, line, slug){
@@ -298,8 +301,8 @@
   }
   function run(tt, cs, who){
     $('connectCard').hidden = true; $('myCard').hidden = true; $('centreCard').hidden = true;
-    if (who === 'tutor' || who === 'assessor') { $('connectCard').hidden = false; paintCentre(cs); paintTutor(tt, cs); return; }
-    if (who === 'trainee') { paintCentre(cs); $('myCard').hidden = false; paintTrainee(tt, cs); return; }
+    if (who === 'tutor' || who === 'assessor') { $('connectCard').hidden = false; paintCentre(cs, tt, who); paintTutor(tt, cs); return; }
+    if (who === 'trainee') { paintCentre(cs, tt, who); $('myCard').hidden = false; paintTrainee(tt, cs); return; }
     setStrip(false);
     $('myCards').innerHTML = '<p class="cardlede">Open your course link to see the input sessions on your timetable.</p>';
     $('myCard').hidden = false;

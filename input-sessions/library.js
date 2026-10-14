@@ -58,6 +58,37 @@ window.InputLib = (function(){
     out.sort(function(a, b){ return (a.date + a.s) < (b.date + b.s) ? -1 : (a.date + a.s) > (b.date + b.s) ? 1 : 0; });
     return out;
   }
+  /* ---- a centre's own input session link ---- */
+  /* Ramy, 15 Oct 2026: "trainees should see those links only on the day the
+     timetable gives that session, as with Connect's sessions." A link opens for
+     a trainee once a timetable input session of the same name has come round:
+     the names match when one contains the other, or when they name the same
+     Connect page. A link no timetable session names stays shut. A course with
+     no input sessions on its timetable is left as it was, so nothing vanishes
+     for a centre that never filled it in. */
+  function norm(s){ return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/^ | $/g, ''); }
+  function rawInputs(tt){
+    var out = [];
+    ((tt && tt.days) || []).forEach(function(d){
+      if (!d || !d.date) return;
+      (d.sessions || []).forEach(function(x){ if (x && x.k === 'input' && x.t) out.push({ date: d.date, t: x.t }); });
+    });
+    return out;
+  }
+  function isInputLink(l){ return /input session/i.test(String((l && l.card) || '') + ' ' + String((l && l.label) || '')); }
+  function linkOpen(l, tt, cs){
+    var inputs = rawInputs(tt);
+    if (!inputs.length) return true;
+    var now = today(cs), ln = norm(l && l.label), ls = slugsFor(l && l.label);
+    return inputs.some(function(x){
+      if (x.date > now) return false;
+      var tn = norm(x.t);
+      if (ln && tn && (tn.indexOf(ln) !== -1 || ln.indexOf(tn) !== -1)) return true;
+      return ls.length > 0 && slugsFor(x.t).some(function(sl){ return ls.indexOf(sl) !== -1; });
+    });
+  }
+  function homeLinkOk(l, tt, cs){ return !isInputLink(l) || linkOpen(l, tt, cs); }
+
   /* ---- the gate on a session page ---- */
   var root = document.documentElement;
   function reveal(){ root.classList.remove('gating'); root.classList.remove('sealed'); }
@@ -97,5 +128,5 @@ window.InputLib = (function(){
   /* If anything goes wrong the page opens: a gate that can strand a trainee
      on a blank page is worse than no gate. */
   setTimeout(function(){ if (root.classList.contains('gating')) root.classList.remove('gating'); }, 8000);
-  return { slugsFor: slugsFor, inputsOf: inputsOf, today: today, rd: rd, iso: iso, dateOf: dateOf, gate: gate };
+  return { linkOpen: linkOpen, homeLinkOk: homeLinkOk, isInputLink: isInputLink, slugsFor: slugsFor, inputsOf: inputsOf, today: today, rd: rd, iso: iso, dateOf: dateOf, gate: gate };
 })();
