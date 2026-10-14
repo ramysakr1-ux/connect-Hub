@@ -9,10 +9,11 @@
 # turns it on. Written in the same voice as the pages: plain sentences, one
 # idea each, no arrows.
 
-def T(rows, mins=True):
+def T(rows, mins=False):
     """The running table: (minutes, stage, what you do). Ramy, 14 Oct 2026: the
     minutes stay only where the page itself gives them; a session whose page
     carries no times gets the stages and what to do, and no invented clock."""
+    mins = False   # Ramy, 15 Oct 2026: no lengths anywhere in the library
     if not mins:
         return '<table class="tn-time"><tr><th>Stage</th><th>What you do</th></tr>' + ''.join(
             '<tr><td>%s</td><td>%s</td></tr>' % (r[1], r[2]) for r in rows) + '</table>'
@@ -151,7 +152,7 @@ NOTES['ppp'] = '''
     (3, 'Predict', 'A minute in pairs, then two predictions on the board.'),
     (12, 'Read', 'Silently, against your watch. Then: were your predictions right? That is the gist check.'),
     (8, 'Detail', 'Six true-or-false, individually, then pairs, then click. Number 6 is the one to argue about.'),
-    (9, 'Debrief', 'Order the stages. Then the question: which stages of a PPP lesson did this session just model, and which did it skip (production: they will notice there was no freer stage, and that is a fair criticism of a 45-minute input).'),
+    (9, 'Debrief', 'Order the stages. Then the question: which stages of a PPP lesson did this session just model, and which did it skip (production: they will notice there was no freer stage, and that is a fair criticism of a short input).'),
 ]) + '''
 <h4>The key</h4>
 <p>On the page: the matches, the six true-or-false with reasons, the debrief order (pre-teach terms, predict the staging, read to check, detail check).</p>
@@ -208,7 +209,7 @@ NOTES['guided-to-less-guided-practice'] = '''
 
 NOTES['teaching-speaking'] = '''
 <h4>Before</h4>
-<p>This is a long one (75 to 90 minutes); cut Plan a speaking lesson to ten minutes if you have 60. Lesson Shape (F) is IH’s; the staging task and the framework table are on the page. Nothing to print.</p>
+<p>This is a long one; if time is short, cut Plan a speaking lesson to ten minutes. Lesson Shape (F) is IH’s; the staging task and the framework table are on the page. Nothing to print.</p>
 <h4>Running it</h4>
 ''' + T([
     (5, 'Warm-up', 'The two questions in pairs. Keep the answers: they come back in part 3.'),
@@ -339,7 +340,7 @@ NOTES['teaching-literacy'] = '''
 <h4>Techniques: there is genuine disagreement here</h4>
 <p>Don’t present the notes as the only right sequencing. Some centres introduce letter names before letter sounds, or vice versa. Use disagreement in the room as the discussion, not a wrong-answer moment.</p>
 <h4>Time is tight: protect the wrap-up</h4>
-<p>45 minutes is short for this much ground. If the handout activity runs long, cut to two of the three technique cards rather than skipping the wrap-up question. That question is the takeaway.</p>'''
+<p>Time is short for this much ground. If the handout activity runs long, cut to two of the three technique cards rather than skipping the wrap-up question. That question is the takeaway.</p>'''
 
 NOTES['word-and-sentence-stress'] = '''
 <h4>Before</h4>
