@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610141604">
+<link rel="stylesheet" href="hub-tokens.css?v=202610141623">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -217,8 +217,13 @@
   .proc .pst b{font-size:0.82rem;}
   .proc .pmin{font-variant-numeric:tabular-nums; font-weight:700; color:var(--teal); font-size:0.72rem;}
   .proc .pint{font-size:0.7rem; letter-spacing:.05em; text-transform:uppercase; color:var(--grey);}
-  .proc .pdo{color:var(--ink); margin:1px 0 0;}
-  .proc .pav{color:var(--brick); margin:2px 0 0; font-size:0.74rem;}
+  .proc .pdo, .proc .pavl{margin:2px 0 0; padding-left:17px; list-style:disc;}
+  .proc .pdo li, .proc .pavl li{margin:0 0 2px; padding:0;}
+  .proc .pdo{color:var(--ink);}
+  .proc .pdo li::marker{color:var(--teal);}
+  .proc .pav{color:var(--brick); margin:4px 0 0; font-size:0.74rem;}
+  .proc .pavl{margin-top:1px;}
+  .proc .pavl li::marker{color:var(--brick);}
   .proc .pclock{margin:7px 0 0; font-size:0.72rem; color:var(--grey); font-variant-numeric:tabular-nums;}
   .proc li.flexi{color:var(--grey);}
   .proc .pflex{font-size:0.66rem; letter-spacing:.06em; text-transform:uppercase; font-weight:700; color:var(--gold-deep);
@@ -389,20 +394,20 @@
   @media(prefers-reduced-motion:reduce){ .tbl select.fm, .fm-pips i{transition:none;} }
   @media print{ .fm-key, .fm-pips{display:none;} .tbl select.fm{border-left-width:1px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610141604">
+<link rel="stylesheet" href="hub-house.css?v=202610141623">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">&larr; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610141604"></script>
-<script src="hub-tracker.js?v=202610141604"></script>
-<script src="hub-rotation.js?v=202610141604"></script>
-<script src="hub-shared.js?v=202610141604"></script>
-<script src="hub-store.js?v=202610141604"></script>
-<script src="hub-say.js?v=202610141604"></script>
-<script src="hub-sync.js?v=202610141604"></script>
+<script src="hub-due.js?v=202610141623"></script>
+<script src="hub-tracker.js?v=202610141623"></script>
+<script src="hub-rotation.js?v=202610141623"></script>
+<script src="hub-shared.js?v=202610141623"></script>
+<script src="hub-store.js?v=202610141623"></script>
+<script src="hub-say.js?v=202610141623"></script>
+<script src="hub-sync.js?v=202610141623"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -475,6 +480,43 @@ if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+/* A stage's instructions are written as running sentences. They are shown as
+   bullet points, one step to a point (Ramy, 14 Oct 2026: "TP points use
+   bullet points all the way through"). Text already written as lines or with
+   its own bullets is kept as the author set it. A short answer stays with the
+   question it answers, and a question inside a dash of example language stays
+   in its sentence. */
+const BUL_ABBR = /(?:\b(?:p|pp|ex|Ex|no|No|vs|Fig|fig|e\.g|i\.e|etc|approx|St|Mr|Mrs|Ms|Dr)\.)$/;
+const BUL_IMP = /^(Board|Play|Ask|Pairs|Then|Drill|Check|Elicit|Give|Put|Write|Read|Tell|Let|Go|Do|Set|Swap|Monitor|Model|Alone|Finish|Show|Replay|Stop|Hand|Collect|Praise|Move|Keep|Listen|Choose|Point|Mime|Clarify|Silence|Answer|Answers|Now|Next|Before|After|Once)\b/;
+function bulletSplit(text) {
+  const t = String(text == null ? '' : text).replace(/\r/g, '').trim();
+  if (!t) return [];
+  if (/\n/.test(t) || /^\s*[•\-–*]\s/.test(t)) {
+    return t.split(/\n+/).map(l => l.replace(/^\s*[•\-–*]\s*/, '').trim()).filter(Boolean);
+  }
+  const out = []; let start = 0; const re = /[.?!]["”’)\]]*\s+(?=["“‘(]?[A-Z])/g; let m;
+  while ((m = re.exec(t))) {
+    const chunk = t.slice(start, m.index + 1);
+    if (m[0][0] === '.' && BUL_ABBR.test(chunk)) continue;
+    if (m[0][0] !== '.' && / [–—] ["“‘]?[A-Z]/.test(chunk) && !BUL_IMP.test(t.slice(m.index + m[0].length))) continue;
+    out.push(t.slice(start, m.index + m[0].trimEnd().length).trim());
+    start = m.index + m[0].length;
+  }
+  if (start < t.length) out.push(t.slice(start).trim());
+  const res = [];
+  out.filter(Boolean).forEach(x => {
+    const prev = res[res.length - 1], w = x.split(/\s+/).length;
+    if (prev && /\?["”’)]*$/.test(prev) &&
+        (w <= 3 || /^No\b/.test(x) || (/^(Yes|Not|Maybe|Only|It|They|We)\b[^?]{0,40}[.!]?$/.test(x) && w <= 6))) res[res.length - 1] = prev + ' ' + x;
+    else res.push(x);
+  });
+  return res;
+}
+const bulletsHTML = (text, cls) => {
+  const b = bulletSplit(text);
+  return b.length ? `<ul class="${cls}">${b.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
+};
 const rec = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch(e) { return null; } };
 const SETTINGS = rec('connect_course_settings') || {};
 const KEY = 'connect_tp_points_v1';
@@ -1060,8 +1102,8 @@ function matsRead(c, mine){
         isFlexi(s) ? '<span class="pflex">if time allows</span>'
                    : (minSpan(s.minutes)[1] > 0 ? `<span class="pmin">${esc(String(s.minutes).replace(/\s*-\s*/, '–'))} min</span>` : '')}${
         s.interaction ? `<span class="pint">${esc(s.interaction)}</span>` : ''}</div>${
-        s.todo ? `<div class="pdo">${esc(s.todo)}</div>` : ''}${
-        s.avoid ? `<div class="pav">Watch out for: ${esc(s.avoid)}</div>` : ''}</li>`).join('')}</ol>
+        s.todo ? bulletsHTML(s.todo, 'pdo') : ''}${
+        s.avoid ? `<div class="pav">Watch out for:${bulletsHTML(s.avoid, 'pavl')}</div>` : ''}</li>`).join('')}</ol>
       ${span[1] ? `<p class="pclock">${total} minutes of stages${flexi ? ', and ' + (flexi === 1 ? 'one flexi stage' : flexi + ' flexi stages') + ' if the time is there' : ''}.</p>` : ''}`;
     proc = mine
       ? `<div class="proc"><div class="plab">The procedure${c.scaffold === 'guided' ? ' — the stages and the clock; the instructions are yours to write' : ''}</div>${body}</div>`
