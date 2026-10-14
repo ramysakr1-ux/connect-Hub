@@ -17,6 +17,7 @@ line that fed the progress bar, which no longer exists.
 import re, sys, pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from _notes import NOTES   # the trainer's side of each session, one block per slug
+from _alias import ALIAS   # made-up names and examples, per slug
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -86,6 +87,21 @@ def films_closed(page):
     """<div class="film"><iframe src=... title=...></iframe></div> becomes a closed frame with a button."""
     return re.sub(r'<div class="film"><iframe src="([^"]+)" title="([^"]+)"[^>]*></iframe></div>',
                   lambda m: '<div class="film closed" data-src="%s" data-title="%s"><button type="button" class="btn teal film-btn">Watch the film</button></div>' % (m.group(1), m.group(2)), page)
+
+def alias(page, slug):
+    """Swap in the made-up names and examples; every old string must be there."""
+    # a broken bar in an alias string stands for a backslash-u2019 written inside a script string
+    esc = chr(92) + 'u2019'
+    for old, new in ALIAS.get(slug, []):
+        old, new = old.replace('\u00a6', esc), new.replace('\u00a6', esc)
+        if old.startswith('re:'):     # a whole array or block, matched by pattern
+            pat = old[3:]
+            assert re.search(pat, page, flags=re.S), f"{slug}: alias pattern not found: {pat[:70]!r}"
+            page = re.sub(pat, lambda m: new, page, count=1, flags=re.S)
+            continue
+        assert old in page, f"{slug}: alias target not found: {old[:70]!r}"
+        page = page.replace(old, new)
+    return page
 
 def strip_lengths(page):
     """Ramy, 15 Oct 2026: "remove the lengths from the library's inputs". No page
@@ -212,7 +228,7 @@ def build(r):
                        css=r['css'].strip('\n'), nav=nav) + films_closed(body.strip('\n')) + notes_block(r['slug']) + sources + '\n\n' + FOOT + '\n</div>\n\n' + script + '\n' + FILM_JS + '\n' + GATE + '\n</body>\n</html>\n'
     for bad in ('Nunito', 'Playfair', 'progressFill', 'class="watermark"', 'International House Istanbul'):
         assert bad not in page.replace(sources, '').replace(notes_block(r['slug']), ''), f"{r['slug']}: {bad} still in the page"
-    page = strip_lengths(page)
+    page = strip_lengths(alias(page, r['slug']))
     out = HERE / r['slug'] / 'index.html'
     out.parent.mkdir(exist_ok=True)
     out.write_text(page, encoding='utf-8')
@@ -1869,7 +1885,7 @@ def hand(slug):
     page = re.sub(r"\n<script>\n\(function\(\)\{\n  document\.querySelectorAll\('\.film\[data-src\]'\).*?</script>", '', page, count=1, flags=re.S)
     page = page.replace('\n</body>', '\n' + FILM_JS + '\n' + GATE + '\n</body>', 1)
     assert page.count('id="trainer"') == 1 and page.count('hub-store.js') == 1, slug
-    page = strip_lengths(page)
+    page = strip_lengths(alias(page, slug))
     p.write_text(page, encoding='utf-8')
     print('patched', p.relative_to(ROOT), len(page))
 
