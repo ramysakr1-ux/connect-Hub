@@ -35,6 +35,7 @@ FOOT = '''  <footer class="hub-brand-foot">
 GATE = '''<script src="../../hub-store.js"></script>
 <script>
 (function(){
+  if (window.InputLib) InputLib.gate();
   if (!window.HubStore || !HubStore.isTutor()) return;
   HubStore.ping().then(function(r){
     if (!r || !r.tutor) return;
@@ -93,7 +94,7 @@ def notes_block(slug):
             + NOTES[slug].strip() + '\n    </div>\n  </section>')
 
 HEAD = '''<!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="gating">
 <head>
 <!--
   Connect Lite — input session: {title}
@@ -107,6 +108,7 @@ HEAD = '''<!DOCTYPE html>
 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="../library.js"></script>
 <link rel="icon" href="../../brand/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../../brand/apple-touch-icon.png">
 <title>{title} — Connect Lite</title>
@@ -1840,7 +1842,11 @@ def hand(slug):
     page = page.replace('\n  <footer class="hub-brand-foot">', notes_block(slug) + '\n\n  <footer class="hub-brand-foot">', 1)
     if 'class="tn-link"' not in page:
         page = page.replace('    <button class="print-btn"', '    <a href="#trainer" class="tn-link" hidden>Trainer notes</a>\n    <button class="print-btn"', 1)
-    page = re.sub(r"\n<script src=\"\.\./\.\./hub-store\.js\"></script>\n<script>\n\(function\(\)\{\n  if \(!window\.HubStore.*?</script>", '', page, count=1, flags=re.S)
+    page = re.sub(r"\n<script src=\"\.\./\.\./hub-store\.js\"></script>\n<script>\n\(function\(\)\{\n(?:  if \(window\.InputLib\) InputLib\.gate\(\);\n)?  if \(!window\.HubStore.*?</script>", '', page, count=1, flags=re.S)
+    if 'class="gating"' not in page:
+        page = page.replace('<html lang="en">', '<html lang="en" class="gating">', 1)
+    if '../library.js' not in page:
+        page = re.sub(r'(<meta name="viewport"[^>]*>)', r'\1\n<script src="../library.js"></script>', page, count=1)
     page = films_closed(page)
     page = re.sub(r"\n<script>\n\(function\(\)\{\n  document\.querySelectorAll\('\.film\[data-src\]'\).*?</script>", '', page, count=1, flags=re.S)
     page = page.replace('\n</body>', '\n' + FILM_JS + '\n' + GATE + '\n</body>', 1)

@@ -199,6 +199,7 @@
 </div>
 
 <script src="../hub-store.js"></script>
+<script src="library.js"></script>
 <script>
 /* The library, by who is looking (Ramy, 14 Oct 2026). Two cards: the centre's
    own input sessions, then Connect's. A tutor sees Connect's whole library as
@@ -206,37 +207,15 @@
    been given so far, newest first: nothing from the future, and nothing the
    course does not have. No link, no cards. */
 (function(){
-  var RULES = [
-    [/stress/, 'word-and-sentence-stress'], [/connected speech|intonation/, 'connected-speech'],
-    [/phonolog|phonemic|sounds|the chart/, 'phonology-sounds'],
-    [/error correction|oral error|monitoring/, 'error-correction'], [/concept check|ccq|elicit/, 'eliciting-and-ccqs'],
-    [/classroom management|instructions and grouping/, 'classroom-management'], [/functional/, 'functional-language'],
-    [/framework|lesson shape/, 'lesson-framework'], [/\bppp\b|presenting grammar|presentation\W+practice/, 'ppp'],
-    [/text.based/, 'text-based-teaching'],
-    [/guided|drill|controlled practice/, 'guided-to-less-guided-practice'], [/speaking/, 'teaching-speaking'],
-    [/exam/, 'teaching-exam-classes'], [/lesson plan/, 'writing-the-lesson-plan'], [/writing/, 'teaching-writing'],
-    [/alternative|third conditional/, 'alternative-teaching-techniques'],
-    [/receptive|reading|listening/, 'receptive-skills'], [/life after|jobs|interview|professional development/, 'life-after-celta'],
-    [/drama|games/, 'drama-in-the-elt-classroom'], [/literacy/, 'teaching-literacy'], [/productive/, 'teaching-productive-skills']
-  ];
+  var L = window.InputLib, slugFor = null;
   function $(id){ return document.getElementById(id); }
-  function slugFor(t){ var s = String(t || '').toLowerCase(); for (var i = 0; i < RULES.length; i++) if (RULES[i][0].test(s)) return RULES[i][1]; return ''; }
-  function rd(k){ try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
-  function iso(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
-  function dateOf(s){ var m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; }
+  var rd = L.rd, iso = L.iso, dateOf = L.dateOf, today = L.today, inputsOf = L.inputsOf;
   function dayName(s, long){ var d = dateOf(s); return d ? d.toLocaleDateString('en-GB', long ? { weekday: 'long', day: 'numeric', month: 'long' } : { weekday: 'short', day: 'numeric' }) : ''; }
   function esc(x){ return String(x == null ? '' : x).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   var NAMES = {};
   document.querySelectorAll('#connectCard a.s[href]').forEach(function(a){ var h3 = a.querySelector('h3'); NAMES[a.getAttribute('href').replace(/\/$/, '')] = h3 ? h3.textContent : ''; });
-  function today(cs){ var d = String((cs && cs.demoToday) || ''); return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : iso(new Date()); }
   function shownLink(l){ return !!(l && l.url && (l.show !== false || (l.showFrom && new Date(l.showFrom).getTime() <= Date.now()))); }
   function centreLinks(cs){ return ((cs && cs.courseLinks) || []).filter(function(l){ return shownLink(l) && /input session/i.test(String(l.card || '') + ' ' + String(l.label || '')); }); }
-  function inputsOf(tt){
-    var out = [];
-    ((tt && tt.days) || []).forEach(function(d){ if (!d || !d.date) return; (d.sessions || []).forEach(function(x){ if (x && x.k === 'input' && x.t) out.push({ date: d.date, s: x.s || '', t: x.t, slug: slugFor(x.t) }); }); });
-    out.sort(function(a, b){ return (a.date + a.s) < (b.date + b.s) ? -1 : 1; });
-    return out;
-  }
   function weekOf(now){
     var nd = dateOf(now), mon = new Date(nd); mon.setDate(nd.getDate() - ((nd.getDay() + 6) % 7));
     var sun = new Date(mon); sun.setDate(mon.getDate() + 6);
@@ -276,7 +255,8 @@
         next.t, ok ? 'Open it here, or print the handout.' : 'Not in the library; your tutor brings it.', ok ? next.slug : '');
     } else setStrip(true, 'Input sessions', 'The course’s input sessions are done', 'Every session stays in the library below.', '');
     var w = weekOf(now);
-    var week = list.filter(function(x){ return x.date >= w.mon && x.date <= w.sun; });
+    var seen = {};
+    var week = list.filter(function(x){ return x.date >= w.mon && x.date <= w.sun; }).filter(function(x){ var k = x.date + '|' + x.s + '|' + x.t; if (seen[k]) return false; seen[k] = 1; return true; });
     $('weekHead').textContent = (w.mon <= now && now <= w.sun) ? 'This week' : 'The week of ' + w.monDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
     $('weekList').innerHTML = week.length ? week.map(function(x){
       var cls = x.date < now ? 'done' : x.date === now ? 'now' : '';
