@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610151316">
+<link rel="stylesheet" href="hub-tokens.css?v=202610151411">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -496,7 +496,7 @@
   .tcol-opt input:checked + span{box-shadow:0 0 0 2px var(--paper), 0 0 0 4px var(--teal);}
   .tcol-opt input:focus-visible + span{outline:2px solid var(--gold-lifted); outline-offset:3px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610151316">
+<link rel="stylesheet" href="hub-house.css?v=202610151411">
 </head>
 <body>
 <div class="board">
@@ -947,17 +947,17 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610151316"></script>
-<script src="hub-store.js?v=202610151316"></script>
-<script src="hub-say.js?v=202610151316"></script>
-<script src="agreement-defaults.js?v=202610151316"></script>
-<script src="observation-defaults.js?v=202610151316"></script>
-<script src="hub-shared.js?v=202610151316"></script>
-<script src="hub-rotation.js?v=202610151316"></script>
-<script src="hub-due.js?v=202610151316"></script>
-<script src="hub-sync.js?v=202610151316"></script>
-<script src="hub-hand.js?v=202610151316"></script>
-<script src="hub-ink.js?v=202610151316"></script>
+<script src="assignment-defaults.js?v=202610151411"></script>
+<script src="hub-store.js?v=202610151411"></script>
+<script src="hub-say.js?v=202610151411"></script>
+<script src="agreement-defaults.js?v=202610151411"></script>
+<script src="observation-defaults.js?v=202610151411"></script>
+<script src="hub-shared.js?v=202610151411"></script>
+<script src="hub-rotation.js?v=202610151411"></script>
+<script src="hub-due.js?v=202610151411"></script>
+<script src="hub-sync.js?v=202610151411"></script>
+<script src="hub-hand.js?v=202610151411"></script>
+<script src="hub-ink.js?v=202610151411"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -2142,14 +2142,6 @@ async function renderStoreRoster(next){
     e.target.textContent = open ? 'Hide the paste box' : 'Add several at once';
   });
 
-  /* PINs on or off is a course setting (settings.pinLinks), saved merged like
-     the Settings tab does, so nothing else in the record is lost. */
-  async function setPinSwitch(on){
-    const kept = (() => { try { return JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) { return {}; } })();
-    const next = Object.assign({}, kept, { pinLinks: !!on });
-    await S.putCourse('settings', next);
-    try { localStorage.setItem('connect_course_settings', JSON.stringify(next)); } catch (e) {}
-  }
   document.getElementById('storeRotateKey').addEventListener('click', async ()=>{
     if(!(await confirmModal('Rotate the course key? Every tutor link in circulation stops working; this browser gets the new one and the new tutor link shows here. Trainees\u2019 links are not affected.', 'Rotate'))) return;
     try { await S.rotateKey(); history.replaceState(null, '', location.pathname); renderStoreRoster(); } catch(err){ alert(err.message); }
@@ -2244,6 +2236,15 @@ async function renderStoreRoster(next){
    removeTrainee calls. The owner console had the identical bug, fixed an hour
    earlier; this is its sibling, found walking course admin on 21 Sep 2026. */
 let ROSTER_BUSY = false;
+/* PINs on or off is a course setting (settings.pinLinks), saved merged like
+   the Settings tab does, so nothing else in the record is lost. */
+async function setPinSwitch(on){
+  const S = window.HubStore;
+  const kept = (() => { try { return JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) { return {}; } })();
+  const next = Object.assign({}, kept, { pinLinks: !!on });
+  await S.putCourse('settings', next);
+  try { localStorage.setItem('connect_course_settings', JSON.stringify(next)); } catch (e) {}
+}
 /* An address typed into a row is saved when the box is left; the roster
    repaints from the store's answer, so what shows is what was kept. */
 document.getElementById('storeRoster').addEventListener('change', async e=>{
@@ -2256,6 +2257,7 @@ document.getElementById('storeRoster').addEventListener('change', async e=>{
   catch(err){ box.disabled = false; alert(err.message); }
 });
 document.getElementById('storeRoster').addEventListener('click', async e=>{
+  const S = window.HubStore;
   const l = e.target.closest('#copyRosterList');
   if (l){ const list = Array.isArray(ROSTER) ? ROSTER : Object.values((ROSTER && ROSTER.trainees) || {}); await hubCopyButton(l, rosterList(list)); return; }
   const c = e.target.closest('[data-copy]');
