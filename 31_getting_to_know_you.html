@@ -26,7 +26,7 @@
 <title>Getting to know you</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610151521">
+<link rel="stylesheet" href="hub-tokens.css?v=202610151532">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -83,6 +83,25 @@
   @keyframes gk-stamp{0%{opacity:0; transform:scale(2) rotate(-14deg);}60%{opacity:1; transform:scale(.94) rotate(-5deg);}100%{transform:rotate(-6deg);}}
   @media(prefers-reduced-motion:reduce){ .gk .act, .gk .act.chosen.gk-new::after{animation:none;} .gk .act, .gk .act .btn{transition:none;} }
   @media(max-width:560px){ .gk .act.chosen::after{position:static; display:inline-block; margin:0 0 8px;} .gk .act.chosen{display:flex; flex-direction:column;} .gk .act.chosen::after{order:-1; align-self:flex-start;} }
+  /* ---- the Focus on the Learner interview (15 Oct 2026) ------------------- */
+  .fmt{margin-top:16px; display:flex; gap:8px; flex-wrap:wrap;}
+  .iv-box{background:var(--surface); border:1px solid var(--sand-line); border-radius:10px; padding:16px 20px; margin-top:12px;}
+  .iv-box h2{margin:0 0 6px; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.15rem;}
+  .iv-box ul.adv{margin:6px 0 0; padding-left:20px; font-size:.9rem; line-height:1.6;}
+  .iv-who{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; align-items:center;}
+  .iv-who input{font:inherit; font-size:.9rem; padding:7px 10px; border:1.5px solid var(--sand-line); border-radius:8px; background:var(--field); color:var(--ink); min-width:0; flex:1 1 11em; max-width:18em;}
+  .iv-q{margin-top:14px;}
+  .iv-q .t{font-size:.7rem; letter-spacing:.1em; font-weight:700; text-transform:uppercase; color:var(--gold-deep);}
+  .iv-q .a{font-weight:700; font-size:.95rem; margin:2px 0;}
+  .iv-q .l{font-size:.8rem; color:var(--grey); margin-bottom:5px; line-height:1.45;}
+  .iv-q textarea, .iv-heard textarea{width:100%; font:inherit; font-size:.9rem; padding:8px 10px; border:1.5px solid var(--sand-line); border-radius:8px; background:var(--field); color:var(--ink); min-height:3.2em; resize:vertical;}
+  .iv-q textarea:focus, .iv-heard textarea:focus, .iv-who input:focus{outline:none; border-color:var(--gold);}
+  .iv-saved{font-size:.8rem; color:var(--grey); margin-left:6px;}
+  .iv-heard .item{display:flex; gap:10px; align-items:flex-start; justify-content:space-between; padding:8px 0; border-top:1px solid var(--row-line, #e6e0d4); font-size:.9rem; line-height:1.5;}
+  .iv-heard .item:first-of-type{border-top:0;}
+  .iv-heard .item b{display:block; font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; color:var(--gold-deep);}
+  .iv-types{display:flex; gap:8px; margin:10px 0 6px; flex-wrap:wrap;}
+  .iv-tutor td, .iv-tutor th{text-align:left; padding:6px 10px 6px 0; font-size:.88rem; vertical-align:top;}
   @media print{ .gk .act{animation:none;} .gk.gk-picked .act:not(.chosen) ol{display:block;} .gk-peek{display:none;} }
 </style>
 </head>
@@ -91,11 +110,12 @@
   <a class="back" id="back" href="index.html">&#8592; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610151521"></script>
-<script src="hub-store.js?v=202610151521"></script>
-<script src="hub-say.js?v=202610151521"></script>
-<script src="hub-sync.js?v=202610151521"></script>
-<script src="gtky-bank.js?v=202610151521"></script>
+<script src="hub-shared.js?v=202610151532"></script>
+<script src="hub-store.js?v=202610151532"></script>
+<script src="hub-say.js?v=202610151532"></script>
+<script src="hub-sync.js?v=202610151532"></script>
+<script src="gtky-bank.js?v=202610151532"></script>
+<script src="fol-interview.js?v=202610151532"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -134,7 +154,16 @@ function offered(pool, seed){ if (pool.length <= 3) return pool.slice(); const o
 let band = '', busy = false, note = '';
 function plan(){ return window.hubGtkyPlan ? hubGtkyPlan(settings(), rec('connect_timetable_v1')) : { when: 'on the first day', minutes: 0, slotMinutes: 45 }; }
 function minutesLine(){ const p = plan(); return p.minutes ? 'About ' + p.minutes + ' minutes each, ' + p.when + (p.slot ? ', in ' + p.slot : '') + '.' : 'The ' + p.slotMinutes + ' minutes of unassessed teaching ' + p.when + ' are shared between the group, so each of you has a few.'; }
+/* THE SESSION'S FORMAT (15 Oct 2026). Course admin, Getting to know you:
+   the three activities (as it always was), a Focus on the Learner interview,
+   or both. With both, the page opens on the interview and the trainee can
+   switch. The interview itself is in iv*() below. */
+function fmt(){ const f = String(settings().gtkyFormat || ''); return f === 'interview' || f === 'both' ? f : 'activities'; }
+let ivView = '';
+function curView(){ const f = fmt(); if (f === 'both') return ivView || 'interview'; return f === 'interview' ? 'interview' : 'activities'; }
+function switcher(){ return fmt() === 'both' ? `<div class="fmt"><button class="chip${curView() === 'interview' ? ' on' : ''}" type="button" data-view="interview">Student interview</button><button class="chip${curView() === 'activities' ? ' on' : ''}" type="button" data-view="activities">Activities</button></div>` : ''; }
 function render(){
+  if (curView() === 'interview') { renderInterview(); return; }
   const g = MY_GROUP, m = mode();
   if (!band) band = groupBand(g) || (IS_TRAINEE ? '' : 'high');
   const mine = IS_TRAINEE ? pickOf(MY_NAME) : null;
@@ -150,7 +179,7 @@ function render(){
     <button class="chip${band === 'low' ? ' on' : ''}" type="button" data-band="low">${BAND_NAME.low}</button>
     <button class="chip${band === 'high' ? ' on' : ''}" type="button" data-band="high">${BAND_NAME.high}</button>
     <span>&middot; ${m === 'online' ? 'online course' : 'in the room'}</span></div>`;
-  if (!band) { $('app').innerHTML = head + pickBox + bands + '<div class="empty">Choose the level of your students above and your three appear.</div>'; wire(); return; }
+  if (!band) { $('app').innerHTML = head + switcher() + pickBox + bands + '<div class="empty">Choose the level of your students above and your three appear.</div>'; wire(); return; }
   const pool = BANK.filter(a => (band === 'high') === !!HIGH[a.level] && (a.mode === 'both' || a.mode === m));
   const show = IS_TRAINEE ? offered(pool, MY_TOKEN || MY_NAME || 'x') : pool;
   /* A pick made from an earlier three (the level changed) stays visible. */
@@ -163,7 +192,7 @@ function render(){
           ? `<button class="btn ghost" type="button" data-unpick="${esc(mine.id)}"${busy ? ' disabled' : ''}>Take it back</button><span class="note">Your pick.</span>`
           : (mine ? '<span class="note">Take your pick back to choose this instead.</span>' : `<button class="btn" type="button" data-pick="${esc(a.slug)}"${busy ? ' disabled' : ''}>Pick this one</button>`)}</div>` : ''}
     </div>`; }).join('');
-  $('app').innerHTML = head + pickBox + bands + (note ? `<p class="note" style="margin:12px 0 0;">${esc(note)}</p>` : '') + list;
+  $('app').innerHTML = head + switcher() + pickBox + bands + (note ? `<p class="note" style="margin:12px 0 0;">${esc(note)}</p>` : '') + list;
   wire();
 }
 function write(list){ try { localStorage.setItem('connect_shared_v1', JSON.stringify(list || [])); } catch(e){} }
@@ -189,10 +218,74 @@ async function unpick(id){
   busy = false; render(); setTimeout(() => { note = ''; render(); }, 2600);
 }
 function wire(){
+  $('app').querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => { ivView = b.dataset.view; render(); }));
   $('app').querySelectorAll('[data-band]').forEach(b => b.addEventListener('click', () => { band = b.dataset.band; render(); }));
   $('app').querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', () => pickIt(b.dataset.pick)));
   $('app').querySelectorAll('[data-unpick]').forEach(b => b.addEventListener('click', () => unpick(b.dataset.unpick)));
 }
+/* ---- the interview ------------------------------------------------------- */
+const IKEY = 'connect_fol_interview_v1';
+const FOL = window.CONNECT_HUB_FOL || { questions: [], advice: [], summaryHtml: () => '' };
+function ivData(){ const d = rec(IKEY); return d && d.students ? d : { students: {} }; }
+function ivSave(d){ try { localStorage.setItem(IKEY, JSON.stringify(d)); } catch (e) {} }
+function regNames(){ const V = rec('connect_volunteers_v1'); return V && Array.isArray(V.students) ? V.students.map(s => String(s.name || '').trim()).filter(Boolean) : []; }
+let ivSel = '', ivTimer = null;
+function ivStudents(){ const d = ivData(); const names = regNames(); Object.keys(d.students).forEach(k => { if (!names.includes(d.students[k].name)) names.push(d.students[k].name); }); return names; }
+function ivEnsure(d, name){ if (!d.students[name]) d.students[name] = { name, answers: {}, heard: [], at: new Date().toISOString() }; return d.students[name]; }
+function renderInterview(){
+  const d = ivData();
+  const head = `<div class="title"><h1>${IS_TRAINEE ? 'Interview a student' : 'Getting to know you: the student interview'}</h1>
+    <p>${IS_TRAINEE ? 'Choose a student and ask the questions below. Write down what they say, then add the grammar or sound problems you heard. Those notes count as evidence for your Focus on the Learner assignment, so the exact words matter.' : 'This course runs its getting-to-know-you session as a Focus on the Learner interview. Each trainee asks a student the questions below and writes down what they hear; it shows back on their Focus on the Learner page.'}</p></div>`;
+  const adv = `<div class="iv-box"><h2>Before you start</h2><ul class="adv">${FOL.advice.map(x => '<li>' + esc(x) + '</li>').join('')}</ul></div>`;
+  if (!IS_TRAINEE) {
+    const tr = roster().map(t => { const rc = t.interview || null; const st = rc && rc.students ? Object.values(rc.students) : []; return { name: t.name, n: st.length, h: st.reduce((a, s) => a + ((s.heard || []).length), 0) }; });
+    const rows = tr.length ? `<table class="iv-tutor"><thead><tr><th>Trainee</th><th>Students interviewed</th><th>Problems heard</th></tr></thead><tbody>${tr.map(t => `<tr><td>${esc(t.name)}</td><td>${t.n || 'Not yet'}</td><td>${t.h || 'None yet'}</td></tr>`).join('')}</tbody></table>` : '<p class="note">No trainees on the course yet.</p>';
+    $('app').innerHTML = head + switcher() + `<div class="iv-box"><h2>Who has interviewed</h2>${rows}</div>` + adv +
+      `<div class="iv-box"><h2>The eight questions</h2>${FOL.questions.map((q, i) => `<div class="iv-q"><div class="t">${i + 1} &middot; ${esc(q.topic)}</div><div class="a">${esc(q.ask)}</div><div class="l">${esc(q.listenFor)}</div></div>`).join('')}</div>`;
+    wire(); return;
+  }
+  const names = ivStudents();
+  const who = `<div class="iv-box"><h2>Who are you interviewing?</h2><div class="iv-who">${names.map(n => {
+      const s = d.students[n]; const heard = s ? (s.heard || []).length : 0; const started = !!s;
+      return `<button class="chip${n === ivSel ? ' on' : ''}" type="button" data-stu="${esc(n)}">${esc(n)} &middot; ${started ? (heard ? 'Saved, ' + heard + ' heard' : 'Saved') : 'Not started'}</button>`; }).join('')}
+      <input type="text" id="ivNew" placeholder="Another student's first name" maxlength="60"><button class="btn ghost" type="button" id="ivAdd">Add</button></div>
+      ${names.length ? '' : '<p class="note" style="margin-top:8px">No students are on the register yet. Add the first name of the student you interviewed.</p>'}</div>`;
+  let body = '';
+  if (ivSel) {
+    const s = d.students[ivSel] || { answers: {}, heard: [] };
+    body = `<div class="iv-box"><h2>Questions for ${esc(ivSel)}<span class="iv-saved" id="ivSaved"></span></h2><p class="note">Write what they say. Your answers stay with you and your tutors.</p>
+      ${FOL.questions.map((q, i) => `<div class="iv-q"><div class="t">${i + 1} &middot; ${esc(q.topic)}</div><div class="a">${esc(q.ask)}</div><div class="l">${esc(q.listenFor)}</div><textarea data-q="${esc(q.key)}" rows="2">${esc((s.answers || {})[q.key] || '')}</textarea></div>`).join('')}</div>
+      <div class="iv-box iv-heard"><h2>What you heard</h2><p class="note">A grammar or sound problem, with the student's own words.</p>
+      ${(s.heard || []).length ? (s.heard || []).map(h => `<div class="item"><div><b>${h.type === 'pronunciation' ? 'Pronunciation' : 'Grammar'}</b>${esc(h.note)}</div><button class="btn ghost" type="button" data-unheard="${esc(h.id)}">Remove</button></div>`).join('') : '<p class="note">Nothing added yet.</p>'}
+      <div class="iv-types"><label class="chip${ivType === 'grammar' ? ' on' : ''}"><input type="radio" name="ivType" value="grammar" ${ivType === 'grammar' ? 'checked' : ''} style="display:none">Grammar</label><label class="chip${ivType === 'pronunciation' ? ' on' : ''}"><input type="radio" name="ivType" value="pronunciation" ${ivType === 'pronunciation' ? 'checked' : ''} style="display:none">Pronunciation</label></div>
+      <textarea id="ivHeard" rows="2" placeholder="What ${esc(ivSel)} said, in their words"></textarea>
+      <div style="margin-top:8px"><button class="btn" type="button" id="ivHeardAdd">Add what you heard</button></div></div>`;
+  }
+  $('app').innerHTML = head + switcher() + who + adv + body;
+  wireInterview(); wire();
+}
+let ivType = 'grammar';
+function wireInterview(){
+  const app = $('app');
+  app.querySelectorAll('[data-stu]').forEach(b => b.addEventListener('click', () => { ivSel = b.dataset.stu; renderInterview(); }));
+  const add = () => { const v = String($('ivNew').value || '').trim(); if (!v) return; const d = ivData(); ivEnsure(d, v); ivSave(d); ivSel = v; renderInterview(); };
+  if ($('ivAdd')) { $('ivAdd').addEventListener('click', add); $('ivNew').addEventListener('keydown', e => { if (e.key === 'Enter') add(); }); }
+  app.querySelectorAll('textarea[data-q]').forEach(t => t.addEventListener('input', () => {
+    clearTimeout(ivTimer); const sv = $('ivSaved'); if (sv) sv.textContent = '';
+    ivTimer = setTimeout(() => { const d = ivData(); const s = ivEnsure(d, ivSel); app.querySelectorAll('textarea[data-q]').forEach(x => { s.answers[x.dataset.q] = x.value; }); ivSave(d); const sv2 = $('ivSaved'); if (sv2) sv2.textContent = ' \u00b7 Saved'; }, 700);
+  }));
+  app.querySelectorAll('input[name=ivType]').forEach(r => r.addEventListener('change', () => { ivType = r.value; app.querySelectorAll('.iv-types .chip').forEach(c => c.classList.toggle('on', c.querySelector('input').checked)); }));
+  if ($('ivHeardAdd')) $('ivHeardAdd').addEventListener('click', () => {
+    const v = String($('ivHeard').value || '').trim(); if (!v || !ivSel) return;
+    const d = ivData(); const s = ivEnsure(d, ivSel);
+    /* save any typed answers first, so the notes and the interview stay together */
+    app.querySelectorAll('textarea[data-q]').forEach(x => { s.answers[x.dataset.q] = x.value; });
+    s.heard.push({ id: 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), type: ivType, note: v });
+    ivSave(d); renderInterview();
+  });
+  app.querySelectorAll('[data-unheard]').forEach(b => b.addEventListener('click', () => { const d = ivData(); const s = d.students[ivSel]; if (!s) return; s.heard = (s.heard || []).filter(h => h.id !== b.dataset.unheard); ivSave(d); renderInterview(); }));
+}
+
 render();
 document.addEventListener('hub:ready', () => { band = band || groupBand(MY_GROUP); render(); });
 

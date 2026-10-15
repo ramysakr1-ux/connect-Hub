@@ -18,7 +18,7 @@
   // Assessor mode (Ramy, 20 Sep 2026): boots like a tutor, writes nothing.
   var mode = !S ? '' : S.isTutor() ? 'tutor' : S.isAssessor() ? 'assessor' : S.isTrainee() ? 'trainee' : (S.isVolunteer && S.isVolunteer()) ? 'volunteer' : '';
   window.HubMode = mode;
-  var TRAINEE_KEYS = { 'chub:plan':'plan', 'chub:selfeval':'selfeval', 'chub:feedback':'feedback', 'connect_assignment_submissions_v1':'assignments', 'chub:tpHistory':'tpHistory', 'chub:tracker':'tracker', 'connect_observations_v1':'observations', 'chub:links':'links', 'chub:celta5':'celta5', 'chub:celta5t':'celta5t', 'chub:agreement':'agreement' };
+  var TRAINEE_KEYS = { 'chub:plan':'plan', 'chub:selfeval':'selfeval', 'chub:feedback':'feedback', 'connect_assignment_submissions_v1':'assignments', 'chub:tpHistory':'tpHistory', 'chub:tracker':'tracker', 'connect_observations_v1':'observations', 'chub:links':'links', 'chub:celta5':'celta5', 'chub:celta5t':'celta5t', 'chub:agreement':'agreement', 'connect_fol_interview_v1':'interview' };
   var TUTOR_ONLY = { feedback:1, tpHistory:1, tracker:1, links:1, celta5t:1 }; // links: a trainee's private links, the tutor's to write; celta5t: the tutors' half of the CELTA 5
   // staffLinks -- about a trainee, for staff only -- has no trainee key at all: the store never hands it to a trainee's token
   var COURSE_KEYS = { 'connect_assignment_wording_v2':'wording', 'connect_course_settings':'settings', 'connect_observation_wording_v1':'observations', 'connect_timetable_v1':'timetable', 'connect_tp_points_v1':'tppoints', 'connect_volunteers_v1':'volunteers' };
@@ -605,7 +605,7 @@
          days ago; nobody had reason to open this file as well, because every
          kind added before today -- celta5, celta5t, staffLinks -- had been
          added here in the same sitting as its store change. agreement was not. */
-      roster.trainees[t.token] = { id: t.token, name: t.name, group: t.group, email: t.email || '', importedAt: t.created, tp: { plan: r.plan || null, selfeval: r.selfeval || null, feedback: r.feedback || null, history: history }, assignments: r.assignments || {}, tracker: r.tracker || {}, observations: r.observations || {}, links: r.links || [], staffLinks: r.staffLinks || [], celta5: r.celta5 || {}, celta5t: r.celta5t || {}, agreement: r.agreement || {} };
+      roster.trainees[t.token] = { id: t.token, name: t.name, group: t.group, email: t.email || '', importedAt: t.created, tp: { plan: r.plan || null, selfeval: r.selfeval || null, feedback: r.feedback || null, history: history }, assignments: r.assignments || {}, tracker: r.tracker || {}, observations: r.observations || {}, links: r.links || [], staffLinks: r.staffLinks || [], celta5: r.celta5 || {}, celta5t: r.celta5t || {}, agreement: r.agreement || {}, interview: r.interview || {} };
     });
     out['connect_roster_v1'] = JSON.stringify(roster);
     return out;

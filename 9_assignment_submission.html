@@ -15,7 +15,7 @@
 <title>Connect Lite — Assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610151521">
+<link rel="stylesheet" href="hub-tokens.css?v=202610151532">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -162,7 +162,7 @@
   @media(max-width:560px){ .wm{flex-wrap:wrap; gap:6px;} .wm-track{width:100%;} }
   @media print{ .wm-track{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610151521">
+<link rel="stylesheet" href="hub-house.css?v=202610151532">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -170,12 +170,13 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610151521"></script>
-<script src="hub-due.js?v=202610151521"></script>
-<script src="hub-shared.js?v=202610151521"></script>
-<script src="hub-store.js?v=202610151521"></script>
-<script src="hub-say.js?v=202610151521"></script>
-<script src="hub-sync.js?v=202610151521"></script>
+<script src="assignment-defaults.js?v=202610151532"></script>
+<script src="hub-due.js?v=202610151532"></script>
+<script src="hub-shared.js?v=202610151532"></script>
+<script src="hub-store.js?v=202610151532"></script>
+<script src="hub-say.js?v=202610151532"></script>
+<script src="hub-sync.js?v=202610151532"></script>
+<script src="fol-interview.js?v=202610151532"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the trainee's submission form with a
@@ -710,6 +711,29 @@ function doSubmit(){
 
 renderPicker();
 render();
+
+/* ---- FROM YOUR INTERVIEW (15 Oct 2026) ------------------------------------
+   Focus on the Learner only. If the course ran its getting-to-know-you session
+   as a student interview, what the trainee wrote and heard shows here, folded,
+   as evidence to draw on; nothing is copied into the assignment for them. The
+   notes live on the getting-to-know-you page. */
+function folIvMount(){
+  try {
+    const old = document.getElementById('folIv'); if (old) old.remove();
+    if (CURRENT !== 'fol' || !window.CONNECT_HUB_FOL) return;
+    const rc = JSON.parse(localStorage.getItem('connect_fol_interview_v1') || 'null');
+    const inner = window.CONNECT_HUB_FOL.summaryHtml(rc);
+    const cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {};
+    const ran = cs.gtkyFormat === 'interview' || cs.gtkyFormat === 'both';
+    if (!inner && !ran) return;
+    const box = document.createElement('details'); box.id = 'folIv'; box.className = 'card'; box.style.marginTop = '14px';
+    box.innerHTML = '<summary style="cursor:pointer;font-weight:700">From your student interview</summary><div style="margin-top:8px;font-size:.9rem;line-height:1.55">' +
+      (inner || '<p class="note" style="margin:0">Nothing written yet.</p>') +
+      '<p style="margin:12px 0 0"><a href="31_getting_to_know_you.html">Open your interview notes</a></p></div>';
+    const app = document.getElementById('app'); if (app) app.insertBefore(box, app.firstChild);
+  } catch (e) {}
+}
+(function(){ if (typeof render !== 'function') return; const r0 = render; render = function(){ r0.apply(this, arguments); folIvMount(); }; folIvMount(); })();
 </script>
 </body>
 </html>

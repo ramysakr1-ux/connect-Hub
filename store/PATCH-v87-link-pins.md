@@ -36,3 +36,7 @@ Never a bare `clasp deploy` (it makes a second deployment with a new URL).
 ## v88 (15 Oct 2026)
 
 A PIN is four to twelve letters or numbers (Ramy: "does it have to be a number?"), not four to six digits. The sheet shows it in lower case; the store accepts A-Z, a-z, 0-9 and hashes what it is given.
+
+## v89 (15 Oct 2026)
+
+A new trainee record kind, `interview` (TRAINEE_WRITES, TRAINEE_READS, TUTOR_WRITES): the Focus on the Learner student interview. Needs the store deployed BEFORE the pages are pushed, or a trainee's interview notes are refused ("Not yours to write: interview") and stay on the device only.
