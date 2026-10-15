@@ -967,6 +967,7 @@ case 'inbox': {
       if (!row) throw new Error('No such trainee');
       var newTok = newKey_();
       var lock = LockService.getScriptLock(); lock.waitLock(10000);
+      COURSE_MEMO_ = null;
       try {
         // the roster row and every record row of theirs
         var sh = sheet_(SHEET_TRAINEES), rows = sh.getDataRange().getValues();
@@ -1655,6 +1656,7 @@ function spreadsheet_() {
 }
 function dataSheetUrl() { var u = spreadsheet_().getUrl(); Logger.log(u); return u; }
 function sheet_(name) {
+  if (name === SHEET_COURSE) COURSE_MEMO_ = null;   // a writer may be about to change it
   var header = HEADERS[name];
   var ss = spreadsheet_();
   var sh = ss.getSheetByName(name);
@@ -1795,11 +1797,27 @@ function kindsByCourse_() {
   }
   return out;
 }
-function courseRead_(courseId, kind) {
-  var sh = sheet_(SHEET_COURSE);
+/* THE COURSE SHEET, READ ONCE PER REQUEST (v92, 15 Oct 2026). Every
+   courseRead_ used to pull the WHOLE sheet -- every course's rows, the library's
+   1.5MB among them -- and a boot makes a dozen of them, the PIN gate two more
+   on every call. Ramy: opening a trainee link took "a very long time". The rows
+   are now read the first time and kept for the rest of this request (an Apps
+   Script execution starts with empty globals, so nothing outlives it). Anything
+   that touches the sheet through sheet_(SHEET_COURSE) -- every writer, every
+   deleter -- throws the copy away, and the two read-modify-write helpers throw
+   it away again after they take their lock, so a read under a lock is always
+   fresh. */
+var COURSE_MEMO_ = null;
+function courseRows_() {
+  if (COURSE_MEMO_) return COURSE_MEMO_;
+  var sh = sheet_(SHEET_COURSE);            // drops any copy; set below
   var last = sh.getLastRow();
-  if (last < 2) return null;
-  var rows = sh.getRange(2, 1, last - 1, 3).getValues();
+  COURSE_MEMO_ = last < 2 ? [] : sh.getRange(2, 1, last - 1, 3).getValues();
+  return COURSE_MEMO_;
+}
+function courseRead_(courseId, kind) {
+  var rows = courseRows_();
+  if (!rows.length) return null;
   var parts = [], plain = null, n = 0;
   for (var i = 0; i < rows.length; i++) {
     if (String(rows[i][0]) !== String(courseId)) continue;
@@ -1828,6 +1846,7 @@ function courseUpdate_(courseId, kind, fn) {
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
+    COURSE_MEMO_ = null;   // another request may have written while this one waited
     var cur = courseRead_(courseId, kind);
     var next = fn(Array.isArray(cur) ? cur : []);
     courseWriteRaw_(courseId, kind, next);
@@ -1839,6 +1858,7 @@ function courseUpdateObj_(courseId, kind, fn) {
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
+    COURSE_MEMO_ = null;   // as above
     var cur = courseRead_(courseId, kind);
     var next = fn(cur && typeof cur === 'object' && !Array.isArray(cur) ? cur : {});
     courseWriteRaw_(courseId, kind, next);
