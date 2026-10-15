@@ -1452,3 +1452,74 @@ window.hubLockup = function(size){
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', foot); else foot();
 })();
+
+/* SIGN OUT (15 Oct 2026). Ramy: "there is no sign out... I can't close the
+   page", on a phone he opens many trainees' links on. A link is the login and
+   the device remembers the last one opened, so on a shared phone or computer
+   the next person lands in the last person's work. "They sign in with a PIN
+   now, right?" -- yes, so this says what it is: Sign out. It sits top right in
+   the header of the landing pages, beside the role label.
+
+   What it does: asks once; sends anything not yet sent (the course keeps the
+   work, and "clearing localStorage is a write" -- never silently drop an
+   unsent draft); if something still has not reached the course, says so and
+   makes the person choose; then forgets this device (the remembered link, the
+   PIN, the cached course) and goes to the front page. The link itself still
+   works: opening it again brings the person back. */
+(function(){
+  var KEEP_NOT = /^(hub|chub|connect)[:_]/;
+  function pending(){
+    try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && k.indexOf('hub:pending:') === 0) { var v = JSON.parse(localStorage.getItem(k) || '{}'); if (v && Object.keys(v).length) return true; } } } catch (e) {}
+    return false;
+  }
+  function leave(){
+    try { var gone = []; for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && KEEP_NOT.test(k)) gone.push(k); } gone.forEach(function(k){ localStorage.removeItem(k); }); } catch (e) {}
+    try { sessionStorage.clear(); } catch (e) {}
+    location.replace(/14_owner\.html$/.test(location.pathname) ? '14_owner.html' : 'index.html');
+  }
+  function ask(msg, label){ return window.confirmModal ? window.confirmModal(msg, label) : Promise.resolve(window.confirm(msg)); }
+  window.hubSignOut = function(){
+    ask('Sign out of Connect Lite on this device? Your work is saved on the course. Open your link again to come back.', 'Sign out').then(function(ok){
+      if (!ok) return;
+      var sent = (window.HubSync && HubSync.flushNow) ? HubSync.flushNow(true).catch(function(){}) : Promise.resolve();
+      sent.then(function(){
+        if (!pending()) { leave(); return; }
+        ask('Some of your changes have not reached the course yet. If you sign out now, they are lost. Wait a moment and try again, or sign out and lose them.', 'Sign out and lose them').then(function(yes){ if (yes) leave(); });
+      });
+    });
+  };
+  /* Only where a link is held on this device: the front page a stranger sees
+     has nothing to sign out of. */
+  function signedIn(){ try { return !!(localStorage.getItem('hub:t') || localStorage.getItem('hub:k') || localStorage.getItem('hub:a') || localStorage.getItem('hub:v') || localStorage.getItem('hub:o')); } catch (e) { return false; } }
+  /* A page with no header strip of its own (the assessor's pack, a volunteer's
+     page) asks for the same control floated top right: body data-signout="float". */
+  function mountFloat(){
+    if (!signedIn() || document.body.dataset.signout !== 'float' || document.querySelector('.hub-signout')) return;
+    var st = document.createElement('style'); st.id = 'hub-signout-float-css';
+    st.textContent = '.hub-signout-float{position:absolute; top:14px; right:18px; z-index:60; font-family:inherit; font-size:.74rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--teal, #1f4f4c); background:none; border:0; padding:8px 0; cursor:pointer; text-decoration:underline; text-underline-offset:3px; text-decoration-color:var(--gold, #b8863f);} .hub-signout-float:hover{color:var(--ink, #2b2622);} @media print{.hub-signout-float{display:none !important;}}';
+    document.head.appendChild(st);
+    if (getComputedStyle(document.body).position === 'static') document.body.style.position = 'relative';
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'hub-signout hub-signout-float'; b.textContent = 'Sign out';
+    b.addEventListener('click', window.hubSignOut); document.body.appendChild(b);
+  }
+  function mount(){
+    if (!signedIn()) return;
+    mountFloat();
+    document.querySelectorAll('.chrome .role').forEach(function(role){
+      if (role.dataset.signout === 'off' || role.parentNode.querySelector('.hub-signout')) return;
+      if (!document.getElementById('hub-signout-css')) {
+        var st = document.createElement('style'); st.id = 'hub-signout-css';
+        st.textContent = '.hub-chrome-right{display:flex; align-items:center; gap:16px;}'
+          + '.hub-signout{font-family:inherit; font-size:.74rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--teal, #1f4f4c); background:none; border:0; padding:8px 0; cursor:pointer; text-decoration:underline; text-underline-offset:3px; text-decoration-color:var(--gold, #b8863f);}'
+          + '.hub-signout:hover{color:var(--ink, #2b2622);}'
+          + '@media print{.hub-signout{display:none !important;}}';
+        document.head.appendChild(st);
+      }
+      var wrap = document.createElement('div'); wrap.className = 'hub-chrome-right';
+      role.parentNode.insertBefore(wrap, role); wrap.appendChild(role);
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'hub-signout'; b.textContent = 'Sign out';
+      b.addEventListener('click', window.hubSignOut); wrap.appendChild(b);
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
+})();
