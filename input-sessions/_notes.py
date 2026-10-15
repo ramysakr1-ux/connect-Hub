@@ -489,3 +489,25 @@ NOTES['teaching-productive-skills'] = '''
 </ul>'''
 
 assert len(NOTES) == 21, len(NOTES)
+
+NOTES['guided-discovery-vs-ppp'] = '''
+<h4>Before</h4>
+<p>Sound for two films: the holiday clip (lead-in) and the filmed grammar lesson (five minutes, a file on the page, no ad). Do not say "guided discovery" or "PPP" until section 4; the nav says Lesson one and Lesson two for that reason, and the film's own title card is cut off the file. Nothing to print unless you want the handout for section 5.</p>
+<h4>Running it</h4>
+''' + T([
+    (5, 'Lead-in', 'The holiday film, then pairs: what went wrong, what has happened to you. Keep it light; it only sets up travel.'),
+    (3, 'Gist', 'One minute against your watch. "Unlucky or lucky?" in one sentence. Take two answers; do not teach anything yet.'),
+    (10, 'Look at the sentences', 'Pairs, the ten questions, then Check. They have just done a guided discovery as learners. Say nothing about that.'),
+    (6, 'Function and form', 'The rule, then the table. Check both. Still no name for what they did.'),
+    (12, 'Lesson two', 'Before you play it: how many stages, where does each start, what happens in each. Three boxes to start, Add a stage for more. Play it once through. Pairs compare their stages. Take a count of hands: two stages, three, four.'),
+    (8, 'Which was which', 'The five questions in pairs, then open. Question 5 is the one to hold: why must guided discovery sit inside a text? Then Show which was which.'),
+    (10, 'The stages', 'Individually, then pairs, then Check. The spare word is "explain". Close on one line from each: which shape will you try in your next TP, and why.'),
+]) + '''
+<h4>The key</h4>
+<p>On the page: the ten discovery answers, the rule (two, the same time, past continuous, past simple), the form table, and the two gap texts (guided discovery: context, unfamiliar, normal, marker, Avoid, controlled and freer, mirror; PPP: elicits, target vocabulary, gave, board, teacher talk, practice, further, 90%). The stage notes on the film have no key on the page: the reading of the lesson is yours, in the room.</p>
+<h4>Watch for</h4>
+<ul>
+<li>Trainees who name the approaches early. Let it pass; the point is the comparison, not the guessing.</li>
+<li>The film: trainees who count every activity as a stage. Push them to the three big moves and what changes at each.</li>
+<li>"Presentation" heard as a lecture. The teacher on film elicits from a picture and drawings; point at that.</li>
+</ul>'''
