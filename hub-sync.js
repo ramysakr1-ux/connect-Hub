@@ -104,6 +104,18 @@
     } catch (e) {}
   }
 
+  /* A PIN refusal (v87). The invitation card never asks, so for it the link
+     is fine: the card says the link also has a PIN and stays drawn. On a
+     course page the sheet has already asked: three wrong tries, or Not now,
+     and the page gates with the way out, which is a new link from course
+     admin, not another guess. */
+  function pinRefused(err){
+    if (window.HUB_NO_PIN_PROMPT) { try { document.body.dataset.pin = '1'; status('This link has a PIN \u2014 the page behind Open asks for it', 'ok'); } catch (e) {} return 'pin'; }
+    gate(err.message === 'Wrong PIN'
+      ? 'The PIN did not match three times. If you remember it, reload the page and try again. If not, ask your course admin for a new link; it lets you choose a PIN again.'
+      : 'This link needs its PIN. Reload the page to type it.');
+    return 'gated';
+  }
   function gate(reason){
     shutdown();
     /* The heading is neutral and the store's reason, under it, says which:
@@ -637,8 +649,12 @@
     if (mode === 'assessor') window.HubAssessor = parse(current('hub:assessor')) || {};
     if (mode === 'volunteer') window.HubVolunteer = parse(current('hub:volunteer')) || {};
   }
+  /* A refusal is the store's answer, not a bad minute: it is not retried.
+     (With PINs, v87, a retry re-asked for the PIN after the person had given
+     up, and the sheet came back over the refusal.) */
   function bootWithRetries(){
-    return S.boot().catch(function(){ return S.boot(); }).catch(function(){ return new Promise(function(res){ setTimeout(res, 1500); }).then(function(){ return S.boot(); }); });
+    function again(err){ if (err && err.refused) throw err; return S.boot(); }
+    return S.boot().catch(again).catch(function(err){ if (err && err.refused) throw err; return new Promise(function(res){ setTimeout(res, 1500); }).then(function(){ return S.boot(); }); });
   }
   function start(){ started = true; if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', runApp); else runApp(); }
 
@@ -670,7 +686,7 @@
       // refuses to render the course.
       /* A PIN refusal with no sheet to ask (the invitation card) is not a dead
          link: the card says the link also has a PIN and stays drawn (v87). */
-      if (err && err.refused) { if (err.pin) { try { document.body.dataset.pin = '1'; status('This link has a PIN \u2014 the page behind Open asks for it', 'ok'); } catch (e) {} return; } gate(err.message); return; }
+      if (err && err.refused) { if (err.pin) { pinRefused(err); return; } gate(err.message); return; }
       status('Could not reach the course \u2014 ' + (err && err.message || err) + ' (showing this browser\u2019s copy)', 'error');
     });
     return;
@@ -704,7 +720,7 @@
     try { localStorage.setItem('hub:booted', identity); } catch (e) {}
     status(mode === 'assessor' ? 'Assessor view \u2014 read-only' : mode === 'volunteer' ? 'Your page' : 'Live \u2014 saved to the course as you go', 'ok');
   }, function(err){
-    if (err && err.refused) { if (err.pin) { try { document.body.dataset.pin = '1'; status('This link has a PIN \u2014 the page behind Open asks for it', 'ok'); } catch (e) {} return 'pin'; } gate(err.message); return 'gated'; }
+    if (err && err.refused) { if (err.pin) { return pinRefused(err); } gate(err.message); return 'gated'; }
     status('Could not reach the course \u2014 ' + (err && err.message || err), 'error');
   })
     .then(function(gated){ if (gated !== 'gated') { uncover(); start(); } });

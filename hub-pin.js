@@ -20,7 +20,8 @@
     st.textContent =
       ".hub-pin-veil{position:fixed;inset:0;z-index:2147483000;background:oklch(23.5% 0.017 65 / .42);display:flex;align-items:center;justify-content:center;padding:20px;}" +
       ".hub-pin{width:min(380px,100%);background:var(--paper,#fdfcf9);border-radius:16px;padding:24px 24px 20px;box-shadow:0 24px 60px -20px oklch(23.5% 0.017 65 / .6);font-family:Karla,Helvetica,sans-serif;color:var(--ink,#2b2622);}" +
-      ".hub-pin .lock{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;background:var(--teal,#1f4f4c);color:#fff;margin-bottom:12px;}" +
+      ".hub-pin .brand{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;}" +
+      ".hub-pin .lock{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;background:var(--teal,#1f4f4c);color:#fff;}" +
       ".hub-pin h2{font-family:Newsreader,Georgia,serif;font-weight:700;font-size:1.35rem;line-height:1.2;margin:0 0 6px;}" +
       ".hub-pin p{font-size:.92rem;line-height:1.55;color:var(--grey,#55524a);margin:0 0 14px;}" +
       ".hub-pin input{width:100%;box-sizing:border-box;font:700 1.6rem/1 Karla,Helvetica,sans-serif;letter-spacing:.32em;text-align:center;padding:12px 10px;border:1.5px solid var(--sand-line,#d9d2c3);border-radius:10px;background:var(--field,#fff);color:var(--ink,#2b2622);outline:none;}" +
@@ -36,6 +37,15 @@
       "@keyframes hub-pin-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}" +
       "@media(prefers-reduced-motion:reduce){.hub-pin.wrong input{animation:none;}}";
     document.head.appendChild(st);
+  }
+  /* The Connect Lite lockup heads the sheet (the logo goes everywhere the
+     name does, 8 Oct 2026): hub-shared.js draws it where the page has it;
+     this copy stands in on a page that does not. */
+  function lockup() {
+    if (window.hubLockup) return window.hubLockup(22);
+    return '<span class="hub-lockup" style="display:inline-flex;align-items:center;gap:7px"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:5px;background:oklch(30% 0.042 58)">' +
+      '<svg viewBox="8 30 104 60" width="15" height="9" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"></path></svg></span>' +
+      '<span style="font-family:\'Instrument Serif\',Georgia,serif;font-style:italic;font-size:17px;line-height:.85;color:oklch(63% 0.096 72)">Connect</span><span style="font-family:\'Instrument Sans\',Karla,sans-serif;font-weight:500;font-size:8px;letter-spacing:.24em;text-transform:uppercase;margin-left:-3px;color:var(--ink,#2b2622)">Lite</span></span>';
   }
   function ask(opts) {
     opts = opts || {};
@@ -54,7 +64,7 @@
         : 'Type it once; this device remembers it.';
       veil.innerHTML =
         '<div class="hub-pin' + (opts.wrong ? ' wrong' : '') + '" role="dialog" aria-modal="true" aria-labelledby="hub-pin-h">' +
-        '<span class="lock" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>' +
+        '<div class="brand">' + lockup() + '<span class="lock" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span></div>' +
         '<h2 id="hub-pin-h"></h2><p class="line"></p>' +
         '<form><label for="hub-pin-in" style="position:absolute;left:-9999px">PIN</label>' +
         '<input id="hub-pin-in" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{4,6}" maxlength="6" placeholder="••••" aria-label="PIN">' +

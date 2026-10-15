@@ -39,6 +39,7 @@ window.HubStore = (function(){
      answer is kept here, and the call goes again. A page that must not ask
      (the invitation card) sets window.HUB_NO_PIN_PROMPT and gets the
      refusal back instead. */
+  var gaveUp = false; // once per page: no sheet again after three wrong or Not now
   function pinName(payload){ return payload.key ? 'hub:kpin' : (payload.token && !payload.a) ? 'hub:pin' : ''; }
   function pinGet(name){ try { return name ? (localStorage.getItem(name) || '') : ''; } catch (e) { return ''; } }
   function pinSet(name, v){ try { if (v) localStorage.setItem(name, v); else localStorage.removeItem(name); } catch (e) {} }
@@ -94,11 +95,14 @@ window.HubStore = (function(){
       // 'PIN needed' is the first open of a link on a course with PINs on:
       // the person chooses one (typed twice) and the store keeps its hash;
       // then it is this device's PIN like any other.
-      if (!out.ok && pn && /^(PIN needed|PIN required|Wrong PIN)$/.test(String(out.error || '')) && !window.HUB_NO_PIN_PROMPT && asked < 3) {
+      if (!out.ok && pn && /^(PIN needed|PIN required|Wrong PIN)$/.test(String(out.error || '')) && !window.HUB_NO_PIN_PROMPT && !gaveUp) {
         var wrong = out.error === 'Wrong PIN', choose = out.error === 'PIN needed'; if (wrong) pinSet(pn, '');
+        // Three wrong, or Not now: this page stops asking; the refusal goes
+        // to the page, which says where a new link comes from.
+        if (asked >= 3) { gaveUp = true; break; }
         var sheet = await pinSheet();
         var given = await sheet.ask({ who: pn === 'hub:kpin' ? 'tutor' : 'trainee', wrong: wrong, choose: choose });
-        if (!given) break;
+        if (!given) { gaveUp = true; break; }
         if (choose) {
           var setOp = pn === 'hub:kpin' ? { op: 'setTutorPin', key: payload.key, pin: given } : { op: 'setMyPin', token: payload.token, pin: given };
           var setOut = await once(setOp, timeoutMs);
