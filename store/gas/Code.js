@@ -1283,13 +1283,28 @@ case 'inbox': {
       var tiFile = interviewFileFor_(course, req.id, tutor, me);
       var tiKey = PropertiesService.getScriptProperties().getProperty('OPENAI_KEY');
       if (!tiKey) throw new Error('Transcription is not switched on');
+      /* First try the speaker-labelled model, asked to stream: OpenAI cuts a
+         plain request off near 80 seconds, a streamed one runs to the end (a
+         5-minute recording took 160 s, 15 Oct 2026). If that fails for any
+         reason, fall back to the plain transcript with no speakers marked. */
+      try {
+        var tdResp = UrlFetchApp.fetch('https://api.openai.com/v1/audio/transcriptions', {
+          method: 'post', muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + tiKey },
+          payload: { file: tiFile.getBlob(), model: 'gpt-4o-transcribe-diarize', response_format: 'diarized_json',
+                     chunking_strategy: 'auto', stream: 'true' }
+        });
+        if (tdResp.getResponseCode() === 200) {
+          var tdText = diarizedTurns_(tdResp.getContentText());
+          if (tdText) return { text: tdText, labelled: true };
+        }
+      } catch (tdErr) { /* fall through to the plain transcript */ }
       var tiResp = UrlFetchApp.fetch('https://api.openai.com/v1/audio/transcriptions', {
         method: 'post', muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + tiKey },
         payload: { file: tiFile.getBlob(), model: 'whisper-1', response_format: 'text', language: 'en',
                    prompt: 'An interview with a learner of English. Write exactly what is said, including grammar mistakes and hesitations.' }
       });
       if (tiResp.getResponseCode() !== 200) throw new Error('The transcript could not be made (' + tiResp.getResponseCode() + ')');
-      return { text: String(tiResp.getContentText() || '').trim() };
+      return { text: String(tiResp.getContentText() || '').trim(), labelled: false };
     }
     case 'transcriptionOn': {
       return { on: !!PropertiesService.getScriptProperties().getProperty('OPENAI_KEY') };
@@ -1866,6 +1881,33 @@ function courseUpdateObj_(courseId, kind, fn) {
   } finally { lock.releaseLock(); }
 }
 // The private folder for a course's interview recordings, under its materials.
+/* A streamed, speaker-labelled transcript (server-sent events, one JSON
+   segment per "data:" line) as lines of "Student: ..." and "Trainee: ...".
+   The student is whoever speaks the most words in an interview; every other
+   voice is the trainee. The trainee can swap them on the page. Returns '' when
+   there is nothing usable, so the caller falls back to the plain transcript. */
+function diarizedTurns_(sse) {
+  var segs = [];
+  String(sse || '').split('\n').forEach(function (line) {
+    if (line.indexOf('data:') !== 0) return;
+    var raw = line.slice(5).trim();
+    if (!raw || raw === '[DONE]') return;
+    var o; try { o = JSON.parse(raw); } catch (e) { return; }
+    if (o && o.type === 'transcript.text.segment' && o.text && String(o.text).trim()) segs.push({ who: String(o.speaker || '?'), text: String(o.text).trim() });
+  });
+  if (!segs.length) return '';
+  var words = {};
+  segs.forEach(function (g) { words[g.who] = (words[g.who] || 0) + g.text.split(/\s+/).length; });
+  var student = Object.keys(words).sort(function (a, b) { return words[b] - words[a]; })[0];
+  var turns = [];
+  segs.forEach(function (g) {
+    var who = g.who === student ? 'Student' : 'Trainee';
+    var last = turns[turns.length - 1];
+    if (last && last.who === who) last.text += ' ' + g.text; else turns.push({ who: who, text: g.text });
+  });
+  return turns.map(function (t) { return t.who + ': ' + t.text; }).join('\n');
+}
+
 function interviewFolder_(course) {
   var props = PropertiesService.getScriptProperties(), key = 'IV_FOLDER_' + course.id, id = props.getProperty(key);
   if (id) { try { return DriveApp.getFolderById(id); } catch (e) { /* gone: make another */ } }

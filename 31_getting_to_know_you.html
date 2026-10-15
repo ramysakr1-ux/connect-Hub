@@ -26,7 +26,7 @@
 <title>Getting to know you</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610151627">
+<link rel="stylesheet" href="hub-tokens.css?v=202610151819">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -110,12 +110,12 @@
   <a class="back" id="back" href="index.html">&#8592; Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610151627"></script>
-<script src="hub-store.js?v=202610151627"></script>
-<script src="hub-say.js?v=202610151627"></script>
-<script src="hub-sync.js?v=202610151627"></script>
-<script src="gtky-bank.js?v=202610151627"></script>
-<script src="fol-interview.js?v=202610151627"></script>
+<script src="hub-shared.js?v=202610151819"></script>
+<script src="hub-store.js?v=202610151819"></script>
+<script src="hub-say.js?v=202610151819"></script>
+<script src="hub-sync.js?v=202610151819"></script>
+<script src="gtky-bank.js?v=202610151819"></script>
+<script src="fol-interview.js?v=202610151819"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -318,7 +318,7 @@ function recBox(){
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn ghost" type="button" data-play="${esc(a.id)}">Listen</button><span class="note">Recording ${i + 1} &middot; ${clock(a.seconds || 0)}</span>
         <button class="btn ghost" type="button" data-tx="${esc(a.id)}">${a.transcript ? 'Make the transcript again' : 'Make a transcript'}</button><button class="btn ghost" type="button" data-delrec="${esc(a.id)}">Delete</button></div>
       <span class="fol-audio"></span>
-      ${a.transcript != null ? `<p class="note" style="margin:8px 0 4px">The transcript is a computer's first try and may tidy mistakes. Listen, and correct it so it says exactly what ${esc(ivSel)} said.</p><textarea data-txt="${esc(a.id)}" rows="5" style="width:100%;font:inherit;font-size:.9rem;padding:8px 10px;border:1.5px solid var(--sand-line);border-radius:8px;background:var(--field);color:var(--ink)">${esc(a.transcript)}</textarea>` : ''}</div>`).join('');
+      ${a.transcript != null ? `<p class="note" style="margin:8px 0 4px">The transcript is a computer's first try and may tidy mistakes. Listen, and correct it so it says exactly what ${esc(ivSel)} said.${/^(Student|Trainee): /m.test(a.transcript) ? ' It marks who is speaking. If the two are the wrong way round, <button class="btn ghost" type="button" data-swap="' + esc(a.id) + '" style="padding:2px 10px;min-height:0">swap them</button>.' : ''}</p><textarea data-txt="${esc(a.id)}" rows="5" style="width:100%;font:inherit;font-size:.9rem;padding:8px 10px;border:1.5px solid var(--sand-line);border-radius:8px;background:var(--field);color:var(--ink)">${esc(a.transcript)}</textarea>` : ''}</div>`).join('');
   return `<div class="iv-box" id="recBox"><h2>Recording <span class="iv-saved">&middot; ${esc(ivSel)} has agreed</span></h2>${ctl}<p class="note" id="recMsg" style="margin:8px 0 0">${esc(rs.msg)}</p>${saved}</div>`;
 }
 function recDone(){ clearInterval(rs.timer); if (rs.stream) rs.stream.getTracks().forEach(t => t.stop()); rs.stream = null; }
@@ -353,12 +353,17 @@ function wireRecording(){
     } catch (e) { $('recSave').disabled = false; recErr('Not saved \u2014 ' + ((e && e.message) || e)); }
   });
   app.querySelectorAll('[data-tx]').forEach(b => b.addEventListener('click', async () => {
-    b.disabled = true; recErr('Making the transcript. This takes about half a minute\u2026');
+    b.disabled = true; recErr('Making the transcript. A short chat takes about a minute; a long one a few minutes. Keep this page open.');
     try {
-      const r = await ivCall({ op: 'transcribeInterview', id: b.dataset.tx }, 180000);
+      const r = await ivCall({ op: 'transcribeInterview', id: b.dataset.tx }, 330000);
       const d = ivData(); const s = d.students[ivSel]; const a = s && (s.audio || []).find(x => x.id === b.dataset.tx); if (a) a.transcript = r.text || '';
       ivSave(d); rs.msg = 'The transcript is ready. Listen, and correct it so it says exactly what they said.'; renderInterview();
     } catch (e) { b.disabled = false; recErr('No transcript \u2014 ' + ((e && e.message) || e)); }
+  }));
+  app.querySelectorAll('[data-swap]').forEach(b => b.addEventListener('click', () => {
+    const d = ivData(); const s = d.students[ivSel]; const a = s && (s.audio || []).find(x => x.id === b.dataset.swap); if (!a) return;
+    a.transcript = String(a.transcript || '').replace(/^(Student|Trainee): /gm, (m, w) => (w === 'Student' ? 'Trainee: ' : 'Student: '));
+    ivSave(d); renderInterview();
   }));
   app.querySelectorAll('textarea[data-txt]').forEach(t => t.addEventListener('input', () => {
     clearTimeout(ivTimer); ivTimer = setTimeout(() => { const d = ivData(); const s = d.students[ivSel]; const a = s && (s.audio || []).find(x => x.id === t.dataset.txt); if (a) { a.transcript = t.value; ivSave(d); } }, 700);

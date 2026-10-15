@@ -52,3 +52,12 @@ Recording the student interview. Ops: `putInterviewAudio` (trainee; only for a s
 ## v92 (15 Oct 2026) -- speed
 
 `courseRead_` pulled the whole `course` sheet on every call (all courses' rows, the library's 1.5MB included); a boot makes about a dozen, and the PIN gate added two more to every call. Ramy, opening a trainee link on a phone and a computer: "a very long time" at Checking your link, again after choosing a PIN, longer on the desktop. Now `courseRows_()` reads the sheet once per request and keeps it for that request only; `sheet_(SHEET_COURSE)` (every writer and deleter) and the two read-modify-write helpers (after their lock) throw it away. Checked by running the real functions in Node against a fake spreadsheet: four reads, one scan; a write, a delete and a locked update all see fresh data.
+
+## v93 (built 15 Oct 2026, not deployed): who is speaking in a transcript
+`transcribeInterview` now asks `gpt-4o-transcribe-diarize` with `stream: 'true'`
+(a plain request is cut off by OpenAI near 80 s; streamed, a 5-minute recording
+took 160 s). `diarizedTurns_` turns the segments into lines of `Student: ...` and
+`Trainee: ...`; the student is whoever speaks the most words. Any failure falls
+back to whisper-1, plain text, `labelled: false`. The page shows a "swap them"
+button. NOT TESTED inside Apps Script (UrlFetchApp's own wait on a 160 s call):
+walk it on the scratch course before relying on it.
