@@ -24,7 +24,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610151554">
+<link rel="stylesheet" href="hub-tokens.css?v=202610151603">
 <style>
   :root{
     /* the pane -- the same four values the trainee landing's cards use */
@@ -452,7 +452,7 @@
   .course.tb.minted{outline:2px solid var(--gold);}
   @media(max-width:640px){ .tb-grid{grid-template-columns:1fr;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610151554">
+<link rel="stylesheet" href="hub-house.css?v=202610151603">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -478,10 +478,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610151554"></script>
-<script src="hub-store.js?v=202610151554"></script>
-<script src="hub-say.js?v=202610151554"></script>
-<script src="hub-card-mail.js?v=202610151554"></script>
+<script src="hub-shared.js?v=202610151603"></script>
+<script src="hub-store.js?v=202610151603"></script>
+<script src="hub-say.js?v=202610151603"></script>
+<script src="hub-card-mail.js?v=202610151603"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -1114,6 +1114,17 @@ $('app').innerHTML = `
       <span class="note" id="mkNote">Only a course with a real centre number gets made, and the centre cannot edit it afterwards.</span>
     </div>
     <div id="needs"></div>
+    <!-- TRANSCRIBING INTERVIEWS (15 Oct 2026). Course admin can switch recording on
+         for a course; the transcript is made by OpenAI's speech model from the
+         store, with a key held in the store's own settings. Pasted here once,
+         never shown again, never written to a page. -->
+    <details class="sending" id="txBlock">
+      <summary>Transcribing interviews<small id="txState">checking\u2026</small></summary>
+      <div class="sendbody">
+        <p class="note">The key lives in the store, not in any page. Paste an OpenAI key and save; leave it empty and save to switch transcripts off. The recording is sent to OpenAI to be transcribed, which the students&rsquo; consent should be read to allow.</p>
+        <div class="filmrow"><input type="password" id="txKey" placeholder="OpenAI key" autocomplete="off" spellcheck="false"><span class="acts"><button class="btn primary" id="txSave" type="button">Save</button></span><span class="note" id="txNote"></span></div>
+      </div>
+    </details>
     <details class="sending" id="sendblock">
       <summary>Sending Lite to someone<small>the film engine, the card, the film link and the price</small></summary>
       <div class="sendbody">
@@ -1866,6 +1877,20 @@ function showSet(got, row){
   back.querySelector('#readclose').onclick = shut;
   document.addEventListener('keydown', function off(e){ if (e.key === 'Escape') { shut(); document.removeEventListener('keydown', off); } });
 }
+/* The transcription key: whether it is on, and saving it. The key itself is
+   never read back. */
+(function(){
+  const state = $('txState'), note = $('txNote'), key = $('txKey'), save = $('txSave');
+  if (!state || !key || !save) return;
+  const show = on => { state.textContent = on ? 'on' : 'off'; };
+  call({ op: 'transcriptionOn' }).then(r => show(r && r.on), () => { state.textContent = 'could not check'; });
+  save.addEventListener('click', async () => {
+    save.disabled = true; note.textContent = 'Saving\u2026';
+    try { const r = await call({ op: 'setOpenAiKey', key: key.value.trim() }); show(r && r.on); key.value = ''; note.textContent = r && r.on ? 'Saved. Transcripts are on.' : 'Transcripts are off.'; }
+    catch (e) { note.textContent = (e && e.message) || String(e); }
+    save.disabled = false;
+  });
+})();
 load();
 /* The console installs as an app of its own (15 Oct 2026): it opens on this
    page and remembers the owner key held in this browser. */

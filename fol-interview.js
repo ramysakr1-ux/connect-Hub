@@ -36,7 +36,7 @@
      was heard. Empty answers are left out. */
   function summaryHtml(rec) {
     var students = rec && rec.students ? Object.keys(rec.students).map(function (k) { return rec.students[k]; }) : [];
-    students = students.filter(function (s) { return s && (s.heard && s.heard.length || Object.keys(s.answers || {}).some(function (k) { return String(s.answers[k] || '').trim(); })); });
+    students = students.filter(function (s) { return s && ((s.heard && s.heard.length) || (s.audio && s.audio.length) || Object.keys(s.answers || {}).some(function (k) { return String(s.answers[k] || '').trim(); })); });
     if (!students.length) return '';
     return students.map(function (s) {
       var ans = QUESTIONS.filter(function (q) { return String((s.answers || {})[q.key] || '').trim(); }).map(function (q) {
@@ -45,7 +45,12 @@
       var heard = (s.heard || []).map(function (h) {
         return '<li style="margin:3px 0"><b>' + (h.type === 'pronunciation' ? 'Pronunciation' : 'Grammar') + ':</b> &ldquo;' + esc(h.note) + '&rdquo;</li>';
       }).join('');
-      return '<div style="margin:10px 0 0;padding-top:8px;border-top:1px solid var(--row-line, #e6e0d4)"><p style="margin:0;font-weight:700">' + esc(s.name) + '</p>' + ans +
+      var recs = (s.audio || []).map(function (a, i) {
+        return '<div style="margin:8px 0 0;font-size:.86rem"><button type="button" data-play="' + esc(a.id) + '" style="font:inherit;font-size:.8rem;font-weight:600;padding:5px 12px;border-radius:8px;border:1.5px solid var(--sand-line);background:var(--field);cursor:pointer">Listen</button> ' +
+          '<span style="color:var(--grey)">Recording ' + (i + 1) + (a.seconds ? ', ' + Math.floor(a.seconds / 60) + ':' + ('0' + (a.seconds % 60)).slice(-2) : '') + '</span>' +
+          (a.transcript ? '<p style="margin:6px 0 0;line-height:1.5"><b>Transcript.</b> ' + esc(a.transcript) + '</p>' : '') + '<span class="fol-audio"></span></div>';
+      }).join('');
+      return '<div style="margin:10px 0 0;padding-top:8px;border-top:1px solid var(--row-line, #e6e0d4)"><p style="margin:0;font-weight:700">' + esc(s.name) + '</p>' + ans + recs +
         (heard ? '<p style="margin:8px 0 2px;font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--grey)">What was heard</p><ul style="margin:0;padding-left:18px;font-size:.86rem;line-height:1.5">' + heard + '</ul>' : '') + '</div>';
     }).join('');
   }
@@ -73,5 +78,27 @@
     });
     return out;
   }
-  window.CONNECT_HUB_FOL = { questions: QUESTIONS, advice: ADVICE, summaryHtml: summaryHtml, poolHtml: poolHtml, itemsFrom: itemsFrom };
+  /* Playing a recording: it lives in a private folder, so it comes through the
+     store (the trainee who made it and the tutors only), as audio in the page. */
+  function audioUrl(res) {
+    var bin = atob(res.bytes), n = bin.length, u8 = new Uint8Array(n);
+    for (var i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
+    return URL.createObjectURL(new Blob([u8], { type: res.type || 'audio/webm' }));
+  }
+  function wirePlay(root) {
+    if (!root) return;
+    root.querySelectorAll('[data-play]').forEach(function (b) {
+      if (b.dataset.wired) return; b.dataset.wired = '1';
+      b.addEventListener('click', function () {
+        var slot = b.parentNode.querySelector('.fol-audio') || (b.parentNode.parentNode && b.parentNode.parentNode.querySelector('.fol-audio')); if (!slot || !window.HubStore) return;
+        b.disabled = true; b.textContent = 'Loading\u2026';
+        var body = { op: 'getInterviewAudio', id: b.dataset.play }; if (HubStore.token && HubStore.token()) body.token = HubStore.token();
+        HubStore.call(body, 90000).then(function (r) {
+          slot.innerHTML = ''; var a = document.createElement('audio'); a.controls = true; a.src = audioUrl(r); a.style.cssText = 'display:block;width:100%;margin-top:6px'; slot.appendChild(a); a.play().catch(function () {});
+          b.textContent = 'Listen again'; b.disabled = false;
+        }, function (e) { b.textContent = 'Listen'; b.disabled = false; slot.textContent = ' ' + ((e && e.message) || 'Could not load the recording'); });
+      });
+    });
+  }
+  window.CONNECT_HUB_FOL = { questions: QUESTIONS, advice: ADVICE, summaryHtml: summaryHtml, poolHtml: poolHtml, itemsFrom: itemsFrom, wirePlay: wirePlay, audioUrl: audioUrl };
 })();

@@ -1051,7 +1051,7 @@ case 'inbox': {
          volunteer's link as "<courseId>-<random>", and the browser has no
          other way to learn which course it is on (30 Sep 2026). Not a secret
          -- the key already proves the course; the random half is the secret. */
-      var boot = { course: { id: course.id, settings: courseRead_(course.id, 'settings'), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor), coming: comingFor_(course.id) } };
+      var boot = { course: { id: course.id, settings: courseRead_(course.id, 'settings'), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null, coming: comingFor_(course.id) } };
       if (assessor) { var exb = assessorExpiry_(course.id); boot.assessor = { expires: exb ? exb.toISOString() : null }; }
       if (reader) {
         /* v53: the assessor's link never carries a candidate's address. */
@@ -1148,7 +1148,7 @@ case 'inbox': {
     // ---- course-level, readable by all on the course, written by tutors ----
     case 'course': {
       if (!course) throw new Error('This link is not on a course');
-      return { settings: courseRead_(course.id, 'settings'), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? courseRead_(course.id, 'volunteers') : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor) };
+      return { settings: courseRead_(course.id, 'settings'), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? courseRead_(course.id, 'volunteers') : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null };
     }
     case 'putCourse': {
       requireTutor_(tutor);
@@ -1230,6 +1230,76 @@ case 'inbox': {
         return pool;
       });
       return { folpool: folPoolFor_(phPool, false) };
+    }
+    /* RECORDING THE STUDENT INTERVIEW (v91, 15 Oct 2026). Ramy: "we can easily
+       have a consent... the same with the video, then it's the audio" and
+       "transcribe". The consent is the one a volunteer already gives on their
+       own page, in six languages: "I agree to being recorded, in sound or on
+       video, during this sign-up and in lessons". So a recording is only ever
+       accepted for a student on the register whose row carries `agreed`, on a
+       course whose Course admin has switched recording on.
+       The file goes to a PRIVATE folder under the course's materials, owned by
+       the account the script runs as -- never "anyone with the link", unlike
+       a trainee's worksheet. It is played back through this store: the trainee
+       who made it, and the tutors of the course, nobody else. The description
+       carries who made it. */
+    case 'putInterviewAudio': {
+      if (!me || tutor || assessor) throw new Error('Trainees only');
+      if (!course) throw new Error('This link is not on a course');
+      if (!((courseRead_(course.id, 'settings') || {}).interviewRecording)) throw new Error('Recording is not switched on for this course');
+      var iaName = String(req.student || '').trim();
+      var iaReg = courseRead_(course.id, 'volunteers') || {};
+      var iaStudent = (iaReg.students || []).filter(function (x) { return x && String(x.name || '').trim().toLowerCase() === iaName.toLowerCase(); })[0];
+      if (!iaStudent) throw new Error('That student is not on the register');
+      if (!iaStudent.agreed) throw new Error('That student has not agreed to be recorded');
+      var iaBytes = Utilities.base64Decode(String(req.bytes || ''));
+      if (!iaBytes.length) throw new Error('Nothing was recorded');
+      if (iaBytes.length > 8 * 1024 * 1024) throw new Error('That recording is over 8MB. Keep an interview under ten minutes.');
+      var iaType = String(req.type || '').split(';')[0];
+      if (!/^audio\//.test(iaType)) iaType = 'audio/webm';
+      var iaExt = iaType.indexOf('mp4') >= 0 ? 'm4a' : iaType.indexOf('ogg') >= 0 ? 'ogg' : iaType.indexOf('mpeg') >= 0 ? 'mp3' : 'webm';
+      var iaStamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
+      var iaFile = interviewFolder_(course).createFile(Utilities.newBlob(iaBytes, iaType, 'Interview ' + me.name + ' with ' + iaName + ' ' + iaStamp + '.' + iaExt));
+      iaFile.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE);
+      iaFile.setDescription(JSON.stringify({ token: me.token, by: me.name, student: iaName, seconds: Number(req.seconds) || 0 }));
+      return { id: iaFile.getId(), size: iaBytes.length };
+    }
+    case 'getInterviewAudio': {
+      var gaFile = interviewFileFor_(course, req.id, tutor, me);
+      var gaBlob = gaFile.getBlob();
+      return { type: gaBlob.getContentType(), bytes: Utilities.base64Encode(gaBlob.getBytes()) };
+    }
+    case 'deleteInterviewAudio': {
+      var daFile = interviewFileFor_(course, req.id, tutor, me);
+      daFile.setTrashed(true);
+      return { deleted: true };
+    }
+    /* The transcript is the OpenAI speech model's (key held as a script
+       property, set from the owner console). It is a convenience: the model
+       tends to tidy a learner's mistakes, so the recording stays the evidence
+       and the trainee corrects the text against it. */
+    case 'transcribeInterview': {
+      var tiFile = interviewFileFor_(course, req.id, tutor, me);
+      var tiKey = PropertiesService.getScriptProperties().getProperty('OPENAI_KEY');
+      if (!tiKey) throw new Error('Transcription is not switched on');
+      var tiResp = UrlFetchApp.fetch('https://api.openai.com/v1/audio/transcriptions', {
+        method: 'post', muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + tiKey },
+        payload: { file: tiFile.getBlob(), model: 'whisper-1', response_format: 'text', language: 'en',
+                   prompt: 'An interview with a learner of English. Write exactly what is said, including grammar mistakes and hesitations.' }
+      });
+      if (tiResp.getResponseCode() !== 200) throw new Error('The transcript could not be made (' + tiResp.getResponseCode() + ')');
+      return { text: String(tiResp.getContentText() || '').trim() };
+    }
+    case 'transcriptionOn': {
+      return { on: !!PropertiesService.getScriptProperties().getProperty('OPENAI_KEY') };
+    }
+    case 'setOpenAiKey': {
+      requireOwner_(owner);
+      var oaKey = String(req.key || '').trim();
+      if (oaKey && !/^sk-[A-Za-z0-9_\-]{20,}$/.test(oaKey)) throw new Error('That does not look like an OpenAI key');
+      var oaProps = PropertiesService.getScriptProperties();
+      if (oaKey) oaProps.setProperty('OPENAI_KEY', oaKey); else oaProps.deleteProperty('OPENAI_KEY');
+      return { on: !!oaKey };
     }
     case 'volunteerAgree': {
       if (!vol) throw new Error('Only a volunteer student can agree for themselves');
@@ -1774,6 +1844,32 @@ function courseUpdateObj_(courseId, kind, fn) {
     courseWriteRaw_(courseId, kind, next);
     return next;
   } finally { lock.releaseLock(); }
+}
+// The private folder for a course's interview recordings, under its materials.
+function interviewFolder_(course) {
+  var props = PropertiesService.getScriptProperties(), key = 'IV_FOLDER_' + course.id, id = props.getProperty(key);
+  if (id) { try { return DriveApp.getFolderById(id); } catch (e) { /* gone: make another */ } }
+  var f = materialsFolder_(course).createFolder('Interview recordings (private)');
+  f.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE);
+  props.setProperty(key, f.getId());
+  return f;
+}
+// A recording the caller may use: the tutors of this course, or the trainee who made it.
+function interviewFileFor_(course, id, tutor, me) {
+  if (!course) throw new Error('This link is not on a course');
+  var f; try { f = DriveApp.getFileById(String(id || '')); } catch (e) { throw new Error('No such recording'); }
+  var inFolder = false, parents = f.getParents(), want = interviewFolder_(course).getId();
+  while (parents.hasNext()) { if (parents.next().getId() === want) inFolder = true; }
+  if (!inFolder) throw new Error('No such recording');
+  var meta = {}; try { meta = JSON.parse(f.getDescription() || '{}'); } catch (e) {}
+  if (!(tutor || (me && meta.token && meta.token === me.token))) throw new Error('Not yours to hear');
+  return f;
+}
+// The register as a trainee may see it: names and levels, and whether each
+// student has agreed to be recorded. No tokens, no addresses, no notes.
+function volunteerNamesFor_(courseId) {
+  var reg = courseRead_(courseId, 'volunteers') || {};
+  return (reg.students || []).filter(function (x) { return x && x.name; }).map(function (x) { return { name: String(x.name), level: x.level || '', agreed: !!x.agreed }; });
 }
 // The Focus on the Learner pool, flattened. Tutors see who heard each note;
 // a trainee sees the notes alone.

@@ -44,3 +44,7 @@ A new trainee record kind, `interview` (TRAINEE_WRITES, TRAINEE_READS, TUTOR_WRI
 ## v90 (15 Oct 2026)
 
 The Focus on the Learner pool. New trainee op `poolHeard {items}` replaces that trainee's list of heard notes in course kind `folpool` (60 notes, 400 characters each); boot and the course read carry `folpool` flattened (trainees get the notes without who heard them, tutors get `by`). Removing or purging a trainee drops their notes. Deploy the store BEFORE pushing the pages.
+
+## v91 (15 Oct 2026)
+
+Recording the student interview. Ops: `putInterviewAudio` (trainee; only for a student on the register whose row has `agreed`, on a course with settings.interviewRecording; 8MB; saved to a PRIVATE 'Interview recordings (private)' folder under the course's materials, description = who made it), `getInterviewAudio` and `deleteInterviewAudio` (the trainee who made it, or the course's tutors), `transcribeInterview` (UrlFetch to OpenAI whisper-1 with the script property OPENAI_KEY), `transcriptionOn` (boolean), `setOpenAiKey` (owner only; empty clears). Boot and the course read now give a trainee `volunteerNames` (name, level, agreed; no tokens, no addresses), because a trainee's boot never carried the register. After deploying: paste the OpenAI key in the owner console (Transcribing interviews), then switch Recording on per course in Course admin.

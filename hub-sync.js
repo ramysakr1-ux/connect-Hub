@@ -542,6 +542,9 @@
     /* The Focus on the Learner pool (15 Oct 2026): what trainees heard in their
        student interviews, one list for the course; tutors get who heard it. */
     out['connect_fol_pool_v1'] = course.folpool ? JSON.stringify(course.folpool) : null;
+    /* The register as a trainee may read it: names, levels, and whether each
+       student has agreed to be recorded. Tutors read the whole register above. */
+    out['connect_volunteer_names_v1'] = course.volunteerNames ? JSON.stringify(course.volunteerNames) : null;
     if (mode === 'trainee') {
       var me = boot.me || { records: {} };
       out['hub:name'] = me.name || '';
