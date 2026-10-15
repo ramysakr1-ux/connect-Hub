@@ -14,7 +14,7 @@ window.HubStore = (function(){
   // (found on the 20 Sep 2026 trainee walk -- a leftover assessor key made a
   // trainee link read-only).
   try {
-    /* A new link forgets the PIN kept for the old one (v75): the PIN belongs
+    /* A new link forgets the PIN kept for the old one (v87): the PIN belongs
        to the link, not to the browser. */
     if (params.get('t')) { if (localStorage.getItem('hub:t') !== params.get('t')) localStorage.removeItem('hub:pin'); localStorage.setItem('hub:t', params.get('t')); localStorage.removeItem('hub:k'); localStorage.removeItem('hub:a'); }
     if (params.get('k')) { if (localStorage.getItem('hub:k') !== params.get('k')) localStorage.removeItem('hub:kpin'); localStorage.setItem('hub:k', params.get('k')); localStorage.removeItem('hub:t'); localStorage.removeItem('hub:a'); }
