@@ -14,8 +14,10 @@ window.HubStore = (function(){
   // (found on the 20 Sep 2026 trainee walk -- a leftover assessor key made a
   // trainee link read-only).
   try {
-    if (params.get('t')) { localStorage.setItem('hub:t', params.get('t')); localStorage.removeItem('hub:k'); localStorage.removeItem('hub:a'); }
-    if (params.get('k')) { localStorage.setItem('hub:k', params.get('k')); localStorage.removeItem('hub:t'); localStorage.removeItem('hub:a'); }
+    /* A new link forgets the PIN kept for the old one (v75): the PIN belongs
+       to the link, not to the browser. */
+    if (params.get('t')) { if (localStorage.getItem('hub:t') !== params.get('t')) localStorage.removeItem('hub:pin'); localStorage.setItem('hub:t', params.get('t')); localStorage.removeItem('hub:k'); localStorage.removeItem('hub:a'); }
+    if (params.get('k')) { if (localStorage.getItem('hub:k') !== params.get('k')) localStorage.removeItem('hub:kpin'); localStorage.setItem('hub:k', params.get('k')); localStorage.removeItem('hub:t'); localStorage.removeItem('hub:a'); }
     // The assessor key travels as ?ak= -- ?a= is the assignment key on screens 9-11
     // (a collision found on the 20 Sep 2026 trainee walk: opening FOL stored 'fol' as an assessor key).
     if (params.get('ak')) { localStorage.setItem('hub:a', params.get('ak')); localStorage.removeItem('hub:t'); localStorage.removeItem('hub:k'); }
@@ -30,6 +32,26 @@ window.HubStore = (function(){
   function key(){ try { return localStorage.getItem('hub:k') || ''; } catch (e) { return ''; } }
   function akey(){ try { return localStorage.getItem('hub:a') || ''; } catch (e) { return ''; } }
   function vtoken(){ try { return localStorage.getItem('hub:v') || ''; } catch (e) { return ''; } }
+  /* THE PIN (v75, 15 Oct 2026). Course admin can put a PIN on a trainee's
+     link and one on the tutor link; the store then refuses every call
+     without it. The PIN this device knows rides on each call; when the store
+     says 'PIN required' or 'Wrong PIN', the sheet in hub-pin.js asks, the
+     answer is kept here, and the call goes again. A page that must not ask
+     (the invitation card) sets window.HUB_NO_PIN_PROMPT and gets the
+     refusal back instead. */
+  function pinName(payload){ return payload.key ? 'hub:kpin' : (payload.token && !payload.a) ? 'hub:pin' : ''; }
+  function pinGet(name){ try { return name ? (localStorage.getItem(name) || '') : ''; } catch (e) { return ''; } }
+  function pinSet(name, v){ try { if (v) localStorage.setItem(name, v); else localStorage.removeItem(name); } catch (e) {} }
+  function pinSheet(){
+    if (window.hubPin) return Promise.resolve(window.hubPin);
+    return new Promise(function(resolve, reject){
+      var sc = document.createElement('script');
+      var v = (document.querySelector('script[src^="hub-store.js"]') || {}).src || '';
+      sc.src = 'hub-pin.js' + (v.indexOf('?v=') !== -1 ? v.slice(v.indexOf('?v=')) : '');
+      sc.onload = function(){ resolve(window.hubPin); }; sc.onerror = function(){ reject(new Error('Could not load the PIN sheet')); };
+      document.head.appendChild(sc);
+    });
+  }
   // text/plain keeps the browser from sending a CORS preflight, which Apps
   // Script would not answer; the response itself is plain JSON.
   // A call that never answers is worse than one that fails: 20 s, then it is
@@ -61,16 +83,28 @@ window.HubStore = (function(){
     else if (vtoken() && payload.v == null) payload.v = vtoken();
     // Apps Script answers the odd call with an HTML error page ("Sayfa
     // Bulunamadi", 1 in 3 during a bad minute on 20 Sep 2026): three tries.
-    var out, tries = 0, waits = [900, 1800];
+    var pn = pinName(payload);
+    if (pn && payload.pin == null && pinGet(pn)) payload.pin = pinGet(pn);
+    var out, tries = 0, waits = [900, 1800], asked = 0;
     for (;;) {
-      try { out = await once(payload, timeoutMs); break; }
-      catch (e) { if (!e.transient || tries >= waits.length) throw e; await new Promise(function(r){ setTimeout(r, waits[tries++]); }); }
+      try { out = await once(payload, timeoutMs); }
+      catch (e) { if (!e.transient || tries >= waits.length) throw e; await new Promise(function(r){ setTimeout(r, waits[tries++]); }); continue; }
+      // The store wants a PIN this device does not have, or has wrong: ask once
+      // per refusal, up to three, then give up like any other refusal.
+      if (!out.ok && pn && /^(PIN required|Wrong PIN)$/.test(String(out.error || '')) && !window.HUB_NO_PIN_PROMPT && asked < 3) {
+        var wrong = out.error === 'Wrong PIN'; if (wrong) pinSet(pn, '');
+        var sheet = await pinSheet();
+        var given = await sheet.ask({ who: pn === 'hub:kpin' ? 'tutor' : 'trainee', wrong: wrong });
+        if (!given) break;
+        pinSet(pn, given); payload.pin = given; asked++; continue;
+      }
+      break;
     }
     // A refusal is the store answering, not the network failing, and the two
     // must not be treated alike: a refused credential means the link is dead,
     // a transport failure means try again later. `transient` already marks the
     // second; this marks the first.
-    if (!out.ok) { var refusal = new Error(out.error || 'Store error'); refusal.refused = true; throw refusal; }
+    if (!out.ok) { var refusal = new Error(out.error || 'Store error'); refusal.refused = true; refusal.pin = /^(PIN required|Wrong PIN)$/.test(String(out.error || '')); throw refusal; }
     return out.result;
   }
   function base(){ return location.origin + location.pathname.replace(/[^/]*$/, ''); }
@@ -101,6 +135,10 @@ window.HubStore = (function(){
     rotateAssessorKey: function(){ return call({ op: 'rotateAssessorKey' }); },
     assessorLinkFor: function(k){ return base() + '12_assessor_pack.html?ak=' + encodeURIComponent(k); },
     rotateKey: function(){ return call({ op: 'rotateKey' }).then(function(r){ try { localStorage.setItem('hub:k', r.key); } catch (e) {} return true; }); },
+    /* PINs (v75): course admin only. pin '' clears. */
+    pins: function(){ return call({ op: 'pins' }); },
+    setTutorPin: function(pin){ return call({ op: 'setTutorPin', pin: pin || '' }).then(function(r){ pinSet('hub:kpin', pin || ''); return r; }); },
+    setTraineePin: function(tok, pin){ return call({ op: 'setTraineePin', token: tok, pin: pin || '' }); },
     purgeTrainee: function(tok){ return call({ op: 'purgeTrainee', token: tok }); },
     /* A materials file goes to Drive and comes back as a link; the bytes never
        reach the sheet (a cell holds 50,000 characters). base64 is a third

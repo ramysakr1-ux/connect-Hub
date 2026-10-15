@@ -22,7 +22,7 @@
  */
 const VERSION = 'lite-202610151057';
 const SHELL = [
-  './', 'index.html', 'invite.html', 'hub-qr.js', 'vendor/qrcode.js',
+  './', 'index.html', 'invite.html', 'hub-qr.js', 'vendor/qrcode.js', 'hub-pin.js',
   '1_trainee_plan_and_analysis.html', '2_trainee_self_evaluation.html', '3_tutor_feedback.html',
   '4_feedback_returned.html', '5_tutor_dashboard.html', '6_centre_admin_dashboard.html',
   '7_candidate_tracker.html', '8_assignment_wording.html', '9_assignment_submission.html',

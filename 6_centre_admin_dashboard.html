@@ -1901,6 +1901,9 @@ async function renderAssessorBlock(rotated){
    "there seems to be a lag"). Now the ops that change the roster answer WITH
    it, and everything else redraws from what is already here. */
 let ROSTER = null;
+/* LINK PINs (v75, 15 Oct 2026). Which links carry one; the store keeps only a
+   hash, so a PIN is shown to admin ONCE, when it is set, and never again. */
+let PINS = { tutor: false, trainees: {} };
 
 /* v53 (1 Oct 2026). Lite sends nothing itself: "Email the link" opens the
    centre's own mail app with the trainee's address and link already in the
@@ -1955,6 +1958,7 @@ async function renderStoreRoster(next){
     try { ROSTER = await S.roster(); }
     catch (err) { box.innerHTML = `<p class="lede brick">${esc(err.message)}</p>`; return; }
   }
+  try { PINS = await S.pins(); } catch (e) { PINS = { tutor: false, trainees: {} }; }
   /* One order, everywhere. Course admin showed the roster in the order people
      were ADDED while the dashboard, the tracker, the grades report and the
      assessor pack all sort by name -- so the tutor who typed the six names met
@@ -1995,6 +1999,16 @@ async function renderStoreRoster(next){
     </div>
     <div class="linkcard">
       ${linkRow('Tutor link', 'Every tutor on the course opens this same link and lands on the same course — the same trainees, the same records. Keep it to tutors, and rotate it if it gets out: every copy in circulation stops working.', S.inviteFor('tutor', S.key()), 'tutor', 'storeRotateKey', 'Rotate')}
+      <div class="linkrow">
+        <div class="body">
+          <b>Team PIN</b>
+          <p>${PINS.tutor ? 'The tutor link asks for a PIN. Each tutor types it once on each device.' : 'A second key on the tutor link: the pages ask for it once on each device, so a copied link alone opens nothing.'}</p>
+        </div>
+        <div class="acts">
+          <button class="btn quiet small" type="button" id="storeTeamPin">${PINS.tutor ? 'Change PIN' : 'Set PIN'}</button>
+          ${PINS.tutor ? '<button class="btn quiet small" type="button" id="storeTeamPinClear">Remove PIN</button>' : ''}
+        </div>
+      </div>
       <div id="assessorBlock" class="linkrow"><div class="body"><b>Assessor link</b><p>Loading…</p></div></div>
     </div>
     </section>
@@ -2054,6 +2068,7 @@ async function renderStoreRoster(next){
                portfolio: one room, one door. The roster is setup -- names,
                links, emails. A trainee's work opens from the tutor dashboard's
                Portfolio, and printing just their TPs is a door inside it. -->
+          <button class="btn quiet small" type="button" data-pin="${esc(t.token)}" data-name="${esc(t.name)}" title="${PINS.trainees[t.token] ? 'This link asks for a PIN. Change or remove it.' : 'Put a PIN on this link'}">${PINS.trainees[t.token] ? 'PIN · set' : 'Set PIN'}</button>
           <button class="btn quiet small" type="button" data-links="${esc(t.token)}">Links${(privateLinksOf(t.token).length + staffLinksOf(t.token).length) ? ' · ' + (privateLinksOf(t.token).length + staffLinksOf(t.token).length) : ''}</button>
           <button class="btn quiet small" type="button" data-remove="${esc(t.token)}" data-name="${esc(t.name)}">Remove</button>
         </div>
@@ -2124,6 +2139,42 @@ async function renderStoreRoster(next){
     e.target.textContent = open ? 'Hide the paste box' : 'Add several at once';
   });
 
+  /* The PIN dialog: a suggested four digits, editable, shown once. */
+  function pinModal(message, current){
+    return new Promise(resolve => {
+      const overlay = document.createElement('div'); overlay.className = 'confirm-overlay';
+      const suggested = String(Math.floor(1000 + Math.random() * 9000));
+      overlay.innerHTML = '<div class="confirm-modal" role="dialog" aria-modal="true"><p class="confirm-message"></p>'
+        + '<label class="confirm-type"><span>Four to six digits. Tell them once; it is not shown again.</span><input type="text" inputmode="numeric" autocomplete="off" maxlength="6"></label>'
+        + '<div class="confirm-actions"><button type="button" class="confirm-cancel">Cancel</button>' + (current ? '<button type="button" class="confirm-cancel" data-clear>Remove PIN</button>' : '') + '<button type="button" class="confirm-action">Set PIN</button></div></div>';
+      overlay.querySelector('.confirm-message').textContent = message;
+      const input = overlay.querySelector('input'), go = overlay.querySelector('.confirm-action');
+      input.value = suggested;
+      input.addEventListener('input', () => { input.value = input.value.replace(/\D/g, '').slice(0, 6); go.disabled = !/^\d{4,6}$/.test(input.value); });
+      input.addEventListener('keydown', e => { if (e.key === 'Enter' && !go.disabled) go.click(); });
+      document.body.appendChild(overlay);
+      const done = r => { document.removeEventListener('keydown', onKey); hubFadeAway(overlay); resolve(r); };
+      const onKey = e => { if (e.key === 'Escape') done(null); };
+      document.addEventListener('keydown', onKey);
+      overlay.addEventListener('mousedown', e => { if (e.target === overlay) done(null); });
+      overlay.querySelector('.confirm-cancel').addEventListener('click', () => done(null));
+      const clr = overlay.querySelector('[data-clear]'); if (clr) clr.addEventListener('click', () => done({ clear: true }));
+      go.addEventListener('click', () => { if (!go.disabled) done({ pin: input.value }); });
+      setTimeout(() => { try { input.focus(); input.select(); } catch (e) {} }, 40);
+    });
+  }
+  async function setPinFlow(token, who){
+    const has = token ? !!PINS.trainees[token] : !!PINS.tutor;
+    const r = await pinModal(token ? `A PIN for ${who}’s link.` : 'A PIN for the tutor link, shared by the teaching team.', has);
+    if (!r) return;
+    try {
+      if (r.clear) { if (token) await S.setTraineePin(token, ''); else await S.setTutorPin(''); }
+      else { if (token) await S.setTraineePin(token, r.pin); else await S.setTutorPin(r.pin); }
+    } catch (err) { alert(err.message); return; }
+    PINS = await S.pins().catch(() => PINS);
+    renderStoreRoster();
+    if (!r.clear) await confirmModal(`${token ? who + '’s' : 'The teaching team’s'} PIN is ${r.pin}. Tell ${token ? 'them' : 'the tutors'} once; it is not shown again. ${token ? 'Their page asks for it the first time they open the link on a device.' : 'Each tutor types it once on each device; you are already in on this one.'}`, 'Done');
+  }
   document.getElementById('storeRotateKey').addEventListener('click', async ()=>{
     if(!(await confirmModal('Rotate the course key? Every tutor link in circulation stops working; this browser gets the new one and the new tutor link shows here. Trainees\u2019 links are not affected.', 'Rotate'))) return;
     try { await S.rotateKey(); history.replaceState(null, '', location.pathname); renderStoreRoster(); } catch(err){ alert(err.message); }
@@ -2240,6 +2291,13 @@ document.getElementById('storeRoster').addEventListener('click', async e=>{
     // trainee their workspace link (walk, 21 Sep 2026).
     await hubCopyButton(c, c.dataset.copy);
     return;
+  }
+  const pb = e.target.closest('[data-pin]');
+  if (pb){ await setPinFlow(pb.dataset.pin, pb.dataset.name); return; }
+  const tp = e.target.closest('#storeTeamPin, #storeTeamPinClear');
+  if (tp){
+    if (tp.id === 'storeTeamPinClear') { if (!(await confirmModal('Remove the team PIN? The tutor link opens with the link alone again.', 'Remove'))) return; try { await S.setTutorPin(''); PINS = await S.pins(); renderStoreRoster(); } catch(err){ alert(err.message); } return; }
+    await setPinFlow(null, 'the teaching team'); return;
   }
   const r = e.target.closest('[data-remove]');
   if (r){

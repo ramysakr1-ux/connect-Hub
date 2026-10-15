@@ -102,6 +102,9 @@
 
   /* THE SCAN ROW (15 Oct 2026): the person's own link as a QR code, so a card
      on a laptop screen, or a printed one, opens on a phone. hub-qr.js draws it. */
+  .pinnote{display:none; margin:10px 0 0; padding:9px 12px; border-radius:10px; background:var(--gold-wash); border:1px solid var(--amber-edge); font-family:'Karla',sans-serif; font-size:13px; line-height:1.45; color:var(--ink);}
+  .pinnote b{font-weight:700;}
+  body[data-pin="1"] .pinnote{display:block;}
   .scan{display:flex; align-items:center; gap:14px; margin:16px 0 0; padding:12px 14px; border-radius:12px; background:var(--paper); border:1px solid var(--sand-line);}
   .scan svg{width:116px; height:116px; flex:0 0 116px; display:block;}
   .scan .scan-t{font-family:'Karla',sans-serif; font-size:12.5px; line-height:1.45; color:var(--grey);}
@@ -213,6 +216,7 @@
   <div class="sheet">
     <p class="what" id="what"></p>
     <p class="keep" id="keep"></p>
+    <p class="pinnote" id="pinnote"><b>This link also has a PIN.</b> <span id="pinwho"></span></p>
     <p class="langs" id="langs" hidden></p>
     <a class="go" id="go" href="#">Open</a>
     <div class="scan" id="scan" hidden><span id="scanQr"></span><span class="scan-t"><b>Scan to open on your phone</b>The same link, as a code. It is yours as much as the link is.</span></div>
@@ -239,6 +243,7 @@
   <div class="t-stub">
     <span class="t-seal" aria-hidden="true"><svg viewBox="8 30 104 60" width="34" height="20" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-deep)" stroke-width="11" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--teal-deep)" stroke-width="11" stroke-linecap="round"></path></svg><b id="t_seal"></b></span>
     <p class="t-keep" id="t_keep"></p>
+    <p class="pinnote" id="t_pinnote"><b>This link also has a PIN.</b> <span id="t_pinwho"></span></p>
     <p class="langs" id="t_langs" hidden></p>
     <a class="t-go" id="t_go" href="#"><span class="g" id="t_goText">Open</span><span class="a">Admit one &rarr;</span></a>
     <div class="scan" id="t_scan" hidden><span id="t_scanQr"></span><span class="scan-t"><b>Scan to open on your phone</b>The same link, as a code. It is yours as much as the link is.</span></div>
@@ -252,7 +257,10 @@
 <!-- A PREVIEW (10 Oct 2026): Course admin shows the course's own card while a
      tutor chooses its look, from ?preview=<role>&card=<look>. It reads what the
      browser holds and never talks to the store (hub-sync stands down). -->
-<script>window.HUB_PREVIEW = /[?&]preview=(trainee|tutor|assessor|volunteer)(&|$)/.test(location.search);</script>
+<script>window.HUB_PREVIEW = /[?&]preview=(trainee|tutor|assessor|volunteer)(&|$)/.test(location.search);
+/* The card never asks for a PIN itself: the page behind Open does. A link with
+   a PIN gets a line on the card instead (hub-sync marks body[data-pin]). */
+window.HUB_NO_PIN_PROMPT = true;</script>
 <script src="hub-shared.js?v=202610151057"></script>
 <script src="hub-store.js?v=202610151057"></script>
 <script src="hub-say.js?v=202610151057"></script>
@@ -315,6 +323,7 @@
   /* Both frames, one fill: each id has a twin on the ticket, t_<id>. */
   var both = function(id, f){ [$(id), $('t_' + id)].forEach(function(el){ if (el) f(el); }); };
   document.body.dataset.role = ROLE;
+  both('pinwho', function(el){ el.textContent = ROLE === 'tutor' ? 'Course admin has it for the teaching team; the page asks once.' : 'Your tutor gives it to you; the page asks once.'; });
   $('chip').textContent = COPY.chip;
   both('eyebrow', function(el){ el.textContent = COPY.eyebrow; });
   $('t_seal').textContent = COPY.seal;

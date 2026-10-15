@@ -324,6 +324,26 @@ function handle_(req) {
   var reader = tutor || assessor;
   var owner = isOwner_(req.owner);
 
+  /* LINK PINS (v75, 15 Oct 2026). Ramy: "can we add a password to lite's
+     link" -- for trainees and for tutors, set by course admin. The link is
+     still the key; the PIN is a second one the STORE checks, so a copied link
+     alone opens nothing. One PIN per trainee link, one for the tutor team.
+     A link with no PIN on record is not gated: the demo and the old courses
+     keep working, and a course closes each link the moment admin sets one.
+     The assessor's link and the volunteers' are never gated. 'ping' passes
+     so a page can tell the store is up; everything else, boot included,
+     needs the PIN once it is set. The two messages are what the pages key
+     on (hub-store.js asks, then retries). */
+  if (course && op !== 'ping' && !owner) {
+    var pinsRec = courseRead_(course.id, 'pins') || {};
+    var want = tutor ? pinsRec.tutor : (me && !assessor && !vol) ? (pinsRec.trainees || {})[me.token] : null;
+    if (want && want.hash) {
+      var given = String(req.pin || '');
+      if (!given) throw new Error('PIN required');
+      if (pinHash_(given, want.salt) !== want.hash) throw new Error('Wrong PIN');
+    }
+  }
+
   switch (op) {
     case 'ping': return { tutor: tutor, assessor: assessor, owner: owner, time: new Date().toISOString() };
 
@@ -904,6 +924,37 @@ case 'inbox': {
       var nk = newKey_();
       PropertiesService.getScriptProperties().setProperty(keyProp_('tutor', course.id), nk);
       return { key: nk };
+    }
+
+    /* The PINs (v75). Course admin sets, changes or clears them; the store
+       keeps a salted hash and the moment it was set, never the digits.
+       setTutorPin / setTraineePin with pin '' clears. 'pins' says which links
+       have one, for the Roster and links tab. */
+    case 'setTutorPin': {
+      requireTutor_(tutor);
+      var tp = courseRead_(course.id, 'pins') || {};
+      tp.tutor = pinEntry_(req.pin);
+      if (!tp.tutor) delete tp.tutor;
+      courseWrite_(course.id, 'pins', tp);
+      return { saved: true, tutor: !!tp.tutor };
+    }
+    case 'setTraineePin': {
+      requireTutor_(tutor);
+      var who = roster_(course.id).filter(function (t) { return t.token === String(req.token); })[0];
+      if (!who) throw new Error('No such trainee');
+      var tp2 = courseRead_(course.id, 'pins') || {};
+      tp2.trainees = tp2.trainees || {};
+      var entry = pinEntry_(req.pin);
+      if (entry) tp2.trainees[who.token] = entry; else delete tp2.trainees[who.token];
+      courseWrite_(course.id, 'pins', tp2);
+      return { saved: true, token: who.token, set: !!entry };
+    }
+    case 'pins': {
+      requireTutor_(tutor);
+      var tp3 = courseRead_(course.id, 'pins') || {};
+      var tr = {};
+      Object.keys(tp3.trainees || {}).forEach(function (k) { tr[k] = tp3.trainees[k].set || true; });
+      return { tutor: tp3.tutor ? (tp3.tutor.set || true) : false, trainees: tr };
     }
 
     // ---- one call per page load: the course plus the caller's own records ----
@@ -1965,6 +2016,21 @@ function nextCourseId_() {
 
 // ---- keys --------------------------------------------------------------------
 function requireTutor_(tutor) { if (!tutor) throw new Error('Tutors only'); }
+
+/* PINs (v75): four to six digits; SHA-256 over salt + pin, hex. A cleared PIN
+   is null. The salt is a fresh uuid per setting, so two people with the same
+   digits do not share a hash. */
+function pinEntry_(raw) {
+  var pin = String(raw == null ? '' : raw).replace(/\s+/g, '');
+  if (!pin) return null;
+  if (!/^\d{4,6}$/.test(pin)) throw new Error('A PIN is four to six digits');
+  var salt = Utilities.getUuid();
+  return { hash: pinHash_(pin, salt), salt: salt, set: new Date().toISOString() };
+}
+function pinHash_(pin, salt) {
+  var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(salt) + ':' + String(pin), Utilities.Charset.UTF_8);
+  return bytes.map(function (b) { return ('0' + (b & 255).toString(16)).slice(-2); }).join('');
+}
 
 // The end of the course's last day, from that course's settings; null while no
 // end is set. It was the end date plus fourteen days until 29 Sep 2026 -- ours,

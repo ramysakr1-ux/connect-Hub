@@ -1,0 +1,63 @@
+/* Connect Lite — the PIN sheet.
+ *
+ * Ramy, 15 Oct 2026: "can we add a password to lite's link". Course admin sets
+ * a PIN on a trainee's link, and one on the tutor link; the STORE refuses a
+ * call without it (Code.js, 'PIN required' / 'Wrong PIN'). hub-store.js asks
+ * here, keeps the answer on this device, and retries. A link with no PIN never
+ * sees this sheet.
+ *
+ * hubPin.ask({ who: 'trainee' | 'tutor', wrong: bool }) -> Promise<string|null>
+ */
+(function () {
+  'use strict';
+  var pending = null;
+  function css() {
+    if (document.getElementById('hub-pin-css')) return;
+    var st = document.createElement('style'); st.id = 'hub-pin-css';
+    st.textContent =
+      ".hub-pin-veil{position:fixed;inset:0;z-index:2147483000;background:oklch(23.5% 0.017 65 / .42);display:flex;align-items:center;justify-content:center;padding:20px;}" +
+      ".hub-pin{width:min(380px,100%);background:var(--paper,#fdfcf9);border-radius:16px;padding:24px 24px 20px;box-shadow:0 24px 60px -20px oklch(23.5% 0.017 65 / .6);font-family:Karla,Helvetica,sans-serif;color:var(--ink,#2b2622);}" +
+      ".hub-pin .lock{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;background:var(--teal,#1f4f4c);color:#fff;margin-bottom:12px;}" +
+      ".hub-pin h2{font-family:Newsreader,Georgia,serif;font-weight:700;font-size:1.35rem;line-height:1.2;margin:0 0 6px;}" +
+      ".hub-pin p{font-size:.92rem;line-height:1.55;color:var(--grey,#55524a);margin:0 0 14px;}" +
+      ".hub-pin input{width:100%;box-sizing:border-box;font:700 1.6rem/1 Karla,Helvetica,sans-serif;letter-spacing:.32em;text-align:center;padding:12px 10px;border:1.5px solid var(--sand-line,#d9d2c3);border-radius:10px;background:var(--field,#fff);color:var(--ink,#2b2622);outline:none;}" +
+      ".hub-pin input:focus{border-color:var(--teal,#1f4f4c);}" +
+      ".hub-pin.wrong input{border-color:var(--brick,#8b2e2e);animation:hub-pin-shake .3s;}" +
+      ".hub-pin .err{color:var(--brick,#8b2e2e);font-weight:600;min-height:1.3em;margin:8px 0 0;font-size:.88rem;}" +
+      ".hub-pin .row{display:flex;gap:10px;margin-top:14px;}" +
+      ".hub-pin button{font:700 .95rem Karla,Helvetica,sans-serif;border:0;border-radius:999px;padding:11px 18px;cursor:pointer;}" +
+      ".hub-pin .go{flex:1;background:var(--teal,#1f4f4c);color:#fff;}" +
+      ".hub-pin .go:disabled{opacity:.5;cursor:default;}" +
+      ".hub-pin .no{background:none;color:var(--grey,#55524a);}" +
+      "@keyframes hub-pin-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}" +
+      "@media(prefers-reduced-motion:reduce){.hub-pin.wrong input{animation:none;}}";
+    document.head.appendChild(st);
+  }
+  function ask(opts) {
+    opts = opts || {};
+    if (pending) return pending;
+    css();
+    pending = new Promise(function (resolve) {
+      var veil = document.createElement('div'); veil.className = 'hub-pin-veil';
+      var tutor = opts.who === 'tutor';
+      veil.innerHTML =
+        '<div class="hub-pin' + (opts.wrong ? ' wrong' : '') + '" role="dialog" aria-modal="true" aria-labelledby="hub-pin-h">' +
+        '<span class="lock" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>' +
+        '<h2 id="hub-pin-h">' + (tutor ? 'The teaching team’s PIN' : 'This link has a PIN') + '</h2>' +
+        '<p>' + (tutor ? 'Course admin set a PIN on the tutor link. Type it once; this device remembers it.' : 'Your tutor gives it to you. Type it once; this device remembers it.') + '</p>' +
+        '<form><label class="sr" for="hub-pin-in" style="position:absolute;left:-9999px">PIN</label>' +
+        '<input id="hub-pin-in" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{4,6}" maxlength="6" placeholder="••••" aria-label="PIN">' +
+        '<p class="err">' + (opts.wrong ? 'Not that one. Try again.' : '') + '</p>' +
+        '<div class="row"><button type="button" class="no">Not now</button><button type="submit" class="go" disabled>Open</button></div></form></div>';
+      document.body.appendChild(veil);
+      var box = veil.firstChild, input = veil.querySelector('input'), go = veil.querySelector('.go'), no = veil.querySelector('.no'), form = veil.querySelector('form');
+      function done(v) { pending = null; try { veil.remove(); } catch (e) {} resolve(v); }
+      input.addEventListener('input', function () { input.value = input.value.replace(/\D/g, '').slice(0, 6); go.disabled = !/^\d{4,6}$/.test(input.value); box.classList.remove('wrong'); });
+      form.addEventListener('submit', function (e) { e.preventDefault(); if (!go.disabled) done(input.value); });
+      no.addEventListener('click', function () { done(null); });
+      setTimeout(function () { try { input.focus(); } catch (e) {} }, 50);
+    });
+    return pending;
+  }
+  window.hubPin = { ask: ask };
+})();

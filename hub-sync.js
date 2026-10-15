@@ -668,7 +668,9 @@
       // walking the assessor role, 21 Sep 2026). Nothing is deleted -- a
       // trainee may hold drafts the store never got -- the screen simply
       // refuses to render the course.
-      if (err && err.refused) { gate(err.message); return; }
+      /* A PIN refusal with no sheet to ask (the invitation card) is not a dead
+         link: the card says the link also has a PIN and stays drawn (v75). */
+      if (err && err.refused) { if (err.pin) { try { document.body.dataset.pin = '1'; } catch (e) {} return; } gate(err.message); return; }
       status('Could not reach the course \u2014 ' + (err && err.message || err) + ' (showing this browser\u2019s copy)', 'error');
     });
     return;
@@ -702,7 +704,7 @@
     try { localStorage.setItem('hub:booted', identity); } catch (e) {}
     status(mode === 'assessor' ? 'Assessor view \u2014 read-only' : mode === 'volunteer' ? 'Your page' : 'Live \u2014 saved to the course as you go', 'ok');
   }, function(err){
-    if (err && err.refused) { gate(err.message); return 'gated'; }
+    if (err && err.refused) { if (err.pin) { try { document.body.dataset.pin = '1'; } catch (e) {} return 'pin'; } gate(err.message); return 'gated'; }
     status('Could not reach the course \u2014 ' + (err && err.message || err), 'error');
   })
     .then(function(gated){ if (gated !== 'gated') { uncover(); start(); } });
