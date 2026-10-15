@@ -946,7 +946,7 @@ case 'inbox': {
       var tpm = courseRead_(course.id, 'pins') || {};
       tpm.trainees = tpm.trainees || {};
       var entry = pinEntry_(req.pin);
-      if (!entry) throw new Error('A PIN is four to six digits');
+      if (!entry) throw new Error('A PIN is four to twelve letters or numbers');
       tpm.trainees[me.token] = entry;
       courseWrite_(course.id, 'pins', tpm);
       return { saved: true };
@@ -955,7 +955,7 @@ case 'inbox': {
       requireTutor_(tutor);
       var tp = courseRead_(course.id, 'pins') || {};
       var tentry = pinEntry_(req.pin);
-      if (!tentry) throw new Error('A PIN is four to six digits');
+      if (!tentry) throw new Error('A PIN is four to twelve letters or numbers');
       tp.tutor = tentry;
       courseWrite_(course.id, 'pins', tp);
       return { saved: true };
@@ -2056,13 +2056,13 @@ function nextCourseId_() {
 // ---- keys --------------------------------------------------------------------
 function requireTutor_(tutor) { if (!tutor) throw new Error('Tutors only'); }
 
-/* PINs (v87): four to six digits; SHA-256 over salt + pin, hex. The salt is a
+/* PINs (v87): four to twelve letters or numbers; SHA-256 over salt + pin, hex. The salt is a
    fresh uuid per setting, so two people with the same digits do not share a
    hash. */
 function pinEntry_(raw) {
   var pin = String(raw == null ? '' : raw).replace(/\s+/g, '');
   if (!pin) return null;
-  if (!/^\d{4,6}$/.test(pin)) throw new Error('A PIN is four to six digits');
+  if (!/^[A-Za-z0-9]{4,12}$/.test(pin)) throw new Error('A PIN is four to twelve letters or numbers');
   var salt = Utilities.getUuid();
   return { hash: pinHash_(pin, salt), salt: salt, set: new Date().toISOString() };
 }

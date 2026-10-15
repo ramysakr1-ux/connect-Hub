@@ -32,3 +32,7 @@ one will just automatically be terminated."
     clasp deploy -i AKfycbz5ESCtTg6kIDNCf7ynt1fB0tOSVusgOUiMub9-wEZunwQ2uTw2wzz1vmbHxzbvpG-eyA -d "v87 link PINs"
 
 Never a bare `clasp deploy` (it makes a second deployment with a new URL).
+
+## v88 (15 Oct 2026)
+
+A PIN is four to twelve letters or numbers (Ramy: "does it have to be a number?"), not four to six digits. The sheet shows it in lower case; the store accepts A-Z, a-z, 0-9 and hashes what it is given.

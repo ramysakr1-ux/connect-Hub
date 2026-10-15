@@ -24,7 +24,7 @@
       ".hub-pin .lock{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;background:var(--teal,#1f4f4c);color:#fff;}" +
       ".hub-pin h2{font-family:Newsreader,Georgia,serif;font-weight:700;font-size:1.35rem;line-height:1.2;margin:0 0 6px;}" +
       ".hub-pin p{font-size:.92rem;line-height:1.55;color:var(--grey,#55524a);margin:0 0 14px;}" +
-      ".hub-pin input{width:100%;box-sizing:border-box;font:700 1.6rem/1 Karla,Helvetica,sans-serif;letter-spacing:.32em;text-align:center;padding:12px 10px;border:1.5px solid var(--sand-line,#d9d2c3);border-radius:10px;background:var(--field,#fff);color:var(--ink,#2b2622);outline:none;}" +
+      ".hub-pin input{width:100%;box-sizing:border-box;font:700 1.6rem/1 Karla,Helvetica,sans-serif;letter-spacing:.18em;text-align:center;padding:12px 10px;border:1.5px solid var(--sand-line,#d9d2c3);border-radius:10px;background:var(--field,#fff);color:var(--ink,#2b2622);outline:none;}" +
       ".hub-pin input+input{margin-top:10px;}" +
       ".hub-pin input:focus{border-color:var(--teal,#1f4f4c);}" +
       ".hub-pin.wrong input{border-color:var(--brick,#8b2e2e);animation:hub-pin-shake .3s;}" +
@@ -59,16 +59,16 @@
         : (tutor ? 'The teaching team’s PIN' : 'This link has a PIN');
       var line = choose
         ? (tutor
-            ? 'You are the first tutor to open this link. Four to six digits, typed twice. Every tutor types it once on each device. If it is lost, course admin rotates the link.'
-            : 'Four to six digits, typed twice. You will type it once on each device you use. If you lose it, your course admin sends you a new link.')
+            ? 'You are the first tutor to open this link. Four to twelve letters or numbers, typed twice. Every tutor types it once on each device. If it is lost, course admin rotates the link.'
+            : 'Four to twelve letters or numbers, typed twice. You will type it once on each device you use. If you lose it, your course admin sends you a new link.')
         : 'Type it once; this device remembers it.';
       veil.innerHTML =
         '<div class="hub-pin' + (opts.wrong ? ' wrong' : '') + '" role="dialog" aria-modal="true" aria-labelledby="hub-pin-h">' +
         '<div class="brand">' + lockup() + '<span class="lock" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span></div>' +
         '<h2 id="hub-pin-h"></h2><p class="line"></p>' +
         '<form><label for="hub-pin-in" style="position:absolute;left:-9999px">PIN</label>' +
-        '<input id="hub-pin-in" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{4,6}" maxlength="6" placeholder="••••" aria-label="PIN">' +
-        (choose ? '<label for="hub-pin-in2" style="position:absolute;left:-9999px">PIN again</label><input id="hub-pin-in2" inputmode="numeric" autocomplete="off" pattern="[0-9]{4,6}" maxlength="6" placeholder="again" aria-label="PIN again">' : '') +
+        '<input id="hub-pin-in" inputmode="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="12" placeholder="••••" aria-label="PIN">' +
+        (choose ? '<label for="hub-pin-in2" style="position:absolute;left:-9999px">PIN again</label><input id="hub-pin-in2" inputmode="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="12" placeholder="again" aria-label="PIN again">' : '') +
         '<p class="err"></p>' +
         '<div class="row"><button type="button" class="no">Not now</button><button type="submit" class="go" disabled></button></div></form></div>';
       veil.querySelector('h2').textContent = head;
@@ -79,7 +79,7 @@
       var box = veil.firstChild, input = veil.querySelector('#hub-pin-in'), input2 = veil.querySelector('#hub-pin-in2'), go = veil.querySelector('.go'), no = veil.querySelector('.no'), form = veil.querySelector('form'), err = veil.querySelector('.err');
       function done(v) { pending = null; try { veil.remove(); } catch (e) {} resolve(v); }
       function check() {
-        var ok = /^\d{4,6}$/.test(input.value);
+        var ok = /^[a-z0-9]{4,12}$/.test(input.value);
         if (choose) {
           var same = input2.value === input.value;
           ok = ok && same;
@@ -87,7 +87,7 @@
         }
         go.disabled = !ok; box.classList.remove('wrong');
       }
-      [input, input2].forEach(function (el) { if (el) el.addEventListener('input', function () { el.value = el.value.replace(/\D/g, '').slice(0, 6); check(); }); });
+      [input, input2].forEach(function (el) { if (el) el.addEventListener('input', function () { el.value = el.value.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 12); check(); }); });
       form.addEventListener('submit', function (e) { e.preventDefault(); if (!go.disabled) done(input.value); });
       no.addEventListener('click', function () { done(null); });
       setTimeout(function () { try { input.focus(); } catch (e) {} }, 50);
