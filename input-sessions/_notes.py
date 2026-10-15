@@ -512,3 +512,25 @@ NOTES['guided-discovery-vs-ppp'] = '''
 <li>The film: trainees who count every activity as a stage. Push them to the three big moves and what changes at each.</li>
 <li>"Presentation" heard as a lecture. The teacher on film elicits from a picture and drawings; point at that.</li>
 </ul>'''
+
+NOTES['interviewing-a-learner'] = '''
+<h4>Before</h4>
+<p>Print the eight questions as a half-page sheet for each trainee (they are on the page, section 4, and in the session you run on Connect). Have a second sheet with space under each question for the student&rsquo;s exact words. Decide beforehand which students are interviewed and by whom; the page does not do that for you.</p>
+<h4>Running it</h4>
+''' + T([
+    (8, 'A first interview', 'Read Lina&rsquo;s interview aloud, two voices. Individually, they rate the six interviewer lines, then Check. Take line 6 first: a leading question feels natural and costs the most.'),
+    (8, 'What the assignment needs', 'Read the four bullets. Then the eight questions: they match each to an area, and Check. Say that the match is the main area; most questions serve two.'),
+    (10, 'Asking clearly', 'Pairs. Each rewrites the six on paper before anyone reveals. Take two of their rewrites onto the board and compare with the models. Then the four habits.'),
+    (8, 'The eight questions', 'Open them one by one. For each, one trainee says the follow-up in their own words, not the one on the card.'),
+    (10, 'What you heard', 'Sort Lina&rsquo;s five, then the specific-or-vague five. The fifth sort item is the one to argue about: a listening need is evidence too, and it is not an error.'),
+    (12, 'Try it', 'Pairs, then swap. Interviewers write exact words. Collect one specific problem and its exact words from each on the way out.'),
+]) + '''
+<h4>The key</h4>
+<p>On the page: the six ratings (too complex for the level; fine; corrects instead of listening; leading and closed; two questions at once; does not follow up), the eight areas (background, background, previous learning, motivation, preferences, needs and support, needs and support, needs and support), the six model rewrites, the five sorts (grammar, grammar, a skills need not an error, pronunciation, grammar), and the five specific-or-vague (too vague, specific, too vague, specific, too vague).</p>
+<h4>Watch for</h4>
+<ul>
+<li>Trainees who correct in the practice interviews. Stop it at once and ask what they gained by it.</li>
+<li>Notes that summarise: &ldquo;she has problems with the past&rdquo;. Ask for the sentence she actually said.</li>
+<li>A student who answers every question with one word. The follow-up is the skill, not the question.</li>
+<li>The assignment is not the interview. The syllabus asks for the learner&rsquo;s background, previous learning and preferences, their language and skills needs, support outside the class, and activities with reasons; the interview supplies the first three, and where the needs come from.</li>
+</ul>'''
