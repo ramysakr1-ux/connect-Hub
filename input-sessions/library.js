@@ -130,3 +130,13 @@ window.InputLib = (function(){
   setTimeout(function(){ if (root.classList.contains('gating')) root.classList.remove('gating'); }, 8000);
   return { linkOpen: linkOpen, homeLinkOk: homeLinkOk, isInputLink: isInputLink, slugsFor: slugsFor, inputsOf: inputsOf, today: today, rd: rd, iso: iso, dateOf: dateOf, gate: gate };
 })();
+
+/* The offline copy (sw.js at the site root). The input sessions do not load hub-shared.js,
+   which is where every other screen registers it, so a visitor who opened a session first
+   never got the worker. Registered here, with the address worked out from this script. */
+try {
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    var __me = document.currentScript && document.currentScript.src;
+    if (__me) navigator.serviceWorker.register(new URL('../sw.js', __me).href);
+  }
+} catch (e) {}

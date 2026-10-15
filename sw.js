@@ -20,7 +20,7 @@
  * VERSION is stamped by bump-assets.py with the same stamp as the ?v= links,
  * so each push retires the previous cache on activate.
  */
-const VERSION = 'lite-202610151819';
+const VERSION = 'lite-202610152045';
 const SHELL = [
   './', 'index.html', 'invite.html', 'hub-qr.js', 'vendor/qrcode.js', 'hub-pin.js',
   '1_trainee_plan_and_analysis.html', '2_trainee_self_evaluation.html', '3_tutor_feedback.html',
@@ -44,6 +44,15 @@ const SHELL = [
   '29_candidate_agreement.html',
   /* 8 Oct 2026: the answer key and the getting-to-know-you bank, with their data. */
   '30_precourse_key.html', '31_getting_to_know_you.html', 'precourse-key.js', 'gtky-bank.js', 'fol-interview.js',
+  /* 15 Oct 2026: the input sessions (the shelf, its two shared files, the three drawings and
+     every session page). They were never in the shell, so one not opened before the
+     connection dropped came up as "You are offline". Pages are kept by their directory
+     address, which is how the shelf and the doors link to them. The one film in the
+     library (guided-discovery-vs-ppp/situational.mp4, 24 MB) is deliberately NOT kept:
+     it plays with a connection and the page reads fine without it. */
+  'input-sessions/', 'input-sessions/library.js', 'input-sessions/session.css',
+  'input-sessions/_art/drama-frog.svg', 'input-sessions/_art/drama-monster.svg', 'input-sessions/_art/story-map.svg',
+  'input-sessions/alternative-teaching-techniques/', 'input-sessions/classroom-management/', 'input-sessions/connected-speech/', 'input-sessions/drama-in-the-elt-classroom/', 'input-sessions/eliciting-and-ccqs/', 'input-sessions/error-correction/', 'input-sessions/functional-language/', 'input-sessions/guided-discovery-vs-ppp/', 'input-sessions/guided-to-less-guided-practice/', 'input-sessions/lesson-framework/', 'input-sessions/life-after-celta/', 'input-sessions/phonology-sounds/', 'input-sessions/ppp/', 'input-sessions/receptive-skills/', 'input-sessions/teaching-exam-classes/', 'input-sessions/teaching-literacy/', 'input-sessions/teaching-productive-skills/', 'input-sessions/teaching-speaking/', 'input-sessions/teaching-writing/', 'input-sessions/text-based-teaching/', 'input-sessions/word-and-sentence-stress/', 'input-sessions/writing-the-lesson-plan/',
   'offer.html',
   'assignment-defaults.js', 'agreement-defaults.js', 'hub-tokens.css', 'hub-house.css', 'hub-record.css',
   /* 8 Oct 2026: the date picker, vendored so the shell has it offline. */
@@ -82,7 +91,7 @@ self.addEventListener('fetch', function (e) {
     // Fonts: the kept copy first, the network fills it in once.
     e.respondWith(caches.match(req).then(function (hit) {
       return hit || fetch(req).then(function (r) {
-        if (r && (r.ok || r.type === 'opaque')) caches.open(VERSION).then(function (c) { c.put(req, r.clone()); });
+        if (r && (r.ok || r.type === 'opaque')) { var keep = r.clone(); caches.open(VERSION).then(function (c) { c.put(req, keep); }).catch(function () {}); }
         return r;
       });
     }));
@@ -110,7 +119,10 @@ self.addEventListener('fetch', function (e) {
     ? fetch(req.url, { cache: 'no-store', credentials: 'same-origin', redirect: req.mode === 'navigate' ? 'manual' : 'follow' })
     : fetch(req);
   e.respondWith(net.then(function (r) {
-    if (r && r.ok) caches.open(VERSION).then(function (c) { c.put(req, r.clone()); });
+    /* The copy is taken BEFORE the page is given the response. Cloned later, inside the
+       cache's own promise, the body could already be in use and clone() threw, so a
+       page visited online was sometimes not kept (found 15 Oct 2026). */
+    if (r && r.ok) { var keep = r.clone(); caches.open(VERSION).then(function (c) { c.put(req, keep); }).catch(function () {}); }
     return r;
   }).catch(function () {
     return caches.match(req).then(function (hit) {
