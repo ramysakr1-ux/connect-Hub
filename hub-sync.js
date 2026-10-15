@@ -669,7 +669,7 @@
       // trainee may hold drafts the store never got -- the screen simply
       // refuses to render the course.
       /* A PIN refusal with no sheet to ask (the invitation card) is not a dead
-         link: the card says the link also has a PIN and stays drawn (v75). */
+         link: the card says the link also has a PIN and stays drawn (v87). */
       if (err && err.refused) { if (err.pin) { try { document.body.dataset.pin = '1'; status('This link has a PIN \u2014 the page behind Open asks for it', 'ok'); } catch (e) {} return; } gate(err.message); return; }
       status('Could not reach the course \u2014 ' + (err && err.message || err) + ' (showing this browser\u2019s copy)', 'error');
     });

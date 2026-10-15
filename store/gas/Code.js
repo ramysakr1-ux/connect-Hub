@@ -324,7 +324,7 @@ function handle_(req) {
   var reader = tutor || assessor;
   var owner = isOwner_(req.owner);
 
-  /* LINK PINS (v75, 15 Oct 2026). Ramy: "can we add a password to lite's
+  /* LINK PINS (v87, 15 Oct 2026). Ramy: "can we add a password to lite's
      link" -- for trainees and for tutors, set by course admin. The link is
      still the key; the PIN is a second one the STORE checks, so a copied link
      alone opens nothing. One PIN per trainee link, one for the tutor team.
@@ -926,7 +926,7 @@ case 'inbox': {
       return { key: nk };
     }
 
-    /* The PINs (v75). Course admin sets, changes or clears them; the store
+    /* The PINs (v87). Course admin sets, changes or clears them; the store
        keeps a salted hash and the moment it was set, never the digits.
        setTutorPin / setTraineePin with pin '' clears. 'pins' says which links
        have one, for the Roster and links tab. */
@@ -2017,7 +2017,7 @@ function nextCourseId_() {
 // ---- keys --------------------------------------------------------------------
 function requireTutor_(tutor) { if (!tutor) throw new Error('Tutors only'); }
 
-/* PINs (v75): four to six digits; SHA-256 over salt + pin, hex. A cleared PIN
+/* PINs (v87): four to six digits; SHA-256 over salt + pin, hex. A cleared PIN
    is null. The salt is a fresh uuid per setting, so two people with the same
    digits do not share a hash. */
 function pinEntry_(raw) {

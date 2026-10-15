@@ -32,7 +32,7 @@ window.HubStore = (function(){
   function key(){ try { return localStorage.getItem('hub:k') || ''; } catch (e) { return ''; } }
   function akey(){ try { return localStorage.getItem('hub:a') || ''; } catch (e) { return ''; } }
   function vtoken(){ try { return localStorage.getItem('hub:v') || ''; } catch (e) { return ''; } }
-  /* THE PIN (v75, 15 Oct 2026). Course admin can put a PIN on a trainee's
+  /* THE PIN (v87, 15 Oct 2026). Course admin can put a PIN on a trainee's
      link and one on the tutor link; the store then refuses every call
      without it. The PIN this device knows rides on each call; when the store
      says 'PIN required' or 'Wrong PIN', the sheet in hub-pin.js asks, the
@@ -135,7 +135,7 @@ window.HubStore = (function(){
     rotateAssessorKey: function(){ return call({ op: 'rotateAssessorKey' }); },
     assessorLinkFor: function(k){ return base() + '12_assessor_pack.html?ak=' + encodeURIComponent(k); },
     rotateKey: function(){ return call({ op: 'rotateKey' }).then(function(r){ try { localStorage.setItem('hub:k', r.key); } catch (e) {} return true; }); },
-    /* PINs (v75): course admin only. pin '' clears. */
+    /* PINs (v87): course admin only. pin '' clears. */
     pins: function(){ return call({ op: 'pins' }); },
     setTutorPin: function(pin){ return call({ op: 'setTutorPin', pin: pin || '' }).then(function(r){ pinSet('hub:kpin', pin || ''); return r; }); },
     setTraineePin: function(tok, pin){ return call({ op: 'setTraineePin', token: tok, pin: pin || '' }); },
