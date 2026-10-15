@@ -234,6 +234,7 @@
 
 
 
+
   <section id="trainer" class="trainer-notes" hidden>
     <div class="card">
       <div class="stage-title">Trainer notes <span class="badge">Tutor only</span></div>
@@ -242,7 +243,8 @@
 <h4>Running it</h4>
 <table class="tn-time"><tr><th>Stage</th><th>What you do</th></tr><tr><td>Lead-in</td><td>The holiday film, then pairs: what went wrong, what has happened to you. Keep it light; it only sets up travel.</td></tr><tr><td>Gist</td><td>One minute against your watch. "Unlucky or lucky?" in one sentence. Take two answers; do not teach anything yet.</td></tr><tr><td>Look at the sentences</td><td>Pairs, the ten questions, then Check. They have just done a guided discovery as learners. Say nothing about that.</td></tr><tr><td>Function and form</td><td>The rule, then the table. Check both. Still no name for what they did.</td></tr><tr><td>Lesson two</td><td>Before you play it: how many stages, where does each start, what happens in each. Three boxes to start, Add a stage for more. Play it once through. Pairs compare their stages. Take a count of hands: two stages, three, four.</td></tr><tr><td>Which was which</td><td>The five questions in pairs, then open. Question 5 is the one to hold: why must guided discovery sit inside a text? Then Show which was which.</td></tr><tr><td>The stages</td><td>Individually, then pairs, then Check. The spare word is "explain". Close on one line from each: which shape will you try in your next TP, and why.</td></tr></table>
 <h4>The key</h4>
-<p>On the page: the ten discovery answers, the rule (two, the same time, past continuous, past simple), the form table, and the two gap texts (guided discovery: context, unfamiliar, normal, marker, Avoid, controlled and freer, mirror; PPP: elicits, target vocabulary, gave, board, teacher talk, practice, further, 90%). The stage notes on the film have no key on the page: the reading of the lesson is yours, in the room.</p>
+<p>On the page: the ten discovery answers, the rule (two, the same time, past continuous, past simple), the form table, and the two gap texts (guided discovery: context, unfamiliar, normal, marker, Avoid, controlled and freer, mirror; PPP: elicits, target vocabulary, gave, board, teacher talk, practice, further, 90%). The stage notes on the film have no key on the page; this is the lesson, for the room.</p>
+<p><b>The filmed lesson</b> (present simple, third person, an ordinary day). <b>0:00 to about 1:00, the situation.</b> A magazine picture: this is Kamal; where does he work? A stall, not a supermarket. "I'm going to tell you about an ordinary day for Kamal. Every day." <b>1:00 to 3:10, presentation and drilling, one sentence at a time.</b> A clock drawn on the board; "He get up in five o'clock" from a student; the teacher takes the idea, asks for a better sentence, models "He gets up at five o'clock", choral and individual repetition, corrects "gates" and "five o'clock", then "Tell Daniel", "Tell Bruna". A cup drawn: "he takes a coffee" becomes "He drinks a cup of coffee", told to Francesca. A bicycle drawn: "How does he go to work?" "Your bike" becomes "He cycles to work", with "cycle" taken as the right verb in the wrong form, and "to walk" corrected to "to work". <b>About 3:10 to the end, the first move towards production.</b> "Go back to the beginning. Can you remember the first sentence about Kamal?" Kamal is written on the board; the class rebuilds the four sentences in order and tells the person next to them. So: a situation built from one picture and three drawings, each sentence elicited, corrected, modelled and drilled, then the whole set retold in pairs. The clip ends before anything freer; let them notice that production never fully arrives.</p>
 <h4>Watch for</h4>
 <ul>
 <li>Trainees who name the approaches early. Let it pass; the point is the comparison, not the guessing.</li>
@@ -322,6 +324,38 @@
       f.appendChild(v);
       var acts = document.createElement('p'); acts.className = 'film-acts';
       var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = 'Hide the lesson'; c.addEventListener('click', close);
+      acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
+    });
+  });
+})();
+</script>
+<script>
+(function(){
+  /* A film with an end time in its address (end=108) is cut there by the
+     page itself: YouTube's own end parameter ran on into the rest of the
+     video and then into the next one (14 Oct 2026). The player is asked to
+     report its clock; at the end time, or when it ends by itself, the frame
+     closes, so nothing follows. */
+  var open = null;
+  window.addEventListener('message', function(e){
+    if (!open || !open.iframe || e.source !== open.iframe.contentWindow) return;
+    var d; try { d = JSON.parse(e.data); } catch (x) { return; }
+    if (!d || d.event !== 'infoDelivery' || !d.info) return;
+    var t = d.info.currentTime, st = d.info.playerState;
+    if ((open.end && t != null && t >= open.end) || st === 0) open.close();
+  });
+  document.querySelectorAll('.film[data-src]').forEach(function(f){
+    var btn = f.querySelector('.film-btn'); if (!btn) return;
+    var end = (f.dataset.src.match(/[?&]end=(\d+)/) || [])[1];
+    function close(){ try { if (open && open.iframe) open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'stopVideo', args: [] }), '*'); } catch (x) {} open = null; f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
+    btn.addEventListener('click', function(){
+      f.classList.remove('closed'); f.innerHTML = '';
+      var i = document.createElement('iframe'); i.src = f.dataset.src + (f.dataset.src.indexOf('?') === -1 ? '?' : '&') + 'autoplay=1&enablejsapi=1&origin=' + encodeURIComponent(location.origin); i.title = f.dataset.title || 'Film';
+      i.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture'; i.allowFullscreen = true; f.appendChild(i);
+      open = { iframe: i, end: end ? +end : 0, close: close };
+      i.addEventListener('load', function(){ try { i.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (x) {} });
+      var acts = document.createElement('p'); acts.className = 'film-acts';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = 'Hide the film'; c.addEventListener('click', close);
       acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
     });
   });
