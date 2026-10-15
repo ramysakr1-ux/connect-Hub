@@ -1051,7 +1051,7 @@ case 'inbox': {
          volunteer's link as "<courseId>-<random>", and the browser has no
          other way to learn which course it is on (30 Sep 2026). Not a secret
          -- the key already proves the course; the random half is the secret. */
-      var boot = { course: { id: course.id, settings: courseRead_(course.id, 'settings'), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: courseRead_(course.id, 'shared'), coming: comingFor_(course.id) } };
+      var boot = { course: { id: course.id, settings: courseRead_(course.id, 'settings'), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor), coming: comingFor_(course.id) } };
       if (assessor) { var exb = assessorExpiry_(course.id); boot.assessor = { expires: exb ? exb.toISOString() : null }; }
       if (reader) {
         /* v53: the assessor's link never carries a candidate's address. */
@@ -1069,6 +1069,7 @@ case 'inbox': {
       var tokP = String(req.token || '');
       deleteRowsWhere_(SHEET_TRAINEES, function (r) { return String(r[0]) === course.id && String(r[1]) === tokP; });
       deleteRowsWhere_(SHEET_RECORDS, function (r) { return String(r[0]) === course.id && String(r[1]) === tokP; });
+      try { courseUpdateObj_(course.id, 'folpool', function (pl) { delete pl[tokP]; return pl; }); } catch (e) {}
       return { purged: true };
     }
 
@@ -1147,7 +1148,7 @@ case 'inbox': {
     // ---- course-level, readable by all on the course, written by tutors ----
     case 'course': {
       if (!course) throw new Error('This link is not on a course');
-      return { settings: courseRead_(course.id, 'settings'), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? courseRead_(course.id, 'volunteers') : null, shared: courseRead_(course.id, 'shared') };
+      return { settings: courseRead_(course.id, 'settings'), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? courseRead_(course.id, 'volunteers') : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor) };
     }
     case 'putCourse': {
       requireTutor_(tutor);
@@ -1201,6 +1202,34 @@ case 'inbox': {
         out.push(item);
         return out.length > 120 ? out.slice(out.length - 120) : out;
       }) };
+    }
+    /* THE FOCUS ON THE LEARNER POOL (v90, 15 Oct 2026). Ramy: "make Lite pool
+       them too." What each trainee HEARD in their student interview (a
+       grammar or pronunciation problem and the student's words, never the
+       answers) is written here, one list per trainee, replaced whole each time
+       so a removed note goes too, and read back by everyone on the course as
+       one pool. Trainees see the notes without who wrote them; the tutors see
+       the name. The answers stay in the trainee's own `interview` record. */
+    case 'poolHeard': {
+      if (!me || tutor || assessor) throw new Error('Trainees only');
+      if (!course) throw new Error('This link is not on a course');
+      var phIn = Array.isArray(req.items) ? req.items : [];
+      var phClean = [];
+      phIn.slice(0, 60).forEach(function (it) {
+        if (!it) return;
+        var phNote = String(it.note || '').trim().slice(0, 400);
+        if (!phNote) return;
+        phClean.push({ id: String(it.id || newKey_().slice(0, 8)).slice(0, 24),
+                       type: it.type === 'pronunciation' ? 'pronunciation' : 'grammar',
+                       note: phNote, student: String(it.student || '').trim().slice(0, 60),
+                       by: String(me.name || '').slice(0, 80), at: new Date().toISOString() });
+      });
+      var phTok = me.token;
+      var phPool = courseUpdateObj_(course.id, 'folpool', function (pool) {
+        if (phClean.length) pool[phTok] = phClean; else delete pool[phTok];
+        return pool;
+      });
+      return { folpool: folPoolFor_(phPool, false) };
     }
     case 'volunteerAgree': {
       if (!vol) throw new Error('Only a volunteer student can agree for themselves');
@@ -1389,6 +1418,7 @@ case 'inbox': {
       requireTutor_(tutor);
       var removed = deleteRowsWhere_(SHEET_TRAINEES, function (r) { return String(r[0]) === course.id && String(r[1]) === String(req.token); });
       if (!removed) throw new Error('No such trainee');
+      try { courseUpdateObj_(course.id, 'folpool', function (pl) { delete pl[String(req.token)]; return pl; }); } catch (e) {}
       return { removed: true, trainees: rosterWithRecords_(course.id, TUTOR_WRITES) };
     }
     default: throw new Error('Unknown op: ' + op);
@@ -1744,6 +1774,20 @@ function courseUpdateObj_(courseId, kind, fn) {
     courseWriteRaw_(courseId, kind, next);
     return next;
   } finally { lock.releaseLock(); }
+}
+// The Focus on the Learner pool, flattened. Tutors see who heard each note;
+// a trainee sees the notes alone.
+function folPoolFor_(pool, forTutor) {
+  var out = [];
+  Object.keys(pool || {}).forEach(function (tok) {
+    (pool[tok] || []).forEach(function (it) {
+      var row = { id: it.id, type: it.type, note: it.note, student: it.student || '', at: it.at };
+      if (forTutor) row.by = it.by || '';
+      out.push(row);
+    });
+  });
+  out.sort(function (a, b) { return String(a.at).localeCompare(String(b.at)); });
+  return out;
 }
 // What each reader may see of the grid. Tutors and the assessor: the whole
 // thing, rows by token (theirs to know). A candidate: nothing until their

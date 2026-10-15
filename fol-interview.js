@@ -49,5 +49,29 @@
         (heard ? '<p style="margin:8px 0 2px;font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--grey)">What was heard</p><ul style="margin:0;padding-left:18px;font-size:.86rem;line-height:1.5">' + heard + '</ul>' : '') + '</div>';
     }).join('');
   }
-  window.CONNECT_HUB_FOL = { questions: QUESTIONS, advice: ADVICE, summaryHtml: summaryHtml };
+  /* THE POOL (15 Oct 2026, Ramy: "make Lite pool them too"). What everyone on
+     the course heard in their student interviews: the problem and the student's
+     words, never the answers. Trainees see the notes alone; tutors also see who
+     heard each (the store only sends the name to a tutor). */
+  function poolHtml(list) {
+    list = Array.isArray(list) ? list : [];
+    if (!list.length) return '<p class="note" style="margin:0">Nothing in the pool yet.</p>';
+    return '<ul style="margin:0;padding-left:0;list-style:none">' + list.map(function (h) {
+      return '<li style="margin:0;padding:8px 0;border-top:1px solid var(--row-line, #e6e0d4);font-size:.9rem;line-height:1.5">' +
+        '<b style="font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-deep)">' + (h.type === 'pronunciation' ? 'Pronunciation' : 'Grammar') + '</b> ' +
+        '&ldquo;' + esc(h.note) + '&rdquo;' +
+        '<span style="color:var(--grey);font-size:.8rem"> &mdash; ' + esc(h.student || 'a student') + ', interview' + (h.by ? ', heard by ' + esc(h.by) : '') + '</span></li>';
+    }).join('') + '</ul>';
+  }
+  /* What this trainee has heard, as the list the store takes (each student's
+     name on each note). */
+  function itemsFrom(rec) {
+    var out = [];
+    var st = rec && rec.students ? rec.students : {};
+    Object.keys(st).forEach(function (k) {
+      var s = st[k]; (s && s.heard || []).forEach(function (h) { if (h && String(h.note || '').trim()) out.push({ id: h.id, type: h.type, note: h.note, student: s.name || k }); });
+    });
+    return out;
+  }
+  window.CONNECT_HUB_FOL = { questions: QUESTIONS, advice: ADVICE, summaryHtml: summaryHtml, poolHtml: poolHtml, itemsFrom: itemsFrom };
 })();

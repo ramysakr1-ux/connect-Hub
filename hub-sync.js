@@ -539,6 +539,9 @@
        handouts, not anybody's private data -- and it is written through the
        store's shareMaterial op, never put whole. */
     out['connect_shared_v1'] = course.shared ? JSON.stringify(course.shared) : null;
+    /* The Focus on the Learner pool (15 Oct 2026): what trainees heard in their
+       student interviews, one list for the course; tutors get who heard it. */
+    out['connect_fol_pool_v1'] = course.folpool ? JSON.stringify(course.folpool) : null;
     if (mode === 'trainee') {
       var me = boot.me || { records: {} };
       out['hub:name'] = me.name || '';

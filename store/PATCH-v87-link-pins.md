@@ -40,3 +40,7 @@ A PIN is four to twelve letters or numbers (Ramy: "does it have to be a number?"
 ## v89 (15 Oct 2026)
 
 A new trainee record kind, `interview` (TRAINEE_WRITES, TRAINEE_READS, TUTOR_WRITES): the Focus on the Learner student interview. Needs the store deployed BEFORE the pages are pushed, or a trainee's interview notes are refused ("Not yours to write: interview") and stay on the device only.
+
+## v90 (15 Oct 2026)
+
+The Focus on the Learner pool. New trainee op `poolHeard {items}` replaces that trainee's list of heard notes in course kind `folpool` (60 notes, 400 characters each); boot and the course read carry `folpool` flattened (trainees get the notes without who heard them, tutors get `by`). Removing or purging a trainee drops their notes. Deploy the store BEFORE pushing the pages.
