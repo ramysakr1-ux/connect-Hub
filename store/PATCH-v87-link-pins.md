@@ -1,33 +1,34 @@
-# Code.gs v87 — link PINs: a second key on trainee links and the tutor link
+# Store v87 — PINs on the links (15 Oct 2026)
 
-Ramy, 15 Oct 2026: *"can we add a password to lite's link"* — for trainees and
-for tutors — *"course admin sets it"*.
+Ramy: "they should receive the link and then the first time they click on it,
+it prompts them to choose a password and they enter it twice. And then if they
+lose it, the course admin will be able to send them another link and the other
+one will just automatically be terminated."
 
-The link is still the key. The PIN is a second one the store checks, so a
-copied link alone opens nothing.
+## What changes
 
-**What the store does**
-- A course record of kind `pins`: `{ tutor: {hash, salt, set}, trainees: { <token>: {hash, salt, set} } }`.
-  SHA-256 over `salt:pin`, a fresh uuid salt per setting; the digits are never kept.
-- In `handle_`, once the caller is known: a tutor-key call needs `req.pin` to
-  match `pins.tutor`; a trainee-token call needs it to match
-  `pins.trainees[token]`. No PIN on record → no gate. `ping` passes; the
-  owner key passes; the assessor key and volunteer links are never gated.
-  Refusals: `PIN required`, `Wrong PIN` (the pages key on these).
-- New tutor-only ops: `setTutorPin {pin}`, `setTraineePin {token, pin}`
-  (pin `''` clears), `pins` → `{tutor: set-stamp|false, trainees: {token: set-stamp}}`.
-- `cloneCourse` does not copy `pins`; the `course` read never returns them.
+- A course setting, `settings.pinLinks` (the switch on Course admin > Links).
+- With it on, every trainee link and the tutor link is gated in `handle_`
+  after the caller is resolved: no PIN on record → `PIN needed` (the page
+  shows the choose sheet, typed twice, and calls `setMyPin` / `setTutorPin`);
+  a PIN on record and none sent → `PIN required`; a wrong one → `Wrong PIN`.
+  Assessor and volunteer links are never gated; `ping` never is.
+- The store keeps only `{hash, salt, set}` per subject in course kind `pins`
+  (`tutor`, `trainees[token]`); the hash is SHA-256 over `salt:pin`. Nobody,
+  admin included, can read a PIN back.
+- Ops: `setMyPin {pin}` (a trainee, their own link, only while no PIN is on
+  record for them), `setTutorPin {pin}` (the tutor key, only while the team
+  has none), `pins` → `{on, tutor, trainees}` (tutor key), `reissueTrainee
+  {token}` (tutor key): a new token, the roster row, every record row and
+  every course-level mention of the old token move to it, the old PIN entry
+  is dropped, the old link dies. `rotateKey` also clears the team's PIN.
+- Pages: `hub-store.js` (the choose flow), `hub-pin.js` (the sheet),
+  `invite.html` (the card says the link asks for a PIN; it never prompts),
+  `6_centre_admin_dashboard.html` (the switch; "New link" on a trainee's row).
 
-**The pages** (`hub-store.js`, `hub-pin.js`, `hub-sync.js`, `invite.html`,
-`6_centre_admin_dashboard.html`): the client sends the PIN it holds
-(`hub:pin` for a trainee link, `hub:kpin` for the tutor key), asks with a
-sheet on `PIN required` / `Wrong PIN` and retries; a new link forgets the old
-PIN. The invitation card never asks (`HUB_NO_PIN_PROMPT`): it shows a line.
-Course admin → Roster and links: Set PIN / PIN · set on each trainee, Team PIN
-on the tutor link; the digits are shown once.
+## Deploy
 
-**Deploy:** `node --check Code.js` → `clasp push` →
-`clasp deploy -i AKfycbz5ESCtTg6kIDNCf7ynt1fB0tOSVusgOUiMub9-wEZunwQ2uTw2wzz1vmbHxzbvpG-eyA -d "v87 link PINs"`.
-Pages first or store first? Either order is safe: an old page against the new
-store simply gets `PIN required` only where a PIN has been set (none yet); a new
-page against the old store never sees the refusal.
+    cd store/gas && node --check Code.js && clasp push
+    clasp deploy -i AKfycbz5ESCtTg6kIDNCf7ynt1fB0tOSVusgOUiMub9-wEZunwQ2uTw2wzz1vmbHxzbvpG-eyA -d "v87 link PINs"
+
+Never a bare `clasp deploy` (it makes a second deployment with a new URL).

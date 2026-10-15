@@ -91,11 +91,19 @@ window.HubStore = (function(){
       catch (e) { if (!e.transient || tries >= waits.length) throw e; await new Promise(function(r){ setTimeout(r, waits[tries++]); }); continue; }
       // The store wants a PIN this device does not have, or has wrong: ask once
       // per refusal, up to three, then give up like any other refusal.
-      if (!out.ok && pn && /^(PIN required|Wrong PIN)$/.test(String(out.error || '')) && !window.HUB_NO_PIN_PROMPT && asked < 3) {
-        var wrong = out.error === 'Wrong PIN'; if (wrong) pinSet(pn, '');
+      // 'PIN needed' is the first open of a link on a course with PINs on:
+      // the person chooses one (typed twice) and the store keeps its hash;
+      // then it is this device's PIN like any other.
+      if (!out.ok && pn && /^(PIN needed|PIN required|Wrong PIN)$/.test(String(out.error || '')) && !window.HUB_NO_PIN_PROMPT && asked < 3) {
+        var wrong = out.error === 'Wrong PIN', choose = out.error === 'PIN needed'; if (wrong) pinSet(pn, '');
         var sheet = await pinSheet();
-        var given = await sheet.ask({ who: pn === 'hub:kpin' ? 'tutor' : 'trainee', wrong: wrong });
+        var given = await sheet.ask({ who: pn === 'hub:kpin' ? 'tutor' : 'trainee', wrong: wrong, choose: choose });
         if (!given) break;
+        if (choose) {
+          var setOp = pn === 'hub:kpin' ? { op: 'setTutorPin', key: payload.key, pin: given } : { op: 'setMyPin', token: payload.token, pin: given };
+          var setOut = await once(setOp, timeoutMs);
+          if (!setOut.ok) { out = setOut; break; }
+        }
         pinSet(pn, given); payload.pin = given; asked++; continue;
       }
       break;
@@ -104,7 +112,7 @@ window.HubStore = (function(){
     // must not be treated alike: a refused credential means the link is dead,
     // a transport failure means try again later. `transient` already marks the
     // second; this marks the first.
-    if (!out.ok) { var refusal = new Error(out.error || 'Store error'); refusal.refused = true; refusal.pin = /^(PIN required|Wrong PIN)$/.test(String(out.error || '')); throw refusal; }
+    if (!out.ok) { var refusal = new Error(out.error || 'Store error'); refusal.refused = true; refusal.pin = /^(PIN needed|PIN required|Wrong PIN)$/.test(String(out.error || '')); throw refusal; }
     return out.result;
   }
   function base(){ return location.origin + location.pathname.replace(/[^/]*$/, ''); }
@@ -135,10 +143,11 @@ window.HubStore = (function(){
     rotateAssessorKey: function(){ return call({ op: 'rotateAssessorKey' }); },
     assessorLinkFor: function(k){ return base() + '12_assessor_pack.html?ak=' + encodeURIComponent(k); },
     rotateKey: function(){ return call({ op: 'rotateKey' }).then(function(r){ try { localStorage.setItem('hub:k', r.key); } catch (e) {} return true; }); },
-    /* PINs (v87): course admin only. pin '' clears. */
+    /* PINs (v87, 15 Oct 2026): people choose their own on first open (the
+       choose flow above). Course admin sees who has one and gives a trainee
+       who lost theirs a NEW link; the old token dies with its PIN. */
     pins: function(){ return call({ op: 'pins' }); },
-    setTutorPin: function(pin){ return call({ op: 'setTutorPin', pin: pin || '' }).then(function(r){ pinSet('hub:kpin', pin || ''); return r; }); },
-    setTraineePin: function(tok, pin){ return call({ op: 'setTraineePin', token: tok, pin: pin || '' }); },
+    reissueTrainee: function(tok){ return call({ op: 'reissueTrainee', token: tok }); },
     purgeTrainee: function(tok){ return call({ op: 'purgeTrainee', token: tok }); },
     /* A materials file goes to Drive and comes back as a link; the bytes never
        reach the sheet (a cell holds 50,000 characters). base64 is a third

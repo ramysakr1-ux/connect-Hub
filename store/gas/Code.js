@@ -324,23 +324,30 @@ function handle_(req) {
   var reader = tutor || assessor;
   var owner = isOwner_(req.owner);
 
-  /* LINK PINS (v87, 15 Oct 2026). Ramy: "can we add a password to lite's
-     link" -- for trainees and for tutors, set by course admin. The link is
-     still the key; the PIN is a second one the STORE checks, so a copied link
-     alone opens nothing. One PIN per trainee link, one for the tutor team.
-     A link with no PIN on record is not gated: the demo and the old courses
-     keep working, and a course closes each link the moment admin sets one.
-     The assessor's link and the volunteers' are never gated. 'ping' passes
-     so a page can tell the store is up; everything else, boot included,
-     needs the PIN once it is set. The two messages are what the pages key
-     on (hub-store.js asks, then retries). */
+  /* LINK PINS (v87, 15 Oct 2026). Ramy: "receive the link and then the
+     first time they click on it, it prompts them to choose a password and
+     they enter it twice. If they lose it, the course admin sends them
+     another link and the other one is terminated." So: a course switches
+     PINs on (settings.pinLinks); from then on a trainee link opens with
+     "choose a PIN" (setMyPin, the one op allowed before a PIN exists) and
+     every later call needs it; the tutor link the same, the first tutor to
+     open it choosing for the team (setTutorPin). A lost PIN is not reset: a
+     new link is issued (reissueTrainee; rotateKey for the team) and the old
+     one dies. A course with the switch off is not gated at all, so the demo
+     and the old courses keep working. The assessor's link and the volunteers'
+     are never gated. 'ping' passes. Three refusals the pages key on:
+     'PIN needed' (choose one), 'PIN required' (type yours), 'Wrong PIN'. */
   if (course && op !== 'ping' && !owner) {
     var pinsRec = courseRead_(course.id, 'pins') || {};
+    var pinsOn = !!((courseRead_(course.id, 'settings') || {}).pinLinks);
     var want = tutor ? pinsRec.tutor : (me && !assessor && !vol) ? (pinsRec.trainees || {})[me.token] : null;
+    var subject = tutor ? 'tutor' : (me && !assessor && !vol) ? 'trainee' : '';
     if (want && want.hash) {
       var given = String(req.pin || '');
       if (!given) throw new Error('PIN required');
       if (pinHash_(given, want.salt) !== want.hash) throw new Error('Wrong PIN');
+    } else if (subject && pinsOn && op !== (subject === 'tutor' ? 'setTutorPin' : 'setMyPin')) {
+      throw new Error('PIN needed');
     }
   }
 
@@ -923,38 +930,70 @@ case 'inbox': {
       requireTutor_(tutor);
       var nk = newKey_();
       PropertiesService.getScriptProperties().setProperty(keyProp_('tutor', course.id), nk);
+      var tpk = courseRead_(course.id, 'pins'); if (tpk && tpk.tutor) { delete tpk.tutor; courseWrite_(course.id, 'pins', tpk); }
       return { key: nk };
     }
 
-    /* The PINs (v87). Course admin sets, changes or clears them; the store
-       keeps a salted hash and the moment it was set, never the digits.
-       setTutorPin / setTraineePin with pin '' clears. 'pins' says which links
-       have one, for the Roster and links tab. */
+    /* The PINs (v87). Chosen by the person, never by admin; the store keeps a
+       salted hash and the moment it was set. setMyPin: a trainee's first
+       choice (no PIN yet), or a change (with the current one, which the
+       gate above has already checked). setTutorPin: the same for the team.
+       reissueTrainee: a new link for a trainee who lost theirs -- new token
+       everywhere their old one was, PIN cleared, old link dead. 'pins' says
+       which links have one, for the Roster and links tab. */
+    case 'setMyPin': {
+      if (!me || tutor || assessor) throw new Error('Trainees only');
+      var tpm = courseRead_(course.id, 'pins') || {};
+      tpm.trainees = tpm.trainees || {};
+      var entry = pinEntry_(req.pin);
+      if (!entry) throw new Error('A PIN is four to six digits');
+      tpm.trainees[me.token] = entry;
+      courseWrite_(course.id, 'pins', tpm);
+      return { saved: true };
+    }
     case 'setTutorPin': {
       requireTutor_(tutor);
       var tp = courseRead_(course.id, 'pins') || {};
-      tp.tutor = pinEntry_(req.pin);
-      if (!tp.tutor) delete tp.tutor;
+      var tentry = pinEntry_(req.pin);
+      if (!tentry) throw new Error('A PIN is four to six digits');
+      tp.tutor = tentry;
       courseWrite_(course.id, 'pins', tp);
-      return { saved: true, tutor: !!tp.tutor };
+      return { saved: true };
     }
-    case 'setTraineePin': {
+    case 'reissueTrainee': {
       requireTutor_(tutor);
-      var who = roster_(course.id).filter(function (t) { return t.token === String(req.token); })[0];
-      if (!who) throw new Error('No such trainee');
-      var tp2 = courseRead_(course.id, 'pins') || {};
-      tp2.trainees = tp2.trainees || {};
-      var entry = pinEntry_(req.pin);
-      if (entry) tp2.trainees[who.token] = entry; else delete tp2.trainees[who.token];
-      courseWrite_(course.id, 'pins', tp2);
-      return { saved: true, token: who.token, set: !!entry };
+      var oldTok = String(req.token || '');
+      var row = roster_(course.id).filter(function (t) { return t.token === oldTok; })[0];
+      if (!row) throw new Error('No such trainee');
+      var newTok = newKey_();
+      var lock = LockService.getScriptLock(); lock.waitLock(10000);
+      try {
+        // the roster row and every record row of theirs
+        var sh = sheet_(SHEET_TRAINEES), rows = sh.getDataRange().getValues();
+        for (var i = 1; i < rows.length; i++) if (String(rows[i][0]) === course.id && String(rows[i][1]) === oldTok) sh.getRange(i + 1, 2).setValue(newTok);
+        var rs = sheet_(SHEET_RECORDS), rr = rs.getDataRange().getValues();
+        for (var j = 1; j < rr.length; j++) if (String(rr[j][0]) === course.id && String(rr[j][1]) === oldTok) rs.getRange(j + 1, 2).setValue(newTok);
+        // and wherever a course-level record names the token (letter order,
+        // slots, groups...): the token is a 24-hex string, so a plain
+        // replacement in the JSON touches nothing else
+        ['settings', 'wording', 'observations', 'timetable', 'tppoints', 'grid', 'stream', 'shared', 'volunteers'].forEach(function (kind) {
+          var rec = courseRead_(course.id, kind);
+          if (rec == null) return;
+          var js = JSON.stringify(rec);
+          if (js.indexOf(oldTok) === -1) return;
+          courseWriteRaw_(course.id, kind, JSON.parse(js.split(oldTok).join(newTok)));
+        });
+        var tpr = courseRead_(course.id, 'pins') || {};
+        if (tpr.trainees) { delete tpr.trainees[oldTok]; courseWriteRaw_(course.id, 'pins', tpr); }
+      } finally { lock.releaseLock(); }
+      return { reissued: true, token: newTok, trainees: rosterWithRecords_(course.id, TUTOR_WRITES) };
     }
     case 'pins': {
       requireTutor_(tutor);
       var tp3 = courseRead_(course.id, 'pins') || {};
       var tr = {};
       Object.keys(tp3.trainees || {}).forEach(function (k) { tr[k] = tp3.trainees[k].set || true; });
-      return { tutor: tp3.tutor ? (tp3.tutor.set || true) : false, trainees: tr };
+      return { on: !!((courseRead_(course.id, 'settings') || {}).pinLinks), tutor: tp3.tutor ? (tp3.tutor.set || true) : false, trainees: tr };
     }
 
     // ---- one call per page load: the course plus the caller's own records ----
@@ -2017,9 +2056,9 @@ function nextCourseId_() {
 // ---- keys --------------------------------------------------------------------
 function requireTutor_(tutor) { if (!tutor) throw new Error('Tutors only'); }
 
-/* PINs (v87): four to six digits; SHA-256 over salt + pin, hex. A cleared PIN
-   is null. The salt is a fresh uuid per setting, so two people with the same
-   digits do not share a hash. */
+/* PINs (v87): four to six digits; SHA-256 over salt + pin, hex. The salt is a
+   fresh uuid per setting, so two people with the same digits do not share a
+   hash. */
 function pinEntry_(raw) {
   var pin = String(raw == null ? '' : raw).replace(/\s+/g, '');
   if (!pin) return null;
