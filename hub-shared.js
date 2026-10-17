@@ -1801,22 +1801,24 @@ window.hubPaintMargin = function (root, margin) {
     var box = loc.querySelector('.readonly'), gut = loc.querySelector('.tmgut');
     items.forEach(function (c, n) {
       var id = c.id || ('n' + n);
-      var at = hubHighlight(box, c.quote, id, c.tick ? 'tmc tmc-tick' : 'tmc', 'tmc');
+      var at = hubHighlight(box, c.quote, id, c.tick ? 'tmc tmc-tick' : 'tmc' + (c.tone ? ' tmc-' + c.tone : ''), 'tmc');
       if (at >= 0 && c.tick) hubTickSpots(c.quote, c.n || 1).forEach(function (sp) {
         var span = document.createElement('span'); span.className = 'tmc-mark'; span.setAttribute('role', 'img'); span.setAttribute('aria-label', 'ticked by your tutor');
         span.innerHTML = hubTickSVG('draw'); hubInsertAt(box, at + sp, span);
       });
       if (c.tick) return;
-      gut.insertAdjacentHTML('beforeend', '<div class="tmcard"><span>Your tutor' + (c.quote ? ', on “' + esc(c.quote.length > 60 ? c.quote.slice(0, 58) + '…' : c.quote) + '”' : '') + '</span><p>' + esc(c.text) + '</p></div>');
+      gut.insertAdjacentHTML('beforeend', '<div class="tmcard' + (c.tone ? ' tone-' + c.tone : '') + '"><span>Your tutor' + (c.quote ? ', on “' + esc(c.quote.length > 60 ? c.quote.slice(0, 58) + '…' : c.quote) + '”' : '') + '</span><p>' + esc(c.text) + '</p></div>');
     });
   });
   if (!document.getElementById('hub-tmc-css')) {
     var st = document.createElement('style'); st.id = 'hub-tmc-css';
-    st.textContent = 'mark.tmc{background:color-mix(in oklab, var(--gold-lifted) 34%, transparent); color:inherit; border-bottom:2px solid var(--gold); border-radius:2px; padding:0 1px;}' +
+    st.textContent = 'mark.tmc{background:oklch(72% 0.035 250 / .2); color:inherit; border-bottom:2px solid oklch(52% 0.045 250); border-radius:2px; padding:0 1px;}' +
+      'mark.tmc.tmc-good{background:oklch(70% 0.1 158 / .22); border-bottom-color:oklch(46% 0.1 158);} mark.tmc.tmc-fix{background:oklch(72% 0.11 40 / .24); border-bottom-color:oklch(52% 0.13 40);}' +
       'mark.tmc-tick{background:color-mix(in oklab, oklch(70% 0.1 158) 22%, transparent) !important; border-bottom:2px solid oklch(46% 0.1 158) !important;} .tmc-mark{white-space:nowrap;}' +
       '.tmgut:empty{display:none;} .tmgut{display:flex; flex-direction:column; gap:8px; margin:6px 0 10px;}' +
-      '.tmcard{background:var(--paper); border:1px solid var(--amber-edge); border-left:3px solid var(--gold); border-radius:10px; padding:8px 11px; font-size:0.86rem; line-height:1.5;}' +
-      '.tmcard span{display:block; font-size:0.72rem; font-weight:700; color:var(--gold-deep); text-transform:uppercase; letter-spacing:.05em;} .tmcard p{margin:3px 0 0;}';
+      '.tmcard{background:var(--paper); border:1px solid var(--sand-line); border-left:3px solid oklch(52% 0.045 250); border-radius:10px; padding:8px 11px; font-size:0.86rem; line-height:1.5;}' +
+      '.tmcard.tone-good{border-left-color:oklch(46% 0.1 158);} .tmcard.tone-fix{border-left-color:oklch(52% 0.13 40);}' +
+      '.tmcard span{display:block; font-size:0.72rem; font-weight:700; color:var(--grey); text-transform:uppercase; letter-spacing:.05em;} .tmcard p{margin:3px 0 0;}';
     document.head.appendChild(st);
   }
 };

@@ -143,8 +143,8 @@
       });
       var cm = items.filter(function (c) { return !c.tick; });
       gut.innerHTML = cm.map(function (c) {
-        hubHighlight(box, c.quote, c.id);
-        return '<div class="mcard' + (c.role === 'second' ? ' by-second' : '') + '" data-mcard="' + c.id + '">' +
+        hubHighlight(box, c.quote, c.id, 'mc' + (c.tone ? ' mc-' + c.tone : ''));
+        return '<div class="mcard' + (c.tone ? ' tone-' + c.tone : '') + (c.role === 'second' ? ' by-second' : '') + '" data-mcard="' + c.id + '">' +
           (c.crit != null && c.crit !== '' ? '<span class="mc-crit">Criterion ' + (+c.crit + 1) + '</span>' : '') +
           '<p>' + esc(c.text) + '</p>' +
           '<span class="mc-by">' + esc(c.by || '') + '</span>' +
@@ -290,18 +290,20 @@
     var crit = (CTX.a.criteria || []);
     ed.innerHTML = '<div class="me-q">“' + esc(opts.quote.length > 140 ? opts.quote.slice(0, 138) + '…' : opts.quote) + '”</div>' +
       '<textarea id="meText" rows="3" placeholder="Your comment. The trainee reads it beside these words.">' + esc(opts.text || '') + '</textarea>' +
+      '<div class="me-tone" role="group" aria-label="What kind of comment"><span>This comment is</span><button type="button" class="tn-good' + (opts.tone === 'good' ? ' on' : '') + '" data-tone="good">Good</button><button type="button" class="tn-fix' + (opts.tone === 'fix' ? ' on' : '') + '" data-tone="fix">To work on</button></div>' +
       '<label class="me-c">Tie it to a criterion <select id="meCrit"><option value="">None</option>' + crit.map(function (c, i) { return '<option value="' + i + '"' + (String(opts.crit) === String(i) ? ' selected' : '') + '>' + esc(critShort(i)) + '</option>'; }).join('') + '</select></label>' +
       '<div class="me-acts"><button type="button" class="me-cancel">Cancel</button><button type="button" class="me-save">Save the comment</button></div>';
     ed.hidden = false;
     var t = $('meText'); setTimeout(function () { t.focus(); t.setSelectionRange(t.value.length, t.value.length); }, 30);
     ed.querySelector('.me-cancel').onclick = function () { ed.hidden = true; };
+    [].forEach.call(ed.querySelectorAll('[data-tone]'), function (b) { b.onclick = function () { var was = b.classList.contains('on'); [].forEach.call(ed.querySelectorAll('[data-tone]'), function (x) { x.classList.remove('on'); }); if (!was) b.classList.add('on'); }; });
     ed.querySelector('.me-save').onclick = function () {
-      var text = t.value.trim(), cv = $('meCrit').value;
+      var text = t.value.trim(), cv = $('meCrit').value, onTone = ed.querySelector('[data-tone].on'), tone = onTone ? onTone.getAttribute('data-tone') : null;
       ed.hidden = true;
       if (!text) { if (opts.id) remove(opts.id); return; }   /* an empty comment is no comment */
       var l = list(writeRound());
-      if (opts.id) { var c = l.filter(function (x) { return x.id === opts.id; })[0]; if (c) { c.text = text; c.crit = cv === '' ? null : +cv; } }
-      else l.push({ id: newId('m'), loc: opts.loc, quote: opts.quote, text: text, crit: cv === '' ? null : +cv, by: CTX.me, role: secondMode() ? 'second' : 'first', at: new Date().toISOString() });
+      if (opts.id) { var c = l.filter(function (x) { return x.id === opts.id; })[0]; if (c) { c.text = text; c.crit = cv === '' ? null : +cv; c.tone = tone; } }
+      else l.push({ id: newId('m'), loc: opts.loc, quote: opts.quote, text: text, crit: cv === '' ? null : +cv, tone: tone, by: CTX.me, role: secondMode() ? 'second' : 'first', at: new Date().toISOString() });
       CTX.save(); CTX.rerender();
     };
   }
@@ -340,7 +342,7 @@
     var sb = t.closest('[data-sb]');
     if (sb && SEL) { bar().hidden = true; editor({ loc: SEL.loc.getAttribute('data-loc'), quote: SEL.quote, text: '', crit: SEL.crit }); window.getSelection().removeAllRanges(); return; }
     var ed = t.closest('[data-medit]');
-    if (ed) { var c = list(writeRound()).filter(function (x) { return x.id === ed.getAttribute('data-medit'); })[0]; if (c) editor({ id: c.id, loc: c.loc, quote: c.quote, text: c.text, crit: c.crit }); return; }
+    if (ed) { var c = list(writeRound()).filter(function (x) { return x.id === ed.getAttribute('data-medit'); })[0]; if (c) editor({ id: c.id, loc: c.loc, quote: c.quote, text: c.text, crit: c.crit, tone: c.tone }); return; }
     var del = t.closest('[data-mdel]'); if (del) { remove(del.getAttribute('data-mdel')); return; }
     var go = t.closest('[data-goto]');
     if (go) { DROP = null; paintDrop(); var m = document.querySelector('mark[data-mc="' + go.getAttribute('data-goto') + '"]'); if (m) { m.scrollIntoView({ block: 'center', behavior: 'smooth' }); m.classList.remove('mc-hit'); void m.offsetWidth; m.classList.add('mc-hit'); } return; }
@@ -617,11 +619,18 @@
     st.textContent = [
       '.mloc{position:relative;}',
       '.mloc .readonly{margin-bottom:10px;}',
-      'mark.mc{background:color-mix(in oklab, var(--gold-lifted) 34%, transparent); color:inherit; border-bottom:2px solid var(--gold); border-radius:2px; cursor:pointer; padding:0 1px;}',
+      /* the colours of a comment: green is good, terracotta is to work on, a calm blue-grey is neither (Ramy, 18 Oct 2026: the yellow is gone) */
+      ':root{--tone-good:oklch(46% 0.1 158); --tone-good-w:oklch(70% 0.1 158 / .22); --tone-fix:oklch(52% 0.13 40); --tone-fix-w:oklch(72% 0.11 40 / .24); --tone-note:oklch(52% 0.045 250); --tone-note-w:oklch(72% 0.035 250 / .2);}',
+      'mark.mc{background:var(--tone-note-w); color:inherit; border-bottom:2px solid var(--tone-note); border-radius:2px; cursor:pointer; padding:0 1px;}',
+      'mark.mc.mc-good{background:var(--tone-good-w); border-bottom-color:var(--tone-good);} mark.mc.mc-fix{background:var(--tone-fix-w); border-bottom-color:var(--tone-fix);}',
       '.mgut:empty{display:none;}',
       '.mgut{display:flex; flex-direction:column; gap:8px; margin:-2px 0 12px;}',
-      '.mcard{background:var(--paper); border:1px solid var(--amber-edge); border-left:4px solid var(--gold); border-radius:12px; padding:12px 16px 11px; font-size:0.95rem; line-height:1.55; box-shadow:0 2px 8px oklch(30% 0.03 70 / .06);}',
-      '.mcard p{margin:4px 0 6px;}',
+      '.mcard{background:var(--paper); border:1px solid var(--sand-line); border-left:4px solid var(--tone-note); border-radius:12px; padding:12px 16px 11px; font-size:0.95rem; line-height:1.55; box-shadow:0 2px 8px oklch(30% 0.03 70 / .06);}',
+      '.mcard p{margin:4px 0 6px;} .mcard.tone-good{border-left-color:var(--tone-good);} .mcard.tone-fix{border-left-color:var(--tone-fix);}',
+      '.me-tone{display:flex; align-items:center; gap:8px; margin:10px 0 0; font-size:0.8rem; font-weight:700;} .me-tone span{margin-right:2px;}',
+      '.me-tone button{font:700 0.8rem Karla,sans-serif; border-radius:14px; padding:6px 14px; border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink); cursor:pointer; min-height:34px;}',
+      '.me-tone .tn-good.on{background:var(--tone-good-w); border-color:var(--tone-good); color:var(--tone-good);} .me-tone .tn-fix.on{background:var(--tone-fix-w); border-color:var(--tone-fix); color:var(--tone-fix);}',
+      '.me-tone button:not(.on):hover{background:var(--paper) !important; border-color:var(--teal) !important; box-shadow:none !important;} .me-tone button.on:hover{box-shadow:none !important;}',
       '.mc-crit{display:inline-block; font-size:0.7rem; font-weight:700; color:var(--teal); text-transform:uppercase; letter-spacing:.06em;}',
       '.mc-by{font-size:0.8rem; color:var(--grey);}',
       '.mc-acts{float:right;} .mc-acts button{background:none; border:none; padding:0 0 0 10px; font:600 0.76rem Karla,sans-serif; color:var(--teal); cursor:pointer; text-decoration:underline; text-decoration-color:var(--sand-line);}',
