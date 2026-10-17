@@ -13,7 +13,7 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610172107">
+<link rel="stylesheet" href="hub-tokens.css?v=202610172118">
 <style>
   /* ---- The assignment editor, v2 (11 Oct 2026) -------------------------------
      From the designer's handoff "Assignment editor v2". The page behind Edit
@@ -179,6 +179,13 @@
   .critcard .ch{display:flex; align-items:baseline; justify-content:space-between; gap:14px; margin-bottom:4px; flex-wrap:wrap;}
   .critcard h2{font-family:'Newsreader',Georgia,serif; font-size:1.2rem; font-weight:600; margin:0;}
   .critcard .ch span{font-size:0.8rem; color:var(--grey);}
+  /* The marking guidance (17 Oct 2026): tutors and the assessor only. */
+  .gcard .gfield{display:flex; flex-direction:column; gap:5px; margin-top:12px;}
+  .gcard .gfield label{font-size:0.8rem; font-weight:700;}
+  .gcard .gfield label span{font-weight:400; color:var(--grey);}
+  .gcard textarea{font:inherit; font-size:0.86rem; line-height:1.5; padding:9px 11px; border:1.5px solid var(--row-line); border-radius:6px; min-width:0; width:100%; box-sizing:border-box; resize:vertical;}
+  .gcard .gnote{font-size:0.8rem; color:var(--grey); margin:6px 0 0;}
+  .gcard .gsaved{font-size:0.78rem; color:var(--grey);}
   .crows{display:flex; flex-direction:column; gap:6px; margin-top:12px;}
   .crow{display:grid; grid-template-columns:30px minmax(0,1fr) 90px 30px; gap:10px; align-items:center;}
   .crow .n{font-size:0.78rem; font-weight:700; color:var(--grey); font-variant-numeric:tabular-nums;}
@@ -302,7 +309,7 @@
     #hubSync.inbar{margin-right:auto; max-width:calc(100% - 272px);}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610172107">
+<link rel="stylesheet" href="hub-house.css?v=202610172118">
 </head>
 <body class="hub-paper" data-sync-ok="Connected to the course &mdash; wording is kept when you press Save" data-sync-ok-short="Connected">
 <div class="board">
@@ -321,14 +328,14 @@
   </div>
 </div></div>
 <div class="menu" id="menu" hidden></div>
-<script src="assignment-defaults.js?v=202610172107"></script>
-<script src="hub-due.js?v=202610172107"></script>
-<script src="hub-rotation.js?v=202610172107"></script>
-<script src="hub-docx.js?v=202610172107"></script>
-<script src="hub-shared.js?v=202610172107"></script>
-<script src="hub-store.js?v=202610172107"></script>
-<script src="hub-say.js?v=202610172107"></script>
-<script src="hub-sync.js?v=202610172107"></script>
+<script src="assignment-defaults.js?v=202610172118"></script>
+<script src="hub-due.js?v=202610172118"></script>
+<script src="hub-rotation.js?v=202610172118"></script>
+<script src="hub-docx.js?v=202610172118"></script>
+<script src="hub-shared.js?v=202610172118"></script>
+<script src="hub-store.js?v=202610172118"></script>
+<script src="hub-say.js?v=202610172118"></script>
+<script src="hub-sync.js?v=202610172118"></script>
 <script>
 /* The course pill goes into the save bar, left of Discard, on every screen
    size: floating in the corner it covered the brief (12 Oct 2026). A plain
@@ -814,6 +821,45 @@ function critCardHTML(a){
   </div>`;
 }
 
+/* ---- The marking guidance (17 Oct 2026) ---------------------------------------
+   Ramy: "do we have like a marking guidelines? Like we do with C18 on
+   Classroom." Its own course record, which the store sends to the tutors and
+   the assessor only (never in the wording: every trainee reads that). It
+   starts as Lite's defaults, written from the C/18 guides; the first change
+   gives this course its own copy. Saves as you type, like the private links
+   on Course admin, and is outside the wording's Save bar. */
+const GUIDE_KEY = 'connect_marking_guidance_v1';
+function guideRecord(){ try { return JSON.parse(localStorage.getItem(GUIDE_KEY) || 'null'); } catch (e) { return null; } }
+function guideCardHTML(a){
+  const g = guideRecord(), x = (g && g.items && g.items[CURRENT]) || {};
+  const crit = a.criteria || [];
+  const ta = (id, val, rows, aria) => `<textarea id="${id}" rows="${rows}" oninput="guideInput()" aria-label="${aria}">${esc(val || '')}</textarea>`;
+  return `<div class="critcard gcard" id="guidecard">
+    <div class="ch"><h2>Marking guidance</h2><span>For the tutors and the assessor. Trainees never see it.</span></div>
+    <p class="gnote">${g && g.fromDefaults ? 'These are Lite’s defaults, written from the C/18 marking guides. Change anything and this course keeps its own copy.' : g ? 'This course’s own guidance. It shows on the marking page and in the assessor’s pack.' : 'No guidance yet. Write what a Met answer looks like, and it shows on the marking page and in the assessor’s pack.'}</p>
+    <div class="gfield"><label for="g_general">How to mark this assignment <span>(before you mark, resubmission, fairness)</span></label>${ta('g_general', x.general, 8, 'How to mark this assignment')}</div>
+    ${crit.map((c, ci) => `<div class="gfield"><label for="g_c${ci}">Criterion ${ci + 1} <span>${esc(c.text)}</span></label>${ta('g_c' + ci, (x.crit || [])[ci], 4, 'Guidance for criterion ' + (ci + 1))}</div>`).join('')}
+    <div class="gfield"><label for="g_sections">Section by section <span>(what a Met answer looks like, common shortfalls)</span></label>${ta('g_sections', x.sections, 10, 'Section by section')}</div>
+    <p class="gnote">A line starting with • is a bullet. A short first line on its own is a heading. <span class="gsaved" id="gsaved"></span></p>
+  </div>`;
+}
+let GUIDE_T = null;
+function guideInput(){
+  const el = $('gsaved'); if (el) el.textContent = 'Saving…';
+  clearTimeout(GUIDE_T);
+  GUIDE_T = setTimeout(() => {
+    const g = guideRecord() || {}, items = Object.assign({}, g.items || {});
+    const n = (DATA[CURRENT].criteria || []).length;
+    items[CURRENT] = Object.assign({}, items[CURRENT] || {}, {
+      general: ($('g_general') || {}).value || '',
+      crit: Array.from({ length: n }, (_, i) => ($('g_c' + i) || {}).value || ''),
+      sections: ($('g_sections') || {}).value || ''
+    });
+    localStorage.setItem(GUIDE_KEY, JSON.stringify({ items }));   // hub-sync sends it to the store
+    const s2 = $('gsaved'); if (s2) s2.textContent = 'Saved.';
+  }, 800);
+}
+
 /* ---- As the candidate sees it ------------------------------------------------ */
 function md(t){ return esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>'); }
 function longDate(iso){
@@ -871,7 +917,7 @@ function render(){
   }
   if (MODE === 'preview') { $('body').innerHTML = '<div class="wholebar"><button type="button" class="btn ghost" onclick="window.print()">Print the whole assignment</button></div>' + previewHTML(a); refreshMarks(); return; }
   $('body').innerHTML = `<div class="ewrap">${railHTML(a)}
-    <div class="doc" id="doc">${importNoteHTML()}${a.sections.map(sectionHTML).join('')}${addCardHTML()}${critCardHTML(a)}</div></div>`;
+    <div class="doc" id="doc">${importNoteHTML()}${a.sections.map(sectionHTML).join('')}${addCardHTML()}${critCardHTML(a)}${guideCardHTML(a)}</div></div>`;
   refreshMarks();
 }
 

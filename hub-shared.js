@@ -1554,3 +1554,35 @@ window.hubLockup = function(size){
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
 })();
+
+/* THE MARKING GUIDANCE (17 Oct 2026). Ramy: "do we have like a marking
+   guidelines? Like we do with C18 on Classroom." Per assignment: a general
+   note, one note per criterion (same order as the criteria) and a
+   section-by-section note. It lives in its own course record that the store
+   sends to the tutors and the assessor only -- never in the wording, which
+   every trainee reads, and never in this public code: the defaults are kept
+   in the store. Plain text; a line starting "• " is a bullet, a short line
+   with no full stop followed by text is a heading. */
+window.hubGuidance = function(key){
+  try {
+    var g = JSON.parse(localStorage.getItem('connect_marking_guidance_v1') || 'null');
+    var x = g && g.items && g.items[key];
+    return x && (x.general || x.sections || (x.crit && x.crit.some(Boolean))) ? x : null;
+  } catch (e) { return null; }
+};
+window.hubGuidanceHTML = function(text){
+  var esc = function(s){ return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  return String(text || '').split(/\n{2,}/).map(function(block){
+    var lines = block.split('\n'), out = '', list = [];
+    var flush = function(){ if (list.length) { out += '<ul>' + list.map(function(l){ return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>'; list = []; } };
+    lines.forEach(function(l, i){
+      if (/^\s*[•\-]\s+/.test(l)) { list.push(l.replace(/^\s*[•\-]\s+/, '')); return; }
+      flush();
+      var head = i === 0 && lines.length > 1 && l.length < 70 && !/[.:;]$/.test(l.trim());
+      var m = l.match(/^(Met|Shortfalls|Meaning|Form|Pronunciation|Use|Problems|References|CCQs)(:)/);
+      out += head ? '<h4>' + esc(l) + '</h4>' : '<p>' + (m ? '<b>' + esc(m[1]) + ':</b>' + esc(l.slice(m[0].length)) : esc(l)) + '</p>';
+    });
+    flush();
+    return out;
+  }).join('');
+};

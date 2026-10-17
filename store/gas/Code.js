@@ -667,6 +667,14 @@ case 'inbox': {
     // Ramy sells a course at a time and mints it here; a centre never creates
     // one. The owner secret opens no course's records -- it lists courses and
     // makes them, and that is all it can do.
+    /* v94 (17 Oct 2026): the default marking guidance, for every course that
+       has not written its own. Kept in the store under the id '_defaults',
+       not in the public site's code: it is for tutors and assessors only. */
+    case 'putDefaultGuidance': {
+      requireOwner_(owner);
+      courseWrite_('_defaults', 'guidance', req.data || null);
+      return { saved: true };
+    }
     case 'ownerCourses': {
       requireOwner_(owner);
       return { courses: ownerList_() };
@@ -822,6 +830,9 @@ case 'inbox': {
         return { id: newKey_().slice(0, 12), at: new Date().toISOString(), by: String(p.by || ''), to: '', text: p.text, draft: true, from: String(s.courseName || fromId) };
       }) : [];
       if (stCarried.length) courseWrite_(nid, 'stream', stCarried);
+      /* v94: the course's own marking guidance travels, if it has any. */
+      var gSrc = courseRead_(fromId, 'guidance');
+      if (gSrc) courseWrite_(nid, 'guidance', gSrc);
       return { id: nid, name: nname, from: fromId, copied: { settings: Object.keys(keep).length, wording: !!w, observations: !!o, timetableDays: ttDays.length }, tutorKey: courseKey_('tutor', nid), assessorKey: courseKey_('assessor', nid), courses: ownerList_() };
     }
     // ---- shared assets: Cambridge's CELTA 5 master and the two fonts -------
@@ -1052,7 +1063,7 @@ case 'inbox': {
          volunteer's link as "<courseId>-<random>", and the browser has no
          other way to learn which course it is on (30 Sep 2026). Not a secret
          -- the key already proves the course; the random half is the secret. */
-      var boot = { course: { id: course.id, settings: courseRead_(course.id, 'settings'), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null, coming: comingFor_(course.id) } };
+      var boot = { course: { id: course.id, settings: courseRead_(course.id, 'settings'), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null, coming: comingFor_(course.id), guidance: reader ? guidanceFor_(course.id) : null } };
       if (assessor) { var exb = assessorExpiry_(course.id); boot.assessor = { expires: exb ? exb.toISOString() : null }; }
       if (reader) {
         /* v53: the assessor's link never carries a candidate's address. */
@@ -1158,7 +1169,9 @@ case 'inbox': {
       // timetable: the course's own timetable, native since 29 Sep 2026 -- the
       // course admin writes it, everyone on the course reads it.
       // tppoints: the rotated teaching-practice points, released per group.
-      if (ck !== 'settings' && ck !== 'wording' && ck !== 'observations' && ck !== 'timetable' && ck !== 'tppoints' && ck !== 'volunteers') throw new Error('Not a course kind: ' + ck);
+      // guidance: the tutors' marking guidance per criterion (v94, 17 Oct 2026) --
+      // read by the tutors and the assessor only, never sent to a trainee.
+      if (ck !== 'settings' && ck !== 'wording' && ck !== 'observations' && ck !== 'timetable' && ck !== 'tppoints' && ck !== 'volunteers' && ck !== 'guidance') throw new Error('Not a course kind: ' + ck);
       var data = req.data;
       if (ck === 'settings') {
         // The owner's centre number stays (1 Oct 2026): a course made for
@@ -1848,6 +1861,15 @@ function courseRead_(courseId, kind) {
   }
   if (json === null) return null;
   try { return JSON.parse(json); } catch (e) { return null; }
+}
+/* The marking guidance (v94, 17 Oct 2026): the course's own, else the
+   store's defaults. The tutors and the assessor read it; nobody else does --
+   boot sends it only to a reader. */
+function guidanceFor_(courseId) {
+  var own = courseRead_(courseId, 'guidance');
+  if (own) return own;
+  var d = courseRead_('_defaults', 'guidance');
+  return d ? { fromDefaults: true, items: d.items || {} } : null;
 }
 function courseWrite_(courseId, kind, data) {
   var lock = LockService.getScriptLock();

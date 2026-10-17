@@ -21,7 +21,7 @@
   var TRAINEE_KEYS = { 'chub:plan':'plan', 'chub:selfeval':'selfeval', 'chub:feedback':'feedback', 'connect_assignment_submissions_v1':'assignments', 'chub:tpHistory':'tpHistory', 'chub:tracker':'tracker', 'connect_observations_v1':'observations', 'chub:links':'links', 'chub:celta5':'celta5', 'chub:celta5t':'celta5t', 'chub:agreement':'agreement', 'connect_fol_interview_v1':'interview' };
   var TUTOR_ONLY = { feedback:1, tpHistory:1, tracker:1, links:1, celta5t:1 }; // links: a trainee's private links, the tutor's to write; celta5t: the tutors' half of the CELTA 5
   // staffLinks -- about a trainee, for staff only -- has no trainee key at all: the store never hands it to a trainee's token
-  var COURSE_KEYS = { 'connect_assignment_wording_v2':'wording', 'connect_course_settings':'settings', 'connect_observation_wording_v1':'observations', 'connect_timetable_v1':'timetable', 'connect_tp_points_v1':'tppoints', 'connect_volunteers_v1':'volunteers' };
+  var COURSE_KEYS = { 'connect_assignment_wording_v2':'wording', 'connect_course_settings':'settings', 'connect_observation_wording_v1':'observations', 'connect_timetable_v1':'timetable', 'connect_tp_points_v1':'tppoints', 'connect_volunteers_v1':'volunteers', 'connect_marking_guidance_v1':'guidance' };
   var origSet = localStorage.setItem.bind(localStorage), origRemove = localStorage.removeItem.bind(localStorage);
   var snapshot = {};   // tutor mode: token -> kind -> json, what the store holds
   var pill;
@@ -505,6 +505,9 @@
     }
     out['connect_assignment_wording_v2'] = course.wording ? JSON.stringify(window.hubWordingFilled ? window.hubWordingFilled(course.wording) : course.wording) : null;
     out['connect_course_settings'] = course.settings ? JSON.stringify(course.settings) : null;
+    /* The marking guidance (17 Oct 2026): the store sends it to the tutors and
+       the assessor only, so a trainee's copy is always null here. */
+    out['connect_marking_guidance_v1'] = course.guidance ? JSON.stringify(course.guidance) : null;
     out['connect_observation_wording_v1'] = course.observations ? JSON.stringify(course.observations) : null;
     /* The course stream (28 Sep 2026): read-only here for every mode -- a
        tutor posts through the store's own post/unpost ops, never by putting
