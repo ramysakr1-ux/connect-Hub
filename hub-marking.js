@@ -108,8 +108,9 @@
   document.addEventListener('click', function (e) {
     if (OPENTIP == null) return;
     var t = e.target; if (!t || !t.closest) return;
-    var row = t.closest('.critrow');
-    if (t.closest('.mk-tipin') || (row && row.querySelector('[data-tip="' + OPENTIP + '"]'))) return;
+    var row = t.closest('.critrow'), mine = row && row.querySelector('[data-tip="' + OPENTIP + '"]');
+    /* inside: the panel, its own Guidance link, and its own note. Anything else, even a blank part of the same row, closes it. */
+    if (t.closest('.mk-tipin') || t.closest('[data-tip="' + OPENTIP + '"]') || (mine && t.closest('[data-crit-comment], [data-addnote]'))) return;
     hideTip();
   });
 
