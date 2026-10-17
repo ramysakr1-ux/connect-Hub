@@ -42,7 +42,8 @@
   var KEY = 'connect_shared_v1';
   var KINDS = { demo: 1, gtky: 1, course: 1 };    // what belongs on this shelf
   var ADD = 'course';                              // what a new share is filed as
-  var NOTE = 'The demonstration lesson, a getting-to-know-you activity, anything for the class \u2014 a link. The volunteer students see it on their page; so does everyone on the course.';
+  /* One short line (Ramy, 18 Oct 2026: "it's too much talking... just say share something with the volunteer students, for example demo lesson material"). */
+  var NOTE = 'Share something with the volunteer students, for example demo lesson material.';
   var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
   var read = function () { try { return (JSON.parse(localStorage.getItem(KEY)) || []).filter(function (x) { return x && x.url && x.name; }); } catch (e) { return []; } };
   var write = function (list) { try { localStorage.setItem(KEY, JSON.stringify(list || [])); } catch (e) {} };

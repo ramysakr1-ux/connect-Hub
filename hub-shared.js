@@ -267,6 +267,12 @@ window.hubObservationHours = function(records){
     var folded = (function(){ try { return !!localStorage.getItem('chub:installHintDone'); } catch (e) { return false; } })();
     var MARK = '<svg viewBox="8 30 104 60" width="16" height="10" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="currentColor" stroke-width="13" stroke-linecap="round" opacity=".55"></path></svg>';
     var draw = function(){
+      /* Only when there is something to press or follow (Ramy, 18 Oct 2026: "I
+         can't really put it anywhere. The only thing I can click on is not
+         now"): Chrome's own Install button, or Safari's and the iPhone's steps.
+         Chrome that will not install, Firefox, or an app already installed:
+         no card at all. */
+      if (already || !(ios || macSafari || deferred)) { host.hidden = true; return; }
       host.hidden = false;
       host.classList.toggle('coin', folded);
       if (folded) {

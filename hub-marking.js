@@ -99,9 +99,19 @@
     var i = OPENTIP, g = CTX && CTX.guide, t = g && g.crit && g.crit[i];
     if (i == null || !t || (document.body.className || '').indexOf('mk-nohelp') >= 0) return;
     var link = document.querySelector('[data-tip="' + i + '"]'); if (!link) return;
-    link.insertAdjacentHTML('afterend', '<div class="mk-tipin" role="note"><div class="mkt-h"><span>Watch out for: criterion ' + (+i + 1) + '</span><button type="button" data-tipclose>Close</button></div>' + (window.hubGuidanceHTML ? hubGuidanceHTML(t) : esc(t)) + '</div>');
+    link.insertAdjacentHTML('afterend', '<div class="mk-tipin" role="note"><div class="mkt-h"><span>Watch out for: criterion ' + (+i + 1) + '</span></div>' + (window.hubGuidanceHTML ? hubGuidanceHTML(t) : esc(t)) + '</div>');
   }
   function hideTip() { if (OPENTIP != null) { OPENTIP = null; paintTipIn(); } }
+  /* Closes the way an empty note does: click outside it (Ramy, 18 Oct 2026:
+     "I don't have to close on the word close"). The criterion's own row counts
+     as inside, so you can still write in its note with the guidance open. */
+  document.addEventListener('click', function (e) {
+    if (OPENTIP == null) return;
+    var t = e.target; if (!t || !t.closest) return;
+    var row = t.closest('.critrow');
+    if (t.closest('.mk-tipin') || (row && row.querySelector('[data-tip="' + OPENTIP + '"]'))) return;
+    hideTip();
+  });
 
   /* ---- margin comments -------------------------------------------------- */
   function list(round) { var s = CTX.sub; s.margin = s.margin || {}; return (s.margin[round] = s.margin[round] || []); }
@@ -340,7 +350,6 @@
     if (add) { var i = add.getAttribute('data-addnote'); var ta = document.querySelector('[data-crit-comment="' + i + '"]'); add.hidden = true; ta.hidden = false; ta.focus(); return; }
     var tl = t.closest('[data-tip]');
     if (tl) { var ti = +tl.getAttribute('data-tip'); OPENTIP = OPENTIP === ti ? null : ti; paintTipIn(); return; }
-    if (t.closest('[data-tipclose]')) { hideTip(); return; }
   });
   /* The guidance opens only when "Guidance" is pressed. It used to open as soon
      as you started a note (Ramy, 18 Oct 2026: "clicking on add a note should
@@ -628,7 +637,7 @@
       'mark.mc-tick{background:color-mix(in oklab, oklch(70% 0.1 158) 22%, transparent); border-bottom:2px solid oklch(46% 0.1 158);} .tickmark{white-space:nowrap;}',
       '.mk-selbar .hub-tick{width:1.05em; height:1.05em; margin:0 3px 0 0; filter:none;}',
       '.mkp-mc q.tk{background:color-mix(in oklab, var(--mark-met-line) 30%, transparent);}',
-      '.mk-selbar button:hover{background:oklch(40% 0.03 65) !important; box-shadow:none !important;} .mk-selbar button.sb-main:hover{background:var(--gold-lifted) !important;}',
+      '.mk-selbar button:hover{box-shadow:none !important; outline:1.5px solid oklch(82% 0.02 70); outline-offset:-1.5px;}',
       '.mk-editor{position:fixed; z-index:61; left:50%; top:50%; transform:translate(-50%,-50%); width:min(460px, calc(100vw - 32px)); background:var(--paper); border:1px solid var(--sand-line); border-top:3px solid var(--gold); border-radius:var(--r-card); padding:16px; box-shadow:0 18px 50px oklch(20% 0.02 60 / .28);}',
       '.me-q{font-size:0.84rem; color:var(--grey); font-style:italic; margin:0 0 10px; line-height:1.45;}',
       '.mk-editor textarea{width:100%; box-sizing:border-box; font:inherit; font-size:0.9rem; padding:9px 11px; border:1.5px solid var(--row-line); border-radius:6px; resize:vertical;}',
@@ -682,7 +691,14 @@
       '.dk-chip.open{box-shadow:0 0 0 2px var(--as, var(--teal));} .dk-chip em{font-style:normal; font-size:0.7rem; font-weight:700; background:var(--as, var(--teal)); color:var(--paper); border-radius:9px; padding:1px 6px; min-width:18px; text-align:center;}',
       '.dk-prog{font-size:0.78rem; color:var(--grey); white-space:nowrap;}',
       '.dk-hide{background:none; border:none; font:600 0.8rem Karla,sans-serif; color:var(--grey); text-decoration:underline; text-decoration-color:var(--sand-line); text-underline-offset:3px; cursor:pointer; padding:4px 0;} .dk-hide:hover{background:none !important; box-shadow:none !important;}',
-      '.mk-dock-tab{position:fixed; left:18px; bottom:18px; z-index:49; font:700 0.8rem Karla,sans-serif; color:var(--as, var(--teal)); background:var(--paper); border:1.5px solid var(--as, var(--teal)); border-radius:20px; padding:9px 16px; cursor:pointer; box-shadow:0 8px 24px oklch(25% 0.02 60 / .16);} .mk-dock-tab:hover{background:var(--sand) !important;}',
+      /* HOVER ON THESE BUTTONS: ONLY THE BORDER MOVES (Ramy, 18 Oct 2026: "the hover is too much, like a flashlight... only the borders should move and not the whole thing"). The shared button hover washes a fill out; each of these keeps its own fill. */
+      '.me-acts .me-save:hover{background:var(--teal) !important; color:var(--paper) !important; border-color:var(--teal-deep) !important; box-shadow:0 0 0 1px var(--teal-deep) !important;}',
+      '.me-acts .me-cancel:hover, .dr-h button:hover, .mkp-top button:hover{background:var(--paper) !important; border-color:var(--teal) !important; box-shadow:none !important;}',
+      '.mk-btn:hover{background:var(--paper) !important; border-color:var(--teal-deep) !important; box-shadow:none !important;}',
+      '.sm-b:not(.on):hover, .dr-btns button:not(.on):hover{background:var(--paper) !important; border-color:var(--teal) !important; box-shadow:none !important;}',
+      '.sm-b.on:hover, .dr-btns button.on:hover{box-shadow:none !important; filter:none !important;}',
+      '.dk-chip:not(.met):not(.not):hover{background:var(--paper) !important; border-color:var(--as, var(--teal)) !important; box-shadow:none !important;} .dk-chip.met:hover, .dk-chip.not:hover{box-shadow:none !important; border-color:currentColor !important;}',
+      '.mk-dock-tab{position:fixed; left:18px; bottom:18px; z-index:49; font:700 0.8rem Karla,sans-serif; color:var(--as, var(--teal)); background:var(--paper); border:1.5px solid var(--as, var(--teal)); border-radius:20px; padding:9px 16px; cursor:pointer; box-shadow:0 8px 24px oklch(25% 0.02 60 / .16);} .mk-dock-tab:hover{background:var(--paper) !important; border-color:var(--teal-deep) !important; box-shadow:0 8px 24px oklch(25% 0.02 60 / .16) !important;}',
       '@media (max-width:1079px){ .mk-dock-tab{left:auto; right:12px; bottom:calc(14px + env(safe-area-inset-bottom));} }',
       '.mk-drop{position:fixed; z-index:51; width:min(440px, calc(100vw - 16px)); background:var(--paper); border:1px solid var(--sand-line); border-top:3px solid var(--as, var(--teal)); border-radius:var(--r-card); padding:12px 14px 14px; box-shadow:0 18px 50px oklch(20% 0.02 60 / .25); max-height:70vh; overflow:auto;}',
       '.dr-h{display:flex; justify-content:space-between; align-items:center;} .dr-h button{font:700 0.78rem Karla,sans-serif; background:none; border:1.5px solid var(--sand-line); border-radius:var(--r-control); padding:4px 10px; cursor:pointer;}',
