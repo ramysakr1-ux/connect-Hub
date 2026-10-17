@@ -523,6 +523,68 @@
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var ov = $('mkPreview'); if (ov && !ov.hidden) ov.hidden = true; var ed = $('mkEditor'); if (ed && !ed.hidden) ed.hidden = true; } });
 
+  /* ---- THE TEXTS TO READ (Ramy, 18 Oct 2026: "when the trainee says I chose text B,
+     I should be able to click on Text B and see what it is... the text chosen
+     should be a link"). The assignment carries its texts as reading sections
+     ("Text A \u2014 ...", "Text B \u2014 ..."); each mention of one, and the "Text
+     chosen" headline, opens it in a reader, the chosen one first. */
+  function textsOf() {
+    return (CTX && CTX.a ? CTX.a.sections : []).map(function (sec) {
+      var m = String(sec.label || '').match(/^\s*Text\s+([A-C])\b[\s\u2014\u2013:\-]*(.*)$/i);
+      return m && window.hubIsReference && hubIsReference(sec) ? { id: m[1].toUpperCase(), title: m[2].trim(), body: String(sec.body || '') } : null;
+    }).filter(Boolean);
+  }
+  function chosenLetter() {
+    var snap = CTX.sub[CTX.round] || CTX.sub.sub2 || CTX.sub.sub1; if (!snap || !snap.text) return '';
+    var ks = Object.keys(snap.text).sort(function (x, y) { return x - y; });
+    for (var i = 0; i < ks.length; i++) { var m = String(snap.text[ks[i]]).match(/\b[Tt]ext\s+([ABC])\b/); if (m) return m[1].toUpperCase(); }
+    return '';
+  }
+  function openTexts(letter) {
+    var texts = textsOf(); if (!texts.length) return;
+    var ch = chosenLetter(), cur = texts.filter(function (x) { return x.id === letter; })[0] || texts.filter(function (x) { return x.id === ch; })[0] || texts[0];
+    var wrap = $('mkTexts'); if (!wrap) { wrap = document.createElement('div'); wrap.id = 'mkTexts'; wrap.className = 'mk-texts-wrap'; document.body.appendChild(wrap); }
+    wrap.className = 'mk-texts-wrap as-' + CTX.key;
+    var body = esc(cur.body).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+    wrap.innerHTML = '<div class="mk-texts" role="dialog" aria-label="The texts"><div class="tx-tabs">' + texts.map(function (x) { return '<button type="button" class="tx-tab' + (x.id === cur.id ? ' on' : '') + '" data-txtab="' + x.id + '"><b>Text ' + x.id + '</b>' + (x.id === ch ? '<span>chosen</span>' : '') + '</button>'; }).join('') + '</div>' +
+      '<h3>Text ' + cur.id + (cur.title ? ' \u00b7 ' + esc(cur.title) : '') + '</h3><div class="tx-body">' + body + '</div></div>';
+    wrap.hidden = false;
+  }
+  function closeTexts() { var w = $('mkTexts'); if (w) w.hidden = true; }
+  function linkTexts() {
+    if (!textsOf().length) return;
+    var ch = chosenLetter();
+    /* the "Text chosen" headline */
+    [].forEach.call(document.querySelectorAll('#mkWork .hl'), function (h) {
+      if (!/^\s*text chosen/i.test(h.textContent) || h.querySelector('a')) return;
+      var a = document.createElement('a'); a.href = '#'; a.className = 'txtlink'; a.setAttribute('data-text', ch); a.title = 'Read the text they chose';
+      while (h.firstChild) a.appendChild(h.firstChild); h.appendChild(a);
+    });
+    /* each mention of Text A, B or C in the writing */
+    [].forEach.call(document.querySelectorAll('#mkWork .mloc .readonly'), function (box) {
+      var w = document.createTreeWalker(box, NodeFilter.SHOW_TEXT, null), nodes = [], n;
+      while ((n = w.nextNode())) if (!(n.parentNode.closest && n.parentNode.closest('a'))) nodes.push(n);
+      nodes.forEach(function (node) {
+        var re = /\b[Tt]ext\s+([ABC])\b/g, m, last = 0, frag = null, v = node.nodeValue;
+        while ((m = re.exec(v))) {
+          if (!frag) frag = document.createDocumentFragment();
+          frag.appendChild(document.createTextNode(v.slice(last, m.index)));
+          var a = document.createElement('a'); a.href = '#'; a.className = 'txtlink'; a.setAttribute('data-text', m[1].toUpperCase()); a.textContent = m[0]; frag.appendChild(a);
+          last = m.index + m[0].length;
+        }
+        if (frag) { frag.appendChild(document.createTextNode(v.slice(last))); node.parentNode.replaceChild(frag, node); }
+      });
+    });
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target; if (!t || !t.closest) return;
+    var l = t.closest('a.txtlink'); if (l) { e.preventDefault(); openTexts(l.getAttribute('data-text')); return; }
+    if (t.closest('[data-readtexts]')) { openTexts(''); return; }
+    var tab = t.closest('[data-txtab]'); if (tab) { openTexts(tab.getAttribute('data-txtab')); return; }
+    var w = $('mkTexts'); if (w && !w.hidden && !t.closest('.mk-texts')) closeTexts();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeTexts(); });
+
   /* ---- THE FRONT PAGE THAT STAYS WITH YOU (Ramy, 18 Oct 2026: "as you scroll
      down, the criteria stays with you... the front page is like still there").
      Once the criteria have scrolled out of sight a thin bar holds them: each
@@ -608,8 +670,9 @@
     var gen = [g && g.general, CTX.a.trap ? 'The hidden word\n' + hubTrapNote(CTX.a.trap) : ''].filter(Boolean).join('\n\n');
     if (gen) parts.push(gbox('how', 'How to mark this assignment', hubGuidanceHTML(gen), 'mk-hbox'));
     if (g && g.sections) parts.push(gbox('bysec', 'Section by section', hubGuidanceHTML(g.sections), 'mk-hbox'));
-    if (!parts.length) { host.innerHTML = ''; return; }
-    host.innerHTML = '<div class="mk-help-bar"><span>Marking help</span><button type="button" data-helptoggle>' + (hidden ? 'Show the guidance' : 'Hide the guidance') + '</button></div>' + (hidden ? '' : '<div class="mk-help-grid">' + parts.join('') + '</div>');
+    var hasTexts = textsOf().length > 0;
+    if (!parts.length && !hasTexts) { host.innerHTML = ''; return; }
+    host.innerHTML = '<div class="mk-help-bar"><span>Marking help</span><span class="hb-acts">' + (hasTexts ? '<button type="button" data-readtexts>Read the texts</button>' : '') + (parts.length ? '<button type="button" data-helptoggle>' + (hidden ? 'Show the guidance' : 'Hide the guidance') + '</button>' : '') + '</span></div>' + (hidden || !parts.length ? '' : '<div class="mk-help-grid">' + parts.join('') + '</div>');
   }
   document.addEventListener('click', function (e) {
     if (e.target.closest && e.target.closest('[data-helptoggle]')) { try { localStorage.setItem('mk:hideHelp', helpHidden() ? '' : '1'); } catch (x) {} paintHelp(); hideTip(); }
@@ -619,6 +682,7 @@
     afterRender: function (ctx) {
       CTX = ctx;
       paintMargin();
+      linkTexts();
       paintStep2();
       paintHelp();
       paintSectionHelp();
@@ -751,6 +815,14 @@
       '.mk-nohelp .mk-tiplink{display:none;}',
       '.mk-tied svg.hub-tick, .dr-ev svg.hub-tick{width:1em; height:1em; vertical-align:-0.18em; margin:0 2px 0 0; filter:none;}',
       '@media (max-width:1079px){ .mk-dock{top:auto; bottom:0; padding:8px 10px calc(8px + env(safe-area-inset-bottom)); border-bottom:none; border-top:1px solid var(--sand-line); box-shadow:0 -6px 20px oklch(25% 0.02 60 / .12);} .dk-up{display:none;} .dk-prog{font-size:0.72rem;} .dk-chip{padding:5px 10px;} }',
+      '.hb-acts{display:flex; gap:18px;} a.txtlink{color:var(--as, var(--teal)); font-weight:700; text-decoration:underline; text-decoration-color:color-mix(in oklab, var(--as, var(--teal)) 40%, transparent); text-underline-offset:3px; cursor:pointer;} a.txtlink:hover{text-decoration-color:var(--as, var(--teal)); background:none !important;}',
+      '.hl a.txtlink{font:inherit; letter-spacing:inherit; text-transform:inherit;}',
+      '.mk-texts-wrap{position:fixed; inset:0; z-index:72; background:oklch(20% 0.02 60 / .4); display:flex; align-items:flex-start; justify-content:center; padding:5vh 16px; overflow:auto;}',
+      '.mk-texts{width:min(780px,100%); background:var(--paper); border-radius:16px; border-top:4px solid var(--as, var(--teal)); box-shadow:0 24px 70px oklch(20% 0.02 60 / .35); padding:16px 24px 22px;}',
+      '.tx-tabs{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 12px;} .tx-tab{display:flex; align-items:center; gap:8px; font:700 0.82rem Karla,sans-serif; border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink); border-radius:16px; padding:7px 14px; cursor:pointer;} .tx-tab span{font-size:0.7rem; font-weight:700; color:var(--as, var(--teal)); text-transform:uppercase; letter-spacing:.06em;}',
+      '.tx-tab.on{border-color:var(--as, var(--teal)); box-shadow:inset 0 0 0 1px var(--as, var(--teal));} .tx-tab:not(.on):hover{background:var(--paper) !important; border-color:var(--as, var(--teal)) !important; box-shadow:none !important;} .tx-tab.on:hover{box-shadow:inset 0 0 0 1px var(--as, var(--teal)) !important; background:var(--paper) !important;}',
+      '.mk-texts h3{font-family:Newsreader,Georgia,serif; font-size:1.3rem; margin:6px 0 10px; color:var(--as, var(--teal));} .tx-body{font-size:1rem; line-height:1.75; max-width:70ch;}',
+      '@media print{ .mk-texts-wrap{display:none !important;} }',
       '.mk-sbox{margin:2px 0 10px;} .mk-sbox > summary{font-size:0.8rem;}',
       '@media print{ .mk-dock-tab,.mk-selbar,.mk-editor,.mk-tip,.mk-dock,.mk-drop,.mk-prev-wrap,.mk-checks,.mk-keys,.mk-help{display:none !important;} }'
     ].join('\n');
