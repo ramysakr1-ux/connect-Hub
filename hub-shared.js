@@ -948,8 +948,18 @@ window.hubLinkShown = function(l){
   if (l.show !== false) return true;
   return !!(l.showFrom && window.HubDue && HubDue.state(l.showFrom).past);
 };
+/* Switched off, an assignment can still have a time it opens by itself
+   (`releaseFrom`, an instant; Ramy, 17 Oct 2026: "where do I set the dates for
+   the assignments to be released?"). From that moment the trainees see it, on
+   the course's clock (hubNow, so the demo's pinned day counts too). */
 window.hubReleased = function(wording, key){
-  return !(wording && wording[key] && wording[key].released === false);
+  var x = wording && wording[key];
+  if (!x || x.released !== false) return true;
+  if (x.releaseFrom) {
+    var t = Date.parse(x.releaseFrom), now = window.hubNow ? window.hubNow() : Date.now();
+    if (!isNaN(t) && now >= t) return true;
+  }
+  return false;
 };
 
 // The four assignments in the order this centre runs them. The order lives

@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610172038">
+<link rel="stylesheet" href="hub-tokens.css?v=202610172045">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -303,6 +303,8 @@
   /* Cambridge's own words beside the field they govern. Bold carries the VERB,
      because "should" and "must" are not the same thing (Ramy, 29 Sep 2026). */
   .hintline{margin:6px 0 0; font-size:0.74rem; color:var(--grey); line-height:1.5;}
+  .as-from{display:flex; align-items:center; gap:6px; font-size:0.74rem; color:var(--grey);} .as-from input{min-width:190px; font:inherit; font-size:0.8rem;}
+  .as-due a{color:var(--teal);}
   .hintline b{color:var(--ink); font-weight:700;}
 
   /* ---- course links card ------------------------------------------------ */
@@ -512,7 +514,7 @@
   .tcol-opt input:checked + span{box-shadow:0 0 0 2px var(--paper), 0 0 0 4px var(--teal);}
   .tcol-opt input:focus-visible + span{outline:2px solid var(--gold-lifted); outline-offset:3px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610172038">
+<link rel="stylesheet" href="hub-house.css?v=202610172045">
 </head>
 <body>
 <div class="board">
@@ -967,17 +969,17 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610172038"></script>
-<script src="hub-store.js?v=202610172038"></script>
-<script src="hub-say.js?v=202610172038"></script>
-<script src="agreement-defaults.js?v=202610172038"></script>
-<script src="observation-defaults.js?v=202610172038"></script>
-<script src="hub-shared.js?v=202610172038"></script>
-<script src="hub-rotation.js?v=202610172038"></script>
-<script src="hub-due.js?v=202610172038"></script>
-<script src="hub-sync.js?v=202610172038"></script>
-<script src="hub-hand.js?v=202610172038"></script>
-<script src="hub-ink.js?v=202610172038"></script>
+<script src="assignment-defaults.js?v=202610172045"></script>
+<script src="hub-store.js?v=202610172045"></script>
+<script src="hub-say.js?v=202610172045"></script>
+<script src="agreement-defaults.js?v=202610172045"></script>
+<script src="observation-defaults.js?v=202610172045"></script>
+<script src="hub-shared.js?v=202610172045"></script>
+<script src="hub-rotation.js?v=202610172045"></script>
+<script src="hub-due.js?v=202610172045"></script>
+<script src="hub-sync.js?v=202610172045"></script>
+<script src="hub-hand.js?v=202610172045"></script>
+<script src="hub-ink.js?v=202610172045"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -2355,13 +2357,30 @@ renderStoreRoster();
       const k = el.dataset.key; if (k === 'a5') return;
       let sw = el.querySelector('.sw');
       if (!sw) { sw = document.createElement('label'); sw.className = 'sw'; sw.style.marginLeft = 'auto'; sw.innerHTML = '<input type="checkbox" class="as-show"><span class="track"></span><span class="lbl"></span>'; el.insertBefore(sw, el.querySelector('a.btn')); }
-      const on = hubReleased(w, k); sw.querySelector('input').checked = on; sw.querySelector('.lbl').textContent = on ? 'Trainees can see it' : 'Hidden from trainees';
+      /* Switch: on means released now. Off, with a day and time beside it, means
+         it opens by itself then (Ramy, 17 Oct 2026). */
+      const x = w[k] || {}, onNow = x.released !== false, opens = !onNow && x.releaseFrom && window.HubDue ? HubDue.state(x.releaseFrom) : null;
+      sw.querySelector('input').checked = onNow;
+      sw.querySelector('.lbl').textContent = onNow ? 'Trainees can see it' : opens && opens.has ? (opens.past ? 'Trainees can see it (opened ' + HubDue.fmt(x.releaseFrom) + ')' : 'Opens ' + HubDue.fmt(x.releaseFrom)) : 'Hidden from trainees';
+      let from = el.querySelector('.as-from');
+      if (!from) { from = document.createElement('label'); from.className = 'as-from'; from.innerHTML = '<span>Or from</span><input type="datetime-local">'; sw.after(from); }
+      from.hidden = onNow;
+      const fi = from.querySelector('input'); const want = x.releaseFrom && window.HubDue ? HubDue.toLocalInput(x.releaseFrom) : '';
+      if (document.activeElement !== fi) fi.value = want;
+      /* The due date, where the release is: set on the assignment's own page. */
+      let due = el.querySelector('.as-due');
+      if (!due) { due = document.createElement('div'); due.className = 'aside as-due'; el.querySelector('.title2').after(due); }
+      due.innerHTML = (x.dueAt && window.HubDue ? 'Due ' + esc(HubDue.fmt(x.dueAt)) : 'No due date yet') + ' \u00b7 <a href="8_assignment_wording.html?a=' + k + '&dates=1">Change</a>';
     });
     paint();
-    host.addEventListener('change', e => { const sw = e.target.closest('.as-show'); if (!sw) return; const k = sw.closest('.arow').dataset.key; w[k] = w[k] || {}; w[k].released = sw.checked; write(); paint(); });
+    host.addEventListener('change', e => {
+      const row = e.target.closest('.arow'); if (!row) return; const k = row.dataset.key; w[k] = w[k] || {};
+      if (e.target.closest('.as-show')) { w[k].released = e.target.checked; if (e.target.checked) delete w[k].releaseFrom; write(); paint(); return; }
+      if (e.target.closest('.as-from')) { const v = e.target.value; if (v && window.HubDue) w[k].releaseFrom = HubDue.fromLocalInput(v); else delete w[k].releaseFrom; write(); paint(); }
+    });
     const bar = document.createElement('div'); bar.className = 'visbar'; bar.innerHTML = '<span>The trainees see only the assignments switched on.</span><button type="button" data-all="1">Show all to trainees</button><button type="button" data-all="0">Hide all</button>';
     host.after(bar);
-    bar.addEventListener('click', e => { const b = e.target.closest('[data-all]'); if (!b) return; ['fol','lrt','lsrt','lfc'].forEach(k => { w[k] = w[k] || {}; w[k].released = b.dataset.all === '1'; }); write(); paint(); });
+    bar.addEventListener('click', e => { const b = e.target.closest('[data-all]'); if (!b) return; ['fol','lrt','lsrt','lfc'].forEach(k => { w[k] = w[k] || {}; w[k].released = b.dataset.all === '1'; if (b.dataset.all === '1') delete w[k].releaseFrom; }); write(); paint(); });
   } catch (e) {}
 })();
 /* The Input sessions door on the tutor dashboard lands on the links block. */
