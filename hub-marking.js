@@ -67,6 +67,13 @@
   }
   var OPENSET = {};
   document.addEventListener('toggle', function (e) { var d = e.target; if (d && d.dataset && d.dataset.bk) OPENSET[d.dataset.bk] = d.open; }, true);
+  /* The yellow guidance boxes close when you click outside them, like a note (Ramy,
+     18 Oct 2026). "Before you mark" is left alone: it opens by itself when a check
+     is flagged, and the flag should stay in view. */
+  document.addEventListener('click', function (e) {
+    var t = e.target; if (!t || !t.closest) return;
+    [].forEach.call(document.querySelectorAll('details.mk-hbox[open], details.mk-sbox[open]'), function (d) { if (!d.contains(t)) d.open = false; });
+  });
   function gbox(key, title, bodyHtml, cls) { return '<details class="guide-box ' + (cls || '') + '" data-bk="' + key + '"' + (OPENSET[key] ? ' open' : '') + '><summary>' + esc(title) + '</summary><div class="gb">' + bodyHtml + '</div></details>'; }
   function firstGuidedSection() {
     var seen = {}, out = [];
@@ -543,6 +550,8 @@
     var d = $('mkDock'); if (!d || !CTX || !CTX.marking) return;
     var show = dockShould(), tab = tabEl();
     d.hidden = !(show && DOCK_OPEN); tab.hidden = !(show && !DOCK_OPEN);
+    /* On a phone the open bar runs along the bottom, where the "saved to the course" pill sits: lift the pill above it. */
+    if (innerWidth < 1080 && !d.hidden) document.body.style.setProperty('--sync-bottom', '72px'); else document.body.style.removeProperty('--sync-bottom');
     if (d.hidden) { var dr = $('mkDrop'); if (dr) dr.hidden = true; return; }
     paintDrop();
   }
@@ -726,8 +735,8 @@
       '.sm-b:not(.on):hover, .dr-btns button:not(.on):hover{background:var(--paper) !important; border-color:var(--teal) !important; box-shadow:none !important;}',
       '.sm-b.on:hover, .dr-btns button.on:hover{box-shadow:none !important; filter:none !important;}',
       '.dk-chip:not(.met):not(.not):hover{background:var(--paper) !important; border-color:var(--as, var(--teal)) !important; box-shadow:none !important;} .dk-chip.met:hover, .dk-chip.not:hover{box-shadow:none !important; border-color:currentColor !important;}',
-      '.mk-dock-tab{position:fixed; left:18px; bottom:18px; z-index:49; font:700 0.8rem Karla,sans-serif; color:var(--as, var(--teal)); background:var(--paper); border:1.5px solid var(--as, var(--teal)); border-radius:20px; padding:9px 16px; cursor:pointer; box-shadow:0 8px 24px oklch(25% 0.02 60 / .16);} .mk-dock-tab:hover{background:var(--paper) !important; border-color:var(--teal-deep) !important; box-shadow:0 8px 24px oklch(25% 0.02 60 / .16) !important;}',
-      '@media (max-width:1079px){ .mk-dock-tab{left:auto; right:12px; bottom:calc(14px + env(safe-area-inset-bottom));} }',
+      '.mk-dock-tab{position:fixed; right:18px; bottom:18px; z-index:60; font:700 0.8rem Karla,sans-serif; color:var(--as, var(--teal)); background:var(--paper); border:1.5px solid var(--as, var(--teal)); border-radius:20px; padding:9px 16px; cursor:pointer; box-shadow:0 8px 24px oklch(25% 0.02 60 / .16);} .mk-dock-tab:hover{background:var(--paper) !important; border-color:var(--teal-deep) !important; box-shadow:0 8px 24px oklch(25% 0.02 60 / .16) !important;}',
+      '@media (max-width:1079px){ .mk-dock-tab{right:12px; bottom:calc(14px + env(safe-area-inset-bottom));} }',
       '.mk-drop{position:fixed; z-index:51; width:min(440px, calc(100vw - 16px)); background:var(--paper); border:1px solid var(--sand-line); border-top:3px solid var(--as, var(--teal)); border-radius:var(--r-card); padding:12px 14px 14px; box-shadow:0 18px 50px oklch(20% 0.02 60 / .25); max-height:70vh; overflow:auto;}',
       '.dr-h{display:flex; justify-content:space-between; align-items:center;} .dr-h button{font:700 0.78rem Karla,sans-serif; background:none; border:1.5px solid var(--sand-line); border-radius:var(--r-control); padding:4px 10px; cursor:pointer;}',
       '.dr-t{font-size:0.88rem; line-height:1.5; margin:6px 0 10px;} .dr-btns{display:flex; gap:8px; margin:0 0 4px;}',
