@@ -1705,7 +1705,7 @@ window.hubWorkChecks = function (a, snap, key, who) {
   var fieldVals = function (re) { var out = []; (a.sections || []).forEach(function (sec, i) { if (sec.type !== 'fields') return; (sec.fields || []).forEach(function (f, fi) { if (!re.test(f.label || '')) return; Object.keys(snap.fields || {}).forEach(function (k) { var m = k.match(/^s(\d+)_i\d+_f(\d+)$/); if (m && +m[1] === i && +m[2] === fi) out.push(snap.fields[k] || ''); }); }); }); return out; };
   /* words */
   if (a.wordMin) {
-    var w = (Object.values(snap.text || {}).join(' ') + ' ' + Object.values(snap.fields || {}).join(' ')).match(/\S+/g); w = w ? w.length : 0;
+    var w = (Object.keys(snap.text || {}).map(function (i) { return hubBareText(snap.text[i], ((a.sections || [])[i] || {}).heads); }).join(' ') + ' ' + Object.values(snap.fields || {}).join(' ')).match(/\S+/g); w = w ? w.length : 0;
     var inR = w >= a.wordMin && w <= a.wordMax;
     add(inR ? 'ok' : 'look', w + ' words',
       w < a.wordMin ? 'Under ' + a.wordMin + '. Not a criterion, but thin work usually fails on the analysis anyway.' : w > a.wordMax ? 'Over ' + a.wordMax + '. Not a criterion: do not fail it for length.' : 'In the range.',
@@ -1870,5 +1870,59 @@ window.hubTickSVG = function(cls){
     '@keyframes hubTickPop{from{transform:scale(.4); opacity:0;} to{transform:scale(1); opacity:1;}} @keyframes hubTickDraw{to{stroke-dashoffset:0;}}' +
     '@media (prefers-reduced-motion: reduce){ .hub-tick.draw, .hub-tick.draw path{animation:none; stroke-dashoffset:0;} }' +
     '@media print{ .hub-tick{filter:none;} }';
+  (document.head || document.documentElement).appendChild(st);
+})();
+
+/* HEADLINES FOR THE PARTS OF AN ANSWER (18 Oct 2026). Ramy: "give headlines to
+   each part of the assignment, for the trainees to write under... length,
+   level, genre... in a different color... it's already organised, we just
+   give it a bit of a nudge... and on the trainee side too."
+   A text section may carry `heads`: ["Level", "Length", ...]. The trainee
+   writes under each headline in its own box; the answer is still STORED as
+   one piece of text, each part starting "Level: ", so every other screen,
+   the record, the word count and a resubmission work as they did. Each
+   headline stays a signpost for a paragraph of prose, not a form field. */
+window.hubJoinHeads = function (heads, vals) {
+  return (heads || []).map(function (h, k) { var v = String((vals || [])[k] || '').replace(/^\s+|\s+$/g, ''); return v ? h + ': ' + v : ''; }).filter(Boolean).join('\n\n');
+};
+window.hubSplitHeads = function (text, heads) {
+  var t = String(text || ''), vals = (heads || []).map(function () { return ''; });
+  if (!t) return vals;
+  var found = [], from = 0;
+  (heads || []).forEach(function (h, k) {
+    var at = (k === 0 || from === 0) && t.indexOf(h + ': ') === 0 ? 0 : t.indexOf('\n\n' + h + ': ', from);
+    if (at < 0) return;
+    var cs = at + (at === 0 && t.indexOf(h + ': ') === 0 ? 0 : 2) + h.length + 2;
+    found.push({ k: k, at: at, cs: cs }); from = cs;
+  });
+  if (!found.length) { vals[0] = t; return vals; }
+  var lead = found[0].at > 0 ? t.slice(0, found[0].at).replace(/^\s+|\s+$/g, '') : '';
+  found.forEach(function (f, n) { vals[f.k] = t.slice(f.cs, n + 1 < found.length ? found[n + 1].at : t.length).replace(/^\s+|\s+$/g, ''); });
+  /* writing before the first headline is not lost: it goes in the first box */
+  if (lead) vals[0] = found[0].k > 0 ? lead : lead + '\n\n' + vals[0];
+  return vals;
+};
+/* the text with its headline labels taken off, for counting words */
+window.hubBareText = function (text, heads) {
+  var t = String(text || ''); if (!heads || !heads.length) return t;
+  return t.split('\n\n').map(function (p) { var h = heads.filter(function (x) { return p.indexOf(x + ': ') === 0; })[0]; return h ? p.slice(h.length + 2) : p; }).join('\n\n');
+};
+/* the same text, read-only, with each headline in its colour on its own line */
+window.hubHeadHTML = function (text, heads) {
+  var e = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+  return String(text || '').split('\n\n').map(function (p) {
+    var h = (heads || []).filter(function (x) { return p.indexOf(x + ': ') === 0; })[0];
+    var body = e(p).replace(/\n/g, '<br>');
+    if (h) { var lab = e(h + ': '); body = '<span class="hl">' + lab + '</span>' + body.slice(lab.length); }
+    return body;
+  }).join('<br><br>');
+};
+(function () {
+  if (document.getElementById('hub-hl-css')) return;
+  var st = document.createElement('style'); st.id = 'hub-hl-css';
+  st.textContent = '.hl{display:block; font:700 0.72rem Karla,sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--as, var(--teal)); margin:2px 0 1px;}' +
+    '.hdl{display:flex; align-items:center; gap:8px; font:700 0.76rem Karla,sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--as, var(--teal)); margin:14px 0 4px;}' +
+    '.hdl::after{content:""; flex:1; height:1px; background:color-mix(in oklab, var(--as, var(--teal)) 30%, transparent);}' +
+    '.hdl:first-of-type{margin-top:4px;}';
   (document.head || document.documentElement).appendChild(st);
 })();

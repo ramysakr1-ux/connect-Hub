@@ -15,7 +15,7 @@
 <title>Connect Lite — Assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610180006">
+<link rel="stylesheet" href="hub-tokens.css?v=202610180024">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -176,7 +176,7 @@
   @media(max-width:560px){ .wm{flex-wrap:wrap; gap:6px;} .wm-track{width:100%;} }
   @media print{ .wm-track{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610180006">
+<link rel="stylesheet" href="hub-house.css?v=202610180024">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -184,13 +184,13 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610180006"></script>
-<script src="hub-due.js?v=202610180006"></script>
-<script src="hub-shared.js?v=202610180006"></script>
-<script src="hub-store.js?v=202610180006"></script>
-<script src="hub-say.js?v=202610180006"></script>
-<script src="hub-sync.js?v=202610180006"></script>
-<script src="fol-interview.js?v=202610180006"></script>
+<script src="assignment-defaults.js?v=202610180024"></script>
+<script src="hub-due.js?v=202610180024"></script>
+<script src="hub-shared.js?v=202610180024"></script>
+<script src="hub-store.js?v=202610180024"></script>
+<script src="hub-say.js?v=202610180024"></script>
+<script src="hub-sync.js?v=202610180024"></script>
+<script src="fol-interview.js?v=202610180024"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the trainee's submission form with a
@@ -413,9 +413,14 @@ function render(){
               html += `<div class="tutorcomment"><span class="tutorlabel">Your tutor, on \u201C${esc(c.text)}\u201D</span>${nl2br(cm||'(not met \u2014 no comment left)')}</div>`;
             }
           });
-          if (onRound2 && sub.sub1 && sub.sub1.text && sub.sub1.text[i]) html += `<div class="firstround"><span class="fr-tag">Your first submission \u2014 as marked, read-only</span><div class="tmloc" data-loc="t${i}" data-round="sub1"><div class="readonly">${nl2br(sub.sub1.text[i])}</div><div class="tmgut"></div></div><button type="button" class="copyfirst" data-role="copyfirst" data-i="${i}" ${locked?'disabled':''}>Start the resubmission from this</button></div>`;
+          if (onRound2 && sub.sub1 && sub.sub1.text && sub.sub1.text[i]) html += `<div class="firstround"><span class="fr-tag">Your first submission \u2014 as marked, read-only</span><div class="tmloc" data-loc="t${i}" data-round="sub1"><div class="readonly">${hubHeadHTML(sub.sub1.text[i], s.heads)}</div><div class="tmgut"></div></div><button type="button" class="copyfirst" data-role="copyfirst" data-i="${i}" ${locked?'disabled':''}>Start the resubmission from this</button></div>`;
           const fin = sub.stage === 'closed' ? (sub.sub2 || sub.sub1) : null;
-          if (fin && fin.text && fin.text[i]) html += `<div class="tmloc" data-loc="t${i}" data-round="${sub.sub2 ? 'sub2' : 'sub1'}"><div class="readonly">${nl2br(fin.text[i])}</div><div class="tmgut"></div></div>`;
+          if (fin && fin.text && fin.text[i]) html += `<div class="tmloc" data-loc="t${i}" data-round="${sub.sub2 ? 'sub2' : 'sub1'}"><div class="readonly">${hubHeadHTML(fin.text[i], s.heads)}</div><div class="tmgut"></div></div>`;
+          else if (s.heads && s.heads.length) {
+            /* a headline over each part of the answer, a box under each (18 Oct 2026) */
+            const hv = hubSplitHeads(TEXT[i], s.heads);
+            html += s.heads.map((h, k) => `<label class="hdl" for="h${i}_${k}">${esc(h)}</label><textarea id="h${i}_${k}" data-role="texth" data-i="${i}" data-h="${k}" rows="3" class="${onRound2?'resub':''}" ${locked?'disabled':''} ${onRound2?'placeholder="Your resubmission"':''}>${esc(hv[k]||'')}</textarea>`).join('');
+          }
           else html += `<textarea data-role="text" data-i="${i}" rows="4" class="${onRound2?'resub':''}" ${locked?'disabled':''} ${onRound2?'placeholder="Your resubmission"':''}>${esc(TEXT[i]||'')}</textarea>`;
         }
       }
@@ -531,7 +536,8 @@ function wcMeter(el, a){
 }
 
 function countWords(){
-  let text = Object.values(TEXT||{}).join(' ') + ' ' + Object.values(FIELDS||{}).join(' ');
+  const secs = (WORDING && WORDING[CURRENT] && WORDING[CURRENT].sections) || [];
+  let text = Object.keys(TEXT||{}).map(i => hubBareText(TEXT[i], (secs[i] || {}).heads)).join(' ') + ' ' + Object.values(FIELDS||{}).join(' ');
   return (text.match(/\S+/g) || []).length;
 }
 function wordCountOk(a){
@@ -650,6 +656,11 @@ function bindInputs(){
   }));
   document.querySelectorAll('[data-role="text"]').forEach(el => el.addEventListener('input', () => {
     TEXT[el.dataset.i] = el.value; dirty = true; autosave();
+  }));
+  document.querySelectorAll('[data-role="texth"]').forEach(el => el.addEventListener('input', () => {
+    const i = el.dataset.i, heads = WORDING[CURRENT].sections[i].heads || [];
+    const vals = heads.map((h, k) => { const b = document.getElementById('h' + i + '_' + k); return b ? b.value : ''; });
+    TEXT[i] = hubJoinHeads(heads, vals); dirty = true; autosave();
   }));
   document.querySelectorAll('[data-role="chip"]').forEach(el => el.addEventListener('click', () => {
     const i = el.dataset.i, cat = el.dataset.cat, val = el.dataset.val;

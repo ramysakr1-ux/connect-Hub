@@ -13,7 +13,7 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610180006">
+<link rel="stylesheet" href="hub-tokens.css?v=202610180024">
 <style>
   /* ---- The assignment editor, v2 (11 Oct 2026) -------------------------------
      From the designer's handoff "Assignment editor v2". The page behind Edit
@@ -179,6 +179,8 @@
   .critcard .ch{display:flex; align-items:baseline; justify-content:space-between; gap:14px; margin-bottom:4px; flex-wrap:wrap;}
   .critcard h2{font-family:'Newsreader',Georgia,serif; font-size:1.2rem; font-weight:600; margin:0;}
   .critcard .ch span{font-size:0.8rem; color:var(--grey);}
+  .headsrow{margin:8px 0 2px;} .headsrow label{display:block; font-size:0.78rem; font-weight:700; margin:0 0 4px;} .headsrow label span{font-weight:400; color:var(--grey);}
+  .headsrow textarea{width:100%; box-sizing:border-box; font:inherit; font-size:0.86rem; line-height:1.5; padding:8px 10px; border:1.5px solid var(--row-line); border-radius:6px; resize:vertical;}
   /* The marking guidance (17 Oct 2026): tutors and the assessor only. */
   .gcard .gfield{display:flex; flex-direction:column; gap:5px; margin-top:12px;}
   .gcard .gfield label{font-size:0.8rem; font-weight:700;}
@@ -311,7 +313,7 @@
     #hubSync.inbar{margin-right:auto; max-width:calc(100% - 272px);}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610180006">
+<link rel="stylesheet" href="hub-house.css?v=202610180024">
 </head>
 <body class="hub-paper" data-sync-ok="Connected to the course &mdash; wording is kept when you press Save" data-sync-ok-short="Connected">
 <div class="board">
@@ -330,14 +332,14 @@
   </div>
 </div></div>
 <div class="menu" id="menu" hidden></div>
-<script src="assignment-defaults.js?v=202610180006"></script>
-<script src="hub-due.js?v=202610180006"></script>
-<script src="hub-rotation.js?v=202610180006"></script>
-<script src="hub-docx.js?v=202610180006"></script>
-<script src="hub-shared.js?v=202610180006"></script>
-<script src="hub-store.js?v=202610180006"></script>
-<script src="hub-say.js?v=202610180006"></script>
-<script src="hub-sync.js?v=202610180006"></script>
+<script src="assignment-defaults.js?v=202610180024"></script>
+<script src="hub-due.js?v=202610180024"></script>
+<script src="hub-rotation.js?v=202610180024"></script>
+<script src="hub-docx.js?v=202610180024"></script>
+<script src="hub-shared.js?v=202610180024"></script>
+<script src="hub-store.js?v=202610180024"></script>
+<script src="hub-say.js?v=202610180024"></script>
+<script src="hub-sync.js?v=202610180024"></script>
 <script>
 /* The course pill goes into the save bar, left of Discard, on every screen
    size: floating in the corner it covered the brief (12 Oct 2026). A plain
@@ -685,8 +687,10 @@ function textSectionHTML(s, i){
   const o = originalOf(i);
   return `${sectionHead(s, i)}
     <textarea class="body" rows="${rowsFor(s.body)}" oninput="updateSection(${i},'body',this.value)" placeholder="What the trainee reads, in your own words.">${esc(s.body)}</textarea>
+    ${s.readonly === true || (window.hubIsReference && hubIsReference(s)) ? '' : `<div class="headsrow"><label for="heads-${i}">Headlines <span>(optional, one per line: the trainee writes under each)</span></label>
+      <textarea id="heads-${i}" rows="${Math.max(2, (s.heads || []).length)}" oninput="updateHeads(${i},this.value)" placeholder="Level&#10;Length&#10;Interests">${esc((s.heads || []).join('\n'))}</textarea></div>`}
     <div class="sfoot" data-foot="${i}">${restoreFoot(i, true)}<span class="sp"></span>
-      <span>${s.readonly === true ? 'They read this. No answer box.' : 'They answer under this.'}</span></div>
+      <span>${s.readonly === true ? 'They read this. No answer box.' : (s.heads && s.heads.length ? 'They answer under each headline.' : 'They answer under this.')}</span></div>
     ${OPEN_ORIG.has(i) && o ? `<div class="orig"><span class="ol">Connect’s original · ${esc(o.label)}</span>${esc(o.body)}</div>` : ''}`;
 }
 /* A picker's groups are edited through hubPickerCats, so this one editor reads
@@ -890,7 +894,7 @@ function previewHTML(a){
          they tick (9_assignment_submission), so the preview does too. */
       body = `<div class="pfield" style="margin:0 0 14px;"><b>Materials link (if this assignment uses outside material)</b><div class="ph">If you\u2019re linking a Drive file or worksheet here, use different material from any assessed TP lesson \u2014 Handbook 9.2.1.</div><div class="pwrite" style="height:44px;">https://drive.google.com/...</div></div><div class="pdecl">${s.items.map(it => `☐ ${esc(it)}`).join('<br>')}${s.aiToggle ? '<br><br>○ Used AI   ○ Did not use AI<br><span style="color:var(--grey);font-size:0.84rem;">If they used it: a link to the conversation, and what it was for.</span>' : ''}</div>`;
     } else {
-      body = `<div class="pb">${md(s.body)}</div>${s.readonly === true ? '' : '<div class="pwrite">the candidate writes here</div>'}`;
+      body = `<div class="pb">${md(s.body)}</div>${s.readonly === true ? '' : (s.heads && s.heads.length ? s.heads.map(h => `<div class="pfield"><b>${esc(h)}</b><div class="pwrite">the candidate writes here</div></div>`).join('') : '<div class="pwrite">the candidate writes here</div>')}`;
     }
     return `<div class="psec"><h3>${esc(s.label)}</h3>${body}${window.hubTrapSpan ? hubTrapSpan(a.trap) : ''}</div>`;
   }).join('');
@@ -1158,6 +1162,11 @@ function removeCriterion(ci){
 
 function updateTitle(v){ DATA[CURRENT].title = v; }
 function updateSection(i, key, v){ DATA[CURRENT].sections[i][key] = v; }
+/* Headlines (18 Oct 2026): one per line, each a signpost for a paragraph */
+function updateHeads(i, v){
+  const h = String(v).split('\n').map(x => x.replace(/^\s+|\s+$/g, '')).filter(Boolean);
+  if (h.length) DATA[CURRENT].sections[i].heads = h; else delete DATA[CURRENT].sections[i].heads;
+}
 function updateField(i, fi, key, v){ DATA[CURRENT].sections[i].fields[fi][key] = v; }
 function addField(i){ DATA[CURRENT].sections[i].fields.push({label:'New field', hint:''}); render(); }
 function removeField(i, fi){ DATA[CURRENT].sections[i].fields.splice(fi,1); render(); }

@@ -13,7 +13,7 @@
 <title>Connect Lite — Mark assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610180006">
+<link rel="stylesheet" href="hub-tokens.css?v=202610180024">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -168,7 +168,7 @@
   @media(prefers-reduced-motion:reduce){ .mv2-seg{transition:none;} .critrow.mv2-hit{animation:none;} }
   @media print{ .mv2{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610180006">
+<link rel="stylesheet" href="hub-house.css?v=202610180024">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -177,15 +177,15 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610180006"></script>
-<script src="hub-exchange.js?v=202610180006"></script>
+<script src="assignment-defaults.js?v=202610180024"></script>
+<script src="hub-exchange.js?v=202610180024"></script>
 <script src="hub-marking.js?v=202610172152"></script>
-<script src="hub-due.js?v=202610180006"></script>
-<script src="hub-shared.js?v=202610180006"></script>
-<script src="hub-store.js?v=202610180006"></script>
-<script src="hub-say.js?v=202610180006"></script>
-<script src="hub-sync.js?v=202610180006"></script>
-<script src="fol-interview.js?v=202610180006"></script>
+<script src="hub-due.js?v=202610180024"></script>
+<script src="hub-shared.js?v=202610180024"></script>
+<script src="hub-store.js?v=202610180024"></script>
+<script src="hub-say.js?v=202610180024"></script>
+<script src="hub-sync.js?v=202610180024"></script>
+<script src="fol-interview.js?v=202610180024"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -333,7 +333,7 @@ function summarize(a, snap, round){
      or a tutor would have marked a 1,400-word assignment with nothing saying
      so. Counted exactly as screen 9 counts it, so the two agree. */
   if (a.wordMin) {
-    const n = (Object.values(snap.text||{}).join(' ') + ' ' + Object.values(snap.fields||{}).join(' ')).match(/\S+/g);
+    const n = (Object.keys(snap.text||{}).map(i => hubBareText(snap.text[i], ((a.sections||[])[i] || {}).heads)).join(' ') + ' ' + Object.values(snap.fields||{}).join(' ')).match(/\S+/g);
     const c = n ? n.length : 0;
     const ok = c >= a.wordMin && c <= a.wordMax;
     out += `<p class="note" style="margin:0 0 10px;${ok?'':'color:var(--brick);'}">${c} words submitted, against ${esc(a.wordMin+'\u2013'+a.wordMax)}${ok?'':' \u2014 outside the range'}</p>`;
@@ -350,7 +350,7 @@ function summarize(a, snap, round){
     // tutor: hubIsReference covers both "Before you start" and the read-only
     // blocks an assignment can now carry (a letter, a text, a class profile).
     if (s.type==='text' && !hubIsReference(s) && snap.text && snap.text[i]) {
-      out += `<div class="roundlabel" data-sec="${i}">${esc(s.label)}</div><div class="mloc" data-loc="t${i}" data-round="${round || ''}" data-sec="${i}"><div class="readonly">${nl2br(snap.text[i])}</div><div class="mgut"></div></div>`;
+      out += `<div class="roundlabel" data-sec="${i}">${esc(s.label)}</div><div class="mloc" data-loc="t${i}" data-round="${round || ''}" data-sec="${i}"><div class="readonly">${hubHeadHTML(snap.text[i], s.heads)}</div><div class="mgut"></div></div>`;
     } else if (s.type==='picker' && snap.picked && snap.picked[i]) {
       const p = snap.picked[i] || {};
       out += `<div class="roundlabel">${esc(s.label)}</div><div class="readonly">${hubPickerCats(s).map(c =>

@@ -28,6 +28,58 @@
   var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
   var $ = function (id) { return document.getElementById(id); };
 
+  /* ---- the guidance, cut into blocks ---------------------------------- */
+  function blocks(text) {
+    return String(text || '').split(/\n{2,}/).map(function (b) {
+      var lines = b.split('\n'); return { head: lines[0].trim(), body: lines.slice(1).join('\n'), all: b };
+    }).filter(function (x) { return x.head; });
+  }
+  function letterOf(label) { var m = String(label || '').match(/^\s*([A-H])\b[.\u00b7\s]/); return m ? m[1] : ''; }
+  /* The block for one place in the work: a written section by its letter
+     ("A.  Choosing Your Text" -> "A \u00b7 Choosing the text"), a table row by its
+     field name ("Clarification of meaning" -> "Meaning and clarification"). */
+  function blockFor(loc) {
+    var g = CTX && CTX.guide; if (!g || !g.sections || !loc) return null;
+    var bl = blocks(g.sections), sec = CTX.a.sections[+loc.getAttribute('data-sec')] || {}, field = loc.getAttribute('data-field');
+    if (field) { var w = field.toLowerCase().split(/\s+/)[0]; return bl.filter(function (b) { return b.head.toLowerCase().indexOf(w) >= 0 && !/^model/i.test(b.head); })[0] || null; }
+    var L = letterOf(sec.label);
+    return L ? (bl.filter(function (b) { return letterOf(b.head) === L; })[0] || null) : null;
+  }
+  /* THE "WHILE YOU READ" CARD, BACK (18 Oct 2026). Ramy asked where it went.
+     A small pill in the corner of the screen, shut until you want it; opened,
+     it shows what a Met answer looks like for the section you are reading and
+     follows you from section to section. Laptop only: on a phone the room
+     is the work's. */
+  var OBS = null, CURLOC = null, READ_OPEN = false;
+  function readEl() { var e = $('mkRead'); if (!e) { e = document.createElement('div'); e.id = 'mkRead'; e.className = 'mk-read'; e.hidden = true; document.body.appendChild(e); } return e; }
+  function paintRead() {
+    var el = readEl();
+    if (!CTX || !CTX.marking || innerWidth < 1080 || helpHidden() || !CURLOC) { el.hidden = true; return; }
+    var b = blockFor(CURLOC); if (!b) { el.hidden = true; return; }
+    el.hidden = false;
+    el.innerHTML = READ_OPEN
+      ? '<div class="rd-top"><b>While you read: ' + esc(b.head) + '</b><button type="button" data-readclose>Close</button></div><div class="rd-body">' + hubGuidanceHTML(b.body) + '</div>'
+      : '<button type="button" class="rd-pill" data-readopen>Guidance for ' + esc(b.head.split(/\s*\u00b7\s*/)[0]) + '</button>';
+  }
+  function watchReading() {
+    if (OBS) OBS.disconnect();
+    var locs = [].slice.call(document.querySelectorAll('#mkWork .mloc'));
+    if (!locs.length || !('IntersectionObserver' in window)) return;
+    var seen = new Map();
+    OBS = new IntersectionObserver(function (ents) {
+      ents.forEach(function (e) { seen.set(e.target, e.isIntersecting ? e.boundingClientRect.top : null); });
+      var best = null, bt = Infinity;
+      seen.forEach(function (t, el) { if (t != null && t > -400 && t < bt) { bt = t; best = el; } });
+      if (best && best !== CURLOC) { CURLOC = best; paintRead(); }
+    }, { rootMargin: '-15% 0px -45% 0px' });
+    locs.forEach(function (l) { OBS.observe(l); });
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest ? e.target : null; if (!t) return;
+    if (t.closest('[data-readopen]')) { READ_OPEN = true; paintRead(); }
+    else if (t.closest('[data-readclose]')) { READ_OPEN = false; paintRead(); }
+  });
+
   /* ---- the criterion's guidance, beside its note ------------------------ */
   function showTip(i, anchor) {
     var g = CTX && CTX.guide; var t = g && g.crit && g.crit[i];
@@ -528,6 +580,7 @@
       paintStep2();
       paintHelp();
       paintDock();
+      CURLOC = null; watchReading(); paintRead();
       if (RESEL) { var id = RESEL; RESEL = null; reselect(id); }
     }
   };
@@ -621,6 +674,12 @@
       '.mk-nohelp .mk-tiplink{display:none;}',
       '.mk-tied svg.hub-tick, .dr-ev svg.hub-tick{width:1em; height:1em; vertical-align:-0.18em; margin:0 2px 0 0; filter:none;}',
       '@media (max-width:1079px){ .mk-dock{top:auto; bottom:0; padding:8px 10px calc(8px + env(safe-area-inset-bottom)); border-bottom:none; border-top:1px solid var(--sand-line); box-shadow:0 -6px 20px oklch(25% 0.02 60 / .12);} .dk-up{display:none;} .dk-prog{font-size:0.72rem;} .dk-chip{padding:5px 10px;} }',
+      '.mk-read{position:fixed; right:18px; bottom:18px; z-index:48; max-width:min(420px, calc(100vw - 36px));}',
+      '.rd-pill{font:700 0.8rem Karla,sans-serif; color:var(--as, var(--teal)); background:var(--paper); border:1.5px solid var(--as, var(--teal)); border-radius:20px; padding:9px 16px; cursor:pointer; box-shadow:0 8px 24px oklch(25% 0.02 60 / .16);} .rd-pill:hover{background:var(--sand) !important;}',
+      '.mk-read:has(.rd-top){background:var(--sand); border:1px solid var(--sand-line); border-left:3px solid var(--as, var(--teal)); border-radius:var(--r-strip); box-shadow:0 14px 40px oklch(25% 0.02 60 / .2); max-height:56vh; overflow:auto; font-size:0.82rem; line-height:1.5;}',
+      '.rd-top{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:9px 12px; border-bottom:1px solid var(--sand-line); position:sticky; top:0; background:var(--sand); color:var(--as, var(--teal));} .rd-top button{font:600 0.76rem Karla,sans-serif; background:none; border:none; color:var(--grey); text-decoration:underline; cursor:pointer;} .rd-top button:hover{background:none !important;}',
+      '.rd-body{padding:4px 12px 10px;} .rd-body p{margin:5px 0;} .rd-body h4{margin:8px 0 2px; font-size:0.82rem;}',
+      '@media print{ .mk-read{display:none !important;} }',
       '@media print{ .mk-selbar,.mk-editor,.mk-tip,.mk-dock,.mk-drop,.mk-prev-wrap,.mk-checks,.mk-keys,.mk-help{display:none !important;} }'
     ].join('\n');
     (document.head || document.documentElement).appendChild(st);

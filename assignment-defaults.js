@@ -272,21 +272,25 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
       {
         "type": "text",
         "label": "A.  Choosing Your Text",
+        "heads": ["Text chosen", "Level", "Length", "Interests", "Genre", "Enough to build the tasks"],
         "body": "• Choose ONE text. Check it suits their level (englishprofile.org helps), is a sensible length, matches their interests, is a genre they would meet outside class, and gives you enough to build two reading tasks and one productive task from.\n• Write which text you chose, and why, against those points."
       },
       {
         "type": "text",
         "label": "B.  Your First Reading Task",
+        "heads": ["Reading for gist", "My task", "How it develops gist reading", "Procedure"],
         "body": "• Design a reading-for-gist task and attach it as Appendix 2, laid out as a handout, with the answer key. It must need the text — not answerable by common sense — and focus on the message, not on vocabulary or grammar. Reading stage only: no lead-in, no pre-teaching.\n• Write what reading for gist is, with reference to your reading; how your task develops it, and whether these learners would do something similar outside class; and the procedure — set-up, what students do, interaction, timing, and how you handle feedback and wrong answers."
       },
       {
         "type": "text",
         "label": "C.  Your Second Reading Task",
+        "heads": ["Sub-skill chosen", "My task", "How it develops it", "Procedure"],
         "body": "• Choose reading for specific information OR reading for detail. Design the task and attach it as Appendix 3, laid out as a handout, with the answer key. Same conditions as B.\n• Write which sub-skill you chose and what it is, with reference to your reading; how your task develops it; and the procedure, as in B."
       },
       {
         "type": "text",
         "label": "D.  Your Productive Follow-up Task",
+        "heads": ["Skill chosen and why", "Why a follow-up stage matters", "My task", "Procedure and feedback"],
         "body": "• Choose speaking OR writing. Design the task and attach it as Appendix 4, laid out as a handout. It must genuinely follow the text and have a communicative purpose — for speaking, learners need a reason to listen to each other.\n• Write which skill you chose and why, with reference to the learners’ needs; why a follow-up stage after reading matters, with reference to your reading; and the procedure, with feedback on whether the task was achieved."
       },
       {
@@ -353,26 +357,31 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
       {
         "type": "text",
         "label": "A.  Your TP Group",
+        "heads": ["The group", "Languages", "Jobs and education", "Why they learn English", "Previous learning", "Learning preferences"],
         "body": "• How many students, their genders, age range and level.\n• Their first languages, and any others they speak.\n• Their jobs and education — first names in brackets, no surnames.\n• Why they are learning English. Use the terminology from your reading.\n• Their previous English learning — how long, and by what methods.\n• Their learning preferences. The activities you choose later must match these."
       },
       {
         "type": "text",
         "label": "B.  The Grammar Problem",
+        "heads": ["The grammar area", "Example 1", "Example 2", "Why they make it"],
         "body": "• Name the grammar area, using the correct term.\n• Give two examples of the mistake. For each: who made it, spoken or written, which lesson stage, and the correct version.\n• Explain why they make it — L1 interference, level, fossilisation, not enough practice."
       },
       {
         "type": "text",
         "label": "C.  The Pronunciation Problem",
+        "heads": ["The pronunciation area", "Example 1", "Example 2", "Why they make it"],
         "body": "• Name the area, using the correct term and IPA.\n• Give two examples. For each: who made it, and both the wrong and the correct pronunciation in IPA.\n• Explain why they make it, as in B."
       },
       {
         "type": "text",
         "label": "D.  The Grammar Task",
+        "heads": ["The task and where it is from", "Why it fits", "Procedure", "A source for the learners"],
         "body": "• Attach ONE task as Appendix 1 and say where it is from. One task only — tutors cannot choose for you.\n• Explain why it fits: the group’s preferences from A, their level, and the context the mistakes were made in.\n• Describe the procedure: set-up, what students do, for how long, in what interaction, how you monitor, and how you give feedback.\n• Suggest one source the learners could use on their own to keep working on this grammar — a book, a website or an app — or someone who could support them, and say why it suits them."
       },
       {
         "type": "text",
         "label": "E.  The Pronunciation Task",
+        "heads": ["The task and where it is from", "Why it fits", "Procedure", "A source for the learners"],
         "body": "• Attach ONE task as Appendix 2 and say where it is from. It must have students producing the sound, not just hearing it — repeating after the teacher is not a task.\n• Explain why it fits: the group’s preferences from A, and their level.\n• Describe the procedure, as in D.\n• Suggest one source or support for working on this sound on their own, as in D."
       },
       {
@@ -435,21 +444,25 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
       {
         "type": "text",
         "label": "A.  Your Strengths",
-        "body": "• From the tutor feedback on your three most recent TPs, identify three teaching strengths you have shown.\n• Back each one with at least one tutor comment, saying which TP it is from, e.g. (TP6). Add a peer comment, or something your students said or showed, if you can.\n• Explain how each strength benefits the students.\n\nStrength 1 —\nStrength 2 —\nStrength 3 —"
+        "heads": ["Strength 1", "Strength 2", "Strength 3"],
+        "body": "• From the tutor feedback on your three most recent TPs, identify three teaching strengths you have shown.\n• Back each one with at least one tutor comment, saying which TP it is from, e.g. (TP6). Add a peer comment, or something your students said or showed, if you can.\n• Explain how each strength benefits the students."
       },
       {
         "type": "text",
         "label": "B.  Your Action Points",
-        "body": "• From the same feedback, identify three action points you still have, each backed with at least one tutor comment and the TP it is from.\n• Explain how each action point affects the students, and give one practical suggestion for addressing it.\n\nAction point 1 —\nAction point 2 —\nAction point 3 —"
+        "heads": ["Action point 1", "Action point 2", "Action point 3"],
+        "body": "• From the same feedback, identify three action points you still have, each backed with at least one tutor comment and the TP it is from.\n• Explain how each action point affects the students, and give one practical suggestion for addressing it."
       },
       {
         "type": "text",
         "label": "C.  What You Learned From Watching Others",
-        "body": "• For each action point in B, give one example of another teacher avoiding that problem — from your peer observation tasks, tutors’ live lessons or video observations.\n• Say who (a tutor or peer by first name, or the video number), what they did, using their actual words where it helps, and why it worked.\n\nExample for action point 1 —\nExample for action point 2 —\nExample for action point 3 —"
+        "heads": ["Example for action point 1", "Example for action point 2", "Example for action point 3"],
+        "body": "• For each action point in B, give one example of another teacher avoiding that problem — from your peer observation tasks, tutors’ live lessons or video observations.\n• Say who (a tutor or peer by first name, or the video number), what they did, using their actual words where it helps, and why it worked."
       },
       {
         "type": "text",
         "label": "D.  After the Course",
+        "heads": ["Area 1", "Area 2", "Area 3"],
         "body": "• Choose three areas to focus on after the course — your own language, a teaching context, a method, an area of language analysis, or similar.\n• For each: why it is a priority and how working on it will affect your students, and what you will actually do over the next year — books by author and title, an exam and why, a conference or course with a link."
       },
       {
