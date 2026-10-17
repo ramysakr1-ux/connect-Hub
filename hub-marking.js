@@ -261,78 +261,9 @@
      Only what can be told from the text. Each line is ticked, flagged for a
      look, or just information; a flag is never a mark. */
   function snapNow() { var s = CTX.sub; return CTX.marking ? s[CTX.round] : (s.sub2 || s.sub1); }
-  function textOf(snap, test) {
-    var a = CTX.a, out = [];
-    a.sections.forEach(function (sec, i) {
-      if (sec.type === 'text' && !window.hubIsReference(sec) && test(sec.label || '', i)) out.push((snap.text || {})[i] || '');
-      if (sec.type === 'fields') sec.fields.forEach(function (f, fi) {
-        if (!test(f.label || '', i, true)) return;
-        Object.keys(snap.fields || {}).forEach(function (k) { if (k.indexOf('s' + i + '_') === 0 && /_f(\d+)$/.exec(k)[1] == fi) out.push(snap.fields[k]); });
-      });
-    });
-    return out.join('\n');
-  }
-  var isBib = function (l) { return /bibliograph|^references?\b|references used/i.test(l); };
-  function surnamesCited(t) {
-    var set = {}, m, re1 = /\(([A-Z][A-Za-z’'\-]+)(?:\s+(?:and|&)\s+[A-Z][A-Za-z’'\-]+)?(?:\s+et al\.?)?,?\s*(\d{4})/g, re2 = /\b([A-Z][A-Za-z’'\-]+)(?:\s+(?:and|&)\s+[A-Z][A-Za-z’'\-]+)?(?:\s+et al\.?)?\s+\((\d{4})/g;
-    while ((m = re1.exec(t))) set[m[1]] = 1;
-    while ((m = re2.exec(t))) if (!/^(In|The|See|Page|Appendix|TP|Section|Text)$/.test(m[1])) set[m[1]] = 1;
-    return Object.keys(set);
-  }
   function checksHTML() {
-    var snap = snapNow(); if (!snap) return '';
-    var a = CTX.a, k = CTX.key, items = [];
-    var add = function (state, label, detail) { items.push({ state: state, label: label, detail: detail || '' }); };
-    /* words, counted as the trainee's page counts them */
-    if (a.wordMin) {
-      var w = (Object.values(snap.text || {}).join(' ') + ' ' + Object.values(snap.fields || {}).join(' ')).match(/\S+/g); w = w ? w.length : 0;
-      add(w >= a.wordMin && w <= a.wordMax ? 'ok' : 'look', w + ' words', w < a.wordMin ? 'Under ' + a.wordMin + '. Not a criterion, but thin work usually fails on the analysis anyway.' : w > a.wordMax ? 'Over ' + a.wordMax + '. Not a criterion: do not fail it for length.' : 'In the range.');
-    }
-    /* sources */
-    var body = textOf(snap, function (l, i, f) { return !isBib(l); });
-    var bib = textOf(snap, function (l) { return isBib(l); });
-    /* LRT names its sources in each item's References row, not in running text: the page-number check below covers it */
-    if (k !== 'lrt' && (bib || /\(\D*\d{4}\)/.test(body))) {
-      var cited = surnamesCited(body);
-      var missing = cited.filter(function (n) { return bib.indexOf(n) < 0; });
-      var bibNames = bib.split(/\n+/).map(function (l) { var mm = l.trim().match(/^([A-Z][A-Za-z’'\-]+),/); return mm ? mm[1] : ''; }).filter(Boolean);
-      var unused = bibNames.filter(function (n, i) { return body.indexOf(n) < 0 && bibNames.indexOf(n) === i; });
-      if (!cited.length) add(k === 'lfc' ? 'info' : 'look', 'No source cited in the text', k === 'lfc' ? 'LFC has no referencing criterion: credit reading where it is cited.' : 'A source in the bibliography but never used in the body does not meet the referencing criterion.');
-      else add(missing.length ? 'look' : 'ok', 'Sources cited in the text: ' + cited.join(', '), missing.length ? 'Not in the bibliography: ' + missing.join(', ') + '.' : 'Each one is in the bibliography.');
-      if (unused.length && k !== 'lfc') add('info', 'In the bibliography only', unused.join(', ') + ': listed but not used in the text.');
-    }
-    /* LRT: a source per item, with page numbers; phonemic script and stress */
-    if (k === 'lrt') {
-      var refs = [], pron = [];
-      a.sections.forEach(function (sec, i) { if (sec.type !== 'fields') return; sec.fields.forEach(function (f, fi) {
-        Object.keys(snap.fields || {}).forEach(function (key) { var mm = key.match(/^s(\d+)_i(\d+)_f(\d+)$/); if (!mm || +mm[1] !== i || +mm[3] !== fi) return;
-          if (/^references?/i.test(f.label)) refs.push(snap.fields[key]); if (/^pronunciation/i.test(f.label)) pron.push(snap.fields[key]); }); }); });
-      if (refs.length) { var pg = refs.filter(function (r) { return /\bpp?\.\s*\d|\b\d{1,4}\s*[–\-]\s*\d{1,4}\b|,\s*\d{1,4}\b/.test(r); }).length; add(pg === refs.length ? 'ok' : 'look', 'Page numbers: ' + pg + ' of ' + refs.length + ' items', pg === refs.length ? 'Each item names a source with a page.' : 'The brief asks for a page number where the source has one.'); }
-      if (pron.length) {
-        var ipa = pron.filter(function (t) { return /\/[^\/\n]*[ɐ-ʯˈˌːəθð][^\/\n]*\//.test(t); }).length;
-        var st = pron.filter(function (t) { return /[ˈ]/.test(t); }).length;
-        add(ipa === pron.length ? 'ok' : 'look', 'Phonemic script: ' + ipa + ' of ' + pron.length + ' items', ipa === pron.length ? 'Check the symbols themselves as you read.' : 'An item with no phonemic script fails criterion 1.');
-        add(st === pron.length ? 'ok' : 'info', 'Stress marked: ' + st + ' of ' + pron.length + ' items', 'Missing stress is usually a note, not a fail, unless stress is the point of the item.');
-      }
-    }
-    /* FoL: IPA in the pronunciation section */
-    if (k === 'fol') {
-      var pr = textOf(snap, function (l) { return /pronunciation/i.test(l); });
-      if (pr) add(/[ɐ-ʯəˈːθð]/.test(pr) ? 'ok' : 'look', 'IPA in the pronunciation problem', /[ɐ-ʯəˈːθð]/.test(pr) ? 'There is phonemic script in section C.' : 'Missing IPA is a criterion 3 failure.');
-    }
-    /* appendices: the materials link the brief asks for */
-    var intro = (a.sections.filter(function (x) { return /^before you start$/i.test((x.label || '').trim()); })[0] || {}).body || '';
-    if (/materials link|appendi/i.test(intro)) add(snap.materialsLink ? 'ok' : 'look', snap.materialsLink ? 'Materials link attached' : 'No materials link', snap.materialsLink ? 'Open it from the top of the work.' : 'The brief asks for the tasks to be attached.');
-    /* the declaration and AI */
-    var d = null; a.sections.forEach(function (sec, i) { if (sec.type === 'declaration') d = (snap.decl || {})[i]; });
-    if (d) {
-      var all = (d.checks || []).every(Boolean);
-      add(all ? 'ok' : 'look', all ? 'Declaration signed' : 'Declaration not complete', all ? '' : 'Every line of the declaration should be ticked.');
-      if (d.aiUsed === 'yes') add(d.aiLink ? 'info' : 'look', 'AI declared: ' + (d.aiPurpose || 'no purpose given'), d.aiLink ? 'Check it is one of the permitted uses and cited in the text.' : 'No link to the conversation.');
-      else if (d.aiUsed) add('ok', 'No AI declared');
-    }
-    /* the hidden word */
-    if (a.trap) { var hit = window.hubTrapFound && hubTrapFound(a.trap, { sub1: snap }); add(hit ? 'look' : 'ok', hit ? 'The hidden word is in this work' : 'Hidden word not in the work', hit ? 'A prompt to look more closely; follow the centre’s usual process.' : ''); }
+    var snap = snapNow(); if (!snap || !window.hubWorkChecks) return '';
+    var items = hubWorkChecks(CTX.a, snap, CTX.key, 'tutor');
     var looks = items.filter(function (x) { return x.state === 'look'; }).length;
     return '<details class="guide-box mk-checks"' + (looks ? ' open' : '') + '><summary>Before you mark: ' + items.length + ' checks' + (looks ? ', ' + looks + ' to look at' : ', all clear') + '</summary><div class="gb"><ul class="mkc">' +
       items.map(function (x) { return '<li class="' + x.state + '"><b>' + (x.state === 'ok' ? 'Done' : x.state === 'look' ? 'Look' : 'Note') + '</b><span>' + esc(x.label) + (x.detail ? '<small>' + esc(x.detail) + '</small>' : '') + '</span></li>'; }).join('') +

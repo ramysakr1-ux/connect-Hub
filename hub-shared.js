@@ -1122,6 +1122,18 @@ if (!window.HubStore) { if (document.readyState === 'loading') document.addEvent
     if (sub.sub2) html += '<div class="section"><h2>Resubmission</h2>' + submissionHTML(a, sub.sub2) + '</div>';
     html += '<div class="section"><h2>Assessment criteria</h2>'
       + criteriaTable(a, marks.sub1 || [], marks.sub2 || [], comments.sub1 || [], comments.sub2 || [], !!sub.sub2) + '</div>';
+    /* The tutors' comments on the text itself (17 Oct 2026): what each one
+       was about, in the trainee's words, then the comment. Empty ones never
+       reach the record. */
+    var mg = sub.margin || {};
+    var mList = function (r) { return (mg[r] || []).filter(function (c) { return c && c.text; }); };
+    if (mList('sub1').length || mList('sub2').length) {
+      html += '<div class="section"><h2>Comments on the text</h2>' + ['sub1', 'sub2'].map(function (r) {
+        var l = mList(r); if (!l.length) return '';
+        return (sub.sub2 ? '<div class="roundlabel">' + (r === 'sub1' ? 'On the first submission' : 'On the resubmission') + '</div>' : '') +
+          l.map(function (c) { return '<div class="comment">' + (c.quote ? '<em>\u201C' + esc(c.quote) + '\u201D</em><br>' : '') + nl2br(c.text) + (c.by ? ' <span style="color:#777;">(' + esc(c.by) + (c.role === 'second' ? ', second marker' : '') + ')</span>' : '') + '</div>'; }).join('');
+      }).join('') + '</div>';
+    }
     html += '<div class="section"><h2>Tutor\u2019s general comments</h2>'
       + (fb.generalComment1 ? '<div class="roundlabel">On the first submission</div><div class="comment">' + nl2br(fb.generalComment1) + '</div>' : '')
       + (fb.generalComment2 ? '<div class="roundlabel">On the resubmission</div><div class="comment">' + nl2br(fb.generalComment2) + '</div>' : '')
@@ -1135,7 +1147,19 @@ if (!window.HubStore) { if (document.readyState === 'loading') document.addEvent
       + (sub.marked1At ? ' \u00b7 ' + esc(when(sub.marked1At)) : '')
       + (sub.marked2At ? ' \u00b7 resubmission marked ' + esc(when(sub.marked2At)) : '')
       + '<br>Second marker: <strong>' + esc(mk.second || '\u2014') + '</strong> \u00b7 ' + (mk.doubleMarked ? 'double-marked' : 'not double-marked')
-      + '</p></div>';
+      + '</p>' + (function () {
+        /* Double marking is not blind: the second marker saw the first's marks
+           and agreed or disagreed with each (17 Oct 2026). */
+        var sec = sub.second || {}, out = '';
+        ['sub1', 'sub2'].forEach(function (r) {
+          var x = sec[r]; if (!x || !x.crit) return;
+          var n = (a.criteria || []).length, keys = Object.keys(x.crit).filter(function (i) { return typeof x.crit[i].agree === 'boolean'; });
+          var dis = keys.filter(function (i) { return x.crit[i].agree === false; });
+          out += '<p class="readonly">' + (sec.sub1 && sec.sub2 ? (r === 'sub1' ? 'First submission: ' : 'Resubmission: ') : '') + esc(x.by || 'The second marker') + ' agreed with ' + (keys.length - dis.length) + ' of ' + n + ' marks' + (dis.length ? '; disagreed on criterion ' + dis.map(function (i) { return +i + 1; }).join(' and ') : '') + '.' +
+            dis.map(function (i) { return x.crit[i].note ? '<br>' + (+i + 1) + ': ' + esc(x.crit[i].note) : ''; }).join('') + '</p>';
+        });
+        return out;
+      })() + '</div>';
     return html;
   };
 })();
@@ -1633,4 +1657,118 @@ window.hubPickTrap = function(taken){
   var free = window.HUB_TRAP_WORDS.filter(function(w){ return !t[w]; });
   var a = new Uint32Array(1); (window.crypto || {}).getRandomValues ? crypto.getRandomValues(a) : (a[0] = Date.now());
   return free[a[0] % free.length];
+};
+
+/* THE CHECKS LITE CAN DO ON A PIECE OF WRITTEN WORK (17 Oct 2026). One list,
+   worded for whoever reads it: the tutor before marking (hub-marking.js), the
+   trainee before Submit (9_assignment_submission.html). Only what can be told
+   from the text; a flag is never a mark. who = 'tutor' | 'trainee'. The
+   hidden word, the AI declaration and the declaration itself are the tutor's
+   only: a trainee is never told there is a hidden word. */
+window.hubWorkChecks = function (a, snap, key, who) {
+  var T = who === 'trainee', items = [];
+  var add = function (state, label, tutor, trainee) { items.push({ state: state, label: label, detail: (T ? trainee : tutor) || '' }); };
+  var isRef = window.hubIsReference || function () { return false; };
+  var isBib = function (l) { return /bibliograph|^references?\b|references used/i.test(l); };
+  var textOf = function (test) {
+    var out = [];
+    (a.sections || []).forEach(function (sec, i) {
+      if (sec.type === 'text' && !isRef(sec) && test(sec.label || '')) out.push((snap.text || {})[i] || '');
+      if (sec.type === 'fields') (sec.fields || []).forEach(function (f, fi) {
+        if (!test(f.label || '')) return;
+        Object.keys(snap.fields || {}).forEach(function (k) { var m = k.match(/^s(\d+)_i\d+_f(\d+)$/); if (m && +m[1] === i && +m[2] === fi) out.push(snap.fields[k]); });
+      });
+    });
+    return out.join('\n');
+  };
+  var fieldVals = function (re) { var out = []; (a.sections || []).forEach(function (sec, i) { if (sec.type !== 'fields') return; (sec.fields || []).forEach(function (f, fi) { if (!re.test(f.label || '')) return; Object.keys(snap.fields || {}).forEach(function (k) { var m = k.match(/^s(\d+)_i\d+_f(\d+)$/); if (m && +m[1] === i && +m[2] === fi) out.push(snap.fields[k] || ''); }); }); }); return out; };
+  /* words */
+  if (a.wordMin) {
+    var w = (Object.values(snap.text || {}).join(' ') + ' ' + Object.values(snap.fields || {}).join(' ')).match(/\S+/g); w = w ? w.length : 0;
+    var inR = w >= a.wordMin && w <= a.wordMax;
+    add(inR ? 'ok' : 'look', w + ' words',
+      w < a.wordMin ? 'Under ' + a.wordMin + '. Not a criterion, but thin work usually fails on the analysis anyway.' : w > a.wordMax ? 'Over ' + a.wordMax + '. Not a criterion: do not fail it for length.' : 'In the range.',
+      w < a.wordMin ? 'The brief asks for ' + a.wordMin + '–' + a.wordMax + ' words. A short answer often leaves out something the criteria need.' : w > a.wordMax ? 'The brief asks for ' + a.wordMin + '–' + a.wordMax + ' words. Cut what repeats.' : 'In the range.');
+  }
+  /* sources in the text and in the bibliography (LRT names them per item instead) */
+  var body = textOf(function (l) { return !isBib(l); }), bib = textOf(isBib);
+  if (key !== 'lrt' && (bib || /\(\D*\d{4}\)/.test(body))) {
+    var set = {}, m, re1 = /\(([A-Z][A-Za-z’'\-]+)(?:\s+(?:and|&)\s+[A-Z][A-Za-z’'\-]+)?(?:\s+et al\.?)?,?\s*(\d{4})/g, re2 = /\b([A-Z][A-Za-z’'\-]+)(?:\s+(?:and|&)\s+[A-Z][A-Za-z’'\-]+)?(?:\s+et al\.?)?\s+\((\d{4})/g;
+    while ((m = re1.exec(body))) set[m[1]] = 1;
+    while ((m = re2.exec(body))) if (!/^(In|The|See|Page|Appendix|TP|Section|Text)$/.test(m[1])) set[m[1]] = 1;
+    var cited = Object.keys(set), missing = cited.filter(function (n) { return bib.indexOf(n) < 0; });
+    var names = bib.split(/\n+/).map(function (l) { var mm = l.trim().match(/^([A-Z][A-Za-z’'\-]+),/); return mm ? mm[1] : ''; }).filter(Boolean);
+    var unused = names.filter(function (n, i) { return body.indexOf(n) < 0 && names.indexOf(n) === i; });
+    if (!cited.length) add(key === 'lfc' ? 'info' : 'look', 'No source cited in the text',
+      key === 'lfc' ? 'LFC has no referencing criterion: credit reading where it is cited.' : 'A source in the bibliography but never used in the body does not meet the referencing criterion.',
+      key === 'lfc' ? 'Not required here, but a book you mention by name in the text counts in your favour.' : 'Name your reading in the text where you use it, for example (Harmer, 2015). A bibliography on its own is not enough.');
+    else add(missing.length ? 'look' : 'ok', 'Sources in the text: ' + cited.join(', '),
+      missing.length ? 'Not in the bibliography: ' + missing.join(', ') + '.' : 'Each one is in the bibliography.',
+      missing.length ? 'Add to your bibliography: ' + missing.join(', ') + '.' : 'Each one is in your bibliography.');
+    if (unused.length && key !== 'lfc') add('info', 'In the bibliography only: ' + unused.join(', '), 'Listed but not used in the text.', 'Listed, but not mentioned in the text. Use it where it helps, or leave it out.');
+  }
+  /* LRT: a source per item with a page; phonemic script and stress */
+  if (key === 'lrt') {
+    var refs = fieldVals(/^references?/i), pron = fieldVals(/^pronunciation/i);
+    if (refs.length) { var pg = refs.filter(function (r) { return /\bpp?\.\s*\d|\b\d{1,4}\s*[–\-]\s*\d{1,4}\b|,\s*\d{1,4}\b/.test(r); }).length;
+      add(pg === refs.length ? 'ok' : 'look', 'Page numbers: ' + pg + ' of ' + refs.length + ' items', pg === refs.length ? 'Each item names a source with a page.' : 'The brief asks for a page number where the source has one.', pg === refs.length ? 'Each item names a source with a page.' : 'Give a page number for each source where it has one.'); }
+    if (pron.length) {
+      var ipa = pron.filter(function (t) { return /\/[^\/\n]*[ɐ-ʯˈˌːəθð][^\/\n]*\//.test(t); }).length;
+      var st = pron.filter(function (t) { return /ˈ/.test(t); }).length;
+      add(ipa === pron.length ? 'ok' : 'look', 'Phonemic script: ' + ipa + ' of ' + pron.length + ' items', ipa === pron.length ? 'Check the symbols themselves as you read.' : 'An item with no phonemic script fails criterion 1.', ipa === pron.length ? 'Every item has it.' : 'Write the pronunciation in phonemic script, between slashes, for every item.');
+      add(st === pron.length ? 'ok' : (T ? 'look' : 'info'), 'Stress marked: ' + st + ' of ' + pron.length + ' items', 'Missing stress is usually a note, not a fail, unless stress is the point of the item.', st === pron.length ? 'Every item has it.' : 'Mark the main stress with ˈ before the stressed syllable.');
+    }
+  }
+  /* FoL: IPA in the pronunciation section */
+  if (key === 'fol') {
+    var pr = textOf(function (l) { return /pronunciation/i.test(l); });
+    if (pr) { var has = /[ɐ-ʯəˈːθð]/.test(pr);
+      add(has ? 'ok' : 'look', has ? 'IPA in the pronunciation problem' : 'No IPA in the pronunciation problem', has ? 'There is phonemic script in section C.' : 'Missing IPA is a criterion 3 failure.', has ? 'There is phonemic script in section C.' : 'Section C asks for the sounds in IPA, both what the student said and the correct form.'); }
+  }
+  /* the materials link the brief asks for */
+  var intro = ((a.sections || []).filter(function (x) { return /^before you start$/i.test((x.label || '').trim()); })[0] || {}).body || '';
+  if (/materials link|appendi/i.test(intro)) add(snap.materialsLink ? 'ok' : 'look', snap.materialsLink ? 'Materials link attached' : 'No materials link', snap.materialsLink ? 'Open it from the top of the work.' : 'The brief asks for the tasks to be attached.', snap.materialsLink ? 'Your tutor can open it.' : 'The brief asks you to attach your tasks: paste the link in the declaration at the foot of the page.');
+  if (T) return items;
+  /* the tutor's only */
+  var d = null; (a.sections || []).forEach(function (sec, i) { if (sec.type === 'declaration') d = (snap.decl || {})[i]; });
+  if (d) {
+    var all = (d.checks || []).every(Boolean);
+    add(all ? 'ok' : 'look', all ? 'Declaration signed' : 'Declaration not complete', all ? '' : 'Every line of the declaration should be ticked.');
+    if (d.aiUsed === 'yes') add(d.aiLink ? 'info' : 'look', 'AI declared: ' + (d.aiPurpose || 'no purpose given'), d.aiLink ? 'Check it is one of the permitted uses and cited in the text.' : 'No link to the conversation.');
+    else if (d.aiUsed) add('ok', 'No AI declared');
+  }
+  if (a.trap && window.hubTrapFound) { var hit = hubTrapFound(a.trap, { sub1: snap }); add(hit ? 'look' : 'ok', hit ? 'The hidden word is in this work' : 'Hidden word not in the work', hit ? 'A prompt to look more closely; follow the centre’s usual process.' : ''); }
+  return items;
+};
+
+/* THE TUTOR'S MARGIN COMMENTS, ON THE TRAINEE'S PAGE (17 Oct 2026). Each
+   [data-loc][data-round] block holds one piece of returned work; a comment on
+   it highlights the words it is about and sits under the block, from "Your
+   tutor". Read-only: the tutor writes them on the marking page. */
+window.hubPaintMargin = function (root, margin) {
+  if (!root || !margin) return;
+  var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+  [].forEach.call(root.querySelectorAll('.tmloc[data-loc]'), function (loc) {
+    var items = (margin[loc.getAttribute('data-round')] || []).filter(function (c) { return c.loc === loc.getAttribute('data-loc') && c.text; });
+    if (!items.length) return;
+    var box = loc.querySelector('.readonly'), gut = loc.querySelector('.tmgut');
+    items.forEach(function (c, n) {
+      var walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT, null), nodes = [], t, all = '';
+      while ((t = walker.nextNode())) { nodes.push([t, all.length]); all += t.nodeValue; }
+      var at = c.quote ? all.indexOf(c.quote) : -1;
+      if (at >= 0) { var end = at + c.quote.length;
+        nodes.forEach(function (pr) { var node = pr[0], st = pr[1], sp = st + node.nodeValue.length; if (sp <= at || st >= end) return;
+          var x = Math.max(0, at - st), y = Math.min(node.nodeValue.length, end - st), mid = node.splitText(x); mid.splitText(y - x);
+          var mk = document.createElement('mark'); mk.className = 'tmc'; mk.title = 'Your tutor commented on this'; mid.parentNode.insertBefore(mk, mid); mk.appendChild(mid); }); }
+      gut.insertAdjacentHTML('beforeend', '<div class="tmcard"><span>Your tutor' + (c.quote ? ', on “' + esc(c.quote.length > 60 ? c.quote.slice(0, 58) + '…' : c.quote) + '”' : '') + '</span><p>' + esc(c.text) + '</p></div>');
+    });
+  });
+  if (!document.getElementById('hub-tmc-css')) {
+    var st = document.createElement('style'); st.id = 'hub-tmc-css';
+    st.textContent = 'mark.tmc{background:color-mix(in oklab, var(--gold-lifted) 34%, transparent); color:inherit; border-bottom:2px solid var(--gold); border-radius:2px; padding:0 1px;}' +
+      '.tmgut:empty{display:none;} .tmgut{display:flex; flex-direction:column; gap:8px; margin:6px 0 10px;}' +
+      '.tmcard{background:var(--paper); border:1px solid var(--amber-edge); border-left:3px solid var(--gold); border-radius:10px; padding:8px 11px; font-size:0.86rem; line-height:1.5;}' +
+      '.tmcard span{display:block; font-size:0.72rem; font-weight:700; color:var(--gold-deep); text-transform:uppercase; letter-spacing:.05em;} .tmcard p{margin:3px 0 0;}';
+    document.head.appendChild(st);
+  }
 };

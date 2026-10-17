@@ -15,7 +15,7 @@
 <title>Connect Lite — Assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610172235">
+<link rel="stylesheet" href="hub-tokens.css?v=202610172244">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -25,6 +25,15 @@
   .picker button{font-family:'Karla',sans-serif; font-size:0.82rem; font-weight:600; padding:7px 14px; border-radius:16px;
     border:1.5px solid var(--sand-line); background:var(--card); color:var(--ink); cursor:pointer;}
   .picker button.active{background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  .as-head{border-top:4px solid var(--as, var(--teal)) !important; background:color-mix(in oklab, var(--as, var(--teal)) 7%, var(--surface)) !important;}
+  .as-head h1, .as-head .eyebrow{color:var(--as, var(--ink)) !important;}
+  body[class*="as-"] .card > h2{color:var(--as);}
+  body[class*="as-"] .picker button.active, body[class*="as-"] .tabs button.active{background:var(--as); border-color:var(--as);}
+  .ps-wrap{position:fixed; inset:0; z-index:80; background:oklch(20% 0.02 60 / .38); display:flex; align-items:center; justify-content:center; padding:16px;}
+  .ps{width:min(500px,100%); background:var(--paper); border-radius:12px; border-top:3px solid var(--gold); padding:20px 22px; box-shadow:0 24px 70px oklch(20% 0.02 60 / .35);}
+  .ps h2{font-family:'Newsreader',Georgia,serif; margin:0 0 6px; font-size:1.3rem;} .ps p{margin:0 0 10px; font-size:0.9rem; line-height:1.5;}
+  .ps ul{margin:0 0 14px; padding:0; list-style:none;} .ps li{padding:8px 0; border-top:1px solid var(--row-line); font-size:0.88rem; line-height:1.45;} .ps li span{display:block; color:var(--grey); margin-top:2px;}
+  .ps-acts{display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;}
   .header{background:var(--surface); border-radius:6px; margin-bottom:20px; border-top:2px solid var(--teal); padding:22px 26px;}
   .header h1{font-family:'Newsreader',Georgia,serif; font-size:1.7rem; margin:0; color:var(--ink);}
   .header .meta{font-size:0.82rem; color:var(--grey); margin-top:8px; display:flex; gap:16px; flex-wrap:wrap;}
@@ -166,7 +175,7 @@
   @media(max-width:560px){ .wm{flex-wrap:wrap; gap:6px;} .wm-track{width:100%;} }
   @media print{ .wm-track{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610172235">
+<link rel="stylesheet" href="hub-house.css?v=202610172244">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -174,13 +183,13 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610172235"></script>
-<script src="hub-due.js?v=202610172235"></script>
-<script src="hub-shared.js?v=202610172235"></script>
-<script src="hub-store.js?v=202610172235"></script>
-<script src="hub-say.js?v=202610172235"></script>
-<script src="hub-sync.js?v=202610172235"></script>
-<script src="fol-interview.js?v=202610172235"></script>
+<script src="assignment-defaults.js?v=202610172244"></script>
+<script src="hub-due.js?v=202610172244"></script>
+<script src="hub-shared.js?v=202610172244"></script>
+<script src="hub-store.js?v=202610172244"></script>
+<script src="hub-say.js?v=202610172244"></script>
+<script src="hub-sync.js?v=202610172244"></script>
+<script src="fol-interview.js?v=202610172244"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the trainee's submission form with a
@@ -319,7 +328,9 @@ function render(){
      under the title before a word of the assignment (Ramy, 25 Sep 2026: "that
      top part... is just too crowded"). The criteria fold away under their
      count; the format is in the brief. */
-  let html = `<div class="header hue-${esc(CURRENT)}"><p class="eyebrow">Written assignments</p><h1>${esc(a.title)}</h1>
+  /* Each assignment's own colour (17 Oct 2026), the same as the tutor's marking page. */
+  document.body.className = document.body.className.replace(/\bas-\w+/g, '').trim() + ' as-' + CURRENT;
+  let html = `<div class="header hue-${esc(CURRENT)} as-head"><p class="eyebrow">Written assignment · ${esc(CURRENT === 'a5' ? 'Assignment 5' : CURRENT.toUpperCase())}</p><h1>${esc(a.title)}</h1>
     <div class="meta">${duePillHTML(dueFor(a, sub), locked)}${a.wordMin?`<span id="wcCounter"></span>`:''}</div>
     ${(a.criteria&&a.criteria.length)?`<details class="critfold"><summary>Marking criteria · ${a.criteria.length}</summary><ol>${a.criteria.map(c=>`<li>${esc(c.text)}</li>`).join('')}</ol></details>`:''}
   </div>`;
@@ -397,8 +408,10 @@ function render(){
               html += `<div class="tutorcomment"><span class="tutorlabel">Your tutor, on \u201C${esc(c.text)}\u201D</span>${nl2br(cm||'(not met \u2014 no comment left)')}</div>`;
             }
           });
-          if (onRound2 && sub.sub1 && sub.sub1.text && sub.sub1.text[i]) html += `<div class="firstround"><span class="fr-tag">Your first submission \u2014 as marked, read-only</span><div class="readonly">${nl2br(sub.sub1.text[i])}</div><button type="button" class="copyfirst" data-role="copyfirst" data-i="${i}" ${locked?'disabled':''}>Start the resubmission from this</button></div>`;
-          html += `<textarea data-role="text" data-i="${i}" rows="4" class="${onRound2?'resub':''}" ${locked?'disabled':''} ${onRound2?'placeholder="Your resubmission"':''}>${esc(TEXT[i]||'')}</textarea>`;
+          if (onRound2 && sub.sub1 && sub.sub1.text && sub.sub1.text[i]) html += `<div class="firstround"><span class="fr-tag">Your first submission \u2014 as marked, read-only</span><div class="tmloc" data-loc="t${i}" data-round="sub1"><div class="readonly">${nl2br(sub.sub1.text[i])}</div><div class="tmgut"></div></div><button type="button" class="copyfirst" data-role="copyfirst" data-i="${i}" ${locked?'disabled':''}>Start the resubmission from this</button></div>`;
+          const fin = sub.stage === 'closed' ? (sub.sub2 || sub.sub1) : null;
+          if (fin && fin.text && fin.text[i]) html += `<div class="tmloc" data-loc="t${i}" data-round="${sub.sub2 ? 'sub2' : 'sub1'}"><div class="readonly">${nl2br(fin.text[i])}</div><div class="tmgut"></div></div>`;
+          else html += `<textarea data-role="text" data-i="${i}" rows="4" class="${onRound2?'resub':''}" ${locked?'disabled':''} ${onRound2?'placeholder="Your resubmission"':''}>${esc(TEXT[i]||'')}</textarea>`;
         }
       }
       html += `</div>`;
@@ -444,8 +457,8 @@ function render(){
           html += `<div class="itemblock"><span class="tag">${esc(item)}</span>`;
           s.fields.forEach((f, fi) => {
             const first = onRound2 && sub.sub1 && sub.sub1.fields ? (sub.sub1.fields[`s${i}_i${ii}_f${fi}`]||'') : '';
-            html += `<div class="row"><label>${esc(f.label)}</label>${f.hint?`<p class="hint">${esc(f.hint)}</p>`:''}${first?`<div class="readonly fr-inline">${nl2br(first)}</div>`:''}
-              <textarea data-role="field" data-i="${i}" data-ii="${ii}" data-fi="${fi}" rows="2" class="${onRound2?'resub':''}" ${locked?'disabled':''} ${onRound2?'placeholder="Your resubmission"':''}>${esc((FIELDS[`s${i}_i${ii}_f${fi}`])||'')}</textarea></div>`;
+            html += `<div class="row"><label>${esc(f.label)}</label>${f.hint?`<p class="hint">${esc(f.hint)}</p>`:''}${first?`<div class="tmloc" data-loc="f:s${i}_i${ii}_f${fi}" data-round="sub1"><div class="readonly fr-inline">${nl2br(first)}</div><div class="tmgut"></div></div>`:''}
+              ${(sub.stage === 'closed' && ((sub.sub2 || sub.sub1 || {}).fields || {})[`s${i}_i${ii}_f${fi}`]) ? `<div class="tmloc" data-loc="f:s${i}_i${ii}_f${fi}" data-round="${sub.sub2 ? 'sub2' : 'sub1'}"><div class="readonly">${nl2br((sub.sub2 || sub.sub1).fields[`s${i}_i${ii}_f${fi}`])}</div><div class="tmgut"></div></div>` : `<textarea data-role="field" data-i="${i}" data-ii="${ii}" data-fi="${fi}" rows="2" class="${onRound2?'resub':''}" ${locked?'disabled':''} ${onRound2?'placeholder="Your resubmission"':''}>${esc((FIELDS[`s${i}_i${ii}_f${fi}`])||'')}</textarea>`}</div>`;
           });
           html += `</div>`;
         });
@@ -487,6 +500,7 @@ function render(){
   </div>`;
 
   $('app').innerHTML = html;
+  if (window.hubPaintMargin) hubPaintMargin($('app'), sub.margin || {});
   const wc = $('wcCounter');
   if (wc) wcMeter(wc, a);
   bindInputs();
@@ -670,7 +684,7 @@ function bindInputs(){
     MATERIALSLINK = el.value; dirty = true; autosave();
   }));
   const btn = $('submitBtn');
-  if (btn) btn.addEventListener('click', doSubmit);
+  if (btn) btn.addEventListener('click', preSubmit);
 }
 
 function snapshot(){ return { picked:PICKED, text:TEXT, fields:FIELDS, decl:DECL, materialsLink:MATERIALSLINK }; }
@@ -683,6 +697,23 @@ function autosave(){
   const s = $('status'); if (s) { s.textContent = 'Saved'; setTimeout(()=>{ if($('status')) $('status').textContent=''; }, 1200); }
 }
 
+/* A SHORT CHECK BEFORE SUBMIT (17 Oct 2026): what Lite can read in the work --
+   the word count, sources in the text and the bibliography, LRT's page
+   numbers and phonemic script, the materials link. Anything to look at is
+   listed, with Go back and Submit anyway: it never stops a submission. */
+function preSubmit(){
+  const a = WORDING[CURRENT];
+  const items = window.hubWorkChecks ? hubWorkChecks(a, snapshot(), CURRENT, 'trainee').filter(x => x.state === 'look') : [];
+  if (!items.length) { doSubmit(); return; }
+  let ov = document.getElementById('preSubmit');
+  if (!ov) { ov = document.createElement('div'); ov.id = 'preSubmit'; ov.className = 'ps-wrap'; document.body.appendChild(ov); }
+  ov.innerHTML = `<div class="ps" role="dialog" aria-label="Before you submit"><h2>Before you submit</h2><p>Lite read your work and found ${items.length === 1 ? 'one thing' : items.length + ' things'} worth a look. You can still submit as it is.</p>
+    <ul>${items.map(x => `<li><b>${esc(x.label)}</b>${x.detail ? `<span>${esc(x.detail)}</span>` : ''}</li>`).join('')}</ul>
+    <div class="ps-acts"><button type="button" class="btn" id="psBack">Go back and look</button><button type="button" class="btn btn-submit" id="psGo">Submit anyway</button></div></div>`;
+  ov.hidden = false;
+  document.getElementById('psBack').onclick = () => { ov.hidden = true; };
+  document.getElementById('psGo').onclick = () => { ov.hidden = true; doSubmit(); };
+}
 function doSubmit(){
   const sub = subFor(CURRENT);
   const snap = snapshot();
