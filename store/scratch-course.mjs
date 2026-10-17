@@ -36,7 +36,9 @@ const NAME = 'Film scratch — not a demo';
    the two standing demos. c3 left this list on 2 Oct 2026 -- the old running
    demo in that slot was deleted on 30 Sep and the slot is where a fresh
    scratch course now lands. The name check above is the real guard. */
-const KEEP = new Set(['c1', 'c2', 'c4', 'c6', 'c7']);
+/* 17 Oct 2026: the ids moved. C/18 is c5, the TP point library is c3, and the
+   film scratch course itself is c1, so c1 left the list and c3 and c5 joined it. */
+const KEEP = new Set(['c2', 'c3', 'c4', 'c5', 'c6', 'c7']);
 const MAKE = process.argv.includes('--make');
 const RESET = process.argv.includes('--reset');
 const ONE = process.argv.includes('--one');
