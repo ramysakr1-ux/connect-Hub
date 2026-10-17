@@ -87,7 +87,7 @@ window.hubObservationHours = function(records){
 // every other button in Lite; the literal is the same warm tone, for a page
 // that has not declared the token.
       ".confirm-cancel{background:var(--box,#faf1e4); color:var(--ink,#2b2620);}"+
-      ".confirm-cancel:hover{border-color:var(--teal);}"+
+      ".confirm-cancel:hover{background:var(--sand-deep,#f3efe6);}"+
       ".confirm-type{display:block; margin:0 0 16px;}"+
       ".confirm-type span{display:block; font-family:'Karla',sans-serif; font-size:0.78rem; font-weight:600; color:var(--grey,#6d655c); margin-bottom:6px;}"+
       ".confirm-type input{width:100%; box-sizing:border-box; font-family:'Karla',sans-serif; font-size:0.92rem; padding:9px 11px; border:1.5px solid var(--sand-line,#e2d9c8); border-radius:6px; background:var(--box,#faf1e4); color:var(--ink,#2b2620);}"+
@@ -125,8 +125,7 @@ window.hubObservationHours = function(records){
       "a.card:hover, a.room:hover, .cell:hover{ transform: translateY(-1px); box-shadow: var(--hub-ring); }"+
       ".cell:hover .chip{ box-shadow: none; }"+
       "button:not(:disabled), .btn, a.act, .chip[data-role], .pchip, .crit-toggle, .picker button, .filter, .tab, .sg, .rb, .copyfirst, .rowbtn, .export-return, .order-arrows button{ transition: box-shadow .12s ease, background-color .12s ease, border-color .12s ease; }"+
-      /* HOVER: ONLY THE BORDER MOVES (Ramy, 18 Oct 2026: "the hover is too much, like a flashlight... only the borders should move and not the whole thing. Should be a rule"). This used to put a 2px glow ring round every button and wash the fill of every plain one. Now a plain button, chip or pill keeps its fill and its border turns teal; a filled button keeps its own darker fill (its own rule). */
-      ".chip[data-role]:not(.disabled):not(.on):hover, .pchip:not(.on):hover, .crit-toggle:not(.on):hover, .picker button:not(.active):not(.on):hover, .rb:not(.on):hover, .copyfirst:not(:disabled):hover, .rowbtn:not(.go):hover, a.act:not(.primary):hover{ border-color: var(--teal); }"+
+      "button:not(:disabled):not(.tab):not(.filter):not(.sg):not(.say-pill):hover, .btn:not(:disabled):hover, a.act:hover, .chip[data-role]:not(.disabled):hover, .pchip:hover, .crit-toggle:hover, .picker button:hover, .rb:hover, .copyfirst:hover, .rowbtn:hover{ box-shadow: var(--hub-ring); }"+
       /* .btn is excluded too. On a course page .btn is already a FILLED teal
          button (hub-house: .hub-course .btn) with its own lift, but it carries
          none of the class names listed above -- so this rule out-specified the
@@ -137,7 +136,7 @@ window.hubObservationHours = function(records){
          its own (hub-say.js). Ramy, 6 Oct 2026, on the tutor's dashboard: "it
          just goes completely washed." This rule was turning the plum to the
          wash with the label still paper. */
-      "button:not(:disabled):not(.primary):not(.btn):not(.btn-teal):not(.btn-gold):not(.btn-add):not(.btn-submit):not(.active):not(.on):not(.picked):not(.confirm-action):not(.act):not(.tab):not(.filter):not(.sg):not(.say-pill):hover{ border-color: var(--teal); }"+
+      "button:not(:disabled):not(.primary):not(.btn):not(.btn-teal):not(.btn-gold):not(.btn-add):not(.btn-submit):not(.active):not(.on):not(.picked):not(.confirm-action):not(.act):not(.tab):not(.filter):not(.sg):not(.say-pill):hover{ background-color: var(--hub-wash); }"+
       "@media (prefers-reduced-motion: reduce){ a.card, a.room, .cell, button, .btn{ transition: none; } a.card:hover, a.room:hover, .cell:hover{ transform: none; } }";
     document.head.appendChild(hcss);
   }
