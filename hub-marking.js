@@ -643,7 +643,10 @@
       '.mc-by{font-size:0.8rem; color:var(--grey);}',
       '.mc-acts{float:right;} .mc-acts button{background:none; border:none; padding:0 0 0 10px; font:600 0.76rem Karla,sans-serif; color:var(--teal); cursor:pointer; text-decoration:underline; text-decoration-color:var(--sand-line);}',
       '.mc-acts button:hover{background:none !important; box-shadow:none !important;}',
-      '.mc-hit{animation:mcHit 1.3s ease-out 1;} @keyframes mcHit{0%{box-shadow:0 0 0 3px oklch(70% 0.12 72 / .7);}100%{box-shadow:0 0 0 3px oklch(70% 0.12 72 / 0);}}',
+      /* Which comment is it? The card gives a little shake: no colour, no gold frame (Ramy, 18 Oct 2026). The words, when you jump to them, get a faint ink outline that fades. */
+      '.mcard.mc-hit{animation:mcShake .5s ease-in-out 1;} @keyframes mcShake{0%,100%{transform:translateX(0);}18%{transform:translateX(-5px);}36%{transform:translateX(5px);}54%{transform:translateX(-3px);}72%{transform:translateX(3px);}}',
+      'mark.mc.mc-hit{animation:mcWords .9s ease-out 1;} @keyframes mcWords{0%{outline:2px solid oklch(40% 0.02 60 / .55); outline-offset:2px;}100%{outline:2px solid transparent; outline-offset:2px;}}',
+      '@media (prefers-reduced-motion: reduce){ .mcard.mc-hit, mark.mc.mc-hit{animation:none;} }',
       '.mk-pair .mloc.has-mc{display:block !important;}',
       '@media (min-width:1080px){ .mloc.has-mc{display:grid; grid-template-columns:minmax(0,1fr) minmax(320px,30%); gap:12px; align-items:start;} .mloc.has-mc .mgut{margin:0;} .mloc.has-mc .readonly{margin-bottom:0;} }',
       '.mk-selbar{position:fixed; z-index:60; display:flex; flex-wrap:wrap; gap:6px; max-width:min(560px, calc(100vw - 24px)); padding:7px; background:var(--ink); border-radius:12px; box-shadow:0 10px 30px oklch(20% 0.02 60 / .3);}',
