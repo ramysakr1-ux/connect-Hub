@@ -1617,7 +1617,8 @@ window.hubGuidance = function(key){
 window.hubGuidanceHTML = function(text){
   var esc = function(s){ return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
   return String(text || '').split(/\n{2,}/).map(function(block){
-    var lines = block.split('\n'), out = '', list = [];
+    /* "Quick:" lines are the marking bar's one-tap comments, not guidance to read */
+    var lines = block.split('\n').filter(function(l){ return !/^Quick:/.test(l); }), out = '', list = [];
     var flush = function(){ if (list.length) { out += '<ul>' + list.map(function(l){ return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>'; list = []; } };
     lines.forEach(function(l, i){
       if (/^\s*[•\-]\s+/.test(l)) { list.push(l.replace(/^\s*[•\-]\s+/, '')); return; }

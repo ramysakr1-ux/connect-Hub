@@ -51,6 +51,17 @@
     var L = letterOf(sec.label);
     return L ? (bl.filter(function (b) { return letterOf(b.head) === L; })[0] || null) : null;
   }
+  /* The one-tap comments for a section: "Quick: Label = Comment" lines in the
+     guidance (17 Oct 2026, Ramy: "is that a headline?"), a short label on the
+     button and a finished comment to the trainee in the box. A guidance with
+     none falls back to its shortfalls, label and text the same. */
+  function quickFor(b) {
+    if (!b) return [];
+    var q = b.all.split('\n').filter(function (l) { return /^Quick:/.test(l); }).map(function (l) {
+      var m = l.replace(/^Quick:\s*/, '').split(/\s*=\s*/); return { label: m[0], text: m.slice(1).join(' = ') || m[0], good: /^good\b/i.test(m[0]) };
+    });
+    return q.length ? q : shortfalls(b).map(function (t) { return { label: t, text: t + '.', good: false }; });
+  }
   function shortfalls(b) {
     if (!b) return [];
     var m = b.all.match(/Shortfalls:\s*([^\n]+)/);
@@ -188,8 +199,8 @@
       exact = full.slice(st, en);
     }
     SEL = { loc: loc, quote: exact.trim().slice(0, 300) };
-    var chips = shortfalls(blockFor(loc));
-    b.innerHTML = '<button type="button" class="sb-main" data-sb="">Comment</button>' + chips.map(function (c, k) { return '<button type="button" data-sb="' + k + '">' + esc(c) + '</button>'; }).join('');
+    var chips = quickFor(blockFor(loc));
+    b.innerHTML = '<button type="button" class="sb-main" data-sb="">Write a comment</button>' + (chips.length ? '<span class="sb-lab">or a quick one:</span>' : '') + chips.map(function (c, k) { return '<button type="button"' + (c.good ? ' class="sb-good"' : '') + ' data-sb="' + k + '" title="' + esc(c.text) + '">' + esc(c.label) + '</button>'; }).join('');
     b._chips = chips;
     b.hidden = false;
     var rr = r.getBoundingClientRect();
@@ -227,7 +238,7 @@
   document.addEventListener('click', function (e) {
     var t = e.target.closest ? e.target : null; if (!t || !CTX) return;
     var sb = t.closest('[data-sb]');
-    if (sb && SEL) { var k = sb.getAttribute('data-sb'); var b = bar(); b.hidden = true; editor({ loc: SEL.loc.getAttribute('data-loc'), quote: SEL.quote, text: k === '' ? '' : b._chips[+k] + '.' }); window.getSelection().removeAllRanges(); return; }
+    if (sb && SEL) { var k = sb.getAttribute('data-sb'); var b = bar(); b.hidden = true; editor({ loc: SEL.loc.getAttribute('data-loc'), quote: SEL.quote, text: k === '' ? '' : b._chips[+k].text }); window.getSelection().removeAllRanges(); return; }
     var ed = t.closest('[data-medit]');
     if (ed) { var c = list(writeRound()).filter(function (x) { return x.id === ed.getAttribute('data-medit'); })[0]; if (c) editor({ id: c.id, loc: c.loc, quote: c.quote, text: c.text, crit: c.crit }); return; }
     var del = t.closest('[data-mdel]'); if (del) { remove(del.getAttribute('data-mdel')); return; }
@@ -433,6 +444,8 @@
       '.mk-selbar{position:fixed; z-index:60; display:flex; flex-wrap:wrap; gap:6px; max-width:min(560px, calc(100vw - 24px)); padding:7px; background:var(--ink); border-radius:12px; box-shadow:0 10px 30px oklch(20% 0.02 60 / .3);}',
       '.mk-selbar button{font:600 0.78rem Karla,sans-serif; color:var(--paper); background:oklch(32% 0.02 65); border:none; border-radius:8px; padding:7px 10px; cursor:pointer; text-align:left;}',
       '.mk-selbar button.sb-main{background:var(--gold); color:var(--ink); font-weight:700;}',
+      '.mk-selbar .sb-lab{flex-basis:100%; font:600 0.72rem Karla,sans-serif; color:oklch(80% 0.02 70); padding:2px 2px 0;}',
+      '.mk-selbar button.sb-good{background:oklch(38% 0.06 160); color:var(--paper);}',
       '.mk-selbar button:hover{background:oklch(40% 0.03 65) !important; box-shadow:none !important;} .mk-selbar button.sb-main:hover{background:var(--gold-lifted) !important;}',
       '.mk-editor{position:fixed; z-index:61; left:50%; top:50%; transform:translate(-50%,-50%); width:min(460px, calc(100vw - 32px)); background:var(--paper); border:1px solid var(--sand-line); border-top:3px solid var(--gold); border-radius:var(--r-card); padding:16px; box-shadow:0 18px 50px oklch(20% 0.02 60 / .28);}',
       '.me-q{font-size:0.84rem; color:var(--grey); font-style:italic; margin:0 0 10px; line-height:1.45;}',
