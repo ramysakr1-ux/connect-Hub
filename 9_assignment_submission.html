@@ -15,7 +15,7 @@
 <title>Connect Lite — Assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610172118">
+<link rel="stylesheet" href="hub-tokens.css?v=202610172132">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -93,6 +93,10 @@
      (25 Sep 2026, and the same class-name trap as the Lite house style note). */
   .card.declcard{background:var(--surface); border-left-color:var(--sand-line);}
   .card .refbody strong{font-weight:700;}
+  .card.guide-card{padding:12px;}
+  .guide-box.guide-solo{margin:0; font-size:0.9rem;}
+  .guide-box.guide-solo > summary{font-size:0.95rem; padding:11px 16px;}
+  .guide-box.guide-solo .gb{padding:6px 18px 14px; max-width:70ch;}
   .chip{border:2px solid var(--sand-line); background:var(--field); color:var(--ink); font-family:'Karla',sans-serif;
     font-size:0.85rem; padding:7px 14px; border-radius:18px; cursor:pointer; margin:0 6px 6px 0;}
   .chip.picked{background:var(--teal); border-color:var(--teal); color:var(--paper); font-weight:600;}
@@ -162,7 +166,7 @@
   @media(max-width:560px){ .wm{flex-wrap:wrap; gap:6px;} .wm-track{width:100%;} }
   @media print{ .wm-track{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610172118">
+<link rel="stylesheet" href="hub-house.css?v=202610172132">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -170,13 +174,13 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610172118"></script>
-<script src="hub-due.js?v=202610172118"></script>
-<script src="hub-shared.js?v=202610172118"></script>
-<script src="hub-store.js?v=202610172118"></script>
-<script src="hub-say.js?v=202610172118"></script>
-<script src="hub-sync.js?v=202610172118"></script>
-<script src="fol-interview.js?v=202610172118"></script>
+<script src="assignment-defaults.js?v=202610172132"></script>
+<script src="hub-due.js?v=202610172132"></script>
+<script src="hub-shared.js?v=202610172132"></script>
+<script src="hub-store.js?v=202610172132"></script>
+<script src="hub-say.js?v=202610172132"></script>
+<script src="hub-sync.js?v=202610172132"></script>
+<script src="fol-interview.js?v=202610172132"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the trainee's submission form with a
@@ -370,6 +374,13 @@ function render(){
         // **bold** in a reference text is the target language ("The target
         // language is in bold"), and it showed as bare asterisks (25 Sep 2026).
         const refHtml = nl2br(s.body).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+        /* Advice, not material: "Before you start" and the reasons work comes
+           back sit in the house's guidance box (Ramy, 17 Oct 2026: "I like
+           that yellow box... use that inside Connect Lite. More often"). */
+        if (/^before you start$|reasons for resubmission/i.test(String(s.label).trim()) && window.hubGuidanceHTML) {
+          html += `<div class="card guide-card"><details class="guide-box guide-solo"${startsClosed?'':' open'}><summary>${esc(s.label)}</summary><div class="gb">${hubGuidanceHTML(s.body)}</div></details></div>`;
+          return;
+        }
         html += `<details class="card ref ${startsClosed?'':'open'}"${startsClosed?'':' open'}><summary><h2>${esc(s.label)}</h2><span class="fold" aria-hidden="true"></span></summary><div class="refbody">${refHtml}</div></details>`;
         return;
       }

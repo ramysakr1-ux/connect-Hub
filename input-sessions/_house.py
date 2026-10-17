@@ -121,7 +121,8 @@ def notes_block(slug):
     """The trainer's side: hidden until the gate opens it."""
     return ('\n\n  <section id="trainer" class="trainer-notes" hidden>\n    <div class="card">\n'
             '      <div class="stage-title">Trainer notes <span class="badge">Tutor only</span></div>\n'
-            + NOTES[slug].strip() + '\n    </div>\n  </section>')
+            + '      <div class="guide-box gb-plain tn-box"><div class="gb">\n'
+            + NOTES[slug].strip() + '\n      </div></div>\n    </div>\n  </section>')
 
 HEAD = '''<!DOCTYPE html>
 <html lang="en" class="gating">
