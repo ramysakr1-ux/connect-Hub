@@ -249,11 +249,15 @@
     while (z < t.length && isW.test(t[z])) z++;
     if (a === z) return false;
     var word = document.createRange(); word.setStart(pos.node, a); word.setEnd(pos.node, z);
-    var same = false;
-    try { same = !!(PICK && PICK.box === box && PICK.word && PICK.word.compareBoundaryPoints(Range.START_TO_START, word) === 0 && PICK.word.compareBoundaryPoints(Range.END_TO_END, word) === 0); } catch (x) {}
+    /* clicks count only when they come one right after another on the same word,
+       like any double or triple click; a click later, or after clicking out,
+       starts again at one word (Ramy, 18 Oct 2026: "I click back again on one,
+       I get the whole section. Not just one word") */
+    var same = false, now = Date.now();
+    try { same = !!(PICK && PICK.box === box && now - PICK.t < 650 && PICK.word && PICK.word.compareBoundaryPoints(Range.START_TO_START, word) === 0 && PICK.word.compareBoundaryPoints(Range.END_TO_END, word) === 0); } catch (x) {}
     var level = same ? Math.min(3, PICK.level + 1) : 1;   /* no fourth click: clicking OUTSIDE the highlight lets go (Ramy, 18 Oct 2026) */
     var range = level === 1 ? word : level === 2 ? paragraphRange(pos.node, box) : (function () { var r = document.createRange(); r.selectNodeContents(box); return r; })();
-    PICK = { box: box, level: level, word: word.cloneRange() };
+    PICK = { box: box, level: level, word: word.cloneRange(), t: now };
     var sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
     onSelect();
     return true;
@@ -266,7 +270,7 @@
     if (inUI(e.target)) return;
     var ro = readonlyOf(e.target), moved = DOWN && Math.hypot(e.clientX - DOWN.x, e.clientY - DOWN.y) > 4;
     if (ro && CTX && !moved && !e.target.closest('mark.mc, .mcard, a, button') && clickPick(e, ro)) return;
-    if (moved) PICK = null;
+    PICK = null;
     setTimeout(onSelect, 10);
   });
 
