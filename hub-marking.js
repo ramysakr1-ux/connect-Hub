@@ -28,76 +28,6 @@
   var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
   var $ = function (id) { return document.getElementById(id); };
 
-  /* ---- the guidance, cut into blocks ---------------------------------- */
-  function blocks(text) {
-    return String(text || '').split(/\n{2,}/).map(function (b) {
-      var lines = b.split('\n'); return { head: lines[0].trim(), body: lines.slice(1).join('\n'), all: b };
-    }).filter(function (x) { return x.head; });
-  }
-  function letterOf(label) { var m = String(label || '').match(/^\s*([A-H])\b[.·\s]/); return m ? m[1] : ''; }
-  /* The block for one place in the work: a written section by its letter
-     (A. Choosing your text -> "A · Choosing the text"), a table row by its
-     field name (Clarification of meaning -> "Meaning and clarification"). */
-  function blockFor(loc) {
-    var g = CTX && CTX.guide; if (!g || !g.sections || !loc) return null;
-    var bl = blocks(g.sections);
-    var sec = CTX.a.sections[+loc.getAttribute('data-sec')] || {};
-    var field = loc.getAttribute('data-field');
-    if (field) {
-      var w = field.toLowerCase().split(/\s+/);
-      var key = w[0] === 'clarification' ? 'clarification' : w[0] === 'anticipated' ? 'anticipated' : w[0];
-      return bl.filter(function (b) { return b.head.toLowerCase().indexOf(key) >= 0 && !/^model/i.test(b.head); })[0] || null;
-    }
-    var L = letterOf(sec.label);
-    return L ? (bl.filter(function (b) { return letterOf(b.head) === L; })[0] || null) : null;
-  }
-  /* The one-tap comments for a section: "Quick: Label = Comment" lines in the
-     guidance (17 Oct 2026, Ramy: "is that a headline?"), a short label on the
-     button and a finished comment to the trainee in the box. A guidance with
-     none falls back to its shortfalls, label and text the same. */
-  function quickFor(b) {
-    if (!b) return [];
-    var q = b.all.split('\n').filter(function (l) { return /^Quick:/.test(l); }).map(function (l) {
-      var m = l.replace(/^Quick:\s*/, '').split(/\s*=\s*/); return { label: m[0], text: m.slice(1).join(' = ') || m[0], good: /^good\b/i.test(m[0]) };
-    });
-    return q.length ? q : shortfalls(b).map(function (t) { return { label: t, text: t + '.', good: false }; });
-  }
-  function shortfalls(b) {
-    if (!b) return [];
-    var m = b.all.match(/Shortfalls:\s*([^\n]+)/);
-    if (!m) return [];
-    return m[1].split(/;\s*/).map(function (t) {
-      t = t.replace(/\.$/, '').trim(); return t.charAt(0).toUpperCase() + t.slice(1);
-    }).filter(function (t) { return t.length > 3 && t.length < 120; }).slice(0, 4);
-  }
-
-  /* ---- the floating card for the section being read -------------------- */
-  var SHUT = {}, OBS = null, CUR = null;
-  function paintFloat(loc) {
-    var host = $('mkFloat'); if (!host) return;
-    var b = blockFor(loc), id = b ? b.head : '';
-    if (!b || SHUT[id]) { host.hidden = true; CUR = null; return; }
-    if (CUR === id && !host.hidden) return;
-    CUR = id;
-    host.innerHTML = '<div class="mkf-top"><span>While you read: ' + esc(b.head) + '</span><button type="button" class="mkf-x" aria-label="Hide this">Hide</button></div>' +
-      '<div class="mkf-body">' + (window.hubGuidanceHTML ? hubGuidanceHTML(b.body) : esc(b.body)) + '</div>';
-    host.hidden = false;
-    host.querySelector('.mkf-x').onclick = function () { SHUT[id] = 1; host.hidden = true; };
-  }
-  function watchReading() {
-    if (OBS) OBS.disconnect();
-    var locs = [].slice.call(document.querySelectorAll('#mkWork .mloc'));
-    if (!locs.length || !('IntersectionObserver' in window)) return;
-    var seen = new Map();
-    OBS = new IntersectionObserver(function (ents) {
-      ents.forEach(function (e) { seen.set(e.target, e.isIntersecting ? e.boundingClientRect.top : null); });
-      var best = null, bt = Infinity;
-      seen.forEach(function (t, el) { if (t != null && t > -400 && t < bt) { bt = t; best = el; } });
-      if (best) paintFloat(best);
-    }, { rootMargin: '-15% 0px -45% 0px' });
-    locs.forEach(function (l) { OBS.observe(l); });
-  }
-
   /* ---- the criterion's guidance, beside its note ------------------------ */
   function showTip(i, anchor) {
     var g = CTX && CTX.guide; var t = g && g.crit && g.crit[i];
@@ -107,16 +37,14 @@
     tip.hidden = false;
     var r = anchor.getBoundingClientRect(), w = Math.min(360, innerWidth - 32);
     tip.style.width = w + 'px';
-    if (innerWidth >= 1080) {
-      /* beside the panel, over the work's edge, level with the box */
-      var panel = $('mkPanel').getBoundingClientRect();
-      tip.style.left = Math.max(16, panel.left - w - 14) + 'px';
-      tip.style.top = Math.min(Math.max(16, r.top - 20), innerHeight - tip.offsetHeight - 16) + 'px';
-      tip.classList.remove('below');
+    if ((document.body.className || '').indexOf('mk-nohelp') >= 0) { tip.hidden = true; return; }
+    /* to the right of the box if there is room, else above it */
+    if (r.right + 14 + w <= innerWidth - 16) {
+      tip.style.left = (r.right + 14) + 'px';
+      tip.style.top = Math.min(Math.max(70, r.top - 20), innerHeight - tip.offsetHeight - 16) + 'px';
     } else {
-      tip.style.left = '16px';
-      tip.style.top = Math.max(16, r.top - tip.offsetHeight - 10) + 'px';
-      tip.classList.add('below');
+      tip.style.left = Math.max(16, Math.min(r.left, innerWidth - w - 16)) + 'px';
+      tip.style.top = Math.max(70, r.top - tip.offsetHeight - 10) + 'px';
     }
   }
   function hideTip() { var t = $('mkTip'); if (t) t.hidden = true; }
@@ -130,37 +58,28 @@
   function writeRound() { return secondMode() ? secondRound() : CTX.round; }
   function mine(c) { return !c.by || c.by === CTX.me; }
   function critShort(i) { var c = (CTX.a.criteria || [])[i]; var t = c ? (c.text || c) : ''; return (+i + 1) + '. ' + (t.length > 60 ? t.slice(0, 58) + '…' : t); }
+  function newId(p) { return p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function evidenceFor(i, round) { return list(round || CTX.round).filter(function (c) { return c.crit != null && c.crit !== '' && String(c.crit) === String(i); }); }
+  var SEL = null, JUST_TICKED = null, RESEL = null;
 
-  /* Highlight the first match of the quote inside one block of text. */
-  function highlight(box, quote, id, cls) {
-    if (!quote) return false;
-    var walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT, null), nodes = [], n, all = '';
-    while ((n = walker.nextNode())) { nodes.push([n, all.length]); all += n.nodeValue; }
-    var at = all.indexOf(quote); if (at < 0) return false;
-    var end = at + quote.length;
-    nodes.forEach(function (pair) {
-      var node = pair[0], start = pair[1], stop = start + node.nodeValue.length;
-      if (stop <= at || start >= end) return;
-      var a = Math.max(0, at - start), b = Math.min(node.nodeValue.length, end - start);
-      var mid = node.splitText(a); mid.splitText(b - a);
-      var m = document.createElement('mark'); m.className = cls || 'mc'; m.dataset.mc = id;
-      mid.parentNode.insertBefore(m, mid); m.appendChild(mid);
-    });
-    return true;
-  }
   function paintMargin() {
-    var marking = CTX.marking;
     [].forEach.call(document.querySelectorAll('#mkWork .mloc'), function (loc) {
       var round = loc.getAttribute('data-round'), here = loc.getAttribute('data-loc');
       var items = list(round).filter(function (c) { return c.loc === here; });
       var gut = loc.querySelector('.mgut'); if (!gut) return;
       var box = loc.querySelector('.readonly');
+      /* ticks first: n of them, spread over the words (hubTickSpots) */
       items.filter(function (c) { return c.tick; }).forEach(function (c) {
-        if (highlight(box, c.quote, c.id, 'mc mc-tick')) { var ms = box.querySelectorAll('mark[data-mc="' + c.id + '"]'); var last = ms[ms.length - 1]; if (last) last.insertAdjacentHTML('afterend', '<span class="tickmark" role="img" aria-label="ticked">' + (window.hubTickSVG ? hubTickSVG(c.id === JUST_TICKED ? 'draw' : '') : '\u2713') + '</span>'); }
+        var at = hubHighlight(box, c.quote, c.id, 'mc mc-tick');
+        if (at < 0) return;
+        hubTickSpots(c.quote, c.n || 1).forEach(function (sp) {
+          var span = document.createElement('span'); span.className = 'tickmark'; span.setAttribute('role', 'img'); span.setAttribute('aria-label', 'ticked');
+          span.innerHTML = hubTickSVG(c.id === JUST_TICKED ? 'draw' : ''); hubInsertAt(box, at + sp, span);
+        });
       });
-      items = items.filter(function (c) { return !c.tick; });
-      gut.innerHTML = items.map(function (c) {
-        highlight(box, c.quote, c.id);
+      var cm = items.filter(function (c) { return !c.tick; });
+      gut.innerHTML = cm.map(function (c) {
+        hubHighlight(box, c.quote, c.id);
         return '<div class="mcard' + (c.role === 'second' ? ' by-second' : '') + '" data-mcard="' + c.id + '">' +
           (c.crit != null && c.crit !== '' ? '<span class="mc-crit">Criterion ' + (+c.crit + 1) + '</span>' : '') +
           '<p>' + esc(c.text) + '</p>' +
@@ -168,53 +87,133 @@
           (canWrite(round) && mine(c) ? '<span class="mc-acts"><button type="button" data-medit="' + c.id + '">Edit</button><button type="button" data-mdel="' + c.id + '">Delete</button></span>' : '') +
           '</div>';
       }).join('');
-      loc.classList.toggle('has-mc', items.length > 0);
+      loc.classList.toggle('has-mc', cm.length > 0);
     });
-    /* under each criterion: the margin comments tied to it */
+    paintEvidence();
+  }
+  /* under each criterion on the front page: what you tied to it, as you read */
+  function paintEvidence() {
     [].forEach.call(document.querySelectorAll('[data-linked]'), function (el) {
-      var i = el.getAttribute('data-linked');
-      var tied = list(CTX.round).filter(function (c) { return !c.tick && String(c.crit) === String(i); });
-      el.innerHTML = tied.length ? '<div class="mk-tied"><span>From your margin comments</span>' + tied.map(function (c) {
-        return '<button type="button" data-goto="' + c.id + '">“' + esc(c.quote.length > 50 ? c.quote.slice(0, 48) + '…' : c.quote) + '”: ' + esc(c.text) + '</button>';
-      }).join('') + '</div>' : '';
+      var i = el.getAttribute('data-linked'), ev = evidenceFor(i);
+      if (!ev.length) { el.innerHTML = ''; return; }
+      var cm = ev.filter(function (c) { return !c.tick; }), tk = ev.filter(function (c) { return c.tick; });
+      var nt = tk.reduce(function (a, c) { return a + (c.n || 1); }, 0);
+      var head = [cm.length ? cm.length + ' comment' + (cm.length > 1 ? 's' : '') : '', tk.length ? nt + ' tick' + (nt > 1 ? 's' : '') : ''].filter(Boolean).join(', ') + ' under this criterion';
+      var q = function (t) { return esc(t.length > 56 ? t.slice(0, 54) + '…' : t); };
+      el.innerHTML = '<div class="mk-tied"><span>' + head + '</span>' +
+        cm.map(function (c) { return '<button type="button" data-goto="' + c.id + '">“' + q(c.quote) + '”: ' + esc(c.text) + '</button>'; }).join('') +
+        tk.map(function (c) { return '<button type="button" data-goto="' + c.id + '">' + hubTickSVG() + ' “' + q(c.quote) + '”' + ((c.n || 1) > 1 ? ' ×' + c.n : '') + '</button>'; }).join('') + '</div>';
     });
-    if (!marking) return;
+  }
+
+  /* what was selected, as one flat string (a line break is a space) */
+  function flatText(frag) {
+    var out = '', w = document.createTreeWalker(frag, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, null), n;
+    while ((n = w.nextNode())) { if (n.nodeType === 3) out += n.nodeValue; else if (n.nodeName === 'BR') out += ' '; }
+    return out;
+  }
+  function selectionInfo(range) {
+    var node = range.commonAncestorContainer; node = node.nodeType === 1 ? node : node.parentNode;
+    var loc = node.closest && node.closest('#mkWork .mloc'); if (!loc) return null;
+    var box = loc.querySelector('.readonly');
+    if (!box || !box.contains(range.startContainer) || !box.contains(range.endContainer)) return null;
+    var pre = document.createRange(); pre.setStart(box, 0); pre.setEnd(range.startContainer, range.startOffset);
+    var st = flatText(pre.cloneContents()).length, en = st + flatText(range.cloneContents()).length;
+    var full = hubFlat(box).all, isW = /[\p{L}\p{N}]/u;
+    /* whole words: a selection that stops mid-word takes the rest of the word */
+    while (st > 0 && isW.test(full[st - 1]) && isW.test(full[st])) st--;
+    while (en < full.length && isW.test(full[en]) && isW.test(full[en - 1])) en++;
+    var q = full.slice(st, en).replace(/^\s+|\s+$/g, '');
+    return q.length < 2 ? null : { loc: loc, quote: q.slice(0, 2000) };
   }
 
   /* the bar that appears over a selection */
-  var SEL = null, JUST_TICKED = null;
   function bar() { var b = $('mkSelBar'); if (!b) { b = document.createElement('div'); b.id = 'mkSelBar'; b.className = 'mk-selbar'; b.hidden = true; document.body.appendChild(b); } return b; }
+  function tickRec() { return SEL && SEL.tickId ? list(writeRound()).filter(function (x) { return x.id === SEL.tickId; })[0] : null; }
+  function showBar(r) {
+    var b = bar(), cr = CTX.a.criteria || [], ex = tickRec(), n = ex ? (ex.n || 1) : 0;
+    b.innerHTML = '<div class="sb-row"><button type="button" class="sb-main" data-sb="">Comment</button>' +
+      '<button type="button" class="sb-good" data-tick>' + hubTickSVG() + ' Good' + (n ? '<span class="sb-n">×' + n + '</span>' : '') + '</button>' +
+      (n ? '<button type="button" class="sb-minus" data-untick title="One tick fewer" aria-label="One tick fewer">−</button>' : '') + '</div>' +
+      (cr.length ? '<div class="sb-row sb-ties"><span class="sb-lab">Tie to criterion</span>' + cr.map(function (c, i) { return '<button type="button" class="sb-c' + (SEL.crit === i ? ' on' : '') + '" data-bcrit="' + i + '" title="' + esc(critShort(i)) + '">' + (i + 1) + '</button>'; }).join('') + '</div>' : '');
+    b.hidden = false;
+    var rr = r.getBoundingClientRect(), w = Math.min(b.offsetWidth, innerWidth - 24);
+    b.style.left = Math.max(12, Math.min(rr.left, innerWidth - w - 12)) + 'px';
+    b.style.top = (rr.bottom + 8 + b.offsetHeight > innerHeight ? Math.max(70, rr.top - b.offsetHeight - 8) : rr.bottom + 8) + 'px';
+  }
   function onSelect() {
     var s = window.getSelection(), b = bar();
-    if (!CTX || !s || s.isCollapsed) { b.hidden = true; return; }
-    var r = s.getRangeAt(0), box = r.commonAncestorContainer;
-    box = box.nodeType === 1 ? box : box.parentNode;
-    var loc = box.closest && box.closest('#mkWork .mloc');
-    var q = s.toString().replace(/\s+/g, ' ').trim();
-    if (!loc || !q || q.length < 2 || !canWrite(loc.getAttribute('data-round'))) { b.hidden = true; return; }
-    var readonly = loc.querySelector('.readonly');
-    var exact = s.toString(); if (readonly.textContent.indexOf(exact) < 0) exact = q;
-    /* whole words: a selection that stops mid-word takes the rest of the word */
-    var full = readonly.textContent, at = full.indexOf(exact);
-    if (at >= 0) {
-      var st = at, en = at + exact.length;
-      while (st > 0 && /\w/.test(full[st - 1]) && /\w/.test(full[st])) st--;
-      while (en < full.length && /\w/.test(full[en]) && /\w/.test(full[en - 1])) en++;
-      exact = full.slice(st, en);
-    }
-    SEL = { loc: loc, quote: exact.trim().slice(0, 300) };
-    /* No ready-made comments (Ramy, 17 Oct 2026: "everyone will just sound
-       the same... copy-paste it from each other"). The bar only opens the
-       comment box; the guidance stays in the reading card as a reminder. */
-    var chips = [];
-    b.innerHTML = '<button type="button" class="sb-main" data-sb="">Comment</button><button type="button" class="sb-good" data-tick>' + (window.hubTickSVG ? hubTickSVG() : '\u2713') + ' Good</button>' + (chips.length ? '<span class="sb-lab">or a quick one:</span>' : '') + chips.map(function (c, k) { return '<button type="button"' + (c.good ? ' class="sb-good"' : '') + ' data-sb="' + k + '" title="' + esc(c.text) + '">' + esc(c.label) + '</button>'; }).join('');
-    b._chips = chips;
-    b.hidden = false;
-    var rr = r.getBoundingClientRect();
-    var w = Math.min(b.offsetWidth, innerWidth - 24);
-    b.style.left = Math.max(12, Math.min(rr.left, innerWidth - w - 12)) + 'px';
-    b.style.top = (rr.bottom + 8 + b.offsetHeight > innerHeight ? rr.top - b.offsetHeight - 8 : rr.bottom + 8) + 'px';
+    if (!CTX || !s || s.isCollapsed || !s.rangeCount) { b.hidden = true; return; }
+    var r = s.getRangeAt(0), info = selectionInfo(r);
+    if (!info || !canWrite(info.loc.getAttribute('data-round'))) { b.hidden = true; return; }
+    SEL = { loc: info.loc, quote: info.quote, crit: null, tickId: null };
+    /* the same words already ticked: Good adds another tick to them */
+    var here = info.loc.getAttribute('data-loc');
+    var ex = list(writeRound()).filter(function (c) { return c.tick && c.loc === here && c.quote === info.quote; })[0];
+    if (ex) { SEL.tickId = ex.id; SEL.crit = ex.crit == null || ex.crit === '' ? null : +ex.crit; }
+    showBar(r);
   }
+  /* after a redraw, the same words are selected again so Good can be pressed again */
+  function reselect(id) {
+    var ms = document.querySelectorAll('#mkWork mark[data-mc="' + id + '"]'); if (!ms.length) return;
+    var rec = list(writeRound()).filter(function (x) { return x.id === id; })[0], loc = ms[0].closest('.mloc'); if (!rec || !loc) return;
+    var r = document.createRange(); r.setStartBefore(ms[0]); r.setEndAfter(ms[ms.length - 1]);
+    var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    SEL = { loc: loc, quote: rec.quote, crit: rec.crit == null || rec.crit === '' ? null : +rec.crit, tickId: id };
+    showBar(r);
+  }
+
+  /* CLICK TO SELECT (Ramy, 18 Oct 2026): one click takes the word, a second
+     click on it takes the whole paragraph (the whole line if it stands alone),
+     a third the whole answer. Dragging still picks an exact phrase. The
+     browser's own double and triple click did the same thing a click late. */
+  var PICK = null, DOWN = null;
+  function inUI(t) { return t.closest && t.closest('#mkSelBar, #mkEditor, #mkDock, #mkDrop, #mkTip, #mkPreview'); }
+  function readonlyOf(t) { return t.closest && t.closest('#mkWork .mloc .readonly'); }
+  function caretAt(x, y) {
+    if (document.caretPositionFromPoint) { var p = document.caretPositionFromPoint(x, y); return p ? { node: p.offsetNode, offset: p.offset } : null; }
+    if (document.caretRangeFromPoint) { var r = document.caretRangeFromPoint(x, y); return r ? { node: r.startContainer, offset: r.startOffset } : null; }
+    return null;
+  }
+  function paragraphRange(node, box) {
+    var top = node; while (top.parentNode && top.parentNode !== box) top = top.parentNode;
+    var first = top, last = top, n = top.previousSibling;
+    while (n) { if (n.nodeName === 'BR' && (!n.previousSibling || n.previousSibling.nodeName === 'BR')) break; first = n; n = n.previousSibling; }
+    n = top.nextSibling;
+    while (n) { if (n.nodeName === 'BR' && (!n.nextSibling || n.nextSibling.nodeName === 'BR')) break; last = n; n = n.nextSibling; }
+    var r = document.createRange(); r.setStartBefore(first); r.setEndAfter(last); return r;
+  }
+  function clickPick(e, box) {
+    var loc = box.closest('.mloc'); if (!canWrite(loc.getAttribute('data-round'))) return false;
+    var pos = caretAt(e.clientX, e.clientY); if (!pos || pos.node.nodeType !== 3 || !box.contains(pos.node)) return false;
+    var again = false;
+    try { again = !!(PICK && PICK.box === box && PICK.range.comparePoint(pos.node, pos.offset) === 0); } catch (x) {}
+    var level = again ? Math.min(3, PICK.level + 1) : 1, range = document.createRange();
+    if (level === 1) {
+      var t = pos.node.nodeValue, a = pos.offset, z = pos.offset, isW = /[\p{L}\p{N}'’\-]/u;
+      while (a > 0 && isW.test(t[a - 1])) a--;
+      while (z < t.length && isW.test(t[z])) z++;
+      if (a === z) return false;
+      range.setStart(pos.node, a); range.setEnd(pos.node, z);
+    } else if (level === 2) range = paragraphRange(pos.node, box);
+    else range.selectNodeContents(box);
+    PICK = { box: box, level: level, range: range.cloneRange() };
+    var sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    onSelect();
+    return true;
+  }
+  document.addEventListener('mousedown', function (e) {
+    DOWN = { x: e.clientX, y: e.clientY };
+    if (!(e.target.closest && e.target.closest('#mkSelBar'))) { var ro = readonlyOf(e.target); if (!ro) PICK = null; else if (e.detail > 1) e.preventDefault(); }
+  });
+  document.addEventListener('mouseup', function (e) {
+    if (inUI(e.target)) return;
+    var ro = readonlyOf(e.target), moved = DOWN && Math.hypot(e.clientX - DOWN.x, e.clientY - DOWN.y) > 4;
+    if (ro && CTX && !moved && !e.target.closest('mark.mc, .mcard, a, button') && clickPick(e, ro)) return;
+    if (moved) PICK = null;
+    setTimeout(onSelect, 10);
+  });
+
   /* the small editor, for a new comment or an old one */
   function editor(opts) {
     var ed = $('mkEditor'); if (!ed) { ed = document.createElement('div'); ed.id = 'mkEditor'; ed.className = 'mk-editor'; document.body.appendChild(ed); }
@@ -232,34 +231,49 @@
       if (!text) { if (opts.id) remove(opts.id); return; }   /* an empty comment is no comment */
       var l = list(writeRound());
       if (opts.id) { var c = l.filter(function (x) { return x.id === opts.id; })[0]; if (c) { c.text = text; c.crit = cv === '' ? null : +cv; } }
-      else l.push({ id: 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), loc: opts.loc, quote: opts.quote, text: text, crit: cv === '' ? null : +cv, by: CTX.me, role: secondMode() ? 'second' : 'first', at: new Date().toISOString() });
+      else l.push({ id: newId('m'), loc: opts.loc, quote: opts.quote, text: text, crit: cv === '' ? null : +cv, by: CTX.me, role: secondMode() ? 'second' : 'first', at: new Date().toISOString() });
       CTX.save(); CTX.rerender();
     };
   }
   function remove(id) { var l = list(writeRound()); var k = l.findIndex(function (x) { return x.id === id; }); if (k >= 0) l.splice(k, 1); CTX.save(); CTX.rerender(); }
 
   /* ---- wiring ---------------------------------------------------------- */
-  document.addEventListener('mouseup', function (e) { if (e.target.closest && e.target.closest('#mkSelBar, #mkEditor')) return; setTimeout(onSelect, 10); });
   document.addEventListener('selectionchange', function () { var s = window.getSelection(); if (!s || s.isCollapsed) { var b = $('mkSelBar'); if (b && !b.matches(':hover')) setTimeout(function () { var s2 = window.getSelection(); if (!s2 || s2.isCollapsed) b.hidden = true; }, 200); } });
-  document.addEventListener('touchend', function () { setTimeout(onSelect, 350); });
+  document.addEventListener('touchend', function (e) { if (!inUI(e.target) && !readonlyOf(e.target)) setTimeout(onSelect, 350); });
   document.addEventListener('click', function (e) {
     var t = e.target.closest ? e.target : null; if (!t || !CTX) return;
+    /* Good: one tick; press again for another, spread over the words */
     var tk = t.closest('[data-tick]');
-    if (tk && SEL) { bar().hidden = true; var tid = 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); JUST_TICKED = tid; list(writeRound()).push({ id: tid, loc: SEL.loc.getAttribute('data-loc'), quote: SEL.quote, text: '', tick: true, by: CTX.me, role: secondMode() ? 'second' : 'first', at: new Date().toISOString() }); window.getSelection().removeAllRanges(); CTX.save(); CTX.rerender(); return; }
+    if (tk && SEL) {
+      var wl = list(writeRound()), rec = tickRec();
+      if (rec) rec.n = Math.min(9, (rec.n || 1) + 1);
+      else { rec = { id: newId('t'), loc: SEL.loc.getAttribute('data-loc'), quote: SEL.quote, text: '', tick: true, n: 1, crit: SEL.crit == null ? null : SEL.crit, by: CTX.me, role: secondMode() ? 'second' : 'first', at: new Date().toISOString() }; wl.push(rec); }
+      JUST_TICKED = rec.id; RESEL = rec.id; CTX.save(); CTX.rerender(); return;
+    }
+    var ut = t.closest('[data-untick]');
+    if (ut && SEL) { var r0 = tickRec(); if (r0) { if ((r0.n || 1) > 1) { r0.n--; RESEL = r0.id; CTX.save(); CTX.rerender(); } else { bar().hidden = true; remove(r0.id); } } return; }
+    var bc = t.closest('[data-bcrit]');
+    if (bc && SEL) {
+      var ci = +bc.getAttribute('data-bcrit'); SEL.crit = SEL.crit === ci ? null : ci;
+      var r1 = tickRec();
+      if (r1) { r1.crit = SEL.crit; RESEL = r1.id; CTX.save(); CTX.rerender(); }
+      else [].forEach.call(bar().querySelectorAll('[data-bcrit]'), function (x) { x.classList.toggle('on', +x.getAttribute('data-bcrit') === SEL.crit); });
+      return;
+    }
     var mt = t.closest('mark.mc-tick');
     if (mt) {
       var tc = list(writeRound()).filter(function (x) { return x.id === mt.dataset.mc; })[0];
       var locEl = mt.closest('.mloc');
-      if (tc && locEl && canWrite(locEl.getAttribute('data-round')) && mine(tc)) { (window.confirmModal ? confirmModal('Take this tick off?', 'Take it off') : Promise.resolve(confirm('Take this tick off?'))).then(function (ok) { if (ok) remove(tc.id); }); }
+      if (tc && locEl && canWrite(locEl.getAttribute('data-round')) && mine(tc) && !getSelection().toString()) { (window.confirmModal ? confirmModal('Take the ' + ((tc.n || 1) > 1 ? (tc.n + ' ticks') : 'tick') + ' off these words?', 'Take off') : Promise.resolve(confirm('Take the tick off?'))).then(function (ok) { if (ok) remove(tc.id); }); }
       return;
     }
     var sb = t.closest('[data-sb]');
-    if (sb && SEL) { var k = sb.getAttribute('data-sb'); var b = bar(); b.hidden = true; editor({ loc: SEL.loc.getAttribute('data-loc'), quote: SEL.quote, text: k === '' ? '' : b._chips[+k].text }); window.getSelection().removeAllRanges(); return; }
+    if (sb && SEL) { bar().hidden = true; editor({ loc: SEL.loc.getAttribute('data-loc'), quote: SEL.quote, text: '', crit: SEL.crit }); window.getSelection().removeAllRanges(); return; }
     var ed = t.closest('[data-medit]');
     if (ed) { var c = list(writeRound()).filter(function (x) { return x.id === ed.getAttribute('data-medit'); })[0]; if (c) editor({ id: c.id, loc: c.loc, quote: c.quote, text: c.text, crit: c.crit }); return; }
     var del = t.closest('[data-mdel]'); if (del) { remove(del.getAttribute('data-mdel')); return; }
     var go = t.closest('[data-goto]');
-    if (go) { var m = document.querySelector('mark[data-mc="' + go.getAttribute('data-goto') + '"]'); if (m) { m.scrollIntoView({ block: 'center', behavior: 'smooth' }); m.classList.remove('mc-hit'); void m.offsetWidth; m.classList.add('mc-hit'); } return; }
+    if (go) { DROP = null; paintDrop(); var m = document.querySelector('mark[data-mc="' + go.getAttribute('data-goto') + '"]'); if (m) { m.scrollIntoView({ block: 'center', behavior: 'smooth' }); m.classList.remove('mc-hit'); void m.offsetWidth; m.classList.add('mc-hit'); } return; }
     var mk = t.closest('mark.mc');
     if (mk) { var card = document.querySelector('[data-mcard="' + mk.dataset.mc + '"]'); if (card) { card.classList.remove('mc-hit'); void card.offsetWidth; card.classList.add('mc-hit'); card.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } return; }
     var add = t.closest('[data-addnote]');
@@ -383,7 +397,7 @@
       '<div class="mkp-band"><p>' + esc(a.title) + '</p><h3>' + (out ? esc(out) : 'Not decided yet: mark every criterion first') + '</h3></div>' +
       (gen ? '<div class="mkp-gen">' + esc(gen).replace(/\n/g, '<br>') + '</div>' : '') +
       '<ul class="mkp-crit">' + cr.map(function (c, i) { return '<li><span class="crit-toggle ' + (m[i] === true ? 'met' : m[i] === false ? 'not' : '') + '" style="cursor:default">' + (m[i] === true ? 'Met' : m[i] === false ? 'Not met' : 'Not marked') + '</span><div><b>' + esc(c.text || c) + '</b>' + (notes[i] ? '<p>' + esc(notes[i]) + '</p>' : '') + '</div></li>'; }).join('') + '</ul>' +
-      (ticks.length ? '<h4>Ticked</h4><ul class="mkp-mc">' + ticks.map(function (c) { return '<li><q class="tk">' + esc(c.quote) + '</q>' + (window.hubTickSVG ? hubTickSVG() : ' \u2713') + '</li>'; }).join('') + '</ul>' : '') +
+      (ticks.length ? '<h4>Ticked</h4><ul class="mkp-mc">' + ticks.map(function (c) { return '<li><q class="tk">' + esc(c.quote) + '</q>' + (window.hubTickSVG ? hubTickSVG() : ' \u2713') + ((c.n || 1) > 1 ? ' \u00d7' + c.n : '') + '</li>'; }).join('') + '</ul>' : '') +
       (mc.length ? '<h4>Comments on her text</h4><ul class="mkp-mc">' + mc.map(function (c) { return '<li><q>' + esc(c.quote) + '</q><p>' + esc(c.text) + '</p></li>'; }).join('') + '</ul>' : '') +
       '</div>';
     ov.hidden = false;
@@ -391,9 +405,6 @@
 
   function paintStep2() {
     var panel = $('mkPanel'); if (!panel) return;
-    /* checks, at the top of the panel under the reading card */
-    var ch = checksHTML();
-    if (ch) { var holder = document.createElement('div'); holder.id = 'mkChecks'; holder.innerHTML = ch; var f = $('mkFloat'); panel.insertBefore(holder, f ? f.nextSibling : panel.firstChild); }
     /* double marking, above the marker record */
     var sh = secondHTML();
     if (sh) { var marker = panel.querySelector('.mk-marker'); var box = document.createElement('div'); box.innerHTML = sh; panel.insertBefore(box.firstChild, marker || null); }
@@ -426,17 +437,98 @@
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var ov = $('mkPreview'); if (ov && !ov.hidden) ov.hidden = true; var ed = $('mkEditor'); if (ed && !ed.hidden) ed.hidden = true; } });
 
+  /* ---- THE FRONT PAGE THAT STAYS WITH YOU (Ramy, 18 Oct 2026: "as you scroll
+     down, the criteria stays with you... the front page is like still there").
+     Once the criteria have scrolled out of sight a thin bar holds them: each
+     criterion as a chip with its state and how much you have tied to it.
+     Tap a chip and it opens over the work with its Met and Not met, its note
+     and everything tied to it; tap away and it folds back. */
+  var DROP = null;
+  function dockEl() { var d = $('mkDock'); if (!d) { d = document.createElement('div'); d.id = 'mkDock'; d.className = 'mk-dock'; d.hidden = true; document.body.appendChild(d); } return d; }
+  function dropEl() { var d = $('mkDrop'); if (!d) { d = document.createElement('div'); d.id = 'mkDrop'; d.className = 'mk-drop'; d.hidden = true; document.body.appendChild(d); } return d; }
+  function dockShould() { var c = $('mkCrit'); if (!c) return false; return c.getBoundingClientRect().top < -40; }   /* once you have scrolled past the top of the criteria */
+  function paintDock() {
+    var d = dockEl(), dr = dropEl(), cr = (CTX && CTX.a && CTX.a.criteria) || [];
+    if (!CTX || !CTX.marking || !cr.length || !$('mkCrit')) { d.hidden = true; dr.hidden = true; return; }
+    var m = CTX.sub.criteriaMarks[CTX.round] || [], done = cr.filter(function (c, i) { return m[i] === true || m[i] === false; }).length;
+    d.innerHTML = '<button type="button" class="dk-up" data-dkup>Front page</button><div class="dk-chips">' + cr.map(function (c, i) {
+      var st = m[i] === true ? 'met' : m[i] === false ? 'not' : '', word = st === 'met' ? 'Met' : st === 'not' ? 'Not met' : 'To mark';
+      var nt = evidenceFor(i).reduce(function (a, x) { return a + (x.tick ? (x.n || 1) : 1); }, 0);
+      return '<button type="button" class="dk-chip ' + st + (DROP === i ? ' open' : '') + '" data-dk="' + i + '" aria-label="Criterion ' + (i + 1) + ': ' + word + (nt ? ', ' + nt + ' marks in the text' : '') + '"><b>' + (i + 1) + '</b><span>' + word + '</span>' + (nt ? '<em>' + nt + '</em>' : '') + '</button>';
+    }).join('') + '</div><span class="dk-prog">' + done + ' of ' + cr.length + ' marked</span>';
+    placeDock();
+  }
+  function placeDock() {
+    var d = $('mkDock'); if (!d || !CTX || !CTX.marking) return;
+    var show = dockShould(); d.hidden = !show;
+    if (!show) { var dr = $('mkDrop'); if (dr) dr.hidden = true; return; }
+    paintDrop();
+  }
+  function paintDrop() {
+    var dr = dropEl(), d = $('mkDock'), i = DROP;
+    if (i == null || !d || d.hidden || !CTX || !CTX.marking) { dr.hidden = true; return; }
+    var c = CTX.a.criteria[i]; if (!c) { dr.hidden = true; return; }
+    var mk = (CTX.sub.criteriaMarks[CTX.round] || [])[i], note = ((CTX.sub.criteriaComments || {})[CTX.round] || [])[i] || '', ev = evidenceFor(i);
+    var q = function (t) { return esc(t.length > 60 ? t.slice(0, 58) + '…' : t); };
+    dr.innerHTML = '<div class="dr-h"><b>Criterion ' + (i + 1) + '</b><button type="button" data-drclose>Close</button></div><p class="dr-t">' + esc(c.text || c) + '</p>' +
+      '<div class="dr-btns"><button type="button" class="dr-met' + (mk === true ? ' on' : '') + '" data-drmark="1">Met</button><button type="button" class="dr-not' + (mk === false ? ' on' : '') + '" data-drmark="0">Not met</button></div>' +
+      (note ? '' : '<button type="button" class="mk-addnote" data-drnote>Add a note</button>') +
+      '<textarea class="dr-note" data-drnotebox rows="2" placeholder="Why, in a sentence or two. The trainee reads this."' + (note ? '' : ' hidden') + '>' + esc(note) + '</textarea>' +
+      (ev.length ? '<div class="dr-ev"><span>Under this criterion</span>' + ev.map(function (x) { return '<button type="button" data-goto="' + x.id + '">' + (x.tick ? hubTickSVG() + ' ' : '') + '“' + q(x.quote) + '”' + (x.tick ? ((x.n || 1) > 1 ? ' ×' + x.n : '') : ': ' + esc(x.text)) + '</button>'; }).join('') + '</div>' : '<p class="dr-none">Nothing tied to this yet. Select words in the work and tie them to it.</p>');
+    dr.hidden = false;
+    var chip = d.querySelector('[data-dk="' + i + '"]'), cr = chip ? chip.getBoundingClientRect() : { left: 12 }, db = d.getBoundingClientRect();
+    if (innerWidth >= 1080) { dr.style.top = db.bottom + 'px'; dr.style.bottom = 'auto'; dr.style.left = Math.max(12, Math.min(cr.left, innerWidth - dr.offsetWidth - 12)) + 'px'; }
+    else { dr.style.top = 'auto'; dr.style.bottom = (innerHeight - db.top) + 'px'; dr.style.left = '8px'; }
+  }
+  var RAF = 0;
+  function onScroll() { if (RAF) return; RAF = requestAnimationFrame(function () { RAF = 0; placeDock(); }); }
+  addEventListener('scroll', onScroll, { passive: true });
+  addEventListener('resize', onScroll);
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest ? e.target : null; if (!t || !CTX) return;
+    if (t.closest('[data-dkup]')) { var c = $('mkCrit'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    var dk = t.closest('[data-dk]'); if (dk) { var i = +dk.getAttribute('data-dk'); DROP = DROP === i ? null : i; paintDock(); return; }
+    if (t.closest('[data-drclose]')) { DROP = null; paintDock(); return; }
+    var dm = t.closest('[data-drmark]');
+    if (dm && DROP != null) { var v = dm.getAttribute('data-drmark') === '1', cur = (CTX.sub.criteriaMarks[CTX.round] || [])[DROP]; CTX.setMark(DROP, cur === v ? null : v); return; }
+    var dn = t.closest('[data-drnote]'); if (dn) { var ta = document.querySelector('[data-drnotebox]'); dn.hidden = true; ta.hidden = false; ta.focus(); return; }
+    if (DROP != null && !t.closest('#mkDock, #mkDrop, #mkTip')) { DROP = null; paintDrop(); var chips = document.querySelectorAll('.dk-chip.open'); [].forEach.call(chips, function (x) { x.classList.remove('open'); }); }
+  });
+  document.addEventListener('input', function (e) {
+    var ta = e.target.closest && e.target.closest('[data-drnotebox]'); if (!ta || DROP == null) return;
+    CTX.setNote(DROP, ta.value);
+    var cov = document.querySelector('[data-crit-comment="' + DROP + '"]'), add = document.querySelector('[data-addnote="' + DROP + '"]');
+    if (cov) { cov.value = ta.value; if (ta.value.trim()) { cov.hidden = false; if (add) add.hidden = true; } }
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && DROP != null) { DROP = null; paintDock(); } });
+
+  /* ---- the help, in collapsibles ("it just needs to disappear eventually") */
+  function helpHidden() { try { return localStorage.getItem('mk:hideHelp') === '1'; } catch (e) { return false; } }
+  function paintHelp() {
+    var host = $('mkHelp'); if (!host) return;
+    var hidden = helpHidden();
+    document.body.classList.toggle('mk-nohelp', hidden && !!CTX.marking);
+    if (!CTX.marking) { host.innerHTML = ''; return; }
+    var g = CTX.guide, parts = [], box = function (title, text) { return '<details class="guide-box mk-hbox"><summary>' + esc(title) + '</summary><div class="gb">' + hubGuidanceHTML(text) + '</div></details>'; };
+    var ch = checksHTML(); if (ch) parts.push(ch);
+    var gen = [g && g.general, CTX.a.trap ? 'The hidden word\n' + hubTrapNote(CTX.a.trap) : ''].filter(Boolean).join('\n\n');
+    if (gen) parts.push(box('How to mark this assignment', gen));
+    if (g && g.sections) parts.push(box('Section by section', g.sections));
+    if (!parts.length) { host.innerHTML = ''; return; }
+    host.innerHTML = '<div class="mk-help-bar"><span>Marking help</span><button type="button" data-helptoggle>' + (hidden ? 'Show the guidance' : 'Hide the guidance') + '</button></div>' + (hidden ? '' : '<div class="mk-help-grid">' + parts.join('') + '</div>');
+  }
+  document.addEventListener('click', function (e) {
+    if (e.target.closest && e.target.closest('[data-helptoggle]')) { try { localStorage.setItem('mk:hideHelp', helpHidden() ? '' : '1'); } catch (x) {} paintHelp(); hideTip(); }
+  });
+
   window.hubMarking = {
     afterRender: function (ctx) {
       CTX = ctx;
-      var panel = $('mkPanel');
-      if (panel && ctx.guide && ctx.guide.sections && !$('mkFloat')) {
-        var f = document.createElement('div'); f.id = 'mkFloat'; f.className = 'mk-float'; f.hidden = true; panel.insertBefore(f, panel.firstChild);
-      }
-      CUR = null;
       paintMargin();
-      watchReading();
       paintStep2();
+      paintHelp();
+      paintDock();
+      if (RESEL) { var id = RESEL; RESEL = null; reselect(id); }
     }
   };
 
@@ -505,7 +597,31 @@
       '.mkp-band{padding:16px 20px; background:color-mix(in oklab, var(--as) 8%, var(--surface)); border-top:4px solid var(--as);} .mkp-band p{margin:0; font-size:0.78rem; text-transform:uppercase; letter-spacing:.08em; color:var(--as); font-weight:700;} .mkp-band h3{margin:4px 0 0; font-family:Newsreader,Georgia,serif; font-size:1.4rem; color:var(--ink);}',
       '.mkp-gen{padding:14px 20px 0; font-size:0.9rem; line-height:1.6;} .mkp-crit,.mkp-mc{list-style:none; margin:0; padding:10px 20px 14px;} .mkp-crit li{display:flex; gap:12px; align-items:flex-start; padding:9px 0; border-top:1px solid var(--row-line); font-size:0.88rem;} .mkp-crit li:first-child{border-top:none;} .mkp-crit p{margin:4px 0 0; color:var(--ink);}',
       '.mk-prev h4{margin:0; padding:4px 20px 0; font-size:0.82rem; text-transform:uppercase; letter-spacing:.07em; color:var(--grey);} .mkp-mc li{padding:8px 0; border-top:1px solid var(--row-line); font-size:0.86rem;} .mkp-mc q{display:block; background:color-mix(in oklab, var(--gold-lifted) 25%, transparent); padding:2px 5px; border-radius:3px;} .mkp-mc p{margin:4px 0 0;}',
-      '@media print{ .mk-selbar,.mk-editor,.mk-tip,.mk-float,.mk-prev-wrap,.mk-checks,.mk-keys{display:none !important;} }'
+      '.mk-selbar{flex-direction:column; gap:6px;} .sb-row{display:flex; gap:6px; align-items:center; flex-wrap:wrap;}',
+      '.sb-lab{font:600 0.72rem Karla,sans-serif; color:oklch(80% 0.02 70); margin-right:2px;}',
+      '.sb-n{margin-left:6px; font-weight:700; opacity:.9;} .mk-selbar button.sb-minus{background:oklch(32% 0.02 65); padding:7px 11px; font-weight:700;}',
+      '.mk-selbar button.sb-c{min-width:34px; text-align:center; padding:6px 0; border:1.5px solid oklch(46% 0.02 65); background:transparent;} .mk-selbar button.sb-c.on{background:var(--gold); border-color:var(--gold); color:var(--ink); font-weight:700;}',
+      '.mk-dock{position:fixed; left:0; right:0; top:0; z-index:50; display:flex; align-items:center; gap:12px; padding:8px 28px; background:color-mix(in oklab, var(--paper) 95%, transparent); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); border-bottom:1px solid var(--sand-line); box-shadow:0 6px 20px oklch(25% 0.02 60 / .10);}',
+      '.dk-up{background:none; border:none; font:700 0.8rem Karla,sans-serif; color:var(--as, var(--teal)); cursor:pointer; text-decoration:underline; text-decoration-color:var(--sand-line); text-underline-offset:3px; white-space:nowrap; padding:4px 0;} .dk-up:hover{background:none !important; box-shadow:none !important;}',
+      '.dk-chips{display:flex; gap:6px; flex:1; overflow-x:auto; padding:2px 0; scrollbar-width:none;} .dk-chips::-webkit-scrollbar{display:none;}',
+      '.dk-chip{display:flex; align-items:center; gap:7px; font:600 0.78rem Karla,sans-serif; border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink); border-radius:18px; padding:5px 12px; cursor:pointer; white-space:nowrap; min-height:36px;}',
+      '.dk-chip b{font:700 0.82rem Karla,sans-serif;} .dk-chip.met{background:var(--mark-met-bg); border-color:var(--mark-met-line); color:var(--mark-met-text);} .dk-chip.not{background:var(--mark-not-bg); border-color:var(--mark-not-line); color:var(--mark-not-text);}',
+      '.dk-chip.open{box-shadow:0 0 0 2px var(--as, var(--teal));} .dk-chip em{font-style:normal; font-size:0.7rem; font-weight:700; background:var(--as, var(--teal)); color:var(--paper); border-radius:9px; padding:1px 6px; min-width:18px; text-align:center;}',
+      '.dk-prog{font-size:0.78rem; color:var(--grey); white-space:nowrap;}',
+      '.mk-drop{position:fixed; z-index:51; width:min(440px, calc(100vw - 16px)); background:var(--paper); border:1px solid var(--sand-line); border-top:3px solid var(--as, var(--teal)); border-radius:var(--r-card); padding:12px 14px 14px; box-shadow:0 18px 50px oklch(20% 0.02 60 / .25); max-height:70vh; overflow:auto;}',
+      '.dr-h{display:flex; justify-content:space-between; align-items:center;} .dr-h button{font:700 0.78rem Karla,sans-serif; background:none; border:1.5px solid var(--sand-line); border-radius:var(--r-control); padding:4px 10px; cursor:pointer;}',
+      '.dr-t{font-size:0.88rem; line-height:1.5; margin:6px 0 10px;} .dr-btns{display:flex; gap:8px; margin:0 0 4px;}',
+      '.dr-btns button{flex:1; font:700 0.88rem Karla,sans-serif; padding:10px; border-radius:var(--r-control); border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink); cursor:pointer; min-height:44px;}',
+      '.dr-btns .dr-met.on{background:var(--mark-met-bg); border-color:var(--mark-met-line); color:var(--mark-met-text);} .dr-btns .dr-not.on{background:var(--mark-not-bg); border-color:var(--mark-not-line); color:var(--mark-not-text);}',
+      '.dr-note{width:100%; box-sizing:border-box; margin-top:8px; font:inherit; font-size:0.86rem; padding:8px 10px; border:1.5px solid var(--row-line); border-radius:6px;}',
+      '.dr-ev{margin-top:10px; padding:7px 10px; border-radius:var(--r-strip); background:var(--gold-wash); font-size:0.8rem;} .dr-ev span{display:block; font-weight:700; font-size:0.72rem; text-transform:uppercase; letter-spacing:.06em; color:var(--gold-deep); margin:0 0 3px;}',
+      '.dr-ev button{display:block; text-align:left; background:none; border:none; padding:3px 0; font:inherit; color:var(--ink); cursor:pointer;} .dr-ev button:hover{background:none !important; box-shadow:none !important; text-decoration:underline;} .dr-none{font-size:0.8rem; color:var(--grey); margin:10px 0 0;}',
+      '.mk-help-bar{display:flex; justify-content:space-between; align-items:center; margin:0 0 6px; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--grey);} .mk-help-bar button{background:none; border:none; font:600 0.8rem Karla,sans-serif; letter-spacing:0; text-transform:none; color:var(--teal); text-decoration:underline; text-decoration-color:var(--sand-line); text-underline-offset:3px; cursor:pointer;} .mk-help-bar button:hover{background:none !important; box-shadow:none !important;}',
+      '.mk-help-grid{display:flex; flex-wrap:wrap; gap:8px; align-items:flex-start;} .mk-help-grid .guide-box{flex:1 1 260px; margin:0;} .mk-help-grid .guide-box[open]{flex-basis:100%;}',
+      '.mk-nohelp .mk-tiplink{display:none;}',
+      '.mk-tied svg.hub-tick, .dr-ev svg.hub-tick{width:1em; height:1em; vertical-align:-0.18em; margin:0 2px 0 0; filter:none;}',
+      '@media (max-width:1079px){ .mk-dock{top:auto; bottom:0; padding:8px 10px calc(8px + env(safe-area-inset-bottom)); border-bottom:none; border-top:1px solid var(--sand-line); box-shadow:0 -6px 20px oklch(25% 0.02 60 / .12);} .dk-up{display:none;} .dk-prog{font-size:0.72rem;} .dk-chip{padding:5px 10px;} }',
+      '@media print{ .mk-selbar,.mk-editor,.mk-tip,.mk-dock,.mk-drop,.mk-prev-wrap,.mk-checks,.mk-keys,.mk-help{display:none !important;} }'
     ].join('\n');
     (document.head || document.documentElement).appendChild(st);
   }

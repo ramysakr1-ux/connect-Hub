@@ -15,7 +15,7 @@
 <title>Connect Lite — Assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610172343">
+<link rel="stylesheet" href="hub-tokens.css?v=202610180006">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -34,6 +34,7 @@
   .ps h2{font-family:'Newsreader',Georgia,serif; margin:0 0 6px; font-size:1.3rem;} .ps p{margin:0 0 10px; font-size:0.9rem; line-height:1.5;}
   .ps ul{margin:0 0 14px; padding:0; list-style:none;} .ps li{padding:8px 0; border-top:1px solid var(--row-line); font-size:0.88rem; line-height:1.45;} .ps li span{display:block; color:var(--grey); margin-top:2px;}
   .ps-acts{display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;}
+  .fb-ev{margin-top:5px; padding:5px 9px; border-radius:8px; background:var(--gold-wash); font-size:0.8rem; line-height:1.45;} .fb-ev div{padding:1px 0;} .fb-ev svg.hub-tick{width:1em; height:1em; vertical-align:-0.18em; margin:0 2px 0 0; filter:none;}
   .header{background:var(--surface); border-radius:6px; margin-bottom:20px; border-top:2px solid var(--teal); padding:22px 26px;}
   .header h1{font-family:'Newsreader',Georgia,serif; font-size:1.7rem; margin:0; color:var(--ink);}
   .header .meta{font-size:0.82rem; color:var(--grey); margin-top:8px; display:flex; gap:16px; flex-wrap:wrap;}
@@ -175,7 +176,7 @@
   @media(max-width:560px){ .wm{flex-wrap:wrap; gap:6px;} .wm-track{width:100%;} }
   @media print{ .wm-track{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610172343">
+<link rel="stylesheet" href="hub-house.css?v=202610180006">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -183,13 +184,13 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610172343"></script>
-<script src="hub-due.js?v=202610172343"></script>
-<script src="hub-shared.js?v=202610172343"></script>
-<script src="hub-store.js?v=202610172343"></script>
-<script src="hub-say.js?v=202610172343"></script>
-<script src="hub-sync.js?v=202610172343"></script>
-<script src="fol-interview.js?v=202610172343"></script>
+<script src="assignment-defaults.js?v=202610180006"></script>
+<script src="hub-due.js?v=202610180006"></script>
+<script src="hub-shared.js?v=202610180006"></script>
+<script src="hub-store.js?v=202610180006"></script>
+<script src="hub-say.js?v=202610180006"></script>
+<script src="hub-sync.js?v=202610180006"></script>
+<script src="fol-interview.js?v=202610180006"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the trainee's submission form with a
@@ -351,9 +352,13 @@ function render(){
         // walk, 20 Sep 2026).
         const round = (sub.criteriaMarks.sub2||[]).some(m=>m===true||m===false) ? 'sub2' : 'sub1';
         const marks = sub.criteriaMarks[round]||[], cms = (sub.criteriaComments&&sub.criteriaComments[round])||[];
-        const rows = (a.criteria||[]).map((c,i)=>({ text:c.text, m:marks[i], cm:cms[i]||'' })).filter(r=>r.m===true||r.m===false||r.cm);
+        /* What the tutor tied to each criterion in her text (18 Oct 2026): the
+           front page and her page agree. */
+        const mg = (sub.margin && sub.margin[round]) || [];
+        const tiedTo = i => mg.filter(x => x.crit != null && String(x.crit) === String(i) && (x.text || x.tick));
+        const rows = (a.criteria||[]).map((c,i)=>({ text:c.text, m:marks[i], cm:cms[i]||'', ev:tiedTo(i) })).filter(r=>r.m===true||r.m===false||r.cm||r.ev.length);
         if (!rows.length) return '';
-        return `<div style="margin-top:12px;">${rows.map(r=>`<div style="display:flex; gap:10px; align-items:flex-start; padding:6px 0; border-top:1px solid var(--sand-line);"><span style="flex:none; font-size:0.72rem; font-weight:700; padding:3px 8px; border-radius:10px; ${r.m===true?'background:var(--mark-met-bg);color:var(--mark-met-text);border:1px solid var(--mark-met-line);':r.m===false?'background:var(--mark-not-bg);color:var(--mark-not-text);border:1px solid var(--mark-not-line);':'background:var(--sand);color:var(--grey);'}">${r.m===true?'Met':r.m===false?'Not met':'\u2014'}</span><div style="font-size:0.85rem; line-height:1.5;"><div>${esc(r.text)}</div>${r.cm?`<div style="color:var(--grey); margin-top:2px;">${nl2br(r.cm)}</div>`:''}</div></div>`).join('')}</div>`;
+        return `<div style="margin-top:12px;">${rows.map(r=>`<div style="display:flex; gap:10px; align-items:flex-start; padding:6px 0; border-top:1px solid var(--sand-line);"><span style="flex:none; font-size:0.72rem; font-weight:700; padding:3px 8px; border-radius:10px; ${r.m===true?'background:var(--mark-met-bg);color:var(--mark-met-text);border:1px solid var(--mark-met-line);':r.m===false?'background:var(--mark-not-bg);color:var(--mark-not-text);border:1px solid var(--mark-not-line);':'background:var(--sand);color:var(--grey);'}">${r.m===true?'Met':r.m===false?'Not met':'\u2014'}</span><div style="font-size:0.85rem; line-height:1.5;"><div>${esc(r.text)}</div>${r.cm?`<div style="color:var(--grey); margin-top:2px;">${nl2br(r.cm)}</div>`:''}${r.ev.length?`<div class="fb-ev">${r.ev.map(x=>`<div>${x.tick?(window.hubTickSVG?hubTickSVG():'\u2713')+' ':''}\u201C${esc(x.quote.length>70?x.quote.slice(0,68)+'\u2026':x.quote)}\u201D${x.tick?((x.n||1)>1?' \u00d7'+x.n:''):': '+esc(x.text)}</div>`).join('')}</div>`:''}</div></div>`).join('')}</div>`;
       })()}
     </div>`;
   }

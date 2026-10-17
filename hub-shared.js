@@ -1151,7 +1151,7 @@ if (!window.HubStore) { if (document.readyState === 'loading') document.addEvent
       html += '<div class="section"><h2>Comments on the text</h2>' + ['sub1', 'sub2'].map(function (r) {
         var l = mList(r); if (!l.length) return '';
         return (sub.sub2 ? '<div class="roundlabel">' + (r === 'sub1' ? 'On the first submission' : 'On the resubmission') + '</div>' : '') +
-          l.map(function (c) { if (c.tick) return '<div class="comment">\u2713 <em>\u201C' + esc(c.quote) + '\u201D</em>' + (c.by ? ' <span style="color:#777;">(' + esc(c.by) + ')</span>' : '') + '</div>'; return '<div class="comment">' + (c.quote ? '<em>\u201C' + esc(c.quote) + '\u201D</em><br>' : '') + nl2br(c.text) + (c.by ? ' <span style="color:#777;">(' + esc(c.by) + (c.role === 'second' ? ', second marker' : '') + ')</span>' : '') + '</div>'; }).join('');
+          l.map(function (c) { if (c.tick) return '<div class="comment">\u2713' + ((c.n || 1) > 1 ? ' \u00d7' + c.n : '') + ' <em>\u201C' + esc(c.quote) + '\u201D</em>' + (c.by ? ' <span style="color:#777;">(' + esc(c.by) + ')</span>' : '') + '</div>'; return '<div class="comment">' + (c.crit != null && c.crit !== '' ? '<span style="font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:#777;">Criterion ' + (+c.crit + 1) + '</span><br>' : '') + (c.quote ? '<em>\u201C' + esc(c.quote) + '\u201D</em><br>' : '') + nl2br(c.text) + (c.by ? ' <span style="color:#777;">(' + esc(c.by) + (c.role === 'second' ? ', second marker' : '') + ')</span>' : '') + '</div>'; }).join('');
       }).join('') + '</div>';
     }
     html += '<div class="section"><h2>Tutor\u2019s general comments</h2>'
@@ -1774,26 +1774,82 @@ window.hubPaintMargin = function (root, margin) {
     if (!items.length) return;
     var box = loc.querySelector('.readonly'), gut = loc.querySelector('.tmgut');
     items.forEach(function (c, n) {
-      var walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT, null), nodes = [], t, all = '';
-      while ((t = walker.nextNode())) { nodes.push([t, all.length]); all += t.nodeValue; }
-      var at = c.quote ? all.indexOf(c.quote) : -1;
-      if (at >= 0) { var end = at + c.quote.length;
-        nodes.forEach(function (pr) { var node = pr[0], st = pr[1], sp = st + node.nodeValue.length; if (sp <= at || st >= end) return;
-          var x = Math.max(0, at - st), y = Math.min(node.nodeValue.length, end - st), mid = node.splitText(x); mid.splitText(y - x);
-          var mk = document.createElement('mark'); mk.className = c.tick ? 'tmc tmc-tick' : 'tmc'; mk.title = c.tick ? 'Your tutor ticked this' : 'Your tutor commented on this'; mk.dataset.tmc = c.id || n; mid.parentNode.insertBefore(mk, mid); mk.appendChild(mid); });
-        if (c.tick) { var ms = box.querySelectorAll('mark[data-tmc="' + (c.id || n) + '"]'), last = ms[ms.length - 1]; if (last) last.insertAdjacentHTML('afterend', '<span class="tmc-mark" role="img" aria-label="ticked by your tutor">' + (window.hubTickSVG ? hubTickSVG('draw') : '\u2713') + '</span>'); } }
+      var id = c.id || ('n' + n);
+      var at = hubHighlight(box, c.quote, id, c.tick ? 'tmc tmc-tick' : 'tmc', 'tmc');
+      if (at >= 0 && c.tick) hubTickSpots(c.quote, c.n || 1).forEach(function (sp) {
+        var span = document.createElement('span'); span.className = 'tmc-mark'; span.setAttribute('role', 'img'); span.setAttribute('aria-label', 'ticked by your tutor');
+        span.innerHTML = hubTickSVG('draw'); hubInsertAt(box, at + sp, span);
+      });
       if (c.tick) return;
       gut.insertAdjacentHTML('beforeend', '<div class="tmcard"><span>Your tutor' + (c.quote ? ', on “' + esc(c.quote.length > 60 ? c.quote.slice(0, 58) + '…' : c.quote) + '”' : '') + '</span><p>' + esc(c.text) + '</p></div>');
     });
   });
   if (!document.getElementById('hub-tmc-css')) {
     var st = document.createElement('style'); st.id = 'hub-tmc-css';
-    st.textContent = 'mark.tmc-tick{background:color-mix(in oklab, oklch(70% 0.1 158) 22%, transparent) !important; border-bottom:2px solid oklch(46% 0.1 158) !important;} .tmc-mark{white-space:nowrap;}' + 'mark.tmc{background:color-mix(in oklab, var(--gold-lifted) 34%, transparent); color:inherit; border-bottom:2px solid var(--gold); border-radius:2px; padding:0 1px;}' +
+    st.textContent = 'mark.tmc{background:color-mix(in oklab, var(--gold-lifted) 34%, transparent); color:inherit; border-bottom:2px solid var(--gold); border-radius:2px; padding:0 1px;}' +
+      'mark.tmc-tick{background:color-mix(in oklab, oklch(70% 0.1 158) 22%, transparent) !important; border-bottom:2px solid oklch(46% 0.1 158) !important;} .tmc-mark{white-space:nowrap;}' +
       '.tmgut:empty{display:none;} .tmgut{display:flex; flex-direction:column; gap:8px; margin:6px 0 10px;}' +
       '.tmcard{background:var(--paper); border:1px solid var(--amber-edge); border-left:3px solid var(--gold); border-radius:10px; padding:8px 11px; font-size:0.86rem; line-height:1.5;}' +
       '.tmcard span{display:block; font-size:0.72rem; font-weight:700; color:var(--gold-deep); text-transform:uppercase; letter-spacing:.05em;} .tmcard p{margin:3px 0 0;}';
     document.head.appendChild(st);
   }
+};
+
+/* HIGHLIGHTING AND TICKING IN A BLOCK OF WORK (18 Oct 2026). One flat reading
+   of a block, shared by the tutor's page and the trainee's: its text nodes
+   joined in order, a line break counting as one space, so a quote that runs
+   over several lines is still found. */
+window.hubFlat = function (box) {
+  var all = '', nodes = [], w = document.createTreeWalker(box, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, null), n;
+  while ((n = w.nextNode())) {
+    if (n.nodeType === 3) { nodes.push([n, all.length]); all += n.nodeValue; }
+    else if (n.nodeName === 'BR') { all += ' '; }
+  }
+  return { all: all, nodes: nodes };
+};
+/* Wrap the first match of quote in <mark>s (one per text node it touches).
+   Returns where it starts in the flat reading, or -1. */
+window.hubHighlight = function (box, quote, id, cls, key) {
+  if (!quote) return -1;
+  var f = hubFlat(box), at = f.all.indexOf(quote); if (at < 0) return -1;
+  var end = at + quote.length;
+  f.nodes.forEach(function (pair) {
+    var node = pair[0], start = pair[1], stop = start + node.nodeValue.length;
+    if (stop <= at || start >= end) return;
+    var a = Math.max(0, at - start), b = Math.min(node.nodeValue.length, end - start);
+    var mid = node.splitText(a); mid.splitText(b - a);
+    var m = document.createElement('mark'); m.className = cls || 'mc'; m.dataset[key || 'mc'] = id;
+    mid.parentNode.insertBefore(m, mid); m.appendChild(mid);
+  });
+  return at;
+};
+/* Put an element at a place in the flat reading. */
+window.hubInsertAt = function (box, off, el) {
+  var f = hubFlat(box), node = null, local = 0;
+  for (var i = 0; i < f.nodes.length; i++) {
+    var st = f.nodes[i][1], len = f.nodes[i][0].nodeValue.length;
+    if (off >= st && off <= st + len) { node = f.nodes[i][0]; local = off - st; if (off < st + len) break; }
+  }
+  if (!node) return;
+  if (local < node.nodeValue.length) { var tail = node.splitText(local); tail.parentNode.insertBefore(el, tail); }
+  else node.parentNode.insertBefore(el, node.nextSibling);
+};
+/* WHERE n TICKS GO IN A QUOTE (Ramy, 18 Oct 2026: "if I click good twice it
+   should show two ticks... spread out around the paragraph... three presses,
+   three ticks, on each line"). The ticks sit at the ends of sentences, spread
+   evenly: one tick at the end, two at the end of the middle and the last, and
+   so on; more ticks than sentences are spread by words. Sentences, not
+   screen lines, because a line is a different place on a phone. */
+window.hubTickSpots = function (quote, n) {
+  var q = String(quote || '').replace(/\s+$/, ''); if (!q) return [];
+  n = Math.max(1, Math.min(+n || 1, 12));
+  var ends = [], re = /[.!?…]+["'”’)\]]*(?=\s|$)/g, m;
+  while ((m = re.exec(q))) ends.push(m.index + m[0].length);
+  if (!ends.length || ends[ends.length - 1] < q.length) ends.push(q.length);
+  var S = ends.length, out = [], k;
+  if (n <= S) { for (k = 0; k < n; k++) out.push(ends[Math.min(S - 1, Math.max(0, Math.round((k + 1) * S / n) - 1))]); }
+  else { for (k = 0; k < n; k++) { var pos = Math.round((k + 1) * q.length / n), sp = q.indexOf(' ', Math.max(0, pos - 1)); out.push(sp < 0 || sp > q.length ? q.length : sp); } }
+  return out.filter(function (v, i, a) { return a.indexOf(v) === i; }).sort(function (x, y) { return x - y; });
 };
 
 /* THE TICK (17 Oct 2026). Ramy: "instead of typing good... a nice tick...
