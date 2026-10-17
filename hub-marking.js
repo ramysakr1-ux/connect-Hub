@@ -288,15 +288,17 @@
   function editor(opts) {
     var ed = $('mkEditor'); if (!ed) { ed = document.createElement('div'); ed.id = 'mkEditor'; ed.className = 'mk-editor'; document.body.appendChild(ed); }
     var crit = (CTX.a.criteria || []), tied = opts.crit == null || opts.crit === '' ? null : +opts.crit;
-    ed.innerHTML = '<div class="me-q">“' + esc(opts.quote.length > 140 ? opts.quote.slice(0, 138) + '…' : opts.quote) + '”</div>' +
-      '<textarea id="meText" rows="3" placeholder="Your comment. The trainee reads it beside these words.">' + esc(opts.text || '') + '</textarea>' +
+    ed.innerHTML = '<div class="me-h">' + (opts.id ? 'Edit your comment' : 'Your comment') + '</div>' +
+      '<blockquote class="me-q">\u201C' + esc(opts.quote.length > 240 ? opts.quote.slice(0, 238) + '\u2026' : opts.quote) + '\u201D</blockquote>' +
+      '<textarea id="meText" rows="6" placeholder="Write it to the trainee, in your own words. They read it beside these words.">' + esc(opts.text || '') + '</textarea>' +
       '<div class="me-tone" role="group" aria-label="What kind of comment"><span>This comment is</span><button type="button" class="tn-good' + (opts.tone === 'good' ? ' on' : '') + '" data-tone="good">Good</button><button type="button" class="tn-fix' + (opts.tone === 'fix' ? ' on' : '') + '" data-tone="fix">To work on</button></div>' +
       (opts.fromBar
         ? ''   /* the chips in the dark box already did it (Ramy, 18 Oct 2026: "keep the one in the chip, delete the one in the comment box") */
         : (crit.length ? '<div class="me-chips"><span>Tied to criterion</span>' + crit.map(function (c, i) { return '<button type="button" class="sb-c' + (tied === i ? ' on' : '') + '" data-mecrit="' + i + '" title="' + esc(critShort(i)) + '">' + (i + 1) + '</button>'; }).join('') + '</div>' : '')) +
-      '<div class="me-acts"><button type="button" class="me-cancel">Cancel</button><button type="button" class="me-save">Save the comment</button></div>';
+      '<div class="me-acts"><span class="me-hint">Ctrl or \u2318 + Enter saves</span><button type="button" class="me-cancel">Cancel</button><button type="button" class="me-save">Save the comment</button></div>';
     ed.hidden = false;
     var t = $('meText'); setTimeout(function () { t.focus(); t.setSelectionRange(t.value.length, t.value.length); }, 30);
+    t.addEventListener('keydown', function (ev) { if ((ev.metaKey || ev.ctrlKey) && ev.key === 'Enter') { ev.preventDefault(); ed.querySelector('.me-save').click(); } });
     ed.querySelector('.me-cancel').onclick = function () { ed.hidden = true; };
     [].forEach.call(ed.querySelectorAll('[data-mecrit]'), function (b) { b.onclick = function () { var i = +b.getAttribute('data-mecrit'); tied = tied === i ? null : i; [].forEach.call(ed.querySelectorAll('[data-mecrit]'), function (x) { x.classList.toggle('on', +x.getAttribute('data-mecrit') === tied); }); }; });
     [].forEach.call(ed.querySelectorAll('[data-tone]'), function (b) { b.onclick = function () { var was = b.classList.contains('on'); [].forEach.call(ed.querySelectorAll('[data-tone]'), function (x) { x.classList.remove('on'); }); if (!was) b.classList.add('on'); }; });
@@ -705,6 +707,14 @@
       '.dk-chip.open{box-shadow:0 0 0 2px var(--as, var(--teal));} .dk-chip em{font-style:normal; font-size:0.7rem; font-weight:700; background:var(--as, var(--teal)); color:var(--paper); border-radius:9px; padding:1px 6px; min-width:18px; text-align:center;}',
       '.dk-prog{font-size:0.78rem; color:var(--grey); white-space:nowrap;}',
       '.dk-hide{background:none; border:none; font:600 0.8rem Karla,sans-serif; color:var(--grey); text-decoration:underline; text-decoration-color:var(--sand-line); text-underline-offset:3px; cursor:pointer; padding:4px 0;} .dk-hide:hover{background:none !important; box-shadow:none !important;}',
+      /* THE COMMENT BOX, TIDIED (Ramy, 18 Oct 2026: "make the comment box itself a little bigger and tidy up the rest") */
+      '.mk-editor{width:min(600px, calc(100vw - 24px)); padding:20px 24px 18px; border-radius:16px; border-top:4px solid var(--as, var(--teal)); max-height:calc(100vh - 32px); overflow:auto;}',
+      '.me-h{font:700 0.72rem Karla,sans-serif; letter-spacing:.09em; text-transform:uppercase; color:var(--grey); margin:0 0 8px;}',
+      '.mk-editor .me-q{margin:0 0 14px; padding:9px 14px; border-left:3px solid var(--tone-note); background:var(--sand); border-radius:0 8px 8px 0; font-size:0.9rem; line-height:1.5; font-style:italic; color:var(--ink-warm); max-height:5.4em; overflow:auto;}',
+      '.mk-editor textarea{min-height:150px; font-size:1rem; line-height:1.6; padding:13px 15px; border-radius:10px; border:1.5px solid var(--row-line); background:var(--field);} .mk-editor textarea:focus{outline:none; border-color:var(--as, var(--teal)); box-shadow:0 0 0 3px color-mix(in oklab, var(--as, var(--teal)) 14%, transparent);}',
+      '.me-tone{margin:14px 0 0;} .me-chips{margin:14px 0 0;}',
+      '.me-acts{align-items:center; margin-top:18px;} .me-hint{margin-right:auto; font-size:0.74rem; color:var(--grey);}',
+      '@media (max-width:560px){ .mk-editor{padding:16px 16px 14px;} .mk-editor textarea{min-height:130px;} .me-hint{display:none;} }',
       /* HOVER ON THESE BUTTONS: ONLY THE BORDER MOVES (Ramy, 18 Oct 2026: "the hover is too much, like a flashlight... only the borders should move and not the whole thing"). The shared button hover washes a fill out; each of these keeps its own fill. */
       '.me-acts .me-save:hover{background:var(--teal) !important; color:var(--paper) !important; border-color:var(--teal-deep) !important; box-shadow:0 0 0 1px var(--teal-deep) !important;}',
       '.me-acts .me-cancel:hover, .dr-h button:hover, .mkp-top button:hover{background:var(--paper) !important; border-color:var(--teal) !important; box-shadow:none !important;}',
