@@ -501,25 +501,28 @@
      criterion as a chip with its state and how much you have tied to it.
      Tap a chip and it opens over the work with its Met and Not met, its note
      and everything tied to it; tap away and it folds back. */
-  var DROP = null;
+  var DROP = null, DOCK_OPEN = false;   /* the bar is shut until you ask for it (Ramy, 18 Oct 2026) */
+  function tabEl() { var t = $('mkDockTab'); if (!t) { t = document.createElement('button'); t.id = 'mkDockTab'; t.type = 'button'; t.className = 'mk-dock-tab'; t.setAttribute('data-dktab', ''); t.hidden = true; document.body.appendChild(t); } return t; }
   function dockEl() { var d = $('mkDock'); if (!d) { d = document.createElement('div'); d.id = 'mkDock'; d.className = 'mk-dock'; d.hidden = true; document.body.appendChild(d); } return d; }
   function dropEl() { var d = $('mkDrop'); if (!d) { d = document.createElement('div'); d.id = 'mkDrop'; d.className = 'mk-drop'; d.hidden = true; document.body.appendChild(d); } return d; }
   function dockShould() { var c = $('mkCrit'); if (!c) return false; return c.getBoundingClientRect().top < -40; }   /* once you have scrolled past the top of the criteria */
   function paintDock() {
     var d = dockEl(), dr = dropEl(), cr = (CTX && CTX.a && CTX.a.criteria) || [];
-    if (!CTX || !CTX.marking || !cr.length || !$('mkCrit')) { d.hidden = true; dr.hidden = true; return; }
+    if (!CTX || !CTX.marking || !cr.length || !$('mkCrit')) { d.hidden = true; dr.hidden = true; tabEl().hidden = true; return; }
     var m = CTX.sub.criteriaMarks[CTX.round] || [], done = cr.filter(function (c, i) { return m[i] === true || m[i] === false; }).length;
     d.innerHTML = '<button type="button" class="dk-up" data-dkup>Front page</button><div class="dk-chips">' + cr.map(function (c, i) {
       var st = m[i] === true ? 'met' : m[i] === false ? 'not' : '', word = st === 'met' ? 'Met' : st === 'not' ? 'Not met' : 'To mark';
       var nt = evidenceFor(i).reduce(function (a, x) { return a + (x.tick ? (x.n || 1) : 1); }, 0);
       return '<button type="button" class="dk-chip ' + st + (DROP === i ? ' open' : '') + '" data-dk="' + i + '" aria-label="Criterion ' + (i + 1) + ': ' + word + (nt ? ', ' + nt + ' marks in the text' : '') + '"><b>' + (i + 1) + '</b><span>' + word + '</span>' + (nt ? '<em>' + nt + '</em>' : '') + '</button>';
-    }).join('') + '</div><span class="dk-prog">' + done + ' of ' + cr.length + ' marked</span>';
+    }).join('') + '</div><span class="dk-prog">' + done + ' of ' + cr.length + ' marked</span><button type="button" class="dk-hide" data-dkhide>Hide</button>';
+    tabEl().innerHTML = 'Criteria \u00b7 ' + done + ' of ' + cr.length;
     placeDock();
   }
   function placeDock() {
     var d = $('mkDock'); if (!d || !CTX || !CTX.marking) return;
-    var show = dockShould(); d.hidden = !show;
-    if (!show) { var dr = $('mkDrop'); if (dr) dr.hidden = true; return; }
+    var show = dockShould(), tab = tabEl();
+    d.hidden = !(show && DOCK_OPEN); tab.hidden = !(show && !DOCK_OPEN);
+    if (d.hidden) { var dr = $('mkDrop'); if (dr) dr.hidden = true; return; }
     paintDrop();
   }
   function paintDrop() {
@@ -544,6 +547,8 @@
   addEventListener('resize', onScroll);
   document.addEventListener('click', function (e) {
     var t = e.target.closest ? e.target : null; if (!t || !CTX) return;
+    if (t.closest('[data-dktab]')) { DOCK_OPEN = true; placeDock(); return; }
+    if (t.closest('[data-dkhide]')) { DOCK_OPEN = false; DROP = null; paintDock(); return; }
     if (t.closest('[data-dkup]')) { var c = $('mkCrit'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     var dk = t.closest('[data-dk]'); if (dk) { var i = +dk.getAttribute('data-dk'); DROP = DROP === i ? null : i; paintDock(); return; }
     if (t.closest('[data-drclose]')) { DROP = null; paintDock(); return; }
@@ -672,6 +677,9 @@
       '.dk-chip b{font:700 0.82rem Karla,sans-serif;} .dk-chip.met{background:var(--mark-met-bg); border-color:var(--mark-met-line); color:var(--mark-met-text);} .dk-chip.not{background:var(--mark-not-bg); border-color:var(--mark-not-line); color:var(--mark-not-text);}',
       '.dk-chip.open{box-shadow:0 0 0 2px var(--as, var(--teal));} .dk-chip em{font-style:normal; font-size:0.7rem; font-weight:700; background:var(--as, var(--teal)); color:var(--paper); border-radius:9px; padding:1px 6px; min-width:18px; text-align:center;}',
       '.dk-prog{font-size:0.78rem; color:var(--grey); white-space:nowrap;}',
+      '.dk-hide{background:none; border:none; font:600 0.8rem Karla,sans-serif; color:var(--grey); text-decoration:underline; text-decoration-color:var(--sand-line); text-underline-offset:3px; cursor:pointer; padding:4px 0;} .dk-hide:hover{background:none !important; box-shadow:none !important;}',
+      '.mk-dock-tab{position:fixed; left:18px; bottom:18px; z-index:49; font:700 0.8rem Karla,sans-serif; color:var(--as, var(--teal)); background:var(--paper); border:1.5px solid var(--as, var(--teal)); border-radius:20px; padding:9px 16px; cursor:pointer; box-shadow:0 8px 24px oklch(25% 0.02 60 / .16);} .mk-dock-tab:hover{background:var(--sand) !important;}',
+      '@media (max-width:1079px){ .mk-dock-tab{left:auto; right:12px; bottom:calc(14px + env(safe-area-inset-bottom));} }',
       '.mk-drop{position:fixed; z-index:51; width:min(440px, calc(100vw - 16px)); background:var(--paper); border:1px solid var(--sand-line); border-top:3px solid var(--as, var(--teal)); border-radius:var(--r-card); padding:12px 14px 14px; box-shadow:0 18px 50px oklch(20% 0.02 60 / .25); max-height:70vh; overflow:auto;}',
       '.dr-h{display:flex; justify-content:space-between; align-items:center;} .dr-h button{font:700 0.78rem Karla,sans-serif; background:none; border:1.5px solid var(--sand-line); border-radius:var(--r-control); padding:4px 10px; cursor:pointer;}',
       '.dr-t{font-size:0.88rem; line-height:1.5; margin:6px 0 10px;} .dr-btns{display:flex; gap:8px; margin:0 0 4px;}',
@@ -687,7 +695,7 @@
       '.mk-tied svg.hub-tick, .dr-ev svg.hub-tick{width:1em; height:1em; vertical-align:-0.18em; margin:0 2px 0 0; filter:none;}',
       '@media (max-width:1079px){ .mk-dock{top:auto; bottom:0; padding:8px 10px calc(8px + env(safe-area-inset-bottom)); border-bottom:none; border-top:1px solid var(--sand-line); box-shadow:0 -6px 20px oklch(25% 0.02 60 / .12);} .dk-up{display:none;} .dk-prog{font-size:0.72rem;} .dk-chip{padding:5px 10px;} }',
       '.mk-sbox{margin:2px 0 10px;} .mk-sbox > summary{font-size:0.8rem;}',
-      '@media print{ .mk-selbar,.mk-editor,.mk-tip,.mk-dock,.mk-drop,.mk-prev-wrap,.mk-checks,.mk-keys,.mk-help{display:none !important;} }'
+      '@media print{ .mk-dock-tab,.mk-selbar,.mk-editor,.mk-tip,.mk-dock,.mk-drop,.mk-prev-wrap,.mk-checks,.mk-keys,.mk-help{display:none !important;} }'
     ].join('\n');
     (document.head || document.documentElement).appendChild(st);
   }
