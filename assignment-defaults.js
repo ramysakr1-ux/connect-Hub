@@ -110,7 +110,7 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
       {
         "type": "text",
         "label": "Before you start",
-        "body": "Choose four items from the letter below — one grammar structure, one functional exponent, and two vocabulary items — and analyse each one: meaning, form, pronunciation and use, and what learners will find difficult. Analyse only the words in bold.\n\n750–1,000 words, not counting the letter. Research every item and name your sources, with a page number where you can. Passing on first or second submission does not affect your certificate grade.",
+        "body": "Choose four items from the letter below — one grammar structure, one functional exponent, and two vocabulary items — and analyse each one: meaning, form, pronunciation and use, and what learners will find difficult. Analyse only the words in bold.\n\n750–1,000 words, not counting the letter. Research every item and name your sources, with a page number where you can. Don't use this analysis as the basis of an assessed TP lesson. Passing on first or second submission does not affect your certificate grade.",
         "readonly": true
       },
       {
@@ -242,7 +242,7 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
       {
         "type": "text",
         "label": "Before you start",
-        "body": "Choose one of the three texts below for the class described, then design two reading tasks and one productive follow-up task, and explain your decisions.\n\n750–1,000 words of continuous prose, not counting the bibliography and appendices. Attach both reading tasks with their answer keys and the productive task with the materials link. Passing on first or second submission does not affect your certificate grade.",
+        "body": "Choose one of the three texts below for the class described, then design two reading tasks and one productive follow-up task, and explain your decisions.\n\n750–1,000 words of continuous prose, not counting the bibliography and appendices. Attach both reading tasks with their answer keys and the productive task with the materials link. Don't use this text or these tasks as the basis of an assessed TP lesson. Passing on first or second submission does not affect your certificate grade.",
         "readonly": true
       },
       {
@@ -368,12 +368,12 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
       {
         "type": "text",
         "label": "D.  The Grammar Task",
-        "body": "• Attach ONE task as Appendix 1 and say where it is from. One task only — tutors cannot choose for you.\n• Explain why it fits: the group’s preferences from A, their level, and the context the mistakes were made in.\n• Describe the procedure: set-up, what students do, for how long, in what interaction, how you monitor, and how you give feedback."
+        "body": "• Attach ONE task as Appendix 1 and say where it is from. One task only — tutors cannot choose for you.\n• Explain why it fits: the group’s preferences from A, their level, and the context the mistakes were made in.\n• Describe the procedure: set-up, what students do, for how long, in what interaction, how you monitor, and how you give feedback.\n• Suggest one source the learners could use on their own to keep working on this grammar — a book, a website or an app — or someone who could support them, and say why it suits them."
       },
       {
         "type": "text",
         "label": "E.  The Pronunciation Task",
-        "body": "• Attach ONE task as Appendix 2 and say where it is from. It must have students producing the sound, not just hearing it — repeating after the teacher is not a task.\n• Explain why it fits: the group’s preferences from A, and their level.\n• Describe the procedure, as in D."
+        "body": "• Attach ONE task as Appendix 2 and say where it is from. It must have students producing the sound, not just hearing it — repeating after the teacher is not a task.\n• Explain why it fits: the group’s preferences from A, and their level.\n• Describe the procedure, as in D.\n• Suggest one source or support for working on this sound on their own, as in D."
       },
       {
         "type": "text",
@@ -435,7 +435,7 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
       {
         "type": "text",
         "label": "A.  Your Strengths",
-        "body": "• From the tutor feedback on your three most recent TPs, identify three teaching strengths you have shown.\n• Back each one with at least one tutor comment, saying which TP it is from, e.g. (TP6). Add a peer comment too if you can.\n• Explain how each strength benefits the students.\n\nStrength 1 —\nStrength 2 —\nStrength 3 —"
+        "body": "• From the tutor feedback on your three most recent TPs, identify three teaching strengths you have shown.\n• Back each one with at least one tutor comment, saying which TP it is from, e.g. (TP6). Add a peer comment, or something your students said or showed, if you can.\n• Explain how each strength benefits the students.\n\nStrength 1 —\nStrength 2 —\nStrength 3 —"
       },
       {
         "type": "text",
