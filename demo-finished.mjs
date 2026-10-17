@@ -23,6 +23,7 @@
  *
  * What it will not do. It refuses to touch c1, c2 or c3.
  */
+import { demoSubmission } from './demo-submissions.mjs';
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
 import { readFileSync, writeFileSync, mkdtempSync, copyFileSync, readdirSync } from 'node:fs';
@@ -347,8 +348,12 @@ function assignment(cand, code, how) {
   const crit = (DEFAULT_WORDING[code] && DEFAULT_WORDING[code].criteria) || [];
   const n = crit.length || 4;
   const notMetAt = notMetIndexFor(code);
-  const body = `This assignment is submitted as part of the CELTA course at ${COURSE.settings.centreName}. It addresses each of the criteria set out in the brief, in the order the brief gives them, with reference to the teaching practice class and to the reading listed at the end.`;
-  const sub = { picked: {}, text: { 1: body }, fields: {}, decl: { 8: { checks: [true, true, true], aiUsed: 'no', aiLink: '', aiPurpose: '' } }, materialsLink: '' };
+  /* The model answers in demo-submissions.mjs, not the 47-word placeholder that
+     stood here (17 Oct 2026). The declaration is filed under the brief's own
+     declaration section: it was always 8, which only Focus on the Learner has. */
+  const body = demoSubmission(code, cand.group) || { picked: {}, text: {}, fields: {} };
+  const declAt = ((DEFAULT_WORDING[code] && DEFAULT_WORDING[code].sections) || []).findIndex((s) => s.type === 'declaration');
+  const sub = { picked: body.picked, text: body.text, fields: body.fields, decl: { [declAt >= 0 ? declAt : 8]: { checks: [true, true, true], aiUsed: 'no', aiLink: '', aiPurpose: '' } }, materialsLink: '' };
   const base = {
     stage: 'closed', usedResubmission: how === 'resub',
     sub1: sub, sub2: how === 'resub' ? sub : null,
