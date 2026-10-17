@@ -45,61 +45,63 @@
     var L = letterOf(sec.label);
     return L ? (bl.filter(function (b) { return letterOf(b.head) === L; })[0] || null) : null;
   }
-  /* THE "WHILE YOU READ" CARD, BACK (18 Oct 2026). Ramy asked where it went.
-     A small pill in the corner of the screen, shut until you want it; opened,
-     it shows what a Met answer looks like for the section you are reading and
-     follows you from section to section. Laptop only: on a phone the room
-     is the work's. */
-  var OBS = null, CURLOC = null, READ_OPEN = false;
-  function readEl() { var e = $('mkRead'); if (!e) { e = document.createElement('div'); e.id = 'mkRead'; e.className = 'mk-read'; e.hidden = true; document.body.appendChild(e); } return e; }
-  function paintRead() {
-    var el = readEl();
-    if (!CTX || !CTX.marking || innerWidth < 1080 || helpHidden() || !CURLOC) { el.hidden = true; return; }
-    var b = blockFor(CURLOC); if (!b) { el.hidden = true; return; }
-    el.hidden = false;
-    el.innerHTML = READ_OPEN
-      ? '<div class="rd-top"><b>While you read: ' + esc(b.head) + '</b><button type="button" data-readclose>Close</button></div><div class="rd-body">' + hubGuidanceHTML(b.body) + '</div>'
-      : '<button type="button" class="rd-pill" data-readopen>Guidance for ' + esc(b.head.split(/\s*\u00b7\s*/)[0]) + '</button>';
-  }
-  function watchReading() {
-    if (OBS) OBS.disconnect();
-    var locs = [].slice.call(document.querySelectorAll('#mkWork .mloc'));
-    if (!locs.length || !('IntersectionObserver' in window)) return;
-    var seen = new Map();
-    OBS = new IntersectionObserver(function (ents) {
-      ents.forEach(function (e) { seen.set(e.target, e.isIntersecting ? e.boundingClientRect.top : null); });
-      var best = null, bt = Infinity;
-      seen.forEach(function (t, el) { if (t != null && t > -400 && t < bt) { bt = t; best = el; } });
-      if (best && best !== CURLOC) { CURLOC = best; paintRead(); }
-    }, { rootMargin: '-15% 0px -45% 0px' });
-    locs.forEach(function (l) { OBS.observe(l); });
-  }
-  document.addEventListener('click', function (e) {
-    var t = e.target.closest ? e.target : null; if (!t) return;
-    if (t.closest('[data-readopen]')) { READ_OPEN = true; paintRead(); }
-    else if (t.closest('[data-readclose]')) { READ_OPEN = false; paintRead(); }
-  });
-
-  /* ---- the criterion's guidance, beside its note ------------------------ */
-  function showTip(i, anchor) {
-    var g = CTX && CTX.guide; var t = g && g.crit && g.crit[i];
-    var tip = $('mkTip'); if (!tip) { tip = document.createElement('div'); tip.id = 'mkTip'; tip.className = 'mk-tip'; tip.setAttribute('role', 'note'); document.body.appendChild(tip); }
-    if (!t) { tip.hidden = true; return; }
-    tip.innerHTML = '<div class="mkt-h">Watch out for: criterion ' + (+i + 1) + '</div>' + (window.hubGuidanceHTML ? hubGuidanceHTML(t) : esc(t));
-    tip.hidden = false;
-    var r = anchor.getBoundingClientRect(), w = Math.min(360, innerWidth - 32);
-    tip.style.width = w + 'px';
-    if ((document.body.className || '').indexOf('mk-nohelp') >= 0) { tip.hidden = true; return; }
-    /* to the right of the box if there is room, else above it */
-    if (r.right + 14 + w <= innerWidth - 16) {
-      tip.style.left = (r.right + 14) + 'px';
-      tip.style.top = Math.min(Math.max(70, r.top - 20), innerHeight - tip.offsetHeight - 16) + 'px';
-    } else {
-      tip.style.left = Math.max(16, Math.min(r.left, innerWidth - w - 16)) + 'px';
-      tip.style.top = Math.max(70, r.top - tip.offsetHeight - 10) + 'px';
+  /* THE "WHILE YOU READ" GUIDANCE, ON TOP OF THE SECTION IT IS FOR (18 Oct 2026).
+     Ramy: "while you read A should sit on top of A... and before you mark
+     underneath the front page, next to each other." The guidance for the first
+     section sits beside "Before you mark" just under the front page; each
+     later section carries its own, shut, on top of it. For a table section
+     (LRT) it holds the row-by-row guidance in one box. */
+  function sectionGuide(i) {
+    var g = CTX && CTX.guide; if (!g || !g.sections) return null;
+    var sec = CTX.a.sections[i]; if (!sec) return null;
+    var bl = blocks(g.sections);
+    if (sec.type === 'text') {
+      var L = letterOf(sec.label), b = L ? bl.filter(function (x) { return letterOf(x.head) === L; })[0] : null;
+      return b ? { head: b.head, body: b.body } : null;
     }
+    if (sec.type === 'fields') {
+      var rows = bl.filter(function (x) { return !/^model/i.test(x.head) && !letterOf(x.head); });
+      return rows.length ? { head: String(sec.label || 'This section').replace(/\s+/g, ' ').trim(), body: rows.map(function (x) { return x.head + '\n' + x.body; }).join('\n\n') } : null;
+    }
+    return null;
   }
-  function hideTip() { var t = $('mkTip'); if (t) t.hidden = true; }
+  var OPENSET = {};
+  document.addEventListener('toggle', function (e) { var d = e.target; if (d && d.dataset && d.dataset.bk) OPENSET[d.dataset.bk] = d.open; }, true);
+  function gbox(key, title, bodyHtml, cls) { return '<details class="guide-box ' + (cls || '') + '" data-bk="' + key + '"' + (OPENSET[key] ? ' open' : '') + '><summary>' + esc(title) + '</summary><div class="gb">' + bodyHtml + '</div></details>'; }
+  function firstGuidedSection() {
+    var seen = {}, out = [];
+    [].forEach.call(document.querySelectorAll('#mkWork .roundlabel[data-sec]'), function (l) { var i = l.getAttribute('data-sec'); if (!seen[i]) { seen[i] = l; out.push([+i, l]); } });
+    return out;
+  }
+  function paintSectionHelp() {
+    [].forEach.call(document.querySelectorAll('.mk-sbox'), function (x) { x.remove(); });
+    if (!CTX || !CTX.marking || helpHidden()) return;
+    firstGuidedSection().forEach(function (pair, n) {
+      if (n === 0) return;   /* the first one lives under the front page */
+      var g = sectionGuide(pair[0]); if (!g) return;
+      pair[1].insertAdjacentHTML('beforebegin', gbox('sec' + pair[0], 'While you read: ' + g.head, hubGuidanceHTML(g.body), 'mk-sbox'));
+    });
+  }
+  function firstSectionBox() {
+    var f = firstGuidedSection()[0]; if (!f) return '';
+    var g = sectionGuide(f[0]); if (!g) return '';
+    return gbox('sec' + f[0], 'While you read: ' + g.head, hubGuidanceHTML(g.body), 'mk-hbox');
+  }
+
+  /* ---- the criterion's guidance, inline above its note ------------------ */
+  /* It used to float and could sit over the note box (Ramy, 18 Oct 2026: "it
+     should not cover the note... on top of the note so you can still write and
+     maybe look at the criteria"). It is a panel in the row now, between the
+     criterion and its note, open until pressed again. */
+  var OPENTIP = null;
+  function paintTipIn() {
+    [].forEach.call(document.querySelectorAll('.mk-tipin'), function (x) { x.remove(); });
+    var i = OPENTIP, g = CTX && CTX.guide, t = g && g.crit && g.crit[i];
+    if (i == null || !t || (document.body.className || '').indexOf('mk-nohelp') >= 0) return;
+    var link = document.querySelector('[data-tip="' + i + '"]'); if (!link) return;
+    link.insertAdjacentHTML('afterend', '<div class="mk-tipin" role="note"><div class="mkt-h"><span>Watch out for: criterion ' + (+i + 1) + '</span><button type="button" data-tipclose>Close</button></div>' + (window.hubGuidanceHTML ? hubGuidanceHTML(t) : esc(t)) + '</div>');
+  }
+  function hideTip() { if (OPENTIP != null) { OPENTIP = null; paintTipIn(); } }
 
   /* ---- margin comments -------------------------------------------------- */
   function list(round) { var s = CTX.sub; s.margin = s.margin || {}; return (s.margin[round] = s.margin[round] || []); }
@@ -235,21 +237,23 @@
     while (n) { if (n.nodeName === 'BR' && (!n.nextSibling || n.nextSibling.nodeName === 'BR')) break; last = n; n = n.nextSibling; }
     var r = document.createRange(); r.setStartBefore(first); r.setEndAfter(last); return r;
   }
+  /* ONE CLICK, ONE WORD; the same word again, its paragraph; again, the whole
+     answer. It widens only when you click the SAME WORD again: a click on any
+     other word starts over at that word, and a click on a blank part of the
+     page, outside the highlight, clears it (Ramy, 18 Oct 2026). */
   function clickPick(e, box) {
     var loc = box.closest('.mloc'); if (!canWrite(loc.getAttribute('data-round'))) return false;
     var pos = caretAt(e.clientX, e.clientY); if (!pos || pos.node.nodeType !== 3 || !box.contains(pos.node)) return false;
-    var again = false;
-    try { again = !!(PICK && PICK.box === box && PICK.range.comparePoint(pos.node, pos.offset) === 0); } catch (x) {}
-    var level = again ? Math.min(3, PICK.level + 1) : 1, range = document.createRange();
-    if (level === 1) {
-      var t = pos.node.nodeValue, a = pos.offset, z = pos.offset, isW = /[\p{L}\p{N}'’\-]/u;
-      while (a > 0 && isW.test(t[a - 1])) a--;
-      while (z < t.length && isW.test(t[z])) z++;
-      if (a === z) return false;
-      range.setStart(pos.node, a); range.setEnd(pos.node, z);
-    } else if (level === 2) range = paragraphRange(pos.node, box);
-    else range.selectNodeContents(box);
-    PICK = { box: box, level: level, range: range.cloneRange() };
+    var t = pos.node.nodeValue, a = pos.offset, z = pos.offset, isW = /[\p{L}\p{N}'’\-]/u;
+    while (a > 0 && isW.test(t[a - 1])) a--;
+    while (z < t.length && isW.test(t[z])) z++;
+    if (a === z) return false;
+    var word = document.createRange(); word.setStart(pos.node, a); word.setEnd(pos.node, z);
+    var same = false;
+    try { same = !!(PICK && PICK.box === box && PICK.word && PICK.word.compareBoundaryPoints(Range.START_TO_START, word) === 0 && PICK.word.compareBoundaryPoints(Range.END_TO_END, word) === 0); } catch (x) {}
+    var level = same ? Math.min(3, PICK.level + 1) : 1;   /* no fourth click: clicking OUTSIDE the highlight lets go (Ramy, 18 Oct 2026) */
+    var range = level === 1 ? word : level === 2 ? paragraphRange(pos.node, box) : (function () { var r = document.createRange(); r.selectNodeContents(box); return r; })();
+    PICK = { box: box, level: level, word: word.cloneRange() };
     var sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
     onSelect();
     return true;
@@ -331,21 +335,23 @@
     var add = t.closest('[data-addnote]');
     if (add) { var i = add.getAttribute('data-addnote'); var ta = document.querySelector('[data-crit-comment="' + i + '"]'); add.hidden = true; ta.hidden = false; ta.focus(); return; }
     var tl = t.closest('[data-tip]');
-    if (tl) { var tip = $('mkTip'); if (tip && !tip.hidden && tip._i === tl.getAttribute('data-tip')) { hideTip(); return; } showTip(tl.getAttribute('data-tip'), tl); $('mkTip')._i = tl.getAttribute('data-tip'); return; }
-    if (!t.closest('#mkTip')) hideTip();
+    if (tl) { var ti = +tl.getAttribute('data-tip'); OPENTIP = OPENTIP === ti ? null : ti; paintTipIn(); return; }
+    if (t.closest('[data-tipclose]')) { hideTip(); return; }
   });
-  document.addEventListener('focusin', function (e) {
-    var ta = e.target.closest && e.target.closest('[data-crit-comment]');
-    if (ta) { showTip(ta.getAttribute('data-crit-comment'), ta); $('mkTip')._i = ta.getAttribute('data-crit-comment'); }
-  });
+  /* The guidance opens only when "Guidance" is pressed. It used to open as soon
+     as you started a note (Ramy, 18 Oct 2026: "clicking on add a note should
+     not open the guidance box"). */
   document.addEventListener('focusout', function (e) {
     var ta = e.target.closest && e.target.closest('[data-crit-comment]');
     if (!ta) return;
-    setTimeout(hideTip, 120);
-    /* an empty note folds back to its link */
-    if (!ta.value.trim()) { ta.hidden = true; var a = document.querySelector('[data-addnote="' + ta.getAttribute('data-crit-comment') + '"]'); if (a) a.hidden = false; }
+    /* an empty note folds back to its link, unless you went to its Guidance */
+    var idx = ta.getAttribute('data-crit-comment');
+    setTimeout(function () {
+      if (ta.value.trim() || !ta.isConnected || String(OPENTIP) === idx) return;
+      var row = ta.closest('.critrow'); if (row && row.contains(document.activeElement)) return;
+      ta.hidden = true; var a = document.querySelector('[data-addnote="' + idx + '"]'); if (a) a.hidden = false;
+    }, 180);
   });
-  addEventListener('scroll', function () { var t = $('mkTip'); if (t && !t.hidden && document.activeElement && document.activeElement.matches && !document.activeElement.matches('[data-crit-comment]')) hideTip(); }, { passive: true });
 
 
   /* ======================= STEP TWO (17 Oct 2026) ======================= */
@@ -358,7 +364,7 @@
     var snap = snapNow(); if (!snap || !window.hubWorkChecks) return '';
     var items = hubWorkChecks(CTX.a, snap, CTX.key, 'tutor');
     var looks = items.filter(function (x) { return x.state === 'look'; }).length;
-    return '<details class="guide-box mk-checks"' + (looks ? ' open' : '') + '><summary>Before you mark: ' + items.length + ' checks' + (looks ? ', ' + looks + ' to look at' : ', all clear') + '</summary><div class="gb"><ul class="mkc">' +
+    return '<details class="guide-box mk-checks" data-bk="checks"' + (OPENSET.checks === undefined ? (looks ? ' open' : '') : (OPENSET.checks ? ' open' : '')) + '><summary>Before you mark: ' + items.length + ' checks' + (looks ? ', ' + looks + ' to look at' : ', all clear') + '</summary><div class="gb"><ul class="mkc">' +
       items.map(function (x) { return '<li class="' + x.state + '"><b>' + (x.state === 'ok' ? 'Done' : x.state === 'look' ? 'Look' : 'Note') + '</b><span>' + esc(x.label) + (x.detail ? '<small>' + esc(x.detail) + '</small>' : '') + '</span></li>'; }).join('') +
       '</ul><p class="mkc-foot">Lite checks what it can read. The judgement is yours.</p></div></details>';
   }
@@ -561,11 +567,12 @@
     var hidden = helpHidden();
     document.body.classList.toggle('mk-nohelp', hidden && !!CTX.marking);
     if (!CTX.marking) { host.innerHTML = ''; return; }
-    var g = CTX.guide, parts = [], box = function (title, text) { return '<details class="guide-box mk-hbox"><summary>' + esc(title) + '</summary><div class="gb">' + hubGuidanceHTML(text) + '</div></details>'; };
+    var g = CTX.guide, parts = [];
     var ch = checksHTML(); if (ch) parts.push(ch);
+    var fs = firstSectionBox(); if (fs) parts.push(fs);
     var gen = [g && g.general, CTX.a.trap ? 'The hidden word\n' + hubTrapNote(CTX.a.trap) : ''].filter(Boolean).join('\n\n');
-    if (gen) parts.push(box('How to mark this assignment', gen));
-    if (g && g.sections) parts.push(box('Section by section', g.sections));
+    if (gen) parts.push(gbox('how', 'How to mark this assignment', hubGuidanceHTML(gen), 'mk-hbox'));
+    if (g && g.sections) parts.push(gbox('bysec', 'Section by section', hubGuidanceHTML(g.sections), 'mk-hbox'));
     if (!parts.length) { host.innerHTML = ''; return; }
     host.innerHTML = '<div class="mk-help-bar"><span>Marking help</span><button type="button" data-helptoggle>' + (hidden ? 'Show the guidance' : 'Hide the guidance') + '</button></div>' + (hidden ? '' : '<div class="mk-help-grid">' + parts.join('') + '</div>');
   }
@@ -579,8 +586,9 @@
       paintMargin();
       paintStep2();
       paintHelp();
+      paintSectionHelp();
+      paintTipIn();
       paintDock();
-      CURLOC = null; watchReading(); paintRead();
       if (RESEL) { var id = RESEL; RESEL = null; reselect(id); }
     }
   };
@@ -594,15 +602,15 @@
       'mark.mc{background:color-mix(in oklab, var(--gold-lifted) 34%, transparent); color:inherit; border-bottom:2px solid var(--gold); border-radius:2px; cursor:pointer; padding:0 1px;}',
       '.mgut:empty{display:none;}',
       '.mgut{display:flex; flex-direction:column; gap:8px; margin:-2px 0 12px;}',
-      '.mcard{background:var(--paper); border:1px solid var(--amber-edge); border-left:3px solid var(--gold); border-radius:var(--r-strip); padding:8px 11px; font-size:0.84rem; line-height:1.5;}',
-      '.mcard p{margin:2px 0 4px;}',
+      '.mcard{background:var(--paper); border:1px solid var(--amber-edge); border-left:4px solid var(--gold); border-radius:12px; padding:12px 16px 11px; font-size:0.95rem; line-height:1.55; box-shadow:0 2px 8px oklch(30% 0.03 70 / .06);}',
+      '.mcard p{margin:4px 0 6px;}',
       '.mc-crit{display:inline-block; font-size:0.7rem; font-weight:700; color:var(--teal); text-transform:uppercase; letter-spacing:.06em;}',
-      '.mc-by{font-size:0.74rem; color:var(--grey);}',
+      '.mc-by{font-size:0.8rem; color:var(--grey);}',
       '.mc-acts{float:right;} .mc-acts button{background:none; border:none; padding:0 0 0 10px; font:600 0.76rem Karla,sans-serif; color:var(--teal); cursor:pointer; text-decoration:underline; text-decoration-color:var(--sand-line);}',
       '.mc-acts button:hover{background:none !important; box-shadow:none !important;}',
       '.mc-hit{animation:mcHit 1.3s ease-out 1;} @keyframes mcHit{0%{box-shadow:0 0 0 3px oklch(70% 0.12 72 / .7);}100%{box-shadow:0 0 0 3px oklch(70% 0.12 72 / 0);}}',
       '.mk-pair .mloc.has-mc{display:block !important;}',
-      '@media (min-width:1280px){ .mloc.has-mc{display:grid; grid-template-columns:minmax(0,1fr) 230px; gap:12px; align-items:start;} .mloc.has-mc .mgut{margin:0;} }',
+      '@media (min-width:1080px){ .mloc.has-mc{display:grid; grid-template-columns:minmax(0,1fr) minmax(320px,30%); gap:12px; align-items:start;} .mloc.has-mc .mgut{margin:0;} .mloc.has-mc .readonly{margin-bottom:0;} }',
       '.mk-selbar{position:fixed; z-index:60; display:flex; flex-wrap:wrap; gap:6px; max-width:min(560px, calc(100vw - 24px)); padding:7px; background:var(--ink); border-radius:12px; box-shadow:0 10px 30px oklch(20% 0.02 60 / .3);}',
       '.mk-selbar button{font:600 0.78rem Karla,sans-serif; color:var(--paper); background:oklch(32% 0.02 65); border:none; border-radius:8px; padding:7px 10px; cursor:pointer; text-align:left;}',
       '.mk-selbar button.sb-main{background:var(--gold); color:var(--ink); font-weight:700;}',
@@ -626,6 +634,9 @@
       '@media (max-width:1079px){ .mk-float{display:none;} }',
       '.mk-tip{position:fixed; z-index:59; background:var(--sand); border:1px solid var(--sand-line); border-left:3px solid var(--teal); border-radius:var(--r-strip); padding:9px 13px 10px; font-size:0.82rem; line-height:1.5; box-shadow:0 12px 34px oklch(25% 0.02 60 / .18); max-height:60vh; overflow:auto;}',
       '.mkt-h{font-weight:700; color:var(--teal); margin:0 0 4px;} .mk-tip p{margin:4px 0;}',
+      '.mk-tipin{margin:8px 0 6px; padding:8px 12px 9px; background:var(--sand); border:1px solid var(--sand-line); border-left:3px solid var(--as, var(--teal)); border-radius:var(--r-strip); font-size:0.82rem; line-height:1.5;}',
+      '.mk-tipin .mkt-h{display:flex; justify-content:space-between; align-items:center; gap:10px; font-weight:700; color:var(--as, var(--teal)); margin:0 0 4px;} .mk-tipin .mkt-h button{font:600 0.76rem Karla,sans-serif; background:none; border:none; color:var(--grey); text-decoration:underline; cursor:pointer;} .mk-tipin .mkt-h button:hover{background:none !important; box-shadow:none !important;}',
+      '.mk-tipin p{margin:4px 0;} .mk-tipin ul{margin:3px 0 5px; padding-left:18px;} .mk-tipin li{margin:2px 0;}',
       '.mk-tied{margin:8px 0 0; padding:7px 10px; border-radius:var(--r-strip); background:var(--gold-wash); font-size:0.8rem;}',
       '.mk-tied span{display:block; font-weight:700; font-size:0.72rem; text-transform:uppercase; letter-spacing:.06em; color:var(--gold-deep); margin:0 0 3px;}',
       '.mk-tied button{display:block; text-align:left; background:none; border:none; padding:3px 0; font:inherit; color:var(--ink); cursor:pointer;} .mk-tied button:hover{background:none !important; box-shadow:none !important; text-decoration:underline;}',
@@ -670,16 +681,12 @@
       '.dr-ev{margin-top:10px; padding:7px 10px; border-radius:var(--r-strip); background:var(--gold-wash); font-size:0.8rem;} .dr-ev span{display:block; font-weight:700; font-size:0.72rem; text-transform:uppercase; letter-spacing:.06em; color:var(--gold-deep); margin:0 0 3px;}',
       '.dr-ev button{display:block; text-align:left; background:none; border:none; padding:3px 0; font:inherit; color:var(--ink); cursor:pointer;} .dr-ev button:hover{background:none !important; box-shadow:none !important; text-decoration:underline;} .dr-none{font-size:0.8rem; color:var(--grey); margin:10px 0 0;}',
       '.mk-help-bar{display:flex; justify-content:space-between; align-items:center; margin:0 0 6px; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--grey);} .mk-help-bar button{background:none; border:none; font:600 0.8rem Karla,sans-serif; letter-spacing:0; text-transform:none; color:var(--teal); text-decoration:underline; text-decoration-color:var(--sand-line); text-underline-offset:3px; cursor:pointer;} .mk-help-bar button:hover{background:none !important; box-shadow:none !important;}',
-      '.mk-help-grid{display:flex; flex-wrap:wrap; gap:8px; align-items:flex-start;} .mk-help-grid .guide-box{flex:1 1 260px; margin:0;} .mk-help-grid .guide-box[open]{flex-basis:100%;}',
+      '.mk-help-grid{display:flex; flex-wrap:wrap; gap:8px; align-items:flex-start;} .mk-help-grid .guide-box{flex:1 1 300px; margin:0;}',
+      '.mk-help-grid .guide-box, .mk-sbox{background:var(--gold-wash); border-color:var(--amber-edge);} .mk-help-grid .guide-box[open] > summary, .mk-sbox[open] > summary{border-bottom-color:var(--amber-edge);}',
       '.mk-nohelp .mk-tiplink{display:none;}',
       '.mk-tied svg.hub-tick, .dr-ev svg.hub-tick{width:1em; height:1em; vertical-align:-0.18em; margin:0 2px 0 0; filter:none;}',
       '@media (max-width:1079px){ .mk-dock{top:auto; bottom:0; padding:8px 10px calc(8px + env(safe-area-inset-bottom)); border-bottom:none; border-top:1px solid var(--sand-line); box-shadow:0 -6px 20px oklch(25% 0.02 60 / .12);} .dk-up{display:none;} .dk-prog{font-size:0.72rem;} .dk-chip{padding:5px 10px;} }',
-      '.mk-read{position:fixed; right:18px; bottom:18px; z-index:48; max-width:min(420px, calc(100vw - 36px));}',
-      '.rd-pill{font:700 0.8rem Karla,sans-serif; color:var(--as, var(--teal)); background:var(--paper); border:1.5px solid var(--as, var(--teal)); border-radius:20px; padding:9px 16px; cursor:pointer; box-shadow:0 8px 24px oklch(25% 0.02 60 / .16);} .rd-pill:hover{background:var(--sand) !important;}',
-      '.mk-read:has(.rd-top){background:var(--sand); border:1px solid var(--sand-line); border-left:3px solid var(--as, var(--teal)); border-radius:var(--r-strip); box-shadow:0 14px 40px oklch(25% 0.02 60 / .2); max-height:56vh; overflow:auto; font-size:0.82rem; line-height:1.5;}',
-      '.rd-top{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:9px 12px; border-bottom:1px solid var(--sand-line); position:sticky; top:0; background:var(--sand); color:var(--as, var(--teal));} .rd-top button{font:600 0.76rem Karla,sans-serif; background:none; border:none; color:var(--grey); text-decoration:underline; cursor:pointer;} .rd-top button:hover{background:none !important;}',
-      '.rd-body{padding:4px 12px 10px;} .rd-body p{margin:5px 0;} .rd-body h4{margin:8px 0 2px; font-size:0.82rem;}',
-      '@media print{ .mk-read{display:none !important;} }',
+      '.mk-sbox{margin:2px 0 10px;} .mk-sbox > summary{font-size:0.8rem;}',
       '@media print{ .mk-selbar,.mk-editor,.mk-tip,.mk-dock,.mk-drop,.mk-prev-wrap,.mk-checks,.mk-keys,.mk-help{display:none !important;} }'
     ].join('\n');
     (document.head || document.documentElement).appendChild(st);

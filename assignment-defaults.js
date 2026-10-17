@@ -272,7 +272,7 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
       {
         "type": "text",
         "label": "A.  Choosing Your Text",
-        "heads": ["Text chosen", "Level", "Length", "Interests", "Genre", "Enough to build the tasks"],
+        "heads": ["Text chosen", "Level", "Length", "Interests", "Genre", "Why not the other texts"],
         "body": "• Choose ONE text. Check it suits their level (englishprofile.org helps), is a sensible length, matches their interests, is a genre they would meet outside class, and gives you enough to build two reading tasks and one productive task from.\n• Write which text you chose, and why, against those points."
       },
       {

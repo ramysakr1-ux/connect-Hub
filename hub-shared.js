@@ -1915,7 +1915,11 @@ window.hubSplitHeads = function (text, heads) {
     var cs = at + (at === 0 && t.indexOf(h + ': ') === 0 ? 0 : 2) + h.length + 2;
     found.push({ k: k, at: at, cs: cs }); from = cs;
   });
-  if (!found.length) { vals[0] = t; return vals; }
+  if (!found.length) {
+    var ps = t.split('\n\n');
+    if (heads.length > 1 && ps.length === heads.length) return ps.map(function (x) { return x.replace(/^\s+|\s+$/g, ''); });
+    vals[0] = t; return vals;
+  }
   var lead = found[0].at > 0 ? t.slice(0, found[0].at).replace(/^\s+|\s+$/g, '') : '';
   found.forEach(function (f, n) { vals[f.k] = t.slice(f.cs, n + 1 < found.length ? found[n + 1].at : t.length).replace(/^\s+|\s+$/g, ''); });
   /* writing before the first headline is not lost: it goes in the first box */
@@ -1930,10 +1934,15 @@ window.hubBareText = function (text, heads) {
 /* the same text, read-only, with each headline in its colour on its own line */
 window.hubHeadHTML = function (text, heads) {
   var e = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
-  return String(text || '').split('\n\n').map(function (p) {
-    var h = (heads || []).filter(function (x) { return p.indexOf(x + ': ') === 0; })[0];
-    var body = e(p).replace(/\n/g, '<br>');
-    if (h) { var lab = e(h + ': '); body = '<span class="hl">' + lab + '</span>' + body.slice(lab.length); }
+  var paras = String(text || '').split('\n\n'), hs = heads || [];
+  var named = paras.map(function (p) { return hs.filter(function (x) { return p.indexOf(x + ': ') === 0; })[0] || null; });
+  /* An answer written before headlines existed, with one paragraph for each
+     headline, still gets them: the k-th paragraph under the k-th headline. */
+  var positional = hs.length > 1 && paras.length === hs.length;
+  return paras.map(function (p, k) {
+    var h = named[k], body = e(p).replace(/\n/g, '<br>');
+    if (h) { var lab = e(h + ': '); return '<span class="hl">' + lab + '</span>' + body.slice(lab.length); }
+    if (positional && named.indexOf(hs[k]) < 0) return '<span class="hl">' + e(hs[k] + ': ') + '</span>' + body;
     return body;
   }).join('<br><br>');
 };

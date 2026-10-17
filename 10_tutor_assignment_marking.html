@@ -13,7 +13,7 @@
 <title>Connect Lite — Mark assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610180034">
+<link rel="stylesheet" href="hub-tokens.css?v=202610180053">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -28,6 +28,10 @@
   .mk-cover > .card{margin-bottom:0;}
   .mk-work > .card{margin-bottom:14px;}
   .mk-help{margin:0 0 14px;}
+  .mk-cgrid{display:block;} .mk-mh{font-family:'Newsreader',Georgia,serif; font-size:1rem; margin:14px 0 6px;}
+  .mk-mrow{display:grid; grid-template-columns:1fr 1fr; gap:10px;} .mk-mrow .row{margin:0 !important;} .mk-mrow input{width:100%; box-sizing:border-box;}
+  .mk-markers{margin-top:6px; padding-top:4px; border-top:1px solid var(--sand-line);}
+  @media (max-width:560px){ .mk-mrow{grid-template-columns:1fr;} }
   #mkCrit{scroll-margin-top:64px;}
   /* the assignment's colour: the heading band, the section labels, the picker */
   .mk-head{border-top:4px solid var(--as, var(--teal)) !important; background:color-mix(in oklab, var(--as, var(--teal)) 7%, var(--surface)) !important;}
@@ -68,11 +72,10 @@
     body.hub-assign.hub-paper .board{max-width:none;}
     body.hub-paper{padding-left:28px; padding-right:28px;}
     .board > #picker, .board > .back{max-width:none;}
-    /* the front page: the criteria on the left, the markers and double marking on the right */
-    .mk-cover{grid-template-columns:minmax(0,1.7fr) minmax(320px,1fr); align-items:start;}
-    .mk-cover > .mk-crit{grid-column:1; grid-row:1 / span 8;}
-    .mk-cover > :not(.mk-crit){grid-column:2;}
-    .mk-work .readonly{max-width:112ch;}
+    /* inside the front page: the criteria on the left, the decision on the right */
+    .mk-cgrid{display:grid; grid-template-columns:minmax(0,1.65fr) minmax(300px,1fr); gap:28px; align-items:start;}
+    .mk-cright{position:sticky; top:70px;}
+    /* the work runs the full width of the screen (Ramy, 18 Oct 2026) */
     body.hub-paper{padding-bottom:40px;}
   }
   @media print{ .mk-cover{display:block;} }
@@ -168,7 +171,7 @@
   @media(prefers-reduced-motion:reduce){ .mv2-seg{transition:none;} .critrow.mv2-hit{animation:none;} }
   @media print{ .mv2{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610180034">
+<link rel="stylesheet" href="hub-house.css?v=202610180053">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -177,15 +180,15 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610180034"></script>
-<script src="hub-exchange.js?v=202610180034"></script>
+<script src="assignment-defaults.js?v=202610180053"></script>
+<script src="hub-exchange.js?v=202610180053"></script>
 <script src="hub-marking.js?v=202610172152"></script>
-<script src="hub-due.js?v=202610180034"></script>
-<script src="hub-shared.js?v=202610180034"></script>
-<script src="hub-store.js?v=202610180034"></script>
-<script src="hub-say.js?v=202610180034"></script>
-<script src="hub-sync.js?v=202610180034"></script>
-<script src="fol-interview.js?v=202610180034"></script>
+<script src="hub-due.js?v=202610180053"></script>
+<script src="hub-shared.js?v=202610180053"></script>
+<script src="hub-store.js?v=202610180053"></script>
+<script src="hub-say.js?v=202610180053"></script>
+<script src="hub-sync.js?v=202610180053"></script>
+<script src="fol-interview.js?v=202610180053"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -470,7 +473,7 @@ function render(){
      scrolled three screens down to mark it. Now the work is on the left and
      the marking sits beside it in a panel that stays in view; on a phone the
      two stack and a bar at the foot jumps between them. */
-  let left = '', right = '', markerHtml = '';   /* left: the work. right: the front page. */
+  let left = '', right = '', markerHtml = '', markerInlineHtml = '';   /* left: the work. right: the front page. */
   if (sub.stage !== 'draft') {
     /* Handbook 9.2.1: materials prepared for the language related task and the
        language skills task "SHOULD not be used as the basis for assessed TP
@@ -511,11 +514,14 @@ function render(){
       }
     } catch(e) {}
     html += overlapFlag;
-    markerHtml = `<div class="card mk-marker"><h2>Marker record</h2>
-      <div class="row"><label>1st marker</label><input type="text" id="marker1" value="${esc(sub.markers.first)}" placeholder="Name"></div>
-      <div class="row"><label>2nd marker (double-marking)</label><input type="text" id="marker2" value="${esc(sub.markers.second)}" placeholder="Leave blank if this assignment isn\u2019t in the double-marked sample"></div>
-      <p class="note" style="margin:0;">Handbook 9.2.3: a proportion of each assignment <b>must</b> be double-marked (3 up to 9 trainees, 4 up to 16, 5 up to 24); double-marked ones <b>should</b> be initialled by both tutors.</p>
-    </div>`;
+    const markerInner = `<h3 class="mk-mh">Marker record</h3>
+      <div class="mk-mrow"><div class="row"><label for="marker1">1st marker</label><input type="text" id="marker1" value="${esc(sub.markers.first)}" placeholder="Name"></div>
+      <div class="row"><label for="marker2">2nd marker (double-marking)</label><input type="text" id="marker2" value="${esc(sub.markers.second)}" placeholder="Only if this one is in the double-marked sample"></div></div>
+      <p class="note" style="margin:0;">Handbook 9.2.3: a proportion of each assignment <b>must</b> be double-marked (3 up to 9 trainees, 4 up to 16, 5 up to 24); double-marked ones <b>should</b> be initialled by both tutors.</p>`;
+    /* Ramy, 18 Oct 2026: "the marker record... I'm not sure why it's sitting on the right".
+       While you mark it is part of the front page, as on C/18's cover; otherwise a card of its own. */
+    markerHtml = (sub.stage === 'submitted' || sub.stage === 'resubmitted') ? '' : `<div class="card mk-marker">${markerInner}</div>`;
+    markerInlineHtml = (sub.stage === 'submitted' || sub.stage === 'resubmitted') ? `<div class="mk-markers">${markerInner}</div>` : '';
   }
 
   if (sub.stage === 'draft') {
@@ -570,6 +576,7 @@ function render(){
       right += `<div class="card mk-crit" id="mkCrit"><h2>Front page</h2>
         <p class="mk-how">Mark each criterion Met or Not met. Comments and ticks you tie to a criterion collect under it as you read, and the bar at the top keeps the criteria with you. A note is optional: the trainee reads it. When every criterion is marked the outcome shows below. Then Save &amp; return to trainee.</p>
         ${trapHit ? `<div class="trap-hit" role="note"><b>The hidden word for this assignment appears in this work.</b> Treat it as a prompt to look more closely at how the work was produced, and follow the centre’s usual process rather than acting on it alone. The trainee is not told.</div>` : ''}
+        <div class="mk-cgrid"><div class="mk-cleft">
         ${mv2HTML(crit, marks)}
         ${sub.stage==='submitted' && sub.usedResubmission ? '<p class="note">This trainee has already used their one resubmission for this assignment \u2014 any criterion Not met here is a final Fail.</p>' : ''}
         ${crit.length ? crit.map((c,i)=>{
@@ -604,6 +611,7 @@ function render(){
             <textarea data-crit-comment="${i}" rows="2" placeholder="Why, in a sentence or two. The trainee reads this." style="margin-top:8px;"${cm ? '' : ' hidden'}>${esc(cm)}</textarea>
           </div>`;
         }).join('') : '<p class="note">No marking criteria set for this assignment yet \u2014 add them in the assignment builder.</p>'}
+        </div><div class="mk-cright">
         <div class="derived ${derivedCls}">${derivedLabel}</div>
         <div class="xchg" id="xchg">
           <div class="xchg-acts">
@@ -618,10 +626,12 @@ function render(){
         </div>
         <div class="row" style="margin-top:12px;"><label>General comment${round==='sub2'?' on the resubmission':''} (optional)</label>
           <textarea id="comment" rows="3" placeholder="Anything that does not belong to one criterion.">${esc((sub.feedback&&(round==='sub2'?sub.feedback.generalComment2:sub.feedback.generalComment1))||'')}</textarea></div>
+        ${markerInlineHtml}
         <div class="actions">
           <button type="button" class="btn btn-quiet" id="unmarkedBtn">Return unmarked</button>
           <button class="btn btn-teal" id="saveBtn" ${allMarked?'':'disabled'}>Save & return to trainee</button>
         </div>
+        </div></div>
       </div>`;
     }
   }

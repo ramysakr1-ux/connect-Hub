@@ -9,7 +9,7 @@ import fs from 'node:fs'; import vm from 'node:vm';
 const HUB = new URL('..', import.meta.url).pathname;
 const STORE = (fs.readFileSync(HUB + 'hub-store.js', 'utf8').match(/https:\/\/script\.google\.com\/macros\/s\/[^'"]+/) || [])[0];
 const OWNER = fs.readFileSync(HUB + '.owner-key', 'utf8').trim();
-const WRITE = process.argv.includes('--write');
+const WRITE = process.argv.includes('--write'), UPDATE = process.argv.includes('--update');
 const NAMES = process.argv.slice(2).filter(a => !a.startsWith('--'));
 const ctx = { window: {} }; vm.createContext(ctx); vm.runInContext(fs.readFileSync(HUB + 'assignment-defaults.js', 'utf8'), ctx);
 const D = ctx.window.CONNECT_HUB_DEFAULT_WORDING;
@@ -22,7 +22,7 @@ for (const c of (list.result.courses || list.result).filter(c => NAMES.some(n =>
   const before = JSON.stringify(w); let n = 0;
   for (const k of ['fol', 'lsrt', 'lfc']) (w[k] || { sections: [] }).sections.forEach(s => {
     const d = D[k].sections.find(x => norm(x.label) === norm(s.label));
-    if (d && d.heads && !s.heads) { s.heads = d.heads; n++; }
+    if (d && d.heads && (!s.heads || (UPDATE && JSON.stringify(s.heads) !== JSON.stringify(d.heads)))) { s.heads = d.heads; n++; }
   });
   console.log(c.name + ': ' + n + ' sections get headlines');
   if (!WRITE || !n) continue;
