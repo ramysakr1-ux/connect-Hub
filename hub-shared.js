@@ -249,7 +249,21 @@ window.hubObservationHours = function(records){
       if (localStorage.getItem('chub:installHintDone') === 'installed') return;
     } catch (e) { return; }
     var ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
-    var deferred = null, already = false;
+    /* Ramy, 17 Oct 2026, in Chrome on his Mac: the card said "use Install in
+       the address bar" and there was no Install. Chrome offers Install only
+       when it will install the page; when it will not -- most often because
+       another Lite app (the tutor's, a trainee's) is already installed, and
+       they share one address -- the card now says so instead of pointing at
+       a button that is not there. Safari on a Mac gets its own words, and
+       Firefox, which cannot install it, says so. */
+    var ua = navigator.userAgent;
+    var macSafari = !ios && /Macintosh/.test(ua) && /Safari\//.test(ua) && !/Chrome|Chromium|Edg\//.test(ua);
+    var firefox = /Firefox\//.test(ua);
+    /* One state per page, whatever redraws the card: Chrome fires
+       beforeinstallprompt once, so a card drawn after it must still know. */
+    var G = window.__hubInstall || (window.__hubInstall = { deferred: null, already: false, t0: Date.now(), hosts: [] });
+    var noOffer = false;
+    var deferred = G.deferred, already = G.already;
     var folded = (function(){ try { return !!localStorage.getItem('chub:installHintDone'); } catch (e) { return false; } })();
     var MARK = '<svg viewBox="8 30 104 60" width="16" height="10" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="currentColor" stroke-width="13" stroke-linecap="round" opacity=".55"></path></svg>';
     var draw = function(){
@@ -263,19 +277,25 @@ window.hubObservationHours = function(records){
       var how = already ? '<span>It is already installed here — this tab is the website. Open <b>Connect Lite</b> from your apps and it remembers your link.</span>'
               : deferred ? '<button type="button" class="btn-install">Install Connect Lite</button>'
               : ios ? '<span>Tap <b>Share</b>, then <b>Add to Home Screen</b>.</span>'
-              : '<span>In Chrome or Edge, use <b>Install</b> in the address bar; on a phone, <b>Add to Home Screen</b>.</span>';
+              : macSafari ? '<span>In Safari, choose <b>File</b>, then <b>Add to Dock</b>.</span>'
+              : firefox ? '<span>Firefox cannot install it. Open this link in Chrome, Edge or Safari to install it.</span>'
+              : noOffer ? '<span>This browser is not offering to install it here. That usually means Connect Lite is already installed on this ' + (/Android|Mobi/i.test(ua) ? 'phone' : 'computer') + ': look for it in your apps.</span>'
+              : '<span>Checking whether this browser can install it\u2026</span>';
       host.innerHTML = '<span><b>Put Connect Lite on your ' + (ios ? 'phone' : 'phone or computer') + '.</b> It opens like an app and remembers your link.</span>' + how + '<button type="button" class="dismiss">Not now</button>';
       var b = host.querySelector('.btn-install'); if (b) b.addEventListener('click', function(){ if (!deferred) return; deferred.prompt(); deferred.userChoice.then(function(r){ if (r && r.outcome === 'accepted') installed(); }); });
       host.querySelector('.dismiss').addEventListener('click', fold);
     };
     var fold = function(){ try { localStorage.setItem('chub:installHintDone', String(Date.now())); } catch (e) {} folded = true; draw(); };
     var installed = function(){ try { localStorage.setItem('chub:installHintDone', 'installed'); } catch (e) {} host.hidden = true; };
-    window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferred = e; if (!folded) draw(); });
+    window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); G.deferred = deferred = e; if (!folded) draw(); });
     window.addEventListener('appinstalled', installed);
     try {
-      if (navigator.getInstalledRelatedApps) navigator.getInstalledRelatedApps().then(function(apps){ if (apps && apps.length) { already = true; if (!folded) draw(); } }, function(){});
+      if (navigator.getInstalledRelatedApps) navigator.getInstalledRelatedApps().then(function(apps){ if (apps && apps.length) { G.already = already = true; if (!folded) draw(); } }, function(){});
     } catch (e) {}
     draw();
+    /* Chrome fires beforeinstallprompt within a moment of loading when it
+       will install; silence after that means it will not, here. */
+    if (!ios && !macSafari && !firefox) setTimeout(function(){ if (!G.deferred && !G.already) { noOffer = true; if (!folded) draw(); } }, Math.max(0, 3500 - (Date.now() - G.t0)));
   };
   window.hubBullets=function(el){
     if(!el || el.dataset.hubBullets) return; el.dataset.hubBullets='1';
