@@ -13,7 +13,7 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610180024">
+<link rel="stylesheet" href="hub-tokens.css?v=202610180034">
 <style>
   /* ---- The assignment editor, v2 (11 Oct 2026) -------------------------------
      From the designer's handoff "Assignment editor v2". The page behind Edit
@@ -313,7 +313,7 @@
     #hubSync.inbar{margin-right:auto; max-width:calc(100% - 272px);}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610180024">
+<link rel="stylesheet" href="hub-house.css?v=202610180034">
 </head>
 <body class="hub-paper" data-sync-ok="Connected to the course &mdash; wording is kept when you press Save" data-sync-ok-short="Connected">
 <div class="board">
@@ -332,14 +332,14 @@
   </div>
 </div></div>
 <div class="menu" id="menu" hidden></div>
-<script src="assignment-defaults.js?v=202610180024"></script>
-<script src="hub-due.js?v=202610180024"></script>
-<script src="hub-rotation.js?v=202610180024"></script>
-<script src="hub-docx.js?v=202610180024"></script>
-<script src="hub-shared.js?v=202610180024"></script>
-<script src="hub-store.js?v=202610180024"></script>
-<script src="hub-say.js?v=202610180024"></script>
-<script src="hub-sync.js?v=202610180024"></script>
+<script src="assignment-defaults.js?v=202610180034"></script>
+<script src="hub-due.js?v=202610180034"></script>
+<script src="hub-rotation.js?v=202610180034"></script>
+<script src="hub-docx.js?v=202610180034"></script>
+<script src="hub-shared.js?v=202610180034"></script>
+<script src="hub-store.js?v=202610180034"></script>
+<script src="hub-say.js?v=202610180034"></script>
+<script src="hub-sync.js?v=202610180034"></script>
 <script>
 /* The course pill goes into the save bar, left of Discard, on every screen
    size: floating in the corner it covered the brief (12 Oct 2026). A plain
@@ -837,8 +837,9 @@ function critCardHTML(a){
 const GUIDE_KEY = 'connect_marking_guidance_v1';
 function guideRecord(){ try { return JSON.parse(localStorage.getItem(GUIDE_KEY) || 'null'); } catch (e) { return null; } }
 function guideCardHTML(a){
-  const g = guideRecord(), x = (g && g.items && g.items[CURRENT]) || {};
+  const g = guideRecord(), x0 = (g && g.items && g.items[CURRENT]) || {};
   const crit = a.criteria || [];
+  const x = Object.assign({}, x0, { crit: hubGuidanceCrit(x0, crit) });
   const ta = (id, val, rows, aria) => `<textarea id="${id}" rows="${rows}" oninput="guideInput()" aria-label="${aria}">${esc(val || '')}</textarea>`;
   return `<div class="critcard gcard" id="guidecard">
     <div class="ch"><h2>Marking guidance</h2><span>For the tutors and the assessor. Trainees never see it.</span></div>
@@ -862,6 +863,7 @@ function guideInput(){
     items[CURRENT] = Object.assign({}, items[CURRENT] || {}, {
       general: ($('g_general') || {}).value || '',
       crit: Array.from({ length: n }, (_, i) => ($('g_c' + i) || {}).value || ''),
+      critText: (DATA[CURRENT].criteria || []).map(c => (typeof c === 'string' ? c : c.text) || ''),
       sections: ($('g_sections') || {}).value || ''
     });
     localStorage.setItem(GUIDE_KEY, JSON.stringify({ items }));   // hub-sync sends it to the store

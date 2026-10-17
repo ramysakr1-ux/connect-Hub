@@ -1361,6 +1361,26 @@ window.CONNECT_HUB_SYLLABUS_CRITERIA = {
   a.criteria = window.CONNECT_HUB_SYLLABUS_CRITERIA[k].map(function(t){ return { text: t, sectionIndex: null }; });
 });
 
+/* THE CENTRE'S OWN ROWS (18 Oct 2026). Ramy: C/18's cover sheets carry one row
+   more than the syllabus for two assignments, and "a lot of centres use four
+   because it just makes it easier". The syllabus lists above stay Cambridge's,
+   word for word; these two are the centre's, put among them so a course starts
+   with the same rows as the C/18 documents. The wording page marks them as
+   "this course" (not the syllabus's words) and still says the syllabus is
+   covered. Each is Cambridge's own design requirement, made a row:
+     2.3  "identification of the receptive language skills and/or subskills that
+          could be practised ... identification of productive language skills"
+     2.4  "reflections on the implications for their own teaching from the
+          observations of experienced ELT professionals and colleagues" */
+window.CONNECT_HUB_CENTRE_ROWS = {
+  lsrt: [{ at: 1, text: 'Identifying receptive and productive skills that could be practised in relation to the text' }],
+  lfc:  [{ at: 2, text: 'Reflecting on the implications for their own teaching of observing experienced teachers and colleagues on the course' }]
+};
+Object.keys(window.CONNECT_HUB_CENTRE_ROWS).forEach(function(k){
+  var a = window.CONNECT_HUB_DEFAULT_WORDING[k]; if (!a) return;
+  window.CONNECT_HUB_CENTRE_ROWS[k].forEach(function(r){ a.criteria.splice(r.at, 0, { text: r.text, sectionIndex: null }); });
+});
+
 window.CONNECT_HUB_ADOPT_CORRECTED_CRITERIA = function(wording){
   var versions = window.CONNECT_HUB_SUPERSEDED_WORDING, now = window.CONNECT_HUB_DEFAULT_WORDING, changed = [];
   if (!wording || !versions || !now) return changed;

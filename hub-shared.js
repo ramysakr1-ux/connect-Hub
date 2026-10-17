@@ -1607,11 +1607,31 @@ window.hubLockup = function(size){
    every trainee reads, and never in this public code: the defaults are kept
    in the store. Plain text; a line starting "• " is a bullet, a short line
    with no full stop followed by text is a heading. */
+/* A course's criteria can be the syllabus's, the centre's own rows among them,
+   or any list a tutor has made, so the guidance for a criterion is found by the
+   criterion's WORDS, not its position (18 Oct 2026): each entry carries
+   critText, the criterion it is for, and a criterion whose words begin with
+   (or are begun by) another's counts as the same. A record with no critText is
+   positional, as it always was. */
+window.hubGuidanceCrit = function(x, criteria){
+  var c = (x && x.crit) || [], t = x && x.critText;
+  if (!t || !criteria) return c;
+  var norm = function(v){ return String(v && v.text != null ? v.text : v).toLowerCase().replace(/[^a-z0-9]+/g, ''); };
+  return criteria.map(function(cr){
+    var n = norm(cr), k = t.findIndex(function(y){ var m = norm(y); return m === n || (Math.min(m.length, n.length) > 24 && (m.indexOf(n) === 0 || n.indexOf(m) === 0)); });
+    return k >= 0 ? (c[k] || '') : '';
+  });
+};
 window.hubGuidance = function(key){
   try {
     var g = JSON.parse(localStorage.getItem('connect_marking_guidance_v1') || 'null');
     var x = g && g.items && g.items[key];
-    return x && (x.general || x.sections || (x.crit && x.crit.some(Boolean))) ? x : null;
+    if (!x) return null;
+    if (x.critText) {
+      var w = JSON.parse(localStorage.getItem('connect_assignment_wording_v2') || 'null'), cr = w && w[key] && w[key].criteria;
+      if (cr) x = Object.assign({}, x, { crit: hubGuidanceCrit(x, cr) });
+    }
+    return x.general || x.sections || (x.crit && x.crit.some(Boolean)) ? x : null;
   } catch (e) { return null; }
 };
 window.hubGuidanceHTML = function(text){
