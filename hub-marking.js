@@ -199,8 +199,11 @@
       exact = full.slice(st, en);
     }
     SEL = { loc: loc, quote: exact.trim().slice(0, 300) };
-    var chips = quickFor(blockFor(loc));
-    b.innerHTML = '<button type="button" class="sb-main" data-sb="">Write a comment</button>' + (chips.length ? '<span class="sb-lab">or a quick one:</span>' : '') + chips.map(function (c, k) { return '<button type="button"' + (c.good ? ' class="sb-good"' : '') + ' data-sb="' + k + '" title="' + esc(c.text) + '">' + esc(c.label) + '</button>'; }).join('');
+    /* No ready-made comments (Ramy, 17 Oct 2026: "everyone will just sound
+       the same... copy-paste it from each other"). The bar only opens the
+       comment box; the guidance stays in the reading card as a reminder. */
+    var chips = [];
+    b.innerHTML = '<button type="button" class="sb-main" data-sb="">Comment</button>' + (chips.length ? '<span class="sb-lab">or a quick one:</span>' : '') + chips.map(function (c, k) { return '<button type="button"' + (c.good ? ' class="sb-good"' : '') + ' data-sb="' + k + '" title="' + esc(c.text) + '">' + esc(c.label) + '</button>'; }).join('');
     b._chips = chips;
     b.hidden = false;
     var rr = r.getBoundingClientRect();
