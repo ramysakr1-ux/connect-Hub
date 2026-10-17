@@ -112,7 +112,12 @@
 
   /* ---- margin comments -------------------------------------------------- */
   function list(round) { var s = CTX.sub; s.margin = s.margin || {}; return (s.margin[round] = s.margin[round] || []); }
-  function canWrite(round) { return CTX.marking && round === CTX.round; }
+  function canWrite(round) {
+    if (secondMode()) return round === secondRound();
+    return CTX.marking && round === CTX.round;
+  }
+  function writeRound() { return secondMode() ? secondRound() : CTX.round; }
+  function mine(c) { return !c.by || c.by === CTX.me; }
   function critShort(i) { var c = (CTX.a.criteria || [])[i]; var t = c ? (c.text || c) : ''; return (+i + 1) + '. ' + (t.length > 60 ? t.slice(0, 58) + '…' : t); }
 
   /* Highlight the first match of the quote inside one block of text. */
@@ -141,11 +146,11 @@
       var box = loc.querySelector('.readonly');
       gut.innerHTML = items.map(function (c) {
         highlight(box, c.quote, c.id);
-        return '<div class="mcard" data-mcard="' + c.id + '">' +
+        return '<div class="mcard' + (c.role === 'second' ? ' by-second' : '') + '" data-mcard="' + c.id + '">' +
           (c.crit != null && c.crit !== '' ? '<span class="mc-crit">Criterion ' + (+c.crit + 1) + '</span>' : '') +
           '<p>' + esc(c.text) + '</p>' +
           '<span class="mc-by">' + esc(c.by || '') + '</span>' +
-          (canWrite(round) ? '<span class="mc-acts"><button type="button" data-medit="' + c.id + '">Edit</button><button type="button" data-mdel="' + c.id + '">Delete</button></span>' : '') +
+          (canWrite(round) && mine(c) ? '<span class="mc-acts"><button type="button" data-medit="' + c.id + '">Edit</button><button type="button" data-mdel="' + c.id + '">Delete</button></span>' : '') +
           '</div>';
       }).join('');
       loc.classList.toggle('has-mc', items.length > 0);
@@ -207,13 +212,13 @@
       var text = t.value.trim(), cv = $('meCrit').value;
       ed.hidden = true;
       if (!text) { if (opts.id) remove(opts.id); return; }   /* an empty comment is no comment */
-      var l = list(CTX.round);
+      var l = list(writeRound());
       if (opts.id) { var c = l.filter(function (x) { return x.id === opts.id; })[0]; if (c) { c.text = text; c.crit = cv === '' ? null : +cv; } }
-      else l.push({ id: 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), loc: opts.loc, quote: opts.quote, text: text, crit: cv === '' ? null : +cv, by: CTX.me, at: new Date().toISOString() });
+      else l.push({ id: 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), loc: opts.loc, quote: opts.quote, text: text, crit: cv === '' ? null : +cv, by: CTX.me, role: secondMode() ? 'second' : 'first', at: new Date().toISOString() });
       CTX.save(); CTX.rerender();
     };
   }
-  function remove(id) { var l = list(CTX.round); var k = l.findIndex(function (x) { return x.id === id; }); if (k >= 0) l.splice(k, 1); CTX.save(); CTX.rerender(); }
+  function remove(id) { var l = list(writeRound()); var k = l.findIndex(function (x) { return x.id === id; }); if (k >= 0) l.splice(k, 1); CTX.save(); CTX.rerender(); }
 
   /* ---- wiring ---------------------------------------------------------- */
   document.addEventListener('mouseup', function (e) { if (e.target.closest && e.target.closest('#mkSelBar, #mkEditor')) return; setTimeout(onSelect, 10); });
@@ -224,7 +229,7 @@
     var sb = t.closest('[data-sb]');
     if (sb && SEL) { var k = sb.getAttribute('data-sb'); var b = bar(); b.hidden = true; editor({ loc: SEL.loc.getAttribute('data-loc'), quote: SEL.quote, text: k === '' ? '' : b._chips[+k] + '.' }); window.getSelection().removeAllRanges(); return; }
     var ed = t.closest('[data-medit]');
-    if (ed) { var c = list(CTX.round).filter(function (x) { return x.id === ed.getAttribute('data-medit'); })[0]; if (c) editor({ id: c.id, loc: c.loc, quote: c.quote, text: c.text, crit: c.crit }); return; }
+    if (ed) { var c = list(writeRound()).filter(function (x) { return x.id === ed.getAttribute('data-medit'); })[0]; if (c) editor({ id: c.id, loc: c.loc, quote: c.quote, text: c.text, crit: c.crit }); return; }
     var del = t.closest('[data-mdel]'); if (del) { remove(del.getAttribute('data-mdel')); return; }
     var go = t.closest('[data-goto]');
     if (go) { var m = document.querySelector('mark[data-mc="' + go.getAttribute('data-goto') + '"]'); if (m) { m.scrollIntoView({ block: 'center', behavior: 'smooth' }); m.classList.remove('mc-hit'); void m.offsetWidth; m.classList.add('mc-hit'); } return; }
@@ -249,6 +254,219 @@
   });
   addEventListener('scroll', function () { var t = $('mkTip'); if (t && !t.hidden && document.activeElement && document.activeElement.matches && !document.activeElement.matches('[data-crit-comment]')) hideTip(); }, { passive: true });
 
+
+  /* ======================= STEP TWO (17 Oct 2026) ======================= */
+
+  /* ---- the checks Lite can do before you mark ----------------------------
+     Only what can be told from the text. Each line is ticked, flagged for a
+     look, or just information; a flag is never a mark. */
+  function snapNow() { var s = CTX.sub; return CTX.marking ? s[CTX.round] : (s.sub2 || s.sub1); }
+  function textOf(snap, test) {
+    var a = CTX.a, out = [];
+    a.sections.forEach(function (sec, i) {
+      if (sec.type === 'text' && !window.hubIsReference(sec) && test(sec.label || '', i)) out.push((snap.text || {})[i] || '');
+      if (sec.type === 'fields') sec.fields.forEach(function (f, fi) {
+        if (!test(f.label || '', i, true)) return;
+        Object.keys(snap.fields || {}).forEach(function (k) { if (k.indexOf('s' + i + '_') === 0 && /_f(\d+)$/.exec(k)[1] == fi) out.push(snap.fields[k]); });
+      });
+    });
+    return out.join('\n');
+  }
+  var isBib = function (l) { return /bibliograph|^references?\b|references used/i.test(l); };
+  function surnamesCited(t) {
+    var set = {}, m, re1 = /\(([A-Z][A-Za-z’'\-]+)(?:\s+(?:and|&)\s+[A-Z][A-Za-z’'\-]+)?(?:\s+et al\.?)?,?\s*(\d{4})/g, re2 = /\b([A-Z][A-Za-z’'\-]+)(?:\s+(?:and|&)\s+[A-Z][A-Za-z’'\-]+)?(?:\s+et al\.?)?\s+\((\d{4})/g;
+    while ((m = re1.exec(t))) set[m[1]] = 1;
+    while ((m = re2.exec(t))) if (!/^(In|The|See|Page|Appendix|TP|Section|Text)$/.test(m[1])) set[m[1]] = 1;
+    return Object.keys(set);
+  }
+  function checksHTML() {
+    var snap = snapNow(); if (!snap) return '';
+    var a = CTX.a, k = CTX.key, items = [];
+    var add = function (state, label, detail) { items.push({ state: state, label: label, detail: detail || '' }); };
+    /* words, counted as the trainee's page counts them */
+    if (a.wordMin) {
+      var w = (Object.values(snap.text || {}).join(' ') + ' ' + Object.values(snap.fields || {}).join(' ')).match(/\S+/g); w = w ? w.length : 0;
+      add(w >= a.wordMin && w <= a.wordMax ? 'ok' : 'look', w + ' words', w < a.wordMin ? 'Under ' + a.wordMin + '. Not a criterion, but thin work usually fails on the analysis anyway.' : w > a.wordMax ? 'Over ' + a.wordMax + '. Not a criterion: do not fail it for length.' : 'In the range.');
+    }
+    /* sources */
+    var body = textOf(snap, function (l, i, f) { return !isBib(l); });
+    var bib = textOf(snap, function (l) { return isBib(l); });
+    /* LRT names its sources in each item's References row, not in running text: the page-number check below covers it */
+    if (k !== 'lrt' && (bib || /\(\D*\d{4}\)/.test(body))) {
+      var cited = surnamesCited(body);
+      var missing = cited.filter(function (n) { return bib.indexOf(n) < 0; });
+      var bibNames = bib.split(/\n+/).map(function (l) { var mm = l.trim().match(/^([A-Z][A-Za-z’'\-]+),/); return mm ? mm[1] : ''; }).filter(Boolean);
+      var unused = bibNames.filter(function (n, i) { return body.indexOf(n) < 0 && bibNames.indexOf(n) === i; });
+      if (!cited.length) add(k === 'lfc' ? 'info' : 'look', 'No source cited in the text', k === 'lfc' ? 'LFC has no referencing criterion: credit reading where it is cited.' : 'A source in the bibliography but never used in the body does not meet the referencing criterion.');
+      else add(missing.length ? 'look' : 'ok', 'Sources cited in the text: ' + cited.join(', '), missing.length ? 'Not in the bibliography: ' + missing.join(', ') + '.' : 'Each one is in the bibliography.');
+      if (unused.length && k !== 'lfc') add('info', 'In the bibliography only', unused.join(', ') + ': listed but not used in the text.');
+    }
+    /* LRT: a source per item, with page numbers; phonemic script and stress */
+    if (k === 'lrt') {
+      var refs = [], pron = [];
+      a.sections.forEach(function (sec, i) { if (sec.type !== 'fields') return; sec.fields.forEach(function (f, fi) {
+        Object.keys(snap.fields || {}).forEach(function (key) { var mm = key.match(/^s(\d+)_i(\d+)_f(\d+)$/); if (!mm || +mm[1] !== i || +mm[3] !== fi) return;
+          if (/^references?/i.test(f.label)) refs.push(snap.fields[key]); if (/^pronunciation/i.test(f.label)) pron.push(snap.fields[key]); }); }); });
+      if (refs.length) { var pg = refs.filter(function (r) { return /\bpp?\.\s*\d|\b\d{1,4}\s*[–\-]\s*\d{1,4}\b|,\s*\d{1,4}\b/.test(r); }).length; add(pg === refs.length ? 'ok' : 'look', 'Page numbers: ' + pg + ' of ' + refs.length + ' items', pg === refs.length ? 'Each item names a source with a page.' : 'The brief asks for a page number where the source has one.'); }
+      if (pron.length) {
+        var ipa = pron.filter(function (t) { return /\/[^\/\n]*[ɐ-ʯˈˌːəθð][^\/\n]*\//.test(t); }).length;
+        var st = pron.filter(function (t) { return /[ˈ]/.test(t); }).length;
+        add(ipa === pron.length ? 'ok' : 'look', 'Phonemic script: ' + ipa + ' of ' + pron.length + ' items', ipa === pron.length ? 'Check the symbols themselves as you read.' : 'An item with no phonemic script fails criterion 1.');
+        add(st === pron.length ? 'ok' : 'info', 'Stress marked: ' + st + ' of ' + pron.length + ' items', 'Missing stress is usually a note, not a fail, unless stress is the point of the item.');
+      }
+    }
+    /* FoL: IPA in the pronunciation section */
+    if (k === 'fol') {
+      var pr = textOf(snap, function (l) { return /pronunciation/i.test(l); });
+      if (pr) add(/[ɐ-ʯəˈːθð]/.test(pr) ? 'ok' : 'look', 'IPA in the pronunciation problem', /[ɐ-ʯəˈːθð]/.test(pr) ? 'There is phonemic script in section C.' : 'Missing IPA is a criterion 3 failure.');
+    }
+    /* appendices: the materials link the brief asks for */
+    var intro = (a.sections.filter(function (x) { return /^before you start$/i.test((x.label || '').trim()); })[0] || {}).body || '';
+    if (/materials link|appendi/i.test(intro)) add(snap.materialsLink ? 'ok' : 'look', snap.materialsLink ? 'Materials link attached' : 'No materials link', snap.materialsLink ? 'Open it from the top of the work.' : 'The brief asks for the tasks to be attached.');
+    /* the declaration and AI */
+    var d = null; a.sections.forEach(function (sec, i) { if (sec.type === 'declaration') d = (snap.decl || {})[i]; });
+    if (d) {
+      var all = (d.checks || []).every(Boolean);
+      add(all ? 'ok' : 'look', all ? 'Declaration signed' : 'Declaration not complete', all ? '' : 'Every line of the declaration should be ticked.');
+      if (d.aiUsed === 'yes') add(d.aiLink ? 'info' : 'look', 'AI declared: ' + (d.aiPurpose || 'no purpose given'), d.aiLink ? 'Check it is one of the permitted uses and cited in the text.' : 'No link to the conversation.');
+      else if (d.aiUsed) add('ok', 'No AI declared');
+    }
+    /* the hidden word */
+    if (a.trap) { var hit = window.hubTrapFound && hubTrapFound(a.trap, { sub1: snap }); add(hit ? 'look' : 'ok', hit ? 'The hidden word is in this work' : 'Hidden word not in the work', hit ? 'A prompt to look more closely; follow the centre’s usual process.' : ''); }
+    var looks = items.filter(function (x) { return x.state === 'look'; }).length;
+    return '<details class="guide-box mk-checks"' + (looks ? ' open' : '') + '><summary>Before you mark: ' + items.length + ' checks' + (looks ? ', ' + looks + ' to look at' : ', all clear') + '</summary><div class="gb"><ul class="mkc">' +
+      items.map(function (x) { return '<li class="' + x.state + '"><b>' + (x.state === 'ok' ? 'Done' : x.state === 'look' ? 'Look' : 'Note') + '</b><span>' + esc(x.label) + (x.detail ? '<small>' + esc(x.detail) + '</small>' : '') + '</span></li>'; }).join('') +
+      '</ul><p class="mkc-foot">Lite checks what it can read. The judgement is yours.</p></div></details>';
+  }
+
+  /* ---- double marking (not blind: the second marker sees everything) ---- */
+  function allMarked(r) { var cr = CTX.a.criteria || [], m = CTX.sub.criteriaMarks[r] || []; return cr.length > 0 && cr.every(function (c, i) { return m[i] === true || m[i] === false; }); }
+  function secondRound() {
+    if (CTX.marking) return allMarked(CTX.round) ? CTX.round : null;
+    if (CTX.sub.sub2 && allMarked('sub2')) return 'sub2';
+    return allMarked('sub1') ? 'sub1' : null;
+  }
+  function modeKey() { return 'mk2:' + (CTX.trainee || '') + ':' + CTX.key; }
+  function secondMode() { try { return sessionStorage.getItem(modeKey()) === '1'; } catch (e) { return false; } }
+  function setSecondMode(on) { try { on ? sessionStorage.setItem(modeKey(), '1') : sessionStorage.removeItem(modeKey()); } catch (e) {} }
+  function secRec(r) { var s = CTX.sub; s.second = s.second || {}; return (s.second[r] = s.second[r] || { by: '', at: '', crit: {}, done: false }); }
+  function secondHTML() {
+    var r = secondRound(); if (!r) return '';
+    var s = CTX.sub, cr = CTX.a.criteria || [], first = (s.markers && s.markers.first) || 'the first marker';
+    var rec = (s.second || {})[r], mode = secondMode();
+    var disagree = rec ? cr.map(function (c, i) { return i; }).filter(function (i) { return rec.crit[i] && rec.crit[i].agree === false; }) : [];
+    var decided = rec ? cr.filter(function (c, i) { return rec.crit[i] && typeof rec.crit[i].agree === 'boolean'; }).length : 0;
+    var roundWord = r === 'sub2' ? 'the resubmission' : 'the first submission';
+    if (!mode) {
+      if (!rec || !decided) return '<div class="card mk-second"><h2>Double marking</h2><p class="mk-how">First marker: <b>' + esc(first) + '</b>. If this one is in the double-marked sample, the second marker sees every mark and note on ' + roundWord + ', agrees or disagrees with each, and initials it.</p><button type="button" class="mk-btn" data-second="on">Second-mark this</button></div>';
+      return '<div class="card mk-second"><h2>Double marking</h2><p class="mk-how">First marker <b>' + esc(first) + '</b>, second marker <b>' + esc(rec.by) + '</b>' + (rec.done ? '' : ' (not finished: ' + decided + ' of ' + cr.length + ')') + '.</p>' +
+        (disagree.length ? '<div class="mk-disagree"><b>The markers disagree on criterion ' + disagree.map(function (i) { return i + 1; }).join(' and ') + '.</b> ' + (CTX.marking ? 'Settle it between you before it goes back to the trainee.' : 'Talk it through and record what you agree.') + disagree.map(function (i) { var n = rec.crit[i].note; return n ? '<span>' + (i + 1) + ': ' + esc(n) + '</span>' : ''; }).join('') + '</div>' : (rec.done ? '<p class="mk-agree">Agreed on all ' + cr.length + ' criteria.</p>' : '')) +
+        '<button type="button" class="mk-btn quiet" data-second="on">' + (rec.done ? 'Open the second marking' : 'Carry on second marking') + '</button></div>';
+    }
+    var me = CTX.me || '';
+    var m = s.criteriaMarks[r] || [], notes = (s.criteriaComments || {})[r] || [];
+    return '<div class="card mk-second on"><h2>Second marking</h2>' +
+      '<p class="mk-how">You see ' + esc(first) + '’s marks and notes on ' + roundWord + '. Agree or disagree with each; a note is optional. Your margin comments show in teal with your name.' + (me && me === first ? ' <b>You were the first marker: the second should be another tutor.</b>' : '') + (me ? '' : ' <b>Put your name in the header first: it initials the record.</b>') + '</p>' +
+      cr.map(function (c, i) {
+        var x = (rec && rec.crit[i]) || {}, note = x.note || '';
+        return '<div class="sm-row"><div class="sm-c"><span class="mk-n">' + (i + 1) + '</span>' + esc(c.text || c) + '</div>' +
+          '<div class="sm-first"><span class="crit-toggle ' + (m[i] === true ? 'met' : 'not') + '" style="cursor:default">' + (m[i] === true ? 'Met' : 'Not met') + '</span>' + (notes[i] ? '<span class="sm-fn">' + esc(notes[i]) + '</span>' : '') + '</div>' +
+          '<div class="sm-acts"><button type="button" class="sm-b' + (x.agree === true ? ' on' : '') + '" data-agree="' + i + '" aria-pressed="' + (x.agree === true) + '">Agree</button><button type="button" class="sm-b no' + (x.agree === false ? ' on' : '') + '" data-disagree="' + i + '" aria-pressed="' + (x.agree === false) + '">Disagree</button>' +
+          '<button type="button" class="mk-addnote" data-snote="' + i + '"' + (note ? ' hidden' : '') + '>Add a note</button></div>' +
+          '<textarea class="sm-note" data-snotebox="' + i + '" rows="2" placeholder="Why, briefly. The first marker reads this."' + (note ? '' : ' hidden') + '>' + esc(note) + '</textarea></div>';
+      }).join('') +
+      '<button type="button" class="mk-btn quiet" data-second="off">Done</button></div>';
+  }
+  function secondSet(i, patch) {
+    var r = secondRound(); if (!r) return;
+    var rec = secRec(r), cr = CTX.a.criteria || [];
+    rec.crit[i] = Object.assign({}, rec.crit[i] || {}, patch);
+    rec.by = CTX.me || rec.by || 'Second marker'; rec.at = new Date().toISOString();
+    rec.done = cr.every(function (c, k) { return rec.crit[k] && typeof rec.crit[k].agree === 'boolean'; });
+    var mk = CTX.sub.markers = CTX.sub.markers || { first: '', second: '', doubleMarked: false };
+    if (rec.done) { mk.second = rec.by; mk.doubleMarked = true; }
+    CTX.save();
+  }
+  /* the first marker sees a disagreement under the criterion itself */
+  function paintDisagreements() {
+    var r = CTX.marking ? CTX.round : null; if (!r) return;
+    var rec = (CTX.sub.second || {})[r]; if (!rec) return;
+    Object.keys(rec.crit || {}).forEach(function (i) {
+      var x = rec.crit[i]; if (x.agree !== false) return;
+      var host = document.querySelector('[data-linked="' + i + '"]'); if (!host) return;
+      host.insertAdjacentHTML('beforebegin', '<div class="mk-disagree small"><b>' + esc(rec.by) + ' disagrees.</b>' + (x.note ? ' ' + esc(x.note) : '') + '</div>');
+    });
+  }
+
+  /* ---- keys: M met, N not met, J and K next and previous ---------------- */
+  var CURI = 0;
+  function markCur() { [].forEach.call(document.querySelectorAll('.critrow.mk-cur'), function (r) { r.classList.remove('mk-cur'); }); var b = document.querySelector('.crit-toggle[data-crit="' + CURI + '"]'); if (b) { var row = b.closest('.critrow'); row.classList.add('mk-cur'); } }
+  document.addEventListener('keydown', function (e) {
+    if (!CTX || !CTX.marking || secondMode()) return;
+    var t = e.target; if (t && (t.matches('input, textarea, select, [contenteditable]') || (t.closest && t.closest('#mkEditor')))) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var n = (CTX.a.criteria || []).length; if (!n) return;
+    var key = e.key.toLowerCase();
+    if (key === 'm' || key === 'n') { e.preventDefault(); var v = key === 'm'; var i = CURI; var next = i; var marks = CTX.sub.criteriaMarks[CTX.round] || []; for (var k = 1; k <= n; k++) { var j = (i + k) % n; if (j !== i && marks[j] !== true && marks[j] !== false) { next = j; break; } } CURI = next; CTX.setMark(i, v); return; }
+    if (key === 'j' || e.key === 'ArrowDown') { if (key !== 'j' && !document.querySelector('.critrow.mk-cur')) return; e.preventDefault(); CURI = Math.min(n - 1, CURI + 1); markCur(); var r1 = document.querySelector('.critrow.mk-cur'); if (r1) r1.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
+    if (key === 'k' || e.key === 'ArrowUp') { if (key !== 'k' && !document.querySelector('.critrow.mk-cur')) return; e.preventDefault(); CURI = Math.max(0, CURI - 1); markCur(); var r2 = document.querySelector('.critrow.mk-cur'); if (r2) r2.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
+  });
+
+  /* ---- preview as the trainee will see it ------------------------------- */
+  function preview() {
+    var a = CTX.a, r = CTX.round, cr = a.criteria || [], m = CTX.sub.criteriaMarks[r] || [];
+    var notes = cr.map(function (c, i) { var ta = document.querySelector('[data-crit-comment="' + i + '"]'); return ta ? ta.value.trim() : (((CTX.sub.criteriaComments || {})[r] || [])[i] || ''); });
+    var gen = (($('comment') || {}).value || '').trim(), out = CTX.outcome();
+    var mc = list(r);
+    var ov = $('mkPreview'); if (!ov) { ov = document.createElement('div'); ov.id = 'mkPreview'; ov.className = 'mk-prev-wrap'; document.body.appendChild(ov); }
+    ov.className = 'mk-prev-wrap as-' + CTX.key;
+    ov.innerHTML = '<div class="mk-prev" role="dialog" aria-label="What the trainee will see">' +
+      '<div class="mkp-top"><span>What the trainee will see when you save and return it</span><button type="button" data-prevclose>Close</button></div>' +
+      '<div class="mkp-band"><p>' + esc(a.title) + '</p><h3>' + (out ? esc(out) : 'Not decided yet: mark every criterion first') + '</h3></div>' +
+      (gen ? '<div class="mkp-gen">' + esc(gen).replace(/\n/g, '<br>') + '</div>' : '') +
+      '<ul class="mkp-crit">' + cr.map(function (c, i) { return '<li><span class="crit-toggle ' + (m[i] === true ? 'met' : m[i] === false ? 'not' : '') + '" style="cursor:default">' + (m[i] === true ? 'Met' : m[i] === false ? 'Not met' : 'Not marked') + '</span><div><b>' + esc(c.text || c) + '</b>' + (notes[i] ? '<p>' + esc(notes[i]) + '</p>' : '') + '</div></li>'; }).join('') + '</ul>' +
+      (mc.length ? '<h4>Comments on her text</h4><ul class="mkp-mc">' + mc.map(function (c) { return '<li><q>' + esc(c.quote) + '</q><p>' + esc(c.text) + '</p></li>'; }).join('') + '</ul>' : '') +
+      '</div>';
+    ov.hidden = false;
+  }
+
+  function paintStep2() {
+    var panel = $('mkPanel'); if (!panel) return;
+    /* checks, at the top of the panel under the reading card */
+    var ch = checksHTML();
+    if (ch) { var holder = document.createElement('div'); holder.id = 'mkChecks'; holder.innerHTML = ch; var f = $('mkFloat'); panel.insertBefore(holder, f ? f.nextSibling : panel.firstChild); }
+    /* double marking, above the marker record */
+    var sh = secondHTML();
+    if (sh) { var marker = panel.querySelector('.mk-marker'); var box = document.createElement('div'); box.innerHTML = sh; panel.insertBefore(box.firstChild, marker || null); }
+    if (secondMode()) { var crit = $('mkCrit'); if (crit) crit.classList.add('mk-dim'); var sec = panel.querySelector('.mk-second.on'); if (sec) sec.scrollIntoView({ block: 'start' }); }
+    paintDisagreements();
+    /* the preview, beside Save; the keys, under the instructions */
+    var acts = document.querySelector('#mkCrit .actions');
+    if (acts && !$('mkPrevBtn')) acts.insertAdjacentHTML('afterbegin', '<button type="button" class="btn btn-quiet" id="mkPrevBtn">Preview as trainee</button>');
+    var how = document.querySelector('#mkCrit .mk-how');
+    if (how && CTX.marking && innerWidth >= 1080) how.insertAdjacentHTML('afterend', '<p class="mk-keys">On a keyboard: M for Met, N for Not met, J and K for the next and the previous criterion.</p>');
+    markCur();
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest ? e.target : null; if (!t || !CTX) return;
+    var sm = t.closest('[data-second]'); if (sm) { setSecondMode(sm.getAttribute('data-second') === 'on'); CTX.rerender(); return; }
+    var ag = t.closest('[data-agree]'); if (ag) { secondSet(ag.getAttribute('data-agree'), { agree: true }); CTX.rerender(); return; }
+    var dg = t.closest('[data-disagree]'); if (dg) { var i = dg.getAttribute('data-disagree'); secondSet(i, { agree: false }); CTX.rerender(); setTimeout(function () { var b = document.querySelector('[data-snote="' + i + '"]'); if (b && !b.hidden) b.click(); }, 30); return; }
+    var sn = t.closest('[data-snote]'); if (sn) { var j = sn.getAttribute('data-snote'), ta = document.querySelector('[data-snotebox="' + j + '"]'); sn.hidden = true; ta.hidden = false; ta.focus(); return; }
+    if (t.closest('#mkPrevBtn')) { preview(); return; }
+    if (t.closest('[data-prevclose]') || t.id === 'mkPreview') { var ov = $('mkPreview'); if (ov) ov.hidden = true; return; }
+    var crit = t.closest('.crit-toggle[data-crit]'); if (crit) CURI = +crit.getAttribute('data-crit');
+  });
+  document.addEventListener('input', function (e) {
+    var ta = e.target.closest && e.target.closest('[data-snotebox]'); if (!ta) return;
+    secondSet(ta.getAttribute('data-snotebox'), { note: ta.value });
+  });
+  document.addEventListener('focusout', function (e) {
+    var ta = e.target.closest && e.target.closest('[data-snotebox]'); if (!ta || ta.value.trim()) return;
+    ta.hidden = true; var b = document.querySelector('[data-snote="' + ta.getAttribute('data-snotebox') + '"]'); if (b) b.hidden = false;
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var ov = $('mkPreview'); if (ov && !ov.hidden) ov.hidden = true; var ed = $('mkEditor'); if (ed && !ed.hidden) ed.hidden = true; } });
+
   window.hubMarking = {
     afterRender: function (ctx) {
       CTX = ctx;
@@ -259,6 +477,7 @@
       CUR = null;
       paintMargin();
       watchReading();
+      paintStep2();
     }
   };
 
@@ -278,6 +497,7 @@
       '.mc-acts{float:right;} .mc-acts button{background:none; border:none; padding:0 0 0 10px; font:600 0.76rem Karla,sans-serif; color:var(--teal); cursor:pointer; text-decoration:underline; text-decoration-color:var(--sand-line);}',
       '.mc-acts button:hover{background:none !important; box-shadow:none !important;}',
       '.mc-hit{animation:mcHit 1.3s ease-out 1;} @keyframes mcHit{0%{box-shadow:0 0 0 3px oklch(70% 0.12 72 / .7);}100%{box-shadow:0 0 0 3px oklch(70% 0.12 72 / 0);}}',
+      '.mk-pair .mloc.has-mc{display:block !important;}',
       '@media (min-width:1280px){ .mloc.has-mc{display:grid; grid-template-columns:minmax(0,1fr) 230px; gap:12px; align-items:start;} .mloc.has-mc .mgut{margin:0;} }',
       '.mk-selbar{position:fixed; z-index:60; display:flex; flex-wrap:wrap; gap:6px; max-width:min(560px, calc(100vw - 24px)); padding:7px; background:var(--ink); border-radius:12px; box-shadow:0 10px 30px oklch(20% 0.02 60 / .3);}',
       '.mk-selbar button{font:600 0.78rem Karla,sans-serif; color:var(--paper); background:oklch(32% 0.02 65); border:none; border-radius:8px; padding:7px 10px; cursor:pointer; text-align:left;}',
@@ -290,7 +510,7 @@
       '.me-acts{display:flex; justify-content:flex-end; gap:10px; margin-top:14px;}',
       '.me-acts button{font:700 0.86rem Karla,sans-serif; border-radius:var(--r-control); padding:9px 16px; cursor:pointer; border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink);}',
       '.me-acts .me-save{background:var(--teal); border-color:var(--teal); color:var(--paper);}',
-      '.mk-float{position:sticky; top:0; z-index:3; margin:0 0 12px; background:var(--sand); border:1px solid var(--sand-line); border-left:3px solid var(--as, var(--teal)); border-radius:var(--r-strip); box-shadow:0 6px 18px oklch(30% 0.02 70 / .08); max-height:42vh; overflow:auto; font-size:0.82rem; line-height:1.5;}',
+      '.mk-float{position:relative; margin:0 0 12px; background:var(--sand); border:1px solid var(--sand-line); border-left:3px solid var(--as, var(--teal)); border-radius:var(--r-strip); box-shadow:0 6px 18px oklch(30% 0.02 70 / .08); max-height:42vh; overflow:auto; font-size:0.82rem; line-height:1.5;}',
       '.mkf-top{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 12px; font-weight:700; color:var(--as, var(--teal)); border-bottom:1px solid var(--sand-line); position:sticky; top:0; background:var(--sand);}',
       '.mkf-x{background:none; border:none; font:600 0.76rem Karla,sans-serif; color:var(--grey); cursor:pointer; text-decoration:underline;} .mkf-x:hover{background:none !important; box-shadow:none !important;}',
       '.mkf-body{padding:4px 12px 10px;} .mkf-body p{margin:5px 0;} .mkf-body h4{margin:8px 0 2px; font-size:0.82rem;}',
@@ -300,7 +520,28 @@
       '.mk-tied{margin:8px 0 0; padding:7px 10px; border-radius:var(--r-strip); background:var(--gold-wash); font-size:0.8rem;}',
       '.mk-tied span{display:block; font-weight:700; font-size:0.72rem; text-transform:uppercase; letter-spacing:.06em; color:var(--gold-deep); margin:0 0 3px;}',
       '.mk-tied button{display:block; text-align:left; background:none; border:none; padding:3px 0; font:inherit; color:var(--ink); cursor:pointer;} .mk-tied button:hover{background:none !important; box-shadow:none !important; text-decoration:underline;}',
-      '@media print{ .mk-selbar,.mk-editor,.mk-tip,.mk-float{display:none !important;} }'
+      '.mcard.by-second{border-color:color-mix(in oklab, var(--teal) 40%, var(--sand-line)); border-left-color:var(--teal);}',
+      '.mk-checks{margin:0 0 12px;} .mkc{list-style:none; margin:4px 0 0; padding:0;} .mkc li{display:flex; gap:10px; align-items:flex-start; padding:6px 0; border-top:1px solid var(--row-line); font-size:0.82rem; line-height:1.45;} .mkc li:first-child{border-top:none;}',
+      '.mkc b{flex:none; width:40px; font-size:0.7rem; text-transform:uppercase; letter-spacing:.06em; padding-top:1px;} .mkc .ok b{color:var(--mark-met-text);} .mkc .look b{color:var(--gold-deep);} .mkc .info b{color:var(--grey);}',
+      '.mkc small{display:block; color:var(--grey); font-size:0.78rem;} .mkc-foot{font-size:0.76rem; color:var(--grey); margin:6px 0 0;}',
+      '.mk-btn{font:700 0.86rem Karla,sans-serif; border-radius:var(--r-control); padding:9px 16px; cursor:pointer; border:1.5px solid var(--teal); background:var(--paper); color:var(--teal);} .mk-btn.quiet{border-color:var(--sand-line); color:var(--ink); margin-top:10px;}',
+      '.mk-second.on{border-left-color:var(--teal);} .mk-second .mk-agree{color:var(--mark-met-text); font-weight:600; font-size:0.86rem; margin:0;}',
+      '.mk-disagree{margin:8px 0; padding:8px 11px; border-radius:var(--r-strip); background:var(--gold-wash); border:1px solid var(--amber-edge); border-left:4px solid var(--amber-edge); font-size:0.84rem; line-height:1.5;} .mk-disagree span{display:block; margin-top:4px;} .mk-disagree.small{margin:6px 0 0; font-size:0.8rem;}',
+      '.sm-row{padding:10px 0; border-top:1px solid var(--row-line);} .sm-c{font-size:0.86rem; line-height:1.45; margin:0 0 6px;}',
+      '.sm-first{display:flex; gap:10px; align-items:flex-start; font-size:0.82rem; color:var(--grey); margin:0 0 8px;} .sm-fn{line-height:1.45;}',
+      '.sm-acts{display:flex; gap:8px; flex-wrap:wrap; align-items:center;} .sm-b{font:700 0.8rem Karla,sans-serif; border-radius:14px; padding:6px 14px; border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink); cursor:pointer; min-height:34px;}',
+      '.sm-b.on{background:var(--mark-met-bg); border-color:var(--mark-met-line); color:var(--mark-met-text);} .sm-b.no.on{background:var(--mark-not-bg); border-color:var(--mark-not-line); color:var(--mark-not-text);}',
+      '.sm-note{width:100%; box-sizing:border-box; margin-top:8px; font:inherit; font-size:0.86rem; padding:8px 10px; border:1.5px solid var(--row-line); border-radius:6px;}',
+      '.mk-dim{opacity:.55;} .mk-dim:hover{opacity:1;}',
+      '.critrow.mk-cur{box-shadow:inset 3px 0 0 var(--as, var(--teal)); padding-left:10px !important; border-radius:4px;}',
+      '.mk-keys{font-size:0.76rem; color:var(--grey); margin:-6px 0 12px;}',
+      '.mk-prev-wrap{position:fixed; inset:0; z-index:70; background:oklch(20% 0.02 60 / .38); display:flex; align-items:flex-start; justify-content:center; padding:5vh 16px; overflow:auto;}',
+      '.mk-prev{width:min(640px, 100%); background:var(--paper); border-radius:var(--r-card); box-shadow:0 24px 70px oklch(20% 0.02 60 / .35); overflow:hidden;}',
+      '.mkp-top{display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 16px; font-size:0.8rem; color:var(--grey); border-bottom:1px solid var(--sand-line);} .mkp-top button{font:700 0.82rem Karla,sans-serif; background:none; border:1.5px solid var(--sand-line); border-radius:var(--r-control); padding:6px 12px; cursor:pointer;}',
+      '.mkp-band{padding:16px 20px; background:color-mix(in oklab, var(--as) 8%, var(--surface)); border-top:4px solid var(--as);} .mkp-band p{margin:0; font-size:0.78rem; text-transform:uppercase; letter-spacing:.08em; color:var(--as); font-weight:700;} .mkp-band h3{margin:4px 0 0; font-family:Newsreader,Georgia,serif; font-size:1.4rem; color:var(--ink);}',
+      '.mkp-gen{padding:14px 20px 0; font-size:0.9rem; line-height:1.6;} .mkp-crit,.mkp-mc{list-style:none; margin:0; padding:10px 20px 14px;} .mkp-crit li{display:flex; gap:12px; align-items:flex-start; padding:9px 0; border-top:1px solid var(--row-line); font-size:0.88rem;} .mkp-crit li:first-child{border-top:none;} .mkp-crit p{margin:4px 0 0; color:var(--ink);}',
+      '.mk-prev h4{margin:0; padding:4px 20px 0; font-size:0.82rem; text-transform:uppercase; letter-spacing:.07em; color:var(--grey);} .mkp-mc li{padding:8px 0; border-top:1px solid var(--row-line); font-size:0.86rem;} .mkp-mc q{display:block; background:color-mix(in oklab, var(--gold-lifted) 25%, transparent); padding:2px 5px; border-radius:3px;} .mkp-mc p{margin:4px 0 0;}',
+      '@media print{ .mk-selbar,.mk-editor,.mk-tip,.mk-float,.mk-prev-wrap,.mk-checks,.mk-keys{display:none !important;} }'
     ].join('\n');
     (document.head || document.documentElement).appendChild(st);
   }

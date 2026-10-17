@@ -13,7 +13,7 @@
 <title>Connect Lite — Mark assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610172227">
+<link rel="stylesheet" href="hub-tokens.css?v=202610172235">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -30,6 +30,17 @@
   body[class*="as-"] .picker button.active{background:var(--as); border-color:var(--as);}
   body[class*="as-"] .roundlabel{color:var(--as);}
   .mk-round > h2{color:var(--as, var(--ink));}
+  #mkPanel [hidden]{display:none !important;} .mk-linked:empty{display:none;}
+  #mkCrit .actions{flex-wrap:wrap;} #mkCrit .actions .btn{flex:1 1 auto;}
+  .mk-pair{display:grid; grid-template-columns:1fr; gap:8px; margin:0 0 6px;}
+  @media (min-width:1280px){ .mk-pair{grid-template-columns:1fr 1fr;} }
+  .mk-pl{font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--grey); margin:0 0 4px;}
+  .mk-r2 .mk-pl{color:var(--gold-deep);}
+  .mk-r2 .readonly{background:var(--gold-wash); border-color:var(--amber-edge);}
+  .mk-pair.same .mk-r2 .readonly{background:var(--field); border-color:var(--sand-line); color:var(--grey);}
+  .mk-compare del{text-decoration:line-through; text-decoration-color:oklch(55% 0.12 27 / .7); color:var(--grey); background:color-mix(in oklab, var(--brick) 6%, transparent);}
+  .mk-compare ins{text-decoration:underline; text-decoration-color:var(--gold); text-decoration-thickness:2px; text-underline-offset:3px; background:color-mix(in oklab, var(--gold-lifted) 22%, transparent);}
+  .mk-carried{margin:0 0 10px; font-size:0.84rem;} .mk-carried summary{cursor:pointer; color:var(--mark-met-text); font-weight:600; padding:4px 0;}
   .mk-resub{background:var(--gold-wash); border-left-color:var(--amber-edge);}
   .mk-resub > h2{color:var(--gold-deep);}
   .mk-addnote, .mk-tiplink{align-self:flex-start; background:none; border:none; padding:2px 0; margin:6px 14px 0 0; font:600 0.8rem 'Karla',sans-serif; color:var(--teal); text-decoration:underline; text-decoration-color:var(--sand-line); text-underline-offset:3px; cursor:pointer;}
@@ -152,7 +163,7 @@
   @media(prefers-reduced-motion:reduce){ .mv2-seg{transition:none;} .critrow.mv2-hit{animation:none;} }
   @media print{ .mv2{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610172227">
+<link rel="stylesheet" href="hub-house.css?v=202610172235">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -161,15 +172,15 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610172227"></script>
-<script src="hub-exchange.js?v=202610172227"></script>
+<script src="assignment-defaults.js?v=202610172235"></script>
+<script src="hub-exchange.js?v=202610172235"></script>
 <script src="hub-marking.js?v=202610172152"></script>
-<script src="hub-due.js?v=202610172227"></script>
-<script src="hub-shared.js?v=202610172227"></script>
-<script src="hub-store.js?v=202610172227"></script>
-<script src="hub-say.js?v=202610172227"></script>
-<script src="hub-sync.js?v=202610172227"></script>
-<script src="fol-interview.js?v=202610172227"></script>
+<script src="hub-due.js?v=202610172235"></script>
+<script src="hub-shared.js?v=202610172235"></script>
+<script src="hub-store.js?v=202610172235"></script>
+<script src="hub-say.js?v=202610172235"></script>
+<script src="hub-sync.js?v=202610172235"></script>
+<script src="fol-interview.js?v=202610172235"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -356,6 +367,66 @@ function summarize(a, snap, round){
   return out || '<p class="note">Nothing submitted yet.</p>';
 }
 
+/* RESUBMISSION, SIDE BY SIDE (17 Oct 2026). Section by section: her first
+   answer, with your first-round margin comments still on it, beside the
+   amber resubmission, the changed words lightly marked in both. A section
+   whose criteria were all Met the first time was locked on her side and
+   carried forward; it folds here with a note saying so. On a phone the two
+   stack, first above resubmission. */
+function wordDiff(x, y){
+  const A = String(x || '').split(/(\s+)/), B = String(y || '').split(/(\s+)/);
+  const n = A.length, m = B.length;
+  if (n * m > 4000000) return [nl2br(x), nl2br(y)];
+  const L = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) L[i][j] = A[i] === B[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+  let i = 0, j = 0, oa = '', ob = '';
+  const w = (t, tag) => /^\s+$/.test(t) ? nl2br(t) : `<${tag}>${nl2br(t)}</${tag}>`;
+  while (i < n && j < m) {
+    if (A[i] === B[j]) { oa += nl2br(A[i]); ob += nl2br(B[j]); i++; j++; }
+    else if (L[i + 1][j] >= L[i][j + 1]) { oa += w(A[i], 'del'); i++; }
+    else { ob += w(B[j], 'ins'); j++; }
+  }
+  while (i < n) oa += w(A[i++], 'del');
+  while (j < m) ob += w(B[j++], 'ins');
+  return [oa, ob];
+}
+function compareRounds(a, sub){
+  const s1 = sub.sub1 || {}, s2 = sub.sub2 || {}, m1 = sub.criteriaMarks.sub1 || [];
+  const locked = i => { const cs = (a.criteria || []).map((c, ci) => ({ c, ci })).filter(x => x.c.sectionIndex === i); return cs.length > 0 && cs.every(x => m1[x.ci] === true); };
+  const pair = (loc, sec, field, label, v1, v2) => {
+    const same = String(v1 || '') === String(v2 || '');
+    const [h1, h2] = same ? [nl2br(v1), nl2br(v2)] : wordDiff(v1, v2);
+    const lab = label ? `<strong>${esc(label)}:</strong> ` : '';
+    return `<div class="mk-pair${same ? ' same' : ''}">
+      <div class="mloc" data-loc="${loc}" data-round="sub1" data-sec="${sec}"${field ? ` data-field="${esc(field)}"` : ''}><div class="mk-pl">First submission</div><div class="readonly">${lab}${h1 || '<span class="note">Nothing written.</span>'}</div><div class="mgut"></div></div>
+      <div class="mloc mk-r2" data-loc="${loc}" data-round="sub2" data-sec="${sec}"${field ? ` data-field="${esc(field)}"` : ''}><div class="mk-pl">Resubmission${same ? ': unchanged' : ''}</div><div class="readonly">${lab}${h2 || '<span class="note">Nothing written.</span>'}</div><div class="mgut"></div></div>
+    </div>`;
+  };
+  let out = `<div class="card mk-round mk-compare"><h2>First submission and resubmission</h2>
+    <p class="note" style="margin:0 0 12px;">Section by section. Words she changed are marked in both: struck through in the first, underlined in the resubmission.</p>`;
+  a.sections.forEach((s, i) => {
+    if (s.type === 'text' && !hubIsReference(s)) {
+      const v1 = (s1.text || {})[i], v2 = (s2.text || {})[i];
+      if (!v1 && !v2) return;
+      out += `<div class="roundlabel" data-sec="${i}">${esc(s.label)}</div>`;
+      if (locked(i)) { out += `<details class="mk-carried"><summary>Met the first time, so carried forward unchanged</summary><div class="readonly">${nl2br(v1)}</div></details>`; return; }
+      out += pair('t' + i, i, '', '', v1, v2);
+    } else if (s.type === 'fields') {
+      const picked = (snap) => { for (let j = i - 1; j >= 0; j--) if (a.sections[j].type === 'picker') return hubPickedItems(a.sections[j], (snap.picked || {})[j]); return []; };
+      const items = picked(s2).length ? picked(s2) : picked(s1);
+      items.forEach((item, ii) => {
+        out += `<div class="roundlabel" data-sec="${i}">${esc(s.label)} \u2014 ${esc(item)}</div>`;
+        if (locked(i)) { out += `<details class="mk-carried"><summary>Met the first time, so carried forward unchanged</summary>${s.fields.map((f, fi) => { const v = (s1.fields || {})[`s${i}_i${ii}_f${fi}`]; return v ? `<div class="readonly"><strong>${esc(f.label)}:</strong> ${nl2br(v)}</div>` : ''; }).join('')}</details>`; return; }
+        s.fields.forEach((f, fi) => {
+          const k = `s${i}_i${ii}_f${fi}`, v1 = (s1.fields || {})[k], v2 = (s2.fields || {})[k];
+          if (v1 || v2) out += pair('f:' + k, i, f.label, f.label, v1, v2);
+        });
+      });
+    }
+  });
+  return out + `</div>`;
+}
+
 function render(){
   /* Every door into this screen -- the dashboard's rows, the tracker's actions
      -- carries ?trainee=. Reached without one (a stale bookmark, a hand-typed
@@ -445,8 +516,8 @@ function render(){
   if (sub.stage === 'draft') {
     html += `<div class="card"><p class="note">Nothing to mark yet \u2014 the trainee hasn\u2019t submitted this assignment.</p></div>`;
   } else {
-    left += `<div class="card mk-round"><h2>First submission</h2>${summarize(a, sub.sub1, 'sub1')}</div>`;
-    if (sub.sub2) left += `<div class="card mk-round mk-resub"><h2>Resubmission</h2>${summarize(a, sub.sub2, 'sub2')}</div>`;
+    if (sub.sub2) left += compareRounds(a, sub);
+    else left += `<div class="card mk-round"><h2>First submission</h2>${summarize(a, sub.sub1, 'sub1')}</div>`;
     if (sub.feedback && sub.feedback.outcome) {
       right += `${sub.stage === 'closed' ? '<div class="card"><h2>Marked and returned</h2><p class="mk-how" style="margin:0;">This assignment is finished. The work and your feedback are kept here as the record; there is nothing to do.</p></div>' : ''}<div class="card"><h2>Your feedback</h2><div class="readonly">${esc(sub.feedback.outcome)}${sub.feedback.generalComment1?('\n\n'+nl2br(sub.feedback.generalComment1)):''}${sub.feedback.generalComment2?('\n\n'+nl2br(sub.feedback.generalComment2)):''}</div></div>`;
     }
@@ -569,7 +640,9 @@ function render(){
   const keepPanel = ($('mkPanel') || {}).scrollTop || 0;
   $('app').innerHTML = html;
   if ($('mkPanel')) $('mkPanel').scrollTop = keepPanel;
-  if (window.hubMarking) hubMarking.afterRender({ key: CURRENT, a, sub, round: sub.stage === 'resubmitted' ? 'sub2' : 'sub1', marking: sub.stage === 'submitted' || sub.stage === 'resubmitted', guide: window.hubGuidance ? hubGuidance(CURRENT) : null, save: saveSubs, rerender: render, me: (function(){ try { return localStorage.getItem('chub:tutorName') || ''; } catch (e) { return ''; } })() });
+  if (window.hubMarking) hubMarking.afterRender({ key: CURRENT, trainee: TRAINEE_ID, a, sub, round: sub.stage === 'resubmitted' ? 'sub2' : 'sub1', marking: sub.stage === 'submitted' || sub.stage === 'resubmitted', guide: window.hubGuidance ? hubGuidance(CURRENT) : null, save: saveSubs, rerender: render,
+    setMark: (i, v) => { const r = sub.stage === 'resubmitted' ? 'sub2' : 'sub1'; sub.criteriaMarks[r][i] = v; saveSubs(); render(); },
+    outcome: () => { const r = sub.stage === 'resubmitted' ? 'sub2' : 'sub1', cr = a.criteria || [], mk = sub.criteriaMarks[r] || []; const all = cr.length > 0 && cr.every((c, i) => mk[i] === true || mk[i] === false); return all ? outcomeFor(r, cr.every((c, i) => mk[i] === true), sub) : ''; }, me: (function(){ try { return localStorage.getItem('chub:tutorName') || ''; } catch (e) { return ''; } })() });
   document.querySelectorAll('[data-crit]').forEach(b => b.addEventListener('click', () => {
     const round = sub.stage==='resubmitted' ? 'sub2' : 'sub1';
     const i = +b.dataset.crit;
