@@ -1586,3 +1586,51 @@ window.hubGuidanceHTML = function(text){
     return out;
   }).join('');
 };
+
+/* THE HIDDEN WORD (17 Oct 2026). Ramy, after the C/18 guides, which hide a
+   word in white text in every section of each assignment file: "add the trap
+   words to the assignments online... one word per assignment, and all
+   different sections. And this word will be disclosed in the guidelines for
+   each assignment." The word is wording[k].trap. On the trainee's page it is
+   invisible -- transparent, 1px, no space taken -- and aria-hidden so a screen
+   reader never says it; but it is real text, so copying the brief, or any
+   tool that reads the page, carries it. The marking page looks for it in the
+   submission and tells the tutor; the trainee is never told. It is a prompt to
+   look closer, never proof. */
+(function(){
+  if (document.getElementById('hub-tw-css')) return;
+  var st = document.createElement('style'); st.id = 'hub-tw-css';
+  st.textContent = '.hub-tw{color:transparent !important; font-size:1px !important; line-height:0 !important; letter-spacing:0 !important; user-select:text; -webkit-user-select:text;} @media print{.hub-tw{color:#fff !important;}}';
+  (document.head || document.documentElement).appendChild(st);
+})();
+window.hubTrapSpan = function(word){
+  word = String(word || '').replace(/[^A-Za-z]/g, '');
+  return word ? '<span class="hub-tw" aria-hidden="true"> ' + word + ' </span>' : '';
+};
+/* Every piece of writing in one submission round, as one string. */
+window.hubSubmissionText = function(round){
+  if (!round) return '';
+  var out = [];
+  var walk = function(v){ if (v == null) return; if (typeof v === 'string') out.push(v); else if (Array.isArray(v)) v.forEach(walk); else if (typeof v === 'object') Object.keys(v).forEach(function(k){ walk(v[k]); }); };
+  walk(round.text); walk(round.fields); walk(round.links); walk(round.materials); walk(round.aiNote); walk(round.ai);
+  return out.join('\n');
+};
+window.hubTrapFound = function(word, sub){
+  word = String(word || '').replace(/[^A-Za-z]/g, '');
+  if (!word || !sub) return false;
+  var re = new RegExp('\\b' + word + '\\b', 'i');
+  return [sub.sub1, sub.sub2].some(function(r){ return r && re.test(window.hubSubmissionText(r)); });
+};
+window.hubTrapNote = function(word){
+  word = String(word || '').replace(/[^A-Za-z]/g, '');
+  return word ? 'The hidden word for this assignment is ' + word + '. It is in every section of the brief: invisible on the page and in print, but anything that copies or reads the page’s text picks it up. If it appears in a trainee’s answer, the work was probably produced from a copy of the brief rather than from the brief as read. Treat it as a prompt to look more closely at how the work was produced, and follow the centre’s usual process rather than acting on it alone. Lite checks every submission for it and tells you on the marking page.' : '';
+};
+/* Words for the hidden word: odd enough never to turn up in a CELTA
+   assignment on their own, none of them the C/18 files' words. */
+window.HUB_TRAP_WORDS = ['PELICAN','TAMBOURINE','PAPRIKA','ARMADILLO','HARMONICA','NUTMEG','ACCORDION','PISTACHIO','WALRUS','MANDOLIN','TOUCAN','CARDAMOM','OCARINA','CHINCHILLA','PERSIMMON','XYLOPHONE','MONGOOSE','TAPIOCA','BASSOON','QUINCE','PLATYPUS','SAFFRON','CORMORANT','BANJO','LORIKEET','TAMARIND','UKULELE','WOMBAT','KOHLRABI','CASTANET','NARWHAL','RHUBARB','DIDGERIDOO','AARDVARK','GOOSEBERRY','PICCOLO','IGUANA','PARSNIP','TRUMPETER','MARMOSET'];
+window.hubPickTrap = function(taken){
+  var t = {}; (taken || []).forEach(function(w){ if (w) t[String(w).toUpperCase()] = 1; });
+  var free = window.HUB_TRAP_WORDS.filter(function(w){ return !t[w]; });
+  var a = new Uint32Array(1); (window.crypto || {}).getRandomValues ? crypto.getRandomValues(a) : (a[0] = Date.now());
+  return free[a[0] % free.length];
+};

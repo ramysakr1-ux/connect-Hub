@@ -15,7 +15,7 @@
 <title>Connect Lite — Assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610172132">
+<link rel="stylesheet" href="hub-tokens.css?v=202610172152">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -166,7 +166,7 @@
   @media(max-width:560px){ .wm{flex-wrap:wrap; gap:6px;} .wm-track{width:100%;} }
   @media print{ .wm-track{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610172132">
+<link rel="stylesheet" href="hub-house.css?v=202610172152">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -174,13 +174,13 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610172132"></script>
-<script src="hub-due.js?v=202610172132"></script>
-<script src="hub-shared.js?v=202610172132"></script>
-<script src="hub-store.js?v=202610172132"></script>
-<script src="hub-say.js?v=202610172132"></script>
-<script src="hub-sync.js?v=202610172132"></script>
-<script src="fol-interview.js?v=202610172132"></script>
+<script src="assignment-defaults.js?v=202610172152"></script>
+<script src="hub-due.js?v=202610172152"></script>
+<script src="hub-shared.js?v=202610172152"></script>
+<script src="hub-store.js?v=202610172152"></script>
+<script src="hub-say.js?v=202610172152"></script>
+<script src="hub-sync.js?v=202610172152"></script>
+<script src="fol-interview.js?v=202610172152"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the trainee's submission form with a
@@ -354,6 +354,8 @@ function render(){
     html += `<div class="locked-banner" style="background:oklch(93% 0.06 60);">Returned unmarked \u2014 your tutor sent this back without marking it. Fix what they asked for and submit it again. This does not use your one resubmission.</div>`;
   }
 
+  /* The hidden word (17 Oct 2026): in every section of the brief, invisible -- see hubTrapSpan. */
+  const TW = window.hubTrapSpan ? hubTrapSpan(a.trap) : '';
   a.sections.forEach((s,i) => {
     if (s.type==='text') {
       // Reference material: read it, don't write in it. Was the label
@@ -378,13 +380,13 @@ function render(){
            back sit in the house's guidance box (Ramy, 17 Oct 2026: "I like
            that yellow box... use that inside Connect Lite. More often"). */
         if (/^before you start$|reasons for resubmission/i.test(String(s.label).trim()) && window.hubGuidanceHTML) {
-          html += `<div class="card guide-card"><details class="guide-box guide-solo"${startsClosed?'':' open'}><summary>${esc(s.label)}</summary><div class="gb">${hubGuidanceHTML(s.body)}</div></details></div>`;
+          html += `<div class="card guide-card"><details class="guide-box guide-solo"${startsClosed?'':' open'}><summary>${esc(s.label)}</summary><div class="gb">${hubGuidanceHTML(s.body)}${TW}</div></details></div>`;
           return;
         }
-        html += `<details class="card ref ${startsClosed?'':'open'}"${startsClosed?'':' open'}><summary><h2>${esc(s.label)}</h2><span class="fold" aria-hidden="true"></span></summary><div class="refbody">${refHtml}</div></details>`;
+        html += `<details class="card ref ${startsClosed?'':'open'}"${startsClosed?'':' open'}><summary><h2>${esc(s.label)}</h2><span class="fold" aria-hidden="true"></span></summary><div class="refbody">${refHtml}${TW}</div></details>`;
         return;
       }
-      html += `<div class="card"><h2>${esc(s.label)}</h2><p class="guide">${nl2br(s.body)}</p>`;
+      html += `<div class="card"><h2>${esc(s.label)}</h2><p class="guide">${nl2br(s.body)}${TW}</p>`;
       {
         if (isLockedNow) {
           html += `<div class="lockedbox"><span class="lockedtag">\u2713 Already met \u2014 carried forward, no changes needed</span><div class="readonly">${nl2br((sub.sub1&&sub.sub1.text&&sub.sub1.text[i])||'')}</div></div>`;
@@ -402,7 +404,7 @@ function render(){
       html += `</div>`;
     } else if (s.type==='picker') {
       const picked = PICKED[i] || {};
-      html += `<div class="card pick"><h2>${esc(s.label)}</h2>${s.intro?`<p class="guide">${nl2br(s.intro)}</p>`:''}<div class="catwrap">
+      html += `<div class="card pick"><h2>${esc(s.label)}</h2>${TW}${s.intro?`<p class="guide">${nl2br(s.intro)}</p>`:''}<div class="catwrap">
         ${hubPickerCats(s).map(c => {
           const chosen = c.fixed ? c.options : (picked[c.key] || []);
           // A fixed group is not a choice. Everyone analyses it, so its chips
@@ -417,7 +419,7 @@ function render(){
       const items = itemsForFieldsSection(a, i);
       const crit = critsForSection(a,i);
       const isLockedNow = onRound2 && sectionLocked(a,sub,i);
-      html += `<div class="card fill"><h2>${esc(s.label)}</h2>${s.intro?`<p class="guide">${esc(s.intro)}</p>`:''}`;
+      html += `<div class="card fill"><h2>${esc(s.label)}</h2>${TW}${s.intro?`<p class="guide">${esc(s.intro)}</p>`:''}`;
       if (!items.length) {
         html += `<p class="guide">Pick your items above first.</p>`;
       } else if (isLockedNow) {
@@ -451,7 +453,7 @@ function render(){
       html += `</div>`;
     } else if (s.type==='declaration') {
       const d = DECL[i] || { checks:s.items.map(()=>false), aiUsed:'', aiLink:'', aiPurpose:'' };
-      html += `<div class="card declcard"><h2>${esc(s.label)}</h2>
+      html += `<div class="card declcard"><h2>${esc(s.label)}</h2>${TW}
         <div class="row"><label>Materials link (if this assignment uses outside material)</label>
           <p class="hint">If you're linking a Drive file or worksheet here, use different material from any assessed TP lesson \u2014 Handbook 9.2.1.</p>
           <input type="url" data-role="materialslink" value="${esc(MATERIALSLINK)}" placeholder="https://drive.google.com/..." ${locked?'disabled':''}></div>

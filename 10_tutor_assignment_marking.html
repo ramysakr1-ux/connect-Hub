@@ -13,7 +13,7 @@
 <title>Connect Lite — Mark assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610172132">
+<link rel="stylesheet" href="hub-tokens.css?v=202610172152">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -60,6 +60,7 @@
   .critrow:last-child{border-bottom:none;}
   /* The marking guidance (17 Oct 2026): folded away until the tutor opens it. */
   .guide-top{margin:0 0 10px;}
+  .trap-hit{margin:0 0 10px; padding:10px 13px; border-radius:var(--r-strip); background:var(--gold-wash); border:1px solid var(--amber-edge); border-left:4px solid var(--amber-edge); color:var(--ink); font-size:0.86rem; line-height:1.5;}
   .critrow .txt{font-size:0.87rem; line-height:1.5; flex:1;}
   .critline{display:flex; align-items:flex-start; justify-content:space-between; gap:14px;}
   /* A phone. The criterion was squeezed into a narrow column beside its pill
@@ -110,7 +111,7 @@
   @media(prefers-reduced-motion:reduce){ .mv2-seg{transition:none;} .critrow.mv2-hit{animation:none;} }
   @media print{ .mv2{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610172132">
+<link rel="stylesheet" href="hub-house.css?v=202610172152">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -119,14 +120,14 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610172132"></script>
-<script src="hub-exchange.js?v=202610172132"></script>
-<script src="hub-due.js?v=202610172132"></script>
-<script src="hub-shared.js?v=202610172132"></script>
-<script src="hub-store.js?v=202610172132"></script>
-<script src="hub-say.js?v=202610172132"></script>
-<script src="hub-sync.js?v=202610172132"></script>
-<script src="fol-interview.js?v=202610172132"></script>
+<script src="assignment-defaults.js?v=202610172152"></script>
+<script src="hub-exchange.js?v=202610172152"></script>
+<script src="hub-due.js?v=202610172152"></script>
+<script src="hub-shared.js?v=202610172152"></script>
+<script src="hub-store.js?v=202610172152"></script>
+<script src="hub-say.js?v=202610172152"></script>
+<script src="hub-sync.js?v=202610172152"></script>
+<script src="fol-interview.js?v=202610172152"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -445,9 +446,12 @@ function render(){
         }
       } catch(e) {}
       const guide = window.hubGuidance ? hubGuidance(CURRENT) : null;
+      /* The hidden word (17 Oct 2026): found anywhere in either round. */
+      const trapHit = !!(a.trap && window.hubTrapFound && hubTrapFound(a.trap, sub));
       const gBox = (title, text) => text ? `<details class="guide-box"><summary>${title}</summary><div class="gb">${hubGuidanceHTML(text)}</div></details>` : '';
       html += `<div class="card"><h2>Assessment criteria</h2>
-        ${guide ? `<div class="guide-top">${gBox('Marking guidance: how to mark this assignment', guide.general)}${gBox('Marking guidance: section by section', guide.sections)}</div>` : ''}
+        ${trapHit ? `<div class="trap-hit" role="note"><b>The hidden word for this assignment appears in this work.</b> Treat it as a prompt to look more closely at how the work was produced, and follow the centre’s usual process rather than acting on it alone. The trainee is not told.</div>` : ''}
+        ${guide || a.trap ? `<div class="guide-top">${gBox('Marking guidance: how to mark this assignment', [guide && guide.general, a.trap ? 'The hidden word\n' + hubTrapNote(a.trap) : ''].filter(Boolean).join('\n\n'))}${guide ? gBox('Marking guidance: section by section', guide.sections) : ''}</div>` : ''}
         ${mv2HTML(crit, marks)}
         ${deadlineWarn}
         ${sub.stage==='submitted' && sub.usedResubmission ? '<p class="note">This trainee has already used their one resubmission for this assignment \u2014 any criterion Not met here is a final Fail.</p>' : ''}

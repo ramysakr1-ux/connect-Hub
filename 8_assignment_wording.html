@@ -13,7 +13,7 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610172132">
+<link rel="stylesheet" href="hub-tokens.css?v=202610172152">
 <style>
   /* ---- The assignment editor, v2 (11 Oct 2026) -------------------------------
      From the designer's handoff "Assignment editor v2". The page behind Edit
@@ -186,6 +186,8 @@
   .gcard textarea{font:inherit; font-size:0.86rem; line-height:1.5; padding:9px 11px; border:1.5px solid var(--row-line); border-radius:6px; min-width:0; width:100%; box-sizing:border-box; resize:vertical;}
   .gcard .gnote{font-size:0.8rem; color:var(--grey); margin:6px 0 0;}
   .gcard .gsaved{font-size:0.78rem; color:var(--grey);}
+  .gcard .gtrap{display:flex; align-items:center; gap:14px; flex-wrap:wrap; font-size:0.9rem;}
+  .gcard .gtrap b{letter-spacing:.06em;}
   .crows{display:flex; flex-direction:column; gap:6px; margin-top:12px;}
   .crow{display:grid; grid-template-columns:30px minmax(0,1fr) 90px 30px; gap:10px; align-items:center;}
   .crow .n{font-size:0.78rem; font-weight:700; color:var(--grey); font-variant-numeric:tabular-nums;}
@@ -309,7 +311,7 @@
     #hubSync.inbar{margin-right:auto; max-width:calc(100% - 272px);}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610172132">
+<link rel="stylesheet" href="hub-house.css?v=202610172152">
 </head>
 <body class="hub-paper" data-sync-ok="Connected to the course &mdash; wording is kept when you press Save" data-sync-ok-short="Connected">
 <div class="board">
@@ -328,14 +330,14 @@
   </div>
 </div></div>
 <div class="menu" id="menu" hidden></div>
-<script src="assignment-defaults.js?v=202610172132"></script>
-<script src="hub-due.js?v=202610172132"></script>
-<script src="hub-rotation.js?v=202610172132"></script>
-<script src="hub-docx.js?v=202610172132"></script>
-<script src="hub-shared.js?v=202610172132"></script>
-<script src="hub-store.js?v=202610172132"></script>
-<script src="hub-say.js?v=202610172132"></script>
-<script src="hub-sync.js?v=202610172132"></script>
+<script src="assignment-defaults.js?v=202610172152"></script>
+<script src="hub-due.js?v=202610172152"></script>
+<script src="hub-rotation.js?v=202610172152"></script>
+<script src="hub-docx.js?v=202610172152"></script>
+<script src="hub-shared.js?v=202610172152"></script>
+<script src="hub-store.js?v=202610172152"></script>
+<script src="hub-say.js?v=202610172152"></script>
+<script src="hub-sync.js?v=202610172152"></script>
 <script>
 /* The course pill goes into the save bar, left of Discard, on every screen
    size: floating in the corner it covered the brief (12 Oct 2026). A plain
@@ -837,6 +839,9 @@ function guideCardHTML(a){
   return `<div class="critcard gcard" id="guidecard">
     <div class="ch"><h2>Marking guidance</h2><span>For the tutors and the assessor. Trainees never see it.</span></div>
     <p class="gnote">${g && g.fromDefaults ? 'These are Lite’s defaults, written from the C/18 marking guides. Change anything and this course keeps its own copy.' : g ? 'This course’s own guidance. It shows on the marking page and in the assessor’s pack.' : 'No guidance yet. Write what a Met answer looks like, and it shows on the marking page and in the assessor’s pack.'}</p>
+    <div class="gfield"><label>Hidden word <span>(in every section of the brief, invisible to trainees)</span></label>
+      <div class="gtrap">${a.trap ? `<b>${esc(a.trap)}</b><button type="button" class="lnk" onclick="newTrap()">New word</button><button type="button" class="lnk" onclick="removeTrap()">Remove</button>` : `<span class="gnote" style="margin:0;">None yet.</span><button type="button" class="lnk" onclick="newTrap()">Add a hidden word</button>`}</div>
+      <p class="gnote">Copying the brief, or a tool reading the page, carries it into the work. The marking page tells you if it turns up. Save the course for a change to reach the trainees.</p></div>
     <div class="gfield"><label for="g_general">How to mark this assignment <span>(before you mark, resubmission, fairness)</span></label>${ta('g_general', x.general, 8, 'How to mark this assignment')}</div>
     ${crit.map((c, ci) => `<div class="gfield"><label for="g_c${ci}">Criterion ${ci + 1} <span>${esc(c.text)}</span></label>${ta('g_c' + ci, (x.crit || [])[ci], 4, 'Guidance for criterion ' + (ci + 1))}</div>`).join('')}
     <div class="gfield"><label for="g_sections">Section by section <span>(what a Met answer looks like, common shortfalls)</span></label>${ta('g_sections', x.sections, 10, 'Section by section')}</div>
@@ -860,6 +865,8 @@ function guideInput(){
   }, 800);
 }
 
+function newTrap(){ const taken = Object.keys(DATA).filter(k => k !== CURRENT && DATA[k]).map(k => DATA[k].trap); DATA[CURRENT].trap = hubPickTrap(taken.concat(DATA[CURRENT].trap || [])); render(); }
+function removeTrap(){ delete DATA[CURRENT].trap; render(); }
 /* ---- As the candidate sees it ------------------------------------------------ */
 function md(t){ return esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>'); }
 function longDate(iso){
@@ -885,7 +892,7 @@ function previewHTML(a){
     } else {
       body = `<div class="pb">${md(s.body)}</div>${s.readonly === true ? '' : '<div class="pwrite">the candidate writes here</div>'}`;
     }
-    return `<div class="psec"><h3>${esc(s.label)}</h3>${body}</div>`;
+    return `<div class="psec"><h3>${esc(s.label)}</h3>${body}${window.hubTrapSpan ? hubTrapSpan(a.trap) : ''}</div>`;
   }).join('');
   const crit = (a.criteria || []).length ? `<div class="psec"><h3>How it is marked</h3><ol class="pcrit">${a.criteria.map(c => `<li>${esc(c.text)}</li>`).join('')}</ol></div>` : '';
   return `<div class="preview">
