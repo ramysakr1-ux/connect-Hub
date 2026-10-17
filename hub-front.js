@@ -120,7 +120,7 @@
       '.fp-film span{display:block; font-size:0.82rem; color:var(--grey); line-height:1.55; margin-top:2px;}',
       '.fp-btn{font-family:Karla,sans-serif; font-size:0.86rem; font-weight:700; color:var(--teal); text-decoration:none;',
       '  border:1.5px solid var(--teal); border-radius:20px; padding:8px 16px; flex:none; white-space:nowrap;}',
-      '.fp-btn:hover{background:rgba(30,107,99,.08);}',
+      '.fp-btn:hover{border-color:var(--teal-deep); background:none;}',
       '.fp-btn.wide{display:block; text-align:center; background:var(--teal); color:var(--paper); border-color:var(--teal); padding:13px 20px; border-radius:26px; margin-top:12px; font-size:0.95rem;}',
       '.fp-btn.wide:hover{background:var(--teal-deep);}',
       '.fp-ask{margin:26px 0 0; padding:18px 20px; background:var(--gold-wash); border-radius:var(--r-strip);}',
