@@ -287,18 +287,21 @@
   /* the small editor, for a new comment or an old one */
   function editor(opts) {
     var ed = $('mkEditor'); if (!ed) { ed = document.createElement('div'); ed.id = 'mkEditor'; ed.className = 'mk-editor'; document.body.appendChild(ed); }
-    var crit = (CTX.a.criteria || []);
+    var crit = (CTX.a.criteria || []), tied = opts.crit == null || opts.crit === '' ? null : +opts.crit;
     ed.innerHTML = '<div class="me-q">“' + esc(opts.quote.length > 140 ? opts.quote.slice(0, 138) + '…' : opts.quote) + '”</div>' +
       '<textarea id="meText" rows="3" placeholder="Your comment. The trainee reads it beside these words.">' + esc(opts.text || '') + '</textarea>' +
       '<div class="me-tone" role="group" aria-label="What kind of comment"><span>This comment is</span><button type="button" class="tn-good' + (opts.tone === 'good' ? ' on' : '') + '" data-tone="good">Good</button><button type="button" class="tn-fix' + (opts.tone === 'fix' ? ' on' : '') + '" data-tone="fix">To work on</button></div>' +
-      '<label class="me-c">Tie it to a criterion <select id="meCrit"><option value="">None</option>' + crit.map(function (c, i) { return '<option value="' + i + '"' + (String(opts.crit) === String(i) ? ' selected' : '') + '>' + esc(critShort(i)) + '</option>'; }).join('') + '</select></label>' +
+      (opts.fromBar
+        ? ''   /* the chips in the dark box already did it (Ramy, 18 Oct 2026: "keep the one in the chip, delete the one in the comment box") */
+        : (crit.length ? '<div class="me-chips"><span>Tied to criterion</span>' + crit.map(function (c, i) { return '<button type="button" class="sb-c' + (tied === i ? ' on' : '') + '" data-mecrit="' + i + '" title="' + esc(critShort(i)) + '">' + (i + 1) + '</button>'; }).join('') + '</div>' : '')) +
       '<div class="me-acts"><button type="button" class="me-cancel">Cancel</button><button type="button" class="me-save">Save the comment</button></div>';
     ed.hidden = false;
     var t = $('meText'); setTimeout(function () { t.focus(); t.setSelectionRange(t.value.length, t.value.length); }, 30);
     ed.querySelector('.me-cancel').onclick = function () { ed.hidden = true; };
+    [].forEach.call(ed.querySelectorAll('[data-mecrit]'), function (b) { b.onclick = function () { var i = +b.getAttribute('data-mecrit'); tied = tied === i ? null : i; [].forEach.call(ed.querySelectorAll('[data-mecrit]'), function (x) { x.classList.toggle('on', +x.getAttribute('data-mecrit') === tied); }); }; });
     [].forEach.call(ed.querySelectorAll('[data-tone]'), function (b) { b.onclick = function () { var was = b.classList.contains('on'); [].forEach.call(ed.querySelectorAll('[data-tone]'), function (x) { x.classList.remove('on'); }); if (!was) b.classList.add('on'); }; });
     ed.querySelector('.me-save').onclick = function () {
-      var text = t.value.trim(), cv = $('meCrit').value, onTone = ed.querySelector('[data-tone].on'), tone = onTone ? onTone.getAttribute('data-tone') : null;
+      var text = t.value.trim(), cv = tied == null ? '' : String(tied), onTone = ed.querySelector('[data-tone].on'), tone = onTone ? onTone.getAttribute('data-tone') : null;
       ed.hidden = true;
       if (!text) { if (opts.id) remove(opts.id); return; }   /* an empty comment is no comment */
       var l = list(writeRound());
@@ -340,7 +343,7 @@
       return;
     }
     var sb = t.closest('[data-sb]');
-    if (sb && SEL) { bar().hidden = true; editor({ loc: SEL.loc.getAttribute('data-loc'), quote: SEL.quote, text: '', crit: SEL.crit }); window.getSelection().removeAllRanges(); return; }
+    if (sb && SEL) { bar().hidden = true; editor({ loc: SEL.loc.getAttribute('data-loc'), quote: SEL.quote, text: '', crit: SEL.crit, fromBar: true }); window.getSelection().removeAllRanges(); return; }
     var ed = t.closest('[data-medit]');
     if (ed) { var c = list(writeRound()).filter(function (x) { return x.id === ed.getAttribute('data-medit'); })[0]; if (c) editor({ id: c.id, loc: c.loc, quote: c.quote, text: c.text, crit: c.crit, tone: c.tone }); return; }
     var del = t.closest('[data-mdel]'); if (del) { remove(del.getAttribute('data-mdel')); return; }
@@ -627,6 +630,8 @@
       '.mgut{display:flex; flex-direction:column; gap:8px; margin:-2px 0 12px;}',
       '.mcard{background:var(--paper); border:1px solid var(--sand-line); border-left:4px solid var(--tone-note); border-radius:12px; padding:12px 16px 11px; font-size:0.95rem; line-height:1.55; box-shadow:0 2px 8px oklch(30% 0.03 70 / .06);}',
       '.mcard p{margin:4px 0 6px;} .mcard.tone-good{border-left-color:var(--tone-good);} .mcard.tone-fix{border-left-color:var(--tone-fix);}',
+      '.me-tied{margin:10px 0 0; font-size:0.8rem; font-weight:700; color:var(--teal);}',
+      '.me-chips{display:flex; align-items:center; gap:8px; margin:10px 0 0; font-size:0.8rem; font-weight:700;} .me-chips .sb-c{min-width:34px; padding:6px 0; border-radius:14px; border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink); font:700 0.8rem Karla,sans-serif; cursor:pointer; text-align:center;} .me-chips .sb-c.on{background:var(--teal); border-color:var(--teal); color:var(--paper);} .me-chips .sb-c:not(.on):hover{background:var(--paper) !important; border-color:var(--teal) !important; box-shadow:none !important;} .me-chips .sb-c.on:hover{background:var(--teal) !important; box-shadow:none !important;}',
       '.me-tone{display:flex; align-items:center; gap:8px; margin:10px 0 0; font-size:0.8rem; font-weight:700;} .me-tone span{margin-right:2px;}',
       '.me-tone button{font:700 0.8rem Karla,sans-serif; border-radius:14px; padding:6px 14px; border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink); cursor:pointer; min-height:34px;}',
       '.me-tone .tn-good.on{background:var(--tone-good-w); border-color:var(--tone-good); color:var(--tone-good);} .me-tone .tn-fix.on{background:var(--tone-fix-w); border-color:var(--tone-fix); color:var(--tone-fix);}',
