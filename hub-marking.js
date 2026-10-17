@@ -298,12 +298,12 @@
     var crit = (CTX.a.criteria || []), tied = opts.crit == null || opts.crit === '' ? null : +opts.crit;
     ed.innerHTML = '<div class="me-h">' + (opts.id ? 'Edit your comment' : 'Your comment') + '</div>' +
       '<blockquote class="me-q">\u201C' + esc(opts.quote.length > 240 ? opts.quote.slice(0, 238) + '\u2026' : opts.quote) + '\u201D</blockquote>' +
-      '<textarea id="meText" rows="6" placeholder="Write it to the trainee, in your own words. They read it beside these words.">' + esc(opts.text || '') + '</textarea>' +
-      '<div class="me-tone" role="group" aria-label="What kind of comment"><span>This comment is</span><button type="button" class="tn-good' + (opts.tone === 'good' ? ' on' : '') + '" data-tone="good">Good</button><button type="button" class="tn-fix' + (opts.tone === 'fix' ? ' on' : '') + '" data-tone="fix">To work on</button></div>' +
+      '<textarea id="meText" rows="8" placeholder="Write it to the trainee, in your own words. They read it beside these words.">' + esc(opts.text || '') + '</textarea>' +
       (opts.fromBar
         ? ''   /* the chips in the dark box already did it (Ramy, 18 Oct 2026: "keep the one in the chip, delete the one in the comment box") */
         : (crit.length ? '<div class="me-chips"><span>Tied to criterion</span>' + crit.map(function (c, i) { return '<button type="button" class="sb-c' + (tied === i ? ' on' : '') + '" data-mecrit="' + i + '" title="' + esc(critShort(i)) + '">' + (i + 1) + '</button>'; }).join('') + '</div>' : '')) +
-      '<div class="me-acts"><span class="me-hint">Ctrl or \u2318 + Enter saves</span><button type="button" class="me-cancel">Cancel</button><button type="button" class="me-save">Save the comment</button></div>';
+      '<div class="me-foot"><div class="me-tone" role="group" aria-label="What kind of comment"><button type="button" class="tn-good' + (opts.tone === 'good' ? ' on' : '') + '" data-tone="good"><i></i>Good</button><button type="button" class="tn-fix' + (opts.tone === 'fix' ? ' on' : '') + '" data-tone="fix"><i></i>To work on</button></div>' +
+      '<div class="me-acts"><button type="button" class="me-cancel">Cancel</button><button type="button" class="me-save" title="Ctrl or \u2318 + Enter">Save</button></div></div>';
     ed.hidden = false;
     var t = $('meText'); setTimeout(function () { t.focus(); t.setSelectionRange(t.value.length, t.value.length); }, 30);
     t.addEventListener('keydown', function (ev) { if ((ev.metaKey || ev.ctrlKey) && ev.key === 'Enter') { ev.preventDefault(); ed.querySelector('.me-save').click(); } });
@@ -369,16 +369,25 @@
   /* The guidance opens only when "Guidance" is pressed. It used to open as soon
      as you started a note (Ramy, 18 Oct 2026: "clicking on add a note should
      not open the guidance box"). */
+  /* It folds on the click itself, like the guidance (Ramy, 18 Oct 2026: "when you
+     click to close add a note... it's not as smooth as closing guidance"). It
+     used to wait 180ms after losing focus. Its own Guidance link and panel count
+     as inside. Tabbing away folds it too. */
+  function foldNote(ta) {
+    if (!ta || ta.hidden || ta.value.trim()) return;
+    ta.hidden = true; var a = document.querySelector('[data-addnote="' + ta.getAttribute('data-crit-comment') + '"]'); if (a) a.hidden = false;
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target; if (!t || !t.closest) return;
+    [].forEach.call(document.querySelectorAll('[data-crit-comment]:not([hidden])'), function (ta) {
+      var i = ta.getAttribute('data-crit-comment');
+      if (t === ta || t.closest('[data-addnote="' + i + '"], [data-tip="' + i + '"]') || (String(OPENTIP) === i && t.closest('.mk-tipin'))) return;
+      foldNote(ta);
+    });
+  });
   document.addEventListener('focusout', function (e) {
     var ta = e.target.closest && e.target.closest('[data-crit-comment]');
-    if (!ta) return;
-    /* an empty note folds back to its link, unless you went to its Guidance */
-    var idx = ta.getAttribute('data-crit-comment');
-    setTimeout(function () {
-      if (ta.value.trim() || !ta.isConnected || String(OPENTIP) === idx) return;
-      var row = ta.closest('.critrow'); if (row && row.contains(document.activeElement)) return;
-      ta.hidden = true; var a = document.querySelector('[data-addnote="' + idx + '"]'); if (a) a.hidden = false;
-    }, 180);
+    if (ta && e.relatedTarget && !e.relatedTarget.closest('[data-tip="' + ta.getAttribute('data-crit-comment') + '"], .mk-tipin')) foldNote(ta);
   });
 
 
@@ -528,62 +537,12 @@
      should be a link"). The assignment carries its texts as reading sections
      ("Text A \u2014 ...", "Text B \u2014 ..."); each mention of one, and the "Text
      chosen" headline, opens it in a reader, the chosen one first. */
-  function textsOf() {
-    return (CTX && CTX.a ? CTX.a.sections : []).map(function (sec) {
-      var m = String(sec.label || '').match(/^\s*Text\s+([A-C])\b[\s\u2014\u2013:\-]*(.*)$/i);
-      return m && window.hubIsReference && hubIsReference(sec) ? { id: m[1].toUpperCase(), title: m[2].trim(), body: String(sec.body || '') } : null;
-    }).filter(Boolean);
-  }
-  function chosenLetter() {
-    var snap = CTX.sub[CTX.round] || CTX.sub.sub2 || CTX.sub.sub1; if (!snap || !snap.text) return '';
-    var ks = Object.keys(snap.text).sort(function (x, y) { return x - y; });
-    for (var i = 0; i < ks.length; i++) { var m = String(snap.text[ks[i]]).match(/\b[Tt]ext\s+([ABC])\b/); if (m) return m[1].toUpperCase(); }
-    return '';
-  }
-  function openTexts(letter) {
-    var texts = textsOf(); if (!texts.length) return;
-    var ch = chosenLetter(), cur = texts.filter(function (x) { return x.id === letter; })[0] || texts.filter(function (x) { return x.id === ch; })[0] || texts[0];
-    var wrap = $('mkTexts'); if (!wrap) { wrap = document.createElement('div'); wrap.id = 'mkTexts'; wrap.className = 'mk-texts-wrap'; document.body.appendChild(wrap); }
-    wrap.className = 'mk-texts-wrap as-' + CTX.key;
-    var body = esc(cur.body).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
-    wrap.innerHTML = '<div class="mk-texts" role="dialog" aria-label="The texts"><div class="tx-tabs">' + texts.map(function (x) { return '<button type="button" class="tx-tab' + (x.id === cur.id ? ' on' : '') + '" data-txtab="' + x.id + '"><b>Text ' + x.id + '</b>' + (x.id === ch ? '<span>chosen</span>' : '') + '</button>'; }).join('') + '</div>' +
-      '<h3>Text ' + cur.id + (cur.title ? ' \u00b7 ' + esc(cur.title) : '') + '</h3><div class="tx-body">' + body + '</div></div>';
-    wrap.hidden = false;
-  }
-  function closeTexts() { var w = $('mkTexts'); if (w) w.hidden = true; }
+  /* The reader itself lives in hub-shared.js (hubTexts), shared with the trainee's page. */
+  function textsOf() { return CTX && CTX.a ? hubTexts.of(CTX.a) : []; }
   function linkTexts() {
-    if (!textsOf().length) return;
-    var ch = chosenLetter();
-    /* the "Text chosen" headline */
-    [].forEach.call(document.querySelectorAll('#mkWork .hl'), function (h) {
-      if (!/^\s*text chosen/i.test(h.textContent) || h.querySelector('a')) return;
-      var a = document.createElement('a'); a.href = '#'; a.className = 'txtlink'; a.setAttribute('data-text', ch); a.title = 'Read the text they chose';
-      while (h.firstChild) a.appendChild(h.firstChild); h.appendChild(a);
-    });
-    /* each mention of Text A, B or C in the writing */
-    [].forEach.call(document.querySelectorAll('#mkWork .mloc .readonly'), function (box) {
-      var w = document.createTreeWalker(box, NodeFilter.SHOW_TEXT, null), nodes = [], n;
-      while ((n = w.nextNode())) if (!(n.parentNode.closest && n.parentNode.closest('a'))) nodes.push(n);
-      nodes.forEach(function (node) {
-        var re = /\b[Tt]ext\s+([ABC])\b/g, m, last = 0, frag = null, v = node.nodeValue;
-        while ((m = re.exec(v))) {
-          if (!frag) frag = document.createDocumentFragment();
-          frag.appendChild(document.createTextNode(v.slice(last, m.index)));
-          var a = document.createElement('a'); a.href = '#'; a.className = 'txtlink'; a.setAttribute('data-text', m[1].toUpperCase()); a.textContent = m[0]; frag.appendChild(a);
-          last = m.index + m[0].length;
-        }
-        if (frag) { frag.appendChild(document.createTextNode(v.slice(last))); node.parentNode.replaceChild(frag, node); }
-      });
-    });
+    var snap = CTX.sub[CTX.round] || CTX.sub.sub2 || CTX.sub.sub1;
+    hubTexts.link(document.getElementById('mkWork'), '.mloc .readonly', CTX.a, CTX.key, hubTexts.chosen(snap), 'Read the text they chose');
   }
-  document.addEventListener('click', function (e) {
-    var t = e.target; if (!t || !t.closest) return;
-    var l = t.closest('a.txtlink'); if (l) { e.preventDefault(); openTexts(l.getAttribute('data-text')); return; }
-    if (t.closest('[data-readtexts]')) { openTexts(''); return; }
-    var tab = t.closest('[data-txtab]'); if (tab) { openTexts(tab.getAttribute('data-txtab')); return; }
-    var w = $('mkTexts'); if (w && !w.hidden && !t.closest('.mk-texts')) closeTexts();
-  });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeTexts(); });
 
   /* ---- THE FRONT PAGE THAT STAYS WITH YOU (Ramy, 18 Oct 2026: "as you scroll
      down, the criteria stays with you... the front page is like still there").
@@ -658,6 +617,17 @@
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && DROP != null) { DROP = null; paintDock(); } });
 
   /* ---- the help, in collapsibles ("it just needs to disappear eventually") */
+  /* How Lite marks (Ramy, 18 Oct 2026: "a small section in how to mark this
+     assignment... the clicks... the mechanics of the marking online"). */
+  var HOWTO = ['Marking in Lite',
+    '- Click a word in the work to select it. Click it again quickly for the line or paragraph, and a third time for the whole section. Click outside to clear it. You can also drag over any stretch.',
+    '- A bar appears over the selection. Comment writes a note in the margin. Good adds a tick; press it again for another, and the minus takes one away.',
+    '- Tie to criterion links the selection to a criterion. It shows under that criterion on the front page, and in the trainee\u2019s feedback.',
+    '- In a comment, choose Good, To work on, or neither. Ctrl or \u2318 and Enter saves it.',
+    '- Click marked words to find their comment in the margin. Each comment has Edit and Delete.',
+    '- Text A, B or C in the writing, and Text chosen, open the texts. Read the texts opens all of them.',
+    '- On the front page, M marks a criterion met and N not met, and J and K move between criteria.',
+    '- The Criteria tab, bottom right, keeps the criteria with you as you read.'].join('\n');
   function helpHidden() { try { return localStorage.getItem('mk:hideHelp') === '1'; } catch (e) { return false; } }
   function paintHelp() {
     var host = $('mkHelp'); if (!host) return;
@@ -667,7 +637,7 @@
     var g = CTX.guide, parts = [];
     var ch = checksHTML(); if (ch) parts.push(ch);
     var fs = firstSectionBox(); if (fs) parts.push(fs);
-    var gen = [g && g.general, CTX.a.trap ? 'The hidden word\n' + hubTrapNote(CTX.a.trap) : ''].filter(Boolean).join('\n\n');
+    var gen = [g && g.general, CTX.a.trap ? 'The hidden word\n' + hubTrapNote(CTX.a.trap) : '', HOWTO].filter(Boolean).join('\n\n');
     if (gen) parts.push(gbox('how', 'How to mark this assignment', hubGuidanceHTML(gen), 'mk-hbox'));
     if (g && g.sections) parts.push(gbox('bysec', 'Section by section', hubGuidanceHTML(g.sections), 'mk-hbox'));
     var hasTexts = textsOf().length > 0;
@@ -785,13 +755,21 @@
       '.dk-prog{font-size:0.78rem; color:var(--grey); white-space:nowrap;}',
       '.dk-hide{background:none; border:none; font:600 0.8rem Karla,sans-serif; color:var(--grey); text-decoration:underline; text-decoration-color:var(--sand-line); text-underline-offset:3px; cursor:pointer; padding:4px 0;} .dk-hide:hover{background:none !important; box-shadow:none !important;}',
       /* THE COMMENT BOX, TIDIED (Ramy, 18 Oct 2026: "make the comment box itself a little bigger and tidy up the rest") */
-      '.mk-editor{width:min(600px, calc(100vw - 24px)); padding:20px 24px 18px; border-radius:16px; border-top:4px solid var(--as, var(--teal)); max-height:calc(100vh - 32px); overflow:auto;}',
+      /* THE COMMENT BOX (Ramy, 18 Oct 2026: "the comment box is now too big... go back to the size we had before, but the part where we write will be bigger... the pills need to be designed better... maybe on one line"). */
+      '.mk-editor{width:min(460px, calc(100vw - 24px)); padding:16px 16px 14px; border-radius:14px; border-top:4px solid var(--as, var(--teal)); max-height:calc(100vh - 32px); overflow:auto;}',
       '.me-h{font:700 0.72rem Karla,sans-serif; letter-spacing:.09em; text-transform:uppercase; color:var(--grey); margin:0 0 8px;}',
-      '.mk-editor .me-q{margin:0 0 14px; padding:9px 14px; border-left:3px solid var(--tone-note); background:var(--sand); border-radius:0 8px 8px 0; font-size:0.9rem; line-height:1.5; font-style:italic; color:var(--ink-warm); max-height:5.4em; overflow:auto;}',
-      '.mk-editor textarea{min-height:150px; font-size:1rem; line-height:1.6; padding:13px 15px; border-radius:10px; border:1.5px solid var(--row-line); background:var(--field);} .mk-editor textarea:focus{outline:none; border-color:var(--as, var(--teal)); box-shadow:0 0 0 3px color-mix(in oklab, var(--as, var(--teal)) 14%, transparent);}',
-      '.me-tone{margin:14px 0 0;} .me-chips{margin:14px 0 0;}',
-      '.me-acts{align-items:center; margin-top:18px;} .me-hint{margin-right:auto; font-size:0.74rem; color:var(--grey);}',
-      '@media (max-width:560px){ .mk-editor{padding:16px 16px 14px;} .mk-editor textarea{min-height:130px;} .me-hint{display:none;} }',
+      '.mk-editor .me-q{margin:0 0 10px; padding:7px 12px; border-left:3px solid var(--tone-note); background:var(--sand); border-radius:0 8px 8px 0; font-size:0.86rem; line-height:1.45; font-style:italic; color:var(--ink-warm); max-height:4.4em; overflow:auto;}',
+      '.mk-editor textarea{min-height:200px; font-size:1rem; line-height:1.6; padding:12px 14px; border-radius:10px; border:1.5px solid var(--row-line); background:var(--field);} .mk-editor textarea:focus{outline:none; border-color:var(--as, var(--teal)); box-shadow:0 0 0 3px color-mix(in oklab, var(--as, var(--teal)) 14%, transparent);}',
+      '.me-chips{margin:10px 0 0;}',
+      '.me-foot{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:12px;}',
+      '.me-foot .me-tone{display:inline-flex; gap:0; margin:0; padding:3px; border-radius:20px; background:var(--sand); border:1px solid var(--sand-line);}',
+      '.me-foot .me-tone button{display:inline-flex; align-items:center; gap:7px; min-height:32px; padding:5px 13px; border:1.5px solid transparent; border-radius:17px; background:transparent; color:var(--grey); font:700 0.8rem Karla,sans-serif; cursor:pointer;}',
+      '.me-foot .me-tone button i{width:8px; height:8px; border-radius:50%; background:var(--sand-line);} .me-foot .tn-good i{background:color-mix(in oklab, var(--tone-good) 45%, transparent);} .me-foot .tn-fix i{background:color-mix(in oklab, var(--tone-fix) 45%, transparent);}',
+      '.me-foot .me-tone .tn-good.on{background:var(--paper); border-color:var(--tone-good); color:var(--tone-good);} .me-foot .me-tone .tn-good.on i{background:var(--tone-good);}',
+      '.me-foot .me-tone .tn-fix.on{background:var(--paper); border-color:var(--tone-fix); color:var(--tone-fix);} .me-foot .me-tone .tn-fix.on i{background:var(--tone-fix);}',
+      '.me-foot .me-tone button:not(.on):hover{background:transparent !important; border-color:var(--sand-line) !important; box-shadow:none !important;} .me-foot .me-tone button.on:hover{background:var(--paper) !important; box-shadow:none !important;}',
+      '.me-foot .me-acts{margin:0 0 0 auto; gap:8px;} .me-foot .me-acts button{padding:8px 16px; min-height:38px;}',
+      '@media (max-width:560px){ .mk-editor textarea{min-height:160px;} }',
       /* HOVER ON THESE BUTTONS: ONLY THE BORDER MOVES (Ramy, 18 Oct 2026: "the hover is too much, like a flashlight... only the borders should move and not the whole thing"). The shared button hover washes a fill out; each of these keeps its own fill. */
       '.me-acts .me-save:hover{background:var(--teal) !important; color:var(--paper) !important; border-color:var(--teal-deep) !important; box-shadow:0 0 0 1px var(--teal-deep) !important;}',
       '.me-acts .me-cancel:hover, .dr-h button:hover, .mkp-top button:hover{background:var(--paper) !important; border-color:var(--teal) !important; box-shadow:none !important;}',
@@ -815,14 +793,7 @@
       '.mk-nohelp .mk-tiplink{display:none;}',
       '.mk-tied svg.hub-tick, .dr-ev svg.hub-tick{width:1em; height:1em; vertical-align:-0.18em; margin:0 2px 0 0; filter:none;}',
       '@media (max-width:1079px){ .mk-dock{top:auto; bottom:0; padding:8px 10px calc(8px + env(safe-area-inset-bottom)); border-bottom:none; border-top:1px solid var(--sand-line); box-shadow:0 -6px 20px oklch(25% 0.02 60 / .12);} .dk-up{display:none;} .dk-prog{font-size:0.72rem;} .dk-chip{padding:5px 10px;} }',
-      '.hb-acts{display:flex; gap:18px;} a.txtlink{color:var(--as, var(--teal)); font-weight:700; text-decoration:underline; text-decoration-color:color-mix(in oklab, var(--as, var(--teal)) 40%, transparent); text-underline-offset:3px; cursor:pointer;} a.txtlink:hover{text-decoration-color:var(--as, var(--teal)); background:none !important;}',
-      '.hl a.txtlink{font:inherit; letter-spacing:inherit; text-transform:inherit;}',
-      '.mk-texts-wrap{position:fixed; inset:0; z-index:72; background:oklch(20% 0.02 60 / .4); display:flex; align-items:flex-start; justify-content:center; padding:5vh 16px; overflow:auto;}',
-      '.mk-texts{width:min(780px,100%); background:var(--paper); border-radius:16px; border-top:4px solid var(--as, var(--teal)); box-shadow:0 24px 70px oklch(20% 0.02 60 / .35); padding:16px 24px 22px;}',
-      '.tx-tabs{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 12px;} .tx-tab{display:flex; align-items:center; gap:8px; font:700 0.82rem Karla,sans-serif; border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink); border-radius:16px; padding:7px 14px; cursor:pointer;} .tx-tab span{font-size:0.7rem; font-weight:700; color:var(--as, var(--teal)); text-transform:uppercase; letter-spacing:.06em;}',
-      '.tx-tab.on{border-color:var(--as, var(--teal)); box-shadow:inset 0 0 0 1px var(--as, var(--teal));} .tx-tab:not(.on):hover{background:var(--paper) !important; border-color:var(--as, var(--teal)) !important; box-shadow:none !important;} .tx-tab.on:hover{box-shadow:inset 0 0 0 1px var(--as, var(--teal)) !important; background:var(--paper) !important;}',
-      '.mk-texts h3{font-family:Newsreader,Georgia,serif; font-size:1.3rem; margin:6px 0 10px; color:var(--as, var(--teal));} .tx-body{font-size:1rem; line-height:1.75; max-width:70ch;}',
-      '@media print{ .mk-texts-wrap{display:none !important;} }',
+      '.hb-acts{display:flex; gap:18px;}',
       '.mk-sbox{margin:2px 0 10px;} .mk-sbox > summary{font-size:0.8rem;}',
       '@media print{ .mk-dock-tab,.mk-selbar,.mk-editor,.mk-tip,.mk-dock,.mk-drop,.mk-prev-wrap,.mk-checks,.mk-keys,.mk-help{display:none !important;} }'
     ].join('\n');

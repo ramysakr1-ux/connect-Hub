@@ -1963,3 +1963,75 @@ window.hubHeadHTML = function (text, heads) {
     '.hdl:first-of-type{margin-top:4px;}';
   (document.head || document.documentElement).appendChild(st);
 })();
+
+/* ---- THE TEXTS TO READ (Ramy, 18 Oct 2026: "when the trainee says I chose text B,
+   I should be able to click on Text B and see what it is... the text chosen should
+   be a link"; then "add the links on the trainee's page too"). An assignment
+   carries its texts as reading sections ("Text A — ...", "Text B — ...");
+   every mention of one in the writing, and the "Text chosen" headline, opens it
+   in a reader with all three a tab away. Used by the marking page and the
+   trainee's own page; the look is in hub-house.css. */
+(function(){
+  var CUR = null; /* {a, key, chosen} of the page that linked last */
+  function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function of(a) {
+    return ((a && a.sections) || []).map(function (sec) {
+      var m = String(sec.label || '').match(/^\s*Text\s+([A-C])\b[\s—–:\-]*(.*)$/i);
+      return m && window.hubIsReference && hubIsReference(sec) ? { id: m[1].toUpperCase(), title: m[2].trim(), body: String(sec.body || '') } : null;
+    }).filter(Boolean);
+  }
+  function chosen(snap) {
+    if (!snap) return '';
+    var vals = [];
+    if (snap.text) Object.keys(snap.text).sort(function (x, y) { return x - y; }).forEach(function (k) { vals.push(snap.text[k]); });
+    if (snap.fields) Object.keys(snap.fields).sort().forEach(function (k) { vals.push(snap.fields[k]); });
+    for (var i = 0; i < vals.length; i++) { var m = String(vals[i] || '').match(/\b[Tt]ext\s+([ABC])\b/); if (m) return m[1].toUpperCase(); }
+    return '';
+  }
+  function open(letter) {
+    if (!CUR) return;
+    var texts = of(CUR.a); if (!texts.length) return;
+    var ch = CUR.chosen, cur = texts.filter(function (x) { return x.id === letter; })[0] || texts.filter(function (x) { return x.id === ch; })[0] || texts[0];
+    var wrap = document.getElementById('hubTexts');
+    if (!wrap) { wrap = document.createElement('div'); wrap.id = 'hubTexts'; document.body.appendChild(wrap); }
+    wrap.className = 'tx-wrap as-' + CUR.key;
+    var body = esc(cur.body).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+    wrap.innerHTML = '<div class="tx-sheet" role="dialog" aria-label="The texts"><div class="tx-tabs">' + texts.map(function (x) { return '<button type="button" class="tx-tab' + (x.id === cur.id ? ' on' : '') + '" data-txtab="' + x.id + '"><b>Text ' + x.id + '</b>' + (x.id === ch ? '<span>chosen</span>' : '') + '</button>'; }).join('') + '</div>' +
+      '<h3>Text ' + cur.id + (cur.title ? ' · ' + esc(cur.title) : '') + '</h3><div class="tx-body">' + body + '</div></div>';
+    wrap.hidden = false;
+  }
+  function close() { var w = document.getElementById('hubTexts'); if (w) w.hidden = true; }
+  /* root: where the writing is; sel: its read-only blocks inside root */
+  function link(root, sel, a, key, ch, title) {
+    CUR = { a: a, key: key, chosen: ch };
+    if (!root || !of(a).length) return;
+    [].forEach.call(root.querySelectorAll('.hl'), function (h) {
+      if (!/^\s*text chosen/i.test(h.textContent) || h.querySelector('a') || !ch) return;
+      var l = document.createElement('a'); l.href = '#'; l.className = 'txtlink'; l.setAttribute('data-text', ch); l.title = title || 'Read the text';
+      while (h.firstChild) l.appendChild(h.firstChild); h.appendChild(l);
+    });
+    [].forEach.call(root.querySelectorAll(sel), function (box) {
+      var w = document.createTreeWalker(box, NodeFilter.SHOW_TEXT, null), nodes = [], n;
+      while ((n = w.nextNode())) if (!(n.parentNode.closest && n.parentNode.closest('a, .hl'))) nodes.push(n);
+      nodes.forEach(function (node) {
+        var re = /\b[Tt]ext\s+([ABC])\b/g, m, last = 0, frag = null, v = node.nodeValue;
+        while ((m = re.exec(v))) {
+          if (!frag) frag = document.createDocumentFragment();
+          frag.appendChild(document.createTextNode(v.slice(last, m.index)));
+          var l = document.createElement('a'); l.href = '#'; l.className = 'txtlink'; l.setAttribute('data-text', m[1].toUpperCase()); l.textContent = m[0]; frag.appendChild(l);
+          last = m.index + m[0].length;
+        }
+        if (frag) { frag.appendChild(document.createTextNode(v.slice(last))); node.parentNode.replaceChild(frag, node); }
+      });
+    });
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target; if (!t || !t.closest) return;
+    var l = t.closest('a.txtlink'); if (l) { e.preventDefault(); open(l.getAttribute('data-text')); return; }
+    if (t.closest('[data-readtexts]')) { open(''); return; }
+    var tab = t.closest('[data-txtab]'); if (tab) { open(tab.getAttribute('data-txtab')); return; }
+    var w = document.getElementById('hubTexts'); if (w && !w.hidden && !t.closest('.tx-sheet')) close();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  window.hubTexts = { of: of, chosen: chosen, link: link, open: open, close: close };
+})();
