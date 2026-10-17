@@ -132,7 +132,7 @@
   function critShort(i) { var c = (CTX.a.criteria || [])[i]; var t = c ? (c.text || c) : ''; return (+i + 1) + '. ' + (t.length > 60 ? t.slice(0, 58) + '…' : t); }
 
   /* Highlight the first match of the quote inside one block of text. */
-  function highlight(box, quote, id) {
+  function highlight(box, quote, id, cls) {
     if (!quote) return false;
     var walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT, null), nodes = [], n, all = '';
     while ((n = walker.nextNode())) { nodes.push([n, all.length]); all += n.nodeValue; }
@@ -143,7 +143,7 @@
       if (stop <= at || start >= end) return;
       var a = Math.max(0, at - start), b = Math.min(node.nodeValue.length, end - start);
       var mid = node.splitText(a); mid.splitText(b - a);
-      var m = document.createElement('mark'); m.className = 'mc'; m.dataset.mc = id;
+      var m = document.createElement('mark'); m.className = cls || 'mc'; m.dataset.mc = id;
       mid.parentNode.insertBefore(m, mid); m.appendChild(mid);
     });
     return true;
@@ -155,6 +155,10 @@
       var items = list(round).filter(function (c) { return c.loc === here; });
       var gut = loc.querySelector('.mgut'); if (!gut) return;
       var box = loc.querySelector('.readonly');
+      items.filter(function (c) { return c.tick; }).forEach(function (c) {
+        if (highlight(box, c.quote, c.id, 'mc mc-tick')) { var ms = box.querySelectorAll('mark[data-mc="' + c.id + '"]'); var last = ms[ms.length - 1]; if (last) last.insertAdjacentHTML('afterend', '<span class="tickmark" role="img" aria-label="ticked">' + (window.hubTickSVG ? hubTickSVG(c.id === JUST_TICKED ? 'draw' : '') : '\u2713') + '</span>'); }
+      });
+      items = items.filter(function (c) { return !c.tick; });
       gut.innerHTML = items.map(function (c) {
         highlight(box, c.quote, c.id);
         return '<div class="mcard' + (c.role === 'second' ? ' by-second' : '') + '" data-mcard="' + c.id + '">' +
@@ -169,7 +173,7 @@
     /* under each criterion: the margin comments tied to it */
     [].forEach.call(document.querySelectorAll('[data-linked]'), function (el) {
       var i = el.getAttribute('data-linked');
-      var tied = list(CTX.round).filter(function (c) { return String(c.crit) === String(i); });
+      var tied = list(CTX.round).filter(function (c) { return !c.tick && String(c.crit) === String(i); });
       el.innerHTML = tied.length ? '<div class="mk-tied"><span>From your margin comments</span>' + tied.map(function (c) {
         return '<button type="button" data-goto="' + c.id + '">“' + esc(c.quote.length > 50 ? c.quote.slice(0, 48) + '…' : c.quote) + '”: ' + esc(c.text) + '</button>';
       }).join('') + '</div>' : '';
@@ -178,7 +182,7 @@
   }
 
   /* the bar that appears over a selection */
-  var SEL = null;
+  var SEL = null, JUST_TICKED = null;
   function bar() { var b = $('mkSelBar'); if (!b) { b = document.createElement('div'); b.id = 'mkSelBar'; b.className = 'mk-selbar'; b.hidden = true; document.body.appendChild(b); } return b; }
   function onSelect() {
     var s = window.getSelection(), b = bar();
@@ -203,7 +207,7 @@
        the same... copy-paste it from each other"). The bar only opens the
        comment box; the guidance stays in the reading card as a reminder. */
     var chips = [];
-    b.innerHTML = '<button type="button" class="sb-main" data-sb="">Comment</button>' + (chips.length ? '<span class="sb-lab">or a quick one:</span>' : '') + chips.map(function (c, k) { return '<button type="button"' + (c.good ? ' class="sb-good"' : '') + ' data-sb="' + k + '" title="' + esc(c.text) + '">' + esc(c.label) + '</button>'; }).join('');
+    b.innerHTML = '<button type="button" class="sb-main" data-sb="">Comment</button><button type="button" class="sb-good" data-tick>' + (window.hubTickSVG ? hubTickSVG() : '\u2713') + ' Good</button>' + (chips.length ? '<span class="sb-lab">or a quick one:</span>' : '') + chips.map(function (c, k) { return '<button type="button"' + (c.good ? ' class="sb-good"' : '') + ' data-sb="' + k + '" title="' + esc(c.text) + '">' + esc(c.label) + '</button>'; }).join('');
     b._chips = chips;
     b.hidden = false;
     var rr = r.getBoundingClientRect();
@@ -240,6 +244,15 @@
   document.addEventListener('touchend', function () { setTimeout(onSelect, 350); });
   document.addEventListener('click', function (e) {
     var t = e.target.closest ? e.target : null; if (!t || !CTX) return;
+    var tk = t.closest('[data-tick]');
+    if (tk && SEL) { bar().hidden = true; var tid = 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); JUST_TICKED = tid; list(writeRound()).push({ id: tid, loc: SEL.loc.getAttribute('data-loc'), quote: SEL.quote, text: '', tick: true, by: CTX.me, role: secondMode() ? 'second' : 'first', at: new Date().toISOString() }); window.getSelection().removeAllRanges(); CTX.save(); CTX.rerender(); return; }
+    var mt = t.closest('mark.mc-tick');
+    if (mt) {
+      var tc = list(writeRound()).filter(function (x) { return x.id === mt.dataset.mc; })[0];
+      var locEl = mt.closest('.mloc');
+      if (tc && locEl && canWrite(locEl.getAttribute('data-round')) && mine(tc)) { (window.confirmModal ? confirmModal('Take this tick off?', 'Take it off') : Promise.resolve(confirm('Take this tick off?'))).then(function (ok) { if (ok) remove(tc.id); }); }
+      return;
+    }
     var sb = t.closest('[data-sb]');
     if (sb && SEL) { var k = sb.getAttribute('data-sb'); var b = bar(); b.hidden = true; editor({ loc: SEL.loc.getAttribute('data-loc'), quote: SEL.quote, text: k === '' ? '' : b._chips[+k].text }); window.getSelection().removeAllRanges(); return; }
     var ed = t.closest('[data-medit]');
@@ -362,7 +375,7 @@
     var a = CTX.a, r = CTX.round, cr = a.criteria || [], m = CTX.sub.criteriaMarks[r] || [];
     var notes = cr.map(function (c, i) { var ta = document.querySelector('[data-crit-comment="' + i + '"]'); return ta ? ta.value.trim() : (((CTX.sub.criteriaComments || {})[r] || [])[i] || ''); });
     var gen = (($('comment') || {}).value || '').trim(), out = CTX.outcome();
-    var mc = list(r);
+    var mc = list(r).filter(function (c) { return !c.tick; }), ticks = list(r).filter(function (c) { return c.tick; });
     var ov = $('mkPreview'); if (!ov) { ov = document.createElement('div'); ov.id = 'mkPreview'; ov.className = 'mk-prev-wrap'; document.body.appendChild(ov); }
     ov.className = 'mk-prev-wrap as-' + CTX.key;
     ov.innerHTML = '<div class="mk-prev" role="dialog" aria-label="What the trainee will see">' +
@@ -370,6 +383,7 @@
       '<div class="mkp-band"><p>' + esc(a.title) + '</p><h3>' + (out ? esc(out) : 'Not decided yet: mark every criterion first') + '</h3></div>' +
       (gen ? '<div class="mkp-gen">' + esc(gen).replace(/\n/g, '<br>') + '</div>' : '') +
       '<ul class="mkp-crit">' + cr.map(function (c, i) { return '<li><span class="crit-toggle ' + (m[i] === true ? 'met' : m[i] === false ? 'not' : '') + '" style="cursor:default">' + (m[i] === true ? 'Met' : m[i] === false ? 'Not met' : 'Not marked') + '</span><div><b>' + esc(c.text || c) + '</b>' + (notes[i] ? '<p>' + esc(notes[i]) + '</p>' : '') + '</div></li>'; }).join('') + '</ul>' +
+      (ticks.length ? '<h4>Ticked</h4><ul class="mkp-mc">' + ticks.map(function (c) { return '<li><q class="tk">' + esc(c.quote) + '</q>' + (window.hubTickSVG ? hubTickSVG() : ' \u2713') + '</li>'; }).join('') + '</ul>' : '') +
       (mc.length ? '<h4>Comments on her text</h4><ul class="mkp-mc">' + mc.map(function (c) { return '<li><q>' + esc(c.quote) + '</q><p>' + esc(c.text) + '</p></li>'; }).join('') + '</ul>' : '') +
       '</div>';
     ov.hidden = false;
@@ -449,6 +463,9 @@
       '.mk-selbar button.sb-main{background:var(--gold); color:var(--ink); font-weight:700;}',
       '.mk-selbar .sb-lab{flex-basis:100%; font:600 0.72rem Karla,sans-serif; color:oklch(80% 0.02 70); padding:2px 2px 0;}',
       '.mk-selbar button.sb-good{background:oklch(38% 0.06 160); color:var(--paper);}',
+      'mark.mc-tick{background:color-mix(in oklab, oklch(70% 0.1 158) 22%, transparent); border-bottom:2px solid oklch(46% 0.1 158);} .tickmark{white-space:nowrap;}',
+      '.mk-selbar .hub-tick{width:1.05em; height:1.05em; margin:0 3px 0 0; filter:none;}',
+      '.mkp-mc q.tk{background:color-mix(in oklab, var(--mark-met-line) 30%, transparent);}',
       '.mk-selbar button:hover{background:oklch(40% 0.03 65) !important; box-shadow:none !important;} .mk-selbar button.sb-main:hover{background:var(--gold-lifted) !important;}',
       '.mk-editor{position:fixed; z-index:61; left:50%; top:50%; transform:translate(-50%,-50%); width:min(460px, calc(100vw - 32px)); background:var(--paper); border:1px solid var(--sand-line); border-top:3px solid var(--gold); border-radius:var(--r-card); padding:16px; box-shadow:0 18px 50px oklch(20% 0.02 60 / .28);}',
       '.me-q{font-size:0.84rem; color:var(--grey); font-style:italic; margin:0 0 10px; line-height:1.45;}',

@@ -1146,12 +1146,12 @@ if (!window.HubStore) { if (document.readyState === 'loading') document.addEvent
        was about, in the trainee's words, then the comment. Empty ones never
        reach the record. */
     var mg = sub.margin || {};
-    var mList = function (r) { return (mg[r] || []).filter(function (c) { return c && c.text; }); };
+    var mList = function (r) { return (mg[r] || []).filter(function (c) { return c && (c.text || (c.tick && c.quote)); }); };
     if (mList('sub1').length || mList('sub2').length) {
       html += '<div class="section"><h2>Comments on the text</h2>' + ['sub1', 'sub2'].map(function (r) {
         var l = mList(r); if (!l.length) return '';
         return (sub.sub2 ? '<div class="roundlabel">' + (r === 'sub1' ? 'On the first submission' : 'On the resubmission') + '</div>' : '') +
-          l.map(function (c) { return '<div class="comment">' + (c.quote ? '<em>\u201C' + esc(c.quote) + '\u201D</em><br>' : '') + nl2br(c.text) + (c.by ? ' <span style="color:#777;">(' + esc(c.by) + (c.role === 'second' ? ', second marker' : '') + ')</span>' : '') + '</div>'; }).join('');
+          l.map(function (c) { if (c.tick) return '<div class="comment">\u2713 <em>\u201C' + esc(c.quote) + '\u201D</em>' + (c.by ? ' <span style="color:#777;">(' + esc(c.by) + ')</span>' : '') + '</div>'; return '<div class="comment">' + (c.quote ? '<em>\u201C' + esc(c.quote) + '\u201D</em><br>' : '') + nl2br(c.text) + (c.by ? ' <span style="color:#777;">(' + esc(c.by) + (c.role === 'second' ? ', second marker' : '') + ')</span>' : '') + '</div>'; }).join('');
       }).join('') + '</div>';
     }
     html += '<div class="section"><h2>Tutor\u2019s general comments</h2>'
@@ -1770,7 +1770,7 @@ window.hubPaintMargin = function (root, margin) {
   if (!root || !margin) return;
   var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
   [].forEach.call(root.querySelectorAll('.tmloc[data-loc]'), function (loc) {
-    var items = (margin[loc.getAttribute('data-round')] || []).filter(function (c) { return c.loc === loc.getAttribute('data-loc') && c.text; });
+    var items = (margin[loc.getAttribute('data-round')] || []).filter(function (c) { return c.loc === loc.getAttribute('data-loc') && (c.text || c.tick); });
     if (!items.length) return;
     var box = loc.querySelector('.readonly'), gut = loc.querySelector('.tmgut');
     items.forEach(function (c, n) {
@@ -1780,16 +1780,39 @@ window.hubPaintMargin = function (root, margin) {
       if (at >= 0) { var end = at + c.quote.length;
         nodes.forEach(function (pr) { var node = pr[0], st = pr[1], sp = st + node.nodeValue.length; if (sp <= at || st >= end) return;
           var x = Math.max(0, at - st), y = Math.min(node.nodeValue.length, end - st), mid = node.splitText(x); mid.splitText(y - x);
-          var mk = document.createElement('mark'); mk.className = 'tmc'; mk.title = 'Your tutor commented on this'; mid.parentNode.insertBefore(mk, mid); mk.appendChild(mid); }); }
+          var mk = document.createElement('mark'); mk.className = c.tick ? 'tmc tmc-tick' : 'tmc'; mk.title = c.tick ? 'Your tutor ticked this' : 'Your tutor commented on this'; mk.dataset.tmc = c.id || n; mid.parentNode.insertBefore(mk, mid); mk.appendChild(mid); });
+        if (c.tick) { var ms = box.querySelectorAll('mark[data-tmc="' + (c.id || n) + '"]'), last = ms[ms.length - 1]; if (last) last.insertAdjacentHTML('afterend', '<span class="tmc-mark" role="img" aria-label="ticked by your tutor">' + (window.hubTickSVG ? hubTickSVG('draw') : '\u2713') + '</span>'); } }
+      if (c.tick) return;
       gut.insertAdjacentHTML('beforeend', '<div class="tmcard"><span>Your tutor' + (c.quote ? ', on “' + esc(c.quote.length > 60 ? c.quote.slice(0, 58) + '…' : c.quote) + '”' : '') + '</span><p>' + esc(c.text) + '</p></div>');
     });
   });
   if (!document.getElementById('hub-tmc-css')) {
     var st = document.createElement('style'); st.id = 'hub-tmc-css';
-    st.textContent = 'mark.tmc{background:color-mix(in oklab, var(--gold-lifted) 34%, transparent); color:inherit; border-bottom:2px solid var(--gold); border-radius:2px; padding:0 1px;}' +
+    st.textContent = 'mark.tmc-tick{background:color-mix(in oklab, oklch(70% 0.1 158) 22%, transparent) !important; border-bottom:2px solid oklch(46% 0.1 158) !important;} .tmc-mark{white-space:nowrap;}' + 'mark.tmc{background:color-mix(in oklab, var(--gold-lifted) 34%, transparent); color:inherit; border-bottom:2px solid var(--gold); border-radius:2px; padding:0 1px;}' +
       '.tmgut:empty{display:none;} .tmgut{display:flex; flex-direction:column; gap:8px; margin:6px 0 10px;}' +
       '.tmcard{background:var(--paper); border:1px solid var(--amber-edge); border-left:3px solid var(--gold); border-radius:10px; padding:8px 11px; font-size:0.86rem; line-height:1.5;}' +
       '.tmcard span{display:block; font-size:0.72rem; font-weight:700; color:var(--gold-deep); text-transform:uppercase; letter-spacing:.05em;} .tmcard p{margin:3px 0 0;}';
     document.head.appendChild(st);
   }
 };
+
+/* THE TICK (17 Oct 2026). Ramy: "instead of typing good... a nice tick...
+   make it like worth it." A green badge with a hand-drawn tick that draws
+   itself in, the same on the tutor's marking page and the trainee's page.
+   Still under reduced motion: it simply appears. */
+window.hubTickSVG = function(cls){
+  return '<svg class="hub-tick' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="11"></circle><path d="M6.4 12.9 C7.7 14.1 9 15.4 10.3 16.8 C12.7 13.5 15.1 10.4 18 7.3"></path></svg>';
+};
+(function(){
+  if (document.getElementById('hub-tick-css')) return;
+  var st = document.createElement('style'); st.id = 'hub-tick-css';
+  st.textContent =
+    '.hub-tick{display:inline-block; width:1.15em; height:1.15em; vertical-align:-0.22em; margin:0 1px 0 4px; overflow:visible; filter:drop-shadow(0 1px 1.5px oklch(30% 0.05 160 / .28));}' +
+    '.hub-tick circle{fill:oklch(46% 0.1 158); stroke:oklch(98% 0.02 158 / .9); stroke-width:1.4;}' +
+    '.hub-tick path{fill:none; stroke:#fff; stroke-width:2.7; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:22; stroke-dashoffset:0;}' +
+    '.hub-tick.draw{animation:hubTickPop .42s cubic-bezier(.2,1.5,.4,1) both;} .hub-tick.draw path{stroke-dashoffset:22; animation:hubTickDraw .5s ease-out .18s forwards;}' +
+    '@keyframes hubTickPop{from{transform:scale(.4); opacity:0;} to{transform:scale(1); opacity:1;}} @keyframes hubTickDraw{to{stroke-dashoffset:0;}}' +
+    '@media (prefers-reduced-motion: reduce){ .hub-tick.draw, .hub-tick.draw path{animation:none; stroke-dashoffset:0;} }' +
+    '@media print{ .hub-tick{filter:none;} }';
+  (document.head || document.documentElement).appendChild(st);
+})();
