@@ -25,7 +25,7 @@
 <title>Connect Lite — Assessor pack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610172027">
+<link rel="stylesheet" href="hub-tokens.css?v=202610172032">
 <style>
   :root{
     /* the control fill, for the shared confirm modal's Cancel button */
@@ -266,7 +266,7 @@
   @media(max-width:560px){ .ap9{padding:22px 18px 18px; border-radius:12px;} .ap9-stats div{min-width:0; flex:1 1 120px;} }
   @media print{ .ap9{display:none !important;} .panel.ap9-obs{border-left:0; background:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610172027">
+<link rel="stylesheet" href="hub-house.css?v=202610172032">
 </head>
 <body data-signout="float">
 <div class="board">
@@ -296,15 +296,15 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202610172027"></script>
-<script src="hub-shared.js?v=202610172027"></script>
-<script src="assignment-defaults.js?v=202610172027"></script>
-<script src="hub-tracker.js?v=202610172027"></script>
-<script src="hub-rotation.js?v=202610172027"></script>
-<script src="hub-attendance.js?v=202610172027"></script>
-<script src="hub-store.js?v=202610172027"></script>
-<script src="hub-say.js?v=202610172027"></script>
-<script src="hub-sync.js?v=202610172027"></script>
+<script src="observation-defaults.js?v=202610172032"></script>
+<script src="hub-shared.js?v=202610172032"></script>
+<script src="assignment-defaults.js?v=202610172032"></script>
+<script src="hub-tracker.js?v=202610172032"></script>
+<script src="hub-rotation.js?v=202610172032"></script>
+<script src="hub-attendance.js?v=202610172032"></script>
+<script src="hub-store.js?v=202610172032"></script>
+<script src="hub-say.js?v=202610172032"></script>
+<script src="hub-sync.js?v=202610172032"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -328,6 +328,8 @@ const MODE = window.HubMode;
 const params = new URLSearchParams(location.search);
 const WHO = params.get('trainee') || '';
 const SETTINGS = rec('connect_course_settings') || {};
+/* The visit day: Course admin's date, or the timetable's Assessor tile when that is empty (hub-shared.js). */
+const VISIT = (window.hubVisitDate ? hubVisitDate(SETTINGS, rec('connect_timetable_v1')) : null) || (SETTINGS.visitDate ? { date: SETTINGS.visitDate, from: 'admin' } : null);
 /* The rooms an online course teaches in: the assessor joins the teaching
    practice from here on the day (Ramy, 28 Sep 2026). Print drops it. */
 /* What and when, beside the door. The assessment date is the centre's
@@ -337,7 +339,7 @@ const SETTINGS = rec('connect_course_settings') || {};
    Ramy, 1 Oct 2026: "next to the link should be some information about what
    and when." */
 function visitWhen(){
-  const d = SETTINGS.visitDate;
+  const d = VISIT && VISIT.date;
   if (!d) return '';
   const day = (function(){ try { return new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }); } catch (e) { return d; } })();
   let times = '';
@@ -456,7 +458,7 @@ function courseChecks(){
      possible, and not on the last day. Date-only strings compared as such;
      the midpoint is worked out in UTC so no clock moves a day. */
   (function(){
-    const v = String(SETTINGS.visitDate || '').slice(0, 10), s0 = String(SETTINGS.start || '').slice(0, 10), e0 = String(SETTINGS.end || '').slice(0, 10);
+    const v = String((VISIT && VISIT.date) || '').slice(0, 10), s0 = String(SETTINGS.start || '').slice(0, 10), e0 = String(SETTINGS.end || '').slice(0, 10);
     const cite = '13.5 — in the second half of the course, as near the end as possible, not the last day';
     if (!v) { say('should', 'Assessment date', 'unknown', 'not set yet', cite); return; }
     if (!s0 || !e0) { say('should', 'Assessment date', 'unknown', v + ', but the course dates are not set', cite); return; }

@@ -905,6 +905,27 @@ window.hubSlotsFor = function(tt, dateISO){
   var sh = window.hubShapeFor(T, dateISO);
   return sh ? sh.slots : (Array.isArray(T.slots) ? T.slots : []);
 };
+/* The assessment date, one fact in two places (Ramy, 17 Oct 2026: "having it
+   in the timetable is not enough. It has to be here as well."). Course admin's
+   date wins when it is typed; left empty, the day of the timetable's Assessor
+   tile stands in, so a course that only put the visit on the timetable still
+   tells the assessor when. Only days the tutors placed tiles on count -- a
+   course shape is a default, not a visit. */
+window.hubAssessorDayFromTimetable = function(tt){
+  var days = (tt && Array.isArray(tt.days)) ? tt.days : [], found = '';
+  days.forEach(function(d){
+    if (!d || !d.date || !Array.isArray(d.sessions)) return;
+    /* The raw tile kind: as slots, an Assessor tile becomes a general event. */
+    if (d.sessions.some(function(x){ return x && x.k === 'assessor'; }) && (!found || d.date < found)) found = String(d.date).slice(0, 10);
+  });
+  return found;
+};
+window.hubVisitDate = function(settings, tt){
+  var typed = String((settings && settings.visitDate) || '').slice(0, 10);
+  if (typed) return { date: typed, from: 'admin' };
+  var t = window.hubAssessorDayFromTimetable(tt);
+  return t ? { date: t, from: 'timetable' } : null;
+};
 /* Which weekdays the course meets on (0 = Sunday). Full-time is Monday to
    Friday, the default; a part-time course ticks only its own days. */
 window.hubMeets = function(tt){

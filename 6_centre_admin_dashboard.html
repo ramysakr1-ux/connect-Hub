@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610172027">
+<link rel="stylesheet" href="hub-tokens.css?v=202610172032">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -512,7 +512,7 @@
   .tcol-opt input:checked + span{box-shadow:0 0 0 2px var(--paper), 0 0 0 4px var(--teal);}
   .tcol-opt input:focus-visible + span{outline:2px solid var(--gold-lifted); outline-offset:3px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610172027">
+<link rel="stylesheet" href="hub-house.css?v=202610172032">
 </head>
 <body>
 <div class="board">
@@ -892,6 +892,7 @@
       <div>
         <label for="visitDate">Assessment date <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0;">in the second half, as near the end as you can, on a teaching practice day, and not the last day</span></label>
         <input type="date" id="visitDate">
+        <p class="hintline" id="visitFromTt" hidden></p>
       </div>
     </div>
     <div class="fields docs">
@@ -966,17 +967,17 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610172027"></script>
-<script src="hub-store.js?v=202610172027"></script>
-<script src="hub-say.js?v=202610172027"></script>
-<script src="agreement-defaults.js?v=202610172027"></script>
-<script src="observation-defaults.js?v=202610172027"></script>
-<script src="hub-shared.js?v=202610172027"></script>
-<script src="hub-rotation.js?v=202610172027"></script>
-<script src="hub-due.js?v=202610172027"></script>
-<script src="hub-sync.js?v=202610172027"></script>
-<script src="hub-hand.js?v=202610172027"></script>
-<script src="hub-ink.js?v=202610172027"></script>
+<script src="assignment-defaults.js?v=202610172032"></script>
+<script src="hub-store.js?v=202610172032"></script>
+<script src="hub-say.js?v=202610172032"></script>
+<script src="agreement-defaults.js?v=202610172032"></script>
+<script src="observation-defaults.js?v=202610172032"></script>
+<script src="hub-shared.js?v=202610172032"></script>
+<script src="hub-rotation.js?v=202610172032"></script>
+<script src="hub-due.js?v=202610172032"></script>
+<script src="hub-sync.js?v=202610172032"></script>
+<script src="hub-hand.js?v=202610172032"></script>
+<script src="hub-ink.js?v=202610172032"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1010,6 +1011,22 @@ document.getElementById('tabs').addEventListener('click', e=>{
 /* One tick per trainee, drawn from the roster the page already has. The
    ids are the roster's own, so the pack can link straight to a portfolio
    rather than matching on a typed name. */
+/* The timetable's Assessor tile and this date, said side by side (Ramy, 17 Oct
+   2026). Empty here: the pack uses the timetable's day, and this says so. Both
+   set and different: say so, so one gets fixed. The typed date always wins. */
+function paintVisitHint(){
+  const box = document.getElementById('visitFromTt'), input = document.getElementById('visitDate');
+  if (!box || !input || !window.hubAssessorDayFromTimetable) return;
+  let tt = null; try { tt = JSON.parse(localStorage.getItem('connect_timetable_v1')); } catch (e) {}
+  const fromTt = hubAssessorDayFromTimetable(tt), typed = input.value;
+  const nice = d => { try { return new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }); } catch (e) { return d; } };
+  box.style.color = '';
+  if (!fromTt) { box.hidden = true; return; }
+  if (!typed) { box.hidden = false; box.textContent = 'From the timetable: ' + nice(fromTt) + ', the day of the Assessor tile. The assessor\u2019s pack uses it until you set a date here.'; return; }
+  if (typed !== fromTt) { box.hidden = false; box.style.color = 'var(--brick)'; box.textContent = 'The timetable has the Assessor tile on ' + nice(fromTt) + ', but this date is ' + nice(typed) + '. The pack uses this date. Change one so they agree.'; return; }
+  box.hidden = true;
+}
+document.getElementById('visitDate') && document.getElementById('visitDate').addEventListener('input', paintVisitHint);
 function paintAssessorPicks(chosen){
   const box = document.getElementById('avPick');
   if (!box) return;
@@ -1251,6 +1268,7 @@ try {
     TUTOR_COLOURS = (cs.tutorColours && typeof cs.tutorColours === 'object') ? Object.assign({}, cs.tutorColours) : {}; renderTutorColours();
     if(cs.appianUrl) document.getElementById('appianUrl').value = cs.appianUrl;
     if(cs.visitDate) document.getElementById('visitDate').value = cs.visitDate;
+    paintVisitHint();
     paintAssessorPicks(cs.assessorVisit || []);
     if(cs.notificationRef) document.getElementById('notificationRef').value = cs.notificationRef;
     if(cs.courseNumber) document.getElementById('courseNumber').value = cs.courseNumber;
