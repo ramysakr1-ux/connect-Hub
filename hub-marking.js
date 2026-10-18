@@ -882,6 +882,11 @@
       '@media (max-width:1079px){ .mk-dock{top:auto; bottom:0; padding:8px 10px calc(8px + env(safe-area-inset-bottom)); border-bottom:none; border-top:1px solid var(--sand-line); box-shadow:0 -6px 20px oklch(25% 0.02 60 / .12);} .dk-up{display:none;} .dk-prog{font-size:0.72rem;} .dk-chip{padding:5px 10px;} }',
       '.hb-acts{display:flex; gap:18px;}',
       '.mk-sbox{margin:2px 0 10px;} .mk-sbox > summary{font-size:0.8rem;}',
+      /* While you read B, C, D are pills like While you read A (Ramy, 19 Oct 2026: "so it's consistent"). The pill sits on its own, the width of its words; open, it fills with the assignment's colour and the text opens full width under it. */
+      '.mk-sbox{background:none !important; border:none !important;} .mk-sbox > summary{display:inline-flex !important; align-items:center; min-height:44px; padding:8px 40px 8px 16px !important; border:1px solid var(--amber-edge) !important; border-radius:999px; background:var(--gold-wash); font-size:0.86rem !important; max-width:100%; box-sizing:border-box;}',
+      '.mk-sbox:not([open]) > summary:hover{border-color:var(--as, var(--teal)) !important;}',
+      '.mk-sbox[open] > summary{background:var(--as, var(--teal)); border-color:var(--as, var(--teal)) !important; color:var(--paper) !important;} .mk-sbox[open] > summary::after{border-color:var(--paper) !important;}',
+      '.mk-sbox > .gb{margin-top:8px; background:var(--gold-wash); border:1px solid var(--amber-edge); border-radius:var(--r-strip); padding:12px 20px 14px !important; column-width:340px; column-gap:36px; column-rule:1px solid color-mix(in oklab, var(--sand-line) 70%, transparent);} .mk-sbox > .gb li, .mk-sbox > .gb p{break-inside:avoid;} .mk-sbox > .gb h4{break-after:avoid;}',
       '@media print{ .mk-dock-tab,.mk-selbar,.mk-editor,.mk-tip,.mk-dock,.mk-drop,.mk-prev-wrap,.mk-checks,.mk-keys,.mk-help{display:none !important;} }'
     ].join('\n');
     (document.head || document.documentElement).appendChild(st);
