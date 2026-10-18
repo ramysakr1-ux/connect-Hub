@@ -680,6 +680,63 @@ case 'inbox': {
       return { courses: ownerList_() };
     }
 
+    /* v88 (19 Oct 2026): the pulse Connect's Command Center reads, with the
+       owner key held on Connect's server. One call, every course that is not
+       a demo or scratch, read-only: where it is, who is on it, what is waiting
+       for a tutor, when the assessor comes, when it last changed. Names of
+       trainees never leave here; counts do. */
+    case 'ownerPulse': {
+      requireOwner_(owner);
+      var pulse = [];
+      var pToday = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+      courses_().forEach(function (c) {
+        var set = courseRead_(c.id, 'settings') || {};
+        if (set.demoToday || /scratch/i.test(String(c.name || ''))) return;
+        if (/grades/i.test(String(set.courseName || '')) || /grades/i.test(String(c.name || ''))) return;
+        var ros = courseRead_(c.id, 'roster') || {};
+        var people = ros.trainees || {};
+        var heads = 0, waiting = 0, resubs = 0, passed = 0, failed = 0;
+        Object.keys(people).forEach(function (tok) {
+          var tr = people[tok] || {}; heads++;
+          var subs = tr.assignments || {};
+          Object.keys(subs).forEach(function (k) {
+            var sub = subs[k] || {}, st = String(sub.stage || '').toLowerCase(), state = String(sub.state || '').toUpperCase();
+            if (st === 'submitted' || st === 'resubmitted') waiting++;
+            if (st === 'resubmission_needed') resubs++;
+            if (state === 'PASS' || state === 'RES' || state === 'RESUBMITTED') passed++;
+            else if (state === 'FAIL') failed++;
+          });
+        });
+        var where = 'no dates';
+        if (set.start && set.end) {
+          if (pToday < set.start) where = 'to come';
+          else if (pToday > set.end) where = 'finished';
+          else {
+            var d0 = new Date(set.start + 'T00:00:00Z').getTime(), dN = new Date(pToday + 'T00:00:00Z').getTime();
+            where = 'week ' + (Math.floor((dN - d0) / (7 * 864e5)) + 1);
+          }
+        }
+        var nx = null;
+        try { nx = where.indexOf('week') === 0 ? nextClass_(c.id) : null; } catch (e) { nx = null; }
+        pulse.push({
+          id: c.id,
+          name: set.courseName || c.name || '',
+          centre: set.centreName || '',
+          centreNumber: set.centreNumber || '',
+          start: set.start || '', end: set.end || '',
+          where: where,
+          trainees: heads,
+          waitingToMark: waiting,
+          resubmissionsOut: resubs,
+          assignments: { passed: passed, failed: failed },
+          visit: set.visitDate || '',
+          nextTP: nx ? { day: nx.day, tp: nx.tp, from: nx.from } : null,
+          timeZone: set.timeZone || ''
+        });
+      });
+      return { asOf: new Date().toISOString(), courses: pulse };
+    }
+
     /* The owner's own key, rotated by a holder of the current one. Every copy
        in circulation dies at once -- including any left in a URL, a browser
        history or a transcript, which is why this exists (27 Sep 2026).
