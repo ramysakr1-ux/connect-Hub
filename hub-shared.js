@@ -1814,7 +1814,7 @@ window.hubPaintMargin = function (root, margin) {
     var st = document.createElement('style'); st.id = 'hub-tmc-css';
     st.textContent = 'mark.tmc{background:oklch(72% 0.035 250 / .2); color:inherit; border-bottom:2px solid oklch(52% 0.045 250); border-radius:2px; padding:0 1px;}' +
       'mark.tmc.tmc-good{background:oklch(70% 0.1 158 / .22); border-bottom-color:oklch(46% 0.1 158);} mark.tmc.tmc-fix{background:oklch(72% 0.11 40 / .24); border-bottom-color:oklch(52% 0.13 40);}' +
-      'mark.tmc-tick{background:color-mix(in oklab, oklch(70% 0.1 158) 22%, transparent) !important; border-bottom:2px solid oklch(46% 0.1 158) !important;} .tmc-mark{white-space:nowrap;}' +
+      /* the trainee sees only the ticks, not a highlight under them (Ramy, 18 Oct 2026: "the trainees should only see the ticks... highlight will either go for the good comments or the action points"); the tutor's marking page keeps the highlight */ 'mark.tmc-tick{background:none !important; border-bottom:0 !important; padding:0 !important;} .tmc-mark{white-space:nowrap;}' +
       '.tmgut:empty{display:none;} .tmgut{display:flex; flex-direction:column; gap:8px; margin:6px 0 10px;}' +
       '.tmcard{background:var(--paper); border:1px solid var(--sand-line); border-left:3px solid oklch(52% 0.045 250); border-radius:10px; padding:8px 11px; font-size:0.86rem; line-height:1.5;}' +
       '.tmcard.tone-good{border-left-color:oklch(46% 0.1 158);} .tmcard.tone-fix{border-left-color:oklch(52% 0.13 40);}' +
@@ -2036,20 +2036,22 @@ window.hubHeadHTML = function (text, heads) {
   window.hubTexts = { of: of, chosen: chosen, link: link, open: open, close: close };
 })();
 
-/* ---- A MIC INSIDE THE BOX (Ramy, 18 Oct 2026: "the voice to text option...
-   should that be inside the comment box?"). One small mic in the corner of a
-   writing box: press it and talk, press it again to stop. Spoken punctuation
-   as on the TP feedback page ("comma", "full stop", "new line"). Chrome and
-   Edge only: WebKit (Safari, and every browser on iPhone and iPad) stops after
-   one sentence, so the mic is not shown there; the phone keyboard has its own.
-   hubMic.attach(root, selector) wraps each matching textarea once. */
+/* ---- ONE MIC THAT FOLLOWS THE CURSOR (Ramy, 18 Oct 2026: "one mic that follows
+   the cursor, like TP feedback"; the same rule he set in Connect on 12 Sep).
+   A Dictate button at the bottom right writes into whichever box you last
+   clicked in. Spoken punctuation as on the TP feedback page ("comma", "full
+   stop", "new line"). Chrome and Edge only: WebKit (Safari, and every browser
+   on iPhone and iPad) stops after one sentence, so the button is not shown
+   there; the Mac's own dictation and the phone keyboard's mic do the job.
+   hubMic.bar(scope) puts the button on the page once; scope is the selector
+   of the boxes it writes into. The look is .dictbar / .dictbtn in hub-house.css. */
 (function(){
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   var ua = navigator.userAgent;
   var WEBKIT = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) || (/Safari/.test(ua) && !/Chrome|Chromium|Edg|OPR|Firefox/.test(ua));
   var OK = !!SR && !WEBKIT;
-  var rec = null, on = false, target = null, btnOn = null;
-  var LANG = /^en-(GB|US|AU)$/.test(navigator.language) ? navigator.language : 'en-GB';
+  var rec = null, on = false, target = null, BAR = null, SCOPE = null;
+  var LANG = 'en-GB';   /* as on the TP feedback page */
   var SPOKEN = [
     [/\b(full stop|fullstop|period)\b/gi,'.'], [/\b(question mark)\b/gi,'?'], [/\b(exclamation mark|exclamation point)\b/gi,'!'],
     [/\b(comma)\b/gi,','], [/\b(semicolon|semi colon)\b/gi,';'], [/\b(colon)\b/gi,':'],
@@ -2080,57 +2082,53 @@ window.hubHeadHTML = function (text, heads) {
     target.dispatchEvent(new Event('input', { bubbles: true }));
   }
   function paint(){
-    [].forEach.call(document.querySelectorAll('.hub-mic'), function(b){
-      var live = on && b === btnOn;
-      b.classList.toggle('rec', live);
-      b.setAttribute('aria-pressed', live ? 'true' : 'false');
-      b.title = live ? 'Stop dictating' : 'Dictate. Say the punctuation: comma, full stop, question mark, new line.';
-    });
+    if (!BAR) return;
+    var b = BAR.querySelector('.dictbtn'); b.classList.toggle('rec', on);
+    b.querySelector('.lbl').textContent = on ? 'Stop dictating' : 'Dictate';
   }
   function stop(){ on = false; if (rec) { try { rec.stop(); } catch (x) {} } paint(); }
-  function start(ta, b){
+  function start(){
+    if (!target || !target.isConnected) { var n = BAR.querySelector('.dict-hint'); n.hidden = false; setTimeout(function(){ n.hidden = true; }, 2600); return; }
     if (!rec) {
       rec = new SR(); rec.continuous = true; rec.interimResults = false; rec.lang = LANG;
       rec.onresult = function(ev){
         for (var i = ev.resultIndex; i < ev.results.length; i++) {
           if (!ev.results[i].isFinal) continue;
           var t = punctuate(ev.results[i][0].transcript.trim()); if (!t) continue;
-          insert(/[.?!,;:—…]$/.test(t) ? t + ' ' : /\n$/.test(t) ? t : t + '. ');
+          insert(/[.?!,;:\u2014\u2026]$/.test(t) ? t + ' ' : /\n$/.test(t) ? t : t + '. ');
         }
       };
       rec.onend = function(){ if (on && target && target.isConnected) { try { rec.start(); } catch (x) {} } else { on = false; paint(); } };
       rec.onerror = function(ev){ if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') { on = false; paint(); } };
     }
-    target = ta; btnOn = b; ta.setAttribute('lang', LANG); ta.focus();
-    if (!on) { on = true; try { rec.start(); } catch (x) {} }
+    rec.lang = LANG; target.setAttribute('lang', LANG); target.focus();
+    on = true; try { rec.start(); } catch (x) {}
     paint();
   }
-  function attach(root, sel){
-    if (!OK || !root) return;
-    [].forEach.call(root.querySelectorAll(sel), function(ta){
-      if (ta.parentNode && ta.parentNode.classList && ta.parentNode.classList.contains('mic-wrap')) return;
-      var w = document.createElement('div'); w.className = 'mic-wrap';
-      ta.parentNode.insertBefore(w, ta); w.appendChild(ta);
-      var b = document.createElement('button'); b.type = 'button'; b.className = 'hub-mic'; b.setAttribute('aria-label', 'Dictate');
-      b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg>';
-      b.addEventListener('mousedown', function(e){ e.preventDefault(); });   /* the box keeps its cursor */
-      b.addEventListener('click', function(){ if (on && btnOn === b) stop(); else start(ta, b); });
-      w.appendChild(b);
+  function bar(scope){
+    if (!OK || BAR) return;
+    SCOPE = scope || 'textarea';
+    BAR = document.createElement('div'); BAR.className = 'dictbar';
+    BAR.innerHTML = '<span class="dict-hint" hidden>Click into a box first</span>' +
+      '<select title="Dictation language"><option value="en-GB">English (UK)</option><option value="en-US">English (US)</option><option value="en-AU">English (Australia)</option></select>' +
+      '<button type="button" class="dictbtn" title="Say the punctuation: comma, full stop, question mark, colon, dash, open bracket, close bracket, new line, new paragraph"><span class="dot"></span><span class="lbl">Dictate</span></button>';
+    var sel = BAR.querySelector('select'); sel.value = LANG;
+    sel.addEventListener('change', function(){ LANG = sel.value; if (rec) rec.lang = LANG; if (target) target.setAttribute('lang', LANG); if (on) { rec.stop(); setTimeout(function(){ try { rec.start(); } catch (x) {} }, 250); } });
+    var btn = BAR.querySelector('.dictbtn');
+    btn.addEventListener('mousedown', function(e){ e.preventDefault(); });   /* the box keeps its cursor */
+    btn.addEventListener('click', function(){ if (on) stop(); else start(); });
+    document.body.appendChild(BAR);
+    document.addEventListener('focusin', function(e){
+      var t = e.target; if (!t.matches || !t.matches(SCOPE)) return;
+      if (on && target !== t) { target = t; t.setAttribute('lang', LANG); } else target = t;
     });
-    paint();
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && on) stop(); }, true);
   }
   if (OK) {
     var st = document.createElement('style');
-    st.textContent =
-      '.mic-wrap{position:relative;} .mic-wrap:has(> textarea[hidden]){display:none;} .mic-wrap > textarea{padding-right:46px !important;}' +
-      '.hub-mic{position:absolute; right:16px; bottom:10px; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; padding:0; cursor:pointer;' +
-        'border:1.5px solid var(--sand-line); background:var(--paper); color:var(--teal);}' +
-      '.hub-mic svg{width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round;}' +
-      '.hub-mic:hover{border-color:var(--teal) !important; background:var(--paper) !important; box-shadow:none !important;}' +
-      '.hub-mic.rec{border-color:var(--brick, oklch(52% 0.15 30)) !important; color:var(--brick, oklch(52% 0.15 30)); animation:hubmic 1.4s ease-in-out infinite;}' +
-      '@keyframes hubmic{0%,100%{box-shadow:0 0 0 0 oklch(52% 0.15 30 / .35);}50%{box-shadow:0 0 0 6px oklch(52% 0.15 30 / 0);}}' +
-      '@media (prefers-reduced-motion: reduce){ .hub-mic.rec{animation:none;} } @media print{ .hub-mic{display:none !important;} }';
+    st.textContent = '.dictbar .dict-hint{font:600 0.78rem Karla,sans-serif; color:var(--ink); background:var(--paper); border:1px solid var(--sand-line); border-radius:12px; padding:6px 10px;}' +
+      '.dictbar .dict-hint[hidden]{display:none;}';
     (document.head || document.documentElement).appendChild(st);
   }
-  window.hubMic = { ok: OK, attach: attach, stop: stop };
+  window.hubMic = { ok: OK, bar: bar, stop: stop };
 })();

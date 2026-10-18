@@ -117,7 +117,7 @@
     var t = e.target; if (!t || !t.closest) return;
     var row = t.closest('.critrow'), mine = row && row.querySelector('[data-tip="' + OPENTIP + '"]');
     /* inside: the panel, its own Guidance link, and its own note. Anything else, even a blank part of the same row, closes it. */
-    if (t.closest('.mk-tipin') || t.closest('[data-tip="' + OPENTIP + '"]') || (mine && t.closest('[data-crit-comment], [data-addnote], .mic-wrap'))) return;
+    if (t.closest('.mk-tipin') || t.closest('[data-tip="' + OPENTIP + '"]') || (mine && t.closest('[data-crit-comment], [data-addnote]')) || t.closest('.dictbar')) return;
     hideTip();
   });
 
@@ -240,7 +240,7 @@
      a third the whole answer. Dragging still picks an exact phrase. The
      browser's own double and triple click did the same thing a click late. */
   var PICK = null, DOWN = null;
-  function inUI(t) { return t.closest && t.closest('#mkSelBar, #mkEditor, #mkDock, #mkDrop, #mkTip, #mkPreview'); }
+  function inUI(t) { return t.closest && t.closest('#mkSelBar, #mkEditor, #mkDock, #mkDrop, #mkTip, #mkPreview, .dictbar'); }
   function readonlyOf(t) { return t.closest && t.closest('#mkWork .mloc .readonly'); }
   function caretAt(x, y) {
     if (document.caretPositionFromPoint) { var p = document.caretPositionFromPoint(x, y); return p ? { node: p.offsetNode, offset: p.offset } : null; }
@@ -305,7 +305,6 @@
       '<div class="me-foot"><div class="me-tone" role="group" aria-label="What kind of comment"><button type="button" class="tn-good' + (opts.tone === 'good' ? ' on' : '') + '" data-tone="good"><i></i>Good</button><button type="button" class="tn-fix' + (opts.tone === 'fix' ? ' on' : '') + '" data-tone="fix"><i></i>To work on</button></div>' +
       '<div class="me-acts"><button type="button" class="me-cancel">Cancel</button><button type="button" class="me-save" title="Ctrl or \u2318 + Enter">Save</button></div></div>';
     ed.hidden = false;
-    if (window.hubMic) hubMic.attach(ed, '#meText');
     var t = $('meText'); setTimeout(function () { t.focus(); t.setSelectionRange(t.value.length, t.value.length); }, 30);
     t.addEventListener('keydown', function (ev) { if ((ev.metaKey || ev.ctrlKey) && ev.key === 'Enter') { ev.preventDefault(); ed.querySelector('.me-save').click(); } });
     ed.querySelector('.me-cancel').onclick = function () { if (window.hubMic) hubMic.stop(); ed.hidden = true; };
@@ -383,7 +382,7 @@
     var t = e.target; if (!t || !t.closest) return;
     [].forEach.call(document.querySelectorAll('[data-crit-comment]:not([hidden])'), function (ta) {
       var i = ta.getAttribute('data-crit-comment');
-      if (t === ta || (ta.parentNode && ta.parentNode.contains(t)) || t.closest('[data-addnote="' + i + '"], [data-tip="' + i + '"]') || (String(OPENTIP) === i && t.closest('.mk-tipin'))) return;
+      if (t === ta || t.closest('.dictbar') || t.closest('[data-addnote="' + i + '"], [data-tip="' + i + '"]') || (String(OPENTIP) === i && t.closest('.mk-tipin'))) return;
       foldNote(ta);
     });
   });
@@ -608,7 +607,7 @@
     var dm = t.closest('[data-drmark]');
     if (dm && DROP != null) { var v = dm.getAttribute('data-drmark') === '1', cur = (CTX.sub.criteriaMarks[CTX.round] || [])[DROP]; CTX.setMark(DROP, cur === v ? null : v); return; }
     var dn = t.closest('[data-drnote]'); if (dn) { var ta = document.querySelector('[data-drnotebox]'); dn.hidden = true; ta.hidden = false; ta.focus(); return; }
-    if (DROP != null && !t.closest('#mkDock, #mkDrop, #mkTip')) { DROP = null; paintDrop(); var chips = document.querySelectorAll('.dk-chip.open'); [].forEach.call(chips, function (x) { x.classList.remove('open'); }); }
+    if (DROP != null && !t.closest('#mkDock, #mkDrop, #mkTip, .dictbar')) { DROP = null; paintDrop(); var chips = document.querySelectorAll('.dk-chip.open'); [].forEach.call(chips, function (x) { x.classList.remove('open'); }); }
   });
   document.addEventListener('input', function (e) {
     var ta = e.target.closest && e.target.closest('[data-drnotebox]'); if (!ta || DROP == null) return;
@@ -655,7 +654,7 @@
       CTX = ctx;
       paintMargin();
       linkTexts();
-      if (window.hubMic) hubMic.attach(document, '#comment, [data-crit-comment]');
+      if (window.hubMic) hubMic.bar('#meText, #comment, [data-crit-comment], [data-drnotebox]');
       paintStep2();
       paintHelp();
       paintSectionHelp();
@@ -782,6 +781,8 @@
       '.dk-chip:not(.met):not(.not):hover{background:var(--paper) !important; border-color:var(--as, var(--teal)) !important; box-shadow:none !important;} .dk-chip.met:hover, .dk-chip.not:hover{box-shadow:none !important; border-color:currentColor !important;}',
       '.mk-dock-tab{position:fixed; right:18px; bottom:18px; z-index:60; font:700 0.8rem Karla,sans-serif; color:var(--as, var(--teal)); background:var(--paper); border:1.5px solid var(--as, var(--teal)); border-radius:20px; padding:9px 16px; cursor:pointer; box-shadow:0 8px 24px oklch(25% 0.02 60 / .16);} .mk-dock-tab:hover{background:var(--paper) !important; border-color:var(--teal-deep) !important; box-shadow:0 8px 24px oklch(25% 0.02 60 / .16) !important;}',
       '@media (max-width:1079px){ .mk-dock-tab{right:12px; bottom:calc(14px + env(safe-area-inset-bottom));} }',
+      /* the Dictate button sits above the Criteria tab, never on it */
+      '@media (max-width:1079px){ .dictbar{bottom:calc(66px + env(safe-area-inset-bottom)) !important;} }',
       '.mk-drop{position:fixed; z-index:51; width:min(440px, calc(100vw - 16px)); background:var(--paper); border:1px solid var(--sand-line); border-top:3px solid var(--as, var(--teal)); border-radius:var(--r-card); padding:12px 14px 14px; box-shadow:0 18px 50px oklch(20% 0.02 60 / .25); max-height:70vh; overflow:auto;}',
       '.dr-h{display:flex; justify-content:space-between; align-items:center;} .dr-h button{font:700 0.78rem Karla,sans-serif; background:none; border:1.5px solid var(--sand-line); border-radius:var(--r-control); padding:4px 10px; cursor:pointer;}',
       '.dr-t{font-size:0.88rem; line-height:1.5; margin:6px 0 10px;} .dr-btns{display:flex; gap:8px; margin:0 0 4px;}',
