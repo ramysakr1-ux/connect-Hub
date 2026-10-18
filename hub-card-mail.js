@@ -96,9 +96,7 @@
   }
   function credit(ctx){
     return '<div style="font-family:' + SANS + '; font-size:11px; color:#8a6534; margin:16px 0 0; padding-top:14px; border-top:1px solid ' + C.line + ';">' + tile(16)
-      + '<span style="font-family:\'Instrument Serif\',Georgia,serif; font-style:italic; font-size:14px; color:' + C.gold + '; margin:0 4px 0 7px; vertical-align:middle;">Connect</span>'
-      + '<span style="font-family:' + SANS + '; font-size:7px; font-weight:600; letter-spacing:0.24em; text-transform:uppercase; color:' + C.ink + '; margin-right:8px; vertical-align:middle;">Lite</span>'
-      + '<span style="vertical-align:middle;">designed and built by <b>Ramy</b>' + (ctx.site ? ' · <a href="' + esc(ctx.site) + '" style="color:#8a6534; text-decoration:none;">' + esc(ctx.site.replace(/^https?:\/\//, '').replace(/\/$/, '')) + '</a>' : '') + '</span></div>';
+      + '<span style="vertical-align:middle; margin-left:7px;">designed and built by <b style="color:' + C.gold + ';">Ramy</b>' + (ctx.site ? ' · <a href="' + esc(ctx.site) + '" style="color:#8a6534; text-decoration:none;">' + esc(ctx.site.replace(/^https?:\/\//, '').replace(/\/$/, '')) + '</a>' : '') + '</span></div>';
   }
   function page(title, letter, card){
     return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>' + esc(title) + '</title></head>'

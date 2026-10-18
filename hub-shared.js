@@ -118,7 +118,7 @@ window.hubObservationHours = function(records){
     var hcss=document.createElement('style'); hcss.id='hub-hover-css';
     // Ramy, 20 Sep 2026: the credit is a watermark like Connect's -- in the header band beside the mark, on the landing screens only, never a door.
     hcss.textContent=":root{ --hub-ring: 0 0 0 2px oklch(86% 0.014 82); --hub-wash: oklch(96% 0.009 82); --bronze: oklch(50% 0.09 62); }"+
-      ".hub-credit{ font-family:'Karla',sans-serif; font-size:11px; letter-spacing:0.01em; color:var(--bronze); opacity:.8; white-space:nowrap; margin-left:12px; align-self:center; }"+
+      ".hub-credit{ font-family:'Karla',sans-serif; font-size:11px; letter-spacing:0.01em; color:color-mix(in oklab, var(--bronze) 85%, transparent); white-space:nowrap; margin-left:12px; align-self:center; }"+
       ".hub-credit b{ font-weight:700; }"+
       "@media (max-width:768px){ .hub-credit{ display:none; } }"+
       "a.card, a.room, .tk-card[href], .cell, .list-row > button:first-child{ transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease; }"+
@@ -1489,6 +1489,17 @@ window.hubIsReference = function(s){
    own credit (the landings, the cards, the console) keeps its own; a page can
    opt out with data-brand="off" on <body>. Never on paper -- the printed
    documents are Cambridge's and the trainee's, not ours. */
+/* THE CREDIT (the rule, Ramy 19 Oct 2026): the logo alone, then "designed and
+   built by" in the quiet bronze, then Ramy in gold. Nothing between the logo
+   and the credit -- the product's name lives on top, never in this line. */
+window.hubMark = function(size){
+  var s = size || 18;
+  return '<span class="hub-lockup"><span class="hub-lockup-tile" style="width:' + s + 'px;height:' + s + 'px;border-radius:' + Math.round(s * 0.23) + 'px">'
+    + '<svg viewBox="8 30 104 60" width="' + Math.round(s * 0.66) + '" height="' + Math.round(s * 0.4) + '" fill="none" aria-hidden="true">'
+    + '<path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"></path>'
+    + '<path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"></path></svg></span></span>';
+};
+window.hubCredit = function(size){ return window.hubMark(size || 16) + '<span class="hub-cred">designed and built by <b>Ramy</b></span>'; };
 window.hubLockup = function(size){
   var s = size || 18;
   return '<span class="hub-lockup"><span class="hub-lockup-tile" style="width:' + s + 'px;height:' + s + 'px;border-radius:' + Math.round(s * 0.23) + 'px">'
@@ -1515,6 +1526,9 @@ window.hubLockup = function(size){
       +   " font-family:'Karla',sans-serif; font-size:11px; color:oklch(50% 0.09 62);}"
       + ".hub-brand-foot .hub-lockup{color:var(--ink, oklch(23.5% 0.017 65));}"
       + ".hub-brand-foot b{font-weight:700;}"
+      /* the name is gold, the words are not: everywhere the credit appears */
+      + ".hub-credit b, .hub-brand-foot b, .hub-cred b, .credit .by b, .fp-foot b, .foot .hub-credit b, .tpcredit .hub-cred b{color:oklch(63% 0.096 72) !important; font-weight:700; opacity:1;}"
+      + ".hub-cred{white-space:nowrap;}"
       + "@media print{.hub-brand-foot{display:none !important;}}";
     document.head.appendChild(c);
   }
@@ -1522,7 +1536,7 @@ window.hubLockup = function(size){
     var b = document.body; if (!b || b.dataset.brand === 'off') return;
     if (document.querySelector('.hub-brand-foot, .hub-credit, .credit, .fp-foot')) return;
     var f = document.createElement('footer'); f.className = 'hub-brand-foot';
-    f.innerHTML = window.hubLockup(18) + '<span>designed and built by <b>Ramy</b></span>';
+    f.innerHTML = window.hubCredit(16);
     /* A screen whose body is a centred row (the assignment page, say) would
        put the footer beside its column, not under it: give it a line of its
        own. */
