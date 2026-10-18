@@ -691,7 +691,7 @@ case 'inbox': {
       var pToday = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
       courses_().forEach(function (c) {
         var set = courseRead_(c.id, 'settings') || {};
-        if (set.demoToday || /scratch/i.test(String(c.name || ''))) return;
+        if (set.demoToday || /scratch|not a course/i.test(String(c.name || '') + ' ' + String(set.courseName || ''))) return;
         if (/grades/i.test(String(set.courseName || '')) || /grades/i.test(String(c.name || ''))) return;
         var ros = courseRead_(c.id, 'roster') || {};
         var people = ros.trainees || {};
