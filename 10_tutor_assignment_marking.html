@@ -13,7 +13,7 @@
 <title>Connect Lite — Mark assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610181358">
+<link rel="stylesheet" href="hub-tokens.css?v=202610181359">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -182,7 +182,7 @@
   @media(prefers-reduced-motion:reduce){ .mv2-seg{transition:none;} .critrow.mv2-hit{animation:none;} }
   @media print{ .mv2{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610181358">
+<link rel="stylesheet" href="hub-house.css?v=202610181359">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -191,15 +191,15 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610181358"></script>
-<script src="hub-exchange.js?v=202610181358"></script>
-<script src="hub-marking.js?v=202610181358"></script>
-<script src="hub-due.js?v=202610181358"></script>
-<script src="hub-shared.js?v=202610181358"></script>
-<script src="hub-store.js?v=202610181358"></script>
-<script src="hub-say.js?v=202610181358"></script>
-<script src="hub-sync.js?v=202610181358"></script>
-<script src="fol-interview.js?v=202610181358"></script>
+<script src="assignment-defaults.js?v=202610181359"></script>
+<script src="hub-exchange.js?v=202610181359"></script>
+<script src="hub-marking.js?v=202610181359"></script>
+<script src="hub-due.js?v=202610181359"></script>
+<script src="hub-shared.js?v=202610181359"></script>
+<script src="hub-store.js?v=202610181359"></script>
+<script src="hub-say.js?v=202610181359"></script>
+<script src="hub-sync.js?v=202610181359"></script>
+<script src="fol-interview.js?v=202610181359"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -824,7 +824,7 @@ render();
    award a pass. */
 function xSlotsFor(a){
   const crit = (a.criteria||[]);
-  return crit.map((c,i)=>({ id:'crit'+i, heading:'Criterion '+(i+1)+' \u2014 '+String(c.text||'').slice(0,80) }))
+  return crit.map((c,i)=>({ id:'crit'+i, heading:'Criterion '+(i+1)+' \u2014 '+String(c.text||'').replace(/\s+/g,' ').trim() }))
     .concat([{ id:'comment', heading:'General comment' }]);
 }
 function xWho(){
@@ -922,7 +922,8 @@ function wireExchange(){
     saveSubs(); render();
     const names = {}; man.forEach(m => names[m.id] = m.heading);
     const d2 = $('xDone'); d2.style.display = '';
-    d2.innerHTML = 'Filled ' + ids.length + ': ' + ids.map(id => esc(names[id]||id)).join(', ') + '.' + (unplaced.length ? ' Not placed: ' + unplaced.map(esc).join(', ') + '.' : '') + ' <button type="button" class="example-btn" id="xUndo">Undo</button>';
+    const nc = ids.filter(id => /^crit/.test(id)).length, gc = ids.indexOf('comment') >= 0;
+    d2.innerHTML = 'Filled ' + (nc ? nc + (nc === 1 ? ' criterion' : ' criteria') : '') + (nc && gc ? ' and ' : '') + (gc ? 'the general comment' : '') + '. Check them, then save.' + (unplaced.length ? ' Not placed: ' + unplaced.map(esc).join(', ') + '.' : '') + ' <button type="button" class="example-btn" id="xUndo">Undo</button>';
     $('xUndo').addEventListener('click', ()=>{
       sub.criteriaMarks[round] = before.marks; before.comments.forEach((v,i)=>{ sub.criteriaComments[round][i] = v; });
       sub.feedback[gk] = before.general; saveSubs(); render(); const d3 = $('xDone'); if (d3) { d3.style.display=''; d3.textContent = 'Put back as it was.'; }

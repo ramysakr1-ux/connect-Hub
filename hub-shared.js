@@ -2102,7 +2102,7 @@ window.hubHeadHTML = function (text, heads) {
     var b = BAR.querySelector('.dictbtn'); b.classList.toggle('rec', on);
     b.querySelector('.lbl').textContent = on ? 'Stop dictating' : 'Dictate';
   }
-  function stop(){ on = false; if (rec) { try { rec.stop(); } catch (x) {} } paint(); }
+  function stop(){ on = false; if (rec) { try { rec.stop(); } catch (x) {} } paint(); var a = document.activeElement; if (BAR && !(a && a.matches && a.matches(SCOPE))) BAR.hidden = true; }
   function start(){
     if (!target || !target.isConnected) { var n = BAR.querySelector('.dict-hint'); n.hidden = false; setTimeout(function(){ n.hidden = true; }, 2600); return; }
     if (!rec) {
@@ -2135,16 +2135,23 @@ window.hubHeadHTML = function (text, heads) {
     btn.addEventListener('mousedown', function(e){ e.preventDefault(); });   /* the box keeps its cursor */
     btn.addEventListener('click', function(){ if (on) stop(); else start(); });
     document.body.appendChild(BAR);
+    /* It shows only while you are in a box it writes into, or while it is
+       listening (Ramy, 19 Oct 2026: it sat on Save & return). */
+    BAR.hidden = true;
     document.addEventListener('focusin', function(e){
       var t = e.target; if (!t.matches || !t.matches(SCOPE)) return;
       if (on && target !== t) { target = t; t.setAttribute('lang', LANG); } else target = t;
+      BAR.hidden = false;
+    });
+    document.addEventListener('focusout', function(){
+      setTimeout(function(){ var a = document.activeElement; if (!on && !(a && a.matches && a.matches(SCOPE)) && !(a && BAR.contains(a))) BAR.hidden = true; }, 150);
     });
     document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && on) stop(); }, true);
   }
   if (OK) {
     var st = document.createElement('style');
     st.textContent = '.dictbar .dict-hint{font:600 0.78rem Karla,sans-serif; color:var(--ink); background:var(--paper); border:1px solid var(--sand-line); border-radius:12px; padding:6px 10px;}' +
-      '.dictbar .dict-hint[hidden]{display:none;}';
+      '.dictbar .dict-hint[hidden]{display:none;} .dictbar[hidden]{display:none !important;}';
     (document.head || document.documentElement).appendChild(st);
   }
   window.hubMic = { ok: OK, bar: bar, stop: stop };
