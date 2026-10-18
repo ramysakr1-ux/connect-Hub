@@ -2095,7 +2095,8 @@ window.hubHeadHTML = function (text, heads) {
         for (var i = ev.resultIndex; i < ev.results.length; i++) {
           if (!ev.results[i].isFinal) continue;
           var t = punctuate(ev.results[i][0].transcript.trim()); if (!t) continue;
-          insert(/[.?!,;:\u2014\u2026]$/.test(t) ? t + ' ' : /\n$/.test(t) ? t : t + '. ');
+          /* only the punctuation you say: no full stop added when you pause (Ramy, 18 Oct 2026) */
+          insert(/\n$/.test(t) ? t : t + ' ');
         }
       };
       rec.onend = function(){ if (on && target && target.isConnected) { try { rec.start(); } catch (x) {} } else { on = false; paint(); } };

@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610181035">
+<link rel="stylesheet" href="hub-tokens.css?v=202610181036">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -429,7 +429,7 @@
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610181035">
+<link rel="stylesheet" href="hub-house.css?v=202610181036">
 </head>
 <body>
 <div class="board">
@@ -582,12 +582,12 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202610181035"></script>
-<script src="hub-shared.js?v=202610181035"></script>
-<script src="hub-store.js?v=202610181035"></script>
-<script src="hub-say.js?v=202610181035"></script>
-<script src="hub-crit-learn.js?v=202610181035"></script>
-<script src="hub-sync.js?v=202610181035"></script>
+<script src="hub-exchange.js?v=202610181036"></script>
+<script src="hub-shared.js?v=202610181036"></script>
+<script src="hub-store.js?v=202610181036"></script>
+<script src="hub-say.js?v=202610181036"></script>
+<script src="hub-crit-learn.js?v=202610181036"></script>
+<script src="hub-sync.js?v=202610181036"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1933,16 +1933,26 @@ function renderTurnStatus(){
     t=t.replace(/([.?!]\s+|\n)([a-z])/g,(m,p,c)=>p+c.toUpperCase());
     return t.trim();
   }
+  function textBefore(){
+    if(!target) return '';
+    if(target.isContentEditable){
+      const sel=window.getSelection(); if(!sel.rangeCount || !target.contains(sel.anchorNode)) return target.innerText||'';
+      const r=document.createRange(); r.selectNodeContents(target); r.setEnd(sel.anchorNode, sel.anchorOffset); return r.toString();
+    }
+    return target.value.slice(0, target.selectionStart ?? target.value.length);
+  }
+  function endsSentence(b){ return !b.trim() || /[.?!\n]\s*$/.test(b); }
   rec.onresult=ev=>{
     for(let i=ev.resultIndex;i<ev.results.length;i++){
       if(!ev.results[i].isFinal) continue;
       let t=punctuate(ev.results[i][0].transcript.trim());
       if(!t) continue;
-      if(!CASED.test(rec.lang)){ insert(t+' '); continue; }
-      /* only add a full stop if you did not speak one yourself */
-      if(/[.?!,;:—…]$/.test(t)) insert(t+' ');
-      else if(/\n$/.test(t)) insert(t);
-      else insert(t+'. ');
+      /* Only the punctuation you say: no full stop is added when you pause
+         (Ramy, 18 Oct 2026: you pause to think mid-sentence). So a new
+         stretch carries on the sentence in lower case unless the last one
+         ended it. */
+      if(CASED.test(rec.lang) && !endsSentence(textBefore())) t=t.replace(/^([A-Z])(?![A-Z])/,m=>m.toLowerCase());
+      insert(/\n$/.test(t) ? t : t+' ');
     }
   };
   rec.onend=()=>{ if(on){ try{ rec.start(); }catch(e){} } };
