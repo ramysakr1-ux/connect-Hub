@@ -97,7 +97,9 @@
      builds in Node, so a centre's file reads here exactly as Ramy's did. */
   function xmlToBlocks(xml){
     const body = xml.slice(Math.max(0, xml.indexOf('<w:body>')));
-    const paraText = p => decode(p.replace(/<w:tab[^>]*\/>/g, '\t').replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim();
+    /* Word's Insert Symbol tick (Wingdings F0FC/F0FE, Wingdings 2 F050/F051) comes as <w:sym>, not text: read it as ✓ (Ramy, 19 Oct 2026: ticks typed into the paragraph). */
+    const symTick = x => x.replace(/<w:sym\b[^>]*w:char="(?:F0FC|F0FE|F050|F051|FC|FE|50|51)"[^>]*\/>/gi, '\u2713');
+    const paraText = p => decode(symTick(p).replace(/<w:tab[^>]*\/>/g, '\t').replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim();
     const paras = frag => (frag.match(/<w:p[ >][\s\S]*?<\/w:p>/g) || []).map(paraText).filter(Boolean);
     const out = [];
     const re = /<w:tbl>[\s\S]*?<\/w:tbl>|<w:p[ >][\s\S]*?<\/w:p>/g;
@@ -147,12 +149,12 @@
     });
     /* Walk the document once: text runs, paragraph ends, range starts and ends. */
     const open = {}, anchors = {}, order = [];
-    const re = /<w:commentRangeStart w:id="(\d+)"[^>]*\/>|<w:commentRangeEnd w:id="(\d+)"[^>]*\/>|<w:t(?: [^>]*)?>([^<]*)<\/w:t>|<w:tab[^>]*\/>|<\/w:p>/g;
+    const re = /<w:commentRangeStart w:id="(\d+)"[^>]*\/>|<w:commentRangeEnd w:id="(\d+)"[^>]*\/>|<w:t(?: [^>]*)?>([^<]*)<\/w:t>|<w:sym\b[^>]*w:char="(F0FC|F0FE|F050|F051|FC|FE|50|51)"[^>]*\/>|<w:tab[^>]*\/>|<\/w:p>/gi;
     let m;
     while ((m = re.exec(docXml))) {
       if (m[1] != null) { open[m[1]] = ''; if (order.indexOf(m[1]) < 0) order.push(m[1]); continue; }
       if (m[2] != null) { if (open[m[2]] != null) { anchors[m[2]] = open[m[2]]; delete open[m[2]]; } continue; }
-      const piece = m[3] != null ? decode(m[3]) : ' ';
+      const piece = m[3] != null ? decode(m[3]) : m[4] != null ? '\u2713' : ' ';
       Object.keys(open).forEach(k => { open[k] += piece; });
     }
     const comments = order.filter(id => bodies[id] && bodies[id].text).map(id => ({ anchor: String(anchors[id] || '').replace(/\s+/g, ' ').trim(), text: bodies[id].text, author: bodies[id].author }));

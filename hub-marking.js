@@ -717,7 +717,7 @@
      comment whose words cannot be found is handed back, never guessed. */
   function normCh(c) { return /[\u2018\u2019\u02bc]/.test(c) ? "'" : /[\u201c\u201d]/.test(c) ? '"' : /[\u2013\u2014]/.test(c) ? '-' : /\s/.test(c) ? ' ' : c.toLowerCase(); }
   function findWords(words) {
-    var want = ''; String(words || '').split('').forEach(function (c) { var n = normCh(c); if (n === ' ' && (!want || want[want.length - 1] === ' ')) return; want += n; });
+    var want = ''; String(words || '').split('').forEach(function (c) { if (/[\u2713\u2714\u221a]/.test(c)) return; var n = normCh(c); if (n === ' ' && (!want || want[want.length - 1] === ' ')) return; want += n; });
     want = want.trim(); if (want.length < 3) return null;
     var round = writeRound(), hit = null;
     [].some.call(document.querySelectorAll('#mkWork .mloc[data-round="' + round + '"]'), function (loc) {
@@ -733,14 +733,14 @@
     var l = list(writeRound()), ids = [], placed = 0, unplaced = [];
     (items || []).forEach(function (it) {
       var text = String(it.text || '').trim(); if (!text) return;
-      var tone = null, tick = /^(\u2713|\u2714|tick|ticked)\.?$/i.test(text);
+      var tkm = text.match(/^((?:[\u2713\u2714\u221a]\s*)+|tick|ticked)\.?$/i), tone = null, tick = !!tkm, tn = tick ? Math.max(1, (tkm[1].match(/[\u2713\u2714\u221a]/g) || []).length) : 0;
       var mt = text.match(/^(good|to work on)\s*[:\-\u2013\u2014]\s*([\s\S]+)$/i); if (mt) { tone = /^good/i.test(mt[1]) ? 'good' : 'fix'; text = mt[2].trim(); }
       /* the whole paragraph when it is short; a long one is found by its first sentence and highlighted whole */
       var hit = findWords(it.anchor);
       if (!hit && it.anchor) { var first = String(it.anchor).split(/(?<=[.!?])\s/)[0]; if (first && first !== it.anchor) hit = findWords(first); }
       if (!hit) { unplaced.push(text); return; }
       var rec = tick
-        ? { id: newId('t'), loc: hit.loc, quote: hit.quote, text: '', tick: true, n: 1, crit: null, by: CTX.me, role: secondMode() ? 'second' : 'first', at: new Date().toISOString() }
+        ? { id: newId('t'), loc: hit.loc, quote: hit.quote, text: '', tick: true, n: tn, crit: null, by: CTX.me, role: secondMode() ? 'second' : 'first', at: new Date().toISOString() }
         : { id: newId('m'), loc: hit.loc, quote: hit.quote, text: text, crit: null, tone: tone, by: CTX.me, role: secondMode() ? 'second' : 'first', at: new Date().toISOString() };
       l.push(rec); ids.push(rec.id); placed++;
     });

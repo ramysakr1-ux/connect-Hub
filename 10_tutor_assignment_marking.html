@@ -13,7 +13,7 @@
 <title>Connect Lite — Mark assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610181602">
+<link rel="stylesheet" href="hub-tokens.css?v=202610182032">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -182,7 +182,7 @@
   @media(prefers-reduced-motion:reduce){ .mv2-seg{transition:none;} .critrow.mv2-hit{animation:none;} }
   @media print{ .mv2{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610181602">
+<link rel="stylesheet" href="hub-house.css?v=202610182032">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -191,16 +191,16 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610181602"></script>
-<script src="hub-exchange.js?v=202610181602"></script>
-<script src="hub-docx.js?v=202610181602"></script>
-<script src="hub-marking.js?v=202610181602"></script>
-<script src="hub-due.js?v=202610181602"></script>
-<script src="hub-shared.js?v=202610181602"></script>
-<script src="hub-store.js?v=202610181602"></script>
-<script src="hub-say.js?v=202610181602"></script>
-<script src="hub-sync.js?v=202610181602"></script>
-<script src="fol-interview.js?v=202610181602"></script>
+<script src="assignment-defaults.js?v=202610182032"></script>
+<script src="hub-exchange.js?v=202610182032"></script>
+<script src="hub-docx.js?v=202610182032"></script>
+<script src="hub-marking.js?v=202610182032"></script>
+<script src="hub-due.js?v=202610182032"></script>
+<script src="hub-shared.js?v=202610182032"></script>
+<script src="hub-store.js?v=202610182032"></script>
+<script src="hub-say.js?v=202610182032"></script>
+<script src="hub-sync.js?v=202610182032"></script>
+<script src="fol-interview.js?v=202610182032"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -873,7 +873,7 @@ function wireExchange(){
     const d = $('xDone'); d.style.display = ''; d.textContent = 'Reading ' + f.name + '\u2026';
     try {
       const got = await window.hubDocxComments(f);
-      if (!got.comments.length && !/Criterion \d|General comment/i.test(got.text) && !/^\s*>>/m.test(got.text)) { d.textContent = 'There were no comments in that file. Comments made on the side of a Google Doc come with it when you download it as Word (File, Download, Microsoft Word).'; return; }
+      if (!got.comments.length && !/Criterion \d|General comment/i.test(got.text) && !/^\s*>>/m.test(got.text) && !/[\u2713\u2714\u221a]/.test(got.text)) { d.textContent = 'There were no comments in that file. Comments made on the side of a Google Doc come with it when you download it as Word (File, Download, Microsoft Word).'; return; }
       readNow(got.text, got.comments);
     } catch (e) { d.textContent = String(e && e.message || e); }
   });
@@ -886,7 +886,7 @@ function wireExchange(){
        this gate swallowed the paste silently even though the reader handles
        bold (24 Sep 2026). Same two shapes the reader accepts. */
     if (!txt) return;
-    if (!/^\s*#/m.test(txt) && !/^\s*(?:\*\*|__).+(?:\*\*|__)\s*:?\s*$/m.test(txt) && !/^\s*>>/m.test(txt)) {
+    if (!/^\s*#/m.test(txt) && !/^\s*(?:\*\*|__).+(?:\*\*|__)\s*:?\s*$/m.test(txt) && !/^\s*>>/m.test(txt) && !/[\u2713\u2714\u221a]/.test(txt)) {
       /* Said out loud, not ignored (Ramy, 18 Oct 2026: "I pasted and nothing happened"). */
       if (txt.length > 20) { const d = $('xDone'); if (d) { d.style.display = ''; d.textContent = 'That paste did not look like a marked reply, so nothing was filled in. A marked reply keeps its headings (\u201CCriterion 1 \u2014 \u2026\u201D, \u201CGeneral comment\u201D), and each criterion starts with Met or Not met.'; $('xchg').scrollIntoView({block:'center', behavior:'smooth'}); } }
       return;
@@ -896,12 +896,31 @@ function wireExchange(){
   });
   /* Lines that start with >> are comments on the work: >> "the words": the comment,
      or >> the comment, right under the paragraph it is about (19 Oct 2026). */
+  /* Ticks typed INTO the paragraph (Ramy, 19 Oct 2026: a trainer who marks in
+     Word puts a ✓ after the words, not a comment on the side). Each ✓ becomes a
+     tick on the words just before it, back to the last tick or the last full
+     stop; ✓✓ is two ticks. Only the work is read, never the marking frame. */
+  function inlineTicks(txt){
+    const out = []; let body = String(txt||''); const at = body.search(/^\s*#\s+Marking\b/m); if (at >= 0) body = body.slice(0, at);
+    body.split(/\r?\n/).forEach(line => {
+      if (/^\s*>>/.test(line)) return;
+      const re = /[\u2713\u2714\u221a]+/g; let m, from = 0;
+      while ((m = re.exec(line))) {
+        const before = line.slice(from, m.index); from = m.index + m[0].length;
+        const parts = before.trim().split(/(?<=[.!?])\s+/); let words = parts[parts.length - 1].trim();
+        const ws = words.split(/\s+/); if (ws.length > 8) words = ws.slice(-8).join(' ');
+        words = words.replace(/^[\s"\u201c\u2018'(\[]+/, '').trim();
+        if (words.replace(/[^a-z0-9]/gi, '').length >= 3) out.push({ anchor: words, text: '\u2713'.repeat(m[0].length) });
+      }
+    });
+    return out;
+  }
   function markerComments(txt){
     const out = []; let prev = '';
     String(txt||'').split(/\r?\n/).forEach(raw => {
       const l = raw.trim(); if (!l) return;
       const m = l.match(/^>>\s*(.*)$/);
-      if (!m) { prev = l.replace(/^#+\s*/, ''); return; }
+      if (!m) { prev = l.replace(/^#+\s*/, '').replace(/[\u2713\u2714\u221a]/g, ''); return; }
       let body = m[1], anchor = prev, text = body;
       const q = body.match(/^["\u201c'\u2018](.+?)["\u201d'\u2019]\s*[:\-\u2013\u2014]?\s*([\s\S]*)$/);
       if (q) { anchor = q[1]; text = q[2]; }
@@ -911,7 +930,7 @@ function wireExchange(){
   }
   function readNow(srcText, sideComments){
     const txt = typeof srcText === 'string' ? srcText : $('xText').value; if (!txt.trim()) return;
-    const notes = (sideComments || []).concat(markerComments(txt));
+    const notes = (sideComments || []).concat(markerComments(txt), inlineTicks(txt));
     const man = xSlotsFor(a); const byName = {}; man.forEach(m => byName[m.heading.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()] = m.id);
     man.forEach(m => { const mm = m.heading.match(/^(Criterion \d+)/); if (mm) byName[mm[1].toLowerCase()] = m.id; });
     const norm = h => String(h||'').toLowerCase().replace(/[\u2018\u2019\u201c\u201d"']/g,'').replace(/[^a-z0-9]+/g,' ').trim();
@@ -938,7 +957,7 @@ function wireExchange(){
     });
     const done = $('xDone'); done.style.display = '';
     const ids = Object.keys(found);
-    if (!ids.length && !notes.length) { done.textContent = 'Nothing in that landed \u2014 the headings ("Criterion 1 \u2014 \u2026", "General comment") need to be kept, and a comment on the work needs a line starting with >>, or a comment on the side of a Word file.'; return; }
+    if (!ids.length && !notes.length) { done.textContent = 'Nothing in that landed \u2014 the headings ("Criterion 1 \u2014 \u2026", "General comment") need to be kept, and a comment on the work needs a line starting with >>, a comment on the side of a Word file, or a \u2713 typed after the words.'; return; }
     /* the form as it was, for Undo */
     const before = { marks: (sub.criteriaMarks[round]||[]).slice(), comments: [...document.querySelectorAll('[data-crit-comment]')].map(el=>el.value), general: ($('comment')||{}).value || '' };
     sub.criteriaMarks[round] = sub.criteriaMarks[round] || []; sub.criteriaComments[round] = sub.criteriaComments[round] || [];
@@ -962,7 +981,9 @@ function wireExchange(){
     const nc = ids.filter(id => /^crit/.test(id)).length, gc = ids.indexOf('comment') >= 0;
     const parts = [];
     if (nc || gc) parts.push('filled ' + (nc ? nc + (nc === 1 ? ' criterion' : ' criteria') : '') + (nc && gc ? ' and ' : '') + (gc ? 'the general comment' : ''));
-    if (put.placed) parts.push('placed ' + put.placed + (put.placed === 1 ? ' comment' : ' comments') + ' in the margin');
+    const nTk = notes.filter(n => /^[\u2713\u2714\u221a]+$/.test(String(n.text||'').trim())).length, nPl = put.placed - Math.min(put.placed, nTk);
+    if (nPl) parts.push('placed ' + nPl + (nPl === 1 ? ' comment' : ' comments') + ' in the margin');
+    if (put.placed && nTk) parts.push('put ' + Math.min(put.placed, nTk) + (Math.min(put.placed, nTk) === 1 ? ' tick' : ' ticks') + ' on the work');
     const said = parts.join(', and ');
     d2.innerHTML = (said ? said.charAt(0).toUpperCase() + said.slice(1) + '. Check them, then save.' : '')
       + (put.unplaced.length ? ' <span class="x-unplaced">' + (put.unplaced.length === 1 ? 'One comment' : put.unplaced.length + ' comments') + ' could not be matched to the words in the work, so ' + (put.unplaced.length === 1 ? 'it is' : 'they are') + ' here to add by hand: ' + put.unplaced.map(t => '\u201c' + esc(t.length > 90 ? t.slice(0, 88) + '\u2026' : t) + '\u201d').join('; ') + '.</span>' : '')
