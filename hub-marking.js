@@ -433,7 +433,8 @@
       '<h4 class="mkc-h">Checked by Lite</h4><ul class="mkc">' +
       items.map(function (x) { return '<li class="' + x.state + '"><b>' + (x.state === 'ok' ? 'Done' : x.state === 'look' ? 'Look' : 'Note') + '</b><span>' + esc(x.label) + (x.detail ? '<small>' + esc(x.detail) + '</small>' : '') + '</span></li>'; }).join('') + '</ul>' +
       (mine.length ? '<h4 class="mkc-h">Check yourself</h4><ul class="mkc-mine">' + mine.map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('') + '</ul>' : '') +
-      (trap ? '<p class="mkc-trap">The hidden word is <b>' + esc(trap) + '</b>. If it is in the work, it was probably produced from a copy of the brief. Look more closely, and follow the centre\u2019s usual process.</p>' : '') +
+      /* the hidden word itself is not told (Ramy, 19 Oct 2026: "is it used or not used? that's your job"): the Checked by Lite row says used or not */
+      '' +
       '</div></details>';
   }
 
@@ -696,7 +697,8 @@
     var ch = checksHTML(); if (ch) parts.push(ch);
     var fs = firstSectionBox(); if (fs) parts.push(fs);
     var gen = g ? splitGeneral(g.general).rest : '';
-    if (gen) parts.push(gbox('how', 'How to mark this assignment', hubGuidanceHTML(gen), 'mk-hbox'));
+    /* Standardisation, not instruction (Ramy, 19 Oct 2026: "I'm talking to CELTA trainers"): the centre's own lines for this assignment, nothing on how assignments are marked. */
+    if (gen) parts.push(gbox('how', 'Standardisation', hubGuidanceHTML(gen), 'mk-hbox'));
     if (g && g.sections) parts.push(gbox('bysec', 'Section by section', hubGuidanceHTML(g.sections), 'mk-hbox'));
     /* its own box (Ramy, 19 Oct 2026), so How to mark is only about the assignment */
     parts.push(gbox('lite', 'Marking in Lite', hubGuidanceHTML(HOWTO.split('\n').slice(1).join('\n')), 'mk-hbox'));

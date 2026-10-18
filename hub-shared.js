@@ -1800,7 +1800,7 @@ window.hubWorkChecks = function (a, snap, key, who) {
     if (d.aiUsed === 'yes') add(d.aiLink ? 'info' : 'look', 'AI declared: ' + (d.aiPurpose || 'no purpose given'), d.aiLink ? 'Check it is one of the permitted uses and cited in the text.' : 'No link to the conversation.');
     else if (d.aiUsed) add('ok', 'No AI declared');
   }
-  if (a.trap && window.hubTrapFound) { var hit = hubTrapFound(a.trap, { sub1: snap }); add(hit ? 'look' : 'ok', hit ? 'The hidden word is in this work' : 'Hidden word not in the work', hit ? 'A prompt to look more closely; follow the centre’s usual process.' : ''); }
+  if (a.trap && window.hubTrapFound) { var hit = hubTrapFound(a.trap, { sub1: snap }); add(hit ? 'look' : 'ok', hit ? 'Hidden word used' : 'Hidden word not used', ''); }
   return items;
 };
 
