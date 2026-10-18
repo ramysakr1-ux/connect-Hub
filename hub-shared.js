@@ -265,7 +265,7 @@ window.hubObservationHours = function(records){
     var noOffer = false;
     var deferred = G.deferred, already = G.already;
     var folded = (function(){ try { return !!localStorage.getItem('chub:installHintDone'); } catch (e) { return false; } })();
-    var MARK = '<svg viewBox="8 30 104 60" width="16" height="10" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="currentColor" stroke-width="13" stroke-linecap="round" opacity=".55"></path></svg>';
+    var MARK = '<svg viewBox="8 28 104 64" width="16" height="10" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="currentColor" stroke-width="13" stroke-linecap="round" opacity=".55"></path></svg>';
     var draw = function(){
       /* Only when there is something to press or follow (Ramy, 18 Oct 2026: "I
          can't really put it anywhere. The only thing I can click on is not
@@ -438,10 +438,10 @@ function hubRoomRefusal(title, who, mode){
   document.body.innerHTML =
     '<div style="max-width:560px;margin:0 auto;padding:16vh 20px 0;font-family:Karla,Helvetica,sans-serif;color:oklch(23.5% 0.017 65);">'
     + '<div style="display:flex;align-items:center;gap:9px;margin-bottom:26px;">'
-    + '<span style="width:30px;height:30px;border-radius:7px;background:oklch(30% 0.042 58);display:inline-flex;align-items:center;justify-content:center;">'
-    + '<svg viewBox="8 30 104 60" width="20" height="12" fill="none">'
-    + '<path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"></path>'
-    + '<path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"></path>'
+    + '<span style="width:30px;height:30px;border-radius:7px;background:#f3efe6;box-shadow:inset 0 0 0 1px oklch(85% 0.02 80);display:inline-flex;align-items:center;justify-content:center;">'
+    + '<svg viewBox="8 28 104 64" width="20" height="12" fill="none">'
+    + '<path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"></path>'
+    + '<path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"></path>'
     + '</svg></span>'
     + '<span style="display:inline-flex;align-items:baseline;gap:4px;">'
     + '<span style="font-family:Instrument Serif,Georgia,serif;font-style:italic;font-size:21px;line-height:0.85;color:oklch(63% 0.096 72);">Connect</span>'
@@ -1495,17 +1495,17 @@ window.hubIsReference = function(s){
 window.hubMark = function(size){
   var s = size || 18;
   return '<span class="hub-lockup"><span class="hub-lockup-tile" style="width:' + s + 'px;height:' + s + 'px;border-radius:' + Math.round(s * 0.23) + 'px">'
-    + '<svg viewBox="8 30 104 60" width="' + Math.round(s * 0.66) + '" height="' + Math.round(s * 0.4) + '" fill="none" aria-hidden="true">'
-    + '<path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"></path>'
-    + '<path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"></path></svg></span></span>';
+    + '<svg viewBox="8 28 104 64" width="' + Math.round(s * 0.66) + '" height="' + Math.round(s * 0.4) + '" fill="none" aria-hidden="true">'
+    + '<path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"></path>'
+    + '<path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"></path></svg></span></span>';
 };
 window.hubCredit = function(size){ return window.hubMark(size || 16) + '<span class="hub-cred">designed and built by <b>Ramy</b></span>'; };
 window.hubLockup = function(size){
   var s = size || 18;
   return '<span class="hub-lockup"><span class="hub-lockup-tile" style="width:' + s + 'px;height:' + s + 'px;border-radius:' + Math.round(s * 0.23) + 'px">'
-    + '<svg viewBox="8 30 104 60" width="' + Math.round(s * 0.66) + '" height="' + Math.round(s * 0.4) + '" fill="none" aria-hidden="true">'
-    + '<path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"></path>'
-    + '<path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"></path></svg></span>'
+    + '<svg viewBox="8 28 104 64" width="' + Math.round(s * 0.66) + '" height="' + Math.round(s * 0.4) + '" fill="none" aria-hidden="true">'
+    + '<path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"></path>'
+    + '<path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"></path></svg></span>'
     + '<span class="hub-lockup-c">Connect</span><span class="hub-lockup-l">Lite</span></span>';
 };
 (function(){
@@ -1519,7 +1519,7 @@ window.hubLockup = function(size){
   if (!document.getElementById('hub-brand-css')) {
     var c = document.createElement('style'); c.id = 'hub-brand-css';
     c.textContent = ".hub-lockup{display:inline-flex; align-items:center; gap:7px; vertical-align:middle;}"
-      + ".hub-lockup-tile{display:inline-flex; align-items:center; justify-content:center; flex:none; background:oklch(30% 0.042 58);}"
+      + ".hub-lockup-tile{display:inline-flex; align-items:center; justify-content:center; flex:none; background:#f3efe6; box-shadow:inset 0 0 0 1px oklch(85% 0.02 80);}"
       + ".hub-lockup-c{font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:17px; line-height:.85; color:oklch(63% 0.096 72);}"
       + ".hub-lockup-l{font-family:'Instrument Sans','Karla',sans-serif; font-weight:500; font-size:8px; letter-spacing:.24em; text-transform:uppercase; color:inherit; margin-left:-3px;}"
       + ".hub-brand-foot{display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; margin:28px auto 22px; padding:0 16px;"

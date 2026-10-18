@@ -41,7 +41,7 @@
   window.hubNoLink = function () {
     document.title = 'Connect Lite — a CELTA course, run from one link';
     document.documentElement.style.background = 'var(--sand)';
-    var mark = '<span class="fp-tile"><svg viewBox="8 30 104 60" width="20" height="12" fill="none">'
+    var mark = '<span class="fp-tile"><svg viewBox="8 28 104 64" width="20" height="12" fill="none">'
       + '<path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path>'
       + '<path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path>'
       + '</svg></span><span class="fp-word"><span class="c">Connect</span><span class="l">Lite</span></span>';

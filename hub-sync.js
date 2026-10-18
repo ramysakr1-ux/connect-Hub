@@ -134,10 +134,10 @@
     document.body.innerHTML =
       '<div style="max-width:560px;margin:0 auto;padding:16vh 20px 0;font-family:Karla,Helvetica,sans-serif;color:oklch(23.5% 0.017 65);">'
       + '<div style="display:flex;align-items:center;gap:9px;margin-bottom:26px;">'
-      + '<span style="width:30px;height:30px;border-radius:7px;background:oklch(30% 0.042 58);display:inline-flex;align-items:center;justify-content:center;">'
-      + '<svg viewBox="8 30 104 60" width="20" height="12" fill="none">'
-      + '<path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"></path>'
-      + '<path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"></path>'
+      + '<span style="width:30px;height:30px;border-radius:7px;background:#f3efe6;box-shadow:inset 0 0 0 1px oklch(85% 0.02 80);display:inline-flex;align-items:center;justify-content:center;">'
+      + '<svg viewBox="8 28 104 64" width="20" height="12" fill="none">'
+      + '<path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"></path>'
+      + '<path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"></path>'
       + '</svg></span>'
       + '<span style="display:inline-flex;align-items:baseline;gap:4px;">'
       + '<span style="font-family:Instrument Serif,Georgia,serif;font-style:italic;font-size:21px;line-height:0.85;color:oklch(63% 0.096 72);">Connect</span>'
@@ -740,8 +740,8 @@
     cover.id = 'hubChecking'; cover.setAttribute('role', 'status'); cover.setAttribute('aria-live', 'polite');
     cover.style.cssText = 'position:fixed;inset:0;z-index:2147482000;background:oklch(92.5% 0.012 85);display:flex;align-items:center;justify-content:center;transition:opacity .25s;font-family:Karla,Helvetica,sans-serif;color:oklch(51% 0.017 70);';
     cover.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:14px;">'
-      + '<span style="width:34px;height:34px;border-radius:8px;background:oklch(30% 0.042 58);display:inline-flex;align-items:center;justify-content:center;">'
-      + '<svg viewBox="8 30 104 60" width="22" height="13" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"></path></svg></span>'
+      + '<span style="width:34px;height:34px;border-radius:8px;background:#f3efe6;box-shadow:inset 0 0 0 1px oklch(85% 0.02 80);display:inline-flex;align-items:center;justify-content:center;">'
+      + '<svg viewBox="8 28 104 64" width="22" height="14" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"></path></svg></span>'
       + '<span style="font-size:0.95rem;">Checking your link\u2026</span></div>';
     (document.body || document.documentElement).appendChild(cover);
   } catch (e) { cover = null; }
