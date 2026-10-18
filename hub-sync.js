@@ -37,7 +37,7 @@
        data-sync-ok="..." data-sync-ok-short="...">. */
     if (text === 'Live \u2014 saved to the course as you go' && document.body && document.body.dataset.syncOk) text = narrow ? (document.body.dataset.syncOkShort || document.body.dataset.syncOk) : document.body.dataset.syncOk;
     if (narrow && text === 'Live \u2014 saved to the course as you go') text = 'Saved as you go';
-    try { var cs0 = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; if (cs0.demoToday && kind === 'ok') { text = narrow ? (text === 'Saved as you go' ? 'Saved' : text) + ' \u00b7 Demo ' + cs0.demoToday : text + ' \u00b7 Demo, today is ' + cs0.demoToday; kind = 'demo'; } } catch (e) {}
+    try { var cs0 = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; if (cs0.demoToday && kind === 'ok' && !/^Demo/.test(text)) { text = narrow ? (text === 'Saved as you go' ? 'Saved' : text) + ' \u00b7 Demo ' + cs0.demoToday : text + ' \u00b7 Demo, today is ' + cs0.demoToday; kind = 'demo'; } } catch (e) {}
     /* Until the page has measured its bar (hubReserveForBar, once the app has
        run), the pill sat at the corner -- on top of Turn in for the whole of
        "Loading from the course..." (10 Oct 2026). It measures the bar itself
@@ -162,9 +162,22 @@
   // so a write handed to the beacon as a page closed is re-sent by the next
   // page, and a boot never overwrites a record this browser has changed but
   // the store has not confirmed yet (the cache-first race, 20 Sep 2026).
+  /* A DEMO COURSE IS PRIVATE TO EACH VISIT (Ramy, 19 Oct 2026: "if I'm going to
+     share this with other people, are they going to type over each other?").
+     A demo course (one with a pinned demo date) is read from the store as
+     usual, but nothing is ever sent back: each write is kept in THIS TAB's
+     session storage, laid over the course on every page of the visit, and
+     gone when the tab closes. The next visit starts from the clean demo.
+     hub-store.js refuses the writes that do not come through here (emails,
+     uploads, roster changes). */
+  function demoNow(){ try { var c = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; return !!c.demoToday; } catch (e) { return false; } }
+  var DEMO = demoNow();
+  window.HUB_DEMO = DEMO;
+  function demoSession(){ try { return sessionStorage.getItem('hub:demoVisit') === '1'; } catch (e) { return false; } }
+  function LS(){ return DEMO ? sessionStorage : localStorage; }
   var LEDGER = 'hub:pending:' + mode + ':' + (!S ? '' : mode === 'tutor' ? S.key() : mode === 'assessor' ? S.assessorKey() : mode === 'volunteer' ? S.volunteerToken() : S.token());
-  function ledger(){ return parse((function(){ try { return localStorage.getItem(LEDGER); } catch (e) { return null; } })()) || {}; }
-  function ledgerSet(l){ try { if (Object.keys(l).length) origSet(LEDGER, JSON.stringify(l)); else origRemove(LEDGER); } catch (e) {} }
+  function ledger(){ return parse((function(){ try { return LS().getItem(LEDGER); } catch (e) { return null; } })()) || {}; }
+  function ledgerSet(l){ try { var st = LS(); if (Object.keys(l).length) { if (st === localStorage) origSet(LEDGER, JSON.stringify(l)); else st.setItem(LEDGER, JSON.stringify(l)); } else { if (st === localStorage) origRemove(LEDGER); else st.removeItem(LEDGER); } } catch (e) {} }
   function remember(id, job){ var l = ledger(); l[id] = job; ledgerSet(l); }
   function confirmed(id){ var l = ledger(); if (l[id]) { delete l[id]; ledgerSet(l); } unnote(id); }
 
@@ -287,6 +300,7 @@
     var jobs = queue; queue = {}; clearTimeout(timer); timer = null;
     var keys = Object.keys(jobs);
     if (!keys.length) return Promise.resolve();
+    if (DEMO) { status('Demo \u00b7 kept on this device', 'demo'); return Promise.resolve(); }   /* stays in this tab's ledger; never sent */
     // One at a time: Apps Script copes badly with a burst.
     var all = keys.reduce(function(chain, k){ return chain.then(function(){ return S.call(jobs[k]).then(function(r){ confirmed(k); return r; }, function(err){
       if (err && err.transient) throw err;          // stays in the ledger; the next page sends it again
@@ -308,6 +322,7 @@
   // document still on its way (26 Sep 2026).
   window.HubSync = { flushNow: function(wait){ var f = flush(); return wait ? f : Promise.race([f, new Promise(function(r){ setTimeout(r, 2500); })]); }, mode: mode };
   function flushBeacon(){
+    if (DEMO) { queue = {}; clearTimeout(timer); timer = null; return; }
     var jobs = queue; queue = {}; clearTimeout(timer); timer = null;
     Object.keys(jobs).forEach(function(k){
       var body = JSON.stringify(payloadFor(jobs[k]));
@@ -336,6 +351,7 @@
    * Only when something is genuinely outstanding, so an ordinary close is
    * never interrupted. */
   window.addEventListener('beforeunload', function(e){
+    if (DEMO) return;   /* a demo's writes are meant to stay behind */
     var pending = Object.keys(queue).length || Object.keys(ledger()).length;
     if (!pending) return;
     e.preventDefault();
@@ -419,6 +435,7 @@
   showUnsaved();   // a refusal from an earlier session is still a refusal
   var identity = mode + ':' + (mode === 'tutor' ? S.key() : mode === 'assessor' ? S.assessorKey() : mode === 'volunteer' ? S.volunteerToken() : S.token());
   var cached = false; try { cached = localStorage.getItem('hub:booted') === identity; } catch (e) {}
+  if (DEMO && !demoSession()) cached = false;   /* a new visit: wait for the clean course, not last visit's copy */
   var dirty = {}, started = false;
   // Writes the store never confirmed: their keys are off-limits to the boot,
   // and they go out again now. A roster write is one trainee's one record,
@@ -653,6 +670,11 @@
       Object.keys(rec).forEach(function(kind){ snapshot[token][kind] = JSON.stringify(rec[kind]); });
     });
   }
+  function afterBoot(){
+    var was = DEMO; DEMO = demoNow(); window.HUB_DEMO = DEMO;
+    if (DEMO) { try { sessionStorage.setItem('hub:demoVisit', '1'); } catch (e) {} }
+    if (DEMO && !was) { var l0 = parse((function(){ try { return localStorage.getItem(LEDGER); } catch (e) { return null; } })()); if (l0) { try { origRemove(LEDGER); } catch (e) {} } }
+  }
   function exposeMeta(){
     if (mode === 'trainee') window.HubMe = parse(current('hub:me')) || {};
     if (mode === 'assessor') window.HubAssessor = parse(current('hub:assessor')) || {};
@@ -684,7 +706,8 @@
         rebuildSnapshot();
       }
       try { localStorage.setItem('hub:booted', identity); } catch (e) {}
-      status(mode === 'assessor' ? 'Assessor view \u2014 read-only' : mode === 'volunteer' ? 'Your page' : 'Live \u2014 saved to the course as you go', 'ok');
+      afterBoot();
+      status(DEMO ? 'Demo \u00b7 changes stay on this device' : mode === 'assessor' ? 'Assessor view \u2014 read-only' : mode === 'volunteer' ? 'Your page' : 'Live \u2014 saved to the course as you go', DEMO ? 'demo' : 'ok');
     }, function(err){
       // The store answering "no" is not the network failing. An expired
       // assessor link, a rotated tutor key, a trainee removed from the course:
@@ -727,7 +750,8 @@
     if (p['connect_roster_v1'] != null) p['connect_roster_v1'] = mergeRoster(p['connect_roster_v1']);
     apply(p, function(k){ return !dirty[k] || k === 'connect_roster_v1'; }); exposeMeta(); rebuildSnapshot();
     try { localStorage.setItem('hub:booted', identity); } catch (e) {}
-    status(mode === 'assessor' ? 'Assessor view \u2014 read-only' : mode === 'volunteer' ? 'Your page' : 'Live \u2014 saved to the course as you go', 'ok');
+    afterBoot();
+    status(DEMO ? 'Demo \u00b7 changes stay on this device' : mode === 'assessor' ? 'Assessor view \u2014 read-only' : mode === 'volunteer' ? 'Your page' : 'Live \u2014 saved to the course as you go', DEMO ? 'demo' : 'ok');
   }, function(err){
     if (err && err.refused) { if (err.pin) { return pinRefused(err); } gate(err.message); return 'gated'; }
     status('Could not reach the course \u2014 ' + (err && err.message || err), 'error');
