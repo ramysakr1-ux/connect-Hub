@@ -676,8 +676,8 @@
       if (d !== owner && gb && gb.parentNode === panel) d.appendChild(gb);
       if (d !== owner && WIDE.matches && d.open) d.open = false;
     });
-    if (owner) { var g = owner.querySelector(':scope > .gb'); if (g) { g.__home = owner; panel.innerHTML = ''; panel.appendChild(g); } panel.className = 'mk-help-panel ' + owner.className.replace(/\bguide-box\b/, ''); panel.hidden = false; }
-    else { panel.hidden = true; }
+    if (owner) { var g = owner.querySelector(':scope > .gb'); if (g) { g.__home = owner; panel.innerHTML = ''; panel.appendChild(g); } panel.className = 'mk-help-panel ' + (panel.classList.contains('is-open') ? 'is-open ' : '') + owner.className.replace(/\bguide-box\b/, ''); panel.hidden = false; requestAnimationFrame(function () { panel.classList.add('is-open'); }); }
+    else { panel.classList.remove('is-open'); }
   }
   document.addEventListener('toggle', function (e) {
     var d = e.target; if (!d || !d.closest || !d.closest('#mkHelp .mk-help-grid')) return;
@@ -916,7 +916,8 @@
       '.mk-help-panel .mkc-lead, .mk-help-panel .mkc-note{column-span:all;}',
       '.mk-help-panel.mk-hbox{background:var(--gold-wash); border-color:var(--amber-edge);}',
       /* THE BOXES ARE PILLS (Ramy, 19 Oct 2026: "treat those boxes as pills, so they change colour when you click on them"). The open one fills with the assignment's colour; Before you mark fills teal when it is good to go, amber when it says watch out. Hover moves the border only. */
-      '@media (min-width:900px){ .mk-help-grid > details{border-radius:999px; overflow:hidden;} .mk-help-grid > details > summary{border-bottom:none !important; min-height:44px; display:flex !important; align-items:center;} }',
+      /* The pill never swells (Ramy, 19 Oct 2026: "when I click a pill, the panel jumps"): on a laptop the text is drawn in the panel under the row only, so the frame between the click and the move no longer opens the pill. */
+      '@media (min-width:900px){ .mk-help-grid > details{border-radius:999px; overflow:hidden;} .mk-help-grid > details > summary{border-bottom:none !important; min-height:44px; display:flex !important; align-items:center;} .mk-help-grid > details > .gb{display:none !important;} }',
       '.mk-help-grid > details:not([open]):hover{border-color:var(--as, var(--teal)) !important;}',
       '.mk-help-grid > details[open]{background:var(--as, var(--teal)) !important; border-color:var(--as, var(--teal)) !important;} .mk-help-grid > details[open] > summary{color:var(--paper) !important;} .mk-help-grid > details[open] > summary::after{border-color:var(--paper) !important;}',
       '.mk-help-grid > details.mk-checks.go[open]{background:var(--teal) !important; border-color:var(--teal) !important;}',
