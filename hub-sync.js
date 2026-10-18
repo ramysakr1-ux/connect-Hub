@@ -36,7 +36,8 @@
        "saved as you go" (the assignment editor, 11 Oct 2026): <body
        data-sync-ok="..." data-sync-ok-short="...">. */
     if (text === 'Live \u2014 saved to the course as you go' && document.body && document.body.dataset.syncOk) text = narrow ? (document.body.dataset.syncOkShort || document.body.dataset.syncOk) : document.body.dataset.syncOk;
-    if (narrow && text === 'Live \u2014 saved to the course as you go') text = 'Saved as you go';
+    /* Shorter everywhere (Ramy, 19 Oct 2026: "unnecessarily big"). */
+    if (text === 'Live \u2014 saved to the course as you go') text = 'Saved as you go';
     try { var cs0 = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; if (cs0.demoToday && kind === 'ok' && !/^Demo/.test(text)) { text = narrow ? (text === 'Saved as you go' ? 'Saved' : text) + ' \u00b7 Demo ' + cs0.demoToday : text + ' \u00b7 Demo, today is ' + cs0.demoToday; kind = 'demo'; } } catch (e) {}
     /* Until the page has measured its bar (hubReserveForBar, once the app has
        run), the pill sat at the corner -- on top of Turn in for the whole of
@@ -707,7 +708,7 @@
       }
       try { localStorage.setItem('hub:booted', identity); } catch (e) {}
       afterBoot();
-      status(DEMO ? 'Demo \u00b7 changes stay on this device' : mode === 'assessor' ? 'Assessor view \u2014 read-only' : mode === 'volunteer' ? 'Your page' : 'Live \u2014 saved to the course as you go', DEMO ? 'demo' : 'ok');
+      status(DEMO ? 'Demo \u00b7 kept on this device' : mode === 'assessor' ? 'Assessor view \u2014 read-only' : mode === 'volunteer' ? 'Your page' : 'Live \u2014 saved to the course as you go', DEMO ? 'demo' : 'ok');
     }, function(err){
       // The store answering "no" is not the network failing. An expired
       // assessor link, a rotated tutor key, a trainee removed from the course:
@@ -751,7 +752,7 @@
     apply(p, function(k){ return !dirty[k] || k === 'connect_roster_v1'; }); exposeMeta(); rebuildSnapshot();
     try { localStorage.setItem('hub:booted', identity); } catch (e) {}
     afterBoot();
-    status(DEMO ? 'Demo \u00b7 changes stay on this device' : mode === 'assessor' ? 'Assessor view \u2014 read-only' : mode === 'volunteer' ? 'Your page' : 'Live \u2014 saved to the course as you go', DEMO ? 'demo' : 'ok');
+    status(DEMO ? 'Demo \u00b7 kept on this device' : mode === 'assessor' ? 'Assessor view \u2014 read-only' : mode === 'volunteer' ? 'Your page' : 'Live \u2014 saved to the course as you go', DEMO ? 'demo' : 'ok');
   }, function(err){
     if (err && err.refused) { if (err.pin) { return pinRefused(err); } gate(err.message); return 'gated'; }
     status('Could not reach the course \u2014 ' + (err && err.message || err), 'error');

@@ -581,7 +581,8 @@
      criterion as a chip with its state and how much you have tied to it.
      Tap a chip and it opens over the work with its Met and Not met, its note
      and everything tied to it; tap away and it folds back. */
-  var DROP = null, DOCK_OPEN = false;   /* the bar is shut until you ask for it (Ramy, 18 Oct 2026) */
+  /* No Criteria tab (Ramy, 19 Oct 2026: "get rid of it and keep the ones on top on top... we don't need it if we can see the ones on top all the time"): once the front page scrolls away, the criteria ride along the top by themselves, on a phone too. */
+  var DROP = null, DOCK_OPEN = true;
   function tabEl() { var t = $('mkDockTab'); if (!t) { t = document.createElement('button'); t.id = 'mkDockTab'; t.type = 'button'; t.className = 'mk-dock-tab'; t.setAttribute('data-dktab', ''); t.hidden = true; document.body.appendChild(t); } return t; }
   function dockEl() { var d = $('mkDock'); if (!d) { d = document.createElement('div'); d.id = 'mkDock'; d.className = 'mk-dock'; d.hidden = true; document.body.appendChild(d); } return d; }
   function dropEl() { var d = $('mkDrop'); if (!d) { d = document.createElement('div'); d.id = 'mkDrop'; d.className = 'mk-drop'; d.hidden = true; document.body.appendChild(d); } return d; }
@@ -594,16 +595,14 @@
       var st = m[i] === true ? 'met' : m[i] === false ? 'not' : '', word = st === 'met' ? 'Met' : st === 'not' ? 'Not met' : 'To mark';
       var nt = evidenceFor(i).reduce(function (a, x) { return a + (x.tick ? (x.n || 1) : 1); }, 0);
       return '<button type="button" class="dk-chip ' + st + (DROP === i ? ' open' : '') + '" data-dk="' + i + '" aria-label="Criterion ' + (i + 1) + ': ' + word + (nt ? ', ' + nt + ' marks in the text' : '') + '"><b>' + (i + 1) + '</b><span>' + word + '</span>' + (nt ? '<em>' + nt + '</em>' : '') + '</button>';
-    }).join('') + '</div><span class="dk-prog">' + done + ' of ' + cr.length + ' marked</span><button type="button" class="dk-hide" data-dkhide>Hide</button>';
+    }).join('') + '</div><span class="dk-prog">' + done + ' of ' + cr.length + ' marked</span>';
     tabEl().innerHTML = 'Criteria \u00b7 ' + done + ' of ' + cr.length;
     placeDock();
   }
   function placeDock() {
     var d = $('mkDock'); if (!d || !CTX || !CTX.marking) return;
     var show = dockShould(), tab = tabEl();
-    d.hidden = !(show && DOCK_OPEN); tab.hidden = !(show && !DOCK_OPEN);
-    /* On a phone the open bar runs along the bottom, where the "saved to the course" pill sits: lift the pill above it. */
-    if (innerWidth < 1080 && !d.hidden) document.body.style.setProperty('--sync-bottom', '72px'); else document.body.style.removeProperty('--sync-bottom');
+    d.hidden = !show; tab.hidden = true;
     if (d.hidden) { var dr = $('mkDrop'); if (dr) dr.hidden = true; return; }
     paintDrop();
   }
@@ -620,8 +619,9 @@
       (ev.length ? '<div class="dr-ev"><span>Under this criterion</span>' + ev.map(function (x) { return '<button type="button" data-goto="' + x.id + '">' + (x.tick ? hubTickSVG() + ' ' : '') + '“' + q(x.quote) + '”' + (x.tick ? ((x.n || 1) > 1 ? ' ×' + x.n : '') : ': ' + esc(x.text)) + '</button>'; }).join('') + '</div>' : '<p class="dr-none">Nothing tied to this yet. Select words in the work and tie them to it.</p>');
     dr.hidden = false;
     var chip = d.querySelector('[data-dk="' + i + '"]'), cr = chip ? chip.getBoundingClientRect() : { left: 12 }, db = d.getBoundingClientRect();
-    if (innerWidth >= 1080) { dr.style.top = db.bottom + 'px'; dr.style.bottom = 'auto'; dr.style.left = Math.max(12, Math.min(cr.left, innerWidth - dr.offsetWidth - 12)) + 'px'; }
-    else { dr.style.top = 'auto'; dr.style.bottom = (innerHeight - db.top) + 'px'; dr.style.left = '8px'; }
+    /* the bar is at the top on every screen now, so the panel opens under it */
+    dr.style.top = db.bottom + 'px'; dr.style.bottom = 'auto';
+    dr.style.left = (innerWidth >= 1080 ? Math.max(12, Math.min(cr.left, innerWidth - dr.offsetWidth - 12)) : 8) + 'px';
   }
   var RAF = 0;
   function onScroll() { if (RAF) return; RAF = requestAnimationFrame(function () { RAF = 0; placeDock(); }); }
@@ -879,8 +879,9 @@
       '.mk-help-grid .guide-box, .mk-sbox{background:var(--gold-wash); border-color:var(--amber-edge);} .mk-help-grid .guide-box[open] > summary, .mk-sbox[open] > summary{border-bottom-color:var(--amber-edge);}',
       '.mk-nohelp .mk-tiplink{display:none;}',
       '.mk-tied svg.hub-tick, .dr-ev svg.hub-tick{width:1em; height:1em; vertical-align:-0.18em; margin:0 2px 0 0; filter:none;}',
-      '@media (max-width:1079px){ .mk-dock{top:auto; bottom:0; padding:8px 10px calc(8px + env(safe-area-inset-bottom)); border-bottom:none; border-top:1px solid var(--sand-line); box-shadow:0 -6px 20px oklch(25% 0.02 60 / .12);} .dk-up{display:none;} .dk-prog{font-size:0.72rem;} .dk-chip{padding:5px 10px;} }',
+      '@media (max-width:1079px){ .mk-dock{top:0; bottom:auto; padding:6px 10px; gap:8px;} .mk-dock .dk-prog{display:none;} .mk-dock .dk-up{font-size:0.74rem;} }',
       '.hb-acts{display:flex; gap:18px;}',
+      'body .hub-brand-foot{margin-bottom:96px;}',
       '.mk-sbox{margin:2px 0 10px;} .mk-sbox > summary{font-size:0.8rem;}',
       /* While you read B, C, D are pills like While you read A (Ramy, 19 Oct 2026: "so it's consistent"). The pill sits on its own, the width of its words; open, it fills with the assignment's colour and the text opens full width under it. */
       '.mk-sbox{background:none !important; border:none !important;} .mk-sbox > summary{display:inline-flex !important; align-items:center; min-height:44px; padding:8px 40px 8px 16px !important; border:1px solid var(--amber-edge) !important; border-radius:999px; background:var(--gold-wash); font-size:0.86rem !important; max-width:100%; box-sizing:border-box;}',

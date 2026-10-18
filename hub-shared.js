@@ -1529,6 +1529,8 @@ window.hubLockup = function(size){
       /* the name is gold, the words are not: everywhere the credit appears */
       + ".hub-credit b, .hub-brand-foot b, .hub-cred b, .credit .by b, .fp-foot b, .foot .hub-credit b, .tpcredit .hub-cred b{color:oklch(63% 0.096 72) !important; font-weight:700; opacity:1;}"
       + ".hub-cred{white-space:nowrap;}"
+      /* the words quiet grey, so the gold name stands apart (as in Connect: muted words, Ramy in gold) */
+      + ".hub-credit, .hub-brand-foot, .hub-cred, .credit .by, .fp-foot > span:first-child, .foot .hub-credit{color:oklch(51% 0.017 70) !important;}"
       + "@media print{.hub-brand-foot{display:none !important;}}";
     document.head.appendChild(c);
   }
@@ -2125,7 +2127,7 @@ window.hubHeadHTML = function (text, heads) {
     SCOPE = scope || 'textarea';
     BAR = document.createElement('div'); BAR.className = 'dictbar';
     BAR.innerHTML = '<span class="dict-hint" hidden>Click into a box first</span>' +
-      '<select title="Dictation language"><option value="en-GB">English (UK)</option><option value="en-US">English (US)</option><option value="en-AU">English (Australia)</option></select>' +
+      '<select title="Dictation language: English (UK), (US) or (Australia)" aria-label="Dictation language"><option value="en-GB">UK</option><option value="en-US">US</option><option value="en-AU">AU</option></select>' +
       '<button type="button" class="dictbtn" title="Say the punctuation: comma, full stop, question mark, colon, dash, open bracket, close bracket, new line, new paragraph"><span class="dot"></span><span class="lbl">Dictate</span></button>';
     var sel = BAR.querySelector('select'); sel.value = LANG;
     sel.addEventListener('change', function(){ LANG = sel.value; if (rec) rec.lang = LANG; if (target) target.setAttribute('lang', LANG); if (on) { rec.stop(); setTimeout(function(){ try { rec.start(); } catch (x) {} }, 250); } });
