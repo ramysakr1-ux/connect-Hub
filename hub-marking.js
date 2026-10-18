@@ -398,13 +398,42 @@
      Only what can be told from the text. Each line is ticked, flagged for a
      look, or just information; a flag is never a mark. */
   function snapNow() { var s = CTX.sub; return CTX.marking ? s[CTX.round] : (s.sub2 || s.sub1); }
+  /* BEFORE YOU MARK = THE REQUIREMENTS (Ramy, 19 Oct 2026: "this is done by Lite,
+     this one needs to be clear... it's a requirement, not an assessment
+     criteria... we don't need to duplicate things... people don't like to read
+     too much"). One teal box: what Lite checked, then the few things only a
+     reader can check, each one line, then the hidden word. The guidance's own
+     "Before you mark" block moves here, so How to mark no longer repeats it. */
+  function splitGeneral(text) {
+    var blocks = String(text || '').split(/\n{2,}/), before = [], rest = [];
+    blocks.forEach(function (bl) {
+      var lines = bl.split('\n');
+      if (/^\s*before you mark\s*$/i.test(lines[0])) lines.slice(1).forEach(function (l) { var m = l.match(/^\s*[\u2022\-]\s+(.*)$/); if (m) before.push(m[1]); });
+      else rest.push(bl);
+    });
+    return { before: before, rest: rest.join('\n\n') };
+  }
+  /* what Lite already checks is not repeated: the word count, the AI declaration, a source cited in the text */
+  var LITE_CHECKS = /word count|\bAI\b|published source quoted/i;
+  function oneLine(t) { var m = String(t).match(/^.*?[.!?](?=\s|$)/); return (m ? m[0] : String(t)).trim(); }
   function checksHTML() {
     var snap = snapNow(); if (!snap || !window.hubWorkChecks) return '';
     var items = hubWorkChecks(CTX.a, snap, CTX.key, 'tutor');
     var looks = items.filter(function (x) { return x.state === 'look'; }).length;
-    return '<details class="guide-box mk-checks" data-bk="checks"' + (OPENSET.checks === undefined ? (looks ? ' open' : '') : (OPENSET.checks ? ' open' : '')) + '><summary>Before you mark: ' + items.length + ' checks' + (looks ? ', ' + looks + ' to look at' : ', all clear') + '</summary><div class="gb"><ul class="mkc">' +
-      items.map(function (x) { return '<li class="' + x.state + '"><b>' + (x.state === 'ok' ? 'Done' : x.state === 'look' ? 'Look' : 'Note') + '</b><span>' + esc(x.label) + (x.detail ? '<small>' + esc(x.detail) + '</small>' : '') + '</span></li>'; }).join('') +
-      '</ul><p class="mkc-foot">Lite checks what it can read. The judgement is yours.</p></div></details>';
+    var mine = splitGeneral(CTX.guide && CTX.guide.general).before.filter(function (b) { return !LITE_CHECKS.test(b); }).map(oneLine);
+    var trap = String(CTX.a.trap || '').replace(/[^A-Za-z]/g, '');
+    /* A light first (Ramy, 19 Oct 2026: "Lite is giving you the green light: you're
+       good to go, the requirements have been met. Or watch out, they haven't.
+       And then you make a decision"). */
+    var go = !looks;
+    return '<details class="guide-box mk-checks ' + (go ? 'go' : 'watch') + '" data-bk="checks"' + (OPENSET.checks === undefined ? (looks ? ' open' : '') : (OPENSET.checks ? ' open' : '')) + '><summary><span class="mkc-light"></span>' + (go ? 'Good to go' : 'Watch out: ' + looks + ' to look at') + '<span class="mkc-sub">Before you mark</span></summary><div class="gb">' +
+      '<p class="mkc-lead">' + (go ? 'Every requirement Lite can check is in place. Mark it.' : (looks === 1 ? 'One requirement is' : looks + ' requirements are') + ' missing or unclear. You decide: mark it, or return it unmarked so the trainee can fix it.') + '</p>' +
+      '<p class="mkc-note">Requirements, not criteria: they decide whether the work is ready to mark, not whether it passes.</p>' +
+      '<h4 class="mkc-h">Checked by Lite</h4><ul class="mkc">' +
+      items.map(function (x) { return '<li class="' + x.state + '"><b>' + (x.state === 'ok' ? 'Done' : x.state === 'look' ? 'Look' : 'Note') + '</b><span>' + esc(x.label) + (x.detail ? '<small>' + esc(x.detail) + '</small>' : '') + '</span></li>'; }).join('') + '</ul>' +
+      (mine.length ? '<h4 class="mkc-h">Check yourself</h4><ul class="mkc-mine">' + mine.map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('') + '</ul>' : '') +
+      (trap ? '<p class="mkc-trap">The hidden word is <b>' + esc(trap) + '</b>. If it is in the work, it was probably produced from a copy of the brief. Look more closely, and follow the centre\u2019s usual process.</p>' : '') +
+      '</div></details>';
   }
 
   /* ---- double marking (not blind: the second marker sees everything) ---- */
@@ -638,7 +667,7 @@
     var g = CTX.guide, parts = [];
     var ch = checksHTML(); if (ch) parts.push(ch);
     var fs = firstSectionBox(); if (fs) parts.push(fs);
-    var gen = [g && g.general, CTX.a.trap ? 'The hidden word\n' + hubTrapNote(CTX.a.trap) : '', HOWTO].filter(Boolean).join('\n\n');
+    var gen = [g && splitGeneral(g.general).rest, HOWTO].filter(Boolean).join('\n\n');
     if (gen) parts.push(gbox('how', 'How to mark this assignment', hubGuidanceHTML(gen), 'mk-hbox'));
     if (g && g.sections) parts.push(gbox('bysec', 'Section by section', hubGuidanceHTML(g.sections), 'mk-hbox'));
     var hasTexts = textsOf().length > 0;
@@ -727,6 +756,16 @@
       '.mk-checks{margin:0 0 12px;} .mkc{list-style:none; margin:4px 0 0; padding:0;} .mkc li{display:flex; gap:10px; align-items:flex-start; padding:6px 0; border-top:1px solid var(--row-line); font-size:0.82rem; line-height:1.45;} .mkc li:first-child{border-top:none;}',
       '.mkc b{flex:none; width:40px; font-size:0.7rem; text-transform:uppercase; letter-spacing:.06em; padding-top:1px;} .mkc .ok b{color:var(--mark-met-text);} .mkc .look b{color:var(--gold-deep);} .mkc .info b{color:var(--grey);}',
       '.mkc small{display:block; color:var(--grey); font-size:0.78rem;} .mkc-foot{font-size:0.76rem; color:var(--grey); margin:6px 0 0;}',
+      /* teal, not yellow: it says where the work stands, it is not guidance to read */
+      '.mk-checks{background:color-mix(in oklab, var(--teal) 6%, var(--paper)) !important; border-color:color-mix(in oklab, var(--teal) 32%, transparent) !important; border-top:3px solid var(--teal) !important;}',
+      '.mk-checks[open] > summary{border-bottom-color:color-mix(in oklab, var(--teal) 22%, transparent) !important;}',
+      '.mk-checks.watch{border-top-color:var(--amber, oklch(70% 0.14 70)) !important; background:color-mix(in oklab, var(--amber, oklch(70% 0.14 70)) 7%, var(--paper)) !important; border-color:color-mix(in oklab, var(--amber, oklch(70% 0.14 70)) 35%, transparent) !important;}',
+      '.mk-checks > summary{display:flex !important; align-items:center; gap:9px; flex-wrap:wrap;} .mkc-light{width:11px; height:11px; border-radius:50%; flex:none; background:var(--teal); box-shadow:0 0 0 3px color-mix(in oklab, var(--teal) 18%, transparent);}',
+      '.mk-checks.watch .mkc-light{background:var(--amber, oklch(70% 0.14 70)); box-shadow:0 0 0 3px color-mix(in oklab, var(--amber, oklch(70% 0.14 70)) 22%, transparent);} .mk-checks.watch > summary{color:var(--ink);}',
+      '.mkc-sub{font-size:0.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--grey);}',
+      '.mkc-note{margin:0 0 6px; font-size:0.78rem; color:var(--grey);}',
+      '.mkc-lead{margin:4px 0 4px; font-weight:700; font-size:0.86rem; color:var(--ink);} .mkc-h{margin:10px 0 2px; font:700 0.7rem Karla,sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--teal);}',
+      '.mkc-mine{margin:4px 0 0; padding-left:18px; font-size:0.82rem; line-height:1.45;} .mkc-mine li{margin:3px 0;} .mkc-trap{margin:10px 0 0; padding-top:8px; border-top:1px solid var(--row-line); font-size:0.8rem; line-height:1.45;}',
       '.mk-btn{font:700 0.86rem Karla,sans-serif; border-radius:var(--r-control); padding:9px 16px; cursor:pointer; border:1.5px solid var(--teal); background:var(--paper); color:var(--teal);} .mk-btn.quiet{border-color:var(--sand-line); color:var(--ink); margin-top:10px;}',
       '.mk-second.on{border-left-color:var(--teal);} .mk-second .mk-agree{color:var(--mark-met-text); font-weight:600; font-size:0.86rem; margin:0;}',
       '.mk-disagree{margin:8px 0; padding:8px 11px; border-radius:var(--r-strip); background:var(--gold-wash); border:1px solid var(--amber-edge); border-left:4px solid var(--amber-edge); font-size:0.84rem; line-height:1.5;} .mk-disagree span{display:block; margin-top:4px;} .mk-disagree.small{margin:6px 0 0; font-size:0.8rem;}',
