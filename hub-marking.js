@@ -117,7 +117,7 @@
     var t = e.target; if (!t || !t.closest) return;
     var row = t.closest('.critrow'), mine = row && row.querySelector('[data-tip="' + OPENTIP + '"]');
     /* inside: the panel, its own Guidance link, and its own note. Anything else, even a blank part of the same row, closes it. */
-    if (t.closest('.mk-tipin') || t.closest('[data-tip="' + OPENTIP + '"]') || (mine && t.closest('[data-crit-comment], [data-addnote]'))) return;
+    if (t.closest('.mk-tipin') || t.closest('[data-tip="' + OPENTIP + '"]') || (mine && t.closest('[data-crit-comment], [data-addnote], .mic-wrap'))) return;
     hideTip();
   });
 
@@ -305,12 +305,14 @@
       '<div class="me-foot"><div class="me-tone" role="group" aria-label="What kind of comment"><button type="button" class="tn-good' + (opts.tone === 'good' ? ' on' : '') + '" data-tone="good"><i></i>Good</button><button type="button" class="tn-fix' + (opts.tone === 'fix' ? ' on' : '') + '" data-tone="fix"><i></i>To work on</button></div>' +
       '<div class="me-acts"><button type="button" class="me-cancel">Cancel</button><button type="button" class="me-save" title="Ctrl or \u2318 + Enter">Save</button></div></div>';
     ed.hidden = false;
+    if (window.hubMic) hubMic.attach(ed, '#meText');
     var t = $('meText'); setTimeout(function () { t.focus(); t.setSelectionRange(t.value.length, t.value.length); }, 30);
     t.addEventListener('keydown', function (ev) { if ((ev.metaKey || ev.ctrlKey) && ev.key === 'Enter') { ev.preventDefault(); ed.querySelector('.me-save').click(); } });
-    ed.querySelector('.me-cancel').onclick = function () { ed.hidden = true; };
+    ed.querySelector('.me-cancel').onclick = function () { if (window.hubMic) hubMic.stop(); ed.hidden = true; };
     [].forEach.call(ed.querySelectorAll('[data-mecrit]'), function (b) { b.onclick = function () { var i = +b.getAttribute('data-mecrit'); tied = tied === i ? null : i; [].forEach.call(ed.querySelectorAll('[data-mecrit]'), function (x) { x.classList.toggle('on', +x.getAttribute('data-mecrit') === tied); }); }; });
     [].forEach.call(ed.querySelectorAll('[data-tone]'), function (b) { b.onclick = function () { var was = b.classList.contains('on'); [].forEach.call(ed.querySelectorAll('[data-tone]'), function (x) { x.classList.remove('on'); }); if (!was) b.classList.add('on'); }; });
     ed.querySelector('.me-save').onclick = function () {
+      if (window.hubMic) hubMic.stop();
       var text = t.value.trim(), cv = tied == null ? '' : String(tied), onTone = ed.querySelector('[data-tone].on'), tone = onTone ? onTone.getAttribute('data-tone') : null;
       ed.hidden = true;
       if (!text) { if (opts.id) remove(opts.id); return; }   /* an empty comment is no comment */
@@ -381,7 +383,7 @@
     var t = e.target; if (!t || !t.closest) return;
     [].forEach.call(document.querySelectorAll('[data-crit-comment]:not([hidden])'), function (ta) {
       var i = ta.getAttribute('data-crit-comment');
-      if (t === ta || t.closest('[data-addnote="' + i + '"], [data-tip="' + i + '"]') || (String(OPENTIP) === i && t.closest('.mk-tipin'))) return;
+      if (t === ta || (ta.parentNode && ta.parentNode.contains(t)) || t.closest('[data-addnote="' + i + '"], [data-tip="' + i + '"]') || (String(OPENTIP) === i && t.closest('.mk-tipin'))) return;
       foldNote(ta);
     });
   });
@@ -530,7 +532,7 @@
     var ta = e.target.closest && e.target.closest('[data-snotebox]'); if (!ta || ta.value.trim()) return;
     ta.hidden = true; var b = document.querySelector('[data-snote="' + ta.getAttribute('data-snotebox') + '"]'); if (b) b.hidden = false;
   });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var ov = $('mkPreview'); if (ov && !ov.hidden) ov.hidden = true; var ed = $('mkEditor'); if (ed && !ed.hidden) ed.hidden = true; } });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var ov = $('mkPreview'); if (ov && !ov.hidden) ov.hidden = true; var ed = $('mkEditor'); if (ed && !ed.hidden) { if (window.hubMic) hubMic.stop(); ed.hidden = true; } } });
 
   /* ---- THE TEXTS TO READ (Ramy, 18 Oct 2026: "when the trainee says I chose text B,
      I should be able to click on Text B and see what it is... the text chosen
@@ -653,6 +655,7 @@
       CTX = ctx;
       paintMargin();
       linkTexts();
+      if (window.hubMic) hubMic.attach(document, '#comment, [data-crit-comment]');
       paintStep2();
       paintHelp();
       paintSectionHelp();

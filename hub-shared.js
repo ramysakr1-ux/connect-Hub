@@ -2035,3 +2035,102 @@ window.hubHeadHTML = function (text, heads) {
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
   window.hubTexts = { of: of, chosen: chosen, link: link, open: open, close: close };
 })();
+
+/* ---- A MIC INSIDE THE BOX (Ramy, 18 Oct 2026: "the voice to text option...
+   should that be inside the comment box?"). One small mic in the corner of a
+   writing box: press it and talk, press it again to stop. Spoken punctuation
+   as on the TP feedback page ("comma", "full stop", "new line"). Chrome and
+   Edge only: WebKit (Safari, and every browser on iPhone and iPad) stops after
+   one sentence, so the mic is not shown there; the phone keyboard has its own.
+   hubMic.attach(root, selector) wraps each matching textarea once. */
+(function(){
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var ua = navigator.userAgent;
+  var WEBKIT = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) || (/Safari/.test(ua) && !/Chrome|Chromium|Edg|OPR|Firefox/.test(ua));
+  var OK = !!SR && !WEBKIT;
+  var rec = null, on = false, target = null, btnOn = null;
+  var LANG = /^en-(GB|US|AU)$/.test(navigator.language) ? navigator.language : 'en-GB';
+  var SPOKEN = [
+    [/\b(full stop|fullstop|period)\b/gi,'.'], [/\b(question mark)\b/gi,'?'], [/\b(exclamation mark|exclamation point)\b/gi,'!'],
+    [/\b(comma)\b/gi,','], [/\b(semicolon|semi colon)\b/gi,';'], [/\b(colon)\b/gi,':'],
+    [/\b(new paragraph)\b/gi,'\n\n'], [/\b(new line|next line)\b/gi,'\n'], [/\b(dash|em dash)\b/gi,' — '], [/\b(hyphen)\b/gi,'-'],
+    [/\b(open bracket|open parenthesis)\b/gi,'('], [/\b(close bracket|close parenthesis)\b/gi,')'],
+    [/\b(open quote|open quotes)\b/gi,'“'], [/\b(close quote|close quotes)\b/gi,'”'], [/\b(ellipsis|dot dot dot)\b/gi,'…']
+  ];
+  function punctuate(t){
+    SPOKEN.forEach(function(p){ t = t.replace(p[0], p[1]); });
+    t = t.replace(/\s+([,.;:?!…])/g,'$1').replace(/([,;:])(?=\S)/g,'$1 ').replace(/([.?!])(?=\S)/g,'$1 ')
+         .replace(/\s*\n\s*/g,'\n').replace(/[ \t]{2,}/g,' ').replace(/\(\s+/g,'(').replace(/\s+\)/g,')')
+         .replace(/“\s+/g,'“').replace(/\s+”/g,'”');
+    t = t.replace(/^\s*([a-z])/, function(m,c){ return c.toUpperCase(); });
+    t = t.replace(/([.?!]\s+|\n)([a-z])/g, function(m,p,c){ return p + c.toUpperCase(); });
+    return t.trim();
+  }
+  function insert(text){
+    if (!target || !target.isConnected) { stop(); return; }
+    var s = target.selectionStart == null ? target.value.length : target.selectionStart;
+    var e = target.selectionEnd == null ? target.value.length : target.selectionEnd;
+    var before = target.value.slice(0, s);
+    /* a new sentence after one that ended starts with a capital; mid-sentence it doesn't */
+    if (before.trim() && !/[.?!\n]\s*$/.test(before)) text = text.replace(/^([A-Z])(?![A-Z])/, function(m){ return m.toLowerCase(); });
+    var pad = before && !/\s$/.test(before) ? ' ' : '';
+    target.value = before + pad + text + target.value.slice(e);
+    var pos = s + pad.length + text.length;
+    try { target.setSelectionRange(pos, pos); } catch (x) {}
+    target.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  function paint(){
+    [].forEach.call(document.querySelectorAll('.hub-mic'), function(b){
+      var live = on && b === btnOn;
+      b.classList.toggle('rec', live);
+      b.setAttribute('aria-pressed', live ? 'true' : 'false');
+      b.title = live ? 'Stop dictating' : 'Dictate. Say the punctuation: comma, full stop, question mark, new line.';
+    });
+  }
+  function stop(){ on = false; if (rec) { try { rec.stop(); } catch (x) {} } paint(); }
+  function start(ta, b){
+    if (!rec) {
+      rec = new SR(); rec.continuous = true; rec.interimResults = false; rec.lang = LANG;
+      rec.onresult = function(ev){
+        for (var i = ev.resultIndex; i < ev.results.length; i++) {
+          if (!ev.results[i].isFinal) continue;
+          var t = punctuate(ev.results[i][0].transcript.trim()); if (!t) continue;
+          insert(/[.?!,;:—…]$/.test(t) ? t + ' ' : /\n$/.test(t) ? t : t + '. ');
+        }
+      };
+      rec.onend = function(){ if (on && target && target.isConnected) { try { rec.start(); } catch (x) {} } else { on = false; paint(); } };
+      rec.onerror = function(ev){ if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') { on = false; paint(); } };
+    }
+    target = ta; btnOn = b; ta.setAttribute('lang', LANG); ta.focus();
+    if (!on) { on = true; try { rec.start(); } catch (x) {} }
+    paint();
+  }
+  function attach(root, sel){
+    if (!OK || !root) return;
+    [].forEach.call(root.querySelectorAll(sel), function(ta){
+      if (ta.parentNode && ta.parentNode.classList && ta.parentNode.classList.contains('mic-wrap')) return;
+      var w = document.createElement('div'); w.className = 'mic-wrap';
+      ta.parentNode.insertBefore(w, ta); w.appendChild(ta);
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'hub-mic'; b.setAttribute('aria-label', 'Dictate');
+      b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg>';
+      b.addEventListener('mousedown', function(e){ e.preventDefault(); });   /* the box keeps its cursor */
+      b.addEventListener('click', function(){ if (on && btnOn === b) stop(); else start(ta, b); });
+      w.appendChild(b);
+    });
+    paint();
+  }
+  if (OK) {
+    var st = document.createElement('style');
+    st.textContent =
+      '.mic-wrap{position:relative;} .mic-wrap:has(> textarea[hidden]){display:none;} .mic-wrap > textarea{padding-right:46px !important;}' +
+      '.hub-mic{position:absolute; right:16px; bottom:10px; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; padding:0; cursor:pointer;' +
+        'border:1.5px solid var(--sand-line); background:var(--paper); color:var(--teal);}' +
+      '.hub-mic svg{width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round;}' +
+      '.hub-mic:hover{border-color:var(--teal) !important; background:var(--paper) !important; box-shadow:none !important;}' +
+      '.hub-mic.rec{border-color:var(--brick, oklch(52% 0.15 30)) !important; color:var(--brick, oklch(52% 0.15 30)); animation:hubmic 1.4s ease-in-out infinite;}' +
+      '@keyframes hubmic{0%,100%{box-shadow:0 0 0 0 oklch(52% 0.15 30 / .35);}50%{box-shadow:0 0 0 6px oklch(52% 0.15 30 / 0);}}' +
+      '@media (prefers-reduced-motion: reduce){ .hub-mic.rec{animation:none;} } @media print{ .hub-mic{display:none !important;} }';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  window.hubMic = { ok: OK, attach: attach, stop: stop };
+})();
