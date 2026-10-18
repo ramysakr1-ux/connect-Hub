@@ -709,7 +709,53 @@
     if (e.target.closest && e.target.closest('[data-helptoggle]')) { try { localStorage.setItem('mk:hideHelp', helpHidden() ? '' : '1'); } catch (x) {} paintHelp(); hideTip(); }
   });
 
+  /* ---- COMMENTS BROUGHT BACK (Ramy, 19 Oct 2026: a tutor marks in a Google Doc
+     or Word, on the side or underneath, or an AI does, and it comes back into
+     Lite). Each comment arrives with the words it is about; those words are
+     found in the trainee's work (curly quotes, dashes and spacing forgiven,
+     capitals ignored) and the comment goes in the margin beside them. A
+     comment whose words cannot be found is handed back, never guessed. */
+  function normCh(c) { return /[\u2018\u2019\u02bc]/.test(c) ? "'" : /[\u201c\u201d]/.test(c) ? '"' : /[\u2013\u2014]/.test(c) ? '-' : /\s/.test(c) ? ' ' : c.toLowerCase(); }
+  function findWords(words) {
+    var want = ''; String(words || '').split('').forEach(function (c) { var n = normCh(c); if (n === ' ' && (!want || want[want.length - 1] === ' ')) return; want += n; });
+    want = want.trim(); if (want.length < 3) return null;
+    var round = writeRound(), hit = null;
+    [].some.call(document.querySelectorAll('#mkWork .mloc[data-round="' + round + '"]'), function (loc) {
+      var box = loc.querySelector('.readonly'); if (!box) return false;
+      var all = hubFlat(box).all, flat = '', map = [];
+      for (var i = 0; i < all.length; i++) { var n = normCh(all[i]); if (n === ' ' && (!flat || flat[flat.length - 1] === ' ')) continue; flat += n; map.push(i); }
+      var at = flat.indexOf(want); if (at < 0) return false;
+      hit = { loc: loc.getAttribute('data-loc'), quote: all.slice(map[at], map[at + want.length - 1] + 1) }; return true;
+    });
+    return hit;
+  }
+  function placeComments(items) {
+    var l = list(writeRound()), ids = [], placed = 0, unplaced = [];
+    (items || []).forEach(function (it) {
+      var text = String(it.text || '').trim(); if (!text) return;
+      var tone = null, tick = /^(\u2713|\u2714|tick|ticked)\.?$/i.test(text);
+      var mt = text.match(/^(good|to work on)\s*[:\-\u2013\u2014]\s*([\s\S]+)$/i); if (mt) { tone = /^good/i.test(mt[1]) ? 'good' : 'fix'; text = mt[2].trim(); }
+      /* the whole paragraph when it is short; a long one is found by its first sentence and highlighted whole */
+      var hit = findWords(it.anchor);
+      if (!hit && it.anchor) { var first = String(it.anchor).split(/(?<=[.!?])\s/)[0]; if (first && first !== it.anchor) hit = findWords(first); }
+      if (!hit) { unplaced.push(text); return; }
+      var rec = tick
+        ? { id: newId('t'), loc: hit.loc, quote: hit.quote, text: '', tick: true, n: 1, crit: null, by: CTX.me, role: secondMode() ? 'second' : 'first', at: new Date().toISOString() }
+        : { id: newId('m'), loc: hit.loc, quote: hit.quote, text: text, crit: null, tone: tone, by: CTX.me, role: secondMode() ? 'second' : 'first', at: new Date().toISOString() };
+      l.push(rec); ids.push(rec.id); placed++;
+    });
+    if (placed) { CTX.save(); CTX.rerender(); }
+    return { placed: placed, unplaced: unplaced, ids: ids };
+  }
+  function removeIds(ids) {
+    var l = list(writeRound()), had = l.length;
+    for (var k = l.length - 1; k >= 0; k--) if ((ids || []).indexOf(l[k].id) >= 0) l.splice(k, 1);
+    if (l.length !== had) { CTX.save(); CTX.rerender(); }
+  }
+
   window.hubMarking = {
+    placeComments: function (items) { return CTX ? placeComments(items) : { placed: 0, unplaced: [], ids: [] }; },
+    removeIds: function (ids) { if (CTX) removeIds(ids); },
     afterRender: function (ctx) {
       CTX = ctx;
       paintMargin();

@@ -13,7 +13,7 @@
 <title>Connect Lite — Mark assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610181440">
+<link rel="stylesheet" href="hub-tokens.css?v=202610181545">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -182,7 +182,7 @@
   @media(prefers-reduced-motion:reduce){ .mv2-seg{transition:none;} .critrow.mv2-hit{animation:none;} }
   @media print{ .mv2{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610181440">
+<link rel="stylesheet" href="hub-house.css?v=202610181545">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -191,15 +191,16 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610181440"></script>
-<script src="hub-exchange.js?v=202610181440"></script>
-<script src="hub-marking.js?v=202610181440"></script>
-<script src="hub-due.js?v=202610181440"></script>
-<script src="hub-shared.js?v=202610181440"></script>
-<script src="hub-store.js?v=202610181440"></script>
-<script src="hub-say.js?v=202610181440"></script>
-<script src="hub-sync.js?v=202610181440"></script>
-<script src="fol-interview.js?v=202610181440"></script>
+<script src="assignment-defaults.js?v=202610181545"></script>
+<script src="hub-exchange.js?v=202610181545"></script>
+<script src="hub-docx.js?v=202610181545"></script>
+<script src="hub-marking.js?v=202610181545"></script>
+<script src="hub-due.js?v=202610181545"></script>
+<script src="hub-shared.js?v=202610181545"></script>
+<script src="hub-store.js?v=202610181545"></script>
+<script src="hub-say.js?v=202610181545"></script>
+<script src="hub-sync.js?v=202610181545"></script>
+<script src="fol-interview.js?v=202610181545"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -634,6 +635,8 @@ function render(){
             <button type="button" class="btn btn-gold" id="xCopy">Copy</button>
             <span class="note" style="margin:0;">the submission and the criteria, as text.</span>
             <button type="button" class="btn btn-quiet" id="xPasteToggle" style="margin-left:auto;">Paste something back</button>
+            <button type="button" class="btn btn-quiet" id="xDocx" title="A Word file (.docx) with comments on the side: download your Google Doc as Word and bring it here">Bring back a Word file</button>
+            <input type="file" id="xDocxFile" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
           </div>
           <div id="xPaste" style="display:none; margin-top:12px;">
             <textarea id="xText" rows="4" placeholder="Paste here — it goes straight into the criteria. The outcome is still worked out from the marks."></textarea>
@@ -848,7 +851,8 @@ function xSubmissionMd(a, sub, round){
 function xBrief(a, sub, round){
   const sl = xSlotsFor(a);
   const md = [xSubmissionMd(a, sub, round), '---', '', '# Marking \u2014 fill in below', '',
-    'You are helping a CELTA tutor mark the written assignment above against its criteria. The tutor will dictate. Under each criterion write, on the first line, exactly "Met" or "Not met", then the tutor\u2019s comment to the trainee (second person, specific). Keep every heading exactly as it is. Leave a criterion empty if the tutor has not decided.', ''];
+    'You are helping a CELTA tutor mark the written assignment above against its criteria. The tutor will dictate. Under each criterion write, on the first line, exactly "Met" or "Not met", then the tutor\u2019s comment to the trainee (second person, specific). Keep every heading exactly as it is. Leave a criterion empty if the tutor has not decided.', '',
+    'To comment on the work itself, put a line starting with >> right under the paragraph it is about, with the exact words in quotes, then the comment: >> "the exact words": your comment. Start the comment with "Good:" or "To work on:" if it is one of those.', ''];
   sl.forEach(s => { md.push('## ' + s.heading); md.push(''); md.push(''); });
   md.push('<!-- lite:slots ' + JSON.stringify(sl.map(s=>[s.id,s.heading])) + ' -->');
   return md.join('\n');
@@ -858,8 +862,21 @@ function wireExchange(){
   const a = WORDING[CURRENT], sub = subFor(CURRENT);
   const round = sub.stage==='resubmitted' ? 'sub2' : 'sub1';
   let PENDING = null;
+  /* what the last read placed in the margin: a re-read replaces it, never doubles it. On window,
+     because every render builds this panel afresh and a local would forget. */
+  if (!window.X_LAST_PUT) window.X_LAST_PUT = { ids: [] };
   $('xCopy').addEventListener('click', ()=> hubCopyButton($('xCopy'), xBrief(a, sub, round)));
   $('xPasteToggle').addEventListener('click', ()=>{ const open = $('xPaste').style.display==='none'; $('xPaste').style.display = open?'':'none'; $('xPasteToggle').textContent = open ? 'Hide' : 'Paste something back'; if (open) $('xText').focus(); });
+  $('xDocx').addEventListener('click', ()=> $('xDocxFile').click());
+  $('xDocxFile').addEventListener('change', async ()=>{
+    const f = $('xDocxFile').files[0]; $('xDocxFile').value = ''; if (!f) return;
+    const d = $('xDone'); d.style.display = ''; d.textContent = 'Reading ' + f.name + '\u2026';
+    try {
+      const got = await window.hubDocxComments(f);
+      if (!got.comments.length && !/Criterion \d|General comment/i.test(got.text) && !/^\s*>>/m.test(got.text)) { d.textContent = 'There were no comments in that file. Comments made on the side of a Google Doc come with it when you download it as Word (File, Download, Microsoft Word).'; return; }
+      readNow(got.text, got.comments);
+    } catch (e) { d.textContent = String(e && e.message || e); }
+  });
   let readTimer = null;
   $('xText').addEventListener('input', ()=>{ clearTimeout(readTimer); readTimer = setTimeout(readNow, 250); });
   document.addEventListener('paste', (e)=>{
@@ -869,7 +886,7 @@ function wireExchange(){
        this gate swallowed the paste silently even though the reader handles
        bold (24 Sep 2026). Same two shapes the reader accepts. */
     if (!txt) return;
-    if (!/^\s*#/m.test(txt) && !/^\s*(?:\*\*|__).+(?:\*\*|__)\s*:?\s*$/m.test(txt)) {
+    if (!/^\s*#/m.test(txt) && !/^\s*(?:\*\*|__).+(?:\*\*|__)\s*:?\s*$/m.test(txt) && !/^\s*>>/m.test(txt)) {
       /* Said out loud, not ignored (Ramy, 18 Oct 2026: "I pasted and nothing happened"). */
       if (txt.length > 20) { const d = $('xDone'); if (d) { d.style.display = ''; d.textContent = 'That paste did not look like a marked reply, so nothing was filled in. A marked reply keeps its headings (\u201CCriterion 1 \u2014 \u2026\u201D, \u201CGeneral comment\u201D), and each criterion starts with Met or Not met.'; $('xchg').scrollIntoView({block:'center', behavior:'smooth'}); } }
       return;
@@ -877,8 +894,24 @@ function wireExchange(){
     e.preventDefault(); if ($('xPaste').style.display==='none') $('xPasteToggle').click();
     $('xText').value = txt; readNow(); $('xchg').scrollIntoView({block:'start', behavior:'smooth'});
   });
-  function readNow(){
-    const txt = $('xText').value; if (!txt.trim()) return;
+  /* Lines that start with >> are comments on the work: >> "the words": the comment,
+     or >> the comment, right under the paragraph it is about (19 Oct 2026). */
+  function markerComments(txt){
+    const out = []; let prev = '';
+    String(txt||'').split(/\r?\n/).forEach(raw => {
+      const l = raw.trim(); if (!l) return;
+      const m = l.match(/^>>\s*(.*)$/);
+      if (!m) { prev = l.replace(/^#+\s*/, ''); return; }
+      let body = m[1], anchor = prev, text = body;
+      const q = body.match(/^["\u201c'\u2018](.+?)["\u201d'\u2019]\s*[:\-\u2013\u2014]?\s*([\s\S]*)$/);
+      if (q) { anchor = q[1]; text = q[2]; }
+      if (text.trim()) out.push({ anchor, text: text.trim() });
+    });
+    return out;
+  }
+  function readNow(srcText, sideComments){
+    const txt = typeof srcText === 'string' ? srcText : $('xText').value; if (!txt.trim()) return;
+    const notes = (sideComments || []).concat(markerComments(txt));
     const man = xSlotsFor(a); const byName = {}; man.forEach(m => byName[m.heading.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()] = m.id);
     man.forEach(m => { const mm = m.heading.match(/^(Criterion \d+)/); if (mm) byName[mm[1].toLowerCase()] = m.id; });
     const norm = h => String(h||'').toLowerCase().replace(/[\u2018\u2019\u201c\u201d"']/g,'').replace(/[^a-z0-9]+/g,' ').trim();
@@ -905,7 +938,7 @@ function wireExchange(){
     });
     const done = $('xDone'); done.style.display = '';
     const ids = Object.keys(found);
-    if (!ids.length) { done.textContent = 'Nothing in that landed \u2014 the headings ("Criterion 1 \u2014 \u2026", "General comment") need to be kept.'; return; }
+    if (!ids.length && !notes.length) { done.textContent = 'Nothing in that landed \u2014 the headings ("Criterion 1 \u2014 \u2026", "General comment") need to be kept, and a comment on the work needs a line starting with >>, or a comment on the side of a Word file.'; return; }
     /* the form as it was, for Undo */
     const before = { marks: (sub.criteriaMarks[round]||[]).slice(), comments: [...document.querySelectorAll('[data-crit-comment]')].map(el=>el.value), general: ($('comment')||{}).value || '' };
     sub.criteriaMarks[round] = sub.criteriaMarks[round] || []; sub.criteriaComments[round] = sub.criteriaComments[round] || [];
@@ -920,13 +953,26 @@ function wireExchange(){
       if (found[id].text) sub.criteriaComments[round][i] = found[id].text;
     });
     saveSubs(); render();
+    /* the comments on the work, into the margin beside their words */
+    if (window.X_LAST_PUT.ids.length && window.hubMarking && hubMarking.removeIds) hubMarking.removeIds(window.X_LAST_PUT.ids);
+    const put = (notes.length && window.hubMarking && hubMarking.placeComments) ? hubMarking.placeComments(notes) : { placed: 0, unplaced: [], ids: [] };
+    window.X_LAST_PUT = put;
     const names = {}; man.forEach(m => names[m.id] = m.heading);
     const d2 = $('xDone'); d2.style.display = '';
     const nc = ids.filter(id => /^crit/.test(id)).length, gc = ids.indexOf('comment') >= 0;
-    d2.innerHTML = 'Filled ' + (nc ? nc + (nc === 1 ? ' criterion' : ' criteria') : '') + (nc && gc ? ' and ' : '') + (gc ? 'the general comment' : '') + '. Check them, then save.' + (unplaced.length ? ' Not placed: ' + unplaced.map(esc).join(', ') + '.' : '') + ' <button type="button" class="example-btn" id="xUndo">Undo</button>';
+    const parts = [];
+    if (nc || gc) parts.push('filled ' + (nc ? nc + (nc === 1 ? ' criterion' : ' criteria') : '') + (nc && gc ? ' and ' : '') + (gc ? 'the general comment' : ''));
+    if (put.placed) parts.push('placed ' + put.placed + (put.placed === 1 ? ' comment' : ' comments') + ' in the margin');
+    const said = parts.join(', and ');
+    d2.innerHTML = (said ? said.charAt(0).toUpperCase() + said.slice(1) + '. Check them, then save.' : '')
+      + (put.unplaced.length ? ' <span class="x-unplaced">' + (put.unplaced.length === 1 ? 'One comment' : put.unplaced.length + ' comments') + ' could not be matched to the words in the work, so ' + (put.unplaced.length === 1 ? 'it is' : 'they are') + ' here to add by hand: ' + put.unplaced.map(t => '\u201c' + esc(t.length > 90 ? t.slice(0, 88) + '\u2026' : t) + '\u201d').join('; ') + '.</span>' : '')
+      + (unplaced.length ? ' Headings not recognised: ' + unplaced.map(esc).join(', ') + '.' : '') + ' <button type="button" class="example-btn" id="xUndo">Undo</button>';
     $('xUndo').addEventListener('click', ()=>{
       sub.criteriaMarks[round] = before.marks; before.comments.forEach((v,i)=>{ sub.criteriaComments[round][i] = v; });
-      sub.feedback[gk] = before.general; saveSubs(); render(); const d3 = $('xDone'); if (d3) { d3.style.display=''; d3.textContent = 'Put back as it was.'; }
+      sub.feedback[gk] = before.general; saveSubs(); render();
+      if (put.ids.length && window.hubMarking && hubMarking.removeIds) hubMarking.removeIds(put.ids);
+      window.X_LAST_PUT = { ids: [] };
+      const d3 = $('xDone'); if (d3) { d3.style.display=''; d3.textContent = 'Put back as it was.'; }
     });
   }
 }

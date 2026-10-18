@@ -126,6 +126,38 @@
     const bytes = await entryBytes(buf, 'word/document.xml');
     return xmlToText(new TextDecoder('utf-8').decode(bytes));
   };
+  /* THE SIDE COMMENTS (Ramy, 19 Oct 2026: tutors "set in their ways" copy the
+     work into a Google Doc, comment on the side, and want it back in Lite).
+     Copying out of a Doc drops its comments; a Word download keeps them: each
+     <w:comment> in word/comments.xml, and in document.xml the words it hangs
+     on, between commentRangeStart and commentRangeEnd with the same id.
+     window.hubDocxComments(file) -> Promise<{ text, comments: [{ anchor, text, author }] }>,
+     the comments in document order, the text as hubDocxText gives it. */
+  window.hubDocxComments = async function(file){
+    const buf = await file.arrayBuffer();
+    const docXml = new TextDecoder('utf-8').decode(await entryBytes(buf, 'word/document.xml'));
+    let comXml = '';
+    try { comXml = new TextDecoder('utf-8').decode(await entryBytes(buf, 'word/comments.xml')); } catch (e) { comXml = ''; }
+    const bodies = {};
+    (comXml.match(/<w:comment\b[\s\S]*?<\/w:comment>/g) || []).forEach(c => {
+      const id = (c.match(/w:id="(\d+)"/) || [])[1]; if (id == null) return;
+      const author = decode((c.match(/w:author="([^"]*)"/) || [])[1] || '');
+      const paras = (c.match(/<w:p[ >][\s\S]*?<\/w:p>/g) || []).map(pp => decode((pp.match(/<w:t(?: [^>]*)?>([^<]*)<\/w:t>/g) || []).map(t => t.replace(/<[^>]+>/g, '')).join(''))).filter(Boolean);
+      bodies[id] = { text: paras.join('\n').trim(), author };
+    });
+    /* Walk the document once: text runs, paragraph ends, range starts and ends. */
+    const open = {}, anchors = {}, order = [];
+    const re = /<w:commentRangeStart w:id="(\d+)"[^>]*\/>|<w:commentRangeEnd w:id="(\d+)"[^>]*\/>|<w:t(?: [^>]*)?>([^<]*)<\/w:t>|<w:tab[^>]*\/>|<\/w:p>/g;
+    let m;
+    while ((m = re.exec(docXml))) {
+      if (m[1] != null) { open[m[1]] = ''; if (order.indexOf(m[1]) < 0) order.push(m[1]); continue; }
+      if (m[2] != null) { if (open[m[2]] != null) { anchors[m[2]] = open[m[2]]; delete open[m[2]]; } continue; }
+      const piece = m[3] != null ? decode(m[3]) : ' ';
+      Object.keys(open).forEach(k => { open[k] += piece; });
+    }
+    const comments = order.filter(id => bodies[id] && bodies[id].text).map(id => ({ anchor: String(anchors[id] || '').replace(/\s+/g, ' ').trim(), text: bodies[id].text, author: bodies[id].author }));
+    return { text: xmlToText(docXml), comments };
+  };
   /* Any file the editors accept: Word through the reader above, text as is. */
   window.hubFileText = function(file){
     if (/\.docx$/i.test(file.name)) return window.hubDocxText(file);
