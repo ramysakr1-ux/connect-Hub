@@ -72,7 +72,8 @@
      is flagged, and the flag should stay in view. */
   document.addEventListener('click', function (e) {
     var t = e.target; if (!t || !t.closest) return;
-    [].forEach.call(document.querySelectorAll('details.mk-hbox[open], details.mk-sbox[open]'), function (d) { if (!d.contains(t)) d.open = false; });
+    var inPanel = t.closest('#mkHelpPanel');
+    [].forEach.call(document.querySelectorAll('details.mk-hbox[open], details.mk-sbox[open]'), function (d) { if (!d.contains(t) && !(inPanel && inPanel.firstChild && inPanel.firstChild.__home === d)) d.open = false; });
   });
   function gbox(key, title, bodyHtml, cls) { return '<details class="guide-box ' + (cls || '') + '" data-bk="' + key + '"' + (OPENSET[key] ? ' open' : '') + '><summary>' + esc(title) + '</summary><div class="gb">' + bodyHtml + '</div></details>'; }
   function firstGuidedSection() {
@@ -658,6 +659,33 @@
     '- Text A, B or C in the writing, and Text chosen, open the texts. Read the texts opens all of them.',
     '- On the front page, M marks a criterion met and N not met, and J and K move between criteria.',
     '- The Criteria tab, bottom right, keeps the criteria with you as you read.'].join('\n');
+  /* THE OPEN BOX READS ACROSS (Ramy, 19 Oct 2026: "instead of the box opening
+     vertically, it could just open horizontally... it covers the whole... easier
+     to read"). On a laptop the row of boxes stays put and the open one's text
+     moves into one panel under the row, the full width, in columns. One box at
+     a time. On a phone the boxes are already full width and open in place. */
+  var WIDE = window.matchMedia ? window.matchMedia('(min-width: 900px)') : { matches: true };
+  function syncPanel() {
+    var panel = $('mkHelpPanel'); if (!panel) return;
+    var boxes = [].slice.call(document.querySelectorAll('#mkHelp .mk-help-grid > details'));
+    var open = WIDE.matches ? boxes.filter(function (d) { return d.open; }) : [];
+    var owner = open[open.length - 1] || null;
+    boxes.forEach(function (d) {
+      var gb = d.querySelector(':scope > .gb') || (panel.firstChild && panel.firstChild.__home === d ? panel.firstChild : null);
+      if (d !== owner && gb && gb.parentNode === panel) d.appendChild(gb);
+      if (d !== owner && WIDE.matches && d.open) d.open = false;
+    });
+    if (owner) { var g = owner.querySelector(':scope > .gb'); if (g) { g.__home = owner; panel.innerHTML = ''; panel.appendChild(g); } panel.className = 'mk-help-panel ' + owner.className.replace(/\bguide-box\b/, ''); panel.hidden = false; }
+    else { panel.hidden = true; }
+  }
+  document.addEventListener('toggle', function (e) {
+    var d = e.target; if (!d || !d.closest || !d.closest('#mkHelp .mk-help-grid')) return;
+    if (d.open && WIDE.matches) [].forEach.call(document.querySelectorAll('#mkHelp .mk-help-grid > details[open]'), function (x) { if (x !== d) x.open = false; });
+    if (d.open) { var p = $('mkHelpPanel'); if (p) { var cur = p.firstChild; if (cur && cur.__home && cur.__home !== d) cur.__home.appendChild(cur); } }
+    else { var p2 = $('mkHelpPanel'); if (p2 && p2.firstChild && p2.firstChild.__home === d) d.appendChild(p2.firstChild); }
+    syncPanel();
+  }, true);
+  if (WIDE.addEventListener) WIDE.addEventListener('change', syncPanel);
   function helpHidden() { try { return localStorage.getItem('mk:hideHelp') === '1'; } catch (e) { return false; } }
   function paintHelp() {
     var host = $('mkHelp'); if (!host) return;
@@ -667,12 +695,15 @@
     var g = CTX.guide, parts = [];
     var ch = checksHTML(); if (ch) parts.push(ch);
     var fs = firstSectionBox(); if (fs) parts.push(fs);
-    var gen = [g && splitGeneral(g.general).rest, HOWTO].filter(Boolean).join('\n\n');
+    var gen = g ? splitGeneral(g.general).rest : '';
     if (gen) parts.push(gbox('how', 'How to mark this assignment', hubGuidanceHTML(gen), 'mk-hbox'));
     if (g && g.sections) parts.push(gbox('bysec', 'Section by section', hubGuidanceHTML(g.sections), 'mk-hbox'));
+    /* its own box (Ramy, 19 Oct 2026), so How to mark is only about the assignment */
+    parts.push(gbox('lite', 'Marking in Lite', hubGuidanceHTML(HOWTO.split('\n').slice(1).join('\n')), 'mk-hbox'));
     var hasTexts = textsOf().length > 0;
     if (!parts.length && !hasTexts) { host.innerHTML = ''; return; }
-    host.innerHTML = '<div class="mk-help-bar"><span>Marking help</span><span class="hb-acts">' + (hasTexts ? '<button type="button" data-readtexts>Read the texts</button>' : '') + (parts.length ? '<button type="button" data-helptoggle>' + (hidden ? 'Show the guidance' : 'Hide the guidance') + '</button>' : '') + '</span></div>' + (hidden || !parts.length ? '' : '<div class="mk-help-grid">' + parts.join('') + '</div>');
+    host.innerHTML = '<div class="mk-help-bar"><span>Marking help</span><span class="hb-acts">' + (hasTexts ? '<button type="button" data-readtexts>Read the texts</button>' : '') + (parts.length ? '<button type="button" data-helptoggle>' + (hidden ? 'Show the guidance' : 'Hide the guidance') + '</button>' : '') + '</span></div>' + (hidden || !parts.length ? '' : '<div class="mk-help-grid">' + parts.join('') + '</div><div class="mk-help-panel" id="mkHelpPanel" hidden></div>');
+    syncPanel();
   }
   document.addEventListener('click', function (e) {
     if (e.target.closest && e.target.closest('[data-helptoggle]')) { try { localStorage.setItem('mk:hideHelp', helpHidden() ? '' : '1'); } catch (x) {} paintHelp(); hideTip(); }
@@ -831,7 +862,13 @@
       '.dr-ev{margin-top:10px; padding:7px 10px; border-radius:var(--r-strip); background:var(--gold-wash); font-size:0.8rem;} .dr-ev span{display:block; font-weight:700; font-size:0.72rem; text-transform:uppercase; letter-spacing:.06em; color:var(--gold-deep); margin:0 0 3px;}',
       '.dr-ev button{display:block; text-align:left; background:none; border:none; padding:3px 0; font:inherit; color:var(--ink); cursor:pointer;} .dr-ev button:hover{background:none !important; box-shadow:none !important; text-decoration:underline;} .dr-none{font-size:0.8rem; color:var(--grey); margin:10px 0 0;}',
       '.mk-help-bar{display:flex; justify-content:space-between; align-items:center; margin:0 0 6px; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--grey);} .mk-help-bar button{background:none; border:none; font:600 0.8rem Karla,sans-serif; letter-spacing:0; text-transform:none; color:var(--teal); text-decoration:underline; text-decoration-color:var(--sand-line); text-underline-offset:3px; cursor:pointer;} .mk-help-bar button:hover{background:none !important; box-shadow:none !important;}',
-      '.mk-help-grid{display:flex; flex-wrap:wrap; gap:8px; align-items:flex-start;} .mk-help-grid .guide-box{flex:1 1 300px; margin:0;}',
+      '.mk-help-panel{margin:8px 0 0; border:1px solid var(--sand-line); border-radius:var(--r-strip); background:var(--sand); font-size:0.88rem; line-height:1.6;} .mk-help-panel[hidden]{display:none;}',
+      '.mk-help-panel > .gb{padding:12px 20px 14px; column-width:340px; column-gap:36px; column-rule:1px solid color-mix(in oklab, var(--sand-line) 70%, transparent);} .mk-help-panel h4{break-after:avoid;} .mk-help-panel li, .mk-help-panel p{break-inside:avoid;}',
+      '.mk-help-panel.mk-checks.go{background:color-mix(in oklab, var(--teal) 6%, var(--paper)); border-color:color-mix(in oklab, var(--teal) 32%, transparent); border-top:3px solid var(--teal);} .mk-help-panel.mk-checks.watch{background:color-mix(in oklab, oklch(70% 0.14 70) 7%, var(--paper)); border-color:color-mix(in oklab, oklch(70% 0.14 70) 35%, transparent); border-top:3px solid oklch(70% 0.14 70);}',
+      '.mk-help-panel .mkc-lead, .mk-help-panel .mkc-note{column-span:all;}',
+      '.mk-help-panel.mk-hbox{background:var(--gold-wash); border-color:var(--amber-edge);}',
+      '@media (min-width:900px){ .mk-help-grid > details[open] > summary{border-bottom:none !important; box-shadow:inset 0 -3px 0 var(--as, var(--teal));} }',
+      '.mk-help-grid{display:flex; flex-wrap:wrap; gap:8px; align-items:flex-start;} .mk-help-grid .guide-box{flex:1 1 220px; margin:0;}',
       '.mk-help-grid .guide-box, .mk-sbox{background:var(--gold-wash); border-color:var(--amber-edge);} .mk-help-grid .guide-box[open] > summary, .mk-sbox[open] > summary{border-bottom-color:var(--amber-edge);}',
       '.mk-nohelp .mk-tiplink{display:none;}',
       '.mk-tied svg.hub-tick, .dr-ev svg.hub-tick{width:1em; height:1em; vertical-align:-0.18em; margin:0 2px 0 0; filter:none;}',
