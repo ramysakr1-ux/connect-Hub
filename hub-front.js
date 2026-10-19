@@ -54,10 +54,6 @@
       + '<h1>Everything your trainees write, and everything you write back</h1>'
       + '<p class="fp-lede">The assessed paperwork of a CELTA course in one place — plans, language analyses, self-evaluations, the four written assignments, your feedback, the grades and the reports. No accounts, no passwords, nothing to install. A course is four kinds of link: one for your tutors, one for each trainee, one for the assessor and one for each volunteer student. Each link arrives as a card with a QR code, so it opens on a phone as easily as on a laptop.</p>'
 
-      + '<div class="fp-why">'
-      + '<b>Why it says Lite</b>'
-      + '<p>Connect is the full system for a CELTA centre: admissions, timetables, every course and every role in one place. It is not open yet. Connect Lite is the small one that is — a single course, a handful of links, nothing to set up and nothing to learn.</p>'
-      + '</div>'
 
       + '<h2>What it does</h2>'
       + '<ul class="fp-does">'
