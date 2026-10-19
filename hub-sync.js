@@ -27,6 +27,10 @@
   var pill;
 
   function status(text, kind){
+    /* A page that saves nothing (the invitation card) never says it saved:
+       <body data-sync-quiet>. Errors still show (20 Oct 2026: the card's
+       corner read "Saved as you go" on a page with nothing to save). */
+    if (document.body && document.body.hasAttribute('data-sync-quiet') && (kind === 'ok' || kind === 'busy' || kind === 'demo')) return;
     /* A pinned demo course says so on the pill, so nobody reading a demo
        wonders why "today" is a Tuesday in March. */
     /* On a phone the pill says it in fewer words (10 Oct 2026: the bars at the
