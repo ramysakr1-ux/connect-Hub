@@ -141,6 +141,24 @@
   .word-card{background:var(--bg);border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;}
   .word-card .wname{font-family:'Playfair Display';font-weight:700;color:var(--navy-deep);font-size:1.05rem;margin-bottom:8px;}
   .word-card label{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--sub);display:block;margin-top:8px;}
+  .game-box{background:var(--bg);border-radius:14px;padding:18px;margin-top:10px;}
+  .game-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:.74rem;font-weight:800;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;}
+  .game-score{color:var(--teal-deep);}
+  .game-scene{font-size:1.02rem;line-height:1.6;background:#fff;border:1.5px solid var(--line);border-left:5px solid var(--navy);border-radius:12px;padding:14px 16px;margin:12px 0;}
+  .game-opts{display:flex;flex-wrap:wrap;gap:8px;}
+  .tech-btn{background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:8px 13px;font-family:'Nunito';font-size:.82rem;font-weight:700;color:var(--ink);cursor:pointer;transition:.15s;}
+  .tech-btn:hover{border-color:var(--teal);}
+  .tech-btn.right{background:var(--teal);border-color:var(--teal);color:#fff;}
+  .tech-btn.miss{animation:shake .3s;border-color:var(--red);color:var(--red);}
+  .tech-btn:disabled{cursor:default;}
+  .game-result{margin-top:12px;font-weight:700;font-size:.92rem;min-height:1.4em;}
+  .game-result.good{color:var(--teal-deep);} .game-result.bad{color:var(--red);}
+  .model-steps{display:grid;gap:8px;margin:10px 0;}
+  .model-step{display:grid;grid-template-columns:150px 1fr;gap:12px;background:var(--bg);border-radius:10px;padding:10px 14px;font-size:.9rem;line-height:1.5;}
+  .model-step .k{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--sub);padding-top:3px;}
+  @media(max-width:640px){.model-step{grid-template-columns:1fr;gap:2px;}}
+  .task-label{font-family:'Playfair Display';font-weight:700;color:var(--navy-deep);font-size:1.05rem;margin:22px 0 4px;}
+  .ccq-list{margin:6px 0 0;padding-left:18px;font-size:.88rem;line-height:1.6;}
   .pair-tag{font-family:'Nunito';font-size:.62rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--navy);border:1.5px solid var(--navy);border-radius:999px;padding:3px 9px;vertical-align:middle;margin-left:6px;}
 </style>
 </head>
@@ -158,9 +176,11 @@
   <nav class="sticky-nav" id="stickyNav">
     <a href="#s1">1 · Lead-in</a>
     <a href="#s1b">2 · Why elicit?</a>
-    <a href="#s2">3 · Techniques</a>
-    <a href="#s5">4 · Practice Table</a>
-    <a href="#s6">5 · Your Turn</a>
+    <a href="#s2">3 · Technique game</a>
+    <a href="#s3">4 · Building CCQs</a>
+    <a href="#s5">5 · CCQ worksheet</a>
+    <a href="#s5b">6 · Checking meaning</a>
+    <a href="#s6">7 · Your Turn</a>
   </nav>
   <button class="print-btn" onclick="window.print()">🖨 Print</button>
 </div>
@@ -206,12 +226,44 @@
 
   <div class="divider"><span>techniques</span></div>
 
-  <!-- 2: WAYS TO ELICIT -->
+  <!-- 2: TECHNIQUE GAME (Ramy, 19 Oct 2026: "make it some kind of a game") -->
   <section id="s2">
     <div class="card" style="--accent:var(--teal);--accent-soft:var(--teal-soft);">
-      <div class="stage-title">Ways to Elicit <span class="badge">Click to reveal</span><span class="time">8 min</span></div>
-      <p class="lead">Eleven ways to get language out of students instead of giving it to them. Click each card.</p>
-      <div class="flip-grid" id="techGrid"></div>
+      <div class="stage-title">Name the Technique <span class="badge">Game</span><span class="time">10 min</span></div>
+      <p class="lead">Eleven classroom moments, one at a time. Read what the teacher does, then choose the eliciting technique. A point for each one you get first time. Play in pairs or as two teams taking turns.</p>
+      <div class="game-box" id="gameBox">
+        <div class="game-top"><span id="gameRound">Moment 1 of 11</span><span class="game-score" id="gameScore">Score 0</span></div>
+        <div class="game-scene" id="gameScene"></div>
+        <div class="game-opts" id="gameOpts"></div>
+        <div class="game-result" id="gameResult"></div>
+        <div class="btn-row"><button class="btn teal" id="gameNext" style="display:none" onclick="nextMoment()">Next moment</button><button class="btn secondary" id="gameAgain" style="display:none" onclick="startGame()">Play again</button></div>
+      </div>
+      <div class="btn-row"><button class="btn secondary" onclick="toggleAllTech(this)">See all eleven</button></div>
+      <div class="flip-grid" id="techGrid" style="display:none"></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>concept checking</span></div>
+
+  <!-- 3: BUILDING CCQs (from Concept Checking Techniques) -->
+  <section id="s3">
+    <div class="card" style="--accent:var(--navy);--accent-soft:var(--navy-soft);">
+      <div class="stage-title">Building CCQs <span class="badge">Model, then two tasks</span><span class="time">10 min</span></div>
+      <p class="lead">A concept checking question checks that students have understood the <b>meaning</b>. Here is how one is built.</p>
+      <div class="model-steps">
+        <div class="model-step"><span class="k">The sentence</span><span><b>She managed to close the door.</b></span></div>
+        <div class="model-step"><span class="k">It means</span><span>She found it difficult to close the door, but she did close it.</span></div>
+        <div class="model-step"><span class="k">In simpler language</span><span>She closed the door. It wasn&#8217;t easy.</span></div>
+        <div class="model-step"><span class="k">Turn them into questions</span><span>Did she close the door? <b>(Yes)</b> &nbsp;Was it easy? <b>(No)</b></span></div>
+      </div>
+
+      <div class="task-label">Task A · What is the sentence?</div>
+      <p class="lead" style="margin-bottom:6px;">Each set of CCQs checks one sentence. Write the sentence, then reveal.</p>
+      <div id="taskA"></div>
+
+      <div class="task-label">Task B · What is wrong with these CCQs?</div>
+      <p class="lead" style="margin-bottom:6px;">Discuss what is wrong with each set, and write a better one. Then reveal.</p>
+      <div id="taskB"></div>
     </div>
   </section>
 
@@ -220,9 +272,20 @@
   <!-- 5: PRACTICE TABLE -->
   <section id="s5">
     <div class="card" style="--accent:var(--navy);--accent-soft:var(--navy-soft);">
-      <div class="stage-title">Practice Table <span class="badge">Fill in, then check</span><span class="time">10 min</span></div>
-      <p class="lead">Item 1 is done for you as an example. For items 2–7, write the meaning and your own CCQs, then reveal to compare.</p>
+      <div class="stage-title">CCQ Worksheet <span class="badge">Fill in, then check</span><span class="time">10 min</span></div>
+      <p class="lead">Item 1 is done for you as an example. For items 2&#8211;7, break the meaning into simple statements, turn them into CCQs, then reveal to compare.</p>
       <div id="tableArea"></div>
+    </div>
+  </section>
+
+  <div class="divider"><span>beyond questions</span></div>
+
+  <!-- 5b: OTHER WAYS TO CHECK MEANING (from Concept Checking Techniques) -->
+  <section id="s5b">
+    <div class="card" style="--accent:var(--teal);--accent-soft:var(--teal-soft);">
+      <div class="stage-title">Other Ways to Check Meaning <span class="badge">Click to reveal</span><span class="time">5 min</span></div>
+      <p class="lead">CCQs are one way. Here are eight. Which would suit the language in your next TP?</p>
+      <div class="flip-grid" id="checkGrid"></div>
     </div>
   </section>
 
@@ -277,26 +340,107 @@ function buildPillMatch(items,leftId,rightId,fbId,keyL,keyR){
   }
 }
 
-// ---------- 2. Ways to elicit ----------
+// ---------- 2. Name the technique (the game) ----------
+// The eleven techniques from the session's own list (Eliciting.doc). Each has
+// a classroom moment for the game and an example for the reference cards.
 const techniques = [
-  {name:'Drawing pictures', c:'#1F497D', csoft:'#e3ebf5', def:'Sketch a quick picture on the board so students guess the word.', ex:'A stick figure with a suitcase → "travel"'},
-  {name:'Acting out — gestures & mime', c:'#2a8c82', csoft:'#dff1ee', def:'Use your body and face to mime the action or feeling — no words.', ex:'Pretending to shiver → "cold"'},
-  {name:'Antonyms / Synonyms', c:'#1F497D', csoft:'#e3ebf5', def:'Give a word with the opposite or similar meaning as a clue.', ex:'"The opposite of huge" → "tiny"'},
-  {name:'Use visuals', c:'#2a8c82', csoft:'#dff1ee', def:'Show a photo, flashcard, or image to prompt the word.', ex:'A photo of a motorway at a standstill → "traffic jam"'},
-  {name:'Definitions', c:'#1F497D', csoft:'#e3ebf5', def:'Describe what the word means without saying the word itself.', ex:'"A place where you borrow books" → "library"'},
-  {name:'Realia', c:'#2a8c82', csoft:'#dff1ee', def:'Bring in or point to the real object itself.', ex:'Holding up a real umbrella → "umbrella"'},
-  {name:'Questions', c:'#1F497D', csoft:'#e3ebf5', def:'Ask a question that the target word answers.', ex:'"What do you call a doctor for animals?" → "vet"'},
-  {name:'Sound prompts', c:'#2a8c82', csoft:'#dff1ee', def:'Play a sound and let the students name what makes it, or what is happening.', ex:'A recording of a siren → "ambulance"'},
-  {name:'Gap-fill exercises', c:'#1F497D', csoft:'#e3ebf5', def:'Give a sentence with the word missing for students to guess.', ex:'"I got to the till and realised I\u2019d ___ my wallet at home" → "left"'},
-  {name:'An anecdote', c:'#2a8c82', csoft:'#dff1ee', def:'Tell a short personal story that leads naturally to the word.', ex:'A story about missing a flight → "furious"'},
-  {name:'Unfinished sentences', c:'#1F497D', csoft:'#e3ebf5', def:'Start a sentence and let students complete it with the target word.', ex:'"If I won the lottery, I would feel..." → "ecstatic"'}
+  {name:'Drawing pictures', def:'Sketch a quick picture on the board so students guess the word.', ex:'A stick figure with a suitcase → "travel"', moment:'The teacher draws a stick figure with a suitcase walking towards a plane, and asks: "What is he doing?"', word:'travel'},
+  {name:'Acting out — gestures & mime', def:'Use your body and face to mime the action or feeling, without words.', ex:'Pretending to shiver → "cold"', moment:'Without a word, the teacher wraps her arms round herself and shivers.', word:'cold'},
+  {name:'Antonyms / Synonyms', def:'Give a word with the opposite or a similar meaning as a clue.', ex:'"The opposite of huge" → "tiny"', moment:'"It’s the opposite of huge."', word:'tiny'},
+  {name:'Use visuals', def:'Show a photo, flashcard or image to prompt the word.', ex:'A photo of a motorway at a standstill → "traffic jam"', moment:'The teacher shows a photo of cars stuck nose to tail on a motorway.', word:'traffic jam'},
+  {name:'Definitions', def:'Describe what the word means without saying the word itself.', ex:'"A place where you borrow books" → "library"', moment:'"It’s a place where you can borrow books for free."', word:'library'},
+  {name:'Realia', def:'Bring in or point to the real object itself.', ex:'Holding up a real umbrella → "umbrella"', moment:'The teacher takes a folded umbrella out of her bag and holds it up.', word:'umbrella'},
+  {name:'Questions', def:'Ask a question that the target word answers.', ex:'"What do you call a doctor for animals?" → "vet"', moment:'"What do you call a doctor for animals?"', word:'vet'},
+  {name:'Sound prompts', def:'Play a sound and let students name what makes it, or what is happening.', ex:'A recording of a siren → "ambulance"', moment:'The teacher plays a recording of a siren getting louder.', word:'ambulance'},
+  {name:'Gap-fill exercises', def:'Give a sentence with the word missing for students to supply.', ex:'"I got to the till and realised I’d ___ my wallet at home" → "left"', moment:'On the board: "I got to the till and realised I’d ___ my wallet at home."', word:'left'},
+  {name:'An anecdote', def:'Tell a short personal story that leads naturally to the word.', ex:'A story about missing a flight → "furious"', moment:'"Last week the taxi never came and I missed my flight. I wasn’t just angry, I was…"', word:'furious'},
+  {name:'Unfinished sentences', def:'Start a sentence and let students complete it with the target word.', ex:'"If I won the lottery, I would feel..." → "ecstatic"', moment:'"If I won the lottery, I would feel…" and the teacher stops, waiting.', word:'ecstatic'}
 ];
+const techCols=[['#1F497D','#e3ebf5'],['#2a8c82','#dff1ee']];
 const techGrid = document.getElementById('techGrid');
-techniques.forEach(t=>{
-  const c=document.createElement('div'); c.className='flip-card'; c.style.setProperty('--c',t.c); c.style.setProperty('--c-soft',t.csoft);
+techniques.forEach((t,i)=>{
+  const c=document.createElement('div'); c.className='flip-card'; c.style.setProperty('--c',techCols[i%2][0]); c.style.setProperty('--c-soft',techCols[i%2][1]);
   c.innerHTML='<div class="flip-front">'+t.name+'</div><div class="flip-back">'+t.def+'<div class="flip-example">e.g. '+t.ex+'</div></div>';
   c.onclick=()=>toggleOpenCard(c);
   techGrid.appendChild(c);
+});
+function toggleAllTech(btn){ const open = techGrid.style.display==='none'; techGrid.style.display = open ? 'grid' : 'none'; btn.textContent = open ? 'Hide the eleven' : 'See all eleven'; }
+
+let gameOrder=[], gameAt=0, gameScore=0, gameFirstTry=true;
+function startGame(){
+  gameOrder = techniques.map((_,i)=>i);
+  for(let i=gameOrder.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [gameOrder[i],gameOrder[j]]=[gameOrder[j],gameOrder[i]]; }
+  gameAt=0; gameScore=0; document.getElementById('gameAgain').style.display='none'; showMoment();
+}
+function showMoment(){
+  const t = techniques[gameOrder[gameAt]]; gameFirstTry=true;
+  document.getElementById('gameRound').textContent='Moment '+(gameAt+1)+' of '+techniques.length;
+  document.getElementById('gameScore').textContent='Score '+gameScore;
+  document.getElementById('gameScene').textContent=t.moment;
+  const r=document.getElementById('gameResult'); r.textContent=''; r.className='game-result';
+  document.getElementById('gameNext').style.display='none';
+  const opts=document.getElementById('gameOpts'); opts.innerHTML='';
+  techniques.forEach((o,i)=>{ const b=document.createElement('button'); b.className='tech-btn'; b.textContent=o.name; b.onclick=()=>choose(b,i); opts.appendChild(b); });
+}
+function choose(btn,i){
+  const right = gameOrder[gameAt]===i, r=document.getElementById('gameResult');
+  if(right){
+    if(gameFirstTry) gameScore++;
+    btn.classList.add('right'); document.querySelectorAll('#gameOpts .tech-btn').forEach(b=>b.disabled=true);
+    r.textContent = (gameFirstTry?'Right! ':'Got it. ')+'This elicits "'+techniques[i].word+'".'; r.className='game-result good';
+    document.getElementById('gameScore').textContent='Score '+gameScore;
+    if(gameAt<techniques.length-1) document.getElementById('gameNext').style.display='inline-block';
+    else { r.textContent+=' Final score: '+gameScore+' out of '+techniques.length+'.'; document.getElementById('gameAgain').style.display='inline-block'; }
+  } else {
+    gameFirstTry=false; btn.classList.add('miss'); btn.disabled=true;
+    r.textContent='Not that one. Look again at what the teacher does.'; r.className='game-result bad';
+  }
+}
+function nextMoment(){ gameAt++; showMoment(); }
+startGame();
+
+// ---------- 3. Building CCQs: tasks A and B (Concept Checking Techniques) ----------
+const taskA = [
+  {ccqs:['When did she start living there? (Three years ago)','Does she still live there? (Yes)'], answer:'She’s been living there for three years. (or: She’s lived there for three years.)'},
+  {ccqs:['Did he clean his suit himself? (No)','Did someone else clean it? (Yes)','Did he ask them to clean it? (Yes)'], answer:'He had his suit cleaned. (or: He got his suit cleaned.)'},
+  {ccqs:['Was it necessary for them to rush to get there? (No)','But did they rush to get there? (Yes)'], answer:'They needn’t have rushed. (Compare: They didn’t need to rush — which doesn’t tell us whether they rushed.)'}
+];
+const taskB = [
+  {sentence:'He’s known Mary since university.', ccqs:['Did he know Anna?','Does he love Mary?','Did he and Mary study nursing?'], answer:'None of them checks the meaning. They ask about things the sentence doesn’t say (Anna, love, nursing). Check the concept instead: Does he know Mary now? (Yes) When did he meet her? (At university) Is that a long time ago? (Yes)'},
+  {sentence:'If she hadn’t overslept, she would have caught the plane.', ccqs:['What would have happened if she hadn’t overslept?'], answer:'It uses the target structure itself, so a student can answer without understanding it, and it is harder than the sentence. Use simple facts: Did she oversleep? (Yes) Did she catch the plane? (No) Why not? (Because she overslept)'},
+  {sentence:'He’s always falling asleep!', ccqs:['Disregarding the possibility that the subject actually suffers from narcolepsy, does the speaker, in your opinion, imply that the subject’s propensity to nod off repeatedly, or perhaps even incessantly, verges on being a source of irritation?'], answer:'The language is far harder than the sentence it checks. CCQs must be simpler than the target language. Try: Does he fall asleep often? (Yes) Does the speaker like this? (No — it’s annoying)'}
+];
+function buildTask(list,id,kind){
+  const box=document.getElementById(id);
+  list.forEach((it,n)=>{
+    const d=document.createElement('div'); d.className='word-card';
+    d.innerHTML='<div class="wname">'+(n+1)+'.'+(it.sentence?' '+it.sentence:'')+'</div>'+
+      '<ul class="ccq-list">'+it.ccqs.map(q=>'<li>'+q+'</li>').join('')+'</ul>'+
+      '<label>'+(kind==='A'?'The sentence':'What is wrong, and a better set')+'</label><textarea class="write-area" rows="2"></textarea>'+
+      '<div class="btn-row"><button class="btn secondary" onclick="revealRow(this)">Reveal answer</button></div>'+
+      '<div class="reveal-card" style="cursor:default;margin-top:8px;"><div class="a">'+it.answer+'</div></div>';
+    box.appendChild(d);
+  });
+}
+buildTask(taskA,'taskA','A'); buildTask(taskB,'taskB','B');
+
+// ---------- 5b. Other ways to check meaning (Concept Checking Techniques) ----------
+const checkWays = [
+  {name:'Concept checking questions', how:'Short, simple questions about the meaning.', ex:'He hesitated before jumping. Did he jump? (Yes) Did he jump immediately? (No) At first, did he want to? (No)'},
+  {name:'Timelines', how:'A line with past, now and future. Useful mainly for tenses.', ex:'She went to Laos two years ago: an X on the line two years before "now".'},
+  {name:'Discriminating between two structures', how:'Students work out the difference between a pair of sentences. Especially useful at higher levels.', ex:'She left when the police got there. / She’d left when the police got there.'},
+  {name:'Negative checking', how:'Show when the language can’t be used.', ex:'"I’ve just smashed your new car." "Never mind!" ?! · Is this OK? I used to walk to school this morning.'},
+  {name:'Extension or completion', how:'Students carry the sentence on, or complete a dialogue.', ex:'T: He used to drink champagne, but… S: …he doesn’t any more.'},
+  {name:'Clear visuals or realia', how:'A picture or object that leaves no doubt. Good for vocabulary.', ex:'A real lemon, a clear photo of a lighthouse.'},
+  {name:'Paraphrasing or explaining', how:'In pairs or groups, students explain the word or structure in their own words. Higher levels only.', ex:'"So ‘managed to’ means it was hard, but she did it."'},
+  {name:'Personalising or giving examples', how:'Students give their own examples. A right example shows understanding.', ex:'T: What’s an example of a mammal? S: A monkey.'}
+];
+const checkGrid=document.getElementById('checkGrid');
+checkWays.forEach((w,i)=>{
+  const c=document.createElement('div'); c.className='flip-card'; c.style.setProperty('--c',techCols[i%2][0]); c.style.setProperty('--c-soft',techCols[i%2][1]);
+  c.innerHTML='<div class="flip-front">'+(i+1)+'. '+w.name+'</div><div class="flip-back">'+w.how+'<div class="flip-example">e.g. '+w.ex+'</div></div>';
+  c.onclick=()=>toggleOpenCard(c);
+  checkGrid.appendChild(c);
 });
 
 // ---------- Lead-in: Spot the Elicitor ----------
@@ -322,7 +466,7 @@ const tableItems = [
   {structure:'3. I wish I was at home.', meaning:'I am not home now. I want to be home now. I don\u2019t want to be here.', ccq:'Am I at home? (No) / Do I want to be home? (Yes) / Do I want to be here? (No)'},
   {structure:'4. She\u2019s looking forward to the end of the course.', meaning:'The course hasn\u2019t finished yet. She thinks about the end and feels happy. She wants it to come.', ccq:'Has the course finished? (No) / Does she feel happy when she thinks about the end? (Yes) / Does she want it to come? (Yes)'},
   {structure:'5. She\u2019s been to Timbuktu.', meaning:'She went there sometime in the past. We don\u2019t know exactly when. She is not there now.', ccq:'Did she go there in the past? (Yes) / Do we know exactly when? (No) / Is she there now? (No)'},
-  {structure:'6. He couldn\u2019t stand her complaining.', meaning:'She complained a lot. He didn\u2019t like it at all \u2014 he hated it. This was in the past.', ccq:'Did she complain a lot? (Yes) / Did he like it? (No) / A little or a lot? (A lot \u2014 he hated it) / Are we talking about now or the past? (The past)'},
+  {structure:'6. He couldn\u2019t stand her complaining.', meaning:'She complained a lot. He didn\u2019t like it at all \u2014 he hated it. This was in the past.', ccq:'Did she complain a lot? (Yes) / Did he like it? (No) / A little or a lot? (A lot \u2014 he hated it) / Is this about standing on his legs? (No) / Are we talking about now or the past? (The past)'},
   {structure:'7. When we arrived in Bangkok, it had been raining.', meaning:'It rained for some time before we arrived. It had probably just stopped when we got there. We could see the evidence: the streets were wet.', ccq:'Did it rain before we arrived? (Yes) / For a short time or a while? (A while) / Was it still raining when we arrived? (Probably not) / How do we know it rained? (The streets were wet)'}
 ];
 const tableArea = document.getElementById('tableArea');
