@@ -145,8 +145,8 @@
       + '</span></div>'
       + '<h1 style="font-family:Newsreader,Georgia,serif;font-weight:700;font-size:1.9rem;line-height:1.2;margin:0 0 10px;">' + (reason ? 'The course could not be opened from this link' : 'Open your course link') + '</h1>'
       + (reason ? '<p style="font-size:0.92rem;line-height:1.65;color:oklch(46% 0.17 25);margin:0 0 14px;">' + String(reason).replace(/[<&]/g, ' ') + '</p>' : '')
-      + '<p style="font-size:0.92rem;line-height:1.65;color:oklch(51% 0.017 70);margin:0;">This page reads one course, through the link your centre sent you. Trainees have their own personal link, tutors share the tutor link, and an assessor has a read-only one. Open the page from that link and everything appears.</p>'
-      + '<p style="font-size:0.92rem;line-height:1.65;color:oklch(51% 0.017 70);margin:14px 0 0;">Lost it? Your course admin can send it again from the Roster and links tab.</p>'
+      + '<p style="font-size:0.92rem;line-height:1.65;color:oklch(42% 0.02 68);margin:0;">This page reads one course, through the link your centre sent you. Trainees have their own personal link, tutors share the tutor link, and an assessor has a read-only one. Open the page from that link and everything appears.</p>'
+      + '<p style="font-size:0.92rem;line-height:1.65;color:oklch(42% 0.02 68);margin:14px 0 0;">Lost it? Your course admin can send it again from the Roster and links tab.</p>'
       + '</div>';
     /* This page has just been wiped. If anything of this person's is unsaved,
        that is the single most important thing on the screen. */
@@ -258,7 +258,7 @@
       (stalled ? ', and nothing is trying any more.' : ' and will be sent again.') +
       '</span>' +
       '<button type="button" data-u="retry" style="font:700 12px Karla,sans-serif;padding:7px 14px;border-radius:20px;border:1.5px solid oklch(45% 0.15 27);background:none;color:oklch(45% 0.15 27);cursor:pointer;">Try again</button>' +
-      '<button type="button" data-u="hide" style="font:600 12px Karla,sans-serif;padding:7px 12px;border-radius:20px;border:none;background:none;color:oklch(51% 0.017 70);cursor:pointer;">Hide</button>';
+      '<button type="button" data-u="hide" style="font:600 12px Karla,sans-serif;padding:7px 12px;border-radius:20px;border:none;background:none;color:oklch(42% 0.02 68);cursor:pointer;">Hide</button>';
     el.querySelector('[data-u=retry]').onclick = function(){
       var uu = unsaved();
       Object.keys(uu).forEach(function(i){ if (uu[i].job) schedule(i, uu[i].job); });
@@ -738,7 +738,7 @@
   try {
     cover = document.createElement('div');
     cover.id = 'hubChecking'; cover.setAttribute('role', 'status'); cover.setAttribute('aria-live', 'polite');
-    cover.style.cssText = 'position:fixed;inset:0;z-index:2147482000;background:oklch(92.5% 0.012 85);display:flex;align-items:center;justify-content:center;transition:opacity .25s;font-family:Karla,Helvetica,sans-serif;color:oklch(51% 0.017 70);';
+    cover.style.cssText = 'position:fixed;inset:0;z-index:2147482000;background:oklch(92.5% 0.012 85);display:flex;align-items:center;justify-content:center;transition:opacity .25s;font-family:Karla,Helvetica,sans-serif;color:oklch(42% 0.02 68);';
     cover.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:14px;">'
       + '<span style="width:34px;height:34px;border-radius:8px;background:#f3efe6;box-shadow:inset 0 0 0 1px oklch(85% 0.02 80);display:inline-flex;align-items:center;justify-content:center;">'
       + '<svg viewBox="8 28 104 64" width="22" height="14" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"></path></svg></span>'

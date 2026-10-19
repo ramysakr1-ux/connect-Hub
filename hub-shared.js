@@ -448,7 +448,7 @@ function hubRoomRefusal(title, who, mode){
     + '<span style="position:absolute;left:1px;top:100%;margin-top:2px;font-family:Instrument Sans,Karla,sans-serif;font-weight:600;font-size:8px;line-height:1;letter-spacing:14.4px;text-transform:uppercase;">Lite</span>'
     + '</span></div>'
     + '<h1 style="font-family:Newsreader,Georgia,serif;font-weight:700;font-size:1.9rem;line-height:1.2;margin:0 0 10px;">' + title + '</h1>'
-    + '<p style="font-size:0.92rem;line-height:1.65;color:oklch(51% 0.017 70);margin:0 0 20px;">' + who + ' Nothing you change here would reach the course.</p>'
+    + '<p style="font-size:0.92rem;line-height:1.65;color:oklch(42% 0.02 68);margin:0 0 20px;">' + who + ' Nothing you change here would reach the course.</p>'
     + '<a href="' + back.href + '" style="font-family:Karla,sans-serif;font-size:0.82rem;font-weight:600;height:34px;padding:0 15px;border-radius:6px;border:1.5px solid oklch(89.5% 0.012 82);background:oklch(96.2% 0.02 80);color:oklch(23.5% 0.017 65);display:inline-flex;align-items:center;text-decoration:none;">' + back.label + '</a>'
     + '</div>';
   return true;
@@ -1530,7 +1530,7 @@ window.hubLockup = function(size){
       + ".hub-credit b, .hub-brand-foot b, .hub-cred b, .credit .by b, .fp-foot b, .foot .hub-credit b, .tpcredit .hub-cred b{color:oklch(63% 0.096 72) !important; font-weight:700; opacity:1;}"
       + ".hub-cred{white-space:nowrap;}"
       /* the words quiet grey, so the gold name stands apart (as in Connect: muted words, Ramy in gold) */
-      + ".hub-credit, .hub-brand-foot, .hub-cred, .credit .by, .fp-foot > span:first-child, .foot .hub-credit{color:oklch(51% 0.017 70) !important;}"
+      + ".hub-credit, .hub-brand-foot, .hub-cred, .credit .by, .fp-foot > span:first-child, .foot .hub-credit{color:oklch(42% 0.02 68) !important;}"
       + "@media print{.hub-brand-foot{display:none !important;}}";
     document.head.appendChild(c);
   }
