@@ -24,23 +24,25 @@ NOTES = {}
 
 NOTES['eliciting-and-ccqs'] = '''
 <h4>Before</h4>
-<p>Open the page on the screen; trainees can follow on their own devices for the practice table. Nothing to print unless you want the practice table on paper: Print the handout gives it with the answers hidden.</p>
+<p>Open the page on the screen; trainees follow on their own devices for the game, the two tasks and the worksheet. Print the handout gives the tasks and the worksheet with the answers hidden.</p>
 <h4>Running it</h4>
 ''' + T([
-    (5, 'Spot the elicitor', 'Read both teachers aloud yourself, with the voices. Ask the room who is eliciting before anyone clicks. Then click, and ask what Teacher B did that A did not: built a situation, left the word for them.'),
-    (8, 'Ways to elicit', 'Click through the eleven as a class, but make them guess the technique from the example first, not the other way round. Ask for a twelfth of their own; there is always one (translation, a song, a smell).'),
-    (10, 'Practice table', 'Item 1 is done. Do item 2 together on the board before they touch the page: meaning in plain words first, CCQs second. Then pairs on 3 to 7, reveal as they finish, not all at once.'),
-    (15, 'Your turn', 'Pairs. Each pair takes two words (the pair tags are on the cards), plans the elicitation and one CCQ, then elicits their words from another pair. Monitor for CCQs that use the target word.'),
-    (2, 'Close', 'One sentence each: the technique you will use in your next TP, and the word.'),
+    (5, 'Spot the elicitor', 'Read both teachers aloud yourself, with the voices. Ask the room who is eliciting before anyone clicks.'),
+    (5, 'Why do we elicit?', 'Pairs list reasons in the box. Collect a few aloud, then reveal the five and the warning: you can\u2019t elicit what isn\u2019t there.'),
+    (10, 'Name the technique', 'Pairs or two teams. One moment at a time; a point only for a first-time answer. See all eleven at the end, and ask for a twelfth of their own.'),
+    (10, 'Building CCQs', 'Walk the managed-to model on the board: the sentence, what it means, simpler statements, then questions. Task A in pairs (find the sentence), Task B as a class (what is wrong).'),
+    (10, 'CCQ worksheet', 'Item 1 is done. Do item 2 together first: meaning in plain words, then CCQs. Pairs on 3 to 7; reveal as they finish.'),
+    (5, 'Other ways to check meaning', 'Click through the eight. Ask which suits the language in their next TP.'),
+    (15, 'Your turn', 'Pairs plan the elicitation and one CCQ for two words, then elicit them from another pair. Monitor for CCQs that use the target word.'),
 ]) + '''
 <h4>The key</h4>
-<p>The practice table’s meanings and CCQs are on the page behind Reveal answer; they follow Workman. The practice words in Your turn have no key: any technique that gets the word out of a student is right, and any CCQ with a yes-or-no or short answer that does not contain the word is right.</p>
+<p>Every task\u2019s answer is on the page behind its reveal. The practice words in Your turn have no key: any technique that gets the word out of a student is right, and any CCQ with a short answer that does not contain the word is right.</p>
 <h4>Watch for</h4>
 <ul>
-<li>CCQs that contain the target language ("Does she use to smoke?"). Send them back to meaning.</li>
-<li>"Do you understand?" dressed up as a CCQ. A CCQ has an answer you can hear.</li>
-<li>Eliciting that becomes a guessing game with no context. The scenario does the work; without one, the students are guessing the teacher’s mind.</li>
-<li>Time. The practice table runs over if every pair does all seven. Three sentences each, then share.</li>
+<li>CCQs that contain the target language (\u201cDid he use to bite his nails?\u201d). Send them back to meaning.</li>
+<li>\u201cDo you understand?\u201d dressed up as a CCQ. A CCQ has an answer you can hear.</li>
+<li>CCQs about things the sentence doesn\u2019t say: Task B\u2019s first set is the model of that mistake.</li>
+<li>Eliciting that becomes a guessing game with no context. The scenario does the work.</li>
 </ul>'''
 
 NOTES['error-correction'] = '''

@@ -52,37 +52,28 @@ ALIAS['teaching-writing'] = [
 ]
 
 ALIAS['eliciting-and-ccqs'] = [
-    # 1
-    (r"1. She used to smoke.", r"1. He used to bite his nails."),
-    (r"She smoked. It was a habit. She doesn¦t smoke now.", r"He bit his nails. It was a habit. He doesn¦t bite them now."),
-    (r"Did she smoke? (Yes) / Did she smoke only once? (No) / Does she smoke now? (No)", r"Did he bite his nails? (Yes) / Did he bite them only once? (No) / Does he bite them now? (No)"),
-    # 2
-    (r"2. He felt embarrassed when he couldn¦t answer the student¦s question.", r"2. She felt embarrassed when she forgot the student¦s name."),
-    (r"He did not know the answer. He did not feel comfortable. It is not a good feeling. He didn¦t do anything wrong. (His face was red.)", r"She did not remember the name. She did not feel comfortable. It is not a good feeling. She didn¦t do anything terrible. (Her cheeks were red.)"),
-    (r"Did he know the answer? (No) / Did he feel comfortable? (No) / Is it a good feeling? (No) / Did he do something bad? (No) / Was his face red? (Yes)", r"Did she remember the name? (No) / Did she feel comfortable? (No) / Is it a good feeling? (No) / Did she do something terrible? (No) / Were her cheeks red? (Yes)"),
-    # 3
-    (r"3. I wish I was at home.", r"3. I wish I was on a beach."),
-    (r"I am not home now. I want to be home now. I don¦t want to be here.", r"I am not on a beach now. I want to be on a beach now. I don¦t want to be here."),
-    (r"Am I at home? (No) / Do I want to be home? (Yes) / Do I want to be here? (No)", r"Am I on a beach? (No) / Do I want to be on a beach? (Yes) / Do I want to be here? (No)"),
-    # 4
-    (r"4. She¦s looking forward to the end of the course.", r"4. He¦s looking forward to the school trip."),
-    (r"The course will finish in the future. She wants the course to finish. She is excited about it.", r"The trip will happen in the future. He wants the trip to happen. He is excited about it."),
-    (r"When will the course finish? (In the future) / Does she want the course to finish? (Yes) / Is she excited about it finishing? (Yes)", r"When is the trip? (In the future) / Does he want the trip to happen? (Yes) / Is he excited about it? (Yes)"),
-    # 5
-    (r"5. She¦s been to Timbuktu.", r"5. She¦s been to Reykjavik."),
-    # 6
-    (r"6. He couldn¦t stand her complaining.", r"6. She couldn¦t stand his snoring."),
-    (r"She complains a lot. He does not like it at all — he hates it.", r"He snores a lot. She does not like it at all — she hates it."),
-    (r"Does she complain a lot? (Yes) / Did he like it? (No) / A little or a lot? (A lot) / Are we talking about now or the past? (The past)", r"Does he snore a lot? (Yes) / Did she like it? (No) / A little or a lot? (A lot) / Are we talking about now or the past? (The past)"),
-    # 7
-    (r"7. When we arrived in Bangkok, it had been raining.", r"7. When we arrived in Oslo, it had been snowing."),
-    (r"It started raining first. We arrived second. The rain had stopped by the time we arrived. We did not see it — we worked it out from the evidence: the ground was wet.", r"It started snowing first. We arrived second. The snow had stopped by the time we arrived. We did not see it — we worked it out from the evidence: the pavements were white."),
-    (r"Which happened first? (The rain) / What happened next? (We arrived) / Did we see it raining? (No) / How did we know? (The ground was wet)", r"Which happened first? (The snow) / What happened next? (We arrived) / Did we see it snowing? (No) / How did we know? (The pavements were white)"),
-    # the trainer notes and the sources line
-    ("they follow Workman.", "they are made up for this session."),
-    ("Does she use to smoke?", "Did he use to bite his nails?"),
-    ("The practice table's seven sentences, meanings and CCQs follow Graham Workman, <i>Concept Questions and Time Lines</i> (Gem Publishing, 2005). The eleven ways to elicit and the practice words are the tutor's own.",
-     "The practice table's sentences, meanings and CCQs are made up for this session. The technique of concept questions and time lines is standard on initial teacher training courses; see Graham Workman, <i>Concept Questions and Time Lines</i> (Gem Publishing, 2005)."),
+    ('<b>She managed to close the door.</b>', '<b>He managed to open the jar.</b>'),
+    ('She found it difficult to close the door, but she did close it.', 'He found it difficult to open the jar, but he did open it.'),
+    ('She closed the door. It wasn&#8217;t easy.', 'He opened the jar. It wasn&#8217;t easy.'),
+    ('Did she close the door? <b>(Yes)</b>', 'Did he open the jar? <b>(Yes)</b>'),
+    ("re:  \\{ccqs:\\['When did she start living there[^\\n]*", "  {ccqs:['When did he start working there? (Two years ago)','Does he still work there? (Yes)'], answer:'He’s been working there for two years. (or: He’s worked there for two years.)'},"),
+    ("re:  \\{ccqs:\\['Did he clean his suit himself[^\\n]*", "  {ccqs:['Did she wash her car herself? (No)','Did someone else wash it? (Yes)','Did she ask them to wash it? (Yes)'], answer:'She had her car washed. (or: She got her car washed.)'},"),
+    ("re:  \\{ccqs:\\['Was it necessary for them to rush[^\\n]*", "  {ccqs:['Was it necessary for us to cook so much food? (No)','But did we cook it all? (Yes)'], answer:'We needn’t have cooked so much food. (Compare: We didn’t need to cook so much — which doesn’t tell us whether we did.)'}"),
+    ("re:  \\{sentence:'He’s known Mary[^\\n]*", "  {sentence:'She’s known Tomás since school.', ccqs:['Did she know Leila?','Does she love Tomás?','Did she and Tomás study maths?'], answer:'None of them checks the meaning. They ask about things the sentence doesn’t say (Leila, love, maths). Check the concept instead: Does she know Tomás now? (Yes) When did she meet him? (At school) Is that a long time ago? (Yes)'},"),
+    ("re:  \\{sentence:'If she hadn’t overslept[^\\n]*", "  {sentence:'If he hadn’t lost his keys, he would have caught the train.', ccqs:['What would have happened if he hadn’t lost his keys?'], answer:'It uses the target structure itself, so a student can answer without understanding it, and it is harder than the sentence. Use simple facts: Did he lose his keys? (Yes) Did he catch the train? (No) Why not? (Because he lost his keys)'},"),
+    ("re:  \\{sentence:'He’s always falling asleep[^\\n]*", "  {sentence:'She’s always losing her phone!', ccqs:['Setting aside the possibility that the subject has some disorder of memory, does the speaker, in your estimation, imply that her tendency to mislay the device repeatedly, or perhaps even continually, borders on being a source of exasperation?'], answer:'The language is far harder than the sentence it checks. CCQs must be simpler than the target language. Try: Does she lose her phone often? (Yes) Does the speaker like this? (No — it’s annoying)'}"),
+    ("re:  \\{name:'Concept checking questions'[^\\n]*", "  {name:'Concept checking questions', how:'Short, simple questions about the meaning.', ex:'She hesitated before answering. Did she answer? (Yes) Did she answer immediately? (No) At first, did she want to? (No)'},"),
+    ("re:  \\{name:'Timelines'[^\\n]*", '  {name:\'Timelines\', how:\'A line with past, now and future. Useful mainly for tenses.\', ex:\'He moved to Lima two years ago: an X on the line two years before "now".\'},'),
+    ("re:  \\{name:'Discriminating between two structures'[^\\n]*", "  {name:'Discriminating between two structures', how:'Students work out the difference between a pair of sentences. Especially useful at higher levels.', ex:'The film started when we arrived. / The film had started when we arrived.'},"),
+    ("re:  \\{name:'Negative checking'[^\\n]*", '  {name:\'Negative checking\', how:\'Show when the language can’t be used.\', ex:\'"I’ve just broken your laptop." "Never mind!" ?! · Is this OK? I used to walk to school this morning.\'},'),
+    ("re:  \\{name:'Extension or completion'[^\\n]*", "  {name:'Extension or completion', how:'Students carry the sentence on, or complete a dialogue.', ex:'T: She used to play the violin, but… S: …she doesn’t any more.'},"),
+    ("re:  \\{structure:'1\\. She used to smoke[^\\n]*", "  {structure:'1. He used to bite his nails.', meaning:'He bit his nails. It was a habit. He doesn\\u2019t bite them now.', ccq:'Did he bite his nails? (Yes) / Did he bite them only once? (No) / Does he bite them now? (No)', done:true},"),
+    ("re:  \\{structure:'2\\. He felt embarrassed[^\\n]*", "  {structure:'2. She felt embarrassed when she forgot the student\\u2019s name.', meaning:'She did not remember the name. Other people saw this. She felt uncomfortable and a little silly. It is not a good feeling, but she didn\\u2019t do anything wrong (that would be ashamed).', ccq:'Did she remember the name? (No) / Were other people there? (Yes) / Did she feel comfortable? (No) / Is it a good feeling? (No) / Did she do something wrong? (No)'},"),
+    ("re:  \\{structure:'3\\. I wish I was at home[^\\n]*", "  {structure:'3. I wish I was on a beach.', meaning:'I am not on a beach now. I want to be on a beach now. I don\\u2019t want to be here.', ccq:'Am I on a beach? (No) / Do I want to be on a beach? (Yes) / Do I want to be here? (No)'},"),
+    ("re:  \\{structure:'4\\. She\\\\u2019s looking forward[^\\n]*", "  {structure:'4. He\\u2019s looking forward to the school trip.', meaning:'The trip hasn\\u2019t happened yet. He thinks about it and feels happy. He wants it to come.', ccq:'Has the trip happened yet? (No) / Does he feel happy when he thinks about it? (Yes) / Does he want it to come? (Yes)'},"),
+    ("re:  \\{structure:'5\\. She\\\\u2019s been to Timbuktu[^\\n]*", "  {structure:'5. She\\u2019s been to Reykjavik.', meaning:'She went there sometime in the past. We don\\u2019t know exactly when. She is not there now.', ccq:'Did she go there in the past? (Yes) / Do we know exactly when? (No) / Is she there now? (No)'},"),
+    ("re:  \\{structure:'6\\. He couldn\\\\u2019t stand[^\\n]*", "  {structure:'6. She couldn\\u2019t stand his snoring.', meaning:'He snored a lot. She didn\\u2019t like it at all \\u2014 she hated it. This was in the past.', ccq:'Did he snore a lot? (Yes) / Did she like it? (No) / A little or a lot? (A lot \\u2014 she hated it) / Is this about standing on her legs? (No) / Are we talking about now or the past? (The past)'},"),
+    ("re:  \\{structure:'7\\. When we arrived in Bangkok[^\\n]*", "  {structure:'7. When we arrived in Oslo, it had been snowing.', meaning:'It snowed for some time before we arrived. It had probably just stopped when we got there. We could see the evidence: the pavements were white.', ccq:'Did it snow before we arrived? (Yes) / For a short time or a while? (A while) / Was it still snowing when we arrived? (Probably not) / How do we know it snowed? (The pavements were white)'}"),
 ]
 
 ALIAS['error-correction'] = [

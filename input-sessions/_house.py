@@ -241,9 +241,9 @@ RECIPES = []
 # ---- Eliciting and CCQs ----------------------------------------------------
 RECIPES.append(dict(
     slug='eliciting-and-ccqs',
-    sources="""The practice table's seven sentences, meanings and CCQs follow Graham Workman, <i>Concept Questions and Time Lines</i> (Gem Publishing, 2005). The eleven ways to elicit and the practice words are the tutor's own.""", src='eliciting-and-ccqs/index.html',
-    title='Eliciting and CCQs', sub='Getting language out of students instead of putting it in. About 40 minutes: a lead-in, eleven ways to elicit, a practice table, then your turn.',
-    nav=[('s1', '1 · Lead-in'), ('s2', '2 · Techniques'), ('s5', '3 · Practice table'), ('s6', '4 · Your turn')],
+    sources="""The sentences, tasks and examples are made up for this session, on the pattern of the tutor's Concept Checking Techniques handout; the technique of concept questions and time lines follows Graham Workman, <i>Concept Questions and Time Lines</i> (Gem Publishing, 2005). The eleven ways to elicit are the tutor's own list; the classroom moments for the game and the practice words are made up.""", src='eliciting-and-ccqs/index.html',
+    title='Eliciting and CCQs', sub='Getting language out of students instead of putting it in: why we elicit, a game on eleven ways to do it, how a CCQ is built, a worksheet, other ways to check meaning, then your turn.',
+    nav=[('s1', '1 · Lead-in'), ('s1b', '2 · Why elicit?'), ('s2', '3 · Technique game'), ('s3', '4 · Building CCQs'), ('s5', '5 · CCQ worksheet'), ('s5b', '6 · Checking meaning'), ('s6', '7 · Your turn')],
     css='''
   .word-card{background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:12px 16px 14px; margin:0 0 10px;}
   .word-card .wname{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.05rem; color:var(--ink); margin:0 0 4px;}
@@ -252,13 +252,34 @@ RECIPES.append(dict(
   .pair-tag{display:inline-flex; align-items:center; font-family:'Karla',sans-serif; font-size:.66rem; font-weight:700; letter-spacing:.04em;
     border-radius:999px; padding:2px 8px; vertical-align:middle; margin-left:6px;
     background:var(--box); border:1px solid var(--sand-line); color:oklch(45% 0.02 70);}
+  .game-box{background:var(--surface); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:16px; margin-top:10px;}
+  .game-top{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--grey);}
+  .game-score{color:var(--teal);}
+  .game-scene{font-family:'Newsreader',Georgia,serif; font-size:1.08rem; line-height:1.55; background:var(--paper); border:1px solid var(--sand-line); border-left:4px solid var(--teal); border-radius:var(--r-strip); padding:12px 14px; margin:12px 0;}
+  .game-opts{display:flex; flex-wrap:wrap; gap:8px;}
+  .tech-btn{background:var(--field); border:1.5px solid var(--sand-line); border-radius:999px; padding:7px 13px; font-family:'Karla',sans-serif; font-size:.84rem; font-weight:600; color:var(--ink); cursor:pointer; min-height:36px;}
+  .tech-btn:hover{border-color:var(--gold);}
+  .tech-btn.right{background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  .tech-btn.miss{border-color:var(--brick); color:var(--brick);}
+  .tech-btn:disabled{cursor:default;}
+  .game-result{margin-top:12px; font-weight:600; font-size:.92rem; min-height:1.4em;}
+  .game-result.good{color:var(--teal);} .game-result.bad{color:var(--brick);}
+  .model-steps{display:grid; gap:8px; margin:10px 0;}
+  .model-step{display:grid; grid-template-columns:170px 1fr; gap:12px; background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:10px 14px; font-size:.92rem; line-height:1.5;}
+  .model-step .k{font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); padding-top:3px;}
+  @media(max-width:640px){ .model-step{grid-template-columns:1fr; gap:2px;} }
+  .task-label{font-family:'Newsreader',Georgia,serif; font-weight:600; color:var(--ink); font-size:1.08rem; margin:22px 0 4px;}
+  .ccq-list{margin:6px 0 0; padding-left:18px; font-size:.92rem; line-height:1.6;}
+  @media print{ .game-box{display:none;} }
 ''',
     body=[
         ('Spot the Elicitor', 'Spot the elicitor'),
         ('then click to reveal who\'s actually eliciting — and who\'s just telling.', 'then click to reveal who is eliciting and who is telling.'),
-        ('Ways to Elicit <span', 'Ways to elicit <span'),
-        ('Practice Table <span', 'Practice table <span'),
-        ('For items 2–7,', 'For items 2 to 7,'),
+        ('Why Do We Elicit? <span', 'Why do we elicit? <span'),
+        ('Name the Technique <span', 'Name the technique <span'),
+        ('CCQ Worksheet <span', 'CCQ worksheet <span'),
+        ('Other Ways to Check Meaning <span', 'Other ways to check meaning <span'),
+        ('For items 2&#8211;7,', 'For items 2 to 7,'),
         ('Your Turn <span class="badge">Practice</span>', 'Your turn <span class="badge">Teaching practice</span>'),
         ('For each one: plan how you would elicit it (which technique?), then write one CCQ to check it. Take turns eliciting and CCQ-ing each other\'s words.',
          'For each one, plan how you would elicit it (which technique?), then write one CCQ to check it. Take turns eliciting and checking each other\'s words.'),
