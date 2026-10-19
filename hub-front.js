@@ -52,7 +52,7 @@
       + '<div class="fp-mark">' + mark + '</div>'
       + '<p class="fp-eyebrow">For a CELTA centre</p>'
       + '<h1>Everything your trainees write, and everything you write back</h1>'
-      + '<p class="fp-lede">The assessed paperwork of a CELTA course in one place — plans, language analyses, self-evaluations, the four written assignments, your feedback, the grades and the reports. No accounts, no passwords, nothing to install. A course is four kinds of link: one for your tutors, one for each trainee, one for the assessor and one for each volunteer student.</p>'
+      + '<p class="fp-lede">The assessed paperwork of a CELTA course in one place — plans, language analyses, self-evaluations, the four written assignments, your feedback, the grades and the reports. No accounts, no passwords, nothing to install. A course is four kinds of link: one for your tutors, one for each trainee, one for the assessor and one for each volunteer student. Each link arrives as a card with a QR code, so it opens on a phone as easily as on a laptop.</p>'
 
       + '<div class="fp-why">'
       + '<b>Why it says Lite</b>'
@@ -64,6 +64,7 @@
       + '<li><b>Plans, analyses and self-evaluations</b> come in from trainees and land on the tutor’s screen. No files, no email.</li>'
       + '<li><b>Feedback</b> is written against the plan the trainee wrote, tagged with the CELTA 5 criteria, and returned the same day.</li>'
       + '<li><b>Written assignments</b> carry your centre’s own wording and criteria, and the outcome follows the marks rather than a box.</li>'
+      + '<li><b>The timetable, TP points and input sessions</b>: the course\u2019s own timetable, each trainee\u2019s TP points with the pages and the audio, and a library of input sessions that opens each one on its day.</li>'
       + '<li><b>Volunteer students</b> have a register, their own page in six languages, reminders the day before, and a signed certificate at the end.</li>'
       + '<li><b>The assessor’s pack, the Cambridge grade form and the end-of-course reports</b> assemble themselves from what is already there.</li>'
       + '</ul>'
@@ -87,7 +88,7 @@
 
       + '<div class="fp-have">'
       + '<b>Already on a course?</b>'
-      + '<p>This page reads one course, through the link your centre sent you. Trainees have their own personal link, tutors share the tutor link, and an assessor has a read-only one. Open the page from that link and everything appears. Lost it? Your course administrator can send it again from the Roster.</p>'
+      + '<p>You need your own link. Your centre emailed it to you as a card, with a button and a QR code. Open Lite from that card and your course is there. Lost it? Ask your course admin to send it again.</p>'
       + '</div>'
 
       + '<div class="fp-foot"><span>' + (window.hubMark ? hubMark(16) + ' ' : '') + 'designed and built by <b>Ramy</b></span><a href="mailto:lite@celtaconnect.com">lite@celtaconnect.com</a></div>'
