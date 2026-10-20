@@ -116,7 +116,7 @@
     var sheet = '<p style="font-family:' + SANS + '; font-size:14.5px; line-height:1.65; color:' + C.ink + '; margin:0;">The whole of a course in one sitting: the same course run two ways, then the plans coming in, the feedback going back, the assignments marked, the assessor’s visit, and the reports at the end. Nothing in it is a mock-up — it is a real course being used.</p>'
       + (ctx.film
           ? '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0 0;"><tr><td align="center" bgcolor="' + C.teal + '" style="border-radius:26px;">'
-            + '<a href="' + esc(ctx.film) + '" style="display:inline-block; padding:14px 34px; font-family:' + SANS + '; font-size:16px; font-weight:700; color:#ffffff; text-decoration:none;">Watch the film &rarr;</a>'
+            + '<a href="' + esc(ctx.film) + '" style="display:inline-block; padding:14px 34px; font-family:' + SANS + '; font-size:16px; font-weight:700; color:#ffffff; text-decoration:none;">Watch the film</a>'
             + '</td></tr></table>'
           : '')
       ;
