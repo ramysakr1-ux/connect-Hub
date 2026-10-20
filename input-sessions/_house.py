@@ -150,6 +150,10 @@ def number_from_nav(page):
         return page
     for h, label in re.findall(r'<a href="#([^"]+)"[^>]*>\s*(\d+)\s*\u00b7', nav.group(1)):
         page = re.sub(r'<section id="%s"(?![^>]*data-n)' % re.escape(h), '<section id="%s" data-n="%s"' % (h, label), page, count=1)
+    # the numeral is drawn from the card's own attribute: attr() reads only
+    # the element it decorates, so the card carries the number too
+    page = re.sub(r'<div class="card" data-n="\d+">', '<div class="card">', page)
+    page = re.sub(r'(<section [^>]*data-n="(\d+)"[^>]*>\s*<div class="card")>', r'\1 data-n="\2">', page)
     return page
 
 def notes_block(slug):
@@ -180,7 +184,7 @@ HEAD = '''<!DOCTYPE html>
 <title>{title} — Connect Lite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,600;0,700;1,600&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../hub-tokens.css">
 <link rel="stylesheet" href="../session.css">
 <style>
@@ -1143,7 +1147,7 @@ RECIPES.append(dict(
   .scenario-options, .mf-options{display:flex; flex-wrap:wrap; gap:8px;}
   .opt-btn{background:var(--field); border:1.5px solid var(--sand-line); padding:6px 14px; border-radius:999px; font-family:'Karla',sans-serif; font-weight:700; font-size:.8rem; cursor:pointer; color:var(--grey); min-height:34px; transition:border-color .12s ease;}
   .opt-btn:hover{border-color:var(--gold);}
-  .opt-btn.correct-pick{background:color-mix(in oklab, var(--teal) 11%, transparent); border-color:color-mix(in oklab, var(--teal) 30%, transparent); color:var(--teal);}
+  .opt-btn.correct-pick{background:var(--teal); border-color:var(--teal); color:#F0EEE9;}
   .opt-btn.wrong-pick{background:color-mix(in oklab, var(--brick) 10%, transparent); border-color:color-mix(in oklab, var(--brick) 28%, transparent); color:var(--brick);}
   .opt-btn[disabled]{cursor:default;}
   .mf-card{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;}
@@ -1572,8 +1576,8 @@ RECIPES.append(dict(
   .quiz-options{display:flex; gap:8px; flex-wrap:wrap;}
   .opt-btn{background:var(--field); border:1.5px solid var(--sand-line); padding:6px 14px; border-radius:999px; font-family:'Karla',sans-serif; font-weight:700; font-size:.82rem; cursor:pointer; color:var(--grey); min-height:34px; transition:border-color .12s ease;}
   .opt-btn:hover{border-color:var(--gold);}
-  .opt-btn.correct{background:color-mix(in oklab, var(--teal) 11%, transparent); border-color:color-mix(in oklab, var(--teal) 30%, transparent); color:var(--teal);}
-  .opt-btn.incorrect{background:color-mix(in oklab, var(--brick) 10%, transparent); border-color:color-mix(in oklab, var(--brick) 28%, transparent); color:var(--brick);}
+  .opt-btn.correct{background:var(--teal); border-color:var(--teal); color:#F0EEE9;}
+  .opt-btn.incorrect{background:var(--brick); border-color:var(--brick); color:#fff;}
   .opt-btn[disabled]{cursor:default;}
   .quiz-feedback{margin-top:8px; font-size:.86rem; color:var(--grey);}
   /* the lead-in table */
@@ -1583,7 +1587,7 @@ RECIPES.append(dict(
   .hm .picks{display:flex; gap:6px; flex-wrap:wrap;}
   .hm .pick{background:var(--field); border:1.5px solid var(--sand-line); border-radius:999px; padding:4px 11px; font-family:'Karla',sans-serif; font-weight:600; font-size:.78rem; color:var(--grey); cursor:pointer; min-height:32px;}
   .hm .pick:hover{border-color:var(--gold);}
-  .hm .pick.on{background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  .hm .pick.on{background:var(--teal); border-color:var(--teal); color:#F0EEE9;}
   @media(max-width:560px){ .hm{grid-template-columns:1fr; gap:4px;} .word-grid{grid-template-columns:1fr 1fr;} }
   @media print{ details.reveal, .quiz-feedback{display:none !important;} .word-card .bubbles{display:none;} }
   /* the pattern sort, the conversation, the unfolded half */

@@ -23,7 +23,7 @@
 <title>Language through text (guided discovery) versus PPP — Connect Lite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,600;0,700;1,600&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../hub-tokens.css">
 <link rel="stylesheet" href="../session.css">
 <style>
@@ -99,7 +99,7 @@
   </nav>
 
   <section id="s1" data-n="1">
-    <div class="card">
+    <div class="card" data-n="1">
       <div class="stage-title">Lead-in <span class="badge">Watch, then talk</span></div>
       <p class="lead">A family sets off on holiday. Watch what goes wrong. Then, in pairs: which of these has happened to you on a trip, and which would be the worst?</p>
       <div class="film closed" data-src="https://www.youtube-nocookie.com/embed/kleG7XCqOb4?rel=0&modestbranding=1" data-title="Vacation"><button type="button" class="btn teal film-btn">Watch the film</button></div>
@@ -110,7 +110,7 @@
   <div class="divider"><span>lesson one</span></div>
 
   <section id="s2" data-n="2">
-    <div class="card">
+    <div class="card" data-n="2">
       <div class="stage-title">Read for the gist <span class="badge">One minute</span></div>
       <p class="lead">Read the text quickly. <b>Is Frank unlucky, or lucky?</b> Decide in one sentence, then compare with a partner.</p>
       <div class="text-block reading">
@@ -173,7 +173,7 @@
   <div class="divider"><span>lesson two</span></div>
 
   <section id="s3" data-n="3">
-    <div class="card">
+    <div class="card" data-n="3">
       <div class="stage-title">Watch a lesson <span class="badge">Before you watch</span></div>
       <p class="lead">A teacher teaches a grammar point to a class of adults. As you watch, work out the <b>stages</b> of the lesson: how many there are, where each one starts, and what happens in it. Keep brief notes in the boxes below. Add a stage when you see one begin.</p>
       <div class="film lesson closed" data-video="situational.mp4" data-title="A grammar lesson"><button type="button" class="btn teal film-btn">Watch the lesson</button></div>
@@ -186,7 +186,7 @@
   <div class="divider"><span>which was which</span></div>
 
   <section id="s4" data-n="4">
-    <div class="card">
+    <div class="card" data-n="4">
       <div class="stage-title">Two approaches <span class="badge">Discuss, then write</span></div>
       <p class="lead">You have now sat in two lessons. The first taught one use of the past continuous; the second taught a different point. The language is beside the point: almost any grammar or vocabulary could have been taught either way. With your partner, talk through these.</p>
       <ol class="qs" id="debate">
@@ -208,7 +208,7 @@
   <div class="divider"><span>the stages</span></div>
 
   <section id="s5" data-n="5">
-    <div class="card">
+    <div class="card" data-n="5">
       <div class="stage-title">The stages of each <span class="badge">Fill the gaps</span></div>
       <p class="lead">Each text describes the stages of one approach. Fill the gaps with words from the box. One word is not needed.</p>
       <div class="wordbox" id="gapWords"></div>
@@ -231,6 +231,9 @@
   </section>
 
   <p class="sources"><b>Sources.</b> The text about Frank is written for this session. The marker sentences, the discovery questions, the rule, the form table, the discussion questions and the two stage descriptions are the tutor's own handout. The lesson on film is from a teacher-training DVD held by the tutor; its title is kept back until the debrief, because it gives the answer away.</p>
+
+
+
 
 
 
@@ -442,6 +445,165 @@
       var i = document.createElement('iframe'); i.src = f.dataset.src + (f.dataset.src.indexOf('?') === -1 ? '?' : '&') + 'autoplay=1&enablejsapi=1&origin=' + encodeURIComponent(location.origin); i.title = f.dataset.title || 'Film';
       i.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture'; i.allowFullscreen = true; f.appendChild(i);
       open = { iframe: i, end: end ? +end : 0, close: close };
+      i.addEventListener('load', function(){ try { i.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (x) {} });
+      var acts = document.createElement('p'); acts.className = 'film-acts';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = 'Hide the film'; c.addEventListener('click', close);
+      acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
+    });
+  });
+})();
+</script>
+<script>
+(function(){
+  /* A film with an end time in its address (end=108) is cut there by the
+     page itself: YouTube's own end parameter ran on into the rest of the
+     video and then into the next one (14 Oct 2026). The player is asked to
+     report its clock; at the end time, or when it ends by itself, the frame
+     closes, so nothing follows. */
+  var open = null;
+  window.addEventListener('message', function(e){
+    if (!open || !open.iframe || e.source !== open.iframe.contentWindow) return;
+    var d; try { d = JSON.parse(e.data); } catch (x) { return; }
+    if (!d || d.event !== 'infoDelivery' || !d.info) return;
+    var t = d.info.currentTime, st = d.info.playerState;
+    if ((open.end && t != null && t >= open.end) || st === 0) { open.close(); return; }
+    /* data-skip="10-89": a stretch of the film the session does not need
+       (Ramy, 20 Oct 2026: the Hamlet sketch's first conversation). The
+       player jumps past it; nothing is cut from the film itself. */
+    if (open.skip && t != null && t >= open.skip[0] && t < open.skip[1]) {
+      try { open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [open.skip[1], true] }), '*'); } catch (x) {}
+    }
+  });
+  /* A film kept beside the page: a native player in the same frame. */
+  document.querySelectorAll('.film[data-video]').forEach(function(f){
+    var btn = f.querySelector('.film-btn'); if (!btn) return;
+    var hide = (btn.textContent || '').replace(/^Watch/, 'Hide');
+    function close(){ var v = f.querySelector('video'); if (v) { try { v.pause(); } catch (x) {} } f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
+    btn.addEventListener('click', function(){
+      f.classList.remove('closed'); f.innerHTML = '';
+      var v = document.createElement('video'); v.src = f.dataset.video; v.controls = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'metadata'; v.title = f.dataset.title || 'Film';
+      v.addEventListener('ended', close); f.appendChild(v);
+      var acts = document.createElement('p'); acts.className = 'film-acts';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = hide; c.addEventListener('click', close);
+      acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
+    });
+  });
+  document.querySelectorAll('.film[data-src]').forEach(function(f){
+    var btn = f.querySelector('.film-btn'); if (!btn) return;
+    var end = (f.dataset.src.match(/[?&]end=(\d+)/) || [])[1];
+    var skip = (f.dataset.skip || '').split('-').map(Number); if (skip.length !== 2 || isNaN(skip[0]) || isNaN(skip[1])) skip = null;
+    function close(){ try { if (open && open.iframe) open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'stopVideo', args: [] }), '*'); } catch (x) {} open = null; f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
+    btn.addEventListener('click', function(){
+      f.classList.remove('closed'); f.innerHTML = '';
+      var i = document.createElement('iframe'); i.src = f.dataset.src + (f.dataset.src.indexOf('?') === -1 ? '?' : '&') + 'autoplay=1&enablejsapi=1&origin=' + encodeURIComponent(location.origin); i.title = f.dataset.title || 'Film';
+      i.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture'; i.allowFullscreen = true; f.appendChild(i);
+      open = { iframe: i, end: end ? +end : 0, skip: skip, close: close };
+      i.addEventListener('load', function(){ try { i.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (x) {} });
+      var acts = document.createElement('p'); acts.className = 'film-acts';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = 'Hide the film'; c.addEventListener('click', close);
+      acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
+    });
+  });
+})();
+</script>
+<script>
+(function(){
+  /* A film with an end time in its address (end=108) is cut there by the
+     page itself: YouTube's own end parameter ran on into the rest of the
+     video and then into the next one (14 Oct 2026). The player is asked to
+     report its clock; at the end time, or when it ends by itself, the frame
+     closes, so nothing follows. */
+  var open = null;
+  window.addEventListener('message', function(e){
+    if (!open || !open.iframe || e.source !== open.iframe.contentWindow) return;
+    var d; try { d = JSON.parse(e.data); } catch (x) { return; }
+    if (!d || d.event !== 'infoDelivery' || !d.info) return;
+    var t = d.info.currentTime, st = d.info.playerState;
+    if ((open.end && t != null && t >= open.end) || st === 0) { open.close(); return; }
+    /* data-skip="10-89": a stretch of the film the session does not need
+       (Ramy, 20 Oct 2026: the Hamlet sketch's first conversation). The
+       player jumps past it; nothing is cut from the film itself. */
+    if (open.skip && t != null && t >= open.skip[0] && t < open.skip[1]) {
+      try { open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [open.skip[1], true] }), '*'); } catch (x) {}
+    }
+  });
+  /* A film kept beside the page: a native player in the same frame. */
+  document.querySelectorAll('.film[data-video]').forEach(function(f){
+    var btn = f.querySelector('.film-btn'); if (!btn) return;
+    var hide = (btn.textContent || '').replace(/^Watch/, 'Hide');
+    function close(){ var v = f.querySelector('video'); if (v) { try { v.pause(); } catch (x) {} } f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
+    btn.addEventListener('click', function(){
+      f.classList.remove('closed'); f.innerHTML = '';
+      var v = document.createElement('video'); v.src = f.dataset.video; v.controls = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'metadata'; v.title = f.dataset.title || 'Film';
+      v.addEventListener('ended', close); f.appendChild(v);
+      var acts = document.createElement('p'); acts.className = 'film-acts';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = hide; c.addEventListener('click', close);
+      acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
+    });
+  });
+  document.querySelectorAll('.film[data-src]').forEach(function(f){
+    var btn = f.querySelector('.film-btn'); if (!btn) return;
+    var end = (f.dataset.src.match(/[?&]end=(\d+)/) || [])[1];
+    var skip = (f.dataset.skip || '').split('-').map(Number); if (skip.length !== 2 || isNaN(skip[0]) || isNaN(skip[1])) skip = null;
+    function close(){ try { if (open && open.iframe) open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'stopVideo', args: [] }), '*'); } catch (x) {} open = null; f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
+    btn.addEventListener('click', function(){
+      f.classList.remove('closed'); f.innerHTML = '';
+      var i = document.createElement('iframe'); i.src = f.dataset.src + (f.dataset.src.indexOf('?') === -1 ? '?' : '&') + 'autoplay=1&enablejsapi=1&origin=' + encodeURIComponent(location.origin); i.title = f.dataset.title || 'Film';
+      i.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture'; i.allowFullscreen = true; f.appendChild(i);
+      open = { iframe: i, end: end ? +end : 0, skip: skip, close: close };
+      i.addEventListener('load', function(){ try { i.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (x) {} });
+      var acts = document.createElement('p'); acts.className = 'film-acts';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = 'Hide the film'; c.addEventListener('click', close);
+      acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
+    });
+  });
+})();
+</script>
+<script>
+(function(){
+  /* A film with an end time in its address (end=108) is cut there by the
+     page itself: YouTube's own end parameter ran on into the rest of the
+     video and then into the next one (14 Oct 2026). The player is asked to
+     report its clock; at the end time, or when it ends by itself, the frame
+     closes, so nothing follows. */
+  var open = null;
+  window.addEventListener('message', function(e){
+    if (!open || !open.iframe || e.source !== open.iframe.contentWindow) return;
+    var d; try { d = JSON.parse(e.data); } catch (x) { return; }
+    if (!d || d.event !== 'infoDelivery' || !d.info) return;
+    var t = d.info.currentTime, st = d.info.playerState;
+    if ((open.end && t != null && t >= open.end) || st === 0) { open.close(); return; }
+    /* data-skip="10-89": a stretch of the film the session does not need
+       (Ramy, 20 Oct 2026: the Hamlet sketch's first conversation). The
+       player jumps past it; nothing is cut from the film itself. */
+    if (open.skip && t != null && t >= open.skip[0] && t < open.skip[1]) {
+      try { open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [open.skip[1], true] }), '*'); } catch (x) {}
+    }
+  });
+  /* A film kept beside the page: a native player in the same frame. */
+  document.querySelectorAll('.film[data-video]').forEach(function(f){
+    var btn = f.querySelector('.film-btn'); if (!btn) return;
+    var hide = (btn.textContent || '').replace(/^Watch/, 'Hide');
+    function close(){ var v = f.querySelector('video'); if (v) { try { v.pause(); } catch (x) {} } f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
+    btn.addEventListener('click', function(){
+      f.classList.remove('closed'); f.innerHTML = '';
+      var v = document.createElement('video'); v.src = f.dataset.video; v.controls = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'metadata'; v.title = f.dataset.title || 'Film';
+      v.addEventListener('ended', close); f.appendChild(v);
+      var acts = document.createElement('p'); acts.className = 'film-acts';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = hide; c.addEventListener('click', close);
+      acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
+    });
+  });
+  document.querySelectorAll('.film[data-src]').forEach(function(f){
+    var btn = f.querySelector('.film-btn'); if (!btn) return;
+    var end = (f.dataset.src.match(/[?&]end=(\d+)/) || [])[1];
+    var skip = (f.dataset.skip || '').split('-').map(Number); if (skip.length !== 2 || isNaN(skip[0]) || isNaN(skip[1])) skip = null;
+    function close(){ try { if (open && open.iframe) open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'stopVideo', args: [] }), '*'); } catch (x) {} open = null; f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
+    btn.addEventListener('click', function(){
+      f.classList.remove('closed'); f.innerHTML = '';
+      var i = document.createElement('iframe'); i.src = f.dataset.src + (f.dataset.src.indexOf('?') === -1 ? '?' : '&') + 'autoplay=1&enablejsapi=1&origin=' + encodeURIComponent(location.origin); i.title = f.dataset.title || 'Film';
+      i.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture'; i.allowFullscreen = true; f.appendChild(i);
+      open = { iframe: i, end: end ? +end : 0, skip: skip, close: close };
       i.addEventListener('load', function(){ try { i.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (x) {} });
       var acts = document.createElement('p'); acts.className = 'film-acts';
       var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = 'Hide the film'; c.addEventListener('click', close);
