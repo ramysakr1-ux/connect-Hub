@@ -1501,6 +1501,14 @@ window.hubMark = function(size){
     + '<path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"></path>'
     + '<path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"></path></svg></span></span>';
 };
+/* The turning mark, for anything Lite is waiting on (21 Oct 2026). */
+window.hubSpinner = function(size){
+  var s = size || 18;
+  return '<span class="hub-spin hub-lockup-tile" style="width:' + s + 'px;height:' + s + 'px;border-radius:' + Math.round(s * 0.23) + 'px;background:#f3efe6;box-shadow:inset 0 0 0 1px oklch(85% 0.02 80)" aria-hidden="true">'
+    + '<svg viewBox="8 28 104 64" width="' + Math.round(s * 0.66) + '" height="' + Math.round(s * 0.4) + '" fill="none">'
+    + '<path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"></path>'
+    + '<path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"></path></svg></span>';
+};
 window.hubCredit = function(size){ return window.hubMark(size || 16) + '<span class="hub-cred">designed and built by <b>Ramy</b></span>'; };
 window.hubLockup = function(size){
   var s = size || 18;
@@ -1533,6 +1541,14 @@ window.hubLockup = function(size){
       + ".hub-cred{white-space:nowrap;}"
       /* the words quiet grey, so the gold name stands apart (as in Connect: muted words, Ramy in gold) */
       + ".hub-credit, .hub-brand-foot, .hub-cred, .credit .by, .fp-foot > span:first-child, .foot .hub-credit{color:oklch(42% 0.02 68) !important;}"
+      /* the mark turns while Lite is waiting on something (Ramy, 21 Oct 2026:
+         "every time there is a checking your link... the logo to spin, so
+         people understand it's not stuck. Also, it looks cool"). The same
+         turn the home's mark makes, quicker. */
+      + "@keyframes hub-spin{from{transform:rotateY(0deg);}to{transform:rotateY(360deg);}}"
+      + ".hub-spin{display:inline-flex; align-items:center; justify-content:center; flex:none; perspective:300px; vertical-align:middle;}"
+      + ".hub-spin svg{animation:hub-spin 1.4s cubic-bezier(.45,.05,.55,.95) infinite; transform-origin:50% 50%;}"
+      + "@media (prefers-reduced-motion: reduce){.hub-spin svg{animation-duration:3s;}}"
       + "@media print{.hub-brand-foot{display:none !important;}}";
     document.head.appendChild(c);
   }

@@ -55,7 +55,9 @@
       }
     } catch (e) {}
     if (!pill){ pill = document.createElement('div'); pill.id = 'hubSync'; pill.style.cssText = 'position:fixed;left:14px;bottom:var(--sync-bottom,14px);z-index:900;font:600 11px/1 Karla,sans-serif;padding:7px 11px;border-radius:999px;background:oklch(37.5% 0.058 195);color:#fff;opacity:.85;pointer-events:none;transition:opacity .3s;'; document.body.appendChild(pill); }
-    pill.textContent = text; pill.style.background = kind === 'error' ? 'oklch(45% 0.15 27)' : kind === 'busy' ? 'oklch(51% 0.017 70)' : 'oklch(37.5% 0.058 195)';
+    pill.textContent = text; pill.style.background = kind === 'error' ? '#7A2E2E' : kind === 'busy' ? '#6B6963' : '#1E3B2F';
+    /* the mark turns beside anything Lite is waiting on (21 Oct 2026) */
+    if (kind === 'busy' && window.hubSpinner) { pill.insertAdjacentHTML('afterbegin', window.hubSpinner(14)); pill.style.display = 'inline-flex'; pill.style.alignItems = 'center'; pill.style.gap = '7px'; }
     pill.style.opacity = '.85';
     if (kind === 'ok' || kind === 'demo') setTimeout(function(){ if (pill.textContent === text) pill.style.opacity = '0'; }, kind === 'demo' ? 4000 : 1800);
     if (kind === 'demo') pill.style.background = 'oklch(52% 0.098 70)';   // gold: a demo, and it stays up
@@ -742,10 +744,12 @@
   try {
     cover = document.createElement('div');
     cover.id = 'hubChecking'; cover.setAttribute('role', 'status'); cover.setAttribute('aria-live', 'polite');
-    cover.style.cssText = 'position:fixed;inset:0;z-index:2147482000;background:oklch(92.5% 0.012 85);display:flex;align-items:center;justify-content:center;transition:opacity .25s;font-family:Karla,Helvetica,sans-serif;color:oklch(42% 0.02 68);';
-    cover.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:14px;">'
-      + '<span style="width:34px;height:34px;border-radius:8px;background:#f3efe6;box-shadow:inset 0 0 0 1px oklch(85% 0.02 80);display:inline-flex;align-items:center;justify-content:center;">'
-      + '<svg viewBox="8 28 104 64" width="22" height="14" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"></path></svg></span>'
+    cover.style.cssText = 'position:fixed;inset:0;z-index:2147482000;background:#F3F3F7;display:flex;align-items:center;justify-content:center;transition:opacity .25s;font-family:Karla,Helvetica,sans-serif;color:oklch(42% 0.02 68);';
+    /* the mark turns while the link is checked (21 Oct 2026) */
+    cover.innerHTML = '<style>@keyframes hubChkSpin{from{transform:rotateY(0deg)}to{transform:rotateY(360deg)}}#hubChecking svg{animation:hubChkSpin 1.4s cubic-bezier(.45,.05,.55,.95) infinite;transform-origin:50% 50%}@media (prefers-reduced-motion:reduce){#hubChecking svg{animation-duration:3s}}</style>'
+      + '<div style="display:flex;flex-direction:column;align-items:center;gap:16px;">'
+      + '<span style="width:52px;height:52px;border-radius:12px;background:#f3efe6;box-shadow:inset 0 0 0 1px oklch(85% 0.02 80),0 10px 30px -14px rgba(35,34,32,.25);display:inline-flex;align-items:center;justify-content:center;perspective:300px;">'
+      + '<svg viewBox="8 28 104 64" width="34" height="21" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"></path></svg></span>'
       + '<span style="font-size:0.95rem;">Checking your link\u2026</span></div>';
     (document.body || document.documentElement).appendChild(cover);
   } catch (e) { cover = null; }
