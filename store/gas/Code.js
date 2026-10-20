@@ -456,6 +456,7 @@ function handle_(req) {
         'Shared materials': 'shared'
       };
       Object.keys(FEAT).forEach(function (label) { out.features[label] = { courses: 0, said: 0 }; });
+      var stPeople = peopleByCourse_({ tracker: 1, celta5t: 1, assignments: 1 });
       courses_().forEach(function (c) {
         var set = courseRead_(c.id, 'settings') || {};
         if (set.demoToday || /scratch/i.test(String(c.name || ''))) return;
@@ -485,8 +486,7 @@ function handle_(req) {
           } else out.length.notSet++;
         } else out.length.notSet++;
 
-        var ros = courseRead_(c.id, 'roster') || {};
-        var people = ros.trainees || {};
+        var people = stPeople[c.id] || {};
         Object.keys(people).forEach(function (tok) {
           var tr = people[tok] || {};
           out.candidates.total++;
@@ -689,12 +689,12 @@ case 'inbox': {
       requireOwner_(owner);
       var pulse = [];
       var pToday = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+      var pPeople = peopleByCourse_({ assignments: 1 });
       courses_().forEach(function (c) {
         var set = courseRead_(c.id, 'settings') || {};
         if (set.demoToday || /scratch|not a course/i.test(String(c.name || '') + ' ' + String(set.courseName || ''))) return;
         if (/grades/i.test(String(set.courseName || '')) || /grades/i.test(String(c.name || ''))) return;
-        var ros = courseRead_(c.id, 'roster') || {};
-        var people = ros.trainees || {};
+        var people = pPeople[c.id] || {};
         var heads = 0, waiting = 0, resubs = 0, passed = 0, failed = 0;
         Object.keys(people).forEach(function (tok) {
           var tr = people[tok] || {}; heads++;
@@ -1762,6 +1762,28 @@ function roster_(courseId) {
   return sh.getRange(2, 1, last - 1, 6).getValues()
     .filter(function (r) { return String(r[0]) === String(courseId) && String(r[1]).trim(); })
     .map(function (r) { return { token: String(r[1]), name: String(r[2]), group: String(r[3]), created: r[4] ? new Date(r[4]).toISOString() : '', email: String(r[5] || '') }; });
+}
+/* EVERY COURSE'S TRAINEES, WITH THE RECORDS ASKED FOR (20 Oct 2026).
+   The owner's figures and the pulse Connect's Command Center reads both
+   counted people from courseRead_(id, 'roster'), a record no course has had
+   since trainees moved to their own sheet, so every course counted nobody:
+   "0 candidates" with six on C/18. One pass over the trainees sheet and one
+   over the records, for every course at once:
+   { courseId: { token: { kind: data, ... } } }. */
+function peopleByCourse_(kinds) {
+  var out = {};
+  var tsh = sheet_(SHEET_TRAINEES), tl = tsh.getLastRow();
+  if (tl >= 2) tsh.getRange(2, 1, tl - 1, 2).getValues().forEach(function (r) {
+    var cid = String(r[0]), tok = String(r[1]).trim(); if (!tok) return;
+    (out[cid] = out[cid] || {})[tok] = {};
+  });
+  var rsh = sheet_(SHEET_RECORDS), rl = rsh.getLastRow();
+  if (rl >= 2) rsh.getRange(2, 1, rl - 1, 4).getValues().forEach(function (r) {
+    var kind = String(r[2]); if (!kinds[kind]) return;
+    var bucket = (out[String(r[0])] || {})[String(r[1])]; if (!bucket) return;
+    try { bucket[kind] = JSON.parse(r[3]); } catch (e) {}
+  });
+  return out;
 }
 // A token is unique across the store, so it finds its own course.
 function traineeAnywhere_(token) {
