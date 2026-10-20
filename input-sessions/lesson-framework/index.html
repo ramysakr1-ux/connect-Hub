@@ -176,7 +176,7 @@
     <button class="print-btn" onclick="window.print()">Print the handout</button>
   </nav>
 
-  <section id="s1">
+  <section id="s1" data-n="1">
     <span class="section-label">1 · The decision tree</span>
     <div class="flow">
       <div class="flow-row">
@@ -209,7 +209,7 @@
     </div>
   </section>
 
-  <section id="s2">
+  <section id="s2" data-n="2">
     <span class="section-label">2 · The six shapes</span>
     <div class="fw-grid">
       <div class="fw-card ppp"><div class="pin"></div>
@@ -239,7 +239,7 @@
     </div>
   </section>
 
-  <section id="s3">
+  <section id="s3" data-n="3">
     <span class="section-label">3 · Card sort: put the stage with its shape</span>
     <div class="sort-wrap">
       <p class="sort-instructions">Tap a stage card below, then tap the shape it belongs to. Six cards, six homes.</p>
@@ -250,13 +250,13 @@
     </div>
   </section>
 
-  <section id="s4">
+  <section id="s4" data-n="4">
     <span class="section-label">4 · Quick quiz: tap a card to turn it</span>
     <div class="quiz-grid" id="quizGrid"></div>
   </section>
 
 
-  <section id="s5">
+  <section id="s5" data-n="5">
     <span class="section-label">5 · Scenarios: name the framework</span>
     <div class="sort-wrap">
       <p class="sort-instructions">Read the mini lesson, then tap the framework you think it is. Teal means right, red means try again.</p>
@@ -265,7 +265,7 @@
     </div>
   </section>
 
-  <section id="s6">
+  <section id="s6" data-n="6">
     <span class="section-label">6 · Meaning or form? Quick fire</span>
     <div class="sort-wrap">
       <p class="sort-instructions">Based on the MFPA table: for each task type, tap whether the focus is on Meaning, Form, or Both.</p>
@@ -274,7 +274,7 @@
     </div>
   </section>
 
-  <section id="s7">
+  <section id="s7" data-n="7">
     <span class="section-label">7 · Spot the flaw in the staging</span>
     <div class="sort-wrap">
       <p class="sort-instructions">Read each lesson plan. Decide what's structurally wrong before you tap "Reveal the fix."</p>
@@ -282,7 +282,7 @@
     </div>
   </section>
 
-  <section id="s8">
+  <section id="s8" data-n="8">
     <span class="section-label">8 · Pacing: budget the minutes</span>
     <div class="sort-wrap">
       <p class="pacing-intro">You have <strong>45 minutes</strong> for a Text-Based lesson. Budget the minutes across the three stages below; the total should land on 45.</p>
@@ -304,7 +304,7 @@
     </div>
   </section>
 
-  <section id="s9">
+  <section id="s9" data-n="9">
     <span class="section-label">9 · Sequence: build the lesson in order</span>
     <div class="sort-wrap">
       <p class="sort-instructions">Pick a framework, then tap the shuffled stages below in the order you think they belong. Check your sequence when you're done.</p>
@@ -322,7 +322,7 @@
     </div>
   </section>
 
-  <section id="s10">
+  <section id="s10" data-n="10">
     <span class="section-label">10 · Build lessons from a coursebook spread</span>
     <div class="sort-wrap">
       <p class="sort-instructions">Each card describes one spread from a made-up coursebook. As a group, decide: how many separate 45-minute lessons could you build from this spread, and which framework would each one use? Tap the card to compare against a suggested breakdown.</p>
@@ -828,17 +828,38 @@ cbItems.forEach((item, i) => {
     var d; try { d = JSON.parse(e.data); } catch (x) { return; }
     if (!d || d.event !== 'infoDelivery' || !d.info) return;
     var t = d.info.currentTime, st = d.info.playerState;
-    if ((open.end && t != null && t >= open.end) || st === 0) open.close();
+    if ((open.end && t != null && t >= open.end) || st === 0) { open.close(); return; }
+    /* data-skip="10-89": a stretch of the film the session does not need
+       (Ramy, 20 Oct 2026: the Hamlet sketch's first conversation). The
+       player jumps past it; nothing is cut from the film itself. */
+    if (open.skip && t != null && t >= open.skip[0] && t < open.skip[1]) {
+      try { open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [open.skip[1], true] }), '*'); } catch (x) {}
+    }
+  });
+  /* A film kept beside the page: a native player in the same frame. */
+  document.querySelectorAll('.film[data-video]').forEach(function(f){
+    var btn = f.querySelector('.film-btn'); if (!btn) return;
+    var hide = (btn.textContent || '').replace(/^Watch/, 'Hide');
+    function close(){ var v = f.querySelector('video'); if (v) { try { v.pause(); } catch (x) {} } f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
+    btn.addEventListener('click', function(){
+      f.classList.remove('closed'); f.innerHTML = '';
+      var v = document.createElement('video'); v.src = f.dataset.video; v.controls = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'metadata'; v.title = f.dataset.title || 'Film';
+      v.addEventListener('ended', close); f.appendChild(v);
+      var acts = document.createElement('p'); acts.className = 'film-acts';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = hide; c.addEventListener('click', close);
+      acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
+    });
   });
   document.querySelectorAll('.film[data-src]').forEach(function(f){
     var btn = f.querySelector('.film-btn'); if (!btn) return;
     var end = (f.dataset.src.match(/[?&]end=(\d+)/) || [])[1];
+    var skip = (f.dataset.skip || '').split('-').map(Number); if (skip.length !== 2 || isNaN(skip[0]) || isNaN(skip[1])) skip = null;
     function close(){ try { if (open && open.iframe) open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'stopVideo', args: [] }), '*'); } catch (x) {} open = null; f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
     btn.addEventListener('click', function(){
       f.classList.remove('closed'); f.innerHTML = '';
       var i = document.createElement('iframe'); i.src = f.dataset.src + (f.dataset.src.indexOf('?') === -1 ? '?' : '&') + 'autoplay=1&enablejsapi=1&origin=' + encodeURIComponent(location.origin); i.title = f.dataset.title || 'Film';
       i.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture'; i.allowFullscreen = true; f.appendChild(i);
-      open = { iframe: i, end: end ? +end : 0, close: close };
+      open = { iframe: i, end: end ? +end : 0, skip: skip, close: close };
       i.addEventListener('load', function(){ try { i.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (x) {} });
       var acts = document.createElement('p'); acts.className = 'film-acts';
       var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = 'Hide the film'; c.addEventListener('click', close);

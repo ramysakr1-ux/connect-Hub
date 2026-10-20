@@ -159,7 +159,7 @@
   <div class="divider"><span>why drill</span></div>
 
   <!-- 1: WHY DRILL -->
-  <section id="s1">
+  <section id="s1" data-n="1">
     <div class="card">
       <div class="stage-title">Guided practice: why drill? <span class="badge">Discuss first</span></div>
       <p class="lead">In your group: why do we drill? When should we drill? Write your ideas before revealing.</p>
@@ -178,7 +178,7 @@
   <div class="divider"><span>techniques</span></div>
 
   <!-- 2: TECHNIQUES -->
-  <section id="s2">
+  <section id="s2" data-n="2">
     <div class="card">
       <div class="stage-title">Drilling techniques <span class="badge">Match the pills</span></div>
       <p class="lead">Click a pill on the left, then click its matching example on the right.</p>
@@ -214,7 +214,7 @@
   <div class="divider"><span>brainstorm</span></div>
 
   <!-- 3: TYPES OF DRILL -->
-  <section id="s3">
+  <section id="s3" data-n="3">
     <div class="card">
       <div class="stage-title">Types of drill <span class="badge">Example, then your turn</span></div>
       <p class="lead">Let's look at <b>one</b> together first: a chain drill.</p>
@@ -240,7 +240,7 @@
   <div class="divider"><span>going further</span></div>
 
   <!-- 4: MORE MEANINGFUL DRILLS -->
-  <section id="s4">
+  <section id="s4" data-n="4">
     <div class="card">
       <div class="stage-title">More meaningful drills <span class="badge">Presentation</span></div>
       <p class="lead">These drills are slower; the teacher is less concerned with 100% correct responses.</p>
@@ -264,7 +264,7 @@
   <div class="divider"><span>rhythm</span></div>
 
   <!-- 5: JAZZ CHANTS -->
-  <section id="s5">
+  <section id="s5" data-n="5">
     <div class="card">
       <div class="stage-title">Jazz chants <span class="badge">Rhythm</span></div>
       <p class="lead">A way of drilling sentences to a beat, often set to music, popularised by Carolyn Graham. Easy to create your own: follow the beat. This one is made up for this session.</p>
@@ -283,7 +283,7 @@
   <div class="divider"><span>controlled practice</span></div>
 
   <!-- 6: TRANSFORMATION & SUBSTITUTION -->
-  <section id="s6">
+  <section id="s6" data-n="6">
     <div class="card">
       <div class="stage-title">Transformation and substitution drills <span class="badge">Practice</span></div>
 
@@ -312,7 +312,7 @@
   <div class="divider"><span>less guided practice</span></div>
 
   <!-- 8: INFO GAP -->
-  <section id="s8">
+  <section id="s8" data-n="7">
     <div class="card">
       <div class="stage-title">Carlos and Ingrid: a shopping information gap <span class="badge">Less-guided practice</span></div>
       <div class="text-block">
@@ -545,17 +545,38 @@ document.querySelectorAll('.flash').forEach(f=>{
     var d; try { d = JSON.parse(e.data); } catch (x) { return; }
     if (!d || d.event !== 'infoDelivery' || !d.info) return;
     var t = d.info.currentTime, st = d.info.playerState;
-    if ((open.end && t != null && t >= open.end) || st === 0) open.close();
+    if ((open.end && t != null && t >= open.end) || st === 0) { open.close(); return; }
+    /* data-skip="10-89": a stretch of the film the session does not need
+       (Ramy, 20 Oct 2026: the Hamlet sketch's first conversation). The
+       player jumps past it; nothing is cut from the film itself. */
+    if (open.skip && t != null && t >= open.skip[0] && t < open.skip[1]) {
+      try { open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [open.skip[1], true] }), '*'); } catch (x) {}
+    }
+  });
+  /* A film kept beside the page: a native player in the same frame. */
+  document.querySelectorAll('.film[data-video]').forEach(function(f){
+    var btn = f.querySelector('.film-btn'); if (!btn) return;
+    var hide = (btn.textContent || '').replace(/^Watch/, 'Hide');
+    function close(){ var v = f.querySelector('video'); if (v) { try { v.pause(); } catch (x) {} } f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
+    btn.addEventListener('click', function(){
+      f.classList.remove('closed'); f.innerHTML = '';
+      var v = document.createElement('video'); v.src = f.dataset.video; v.controls = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'metadata'; v.title = f.dataset.title || 'Film';
+      v.addEventListener('ended', close); f.appendChild(v);
+      var acts = document.createElement('p'); acts.className = 'film-acts';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = hide; c.addEventListener('click', close);
+      acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
+    });
   });
   document.querySelectorAll('.film[data-src]').forEach(function(f){
     var btn = f.querySelector('.film-btn'); if (!btn) return;
     var end = (f.dataset.src.match(/[?&]end=(\d+)/) || [])[1];
+    var skip = (f.dataset.skip || '').split('-').map(Number); if (skip.length !== 2 || isNaN(skip[0]) || isNaN(skip[1])) skip = null;
     function close(){ try { if (open && open.iframe) open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'stopVideo', args: [] }), '*'); } catch (x) {} open = null; f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
     btn.addEventListener('click', function(){
       f.classList.remove('closed'); f.innerHTML = '';
       var i = document.createElement('iframe'); i.src = f.dataset.src + (f.dataset.src.indexOf('?') === -1 ? '?' : '&') + 'autoplay=1&enablejsapi=1&origin=' + encodeURIComponent(location.origin); i.title = f.dataset.title || 'Film';
       i.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture'; i.allowFullscreen = true; f.appendChild(i);
-      open = { iframe: i, end: end ? +end : 0, close: close };
+      open = { iframe: i, end: end ? +end : 0, skip: skip, close: close };
       i.addEventListener('load', function(){ try { i.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (x) {} });
       var acts = document.createElement('p'); acts.className = 'film-acts';
       var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = 'Hide the film'; c.addEventListener('click', close);

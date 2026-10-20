@@ -146,7 +146,7 @@
   </nav>
 
   <!-- 1 -->
-  <section id="s1">
+  <section id="s1" data-n="1">
     <div class="card">
       <div class="stage-title">Would you rather? <span class="badge">Pick one, then tell your partner why</span></div>
       <p class="lead">Think back to teachers you've had: at school, in language classes, anywhere. Which teacher would you rather have?</p>
@@ -159,7 +159,7 @@
   <div class="divider"><span>why pairs and groups</span></div>
 
   <!-- 2 -->
-  <section id="s2">
+  <section id="s2" data-n="2">
     <div class="card">
       <div class="stage-title">Who is talking? <span class="badge">Move the sliders</span></div>
       <p class="lead">A speaking activity. The teacher can ask each student one by one in <b>open class</b>, or put everyone in <b>pairs</b>. How long does each student actually get to speak?</p>
@@ -181,7 +181,7 @@
   <div class="divider"><span>what it covers</span></div>
 
   <!-- 3 -->
-  <section id="s3">
+  <section id="s3" data-n="3">
     <div class="card">
       <div class="stage-title">Spin the wheel <span class="badge">In your group</span></div>
       <p class="lead">Good classroom management covers all of these, and probably more. Spin, then discuss: <b>why does it matter?</b> Think about how it feels to be the student, and the teachers you've had.</p>
@@ -196,7 +196,7 @@
   <div class="divider"><span>what do you think?</span></div>
 
   <!-- 4 -->
-  <section id="s4">
+  <section id="s4" data-n="4">
     <div class="card">
       <div class="stage-title">Yes, no or maybe? <span class="badge">Decide, then reveal</span></div>
       <p class="lead">Agree with your partner first. Then reveal what most experienced teachers would say. Some of them really do depend.</p>
@@ -207,7 +207,7 @@
   <div class="divider"><span>how teachers get in the way</span></div>
 
   <!-- 5 -->
-  <section id="s5">
+  <section id="s5" data-n="5">
     <div class="card">
       <div class="stage-title">Spot the problem <span class="badge">Match it</span></div>
       <p class="lead">Fourteen real moments from real classrooms. Why is each one a problem? Pick the label that fits.</p>
@@ -223,7 +223,7 @@
   <div class="divider"><span>say less, say it clearly</span></div>
 
   <!-- 6 -->
-  <section id="s6">
+  <section id="s6" data-n="6">
     <div class="card">
       <div class="stage-title">Grade your language <span class="badge">Tap to fix</span></div>
       <p class="lead"><b>Imperatives, direct questions, natural speech.</b> No idioms, no baby language, no shouting. Tap each one to see a clearer version.</p>
@@ -248,7 +248,7 @@
   <div class="divider"><span>this afternoon</span></div>
 
   <!-- 7 -->
-  <section id="s7">
+  <section id="s7" data-n="7">
     <div class="card">
       <div class="stage-title">Take it into TP <span class="badge">Tick what you'll try</span></div>
       <p class="lead">Pick the ones you'll try first, and watch for them in your peers' lessons too.</p>
@@ -454,17 +454,38 @@ window.addEventListener('scroll',()=>{
     var d; try { d = JSON.parse(e.data); } catch (x) { return; }
     if (!d || d.event !== 'infoDelivery' || !d.info) return;
     var t = d.info.currentTime, st = d.info.playerState;
-    if ((open.end && t != null && t >= open.end) || st === 0) open.close();
+    if ((open.end && t != null && t >= open.end) || st === 0) { open.close(); return; }
+    /* data-skip="10-89": a stretch of the film the session does not need
+       (Ramy, 20 Oct 2026: the Hamlet sketch's first conversation). The
+       player jumps past it; nothing is cut from the film itself. */
+    if (open.skip && t != null && t >= open.skip[0] && t < open.skip[1]) {
+      try { open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [open.skip[1], true] }), '*'); } catch (x) {}
+    }
+  });
+  /* A film kept beside the page: a native player in the same frame. */
+  document.querySelectorAll('.film[data-video]').forEach(function(f){
+    var btn = f.querySelector('.film-btn'); if (!btn) return;
+    var hide = (btn.textContent || '').replace(/^Watch/, 'Hide');
+    function close(){ var v = f.querySelector('video'); if (v) { try { v.pause(); } catch (x) {} } f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
+    btn.addEventListener('click', function(){
+      f.classList.remove('closed'); f.innerHTML = '';
+      var v = document.createElement('video'); v.src = f.dataset.video; v.controls = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'metadata'; v.title = f.dataset.title || 'Film';
+      v.addEventListener('ended', close); f.appendChild(v);
+      var acts = document.createElement('p'); acts.className = 'film-acts';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = hide; c.addEventListener('click', close);
+      acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
+    });
   });
   document.querySelectorAll('.film[data-src]').forEach(function(f){
     var btn = f.querySelector('.film-btn'); if (!btn) return;
     var end = (f.dataset.src.match(/[?&]end=(\d+)/) || [])[1];
+    var skip = (f.dataset.skip || '').split('-').map(Number); if (skip.length !== 2 || isNaN(skip[0]) || isNaN(skip[1])) skip = null;
     function close(){ try { if (open && open.iframe) open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'stopVideo', args: [] }), '*'); } catch (x) {} open = null; f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
     btn.addEventListener('click', function(){
       f.classList.remove('closed'); f.innerHTML = '';
       var i = document.createElement('iframe'); i.src = f.dataset.src + (f.dataset.src.indexOf('?') === -1 ? '?' : '&') + 'autoplay=1&enablejsapi=1&origin=' + encodeURIComponent(location.origin); i.title = f.dataset.title || 'Film';
       i.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture'; i.allowFullscreen = true; f.appendChild(i);
-      open = { iframe: i, end: end ? +end : 0, close: close };
+      open = { iframe: i, end: end ? +end : 0, skip: skip, close: close };
       i.addEventListener('load', function(){ try { i.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (x) {} });
       var acts = document.createElement('p'); acts.className = 'film-acts';
       var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = 'Hide the film'; c.addEventListener('click', close);

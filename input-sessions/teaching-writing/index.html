@@ -102,7 +102,7 @@
     <button class="print-btn" onclick="window.print()">Print the handout</button>
   </nav>
 
-  <section id="s1">
+  <section id="s1" data-n="1">
     <span class="section-label">1 · Warm-up: the mystery present</span>
     <div class="wrap">
       <div class="note-card">
@@ -112,7 +112,7 @@
     </div>
   </section>
 
-  <section id="s2">
+  <section id="s2" data-n="2">
     <span class="section-label">2 · The thank-you letter</span>
     <div class="wrap">
       <p class="intro">Read the model letter. How does it start? What other features does it have? Is the present actually named, or only implied?</p>
@@ -130,7 +130,7 @@
     </div>
   </section>
 
-  <section id="s3">
+  <section id="s3" data-n="3">
     <span class="section-label">3 · Attitudes to writing</span>
     <div class="wrap">
       <p class="intro">Tap each word, then tap Positive or Negative to sort it.</p>
@@ -141,7 +141,7 @@
     </div>
   </section>
 
-  <section id="s4">
+  <section id="s4" data-n="4">
     <span class="section-label">4 · What do we think about before we write?</span>
     <div class="wrap">
       <div class="note-card flag">
@@ -169,7 +169,7 @@
     </div>
   </section>
 
-  <section id="s5">
+  <section id="s5" data-n="5">
     <span class="section-label">5 · Product or process writing</span>
     <div class="wrap">
       <p class="intro">Tap each statement, then tap Product or Process.</p>
@@ -180,7 +180,7 @@
     </div>
   </section>
 
-  <section id="s6">
+  <section id="s6" data-n="6">
     <span class="section-label">6 · Wall dictation: Tomas and Lena</span>
     <div class="wrap">
       <p class="intro">A running dictation: the text is on a wall outside the room, and one of you runs to it, remembers a line, and comes back to dictate it to your partner, who writes. Swap roles. On screen, the text appears line by line instead.</p>
@@ -216,7 +216,7 @@
     </div>
   </section>
 
-  <section id="s7">
+  <section id="s7" data-n="7">
     <span class="section-label">7 · Now you write: parallel writing</span>
     <div class="wrap">
       <div class="note-card">
@@ -238,7 +238,7 @@
     </div>
   </section>
 
-  <section id="s8">
+  <section id="s8" data-n="8">
     <span class="section-label">8 · Controlled, semi-controlled, freer</span>
     <div class="wrap">
       <p class="intro">Tap each example, then tap the zone it belongs to on the control-to-freedom continuum.</p>
@@ -249,7 +249,7 @@
     </div>
   </section>
 
-  <section id="s9">
+  <section id="s9" data-n="9">
     <span class="section-label">9 · Wrap-up: backs to the board</span>
     <div class="wrap">
       <p class="intro">One of you sits with your back to the board. New term shows a word to everyone else, who describe it without saying it until the guesser gets it (online: the guesser looks away from the screen while the others describe the word in the chat or out loud).</p>
@@ -476,17 +476,38 @@ document.getElementById('termBtn').addEventListener('click', () => {
     var d; try { d = JSON.parse(e.data); } catch (x) { return; }
     if (!d || d.event !== 'infoDelivery' || !d.info) return;
     var t = d.info.currentTime, st = d.info.playerState;
-    if ((open.end && t != null && t >= open.end) || st === 0) open.close();
+    if ((open.end && t != null && t >= open.end) || st === 0) { open.close(); return; }
+    /* data-skip="10-89": a stretch of the film the session does not need
+       (Ramy, 20 Oct 2026: the Hamlet sketch's first conversation). The
+       player jumps past it; nothing is cut from the film itself. */
+    if (open.skip && t != null && t >= open.skip[0] && t < open.skip[1]) {
+      try { open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [open.skip[1], true] }), '*'); } catch (x) {}
+    }
+  });
+  /* A film kept beside the page: a native player in the same frame. */
+  document.querySelectorAll('.film[data-video]').forEach(function(f){
+    var btn = f.querySelector('.film-btn'); if (!btn) return;
+    var hide = (btn.textContent || '').replace(/^Watch/, 'Hide');
+    function close(){ var v = f.querySelector('video'); if (v) { try { v.pause(); } catch (x) {} } f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
+    btn.addEventListener('click', function(){
+      f.classList.remove('closed'); f.innerHTML = '';
+      var v = document.createElement('video'); v.src = f.dataset.video; v.controls = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'metadata'; v.title = f.dataset.title || 'Film';
+      v.addEventListener('ended', close); f.appendChild(v);
+      var acts = document.createElement('p'); acts.className = 'film-acts';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = hide; c.addEventListener('click', close);
+      acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
+    });
   });
   document.querySelectorAll('.film[data-src]').forEach(function(f){
     var btn = f.querySelector('.film-btn'); if (!btn) return;
     var end = (f.dataset.src.match(/[?&]end=(\d+)/) || [])[1];
+    var skip = (f.dataset.skip || '').split('-').map(Number); if (skip.length !== 2 || isNaN(skip[0]) || isNaN(skip[1])) skip = null;
     function close(){ try { if (open && open.iframe) open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'stopVideo', args: [] }), '*'); } catch (x) {} open = null; f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
     btn.addEventListener('click', function(){
       f.classList.remove('closed'); f.innerHTML = '';
       var i = document.createElement('iframe'); i.src = f.dataset.src + (f.dataset.src.indexOf('?') === -1 ? '?' : '&') + 'autoplay=1&enablejsapi=1&origin=' + encodeURIComponent(location.origin); i.title = f.dataset.title || 'Film';
       i.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture'; i.allowFullscreen = true; f.appendChild(i);
-      open = { iframe: i, end: end ? +end : 0, close: close };
+      open = { iframe: i, end: end ? +end : 0, skip: skip, close: close };
       i.addEventListener('load', function(){ try { i.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (x) {} });
       var acts = document.createElement('p'); acts.className = 'film-acts';
       var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = 'Hide the film'; c.addEventListener('click', close);

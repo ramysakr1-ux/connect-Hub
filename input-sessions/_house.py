@@ -63,17 +63,38 @@ FILM_JS = '''<script>
     var d; try { d = JSON.parse(e.data); } catch (x) { return; }
     if (!d || d.event !== 'infoDelivery' || !d.info) return;
     var t = d.info.currentTime, st = d.info.playerState;
-    if ((open.end && t != null && t >= open.end) || st === 0) open.close();
+    if ((open.end && t != null && t >= open.end) || st === 0) { open.close(); return; }
+    /* data-skip="10-89": a stretch of the film the session does not need
+       (Ramy, 20 Oct 2026: the Hamlet sketch's first conversation). The
+       player jumps past it; nothing is cut from the film itself. */
+    if (open.skip && t != null && t >= open.skip[0] && t < open.skip[1]) {
+      try { open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [open.skip[1], true] }), '*'); } catch (x) {}
+    }
+  });
+  /* A film kept beside the page: a native player in the same frame. */
+  document.querySelectorAll('.film[data-video]').forEach(function(f){
+    var btn = f.querySelector('.film-btn'); if (!btn) return;
+    var hide = (btn.textContent || '').replace(/^Watch/, 'Hide');
+    function close(){ var v = f.querySelector('video'); if (v) { try { v.pause(); } catch (x) {} } f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
+    btn.addEventListener('click', function(){
+      f.classList.remove('closed'); f.innerHTML = '';
+      var v = document.createElement('video'); v.src = f.dataset.video; v.controls = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'metadata'; v.title = f.dataset.title || 'Film';
+      v.addEventListener('ended', close); f.appendChild(v);
+      var acts = document.createElement('p'); acts.className = 'film-acts';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = hide; c.addEventListener('click', close);
+      acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
+    });
   });
   document.querySelectorAll('.film[data-src]').forEach(function(f){
     var btn = f.querySelector('.film-btn'); if (!btn) return;
     var end = (f.dataset.src.match(/[?&]end=(\\d+)/) || [])[1];
+    var skip = (f.dataset.skip || '').split('-').map(Number); if (skip.length !== 2 || isNaN(skip[0]) || isNaN(skip[1])) skip = null;
     function close(){ try { if (open && open.iframe) open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'stopVideo', args: [] }), '*'); } catch (x) {} open = null; f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
     btn.addEventListener('click', function(){
       f.classList.remove('closed'); f.innerHTML = '';
       var i = document.createElement('iframe'); i.src = f.dataset.src + (f.dataset.src.indexOf('?') === -1 ? '?' : '&') + 'autoplay=1&enablejsapi=1&origin=' + encodeURIComponent(location.origin); i.title = f.dataset.title || 'Film';
       i.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture'; i.allowFullscreen = true; f.appendChild(i);
-      open = { iframe: i, end: end ? +end : 0, close: close };
+      open = { iframe: i, end: end ? +end : 0, skip: skip, close: close };
       i.addEventListener('load', function(){ try { i.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (x) {} });
       var acts = document.createElement('p'); acts.className = 'film-acts';
       var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = 'Hide the film'; c.addEventListener('click', close);
@@ -85,8 +106,8 @@ FILM_JS = '''<script>
 
 def films_closed(page):
     """<div class="film"><iframe src=... title=...></iframe></div> becomes a closed frame with a button."""
-    return re.sub(r'<div class="film"><iframe src="([^"]+)" title="([^"]+)"[^>]*></iframe></div>',
-                  lambda m: '<div class="film closed" data-src="%s" data-title="%s"><button type="button" class="btn teal film-btn">Watch the film</button></div>' % (m.group(1), m.group(2)), page)
+    return re.sub(r'<div class="film"><iframe src="([^"]+)" title="([^"]+)"( data-skip="[^"]+")?[^>]*></iframe></div>',
+                  lambda m: '<div class="film%s closed" %s="%s" data-title="%s"%s><button type="button" class="btn teal film-btn">Watch the film</button></div>' % (' sd' if m.group(1).endswith('.mp4') else '', 'data-video' if m.group(1).endswith('.mp4') else 'data-src', m.group(1), m.group(2), m.group(3) or ''), page)
 
 def alias(page, slug):
     """Swap in the made-up names and examples; every old string must be there."""
@@ -115,6 +136,20 @@ def strip_lengths(page):
     page = re.sub(r'<span class="section-tag">[^<]*</span>', eyebrow, page)
     page = re.sub(r'\s*<div class="su"><div class="k">Time</div><div class="v">\d+ minutes</div></div>', '', page)
     page = page.replace('About 40 minutes: a lead-in,', 'A lead-in,')
+    return page
+
+def number_from_nav(page):
+    """The workbook (20 Oct 2026): each task shows, in its margin, the number
+    its nav label carries ("2 · Word stress" puts a 2 beside #s2). The number
+    lives on the section as data-n, so the margin and the nav cannot
+    disagree; a label with no number (Lead-in, Debrief) leaves none. Run on
+    every page, including the two kept by hand; it is safe to run twice."""
+    page = re.sub(r'(<section\b[^>]*?) data-n="\d+"', r'\1', page)
+    nav = re.search(r'<nav class="sticky-nav"[^>]*>(.*?)</nav>', page, flags=re.S)
+    if not nav:
+        return page
+    for h, label in re.findall(r'<a href="#([^"]+)"[^>]*>\s*(\d+)\s*\u00b7', nav.group(1)):
+        page = re.sub(r'<section id="%s"(?![^>]*data-n)' % re.escape(h), '<section id="%s" data-n="%s"' % (h, label), page, count=1)
     return page
 
 def notes_block(slug):
@@ -229,7 +264,7 @@ def build(r):
                        css=r['css'].strip('\n'), nav=nav) + films_closed(body.strip('\n')) + notes_block(r['slug']) + sources + '\n\n' + FOOT + '\n</div>\n\n' + script + '\n' + FILM_JS + '\n' + GATE + '\n</body>\n</html>\n'
     for bad in ('Nunito', 'Playfair', 'progressFill', 'class="watermark"', 'International House Istanbul'):
         assert bad not in page.replace(sources, '').replace(notes_block(r['slug']), ''), f"{r['slug']}: {bad} still in the page"
-    page = strip_lengths(alias(page, r['slug']))
+    page = number_from_nav(strip_lengths(alias(page, r['slug'])))
     out = HERE / r['slug'] / 'index.html'
     out.parent.mkdir(exist_ok=True)
     out.write_text(page, encoding='utf-8')
@@ -239,11 +274,12 @@ def build(r):
 RECIPES = []
 
 # ---- Eliciting and CCQs ----------------------------------------------------
+CLASSROOM = '<section id="s2b">\n<div class="card">\n<div class="stage-title">In the classroom: a dialogue the students build <span class="badge">Watch, then name it</span></div>\n<p class="lead">A teacher gets a whole dialogue out of a class without reading them a line of it. Watch once, with the eleven techniques in front of you. Which do you see, and what do the students say that the teacher never said?</p>\n<div class="film"><iframe src="elicited-dialogue.mp4" title="An elicited dialogue"></iframe></div>\n<p class="lead" style="margin-top:12px"><b>Write as you watch.</b> The techniques you spotted, in order, and the moment you would have given up and told them.</p>\n<textarea class="write-area" rows="4" aria-label="What you saw" placeholder="The techniques, in order, and the moment you would have told them"></textarea>\n<details class="reveal">\n  <summary>Afterwards, in pairs</summary>\n  <div class="content">Compare your lists. Where did the teacher drill before moving on? What did the board look like at the end, and who wrote it? Keep one thing from this film for your next TP, and say what it is.</div>\n</details>\n</div></section>\n'
 RECIPES.append(dict(
     slug='eliciting-and-ccqs',
-    sources="""The sentences, tasks and examples are made up for this session, on the pattern of the tutor's Concept Checking Techniques handout; the technique of concept questions and time lines follows Graham Workman, <i>Concept Questions and Time Lines</i> (Gem Publishing, 2005). The eleven ways to elicit are the tutor's own list; the classroom moments for the game and the practice words are made up.""", src='eliciting-and-ccqs/index.html',
-    title='Eliciting and CCQs', sub='Getting language out of students instead of putting it in: why we elicit, a game on eleven ways to do it, how a CCQ is built, a worksheet, other ways to check meaning, then your turn.',
-    nav=[('s1', '1 · Lead-in'), ('s1b', '2 · Why elicit?'), ('s2', '3 · Technique game'), ('s3', '4 · Building CCQs'), ('s5', '5 · CCQ worksheet'), ('s5b', '6 · Checking meaning'), ('s6', '7 · Your turn')],
+    sources="""The sentences, tasks and examples are made up for this session, on the pattern of the tutor's Concept Checking Techniques handout; the technique of concept questions and time lines follows Graham Workman, <i>Concept Questions and Time Lines</i> (Gem Publishing, 2005). The eleven ways to elicit are the tutor's own list; the classroom moments for the game and the practice words are made up. The classroom film is from the <i>Learning Teaching</i> DVD (Macmillan), held by the tutor.""", src='eliciting-and-ccqs/index.html',
+    title='Eliciting and CCQs', sub='Getting language out of students instead of putting it in: why we elicit, a game on eleven ways to do it, a dialogue elicited on film, how a CCQ is built, a worksheet, other ways to check meaning, then your turn.',
+    nav=[('s1', '1 · Lead-in'), ('s1b', '2 · Why elicit?'), ('s2', '3 · Technique game'), ('s2b', '4 · In the classroom'), ('s3', '5 · Building CCQs'), ('s5', '6 · CCQ worksheet'), ('s5b', '7 · Checking meaning'), ('s6', '8 · Your turn')],
     css='''
   .word-card{background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:12px 16px 14px; margin:0 0 10px;}
   .word-card .wname{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.05rem; color:var(--ink); margin:0 0 4px;}
@@ -273,6 +309,7 @@ RECIPES.append(dict(
   @media print{ .game-box{display:none;} }
 ''',
     body=[
+        ('<section id="s3">', CLASSROOM + '<section id="s3">'),
         ('Spot the Elicitor', 'Spot the elicitor'),
         ('then click to reveal who\'s actually eliciting — and who\'s just telling.', 'then click to reveal who is eliciting and who is telling.'),
         ('Why Do We Elicit? <span', 'Why do we elicit? <span'),
@@ -1481,7 +1518,7 @@ HAMLET = """<section id="s0">
 <div class="card">
 <div class="stage-title">Lead-in: one line, nine readings <span class="badge">Watch twice</span><span class="time">8 min</span></div>
 <p class="lead">Nine actors, one line from <i>Hamlet</i>, and a disagreement about where the stress goes. First time through, tick the word each one lands on. Second time, in pairs: what does the line mean each time, and which reading would you choose?</p>
-<div class="film"><iframe src="https://www.youtube-nocookie.com/embed/iQULEW2JwHE?rel=0&modestbranding=1" title="Shakespeare Live! From the RSC: To be, or not to be" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>
+<div class="film"><iframe src="https://www.youtube-nocookie.com/embed/iQULEW2JwHE?rel=0&modestbranding=1" title="Shakespeare Live! From the RSC: To be, or not to be" data-skip="10-89" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>
 <p class="film-link">From <i>Shakespeare Live! From the RSC</i> (BBC Two, 23 April 2016). If the frame stays black, <a href="https://www.youtube.com/watch?v=iQULEW2JwHE" target="_blank" rel="noopener">watch it on YouTube</a>; the RSC's own <a href="https://www.youtube.com/watch?v=6gZtW-U6qG4" target="_blank" rel="noopener">short cut</a> has the ending.</p>
 <div id="hamlet"></div>
 <div class="btn-row"><button class="btn secondary" onclick="toggleReveal('hamletKey',this)">Reveal</button></div>
@@ -2034,7 +2071,7 @@ def hand(slug):
     page = re.sub(r"\n<script>\n\(function\(\)\{\n  document\.querySelectorAll\('\.film\[data-src\]'\).*?</script>", '', page, count=1, flags=re.S)
     page = page.replace('\n</body>', '\n' + FILM_JS + '\n' + GATE + '\n</body>', 1)
     assert page.count('id="trainer"') == 1 and page.count('hub-store.js') == 1, slug
-    page = strip_lengths(alias(page, slug))
+    page = number_from_nav(strip_lengths(alias(page, slug)))
     p.write_text(page, encoding='utf-8')
     print('patched', p.relative_to(ROOT), len(page))
 

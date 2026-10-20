@@ -93,7 +93,7 @@
 
   <div class="voice"><label for="voicePick">The voice that says the words</label><select id="voicePick"><option value="">Choosing</option></select><button class="btn" type="button" onclick="say('The quick brown fox jumps over the lazy dog.')">Try it</button></div>
   <!-- 1 -->
-  <section id="s1">
+  <section id="s1" data-n="1">
     <div class="card">
       <div class="stage-title">Sounds against letters <span class="badge">Lead-in</span></div>
       <p class="lead">Listen to each word and write it down. Then check your spelling with a partner and discuss what each word means. Finally, count the <b>letters</b> and the <b>sounds</b> in each word.</p>
@@ -120,7 +120,7 @@
   <div class="divider"><span>terminology</span></div>
 
   <!-- 2 -->
-  <section id="s2">
+  <section id="s2" data-n="2">
     <div class="card">
       <div class="stage-title">Match the terminology <span class="badge">Match the pills</span></div>
       <p class="lead">Click a term on the left, then click its definition on the right.</p>
@@ -132,7 +132,7 @@
   <div class="divider"><span>consonants</span></div>
 
   <!-- 3 -->
-  <section id="s3">
+  <section id="s3" data-n="3">
     <div class="card">
       <div class="stage-title">Consonant sounds: where is the obstruction? <span class="badge">Try it</span></div>
       <p class="lead">Consonant sounds are formed when the airflow from the lungs is obstructed by the moveable parts of the mouth — the tongue and the lips. Say each sound and decide <b>where</b> the obstruction happens. Example: /b/ as in <i>ban</i> is made by stopping the airflow at the lips.</p>
@@ -151,7 +151,7 @@
   <div class="divider"><span>voicing</span></div>
 
   <!-- 4 -->
-  <section id="s4">
+  <section id="s4" data-n="4">
     <div class="card">
       <div class="stage-title">Voiced or unvoiced? <span class="badge">Try it</span></div>
       <p class="lead">Many consonants come in voiced / unvoiced pairs, such as /p/ and /b/. A <b>voiced</b> sound is made by activating the vocal cords — put your hand on your throat and feel them vibrate. An <b>unvoiced</b> sound needs no vocal cord activation.</p>
@@ -169,7 +169,7 @@
   <div class="divider"><span>reference</span></div>
 
   <!-- 5 -->
-  <section id="s5">
+  <section id="s5" data-n="5">
     <div class="card">
       <div class="stage-title">The phonemic chart <span class="badge">Click to hear</span></div>
       <p class="lead">British English has 44 phonemes. Click any sound to hear its example word. Use this chart for the next two tasks.</p>
@@ -183,7 +183,7 @@
   <div class="divider"><span>phonemic script</span></div>
 
   <!-- 6 -->
-  <section id="s6">
+  <section id="s6" data-n="6">
     <div class="card">
       <div class="stage-title">Write these words in phonemic script <span class="badge">Try it</span></div>
       <p class="lead">Click in a box, then use the symbol keys to type. Slashes are added for you.</p>
@@ -201,7 +201,7 @@
   <div class="divider"><span>a bit of fun</span></div>
 
   <!-- 7 -->
-  <section id="s7">
+  <section id="s7" data-n="7">
     <div class="card">
       <div class="stage-title">Decipher the film titles <span class="badge">Game</span></div>
       <p class="lead">Use the chart to decode these film titles. First to finish wins.</p>
@@ -375,7 +375,7 @@ function cell(c){ if(!c) return '<div class="ph blank"></div>';
   return '<div class="ph" style="--c:'+c[2]+'" onclick="say(\''+c[1]+'\')"><div class="s">'+c[0]+'</div><div class="w">'+c[1]+'</div></div>'; }
 function block(title,rows,cols,color){ return '<div class="chart-block" style="--c:'+color+'"><h5>'+title+'</h5>'+rows.map(r=>'<div class="chart-row" style="--cols:'+cols+'">'+r.map(cell).join('')+'</div>').join('')+'</div>'; }
 document.getElementById('phonChart').innerHTML =
-  '<div class="chart-top">'+block('Vowels',vowels,4,'var(--gold-deep)')+block('Diphthongs',diph,3,ORANGE)+'</div>'+block('Consonants',cons,8,'var(--teal)');
+  '<div class="chart-top">'+block('Vowels',vowels,4,'var(--gold)')+block('Diphthongs',diph,3,ORANGE)+'</div>'+block('Consonants',cons,8,'var(--teal)');
 
 // ---------- 6. phonemic script ----------
 const keys = ['\u026a','e','\u00e6','\u028c','\u0252','\u028a','\u0259','i\u02d0','\u0251\u02d0','\u0254\u02d0','u\u02d0','\u025c\u02d0','|','e\u026a','a\u026a','\u0254\u026a','\u0259\u028a','a\u028a','\u026a\u0259','e\u0259','\u028a\u0259','|','\u03b8','\u00f0','\u0283','\u0292','t\u0283','d\u0292','\u014b','j'];
@@ -431,17 +431,38 @@ document.addEventListener('scroll',onScroll); onScroll();
     var d; try { d = JSON.parse(e.data); } catch (x) { return; }
     if (!d || d.event !== 'infoDelivery' || !d.info) return;
     var t = d.info.currentTime, st = d.info.playerState;
-    if ((open.end && t != null && t >= open.end) || st === 0) open.close();
+    if ((open.end && t != null && t >= open.end) || st === 0) { open.close(); return; }
+    /* data-skip="10-89": a stretch of the film the session does not need
+       (Ramy, 20 Oct 2026: the Hamlet sketch's first conversation). The
+       player jumps past it; nothing is cut from the film itself. */
+    if (open.skip && t != null && t >= open.skip[0] && t < open.skip[1]) {
+      try { open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [open.skip[1], true] }), '*'); } catch (x) {}
+    }
+  });
+  /* A film kept beside the page: a native player in the same frame. */
+  document.querySelectorAll('.film[data-video]').forEach(function(f){
+    var btn = f.querySelector('.film-btn'); if (!btn) return;
+    var hide = (btn.textContent || '').replace(/^Watch/, 'Hide');
+    function close(){ var v = f.querySelector('video'); if (v) { try { v.pause(); } catch (x) {} } f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
+    btn.addEventListener('click', function(){
+      f.classList.remove('closed'); f.innerHTML = '';
+      var v = document.createElement('video'); v.src = f.dataset.video; v.controls = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'metadata'; v.title = f.dataset.title || 'Film';
+      v.addEventListener('ended', close); f.appendChild(v);
+      var acts = document.createElement('p'); acts.className = 'film-acts';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = hide; c.addEventListener('click', close);
+      acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
+    });
   });
   document.querySelectorAll('.film[data-src]').forEach(function(f){
     var btn = f.querySelector('.film-btn'); if (!btn) return;
     var end = (f.dataset.src.match(/[?&]end=(\d+)/) || [])[1];
+    var skip = (f.dataset.skip || '').split('-').map(Number); if (skip.length !== 2 || isNaN(skip[0]) || isNaN(skip[1])) skip = null;
     function close(){ try { if (open && open.iframe) open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'stopVideo', args: [] }), '*'); } catch (x) {} open = null; f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
     btn.addEventListener('click', function(){
       f.classList.remove('closed'); f.innerHTML = '';
       var i = document.createElement('iframe'); i.src = f.dataset.src + (f.dataset.src.indexOf('?') === -1 ? '?' : '&') + 'autoplay=1&enablejsapi=1&origin=' + encodeURIComponent(location.origin); i.title = f.dataset.title || 'Film';
       i.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture'; i.allowFullscreen = true; f.appendChild(i);
-      open = { iframe: i, end: end ? +end : 0, close: close };
+      open = { iframe: i, end: end ? +end : 0, skip: skip, close: close };
       i.addEventListener('load', function(){ try { i.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (x) {} });
       var acts = document.createElement('p'); acts.className = 'film-acts';
       var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = 'Hide the film'; c.addEventListener('click', close);

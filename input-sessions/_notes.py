@@ -30,6 +30,7 @@ NOTES['eliciting-and-ccqs'] = '''
     (5, 'Spot the elicitor', 'Read both teachers aloud yourself, with the voices. Ask the room who is eliciting before anyone clicks.'),
     (5, 'Why do we elicit?', 'Pairs list reasons in the box. Collect a few aloud, then reveal the five and the warning: you can\u2019t elicit what isn\u2019t there.'),
     (10, 'Name the technique', 'Pairs or two teams. One moment at a time; a point only for a first-time answer. See all eleven at the end, and ask for a twelfth of their own.'),
+    (8, 'In the classroom', 'The film is three and a half minutes. Play it once; pairs write the techniques in order and the moment they would have told the class. Name the techniques yourself before the session: the page gives no key, so the room builds it.'),
     (10, 'Building CCQs', 'Walk the managed-to model on the board: the sentence, what it means, simpler statements, then questions. Task A in pairs (find the sentence), Task B as a class (what is wrong).'),
     (10, 'CCQ worksheet', 'Item 1 is done. Do item 2 together first: meaning in plain words, then CCQs. Pairs on 3 to 7; reveal as they finish.'),
     (5, 'Other ways to check meaning', 'Click through the eight. Ask which suits the language in their next TP.'),
@@ -346,7 +347,7 @@ NOTES['teaching-literacy'] = '''
 
 NOTES['word-and-sentence-stress'] = '''
 <h4>Before</h4>
-<p>Sound for the Hamlet sketch (4 minutes; it is a fan upload, so check it still plays, and the RSC’s own short cut is the fallback link under the frame). Nothing to print; the chant and the roses sentence are on screen.</p>
+<p>Sound for the Hamlet sketch (about five minutes: the page jumps past the first conversation, from the first line to the second actor; it is a fan upload, so check it still plays, and the RSC’s own short cut is the fallback link under the frame). Nothing to print; the chant and the roses sentence are on screen.</p>
 <h4>Running it</h4>
 ''' + T(mins=False, rows=[
     (8, 'Lead-in', 'Watch once: tick the word each actor lands on. Watch again in pairs: what does the line mean each time, which would you choose. Then the reveal. If you want a word-by-word key for the nine, add it after one viewing; the page does not claim one.'),

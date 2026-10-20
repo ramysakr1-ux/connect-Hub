@@ -74,7 +74,7 @@
   </nav>
 
   <!-- 1: WARM-UP -->
-  <section id="s1">
+  <section id="s1" data-n="1">
     <div class="card">
       <div class="stage-title">Warm-up <span class="badge">Discuss</span></div>
       <p class="lead">Before we start, think about your own experience as a learner or teacher.</p>
@@ -89,7 +89,7 @@
   <div class="divider"><span>sorting</span></div>
 
   <!-- 2: FLUENCY VS ACCURACY -->
-  <section id="s2">
+  <section id="s2" data-n="2">
     <div class="card">
       <div class="stage-title">Free speaking or controlled speaking? <span class="badge">Sort the features</span></div>
       <p class="lead">Put each feature under the correct heading: does it describe a <b>free (fluency)</b> speaking task, or a <b>controlled (accuracy)</b> speaking task?</p>
@@ -104,7 +104,7 @@
   <div class="divider"><span>reading</span></div>
 
   <!-- 3: WHAT MAKES FLUENCY WORK -->
-  <section id="s3">
+  <section id="s3" data-n="3">
     <div class="card">
       <div class="stage-title">What makes a fluency task work? <span class="badge">Read and discuss</span></div>
       <p class="lead">Read the principles below. Do they match what you said in the warm-up?</p>
@@ -126,7 +126,7 @@
   <div class="divider"><span>staging</span></div>
 
   <!-- 4: STAGE ORDER -->
-  <section id="s4">
+  <section id="s4" data-n="4">
     <div class="card">
       <div class="stage-title">Put the stages in order <span class="badge">Order, then reveal</span></div>
       <p class="lead">Below are the stages of a free speaking activity, in random order. Click each stage, in the order you think it happens, from first to last.</p>
@@ -145,7 +145,7 @@
   <div class="divider"><span>the framework</span></div>
 
   <!-- 5: FRAMEWORK -->
-  <section id="s5">
+  <section id="s5" data-n="5">
     <div class="card">
       <div class="stage-title">The productive skills shape <span class="badge">The framework</span></div>
       <p class="lead">This shape works for speaking <i>or</i> writing lessons. Main aim: <b>to practise oral/written fluency in relation to ___ (topic)</b>. Stages are chosen as necessary; not every lesson needs all five.</p>
@@ -163,7 +163,7 @@
   <div class="divider"><span>matching</span></div>
 
   <!-- 6: PROBLEMS AND SOLUTIONS -->
-  <section id="s6">
+  <section id="s6" data-n="6">
     <div class="card">
       <div class="stage-title">Common speaking problems <span class="badge">Match and discuss</span></div>
       <p class="lead">Match each problem students have with speaking to the best classroom solution.</p>
@@ -178,7 +178,7 @@
   <div class="divider"><span>production</span></div>
 
   <!-- 7: PLAN A STAGE -->
-  <section id="s7">
+  <section id="s7" data-n="7">
     <div class="card">
       <div class="stage-title">Plan a speaking lesson <span class="badge">Apply the framework</span></div>
       <p class="lead">In pairs, choose a topic and plan the five stages using the productive skills shape. Keep it brief; a sentence or two per stage is enough.</p>
@@ -201,7 +201,7 @@
   <div class="divider"><span>wrap-up</span></div>
 
   <!-- 8: WRAP UP -->
-  <section id="s8">
+  <section id="s8" data-n="8">
     <div class="card">
       <div class="stage-title">Key takeaways</div>
       <ul class="checklist">
@@ -387,17 +387,38 @@ onScroll();
     var d; try { d = JSON.parse(e.data); } catch (x) { return; }
     if (!d || d.event !== 'infoDelivery' || !d.info) return;
     var t = d.info.currentTime, st = d.info.playerState;
-    if ((open.end && t != null && t >= open.end) || st === 0) open.close();
+    if ((open.end && t != null && t >= open.end) || st === 0) { open.close(); return; }
+    /* data-skip="10-89": a stretch of the film the session does not need
+       (Ramy, 20 Oct 2026: the Hamlet sketch's first conversation). The
+       player jumps past it; nothing is cut from the film itself. */
+    if (open.skip && t != null && t >= open.skip[0] && t < open.skip[1]) {
+      try { open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [open.skip[1], true] }), '*'); } catch (x) {}
+    }
+  });
+  /* A film kept beside the page: a native player in the same frame. */
+  document.querySelectorAll('.film[data-video]').forEach(function(f){
+    var btn = f.querySelector('.film-btn'); if (!btn) return;
+    var hide = (btn.textContent || '').replace(/^Watch/, 'Hide');
+    function close(){ var v = f.querySelector('video'); if (v) { try { v.pause(); } catch (x) {} } f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
+    btn.addEventListener('click', function(){
+      f.classList.remove('closed'); f.innerHTML = '';
+      var v = document.createElement('video'); v.src = f.dataset.video; v.controls = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'metadata'; v.title = f.dataset.title || 'Film';
+      v.addEventListener('ended', close); f.appendChild(v);
+      var acts = document.createElement('p'); acts.className = 'film-acts';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = hide; c.addEventListener('click', close);
+      acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
+    });
   });
   document.querySelectorAll('.film[data-src]').forEach(function(f){
     var btn = f.querySelector('.film-btn'); if (!btn) return;
     var end = (f.dataset.src.match(/[?&]end=(\d+)/) || [])[1];
+    var skip = (f.dataset.skip || '').split('-').map(Number); if (skip.length !== 2 || isNaN(skip[0]) || isNaN(skip[1])) skip = null;
     function close(){ try { if (open && open.iframe) open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'stopVideo', args: [] }), '*'); } catch (x) {} open = null; f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
     btn.addEventListener('click', function(){
       f.classList.remove('closed'); f.innerHTML = '';
       var i = document.createElement('iframe'); i.src = f.dataset.src + (f.dataset.src.indexOf('?') === -1 ? '?' : '&') + 'autoplay=1&enablejsapi=1&origin=' + encodeURIComponent(location.origin); i.title = f.dataset.title || 'Film';
       i.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture'; i.allowFullscreen = true; f.appendChild(i);
-      open = { iframe: i, end: end ? +end : 0, close: close };
+      open = { iframe: i, end: end ? +end : 0, skip: skip, close: close };
       i.addEventListener('load', function(){ try { i.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (x) {} });
       var acts = document.createElement('p'); acts.className = 'film-acts';
       var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = 'Hide the film'; c.addEventListener('click', close);
