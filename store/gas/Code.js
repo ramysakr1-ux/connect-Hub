@@ -459,7 +459,9 @@ function handle_(req) {
       var stPeople = peopleByCourse_({ tracker: 1, celta5t: 1, assignments: 1 });
       courses_().forEach(function (c) {
         var set = courseRead_(c.id, 'settings') || {};
-        if (set.demoToday || /scratch/i.test(String(c.name || ''))) return;
+        // "not a course": the TP point library is kept as a course record, as
+        // the pulse below already knows (20 Oct 2026: it counted a test name).
+        if (set.demoToday || /scratch|not a course/i.test(String(c.name || '') + ' ' + String(set.courseName || ''))) return;
         if (/grades/i.test(String(set.courseName || '')) || /grades/i.test(String(c.name || ''))) return;
         out.courses.total++;
         var num = String(set.centreNumber || '').trim().toUpperCase();
