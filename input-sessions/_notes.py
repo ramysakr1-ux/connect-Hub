@@ -351,10 +351,14 @@ NOTES['word-and-sentence-stress'] = '''
 ''' + T(mins=False, rows=[
     (8, 'Lead-in', 'Watch once: tick the word each actor lands on. Watch again in pairs: what does the line mean each time, which would you choose. Then the reveal. If you want a word-by-word key for the nine, add it after one viewing; the page does not claim one.'),
     (6, 'Rhythm', 'Clap the four beats and say the four lines over them, faster each time. The reveal names stress timing.'),
-    (8, 'Word stress', 'Sixteen countries; say each before clicking. Pakistan and Montreal carry a secondary stress; make them hear it.'),
+    (8, 'Word stress', 'Sixteen countries; say each before clicking. Have them sort the words into the bubble patterns first, then click. Pakistan and Montreal carry a secondary stress; make them hear it. Show how you mark stress on the board: bubbles, never accent marks.'),
     (8, 'Contrastive', 'The roses sentence seven ways, round the room, one word each. Reveal the implication after each.'),
+    (7, 'In context', 'Step 1 alone: mark the five questions. Only then open the conversation (on paper, fold the page). Pairs read it with their own names and mark again. Ask what moved before the reveal.'),
+    (7, 'The café', 'Pairs read the five exchanges aloud, the server leaning on a different word each time. Agree the stress, then reveal. Push for why: the stress answers what the customer just said.'),
     (7, 'Attitudinal', 'Five Paris exchanges in pairs: which word, before revealing.'),
     (8, 'Noun or verb', 'Eight quiz items individually. Then two more pairs of their own (import, present, record, object, contract, conduct).'),
+    (6, 'Make it productive', 'Ask the room which tasks so far were receptive (all of them). Each trainee picks one and writes how Ss would say it. Hear three, then the reveal. Tie it to their next TP plan.'),
+    (3, 'Round-up', 'Trainees write their three before opening. Collect them aloud; the reveal is the board summary.'),
 ]) + '''
 <h4>The key</h4>
 <p>On the page for every task. Primary stress: aus-TRA-lia, HUN-ga-ry, bra-ZIL, ja-PAN, IT-a-ly, LON-don, pak-i-STAN (secondary on pak), GER-ma-ny, chi-CA-go, mon-tre-AL (secondary on mon), tor-QUAY, TUR-key, IN-di-a, SWIT-zer-land, a-MER-i-ca, slo-VA-ki-a.</p>
@@ -362,7 +366,10 @@ NOTES['word-and-sentence-stress'] = '''
 <ul>
 <li>Stress shown by volume alone. Length and pitch carry it too; the chant is where they feel that.</li>
 <li>Trainees who mark every word. One stress per thought group; contrastive stress moves it.</li>
-</ul>'''
+<li>Australia and America in the sort. Some accents give them a syllable less; the main stress stays put. Accept both.</li>
+</ul>
+<h4>If you want another lead-in</h4>
+<p>A published jazz chant built on echo questions ("Spectacles?" "Spectacles.") works well before the rhythm task. It is not reproduced on the page; bring your own copy.</p>'''
 
 NOTES['connected-speech'] = '''
 <h4>Before</h4>

@@ -1366,6 +1366,117 @@ RECIPES.append(dict(
 ))
 
 # ---- Word and sentence stress ------------------------------------------------
+# Ramy, 20 Oct 2026, after running it: "it's good, but it was short". From the
+# old Phonology 1 plan and handouts: stress in context (the fold-the-page
+# task), the barman (here a café), stress marked as bubbles with a pattern
+# sort, the turn from receptive to productive, and a round-up. The "open
+# door" drill was left out on his word. Every line below is written for Lite.
+def _pat(*marks):
+    return '<span class="pat">' + ''.join('<span class="circle %s"></span>' % {'O': 'primary', 'S': 'secondary', 'o': 'unstressed'}[m] for m in marks) + '</span>'
+
+STRESS_SORT = """
+  <div class="sort-block">
+    <p class="instr"><b>First, sort them.</b> Before you click anything, say each word and put it under its pattern. Big bubble for the main stress, small for the rest. Then click the words to check.</p>
+    <div class="pat-grid">
+      <div class="pat-row">""" + _pat('O','o') + """<input class="blank" aria-label="Words with this pattern"></div>
+      <div class="pat-row">""" + _pat('o','O') + """<input class="blank" aria-label="Words with this pattern"></div>
+      <div class="pat-row">""" + _pat('O','o','o') + """<input class="blank" aria-label="Words with this pattern"></div>
+      <div class="pat-row">""" + _pat('o','O','o') + """<input class="blank" aria-label="Words with this pattern"></div>
+      <div class="pat-row">""" + _pat('o','O','o','o') + """<input class="blank" aria-label="Words with this pattern"></div>
+      <div class="pat-row">""" + _pat('S','o','O') + """<input class="blank" aria-label="Words with this pattern"></div>
+    </div>
+    <details class="reveal">
+      <summary>Check the sort</summary>
+      <div class="content">
+        <b>Oo</b> London, Turkey &middot; <b>oO</b> Brazil, Japan, Torquay &middot; <b>Ooo</b> Hungary, Italy, Germany, India, Switzerland &middot; <b>oOo</b> Chicago &middot; <b>oOoo</b> Australia, America, Slovakia &middot; <b>small, then O</b> Pakistan, Montreal (a secondary stress on the first syllable).<br><br>
+        Australia and America may not fit. Some speakers say aus-TRAY-lya in three syllables, and America can lose a syllable in fast speech. The main stress does not move; the count does. Accept both.
+      </div>
+    </details>
+    <details class="reveal">
+      <summary>How to mark stress on the board</summary>
+      <div class="content">Use bubbles or boxes above the word, a big one on the stressed syllable. Not an accent mark and not an underline: Ss read an accent as a letter in their own language, and underlines are already doing other jobs on your board. Mark it the same way every lesson so Ss know it on sight.</div>
+    </details>
+  </div>"""
+
+STRESS_CONTEXT = """<section id="s3b">
+<div class="card">
+<div class="stage-title">Stress in context: say it, then see it in a conversation <span class="badge">Two steps</span></div>
+  <p class="instr"><b>Step 1.</b> Say each question on its own and mark the word that carries the main stress.</p>
+  <p class="chant-line">What's your name?</p>
+  <p class="chant-line">Nice to meet you.</p>
+  <p class="chant-line">How are you?</p>
+  <p class="chant-line">Where are you from?</p>
+  <p class="chant-line">Where do you live?</p>
+  <div class="btn-row"><button class="btn secondary" onclick="this.closest('.card').querySelector('.unfold').classList.add('shown'); this.parentNode.remove()">Now open the conversation</button></div>
+  <div class="unfold">
+    <p class="instr"><b>Step 2.</b> Fill in the gaps with your own details. Read the conversation aloud with a partner, then mark the stress again. Has it moved?</p>
+    <div class="convo">
+      <p><b>A</b> Hi, I'm <input class="blank short" aria-label="A's name">. What's your name?</p>
+      <p><b>B</b> I'm <input class="blank short" aria-label="B's name">.</p>
+      <p><b>A</b> Nice to meet you.</p>
+      <p><b>B</b> Nice to meet you too.</p>
+      <p><b>A</b> How are you?</p>
+      <p><b>B</b> Fine, thanks. How are you?</p>
+      <p><b>A</b> Good. Where are you from?</p>
+      <p><b>B</b> <input class="blank short" aria-label="B's country">. And where are you from?</p>
+      <p><b>A</b> <input class="blank short" aria-label="A's country">. Where do you live now?</p>
+      <p><b>B</b> In <input class="blank short" aria-label="B's town">. And where do you live?</p>
+    </div>
+    <details class="reveal">
+      <summary>Reveal: what moved, and why</summary>
+      <div class="content">On their own: what's your <b>NAME</b>, nice to <b>MEET</b> you, how <b>ARE</b> you, where are you <b>FROM</b>, where do you <b>LIVE</b>.<br><br>
+      Asked back, the stress jumps to <b>YOU</b>: nice to meet <b>YOU</b> too, how are <b>YOU</b>, and where are <b>YOU</b> from, where do <b>YOU</b> live. The question is old news by then; the person is the new information.<br><br>
+      So a phrase taught on its own can teach the wrong stress. Give Ss the conversation, not the list.</div>
+    </details>
+  </div>
+  </div></section>
+<section id="s3c">
+<div class="card">
+<div class="stage-title">The café: one answer, five times <span class="badge">Mark the main stress</span></div>
+  <p class="instr">The server says exactly the same words every time. Read each exchange, decide where the main stress falls in the answer, then check. Better still, read it aloud with a partner and argue.</p>
+  <div class="paris-block"><p class="qline"><b>Customer</b> A flat white with oat milk, please.</p><p class="aline"><b>Server</b> We don't have any oat milk.</p><details class="reveal"><summary>Where is the stress?</summary><div class="content">On <b>OAT MILK</b>. It is the news: everything else is fine, this one thing is missing.</div></details></div>
+  <div class="paris-block"><p class="qline"><b>Customer</b> Oh, never mind. Just a splash, then.</p><p class="aline"><b>Server</b> We don't have any oat milk.</p><details class="reveal"><summary>Where is the stress?</summary><div class="content">On <b>ANY</b>. Not even a splash: the answer corrects how much.</div></details></div>
+  <div class="paris-block"><p class="qline"><b>Customer</b> Is it in the fridge? Let me have a look.</p><p class="aline"><b>Server</b> We don't have any oat milk.</p><details class="reveal"><summary>Where is the stress?</summary><div class="content">On <b>HAVE</b>. It isn't hidden somewhere; it isn't in the building.</div></details></div>
+  <div class="paris-block"><p class="qline"><b>Customer</b> You must have some. You always have some!</p><p class="aline"><b>Server</b> We don't have any oat milk.</p><details class="reveal"><summary>Where is the stress?</summary><div class="content">On <b>DON'T</b>. A flat denial of what the customer insists on.</div></details></div>
+  <div class="paris-block"><p class="qline"><b>Customer</b> Every café in town has oat milk!</p><p class="aline"><b>Server</b> We don't have any oat milk.</p><details class="reveal"><summary>Where is the stress?</summary><div class="content">On <b>WE</b>. Maybe every other café does; this one doesn't.</div></details></div>
+  <details class="reveal"><summary>What the café shows</summary><div class="content">The words never change; the conversation decides where the weight goes. Each time, the stress lands on the part of the answer that pushes back against what was just said.</div></details>
+  </div></section>
+"""
+
+STRESS_END = """
+<section id="s6">
+<div class="card">
+<div class="stage-title">Make it productive <span class="badge">Plan it</span></div>
+  <p class="instr">Look back at the tasks above. Your Ss would only <i>hear</i> stress in most of them: listen, mark, check. That is receptive work. Pick one task and write how you would get Ss to <i>say</i> it in a lesson.</p>
+  <textarea class="write-area" rows="4" aria-label="How you would make one task productive" placeholder="The task, and what your Ss would do"></textarea>
+  <details class="reveal">
+    <summary>Some ways in</summary>
+    <div class="content"><ul>
+      <li>Drill it: clap or tap the beat, back-chain a long phrase from the end, then say it at natural speed.</li>
+      <li>The café in pairs, then again with a new item and a new customer of their own.</li>
+      <li>Ss write a sentence, stress one word, and their partner says what it implies.</li>
+      <li>Board the bubbles first, have Ss say the words before you model them, then correct.</li>
+      <li>Noun or verb: Ss write one sentence with each and read them to the group, who say which they heard.</li>
+    </ul>
+    When you plan pronunciation for TP, plan the moment Ss say it, not only the moment they notice it.</div>
+  </details>
+  </div></section>
+<section id="s7">
+<div class="card">
+<div class="stage-title">Round-up <span class="badge">Three things</span></div>
+  <p class="instr">Before you open it, write the three things this session showed about stress.</p>
+  <textarea class="write-area" rows="3" aria-label="Your three things" placeholder="One, two, three"></textarea>
+  <details class="reveal">
+    <summary>Check</summary>
+    <div class="content"><ol>
+      <li><b>English is stress-timed.</b> Stressed words keep the beat; grammar words get squashed to fit.</li>
+      <li><b>Sentence stress moves</b> with the context and with the speaker's attitude. Teach it in a conversation, not a list.</li>
+      <li><b>Word stress has patterns,</b> and they can change with the part of speech: a REcord, to reCORD.</li>
+    </ol></div>
+  </details>
+  </div></section>
+"""
+
 HAMLET = """<section id="s0">
 <div class="card">
 <div class="stage-title">Lead-in: one line, nine readings <span class="badge">Watch twice</span><span class="time">8 min</span></div>
@@ -1382,8 +1493,8 @@ HAMLET = """<section id="s0">
 RECIPES.append(dict(
     slug='word-and-sentence-stress', src='desktop:../../../connect-Hub/_mock/sessions/Word_and_Sentence_Stress.html', h2_sections=True,
     eyebrow='Input session · Phonology 2 of 3', title='Word and sentence stress',
-    sub='Where the weight falls, and what it changes. The rhythm of English, primary and secondary stress, one sentence with seven meanings, five questions about Paris, and nouns that turn into verbs.',
-    nav=[('s0', 'Lead-in'), ('s1', '1 · Rhythm'), ('s2', '2 · Word stress'), ('s3', '3 · Contrastive'), ('s4', '4 · Attitudinal'), ('s5', '5 · Noun or verb')],
+    sub='Where the weight falls, and what it changes. The rhythm of English, primary and secondary stress, one sentence with seven meanings, stress that moves in a conversation, five questions about Paris, nouns that turn into verbs, and how to get Ss saying it.',
+    nav=[('s0', 'Lead-in'), ('s1', '1 · Rhythm'), ('s2', '2 · Word stress'), ('s3', '3 · Contrastive'), ('s3b', '4 · In context'), ('s3c', '5 · The café'), ('s4', '6 · Attitudinal'), ('s5', '7 · Noun or verb'), ('s6', '8 · Make it productive'), ('s7', 'Round-up')],
     sources="""The film is <i>Shakespeare Live! From the RSC</i> (BBC and the Royal Shakespeare Company, 2016). The rhythm chant, the countries, the roses sentence and the Paris question are classic CELTA input material; the noun-or-verb quiz is the tutor's own.""",
     css=r"""
   .instr{color:var(--grey); font-size:.92rem; margin:0 0 12px; line-height:1.55;}
@@ -1438,10 +1549,25 @@ RECIPES.append(dict(
   .hm .pick.on{background:var(--teal); border-color:var(--teal); color:var(--paper);}
   @media(max-width:560px){ .hm{grid-template-columns:1fr; gap:4px;} .word-grid{grid-template-columns:1fr 1fr;} }
   @media print{ details.reveal, .quiz-feedback{display:none !important;} .word-card .bubbles{display:none;} }
+  /* the pattern sort, the conversation, the unfolded half */
+  .sort-block{margin:0 0 16px;}
+  .pat-grid{display:grid; gap:8px; margin:0 0 6px;}
+  .pat-row{display:grid; grid-template-columns:96px 1fr; gap:12px; align-items:center;}
+  .pat{display:inline-flex; gap:7px; align-items:center;}
+  .pat-row input.blank{width:100%;}
+  .unfold{display:none; margin-top:14px;}
+  .unfold.shown{display:block;}
+  .convo p{margin:4px 0; font-size:.95rem; line-height:1.9;}
+  .convo b{display:inline-block; width:22px; color:var(--gold-deep);}
+  input.blank.short{width:9em; max-width:60%;}
+  @media print{ .unfold{display:block !important;} }
 """,
     drop=[r'\s*<div class="masthead">.*?</div>\s*<h1>.*?</h1>\s*<p class="tagline">.*?</p>', r'\s*<footer>.*?</footer>'],
     body=[
         ('<section id="s1">', HAMLET + '<section id="s1">'),
+        ('<div class="word-grid" id="wordGrid"></div>', STRESS_SORT + '\n  <div class="word-grid" id="wordGrid"></div>'),
+        ('<section id="s4">', STRESS_CONTEXT + '<section id="s4">'),
+        ('<div id="quizBlock"></div>\n</div></section>\n', '<div id="quizBlock"></div>\n</div></section>\n' + STRESS_END),
         ('<div class="stage-title">The Rhythm of English</div>', '<div class="stage-title">The rhythm of English <span class="badge">Say it aloud</span></div>'),
         ('<div class="stage-title">Word Stress: Primary and Secondary</div>', '<div class="stage-title">Word stress: primary and secondary <span class="badge">Click each word</span></div>'),
         ('<div class="stage-title">Contrastive Stress: One Sentence, Seven Meanings</div>', '<div class="stage-title">Contrastive stress: one sentence, seven meanings <span class="badge">Say it seven ways</span></div>'),

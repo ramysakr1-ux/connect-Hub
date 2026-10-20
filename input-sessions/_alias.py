@@ -650,7 +650,7 @@ ALIAS['receptive-skills'] = [
 ALIAS['word-and-sentence-stress'] = [
     # the sources line first
     ("The rhythm chant, the countries, the roses sentence and the Paris question are classic CELTA input material; the noun-or-verb quiz is the tutor's own.",
-     "The rhythm chant, the contrastive stress sentence and the question exchanges are made up for this session; the word list and the noun-or-verb quiz are the tutor's own."),
+     "The rhythm chant, the contrastive stress sentence, the question exchanges, the greetings conversation and the café are made up for this session; the word list, the noun-or-verb quiz and the round-up are the tutor's own."),
     # the rhythm chant: four content words on a steady beat
     ('<span class="stress">YOU</span> &nbsp; <span class="stress">ME</span> &nbsp; <span class="stress">HIM</span> &nbsp; <span class="stress">HER</span>',
      '<span class="stress">COOK</span> &nbsp; <span class="stress">BAKE</span> &nbsp; <span class="stress">FRY</span> &nbsp; <span class="stress">ROAST</span>'),
