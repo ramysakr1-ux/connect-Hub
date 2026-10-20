@@ -841,16 +841,18 @@ window.hubClockRange = function(a, b){
    name -> palette index); a tutor nobody picked for takes the next colour
    nobody has, so up to eight tutors never share one. */
 window.HUB_TUTOR_COLOURS = [
-  /* Coral, not orange (10 Oct 2026): the orange sat beside teaching practice's
-     gold, and a tutor's colour must never read as TP. */
-  { name: 'Coral',  bg: 'oklch(94% 0.05 32)',    bd: 'oklch(82% 0.1 32)',  fg: 'oklch(46% 0.14 32)' },
-  { name: 'Blue',   bg: 'oklch(94.5% 0.03 245)', bd: 'oklch(82% 0.06 245)', fg: 'oklch(40% 0.1 250)' },
-  { name: 'Green',  bg: 'oklch(94.5% 0.04 150)', bd: 'oklch(80% 0.06 150)', fg: 'oklch(38% 0.08 150)' },
-  { name: 'Purple', bg: 'oklch(94.5% 0.03 320)', bd: 'oklch(82% 0.05 320)', fg: 'oklch(40% 0.09 320)' },
-  { name: 'Pink',   bg: 'oklch(95% 0.035 355)',  bd: 'oklch(83% 0.07 355)', fg: 'oklch(42% 0.12 355)' },
-  { name: 'Olive',  bg: 'oklch(95% 0.045 115)',  bd: 'oklch(83% 0.08 115)', fg: 'oklch(40% 0.08 115)' },
-  { name: 'Indigo', bg: 'oklch(94.5% 0.03 280)', bd: 'oklch(80% 0.07 280)', fg: 'oklch(40% 0.12 280)' },
-  { name: 'Sky',    bg: 'oklch(95% 0.035 225)',  bd: 'oklch(80% 0.07 225)', fg: 'oklch(40% 0.1 230)' }
+  /* Solid, under the workbook (20 Oct 2026): a tutor's colour is a full
+     fill with cream type, like every other tile. Coral, not orange (10 Oct
+     2026): the orange sat beside teaching practice, and a tutor's colour
+     must never read as TP, which is now the red. */
+  { name: 'Coral',  bg: 'oklch(52% 0.14 32)',  bd: 'oklch(52% 0.14 32)',  fg: '#F0EEE9' },
+  { name: 'Blue',   bg: 'oklch(46% 0.1 250)',  bd: 'oklch(46% 0.1 250)',  fg: '#F0EEE9' },
+  { name: 'Green',  bg: 'oklch(44% 0.08 150)', bd: 'oklch(44% 0.08 150)', fg: '#F0EEE9' },
+  { name: 'Purple', bg: 'oklch(45% 0.09 320)', bd: 'oklch(45% 0.09 320)', fg: '#F0EEE9' },
+  { name: 'Pink',   bg: 'oklch(50% 0.12 355)', bd: 'oklch(50% 0.12 355)', fg: '#F0EEE9' },
+  { name: 'Olive',  bg: 'oklch(46% 0.08 115)', bd: 'oklch(46% 0.08 115)', fg: '#F0EEE9' },
+  { name: 'Indigo', bg: 'oklch(44% 0.12 280)', bd: 'oklch(44% 0.12 280)', fg: '#F0EEE9' },
+  { name: 'Sky',    bg: 'oklch(48% 0.1 230)',  bd: 'oklch(48% 0.1 230)',  fg: '#F0EEE9' }
 ];
 /* THE COURSE'S TUTORS, from both lists on Course admin (10 Oct 2026). Ramy
    added Narges under "Add a tutor" and the timetable never knew her: it read
