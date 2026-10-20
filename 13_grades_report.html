@@ -23,7 +23,7 @@
 <title>Connect Lite — Grades report</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610201735">
+<link rel="stylesheet" href="hub-tokens.css?v=202610201754">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -124,6 +124,22 @@
   .chead h2{margin:0; font-family:'Newsreader',Georgia,serif; font-size:1.35rem; font-weight:600;}
   .chead .ltr{font-family:'Instrument Sans',sans-serif; font-size:12px; font-weight:600; letter-spacing:.16em; color:var(--grey); margin-right:10px;}
   .chead .cap{font-size:0.8rem; color:var(--brick); line-height:1.5;}
+  /* ON A PHONE, ONE TRAINEE AT A TIME (Ramy, 20 Oct 2026). Every trainee
+     open at once made this page about 15,000px tall on a phone. Below 720px a
+     trainee folds to its head (name, the grade's move, what is still to
+     write) and one opens at a time, from the head or from its letter above.
+     A laptop shows them all, as before. */
+  .ctoggle{display:none;}
+  @media (max-width: 719px){
+    .cand .chead{cursor:pointer;}
+    /* name and Open/Close on one line, the status under them, every time */
+    .cand .chead h2{order:1; flex:1 1 auto; min-width:0;}
+    .cand .chead .ctoggle{order:2;}
+    .cand .chead .gr-head, .cand .chead .cap{order:3; flex-basis:100%;}
+    .ctoggle{display:inline-flex; align-self:center; margin-left:auto; font-size:0.85rem; font-weight:700; color:var(--teal); text-decoration:underline; text-underline-offset:3px;}
+    .cand:not(.open) > :not(.chead){display:none !important;}
+    .cand:not(.open){padding-bottom:4px;}
+  }
   .grow{display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:12px 24px;
     border-bottom:1px solid var(--sand-line);}
   .grow label{font-family:'Instrument Sans',sans-serif; font-size:9px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); white-space:nowrap;}
@@ -251,7 +267,7 @@
   @media(prefers-reduced-motion:reduce){ .jump a .gr-ring, .gr-spread i{transition:none;} }
   @media print{ .gr-spread, .gr-key, .gr-move, .gr-left{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610201735">
+<link rel="stylesheet" href="hub-house.css?v=202610201754">
 </head>
 <body>
 <div class="board">
@@ -304,11 +320,11 @@
 
 </div>
 
-<script src="hub-tracker.js?v=202610201735"></script>
-<script src="hub-store.js?v=202610201735"></script>
-<script src="hub-say.js?v=202610201735"></script>
-<script src="hub-shared.js?v=202610201735"></script>
-<script src="hub-sync.js?v=202610201735"></script>
+<script src="hub-tracker.js?v=202610201754"></script>
+<script src="hub-store.js?v=202610201754"></script>
+<script src="hub-say.js?v=202610201754"></script>
+<script src="hub-shared.js?v=202610201754"></script>
+<script src="hub-sync.js?v=202610201754"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a trainee's link opened it and read the course and
@@ -620,10 +636,11 @@ function proseSection(p, f){
 function paintCands(){
   document.getElementById('cands').innerHTML = ORDER.map((p, i) => {
     const d = DATA[p.id];
-    return `<section class="cand" id="c${i}" data-id="${esc(p.id)}">
+    return `<section class="cand${OPEN_ID === p.id ? ' open' : ''}" id="c${i}" data-id="${esc(p.id)}">
       <div class="chead">
         <h2><span class="ltr">${letterFor(i)}</span>${esc(d.name)}${p.withdrawn ? ' <span class="src">(withdrawn)</span>' : ''}</h2>
         ${p.cap ? `<div class="cap">${esc(p.cap.line)}</div>` : ''}
+        <span class="ctoggle" aria-hidden="true">${OPEN_ID === p.id ? 'Close' : 'Open'}</span>
       </div>
       <div class="grow"><label>Provisional grade</label>${gradeSelect('provisional', PROV, d.provisional, p)}</div>
       <div class="prosewrap evwrap" data-ev="${esc(p.id)}"${wantsEvidence(p, d.provisional) ? '' : ' hidden'}>${proseSection(p, EVIDENCE)}</div>
@@ -655,6 +672,32 @@ function paintCands(){
 }
 
 function paint(){ paintJump(); paintCourse(); paintCohort(); paintCands(); }
+
+/* The phone's one-at-a-time fold: which trainee is open (none to start). */
+let OPEN_ID = null;
+function openCand(sec, toggle){
+  if (!sec) return;
+  const id = sec.dataset.id;
+  OPEN_ID = (toggle && OPEN_ID === id) ? null : id;
+  document.querySelectorAll('#cands section.cand').forEach(c => {
+    const on = c.dataset.id === OPEN_ID;
+    c.classList.toggle('open', on);
+    const t = c.querySelector('.ctoggle'); if (t) t.textContent = on ? 'Close' : 'Open';
+  });
+}
+document.addEventListener('click', e => {
+  if (!window.matchMedia('(max-width: 719px)').matches) return;
+  const head = e.target.closest('#cands .chead');
+  if (head && !e.target.closest('a,button,select,input,textarea')) { openCand(head.closest('section.cand'), true); return; }
+  const j = e.target.closest('#jump a[href^="#c"]');
+  if (j) {
+    e.preventDefault();
+    const sec = document.querySelector(j.getAttribute('href'));
+    openCand(sec, false);
+    // Below the sticky letters, which take two rows on a phone.
+    if (sec) { const bar = document.getElementById('jump'); window.scrollTo({ top: sec.getBoundingClientRect().top + window.scrollY - (bar ? bar.offsetHeight : 0) - 12 }); }
+  }
+});
 
 /* ---- copying: the unit Appian wants is one section ---- */
 function sectionText(id, key){
@@ -905,6 +948,11 @@ window.addEventListener('beforeprint', buildPrintable);
     document.body.classList.add('ro');
     document.getElementById('saveBtn').style.display = 'none';
     if (window.HubMode === 'assessor') document.getElementById('roleLabel').textContent = 'Assessor';
+    /* The back link said "Tutor dashboard" to the assessor, a page their link
+       cannot open (walked 20 Oct 2026). Same as the final report's. */
+    const bk = document.querySelector('a.back');
+    if (bk && window.HubMode === 'assessor') { bk.href = '12_assessor_pack.html'; bk.textContent = 'Assessor pack'; }
+    if (bk && window.HubMode === 'trainee') { bk.href = 'index.html'; bk.textContent = 'Back'; }
   }
   const people=roster();
   ORDER=people;
