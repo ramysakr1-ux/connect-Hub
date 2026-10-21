@@ -35,11 +35,14 @@ window.LiteVoice = window.LiteVoice || (function(){
   function fileFor(text, stress){ return slug(text) + (stress ? '--' + slug(stress) : ''); }
   var queue = [];
   function play(item){
-    var voice = item.speaker === 'b' ? partner(chosen) : chosen;
+    /* 'b' is the other voice of the chosen accent; 'man' and 'woman' keep a
+       named person's sex (Carlos, Ingrid) in whichever accent is chosen. */
+    var accent = chosen.split('-')[0];
+    var voice = item.speaker === 'b' ? partner(chosen) : item.speaker === 'man' || item.speaker === 'woman' ? accent + '-' + item.speaker : chosen;
     player.src = 'audio/' + voice + '/' + fileFor(item.text, item.stress) + '.mp3';
     var p = player.play(); if (p && p.catch) p.catch(function(){ queue = []; fallback(item.text); });
   }
-  player.addEventListener('ended', function(){ if (queue.length) setTimeout(function(){ if (queue.length) play(queue.shift()); }, 450); });
+  player.addEventListener('ended', function(){ if (queue.length) setTimeout(function(){ if (queue.length) play(queue.shift()); }, queue[0].gap != null ? queue[0].gap : 450); });
   function say(text, speaker, stress){ sayAll([{ text: text, speaker: speaker, stress: stress }]); }
   /* A dialogue: each line in turn, the second speaker in the other voice. */
   function sayAll(items){
@@ -98,7 +101,7 @@ window.LiteVoice = window.LiteVoice || (function(){
   document.head.appendChild(css);
   /* The sessions that speak. Their hooks live beside them in audio/hooks.js,
      so the voice bar only appears where there is something to hear. */
-  var VOICED = ['phonology-sounds', 'word-and-sentence-stress', 'connected-speech'];
+  var VOICED = ['phonology-sounds', 'word-and-sentence-stress', 'connected-speech', 'guided-to-less-guided-practice', 'error-correction', 'functional-language', 'classroom-management', 'receptive-skills', 'alternative-teaching-techniques', 'drama-in-the-elt-classroom'];
   var here = (location.pathname.match(/input-sessions\/([^/]+)\//) || [])[1];
   function start(){
     if (VOICED.indexOf(here) === -1) return;
