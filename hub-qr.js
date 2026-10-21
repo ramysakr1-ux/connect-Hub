@@ -48,10 +48,12 @@
     var side = Math.round(size * 0.17), plate = side + 2, px = (size - plate) / 2;
     svg.appendChild(el('rect', { x: px, y: px, width: plate, height: plate, rx: plate / 5, fill: bg }));
     var g = el('g', { transform: 'translate(' + (size - side) / 2 + ' ' + (size - side) / 2 + ')' });
-    g.appendChild(el('rect', { x: 0, y: 0, width: side, height: side, rx: side / 4.5, fill: ink }));
+    // Lite's mark: the cream tile with gold and ink arcs, as in every other
+    // place it appears (21 Oct 2026; it was a dark tile here)
+    g.appendChild(el('rect', { x: 0.15, y: 0.15, width: side - 0.3, height: side - 0.3, rx: side / 4.5, fill: '#f8f6f1', stroke: '#d9d2c4', 'stroke-width': 0.3 }));
     var inner = el('svg', { viewBox: '8 30 104 60', x: side * 0.14, y: side * 0.14, width: side * 0.72, height: side * 0.72 });
-    inner.appendChild(el('path', { d: 'M56.1 42.2 A 24 24 0 1 0 56.1 77.8', stroke: gold, 'stroke-width': 13, 'stroke-linecap': 'round', fill: 'none' }));
-    inner.appendChild(el('path', { d: 'M96.1 42.2 A 24 24 0 1 0 96.1 77.8', stroke: bg, 'stroke-width': 13, 'stroke-linecap': 'round', fill: 'none' }));
+    inner.appendChild(el('path', { d: 'M56.1 42.2 A 24 24 0 1 0 56.1 77.8', stroke: '#a8803f', 'stroke-width': 13, 'stroke-linecap': 'round', fill: 'none' }));
+    inner.appendChild(el('path', { d: 'M96.1 42.2 A 24 24 0 1 0 96.1 77.8', stroke: '#2b2218', 'stroke-width': 13, 'stroke-linecap': 'round', fill: 'none' }));
     g.appendChild(inner);
     svg.appendChild(g);
     return svg;
