@@ -70,12 +70,12 @@ for (const voice of Object.keys(VOICES)) {
     if (existsSync(target) && !all) continue;
     const want = words(it.text), single = !/\s/.test(it.text.trim());
     let kept = null, last = "";
-    for (let take = 1; take <= 6 && !kept; take++) {
+    for (let take = 1; take <= (+process.env.TAKES || 6) && !kept; take++) {
       const buf = await speak(voice, it);
       const got = words(await hear(buf, single)); last = got;
       if (got === want || (SAME[want] || []).includes(got) || (!single && close(got, want))) kept = buf;
       else if (take === 1) kept = null;
-      if (!kept && take === 6) { kept = buf; doubtful.push(`${voice} "${it.text}" heard as "${got}"`); }
+      if (!kept && take === (+process.env.TAKES || 6)) { kept = buf; doubtful.push(`${voice} "${it.text}" heard as "${got}"`); }
     }
     writeFileSync(target, kept); made++;
     if (it.stress) listen.push(`${voice} "${it.text}" (stress on ${it.stress})`);
