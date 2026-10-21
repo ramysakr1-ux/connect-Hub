@@ -39,7 +39,7 @@
 <title>Connect Lite — Volunteer register</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610211634">
+<link rel="stylesheet" href="hub-tokens.css?v=202610211639">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -55,6 +55,8 @@
   .panel textarea{font-family:ui-monospace,Menlo,monospace; font-size:0.78rem; width:100%; min-height:88px; padding:8px 10px; border:1px solid var(--sand-line); border-radius:7px; background:var(--paper); color:var(--ink);}
   .panel input[type=text]{font-family:inherit; font-size:0.86rem; padding:7px 10px; border:1px solid var(--sand-line); border-radius:7px; background:var(--paper); color:var(--ink); min-width:220px;}
   .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  .panel input[type=email]{font-family:inherit; font-size:0.86rem; padding:7px 10px; border:1px solid var(--sand-line); border-radius:7px; background:var(--paper); color:var(--ink); min-width:220px;}
+  .row.one input{flex:1 1 220px; min-width:0;}
   .reg{background:var(--surface); border:1px solid var(--sand-line); border-left:5px solid var(--teal); border-radius:10px; padding:4px 0 6px;}
   .who{display:grid; grid-template-columns:1.1fr auto; gap:12px; align-items:center; padding:11px 16px; border-top:1px solid var(--sand-line);}
   .mailrow{margin:6px 0 2px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px;} .mailrow small.invited{flex-basis:100%; color:var(--ink-soft, #55524c);} .mailrow .email{font:0.82rem 'Karla',sans-serif; width:min(100%, 280px); padding:5px 8px; border:1px solid var(--sand-line); border-radius:6px; background:var(--field); color:var(--ink);} .mailrow small{margin-left:8px; color:var(--grey); font-size:0.74rem;}
@@ -135,21 +137,21 @@
   @media(max-width:560px){ .vr9-coming{grid-template-columns:1fr auto;} .vr9-coming .split{grid-column:1 / -1;} .vr9-coming .num{border:0; padding:0;} .vr9-now small{margin-left:0; flex-basis:100%;} }
   @media print{ .vr9-now{display:none;} .seg.vr9-today{box-shadow:none;} .vr9-coming{border:1px solid #bbb;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610211634">
+<link rel="stylesheet" href="hub-house.css?v=202610211639">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610211634"></script>
-<script src="hub-shared.js?v=202610211634"></script>
-<script src="hub-timetable-parse.js?v=202610211634"></script>
-<script src="hub-xlsx.js?v=202610211634"></script>
-<script src="hub-attendance.js?v=202610211634"></script>
-<script src="hub-store.js?v=202610211634"></script>
-<script src="hub-say.js?v=202610211634"></script>
-<script src="hub-sync.js?v=202610211634"></script>
+<script src="hub-due.js?v=202610211639"></script>
+<script src="hub-shared.js?v=202610211639"></script>
+<script src="hub-timetable-parse.js?v=202610211639"></script>
+<script src="hub-xlsx.js?v=202610211639"></script>
+<script src="hub-attendance.js?v=202610211639"></script>
+<script src="hub-store.js?v=202610211639"></script>
+<script src="hub-say.js?v=202610211639"></script>
+<script src="hub-sync.js?v=202610211639"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -331,7 +333,8 @@ function render(){
 function addHTML(){
   return `<div class="panel"><h3>Add students</h3>
     <p>One at a time, paste a list, or choose an Excel or CSV file — one name a line, or a spreadsheet column. A second column is kept as a note (a phone number, a level, whatever you use).</p>
-    <div class="row"><input type="text" id="oneName" placeholder="Name"><button class="btn" id="addOne">Add</button></div>
+    <div class="row one"><input type="text" id="oneName" placeholder="Name" autocomplete="off"><input type="email" id="oneEmail" placeholder="Their email (for the invitation)" autocomplete="off"></div>
+    <div class="row" style="margin-top:8px"><button class="btn btn-gold" id="addSend">Add and send the invitation</button><button class="btn" id="addOne">Add</button></div>
     <p style="margin:12px 0 6px">Or paste:</p>
     <textarea id="paste" placeholder="Ayşe Demir&#10;Mehmet Yılmaz&#10;Elena Petrova"></textarea>
     <div class="row" style="margin-top:8px"><button class="btn" id="addMany">Add the pasted list</button>
@@ -377,12 +380,45 @@ function addNames(rows){
   persist(added ? added + (added === 1 ? ' student added' : ' students added') : 'Nobody new in that list');
 }
 
+/* Send one volunteer their invitation (21 Oct 2026). Ramy: "the course tutors
+   can't invite volunteer Ss". The store sends it from lite@ in the centre's
+   name, with replies going to the centre's volunteer contact, never a tutor's
+   address. The register is saved first, so a student added a moment ago is
+   on the course before the store looks for them. */
+async function inviteStudent(st, email, btn){
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { note = 'Type ' + st.name + '\u2019s email first.'; render(); return; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending\u2026'; }
+  else { note = 'Sending the invitation to ' + email + '\u2026'; const s = document.querySelector('.status'); if (s) s.textContent = note; }
+  try {
+    if (st.email !== email) { st.email = email; try { localStorage.setItem(KEY, JSON.stringify(REG)); } catch(e) {} }
+    if (window.HubSync && window.HubSync.flushNow) { try { await window.HubSync.flushNow(true); } catch(e) {} }
+    const r = await window.HubStore.call({ op: 'volunteerInvite', v: st.token, email });
+    st.invited = (r && r.invited) || new Date().toISOString();
+    persist('Invitation sent to ' + email);
+  } catch (err) {
+    note = (err && err.message) ? err.message : 'The invitation did not go. Try again in a moment.';
+    render();
+  }
+}
+
 function wire(){
   if (!IS_TUTOR) return;
   if ($('addOpen')) $('addOpen').addEventListener('click', () => { ADD_OPEN = !ADD_OPEN; render(); });
   if ($('addOne')) $('addOne').addEventListener('click', () => {
     const v = $('oneName').value.trim(); if (!v) return;
-    addNames([[v]]);
+    const m = $('oneEmail') ? $('oneEmail').value.trim() : '';
+    addNames([m ? [v, m] : [v]]);
+  });
+  /* Add and send the invitation (Ramy, 21 Oct 2026): a name and an email
+     typed once, the row made, and the invitation sent, in one tap. */
+  if ($('addSend')) $('addSend').addEventListener('click', () => {
+    const v = $('oneName').value.trim(), m = $('oneEmail').value.trim();
+    if (!v) { note = 'Type their name first.'; render(); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m)) { note = 'Type their email first.'; render(); return; }
+    addNames([[v, m]]);
+    const st = students().find(x => x.name.trim().toLowerCase() === v.toLowerCase());
+    if (!st || !st.token) { note = 'Added. The invitation can be sent from their row in a moment.'; render(); return; }
+    inviteStudent(st, m, null);
   });
   if ($('addMany')) $('addMany').addEventListener('click', () => {
     const text = $('paste').value;
@@ -409,22 +445,10 @@ function wire(){
      replies going to the centre's volunteer contact, never a tutor's address.
      The register is saved first, so a student added a moment ago is on the
      course before the store looks for them. */
-  document.querySelectorAll('[data-invite]').forEach(el => el.addEventListener('click', async () => {
+  document.querySelectorAll('[data-invite]').forEach(el => el.addEventListener('click', () => {
     const i = +el.dataset.invite, st = students()[i]; if (!st || !st.token) return;
     const box = document.querySelector('[data-email="' + i + '"]');
-    const email = (box ? box.value : st.email || '').trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { note = 'Type ' + st.name + '\u2019s email first.'; render(); return; }
-    el.disabled = true; el.textContent = 'Sending\u2026';
-    try {
-      if (st.email !== email) { st.email = email; try { localStorage.setItem(KEY, JSON.stringify(REG)); } catch(e) {} }
-      if (window.HubSync && window.HubSync.flushNow) { try { await window.HubSync.flushNow(true); } catch(e) {} }
-      const r = await window.HubStore.call({ op: 'volunteerInvite', v: st.token, email });
-      st.invited = (r && r.invited) || new Date().toISOString();
-      persist('Invitation sent to ' + email);
-    } catch (err) {
-      note = (err && err.message) ? err.message : 'The invitation did not go. Try again in a moment.';
-      render();
-    }
+    inviteStudent(st, (box ? box.value : st.email || '').trim(), el);
   }));
   document.querySelectorAll('[data-rm]').forEach(el => el.addEventListener('click', () => {
     const st = students()[+el.dataset.rm]; if (!st) return;
