@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610212006">
+<link rel="stylesheet" href="hub-tokens.css?v=202610212020">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -395,20 +395,20 @@
   @media(prefers-reduced-motion:reduce){ .tbl select.fm, .fm-pips i{transition:none;} }
   @media print{ .fm-key, .fm-pips{display:none;} .tbl select.fm{border-left-width:1px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610212006">
+<link rel="stylesheet" href="hub-house.css?v=202610212020">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610212006"></script>
-<script src="hub-tracker.js?v=202610212006"></script>
-<script src="hub-rotation.js?v=202610212006"></script>
-<script src="hub-shared.js?v=202610212006"></script>
-<script src="hub-store.js?v=202610212006"></script>
-<script src="hub-say.js?v=202610212006"></script>
-<script src="hub-sync.js?v=202610212006"></script>
+<script src="hub-due.js?v=202610212020"></script>
+<script src="hub-tracker.js?v=202610212020"></script>
+<script src="hub-rotation.js?v=202610212020"></script>
+<script src="hub-shared.js?v=202610212020"></script>
+<script src="hub-store.js?v=202610212020"></script>
+<script src="hub-say.js?v=202610212020"></script>
+<script src="hub-sync.js?v=202610212020"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -700,7 +700,12 @@ function setBar(){
     <a class="btn quiet sm" href="28_tp_point_sets.html">Write a set</a></div>`;
   const sess = sessionIds();
   const gs = groups();
-  const line = ids.map(id => {
+  /* A set with no name, no book and nothing written is not shown: an empty
+     "The set" beside the real one read as a second set (Ramy, 21 Oct 2026).
+     It is still there in Write the sets, with a Remove at the top. */
+  const worth = id => { const x = lib[id]; return !!(x.name || x.book) || sess.some(k => { const ses = (x.sessions || {})[k]; return ses && (ses.slots || []).some(sl => sl && (sl.type || sl.aim)); }); };
+  let shown = ids.filter(worth); if (!shown.length) shown = ids;
+  const line = shown.map(id => {
     const s = lib[id];
     const written = sess.filter(x => { const ses = (s.sessions || {})[x]; return ses && (ses.slots || []).some(sl => sl && (sl.type || sl.aim)); }).length;
     const using = gs.filter(g => setIdFor(g.group) === id).map(g => g.group);
@@ -714,9 +719,9 @@ function setBar(){
      just pressed. */
   const applied = /^(Built from|Rotation built)/.test(note || '');
   return `<div class="setbar on">${line}
-    <a class="btn quiet sm" href="28_tp_point_sets.html">${ids.length > 1 ? 'Write the sets' : 'Write the set'}</a>
+    <a class="btn quiet sm" href="28_tp_point_sets.html">${shown.length > 1 ? 'Write the sets' : 'Write the set'}</a>
     <button type="button" class="btn sm" id="applyset"${applied ? ' disabled' : ''}>${
-      applied ? 'Applied' : 'Apply ' + (ids.length > 1 ? 'them' : 'it')}</button>${
+      applied ? 'Applied' : 'Apply ' + (shown.length > 1 ? 'them' : 'it')}</button>${
       applied ? `<span class="status">${esc(note)}</span>` : ''}</div>`;
 }
 function wireSetBar(){
