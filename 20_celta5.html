@@ -41,7 +41,7 @@
 <title>Connect Lite — CELTA 5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610212107">
+<link rel="stylesheet" href="hub-tokens.css?v=202610212120">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:980px; margin:0 auto; padding:26px 20px 80px;}
@@ -162,6 +162,10 @@
   .absence{display:grid; gap:6px; margin:6px 0;}
   @media(max-width:760px){ .absence{grid-template-columns:1fr 1fr !important;} }
   .mk label.wide{padding:3px 5px;}
+  .markbar{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 10px;} .markbar span{font-size:0.78rem; font-weight:700; color:var(--grey); margin-right:4px;}
+  .mk label.pop{animation:markpop .38s cubic-bezier(.3,1.5,.5,1);} @keyframes markpop{0%{transform:scale(.6); opacity:.4}60%{transform:scale(1.25)}100%{transform:scale(1); opacity:1}}
+  .mk label.drop{animation:markdrop .3s ease;} @keyframes markdrop{0%{transform:scale(1.15)}100%{transform:scale(1)}}
+  @media(prefers-reduced-motion:reduce){ .mk label.pop,.mk label.drop{animation:none;} }
   .mk .shown.none{background:transparent; color:var(--grey);}
   .oneline{display:flex; gap:18px; flex-wrap:wrap; align-items:flex-end; margin:0 0 12px;}
   .oneline .ol{flex:0 0 auto; min-width:140px; max-width:200px;}
@@ -206,7 +210,7 @@
   @media(prefers-reduced-motion:reduce){ .c5r i{transition:none;} .c5r li.attn.first i, section.part:target{animation:none;} }
   @media print{ .c5r{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610212107">
+<link rel="stylesheet" href="hub-house.css?v=202610212120">
 </head>
 <body class="hub-celta5 hub-paper hub-course">
 <div class="board">
@@ -219,19 +223,19 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202610212107"></script>
-<script src="hub-hand.js?v=202610212107"></script>
-<script src="hub-ink.js?v=202610212107"></script>
-<script src="assignment-defaults.js?v=202610212107"></script>
-<script src="celta5-text.js?v=202610212107"></script>
-<script src="celta5-appendix.js?v=202610212107"></script>
-<script src="celta5-criteria.js?v=202610212107"></script>
-<script src="hub-tracker.js?v=202610212107"></script>
-<script src="observation-defaults.js?v=202610212107"></script>
-<script src="hub-shared.js?v=202610212107"></script>
-<script src="hub-store.js?v=202610212107"></script>
-<script src="hub-say.js?v=202610212107"></script>
-<script src="hub-sync.js?v=202610212107"></script>
+<script src="celta5-pdf.js?v=202610212120"></script>
+<script src="hub-hand.js?v=202610212120"></script>
+<script src="hub-ink.js?v=202610212120"></script>
+<script src="assignment-defaults.js?v=202610212120"></script>
+<script src="celta5-text.js?v=202610212120"></script>
+<script src="celta5-appendix.js?v=202610212120"></script>
+<script src="celta5-criteria.js?v=202610212120"></script>
+<script src="hub-tracker.js?v=202610212120"></script>
+<script src="observation-defaults.js?v=202610212120"></script>
+<script src="hub-shared.js?v=202610212120"></script>
+<script src="hub-store.js?v=202610212120"></script>
+<script src="hub-say.js?v=202610212120"></script>
+<script src="hub-sync.js?v=202610212120"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -349,7 +353,10 @@ const marksGrid = (candMarks, tutorMarks, opts) => {
      (audit, 29 Sep 2026). X is the candidate's alone, as on the form. */
   const cell = (marks, mine, name) => code => {
     const v = (marks || {})[code] || '';
-    const scale = name === 'cand' ? MARKS_CAND : MARKS_TUTOR;
+    /* X in the tutor's column at Stage 2 too (Ramy, 21 Oct 2026): Cambridge's form tells the tutor only to
+       indicate agreement with the candidate's self-assessment, and never bars X, so a tutor agrees "not yet
+       applicable" with the same mark. Stage 3 stays S+, S, N. */
+    const scale = (name === 'cand' || opts.tutorX) ? MARKS_CAND : MARKS_TUTOR;
     if (!mine) return `<span class="mk"><span class="shown${v ? '' : ' none'}">${scale.includes(v) ? esc(v) : '–'}</span></span>`;
     return `<span class="mk">${scale.map(m => `<label class="m${m.length > 1 ? ' wide' : ''}"><input type="radio" name="${name}-${code}" data-marks="${name}" data-code="${code}" value="${m}"${v===m?' checked':''}>${m}</label>`).join('')}</span>`;
   };
@@ -360,8 +367,9 @@ const marksGrid = (candMarks, tutorMarks, opts) => {
     if (c[1] !== last) { rows += `<tr class="topic"><td colspan="${opts.showCand ? 4 : 3}">${c[1]} · ${esc(names[c[1]] || '')}</td></tr>`; last = c[1]; }
     rows += `<tr><td class="code">${c[0]}</td><td>${esc(c[2])}</td>${opts.showCand ? `<td class="mark">${cCell(c[0])}</td>` : ''}<td class="mark">${tCell(c[0])}</td></tr>`;
   });
-  return `<table class="grid"><thead><tr><th></th><th>Criterion</th>${opts.showCand ? '<th>You</th>' : ''}<th>Tutor</th></tr></thead><tbody>${rows}</tbody></table>
-    <p class="note" style="margin:6px 0 0;font-size:0.76rem;color:var(--grey)">S+ — above the standard at this stage · S — meets the standard · N — not to standard${opts.showCand ? ' · X — not applicable yet (your column only)' : ''}</p>`;
+  const bar = !opts.tutorMine ? '' : `<div class="markbar"><span>Your column</span><button type="button" class="btn quiet sm" data-fillall="S">Mark every empty one S</button><button type="button" class="btn quiet sm" data-clearall="1">Clear your column</button></div>`;
+  return bar + `<table class="grid"><thead><tr><th></th><th>Criterion</th>${opts.showCand ? '<th>You</th>' : ''}<th>Tutor</th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="note" style="margin:6px 0 0;font-size:0.76rem;color:var(--grey)">S+ — above the standard at this stage · S — meets the standard · N — not to standard${opts.tutorX ? ' · X — not applicable yet at this stage' : ''}${opts.tutorMine ? ' · tap a mark again to take it off' : ''}</p>`;
 };
 
 /* ---- the tables that fill themselves ------------------------------------ */
@@ -578,7 +586,7 @@ function render(){
   <section class="part" id="s2"><h2>Stage 2 <small>mid-course tutorial</small> ${pill(st2[0], st2[1])}</h2>
     ${stageText('stage2')}
     ${tut || s2t.hoursTaught ? `<div class="oneline"><div class="ol">${field(s2t, 'hoursTaught', 'Hours taught at this stage', { o:'s2t', mine: tut, input:'text', locked: !!s2t.returnedAt })}</div></div>` : ''}
-    ${marksGrid(s2c.marks, s2t.marks, { topics:['1','2','3','4','5'], showCand:true, candMine: my && !s2c.submittedAt, tutorMine: tut && !s2t.returnedAt })}
+    ${marksGrid(s2c.marks, s2t.marks, { topics:['1','2','3','4','5'], showCand:true, candMine: my && !s2c.submittedAt, tutorMine: tut && !s2t.returnedAt, tutorX:true })}
     <div class="halves" style="margin-top:14px">
       <div class="half ${my?'mine':''}"><h3>Candidate <small>${s2c.submittedAt ? 'submitted ' + when(s2c.submittedAt) : ''}</small></h3>
         ${field(s2c, 'notesWA', 'Notes on your written assignments', { o:'s2c', mine: my, locked: !!s2c.submittedAt })}
@@ -824,6 +832,43 @@ function bind(){
     const obj = OBJ[o](); obj[el.dataset.k] = el.type === 'checkbox' ? el.checked : el.type === 'radio' ? el.value : el.value; save(o);
   }));
   app.querySelectorAll('[data-o][data-k][type=checkbox], [data-o][data-k][type=radio]').forEach(el => el.addEventListener('change', () => { const o = el.dataset.o; if (!isMineObj(o)) return; const obj = OBJ[o](); obj[el.dataset.k] = el.type === 'checkbox' ? el.checked : el.value; save(o); }));
+  /* Take a mark off (Ramy, 21 Oct 2026: "I cannot remove it. I can only change it"): a radio cannot be
+     unticked, so a tap on the mark already chosen clears it. Only on the column the person owns. */
+  const clearOne = el => {
+    const which = el.dataset.marks; const stage = el.closest('section').id === 's3' ? 'stage3' : 'stage2';
+    if (which === 'cand') { if (!IS_TRAINEE) return; if (C[stage] && C[stage].marks) { delete C[stage].marks[el.dataset.code]; saveC(); } }
+    else { if (!IS_TUTOR) return; if (TT[stage] && TT[stage].marks) { delete TT[stage].marks[el.dataset.code]; saveT(); } }
+  };
+  app.querySelectorAll('label.m').forEach(lab => lab.addEventListener('click', e => {
+    /* the label's own click comes first, before the radio flips; the click it then sends to the radio
+       bubbles back up here and must be ignored */
+    const inp = lab.querySelector('input[data-marks]'); if (!inp || e.target === inp || !inp.checked) return;
+    e.preventDefault(); inp.checked = false; clearOne(inp);
+  }));
+  /* The whole column at once, as a domino: every empty criterion takes the mark one after another,
+     and Clear takes them all off the same way. Saved once, at the end. */
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const domino = (section, inputs, apply, cls, done) => {
+    inputs.forEach((inp, i) => setTimeout(() => {
+      apply(inp); const lab = inp.closest('label'); if (lab) { lab.classList.remove('pop', 'drop'); void lab.offsetWidth; lab.classList.add(cls); }
+      if (i === inputs.length - 1) setTimeout(done, 40);
+    }, reduced ? 0 : i * 32));
+    if (!inputs.length) done();
+  };
+  app.querySelectorAll('[data-fillall]').forEach(btn => btn.addEventListener('click', () => {
+    if (!IS_TUTOR) return; const section = btn.closest('section'); const stage = section.id === 's3' ? 'stage3' : 'stage2';
+    const todo = [...section.querySelectorAll('input[data-marks="tutor"][value="' + btn.dataset.fillall + '"]')].filter(i => !section.querySelector('input[data-marks="tutor"][data-code="' + i.dataset.code + '"]:checked'));
+    TT[stage] = TT[stage] || {}; TT[stage].marks = TT[stage].marks || {};
+    btn.disabled = true;
+    domino(section, todo, i => { i.checked = true; TT[stage].marks[i.dataset.code] = i.value; }, 'pop', () => { saveT(); btn.disabled = false; });
+  }));
+  app.querySelectorAll('[data-clearall]').forEach(btn => btn.addEventListener('click', () => {
+    if (!IS_TUTOR) return; const section = btn.closest('section'); const stage = section.id === 's3' ? 'stage3' : 'stage2';
+    const on = [...section.querySelectorAll('input[data-marks="tutor"]:checked')];
+    if (on.length && !confirm('Take every mark off your column?')) return;
+    btn.disabled = true;
+    domino(section, on.reverse(), i => { i.checked = false; if (TT[stage] && TT[stage].marks) delete TT[stage].marks[i.dataset.code]; }, 'drop', () => { saveT(); btn.disabled = false; });
+  }));
   app.querySelectorAll('[data-marks]').forEach(el => el.addEventListener('change', () => {
     const which = el.dataset.marks; const stage = el.closest('section').id === 's3' ? 'stage3' : 'stage2';
     if (which === 'cand') { if (!IS_TRAINEE) return; C[stage] = C[stage] || {}; C[stage].marks = C[stage].marks || {}; C[stage].marks[el.dataset.code] = el.value; saveC(); }
