@@ -39,7 +39,7 @@
 <title>Connect Lite — Volunteer register</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610211548">
+<link rel="stylesheet" href="hub-tokens.css?v=202610211604">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -57,7 +57,7 @@
   .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
   .reg{background:var(--surface); border:1px solid var(--sand-line); border-left:5px solid var(--teal); border-radius:10px; padding:4px 0 6px;}
   .who{display:grid; grid-template-columns:1.1fr auto; gap:12px; align-items:center; padding:11px 16px; border-top:1px solid var(--sand-line);}
-  .mailrow{margin:6px 0 2px;} .mailrow .email{font:0.82rem 'Karla',sans-serif; width:min(100%, 280px); padding:5px 8px; border:1px solid var(--sand-line); border-radius:6px; background:var(--field); color:var(--ink);} .mailrow small{margin-left:8px; color:var(--grey); font-size:0.74rem;}
+  .mailrow{margin:6px 0 2px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px;} .mailrow small.invited{flex-basis:100%; color:var(--ink-soft, #55524c);} .mailrow .email{font:0.82rem 'Karla',sans-serif; width:min(100%, 280px); padding:5px 8px; border:1px solid var(--sand-line); border-radius:6px; background:var(--field); color:var(--ink);} .mailrow small{margin-left:8px; color:var(--grey); font-size:0.74rem;}
   .legend.coming{font-weight:500; color:var(--ink);}
   .who:first-child{border-top:0;}
   .nm{font-weight:700; font-size:0.94rem;}
@@ -130,21 +130,21 @@
   @media(max-width:560px){ .vr9-coming{grid-template-columns:1fr auto;} .vr9-coming .split{grid-column:1 / -1;} .vr9-coming .num{border:0; padding:0;} .vr9-now small{margin-left:0; flex-basis:100%;} }
   @media print{ .vr9-now{display:none;} .seg.vr9-today{box-shadow:none;} .vr9-coming{border:1px solid #bbb;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610211548">
+<link rel="stylesheet" href="hub-house.css?v=202610211604">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610211548"></script>
-<script src="hub-shared.js?v=202610211548"></script>
-<script src="hub-timetable-parse.js?v=202610211548"></script>
-<script src="hub-xlsx.js?v=202610211548"></script>
-<script src="hub-attendance.js?v=202610211548"></script>
-<script src="hub-store.js?v=202610211548"></script>
-<script src="hub-say.js?v=202610211548"></script>
-<script src="hub-sync.js?v=202610211548"></script>
+<script src="hub-due.js?v=202610211604"></script>
+<script src="hub-shared.js?v=202610211604"></script>
+<script src="hub-timetable-parse.js?v=202610211604"></script>
+<script src="hub-xlsx.js?v=202610211604"></script>
+<script src="hub-attendance.js?v=202610211604"></script>
+<script src="hub-store.js?v=202610211604"></script>
+<script src="hub-say.js?v=202610211604"></script>
+<script src="hub-sync.js?v=202610211604"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -291,7 +291,7 @@ function render(){
           : (st.level ? '<span class="lvltag">' + esc(st.level) + '</span>' : '')}${IS_TUTOR
           ? `<span class="carried"><input type="number" min="0" step="0.25" data-carried="${i}" value="${st.carried != null ? esc(st.carried) : ''}" placeholder="0" title="Hours this student already had at this level at the centre, before this course"><small>h at this level before</small></span>`
           : (st.carried ? '<small>' + esc(st.carried) + ' h at this level before this course</small>' : '')}${st.note ? '<small>' + esc(st.note) + '</small>' : ''}</div>
-        ${IS_TUTOR ? `<div class="mailrow"><input type="email" class="email" data-email="${i}" value="${esc(st.email || '')}" placeholder="Email, for the reminders">${st.email && st.notify === false ? '<small>asked for no emails</small>' : ''}</div>` : ''}
+        ${IS_TUTOR ? `<div class="mailrow"><input type="email" class="email" data-email="${i}" value="${esc(st.email || '')}" placeholder="Email, for the reminders">${st.token ? `<button type="button" class="btn sm" data-invite="${i}">${st.invited ? 'Send again' : 'Send the invitation'}</button>` : ''}${st.email && st.notify === false ? '<small>asked for no emails</small>' : ''}${st.invited ? `<small class="invited">Invitation sent ${dm(String(st.invited).slice(0, 10))}</small>` : ''}</div>` : ''}
         ${st.token ? (st.agreed
           ? `<span class="agreed yes">✓ Agreed to the joining note, ${dm(String(st.agreed).slice(0, 10))}</span>`
           : `<span class="agreed no">Has not yet agreed to the joining note (it opens with their link)</span>`) : ''}
@@ -399,6 +399,28 @@ function wire(){
     try { await navigator.clipboard.writeText(link); el.textContent = 'Copied'; setTimeout(() => { el.textContent = 'Copy their link'; }, 1600); }
     catch(e) { prompt('Their link:', link); }
   }));
+  /* Send the invitation (21 Oct 2026). Ramy: "the course tutors can't invite
+     volunteer Ss". The store sends it from lite@ in the centre's name, with
+     replies going to the centre's volunteer contact, never a tutor's address.
+     The register is saved first, so a student added a moment ago is on the
+     course before the store looks for them. */
+  document.querySelectorAll('[data-invite]').forEach(el => el.addEventListener('click', async () => {
+    const i = +el.dataset.invite, st = students()[i]; if (!st || !st.token) return;
+    const box = document.querySelector('[data-email="' + i + '"]');
+    const email = (box ? box.value : st.email || '').trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { note = 'Type ' + st.name + '\u2019s email first.'; render(); return; }
+    el.disabled = true; el.textContent = 'Sending\u2026';
+    try {
+      if (st.email !== email) { st.email = email; try { localStorage.setItem(KEY, JSON.stringify(REG)); } catch(e) {} }
+      if (window.HubSync && window.HubSync.flushNow) { try { await window.HubSync.flushNow(true); } catch(e) {} }
+      const r = await window.HubStore.call({ op: 'volunteerInvite', v: st.token, email });
+      st.invited = (r && r.invited) || new Date().toISOString();
+      persist('Invitation sent to ' + email);
+    } catch (err) {
+      note = (err && err.message) ? err.message : 'The invitation did not go. Try again in a moment.';
+      render();
+    }
+  }));
   document.querySelectorAll('[data-rm]').forEach(el => el.addEventListener('click', () => {
     const st = students()[+el.dataset.rm]; if (!st) return;
     if (!confirm('Remove ' + st.name + ' from the register? Their attendance goes with them.')) return;
@@ -426,7 +448,14 @@ function wire(){
     const st = students()[+el.dataset.email]; if (!st) return;
     const v = el.value.trim();
     if (v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { el.setCustomValidity('Not an email address'); el.reportValidity(); return; }
-    el.setCustomValidity(''); st.email = v; persist(v ? 'Email saved' : 'Email cleared');
+    /* Saved without redrawing the list: typing an address and then tapping
+       "Send the invitation" fires this first, and a redraw swapped the button
+       out from under the tap, so the send never happened (21 Oct 2026). */
+    el.setCustomValidity(''); st.email = v;
+    try { localStorage.setItem(KEY, JSON.stringify(REG)); } catch(e) {}
+    const word = v ? 'Email saved' : 'Email cleared'; note = word;
+    const s = document.querySelector('.status'); if (s) s.textContent = word;
+    setTimeout(() => { if (note === word) { note = ''; const s2 = document.querySelector('.status'); if (s2) s2.textContent = ''; } }, 2200);
   }));
   document.querySelectorAll('[data-carried]').forEach(el => el.addEventListener('change', () => {
     const st = students()[+el.dataset.carried]; if (!st) return;

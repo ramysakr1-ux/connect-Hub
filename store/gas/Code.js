@@ -1389,6 +1389,54 @@ case 'inbox': {
       if (oaKey) oaProps.setProperty('OPENAI_KEY', oaKey); else oaProps.deleteProperty('OPENAI_KEY');
       return { on: !!oaKey };
     }
+    /* v95 (21 Oct 2026): a tutor sends a volunteer student their invitation.
+       Ramy: "the course tutors can't invite volunteer Ss" -- the register only
+       had "Copy their link", so a tutor pasted it into their own mail, which
+       also showed the volunteer the tutor's address. Now the store sends it
+       from lite@, in the centre's name, replies going to the centre's
+       volunteer contact and never to a tutor. One volunteer a call, only a
+       row on this course's register, and not twice inside ten minutes. The
+       address may come with the call (typed a moment ago, before the register
+       has saved); it is written onto that row, so the register and the mail
+       agree. A pinned demo course sends but writes nothing. */
+    case 'volunteerInvite': {
+      requireTutor_(tutor);
+      var viTok = String(req.v || '');
+      var viOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      var viSet = courseRead_(course.id, 'settings') || {};
+      var viReg = courseRead_(course.id, 'volunteers') || {};
+      var viRow = (viReg.students || []).filter(function (s) { return s && s.token === viTok; })[0];
+      if (!viRow) throw new Error('That student is not on this course\u2019s register yet. Wait for \u201cSaved\u201d, then send.');
+      var viTo = String(req.email || viRow.email || '').trim();
+      if (!viOk.test(viTo)) throw new Error('Type their email first');
+      if (viRow.invited && (new Date().getTime() - new Date(viRow.invited).getTime()) < 10 * 60 * 1000) throw new Error('Sent a few minutes ago. Give it a little while before sending again.');
+      var viCentre = viSet.centreName || 'Connect Lite';
+      var viContact = (viSet.volunteerContact && viOk.test(viSet.volunteerContact.email || '')) ? viSet.volunteerContact : null;
+      var viLink = SITE_ + 'invite.html?v=' + encodeURIComponent(viTok);
+      var viEsc = function (x) { return String(x == null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+      var viFirst = String(viRow.name || '').trim().split(/\s+/)[0];
+      var viP = 'font:16px/1.55 Arial,Helvetica,sans-serif;color:#232220;margin:0 0 14px';
+      var viHtml = '<div style="max-width:520px">'
+        + '<p style="' + viP + '">' + (viFirst ? 'Hello ' + viEsc(viFirst) + ',' : 'Hello,') + '</p>'
+        + '<p style="' + viP + '">Thank you for coming to be taught on the CELTA course at ' + viEsc(viCentre) + '.</p>'
+        + '<p style="' + viP + '">Here is your page for the classes: the next one to come to, which days you came, and your certificate at the end.</p>'
+        + '<p style="margin:22px 0"><a href="' + viLink + '" style="display:inline-block;padding:13px 22px;background:#1E3B2F;color:#ffffff;text-decoration:none;border-radius:10px;font:bold 16px Arial,Helvetica,sans-serif">Open my page</a></p>'
+        + '<p style="' + viP + '"><b>This link is just for you.</b> Open it on your phone before each class.</p>'
+        + (viContact ? '<p style="font:14px/1.5 Arial,Helvetica,sans-serif;color:#555;margin:22px 0 0">Questions? Reply to this email and it reaches ' + viEsc(viContact.name || viCentre) + '.</p>' : '')
+        + '</div>';
+      var viText = (viFirst ? 'Hello ' + viFirst + ',' : 'Hello,') + '\n\nThank you for coming to be taught on the CELTA course at ' + viCentre + '.\n\nYour page for the classes: ' + viLink + '\n\nThis link is just for you. Open it on your phone before each class.';
+      var viMsg = { to: viTo, subject: 'Your classes at ' + viCentre, htmlBody: viHtml, body: viText, name: viCentre };
+      if (viContact) viMsg.replyTo = viContact.email;
+      sendAs_(viMsg);
+      var viAt = new Date().toISOString();
+      if (!viSet.demoToday) {
+        courseUpdateObj_(course.id, 'volunteers', function (reg) {
+          (reg.students || []).forEach(function (s) { if (s && s.token === viTok) { s.invited = viAt; s.email = viTo; } });
+          return reg;
+        });
+      }
+      return { invited: viAt, to: viTo };
+    }
     case 'volunteerAgree': {
       if (!vol) throw new Error('Only a volunteer student can agree for themselves');
       /* The moment is the browser's; the store only refuses nonsense. Written

@@ -27,6 +27,17 @@ Never a bare `clasp deploy`. If anything is ever edited in the Apps Script
 editor instead, `clasp pull` before the next change or the repo copy is stale.
 The patches below are how the editor's text got to v73.
 
+## 21 Oct 2026 — a tutor sends a volunteer their invitation (version 112, store v95)
+
+New op `volunteerInvite` (tutor key; `v` = the volunteer's token, `email`
+optional). Ramy: "the course tutors can't invite volunteer Ss". The register
+only had "Copy their link". The store now sends the invitation from lite@ in
+the centre's name, Reply-To the centre's volunteer contact (never a tutor),
+to one row on this course's register, not twice inside ten minutes. The
+address sent with the call is written onto the row with `invited` (ISO). A
+pinned demo course (`demoToday`) sends but writes nothing. Additive: no other
+op changed. Pulled version 111 first and checked it was identical to the repo.
+
 ## 12 Oct 2026 — a course's folder says whose it is (version 100, store v86)
 
 A course's materials folder was "Connect Lite materials — " and the console's
