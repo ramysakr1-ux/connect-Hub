@@ -1,0 +1,19 @@
+/* Drama in the ELT classroom: where the house voices speak (Ramy, 22 Oct 2026). Nico the Snail is heard as a small play, the narrator and
+   each character in their own voice (the tags 'asks the bird' are dropped: the voices say who is speaking); the Wave and Turn chant to a beat.
+   The lines are in lines.json. */
+(function(){
+  var V = window.LiteVoice; if (!V) return;
+  var T = function(t, g){ return { text: t, speaker: 'a', gap: g }; }, L = function(t, g){ return { text: t, speaker: 'b', gap: g }; };
+  var btn = function(label, items){ return V.button(label, items); };
+  var after = function(el, b){ if (!el || (el.nextElementSibling && el.nextElementSibling.classList.contains('say-row'))) return; var p = document.createElement('p'); p.className = 'say-row'; p.appendChild(b); el.parentNode.insertBefore(p, el.nextSibling); };
+  var into = function(el, b){ if (!el || el.querySelector(':scope > .say-btn')) return; el.appendChild(document.createTextNode(' ')); el.appendChild(b); };
+  /* the deepest element whose own text holds the words */
+  var find = function(root, text){ var best = null; (root || document).querySelectorAll('*').forEach(function(e){ if (e.textContent.indexOf(text) !== -1 && !Array.prototype.some.call(e.children, function(c){ return c.textContent.indexOf(text) !== -1; })) best = best || e; }); return best; };
+
+  var STORY = [["n", "This is the story of Nico the snail."], ["n", "Nico the snail is a lovely brown snail, but he is very sad."], ["nico", "Slow is horrible."], ["bird", "Hello, Nico. Why are you sad?"], ["nico", "Slow is horrible. I want to be quick like you."], ["bird", "Go and see the wizard at the top of the hill. He can change the way you move."], ["nico", "That's a good idea. Goodbye."], ["bird", "Goodbye."], ["rabbit", "Hello, Nico. Why are you sad?"], ["nico", "Slow is horrible. I want to be quick like you."], ["rabbit", "Go and see the wizard at the top of the hill. He can change the way you move."], ["nico", "That's a good idea. Goodbye."], ["rabbit", "Goodbye."], ["n", "Nico the snail climbs to the top of the hill."], ["wizard", "Hello, Nico. Why are you sad?"], ["nico", "Slow is horrible. I want to be quick like the bird or the rabbit."], ["wizard", "Ha, ha, ha! No problem. I can make you quick. Are you ready?"], ["wizard", "One, two, three. Presto!"], ["n", "Whoosh, bang!"], ["nico", "Now I'm like the bird… Oh, no… I'm too high! It's horrible!"], ["wizard", "Let's try again. One, two, three. Presto!"], ["n", "Whoosh, bang!"], ["nico", "Now I'm like the rabbit… Oh, no… I can't stop! It's horrible! Oh, please, I want to be a snail! I want to be brown! I want to be ME!"], ["wizard", "OK, Nico. But this is the last time. One, two, three. Presto!"], ["n", "Whoosh, bang!"], ["wizard", "Are you happy now?"], ["nico", "Oh, yes. I'm happy now. I'm a lovely brown snail! Thank you. Goodbye."]], CHANT = ["You raise your left hand up,", "You lower it back down;", "Up, down, up, down, you wave it all around", "You do the Wave and Turn,", "And you spin around.", "That's what it's all about!", "Hey, the Wave and Turn!", "Knees bent, arms wide,", "Ha, ha, ha!"];
+  var who = { n: 'a', nico: 'b', bird: 'woman', rabbit: 'man', wizard: 'man' };
+  var act = Array.prototype.find.call(document.querySelectorAll('.act'), function(a){ var h = a.querySelector('h3'); return h && /Nico the Snail/.test(h.textContent); });
+  if (act) { var p = document.createElement('p'); p.className = 'say-row'; p.appendChild(btn('Hear the story as a play', STORY.map(function(s){ return { text: s[1], speaker: who[s[0]], gap: 500 }; }))); act.appendChild(p); }
+  var song = document.querySelector('.song');
+  if (song) { var q = document.createElement('p'); q.className = 'say-row'; q.appendChild(btn('Hear the chant', CHANT.map(function(t, i){ return { text: t, speaker: 'a', gap: 150 }; }))); song.parentNode.appendChild(q); }
+})();
