@@ -24,7 +24,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610211505">
+<link rel="stylesheet" href="hub-tokens.css?v=202610211525">
 <style>
   :root{
     /* the pane -- the same four values the trainee landing's cards use */
@@ -452,7 +452,7 @@
   .course.tb.minted{outline:2px solid var(--gold);}
   @media(max-width:640px){ .tb-grid{grid-template-columns:1fr;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610211505">
+<link rel="stylesheet" href="hub-house.css?v=202610211525">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -478,10 +478,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610211505"></script>
-<script src="hub-store.js?v=202610211505"></script>
-<script src="hub-say.js?v=202610211505"></script>
-<script src="hub-card-mail.js?v=202610211505"></script>
+<script src="hub-shared.js?v=202610211525"></script>
+<script src="hub-store.js?v=202610211525"></script>
+<script src="hub-say.js?v=202610211525"></script>
+<script src="hub-card-mail.js?v=202610211525"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -691,7 +691,7 @@ function ticketBook(c, kind, name, centre, alt, n, minted){
       <p class="cchips tb-foot">
         <span class="chip faint"><code>${esc(c.id)}</code>${c.created ? ' \u00b7 made ' + esc(niceDate(c.created)) : ''}</span>
         <span class="chip faint">${n ? n + ' trainee' + (n === 1 ? '' : 's') : '0 trainees yet'}</span>
-        <span class="chip faint mats-line" data-mats="${esc(c.id)}"><span class="note">Materials: checking\u2026</span></span>
+        <span class="chip faint mats-line" data-mats="${esc(c.id)}"><span class="note hub-wait">Materials: checking\u2026</span></span>
         ${c.demoToday ? `<span class="chip demo" title="settings.demoToday">Demo \u00b7 pinned to ${esc(niceDate(c.demoToday))}</span>` : ''}
         <span class="tb-acts">
           <button class="btn quiet small" type="button" data-clone="${esc(c.id)}" data-label="${esc(label(c))}">Start the next course from this</button>
@@ -994,7 +994,7 @@ function render(courses, msg){
              course being kept (23 Sep 2026). Filled in by fillMaterials(). -->
         <p class="cchips">
           <span class="chip faint"><code>${esc(c.id)}</code>${c.created ? ' \u00b7 made ' + esc(niceDate(c.created)) : ''}</span>
-          <span class="chip faint mats-line" data-mats="${esc(c.id)}"><span class="note">Materials: checking\u2026</span></span>
+          <span class="chip faint mats-line" data-mats="${esc(c.id)}"><span class="note hub-wait">Materials: checking\u2026</span></span>
           ${c.demoToday ? `<span class="chip demo" title="settings.demoToday \u2014 every screen on this course reads this date as today, and its links never expire">Demo \u00b7 pinned to ${esc(niceDate(c.demoToday))}</span>` : ''}
         </p>
       </div>
@@ -1119,7 +1119,7 @@ $('app').innerHTML = `
          store, with a key held in the store's own settings. Pasted here once,
          never shown again, never written to a page. -->
     <details class="sending" id="txBlock">
-      <summary>Transcribing interviews<small id="txState">checking\u2026</small></summary>
+      <summary>Transcribing interviews<small id="txState" class="hub-wait">checking\u2026</small></summary>
       <div class="sendbody">
         <p class="note">The key lives in the store, not in any page. Paste an OpenAI key and save; leave it empty and save to switch transcripts off. The recording is sent to OpenAI to be transcribed, which the students&rsquo; consent should be read to allow.</p>
         <div class="filmrow"><input type="password" id="txKey" placeholder="OpenAI key" autocomplete="off" spellcheck="false"><span class="acts"><button class="btn primary" id="txSave" type="button">Save</button></span><span class="note" id="txNote"></span></div>
@@ -1886,8 +1886,8 @@ function showSet(got, row){
 (function(){
   const state = $('txState'), note = $('txNote'), key = $('txKey'), save = $('txSave');
   if (!state || !key || !save) return;
-  const show = on => { state.textContent = on ? 'on' : 'off'; };
-  call({ op: 'transcriptionOn' }).then(r => show(r && r.on), () => { state.textContent = 'could not check'; });
+  const show = on => { state.classList.remove('hub-wait'); state.textContent = on ? 'on' : 'off'; };
+  call({ op: 'transcriptionOn' }).then(r => show(r && r.on), () => { state.classList.remove('hub-wait'); state.textContent = 'could not check'; });
   save.addEventListener('click', async () => {
     save.disabled = true; note.textContent = 'Saving\u2026';
     try { const r = await call({ op: 'setOpenAiKey', key: key.value.trim() }); show(r && r.on); key.value = ''; note.textContent = r && r.on ? 'Saved. Transcripts are on.' : 'Transcripts are off.'; }
