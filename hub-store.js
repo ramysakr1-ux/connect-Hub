@@ -181,7 +181,17 @@ window.HubStore = (function(){
        suggester. The store decides whether there is anything to take: it
        refuses if this course has tagging of its own, so this can only seed. */
     seedCritLearn: function(){ return call({ op: 'seedCritLearn' }); },
-    roster: function(){ return call({ op: 'roster' }).then(function(r){ return r.trainees; }); },
+    /* The store now and then answers ok with nothing in it (4 Oct, 21 Oct 2026:
+       Course admin showed "Cannot read properties of undefined"). Ask again,
+       then say it plainly. */
+    roster: async function(){
+      for (var i = 0; i < 3; i++) {
+        var r = await call({ op: 'roster' });
+        if (r && Array.isArray(r.trainees)) return r.trainees;
+        await new Promise(function(res){ setTimeout(res, 800 * (i + 1)); });
+      }
+      throw new Error('The roster did not load. Reload the page in a moment.');
+    },
     /* v53 (1 Oct 2026): a trainee may carry an email. Optional everywhere. */
     addTrainee: function(name, group, email){ return call({ op: 'addTrainee', name: name, group: group, email: email || '' }); },
     // A pasted class list in one call, rather than one call per name.
