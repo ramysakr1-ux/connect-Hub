@@ -23,6 +23,7 @@
   // staffLinks -- about a trainee, for staff only -- has no trainee key at all: the store never hands it to a trainee's token
   var COURSE_KEYS = { 'connect_assignment_wording_v2':'wording', 'connect_course_settings':'settings', 'connect_observation_wording_v1':'observations', 'connect_timetable_v1':'timetable', 'connect_tp_points_v1':'tppoints', 'connect_volunteers_v1':'volunteers', 'connect_marking_guidance_v1':'guidance' };
   var origSet = localStorage.setItem.bind(localStorage), origRemove = localStorage.removeItem.bind(localStorage);
+  var origGet = localStorage.getItem.bind(localStorage);
   var snapshot = {};   // tutor mode: token -> kind -> json, what the store holds
   var pill;
 
@@ -419,8 +420,17 @@
       });
     }
   }
-  localStorage.setItem = function(k, v){ origSet(k, v); route(k, v); };
-  localStorage.removeItem = function(k){ origRemove(k); route(k, null); };
+  /* SAFARI (21 Oct 2026). Assigning localStorage.setItem = fn works in
+     Chrome, but Safari (and Firefox) follow the Storage rules and store a
+     key called "setItem" instead: the hook was never installed, and nothing
+     a tutor saved through localStorage in Safari reached the course. Found
+     when C/18's first volunteer would not save. The hook goes on the
+     prototype, for this one storage object only, which every engine honours;
+     the stray keys an earlier load left behind are cleared. */
+  var pSet = Storage.prototype.setItem, pRemove = Storage.prototype.removeItem;
+  Storage.prototype.setItem = function(k, v){ pSet.call(this, k, v); if (this === localStorage) route(k, v); };
+  Storage.prototype.removeItem = function(k){ pRemove.call(this, k); if (this === localStorage) route(k, null); };
+  try { ['setItem', 'removeItem'].forEach(function(k){ if (Object.prototype.hasOwnProperty.call(localStorage, k) || origGet(k) !== null) pRemove.call(localStorage, k); }); } catch (e) {}
 
   // ---- preload ------------------------------------------------------------------
   // Apps Script answers in 1.5-13 s even for a ping (measured 20 Sep 2026), so
