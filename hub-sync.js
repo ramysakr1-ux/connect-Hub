@@ -18,6 +18,19 @@
   // Assessor mode (Ramy, 20 Sep 2026): boots like a tutor, writes nothing.
   var mode = !S ? '' : S.isTutor() ? 'tutor' : S.isAssessor() ? 'assessor' : S.isTrainee() ? 'trainee' : (S.isVolunteer && S.isVolunteer()) ? 'volunteer' : '';
   window.HubMode = mode;
+  /* AN ASSESSOR ALWAYS HAS A WAY BACK (Ramy, 21 Oct 2026: "they don't know how this thing works... they
+     should be able to easily get back"). On every page an assessor opens from the pack, a clear forest
+     pill at the top goes back to it. Only for the assessor; the pack itself does not need it. */
+  if (mode === 'assessor' && !/12_assessor_pack\.html/.test(location.pathname)) {
+    var addWayBack = function(){
+      if (!document.body || document.getElementById('hubAkBack')) return;
+      var a = document.createElement('a');
+      a.id = 'hubAkBack'; a.href = '12_assessor_pack.html'; a.textContent = 'Back to the assessor pack';
+      a.style.cssText = 'display:inline-block;margin:14px 0 0 16px;padding:9px 16px;border-radius:999px;background:#1E3B2F;color:#fff;font:700 0.86rem Karla,Helvetica,sans-serif;text-decoration:none;box-shadow:0 1px 2px rgba(35,34,32,.08),0 6px 16px rgba(35,34,32,.1);position:relative;z-index:5;';
+      document.body.insertBefore(a, document.body.firstChild);
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addWayBack); else addWayBack();
+  }
   var TRAINEE_KEYS = { 'chub:plan':'plan', 'chub:selfeval':'selfeval', 'chub:feedback':'feedback', 'connect_assignment_submissions_v1':'assignments', 'chub:tpHistory':'tpHistory', 'chub:tracker':'tracker', 'connect_observations_v1':'observations', 'chub:links':'links', 'chub:celta5':'celta5', 'chub:celta5t':'celta5t', 'chub:agreement':'agreement', 'connect_fol_interview_v1':'interview' };
   var TUTOR_ONLY = { feedback:1, tpHistory:1, tracker:1, links:1, celta5t:1 }; // links: a trainee's private links, the tutor's to write; celta5t: the tutors' half of the CELTA 5
   // staffLinks -- about a trainee, for staff only -- has no trainee key at all: the store never hands it to a trainee's token
