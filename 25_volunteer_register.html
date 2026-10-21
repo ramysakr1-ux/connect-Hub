@@ -39,7 +39,7 @@
 <title>Connect Lite — Volunteer register</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610211749">
+<link rel="stylesheet" href="hub-tokens.css?v=202610211800">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -57,6 +57,9 @@
   .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
   .panel input[type=email]{font-family:inherit; font-size:0.86rem; padding:7px 10px; border:1px solid var(--sand-line); border-radius:7px; background:var(--paper); color:var(--ink); min-width:220px;}
   .row.one input{flex:1 1 220px; min-width:0;}
+  .many{margin-top:14px;} .many summary{cursor:pointer; font-weight:700; color:var(--a-forest, #1E3B2F); font-size:0.86rem; list-style:none;}
+  .many summary::-webkit-details-marker{display:none;} .many summary{text-decoration:underline; text-underline-offset:3px;}
+  .many p{margin:8px 0 8px !important;}
   .sentnote{margin:0 0 10px !important; color:var(--a-forest, #1E3B2F) !important; font-weight:700;}
   /* the file chooser is a house button; the browser's own control is hidden inside it */
   .filebtn{position:relative; overflow:hidden; cursor:pointer;} .filebtn input[type=file]{position:absolute; inset:0; opacity:0; cursor:pointer; font-size:0;}
@@ -142,21 +145,21 @@
   @media(max-width:560px){ .vr9-coming{grid-template-columns:1fr auto;} .vr9-coming .split{grid-column:1 / -1;} .vr9-coming .num{border:0; padding:0;} .vr9-now small{margin-left:0; flex-basis:100%;} }
   @media print{ .vr9-now{display:none;} .seg.vr9-today{box-shadow:none;} .vr9-coming{border:1px solid #bbb;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610211749">
+<link rel="stylesheet" href="hub-house.css?v=202610211800">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610211749"></script>
-<script src="hub-shared.js?v=202610211749"></script>
-<script src="hub-timetable-parse.js?v=202610211749"></script>
-<script src="hub-xlsx.js?v=202610211749"></script>
-<script src="hub-attendance.js?v=202610211749"></script>
-<script src="hub-store.js?v=202610211749"></script>
-<script src="hub-say.js?v=202610211749"></script>
-<script src="hub-sync.js?v=202610211749"></script>
+<script src="hub-due.js?v=202610211800"></script>
+<script src="hub-shared.js?v=202610211800"></script>
+<script src="hub-timetable-parse.js?v=202610211800"></script>
+<script src="hub-xlsx.js?v=202610211800"></script>
+<script src="hub-attendance.js?v=202610211800"></script>
+<script src="hub-store.js?v=202610211800"></script>
+<script src="hub-say.js?v=202610211800"></script>
+<script src="hub-sync.js?v=202610211800"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -337,16 +340,20 @@ function render(){
 }
 
 let LAST_SENT = '';   // "Invitation sent to Amin." -- shown in the panel, which stays open for the next person
+let MANY_OPEN = false;   // "Add several at once" stays open across a redraw once opened
 function addHTML(){
-  return `<div class="panel"><h3>Add students</h3>
-    <p>In a pasted list or a file, one name a line; a second column is kept as a note.</p>
+  /* One person at a time is the form (Ramy, 21 Oct 2026: "a bit busy").
+     A list, pasted or from a file, sits behind "Add several at once". */
+  return `<div class="panel"><h3>Add a student</h3>
     ${LAST_SENT ? `<p class="sentnote">${esc(LAST_SENT)} Add another below.</p>` : ''}
-    <div class="row one"><input type="text" id="oneName" placeholder="Name" autocomplete="off"><input type="email" id="oneEmail" placeholder="Their email (for the invitation)" autocomplete="off"></div>
+    <div class="row one"><input type="text" id="oneName" placeholder="Name" autocomplete="off"><input type="email" id="oneEmail" placeholder="Their email" autocomplete="off"></div>
     <div class="row" style="margin-top:8px"><button class="btn btn-gold" id="addSend">Add and send the invitation</button></div>
-    <p style="margin:12px 0 6px">Or paste:</p>
-    <textarea id="paste" placeholder="Ayşe Demir&#10;Mehmet Yılmaz&#10;Elena Petrova"></textarea>
-    <div class="row" style="margin-top:8px"><button class="btn" id="addMany">Add the pasted list</button>
-      <label class="btn filebtn">Choose an Excel or CSV file<input type="file" id="addFile" accept=".xlsx,.csv,.tsv,.txt"></label></div></div>`;
+    <details class="many" id="many"${MANY_OPEN ? ' open' : ''}><summary>Add several at once</summary>
+      <p>Paste a column of names, one a line, or choose an Excel or CSV file. An email in the list is kept, and you send each invitation from their row.</p>
+      <textarea id="paste" placeholder="Ayşe Demir&#10;Mehmet Yılmaz&#10;Elena Petrova"></textarea>
+      <div class="row" style="margin-top:8px"><button class="btn" id="addMany">Add the pasted names</button>
+        <label class="btn filebtn">Choose an Excel or CSV file<input type="file" id="addFile" accept=".xlsx,.csv,.tsv,.txt"></label></div>
+    </details></div>`;
 }
 
 function addNames(rows){
@@ -419,6 +426,7 @@ async function inviteStudent(st, email, btn){
 function wire(){
   if (!IS_TUTOR) return;
   if ($('addOpen')) $('addOpen').addEventListener('click', () => { ADD_OPEN = !ADD_OPEN; LAST_SENT = ''; render(); });
+  if ($('many')) $('many').addEventListener('toggle', e => { MANY_OPEN = e.target.open; });
   /* Add and send the invitation (Ramy, 21 Oct 2026): a name and an email
      typed once, the row made, and the invitation sent, in one tap. */
   if ($('addSend')) $('addSend').addEventListener('click', () => {
