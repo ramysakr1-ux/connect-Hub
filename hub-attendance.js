@@ -115,6 +115,19 @@
     };
   }
 
+  /* HOURS PER LEVEL (Ramy, 21 Oct 2026: "check the number of hours per
+     level according to Cambridge"). Cambridge's guided learning hours are
+     cumulative from beginner: A1 90-100, A2 180-200, B1 350-400, B2 500-600,
+     C1 700-800, C2 1,000-1,200 (support.cambridgeenglish.org, "Guided
+     learning hours"). The hours for a level alone are the step from the one
+     below it. A centre's own number, when it sets one, still wins. */
+  var LEVEL_HOURS = { A1: 100, A2: 100, B1: 200, B2: 200, C1: 200, C2: 400 };
+  function hoursForLevel(level, settings) {
+    var own = settings && Number(settings.volunteerCertificateHours);
+    if (own > 0) return own;
+    return LEVEL_HOURS[String(level || '').trim().toUpperCase()] || 200;
+  }
+
   /* PER LEVEL (Ramy, 8 Oct 2026). The certificate of attendance is 160 hours
      AT A LEVEL -- a level's 200 hours less twenty per cent leeway -- so the
      count is the hours at the student's current level: what they carried in
@@ -148,7 +161,7 @@
   var api = { TICK_MINUTES: TICK_MINUTES, PARTIAL_MINUTES: PARTIAL_MINUTES,
               lessonsNeededForPresent: lessonsNeededForPresent, dayCredit: dayCredit,
               record: record, describe: describe, certificate: certificate, nextMark: nextMark,
-              atLevel: atLevel, completedOn: completedOn };
+              atLevel: atLevel, completedOn: completedOn, hoursForLevel: hoursForLevel };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.hubAttendance = api;
 })(typeof window !== 'undefined' ? window : globalThis);
