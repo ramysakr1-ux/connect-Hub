@@ -39,7 +39,7 @@
 <title>Connect Lite — Volunteer register</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610211731">
+<link rel="stylesheet" href="hub-tokens.css?v=202610211738">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -57,6 +57,7 @@
   .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
   .panel input[type=email]{font-family:inherit; font-size:0.86rem; padding:7px 10px; border:1px solid var(--sand-line); border-radius:7px; background:var(--paper); color:var(--ink); min-width:220px;}
   .row.one input{flex:1 1 220px; min-width:0;}
+  .sentnote{margin:0 0 10px !important; color:var(--a-forest, #1E3B2F) !important; font-weight:700;}
   /* the file chooser is a house button; the browser's own control is hidden inside it */
   .filebtn{position:relative; overflow:hidden; cursor:pointer;} .filebtn input[type=file]{position:absolute; inset:0; opacity:0; cursor:pointer; font-size:0;}
   .reg{background:var(--surface); border:1px solid var(--sand-line); border-left:5px solid var(--teal); border-radius:10px; padding:4px 0 6px;}
@@ -141,21 +142,21 @@
   @media(max-width:560px){ .vr9-coming{grid-template-columns:1fr auto;} .vr9-coming .split{grid-column:1 / -1;} .vr9-coming .num{border:0; padding:0;} .vr9-now small{margin-left:0; flex-basis:100%;} }
   @media print{ .vr9-now{display:none;} .seg.vr9-today{box-shadow:none;} .vr9-coming{border:1px solid #bbb;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610211731">
+<link rel="stylesheet" href="hub-house.css?v=202610211738">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610211731"></script>
-<script src="hub-shared.js?v=202610211731"></script>
-<script src="hub-timetable-parse.js?v=202610211731"></script>
-<script src="hub-xlsx.js?v=202610211731"></script>
-<script src="hub-attendance.js?v=202610211731"></script>
-<script src="hub-store.js?v=202610211731"></script>
-<script src="hub-say.js?v=202610211731"></script>
-<script src="hub-sync.js?v=202610211731"></script>
+<script src="hub-due.js?v=202610211738"></script>
+<script src="hub-shared.js?v=202610211738"></script>
+<script src="hub-timetable-parse.js?v=202610211738"></script>
+<script src="hub-xlsx.js?v=202610211738"></script>
+<script src="hub-attendance.js?v=202610211738"></script>
+<script src="hub-store.js?v=202610211738"></script>
+<script src="hub-say.js?v=202610211738"></script>
+<script src="hub-sync.js?v=202610211738"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -335,11 +336,13 @@ function render(){
   wire();
 }
 
+let LAST_SENT = '';   // "Invitation sent to Amin." -- shown in the panel, which stays open for the next person
 function addHTML(){
   return `<div class="panel"><h3>Add students</h3>
     <p>In a pasted list or a file, one name a line; a second column is kept as a note.</p>
+    ${LAST_SENT ? `<p class="sentnote">${esc(LAST_SENT)} Add another below.</p>` : ''}
     <div class="row one"><input type="text" id="oneName" placeholder="Name" autocomplete="off"><input type="email" id="oneEmail" placeholder="Their email (for the invitation)" autocomplete="off"></div>
-    <div class="row" style="margin-top:8px"><button class="btn btn-gold" id="addSend">Add and send the invitation</button><button class="btn" id="addOne">Add</button></div>
+    <div class="row" style="margin-top:8px"><button class="btn btn-gold" id="addSend">Add and send the invitation</button></div>
     <p style="margin:12px 0 6px">Or paste:</p>
     <textarea id="paste" placeholder="Ayşe Demir&#10;Mehmet Yılmaz&#10;Elena Petrova"></textarea>
     <div class="row" style="margin-top:8px"><button class="btn" id="addMany">Add the pasted list</button>
@@ -401,7 +404,9 @@ async function inviteStudent(st, email, btn){
     if (window.HubSync && window.HubSync.flushNow) { try { await window.HubSync.flushNow(true); } catch(e) {} }
     const r = await window.HubStore.call({ op: 'volunteerInvite', v: st.token, email });
     st.invited = (r && r.invited) || new Date().toISOString();
+    if (!btn) { LAST_SENT = 'Invitation sent to ' + st.name + '.'; ADD_OPEN = true; }
     persist('Invitation sent to ' + email);
+    if (!btn && $('oneName')) $('oneName').focus();
   } catch (err) {
     note = (err && err.message) ? err.message : 'The invitation did not go. Try again in a moment.';
     render();
@@ -410,18 +415,14 @@ async function inviteStudent(st, email, btn){
 
 function wire(){
   if (!IS_TUTOR) return;
-  if ($('addOpen')) $('addOpen').addEventListener('click', () => { ADD_OPEN = !ADD_OPEN; render(); });
-  if ($('addOne')) $('addOne').addEventListener('click', () => {
-    const v = $('oneName').value.trim(); if (!v) return;
-    const m = $('oneEmail') ? $('oneEmail').value.trim() : '';
-    addNames([m ? [v, m] : [v]]);
-  });
+  if ($('addOpen')) $('addOpen').addEventListener('click', () => { ADD_OPEN = !ADD_OPEN; LAST_SENT = ''; render(); });
   /* Add and send the invitation (Ramy, 21 Oct 2026): a name and an email
      typed once, the row made, and the invitation sent, in one tap. */
   if ($('addSend')) $('addSend').addEventListener('click', () => {
     const v = $('oneName').value.trim(), m = $('oneEmail').value.trim();
     if (!v) { note = 'Type their name first.'; render(); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m)) { note = 'Type their email first.'; render(); return; }
+    LAST_SENT = '';
     addNames([[v, m]]);
     const st = students().find(x => x.name.trim().toLowerCase() === v.toLowerCase());
     if (!st || !st.token) { note = 'Added. The invitation can be sent from their row in a moment.'; render(); return; }
