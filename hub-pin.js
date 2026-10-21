@@ -43,7 +43,7 @@
      this copy stands in on a page that does not. */
   function lockup() {
     if (window.hubLockup) return window.hubLockup(22);
-    return '<span class="hub-lockup" style="display:inline-flex;align-items:center;gap:7px"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:5px;background:#f3efe6;box-shadow:inset 0 0 0 1px oklch(85% 0.02 80)">' +
+    return '<span class="hub-lockup" style="display:inline-flex;align-items:center;gap:7px"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:5px;background:#f8f6f1;box-shadow:inset 0 0 0 1px oklch(85% 0.02 80)">' +
       '<svg viewBox="8 28 104 64" width="15" height="9" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"></path></svg></span>' +
       '<span style="font-family:\'Instrument Serif\',Georgia,serif;font-style:italic;font-size:17px;line-height:.85;color:oklch(63% 0.096 72)">Connect</span><span style="font-family:\'Instrument Sans\',Karla,sans-serif;font-weight:500;font-size:8px;letter-spacing:.24em;text-transform:uppercase;margin-left:-3px;color:var(--ink,#2b2622)">Lite</span></span>';
   }

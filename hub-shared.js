@@ -438,7 +438,7 @@ function hubRoomRefusal(title, who, mode){
   document.body.innerHTML =
     '<div style="max-width:560px;margin:0 auto;padding:16vh 20px 0;font-family:Karla,Helvetica,sans-serif;color:oklch(23.5% 0.017 65);">'
     + '<div style="display:flex;align-items:center;gap:9px;margin-bottom:26px;">'
-    + '<span style="width:30px;height:30px;border-radius:7px;background:#f3efe6;box-shadow:inset 0 0 0 1px oklch(85% 0.02 80);display:inline-flex;align-items:center;justify-content:center;">'
+    + '<span style="width:30px;height:30px;border-radius:7px;background:#f8f6f1;box-shadow:inset 0 0 0 1px oklch(85% 0.02 80);display:inline-flex;align-items:center;justify-content:center;">'
     + '<svg viewBox="8 28 104 64" width="20" height="12" fill="none">'
     + '<path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"></path>'
     + '<path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"></path>'
@@ -1504,7 +1504,7 @@ window.hubMark = function(size){
 /* The turning mark, for anything Lite is waiting on (21 Oct 2026). */
 window.hubSpinner = function(size){
   var s = size || 18;
-  return '<span class="hub-spin hub-lockup-tile" style="width:' + s + 'px;height:' + s + 'px;border-radius:' + Math.round(s * 0.23) + 'px;background:#f3efe6;box-shadow:inset 0 0 0 1px oklch(85% 0.02 80)" aria-hidden="true">'
+  return '<span class="hub-spin hub-lockup-tile" style="width:' + s + 'px;height:' + s + 'px;border-radius:' + Math.round(s * 0.23) + 'px;background:#f8f6f1;box-shadow:inset 0 0 0 1px oklch(85% 0.02 80)" aria-hidden="true">'
     + '<svg viewBox="8 28 104 64" width="' + Math.round(s * 0.66) + '" height="' + Math.round(s * 0.4) + '" fill="none">'
     + '<path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"></path>'
     + '<path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"></path></svg></span>';
@@ -1529,7 +1529,7 @@ window.hubLockup = function(size){
   if (!document.getElementById('hub-brand-css')) {
     var c = document.createElement('style'); c.id = 'hub-brand-css';
     c.textContent = ".hub-lockup{display:inline-flex; align-items:center; gap:7px; vertical-align:middle;}"
-      + ".hub-lockup-tile{display:inline-flex; align-items:center; justify-content:center; flex:none; background:#f3efe6; box-shadow:inset 0 0 0 1px oklch(85% 0.02 80);}"
+      + ".hub-lockup-tile{display:inline-flex; align-items:center; justify-content:center; flex:none; background:#f8f6f1; box-shadow:inset 0 0 0 1px oklch(85% 0.02 80);}"
       + ".hub-lockup-c{font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:17px; line-height:.85; color:oklch(63% 0.096 72);}"
       + ".hub-lockup-l{font-family:'Instrument Sans','Karla',sans-serif; font-weight:500; font-size:8px; letter-spacing:.24em; text-transform:uppercase; color:inherit; margin-left:-3px;}"
       + ".hub-brand-foot{display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; margin:28px auto 22px; padding:0 16px;"

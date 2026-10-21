@@ -140,7 +140,7 @@
     document.body.innerHTML =
       '<div style="max-width:560px;margin:0 auto;padding:16vh 20px 0;font-family:Karla,Helvetica,sans-serif;color:oklch(23.5% 0.017 65);">'
       + '<div style="display:flex;align-items:center;gap:9px;margin-bottom:26px;">'
-      + '<span style="width:30px;height:30px;border-radius:7px;background:#f3efe6;box-shadow:inset 0 0 0 1px oklch(85% 0.02 80);display:inline-flex;align-items:center;justify-content:center;">'
+      + '<span style="width:30px;height:30px;border-radius:7px;background:#f8f6f1;box-shadow:inset 0 0 0 1px oklch(85% 0.02 80);display:inline-flex;align-items:center;justify-content:center;">'
       + '<svg viewBox="8 28 104 64" width="20" height="12" fill="none">'
       + '<path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"></path>'
       + '<path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"></path>'
@@ -748,7 +748,7 @@
     /* the mark turns while the link is checked (21 Oct 2026) */
     cover.innerHTML = '<style>@keyframes hubChkSpin{from{transform:rotateY(0deg)}to{transform:rotateY(360deg)}}#hubChecking svg{animation:hubChkSpin 1.4s cubic-bezier(.45,.05,.55,.95) infinite;transform-origin:50% 50%}@media (prefers-reduced-motion:reduce){#hubChecking svg{animation-duration:3s}}</style>'
       + '<div style="display:flex;flex-direction:column;align-items:center;gap:16px;">'
-      + '<span style="width:52px;height:52px;border-radius:12px;background:#f3efe6;box-shadow:inset 0 0 0 1px oklch(85% 0.02 80),0 10px 30px -14px rgba(35,34,32,.25);display:inline-flex;align-items:center;justify-content:center;perspective:300px;">'
+      + '<span style="width:52px;height:52px;border-radius:12px;background:#f8f6f1;box-shadow:inset 0 0 0 1px oklch(85% 0.02 80),0 10px 30px -14px rgba(35,34,32,.25);display:inline-flex;align-items:center;justify-content:center;perspective:300px;">'
       + '<svg viewBox="8 28 104 64" width="34" height="21" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"></path></svg></span>'
       + '<span style="font-size:0.95rem;">Checking your link\u2026</span></div>';
     (document.body || document.documentElement).appendChild(cover);
