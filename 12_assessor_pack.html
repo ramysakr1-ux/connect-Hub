@@ -25,7 +25,7 @@
 <title>Connect Lite — Assessor pack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610212137">
+<link rel="stylesheet" href="hub-tokens.css?v=202610212148">
 <style>
   :root{
     /* the control fill, for the shared confirm modal's Cancel button */
@@ -49,6 +49,10 @@
     border-radius:4px; box-shadow:0 1px 3px rgba(40,30,15,0.05), 0 12px 40px -28px rgba(40,30,15,0.5);
     padding:0 clamp(22px, 5vw, 64px) 54px;}
   /* The masthead is part of the sheet: no card inside a card. */
+  /* the course, the centre and the dates are in the welcome card below; the masthead keeps the mark, the
+     eyebrow and the Appian door (Ramy, 21 Oct 2026) */
+  .header .course-name, .header .tag, .header #accessLine, .header .access{display:none !important;}
+  .header .appian-ref{font-size:0.78rem; color:var(--grey); margin-left:6px;}
   .header{background:none; border-radius:0; border-top:none; border-bottom:2px solid var(--ink-warm);
     padding:40px 0 26px; text-align:center; margin:0 0 6px; box-shadow:none;}
   .header .eyebrow{margin:14px 0 0; font-family:'Instrument Sans',Karla,sans-serif; font-weight:600; font-size:10px; letter-spacing:0.22em; color:var(--grey); text-transform:uppercase;}
@@ -103,14 +107,6 @@
   /* Gold edges the card, as on every other screen (Ramy, 24 Sep 2026). */
   /* No box: the sheet is the box. Rows are ruled, as on a form. */
   .panel{background:none; border:none; border-radius:0; padding:0; box-shadow:none;}
-  /* The course against the Handbook. The VERB is coloured on every line --
-     brick for a must, gold for a should -- so the grid reads as two kinds of
-     line at a glance. Ramy, 1 Oct 2026: one card in red and the rest in white
-     "doesn't make sense... maybe must will be one colour and should another".
-     The card itself stays quiet until it falls short, and then it takes the
-     verb's colour, which is how the one line that needs attention still
-     stands out from the twenty that do not. Nothing here blocks: it is what
-     an assessor asks. */
   table.mid th:not(:first-child), table.mid td:not(:first-child){text-align:center;}
   .chkgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(236px,1fr)); gap:0 26px; padding:14px 0 4px;}
   /* On a sheet a check is a ruled entry, not a tile -- until it falls short,
@@ -136,7 +132,7 @@
     body{padding:0; background:#fff;}
     .board{border:none; box-shadow:none; padding:0; max-width:none;}
     h2.sect{break-after:avoid; page-break-after:avoid;}
-    .docrow, .chk, tr{break-inside:avoid; page-break-inside:avoid;}
+    .docrow, tr{break-inside:avoid; page-break-inside:avoid;}
     #onlineRooms .online-rooms{border-color:#999; background:none;}
   }
   table{width:100%; border-collapse:collapse;}
@@ -269,7 +265,7 @@
   @media(max-width:560px){ .ap9{padding:22px 18px 18px; border-radius:12px;} .ap9-stats div{min-width:0; flex:1 1 120px;} }
   @media print{ .ap9{display:none !important;} .panel.ap9-obs{border-left:0; background:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610212137">
+<link rel="stylesheet" href="hub-house.css?v=202610212148">
 </head>
 <body data-signout="float">
 <div class="board">
@@ -299,15 +295,15 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202610212137"></script>
-<script src="hub-shared.js?v=202610212137"></script>
-<script src="assignment-defaults.js?v=202610212137"></script>
-<script src="hub-tracker.js?v=202610212137"></script>
-<script src="hub-rotation.js?v=202610212137"></script>
-<script src="hub-attendance.js?v=202610212137"></script>
-<script src="hub-store.js?v=202610212137"></script>
-<script src="hub-say.js?v=202610212137"></script>
-<script src="hub-sync.js?v=202610212137"></script>
+<script src="observation-defaults.js?v=202610212148"></script>
+<script src="hub-shared.js?v=202610212148"></script>
+<script src="assignment-defaults.js?v=202610212148"></script>
+<script src="hub-tracker.js?v=202610212148"></script>
+<script src="hub-rotation.js?v=202610212148"></script>
+<script src="hub-attendance.js?v=202610212148"></script>
+<script src="hub-store.js?v=202610212148"></script>
+<script src="hub-say.js?v=202610212148"></script>
+<script src="hub-sync.js?v=202610212148"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -358,7 +354,7 @@ function visitWhen(){
   return day + times + (times ? zone : '');
 }
 if (window.hubOnlineRoomsHTML) {
-  const strip = hubOnlineRoomsHTML(SETTINGS, { all: true, assessor: true, when: visitWhen() });
+  const strip = hubOnlineRoomsHTML(SETTINGS, { all: true, assessor: true });
   /* And the assessment timetable beside it, when the centre has provided one.
      It is the document that says what happens and at what hour on the day the
      assessor is there, and it was the last row of the last panel on the page
@@ -371,8 +367,8 @@ if (window.hubOnlineRoomsHTML) {
      it and then it shows the time, the assessor visit timetable." The room
      follows it, because the room is the same one all day. */
   const day = at
-    ? `<a class="or-join first" href="${esc(at)}" target="_blank" rel="noopener noreferrer">Visit timetable${when ? '<small>' + esc(when) + '</small>' : ''}</a>`
-    : (when ? `<span class="or-when">${esc(when)}</span>` : '');
+    ? `<a class="or-join first" href="${esc(at)}" target="_blank" rel="noopener noreferrer">Visit timetable</a>`
+    : '';
   document.getElementById('onlineRooms').innerHTML = strip
     ? strip.replace('<div class="online-rooms">', '<div class="online-rooms">' + day)
     : (day ? '<div class="online-rooms">' + day + '</div>' : '');
@@ -399,6 +395,10 @@ const appianBtn = (cls) =>
    course notification reference number". The Appian grade form gates on it,
    so a link to Appian without the reference is a door the assessor cannot
    open. Shown under the buttons, where they are about to need it. */
+const appianRef = () => {
+  const r = String(SETTINGS.notificationRef || '').trim();
+  return r ? `<span class="appian-ref">Appian asks for the reference <b>${esc(r)}</b></span>` : '';
+};
 const refLine = () => {
   const r = String(SETTINGS.notificationRef || '').trim();
   return r ? `<p class="access" style="font-weight:500;">Course notification reference <b>${esc(r)}</b> — Appian asks for this</p>` : '';
@@ -410,163 +410,6 @@ const refLine = () => {
    only ever had six, showing two that were never going to be taught. */
 const TP_TOTAL = (function(){ const n = parseInt(SETTINGS.tpCount, 10); return (n >= 1 && n <= HUB_MAX_TP) ? n : 8; })();
 
-/* THE COURSE'S OWN NUMBERS, against the sections that set them. Lite recorded
-   every one of these and checked none, and reported "N of TP_TOTAL" against
-   the centre's own figure -- so a four-lesson course read "4 of 4" and looked
-   complete to an assessor (audit, 29 Sep 2026).
-
-   Each line carries Cambridge's own VERB, because "should" is a recommendation
-   and "must" is not (Ramy, 29 Sep 2026). Nothing here blocks anything: it is
-   what an assessor would ask in the room, answered in advance. */
-function courseChecks(){
-  const out = [];
-  const say = (verb, label, state, detail, cite) => out.push({ verb, label, state, detail, cite });
-  /* Contact hours: the timetable can now work this out, because it knows the
-     shape of a day and how many days there are. Before the timetable existed
-     this was a number somebody typed, and on C/18 nobody had (29 Sep 2026).
-     Breaks and lunch are not contact; everything else on the day is. The
-     typed value still wins when it is set, because a centre may count
-     differently and the number belongs to them -- but when the two disagree
-     the check says so, rather than quietly preferring one. */
-  const tt = rec('connect_timetable_v1') || null;
-  const fromTimetable = (function(){
-    if (!tt || !tt.days || !tt.days.length || !tt.slots || !tt.slots.length) return null;
-    const dayMins = slots => (slots || []).reduce((n, sl) => {
-      if (sl.kind === 'break') return n;
-      const a = String(sl.from||'').match(/^(\d{1,2}):(\d{2})/), b = String(sl.to||'').match(/^(\d{1,2}):(\d{2})/);
-      if (!a || !b) return n;
-      const d = (+b[1]*60 + +b[2]) - (+a[1]*60 + +a[2]);
-      return d > 0 ? n + d : n;
-    }, 0);
-    /* Each day by its own shape (9 Oct 2026): a course whose afternoon
-       changes, or a part-time one with a long Saturday, does not have one
-       length of day. */
-    const total = tt.days.reduce((n, d) => n + dayMins(window.hubSlotsFor ? hubSlotsFor(tt, d.date) : tt.slots), 0);
-    if (!total) return null;
-    return { perDay: Math.round(total / tt.days.length), days: tt.days.length, hours: Math.round(total / 60) };
-  })();
-  const hours = parseInt(SETTINGS.totalHours, 10) || 0;
-  const shown = hours || (fromTimetable ? fromTimetable.hours : 0);
-  const disagree = hours && fromTimetable && Math.abs(hours - fromTimetable.hours) > 2;
-  say('must', 'Course hours', !shown ? 'unknown' : shown >= 120 ? 'met' : 'short',
-      !shown ? 'not set, and no timetable to work it out from'
-        : hours && fromTimetable
-          ? (disagree ? hours + ' contact hours set; the timetable comes to ' + fromTimetable.hours
-                      : hours + ' contact hours, and the timetable agrees')
-        : hours ? hours + ' contact hours'
-        : fromTimetable.hours + ' contact hours, from the timetable (' + fromTimetable.days + ' days)',
-      '3.1 — at least 120 contact hours');
-
-  /* 13.5: the assessment in the second half of the course, as near the end as
-     possible, and not on the last day. Date-only strings compared as such;
-     the midpoint is worked out in UTC so no clock moves a day. */
-  (function(){
-    const v = String((VISIT && VISIT.date) || '').slice(0, 10), s0 = String(SETTINGS.start || '').slice(0, 10), e0 = String(SETTINGS.end || '').slice(0, 10);
-    const cite = '13.5 — in the second half of the course, as near the end as possible, not the last day';
-    if (!v) { say('should', 'Assessment date', 'unknown', 'not set yet', cite); return; }
-    if (!s0 || !e0) { say('should', 'Assessment date', 'unknown', v + ', but the course dates are not set', cite); return; }
-    const ms = x => Date.UTC(+x.slice(0,4), +x.slice(5,7) - 1, +x.slice(8,10));
-    const mid = (ms(s0) + ms(e0)) / 2;
-    const last = v === e0, late = ms(v) >= mid;
-    say('should', 'Assessment date', last ? 'short' : late ? 'met' : 'short',
-        last ? v + ' is the last day of the course; the Handbook says avoid it' : late ? v + ', in the second half of the course' : v + ', in the first half of the course', cite);
-  })();
-
-  /* Two things a timetable makes checkable that nothing else could: a
-     trainee teaches once a day, and a class takes no more than three hours
-     of teaching practice in a day (Handbook 9.1.1 and §26). Both are about
-     the SHAPE of the day, so before the timetable there was nothing to read. */
-  if (tt && tt.slots && tt.slots.length) {
-    /* The heaviest teaching day the timetable has: with more than one shape
-       (9 Oct 2026), the rule is about the longest. */
-    const tpOf = slots => (slots || []).filter(sl => sl.kind === 'tp');
-    const lenOf = slots => tpOf(slots).reduce((n, sl) => { const a = String(sl.from||'').match(/^(\d{1,2}):(\d{2})/), b = String(sl.to||'').match(/^(\d{1,2}):(\d{2})/); if (!a || !b) return n; const d = (+b[1]*60 + +b[2]) - (+a[1]*60 + +a[2]); return d > 0 ? n + d : n; }, 0);
-    const tpSlots = [tt.slots].concat((tt.shapes || []).map(sh => sh && sh.slots)).filter(Boolean).reduce((best, sl) => lenOf(sl) > lenOf(best) ? sl : best, tt.slots).filter(sl => sl.kind === 'tp');
-    const tpMins = tpSlots.reduce((n, sl) => {
-      const a = String(sl.from||'').match(/^(\d{1,2}):(\d{2})/), b = String(sl.to||'').match(/^(\d{1,2}):(\d{2})/);
-      if (!a || !b) return n;
-      const d = (+b[1]*60 + +b[2]) - (+a[1]*60 + +a[2]);
-      return d > 0 ? n + d : n;
-    }, 0);
-    if (tpMins) say('must', 'Teaching practice in a day', tpMins <= 180 ? 'met' : 'short',
-        (tpMins/60).toFixed(tpMins % 60 ? 2 : 0).replace('.00','') + ' hours a day across ' + tpSlots.length + ' lesson' + (tpSlots.length===1?'':'s'),
-        '9.1.1 — a class takes no more than three hours of teaching practice in a day');
-    /* Once a day: the rotation gives each trainee one slot, but a tutor can
-       change any of it, so this reads the teaching sets rather than trusting
-       the shape. A set larger than the number of lessons means somebody has
-       to teach twice, or somebody does not teach. */
-    const R = window.hubRotation;
-    if (R && tpSlots.length) {
-      const sizes = {};
-      const by = {};
-      PEOPLE.forEach(t => { const g = String(t.group||''); (by[g] = by[g] || []).push({ token: t.id || t.token, name: t.name }); });
-      let worst = 0, which = '';
-      Object.keys(by).forEach(g => {
-        R.setsFor(by[g]).forEach(set => { if (set.length > worst) { worst = set.length; which = 'Group ' + (g || '—'); } });
-      });
-      if (worst) say('must', 'Once a day each', worst <= tpSlots.length ? 'met' : 'short',
-          worst <= tpSlots.length
-            ? tpSlots.length + ' lessons a day, ' + worst + ' teaching — each trainee teaches once'
-            : which + ' has ' + worst + ' teaching on a day with ' + tpSlots.length + ' lesson' + (tpSlots.length===1?'':'s'),
-          '§26 — a trainee teaches on no more than one occasion a day');
-    }
-  }
-  say('should', 'Teaching practices each', TP_TOTAL >= 8 ? 'met' : 'short',
-      TP_TOTAL + ' per trainee', '9.1.2 — a minimum of eight occasions');
-
-  /* Six hours, two levels one below intermediate, 40 minutes twice, never over
-     an hour -- all read off the feedback sheets the tutors already filled in. */
-  const BELOW = /^(a0|a1|a2|beginner|elementary|pre-int|pre int|pre-intermediate)/i;
-  const perCand = PEOPLE.map(tr => {
-    const hist = T.tpHistory(tr) || {};
-    let mins = 0, over60 = 0, atLeast40 = 0; const levels = new Set(); let below = false;
-    Object.keys(hist).forEach(n => {
-      const f = ((hist[n].state || {}).f) || {};
-      const m = parseInt(String(f.fTime || '').replace(/[^0-9]/g, ''), 10);
-      if (m > 0) { mins += m; if (m > 60) over60++; if (m >= 40) atLeast40++; }
-      const lv = String(f.fLevel || '').trim();
-      if (lv) { levels.add(lv.toLowerCase()); if (BELOW.test(lv)) below = true; }
-    });
-    return { name: tr.name, mins, over60, atLeast40, levels: levels.size, below, taught: Object.keys(hist).length };
-  }).filter(c => c.taught);
-  const shortOf = (pred) => perCand.filter(pred).map(c => c.name);
-  if (perCand.length) {
-    /* A trainee with no minutes on any sheet is not "at six hours"; they are
-       unknown, and the line says so rather than affirming a must (second
-       audit, 29 Sep 2026: the old guard skipped them and read "met"). */
-    const noSix = shortOf(c => c.mins && c.mins < 360), noMins = shortOf(c => !c.mins);
-    say('must', 'Six hours of assessed teaching practice', noSix.length ? 'short' : noMins.length ? 'unknown' : 'met',
-        noSix.length ? noSix.length + ' under six hours: ' + noSix.slice(0, 3).join(', ') + (noSix.length > 3 ? '…' : '')
-          : noMins.length ? noMins.length + ' with no lesson lengths recorded yet' : 'every trainee at six hours or more',
-        '9.1.1 — six hours of assessed teaching practice for each trainee');
-    const oneLevel = shortOf(c => c.levels < 2);
-    say('should', 'Two significantly different levels', oneLevel.length ? 'short' : 'met',
-        oneLevel.length ? oneLevel.length + ' taught at one level only' : 'every trainee at two levels or more',
-        '9.1.2 — at least two hours at two significantly different levels, one below intermediate');
-    const noBelow = shortOf(c => !c.below);
-    if (noBelow.length) say('should', 'A level below intermediate', 'short',
-        noBelow.length + ' with nothing recorded below intermediate', '9.1.2 — one of which should be below intermediate');
-    const short40 = shortOf(c => c.atLeast40 < 2);
-    if (short40.length) say('should', 'Forty minutes, at least twice', 'short',
-        short40.length + ' with fewer than two lessons of 40 minutes or more', '9.1.2 — a minimum of 40 minutes at least twice');
-    const long = shortOf(c => c.over60 > 0);
-    if (long.length) say('should', 'Never longer than an hour', 'short',
-        long.length + ' with a lesson over 60 minutes', '9.1.2 — never longer than for one hour');
-  }
-  /* 7.1 sets the cohort and the group size; both are "must". */
-  const n = PEOPLE.length;
-  if (n) say('must', 'Trainees on the course', n >= 4 && n <= 24 ? 'met' : 'short',
-      n + ' on the roster', '7.1 — minimum four, maximum 24');
-  const groups = {};
-  PEOPLE.forEach(tr => { const g = tr.group || ''; if (g) groups[g] = (groups[g] || 0) + 1; });
-  const bad = Object.keys(groups).filter(g => groups[g] < 4 || groups[g] > 6);
-  if (Object.keys(groups).length) say('must', 'Teaching practice groups', bad.length ? 'short' : 'met',
-      bad.length ? bad.map(g => g + ' has ' + groups[g]).join(', ')
-                 : (Object.keys(groups).length === 1 ? 'one group of ' + groups[Object.keys(groups)[0]]
-                                                     : Object.keys(groups).length + ' groups, each 4 to 6'),
-      '7.1 — groups must consist of 4–6 trainees');
-  return out;
-}
 /* ---- v9 (7 Oct 2026): the assessor's welcome ------------------------------
    The pack's first screen for the one visitor from outside: who it is for,
    the visit, three numbers, and a way into each section. Screen only -- the
@@ -574,7 +417,6 @@ function courseChecks(){
 function ap9Visit(){
   const n = PEOPLE.length;
   const chosen = (SETTINGS.assessorVisit || []).filter(id => PEOPLE.some(p => p.id === id)).length;
-  let met = 0, all = 0; try { const rows = courseChecks(); all = rows.length; met = rows.filter(r => r.state === 'met').length; } catch (e) {}
   const when = (typeof visitWhen === 'function' && visitWhen()) || '';
   const MARK = '<svg class="ap9-mark" viewBox="8 28 104 64" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="9" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="9" stroke-linecap="round"></path></svg>';
   const stat = (v, l) => '<div><b>' + v + '</b><span>' + l + '</span></div>';
@@ -584,11 +426,22 @@ function ap9Visit(){
     + (when ? '<p class="when">Your visit: <b>' + esc(when) + '</b></p>' : '<p class="when">The centre has not set the visit date yet.</p>')
     + '<div class="ap9-stats">' + stat(n, n === 1 ? 'trainee on the course' : 'trainees on the course')
       + (chosen ? stat(chosen, chosen === 1 ? 'you are observing' : 'you are observing') : '')
-      + (all ? stat(met + '<small> of ' + all + '</small>', 'Handbook checks met') : '') + '</div>'
+      + '</div>'
     + '<nav class="ap9-jump" id="ap9Jump" aria-label="Sections of the pack"></nav>'
     + '</section>';
 }
 /* the section chips, built from the headings render drew */
+/* A pill goes to its section and opens it (Ramy, 21 Oct 2026: "I'm clicking on all those steps in the
+   pills... nothing happens"). Folding the sections into <details> had dropped the ids the pills point
+   at, so nothing was there to go to. */
+function ap9Wire(){
+  const nav = document.getElementById('ap9Jump'); if (!nav) return;
+  nav.querySelectorAll('a').forEach(a => a.addEventListener('click', e => {
+    const t = document.getElementById(a.getAttribute('href').slice(1)); if (!t) return;
+    e.preventDefault(); if (t.tagName === 'DETAILS') t.open = true;
+    t.scrollIntoView({ behavior: 'smooth', block: 'start' }); history.replaceState(null, '', '#' + t.id);
+  }));
+}
 function ap9Chips(){
   const nav = document.getElementById('ap9Jump'); if (!nav || nav.childElementCount) return;
   const hs = [...document.querySelectorAll('#app h2.sect')];
@@ -596,19 +449,11 @@ function ap9Chips(){
     return '<a href="#' + h.id + '">' + esc(t) + '</a>'; }).join('');
 }
 
-function checksHTML(){
-  const rows = courseChecks();
-  if (!rows.length) return '';
-  const cell = r => `<div class="chk ${r.state}"><div class="chk-h"><span class="verb ${r.verb}">${r.verb}</span><b>${esc(r.label)}</b></div>
-    <div class="chk-d">${esc(r.detail)}</div><div class="chk-c">Handbook ${esc(r.cite)}</div></div>`;
-  return `<h2 class="sect">The course against the Handbook <small>recorded here, checked against Cambridge</small></h2>
-    <div class="panel"><p class="note" style="margin:0 0 12px">Cambridge's own verb on each line. <b>Must</b> is a requirement; <b>should</b> is a recommendation, and the call stays the centre's.</p>
-    <div class="chkgrid">${rows.map(cell).join('')}</div></div>`;
-}
 let WORDING = rec('connect_assignment_wording_v2'); if (!WORDING && window.CONNECT_HUB_DEFAULT_WORDING) WORDING = window.CONNECT_HUB_DEFAULT_WORDING;
 const ORDER = hubAssignmentOrder(WORDING);
 const roster = rec('connect_roster_v1') || { trainees: {} };
-const PEOPLE = Object.values(roster.trainees||{}).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+/* group by group, A to F (Ramy, 21 Oct 2026), not alphabetical */
+const PEOPLE = window.hubRotation ? hubRotation.inLetterOrder(Object.values(roster.trainees||{})) : Object.values(roster.trainees||{}).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
 
 // The tracker's vocabulary, so the pack reads like the grid.
 const A_STATE = {
@@ -662,7 +507,6 @@ if (MODE === 'assessor') {
     return d.toISOString();
   };
   const ex = fromEnd() || (window.HubAssessor && window.HubAssessor.expires);
-  $('accessLine').insertAdjacentHTML('afterend', refLine());
   $('accessLine').textContent = 'Read-only assessor view' + (SETTINGS && SETTINGS.demoToday
     ? ' · a demo course, pinned to ' + longDate(String(SETTINGS.demoToday)) + ' — this link does not expire'
     : ex
@@ -729,10 +573,9 @@ function renderList(){
      already offers: the tracker and the grades live in The whole cohort at
      once, where they belong, and the two things that are neither reading nor
      navigation -- Appian and Print -- sit quietly at the right. */
-  $('toolbar').innerHTML = `${MODE === 'tutor' ? '<a class="btn ghost" href="5_tutor_dashboard.html">Tutor home</a>' : ''}<span class="tools-right">${appianBtn('ghost')}<button class="btn-print" type="button" onclick="window.print()">Print / Save as PDF</button></span>`;
+  $('toolbar').innerHTML = `${MODE === 'tutor' ? '<a class="btn ghost" href="5_tutor_dashboard.html">Tutor home</a>' : ''}<span class="tools-right">${appianBtn('primary')}${appianRef()}</span>`;
   $('app').innerHTML = `
     ${ap9Visit()}
-    ${checksHTML()}
     <!-- Handbook 14.1 opens its list with "Candidate portfolios - clearly
          named candidate portfolios including the documentation detailed in
          section 12.1.1", and 14.2 says that "the portfolio of at least
@@ -779,7 +622,6 @@ function renderList(){
     <div class="panel">${n ? `
       <div class="docrow"><span>Provisional and final grades, in Cambridge&rsquo;s own fields, to copy into Appian</span><a href="13_grades_report.html">Open the grades</a></div>
       <div class="docrow"><span>Every trainee &mdash; teaching practice, assignments and where each one stands</span><a href="7_candidate_tracker.html">Open the tracker</a></div>
-      <div class="docrow"><span>The trainees&rsquo; own aims for the last two teaching practices, by group</span><a href="21_tp_grid.html">Open TP7&amp;8 grid</a></div>
     ` : '<div class="empty">No trainees on the course yet.</div>'}</div>
 
     <h2 class="sect">Double-marking record <small>Handbook 9.2.3: ${sample} of each assignment for ${n} trainee${n===1?'':'s'}</small></h2>
@@ -792,6 +634,7 @@ function renderList(){
     <h2 class="sect" id="briefs">Assignment briefs <small>as the centre set them, in the centre’s order</small></h2>
     <div class="panel">${briefs()}</div>`;
   ap9Chips();
+  ap9Wire();
   if (window.hubStackTables) hubStackTables($('app'));
   foldSections($('app'));
 }
@@ -903,7 +746,7 @@ function volunteerStudents(){
 /* Matched against the TITLE only -- the Handbook reference in the small print
    sits on half the sections, and matching the whole heading left everything
    open. */
-const OPEN_SECTIONS = /^(The course against the Handbook|Trainees you are observing|Every other trainee|Candidate portfolios|The whole cohort)/i;
+const OPEN_SECTIONS = /^(Trainees you are observing|Every other trainee|Candidate portfolios|The whole cohort)/i;
 function foldSections(root){
   if (!root) return;
   const heads = [...root.querySelectorAll('h2.sect')];
@@ -918,6 +761,7 @@ function foldSections(root){
     if (OPEN_SECTIONS.test(title)) d.open = true;
     const sum = document.createElement('summary');
     sum.innerHTML = h.innerHTML;
+    if (h.id) d.id = h.id;     // the section pills point at these ids; folding used to drop them
     h.replaceWith(d);
     d.appendChild(sum);
     body.forEach(b => d.appendChild(b));
@@ -1135,7 +979,7 @@ function celta5Block(tr){
 function renderOne(tr){
   const c = T.recordFor(tr), r = T.readCandidate(c), chip = T.STATE_CHIP[r.state], man = tr.tracker || {};
   $('backLink').hidden = false;
-  $('toolbar').innerHTML = `${MODE === 'tutor' ? '<a class="btn ghost" href="5_tutor_dashboard.html">Tutor home</a>' : ''}<a class="btn ghost" href="7_candidate_tracker.html">Trainee tracker</a>${appianBtn('ghost')}<button class="btn-print" type="button" onclick="window.print()">Print / Save as PDF</button>`;
+  $('toolbar').innerHTML = `${MODE === 'tutor' ? '<a class="btn ghost" href="5_tutor_dashboard.html">Tutor home</a>' : ''}<a class="btn ghost" href="7_candidate_tracker.html">Trainee tracker</a>${appianBtn('primary')}${appianRef()}<button class="btn-print" type="button" onclick="window.print()">Print / Save as PDF</button>`;
   const verdict = v => v==='NOTSTD' ? 'not to standard' : v==='STD' ? 'to standard' : v==='ABOVE' ? 'above standard' : 'not held';
   const facts = [
     ['Standing', chip.text.charAt(0)+chip.text.slice(1).toLowerCase() + (r.from ? ' — from ' + r.from : ''), r.state==='notstd' ? 'red' : ''],
