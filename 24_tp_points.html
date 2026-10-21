@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610212020">
+<link rel="stylesheet" href="hub-tokens.css?v=202610212029">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -316,6 +316,10 @@
     .tbl.ord.stack td{grid-template-columns:74px 1fr;}
   }
   @media (max-width:560px){ .board{padding:18px 12px 60px;} section.group{padding:12px 12px 14px;} }
+  .viewas{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:14px 0 16px;}
+  .viewas label{font-size:0.78rem; font-weight:700; color:var(--grey);}
+  .viewas select{font-family:inherit; font-size:0.86rem; padding:7px 10px; border:1px solid var(--sand-line); border-radius:10px; background:#fff; color:var(--ink); max-width:100%;}
+  .viewas .vnote{flex-basis:100%; font-size:0.82rem; color:var(--ink-warm, var(--ink)); line-height:1.5;}
   .printme{float:right; font-family:inherit; font-size:0.66rem; font-weight:700; letter-spacing:.06em;
     text-transform:uppercase; color:var(--teal); background:none; border:1px solid var(--sand-line);
     border-radius:999px; padding:3px 10px; cursor:pointer;}
@@ -326,7 +330,7 @@
      image prints in its place. */
   .tpcredit{display:none;}
   @media print{
-    .back,.relbar,#hubSync,.printme,.others,.day.past,.req,.lede,.ok,.pgopen,.say-pill,.hub-brand-foot,.audlinks{display:none !important;}
+    .back,.relbar,.viewas,#hubSync,.printme,.others,.day.past,.req,.lede,.ok,.pgopen,.say-pill,.hub-brand-foot,.audlinks{display:none !important;}
     .tpcredit{display:flex; align-items:center; gap:8px; margin:14px 0 0; padding-top:8px; border-top:1px solid #bbb; font-size:9.5pt; color:#444;}
     .tpcredit b{color:#000;} .tpcredit .tpc-sep{flex:1;} .tpcredit .hub-cred{color:#8a6534;}
     /* a play button means nothing on paper: the track's number stays */
@@ -395,20 +399,20 @@
   @media(prefers-reduced-motion:reduce){ .tbl select.fm, .fm-pips i{transition:none;} }
   @media print{ .fm-key, .fm-pips{display:none;} .tbl select.fm{border-left-width:1px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610212020">
+<link rel="stylesheet" href="hub-house.css?v=202610212029">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610212020"></script>
-<script src="hub-tracker.js?v=202610212020"></script>
-<script src="hub-rotation.js?v=202610212020"></script>
-<script src="hub-shared.js?v=202610212020"></script>
-<script src="hub-store.js?v=202610212020"></script>
-<script src="hub-say.js?v=202610212020"></script>
-<script src="hub-sync.js?v=202610212020"></script>
+<script src="hub-due.js?v=202610212029"></script>
+<script src="hub-tracker.js?v=202610212029"></script>
+<script src="hub-rotation.js?v=202610212029"></script>
+<script src="hub-shared.js?v=202610212029"></script>
+<script src="hub-store.js?v=202610212029"></script>
+<script src="hub-say.js?v=202610212029"></script>
+<script src="hub-sync.js?v=202610212029"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -1155,17 +1159,22 @@ function matsRead(c, mine){
        + players + proc + sources;
 }
 
-function render(){
+function renderCore(){
   const app = $('app');
   /* A trainee opens this to find out what they are teaching, not to read
      about rotation (Ramy, 4 Oct 2026). The explanation stays for staff. */
-  const head = `<p class="eyebrow">Teaching practice</p><h1>TP points</h1>${IS_TRAINEE ? '' :
+  const head = `<p class="eyebrow">Teaching practice</p><h1>TP points</h1>${(IS_TRAINEE || VIEW_AS) ? '' :
     `<p class="lede">The lesson type for each trainee, TP 1 to ${TPS}. It rotates so nobody in a teaching set teaches the same type on the same day and each trainee covers six different types. Change any cell; the check below reads what is on the page, not what was generated. The last two TPs are the trainees\u2019 own on the planning grid.</p>`}`;
 
-  if (IS_TRAINEE) {
-    if (!P || !P.released) { app.innerHTML = head + `<div class="empty">Your tutor has not released the teaching practice points yet.</div>`; return; }
-    const me = rec('hub:me') || {};
-    const rows = P.points || {};
+  if (IS_TRAINEE || VIEW_AS) {
+    /* A TUTOR'S VIEW OF THE TRAINEE'S PAGE (Ramy, 21 Oct 2026). The same page,
+       drawn from the course's own record for the chosen trainee's group, so a
+       tutor can see what a trainee reads without opening anyone's link. It
+       reads only; nothing on it is saved. */
+    const Pv = IS_TRAINEE ? P : { released: !!((P.released || {})[VIEW_AS.group]), points: (P.groups || {})[VIEW_AS.group] || {}, sets: (P.sets || {})[VIEW_AS.group] || [], group: VIEW_AS.group };
+    if (IS_TRAINEE && (!P || !P.released)) { app.innerHTML = head + `<div class="empty">Your tutor has not released the teaching practice points yet.</div>`; return; }
+    const me = IS_TRAINEE ? (rec('hub:me') || {}) : { token: VIEW_AS.token, group: VIEW_AS.group, name: VIEW_AS.name };
+    const rows = Pv.points || {};
     /* THE SHAPE IS RAMY'S OWN DOCUMENT (his TP1ABC.docx, read block by block on
        30 Sep 2026 and rebuilt here on 1 Oct): a table per teaching day, ONE ROW
        PER TRAINEE -- slot, who, the lesson and what to get -- under a line
@@ -1177,7 +1186,7 @@ function render(){
        functional language, vocab and listening. Five lessons in one box. Why?"
        A trainee sits in on the other two lessons of their own day, so those
        belong on the same table as rows -- marked plainly as not theirs. */
-    const sets = (P.sets || []).filter(x => Array.isArray(x) && x.length);
+    const sets = (Pv.sets || []).filter(x => Array.isArray(x) && x.length);
     const flat = sets.reduce((a, b) => a.concat(b), []);
     /* fixed places (hub-rotation): the first set is A B C, the second D E F,
        so a set of two on the second day is D and E, not C and D */
@@ -1325,7 +1334,7 @@ function render(){
       </section>`;
     }).filter(Boolean).join('');
 
-    app.innerHTML = head + `<section class="group"><h2>Group ${esc(P.group || '\u2014')}</h2>
+    app.innerHTML = head + `<section class="group"><h2>Group ${esc(Pv.group || '\u2014')}</h2>
       <p class="ok">Your lesson first, with the pages you are teaching from. What the other two are teaching is at the foot of the day.</p>
       ${tables || '<div class="empty">No points released for your set yet.</div>'}
       </section>`;
@@ -1506,6 +1515,35 @@ function render(){
   }));
 }
 
+let VIEW_AS = null;   // a tutor's "see it as": { token, name, group }, or null for the tutor's own view
+
+/* THE PICKER (Ramy, 21 Oct 2026: the TP points page is the one a tutor cannot
+   see as a trainee does). A tutor chooses a trainee; the page is drawn as that
+   trainee's page. Nothing is signed in as them and nothing is saved. */
+function viewAsBar(){
+  const gs = groups(); if (!gs.length) return '';
+  const opts = gs.map(g => `<optgroup label="Group ${esc(g.group || '\u2014')}">${g.people.map(t => `<option value="${esc(t.token)}"${VIEW_AS && VIEW_AS.token === t.token ? ' selected' : ''}>${esc(t.name || 'Trainee')}</option>`).join('')}</optgroup>`).join('');
+  const rel = VIEW_AS ? !!((P && P.released || {})[VIEW_AS.group]) : true;
+  return `<div class="viewas"><label for="viewas">See it as</label>
+    <select id="viewas"><option value="">My own view, the tutor’s</option>${opts}</select>
+    ${VIEW_AS ? `<span class="vnote"><b>${esc(VIEW_AS.name || 'This trainee')}</b>’s page, as they read it. Nothing here is saved.${rel ? '' : ' Not released to Group ' + esc(VIEW_AS.group || '\u2014') + ' yet, so they see nothing until you release it.'}</span>` : ''}
+  </div>`;
+}
+function render(){
+  renderCore();
+  if (!IS_TUTOR) return;
+  const app = $('app');
+  const bar = viewAsBar(); if (!bar) return;
+  const lede = app.querySelector('.lede');
+  if (lede) lede.insertAdjacentHTML('afterend', bar); else app.insertAdjacentHTML('afterbegin', bar);
+  const sel = $('viewas');
+  if (sel) sel.onchange = () => {
+    const t = sel.value;
+    VIEW_AS = null;
+    if (t) { const g = groups().find(x => x.people.some(p => p.token === t)); const person = g && g.people.find(p => p.token === t); if (person) VIEW_AS = { token: t, name: person.name, group: g.group }; }
+    render(); window.scrollTo(0, 0);
+  };
+}
 render();
 
 /* ---- v2 (7 Oct 2026): the families, visible ---------------------------------
