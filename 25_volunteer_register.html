@@ -39,7 +39,7 @@
 <title>Connect Lite — Volunteer register</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610211719">
+<link rel="stylesheet" href="hub-tokens.css?v=202610211730">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -141,21 +141,21 @@
   @media(max-width:560px){ .vr9-coming{grid-template-columns:1fr auto;} .vr9-coming .split{grid-column:1 / -1;} .vr9-coming .num{border:0; padding:0;} .vr9-now small{margin-left:0; flex-basis:100%;} }
   @media print{ .vr9-now{display:none;} .seg.vr9-today{box-shadow:none;} .vr9-coming{border:1px solid #bbb;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610211719">
+<link rel="stylesheet" href="hub-house.css?v=202610211730">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610211719"></script>
-<script src="hub-shared.js?v=202610211719"></script>
-<script src="hub-timetable-parse.js?v=202610211719"></script>
-<script src="hub-xlsx.js?v=202610211719"></script>
-<script src="hub-attendance.js?v=202610211719"></script>
-<script src="hub-store.js?v=202610211719"></script>
-<script src="hub-say.js?v=202610211719"></script>
-<script src="hub-sync.js?v=202610211719"></script>
+<script src="hub-due.js?v=202610211730"></script>
+<script src="hub-shared.js?v=202610211730"></script>
+<script src="hub-timetable-parse.js?v=202610211730"></script>
+<script src="hub-xlsx.js?v=202610211730"></script>
+<script src="hub-attendance.js?v=202610211730"></script>
+<script src="hub-store.js?v=202610211730"></script>
+<script src="hub-say.js?v=202610211730"></script>
+<script src="hub-sync.js?v=202610211730"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -253,7 +253,9 @@ const fmtH = h => (Math.round(h * 100) / 100).toString().replace(/\.00$/, '');
 /* v56: who is coming to the next class, from the store's own count. */
 const COMING = (() => { try { const c = JSON.parse(localStorage.getItem('connect_coming_v1')); return c && c.day ? c : null; } catch (e) { return null; } })();
 function persist(word){
-  REG = REG || { students: [] };
+  /* a course whose register was never written comes back as an empty
+     record with no list in it: give it one (C/18, 21 Oct 2026) */
+  REG = REG || {}; if (!Array.isArray(REG.students)) REG.students = [];
   try { localStorage.setItem(KEY, JSON.stringify(REG)); } catch(e) {}
   note = word || 'Saved';
   render();
@@ -346,7 +348,9 @@ function addHTML(){
 }
 
 function addNames(rows){
-  REG = REG || { students: [] };
+  /* a course whose register was never written comes back as an empty
+     record with no list in it: give it one (C/18, 21 Oct 2026) */
+  REG = REG || {}; if (!Array.isArray(REG.students)) REG.students = [];
   const have = new Set(students().map(s => s.name.trim().toLowerCase()));
   /* A header row, when the sheet has one, says which column is which: the
      name, a level (kept as the level when it is a CEFR code), and anything
