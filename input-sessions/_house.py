@@ -18,6 +18,7 @@ import re, sys, pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from _notes import NOTES   # the trainer's side of each session, one block per slug
 from _alias import ALIAS   # made-up names and examples, per slug
+from _tl import TL         # the target language, marked in green, per slug
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -218,6 +219,13 @@ HEAD = '''<!DOCTYPE html>
 '''
 
 
+def mark_tl(page, slug):
+    """Wrap the target language in the examples; every old string must be there."""
+    for old, new in TL.get(slug, []):
+        assert old in page, f"{slug}: TL target not found: {old[:70]!r}"
+        page = page.replace(old, new)
+    return page
+
 def build(r):
     src = (ROOT / r['src']).read_text(encoding='utf-8') if not r['src'].startswith('desktop:') \
         else (DESKTOP / r['src'][8:]).read_text(encoding='utf-8')
@@ -278,7 +286,7 @@ def build(r):
                        css=r['css'].strip('\n'), nav=nav) + films_closed(body.strip('\n')) + notes_block(r['slug']) + sources + '\n\n' + FOOT + '\n</div>\n\n' + script + '\n' + FILM_JS + '\n' + GATE + '\n</body>\n</html>\n'
     for bad in ('Nunito', 'Playfair', 'progressFill', 'class="watermark"', 'International House Istanbul'):
         assert bad not in page.replace(sources, '').replace(notes_block(r['slug']), ''), f"{r['slug']}: {bad} still in the page"
-    page = number_from_nav(strip_lengths(alias(page, r['slug'])))
+    page = number_from_nav(strip_lengths(mark_tl(alias(page, r['slug']), r['slug'])))
     out = HERE / r['slug'] / 'index.html'
     out.parent.mkdir(exist_ok=True)
     out.write_text(page, encoding='utf-8')
@@ -2083,8 +2091,11 @@ def hand(slug):
         page = re.sub(r'(<meta name="viewport"[^>]*>)', r'\1\n<script src="../library.js"></script>', page, count=1)
     page = films_closed(page)
     page = re.sub(r"\n<script>\n\(function\(\)\{\n  document\.querySelectorAll\('\.film\[data-src\]'\).*?</script>", '', page, count=1, flags=re.S)
+    # every earlier copy of the film script goes, so a rebuild adds one, not one more
+    page = re.sub(r"\n<script>\n\(function\(\)\{\n  /\* A film with an end time.*?</script>", '', page, flags=re.S)
     page = page.replace('\n</body>', '\n' + FILM_JS + '\n' + GATE + '\n</body>', 1)
     assert page.count('id="trainer"') == 1 and page.count('hub-store.js') == 1, slug
+    assert page.count('A film with an end time') == 1, slug + ': the film script is not there once'
     page = number_from_nav(strip_lengths(alias(page, slug)))
     p.write_text(page, encoding='utf-8')
     print('patched', p.relative_to(ROOT), len(page))
