@@ -285,7 +285,32 @@
     return out;
   }
 
-  const api = { AIMS, LANGUAGE_FOCUS, LETTERS, FAMILY, FAMILY_WORD, familyOf, aimsInFamily,
+  /* THE ORDER A TUTOR READS THE COHORT IN (Ramy, 21 Oct 2026: the tracker, the
+     assignments and teaching practice "are in alphabetical order instead of
+     A, B, C, D, E, F"). Group by group, each group in letter order, so the list
+     reads like the TP points screen and the timetable. A trainee with no group
+     goes last, in name order. Takes roster trainees ({ id|token, name, group }). */
+  function inLetterOrder(trainees) {
+    const list = (trainees || []).filter(Boolean);
+    const by = {};
+    list.forEach((t) => { const g = String(t.group || ''); (by[g] = by[g] || []).push(t); });
+    const place = {};
+    Object.keys(by).forEach((g) => {
+      if (g === '') return;
+      lettersFor(by[g].map((t) => ({ token: String(t.id || t.token), name: t.name }))).forEach((p) => { place[p.token] = p.idx; });
+    });
+    const grp = (t) => String(t.group || '');
+    return list.slice().sort((a, b) => {
+      const ga = grp(a), gb = grp(b);
+      if ((ga === '') !== (gb === '')) return ga === '' ? 1 : -1;
+      if (ga !== gb) return ga.localeCompare(gb, undefined, { numeric: true });
+      const pa = place[String(a.id || a.token)], pb = place[String(b.id || b.token)];
+      if (pa !== undefined && pb !== undefined && pa !== pb) return pa - pb;
+      return String(a.name || '').localeCompare(String(b.name || ''));
+    });
+  }
+
+  const api = { inLetterOrder, AIMS, LANGUAGE_FOCUS, LETTERS, FAMILY, FAMILY_WORD, familyOf, aimsInFamily,
                 lettersFor, setsFor, setName, aimFor, rotate, orderFor, orderDealt, dayOfSet,
                 languageFocusCheck, clashes, afterFail };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
