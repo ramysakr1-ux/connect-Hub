@@ -259,6 +259,16 @@ def build(r):
     for a, c in r.get('script', []):
         assert a in script, f"{r['slug']}: script edit not found: {a[:60]}"
         script = script.replace(a, c)
+    # THE SAME ORDER FOR EVERYONE (Ramy, 21 Oct 2026: "make sure the order of
+    # the activities is the same for everyone"). The sessions shuffled their
+    # matching pills, games and sequences with Math.random, so each trainee in
+    # the room saw a different order and the class could not go through it
+    # together. Every shuffle now draws from a generator seeded by the
+    # session's own name: still mixed, but identical on every device and every
+    # reload. A Reshuffle button still moves on through the same sequence.
+    seed = sum((i + 1) * ord(ch) for i, ch in enumerate(r['slug'])) % 2147483647 or 1
+    script = script.replace('Math.random()', '__lr()')
+    script = script.replace('<script>', '<script>\nvar __lrS = ' + str(seed) + '; function __lr(){ __lrS = (__lrS * 16807) % 2147483647; return (__lrS - 1) / 2147483646; }', 1)
     # the progress bar is gone: drop the statement that fed it, not the line
     script = re.sub(r"\s*document\.getElementById\('progressFill'\)\.style\.width\s*=[^;]*;", '', script)
     assert 'progressFill' not in script, f"{r['slug']}: progressFill still referenced"
