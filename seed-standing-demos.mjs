@@ -115,7 +115,7 @@ const GROUPS = ['1', '2'];
 const peopleIn = (g, people) => people.filter(p => String(CANDS.find(c => c.name === p.name) ? (CANDS.find(c => c.name === p.name).group) : '1') === g);
 const TUTORS = ['Jordan Blake', 'Diane Okonkwo'];
 const VOLUNTEERS = [
-  { name: 'Ayşe Demir', level: 'B1', note: '', lang: 'tr', carried: 140 },
+  { name: 'Ayşe Demir', level: 'B1', note: '', lang: 'tr', carried: 180 },
   { name: 'Mehmet Yılmaz', level: 'A2', note: '', lang: 'tr' },
   { name: 'Elena Petrova', level: 'B1', note: '', lang: 'ru', carried: 62 },
   { name: 'Omar Haddad', level: 'A2', note: 'evenings only', lang: 'ar' },
@@ -179,10 +179,10 @@ function settingsFor(tokens) {
     logo: LOGO, gradeForm: FINISHED.settings.gradeForm,
     timeZone: 'Europe/London', onlineRooms: ROOMS,
     courseLinks: COURSE_LINKS,
-    /* 160 hours across the centre (Ramy, 1 Oct 2026: "that's what we agreed on").
-       Ayşe carries hours in from earlier courses so the certificate scene is
-       true on the before-the-visit demo. */
-    volunteerCertificateHours: 160,
+    /* No volunteerCertificateHours: the demos follow the hours per level,
+       Cambridge's (Ramy, 21 Oct 2026), like every course. Ayşe carries hours
+       in from earlier courses so the certificate scene is true on the
+       before-the-visit demo. */
     visitDate: DAY(VISIT_DAY), assessorVisit: [], docs: {},
     appianUrl: '',
     demoToday: PIN,
