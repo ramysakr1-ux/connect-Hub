@@ -25,7 +25,7 @@
 <title>Connect Lite — Assessor pack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610212219">
+<link rel="stylesheet" href="hub-tokens.css?v=202610212228">
 <style>
   :root{
     /* the control fill, for the shared confirm modal's Cancel button */
@@ -269,7 +269,7 @@
   @media(max-width:560px){ .ap9{padding:22px 18px 18px; border-radius:12px;} .ap9-stats div{min-width:0; flex:1 1 120px;} }
   @media print{ .ap9{display:none !important;} .panel.ap9-obs{border-left:0; background:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610212219">
+<link rel="stylesheet" href="hub-house.css?v=202610212228">
 </head>
 <body data-signout="float">
 <div class="board">
@@ -301,15 +301,15 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202610212219"></script>
-<script src="hub-shared.js?v=202610212219"></script>
-<script src="assignment-defaults.js?v=202610212219"></script>
-<script src="hub-tracker.js?v=202610212219"></script>
-<script src="hub-rotation.js?v=202610212219"></script>
-<script src="hub-attendance.js?v=202610212219"></script>
-<script src="hub-store.js?v=202610212219"></script>
-<script src="hub-say.js?v=202610212219"></script>
-<script src="hub-sync.js?v=202610212219"></script>
+<script src="observation-defaults.js?v=202610212228"></script>
+<script src="hub-shared.js?v=202610212228"></script>
+<script src="assignment-defaults.js?v=202610212228"></script>
+<script src="hub-tracker.js?v=202610212228"></script>
+<script src="hub-rotation.js?v=202610212228"></script>
+<script src="hub-attendance.js?v=202610212228"></script>
+<script src="hub-store.js?v=202610212228"></script>
+<script src="hub-say.js?v=202610212228"></script>
+<script src="hub-sync.js?v=202610212228"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -582,6 +582,8 @@ function renderList(){
      once, where they belong, and the two things that are neither reading nor
      navigation -- Appian and Print -- sit quietly at the right. */
   $('toolbar').innerHTML = `${MODE === 'tutor' ? '<a class="btn ghost" href="5_tutor_dashboard.html">Tutor home</a>' : ''}<span class="tools-right"></span>`;
+  /* a tutor's way out, where a way back always is (Ramy, 21 Oct 2026: "I can't even get out") */
+  if (MODE === 'tutor') { $('backLink').hidden = false; $('backLink').textContent = 'Tutor home'; $('backLink').href = '5_tutor_dashboard.html'; }
   $('app').innerHTML = `
     ${ap9Visit()}
     <!-- Handbook 14.1 opens its list with "Candidate portfolios - clearly
@@ -914,7 +916,7 @@ function tpBlock(tr, n, c){
   let meta, right='';
   if (fb) {
     const g = G_STATE[c['tp'+n]];
-    meta = `<span class="chip ${g?g.cls:'wait'}">${g?g.t:'returned'}</span> <b>${esc(c['tp'+n+'_aim'] || (f && f.fMain) || '')}</b>${f && f.fTutor ? ' · tutor ' + esc(f.fTutor) : ''}${f && f.fDate ? ' · taught ' + esc(niceDate(f.fDate)) : ''}${fb.returnedAt ? ' · returned ' + esc(when(fb.returnedAt)) : ''}`;
+    meta = `<span class="chip ${g?g.cls:'wait'}">${g?g.t:'returned'}</span> <b>${esc(c['tp'+n+'_aim'] || (f && f.fMain) || '')}</b>${f && f.fDate ? ' · ' + esc(niceDate(f.fDate)) : ''}${f && f.fTutor ? ' · ' + esc(f.fTutor) : ''}`;
     right = fb.docHTML ? `<button class="btn ghost" type="button" data-doc="tp${n}">Show the document</button>` : '<span class="sub">no document stored</span>';
   } else if (isCur) {
     const se = tr.tp && tr.tp.selfeval;
@@ -931,7 +933,7 @@ function tpBlock(tr, n, c){
      existed. The turned-in plan now prints with the rest. */
   const planDoc = (!fb && plan && planN === n && plan.status === 'turned_in' && plan.docHTML)
     ? `<div class="doc" id="doc-plan${n}" hidden><p class="tpmark">Teaching practice ${n} — the plan, as turned in. Not taught yet.</p>${plan.docHTML}</div>` : '';
-  return `<div class="tp" id="tp${n}"><div class="tp-row"><span class="n">TP${n}</span><span class="meta"><span class="sub">${STAGE_OF(n)}</span><br>${meta}</span>${right}</div>${fb && fb.docHTML ? `<div class="doc" id="doc-tp${n}" hidden>${fb.docHTML}</div>` : ''}${planDoc}</div>`;
+  return `<div class="tp" id="tp${n}"><div class="tp-row"><span class="n">TP${n}</span><span class="meta">${meta}</span>${right}</div>${fb && fb.docHTML ? `<div class="doc" id="doc-tp${n}" hidden>${fb.docHTML}</div>` : ''}${planDoc}</div>`;
 }
 function assignmentBlock(tr, k){
   const w = WORDING && WORDING[k]; const sub = (tr.assignments||{})[k] || {}; const st = T.assignmentState(sub); const a = A_STATE[st.code] || A_STATE[''];
@@ -986,20 +988,19 @@ function celta5Block(tr){
 }
 function renderOne(tr){
   const c = T.recordFor(tr), r = T.readCandidate(c), chip = T.STATE_CHIP[r.state], man = tr.tracker || {};
-  $('backLink').hidden = false;
+  $('backLink').hidden = false; $('backLink').textContent = 'All trainees'; $('backLink').href = '12_assessor_pack.html';
   $('toolbar').innerHTML = `${MODE === 'tutor' ? '<a class="btn ghost" href="5_tutor_dashboard.html">Tutor home</a>' : ''}<a class="btn ghost" href="7_candidate_tracker.html">Trainee tracker</a><button class="btn-print" type="button" onclick="window.print()">Print / Save as PDF</button>`;
   const verdict = v => v==='NOTSTD' ? 'not to standard' : v==='STD' ? 'to standard' : v==='ABOVE' ? 'above standard' : 'not held';
   const facts = [
     ['Standing', chip.text.charAt(0)+chip.text.slice(1).toLowerCase() + (r.from ? ' — from ' + r.from : ''), r.state==='notstd' ? 'red' : ''],
     ['Provisional grade', (man.grades && man.grades.provisional) || 'not set', man.grades && man.grades.provisional==='FAIL' ? 'red' : ''],
     ['Final grade', (man.grades && man.grades.final) || 'not set', man.grades && man.grades.final==='FAIL' ? 'red' : ''],
-    ['Grade cap', r.ceiling ? r.ceiling.replace('SRT','LSRT') : 'none', r.ceiling ? 'amb' : ''],
-    ['Stage 1 record', man.stage1 ? 'done' : 'not yet', ''],
-    ['Stage 2 tutorial', verdict(man.stage2), man.stage2==='NOTSTD' ? 'red' : ''],
-    ['Stage 3 tutorial', verdict(man.stage3), man.stage3==='NOTSTD' ? 'red' : ''],
-    ['Fail letter', man.failLetter ? 'issued ' + man.failLetter : 'not issued', man.failLetter ? 'red' : ''],
-    ['Withdrawn', man.withdrawn ? 'yes' : 'no', man.withdrawn ? 'red' : '']
-  ];
+    /* the rest only when it applies (Ramy, 21 Oct 2026: "this whole header is kind of busy... don't really
+       understand what it says"); the stage records are in the CELTA 5 section below */
+    r.ceiling ? ['Grade cap', r.ceiling.replace('SRT','LSRT'), 'amb'] : null,
+    man.failLetter ? ['Fail letter', 'issued ' + man.failLetter, 'red'] : null,
+    man.withdrawn ? ['Withdrawn', 'yes', 'red'] : null
+  ].filter(Boolean);
   $('app').innerHTML = `
     <div class="panel">
       <div class="cand-head"><div style="display:flex;align-items:center;gap:12px;">${letterChip(tr, true)}<div><h1>${esc(tr.name)}</h1><div class="sub">${esc([tr.group ? 'Group ' + tr.group : '', letterInfo(tr).set ? 'Teaching set ' + letterInfo(tr).set : ''].filter(Boolean).join(' · '))}</div></div></div><span class="standing ${chip.cls}">${esc(chip.text)}</span></div>
