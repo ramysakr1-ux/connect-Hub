@@ -39,7 +39,7 @@
 <title>Connect Lite — Volunteer register</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610211730">
+<link rel="stylesheet" href="hub-tokens.css?v=202610211731">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -141,21 +141,21 @@
   @media(max-width:560px){ .vr9-coming{grid-template-columns:1fr auto;} .vr9-coming .split{grid-column:1 / -1;} .vr9-coming .num{border:0; padding:0;} .vr9-now small{margin-left:0; flex-basis:100%;} }
   @media print{ .vr9-now{display:none;} .seg.vr9-today{box-shadow:none;} .vr9-coming{border:1px solid #bbb;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610211730">
+<link rel="stylesheet" href="hub-house.css?v=202610211731">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610211730"></script>
-<script src="hub-shared.js?v=202610211730"></script>
-<script src="hub-timetable-parse.js?v=202610211730"></script>
-<script src="hub-xlsx.js?v=202610211730"></script>
-<script src="hub-attendance.js?v=202610211730"></script>
-<script src="hub-store.js?v=202610211730"></script>
-<script src="hub-say.js?v=202610211730"></script>
-<script src="hub-sync.js?v=202610211730"></script>
+<script src="hub-due.js?v=202610211731"></script>
+<script src="hub-shared.js?v=202610211731"></script>
+<script src="hub-timetable-parse.js?v=202610211731"></script>
+<script src="hub-xlsx.js?v=202610211731"></script>
+<script src="hub-attendance.js?v=202610211731"></script>
+<script src="hub-store.js?v=202610211731"></script>
+<script src="hub-say.js?v=202610211731"></script>
+<script src="hub-sync.js?v=202610211731"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -270,7 +270,7 @@ function render(){
   const list = students();
   const head = `<p class="eyebrow">Course</p><h1>Volunteer register</h1>
     <p class="lede">${IS_TUTOR
-      ? 'The students who come in to be taught. One row each, one block per teaching day — tap a block to mark somebody in the room. The days and the hours come from the timetable, so nothing here is a second schedule to keep.'
+      ? 'The volunteer students, one row each. Tap a day to mark who was in the room. The days come from the timetable.'
       : 'The students who came in to be taught, and which teaching days each of them attended.'}</p>`;
 
   if (!days.length) {
@@ -286,11 +286,11 @@ function render(){
      twenty to learn that two have not opened their link at all. */
   const waiting = list.filter(st => st.token && !st.agreed).length;
   const consent = !IS_TUTOR || !list.length ? '' : `<p class="consent-count">${waiting
-    ? `<b>${waiting} of ${list.length}</b> ${waiting === 1 ? 'has' : 'have'} not yet agreed to the centre\u2019s joining note. It opens by itself the first time they open their own link, so this usually means the link has not been sent on.`
+    ? `<b>${waiting} of ${list.length}</b> ${waiting === 1 ? 'has' : 'have'} not yet agreed to the centre\u2019s joining note. They agree when they first open their link, so send them the invitation.`
     : `All ${list.length} ${list.length === 1 ? 'has' : 'have'} agreed to the centre\u2019s joining note.`}</p>`;
 
   if (!list.length) {
-    app.innerHTML = head + bar + `<div class="empty">Nobody on the register yet.${IS_TUTOR ? ' Add them one at a time, or paste a list from a spreadsheet.' : ''}</div>`;
+    app.innerHTML = head + bar + `<div class="empty">Nobody on the register yet.</div>`;
     wire();
     return;
   }
@@ -307,7 +307,7 @@ function render(){
         ${IS_TUTOR ? `<div class="mailrow"><input type="email" class="email" data-email="${i}" value="${esc(st.email || '')}" placeholder="Their email">${st.token ? `<button type="button" class="btn sm" data-invite="${i}">${st.invited ? 'Send again' : 'Send the invitation'}</button>` : ''}${st.email && st.notify === false ? '<small>asked for no emails</small>' : ''}${st.invited ? `<small class="invited">Invitation sent ${dm(String(st.invited).slice(0, 10))}</small>` : ''}</div>` : ''}
         ${st.token ? (st.agreed
           ? `<span class="agreed yes">✓ Agreed to the joining note, ${dm(String(st.agreed).slice(0, 10))}</span>`
-          : `<span class="agreed no">Has not yet agreed to the joining note (it opens with their link)</span>`) : ''}
+          : `<span class="agreed no">Not yet agreed to the joining note</span>`) : ''}
         <div class="segs">${r.days.map(x => {
           const past = x.date < TODAY;
           const cls = x.tier === 'present' ? 'here' : x.tier === 'partial' ? 'part' : past ? 'miss' : 'soon';
@@ -329,7 +329,6 @@ function render(){
     <span><span class="seg part"></span>came for part of it</span>
     <span><span class="seg miss"></span>not marked, day has passed</span>
     <span><span class="seg soon"></span>still to come</span>
-    <span>Tap to change.</span>
   </p>
   <p class="legend">${lessons} lesson${lessons === 1 ? '' : 's'} of ${lessonMinutes} minutes a day · ${A.lessonsNeededForPresent(lessons)} of them counts as being in the room, and credits the whole ${fmtH(hoursPerDay)} hours · ${days.length} teaching days, ${fmtH(days.length * hoursPerDay)} h if somebody comes to all of them.</p>`;
 
@@ -338,7 +337,7 @@ function render(){
 
 function addHTML(){
   return `<div class="panel"><h3>Add students</h3>
-    <p>Add one person with their email, or paste a list, or choose an Excel or CSV file. In a list, one name a line; a second column is kept as a note.</p>
+    <p>In a pasted list or a file, one name a line; a second column is kept as a note.</p>
     <div class="row one"><input type="text" id="oneName" placeholder="Name" autocomplete="off"><input type="email" id="oneEmail" placeholder="Their email (for the invitation)" autocomplete="off"></div>
     <div class="row" style="margin-top:8px"><button class="btn btn-gold" id="addSend">Add and send the invitation</button><button class="btn" id="addOne">Add</button></div>
     <p style="margin:12px 0 6px">Or paste:</p>
@@ -540,7 +539,7 @@ render();
     const reg = app.querySelector('.reg');
     if (reg && today.length && !app.querySelector('.vr9-now')) {
       const here = today.filter(el => el.classList.contains('here')).length, part = today.filter(el => el.classList.contains('part')).length;
-      reg.insertAdjacentHTML('beforebegin', '<div class="vr9-now" aria-live="polite"><b>' + here + '</b><span>in the room today' + (part ? ' \u00b7 ' + part + ' for part of it' : '') + '</span><small>Today\u2019s block is ringed on every row</small></div>');
+      reg.insertAdjacentHTML('beforebegin', '<div class="vr9-now" aria-live="polite"><b>' + here + '</b><span>in the room today' + (part ? ' \u00b7 ' + part + ' for part of it' : '') + '</span></div>');
     }
   }
   new MutationObserver(() => requestAnimationFrame(apply)).observe(app, { childList: true });
