@@ -20,7 +20,7 @@
  * VERSION is stamped by bump-assets.py with the same stamp as the ?v= links,
  * so each push retires the previous cache on activate.
  */
-const VERSION = 'lite-202610212333';
+const VERSION = 'lite-202610220116';
 const SHELL = [
   './', 'index.html', 'invite.html', 'hub-qr.js', 'vendor/qrcode.js', 'hub-pin.js',
   '1_trainee_plan_and_analysis.html', '2_trainee_self_evaluation.html', '3_tutor_feedback.html',
@@ -60,6 +60,32 @@ const SHELL = [
   'brand/favicon.svg', 'brand/favicon.ico', 'brand/apple-touch-icon.png',
 ];
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
+/* Films and tracks outlive a deploy: a new version must not throw away 74 MB
+   somebody kept on purpose. hub-store.js keeps the TP points' tracks here too. */
+const MEDIA = 'lite-media-v1';
+const KEEPING = {};
+function keepWhole(u) {
+  if (KEEPING[u]) return; KEEPING[u] = 1;
+  fetch(u, { cache: 'no-store' }).then(function (r) {
+    if (r && r.status === 200) return caches.open(MEDIA).then(function (c) { return c.put(u, r); });
+  }).catch(function () {}).then(function () { delete KEEPING[u]; });
+}
+function media(req) {
+  var u = req.url.split('#')[0].split('?')[0];
+  return caches.open(MEDIA).then(function (c) { return c.match(u); }).then(function (hit) {
+    if (!hit) return fetch(req).then(function (r) { keepWhole(u); return r; });
+    var type = hit.headers.get('Content-Type') || 'video/mp4';
+    return hit.blob().then(function (blob) {
+      var size = blob.size, range = req.headers.get('range');
+      var m = range && /bytes=(\d*)-(\d*)/.exec(range);
+      if (!m) return new Response(blob, { status: 200, headers: { 'Content-Type': type, 'Content-Length': String(size), 'Accept-Ranges': 'bytes' } });
+      var s = m[1] === '' ? Math.max(0, size - Number(m[2])) : Number(m[1]);
+      var en = m[1] !== '' && m[2] !== '' ? Math.min(Number(m[2]), size - 1) : size - 1;
+      if (s >= size) return new Response('', { status: 416, headers: { 'Content-Range': 'bytes */' + size } });
+      return new Response(blob.slice(s, en + 1), { status: 206, headers: { 'Content-Type': type, 'Content-Range': 'bytes ' + s + '-' + en + '/' + size, 'Content-Length': String(en - s + 1), 'Accept-Ranges': 'bytes' } });
+    });
+  });
+}
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(VERSION).then(function (cache) {
@@ -75,7 +101,7 @@ self.addEventListener('install', function (e) {
 
 self.addEventListener('activate', function (e) {
   e.waitUntil(caches.keys().then(function (keys) {
-    return Promise.all(keys.filter(function (k) { return k !== VERSION; }).map(function (k) { return caches.delete(k); }));
+    return Promise.all(keys.filter(function (k) { return k !== VERSION && k !== MEDIA; }).map(function (k) { return caches.delete(k); }));
   }).then(function () { return self.clients.claim(); }));
 });
 
@@ -86,6 +112,14 @@ self.addEventListener('fetch', function (e) {
   const sameOrigin = url.origin === self.location.origin;
   const isFont = FONT_HOSTS.indexOf(url.host) !== -1;
   if (!sameOrigin && !isFont) return;           // the store, and anything else, is left alone
+
+  /* THE SESSION FILMS, KEPT ONCE WATCHED (Ramy, 22 Oct 2026: "the videos don't
+     work" with no internet). They are too big for the shell (24 and 50 MB), so a
+     film is kept only on a device where somebody pressed play: the first play
+     streams as before and the whole file is fetched once beside it. From then
+     on the kept copy answers, and a player's "bytes=" request is cut from it,
+     because a video asks for pieces and a plain cache answer is not a piece. */
+  if (sameOrigin && /\.(mp4|m4a|mp3)$/i.test(url.pathname)) { e.respondWith(media(req)); return; }
 
   if (isFont) {
     // Fonts: the kept copy first, the network fills it in once.

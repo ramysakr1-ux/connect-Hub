@@ -124,7 +124,7 @@ NOTES['functional-language'] = '''
 
 NOTES['phonology-sounds'] = '''
 <h4>Before</h4>
-<p>Test the sound on the room’s machine: open the page, use the voice picker at the top and press Try it. Pick a British voice that the room can hear clearly; the choice is remembered on that machine. The Seeing Speech link in part 3 needs the internet.</p>
+<p>Test the sound on the room’s machine: press Play on the first word and turn the speakers up until the back row hears it. The words are recordings, so they sound the same on every machine and play without the internet once heard. The Seeing Speech link in part 3 needs the internet.</p>
 <h4>Running it</h4>
 ''' + T([
     (8, 'Sounds and letters', 'Play each word twice; they write it, then count. Let the room disagree about "letter" (four or five sounds) before you reveal: the disagreement is the lesson.'),
@@ -139,7 +139,7 @@ NOTES['phonology-sounds'] = '''
 <p>All on the page: Check answers under each task, Reveal for the script and the films. The obstruction answers are: b, m and p at the lips; v at the lower lip and top teeth; n and t at the tongue tip and ridge; r at the tongue tip near the ridge; k at the back of the tongue and soft palate.</p>
 <h4>Watch for</h4>
 <ul>
-<li>The voice. A synthetic voice is fine for single words; it is not a model for connected speech, so say the words yourself too.</li>
+<li>The voice. The recordings model single words; they are not a model for connected speech, so say the words yourself too.</li>
 <li>Trainees who stop at "I can’t do phonemic script". The keys on the page mean nobody has to draw a symbol; they only have to choose one.</li>
 <li>American and British counts for "letter": both are right; the chart is British.</li>
 </ul>'''

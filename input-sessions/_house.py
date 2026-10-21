@@ -180,6 +180,7 @@ HEAD = '''<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="../library.js"></script>
+<script src="../voices.js"></script>
 <link rel="icon" href="../../brand/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../../brand/apple-touch-icon.png">
 <title>{title} — Connect Lite</title>
@@ -584,7 +585,7 @@ RECIPES.append(dict(
 RECIPES.append(dict(
     slug='phonology-sounds',
     sources="""The terminology and the voiced-unvoiced task follow the tutor's CELTA input materials; the phonemic chart is the standard British English chart of 44 phonemes (Adrian Underhill, <i>Sound Foundations</i>, Macmillan).""", src='phonology-sounds/index.html',
-    title='Phonology: sounds', sub='Sounds against letters, consonants and vowels, the phonemic chart, and phonemic script. The words are spoken by your browser, so turn the sound on.',
+    title='Phonology: sounds', sub='Sounds against letters, consonants and vowels, the phonemic chart, and phonemic script. The words are recorded, so turn the sound on.',
     nav=[('s1', '1 · Sounds and letters'), ('s2', '2 · Terms'), ('s3', '3 · Consonants'), ('s4', '4 · Voicing'), ('s5', '5 · The chart'), ('s6', '6 · Script'), ('s7', '7 · Film titles')],
     css=r"""
   .play{display:inline-flex; align-items:center; justify-content:center; gap:6px; background:var(--teal); color:var(--paper); border:none; border-radius:999px; padding:5px 12px; font-weight:700; font-size:.76rem; cursor:pointer; min-height:30px;}
@@ -625,8 +626,7 @@ RECIPES.append(dict(
   }
 """,
     body=[
-        ('<!-- 1 -->\n  <section id="s1">', '<div class="voice"><label for="voicePick">The voice that says the words</label><select id="voicePick"><option value="">Choosing</option></select><button class="btn" type="button" onclick="say(\'The quick brown fox jumps over the lazy dog.\')">Try it</button></div>\n  <!-- 1 -->\n  <section id="s1">'),
-        ('Sounds vs Letters <span', 'Sounds against letters <span'),
+                ('Sounds vs Letters <span', 'Sounds against letters <span'),
         ('<p class="lead" style="font-size:.85rem;"><b>Example:</b>', '<p class="lead"><b>Example:</b>'),
         ('<button class="btn" onclick="checkLeadIn()">Check answers</button>', '<button class="btn teal" onclick="checkLeadIn()">Check answers</button>'),
         ('<button class="play" onclick="say(\'letter\')">▶ Play</button>', '<button class="play" onclick="say(\'letter\')">Play</button>'),
@@ -651,18 +651,23 @@ RECIPES.append(dict(
         ("""function pickVoice(){
   const vs = speechSynthesis.getVoices();
   gbVoice = vs.find(v=>/en-GB/i.test(v.lang)) || vs.find(v=>/^en/i.test(v.lang)) || null;
-}""", """// The voice: British English if the device has one, else any English; and
-// whichever the tutor picked last time on this device, remembered.
+}""", """// The words are recorded once (OpenAI's sage voice, standard British English:
+// tools/make-phonology-audio.mjs), one small file each, kept on the device once
+// played (Ramy, 22 Oct 2026: "I don't want a million voices"). The device's own
+// voice speaks only a word that has no file.
 function pickVoice(){
-  const vs = speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang));
-  let want = null; try{ want = localStorage.getItem('lite-voice'); }catch(e){}
-  gbVoice = (want && vs.find(v=>v.name===want)) || vs.find(v=>/en-GB/i.test(v.lang) && /Daniel|Google UK English Female|Google UK English Male|Libby|Sonia|Ryan/i.test(v.name)) || vs.find(v=>/en-GB/i.test(v.lang)) || vs[0] || null;
-  const sel = document.getElementById('voicePick');
-  if(sel && vs.length){
-    sel.innerHTML = vs.map(v=>'<option value="'+v.name.replace(/"/g,'&quot;')+'"'+(gbVoice&&v.name===gbVoice.name?' selected':'')+'>'+v.name+' ('+v.lang+')</option>').join('');
-    sel.onchange = ()=>{ gbVoice = vs.find(v=>v.name===sel.value) || gbVoice; try{ localStorage.setItem('lite-voice', sel.value); }catch(e){} };
-  }
+  const vs = speechSynthesis.getVoices();
+  gbVoice = vs.find(v=>/en-GB/i.test(v.lang)) || vs.find(v=>/^en/i.test(v.lang)) || null;
 }"""),
+        ("""function say(text){
+  if(!('speechSynthesis' in window)){ alert('Audio is not supported in this browser.'); return; }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-GB'; if(gbVoice) u.voice = gbVoice; u.rate = 0.85;
+  speechSynthesis.speak(u);
+}""", """// Lite's four house voices (../voices.js): the chart is British, so an American voice gets a note.
+LiteVoice.set({ britishChart: true });
+function say(text){ LiteVoice.say(text); }"""),
         ("const NAVY='#1F497D', PURPLE='#7a4a8a', ORANGE='#d9772a', TEALC='#2a8c82', OLIVE='#8a9a2a';",
          "const NAVY='var(--teal)', PURPLE='var(--gold-deep)', ORANGE='var(--ink-warm)', TEALC='var(--teal)', OLIVE='var(--grey)';"),
         ("block('Vowels',vowels,4,'#e0b500')+block('Diphthongs',diph,3,ORANGE)+'</div>'+block('Consonants',cons,8,'#c0392b');",

@@ -175,7 +175,20 @@ window.HubStore = (function(){
     /* A TP point's track, through the store (v84): Drive refuses Lite's pages
        now. A tutor's or assessor's key speaks for itself; a trainee sends their
        token. */
-    audio: function(id){ var b = { op: 'audio', id: id }; if (!key() && !akey() && token()) b.token = token(); return call(b, 60000); },
+    /* A track, kept once played (Ramy, 22 Oct 2026: listening offline). The
+       store's answer is kept on this device beside the session films (sw.js,
+       'lite-media-v1'); with no connection the kept copy answers instead. */
+    audio: function(id){
+      var b = { op: 'audio', id: id }; if (!key() && !akey() && token()) b.token = token();
+      var at = location.origin + '/_kept/' + encodeURIComponent(id);
+      var box = function(){ return window.caches ? caches.open('lite-media-v1') : Promise.reject(new Error('no cache')); };
+      return call(b, 60000).then(function(r){
+        if (r && r.b64) box().then(function(c){ return c.put(at, new Response(JSON.stringify({ b64: r.b64, mime: r.mime }), { headers: { 'Content-Type': 'application/json' } })); }).catch(function(){});
+        return r;
+      }, function(err){
+        return box().then(function(c){ return c.match(at); }).then(function(hit){ if (!hit) throw err; return hit.json(); }, function(){ throw err; });
+      });
+    },
     putCourse: function(kind, data){ return call({ op: 'putCourse', kind: kind, data: data }); },
     /* A centre's next course starts from what its last one taught the criteria
        suggester. The store decides whether there is anything to take: it
