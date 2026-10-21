@@ -43,7 +43,7 @@
 <title>Connect Lite — My classes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610211808">
+<link rel="stylesheet" href="hub-tokens.css?v=202610211902">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:720px; margin:0 auto; padding:22px 20px 60px;}
@@ -87,7 +87,8 @@
   .earlier > a.mat:first-of-type{margin-top:12px;}
   .segs{display:flex; flex-wrap:wrap; gap:3px; margin:10px 0 8px;}
   .seg{width:17px; height:19px; border-radius:3px; background:oklch(93% 0.006 80);}
-  .seg.here{background:var(--a-forest);} .seg.miss{background:var(--a-red);} .seg.part{background:var(--a-mustard);}
+  .seg.here{background:var(--a-forest);} .seg.miss{background:var(--a-red);} .seg.part{background:var(--a-lemon);}
+  .seg.before{background:transparent !important; box-shadow:inset 0 0 0 1.5px #D6D4DC;}
   .hrs{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-top:14px;}
   .hrs b{font-family:'Newsreader',Georgia,serif; font-size:1.9rem;}
   .hrs span{color:var(--grey); font-size:0.84rem;}
@@ -180,17 +181,17 @@
   @keyframes v4-sheen{from{left:-50%;}to{left:120%;}}
   @media(prefers-reduced-motion:reduce){ .next.v4 *, .cert.earned::after, .track i{animation:none !important; transition:none !important;} .cert.earned::after{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610211808">
+<link rel="stylesheet" href="hub-house.css?v=202610211902">
 </head>
 <body class="hub-grid hub-paper" data-signout="float">
 <div class="board" id="app"></div>
 <div id="consent"></div>
-<script src="hub-shared.js?v=202610211808"></script>
-<script src="hub-attendance.js?v=202610211808"></script>
-<script src="hub-volunteer-i18n.js?v=202610211808"></script>
-<script src="hub-store.js?v=202610211808"></script>
-<script src="hub-say.js?v=202610211808"></script>
-<script src="hub-sync.js?v=202610211808"></script>
+<script src="hub-shared.js?v=202610211902"></script>
+<script src="hub-attendance.js?v=202610211902"></script>
+<script src="hub-volunteer-i18n.js?v=202610211902"></script>
+<script src="hub-store.js?v=202610211902"></script>
+<script src="hub-say.js?v=202610211902"></script>
+<script src="hub-sync.js?v=202610211902"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -299,6 +300,14 @@ const days = (TT.days || []).filter(d => d.tp).map(d => d.date).sort();
 const A = window.hubAttendance;
 const LESSON_MIN0 = tpSlots.length ? Math.round(tpSlots.reduce((n, sl) => n + mins(sl), 0) / tpSlots.length) : 0;
 const MARKS = ME.marks || (ME.here || []).reduce(function(m, d){ m[d] = 'present'; return m; }, {});
+/* The day they joined the register: days before it are not days they missed
+   (21 Oct 2026). A row added before that was kept falls back to the day the
+   invitation went, if no day before it was ever marked. */
+const JOINED = (function(){
+  if (ME.added) return String(ME.added).slice(0, 10);
+  var inv = ME.invited ? String(ME.invited).slice(0, 10) : '';
+  return inv && !Object.keys(MARKS).some(function(d){ return d < inv; }) ? inv : '';
+})();
 const REC = A.record(MARKS, days, tpSlots.length, LESSON_MIN0);
 const attended = REC.present;
 const hours = REC.hours;
@@ -375,7 +384,7 @@ function render(){
       ${SHARED.length ? SHARED.slice(0, 3).map(mat).join('') : '<p class="empty">Nothing shared yet.</p>'}
       ${SHARED.length > 3 ? `<details class="earlier"><summary>Everything else your teachers have shared — ${SHARED.length - 3} more</summary>${SHARED.slice(3).map(mat).join('')}</details>` : ''}</div>
     <div class="card"><h3>Your attendance</h3>
-      <div class="segs">${REC.days.map(x => `<span class="seg ${x.tier === 'present' ? 'here' : x.tier === 'partial' ? 'part' : x.date < TODAY ? 'miss' : ''}" title="${esc(shortDay(x.date))}"></span>`).join('')}</div>
+      <div class="segs">${REC.days.map(x => `<span class="seg ${x.tier === 'present' ? 'here' : x.tier === 'partial' ? 'part' : x.date < JOINED ? 'before' : x.date < TODAY ? 'miss' : ''}" title="${esc(shortDay(x.date))}"></span>`).join('')}</div>
       <div class="hrs"><b>${fmtH(hours)} h</b><span>${attended} ${attended === 1 ? 'class' : 'classes'}${REC.partial ? ' · ' + REC.partial + ' part of a class' : ''}${upcoming.length ? ' · ' + upcoming.length + ' still to come' : ''}</span></div>
       ${TARGET > 0 ? `<div class="track"><i style="width:${Math.min(100, Math.round(CERT.total / TARGET * 100))}%"></i></div><p class="trk-l"><b>${fmtH(Math.min(CERT.total, TARGET))}</b> of ${fmtH(TARGET)} hours${LEVEL ? ' at ' + esc(LEVEL) : ''} towards your certificate${CERT.carried ? ', ' + fmtH(CERT.carried) + ' of them from earlier courses' : ''}</p>`
       /* The bar counts what the certificate counts: this course AND the hours

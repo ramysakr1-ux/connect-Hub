@@ -1091,7 +1091,9 @@ case 'inbox': {
            has to reach their own page too. */
         return { volunteer: { name: vol.name, here: vol.here || [], marks: vol.marks || null, level: vol.level || '', note: vol.note || '', agreed: vol.agreed || '', cert: vol.cert || null, carried: vol.carried || 0, levelFrom: vol.levelFrom || '' /* v79: the day they moved up, the count at the level starts there */,
                               /* v56: the reminders (1 Oct 2026) -- their answers by day, and whether they still want mail */
-                              replies: vol.replies || {}, email: vol.email || '', notify: vol.notify === false ? false : true, nextClass: nextClass_(course.id) },
+                              replies: vol.replies || {}, email: vol.email || '', notify: vol.notify === false ? false : true, nextClass: nextClass_(course.id),
+                              /* v96 (21 Oct 2026): when they joined, so days before it are not shown as missed */
+                              added: vol.added || '', invited: vol.invited || '' },
                  course: { settings: { centreName: vset.centreName, courseName: vset.courseName,
                                        start: vset.start, end: vset.end, logo: vset.logo,
                                        timeZone: vset.timeZone, onlineRooms: vset.onlineRooms || [],

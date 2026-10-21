@@ -27,6 +27,13 @@ Never a bare `clasp deploy`. If anything is ever edited in the Apps Script
 editor instead, `clasp pull` before the next change or the repo copy is stale.
 The patches below are how the editor's text got to v73.
 
+## 21 Oct 2026 — a volunteer's page knows when they joined (version 113, store v96)
+
+The volunteer boot also returns `added` and `invited` from their register row,
+so their own page shows the days before they joined as "before they joined",
+not as missed. Additive. Live version 112 was checked identical to the repo
+before the push.
+
 ## 21 Oct 2026 — a tutor sends a volunteer their invitation (version 112, store v95)
 
 New op `volunteerInvite` (tutor key; `v` = the volunteer's token, `email`

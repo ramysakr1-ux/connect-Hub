@@ -39,7 +39,7 @@
 <title>Connect Lite — Volunteer register</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610211808">
+<link rel="stylesheet" href="hub-tokens.css?v=202610211902">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -60,6 +60,7 @@
   .many{margin-top:14px;} .many summary{cursor:pointer; font-weight:700; color:var(--a-forest, #1E3B2F); font-size:0.86rem; list-style:none;}
   .many summary::-webkit-details-marker{display:none;} .many summary{text-decoration:underline; text-underline-offset:3px;}
   .many p{margin:8px 0 8px !important;}
+  .mrow{margin-top:10px;} .mrow + .mrow{padding-top:10px; border-top:1px solid var(--row-line, #E4E3EA);} .morerows{color:var(--a-forest, #1E3B2F); font-weight:700; font-size:0.84rem;}
   .sentnote{margin:0 0 10px !important; color:var(--a-forest, #1E3B2F) !important; font-weight:700;}
   /* the file chooser is a house button; the browser's own control is hidden inside it */
   .filebtn{position:relative; overflow:hidden; cursor:pointer;} .filebtn input[type=file]{position:absolute; inset:0; opacity:0; cursor:pointer; font-size:0;}
@@ -74,6 +75,7 @@
   .seg{width:15px; height:17px; border-radius:3px; border:0; padding:0; cursor:pointer; background:oklch(88% 0.008 80);}
   .seg.here{background:var(--teal);}
   .seg.miss{background:oklch(88% 0.055 27);}
+  .seg.before, .segs .seg.before{background:transparent !important; box-shadow:inset 0 0 0 1.5px #D6D4DC;}
   .seg.part{background:oklch(85% 0.09 78);}
   .lvl select{font-family:inherit; font-size:0.74rem; padding:1px 4px; margin-left:8px; border:1px solid var(--sand-line); border-radius:5px; background:var(--paper); color:var(--grey);}
   /* Whether they have agreed to the centre's joining note, stamped by their
@@ -145,21 +147,21 @@
   @media(max-width:560px){ .vr9-coming{grid-template-columns:1fr auto;} .vr9-coming .split{grid-column:1 / -1;} .vr9-coming .num{border:0; padding:0;} .vr9-now small{margin-left:0; flex-basis:100%;} }
   @media print{ .vr9-now{display:none;} .seg.vr9-today{box-shadow:none;} .vr9-coming{border:1px solid #bbb;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610211808">
+<link rel="stylesheet" href="hub-house.css?v=202610211902">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610211808"></script>
-<script src="hub-shared.js?v=202610211808"></script>
-<script src="hub-timetable-parse.js?v=202610211808"></script>
-<script src="hub-xlsx.js?v=202610211808"></script>
-<script src="hub-attendance.js?v=202610211808"></script>
-<script src="hub-store.js?v=202610211808"></script>
-<script src="hub-say.js?v=202610211808"></script>
-<script src="hub-sync.js?v=202610211808"></script>
+<script src="hub-due.js?v=202610211902"></script>
+<script src="hub-shared.js?v=202610211902"></script>
+<script src="hub-timetable-parse.js?v=202610211902"></script>
+<script src="hub-xlsx.js?v=202610211902"></script>
+<script src="hub-attendance.js?v=202610211902"></script>
+<script src="hub-store.js?v=202610211902"></script>
+<script src="hub-say.js?v=202610211902"></script>
+<script src="hub-sync.js?v=202610211902"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -266,6 +268,17 @@ function persist(word){
   setTimeout(() => { if (note === word) { note = ''; const s = document.querySelector('.status'); if (s) s.textContent = ''; } }, 2200);
 }
 
+/* The day someone joined the register: set when they are added; for a row
+   added before that was kept, the day their invitation went, if no day
+   before it was ever marked. */
+function joinedOn(st){
+  if (st.added) return String(st.added).slice(0, 10);
+  const inv = st.invited ? String(st.invited).slice(0, 10) : '';
+  if (inv && !Object.keys(st.marks || {}).some(d => d < inv)) return inv;
+  return '';
+}
+const r0 = st => { const j = joinedOn(st); return !!j && j > (teachingDays().days[0] || ''); };
+
 function render(){
   mintMissing();
   migrateMarks();
@@ -314,7 +327,9 @@ function render(){
           : `<span class="agreed no">Not yet agreed to the joining note</span>`) : ''}
         <div class="segs">${r.days.map(x => {
           const past = x.date < TODAY;
-          const cls = x.tier === 'present' ? 'here' : x.tier === 'partial' ? 'part' : past ? 'miss' : 'soon';
+          /* a day before this person joined is not a day they missed (Amin, C/18, 21 Oct 2026) */
+          const before = x.tier === 'absent' && x.date < joinedOn(st);
+          const cls = x.tier === 'present' ? 'here' : x.tier === 'partial' ? 'part' : before ? 'before' : past ? 'miss' : 'soon';
           const what = x.tier === 'absent' && !past ? 'Still to come' : A.describe(x.tier, lessons, lessonMinutes);
           return IS_TUTOR
             ? `<button type="button" class="seg ${cls}" data-i="${i}" data-d="${esc(x.date)}" title="${dm(x.date)} — ${esc(what)}"></button>`
@@ -327,12 +342,13 @@ function render(){
             : `<span class="nolink" title="The course id has not arrived from the store yet">No link yet</span>`}<button type="button" class="btn quiet sm" data-rm="${i}">Remove</button></div>` : ''}</div>
     </div>`;
   }).join('')}</div>
-  ${COMING ? `<div class="vr9-coming"><div class="lead"><span class="k">Next class</span><b>${esc(dm(COMING.day))}</b><small>TP ${esc(COMING.tp)} at ${esc(hubClock(COMING.from))}</small></div><div class="num"><b>${COMING.yes + COMING.noAnswer}</b><small>expected</small></div><div class="split"><span class="bar" aria-hidden="true"><i class="y" style="flex:${COMING.yes}"></i><i class="q" style="flex:${COMING.noAnswer}"></i><i class="n" style="flex:${COMING.no}"></i></span><span class="keys"><span><i class="y"></i>${COMING.yes} said yes</span><span><i class="q"></i>${COMING.noAnswer} have not answered</span><span><i class="n"></i>${COMING.no} said no</span></span></div></div>` : ''}
+  ${COMING ? `<div class="vr9-coming"><div class="lead"><span class="k">Next class</span><b>${esc(dm(COMING.day))}</b><small>TP ${esc(COMING.tp)} at ${esc(hubClock(COMING.from))}</small></div><div class="num"><b>${COMING.yes + COMING.noAnswer}</b><small>expected</small></div><div class="split"><span class="bar" aria-hidden="true"><i class="y" style="flex:${COMING.yes}"></i><i class="q" style="flex:${COMING.noAnswer}"></i><i class="n" style="flex:${COMING.no}"></i></span><span class="keys"><span><i class="y"></i>${COMING.yes} said yes</span><span><i class="q"></i>${COMING.noAnswer} ${COMING.noAnswer === 1 ? 'has' : 'have'} not answered</span><span><i class="n"></i>${COMING.no} said no</span></span></div></div>` : ''}
   <p class="legend">
     <span><span class="seg here"></span>in the room</span>
     <span><span class="seg part"></span>came for part of it</span>
     <span><span class="seg miss"></span>not marked, day has passed</span>
     <span><span class="seg soon"></span>still to come</span>
+    ${list.some(st => r0(st)) ? '<span><span class="seg before"></span>before they joined</span>' : ''}
   </p>
   <p class="legend">${lessons} lesson${lessons === 1 ? '' : 's'} of ${lessonMinutes} minutes a day · ${A.lessonsNeededForPresent(lessons)} of them counts as being in the room, and credits the whole ${fmtH(hoursPerDay)} hours · ${days.length} teaching days, ${fmtH(days.length * hoursPerDay)} h if somebody comes to all of them.</p>`;
 
@@ -340,18 +356,19 @@ function render(){
 }
 
 let LAST_SENT = '';   // "Invitation sent to Amin." -- shown in the panel, which stays open for the next person
-let MANY_OPEN = false;   // "Add several at once" stays open across a redraw once opened
+let MANY_OPEN = false;
+let MANY_ROWS = 5;      // the boxes under "Add several at once"; "Add another row" adds one   // "Add several at once" stays open across a redraw once opened
 function addHTML(){
   /* One person at a time is the form (Ramy, 21 Oct 2026: "a bit busy").
      A list, pasted or from a file, sits behind "Add several at once". */
   return `<div class="panel"><h3>Add a student</h3>
-    ${LAST_SENT ? `<p class="sentnote">${esc(LAST_SENT)} Add another below.</p>` : ''}
+    ${LAST_SENT ? `<p class="sentnote">${esc(LAST_SENT)}</p>` : ''}
     <div class="row one"><input type="text" id="oneName" placeholder="Name" autocomplete="off"><input type="email" id="oneEmail" placeholder="Their email" autocomplete="off"></div>
     <div class="row" style="margin-top:8px"><button class="btn btn-gold" id="addSend">Add and send the invitation</button></div>
     <details class="many" id="many"${MANY_OPEN ? ' open' : ''}><summary>Add several at once</summary>
-      <p>Paste a column of names, one a line, or choose an Excel or CSV file. An email in the list is kept, and you send each invitation from their row.</p>
-      <textarea id="paste" placeholder="Lucía Fernández&#10;Kwame Mensah&#10;Mei Tanaka"></textarea>
-      <div class="row" style="margin-top:8px"><button class="btn" id="addMany">Add the pasted names</button>
+      ${Array.from({ length: MANY_ROWS }, (_, k) => `<div class="row one mrow"><input type="text" class="mName" placeholder="Name" autocomplete="off"><input type="email" class="mEmail" placeholder="Their email" autocomplete="off"></div>`).join('')}
+      <p style="margin:6px 0 10px !important"><a href="#" id="moreRows" class="morerows">Add another row</a></p>
+      <div class="row"><button class="btn btn-gold" id="addSendAll">Add and send all the invitations</button>
         <label class="btn filebtn">Choose an Excel or CSV file<input type="file" id="addFile" accept=".xlsx,.csv,.tsv,.txt"></label></div>
     </details></div>`;
 }
@@ -390,7 +407,7 @@ function addNames(rows){
     const isMail = x => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(x || '').trim());
     const email = col.email != null ? String(r[col.email] || '').trim() : (r.find(isMail) || '');
     const note = col.note >= 0 ? String(r[col.note] || '').trim() : '';
-    REG.students.push({ name, note: isMail(note) ? '' : note, email: isMail(email) ? email : '', marks: {}, level: LEVELS.includes(lvl) ? lvl : '', token: mintToken() });
+    REG.students.push({ name, note: isMail(note) ? '' : note, email: isMail(email) ? email : '', marks: {}, level: LEVELS.includes(lvl) ? lvl : '', token: mintToken(), added: TODAY });
     added++;
   });
   REG.students.sort((a, b) => a.name.localeCompare(b.name));
@@ -411,7 +428,7 @@ async function inviteStudent(st, email, btn){
     if (window.HubSync && window.HubSync.flushNow) { try { await window.HubSync.flushNow(true); } catch(e) {} }
     const r = await window.HubStore.call({ op: 'volunteerInvite', v: st.token, email });
     st.invited = (r && r.invited) || new Date().toISOString();
-    if (!btn) { LAST_SENT = 'Invitation sent to ' + st.name + '.'; ADD_OPEN = true; }
+    if (!btn) { LAST_SENT = 'Invitation sent to ' + st.name + '. Add another below.'; ADD_OPEN = true; }
     persist('Invitation sent to ' + email);
     if (!btn && $('oneName')) $('oneName').focus();
   } catch (err) {
@@ -439,10 +456,39 @@ function wire(){
     if (!st || !st.token) { note = 'Added. The invitation can be sent from their row in a moment.'; render(); return; }
     inviteStudent(st, m, null);
   });
-  if ($('addMany')) $('addMany').addEventListener('click', () => {
-    const text = $('paste').value;
-    if (!text.trim()) { note = 'Nothing pasted yet.'; render(); return; }
-    addNames(window.hubTimetableParse.rowsFromText(text));
+  if ($('moreRows')) $('moreRows').addEventListener('click', e => {
+    e.preventDefault();
+    const keep = [...document.querySelectorAll('.mrow')].map(r => [r.querySelector('.mName').value, r.querySelector('.mEmail').value]);
+    MANY_ROWS++; MANY_OPEN = true; render();
+    document.querySelectorAll('.mrow').forEach((r, n) => { if (keep[n]) { r.querySelector('.mName').value = keep[n][0]; r.querySelector('.mEmail').value = keep[n][1]; } });
+    const last = [...document.querySelectorAll('.mName')].pop(); if (last) last.focus();
+  });
+  /* Several at once (Ramy, 21 Oct 2026: "just open a bunch of boxes for the
+     emails"): every filled row is added, and everyone with an email is sent
+     their invitation, one after another. */
+  if ($('addSendAll')) $('addSendAll').addEventListener('click', async () => {
+    const isMail = x => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x);
+    const rows = [...document.querySelectorAll('.mrow')].map(r => [r.querySelector('.mName').value.trim(), r.querySelector('.mEmail').value.trim()]).filter(r => r[0]);
+    if (!rows.length) { note = 'Type at least one name.'; render(); return; }
+    const bad = rows.filter(r => r[1] && !isMail(r[1]));
+    if (bad.length) { note = 'Check the email for ' + bad.map(r => r[0]).join(', ') + '.'; render(); return; }
+    LAST_SENT = ''; addNames(rows.map(r => r[1] ? [r[0], r[1]] : [r[0]]));
+    let sent = 0, failed = [];
+    for (const [nm, em] of rows) {
+      if (!em) continue;
+      const st = students().find(x => x.name.trim().toLowerCase() === nm.toLowerCase());
+      if (!st || !st.token) { failed.push(nm); continue; }
+      try {
+        if (st.email !== em) { st.email = em; try { localStorage.setItem(KEY, JSON.stringify(REG)); } catch(e) {} }
+        if (window.HubSync && window.HubSync.flushNow) { try { await window.HubSync.flushNow(true); } catch(e) {} }
+        const r = await window.HubStore.call({ op: 'volunteerInvite', v: st.token, email: em });
+        st.invited = (r && r.invited) || new Date().toISOString(); sent++;
+      } catch (e) { failed.push(nm); }
+    }
+    MANY_ROWS = 5; MANY_OPEN = false;
+    LAST_SENT = (sent ? 'Invitations sent to ' + sent + (sent === 1 ? ' person.' : ' people.') : 'Added.') + (failed.length ? ' Not sent yet: ' + failed.join(', ') + '; use Send the invitation on their row.' : '');
+    ADD_OPEN = true;
+    persist(sent ? sent + ' sent' : 'Added');
   });
   /* An Excel file straight in (hub-xlsx.js reads the first sheet); CSV and
      text go through the same reader as a paste. */
