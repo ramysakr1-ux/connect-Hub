@@ -136,10 +136,12 @@
        STOPPED working carries a reason and always gets the plain refusal:
        that is news, not an invitation. */
     if (!reason && typeof window.hubNoLink === 'function') { window.hubNoLink(); return; }
-    document.documentElement.style.background = 'oklch(92.5% 0.012 85)';
-    document.body.style.cssText = 'margin:0;background:oklch(92.5% 0.012 85);';
+    /* In the notebook (Ramy, 21 Oct 2026: it "doesn't match what we have now"): the Bright White page,
+       a white card with the shadow, ink text, the cream mark. It used to be the old beige. */
+    document.documentElement.style.background = '#F3F3F7';
+    document.body.style.cssText = 'margin:0;background:#F3F3F7;min-height:100vh;';
     document.body.innerHTML =
-      '<div style="max-width:560px;margin:0 auto;padding:16vh 20px 0;font-family:Karla,Helvetica,sans-serif;color:oklch(23.5% 0.017 65);">'
+      '<div style="max-width:560px;margin:14vh auto 40px;padding:30px 28px 28px;background:#fff;border-radius:16px;box-shadow:0 1px 2px rgba(35,34,32,.06),0 10px 30px rgba(35,34,32,.08);font-family:Karla,Helvetica,sans-serif;color:#232220;box-sizing:border-box;width:calc(100% - 32px);">'
       + '<div style="display:flex;align-items:center;gap:9px;margin-bottom:26px;">'
       + '<span style="width:30px;height:30px;border-radius:7px;background:#f8f6f1;box-shadow:inset 0 0 0 1px oklch(85% 0.02 80);display:inline-flex;align-items:center;justify-content:center;">'
       + '<svg viewBox="8 28 104 64" width="20" height="12" fill="none">'
@@ -147,13 +149,13 @@
       + '<path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"></path>'
       + '</svg></span>'
       + '<span style="position:relative;display:inline-block;">'
-      + '<span style="font-family:Instrument Serif,Georgia,serif;font-style:italic;font-size:21px;line-height:0.85;color:oklch(63% 0.096 72);">Connect</span>'
+      + '<span style="font-family:Instrument Serif,Georgia,serif;font-style:italic;font-size:21px;line-height:0.85;color:#a8803f;">Connect</span>'
       + '<span style="position:absolute;left:1px;top:100%;margin-top:2px;font-family:Instrument Sans,Karla,sans-serif;font-weight:600;font-size:8px;line-height:1;letter-spacing:14.4px;text-transform:uppercase;">Lite</span>'
       + '</span></div>'
-      + '<h1 style="font-family:Newsreader,Georgia,serif;font-weight:700;font-size:1.9rem;line-height:1.2;margin:0 0 10px;">' + (reason ? 'The course could not be opened from this link' : 'Open your course link') + '</h1>'
-      + (reason ? '<p style="font-size:0.92rem;line-height:1.65;color:oklch(46% 0.17 25);margin:0 0 14px;">' + String(reason).replace(/[<&]/g, ' ') + '</p>' : '')
-      + '<p style="font-size:0.92rem;line-height:1.65;color:oklch(42% 0.02 68);margin:0;">This page reads one course, through the link your centre sent you. Trainees have their own personal link, tutors share the tutor link, and an assessor has a read-only one. Open the page from that link and everything appears.</p>'
-      + '<p style="font-size:0.92rem;line-height:1.65;color:oklch(42% 0.02 68);margin:14px 0 0;">Lost it? Your course admin can send it again from the Roster and links tab.</p>'
+      + '<h1 style="font-family:Newsreader,Georgia,serif;font-weight:400;font-size:2rem;line-height:1.2;margin:0 0 12px;color:#232220;">' + (reason ? 'The course could not be opened from this link' : 'Open your course link') + '</h1>'
+      + (reason ? '<p style="font-size:0.92rem;line-height:1.65;color:#7A2E2E;font-weight:700;margin:0 0 14px;">' + String(reason).replace(/[<&]/g, ' ') + '</p>' : '')
+      + '<p style="font-size:0.92rem;line-height:1.65;color:#55524c;margin:0;">This page reads one course, through the link your centre sent you. Trainees have their own personal link, tutors share the tutor link, and an assessor has a read-only one. Open the page from that link and everything appears.</p>'
+      + '<p style="font-size:0.92rem;line-height:1.65;color:#55524c;margin:14px 0 0;">Lost it? Your course admin can send it again from the Roster and links tab.</p>'
       + '</div>';
     /* This page has just been wiped. If anything of this person's is unsaved,
        that is the single most important thing on the screen. */
