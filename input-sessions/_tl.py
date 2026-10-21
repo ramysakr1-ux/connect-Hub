@@ -14,8 +14,8 @@ TL['eliciting-and-ccqs'] = [
     # the model on the slide
     ('<b>He managed to open the jar.</b>', 'He ' + tl('managed to') + ' open the jar.'),
     # Task A: the answers the CCQs point to
-    ("answer:'He’s been working there for two years. (or: He’s worked there for two years.)'",
-     "answer:'" + tl("He’s been working") + " there for two years. (or: " + tl("He’s worked") + " there for two years.)'"),
+    ("answer:'He’s been working there for two years. (Not: He’s worked there",
+     "answer:'" + tl("He’s been working") + " there for two years. (Not: " + tl("He’s worked") + " there"),
     ("answer:'She had her car washed. (or: She got her car washed.)'",
      "answer:'She " + tl('had her car washed') + ". (or: She " + tl('got her car washed') + ".)'"),
     ("answer:'We needn’t have cooked so much food.",
