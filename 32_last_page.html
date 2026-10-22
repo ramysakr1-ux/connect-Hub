@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<!--
+  The last page — what a trainee finds at the end of the course.
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy, 23 Oct 2026: "design something for the end of course ... someone who
+  finished, what would Lite do to this person?" Then, on the design ("The last
+  page", artifact CU5mMPTqqii3uXqjk4mHuj):
+    - NO GRADE and nothing about passing: "congratulations on finishing TP8 ...
+      or finishing the course". The grade is Cambridge's and the centre's.
+    - the class photo, put up once by a tutor (a Zoom screenshot is fine),
+      framed, and on a card the trainee can download or print.
+    - "How far you came": TP1's first point to work on beside what worked in
+      the last TP.
+    - "What people said about you": ONE short warm phrase per person, half a
+      sentence is fine, from anything written on the course, signed by
+      whoever wrote it. Nothing positive found: the section is left out. No
+      generic line from Lite.
+
+  ONE FILE, TWO SIDES. A trainee's link draws their own page from their own
+  records. A tutor's link with no trainee draws the tutor's side: the class
+  photo and, for each trainee, the phrases to choose from. A tutor's link with
+  ?trainee=<id> shows that trainee's page as they will see it.
+
+  WHERE IT IS KEPT. The course settings, which every page already reads:
+  settings.classPhoto = { src: <jpeg data URI>, at } and
+  settings.lastWords = { <token>: [ { text, by, role, from } ] }. The store
+  splits a large settings record over several cells, so the photo fits.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="brand/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<title>The last page</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hub-tokens.css?v=202610230057">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Karla',sans-serif; color:#232220; background:linear-gradient(180deg,#FFFFFF 0,#F3F3F7 420px);}
+  a{color:#1E3B2F;}
+  .wrap{max-width:1040px; margin:0 auto; padding:0 20px;}
+  .k{margin:0 0 18px; font:600 12px 'Karla',sans-serif; letter-spacing:.26em; text-transform:uppercase;}
+  .lbl{margin:0 0 18px; font:600 11px 'Karla',sans-serif; letter-spacing:.2em; text-transform:uppercase; color:#6B6963;}
+  .card{background:#FFFFFF; border-radius:16px; padding:30px 32px; box-shadow:0 12px 30px -18px rgba(20,40,32,.35);}
+
+  /* the hero: forest, the drifting mark, confetti that keeps falling */
+  .hero{position:relative; overflow:hidden; background:#1E3B2F; color:#F3EEE4; padding:64px 0 120px;}
+  .hero .k{color:#E6DCA6;}
+  .hero h1{margin:0; font:700 clamp(44px,7vw,88px)/1 'Newsreader',serif; letter-spacing:-.02em;}
+  .hero p.lede{margin:22px 0 0; max-width:640px; font:500 19px/1.55 'Karla',sans-serif; color:#DCE6E0;}
+  .hero .mk{position:absolute; right:-170px; top:-80px; width:620px; opacity:.13; animation:lpDrift 18s ease-in-out infinite;}
+  .confetti{position:absolute; inset:0; pointer-events:none; overflow:hidden;}
+  .confetti i{position:absolute; top:-20px; border-radius:2px; opacity:0; animation:lpFall linear infinite;}
+  @keyframes lpFall{0%{transform:translateY(-40px) rotate(0);opacity:0}8%{opacity:1}100%{transform:translateY(620px) rotate(540deg);opacity:0}}
+  @keyframes lpDrift{0%,100%{transform:rotate(-8deg) scale(1)}50%{transform:rotate(-4deg) scale(1.04)}}
+  @media (prefers-reduced-motion: reduce){ .confetti{display:none;} .hero .mk{animation:none;} }
+  .top{position:relative; display:flex; justify-content:space-between; align-items:center; margin-bottom:40px;}
+  .top a{color:#E6DCA6; font:600 14px 'Karla',sans-serif; text-decoration:none;}
+  .top a:hover{text-decoration:underline;}
+
+  /* the class photo, mounted and framed */
+  .photo{position:relative; margin:-84px auto 0; max-width:860px;}
+  .frame{background:#FFFFFF; padding:22px 22px 26px; border-radius:6px; transform:rotate(-1deg);
+    box-shadow:0 40px 70px -30px rgba(20,40,32,.55),0 2px 6px rgba(20,40,32,.12);}
+  .frame .mat{border:10px solid #F6F1E6; outline:1px solid #E4DCCB; background:#1B1D1F; border-radius:2px;}
+  .frame img{display:block; width:100%; height:auto;}
+  .frame figcaption{display:flex; justify-content:space-between; align-items:baseline; gap:16px; flex-wrap:wrap; margin-top:18px; padding:0 6px;}
+  .frame figcaption b{font:italic 26px/1.2 'Instrument Serif',serif; font-weight:400; color:#1E3B2F;}
+  .frame figcaption span{font:600 13px 'Karla',sans-serif; color:#6B6963;}
+
+  .two{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.35fr); gap:24px; margin-top:64px;}
+  .last{border-top:3px solid #CC9140; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:14px;}
+  .stamp{width:176px; height:176px; border-radius:50%; border:4px solid #A8803F; color:#8A6930; display:flex; flex-direction:column; align-items:center; justify-content:center; transform:rotate(-8deg);}
+  .stamp b{font:700 56px/1 'Newsreader',serif;}
+  .stamp span{font:700 10px 'Karla',sans-serif; letter-spacing:.18em; text-transform:uppercase; margin-top:6px;}
+  .last p{margin:6px 0 0; max-width:300px; font:500 14px/1.5 'Karla',sans-serif; color:#4A4843;}
+  .far{border-top:3px solid #1E3B2F;}
+  .far .q{padding:18px 20px; border-radius:12px; margin-top:16px;}
+  .far .q small{display:block; margin:0 0 6px; font:700 11px 'Karla',sans-serif; letter-spacing:.14em; text-transform:uppercase;}
+  .far .q p{margin:0; font:italic 22px/1.35 'Instrument Serif',serif;}
+  .far .q.a{background:#F7F2F1;} .far .q.a small{color:#7A2E2A;} .far .q.a p{color:#5C2320;}
+  .far .q.b{background:#EEF4F0;} .far .q.b small, .far .q.b p{color:#1E3B2F;}
+
+  .nums{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-top:24px;}
+  .nums div{background:#FFFFFF; border-radius:14px; padding:20px 18px; box-shadow:0 8px 22px -16px rgba(20,40,32,.35);}
+  .nums b{display:block; font:700 40px/1 'Newsreader',serif; color:#1E3B2F;}
+  .nums span{font:500 13px/1.4 'Karla',sans-serif; color:#4A4843;}
+
+  .said{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:24px;}
+  .said .card:nth-child(odd){transform:rotate(-.6deg);} .said .card:nth-child(even){transform:rotate(.5deg);}
+  .said q{display:block; font:italic 32px/1.3 'Instrument Serif',serif; color:#2B2A27; quotes:"\201C" "\201D";}
+  .said .from{margin:10px 0 0; font:600 12px 'Karla',sans-serif; color:#6B6963;}
+  .said .sig{margin-top:22px; border-top:1px solid #DCDCE3; padding-top:12px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .said .sig .hand{max-height:46px; color:#1E3B2F;}
+  .said .sig .hand svg{max-height:46px; width:auto;}
+  .said .sig em{font:italic 28px 'Instrument Serif',serif; color:#1E3B2F;}
+  .said .sig span{font:600 12px 'Karla',sans-serif; color:#6B6963;}
+
+  .keep{display:flex; flex-wrap:wrap; gap:20px; align-items:center; justify-content:space-between; margin:64px 0 0;}
+  .keep h2{margin:0 0 8px; font:700 28px/1.15 'Newsreader',serif; color:#1E3B2F;}
+  .keep p{margin:0; max-width:560px; font:500 16px/1.55 'Karla',sans-serif; color:#4A4843;}
+  .btns{display:flex; gap:12px; flex-wrap:wrap;}
+  .gold{display:inline-flex; align-items:center; min-height:48px; padding:0 26px; border-radius:999px; border:0; background:#CC9140; color:#1F1A14; font:700 15px 'Karla',sans-serif; cursor:pointer; text-decoration:none;}
+  .gold:hover{background:#B9822F;}
+  .line{display:inline-flex; align-items:center; min-height:48px; padding:0 24px; border-radius:999px; border:1.5px solid #1E3B2F; background:transparent; color:#1E3B2F; font:700 15px 'Karla',sans-serif; cursor:pointer; text-decoration:none;}
+  .line:hover{background:#EEF4F0;}
+  .credit{margin:40px 0 72px; display:flex; justify-content:center; align-items:center; gap:10px; font:500 13px 'Karla',sans-serif; color:#4A4843;}
+  .credit .tile{width:26px; height:26px; border-radius:7px; background:#F8F6F1; border:1px solid #E4DCCB; display:grid; place-items:center;}
+  .credit b{color:#A8803F;}
+
+  /* the tutor's side */
+  .staff{padding:40px 0 80px;}
+  .staff h1{margin:0 0 6px; font:700 2rem/1.15 'Newsreader',serif; color:#1E3B2F;}
+  .staff .sub{margin:0 0 26px; color:#4A4843; font-size:.95rem; line-height:1.6; max-width:680px;}
+  .staff .card{margin-top:20px; border-top:3px solid #1E3B2F;}
+  .staff h2{margin:0 0 6px; font:700 1.35rem 'Newsreader',serif; color:#1E3B2F;}
+  .staff .hint{margin:0 0 14px; color:#6B6963; font-size:.9rem; line-height:1.55;}
+  .drop{border:2px dashed #C9C9D2; border-radius:14px; min-height:220px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; background:#FAFAFC; text-align:center; padding:20px; cursor:pointer;}
+  .drop img{max-width:100%; max-height:360px; border-radius:6px;}
+  .drop b{color:#1E3B2F;} .drop span{color:#6B6963; font-size:.85rem;}
+  .who{border-top:1px solid #E8E8EE; padding:18px 0;}
+  .who:first-of-type{border-top:0;}
+  .who h3{margin:0 0 10px; font:700 1.05rem 'Karla',sans-serif; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .who h3 a{font-weight:600; font-size:.85rem;}
+  .opt{display:flex; gap:10px; align-items:flex-start; padding:8px 10px; border-radius:8px; cursor:pointer;}
+  .opt:hover{background:#F3F3F7;}
+  .opt input{margin-top:5px;}
+  .opt q{font:italic 1.15rem/1.35 'Instrument Serif',serif; color:#2B2A27;}
+  .opt small{display:block; color:#6B6963; font-size:.78rem; margin-top:2px;}
+  .own{display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr); gap:8px; margin-top:8px;}
+  .own input{font:inherit; font-size:.9rem; padding:9px 11px; border:1.5px solid #DCDCE3; border-radius:8px; background:#FFFFFF; min-width:0;}
+  .none{color:#6B6963; font-size:.9rem; font-style:italic;}
+  .savebar{position:sticky; bottom:0; margin-top:24px; padding:14px 0; background:linear-gradient(180deg,rgba(243,243,247,0),#F3F3F7 40%); display:flex; gap:14px; align-items:center;}
+  .status{font-size:.9rem; color:#4A4843;}
+
+  @media (max-width:720px){ .two{grid-template-columns:minmax(0,1fr);} .frame{transform:none;} .own{grid-template-columns:minmax(0,1fr);} .hero{padding-top:40px;} }
+
+  /* PRINT: one A4 page, the framed photo and the name, ready to frame */
+  .printcard{display:none;}
+  @media print{
+    @page{size:A4; margin:16mm;}
+    body{background:#fff;}
+    body > *:not(.printcard){display:none !important;}
+    .printcard{display:flex !important; flex-direction:column; align-items:center; text-align:center; gap:10mm; padding-top:6mm;}
+    .printcard .frame{transform:none; box-shadow:none; border:1px solid #E4DCCB; width:100%;}
+    .printcard h1{margin:4mm 0 0; font:700 34pt/1 'Newsreader',serif; color:#1E3B2F;}
+    .printcard p{margin:0; font:italic 18pt 'Instrument Serif',serif; color:#8A6930;}
+    .printcard small{font:600 10pt 'Karla',sans-serif; color:#4A4843;}
+  }
+</style>
+<link rel="stylesheet" href="hub-house.css?v=202610230057">
+</head>
+<body>
+<div id="app"></div>
+<div class="printcard" id="printcard" aria-hidden="true"></div>
+<script src="hub-shared.js?v=202610230057"></script>
+<script src="hub-store.js?v=202610230057"></script>
+<script src="hub-tracker.js?v=202610230057"></script>
+<script src="hub-hand.js?v=202610230057"></script>
+<script src="hub-ink.js?v=202610230057"></script>
+<script src="hub-say.js?v=202610230057"></script>
+<script src="hub-sync.js?v=202610230057"></script>
+<script type="text/x-hub-app">
+if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
+  throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const rec = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
+const P = new URLSearchParams(location.search);
+const IS_TRAINEE = !!(window.HubStore && HubStore.isTrainee && HubStore.isTrainee());
+const IS_TUTOR = !!(window.HubStore && HubStore.isTutor && HubStore.isTutor());
+const VIEW_ID = !IS_TRAINEE ? (P.get('trainee') || '') : '';
+const KEYQ = ['t','k','ak'].filter(n => P.get(n)).map(n => n + '=' + encodeURIComponent(P.get(n))).join('&');
+const S = () => rec('connect_course_settings') || {};
+const ROSTER = () => (rec('connect_roster_v1') || {}).trainees || {};
+const T = window.HubTracker;
+
+const MARK = (w, sw, a, b) => '<svg viewBox="8 28 104 64" width="' + w + '" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="' + a + '" stroke-width="' + sw + '" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="' + b + '" stroke-width="' + sw + '" stroke-linecap="round"></path></svg>';
+const dateOf = s => { try { return window.hubDateOf ? hubDateOf(s) : new Date(s); } catch (e) { return null; } };
+const day = (s, o) => { const d = dateOf(s); return d && !isNaN(d) ? d.toLocaleDateString('en-GB', o) : ''; };
+function span(cs){
+  const a = dateOf(cs.start), b = dateOf(cs.end);
+  if (!a || !b || isNaN(a) || isNaN(b)) return '';
+  const sameM = a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
+  return sameM ? a.getDate() + ' – ' + day(cs.end, { day:'numeric', month:'long', year:'numeric' })
+               : day(cs.start, { day:'numeric', month:'long' }) + ' – ' + day(cs.end, { day:'numeric', month:'long', year:'numeric' });
+}
+const textOf = html => { const d = document.createElement('div'); d.innerHTML = html || ''; d.querySelectorAll('[data-c]').forEach(x => x.remove()); return d.textContent.replace(/ /g, ' ').replace(/\s+/g, ' ').trim(); };
+
+/* ---- one trainee's records, wherever they are read from ---------------- */
+function recordsOf(id){
+  if (IS_TRAINEE) {
+    const me = rec('hub:me') || {};
+    return { name: me.name || '', token: me.token || '', tp: rec('chub:tpHistory') || {}, subs: rec('connect_assignment_submissions_v1') || {} };
+  }
+  const tr = ROSTER()[id];
+  if (!tr) return null;
+  return { name: tr.name || '', token: id, tp: (T && T.tpHistory) ? T.tpHistory(tr) : {}, subs: tr.assignments || {} };
+}
+const tpNums = H => Object.keys(H).map(Number).filter(n => H[n] && (H[n].docHTML || H[n].state)).sort((a, b) => a - b);
+const listItems = (fb, ids, keep) => { const L = (fb && fb.state && fb.state.lists) || {}; return ids.reduce((a, k) => a.concat((L[k] || []).filter(it => it && (!keep || keep(it)))), []); };
+
+/* ---- the warm phrases --------------------------------------------------- */
+/* ONE short phrase per person, from anything written on the course. Half a
+   sentence is fine. Never an action point, never a grade or a pass, never a
+   criterion code. Warm words count most; short beats long. */
+/* The people words (a smile, a joke, warmth) are what a trainee remembers; the
+   teaching words (engaged, clear) count, but less. */
+const HEART = /\b(smile|smiles|smiling|laugh|laughed|laughing|joke|jokes|fun|energy|energetic|rapport|lovely|love|loved|warm|warmth|enjoy|enjoyed|enjoying|kind|kindness|patient|patience|friendly|lively|brilliant|wonderful|beautiful|delight|charming)\b/i;
+const WARM = /\b(confident|confidence|relaxed|natural|engaging|engaged|positive|excellent|great|calm|clear|creative|encouraging|encouraged|praise|well done|good job|nicely|really well|impressive)\b/i;
+const LOOSE = /\b(a|an|the|to|of|and|or|with|for|has|have|it|is|was|that|this|in|on|at|by|as|be)$/i;
+const NOT = /\b(pass|passed|fail|grade|standard|next time|try to|try|remember|avoid|make sure|don'?t|need to|needs|should|could|instead|rather than|watch out|careful|keep your|reduce|less|more time|missing|but)\b/i;
+function phrasesFrom(text){
+  return String(text || '')
+    .replace(/\(\s*\d[a-n](\s*,\s*\d[a-n])*\s*\)/g, '').replace(/\[\s*\d[a-n]\s*\]/g, '').replace(/\b\d[a-n]\b/g, '')
+    .split(/[.;:!?—–]|\s-\s|,\s+(?=and\b|but\b|which\b|so\b)|\band\b(?=\s+(?:you|the|your|everyone|they)\b)/i)
+    .map(s => s.replace(/^\s*(and|so|also|then)\s+/i, '').replace(/^[A-Z][a-z]+,\s+/, '').replace(/\s+/g, ' ').trim())
+    .filter(s => { const n = s.split(' ').length; return n >= 2 && n <= 10 && !NOT.test(s) && !LOOSE.test(s) && !/\d/.test(s); });
+}
+function scoreOf(p){ const n = p.split(' ').length; return (HEART.test(p) ? 16 : WARM.test(p) ? 8 : 0) + (/\b(you|your|everyone|the learners|the students|ss)\b/i.test(p) ? 2 : 0) - Math.abs(n - 6) * .4; }
+/* Every candidate phrase about one trainee, best first, grouped by who wrote it. */
+function suggestionsFor(R){
+  const out = [];
+  const H = R.tp || {};
+  tpNums(H).forEach(n => {
+    const fb = H[n], f = (fb.state && fb.state.f) || {};
+    const by = String(f.fTutor || '').trim() || 'Your tutor';
+    const texts = listItems(fb, ['lSP', 'lST']).map(it => textOf(it.html)).concat([f.tOverall || '']);
+    texts.forEach(t => phrasesFrom(t).forEach(p => out.push({ text: p, by, role: 'Tutor', from: 'From TP ' + n, score: scoreOf(p) })));
+  });
+  Object.keys(R.subs || {}).forEach(k => {
+    const s = R.subs[k] || {}, fbk = s.feedback || {};
+    const by = String((s.markers && s.markers.first) || fbk.marker || '').trim() || 'Your tutor';
+    [fbk.comment, fbk.overall, fbk.general].forEach(t => phrasesFrom(t).forEach(p => out.push({ text: p, by, role: 'Tutor', from: 'From your ' + k.toUpperCase() + ' assignment', score: scoreOf(p) - 1 })));
+  });
+  const seen = {};
+  return out.filter(o => o.score > 0 && !seen[o.text.toLowerCase()] && (seen[o.text.toLowerCase()] = 1)).sort((a, b) => b.score - a.score);
+}
+/* The page's choice: the tutors' saved picks, else the best phrase per person. */
+function chosenFor(R){
+  const saved = (S().lastWords || {})[R.token];
+  if (Array.isArray(saved)) return saved.filter(x => x && x.text);
+  const best = {};
+  suggestionsFor(R).forEach(o => { if (!best[o.by]) best[o.by] = o; });
+  return Object.keys(best).map(k => best[k]).slice(0, 3);
+}
+
+/* ---- the trainee's page ------------------------------------------------- */
+function confetti(){
+  const C = ['#CC9140', '#F3EEE4', '#7FA392', '#E6DCA6'];
+  let h = '';
+  for (let i = 0; i < 26; i++) h += '<i style="left:' + ((i * 37) % 100) + '%;width:' + (i % 3 ? 7 : 10) + 'px;height:' + (i % 3 ? 14 : 6) + 'px;background:' + C[i % 4] + ';animation-duration:' + (4.6 + (i % 5) * .55).toFixed(2) + 's;animation-delay:' + ((i * .37) % 4).toFixed(2) + 's"></i>';
+  return '<div class="confetti" aria-hidden="true">' + h + '</div>';
+}
+function framed(cs, R){
+  const ph = cs.classPhoto && cs.classPhoto.src;
+  if (!ph) return '';
+  return '<figure class="frame"><div class="mat"><img src="' + esc(ph) + '" alt="The class photo"></div>'
+    + '<figcaption><b>' + esc(cs.courseName || 'The course') + ', the last afternoon</b><span>' + esc([cs.centreName, span(cs)].filter(Boolean).join(' · ')) + '</span></figcaption></figure>';
+}
+function trainee(R){
+  const cs = S(), H = R.tp || {}, nums = tpNums(H);
+  const first = (R.name || '').split(/\s+/)[0];
+  const days = ((rec('connect_timetable_v1') || {}).days || []).length;
+  const closed = Object.keys(R.subs || {}).filter(k => R.subs[k] && R.subs[k].stage === 'closed').length;
+  const stars = nums.reduce((a, n) => a + listItems(H[n], ['lAP', 'lAT'], it => it.star).length, 0);
+  const lastN = nums[nums.length - 1], lastF = lastN ? ((H[lastN].state && H[lastN].state.f) || {}) : {};
+  const startP = nums.length ? listItems(H[nums[0]], ['lAP', 'lAT'], it => it.star).map(it => textOf(it.html)).filter(Boolean)[0] : '';
+  const endP = lastN ? listItems(H[lastN], ['lSP', 'lST']).map(it => textOf(it.html)).filter(Boolean)[0] : '';
+  const said = chosenFor(R);
+  const stats = [[days, 'days on the course'], [nums.length, nums.length === 1 ? 'teaching practice taught' : 'teaching practices taught'],
+    [closed, closed === 1 ? 'assignment closed' : 'assignments closed'], [stars, stars === 1 ? 'action point worked on' : 'action points worked on']].filter(x => x[0]);
+  const lastBits = [lastF.fLevel, lastF.fMain && String(lastF.fMain).split(/[.,(]/)[0].toLowerCase(), lastF.fTime && lastF.fTime + ' minutes', lastF.fStudents && lastF.fStudents + ' students'].filter(Boolean);
+  const back = IS_TRAINEE ? 'index.html' + (KEYQ ? '?' + KEYQ : '') : '32_last_page.html' + (KEYQ ? '?' + KEYQ : '');
+
+  $('app').innerHTML =
+    '<section class="hero">' + confetti() + '<div class="mk">' + MARK(620, 9, '#E6B66A', '#F3EEE4') + '</div><div class="wrap" style="position:relative">'
+      + '<div class="top"><a href="' + esc(back) + '">' + (IS_TRAINEE ? 'Your course' : 'Back to the tutors’ side') + '</a></div>'
+      + '<p class="k">The last day · ' + esc([cs.courseName, cs.centreName].filter(Boolean).join(' · ')) + '</p>'
+      + '<h1>Congratulations' + (first ? ', ' + esc(first) : '') + '.</h1>'
+      + '<p class="lede">You have finished the course.' + (days ? ' ' + days + ' days' : '') + (nums.length ? ', ' + nums.length + ' lessons' : '') + (closed ? ', ' + closed + ' assignments' : '') + ' and a room full of people who started as strangers. This page is yours to keep.</p>'
+    + '</div></section>'
+    + '<div class="wrap">'
+      + (cs.classPhoto && cs.classPhoto.src ? '<div class="photo">' + framed(cs, R) + '</div>' : '<div style="height:24px"></div>')
+      + '<div class="two">'
+        + (lastN ? '<div class="card last"><p class="lbl" style="margin:0">Your last lesson</p><div class="stamp"><b>TP ' + lastN + '</b><span>' + esc(lastF.fDate ? 'Taught · ' + day(lastF.fDate, { day:'numeric', month:'short' }) : 'Taught') + '</span></div>'
+          + '<p>' + esc(lastBits.join(' · ')) + (lastBits.length ? '. ' : '') + 'Congratulations on finishing your teaching practice.</p></div>' : '')
+        + ((startP || endP) ? '<div class="card far"><p class="lbl" style="margin:0">How far you came</p>'
+          + (startP ? '<div class="q a"><small>Where you started · TP ' + nums[0] + ' · to work on</small><p>“' + esc(startP) + '”</p></div>' : '')
+          + (endP ? '<div class="q b"><small>Where you finished · TP ' + lastN + ' · what worked</small><p>“' + esc(endP) + '”</p></div>' : '')
+          + '</div>' : '')
+      + '</div>'
+      + (stats.length ? '<div class="nums">' + stats.map(x => '<div><b>' + x[0] + '</b><span>' + x[1] + '</span></div>').join('') + '</div>' : '')
+      + (said.length ? '<section style="margin-top:64px"><p class="lbl">What people said about you</p><div class="said">' + said.map(o => {
+          const ink = (window.hubInk && hubInk.mine && hubHand) ? hubInk.mine(o.by) : '';
+          const hand = ink && window.hubHand ? '<span class="hand">' + hubHand.html(ink, o.by) + '</span>' : '<em>' + esc(o.by) + '</em>';
+          return '<div class="card"><q>' + esc(o.text) + '</q><p class="from">' + esc(o.from || '') + '</p><div class="sig">' + hand + '<span>' + esc(o.role || '') + (o.role ? ' · ' : '') + esc(o.by) + '</span></div></div>';
+        }).join('') + '</div></section>' : '')
+      + '<div class="card keep"><div><h2>Keep it</h2><p>Everything you wrote stays here, and this link keeps working.' + (cs.classPhoto && cs.classPhoto.src ? ' The card has the class photo, your name and the course, ready to frame or share.' : ' The card has your name and the course, ready to frame or share.') + '</p></div>'
+        + '<div class="btns"><button type="button" class="gold" id="dl">Download your card</button><button type="button" class="line" id="pr">Print it</button><a class="line" href="4_feedback_returned.html' + (KEYQ ? '?' + KEYQ : '') + '">Read your whole record</a></div></div>'
+      + '<div style="height:56px"></div>'
+    + '</div>';
+
+  $('printcard').innerHTML = (cs.classPhoto && cs.classPhoto.src ? framed(cs, R) : '')
+    + '<h1>' + esc(R.name) + '</h1><p>finished the CELTA course</p><small>' + esc([cs.centreName, span(cs)].filter(Boolean).join(' · ')) + '</small>';
+  $('pr').addEventListener('click', () => window.print());
+  $('dl').addEventListener('click', () => card(R, cs));
+}
+
+/* THE CARD, 1080 x 1350, drawn here and saved as a picture. */
+async function card(R, cs){
+  try { await document.fonts.ready; } catch (e) {}
+  const c = document.createElement('canvas'); c.width = 1080; c.height = 1350;
+  const g = c.getContext('2d');
+  g.fillStyle = '#1E3B2F'; g.fillRect(0, 0, 1080, 1350);
+  const arcs = (x, y, s, a, b, w) => { g.save(); g.translate(x, y); g.scale(s, s); g.lineCap = 'round'; g.lineWidth = w;
+    g.strokeStyle = a; g.beginPath(); g.arc(40, 60, 24, -Math.PI * .26, Math.PI * .26, true); g.stroke();
+    g.strokeStyle = b; g.beginPath(); g.arc(80, 60, 24, -Math.PI * .26, Math.PI * .26, true); g.stroke(); g.restore(); };
+  g.globalAlpha = .12; arcs(560, 760, 8.5, '#E6B66A', '#F3EEE4', 9); g.globalAlpha = 1;
+  g.textAlign = 'center'; g.fillStyle = '#E6DCA6'; g.font = '600 18px Karla'; g.fillText('C E L T A   ·   ' + (dateOf(cs.end) ? dateOf(cs.end).getFullYear() : ''), 540, 120);
+  let y = 170;
+  const ph = cs.classPhoto && cs.classPhoto.src;
+  if (ph) {
+    const im = new Image(); im.src = ph; await new Promise(r => { im.onload = r; im.onerror = r; });
+    const w = 820, h = Math.min(560, Math.round(w * (im.naturalHeight || 9) / (im.naturalWidth || 16)));
+    g.save(); g.translate(540, y + (h + 120) / 2); g.rotate(-1.5 * Math.PI / 180);
+    g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowBlur = 50; g.shadowOffsetY = 26;
+    g.fillStyle = '#FFFFFF'; g.fillRect(-(w + 64) / 2, -(h + 120) / 2, w + 64, h + 120); g.shadowColor = 'transparent';
+    g.fillStyle = '#F6F1E6'; g.fillRect(-(w + 24) / 2, -(h + 120) / 2 + 20, w + 24, h + 24);
+    try { g.drawImage(im, -w / 2, -(h + 120) / 2 + 32, w, h); } catch (e) {}
+    g.restore();
+    y += h + 170;
+  } else y += 220;
+  g.fillStyle = '#F3EEE4'; g.font = '700 84px Newsreader'; g.fillText(R.name || '', 540, y + 30);
+  g.fillStyle = '#E6DCA6'; g.font = 'italic 40px "Instrument Serif"'; g.fillText('finished the CELTA course', 540, y + 92);
+  g.fillStyle = '#CC9140'; g.fillRect(470, y + 128, 140, 4);
+  g.fillStyle = '#DCE6E0'; g.font = '600 24px Karla'; g.fillText([cs.centreName, span(cs)].filter(Boolean).join(' · '), 540, y + 182);
+  g.fillStyle = '#F8F6F1'; g.beginPath(); g.roundRect ? g.roundRect(84, 1234, 52, 52, 12) : g.rect(84, 1234, 52, 52); g.fill();
+  arcs(84, 1216, .62, '#a8803f', '#2b2218', 13);
+  g.textAlign = 'left'; g.fillStyle = '#CC9140'; g.font = 'italic 34px "Instrument Serif"'; g.fillText('Connect', 150, 1272);
+  g.fillStyle = '#F3EEE4'; g.font = '700 13px Karla'; g.fillText('LITE', 262, 1272);
+  c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = (R.name || 'CELTA').replace(/[^\w ]+/g, '').trim() + ' - CELTA.png'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); }, 'image/png');
+}
+
+/* ---- the tutors' side --------------------------------------------------- */
+let PICKS = {};
+function staff(){
+  const cs = S(), roster = ROSTER();
+  const ids = Object.keys(roster).filter(id => !(roster[id] && roster[id].withdrawn)).sort((a, b) => String(roster[a].name).localeCompare(String(roster[b].name)));
+  const saved = cs.lastWords || {};
+  PICKS = {};
+  const rows = ids.map(id => {
+    const R = recordsOf(id); if (!R) return '';
+    const sug = suggestionsFor(R).slice(0, 6);
+    const cur = Array.isArray(saved[id]) ? saved[id] : chosenFor(R);
+    PICKS[id] = cur.slice();
+    const isOn = t => cur.some(x => x.text === t);
+    return '<div class="who" data-id="' + esc(id) + '"><h3><span>' + esc(R.name) + '</span><a href="32_last_page.html?' + esc(KEYQ) + '&amp;trainee=' + encodeURIComponent(id) + '">See their page</a></h3>'
+      + (sug.length ? sug.map((o, i) => '<label class="opt"><input type="checkbox" data-i="' + i + '"' + (isOn(o.text) ? ' checked' : '') + '><span><q>' + esc(o.text) + '</q><small>' + esc(o.by + ' · ' + o.from) + '</small></span></label>').join('')
+        : '<p class="none">Nothing warm found in their records yet. Add a line below, or leave it: the section is then left out of their page.</p>')
+      + cur.filter(x => !sug.some(o => o.text === x.text)).map(x => '<label class="opt"><input type="checkbox" checked data-own="' + esc(x.text) + '"><span><q>' + esc(x.text) + '</q><small>' + esc(x.by + ' · ' + (x.from || '')) + '</small></span></label>').join('')
+      + '<div class="own"><input type="text" placeholder="Add a line from anyone: a peer, a tutor, a volunteer" data-add="text"><input type="text" placeholder="Who said it" data-add="by"><input type="text" placeholder="Where (e.g. watching TP 5)" data-add="from"></div>'
+      + '</div>';
+  });
+  $('app').innerHTML = '<div class="wrap staff">'
+    + '<p class="lbl">The last day · ' + esc(cs.courseName || '') + '</p>'
+    + '<h1>The last page</h1>'
+    + '<p class="sub">What each trainee finds at the end of the course: the class photo, framed, how far they came, and a few warm words from the people who watched them teach. No grade, nothing about passing.</p>'
+    + '<div class="card"><h2>The class photo</h2><p class="hint">One photo of everyone. A Zoom screenshot on the last afternoon works, or a photo from the room. It goes on every trainee’s last page, framed, and on the card they keep.</p>'
+      + '<label class="drop" id="drop">' + (cs.classPhoto && cs.classPhoto.src ? '<img src="' + esc(cs.classPhoto.src) + '" alt="The class photo"><span>Choose another to replace it</span>' : '<b>Choose the photo</b><span>JPG or PNG · a screenshot is fine</span>')
+      + '<input type="file" id="file" accept="image/*" hidden></label></div>'
+    + '<div class="card"><h2>What people said about each trainee</h2><p class="hint">Short, warm phrases from anything written on the course, each under the name of whoever wrote it. Tick the ones that go on their page, or add your own. Never an action point or a grade.</p>' + rows.join('') + '</div>'
+    + '<div class="savebar"><button type="button" class="gold" id="save">Save the last pages</button><span class="status" id="status"></span></div>'
+    + '</div>';
+  $('file').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (f) takePhoto(f); });
+  $('save').addEventListener('click', saveAll);
+}
+function takePhoto(f){
+  const r = new FileReader();
+  r.onload = () => { const im = new Image(); im.onload = () => {
+    const W = Math.min(1600, im.naturalWidth), H = Math.round(W * im.naturalHeight / im.naturalWidth);
+    const c = document.createElement('canvas'); c.width = W; c.height = H; c.getContext('2d').drawImage(im, 0, 0, W, H);
+    const src = c.toDataURL('image/jpeg', .78);
+    const cs = S(); cs.classPhoto = { src, at: new Date().toISOString() };
+    localStorage.setItem('connect_course_settings', JSON.stringify(cs));
+    $('drop').querySelector('b, img') && ($('drop').innerHTML = '<img src="' + src + '" alt="The class photo"><span>Not saved yet: press Save the last pages</span><input type="file" id="file" accept="image/*" hidden>');
+    $('file').addEventListener('change', e => { const f2 = e.target.files && e.target.files[0]; if (f2) takePhoto(f2); });
+    $('status').textContent = 'Photo ready. Save to put it on every trainee’s page.';
+  }; im.src = r.result; };
+  r.readAsDataURL(f);
+}
+async function saveAll(){
+  const cs = S(), words = {};
+  document.querySelectorAll('.who').forEach(w => {
+    const id = w.dataset.id, R = recordsOf(id), sug = suggestionsFor(R).slice(0, 6), list = [];
+    w.querySelectorAll('input[type=checkbox]').forEach(cb => { if (!cb.checked) return;
+      if (cb.dataset.i != null) { const o = sug[+cb.dataset.i]; if (o) list.push({ text: o.text, by: o.by, role: o.role, from: o.from }); }
+      else { const old = (PICKS[id] || []).find(x => x.text === cb.dataset.own); if (old) list.push(old); } });
+    const t = w.querySelector('[data-add=text]').value.trim();
+    if (t) list.push({ text: t.replace(/[.\s]+$/, ''), by: w.querySelector('[data-add=by]').value.trim() || 'Your tutor', role: '', from: w.querySelector('[data-add=from]').value.trim() });
+    words[id] = list;
+  });
+  cs.lastWords = words;
+  $('save').disabled = true; $('status').textContent = 'Saving…';
+  try {
+    await HubStore.putCourse('settings', cs);
+    localStorage.setItem('connect_course_settings', JSON.stringify(cs));
+    $('status').textContent = 'Saved. Every trainee’s last page has it now.';
+  } catch (e) { $('status').textContent = 'Not saved: ' + (e && e.message || e); }
+  $('save').disabled = false;
+}
+
+function render(){
+  if (IS_TRAINEE) { const R = recordsOf(); if (R) trainee(R); return; }
+  if (VIEW_ID) { const R = recordsOf(VIEW_ID); if (R) { trainee(R); return; } }
+  if (IS_TUTOR) { staff(); return; }
+  $('app').innerHTML = '<div class="wrap staff"><h1>The last page</h1><p class="sub">Open this from your own course link.</p></div>';
+}
+render();
+document.addEventListener('hub:ready', render);
+</script>
+</body>
+</html>
