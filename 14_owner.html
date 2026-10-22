@@ -451,6 +451,13 @@
   .course.tb.c-live{border-top-color:var(--pill-good-line);}
   .course.tb.minted{outline:2px solid var(--gold);}
   @media(max-width:640px){ .tb-grid{grid-template-columns:1fr;} }
+  .course.demorow{display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px; padding:14px 18px; background:var(--paper); box-shadow:var(--nb-shadow); border-radius:var(--r-card,14px); margin:0 0 10px; border:0;}
+  .demorow .dr-name{flex:1 1 240px; min-width:0;} .demorow .dr-name b{display:block; font:600 1.08rem/1.25 Newsreader,Georgia,serif; color:var(--ink);} .demorow .dr-name small{display:block; margin-top:2px; font-size:.8rem; color:var(--grey);}
+  .demorow .dr-acts{display:flex; flex-wrap:wrap; gap:6px 8px; align-items:center;}
+  .demorow .linkbtn{font-size:.82rem; margin:0 4px;}
+  body .demorow .btn{background:var(--a-stone, #EBEBF0) !important; color:var(--ink) !important; box-shadow:none !important; border:0 !important; border-radius:999px; padding:6px 13px;}
+  body .demorow .btn:not(.quiet){background:var(--a-forest, #1E3B2F) !important; color:#fff !important;}
+  .tools{margin-top:26px; padding-top:18px; border-top:1px solid var(--sand-line);}
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202610220855">
 </head>
@@ -703,6 +710,25 @@ function ticketBook(c, kind, name, centre, alt, n, minted){
       </p>
     </div>`;
 }
+/* A STANDING DEMO IS ONE ROW (Ramy, 22 Oct 2026: the same four big tiles three times over). Its name and its day on the left, the four
+   things you copy on the right; the buttons carry the same data-attributes the tickets did, so every handler is the one it was. */
+function demoRow(c, kind, name, centre, alt, n, minted){
+  const tutorLink = base() + 'invite.html?k=' + encodeURIComponent(c.tutorKey);
+  const assessorLink = base() + 'invite.html?ak=' + encodeURIComponent(c.assessorKey);
+  const bits = [alt ? 'shown as \u201c' + esc(alt) + '\u201d' : '', c.demoToday ? 'pinned to ' + esc(niceDate(c.demoToday)) : '', n ? n + ' trainee' + (n === 1 ? '' : 's') : '', esc(c.id)].filter(Boolean).join(' \u00b7 ');
+  return `<div class="course demorow c-demo${minted ? ' minted' : ''}" id="course-${esc(c.id)}">
+    <div class="dr-name"><b>${esc(name)}</b><small>${bits}</small></div>
+    <div class="dr-acts" role="group" aria-label="Copy a link card for ${esc(name)}">
+      <button type="button" class="btn small quiet" data-copy="${esc(tutorLink)}" title="The teaching team: tutors and course admin use it">Team</button>
+      <button type="button" class="btn small quiet" data-copy="${esc(assessorLink)}" title="The assessor: read-only, for the visit">Assessor</button>
+      <button type="button" class="btn small quiet" data-vol="${esc(c.id)}" data-key="${esc(c.tutorKey)}" title="A volunteer student\u2019s own page">Volunteer</button>
+      <button type="button" class="btn small" data-note="${esc(c.id)}" title="The offer card as a message: what Lite is, how it\u2019s priced, four ways in">Offer card</button>
+      <a class="linkbtn" data-mail="${esc(c.id)}" href="#">Email it</a>
+      <a class="linkbtn" data-card="${esc(c.id)}" href="#">See it</a>
+      <button class="btn quiet small" type="button" data-clone="${esc(c.id)}" data-label="${esc(label(c))}">Start the next course from this</button>
+      <button class="btn quiet small" type="button" data-delete="${esc(c.id)}" data-label="${esc(label(c))}" data-trainees="${n}">Delete</button>
+    </div></div>`;
+}
 function cardLink(c){
   const film = filmLink();
   /* No figure travels on the link any more (7 Oct 2026): the card says how
@@ -859,7 +885,7 @@ async function noteFor(c){
   return [
     'Hi,',
     '',
-    'Here is Connect Lite \u2014 everything your trainees write, and everything you write back, in one place.',
+    'Here is Connect Lite: teach the course, and Lite does the rest. Every trainee gets a course of their own, and every tutor gets their evenings back.',
     '',
     cardLink(c),
     '',
@@ -946,6 +972,7 @@ function render(courses, msg){
     /* THE TICKET BOOK (1b, Ramy, 8 Oct 2026): a course whose links open on the
        ticket gets its console card as tickets too. &card=ticket on the
        console's own address previews it on every course. */
+    if (kind.k === 'demo') return demoRow(c, kind, name, centre, alt, n, minted);
     if (kind.k !== 'record' && (CARD_PREVIEW === 'ticket' || (CARD_PREVIEW !== 'welcome' && c.cardStyle === 'ticket'))) return ticketBook(c, kind, name, centre, alt, n, minted);
     return `
     <div class="course c-${kind.k}${minted ? ' minted' : ''}" id="course-${esc(c.id)}">
@@ -1125,6 +1152,30 @@ $('app').innerHTML = `
       <span class="note" id="mkNote">Only a course with a real centre number gets made, and the centre cannot edit it afterwards.</span>
     </div>
     <div id="needs"></div>
+    ${COURSES.length ? (function(){
+      const live = ordered.filter(c => courseKind(c).k === 'live');
+      /* THE FIND BOX, once there are enough live courses for scrolling to be
+         the problem. Four demos never needed one. */
+      const find = live.length > 6 ? `<div class="findrow">
+          <input type="search" id="findCourse" placeholder="Find a course \u2014 name, centre or number" autocomplete="off">
+          <span class="note" id="findNote"></span></div>` : '';
+      return SECTIONS.map(sec => {
+        const inIt = ordered.filter(c => courseKind(c).k === sec.k);
+        if (!inIt.length) return '';
+        /* Live is always open. The others are shut unless this browser was
+           left with them open -- except when there is no live course at all,
+           when a page of closed headers would look like nothing is there. */
+        const always = sec.k === 'live';
+        const open = always || !live.length && sec.k === 'demo' || secOpen(sec.k);
+        return `<details class="sec ${sec.k}${always ? ' always' : ''}" data-sec="${sec.k}"${open ? ' open' : ''}>
+          <summary><h2 class="section ${sec.k}">${esc(sec.t)}<small>${esc(sec.w)}</small>
+            <span class="seccount">${inIt.length}</span></h2></summary>
+          ${always ? find : ''}
+          <div class="courses">${inIt.map(card).join('')}</div></details>`;
+      }).join('');
+    })() : '<div class="courses"><div class="empty">No courses yet. Make the first one, then send its tutor link to the centre.</div></div>'}
+    <div id="statsslot"></div>
+    <div class="tools">
     <!-- TRANSCRIBING INTERVIEWS (15 Oct 2026). Course admin can switch recording on
          for a course; the transcript is made by OpenAI's speech model from the
          store, with a key held in the store's own settings. Pasted here once,
@@ -1191,29 +1242,7 @@ $('app').innerHTML = `
     </div>
       </div>
     </details>
-    <div id="statsslot"></div>
-    ${COURSES.length ? (function(){
-      const live = ordered.filter(c => courseKind(c).k === 'live');
-      /* THE FIND BOX, once there are enough live courses for scrolling to be
-         the problem. Four demos never needed one. */
-      const find = live.length > 6 ? `<div class="findrow">
-          <input type="search" id="findCourse" placeholder="Find a course \u2014 name, centre or number" autocomplete="off">
-          <span class="note" id="findNote"></span></div>` : '';
-      return SECTIONS.map(sec => {
-        const inIt = ordered.filter(c => courseKind(c).k === sec.k);
-        if (!inIt.length) return '';
-        /* Live is always open. The others are shut unless this browser was
-           left with them open -- except when there is no live course at all,
-           when a page of closed headers would look like nothing is there. */
-        const always = sec.k === 'live';
-        const open = always || !live.length && sec.k === 'demo' || secOpen(sec.k);
-        return `<details class="sec ${sec.k}${always ? ' always' : ''}" data-sec="${sec.k}"${open ? ' open' : ''}>
-          <summary><h2 class="section ${sec.k}">${esc(sec.t)}<small>${esc(sec.w)}</small>
-            <span class="seccount">${inIt.length}</span></h2></summary>
-          ${always ? find : ''}
-          <div class="courses">${inIt.map(card).join('')}</div></details>`;
-      }).join('');
-    })() : '<div class="courses"><div class="empty">No courses yet. Make the first one, then send its tutor link to the centre.</div></div>'}
+    </div>
     <p id="status"></p>`;
   if (msg) status(msg);
   wireSending();
@@ -1653,7 +1682,7 @@ async function inbox(){
 function drawInbox(){
   const host = $('app'); if (!host || !INBOX) return;
   let box = document.querySelector('.inbox');
-  if (!box) { box = document.createElement('section'); box.className = 'inbox'; host.appendChild(box); }
+  if (!box) { box = document.createElement('section'); box.className = 'inbox'; const ref = $('statsslot'); if (ref && ref.parentNode === host) host.insertBefore(box, ref); else host.appendChild(box); }
   const C = INBOX.contributions || [], R = INBOX.reports || [];
   /* FIVE AT A TIME. Ramy, 5 Oct 2026: "if they start stacking up it'll be like
      stacks of TP points, contributions." The sheet has every row and the
@@ -1837,7 +1866,7 @@ function drawStats(S){
   /* `d` is already the per-centre table a few lines up in this function. */
   const drawer = $('statblock');
   if (drawer) {
-    try { drawer.open = localStorage.getItem(STAT_OPEN) !== '0'; } catch (e) { drawer.open = true; }
+    try { drawer.open = localStorage.getItem(STAT_OPEN) === '1'; } catch (e) { drawer.open = false; }
     drawer.ontoggle = () => { try { localStorage.setItem(STAT_OPEN, drawer.open ? '1' : '0'); } catch (e) {} };
   }
 
