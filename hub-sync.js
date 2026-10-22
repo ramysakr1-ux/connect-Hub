@@ -597,8 +597,14 @@
     /* The register as a trainee may read it: names, levels, and whether each
        student has agreed to be recorded. Tutors read the whole register above. */
     out['connect_volunteer_names_v1'] = course.volunteerNames ? JSON.stringify(course.volunteerNames) : null;
+    /* The end-of-course feedback (23 Oct 2026): the answers, for the tutors
+       only -- anonymous unless a trainee chose to add their name. Read-only
+       here; a trainee sends through the store's courseFeedback op. */
+    out['connect_course_feedback_v1'] = course.courseFeedback ? JSON.stringify(course.courseFeedback) : null;
     if (mode === 'trainee') {
       var me = boot.me || { records: {} };
+      /* that this trainee has answered, and when -- never what */
+      out['chub:courseFeedbackSent'] = me.records.courseFeedbackSent ? JSON.stringify(me.records.courseFeedbackSent) : null;
       out['hub:name'] = me.name || '';
       out['hub:me'] = JSON.stringify({ token: me.token, name: me.name, group: me.group });
       Object.keys(TRAINEE_KEYS).forEach(function(key){ var v = me.records[TRAINEE_KEYS[key]]; out[key] = v == null ? null : JSON.stringify(v); });

@@ -20,7 +20,7 @@
  * VERSION is stamped by bump-assets.py with the same stamp as the ?v= links,
  * so each push retires the previous cache on activate.
  */
-const VERSION = 'lite-202610230111';
+const VERSION = 'lite-202610230123';
 const SHELL = [
   './', 'index.html', 'invite.html', 'hub-qr.js', 'vendor/qrcode.js', 'hub-pin.js',
   '1_trainee_plan_and_analysis.html', '2_trainee_self_evaluation.html', '3_tutor_feedback.html',
@@ -43,7 +43,7 @@ const SHELL = [
   /* 5 Oct 2026: the candidate agreement, read and signed once at the start. */
   '29_candidate_agreement.html',
   /* 8 Oct 2026: the answer key and the getting-to-know-you bank, with their data. */
-  '30_precourse_key.html', '31_getting_to_know_you.html', '32_last_page.html', 'precourse-key.js', 'gtky-bank.js', 'fol-interview.js',
+  '30_precourse_key.html', '31_getting_to_know_you.html', '32_last_page.html', '33_course_feedback.html', 'precourse-key.js', 'gtky-bank.js', 'fol-interview.js',
   /* 15 Oct 2026: the input sessions (the shelf, its two shared files, the three drawings and
      every session page). They were never in the shell, so one not opened before the
      connection dropped came up as "You are offline". Pages are kept by their directory

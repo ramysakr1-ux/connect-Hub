@@ -37,7 +37,7 @@
 <title>The last page</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610230111">
+<link rel="stylesheet" href="hub-tokens.css?v=202610230123">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:#232220; background:linear-gradient(180deg,#FFFFFF 0,#F3F3F7 420px);}
@@ -152,21 +152,21 @@
     .printcard small{font:600 10pt 'Karla',sans-serif; color:#4A4843;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610230111">
+<link rel="stylesheet" href="hub-house.css?v=202610230123">
 </head>
 <body>
 <div id="app"></div>
 <div class="printcard" id="printcard" aria-hidden="true"></div>
-<script src="hub-shared.js?v=202610230111"></script>
-<script src="hub-store.js?v=202610230111"></script>
-<script src="hub-tracker.js?v=202610230111"></script>
-<script src="hub-hand.js?v=202610230111"></script>
-<script src="hub-ink.js?v=202610230111"></script>
-<script src="hub-say.js?v=202610230111"></script>
-<script src="observation-defaults.js?v=202610230111"></script>
-<script src="hub-rotation.js?v=202610230111"></script>
-<script src="hub-peers.js?v=202610230111"></script>
-<script src="hub-sync.js?v=202610230111"></script>
+<script src="hub-shared.js?v=202610230123"></script>
+<script src="hub-store.js?v=202610230123"></script>
+<script src="hub-tracker.js?v=202610230123"></script>
+<script src="hub-hand.js?v=202610230123"></script>
+<script src="hub-ink.js?v=202610230123"></script>
+<script src="hub-say.js?v=202610230123"></script>
+<script src="observation-defaults.js?v=202610230123"></script>
+<script src="hub-rotation.js?v=202610230123"></script>
+<script src="hub-peers.js?v=202610230123"></script>
+<script src="hub-sync.js?v=202610230123"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -284,6 +284,8 @@ function chosenFor(R){
   return Object.keys(best).map(k => best[k]).slice(0, MAX_SAID);
 }
 
+/* The course feedback is open: released by a tutor, or its time has come (33_course_feedback.html). */
+function feedbackOpen(){ const cf = S().courseFeedback || {}; if (cf.released) return true; const t = cf.openAt ? Date.parse(cf.openAt) : NaN; return !isNaN(t) && Date.now() >= t; }
 /* ---- the trainee's page ------------------------------------------------- */
 function confetti(){
   const C = ['#CC9140', '#F3EEE4', '#7FA392', '#E6DCA6'];
@@ -335,6 +337,7 @@ function trainee(R){
           const hand = ink && window.hubHand ? '<span class="hand">' + hubHand.html(ink, o.by) + '</span>' : '<em>' + esc(o.by) + '</em>';
           return '<div class="card"><q>' + esc(o.text) + '</q><p class="from">' + esc(o.from || '') + '</p><div class="sig">' + hand + '<span>' + esc(o.role || '') + (o.role ? ' · ' : '') + esc(o.by) + '</span></div></div>';
         }).join('') + '</div></section>' : '')
+      + (IS_TRAINEE && feedbackOpen() && !(rec('chub:courseFeedbackSent') || rec('chub:courseFeedbackSentHere')) ? '<div class="card keep" style="border-top:3px solid #CC9140"><div><h2>Tell us about the course</h2><p>Twelve short questions, one tap each. Your answers go to the centre, without your name unless you choose to add it.</p></div><div class="btns"><a class="line" href="33_course_feedback.html' + (KEYQ ? '?' + KEYQ : '') + '">Give your feedback</a></div></div>' : '')
       + '<div class="card keep"><div><h2>Keep it</h2><p>Everything you wrote stays here, and this link keeps working.' + (cs.classPhoto && cs.classPhoto.src ? ' The card has the class photo, your name and the course, ready to frame or share.' : ' The card has your name and the course, ready to frame or share.') + '</p></div>'
         + '<div class="btns"><button type="button" class="gold" id="dl">Download your card</button><button type="button" class="line" id="pr">Print it</button><a class="line" href="4_feedback_returned.html' + (KEYQ ? '?' + KEYQ : '') + '">Read your whole record</a></div></div>'
       + '<div style="height:56px"></div>'

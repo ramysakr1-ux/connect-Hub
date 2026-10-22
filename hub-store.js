@@ -190,6 +190,8 @@ window.HubStore = (function(){
       });
     },
     putCourse: function(kind, data){ return call({ op: 'putCourse', kind: kind, data: data }); },
+    /* v96 (23 Oct 2026): the end-of-course feedback, sent once, anonymous unless `named` */
+    courseFeedback: function(answers, named){ return call({ op: 'courseFeedback', answers: answers, named: named === true }); },
     /* A centre's next course starts from what its last one taught the criteria
        suggester. The store decides whether there is anything to take: it
        refuses if this course has tagging of its own, so this can only seed. */

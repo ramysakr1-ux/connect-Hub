@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<!--
+  The course feedback — what the trainees think of the course, at the end.
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy, 23 Oct 2026: "use Connect's feedback at the end of the course, or
+  upload your own, and then there will be a release button ... or setting a
+  timer, as we do ... a nice form, keep it easy, intuitive, few questions on
+  how they feel about the course. Will they recommend the course? One about the
+  tutors, one about the workload, one about the platform ... support they
+  received from the centre. Anything they want to add." And: "should be
+  anonymous. Or should be a choice."
+
+  ONE FILE, TWO SIDES. A trainee's link draws the form (or the centre's own
+  form, as a door), once it is open. A tutor's link draws the choice of form,
+  the release, and the answers.
+
+  WHERE IT IS KEPT. The choice and the release in the course settings:
+  settings.courseFeedback = { form: 'lite'|'own', url, released, openAt }.
+  The answers through the store's courseFeedback op (v96): appended to one
+  course list with the day only and no token, a name only when the trainee
+  ticked to add it; the trainee's record keeps only that they answered.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="brand/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<title>Course feedback</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hub-tokens.css?v=202610230123">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Karla',sans-serif; color:#232220; background:linear-gradient(180deg,#FFFFFF 0,#F3F3F7 380px);}
+  .wrap{max-width:760px; margin:0 auto; padding:36px 20px 90px;}
+  .back{display:inline-block; margin-bottom:18px; font-weight:600; font-size:.9rem; color:#1E3B2F; text-decoration:none;}
+  .back:hover{text-decoration:underline;}
+  .k{margin:0 0 10px; font:600 11px 'Karla',sans-serif; letter-spacing:.22em; text-transform:uppercase; color:#6B6963;}
+  h1{margin:0; font:700 clamp(30px,5vw,44px)/1.1 'Newsreader',serif; color:#1E3B2F;}
+  .lede{margin:12px 0 0; font-size:1.02rem; line-height:1.6; color:#4A4843; max-width:600px;}
+  .card{background:#FFFFFF; border-radius:16px; padding:26px 28px; box-shadow:0 12px 30px -18px rgba(20,40,32,.35); margin-top:20px; border-top:3px solid #1E3B2F;}
+  .q h2{margin:0 0 4px; font:600 1.2rem/1.3 'Newsreader',serif; color:#232220;}
+  .q p.hint{margin:0 0 14px; font-size:.88rem; color:#6B6963;}
+  .scale{display:flex; flex-wrap:wrap; gap:8px; border:0; margin:0; padding:0;}
+  .scale legend{position:absolute; left:-9999px;}
+  .scale label{position:relative;}
+  .scale input{position:absolute; opacity:0; inset:0; margin:0; cursor:pointer;}
+  .scale span{display:inline-flex; align-items:center; min-height:44px; padding:0 16px; border-radius:999px; border:1.5px solid #DCDCE3; background:#FFFFFF; font-weight:600; font-size:.92rem; color:#232220;}
+  .scale input:hover + span{border-color:#1E3B2F;}
+  .scale input:focus-visible + span{outline:2px solid #CC9140; outline-offset:2px;}
+  .scale input:checked + span{background:#1E3B2F; border-color:#1E3B2F; color:#FFFFFF;}
+  textarea{display:block; width:100%; margin-top:12px; font:inherit; font-size:.95rem; line-height:1.5; padding:11px 13px; border:1.5px solid #DCDCE3; border-radius:10px; background:#FFFFFF; min-height:84px; resize:vertical;}
+  textarea:focus{outline:2px solid #CC9140; outline-offset:1px; border-color:#CC9140;}
+  .opt{font-size:.85rem; color:#6B6963; margin-top:8px; display:block;}
+  .arow{display:flex; flex-wrap:wrap; gap:8px; align-items:center;}
+  .cbtn{display:inline-flex; align-items:center; gap:6px; min-height:44px; padding:0 14px; border-radius:999px; border:1.5px dashed #C9C9D2; background:transparent; color:#1E3B2F; font:600 .88rem 'Karla',sans-serif; cursor:pointer; margin-left:auto;}
+  .cbtn:hover{border-color:#1E3B2F;} .cbtn[aria-expanded=true]{border-style:solid; border-color:#1E3B2F; background:#EEF4F0;}
+  .cbtn:focus-visible{outline:2px solid #CC9140; outline-offset:2px;}
+  .send{display:flex; flex-wrap:wrap; gap:16px; align-items:center; margin-top:24px;}
+  .named{display:flex; gap:10px; align-items:flex-start; font-size:.95rem; line-height:1.45; cursor:pointer;}
+  .named input{margin-top:4px; width:18px; height:18px;}
+  .gold{display:inline-flex; align-items:center; min-height:48px; padding:0 26px; border-radius:999px; border:0; background:#CC9140; color:#1F1A14; font:700 15px 'Karla',sans-serif; cursor:pointer; text-decoration:none;}
+  .gold:hover{background:#B9822F;} .gold[disabled]{opacity:.55; cursor:default;}
+  .line{display:inline-flex; align-items:center; min-height:44px; padding:0 20px; border-radius:999px; border:1.5px solid #1E3B2F; background:transparent; color:#1E3B2F; font:700 14px 'Karla',sans-serif; cursor:pointer; text-decoration:none;}
+  .line:hover{background:#EEF4F0;}
+  .status{font-size:.92rem; color:#4A4843;}
+  .done{text-align:center; padding:44px 28px;}
+  .done h2{margin:0 0 8px; font:700 1.8rem 'Newsreader',serif; color:#1E3B2F;}
+  .done p{margin:0; color:#4A4843; line-height:1.6;}
+  /* the tutors' side */
+  .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-top:12px;}
+  .choice{display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border-radius:10px; cursor:pointer;}
+  .choice:hover{background:#F3F3F7;}
+  .choice input{margin-top:4px;}
+  .choice b{display:block;} .choice small{color:#6B6963;}
+  input[type=url], input[type=datetime-local]{font:inherit; font-size:.92rem; padding:10px 12px; border:1.5px solid #DCDCE3; border-radius:8px; background:#FFFFFF; min-width:0;}
+  input[type=url]{width:100%;}
+  label.f{display:block; font-size:.78rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:#6B6963; margin:14px 0 6px;}
+  .pill{display:inline-block; padding:4px 12px; border-radius:999px; font-weight:700; font-size:.8rem;}
+  .pill.open{background:#EEF4F0; color:#1E3B2F;} .pill.shut{background:#F3F3F7; color:#4A4843;}
+  .tally{margin:10px 0 0; display:flex; flex-direction:column; gap:6px;}
+  .tally div{display:grid; grid-template-columns:140px minmax(0,1fr) 30px; gap:10px; align-items:center; font-size:.9rem;}
+  .tally i{display:block; height:10px; border-radius:999px; background:#1E3B2F;}
+  .tally .bar{background:#EEF0F3; border-radius:999px;}
+  .quote{margin:10px 0 0; padding:12px 14px; border-radius:10px; background:#F7F7FA; font-size:.95rem; line-height:1.5;}
+  .quote small{display:block; margin-top:4px; color:#6B6963; font-size:.78rem;}
+  @media (max-width:560px){ .tally div{grid-template-columns:110px minmax(0,1fr) 26px;} .card{padding:22px 16px;} .scale{gap:6px;} .scale span{padding:0 12px; font-size:.88rem;} .cbtn{margin-left:0;} }
+</style>
+<link rel="stylesheet" href="hub-house.css?v=202610230123">
+</head>
+<body>
+<div class="wrap"><a class="back" id="back" href="index.html">Back</a><div id="app"></div></div>
+<script src="hub-shared.js?v=202610230123"></script>
+<script src="hub-store.js?v=202610230123"></script>
+<script src="hub-say.js?v=202610230123"></script>
+<script src="hub-sync.js?v=202610230123"></script>
+<script type="text/x-hub-app">
+if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
+  throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const rec = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
+const P = new URLSearchParams(location.search);
+const KEYQ = ['t','k','ak'].filter(n => P.get(n)).map(n => n + '=' + encodeURIComponent(P.get(n))).join('&');
+const IS_TRAINEE = !!(window.HubStore && HubStore.isTrainee && HubStore.isTrainee());
+const IS_TUTOR = !!(window.HubStore && HubStore.isTutor && HubStore.isTutor());
+const S = () => rec('connect_course_settings') || {};
+const CF = () => S().courseFeedback || {};
+$('back').href = (IS_TUTOR ? '5_tutor_dashboard.html' : 'index.html') + (KEYQ ? '?' + KEYQ : '');
+
+/* The questions. Short, one idea each, the same words on both sides. */
+/* One tap each and an optional comment, in short sections (Ramy's list,
+   plus what centres' own forms ask). A few minutes at most (Ramy: "I don't
+   want it to take more than like 5 minutes"): twelve, comments optional. */
+/* ONE SCALE (23 Oct 2026). Ramy: "4 options ... poor, fair, good, excellent
+   ... there is a psychology behind those feedback forms." The research does
+   not settle four points against five; what it agrees on is labelling every
+   point and keeping one scale across the items so they compare (Landrum
+   1999: no real difference for student evaluations, and the four labels are
+   read more accurately). So: four, no middle to sit on, the same on every
+   question that is about quality. Workload is not a quality, so it has its
+   own three; recommending is No, Maybe, Yes. */
+const Q4 = ['Poor', 'Fair', 'Good', 'Excellent'];
+const QS = [
+  { sec: 'The course', id: 'overall', q: 'Overall, how was the course?', scale: Q4, note: true },
+  { sec: 'Learning to teach', id: 'input', q: 'How were the input sessions?', scale: Q4, note: true },
+  { id: 'tp', q: 'How was teaching practice?', hint: 'The organisation, the students, the resources.', scale: Q4, note: true },
+  { id: 'tpfeedback', q: 'How was the feedback after your lessons?', hint: 'Spoken and written, from your tutors and from each other.', scale: Q4, note: true },
+  { id: 'assignments', q: 'How were the assignments?', hint: 'The tasks, and your tutors\u2019 comments on them.', scale: Q4, note: true },
+  { sec: 'The people and the running of it', id: 'tutors', q: 'How was the support from your tutors?', hint: 'Helping you plan, their feedback, their comments on your work.', scale: Q4, note: true },
+  { id: 'workload', q: 'How was the workload?', scale: ['Too light', 'About right', 'Too heavy'], note: true },
+  { id: 'centre', q: 'How was the organisation of the course?', hint: 'The timetable, the running of it, the support from the centre.', scale: Q4, note: true },
+  { id: 'platform', q: 'How was Connect Lite to use?', scale: Q4, note: true },
+  { sec: 'To finish', id: 'recommend', q: 'Would you recommend this course to a friend?', scale: ['No', 'Maybe', 'Yes'], note: true },
+  { id: 'more', q: 'Anything else you would like to add?', scale: null, note: true },
+  { id: 'quote', q: 'May the centre quote your words, on its website for example?', scale: ['Yes', 'No'] }
+];
+
+/* Open: released by a tutor, or the opening time has come. */
+function isOpen(cf){
+  if (cf.released) return true;
+  const t = cf.openAt ? Date.parse(cf.openAt) : NaN;
+  return !isNaN(t) && Date.now() >= t;
+}
+const openLine = cf => {
+  const t = cf.openAt ? new Date(cf.openAt) : null;
+  return t && !isNaN(t) ? t.toLocaleString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : '';
+};
+
+/* ---- the trainee ---------------------------------------------------------- */
+function trainee(){
+  const cs = S(), cf = CF();
+  const sent = rec('chub:courseFeedbackSent') || rec('chub:courseFeedbackSentHere');
+  const head = '<p class="k">The end of the course · ' + esc(cs.courseName || '') + '</p><h1>Course feedback</h1>';
+  if (sent) { $('app').innerHTML = head + '<div class="card done"><h2>Thank you.</h2><p>Your feedback is with the centre. It helps the next course.</p></div>'; return; }
+  if (!isOpen(cf)) {
+    $('app').innerHTML = head + '<p class="lede">' + (openLine(cf) ? 'It opens on ' + esc(openLine(cf)) + '.' : 'Your tutors open it near the end of the course.') + '</p>';
+    return;
+  }
+  if (cf.form === 'own' && cf.url) {
+    $('app').innerHTML = head + '<p class="lede">Your centre has its own form. It opens in a new tab.</p><div class="card"><a class="gold" href="' + esc(cf.url) + '" target="_blank" rel="noopener">Open the feedback form</a></div>';
+    return;
+  }
+  $('app').innerHTML = head
+    + '<p class="lede">Twelve short questions, one tap each. Comments are optional. It takes a few minutes. Your answers go to the centre, without your name unless you choose to add it.</p>'
+    + '<form id="form">' + QS.map((x, i) => (x.sec ? '<p class="k" style="margin:34px 0 0">' + esc(x.sec) + '</p>' : '') + '<div class="card q"><h2 id="h' + i + '">' + esc(x.q) + '</h2>'
+        + (x.hint ? '<p class="hint">' + esc(x.hint) + '</p>' : '')
+        + (x.scale ? '<div class="arow"><fieldset class="scale" aria-labelledby="h' + i + '"><legend>' + esc(x.q) + '</legend>' + x.scale.map(v => '<label><input type="radio" name="' + x.id + '" value="' + esc(v) + '"><span>' + esc(v) + '</span></label>').join('') + '</fieldset>'
+            + (x.note ? '<button type="button" class="cbtn" data-c="' + x.id + '" aria-expanded="false" aria-controls="n' + i + '"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>Comment</button>' : '')
+            + '</div>' : '')
+        + (x.note ? '<textarea id="n' + i + '" name="' + x.id + 'Note" aria-labelledby="h' + i + '"' + (x.scale ? ' hidden placeholder="Anything to say about this?"' : ' placeholder="Write as much or as little as you like."') + '></textarea>' : '')
+        + '</div>').join('')
+    + '<div class="send"><label class="named"><input type="checkbox" id="named"><span>Add my name to my answers<br><small style="color:#6B6963">Leave it unticked to send them anonymously.</small></span></label>'
+    + '<button type="submit" class="gold" id="sendBtn">Send my feedback</button><span class="status" id="status" role="status"></span></div></form>';
+  document.querySelectorAll('.cbtn').forEach(b => b.addEventListener('click', () => {
+    const t = $(b.getAttribute('aria-controls')), open = t.hidden;
+    t.hidden = !open; b.setAttribute('aria-expanded', String(open)); if (open) t.focus();
+  }));
+  $('form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const fd = new FormData($('form')), answers = {};
+    QS.forEach(x => { if (x.scale) answers[x.id] = fd.get(x.id) || ''; if (x.note) answers[x.id + 'Note'] = String(fd.get(x.id + 'Note') || '').trim(); });
+    if (!Object.values(answers).some(v => v)) { $('status').textContent = 'Answer at least one question first.'; return; }
+    $('sendBtn').disabled = true; $('status').textContent = 'Sending…';
+    try {
+      await HubStore.courseFeedback(answers, $('named').checked);
+      try { localStorage.setItem('chub:courseFeedbackSentHere', JSON.stringify({ at: new Date().toISOString() })); } catch (err) {}
+      trainee();
+    } catch (err) { $('status').textContent = 'Not sent: ' + (err && err.message || err) + '. Try again in a moment.'; $('sendBtn').disabled = false; }
+  });
+}
+
+/* ---- the tutors ------------------------------------------------------------ */
+function staff(){
+  const cs = S(), cf = CF(), list = rec('connect_course_feedback_v1') || [];
+  const open = isOpen(cf), form = cf.form === 'own' ? 'own' : 'lite';
+  const local = d => { const t = d ? new Date(d) : null; if (!t || isNaN(t)) return ''; const p = n => String(n).padStart(2, '0'); return t.getFullYear() + '-' + p(t.getMonth() + 1) + '-' + p(t.getDate()) + 'T' + p(t.getHours()) + ':' + p(t.getMinutes()); };
+  const tally = x => {
+    const n = {}; x.scale.forEach(v => n[v] = 0);
+    list.forEach(e => { const v = (e.answers || {})[x.id]; if (v in n) n[v]++; });
+    const max = Math.max(1, ...Object.values(n));
+    return '<div class="tally">' + x.scale.map(v => '<div><span>' + esc(v) + '</span><span class="bar"><i style="width:' + Math.round(100 * n[v] / max) + '%"></i></span><b>' + n[v] + '</b></div>').join('') + '</div>';
+  };
+  const notes = x => list.filter(e => ((e.answers || {})[x.id + 'Note'] || '').trim())
+    .map(e => '<div class="quote">' + esc(e.answers[x.id + 'Note']) + '<small>' + (e.name ? esc(e.name) : 'Anonymous') + (e.day ? ' · ' + esc(e.day) : '') + '</small></div>').join('');
+  $('app').innerHTML = '<p class="k">The end of the course · ' + esc(cs.courseName || '') + '</p><h1>Course feedback</h1>'
+    + '<p class="lede">What the trainees think of the course. Anonymous unless a trainee chooses to add their name.</p>'
+    + '<div class="card"><h2 style="margin:0 0 4px;font:700 1.3rem Newsreader,serif;color:#1E3B2F">The form</h2>'
+      + '<label class="choice"><input type="radio" name="form" value="lite"' + (form === 'lite' ? ' checked' : '') + '><span><b>Connect Lite’s form</b><small>Twelve short questions, one tap each, comments optional: the course overall, the input sessions, teaching practice, the feedback after it, the assignments, the tutors, the workload, how the course was run, the platform, would they recommend it, anything else, and whether you may quote them.</small></span></label>'
+      + '<label class="choice"><input type="radio" name="form" value="own"' + (form === 'own' ? ' checked' : '') + '><span><b>Our own form</b><small>A link to the centre’s form, a Google Form for example. The trainees get a button that opens it.</small></span></label>'
+      + '<label class="f" for="url">Link to your form</label><input type="url" id="url" placeholder="https://" value="' + esc(cf.url || '') + '">'
+      + '<h2 style="margin:22px 0 4px;font:700 1.3rem Newsreader,serif;color:#1E3B2F">When it opens</h2>'
+      + '<p style="margin:0 0 8px">' + (open ? '<span class="pill open">Open</span> The trainees can answer now.' : '<span class="pill shut">Not open yet</span> ' + (openLine(cf) ? 'Opens on ' + esc(openLine(cf)) + '.' : 'Release it now, or set a time.')) + '</p>'
+      + '<label class="f" for="openAt">Open at</label><input type="datetime-local" id="openAt" value="' + esc(local(cf.openAt)) + '">'
+      + '<div class="row"><button type="button" class="gold" id="save">Save</button>'
+      + (open ? '<button type="button" class="line" id="close">Close it again</button>' : '<button type="button" class="line" id="release">Release it now</button>')
+      + '<span class="status" id="status" role="status"></span></div></div>'
+    + '<div class="card"><h2 style="margin:0 0 4px;font:700 1.3rem Newsreader,serif;color:#1E3B2F">The answers</h2>'
+      + '<p style="margin:0;color:#4A4843">' + (list.length ? list.length + (list.length === 1 ? ' trainee has' : ' trainees have') + ' answered.' : (form === 'own' ? 'The answers are on your own form.' : 'No answers yet.')) + '</p>'
+      + (list.length ? QS.map(x => '<div style="margin-top:22px"><h3 style="margin:0;font:600 1.05rem Newsreader,serif">' + esc(x.q) + '</h3>' + (x.scale ? tally(x) : '') + notes(x) + '</div>').join('') : '')
+    + '</div>';
+  const save = async patch => {
+    const next = S();
+    next.courseFeedback = Object.assign({}, next.courseFeedback || {}, {
+      form: (document.querySelector('input[name=form]:checked') || {}).value || 'lite',
+      url: $('url').value.trim(),
+      openAt: $('openAt').value ? new Date($('openAt').value).toISOString() : ''
+    }, patch || {});
+    if (next.courseFeedback.form === 'own' && !/^https:\/\//.test(next.courseFeedback.url)) { $('status').textContent = 'Paste your form’s link first (it starts https://).'; return; }
+    $('status').textContent = 'Saving…';
+    try { await HubStore.putCourse('settings', next); localStorage.setItem('connect_course_settings', JSON.stringify(next)); staff(); $('status').textContent = 'Saved.'; }
+    catch (e) { $('status').textContent = 'Not saved: ' + (e && e.message || e); }
+  };
+  $('save').addEventListener('click', () => save());
+  if ($('release')) $('release').addEventListener('click', () => save({ released: true }));
+  if ($('close')) $('close').addEventListener('click', () => save({ released: false, openAt: '' }));
+}
+
+function render(){
+  if (IS_TRAINEE) return trainee();
+  if (IS_TUTOR) return staff();
+  $('app').innerHTML = '<h1>Course feedback</h1><p class="lede">This is for the trainees and their tutors.</p>';
+}
+render();
+document.addEventListener('hub:ready', render);
+</script>
+</body>
+</html>

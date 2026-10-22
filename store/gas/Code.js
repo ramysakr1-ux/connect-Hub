@@ -45,7 +45,7 @@ var SHEET_CENTRES = 'centres';   // number | name | first seen | courses made   
 var TRAINEE_WRITES = { plan:1, selfeval:1, assignments:1, observations:1, celta5:1, agreement:1, interview:1, tpHistory:0 };// staffLinks: about a candidate, for the tutors and the assessor only -- deliberately absent from TRAINEE_READS (28 Sep 2026)
 var TUTOR_WRITES = { plan:1, selfeval:1, feedback:1, assignments:1, tracker:1, observations:1, links:1, staffLinks:1, celta5:1, celta5t:1, interview:1, tpHistory:1 };
 // links: a candidate's private links (their CELTA 5, a reading), written by the tutor, read by the candidate (28 Sep 2026)
-var TRAINEE_READS = { plan:1, selfeval:1, feedback:1, assignments:1, tracker:1, observations:1, links:1, celta5:1, celta5t:1, agreement:1, interview:1, tpHistory:1 };
+var TRAINEE_READS = { plan:1, selfeval:1, feedback:1, assignments:1, tracker:1, observations:1, links:1, celta5:1, celta5t:1, agreement:1, interview:1, tpHistory:1, courseFeedbackSent:1 };
 function doGet(e) {
   return json_({ ok: true, service: 'connect-lite-store', hint: 'POST a JSON body' });
 }
@@ -1125,6 +1125,7 @@ case 'inbox': {
          other way to learn which course it is on (30 Sep 2026). Not a secret
          -- the key already proves the course; the random half is the secret. */
       var boot = { course: { id: course.id, settings: courseRead_(course.id, 'settings'), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null, coming: comingFor_(course.id), guidance: reader ? guidanceFor_(course.id) : null } };
+      if (tutor) boot.course.courseFeedback = courseRead_(course.id, 'courseFeedback') || [];
       if (assessor) { var exb = assessorExpiry_(course.id); boot.assessor = { expires: exb ? exb.toISOString() : null }; }
       if (reader) {
         /* v53: the assessor's link never carries a candidate's address. */
@@ -1221,7 +1222,9 @@ case 'inbox': {
     // ---- course-level, readable by all on the course, written by tutors ----
     case 'course': {
       if (!course) throw new Error('This link is not on a course');
-      return { settings: courseRead_(course.id, 'settings'), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? courseRead_(course.id, 'volunteers') : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null };
+      var cres = { settings: courseRead_(course.id, 'settings'), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? courseRead_(course.id, 'volunteers') : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null };
+      if (tutor) cres.courseFeedback = courseRead_(course.id, 'courseFeedback') || [];
+      return cres;
     }
     case 'putCourse': {
       requireTutor_(tutor);
@@ -1490,6 +1493,26 @@ case 'inbox': {
           return String(x.by || '') !== String((me && me.name) || '');
         });
       }) };
+    }
+    /* END-OF-COURSE FEEDBACK (v96, 23 Oct 2026). Ramy: a short form at the end
+       of the course -- the course, the tutors, the workload, the centre's
+       support, the platform, anything else. ANONYMOUS unless the trainee
+       chooses otherwise ("should be a choice"): each answer is appended to one
+       course-level list carrying the day only, no token, and a name only when
+       the trainee ticked to add it. Their own record remembers THAT they
+       answered, never what, so nobody answers twice. The tutors read the list
+       (boot and course, tutor only); a trainee and the assessor never do. */
+    case 'courseFeedback': {
+      if (!me || tutor || assessor) throw new Error('Only a trainee answers the course feedback');
+      if (read_(course.id, me.token, 'courseFeedbackSent')) return { sent: true, already: true };
+      var fa = (req.answers && typeof req.answers === 'object') ? req.answers : {};
+      var fclean = {};
+      Object.keys(fa).slice(0, 24).forEach(function (q) { fclean[String(q).slice(0, 40)] = String(fa[q] == null ? '' : fa[q]).slice(0, 3000); });
+      var fentry = { day: Utilities.formatDate(new Date(), 'UTC', 'yyyy-MM-dd'), answers: fclean };
+      if (req.named === true) fentry.name = String(me.name || '').slice(0, 120);
+      courseUpdate_(course.id, 'courseFeedback', function (list) { list.push(fentry); return list; });
+      write_(course.id, me.token, 'courseFeedbackSent', { at: new Date().toISOString() });
+      return { sent: true };
     }
     case 'post': {
       requireTutor_(tutor);

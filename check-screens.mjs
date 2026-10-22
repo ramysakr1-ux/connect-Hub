@@ -76,6 +76,7 @@ const ROOMS = {
   '30_precourse_key.html':           { trainee:'open',   tutor:'open',   assessor:'open',   volunteer:'refuse' },
   '31_getting_to_know_you.html':     { trainee:'open',   tutor:'open',   assessor:'open',   volunteer:'refuse' },
   '32_last_page.html':              { trainee:'open',   tutor:'open',   assessor:'open',   volunteer:'refuse' },
+  '33_course_feedback.html':        { trainee:'open',   tutor:'open',   assessor:'open',   volunteer:'refuse' },
   '25_volunteer_register.html':      { trainee:'refuse', tutor:'open',   assessor:'open',   volunteer:'refuse' },
   /* A volunteer student's own page, and the certificate printed from it. The
      certificate is also the tutor's, to print one from the register. */
