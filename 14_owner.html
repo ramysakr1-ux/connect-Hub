@@ -454,6 +454,7 @@
   .course.demorow{display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px; padding:14px 18px; background:var(--paper); box-shadow:var(--nb-shadow); border-radius:var(--r-card,14px); margin:0 0 10px; border:0;}
   .demorow .dr-name{flex:1 1 240px; min-width:0;} .demorow .dr-name b{display:block; font:600 1.08rem/1.25 Newsreader,Georgia,serif; color:var(--ink);} .demorow .dr-name small{display:block; margin-top:2px; font-size:.8rem; color:var(--grey);}
   .demorow .dr-acts{display:flex; flex-wrap:wrap; gap:6px 8px; align-items:center;}
+  body .demorow a.btn{text-decoration:none !important;}
   .demorow .linkbtn{font-size:.92rem; margin:0 6px; padding:12px 4px; display:inline-block;}
   .demorow .dr-acts{gap:8px 10px;}
   body .demorow .moreacts > button{background:var(--a-stone, #EBEBF0) !important; color:var(--ink) !important; border-radius:999px; padding:10px 18px; min-height:44px; font-size:.92rem; font-weight:600;}
@@ -788,6 +789,17 @@ function scratchRow(c, kind, name, centre, alt, n, minted){
       <span class="chip faint mats-line" data-mats="${esc(c.id)}"><span class="note hub-wait">Materials: checking\u2026</span></span>
     </p></div>`;
 }
+/* A KEPT PAGE IS ONE ROW TOO (Ramy, 22 Oct 2026: "make the kept pages compact too"). The grades page gets its two doors, the TP point library its one. */
+function keptRow(c, kind, name, centre, alt, n, minted){
+  const doors = kind.lib
+    ? `<a class="btn small" href="28_tp_point_sets.html?k=${encodeURIComponent(c.tutorKey)}" title="The five sets every centre takes from. Nothing here is sent to anyone">Open the library</a>`
+    : `<a class="btn small" href="c17-provisional-grades/?k=${encodeURIComponent(c.tutorKey)}" title="Where the trainers write the provisional grades. It saves for everyone">Open it</a>
+       <button type="button" class="btn small quiet" data-copy="${esc(base() + 'c17-provisional-grades/?ak=' + encodeURIComponent(c.assessorKey))}" title="For Classroom and Appian. Nobody can change anything with it">Copy the view-only link</button>`;
+  return `<div class="course demorow keptrow c-record" id="course-${esc(c.id)}">
+    <div class="dr-name"><b>${esc(name)}${kind.lib ? '' : ` <span class="kind kind-record" title="${esc(kind.w)}">${esc(kind.t)}</span>`}</b>
+      <small>${kind.lib ? 'the sets every centre takes from' : 'where the trainers write the provisional grades'} \u00b7 ${esc(c.id)}${c.created ? ' \u00b7 made ' + esc(niceDate(c.created)) : ''}</small></div>
+    <div class="dr-acts">${doors}</div></div>`;
+}
 function cardLink(c){
   const film = filmLink();
   /* No figure travels on the link any more (7 Oct 2026): the card says how
@@ -1034,6 +1046,7 @@ function render(courses, msg){
     if (kind.k === 'demo') return demoRow(c, kind, name, centre, alt, n, minted);
     if (kind.k === 'live') return liveRow(c, kind, name, centre, alt, n, minted);
     if (kind.k === 'scratch') return scratchRow(c, kind, name, centre, alt, n, minted);
+    if (kind.k === 'record') return keptRow(c, kind, name, centre, alt, n, minted);
     if (kind.k !== 'record' && (CARD_PREVIEW === 'ticket' || (CARD_PREVIEW !== 'welcome' && c.cardStyle === 'ticket'))) return ticketBook(c, kind, name, centre, alt, n, minted);
     return `
     <div class="course c-${kind.k}${minted ? ' minted' : ''}" id="course-${esc(c.id)}">
