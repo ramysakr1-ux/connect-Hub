@@ -196,6 +196,7 @@ function sendAs_(msg) {
   if (!FROM_OK_) { MailApp.sendEmail(msg); return; }
   var opt = { htmlBody: msg.htmlBody, name: msg.name, replyTo: msg.replyTo, from: FROM_ };
   if (msg.bcc) opt.bcc = msg.bcc;
+  if (msg.attachments) opt.attachments = msg.attachments;
   GmailApp.sendEmail(msg.to, msg.subject, msg.body || '', opt);
 }
 function sendVolunteerReminders() {
@@ -1513,6 +1514,24 @@ case 'inbox': {
       courseUpdate_(course.id, 'courseFeedback', function (list) { list.push(fentry); return list; });
       write_(course.id, me.token, 'courseFeedbackSent', { at: new Date().toISOString() });
       return { sent: true };
+    }
+    /* The answers, sent to the centre (v96, 23 Oct 2026). Ramy: "we need to
+       be able to either download them or email them to the center. Or
+       both." The tutors' page builds the summary and the spreadsheet from
+       the answers it already holds; this sends them, to ONE address, from
+       Lite's own address, with the spreadsheet attached. */
+    case 'mailCourseFeedback': {
+      requireTutor_(tutor);
+      var mto = String(req.to || '').trim();
+      if (!/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(mto)) throw new Error('That is not an email address');
+      var msubj = String(req.subject || 'Course feedback').slice(0, 200);
+      var mbody = String(req.body || '').slice(0, 20000);
+      var mcsv = String(req.csv || '');
+      if (mcsv.length > 400000) throw new Error('The spreadsheet is too large to send');
+      var mmsg = { to: mto, subject: msubj, body: mbody, name: 'Connect Lite' };
+      if (mcsv) mmsg.attachments = [Utilities.newBlob(mcsv, 'text/csv', String(req.filename || 'course-feedback.csv').replace(/[^\w .-]+/g, '').slice(0, 80) || 'course-feedback.csv')];
+      sendAs_(mmsg);
+      return { sent: true, to: mto };
     }
     case 'post': {
       requireTutor_(tutor);

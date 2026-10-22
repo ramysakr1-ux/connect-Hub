@@ -191,6 +191,7 @@ window.HubStore = (function(){
     },
     putCourse: function(kind, data){ return call({ op: 'putCourse', kind: kind, data: data }); },
     /* v96 (23 Oct 2026): the end-of-course feedback, sent once, anonymous unless `named` */
+    mailCourseFeedback: function(m){ return call({ op: 'mailCourseFeedback', to: m.to, subject: m.subject, body: m.body, csv: m.csv, filename: m.filename }); },
     courseFeedback: function(answers, named){ return call({ op: 'courseFeedback', answers: answers, named: named === true }); },
     /* A centre's next course starts from what its last one taught the criteria
        suggester. The store decides whether there is anything to take: it
