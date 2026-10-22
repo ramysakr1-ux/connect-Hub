@@ -455,6 +455,8 @@
   .demorow .dr-name{flex:1 1 240px; min-width:0;} .demorow .dr-name b{display:block; font:600 1.08rem/1.25 Newsreader,Georgia,serif; color:var(--ink);} .demorow .dr-name small{display:block; margin-top:2px; font-size:.8rem; color:var(--grey);}
   .demorow .dr-acts{display:flex; flex-wrap:wrap; gap:6px 8px; align-items:center;}
   .demorow .linkbtn{font-size:.82rem; margin:0 4px;}
+  .liverow .lr-foot{flex:1 1 100%; display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0;} .liverow .tb-acts{margin-left:auto; display:flex; align-items:center; gap:8px;}
+  .liverow .minted-line, .liverow .v4-steps{flex:1 1 100%;}
   body .demorow .btn{background:var(--a-stone, #EBEBF0) !important; color:var(--ink) !important; box-shadow:none !important; border:0 !important; border-radius:999px; padding:6px 13px;}
   body .demorow .btn:not(.quiet){background:var(--a-forest, #1E3B2F) !important; color:#fff !important;}
   .tools{margin-top:26px; padding-top:18px; border-top:1px solid var(--sand-line);}
@@ -729,6 +731,33 @@ function demoRow(c, kind, name, centre, alt, n, minted){
       <button class="btn quiet small" type="button" data-delete="${esc(c.id)}" data-label="${esc(label(c))}" data-trainees="${n}">Delete</button>
     </div></div>`;
 }
+/* THE LIVE COURSE IS ONE ROW TOO (Ramy, 22 Oct 2026: "make the live course card shorter"): the name, the centre and what you copy, then the facts and
+   the two quiet actions. Delete stays behind the \u22ef menu, as it always did on a real course. Same data-attributes as the tickets, so every handler is unchanged. */
+function liveRow(c, kind, name, centre, alt, n, minted){
+  const tutorLink = base() + 'invite.html?k=' + encodeURIComponent(c.tutorKey);
+  const assessorLink = base() + 'invite.html?ak=' + encodeURIComponent(c.assessorKey);
+  return `<div class="course demorow liverow c-live${minted ? ' minted' : ''}" id="course-${esc(c.id)}">
+    ${minted ? '<p class="minted-line">New \u2014 send the centre its tutor link: copy it, or email the message with the buttons below. They set the course up and add their own trainees.</p><ol class="v4-steps" aria-label="What happens next"><li class="done">Course made</li><li class="now">Send the tutor link</li><li>The centre sets it up and adds its trainees</li></ol>' : ''}
+    <div class="dr-name"><b>${esc(name)} <span class="kind kind-live" title="${esc(kind.w)}">${esc(kind.t)}</span></b>
+      <small>${esc(centre)}${centre && c.centreNumber ? ' \u00b7 ' : ''}${esc(c.centreNumber || '')}</small></div>
+    <div class="dr-acts" role="group" aria-label="Copy a link card for ${esc(name)}">
+      <button type="button" class="btn small quiet" data-copy="${esc(tutorLink)}" title="The teaching team: their tutors and course admin all use it">Team link</button>
+      <button type="button" class="btn small quiet" data-copy="${esc(assessorLink)}" title="The assessor: read-only, for the visit. The centre can find and change it too">Assessor link</button>
+      <button type="button" class="btn small quiet" data-vol="${esc(c.id)}" data-key="${esc(c.tutorKey)}" title="One student\u2019s own page: the next class, their days, their certificate">Volunteer link</button>
+      <button type="button" class="btn small" data-note="${esc(c.id)}" data-what="tutor" title="A short message with the tutor link in it, for whoever runs the course at the centre">Message to the centre</button>
+      <a class="linkbtn" data-mail="${esc(c.id)}" data-what="tutor" href="#">Email it</a>
+    </div>
+    <p class="cchips lr-foot">
+      <span class="chip faint"><code>${esc(c.id)}</code>${c.created ? ' \u00b7 made ' + esc(niceDate(c.created)) : ''}</span>
+      <span class="chip faint">${n ? n + ' trainee' + (n === 1 ? '' : 's') : '0 trainees yet'}</span>
+      <span class="chip faint mats-line" data-mats="${esc(c.id)}"><span class="note hub-wait">Materials: checking\u2026</span></span>
+      <span class="tb-acts">
+        <button class="btn quiet small" type="button" data-clone="${esc(c.id)}" data-label="${esc(label(c))}">Start the next course from this</button>
+        <span class="moreacts"><button type="button" class="moretog" aria-label="More for this course">\u22ef</button>
+          <span class="menu"><button type="button" data-delete="${esc(c.id)}" data-label="${esc(label(c))}" data-trainees="${n}">Delete this course</button></span></span>
+      </span>
+    </p></div>`;
+}
 function cardLink(c){
   const film = filmLink();
   /* No figure travels on the link any more (7 Oct 2026): the card says how
@@ -973,6 +1002,7 @@ function render(courses, msg){
        ticket gets its console card as tickets too. &card=ticket on the
        console's own address previews it on every course. */
     if (kind.k === 'demo') return demoRow(c, kind, name, centre, alt, n, minted);
+    if (kind.k === 'live') return liveRow(c, kind, name, centre, alt, n, minted);
     if (kind.k !== 'record' && (CARD_PREVIEW === 'ticket' || (CARD_PREVIEW !== 'welcome' && c.cardStyle === 'ticket'))) return ticketBook(c, kind, name, centre, alt, n, minted);
     return `
     <div class="course c-${kind.k}${minted ? ' minted' : ''}" id="course-${esc(c.id)}">
