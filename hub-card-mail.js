@@ -16,11 +16,11 @@
  * No images and no SVG -- the mark is set in type so nothing has to load.
  */
 (function(){
-  var C = { sand:'#fdfbf7', surface:'#f5eee2', box:'#ede0cc', line:'#d6cec1', ink:'#241d16', inkWarm:'#3e2818',
-            grey:'#6d655c', teal:'#0f4a4b', gold:'#ad7f43',
+  var C = { sand:'#f3f3f7', surface:'#ebebf0', box:'#e3e6ea', line:'#d9d9e0', ink:'#232220', inkWarm:'#232220',
+            grey:'#5b5f6b', teal:'#1e3b2f', gold:'#a8803f',
             /* the welcome family (1a, the link cards, 7 Oct 2026) */
-            tealDeep:'#0b3a3b', goldWash:'#f6ead3', amber:'#e5c98f', goldDeep:'#8a6534', paper:'#fffdf9',
-            onTealGold:'#d9b47a', onTealMeta:'#d7e6e5' };
+            tealDeep:'#1e3b2f', goldWash:'#f7f1dd', amber:'#c99a2e', goldDeep:'#7a5a1f', paper:'#ffffff',
+            onTealGold:'#cc9140', onTealMeta:'#e3e6ea' };
   var MAIL = 'lite@celtaconnect.com';
   /* The tile, as an image: an email cannot draw the mark, and the brand is
      always there (Ramy, 8 Oct 2026). The published icon, from the live site
@@ -113,7 +113,7 @@
      anyone holds a demo link, so it ends by offering one rather than assuming
      the reader already has three. No price, no doors, one button. */
   function filmDoc(letter, ctx) {
-    var sheet = '<p style="font-family:' + SANS + '; font-size:14.5px; line-height:1.65; color:' + C.ink + '; margin:0;">The whole of a course in one sitting: the same course run two ways, then the plans coming in, the feedback going back, the assignments marked, the assessor’s visit, and the reports at the end. Nothing in it is a mock-up — it is a real course being used.</p>'
+    var sheet = '<p style="font-family:' + SANS + '; font-size:14.5px; line-height:1.65; color:' + C.ink + '; margin:0;">The timetable built, the TP points dealt, plans in and feedback back, the assignments marked, the assessor’s visit and the final grades. Nothing in it is a mock-up: it is Lite, being used.</p>'
       + (ctx.film
           ? '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0 0;"><tr><td align="center" bgcolor="' + C.teal + '" style="border-radius:26px;">'
             + '<a href="' + esc(ctx.film) + '" style="display:inline-block; padding:14px 34px; font-family:' + SANS + '; font-size:16px; font-weight:700; color:#ffffff; text-decoration:none;">Watch the film</a>'
@@ -121,7 +121,7 @@
           : '')
       ;
     var ask = '<p style="font-family:' + SANS + '; font-size:14px; line-height:1.65; color:' + C.ink + '; margin:' + (STYLE === 'ticket' ? '0' : '22px 0 0; padding-top:16px; border-top:1px solid ' + C.line) + ';">Centres and trainers: email <a href="mailto:' + MAIL + '" style="color:' + C.teal + '; font-weight:700; text-decoration:none;">' + MAIL + '</a> for the rates and a demo link. You get three real courses to walk around — as a tutor, as one of the trainees, as the assessor and as a volunteer student — and you can type in all of them.</p>';
-    return page('Connect Lite — the film', letter, wrap(ctx, 'A short film', 'A CELTA course, from the link being sent to the final report', '', sheet, ask));
+    return page('Connect Lite — the film', letter, wrap(ctx, 'A short film', 'A CELTA course, start to finish', '', sheet, ask));
   }
 
 
@@ -178,7 +178,7 @@
   window.hubCardMail = function(ctx){
     STYLE = ctx.cardStyle === 'ticket' ? 'ticket' : 'welcome';
     var doors = (ctx.doors || []).map(function(d){ return door(d.label, d.note, d.href, 'Open'); }).join('');
-    if (ctx.film) doors += door('The film', 'Start to finish: a course from the first plan to the certificates.', ctx.film, 'Watch');
+    if (ctx.film) doors += door('The film', 'A whole course, start to finish, in three minutes.', ctx.film, 'Watch');
     /* The letter (Ramy, 2 Oct 2026: "a nice message from me on top, with nice
        font, with my signature, and the card sitting underneath it"). His note,
        in the serif, signed; the card is the enclosure. No note, no letter. */
@@ -193,15 +193,15 @@
     if (ctx.only === 'price') return priceDoc(letter, ctx);
     var li = function(t){ return '<li style="margin:0 0 3px;">' + esc(t) + '</li>'; };
     var sheet =
-      '<h2 style="font-family:' + SERIF + '; font-weight:600; font-size:17px; color:' + C.inkWarm + '; margin:0 0 4px;">See it working</h2>' +
-      '<p style="font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.grey + '; margin:0 0 4px;">Real courses. Open one as a tutor, a trainee, the assessor or a volunteer student, and type in it.</p>' +
+      '<h2 style="font-family:' + SERIF + '; font-weight:600; font-size:17px; color:' + C.inkWarm + '; margin:0 0 4px;">Open a real course</h2>' +
+      '<p style="font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.grey + '; margin:0 0 4px;">Three courses at three moments. Go in as a tutor, a trainee, the assessor or a volunteer student, and type. Nothing you do reaches anyone’s record.</p>' +
       '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px ' + (STYLE === 'ticket' ? 'dashed ' : 'solid ') + C.line + '; margin-top:' + (STYLE === 'ticket' ? '14px' : '0') + ';">' + doors + '</table>' +
       /* How it is priced, never what (Ramy, 7 Oct 2026). On the ticket it goes
          on the stub instead (below). */
       (STYLE === 'ticket' ? '' : '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:18px 0 0;"><tr><td style="background:' + C.goldWash + '; border:1px solid ' + C.amber + '; border-radius:12px; padding:16px 18px;">' +
         '<div style="font-family:' + SERIF + '; font-size:20px; font-weight:700; color:' + C.inkWarm + '; line-height:1.2; margin:0 0 6px;">Priced per course, not per trainee</div>' +
         '<ul style="margin:0; padding-left:18px; font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.ink + ';">' +
-          li('Packages from one course to twenty: the more you take, the less each costs.') +
+          li('Every feature in every course. The more courses you take, the less each one costs.') +
           li('Duplicate a finished course and run it again.') +
           li('Up to 24 trainees, all their tutors and your course admin. Volunteer students and the assessor are never counted.') +
         '</ul>' +
@@ -216,8 +216,8 @@
         + '</tr></table>'
       : contact('For the rates and demo links:');
     var html = page('Connect Lite — for your centre', letter,
-      wrap(ctx, ctx.cardStyle === 'ticket' ? 'For a CELTA centre' : 'For a centre', 'Everything your trainees write, and everything you write back',
-        'A CELTA course’s assessed paperwork in one place. No accounts, no passwords, nothing to install. A course runs on four kinds of link.', sheet, stub));
+      wrap(ctx, 'For a CELTA centre', 'Teach the course. Lite does the rest.',
+        'Every trainee gets a course of their own. Every tutor gets their evenings back. Built on Cambridge’s handbook, made by a CELTA tutor, and simple enough for anyone.', sheet, stub));
     return html;
   };
 })();

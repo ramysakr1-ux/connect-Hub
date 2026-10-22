@@ -39,7 +39,7 @@
   };
 
   window.hubNoLink = function () {
-    document.title = 'Connect Lite — a CELTA course, run from one link';
+    document.title = 'Connect Lite — your CELTA course, in one place';
     document.documentElement.style.background = 'var(--sand)';
     var mark = '<span class="fp-tile"><svg viewBox="8 28 104 64" width="20" height="12" fill="none">'
       + '<path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path>'
@@ -51,22 +51,24 @@
       '<div class="fp-card">'
       + '<div class="fp-mark">' + mark + '</div>'
       + '<p class="fp-eyebrow">For a CELTA centre</p>'
-      + '<h1>Everything your trainees write, and everything you write back</h1>'
-      + '<p class="fp-lede">The assessed paperwork of a CELTA course in one place — plans, language analyses, self-evaluations, the four written assignments, your feedback, the grades and the reports. No accounts, no passwords, nothing to install. A course is four kinds of link: one for your tutors, one for each trainee, one for the assessor and one for each volunteer student. Each link arrives as a card with a QR code, so it opens on a phone as easily as on a laptop.</p>'
-
+      + '<h1>Teach the course. Lite does the rest.</h1>'
+      + '<p class="fp-lede">Every trainee gets a course of their own. Every tutor gets their evenings back. Connect Lite was built by a CELTA tutor, for the four weeks every tutor knows: plans arriving at midnight, feedback typed twice, a booklet filled in from memory, and a scramble for volunteer students. Lite takes all of it on. Each trainee opens one link and finds a course of their own. Each tutor opens theirs and sees exactly what needs them next. And when the assessor arrives, the pack is already there. Each link arrives as a card with a QR code, so it opens on a phone as easily as on a laptop.</p>'
 
       + '<h2>What it does</h2>'
       + '<ul class="fp-does">'
-      + '<li><b>Plans, analyses and self-evaluations</b> come in from trainees and land on the tutor’s screen. No files, no email.</li>'
-      + '<li><b>Feedback</b> is written against the plan the trainee wrote, tagged with the CELTA 5 criteria, and returned the same day.</li>'
-      + '<li><b>Written assignments</b> carry your centre’s own wording and criteria, and the outcome follows the marks rather than a box.</li>'
-      + '<li><b>The timetable, TP points and input sessions</b>: the course\u2019s own timetable, each trainee\u2019s TP points with the pages and the audio, and a library of input sessions that opens each one on its day.</li>'
-      + '<li><b>Volunteer students</b> have a register, their own page in six languages, reminders the day before, and a signed certificate at the end.</li>'
-      + '<li><b>The assessor’s pack, the Cambridge grade form and the end-of-course reports</b> assemble themselves from what is already there.</li>'
+      + '<li><b>A course of their own.</b> One link, and each trainee finds their timetable, their TP, their pages and their feedback.</li>'
+      + '<li><b>It always knows what\u2019s next.</b> Every screen opens on what is waiting for you. No training: if you can open an email, you can run a course.</li>'
+      + '<li><b>Write it once.</b> A plan carries on into the feedback, the tracker, CELTA 5 and the assessor\u2019s pack. One written assignment: 13 clicks, not 70.</li>'
+      + '<li><b>Cambridge, built in.</b> The 41 criteria, the CELTA 5 stages and the grade form, in Cambridge\u2019s own words.</li>'
+      + '<li><b>CELTA 5, written as you go.</b> Trainee and tutor each write their half and sign on the screen; on the last day it prints as Cambridge\u2019s booklet, already signed.</li>'
+      + '<li><b>TP points, dealt fairly.</b> Every trainee teaches every type, and nobody always goes first.</li>'
+      + '<li><b>A timetable that understands CELTA.</b> Built in a minute, or read from your spreadsheet; everyone sees their own day.</li>'
+      + '<li><b>Volunteer students who come back.</b> A page in their own language, the trainees\u2019 handouts before the class, and a certificate they have earned.</li>'
+      + '<li><b>Your centre, your way.</b> Your wording, your criteria and your TP points, with a library of interactive input sessions. Duplicate a finished course and go.</li>'
       + '</ul>'
 
       + '<div class="fp-film">'
-      + '<div><b>See a whole course, start to finish</b><span>From the first lesson plan to the certificates. A real course, not a mock-up.</span></div>'
+      + '<div><b>See a whole course, start to finish</b><span>A whole course, start to finish, in three minutes. A real course, not a mock-up.</span></div>'
       + '<a class="fp-btn" href="film/course-journey.html">Watch the film</a>'
       + '</div>'
 
