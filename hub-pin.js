@@ -55,8 +55,8 @@
       var veil = document.createElement('div'); veil.className = 'hub-pin-veil';
       var tutor = opts.who === 'tutor', choose = !!opts.choose;
       var head = choose
-        ? (tutor ? 'Choose the teaching team’s PIN' : 'Choose a PIN for your link')
-        : (tutor ? 'The teaching team’s PIN' : 'This link has a PIN');
+        ? (tutor ? 'Choose the training team’s PIN' : 'Choose a PIN for your link')
+        : (tutor ? 'The training team’s PIN' : 'This link has a PIN');
       var line = choose
         ? (tutor
             ? 'You are the first tutor to open this link. Four to twelve letters or numbers, typed twice. Every tutor types it once on each device. If it is lost, course admin rotates the link.'
