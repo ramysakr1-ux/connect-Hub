@@ -159,6 +159,8 @@
     border:1px solid var(--sand-line); border-radius:9px; padding:5px; min-width:190px;
     box-shadow:0 10px 26px rgba(0,0,0,.14); display:none;}
   .moreacts.on .menu{display:block;}
+  .moreacts.up .menu{top:auto; bottom:100%; margin-bottom:6px;}
+  .course.menu-open, details.sec.menu-open{position:relative; z-index:60;}
   .moreacts .menu button{display:block; width:100%; text-align:left; font:600 .82rem/1 inherit;
     background:none; border:0; padding:8px 10px; border-radius:6px; cursor:pointer; color:var(--garnet,#8a2f3a);}
   .moreacts .menu button:hover{background:var(--box);}
@@ -451,7 +453,7 @@
   .course.tb.c-live{border-top-color:var(--pill-good-line);}
   .course.tb.minted{outline:2px solid var(--gold);}
   @media(max-width:640px){ .tb-grid{grid-template-columns:1fr;} }
-  .course.demorow{display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px; padding:14px 18px; background:var(--paper); box-shadow:var(--nb-shadow); border-radius:var(--r-card,14px); margin:0 0 10px; border:0;}
+  .course.demorow{overflow:visible !important; display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px; padding:14px 18px; background:var(--paper); box-shadow:var(--nb-shadow); border-radius:var(--r-card,14px); margin:0 0 10px; border:0;}
   .demorow .dr-name{flex:1 1 240px; min-width:0;} .demorow .dr-name b{display:block; font:600 1.08rem/1.25 Newsreader,Georgia,serif; color:var(--ink);} .demorow .dr-name small{display:block; margin-top:2px; font-size:.8rem; color:var(--grey);}
   .demorow .dr-acts{display:flex; flex-wrap:wrap; gap:6px 8px; align-items:center;}
   body .demorow a.btn{text-decoration:none !important;}
@@ -1678,7 +1680,17 @@ function wireSections(){
 document.addEventListener('click', e => {
   const tog = e.target.closest && e.target.closest('.moretog');
   document.querySelectorAll('.moreacts.on').forEach(m => { if (!tog || m !== tog.parentElement) m.classList.remove('on'); });
-  if (tog) { tog.parentElement.classList.toggle('on'); e.stopPropagation(); }
+  if (!tog) document.querySelectorAll('.menu-open').forEach(x => x.classList.remove('menu-open'));
+  if (tog) {
+    const m = tog.parentElement; m.classList.toggle('on'); m.classList.remove('up');
+    /* The card and its section are lifted above the ones that follow while a menu is open, or the next card paints over the menu. */
+    document.querySelectorAll('.menu-open').forEach(x => x.classList.remove('menu-open'));
+    if (m.classList.contains('on')) { const c = m.closest('.course'), sc = m.closest('details.sec'); if (c) c.classList.add('menu-open'); if (sc) sc.classList.add('menu-open'); }
+    /* A menu that would drop below the screen (the button near the foot of a phone) opens upwards instead:
+       Ramy, 22 Oct 2026, "you can't see the box" -- the Delete was off the bottom edge. */
+    if (m.classList.contains('on')) { const r = m.querySelector('.menu').getBoundingClientRect(); if (r.bottom > window.innerHeight - 8) m.classList.add('up'); }
+    e.stopPropagation();
+  }
 });
 function wireSending(){
   const d = $('sendblock');
