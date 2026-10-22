@@ -37,7 +37,7 @@
 <title>The last page</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610230109">
+<link rel="stylesheet" href="hub-tokens.css?v=202610230111">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:#232220; background:linear-gradient(180deg,#FFFFFF 0,#F3F3F7 420px);}
@@ -152,21 +152,21 @@
     .printcard small{font:600 10pt 'Karla',sans-serif; color:#4A4843;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610230109">
+<link rel="stylesheet" href="hub-house.css?v=202610230111">
 </head>
 <body>
 <div id="app"></div>
 <div class="printcard" id="printcard" aria-hidden="true"></div>
-<script src="hub-shared.js?v=202610230109"></script>
-<script src="hub-store.js?v=202610230109"></script>
-<script src="hub-tracker.js?v=202610230109"></script>
-<script src="hub-hand.js?v=202610230109"></script>
-<script src="hub-ink.js?v=202610230109"></script>
-<script src="hub-say.js?v=202610230109"></script>
-<script src="observation-defaults.js?v=202610230109"></script>
-<script src="hub-rotation.js?v=202610230109"></script>
-<script src="hub-peers.js?v=202610230109"></script>
-<script src="hub-sync.js?v=202610230109"></script>
+<script src="hub-shared.js?v=202610230111"></script>
+<script src="hub-store.js?v=202610230111"></script>
+<script src="hub-tracker.js?v=202610230111"></script>
+<script src="hub-hand.js?v=202610230111"></script>
+<script src="hub-ink.js?v=202610230111"></script>
+<script src="hub-say.js?v=202610230111"></script>
+<script src="observation-defaults.js?v=202610230111"></script>
+<script src="hub-rotation.js?v=202610230111"></script>
+<script src="hub-peers.js?v=202610230111"></script>
+<script src="hub-sync.js?v=202610230111"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -274,13 +274,14 @@ function suggestionsFor(R){
   const seen = {};
   return out.filter(o => o.score > 0 && !seen[o.text.toLowerCase()] && (seen[o.text.toLowerCase()] = 1)).sort((a, b) => b.score - a.score);
 }
+const MAX_SAID = 3;
 /* The page's choice: the tutors' saved picks, else the best phrase per person. */
 function chosenFor(R){
   const saved = (S().lastWords || {})[R.token];
-  if (Array.isArray(saved)) return saved.filter(x => x && x.text);
+  if (Array.isArray(saved)) return saved.filter(x => x && x.text).slice(0, MAX_SAID);
   const best = {};
   suggestionsFor(R).forEach(o => { if (!best[o.by]) best[o.by] = o; });
-  return Object.keys(best).map(k => best[k]).slice(0, 3);
+  return Object.keys(best).map(k => best[k]).slice(0, MAX_SAID);
 }
 
 /* ---- the trainee's page ------------------------------------------------- */
@@ -407,11 +408,16 @@ function staff(){
     + '<div class="card"><h2>The class photo</h2><p class="hint">One photo of everyone. A Zoom screenshot on the last afternoon works, or a photo from the room. It goes on every trainee’s last page, framed, and on the card they keep.</p>'
       + '<label class="drop" id="drop">' + (cs.classPhoto && cs.classPhoto.src ? '<img src="' + esc(cs.classPhoto.src) + '" alt="The class photo"><span>Choose another to replace it</span>' : '<b>Choose the photo</b><span>JPG or PNG · a screenshot is fine</span>')
       + '<input type="file" id="file" accept="image/*" hidden></label></div>'
-    + '<div class="card"><h2>What people said about each trainee</h2><p class="hint">Short, warm phrases from anything written on the course, each under the name of whoever wrote it. Tick the ones that go on their page, or add your own. Never an action point or a grade.</p>' + rows.join('') + '</div>'
+    + '<div class="card"><h2>What people said about each trainee</h2><p class="hint">Short, warm phrases from anything written on the course, each under the name of whoever wrote it. Tick up to three for their page, or add your own. Never an action point or a grade.</p>' + rows.join('') + '</div>'
     + '<div class="savebar"><button type="button" class="gold" id="save">Save the last pages</button><span class="status" id="status"></span></div>'
     + '</div>';
   $('file').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (f) takePhoto(f); });
   $('save').addEventListener('click', saveAll);
+  /* three at most per trainee (Ramy, 23 Oct 2026: "cap this at like 3") */
+  document.querySelectorAll('.who').forEach(w => w.addEventListener('change', e => {
+    if (!e.target.matches('input[type=checkbox]') || !e.target.checked) return;
+    if (w.querySelectorAll('input[type=checkbox]:checked').length > MAX_SAID) { e.target.checked = false; $('status').textContent = 'Three at most for each trainee. Untick one first.'; }
+  }));
 }
 function takePhoto(f){
   const r = new FileReader();
@@ -436,7 +442,7 @@ async function saveAll(){
       else { const old = (PICKS[id] || []).find(x => x.text === cb.dataset.own); if (old) list.push(old); } });
     const t = w.querySelector('[data-add=text]').value.trim();
     if (t) list.push({ text: t.replace(/[.\s]+$/, ''), by: w.querySelector('[data-add=by]').value.trim() || 'Your tutor', role: '', from: w.querySelector('[data-add=from]').value.trim() });
-    words[id] = list;
+    words[id] = list.slice(0, MAX_SAID);
   });
   cs.lastWords = words;
   $('save').disabled = true; $('status').textContent = 'Saving…';
