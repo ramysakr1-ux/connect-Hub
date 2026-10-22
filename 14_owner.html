@@ -763,6 +763,31 @@ function liveRow(c, kind, name, centre, alt, n, minted){
       </span>
     </p></div>`;
 }
+/* A SCRATCH COURSE IS ONE ROW TOO (Ramy, 22 Oct 2026: "make the scratch card compact"): the demo row's buttons, plus the line of facts, because its
+   materials chip is where the Drive files are emptied. Same data-attributes as the tickets, so every handler is unchanged. */
+function scratchRow(c, kind, name, centre, alt, n, minted){
+  const tutorLink = base() + 'invite.html?k=' + encodeURIComponent(c.tutorKey);
+  const assessorLink = base() + 'invite.html?ak=' + encodeURIComponent(c.assessorKey);
+  const bits = [esc(centre), c.centreNumber ? esc(c.centreNumber) : '', alt ? 'shown as \u201c' + esc(alt) + '\u201d' : ''].filter(Boolean).join(' \u00b7 ');
+  return `<div class="course demorow scratchrow c-scratch" id="course-${esc(c.id)}">
+    <div class="dr-name"><b>${esc(name)} <span class="kind kind-scratch" title="${esc(kind.w)}">${esc(kind.t)}</span></b><small>${bits}</small></div>
+    <div class="dr-acts" role="group" aria-label="Copy a link card for ${esc(name)}">
+      <button type="button" class="btn small quiet" data-copy="${esc(tutorLink)}" title="The teaching team: tutors and course admin use it">Team</button>
+      <button type="button" class="btn small quiet" data-copy="${esc(assessorLink)}" title="The assessor: read-only, for the visit">Assessor</button>
+      <button type="button" class="btn small quiet" data-vol="${esc(c.id)}" data-key="${esc(c.tutorKey)}" title="A volunteer student\u2019s own page">Volunteer</button>
+      <button type="button" class="btn small" data-note="${esc(c.id)}" title="The offer card as a message: what Lite is, how it\u2019s priced, four ways in">Offer card</button>
+      <a class="linkbtn" data-mail="${esc(c.id)}" href="#">Email it</a>
+      <a class="linkbtn" data-card="${esc(c.id)}" href="#">See it</a>
+      <span class="moreacts"><button type="button" class="moretog" aria-label="More for this scratch course">More \u22ef</button>
+        <span class="menu"><button type="button" class="m-clone" data-clone="${esc(c.id)}" data-label="${esc(label(c))}">Start the next course from this</button>
+          <button type="button" data-delete="${esc(c.id)}" data-label="${esc(label(c))}" data-trainees="${n}">Delete this course</button></span></span>
+    </div>
+    <p class="cchips lr-foot">
+      <span class="chip faint"><code>${esc(c.id)}</code>${c.created ? ' \u00b7 made ' + esc(niceDate(c.created)) : ''}</span>
+      <span class="chip faint">${n ? n + ' trainee' + (n === 1 ? '' : 's') : '0 trainees yet'}</span>
+      <span class="chip faint mats-line" data-mats="${esc(c.id)}"><span class="note hub-wait">Materials: checking\u2026</span></span>
+    </p></div>`;
+}
 function cardLink(c){
   const film = filmLink();
   /* No figure travels on the link any more (7 Oct 2026): the card says how
@@ -1008,6 +1033,7 @@ function render(courses, msg){
        console's own address previews it on every course. */
     if (kind.k === 'demo') return demoRow(c, kind, name, centre, alt, n, minted);
     if (kind.k === 'live') return liveRow(c, kind, name, centre, alt, n, minted);
+    if (kind.k === 'scratch') return scratchRow(c, kind, name, centre, alt, n, minted);
     if (kind.k !== 'record' && (CARD_PREVIEW === 'ticket' || (CARD_PREVIEW !== 'welcome' && c.cardStyle === 'ticket'))) return ticketBook(c, kind, name, centre, alt, n, minted);
     return `
     <div class="course c-${kind.k}${minted ? ' minted' : ''}" id="course-${esc(c.id)}">
