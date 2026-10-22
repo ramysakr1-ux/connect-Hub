@@ -37,7 +37,7 @@
 <title>The last page</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610230102">
+<link rel="stylesheet" href="hub-tokens.css?v=202610230109">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:#232220; background:linear-gradient(180deg,#FFFFFF 0,#F3F3F7 420px);}
@@ -152,18 +152,21 @@
     .printcard small{font:600 10pt 'Karla',sans-serif; color:#4A4843;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610230102">
+<link rel="stylesheet" href="hub-house.css?v=202610230109">
 </head>
 <body>
 <div id="app"></div>
 <div class="printcard" id="printcard" aria-hidden="true"></div>
-<script src="hub-shared.js?v=202610230102"></script>
-<script src="hub-store.js?v=202610230102"></script>
-<script src="hub-tracker.js?v=202610230102"></script>
-<script src="hub-hand.js?v=202610230102"></script>
-<script src="hub-ink.js?v=202610230102"></script>
-<script src="hub-say.js?v=202610230102"></script>
-<script src="hub-sync.js?v=202610230102"></script>
+<script src="hub-shared.js?v=202610230109"></script>
+<script src="hub-store.js?v=202610230109"></script>
+<script src="hub-tracker.js?v=202610230109"></script>
+<script src="hub-hand.js?v=202610230109"></script>
+<script src="hub-ink.js?v=202610230109"></script>
+<script src="hub-say.js?v=202610230109"></script>
+<script src="observation-defaults.js?v=202610230109"></script>
+<script src="hub-rotation.js?v=202610230109"></script>
+<script src="hub-peers.js?v=202610230109"></script>
+<script src="hub-sync.js?v=202610230109"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -218,7 +221,7 @@ const NOT = /\b(pass|passed|fail|grade|standard|next time|try to|try|remember|av
 function phrasesFrom(text){
   return String(text || '')
     .replace(/\(\s*\d[a-n](\s*,\s*\d[a-n])*\s*\)/g, '').replace(/\[\s*\d[a-n]\s*\]/g, '').replace(/\b\d[a-n]\b/g, '')
-    .split(/[.;:!?—–]|\s-\s|,\s+(?=and\b|but\b|which\b|so\b)|\band\b(?=\s+(?:you|the|your|everyone|they)\b)/i)
+    .split(/[.;:!?—–]|\s-\s|,\s+|\band\b(?=\s+(?:you|the|your|everyone|they)\b)/i)
     .map(s => s.replace(/^\s*(and|so|also|then)\s+/i, '').replace(/^[A-Z][a-z]+,\s+/, '').replace(/\s+/g, ' ').trim())
     .filter(s => { const n = s.split(' ').length; return n >= 2 && n <= 10 && !NOT.test(s) && !LOOSE.test(s) && !/\d/.test(s); });
 }
@@ -244,6 +247,30 @@ function suggestionsFor(R){
     Object.keys(cc).forEach(r => { const o = cc[r] || {}; Object.keys(o).forEach(c => texts.push(o[c])); });
     texts.forEach(t => phrasesFrom(t).forEach(p => out.push({ text: p, by, role: 'Tutor', from: 'From your ' + (ASG[k] || k.toUpperCase()) + ' assignment', score: scoreOf(p) - 1 })));
   });
+  /* What the other trainees wrote while watching them (peer observation
+     sheets). Teacher 1, 2 and 3 on a sheet are known from the TP's order
+     (hub-peers.js), so a note in a column is about that column's trainee and
+     is signed by the trainee who wrote it. A tutor's browser has everyone's
+     sheets; a trainee's has only their own, so these reach a trainee's page
+     when a tutor saves the last pages. */
+  if (!IS_TRAINEE && window.hubPeerTeachers) {
+    let W = null; try { W = JSON.parse(localStorage.getItem('connect_observation_wording_v1')); } catch (e) {}
+    const TASKS = ((W && W.peer) ? W : (window.CONNECT_HUB_OBSERVATION_DEFAULTS || {})).peer || [];
+    const roster = ROSTER();
+    Object.keys(roster).forEach(oid => {
+      if (oid === R.token) return;
+      const o = roster[oid] || {}, obs = o.observations || {};
+      Object.keys(obs).forEach(key => {
+        const m = /^(.+)#([ab])$/.exec(key); if (!m) return;
+        const task = TASKS.find(t => t.id === m[1]); if (!task || !task.tp) return;
+        const order = hubPeerTeachers(String(o.group || ''), task.tp, m[2]) || [];
+        const c = order.findIndex(p => p && String(p.token) === String(R.token)); if (c < 0) return;
+        const a = (obs[key] || {}).a || {};
+        Object.keys(a).filter(f => new RegExp('^(r\\d+c' + c + '|f' + c + ')$').test(f)).forEach(f =>
+          phrasesFrom(a[f]).forEach(p => out.push({ text: p, by: o.name || 'A fellow trainee', role: 'Trainee', from: 'Watching your TP ' + task.tp, score: scoreOf(p) + 1 })));
+      });
+    });
+  }
   const seen = {};
   return out.filter(o => o.score > 0 && !seen[o.text.toLowerCase()] && (seen[o.text.toLowerCase()] = 1)).sort((a, b) => b.score - a.score);
 }

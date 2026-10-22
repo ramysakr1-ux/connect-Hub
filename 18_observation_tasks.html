@@ -51,7 +51,7 @@
 <title>Connect Lite — Observation tasks</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610230102">
+<link rel="stylesheet" href="hub-tokens.css?v=202610230109">
 <style>
   /* The palette lives on each screen, not in hub-house.css. */
   :root{
@@ -189,18 +189,20 @@
   @media(max-width:600px){ .task .ob-line{left:0;} .bar .ob-meter{margin-left:0; width:100%;} }
   @media print{ .ob-line, .ob-meter{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610230102">
+<link rel="stylesheet" href="hub-house.css?v=202610230109">
 </head>
 <body class="hub-obs hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="observation-defaults.js?v=202610230102"></script>
-<script src="hub-shared.js?v=202610230102"></script>
-<script src="hub-store.js?v=202610230102"></script>
-<script src="hub-say.js?v=202610230102"></script>
-<script src="hub-sync.js?v=202610230102"></script>
+<script src="observation-defaults.js?v=202610230109"></script>
+<script src="hub-shared.js?v=202610230109"></script>
+<script src="hub-store.js?v=202610230109"></script>
+<script src="hub-say.js?v=202610230109"></script>
+<script src="hub-rotation.js?v=202610230109"></script>
+<script src="hub-peers.js?v=202610230109"></script>
+<script src="hub-sync.js?v=202610230109"></script>
 <script type="text/x-hub-app">
 /* A trainee's own work. A tutor or an assessor READS it -- they have to, it
    is portfolio evidence -- so the page is not refused them; the fields are
@@ -261,6 +263,22 @@ const answered = k => {
 };
 
 const TEACHERS = ['Teacher 1','Teacher 2','Teacher 3'];
+/* WHO THEY WERE (23 Oct 2026). Teacher 1, 2 and 3 are known: the set that
+   teaches on that sitting, in that TP's order (hub-peers.js). A tutor reads
+   names; a trainee reads letters, as on the timetable, and "You" for their
+   own lesson. Before the course has its sets, the columns stay numbered. */
+const VIEWER = (function(){
+  try {
+    if (!READONLY) { const me = JSON.parse(localStorage.getItem('hub:me') || '{}') || {}; return { token: String(me.token || ''), group: String(me.group || '') }; }
+    const roster = JSON.parse(localStorage.getItem('connect_roster_v1') || '{}') || {};
+    const id = P.get('trainee') || '', tr = (roster.trainees || {})[id] || {};
+    return { token: String(id), group: String(tr.group || '') };
+  } catch (e) { return { token: '', group: '' }; }
+})();
+function teacherLabels(t, sit){
+  const tch = (t.tp && sit && window.hubPeerTeachers) ? hubPeerTeachers(VIEWER.group, t.tp, sit) : null;
+  return TEACHERS.map((n, c) => { const p = tch && tch[c]; if (!p) return n; if (!READONLY && p.token === VIEWER.token) return 'You'; return p.name || ('Trainee ' + (p.letter || c + 1)); });
+}
 
 /* ---------------------------------------------------------------- the list */
 const expectedOf = t =>
@@ -345,9 +363,10 @@ function sheet(t, sit){
   const turned = WORK[k].turnedInAt;
 
   let body = '';
+  const TL = teacherLabels(t, sit);
   if (t.shape === 'grid') {
     body = `<table class="sheet stack"><thead><tr><th class="n"></th><th class="q">Observation focus</th>
-      ${TEACHERS.map(n => `<th>${n}</th>`).join('')}</tr></thead><tbody>
+      ${TL.map(n => `<th>${esc(n)}</th>`).join('')}</tr></thead><tbody>
       ${t.rows.map((q,i) => `<tr><td class="n">${i+1}</td><td class="q">${esc(q)}</td>
         ${TEACHERS.map((n,c) => `<td data-t="${esc(n)}">${box(k, 'r'+i+'c'+c)}</td>`).join('')}</tr>`).join('')}
       </tbody></table>`;
@@ -361,7 +380,7 @@ function sheet(t, sit){
     if ((t.after || []).length) body += `<div class="after"><h4>After watching</h4>
       ${t.after.map((q,i) => `<div class="part"><p class="lines">${esc(q)}</p>${box(k, 'a'+i)}</div>`).join('')}</div>`;
   } else if (t.shape === 'focus') {
-    body = TEACHERS.map((n,c) => `<div class="part"><h4>${n}</h4>
+    body = TEACHERS.map((n,c) => `<div class="part"><h4>${esc(TL[c])}</h4>
       <p class="lines">Focus area — what they asked you to watch for, and what you saw.</p>${box(k, 'f'+c)}</div>`).join('');
   } else if (t.shape === 'questions') {
     body = t.rows.map((q,i) => `<div class="part"><h4>${i+1}. ${esc(q)}</h4>${box(k, 'q'+i)}</div>`).join('');
