@@ -20,7 +20,7 @@
  * VERSION is stamped by bump-assets.py with the same stamp as the ?v= links,
  * so each push retires the previous cache on activate.
  */
-const VERSION = 'lite-202610221434';
+const VERSION = 'lite-202610221613';
 const SHELL = [
   './', 'index.html', 'invite.html', 'hub-qr.js', 'vendor/qrcode.js', 'hub-pin.js',
   '1_trainee_plan_and_analysis.html', '2_trainee_self_evaluation.html', '3_tutor_feedback.html',
@@ -48,8 +48,8 @@ const SHELL = [
      every session page). They were never in the shell, so one not opened before the
      connection dropped came up as "You are offline". Pages are kept by their directory
      address, which is how the shelf and the doors link to them. The one film in the
-     library (guided-discovery-vs-ppp/situational.mp4, 24 MB) is deliberately NOT kept:
-     it plays with a connection and the page reads fine without it. */
+     library (guided-discovery-vs-ppp/situational.mp4, 24 MB) is deliberately NOT kept
+     with the shell: it is kept once played, like the others (see the media route below). */
   'input-sessions/', 'input-sessions/library.js', 'input-sessions/session.css',
   'input-sessions/_art/drama-frog.svg', 'input-sessions/_art/drama-monster.svg', 'input-sessions/_art/story-map.svg',
   'input-sessions/alternative-teaching-techniques/', 'input-sessions/classroom-management/', 'input-sessions/connected-speech/', 'input-sessions/drama-in-the-elt-classroom/', 'input-sessions/eliciting-and-ccqs/', 'input-sessions/error-correction/', 'input-sessions/functional-language/', 'input-sessions/guided-discovery-vs-ppp/', 'input-sessions/guided-to-less-guided-practice/', 'input-sessions/lesson-framework/', 'input-sessions/life-after-celta/', 'input-sessions/phonology-sounds/', 'input-sessions/ppp/', 'input-sessions/receptive-skills/', 'input-sessions/teaching-exam-classes/', 'input-sessions/teaching-literacy/', 'input-sessions/teaching-productive-skills/', 'input-sessions/teaching-speaking/', 'input-sessions/teaching-writing/', 'input-sessions/text-based-teaching/', 'input-sessions/word-and-sentence-stress/', 'input-sessions/writing-the-lesson-plan/',
@@ -60,6 +60,9 @@ const SHELL = [
   'brand/favicon.svg', 'brand/favicon.ico', 'brand/apple-touch-icon.png',
 ];
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
+/* The film files live in an R2 bucket, not in the repo (22 Oct 2026). Pages ask for them with
+   crossorigin=anonymous, so the answer is readable and can be kept like a same-site film. */
+const FILM_HOST = 'films.connectlitefilms.com';
 /* Films and tracks outlive a deploy: a new version must not throw away 74 MB
    somebody kept on purpose. hub-store.js keeps the TP points' tracks here too. */
 const MEDIA = 'lite-media-v1';
@@ -111,7 +114,8 @@ self.addEventListener('fetch', function (e) {
   const url = new URL(req.url);
   const sameOrigin = url.origin === self.location.origin;
   const isFont = FONT_HOSTS.indexOf(url.host) !== -1;
-  if (!sameOrigin && !isFont) return;           // the store, and anything else, is left alone
+  const isFilm = url.host === FILM_HOST;
+  if (!sameOrigin && !isFont && !isFilm) return;           // the store, and anything else, is left alone
 
   /* THE SESSION FILMS, KEPT ONCE WATCHED (Ramy, 22 Oct 2026: "the videos don't
      work" with no internet). They are too big for the shell (24 and 50 MB), so a
@@ -119,7 +123,7 @@ self.addEventListener('fetch', function (e) {
      streams as before and the whole file is fetched once beside it. From then
      on the kept copy answers, and a player's "bytes=" request is cut from it,
      because a video asks for pieces and a plain cache answer is not a piece. */
-  if (sameOrigin && /\.(mp4|m4a|mp3)$/i.test(url.pathname)) { e.respondWith(media(req)); return; }
+  if ((sameOrigin || isFilm) && /\.(mp4|m4a|mp3)$/i.test(url.pathname)) { e.respondWith(media(req)); return; }
 
   if (isFont) {
     // Fonts: the kept copy first, the network fills it in once.
