@@ -24,7 +24,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610220835">
+<link rel="stylesheet" href="hub-tokens.css?v=202610220855">
 <style>
   :root{
     /* the pane -- the same four values the trainee landing's cards use */
@@ -452,7 +452,7 @@
   .course.tb.minted{outline:2px solid var(--gold);}
   @media(max-width:640px){ .tb-grid{grid-template-columns:1fr;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610220835">
+<link rel="stylesheet" href="hub-house.css?v=202610220855">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -478,10 +478,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610220835"></script>
-<script src="hub-store.js?v=202610220835"></script>
-<script src="hub-say.js?v=202610220835"></script>
-<script src="hub-card-mail.js?v=202610220835"></script>
+<script src="hub-shared.js?v=202610220855"></script>
+<script src="hub-store.js?v=202610220855"></script>
+<script src="hub-say.js?v=202610220855"></script>
+<script src="hub-card-mail.js?v=202610220855"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after,
    so the Command Center's Connect Lite door can be a plain link with no secret
@@ -824,13 +824,13 @@ const SECTIONS = [
   { k: 'live',    t: 'Live courses',      w: 'real centres, real trainees' },
   { k: 'demo',    t: 'Demos',             w: 'what a centre is sent \u2014 pinned to one day, never ageing' },
   { k: 'scratch', t: 'Scratch',           w: 'for testing and filming \u2014 throw away freely' },
-  { k: 'record',  t: 'Records',           w: 'pages the store keeps as courses' },
+  { k: 'record',  t: 'Kept pages',        w: 'the store holds these as courses, but they are pages: C/17\u2019s grades and the TP point library' },
 ];
 function courseKind(c){
   const n = String(c.name || ''), cn = String(c.courseName || '');
   if (/scratch/i.test(n)) return { k: 'scratch', t: 'Scratch', w: 'For testing and for filming. Not a demo, not a real course \u2014 anything here can be thrown away.' };
   if (c.demoToday || /^Demo \u2014|^Finished course/.test(n)) return { k: 'demo', t: 'Demo', w: 'A standing demo, pinned to one day so it never ages. This is what a centre is sent.' };
-  if (/grades/i.test(cn) || /grades/i.test(n)) return { k: 'record', t: 'Record, not a course', w: 'A page of its own that the store keeps as a course. No trainees, no teaching practice.' };
+  if (/grades/i.test(cn) || /grades/i.test(n)) return { k: 'record', t: 'A page, not a course', w: 'C/17\u2019s provisional grades, kept in the store as a course because the store only holds courses. No trainees, no teaching practice.' };
   /* THE LIBRARY HAS ITS OWN COURSE since 5 Oct 2026. It used to live on the
      film's scratch course -- the one this console calls "throw away freely",
      with Delete in the open -- which is a poor address for 180 lessons. It is
@@ -946,7 +946,7 @@ function render(courses, msg){
     /* THE TICKET BOOK (1b, Ramy, 8 Oct 2026): a course whose links open on the
        ticket gets its console card as tickets too. &card=ticket on the
        console's own address previews it on every course. */
-    if (!kind.lib && (CARD_PREVIEW === 'ticket' || (CARD_PREVIEW !== 'welcome' && c.cardStyle === 'ticket'))) return ticketBook(c, kind, name, centre, alt, n, minted);
+    if (kind.k !== 'record' && (CARD_PREVIEW === 'ticket' || (CARD_PREVIEW !== 'welcome' && c.cardStyle === 'ticket'))) return ticketBook(c, kind, name, centre, alt, n, minted);
     return `
     <div class="course c-${kind.k}${minted ? ' minted' : ''}" id="course-${esc(c.id)}">
       <!-- THE CONSOLE CARD in the welcome family (1a, the link cards, Ramy's
@@ -967,8 +967,8 @@ function render(courses, msg){
                  sheets); this course's things start fresh (dates, assessment
                  date and picks, notification reference, the assessor's document
                  links, the roster and every record, both keys). -->
-            <button class="btn quiet small" type="button" data-clone="${esc(c.id)}" data-label="${esc(label(c))}">Start the next course from this</button>
-            ${kind.k === 'live'
+            ${kind.k === 'record' ? '' : `<button class="btn quiet small" type="button" data-clone="${esc(c.id)}" data-label="${esc(label(c))}">Start the next course from this</button>`}
+            ${kind.k === 'record' ? '' : kind.k === 'live'
               /* A REAL CENTRE'S COURSE. Ramy, 5 Oct 2026: "the live courses should
                  be somehow protected, not just out there in the open." Deleting
                  still asks for the course id to be typed -- that guard is older
@@ -988,13 +988,13 @@ function render(courses, msg){
              when it says something the name does not (Ramy, 30 Sep 2026:
              "there are 3 C1 courses"). -->
         ${alt ? `<p class="clabel">Shown to the centre as \u201c${esc(alt)}\u201d</p>` : ''}
-        <p class="cmeta">${[centre ? esc(centre) : '', c.centreNumber ? `<span title="Cambridge centre number, set when the course was made">${esc(c.centreNumber)}</span>` : '', n ? `${n} trainee${n === 1 ? '' : 's'}` : '0 trainees yet'].filter(Boolean).join(' \u00b7 ')}</p>
+        ${kind.k === 'record' ? '' : `<p class="cmeta">${[centre ? esc(centre) : '', c.centreNumber ? `<span title="Cambridge centre number, set when the course was made">${esc(c.centreNumber)}</span>` : '', n ? `${n} trainee${n === 1 ? '' : 's'}` : '0 trainees yet'].filter(Boolean).join(' \u00b7 ')}</p>`}
         <!-- Attachments live on this Drive, not the trainees', so they are the
              owner's to clear. Deleting the course takes them too; this is for a
              course being kept (23 Sep 2026). Filled in by fillMaterials(). -->
         <p class="cchips">
           <span class="chip faint"><code>${esc(c.id)}</code>${c.created ? ' \u00b7 made ' + esc(niceDate(c.created)) : ''}</span>
-          <span class="chip faint mats-line" data-mats="${esc(c.id)}"><span class="note hub-wait">Materials: checking\u2026</span></span>
+          ${kind.k === 'record' ? '' : `<span class="chip faint mats-line" data-mats="${esc(c.id)}"><span class="note hub-wait">Materials: checking\u2026</span></span>`}
           ${c.demoToday ? `<span class="chip demo" title="settings.demoToday \u2014 every screen on this course reads this date as today, and its links never expire">Demo \u00b7 pinned to ${esc(niceDate(c.demoToday))}</span>` : ''}
         </p>
       </div>
@@ -1017,7 +1017,18 @@ function render(courses, msg){
            any of my TP points library from it, so it's useless"). It gets the
            one door it actually needs. -->
       <div class="links">
-        ${kind.lib ? `<div class="link tutor">
+        ${kind.k === 'record' && !kind.lib ? `<div class="link tutor">
+          <span class="badge" aria-hidden="true">G</span>
+          <b>The grades page</b>
+          <span class="note">Where the trainers write the provisional grades. It saves for everyone.</span>
+          <a class="btn small" href="c17-provisional-grades/?k=${encodeURIComponent(c.tutorKey)}">Open it</a>
+        </div>
+        <div class="link">
+          <span class="badge" aria-hidden="true">A</span>
+          <b>View-only link</b>
+          <span class="note">For Classroom and Appian. Nobody can change anything with it.</span>
+          <button class="btn small" type="button" data-copy="${esc(base() + 'c17-provisional-grades/?ak=' + encodeURIComponent(c.assessorKey))}">Copy</button>
+        </div>` : kind.lib ? `<div class="link tutor">
           <span class="badge" aria-hidden="true">L</span>
           <b>The sets</b>
           <span class="note">The five sets every centre takes from — the lessons, their slots and their stages. This is the only way in, and nothing here is sent to anyone.</span>
@@ -1663,6 +1674,12 @@ function drawInbox(){
         <button type="button" class="btn small" data-in="drop|${esc(sheet)}|${esc(at)}">Delete</button>
       </div></div>`;
 
+  if (!showC.length && !showR.length) {
+    box.innerHTML = `<h2>From the people using it</h2>
+      <p class="lede">Nothing yet: no sets offered and nothing said.${INBOX.sheet ? ` <a href="${esc(INBOX.sheet)}" target="_blank" rel="noopener">The sheet behind the store</a> has every row.` : ''}</p>`;
+    drawNeeds();
+    return;
+  }
   box.innerHTML = `<h2>From the people using it</h2>
     <p class="lede">${newC ? `<b>${newC}</b> set${newC === 1 ? '' : 's'} offered to the TP points library` : 'No sets waiting'} \u00b7 ${
       newR ? `<b>${newR}</b> thing${newR === 1 ? '' : 's'} said` : 'nothing said'
