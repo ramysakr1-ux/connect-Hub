@@ -347,7 +347,7 @@ NOTES['teaching-literacy'] = '''
 
 NOTES['word-and-sentence-stress'] = '''
 <h4>Before</h4>
-<p>Sound for the Hamlet sketch (about five minutes: the page jumps past the first conversation, from the first line to the second actor; it is a fan upload, so check it still plays, and the RSC’s own short cut is the fallback link under the frame). Nothing to print; the chant and the roses sentence are on screen.</p>
+<p>Sound for the Hamlet sketch (about five minutes: the page plays the first actor and then the second actor’s note (to be or not to BE), and jumps past the long chat about the skull and Hamlet to the next actor; it is a fan upload, so check it still plays, and the RSC’s own short cut is the fallback link under the frame). Nothing to print; the chant and the roses sentence are on screen.</p>
 <h4>Running it</h4>
 ''' + T(mins=False, rows=[
     (8, 'Lead-in', 'Watch once: tick the word each actor lands on. Watch again in pairs: what does the line mean each time, which would you choose. Then the reveal. If you want a word-by-word key for the nine, add it after one viewing; the page does not claim one.'),

@@ -96,7 +96,7 @@
     css.textContent = [
       '.fp-body{margin:0; background:var(--sand); color:var(--ink); font-family:Karla,system-ui,sans-serif;',
       '  display:flex; align-items:flex-start; justify-content:center; padding:6vh 18px 48px;}',
-      '.fp-card{background:var(--surface); border-left:5px solid var(--gold); border-radius:8px; max-width:600px; width:100%; padding:30px 34px 28px;}',
+      '.fp-card{background:var(--paper); box-shadow:0 1px 2px rgba(35,34,32,.05), 0 12px 32px rgba(35,34,32,.10); border-radius:14px; max-width:600px; width:100%; padding:30px 34px 28px;}',
       '.fp-mark{display:flex; align-items:center; gap:9px; margin-bottom:26px;}',
       '.fp-tile{width:30px; height:30px; border-radius:7px; background:var(--ink-warm); display:inline-flex; align-items:center; justify-content:center; flex:none;}',
       '.fp-word{display:inline-flex; align-items:baseline; gap:4px;}',

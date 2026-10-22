@@ -65,7 +65,7 @@ FILM_JS = '''<script>
     if (!d || d.event !== 'infoDelivery' || !d.info) return;
     var t = d.info.currentTime, st = d.info.playerState;
     if ((open.end && t != null && t >= open.end) || st === 0) { open.close(); return; }
-    /* data-skip="10-89": a stretch of the film the session does not need
+    /* data-skip="26.5-89": a stretch of the film the session does not need
        (Ramy, 20 Oct 2026: the Hamlet sketch's first conversation). The
        player jumps past it; nothing is cut from the film itself. */
     if (open.skip && t != null && t >= open.skip[0] && t < open.skip[1]) {
@@ -641,7 +641,7 @@ RECIPES.append(dict(
         ('Voiced or Unvoiced? <span class="badge">Practice</span>', 'Voiced or unvoiced? <span class="badge">Try it</span>'),
         ('The Phonemic Chart <span', 'The phonemic chart <span'),
         ('<span style="--c:#1F497D">long vowels</span><span style="--c:#7a4a8a">short vowels</span><span style="--c:#d9772a">diphthongs</span><span style="--c:#2a8c82">voiced consonants</span><span style="--c:#8a9a2a">unvoiced consonants</span>',
-         '<span style="--c:var(--teal)">long vowels</span><span style="--c:var(--gold-deep)">short vowels</span><span style="--c:var(--ink-warm)">diphthongs</span><span style="--c:var(--teal)">voiced consonants</span><span style="--c:var(--grey)">unvoiced consonants</span>'),
+         '<span style="--c:var(--a-slate, #4B5A7A)">long vowels</span><span style="--c:var(--gold-deep)">short vowels</span><span style="--c:var(--ink-warm)">diphthongs</span><span style="--c:var(--teal)">voiced consonants</span><span style="--c:var(--grey)">unvoiced consonants</span>'),
         ('Write These Words in Phonemic Script <span class="badge">Practice</span>', 'Write these words in phonemic script <span class="badge">Try it</span>'),
         ('Decipher the Film Titles <span', 'Decipher the film titles <span'),
         ('<button class="btn" style="background:var(--amber);" onclick="checkFilms()">Check answers</button>', '<button class="btn teal" onclick="checkFilms()">Check answers</button>'),
@@ -669,7 +669,7 @@ function pickVoice(){
 LiteVoice.set({ britishChart: true });
 function say(text){ LiteVoice.say(text); }"""),
         ("const NAVY='#1F497D', PURPLE='#7a4a8a', ORANGE='#d9772a', TEALC='#2a8c82', OLIVE='#8a9a2a';",
-         "const NAVY='var(--teal)', PURPLE='var(--gold-deep)', ORANGE='var(--ink-warm)', TEALC='var(--teal)', OLIVE='var(--grey)';"),
+         "const NAVY='var(--a-slate, #4B5A7A)', PURPLE='var(--gold-deep)', ORANGE='var(--ink-warm)', TEALC='var(--teal)', OLIVE='var(--grey)';"),
         ("block('Vowels',vowels,4,'#e0b500')+block('Diphthongs',diph,3,ORANGE)+'</div>'+block('Consonants',cons,8,'#c0392b');",
          "block('Vowels',vowels,4,'var(--gold)')+block('Diphthongs',diph,3,ORANGE)+'</div>'+block('Consonants',cons,8,'var(--teal)');"),
         ("<button class=\"play\" style=\"padding:3px 8px;font-size:.7rem\" onclick=\"say(\\''+o.eg+'\\')\">▶</button>", "<button class=\"play\" style=\"padding:3px 10px;font-size:.7rem;min-height:26px\" onclick=\"say(\\''+o.eg+'\\')\">Play</button>"),
@@ -1545,7 +1545,7 @@ HAMLET = """<section id="s0">
 <div class="card">
 <div class="stage-title">Lead-in: one line, nine readings <span class="badge">Watch twice</span><span class="time">8 min</span></div>
 <p class="lead">Nine actors, one line from <i>Hamlet</i>, and a disagreement about where the stress goes. First time through, tick the word each one lands on. Second time, in pairs: what does the line mean each time, and which reading would you choose?</p>
-<div class="film"><iframe src="https://www.youtube-nocookie.com/embed/iQULEW2JwHE?rel=0&modestbranding=1" title="Shakespeare Live! From the RSC: To be, or not to be" data-skip="10-89" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>
+<div class="film"><iframe src="https://www.youtube-nocookie.com/embed/iQULEW2JwHE?rel=0&modestbranding=1" title="Shakespeare Live! From the RSC: To be, or not to be" data-skip="26.5-89" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>
 <p class="film-link">From <i>Shakespeare Live! From the RSC</i> (BBC Two, 23 April 2016). If the frame stays black, <a href="https://www.youtube.com/watch?v=iQULEW2JwHE" target="_blank" rel="noopener">watch it on YouTube</a>; the RSC's own <a href="https://www.youtube.com/watch?v=6gZtW-U6qG4" target="_blank" rel="noopener">short cut</a> has the ending.</p>
 <div id="hamlet"></div>
 <div class="btn-row"><button class="btn secondary" onclick="toggleReveal('hamletKey',this)">Reveal</button></div>
