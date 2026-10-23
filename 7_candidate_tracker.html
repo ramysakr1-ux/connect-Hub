@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610232135">
+<link rel="stylesheet" href="hub-tokens.css?v=202610232157">
 <style>
   /* design_handoff_candidate_tracker (Ramy, 20 Sep 2026), with the Hub's
      colour-coded chips in the cells -- "I like the chips that you created.
@@ -242,7 +242,7 @@
   @media(hover:none){ .row.tk-row{background:none;} .cell.tk-col{background:none;} }
   @media print{ .tk-bar{display:none;} .row.tk-row, .cell.tk-col{background:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610232135">
+<link rel="stylesheet" href="hub-house.css?v=202610232157">
 </head>
 <body>
 <div class="page">
@@ -259,7 +259,7 @@
     </div>
     <div class="eyebrow" id="eyebrow"></div>
     <h1>Trainee tracker</h1>
-    <div class="lede">Colour only marks what needs you. Everything that is fine stays quiet. Every cell is written by the thing that produced it — a submission, a mark sheet, the feedback you returned. Nothing on the grid is typed into it; only the Stage records, the Fail letter and withdrawal are yours to set, in the strip that opens under a trainee.</div>
+    <div class="lede">Colour only marks what needs you. Everything that is fine stays quiet. Every cell is written by the thing that produced it — a submission, a mark sheet, the feedback you returned, the CELTA 5. Nothing on the grid is typed into it; only the Fail letter and withdrawal are yours to set, in the strip that opens under a trainee.</div>
   </div>
   <div class="card">
     <div class="bar">
@@ -271,14 +271,14 @@
   </div>
   <div id="detail"></div>
 </div>
-<script src="hub-due.js?v=202610232135"></script>
-<script src="hub-shared.js?v=202610232135"></script>
-<script src="hub-rotation.js?v=202610232135"></script>
-<script src="assignment-defaults.js?v=202610232135"></script>
-<script src="hub-tracker.js?v=202610232135"></script>
-<script src="hub-store.js?v=202610232135"></script>
-<script src="hub-say.js?v=202610232135"></script>
-<script src="hub-sync.js?v=202610232135"></script>
+<script src="hub-due.js?v=202610232157"></script>
+<script src="hub-shared.js?v=202610232157"></script>
+<script src="hub-rotation.js?v=202610232157"></script>
+<script src="assignment-defaults.js?v=202610232157"></script>
+<script src="hub-tracker.js?v=202610232157"></script>
+<script src="hub-store.js?v=202610232157"></script>
+<script src="hub-say.js?v=202610232157"></script>
+<script src="hub-sync.js?v=202610232157"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
@@ -323,6 +323,8 @@ const ASSN = hubAssignmentOrder(WORDING).filter(k => k !== 'a5').map(k => ({ key
 /* As many teaching practices as the course gives (Course admin > Settings),
    eight when unset. */
 const TP_TOTAL = T.tpTotal();
+/* past the course's last day, on the demo clock where one is set */
+const COURSE_OVER = (function(){ try { const s = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; const today = window.hubToday ? hubToday() : new Date().toISOString().slice(0, 10); return !!(s.end && today > s.end); } catch (e) { return false; } })();
 const BANDS = T.stageBands(TP_TOTAL);
 const TPS = Array.from({length:TP_TOTAL},(_,i)=>i+1).map(n=>({key:'tp'+n, n, label:'TP'+n}));
 
@@ -454,7 +456,11 @@ function paintDmStrip(all, isA){
          passes and no double-marked fail -- Lite affirming a compliance
          Cambridge had not granted (audit, 29 Sep 2026). A "should", so this
          is a note in Cambridge's words, never a red. */
-      const FAILED = ['FAIL', 'FAILRES'];
+      /* A Fail is the outcome after the resubmission, not a first submission waiting
+         for it: 9.2.3, "The grade awarded on resubmission should be recorded ... as
+         Pass (on resubmission) or Fail". Counting FAILRES flagged Elif's resubmission
+         as an unchecked fail (tutor walk, 24 Oct 2026). */
+      const FAILED = ['FAIL'];
       const failing = all.filter(p=>FAILED.includes(p.asg[a.key].code));
       const failsUnchecked = failing.filter(p=>!p.asg[a.key].dm).length;
       const met = n >= required;
@@ -479,7 +485,11 @@ function markersLine(all){
   const short = [];
   all.forEach(p => { const t = new Set();
     Object.values(T.tpHistory(p.tr) || {}).forEach(fb => { const v = String(((fb.state || {}).f || {}).fTutor || '').trim(); if (v) t.add(v.toLowerCase()); });
-    if (t.size === 1) short.push(p.tr.name); });
+    /* 9.1.3: observed by two tutors "during the course". On day 10 every trainee has
+       had only their first tutor, as the course is built (tutor walk, 24 Oct 2026); it
+       is a shortfall only when nothing is left to teach, or the course is over. */
+    const left = TP_TOTAL - Object.keys(T.tpHistory(p.tr) || {}).length;
+    if (t.size === 1 && (left <= 0 || COURSE_OVER)) short.push(p.tr.name); });
   const bits = [];
   bits.push(names.size >= 2
     ? `<span class="ok">${names.size} tutors have marked</span>`

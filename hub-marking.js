@@ -457,6 +457,11 @@
     var decided = rec ? cr.filter(function (c, i) { return rec.crit[i] && typeof rec.crit[i].agree === 'boolean'; }).length : 0;
     var roundWord = r === 'sub2' ? 'the resubmission' : 'the first submission';
     if (!mode) {
+      /* The second marker named in the marker record, with no criterion-by-criterion
+         record behind it, is still double-marked: it read "Second-mark this" on work
+         the assessor pack listed as double-marked (tutor walk, 24 Oct 2026). */
+      var named = s.markers && s.markers.doubleMarked && String(s.markers.second || '').trim();
+      if ((!rec || !decided) && named) return '<div class="card mk-second"><h2>Double marking</h2><p class="mk-how">First marker <b>' + esc(first) + '</b>, second marker <b>' + esc(named) + '</b>, as the marker record says. No criterion-by-criterion second marking was kept here.</p><button type="button" class="mk-btn quiet" data-second="on">Second-mark it here</button></div>';
       if (!rec || !decided) return '<div class="card mk-second"><h2>Double marking</h2><p class="mk-how">First marker: <b>' + esc(first) + '</b>. If this one is in the double-marked sample, the second marker sees every mark and note on ' + roundWord + ', agrees or disagrees with each, and initials it.</p><button type="button" class="mk-btn" data-second="on">Second-mark this</button></div>';
       return '<div class="card mk-second"><h2>Double marking</h2><p class="mk-how">First marker <b>' + esc(first) + '</b>, second marker <b>' + esc(rec.by) + '</b>' + (rec.done ? '' : ' (not finished: ' + decided + ' of ' + cr.length + ')') + '.</p>' +
         (disagree.length ? '<div class="mk-disagree"><b>The markers disagree on criterion ' + disagree.map(function (i) { return i + 1; }).join(' and ') + '.</b> ' + (CTX.marking ? 'Settle it between you before it goes back to the trainee.' : 'Talk it through and record what you agree.') + disagree.map(function (i) { var n = rec.crit[i].note; return n ? '<span>' + (i + 1) + ': ' + esc(n) + '</span>' : ''; }).join('') + '</div>' : (rec.done ? '<p class="mk-agree">Agreed on all ' + cr.length + ' criteria.</p>' : '')) +

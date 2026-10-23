@@ -13,7 +13,7 @@
 <title>Connect Lite — Mark assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610232135">
+<link rel="stylesheet" href="hub-tokens.css?v=202610232157">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -182,7 +182,7 @@
   @media(prefers-reduced-motion:reduce){ .mv2-seg{transition:none;} .critrow.mv2-hit{animation:none;} }
   @media print{ .mv2{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610232135">
+<link rel="stylesheet" href="hub-house.css?v=202610232157">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -191,16 +191,16 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610232135"></script>
-<script src="hub-exchange.js?v=202610232135"></script>
-<script src="hub-docx.js?v=202610232135"></script>
-<script src="hub-marking.js?v=202610232135"></script>
-<script src="hub-due.js?v=202610232135"></script>
-<script src="hub-shared.js?v=202610232135"></script>
-<script src="hub-store.js?v=202610232135"></script>
-<script src="hub-say.js?v=202610232135"></script>
-<script src="hub-sync.js?v=202610232135"></script>
-<script src="fol-interview.js?v=202610232135"></script>
+<script src="assignment-defaults.js?v=202610232157"></script>
+<script src="hub-exchange.js?v=202610232157"></script>
+<script src="hub-docx.js?v=202610232157"></script>
+<script src="hub-marking.js?v=202610232157"></script>
+<script src="hub-due.js?v=202610232157"></script>
+<script src="hub-shared.js?v=202610232157"></script>
+<script src="hub-store.js?v=202610232157"></script>
+<script src="hub-say.js?v=202610232157"></script>
+<script src="hub-sync.js?v=202610232157"></script>
+<script src="fol-interview.js?v=202610232157"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -302,7 +302,12 @@ function dueRowHTML(a, sub){
     : (st.past ? (isResub ? 'Resubmission closed ' : 'Closed ') + esc(st.due)
                : 'Due ' + esc(st.due) + ' \u00b7 ' + esc(st.text))
       + (mine.extended ? ' \u2014 extended for this trainee' : '');
-  const prefill = HubDue.toLocalInput(new Date(Date.now() + 3 * HubDue.DAY).toISOString());
+  /* Three days after the deadline as it stands, so the box offers a real extension.
+     It was three days from the machine's clock, which on a demo pinned to March
+     offered "Mon 26 Oct" beside a 17 March deadline (tutor walk, 24 Oct 2026). */
+  const fromMs = st.has && isFinite(new Date(mine.iso).getTime()) ? new Date(mine.iso).getTime()
+    : (window.hubToday && hubToday() ? new Date(hubToday() + 'T17:00:00').getTime() : Date.now());
+  const prefill = HubDue.toLocalInput(new Date(fromMs + 3 * HubDue.DAY).toISOString());
   /* red only while the passed deadline still needs somebody: once the work is
      in (or the assignment closed) the date is a fact, not an alarm */
   return `<div class="duerow ${st.past && !settled ? 'past' : ''}">

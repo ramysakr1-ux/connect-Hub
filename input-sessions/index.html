@@ -31,6 +31,7 @@
   /* the course strip: what is next on this course, and this week (14 Oct 2026) */
   .next{display:grid; grid-template-columns:1.6fr 1fr; gap:14px; margin:0 0 28px;}
   .next[hidden]{display:none;}
+  #nextOpen[hidden]{display:none !important;} /* .btn's inline-flex beat [hidden]: an Open button showed for a session not in the library */
   .act{background:var(--gold-wash); border:1px solid var(--amber-edge); border-left:4px solid var(--gold); border-radius:var(--r-card); padding:18px 20px;}
   .act .tone{font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; font-weight:600; color:var(--gold-deep); margin:0 0 6px;}
   .act h2{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.3rem; margin:0 0 4px;}
@@ -260,14 +261,22 @@
   }
   /* Tutors and assessors: the whole Connect library, with the course strip and
      a pill on each card for when it comes on this course. */
+  /* The course's clock: "2:15 PM", or "14:15" on a 24-hour course (settings.clock). */
+  function clockOf(hhmm, cs){
+    var m = String(hhmm || '').match(/^(\d{1,2}):(\d{2})/); if (!m) return String(hhmm || '');
+    if (cs && String(cs.clock) === '24') return (m[1].length < 2 ? '0' : '') + m[1] + ':' + m[2];
+    var h = +m[1]; return (h % 12 || 12) + ':' + m[2] + (h < 12 ? ' AM' : ' PM');
+  }
   function paintTutor(tt, cs){
     var list = inputsOf(tt), now = today(cs);
     if (!list.length) { setStrip(false); return; }
     var next = list.filter(function(x){ return x.date >= now; })[0] || null;
     if (next) {
       var ok = next.slug && NAMES[next.slug] != null;
-      setStrip(true, (next.date === now ? 'Today' : 'Next') + ' · ' + dayName(next.date, true) + (next.s ? ' · ' + next.s : ''),
-        next.t, ok ? 'Open it here, or print the handout.' : 'Not in the library; your tutor brings it.', ok ? next.slug : '');
+      /* Said to staff: "your tutor brings it" was said to the tutor, and the time was
+         a raw 14:15 on a course that reads its clock as 2:15 PM (tutor walk, 24 Oct 2026). */
+      setStrip(true, (next.date === now ? 'Today' : 'Next') + ' · ' + dayName(next.date, true) + (next.s ? ' · ' + clockOf(next.s, cs) : ''),
+        next.t, ok ? 'Open it here, or print the handout.' : 'Not in Connect’s library: it is taught from the centre’s own material.', ok ? next.slug : '');
     } else setStrip(true, 'Input sessions', 'The course’s input sessions are done', 'Every session stays in the library below.', '');
     var w = weekOf(now);
     var seen = {};
@@ -297,11 +306,11 @@
     var released = inputsOf(tt).filter(function(x){ return x.date <= now && x.slug && NAMES[x.slug] != null; }).reverse();
     $('myCards').innerHTML = released.length ? released.map(function(x){
       var pill = x.date === now ? 'Today' : dayName(x.date);
-      return '<a class="s" href="' + esc(x.slug) + '/"><p class="k">' + esc(dayName(x.date, true)) + (x.s ? ' · ' + esc(x.s) : '') + '</p><h3>' + esc(NAMES[x.slug]) + '</h3><p class="m"><span class="pill ' + (x.date === now ? 'now' : 'wait') + '">' + esc(pill) + '</span></p></a>';
+      return '<a class="s" href="' + esc(x.slug) + '/"><p class="k">' + esc(dayName(x.date, true)) + (x.s ? ' · ' + esc(clockOf(x.s, cs)) : '') + '</p><h3>' + esc(NAMES[x.slug]) + '</h3><p class="m"><span class="pill ' + (x.date === now ? 'now' : 'wait') + '">' + esc(pill) + '</span></p></a>';
     }).join('') : '<p class="cardlede">No input sessions have been given on your course yet.</p>';
     var last = released[0];
     if (!last) { setStrip(false); return; }
-    setStrip(true, (last.date === now ? 'Today' : 'Last session') + ' · ' + dayName(last.date, true) + (last.s ? ' · ' + last.s : ''),
+    setStrip(true, (last.date === now ? 'Today' : 'Last session') + ' · ' + dayName(last.date, true) + (last.s ? ' · ' + clockOf(last.s, cs) : ''),
       NAMES[last.slug], 'Open it again whenever you need it.', last.slug);
     var w = weekOf(now);
     var week = released.filter(function(x){ return x.date >= w.mon && x.date <= w.sun; }).reverse();
