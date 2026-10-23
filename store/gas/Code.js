@@ -926,22 +926,95 @@ case 'inbox': {
       var did = String(req.course || '').trim();
       if (!did) throw new Error('Which course?');
       if (String(req.confirm || '') !== did) throw new Error('Deleting a course needs its id as confirmation');
-      if (!courseById_(did)) throw new Error('No such course');
-      var removed = {
-        trainees: deleteRowsWhere_(SHEET_TRAINEES, function (r) { return String(r[0]) === did; }),
-        records: deleteRowsWhere_(SHEET_RECORDS, function (r) { return String(r[0]) === did; }),
-        settings: deleteRowsWhere_(SHEET_COURSE, function (r) { return String(r[0]) === did; })
-      };
-      deleteRowsWhere_(SHEET_COURSES, function (r) { return String(r[0]) === did; });
-      // and its two secrets, so the links cannot outlive the course
-      var dprops = PropertiesService.getScriptProperties();
-      dprops.deleteProperty(keyProp_('tutor', did));
-      dprops.deleteProperty(keyProp_('assessor', did));
-      // ...and its materials. Deleting a course used to leave its Drive folder
-      // behind for ever, with nothing left pointing at it: an orphan nobody
-      // would ever find, on the centre's own storage (23 Sep 2026).
-      removed.materials = trashMaterials_(did);
+      /* ONE DELETE AT A TIME (24 Oct 2026). Two deletes of c7 ran together --
+         a second press, and the page's own retry of a request that had timed
+         out -- and each removed rows by the numbers it had read at its start.
+         Once the first had removed rows, the second's numbers pointed at other
+         courses' records, and every course lost them. Under the script lock a
+         delete reads the sheet fresh and nothing else writes while it runs. */
+      var dlock = LockService.getScriptLock();
+      if (!dlock.tryLock(30000)) throw new Error('Another change is running on the store. Try again in a minute.');
+      var removed;
+      try {
+        if (!courseById_(did)) throw new Error('No such course');
+        removed = {
+          trainees: deleteRowsWhere_(SHEET_TRAINEES, function (r) { return String(r[0]) === did; }),
+          records: deleteRowsWhere_(SHEET_RECORDS, function (r) { return String(r[0]) === did; }),
+          settings: deleteRowsWhere_(SHEET_COURSE, function (r) { return String(r[0]) === did; })
+        };
+        deleteRowsWhere_(SHEET_COURSES, function (r) { return String(r[0]) === did; });
+        // and its two secrets, so the links cannot outlive the course
+        var dprops = PropertiesService.getScriptProperties();
+        dprops.deleteProperty(keyProp_('tutor', did));
+        dprops.deleteProperty(keyProp_('assessor', did));
+        // ...and its materials. Deleting a course used to leave its Drive folder
+        // behind for ever, with nothing left pointing at it: an orphan nobody
+        // would ever find, on the centre's own storage (23 Sep 2026).
+        removed.materials = trashMaterials_(did);
+      } finally { dlock.releaseLock(); }
       return { deleted: did, removed: removed, courses: ownerList_() };
+    }
+    /* RESTORE FROM THE NIGHTLY BACKUP (24 Oct 2026), after the c7 delete took
+       other courses' records with it. Owner only, and a dry run unless `write`
+       is true. For the courses named, the backup's rows that are missing now
+       are put back: records and trainees by their key (course, token, kind /
+       course, token), so anything written since the backup stays as it is; a
+       course-level kind only where the live one no longer reads, and then all
+       its pieces from the backup together. It never removes a record, and
+       never touches a course it was not given. */
+    case 'restoreFromBackup': {
+      requireOwner_(owner);
+      var bid = String(req.backup || '').trim();
+      if (!bid) throw new Error('Which backup?');
+      var only = (req.courses || []).map(String);
+      if (!only.length) throw new Error('Which courses?');
+      only.forEach(function (id) { if (!courseById_(id)) throw new Error('Not a course now: ' + id); });
+      var rwrite = req.write === true;
+      var want = {}; only.forEach(function (id) { want[id] = 1; });
+      var rlock = LockService.getScriptLock();
+      if (!rlock.tryLock(30000)) throw new Error('Another change is running on the store. Try again in a minute.');
+      try {
+        var bk = SpreadsheetApp.openById(bid);
+        var report = {};
+        var bump = function (c, k, n) { report[c] = report[c] || {}; report[c][k] = (report[c][k] || 0) + n; };
+        var bRows = function (name) { var sh = bk.getSheetByName(name); if (!sh) return []; var last = sh.getLastRow(); return last < 2 ? [] : sh.getRange(2, 1, last - 1, sh.getLastColumn()).getValues(); };
+        var fit = function (r, w) { var o = r.slice(0, w); while (o.length < w) o.push(''); return o; };
+        [[SHEET_RECORDS, function (r) { return r[0] + '|' + r[1] + '|' + r[2]; }],
+         [SHEET_TRAINEES, function (r) { return r[0] + '|' + r[1]; }]].forEach(function (pair) {
+          var name = pair[0], keyOf = pair[1], lsh = sheet_(name);
+          var llast = lsh.getLastRow(), w = lsh.getLastColumn();
+          var have = {};
+          if (llast >= 2) lsh.getRange(2, 1, llast - 1, w).getValues().forEach(function (r) { if (want[String(r[0])]) have[keyOf(r)] = 1; });
+          var add = [];
+          bRows(name).forEach(function (r) {
+            if (!want[String(r[0])] || have[keyOf(r)]) return;
+            have[keyOf(r)] = 1; add.push(fit(r, w)); bump(String(r[0]), name, 1);
+          });
+          if (rwrite) for (var i = 0; i < add.length; i += 200) {
+            var part = add.slice(i, i + 200);
+            lsh.getRange(lsh.getLastRow() + 1, 1, part.length, w).setValues(part);
+          }
+        });
+        // course-level kinds: whole kinds only, and only where the live one no longer reads
+        var groups = {};
+        bRows(SHEET_COURSE).forEach(function (r) {
+          var cid = String(r[0]); if (!want[cid]) return;
+          var base = String(r[1]).split('#')[0];
+          (groups[cid + '|' + base] = groups[cid + '|' + base] || { cid: cid, base: base, rows: [] }).rows.push(r);
+        });
+        var csh = sheet_(SHEET_COURSE), cw = csh.getLastColumn();
+        Object.keys(groups).forEach(function (g) {
+          var G = groups[g];
+          COURSE_MEMO_ = null;
+          if (courseRead_(G.cid, G.base) !== null) return;
+          bump(G.cid, 'course:' + G.base, G.rows.length);
+          if (!rwrite) return;
+          deleteRowsWhere_(SHEET_COURSE, function (r) { return String(r[0]) === G.cid && String(r[1]).split('#')[0] === G.base; });
+          csh.getRange(csh.getLastRow() + 1, 1, G.rows.length, cw).setValues(G.rows.map(function (r) { return fit(r, cw); }));
+        });
+        COURSE_MEMO_ = null;
+        return { write: rwrite, backup: bk.getName(), report: report };
+      } finally { rlock.releaseLock(); }
     }
     /* v84 (10 Oct 2026): A TRACK THROUGH THE STORE. Drive now answers 403 to a
        track asked for by another site's page (any cross-site media request),

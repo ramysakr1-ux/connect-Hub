@@ -94,9 +94,13 @@ window.HubStore = (function(){
     var pn = pinName(payload);
     if (pn && payload.pin == null && pinGet(pn)) payload.pin = pinGet(pn);
     var out, tries = 0, waits = [900, 1800], asked = 0;
+    /* A delete or a restore is never sent twice (24 Oct 2026): a request that
+       timed out may still be running on the store, and a second one alongside
+       it is how deleting c7 took other courses' records. */
+    var onlyOnce = payload.op === 'deleteCourse' || payload.op === 'restoreFromBackup';
     for (;;) {
       try { out = await once(payload, timeoutMs); }
-      catch (e) { if (!e.transient || tries >= waits.length) throw e; await new Promise(function(r){ setTimeout(r, waits[tries++]); }); continue; }
+      catch (e) { if (!e.transient || onlyOnce || tries >= waits.length) throw e; await new Promise(function(r){ setTimeout(r, waits[tries++]); }); continue; }
       // The store wants a PIN this device does not have, or has wrong: ask once
       // per refusal, up to three, then give up like any other refusal.
       // 'PIN needed' is the first open of a link on a course with PINs on:
