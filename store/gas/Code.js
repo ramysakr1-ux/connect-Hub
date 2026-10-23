@@ -1225,6 +1225,10 @@ case 'inbox': {
       if (!course) throw new Error('This link is not on a course');
       var cres = { settings: courseRead_(course.id, 'settings'), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? courseRead_(course.id, 'volunteers') : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null };
       if (tutor) cres.courseFeedback = courseRead_(course.id, 'courseFeedback') || [];
+      // critLearn: what this course's tutors have tagged, for the criteria suggester (26 Sep 2026).
+      // Tutors only. Restored 24 Oct 2026: it had dropped out of the read and the write when the
+      // other course kinds were added, so every course's learning was refused and lost.
+      if (tutor) cres.critLearn = courseRead_(course.id, 'critLearn') || null;
       return cres;
     }
     case 'putCourse': {
@@ -1236,7 +1240,7 @@ case 'inbox': {
       // tppoints: the rotated teaching-practice points, released per group.
       // guidance: the tutors' marking guidance per criterion (v94, 17 Oct 2026) --
       // read by the tutors and the assessor only, never sent to a trainee.
-      if (ck !== 'settings' && ck !== 'wording' && ck !== 'observations' && ck !== 'timetable' && ck !== 'tppoints' && ck !== 'volunteers' && ck !== 'guidance') throw new Error('Not a course kind: ' + ck);
+      if (ck !== 'settings' && ck !== 'wording' && ck !== 'observations' && ck !== 'timetable' && ck !== 'tppoints' && ck !== 'volunteers' && ck !== 'guidance' && ck !== 'critLearn') throw new Error('Not a course kind: ' + ck);
       var data = req.data;
       if (ck === 'settings') {
         // The owner's centre number stays (1 Oct 2026): a course made for
