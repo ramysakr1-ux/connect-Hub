@@ -89,6 +89,9 @@ const reset = () => page.evaluate(() => { eval('CRIT_MODEL = null'); });
 const RAPPORT = 'Warm with the group from the first minute; you use names and you wait for answers';
 const SIMILAR = 'Warm with this group too — you use their names and you give them time to answer';
 
+/* Steps 1 to 5 test the LEARNED half on its own, so the tutor vocabulary
+   (hub-crit-vocab.js, 24 Oct 2026) is set aside for them; step 7 tests it. */
+await page.evaluate(() => { window.__vocab = window.HubCritVocab; window.HubCritVocab = null; });
 console.log('\nConnect Lite — does the criteria suggester learn?\n');
 
 console.log('1. with nothing learned, the wording rule alone');
@@ -135,11 +138,21 @@ await page.evaluate(() => { try { localStorage.removeItem('chub:critlearn'); } c
 const fresh = await ctx.newPage();
 await fresh.goto(BASE + '3_tutor_feedback.html?k=k');     /* the fake store holds no critLearn */
 await fresh.waitForTimeout(2000);
+await fresh.evaluate(() => { window.HubCritVocab = null; });
 const freshPicks = await fresh.evaluate(t => eval('scoreCriteria')(t, 'teaching').map(x => x.code), SIMILAR);
 ok(!freshPicks.includes('1d'), 'a course with no record of its own is back to the wording: ' + freshPicks.join(', '));
 await fresh.close();
 
-console.log('\n6. the model is a staff record');
+console.log('\n6. the tutor vocabulary, on a course that has learned nothing');
+await reset();
+await page.evaluate(() => { window.HubCritVocab = window.__vocab; });
+const vcold = await suggest(RAPPORT, 'teaching');
+ok(vcold[0] && vcold[0].code === '1d', 'warm, names, wait: 1d leads before anything is learned: ' + vcold.map(x => x.code).join(', '));
+const vmon = await suggest('Walk round and monitor every pair during the writing', 'teaching');
+ok(vmon[0] && vmon[0].code === '5j', 'monitoring is 5j: ' + vmon.map(x => x.code).join(', '));
+const vplan = await suggest('Plan the timing of each stage realistically', 'planning');
+ok(vplan.length && vplan.every(x => x.code[0] === '4'), 'planning still gets topic 4 only: ' + vplan.map(x => x.code).join(', '));
+console.log('\n7. the model is a staff record');
 const gate = readFileSync(join(HERE, 'store', 'README.md'), 'utf8');
 ok(/critLearn/.test(gate), 'the store change that gates it is written down in store/README.md');
 const traineePage = await ctx.newPage();
