@@ -57,8 +57,7 @@
       + '<tr><td bgcolor="' + C.tealDeep + '" style="background:' + C.tealDeep + '; padding:26px 30px 30px; border-radius:18px 18px 0 0;">'
       +   '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;"><tr>'
       +     '<td style="vertical-align:middle;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="vertical-align:middle;">' + tile(28) + '</td>'
-      +     '<td style="vertical-align:middle; padding-left:9px;"><div style="font-family:\'Instrument Serif\',Georgia,serif; font-style:italic; font-size:21px; line-height:1; color:' + C.onTealGold + ';">Connect</div>'
-      +     '<div style="font-family:' + SANS + '; font-size:8px; font-weight:600; line-height:1; letter-spacing:0.24em; text-transform:uppercase; color:' + C.paper + '; padding-left:1px; margin-top:1px;">Lite</div></td></tr></table></td>'
+      +     '<td style="vertical-align:middle; padding-left:9px;"><div style="font-family:\'Instrument Serif\',Georgia,serif; font-style:italic; font-size:21px; line-height:1; color:' + C.onTealGold + ';">Connect<span style="font-family:' + SANS + '; font-style:normal; font-size:8px; font-weight:600; line-height:1; letter-spacing:0.24em; text-transform:uppercase; color:' + C.paper + '; margin-left:4px;">Lite</span></div></td></tr></table></td>'
       +     '<td align="right" style="vertical-align:middle;"><span style="font-family:' + SANS + '; font-size:10px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:' + C.onTealGold + '; border:1px solid ' + C.onTealGold + '; border-radius:999px; padding:4px 10px; white-space:nowrap;">' + esc(chip) + '</span></td>'
       +   '</tr></table>'
       +   '<h1 style="font-family:' + SERIF + '; font-weight:700; font-size:28px; line-height:1.12; color:' + C.paper + '; margin:0;">' + esc(headline) + '</h1>'
@@ -75,8 +74,7 @@
       + '<tr><td style="background:' + C.paper + '; border-top:6px solid ' + C.gold + '; padding:24px 30px 22px; border-radius:16px 16px 0 0;">'
       +   '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 20px;"><tr>'
       +     '<td style="vertical-align:middle;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="vertical-align:middle;">' + tile(28) + '</td>'
-      +     '<td style="vertical-align:middle; padding-left:9px;"><div style="font-family:\'Instrument Serif\',Georgia,serif; font-style:italic; font-size:21px; line-height:1; color:' + C.gold + ';">Connect</div>'
-      +     '<div style="font-family:' + SANS + '; font-size:8px; font-weight:600; line-height:1; letter-spacing:0.24em; text-transform:uppercase; color:' + C.ink + '; padding-left:1px; margin-top:1px;">Lite</div></td></tr></table></td>'
+      +     '<td style="vertical-align:middle; padding-left:9px;"><div style="font-family:\'Instrument Serif\',Georgia,serif; font-style:italic; font-size:21px; line-height:1; color:' + C.gold + ';">Connect<span style="font-family:' + SANS + '; font-style:normal; font-size:8px; font-weight:600; line-height:1; letter-spacing:0.24em; text-transform:uppercase; color:' + C.ink + '; margin-left:4px;">Lite</span></div></td></tr></table></td>'
       +     '<td align="right" style="vertical-align:middle; font-family:' + SANS + '; font-size:10px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:' + C.grey + '; white-space:nowrap;">' + esc(chip) + '</td>'
       +   '</tr></table>'
       +   '<h1 style="font-family:' + SERIF + '; font-weight:700; font-size:25px; line-height:1.15; color:' + C.tealDeep + '; margin:0;">' + esc(headline) + '</h1>'
@@ -186,7 +184,9 @@
       ? '<table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px; width:100%;"><tr><td style="padding:6px 8px 26px;">' +
           '<div style="font-family:' + SERIF + '; font-size:17px; line-height:1.7; color:' + C.ink + ';">' + paras(ctx.note) + '</div>' +
           '<div style="font-family:\'Instrument Serif\',Georgia,serif; font-style:italic; font-size:26px; color:' + C.inkWarm + '; margin:14px 0 0;">Ramy</div>' +
-          '<div style="font-family:' + SANS + '; font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:' + C.grey + '; margin:4px 0 0;">Connect Lite</div>' +
+          /* the logo, as everywhere (Ramy, 24 Oct 2026: "it's a logo, for God's sake"): tile, Connect, LITE tight under the C */
+          '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:12px 0 0;"><tr><td style="vertical-align:middle;">' + tile(28) + '</td>' +
+            '<td style="vertical-align:middle; padding-left:9px;"><div style="font-family:\'Instrument Serif\',Georgia,serif; font-style:italic; font-size:21px; line-height:1; color:' + C.gold + ';">Connect<span style="font-family:' + SANS + '; font-style:normal; font-size:8px; font-weight:600; line-height:1; letter-spacing:0.24em; text-transform:uppercase; color:' + C.ink + '; margin-left:4px;">Lite</span></div></td></tr></table>' +
         '</td></tr></table>'
       : '';
     if (ctx.only === 'film') return filmDoc(letter, ctx);

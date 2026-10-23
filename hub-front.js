@@ -101,7 +101,7 @@
       '.fp-tile{width:30px; height:30px; border-radius:7px; background:var(--ink-warm); display:inline-flex; align-items:center; justify-content:center; flex:none;}',
       '.fp-word{display:inline-flex; align-items:baseline; gap:4px;}',
       '.fp-word .c{font-family:"Instrument Serif",Georgia,serif; font-style:italic; font-size:21px; line-height:0.85; color:var(--gold);}',
-      '.fp-word .l{font-family:"Instrument Sans",Karla,sans-serif; font-weight:500; font-size:9px; letter-spacing:0.24em; text-transform:uppercase;}',
+      '.fp-word .l{font-family:"Instrument Sans",Karla,sans-serif; font-weight:600; font-size:8px; letter-spacing:0.24em; text-transform:uppercase;}',
       '.fp-eyebrow{font-family:"Instrument Sans",Karla,sans-serif; font-weight:600; font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:var(--grey); margin:0 0 5px;}',
       '.fp-card h1{font-family:Newsreader,Georgia,serif; font-weight:700; font-size:1.75rem; line-height:1.2; margin:0 0 8px; color:var(--teal); text-wrap:balance;}',
       '.fp-card h2{font-family:Newsreader,Georgia,serif; font-weight:600; font-size:1.05rem; color:var(--ink-warm); margin:26px 0 8px;}',

@@ -35,3 +35,6 @@ for f in glob.glob("*.html"):
 sw = pathlib.Path("sw.js"); t = sw.read_text()
 t2 = re.sub(r"const VERSION = '[^']*'", "const VERSION = 'lite-" + stamp + "'", t)
 if t2 != t: sw.write_text(t2); print("stamped sw.js")
+# The logo is fixed (24 Oct 2026): fail loudly if any lockup has drifted.
+import subprocess, sys
+if subprocess.call([sys.executable, 'check-lockup.py']) != 0: sys.exit(1)
