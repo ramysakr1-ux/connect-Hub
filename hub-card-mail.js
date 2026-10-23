@@ -95,6 +95,8 @@
     return '<p style="font-family:' + SANS + '; font-size:13.5px; line-height:1.6; color:' + C.ink + '; margin:18px 0 0;">' + esc(lead) + ' <a href="mailto:' + MAIL + '" style="color:' + C.teal + '; font-weight:700; text-decoration:none;">' + MAIL + '</a></p>';
   }
   function credit(ctx){
+    /* the price card carries no name (Ramy, 24 Oct 2026: "just remove my credit") */
+    if (ctx.only === 'price') return '';
     return '<div style="font-family:' + SANS + '; font-size:11px; color:#8a6534; margin:16px 0 0; padding-top:14px; border-top:1px solid ' + C.line + ';">' + tile(16)
       + '<span style="vertical-align:middle; margin-left:7px;">designed and built by <b style="color:' + C.gold + ';">Ramy</b>' + (ctx.site ? ' · <a href="' + esc(ctx.site) + '" style="color:#8a6534; text-decoration:none;">' + esc(ctx.site.replace(/^https?:\/\//, '').replace(/\/$/, '')) + '</a>' : '') + '</span></div>';
   }

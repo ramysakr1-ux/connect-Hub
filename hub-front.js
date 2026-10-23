@@ -54,20 +54,17 @@
       + '<h1>Teach the course. Lite does the rest.</h1>'
       /* WHAT IT IS, before what it does (Ramy, 24 Oct 2026: "the card should tell people
          what Lite is. And it's not doing that right now"). */
-      + '<p class="fp-what"><b>Connect Lite is the app a CELTA course runs on.</b> Plans, feedback, assignments and the CELTA 5 for every trainee; the timetable, tracker and assessor\u2019s pack for the tutors. One link each.</p>'
-      + '<p class="fp-lede">Built by a CELTA tutor for the four weeks every tutor knows: plans arriving at midnight, feedback typed twice, a booklet filled in from memory, and a scramble for volunteer students. Lite takes all of it on, and every tutor gets their evenings back.</p>'
+      + '<p class="fp-what"><b>Connect Lite is the app a CELTA course runs on, from the first plan to the final grade.</b></p>'
+      + '<p class="fp-lede">Every trainee gets a course of their own. Every tutor gets their evenings back. Built on Cambridge\u2019s handbook, made by a CELTA tutor, and simple enough for anyone.</p>'
 
       + '<h2>What it does</h2>'
       + '<ul class="fp-does">'
-      + '<li><b>A course of their own.</b> One link, and each trainee finds their timetable, their TP, their pages and their feedback.</li>'
-      + '<li><b>It always knows what\u2019s next.</b> Every screen opens on what is waiting for you. No training: if you can open an email, you can run a course.</li>'
-      + '<li><b>Write it once.</b> A plan carries on into the feedback, the tracker, CELTA 5 and the assessor\u2019s pack. One written assignment: 13 clicks, not 70.</li>'
-      + '<li><b>Cambridge, built in.</b> The 41 criteria, the CELTA 5 stages and the grade form, in Cambridge\u2019s own words.</li>'
-      + '<li><b>CELTA 5, written as you go.</b> Trainee and tutor each write their half and sign on the screen; on the last day it prints as Cambridge\u2019s booklet, already signed.</li>'
-      + '<li><b>TP points, dealt fairly.</b> One press deals the lessons. The aims rotate, so nobody always goes first.</li>'
-      + '<li><b>A timetable that understands CELTA.</b> Built in a minute, or read from your spreadsheet; everyone sees their own day.</li>'
-      + '<li><b>Volunteer students who come back.</b> A page in their own language, the trainees\u2019 handouts before the class, and a certificate they have earned.</li>'
-      + '<li><b>Your centre, your way.</b> Your wording, your criteria and your TP points, with a library of interactive input sessions. Duplicate a finished course and go.</li>'
+      + '<li><b>The assessor\u2019s pack is already built.</b> Open the link and the portfolios, grades and assignments are there.</li>'
+      + '<li><b>One written assignment: 13 clicks, not 70.</b> Plan, mark and return it without leaving the page.</li>'
+      + '<li><b>One press deals the lessons.</b> The aims rotate, so nobody always goes first.</li>'
+      + '<li><b>The CELTA 5 prints as Cambridge\u2019s booklet, already signed.</b> Trainee and tutor each sign on the screen.</li>'
+      + '<li><b>The timetable builds in a minute.</b> Or it reads the spreadsheet you already have.</li>'
+      + '<li><b>It opens on a phone, a tablet or a laptop.</b> Trainees can plan on the bus.</li>'
       + '</ul>'
 
       + '<div class="fp-film">'
