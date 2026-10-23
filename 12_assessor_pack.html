@@ -25,7 +25,7 @@
 <title>Connect Lite — Assessor pack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610232024">
+<link rel="stylesheet" href="hub-tokens.css?v=202610232109">
 <style>
   :root{
     /* the control fill, for the shared confirm modal's Cancel button */
@@ -269,7 +269,7 @@
   @media(max-width:560px){ .ap9{padding:22px 18px 18px; border-radius:12px;} .ap9-stats div{min-width:0; flex:1 1 120px;} }
   @media print{ .ap9{display:none !important;} .panel.ap9-obs{border-left:0; background:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610232024">
+<link rel="stylesheet" href="hub-house.css?v=202610232109">
 </head>
 <body data-signout="float">
 <div class="board">
@@ -301,15 +301,15 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202610232024"></script>
-<script src="hub-shared.js?v=202610232024"></script>
-<script src="assignment-defaults.js?v=202610232024"></script>
-<script src="hub-tracker.js?v=202610232024"></script>
-<script src="hub-rotation.js?v=202610232024"></script>
-<script src="hub-attendance.js?v=202610232024"></script>
-<script src="hub-store.js?v=202610232024"></script>
-<script src="hub-say.js?v=202610232024"></script>
-<script src="hub-sync.js?v=202610232024"></script>
+<script src="observation-defaults.js?v=202610232109"></script>
+<script src="hub-shared.js?v=202610232109"></script>
+<script src="assignment-defaults.js?v=202610232109"></script>
+<script src="hub-tracker.js?v=202610232109"></script>
+<script src="hub-rotation.js?v=202610232109"></script>
+<script src="hub-attendance.js?v=202610232109"></script>
+<script src="hub-store.js?v=202610232109"></script>
+<script src="hub-say.js?v=202610232109"></script>
+<script src="hub-sync.js?v=202610232109"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -733,16 +733,21 @@ function volunteerStudents(){
   list.forEach(st => { const l = String(st.level || '').trim(); if (l) levels[l] = (levels[l] || 0) + 1; });
   const levelLine = Object.keys(levels).sort().map(l => l + ' (' + levels[l] + ')').join(', ');
   const attended = rows.filter(x => x.r.present > 0).length;
+  /* Attended out of the days so far, as the register counts them (Ramy, 24 Oct 2026). */
+  const TODAY = window.hubToday ? hubToday() : new Date().toISOString().slice(0, 10);
+  const marksOf = st => st.marks || (st.here || []).reduce((m, d) => { m[d] = 'present'; return m; }, {});
+  const soFar = st => { const m = marksOf(st); return days.filter(d => d < TODAY || m[d]).length; };
+  const pastDays = days.filter(d => d < TODAY).length;
 
   return `<h2 class="sect">Volunteer students <small>Handbook 14.1 &middot; the centre's own register, ${list.length} on it</small></h2>
     <div class="panel">
-      <div class="docrow"><span>${list.length} student${list.length===1?'':'s'} on the register, ${attended} with attendance recorded${levelLine ? ' &middot; levels: ' + esc(levelLine) : ''}</span><span>${days.length} teaching day${days.length===1?'':'s'}</span></div>
+      <div class="docrow"><span>${list.length} student${list.length===1?'':'s'} on the register, ${attended} with attendance recorded${levelLine ? ' &middot; levels: ' + esc(levelLine) : ''}</span><span>${days.length} teaching day${days.length===1?'':'s'}${pastDays < days.length ? ', ' + pastDays + ' so far' : ''}</span></div>
       <!-- Ramy, 1 Oct 2026: "the numbers should sit in the middle of the
            headline" -- a figure parked at the left edge of a wide column has
            nothing to do with the word above it. Every column but the name is
            centred, heading and figure together. -->
       <table class="mid"><tr><th>Student</th><th>Level</th><th>Classes attended</th><th>Part of a class</th><th>Hours</th></tr>
-      ${rows.map(({st, r}) => `<tr><td>${esc(st.name)}</td><td>${esc(st.level || '')}</td><td>${r.present} of ${days.length}</td><td>${r.partial || ''}</td><td>${fmtH(r.hours)}</td></tr>`).join('')}
+      ${rows.map(({st, r}) => `<tr><td>${esc(st.name)}</td><td>${esc(st.level || '')}</td><td>${r.present} of ${soFar(st)}</td><td>${r.partial || ''}</td><td>${fmtH(r.hours)}</td></tr>`).join('')}
       </table>
     </div>`;
 }
@@ -865,12 +870,12 @@ function letterInfo(tr){
     if (window.hubRotation && hubRotation.lettersFor) Object.entries(byG).forEach(([g, ps]) => hubRotation.lettersFor(ps).forEach(p => { LETTERS_CACHE[p.token] = Object.assign({ g }, p); }));
   }
   const p = LETTERS_CACHE[tr.id || tr.token];
-  if (!p || !p.letter) return { letter: hubInitials(tr.name), set: '' };
+  if (!p || !p.letter) return { letter: '', set: '' };
   const mates = Object.values(LETTERS_CACHE).filter(q => q.g === p.g && q.idx != null && (q.idx < 3) === (p.idx < 3) && q.idx <= 5);
   const set = p.idx <= 5 ? mates.sort((a, b) => a.idx - b.idx).map(q => q.letter).join('') : '';
   return { letter: p.letter, set };
 }
-const letterChip = (tr, big) => `<span class="avi avi-cand"${big ? ' style="width:40px;height:40px;font-size:0.95rem;border-radius:9px;"' : ''} aria-hidden="true">${esc(letterInfo(tr).letter)}</span>`;
+const letterChip = (tr, big) => !letterInfo(tr).letter ? '' : `<span class="avi avi-cand"${big ? ' style="width:40px;height:40px;font-size:0.95rem;border-radius:9px;"' : ''} aria-hidden="true">${esc(letterInfo(tr).letter)}</span>`;
 /* Early in a course most of the portfolio is lines saying nothing has happened
    yet (Ramy, 11 Oct 2026: "tidy the page"). A TP with nothing to show -- not
    returned, not in progress, no plan turned in for it -- folds into one line

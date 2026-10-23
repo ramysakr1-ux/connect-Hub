@@ -218,9 +218,37 @@ window.hubObservationHours = function(records){
      different colour?"). Staff are teal, trainees sand with ink initials,
      so the two read apart at a glance; the colour never follows the person. */
   window.hubInitials=function(name){ return String(name||'').trim().split(/\s+/).slice(0,2).map(function(w){ return w[0]||''; }).join('').toUpperCase(); };
-  window.hubAvatar=function(name, kind){
+  /* ONE RULE FOR A TRAINEE'S TILE (Ramy, 24 Oct 2026: "lose the avatar with
+     the initials ... keep the letters all the way through everywhere"). A
+     trainee is their teaching-set letter, A to F in each group, as the course
+     admin places them (settings.slotOf) and hub-rotation deals them. Never
+     initials, never an alphabetical count: where no letter is known there is
+     no tile. Staff keep their initials. */
+  var LETTERS = null;
+  window.hubLetters = function(){
+    if (LETTERS) return LETTERS;
+    var out = { byToken: {}, byName: {} };
+    if (!window.hubRotation || !hubRotation.lettersFor) return out;
+    var r = null; try { r = JSON.parse(localStorage.getItem('connect_roster_v1') || 'null'); } catch (err) {}
+    var by = {};
+    Object.values((r && r.trainees) || {}).forEach(function(t){ if (!t || !t.name) return; var g = String(t.group || ''); (by[g] = by[g] || []).push({ token: String(t.id || t.token || ''), name: t.name }); });
+    Object.keys(by).forEach(function(g){ hubRotation.lettersFor(by[g]).forEach(function(p){ if (!p.letter) return; var v = { letter: p.letter, idx: p.idx, group: g }; out.byToken[p.token] = v; out.byName[p.name] = v; }); });
+    if (Object.keys(out.byToken).length) LETTERS = out;
+    return out;
+  };
+  window.hubLetterOf = function(token, name){
+    var L = window.hubLetters();
+    var v = (token && L.byToken[String(token)]) || (name && L.byName[name]);
+    if (v) return v.letter;
+    /* a trainee's browser has no roster: the places the course admin set say it directly */
+    var s = null; try { s = JSON.parse(localStorage.getItem('connect_course_settings') || 'null'); } catch (err) {}
+    return (token && s && s.slotOf && /^[A-F]$/.test(String(s.slotOf[String(token)] || ''))) ? String(s.slotOf[String(token)]) : '';
+  };
+  window.hubAvatar=function(name, kind, token){
     var e=function(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); };
-    return '<span class="avi '+(kind==='staff'?'avi-staff':'avi-cand')+'" aria-hidden="true">'+e(window.hubInitials(name))+'</span>';
+    if (kind==='staff') return '<span class="avi avi-staff" aria-hidden="true">'+e(window.hubInitials(name))+'</span>';
+    var l = window.hubLetterOf(token, name);
+    return l ? '<span class="avi avi-cand" aria-hidden="true">'+e(l)+'</span>' : '';
   };
 
   /* The install hint, on the pages people live on; never when already

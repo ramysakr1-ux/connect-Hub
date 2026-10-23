@@ -1198,7 +1198,7 @@ case 'inbox': {
          volunteer's link as "<courseId>-<random>", and the browser has no
          other way to learn which course it is on (30 Sep 2026). Not a secret
          -- the key already proves the course; the random half is the secret. */
-      var boot = { course: { id: course.id, settings: courseRead_(course.id, 'settings'), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null, coming: comingFor_(course.id), guidance: reader ? guidanceFor_(course.id) : null } };
+      var boot = { course: { id: course.id, settings: settingsFor_(course, courseRead_(course.id, 'settings'), reader, me), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null, coming: comingFor_(course.id), guidance: reader ? guidanceFor_(course.id) : null } };
       if (tutor) boot.course.courseFeedback = courseRead_(course.id, 'courseFeedback') || [];
       if (assessor) { var exb = assessorExpiry_(course.id); boot.assessor = { expires: exb ? exb.toISOString() : null }; }
       if (reader) {
@@ -1296,7 +1296,7 @@ case 'inbox': {
     // ---- course-level, readable by all on the course, written by tutors ----
     case 'course': {
       if (!course) throw new Error('This link is not on a course');
-      var cres = { settings: courseRead_(course.id, 'settings'), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? courseRead_(course.id, 'volunteers') : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null };
+      var cres = { settings: settingsFor_(course, courseRead_(course.id, 'settings'), reader, me), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? courseRead_(course.id, 'volunteers') : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null };
       if (tutor) cres.courseFeedback = courseRead_(course.id, 'courseFeedback') || [];
       // critLearn: what this course's tutors have tagged, for the criteria suggester (26 Sep 2026).
       // Tutors only. Restored 24 Oct 2026: it had dropped out of the read and the write when the
@@ -2245,7 +2245,8 @@ function gridFor_(course, g, reader, me) {
   var grp = String(me.group || '');
   if (!rel[grp]) return { released: false };
   var people = roster_(course.id).filter(function (t) { return String(t.group || '') === grp; });
-  return { released: true, group: grp, due: due[grp] || '', rows: people.map(function (t) { return { name: t.name, mine: t.token === me.token, plan: rows[t.token] || {} }; }) };
+  var slot = ((courseRead_(course.id, 'settings') || {}).slotOf) || {};
+  return { released: true, group: grp, due: due[grp] || '', rows: people.map(function (t) { return { name: t.name, letter: /^[A-F]$/.test(String(slot[t.token] || '')) ? String(slot[t.token]) : '', mine: t.token === me.token, plan: rows[t.token] || {} }; }) };
 }
 // What each reader may see of the teaching-practice points. Tutors and the
 // assessor: the whole rotation, every group, whether released or not -- it is
@@ -2253,6 +2254,31 @@ function gridFor_(course, g, reader, me) {
 // their own group is released, then that group's points only, their own
 // marked, so they learn what they are teaching without reading round the
 // other group. Same shape and same rule as gridFor_ above (29 Sep 2026).
+/* NO TRAINEE EVER RECEIVES ANOTHER'S KEY (walk, 24 Oct 2026). A trainee's token
+   is their key, and the course settings carried every one of them to every
+   trainee and volunteer: settings.slotOf (token -> letter, the places the course
+   admin set), letterOrder, assessorVisit; and the TP points carried the group's,
+   in the sets and as the keys of the points. Anyone who is not staff now gets a
+   stand-in for every token but their own: a one-way digest, the same on every
+   read, so the rotation still places people and their letters still match, and
+   a stand-in opens nothing. Who the assessor observes is staff business only. */
+function standIn_(courseId, t) {
+  var d = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(courseId) + '|' + String(t));
+  return 'p' + d.slice(0, 8).map(function (b) { return ('0' + ((b + 256) % 256).toString(16)).slice(-2); }).join('');
+}
+function hideTokens_(courseId, me) {
+  var mine = me ? String(me.token) : '';
+  return function (t) { return (t == null || t === '') ? t : String(t) === mine ? t : standIn_(courseId, t); };
+}
+function settingsFor_(course, s, reader, me) {
+  if (reader || !s || typeof s !== 'object') return s;
+  var hide = hideTokens_(course.id, me), out = {};
+  Object.keys(s).forEach(function (k) { out[k] = s[k]; });
+  delete out.assessorVisit;
+  if (out.slotOf && typeof out.slotOf === 'object') { var so = {}; Object.keys(out.slotOf).forEach(function (t) { so[hide(t)] = out.slotOf[t]; }); out.slotOf = so; }
+  if (Array.isArray(out.letterOrder)) out.letterOrder = out.letterOrder.map(hide);
+  return out;
+}
 function tpPointsFor_(p, reader, me) {
   p = (p && typeof p === 'object' && !Array.isArray(p)) ? p : {};
   var byGroup = p.groups || {}, rel = p.released || {};
@@ -2269,8 +2295,13 @@ function tpPointsFor_(p, reader, me) {
      reach a candidate BEFORE the points are released, because the timetable
      draws its letters from them and a candidate's timetable showed a dash in
      every teaching slot until then. The points themselves still wait. */
-  if (!rel[grp]) return { released: false, group: grp, sets: (p.sets || {})[grp] || null, me: me.token };
-  return { released: true, group: grp, points: byGroup[grp] || {}, sets: (p.sets || {})[grp] || null, me: me.token };
+  var hide = hideTokens_(me.course || '', me);
+  var sets = (p.sets || {})[grp] || null;
+  if (Array.isArray(sets)) sets = sets.map(function (set) { return Array.isArray(set) ? set.map(hide) : set; });
+  if (!rel[grp]) return { released: false, group: grp, sets: sets, me: me.token };
+  var pts = byGroup[grp] || {}, mine = {};
+  Object.keys(pts).forEach(function (t) { mine[hide(t)] = pts[t]; });
+  return { released: true, group: grp, points: mine, sets: sets, me: me.token };
 }
 function courseWriteRaw_(courseId, kind, data) {
   var sh = sheet_(SHEET_COURSE);

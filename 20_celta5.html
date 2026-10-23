@@ -41,7 +41,7 @@
 <title>Connect Lite — CELTA 5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610232024">
+<link rel="stylesheet" href="hub-tokens.css?v=202610232109">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:980px; margin:0 auto; padding:26px 20px 80px;}
@@ -210,7 +210,7 @@
   @media(prefers-reduced-motion:reduce){ .c5r i{transition:none;} .c5r li.attn.first i, section.part:target{animation:none;} }
   @media print{ .c5r{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610232024">
+<link rel="stylesheet" href="hub-house.css?v=202610232109">
 </head>
 <body class="hub-celta5 hub-paper hub-course">
 <div class="board">
@@ -223,19 +223,19 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202610232024"></script>
-<script src="hub-hand.js?v=202610232024"></script>
-<script src="hub-ink.js?v=202610232024"></script>
-<script src="assignment-defaults.js?v=202610232024"></script>
-<script src="celta5-text.js?v=202610232024"></script>
-<script src="celta5-appendix.js?v=202610232024"></script>
-<script src="celta5-criteria.js?v=202610232024"></script>
-<script src="hub-tracker.js?v=202610232024"></script>
-<script src="observation-defaults.js?v=202610232024"></script>
-<script src="hub-shared.js?v=202610232024"></script>
-<script src="hub-store.js?v=202610232024"></script>
-<script src="hub-say.js?v=202610232024"></script>
-<script src="hub-sync.js?v=202610232024"></script>
+<script src="celta5-pdf.js?v=202610232109"></script>
+<script src="hub-hand.js?v=202610232109"></script>
+<script src="hub-ink.js?v=202610232109"></script>
+<script src="assignment-defaults.js?v=202610232109"></script>
+<script src="celta5-text.js?v=202610232109"></script>
+<script src="celta5-appendix.js?v=202610232109"></script>
+<script src="celta5-criteria.js?v=202610232109"></script>
+<script src="hub-tracker.js?v=202610232109"></script>
+<script src="observation-defaults.js?v=202610232109"></script>
+<script src="hub-shared.js?v=202610232109"></script>
+<script src="hub-store.js?v=202610232109"></script>
+<script src="hub-say.js?v=202610232109"></script>
+<script src="hub-sync.js?v=202610232109"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -388,10 +388,17 @@ function tpRows(){
    input's value until someone types, so the booklet read blank (second
    audit, 29 Sep 2026). */
 const obsLength = (k, a) => { if (a && a.hLength) return a.hLength; try { const set = (rec('connect_observation_wording_v1') && rec('connect_observation_wording_v1').filmed) ? rec('connect_observation_wording_v1') : (window.CONNECT_HUB_OBSERVATION_DEFAULTS || {}); const t = [].concat(set.filmed || [], set.live || []).find(x => x && x.id === k); return t && t.minutes ? String(t.minutes) : ''; } catch (e) { return ''; } };
+/* The sheet's date is a calendar date (YYYY-MM-DD) and printed raw beside the
+   long dates either side of it (walk, 24 Oct 2026). Read as that date, never
+   through a time zone. */
+function dayOnly(v){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v || '').trim());
+  return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric', timeZone:'UTC' }) : (v || '');
+}
 function obsRows(){
   const w = who.tr.observations || {}; const out = [];
   window.hubObservationSet().all.forEach(k => { const r = w[k]; if (!r || !r.turnedInAt) return; const a = r.a || {};
-    out.push([k.startsWith('filmed') ? 'Filmed' : 'Live', a.hDate || '', obsLength(k, a), a.hLevel || '', a.hLearners || '', a.hLesson || '', a.hSigned || '', when(r.turnedInAt)]); });
+    out.push([k.startsWith('filmed') ? 'Filmed' : 'Live', dayOnly(a.hDate), obsLength(k, a), a.hLevel || '', a.hLearners || '', a.hLesson || '', a.hSigned || '', when(r.turnedInAt)]); });
   return out;
 }
 /* Cambridge's own Record of Assessment of Written Assignments (July 2023,

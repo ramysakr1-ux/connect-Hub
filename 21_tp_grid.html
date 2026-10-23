@@ -29,7 +29,7 @@
 <title>Connect Lite — TP planning grid</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610232024">
+<link rel="stylesheet" href="hub-tokens.css?v=202610232109">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -111,19 +111,20 @@
   @media(max-width:560px){ .ag-map{grid-template-columns:1fr; gap:4px;} .ag-map .tp{margin-top:6px;} }
   @media print{ .ag-map, .ag-count{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610232024">
+<link rel="stylesheet" href="hub-house.css?v=202610232109">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610232024"></script>
-<script src="hub-tracker.js?v=202610232024"></script>
-<script src="hub-shared.js?v=202610232024"></script>
-<script src="hub-store.js?v=202610232024"></script>
-<script src="hub-say.js?v=202610232024"></script>
-<script src="hub-sync.js?v=202610232024"></script>
+<script src="hub-due.js?v=202610232109"></script>
+<script src="hub-tracker.js?v=202610232109"></script>
+<script src="hub-rotation.js?v=202610232109"></script>
+<script src="hub-shared.js?v=202610232109"></script>
+<script src="hub-store.js?v=202610232109"></script>
+<script src="hub-say.js?v=202610232109"></script>
+<script src="hub-sync.js?v=202610232109"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -156,10 +157,10 @@ const aimWord = a => AIM_WORD[String(a || '').toUpperCase()] || a || '';
 let grid = rec(KEY) || null;
 let busy = false, note = '', pendingRelease = null;   // pendingRelease: { group, on }
 const groupsOf = () => {
-  if (IS_TRAINEE) return grid && grid.released ? [{ group: grid.group, rows: grid.rows.map(r => ({ name: r.name, mine: r.mine, plan: r.plan || {}, tr: r.mine ? meTr() : null })) }] : [];
+  if (IS_TRAINEE) return grid && grid.released ? [{ group: grid.group, rows: grid.rows.map(r => ({ name: r.name, letter: r.letter || '', mine: r.mine, plan: r.plan || {}, tr: r.mine ? meTr() : null })).sort((a, b) => (a.letter || 'Z').localeCompare(b.letter || 'Z') || (a.name || '').localeCompare(b.name || '')) }] : [];
   const roster = rec('connect_roster_v1') || {}; const people = Object.values(roster.trainees || {});
   const by = {}; people.forEach(t => { const g = String(t.group || ''); (by[g] = by[g] || []).push(t); });
-  return Object.keys(by).sort().map(g => ({ group: g, rows: by[g].sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(t => ({ name: t.name, token: t.id, plan: ((grid && grid.rows) || {})[t.id] || {}, tr: t })) }));
+  return Object.keys(by).sort().map(g => ({ group: g, rows: by[g].map(t => Object.assign({ L: window.hubLetterOf ? hubLetterOf(t.id, t.name) : '' }, t)).sort((a, b) => (a.L || 'Z').localeCompare(b.L || 'Z') || (a.name || '').localeCompare(b.name || '')).map(t => ({ name: t.name, token: t.id, letter: t.L, plan: ((grid && grid.rows) || {})[t.id] || {}, tr: t })) }));
 };
 function meTr(){ const me = rec('hub:me') || {}; return { id: me.token, name: me.name, tp: { plan: rec('chub:plan'), selfeval: rec('chub:selfeval'), feedback: rec('chub:feedback'), history: rec('chub:tpHistory') || {} }, assignments: rec('connect_assignment_submissions_v1') || {}, tracker: rec('chub:tracker') || {} }; }
 const released = g => IS_TRAINEE ? !!(grid && grid.released) : !!(grid && grid.released && grid.released[g]);
@@ -185,7 +186,7 @@ function render(){
     const rows = g.rows.map(r => {
       const editable = IS_TUTOR || (IS_TRAINEE && r.mine);
       const sf = r.tr ? soFar(r.tr) : '';
-      return `<tr class="${r.mine ? 'mine' : ''}" data-token="${esc(r.token || '')}"><td><div class="nm">${window.hubAvatar ? hubAvatar(r.name) : ''}${esc(r.name)}${r.mine ? '<span class="you">you</span>' : ''}</div>${sf ? `<div class="sofar">So far: <b>${esc(sf)}</b></div>` : ''}</td>`
+      return `<tr class="${r.mine ? 'mine' : ''}" data-token="${esc(r.token || '')}"><td><div class="nm">${r.letter ? `<span class="avi avi-cand" aria-hidden="true">${esc(r.letter)}</span>` : ''}${esc(r.name)}${r.mine ? '<span class="you">you</span>' : ''}</div>${sf ? `<div class="sofar">So far: <b>${esc(sf)}</b></div>` : ''}</td>`
         + TPS.map(tp => { const p = r.plan['tp' + tp] || {}; const isClash = aimWord(p.main) && clash[tp][aimWord(p.main)] > 1;
           return `<td class="cell first${isClash ? ' clash' : ''}" data-tp="${tp}" data-f="main">${sel('main', p.main, AIMS, editable)}</td><td class="cell" data-tp="${tp}" data-f="sub">${sel('sub', p.sub, AIMS, editable)}</td><td class="cell" data-tp="${tp}" data-f="material">${editable ? `<input type="text" class="material" value="${esc(p.material || '')}" placeholder="Coursebook, pages…">` : `<div class="ro${p.material ? '' : ' empty'}">${esc(p.material || 'not yet')}</div>`}</td>`; }).join('')
         + `</tr>`;

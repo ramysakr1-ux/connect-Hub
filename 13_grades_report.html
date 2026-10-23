@@ -23,7 +23,7 @@
 <title>Connect Lite — Grades report</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610232024">
+<link rel="stylesheet" href="hub-tokens.css?v=202610232109">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -87,6 +87,8 @@
   .jump a:hover{border-color:var(--grey); color:var(--ink);} /* hue-free: hover lifts the contrast, never the colour */
   .jump a.done{border-color:var(--teal); color:var(--teal);}
   .jump .count{margin-left:6px; font-size:0.78rem; color:var(--grey);}
+  .jump .jg{font-size:0.72rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--grey); margin:0 2px 0 8px;}
+  .jump .jg:first-child{margin-left:0;}
 
   /* ---- the cohort: two grade tables, side by side ---- */
   .cohort{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:18px;}
@@ -267,7 +269,7 @@
   @media(prefers-reduced-motion:reduce){ .jump a .gr-ring, .gr-spread i{transition:none;} }
   @media print{ .gr-spread, .gr-key, .gr-move, .gr-left{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610232024">
+<link rel="stylesheet" href="hub-house.css?v=202610232109">
 </head>
 <body>
 <div class="board">
@@ -320,11 +322,12 @@
 
 </div>
 
-<script src="hub-tracker.js?v=202610232024"></script>
-<script src="hub-store.js?v=202610232024"></script>
-<script src="hub-say.js?v=202610232024"></script>
-<script src="hub-shared.js?v=202610232024"></script>
-<script src="hub-sync.js?v=202610232024"></script>
+<script src="hub-tracker.js?v=202610232109"></script>
+<script src="hub-store.js?v=202610232109"></script>
+<script src="hub-say.js?v=202610232109"></script>
+<script src="hub-rotation.js?v=202610232109"></script>
+<script src="hub-shared.js?v=202610232109"></script>
+<script src="hub-sync.js?v=202610232109"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a trainee's link opened it and read the course and
@@ -548,15 +551,26 @@ function capFor(tr){
   }catch(e){ return null; }
 }
 
-/* The roster decides who appears, and in what order. Letters are positional,
-   as the Word form has them: A, B, C… in roster order. */
+/* The roster decides who appears. Each trainee is their teaching-set letter, as
+   the course admin places them and every other page shows them (Ramy, 24 Oct
+   2026: "keep the letters all the way through everywhere"), so the order is by
+   group, then letter; it was A to L by name, which made Amara B here and E in
+   the pack. */
 function roster(){
   const r = loadRoster().trainees || {};
-  return Object.values(r).filter(t=>t && t.name).sort((a,b)=>(a.name||'').localeCompare(b.name||''))
-    .map(t=>({ id:t.id||t.name, name:t.name, withdrawn: !!(t.tracker && t.tracker.withdrawn), saved:(t.tracker && t.tracker.grades) || null, cap: capFor(t) }));
+  const L = window.hubLetters ? hubLetters().byToken : {};
+  const at = t => L[String(t.id || t.token || '')] || {};
+  return Object.values(r).filter(t=>t && t.name).sort((a,b)=>{
+      const ga = String(a.group||''), gb = String(b.group||'');
+      if (ga !== gb) return ga.localeCompare(gb, undefined, { numeric:true });
+      const ia = at(a).idx, ib = at(b).idx;
+      if (ia != null && ib != null && ia !== ib) return ia - ib;
+      return (a.name||'').localeCompare(b.name||'');
+    })
+    .map(t=>({ id:t.id||t.name, name:t.name, group:String(t.group||''), letter: at(t).letter || '', withdrawn: !!(t.tracker && t.tracker.withdrawn), saved:(t.tracker && t.tracker.grades) || null, cap: capFor(t) }));
 }
-
-function letterFor(i){ return String.fromCharCode(65+i); }
+const MANY_GROUPS = () => new Set(ORDER.map(p => p.group)).size > 1;
+function letterFor(i){ const p = ORDER[i]; return p ? p.letter : ''; }
 
 function fit(el){ if(!el) return; el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
 
@@ -579,8 +593,10 @@ function gradeSelect(kind, opts, cur, p){
 
 function paintJump(){
   const done = ORDER.filter(p => DATA[p.id].final).length;
+  /* one run of letters per group, headed by the group when there is more than one */
   document.getElementById('jump').innerHTML = ORDER.map((p, i) =>
-    `<a href="#c${i}" title="${esc(p.name)}" class="${DATA[p.id].final ? 'done' : ''}">${letterFor(i)}</a>`).join('') +
+    (MANY_GROUPS() && (i === 0 || ORDER[i - 1].group !== p.group) ? `<span class="jg">Group ${esc(p.group)}</span>` : '') +
+    `<a href="#c${i}" title="${esc(p.name)}" class="${DATA[p.id].final ? 'done' : ''}">${esc(letterFor(i) || '·')}</a>`).join('') +
     `<span class="count">${done} of ${ORDER.length} final grades</span>`;
 }
 
@@ -589,7 +605,7 @@ function paintJump(){
 function paintCohort(){
   const table = (kind, opts) => `<table><tbody>${ORDER.map((p, i) => `<tr>
     <td class="l">${letterFor(i)}</td>
-    <td class="n">${esc(p.name)}${p.withdrawn ? '<span class="wd">withdrawn</span>' : ''}</td>
+    <td class="n">${esc(p.name)}${MANY_GROUPS() ? '<span class="wd">Group ' + esc(p.group) + '</span>' : ''}${p.withdrawn ? '<span class="wd">withdrawn</span>' : ''}</td>
     <td class="s">${gradeSelect(kind, opts, DATA[p.id][kind], p)}</td></tr>`).join('')}</tbody></table>`;
   document.getElementById('cohort').innerHTML = `
     <div class="gt">
@@ -708,7 +724,7 @@ function sectionText(id, key){
 }
 function profileText(id, i){
   const d = DATA[id];
-  const lines = [letterFor(i) + ' — ' + d.name, 'Provisional grade: ' + (d.provisional || 'not set'), ''];
+  const lines = [(letterFor(i) ? letterFor(i) + ' — ' : '') + d.name + (MANY_GROUPS() ? ' (Group ' + ORDER[i].group + ')' : ''), 'Provisional grade: ' + (d.provisional || 'not set'), ''];
   SECTIONS.forEach(s => { lines.push(s.heading.toUpperCase() + ':'); lines.push(sectionText(id, s.key) || '(nothing recorded)'); lines.push(''); });
   lines.push('Final grade: ' + (d.final || 'not set'), '');
   FIELDS.forEach(f => { lines.push(f.heading.toUpperCase() + ':'); lines.push(sectionText(id, f.key) || '(nothing recorded)'); lines.push(''); });
@@ -896,7 +912,7 @@ function printableRecord(p, i){
     return `<h3>${f.heading}</h3>` + (v ? `<p>${esc(v)}</p>` : '<div class="none">Nothing recorded.</div>');
   };
   return `<div class="pcand">
-    <h2>${letterFor(i)} · ${esc(d.name || '')}</h2>
+    <h2>${letterFor(i) ? letterFor(i) + ' · ' : ''}${esc(d.name || '')}${MANY_GROUPS() ? ' · Group ' + esc(ORDER[i].group) : ''}</h2>
     <div class="pgrades">Provisional grade: <b>${esc(d.provisional || 'not set')}</b> · Final grade: <b>${esc(d.final || 'not set')}</b>${p.cap ? ' · ' + esc(p.cap.line) : ''}</div>
     ${SECTIONS.map(s => `<h3>${s.heading}</h3>${list(s.key)}`).join('')}
     ${wantsEvidence(p, d.provisional) ? prose(EVIDENCE) : ''}
