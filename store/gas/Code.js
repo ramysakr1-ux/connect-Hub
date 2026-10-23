@@ -1846,11 +1846,26 @@ function sheet_(name) {
   if (!sh) { sh = ss.insertSheet(name); sh.getRange(1, 1, 1, header.length).setValues([header]).setFontWeight('bold'); sh.setFrozenRows(1); }
   return sh;
 }
+/* Rows go in BLOCKS (24 Oct 2026). One deleteRow per matching row is one
+   round trip to Sheets each, and a course's records run to hundreds of rows
+   (feedback documents are chunked across rows), so deleting c7 ran out of
+   Apps Script's time limit partway through, every time: the trainees went,
+   some records went, and the course itself, deleted last, never did --
+   "it's like it's deleted, but still there". A course's rows sit mostly
+   together, so each run of neighbouring matches is one deleteRows call,
+   taken bottom-up so the row numbers above stay true. */
 function deleteRowsWhere_(name, match) {
   var sh = sheet_(name);
   var rows = sh.getDataRange().getValues();
-  var n = 0;
-  for (var i = rows.length - 1; i >= 1; i--) if (match(rows[i])) { sh.deleteRow(i + 1); n++; }
+  var n = 0, i = rows.length - 1;
+  while (i >= 1) {
+    if (!match(rows[i])) { i--; continue; }
+    var end = i;
+    while (i >= 1 && match(rows[i])) i--;
+    var count = end - i;                 // rows i+1 .. end (0-based) are a run
+    sh.deleteRows(i + 2, count);         // sheet rows are 1-based; row 0 is the header
+    n += count;
+  }
   return n;
 }
 function roster_(courseId) {
