@@ -445,7 +445,7 @@ function hubRoomRefusal(title, who, mode){
     + '</svg></span>'
     + '<span style="position:relative;display:inline-block;">'
     + '<span style="font-family:Instrument Serif,Georgia,serif;font-style:italic;font-size:21px;line-height:0.85;color:oklch(63% 0.096 72);">Connect</span>'
-    + '<span style="position:absolute;left:1px;top:100%;margin-top:2px;font-family:Instrument Sans,Karla,sans-serif;font-weight:600;font-size:8px;line-height:1;letter-spacing:14.4px;text-transform:uppercase;">Lite</span>'
+    + '<span style="position:absolute;left:1px;top:100%;margin-top:2px;font-family:Instrument Sans,Karla,sans-serif;font-weight:600;font-size:8px;line-height:1;letter-spacing:0.24em;text-transform:uppercase;">Lite</span>'
     + '</span></div>'
     + '<h1 style="font-family:Newsreader,Georgia,serif;font-weight:700;font-size:1.9rem;line-height:1.2;margin:0 0 10px;">' + title + '</h1>'
     + '<p style="font-size:0.92rem;line-height:1.65;color:oklch(42% 0.02 68);margin:0 0 20px;">' + who + ' Nothing you change here would reach the course.</p>'

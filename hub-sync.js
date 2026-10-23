@@ -20,8 +20,10 @@
   window.HubMode = mode;
   /* AN ASSESSOR ALWAYS HAS A WAY BACK (Ramy, 21 Oct 2026: "they don't know how this thing works... they
      should be able to easily get back"). On every page an assessor opens from the pack, a clear forest
-     pill at the top goes back to it. Only for the assessor; the pack itself does not need it. */
-  if (mode === 'assessor' && !/12_assessor_pack\.html/.test(location.pathname)) {
+     pill at the top goes back to it. Only for the assessor; the pack itself does not need it, and nor
+     does the invitation card (23 Oct 2026): it is the way in, and the pill sat beside the card and
+     pushed it off centre. */
+  if (mode === 'assessor' && !/(12_assessor_pack|invite)\.html/.test(location.pathname)) {
     var addWayBack = function(){
       if (!document.body || document.getElementById('hubAkBack')) return;
       var a = document.createElement('a');
@@ -163,7 +165,7 @@
       + '</svg></span>'
       + '<span style="position:relative;display:inline-block;">'
       + '<span style="font-family:Instrument Serif,Georgia,serif;font-style:italic;font-size:21px;line-height:0.85;color:#a8803f;">Connect</span>'
-      + '<span style="position:absolute;left:1px;top:100%;margin-top:2px;font-family:Instrument Sans,Karla,sans-serif;font-weight:600;font-size:8px;line-height:1;letter-spacing:14.4px;text-transform:uppercase;">Lite</span>'
+      + '<span style="position:absolute;left:1px;top:100%;margin-top:2px;font-family:Instrument Sans,Karla,sans-serif;font-weight:600;font-size:8px;line-height:1;letter-spacing:0.24em;text-transform:uppercase;">Lite</span>'
       + '</span></div>'
       + '<h1 style="font-family:Newsreader,Georgia,serif;font-weight:400;font-size:2rem;line-height:1.2;margin:0 0 12px;color:#232220;">' + (reason ? 'The course could not be opened from this link' : 'Open your course link') + '</h1>'
       + (reason ? '<p style="font-size:0.92rem;line-height:1.65;color:#7A2E2E;font-weight:700;margin:0 0 14px;">' + String(reason).replace(/[<&]/g, ' ') + '</p>' : '')
