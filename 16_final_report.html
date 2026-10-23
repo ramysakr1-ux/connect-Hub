@@ -34,7 +34,7 @@
 <title>Connect Lite — Final course report</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610231951">
+<link rel="stylesheet" href="hub-tokens.css?v=202610232024">
 <style>
   :root{
     --cream:oklch(97.5% 0.012 85);
@@ -98,6 +98,11 @@
   .comment{font-size:0.92rem; line-height:1.65; white-space:pre-wrap;}
   .missing{background:var(--surface); border-radius:6px; border-left:5px solid var(--brick); padding:22px 26px;}
   .missing h2{margin:0 0 8px; font-family:'Newsreader',Georgia,serif; font-size:1.2rem;}
+  .missing.choose{border-left-color:var(--teal);}
+  .pick{list-style:none; margin:14px 0 0; padding:0; columns:2; column-gap:28px;}
+  .pick li{padding:5px 0; break-inside:avoid;}
+  .pick a{color:inherit; font-weight:600;}
+  @media (max-width:560px){ .pick{columns:1;} }
 
   /* Orientation stated, not left to the print dialog -- see hub-record.css. */
   @page{ size:A4 portrait; margin:12mm; }
@@ -131,7 +136,7 @@
   @keyframes v4-stamp{0%{opacity:0; transform:scale(1.9) rotate(-6deg);}65%{opacity:1; transform:scale(.95) rotate(1deg);}100%{transform:none;}}
   @media(prefers-reduced-motion:reduce){ .sheet, .sheet *{animation:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610231951">
+<link rel="stylesheet" href="hub-house.css?v=202610232024">
 </head>
 <body class="hub-assign">
 <div class="board">
@@ -148,11 +153,11 @@
   <div id="doc"></div>
 </div>
 
-<script src="hub-tracker.js?v=202610231951"></script>
-<script src="hub-store.js?v=202610231951"></script>
-<script src="hub-say.js?v=202610231951"></script>
-<script src="hub-shared.js?v=202610231951"></script>
-<script src="hub-sync.js?v=202610231951"></script>
+<script src="hub-tracker.js?v=202610232024"></script>
+<script src="hub-store.js?v=202610232024"></script>
+<script src="hub-say.js?v=202610232024"></script>
+<script src="hub-shared.js?v=202610232024"></script>
+<script src="hub-sync.js?v=202610232024"></script>
 <script type="text/x-hub-app">
 /* Tutors and the assessor. A trainee's link is refused: Connect releases the
    trainee's own copy as a separate, later act once Cambridge has confirmed,
@@ -248,11 +253,16 @@ const who = Object.values(roster.trainees || {}).find(t => t && (t.id === id || 
   a.href = 'mailto:' + encodeURIComponent(who.email) + '?subject=' + subject + '&body=' + body;
   a.hidden = false;
 })();
-if (window.HubMode === 'assessor') { const b = document.getElementById('backLink'); b.href = '12_assessor_pack.html'; b.innerHTML = 'Assessor pack'; }
 
 const doc = document.getElementById('doc');
 if (!who) {
-  doc.innerHTML = `<div class="missing"><h2>No trainee to report on</h2><p class="note">Open this from a trainee on the <a href="13_grades_report.html">grades report</a>.</p></div>`;
+  /* Opened from the assessor pack's Course documents there is no trainee yet,
+     and "open this from the grades report" was a dead end on a page the pack
+     itself sent them to (assessor walk, 24 Oct 2026). Every trainee is a door. */
+  const all = Object.values(roster.trainees || {}).filter(t => t && t.name).sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  doc.innerHTML = all.length
+    ? `<div class="missing choose"><h2>Choose a trainee</h2><p class="note">Each trainee's report is written on this form at the end of the course.</p><ul class="pick">${all.map(t => `<li><a href="16_final_report.html?id=${encodeURIComponent(t.id || t.token || t.name)}">${esc(t.name)}</a></li>`).join('')}</ul></div>`
+    : `<div class="missing"><h2>No trainee to report on</h2><p class="note">Open this from a trainee on the <a href="13_grades_report.html">grades report</a>.</p></div>`;
 } else {
   const g = (who.tracker && who.tracker.grades) || {};
   const finalGrade = g.final || '';

@@ -2187,7 +2187,7 @@ window.hubHeadHTML = function (text, heads) {
   if (/\/(offer\.html|film\/|brand\/)/.test(location.pathname)) return;
   var MSG = 'This is a demo course. Printing and downloading are turned off.';
   function demo(){ try { return !!(window.hubDemoToday && window.hubDemoToday()); } catch (e) { return false; } }
-  function say(){
+  function say(msg){
     var t = document.getElementById('hubDemoLock');
     if (!t) {
       t = document.createElement('div'); t.id = 'hubDemoLock'; t.setAttribute('role', 'status');
@@ -2195,7 +2195,7 @@ window.hubHeadHTML = function (text, heads) {
         + 'background:var(--ink,#1f1a14);color:var(--paper,#fdfcf9);font:600 0.88rem/1.4 Karla,sans-serif;padding:11px 18px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.18);text-align:center;';
       document.body.appendChild(t);
     }
-    t.textContent = MSG; t.hidden = false;
+    t.textContent = msg || MSG; t.hidden = false;
     clearTimeout(say._t); say._t = setTimeout(function(){ t.hidden = true; }, 3200);
   }
   var st = document.createElement('style');
@@ -2207,7 +2207,12 @@ window.hubHeadHTML = function (text, heads) {
   function isDownload(a){ return !!a && (a.hasAttribute('download') || /export=download|drive\.usercontent\.google\.com\/download/.test(a.href || '')); }
   document.addEventListener('click', function(e){
     var a = e.target && e.target.closest ? e.target.closest('a') : null;
-    if (isDownload(a) && demo()) { e.preventDefault(); e.stopPropagation(); say(); }
+    if (isDownload(a) && demo()) { e.preventDefault(); e.stopPropagation(); say(); return; }
+    /* The demo centre's own documents are placeholders (drive.google.com/.../demo-...),
+       and opened a Drive error (assessor walk, 24 Oct 2026). Say what would open. */
+    if (a && /drive\.google\.com\/drive\/folders\/demo-/.test(a.href || '') && demo()) {
+      e.preventDefault(); e.stopPropagation(); say('This is a demo course. On a real course this opens the centre\u2019s own document.');
+    }
   }, true);
   var realClick = HTMLAnchorElement.prototype.click;
   HTMLAnchorElement.prototype.click = function(){ if (isDownload(this) && demo()) { say(); return; } return realClick.apply(this, arguments); };

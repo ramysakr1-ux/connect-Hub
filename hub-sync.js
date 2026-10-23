@@ -30,6 +30,12 @@
       a.id = 'hubAkBack'; a.href = '12_assessor_pack.html'; a.textContent = 'Back to the assessor pack';
       a.style.cssText = 'display:inline-block;margin:14px 0 0 16px;padding:9px 16px;border-radius:999px;background:#1E3B2F;color:#fff;font:700 0.86rem Karla,Helvetica,sans-serif;text-decoration:none;box-shadow:0 1px 2px rgba(35,34,32,.08),0 6px 16px rgba(35,34,32,.1);position:relative;z-index:5;';
       document.body.insertBefore(a, document.body.firstChild);
+      /* One way back, not two: the page's own back link to a dashboard or to the
+         pack sat under the pill saying the same thing (assessor walk, 24 Oct 2026).
+         A back link to somewhere else, such as the grades from a report, stays. */
+      var st = document.createElement('style');
+      st.textContent = 'a.back[href^="12_assessor_pack"],a.back[href^="5_tutor_dashboard"],a.back[href^="index.html"],a.back[href^="6_centre_admin"]{display:none !important;}';
+      document.head.appendChild(st);
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addWayBack); else addWayBack();
   }

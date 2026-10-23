@@ -25,7 +25,7 @@
 <title>Connect Lite — Assessor pack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610231951">
+<link rel="stylesheet" href="hub-tokens.css?v=202610232024">
 <style>
   :root{
     /* the control fill, for the shared confirm modal's Cancel button */
@@ -269,7 +269,7 @@
   @media(max-width:560px){ .ap9{padding:22px 18px 18px; border-radius:12px;} .ap9-stats div{min-width:0; flex:1 1 120px;} }
   @media print{ .ap9{display:none !important;} .panel.ap9-obs{border-left:0; background:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610231951">
+<link rel="stylesheet" href="hub-house.css?v=202610232024">
 </head>
 <body data-signout="float">
 <div class="board">
@@ -301,15 +301,15 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202610231951"></script>
-<script src="hub-shared.js?v=202610231951"></script>
-<script src="assignment-defaults.js?v=202610231951"></script>
-<script src="hub-tracker.js?v=202610231951"></script>
-<script src="hub-rotation.js?v=202610231951"></script>
-<script src="hub-attendance.js?v=202610231951"></script>
-<script src="hub-store.js?v=202610231951"></script>
-<script src="hub-say.js?v=202610231951"></script>
-<script src="hub-sync.js?v=202610231951"></script>
+<script src="observation-defaults.js?v=202610232024"></script>
+<script src="hub-shared.js?v=202610232024"></script>
+<script src="assignment-defaults.js?v=202610232024"></script>
+<script src="hub-tracker.js?v=202610232024"></script>
+<script src="hub-rotation.js?v=202610232024"></script>
+<script src="hub-attendance.js?v=202610232024"></script>
+<script src="hub-store.js?v=202610232024"></script>
+<script src="hub-say.js?v=202610232024"></script>
+<script src="hub-sync.js?v=202610232024"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -980,9 +980,16 @@ function agreementRow(tr){
 function celta5Block(tr){
   const c = tr.celta5 || {}, t = tr.celta5t || {}; const conf = c.confirms || {};
   const sig = s => s && s.at ? '<span class="chip fine">signed</span>' : '<span class="chip nd">not signed</span>';
-  const stage = (n, ret, signed, sub) => `<div class="tp"><div class="tp-row"><span class="n">Stage ${n}</span><span class="meta">${ret ? '<span class="chip fine">returned</span>' : sub ? '<span class="chip wait">with the tutor</span>' : '<span class="chip nd">open</span>'} ${sig(signed)}</span></div></div>`;
+  /* A stage not yet reached said "open · not signed", which read as overdue on day 10
+     (assessor walk, 24 Oct 2026). Until it is returned there is nothing to sign, so the
+     signature shows only after; Stage 3 is written only for the trainees who need it
+     (CELTA 5 p20), so before it is it says so. A returned Stage 2 or 3 names its verdict. */
+  const OVR = { above: 'above standard', to: 'to standard', not: 'not to standard' };
+  const stage = (n, ret, signed, sub, overall) => `<div class="tp"><div class="tp-row"><span class="n">Stage ${n}</span><span class="meta">${ret
+    ? '<span class="chip fine">returned' + (OVR[overall] ? ' · ' + OVR[overall] : '') + '</span> ' + sig(signed)
+    : sub ? '<span class="chip wait">with the tutor</span>' : '<span class="chip nd">' + (n === 3 ? 'only if needed' : 'not yet') + '</span>'}</span></div></div>`;
   return `<div class="tp"><div class="tp-row"><span class="n">Confirmations</span><span class="meta">portfolio ${sig(conf.portfolio)} · appeals ${sig(conf.appeals)}</span></div></div>`
-    + stage(1, t.stage1 && t.stage1.returnedAt, c.stage1 && c.stage1.signed) + stage(2, t.stage2 && t.stage2.returnedAt, c.stage2 && c.stage2.signed, c.stage2 && c.stage2.submittedAt) + stage(3, t.stage3 && t.stage3.returnedAt, c.stage3 && c.stage3.signed)
+    + stage(1, t.stage1 && t.stage1.returnedAt, c.stage1 && c.stage1.signed) + stage(2, t.stage2 && t.stage2.returnedAt, c.stage2 && c.stage2.signed, c.stage2 && c.stage2.submittedAt, t.stage2 && t.stage2.overall) + stage(3, t.stage3 && t.stage3.returnedAt, c.stage3 && c.stage3.signed, false, t.stage3 && t.stage3.overall)
     + `<div class="tp"><div class="tp-row"><span class="n">Final declaration</span><span class="meta">trainee ${sig(c.final && c.final.signed)} · tutor ${sig(t.final && t.final.signed)}</span></div></div>`
     + `<div class="tp"><div class="tp-row"><span class="n"></span><span class="meta"></span><a class="btn ghost" href="20_celta5.html?trainee=${encodeURIComponent(tr.id)}">Open the CELTA 5</a></div></div>`;
 }
