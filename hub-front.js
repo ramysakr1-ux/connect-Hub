@@ -52,7 +52,10 @@
       + '<div class="fp-mark">' + mark + '</div>'
       + '<p class="fp-eyebrow">For a CELTA centre</p>'
       + '<h1>Teach the course. Lite does the rest.</h1>'
-      + '<p class="fp-lede">Every trainee gets a course of their own. Every tutor gets their evenings back. Connect Lite was built by a CELTA tutor, for the four weeks every tutor knows: plans arriving at midnight, feedback typed twice, a booklet filled in from memory, and a scramble for volunteer students. Lite takes all of it on. Each trainee opens one link and finds a course of their own. Each tutor opens theirs and sees exactly what needs them next. And when the assessor arrives, the pack is already there. Each link arrives as a card with a QR code, so it opens on a phone as easily as on a laptop.</p>'
+      /* WHAT IT IS, before what it does (Ramy, 24 Oct 2026: "the card should tell people
+         what Lite is. And it's not doing that right now"). */
+      + '<p class="fp-what"><b>Connect Lite is the app a CELTA course runs on.</b> Plans, feedback, assignments and the CELTA 5 for every trainee; the timetable, tracker and assessor\u2019s pack for the tutors. One link each.</p>'
+      + '<p class="fp-lede">Built by a CELTA tutor for the four weeks every tutor knows: plans arriving at midnight, feedback typed twice, a booklet filled in from memory, and a scramble for volunteer students. Lite takes all of it on, and every tutor gets their evenings back.</p>'
 
       + '<h2>What it does</h2>'
       + '<ul class="fp-does">'
@@ -106,6 +109,7 @@
       '.fp-card h1{font-family:Newsreader,Georgia,serif; font-weight:700; font-size:1.75rem; line-height:1.2; margin:0 0 8px; color:var(--teal); text-wrap:balance;}',
       '.fp-card h2{font-family:Newsreader,Georgia,serif; font-weight:600; font-size:1.05rem; color:var(--ink-warm); margin:26px 0 8px;}',
       '.fp-lede{font-size:0.95rem; line-height:1.7; margin:0;}',
+      '.fp-what{font-size:1.02rem; line-height:1.6; margin:0 0 14px; color:var(--ink);} .fp-what b{color:var(--teal); font-weight:700;}',
       '.fp-small{font-size:0.9rem;}',
       '.fp-lede a{color:var(--teal); font-weight:700; text-decoration:none; border-bottom:1.5px solid var(--amber-edge);}',
       '.fp-lede a:hover{border-bottom-color:var(--teal);}',
