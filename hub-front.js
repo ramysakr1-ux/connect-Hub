@@ -61,7 +61,7 @@
       + '<li><b>Write it once.</b> A plan carries on into the feedback, the tracker, CELTA 5 and the assessor\u2019s pack. One written assignment: 13 clicks, not 70.</li>'
       + '<li><b>Cambridge, built in.</b> The 41 criteria, the CELTA 5 stages and the grade form, in Cambridge\u2019s own words.</li>'
       + '<li><b>CELTA 5, written as you go.</b> Trainee and tutor each write their half and sign on the screen; on the last day it prints as Cambridge\u2019s booklet, already signed.</li>'
-      + '<li><b>TP points, dealt fairly.</b> Every trainee teaches every type, and nobody always goes first.</li>'
+      + '<li><b>TP points, dealt fairly.</b> One press deals the lessons. The aims rotate, so nobody always goes first.</li>'
       + '<li><b>A timetable that understands CELTA.</b> Built in a minute, or read from your spreadsheet; everyone sees their own day.</li>'
       + '<li><b>Volunteer students who come back.</b> A page in their own language, the trainees\u2019 handouts before the class, and a certificate they have earned.</li>'
       + '<li><b>Your centre, your way.</b> Your wording, your criteria and your TP points, with a library of interactive input sessions. Duplicate a finished course and go.</li>'
