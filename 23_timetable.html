@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610231344">
+<link rel="stylesheet" href="hub-tokens.css?v=202610231738">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -480,24 +480,24 @@
     h1{font-size:1.4rem;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610231344">
+<link rel="stylesheet" href="hub-house.css?v=202610231738">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610231344"></script>
-<script src="hub-tracker.js?v=202610231344"></script>
-<script src="hub-rotation.js?v=202610231344"></script>
-<script src="hub-xlsx.js?v=202610231344"></script>
-<script src="hub-docx.js?v=202610231344"></script>
-<script src="hub-timetable-parse.js?v=202610231344"></script>
-<script src="assignment-defaults.js?v=202610231344"></script>
-<script src="hub-shared.js?v=202610231344"></script>
-<script src="hub-store.js?v=202610231344"></script>
-<script src="hub-say.js?v=202610231344"></script>
-<script src="hub-sync.js?v=202610231344"></script>
+<script src="hub-due.js?v=202610231738"></script>
+<script src="hub-tracker.js?v=202610231738"></script>
+<script src="hub-rotation.js?v=202610231738"></script>
+<script src="hub-xlsx.js?v=202610231738"></script>
+<script src="hub-docx.js?v=202610231738"></script>
+<script src="hub-timetable-parse.js?v=202610231738"></script>
+<script src="assignment-defaults.js?v=202610231738"></script>
+<script src="hub-shared.js?v=202610231738"></script>
+<script src="hub-store.js?v=202610231738"></script>
+<script src="hub-say.js?v=202610231738"></script>
+<script src="hub-sync.js?v=202610231738"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -713,7 +713,11 @@ function dues(){
     const base = a.dueAt || a.due || '';
     const perSet = !!(a.dueSets && Object.keys(a.dueSets).length);
     const subOf = tr => ((tr.records && tr.records.assignments) || (IS_TRAINEE ? rec('connect_assignment_submissions_v1') : null) || {})[k];
-    const inHand = sub => !!(sub && (sub.submittedAt || sub.submitted || sub.turnedIn));
+    /* In hand once it has been submitted: the submission screen stamps sub1At
+       (it never wrote submittedAt, so every passed deadline read "12 of 12 not
+       in" on a course where all twelve were in -- found walking the demo,
+       24 Oct 2026). A record past draft has been submitted too. */
+    const inHand = sub => !!(sub && (sub.sub1At || sub.submittedAt || sub.submitted || sub.turnedIn || (sub.stage && sub.stage !== 'draft')));
     const push = (when, title, missing, total, fixed, who) => {
       const iso = dayOf(when);
       if (!iso) return;

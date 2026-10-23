@@ -110,16 +110,49 @@ window.InputLib = (function(){
     if (p.length && /\.html?$/.test(p[p.length - 1])) p.pop();
     return p[p.length - 1] || '';
   }
+  /* THE DEMO OPENS ONE SESSION (Ramy, 24 Oct 2026: "they can maybe open ...
+     today's input session ... the other ones, they should not be able to open
+     them ... this is a demo course"). On a demo course, for every link, the
+     sessions are all listed but only the latest one the timetable has given
+     opens; the rest say it is a demo and point to that one. */
+  function demoOpen(tt, cs){
+    var now = today(cs), given = inputsOf(tt).filter(function(x){ return x.slug && x.date <= now; });
+    if (!given.length) return null;
+    var last = given[given.length - 1].date;
+    return given.filter(function(x){ return x.date === last; });
+  }
+  function sealDemo(open){
+    var wrap = document.querySelector('.wrap'); if (!wrap) { reveal(); return; }
+    var n = wrap.querySelector('.seal');
+    if (!n) {
+      n = document.createElement('div'); n.className = 'seal card';
+      var after = wrap.querySelector('a.back') || wrap.querySelector('.chrome');
+      if (after && after.parentNode === wrap) wrap.insertBefore(n, after.nextSibling); else wrap.insertBefore(n, wrap.firstChild);
+    }
+    var esc = function(t){ return String(t).replace(/[&<>"]/g, function(c){ return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]; }); };
+    var links = (open || []).map(function(x){ return '<a href="../' + esc(x.slug) + '/">' + esc(x.t) + '</a>'; }).join(' and ');
+    n.innerHTML = '<div class="stage-title">This is a demo course</div><p class="lead" style="margin:0">On a real course, each session opens on the day the timetable gives it. In the demo, only the latest one opens' + (links ? ': ' + links + '.' : '.') + '</p>';
+    root.classList.add('sealed'); root.classList.remove('gating');
+  }
   function gate(){
     var H = window.HubStore, slug = pageSlug();
-    if (!H || !slug || H.isTutor() || H.isAssessor() || !H.token()) { reveal(); return; }
     function decide(tt, cs){
+      if (cs && cs.demoToday) {
+        var open = demoOpen(tt, cs) || [];
+        if (open.some(function(x){ return x.slug === slug; })) reveal(); else sealDemo(open);
+        return;
+      }
+      if (!H || H.isTutor() || H.isAssessor() || !H.token()) { reveal(); return; }
       var now = today(cs), mine = inputsOf(tt).filter(function(x){ return x.slug === slug; });
       if (mine.some(function(x){ return x.date <= now; })) reveal(); else seal(mine.length ? 'later' : 'never');
     }
+    if (!slug) { reveal(); return; }
+    var demoCs = rd('connect_course_settings') || {};
+    if (!demoCs.demoToday && (!H || H.isTutor() || H.isAssessor() || !H.token())) { reveal(); return; }
     var tt = rd('connect_timetable_v1'), cs = rd('connect_course_settings');
     var haveLocal = !!(tt && tt.days && tt.days.length);
     if (haveLocal) decide(tt, cs || {});
+    if (!H || !H.course) { if (!haveLocal) reveal(); return; }
     H.course().then(function(c){
       if (c && c.timetable && c.timetable.days && c.timetable.days.length) decide(c.timetable, c.settings || cs || {});
       else if (!haveLocal) reveal();
@@ -129,6 +162,27 @@ window.InputLib = (function(){
      on a blank page is worse than no gate. */
   setTimeout(function(){ if (root.classList.contains('gating')) root.classList.remove('gating'); }, 8000);
   return { linkOpen: linkOpen, homeLinkOk: homeLinkOk, isInputLink: isInputLink, slugsFor: slugsFor, inputsOf: inputsOf, today: today, rd: rd, iso: iso, dateOf: dateOf, gate: gate };
+})();
+
+/* The demo is view only (Ramy, 24 Oct 2026): a session's "Print the handout"
+   says so on a demo course instead of printing. The sessions do not load
+   hub-shared.js, which carries the same lock for every other screen. */
+(function(){
+  function demo(){ try { return !!(JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}).demoToday; } catch (e) { return false; } }
+  var real = window.print;
+  window.print = function(){
+    if (!demo()) return real.apply(window, arguments);
+    var t = document.getElementById('hubDemoLock');
+    if (!t) { t = document.createElement('div'); t.id = 'hubDemoLock'; t.setAttribute('role', 'status');
+      t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2000;max-width:calc(100vw - 32px);background:#1f1a14;color:#fdfcf9;font:600 0.88rem/1.4 Karla,sans-serif;padding:11px 18px;border-radius:10px;text-align:center;';
+      document.body.appendChild(t); }
+    t.textContent = 'This is a demo course. Printing is turned off.'; t.hidden = false;
+    clearTimeout(t._h); t._h = setTimeout(function(){ t.hidden = true; }, 3200);
+  };
+  var st = document.createElement('style');
+  st.textContent = '@media print{html.hub-demo-lock body > *{display:none !important;} html.hub-demo-lock body::before{content:"This is a demo course. Printing is turned off.";display:block;padding:40px;font:16px Karla,sans-serif;}}';
+  (document.head || document.documentElement).appendChild(st);
+  window.addEventListener('beforeprint', function(){ document.documentElement.classList.toggle('hub-demo-lock', demo()); });
 })();
 
 /* The offline copy (sw.js at the site root). The input sessions do not load hub-shared.js,

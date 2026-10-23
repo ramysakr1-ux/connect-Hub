@@ -2174,3 +2174,42 @@ window.hubHeadHTML = function (text, heads) {
   }
   window.hubMic = { ok: OK, bar: bar, stop: stop };
 })();
+
+/* THE DEMO IS VIEW ONLY (Ramy, 24 Oct 2026: "I want it to be view only. For
+   everyone ... they can't download anything"). On a demo course (the demo
+   clock is set) printing and downloading say so instead of happening: the
+   print buttons, Cmd+P, a link marked download, a Drive download link and the
+   files the pages build themselves (Word, PDF, spreadsheets). Each check is
+   made at the moment of the click, so a page opened before the course
+   settings arrived is still covered. The public pages (the offer card, the
+   films) are never a course, so they are left alone. */
+(function(){
+  if (/\/(offer\.html|film\/|brand\/)/.test(location.pathname)) return;
+  var MSG = 'This is a demo course. Printing and downloading are turned off.';
+  function demo(){ try { return !!(window.hubDemoToday && window.hubDemoToday()); } catch (e) { return false; } }
+  function say(){
+    var t = document.getElementById('hubDemoLock');
+    if (!t) {
+      t = document.createElement('div'); t.id = 'hubDemoLock'; t.setAttribute('role', 'status');
+      t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2000;max-width:calc(100vw - 32px);'
+        + 'background:var(--ink,#1f1a14);color:var(--paper,#fdfcf9);font:600 0.88rem/1.4 Karla,sans-serif;padding:11px 18px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.18);text-align:center;';
+      document.body.appendChild(t);
+    }
+    t.textContent = MSG; t.hidden = false;
+    clearTimeout(say._t); say._t = setTimeout(function(){ t.hidden = true; }, 3200);
+  }
+  var st = document.createElement('style');
+  st.textContent = '@media print{html.hub-demo-lock body > *{display:none !important;} html.hub-demo-lock body::before{content:"' + MSG + '";display:block;padding:40px;font:16px Karla,sans-serif;}}';
+  (document.head || document.documentElement).appendChild(st);
+  var realPrint = window.print;
+  window.print = function(){ if (demo()) { say(); return; } return realPrint.apply(window, arguments); };
+  window.addEventListener('beforeprint', function(){ document.documentElement.classList.toggle('hub-demo-lock', demo()); });
+  function isDownload(a){ return !!a && (a.hasAttribute('download') || /export=download|drive\.usercontent\.google\.com\/download/.test(a.href || '')); }
+  document.addEventListener('click', function(e){
+    var a = e.target && e.target.closest ? e.target.closest('a') : null;
+    if (isDownload(a) && demo()) { e.preventDefault(); e.stopPropagation(); say(); }
+  }, true);
+  var realClick = HTMLAnchorElement.prototype.click;
+  HTMLAnchorElement.prototype.click = function(){ if (isDownload(this) && demo()) { say(); return; } return realClick.apply(this, arguments); };
+  window.hubDemoLocked = demo; window.hubDemoSay = say;
+})();

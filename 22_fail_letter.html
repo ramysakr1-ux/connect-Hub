@@ -35,7 +35,7 @@
 <title>Connect Lite — Fail letter</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610231344">
+<link rel="stylesheet" href="hub-tokens.css?v=202610231738">
 <style>
   :root{
     --cream:oklch(97.5% 0.012 85);
@@ -133,6 +133,9 @@
   .pill.amb{background:oklch(93% 0.06 75); border-color:oklch(80% 0.09 72); color:oklch(38% 0.09 60);}
   .empty{font-size:0.86rem; color:var(--ink-soft); background:var(--surface); border:1px dashed var(--sand-line);
          border-radius:10px; padding:18px; text-align:center;}
+  .receipt{margin-top:18px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; font-size:0.88rem;}
+  .receipt svg{width:150px; height:50px;}
+  .receipt .who b{display:block;}
   .sign{margin-top:26px; padding-top:18px; border-top:1px solid var(--sand-line); font-size:0.88rem;}
   @media print{ textarea{border:none; background:transparent; padding:0; resize:none;} .f{margin-top:14px;} .cite, .lede{display:none;} }
 </style>
@@ -146,11 +149,13 @@
   <div id="doc"></div>
 </div>
 
-<script src="hub-tracker.js?v=202610231344"></script>
-<script src="hub-store.js?v=202610231344"></script>
-<script src="hub-say.js?v=202610231344"></script>
-<script src="hub-shared.js?v=202610231344"></script>
-<script src="hub-sync.js?v=202610231344"></script>
+<script src="hub-hand.js?v=202610231738"></script>
+<script src="hub-ink.js?v=202610231738"></script>
+<script src="hub-tracker.js?v=202610231738"></script>
+<script src="hub-store.js?v=202610231738"></script>
+<script src="hub-say.js?v=202610231738"></script>
+<script src="hub-shared.js?v=202610231738"></script>
+<script src="hub-sync.js?v=202610231738"></script>
 <script type="text/x-hub-app">
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const T = window.HubTracker;
@@ -226,6 +231,23 @@ function draft(r){
   return lines.join('\n');
 }
 
+/* THE TRAINEE SIGNS FOR IT (Ramy, 24 Oct 2026: "he was issued a warning
+   letter but hasn't signed it yet"). The signature is the trainee's, so it
+   lives in their own CELTA 5 record, which they can write and their tutors
+   read; it names the issue it was for, so a letter withdrawn and issued
+   again asks to be signed again. Signing says the letter was received and
+   read, nothing more. */
+function letterSig(issuedAt){
+  const c = IS_TRAINEE ? (rec('chub:celta5') || {}) : ((who.tr && who.tr.celta5) || {});
+  const s = c.failLetterSigned || null;
+  return s && s.at && s.letter === issuedAt ? s : null;
+}
+function receipt(issuedAt){
+  const s = letterSig(issuedAt);
+  if (s) return `<div class="receipt">${s.ink && window.hubInk ? window.hubInk.svg(s.ink, 'sm', s.name) : ''}<div class="who"><b>${esc(s.name)}</b>Received and read, signed ${esc(when(s.at))}</div></div>`;
+  if (IS_TRAINEE) return `<div class="receipt"><button class="btn primary" type="button" id="signLetter">Sign to say you have read it</button></div>`;
+  return `<div class="receipt"><span class="pill amb">Not signed yet</span><span class="status">It is signed from the trainee\u2019s own link.</span></div>`;
+}
 function render(){
   if (!who) { $('doc').innerHTML = '<div class="empty">Name a trainee in the link to open their letter.</div>'; return; }
   const r = T.readCandidate(T.recordFor(who.tr));
@@ -254,6 +276,7 @@ function render(){
         : `<label class="f" for="body">The letter</label><textarea id="body" style="min-height:420px" placeholder="The letter as the trainee will read it.">${esc(body)}</textarea>`}
       <div class="sign">${issuedAt ? esc(issuedBy || '') + '<br>' + esc(SETTINGS.centreName || '') : ''}</div>
     </div>
+    ${issuedAt ? receipt(issuedAt) : ''}
     ${readOnly ? '' : `<div class="acts">
       ${issuedAt
         ? `<span class="pill on">Issued ${esc(when(issuedAt))}</span><button class="btn" type="button" id="unissue">Withdraw the letter</button>`
@@ -262,6 +285,15 @@ function render(){
       <span class="status" id="status"></span>
     </div>`}`;
 
+  const sg = $('signLetter');
+  if (sg) sg.addEventListener('click', async () => {
+    const ink = await window.hubInk.confirm({ name: who.name, title: 'Sign the letter' });
+    if (ink === null) return;
+    const c = rec('chub:celta5') || {};
+    c.failLetterSigned = ink ? { name: who.name, at: new Date().toISOString(), ink, letter: issuedAt } : { name: who.name, at: new Date().toISOString(), letter: issuedAt };
+    localStorage.setItem('chub:celta5', JSON.stringify(c));
+    render();
+  });
   const b = $('body');
   if (b) b.addEventListener('input', () => saveTracker({ failLetterDoc: b.value }));
   const iss = $('issue');
@@ -288,6 +320,7 @@ function render(){
     saveTracker({ failLetterDoc: draft(r) }); render();
   });
 }
+if (IS_TRAINEE) { const bl = $('backLink'); if (bl) { bl.href = 'index.html'; bl.textContent = 'Home'; } }
 render();
 </script>
 </body>
