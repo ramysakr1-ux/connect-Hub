@@ -2246,7 +2246,7 @@ window.hubHeadHTML = function (text, heads) {
     /* The demo centre's own documents are placeholders (drive.google.com/.../demo-...),
        and opened a Drive error (assessor walk, 24 Oct 2026). Say what would open. */
     if (a && /drive\.google\.com\/drive\/folders\/demo-/.test(a.href || '') && demo()) {
-      e.preventDefault(); e.stopPropagation(); say('This is a demo course. On a real course this opens the centre\u2019s own document.');
+      e.preventDefault(); e.stopPropagation(); say('This is a demo course. On a real course this opens the file itself.');
     }
   }, true);
   var realClick = HTMLAnchorElement.prototype.click;

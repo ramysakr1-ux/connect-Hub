@@ -65,11 +65,12 @@
         'Your next class is at the top, with the time in the course’s own clock and in yours. Press Join to go into the online room. You do not need to prepare anything.',
         'Anything your teachers share for a lesson appears under For your next class. Have a look if you like; you do not have to.',
         'Your attendance is marked by the tutor, not by you. A class counts when you were there for most of it. Your hours add up on your page.',
-        'When your hours reach the centre’s number, your certificate appears on your page. Print it, or save it as a PDF, and the centre signs it.',
+        'When your hours reach the centre’s number, your certificate appears on your page, already signed by the centre. Print it, or save it as a PDF.',
         'Add the page to your phone: Add to Home Screen in Safari, or Install in Chrome. Then it opens like an app.',
         'If you cannot come to a class, press No under “Are you coming?” at the top of your page.'
       ],
-      howLink: 'How your page works'
+      howLink: 'How your page works',
+      backLink: 'Back to your page'
     },
     tr: {
       consentHeading: 'Başlamadan önce',
@@ -92,11 +93,12 @@
         'Bir sonraki dersiniz en üsttedir; saati hem kursun saatiyle hem sizin saatinizle yazar. Çevrimiçi odaya girmek için Katıl’a basın. Hazırlık yapmanız gerekmez.',
         'Öğretmenlerinizin bir ders için paylaştığı her şey “Bir sonraki dersiniz için” başlığı altında görünür. İsterseniz bakın; zorunlu değil.',
         'Devamınızı siz değil, eğitmen işaretler. Dersin çoğunda oradaysanız ders sayılır. Saatleriniz sayfanızda toplanır.',
-        'Saatleriniz merkezin belirlediği sayıya ulaşınca sertifikanız sayfanızda görünür. Yazdırın ya da PDF olarak kaydedin; merkez imzalar.',
+        'Saatleriniz merkezin belirlediği sayıya ulaşınca sertifikanız, merkez tarafından imzalanmış olarak sayfanızda görünür. Yazdırın ya da PDF olarak kaydedin.',
         'Sayfayı telefonunuza ekleyin: Safari’de Ana Ekrana Ekle, Chrome’da Yükle. Sonra bir uygulama gibi açılır.',
         'Bir derse gelemeyecekseniz, sayfanızın en üstündeki “Are you coming?” sorusunun altında No düğmesine basın.'
       ],
-      howLink: 'Sayfanız nasıl çalışır'
+      howLink: 'Sayfanız nasıl çalışır',
+      backLink: 'Sayfanıza dönün'
     },
     ar: {
       consentHeading: 'قبل أن نبدأ',
@@ -119,11 +121,12 @@
         'درسك التالي في الأعلى، مع الوقت بتوقيت الدورة وبتوقيتك. اضغط «انضم» لدخول الغرفة عبر الإنترنت. لا تحتاج إلى أي تحضير.',
         'كل ما يشاركه معلموك لدرس ما يظهر تحت «لدرسك التالي». ألقِ نظرة إن أحببت؛ ليس واجبًا.',
         'يسجّل المدرّب حضورك، لا أنت. يُحتسب الدرس إذا حضرت معظمه. تتجمع ساعاتك على صفحتك.',
-        'عندما تبلغ ساعاتك العدد الذي حدده المركز، تظهر شهادتك على صفحتك. اطبعها أو احفظها بصيغة PDF، ويوقّعها المركز.',
+        'عندما تبلغ ساعاتك العدد الذي حدده المركز، تظهر شهادتك على صفحتك موقّعةً من المركز. اطبعها أو احفظها بصيغة PDF.',
         'أضف الصفحة إلى هاتفك: «إضافة إلى الشاشة الرئيسية» في Safari، أو «تثبيت» في Chrome. بعدها تُفتح كتطبيق.',
         'إذا لم تستطع الحضور إلى درس، اضغط No تحت “Are you coming?” في أعلى صفحتك.'
       ],
-      howLink: 'كيف تعمل صفحتك'
+      howLink: 'كيف تعمل صفحتك',
+      backLink: 'العودة إلى صفحتك'
     },
     ru: {
       consentHeading: 'Прежде чем начать',
@@ -146,11 +149,12 @@
         'Ваше следующее занятие — вверху, со временем по часам курса и по вашим. Нажмите «Присоединиться», чтобы войти в онлайн-комнату. Готовиться не нужно.',
         'Всё, чем ваши преподаватели делятся к занятию, появляется в разделе «К вашему следующему занятию». Посмотрите, если хотите; это не обязательно.',
         'Посещаемость отмечает тьютор, а не вы. Занятие засчитывается, если вы были на большей его части. Ваши часы суммируются на странице.',
-        'Когда ваши часы достигнут числа, установленного центром, на странице появится ваш сертификат. Распечатайте его или сохраните в PDF; центр его подпишет.',
+        'Когда ваши часы достигнут числа, установленного центром, на странице появится ваш сертификат, уже подписанный центром. Распечатайте его или сохраните в PDF.',
         'Добавьте страницу на телефон: «На экран Домой» в Safari или «Установить» в Chrome. Тогда она открывается как приложение.',
         'Если вы не можете прийти на занятие, нажмите No под вопросом «Are you coming?» вверху вашей страницы.'
       ],
-      howLink: 'Как работает ваша страница'
+      howLink: 'Как работает ваша страница',
+      backLink: 'Вернуться на вашу страницу'
     },
     fa: {
       consentHeading: 'پیش از شروع',
@@ -173,11 +177,12 @@
         'کلاس بعدی شما در بالای صفحه است، با ساعت به وقت دوره و به وقت شما. برای ورود به اتاق آنلاین «پیوستن» را بزنید. نیازی به آمادگی نیست.',
         'هر چیزی که معلمانتان برای یک درس به اشتراک بگذارند زیر «برای کلاس بعدی شما» نمایش داده می‌شود. اگر خواستید نگاهی بیندازید؛ اجباری نیست.',
         'حضور شما را مربی ثبت می‌کند، نه شما. اگر بیشترِ کلاس را حاضر بوده باشید، آن کلاس حساب می‌شود. ساعت‌هایتان در صفحه‌تان جمع می‌شود.',
-        'وقتی ساعت‌هایتان به عددی که مرکز تعیین کرده برسد، گواهی‌تان در صفحه‌تان ظاهر می‌شود. آن را چاپ کنید یا به‌صورت PDF ذخیره کنید؛ مرکز آن را امضا می‌کند.',
+        'وقتی ساعت‌هایتان به عددی که مرکز تعیین کرده برسد، گواهی‌تان با امضای مرکز در صفحه‌تان ظاهر می‌شود. آن را چاپ کنید یا به‌صورت PDF ذخیره کنید.',
         'صفحه را به تلفن خود اضافه کنید: «افزودن به صفحه‌ی اصلی» در Safari یا «نصب» در Chrome. سپس مانند یک برنامه باز می‌شود.',
         'اگر نمی‌توانید به کلاسی بیایید، در بالای صفحه‌تان زیر «Are you coming?» دکمهٔ No را بزنید.'
       ],
-      howLink: 'صفحه‌ی شما چگونه کار می‌کند'
+      howLink: 'صفحه‌ی شما چگونه کار می‌کند',
+      backLink: 'بازگشت به صفحه‌ی شما'
     },
     uk: {
       consentHeading: 'Перш ніж почати',
@@ -200,11 +205,12 @@
         'Ваше наступне заняття — вгорі, з часом за годинником курсу та за вашим. Натисніть «Приєднатися», щоб увійти до онлайн-кімнати. Готуватися не потрібно.',
         'Усе, чим ваші викладачі діляться до заняття, з’являється в розділі «До вашого наступного заняття». Подивіться, якщо хочете; це не обов’язково.',
         'Відвідуваність відмічає тьютор, а не ви. Заняття зараховується, якщо ви були на більшій його частині. Ваші години підсумовуються на сторінці.',
-        'Коли ваші години сягнуть числа, встановленого центром, на сторінці з’явиться ваш сертифікат. Роздрукуйте його або збережіть у PDF; центр його підпише.',
+        'Коли ваші години сягнуть числа, встановленого центром, на сторінці з’явиться ваш сертифікат, уже підписаний центром. Роздрукуйте його або збережіть у PDF.',
         'Додайте сторінку на телефон: «На Початковий екран» у Safari або «Встановити» в Chrome. Тоді вона відкривається як застосунок.',
         'Якщо ви не можете прийти на заняття, натисніть No під питанням «Are you coming?» угорі вашої сторінки.'
       ],
-      howLink: 'Як працює ваша сторінка'
+      howLink: 'Як працює ваша сторінка',
+      backLink: 'Повернутися на вашу сторінку'
     }
   };
 

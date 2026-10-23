@@ -1350,6 +1350,9 @@ case 'inbox': {
                    name: shName, url: shUrl,
                    by: String(req.by || (me && me.name) || '').slice(0, 80),
                    tp: String(req.tp || '').slice(0, 12),
+                   /* what the lesson is about ("Grammar"), which the plan page has sent since
+                      1 Oct and the store dropped on the floor (volunteer walk, 24 Oct 2026) */
+                   aim: String(req.aim || '').slice(0, 40),
                    kind: String(req.kind || '').slice(0, 20) };
       /* One row per link: sharing the same file twice is a slip, not two
          handouts, and a volunteer should not see it listed twice. */
