@@ -69,13 +69,22 @@
   }
   function d0(t){ return new Date(t).getTimezoneOffset() * MIN; }
 
+  /* A deadline is the course's: 6 PM in London read "9:00 PM" to a reader in
+     Istanbul, beside a timetable that says 6 PM (walk, 24 Oct 2026). It reads on
+     the course's clock, and names the city when the reader is somewhere else. */
+  function courseZone(){
+    try { return (JSON.parse(localStorage.getItem('connect_course_settings') || 'null') || {}).timeZone || ''; } catch (e) { return ''; }
+  }
   function fmt(iso){
     var t = parse(iso); if (t === null) return '';
-    var d = new Date(t);
+    var d = new Date(t), tz = courseZone(), o = { weekday:'short', day:'numeric', month:'short' };
+    var away = tz && window.hubReaderZone && window.hubReaderZone() && window.hubReaderZone() !== tz;
+    if (tz) { try { new Intl.DateTimeFormat('en-GB', { timeZone: tz }); o.timeZone = tz; } catch (e) { tz = ''; away = false; } }
     /* en-GB, not the browser's locale: on a US machine this read "Sun, Sep 27,
        02:32 PM" while every other date on Lite is British (walk, 28 Sep 2026). */
-    return d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' })
-      + ', ' + (window.hubTimeOf ? window.hubTimeOf(d) : d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true }));
+    return d.toLocaleDateString('en-GB', o)
+      + ', ' + (window.hubTimeOf ? window.hubTimeOf(d, tz || undefined) : d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true }))
+      + (away && window.hubZoneName ? ' (' + window.hubZoneName(tz) + ')' : '');
   }
 
   /* "3 days left", "4 hours left", "closed yesterday". Rounded the way a person

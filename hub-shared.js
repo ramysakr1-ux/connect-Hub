@@ -36,6 +36,13 @@ window.hubObservationSet = function(){
   return { filmed: filmed, live: live, all: filmed.concat(live) };
 };
 /* Minutes turned in, per group, from the sheets' own Length header. */
+/* Minutes as a person says them: "3 h 15 min", not "3.3" (walk, 24 Oct 2026:
+   195 minutes read as 3.3 of 6 hours). */
+window.hubHoursText = function(min){
+  min = Math.max(0, Math.round(Number(min) || 0));
+  var h = Math.floor(min / 60), m = min % 60;
+  return h ? h + ' h' + (m ? ' ' + m + ' min' : '') : m + ' min';
+};
 window.hubObservationHours = function(records){
   var set = window.hubObservationSet(), w = records || {};
   /* A sheet that declares its own length counts at that length when the
