@@ -10,8 +10,9 @@
 // rulings of 12-15 Sep 2026 -- see the comments there). What differs is
 // where the facts come from: TP grades and aims from the feedback the tutor
 // returned, assignment outcomes and double marking from the marking screen,
-// none of it keyed in. Only the three Stage records, the Fail letter and
-// withdrawal are the tutor's to set here, as they are in the tracker.
+// and the three Stage records from the CELTA 5 the tutor returned (Ramy,
+// 24 Oct 2026: the standing is the CELTA 5's, never the TPs'), none of it
+// keyed in. Only the Fail letter and withdrawal are the tutor's to set here.
 
 window.HubTracker = (function(){
   // Course order (Ramy, 20 Sep 2026). SRT is the tracker's code for the LSRT;
@@ -131,6 +132,20 @@ window.HubTracker = (function(){
     var c = {};
     var manual = (tr && tr.tracker) || {};
     ['stage1','stage2','stage3','failLetter','withdrawn'].forEach(function(k){ c[k] = manual[k] || ''; });
+    /* THE STAGES ARE THE CELTA 5'S (Ramy, 24 Oct 2026: "where does it say in
+       Lite that this is above standard?"). A stage is the record Cambridge
+       asks for: Stage 1 once the tutor has returned it, Stages 2 and 3 with
+       the tutor's own "Overall at this stage", once returned. The tracker
+       used to keep a second copy set by hand, which nobody set, so the
+       standing fell back to the last lesson's grade. A value set by hand on
+       an older course still counts where the CELTA 5 holds nothing. */
+    var t5 = (tr && tr.celta5t) || {};
+    var OVERALL = { above: 'ABOVE', to: 'STD', not: 'NOTSTD' };
+    if (t5.stage1 && t5.stage1.returnedAt) { c.stage1 = 'GIVEN'; c.stage1At = t5.stage1.returnedAt; }
+    ['stage2', 'stage3'].forEach(function(k){
+      var s = t5[k];
+      if (s && s.returnedAt && OVERALL[s.overall]) { c[k] = OVERALL[s.overall]; c[k + 'At'] = s.returnedAt; c[k + 'From5'] = true; }
+    });
     /* Handbook 15.1 DEFINES a potential Fail: "the portfolios of all candidates
        identified as potential Fails, i.e., Pass/Fail at the provisional
        grading meeting". The grade was sitting in tracker.grades.provisional
@@ -188,9 +203,10 @@ window.HubTracker = (function(){
         ? fails[0] + ' failed — a Pass is still open on other evidence, but not Pass A (11.6)'
         : null;
     var standard = null, from = '';
+    /* A standing is a stage record, never one lesson. Before Stage 2 there is
+       none, and the latest TP grade is reported as what it is (latestTp). */
     if (c.stage3) { standard = c.stage3; from = 'Stage 3'; }
     else if (c.stage2) { standard = c.stage2; from = 'Stage 2'; }
-    else if (latest) { standard = latest.key; from = 'TP' + latestN; }
     /* WHAT MAKES A POTENTIAL FAIL. Cambridge gives one definition (15.1:
        "Pass/Fail at the provisional grading meeting") and Lite never used it.
        These are the triggers, each carrying the document it comes from; the
@@ -269,9 +285,10 @@ window.HubTracker = (function(){
       : standard === 'NOTSTD' ? 'notstd'
       : standard === 'ABOVE' ? 'above'
       : standard === 'STD' ? 'std'
-      : 'none';
+      : 'nostage';
     return {
       state:state, from:from, graded:graded, notStd:notStd, above:above,
+      latestTp: latest ? { key: latest.key, n: latestN } : null,
       fails:fails, resubs:resubs, pending:pending, ceiling:ceiling,
       potentialFail:potentialFail, failWhy:failWhy, letterDue:letterDue, letterAdvised:letterAdvised, letterIssued:letterIssued,
       provisional:c.provisional, provisionalPassFail:provisionalPassFail, watch:watch, withdrawnQuery:withdrawnQuery,
@@ -283,6 +300,7 @@ window.HubTracker = (function(){
     notstd:    { text:'NOT TO STANDARD', cls:'tk-notstd' },
     std:       { text:'TO STANDARD', cls:'tk-std' },
     above:     { text:'ABOVE STANDARD', cls:'tk-above' },
+    nostage:   { text:'NO STAGE RECORD YET', cls:'tk-none' },
     none:      { text:'NOT STARTED', cls:'tk-none' }
   };
   return { ASSIGNMENTS:ASSIGNMENTS, SHOW_AS:SHOW_AS, HUB_KEY_FOR:HUB_KEY_FOR, TP_GRADES:TP_GRADES, tpGrade:tpGrade, AIMS:AIMS, aimShort:aimShort, aimFor:aimFor,

@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610231932">
+<link rel="stylesheet" href="hub-tokens.css?v=202610231951">
 <style>
   /* design_handoff_candidate_tracker (Ramy, 20 Sep 2026), with the Hub's
      colour-coded chips in the cells -- "I like the chips that you created.
@@ -242,7 +242,7 @@
   @media(hover:none){ .row.tk-row{background:none;} .cell.tk-col{background:none;} }
   @media print{ .tk-bar{display:none;} .row.tk-row, .cell.tk-col{background:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610231932">
+<link rel="stylesheet" href="hub-house.css?v=202610231951">
 </head>
 <body>
 <div class="page">
@@ -271,14 +271,14 @@
   </div>
   <div id="detail"></div>
 </div>
-<script src="hub-due.js?v=202610231932"></script>
-<script src="hub-shared.js?v=202610231932"></script>
-<script src="hub-rotation.js?v=202610231932"></script>
-<script src="assignment-defaults.js?v=202610231932"></script>
-<script src="hub-tracker.js?v=202610231932"></script>
-<script src="hub-store.js?v=202610231932"></script>
-<script src="hub-say.js?v=202610231932"></script>
-<script src="hub-sync.js?v=202610231932"></script>
+<script src="hub-due.js?v=202610231951"></script>
+<script src="hub-shared.js?v=202610231951"></script>
+<script src="hub-rotation.js?v=202610231951"></script>
+<script src="assignment-defaults.js?v=202610231951"></script>
+<script src="hub-tracker.js?v=202610231951"></script>
+<script src="hub-store.js?v=202610231951"></script>
+<script src="hub-say.js?v=202610231951"></script>
+<script src="hub-sync.js?v=202610231951"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
@@ -637,7 +637,12 @@ function renderDetail(all){
   }
   // the trainee's standing, from the tracker's rules
   const r = p.r; const chip = T.STATE_CHIP[r.state]; const man0 = p.tr.tracker || {};
-  facts.push(['Standing', chip.text.charAt(0)+chip.text.slice(1).toLowerCase() + (r.from?' — from '+r.from:''), r.state==='notstd'?'red':'']);
+  /* The standing is the CELTA 5's latest returned stage, never one lesson
+     (Ramy, 24 Oct 2026); the latest TP grade is its own line. */
+  const c5 = p.c || {};
+  const stAt = c5.stage3At || c5.stage2At;
+  facts.push(['Standing', r.state==='nostage' ? 'No stage record yet' : chip.text.charAt(0)+chip.text.slice(1).toLowerCase() + (r.from ? ' — ' + r.from + (stAt ? ', returned ' + new Date(stAt).toLocaleDateString('en-GB',{day:'numeric',month:'long'}) : '') : ''), r.state==='notstd'?'red':'']);
+  if (r.latestTp) { const vw = {NOTSTD:'Not to standard', STD:'To standard', ABOVE:'Above standard'}[r.latestTp.key] || ''; if (vw) facts.push(['Latest TP grade', vw + ' (TP' + r.latestTp.n + ')', r.latestTp.key==='NOTSTD'?'red':'']); }
   // Grades are set on the Grades report (13); read here, never edited.
   const gr = man0.grades || {};
   if (gr.provisional || gr.final || !ME){
@@ -667,11 +672,20 @@ function renderDetail(all){
     ? `<span class="v ${cur ? 'set-'+cur : ''}">${(options.find(o=>o[0]===cur)||options[options.length-1])[1]}</span>`
     : `<span class="seg">${options.map(o=>`<button class="sg ${o[0]===cur?'on set-'+(o[0]||'none'):''}" data-id="${esc(p.tr.id)}" data-field="${field}" data-value="${o[0]}">${o[1]}</button>`).join('')}</span>`;
   // The grid's own tokens, so a segment never wraps.
-  const verdicts = [['NOTSTD','not std'],['STD','std'],['ABOVE','above'],['','not held']];
+  /* The stages are read from the CELTA 5, where the tutor writes and returns
+     them (24 Oct 2026); there is no second copy to set here. A value set by
+     hand on an older course still shows, and says so. */
+  const c5link = ME ? '20_celta5.html' : `20_celta5.html?trainee=${encodeURIComponent(p.tr.id)}`;
+  const stageVal = k => {
+    const v = c5[k], at = c5[k + 'At'];
+    if (!v) return `<span class="v">Not returned yet</span>`;
+    const w = v === 'GIVEN' ? 'Returned' : ({NOTSTD:'Not to standard', STD:'To standard', ABOVE:'Above standard'}[v] || v);
+    return `<span class="v ${v !== 'GIVEN' ? 'set-' + v : ''}">${esc(w)}${at ? ', ' + esc(new Date(at).toLocaleDateString('en-GB',{day:'numeric',month:'short'})) : ''}${(k !== 'stage1' && !c5[k + 'From5']) ? ' (set by hand)' : ''}</span>`;
+  };
   const recRows = [
-    ['Stage 1', seg('stage1', [['GIVEN','record done'],['','not yet']], man.stage1||'')],
-    ['Stage 2', seg('stage2', verdicts, man.stage2||'')],
-    ['Stage 3', seg('stage3', verdicts, man.stage3||'')],
+    ['Stage 1', stageVal('stage1')],
+    ['Stage 2', stageVal('stage2')],
+    ['Stage 3', stageVal('stage3') + ` <a class="sg" href="${c5link}">Open the CELTA 5</a>`],
     ['Fail letter', RO ? `<span class="v ${man.failLetter?'set-NOTSTD':''}">${man.failLetter ? 'Issued ' + esc(String(man.failLetter)) : 'Not issued'}</span>`
       : `<span class="seg">${man.failLetter
           ? `<button class="sg on set-NOTSTD" data-id="${esc(p.tr.id)}" data-field="failLetter" data-value="">Issued ${esc(String(man.failLetter))} · undo</button>`
