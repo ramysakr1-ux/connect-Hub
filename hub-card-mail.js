@@ -157,7 +157,34 @@
        figure -- worked out, never typed, so it cannot drift from it. */
     var small = rates.length ? rates[0].total / 2 : 0;
     var table = rates.length ? [{ label: 'One small course', note: 'one teaching practice group', n: 1, total: small }].concat(rates) : [];
+    /* WHAT IT DOES FOR THEM, then WHAT THE MONEY BUYS (Ramy, 24 Oct 2026: "they still
+       don't know what the platform actually does ... smart timetable, smart assignment,
+       smart tracking"; "we're just telling them what their money is going to buy them"). */
+    var h = function(t){ return '<h3 style="font-family:' + SERIF + '; font-weight:700; font-size:17px; color:' + C.inkWarm + '; margin:22px 0 6px;">' + t + '</h3>'; };
+    var li = function(b, t){ return '<li style="margin:0 0 7px;"><b style="color:' + C.inkWarm + ';">' + b + '</b> ' + t + '</li>'; };
+    var ul = function(items){ return '<ul style="font-family:' + SANS + '; font-size:13.5px; line-height:1.6; color:' + C.ink + '; margin:0; padding-left:18px;">' + items.join('') + '</ul>'; };
+    var does = h('What it does for you')
+      + '<p style="font-family:' + SANS + '; font-size:13.5px; line-height:1.6; color:' + C.ink + '; margin:0 0 8px;">Less copying, less chasing, more time in the room.</p>'
+      + ul([
+          li('Smart timetable.', 'Build it in a minute, or read it from your spreadsheet. Everyone sees their own day.'),
+          li('Smart assignments.', 'Write a plan once, and it carries into the feedback, the tracker and the assessor\u2019s pack. Deadlines and marking are in one place.'),
+          li('Smart tracking.', 'Every trainee\u2019s teaching, assignments and standing on one screen, so you see who needs you first.'),
+          li('Less paperwork.', 'The CELTA 5 is signed on screen and prints as Cambridge\u2019s booklet.')
+        ]);
+    var buys = h('What your money buys')
+      + ul([
+          li('The platform,', 'for every tutor, trainee and the course admin.'),
+          li('The assessor\u2019s link,', 'read-only.'),
+          li('A page for every volunteer student', 'on the register.'),
+          li('The four written assignments,', 'and Assignment 5, the plagiarism reflection.'),
+          li('The observation tasks:', 'peer, filmed and live.'),
+          li('TP points', 'for every book you teach from.'),
+          li('Interactive input sessions,', 'with their videos.'),
+          li('A timetable where everyone sees their own day,', 'with the course\u2019s clock and your own time beside it.'),
+          li('The CELTA 5, the grades report and the course record.', '')
+        ]);
     var sheet = '<p style="font-family:' + SANS + '; font-size:14.5px; line-height:1.65; color:' + C.ink + '; margin:0;">There is one thing to buy: a course. Every feature is in every course, and nothing is held back for a higher tier, because there isn\u2019t one.</p>'
+      + does
       + (rates.length
           ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 0;"><tr><td style="background:' + C.goldWash + '; border:1px solid ' + C.amber + '; border-radius:12px; padding:16px 18px;">'
             + '<div style="font-family:' + SERIF + '; font-weight:700; font-size:30px; color:' + C.inkWarm + '; line-height:1;"><span style="font-size:18px; font-weight:600;">From </span>' + money(small) + '</div>'
@@ -165,6 +192,7 @@
             + '</td></tr></table>'
             + rateRows(table)
           : '')
+      + buys
       + '<p style="font-family:' + SANS + '; font-size:13.5px; line-height:1.65; color:' + C.ink + '; margin:16px 0 0;"><b style="color:' + C.inkWarm + ';">Volunteer students are not counted.</b> However many come, their register, their own pages, the day-before reminders and the signed certificates are in the price.</p>'
       + '<p style="font-family:' + SANS + '; font-size:13.5px; line-height:1.65; color:' + C.ink + '; margin:16px 0 0;"><b style="color:' + C.inkWarm + ';">A course with one teaching practice group counts as half a course.</b> Six trainees or fewer is one group. Blocks do not expire, nothing recurs, and the length of a course \u2014 four weeks, five, or part-time over three months \u2014 makes no difference.</p>'
       /* No "rates in full" link: the rates page came down (Ramy, 7 Oct 2026:
@@ -196,7 +224,7 @@
     var li = function(t){ return '<li style="margin:0 0 3px;">' + esc(t) + '</li>'; };
     var sheet =
       '<h2 style="font-family:' + SERIF + '; font-weight:600; font-size:17px; color:' + C.inkWarm + '; margin:0 0 4px;">Open a real course</h2>' +
-      '<p style="font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.grey + '; margin:0 0 4px;">Three courses at three moments. Go in as a tutor, a trainee, the assessor or a volunteer student, and type. Nothing you do reaches anyone’s record.</p>' +
+      '<p style="font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.grey + '; margin:0 0 4px;">One real course, three weeks in. Go in as a tutor, as one of the trainees, as the assessor or as a volunteer student, and type. Nothing you do reaches anyone\u2019s record.</p>' +
       '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px ' + (STYLE === 'ticket' ? 'dashed ' : 'solid ') + C.line + '; margin-top:' + (STYLE === 'ticket' ? '14px' : '0') + ';">' + doors + '</table>' +
       /* How it is priced, never what (Ramy, 7 Oct 2026). On the ticket it goes
          on the stub instead (below). */
@@ -219,7 +247,8 @@
       : contact('For the rates and demo links:');
     var html = page('Connect Lite — for your centre', letter,
       wrap(ctx, 'For a CELTA centre', 'Teach the course. Lite does the rest.',
-        'Every trainee gets a course of their own. Every tutor gets their evenings back. Built on Cambridge’s handbook, made by a CELTA tutor, and simple enough for anyone.', sheet, stub));
+        /* what it is, then the old line (Ramy, 24 Oct 2026) */
+        'Connect Lite is the app a CELTA course runs on, from the first plan to the final grade. Every trainee gets a course of their own. Every tutor gets their evenings back.', sheet, stub));
     return html;
   };
 })();
