@@ -28,8 +28,8 @@ Change the token in `hub-tokens.css`, not the page. Then re-stamp (`bump-assets.
 
 ## Hover
 
-Every card that opens something rises 3px and its paper warms a shade toward the forest; a card that is not the trainee's own (the From the course row) warms toward its slate. A card that only shows never moves. One rule, in hub-house.css (Ramy, 25 Oct 2026).
+Every white card or pill that opens or switches something rises 3px and its paper warms a shade toward the forest (`color-mix(in oklch, var(--a-forest) 6%, var(--paper))`): the home's cards, the course row, the assignment picker, the tabs, the quiet buttons, the white button on a green cover. A pill already filled (active, on, forest) keeps its fill. A card that only shows never moves. One rule, in hub-house.css (Ramy, 25 Oct 2026).
 
 ## Words on green
 
-On a dark forest or navy ground the words are white, and the small marks beside them (a lesson's aim, a marker's initials) are light gold, `--a-lemon`. Never grey or purple on green (Ramy, 25 Oct 2026).
+On a dark forest or navy ground the words are white, and the small marks beside them (a lesson's aim, a marker's initials, "Coming soon") are the vivid gold, `--a-gold-ink`. Never grey, ink or purple on green, and never the pale lemon as writing: the lemon is a fill (Ramy, 25 Oct 2026, twice).

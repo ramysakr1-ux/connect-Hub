@@ -151,7 +151,8 @@ const COURSE_LINKS = [
      nothing, so the shelf is named for what a centre actually keeps on it. */
   { label: 'CELTA syllabus and assessment guidelines \u2014 Cambridge', url: 'https://www.cambridgeenglish.org/Images/21816-celta-syllbus.pdf', card: 'Course files', show: true },
   { label: 'Coursebook audio and video, both levels', url: 'https://drive.google.com/drive/folders/demo-coursebook-audio', card: 'Course files', show: true },
-  { label: 'Digital library \u2014 the centre\u2019s own shelf: handbook, policies, reading', url: 'https://drive.google.com/drive/folders/demo-centre-handbook', card: 'Course files', show: true },
+  { label: 'Centre handbook and policies', url: 'https://drive.google.com/drive/folders/demo-centre-handbook', card: 'Course files', show: true },
+  { label: 'Digital library: methodology, grammar and reading', url: 'https://drive.google.com/drive/folders/demo-digital-library', card: 'Course files', show: true },
 ];
 const DOCS = {
   docTimetable: 'https://drive.google.com/drive/folders/demo-course-timetable',
