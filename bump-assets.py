@@ -38,3 +38,5 @@ if t2 != t: sw.write_text(t2); print("stamped sw.js")
 # The logo is fixed (24 Oct 2026): fail loudly if any lockup has drifted.
 import subprocess, sys
 if subprocess.call([sys.executable, 'check-lockup.py']) != 0: sys.exit(1)
+# Colours are tokens (25 Oct 2026, COLOURS.md): a page may not gain raw hex.
+if subprocess.call([sys.executable, 'check-colours.py']) != 0: sys.exit(1)

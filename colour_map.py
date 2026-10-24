@@ -1,0 +1,1 @@
+MAP = {'#f3f3f7': 'sand', '#ebebf0': 'sand-deep', '#dcdce3': 'sand-line', '#e8e8ee': 'row-line', '#ffffff': 'paper', '#232220': 'ink', '#6b6963': 'grey', '#6e6c66': 'faint', '#1e3b2f': 'teal', '#2a4d3e': 'teal-lifted', '#173025': 'teal-deep', '#7a2e2e': 'brick', '#2f3b57': 'a-navy', '#c99a2e': 'a-mustard', '#4b5a7a': 'a-slate', '#e6dca6': 'a-lemon'}
