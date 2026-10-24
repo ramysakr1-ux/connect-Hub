@@ -13,7 +13,7 @@
 <title>Connect Lite — Mark assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610250032">
+<link rel="stylesheet" href="hub-tokens.css?v=202610250051">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -186,10 +186,12 @@
   .mk-match{border-top:1px solid var(--row-line); padding:10px 0; font-size:0.9rem; line-height:1.5;}
   .mk-match blockquote{margin:6px 0 0; padding:8px 12px; background:var(--sand); border-left:3px solid var(--sand-line); border-radius:0 8px 8px 0; font-size:0.88rem; color:var(--ink);}
   .mk-hit{display:flex; flex-direction:column; gap:2px; margin:8px 0 0 12px; font-size:0.86rem;} .mk-hit span{color:var(--grey);}
+  .mk-attach, .mk-unflag{margin-top:6px; font-size:0.78rem !important; padding:5px 11px !important;} .mk-attach:disabled{opacity:.6; cursor:default;}
+  .mk-flag blockquote{border-left-color:var(--a-red, #7A2E2E);} .mk-where{font-size:0.86rem; color:var(--grey); margin-top:6px;}
   .mk-pair{margin-top:8px;} .mk-pair .note{display:block; margin-top:4px;}
   .mk-same{color:var(--brick); font-weight:700;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610250032">
+<link rel="stylesheet" href="hub-house.css?v=202610250051">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -198,16 +200,16 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610250032"></script>
-<script src="hub-exchange.js?v=202610250032"></script>
-<script src="hub-docx.js?v=202610250032"></script>
-<script src="hub-marking.js?v=202610250032"></script>
-<script src="hub-due.js?v=202610250032"></script>
-<script src="hub-shared.js?v=202610250032"></script>
-<script src="hub-store.js?v=202610250032"></script>
-<script src="hub-say.js?v=202610250032"></script>
-<script src="hub-sync.js?v=202610250032"></script>
-<script src="fol-interview.js?v=202610250032"></script>
+<script src="assignment-defaults.js?v=202610250051"></script>
+<script src="hub-exchange.js?v=202610250051"></script>
+<script src="hub-docx.js?v=202610250051"></script>
+<script src="hub-marking.js?v=202610250051"></script>
+<script src="hub-due.js?v=202610250051"></script>
+<script src="hub-shared.js?v=202610250051"></script>
+<script src="hub-store.js?v=202610250051"></script>
+<script src="hub-say.js?v=202610250051"></script>
+<script src="hub-sync.js?v=202610250051"></script>
+<script src="fol-interview.js?v=202610250051"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -434,8 +436,44 @@ function checkCard(sub){
   return `<div class="card mk-check" id="checkCard"><h2>Is it their own work?</h2>
     <p class="note" style="margin:0 0 10px;">Three passes, when you press: every other assignment on Lite, by shared runs of words; the web, sentence by sentence; then paraphrase between any pair the first pass finds. It marks nothing and names nobody. What it finds is for you to read.</p>
     <div class="actions" style="margin:0; justify-content:flex-start;"><button type="button" class="btn btn-quiet" id="ownCheck" data-round="${round}">Check this assignment</button><span class="note" id="checkState"></span></div>
-    <div id="checkOut"></div></div>`;
+    <div id="checkOut"></div>
+    <div id="flagsOut">${flagsHTML(sub, round)}</div></div>`;
 }
+/* ATTACHED TO THE RECORD (Ramy, 25 Oct 2026: "the plagiarized section should be attached to the
+   assignment ... and then returned to the trainee as view-only, so everyone can see it, trainee and
+   assessor; and then the letter is just the letter"). A passage the tutor attaches is kept on the
+   assignment itself (sub.flags[round]) and travels with it: the marked record marks the passage in
+   the text and lists where it was found, the trainee's page lists it under the feedback, the
+   assessor's pack counts it. Where it was found names a course and a centre, never a person. */
+function flagsOf(sub, round){ return ((sub.flags || {})[round] || []).filter(Boolean); }
+function whereHTML(f){
+  if (f.kind === 'web') return 'On the web: <a href="' + esc(f.link || '') + '" target="_blank" rel="noopener">' + esc(f.title || f.link || '') + '</a>';
+  if (f.kind === 'paraphrase') return 'Says the same, in other words, as a passage in ' + esc(f.course || 'another course') + (f.centre ? ' (' + esc(f.centre) + ')' : '') + ', ' + esc((NAMES[f.code] || String(f.code || '').toUpperCase())) + (f.pair ? ': <em>\u201C' + esc(f.pair) + '\u201D</em>' : '') + (f.note ? ' \u2014 ' + esc(f.note) : '');
+  return 'Also in ' + esc((NAMES[f.code] || String(f.code || '').toUpperCase())) + ' on ' + esc(f.course || 'another course') + (f.centre ? ' (' + esc(f.centre) + ')' : '') + (f.round === 'sub2' ? ', the resubmission' : '') + (f.pct ? ' \u00b7 ' + f.pct + '% of this text shared' : '');
+}
+function flagsHTML(sub, round){
+  const l = flagsOf(sub, round); if (!l.length) return '';
+  return `<h3 class="mk-h3">Attached to the record \u00b7 ${l.length}</h3><p class="note" style="margin:0 0 6px;">These go back with the assignment: marked in the text on the record, listed under the feedback for the trainee, counted in the assessor\u2019s pack.</p>` +
+    l.map((f, i) => `<div class="mk-match mk-flag"><blockquote>${esc(f.quote)}</blockquote><div class="mk-where">${whereHTML(f)}</div><button type="button" class="btn btn-quiet sm mk-unflag" data-i="${i}">Take it off the record</button></div>`).join('');
+}
+function attachBtn(obj){ return `<button type="button" class="btn btn-quiet sm mk-attach" data-flag="${encodeURIComponent(JSON.stringify(obj))}">Attach to the record</button>`; }
+function addFlag(obj){
+  const sub = subFor(CURRENT); const round = obj.round0 || (sub.sub2 ? 'sub2' : 'sub1'); delete obj.round0;
+  sub.flags = sub.flags || {}; sub.flags[round] = sub.flags[round] || [];
+  if (sub.flags[round].some(f => f.quote === obj.quote && f.kind === obj.kind)) return;
+  let by = ''; try { by = localStorage.getItem('chub:tutorName') || ''; } catch (e) {}
+  sub.flags[round].push(Object.assign({ at: new Date().toISOString(), by }, obj)); saveSubs();
+  const out = $('flagsOut'); if (out) out.innerHTML = flagsHTML(sub, round);
+}
+function removeFlag(i){
+  const sub = subFor(CURRENT); const round = sub.sub2 ? 'sub2' : 'sub1';
+  if (sub.flags && sub.flags[round]) sub.flags[round].splice(i, 1); saveSubs();
+  const out = $('flagsOut'); if (out) out.innerHTML = flagsHTML(sub, round);
+}
+document.addEventListener('click', e => {
+  const a = e.target.closest('.mk-attach'); if (a) { try { addFlag(JSON.parse(decodeURIComponent(a.dataset.flag))); a.textContent = 'Attached'; a.disabled = true; } catch (err) {} return; }
+  const r = e.target.closest('.mk-unflag'); if (r) removeFlag(+r.dataset.i);
+});
 async function runCheck(round){
   const out = $('checkOut'), st = $('checkState'), b = $('ownCheck'); if (!out) return;
   const S = window.HubStore, body = { code: CURRENT, round, token: TRAINEE_ID };
@@ -446,7 +484,7 @@ async function runCheck(round){
   catch (e) { out.innerHTML = `<p class="note">It could not be compared: ${esc(e.message)}</p>`; b.disabled = false; st.textContent = ''; return; }
   let html = `<h3 class="mk-h3">Across Lite</h3>`;
   if (!sim.matches.length) html += `<p class="note">Compared with ${sim.compared} other submission${sim.compared === 1 ? '' : 's'}. Nothing shared beyond the brief's own phrases and the references everyone cites.</p>`;
-  else html += sim.matches.map(m => `<div class="mk-match"><b>${esc(m.course)}${m.centre ? ' · ' + esc(m.centre) : ''}</b> · ${esc(name(m.code))}${m.round === 'sub2' ? ' (resubmission)' : ''} · ${m.shared} shared run${m.shared === 1 ? '' : 's'} of eight words, ${m.pct}% of this text${m.sameCourse ? ' · <span class="mk-same">same course</span>' : ''}${m.passages.map(x => `<blockquote>${esc(x)}</blockquote>`).join('')}</div>`).join('');
+  else html += sim.matches.map(m => `<div class="mk-match"><b>${esc(m.course)}${m.centre ? ' · ' + esc(m.centre) : ''}</b> · ${esc(name(m.code))}${m.round === 'sub2' ? ' (resubmission)' : ''} · ${m.shared} shared run${m.shared === 1 ? '' : 's'} of eight words, ${m.pct}% of this text${m.sameCourse ? ' · <span class="mk-same">same course</span>' : ''}${m.passages.map(x => `<blockquote>${esc(x)}</blockquote>${attachBtn({ kind:'lite', quote:x, course:m.course, centre:m.centre || '', code:m.code, round:m.round, pct:m.pct, round0: round })}`).join('')}</div>`).join('');
   out.innerHTML = html;
   st.textContent = 'Searching the web…';
   html += `<h3 class="mk-h3">On the web</h3>`;
@@ -454,7 +492,7 @@ async function runCheck(round){
     const web = await S.call(Object.assign({ op: 'webCheck' }, body));
     if (web.off) html += `<p class="note">Web search is not switched on. The owner adds a Brave Search key in the console.</p>`;
     else if (!web.found) html += `<p class="note">${web.checked} distinctive sentences searched in quotation marks. None found on a page in Brave Search's index.</p>`;
-    else html += web.sentences.filter(x => x.hits.length).map(x => `<div class="mk-match"><blockquote>${esc(x.sentence)}</blockquote>${x.hits.map(h => `<div class="mk-hit"><a href="${esc(h.link)}" target="_blank" rel="noopener">${esc(h.title || h.link)}</a><span>${esc(h.snippet)}</span></div>`).join('')}</div>`).join('') + `<p class="note">${web.found} of ${web.checked} sentences found. A lead, not proof: open the page and read it. Web results by Brave Search.</p>`;
+    else html += web.sentences.filter(x => x.hits.length).map(x => `<div class="mk-match"><blockquote>${esc(x.sentence)}</blockquote>${x.hits.map(h => `<div class="mk-hit"><a href="${esc(h.link)}" target="_blank" rel="noopener">${esc(h.title || h.link)}</a><span>${esc(h.snippet)}</span>${attachBtn({ kind:'web', quote:x.sentence, link:h.link, title:h.title || '', round0: round })}</div>`).join('')}</div>`).join('') + `<p class="note">${web.found} of ${web.checked} sentences found. A lead, not proof: open the page and read it. Web results by Brave Search.</p>`;
   } catch (e) { html += `<p class="note">${esc(e.message)}</p>`; }
   out.innerHTML = html;
   if (sim.matches.length) {
@@ -464,7 +502,7 @@ async function runCheck(round){
       const ai = await S.call(Object.assign({ op: 'aiCheck' }, body));
       if (ai.off) html += `<p class="note">The paraphrase pass is not switched on. The owner adds a Claude key in the console.</p>`;
       else if (!ai.results.length) html += `<p class="note">${esc(ai.note || 'Nothing to read.')}</p>`;
-      else html += ai.results.map(r => `<div class="mk-match"><b>${esc(r.course)}</b> · ${esc(name(r.code))}${r.round === 'sub2' ? ' (resubmission)' : ''}: ${r.error ? 'could not be read (' + esc(r.error) + ')' : r.verdict === 'none' ? 'nothing beyond the brief' : r.verdict === 'substantial' ? 'substantial paraphrase' : r.verdict === 'some' ? 'some paraphrase' : esc(r.raw || 'no answer')}${(r.pairs || []).map(x => `<div class="mk-pair"><blockquote>${esc(x.a)}</blockquote><blockquote>${esc(x.b)}</blockquote><span class="note">${esc(x.note)}</span></div>`).join('')}</div>`).join('');
+      else html += ai.results.map(r => `<div class="mk-match"><b>${esc(r.course)}</b> · ${esc(name(r.code))}${r.round === 'sub2' ? ' (resubmission)' : ''}: ${r.error ? 'could not be read (' + esc(r.error) + ')' : r.verdict === 'none' ? 'nothing beyond the brief' : r.verdict === 'substantial' ? 'substantial paraphrase' : r.verdict === 'some' ? 'some paraphrase' : esc(r.raw || 'no answer')}${(r.pairs || []).map(x => `<div class="mk-pair"><blockquote>${esc(x.a)}</blockquote><blockquote>${esc(x.b)}</blockquote><span class="note">${esc(x.note)}</span>${attachBtn({ kind:'paraphrase', quote:x.a, pair:x.b, note:x.note || '', course:r.course, centre:r.centre || '', code:r.code, round:r.round, round0: round })}</div>`).join('')}</div>`).join('');
     } catch (e) { html += `<p class="note">${esc(e.message)}</p>`; }
     out.innerHTML = html;
   }

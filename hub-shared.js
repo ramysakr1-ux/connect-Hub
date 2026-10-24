@@ -1120,7 +1120,19 @@ if (!window.HubStore) { if (document.readyState === 'loading') document.addEvent
   function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function nl2br(s){ return esc(s).replace(/\n/g,'<br>'); }
 
-  function submissionHTML(a, snap){
+  /* A passage attached to the record (10_, 25 Oct 2026) is marked where it sits in the text.
+     The text is escaped first, so the quote is matched escaped; a long quote is matched on its
+     first sixty characters when the whole of it does not sit on one line. */
+  function markFlags(html, flags){
+    (flags || []).forEach(function (f) {
+      var q = esc(String(f.quote || '').trim()); if (q.length < 12) return;
+      var at = html.indexOf(q), len = q.length;
+      if (at < 0) { var head = esc(String(f.quote).trim().slice(0, 60)); at = html.indexOf(head); len = head.length; if (at < 0 || head.length < 12) return; }
+      html = html.slice(0, at) + '<mark class="flag">' + html.slice(at, at + len) + '</mark>' + html.slice(at + len);
+    });
+    return html;
+  }
+  function submissionHTML(a, snap, flags){
     if (!snap) return '<p class="readonly">Nothing submitted.</p>';
     let out = '';
     /* The materials link the trainee gave, first, so a marker or an assessor
@@ -1129,7 +1141,7 @@ if (!window.HubStore) { if (document.readyState === 'loading') document.addEvent
     if (ml) out += '<p style="margin:0 0 10px;"><a href="' + esc(ml) + '" target="_blank" rel="noopener" style="display:inline-block;font-size:0.78rem;font-weight:700;padding:5px 12px;border-radius:16px;background:oklch(37.5% 0.058 195);color:#fff;text-decoration:none;">Open the materials \u2197</a></p>';
     a.sections.forEach((s,i) => {
       if (s.type==='text' && !/before you start/i.test(s.label) && snap.text && snap.text[i]) {
-        out += `<div class="roundlabel">${esc(s.label)}</div><div class="readonly">${nl2br(snap.text[i])}</div>`;
+        out += `<div class="roundlabel">${esc(s.label)}</div><div class="readonly">${markFlags(nl2br(snap.text[i]), flags)}</div>`;
       } else if (s.type==='picker' && snap.picked && snap.picked[i]) {
         const p = snap.picked[i];
         out += `<div class="roundlabel">${esc(s.label)}</div><div class="readonly">${esc(s.catA.label)}: ${p.A.map(esc).join(', ')||'\u2014'}\n${esc(s.catB.label)}: ${p.B.map(esc).join(', ')||'\u2014'}</div>`;
@@ -1181,8 +1193,27 @@ if (!window.HubStore) { if (document.readyState === 'loading') document.addEvent
       + '<h1>' + esc(a.title) + '</h1>'
       + (fb.outcome ? '<div class="outcome-badge ' + (isPass ? 'pass' : 'fail') + '">' + esc(fb.outcome) + '</div>' : '')
       + '</div>'
-      + '<div class="section"><h2>First submission</h2>' + submissionHTML(a, sub.sub1) + '</div>';
-    if (sub.sub2) html += '<div class="section"><h2>Resubmission</h2>' + submissionHTML(a, sub.sub2) + '</div>';
+      + '<div class="section"><h2>First submission</h2>' + submissionHTML(a, sub.sub1, (sub.flags || {}).sub1) + '</div>';
+    if (sub.sub2) html += '<div class="section"><h2>Resubmission</h2>' + submissionHTML(a, sub.sub2, (sub.flags || {}).sub2) + '</div>';
+    /* PASSAGES FOUND ELSEWHERE (Ramy, 25 Oct 2026): what the tutor attached from the own-work check
+       goes back with the assignment, for the trainee and the assessor alike. Each is marked in the
+       text above and listed here with where it was found: a course and a centre, or a web page,
+       never a person. The warning letter stays the letter. */
+    var FL = sub.flags || {}, fl = function (r) { return (FL[r] || []).filter(Boolean); };
+    if (fl('sub1').length || fl('sub2').length) {
+      var where = function (f) {
+        var code = String(f.code || '').toUpperCase();
+        if (f.kind === 'web') return 'Found on the web: <a href="' + esc(f.link || '') + '" target="_blank" rel="noopener">' + esc(f.title || f.link || '') + '</a>';
+        if (f.kind === 'paraphrase') return 'Says the same, in other words, as a passage in ' + esc(f.course || 'another course') + (f.centre ? ' (' + esc(f.centre) + ')' : '') + (code ? ', ' + esc(code) : '') + (f.pair ? ': <em>\u201C' + esc(f.pair) + '\u201D</em>' : '') + (f.note ? ' \u2014 ' + esc(f.note) : '');
+        return 'Also in ' + (code ? esc(code) + ' ' : '') + 'on ' + esc(f.course || 'another course') + (f.centre ? ' (' + esc(f.centre) + ')' : '') + (f.round === 'sub2' ? ', the resubmission' : '') + (f.pct ? ' \u00b7 ' + f.pct + '% of this text shared' : '');
+      };
+      var whenF = function (iso) { if (!iso) return ''; var d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); };
+      html += '<div class="section flags"><h2>Passages found elsewhere</h2><p class="readonly" style="white-space:normal;">Marked in the text above. Attached by the tutors from the own-work check; the centre\u2019s plagiarism policy in the candidate agreement says what follows.</p>' + ['sub1', 'sub2'].map(function (r) {
+        var l = fl(r); if (!l.length) return '';
+        return (sub.sub2 ? '<div class="roundlabel">' + (r === 'sub1' ? 'In the first submission' : 'In the resubmission') + '</div>' : '') +
+          l.map(function (f) { return '<div class="comment"><em>\u201C' + esc(f.quote) + '\u201D</em><br>' + where(f) + ((f.by || f.at) ? ' <span style="color:#777;">(' + esc([f.by, whenF(f.at)].filter(Boolean).join(', ')) + ')</span>' : '') + '</div>'; }).join('');
+      }).join('') + '</div>';
+    }
     html += '<div class="section"><h2>Assessment criteria</h2>'
       + criteriaTable(a, marks.sub1 || [], marks.sub2 || [], comments.sub1 || [], comments.sub2 || [], !!sub.sub2) + '</div>';
     /* The tutors' comments on the text itself (17 Oct 2026): what each one

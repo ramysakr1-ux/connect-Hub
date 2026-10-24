@@ -15,7 +15,7 @@
 <title>Connect Lite — Assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610250032">
+<link rel="stylesheet" href="hub-tokens.css?v=202610250051">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -45,6 +45,7 @@
   .fb-card h2{font-family:'Newsreader',Georgia,serif; font-size:1.1rem; margin:0 0 8px; color:var(--ink);}
   /* the tutor's general comment had no size of its own and came out at the browser's 16px, a size nothing else on the screen uses (sweep, 28 Sep 2026) */
   .fb-card p{font-size:0.9rem; line-height:1.6; margin:0 0 10px;}
+  .fb-flag{padding:8px 12px; margin:6px 0; background:var(--paper); border-left:3px solid var(--a-red, #7A2E2E); border-radius:0 8px 8px 0; font-size:0.88rem; line-height:1.5;} .fb-flag-where{color:var(--grey); font-size:0.82rem; margin-top:3px;}
   .outcome{display:inline-block; font-weight:700; padding:3px 12px; border-radius:12px; margin-left:8px; font-size:0.82rem;}
   .outcome.pass{background:var(--mark-met-bg); color:var(--mark-met-text);}
   .outcome.resub{background:oklch(93% 0.06 60); color:oklch(40% 0.1 60);}
@@ -176,7 +177,7 @@
   @media(max-width:560px){ .wm{flex-wrap:wrap; gap:6px;} .wm-track{width:100%;} }
   @media print{ .wm-track{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610250032">
+<link rel="stylesheet" href="hub-house.css?v=202610250051">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -184,13 +185,13 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610250032"></script>
-<script src="hub-due.js?v=202610250032"></script>
-<script src="hub-shared.js?v=202610250032"></script>
-<script src="hub-store.js?v=202610250032"></script>
-<script src="hub-say.js?v=202610250032"></script>
-<script src="hub-sync.js?v=202610250032"></script>
-<script src="fol-interview.js?v=202610250032"></script>
+<script src="assignment-defaults.js?v=202610250051"></script>
+<script src="hub-due.js?v=202610250051"></script>
+<script src="hub-shared.js?v=202610250051"></script>
+<script src="hub-store.js?v=202610250051"></script>
+<script src="hub-say.js?v=202610250051"></script>
+<script src="hub-sync.js?v=202610250051"></script>
+<script src="fol-interview.js?v=202610250051"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the trainee's submission form with a
@@ -288,6 +289,20 @@ function itemsForFieldsSection(a, secIdx){
   return [];
 }
 
+/* PASSAGES FOUND ELSEWHERE (25 Oct 2026): what the tutor attached from the own-work check comes
+   back with the assignment. Listed here, and marked in the text on the record. */
+function flagsHTML(round){
+  const sub = subFor(CURRENT); const l = ((sub.flags || {})[round] || []).filter(Boolean);
+  if (!l.length) return '';
+  const where = f => { const code = String(f.code || '').toUpperCase();
+    if (f.kind === 'web') return `Found on the web: <a href="${esc(f.link || '')}" target="_blank" rel="noopener">${esc(f.title || f.link || '')}</a>`;
+    if (f.kind === 'paraphrase') return `Says the same, in other words, as a passage in ${esc(f.course || 'another course')}${f.centre ? ' (' + esc(f.centre) + ')' : ''}${code ? ', ' + esc(code) : ''}`;
+    return `Also in ${code ? esc(code) + ' ' : ''}on ${esc(f.course || 'another course')}${f.centre ? ' (' + esc(f.centre) + ')' : ''}`; };
+  return `<div class="fb-flags"><h2 style="margin-top:14px;">Passages found elsewhere \u00b7 ${l.length}</h2>
+    <p class="guide" style="margin:0 0 8px;">Your tutors attached these from the own-work check. They are marked in your text on the record. The plagiarism section of your candidate agreement says what happens next.</p>
+    ${l.map(f => `<div class="fb-flag"><em>\u201C${esc(f.quote)}\u201D</em><div class="fb-flag-where">${where(f)}</div></div>`).join('')}
+    <a class="btn btn-quiet sm" href="11_assignment_record.html?a=${encodeURIComponent(CURRENT)}&me=1" style="margin-top:8px;">Open the marked record</a></div>`;
+}
 function render(){
   const a = WORDING && WORDING[CURRENT];
   if (!a){ $('app').innerHTML = '<div class="card"><p class="guide">This assignment isn\u2019t set up yet \u2014 check with your centre.</p></div>'; return; }
@@ -358,7 +373,7 @@ function render(){
         const tiedTo = i => mg.filter(x => x.crit != null && String(x.crit) === String(i) && (x.text || x.tick));
         const rows = (a.criteria||[]).map((c,i)=>({ text:c.text, m:marks[i], cm:cms[i]||'', ev:tiedTo(i) })).filter(r=>r.m===true||r.m===false||r.cm||r.ev.length);
         if (!rows.length) return '';
-        return `<div style="margin-top:12px;">${rows.map(r=>`<div style="display:flex; gap:10px; align-items:flex-start; padding:6px 0; border-top:1px solid var(--sand-line);"><span style="flex:none; font-size:0.72rem; font-weight:700; padding:3px 8px; border-radius:10px; ${r.m===true?'background:var(--mark-met-bg);color:var(--mark-met-text);border:1px solid var(--mark-met-line);':r.m===false?'background:var(--mark-not-bg);color:var(--mark-not-text);border:1px solid var(--mark-not-line);':'background:var(--sand);color:var(--grey);'}">${r.m===true?'Met':r.m===false?'Not met':'\u2014'}</span><div style="font-size:0.85rem; line-height:1.5;"><div>${esc(r.text)}</div>${r.cm?`<div style="color:var(--grey); margin-top:2px;">${nl2br(r.cm)}</div>`:''}${r.ev.length?`<div class="fb-ev">${r.ev.map(x=>`<div>${x.tick?(window.hubTickSVG?hubTickSVG():'\u2713')+' ':''}\u201C${esc(x.quote.length>70?x.quote.slice(0,68)+'\u2026':x.quote)}\u201D${x.tick?((x.n||1)>1?' \u00d7'+x.n:''):': '+esc(x.text)}</div>`).join('')}</div>`:''}</div></div>`).join('')}</div>`;
+        return (rows.length ? `<div style="margin-top:12px;">${rows.map(r=>`<div style="display:flex; gap:10px; align-items:flex-start; padding:6px 0; border-top:1px solid var(--sand-line);"><span style="flex:none; font-size:0.72rem; font-weight:700; padding:3px 8px; border-radius:10px; ${r.m===true?'background:var(--mark-met-bg);color:var(--mark-met-text);border:1px solid var(--mark-met-line);':r.m===false?'background:var(--mark-not-bg);color:var(--mark-not-text);border:1px solid var(--mark-not-line);':'background:var(--sand);color:var(--grey);'}">${r.m===true?'Met':r.m===false?'Not met':'\u2014'}</span><div style="font-size:0.85rem; line-height:1.5;"><div>${esc(r.text)}</div>${r.cm?`<div style="color:var(--grey); margin-top:2px;">${nl2br(r.cm)}</div>`:''}${r.ev.length?`<div class="fb-ev">${r.ev.map(x=>`<div>${x.tick?(window.hubTickSVG?hubTickSVG():'\u2713')+' ':''}\u201C${esc(x.quote.length>70?x.quote.slice(0,68)+'\u2026':x.quote)}\u201D${x.tick?((x.n||1)>1?' \u00d7'+x.n:''):': '+esc(x.text)}</div>`).join('')}</div>`:''}</div></div>`).join('')}</div>` : '') + flagsHTML(round);
       })()}
     </div>`;
   }
