@@ -68,6 +68,7 @@
       host.hidden = !any; if (!any) return;
       host.innerHTML = '<div class="shead"><h2>' + esc(opts.title || 'Shared with the students') + '</h2><span class="new">' + esc(note) + '</span></div>'
         + '<div class="shelf-group">'
+          + (opts.lede ? '<p class="shelf-note" style="margin:0 0 8px">' + esc(opts.lede) + '</p>' : '')
           + '<div class="shelf-head">' + (may ? '<span class="shelf-note">' + NOTE + '</span>' : '')
           + (may ? '<button class="shelf-add" type="button" data-open="' + ADD + '">' + (open ? 'Cancel' : 'Share with the students') + '</button>' : '')
           + '</div>'
@@ -80,7 +81,7 @@
           + (list.length ? list.map(function (x) {
               return '<div class="shelf-row"><a href="' + esc(x.url) + '" target="_blank" rel="noopener noreferrer">' + esc(x.name) + '</a>'
                 + '<span class="shelf-meta">' + esc(x.by || '') + (x.tp ? ' · ' + esc(x.tp) : '') + (x.at ? ' · ' + esc(when(x.at)) : '') + (host_(x.url) ? ' · ' + esc(host_(x.url)) : '') + '</span>'
-                + (mine(x) ? '<button class="rm" type="button" data-rm="' + esc(x.id) + '">Take back</button>' : '')
+                + (mine(x) ? '<button class="rm" type="button" data-rm="' + esc(x.id) + '">Stop sharing</button>' : '')
                 + '</div>';
             }).join('') : (may && !open ? '<p class="shelf-empty">Nothing here yet.</p>' : ''))
         + '</div>';
@@ -104,7 +105,7 @@
     }
     async function remove(id) {
       if (busy) return;
-      var ok = window.confirmModal ? await confirmModal('Take this back from the students and everyone on the course?', 'Take back') : confirm('Take this back?');
+      var ok = window.confirmModal ? await confirmModal('Stop sharing this? The other trainees and the volunteer students will no longer see it.', 'Stop sharing') : confirm('Stop sharing this?');
       if (!ok) return;
       busy = true; note = 'Taking back…'; draw();
       try {
