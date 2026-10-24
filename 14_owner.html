@@ -12,8 +12,9 @@
     3. The live courses: a real centre's, with its links and the message to send.
     4. Making a course.
 
-  Everything else (the TP point library, old demos, the inbox, the film link, the
-  rates, the transcription key) is still here, under the fold. What left: the
+  Everything else (earlier courses, old demos, the bin, the inbox, the film link,
+  the rates, the transcription key) is still here, under the fold; the TP point
+  library is one link, because it is not a course. What left: the
   statistics room, the film engine, the "three demos" machinery, the needs strip,
   the ticket book and the three other shapes a course card used to take.
 
@@ -37,7 +38,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610240853">
+<link rel="stylesheet" href="hub-tokens.css?v=202610240906">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 70px;}
@@ -129,6 +130,9 @@
   .state.new{color:var(--a-mustard, #C99A2E);}
   .card.new{box-shadow:var(--nb-shadow), inset 0 0 0 2px var(--a-mustard, #C99A2E);}
   .card.bin{opacity:.72;}
+  .libline{margin:18px 4px 6px; font-size:0.92rem;}
+  .libline a{color:var(--a-forest, #1E3B2F); font-weight:600;}
+  .libline small{color:var(--grey); margin-left:8px;}
   .card.bin .name b{text-decoration:line-through; text-decoration-color:var(--grey); text-decoration-thickness:1px;}
   code{font-family:'Karla',sans-serif; font-size:0.78rem; color:var(--grey);}
   .addr{flex:1 1 100%; font-size:0.74rem; word-break:break-all; color:var(--grey);}
@@ -203,7 +207,7 @@
   @media (max-width:760px){ .demo .doors{grid-template-columns:1fr 1fr;} .setting{grid-template-columns:1fr;} }
   @media (max-width:520px){ .demo .doors{grid-template-columns:1fr;} .title h1{font-size:1.8rem;} body{padding:0 14px 60px;} .card{padding:16px;} .row-course .acts .btn{flex:1 1 auto; justify-content:center;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610240853">
+<link rel="stylesheet" href="hub-house.css?v=202610240906">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -226,10 +230,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610240853"></script>
-<script src="hub-store.js?v=202610240853"></script>
-<script src="hub-say.js?v=202610240853"></script>
-<script src="hub-card-mail.js?v=202610240853"></script>
+<script src="hub-shared.js?v=202610240906"></script>
+<script src="hub-store.js?v=202610240906"></script>
+<script src="hub-say.js?v=202610240906"></script>
+<script src="hub-card-mail.js?v=202610240906"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after. */
 const OWNER_STORE = 'hub:o';
@@ -481,7 +485,7 @@ function oldDemoRow(c){
 
 function binRow(c){
   return `<div class="card bin" id="course-${esc(c.id)}"><div class="row-course">
-    <div class="name"><b>${esc(c.courseName || c.name || label(c))}</b><small>${esc([c.centreName, c.trainees ? c.trainees + ' trainees' : ''].filter(Boolean).join(' · '))}${c.goesOn ? ' · goes for good on ' + esc(niceDate(c.goesOn)) : ''} · <code>${esc(c.id)}</code></small></div>
+    <div class="name"><b>${esc(c.courseName || c.name || label(c))}</b><small>${esc([c.centreName, c.trainees ? c.trainees + ' trainees' : '', c.goesOn ? 'goes for good on ' + niceDate(c.goesOn) : ''].filter(Boolean).join(' · '))} · <code>${esc(c.id)}</code></small></div>
     <div class="acts">${kbtn(`data-undelete="${esc(c.id)}" data-label="${esc(label(c))}"`, 'Put it back')}</div>
   </div></div>`;
 }
@@ -489,14 +493,17 @@ function binRow(c){
 function render(courses, msg){
   COURSES = courses || [];
   const demo = theDemo();
-  const live = COURSES.filter(c => courseKind(c) === 'live').sort((a, b) => (b.id === NEW_ID) - (a.id === NEW_ID) || String(b.start || '').localeCompare(String(a.start || '')));
+  // a real course is live until its end date; the day after, it is an earlier course, links still working
+  const real = COURSES.filter(c => courseKind(c) === 'live').sort((a, b) => (b.id === NEW_ID) - (a.id === NEW_ID) || String(b.start || '').localeCompare(String(a.start || '')));
+  const live = real.filter(c => !(c.end && c.end < TODAY()));
+  const earlier = real.filter(c => c.end && c.end < TODAY());
   const old = COURSES.filter(c => courseKind(c) === 'demo' && c !== demo);
   const scratch = COURSES.filter(c => courseKind(c) === 'scratch');
   const lib = COURSES.find(c => courseKind(c) === 'library'), grades = COURSES.find(c => courseKind(c) === 'grades');
   const bin = COURSES.filter(c => courseKind(c) === 'bin').sort((a, b) => String(a.deleted).localeCompare(String(b.deleted)));
   $('app').innerHTML = `
     <div class="title">
-      <div><p class="eyebrow">Connect Lite</p><h1>Courses</h1><p>${live.length ? live.length + ' live course' + (live.length === 1 ? '' : 's') + ', ' : ''}one demo${old.length ? ', ' + old.length + ' old demo' + (old.length === 1 ? '' : 's') + ' to clear' : ''}.</p></div>
+      <div><p class="eyebrow">Connect Lite</p><h1>Courses</h1><p>${live.length ? live.length + ' live course' + (live.length === 1 ? '' : 's') + ', ' : ''}one demo${earlier.length ? ', ' + earlier.length + ' earlier course' + (earlier.length === 1 ? '' : 's') : ''}${old.length ? ', ' + old.length + ' old demo' + (old.length === 1 ? '' : 's') + ' to clear' : ''}.</p></div>
       <div class="acts"><button class="btn primary" id="makeBtn" type="button">Make a course</button></div>
     </div>
     <div class="make" id="makeRow" hidden>
@@ -512,11 +519,13 @@ function render(courses, msg){
     <section class="sec"><h2>Live courses <small>real centres, real trainees — never practise on these</small></h2>
       <div class="cards">${live.length ? live.map(liveRow).join('') : '<div class="empty">No live course yet. Make one above and send the centre its tutor link.</div>'}</div></section>
 
-    ${(lib || grades || old.length || scratch.length) ? `<details class="fold" id="foldPages"><summary>Pages and old courses <small>${[lib ? 'the TP point library' : '', grades ? 'C/17’s grades' : '', old.length ? old.length + ' old demo' + (old.length === 1 ? '' : 's') : '', scratch.length ? scratch.length + ' scratch' : ''].filter(Boolean).join(' · ')}</small></summary>
-      <div class="cards">${lib ? pageRow(lib, 'library') : ''}${grades ? pageRow(grades, 'grades') : ''}${old.map(oldDemoRow).join('')}${scratch.map(oldDemoRow).join('')}</div></details>` : ''}
+    ${(earlier.length || grades || old.length || scratch.length) ? `<details class="fold" id="foldEarlier"><summary>Earlier courses <small>${[earlier.length ? earlier.length + ' finished course' + (earlier.length === 1 ? '' : 's') + ', links still working' : '', grades ? 'C/17’s grades' : '', old.length ? old.length + ' old demo' + (old.length === 1 ? '' : 's') : '', scratch.length ? scratch.length + ' scratch' : ''].filter(Boolean).join(' · ')}</small></summary>
+      <div class="cards">${earlier.map(liveRow).join('')}${grades ? pageRow(grades, 'grades') : ''}${old.map(oldDemoRow).join('')}${scratch.map(oldDemoRow).join('')}</div></details>` : ''}
 
     ${bin.length ? `<details class="fold" id="foldBin"><summary>The bin <small>${bin.length} course${bin.length === 1 ? '' : 's'} · links off · gone for good after 30 days</small></summary>
       <div class="cards">${bin.map(binRow).join('')}</div></details>` : ''}
+
+    ${lib ? `<p class="libline"><a href="28_tp_point_sets.html?k=${encodeURIComponent(lib.tutorKey)}">The TP point library</a> <small>the sets every centre takes from; not a course</small></p>` : ''}
 
     <details class="fold" id="foldInbox"><summary>From the people using it <small id="inboxSmall">looking…</small></summary><div class="card" id="inboxBox"><p class="empty" style="padding:6px 0">Looking…</p></div></details>
 
@@ -530,7 +539,7 @@ function render(courses, msg){
       </div></details>
     <p id="status"></p>`;
   if (msg) status(msg);
-  ['foldPages', 'foldInbox', 'foldSettings'].forEach(id => { const d = $(id); if (!d) return; d.open = ls.get('hub:o:' + id) === '1'; d.ontoggle = () => ls.set('hub:o:' + id, d.open ? '1' : '0'); });
+  ['foldEarlier', 'foldBin', 'foldInbox', 'foldSettings'].forEach(id => { const d = $(id); if (!d) return; d.open = ls.get('hub:o:' + id) === '1'; d.ontoggle = () => ls.set('hub:o:' + id, d.open ? '1' : '0'); });
   if (demo) fillDoors(demo);
   fillMaterials();
   drawInbox();
