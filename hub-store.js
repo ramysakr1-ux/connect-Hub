@@ -97,7 +97,7 @@ window.HubStore = (function(){
     /* A delete or a restore is never sent twice (24 Oct 2026): a request that
        timed out may still be running on the store, and a second one alongside
        it is how deleting c7 took other courses' records. */
-    var onlyOnce = payload.op === 'deleteCourse' || payload.op === 'restoreFromBackup';
+    var onlyOnce = /^(deleteCourse|undeleteCourse|purgeCourse|restoreFromBackup)$/.test(payload.op);
     for (;;) {
       try { out = await once(payload, timeoutMs); }
       catch (e) { if (!e.transient || onlyOnce || tries >= waits.length) throw e; await new Promise(function(r){ setTimeout(r, waits[tries++]); }); continue; }

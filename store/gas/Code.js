@@ -28,7 +28,7 @@
 // Wire: POST JSON as text/plain (no CORS preflight) -> JSON out.
 //   { op, key?, a?, token?, kind?, data? }
 
-var SHEET_COURSES  = 'courses';   // id | name | created   (the keys are NOT here -- see below)
+var SHEET_COURSES  = 'courses';   // id | name | created | deleted   (the keys are NOT here -- see below)
 var SHEET_RECORDS  = 'records';   // course | token | kind | json | updated
 var SHEET_TRAINEES = 'trainees';  // course | token | name | group | created
 var SHEET_COURSE   = 'course';    // course | kind | json | updated  (settings, wording)
@@ -918,41 +918,58 @@ case 'inbox': {
       want.forEach(function (n) { var it = af2.getFilesByName(n); if (it.hasNext()) outA[n] = Utilities.base64Encode(it.next().getBlob().getBytes()); });
       return outA;
     }
-    // Destructive, and the only op that is. The dialog does the asking; this
-    // asks again in its own terms -- the caller must name the course twice,
-    // so a stray or repeated request cannot delete one by accident.
+    /* THE SAFE DELETE (25 Oct 2026; Ramy, 24 Oct: "that disaster can never
+       happen again"). Deleting a course no longer removes a row. It puts the
+       course in the bin: a stamp in the courses sheet's fourth column, which
+       every reader of courses_() skips, so its links stop opening at once and
+       it leaves the console, the pulse and the reports; nothing else moves.
+       The rows go for good 30 days later, from the nightly backup run, one
+       course a night, under the script lock, in blocks, and only once that
+       night's backup is on Drive. undeleteCourse brings a binned course back
+       whole. A LIVE COURSE cannot be binned at all: one with trainees whose
+       end date has not passed, unless it is a pinned demo. End the course in
+       its settings first. The caller still names the course twice. */
     case 'deleteCourse': {
       requireOwner_(owner);
       var did = String(req.course || '').trim();
       if (!did) throw new Error('Which course?');
       if (String(req.confirm || '') !== did) throw new Error('Deleting a course needs its id as confirmation');
-      /* ONE DELETE AT A TIME (24 Oct 2026). Two deletes of c7 ran together --
-         a second press, and the page's own retry of a request that had timed
-         out -- and each removed rows by the numbers it had read at its start.
-         Once the first had removed rows, the second's numbers pointed at other
-         courses' records, and every course lost them. Under the script lock a
-         delete reads the sheet fresh and nothing else writes while it runs. */
       var dlock = LockService.getScriptLock();
       if (!dlock.tryLock(30000)) throw new Error('Another change is running on the store. Try again in a minute.');
-      var removed;
       try {
-        if (!courseById_(did)) throw new Error('No such course');
-        removed = {
-          trainees: deleteRowsWhere_(SHEET_TRAINEES, function (r) { return String(r[0]) === did; }),
-          records: deleteRowsWhere_(SHEET_RECORDS, function (r) { return String(r[0]) === did; }),
-          settings: deleteRowsWhere_(SHEET_COURSE, function (r) { return String(r[0]) === did; })
-        };
-        deleteRowsWhere_(SHEET_COURSES, function (r) { return String(r[0]) === did; });
-        // and its two secrets, so the links cannot outlive the course
-        var dprops = PropertiesService.getScriptProperties();
-        dprops.deleteProperty(keyProp_('tutor', did));
-        dprops.deleteProperty(keyProp_('assessor', did));
-        // ...and its materials. Deleting a course used to leave its Drive folder
-        // behind for ever, with nothing left pointing at it: an orphan nobody
-        // would ever find, on the centre's own storage (23 Sep 2026).
-        removed.materials = trashMaterials_(did);
+        var dc = courseById_(did);
+        if (!dc) throw new Error('No such course');
+        var dset = courseRead_(did, 'settings') || {};
+        var dToday = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+        if (!dset.demoToday && dset.end && String(dset.end) >= dToday && roster_(did).length) throw new Error('This is a live course until ' + dset.end + '. Lite does not delete a live course; end it in its settings first.');
+        setCourseField_(did, 'deleted', new Date().toISOString());
       } finally { dlock.releaseLock(); }
-      return { deleted: did, removed: removed, courses: ownerList_() };
+      return { deleted: did, binned: true, until: Utilities.formatDate(new Date(Date.now() + BIN_DAYS * 86400000), Session.getScriptTimeZone(), 'yyyy-MM-dd'), courses: ownerList_() };
+    }
+    case 'undeleteCourse': {
+      requireOwner_(owner);
+      var uid = String(req.course || '').trim();
+      var ulock = LockService.getScriptLock();
+      if (!ulock.tryLock(30000)) throw new Error('Another change is running on the store. Try again in a minute.');
+      try {
+        var uc = courses_(true).filter(function (c) { return c.id === uid; })[0];
+        if (!uc) throw new Error('No such course');
+        if (!uc.deleted) throw new Error('This course is not in the bin');
+        setCourseField_(uid, 'deleted', '');
+      } finally { ulock.releaseLock(); }
+      return { restored: uid, courses: ownerList_() };
+    }
+    /* The permanent delete, by hand: only a course already in the bin, named
+       twice. The console does not offer it; the nightly run does the same
+       thing by itself after 30 days. */
+    case 'purgeCourse': {
+      requireOwner_(owner);
+      var pid = String(req.course || '').trim();
+      if (!pid || String(req.confirm || '') !== pid) throw new Error('Purging a course needs its id as confirmation');
+      var pc = courses_(true).filter(function (c) { return c.id === pid; })[0];
+      if (!pc) throw new Error('No such course');
+      if (!pc.deleted) throw new Error('Only a course in the bin can be purged; delete it first');
+      return { purged: pid, removed: purgeCourse_(pid), courses: ownerList_() };
     }
     /* RESTORE FROM THE NIGHTLY BACKUP (24 Oct 2026), after the c7 delete took
        other courses' records with it. Owner only, and a dry run unless `write`
@@ -1842,12 +1859,17 @@ function migrate_() {
 
 // ---- courses ----------------------------------------------------------------
 function newKey_() { return Utilities.getUuid().replace(/-/g, '').slice(0, 24); }
-function courses_() {
+/* The courses that exist. A course in the bin (v122, 25 Oct 2026: column D
+   carries the moment it was deleted) is left out unless asked for, so its keys
+   open nothing, the console and the pulse do not list it, the reports and
+   reminders skip it, and its id is still taken. */
+function courses_(withDeleted) {
   var sh = sheet_(SHEET_COURSES);
   var last = sh.getLastRow();
   if (last < 2) return [];
-  return sh.getRange(2, 1, last - 1, 3).getValues().filter(function (r) { return String(r[0]).trim(); })
-    .map(function (r) { return { id: String(r[0]), name: String(r[1]), created: r[2] ? new Date(r[2]).toISOString() : '' }; });
+  return sh.getRange(2, 1, last - 1, 4).getValues().filter(function (r) { return String(r[0]).trim(); })
+    .map(function (r) { return { id: String(r[0]), name: String(r[1]), created: r[2] ? new Date(r[2]).toISOString() : '', deleted: r[3] ? new Date(r[3]).toISOString() : '' }; })
+    .filter(function (c) { return withDeleted || !c.deleted; });
 }
 // A course's two secrets, in the script's properties rather than the Sheet.
 function keyProp_(kind, courseId) { return 'KEY_' + String(kind).toUpperCase() + '_' + courseId; }
@@ -1871,9 +1893,11 @@ function courseById_(id) {
   return courses_().filter(function (c) { return c.id === String(id); })[0] || null;
 }
 function setCourseField_(id, field, value) {
-  var col = { name: 2 }[field];
+  var col = { name: 2, deleted: 4 }[field];
   if (!col) throw new Error('Not a course field: ' + field);
   var sh = sheet_(SHEET_COURSES);
+  // a sheet made before v122 has no header in D; the first bin sets it
+  if (col === 4 && !String(sh.getRange(1, 4).getValue() || '')) sh.getRange(1, 4).setValue('deleted').setFontWeight('bold');
   var rows = sh.getDataRange().getValues();
   for (var i = 1; i < rows.length; i++) if (String(rows[i][0]) === String(id)) { sh.getRange(i + 1, col).setValue(value); return; }
   throw new Error('No such course');
@@ -1881,7 +1905,7 @@ function setCourseField_(id, field, value) {
 
 // ---- storage ----------------------------------------------------------------
 var HEADERS = {};
-HEADERS[SHEET_COURSES]  = ['id', 'name', 'created'];
+HEADERS[SHEET_COURSES]  = ['id', 'name', 'created', 'deleted'];
 HEADERS[SHEET_RECORDS]  = ['course', 'token', 'kind', 'json', 'updated'];
 HEADERS[SHEET_TRAINEES] = ['course', 'token', 'name', 'group', 'created', 'email'];
 /* v53 (1 Oct 2026): a candidate may carry an email, column F. A sheet made
@@ -2453,7 +2477,7 @@ function requireOwner_(owner) { if (!owner) throw new Error('Not yours to open')
    listing N courses cost 2N+1 sheet reads and 2N property reads, and every
    course Ramy sold made the console slower for every course after it. */
 function ownerList_() {
-  var list = courses_();
+  var list = courses_(true);   // the bin too, marked, so the console can offer to put a course back
   if (!list.length) return [];
 
   // v77 (8 Oct 2026): a course whose settings outgrew one cell (a centre's
@@ -2508,6 +2532,8 @@ function ownerList_() {
     var s = settings[c.id] || {};
     return {
       id: c.id, name: c.name, created: c.created,
+      deleted: c.deleted || '',
+      goesOn: c.deleted ? Utilities.formatDate(new Date(new Date(c.deleted).getTime() + BIN_DAYS * 86400000), Session.getScriptTimeZone(), 'yyyy-MM-dd') : '',
       centreName: s.centreName || '', centreNumber: s.centreNumber || '', courseName: s.courseName || '',
       // v76 (8 Oct 2026): which card the course's links open on, so the
       // console can show the course as a ticket book when it is the ticket.
@@ -2571,7 +2597,7 @@ function centresSeed_(rows) {
 
 function nextCourseId_() {
   var used = {};
-  courses_().forEach(function (c) { used[c.id] = 1; });
+  courses_(true).forEach(function (c) { used[c.id] = 1; });   // a binned id stays taken: a reused id would inherit its rows
   for (var i = 1; i < 10000; i++) if (!used['c' + i]) return 'c' + i;
   throw new Error('Too many courses');
 }
@@ -2833,5 +2859,85 @@ function nightlyBackup() {
   for (var i = BACKUP_KEEP; i < mine.length; i++) { mine[i].setTrashed(true); dropped++; }
 
   props.setProperty('BACKUP_LAST', stamp);
-  return 'wrote ' + name + '; kept ' + Math.min(mine.length, BACKUP_KEEP) + ', trashed ' + dropped;
+  var after = nightlyAfterBackup_(stamp);
+  return 'wrote ' + name + '; kept ' + Math.min(mine.length, BACKUP_KEEP) + ', trashed ' + dropped + '; ' + after;
+}
+
+/* ---------- after the backup: the bin, and the count of every course ---------- */
+
+var BIN_DAYS = 30;
+
+/* Runs once a night, only after the night's copy is on Drive, so anything it
+   removes is in a backup first. Two jobs. ONE: a course that has sat in the
+   bin for BIN_DAYS goes for good -- one course a night, so a run can never
+   outlast Apps Script's time limit halfway through a second course. TWO: the
+   watch. Every course's rows are counted and compared with last night's; a
+   course that LOST records or trainees overnight is mailed to the owner with
+   the backup to restore from, before anyone notices it on a page. A tutor
+   removing a trainee shows here too, and the mail says so. */
+function nightlyAfterBackup_(stamp) {
+  var props = PropertiesService.getScriptProperties();
+  var out = [];
+  try {
+    var cutoff = Date.now() - BIN_DAYS * 86400000;
+    var due = courses_(true).filter(function (c) { return c.deleted && new Date(c.deleted).getTime() <= cutoff; })
+      .sort(function (a, b) { return a.deleted.localeCompare(b.deleted); })[0];
+    if (due) { var gone = purgeCourse_(due.id); out.push('purged ' + due.id + ' (' + gone.trainees + ' trainees, ' + gone.records + ' records)'); }
+    else out.push('nothing due from the bin');
+  } catch (e) { out.push('purge failed: ' + e); }
+  try {
+    var counts = rowCounts_();
+    var before = {};
+    try { before = JSON.parse(props.getProperty('COUNTS_LAST') || '{}'); } catch (e) {}
+    var lost = [];
+    courses_().forEach(function (c) {
+      var was = before[c.id], now = counts[c.id] || { trainees: 0, records: 0 };
+      if (!was) return;
+      if (now.records < was.records || now.trainees < was.trainees) lost.push(c.id + ' (' + (c.name || '') + '): records ' + was.records + ' \u2192 ' + now.records + ', trainees ' + was.trainees + ' \u2192 ' + now.trainees);
+    });
+    props.setProperty('COUNTS_LAST', JSON.stringify(counts));
+    if (lost.length) {
+      var to = Session.getEffectiveUser().getEmail();
+      if (to) MailApp.sendEmail({ to: to, name: 'Connect Lite',
+        subject: 'Connect Lite: ' + lost.length + ' course' + (lost.length === 1 ? '' : 's') + ' lost rows overnight',
+        body: 'Since last night these courses have fewer rows in the store:\n\n' + lost.join('\n') + '\n\nA tutor removing a trainee, or a resubmission replacing a record, shows here too. If it was not that, restore from last night\'s backup with restoreFromBackup, dry run first:\n  Connect Lite backup ' + (props.getProperty('BACKUP_PREV') || '(the night before)') + '\n\nThe store: ' + dataSheetUrl() });
+      out.push('mailed about ' + lost.length);
+    } else out.push('counts steady');
+    props.setProperty('BACKUP_PREV', stamp);
+  } catch (e) { out.push('count check failed: ' + e); }
+  return out.join('; ');
+}
+function rowCounts_() {
+  var counts = {};
+  var bump = function (id, k) { var c = counts[id] = counts[id] || { trainees: 0, records: 0 }; c[k]++; };
+  var t = sheet_(SHEET_TRAINEES), tl = t.getLastRow();
+  if (tl >= 2) t.getRange(2, 1, tl - 1, 2).getValues().forEach(function (r) { if (String(r[1]).trim()) bump(String(r[0]), 'trainees'); });
+  var rr = sheet_(SHEET_RECORDS), rl = rr.getLastRow();
+  if (rl >= 2) rr.getRange(2, 1, rl - 1, 1).getValues().forEach(function (r) { if (String(r[0]).trim()) bump(String(r[0]), 'records'); });
+  return counts;
+}
+/* The rows go. Under the script lock (24 Oct 2026: two deletes running
+   together, each on row numbers read at its start, took other courses' rows),
+   in blocks, this course only, and it must already be in the bin. Its two
+   secrets go with it so the links cannot outlive it, and its materials folder
+   goes to Drive's trash (23 Sep 2026: an orphan folder nobody would find). */
+function purgeCourse_(id) {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) throw new Error('Another change is running on the store. Try again in a minute.');
+  try {
+    var c = courses_(true).filter(function (x) { return x.id === id; })[0];
+    if (!c) throw new Error('No such course');
+    if (!c.deleted) throw new Error('Not in the bin: ' + id);
+    var removed = {
+      trainees: deleteRowsWhere_(SHEET_TRAINEES, function (r) { return String(r[0]) === id; }),
+      records: deleteRowsWhere_(SHEET_RECORDS, function (r) { return String(r[0]) === id; }),
+      settings: deleteRowsWhere_(SHEET_COURSE, function (r) { return String(r[0]) === id; })
+    };
+    deleteRowsWhere_(SHEET_COURSES, function (r) { return String(r[0]) === id; });
+    var props = PropertiesService.getScriptProperties();
+    props.deleteProperty(keyProp_('tutor', id));
+    props.deleteProperty(keyProp_('assessor', id));
+    removed.materials = trashMaterials_(id);
+    return removed;
+  } finally { lock.releaseLock(); }
 }
