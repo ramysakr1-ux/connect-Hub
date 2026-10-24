@@ -25,3 +25,7 @@ One file holds every colour: `hub-tokens.css`. The notebook block at the bottom 
 ## When you change a colour
 
 Change the token in `hub-tokens.css`, not the page. Then re-stamp (`bump-assets.py`) and walk two screens at phone and desktop size.
+
+## Hover
+
+Every card that opens something rises 3px and its paper warms a shade toward the forest; a card that is not the trainee's own (the From the course row) warms toward its slate. A card that only shows never moves. One rule, in hub-house.css (Ramy, 25 Oct 2026).
