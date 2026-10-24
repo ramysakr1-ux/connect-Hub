@@ -38,7 +38,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610250051">
+<link rel="stylesheet" href="hub-tokens.css?v=202610250105">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 70px;}
@@ -207,7 +207,7 @@
   @media (max-width:760px){ .demo .doors{grid-template-columns:1fr 1fr;} .setting{grid-template-columns:1fr;} }
   @media (max-width:520px){ .demo .doors{grid-template-columns:1fr;} .title h1{font-size:1.8rem;} body{padding:0 14px 60px;} .card{padding:16px;} .row-course .acts .btn{flex:1 1 auto; justify-content:center;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610250051">
+<link rel="stylesheet" href="hub-house.css?v=202610250105">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -230,10 +230,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610250051"></script>
-<script src="hub-store.js?v=202610250051"></script>
-<script src="hub-say.js?v=202610250051"></script>
-<script src="hub-card-mail.js?v=202610250051"></script>
+<script src="hub-shared.js?v=202610250105"></script>
+<script src="hub-store.js?v=202610250105"></script>
+<script src="hub-say.js?v=202610250105"></script>
+<script src="hub-card-mail.js?v=202610250105"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after. */
 const OWNER_STORE = 'hub:o';
@@ -278,19 +278,20 @@ let SHOW_URLS = ls.get(URLS_KEY) === '1';
 
 /* THE LETTERS, one per card (Ramy, 3 Oct 2026). His, typed over and kept in this browser. */
 const DEFAULT_NOTES = {
+  /* The same words as the card's own letter (offer.html), kept neutral (Ramy, 24–25 Oct 2026). */
   '': [
     'Hello,',
     '',
-    'I’m a CELTA tutor, and I built Connect Lite to run a course from one place: the timetable, the TP points, plans and feedback, the assignments, the CELTA 5, the assessor’s pack and the volunteer students.',
+    'I run CELTA courses, and I built Connect Lite because the work lived in five places at once.',
     '',
-    'Below is a real course, two weeks in. Open it as an assessor or as a volunteer student, and type. Nothing you do there reaches anyone’s record. Five minutes in the tutor’s view will tell you more than I can here.',
+    'Below is a real course, two weeks in. Spend five minutes in it as an assessor or a volunteer student, and type. Nothing you do there touches anybody’s record. It will tell you more than I can.',
     '',
     'If it looks like something your centre could use, just reply.',
   ].join('\n'),
   film: [
     'Hello,',
     '',
-    'I’m a CELTA tutor, and I built Connect Lite to run a course from one place: the timetable, TP points, plans and feedback, assignments, CELTA 5, the assessor’s pack and the volunteer students.',
+    'I run CELTA courses, and I built Connect Lite, the app a CELTA course runs on, from the first plan to the final grade.',
     '',
     'Rather than describe it, I filmed it. One course, start to finish, in three minutes.',
     '',
@@ -338,11 +339,21 @@ const DOORS = {};
 async function doorsFor(c){
   if (DOORS[c.id]) return DOORS[c.id];
   const inv = (p, v) => base() + 'invite.html?' + p + '=' + encodeURIComponent(v);
-  const out = { tutor: inv('k', c.tutorKey), assessor: c.assessorKey ? inv('ak', c.assessorKey) : '', trainee: '', volunteer: '', traineeName: '', volunteerName: '' };
+  const out = { tutor: inv('k', c.tutorKey), assessor: c.assessorKey ? inv('ak', c.assessorKey) : '', trainee: '', volunteer: '', traineeName: '', volunteerName: '', picks: [], count: 0 };
   try {
     const r = await HubStore.call({ op: 'roster', key: c.tutorKey });
     const list = Object.values((r && r.trainees) || {}).sort((a, b) => String(a.name).localeCompare(String(b.name)));
-    if (list.length) { out.trainee = inv('t', list[0].token); out.traineeName = list[0].name; }
+    if (list.length) { out.trainee = inv('t', list[0].token); out.traineeName = list[0].name; out.count = list.length; }
+    /* THE THREE-WAY DOOR, as the card has it (offer.html, Ramy, 25 Oct 2026): one trainee whose feedback is
+       back and open, one whose feedback is sealed until the self-evaluation is in, one with a letter from
+       the tutors. The same rule, read from the same records, so the email and the card name the same three. */
+    const state = t => { const rec = t.records || {}, fb = rec.feedback || {}, se = rec.selfeval || {}, tr = rec.tracker || {};
+      if (tr.malpracticeLetterIssuedAt || tr.failLetterIssuedAt) return 'letter';
+      if (fb.status === 'returned' && fb.docHTML) return se.status === 'turned_in' ? 'open' : 'held';
+      return ''; };
+    const LINE = { open: 'Feedback is back and open.', held: 'Feedback is sealed until the self-evaluation is in.', letter: 'A letter from the tutors is waiting to be read and signed.' };
+    const picks = ['open', 'held', 'letter'].map(st => { const t = list.find(x => state(x) === st); return t ? { name: String(t.name).split(' ')[0], line: LINE[st], href: inv('t', t.token) } : null; }).filter(Boolean);
+    if (picks.length >= 2) out.picks = picks;
   } catch (e) {}
   try {
     const cr = await HubStore.call({ op: 'course', key: c.tutorKey });
@@ -362,17 +373,32 @@ function cardSubject(){
   return 'Connect Lite — a real course to look around, and a film';
 }
 async function cardHtml(){
-  if (cardKind() === 'film') return hubCardMail({ note: demoNote(), film: filmLink(), site: base(), only: 'film', cardStyle: cardStyle() });
-  if (cardKind() === 'price') return hubCardMail({ note: demoNote(), rates: ratesList(), site: base(), only: 'price', cardStyle: cardStyle() });
+  if (cardKind() === 'film') return hubCardMail({ note: demoNote(), film: filmLink(), only: 'film', cardStyle: cardStyle() });
+  if (cardKind() === 'price') return hubCardMail({ note: demoNote(), rates: ratesList(), only: 'price', cardStyle: cardStyle() });
   const d = theDemo(); const doors = [];
   if (d) {
     const k = await doorsFor(d);
-    doors.push({ label: 'As a tutor', note: 'The whole course: the trainees, their work, the grades and the reports.', href: k.tutor });
-    if (k.trainee) doors.push({ label: 'As a trainee', note: (k.traineeName ? k.traineeName.split(' ')[0] + '’s' : 'One trainee’s') + ' own space: plans, self-evaluations, feedback and assignments.', href: k.trainee });
-    if (k.assessor) doors.push({ label: 'As the assessor', note: 'Read-only: every portfolio, the grades and the double-marking record.', href: k.assessor });
-    if (k.volunteer) doors.push({ label: 'As a volunteer student', note: 'Their next class, their days, their certificate.', href: k.volunteer });
+    /* the same doors in the same order as the card (offer.html): the trainees, the assessor, the volunteer
+       student, the film; the tutor's door comes last, under the price (Ramy, 25 Oct 2026) */
+    const W = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve'];
+    const n = k.count, word = W[n] || String(n);
+    if (k.picks.length) doors.push({ label: 'As a trainee', note: word + ' trainee' + (n === 1 ? '' : 's') + ', each at a different point on the course. Pick one.', picks: k.picks });
+    else if (k.trainee) doors.push({ label: 'As a trainee', note: (k.traineeName ? k.traineeName.split(' ')[0] + '’s' : 'One trainee’s') + ' own space: plans, self-evaluations, feedback and assignments.', href: k.trainee });
+    if (k.assessor) doors.push({ label: 'As the assessor', note: 'Read-only: each trainee’s teaching practice record, their grades and their written assignments, in one place.', href: k.assessor });
+    if (k.volunteer) doors.push({ label: 'As a volunteer student', note: (k.volunteerName ? String(k.volunteerName).split(' ')[0] + '’s' : 'One student’s') + ' page for the classes: the next one to come to, the days they came, and their certificate at the end.', href: k.volunteer });
   }
-  return hubCardMail({ note: demoNote(), film: filmLink(), doors, site: base(), cardStyle: cardStyle() });
+  const tutorDoor = d ? { note: 'The whole course: ' + (function(){ const n = (DOORS[d.id] || {}).count || 0; const w = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'][n] || String(n); return n ? w + ' trainee' + (n === 1 ? '' : 's') + ', their work, the grades and the reports.' : 'the trainees, their work, the grades and the reports.'; })(), href: base() + 'invite.html?k=' + encodeURIComponent(d.tutorKey) } : null;
+  /* where the demo stands, as the card says it (offer.html): the day, the week, the days to the visit */
+  const moment = (function(){
+    if (!d || !d.demoToday || !d.start) return '';
+    const days = []; const dt = new Date(d.start + 'T00:00:00Z'), end = new Date((d.end || d.demoToday) + 'T00:00:00Z');
+    for (; dt <= end; dt.setUTCDate(dt.getUTCDate() + 1)) { const w = dt.getUTCDay(); if (w && w !== 6) days.push(dt.toISOString().slice(0, 10)); }
+    const n = days.indexOf(d.demoToday) + 1, visit = d.visitDate ? days.indexOf(d.visitDate) + 1 : 0; if (n <= 0) return '';
+    const where = n <= 6 ? 'the end of its first week' : n <= 10 ? 'its second week' : n <= 15 ? 'its third week' : 'its last week';
+    const vis = visit > n ? ', ' + (visit - n === 1 ? 'the day before' : (visit - n) + ' days before') + ' the assessor’s visit' : '';
+    return 'This course is fixed on day ' + n + ' of ' + days.length + ', ' + where + vis + '. It stays there, so what you see today is what you see next month.';
+  })();
+  return hubCardMail({ note: demoNote(), film: filmLink(), doors, tutorDoor, moment, cardStyle: cardStyle() });
 }
 /* plain-text versions, for a mail client */
 async function noteFor(c){
@@ -436,7 +462,7 @@ function sendCard(){
         <select id="cardStyleSel" aria-label="How the card looks"><option value="welcome">Welcome look</option><option value="ticket"${cardStyle() === 'ticket' ? ' selected' : ''}>Ticket look</option></select>
         <input type="email" id="cardCopyTo" placeholder="A copy to you (optional)" value="${esc(cardCopyTo())}" style="flex:0 1 220px">
       </div>
-      <p class="note">The offer card carries your letter, the four doors into the demo and the film. Just the film goes to someone who has never seen Lite. Just the price is the only one with figures in it; the rates are under Settings below. Each kind keeps its own letter.</p>
+      <p class="note">The offer card carries your letter, the four questions, the doors into the demo and the film, the same as the card on the web. Just the film goes to someone who has never seen Lite. Just the price is the only one with figures in it; the rates are under Settings below. Each kind keeps its own letter.</p>
     </details>
   </div>`;
 }

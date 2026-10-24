@@ -33,18 +33,32 @@
   var paras = function(t){ return String(t || '').trim().split(/\n{2,}/).map(function(p){ return '<p style="margin:0 0 10px;">' + esc(p).replace(/\n/g, '<br>') + '</p>'; }).join(''); };
 
   var STYLE = 'welcome';   // set per call from ctx.cardStyle: 'welcome' (1a) or 'ticket' (1b)
-  function door(label, note, href, verb){
+  function button(href, verb, small){
+    return STYLE === 'ticket'
+      ? '<a href="' + esc(href) + '" style="font-family:' + SANS + '; font-size:' + (small ? '11.5' : '12.5') + 'px; font-weight:700; color:' + C.paper + '; text-decoration:none; background:' + C.tealDeep + '; border-radius:8px; padding:' + (small ? '5px 11px' : '7px 14px') + '; display:inline-block;">' + esc(verb) + '</a>'
+      : '<a href="' + esc(href) + '" style="font-family:' + SANS + '; font-size:' + (small ? '12' : '13') + 'px; font-weight:700; color:' + C.teal + '; text-decoration:none; border:1.5px solid ' + C.teal + '; border-radius:20px; padding:' + (small ? '4px 12px' : '6px 14px') + '; display:inline-block;">' + esc(verb) + '</a>';
+  }
+  /* A door is a row; a door with picks (the three trainees, 25 Oct 2026) is the row and three quiet
+     rows under it, each with its own Open, as the card on the web has them. */
+  function door(label, note, href, verb, picks){
     var rule = '1px ' + (STYLE === 'ticket' ? 'dashed ' : 'solid ') + C.line;
-    var btn = STYLE === 'ticket'
-      ? '<a href="' + esc(href) + '" style="font-family:' + SANS + '; font-size:12.5px; font-weight:700; color:' + C.paper + '; text-decoration:none; background:' + C.tealDeep + '; border-radius:8px; padding:7px 14px; display:inline-block;">' + esc(verb) + '</a>'
-      : '<a href="' + esc(href) + '" style="font-family:' + SANS + '; font-size:13px; font-weight:700; color:' + C.teal + '; text-decoration:none; border:1.5px solid ' + C.teal + '; border-radius:20px; padding:6px 14px; display:inline-block;">' + esc(verb) + '</a>';
-    return '<tr>' +
-      '<td style="padding:13px 0; border-bottom:' + rule + '; vertical-align:top;">' +
+    var last = !(picks && picks.length);
+    var out = '<tr>' +
+      '<td style="padding:13px 0 ' + (last ? '13px' : '4px') + '; ' + (last ? 'border-bottom:' + rule + '; ' : '') + 'vertical-align:top;">' +
         '<div style="font-family:' + SANS + '; font-size:14px; font-weight:700; color:' + C.inkWarm + '; margin:0 0 3px;">' + esc(label) + '</div>' +
         '<div style="font-family:' + SANS + '; font-size:13px; line-height:1.55; color:' + C.grey + ';">' + esc(note) + '</div>' +
       '</td>' +
-      '<td style="padding:13px 0 13px 16px; border-bottom:' + rule + '; vertical-align:middle; white-space:nowrap;" align="right">' + btn +
+      '<td style="padding:13px 0 ' + (last ? '13px' : '4px') + ' 16px; ' + (last ? 'border-bottom:' + rule + '; ' : '') + 'vertical-align:middle; white-space:nowrap;" align="right">' + (href ? button(href, verb) : '') +
       '</td></tr>';
+    (picks || []).forEach(function (p, i) {
+      var end = i === picks.length - 1;
+      out += '<tr>' +
+        '<td style="padding:6px 0 ' + (end ? '13px' : '6px') + ' 14px; ' + (end ? 'border-bottom:' + rule + '; ' : '') + 'vertical-align:middle;">' +
+          '<span style="font-family:' + SANS + '; font-size:13px; font-weight:700; color:' + C.inkWarm + ';">' + esc(p.name) + '</span> ' +
+          '<span style="font-family:' + SANS + '; font-size:12.5px; color:' + C.grey + ';">' + esc(p.line) + '</span></td>' +
+        '<td style="padding:6px 0 ' + (end ? '13px' : '6px') + ' 16px; ' + (end ? 'border-bottom:' + rule + '; ' : '') + 'vertical-align:middle; white-space:nowrap;" align="right">' + button(p.href, 'Open', true) + '</td></tr>';
+    });
+    return out;
   }
 
 
@@ -98,7 +112,8 @@
     /* the price card carries no name (Ramy, 24 Oct 2026: "just remove my credit") */
     if (ctx.only === 'price') return '';
     return '<div style="font-family:' + SANS + '; font-size:11px; color:#8a6534; margin:16px 0 0; padding-top:14px; border-top:1px solid ' + C.line + ';">' + tile(16)
-      + '<span style="vertical-align:middle; margin-left:7px;">designed and built by <b style="color:' + C.gold + ';">Ramy</b>' + (ctx.site ? ' · <a href="' + esc(ctx.site) + '" style="color:#8a6534; text-decoration:none;">' + esc(ctx.site.replace(/^https?:\/\//, '').replace(/\/$/, '')) + '</a>' : '') + '</span></div>';
+      /* never a link, and nothing beside the name (the credit rule, 19 Oct 2026; the site link went 25 Oct) */
+      + '<span style="vertical-align:middle; margin-left:7px;">designed and built by <b style="color:' + C.gold + ';">Ramy</b></span></div>';
   }
   function page(title, letter, card){
     return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>' + esc(title) + '</title></head>'
@@ -203,11 +218,11 @@
     return page('Connect Lite \u2014 what it costs', letter, wrap(ctx, 'What it costs', 'One price, one course, everything in it', '', sheet, STYLE === 'ticket' ? contact('Questions:').replace('margin:18px 0 0;', 'margin:0;') : contact('Questions:')));
   }
 
-  /* ctx: { note, film, doors, site, only, rates } -- rates are
+  /* ctx: { note, film, doors, tutorDoor, moment, only, rates, cardStyle } -- rates are
      read by priceDoc only; the full card carries no figure (7 Oct 2026). */
   window.hubCardMail = function(ctx){
     STYLE = ctx.cardStyle === 'ticket' ? 'ticket' : 'welcome';
-    var doors = (ctx.doors || []).map(function(d){ return door(d.label, d.note, d.href, 'Open'); }).join('');
+    var doors = (ctx.doors || []).map(function(d){ return door(d.label, d.note, d.href, 'Open', d.picks); }).join('');
     if (ctx.film) doors += door('The film', 'A whole course, start to finish, in three minutes.', playLink(ctx.film), 'Watch');
     /* The letter (Ramy, 2 Oct 2026: "a nice message from me on top, with nice
        font, with my signature, and the card sitting underneath it"). His note,
@@ -224,9 +239,30 @@
     if (ctx.only === 'film') return filmDoc(letter, ctx);
     if (ctx.only === 'price') return priceDoc(letter, ctx);
     var li = function(t){ return '<li style="margin:0 0 3px;">' + esc(t) + '</li>'; };
+    var h2 = function(t, top){ return '<h2 style="font-family:' + SERIF + '; font-weight:600; font-size:17px; color:' + C.inkWarm + '; margin:' + (top || 0) + ' 0 4px;">' + esc(t) + '</h2>'; };
+    /* THE FOUR QUESTIONS, as the card asks and answers them (offer.html, Ramy, 25 Oct 2026). An email
+       cannot fold, so each answer sits under its question. */
+    var QA = [
+      ['Can we use our own course files?', 'Yes. The timetable, assignments, observation tasks and input sessions can all be yours. Build the timetable in Lite or read it from your spreadsheet. Link files on your Drive or upload them.'],
+      ['Do people need accounts?', 'No. Everyone has their own link, which works until the course ends. Turn on PINs and each person sets one the first time. If a tutor link gets out, course admin replaces it in one click and the old copies stop working.'],
+      ['Can we take it all away?', 'Yes. One button prints every trainee\u2019s full record: each teaching practice with its plan, language analysis and self-evaluation, and every marked assignment. The grades report, the assessor\u2019s pack and the end-of-course reports print separately. Nothing is deleted on a timer.'],
+      ['Does it check for plagiarism?', 'Yes. At the press of a button, Lite checks an assignment against other work across Lite courses and against the web, and for paraphrase.']
+    ];
+    var questions = h2('Questions before you try it') + QA.map(function (q, i) {
+      return '<div style="padding:9px 0; ' + (i ? 'border-top:1px solid ' + C.line + ';' : '') + '">' +
+        '<div style="font-family:' + SANS + '; font-size:14px; font-weight:700; color:' + C.inkWarm + '; margin:0 0 3px;">' + esc(q[0]) + '</div>' +
+        '<div style="font-family:' + SANS + '; font-size:13px; line-height:1.55; color:' + C.grey + ';">' + esc(q[1]) + '</div></div>';
+    }).join('');
+    var tutorDoor = ctx.tutorDoor && ctx.tutorDoor.href
+      ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:18px 0 0;"><tr>' +
+        '<td style="vertical-align:middle;"><div style="font-family:' + SANS + '; font-size:13px; line-height:1.55; color:' + C.grey + ';">' + esc(ctx.tutorDoor.note) + '</div></td>' +
+        '<td style="vertical-align:middle; padding-left:16px; white-space:nowrap;" align="right">' + button(ctx.tutorDoor.href, 'Open the course as a tutor') + '</td></tr></table>'
+      : '';
     var sheet =
-      '<h2 style="font-family:' + SERIF + '; font-weight:600; font-size:17px; color:' + C.inkWarm + '; margin:0 0 4px;">Open a real course</h2>' +
-      '<p style="font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.grey + '; margin:0 0 4px;">One real course, two weeks in. Go in as an assessor or as a volunteer student, and type. Nothing you do reaches anyone\u2019s record.</p>' +
+      questions +
+      h2('See it working', '22px') +
+      '<p style="font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.grey + '; margin:0 0 4px;">A real course, two weeks in. Type in it. Nothing touches anybody\u2019s record.</p>' +
+      (ctx.moment ? '<p style="font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.grey + '; margin:0 0 4px;">' + esc(ctx.moment) + '</p>' : '') +
       '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px ' + (STYLE === 'ticket' ? 'dashed ' : 'solid ') + C.line + '; margin-top:' + (STYLE === 'ticket' ? '14px' : '0') + ';">' + doors + '</table>' +
       /* How it is priced, never what (Ramy, 7 Oct 2026). On the ticket it goes
          on the stub instead (below). */
@@ -238,6 +274,8 @@
           li('Up to 24 trainees, all their tutors and your course admin. Volunteer students and the assessor are never counted.') +
         '</ul>' +
       '</td></tr></table>') +
+      /* the tutor's door comes last, under the price, as on the card (25 Oct 2026) */
+      tutorDoor +
       // sign-off, only when the card goes alone: the letter above signs otherwise
       (ctx.note ? '' : '<div style="font-family:\'Instrument Serif\',Georgia,serif; font-style:italic; font-size:24px; color:' + C.inkWarm + '; margin:18px 0 0;">Ramy</div>');
     var stub = STYLE === 'ticket'
@@ -250,7 +288,7 @@
     var html = page('Connect Lite — for your centre', letter,
       wrap(ctx, 'For a CELTA centre', 'Teach the course. Lite does the rest.',
         /* what it is, then the old line (Ramy, 24 Oct 2026) */
-        'Connect Lite is the app a CELTA course runs on, from the first plan to the final grade. Every trainee gets a course of their own. Every tutor gets their evenings back.', sheet, stub));
+        'Connect Lite is the app a CELTA course runs on, from the first plan to the final grade. Every trainee gets a course of their own. Every tutor gets their evenings back. Built on Cambridge\u2019s handbook, made by a CELTA tutor, and simple enough for anyone.', sheet, stub));
     return html;
   };
 })();
