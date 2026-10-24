@@ -38,7 +38,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610250111">
+<link rel="stylesheet" href="hub-tokens.css?v=202610250144">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 70px;}
@@ -207,7 +207,7 @@
   @media (max-width:760px){ .demo .doors{grid-template-columns:1fr 1fr;} .setting{grid-template-columns:1fr;} }
   @media (max-width:520px){ .demo .doors{grid-template-columns:1fr;} .title h1{font-size:1.8rem;} body{padding:0 14px 60px;} .card{padding:16px;} .row-course .acts .btn{flex:1 1 auto; justify-content:center;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610250111">
+<link rel="stylesheet" href="hub-house.css?v=202610250144">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -230,10 +230,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610250111"></script>
-<script src="hub-store.js?v=202610250111"></script>
-<script src="hub-say.js?v=202610250111"></script>
-<script src="hub-card-mail.js?v=202610250111"></script>
+<script src="hub-shared.js?v=202610250144"></script>
+<script src="hub-store.js?v=202610250144"></script>
+<script src="hub-say.js?v=202610250144"></script>
+<script src="hub-card-mail.js?v=202610250144"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after. */
 const OWNER_STORE = 'hub:o';
@@ -507,7 +507,7 @@ function oldDemoRow(c){
   const tutor = base() + 'invite.html?k=' + encodeURIComponent(c.tutorKey);
   return `<div class="card" id="course-${esc(c.id)}"><div class="row-course">
     <div class="name"><b>${esc(c.name || label(c))}</b><small>${esc([c.courseName, c.demoToday ? 'pinned to ' + shortDate(c.demoToday) : '', c.trainees ? c.trainees + ' trainees' : ''].filter(Boolean).join(' · '))} · <code>${esc(c.id)}</code></small></div>
-    <div class="acts">${kbtn(`data-copy="${esc(tutor)}"`, 'Tutor link')}<a class="linkbtn" href="5_tutor_dashboard.html?k=${encodeURIComponent(c.tutorKey)}" target="_blank" rel="noopener">Open</a>
+    <div class="acts">${kbtn(`data-copy="${esc(tutor)}"`, 'Tutor link')}<button type="button" class="btn small" data-door="trainee" data-id="${esc(c.id)}" title="One trainee’s own link into this demo (Ramy, 25 Oct 2026: the day-one demo goes to trainees)" disabled>Finding…</button><a class="linkbtn" href="5_tutor_dashboard.html?k=${encodeURIComponent(c.tutorKey)}" target="_blank" rel="noopener">Open</a>
       <button type="button" class="btn small danger" data-delete="${esc(c.id)}" data-label="${esc(label(c))}" data-trainees="${c.trainees || 0}">Delete</button></div>
   </div></div>`;
 }
@@ -571,7 +571,7 @@ function render(courses, msg){
     <p id="status"></p>`;
   if (msg) status(msg);
   ['foldEarlier', 'foldBin', 'foldInbox', 'foldSettings'].forEach(id => { const d = $(id); if (!d) return; d.open = ls.get('hub:o:' + id) === '1'; d.ontoggle = () => ls.set('hub:o:' + id, d.open ? '1' : '0'); });
-  if (demo) fillDoors(demo);
+  COURSES.filter(c => courseKind(c) === 'demo').forEach(fillDoors);   // the cover's doors, and a trainee link on every other demo
   fillMaterials();
   drawInbox();
   txState(); checksState();
@@ -580,7 +580,7 @@ function render(courses, msg){
 async function fillDoors(c){
   const k = await doorsFor(c);
   const t = document.querySelector(`[data-door="trainee"][data-id="${c.id}"]`), v = document.querySelector(`[data-door="volunteer"][data-id="${c.id}"]`);
-  if (t) { if (k.trainee) { t.disabled = false; t.textContent = 'Copy the card'; t.setAttribute('data-copy', k.trainee); t.removeAttribute('data-door'); const s = $('dt-' + c.id); if (s && k.traineeName) s.textContent = k.traineeName.split(' ')[0] + '’s own space: plans, self-evaluations, feedback and assignments.'; } else t.textContent = 'No trainees on it'; }
+  if (t) { if (k.trainee) { t.disabled = false; t.textContent = t.closest('.doors') ? 'Copy the card' : 'Trainee link'; t.setAttribute('data-copy', k.trainee); t.removeAttribute('data-door'); const s = $('dt-' + c.id); if (s && k.traineeName) s.textContent = k.traineeName.split(' ')[0] + '’s own space: plans, self-evaluations, feedback and assignments.'; } else t.textContent = 'No trainees on it'; }
   if (v) { if (k.volunteer) { v.disabled = false; v.textContent = 'Copy the card'; v.setAttribute('data-copy', k.volunteer); v.removeAttribute('data-door'); const s = $('dv-' + c.id); if (s && k.volunteerName) s.textContent = k.volunteerName.split(' ')[0] + '’s page: the next class, their days, their certificate.'; } else v.textContent = 'No volunteers on it'; }
 }
 async function fillMaterials(){

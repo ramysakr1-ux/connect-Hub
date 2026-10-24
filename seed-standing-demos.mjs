@@ -59,7 +59,7 @@ const R = (() => { const src = readFileSync(join(HERE, 'hub-rotation.js'), 'utf8
 
 const WRITE = process.argv.includes('--write');
 const WHICH = process.argv[process.argv.indexOf('--which') + 1];
-if (!['start', 'visit'].includes(WHICH)) { console.log('say --which start or --which visit'); process.exit(1); }
+if (!['start', 'visit', 'dayone'].includes(WHICH)) { console.log('say --which start, --which visit or --which dayone'); process.exit(1); }
 const REUSE = (process.argv[process.argv.indexOf('--course') + 1] || '').match(/^c\d+$/) ? process.argv[process.argv.indexOf('--course') + 1] : '';
 const KEEP = new Set(['c1', 'c2', 'c3', 'c4', 'c5']);
 
@@ -88,7 +88,9 @@ const DAY = i => DAYS[i - 1];                                  // 1-based course
    nothing to observe. The visit now falls on a TEACHING day (day 17, TP8),
    and the before-the-visit demo sits on day 13 — TP6 just taught, TP7 next,
    the visit four days out. */
-const PIN_DAY = WHICH === 'start' ? 6 : 13;
+/* dayone (Ramy, 25 Oct 2026): the link for trainees, pinned to day 1 -- they sign the agreement, pick a
+   getting-to-know-you activity, read the timetable and TP1's points, and open the day's input session. */
+const PIN_DAY = WHICH === 'dayone' ? 1 : WHICH === 'start' ? 6 : 13;
 const PIN = DAY(PIN_DAY);
 const VISIT_DAY = 17;
 /* London is on GMT in March, so a course time is a UTC time. */
@@ -194,6 +196,13 @@ function settingsFor(tokens) {
     certSigner: { name: 'Helen Ward', role: 'Director of Studies', ink: '@greatvibes,0' },
   };
   if (WHICH === 'visit') { s.docs = DOCS; s.assessorVisit = [tokens[0], tokens[3]]; }
+  if (WHICH === 'dayone') {
+    /* the agreement, in Lite's own words, for the trainee to read and sign; the pre-course key and the
+       getting-to-know-you pick switched on */
+    const src = readFileSync(join(HERE, 'agreement-defaults.js'), 'utf8'); const scope = { window: {} }; new Function('window', src)(scope.window);
+    const agr = {}; Object.entries(scope.window.CONNECT_HUB_AGREEMENT_DEFAULTS || {}).forEach(([k, v]) => { agr[k] = String(v || '').replace(/\{centre\}/g, 'Elmswood English Centre'); });
+    s.agreement = agr; s.preCourseConnect = true; s.gtkyFormat = 'activity'; s.gtkyMinutes = '10';
+  }
   return s;
 }
 
@@ -253,6 +262,9 @@ const INPUT = [
   ['Assessor visit: teaching practice', 'Assessor visit: feedback'],
   ['Course review and CELTA 5 checks', 'End of course'],
 ];
+/* On the day-one demo the afternoon of day 1 is a real session the library carries, so the trainee's home
+   has one to open (Ramy, 25 Oct 2026: "one input session on that day, maybe classroom management"). */
+if (WHICH === 'dayone') INPUT[0] = ['Welcome, the course and the portfolio', 'Classroom management'];
 function timetable() {
   const days = DAYS.map((date, i) => {
     const d = { date, cells: { i1: INPUT[i][0], i2: INPUT[i][1] }, notes: '' };
@@ -260,6 +272,24 @@ function timetable() {
     return d;
   });
   DAYS.slice(1).forEach((date, i) => { const tp = Math.floor(i / 2) + 1; if (tp > TP_COUNT) return; days[i + 1].tp = tp; days[i + 1].setIndex = i % 2; });
+  /* The day-one demo carries the timetable page's own session shape (v3) as well, so the trainee's home can
+     name the day's input session and the getting-to-know-you slot, and the tutors take turns with the
+     inputs (Ramy, 25 Oct 2026). Written for c9 by hand first; the seed now makes the same. */
+  if (WHICH === 'dayone') {
+    let n = 0; const T = TUTORS.length;
+    days.forEach((d, di) => { const c = d.cells || {}; const S = []; let i = 0; const id = p => p + (++i);
+      S.push({ id: id('input'), s: '10:00', e: '11:00', k: 'input', t: c.i1 || 'Input', by: n % T }); n++;
+      S.push({ id: id('break'), s: '11:00', e: '11:15', k: 'break', t: 'Break' });
+      S.push({ id: id('input'), s: '11:15', e: '12:15', k: 'input', t: c.i2 || 'Input', by: n % T }); n++;
+      S.push({ id: id('lunch'), s: '12:15', e: '13:15', k: 'lunch', t: 'Lunch' });
+      if (d.tp) { S.push({ id: id('plan'), s: '13:15', e: '13:30', k: 'plan', t: 'TP preparation' });
+        S.push({ id: id('tp'), s: '13:30', e: '14:15', k: 'tp' }); S.push({ id: id('tp'), s: '14:15', e: '15:00', k: 'tp' }); S.push({ id: id('tp'), s: '15:15', e: '16:00', k: 'tp' });
+        S.push({ id: id('plan'), s: '16:15', e: '17:00', k: 'plan', t: 'Lesson planning' }); S.push({ id: id('feedback'), s: '17:15', e: '18:00', k: 'feedback', t: 'TP feedback', room: 'Feedback and tutorials' }); }
+      else if (di === 0) { S.push({ id: id('event'), s: '13:30', e: '14:15', k: 'demo', t: 'Demonstration lesson', room: 'Teaching practice' }); S.push({ id: id('event'), s: '14:15', e: '15:00', k: 'event', t: 'Getting to know you: your activity with the students', room: 'Teaching practice' }); S.push({ id: id('plan'), s: '15:15', e: '16:30', k: 'plan', t: 'Lesson planning: TP1' }); S.push({ id: id('event'), s: '16:30', e: '17:00', k: 'event', t: 'Your Lite link: the course online' }); }
+      else { S.push({ id: id('plan'), s: '13:30', e: '15:00', k: 'plan', t: 'Lesson planning' }); S.push({ id: id('event'), s: '15:00', e: '16:30', k: 'event', t: 'Work on assignments' }); }
+      d.sessions = S; });
+    return { days, slots: SLOTS_DAY.map(x => Object.assign({}, x)), published: true, built: iso(1, '09:00'), v: 3 };
+  }
   return { days, slots: SLOTS_DAY.map(x => Object.assign({}, x)), published: true, built: iso(1, '09:00') };
 }
 
@@ -347,7 +377,7 @@ async function candidateRecords(cand, ci, token, setIndex, rot, buildDoc, volunt
     const day = teachDay(nextTp);
     /* And Olivia's next plan is still blank on the first-week demo, so scene 6
        can write one on camera (stubbed): she teaches tomorrow, it is due today. */
-    if (day - 1 <= PIN_DAY && !(WHICH === 'start' && ci === 0)) {
+    if (WHICH !== 'dayone' && day - 1 <= PIN_DAY && !(WHICH === 'start' && ci === 0)) {
       const { doc } = plan(cand, ci, nextTp, rot.rows[token]['tp' + nextTp], setIndex);
       recs.plan = { status: 'turned_in', label: nextTp + ' · ' + cand.name, state: doc, centreName: 'Elmswood English Centre', turnedInAt: ts(Math.min(day - 1, PIN_DAY), ci % 2 ? '16:52' : '09:14'), docHTML: '' };
     }
@@ -363,7 +393,7 @@ async function candidateRecords(cand, ci, token, setIndex, rot, buildDoc, volunt
   const obs = {};
   const filmedDays = { filmed1: 1, filmed2: 4, filmed3: 8, filmed4: 11 };
   Object.entries(filmedDays).forEach(([id, day]) => {
-    if (day > PIN_DAY) return;
+    if (day > PIN_DAY || WHICH === 'dayone') return;
     if (WHICH === 'start' && id === 'filmed2' && ci >= 3) return;   // three of six have not done the second yet
     const sheet = OBS_WORDING.filmed.find(t => t.id === id);
     const a = { hLesson: ['A2 reading: a day in the life', 'B1 grammar: past simple stories', 'A2 speaking: giving directions', 'B1 vocabulary: food and cooking'][Number(id.slice(-1)) - 1], hLevel: Number(id.slice(-1)) % 2 ? 'A2' : 'B1', hLength: '45', hDate: DAY(day), hLearners: '10', hSigned: 'Recorded lesson' };
@@ -382,10 +412,10 @@ async function candidateRecords(cand, ci, token, setIndex, rot, buildDoc, volunt
   /* The CELTA 5, both halves. */
   /* For the film (30 Sep 2026): on the first-week demo Selin has not yet
      confirmed Cambridge's words, so scene 3 can sign them on camera (stubbed). */
-  const C = (WHICH === 'start' && ci === 5) ? { confirms: {} } : { confirms: { portfolio: signed(cand.name, 1, '12:05'), appeals: signed(cand.name, 1, '12:06') } };
+  const C = (WHICH === 'dayone' || (WHICH === 'start' && ci === 5)) ? { confirms: {} } : { confirms: { portfolio: signed(cand.name, 1, '12:05'), appeals: signed(cand.name, 1, '12:06') } };
   const T = { cover: { uln: '' } };
   const stage1Day = WHICH === 'start' ? 5 : 10;
-  if (WHICH === 'start' ? ci < 2 : true) {
+  if (WHICH === 'dayone' ? false : WHICH === 'start' ? ci < 2 : true) {
     T.stage1 = { tutorialGiven: 'yes', /* Stage 1 is written after TP2, whenever it is read: 1.5 hours on both
        demos, not 3 on the later one. */
       hoursTaught: '1.5', /* Bulleted, and each point carrying the criterion it was tagged
@@ -417,6 +447,7 @@ async function candidateRecords(cand, ci, token, setIndex, rot, buildDoc, volunt
   const draftSub = (code) => { const full = assignment(cand, code, 'pass', DEFAULT_WORDING, asgAt); return { stage: 'submitted', usedResubmission: false, sub1: full.sub1, sub2: null, criteriaMarks: { sub1: [], sub2: [] }, criteriaComments: { sub1: [], sub2: [] }, markers: { first: '', second: '', doubleMarked: false }, sub1At: asgAt[code] - 5 * 36e5, feedback: { outcome: '', generalComment1: '', generalComment2: '' } }; };
   Object.entries(cand.assignments).forEach(([code, how]) => {
     const due = ASG_DUE_DAY[code];
+    if (WHICH === 'dayone') return;
     if (WHICH === 'start') {
       if (code !== 'fol') return;
       if (ci === 0) asg[code] = Object.assign(assignment(cand, code, 'pass', DEFAULT_WORDING, asgAt), { sub1At: ts(4, '21:40'), marked1At: ts(6, '08:50') });
@@ -483,7 +514,7 @@ async function docBuilder(settings) {
 }
 
 /* ---- the course ------------------------------------------------------------ */
-const NAME = WHICH === 'start' ? 'Demo — the first week' : 'Demo — before the visit';
+const NAME = WHICH === 'dayone' ? 'Demo — day one' : WHICH === 'start' ? 'Demo — the first week' : 'Demo — before the visit';
 let course;
 if (REUSE) {
   const oc = await call({ op: 'ownerCourses', owner: OWNER });

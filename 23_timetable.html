@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610250111">
+<link rel="stylesheet" href="hub-tokens.css?v=202610250144">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -480,24 +480,24 @@
     h1{font-size:1.4rem;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610250111">
+<link rel="stylesheet" href="hub-house.css?v=202610250144">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610250111"></script>
-<script src="hub-tracker.js?v=202610250111"></script>
-<script src="hub-rotation.js?v=202610250111"></script>
-<script src="hub-xlsx.js?v=202610250111"></script>
-<script src="hub-docx.js?v=202610250111"></script>
-<script src="hub-timetable-parse.js?v=202610250111"></script>
-<script src="assignment-defaults.js?v=202610250111"></script>
-<script src="hub-shared.js?v=202610250111"></script>
-<script src="hub-store.js?v=202610250111"></script>
-<script src="hub-say.js?v=202610250111"></script>
-<script src="hub-sync.js?v=202610250111"></script>
+<script src="hub-due.js?v=202610250144"></script>
+<script src="hub-tracker.js?v=202610250144"></script>
+<script src="hub-rotation.js?v=202610250144"></script>
+<script src="hub-xlsx.js?v=202610250144"></script>
+<script src="hub-docx.js?v=202610250144"></script>
+<script src="hub-timetable-parse.js?v=202610250144"></script>
+<script src="assignment-defaults.js?v=202610250144"></script>
+<script src="hub-shared.js?v=202610250144"></script>
+<script src="hub-store.js?v=202610250144"></script>
+<script src="hub-say.js?v=202610250144"></script>
+<script src="hub-sync.js?v=202610250144"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1599,9 +1599,9 @@ function inputByHTML(){
   return `<div class="tset"><span class="ml">Who teaches the inputs</span><div class="opts">
       ${rows.map((r, i) => `<div class="ibrow">From <select data-ib-from="${i}">${dayOpts(r.from)}</select> <select data-ib-by="${i}">${tutOpts(r.by)}</select>${i ? ` <button type="button" class="linkbtn" data-ib-del="${i}">Remove</button>` : ''}</div>`).join('')}
       <button type="button" class="linkbtn" id="ibAdd">+ Another tutor from a later day</button>
-      <div class="row"><button type="button" class="btn quiet" id="ibApply">Give the input sessions these tutors</button></div>
+      <div class="row"><button type="button" class="btn quiet" id="ibApply">Give the input sessions these tutors</button>${TUTORS.length > 1 ? `<button type="button" class="btn quiet" id="ibTurns">Tutors take turns</button>` : ''}</div>
     </div></div>
-    <p class="hint">Each tutor teaches the inputs from their day until the next tutor’s. One press colours every input tile in those days; a single tile can still be changed by clicking it.</p>`;
+    <p class="hint">Each tutor teaches the inputs from their day until the next tutor’s. One press colours every input tile in those days; a single tile can still be changed by clicking it.${TUTORS.length > 1 ? ' Or the tutors take turns: two input sessions in a day go to two tutors, and a day with one goes to the other tutor from the day before.' : ''}</p>`;
 }
 function inputByRows(){
   const open = (TT.days || []).filter(d => !d.closed);
@@ -1641,9 +1641,31 @@ function wireInputBy(){
     render();
   });
 }
+/* TUTORS TAKE TURNS (Ramy, 25 Oct 2026: "the trainers should take turns with the input sessions ... on the
+   same day. Two input sessions one day, one trainer does one and the other does the other; one input session
+   a day, then every other day"). One running count over every input session in day and time order, each
+   handed to the next tutor: two on one day land on two tutors, and a run of single days alternates. */
+function turnsPlan(tt, nTutors){
+  const plan = []; let n = 0;
+  (tt.days || []).forEach(d => { if (d.closed) return;
+    (d.sessions || []).slice().sort((a, b) => String(a.s || '').localeCompare(String(b.s || ''))).forEach(x => { if (x.k !== 'input') return; plan.push([x, n % nTutors]); n++; }); });
+  return plan;
+}
+function wireTurns(){
+  if (!$('ibTurns')) return;
+  $('ibTurns').addEventListener('click', async () => {
+    const plan = turnsPlan(TT, TUTORS.length); if (!plan.length) { note = 'No input sessions yet'; render(); return; }
+    const differ = plan.filter(([x, i]) => x.by !== undefined && x.by !== '' && x.by !== null && +x.by !== i).length;
+    if (differ && !(await ask(differ + ' of these ' + plan.length + ' input sessions already name a different tutor. Change them so the tutors take turns?', 'Take turns'))) return;
+    remember();
+    plan.forEach(([x, i]) => { x.by = i; });
+    save('Saved', { key: 'inputBy', text: 'The tutors take turns with the input sessions', effects: [plan.length + ' input sessions'] });
+    render();
+  });
+}
 function wireSettings(){
   if (!IS_TUTOR) return;
-  wireInputBy();
+  wireInputBy(); wireTurns();
   if ($('setOpen')) $('setOpen').addEventListener('click', () => { SET_OPEN = !SET_OPEN; render(); });
   if ($('setClose')) $('setClose').addEventListener('click', () => { SET_OPEN = false; render(); });
   document.querySelectorAll('input[name="ttLayout"]').forEach(el => el.addEventListener('change', () => {

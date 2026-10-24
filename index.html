@@ -38,7 +38,7 @@
 <meta name="twitter:image" content="https://lite.celtaconnect.com/brand/share-card.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610250111">
+<link rel="stylesheet" href="hub-tokens.css?v=202610250144">
 <style>
   :root{
     /* The pane. A card on this page is a sheet of glass lying on the paper,
@@ -110,6 +110,10 @@
   .hero .todo li:before{content:""; position:absolute; left:1px; top:7px; width:6px; height:6px;
     border-radius:50%; background:var(--gold-lifted);}
   .hero .todo a{color:inherit; font-weight:700; text-decoration:underline; text-underline-offset:3px;}
+  /* colour on the cover (Ramy, 25 Oct 2026): red for a warning or a Fail, amber for a letter already signed; readable on the forest */
+  .hero .todo li.red:before{background:#E8A49C;} .hero .todo li.red a{color:#F6C9C3;}
+  .hero .todo li.amber:before{background:var(--a-gold-ink, #F0C24B);} .hero .todo li.amber a{color:var(--a-gold-ink, #F0C24B);}
+  .hero.quiet .todo li.red a{color:var(--a-red);} .hero.quiet .todo li.amber a{color:var(--a-mustard, #C99A2E);}
   .hero .go{display:inline-block; margin:17px 0 0; background:var(--paper); color:var(--teal);
     font-family:'Karla',sans-serif; font-weight:700; font-size:0.9rem; padding:11px 22px;
     border-radius:999px; text-decoration:none;}
@@ -433,7 +437,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610250111">
+<link rel="stylesheet" href="hub-house.css?v=202610250144">
 </head>
 <body>
 <div class="board">
@@ -642,16 +646,16 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 28 104 64" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202610250111"></script>
-<script src="observation-defaults.js?v=202610250111"></script>
-<script src="hub-shared.js?v=202610250111"></script>
+<script src="hub-due.js?v=202610250144"></script>
+<script src="observation-defaults.js?v=202610250144"></script>
+<script src="hub-shared.js?v=202610250144"></script>
 <script src="input-sessions/library.js?v=202610141516"></script>
-<script src="hub-store.js?v=202610250111"></script>
-<script src="hub-say.js?v=202610250111"></script>
-<script src="hub-shelf.js?v=202610250111"></script>
-<script src="hub-front.js?v=202610250111"></script>
-<script src="hub-sync.js?v=202610250111"></script>
-<script src="hub-feedback.js?v=202610250111"></script>
+<script src="hub-store.js?v=202610250144"></script>
+<script src="hub-say.js?v=202610250144"></script>
+<script src="hub-shelf.js?v=202610250144"></script>
+<script src="hub-front.js?v=202610250144"></script>
+<script src="hub-sync.js?v=202610250144"></script>
+<script src="hub-feedback.js?v=202610250144"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -677,6 +681,10 @@ const plan=rec('chub:plan'), self=rec('chub:selfeval'), fb=rec('chub:feedback');
 const planIn = !!(plan && plan.status==='turned_in');
 const selfIn = !!(self && self.status==='turned_in');
 const fbBack = !!(fb && fb.status==='returned');
+/* Opened yet? The feedback arrives in the welcome card and, once the envelope has been opened on this
+   device, moves to the teaching practice card (Ramy, 25 Oct 2026: "it arrives at the hero and then it
+   moves to the other card"). The mark is set by the envelope itself (4_feedback_returned.html). */
+const fbOpened = (function(){ if (!fbBack) return false; const m = String((fb.state && fb.state.f && fb.state.f.fTP) || fb.label || '').match(/\d+/); try { return localStorage.getItem('chub:fbOpened:' + (m ? m[0] : 'x')) === '1'; } catch (e) { return false; } })();
 /* Teaching practices already returned AND filed away by "Start next TP". They
    are the trainee's record, and the card below has to know about them: with
    eight of them filed and nothing currently in flight, it used to read "After
@@ -704,14 +712,19 @@ const ASG = (function(){
   var TYPES = hubAssignmentOrder(wI).filter(function(k){
     return k === 'a5' ? a5InPlay(subs) : (hubReleased(wI, k) || !!subs[k]);
   });
-  var TOTAL = TYPES.length, needsResub = 0, sentBack = 0, closed = 0, touched = 0;
+  var TOTAL = TYPES.length, needsResub = 0, sentBack = 0, closed = 0, touched = 0, failed = [];
   TYPES.forEach(function(t){
     var s = subs[t]; if(!s) return;
     touched++;
+    if (/^Fail/.test(((s.feedback || {}).outcome) || '')) failed.push(t);
     if(s.stage === 'resubmission_needed') needsResub++;
     else if(s.stage === 'returned_unmarked') sentBack++;
     else if(s.stage === 'closed') closed++;
   });
+  /* A Fail is red and comes first (Ramy, 25 Oct 2026: "red is for warning and fail ... the assignment
+     itself should be flagged in red"). */
+  var NM = { lrt:'LRT', lsrt:'LSRT', fol:'FOL', lfc:'LFC', a5:'Assignment 5' };
+  if(failed.length) return {text: failed.map(function(k){ return NM[k] || k.toUpperCase(); }).join(', ') + (failed.length === 1 ? ' failed — read the decision on the record' : ' failed — read the decisions on the records'), tone:'stuck', total:TOTAL, failed: failed};
   if(needsResub > 0) return {text: needsResub + (needsResub===1?' assignment needs resubmission':' assignments need resubmission'), tone:'stuck', total:TOTAL};
   if(sentBack > 0) return {text: sentBack + (sentBack===1?' assignment returned unmarked — submit it again':' assignments returned unmarked — submit them again'), tone:'stuck', total:TOTAL};
   if(TOTAL && closed === TOTAL) return {text:'All ' + TOTAL + ' complete', tone:'', total:TOTAL};
@@ -791,13 +804,14 @@ line(document.getElementById('badgeSelf'),
   NEXT === 'self' ? 'act' : selfIn ? 'done' : '');
 
 line(document.getElementById('badgeFeedback'),
-  fbBack && selfIn  ? 'Ready to read'
+  fbBack && selfIn && !fbOpened ? 'Sealed, in your welcome card'
+  : fbBack && selfIn  ? 'Ready to read'
   : fbBack          ? 'Ready — your self-evaluation first'
   : selfIn          ? 'With your tutor'
   : planIn          ? 'With your tutor'
   : filed           ? filed + ' returned'
   : 'After your lesson plan',
-  NEXT === 'feedback' ? 'act' : '');
+  NEXT === 'feedback' && fbOpened ? 'act' : '');
 
 line(document.getElementById('badgeAssign'), ASG.text, ASG.tone);
 
@@ -1293,7 +1307,7 @@ if (fbBack){
   })();
 
   const waiting = [];
-  const add = (text, href) => waiting.push({ text: text, href: href });
+  const add = (text, href, tone) => waiting.push({ text: text, href: href, tone: tone || '' });
   /* TODAY'S INPUT SESSION, FIRST (Ramy, 19 Oct 2026: "put tomorrow's session
      on the welcome card"). The timetable's input session for today, when the
      library has its page, straight to it; the same rule the library's own gate
@@ -1305,8 +1319,13 @@ if (fbBack){
       add('Today\u2019s input session' + (x.s && window.hubClock ? ', ' + hubClock(x.s) : '') + ': ' + x.t, 'input-sessions/' + x.slug + '/');
     });
   }
-  if (ASG.tone === 'stuck') add(ASG.text, '9_assignment_submission.html');
-  if (fbBack && selfIn) add('Your teaching practice feedback is back — read it', '4_feedback_returned.html');
+  /* Day one: the getting-to-know-you activity is picked today if it was not picked before the course
+     (Ramy, 25 Oct 2026, the day-one demo: "they see the getting to know you"). A pick is a share of kind gtky. */
+  if (CS.preCourseConnect && CS.gtkyFormat !== 'interview' && TODAY && START && TODAY === START
+      && !(rec('connect_shared_v1') || []).some(function(x){ return x && x.kind === 'gtky' && x.by === ME.name; }))
+    add('Pick your getting-to-know-you activity for today', '31_getting_to_know_you.html');
+  if (ASG.tone === 'stuck') add(ASG.text, '9_assignment_submission.html' + (ASG.failed && ASG.failed.length ? '?a=' + encodeURIComponent(ASG.failed[0]) : ''), ASG.failed && ASG.failed.length ? 'red' : 'amber');
+  if (fbBack && selfIn && !fbOpened) add('Your teaching practice feedback is back — open it', '4_feedback_returned.html');
   ['stage1','stage2','stage3'].forEach(function(key, i){
     if (C5T[key] && C5T[key].returnedAt && !(C5[key] && C5[key].signed && C5[key].signed.at))
       add('Stage ' + (i + 1) + ' of your CELTA 5 is back — sign it', '20_celta5.html');
@@ -1317,11 +1336,18 @@ if (fbBack){
      it was for, so a letter withdrawn and issued again asks again. */
   (function(){
     const trk = rec('chub:tracker') || {}, sig = C5.failLetterSigned || {};
+    /* red while it waits to be signed; once signed it stays on the card in amber, so the warning is not
+       forgotten the moment it is signed for (Ramy, 25 Oct 2026) */
+    const signedOn = iso => { try { return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: CS.timeZone || undefined }); } catch (e) { return ''; } };
     if (trk.failLetterIssuedAt && !(sig.at && sig.letter === trk.failLetterIssuedAt))
-      add('A letter from your tutors: read it and sign it', '22_fail_letter.html');
+      add('A letter from your tutors: read it and sign it', '22_fail_letter.html', 'red');
+    else if (trk.failLetterIssuedAt && sig.at)
+      add('Your tutors\u2019 letter about the course outcome, signed ' + signedOn(sig.at), '22_fail_letter.html', 'amber');
     const msig = C5.malpracticeLetterSigned || {};
     if (trk.malpracticeLetterIssuedAt && !(msig.at && msig.letter === trk.malpracticeLetterIssuedAt))
-      add('A written warning from your tutors: read it and sign it', '35_malpractice_letter.html');
+      add('A written warning from your tutors: read it and sign it', '35_malpractice_letter.html', 'red');
+    else if (trk.malpracticeLetterIssuedAt && msig.at)
+      add('The written warning you signed on ' + signedOn(msig.at), '35_malpractice_letter.html', 'amber');
   })();
   if (C5T.final && C5T.final.signed && C5T.final.signed.at && !(C5.final && C5.final.signed && C5.final.signed.at))
     add('Your final declaration is ready to sign', '20_celta5.html');
@@ -1437,7 +1463,7 @@ if (fbBack){
   k.textContent = kind;
   h.textContent = title;
   w.innerHTML = when;
-  ul.innerHTML = list.map(it => '<li><a href="' + esc2(it.href) + '"'
+  ul.innerHTML = list.map(it => '<li' + (it.tone ? ' class="' + it.tone + '"' : '') + '><a href="' + esc2(it.href) + '"'
     + (it.out ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' + esc2(it.text) + '</a></li>').join('');
   if (door) { go.href = door.href; go.textContent = beforeStart ? 'Start here' : 'Open it'; go.hidden = false; }
   tiny.textContent = note;
