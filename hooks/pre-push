@@ -1,0 +1,10 @@
+#!/bin/sh
+# Before a push to main (a deploy), every screen must load in a browser with no
+# error, offline, against a neutralised store: node check-screens.mjs. Installed
+# once with:  git config core.hooksPath hooks   (25 Oct 2026, see CHECKS.md). Skip for one push with:  git push --no-verify
+cd "$(git rev-parse --show-toplevel)" || exit 1
+echo "pre-push: every screen, offline (check-screens.mjs)"
+node check-screens.mjs > /tmp/lite-check-screens.log 2>&1
+code=$?
+tail -5 /tmp/lite-check-screens.log
+if [ $code -ne 0 ]; then echo "pre-push: screens check failed; log in /tmp/lite-check-screens.log. Push refused."; exit 1; fi
