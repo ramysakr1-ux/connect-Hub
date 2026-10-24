@@ -38,7 +38,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610241518">
+<link rel="stylesheet" href="hub-tokens.css?v=202610241630">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 70px;}
@@ -207,7 +207,7 @@
   @media (max-width:760px){ .demo .doors{grid-template-columns:1fr 1fr;} .setting{grid-template-columns:1fr;} }
   @media (max-width:520px){ .demo .doors{grid-template-columns:1fr;} .title h1{font-size:1.8rem;} body{padding:0 14px 60px;} .card{padding:16px;} .row-course .acts .btn{flex:1 1 auto; justify-content:center;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610241518">
+<link rel="stylesheet" href="hub-house.css?v=202610241630">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -230,10 +230,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610241518"></script>
-<script src="hub-store.js?v=202610241518"></script>
-<script src="hub-say.js?v=202610241518"></script>
-<script src="hub-card-mail.js?v=202610241518"></script>
+<script src="hub-shared.js?v=202610241630"></script>
+<script src="hub-store.js?v=202610241630"></script>
+<script src="hub-say.js?v=202610241630"></script>
+<script src="hub-card-mail.js?v=202610241630"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after. */
 const OWNER_STORE = 'hub:o';
@@ -537,7 +537,7 @@ function render(courses, msg){
         <div class="setting"><label for="filmLink">The film</label><div class="v"><input type="url" id="filmLink" class="wide" placeholder="${esc(base() + 'film/course-journey.html')}" value="${esc(ls.get(FILM_KEY) || '')}"><a class="linkbtn" href="${esc(filmLink())}" target="_blank" rel="noopener">Open</a><span class="note">On every card and message. The course film, unless you put another link here.</span></div></div>
         <div class="setting"><label>The rates, in pounds</label><div class="v">${RATE_ROWS.map(([k, n, l]) => `<input type="text" inputmode="numeric" class="rate" data-rate="${k}" aria-label="${esc(l)}" placeholder="${esc(l)}" value="${esc(ratesSaved()[k] || '')}">`).join('')}<span class="note">The total for each package. Only the price card shows them, and it works out the price per course from these. Never in Lite’s code.</span></div></div>
         <div class="setting"><label for="txKey">Transcribing interviews</label><div class="v"><input type="password" id="txKey" class="wide" placeholder="OpenAI key" autocomplete="off" spellcheck="false"><button class="btn small" id="txSave" type="button">Save</button><span id="txState" class="state">checking…</span><span class="note" id="txNote">The key lives in the store, never in a page. Empty and save switches transcripts off.</span></div></div>
-        <div class="setting"><label for="wsKey">Web search for the plagiarism check</label><div class="v"><input type="password" id="wsKey" class="wide" placeholder="Google search key" autocomplete="off" spellcheck="false"><input type="text" id="wsCx" class="wide" placeholder="Search engine id (cx)" autocomplete="off" spellcheck="false"><button class="btn small" id="wsSave" type="button">Save</button><span id="wsState" class="state">checking…</span><span class="note" id="wsNote">A Programmable Search Engine set to search the whole web, and its key. The marking page's check searches six sentences an assignment. Empty and save switches it off.</span></div></div>
+        <div class="setting"><label for="wsKey">Web search for the plagiarism check</label><div class="v"><input type="password" id="wsKey" class="wide" placeholder="Brave Search API key" autocomplete="off" spellcheck="false"><button class="btn small" id="wsSave" type="button">Save</button><span id="wsState" class="state">checking…</span><span class="note" id="wsNote">A Brave Search API key (brave.com/search/api). The marking page's check searches six sentences an assignment, about a thousand searches a month within Brave's credit. Empty and save switches it off.</span></div></div>
         <div class="setting"><label for="aiKey">Paraphrase pass</label><div class="v"><input type="password" id="aiKey" class="wide" placeholder="Claude API key" autocomplete="off" spellcheck="false"><button class="btn small" id="aiSave" type="button">Save</button><span id="aiState" class="state">checking…</span><span class="note" id="aiNote">From the API organization linked to the plan. Reads only the pairs the first pass finds. Empty and save switches it off.</span></div></div>
         <div class="setting"><label>Addresses</label><div class="v"><button class="btn small" id="toggleUrls" type="button">${SHOW_URLS ? 'Hide the raw links' : 'Show the raw links'}</button><span class="note">To find which course a key belongs to.</span></div></div>
         <div class="setting"><label>Feedback</label><div class="v" id="fbline">looking…</div></div>
@@ -698,8 +698,8 @@ $('app').addEventListener('click', async e => {
   if (T('#txSave')) { const b = T('#txSave'), key = $('txKey'), note = $('txNote'); b.disabled = true; note.textContent = 'Saving…';
     try { const r = await call({ op: 'setOpenAiKey', key: key.value.trim() }); key.value = ''; note.textContent = r && r.on ? 'Saved. Transcripts are on.' : 'Transcripts are off.'; txState(); } catch (err) { note.textContent = err.message || String(err); }
     b.disabled = false; return; }
-  if (T('#wsSave')) { const b = T('#wsSave'), key = $('wsKey'), cx = $('wsCx'), note = $('wsNote'); b.disabled = true; note.textContent = 'Saving…';
-    try { const r = await call({ op: 'setSearchKey', key: key.value.trim(), cx: cx.value.trim() }); key.value = ''; cx.value = ''; note.textContent = r && r.on ? 'Saved. The web pass is on.' : 'The web pass is off.'; checksState(); } catch (err) { note.textContent = err.message || String(err); }
+  if (T('#wsSave')) { const b = T('#wsSave'), key = $('wsKey'), note = $('wsNote'); b.disabled = true; note.textContent = 'Saving…';
+    try { const r = await call({ op: 'setSearchKey', key: key.value.trim() }); key.value = ''; note.textContent = r && r.on ? 'Saved. The web pass is on.' : 'The web pass is off.'; checksState(); } catch (err) { note.textContent = err.message || String(err); }
     b.disabled = false; return; }
   if (T('#aiSave')) { const b = T('#aiSave'), key = $('aiKey'), note = $('aiNote'); b.disabled = true; note.textContent = 'Saving…';
     try { const r = await call({ op: 'setClaudeKey', key: key.value.trim() }); key.value = ''; note.textContent = r && r.on ? 'Saved. The paraphrase pass is on.' : 'The paraphrase pass is off.'; checksState(); } catch (err) { note.textContent = err.message || String(err); }

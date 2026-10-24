@@ -1510,19 +1510,20 @@ case 'inbox': {
                    (collusion) then every other (a previous candidate), by runs
                    of eight words; the other trainee is never named.
          webCheck  the six most distinctive sentences, each searched in quotes
-                   through Google's Programmable Search (keys in the properties).
+                   through the Brave Search API (key in the properties).
          aiCheck   the pairs similar found, read by Claude for paraphrase.
        Nothing marks anything. On a demo course nothing leaves Lite. */
     case 'checksOn': {
       var cp = PropertiesService.getScriptProperties();
-      return { web: !!(cp.getProperty('GOOGLE_CSE_KEY') && cp.getProperty('GOOGLE_CSE_CX')), ai: !!cp.getProperty('CLAUDE_KEY') };
+      return { web: !!cp.getProperty('BRAVE_KEY'), ai: !!cp.getProperty('CLAUDE_KEY') };
     }
+    /* The web pass searches through the Brave Search API (25 Oct 2026): Google's
+       Custom Search JSON API is closed to new customers and ends on 1 Jan 2027. */
     case 'setSearchKey': {
       requireOwner_(owner);
-      var sp = PropertiesService.getScriptProperties(), sk = String(req.key || '').trim(), scx = String(req.cx || '').trim();
-      if (sk) sp.setProperty('GOOGLE_CSE_KEY', sk); else sp.deleteProperty('GOOGLE_CSE_KEY');
-      if (scx) sp.setProperty('GOOGLE_CSE_CX', scx); else if (!sk) sp.deleteProperty('GOOGLE_CSE_CX');
-      return { on: !!(sp.getProperty('GOOGLE_CSE_KEY') && sp.getProperty('GOOGLE_CSE_CX')) };
+      var sp = PropertiesService.getScriptProperties(), sk = String(req.key || '').trim();
+      if (sk) sp.setProperty('BRAVE_KEY', sk); else sp.deleteProperty('BRAVE_KEY');
+      return { on: !!sk };
     }
     case 'setClaudeKey': {
       requireOwner_(owner);
@@ -2177,8 +2178,8 @@ function similar_(course, token, code, round) {
   return { total: total, words: w.length, compared: compared, common: total - rareTotal, matches: matches.slice(0, 8) };
 }
 function webCheck_(course, token, code, round) {
-  var p = PropertiesService.getScriptProperties(), key = p.getProperty('GOOGLE_CSE_KEY'), cx = p.getProperty('GOOGLE_CSE_CX');
-  if (!key || !cx) return { off: true };
+  var key = PropertiesService.getScriptProperties().getProperty('BRAVE_KEY');
+  if (!key) return { off: true };
   var A = read_(course.id, token, 'assignments') || {}, txt = submissionText_((A[code] || {})[round]);
   if (!txt) throw new Error('Nothing submitted for that round');
   var sents = txt.split(/(?<=[.!?])\s+/).map(function (x) { return x.trim(); }).filter(function (x) { var n = x.split(' ').length; return n >= 10 && n <= 30; });
@@ -2189,11 +2190,14 @@ function webCheck_(course, token, code, round) {
   var out = [];
   picked.forEach(function (s) {
     var q = '"' + s.replace(/"/g, '').slice(0, 160) + '"';
-    var url = 'https://www.googleapis.com/customsearch/v1?key=' + encodeURIComponent(key) + '&cx=' + encodeURIComponent(cx) + '&num=5&q=' + encodeURIComponent(q);
+    var url = 'https://api.search.brave.com/res/v1/web/search?count=5&q=' + encodeURIComponent(q);
     try {
-      var r = UrlFetchApp.fetch(url, { muteHttpExceptions: true }), j = JSON.parse(r.getContentText());
-      var items = (j.items || []).map(function (it) { return { title: String(it.title || '').slice(0, 120), link: String(it.link || ''), snippet: String(it.snippet || '').slice(0, 240) }; });
-      out.push({ sentence: s, hits: items, error: j.error ? String(j.error.message || '').slice(0, 120) : '' });
+      var r = UrlFetchApp.fetch(url, { muteHttpExceptions: true, headers: { 'Accept': 'application/json', 'X-Subscription-Token': key } });
+      var j = JSON.parse(r.getContentText());
+      var results = (j.web && j.web.results) || [];
+      var items = results.map(function (it) { return { title: String(it.title || '').replace(/<[^>]+>/g, '').slice(0, 120), link: String(it.url || ''), snippet: String(it.description || '').replace(/<[^>]+>/g, '').slice(0, 240) }; });
+      var err = r.getResponseCode() >= 400 ? ('Brave answered ' + r.getResponseCode() + (j && j.error ? ': ' + String(j.error.detail || j.error.code || '').slice(0, 80) : '')) : '';
+      out.push({ sentence: s, hits: items, error: err });
     } catch (e) { out.push({ sentence: s, hits: [], error: String(e && e.message || e).slice(0, 120) }); }
   });
   return { checked: out.length, found: out.filter(function (x) { return x.hits.length; }).length, sentences: out };
