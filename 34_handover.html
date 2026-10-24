@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<!--
+  The handover — one card per trainee for the tutor who takes the group next.
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy, 25 Oct 2026: "when trainers hand over, like they swap sort of halfway
+  through, we usually kind of tell each other a little bit about the group that
+  everyone is getting ... a quick summary for each trainee that will be handed
+  over halfway through the course to the new trainer." And: "include what they
+  received for stage 2 ... above standard, or pending."
+
+  Everything on a card is read from the record — the grade of every lesson, the
+  open action points in the leaving tutor's own words from the last feedback,
+  the Stage 1 and Stage 2 results, the assignments, the fail letter, special
+  needs — except the last line, which the leaving tutor writes. Nothing is
+  generated.
+
+  WHERE THE LINE IS KEPT. In the trainee's staffLinks record, as an entry
+  { handover: true, text, by, at }: the one kind the store never hands to a
+  trainee's token (v30), so a trainee never sees it. The Links drawer on
+  Course admin draws only entries with a url and keeps the rest when it saves.
+  No store change.
+
+  Tutors only. The assessor has the pack; a trainee has their own record.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="brand/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<title>Handover</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hub-tokens.css?v=202610241341">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);}
+  .wrap{max-width:980px; margin:0 auto; padding:32px 20px 90px;}
+  .back{display:inline-block; margin-bottom:14px; font-weight:600; font-size:.9rem; color:var(--teal); text-decoration:none;}
+  .back:hover{text-decoration:underline;}
+  .k{font-family:'Instrument Sans','Karla',sans-serif; font-weight:600; font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--brick); margin:0 0 6px;}
+  h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:32px; line-height:1.08; margin:0 0 8px;}
+  .lede{color:var(--grey); font-size:15px; line-height:1.5; margin:0 0 20px; max-width:680px;}
+  .tabs{display:flex; gap:8px; margin:0 0 18px; flex-wrap:wrap;}
+  .tabs button{font:inherit; font-weight:700; font-size:13.5px; padding:8px 14px; border-radius:999px; border:1px solid var(--sand-line); background:var(--paper); color:var(--teal); cursor:pointer;}
+  .tabs button[aria-pressed="true"]{background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  .hand{display:flex; gap:12px 18px; align-items:center; flex-wrap:wrap; background:var(--teal); color:var(--paper); border-radius:var(--r-card); padding:16px 20px; margin:0 0 24px;}
+  .hand .who{display:flex; gap:10px; align-items:center; flex-wrap:wrap; font-family:'Newsreader',Georgia,serif; font-size:19px; font-weight:600;}
+  .hand select{font:inherit; font-family:'Karla',sans-serif; font-size:14px; font-weight:700; color:var(--teal); background:var(--paper); border:0; border-radius:8px; padding:6px 10px;}
+  .hand .when{color:var(--paper); opacity:.8; font-size:13.5px; flex-basis:100%;}
+  .hand .print{margin-left:auto; background:var(--paper); color:var(--teal); border:0; border-radius:999px; padding:9px 16px; font:inherit; font-weight:700; font-size:13.5px; cursor:pointer;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:16px;}
+  .tr{background:var(--paper); border-radius:var(--r-card); box-shadow:var(--nb-shadow); padding:18px 20px 16px; border-top:3px solid var(--teal); break-inside:avoid;}
+  .tr.amber{border-top-color:var(--a-mustard);} .tr.red{border-top-color:var(--brick);}
+  .tr header{display:flex; justify-content:space-between; align-items:baseline; gap:10px;}
+  .tr h2{font-family:'Newsreader',Georgia,serif; font-size:21px; font-weight:700; margin:0;}
+  .letter{font-family:'Instrument Sans','Karla',sans-serif; font-weight:600; font-size:12px; color:var(--grey); background:var(--sand); border-radius:6px; padding:3px 8px; white-space:nowrap;}
+  .grades{display:flex; gap:6px; flex-wrap:wrap; margin:12px 0 2px;}
+  .g{font-size:11.5px; font-weight:600; border-radius:6px; padding:4px 8px; background:var(--sand); color:var(--grey);}
+  .g.above{background:var(--teal); color:var(--paper);} .g.not{background:var(--brick); color:var(--paper);} .g.to{background:var(--sand-deep); color:var(--ink);}
+  .stages{display:flex; gap:6px; flex-wrap:wrap; margin:8px 0 0;}
+  .st{font-size:11.5px; font-weight:600; border-radius:6px; padding:4px 8px; border:1px solid var(--sand-line); color:var(--ink); background:var(--paper);}
+  .st.above{border-color:var(--teal); color:var(--teal);} .st.not{border-color:var(--brick); color:var(--brick);} .st.pending{color:var(--grey); border-style:dashed;}
+  .tr .k{margin:14px 0 4px; font-size:10.5px; letter-spacing:.2em;}
+  ul{margin:0; padding-left:18px; font-size:14px; line-height:1.5;}
+  ul.plain{list-style:none; padding:0; color:var(--grey);}
+  .note{margin:0; font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:16.5px; line-height:1.4; color:var(--ink);}
+  .note.empty{color:var(--grey);}
+  textarea{width:100%; min-height:64px; font:inherit; font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:16px; line-height:1.4; color:var(--ink); background:var(--field); border:1px solid var(--sand-line); border-radius:var(--r-control); padding:8px 10px; resize:vertical;}
+  textarea:focus{outline:2px solid var(--teal); outline-offset:1px;}
+  .row{display:flex; gap:8px; align-items:center; margin-top:8px; flex-wrap:wrap;}
+  .row button{font:inherit; font-weight:700; font-size:13px; padding:7px 14px; border-radius:999px; border:0; background:var(--teal); color:var(--paper); cursor:pointer;}
+  .row button.quiet{background:var(--paper); color:var(--teal); border:1px solid var(--sand-line);}
+  .row .saved{font-size:12.5px; color:var(--grey);}
+  .empty-group{color:var(--grey); font-size:15px;}
+  @media (max-width:480px){ .wrap{padding:22px 16px 70px;} h1{font-size:27px;} .hand .print{margin-left:0;} }
+  @media print{
+    body{background:var(--paper);} .wrap{max-width:none; padding:0;}
+    .back, .tabs, .hand .print, .row, textarea{display:none !important;}
+    .hand{background:none; color:var(--ink); border:1px solid var(--sand-line); padding:10px 14px;} .hand .who{font-size:16px;} .hand select{appearance:none; -webkit-appearance:none; background:none; color:var(--ink); padding:0; font-size:15px;}
+    .hand .when{color:var(--grey); opacity:1;}
+    .grid{grid-template-columns:1fr 1fr; gap:12px;} .tr{box-shadow:none; border:1px solid var(--sand-line); border-top:3px solid var(--teal);}
+    .note.empty{display:none;}
+  }
+</style>
+<link rel="stylesheet" href="hub-house.css?v=202610241341">
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="5_tutor_dashboard.html">Back</a>
+  <div id="app"><p class="lede">Loading the course…</p></div>
+</div>
+<script src="hub-shared.js?v=202610241341"></script>
+<script src="hub-store.js?v=202610241341"></script>
+<script src="hub-say.js?v=202610241341"></script>
+<script src="hub-rotation.js?v=202610241341"></script>
+<script>
+/* Whose room this is: the tutors'. */
+if (window.hubTutorRoomOnly && hubTutorRoomOnly()) { /* refused; hubTutorRoomOnly drew the room */ }
+else (async function(){
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const bare = s => String(s == null ? '' : s).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').replace(/\s*\b\d[a-z]\b\s*$/, '').trim();
+  const S = window.HubStore;
+  let course, roster;
+  try {
+    const [c, r] = await Promise.all([S.call({ op: 'course' }), S.call({ op: 'roster' })]);
+    course = c || {}; roster = Object.values((r && r.trainees) || {}).filter(Boolean);
+  } catch (e) { $('app').innerHTML = '<p class="lede">The course could not be read: ' + esc(e.message) + '</p>'; return; }
+  const cs = course.settings || {};
+  const tz = cs.timeZone || undefined;
+  const tpCount = parseInt(cs.tpCount, 10) || 8, half = Math.floor(tpCount / 2) + 1;
+  const tutors = (() => { let n = []; try { n = window.hubTutorNames ? hubTutorNames(cs) : []; } catch (e) {} if (!Array.isArray(n) || !n.length) n = String(cs.tutorNames || '').split(',').map(s => s.trim()).filter(Boolean); return n; })();
+  const contacts = Array.isArray(cs.tutorContacts) ? cs.tutorContacts : [];
+  const groups = [...new Set(roster.map(t => String(t.group || '')).filter(Boolean))].sort();
+  const urlG = new URLSearchParams(location.search).get('group');
+  let group = (urlG && groups.includes(urlG)) ? urlG : (groups[0] || '');
+  const swapDay = (() => { const days = (course.timetable && course.timetable.days) || []; const d = days.find(x => String(x.tp) === String(half)); if (!d || !d.date) return ''; try { return new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'long', timeZone: tz }).format(hubDateOf(d.date)); } catch (e) { return d.date; } })();
+  const GRADE = { 'Above standard': ['above', 'Above'], 'To standard': ['to', 'To'], 'Not to standard': ['not', 'Not to'], 'Below standard': ['not', 'Not to'] };
+  const STAGE = { above: ['above', 'Above standard'], to: ['to', 'To standard'], below: ['not', 'Not to standard'], not: ['not', 'Not to standard'] };
+  const letterOf = (t, i) => (window.hubLetterOf && hubLetterOf(t.token, t.name)) || (cs.slotOf && cs.slotOf[t.token]) || 'ABCDEF'[i % 6];
+  /* A stamp (ISO, with a time) is an instant: shown in the course's zone. A date-only
+     string is a calendar day: shown as written, never shifted by a zone. */
+  const fmtDay = s => { try { s = String(s || ''); return /T/.test(s) ? new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: tz }).format(new Date(s)) : new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).format(hubDateOf(s)); } catch (e) { return s; } };
+  const AS = { lsrt: 'LSRT', lrt: 'LRT', fol: 'FOL', lfc: 'LFC', a5: 'Assignment 5' };
+
+  function card(t, i){
+    const R = t.records || {};
+    const H = Object.assign({}, R.tpHistory || {}); if (R.feedback && R.feedback.state) H[String((R.feedback.state.f || {}).fTP || '').replace(/\D/g, '') || 'x'] = R.feedback;
+    const keys = Object.keys(H).filter(k => H[k] && H[k].state && H[k].state.f).sort((a, b) => a - b);
+    const grades = keys.map(k => [k, (H[k].state.f.fGrade || '').trim()]);
+    const chips = grades.map(([k, g]) => { const m = GRADE[g] || ['', g || '?']; return `<span class="g ${m[0]}">TP${esc(k)} · ${esc(m[1])}</span>`; }).join('') || '<span class="g">No lesson yet</span>';
+    const last = keys.length ? H[keys[keys.length - 1]].state : null;
+    const L = (last && last.lists) || {};
+    const watch = [...(L.lAT || []), ...(L.lAP || [])].map(x => bare(x && (x.html || x.t || x.text || ''))).filter(Boolean).slice(0, 3);
+    const c5t = R.celta5t || {};
+    /* Stage 1 is a progress check and carries no grade: done or pending. Stage 2 carries the
+       tutor's overall: above, to or not to standard, or pending until it is returned. */
+    const stage = n => { const st = c5t['stage' + n] || {}; if (n === 1) return st.returnedAt ? `<span class="st">Stage 1 · done ${esc(fmtDay(st.returnedAt))}</span>` : '<span class="st pending">Stage 1 · pending</span>';
+      if (st.returnedAt && STAGE[st.overall]) { const m = STAGE[st.overall]; return `<span class="st ${m[0]}">Stage 2 · ${m[1]}</span>`; } return '<span class="st pending">Stage 2 · pending</span>'; };
+    const standing = [];
+    const A = R.assignments || {};
+    Object.keys(AS).forEach(k => { const a = A[k]; if (!a) return; const out = (a.feedback && a.feedback.outcome) || ''; const st = a.stage || '';
+      if (st === 'closed' && out) standing.push(AS[k] + ': ' + out);
+      else if (st === 'resubmission_needed') standing.push(AS[k] + ': resubmission out');
+      else if (st === 'submitted' || st === 'resubmitted') standing.push(AS[k] + ': in, waiting to be marked');
+      else if (st === 'returned_unmarked') standing.push(AS[k] + ': returned unmarked');
+    });
+    const tr = R.tracker || {};
+    if (tr.failLetter) standing.push('Fail warning letter issued ' + tr.failLetter + ((R.celta5 || {}).failLetterSigned ? ', signed' : ', not yet signed'));
+    const sp = ((R.agreement || {}).special) || {};
+    if (sp.needs) standing.push('Special needs on the agreement: ' + bare(sp.text));
+    const hand = ((R.staffLinks || []).find(x => x && x.handover)) || null;
+    const lastTwo = grades.slice(-2).map(x => x[1]);
+    const flag = tr.failLetter ? 'red' : ((lastTwo.includes('Not to standard') || lastTwo.includes('Below standard') || Object.values(A).some(a => a && a.stage === 'resubmission_needed')) ? 'amber' : '');
+    return `<article class="tr ${flag}" data-token="${esc(t.token)}">
+      <header><h2>${esc(t.name)}</h2><span class="letter">${esc(letterOf(t, i))}</span></header>
+      <div class="grades">${chips}</div>
+      <div class="stages">${stage(1)}${stage(2)}</div>
+      <p class="k">Watch</p>
+      ${watch.length ? '<ul>' + watch.map(w => '<li>' + esc(w) + '</li>').join('') + '</ul>' : '<ul class="plain"><li>No action points yet.</li></ul>'}
+      <p class="k">Standing</p>
+      <ul class="plain">${standing.length ? standing.map(s => '<li>' + esc(s) + '</li>').join('') : '<li>Nothing outstanding.</li>'}</ul>
+      <p class="k">From ${esc((hand && hand.by) || leaving || 'the tutor')}</p>
+      <div class="handbox">${hand && hand.text ? `<p class="note">${esc(hand.text)}</p><div class="row"><button type="button" class="quiet" data-edit="${esc(t.token)}">Change</button><span class="saved">${esc(hand.by || '')}${hand.at ? ', ' + fmtDay(hand.at) : ''}</span></div>`
+        : `<p class="note empty">The one line only you can write: what the record does not know.</p><div class="row"><button type="button" class="quiet" data-edit="${esc(t.token)}">Write it</button></div>`}</div>
+    </article>`;
+  }
+
+  const chosen = {};   // per group: { from, to } once the tutor has picked
+  function taughtBy(list){ const n = {}; list.forEach(t => { const R = t.records || {}; const all = Object.values(R.tpHistory || {}).concat(R.feedback ? [R.feedback] : []); all.forEach(h => { const who = h && h.state && h.state.f && h.state.f.fTutor; if (who) n[who] = (n[who] || 0) + 1; }); }); return Object.keys(n).sort((a, b) => n[b] - n[a])[0] || ''; }
+  let leaving = '';
+  function draw(){
+    const list = roster.filter(t => String(t.group || '') === group);
+    const c = chosen[group] || {};
+    leaving = c.from || (contacts.find(x => x && String(x.group || '') === group && x.name) || {}).name || taughtBy(list) || tutors[0] || '';
+    const receiving = c.to || tutors.find(n => n !== leaving) || '';
+    const opts = (sel) => tutors.map(n => `<option${n === sel ? ' selected' : ''}>${esc(n)}</option>`).join('') || '<option>Tutor</option>';
+    $('app').innerHTML = `
+      <p class="k">Teaching practice · ${esc(cs.courseName || '')}</p>
+      <h1>Handover${group ? ': Group ' + esc(group) : ''}</h1>
+      <p class="lede">${list.length} trainee${list.length === 1 ? '' : 's'}${swapDay ? ', changing tutor at the change of class on ' + esc(swapDay) : ''}. Everything here is from the record except the last line of each card, which the leaving tutor writes.</p>
+      ${groups.length > 1 ? '<div class="tabs">' + groups.map(g => `<button type="button" data-group="${esc(g)}" aria-pressed="${g === group}">Group ${esc(g)}</button>`).join('') + '</div>' : ''}
+      <div class="hand"><div class="who">From <select id="from">${opts(leaving)}</select> to <select id="to">${opts(receiving)}</select></div><button type="button" class="print" id="print">Print the handover</button>
+        <span class="when">TP1 to TP${half - 1} with the first tutor, from TP${half} with the next${swapDay ? ' · ' + esc(swapDay) : ''}</span></div>
+      <div class="grid">${list.length ? list.map(card).join('') : '<p class="empty-group">Nobody is on this group yet.</p>'}</div>`;
+    $('print').onclick = () => window.print();
+    $('from').onchange = $('to').onchange = () => { chosen[group] = { from: $('from').value, to: $('to').value }; draw(); };
+    document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { group = b.dataset.group; history.replaceState(null, '', '?group=' + encodeURIComponent(group)); draw(); });
+    document.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => edit(b.dataset.edit));
+  }
+
+  function edit(token){
+    const t = roster.find(x => x.token === token); if (!t) return;
+    const art = document.querySelector('.tr[data-token="' + token + '"] .handbox'); if (!art) return;
+    const cur = ((t.records || {}).staffLinks || []).find(x => x && x.handover) || {};
+    art.innerHTML = `<textarea id="ta-${esc(token)}" placeholder="One line. What the next tutor should know that the record does not say.">${esc(cur.text || '')}</textarea>
+      <div class="row"><button type="button" data-save="${esc(token)}">Save</button><button type="button" class="quiet" data-cancel="1">Cancel</button><span class="saved"></span></div>`;
+    art.querySelector('textarea').focus();
+    art.querySelector('[data-cancel]').onclick = draw;
+    art.querySelector('[data-save]').onclick = async () => {
+      const text = art.querySelector('textarea').value.replace(/\s+/g, ' ').trim();
+      const by = leaving || tutors[0] || 'Tutor';
+      const links = ((t.records || {}).staffLinks || []).filter(x => x && !x.handover);
+      const entry = { handover: true, text, by, at: new Date().toISOString() };
+      const next = text ? links.concat([entry]) : links;
+      const msg = art.querySelector('.saved'); msg.textContent = 'Saving…';
+      try {
+        const r = await S.put('staffLinks', next, token);
+        if (r && r.demo) { if (window.hubDemoSay) hubDemoSay('This is a demo course. The line stays on this device.'); }
+        t.records = t.records || {}; t.records.staffLinks = next;
+        draw();
+      } catch (e) { msg.textContent = 'Not saved: ' + e.message; }
+    };
+  }
+  draw();
+})();
+</script>
+</body>
+</html>

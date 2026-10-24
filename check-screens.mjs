@@ -48,6 +48,7 @@ const ROOMS = {
   '2_trainee_self_evaluation.html':  { trainee:'open',   tutor:'refuse', assessor:'refuse' },
   '3_tutor_feedback.html':           { trainee:'refuse', tutor:'open',   assessor:'refuse' },
   '5_tutor_dashboard.html':          { trainee:'refuse', tutor:'open',   assessor:'refuse' },
+  '34_handover.html':                { trainee:'refuse', tutor:'open',   assessor:'refuse' },
   '6_centre_admin_dashboard.html':   { trainee:'refuse', tutor:'open',   assessor:'refuse' },
   '7_candidate_tracker.html':        { trainee:'own',    tutor:'open',   assessor:'open'   },
   '8_assignment_wording.html':       { trainee:'refuse', tutor:'open',   assessor:'refuse' },

@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610241243">
+<link rel="stylesheet" href="hub-tokens.css?v=202610241341">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -515,7 +515,7 @@
   .tcol-opt input:checked + span{box-shadow:0 0 0 2px var(--paper), 0 0 0 4px var(--teal);}
   .tcol-opt input:focus-visible + span{outline:2px solid var(--gold-lifted); outline-offset:3px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610241243">
+<link rel="stylesheet" href="hub-house.css?v=202610241341">
 </head>
 <body>
 <div class="board">
@@ -970,17 +970,17 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610241243"></script>
-<script src="hub-store.js?v=202610241243"></script>
-<script src="hub-say.js?v=202610241243"></script>
-<script src="agreement-defaults.js?v=202610241243"></script>
-<script src="observation-defaults.js?v=202610241243"></script>
-<script src="hub-shared.js?v=202610241243"></script>
-<script src="hub-rotation.js?v=202610241243"></script>
-<script src="hub-due.js?v=202610241243"></script>
-<script src="hub-sync.js?v=202610241243"></script>
-<script src="hub-hand.js?v=202610241243"></script>
-<script src="hub-ink.js?v=202610241243"></script>
+<script src="assignment-defaults.js?v=202610241341"></script>
+<script src="hub-store.js?v=202610241341"></script>
+<script src="hub-say.js?v=202610241341"></script>
+<script src="agreement-defaults.js?v=202610241341"></script>
+<script src="observation-defaults.js?v=202610241341"></script>
+<script src="hub-shared.js?v=202610241341"></script>
+<script src="hub-rotation.js?v=202610241341"></script>
+<script src="hub-due.js?v=202610241341"></script>
+<script src="hub-sync.js?v=202610241341"></script>
+<script src="hub-hand.js?v=202610241341"></script>
+<script src="hub-ink.js?v=202610241341"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1831,12 +1831,15 @@ const ROSTER_KEY='connect_roster_v1';
 /* A trainee's private links, read from and written to the local roster,
    which hub-sync mirrors to the store one record at a time. */
 function privateLinksOf(token){ try { const r = JSON.parse(localStorage.getItem(ROSTER_KEY)); const t = r && r.trainees && r.trainees[token]; return (t && Array.isArray(t.links)) ? t.links : []; } catch (e) { return []; } }
-function staffLinksOf(token){ try { const r = JSON.parse(localStorage.getItem(ROSTER_KEY)); const t = r && r.trainees && r.trainees[token]; return (t && Array.isArray(t.staffLinks)) ? t.staffLinks : []; } catch (e) { return []; } }
+/* staffLinks also carries the handover line (34_handover.html, 25 Oct 2026: an entry with
+   handover:true and no url). The drawer draws the links and keeps the rest when it saves. */
+function staffLinksAll(token){ try { const r = JSON.parse(localStorage.getItem(ROSTER_KEY)); const t = r && r.trainees && r.trainees[token]; return (t && Array.isArray(t.staffLinks)) ? t.staffLinks : []; } catch (e) { return []; } }
+function staffLinksOf(token){ return staffLinksAll(token).filter(l => l && !l.handover); }
 function savePrivateLinks(token, links, staffLinks){
   let r = null; try { r = JSON.parse(localStorage.getItem(ROSTER_KEY)); } catch (e) {}
   if (!r || !r.trainees || !r.trainees[token]) { alert('The roster has not loaded yet \u2014 give it a moment and try again.'); return; }
   r.trainees[token].links = links;
-  r.trainees[token].staffLinks = staffLinks || [];
+  r.trainees[token].staffLinks = staffLinksAll(token).filter(l => l && l.handover).concat(staffLinks || []);
   localStorage.setItem(ROSTER_KEY, JSON.stringify(r));
 }
 function loadRoster(){ try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
