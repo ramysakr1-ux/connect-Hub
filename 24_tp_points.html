@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610242226">
+<link rel="stylesheet" href="hub-tokens.css?v=202610242233">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -258,6 +258,8 @@
   .whoami .nots{margin-left:9px; font-size:0.62rem; letter-spacing:.1em; color:var(--brick); font-weight:700;}
   .lessonline{margin:0 0 4px;}
   .others{margin:20px 0 0; padding:14px 0 0; border-top:1px dashed var(--sand-line);}
+  .pg .pgimg{display:block; width:100%; height:auto; border:1px solid var(--sand-line); border-radius:6px; background:var(--paper);}
+  .ls-page.ls-img{overflow:auto; height:auto;} .ls-page.ls-img img{display:block; width:100%; height:auto;}
   .others h3{font-family:'Newsreader',Georgia,serif; font-size:1.02rem; margin:0 0 3px;}
   .othersnote{margin:0 0 12px; font-size:0.78rem; color:var(--grey);}
   .other-block{background:var(--paper); border:1px solid var(--sand-line); border-radius:9px;
@@ -399,7 +401,7 @@
   @media(prefers-reduced-motion:reduce){ .tbl select.fm, .fm-pips i{transition:none;} }
   @media print{ .fm-key, .fm-pips{display:none;} .tbl select.fm{border-left-width:1px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610242226">
+<link rel="stylesheet" href="hub-house.css?v=202610242233">
 <style>
 /* THE CARD A TRAINEE RECEIVES, IN COLOUR (Ramy, 21 Oct 2026: "the card that
    the trainees receive ... could use a bit of color and distinction"). Each
@@ -556,13 +558,13 @@ body.ls-open{overflow:hidden;}
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610242226"></script>
-<script src="hub-tracker.js?v=202610242226"></script>
-<script src="hub-rotation.js?v=202610242226"></script>
-<script src="hub-shared.js?v=202610242226"></script>
-<script src="hub-store.js?v=202610242226"></script>
-<script src="hub-say.js?v=202610242226"></script>
-<script src="hub-sync.js?v=202610242226"></script>
+<script src="hub-due.js?v=202610242233"></script>
+<script src="hub-tracker.js?v=202610242233"></script>
+<script src="hub-rotation.js?v=202610242233"></script>
+<script src="hub-shared.js?v=202610242233"></script>
+<script src="hub-store.js?v=202610242233"></script>
+<script src="hub-say.js?v=202610242233"></script>
+<script src="hub-sync.js?v=202610242233"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -1103,6 +1105,11 @@ function pageFigures(c, mine){
   if (!files.length) return '';
   const body = files.map(f => {
     const m = String(f.url).match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^"' ]*?id=)([\w-]{20,})/);
+    /* A PAGE THAT IS A PLAIN IMAGE (25 Oct 2026): the demo's own pages, or a scan a centre keeps on the web
+       rather than in Drive. It shows, prints and opens full size as itself. */
+    if (!m && /\.(png|jpe?g|webp|gif)([?#]|$)/i.test(f.url)) return `<figure class="pg${mine ? '' : ' ref'}"><figcaption>${esc(f.name || 'Page')}${mine ? '' : ' — not yours'}</figcaption>
+      <img class="pgimg" src="${esc(f.url)}" alt="${esc(f.name || 'Page')}" loading="lazy">
+      <a class="pgopen" href="${esc(f.url)}" target="_blank" rel="noopener">Open full size</a></figure>`;
     if (!m) return '';
     /* AN IMAGE, NOT AN IFRAME. Ramy, 4 Oct 2026: the print button "doesn't
        print as a PDF" -- a cross-origin Drive /preview iframe never prints, so
@@ -1229,9 +1236,12 @@ function lsOpen(key, i, from){
   const pageView = id
     ? `<div class="ls-page"><iframe src="https://drive.google.com/file/d/${esc(id)}/preview?hl=en" title="${esc(m.kind + ', ' + m.title)}"></iframe></div>
        <a class="ls-btn" href="https://drive.google.com/file/d/${esc(id)}/view" target="_blank" rel="noopener">Open full size</a>`
+    : /\.(png|jpe?g|webp|gif)([?#]|$)/i.test(m.file || '')
+      ? `<div class="ls-page ls-img"><img src="${esc(m.file)}" alt="${esc(m.kind + ', ' + m.title)}"></div>
+         <a class="ls-btn" href="${esc(m.file)}" target="_blank" rel="noopener">Open full size</a>`
     : m.file
       ? `<a class="ls-btn" href="${esc(m.file)}" target="_blank" rel="noopener">Open the page</a>`
-      : `<div class="ls-page ls-nopage"><p>This page is in your book: <b>${esc(m.kind)}, ${esc(m.title.toLowerCase())}</b>.</p><p>Your centre has not added a scan of it here.</p></div>`;
+      : `<div class="ls-page ls-nopage"><p><b>${esc(m.kind)}, ${esc(m.title.toLowerCase())}</b></p><p>No scan of this page has been added yet. Use it from the coursebook.</p></div>`;
   const uses = m.uses.filter(u => u.what);
   ov.innerHTML = `<button type="button" class="ls-dim" aria-label="Close the page" data-ls-close></button>
     <div class="ls-panel" role="dialog" aria-modal="true" aria-label="${esc(m.kind + ', ' + m.title)}">
