@@ -79,7 +79,7 @@
       + '<p>You need your own link. Your centre emailed it as a card, with a button and a QR code. Open Lite from that card and your course is there. Lost it? Ask your course admin to send it again.</p>'
       + '</div>'
 
-      + '<div class="fp-foot"><span>' + (window.hubMark ? hubMark(16) + ' ' : '') + 'designed and built by <b>Ramy</b></span><a href="mailto:lite@celtaconnect.com">lite@celtaconnect.com</a></div>'
+      + '<div class="fp-foot"><span>' + (window.hubMark ? hubMark(16) : '') + 'designed and built by <b>Ramy</b></span><a href="mailto:lite@celtaconnect.com">lite@celtaconnect.com</a></div>'
       + '</div>';
 
     var css = document.createElement('style');

@@ -112,11 +112,13 @@
      film... and then I can say the phrase we had before"). Sent cold, before
      anyone holds a demo link, so it ends by offering one rather than assuming
      the reader already has three. No price, no doors, one button. */
+  /* A Watch the film link starts the film: the film page reads #play (Ramy, 25 Oct 2026). */
+  function playLink(u) { u = String(u || ''); return u && u.indexOf('#') < 0 ? u + '#play' : u; }
   function filmDoc(letter, ctx) {
     var sheet = '<p style="font-family:' + SANS + '; font-size:14.5px; line-height:1.65; color:' + C.ink + '; margin:0;">The timetable built, the TP points dealt, plans in and feedback back, the assignments marked, the assessor’s visit and the final grades. Nothing in it is a mock-up: it is Lite, being used.</p>'
       + (ctx.film
           ? '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0 0;"><tr><td align="center" bgcolor="' + C.teal + '" style="border-radius:26px;">'
-            + '<a href="' + esc(ctx.film) + '" style="display:inline-block; padding:14px 34px; font-family:' + SANS + '; font-size:16px; font-weight:700; color:#ffffff; text-decoration:none;">Watch the film</a>'
+            + '<a href="' + esc(playLink(ctx.film)) + '" style="display:inline-block; padding:14px 34px; font-family:' + SANS + '; font-size:16px; font-weight:700; color:#ffffff; text-decoration:none;">Watch the film</a>'
             + '</td></tr></table>'
           : '')
       ;
@@ -206,7 +208,7 @@
   window.hubCardMail = function(ctx){
     STYLE = ctx.cardStyle === 'ticket' ? 'ticket' : 'welcome';
     var doors = (ctx.doors || []).map(function(d){ return door(d.label, d.note, d.href, 'Open'); }).join('');
-    if (ctx.film) doors += door('The film', 'A whole course, start to finish, in three minutes.', ctx.film, 'Watch');
+    if (ctx.film) doors += door('The film', 'A whole course, start to finish, in three minutes.', playLink(ctx.film), 'Watch');
     /* The letter (Ramy, 2 Oct 2026: "a nice message from me on top, with nice
        font, with my signature, and the card sitting underneath it"). His note,
        in the serif, signed; the card is the enclosure. No note, no letter. */
