@@ -122,7 +122,7 @@
             + '</td></tr></table>'
           : '')
       ;
-    var ask = '<p style="font-family:' + SANS + '; font-size:14px; line-height:1.65; color:' + C.ink + '; margin:' + (STYLE === 'ticket' ? '0' : '22px 0 0; padding-top:16px; border-top:1px solid ' + C.line) + ';">Centres and trainers: email <a href="mailto:' + MAIL + '" style="color:' + C.teal + '; font-weight:700; text-decoration:none;">' + MAIL + '</a> for the rates and a demo link. You get a real course, two weeks in, to walk around as a tutor, as one of the trainees, as the assessor and as a volunteer student, and you can type in all of it.</p>';
+    var ask = '<p style="font-family:' + SANS + '; font-size:14px; line-height:1.65; color:' + C.ink + '; margin:' + (STYLE === 'ticket' ? '0' : '22px 0 0; padding-top:16px; border-top:1px solid ' + C.line) + ';">Centres and trainers: email <a href="mailto:' + MAIL + '" style="color:' + C.teal + '; font-weight:700; text-decoration:none;">' + MAIL + '</a> for the rates and a demo link. You get a real course, two weeks in, to walk around as an assessor or as a volunteer student, and you can type in all of it.</p>';
     return page('Connect Lite — the film', letter, wrap(ctx, 'A short film', 'A CELTA course, start to finish', '', sheet, ask));
   }
 
@@ -226,7 +226,7 @@
     var li = function(t){ return '<li style="margin:0 0 3px;">' + esc(t) + '</li>'; };
     var sheet =
       '<h2 style="font-family:' + SERIF + '; font-weight:600; font-size:17px; color:' + C.inkWarm + '; margin:0 0 4px;">Open a real course</h2>' +
-      '<p style="font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.grey + '; margin:0 0 4px;">One real course, two weeks in. Go in as a tutor, as one of the trainees, as the assessor or as a volunteer student, and type. Nothing you do reaches anyone\u2019s record.</p>' +
+      '<p style="font-family:' + SANS + '; font-size:13px; line-height:1.6; color:' + C.grey + '; margin:0 0 4px;">One real course, two weeks in. Go in as an assessor or as a volunteer student, and type. Nothing you do reaches anyone\u2019s record.</p>' +
       '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px ' + (STYLE === 'ticket' ? 'dashed ' : 'solid ') + C.line + '; margin-top:' + (STYLE === 'ticket' ? '14px' : '0') + ';">' + doors + '</table>' +
       /* How it is priced, never what (Ramy, 7 Oct 2026). On the ticket it goes
          on the stub instead (below). */
