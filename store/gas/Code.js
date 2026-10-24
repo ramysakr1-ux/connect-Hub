@@ -2215,16 +2215,21 @@ function aiCheck_(course, token, code, round) {
     var o = byRef[m.ref]; if (!o) return;
     var prompt = 'Two CELTA written assignments follow, each cut to its first 6000 characters. Both answer the same brief, so shared quotations of the brief, of set texts and of standard terminology are expected and do not count. ' +
       'Do they contain passages that say the same thing in different words, beyond what two independent writers on the same brief would share? ' +
-      'Answer with JSON only: {"verdict":"none"|"some"|"substantial","pairs":[{"a":"<up to 40 words from text A>","b":"<the matching up to 40 words from text B>","note":"<one sentence>"}]} with at most 3 pairs.\n\nTEXT A:\n' + mine.text.slice(0, 6000) + '\n\nTEXT B:\n' + o.text.slice(0, 6000);
+      'Answer with JSON only, nothing before or after it: {"verdict":"none"|"some"|"substantial","pairs":[{"a":"<up to 25 words from text A>","b":"<the matching up to 25 words from text B>","note":"<one short sentence>"}]} with at most 3 pairs. Keep every string short.\n\nTEXT A:\n' + mine.text.slice(0, 6000) + '\n\nTEXT B:\n' + o.text.slice(0, 6000);
     try {
       var r = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', { method: 'post', contentType: 'application/json', muteHttpExceptions: true,
         headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
-        payload: JSON.stringify({ model: model, max_tokens: 900, messages: [{ role: 'user', content: prompt }] }) });
+        payload: JSON.stringify({ model: model, max_tokens: 1600, messages: [{ role: 'user', content: prompt }] }) });
       var j = JSON.parse(r.getContentText());
       if (j.error) { results.push({ course: m.course, code: m.code, round: m.round, error: String(j.error.message || j.error.type || '').slice(0, 160) }); return; }
       var text = ((j.content || []).map(function (c) { return c.text || ''; }).join('')).trim();
       var jm = text.match(/\{[\s\S]*\}/), parsed = null; try { parsed = jm ? JSON.parse(jm[0]) : null; } catch (e) {}
-      results.push({ course: m.course, code: m.code, round: m.round, verdict: parsed ? String(parsed.verdict || '') : '', pairs: parsed && Array.isArray(parsed.pairs) ? parsed.pairs.slice(0, 3).map(function (x) { return { a: String(x.a || '').slice(0, 400), b: String(x.b || '').slice(0, 400), note: String(x.note || '').slice(0, 240) }; }) : [], raw: parsed ? '' : text.slice(0, 300) });
+      /* The answer can be cut short (25 Oct 2026: a long pair ran past the token
+         limit): the verdict is salvaged from the text, and whole pairs with it. */
+      var verdict = parsed ? String(parsed.verdict || '') : ((text.match(/"verdict"\s*:\s*"(none|some|substantial)"/) || [])[1] || '');
+      var pairs = parsed && Array.isArray(parsed.pairs) ? parsed.pairs : [];
+      if (!parsed) { var pm, re = /\{\s*"a"\s*:\s*"((?:[^"\\]|\\.)*)"\s*,\s*"b"\s*:\s*"((?:[^"\\]|\\.)*)"\s*(?:,\s*"note"\s*:\s*"((?:[^"\\]|\\.)*)")?\s*\}/g; while ((pm = re.exec(text)) && pairs.length < 3) pairs.push({ a: pm[1], b: pm[2], note: pm[3] || '' }); }
+      results.push({ course: m.course, code: m.code, round: m.round, verdict: verdict, pairs: pairs.slice(0, 3).map(function (x) { return { a: String(x.a || '').slice(0, 400), b: String(x.b || '').slice(0, 400), note: String(x.note || '').slice(0, 240) }; }), raw: (parsed || verdict) ? '' : text.slice(0, 300), stop: j.stop_reason || '' });
     } catch (e) { results.push({ course: m.course, code: m.code, round: m.round, error: String(e && e.message || e).slice(0, 160) }); }
   });
   return { model: model, results: results };
