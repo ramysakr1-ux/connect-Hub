@@ -197,11 +197,15 @@ window.HubTracker = (function(){
       else if (v === 'FAILRES') pending.push(code);
       else if (v === 'RES') resubs.push(code);
     });
-    var ceiling = fails.length > 1
-      ? fails.join(', ') + ' failed — not eligible for a Pass (11.6)'
-      : fails.length === 1
-        ? fails[0] + ' failed — a Pass is still open on other evidence, but not Pass A (11.6)'
-        : null;
+    /* 11.6: one failed assignment caps the grade (no Pass A; a Pass needs evidence of
+       the criteria elsewhere). More than one failed is not a cap and not a warning:
+       "Candidates who fail more than one assignment are not eligible for a Pass."
+       That is a Fail on written work, said as such (Ramy, 25 Oct 2026: "that's a
+       fail, done"), and no Fail warning letter is prompted for it. */
+    var ceiling = fails.length === 1
+      ? fails[0] + ' failed — a Pass is still open on other evidence, but not Pass A (11.6)'
+      : null;
+    var writtenFail = fails.length > 1 ? fails.join(' and ') + ' failed — not eligible for a Pass (11.6)' : null;
     var standard = null, from = '';
     /* A standing is a stage record, never one lesson. Before Stage 2 there is
        none, and the latest TP grade is reported as what it is (latestTp). */
@@ -216,9 +220,8 @@ window.HubTracker = (function(){
        it is now a watch signal below and not a Fail trigger. */
     var provisionalPassFail = /FAIL/.test(c.provisional) && /PASS/.test(c.provisional);
     var failWhy = [];
-    if (provisionalPassFail) failWhy.push('provisionally graded ' + c.provisional + ' — a potential Fail (15.1)');
+    if (provisionalPassFail) failWhy.push('provisionally graded ' + c.provisional + ' — borderline, which 15.1 calls a potential Fail');
     if (standard === 'NOTSTD' && from.indexOf('Stage') === 0) failWhy.push(from + ' not to standard');
-    if (fails.length > 1) failWhy.push(fails.join(' and ') + ' failed — not eligible for a Pass (11.6)');
     var potentialFail = failWhy.length > 0;
     /* The centre's own early-warning signal, not Cambridge's, and labelled so.
        Two not-to-standard lessons running in the second half is worth a tutor's
@@ -235,7 +238,7 @@ window.HubTracker = (function(){
     var lessonsLeft = tpTotal() - graded;
     /* 10.2: a Fail letter "should" be issued, "ideally with at least two
        lessons left to teach". Said in Cambridge's words; never an order. */
-    if (letterDue) failWhy.push('no Fail letter issued · ' + (lessonsLeft <= 0 ? 'no lessons left to teach' : lessonsLeft + ' lesson' + (lessonsLeft === 1 ? '' : 's') + ' left to teach') + ' — 10.2: one should be issued, ideally with at least two lessons left');
+    if (letterDue) failWhy.push('no Fail warning letter issued · ' + (lessonsLeft <= 0 ? 'no lessons left to teach' : lessonsLeft + ' lesson' + (lessonsLeft === 1 ? '' : 's') + ' left to teach') + ' — 10.2: one should be issued, ideally with at least two lessons left');
     /* letterAdvised used to fire on a single assignment awaiting its
        resubmission and say "a letter can go out now". 9.2.3 GUARANTEES that
        resubmission ("trainees must have the opportunity... on one occasion
@@ -245,13 +248,17 @@ window.HubTracker = (function(){
     var lateNotStd = notStdAt.filter(function(k){ return k >= secondHalfFrom(); });
     var lateOnlyStd = [];
     if (c.stage2 === 'ABOVE') for (var k2 = secondHalfFrom(); k2 <= tpTotal(); k2++) { var g2 = tpGrade(c['tp'+k2]); if (g2 && g2.key === 'STD') lateOnlyStd.push(k2); }
+    /* 10.2's three triggers, read as a drop in level after Stage 2 (Ramy, 25 Oct 2026:
+       "not about the lesson, about the level"): not to standard at Stage 2; above standard
+       at Stage 2 and then only to standard; to or above standard at Stage 2 and then not to
+       standard. Assignments play no part in them. */
     var stage3Why = null;
     if (!c.stage3) {
       if (c.stage2 === 'NOTSTD') stage3Why = 'not to standard at Stage 2';
-      else if (c.stage2 === 'ABOVE' && lateOnlyStd.length && !lateNotStd.length && !fails.length)
-        stage3Why = 'above standard at Stage 2, then TP' + lateOnlyStd.join(' and TP') + ' only to standard — progress not maintained';
       else if (c.stage2 && lateNotStd.length)
-        stage3Why = (c.stage2 === 'ABOVE' ? 'above standard' : 'to standard') + ' at Stage 2, then TP' + lateNotStd.join(' and TP') + ' not to standard';
+        stage3Why = (c.stage2 === 'ABOVE' ? 'above standard' : 'to standard') + ' at Stage 2, then TP' + lateNotStd.join(' and TP') + ' not to standard — not making the expected progress in the second half';
+      else if (c.stage2 === 'ABOVE' && lateOnlyStd.length)
+        stage3Why = 'above standard at Stage 2, then TP' + lateOnlyStd.join(' and TP') + ' to standard — not making the expected progress in the second half';
     }
     /* 10.2's Stage 3 triggers are all about TP standard and progress after
        Stage 2. The three that used to sit here -- back-to-back lessons with no
@@ -289,7 +296,7 @@ window.HubTracker = (function(){
     return {
       state:state, from:from, graded:graded, notStd:notStd, above:above,
       latestTp: latest ? { key: latest.key, n: latestN } : null,
-      fails:fails, resubs:resubs, pending:pending, ceiling:ceiling,
+      fails:fails, resubs:resubs, pending:pending, ceiling:ceiling, writtenFail:writtenFail,
       potentialFail:potentialFail, failWhy:failWhy, letterDue:letterDue, letterAdvised:letterAdvised, letterIssued:letterIssued,
       provisional:c.provisional, provisionalPassFail:provisionalPassFail, watch:watch, withdrawnQuery:withdrawnQuery,
       lessonsLeft:lessonsLeft, stage3Why:stage3Why, stage2Hint:stage2Hint, stage1Due:stage1Due, stage2Due:stage2Due
