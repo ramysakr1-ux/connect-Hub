@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610242220">
+<link rel="stylesheet" href="hub-tokens.css?v=202610242226">
 <style>
   /* design_handoff_candidate_tracker (Ramy, 20 Sep 2026), with the Hub's
      colour-coded chips in the cells -- "I like the chips that you created.
@@ -242,7 +242,7 @@
   @media(hover:none){ .row.tk-row{background:none;} .cell.tk-col{background:none;} }
   @media print{ .tk-bar{display:none;} .row.tk-row, .cell.tk-col{background:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610242220">
+<link rel="stylesheet" href="hub-house.css?v=202610242226">
 </head>
 <body>
 <div class="page">
@@ -271,14 +271,14 @@
   </div>
   <div id="detail"></div>
 </div>
-<script src="hub-due.js?v=202610242220"></script>
-<script src="hub-shared.js?v=202610242220"></script>
-<script src="hub-rotation.js?v=202610242220"></script>
-<script src="assignment-defaults.js?v=202610242220"></script>
-<script src="hub-tracker.js?v=202610242220"></script>
-<script src="hub-store.js?v=202610242220"></script>
-<script src="hub-say.js?v=202610242220"></script>
-<script src="hub-sync.js?v=202610242220"></script>
+<script src="hub-due.js?v=202610242226"></script>
+<script src="hub-shared.js?v=202610242226"></script>
+<script src="hub-rotation.js?v=202610242226"></script>
+<script src="assignment-defaults.js?v=202610242226"></script>
+<script src="hub-tracker.js?v=202610242226"></script>
+<script src="hub-store.js?v=202610242226"></script>
+<script src="hub-say.js?v=202610242226"></script>
+<script src="hub-sync.js?v=202610242226"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
@@ -306,7 +306,7 @@ function loadRoster(){
     const rec = k => { try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } };
     const plan = rec('chub:plan');
     const name = (localStorage.getItem('hub:name') || '') || (plan && plan.state && plan.state.meta && plan.state.meta.name) || 'You';
-    return { trainees: { me: { id:'me', name:name, tp:{ feedback: rec('chub:feedback'), selfeval: rec('chub:selfeval'), plan: rec('chub:plan'), history: rec('chub:tpHistory') || {} }, assignments: rec('connect_assignment_submissions_v1') || {}, tracker: rec('chub:tracker') || {} } } };
+    return { trainees: { me: { id:'me', name:name, tp:{ feedback: rec('chub:feedback'), selfeval: rec('chub:selfeval'), plan: rec('chub:plan'), history: rec('chub:tpHistory') || {} }, assignments: rec('connect_assignment_submissions_v1') || {}, tracker: rec('chub:tracker') || {}, celta5: rec('chub:celta5') || {}, celta5t: rec('chub:celta5t') || {} } } };
   }
   try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) || {trainees:{}}; }catch(e){ return {trainees:{}}; }
 }
@@ -531,7 +531,12 @@ function render(){
   const shown = all.filter(p => FILTER==='Everyone' || (FILTER==='To mark' && toMark(p)>0) || (FILTER==='Double marked' && dmCount(p)>0) || (FILTER==='At risk' && atRisk(p)));
   const isA = TAB==='assn';
   paintDmStrip(all, isA);
-  const cols = isA ? ASSN : TPS;
+  /* THE COURSE SO FAR (Ramy, 25 Oct 2026: on day 10 the tracker showed TP5 to TP8 as empty columns).
+     Teaching practice runs to the furthest TP anyone on the course has reached; the rest arrive as
+     they are taught. Read from everyone, not the filtered list, so a filter never moves the columns. */
+  const reached = Math.max(1, ...all.map(p => TPS.reduce((m, t) => (p.tps[t.key] && p.tps[t.key].g && p.tps[t.key].g !== 'nd') ? Math.max(m, t.n) : m, 0)));
+  const TPS_SHOWN = TPS.slice(0, Math.min(TP_TOTAL, reached));
+  const cols = isA ? ASSN : TPS_SHOWN;
   /* The widths come from CSS custom properties so a phone can change them
      without this having to know the viewport. On a narrow screen the name
      column shrinks and every mark column takes a floor, which makes the grid
@@ -540,17 +545,17 @@ function render(){
      cutting "Passed" off the edge (Ramy, 24 Sep 2026). */
   const gridCols = isA
     ? 'var(--who-col,210px) repeat(4, minmax(var(--cell-min,0px), 1fr)) var(--tail-col,58px)'
-    : 'var(--who-col,210px) repeat(8, minmax(var(--cell-min,0px), 1fr)) var(--tail-col,58px)';
+    : 'var(--who-col,210px) repeat(' + TPS_SHOWN.length + ', minmax(var(--cell-min,0px), 1fr)) var(--tail-col,58px)';
   if (!all.length){ $('gridwrap').innerHTML = `<div class="empty">No trainee files imported yet. The tracker fills itself from the files you import on the dashboard and the feedback you return.</div>`; $('detail').innerHTML=''; return; }
   if (ME && !all.some(p=>Object.keys(p.tr.assignments||{}).length || Object.keys(p.tr.tp.history||{}).length || (p.tr.tp.feedback))){ $('gridwrap').innerHTML = `<div class="empty">Nothing to show yet. Your row fills in as you submit work and as your tutor returns it.</div>`; $('detail').innerHTML=''; return; }
   let html = '';
   /* Handbook 10.2: first third, halfway, final third -- so the bands follow the
      course length rather than assuming eight. See T.stageBands. */
-  if (!isA) { const s1 = BANDS.s1End, s2 = BANDS.s3Start - BANDS.s1End - 1, s3 = TP_TOTAL - BANDS.s3Start + 1;
+  if (!isA) { const N = TPS_SHOWN.length, s1 = Math.min(BANDS.s1End, N), s2 = Math.max(0, Math.min(BANDS.s3Start - 1, N) - BANDS.s1End), s3 = Math.max(0, N - BANDS.s3Start + 1);
     html += `<div class="grid bands" style="grid-template-columns:${gridCols}"><div></div>` +
       `<div class="band" style="grid-column:span ${s1}">Stage 1</div>` +
       (s2 > 0 ? `<div class="band" style="grid-column:span ${s2}">Stage 2</div>` : '') +
-      `<div class="band" style="grid-column:span ${s3}">Stage 3</div><div></div></div>`; }
+      (s3 > 0 ? `<div class="band" style="grid-column:span ${s3}">Stage 3</div>` : '') + `<div></div></div>`; }
   html += `<div class="grid colhead" style="grid-template-columns:${gridCols}"><div class="count">${shown.length} trainee${shown.length===1?'':'s'}</div>${cols.map(c=>`<div class="col"><b>${c.label}</b><span>mark / DM</span></div>`).join('')}<div class="tail-h">${isA?'Passed':'To std'}</div></div>`;
   html += shown.map(p=>{
     const risk = atRisk(p);
