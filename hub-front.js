@@ -61,10 +61,10 @@
       + '<ul class="fp-does">'
       + '<li><b>The assessor\u2019s pack is already built.</b> Open the link and the portfolios, grades and assignments are there.</li>'
       + '<li><b>One written assignment: 13 clicks, not 70.</b> Plan, mark and return it without leaving the page.</li>'
-      + '<li><b>One press deals the lessons.</b> The aims rotate, so nobody always goes first.</li>'
+      + '<li><b>One press deals the lessons.</b> Lite takes care of TP points for you.</li>'
       + '<li><b>The CELTA 5 prints as Cambridge\u2019s booklet, already signed.</b> Trainee and tutor each sign on the screen.</li>'
       + '<li><b>The timetable builds in a minute.</b> Or it reads the spreadsheet you already have.</li>'
-      + '<li><b>It opens on a phone, a tablet or a laptop.</b> Trainees can plan on the bus.</li>'
+      + '<li><b>It opens on a phone, a tablet or a laptop.</b></li>'
       + '</ul>'
 
       + '<div class="fp-film">'
