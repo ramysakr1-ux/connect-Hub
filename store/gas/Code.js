@@ -2103,9 +2103,10 @@ function read_(courseId, token, kind) {
 /* ---- is it their own work: the three passes (25 Oct 2026) ------------------ */
 function submissionText_(sub) {
   if (!sub) return '';
-  var parts = [], t = sub.text || {}, f = sub.fields || {};
+  /* The prose sections only: the short fields (the text's title, its level, its
+     source) are shared by anyone who chose the same text, which is not copying. */
+  var parts = [], t = sub.text || {};
   Object.keys(t).sort().forEach(function (k) { parts.push(String(t[k] || '')); });
-  Object.keys(f).forEach(function (k) { parts.push(String(f[k] || '')); });
   return parts.join('\n').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim();
 }
 function words_(s) { return String(s || '').toLowerCase().replace(/[\u2019']/g, '').match(/[a-z0-9\u00c0-\u024f]+/g) || []; }
@@ -2153,7 +2154,7 @@ function similar_(course, token, code, round) {
   others.forEach(function (x) {
     var o = x.o, OS = x.OS, shared = [];
     Object.keys(rare).forEach(function (k) { if (OS[k] !== undefined) shared.push(rare[k]); });
-    if (shared.length < 8 && (!rareTotal || 100 * shared.length / rareTotal < 5)) return;
+    if (!shared.length) return;
     shared.sort(function (a, b) { return a - b; });
     var runs = [], start = shared[0], prev = shared[0];
     for (var i = 1; i <= shared.length; i++) {
@@ -2162,6 +2163,11 @@ function similar_(course, token, code, round) {
       if (i < shared.length) { start = shared[i]; prev = shared[i]; }
     }
     runs.sort(function (a, b) { return (b[1] - b[0]) - (a[1] - a[0]); });
+    /* A match is a lifted passage (25 words running) or a lot of it (five per cent
+       of the text); scattered phrases two writers on the same brief would both use
+       (a title they both chose, a reference they both cite) are neither. */
+    var longest = runs.length ? runs[0][1] - runs[0][0] : 0;
+    if (longest < 25 && (!rareTotal || 100 * shared.length / rareTotal < 5)) return;
     var passages = runs.slice(0, 3).map(function (r) { return w.slice(r[0], Math.min(r[1], r[0] + 70)).join(' '); });
     var same = o.course === course.id, cset = same ? {} : (courseRead_(o.course, 'settings') || {});
     matches.push({ sameCourse: same, course: same ? 'this course' : (cset.courseName || names[o.course] || 'another course'), centre: same ? '' : (cset.centreName || ''),
