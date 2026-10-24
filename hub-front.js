@@ -70,7 +70,7 @@
 
       + '<div class="fp-ask">'
       + '<b>Ask for a demo</b>'
-      + '<p>I’ll send you a real course, two weeks in. Walk it as an assessor or a volunteer student, and type in all of it. Nothing you do touches anybody’s record.</p>'
+      + '<p>I’ll send you a real course, two weeks in. Walk it as a tutor, a trainee, an assessor or a volunteer student, and type in all of it. Nothing you do touches anybody’s record.</p>'
       + '<a class="fp-btn wide" href="mailto:lite@celtaconnect.com?subject=' + encodeURIComponent('Connect Lite — a demo link, please') + '">Email me for a demo link</a>'
       + '</div>'
 

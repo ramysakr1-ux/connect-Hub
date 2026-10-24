@@ -137,7 +137,7 @@
             + '</td></tr></table>'
           : '')
       ;
-    var ask = '<p style="font-family:' + SANS + '; font-size:14px; line-height:1.65; color:' + C.ink + '; margin:' + (STYLE === 'ticket' ? '0' : '22px 0 0; padding-top:16px; border-top:1px solid ' + C.line) + ';">Centres and trainers: email <a href="mailto:' + MAIL + '" style="color:' + C.teal + '; font-weight:700; text-decoration:none;">' + MAIL + '</a> for the rates and a demo link. You get a real course, two weeks in, to walk around as an assessor or as a volunteer student, and you can type in all of it.</p>';
+    var ask = '<p style="font-family:' + SANS + '; font-size:14px; line-height:1.65; color:' + C.ink + '; margin:' + (STYLE === 'ticket' ? '0' : '22px 0 0; padding-top:16px; border-top:1px solid ' + C.line) + ';">Centres and trainers: email <a href="mailto:' + MAIL + '" style="color:' + C.teal + '; font-weight:700; text-decoration:none;">' + MAIL + '</a> for the rates and a demo link. You get a real course, two weeks in, to walk around as a tutor, a trainee, an assessor or a volunteer student, and you can type in all of it.</p>';
     return page('Connect Lite — the film', letter, wrap(ctx, 'A short film', 'A CELTA course, start to finish', '', sheet, ask));
   }
 
@@ -231,9 +231,7 @@
       ? '<table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px; width:100%;"><tr><td style="padding:6px 8px 26px;">' +
           '<div style="font-family:' + SERIF + '; font-size:17px; line-height:1.7; color:' + C.ink + ';">' + paras(ctx.note) + '</div>' +
           '<div style="font-family:\'Instrument Serif\',Georgia,serif; font-style:italic; font-size:26px; color:' + C.inkWarm + '; margin:14px 0 0;">Ramy</div>' +
-          /* the logo, as everywhere (Ramy, 24 Oct 2026: "it's a logo, for God's sake"): tile, Connect, LITE tight under the C */
-          '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:12px 0 0;"><tr><td style="vertical-align:middle;">' + tile(28) + '</td>' +
-            '<td style="vertical-align:middle; padding-left:9px;"><div style="font-family:\'Instrument Serif\',Georgia,serif; font-style:italic; font-size:21px; line-height:1; color:' + C.gold + ';">Connect<span style="font-family:' + SANS + '; font-style:normal; font-size:8px; font-weight:600; line-height:1; letter-spacing:0.24em; text-transform:uppercase; color:' + C.ink + '; margin-left:4px;">Lite</span></div></td></tr></table>' +
+          /* no lockup under the signature (Ramy, 25 Oct 2026): the card's own bar carries it */
         '</td></tr></table>'
       : '';
     if (ctx.only === 'film') return filmDoc(letter, ctx);
