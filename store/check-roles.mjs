@@ -38,9 +38,9 @@ const MATRIX = HERE + 'store/role-matrix.json';
 const raw = async (b) => {
   for (let i = 0; i < 5; i++) {
     try {
-      const r = await (await fetch(STORE, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(b) })).json();
+      const r = await (await fetch(STORE, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(b), signal: AbortSignal.timeout(30000) })).json();
       if (r && (r.ok || r.error)) return r;
-    } catch (e) {}
+    } catch (e) { if (i === 4) return { ok: false, error: 'no answer in 30 s x5 (' + String(e.message || e).slice(0, 30) + ')' }; }
     await new Promise((r) => setTimeout(r, 1500));
   }
   throw new Error('store unreachable');
@@ -106,16 +106,24 @@ const MAY = { tutor: 1, owner: 1 };   // the roles a DANGER op is never exercise
 
 /* ---- 1. the matrix ---------------------------------------------------- */
 const matrix = {}, replies = {};
-for (const op of OPS) {
+/* The seven roles are asked at once for each op: Apps Script answers in 2-13 s,
+   and one after another the seventy ops took over an hour (25 Oct 2026). */
+/* A token names a trainee, so "nobody" and the volunteer must not carry one in
+   an op's arguments (the first run gave nobody a trainee's token for get, put
+   and gridSet, and nobody was a trainee). Five ops at a time: at 10 s a call
+   the seventy took eighty minutes one after another. */
+const argsFor = (op, role) => { const a = Object.assign({}, ARGS[op] || {}); if (role === 'nobody' || role === 'volunteer') delete a.token; return a; };
+const one = async (op) => {
   matrix[op] = {};
-  for (const [role, cred] of Object.entries(ROLES)) {
-    if (DANGER.has(op) && MAY[role]) { matrix[op][role] = '(not exercised)'; continue; }
-    const r = await raw(Object.assign({ op }, cred, ARGS[op] || {}));
+  await Promise.all(Object.entries(ROLES).map(async ([role, cred]) => {
+    if (DANGER.has(op) && MAY[role]) { matrix[op][role] = '(not exercised)'; return; }
+    const r = await raw(Object.assign({ op }, cred, argsFor(op, role)));
     matrix[op][role] = r.ok ? 'ok' : String(r.error || 'refused').slice(0, 60);
     (replies[role] = replies[role] || {})[op] = r;
-  }
+  }));
   process.stdout.write('.');
-}
+};
+for (let i = 0; i < OPS.length; i += 5) await Promise.all(OPS.slice(i, i + 5).map(one));
 console.log('\n' + OPS.length + ' ops x ' + Object.keys(ROLES).length + ' roles');
 
 /* ---- 2. the secrets ----------------------------------------------------- */
