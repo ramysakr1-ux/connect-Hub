@@ -75,7 +75,7 @@ window.HubStore = (function(){
      see hub-sync.js. These are the calls that only read; anything else on a
      demo is answered here and never sent -- no email, no upload, no roster
      change. feedback and report are the visitor's own note to Lite's maker. */
-  var READS = { celta5Assets:1, boot:1, get:1, me:1, course:1, roster:1, audio:1, ping:1, pins:1, materials:1, stats:1, inbox:1, readContribution:1, feedbackSummary:1, centres:1, ownerCourses:1, assessorLink:1, getInterviewAudio:1, feedback:1, report:1, demoCard:1 };
+  var READS = { celta5Assets:1, boot:1, get:1, me:1, course:1, roster:1, audio:1, ping:1, pins:1, materials:1, stats:1, inbox:1, readContribution:1, feedbackSummary:1, centres:1, ownerCourses:1, assessorLink:1, getInterviewAudio:1, feedback:1, report:1, demoCard:1, similar:1, webCheck:1, aiCheck:1, checksOn:1 };
   function isDemo(){ if (window.HUB_DEMO != null) return !!window.HUB_DEMO; try { var c = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; return !!c.demoToday; } catch (e) { return false; } }
   async function call(body, timeoutMs){
     var payload = Object.assign({}, body);

@@ -1501,6 +1501,56 @@ case 'inbox': {
     case 'transcriptionOn': {
       return { on: !!PropertiesService.getScriptProperties().getProperty('OPENAI_KEY') };
     }
+    /* ---- IS IT THEIR OWN WORK? (25 Oct 2026) ------------------------------
+       Ramy: "a deterrent against plagiarism ... anything to do with another
+       assignment that was maybe written on Lite, like other courses ... scan
+       anything that's been published online." Three passes, each a read, each
+       pressed by a tutor and never run by itself:
+         similar   every assignment ever submitted on Lite, this course first
+                   (collusion) then every other (a previous candidate), by runs
+                   of eight words; the other trainee is never named.
+         webCheck  the six most distinctive sentences, each searched in quotes
+                   through Google's Programmable Search (keys in the properties).
+         aiCheck   the pairs similar found, read by Claude for paraphrase.
+       Nothing marks anything. On a demo course nothing leaves Lite. */
+    case 'checksOn': {
+      var cp = PropertiesService.getScriptProperties();
+      return { web: !!(cp.getProperty('GOOGLE_CSE_KEY') && cp.getProperty('GOOGLE_CSE_CX')), ai: !!cp.getProperty('CLAUDE_KEY') };
+    }
+    case 'setSearchKey': {
+      requireOwner_(owner);
+      var sp = PropertiesService.getScriptProperties(), sk = String(req.key || '').trim(), scx = String(req.cx || '').trim();
+      if (sk) sp.setProperty('GOOGLE_CSE_KEY', sk); else sp.deleteProperty('GOOGLE_CSE_KEY');
+      if (scx) sp.setProperty('GOOGLE_CSE_CX', scx); else if (!sk) sp.deleteProperty('GOOGLE_CSE_CX');
+      return { on: !!(sp.getProperty('GOOGLE_CSE_KEY') && sp.getProperty('GOOGLE_CSE_CX')) };
+    }
+    case 'setClaudeKey': {
+      requireOwner_(owner);
+      var ck2 = String(req.key || '').trim();
+      if (ck2 && !/^sk-ant-/.test(ck2)) throw new Error('That does not look like a Claude API key');
+      var cpp = PropertiesService.getScriptProperties();
+      if (ck2) cpp.setProperty('CLAUDE_KEY', ck2); else cpp.deleteProperty('CLAUDE_KEY');
+      return { on: !!ck2 };
+    }
+    case 'similar': {
+      requireTutor_(tutor);
+      if (!me) throw new Error('No token');
+      return similar_(course, me.token, String(req.code || ''), String(req.round || 'sub1'));
+    }
+    case 'webCheck': {
+      requireTutor_(tutor);
+      if (!me) throw new Error('No token');
+      var wset = courseRead_(course.id, 'settings') || {};
+      if (wset.demoToday) throw new Error('Not on a demo course: nothing leaves Lite');
+      return webCheck_(course, me.token, String(req.code || ''), String(req.round || 'sub1'));
+    }
+    case 'aiCheck': {
+      requireTutor_(tutor);
+      if (!me) throw new Error('No token');
+      var aset = courseRead_(course.id, 'settings') || {};
+      if (aset.demoToday) throw new Error('Not on a demo course: nothing leaves Lite');
+      return aiCheck_(course, me.token, String(req.code || ''), String(req.round || 'sub1'));
+    }
     case 'setOpenAiKey': {
       requireOwner_(owner);
       var oaKey = String(req.key || '').trim();
@@ -2050,6 +2100,114 @@ function read_(courseId, token, kind) {
    sheet twelve times, and the wait grew with the course. Apps Script answers in
    1.5-13 s at the best of times (Ramy, 21 Sep 2026: "there seems to be a lag"),
    so the reads inside one call are the part worth not repeating. */
+/* ---- is it their own work: the three passes (25 Oct 2026) ------------------ */
+function submissionText_(sub) {
+  if (!sub) return '';
+  var parts = [], t = sub.text || {}, f = sub.fields || {};
+  Object.keys(t).sort().forEach(function (k) { parts.push(String(t[k] || '')); });
+  Object.keys(f).forEach(function (k) { parts.push(String(f[k] || '')); });
+  return parts.join('\n').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim();
+}
+function words_(s) { return String(s || '').toLowerCase().replace(/[\u2019']/g, '').match(/[a-z0-9\u00c0-\u024f]+/g) || []; }
+function shingles_(w, n) { var out = {}; for (var i = 0; i + n <= w.length; i++) { var k = w.slice(i, i + n).join(' '); if (out[k] === undefined) out[k] = i; } return out; }
+/* Every submission on the store with at least 80 words: course, token, assignment, round, text. */
+function allSubmissions_() {
+  var sh = sheet_(SHEET_RECORDS), last = sh.getLastRow(); if (last < 2) return [];
+  var rows = sh.getRange(2, 1, last - 1, 4).getValues(), out = [];
+  rows.forEach(function (r) {
+    if (String(r[2]) !== 'assignments') return;
+    var A; try { A = JSON.parse(r[3]); } catch (e) { return; }
+    if (!A || typeof A !== 'object') return;
+    Object.keys(A).forEach(function (code) {
+      var a = A[code]; if (!a) return;
+      ['sub1', 'sub2'].forEach(function (round) {
+        var txt = submissionText_(a[round]); if (txt.split(' ').length < 80) return;
+        out.push({ course: String(r[0]), token: String(r[1]), code: code, round: round, text: txt, at: a[round + 'At'] || '' });
+      });
+    });
+  });
+  return out;
+}
+function similar_(course, token, code, round) {
+  var all = allSubmissions_(), mine = null;
+  all.forEach(function (s) { if (s.course === course.id && s.token === token && s.code === code && s.round === round) mine = s; });
+  if (!mine) throw new Error('Nothing submitted for that round, or too short to compare');
+  var N = 8, w = words_(mine.text), S = shingles_(w, N), total = Object.keys(S).length;
+  if (!total) return { total: 0, words: w.length, matches: [], compared: 0 };
+  var names = {}; courses_(true).forEach(function (c) { names[c.id] = c.name; });
+  var matches = [], compared = 0;
+  all.forEach(function (o) {
+    if (o === mine) return;
+    if (o.course === course.id && o.token === token) return;   // the same trainee's other rounds and assignments
+    compared++;
+    var OS = shingles_(words_(o.text), N), shared = [];
+    Object.keys(S).forEach(function (k) { if (OS[k] !== undefined) shared.push(S[k]); });
+    if (shared.length < 6) return;                               // about two sentences
+    shared.sort(function (a, b) { return a - b; });
+    var runs = [], start = shared[0], prev = shared[0];
+    for (var i = 1; i <= shared.length; i++) {
+      if (i < shared.length && shared[i] === prev + 1) { prev = shared[i]; continue; }
+      runs.push([start, prev + N]);
+      if (i < shared.length) { start = shared[i]; prev = shared[i]; }
+    }
+    runs.sort(function (a, b) { return (b[1] - b[0]) - (a[1] - a[0]); });
+    var passages = runs.slice(0, 3).map(function (r) { return w.slice(r[0], Math.min(r[1], r[0] + 70)).join(' '); });
+    var same = o.course === course.id, cset = same ? {} : (courseRead_(o.course, 'settings') || {});
+    matches.push({ sameCourse: same, course: same ? 'this course' : (cset.courseName || names[o.course] || 'another course'), centre: same ? '' : (cset.centreName || ''),
+                   code: o.code, round: o.round, when: o.at, shared: shared.length, pct: Math.round(100 * shared.length / total), passages: passages, ref: o.course + '|' + o.token + '|' + o.code + '|' + o.round });
+  });
+  matches.sort(function (a, b) { return b.shared - a.shared; });
+  return { total: total, words: w.length, compared: compared, matches: matches.slice(0, 8) };
+}
+function webCheck_(course, token, code, round) {
+  var p = PropertiesService.getScriptProperties(), key = p.getProperty('GOOGLE_CSE_KEY'), cx = p.getProperty('GOOGLE_CSE_CX');
+  if (!key || !cx) return { off: true };
+  var A = read_(course.id, token, 'assignments') || {}, txt = submissionText_((A[code] || {})[round]);
+  if (!txt) throw new Error('Nothing submitted for that round');
+  var sents = txt.split(/(?<=[.!?])\s+/).map(function (x) { return x.trim(); }).filter(function (x) { var n = x.split(' ').length; return n >= 10 && n <= 30; });
+  var score = function (x) { return x.replace(/[^a-z]/gi, '').length / x.split(' ').length; };   // longer words, more distinctive
+  sents.sort(function (a, b) { return score(b) - score(a); });
+  var picked = [], seen = {};
+  for (var i = 0; i < sents.length && picked.length < 6; i++) { var k = sents[i].slice(0, 40); if (seen[k]) continue; seen[k] = 1; picked.push(sents[i]); }
+  var out = [];
+  picked.forEach(function (s) {
+    var q = '"' + s.replace(/"/g, '').slice(0, 160) + '"';
+    var url = 'https://www.googleapis.com/customsearch/v1?key=' + encodeURIComponent(key) + '&cx=' + encodeURIComponent(cx) + '&num=5&q=' + encodeURIComponent(q);
+    try {
+      var r = UrlFetchApp.fetch(url, { muteHttpExceptions: true }), j = JSON.parse(r.getContentText());
+      var items = (j.items || []).map(function (it) { return { title: String(it.title || '').slice(0, 120), link: String(it.link || ''), snippet: String(it.snippet || '').slice(0, 240) }; });
+      out.push({ sentence: s, hits: items, error: j.error ? String(j.error.message || '').slice(0, 120) : '' });
+    } catch (e) { out.push({ sentence: s, hits: [], error: String(e && e.message || e).slice(0, 120) }); }
+  });
+  return { checked: out.length, found: out.filter(function (x) { return x.hits.length; }).length, sentences: out };
+}
+function aiCheck_(course, token, code, round) {
+  var key = PropertiesService.getScriptProperties().getProperty('CLAUDE_KEY');
+  if (!key) return { off: true };
+  var sim = similar_(course, token, code, round);
+  if (!sim.matches.length) return { model: '', results: [], note: 'No candidate pair to read: the first pass found nothing shared.' };
+  var all = allSubmissions_(), byRef = {};
+  all.forEach(function (s) { byRef[s.course + '|' + s.token + '|' + s.code + '|' + s.round] = s; });
+  var mine = byRef[course.id + '|' + token + '|' + code + '|' + round];
+  var model = 'claude-haiku-5-5', results = [];
+  sim.matches.slice(0, 3).forEach(function (m) {
+    var o = byRef[m.ref]; if (!o) return;
+    var prompt = 'Two CELTA written assignments follow, each cut to its first 6000 characters. Both answer the same brief, so shared quotations of the brief, of set texts and of standard terminology are expected and do not count. ' +
+      'Do they contain passages that say the same thing in different words, beyond what two independent writers on the same brief would share? ' +
+      'Answer with JSON only: {"verdict":"none"|"some"|"substantial","pairs":[{"a":"<up to 40 words from text A>","b":"<the matching up to 40 words from text B>","note":"<one sentence>"}]} with at most 3 pairs.\n\nTEXT A:\n' + mine.text.slice(0, 6000) + '\n\nTEXT B:\n' + o.text.slice(0, 6000);
+    try {
+      var r = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', { method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+        headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+        payload: JSON.stringify({ model: model, max_tokens: 900, messages: [{ role: 'user', content: prompt }] }) });
+      var j = JSON.parse(r.getContentText());
+      if (j.error) { results.push({ course: m.course, code: m.code, round: m.round, error: String(j.error.message || j.error.type || '').slice(0, 160) }); return; }
+      var text = ((j.content || []).map(function (c) { return c.text || ''; }).join('')).trim();
+      var jm = text.match(/\{[\s\S]*\}/), parsed = null; try { parsed = jm ? JSON.parse(jm[0]) : null; } catch (e) {}
+      results.push({ course: m.course, code: m.code, round: m.round, verdict: parsed ? String(parsed.verdict || '') : '', pairs: parsed && Array.isArray(parsed.pairs) ? parsed.pairs.slice(0, 3).map(function (x) { return { a: String(x.a || '').slice(0, 400), b: String(x.b || '').slice(0, 400), note: String(x.note || '').slice(0, 240) }; }) : [], raw: parsed ? '' : text.slice(0, 300) });
+    } catch (e) { results.push({ course: m.course, code: m.code, round: m.round, error: String(e && e.message || e).slice(0, 160) }); }
+  });
+  return { model: model, results: results };
+}
 function withoutEmails_(list, strip) {
   if (!strip) return list;
   return list.map(function (t) { var o = {}; Object.keys(t).forEach(function (k) { if (k !== 'email') o[k] = t[k]; }); return o; });

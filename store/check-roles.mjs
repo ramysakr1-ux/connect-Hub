@@ -95,13 +95,14 @@ const ARGS = {
   courseFeedback: { answers: {}, named: false }, materials: { course: sc.id }, feedback: { text: 'role check', page: 'check', role: 'check' },
   report: { text: 'role check', page: 'check', role: 'check', kind: 'check' }, readContribution: { set: 'none' }, pins: {}, inbox: {},
   feedbackSummary: {}, stats: {}, ownerPulse: {}, centres: {}, celta5Assets: {}, audio: { id: 'none' }, assessorLink: {}, demoCard: {}, me: {}, roster: {}, course: {}, boot: {}, ping: {},
+  similar: { token: T1, code: 'lsrt', round: 'sub1' }, webCheck: { token: T1, code: 'lsrt', round: 'sub1' }, aiCheck: { token: T1, code: 'lsrt', round: 'sub1' }, checksOn: {},
 };
 /* Called ONLY as the roles that must be refused: the permitted role would
    mutate, mail, upload, rotate or delete something that is not this check's. */
 const DANGER = new Set(['deleteCourse', 'purgeCourse', 'undeleteCourse', 'restoreFromBackup', 'rotateKey', 'rotateAssessorKey', 'rotateOwnerKey', 'setOpenAiKey', 'setTutorPin', 'setMyPin',
   'installReminders', 'mailCourseFeedback', 'sendCard', 'volunteerInvite', 'volunteerNotify', 'transcribeInterview', 'transcriptionOn', 'putInterviewAudio', 'deleteInterviewAudio', 'getInterviewAudio',
   'putAsset', 'putMaterial', 'purgeMaterials', 'purgeTrainee', 'removeTrainee', 'reissueTrainee', 'renameTrainee', 'renameCourse', 'cloneCourse', 'createCourse', 'addTrainee', 'addTrainees',
-  'centresSeed', 'putDefaultGuidance', 'inboxRow', 'postAt', 'contribute', 'poolHeard', 'feedback', 'report']);
+  'centresSeed', 'putDefaultGuidance', 'inboxRow', 'postAt', 'contribute', 'poolHeard', 'feedback', 'report', 'webCheck', 'aiCheck', 'setSearchKey', 'setClaudeKey']);
 const MAY = { tutor: 1, owner: 1 };   // the roles a DANGER op is never exercised as
 
 /* ---- 1. the matrix ---------------------------------------------------- */

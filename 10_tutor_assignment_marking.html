@@ -13,7 +13,7 @@
 <title>Connect Lite — Mark assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610241444">
+<link rel="stylesheet" href="hub-tokens.css?v=202610241505">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -181,8 +181,15 @@
   @keyframes mv2-hit{0%{box-shadow:0 0 0 3px oklch(70% 0.12 72 / .7); background:var(--gold-wash);}100%{box-shadow:0 0 0 3px oklch(70% 0.12 72 / 0); background:transparent;}}
   @media(prefers-reduced-motion:reduce){ .mv2-seg{transition:none;} .critrow.mv2-hit{animation:none;} }
   @media print{ .mv2{display:none;} }
+  /* Is it their own work? */
+  .mk-h3{font-family:'Instrument Sans','Karla',sans-serif; font-weight:600; font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--brick); margin:16px 0 6px;}
+  .mk-match{border-top:1px solid var(--row-line); padding:10px 0; font-size:0.9rem; line-height:1.5;}
+  .mk-match blockquote{margin:6px 0 0; padding:8px 12px; background:var(--sand); border-left:3px solid var(--sand-line); border-radius:0 8px 8px 0; font-size:0.88rem; color:var(--ink);}
+  .mk-hit{display:flex; flex-direction:column; gap:2px; margin:8px 0 0 12px; font-size:0.86rem;} .mk-hit span{color:var(--grey);}
+  .mk-pair{margin-top:8px;} .mk-pair .note{display:block; margin-top:4px;}
+  .mk-same{color:var(--brick); font-weight:700;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610241444">
+<link rel="stylesheet" href="hub-house.css?v=202610241505">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -191,16 +198,16 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610241444"></script>
-<script src="hub-exchange.js?v=202610241444"></script>
-<script src="hub-docx.js?v=202610241444"></script>
-<script src="hub-marking.js?v=202610241444"></script>
-<script src="hub-due.js?v=202610241444"></script>
-<script src="hub-shared.js?v=202610241444"></script>
-<script src="hub-store.js?v=202610241444"></script>
-<script src="hub-say.js?v=202610241444"></script>
-<script src="hub-sync.js?v=202610241444"></script>
-<script src="fol-interview.js?v=202610241444"></script>
+<script src="assignment-defaults.js?v=202610241505"></script>
+<script src="hub-exchange.js?v=202610241505"></script>
+<script src="hub-docx.js?v=202610241505"></script>
+<script src="hub-marking.js?v=202610241505"></script>
+<script src="hub-due.js?v=202610241505"></script>
+<script src="hub-shared.js?v=202610241505"></script>
+<script src="hub-store.js?v=202610241505"></script>
+<script src="hub-say.js?v=202610241505"></script>
+<script src="hub-sync.js?v=202610241505"></script>
+<script src="fol-interview.js?v=202610241505"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -415,6 +422,57 @@ function wordDiff(x, y){
   while (j < m) ob += w(B[j++], 'ins');
   return [oa, ob];
 }
+/* IS IT THEIR OWN WORK? (Ramy, 25 Oct 2026: "anything to do with another assignment
+   that was maybe written on Lite, like other courses ... anything that's been published
+   online"). Three passes, each pressed by the tutor, none of them marking anything:
+   similar (every other assignment on Lite, by runs of eight words; the other trainee
+   never named), webCheck (six distinctive sentences through a Google search key),
+   aiCheck (the pairs the first pass found, read for paraphrase). The store refuses the
+   last two on a demo course, so nothing leaves Lite there. */
+function checkCard(sub){
+  const round = sub.sub2 ? 'sub2' : 'sub1';
+  return `<div class="card mk-check" id="checkCard"><h2>Is it their own work?</h2>
+    <p class="note" style="margin:0 0 10px;">Three passes, when you press: every other assignment on Lite, by shared runs of words; the web, sentence by sentence; then paraphrase between any pair the first pass finds. It marks nothing and names nobody. What it finds is for you to read.</p>
+    <div class="actions" style="margin:0; justify-content:flex-start;"><button type="button" class="btn btn-quiet" id="ownCheck" data-round="${round}">Check this assignment</button><span class="note" id="checkState"></span></div>
+    <div id="checkOut"></div></div>`;
+}
+async function runCheck(round){
+  const out = $('checkOut'), st = $('checkState'), b = $('ownCheck'); if (!out) return;
+  const S = window.HubStore, body = { code: CURRENT, round, token: TRAINEE_ID };
+  const name = c => NAMES[c] || String(c || '').toUpperCase();
+  b.disabled = true; st.textContent = 'Reading every assignment on Lite…'; out.innerHTML = '';
+  let sim = null;
+  try { sim = await S.call(Object.assign({ op: 'similar' }, body)); }
+  catch (e) { out.innerHTML = `<p class="note">It could not be compared: ${esc(e.message)}</p>`; b.disabled = false; st.textContent = ''; return; }
+  let html = `<h3 class="mk-h3">Across Lite</h3>`;
+  if (!sim.matches.length) html += `<p class="note">Compared with ${sim.compared} other submission${sim.compared === 1 ? '' : 's'}. Nothing shared beyond a sentence.</p>`;
+  else html += sim.matches.map(m => `<div class="mk-match"><b>${esc(m.course)}${m.centre ? ' · ' + esc(m.centre) : ''}</b> · ${esc(name(m.code))}${m.round === 'sub2' ? ' (resubmission)' : ''} · ${m.shared} shared run${m.shared === 1 ? '' : 's'} of eight words, ${m.pct}% of this text${m.sameCourse ? ' · <span class="mk-same">same course</span>' : ''}${m.passages.map(x => `<blockquote>${esc(x)}</blockquote>`).join('')}</div>`).join('');
+  out.innerHTML = html;
+  st.textContent = 'Searching the web…';
+  html += `<h3 class="mk-h3">On the web</h3>`;
+  try {
+    const web = await S.call(Object.assign({ op: 'webCheck' }, body));
+    if (web.off) html += `<p class="note">Web search is not switched on. The owner adds a Google search key in the console.</p>`;
+    else if (!web.found) html += `<p class="note">${web.checked} distinctive sentences searched in quotation marks. None found on a page Google indexes.</p>`;
+    else html += web.sentences.filter(x => x.hits.length).map(x => `<div class="mk-match"><blockquote>${esc(x.sentence)}</blockquote>${x.hits.map(h => `<div class="mk-hit"><a href="${esc(h.link)}" target="_blank" rel="noopener">${esc(h.title || h.link)}</a><span>${esc(h.snippet)}</span></div>`).join('')}</div>`).join('') + `<p class="note">${web.found} of ${web.checked} sentences found. A lead, not proof: open the page and read it.</p>`;
+  } catch (e) { html += `<p class="note">${esc(e.message)}</p>`; }
+  out.innerHTML = html;
+  if (sim.matches.length) {
+    st.textContent = 'Reading the pairs for paraphrase…';
+    html += `<h3 class="mk-h3">Paraphrase</h3>`;
+    try {
+      const ai = await S.call(Object.assign({ op: 'aiCheck' }, body));
+      if (ai.off) html += `<p class="note">The paraphrase pass is not switched on. The owner adds a Claude key in the console.</p>`;
+      else if (!ai.results.length) html += `<p class="note">${esc(ai.note || 'Nothing to read.')}</p>`;
+      else html += ai.results.map(r => `<div class="mk-match"><b>${esc(r.course)}</b> · ${esc(name(r.code))}${r.round === 'sub2' ? ' (resubmission)' : ''}: ${r.error ? 'could not be read (' + esc(r.error) + ')' : r.verdict === 'none' ? 'nothing beyond the brief' : r.verdict === 'substantial' ? 'substantial paraphrase' : r.verdict === 'some' ? 'some paraphrase' : esc(r.raw || 'no answer')}${(r.pairs || []).map(x => `<div class="mk-pair"><blockquote>${esc(x.a)}</blockquote><blockquote>${esc(x.b)}</blockquote><span class="note">${esc(x.note)}</span></div>`).join('')}</div>`).join('');
+    } catch (e) { html += `<p class="note">${esc(e.message)}</p>`; }
+    out.innerHTML = html;
+  }
+  st.textContent = 'Checked at ' + new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + '.';
+  b.disabled = false; b.textContent = 'Check again';
+}
+document.addEventListener('click', e => { const b = e.target.closest('#ownCheck'); if (b) runCheck(b.dataset.round); });
+
 function compareRounds(a, sub){
   const s1 = sub.sub1 || {}, s2 = sub.sub2 || {}, m1 = sub.criteriaMarks.sub1 || [];
   const locked = i => { const cs = (a.criteria || []).map((c, ci) => ({ c, ci })).filter(x => x.c.sectionIndex === i); return cs.length > 0 && cs.every(x => m1[x.ci] === true); };
@@ -551,6 +609,7 @@ function render(){
   } else {
     if (sub.sub2) left += compareRounds(a, sub);
     else left += `<div class="card mk-round"><h2>First submission</h2>${summarize(a, sub.sub1, 'sub1')}</div>`;
+    left += checkCard(sub);
     if (sub.feedback && sub.feedback.outcome) {
       right += `${sub.stage === 'closed' ? '<div class="card"><h2>Marked and returned</h2><p class="mk-how" style="margin:0;">This assignment is finished. The work and your feedback are kept here as the record; there is nothing to do.</p></div>' : ''}<div class="card"><h2>Your feedback</h2><div class="readonly">${esc(sub.feedback.outcome)}${sub.feedback.generalComment1?('\n\n'+nl2br(sub.feedback.generalComment1)):''}${sub.feedback.generalComment2?('\n\n'+nl2br(sub.feedback.generalComment2)):''}</div></div>`;
     }
