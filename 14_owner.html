@@ -38,7 +38,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610240932">
+<link rel="stylesheet" href="hub-tokens.css?v=202610240942">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 70px;}
@@ -207,7 +207,7 @@
   @media (max-width:760px){ .demo .doors{grid-template-columns:1fr 1fr;} .setting{grid-template-columns:1fr;} }
   @media (max-width:520px){ .demo .doors{grid-template-columns:1fr;} .title h1{font-size:1.8rem;} body{padding:0 14px 60px;} .card{padding:16px;} .row-course .acts .btn{flex:1 1 auto; justify-content:center;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610240932">
+<link rel="stylesheet" href="hub-house.css?v=202610240942">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -230,10 +230,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610240932"></script>
-<script src="hub-store.js?v=202610240932"></script>
-<script src="hub-say.js?v=202610240932"></script>
-<script src="hub-card-mail.js?v=202610240932"></script>
+<script src="hub-shared.js?v=202610240942"></script>
+<script src="hub-store.js?v=202610240942"></script>
+<script src="hub-say.js?v=202610240942"></script>
+<script src="hub-card-mail.js?v=202610240942"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after. */
 const OWNER_STORE = 'hub:o';
@@ -267,7 +267,8 @@ function ratesSaved(){ try { return JSON.parse(ls.get(RATES_KEY)) || {}; } catch
 function rateNum(v){ const n = Number(String(v == null ? '' : v).replace(/[^0-9.]/g, '')); return n > 0 ? n : 0; }
 /* all four, or none: a price email with a gap in its table is worse than the console saying so */
 function ratesList(){ const r = ratesSaved(); const list = RATE_ROWS.map(([k, n, label]) => ({ label, n, total: rateNum(r[k]) })); return list.every(x => x.total > 0) ? list : null; }
-function filmLink(){ let v = (ls.get(FILM_KEY) || '').trim(); if (/\/film\/(connect-lite-film\.(webm|mp4)|watch\.html)$/i.test(v)) { v = v.replace(/\/film\/(connect-lite-film\.(webm|mp4)|watch\.html)$/i, '/film/course-journey.html'); ls.set(FILM_KEY, v); } return v; }
+/* The film is on every card (Ramy, 25 Oct 2026): the course film unless another link is typed under Settings. */
+function filmLink(){ let v = (ls.get(FILM_KEY) || '').trim(); if (/\/film\/(connect-lite-film\.(webm|mp4)|watch\.html)$/i.test(v)) { v = v.replace(/\/film\/(connect-lite-film\.(webm|mp4)|watch\.html)$/i, '/film/course-journey.html'); ls.set(FILM_KEY, v); } return v || base() + 'film/course-journey.html'; }
 function cardKind(){ const v = ls.get(CARD_KIND_KEY); return (v === 'film' || v === 'price') ? v : ''; }
 function cardStyle(){ return ls.get(CARD_STYLE_KEY) === 'ticket' ? 'ticket' : 'welcome'; }
 function cardCopyTo(){ return (ls.get(CARD_CC_KEY) || '').trim(); }
@@ -531,7 +532,7 @@ function render(courses, msg){
 
     <details class="fold" id="foldSettings"><summary>Settings <small>the film, the rates, the transcription key, the addresses</small></summary>
       <div class="card">
-        <div class="setting"><label for="filmLink">The film</label><div class="v"><input type="url" id="filmLink" class="wide" placeholder="https://…" value="${esc(filmLink())}">${filmLink() ? `<a class="linkbtn" href="${esc(filmLink())}" target="_blank" rel="noopener">Open</a>` : ''}<span class="note">Rides on every card and message. Kept in this browser.</span></div></div>
+        <div class="setting"><label for="filmLink">The film</label><div class="v"><input type="url" id="filmLink" class="wide" placeholder="${esc(base() + 'film/course-journey.html')}" value="${esc(ls.get(FILM_KEY) || '')}"><a class="linkbtn" href="${esc(filmLink())}" target="_blank" rel="noopener">Open</a><span class="note">On every card and message. The course film, unless you put another link here.</span></div></div>
         <div class="setting"><label>The rates, in pounds</label><div class="v">${RATE_ROWS.map(([k, n, l]) => `<input type="text" inputmode="numeric" class="rate" data-rate="${k}" aria-label="${esc(l)}" placeholder="${esc(l)}" value="${esc(ratesSaved()[k] || '')}">`).join('')}<span class="note">The total for each package. Only the price card shows them, and it works out the price per course from these. Never in Lite’s code.</span></div></div>
         <div class="setting"><label for="txKey">Transcribing interviews</label><div class="v"><input type="password" id="txKey" class="wide" placeholder="OpenAI key" autocomplete="off" spellcheck="false"><button class="btn small" id="txSave" type="button">Save</button><span id="txState" class="state">checking…</span><span class="note" id="txNote">The key lives in the store, never in a page. Empty and save switches transcripts off.</span></div></div>
         <div class="setting"><label>Addresses</label><div class="v"><button class="btn small" id="toggleUrls" type="button">${SHOW_URLS ? 'Hide the raw links' : 'Show the raw links'}</button><span class="note">To find which course a key belongs to.</span></div></div>
