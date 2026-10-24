@@ -29,3 +29,7 @@ Change the token in `hub-tokens.css`, not the page. Then re-stamp (`bump-assets.
 ## Hover
 
 Every card that opens something rises 3px and its paper warms a shade toward the forest; a card that is not the trainee's own (the From the course row) warms toward its slate. A card that only shows never moves. One rule, in hub-house.css (Ramy, 25 Oct 2026).
+
+## Words on green
+
+On a dark forest or navy ground the words are white, and the small marks beside them (a lesson's aim, a marker's initials) are light gold, `--a-lemon`. Never grey or purple on green (Ramy, 25 Oct 2026).

@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610242305">
+<link rel="stylesheet" href="hub-tokens.css?v=202610242314">
 <style>
   /* design_handoff_candidate_tracker (Ramy, 20 Sep 2026), with the Hub's
      colour-coded chips in the cells -- "I like the chips that you created.
@@ -242,7 +242,7 @@
   @media(hover:none){ .row.tk-row{background:none;} .cell.tk-col{background:none;} }
   @media print{ .tk-bar{display:none;} .row.tk-row, .cell.tk-col{background:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610242305">
+<link rel="stylesheet" href="hub-house.css?v=202610242314">
 </head>
 <body>
 <div class="page">
@@ -271,14 +271,14 @@
   </div>
   <div id="detail"></div>
 </div>
-<script src="hub-due.js?v=202610242305"></script>
-<script src="hub-shared.js?v=202610242305"></script>
-<script src="hub-rotation.js?v=202610242305"></script>
-<script src="assignment-defaults.js?v=202610242305"></script>
-<script src="hub-tracker.js?v=202610242305"></script>
-<script src="hub-store.js?v=202610242305"></script>
-<script src="hub-say.js?v=202610242305"></script>
-<script src="hub-sync.js?v=202610242305"></script>
+<script src="hub-due.js?v=202610242314"></script>
+<script src="hub-shared.js?v=202610242314"></script>
+<script src="hub-rotation.js?v=202610242314"></script>
+<script src="assignment-defaults.js?v=202610242314"></script>
+<script src="hub-tracker.js?v=202610242314"></script>
+<script src="hub-store.js?v=202610242314"></script>
+<script src="hub-say.js?v=202610242314"></script>
+<script src="hub-sync.js?v=202610242314"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
@@ -373,7 +373,9 @@ function dueChip(p, key, a){
     if (!st.has) return null;
     if (st.past) return A_STATE.MISSING;
     if (st.ms <= 3 * HubDue.DAY) return A_STATE.DUE;
-    return null;
+    /* not yet due: say when, so an empty cell reads as "set, not yet in" rather than nothing */
+    try { const tz = (JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}).timeZone || undefined;
+      return { cls: 'nd', t: 'due ' + new Date(st.at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: tz }), name: 'Set, not yet due' }; } catch (e) { return null; }
   }
   if (a.code === 'FAILRES') {
     const base = HubDue.resubFor(w, a.sub);
@@ -574,6 +576,8 @@ function render(){
       return `<div class="cell ${selected?'sel':''}" data-id="${esc(p.tr.id)}" data-col="${col.key}">${chip}</div>`;
     }).join('');
     const passed = ASSN.filter(a=>['PASS','RES'].includes(p.asg[a.key].code)).length;
+    /* the same rule for the assignments: out of the ones marked so far, not out of four */
+    const marked = ASSN.filter(a=>['PASS','RES','FAIL','FAILRES','RESLATE'].includes(p.asg[a.key].code)).length;
     /* design-handoff-candidate-tracker §Tail column: "5/6 to standard across
        TP1-6". That is all but the last two of an eight-TP course, NOT the first
        two thirds (which would be TP1-5) -- so it is kept as all but the last
@@ -581,8 +585,12 @@ function render(){
        course. The spec gives one number and this preserves it; do not re-derive
        it from the stage bands, which is what got it wrong first time. */
     const tailOf = Math.max(1, TP_TOTAL - 2);
-    const toStd = TPS.slice(0,tailOf).filter(t=>['STD','ABOVE'].includes(p.tps[t.key].g)).length;
-    return `<div class="grid row ${risk?'risk':''}" style="grid-template-columns:${gridCols}"><div class="who"><div class="nm">${letterChip(p.tr)}${esc(p.tr.name)}</div>${risk?'<div class="flag">at risk</div>':''}</div>${cells}<div class="tail">${isA?passed+'/4':toStd+'/'+tailOf}</div></div>`;
+    /* ONE RULE FOR THE COURSE SO FAR (Ramy, 25 Oct 2026): nothing counts that has not happened. The tail is
+       out of the TPs graded so far inside its window, so day 10 reads 4/4, not 4/6 against two untaught. */
+    const window_ = TPS.slice(0,tailOf).filter(t=>['STD','ABOVE','NOTSTD'].includes(p.tps[t.key].g));
+    const toStd = window_.filter(t=>['STD','ABOVE'].includes(p.tps[t.key].g)).length;
+    const outOf = window_.length;
+    return `<div class="grid row ${risk?'risk':''}" style="grid-template-columns:${gridCols}"><div class="who"><div class="nm">${letterChip(p.tr)}${esc(p.tr.name)}</div>${risk?'<div class="flag">at risk</div>':''}</div>${cells}<div class="tail">${isA?(marked ? passed+'/'+marked : '·'):(outOf ? toStd+'/'+outOf : '·')}</div></div>`;
   }).join('');
   const leg = isA ? ['DUE','MISSING','WAIT','FAILRES','WAIT2','UNMARKED','FAIL','PASS','RES'].map(k=>A_STATE[k]) : ['un','NOTSTD','STD','ABOVE'].map(k=>T_STATE[k]);
   html += `<div class="legend">${leg.map(s=>`<div class="it"><span class="chip ${s.cls}">${s.t}</span><span class="lb">${s.name}</span></div>`).join('')}<p class="legend-note">Inside a chip: <b>/ —</b> not double marked · <b>/ DM JB</b> the second marker’s initials</p></div>`;
