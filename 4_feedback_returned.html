@@ -13,7 +13,7 @@
 <title>Feedback returned</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610242215">
+<link rel="stylesheet" href="hub-tokens.css?v=202610242220">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -47,6 +47,11 @@
      one up under its own foot. It was on .earlier while the newest sheet was
      last, which worked only for that order. */
   .doc.tucked{margin-bottom:-14px;}
+  .earlier-fold{margin:28px 0 0;}
+  .earlier-fold > summary{list-style:none; cursor:pointer; display:inline-block; font-family:'Karla',sans-serif; font-weight:700; font-size:0.9rem; color:var(--teal); padding:10px 18px; border:1px solid var(--sand-line); border-radius:999px; background:var(--sand);}
+  .earlier-fold > summary::-webkit-details-marker{display:none;}
+  .earlier-fold[open] > summary{margin-bottom:20px;}
+  @media print{ .earlier-fold > summary{display:none;} .earlier-fold{margin:0;} }
   .doc:hover{z-index:3; transform:translateY(-3px);
     box-shadow:0 2px 4px oklch(58% 0.03 70 / 0.11), 0 16px 28px -12px oklch(58% 0.03 70 / 0.09);}
   .doc.earlier:hover{transform:scale(.975) translateY(-3px); filter:none;}
@@ -137,7 +142,7 @@
   .wordmark-spin{animation:wordmark-spin 90s linear infinite; transform-origin:50% 50%; transform-style:preserve-3d;}
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610242215">
+<link rel="stylesheet" href="hub-house.css?v=202610242220">
 </head>
 <body>
 <div class="board">
@@ -149,14 +154,14 @@
       <span id="centreName" class="hub-centre-name" style="font-family:'Newsreader',Georgia,serif;font-size:18px;color:var(--teal);"></span>
     </div>
     <h1 id="recordTitle">Your teaching practice record</h1>
-    <p id="recordIntro">Every teaching practice your tutor has returned, newest last, each with your plan, your self-evaluation and their feedback. Read-only. Print the lot as one PDF to keep.</p>
+    <p id="recordIntro">Your latest teaching practice, with your plan, your self-evaluation and your tutor’s feedback. Earlier ones are folded below. Read-only. Print them all as one PDF to keep.</p>
   </div>
   <div id="content"></div>
 </div>
-<script src="hub-shared.js?v=202610242215"></script>
-<script src="hub-store.js?v=202610242215"></script>
-<script src="hub-say.js?v=202610242215"></script>
-<script src="hub-sync.js?v=202610242215"></script>
+<script src="hub-shared.js?v=202610242220"></script>
+<script src="hub-store.js?v=202610242220"></script>
+<script src="hub-say.js?v=202610242220"></script>
+<script src="hub-sync.js?v=202610242220"></script>
 <script type="text/x-hub-app">
 function rec(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
 
@@ -330,6 +335,18 @@ if(currentOpen || past.length){
     d.classList.add(i===0?'current':'earlier');
     if(i<sheets.length-1) d.classList.add('tucked');
   });
+  /* ONE TP AT A TIME (Ramy, 25 Oct 2026: "Open it" on the TP4 feedback opened the whole course).
+     The newest is open; every earlier one folds below it, and while the feedback is still sealed
+     all of them fold under the envelope. Printing opens the fold, so the PDF still keeps every TP. */
+  const earlier = currentHeld ? sheets : sheets.slice(1);
+  if (earlier.length) {
+    const fold = document.createElement('details'); fold.className = 'earlier-fold';
+    fold.innerHTML = '<summary>Earlier teaching practice (' + earlier.length + ')</summary>';
+    earlier[0].before(fold); earlier.forEach(d => fold.appendChild(d));
+    if (!currentHeld && sheets[0]) sheets[0].classList.remove('tucked');
+    addEventListener('beforeprint', () => { fold.dataset.was = fold.open ? '1' : ''; fold.open = true; });
+    addEventListener('afterprint', () => { fold.open = fold.dataset.was === '1'; });
+  }
   const actions=document.createElement('div');
   actions.className='actions';
   actions.innerHTML='<button type="button" class="btn-print" id="printBtn">Print / Save as PDF</button>'
