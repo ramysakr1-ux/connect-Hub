@@ -57,16 +57,6 @@
       + '<p class="fp-what"><b>Connect Lite is the app a CELTA course runs on, from the first plan to the final grade.</b></p>'
       + '<p class="fp-lede">Every trainee gets a course of their own. Every tutor gets their evenings back. Built on Cambridge\u2019s handbook, made by a CELTA tutor, and simple enough for anyone.</p>'
 
-      + '<h2>What it does</h2>'
-      + '<ul class="fp-does">'
-      + '<li><b>The assessor\u2019s pack is already built.</b> Open the link and the portfolios, grades and assignments are there.</li>'
-      + '<li><b>One written assignment: 13 clicks, not 70.</b> Plan, mark and return it without leaving the page.</li>'
-      + '<li><b>One press deals the lessons.</b> Lite takes care of TP points for you.</li>'
-      + '<li><b>The CELTA 5 prints as Cambridge\u2019s booklet, already signed.</b> Trainee and tutor each sign on the screen.</li>'
-      + '<li><b>The timetable builds in a minute.</b> Or it reads the spreadsheet you already have.</li>'
-      + '<li><b>It opens on a phone, a tablet or a laptop.</b></li>'
-      + '</ul>'
-
       + '<div class="fp-film">'
       + '<div><b>See a whole course, start to finish</b><span>A whole course, start to finish, in three minutes. A real course, not a mock-up.</span></div>'
       + '<a class="fp-btn" href="film/course-journey.html">Watch the film</a>'
@@ -80,13 +70,13 @@
 
       + '<div class="fp-ask">'
       + '<b>Ask for a demo</b>'
-      + '<p>I will send you a real course, two weeks in, that you can walk around — as a tutor, as one of the trainees, as the assessor and as a volunteer student — and you can type in all of it. Nothing you do there touches anybody’s record.</p>'
+      + '<p>I’ll send you a real course, two weeks in. Walk it as a tutor, a trainee, the assessor or a volunteer student, and type in all of it. Nothing you do touches anybody’s record.</p>'
       + '<a class="fp-btn wide" href="mailto:lite@celtaconnect.com?subject=' + encodeURIComponent('Connect Lite — a demo link, please') + '">Email me for a demo link</a>'
       + '</div>'
 
       + '<div class="fp-have">'
       + '<b>Already on a course?</b>'
-      + '<p>You need your own link. Your centre emailed it to you as a card, with a button and a QR code. Open Lite from that card and your course is there. Lost it? Ask your course admin to send it again.</p>'
+      + '<p>You need your own link. Your centre emailed it as a card, with a button and a QR code. Open Lite from that card and your course is there. Lost it? Ask your course admin to send it again.</p>'
       + '</div>'
 
       + '<div class="fp-foot"><span>' + (window.hubMark ? hubMark(16) + ' ' : '') + 'designed and built by <b>Ramy</b></span><a href="mailto:lite@celtaconnect.com">lite@celtaconnect.com</a></div>'
