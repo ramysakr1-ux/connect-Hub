@@ -2135,14 +2135,25 @@ function similar_(course, token, code, round) {
   var N = 8, w = words_(mine.text), S = shingles_(w, N), total = Object.keys(S).length;
   if (!total) return { total: 0, words: w.length, matches: [], compared: 0 };
   var names = {}; courses_(true).forEach(function (c) { names[c.id] = c.name; });
-  var matches = [], compared = 0;
+  /* Boilerplate is not copying: the brief's own phrases ("I chose speaking because
+     the class"), a reference every candidate cites, the declaration. A run that
+     appears in three or more OTHER submissions is common property and is ignored;
+     what is left has to amount to a paragraph (eight runs, or five per cent). */
+  var others = [], df = {};
   all.forEach(function (o) {
     if (o === mine) return;
     if (o.course === course.id && o.token === token) return;   // the same trainee's other rounds and assignments
-    compared++;
-    var OS = shingles_(words_(o.text), N), shared = [];
-    Object.keys(S).forEach(function (k) { if (OS[k] !== undefined) shared.push(S[k]); });
-    if (shared.length < 6) return;                               // about two sentences
+    var OS = shingles_(words_(o.text), N);
+    others.push({ o: o, OS: OS });
+    Object.keys(S).forEach(function (k) { if (OS[k] !== undefined) df[k] = (df[k] || 0) + 1; });
+  });
+  var rare = {}; Object.keys(S).forEach(function (k) { if ((df[k] || 0) <= 2) rare[k] = S[k]; });
+  var rareTotal = Object.keys(rare).length;
+  var matches = [], compared = others.length;
+  others.forEach(function (x) {
+    var o = x.o, OS = x.OS, shared = [];
+    Object.keys(rare).forEach(function (k) { if (OS[k] !== undefined) shared.push(rare[k]); });
+    if (shared.length < 8 && (!rareTotal || 100 * shared.length / rareTotal < 5)) return;
     shared.sort(function (a, b) { return a - b; });
     var runs = [], start = shared[0], prev = shared[0];
     for (var i = 1; i <= shared.length; i++) {
@@ -2157,7 +2168,7 @@ function similar_(course, token, code, round) {
                    code: o.code, round: o.round, when: o.at, shared: shared.length, pct: Math.round(100 * shared.length / total), passages: passages, ref: o.course + '|' + o.token + '|' + o.code + '|' + o.round });
   });
   matches.sort(function (a, b) { return b.shared - a.shared; });
-  return { total: total, words: w.length, compared: compared, matches: matches.slice(0, 8) };
+  return { total: total, words: w.length, compared: compared, common: total - rareTotal, matches: matches.slice(0, 8) };
 }
 function webCheck_(course, token, code, round) {
   var p = PropertiesService.getScriptProperties(), key = p.getProperty('GOOGLE_CSE_KEY'), cx = p.getProperty('GOOGLE_CSE_CX');
