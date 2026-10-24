@@ -33,7 +33,7 @@
 <title>Handover</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610241358">
+<link rel="stylesheet" href="hub-tokens.css?v=202610241410">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);}
@@ -50,7 +50,12 @@
   .hand .who{display:flex; gap:10px; align-items:center; flex-wrap:wrap; font-family:'Newsreader',Georgia,serif; font-size:19px; font-weight:600;}
   .hand select{font:inherit; font-family:'Karla',sans-serif; font-size:14px; font-weight:700; color:var(--teal); background:var(--paper); border:0; border-radius:8px; padding:6px 10px;}
   .hand .when{color:var(--paper); opacity:.8; font-size:13.5px; flex-basis:100%;}
-  .hand .print{margin-left:auto; background:var(--paper); color:var(--teal); border:0; border-radius:999px; padding:9px 16px; font:inherit; font-weight:700; font-size:13.5px; cursor:pointer;}
+  .hand .acts{margin-left:auto; display:flex; gap:8px;}
+  .hand .print{background:var(--paper); color:var(--teal); border:0; border-radius:999px; padding:9px 16px; font:inherit; font-weight:700; font-size:13.5px; cursor:pointer;}
+  .hand .print.go{background:var(--a-lemon); color:var(--ink);}
+  .hand .when b{color:var(--paper); font-weight:700;}
+  .hand .check{flex-basis:100%; background:var(--paper); color:var(--ink); border-radius:var(--r-strip); padding:12px 14px; font-size:14px; line-height:1.5;}
+  .hand .check .row{margin-top:8px;}
   .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:16px;}
   .tr{background:var(--paper); border-radius:var(--r-card); box-shadow:var(--nb-shadow); padding:18px 20px 16px; border-top:3px solid var(--teal); break-inside:avoid;}
   .tr.amber{border-top-color:var(--a-mustard);} .tr.red{border-top-color:var(--brick);}
@@ -75,28 +80,28 @@
   .row button.quiet{background:var(--paper); color:var(--teal); border:1px solid var(--sand-line);}
   .row .saved{font-size:12.5px; color:var(--grey);}
   .empty-group{color:var(--grey); font-size:15px;}
-  @media (max-width:480px){ .wrap{padding:22px 16px 70px;} h1{font-size:27px;} .hand .print{margin-left:0;} }
+  @media (max-width:480px){ .wrap{padding:22px 16px 70px;} h1{font-size:27px;} .hand .acts{margin-left:0;} }
   @media print{
     body{background:var(--paper);} .wrap{max-width:none; padding:0;}
-    .back, .tabs, .hand .print, .row, textarea{display:none !important;}
+    .back, .tabs, .hand .acts, .hand .check, .row, textarea{display:none !important;}
     .hand{background:none; color:var(--ink); border:1px solid var(--sand-line); padding:10px 14px;} .hand .who{font-size:16px;} .hand select{appearance:none; -webkit-appearance:none; background:none; color:var(--ink); padding:0; font-size:15px;}
     .hand .when{color:var(--grey); opacity:1;}
     .grid{grid-template-columns:1fr 1fr; gap:12px;} .tr{box-shadow:none; border:1px solid var(--sand-line); border-top:3px solid var(--teal);}
     .note.empty{display:none;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610241358">
+<link rel="stylesheet" href="hub-house.css?v=202610241410">
 </head>
 <body>
 <div class="wrap">
   <a class="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"><p class="lede">Loading the course…</p></div>
 </div>
-<script src="hub-shared.js?v=202610241358"></script>
-<script src="hub-store.js?v=202610241358"></script>
-<script src="hub-say.js?v=202610241358"></script>
-<script src="hub-rotation.js?v=202610241358"></script>
-<script src="hub-sync.js?v=202610241358"></script>
+<script src="hub-shared.js?v=202610241410"></script>
+<script src="hub-store.js?v=202610241410"></script>
+<script src="hub-say.js?v=202610241410"></script>
+<script src="hub-rotation.js?v=202610241410"></script>
+<script src="hub-sync.js?v=202610241410"></script>
 <script>
 /* Whose room this is: the tutors'. hub-sync.js sets HubMode, which the gate reads;
    without it the room opened for a trainee (the pre-push check caught it, 25 Oct 2026). */
@@ -179,17 +184,44 @@ else (async function(){
     const c = chosen[group] || {};
     leaving = c.from || (contacts.find(x => x && String(x.group || '') === group && x.name) || {}).name || taughtBy(list) || tutors[0] || '';
     const receiving = c.to || tutors.find(n => n !== leaving) || '';
+    const stamps = list.map(t => (((t.records || {}).staffLinks || []).find(x => x && x.handover) || {}).handed).filter(Boolean).sort((a, b) => String(b.at).localeCompare(String(a.at)));
+    const handed = (stamps.length && stamps.length === list.length) ? stamps[0] : null;
     const opts = (sel) => tutors.map(n => `<option${n === sel ? ' selected' : ''}>${esc(n)}</option>`).join('') || '<option>Tutor</option>';
     $('app').innerHTML = `
       <p class="k">Teaching practice · ${esc(cs.courseName || '')}</p>
       <h1>Handover${group ? ': Group ' + esc(group) : ''}</h1>
       <p class="lede">${list.length} trainee${list.length === 1 ? '' : 's'}${swapDay ? ', changing tutor at the change of class on ' + esc(swapDay) : ''}. Everything here is from the record except the last line of each card, which the leaving tutor writes.</p>
       ${groups.length > 1 ? '<div class="tabs">' + groups.map(g => `<button type="button" data-group="${esc(g)}" aria-pressed="${g === group}">Group ${esc(g)}</button>`).join('') + '</div>' : ''}
-      <div class="hand"><div class="who">From <select id="from">${opts(leaving)}</select> to <select id="to">${opts(receiving)}</select></div><button type="button" class="print" id="print">Print the handover</button>
-        <span class="when">TP1 to TP${half - 1} with the first tutor, from TP${half} with the next${swapDay ? ' · ' + esc(swapDay) : ''}</span></div>
+      <div class="hand"><div class="who">From <select id="from">${opts(leaving)}</select> to <select id="to">${opts(receiving)}</select></div>
+        <span class="acts"><button type="button" class="print" id="print">Print</button><button type="button" class="print go" id="hand">${handed ? 'Hand over again' : 'Hand over'}</button></span>
+        <span class="when">TP1 to TP${half - 1} with the first tutor, from TP${half} with the next${swapDay ? ' · ' + esc(swapDay) : ''}${handed ? ' · <b>Handed over by ' + esc(handed.by) + ' to ' + esc(handed.to) + ', ' + esc(fmtDay(handed.at)) + '</b>' : ''}</span>
+        <div class="check" id="check" hidden></div></div>
       <div class="grid">${list.length ? list.map(card).join('') : '<p class="empty-group">Nobody is on this group yet.</p>'}</div>`;
     $('print').onclick = () => window.print();
     $('from').onchange = $('to').onchange = () => { chosen[group] = { from: $('from').value, to: $('to').value }; draw(); };
+    $('hand').onclick = () => {
+      const from = $('from').value, to = $('to').value, ck = $('check');
+      ck.hidden = false;
+      ck.innerHTML = `<b>Hand over Group ${esc(group)} from ${esc(from)} to ${esc(to)}?</b> Every card is stamped with today, and the course noticeboard tells the group who their tutor is from TP${half}.
+        <span class="row"><button type="button" id="yes">Yes, hand over</button><button type="button" class="quiet" id="no">Not yet</button><span class="saved" id="handmsg"></span></span>`;
+      $('no').onclick = () => { ck.hidden = true; };
+      $('yes').onclick = async () => {
+        const at = new Date().toISOString(), msg = $('handmsg'); msg.textContent = 'Handing over…'; $('yes').disabled = true;
+        try {
+          for (const t of list) {
+            const links = ((t.records || {}).staffLinks || []);
+            const cur = links.find(x => x && x.handover) || { handover: true, text: '', by: from };
+            const next = links.filter(x => x && !x.handover).concat([Object.assign({}, cur, { handed: { by: from, to, at } })]);
+            const r = await S.put('staffLinks', next, t.token);
+            t.records = t.records || {}; t.records.staffLinks = next;
+            if (r && r.demo && window.hubDemoSay) hubDemoSay('This is a demo course. The handover stays on this device.');
+          }
+          const line = 'From ' + (swapDay || 'TP' + half) + ', Group ' + group + ' is with ' + to + '. ' + from + ' has handed over.';
+          await S.call({ op: 'post', text: line, by: from, to: group });
+          draw();
+        } catch (e) { msg.textContent = 'Not handed over: ' + e.message; $('yes').disabled = false; }
+      };
+    };
     document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { group = b.dataset.group; history.replaceState(null, '', '?group=' + encodeURIComponent(group)); draw(); });
     document.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => edit(b.dataset.edit));
   }
