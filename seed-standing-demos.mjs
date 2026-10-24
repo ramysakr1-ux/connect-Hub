@@ -186,9 +186,9 @@ function settingsFor(tokens) {
     visitDate: DAY(VISIT_DAY), assessorVisit: [], docs: {},
     appianUrl: '',
     demoToday: PIN,
-    /* The demos' links open on the ticket (Ramy, 8 Oct 2026: "switch demos
-       to ticket"), so a re-plant keeps it. */
-    cardStyle: 'ticket',
+    /* The demos' links open on the Welcome look, the green panel (Ramy, 25 Oct 2026:
+       "switch it to Welcome"; it had been the ticket since 8 Oct), so a re-plant keeps it. */
+    cardStyle: 'welcome',
     /* Who signs the volunteers' certificates for the (invented) centre, 8 Oct 2026. */
     certSigner: { name: 'Helen Ward', role: 'Director of Studies', ink: '@greatvibes,0' },
   };
