@@ -678,6 +678,23 @@ case 'inbox': {
       courseWrite_('_defaults', 'guidance', req.data || null);
       return { saved: true };
     }
+    /* THE DEMO'S DOOR, FOR A BARE LINK (v123, 25 Oct 2026). The trainers' card
+       and anyone typing lite.celtaconnect.com/offer reach the offer card with
+       no key on the link, and its doors stood closed ("No demo is attached").
+       This names the demo course's tutor key, with no credential: it is the
+       key every public card already carries, and only a course pinned to a
+       day (settings.demoToday) can be named, never a real one. The mid-course
+       demo by name, else the newest pinned course. */
+    case 'demoCard': {
+      var demos = [];
+      courses_().forEach(function (c) {
+        var s = courseRead_(c.id, 'settings') || {};
+        if (s.demoToday) demos.push({ c: c, mid: /mid-course/i.test(String(c.name || '')) });
+      });
+      if (!demos.length) return { k: '' };
+      demos.sort(function (a, b) { return (b.mid - a.mid) || String(b.c.created).localeCompare(String(a.c.created)); });
+      return { k: courseKey_('tutor', demos[0].c.id), course: demos[0].c.id };
+    }
     case 'ownerCourses': {
       requireOwner_(owner);
       return { courses: ownerList_() };

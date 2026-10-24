@@ -50,6 +50,13 @@ for p in ('brand/share-card.html', 'brand/trainers-card.html'):
     need(p, r"font-weight: 600; font-size: calc\(var\(--w\) \* 8 / 21\);.{0,160}?letter-spacing: \.24em; margin-left: calc\(var\(--w\) \* 0\.19\)", "LITE 8/21, 600, 0.24em, 0.19 after", 1)
     never(p, r"grid-row", "no grid rows: LITE is not under the word")
 
+# the film pages (each draws its own): cream tile, gold and ink arcs, LITE 8/21 / 600 / 0.24em
+import glob
+for p in sorted(glob.glob('film/*.html')):
+    if '.mark .tile{' not in text(p): continue
+    need(p, r"\.mark \.tile\{[^}]*background:#f8f6f1; box-shadow:inset 0 0 0 1px", "film page tile is cream", 1)
+    need(p, r"\.mark \.pair span\{[^}]*font-size:calc\(1\.7rem \* 8 / 21\); font-weight:600;[^}]*letter-spacing:\.24em", "film page LITE 8/21 / 600 / 0.24em", 1)
+    never(p, r'viewBox="8 30 104 60"|stroke="var\(--paper\)"|background:var\(--ink-warm\);\}', "film page: old dark tile or clipped arcs")
 # the input sessions (their own sheet) and the assessor pack (a 27px word)
 need('input-sessions/session.css', r"\.hub-word\{font-family:[^;]*; font-weight:600; font-size:8px; letter-spacing:0\.24em", "session LITE 600 / 8px / 0.24em", 1)
 need('input-sessions/session.css', r"\.hub-pair\{display:inline-flex; align-items:baseline", "session logo on one baseline", 1)

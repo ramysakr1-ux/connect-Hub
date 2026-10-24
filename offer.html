@@ -47,7 +47,7 @@
 <meta name="twitter:image" content="https://lite.celtaconnect.com/brand/share-card.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610240942">
+<link rel="stylesheet" href="hub-tokens.css?v=202610240955">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -211,7 +211,7 @@
   @media(max-width:420px){ body[data-card="ticket"] .panel{padding:22px 20px 6px;} body[data-card="ticket"] .t-stub{padding:14px 20px 20px;} }
   @media print{ body[data-card="ticket"] .card{filter:none;} body[data-card="ticket"] .t-perf{background:none;} body[data-card="ticket"] .t-stub{background:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610240942">
+<link rel="stylesheet" href="hub-house.css?v=202610240955">
 </head>
 <body data-say-pill="off">
 
@@ -345,10 +345,10 @@
   </div>
 </div>
 
-<script src="hub-shared.js?v=202610240942"></script>
-<script src="hub-store.js?v=202610240942"></script>
-<script src="hub-say.js?v=202610240942"></script>
-<script src="hub-feedback.js?v=202610240942"></script>
+<script src="hub-shared.js?v=202610240955"></script>
+<script src="hub-store.js?v=202610240955"></script>
+<script src="hub-say.js?v=202610240955"></script>
+<script src="hub-feedback.js?v=202610240955"></script>
 <script>
 /* Everything course-specific comes from the one key in the URL. The card is
    complete and readable before any of it arrives -- what the store adds is the
@@ -367,8 +367,9 @@
      Those cards are out of reach, but the page they open is not. */
   /* ...and the eight-minute film and its page went on 8 Oct 2026; those
      cards now open Course Journey. */
-  var film = (q.get('f') || '').trim().replace(/\/film\/(connect-lite-film\.(webm|mp4)|watch\.html)$/i, '/film/course-journey.html');
   var base = location.origin + location.pathname.replace(/[^/]*$/, '');
+  /* The film is on every card (25 Oct 2026): the course film unless the link names another. */
+  var film = ((q.get('f') || '').trim() || base + 'film/course-journey.html').replace(/\/film\/(connect-lite-film\.(webm|mp4)|watch\.html)$/i, '/film/course-journey.html');
   var invite = function(param, value){ return base + 'invite.html?' + param + '=' + encodeURIComponent(value); };
 
   /* No figure on the card (7 Oct 2026), so the old &p= quote is ignored.
@@ -380,17 +381,23 @@
     document.getElementById('filmLink').href = film;
     row.hidden = false;
   }
-  if (!k) {
-    /* What the reader has, not what the code found. "No course on this link"
-       named the ?k= that is missing; a centre reading the card has no idea
-       there is a key, or that a card is supposed to carry one (Ramy, 6 Oct
-       2026: "I also don't get the last part. What does that mean?"). */
+  /* A bare link (the trainers' card, lite.celtaconnect.com/offer typed by
+     hand) carries no key: the store names the demo (25 Oct 2026). Only if it
+     cannot does the card say so, in the reader's words, not the code's
+     (Ramy, 6 Oct 2026: "I also don't get the last part. What does that mean?"). */
+  var noDemo = function(){
     document.getElementById('goBtn').textContent = 'No demo is attached to this card';
     var nd = document.getElementById('goNote'); if (nd) nd.textContent = 'Ask for a card with a demo on it and these links open.';
     document.getElementById('goBtn').setAttribute('aria-disabled', 'true');
+  };
+  if (!k) {
+    if (!window.HubStore) { noDemo(); return; }
+    HubStore.call({ op: 'demoCard' }).then(function(r){ if (r && r.k) openDoors(r.k); else noDemo(); }).catch(noDemo);
     return;
   }
+  openDoors(k);
 
+  function openDoors(k){
   var tutor = invite('k', k);
   document.getElementById('goBtn').href = tutor;
 
@@ -443,6 +450,7 @@
     document.getElementById('volNote').textContent = first.name.split(' ')[0] + '’s page for the classes: the next one to come to, the days they came, and their certificate at the end.';   // the ticket's words
     row.hidden = false;
   }).catch(function(){});
+  }
 })();
 </script>
 </body>

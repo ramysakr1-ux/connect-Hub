@@ -120,7 +120,7 @@
             + '</td></tr></table>'
           : '')
       ;
-    var ask = '<p style="font-family:' + SANS + '; font-size:14px; line-height:1.65; color:' + C.ink + '; margin:' + (STYLE === 'ticket' ? '0' : '22px 0 0; padding-top:16px; border-top:1px solid ' + C.line) + ';">Centres and trainers: email <a href="mailto:' + MAIL + '" style="color:' + C.teal + '; font-weight:700; text-decoration:none;">' + MAIL + '</a> for the rates and a demo link. You get three real courses to walk around — as a tutor, as one of the trainees, as the assessor and as a volunteer student — and you can type in all of them.</p>';
+    var ask = '<p style="font-family:' + SANS + '; font-size:14px; line-height:1.65; color:' + C.ink + '; margin:' + (STYLE === 'ticket' ? '0' : '22px 0 0; padding-top:16px; border-top:1px solid ' + C.line) + ';">Centres and trainers: email <a href="mailto:' + MAIL + '" style="color:' + C.teal + '; font-weight:700; text-decoration:none;">' + MAIL + '</a> for the rates and a demo link. You get a real course, two weeks in, to walk around as a tutor, as one of the trainees, as the assessor and as a volunteer student, and you can type in all of it.</p>';
     return page('Connect Lite — the film', letter, wrap(ctx, 'A short film', 'A CELTA course, start to finish', '', sheet, ask));
   }
 
