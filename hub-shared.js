@@ -2245,6 +2245,11 @@ window.hubHeadHTML = function (text, heads) {
     if (isDownload(a) && demo()) { e.preventDefault(); e.stopPropagation(); say(); return; }
     /* The demo centre's own documents are placeholders (drive.google.com/.../demo-...),
        and opened a Drive error (assessor walk, 24 Oct 2026). Say what would open. */
+    /* Every link on the Course files card, too (Ramy, 25 Oct 2026): on the demo its rows are the centre's own
+       files, and one of them opened Cambridge's site instead of saying what it is. */
+    if (a && demo() && a.closest && a.closest('.room.files')) {
+      e.preventDefault(); e.stopPropagation(); say('This is a demo course. On a real course this opens the file itself.'); return;
+    }
     if (a && /drive\.google\.com\/drive\/folders\/demo-/.test(a.href || '') && demo()) {
       e.preventDefault(); e.stopPropagation(); say('This is a demo course. On a real course this opens the file itself.');
     }
