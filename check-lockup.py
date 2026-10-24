@@ -43,11 +43,12 @@ for p in ('13_grades_report.html', '14_owner.html', '17_how_it_works.html', '6_c
 need('hub-card-mail.js', r">Connect<span style=\"font-family:' \+ SANS \+ '; font-style:normal; font-size:8px; font-weight:600; line-height:1; letter-spacing:0\.24em; text-transform:uppercase; color:' \+ C\.\w+ \+ '; margin-left:4px;\">Lite</span></div>", "every emailed lockup is one line, LITE 8px / 600 / 0.24em", 3)
 never('hub-card-mail.js', r">Lite</div>", "no LITE on a line of its own")
 never('hub-card-mail.js', r">Connect Lite</div>", "no one-line 'Connect Lite' caption")
-# the share card, the same logo at 44px
-need('brand/share-card.html', r"\.mark \{ display: flex;", "tile and word in one row", 1)
-need('brand/share-card.html', r"\.word \{ display: inline-flex; align-items: baseline; \}", "one line, on the baseline", 1)
-need('brand/share-card.html', r"font-weight: 600; font-size: calc\(var\(--w\) \* 8 / 21\);.{0,160}?letter-spacing: \.24em; margin-left: calc\(var\(--w\) \* 0\.19\)", "LITE 8/21, 600, 0.24em, 0.19 after", 1)
-never('brand/share-card.html', r"grid-row", "no grid rows: LITE is not under the word")
+# the share card and the trainers' card, the same logo at 44px
+for p in ('brand/share-card.html', 'brand/trainers-card.html'):
+    need(p, r"\.mark \{ display: flex;", "tile and word in one row", 1)
+    need(p, r"\.word \{ display: inline-flex; align-items: baseline; \}", "one line, on the baseline", 1)
+    need(p, r"font-weight: 600; font-size: calc\(var\(--w\) \* 8 / 21\);.{0,160}?letter-spacing: \.24em; margin-left: calc\(var\(--w\) \* 0\.19\)", "LITE 8/21, 600, 0.24em, 0.19 after", 1)
+    never(p, r"grid-row", "no grid rows: LITE is not under the word")
 
 # the input sessions (their own sheet) and the assessor pack (a 27px word)
 need('input-sessions/session.css', r"\.hub-word\{font-family:[^;]*; font-weight:600; font-size:8px; letter-spacing:0\.24em", "session LITE 600 / 8px / 0.24em", 1)
