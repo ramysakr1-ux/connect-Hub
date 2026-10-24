@@ -47,7 +47,7 @@
 <meta name="twitter:image" content="https://lite.celtaconnect.com/brand/share-card.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610242022">
+<link rel="stylesheet" href="hub-tokens.css?v=202610242044">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -121,6 +121,16 @@
     text-decoration:none; border:1.5px solid var(--teal); border-radius:20px; padding:6px 14px; flex:none;}
   .door a:hover{background:var(--teal); color:var(--paper);}
   .door a[aria-disabled="true"]{opacity:.45; pointer-events:none;}
+  /* The trainee door offers three trainees, each at a different point on the course (Ramy, 25 Oct 2026). */
+  /* The film is a button, not a sentence: nobody reads "rather watch?" as something to press (Ramy, 25 Oct 2026). */
+  .after .watch{display:inline-block; font-family:'Karla',sans-serif; font-size:0.88rem; font-weight:700; color:var(--teal); text-decoration:none; border:1.5px solid var(--teal); border-radius:999px; padding:9px 24px; transition:background .15s, color .15s;}
+  .after .watch:hover{background:var(--teal); color:var(--paper);}
+  .after .watch:focus-visible{outline:2px solid var(--gold-lifted); outline-offset:3px;}
+  .door .picks{flex:1 1 100%; display:grid; margin-top:2px;}
+  .door .picks .sub{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 0; border-top:1px dotted var(--sand-line);}
+  .door .picks .who{display:flex; flex-direction:column; gap:1px; min-width:0;}
+  .door .picks .who b{min-width:0; font-size:0.88rem; color:var(--ink-warm);}
+  .door .picks .who span{font-size:0.8rem; color:var(--grey); line-height:1.45;}
 
   /* PRICED, NOT PRICE-TAGGED (Ramy, 7 Oct 2026: no figure on the cards;
      there are packages, and the rates come by email). The box says how the
@@ -211,7 +221,7 @@
   @media(max-width:420px){ body[data-card="ticket"] .panel{padding:22px 20px 6px;} body[data-card="ticket"] .t-stub{padding:14px 20px 20px;} }
   @media print{ body[data-card="ticket"] .card{filter:none;} body[data-card="ticket"] .t-perf{background:none;} body[data-card="ticket"] .t-stub{background:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610242022">
+<link rel="stylesheet" href="hub-house.css?v=202610242044">
 </head>
 <body data-say-pill="off">
 
@@ -284,6 +294,7 @@
       <b>As a trainee</b>
       <span class="note" id="candNote">One trainee’s own space: their lesson plans and language analysis, their self-evaluations, the feedback their tutors return, and their written assignments.</span>
       <a id="doorCand" href="#" aria-disabled="true">Open</a>
+      <span class="picks" id="candPick" hidden></span>
     </div>
     <div class="door">
       <b>As the assessor</b>
@@ -299,7 +310,7 @@
     </div>
   </div>
 
-  <p class="after" id="filmRow" hidden>Rather watch? <a id="filmLink" href="#">There’s a three-minute film</a>.</p>
+  <p class="after" id="filmRow" hidden><a class="watch" id="filmLink" href="#">Watch the film</a></p>
   <div class="price">
     <h3>Priced per course, not per trainee</h3>
     <ul>
@@ -333,10 +344,10 @@
   </div>
 </div>
 
-<script src="hub-shared.js?v=202610242022"></script>
-<script src="hub-store.js?v=202610242022"></script>
-<script src="hub-say.js?v=202610242022"></script>
-<script src="hub-feedback.js?v=202610242022"></script>
+<script src="hub-shared.js?v=202610242044"></script>
+<script src="hub-store.js?v=202610242044"></script>
+<script src="hub-say.js?v=202610242044"></script>
+<script src="hub-feedback.js?v=202610242044"></script>
 <script>
 /* Everything course-specific comes from the one key in the URL. The card is
    complete and readable before any of it arrives -- what the store adds is the
@@ -366,7 +377,7 @@
   if (q.get('np')) document.querySelector('.price').hidden = true;
   if (film && /^https?:\/\//i.test(film)) {
     var row = document.getElementById('filmRow');
-    document.getElementById('filmLink').href = film;
+    document.getElementById('filmLink').href = film + (film.indexOf('#') < 0 ? '#play' : '');
     row.hidden = false;
   }
   /* A bare link (the trainers' card, lite.celtaconnect.com/offer typed by
@@ -401,15 +412,44 @@
     var a = document.getElementById('doorAssessor');
     a.href = invite('ak', key); a.removeAttribute('aria-disabled');
   }).catch(function(){});
-  HubStore.call({ op: 'roster', key: k }).then(function(r){
+  var askRoster = function(again){ return HubStore.call({ op: 'roster', key: k }).then(function(r){ if (!again && !(r && r.trainees && Object.keys(r.trainees).length)) return new Promise(function(res){ setTimeout(res, 1500); }).then(function(){ return askRoster(true); }); return r; }); };
+  askRoster(false).then(function(r){
     var list = Object.keys((r && r.trainees) || {}).map(function(id){ return r.trainees[id]; })
       .sort(function(a, b){ return String(a.name).localeCompare(String(b.name)); });
     if (!list.length) return;
     var one = list[0];
     var a = document.getElementById('doorCand');
     a.href = invite('t', one.token); a.removeAttribute('aria-disabled');
-    document.getElementById('candNote').textContent =
+    if (document.getElementById('candPick').hidden) document.getElementById('candNote').textContent =
       String(one.name).split(' ')[0] + '’s own space: their lesson plans and language analysis, their self-evaluations, the feedback their tutors return, and their written assignments.';   // the ticket's words, 8 Oct 2026
+    /* Three trainees, each at a different point (Ramy, 25 Oct 2026): one whose feedback is back and open,
+       one whose feedback is sealed until the self-evaluation is in, one with a letter from the tutors.
+       Read from the course, so a re-seeded course picks its own three. */
+    (function(){
+      var state = function(t){
+        var rec = t.records || {}, fb = rec.feedback || {}, se = rec.selfeval || {}, tr = rec.tracker || {};
+        if (tr.malpracticeLetterIssuedAt || tr.failLetterIssuedAt) return 'letter';
+        if (fb.status === 'returned' && fb.docHTML) return se.status === 'turned_in' ? 'open' : 'held';
+        return '';
+      };
+      var LINE = { open: 'Feedback is back and open.', held: 'Feedback is sealed until the self-evaluation is in.', letter: 'A letter from the tutors is waiting to be read and signed.' };
+      var picks = ['open', 'held', 'letter'].map(function(st){ return list.filter(function(t){ return state(t) === st; })[0] ? { st: st, t: list.filter(function(t){ return state(t) === st; })[0] } : null; }).filter(Boolean);
+      if (picks.length < 2) return;
+      var box = document.getElementById('candPick');
+      picks.forEach(function(x){
+        var row = document.createElement('div'); row.className = 'sub';
+        var who = document.createElement('span'); who.className = 'who';
+        var b = document.createElement('b'); b.textContent = String(x.t.name).split(' ')[0];
+        var sp = document.createElement('span'); sp.textContent = LINE[x.st];
+        who.appendChild(b); who.appendChild(sp);
+        var a = document.createElement('a'); a.href = invite('t', x.t.token); a.textContent = 'Open';
+        a.setAttribute('aria-label', 'Open as ' + b.textContent);
+        row.appendChild(who); row.appendChild(a); box.appendChild(row);
+      });
+      box.hidden = false; document.getElementById('doorCand').hidden = true;
+      var w = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve'][list.length] || String(list.length);
+      document.getElementById('candNote').textContent = w + ' trainee' + (list.length === 1 ? '' : 's') + ', each at a different point on the course. Pick one.';
+    })();
     var words = ['','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'][list.length] || String(list.length);
     document.getElementById('goNote').textContent = 'The whole course: ' + words + ' trainee' + (list.length === 1 ? '' : 's') + ', their work, the grades and the reports.';
   }).catch(function(){});

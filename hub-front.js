@@ -59,7 +59,7 @@
 
       + '<div class="fp-film">'
       + '<div><b>See a whole course, start to finish</b><span>A whole course, start to finish, in three minutes. A real course, not a mock-up.</span></div>'
-      + '<a class="fp-btn" href="film/course-journey.html">Watch the film</a>'
+      + '<a class="fp-btn" href="film/course-journey.html#play">Watch the film</a>'
       + '</div>'
 
       /* No figure on the front either (Ramy, 7 Oct 2026): the front page and
