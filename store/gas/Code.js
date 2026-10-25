@@ -1482,7 +1482,14 @@ case 'inbox': {
         (tnPool[w] || []).forEach(function (it) { if (it && it.shared) tnShared.push(it); });
       });
       tnShared.sort(function (a, b) { return String(a.at).localeCompare(String(b.at)); });
-      return { mine: tnPool[tnWho] || [], shared: tnShared };
+      /* v130: the replies trainees left on the notes this tutor connected with them */
+      var tnConnected = (courseRead_(course.id, 'notes') || {})['tutor:' + tnWho] || [];
+      var tnMine = (tnPool[tnWho] || []).map(function (it) {
+        var copy = tnConnected.filter(function (c) { return c && c.id === it.id; })[0];
+        if (!copy || !copy.replies || !copy.replies.length) return it;
+        return Object.assign({}, it, { replies: copy.replies.map(function (r) { return { by: r.by, at: r.at, text: r.text }; }) });
+      });
+      return { mine: tnMine, shared: tnShared };
     }
     case 'putTutorNote': {
       requireTutor_(tutor);
@@ -1490,6 +1497,9 @@ case 'inbox': {
       var ptItem = noteClean_(req.item, String(req.who || '').trim());
       if (!ptItem) throw new Error('Nothing to keep');
       ptItem.shared = !!(req.item && req.item.shared);
+      /* v130: where the tutor connected it on the trainees' side, so their own list remembers */
+      var ptSent = req.item && req.item.sent;
+      ptItem.sent = (ptSent && /^(trainee|group|course)$/.test(String(ptSent.scope || ''))) ? { scope: String(ptSent.scope), to: String(ptSent.to || '').slice(0, 40), group: String(ptSent.group || '').slice(0, 20), name: String(ptSent.name || '').slice(0, 80) } : null;
       var ptPool = courseUpdateObj_(course.id, 'tutorNotes', function (pool) {
         var list = (pool[ptWho] || []).filter(function (x) { return x && x.id !== ptItem.id; });
         list.push(ptItem);
@@ -1508,6 +1518,73 @@ case 'inbox': {
         return pool;
       });
       return { dropped: true, mine: dtPool[dtWho] || [] };
+    }
+    /* A TUTOR CONNECTS A NOTE WITH A TRAINEE (v130, 25 Oct 2026; Ramy: "can the tutors share notes with
+       trainees and email and whatnot?"). The note goes into the same `notes` pool the trainees connect
+       through, under the key "tutor:<name>", with its audience: one trainee (`to` is their token), a TP
+       group, or the whole course. The trainee's boot hands them what reaches them, signed with the
+       tutor's name. The tutor's own notebook stays theirs; only what they connect moves. */
+    case 'tutorConnectNote': {
+      requireTutor_(tutor);
+      var tcWho = tutorWho_(req.who);
+      var tcItem = noteClean_(req.item, String(req.who || '').trim());
+      if (!tcItem) throw new Error('Nothing to connect');
+      tcItem.fromTutor = true;
+      tcItem.scope = req.scope === 'trainee' ? 'trainee' : req.scope === 'course' ? 'course' : 'group';
+      if (tcItem.scope === 'trainee') {
+        var tcTo = String(req.to || '');
+        if (!roster_(course.id).some(function (t) { return t.token === tcTo; })) throw new Error('That trainee is not on the course');
+        tcItem.to = tcTo;
+      } else if (tcItem.scope === 'group') {
+        tcItem.group = String(req.group || '').trim();
+        if (!tcItem.group) throw new Error('Which TP group?');
+      }
+      var tcKey = 'tutor:' + tcWho;
+      courseUpdateObj_(course.id, 'notes', function (pool) {
+        var list = (pool[tcKey] || []).filter(function (x) { return x && x.id !== tcItem.id; });
+        list.push(tcItem);
+        pool[tcKey] = list.length > 400 ? list.slice(list.length - 400) : list;
+        return pool;
+      });
+      return { connected: true };
+    }
+    /* A TRAINEE REPLIES TO A TUTOR'S NOTE (v130; Ramy: "they can only reply to the note, but they cannot
+       initiate a note. They can only send an email"). A short word back, kept on the tutor's connected
+       copy in the pool; the tutor reads it under their note, the trainee sees their own reply, and nobody
+       else sees it. A trainee can reply only to a note that reached them. */
+    case 'replyNote': {
+      if (!me || tutor || assessor) throw new Error('Trainees only');
+      if (!course) throw new Error('This link is not on a course');
+      var rpId = String(req.id || ''), rpText = String(req.text || '').trim().slice(0, 400);
+      if (!rpText) throw new Error('Nothing to send');
+      var rpG = String(me.group || ''), rpFound = false;
+      courseUpdateObj_(course.id, 'notes', function (pool) {
+        Object.keys(pool).forEach(function (k) {
+          if (k.indexOf('tutor:') !== 0) return;
+          (pool[k] || []).forEach(function (it) {
+            if (!it || it.id !== rpId) return;
+            var reaches = it.scope === 'course' || (it.scope === 'group' && String(it.group || '') === rpG) || (it.scope === 'trainee' && it.to === me.token);
+            if (!reaches) return;
+            rpFound = true;
+            var list = (it.replies || []).filter(function (r) { return r && r.token !== me.token; });
+            list.push({ token: me.token, by: String(me.name || '').slice(0, 80), at: new Date().toISOString(), text: rpText });
+            it.replies = list.length > 40 ? list.slice(list.length - 40) : list;
+          });
+        });
+        return pool;
+      });
+      if (!rpFound) throw new Error('That note did not reach you');
+      return { replied: true, notes: sharedNotesFor_(course.id, me) };
+    }
+    case 'tutorUnconnectNote': {
+      requireTutor_(tutor);
+      var tuKey = 'tutor:' + tutorWho_(req.who), tuId = String(req.id || '');
+      courseUpdateObj_(course.id, 'notes', function (pool) {
+        var list = (pool[tuKey] || []).filter(function (x) { return x && x.id !== tuId; });
+        if (list.length) pool[tuKey] = list; else delete pool[tuKey];
+        return pool;
+      });
+      return { connected: false };
     }
     /* A VOICE NOTE (v129). The file goes to a private folder under the course's materials, like an
        interview recording, and is played back through the store: by the person who made it, and by
@@ -2566,7 +2643,10 @@ function sharedNotesFor_(courseId, me) {
     if (tok === me.token) return;
     (pool[tok] || []).forEach(function (it) {
       if (!it) return;
-      if (it.scope === 'course' || (it.scope === 'group' && String(it.group || '') === g)) out.push(it);
+      if (it.scope === 'course' || (it.scope === 'group' && String(it.group || '') === g) || (it.scope === 'trainee' && it.to === me.token)) {
+        if (it.replies) { var mineOnly = it.replies.filter(function (r) { return r && r.token === me.token; }).map(function (r) { return { by: r.by, at: r.at, text: r.text }; }); it = Object.assign({}, it, { replies: mineOnly }); }
+        out.push(it);
+      }
     });
   });
   out.sort(function (a, b) { return String(a.at).localeCompare(String(b.at)); });
@@ -2592,6 +2672,11 @@ function noteFileFor_(course, id, tutor, me, who, own) {
   var fid = f.getId();
   function listed(list, test) { return (list || []).some(function (it) { return it && it.audio && it.audio.id === fid && test(it); }); }
   if (meta.tutor) {
+    /* a trainee hears a tutor's voice note only when that note was connected with them (v130) */
+    if (!tutor && me && !own) {
+      var npool = courseRead_(course.id, 'notes') || {}, ng = String(me.group || '');
+      if (listed(npool['tutor:' + meta.who], function (it) { return it.scope === 'course' || (it.scope === 'group' && String(it.group || '') === ng) || (it.scope === 'trainee' && it.to === me.token); })) return f;
+    }
     if (!tutor) throw new Error('Not yours to hear');
     var mine = !!who && tutorWho_(who) === meta.who;
     if (mine) return f;

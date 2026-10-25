@@ -121,13 +121,16 @@
       var w = who(); if (!w) return Promise.reject(new Error('no name'));
       var c = tutor.cache();
       return S.call({ op: 'tutorNotes', who: w }).then(function(r){
-        if (!r || !Array.isArray(r.mine)) return c;
-        /* a demo keeps its writes on the device: what this visit wrote stays over the store's list */
-        var mine = r.mine.slice();
-        if (demo()) (c.mine || []).forEach(function(it){ if (it && it.local && !mine.some(function(x){ return x.id === it.id; })) mine.push(it); });
+        if (!r || !Array.isArray(r.mine)) return tutor.cache();
+        /* a demo keeps its writes on the device: what this visit wrote stays over the store's list.
+           The cache is read again HERE, not when the call went out: a note written or connected while
+           the store was answering was otherwise overwritten by the older copy (25 Oct 2026). */
+        var mine = r.mine.slice(), cur = tutor.cache();
+        if (demo()) (cur.mine || []).forEach(function(it){ if (it && it.local) { mine = mine.filter(function(x){ return x.id !== it.id; }); mine.push(it); } });
+        mine.sort(function(a, b){ return String(a.at).localeCompare(String(b.at)); });
         var next = { who: w, mine: mine, shared: r.shared || [], at: Date.now() };
         tutor.keep(next); return next;
-      }, function(){ return c; });
+      }, function(){ return tutor.cache(); });
     },
     put: function(item){
       var w = who(); if (!w) return Promise.reject(new Error('Say which tutor you are first'));

@@ -22,7 +22,7 @@
 <title>Your notebook</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610250929">
+<link rel="stylesheet" href="hub-tokens.css?v=202610250945">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:36px 20px 120px; display:flex; justify-content:center;}
@@ -101,6 +101,10 @@
   .namecard input{width:100%; max-width:360px; font:400 1rem 'Karla',sans-serif; padding:10px 14px; border:1.5px solid var(--sand-line); border-radius:10px; margin-right:10px; margin-bottom:10px;}
   .note.mine.editing .text{display:none;}
   .pill-ask{font-size:0.84rem; color:var(--a-red); font-weight:700;}
+  .note .reply{margin:10px 0 0; padding:8px 12px; border-left:3px solid var(--a-mustard); background:var(--sand); border-radius:0 8px 8px 0; font-size:0.9rem; line-height:1.5;}
+  .note .reply b{font-size:0.8rem;} .note .reply span{font-size:0.76rem; color:var(--grey); margin-left:6px;}
+  .note .replybox{margin-top:10px;} .note .replybox textarea{width:100%; min-height:72px; resize:vertical; font:400 0.95rem/1.5 'Karla',sans-serif; color:var(--ink); background:var(--paper); border:1.5px solid var(--sand-line); border-radius:10px; padding:10px 12px; margin-bottom:8px;}
+  .note .replybox .btn{font-size:0.82rem; padding:8px 14px;}
   @media (max-width:640px){
     body{padding:22px 16px 120px;}
     .title h1{font-size:2.1rem;}
@@ -112,18 +116,18 @@
   }
   @media print{ .back, .title .write, .tabs, .acts, .nbk-arc{display:none !important;} body{background:#fff; padding:0;} .note, .thread{box-shadow:none; border:1px solid #ddd;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610250929">
+<link rel="stylesheet" href="hub-house.css?v=202610250945">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610250929"></script>
-<script src="hub-store.js?v=202610250929"></script>
-<script src="hub-say.js?v=202610250929"></script>
-<script src="hub-sync.js?v=202610250929"></script>
-<script src="hub-notebook.js?v=202610250929"></script>
+<script src="hub-shared.js?v=202610250945"></script>
+<script src="hub-store.js?v=202610250945"></script>
+<script src="hub-say.js?v=202610250945"></script>
+<script src="hub-sync.js?v=202610250945"></script>
+<script src="hub-notebook.js?v=202610250945"></script>
 <script type="text/x-hub-app">
 /* Two people have a notebook: a trainee and a tutor. Nobody else has a door. */
 (function(){
@@ -145,7 +149,7 @@ const TT = rec('connect_timetable_v1') || {};
 const TODAY = NB.today();
 const ME = rec('hub:me') || {};
 let VIEW = (function(){ try { return localStorage.getItem('chub:nbkView') || 'day'; } catch (e) { return 'day'; } })();
-let MENU = '', EDIT = '', ASK = '', NOTE = '';
+let MENU = '', EDIT = '', ASK = '', NOTE = '', REPLY = '';
 let T = { who: '', mine: [], shared: [] };   // the tutor's
 
 /* ---- what the course knows about a day --------------------------------- */
@@ -168,12 +172,20 @@ function mine(){ return TUTOR ? (T.mine || []) : NB.load().notes; }
 function connected(){ return TUTOR ? (T.shared || []) : (rec('connect_notes_v1') || []); }
 function byDay(list){ const m = {}; list.forEach(n => { if (!n) return; (m[n.day] = m[n.day] || []).push(n); }); Object.keys(m).forEach(k => m[k].sort((a, b) => String(a.at).localeCompare(String(b.at)))); return m; }
 function chip(th){ if (!th || th.k === 'day' || !th.t) return ''; return '<span class="nbk-chip ' + esc(th.k) + '">' + esc(th.t) + '</span>' + (th.sub ? '<span>' + esc(th.sub) + '</span>' : ''); }
+function audience(n){
+  if (!TUTOR) return n.shared === 'course' ? 'the whole course' : n.shared === 'group' ? 'your TP group' : '';
+  const parts = [];
+  if (n.sent && n.sent.scope) parts.push(n.sent.scope === 'trainee' ? (n.sent.name || 'a trainee') : n.sent.scope === 'group' ? 'TP group ' + (n.sent.group || '') : 'the whole course');
+  if (n.shared) parts.push('the other tutors');
+  return parts.join(' and ');
+}
 function linkedMark(n){
-  const on = TUTOR ? !!n.shared : !!n.shared;
-  if (!on) return '';
-  const w = TUTOR ? 'the other tutors' : n.shared === 'course' ? 'the whole course' : 'your TP group';
+  const w = audience(n);
+  if (!w) return '';
   return '<span class="linked" title="Connected with ' + esc(w) + '">' + NB.arc(true, 14) + '<span>' + esc(w) + '</span></span>';
 }
+const rosterRow = tok => { const r = rec('connect_roster_v1'); return (r && r.trainees && r.trainees[tok]) || null; };
+const traineeOf = n => (n.thread && n.thread.k === 'trainee') ? Object.assign({ token: n.thread.id, name: n.thread.t }, rosterRow(n.thread.id) || {}) : null;
 function voiceHTML(n, canPlay){
   if (!n.audio) return '';
   return '<div class="voice">' + (canPlay ? '<button type="button" class="listen" data-play="' + esc(n.id) + '">Listen</button>' : '') + '<span>Voice note' + (n.audio.seconds ? ', ' + NB.secs(n.audio.seconds) : '') + '</span><span class="slot"></span></div>';
@@ -182,24 +194,48 @@ function noteHTML(n, opts){
   opts = opts || {};
   const own = !opts.theirs;
   const editing = own && EDIT === n.id, asking = own && ASK === n.id, menu = own && MENU === n.id;
-  const connectWord = TUTOR ? (n.shared ? 'Connected with the other tutors' : 'Connect with the other tutors') : (n.shared ? 'Connected' : 'Connect');
+  const connectWord = audience(n) ? 'Connected' : 'Connect';
+  const tr = TUTOR ? traineeOf(n) : null;
   const acts = !own ? '' : '<div class="acts">'
     + (asking ? '<span class="ask">Delete this note? <button type="button" class="del" data-del="' + esc(n.id) + '"><b>Yes, delete it</b></button> <button type="button" data-ask="">No</button></span>'
       : (editing ? '<button type="button" data-save="' + esc(n.id) + '">Save</button><button type="button" data-edit="">Cancel</button>'
         : '<button type="button" data-connect="' + esc(n.id) + '">' + connectWord + '</button>'
           + '<button type="button" data-edit="' + esc(n.id) + '">Edit</button>'
           + (!TUTOR && tutorEmails().length ? '<a href="' + esc(mailto(n)) + '">Email it to my tutor</a>' : '')
+          + (TUTOR && tr && tr.email ? '<a href="' + esc(mailtoTrainee(n, tr)) + '">Email it to ' + esc(String(tr.name || '').split(/\s+/)[0]) + '</a>' : '')
           + '<button type="button" class="del" data-ask="' + esc(n.id) + '">Delete</button>'))
     + '</div>';
+  const sentScope = (n.sent && n.sent.scope) || '';
   const menuHTML = !menu ? '' : TUTOR
-    ? '<div class="menu" data-menu><div class="hd">This note</div><button type="button" data-scope="tutors"' + (n.shared ? ' class="on"' : '') + '>Connect with the other tutors</button><button type="button" data-scope=""' + (!n.shared ? ' class="on"' : '') + '>Keep it to yourself</button></div>'
+    ? '<div class="menu" data-menu><div class="hd">This note</div>'
+      + (tr ? '<button type="button" data-scope="trainee"' + (sentScope === 'trainee' ? ' class="on"' : '') + '>Connect with ' + esc(tr.name) + '</button>'
+            + (tr.group ? '<button type="button" data-scope="group"' + (sentScope === 'group' ? ' class="on"' : '') + '>Connect with TP group ' + esc(tr.group) + '</button>' : '') : '')
+      + '<button type="button" data-scope="course"' + (sentScope === 'course' ? ' class="on"' : '') + '>Connect with everyone on the course</button>'
+      + '<button type="button" data-scope="tutors"' + (n.shared ? ' class="on"' : '') + '>Connect with the other tutors</button>'
+      + '<button type="button" data-scope=""' + (!n.shared && !sentScope ? ' class="on"' : '') + '>Keep it to yourself</button></div>'
     : '<div class="menu" data-menu><div class="hd">This note</div><button type="button" data-scope="group"' + (n.shared === 'group' ? ' class="on"' : '') + '>Connect with my TP group</button><button type="button" data-scope="course"' + (n.shared === 'course' ? ' class="on"' : '') + '>Connect with the whole course</button><button type="button" data-scope=""' + (!n.shared ? ' class="on"' : '') + '>Keep it to yourself</button></div>';
   return '<div class="note' + (own ? ' mine' : '') + (editing ? ' editing' : '') + '" data-id="' + esc(n.id) + '">'
-    + '<div class="top">' + (opts.theirs ? '<span class="by">' + esc(n.by || 'Someone') + '</span>' : '') + (opts.showDay ? '<span>' + esc(NB.dayLabel(n.day)) + '</span>' : '') + '<span>' + esc(NB.timeLabel(n.at)) + '</span>' + (opts.hideChip ? '' : chip(n.thread)) + linkedMark(n) + '</div>'
+    + '<div class="top">' + (opts.theirs ? '<span class="by">' + esc(n.by || 'Someone') + (n.fromTutor ? ', tutor' : '') + '</span>' + (n.scope === 'trainee' ? '<span class="nbk-chip">To you</span>' : '') : '') + (opts.showDay ? '<span>' + esc(NB.dayLabel(n.day)) + '</span>' : '') + '<span>' + esc(NB.timeLabel(n.at)) + '</span>' + (opts.hideChip || (opts.theirs && n.thread && n.thread.k === 'trainee' && n.thread.id === ME.token) ? '' : chip(n.thread)) + linkedMark(n) + '</div>'
     + '<p class="text">' + esc(n.text) + '</p>'
     + (editing ? '<textarea class="edit" data-ta="' + esc(n.id) + '">' + esc(n.text) + '</textarea>' : '')
     + voiceHTML(n, true)
+    + repliesHTML(n, opts)
     + acts + menuHTML + '</div>';
+}
+/* A trainee answers a tutor's note; they never start one. The reply sits under the note, for the tutor and them. */
+function repliesHTML(n, opts){
+  const list = Array.isArray(n.replies) ? n.replies : [];
+  let out = list.map(r => '<p class="reply"><b>' + esc(r.by || 'Reply') + '</b> <span>' + esc(NB.dayLabel(String(r.at || '').slice(0, 10))) + '</span><br>' + esc(r.text) + '</p>').join('');
+  if (!TUTOR && opts.theirs && n.fromTutor) {
+    if (REPLY === n.id) out += '<div class="replybox"><textarea data-reply-ta="' + esc(n.id) + '" placeholder="A word back to ' + esc(n.by || 'your tutor') + '."></textarea><div><button type="button" class="btn primary" data-reply-send="' + esc(n.id) + '">Send the reply</button> <button type="button" class="btn" data-reply="">Cancel</button></div></div>';
+    else out += '<div class="acts"><button type="button" data-reply="' + esc(n.id) + '">' + (list.length ? 'Reply again' : 'Reply') + '</button></div>';
+  }
+  return out;
+}
+function mailtoTrainee(n, tr){
+  const subj = 'A note from ' + NB.who() + (n.thread && n.thread.sub ? ' \u2014 ' + n.thread.sub : '');
+  const body = n.text + '\n\n(' + NB.dayLabel(n.day, true) + ', from my notebook on Connect Lite)';
+  return 'mailto:' + encodeURIComponent(tr.email) + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
 }
 function mailto(n){
   const subj = 'A note from ' + (ME.name || 'a trainee') + (n.thread && n.thread.t && n.thread.k !== 'day' ? ' — ' + n.thread.t : '');
@@ -279,7 +315,7 @@ function viewThread(){
 /* ---- connected ------------------------------------------------------------ */
 function viewConnected(){
   const list = connected().slice().sort((a, b) => String(b.at).localeCompare(String(a.at)));
-  const sub = TUTOR ? 'Notes the other tutors connected with you. Yours stay yours until you connect them.' : 'Notes your classmates connected with your TP group or with the whole course. Yours stay yours until you connect them.';
+  const sub = TUTOR ? 'Notes the other tutors connected with you. Yours stay yours until you connect them.' : 'Notes your tutors connected with you, and notes your classmates connected with your TP group or with the whole course. You can reply to a tutor\u2019s note; yours stay yours until you connect them.';
   return '<section class="connected"><h2>' + NB.arc(true, 18) + 'Connected</h2><p class="gsub">' + esc(sub) + '</p>'
     + (list.length ? list.map(n => noteHTML(n, { theirs: true, showDay: true })).join('') : '<p class="shape">Nothing connected with you yet.</p>') + '</section>';
 }
@@ -316,6 +352,8 @@ function wire(){
   app.querySelectorAll('[data-save]').forEach(b => b.addEventListener('click', () => saveEdit(b.dataset.save)));
   app.querySelectorAll('[data-ask]').forEach(b => b.addEventListener('click', () => { ASK = b.dataset.ask; MENU = ''; render(); }));
   app.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => del(b.dataset.del)));
+  app.querySelectorAll('[data-reply]').forEach(b => b.addEventListener('click', () => { REPLY = b.dataset.reply; render(); const ta = app.querySelector('[data-reply-ta="' + REPLY + '"]'); if (ta) ta.focus(); }));
+  app.querySelectorAll('[data-reply-send]').forEach(b => b.addEventListener('click', () => sendReply(b.dataset.replySend)));
 }
 document.addEventListener('click', e => { if (MENU && !e.target.closest('[data-menu]') && !e.target.closest('[data-connect]')) { MENU = ''; render(); } });
 function findNote(id){ return mine().concat(connected()).find(n => n && n.id === id); }
@@ -327,7 +365,7 @@ function saveEdit(id){
   const text = ta.value.trim(); const n = mine().find(x => x.id === id); if (!n) return;
   if (!text && !n.audio) { ASK = id; EDIT = ''; render(); return; }
   n.text = text; n.edited = NB.nowISO();
-  persist(n).then(() => { EDIT = ''; if (n.shared) return reconnect(n); }).then(render, err);
+  persist(n).then(() => { EDIT = ''; if (n.shared || (n.sent && n.sent.scope)) return reconnect(n); }).then(render, err);
 }
 function persist(n){
   if (TUTOR) return NB.tutor.put(n).then(c => { T = c; });
@@ -336,13 +374,30 @@ function persist(n){
 }
 /* a connected note that changes is connected again, so the copy others hold is the new one */
 function reconnect(n){
-  if (TUTOR) return Promise.resolve();
+  if (TUTOR) return (n.sent && n.sent.scope) ? HubStore.call({ op: 'tutorConnectNote', who: NB.who(), item: n, scope: n.sent.scope, to: n.sent.to, group: n.sent.group }).catch(() => {}) : Promise.resolve();
   return HubStore.call({ op: 'shareNote', token: HubStore.token(), item: n, scope: n.shared }).then(r => { if (r && r.notes) keepConnected(r.notes); }, () => {});
 }
 function keepConnected(list){ try { localStorage.setItem('connect_notes_v1', JSON.stringify(list)); } catch (e) {} }
 function connect(id, scope){
   const n = mine().find(x => x.id === id); if (!n) return; MENU = '';
-  if (TUTOR) { n.shared = !!scope; persist(n).then(() => { NOTE = n.shared ? 'Connected with the other tutors.' : 'Kept to yourself.'; render(); }, err); return; }
+  if (TUTOR) {
+    const who = NB.who();
+    if (scope === 'tutors') { n.shared = !n.shared; persist(n).then(() => { NOTE = n.shared ? 'Connected with the other tutors.' : 'No longer with the other tutors.'; render(); }, err); return; }
+    if (!scope) {
+      const had = !!(n.sent && n.sent.scope); n.shared = false; n.sent = null;
+      persist(n).then(() => had ? HubStore.call({ op: 'tutorUnconnectNote', who: who, id: id }).catch(() => {}) : null).then(() => { NOTE = 'Kept to yourself.'; render(); }, err);
+      return;
+    }
+    const tr = traineeOf(n);
+    const sent = scope === 'trainee' ? { scope: 'trainee', to: tr ? tr.token : '', name: tr ? tr.name : '' } : scope === 'group' ? { scope: 'group', group: tr ? tr.group : '' } : { scope: 'course' };
+    if ((scope === 'trainee' && !sent.to) || (scope === 'group' && !sent.group)) { NOTE = 'This note is not on a trainee.'; render(); return; }
+    n.sent = sent;
+    persist(n).then(() => HubStore.call({ op: 'tutorConnectNote', who: who, item: n, scope: scope, to: sent.to, group: sent.group })).then(r => {
+      NOTE = r && r.demo ? 'Demo: connected on this device only.' : ('Connected with ' + (scope === 'trainee' ? sent.name : scope === 'group' ? 'TP group ' + sent.group : 'everyone on the course') + '.');
+      render();
+    }, err);
+    return;
+  }
   if (!scope) {
     n.shared = ''; persist(n).then(() => HubStore.call({ op: 'unshareNote', token: HubStore.token(), id: id })).then(r => { if (r && r.notes) keepConnected(r.notes); NOTE = 'Kept to yourself.'; render(); }, err);
     return;
@@ -358,9 +413,17 @@ function del(id){
   const n = mine().find(x => x.id === id); if (!n) return; ASK = '';
   const audioId = n.audio && n.audio.id;
   let p;
-  if (TUTOR) p = NB.tutor.drop(id).then(c => { T = c; });
+  if (TUTOR) p = NB.tutor.drop(id).then(c => { T = c; if (n.sent && n.sent.scope) return HubStore.call({ op: 'tutorUnconnectNote', who: NB.who(), id: id }).catch(() => {}); });
   else { const nb = NB.load(); nb.notes = nb.notes.filter(x => x.id !== id); p = NB.save(nb).then(() => n.shared ? HubStore.call({ op: 'unshareNote', token: HubStore.token(), id: id }).then(r => { if (r && r.notes) keepConnected(r.notes); }, () => {}) : null); }
   p.then(() => { if (audioId) { const b = { op: 'deleteNoteAudio', id: audioId }; if (!TUTOR) b.token = HubStore.token(); else b.who = NB.who(); HubStore.call(b).catch(() => {}); } NOTE = 'Deleted.'; render(); NB.count(); }, err);
+}
+function sendReply(id){
+  const ta = $('app').querySelector('[data-reply-ta="' + id + '"]'); const text = ta ? ta.value.trim() : ''; if (!text) return;
+  HubStore.call({ op: 'replyNote', token: HubStore.token(), id: id, text: text }).then(r => {
+    if (r && r.notes) keepConnected(r.notes);
+    else { /* a demo keeps it on the device */ const list = connected(); const n = list.find(x => x.id === id); if (n) { n.replies = [{ by: ME.name || 'You', at: NB.nowISO(), text: text }]; keepConnected(list); } }
+    REPLY = ''; NOTE = r && r.demo ? 'Demo: your reply stays on this device.' : 'Sent to ' + ((connected().find(x => x.id === id) || {}).by || 'your tutor') + '.'; render();
+  }, err);
 }
 function err(e){ NOTE = 'Not saved — ' + ((e && e.message) || e); render(); }
 
