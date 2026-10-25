@@ -26,7 +26,7 @@
 <title>Candidate agreement</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610251002">
+<link rel="stylesheet" href="hub-tokens.css?v=202610251017">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -72,20 +72,20 @@
   .decl textarea:disabled{opacity:0.55;}
   @media print{ body{background:#fff; padding:0;} .back,.signbox .row,.btn{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610251002">
+<link rel="stylesheet" href="hub-house.css?v=202610251017">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610251002"></script>
-<script src="hub-store.js?v=202610251002"></script>
-<script src="hub-hand.js?v=202610251002"></script>
-<script src="hub-ink.js?v=202610251002"></script>
-<script src="hub-say.js?v=202610251002"></script>
-<script src="hub-sync.js?v=202610251002"></script>
-<script src="hub-notebook.js?v=202610251002"></script>
+<script src="hub-shared.js?v=202610251017"></script>
+<script src="hub-store.js?v=202610251017"></script>
+<script src="hub-hand.js?v=202610251017"></script>
+<script src="hub-ink.js?v=202610251017"></script>
+<script src="hub-say.js?v=202610251017"></script>
+<script src="hub-sync.js?v=202610251017"></script>
+<script src="hub-notebook.js?v=202610251017"></script>
 <script type="text/x-hub-app">
 /* A volunteer student is not on the course. They come in off the street to be
    taught, and what the centre asks of its TRAINEES -- attendance, plagiarism,
@@ -110,6 +110,8 @@ const IS_TRAINEE = !!(window.HubStore && HubStore.isTrainee && HubStore.isTraine
    there shouldn't be one"). A candidate's own boot leaves it in hub:me. */
 const ME = (function(){ try { return JSON.parse(localStorage.getItem('hub:me') || '{}') || {}; } catch(e){ return {}; } })();
 const MY_NAME = String(ME.name || '').trim();
+/* a demo whose visitor writes their own name at the signing (25 Oct 2026): the sheet shows without a name */
+const ASKS_HERE = (function(){ try { const c = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; return !!(c.demoAskName && c.demoToday); } catch (e) { return false; } })();
 const KEY = 'chub:agreement';
 /* Staff open this with ?trainee=<id> from that trainee's own row in the pack,
    the same way the observation sheets and the marked assignments do (Ramy,
@@ -244,7 +246,7 @@ function render(){
         <div class="row"><button class="btn" type="button" id="signBtn">Sign the new wording</button></div>
         <p class="status" id="status"></p>` : ''}</div>`;
   } else if (IS_TRAINEE) {
-    sign = MY_NAME ? `<div class="signbox"><h2>Sign it</h2>
+    sign = (MY_NAME || ASKS_HERE) ? `<div class="signbox"><h2>Sign it</h2>
       <p class="lead">Signing records that you have read the agreement above and accept it, including how your information is kept and shared with Cambridge. Your name and the date are kept with your course record; your tutor and the assessor can see that you signed and when.</p>
       ${declForm(rec)}
       <div class="row"><button class="btn" type="button" id="signBtn">Read and sign</button></div>
@@ -260,16 +262,28 @@ function render(){
 
   const btn = $('signBtn');
   if (btn) btn.addEventListener('click', async () => {
+    /* THE DAY-ONE DEMO (Ramy, 25 Oct 2026: "they sign an agreement, they write their name, and then it turns
+       into a digital signature"). A demo whose settings carry demoAskName has no name for the visitor until
+       they write it here; the sheet asks for it, and from that moment the visit is theirs: the welcome, the
+       CELTA 5, the notebook. Kept in the tab; the course never hears it. */
+    const CSX = (function(){ try { return JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) { return {}; } })();
+    const ASKS = IS_TRAINEE && !!CSX.demoAskName && !!CSX.demoToday;
     const name = (record().name || MY_NAME || '').trim();
-    if (!name) { const st = $('status'); if (st) st.textContent = 'Your name has not loaded from the course yet.'; return; }
+    if (!name && !ASKS) { const st = $('status'); if (st) st.textContent = 'Your name has not loaded from the course yet.'; return; }
     /* The declaration comes first: Handbook 6.3 asks that the agreement carry
        a Candidate Declaration on special consideration, signed, so the
        centre can make reasonable adjustments before the course starts. */
     if (IS_TRAINEE && !readDecl()) { const st = $('status'); if (st) st.textContent = 'Answer the declaration first: do you have a special requirement?'; const f = document.querySelector('.decl'); if (f) f.scrollIntoView({ block: 'center' }); return; }
-    let ink = '';
-    try { ink = await window.hubInk.confirm({ name, title: 'Sign the candidate agreement' }); } catch(e) { ink = null; }
+    let ink = '', signedAs = name;
+    /* the name from the card writes itself; a visitor who gave none writes it here */
+    try { ink = await window.hubInk.confirm(ASKS && !name ? { askName: true, name: '', title: 'Sign the candidate agreement' } : { name, title: 'Sign the candidate agreement' }); } catch(e) { ink = null; }
     if (ink === null) return;               // cancelled
-    const r = { name, at: now(), print: fp };
+    if (ASKS && ink && typeof ink === 'object' && 'ink' in ink) {
+      signedAs = String(ink.name || '').trim(); ink = ink.ink;
+      if (!signedAs) { const st = $('status'); if (st) st.textContent = 'Write your name to sign.'; return; }
+      try { sessionStorage.setItem('hub:demoName', signedAs); localStorage.setItem('hub:name', signedAs); const me = JSON.parse(localStorage.getItem('hub:me') || '{}') || {}; me.name = signedAs; localStorage.setItem('hub:me', JSON.stringify(me)); } catch (e) {}
+    }
+    const r = { name: signedAs, at: now(), print: fp };
     if (ink) r.ink = ink;
     const d = readDecl(); if (d) r.special = d;
     saveRecord(r);

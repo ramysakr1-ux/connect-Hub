@@ -625,7 +625,7 @@
     if (mode === 'trainee') {
       var me = boot.me || { records: {} };
       /* a demo that asked the visitor's name on the card: the visit is theirs (25 Oct 2026) */
-      if (course.settings && course.settings.demoToday) { try { var dn = sessionStorage.getItem('hub:demoName') || ''; if (dn) me = Object.assign({}, me, { name: dn }); } catch (e) {} }
+      if (course.settings && course.settings.demoToday) { try { var dn = sessionStorage.getItem('hub:demoName') || ''; if (dn) me = Object.assign({}, me, { name: dn }); else if (course.settings.demoAskName) me = Object.assign({}, me, { name: '' }); } catch (e) {} }
       /* that this trainee has answered, and when -- never what */
       out['chub:courseFeedbackSent'] = me.records.courseFeedbackSent ? JSON.stringify(me.records.courseFeedbackSent) : null;
       out['hub:name'] = me.name || '';
