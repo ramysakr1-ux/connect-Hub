@@ -218,7 +218,8 @@ window.hubObservationHours = function(records){
       if(opts.assessor) who='';
       else if(g&&mine&&g===mine) who='<small>your group</small>';
       else if(g&&(opts.all||mine)) who='<small>Group '+e(g)+'</small>';
-      return '<a class="or-join'+(g&&mine&&g===mine?' mine':'')+'" href="'+e(r.url)+'" target="_blank" rel="noopener noreferrer">'+e(lbl(r))+who+'</a>'; }).join('')+'</div>';
+      /* The camera says it is an online room (Ramy, 25 Oct 2026); it takes the place of the dot. */
+      return '<a class="or-join has-cam'+(g&&mine&&g===mine?' mine':'')+'" href="'+e(r.url)+'" target="_blank" rel="noopener noreferrer"><svg class="cam" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2.5"/><path d="M16 10.5l6-3.5v10l-6-3.5z"/></svg>'+e(lbl(r))+who+'</a>'; }).join('')+'</div>';
   };
   /* An initials tile for a person (Ramy, 28 Sep 2026: "should trainees have
      avatars as well, with their initials, like the tutors? perhaps a
@@ -2280,6 +2281,10 @@ window.hubHeadHTML = function (text, heads) {
        files, and one of them opened Cambridge's site instead of saying what it is. */
     if (a && demo() && a.closest && a.closest('.room.files') && a.target === '_blank') {
       e.preventDefault(); e.stopPropagation(); say('This is a demo course. On a real course this opens the file itself.'); return;
+    }
+    /* The demo's online rooms are made-up Zoom links that open nothing (Ramy, 25 Oct 2026: "Nothing happens"). */
+    if (a && demo() && a.closest && a.closest('.rooms .rm, .online-rooms .or-join')) {
+      e.preventDefault(); e.stopPropagation(); say('This is a demo course. On a real course this opens the online room.'); return;
     }
     if (a && /drive\.google\.com\/drive\/folders\/demo-/.test(a.href || '') && demo()) {
       e.preventDefault(); e.stopPropagation(); say('This is a demo course. On a real course this opens the file itself.');

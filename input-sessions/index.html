@@ -298,27 +298,37 @@
       m.appendChild(pill);
     });
   }
-  /* A trainee: only what their timetable has given so far, newest first. The
-     session they are on today, or the last one given, is the strip. Nothing
-     after today is shown, and nothing that is not on the course. */
+  /* A trainee: the cards are what their timetable has given so far, newest first; nothing after today opens. The
+     strip's This week lists every input session of the week (Ramy, 25 Oct 2026: "it should be more than just
+     classroom management... make a list of the input sessions of the week"): the ones given so far open, the
+     rest are named with their day and open here on it. A session taught from the centre's own material is named
+     the way the timetable names it. */
   function paintTrainee(tt, cs){
     var now = today(cs);
-    var released = inputsOf(tt).filter(function(x){ return x.date <= now && x.slug && NAMES[x.slug] != null; }).reverse();
+    var all = inputsOf(tt);
+    var released = all.filter(function(x){ return x.date <= now && x.slug && NAMES[x.slug] != null; }).reverse();
     $('myCards').innerHTML = released.length ? released.map(function(x){
       var pill = x.date === now ? 'Today' : dayName(x.date);
       return '<a class="s" href="' + esc(x.slug) + '/"><p class="k">' + esc(dayName(x.date, true)) + (x.s ? ' · ' + esc(clockOf(x.s, cs)) : '') + '</p><h3>' + esc(NAMES[x.slug]) + '</h3><p class="m"><span class="pill ' + (x.date === now ? 'now' : 'wait') + '">' + esc(pill) + '</span></p></a>';
     }).join('') : '<p class="cardlede">No input sessions have been given on your course yet.</p>';
+    var nameOf = function(x){ return x.slug && NAMES[x.slug] != null ? NAMES[x.slug] : x.t; };
     var last = released[0];
-    if (!last) { setStrip(false); return; }
-    setStrip(true, (last.date === now ? 'Today' : 'Last session') + ' · ' + dayName(last.date, true) + (last.s ? ' · ' + clockOf(last.s, cs) : ''),
+    var next = all.filter(function(x){ return x.date > now || (x.date === now && !(x.slug && NAMES[x.slug] != null)); })[0] || null;
+    if (last) setStrip(true, (last.date === now ? 'Today' : 'Last session') + ' · ' + dayName(last.date, true) + (last.s ? ' · ' + clockOf(last.s, cs) : ''),
       NAMES[last.slug], 'Open it again whenever you need it.', last.slug);
-    var w = weekOf(now);
-    var week = released.filter(function(x){ return x.date >= w.mon && x.date <= w.sun; }).reverse();
+    else if (next) setStrip(true, (next.date === now ? 'Today' : 'Next') + ' · ' + dayName(next.date, true) + (next.s ? ' · ' + clockOf(next.s, cs) : ''),
+      nameOf(next), 'It opens here on the day it is taught.', '');
+    else { setStrip(false); return; }
+    var w = weekOf(now), seen = {};
+    var week = all.filter(function(x){ return x.date >= w.mon && x.date <= w.sun; }).filter(function(x){ var k = x.date + '|' + x.s + '|' + x.t; if (seen[k]) return false; seen[k] = 1; return true; });
     $('weekHead').textContent = 'This week';
     $('weekList').innerHTML = week.length ? week.map(function(x){
-      var cls = x.date === now ? 'now' : 'done';
-      return '<li class="' + cls + '"><span><a href="' + esc(x.slug) + '/">' + esc(NAMES[x.slug]) + '</a></span><span>' + esc(dayName(x.date)) + '</span></li>';
-    }).join('') : '<li><span class="none">No input sessions given this week yet.</span></li>';
+      var given = x.date <= now && x.slug && NAMES[x.slug] != null;
+      var cls = x.date < now ? 'done' : x.date === now ? 'now' : '';
+      var name = given ? '<a href="' + esc(x.slug) + '/">' + esc(NAMES[x.slug]) + '</a>' : esc(nameOf(x));
+      return '<li class="' + cls + '"><span>' + name + '</span><span>' + esc(dayName(x.date)) + '</span></li>';
+    }).join('') + '<li><span class="none">Each session opens here on the day it is taught.</span></li>'
+      : '<li><span class="none">No input sessions this week.</span></li>';
   }
   function run(tt, cs, who){
     $('connectCard').hidden = true; $('myCard').hidden = true; $('centreCard').hidden = true;
