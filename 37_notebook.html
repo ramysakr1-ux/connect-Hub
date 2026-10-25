@@ -22,7 +22,7 @@
 <title>Your notebook</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610250945">
+<link rel="stylesheet" href="hub-tokens.css?v=202610250948">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:36px 20px 120px; display:flex; justify-content:center;}
@@ -116,18 +116,18 @@
   }
   @media print{ .back, .title .write, .tabs, .acts, .nbk-arc{display:none !important;} body{background:#fff; padding:0;} .note, .thread{box-shadow:none; border:1px solid #ddd;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610250945">
+<link rel="stylesheet" href="hub-house.css?v=202610250948">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610250945"></script>
-<script src="hub-store.js?v=202610250945"></script>
-<script src="hub-say.js?v=202610250945"></script>
-<script src="hub-sync.js?v=202610250945"></script>
-<script src="hub-notebook.js?v=202610250945"></script>
+<script src="hub-shared.js?v=202610250948"></script>
+<script src="hub-store.js?v=202610250948"></script>
+<script src="hub-say.js?v=202610250948"></script>
+<script src="hub-sync.js?v=202610250948"></script>
+<script src="hub-notebook.js?v=202610250948"></script>
 <script type="text/x-hub-app">
 /* Two people have a notebook: a trainee and a tutor. Nobody else has a door. */
 (function(){
@@ -210,7 +210,7 @@ function noteHTML(n, opts){
     ? '<div class="menu" data-menu><div class="hd">This note</div>'
       + (tr ? '<button type="button" data-scope="trainee"' + (sentScope === 'trainee' ? ' class="on"' : '') + '>Connect with ' + esc(tr.name) + '</button>'
             + (tr.group ? '<button type="button" data-scope="group"' + (sentScope === 'group' ? ' class="on"' : '') + '>Connect with TP group ' + esc(tr.group) + '</button>' : '') : '')
-      + '<button type="button" data-scope="course"' + (sentScope === 'course' ? ' class="on"' : '') + '>Connect with everyone on the course</button>'
+      /* no "everyone on the course" for a tutor (Ramy, 25 Oct 2026): that is an announcement, and the noticeboard is its door */
       + '<button type="button" data-scope="tutors"' + (n.shared ? ' class="on"' : '') + '>Connect with the other tutors</button>'
       + '<button type="button" data-scope=""' + (!n.shared && !sentScope ? ' class="on"' : '') + '>Keep it to yourself</button></div>'
     : '<div class="menu" data-menu><div class="hd">This note</div><button type="button" data-scope="group"' + (n.shared === 'group' ? ' class="on"' : '') + '>Connect with my TP group</button><button type="button" data-scope="course"' + (n.shared === 'course' ? ' class="on"' : '') + '>Connect with the whole course</button><button type="button" data-scope=""' + (!n.shared ? ' class="on"' : '') + '>Keep it to yourself</button></div>';
@@ -389,7 +389,8 @@ function connect(id, scope){
       return;
     }
     const tr = traineeOf(n);
-    const sent = scope === 'trainee' ? { scope: 'trainee', to: tr ? tr.token : '', name: tr ? tr.name : '' } : scope === 'group' ? { scope: 'group', group: tr ? tr.group : '' } : { scope: 'course' };
+    if (scope === 'course') { NOTE = 'An announcement goes on the noticeboard.'; render(); return; }
+    const sent = scope === 'trainee' ? { scope: 'trainee', to: tr ? tr.token : '', name: tr ? tr.name : '' } : { scope: 'group', group: tr ? tr.group : '' };
     if ((scope === 'trainee' && !sent.to) || (scope === 'group' && !sent.group)) { NOTE = 'This note is not on a trainee.'; render(); return; }
     n.sent = sent;
     persist(n).then(() => HubStore.call({ op: 'tutorConnectNote', who: who, item: n, scope: scope, to: sent.to, group: sent.group })).then(r => {
