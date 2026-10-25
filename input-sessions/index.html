@@ -73,6 +73,11 @@
   .s{transition:transform .14s ease, box-shadow .14s ease, border-color .14s ease;}
   .s:hover{transform:translateY(-2px); border-bottom-color:var(--gold); box-shadow:0 1px 2px oklch(58% 0.03 70 / 0.11), 0 9px 18px -8px oklch(58% 0.03 70 / 0.14);}
   .s:hover h3{color:var(--teal);}
+  /* This week's sessions still to come, on a trainee's page (Ramy, 25 Oct 2026: "they can't click on them... until
+     the time comes"): the card is there, quieter, and does nothing. */
+  .s.locked{cursor:default; opacity:.62;}
+  .s.locked:hover{transform:none; border-bottom-color:var(--sand-line);}
+  .s.locked:hover h3{color:inherit;}
   .s .k{font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold-deep); font-weight:600; margin:0 0 5px;}
   .s h3{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.08rem; line-height:1.25; margin:0 0 6px;}
   .s .m{margin:0; font-size:.78rem; color:var(--grey); display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
@@ -201,7 +206,7 @@
 
   <section class="libcard" id="myCard" hidden>
     <h2 class="cardhead">Your input sessions</h2>
-    <p class="cardlede">The sessions on your timetable, as they are given. Each one stays open once it has been given.</p>
+    <p class="cardlede">The sessions on your timetable. This week&rsquo;s are here before their day and open on it; each stays open once it has been given.</p>
     <div class="cards" id="myCards"></div>
   </section>
 
@@ -307,11 +312,23 @@
     var now = today(cs);
     var all = inputsOf(tt);
     var released = all.filter(function(x){ return x.date <= now && x.slug && NAMES[x.slug] != null; }).reverse();
-    $('myCards').innerHTML = released.length ? released.map(function(x){
+    var nameOf = function(x){ return x.slug && NAMES[x.slug] != null ? NAMES[x.slug] : x.t; };
+    /* Ahead of the cards that open: this week's sessions still to come, soonest first, locked until their day, and
+       any of the week's sessions taught from the centre's own material, which have no page here at all. */
+    var wk = weekOf(now), seenWk = {};
+    var ahead = all.filter(function(x){ return x.date >= wk.mon && x.date <= wk.sun; })
+      .filter(function(x){ var k = x.date + '|' + x.s + '|' + x.t; if (seenWk[k]) return false; seenWk[k] = 1; return true; })
+      .filter(function(x){ var page = x.slug && NAMES[x.slug] != null; return page ? x.date > now : true; });
+    var lockedHTML = ahead.map(function(x){
+      var page = x.slug && NAMES[x.slug] != null;
+      var pill = page ? 'Opens ' + dayName(x.date, true).split(' ')[0] : 'Your centre’s material';
+      return '<div class="s locked" aria-disabled="true"><p class="k">' + esc(dayName(x.date, true)) + (x.s ? ' · ' + esc(clockOf(x.s, cs)) : '') + '</p><h3>' + esc(nameOf(x)) + '</h3><p class="m"><span class="pill">' + esc(pill) + '</span></p></div>';
+    }).join('');
+    var openHTML = released.map(function(x){
       var pill = x.date === now ? 'Today' : dayName(x.date);
       return '<a class="s" href="' + esc(x.slug) + '/"><p class="k">' + esc(dayName(x.date, true)) + (x.s ? ' · ' + esc(clockOf(x.s, cs)) : '') + '</p><h3>' + esc(NAMES[x.slug]) + '</h3><p class="m"><span class="pill ' + (x.date === now ? 'now' : 'wait') + '">' + esc(pill) + '</span></p></a>';
-    }).join('') : '<p class="cardlede">No input sessions have been given on your course yet.</p>';
-    var nameOf = function(x){ return x.slug && NAMES[x.slug] != null ? NAMES[x.slug] : x.t; };
+    }).join('');
+    $('myCards').innerHTML = (lockedHTML || openHTML) ? lockedHTML + openHTML : '<p class="cardlede">No input sessions have been given on your course yet.</p>';
     var last = released[0];
     var next = all.filter(function(x){ return x.date > now || (x.date === now && !(x.slug && NAMES[x.slug] != null)); })[0] || null;
     if (last) setStrip(true, (last.date === now ? 'Today' : 'Last session') + ' · ' + dayName(last.date, true) + (last.s ? ' · ' + clockOf(last.s, cs) : ''),
