@@ -43,7 +43,7 @@
 <title>Connect Lite — My classes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610260038">
+<link rel="stylesheet" href="hub-tokens.css?v=202610260051">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:720px; margin:0 auto; padding:22px 20px 60px;}
@@ -180,17 +180,17 @@
   @keyframes v4-sheen{from{left:-50%;}to{left:120%;}}
   @media(prefers-reduced-motion:reduce){ .next.v4 *, .cert.earned::after, .track i{animation:none !important; transition:none !important;} .cert.earned::after{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610260038">
+<link rel="stylesheet" href="hub-house.css?v=202610260051">
 </head>
 <body class="hub-grid hub-paper" data-signout="float">
 <div class="board" id="app"></div>
 <div id="consent"></div>
-<script src="hub-shared.js?v=202610260038"></script>
-<script src="hub-attendance.js?v=202610260038"></script>
-<script src="hub-volunteer-i18n.js?v=202610260038"></script>
-<script src="hub-store.js?v=202610260038"></script>
-<script src="hub-say.js?v=202610260038"></script>
-<script src="hub-sync.js?v=202610260038"></script>
+<script src="hub-shared.js?v=202610260051"></script>
+<script src="hub-attendance.js?v=202610260051"></script>
+<script src="hub-volunteer-i18n.js?v=202610260051"></script>
+<script src="hub-store.js?v=202610260051"></script>
+<script src="hub-say.js?v=202610260051"></script>
+<script src="hub-sync.js?v=202610260051"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -214,7 +214,13 @@ const TT = rec('connect_timetable_v1') || {};
    'course'). The shelf used to stay on the course; Ramy, 6 Oct 2026: "share
    with the volunteer students... doesn't matter what's in there." */
 const SHELF_KINDS = { demo: 'demonstration lesson', gtky: 'activity', course: 'from your teachers' };
-const SHARED = (rec('connect_shared_v1') || []).filter(x => x && x.url && x.name && (!x.kind || x.kind === 'materials' || SHELF_KINDS[x.kind])).slice().sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
+/* A trainee's handout is for one class, and a student at A2 has no use for the B2 class's cards (Fable read,
+   26 Oct 2026): a handout that names its level shows only to a student at that level. What the tutors put on
+   the shelf is for everyone, and a handout shared before the level travelled with it stays in view. */
+const cefr = s => { const m = String(s || '').match(/\b([ABC][12])\b/i); return m ? m[1].toUpperCase() : String(s || '').trim().toLowerCase(); };
+const myLevel = cefr((rec('hub:volunteer') || {}).level);
+const forMyClass = x => !(x.kind === 'materials' || !x.kind) || !x.level || !myLevel || cefr(x.level) === myLevel;
+const SHARED = (rec('connect_shared_v1') || []).filter(x => x && x.url && x.name && (!x.kind || x.kind === 'materials' || SHELF_KINDS[x.kind])).filter(forMyClass).slice().sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
 /* The teachers a volunteer can write to, from the course's own tutor
    contacts. A volunteer has no group, so they see all of them. */
 /* 1 Oct 2026. The block here used to list the course TUTORS with mail links.

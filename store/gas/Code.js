@@ -1438,6 +1438,9 @@ case 'inbox': {
                    /* what the lesson is about ("Grammar"), which the plan page has sent since
                       1 Oct and the store dropped on the floor (volunteer walk, 24 Oct 2026) */
                    aim: String(req.aim || '').slice(0, 40),
+                   /* the class it was made for ("A2"), from the plan, so a volunteer sees their
+                      own class's handouts and not the other level's (Fable read, 26 Oct 2026) */
+                   level: String(req.level || '').slice(0, 30),
                    kind: String(req.kind || '').slice(0, 20) };
       /* One row per link: sharing the same file twice is a slip, not two
          handouts, and a volunteer should not see it listed twice. */
