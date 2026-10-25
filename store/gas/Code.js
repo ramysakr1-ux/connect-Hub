@@ -342,9 +342,10 @@ function handle_(req) {
 
   /* A DATED PASS (v132, 25 Oct 2026; Ramy: "a dated pass per person... I like this idea"). A link sent to a
      named person from the console carries a pass (&p=), minted for a number of days; the browser sends it
-     with every call, and after its date the store refuses that visit with the date. A link without a pass,
-     the one on the website or social media, never expires. Soft by design: the demo's data is invented and
-     the public links are public, so the pass is a dated invitation, not a lock. */
+     with every call, and after its date the store refuses that visit with the date. A link without a pass
+     (one sent before passes existed, or "no date") never expires. Demos are sent to individuals only; nothing
+     public links into one. Soft by design: the pass is a dated invitation, not a lock; to close links already
+     sent, rotate the keys. */
   if (course && !owner && req.pass && op !== 'ping' && op !== 'passInfo') passCheck_(course, String(req.pass));
 
   /* LINK PINS (v87, 15 Oct 2026). Ramy: "receive the link and then the
