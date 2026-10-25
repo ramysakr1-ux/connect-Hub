@@ -340,6 +340,13 @@ function handle_(req) {
     }
   }
 
+  /* A DATED PASS (v132, 25 Oct 2026; Ramy: "a dated pass per person... I like this idea"). A link sent to a
+     named person from the console carries a pass (&p=), minted for a number of days; the browser sends it
+     with every call, and after its date the store refuses that visit with the date. A link without a pass,
+     the one on the website or social media, never expires. Soft by design: the demo's data is invented and
+     the public links are public, so the pass is a dated invitation, not a lock. */
+  if (course && !owner && req.pass && op !== 'ping' && op !== 'passInfo') passCheck_(course, String(req.pass));
+
   /* LINK PINS (v87, 15 Oct 2026). Ramy: "receive the link and then the
      first time they click on it, it prompts them to choose a password and
      they enter it twice. If they lose it, the course admin sends them
@@ -369,6 +376,30 @@ function handle_(req) {
 
   switch (op) {
     case 'ping': return { tutor: tutor, assessor: assessor, owner: owner, time: new Date().toISOString() };
+    /* THE PASS (v132). `mintPass` is the owner's: a pass for a course, for 1 to 60 days (a week when not said).
+       `passInfo` is public and tells the invitation card the date to print; it answers nothing else. */
+    case 'mintPass': {
+      requireOwner_(owner);
+      var mpc = courseById_(String(req.course || '').trim());
+      if (!mpc) throw new Error('No such course');
+      var mpDays = Math.max(1, Math.min(60, Math.round(Number(req.days)) || 7));
+      var mpd = new Date(); mpd.setUTCDate(mpd.getUTCDate() + mpDays);
+      var mpExp = mpd.toISOString().slice(0, 10), mpId = 'p-' + mpc.id + '-' + newKey_().slice(0, 12);
+      var mpOld = new Date(); mpOld.setUTCDate(mpOld.getUTCDate() - 30); var mpCut = mpOld.toISOString().slice(0, 10);
+      courseUpdateObj_(mpc.id, 'passes', function (pool) {
+        Object.keys(pool).forEach(function (k) { if (pool[k] && String(pool[k].exp) < mpCut) delete pool[k]; });   // a month after it ended, a pass is forgotten
+        pool[mpId] = { exp: mpExp, days: mpDays, label: String(req.label || '').slice(0, 60), at: new Date().toISOString() };
+        return pool;
+      });
+      return { id: mpId, exp: mpExp };
+    }
+    case 'passInfo': {
+      var pi = parsePass_(req.p);
+      if (!pi) throw new Error('This link is not valid.');
+      var pir = (courseRead_(pi.course, 'passes') || {})[String(req.p)];
+      if (!pir) throw new Error('This link is not valid.');
+      return { exp: pir.exp, expired: new Date().toISOString().slice(0, 10) > String(pir.exp) };
+    }
 
     /* v59 (1 Oct 2026). Ramy: "some kind of likes feedback, connected to
        Google" -- demos and the offer page only. A thumb and an optional line,
@@ -2626,6 +2657,20 @@ function diarizedTurns_(sse) {
   return turns.map(function (t) { return t.who + ': ' + t.text; }).join('\n');
 }
 
+/* THE PASS's helpers (v132). A pass is "p-<course id>-<12 hex>", so its course is read from it. */
+function parsePass_(p) {
+  var m = /^p-([A-Za-z0-9]+)-([0-9a-f]{12})$/.exec(String(p || ''));
+  return m ? { course: m[1] } : null;
+}
+function passCheck_(course, p) {
+  var pi = parsePass_(p);
+  if (!pi || pi.course !== course.id) throw new Error('This link is not valid.');
+  var rec = (courseRead_(course.id, 'passes') || {})[p];
+  if (!rec) throw new Error('This link is not valid.');
+  if (new Date().toISOString().slice(0, 10) > String(rec.exp)) {
+    throw new Error('This link expired on ' + new Date(rec.exp + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + '.');
+  }
+}
 /* THE NOTEBOOK's helpers (v129). */
 // A note as the pool keeps it: the words, where it was written, when, and a voice note's id. Never more.
 function noteClean_(it, byName) {

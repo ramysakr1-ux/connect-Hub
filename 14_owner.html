@@ -38,7 +38,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610251105">
+<link rel="stylesheet" href="hub-tokens.css?v=202610251112">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 70px;}
@@ -82,6 +82,8 @@
   .sec > h2 small{font-family:'Karla',sans-serif; font-weight:400; font-size:0.8rem; color:var(--grey);}
   .cards{display:flex; flex-direction:column; gap:12px; margin-top:12px;}
   .door .sendrow{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+  .passsel{font-size:0.8rem; color:var(--grey); display:inline-flex; align-items:center; gap:6px;}
+  .passsel select{font:600 0.8rem 'Karla',sans-serif; padding:4px 8px; border-radius:8px; border:1.5px solid var(--sand-line); background:var(--field); color:var(--ink);}
   .door .sendrow .linkbtn{font-size:0.8rem;}
   .card{background:var(--paper); border-radius:14px; box-shadow:var(--nb-shadow); padding:18px 20px;}
 
@@ -209,7 +211,7 @@
   @media (max-width:760px){ .demo .doors{grid-template-columns:1fr 1fr;} .setting{grid-template-columns:1fr;} }
   @media (max-width:520px){ .demo .doors{grid-template-columns:1fr;} .title h1{font-size:1.8rem;} body{padding:0 14px 60px;} .card{padding:16px;} .row-course .acts .btn{flex:1 1 auto; justify-content:center;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610251105">
+<link rel="stylesheet" href="hub-house.css?v=202610251112">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -232,10 +234,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610251105"></script>
-<script src="hub-store.js?v=202610251105"></script>
-<script src="hub-say.js?v=202610251105"></script>
-<script src="hub-card-mail.js?v=202610251105"></script>
+<script src="hub-shared.js?v=202610251112"></script>
+<script src="hub-store.js?v=202610251112"></script>
+<script src="hub-say.js?v=202610251112"></script>
+<script src="hub-card-mail.js?v=202610251112"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after. */
 const OWNER_STORE = 'hub:o';
@@ -337,6 +339,18 @@ function courseState(c){
 }
 
 /* ---- the four doors into a course: the tutor's, a trainee's, the assessor's, a volunteer's ---- */
+/* THE DATED PASS (Ramy, 25 Oct 2026: "a dated pass per person... when you send the demo to someone you pick how
+   long it lasts, one week by default"). The choice is the console's, kept here; a link copied, seen or sent from
+   a card carries a pass minted for that many days, and the card it opens reads the date. "No date" is the public
+   link, the one for the website and social media, which never expires. */
+const PASS_KEY = 'chub:passDays';
+function passDays(){ const v = ls.get(PASS_KEY); return v == null || v === '' ? 7 : Math.max(0, Number(v) || 0); }
+async function mintFor(courseId, label){ const d = passDays(); if (!d) return null; const r = await call({ op: 'mintPass', course: courseId, days: d, label: label || '' }); return r && r.id ? { id: r.id, exp: r.exp } : null; }
+const dated = (link, m) => (m && m.id && /invite\.html\?/.test(String(link))) ? link + '&p=' + encodeURIComponent(m.id) : link;
+function passSelect(){
+  const d = passDays(), opt = (v, t) => `<option value="${v}"${d === v ? ' selected' : ''}>${t}</option>`;
+  return `<label class="passsel">Links sent from here open for <select data-passdays aria-label="How long a link sent from here opens for">${opt(1, 'a day')}${opt(3, '3 days')}${opt(7, 'a week')}${opt(14, '2 weeks')}${opt(30, 'a month')}${opt(0, 'no date (the public link)')}</select></label>`;
+}
 const DOORS = {};
 async function doorsFor(c){
   if (DOORS[c.id]) return DOORS[c.id];
@@ -374,7 +388,7 @@ function cardSubject(){
   if (cardKind() === 'price') return 'Connect Lite — what it costs';
   return 'Connect Lite — a real course to look around, and a film';
 }
-async function cardHtml(){
+async function cardHtml(mint){
   if (cardKind() === 'film') return hubCardMail({ note: demoNote(), film: filmLink(), only: 'film', cardStyle: cardStyle() });
   if (cardKind() === 'price') return hubCardMail({ note: demoNote(), rates: ratesList(), only: 'price', cardStyle: cardStyle() });
   const d = theDemo(); const doors = [];
@@ -400,7 +414,16 @@ async function cardHtml(){
     const vis = visit > n ? ', ' + (visit - n === 1 ? 'the day before' : (visit - n) + ' days before') + ' the assessor’s visit' : '';
     return 'This course is fixed on day ' + n + ' of ' + days.length + ', ' + where + vis + '. It stays there, so what you see today is what you see next month.';
   })();
-  return hubCardMail({ note: demoNote(), film: filmLink(), doors, tutorDoor, moment, cardStyle: cardStyle() });
+  let momentOut = moment;
+  if (mint && d) {
+    const m = await mintFor(d.id, 'card');
+    if (m) {
+      doors.forEach(x => { if (x.href) x.href = dated(x.href, m); if (x.picks) x.picks = x.picks.map(pk => Object.assign({}, pk, { href: dated(pk.href, m) })); });
+      if (tutorDoor && tutorDoor.href) tutorDoor.href = dated(tutorDoor.href, m);
+      momentOut = (moment ? moment + ' ' : '') + 'The links on this card open until ' + niceDate(m.exp) + '.';
+    }
+  }
+  return hubCardMail({ note: demoNote(), film: filmLink(), doors, tutorDoor, moment: momentOut, cardStyle: cardStyle() });
 }
 /* plain-text versions, for a mail client */
 async function noteFor(c){
@@ -446,7 +469,7 @@ function demoCard(c){
         <span class="sendrow"><button type="button" class="btn small" data-door="volunteer" data-id="${esc(c.id)}" disabled>Finding…</button><a class="linkbtn" data-see="volunteer" data-id="${esc(c.id)}" href="#" target="_blank" rel="noopener" hidden>See the card</a>${sends('volunteer')}</span></div>
     </div>
     <div class="foot">
-      <span>All four links, with the film:</span>${sends('all')}
+      ${passSelect()}<span>All four links, with the film:</span>${sends('all')}
       <a class="linkbtn" data-card="${esc(c.id)}" href="#">See the offer card</a>
       <a class="linkbtn" href="5_tutor_dashboard.html?k=${encodeURIComponent(c.tutorKey)}" target="_blank" rel="noopener">Open it as a tutor</a>
       <span class="right"><code>${esc(c.id)}</code>
@@ -463,6 +486,7 @@ function sendCard(){
     <div class="row">
       <select id="cardKind" aria-label="Which card"><option value="">The offer card</option><option value="film"${kind === 'film' ? ' selected' : ''}>Just the film</option><option value="price"${kind === 'price' ? ' selected' : ''}>Just the price</option></select>
       <input type="email" id="cardTo" placeholder="Their email address" autocomplete="off">
+      ${passSelect()}
       <button class="btn primary" type="button" id="cardSend">Send</button>
       <button class="btn" type="button" id="cardPreview">Preview</button>
     </div>
@@ -537,7 +561,7 @@ function dayOneCard(c){
       <div class="door"><b>The film</b><span>One TP, from the trainee’s side: the second long film. It goes with every link sent from here.</span><button type="button" class="btn small" data-copy="${esc(DAY_ONE_FILM)}">Copy the link</button></div>
     </div>
     <div class="foot">
-      <span>All three links, with the film:</span>
+      ${passSelect()}<span>All three links, with the film:</span>
       <button type="button" class="linkbtn" data-share="wa" data-who="all" data-demo="dayone" data-film="${esc(DAY_ONE_FILM)}" data-id="${esc(c.id)}" data-tutor="${esc(tutor)}">WhatsApp</button>
       <button type="button" class="linkbtn" data-share="mail" data-who="all" data-demo="dayone" data-film="${esc(DAY_ONE_FILM)}" data-id="${esc(c.id)}" data-tutor="${esc(tutor)}">Email</button>
       <span class="right"><code>${esc(c.id)}</code></span>
@@ -740,6 +764,7 @@ document.addEventListener('input', e => {
   if (t.id === 'demoNote') ls.set(noteKey(), t.value);
   if (t.id === 'cardCopyTo') ls.set(CARD_CC_KEY, t.value.trim());
   if (t.id === 'cardStyleSel') ls.set(CARD_STYLE_KEY, t.value);
+  if (t.hasAttribute && t.hasAttribute('data-passdays')) { ls.set(PASS_KEY, t.value); document.querySelectorAll('[data-passdays]').forEach(x => { x.value = t.value; }); }
   if (t.id === 'cardKind') { ls.set(CARD_KIND_KEY, t.value); const n = $('demoNote'); if (n) n.value = demoNote(); }
   const rt = t.closest('[data-rate]'); if (rt) { const r = ratesSaved(); r[rt.dataset.rate] = rt.value.trim(); ls.set(RATES_KEY, JSON.stringify(r)); }
 });
@@ -782,13 +807,13 @@ $('app').addEventListener('click', async e => {
   if ((T('#cardPreview') || T('#cardCopy') || T('#cardSend')) && cardKind() === 'price' && !ratesList()) { status('Type the four rates first, under Settings.'); const d = $('foldSettings'); if (d) d.open = true; const f = document.querySelector('[data-rate]'); if (f) f.focus(); return; }
   if (T('#cardPreview')) { const u = URL.createObjectURL(new Blob([await cardHtml()], { type: 'text/html' })); window.open(u, '_blank', 'noopener'); setTimeout(() => URL.revokeObjectURL(u), 60000); return; }
   if (T('#cardCopy')) { const b = T('#cardCopy'), was = b.textContent;
-    try { await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([await cardHtml()], { type: 'text/html' }), 'text/plain': new Blob([demoNote()], { type: 'text/plain' }) })]); b.textContent = 'Copied — paste it into a new message'; }
+    try { await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([await cardHtml(true)], { type: 'text/html' }), 'text/plain': new Blob([demoNote()], { type: 'text/plain' }) })]); b.textContent = 'Copied — paste it into a new message'; }
     catch (err) { b.textContent = 'Could not copy — use Preview and copy from there'; }
     setTimeout(() => { b.textContent = was; }, 2600); return; }
   if (T('#cardSend')) { const b = T('#cardSend'), to = ($('cardTo').value || '').trim(), cc = ($('cardCopyTo') ? $('cardCopyTo').value : '').trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) { status('Type the address the card goes to.'); $('cardTo').focus(); return; }
     b.disabled = true; b.textContent = 'Sending…'; status('');
-    try { const r = await HubStore.call({ op: 'sendCard', owner: ownerKey(), to, copy: cc, subject: cardSubject(), html: await cardHtml(), text: demoNote() }); status('Sent to ' + to + ' from ' + (r && r.from || 'the store') + (cc ? ', with a copy to ' + cc : '') + '.'); $('cardTo').value = ''; }
+    try { const r = await HubStore.call({ op: 'sendCard', owner: ownerKey(), to, copy: cc, subject: cardSubject(), html: await cardHtml(true), text: demoNote() }); status('Sent to ' + to + ' from ' + (r && r.from || 'the store') + (cc ? ', with a copy to ' + cc : '') + '.'); $('cardTo').value = ''; }
     catch (err) { status('Not sent: ' + (err && err.message || err)); }
     b.disabled = false; b.textContent = 'Send'; return; }
   const note = T('[data-note]');
@@ -805,13 +830,24 @@ $('app').addEventListener('click', async e => {
       v.disabled = false; v.textContent = was; await hubCopyButton(v, base() + 'invite.html?v=' + encodeURIComponent(first.token)); }
     catch (err) { v.textContent = 'Could not reach the course'; v.disabled = false; setTimeout(() => { v.textContent = was; }, 2600); }
     return; }
+  const see = T('.sendrow a.linkbtn');
+  if (see && see.getAttribute('href') && /invite\.html\?/.test(see.href) && passDays()) {
+    e.preventDefault(); const w = window.open('', '_blank'); const href = see.href;
+    try { const m = await mintFor(see.closest('[data-doors]').dataset.doors, 'seen'); const u = dated(href, m); if (w) w.location = u; else window.open(u, '_blank'); }
+    catch (err) { if (w) w.location = href; }
+    return;
+  }
   const sh = T('[data-share]');
   if (sh) {
     const who = sh.dataset.who || 'all', mid = sh.dataset.demo === 'mid', film = sh.dataset.film || DAY_ONE_FILM;
     const L = { trainee: sh.dataset.trainee, tutor: sh.dataset.tutor, assessor: sh.dataset.assessor, volunteer: sh.dataset.volunteer };
     const need = who === 'all' ? (mid ? ['trainee', 'tutor', 'assessor', 'volunteer'] : ['trainee', 'tutor', 'volunteer']) : [who];
     if (need.some(r => !L[r])) { status('That link is still being found; try again in a moment.'); return; }
-    const until = sh.dataset.until ? ' The link' + (need.length > 1 ? 's open' : ' opens') + ' until ' + niceDate(sh.dataset.until) + '.' : '';
+    const wa = sh.dataset.share === 'wa' ? window.open('', '_blank') : null;   /* opened now, filled after the pass is minted: a window opened after a wait is blocked */
+    let pass = null; try { pass = await mintFor(sh.dataset.id, who); } catch (err) { status('Could not make the dated pass: ' + (err && err.message || err)); if (wa) wa.close(); return; }
+    need.forEach(r => { L[r] = dated(L[r], pass); });
+    const endsOn = [sh.dataset.until, pass && pass.exp].filter(Boolean).sort()[0];
+    const until = endsOn ? ' The link' + (need.length > 1 ? 's open' : ' opens') + ' until ' + niceDate(endsOn) + '.' : '';
     const when = mid ? 'half-way through the course, day 10 of 20' : 'on day one of the course';
     const LINE = { trainee: 'As a trainee, ' + when + ': ', tutor: 'As a tutor, ' + when + ': ', assessor: 'As the assessor, read-only, ' + when + ': ', volunteer: 'As a volunteer student, one of the people the trainees teach: ' };
     const where = mid ? 'a CELTA course half-way through' : 'day one of a CELTA course';
@@ -824,12 +860,19 @@ $('app').addEventListener('click', async e => {
     const filmLine = mid ? 'The film: ' : 'The film, one TP from the trainee\u2019s side: ';
     const text = head + '\n\n' + need.map(r => LINE[r] + L[r]).join('\n\n') + '\n\n' + filmLine + film + '\n\n' + tail + until;
     const subject = 'Connect Lite' + (mid ? ', the demo' : ', day one') + (who === 'all' ? '' : who === 'volunteer' ? ', as a volunteer student' : who === 'assessor' ? ', as the assessor' : ', as a ' + who);
-    if (sh.dataset.share === 'wa') window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
+    if (sh.dataset.share === 'wa') { const u = 'https://wa.me/?text=' + encodeURIComponent(text); if (wa) wa.location = u; else window.open(u, '_blank', 'noopener'); }
     else location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(text);
     return;
   }
   const b = T('[data-copy]');
-  if (b) { await hubCopyButton(b, b.dataset.copy); return; }
+  if (b) {
+    const host = b.closest('[data-doors]');
+    if (host && /invite\.html\?/.test(b.dataset.copy) && passDays()) {
+      try { const m = await mintFor(host.dataset.doors, 'copied'); await hubCopyButton(b, dated(b.dataset.copy, m)); } catch (err) { await hubCopyButton(b, b.dataset.copy); }
+      return;
+    }
+    await hubCopyButton(b, b.dataset.copy); return;
+  }
   const pg = T('[data-purge]');
   if (pg) { if (BUSY) return; const files = Number(pg.dataset.files) || 0;
     const typed = await confirmModal(`Empty the materials for ${pg.dataset.purge}? ${files} file${files === 1 ? '' : 's'} go to Drive’s trash, where Drive keeps them for 30 days. The plans that name them will point at nothing.`, 'Empty the materials', { type: pg.dataset.purge, hint: `Type ${pg.dataset.purge} to empty its materials` });

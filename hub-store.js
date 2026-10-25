@@ -26,12 +26,20 @@ window.HubStore = (function(){
        is the LAST one that wins in this browser. */
     if (params.get('v')) { localStorage.setItem('hub:v', params.get('v')); localStorage.removeItem('hub:t'); localStorage.removeItem('hub:k'); localStorage.removeItem('hub:a'); }
     if (params.get('t') || params.get('k') || params.get('ak')) localStorage.removeItem('hub:v');
+    /* A DATED PASS (25 Oct 2026) lives in this TAB, not the browser: a link sent to a person carries &p=, the
+       tab keeps it as it moves between pages, and a link opened fresh (the website's, in a new tab or pasted
+       in) carries none and so never expires. */
+    if (params.get('t') || params.get('k') || params.get('ak') || params.get('v')) {
+      if (params.get('p')) sessionStorage.setItem('hub:p', params.get('p'));
+      else { var ref = ''; try { ref = new URL(document.referrer).origin; } catch (e2) {} if (ref !== location.origin) sessionStorage.removeItem('hub:p'); }
+    }
     var stray = localStorage.getItem('hub:a'); if (stray && /^(fol|lrt|lsrt|lfc|a5)$/.test(stray)) localStorage.removeItem('hub:a');
   } catch (e) {}
   function token(){ try { return localStorage.getItem('hub:t') || ''; } catch (e) { return ''; } }
   function key(){ try { return localStorage.getItem('hub:k') || ''; } catch (e) { return ''; } }
   function akey(){ try { return localStorage.getItem('hub:a') || ''; } catch (e) { return ''; } }
   function vtoken(){ try { return localStorage.getItem('hub:v') || ''; } catch (e) { return ''; } }
+  function passId(){ try { return sessionStorage.getItem('hub:p') || ''; } catch (e) { return ''; } }
   /* THE PIN (v87, 15 Oct 2026). Course admin can put a PIN on a trainee's
      link and one on the tutor link; the store then refuses every call
      without it. The PIN this device knows rides on each call; when the store
@@ -75,7 +83,7 @@ window.HubStore = (function(){
      see hub-sync.js. These are the calls that only read; anything else on a
      demo is answered here and never sent -- no email, no upload, no roster
      change. feedback and report are the visitor's own note to Lite's maker. */
-  var READS = { celta5Assets:1, boot:1, get:1, me:1, course:1, roster:1, audio:1, ping:1, pins:1, materials:1, stats:1, inbox:1, readContribution:1, feedbackSummary:1, centres:1, ownerCourses:1, assessorLink:1, getInterviewAudio:1, feedback:1, report:1, demoCard:1, similar:1, webCheck:1, aiCheck:1, checksOn:1, tutorNotes:1, getNoteAudio:1 };
+  var READS = { celta5Assets:1, boot:1, get:1, me:1, course:1, roster:1, audio:1, ping:1, pins:1, materials:1, stats:1, inbox:1, readContribution:1, feedbackSummary:1, centres:1, ownerCourses:1, assessorLink:1, getInterviewAudio:1, feedback:1, report:1, demoCard:1, similar:1, webCheck:1, aiCheck:1, checksOn:1, tutorNotes:1, getNoteAudio:1, passInfo:1 };
   function isDemo(){ if (window.HUB_DEMO != null) return !!window.HUB_DEMO; try { var c = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; return !!c.demoToday; } catch (e) { return false; } }
   async function call(body, timeoutMs){
     var payload = Object.assign({}, body);
@@ -89,6 +97,7 @@ window.HubStore = (function(){
     else if (key() && payload.key == null) payload.key = key();
     else if (akey() && payload.a == null) payload.a = akey();
     else if (vtoken() && payload.v == null) payload.v = vtoken();
+    if (!payload.owner && payload.pass == null && passId()) payload.pass = passId();
     // Apps Script answers the odd call with an HTML error page ("Sayfa
     // Bulunamadi", 1 in 3 during a bad minute on 20 Sep 2026): three tries.
     var pn = pinName(payload);
@@ -133,6 +142,7 @@ window.HubStore = (function(){
   function base(){ return location.origin + location.pathname.replace(/[^/]*$/, ''); }
   function withAccess(href){
     var sep = href.indexOf('?') === -1 ? '?' : '&';
+    var pp = passId(); if (pp && !/[?&]p=/.test(href)) { href += sep + 'p=' + encodeURIComponent(pp); sep = '&'; }
     if (key()) return href + sep + 'k=' + encodeURIComponent(key());
     if (akey()) return href + sep + 'ak=' + encodeURIComponent(akey());
     if (token()) return href + sep + 't=' + encodeURIComponent(token());
