@@ -40,7 +40,7 @@
 <title>Certificate</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610260102">
+<link rel="stylesheet" href="hub-tokens.css?v=202610260121">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:22px 20px 60px;}
@@ -132,17 +132,17 @@
   @media (max-width:640px){ .v4-seal{right:6%; bottom:6%;} }
   @media print{ .sheet::after{display:none;} .v4-seal{animation:none !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610260102">
+<link rel="stylesheet" href="hub-house.css?v=202610260121">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board" id="app"></div>
-<script src="hub-shared.js?v=202610260102"></script>
-<script src="hub-attendance.js?v=202610260102"></script>
-<script src="hub-hand.js?v=202610260102"></script>
-<script src="hub-ink.js?v=202610260102"></script>
-<script src="hub-store.js?v=202610260102"></script>
-<script src="hub-say.js?v=202610260102"></script>
-<script src="hub-sync.js?v=202610260102"></script>
+<script src="hub-shared.js?v=202610260121"></script>
+<script src="hub-attendance.js?v=202610260121"></script>
+<script src="hub-hand.js?v=202610260121"></script>
+<script src="hub-ink.js?v=202610260121"></script>
+<script src="hub-store.js?v=202610260121"></script>
+<script src="hub-say.js?v=202610260121"></script>
+<script src="hub-sync.js?v=202610260121"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A student's own, or a tutor printing one from the register. */
@@ -167,7 +167,8 @@ const fmtH = h => (Math.round(h * 100) / 100).toString().replace(/\.00$/, '');
 const tpSlots = (TT.slots || []).filter(s => s.kind === 'tp');
 const mins = sl => { const a = String(sl.from||'').match(/^(\d{1,2}):(\d{2})/), b = String(sl.to||'').match(/^(\d{1,2}):(\d{2})/); if (!a||!b) return 0; const d = (+b[1]*60 + +b[2]) - (+a[1]*60 + +a[2]); return d > 0 ? d : 0; };
 const LESSON_MIN = tpSlots.length ? Math.round(tpSlots.reduce((n, sl) => n + mins(sl), 0) / tpSlots.length) : 0;
-const days = (TT.days || []).filter(d => d.tp).map(d => d.date).sort();
+const CD = window.hubAttendance.classDays(TT);
+const days = CD.days;
 
 /* Whose certificate. A student opens their own on their own link; a tutor
    opens any by passing ?who=<their token> from the register. */
@@ -192,15 +193,15 @@ function render(){
   /* A record written before the three tiers held a list of dates, all of them
      "in the room". */
   const marks = who.marks || (who.here || []).reduce((m, d) => { m[d] = 'present'; return m; }, {});
-  const r = A.record(marks, days, tpSlots.length, LESSON_MIN);
+  const r = A.record(marks, days, tpSlots.length, LESSON_MIN, CD.perDay);
   /* 160 hours AT A LEVEL (Ramy, 8 Oct 2026: "completed a hundred and sixty
      hours of level whatever"): carried in at the level, plus this course's
      days since the student moved up to it. */
   const level = String(who.level || '').trim();
   const marksL = A.atLevel(marks, who.levelFrom);
-  const rL = who.levelFrom ? A.record(marksL, days, tpSlots.length, LESSON_MIN) : r;
+  const rL = who.levelFrom ? A.record(marksL, days, tpSlots.length, LESSON_MIN, CD.perDay) : r;
   const cert = A.certificate(rL.hours, A.hoursForLevel(level, SETTINGS), tpSlots.length, LESSON_MIN, who.carried);
-  const doneOn = A.completedOn(marksL, days, tpSlots.length, LESSON_MIN, who.carried, cert.target);
+  const doneOn = A.completedOn(marksL, days, tpSlots.length, LESSON_MIN, who.carried, cert.target, CD.perDay);
 
   if (!cert.earned && !IS_TUTOR) {
     app.innerHTML = `<div class="empty"><b>Not quite yet.</b><br>Your certificate comes when you complete ${fmtH(cert.target)} hours${level ? ' at ' + esc(level) : ''}. You have ${fmtH(cert.total)} so far, so that is <b>${cert.classesLeft} more ${cert.classesLeft === 1 ? 'class' : 'classes'}</b>. It will appear here on its own.</div>`;

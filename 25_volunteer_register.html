@@ -39,7 +39,7 @@
 <title>Connect Lite — Volunteer register</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610260102">
+<link rel="stylesheet" href="hub-tokens.css?v=202610260121">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -147,21 +147,21 @@
   @media(max-width:560px){ .vr9-coming{grid-template-columns:1fr auto;} .vr9-coming .split{grid-column:1 / -1;} .vr9-coming .num{border:0; padding:0;} .vr9-now small{margin-left:0; flex-basis:100%;} }
   @media print{ .vr9-now{display:none;} .seg.vr9-today{box-shadow:none;} .vr9-coming{border:1px solid #bbb;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610260102">
+<link rel="stylesheet" href="hub-house.css?v=202610260121">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610260102"></script>
-<script src="hub-shared.js?v=202610260102"></script>
-<script src="hub-timetable-parse.js?v=202610260102"></script>
-<script src="hub-xlsx.js?v=202610260102"></script>
-<script src="hub-attendance.js?v=202610260102"></script>
-<script src="hub-store.js?v=202610260102"></script>
-<script src="hub-say.js?v=202610260102"></script>
-<script src="hub-sync.js?v=202610260102"></script>
+<script src="hub-due.js?v=202610260121"></script>
+<script src="hub-shared.js?v=202610260121"></script>
+<script src="hub-timetable-parse.js?v=202610260121"></script>
+<script src="hub-xlsx.js?v=202610260121"></script>
+<script src="hub-attendance.js?v=202610260121"></script>
+<script src="hub-store.js?v=202610260121"></script>
+<script src="hub-say.js?v=202610260121"></script>
+<script src="hub-sync.js?v=202610260121"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -202,7 +202,9 @@ function teachingDays(){
     const d = (+b[1]*60 + +b[2]) - (+a[1]*60 + +a[2]);
     return d > 0 ? n + d : n;
   }, 0);
-  return { days: tt.days.filter(d => d.tp).map(d => d.date), hoursPerDay: mins / 60,
+  /* teaching practice days, and days with a slot in the Teaching practice room (hub-attendance.js classDays) */
+  const cd = A.classDays(tt);
+  return { days: cd.days, perDay: cd.perDay, hoursPerDay: mins / 60,
            lessons: slots.length, lessonMinutes: slots.length ? Math.round(mins / slots.length) : 0 };
 }
 
@@ -253,7 +255,7 @@ function mintMissing(){
 /* Hours come from the shared engine, never from counting marks here: the
    register, the student's page and the certificate all read the same file so
    they cannot drift. */
-const recordOf = (st, days, lessons, lessonMinutes) => A.record(st.marks || {}, days, lessons, lessonMinutes);
+const recordOf = (st, days, lessons, lessonMinutes, perDay) => A.record(st.marks || {}, days, lessons, lessonMinutes, perDay);
 const fmtH = h => (Math.round(h * 100) / 100).toString().replace(/\.00$/, '');
 
 /* v56: who is coming to the next class, from the store's own count. */
@@ -283,7 +285,7 @@ function render(){
   mintMissing();
   migrateMarks();
   const app = $('app');
-  const { days, hoursPerDay, lessons, lessonMinutes } = teachingDays();
+  const { days, perDay, hoursPerDay, lessons, lessonMinutes } = teachingDays();
   const list = students();
   const head = `<p class="eyebrow">Course</p><h1>Volunteer register</h1>
     <p class="lede">${IS_TUTOR
@@ -313,7 +315,7 @@ function render(){
   }
 
   app.innerHTML = head + bar + consent + `<div class="reg">${list.map((st, i) => {
-    const r = recordOf(st, days, lessons, lessonMinutes);
+    const r = recordOf(st, days, lessons, lessonMinutes, perDay);
     return `<div class="who">
       <div>
         <div class="nm">${esc(st.name)}${IS_TUTOR
@@ -330,7 +332,7 @@ function render(){
           /* a day before this person joined is not a day they missed (Amin, C/18, 21 Oct 2026) */
           const before = x.tier === 'absent' && x.date < joinedOn(st);
           const cls = x.tier === 'present' ? 'here' : x.tier === 'partial' ? 'part' : before ? 'before' : past ? 'miss' : 'soon';
-          const what = x.tier === 'absent' && !past ? 'Still to come' : A.describe(x.tier, lessons, lessonMinutes);
+          const what = x.tier === 'absent' && !past ? 'Still to come' : A.describe(x.tier, (perDay[x.date] || {}).lessons || lessons, (perDay[x.date] || {}).lessonMinutes || lessonMinutes);
           return IS_TUTOR
             ? `<button type="button" class="seg ${cls}" data-i="${i}" data-d="${esc(x.date)}" title="${dm(x.date)} — ${esc(what)}"></button>`
             : `<span class="seg ${cls}" title="${dm(x.date)} — ${esc(what)}"></span>`;
@@ -348,7 +350,7 @@ function render(){
             : `<span class="nolink" title="The course id has not arrived from the store yet">No link yet</span>`}<button type="button" class="btn quiet sm" data-rm="${i}">Remove</button></div>` : ''}</div>
     </div>`;
   }).join('')}</div>
-  ${COMING ? `<div class="vr9-coming"><div class="lead"><span class="k">Next class</span><b>${esc(dm(COMING.day))}</b><small>TP ${esc(COMING.tp)} at ${esc(hubClock(COMING.from))}</small></div><div class="num"><b>${COMING.yes + COMING.noAnswer}</b><small>expected</small></div><div class="split"><span class="bar" aria-hidden="true"><i class="y" style="flex:${COMING.yes}"></i><i class="q" style="flex:${COMING.noAnswer}"></i><i class="n" style="flex:${COMING.no}"></i></span><span class="keys"><span><i class="y"></i>${COMING.yes} said yes</span><span><i class="q"></i>${COMING.noAnswer} ${COMING.noAnswer === 1 ? 'has' : 'have'} not answered</span><span><i class="n"></i>${COMING.no} said no</span></span></div></div>` : ''}
+  ${COMING ? `<div class="vr9-coming"><div class="lead"><span class="k">Next class</span><b>${esc(dm(COMING.day))}</b><small>${COMING.tp ? 'TP ' + esc(COMING.tp) : esc(COMING.label || 'Class')} at ${esc(hubClock(COMING.from))}</small></div><div class="num"><b>${COMING.yes + COMING.noAnswer}</b><small>expected</small></div><div class="split"><span class="bar" aria-hidden="true"><i class="y" style="flex:${COMING.yes}"></i><i class="q" style="flex:${COMING.noAnswer}"></i><i class="n" style="flex:${COMING.no}"></i></span><span class="keys"><span><i class="y"></i>${COMING.yes} said yes</span><span><i class="q"></i>${COMING.noAnswer} ${COMING.noAnswer === 1 ? 'has' : 'have'} not answered</span><span><i class="n"></i>${COMING.no} said no</span></span></div></div>` : ''}
   <p class="legend">
     <span><span class="seg here"></span>in the room</span>
     <span><span class="seg part"></span>came for part of it</span>

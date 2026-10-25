@@ -91,12 +91,16 @@ function nextClass_(courseId) {
   var tt = courseRead_(courseId, 'timetable') || {};
   if (!tt.published) return null;
   var tp = (tt.slots || []).filter(function (s) { return s && s.kind === 'tp' && s.from; })[0];
-  if (!tp) return null;
   var now = set.demoToday ? localInstant_(String(set.demoToday), '09:00', tz) : new Date();
-  var days = (tt.days || []).filter(function (d) { return d && d.tp && d.date; });
+  /* A class is a teaching practice day, or a day with a slot in the Teaching practice room: the demonstration
+     lesson, getting to know a new class (Ramy, 26 Oct 2026: "count Monday"; hub-attendance.js classDays). */
+  var inRoom = function (d) { return (d.sessions || []).filter(function (x) { return x && x.s && x.e && x.k !== 'break' && x.k !== 'lunch' && /teaching practice/i.test(String(x.room || '')); }).sort(function (a, b) { return a.s < b.s ? -1 : 1; }); };
+  var days = (tt.days || []).filter(function (d) { return d && d.date && ((d.tp && tp) || (!d.tp && inRoom(d).length)); });
   for (var i = 0; i < days.length; i++) {
-    var start = localInstant_(days[i].date, tp.from, tz);
-    if (start.getTime() > now.getTime() - 3 * 36e5) return { day: days[i].date, tp: days[i].tp, from: tp.from, to: tp.to || '', startISO: start.toISOString() };
+    var rs = days[i].tp ? null : inRoom(days[i]);
+    var from = rs ? rs[0].s : tp.from, to = rs ? rs[rs.length - 1].e : (tp.to || '');
+    var start = localInstant_(days[i].date, from, tz);
+    if (start.getTime() > now.getTime() - 3 * 36e5) return { day: days[i].date, tp: days[i].tp || '', label: rs ? String(rs[0].t || '') : '', from: from, to: to, startISO: start.toISOString() };
   }
   return null;
 }
@@ -106,7 +110,7 @@ function comingFor_(courseId) {
   var reg = courseRead_(courseId, 'volunteers') || {};
   var yes = 0, no = 0, none = 0;
   (reg.students || []).forEach(function (s) { if (!s) return; var r = (s.replies || {})[nx.day]; if (r && r.coming === 'yes') yes++; else if (r && r.coming === 'no') no++; else none++; });
-  return { day: nx.day, tp: nx.tp, from: nx.from, yes: yes, no: no, noAnswer: none, total: yes + no + none };
+  return { day: nx.day, tp: nx.tp, label: nx.label || '', from: nx.from, yes: yes, no: no, noAnswer: none, total: yes + no + none };
 }
 function withoutVolunteerEmails_(reg, strip) {
   if (!strip || !reg || !reg.students) return reg;
@@ -225,7 +229,7 @@ function sendVolunteerReminders() {
       var second = !(done[nx.day + ':today'] || false) && hours <= 1.25;
       if (!first && !second) return;
       var rooms = (set.onlineRooms || []).filter(function (r) { return r && r.url && /teaching/i.test(r.label || ''); });
-      var what = 'Teaching practice' + (rooms.length === 1 && rooms[0].level ? ' (' + rooms[0].level + ')' : '');
+      var what = (nx.tp ? 'Teaching practice' : (nx.label || 'Class')) + (rooms.length === 1 && rooms[0].level ? ' (' + rooms[0].level + ')' : '');
       var when = Utilities.formatDate(start, tz, 'EEEE d MMMM, HH:mm');
       var time = Utilities.formatDate(start, tz, 'HH:mm');
       var contact = (set.volunteerContact && set.volunteerContact.email) ? set.volunteerContact.email : null;

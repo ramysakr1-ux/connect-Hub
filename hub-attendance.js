@@ -67,12 +67,13 @@
   /* The whole record for one student.
      marks: { '2026-10-05': 'present', ... }   days: ['2026-10-05', ...]
      Returns hours credited, the counts per tier, and the day list in order. */
-  function record(marks, days, lessonsInDay, lessonMinutes) {
+  function record(marks, days, lessonsInDay, lessonMinutes, perDay) {
     marks = marks || {};
     days = days || [];
     var out = { hours: 0, present: 0, partial: 0, absent: 0, days: [] };
     days.forEach(function (d) {
-      var c = dayCredit(marks[d], lessonsInDay, lessonMinutes);
+      var own = perDay && perDay[d];
+      var c = own ? dayCredit(marks[d], own.lessons, own.lessonMinutes) : dayCredit(marks[d], lessonsInDay, lessonMinutes);
       out[c.tier]++;
       out.hours += c.creditedMinutes / 60;
       out.days.push({ date: d, tier: c.tier, creditedMinutes: c.creditedMinutes });
@@ -142,14 +143,39 @@
   }
   /* The day the hours at the level reached the target: the certificate's
      date. '' when they have not. */
-  function completedOn(marks, days, lessonsInDay, lessonMinutes, carried, target) {
+  function completedOn(marks, days, lessonsInDay, lessonMinutes, carried, target, perDay) {
     var total = parseFloat(carried) || 0; target = parseFloat(target) || 0;
     if (!target) return '';
     for (var i = 0; i < (days || []).length; i++) {
-      total += (dayCredit((marks || {})[days[i]], lessonsInDay, lessonMinutes).creditedMinutes || 0) / 60;
+      var own = perDay && perDay[days[i]];
+      total += (dayCredit((marks || {})[days[i]], own ? own.lessons : lessonsInDay, own ? own.lessonMinutes : lessonMinutes).creditedMinutes || 0) / 60;
       if (total >= target - 1e-9) return days[i];
     }
     return '';
+  }
+
+  /* WHICH DAYS ARE CLASSES (Ramy, 26 Oct 2026: "count Monday"). A day the timetable gives teaching practice
+     to, as always, at the course's teaching-practice length; and now also a day with a slot in the Teaching
+     practice room -- the demonstration lesson, getting to know a new class, the student interviews -- because
+     the students are in the room for it. Such a day counts its own slots there, so a 14:00-16:30 session is
+     two and a half hours, not a teaching day. A filmed observation is not in that room and does not count. */
+  function hm(t) { var m = String(t || '').match(/^(\d{1,2}):(\d{2})/); return m ? +m[1] * 60 + +m[2] : null; }
+  function classDays(tt) {
+    tt = tt || {};
+    var tp = (tt.slots || []).filter(function (s) { return s && s.kind === 'tp'; });
+    var tpMin = tp.reduce(function (n, s) { var a = hm(s.from), b = hm(s.to); return a != null && b != null && b > a ? n + b - a : n; }, 0);
+    var out = { days: [], perDay: {}, lessons: tp.length, lessonMinutes: tp.length ? Math.round(tpMin / tp.length) : 0 };
+    (tt.days || []).forEach(function (d) {
+      if (!d || !d.date) return;
+      if (d.tp) { out.days.push(d.date); return; }
+      var inRoom = (d.sessions || []).filter(function (x) { return x && x.k !== 'break' && x.k !== 'lunch' && /teaching practice/i.test(String(x.room || '')) && hm(x.s) != null && hm(x.e) > hm(x.s); });
+      if (!inRoom.length) return;
+      var total = inRoom.reduce(function (n, x) { return n + hm(x.e) - hm(x.s); }, 0);
+      out.days.push(d.date);
+      out.perDay[d.date] = { lessons: inRoom.length, lessonMinutes: Math.round(total / inRoom.length), from: inRoom[0].s, to: inRoom[inRoom.length - 1].e };
+    });
+    out.days.sort();
+    return out;
   }
 
   /* The next mark when a tutor taps one: nothing, in the room, part of it,
@@ -161,7 +187,7 @@
   var api = { TICK_MINUTES: TICK_MINUTES, PARTIAL_MINUTES: PARTIAL_MINUTES,
               lessonsNeededForPresent: lessonsNeededForPresent, dayCredit: dayCredit,
               record: record, describe: describe, certificate: certificate, nextMark: nextMark,
-              atLevel: atLevel, completedOn: completedOn, hoursForLevel: hoursForLevel };
+              atLevel: atLevel, completedOn: completedOn, hoursForLevel: hoursForLevel, classDays: classDays };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.hubAttendance = api;
 })(typeof window !== 'undefined' ? window : globalThis);
