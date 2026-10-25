@@ -38,7 +38,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610251031">
+<link rel="stylesheet" href="hub-tokens.css?v=202610251044">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 70px;}
@@ -81,6 +81,8 @@
   .sec > h2{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.25rem; margin:0 0 4px; display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;}
   .sec > h2 small{font-family:'Karla',sans-serif; font-weight:400; font-size:0.8rem; color:var(--grey);}
   .cards{display:flex; flex-direction:column; gap:12px; margin-top:12px;}
+  .door .sendrow{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+  .door .sendrow .linkbtn{font-size:0.8rem;}
   .card{background:var(--paper); border-radius:14px; box-shadow:var(--nb-shadow); padding:18px 20px;}
 
   /* THE DEMO: a forest cover with the arcs ghosted in, its doors on the paper under it */
@@ -207,7 +209,7 @@
   @media (max-width:760px){ .demo .doors{grid-template-columns:1fr 1fr;} .setting{grid-template-columns:1fr;} }
   @media (max-width:520px){ .demo .doors{grid-template-columns:1fr;} .title h1{font-size:1.8rem;} body{padding:0 14px 60px;} .card{padding:16px;} .row-course .acts .btn{flex:1 1 auto; justify-content:center;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610251031">
+<link rel="stylesheet" href="hub-house.css?v=202610251044">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -230,10 +232,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610251031"></script>
-<script src="hub-store.js?v=202610251031"></script>
-<script src="hub-say.js?v=202610251031"></script>
-<script src="hub-card-mail.js?v=202610251031"></script>
+<script src="hub-shared.js?v=202610251044"></script>
+<script src="hub-store.js?v=202610251044"></script>
+<script src="hub-say.js?v=202610251044"></script>
+<script src="hub-card-mail.js?v=202610251044"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after. */
 const OWNER_STORE = 'hub:o';
@@ -514,14 +516,21 @@ function dayOneCard(c){
       <h3>${esc(c.name || label(c))}</h3>
       <p>${esc(c.courseName || '')}${bits ? ' · ' + esc(bits) : ''}<span id="du-${esc(c.id)}"></span></p>
     </div>
+    <!-- one door per role, each sent on its own with the film (Ramy, 25 Oct 2026: "if I copy trainer, it will be
+         trainer and film... if I want all three of them, I'll choose all three"); the foot sends all three -->
     <div class="doors" data-doors="${esc(c.id)}">
-      <div class="door"><b>As a trainee</b><span id="dt-${esc(c.id)}">Day one: the card asks their name, then the agreement to sign, the CELTA 5, TP1’s points and the day’s input session.</span><button type="button" class="btn small" data-door="trainee" data-id="${esc(c.id)}" disabled>Finding…</button></div>
-      <div class="door"><b>As a tutor</b><span>Day one of the course as the tutors see it: twelve trainees and nothing done yet.</span><button type="button" class="btn small" data-copy="${esc(tutor)}">Copy the card</button></div>
-      <div class="door"><b>The film</b><span>One TP, from the trainee’s side: the second long film, sent with these links.</span><button type="button" class="btn small" data-copy="${esc(DAY_ONE_FILM)}">Copy the link</button></div>
+      <div class="door"><b>As a trainee</b><span id="dt-${esc(c.id)}">Day one: the card asks their name, then the agreement to sign, the CELTA 5, TP1’s points and the day’s input session.</span>
+        <span class="sendrow"><button type="button" class="btn small" data-door="trainee" data-id="${esc(c.id)}" disabled>Finding…</button><button type="button" class="linkbtn" data-share="wa" data-who="trainee" data-id="${esc(c.id)}" data-tutor="${esc(tutor)}">WhatsApp</button><button type="button" class="linkbtn" data-share="mail" data-who="trainee" data-id="${esc(c.id)}" data-tutor="${esc(tutor)}">Email</button></span></div>
+      <div class="door"><b>As a tutor</b><span>Day one of the course as the tutors see it: twelve trainees and nothing done yet. The card asks which tutor is here.</span>
+        <span class="sendrow"><button type="button" class="btn small" data-copy="${esc(tutor)}">Copy the card</button><button type="button" class="linkbtn" data-share="wa" data-who="tutor" data-id="${esc(c.id)}" data-tutor="${esc(tutor)}">WhatsApp</button><button type="button" class="linkbtn" data-share="mail" data-who="tutor" data-id="${esc(c.id)}" data-tutor="${esc(tutor)}">Email</button></span></div>
+      <div class="door"><b>As a volunteer student</b><span id="dv-${esc(c.id)}">Their next class, their days, their certificate.</span>
+        <span class="sendrow"><button type="button" class="btn small" data-door="volunteer" data-id="${esc(c.id)}" disabled>Finding…</button><button type="button" class="linkbtn" data-share="wa" data-who="volunteer" data-id="${esc(c.id)}" data-tutor="${esc(tutor)}">WhatsApp</button><button type="button" class="linkbtn" data-share="mail" data-who="volunteer" data-id="${esc(c.id)}" data-tutor="${esc(tutor)}">Email</button></span></div>
+      <div class="door"><b>The film</b><span>One TP, from the trainee’s side: the second long film. It goes with every link sent from here.</span><button type="button" class="btn small" data-copy="${esc(DAY_ONE_FILM)}">Copy the link</button></div>
     </div>
     <div class="foot">
-      <button type="button" class="linkbtn" data-share="wa" data-id="${esc(c.id)}" data-tutor="${esc(tutor)}">Share on WhatsApp</button>
-      <button type="button" class="linkbtn" data-share="mail" data-id="${esc(c.id)}" data-tutor="${esc(tutor)}">Send by email</button>
+      <span>All three links, with the film:</span>
+      <button type="button" class="linkbtn" data-share="wa" data-who="all" data-id="${esc(c.id)}" data-tutor="${esc(tutor)}">WhatsApp</button>
+      <button type="button" class="linkbtn" data-share="mail" data-who="all" data-id="${esc(c.id)}" data-tutor="${esc(tutor)}">Email</button>
       <span class="right"><code>${esc(c.id)}</code></span>
     </div>
   </div>`;
@@ -605,7 +614,7 @@ function render(courses, msg){
 }
 async function fillDoors(c){
   const k = await doorsFor(c);
-  document.querySelectorAll(`[data-share][data-id="${c.id}"]`).forEach(b => { if (k.trainee) b.setAttribute('data-trainee', k.trainee); });
+  document.querySelectorAll(`[data-share][data-id="${c.id}"]`).forEach(b => { if (k.trainee) b.setAttribute('data-trainee', k.trainee); if (k.volunteer) b.setAttribute('data-volunteer', k.volunteer); });
   if (/day one/i.test(String(c.name || ''))) { try { const cs = (await call({ op: 'course', key: c.tutorKey })).settings || {}; if (cs.demoExpires) { const u = $('du-' + c.id); if (u) u.textContent = ' · links open until ' + niceDate(cs.demoExpires); document.querySelectorAll(`[data-share][data-id="${c.id}"]`).forEach(b => b.setAttribute('data-until', cs.demoExpires)); } } catch (e) {} }
   const t = document.querySelector(`[data-door="trainee"][data-id="${c.id}"]`), v = document.querySelector(`[data-door="volunteer"][data-id="${c.id}"]`);
   if (t) { if (k.trainee) { t.disabled = false; t.textContent = t.closest('.doors') ? 'Copy the card' : 'Trainee link'; t.setAttribute('data-copy', k.trainee); t.removeAttribute('data-door'); const s = $('dt-' + c.id); if (s && k.traineeName) s.textContent = k.traineeName.split(' ')[0] + '’s own space: plans, self-evaluations, feedback and assignments.'; } else t.textContent = 'No trainees on it'; }
@@ -787,12 +796,20 @@ $('app').addEventListener('click', async e => {
     return; }
   const sh = T('[data-share]');
   if (sh) {
-    const trainee = sh.dataset.trainee, tutor = sh.dataset.tutor;
-    if (!trainee) { status('The trainee link is still being found; try again in a moment.'); return; }
-    const until = sh.dataset.until ? ' The links open until ' + niceDate(sh.dataset.until) + '.' : '';
-    const text = 'Connect Lite, day one of a CELTA course, the way a trainee and a tutor see it for the first time.\n\nAs a trainee: ' + trainee + '\n\nAs a tutor: ' + tutor + '\n\nThe film, one TP from the trainee\u2019s side: ' + DAY_ONE_FILM + '\n\nThe card asks your name; everything you do stays in your own visit.' + until;
+    const who = sh.dataset.who || 'all', L = { trainee: sh.dataset.trainee, tutor: sh.dataset.tutor, volunteer: sh.dataset.volunteer };
+    const need = who === 'all' ? ['trainee', 'tutor', 'volunteer'] : [who];
+    if (need.some(r => !L[r])) { status('That link is still being found; try again in a moment.'); return; }
+    const until = sh.dataset.until ? ' The link' + (need.length > 1 ? 's open' : ' opens') + ' until ' + niceDate(sh.dataset.until) + '.' : '';
+    const LINE = { trainee: 'As a trainee, on day one of the course: ', tutor: 'As a tutor, on day one of the course: ', volunteer: 'As a volunteer student, one of the people the trainees teach: ' };
+    const head = who === 'all' ? 'Connect Lite, day one of a CELTA course, the way the people on it see it for the first time.'
+      : who === 'trainee' ? 'Connect Lite, day one of a CELTA course, the way a trainee sees it for the first time.'
+      : who === 'tutor' ? 'Connect Lite, day one of a CELTA course, the way a tutor sees it for the first time.'
+      : 'Connect Lite, as a volunteer student sees it: the people the trainees teach.';
+    const tail = who === 'volunteer' ? 'Everything you do stays in your own visit.' : 'The card asks your name; everything you do stays in your own visit.';
+    const text = head + '\n\n' + need.map(r => LINE[r] + L[r]).join('\n\n') + '\n\nThe film, one TP from the trainee\u2019s side: ' + DAY_ONE_FILM + '\n\n' + tail + until;
+    const subject = 'Connect Lite, day one' + (who === 'all' ? '' : who === 'volunteer' ? ', as a volunteer student' : ', as a ' + who);
     if (sh.dataset.share === 'wa') window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
-    else location.href = 'mailto:?subject=' + encodeURIComponent('Connect Lite, day one') + '&body=' + encodeURIComponent(text);
+    else location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(text);
     return;
   }
   const b = T('[data-copy]');
