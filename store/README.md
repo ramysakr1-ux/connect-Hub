@@ -27,6 +27,11 @@ Never a bare `clasp deploy`. If anything is ever edited in the Apps Script
 editor instead, `clasp pull` before the next change or the repo copy is stale.
 The patches below are how the editor's text got to v73.
 
+## 25 Oct 2026 — the notebook (store v129)
+
+A trainee's private `notebook` record, the `notes` and `tutorNotes` pools, the share/connect
+ops and the voice-note ops. See `2026-10-25-notebook.md`. Additive.
+
 ## 21 Oct 2026 — a volunteer's page knows when they joined (version 113, store v96)
 
 The volunteer boot also returns `added` and `invited` from their register row,

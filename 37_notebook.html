@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<!--
+  Connect Lite — your notebook
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy, 25 Oct 2026: "a smart notebook, connected to the rest of the course".
+  One notebook per person, kept by the course: every note is stamped with the
+  day and the place it was written, and reads here by day and by thread. The
+  arc in the corner of every page writes into it (hub-notebook.js). A trainee's
+  notebook is theirs alone; a tutor's is theirs alone. A note reaches anyone
+  else only when its writer CONNECTS it: a trainee with their TP group or the
+  whole course, a tutor with the other tutors. What others connected with you
+  sits under "Connected", with the two arcs linked.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="brand/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<title>Your notebook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hub-tokens.css?v=202610250844">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:36px 20px 120px; display:flex; justify-content:center;}
+  .board{max-width:940px; width:100%;}
+  a{color:var(--teal);}
+  .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
+  .back:hover{text-decoration:underline;}
+  .title{border-top:4px solid var(--a-rule, var(--ink)); padding-top:22px; display:flex; align-items:flex-end; justify-content:space-between; gap:18px; flex-wrap:wrap;}
+  .title h1{margin:0; font-family:'Newsreader',Georgia,serif; font-weight:400; font-size:2.6rem; line-height:1.05;}
+  .title .eyebrow{margin:0 0 8px; font-family:'Instrument Sans','Karla',sans-serif; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--a-red); font-weight:600;}
+  .title p{margin:10px 0 0; font-size:0.92rem; color:var(--grey); line-height:1.55; max-width:620px;}
+  .title .write{flex:none; margin-bottom:4px;}
+  .btn{display:inline-block; font:700 0.88rem 'Karla',sans-serif; padding:11px 18px; border-radius:var(--r-control); border:0; cursor:pointer; text-decoration:none; color:var(--ink); background:var(--paper);}
+  .btn.primary{background:var(--a-forest); color:var(--paper);}
+  .tabs{display:flex; gap:22px; margin:30px 0 6px; border-bottom:1px solid var(--row-line);}
+  .tab{font:700 0.88rem 'Karla',sans-serif; background:none; border:0; border-bottom:2px solid transparent; padding:8px 0 10px; color:var(--grey); cursor:pointer; margin-bottom:-1px;}
+  .tab.active{color:var(--ink); border-bottom-color:var(--a-forest);}
+  .lede{font-size:0.86rem; color:var(--grey); margin:12px 0 0;}
+  /* a day: the numeral is the pen */
+  .day{display:grid; grid-template-columns:120px 1fr; gap:18px; margin-top:28px; align-items:start;}
+  .day .date{position:sticky; top:16px;}
+  .day .date .num{font-family:'Newsreader',Georgia,serif; font-weight:400; font-size:3rem; line-height:.9; color:var(--a-red);}
+  .day .date .wd{margin-top:6px; font-size:0.86rem; font-weight:700;}
+  .day .date .mo{font-size:0.8rem; color:var(--grey);}
+  .day .date .today{display:inline-block; margin-top:8px; font:700 10.5px/1 'Karla',sans-serif; letter-spacing:.1em; text-transform:uppercase; color:var(--paper); background:var(--a-forest); padding:5px 8px; border-radius:7px;}
+  .shape{font-size:0.82rem; color:var(--grey); margin:4px 0 10px; line-height:1.6;}
+  .shape b{color:var(--ink); font-weight:600;}
+  .note{background:var(--paper); border-radius:var(--r-card); box-shadow:var(--nb-shadow); padding:16px 20px 14px; margin-bottom:12px; position:relative;}
+  .note .top{display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:0.78rem; color:var(--grey);}
+  .note .top .by{font-weight:700; color:var(--ink);}
+  .note .top .linked{display:inline-flex; align-items:center; gap:6px; color:var(--a-forest); font-weight:700; margin-left:auto;}
+  .note .top .linked svg{color:var(--a-forest);}
+  .note .text{margin:10px 0 0; font-size:0.98rem; line-height:1.6; white-space:pre-wrap; word-wrap:break-word;}
+  .note .text:empty{display:none;}
+  .note .voice{margin-top:10px; font-size:0.84rem; color:var(--grey); display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+  .note .voice .slot{flex-basis:100%;}
+  .note .acts{display:flex; gap:14px; flex-wrap:wrap; margin-top:12px; padding-top:10px; border-top:1px solid var(--row-line); font-size:0.8rem;}
+  .note .acts button, .note .acts a{font:600 0.8rem 'Karla',sans-serif; background:none; border:0; padding:0; color:var(--grey); cursor:pointer; text-decoration:none;}
+  .note .acts button:hover, .note .acts a:hover{color:var(--a-forest); text-decoration:underline;}
+  .note .acts .del:hover{color:var(--a-red);}
+  .note .acts .ask{color:var(--ink);} .note .acts .ask b{color:var(--a-red);}
+  .note textarea.edit{width:100%; min-height:110px; resize:vertical; font:400 0.98rem/1.6 'Karla',sans-serif; color:var(--ink); background:var(--paper); border:1.5px solid var(--sand-line); border-radius:10px; padding:10px 12px; margin-top:10px;}
+  .menu{position:absolute; right:14px; bottom:44px; background:var(--paper); border-radius:12px; box-shadow:0 2px 4px rgba(35,34,32,.08), 0 18px 40px -14px rgba(35,34,32,.4); padding:6px; z-index:5; min-width:240px;}
+  .menu button{display:block; width:100%; text-align:left; font:600 0.86rem 'Karla',sans-serif; background:none; border:0; padding:10px 12px; border-radius:8px; color:var(--ink); cursor:pointer;}
+  .menu button:hover{background:var(--sand);}
+  .menu button.on{color:var(--a-forest);} .menu button.on::after{content:'  \2713';}
+  .menu .hd{font:600 10.5px/1 'Karla',sans-serif; letter-spacing:.12em; text-transform:uppercase; color:var(--grey); padding:8px 12px 4px;}
+  .listen{font:600 0.8rem 'Karla',sans-serif; padding:6px 12px; border-radius:8px; border:0; background:var(--sand-deep); color:var(--ink); cursor:pointer;}
+  .listen:hover{background:var(--a-forest); color:var(--paper);}
+  /* threads */
+  .group{margin-top:30px;}
+  .group h2{margin:0 0 4px; font-family:'Newsreader',Georgia,serif; font-weight:400; font-size:1.5rem;}
+  .group .gsub{font-size:0.84rem; color:var(--grey); margin:0 0 12px;}
+  .thread{background:var(--paper); border-radius:var(--r-card); box-shadow:var(--nb-shadow); padding:18px 20px; margin-bottom:12px;}
+  .thread .th{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px;}
+  .thread .th h3{margin:0; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.15rem;}
+  .thread .th .n{font-size:0.8rem; color:var(--grey);}
+  .thread .th .write{margin-left:auto; font:600 0.8rem 'Karla',sans-serif; background:none; border:0; color:var(--a-forest); cursor:pointer; padding:0;}
+  .thread .th .write:hover{text-decoration:underline;}
+  .thread .note{box-shadow:none; background:var(--sand); padding:12px 16px 10px; margin:10px 0 0;}
+  .thread .note .acts{border-top-color:var(--sand-line);}
+  .carry{background:color-mix(in oklab, var(--a-lemon) 32%, var(--paper)); border-radius:12px; padding:12px 14px; margin:10px 0 0; font-size:0.88rem; line-height:1.5;}
+  .carry b{display:block; font:600 10.5px/1 'Karla',sans-serif; letter-spacing:.12em; text-transform:uppercase; color:var(--grey); margin-bottom:6px;}
+  .carry ul{margin:0; padding-left:18px;} .carry li{margin:2px 0;}
+  .carry .q{margin:6px 0 0; font-style:italic; color:var(--a-forest); font-family:'Newsreader',Georgia,serif; font-size:1rem;}
+  .thread .empty{font-size:0.86rem; color:var(--grey); margin:8px 0 0;}
+  /* connected */
+  .connected{margin-top:40px; padding-top:10px; border-top:1px solid var(--row-line);}
+  .connected h2{margin:14px 0 4px; font-family:'Newsreader',Georgia,serif; font-weight:400; font-size:1.5rem; display:flex; align-items:center; gap:10px;}
+  .connected h2 svg{color:var(--a-forest);}
+  .connected .gsub{font-size:0.84rem; color:var(--grey); margin:0 0 14px;}
+  .empty-all{background:var(--paper); border-radius:var(--r-card); box-shadow:var(--nb-shadow); padding:26px 24px; margin-top:24px; font-size:0.95rem; line-height:1.6; color:var(--grey);}
+  .empty-all b{color:var(--ink);}
+  .namecard{background:var(--paper); border-radius:var(--r-card); box-shadow:var(--nb-shadow); padding:22px 24px; margin-top:24px;}
+  .namecard p{margin:0 0 12px; font-size:0.92rem; line-height:1.55; color:var(--grey);}
+  .namecard input{width:100%; max-width:360px; font:400 1rem 'Karla',sans-serif; padding:10px 14px; border:1.5px solid var(--sand-line); border-radius:10px; margin-right:10px; margin-bottom:10px;}
+  .note.mine.editing .text{display:none;}
+  .pill-ask{font-size:0.84rem; color:var(--a-red); font-weight:700;}
+  @media (max-width:640px){
+    body{padding:22px 16px 120px;}
+    .title h1{font-size:2.1rem;}
+    .day{grid-template-columns:1fr; gap:8px;}
+    .day .date{position:static; display:flex; align-items:baseline; gap:10px;}
+    .day .date .num{font-size:2rem;}
+    .day .date .today{margin-top:0;}
+    .menu{right:8px; left:8px; min-width:0;}
+  }
+  @media print{ .back, .title .write, .tabs, .acts, .nbk-arc{display:none !important;} body{background:#fff; padding:0;} .note, .thread{box-shadow:none; border:1px solid #ddd;} }
+</style>
+<link rel="stylesheet" href="hub-house.css?v=202610250844">
+</head>
+<body>
+<div class="board">
+  <a class="back" id="back" href="index.html">Back</a>
+  <div id="app"></div>
+</div>
+<script src="hub-shared.js?v=202610250844"></script>
+<script src="hub-store.js?v=202610250844"></script>
+<script src="hub-say.js?v=202610250844"></script>
+<script src="hub-sync.js?v=202610250844"></script>
+<script src="hub-notebook.js?v=202610250844"></script>
+<script type="text/x-hub-app">
+/* Two people have a notebook: a trainee and a tutor. Nobody else has a door. */
+(function(){
+  const mode = window.HubMode;
+  if (mode === 'assessor' || mode === 'volunteer') {
+    hubRoomRefusal('This room belongs to the person whose notebook it is',
+      mode === 'assessor' ? 'A notebook is private to the trainee or the tutor who keeps it; nothing in it is part of the course record.' : 'A notebook belongs to a trainee or a tutor on the course.', mode);
+    throw new Error('Connect Lite: stopping this page on purpose — not this reader’s room.');
+  }
+})();
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const rec = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const NB = window.HubNotebook;
+const TUTOR = NB.mode === 'tutor';
+if (TUTOR) $('back').href = '5_tutor_dashboard.html';
+const CS = rec('connect_course_settings') || {};
+const TT = rec('connect_timetable_v1') || {};
+const TODAY = NB.today();
+const ME = rec('hub:me') || {};
+let VIEW = (function(){ try { return localStorage.getItem('chub:nbkView') || 'day'; } catch (e) { return 'day'; } })();
+let MENU = '', EDIT = '', ASK = '', NOTE = '';
+let T = { who: '', mine: [], shared: [] };   // the tutor's
+
+/* ---- what the course knows about a day --------------------------------- */
+function shapeOf(date){
+  const d = (TT.days || []).find(x => x && (x.date || x.d) === date); if (!d) return '';
+  const bits = [];
+  if (Array.isArray(d.sessions) && d.sessions.length) {
+    d.sessions.forEach(s => { if (!s) return; if (s.k === 'input' && s.t) bits.push('<b>' + esc(s.t) + '</b>'); else if (s.k === 'demo' && s.t) bits.push(esc(s.t)); else if (s.k === 'event' && s.t) bits.push(esc(s.t)); });
+    if (d.tp) bits.push('<b>TP' + esc(d.tp) + '</b>'); else if (d.sessions.some(s => s && s.k === 'tp')) bits.push('<b>Teaching practice</b>');
+    if (d.sessions.some(s => s && s.k === 'feedback')) bits.push('TP feedback');
+  } else {
+    const c = d.cells || {}; if (c.i1) bits.push('<b>' + esc(c.i1) + '</b>'); if (c.i2) bits.push('<b>' + esc(c.i2) + '</b>'); if (d.tp) bits.push('<b>TP' + esc(d.tp) + '</b>');
+  }
+  return bits.filter((x, i, a) => a.indexOf(x) === i).join(' · ');
+}
+const tutorEmails = () => (CS.tutorContacts || []).map(c => c && c.email).filter(Boolean);
+
+/* ---- the notes ---------------------------------------------------------- */
+function mine(){ return TUTOR ? (T.mine || []) : NB.load().notes; }
+function connected(){ return TUTOR ? (T.shared || []) : (rec('connect_notes_v1') || []); }
+function byDay(list){ const m = {}; list.forEach(n => { if (!n) return; (m[n.day] = m[n.day] || []).push(n); }); Object.keys(m).forEach(k => m[k].sort((a, b) => String(a.at).localeCompare(String(b.at)))); return m; }
+function chip(th){ if (!th || th.k === 'day' || !th.t) return ''; return '<span class="nbk-chip ' + esc(th.k) + '">' + esc(th.t) + '</span>' + (th.sub ? '<span>' + esc(th.sub) + '</span>' : ''); }
+function linkedMark(n){
+  const on = TUTOR ? !!n.shared : !!n.shared;
+  if (!on) return '';
+  const w = TUTOR ? 'the other tutors' : n.shared === 'course' ? 'the whole course' : 'your TP group';
+  return '<span class="linked" title="Connected with ' + esc(w) + '">' + NB.arc(true, 14) + '<span>' + esc(w) + '</span></span>';
+}
+function voiceHTML(n, canPlay){
+  if (!n.audio) return '';
+  return '<div class="voice">' + (canPlay ? '<button type="button" class="listen" data-play="' + esc(n.id) + '">Listen</button>' : '') + '<span>Voice note' + (n.audio.seconds ? ', ' + NB.secs(n.audio.seconds) : '') + '</span><span class="slot"></span></div>';
+}
+function noteHTML(n, opts){
+  opts = opts || {};
+  const own = !opts.theirs;
+  const editing = own && EDIT === n.id, asking = own && ASK === n.id, menu = own && MENU === n.id;
+  const connectWord = TUTOR ? (n.shared ? 'Connected with the other tutors' : 'Connect with the other tutors') : (n.shared ? 'Connected' : 'Connect');
+  const acts = !own ? '' : '<div class="acts">'
+    + (asking ? '<span class="ask">Delete this note? <button type="button" class="del" data-del="' + esc(n.id) + '"><b>Yes, delete it</b></button> <button type="button" data-ask="">No</button></span>'
+      : (editing ? '<button type="button" data-save="' + esc(n.id) + '">Save</button><button type="button" data-edit="">Cancel</button>'
+        : '<button type="button" data-connect="' + esc(n.id) + '">' + connectWord + '</button>'
+          + '<button type="button" data-edit="' + esc(n.id) + '">Edit</button>'
+          + (!TUTOR && tutorEmails().length ? '<a href="' + esc(mailto(n)) + '">Email it to my tutor</a>' : '')
+          + '<button type="button" class="del" data-ask="' + esc(n.id) + '">Delete</button>'))
+    + '</div>';
+  const menuHTML = !menu ? '' : TUTOR
+    ? '<div class="menu" data-menu><div class="hd">This note</div><button type="button" data-scope="tutors"' + (n.shared ? ' class="on"' : '') + '>Connect with the other tutors</button><button type="button" data-scope=""' + (!n.shared ? ' class="on"' : '') + '>Keep it to yourself</button></div>'
+    : '<div class="menu" data-menu><div class="hd">This note</div><button type="button" data-scope="group"' + (n.shared === 'group' ? ' class="on"' : '') + '>Connect with my TP group</button><button type="button" data-scope="course"' + (n.shared === 'course' ? ' class="on"' : '') + '>Connect with the whole course</button><button type="button" data-scope=""' + (!n.shared ? ' class="on"' : '') + '>Keep it to yourself</button></div>';
+  return '<div class="note' + (own ? ' mine' : '') + (editing ? ' editing' : '') + '" data-id="' + esc(n.id) + '">'
+    + '<div class="top">' + (opts.theirs ? '<span class="by">' + esc(n.by || 'Someone') + '</span>' : '') + (opts.showDay ? '<span>' + esc(NB.dayLabel(n.day)) + '</span>' : '') + '<span>' + esc(NB.timeLabel(n.at)) + '</span>' + (opts.hideChip ? '' : chip(n.thread)) + linkedMark(n) + '</div>'
+    + '<p class="text">' + esc(n.text) + '</p>'
+    + (editing ? '<textarea class="edit" data-ta="' + esc(n.id) + '">' + esc(n.text) + '</textarea>' : '')
+    + voiceHTML(n, true)
+    + acts + menuHTML + '</div>';
+}
+function mailto(n){
+  const subj = 'A note from ' + (ME.name || 'a trainee') + (n.thread && n.thread.t && n.thread.k !== 'day' ? ' — ' + n.thread.t : '');
+  const body = n.text + '\n\n(' + NB.dayLabel(n.day, true) + (n.thread && n.thread.k !== 'day' ? ', ' + n.thread.t : '') + ', from my notebook on Connect Lite)';
+  return 'mailto:' + encodeURIComponent(tutorEmails().join(',')) + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
+}
+
+/* ---- by day --------------------------------------------------------------- */
+function dayBlock(date, notes, theirs){
+  const d = new Date(date + 'T12:00:00'), isToday = date === TODAY;
+  const wd = isNaN(d) ? '' : d.toLocaleDateString('en-GB', { weekday: 'long' }), mo = isNaN(d) ? date : d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+  const shape = shapeOf(date);
+  return '<section class="day"><div class="date"><div class="num">' + (isNaN(d) ? '' : d.getDate()) + '</div><div><div class="wd">' + esc(wd) + '</div><div class="mo">' + esc(mo) + '</div></div>' + (isToday ? '<span class="today">Today</span>' : '') + '</div>'
+    + '<div>' + (shape ? '<p class="shape">' + shape + '</p>' : '')
+    + (notes.length ? notes.map(n => noteHTML(n, { theirs })).join('') : (isToday ? '<p class="shape">Nothing yet today. The arc in the corner of any page writes here.</p>' : ''))
+    + '</div></section>';
+}
+function viewDay(){
+  const m = byDay(mine()); const days = Object.keys(m).sort().reverse();
+  if (days.indexOf(TODAY) === -1) days.unshift(TODAY);
+  days.sort().reverse();
+  if (!mine().length) return emptyAll() + dayBlock(TODAY, [], false);
+  return days.map(d => dayBlock(d, m[d] || [], false)).join('');
+}
+function emptyAll(){
+  return '<div class="empty-all"><b>Nothing here yet.</b> ' + (TUTOR
+    ? 'The arc in the corner of any page writes into your notebook: watching a TP, marking an assignment, reading the tracker, giving an input session. Each note keeps the day and the trainee or session it was about.'
+    : 'The arc in the corner of any page writes into your notebook: an input session, your lesson plan, your returned feedback, an assignment. Each note keeps the day and the thread it belongs to, so it reads back as the course in your own words.') + '</div>';
+}
+
+/* ---- by thread ------------------------------------------------------------ */
+function latestReturnedTP(){
+  if (TUTOR) return 0;
+  const h = rec('chub:tpHistory') || {}, fb = rec('chub:feedback');
+  let n = Math.max(0, ...Object.keys(h).map(Number).filter(x => x > 0));
+  const m = fb && String((fb.state && fb.state.f && fb.state.f.fTP) || fb.label || '').match(/\d+/); if (m && fb.docHTML) n = Math.max(n, +m[0]);
+  return n;
+}
+function threadBlock(th, notes, carry){
+  const key = NB.threadKey(th);
+  return '<div class="thread" data-th="' + esc(key) + '"><div class="th">' + chip(th) + '<h3>' + esc(th.t) + '</h3><span class="n">' + (notes.length ? notes.length + ' note' + (notes.length === 1 ? '' : 's') : '') + '</span><button type="button" class="write" data-write="' + esc(key) + '">Write a note</button></div>'
+    + (carry || '')
+    + (notes.length ? notes.map(n => noteHTML(n, { showDay: true, hideChip: true })).join('') : (carry ? '' : '<p class="empty">Nothing here yet.</p>'))
+    + '</div>';
+}
+function carryFor(n){
+  const pts = NB.actionPoints(String(n - 1)); if (!pts) return '';
+  return '<div class="carry"><b>Action points from TP' + (n - 1) + '</b><ul>' + pts.map(p => '<li>' + esc(p) + '</li>').join('') + '</ul><p class="q">What will you try in TP' + n + '?</p></div>';
+}
+function fromFeedback(n){
+  const pts = NB.actionPoints(String(n)); if (!pts) return '';
+  return '<div class="carry"><b>From your tutor’s feedback on TP' + n + '</b><ul>' + pts.map(p => '<li>' + esc(p) + '</li>').join('') + '</ul></div>';
+}
+function viewThread(){
+  const list = mine(); const groups = {};
+  const KEYS = {};
+  list.forEach(n => { const th = n.thread || { k: 'day', id: n.day, t: NB.dayLabel(n.day) }; const key = NB.threadKey(th); KEYS[key] = KEYS[key] || { th: th, notes: [] }; KEYS[key].notes.push(n); });
+  /* every TP up to the one after the last returned, written in or not */
+  if (!TUTOR) { const last = latestReturnedTP(); for (let i = 1; i <= Math.min(8, last + 1); i++) { const k = 'tp:' + i; if (!KEYS[k]) KEYS[k] = { th: { k: 'tp', id: String(i), t: 'TP' + i }, notes: [] }; } }
+  Object.keys(KEYS).forEach(k => { const g = KEYS[k].th.k; (groups[g] = groups[g] || []).push(KEYS[k]); });
+  const ORDER = TUTOR ? [['trainee', 'Trainees', 'What you noticed about each one, across the course.'], ['tp', 'Teaching practice'], ['input', 'Input sessions'], ['asg', 'Assignments'], ['day', 'Days'], ['page', 'Other'], ['obs', 'Observations']]
+                      : [['tp', 'Teaching practice', 'Your notes on each TP, with the action points your tutor gave you carried into the next.'], ['input', 'Input sessions'], ['asg', 'Written assignments'], ['obs', 'Observations'], ['day', 'Days'], ['page', 'Other']];
+  let out = '';
+  ORDER.forEach(([g, title, sub]) => {
+    const ts = groups[g]; if (!ts || !ts.length) return;
+    ts.sort((a, b) => g === 'tp' ? (+a.th.id || 0) - (+b.th.id || 0) : String(a.th.t).localeCompare(String(b.th.t)));
+    out += '<div class="group"><h2>' + esc(title) + '</h2>' + (sub ? '<p class="gsub">' + esc(sub) + '</p>' : '')
+      + ts.map(t => {
+        let carry = '';
+        if (!TUTOR && g === 'tp' && t.th.id) { const n = +t.th.id; const last = latestReturnedTP(); if (n === last + 1) carry = carryFor(n); else if (n <= last) carry = fromFeedback(n); }
+        return threadBlock(t.th, t.notes.slice().sort((a, b) => String(a.at).localeCompare(String(b.at))), carry);
+      }).join('') + '</div>';
+  });
+  return out || emptyAll();
+}
+
+/* ---- connected ------------------------------------------------------------ */
+function viewConnected(){
+  const list = connected().slice().sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  const sub = TUTOR ? 'Notes the other tutors connected with you. Yours stay yours until you connect them.' : 'Notes your classmates connected with your TP group or with the whole course. Yours stay yours until you connect them.';
+  return '<section class="connected"><h2>' + NB.arc(true, 18) + 'Connected</h2><p class="gsub">' + esc(sub) + '</p>'
+    + (list.length ? list.map(n => noteHTML(n, { theirs: true, showDay: true })).join('') : '<p class="shape">Nothing connected with you yet.</p>') + '</section>';
+}
+
+/* ---- the page --------------------------------------------------------------- */
+function render(){
+  const who = TUTOR ? NB.who() : (ME.name || '');
+  const head = '<div class="title"><div><p class="eyebrow">' + (TUTOR ? 'Tutor' : 'Trainee') + (who ? ' · ' + esc(who) : '') + '</p><h1>Your notebook</h1>'
+    + '<p>' + (TUTOR ? 'Yours alone. The other tutors see only the notes you connect with them.' : 'Yours alone. Your tutors never see it; a note reaches your classmates only when you connect it with them.') + '</p></div>'
+    + '<button type="button" class="btn primary write" id="writeNow">Write a note</button></div>';
+  if (TUTOR && !NB.who()) {
+    $('app').innerHTML = head + '<div class="namecard"><p>The notebook is yours alone, so it needs your name once: the same one the dashboard asks for.</p><input type="text" id="whoIn" placeholder="Your name" autocomplete="name"><button type="button" class="btn primary" id="whoGo">Open my notebook</button></div>';
+    $('writeNow').addEventListener('click', () => NB.open({ k: 'day', id: TODAY, t: 'Today' }));
+    $('whoGo').addEventListener('click', () => { const v = $('whoIn').value.trim(); if (!v) return; try { localStorage.setItem('chub:tutorName', v); } catch (e) {} loadTutor(); });
+    $('whoIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('whoGo').click(); });
+    return;
+  }
+  $('app').innerHTML = head
+    + '<div class="tabs"><button type="button" class="tab' + (VIEW === 'day' ? ' active' : '') + '" data-view="day">By day</button><button type="button" class="tab' + (VIEW === 'thread' ? ' active' : '') + '" data-view="thread">By thread</button></div>'
+    + (NOTE ? '<p class="lede" aria-live="polite">' + esc(NOTE) + '</p>' : '')
+    + (VIEW === 'day' ? viewDay() : viewThread())
+    + viewConnected();
+  wire();
+}
+function wire(){
+  const app = $('app');
+  $('writeNow').addEventListener('click', () => NB.open({ k: 'day', id: TODAY, t: 'Today' }));
+  app.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { VIEW = b.dataset.view; try { localStorage.setItem('chub:nbkView', VIEW); } catch (e) {} MENU = ''; render(); }));
+  app.querySelectorAll('[data-write]').forEach(b => b.addEventListener('click', () => { const t = findThread(b.dataset.write); NB.open(t); }));
+  app.querySelectorAll('[data-play]').forEach(b => b.addEventListener('click', () => { const n = findNote(b.dataset.play); const slot = b.parentNode.querySelector('.slot'); if (n) NB.play(n, slot, b); }));
+  app.querySelectorAll('[data-connect]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); MENU = MENU === b.dataset.connect ? '' : b.dataset.connect; render(); }));
+  app.querySelectorAll('[data-menu] [data-scope]').forEach(b => b.addEventListener('click', () => connect(MENU, b.dataset.scope)));
+  app.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => { EDIT = b.dataset.edit; MENU = ''; render(); if (EDIT) { const ta = app.querySelector('[data-ta="' + EDIT + '"]'); if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } } }));
+  app.querySelectorAll('[data-save]').forEach(b => b.addEventListener('click', () => saveEdit(b.dataset.save)));
+  app.querySelectorAll('[data-ask]').forEach(b => b.addEventListener('click', () => { ASK = b.dataset.ask; MENU = ''; render(); }));
+  app.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => del(b.dataset.del)));
+}
+document.addEventListener('click', e => { if (MENU && !e.target.closest('[data-menu]') && !e.target.closest('[data-connect]')) { MENU = ''; render(); } });
+function findNote(id){ return mine().concat(connected()).find(n => n && n.id === id); }
+function findThread(key){ const n = mine().find(x => NB.threadKey(x.thread) === key); if (n) return n.thread; const m = key.match(/^tp:(\d+)$/); if (m) return { k: 'tp', id: m[1], t: 'TP' + m[1] }; return { k: 'day', id: TODAY, t: 'Today' }; }
+
+/* ---- the writes ------------------------------------------------------------- */
+function saveEdit(id){
+  const ta = $('app').querySelector('[data-ta="' + id + '"]'); if (!ta) return;
+  const text = ta.value.trim(); const n = mine().find(x => x.id === id); if (!n) return;
+  if (!text && !n.audio) { ASK = id; EDIT = ''; render(); return; }
+  n.text = text; n.edited = NB.nowISO();
+  persist(n).then(() => { EDIT = ''; if (n.shared) return reconnect(n); }).then(render, err);
+}
+function persist(n){
+  if (TUTOR) return NB.tutor.put(n).then(c => { T = c; });
+  const nb = NB.load(); const i = nb.notes.findIndex(x => x.id === n.id); if (i >= 0) nb.notes[i] = n; else nb.notes.push(n);
+  return NB.save(nb);
+}
+/* a connected note that changes is connected again, so the copy others hold is the new one */
+function reconnect(n){
+  if (TUTOR) return Promise.resolve();
+  return HubStore.call({ op: 'shareNote', token: HubStore.token(), item: n, scope: n.shared }).then(r => { if (r && r.notes) keepConnected(r.notes); }, () => {});
+}
+function keepConnected(list){ try { localStorage.setItem('connect_notes_v1', JSON.stringify(list)); } catch (e) {} }
+function connect(id, scope){
+  const n = mine().find(x => x.id === id); if (!n) return; MENU = '';
+  if (TUTOR) { n.shared = !!scope; persist(n).then(() => { NOTE = n.shared ? 'Connected with the other tutors.' : 'Kept to yourself.'; render(); }, err); return; }
+  if (!scope) {
+    n.shared = ''; persist(n).then(() => HubStore.call({ op: 'unshareNote', token: HubStore.token(), id: id })).then(r => { if (r && r.notes) keepConnected(r.notes); NOTE = 'Kept to yourself.'; render(); }, err);
+    return;
+  }
+  n.shared = scope;
+  persist(n).then(() => HubStore.call({ op: 'shareNote', token: HubStore.token(), item: n, scope: scope })).then(r => {
+    if (r && r.notes) keepConnected(r.notes);
+    NOTE = r && r.demo ? 'Demo: connected on this device only.' : ('Connected with ' + (scope === 'course' ? 'the whole course.' : 'your TP group.'));
+    render();
+  }, err);
+}
+function del(id){
+  const n = mine().find(x => x.id === id); if (!n) return; ASK = '';
+  const audioId = n.audio && n.audio.id;
+  let p;
+  if (TUTOR) p = NB.tutor.drop(id).then(c => { T = c; });
+  else { const nb = NB.load(); nb.notes = nb.notes.filter(x => x.id !== id); p = NB.save(nb).then(() => n.shared ? HubStore.call({ op: 'unshareNote', token: HubStore.token(), id: id }).then(r => { if (r && r.notes) keepConnected(r.notes); }, () => {}) : null); }
+  p.then(() => { if (audioId) { const b = { op: 'deleteNoteAudio', id: audioId }; if (!TUTOR) b.token = HubStore.token(); else b.who = NB.who(); HubStore.call(b).catch(() => {}); } NOTE = 'Deleted.'; render(); NB.count(); }, err);
+}
+function err(e){ NOTE = 'Not saved — ' + ((e && e.message) || e); render(); }
+
+function loadTutor(){
+  T = NB.tutor.cache(); render();
+  NB.tutor.load().then(c => { T = c; render(); }, () => {});
+}
+if (TUTOR) loadTutor(); else render();
+/* a note written from the arc on this page lands at once */
+window.addEventListener('storage', e => { if (e.key === 'chub:notebook' || e.key === 'chub:tutorNotebook') { if (TUTOR) T = NB.tutor.cache(); render(); } });
+(function(){ const orig = localStorage.setItem.bind(localStorage); const P = Storage.prototype.setItem; Storage.prototype.setItem = function(k, v){ P.call(this, k, v); if (this === localStorage && (k === 'chub:notebook' || k === 'chub:tutorNotebook')) setTimeout(() => { if (TUTOR) T = NB.tutor.cache(); if (!EDIT) render(); }, 0); }; })();
+</script>
+</body>
+</html>

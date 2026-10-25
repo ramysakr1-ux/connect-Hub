@@ -35,6 +35,7 @@ FOOT = '''  <footer class="hub-brand-foot">
 # answers tutor:true only for a key that opens a course. Nothing else on the
 # page talks to the store.
 GATE = '''<script src="../../hub-store.js"></script>
+<script src="../../hub-notebook.js"></script>
 <script>
 (function(){
   if (window.InputLib) InputLib.gate();
@@ -2099,7 +2100,7 @@ def hand(slug):
     # every earlier copy of the film script goes, so a rebuild adds one, not one more
     page = re.sub(r"\n<script>\n\(function\(\)\{\n  /\* A film with an end time.*?</script>", '', page, flags=re.S)
     page = page.replace('\n</body>', '\n' + FILM_JS + '\n' + GATE + '\n</body>', 1)
-    assert page.count('id="trainer"') == 1 and page.count('hub-store.js') == 1, slug
+    assert page.count('id="trainer"') == 1 and page.count('hub-store.js') == 1 and page.count('hub-notebook.js') == 1, slug
     assert page.count('A film with an end time') == 1, slug + ': the film script is not there once'
     page = number_from_nav(strip_lengths(alias(page, slug)))
     p.write_text(page, encoding='utf-8')

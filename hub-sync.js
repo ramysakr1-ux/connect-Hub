@@ -39,7 +39,7 @@
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addWayBack); else addWayBack();
   }
-  var TRAINEE_KEYS = { 'chub:plan':'plan', 'chub:selfeval':'selfeval', 'chub:feedback':'feedback', 'connect_assignment_submissions_v1':'assignments', 'chub:tpHistory':'tpHistory', 'chub:tracker':'tracker', 'connect_observations_v1':'observations', 'chub:links':'links', 'chub:celta5':'celta5', 'chub:celta5t':'celta5t', 'chub:agreement':'agreement', 'connect_fol_interview_v1':'interview' };
+  var TRAINEE_KEYS = { 'chub:plan':'plan', 'chub:selfeval':'selfeval', 'chub:feedback':'feedback', 'connect_assignment_submissions_v1':'assignments', 'chub:tpHistory':'tpHistory', 'chub:tracker':'tracker', 'connect_observations_v1':'observations', 'chub:links':'links', 'chub:celta5':'celta5', 'chub:celta5t':'celta5t', 'chub:agreement':'agreement', 'connect_fol_interview_v1':'interview', 'chub:notebook':'notebook' };  // notebook (25 Oct 2026): the trainee's own, private; the store never hands it to a tutor
   var TUTOR_ONLY = { feedback:1, tpHistory:1, tracker:1, links:1, celta5t:1 }; // links: a trainee's private links, the tutor's to write; celta5t: the tutors' half of the CELTA 5
   // staffLinks -- about a trainee, for staff only -- has no trainee key at all: the store never hands it to a trainee's token
   var COURSE_KEYS = { 'connect_assignment_wording_v2':'wording', 'connect_course_settings':'settings', 'connect_observation_wording_v1':'observations', 'connect_timetable_v1':'timetable', 'connect_tp_points_v1':'tppoints', 'connect_volunteers_v1':'volunteers', 'connect_marking_guidance_v1':'guidance' };
@@ -250,7 +250,7 @@
     var kind = job && job.kind;
     return ({ plan: 'a lesson plan', selfeval: 'a self-evaluation', feedback: 'tutor feedback',
               tpHistory: 'the teaching practice record', assignments: 'assignment work', observations: 'observation tasks', links: 'a trainee\u2019s links', staffLinks: 'a staff-only link', celta5: 'the CELTA 5', celta5t: 'the CELTA 5',
-              tracker: 'the tracker', settings: 'the course settings',
+              tracker: 'the tracker', settings: 'the course settings', notebook: 'your notebook',
               wording: 'the assignment wording', roster: 'the roster' })[kind] || 'a change';
   }
   // Which storage key a queued job stands for, so a boot can leave it alone.
@@ -609,6 +609,9 @@
        only -- anonymous unless a trainee chose to add their name. Read-only
        here; a trainee sends through the store's courseFeedback op. */
     out['connect_course_feedback_v1'] = course.courseFeedback ? JSON.stringify(course.courseFeedback) : null;
+    /* The notes classmates connected with this trainee (25 Oct 2026): read-only here, written
+       through the store's shareNote op; a trainee's own notes are their `notebook` record. */
+    out['connect_notes_v1'] = course.notes ? JSON.stringify(course.notes) : null;
     if (mode === 'trainee') {
       var me = boot.me || { records: {} };
       /* that this trainee has answered, and when -- never what */

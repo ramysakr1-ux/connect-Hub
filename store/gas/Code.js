@@ -42,10 +42,16 @@ var SHEET_CENTRES = 'centres';   // number | name | first seen | courses made   
 // the trainee submits into it and the tutor marks into it, so both may write
 // it and the screens keep the two halves apart.
 // celta5: the candidate's half of the CELTA 5 record booklet; celta5t: the tutors' half (28 Sep 2026)
-var TRAINEE_WRITES = { plan:1, selfeval:1, assignments:1, observations:1, celta5:1, agreement:1, interview:1, tpHistory:0 };// staffLinks: about a candidate, for the tutors and the assessor only -- deliberately absent from TRAINEE_READS (28 Sep 2026)
+var TRAINEE_WRITES = { plan:1, selfeval:1, assignments:1, observations:1, celta5:1, agreement:1, interview:1, notebook:1, tpHistory:0 };// staffLinks: about a candidate, for the tutors and the assessor only -- deliberately absent from TRAINEE_READS (28 Sep 2026)
 var TUTOR_WRITES = { plan:1, selfeval:1, feedback:1, assignments:1, tracker:1, observations:1, links:1, staffLinks:1, celta5:1, celta5t:1, interview:1, tpHistory:1 };
 // links: a candidate's private links (their CELTA 5, a reading), written by the tutor, read by the candidate (28 Sep 2026)
-var TRAINEE_READS = { plan:1, selfeval:1, feedback:1, assignments:1, tracker:1, observations:1, links:1, celta5:1, celta5t:1, agreement:1, interview:1, tpHistory:1, courseFeedbackSent:1 };
+var TRAINEE_READS = { plan:1, selfeval:1, feedback:1, assignments:1, tracker:1, observations:1, links:1, celta5:1, celta5t:1, agreement:1, interview:1, tpHistory:1, courseFeedbackSent:1, notebook:1 };
+/* THE NOTEBOOK (v129, 25 Oct 2026). Ramy: "a smart notebook... personal, obviously". A trainee's notes are
+   theirs alone: written and read on their own token, and NEVER folded into the roster a tutor or the
+   assessor boots with, nor answered to a reader's `get`. A note reaches anyone else only when its writer
+   shares it (shareNote, below), into the course-level `notes` pool. The tutors' notebooks are the same
+   idea on the course side (`tutorNotes`, one list per tutor name, read back only as that tutor). */
+var PRIVATE_KINDS = { notebook:1 };
 function doGet(e) {
   return json_({ ok: true, service: 'connect-lite-store', hint: 'POST a JSON body' });
 }
@@ -1240,6 +1246,8 @@ case 'inbox': {
         boot.roster = withoutEmails_(rosterWithRecords_(course.id, TUTOR_WRITES), assessor);
       } else if (me) {
         boot.me = { token: me.token, name: me.name, group: me.group, email: me.email || '', records: recordsFor_(course.id, me.token, TRAINEE_READS) };
+        /* v129: the notes classmates shared with this trainee's group or with the whole course */
+        boot.course.notes = sharedNotesFor_(course.id, me);
       }
       return boot;
     }
@@ -1262,7 +1270,7 @@ case 'inbox': {
     }
     case 'get': {
       var kind = String(req.kind || '');
-      if (reader) { return { data: read_(course.id, String(req.token || ''), kind) }; }
+      if (reader) { if (PRIVATE_KINDS[kind]) throw new Error('Not yours to read: ' + kind); return { data: read_(course.id, String(req.token || ''), kind) }; }
       if (!me) throw new Error('No token');
       if (!TRAINEE_READS[kind]) throw new Error('Not yours to read: ' + kind);
       return { data: read_(course.id, me.token, kind) };
@@ -1423,6 +1431,115 @@ case 'inbox': {
         return pool;
       });
       return { folpool: folPoolFor_(phPool, false) };
+    }
+    /* THE NOTEBOOK (v129, 25 Oct 2026). Ramy: "a smart notebook, connected to the rest of the
+       course"; "share with the whole course or share with my TP group"; "one for the trainers as
+       well, separate obviously... personal: tutors cannot see each other's notebook. They can share
+       but they cannot see each other's notes."
+       A TRAINEE'S notes live in their own `notebook` record (put/get, private, see PRIVATE_KINDS).
+       Sharing one copies it into the course-level `notes` pool, one list per token, upserted by
+       id so two trainees sharing in the same moment cannot overwrite each other; the boot hands
+       each trainee the notes shared with their group or with everyone, with the writer's name.
+       Tutors and the assessor never get the pool: it is the trainees' own.
+       A TUTOR'S notes are the course-level `tutorNotes` pool, one list per tutor name (the name
+       the dashboard asks for; the tutors share one key, so the name is the only identity there
+       is, and these ops answer only the list for the name given plus what the others shared).
+       The pool is never in the boot, so a colleague's page never caches it. */
+    case 'shareNote': {
+      if (!me || tutor || assessor) throw new Error('Trainees only');
+      if (!course) throw new Error('This link is not on a course');
+      var snItem = noteClean_(req.item, me.name);
+      if (!snItem) throw new Error('Nothing to share');
+      snItem.scope = req.scope === 'course' ? 'course' : 'group';
+      snItem.group = String(me.group || '');
+      var snTok = me.token;
+      courseUpdateObj_(course.id, 'notes', function (pool) {
+        var list = (pool[snTok] || []).filter(function (x) { return x && x.id !== snItem.id; });
+        list.push(snItem);
+        pool[snTok] = list.length > 200 ? list.slice(list.length - 200) : list;
+        return pool;
+      });
+      return { shared: true, notes: sharedNotesFor_(course.id, me) };
+    }
+    case 'unshareNote': {
+      if (!me || tutor || assessor) throw new Error('Trainees only');
+      if (!course) throw new Error('This link is not on a course');
+      var unId = String(req.id || ''), unTok = me.token;
+      courseUpdateObj_(course.id, 'notes', function (pool) {
+        var list = (pool[unTok] || []).filter(function (x) { return x && x.id !== unId; });
+        if (list.length) pool[unTok] = list; else delete pool[unTok];
+        return pool;
+      });
+      return { shared: false, notes: sharedNotesFor_(course.id, me) };
+    }
+    case 'tutorNotes': {
+      requireTutor_(tutor);
+      var tnWho = tutorWho_(req.who);
+      var tnPool = courseRead_(course.id, 'tutorNotes') || {};
+      var tnShared = [];
+      Object.keys(tnPool).forEach(function (w) {
+        if (w === tnWho) return;
+        (tnPool[w] || []).forEach(function (it) { if (it && it.shared) tnShared.push(it); });
+      });
+      tnShared.sort(function (a, b) { return String(a.at).localeCompare(String(b.at)); });
+      return { mine: tnPool[tnWho] || [], shared: tnShared };
+    }
+    case 'putTutorNote': {
+      requireTutor_(tutor);
+      var ptWho = tutorWho_(req.who);
+      var ptItem = noteClean_(req.item, String(req.who || '').trim());
+      if (!ptItem) throw new Error('Nothing to keep');
+      ptItem.shared = !!(req.item && req.item.shared);
+      var ptPool = courseUpdateObj_(course.id, 'tutorNotes', function (pool) {
+        var list = (pool[ptWho] || []).filter(function (x) { return x && x.id !== ptItem.id; });
+        list.push(ptItem);
+        list.sort(function (a, b) { return String(a.at).localeCompare(String(b.at)); });
+        pool[ptWho] = list.length > 400 ? list.slice(list.length - 400) : list;
+        return pool;
+      });
+      return { saved: true, mine: ptPool[ptWho] || [] };
+    }
+    case 'dropTutorNote': {
+      requireTutor_(tutor);
+      var dtWho = tutorWho_(req.who), dtId = String(req.id || '');
+      var dtPool = courseUpdateObj_(course.id, 'tutorNotes', function (pool) {
+        var list = (pool[dtWho] || []).filter(function (x) { return x && x.id !== dtId; });
+        if (list.length) pool[dtWho] = list; else delete pool[dtWho];
+        return pool;
+      });
+      return { dropped: true, mine: dtPool[dtWho] || [] };
+    }
+    /* A VOICE NOTE (v129). The file goes to a private folder under the course's materials, like an
+       interview recording, and is played back through the store: by the person who made it, and by
+       whoever the note was shared with. Never the bytes in the sheet. Ninety seconds is the most a
+       note holds; the page stops the recorder there. */
+    case 'putNoteAudio': {
+      if (!course) throw new Error('This link is not on a course');
+      if (assessor || (!me && !tutor)) throw new Error('Only a trainee or a tutor can keep a voice note');
+      var naBytes = Utilities.base64Decode(String(req.bytes || ''));
+      if (!naBytes.length) throw new Error('Nothing was recorded');
+      if (naBytes.length > 3 * 1024 * 1024) throw new Error('That recording is over 3MB. Keep a voice note under ninety seconds.');
+      var naType = String(req.type || '').split(';')[0];
+      if (!/^audio\//.test(naType)) naType = 'audio/webm';
+      var naExt = naType.indexOf('mp4') >= 0 ? 'm4a' : naType.indexOf('ogg') >= 0 ? 'ogg' : naType.indexOf('mpeg') >= 0 ? 'mp3' : 'webm';
+      var naWho = tutor ? String(req.who || '').trim().slice(0, 80) : me.name;
+      var naStamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
+      var naFile = notebookFolder_(course).createFile(Utilities.newBlob(naBytes, naType, 'Voice note ' + naWho + ' ' + naStamp + '.' + naExt));
+      naFile.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE);
+      var naMeta = { by: naWho, seconds: Number(req.seconds) || 0 };
+      if (tutor) { naMeta.tutor = true; naMeta.who = tutorWho_(req.who); } else naMeta.token = me.token;
+      naFile.setDescription(JSON.stringify(naMeta));
+      return { id: naFile.getId(), size: naBytes.length };
+    }
+    case 'getNoteAudio': {
+      var gnFile = noteFileFor_(course, req.id, tutor, me, req.who);
+      var gnBlob = gnFile.getBlob();
+      return { type: gnBlob.getContentType(), bytes: Utilities.base64Encode(gnBlob.getBytes()) };
+    }
+    case 'deleteNoteAudio': {
+      var dnFile = noteFileFor_(course, req.id, tutor, me, req.who, true);
+      dnFile.setTrashed(true);
+      return { deleted: true };
     }
     /* RECORDING THE STUDENT INTERVIEW (v91, 15 Oct 2026). Ramy: "we can easily
        have a consent... the same with the video, then it's the audio" and
@@ -2423,6 +2540,73 @@ function diarizedTurns_(sse) {
   return turns.map(function (t) { return t.who + ': ' + t.text; }).join('\n');
 }
 
+/* THE NOTEBOOK's helpers (v129). */
+// A note as the pool keeps it: the words, where it was written, when, and a voice note's id. Never more.
+function noteClean_(it, byName) {
+  if (!it || typeof it !== 'object') return null;
+  var text = String(it.text || '').trim().slice(0, 4000);
+  var audio = (it.audio && it.audio.id) ? { id: String(it.audio.id).slice(0, 80), seconds: Number(it.audio.seconds) || 0 } : null;
+  if (!text && !audio) return null;
+  var th = it.thread && typeof it.thread === 'object' ? it.thread : {};
+  return { id: String(it.id || newKey_().slice(0, 10)).slice(0, 24), at: /^\d{4}-\d{2}-\d{2}T/.test(String(it.at || '')) ? String(it.at) : new Date().toISOString(),
+           day: /^\d{4}-\d{2}-\d{2}$/.test(String(it.day || '')) ? String(it.day) : new Date().toISOString().slice(0, 10),
+           thread: { k: String(th.k || 'day').slice(0, 12), id: String(th.id || '').slice(0, 60), t: String(th.t || '').slice(0, 120) },
+           text: text, audio: audio, by: String(byName || '').slice(0, 80) };
+}
+// A tutor's name as the pool keys it: lower case, one space between words. The name is the identity (one shared key).
+function tutorWho_(who) {
+  var w = String(who || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  if (!w) throw new Error('Say which tutor you are first: your name, on the dashboard');
+  return w.slice(0, 80);
+}
+// The notes classmates shared with this trainee: everyone's "course" notes, and their own group's "group" notes. Never their own.
+function sharedNotesFor_(courseId, me) {
+  var pool = courseRead_(courseId, 'notes') || {}, out = [], g = String(me.group || '');
+  Object.keys(pool).forEach(function (tok) {
+    if (tok === me.token) return;
+    (pool[tok] || []).forEach(function (it) {
+      if (!it) return;
+      if (it.scope === 'course' || (it.scope === 'group' && String(it.group || '') === g)) out.push(it);
+    });
+  });
+  out.sort(function (a, b) { return String(a.at).localeCompare(String(b.at)); });
+  return out;
+}
+function notebookFolder_(course) {
+  var props = PropertiesService.getScriptProperties(), key = 'NB_FOLDER_' + course.id, id = props.getProperty(key);
+  if (id) { try { return DriveApp.getFolderById(id); } catch (e) { /* gone: make another */ } }
+  var f = materialsFolder_(course).createFolder('Notebook recordings (private)');
+  f.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE);
+  props.setProperty(key, f.getId());
+  return f;
+}
+/* Who may hear a voice note: the one who made it; a tutor, their own and the ones a colleague shared; a
+   trainee, their own and the ones shared with their group or the course. `own` asks for the maker alone. */
+function noteFileFor_(course, id, tutor, me, who, own) {
+  if (!course) throw new Error('This link is not on a course');
+  var f; try { f = DriveApp.getFileById(String(id || '')); } catch (e) { throw new Error('No such recording'); }
+  var inFolder = false, parents = f.getParents(), want = notebookFolder_(course).getId();
+  while (parents.hasNext()) { if (parents.next().getId() === want) inFolder = true; }
+  if (!inFolder) throw new Error('No such recording');
+  var meta = {}; try { meta = JSON.parse(f.getDescription() || '{}'); } catch (e) {}
+  var fid = f.getId();
+  function listed(list, test) { return (list || []).some(function (it) { return it && it.audio && it.audio.id === fid && test(it); }); }
+  if (meta.tutor) {
+    if (!tutor) throw new Error('Not yours to hear');
+    var mine = !!who && tutorWho_(who) === meta.who;
+    if (mine) return f;
+    if (own) throw new Error('Not yours to hear');
+    var tpool = courseRead_(course.id, 'tutorNotes') || {};
+    if (listed(tpool[meta.who], function (it) { return !!it.shared; })) return f;
+    throw new Error('Not yours to hear');
+  }
+  if (!me || tutor) throw new Error('Not yours to hear');
+  if (meta.token === me.token) return f;
+  if (own) throw new Error('Not yours to hear');
+  var pool = courseRead_(course.id, 'notes') || {}, g = String(me.group || '');
+  if (listed(pool[meta.token], function (it) { return it.scope === 'course' || (it.scope === 'group' && String(it.group || '') === g); })) return f;
+  throw new Error('Not yours to hear');
+}
 function interviewFolder_(course) {
   var props = PropertiesService.getScriptProperties(), key = 'IV_FOLDER_' + course.id, id = props.getProperty(key);
   if (id) { try { return DriveApp.getFolderById(id); } catch (e) { /* gone: make another */ } }
@@ -2594,6 +2778,7 @@ function tpOf_(kind) { var m = /^tpHistory:(\d+)$/.exec(String(kind)); return m 
 function foldRecord_(bucket, kind, json, kinds) {
   var n = tpOf_(kind);
   var base = n ? 'tpHistory' : kind;
+  if (PRIVATE_KINDS[base] && kinds !== TRAINEE_READS) return;   // the notebook: the trainee's own, never a reader's
   if (!kinds[base] && !TRAINEE_READS[base]) return;
   var data; try { data = JSON.parse(json); } catch (e) { return; }
   if (base !== 'tpHistory') { bucket[kind] = data; return; }

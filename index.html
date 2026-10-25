@@ -38,7 +38,7 @@
 <meta name="twitter:image" content="https://lite.celtaconnect.com/brand/share-card.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610250144">
+<link rel="stylesheet" href="hub-tokens.css?v=202610250844">
 <style>
   :root{
     /* The pane. A card on this page is a sheet of glass lying on the paper,
@@ -111,9 +111,9 @@
     border-radius:50%; background:var(--gold-lifted);}
   .hero .todo a{color:inherit; font-weight:700; text-decoration:underline; text-underline-offset:3px;}
   /* colour on the cover (Ramy, 25 Oct 2026): red for a warning or a Fail, amber for a letter already signed; readable on the forest */
-  .hero .todo li.red:before{background:#E8A49C;} .hero .todo li.red a{color:#F6C9C3;}
-  .hero .todo li.amber:before{background:var(--a-gold-ink, #F0C24B);} .hero .todo li.amber a{color:var(--a-gold-ink, #F0C24B);}
-  .hero.quiet .todo li.red a{color:var(--a-red);} .hero.quiet .todo li.amber a{color:var(--a-mustard, #C99A2E);}
+  .hero .todo li.red:before{background:var(--a-red-ink);} .hero .todo li.red a{color:var(--a-red-ink);}
+  .hero .todo li.amber:before{background:var(--a-gold-ink);} .hero .todo li.amber a{color:var(--a-gold-ink);}
+  .hero.quiet .todo li.red a{color:var(--a-red);} .hero.quiet .todo li.amber a{color:var(--a-mustard);}
   .hero .go{display:inline-block; margin:17px 0 0; background:var(--paper); color:var(--teal);
     font-family:'Karla',sans-serif; font-weight:700; font-size:0.9rem; padding:11px 22px;
     border-radius:999px; text-decoration:none;}
@@ -437,7 +437,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610250144">
+<link rel="stylesheet" href="hub-house.css?v=202610250844">
 </head>
 <body>
 <div class="board">
@@ -609,11 +609,13 @@
     </a>
     <!-- A fourth card, held for something to come (Ramy, 25 Oct 2026: "a third card for something else...
          we'll think of something"). His idea that day: a notebook of the trainee's own, by date, with voice notes. -->
-    <div class="room soon" id="roomSoon">
+    <!-- Built 25 Oct 2026 (hub-notebook.js, 37_notebook.html): the arc in the corner of every page writes
+         into it; it reads by day and by thread; a note reaches classmates only when its writer connects it. -->
+    <a class="room" id="roomNotebook" href="37_notebook.html">
       <h2>Your notebook</h2>
-      <p>Your own notes from input sessions and TP, kept by date, with voice notes.</p>
-      <span class="st">Coming soon</span>
-    </div>
+      <p>Your own notes from input sessions, TP and the assignments, kept by day and by thread, with voice notes. Yours alone, unless you connect a note with your group.</p>
+      <span class="st" id="badgeNotebook"></span>
+    </a>
   </div>
 
   </div>
@@ -646,16 +648,17 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 28 104 64" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202610250144"></script>
-<script src="observation-defaults.js?v=202610250144"></script>
-<script src="hub-shared.js?v=202610250144"></script>
+<script src="hub-due.js?v=202610250844"></script>
+<script src="observation-defaults.js?v=202610250844"></script>
+<script src="hub-shared.js?v=202610250844"></script>
 <script src="input-sessions/library.js?v=202610141516"></script>
-<script src="hub-store.js?v=202610250144"></script>
-<script src="hub-say.js?v=202610250144"></script>
-<script src="hub-shelf.js?v=202610250144"></script>
-<script src="hub-front.js?v=202610250144"></script>
-<script src="hub-sync.js?v=202610250144"></script>
-<script src="hub-feedback.js?v=202610250144"></script>
+<script src="hub-store.js?v=202610250844"></script>
+<script src="hub-say.js?v=202610250844"></script>
+<script src="hub-shelf.js?v=202610250844"></script>
+<script src="hub-front.js?v=202610250844"></script>
+<script src="hub-sync.js?v=202610250844"></script>
+<script src="hub-notebook.js?v=202610250844"></script>
+<script src="hub-feedback.js?v=202610250844"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -1136,6 +1139,16 @@ if (fbBack){
      idea. When A is teaching and they share something, the classmates get to
      know." So the list is both: what the tutors put up for the class, and
      every handout a classmate shared for their own teaching practice. */
+  /* The notebook's badge: how many notes, and the last day written (25 Oct 2026). */
+  (function(){ const b = document.getElementById('badgeNotebook'); if (!b) return;
+    const nb = rec('chub:notebook') || {}; const notes = Array.isArray(nb.notes) ? nb.notes : [];
+    const shared = (rec('connect_notes_v1') || []).length;
+    if (!notes.length) { b.textContent = shared ? shared + ' connected with you' : 'Yours alone'; b.classList.add('done'); return; }
+    const last = notes.map(n => n.day).sort().pop();
+    const when = (function(){ try { return new Date(last + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }); } catch (e) { return last; } })();
+    b.textContent = notes.length + ' note' + (notes.length === 1 ? '' : 's') + ' \u00b7 last ' + when + (shared ? ' \u00b7 ' + shared + ' connected with you' : '');
+    b.classList.add('done');
+  })();
   (function(){ const card = document.getElementById('roomShared'); if (!card) return;
     const list = (rec('connect_shared_v1') || []).filter(x => x && x.url && x.name);
     card.hidden = !list.length; const b = document.getElementById('badgeShared');
