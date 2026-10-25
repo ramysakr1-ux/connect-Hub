@@ -185,13 +185,15 @@
   function arcSVG(two, size){
     var s = size || 22;
     return two
-      ? '<svg viewBox="8 28 104 64" width="' + Math.round(s * 1.6) + '" height="' + s + '" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--a-gold-ink)" stroke-width="13" stroke-linecap="round"></path></svg>'
+      /* the two linked arcs wear the mark's own colours, gold then ink (Ramy, 25 Oct 2026: "make sure the colours are right") */
+      ? '<svg viewBox="8 28 104 64" width="' + Math.round(s * 1.6) + '" height="' + s + '" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--a-mustard)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--ink)" stroke-width="13" stroke-linecap="round"></path></svg>'
       : '<svg viewBox="8 28 56 64" width="' + Math.round(s * 0.88) + '" height="' + s + '" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path></svg>';
   }
 
   /* ---- the sheet ----------------------------------------------------------- */
   var CSS = ''
-    + '.nbk-arc{position:fixed;right:18px;bottom:var(--nbk-bottom,var(--sync-bottom,16px));z-index:880;width:52px;height:52px;border-radius:50%;border:0;background:var(--a-forest);color:var(--paper);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 4px rgba(35,34,32,.1),0 14px 30px -12px rgba(35,34,32,.45);transition:transform .16s ease,box-shadow .16s ease,background-color .16s ease;background-image:linear-gradient(180deg,rgba(255,255,255,.1),transparent 60%);}'
+    + '.nbk-arc{position:fixed;box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent;right:18px;bottom:var(--nbk-bottom,var(--sync-bottom,16px));z-index:880;width:52px;height:52px;border-radius:50%;border:0;background:var(--a-forest);color:var(--paper);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 4px rgba(35,34,32,.1),0 14px 30px -12px rgba(35,34,32,.45);transition:transform .16s ease,box-shadow .16s ease,background-color .16s ease;background-image:linear-gradient(180deg,rgba(255,255,255,.1),transparent 60%);}'
+    + '.nbk-arc:focus-visible{outline:3px solid var(--a-gold-ink);outline-offset:2px;}'
     + '.nbk-arc:hover{transform:translateY(-3px);background-color:var(--a-forest-2);box-shadow:0 2px 4px rgba(35,34,32,.1),0 20px 36px -14px rgba(35,34,32,.5) !important;}'
     + '.nbk-arc svg{display:block;}'
     + '.nbk-arc .nbk-n{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:10px;background:var(--paper);color:var(--a-forest);font:700 11px/20px Karla,sans-serif;text-align:center;padding:0 5px;box-shadow:0 1px 3px rgba(35,34,32,.25);}'
@@ -355,9 +357,12 @@
     if (arc || document.querySelector('.nbk-arc')) return;
     if (document.body.hasAttribute('data-no-notebook')) return;
     css();
-    arc = document.createElement('button'); arc.type = 'button'; arc.className = 'nbk-arc'; arc.setAttribute('aria-label', 'Write a note in your notebook'); arc.title = 'Write a note';
+    /* not a <button>: a turned-in plan disables every button on its page, and the shared hover rules
+       wash every button; the arc is its own thing, with a button's role and keys */
+    arc = document.createElement('span'); arc.className = 'nbk-arc'; arc.setAttribute('role', 'button'); arc.tabIndex = 0; arc.setAttribute('aria-label', 'Write a note in your notebook'); arc.title = 'Write a note';
     arc.innerHTML = arcSVG(false, 24);
     arc.addEventListener('click', function(){ open(context()); });
+    arc.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(context()); } });
     document.body.appendChild(arc);
     paintCount(); place();
     window.addEventListener('resize', place); window.addEventListener('orientationchange', place);
