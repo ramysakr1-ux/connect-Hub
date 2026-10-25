@@ -20,7 +20,7 @@
  * VERSION is stamped by bump-assets.py with the same stamp as the ?v= links,
  * so each push retires the previous cache on activate.
  */
-const VERSION = 'lite-202610251542';
+const VERSION = 'lite-202610251601';
 const SHELL = [
   './', 'index.html', 'invite.html', 'hub-qr.js', 'vendor/qrcode.js', 'hub-pin.js',
   '1_trainee_plan_and_analysis.html', '2_trainee_self_evaluation.html', '3_tutor_feedback.html',
@@ -65,7 +65,7 @@ const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 const FILM_HOST = 'films.connectlitefilms.com';
 /* Films and tracks outlive a deploy: a new version must not throw away 74 MB
    somebody kept on purpose. hub-store.js keeps the TP points' tracks here too. */
-const MEDIA = 'lite-media-v1';
+const MEDIA = 'lite-media-v2';   // v2 (25 Oct 2026): kept copies are keyed with their ?v=; v1's go
 const KEEPING = {};
 function keepWhole(u) {
   if (KEEPING[u]) return; KEEPING[u] = 1;
@@ -74,7 +74,7 @@ function keepWhole(u) {
   }).catch(function () {}).then(function () { delete KEEPING[u]; });
 }
 function media(req) {
-  var u = req.url.split('#')[0].split('?')[0];
+  var u = req.url.split('#')[0];   // with its ?v=: a replaced film is a new copy, never the old one answered for it
   return caches.open(MEDIA).then(function (c) { return c.match(u); }).then(function (hit) {
     if (!hit) return fetch(req).then(function (r) { keepWhole(u); return r; });
     var type = hit.headers.get('Content-Type') || 'video/mp4';
@@ -123,6 +123,12 @@ self.addEventListener('fetch', function (e) {
      streams as before and the whole file is fetched once beside it. From then
      on the kept copy answers, and a player's "bytes=" request is cut from it,
      because a video asks for pieces and a plain cache answer is not a piece. */
+  /* THE FILMS STREAM, AND ARE NOT KEPT (Ramy, 25 Oct 2026: "the film attached to the card is not really working,
+     buffering a lot"). Keeping meant a second download of the whole file the moment somebody pressed play, and on a
+     phone that download took the bandwidth the player needed: the film stalled. The films in /film/ are for
+     watching once, from a card or a page, so the browser streams them on its own and nothing here touches them.
+     The input-session films, used in class with no internet, are still kept once played. */
+  if (isFilm && url.pathname.indexOf('/film/') === 0) return;
   if ((sameOrigin || isFilm) && /\.(mp4|m4a|mp3)$/i.test(url.pathname)) { e.respondWith(media(req)); return; }
 
   if (isFont) {
