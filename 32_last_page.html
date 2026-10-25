@@ -37,7 +37,7 @@
 <title>The last page</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610251119">
+<link rel="stylesheet" href="hub-tokens.css?v=202610251203">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:linear-gradient(180deg,var(--paper) 0,var(--sand) 420px);}
@@ -153,22 +153,22 @@
     .printcard small{font:600 10pt 'Karla',sans-serif; color:#4A4843;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610251119">
+<link rel="stylesheet" href="hub-house.css?v=202610251203">
 </head>
 <body>
 <div id="app"></div>
 <div class="printcard" id="printcard" aria-hidden="true"></div>
-<script src="hub-shared.js?v=202610251119"></script>
-<script src="hub-store.js?v=202610251119"></script>
-<script src="hub-tracker.js?v=202610251119"></script>
-<script src="hub-hand.js?v=202610251119"></script>
-<script src="hub-ink.js?v=202610251119"></script>
-<script src="hub-say.js?v=202610251119"></script>
-<script src="observation-defaults.js?v=202610251119"></script>
-<script src="hub-rotation.js?v=202610251119"></script>
-<script src="hub-peers.js?v=202610251119"></script>
-<script src="hub-sync.js?v=202610251119"></script>
-<script src="hub-notebook.js?v=202610251119"></script>
+<script src="hub-shared.js?v=202610251203"></script>
+<script src="hub-store.js?v=202610251203"></script>
+<script src="hub-tracker.js?v=202610251203"></script>
+<script src="hub-hand.js?v=202610251203"></script>
+<script src="hub-ink.js?v=202610251203"></script>
+<script src="hub-say.js?v=202610251203"></script>
+<script src="observation-defaults.js?v=202610251203"></script>
+<script src="hub-rotation.js?v=202610251203"></script>
+<script src="hub-peers.js?v=202610251203"></script>
+<script src="hub-sync.js?v=202610251203"></script>
+<script src="hub-notebook.js?v=202610251203"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -301,8 +301,39 @@ function framed(cs, R){
   return '<figure class="frame"><div class="mat"><img src="' + esc(ph) + '" alt="The class photo"></div>'
     + '<figcaption><b>' + esc(cs.courseName || 'The course') + ', the last afternoon</b><span>' + esc([cs.centreName, span(cs)].filter(Boolean).join(' · ')) + '</span></figcaption></figure>';
 }
+/* THE NOTEBOOK ON THE LAST PAGE (Ramy, 25 Oct 2026: "build the notebook button on the last page"). The trainee's own
+   notes, in their own words, beside "how far you came": the first note and the latest, how many, and a way to
+   keep them. Only the trainee's own: a tutor opening this page as a trainee sees none of it (the notebook is
+   private), and what classmates connected is not part of it. */
+function myNotes(){
+  if (!IS_TRAINEE || !window.HubNotebook || !HubNotebook.load) return [];
+  return (HubNotebook.load().notes || []).filter(n => n && (n.text || n.audio)).slice().sort((a, b) => String(a.at).localeCompare(String(b.at)));
+}
+function noteLine(n){ const t = n.thread && n.thread.k !== 'day' && n.thread.t ? ' · ' + n.thread.t : ''; return HubNotebook.dayLabel(n.day, true) + t; }
+function noteText(n){ const x = String(n.text || '').replace(/\s+/g, ' ').trim(); return x ? (x.length > 230 ? x.slice(0, 227).replace(/\s+\S*$/, '') + '\u2026' : x) : 'A voice note'; }
+function notebookCard(notes){
+  if (!notes.length) return '';
+  const first = notes[0], last = notes[notes.length - 1], days = new Set(notes.map(n => n.day)).size, voice = notes.filter(n => n.audio).length;
+  const count = notes.length + (notes.length === 1 ? ' note' : ' notes') + ' across ' + days + (days === 1 ? ' day' : ' days') + (voice ? ', ' + voice + (voice === 1 ? ' of them a voice note' : ' of them voice notes') : '');
+  return '<section style="margin-top:64px"><p class="lbl">In your own words</p><div class="card far"><p class="lbl" style="margin:0">Your notebook · ' + esc(count) + '</p>'
+    + '<div class="q a"><small>' + (notes.length > 1 ? 'Where you started · ' : 'Your note · ') + esc(noteLine(first)) + '</small><p>“' + esc(noteText(first)) + '”</p></div>'
+    + (notes.length > 1 ? '<div class="q b"><small>Where you finished · ' + esc(noteLine(last)) + '</small><p>“' + esc(noteText(last)) + '”</p></div>' : '')
+    + '<div class="btns" style="margin-top:22px"><a class="line" href="37_notebook.html' + (KEYQ ? '?' + KEYQ : '') + '">Read your notebook</a><button type="button" class="line" id="nbDl">Download your notebook</button></div></div></section>';
+}
+/* the whole notebook as a page of its own, to keep and to print: by day, in order, nothing else in it */
+function downloadNotebook(R, cs, notes){
+  const byDay = {}; notes.forEach(n => { (byDay[n.day] = byDay[n.day] || []).push(n); });
+  const body = Object.keys(byDay).sort().map(d => '<h2>' + esc(HubNotebook.dayLabel(d, true)) + '</h2>' + byDay[d].map(n =>
+    '<div class="n"><p class="m">' + esc(HubNotebook.timeLabel(n.at)) + (n.thread && n.thread.k !== 'day' && n.thread.t ? ' · ' + esc(n.thread.t) : '') + '</p>'
+    + (n.text ? '<p class="t">' + esc(n.text) + '</p>' : '') + (n.audio ? '<p class="v">A voice note' + (n.audio.seconds ? ', ' + HubNotebook.secs(n.audio.seconds) : '') + ', kept in Lite.</p>' : '') + '</div>').join('')).join('');
+  const html = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(R.name) + ' · my notebook</title>'
+    + '<style>body{font:16px/1.6 Georgia,serif;color:#232220;max-width:680px;margin:40px auto;padding:0 20px}h1{font-weight:400;font-size:2.2rem;margin:0}.sub{color:#6B6963;margin:4px 0 32px;font:14px/1.5 sans-serif}h2{font-weight:400;font-size:1.3rem;margin:34px 0 8px;border-top:1px solid #ddd;padding-top:14px}.n{margin:12px 0}.m{margin:0;font:12px sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#6B6963}.t{margin:4px 0 0;white-space:pre-wrap}.v{margin:4px 0 0;font-style:italic;color:#6B6963}@media print{body{margin:0}}</style></head><body>'
+    + '<h1>My notebook</h1><p class="sub">' + esc([R.name, cs.courseName, cs.centreName].filter(Boolean).join(' · ')) + ' · ' + notes.length + (notes.length === 1 ? ' note' : ' notes') + '. Written by me; nobody else has seen it unless I connected it.</p>' + body + '</body></html>';
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+  a.download = (R.name || 'My').replace(/[^\p{L}\p{N} ._-]+/gu, '').trim() + ' - notebook.html'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+}
 function trainee(R){
-  const cs = S(), H = R.tp || {}, nums = tpNums(H);
+  const cs = S(), H = R.tp || {}, nums = tpNums(H), NB = myNotes();
   const first = (R.name || '').split(/\s+/)[0];
   const days = ((rec('connect_timetable_v1') || {}).days || []).length;
   const closed = Object.keys(R.subs || {}).filter(k => R.subs[k] && R.subs[k].stage === 'closed').length;
@@ -334,6 +365,7 @@ function trainee(R){
           + '</div>' : '')
       + '</div>'
       + (stats.length ? '<div class="nums">' + stats.map(x => '<div><b>' + x[0] + '</b><span>' + x[1] + '</span></div>').join('') + '</div>' : '')
+      + notebookCard(NB)
       + (said.length ? '<section style="margin-top:64px"><p class="lbl">What people said about you</p><div class="said">' + said.map(o => {
           const ink = (window.hubInk && hubInk.mine && hubHand) ? hubInk.mine(o.by) : '';
           const hand = ink && window.hubHand ? '<span class="hand">' + hubHand.html(ink, o.by) + '</span>' : '<em>' + esc(o.by) + '</em>';
@@ -341,7 +373,7 @@ function trainee(R){
         }).join('') + '</div></section>' : '')
       + (IS_TRAINEE && feedbackOpen() && !(rec('chub:courseFeedbackSent') || rec('chub:courseFeedbackSentHere')) ? '<div class="card keep" style="border-top:3px solid #CC9140"><div><h2>Tell us about the course</h2><p>Sixteen short questions, one tap each. Your answers go to the centre, without your name unless you choose to add it.</p></div><div class="btns"><a class="line" href="33_course_feedback.html' + (KEYQ ? '?' + KEYQ : '') + '">Give your feedback</a></div></div>' : '')
       + '<div class="card keep"><div><h2>Keep it</h2><p>Everything you wrote stays here, and this link keeps working.' + (cs.classPhoto && cs.classPhoto.src ? ' The card has the class photo, your name and the course, ready to frame or share.' : ' The card has your name and the course, ready to frame or share.') + '</p></div>'
-        + '<div class="btns"><button type="button" class="gold" id="dl">Download your card</button><button type="button" class="line" id="pr">Print it</button><a class="line" href="4_feedback_returned.html' + (KEYQ ? '?' + KEYQ : '') + '">Read your whole record</a></div></div>'
+        + '<div class="btns"><button type="button" class="gold" id="dl">Download your card</button><button type="button" class="line" id="pr">Print it</button><a class="line" href="4_feedback_returned.html' + (KEYQ ? '?' + KEYQ : '') + '">Read your whole record</a>' + (IS_TRAINEE ? '<a class="line" href="37_notebook.html' + (KEYQ ? '?' + KEYQ : '') + '">Your notebook</a>' : '') + '</div></div>'
       + '<div style="height:56px"></div>'
     + '</div>';
 
@@ -349,6 +381,7 @@ function trainee(R){
     + '<h1>' + esc(R.name) + '</h1><p>finished the CELTA course</p><small>' + esc([cs.centreName, span(cs)].filter(Boolean).join(' · ')) + '</small>';
   $('pr').addEventListener('click', () => window.print());
   $('dl').addEventListener('click', () => card(R, cs));
+  if ($('nbDl')) $('nbDl').addEventListener('click', () => downloadNotebook(R, cs, NB));
 }
 
 /* THE CARD, 1080 x 1350, drawn here and saved as a picture. */
