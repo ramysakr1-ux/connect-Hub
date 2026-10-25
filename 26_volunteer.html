@@ -43,7 +43,7 @@
 <title>Connect Lite — My classes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610260121">
+<link rel="stylesheet" href="hub-tokens.css?v=202610260130">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:720px; margin:0 auto; padding:22px 20px 60px;}
@@ -67,6 +67,33 @@
   .next.done .k{opacity:1; color:var(--grey);}
   .card{background:var(--surface); border:1px solid var(--sand-line); border-radius:11px; padding:16px 18px; margin:0 0 14px;}
   .card h3{font-family:'Newsreader',Georgia,serif; font-size:1.1rem; margin:0 0 3px;}
+  /* FROM YOUR CLASSES (Ramy, 26 Oct 2026: "we need to give them something"). The language of each lesson as
+     cards to turn over: the word or the sentence on the front, what it means and how it is said on the back. */
+  .fc-deck{margin:12px 0 2px;}
+  .fc{display:block; width:100%; border:0; padding:0; background:none; font:inherit; color:inherit; cursor:pointer; perspective:1100px;}
+  .fc:focus-visible{outline:3px solid var(--teal); outline-offset:4px; border-radius:14px;}
+  .fc-in{position:relative; display:block; min-height:220px; transition:transform .55s cubic-bezier(.3,.7,.2,1); transform-style:preserve-3d;}
+  .fc.on .fc-in{transform:rotateY(180deg);}
+  .fc-face{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:22px 24px; border-radius:14px; text-align:center;
+    backface-visibility:hidden; -webkit-backface-visibility:hidden; box-shadow:0 1px 2px rgba(35,34,32,.05), 0 12px 28px -16px rgba(35,34,32,.25);}
+  .fc-front{background:var(--paper); border:1px solid var(--sand-line);}
+  .fc-back{background:var(--a-forest); color:var(--a-stone); transform:rotateY(180deg);}
+  .fc-face small{font-size:0.72rem; letter-spacing:.06em; color:var(--faint);}
+  .fc-back small{color:var(--a-lemon);}
+  .fc-face b{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.7rem; line-height:1.25; color:var(--ink);}
+  .fc-face b.long{font-size:1.15rem;}
+  .fc-back b{color:var(--a-lemon); font-size:1.2rem;}
+  .fc-face p{margin:0; font-size:0.95rem; line-height:1.5; max-width:46ch;}
+  .fc-face .fc-say{font-size:0.85rem; opacity:.85;}
+  .fc-face em{font-style:normal; font-size:0.72rem; color:var(--faint);}
+  .fc-nav{display:flex; align-items:center; justify-content:space-between; gap:12px; margin:12px 0 0;}
+  .fc-nav button{border:1px solid var(--sand-line); background:var(--surface); color:var(--ink); border-radius:999px; padding:7px 16px; font:inherit; font-size:0.85rem; font-weight:600; cursor:pointer;}
+  .fc-nav button:disabled{opacity:.4; cursor:default;}
+  .fc-nav span{font-size:0.8rem; color:var(--grey);}
+  .fc-days{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 0;}
+  .fc-days button{border:1px solid var(--sand-line); background:var(--surface); border-radius:999px; padding:6px 12px; font:inherit; font-size:0.8rem; color:var(--ink); cursor:pointer;}
+  .fc-days button.on{border-color:var(--teal); color:var(--teal); font-weight:700;}
+  @media(prefers-reduced-motion:reduce){ .fc-in{transition:none;} }
   .card p.note{color:var(--grey); font-size:0.82rem; margin:0 0 12px; line-height:1.55;}
   /* A material is a card you press, not a row with a link in it (Ramy, 6 Oct
      2026: "give them a nice frame, like a green frame... it reads what's
@@ -183,17 +210,17 @@
   @keyframes v4-sheen{from{left:-50%;}to{left:120%;}}
   @media(prefers-reduced-motion:reduce){ .next.v4 *, .cert.earned::after, .track i{animation:none !important; transition:none !important;} .cert.earned::after{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610260121">
+<link rel="stylesheet" href="hub-house.css?v=202610260130">
 </head>
 <body class="hub-grid hub-paper" data-signout="float">
 <div class="board" id="app"></div>
 <div id="consent"></div>
-<script src="hub-shared.js?v=202610260121"></script>
-<script src="hub-attendance.js?v=202610260121"></script>
-<script src="hub-volunteer-i18n.js?v=202610260121"></script>
-<script src="hub-store.js?v=202610260121"></script>
-<script src="hub-say.js?v=202610260121"></script>
-<script src="hub-sync.js?v=202610260121"></script>
+<script src="hub-shared.js?v=202610260130"></script>
+<script src="hub-attendance.js?v=202610260130"></script>
+<script src="hub-volunteer-i18n.js?v=202610260130"></script>
+<script src="hub-store.js?v=202610260130"></script>
+<script src="hub-say.js?v=202610260130"></script>
+<script src="hub-sync.js?v=202610260130"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -362,6 +389,51 @@ function dayStart(d){
   return sl.length ? sl[0].from : '';
 }
 
+/* The cards: fetched once the page is up, kept on this device for the next visit. */
+let VC = (() => { try { return JSON.parse(localStorage.getItem('chub:volCards') || 'null'); } catch (e) { return null; } })();
+let fcDay = '', fcIdx = 0, fcOn = false;
+function cardsBlock(){
+  const classes = (VC && VC.classes) || [];
+  if (!classes.length) return '';
+  const cls = classes.find(c => c.date === fcDay) || classes[0];
+  const deck = cls.lessons.flatMap(l => l.cards.map(c => Object.assign({ by: l.by, title: l.title }, c)));
+  if (!deck.length) return '';
+  if (fcIdx >= deck.length) fcIdx = 0;
+  const c = deck[fcIdx];
+  const head = cls.date === TODAY ? 'From today\u2019s class' : cls === classes[0] ? 'From your last class' : 'From ' + longDay(cls.date);
+  const from = [c.title, c.by ? c.by + '\u2019s lesson' : ''].filter(Boolean).join(' \u00b7 ');
+  return `<div class="card"><h3>${esc(head)}</h3>
+      <p class="note">${cls === classes[0] && cls.date !== TODAY ? esc(longDay(cls.date)) + '. ' : ''}What your teachers taught, to practise at home. Say it, then turn the card.</p>
+      <div class="fc-deck">
+        <button type="button" class="fc${fcOn ? ' on' : ''}" id="fcCard" aria-label="${fcOn ? 'Turn back' : 'Turn the card'}">
+          <span class="fc-in">
+            <span class="fc-face fc-front" aria-hidden="${fcOn}"><small>${esc(from)}</small><b class="${c.front.length > 40 ? 'long' : ''}">${esc(c.front)}</b><em>Tap to turn</em></span>
+            <span class="fc-face fc-back" aria-hidden="${!fcOn}">${c.name ? '<small>' + esc(c.name) + '</small>' : ''}${c.front.length <= 40 ? '<b>' + esc(c.front) + '</b>' : ''}${c.back ? '<p>' + esc(c.back) + '</p>' : ''}${c.say ? '<p class="fc-say">' + esc(c.say) + '</p>' : ''}</span>
+          </span>
+        </button>
+        <div class="fc-nav"><button type="button" id="fcPrev"${fcIdx === 0 ? ' disabled' : ''}>Back</button><span>${fcIdx + 1} of ${deck.length}</span><button type="button" id="fcNext"${fcIdx === deck.length - 1 ? ' disabled' : ''}>Next</button></div>
+      </div>
+      ${classes.length > 1 ? `<div class="fc-days">${classes.map(x => `<button type="button" data-fcday="${esc(x.date)}" class="${x === cls ? 'on' : ''}">${esc(shortDay(x.date))}</button>`).join('')}</div>` : ''}
+    </div>`;
+}
+function bindCards(){
+  const card = $('fcCard'); if (!card) return;
+  card.addEventListener('click', () => { fcOn = !fcOn; card.classList.toggle('on', fcOn); card.setAttribute('aria-label', fcOn ? 'Turn back' : 'Turn the card'); });
+  const go = d => { fcIdx += d; fcOn = false; render(); const n = $('fcCard'); if (n) n.focus({ preventScroll: true }); };
+  if ($('fcPrev')) $('fcPrev').addEventListener('click', () => go(-1));
+  if ($('fcNext')) $('fcNext').addEventListener('click', () => go(1));
+  document.querySelectorAll('[data-fcday]').forEach(b => b.addEventListener('click', () => { fcDay = b.getAttribute('data-fcday'); fcIdx = 0; fcOn = false; render(); }));
+}
+function loadCards(){
+  if (!window.HubStore || !HubStore.call) return;
+  HubStore.call({ op: 'volunteerCards' }).then(r => {
+    if (!r || !Array.isArray(r.classes)) return;
+    VC = { classes: r.classes };
+    try { localStorage.setItem('chub:volCards', JSON.stringify(VC)); } catch (e) {}
+    render();
+  }).catch(() => {});
+}
+
 function render(){
   const app = $('app');
   const first = String(ME.name || '').trim().split(/\s+/)[0] || '';
@@ -401,6 +473,7 @@ function render(){
       <p class="note">Anything your teachers share for the lesson appears here. Have a look if you like — you do not have to.</p>
       ${SHARED.length ? SHARED.slice(0, 3).map(mat).join('') : '<p class="empty">Nothing shared yet.</p>'}
       ${SHARED.length > 3 ? `<details class="earlier"><summary>Everything else your teachers have shared — ${SHARED.length - 3} more</summary>${SHARED.slice(3).map(mat).join('')}</details>` : ''}</div>
+    ${cardsBlock()}
     <div class="card"><h3>Your attendance</h3>
       <div class="segs">${REC.days.map(x => `<span class="seg ${x.tier === 'present' ? 'here' : x.tier === 'partial' ? 'part' : x.date < JOINED ? 'before' : x.date < TODAY ? 'miss' : ''}" title="${esc(shortDay(x.date))}"></span>`).join('')}</div>
       <div class="hrs"><b>${fmtH(hours)} h</b><span>${attended} ${attended === 1 ? 'class' : 'classes'}${REC.partial ? ' · ' + REC.partial + ' part of a class' : ''}${upcoming.length ? ' · ' + upcoming.length + ' still to come' : ''}</span></div>
@@ -427,6 +500,7 @@ function render(){
     ${agreedAt() ? `<p class="agreed" lang="${esc(LANG())}" dir="${I18N.isRtl(LANG()) ? 'rtl' : 'ltr'}"><button type="button" id="readAgain">${esc(T().agreedOn.replace('{date}', longDay(agreedAt().slice(0, 10))))}</button></p>` : ''}`;
   if (window.hubInstallHint) hubInstallHint($('installHint'), 'volunteer');
   if ($('readAgain')) $('readAgain').addEventListener('click', () => consent(true));
+  bindCards();
   mailBlock();
   document.querySelectorAll('[data-coming]').forEach(b => b.addEventListener('click', () => answer(b.dataset.coming)));
   document.querySelectorAll('[data-notify]').forEach(b => b.addEventListener('click', () => notify(b.dataset.notify === 'on')));
@@ -515,6 +589,7 @@ function consent(readOnly){
 function daysBetween(a, b){ const x = parse(a), y = parse(b); return (x && y) ? Math.round((y - x) / 86400000) : 99; }
 
 render();
+loadCards();
 if (!agreedAt()) consent(false); else stamp();
 </script>
 </body>

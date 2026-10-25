@@ -324,7 +324,8 @@ function handle_(req) {
      the centre's joining note, once, and can touch nothing else. */
   /* v56 adds two more: answering a reminder (volunteerReply) and turning the
      mail off or on (volunteerNotify). Still their own row, still nothing else. */
-  if (vol && op !== 'boot' && op !== 'ping' && op !== 'volunteerAgree' && op !== 'volunteerReply' && op !== 'volunteerNotify') throw new Error('This link only opens your own page');
+  /* v136: volunteerCards reads the language of their own level's lessons, and nothing of a trainee's (see the op). */
+  if (vol && op !== 'boot' && op !== 'ping' && op !== 'volunteerAgree' && op !== 'volunteerReply' && op !== 'volunteerNotify' && op !== 'volunteerCards') throw new Error('This link only opens your own page');
   // A trainee's token names their course, and it must agree with any key sent.
   var me = null;
   if (req.token) {
@@ -1891,6 +1892,50 @@ case 'inbox': {
         });
       }
       return { invited: viAt, to: viTo };
+    }
+    /* FROM YOUR CLASSES (v136, 26 Oct 2026; Ramy: "we need to give them something"). The language each lesson
+       taught, as flip cards for a volunteer to practise at home: lessons at THEIR level, on days that have come.
+       A trainee's plan is never sent. Out of its language analysis come only the learner's side of it: a word,
+       what it means and how it is said; or a lesson's example sentences and what they mean. No CCQs, no
+       problems, no procedure, no notes, and the teacher's first name only. */
+    case 'volunteerCards': {
+      if (!vol) throw new Error('Volunteer students only');
+      var vcSet = courseRead_(course.id, 'settings') || {};
+      var vcTz = vcSet.timeZone || 'Europe/London';
+      var vcToday = /^\d{4}-\d{2}-\d{2}$/.test(String(vcSet.demoToday || '')) ? String(vcSet.demoToday) : Utilities.formatDate(new Date(), vcTz, 'yyyy-MM-dd');
+      var cefr = function (x) { var m = String(x || '').match(/\b([ABC][12])\b/i); return m ? m[1].toUpperCase() : String(x || '').trim().toLowerCase(); };
+      var vcLevel = cefr(vol.level);
+      if (!vcLevel) return { today: vcToday, classes: [] };
+      var clip = function (x, n) { return String(x || '').replace(/\s+/g, ' ').trim().slice(0, n); };
+      var byDay = {};
+      rosterWithRecords_(course.id, { tpHistory: true, plan: true }).forEach(function (t) {
+        var R = t.records || {}, docs = {};
+        Object.keys(R.tpHistory || {}).forEach(function (k) { var h = R.tpHistory[k]; if (h && h.state && h.state.doc) docs[k] = h.state.doc; });
+        if (R.plan && R.plan.state && R.plan.state.meta && !docs[R.plan.state.meta.tp]) docs[R.plan.state.meta.tp] = R.plan.state;
+        Object.keys(docs).forEach(function (k) {
+          var d = docs[k], m = d.meta || {}, la = d.la;
+          var date = String(m.date || '').slice(0, 10);
+          if (!la || !date || date > vcToday || cefr(m.level) !== vcLevel) return;
+          var cards = [];
+          (la.vocab || []).forEach(function (v) { if (v && v.item) cards.push({ front: clip(v.item, 80), back: clip(v.def, 200), say: clip((String(v.form || '').match(/\/[^\/\n]{1,60}\//g) || []).join('  '), 120) }); });
+          (la.blocks || []).forEach(function (b) {
+            var f = {}; (b && b.fields || []).forEach(function (x) { if (x && x.key) f[x.key] = x.value; });
+            var ex = f.marker || f.exponents || f.exponent || '';
+            if (ex) cards.push({ front: clip(ex, 220), back: clip(f.meaning || f['function'] || '', 320), name: clip(f.item, 120) });
+          });
+          if (!cards.length) return;
+          var title = clip(String(la.context || '').split(/[:(]/)[0], 80);
+          (byDay[date] = byDay[date] || []).push({ by: String(t.name || '').split(/\s+/)[0], title: title, cards: cards.slice(0, 24) });
+        });
+      });
+      /* today's lessons once the class has begun, never before it (a real course; the demo's clock is a date) */
+      if (!vcSet.demoToday && byDay[vcToday]) {
+        var vcTt = courseRead_(course.id, 'timetable') || {};
+        var vcTp = (vcTt.slots || []).filter(function (x) { return x && x.kind === 'tp' && x.from; })[0];
+        if (vcTp && Utilities.formatDate(new Date(), vcTz, 'HH:mm') < String(vcTp.from)) delete byDay[vcToday];
+      }
+      var vcDays = Object.keys(byDay).sort().reverse().slice(0, 12);
+      return { today: vcToday, classes: vcDays.map(function (d) { return { date: d, lessons: byDay[d] }; }) };
     }
     case 'volunteerAgree': {
       if (!vol) throw new Error('Only a volunteer student can agree for themselves');
