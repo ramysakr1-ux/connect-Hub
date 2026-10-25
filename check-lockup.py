@@ -40,7 +40,7 @@ need('hub-front.js', r"\.fp-word \.l\{[^}]*font-weight:600; font-size:8px; lette
 for p in ('13_grades_report.html', '14_owner.html', '17_how_it_works.html', '6_centre_admin_dashboard.html', '5_tutor_dashboard.html', '7_candidate_tracker.html'):
     need(p, r"\.hub-word\{\s*font-family:[^;]*; font-weight:600; font-size:8px;", "page-local .hub-word 600 / 8px")
 # the emailed cards: header (welcome and ticket) and the sign-off, LITE beside the word
-need('hub-card-mail.js', r">Connect<span style=\"font-family:' \+ SANS \+ '; font-style:normal; font-size:8px; font-weight:600; line-height:1; letter-spacing:0\.24em; text-transform:uppercase; color:' \+ C\.\w+ \+ '; margin-left:4px;\">Lite</span></div>", "every emailed lockup is one line, LITE 8px / 600 / 0.24em", 3)
+need('hub-card-mail.js', r">Connect<span style=\"font-family:' \+ SANS \+ '; font-style:normal; font-size:8px; font-weight:600; line-height:1; letter-spacing:0\.24em; text-transform:uppercase; color:' \+ C\.\w+ \+ '; margin-left:4px;\">Lite</span></div>", "every emailed lockup is one line, LITE 8px / 600 / 0.24em", 2)  # two since 25 Oct 2026 (37583036): the lockup under the signature went, the card's bar carries it
 never('hub-card-mail.js', r">Lite</div>", "no LITE on a line of its own")
 never('hub-card-mail.js', r">Connect Lite</div>", "no one-line 'Connect Lite' caption")
 # the share card and the trainers' card, the same logo at 44px
