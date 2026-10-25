@@ -730,6 +730,23 @@ case 'inbox': {
       courseWrite_('_defaults', 'guidance', req.data || null);
       return { saved: true };
     }
+    /* HOMEWORK FOR THE VOLUNTEERS (v137, 26 Oct 2026; Ramy: "for every lesson they have a little bit of
+       homework, self-study, with the answers"). One record per library set, under '_defaults', keyed by the
+       lesson ('1A·1'): { title, k, do, items, script? }. Kept in the store, not in the public site's code, because
+       it is built on the coursebooks' own exercises. A volunteer reads only their own level's lessons, on the days
+       they were taught (volunteerCards). */
+    case 'putHomework': {
+      requireOwner_(owner);
+      var hwSet = String(req.set || '');
+      if (!/^s\d{1,3}$/.test(hwSet)) throw new Error('A library set id like s8 is needed');
+      courseWrite_('_defaults', 'homework:' + hwSet, req.data || null);
+      return { saved: true, set: hwSet, lessons: Object.keys(req.data || {}).length };
+    }
+    case 'getHomework': {
+      requireOwner_(owner);
+      var hwGet = String(req.set || '');
+      return { set: hwGet, data: courseRead_('_defaults', 'homework:' + hwGet) };
+    }
     /* THE DEMO'S DOOR, FOR A BARE LINK (v123, 25 Oct 2026). The trainers' card
        and anyone typing lite.celtaconnect.com/offer reach the offer card with
        no key on the link, and its doors stood closed ("No demo is attached").
@@ -1907,7 +1924,7 @@ case 'inbox': {
       var vcLevel = cefr(vol.level);
       if (!vcLevel) return { today: vcToday, classes: [] };
       var clip = function (x, n) { return String(x || '').replace(/\s+/g, ' ').trim().slice(0, n); };
-      var byDay = {};
+      var byDay = {}, lvlOf = {};
       rosterWithRecords_(course.id, { tpHistory: true, plan: true }).forEach(function (t) {
         var R = t.records || {}, docs = {};
         Object.keys(R.tpHistory || {}).forEach(function (k) { var h = R.tpHistory[k]; if (h && h.state && h.state.doc) docs[k] = h.state.doc; });
@@ -1915,6 +1932,7 @@ case 'inbox': {
         Object.keys(docs).forEach(function (k) {
           var d = docs[k], m = d.meta || {}, la = d.la;
           var date = String(m.date || '').slice(0, 10);
+          if (m.level) lvlOf[t.token + '|' + k] = cefr(m.level);   // the level this lesson was planned at, for the homework below
           if (!la || !date || date > vcToday || cefr(m.level) !== vcLevel) return;
           var cards = [];
           (la.vocab || []).forEach(function (v) { if (v && v.item) cards.push({ front: clip(v.item, 80), back: clip(v.def, 200), say: clip((String(v.form || '').match(/\/[^\/\n]{1,60}\//g) || []).join('  '), 120) }); });
@@ -1934,8 +1952,54 @@ case 'inbox': {
         var vcTp = (vcTt.slots || []).filter(function (x) { return x && x.kind === 'tp' && x.from; })[0];
         if (vcTp && Utilities.formatDate(new Date(), vcTz, 'HH:mm') < String(vcTp.from)) delete byDay[vcToday];
       }
-      var vcDays = Object.keys(byDay).sort().reverse().slice(0, 12);
-      return { today: vcToday, classes: vcDays.map(function (d) { return { date: d, lessons: byDay[d] }; }) };
+      /* HOMEWORK: each lesson taught that day at this level, from the course's TP points. The trainee who taught it
+         is found from the TP points (group, token, TP number), the day from the timetable (the TP number and which
+         set of the group teaches that day), the level from the library set the group uses. */
+      var hwByDay = {};
+      var tpp = courseRead_(course.id, 'tppoints') || {};
+      var ttb = courseRead_(course.id, 'timetable') || {};
+      var libs = (tpp.set && tpp.set.library) || {}, setFor = (tpp.set && tpp.set.setFor) || {};
+      var firsts = {}; roster_(course.id).forEach(function (t) { firsts[t.token] = String(t.name || '').split(/\s+/)[0]; });
+      var hwMaps = {};
+      Object.keys(tpp.groups || {}).forEach(function (g) {
+        var halves = (tpp.sets && tpp.sets[g]) || [];
+        Object.keys(tpp.groups[g] || {}).forEach(function (tok) {
+          var si = 0; halves.forEach(function (arr, ix) { if ((arr || []).indexOf(tok) >= 0) si = ix; });
+          var recs = tpp.groups[g][tok] || {};
+          Object.keys(recs).forEach(function (tk) {
+            var m = /^tp(\d+)$/.exec(tk), x = recs[tk];
+            if (!m || !x || !x.from) return;
+            /* The group's set, unless the trainee planned this lesson at another level (a class can change level
+               partway through a course): then the set that has this lesson, of this kind, at that level. */
+            var sid = setFor[g], want = lvlOf[tok + '|' + m[1]];
+            if (want && !(libs[sid] && cefr(libs[sid].level) === want)) {
+              var par = String(x.from).split('\u00b7');
+              var alt = Object.keys(libs).filter(function (id) {
+                var L2 = libs[id], ses = L2 && L2.sessions && L2.sessions[par[0]], sl = ses && ses.slots && ses.slots[(+par[1] || 1) - 1];
+                return L2 && cefr(L2.level) === want && sl && String(sl.type || '') === String(x.aim || '');
+              })[0];
+              if (alt) sid = alt;
+            }
+            var L = sid && libs[sid];
+            if (!L || cefr(L.level) !== vcLevel) return;
+            var hwMap = hwMaps[sid] || (hwMaps[sid] = courseRead_('_defaults', 'homework:' + sid) || {});
+            if (!hwMap[x.from]) return;
+            var day = (ttb.days || []).filter(function (d) { return d && d.date && d.tp && String(d.tp) === m[1] && (d.setIndex || 0) === si; })[0];
+            if (!day || String(day.date) > vcToday) return;
+            (hwByDay[day.date] = hwByDay[day.date] || []).push({ by: firsts[tok] || '', from: x.from, aim: String(x.aim || ''), hw: hwMap[x.from] });
+          });
+        });
+      });
+      if (!vcSet.demoToday && hwByDay[vcToday]) {
+        var hwTp = (ttb.slots || []).filter(function (x) { return x && x.kind === 'tp' && x.from; })[0];
+        if (hwTp && Utilities.formatDate(new Date(), vcTz, 'HH:mm') < String(hwTp.from)) delete hwByDay[vcToday];
+      }
+      var allDays = {}; Object.keys(byDay).forEach(function (d) { allDays[d] = 1; }); Object.keys(hwByDay).forEach(function (d) { allDays[d] = 1; });
+      var vcDays = Object.keys(allDays).sort().reverse().slice(0, 12);
+      return { today: vcToday, classes: vcDays.map(function (d) {
+        var hws = (hwByDay[d] || []).sort(function (a, b) { return a.from < b.from ? -1 : 1; });
+        return { date: d, lessons: byDay[d] || [], homework: hws };
+      }) };
     }
     case 'volunteerAgree': {
       if (!vol) throw new Error('Only a volunteer student can agree for themselves');
