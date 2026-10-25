@@ -330,6 +330,15 @@ function handle_(req) {
   }
   var reader = tutor || assessor;
   var owner = isOwner_(req.owner);
+  /* A DEMO LINK WITH A DATE ON IT (v131, 25 Oct 2026; Ramy: "I don't want them to stay forever").
+     settings.demoExpires = 'YYYY-MM-DD': after that day every link on the course is refused, and the
+     refusal says the date. The owner still reaches the course, to delete it. */
+  if (course && !owner && op !== 'ping') {
+    var dxs = courseRead_(course.id, 'settings');
+    if (dxs && /^\d{4}-\d{2}-\d{2}$/.test(String(dxs.demoExpires || '')) && new Date().toISOString().slice(0, 10) > String(dxs.demoExpires)) {
+      throw new Error('This demo link expired on ' + new Date(dxs.demoExpires + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + '.');
+    }
+  }
 
   /* LINK PINS (v87, 15 Oct 2026). Ramy: "receive the link and then the
      first time they click on it, it prompts them to choose a password and

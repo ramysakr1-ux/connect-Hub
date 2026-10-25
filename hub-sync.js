@@ -207,6 +207,16 @@
   function demoSession(){ try { return sessionStorage.getItem('hub:demoVisit') === '1'; } catch (e) { return false; } }
   function LS(){ return DEMO ? sessionStorage : localStorage; }
   var LEDGER = 'hub:pending:' + mode + ':' + (!S ? '' : mode === 'tutor' ? S.key() : mode === 'assessor' ? S.assessorKey() : mode === 'volunteer' ? S.volunteerToken() : S.token());
+  /* A DEMO VISIT ENDS WITH THE TAB, OR AFTER AN HOUR LEFT ALONE (Ramy, 25 Oct 2026: "both demos should
+     reset"). A tab left open overnight opens clean the next morning: the visit's writes, its ledger and
+     the visitor's name go, and the boot waits for the clean course as on a first open. */
+  if (DEMO) { try {
+    var seen = +sessionStorage.getItem('hub:demoSeen') || 0;
+    if (seen && Date.now() - seen > 3600000) { ['hub:demoVisit', 'hub:demoName', LEDGER].forEach(function(k){ sessionStorage.removeItem(k); }); }
+    sessionStorage.setItem('hub:demoSeen', String(Date.now()));
+    /* the name the visitor typed on the card is theirs at once, before the boot confirms it */
+    if (mode === 'trainee') { var dn0 = sessionStorage.getItem('hub:demoName') || ''; if (dn0) { origSet('hub:name', dn0); var me0 = parse(origGet('hub:me')) || {}; me0.name = dn0; origSet('hub:me', JSON.stringify(me0)); } }
+  } catch (e) {} }
   function ledger(){ return parse((function(){ try { return LS().getItem(LEDGER); } catch (e) { return null; } })()) || {}; }
   function ledgerSet(l){ try { var st = LS(); if (Object.keys(l).length) { if (st === localStorage) origSet(LEDGER, JSON.stringify(l)); else st.setItem(LEDGER, JSON.stringify(l)); } else { if (st === localStorage) origRemove(LEDGER); else st.removeItem(LEDGER); } } catch (e) {} }
   function remember(id, job){ var l = ledger(); l[id] = job; ledgerSet(l); }
@@ -614,6 +624,8 @@
     out['connect_notes_v1'] = course.notes ? JSON.stringify(course.notes) : null;
     if (mode === 'trainee') {
       var me = boot.me || { records: {} };
+      /* a demo that asked the visitor's name on the card: the visit is theirs (25 Oct 2026) */
+      if (course.settings && course.settings.demoToday) { try { var dn = sessionStorage.getItem('hub:demoName') || ''; if (dn) me = Object.assign({}, me, { name: dn }); } catch (e) {} }
       /* that this trainee has answered, and when -- never what */
       out['chub:courseFeedbackSent'] = me.records.courseFeedbackSent ? JSON.stringify(me.records.courseFeedbackSent) : null;
       out['hub:name'] = me.name || '';

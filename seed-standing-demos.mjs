@@ -196,6 +196,7 @@ function settingsFor(tokens) {
     certSigner: { name: 'Helen Ward', role: 'Director of Studies', ink: '@greatvibes,0' },
   };
   if (WHICH === 'visit') { s.docs = DOCS; s.assessorVisit = [tokens[0], tokens[3]]; }
+  if (WHICH === 'dayone') s.demoAskName = true;   // the card asks who is visiting (25 Oct 2026)
   if (WHICH === 'dayone') {
     /* the agreement, in Lite's own words, for the trainee to read and sign; the pre-course key and the
        getting-to-know-you pick switched on */
