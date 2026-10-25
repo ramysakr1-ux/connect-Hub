@@ -38,7 +38,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610251502">
+<link rel="stylesheet" href="hub-tokens.css?v=202610251533">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 70px;}
@@ -211,7 +211,7 @@
   @media (max-width:760px){ .demo .doors{grid-template-columns:1fr 1fr;} .setting{grid-template-columns:1fr;} }
   @media (max-width:520px){ .demo .doors{grid-template-columns:1fr;} .title h1{font-size:1.8rem;} body{padding:0 14px 60px;} .card{padding:16px;} .row-course .acts .btn{flex:1 1 auto; justify-content:center;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610251502">
+<link rel="stylesheet" href="hub-house.css?v=202610251533">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -234,10 +234,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610251502"></script>
-<script src="hub-store.js?v=202610251502"></script>
-<script src="hub-say.js?v=202610251502"></script>
-<script src="hub-card-mail.js?v=202610251502"></script>
+<script src="hub-shared.js?v=202610251533"></script>
+<script src="hub-store.js?v=202610251533"></script>
+<script src="hub-say.js?v=202610251533"></script>
+<script src="hub-card-mail.js?v=202610251533"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after. */
 const OWNER_STORE = 'hub:o';
@@ -538,7 +538,11 @@ function pageRow(c, kind){
     <div class="acts">${door}${kind === 'grades' ? `<button type="button" class="btn small danger" data-delete="${esc(c.id)}" data-label="${esc(label(c))}" data-trainees="0">Delete</button>` : ''}</div>
   </div></div>`;
 }
-const DAY_ONE_FILM = 'https://lite.celtaconnect.com/film/trainee-journey.html';   /* one TP, from the trainee's side (Ramy, 25 Oct 2026) */
+/* The day-one film is On the day (Ramy, 25 Oct 2026: "I don't like this one. Something else... the card will have watch the
+   film, and then also open the link"). It rides on the trainee's and the tutor's card as &f=, not as a line in the message. */
+const DAY_ONE_FILM_SLUG = 'on-the-day';
+const DAY_ONE_FILM = 'https://lite.celtaconnect.com/film/' + DAY_ONE_FILM_SLUG + '.html';
+const withFilm = (link, slug) => (slug && /invite\.html\?(t|k)=/.test(String(link)) && !/[?&]f=/.test(String(link))) ? link + '&f=' + encodeURIComponent(slug) : link;
 function dayOneCard(c){
   const tutor = base() + 'invite.html?k=' + encodeURIComponent(c.tutorKey);
   const bits = [c.centreName, c.demoToday ? 'pinned to ' + niceDate(c.demoToday) : '', c.trainees ? c.trainees + ' trainees' : ''].filter(Boolean).join(' · ');
@@ -551,14 +555,14 @@ function dayOneCard(c){
     </div>
     <!-- one door per role, each sent on its own with the film (Ramy, 25 Oct 2026: "if I copy trainer, it will be
          trainer and film... if I want all three of them, I'll choose all three"); the foot sends all three -->
-    <div class="doors" data-doors="${esc(c.id)}">
+    <div class="doors" data-doors="${esc(c.id)}" data-film="${esc(DAY_ONE_FILM_SLUG)}">
       <div class="door"><b>As a trainee</b><span id="dt-${esc(c.id)}" data-keep>Day one: the card asks their name, then the agreement to sign, the CELTA 5, TP1’s points and the day’s input session.</span>
         <span class="sendrow"><button type="button" class="btn small" data-door="trainee" data-id="${esc(c.id)}" disabled>Finding…</button><a class="linkbtn" data-see="trainee" data-id="${esc(c.id)}" href="#" target="_blank" rel="noopener" hidden>See the card</a><button type="button" class="linkbtn" data-share="wa" data-who="trainee" data-demo="dayone" data-film="${esc(DAY_ONE_FILM)}" data-id="${esc(c.id)}" data-tutor="${esc(tutor)}">WhatsApp</button><button type="button" class="linkbtn" data-share="mail" data-who="trainee" data-demo="dayone" data-film="${esc(DAY_ONE_FILM)}" data-id="${esc(c.id)}" data-tutor="${esc(tutor)}">Email</button></span></div>
       <div class="door"><b>As a tutor</b><span>Day one of the course as the tutors see it: twelve trainees and nothing done yet. The card asks which tutor is here.</span>
         <span class="sendrow"><button type="button" class="btn small" data-copy="${esc(tutor)}">Copy the card</button><a class="linkbtn" href="${esc(tutor)}" target="_blank" rel="noopener">See the card</a><button type="button" class="linkbtn" data-share="wa" data-who="tutor" data-demo="dayone" data-film="${esc(DAY_ONE_FILM)}" data-id="${esc(c.id)}" data-tutor="${esc(tutor)}">WhatsApp</button><button type="button" class="linkbtn" data-share="mail" data-who="tutor" data-demo="dayone" data-film="${esc(DAY_ONE_FILM)}" data-id="${esc(c.id)}" data-tutor="${esc(tutor)}">Email</button></span></div>
       <div class="door"><b>As a volunteer student</b><span id="dv-${esc(c.id)}" data-keep>Their next class, their days, their certificate.</span>
         <span class="sendrow"><button type="button" class="btn small" data-door="volunteer" data-id="${esc(c.id)}" disabled>Finding…</button><a class="linkbtn" data-see="volunteer" data-id="${esc(c.id)}" href="#" target="_blank" rel="noopener" hidden>See the card</a><button type="button" class="linkbtn" data-share="wa" data-who="volunteer" data-demo="dayone" data-film="${esc(DAY_ONE_FILM)}" data-id="${esc(c.id)}" data-tutor="${esc(tutor)}">WhatsApp</button><button type="button" class="linkbtn" data-share="mail" data-who="volunteer" data-demo="dayone" data-film="${esc(DAY_ONE_FILM)}" data-id="${esc(c.id)}" data-tutor="${esc(tutor)}">Email</button></span></div>
-      <div class="door"><b>The film</b><span>One TP, from the trainee’s side: the second long film. It goes with every link sent from here.</span><button type="button" class="btn small" data-copy="${esc(DAY_ONE_FILM)}">Copy the link</button></div>
+      <div class="door"><b>The film</b><span>On the day: Lite opening on any day already knowing where the course is. Every trainee and tutor card sent from here offers it as “Watch the film first”.</span><button type="button" class="btn small" data-copy="${esc(DAY_ONE_FILM)}">Copy the link</button></div>
     </div>
     <div class="foot">
       ${passSelect()}<span>All three links, with the film:</span>
@@ -833,7 +837,7 @@ $('app').addEventListener('click', async e => {
   const see = T('.sendrow a.linkbtn');
   if (see && see.getAttribute('href') && /invite\.html\?/.test(see.href) && passDays()) {
     e.preventDefault(); const w = window.open('', '_blank'); const href = see.href;
-    try { const m = await mintFor(see.closest('[data-doors]').dataset.doors, 'seen'); const u = dated(href, m); if (w) w.location = u; else window.open(u, '_blank'); }
+    try { const dh = see.closest('[data-doors]'); const m = await mintFor(dh.dataset.doors, 'seen'); const u = withFilm(dated(href, m), dh.dataset.film); if (w) w.location = u; else window.open(u, '_blank'); }
     catch (err) { if (w) w.location = href; }
     return;
   }
@@ -845,7 +849,7 @@ $('app').addEventListener('click', async e => {
     if (need.some(r => !L[r])) { status('That link is still being found; try again in a moment.'); return; }
     const wa = sh.dataset.share === 'wa' ? window.open('', '_blank') : null;   /* opened now, filled after the pass is minted: a window opened after a wait is blocked */
     let pass = null; try { pass = await mintFor(sh.dataset.id, who); } catch (err) { status('Could not make the dated pass: ' + (err && err.message || err)); if (wa) wa.close(); return; }
-    need.forEach(r => { L[r] = dated(L[r], pass); });
+    need.forEach(r => { L[r] = dated(L[r], pass); if (!mid) L[r] = withFilm(L[r], DAY_ONE_FILM_SLUG); });
     const endsOn = [sh.dataset.until, pass && pass.exp].filter(Boolean).sort()[0];
     const until = endsOn ? ' The link' + (need.length > 1 ? 's open' : ' opens') + ' until ' + niceDate(endsOn) + '.' : '';
     const when = mid ? 'half-way through the course, day 10 of 20' : 'on day one of the course';
@@ -858,7 +862,7 @@ $('app').addEventListener('click', async e => {
       : 'Connect Lite, as a volunteer student sees it: the people the trainees teach.';
     const tail = mid || who === 'volunteer' ? 'Everything you do stays in your own visit.' : 'The card asks your name; everything you do stays in your own visit.';
     const filmLine = mid ? 'The film: ' : 'The film, one TP from the trainee\u2019s side: ';
-    const text = head + '\n\n' + need.map(r => LINE[r] + L[r]).join('\n\n') + '\n\n' + filmLine + film + '\n\n' + tail + until;
+    const text = head + '\n\n' + need.map(r => LINE[r] + L[r]).join('\n\n') + '\n\n' + (mid ? filmLine + film + '\n\n' : '') + tail + until;   /* day one: the film is on the card itself */
     const subject = 'Connect Lite' + (mid ? ', the demo' : ', day one') + (who === 'all' ? '' : who === 'volunteer' ? ', as a volunteer student' : who === 'assessor' ? ', as the assessor' : ', as a ' + who);
     if (sh.dataset.share === 'wa') { const u = 'https://wa.me/?text=' + encodeURIComponent(text); if (wa) wa.location = u; else window.open(u, '_blank', 'noopener'); }
     else location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(text);
@@ -868,7 +872,7 @@ $('app').addEventListener('click', async e => {
   if (b) {
     const host = b.closest('[data-doors]');
     if (host && /invite\.html\?/.test(b.dataset.copy) && passDays()) {
-      try { const m = await mintFor(host.dataset.doors, 'copied'); await hubCopyButton(b, dated(b.dataset.copy, m)); } catch (err) { await hubCopyButton(b, b.dataset.copy); }
+      try { const m = await mintFor(host.dataset.doors, 'copied'); await hubCopyButton(b, withFilm(dated(b.dataset.copy, m), host.dataset.film)); } catch (err) { await hubCopyButton(b, withFilm(b.dataset.copy, host.dataset.film)); }
       return;
     }
     await hubCopyButton(b, b.dataset.copy); return;

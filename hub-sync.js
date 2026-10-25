@@ -645,6 +645,11 @@
          every teaching practice it knows; this only keeps the ones it does
          not, which is the trainee's own copy of what they were returned. */
       out['chub:tpHistory'] = (function(){
+        /* NOT ON A DEMO (Ramy, 25 Oct 2026: "my mid-course demo is not resetting"). The rule below keeps a filing only
+           this browser holds, and on a demo that filing is a past visit's: a browser that saw the demo when it was
+           pinned at the visit kept TP5-8 for good, and every later visit put them back. A demo's history is the
+           store's, always. */
+        if (DEMO) return out['chub:tpHistory'];
         var theirs = me.records.tpHistory || {}, mine = parse(current('chub:tpHistory')) || {};
         var merged = null;
         Object.keys(mine).forEach(function(n){
@@ -671,7 +676,7 @@
        returnedAt); a filing only this browser holds is kept, and sent, so the
        store catches up rather than the browser forgetting. Tutor only: an
        assessor writes nothing. */
-    var mine = mode === 'tutor' ? (parse(current('connect_roster_v1')) || {}).trainees || {} : {};
+    var mine = (mode === 'tutor' && !DEMO) ? (parse(current('connect_roster_v1')) || {}).trainees || {} : {};   // not on a demo: a past visit's filings are not this one's
     (boot.roster || []).forEach(function(t){
       var r = t.records || {};
       var history = r.tpHistory || {};
