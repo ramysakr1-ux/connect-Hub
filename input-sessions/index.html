@@ -29,7 +29,7 @@
   .top h1{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.95rem; margin:0 0 6px; letter-spacing:-.01em;}
   .top .lede{margin:0; color:var(--grey); max-width:64ch; font-size:.95rem; line-height:1.6;}
   /* the course strip: what is next on this course, and this week (14 Oct 2026) */
-  .next{display:grid; grid-template-columns:1.6fr 1fr; gap:14px; margin:0 0 28px;}
+  .next{display:grid; grid-template-columns:1.6fr 1fr; gap:14px; margin:0 0 28px; align-items:start;}
   .next[hidden]{display:none;}
   #nextOpen[hidden]{display:none !important;} /* .btn's inline-flex beat [hidden]: an Open button showed for a session not in the library */
   .act{background:var(--gold-wash); border:1px solid var(--amber-edge); border-left:4px solid var(--gold); border-radius:var(--r-card); padding:18px 20px;}
@@ -78,6 +78,10 @@
   .s.locked{cursor:default; opacity:.62;}
   .s.locked:hover{transform:none; border-bottom-color:var(--sand-line);}
   .s.locked:hover h3{color:inherit;}
+  /* A centre-material session on its day: given, so not dimmed, but with no page here to open. */
+  .s.still{cursor:default;}
+  .s.still:hover{transform:none; box-shadow:none; border-bottom-color:var(--sand-line);}
+  .s.still:hover h3{color:inherit;}
   .s .k{font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold-deep); font-weight:600; margin:0 0 5px;}
   .s h3{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.08rem; line-height:1.25; margin:0 0 6px;}
   .s .m{margin:0; font-size:.78rem; color:var(--grey); display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
@@ -308,41 +312,58 @@
      classroom management... make a list of the input sessions of the week"): the ones given so far open, the
      rest are named with their day and open here on it. A session taught from the centre's own material is named
      the way the timetable names it. */
+  /* The centre's own link for a session taught from its material, if it has added one: the names match when
+     one contains the other, the same rule the centre card uses. */
+  function centreLinkFor(x, cs, tt){
+    var n = function(t){ return String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); }, tn = n(x.t);
+    return centreLinks(cs, tt, 'trainee').filter(function(l){ var ln = n(l.label); return ln && tn && (tn.indexOf(ln) !== -1 || ln.indexOf(tn) !== -1); })[0] || null;
+  }
+  /* A trainee's sessions read the timetable's Input tiles and nothing else (Ramy, 26 Oct 2026: "it should read
+     what's on the timetable, that is an input session"), in the order a trainee meets them: today's first, open;
+     the rest of this week by day, each saying when it opens; then the ones already given, newest first. A page
+     already given is never shown again as locked ("classroom management opens on Tuesday, but it's already
+     open"). A session taught from the centre's own material opens on its day too: the centre's link when it has
+     one, otherwise a card saying it is taught in the room. */
   function paintTrainee(tt, cs){
-    var now = today(cs);
-    var all = inputsOf(tt);
-    var released = all.filter(function(x){ return x.date <= now && x.slug && NAMES[x.slug] != null; }).reverse();
-    var nameOf = function(x){ return x.slug && NAMES[x.slug] != null ? NAMES[x.slug] : x.t; };
-    /* Ahead of the cards that open: this week's sessions still to come, soonest first, locked until their day, and
-       any of the week's sessions taught from the centre's own material, which have no page here at all. */
-    var wk = weekOf(now), seenWk = {};
-    var ahead = all.filter(function(x){ return x.date >= wk.mon && x.date <= wk.sun; })
-      .filter(function(x){ var k = x.date + '|' + x.s + '|' + x.t; if (seenWk[k]) return false; seenWk[k] = 1; return true; })
-      .filter(function(x){ var page = x.slug && NAMES[x.slug] != null; return page ? x.date > now : true; });
-    var lockedHTML = ahead.map(function(x){
-      var page = x.slug && NAMES[x.slug] != null;
-      var pill = page ? 'Opens ' + dayName(x.date, true).split(' ')[0] : 'Your centre’s material';
-      return '<div class="s locked" aria-disabled="true"><p class="k">' + esc(dayName(x.date, true)) + (x.s ? ' · ' + esc(clockOf(x.s, cs)) : '') + '</p><h3>' + esc(nameOf(x)) + '</h3><p class="m"><span class="pill">' + esc(pill) + '</span></p></div>';
-    }).join('');
-    var openHTML = released.map(function(x){
-      var pill = x.date === now ? 'Today' : dayName(x.date);
-      return '<a class="s" href="' + esc(x.slug) + '/"><p class="k">' + esc(dayName(x.date, true)) + (x.s ? ' · ' + esc(clockOf(x.s, cs)) : '') + '</p><h3>' + esc(NAMES[x.slug]) + '</h3><p class="m"><span class="pill ' + (x.date === now ? 'now' : 'wait') + '">' + esc(pill) + '</span></p></a>';
-    }).join('');
-    $('myCards').innerHTML = (lockedHTML || openHTML) ? lockedHTML + openHTML : '<p class="cardlede">No input sessions have been given on your course yet.</p>';
-    var last = released[0];
-    var next = all.filter(function(x){ return x.date > now || (x.date === now && !(x.slug && NAMES[x.slug] != null)); })[0] || null;
+    var now = today(cs), wk = weekOf(now);
+    var isPage = function(x){ return !!(x.slug && NAMES[x.slug] != null); };
+    var nameOf = function(x){ return isPage(x) ? NAMES[x.slug] : x.t; };
+    var seenK = {}, all = inputsOf(tt).filter(function(x){ var k = x.date + '|' + x.s + '|' + (isPage(x) ? x.slug : x.t); if (seenK[k]) return false; seenK[k] = 1; return true; });
+    var given = {};
+    all.forEach(function(x){ if (isPage(x) && x.date <= now) given[x.slug] = 1; });
+    var todays = all.filter(function(x){ return x.date === now; });
+    var aheadSeen = {}, ahead = all.filter(function(x){
+      if (x.date <= now || x.date > wk.sun) return false;
+      if (isPage(x)) { if (given[x.slug] || aheadSeen[x.slug]) return false; aheadSeen[x.slug] = 1; }
+      return true;
+    });
+    var earlierSeen = {}, earlier = all.filter(function(x){ return x.date < now && (isPage(x) || x.date >= wk.mon); }).reverse()
+      .filter(function(x){ if (!isPage(x)) return true; if (earlierSeen[x.slug] || todays.some(function(t){ return t.slug === x.slug; })) return false; earlierSeen[x.slug] = 1; return true; });
+    var head = function(x){ return '<p class="k">' + esc(dayName(x.date, true)) + (x.s ? ' · ' + esc(clockOf(x.s, cs)) : '') + '</p><h3>' + esc(nameOf(x)) + '</h3>'; };
+    var openCard = function(x){
+      var pill = '<span class="pill ' + (x.date === now ? 'now' : 'wait') + '">' + esc(x.date === now ? 'Today' : dayName(x.date)) + '</span>';
+      if (isPage(x)) return '<a class="s" href="' + esc(x.slug) + '/">' + head(x) + '<p class="m">' + pill + '</p></a>';
+      var link = centreLinkFor(x, cs, tt);
+      return link
+        ? '<a class="s ext" href="' + esc(link.url) + '" target="_blank" rel="noopener noreferrer">' + head(x) + '<p class="m">' + pill + ' Opens where the centre keeps it</p></a>'
+        : '<div class="s still">' + head(x) + '<p class="m">' + pill + ' Taught in the room</p></div>';
+    };
+    var lockedCard = function(x){ return '<div class="s locked" aria-disabled="true">' + head(x) + '<p class="m"><span class="pill">Opens ' + esc(dayName(x.date, true).split(' ')[0]) + '</span></p></div>'; };
+    var html = todays.map(openCard).join('') + ahead.map(lockedCard).join('') + earlier.map(openCard).join('');
+    $('myCards').innerHTML = html || '<p class="cardlede">No input sessions have been given on your course yet.</p>';
+    var last = all.filter(function(x){ return isPage(x) && x.date <= now; }).pop();
+    var next = all.filter(function(x){ return x.date > now; })[0] || null;
     if (last) setStrip(true, (last.date === now ? 'Today' : 'Last session') + ' · ' + dayName(last.date, true) + (last.s ? ' · ' + clockOf(last.s, cs) : ''),
       NAMES[last.slug], 'Open it again whenever you need it.', last.slug);
-    else if (next) setStrip(true, (next.date === now ? 'Today' : 'Next') + ' · ' + dayName(next.date, true) + (next.s ? ' · ' + clockOf(next.s, cs) : ''),
+    else if (next) setStrip(true, 'Next · ' + dayName(next.date, true) + (next.s ? ' · ' + clockOf(next.s, cs) : ''),
       nameOf(next), 'It opens here on the day it is taught.', '');
     else { setStrip(false); return; }
-    var w = weekOf(now), seen = {};
-    var week = all.filter(function(x){ return x.date >= w.mon && x.date <= w.sun; }).filter(function(x){ var k = x.date + '|' + x.s + '|' + x.t; if (seen[k]) return false; seen[k] = 1; return true; });
+    var week = all.filter(function(x){ return x.date >= wk.mon && x.date <= wk.sun; });
     $('weekHead').textContent = 'This week';
     $('weekList').innerHTML = week.length ? week.map(function(x){
-      var given = x.date <= now && x.slug && NAMES[x.slug] != null;
+      var open = isPage(x) && given[x.slug];
       var cls = x.date < now ? 'done' : x.date === now ? 'now' : '';
-      var name = given ? '<a href="' + esc(x.slug) + '/">' + esc(NAMES[x.slug]) + '</a>' : esc(nameOf(x));
+      var name = open ? '<a href="' + esc(x.slug) + '/">' + esc(NAMES[x.slug]) + '</a>' : esc(nameOf(x));
       return '<li class="' + cls + '"><span>' + name + '</span><span>' + esc(dayName(x.date)) + '</span></li>';
     }).join('') + '<li><span class="none">Each session opens here on the day it is taught.</span></li>'
       : '<li><span class="none">No input sessions this week.</span></li>';

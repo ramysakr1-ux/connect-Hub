@@ -266,6 +266,11 @@ const INPUT = [
 /* On the day-one demo the afternoon of day 1 is a real session the library carries, so the trainee's home
    has one to open (Ramy, 25 Oct 2026: "one input session on that day, maybe classroom management"). */
 if (WHICH === 'dayone') INPUT[0] = ['Welcome, the course and the portfolio', 'Classroom management'];
+/* What a slot is, the way the timetable colours it (Ramy, 26 Oct 2026: the input sessions page "should read
+   what's on the timetable, that is an input session really"). An assignment briefing or a tutorial is not an
+   input session, the assessor's slots are the assessor's, and the last day's are the whole group's, so none of
+   them lands on a trainee's input sessions page. */
+const kindOf = t => /the assignment|tutorials/i.test(t) ? 'task' : /^assessor visit/i.test(t) ? 'assessor' : /^demonstration lesson/i.test(t) ? 'demo' : /^course review|^end of course/i.test(t) ? 'event' : 'input';
 function timetable() {
   const days = DAYS.map((date, i) => {
     const d = { date, cells: { i1: INPUT[i][0], i2: INPUT[i][1] }, notes: '' };
@@ -279,9 +284,9 @@ function timetable() {
   if (WHICH === 'dayone') {
     let n = 0; const T = TUTORS.length;
     days.forEach((d, di) => { const c = d.cells || {}; const S = []; let i = 0; const id = p => p + (++i);
-      S.push({ id: id('input'), s: '10:00', e: '11:00', k: 'input', t: c.i1 || 'Input', by: n % T }); n++;
+      S.push({ id: id('input'), s: '10:00', e: '11:00', k: kindOf(c.i1 || ''), t: c.i1 || 'Input', by: n % T }); n++;
       S.push({ id: id('break'), s: '11:00', e: '11:15', k: 'break', t: 'Break' });
-      S.push({ id: id('input'), s: '11:15', e: '12:15', k: 'input', t: c.i2 || 'Input', by: n % T }); n++;
+      S.push({ id: id('input'), s: '11:15', e: '12:15', k: kindOf(c.i2 || ''), t: c.i2 || 'Input', by: n % T }); n++;
       S.push({ id: id('lunch'), s: '12:15', e: '13:15', k: 'lunch', t: 'Lunch' });
       if (d.tp) { S.push({ id: id('plan'), s: '13:15', e: '13:30', k: 'plan', t: 'TP preparation' });
         S.push({ id: id('tp'), s: '13:30', e: '14:15', k: 'tp' }); S.push({ id: id('tp'), s: '14:15', e: '15:00', k: 'tp' }); S.push({ id: id('tp'), s: '15:15', e: '16:00', k: 'tp' });
