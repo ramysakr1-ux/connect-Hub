@@ -214,6 +214,19 @@
     var seen = +sessionStorage.getItem('hub:demoSeen') || 0;
     if (seen && Date.now() - seen > 3600000) { ['hub:demoVisit', 'hub:demoName', LEDGER].forEach(function(k){ sessionStorage.removeItem(k); }); }
     sessionStorage.setItem('hub:demoSeen', String(Date.now()));
+    /* A NEW DEMO VISIT STARTS FROM NOTHING (Ramy, 25 Oct 2026: "every time I try to walk after spending hours fixing
+       everything... nothing seems to be fixed... for all of them, and also reset for me, with the 1 hour rule"). The
+       boot replaces the course's records, but pages keep their own memory in this browser too: what was dismissed,
+       which envelope was opened, a draft, the tutors' notebook, and (until today) a past visit's TP history. So the
+       first page of a visit -- a new tab, or the same tab after an hour left alone -- forgets everything Lite kept
+       here except the link itself and anything a REAL course still has waiting to be sent, and the boot below
+       waits for the clean course. Every person and every role, on every demo; a real course never comes here. */
+    if (!demoSession()) {
+      var KEEP = /^(hub:(t|k|a|v|o|p|kpin|pin)$|hub:o:|hub:pending:|hub:unsaved:|chub:tutorName$|chub:passDays$|chub:card|chub:installHintDone$|mk:)/;
+      var gone = [];
+      for (var gi = localStorage.length - 1; gi >= 0; gi--) { var gk = localStorage.key(gi); if (gk && !KEEP.test(gk) && /^(chub[:_]|connect_|hub:)/.test(gk)) gone.push(gk); }
+      gone.forEach(function(k){ try { origRemove(k); } catch (e) {} });
+    }
     /* the name the visitor typed on the card is theirs at once, before the boot confirms it */
     if (mode === 'trainee') { var dn0 = sessionStorage.getItem('hub:demoName') || ''; if (dn0) { origSet('hub:name', dn0); var me0 = parse(origGet('hub:me')) || {}; me0.name = dn0; origSet('hub:me', JSON.stringify(me0)); } }
   } catch (e) {} }
