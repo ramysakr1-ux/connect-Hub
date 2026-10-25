@@ -51,7 +51,7 @@
 <title>Connect Lite — Observation tasks</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610251203">
+<link rel="stylesheet" href="hub-tokens.css?v=202610251328">
 <style>
   /* The palette lives on each screen, not in hub-house.css. */
   :root{
@@ -188,22 +188,37 @@
   @media(prefers-reduced-motion:reduce){ .task .ob-line i, .ob-meter .trk i{transition:none;} #turnIn.ob-ready, .turned.ob-new{animation:none;} }
   @media(max-width:600px){ .task .ob-line{left:0;} .bar .ob-meter{margin-left:0; width:100%;} }
   @media print{ .ob-line, .ob-meter{display:none;} }
+
+  /* ---- connecting a peer sheet (25 Oct 2026) -----------------------------------
+     Under a peer sheet, one row a teacher: connect what you wrote about them, or
+     take it back. On the teacher's side, "Shared with you" lists what arrived. */
+  .connect{background:var(--box); border:1px solid var(--sand-line); border-radius:8px; padding:14px 16px 6px; margin:22px 0 14px;}
+  .connect h4{font-family:'Newsreader',Georgia,serif; font-size:1.02rem; margin:0 0 4px;}
+  .connect .lines{font-size:0.84rem; color:var(--grey); line-height:1.6; margin:0 0 10px; max-width:66ch;}
+  .cn-row{display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:9px 0; border-top:1px solid var(--sand-line);}
+  .cn-who{flex:1 1 140px; font-size:0.9rem; font-weight:600;}
+  .cn-state{font-size:0.82rem; color:var(--grey); line-height:1.45;}
+  .cn-done{color:var(--teal); font-weight:700;}
+  .cn-note{font-size:0.82rem; color:var(--teal); font-weight:600; margin:2px 0 8px;}
+  .cn-row .btn{min-height:40px;}
+  .theirs{white-space:pre-wrap; background:var(--paper); border:1px solid var(--sand-line); border-radius:6px; padding:9px 11px; font-size:0.9rem; line-height:1.55; overflow-wrap:anywhere;}
+  @media print{ .connect{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610251203">
+<link rel="stylesheet" href="hub-house.css?v=202610251328">
 </head>
 <body class="hub-obs hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="observation-defaults.js?v=202610251203"></script>
-<script src="hub-shared.js?v=202610251203"></script>
-<script src="hub-store.js?v=202610251203"></script>
-<script src="hub-say.js?v=202610251203"></script>
-<script src="hub-rotation.js?v=202610251203"></script>
-<script src="hub-peers.js?v=202610251203"></script>
-<script src="hub-sync.js?v=202610251203"></script>
-<script src="hub-notebook.js?v=202610251203"></script>
+<script src="observation-defaults.js?v=202610251328"></script>
+<script src="hub-shared.js?v=202610251328"></script>
+<script src="hub-store.js?v=202610251328"></script>
+<script src="hub-say.js?v=202610251328"></script>
+<script src="hub-rotation.js?v=202610251328"></script>
+<script src="hub-peers.js?v=202610251328"></script>
+<script src="hub-sync.js?v=202610251328"></script>
+<script src="hub-notebook.js?v=202610251328"></script>
 <script type="text/x-hub-app">
 /* A trainee's own work. A tutor or an assessor READS it -- they have to, it
    is portfolio evidence -- so the page is not refused them; the fields are
@@ -324,6 +339,12 @@ function list(){
       <div class="sub">${TASKS.peer.map(t => ['a','b'].map(s => row(t, s)).join('')).join('')}</div>
     </div>
 
+    ${(!READONLY && SHARED.length) ? `<div class="grp">
+      <div class="hd"><h2>Shared with you</h2></div>
+      <p class="note">What classmates who watched your lessons chose to connect with you, after the feedback. Each one opens once you have handed in your own self-evaluation for that TP.</p>
+      <div class="sub">${SHARED.map(sharedRow).join('')}</div>
+    </div>` : ''}
+
     <div class="grp">
       <div class="hd"><h2>Experienced teachers</h2>${tallyOf(otherKeys)}</div>
       <p class="note">The observations Cambridge asks for outside your own group.</p>
@@ -358,6 +379,120 @@ const field = (k, name, label, fallback, hint) => {
   return `<div><label>${label}</label><input data-f="${name}" value="${esc(shown)}"${hint ? ` placeholder="${esc(hint)}"` : ''}${READONLY ? ' readonly' : ''}></div>`;
 };
 
+/* ---------------------------------------------------------- connecting a sheet
+   Ramy, 25 Oct 2026: a trainee who watched a colleague teach may choose to share what they wrote about that
+   colleague, "only after the oral feedback", and "it shouldn't open until the self-eval is submitted".
+   So, per peer sheet and per teacher: the observer connects ONE teacher's column (the questions and their
+   answers, whatever the centre worded them as) with that teacher, and can take it back. The button opens when
+   the day's TP feedback slot is over on the course's clock; the teacher reads it once they have handed in their
+   own self-evaluation for that TP (the store holds the answers back, not this page). Peer sheets of the
+   centre's own wording work the same: the columns are the shape's, not the questions'. */
+let SHARED = []; try { SHARED = JSON.parse(localStorage.getItem('connect_peer_sheets_v1') || '[]') || []; } catch (e) {}
+let TT = null, CSET = {}; try { TT = JSON.parse(localStorage.getItem('connect_timetable_v1') || 'null'); } catch (e) {} try { CSET = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
+let CNOTE = '';
+function instantOf(date, hhmm){
+  const tz = CSET.timeZone || '';
+  if (tz && window.hubZonedInstant) { const v = window.hubZonedInstant(date, hhmm, tz); if (v != null) return v; }
+  const m = String(date).match(/^(\d{4})-(\d{2})-(\d{2})/), h = String(hhmm).match(/^(\d{1,2}):(\d{2})/);
+  return m && h ? new Date(+m[1], +m[2] - 1, +m[3], +h[1], +h[2]).getTime() : null;
+}
+/* When the oral feedback for this sitting is over: the day the timetable puts that TP and that half on, at the end of its
+   feedback slot (the end of the day when it has none). null when the timetable does not say, and then nothing waits. */
+function feedbackEnd(tp, sit){
+  const days = (TT && Array.isArray(TT.days)) ? TT.days : [], want = sit === 'b' ? 1 : 0;
+  const day = days.filter(d => d && +d.tp === +tp && (d.setIndex || 0) === want && d.date && !d.closed).sort((a, b) => a.date < b.date ? -1 : 1)[0];
+  if (!day) return null;
+  const slots = window.hubSlotsFor ? hubSlotsFor(TT, day.date) : [];
+  const fb = slots.filter(x => x && x.kind === 'feedback' && !/reflect/i.test(x.label || ''));
+  const last = (fb.length ? fb : slots).map(x => x.to).filter(Boolean).sort().pop();
+  if (!last) return null;
+  const at = instantOf(day.date, last);
+  return at == null ? null : { at, date: day.date, time: last };
+}
+function whenText(fe){
+  const tz = CSET.timeZone || '', o = { weekday: 'short', day: 'numeric', month: 'short' };
+  if (tz) o.timeZone = tz;
+  let d = ''; try { d = new Date(fe.at).toLocaleDateString('en-GB', o); } catch (e) { d = fe.date; }
+  return d + ', ' + (window.hubTimeOf ? hubTimeOf(new Date(fe.at), tz || undefined) : fe.time);
+}
+const peerTeachers = (t, sit) => (t.tp && sit && window.hubPeerTeachers) ? hubPeerTeachers(VIEWER.group, t.tp, sit) : null;
+/* One teacher's part of the sheet, as question and answer. A grid has a column each; the focus sheet a part each; the
+   single-column sheet has one set of answers for all three, so each teacher is sent the same. */
+function peerRowsFor(t, k, c){
+  const A = (WORK[k] || {}).a || {}, v = f => String(A[f] || '').trim();
+  if (t.shape === 'grid') return t.rows.map((q, i) => ({ q, a: v('r' + i + 'c' + c) }));
+  if (t.shape === 'focus') return [{ q: 'Focus area: what they asked you to watch for, and what you saw.', a: v('f' + c) }];
+  return (t.rows || []).map((q, i) => ({ q, a: v('r' + i) })).concat((t.after || []).map((q, i) => ({ q, a: v('a' + i) })));
+}
+const rowsHash = rows => { let h = 5381; const s = JSON.stringify(rows); for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return String(h); };
+function connectPanel(t, sit, k){
+  if (READONLY || !t.tp || !sit) return '';
+  const tch = peerTeachers(t, sit); if (!tch || !tch.length) return '';
+  const TL = teacherLabels(t, sit), fe = feedbackEnd(+t.tp, sit), now = window.hubNow ? hubNow() : Date.now();
+  const waits = fe && now < fe.at, sent = (WORK[k] || {}).shared || {};
+  const rows = tch.map((p, c) => {
+    if (!p || !p.token || p.token === VIEWER.token) return '';
+    const rs = peerRowsFor(t, k, c), has = rs.some(r => r.a), on = sent[p.token];
+    let st;
+    if (on) {
+      const at = on.at || on, stale = on.h && on.h !== rowsHash(rs);
+      st = `<span class="cn-state"><span class="cn-done">Connected</span> on ${esc(new Date(at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }))}.${stale ? ' You have added to this since.' : ''}</span>
+        ${stale ? `<button type="button" class="btn" data-share="${c}">Send the new version</button>` : ''}
+        <button type="button" class="btn" data-unshare="${c}">Take it back</button>`;
+    } else if (waits) st = `<span class="cn-state">Opens after the TP${esc(t.tp)} feedback, ${esc(whenText(fe))}.</span>`;
+    else if (!has) st = `<span class="cn-state">Nothing written about ${esc(TL[c])} yet.</span>`;
+    else st = `<button type="button" class="btn" data-share="${c}">Connect</button>`;
+    return `<div class="cn-row"><span class="cn-who">${esc(TL[c])}</span>${st}</div>`;
+  }).join('');
+  if (!rows) return '';
+  return `<div class="connect"><h4>Connect what you wrote</h4>
+    <p class="lines">After you have given your oral feedback, you can connect what you wrote about a teacher with that teacher. Only their part goes to them, and they read it once they have handed in their own self-evaluation. It is your choice, and you can take it back.</p>
+    ${CNOTE ? `<p class="cn-note" role="status">${esc(CNOTE)}</p>` : ''}${rows}</div>`;
+}
+function connectNow(t, sit, k, c, btn){
+  const p = (peerTeachers(t, sit) || [])[c]; if (!p || !p.token) return;
+  const rows = peerRowsFor(t, k, c), TL = teacherLabels(t, sit);
+  btn.disabled = true; btn.textContent = 'Connecting';
+  HubStore.call({ op: 'shareSheet', token: HubStore.token(), to: p.token, task: t.id, sit, tp: t.tp, col: t.shape === 'single' ? -1 : c, title: t.title, rows }).then(r => {
+    rec(k); WORK[k].shared = WORK[k].shared || {}; WORK[k].shared[p.token] = { at: new Date().toISOString(), h: rowsHash(rows) }; save();
+    CNOTE = (r && r.demo ? 'Demo: connected on this device only. ' : '') + 'Connected with ' + TL[c] + '.';
+    sheet(t, sit);
+  }, e => { btn.disabled = false; btn.textContent = 'Connect'; CNOTE = (e && e.message) || 'That did not go. Try again.'; sheet(t, sit); });
+}
+function takeBack(t, sit, k, c, btn){
+  const p = (peerTeachers(t, sit) || [])[c]; if (!p || !p.token) return;
+  const TL = teacherLabels(t, sit);
+  btn.disabled = true;
+  HubStore.call({ op: 'unshareSheet', token: HubStore.token(), to: p.token, task: t.id, sit }).then(r => {
+    rec(k); if (WORK[k].shared) delete WORK[k].shared[p.token]; save();
+    CNOTE = 'Taken back from ' + TL[c] + '.';
+    sheet(t, sit);
+  }, e => { btn.disabled = false; CNOTE = (e && e.message) || 'That did not go. Try again.'; sheet(t, sit); });
+}
+function sharedRow(s){
+  const label = 'TP' + s.tp + s.sit;
+  if (s.locked) return `<a class="task" href="2_trainee_self_evaluation.html${KEYQ ? '?' + KEYQ : ''}"><span class="tp">${esc(label)}</span><span class="nm">${esc(s.title)}<small>From ${esc(s.by)}. It opens once you have handed in your TP${esc(s.tp)} self-evaluation.</small></span><span class="st">Waiting</span></a>`;
+  return `<a class="task" href="?shared=${encodeURIComponent(s.id)}${KEYQ ? '&' + KEYQ : ''}"><span class="tp">${esc(label)}</span><span class="nm">${esc(s.title)}<small>From ${esc(s.by)}</small></span><span class="st done">Read</span></a>`;
+}
+function sharedSheet(id){
+  const s = SHARED.find(x => x.id === id);
+  $('back').href = location.pathname + (KEYQ ? '?' + KEYQ : '');
+  if (!s || s.locked) { $('app').innerHTML = `<p class="eyebrow">Shared with you</p><h1>Not open yet</h1><p class="lede">${s ? 'It opens once you have handed in your self-evaluation for that teaching practice.' : 'That sheet is not here any more. The one who wrote it can take it back.'}</p>`; return; }
+  $('app').innerHTML = `<p class="eyebrow">Shared with you · TP${esc(s.tp)}${esc(s.sit)}</p>
+    <h1>${esc(s.title)}</h1>
+    <p class="lede"><b>${esc(s.by)}</b> watched your TP${esc(s.tp)} lesson and chose to connect what they wrote about it. Only the part about you is here. They can take it back, so it may disappear.</p>
+    ${s.rows.filter(r => r.a).map(r => `<div class="part"><h4>${esc(r.q)}</h4><div class="theirs">${esc(r.a)}</div></div>`).join('')}`;
+}
+/* Look again at the store when the page opens: a sheet that was waiting may be open now (the teacher has handed in), or taken back. */
+if (!READONLY && window.HubStore && HubStore.call) {
+  try { HubStore.call({ op: 'peerSheets', token: HubStore.token() }).then(r => {
+    if (!r || !Array.isArray(r.sheets)) return;
+    const was = JSON.stringify(SHARED); SHARED = r.sheets;
+    try { localStorage.setItem('connect_peer_sheets_v1', JSON.stringify(SHARED)); } catch (e) {}
+    if (was !== JSON.stringify(SHARED) && !P.get('task')) { if (P.get('shared')) sharedSheet(P.get('shared')); else list(); }
+  }, () => {}); } catch (e) {}
+}
+
 function sheet(t, sit){
   const k = recKey(t.id, sit);
   rec(k);
@@ -369,7 +504,7 @@ function sheet(t, sit){
     body = `<table class="sheet stack"><thead><tr><th class="n"></th><th class="q">Observation focus</th>
       ${TL.map(n => `<th>${esc(n)}</th>`).join('')}</tr></thead><tbody>
       ${t.rows.map((q,i) => `<tr><td class="n">${i+1}</td><td class="q">${esc(q)}</td>
-        ${TEACHERS.map((n,c) => `<td data-t="${esc(n)}">${box(k, 'r'+i+'c'+c)}</td>`).join('')}</tr>`).join('')}
+        ${TEACHERS.map((n,c) => `<td data-t="${esc(TL[c])}">${box(k, 'r'+i+'c'+c)}</td>`).join('')}</tr>`).join('')}
       </tbody></table>`;
   } else if (t.shape === 'single' || t.shape === 'notes') {
     const head = t.shape === 'notes' ? 'Your notes' : 'Notes (all teachers)';
@@ -431,6 +566,7 @@ function sheet(t, sit){
     ${t.brief ? `<div class="brief">${esc(t.brief)}</div>` : ''}
     ${header}
     ${body}
+    ${connectPanel(t, sit, k)}
     ${READONLY ? '' : turnsIn(t)
       ? `<div class="bar"><button class="btn primary" id="turnIn">${turned ? 'Turn in again' : 'Turn in'}</button><span class="status" id="status"></span></div>`
       : `<div class="bar"><span class="status" id="status">Your notes save as you type.</span></div>`}`;
@@ -462,6 +598,8 @@ function sheet(t, sit){
     ta.value = next; ta.setSelectionRange(caret, caret);
     ta.dispatchEvent(new Event('input', { bubbles: true }));
   }));
+  document.querySelectorAll('[data-share]').forEach(b => b.addEventListener('click', () => connectNow(t, sit, k, +b.dataset.share, b)));
+  document.querySelectorAll('[data-unshare]').forEach(b => b.addEventListener('click', () => takeBack(t, sit, k, +b.dataset.unshare, b)));
   if ($('turnIn')) $('turnIn').addEventListener('click', () => {
     /* Handbook 12.1.2 asks for the tutor's name and date on feedback and progress records; dating a turned-in sheet is the centre's own practice. */
     WORK[k].turnedInAt = new Date().toISOString(); save(); sheet(t, sit);
@@ -470,6 +608,7 @@ function sheet(t, sit){
 
 const id = P.get('task');
 if (id && findTask(id)) sheet(findTask(id), P.get('sit') || '');
+else if (!READONLY && P.get('shared')) sharedSheet(P.get('shared'));
 else list();
 
 /* ---- v2 (7 Oct 2026): how far each sheet has got -----------------------------

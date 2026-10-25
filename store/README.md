@@ -27,6 +27,13 @@ Never a bare `clasp deploy`. If anything is ever edited in the Apps Script
 editor instead, `clasp pull` before the next change or the repo copy is stale.
 The patches below are how the editor's text got to v73.
 
+## 25 Oct 2026 — peer sheets, connected (store v133)
+
+`shareSheet`, `unshareSheet`, `peerSheets` and the course kind `peerShared`; the boot carries
+`course.peerSheets` for a trainee. A classmate of the same TP group receives one teacher's part of a
+peer sheet, with the answers held back until their own self-evaluation for that TP is in. See
+`2026-10-25-peer-sheets.md`. Additive.
+
 ## 25 Oct 2026 — a dated pass per person (store v132)
 
 `mintPass` (owner), `passInfo` (public) and a pass check on every call that carries one; links without a pass

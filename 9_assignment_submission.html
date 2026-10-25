@@ -15,7 +15,7 @@
 <title>Connect Lite — Assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610251203">
+<link rel="stylesheet" href="hub-tokens.css?v=202610251328">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -57,6 +57,15 @@
   .card{background:var(--surface); border-radius:6px; padding:18px 22px; margin-bottom:16px; border-left:5px solid var(--gold);}
   .card h2{font-family:'Newsreader',Georgia,serif; font-size:1.1rem; margin:0 0 6px; color:var(--ink);}
   .card .guide{font-size:0.85rem; color:var(--grey); line-height:1.55; margin:0 0 10px;}
+  /* Lessons from the Classroom: the trainee's own course, to read before writing (25 Oct 2026) */
+  .lb summary{cursor:pointer; font-weight:700;}
+  .lb summary small{display:block; font-weight:400; color:var(--grey); margin-top:2px;}
+  .lb .lb-in{margin-top:10px; font-size:0.9rem; line-height:1.55;}
+  .lb h3{font-family:'Newsreader',Georgia,serif; font-size:1rem; margin:16px 0 4px;}
+  .lb .lb-tp{border-top:1px solid var(--sand-line); padding:8px 0;}
+  .lb .lb-tp p{margin:2px 0 0; color:var(--ink);}
+  .lb .lb-tp p span{display:inline-block; min-width:78px; font-size:0.68rem; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); font-weight:700;}
+  .lb .lb-links{display:flex; flex-wrap:wrap; gap:8px 16px; margin:6px 0 0;}
   .card .crit{font-size:0.8rem; color:var(--teal); margin:0 0 14px; line-height:1.6;}
   textarea, input[type=text], input[type=url]{width:100%; font-family:'Karla',sans-serif; font-size:0.9rem; padding:9px 12px;
     border:1.5px solid var(--sand-line); border-radius:6px; background:var(--field); color:var(--ink); line-height:1.55; resize:vertical;}
@@ -180,7 +189,7 @@
   @media(max-width:560px){ .wm{flex-wrap:wrap; gap:6px;} .wm-track{width:100%;} }
   @media print{ .wm-track{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610251203">
+<link rel="stylesheet" href="hub-house.css?v=202610251328">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -188,14 +197,14 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610251203"></script>
-<script src="hub-due.js?v=202610251203"></script>
-<script src="hub-shared.js?v=202610251203"></script>
-<script src="hub-store.js?v=202610251203"></script>
-<script src="hub-say.js?v=202610251203"></script>
-<script src="hub-sync.js?v=202610251203"></script>
-<script src="hub-notebook.js?v=202610251203"></script>
-<script src="fol-interview.js?v=202610251203"></script>
+<script src="assignment-defaults.js?v=202610251328"></script>
+<script src="hub-due.js?v=202610251328"></script>
+<script src="hub-shared.js?v=202610251328"></script>
+<script src="hub-store.js?v=202610251328"></script>
+<script src="hub-say.js?v=202610251328"></script>
+<script src="hub-sync.js?v=202610251328"></script>
+<script src="hub-notebook.js?v=202610251328"></script>
+<script src="fol-interview.js?v=202610251328"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the trainee's submission form with a
@@ -816,6 +825,57 @@ function folIvMount(){
   } catch (e) {}
 }
 (function(){ if (typeof render !== 'function') return; const r0 = render; render = function(){ r0.apply(this, arguments); folIvMount(); }; folIvMount(); })();
+
+/* ---- LOOK BACK OVER YOUR COURSE (25 Oct 2026) ------------------------------
+   Lessons from the Classroom is a reflection: the trainee's own strengths and weaknesses in light of
+   feedback, what to develop, what watching other teachers taught them, how to go on after the course.
+   Ramy: they should "go through their observation and feedback and so on". So, on that assignment only,
+   a folded card above the brief gathers what the trainee has of their own: what the tutors wrote after
+   each teaching practice, the observation sheets (the peer ones, the experienced teachers', and those
+   classmates connected with them), and the notebook. Each opens the page it lives on. Nothing is copied
+   into the answer; the writing is theirs. This page is the trainee's room alone, so no mode check. */
+function lfcMount(){
+  try {
+    const old = document.getElementById('lfcBack'); if (old) old.remove();
+    if (CURRENT !== 'lfc') return;
+    const rd = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
+    const txt = h => { const d = document.createElement('div'); d.innerHTML = h || ''; d.querySelectorAll('.tag,[data-c]').forEach(x => x.remove()); return d.textContent.replace(/\s+/g, ' ').trim(); };
+    const H = rd('chub:tpHistory') || {};
+    const nums = Object.keys(H).map(Number).filter(n => n > 0 && H[n] && (H[n].docHTML || H[n].state)).sort((a, b) => a - b);
+    const items = (fb, ids) => { const L = (fb && fb.state && fb.state.lists) || {}; return ids.reduce((a, k) => a.concat((L[k] || []).map(it => it && txt(it.html)).filter(Boolean)), []); };
+    const tpRows = nums.map(n => {
+      const good = items(H[n], ['lSP', 'lST']).slice(0, 2), next = items(H[n], ['lAP', 'lAT']).slice(0, 2);
+      return '<div class="lb-tp"><b>TP' + n + '</b>' + (good.length ? '<p><span>What worked</span>' + good.map(esc).join(' · ') + '</p>' : '') + (next.length ? '<p><span>To work on</span>' + next.map(esc).join(' · ') + '</p>' : '') + '</div>';
+    }).join('');
+    const O = rd('connect_observations_v1') || {};
+    const written = o => o && Object.keys(o.a || {}).some(f => String(o.a[f] || '').trim());
+    const watched = Object.keys(O).filter(k => /^(filmed|live)/.test(k) && O[k] && O[k].turnedInAt).length;
+    const peer = Object.keys(O).filter(k => /^peer/.test(k) && written(O[k])).length;
+    const SH = rd('connect_peer_sheets_v1') || [], shOpen = SH.filter(x => x && !x.locked).length;
+    const notes = (window.HubNotebook && HubNotebook.load ? (HubNotebook.load().notes || []) : []).filter(n => n && (n.text || n.audio));
+    const days = new Set(notes.map(n => n.day)).size;
+    const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
+    const brief = [nums.length ? plural(nums.length, 'returned lesson', 'returned lessons') : '', (watched + peer) ? plural(watched + peer, 'observation sheet', 'observation sheets') : '', notes.length ? plural(notes.length, 'note', 'notes') : ''].filter(Boolean).join(', ');
+    const box = document.createElement('details'); box.id = 'lfcBack'; box.className = 'card lb'; box.style.marginTop = '14px';
+    box.innerHTML = '<summary>Look back over your course' + (brief ? '<small>' + esc(brief) + '</small>' : '') + '</summary><div class="lb-in">'
+      + '<p class="guide" style="margin:0 0 4px">This assignment starts from your own course. Read what you have first, then write in your own words. Nothing here is copied into your answer.</p>'
+      + '<h3>What your tutors said</h3>' + (tpRows || '<p class="guide" style="margin:0">Nothing has been returned to you yet.</p>')
+      + (nums.length ? '<div class="lb-links"><a href="4_feedback_returned.html">Your teaching practice record, with your plans and self-evaluations</a></div>' : '')
+      + '<h3>What you watched</h3><p style="margin:0">' + [
+          watched ? plural(watched, 'experienced teacher observation', 'experienced teacher observations') + ' turned in' : '',
+          peer ? plural(peer, 'peer observation sheet', 'peer observation sheets') + ' with your notes' : '',
+          shOpen ? plural(shOpen, 'sheet', 'sheets') + ' a classmate connected with you' : ''
+        ].filter(Boolean).map(esc).join('. ') + ((watched || peer || shOpen) ? '.' : 'Nothing written on an observation sheet yet.') + '</p>'
+      + '<div class="lb-links"><a href="18_observation_tasks.html">Your observation sheets</a></div>'
+      + '<h3>Your notebook</h3><p style="margin:0">' + (notes.length ? esc(plural(notes.length, 'note', 'notes') + ' across ' + plural(days, 'day', 'days')) + '.' : 'No notes yet. The arc in the corner of any page opens it.') + '</p>'
+      + (notes.length ? '<div class="lb-links"><a href="37_notebook.html">Read your notebook</a></div>' : '')
+      + '</div>';
+    const app = document.getElementById('app'); if (!app) return;
+    const hdr = app.querySelector('.header');
+    if (hdr && hdr.parentNode === app) hdr.after(box); else app.insertBefore(box, app.firstChild);
+  } catch (e) {}
+}
+(function(){ if (typeof render !== 'function') return; const r1 = render; render = function(){ r1.apply(this, arguments); lfcMount(); }; lfcMount(); })();
 </script>
 </body>
 </html>

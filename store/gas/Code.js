@@ -1289,6 +1289,8 @@ case 'inbox': {
         boot.me = { token: me.token, name: me.name, group: me.group, email: me.email || '', records: recordsFor_(course.id, me.token, TRAINEE_READS) };
         /* v129: the notes classmates shared with this trainee's group or with the whole course */
         boot.course.notes = sharedNotesFor_(course.id, me);
+        /* v133: the peer sheets a classmate connected with this trainee (answers held back until their own self-evaluation is in) */
+        boot.course.peerSheets = peerSheetsFor_(course.id, me);
       }
       return boot;
     }
@@ -1512,6 +1514,46 @@ case 'inbox': {
         return pool;
       });
       return { shared: false, notes: sharedNotesFor_(course.id, me) };
+    }
+    /* PEER SHEETS, CONNECTED (v133, 25 Oct 2026). Ramy: a trainee who watched a colleague teach may choose to
+       share what they wrote about that colleague, "only after the oral feedback", and "it shouldn't open
+       until the self-eval is submitted". The observer sends ONE teacher's column (the questions with
+       their answers, so the wording is the centre's own whatever it is) to ONE classmate of their own TP
+       group, and takes it back the same way. The copy lives in the course's `peerShared` pool, keyed by
+       the observer. The teacher gets it in the boot and in `peerSheets`, and the answers stay out of it
+       until THEIR self-evaluation for that teaching practice is turned in (or its feedback is returned):
+       the store holds that back, not the page. The "after the oral feedback" half is the page's, by the
+       timetable's feedback slot; it guards the observer from sharing early, and the sheet is their own.
+       Tutors read the observer's own sheet, as before; they never need the pool. */
+    case 'shareSheet': {
+      if (!me || tutor || assessor) throw new Error('Trainees only');
+      if (!course) throw new Error('This link is not on a course');
+      var ssTo = peerTo_(course.id, me, req.to);
+      var ssItem = peerSheetClean_(req, me, ssTo);
+      courseUpdateObj_(course.id, 'peerShared', function (pool) {
+        var list = (pool[me.token] || []).filter(function (x) { return x && x.id !== ssItem.id; });
+        list.push(ssItem);
+        pool[me.token] = list.length > 160 ? list.slice(list.length - 160) : list;
+        return pool;
+      });
+      return { shared: true };
+    }
+    case 'unshareSheet': {
+      if (!me || tutor || assessor) throw new Error('Trainees only');
+      if (!course) throw new Error('This link is not on a course');
+      var usTo = peerTo_(course.id, me, req.to);
+      var usId = peerSheetId_(String(req.task || ''), req.sit === 'b' ? 'b' : 'a', usTo);
+      courseUpdateObj_(course.id, 'peerShared', function (pool) {
+        var list = (pool[me.token] || []).filter(function (x) { return x && x.id !== usId; });
+        if (list.length) pool[me.token] = list; else delete pool[me.token];
+        return pool;
+      });
+      return { shared: false };
+    }
+    case 'peerSheets': {
+      if (!me || tutor || assessor) throw new Error('Trainees only');
+      if (!course) throw new Error('This link is not on a course');
+      return { sheets: peerSheetsFor_(course.id, me) };
     }
     case 'tutorNotes': {
       requireTutor_(tutor);
@@ -2703,6 +2745,65 @@ function sharedNotesFor_(courseId, me) {
         out.push(it);
       }
     });
+  });
+  out.sort(function (a, b) { return String(a.at).localeCompare(String(b.at)); });
+  return out;
+}
+/* PEER SHEETS (v133). The observer is a trainee; the teacher they write about is another trainee of the SAME TP
+   group, named in the browser by a stand-in id (standIn_), never by a key. */
+function peerTo_(courseId, me, standIn) {
+  var want = String(standIn || '');
+  if (!want) throw new Error('Which classmate?');
+  var hit = roster_(courseId).filter(function (t) {
+    return t.token !== me.token && String(t.group) === String(me.group || '') && standIn_(courseId, t.token) === want;
+  })[0];
+  if (!hit) throw new Error('That classmate is not in your TP group');
+  return hit.token;
+}
+function peerSheetId_(task, sit, to) { return String(task).slice(0, 40) + '#' + sit + '>' + to; }
+function peerSheetClean_(req, me, to) {
+  var task = String(req.task || '');
+  if (!/^[A-Za-z0-9_-]{1,40}$/.test(task)) throw new Error('Which sheet?');
+  var tp = parseInt(req.tp, 10);
+  if (!(tp >= 1 && tp <= 20)) throw new Error('Which teaching practice?');
+  var sit = req.sit === 'b' ? 'b' : 'a';
+  var rows = (Array.isArray(req.rows) ? req.rows : []).slice(0, 40).map(function (r) {
+    return { q: String((r && r.q) || '').trim().slice(0, 400), a: String((r && r.a) || '').trim().slice(0, 4000) };
+  });
+  if (!rows.some(function (r) { return r.a; })) throw new Error('Nothing is written on this sheet yet');
+  var col = parseInt(req.col, 10);
+  return { id: peerSheetId_(task, sit, to), task: task, sit: sit, tp: tp, col: (col >= 0 && col <= 2) ? col : -1,
+           title: String(req.title || '').trim().slice(0, 120), rows: rows, to: to, by: String(me.name || '').slice(0, 80),
+           group: String(me.group || ''), at: new Date().toISOString() };
+}
+// Has this trainee turned in their self-evaluation for teaching practice `tp`? The live one carries "TP 3 · ..." in its
+// label; once the tutor returns the feedback the live copy moves into the history under the number.
+function selfEvalDone_(recs, tp) {
+  var hist = (recs && recs.tpHistory) || {};
+  if (hist[tp]) return true;
+  var se = recs && recs.selfeval;
+  if (se && se.status === 'turned_in') {
+    var m = String(se.label || '').match(/\d+/);
+    if (m && parseInt(m[0], 10) === tp) return true;
+  }
+  return false;
+}
+// What classmates connected with this trainee. The answers are in it only for a teaching practice the trainee has
+// already written their own self-evaluation for; before that the row says it exists and nothing else.
+function peerSheetsFor_(courseId, me) {
+  var pool = courseRead_(courseId, 'peerShared') || {}, mine = [];
+  Object.keys(pool).forEach(function (tok) {
+    if (tok === me.token) return;
+    (pool[tok] || []).forEach(function (it) { if (it && it.to === me.token) mine.push({ from: tok, it: it }); });
+  });
+  if (!mine.length) return [];
+  var recs = recordsFor_(courseId, me.token, { selfeval: 1, tpHistory: 1 }), done = {};
+  var out = mine.map(function (m) {
+    var it = m.it;
+    if (done[it.tp] === undefined) done[it.tp] = selfEvalDone_(recs, it.tp);
+    var row = { id: standIn_(courseId, m.from) + ':' + it.task + '#' + it.sit, task: it.task, sit: it.sit, tp: it.tp, title: it.title, by: it.by, at: it.at };
+    if (done[it.tp]) row.rows = it.rows; else row.locked = true;
+    return row;
   });
   out.sort(function (a, b) { return String(a.at).localeCompare(String(b.at)); });
   return out;

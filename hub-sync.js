@@ -622,6 +622,10 @@
     /* The notes classmates connected with this trainee (25 Oct 2026): read-only here, written
        through the store's shareNote op; a trainee's own notes are their `notebook` record. */
     out['connect_notes_v1'] = course.notes ? JSON.stringify(course.notes) : null;
+    /* The peer sheets a classmate connected with this trainee (25 Oct 2026): one teacher's column each, answers
+       held back by the store until the trainee's own self-evaluation for that TP is in. Read-only here; written
+       through the store's shareSheet op by the one who watched. */
+    out['connect_peer_sheets_v1'] = course.peerSheets ? JSON.stringify(course.peerSheets) : null;
     if (mode === 'trainee') {
       var me = boot.me || { records: {} };
       /* a demo that asked the visitor's name on the card: the visit is theirs (25 Oct 2026) */
