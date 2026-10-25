@@ -619,6 +619,16 @@ const SHARES = [
   [9, '21:00', 1, 'Comparatives: picture prompts', 'https://drive.google.com/file/d/demo-share-comparatives/view', 'handout'],
   [15, '20:30', 4, 'Making arrangements: role cards', 'https://drive.google.com/file/d/demo-share-rolecards/view', 'worksheet'],
 ];
+/* THE DEMONSTRATION LESSON (Ramy, 25 Oct 2026: "use Sarah's Date... and Describing People, it's a continuation;
+   put both of them as the demo, for A2"). Day one watches the tutor teach the A2 class with Live observation task 1
+   in hand; the two lessons go on the shelf for the trainees and the volunteer students before it starts. They are
+   Ramy's own teacher-made lessons (iCloud, "Demo lesson A1/A2"), copied into demo-media/dayone-demo with the
+   centre's name in place of his: the demo's tutors are invented and nothing in a demo carries a real name. Day one
+   only: the mid-course demos were seeded before the shelf existed and are not dressed again here. */
+const DEMO_SHARES = WHICH === 'dayone' ? [
+  [1, '13:05', 'Demonstration lesson 1: Sarah\u2019s Date, a reading lesson (A2)', 'https://lite.celtaconnect.com/demo-media/dayone-demo/sarahs-date-reading.html'],
+  [1, '13:06', 'Demonstration lesson 2: Describing People, language from the text (A2)', 'https://lite.celtaconnect.com/demo-media/dayone-demo/describing-people.html'],
+] : [];
 /* Six rows, one per trainee in a group -- and a course of twelve has two
    groups, so it wraps rather than running off the end (found seeding c7 with
    twelve, 1 Oct 2026). */
@@ -669,6 +679,12 @@ if (WRITE) {
     if (day > PIN_DAY) continue;
     await must('share', { op: 'shareMaterial', key: KEY, name, url, by: people[ci].name, tp: String(Math.max(1, Math.floor((day - 1) / 2))), kind, at: iso(day, hhmm) });
   }
+  /* the tutor's shelf: a row already up by that name is not put up twice on a re-run */
+  const shelfNow = (((await call({ op: 'course', key: KEY })).result || {}).shared || []).map(x => x && x.name);
+  for (const [day, hhmm, name, url] of DEMO_SHARES) {
+    if (day > PIN_DAY || shelfNow.includes(name)) continue;
+    await must('share demo', { op: 'shareMaterial', key: KEY, name, url, by: TUTORS[0], tp: '', kind: 'demo', at: iso(day, hhmm) });
+  }
   if (WHICH === 'visit') {
     for (const [ci, p] of people.entries()) {
       const gr = gridFor(ci), hh = 10 + (ci % 8);
@@ -680,7 +696,7 @@ if (WRITE) {
 } else {
   for (const [ci, p] of people.entries()) console.log(`${p.name.padEnd(18)} set ${setOf(p.token)} — aims: ${[1,2,3,4,5,6,7,8].map(tp => rot.rows[p.token]['tp' + tp]).join(' · ')}`);
   console.log(`\nvolunteers: ${vols.students.map(s => s.name + ' (' + Object.keys(s.marks).length + ' marked' + (s.agreed ? ', agreed' : '') + (s.cert ? ', certificate signed' : '') + ')').join('; ')}`);
-  console.log(`posts up to the pin: ${POSTS.filter(p => p[0] <= PIN_DAY).length}; shares: ${SHARES.filter(s => s[0] <= PIN_DAY).length}`);
+  console.log(`posts up to the pin: ${POSTS.filter(p => p[0] <= PIN_DAY).length}; shares: ${SHARES.filter(s => s[0] <= PIN_DAY).length}; the tutor's shelf: ${DEMO_SHARES.length}`);
 }
 
 if (WRITE) {
