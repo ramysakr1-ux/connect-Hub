@@ -15,7 +15,7 @@
 <title>Connect Lite — Assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610251328">
+<link rel="stylesheet" href="hub-tokens.css?v=202610251344">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -62,9 +62,15 @@
   .lb summary small{display:block; font-weight:400; color:var(--grey); margin-top:2px;}
   .lb .lb-in{margin-top:10px; font-size:0.9rem; line-height:1.55;}
   .lb h3{font-family:'Newsreader',Georgia,serif; font-size:1rem; margin:16px 0 4px;}
-  .lb .lb-tp{border-top:1px solid var(--sand-line); padding:8px 0;}
-  .lb .lb-tp p{margin:2px 0 0; color:var(--ink);}
-  .lb .lb-tp p span{display:inline-block; min-width:78px; font-size:0.68rem; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); font-weight:700;}
+  .lb .lb-tp{border-top:1px solid var(--sand-line); padding:9px 0;}
+  .lb .lb-tp small{color:var(--grey);}
+  .lb .lb-tp p, .lb .lb-note p, .lb .lb-sheet p, .lb .lb-more > p{margin:2px 0 6px; color:var(--ink);}
+  .lb .lb-tp ul{margin:2px 0 6px; padding-left:18px;} .lb .lb-tp li{margin:2px 0;}
+  .lb .lb-k{font-size:0.68rem; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); font-weight:700; margin:8px 0 0 !important;}
+  .lb .lb-more, .lb .lb-sheet{border-top:1px solid var(--sand-line); padding:8px 0;}
+  .lb .lb-more > summary, .lb .lb-sheet > summary{font-size:0.9rem; font-weight:600; cursor:pointer;}
+  .lb .lb-sheet > summary small{display:inline; margin:0; font-weight:400;}
+  .lb .lb-note{border-top:1px solid var(--sand-line); padding:6px 0;}
   .lb .lb-links{display:flex; flex-wrap:wrap; gap:8px 16px; margin:6px 0 0;}
   .card .crit{font-size:0.8rem; color:var(--teal); margin:0 0 14px; line-height:1.6;}
   textarea, input[type=text], input[type=url]{width:100%; font-family:'Karla',sans-serif; font-size:0.9rem; padding:9px 12px;
@@ -189,7 +195,7 @@
   @media(max-width:560px){ .wm{flex-wrap:wrap; gap:6px;} .wm-track{width:100%;} }
   @media print{ .wm-track{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610251328">
+<link rel="stylesheet" href="hub-house.css?v=202610251344">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -197,14 +203,17 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610251328"></script>
-<script src="hub-due.js?v=202610251328"></script>
-<script src="hub-shared.js?v=202610251328"></script>
-<script src="hub-store.js?v=202610251328"></script>
-<script src="hub-say.js?v=202610251328"></script>
-<script src="hub-sync.js?v=202610251328"></script>
-<script src="hub-notebook.js?v=202610251328"></script>
-<script src="fol-interview.js?v=202610251328"></script>
+<script src="assignment-defaults.js?v=202610251344"></script>
+<script src="hub-due.js?v=202610251344"></script>
+<script src="hub-shared.js?v=202610251344"></script>
+<script src="hub-store.js?v=202610251344"></script>
+<script src="hub-say.js?v=202610251344"></script>
+<script src="hub-sync.js?v=202610251344"></script>
+<script src="hub-notebook.js?v=202610251344"></script>
+<script src="observation-defaults.js?v=202610251344"></script>
+<script src="hub-rotation.js?v=202610251344"></script>
+<script src="hub-peers.js?v=202610251344"></script>
+<script src="fol-interview.js?v=202610251344"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the trainee's submission form with a
@@ -827,49 +836,113 @@ function folIvMount(){
 (function(){ if (typeof render !== 'function') return; const r0 = render; render = function(){ r0.apply(this, arguments); folIvMount(); }; folIvMount(); })();
 
 /* ---- LOOK BACK OVER YOUR COURSE (25 Oct 2026) ------------------------------
-   Lessons from the Classroom is a reflection: the trainee's own strengths and weaknesses in light of
-   feedback, what to develop, what watching other teachers taught them, how to go on after the course.
-   Ramy: they should "go through their observation and feedback and so on". So, on that assignment only,
-   a folded card above the brief gathers what the trainee has of their own: what the tutors wrote after
-   each teaching practice, the observation sheets (the peer ones, the experienced teachers', and those
-   classmates connected with them), and the notebook. Each opens the page it lives on. Nothing is copied
-   into the answer; the writing is theirs. This page is the trainee's room alone, so no mode check. */
+   Lessons from the Classroom is a reflection, and its brief says where each part comes from:
+     A  Your strengths      from the tutor feedback on your three most recent TPs, each backed by a tutor comment
+                            and the TP it is from, "(TP6)"; a peer comment too if you can.
+     B  Your action points  from the same feedback, the same way.
+     C  What you learned    for each action point, one example of another teacher avoiding it: from the peer
+        from watching       observation tasks, the tutors' live lessons or the video observations; who, what they
+                            did, their actual words.
+     D  After the course    the trainee's own thinking; nothing in the record gives it, so the notebook is nearest.
+   So the card is a folded desk above the brief, always there (not on a timeline), laid out in the brief's own
+   order: the tutors' words for the last three lessons in full (the rest folded), what classmates connected with
+   them, the observation sheets they wrote (peer, live, filmed) with their actual notes, and their own notebook
+   with the notes tutors and classmates connected with them. Nothing is copied into the answer. This page is the
+   trainee's room alone, so no mode check. */
 function lfcMount(){
   try {
     const old = document.getElementById('lfcBack'); if (old) old.remove();
     if (CURRENT !== 'lfc') return;
     const rd = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
     const txt = h => { const d = document.createElement('div'); d.innerHTML = h || ''; d.querySelectorAll('.tag,[data-c]').forEach(x => x.remove()); return d.textContent.replace(/\s+/g, ' ').trim(); };
-    const H = rd('chub:tpHistory') || {};
-    const nums = Object.keys(H).map(Number).filter(n => n > 0 && H[n] && (H[n].docHTML || H[n].state)).sort((a, b) => a - b);
-    const items = (fb, ids) => { const L = (fb && fb.state && fb.state.lists) || {}; return ids.reduce((a, k) => a.concat((L[k] || []).map(it => it && txt(it.html)).filter(Boolean)), []); };
-    const tpRows = nums.map(n => {
-      const good = items(H[n], ['lSP', 'lST']).slice(0, 2), next = items(H[n], ['lAP', 'lAT']).slice(0, 2);
-      return '<div class="lb-tp"><b>TP' + n + '</b>' + (good.length ? '<p><span>What worked</span>' + good.map(esc).join(' · ') + '</p>' : '') + (next.length ? '<p><span>To work on</span>' + next.map(esc).join(' · ') + '</p>' : '') + '</div>';
-    }).join('');
-    const O = rd('connect_observations_v1') || {};
-    const written = o => o && Object.keys(o.a || {}).some(f => String(o.a[f] || '').trim());
-    const watched = Object.keys(O).filter(k => /^(filmed|live)/.test(k) && O[k] && O[k].turnedInAt).length;
-    const peer = Object.keys(O).filter(k => /^peer/.test(k) && written(O[k])).length;
-    const SH = rd('connect_peer_sheets_v1') || [], shOpen = SH.filter(x => x && !x.locked).length;
-    const notes = (window.HubNotebook && HubNotebook.load ? (HubNotebook.load().notes || []) : []).filter(n => n && (n.text || n.audio));
-    const days = new Set(notes.map(n => n.day)).size;
     const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
-    const brief = [nums.length ? plural(nums.length, 'returned lesson', 'returned lessons') : '', (watched + peer) ? plural(watched + peer, 'observation sheet', 'observation sheets') : '', notes.length ? plural(notes.length, 'note', 'notes') : ''].filter(Boolean).join(', ');
+    const ME = rd('hub:me') || {};
+
+    /* ---- A and B: what the tutors wrote, TP by TP ---- */
+    const H = rd('chub:tpHistory') || {};
+    const nums = Object.keys(H).map(Number).filter(n => n > 0 && H[n] && (H[n].docHTML || H[n].state)).sort((a, b) => b - a);   // newest first
+    const items = (fb, ids) => { const L = (fb && fb.state && fb.state.lists) || {}; return ids.reduce((a, k) => a.concat((L[k] || []).map(it => it && txt(it.html)).filter(Boolean)), []); };
+    const ul = a => '<ul>' + a.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+    const tpBlock = n => {
+      const fb = H[n], f = (fb.state && fb.state.f) || {};
+      const good = items(fb, ['lSP', 'lST']), next = items(fb, ['lAP', 'lAT']), overall = String(f.tOverall || '').trim();
+      return '<div class="lb-tp"><b>TP' + n + '</b>' + (f.fTutor ? '<small> · ' + esc(f.fTutor) + '</small>' : '')
+        + (good.length ? '<p class="lb-k">What worked</p>' + ul(good) : '') + (next.length ? '<p class="lb-k">To work on</p>' + ul(next) : '')
+        + (overall ? '<p class="lb-k">Overall</p><p>' + esc(overall) + '</p>' : '') + '</div>';
+    };
+    const recent = nums.slice(0, 3), earlier = nums.slice(3);
+    const sectionA = '<h3>A and B · What your tutors said</h3>'
+      + '<p class="guide">The brief asks for your three most recent lessons. Name the lesson beside each comment you use, like (TP' + (nums[0] || 6) + ').</p>'
+      + (recent.length ? recent.map(tpBlock).join('') : '<p class="guide" style="margin:0">Nothing has been returned to you yet.</p>')
+      + (earlier.length ? '<details class="lb-more"><summary>Earlier lessons · ' + earlier.length + '</summary>' + earlier.map(tpBlock).join('') + '</details>' : '')
+      + (nums.length ? '<div class="lb-links"><a href="4_feedback_returned.html">Every lesson, with your plan and your self-evaluation beside the feedback</a></div>' : '');
+
+    /* ---- A: what classmates connected with the trainee ---- */
+    const SH = rd('connect_peer_sheets_v1') || [];
+    const shBlock = '<h3>A · What your classmates said</h3>'
+      + '<p class="guide">Feedback from classmates who watched you teach. They give it aloud; what a classmate wrote down appears here when they choose to connect it with you.</p>'
+      + (SH.length ? SH.map(x => x.locked
+          ? '<div class="lb-tp"><b>TP' + esc(x.tp) + esc(x.sit) + '</b><small> · ' + esc(x.by) + '</small><p class="guide" style="margin:2px 0 0">It opens once you have handed in your TP' + esc(x.tp) + ' self-evaluation.</p></div>'
+          : '<div class="lb-tp"><b>TP' + esc(x.tp) + esc(x.sit) + '</b><small> · ' + esc(x.by) + '</small>' + (x.rows || []).filter(r => r.a).map(r => '<p class="lb-k">' + esc(r.q) + '</p><p>' + esc(r.a) + '</p>').join('') + '</div>').join('')
+        : '<p class="guide" style="margin:0">No classmate has connected anything with you yet.</p>');
+
+    /* ---- C: what the trainee wrote while watching others ---- */
+    const O = rd('connect_observations_v1') || {};
+    const W = rd('connect_observation_wording_v1');
+    const TASKS = (W && W.peer) ? W : (window.CONNECT_HUB_OBSERVATION_DEFAULTS || { peer: [], filmed: [], live: [] });
+    const val = (A, f) => String((A || {})[f] || '').trim();
+    const who = (task, sit, c) => {
+      const tch = (task.tp && window.hubPeerTeachers) ? hubPeerTeachers(String(ME.group || ''), task.tp, sit) : null, pp = tch && tch[c];
+      return !pp ? 'Teacher ' + (c + 1) : String(pp.token) === String(ME.token) ? 'You' : (pp.name || ('Trainee ' + (pp.letter || c + 1)));
+    };
+    /* what was written, question by question, whatever the sheet's shape; a lettered-parts sheet is read on its own page */
+    const written = (task, sit, A) => {
+      const out = [];
+      if (task.shape === 'grid') (task.rows || []).forEach((q, i) => { const ls = [0, 1, 2].map(c => ({ w: who(task, sit, c), t: val(A, 'r' + i + 'c' + c) })).filter(x => x.t); if (ls.length) out.push({ q, ls }); });
+      else if (task.shape === 'focus') [0, 1, 2].forEach(c => { const t = val(A, 'f' + c); if (t) out.push({ q: who(task, sit, c) + ' · what they asked you to watch for, and what you saw', ls: [{ w: '', t }] }); });
+      else if (task.shape === 'single' || task.shape === 'notes') { (task.rows || []).forEach((q, i) => { const t = val(A, 'r' + i); if (t) out.push({ q, ls: [{ w: '', t }] }); }); (task.after || []).forEach((q, i) => { const t = val(A, 'a' + i); if (t) out.push({ q, ls: [{ w: '', t }] }); }); }
+      else if (task.shape === 'questions') { (task.rows || []).forEach((q, i) => { const t = val(A, 'q' + i); if (t) out.push({ q, ls: [{ w: '', t }] }); }); (task.after || []).forEach((q, i) => { const t = val(A, 'a' + i); if (t) out.push({ q, ls: [{ w: '', t }] }); }); }
+      return out;
+    };
+    const sheetBox = (title, sub, task, key, sit, link) => {
+      const rec = O[key]; if (!rec || !rec.a) return '';
+      const rows = written(task, sit, rec.a), parts = task.shape === 'parts' && Object.keys(rec.a).some(f => val(rec.a, f));
+      if (!rows.length && !parts) return '';
+      return '<details class="lb-sheet"><summary><b>' + esc(title) + '</b>' + (sub ? '<small> · ' + esc(sub) + '</small>' : '') + '</summary>'
+        + rows.map(r => '<p class="lb-k">' + esc(r.q) + '</p>' + r.ls.map(l => '<p>' + (l.w ? '<em>' + esc(l.w) + ':</em> ' : '') + esc(l.t) + '</p>').join('')).join('')
+        + (parts ? '<p class="guide" style="margin:6px 0 0">This sheet is in lettered parts; read it on its own page.</p>' : '')
+        + '<div class="lb-links"><a href="' + link + '">Open the sheet</a></div></details>';
+    };
+    const peerBoxes = [];
+    (TASKS.peer || []).forEach(t => ['a', 'b'].forEach(sit => { const k = t.id + '#' + sit; const h = sheetBox('TP' + t.tp + sit, t.title, t, k, sit, '18_observation_tasks.html?task=' + encodeURIComponent(t.id) + '&sit=' + sit); if (h) peerBoxes.push({ n: t.tp, h }); }));
+    const liveBoxes = (TASKS.live || []).map((t, i) => sheetBox('Live observation ' + (i + 1), t.title, t, t.id, '', '18_observation_tasks.html?task=' + encodeURIComponent(t.id))).filter(Boolean);
+    const filmBoxes = (TASKS.filmed || []).map((t, i) => sheetBox('Video ' + (i + 1), t.title, t, t.id, '', '18_observation_tasks.html?task=' + encodeURIComponent(t.id))).filter(Boolean);
+    const sectionC = '<h3>C · What you watched</h3>'
+      + '<p class="guide">The brief asks for who, what they did, and why it worked: a classmate or tutor by first name, or the video number. These are your own notes from each sheet.</p>'
+      + ((peerBoxes.length || liveBoxes.length || filmBoxes.length)
+        ? (liveBoxes.length ? '<p class="lb-k">Tutors’ live lessons</p>' + liveBoxes.join('') : '')
+          + (filmBoxes.length ? '<p class="lb-k">Video observations</p>' + filmBoxes.join('') : '')
+          + (peerBoxes.length ? '<p class="lb-k">Peer observations</p>' + peerBoxes.map(x => x.h).join('') : '')
+        : '<p class="guide" style="margin:0">Nothing written on an observation sheet yet.</p>')
+      + '<div class="lb-links"><a href="18_observation_tasks.html">All your observation sheets</a></div>';
+
+    /* ---- D, and all of it: the notebook, and what was connected with the trainee ---- */
+    const notes = (window.HubNotebook && HubNotebook.load ? (HubNotebook.load().notes || []) : []).filter(n => n && (n.text || n.audio)).slice().sort((a, b) => String(a.at).localeCompare(String(b.at)));
+    const CN = (rd('connect_notes_v1') || []).filter(n => n && n.text);
+    const dayOf = n => (window.HubNotebook && HubNotebook.dayLabel ? HubNotebook.dayLabel(n.day, true) : String(n.day || '')) + (n.thread && n.thread.k !== 'day' && n.thread.t ? ' · ' + n.thread.t : '');
+    const noteP = n => '<div class="lb-note"><p class="lb-k">' + esc(dayOf(n)) + '</p><p>' + esc(n.text || 'A voice note') + '</p></div>';
+    const connP = n => '<div class="lb-note"><p class="lb-k">' + esc(dayOf(n)) + ' · connected with you by ' + esc(n.by || 'a classmate') + (n.fromTutor ? ' (tutor)' : '') + '</p><p>' + esc(n.text) + '</p></div>';
+    const sectionD = '<h3>Your own words · and D, After the course</h3>'
+      + '<p class="guide">The brief leaves what comes next to you. Your notes and the ones people connected with you are the nearest thing the course holds.</p>'
+      + (notes.length ? '<details class="lb-more"><summary>Your notebook · ' + plural(notes.length, 'note', 'notes') + '</summary>' + notes.map(noteP).join('') + '<div class="lb-links"><a href="37_notebook.html">Open your notebook</a></div></details>' : '<p class="guide" style="margin:0">No notes yet. The arc in the corner of any page opens your notebook.</p>')
+      + (CN.length ? '<details class="lb-more"><summary>Connected with you · ' + plural(CN.length, 'note', 'notes') + '</summary>' + CN.map(connP).join('') + '</details>' : '');
+
+    const watched = peerBoxes.length + liveBoxes.length + filmBoxes.length;
+    const brief = [nums.length ? plural(nums.length, 'returned lesson', 'returned lessons') : '', watched ? plural(watched, 'observation sheet', 'observation sheets') : '', (SH.filter(x => !x.locked).length) ? plural(SH.filter(x => !x.locked).length, 'classmate sheet', 'classmate sheets') : '', notes.length ? plural(notes.length, 'note', 'notes') : ''].filter(Boolean).join(', ');
     const box = document.createElement('details'); box.id = 'lfcBack'; box.className = 'card lb'; box.style.marginTop = '14px';
     box.innerHTML = '<summary>Look back over your course' + (brief ? '<small>' + esc(brief) + '</small>' : '') + '</summary><div class="lb-in">'
-      + '<p class="guide" style="margin:0 0 4px">This assignment starts from your own course. Read what you have first, then write in your own words. Nothing here is copied into your answer.</p>'
-      + '<h3>What your tutors said</h3>' + (tpRows || '<p class="guide" style="margin:0">Nothing has been returned to you yet.</p>')
-      + (nums.length ? '<div class="lb-links"><a href="4_feedback_returned.html">Your teaching practice record, with your plans and self-evaluations</a></div>' : '')
-      + '<h3>What you watched</h3><p style="margin:0">' + [
-          watched ? plural(watched, 'experienced teacher observation', 'experienced teacher observations') + ' turned in' : '',
-          peer ? plural(peer, 'peer observation sheet', 'peer observation sheets') + ' with your notes' : '',
-          shOpen ? plural(shOpen, 'sheet', 'sheets') + ' a classmate connected with you' : ''
-        ].filter(Boolean).map(esc).join('. ') + ((watched || peer || shOpen) ? '.' : 'Nothing written on an observation sheet yet.') + '</p>'
-      + '<div class="lb-links"><a href="18_observation_tasks.html">Your observation sheets</a></div>'
-      + '<h3>Your notebook</h3><p style="margin:0">' + (notes.length ? esc(plural(notes.length, 'note', 'notes') + ' across ' + plural(days, 'day', 'days')) + '.' : 'No notes yet. The arc in the corner of any page opens it.') + '</p>'
-      + (notes.length ? '<div class="lb-links"><a href="37_notebook.html">Read your notebook</a></div>' : '')
-      + '</div>';
+      + '<p class="guide" style="margin:0 0 4px">This assignment starts from your own course. It follows the order of the brief below. Read what you have, then write in your own words. Nothing here is copied into your answer.</p>'
+      + sectionA + shBlock + sectionC + sectionD + '</div>';
     const app = document.getElementById('app'); if (!app) return;
     const hdr = app.querySelector('.header');
     if (hdr && hdr.parentNode === app) hdr.after(box); else app.insertBefore(box, app.firstChild);
