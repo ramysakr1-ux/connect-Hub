@@ -112,9 +112,14 @@
         ? 'This is your signature. It is written from your name, it is yours alone, and it is the same every time you sign — here, on this course, and on Cambridge’s booklet.'
         : 'This is your signature, ' + (opts.name || '') + '. It is the same every time you sign — here, on this course, and on Cambridge’s booklet. It cannot be changed afterwards.';
 
+      /* A DEMO VISITOR'S OWN HAND (25 Oct 2026). On a demo whose card asks the visitor's name
+         (settings.demoAskName), the hand is written from that name, in a script face, so each visitor
+         signs as themselves and the same way on every sheet of the visit. */
+      var visitor = (function(){ try { var c = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; return !!(c.demoAskName && c.demoToday); } catch (e) { return false; } })();
       var spec = (window.hubHand && window.hubHand.spec(seed)) || '';
+      function specNow(){ if (!visitor || !window.hubHand) return spec; var n = nameNow(); return n ? window.hubHand.spec('demo:' + n.toLowerCase(), window.hubHand.SCRIPTS) : ''; }
       function draw(){
-        var n = nameNow();
+        var n = nameNow(); spec = specNow();
         mark.innerHTML = n && spec ? window.hubHand.html(spec, n) : '';
         ok.disabled = !n || !spec;
         hint.textContent = n ? '' : 'Your signature appears here';

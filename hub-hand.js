@@ -64,11 +64,16 @@
      gave four near-identical hands the first time (6 Oct 2026). */
   function trait(seed, salt){ return hash32(salt + '\u0001' + seed) / 4294967296; }
 
-  function spec(seed){
+  /* THE DEMO WRITES IN SCRIPT (Ramy, 25 Oct 2026: "we had very cool writing and signatures"). A demo
+     visitor who writes their own name signs in one of the three script faces, chosen from that name;
+     a real course keeps all five, so nobody's signature moves. */
+  var SCRIPTS = ['allura', 'parisienne', 'sacramento'];
+  function spec(seed, faces){
     var k = String(seed == null ? '' : seed);
     if (!k) return '';
     if (k.indexOf('k:') === 0) return '@' + STAFF + ',0';
-    var face = FACES[Math.floor(trait(k, 'face') * FACES.length) % FACES.length];
+    var pool = (faces && faces.length) ? faces : FACES;
+    var face = pool[Math.floor(trait(k, 'face') * pool.length) % pool.length];
     var slant = Math.round(trait(k, 'slant') * 10) - 5;      /* -5 to +4 degrees */
     return '@' + face + ',' + slant;
   }
@@ -111,6 +116,6 @@
       + '" aria-label="Signature">' + esc(name) + '</span>';
   }
 
-  window.hubHand = { spec: spec, html: html, face: face, written: written, parse: parse, css: css, FACES: FACES, ALL: ALL, INK: INK };
+  window.hubHand = { spec: spec, html: html, face: face, written: written, parse: parse, css: css, FACES: FACES, SCRIPTS: SCRIPTS, ALL: ALL, INK: INK };
   if (typeof module !== 'undefined' && module.exports) module.exports = window.hubHand;
 })();
