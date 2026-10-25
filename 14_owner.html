@@ -38,7 +38,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610251021">
+<link rel="stylesheet" href="hub-tokens.css?v=202610251026">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 70px;}
@@ -207,7 +207,7 @@
   @media (max-width:760px){ .demo .doors{grid-template-columns:1fr 1fr;} .setting{grid-template-columns:1fr;} }
   @media (max-width:520px){ .demo .doors{grid-template-columns:1fr;} .title h1{font-size:1.8rem;} body{padding:0 14px 60px;} .card{padding:16px;} .row-course .acts .btn{flex:1 1 auto; justify-content:center;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610251021">
+<link rel="stylesheet" href="hub-house.css?v=202610251026">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -230,10 +230,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610251021"></script>
-<script src="hub-store.js?v=202610251021"></script>
-<script src="hub-say.js?v=202610251021"></script>
-<script src="hub-card-mail.js?v=202610251021"></script>
+<script src="hub-shared.js?v=202610251026"></script>
+<script src="hub-store.js?v=202610251026"></script>
+<script src="hub-say.js?v=202610251026"></script>
+<script src="hub-card-mail.js?v=202610251026"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after. */
 const OWNER_STORE = 'hub:o';
@@ -503,6 +503,29 @@ function pageRow(c, kind){
     <div class="acts">${door}${kind === 'grades' ? `<button type="button" class="btn small danger" data-delete="${esc(c.id)}" data-label="${esc(label(c))}" data-trainees="0">Delete</button>` : ''}</div>
   </div></div>`;
 }
+const DAY_ONE_FILM = 'https://lite.celtaconnect.com/film/course-journey.html';
+function dayOneCard(c){
+  const tutor = base() + 'invite.html?k=' + encodeURIComponent(c.tutorKey);
+  const bits = [c.centreName, c.demoToday ? 'pinned to ' + niceDate(c.demoToday) : '', c.trainees ? c.trainees + ' trainees' : ''].filter(Boolean).join(' · ');
+  return `<div class="card demo dayone" id="course-${esc(c.id)}">
+    <div class="cover">
+      <svg class="big" viewBox="8 28 104 64" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#F0EEE9" stroke-width="9" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#F0EEE9" stroke-width="9" stroke-linecap="round"></path></svg>
+      <p class="eyebrow">Day one · the first time, as a trainee and as a tutor</p>
+      <h3>${esc(c.name || label(c))}</h3>
+      <p>${esc(c.courseName || '')}${bits ? ' · ' + esc(bits) : ''}<span id="du-${esc(c.id)}"></span></p>
+    </div>
+    <div class="doors" data-doors="${esc(c.id)}">
+      <div class="door"><b>As a trainee</b><span id="dt-${esc(c.id)}">Day one: the card asks their name, then the agreement to sign, the CELTA 5, TP1’s points and the day’s input session.</span><button type="button" class="btn small" data-door="trainee" data-id="${esc(c.id)}" disabled>Finding…</button></div>
+      <div class="door"><b>As a tutor</b><span>Day one of the course as the tutors see it: twelve trainees and nothing done yet.</span><button type="button" class="btn small" data-copy="${esc(tutor)}">Copy the card</button></div>
+      <div class="door"><b>The film</b><span>A whole CELTA course in three minutes: the second long film, sent with these links (Ramy, 25 Oct 2026).</span><button type="button" class="btn small" data-copy="${esc(DAY_ONE_FILM)}">Copy the link</button></div>
+    </div>
+    <div class="foot">
+      <button type="button" class="linkbtn" data-share="wa" data-id="${esc(c.id)}" data-tutor="${esc(tutor)}">Share on WhatsApp</button>
+      <button type="button" class="linkbtn" data-share="mail" data-id="${esc(c.id)}" data-tutor="${esc(tutor)}">Send by email</button>
+      <span class="right"><code>${esc(c.id)}</code></span>
+    </div>
+  </div>`;
+}
 function oldDemoRow(c){
   const tutor = base() + 'invite.html?k=' + encodeURIComponent(c.tutorKey);
   return `<div class="card" id="course-${esc(c.id)}"><div class="row-course">
@@ -526,13 +549,16 @@ function render(courses, msg){
   const real = COURSES.filter(c => courseKind(c) === 'live').sort((a, b) => (b.id === NEW_ID) - (a.id === NEW_ID) || String(b.start || '').localeCompare(String(a.start || '')));
   const live = real.filter(c => !(c.end && c.end < TODAY()));
   const earlier = real.filter(c => c.end && c.end < TODAY());
-  const old = COURSES.filter(c => courseKind(c) === 'demo' && c !== demo);
+  /* THE DAY-ONE DEMO (Ramy, 25 Oct 2026: "why is it under earlier courses?"): a second standing demo, with its
+     own card beside the mid-course one; the links to copy, and WhatsApp and email to send them by. */
+  const dayOne = COURSES.find(c => courseKind(c) === 'demo' && c !== demo && /day one/i.test(String(c.name || '')));
+  const old = COURSES.filter(c => courseKind(c) === 'demo' && c !== demo && c !== dayOne);
   const scratch = COURSES.filter(c => courseKind(c) === 'scratch');
   const lib = COURSES.find(c => courseKind(c) === 'library'), grades = COURSES.find(c => courseKind(c) === 'grades');
   const bin = COURSES.filter(c => courseKind(c) === 'bin').sort((a, b) => String(a.deleted).localeCompare(String(b.deleted)));
   $('app').innerHTML = `
     <div class="title">
-      <div><p class="eyebrow">Connect Lite</p><h1>Courses</h1><p>${live.length ? live.length + ' live course' + (live.length === 1 ? '' : 's') + ', ' : ''}one demo${earlier.length ? ', ' + earlier.length + ' earlier course' + (earlier.length === 1 ? '' : 's') : ''}${old.length ? ', ' + old.length + ' old demo' + (old.length === 1 ? '' : 's') + ' to clear' : ''}.</p></div>
+      <div><p class="eyebrow">Connect Lite</p><h1>Courses</h1><p>${live.length ? live.length + ' live course' + (live.length === 1 ? '' : 's') + ', ' : ''}${dayOne ? 'two demos' : 'one demo'}${earlier.length ? ', ' + earlier.length + ' earlier course' + (earlier.length === 1 ? '' : 's') : ''}${old.length ? ', ' + old.length + ' old demo' + (old.length === 1 ? '' : 's') + ' to clear' : ''}.</p></div>
       <div class="acts"><button class="btn primary" id="makeBtn" type="button">Make a course</button></div>
     </div>
     <div class="make" id="makeRow" hidden>
@@ -543,7 +569,7 @@ function render(courses, msg){
       <span class="note" id="mkNote">Only a course with a real centre number gets made, and the centre cannot edit it afterwards.</span>
     </div>
 
-    ${demo ? `<section class="sec"><div class="cards">${demoCard(demo)}${sendCard()}</div></section>` : `<section class="sec"><div class="empty">No demo course. Seed one, and every card will open it.</div></section>`}
+    ${demo ? `<section class="sec"><div class="cards">${demoCard(demo)}${sendCard()}${dayOne ? dayOneCard(dayOne) : ''}</div></section>` : `<section class="sec"><div class="empty">No demo course. Seed one, and every card will open it.</div></section>`}
 
     <section class="sec"><h2>Live courses <small>real centres, real trainees — never practise on these</small></h2>
       <div class="cards">${live.length ? live.map(liveRow).join('') : '<div class="empty">No live course yet. Make one above and send the centre its tutor link.</div>'}</div></section>
@@ -579,6 +605,8 @@ function render(courses, msg){
 }
 async function fillDoors(c){
   const k = await doorsFor(c);
+  document.querySelectorAll(`[data-share][data-id="${c.id}"]`).forEach(b => { if (k.trainee) b.setAttribute('data-trainee', k.trainee); });
+  if (/day one/i.test(String(c.name || ''))) { try { const cs = (await call({ op: 'course', key: c.tutorKey })).settings || {}; if (cs.demoExpires) { const u = $('du-' + c.id); if (u) u.textContent = ' · links open until ' + niceDate(cs.demoExpires); document.querySelectorAll(`[data-share][data-id="${c.id}"]`).forEach(b => b.setAttribute('data-until', cs.demoExpires)); } } catch (e) {} }
   const t = document.querySelector(`[data-door="trainee"][data-id="${c.id}"]`), v = document.querySelector(`[data-door="volunteer"][data-id="${c.id}"]`);
   if (t) { if (k.trainee) { t.disabled = false; t.textContent = t.closest('.doors') ? 'Copy the card' : 'Trainee link'; t.setAttribute('data-copy', k.trainee); t.removeAttribute('data-door'); const s = $('dt-' + c.id); if (s && k.traineeName) s.textContent = k.traineeName.split(' ')[0] + '’s own space: plans, self-evaluations, feedback and assignments.'; } else t.textContent = 'No trainees on it'; }
   if (v) { if (k.volunteer) { v.disabled = false; v.textContent = 'Copy the card'; v.setAttribute('data-copy', k.volunteer); v.removeAttribute('data-door'); const s = $('dv-' + c.id); if (s && k.volunteerName) s.textContent = k.volunteerName.split(' ')[0] + '’s page: the next class, their days, their certificate.'; } else v.textContent = 'No volunteers on it'; }
@@ -757,6 +785,16 @@ $('app').addEventListener('click', async e => {
       v.disabled = false; v.textContent = was; await hubCopyButton(v, base() + 'invite.html?v=' + encodeURIComponent(first.token)); }
     catch (err) { v.textContent = 'Could not reach the course'; v.disabled = false; setTimeout(() => { v.textContent = was; }, 2600); }
     return; }
+  const sh = T('[data-share]');
+  if (sh) {
+    const trainee = sh.dataset.trainee, tutor = sh.dataset.tutor;
+    if (!trainee) { status('The trainee link is still being found; try again in a moment.'); return; }
+    const until = sh.dataset.until ? ' The links open until ' + niceDate(sh.dataset.until) + '.' : '';
+    const text = 'Connect Lite, day one of a CELTA course, the way a trainee and a tutor see it for the first time.\n\nAs a trainee: ' + trainee + '\n\nAs a tutor: ' + tutor + '\n\nThe film, a whole CELTA course in three minutes: ' + DAY_ONE_FILM + '\n\nThe card asks your name; everything you do stays in your own visit.' + until;
+    if (sh.dataset.share === 'wa') window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
+    else location.href = 'mailto:?subject=' + encodeURIComponent('Connect Lite, day one') + '&body=' + encodeURIComponent(text);
+    return;
+  }
   const b = T('[data-copy]');
   if (b) { await hubCopyButton(b, b.dataset.copy); return; }
   const pg = T('[data-purge]');
