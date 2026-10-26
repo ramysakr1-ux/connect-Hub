@@ -263,6 +263,7 @@
         </div>
         <div class="field"><label for="f-why">Why this school, in one sentence</label><p class="why">Something you read on their website: a course they run, how they teach, where they are.</p><input id="f-why" data-k="why"></div>
         <div class="field"><label for="f-can">What you can teach, and to whom, in one sentence</label><input id="f-can" data-k="can"></div>
+        <div class="field"><label for="f-bring">What you bring, in two or three sentences</label><p class="why">Not your CV again: the one or two things that make you right for this school, in your own voice. Left empty, the letter uses your CV.</p><textarea id="f-bring" data-k="bring" rows="4"></textarea></div>
       </div>
 
       <div class="card">
@@ -297,21 +298,21 @@
 <script>
 /* Examples, shown in gray until the person types over them; never printed. Made-up people. */
 const EX = {
-  new: { name:'Sofia Marín', email:'sofia.marin@example.com', phone:'+34 600 123 456', city:'Valencia, Spain', linkedin:'linkedin.com/in/sofiamarin', web:'', video:'youtu.be/your-intro',
+  new: { bring:'Two summers leading a children’s camp taught me to keep a group busy, happy and on task, and my private conversation classes taught me to listen. On the course I learned to plan around one clear aim and to keep my own talking short.', name:'Sofia Marín', email:'sofia.marin@example.com', phone:'+34 600 123 456', city:'Valencia, Spain', linkedin:'linkedin.com/in/sofiamarin', web:'', video:'youtu.be/your-intro',
     headline:'CELTA-qualified English teacher · adults and teens, A2 to B1',
     profile:'Newly CELTA-qualified, with six assessed hours at A2 and B1 and two summers teaching children. I plan around a clear main aim and keep teacher talk low.',
     celta:'Cambridge CELTA · the center’s name · November 2026', tp:'Six assessed hours, A2 and B1 adults, in person; observed six hours of experienced teachers',
     books:'Speakout A2, Empower B1', exp:'2023–2024 · Summer camp leader, children 8 to 12: games, sports and English activities\n2025 · Private conversation classes, three adult learners, online',
     langs:'Spanish (first language), English (C2), Italian (B1)', nat:'Spanish',
     expLabel:'Earlier experience', expWhy:'Study, travel, part-time work: anything with people, groups or other languages.' },
-  career: { name:'David Okafor', email:'david.okafor@example.com', phone:'+44 7700 900123', city:'Leeds, UK', linkedin:'linkedin.com/in/davidokafor', web:'', video:'youtu.be/your-intro',
+  career: { bring:'I have spent ten years training adults at work, so I know how busy professionals learn: short, practical, and straight to what they need on Monday morning. I can bring that to your classes, along with the language of meetings, appraisals and email from the inside.', name:'David Okafor', email:'david.okafor@example.com', phone:'+44 7700 900123', city:'Leeds, UK', linkedin:'linkedin.com/in/davidokafor', web:'', video:'youtu.be/your-intro',
     headline:'English teacher and trainer (CELTA) · adults, business English',
     profile:'Eighteen years in HR, the last ten training staff, now CELTA-qualified. I bring workplace English from the inside: interviews, meetings, appraisals, emails that get answered.',
     celta:'Cambridge CELTA · the center’s name · November 2026', tp:'Six assessed hours, B1 and B2 adults, in person',
     books:'Speakout B1, Business Result Intermediate', exp:'2016–2026 · Learning and development lead, a logistics company: designed and ran training for 200+ staff a year\n2008–2016 · HR adviser: interviews, onboarding, workshops',
     langs:'English (first language), French (B2)', nat:'British',
     expLabel:'Your earlier career, rewritten for teaching', expWhy:'Name what transfers: training, presenting, managing groups, a field you can teach.' },
-  teacher: { name:'Yuki Tanaka', email:'yuki.tanaka@example.com', phone:'+81 90 1234 5678', city:'Osaka, Japan', linkedin:'', web:'yourname.example.com', video:'youtu.be/your-intro',
+  teacher: { bring:'Eight years with children and teenagers have taught me routines, games, and how to keep a mixed class on track. The CELTA gave me a clearer shape for every lesson and the habit of letting learners do more of the talking.', name:'Yuki Tanaka', email:'yuki.tanaka@example.com', phone:'+81 90 1234 5678', city:'Osaka, Japan', linkedin:'', web:'yourname.example.com', video:'youtu.be/your-intro',
     headline:'English teacher, eight years · young learners, teens and exam classes',
     profile:'Eight years teaching children and teenagers, now CELTA-qualified. The course changed how I stage a lesson: one main aim, more learner talk, and feedback that learners act on.',
     celta:'Cambridge CELTA · the center’s name · November 2026', tp:'Six assessed hours, A2 and B1 adults, in person',
@@ -401,16 +402,38 @@ function cv(){
     ${prof}${order.join('')}${langs}
     <div class="cv-sec"><h3>References</h3>Your CELTA tutors, on request. CELTA report attached.</div>`;
 }
+/* WHAT YOU BRING (Ramy, 26 Oct 2026: about 100 words was thin). One paragraph after the opening, made from what they
+   already typed on the CV page: the CELTA sentence for where they are in teaching, their teaching practice, their most
+   recent experience, and what they wrote for this kind of teaching (exams, a specialist field...). Each says a thing
+   once; the CV's profile stays on the CV. On screen an empty part shows its example in gray; on paper it is not there. */
+function bring(){
+  const lower = t => /^[A-Z][a-z]/.test(t) ? t[0].toLowerCase() + t.slice(1) : t;
+  const clean = t => esc(lower(String(t).trim())).replace(/[.;,]+\s*$/, '');
+  const part = (k, f) => has(k) ? f(st.d[k]) : (printing ? '' : '<span class="eg">' + f(k === 'extra' ? ((K[st.k].extra || [])[1] || '') : ex(k)) + '</span>');
+  const latest = src => { const rows = String(src || '').split('\n').filter(l => l.trim()).map(l => { const i = l.indexOf(' · '); const a = i >= 0 ? l.slice(0, i) : '', b = i >= 0 ? l.slice(i + 3) : l; const y = Math.max(0, ...(a.match(/\d{4}/g) || ['0']).map(Number)); return { a, b, y }; });
+    rows.sort((x, z) => z.y - x.y); return rows[0]; };
+  const opener = { new:'I have just completed the CELTA.', career:'After a career in another field, I have just completed the CELTA and am moving into teaching.', teacher:'I have taught English for several years, and I have just completed the CELTA.' }[st.p];
+  const expLead = { new:'Before the course', career:'Before teaching', teacher:'Most recently' }[st.p];
+  const bits = [opener,
+    part('tp', t => 'My teaching practice: ' + clean(t) + '.'),
+    part('exp', t => { const r = latest(t); return r ? expLead + ': ' + clean(r.b) + (r.a ? ' (' + esc(r.a) + ')' : '') + '.' : ''; }),
+    K[st.k].extra ? part('extra', t => K[st.k].extra[0] + ': ' + clean(t) + '.') : ''
+  ].filter(Boolean);
+  /* their own words, when they have written them, after the CELTA sentence */
+  if (has('bring')) return '<p>' + opener + ' ' + esc(st.d.bring) + '</p>';
+  if (!printing) return '<p>' + opener + ' <span class="eg">' + esc(ex('bring')) + '</span></p>';
+  return '<p>' + bits.join(' ') + '</p>';
+}
 function letter(){
   const lx = k => has(k) ? esc(st.d[k]) : (printing ? '' : '<span class="eg">[' + esc(LETTER_EX[k]) + ']</span>');
-  const hook = { new:'I have just completed the CELTA, with six assessed hours of teaching practice.', career:'After years in another career, I have completed the CELTA and am moving into teaching.', teacher:'I have taught English for several years and have just completed the CELTA.' }[st.p];
   const today = new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
   const head = [has('email') ? `<a href="mailto:${esc(st.d.email)}">${esc(st.d.email)}</a>` : '', has('phone') ? esc(st.d.phone) : '', has('city') ? esc(st.d.city) : ''].filter(Boolean).join(' · ');
   return `<div class="letter"><div class="cv-name" style="font-size:1.5rem">${val('name', ex('name'))}</div><div class="cv-contact" style="margin-bottom:18px">${head || '&nbsp;'}</div>
     <p>${today}</p><p>Dear ${lx('dos')},</p>
     <p>I am writing to apply for a teaching position at ${lx('school')}${st.pl === 'online' ? ', teaching online' : ''}. ${lx('why')}</p>
-    <p>${hook} ${lx('can')} I would welcome feedback and the chance to keep developing in ${K[st.k].letter}.</p>
-    <p>My CV and CELTA report are attached; my tutors are happy to act as references.</p>
+    ${bring()}
+    <p>${lx('can')} I would welcome feedback and the chance to keep developing in ${K[st.k].letter}.</p>
+    <p>My CV and CELTA report are attached, and my tutors are happy to act as references. I would be glad to teach a demo lesson, or to talk online at a time that suits you.</p>
     <p>Sincerely,<br>${val('name', ex('name'))}</p></div>`;
 }
 let view = 'cv';
