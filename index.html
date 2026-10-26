@@ -38,7 +38,7 @@
 <meta name="twitter:image" content="https://lite.celtaconnect.com/brand/share-card.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610261845">
+<link rel="stylesheet" href="hub-tokens.css?v=202610261907">
 <style>
   :root{
     /* The pane. A card on this page is a sheet of glass lying on the paper,
@@ -107,6 +107,7 @@
   .hero .hero-name{display:flex; flex-wrap:wrap; gap:10px; margin:16px 0 0;}
   .hero .hero-name input{flex:1 1 220px; max-width:360px; font:inherit; font-size:1rem; padding:11px 14px; border-radius:10px; border:0; background:var(--paper); color:var(--ink);}
   .hero .hero-name .go{display:inline-flex; margin:0; cursor:pointer; border:0;}
+  .hero .hero-sig{flex-basis:100%; color:var(--paper); min-height:0;} .hero .hero-sig small{display:block; font-size:.78rem; opacity:.8; margin:4px 0 2px;} .hero .hero-sig svg.ink, .hero .hero-sig .hand{height:52px; color:var(--paper);}
   .hero .todo{list-style:none; margin:14px 0 0; padding:0; display:flex; flex-direction:column; gap:8px;}
   .hero .todo:empty{display:none;}
   .hero .todo li{position:relative; padding-left:18px; font-size:0.9rem; line-height:1.5; opacity:.95;}
@@ -452,7 +453,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610261845">
+<link rel="stylesheet" href="hub-house.css?v=202610261907">
 </head>
 <body>
 <div class="board">
@@ -665,17 +666,19 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 28 104 64" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202610261845"></script>
-<script src="observation-defaults.js?v=202610261845"></script>
-<script src="hub-shared.js?v=202610261845"></script>
+<script src="hub-due.js?v=202610261907"></script>
+<script src="observation-defaults.js?v=202610261907"></script>
+<script src="hub-shared.js?v=202610261907"></script>
+<script src="hub-hand.js?v=202610261907"></script>
+<script src="hub-ink.js?v=202610261907"></script>
 <script src="input-sessions/library.js?v=202610141516"></script>
-<script src="hub-store.js?v=202610261845"></script>
-<script src="hub-say.js?v=202610261845"></script>
-<script src="hub-shelf.js?v=202610261845"></script>
-<script src="hub-front.js?v=202610261845"></script>
-<script src="hub-sync.js?v=202610261845"></script>
-<script src="hub-notebook.js?v=202610261845"></script>
-<script src="hub-feedback.js?v=202610261845"></script>
+<script src="hub-store.js?v=202610261907"></script>
+<script src="hub-say.js?v=202610261907"></script>
+<script src="hub-shelf.js?v=202610261907"></script>
+<script src="hub-front.js?v=202610261907"></script>
+<script src="hub-sync.js?v=202610261907"></script>
+<script src="hub-notebook.js?v=202610261907"></script>
+<script src="hub-feedback.js?v=202610261907"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -704,9 +707,17 @@ function status(el,text,tone){ if(!el) return; el.textContent=text; el.className
 (function(){
   if (window.HubMode !== 'trainee') return;
   const cs = rec('connect_course_settings') || {};
-  if (cs.demoToday) return;
   const a = cs.agreement || {}, own = String(((cs.docs || {}).docAgreement) || '').trim();
   const has = !!(own || ['agrAttendance','agrPlagiarism','agrComplaints','agrResubmissions'].some(k => String(a[k] || '').trim()));
+  /* A DEMO THAT ASKS WHO IS VISITING (Ramy, 26 Oct 2026: "for the sake of the demo, they don't actually have to sign the
+     agreement ... this is a demo, you don't need to sign ... so they're not weeded out"): once the visitor has given their
+     name, the agreement shows once, with Continue instead of a signature. Any other demo is for looking round. */
+  if (cs.demoToday) {
+    let named = '', seen = '';
+    try { named = (sessionStorage.getItem('hub:demoName') || '').trim(); seen = sessionStorage.getItem('hub:demoAgreed') || ''; } catch (e) {}
+    if (cs.demoAskName && has && named && !seen) { location.replace('29_candidate_agreement.html?first=1'); throw new Error('Connect Lite: the agreement comes first.'); }
+    return;
+  }
   const s = rec('chub:agreement');
   if (has && !(s && s.at)) { location.replace('29_candidate_agreement.html?first=1'); throw new Error('Connect Lite: the agreement comes first.'); }
 })();
@@ -1416,7 +1427,9 @@ if (fbBack){
   })();
   if (C5T.final && C5T.final.signed && C5T.final.signed.at && !(C5.final && C5.final.signed && C5.final.signed.at))
     add('Your final declaration is ready to sign', '20_celta5.html');
-  if (hasAgr && !signedAgr) add('Read and sign the candidate agreement', '29_candidate_agreement.html');
+  /* a demo visitor who pressed Continue on the agreement has seen it: nothing to sign on a demo (26 Oct 2026) */
+  const demoAgreed = (function(){ try { return !!(CS.demoToday && sessionStorage.getItem('hub:demoAgreed')); } catch (e) { return false; } })();
+  if (hasAgr && !signedAgr && !demoAgreed) add('Read and sign the candidate agreement', '29_candidate_agreement.html');
   /* NOT BEFORE DAY ONE. Ramy, 6 Oct 2026: "the self-declaration should happen
      on the first day of the course. I don't want them going through it yet
      without really knowing what they're supposed to do." They are Cambridge's
@@ -1453,7 +1466,8 @@ if (fbBack){
   if (ASK_NAME) {
     kind = 'Welcome';
     title = 'Welcome. What is your name?';
-    when = 'This is day one of a CELTA course on Connect Lite, and for this visit you are one of its trainees. Write your name: the course greets you by it, and your documents are signed with it.';
+    when = (beforeStart ? 'This is a CELTA course on Connect Lite, starting on <b>' + esc2(dayName(START)) + '</b>,' : 'This is day one of a CELTA course on Connect Lite,')
+      + ' and for this visit you are one of its trainees. Write your name: the course greets you by it, and it becomes your signature.';
     list = [];
   } else if (afterEnd) {
     quiet = true;
@@ -1473,9 +1487,13 @@ if (fbBack){
        the two pages of Lite's own and one sentence on what to do. */
     /* Short on purpose (Ramy, 8 Oct 2026: "too much writing"): one line on
        the card, and what each thing is lives on the item itself. */
-    const keyOpens = (function(){ const m = String(START || '').match(/^(\d{4})-(\d{2})-(\d{2})/); if (!m) return ''; const d = new Date(Date.UTC(+m[1], +m[2]-1, +m[3])); d.setUTCDate(d.getUTCDate() - 2); return d.toISOString().slice(0, 10); })();
+    /* THE LAST WORKING DAY BEFORE THE COURSE (Ramy, 26 Oct 2026: "return on whatever date for further instructions"): until
+       then the card says only what is sure -- when the course starts, the pre-course task in case they don't have it, and
+       the day to come back; from that day, whatever the course admin set up (the answer key, the getting-to-know-you
+       activity, the interview questions). Friday for a Monday start. */
+    const keyOpens = window.hubPreOpens ? hubPreOpens(START) : '';
     const preSet = CS.preCourseConnect
-      ? [{ text: 'Check your pre-course task against the answer key' + (keyOpens && TODAY && TODAY < keyOpens ? ' (it opens ' + shortDay(keyOpens) + ')' : ''), href: '30_precourse_key.html' },
+      ? [{ text: 'Check your pre-course task against the answer key', href: '30_precourse_key.html' },
          (function(){ const plan = window.hubGtkyPlan ? hubGtkyPlan(CS, TT) : { when: '', minutes: 0 };
             return { text: (CS.gtkyFormat === 'interview' ? 'Read the questions for your student interview' : CS.gtkyFormat === 'both' ? 'Pick your getting-to-know-you activity, and read the questions for your student interview' : 'Pick your getting-to-know-you activity') + (plan.when ? ' (' + (plan.minutes ? plan.minutes + ' minutes, ' : '') + plan.when + (plan.slot ? ', ' + plan.slot : '') + ')' : ''), href: '31_getting_to_know_you.html' }; })()]
       : [];
@@ -1491,6 +1509,13 @@ if (fbBack){
     if (ttReady) list = list.concat([{ text: 'Look at your timetable — see what day one holds', href: '23_timetable.html' }]);
     note = (ttReady ? '' : 'Your timetable will be here before the course starts. ')
       + 'The cards below open as the course reaches them — your lesson plan when teaching practice begins, your feedback when your tutor returns it. You will not have to go looking.';
+    if (keyOpens && TODAY && TODAY < keyOpens) {
+      when = 'Your course starts on <b>' + esc2(dayName(START)) + '</b>' + (n === 1 ? ' — tomorrow.' : n > 1 ? ' — ' + n + ' days from today.' : '.')
+        + (preLinks.length ? ' Here is your pre-course task, in case you don’t have it.' : '')
+        + ' Come back on <b>' + esc2(dayName(keyOpens)) + '</b> for what to do before day one.';
+      list = preLinks.map(l => ({ text: String(l.label || 'Your pre-course task'), href: l.url, out: true }));
+      note = '';
+    }
   } else if (firstVisit) {
     /* A WELCOME FOR WHOEVER COMES IN AFTER DAY ONE (Ramy, 10 Oct 2026). The
        welcome above only ever showed before the course started, so a trainee
@@ -1544,8 +1569,15 @@ if (fbBack){
     const f = document.createElement('form');
     f.id = 'heroName'; f.className = 'hero-name';
     f.innerHTML = '<input type="text" id="heroNameIn" autocomplete="name" maxlength="80" placeholder="Your name" aria-label="Your name, for this visit">'
-      + '<button type="submit" class="go">Start</button>';
+      + '<button type="submit" class="go">Start</button>'
+      /* the name becomes a signature as it is typed (Ramy, 26 Oct 2026: "do they see a digital signature like the trainers do?") */
+      + '<div class="hero-sig" id="heroSig" aria-live="polite"></div>';
     w.insertAdjacentElement('afterend', f);
+    const sigIn = document.getElementById('heroNameIn'), sigOut = document.getElementById('heroSig');
+    sigIn.addEventListener('input', function(){
+      const v = String(sigIn.value || '').trim();
+      sigOut.innerHTML = v && window.hubInk ? '<small>This is how you will sign</small>' + hubInk.svg(hubInk.mine(v), 'sm', v) : '';
+    });
     f.addEventListener('submit', function(e){
       e.preventDefault();
       const v = String(document.getElementById('heroNameIn').value || '').trim().slice(0, 80);
@@ -1555,7 +1587,7 @@ if (fbBack){
         localStorage.setItem('hub:name', v);
         const me2 = rec('hub:me') || {}; me2.name = v; localStorage.setItem('hub:me', JSON.stringify(me2));
       } catch (err) {}
-      location.reload();
+      location.reload();   /* the agreement comes next: the gate at the top of the page sends them on */
     });
   }
 

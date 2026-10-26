@@ -26,7 +26,7 @@
 <title>Candidate agreement</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610261845">
+<link rel="stylesheet" href="hub-tokens.css?v=202610261907">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -73,20 +73,20 @@
   .decl textarea:disabled{opacity:0.55;}
   @media print{ body{background:#fff; padding:0;} .back,.signbox .row,.btn{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610261845">
+<link rel="stylesheet" href="hub-house.css?v=202610261907">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610261845"></script>
-<script src="hub-store.js?v=202610261845"></script>
-<script src="hub-hand.js?v=202610261845"></script>
-<script src="hub-ink.js?v=202610261845"></script>
-<script src="hub-say.js?v=202610261845"></script>
-<script src="hub-sync.js?v=202610261845"></script>
-<script src="hub-notebook.js?v=202610261845"></script>
+<script src="hub-shared.js?v=202610261907"></script>
+<script src="hub-store.js?v=202610261907"></script>
+<script src="hub-hand.js?v=202610261907"></script>
+<script src="hub-ink.js?v=202610261907"></script>
+<script src="hub-say.js?v=202610261907"></script>
+<script src="hub-sync.js?v=202610261907"></script>
+<script src="hub-notebook.js?v=202610261907"></script>
 <script type="text/x-hub-app">
 /* A volunteer student is not on the course. They come in off the street to be
    taught, and what the centre asks of its TRAINEES -- attendance, plagiarism,
@@ -243,7 +243,12 @@ function render(){
      that could change it. A centre that rewrites the agreement asks for it
      again (the fingerprint below) -- the same signature, a new date. */
   let sign;
-  if (rec.at) {
+  /* THE DEMO'S AGREEMENT (Ramy, 26 Oct 2026: "this is a demo, you don't need to sign ... so they're not weeded out by what
+     do I have to sign this"): the visitor sees that a trainee meets the agreement first, and goes on without signing. */
+  if (FIRST && ASKS_HERE && !rec.at) {
+    sign = `<div class="signbox"><h2>This is a demo</h2><p class="lead">On a real course, the trainee signs here before anything else, and their name becomes their signature. For this visit you don’t need to sign.</p>
+      <div class="row"><button class="btn primary" type="button" id="demoGo">Continue to the course</button></div></div>`;
+  } else if (rec.at) {
     const stale = rec.print && rec.print !== fp;
     sign = `<div class="signbox"><h2>Signed</h2>
       <div class="signed">${rec.ink && window.hubInk ? window.hubInk.svg(rec.ink, 'sm', rec.name) : ''}
@@ -266,6 +271,8 @@ function render(){
   }
 
   $('app').innerHTML = head + ownBlock + body + sign;
+  const dg = $('demoGo');
+  if (dg) dg.addEventListener('click', () => { try { sessionStorage.setItem('hub:demoAgreed', '1'); } catch (e) {} location.replace('index.html'); });
 
   const btn = $('signBtn');
   if (btn) btn.addEventListener('click', async () => {

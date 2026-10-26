@@ -59,12 +59,18 @@ const R = (() => { const src = readFileSync(join(HERE, 'hub-rotation.js'), 'utf8
 
 const WRITE = process.argv.includes('--write');
 const WHICH = process.argv[process.argv.indexOf('--which') + 1];
-if (!['start', 'visit', 'dayone', 'walk'].includes(WHICH)) { console.log('say --which start, --which visit, --which dayone or --which walk'); process.exit(1); }
+if (!['start', 'visit', 'dayone', 'walk', 'friday'].includes(WHICH)) { console.log('say --which start, --which visit, --which dayone, --which walk or --which friday'); process.exit(1); }
 /* walk (Ramy, 26 Oct 2026: "walking through it from the start, from day one"): the day-one course, but on
    the real calendar from Monday 26 October, with no demo clock. Nothing is pinned, every write saves, and
    tomorrow is day 2. Ramy walks it as a trainee, Claude as the tutor. */
 const WALK = WHICH === 'walk';
-const DAYONE = WHICH === 'dayone' || WALK;
+/* friday (Ramy, 26 Oct 2026: "the demo should be written from the Friday before the course starts. The trainee is like for
+   the first time login, and then they are told about either the getting to know you or the interviews on day one and the
+   answer key and anything else is supposed to be there"). The day-one course, pinned to the Friday before day one, so a
+   visitor meets the course before it begins: the agreement, then "Your course starts on Monday ... Before then". A second
+   demo beside the day-one one, not instead of it. */
+const FRIDAY = WHICH === 'friday';
+const DAYONE = WHICH === 'dayone' || WALK || FRIDAY;
 const REUSE = (process.argv[process.argv.indexOf('--course') + 1] || '').match(/^c\d+$/) ? process.argv[process.argv.indexOf('--course') + 1] : '';
 const KEEP = new Set(['c1', 'c2', 'c3', 'c4', 'c5']);
 
@@ -95,8 +101,8 @@ const DAY = i => DAYS[i - 1];                                  // 1-based course
    the visit four days out. */
 /* dayone (Ramy, 25 Oct 2026): the link for trainees, pinned to day 1 -- they sign the agreement, pick a
    getting-to-know-you activity, read the timetable and TP1's points, and open the day's input session. */
-const PIN_DAY = DAYONE ? 1 : WHICH === 'start' ? 6 : 13;
-const PIN = DAY(PIN_DAY);
+const PIN_DAY = FRIDAY ? 0 : DAYONE ? 1 : WHICH === 'start' ? 6 : 13;
+const PIN = FRIDAY ? (() => { const d = new Date(START + 'T12:00:00Z'); do { d.setUTCDate(d.getUTCDate() - 1); } while (d.getUTCDay() === 0 || d.getUTCDay() === 6); return d.toISOString().slice(0, 10); })() : DAY(PIN_DAY);
 const VISIT_DAY = 17;
 /* London is on GMT in March, so a course time is a UTC time. */
 const ts = (day, hhmm) => Date.parse(DAY(day) + 'T' + hhmm + ':00Z');
@@ -203,6 +209,7 @@ function settingsFor(tokens) {
   if (WHICH === 'visit') { s.docs = DOCS; s.assessorVisit = [tokens[0], tokens[3]]; }
   if (DAYONE) s.demoAskName = true;   // the card asks who is visiting (25 Oct 2026)
   /* the walk is a real course: each trainee's link is theirs, and the clock is the real one */
+  if (FRIDAY) s.courseLinks = COURSE_LINKS.concat([{ label: 'Pre-course task', url: 'https://drive.google.com/file/d/demo-precourse-task/view', card: 'Before the course', show: true }]);
   if (WALK) { delete s.demoToday; delete s.demoAskName; s.courseName = 'CELTA — Launch walk'; s.notificationRef = 'TR999-LW/2026'; }
   if (DAYONE) {
     /* the agreement, in Lite's own words, for the trainee to read and sign; the pre-course key and the
@@ -527,7 +534,7 @@ async function docBuilder(settings) {
 }
 
 /* ---- the course ------------------------------------------------------------ */
-const NAME = WALK ? 'Launch walk — from day one' : DAYONE ? 'Demo — day one' : WHICH === 'start' ? 'Demo — the first week' : 'Demo — before the visit';
+const NAME = WALK ? 'Launch walk — from day one' : FRIDAY ? 'Demo — before day one' : DAYONE ? 'Demo — day one' : WHICH === 'start' ? 'Demo — the first week' : 'Demo — before the visit';
 let course;
 if (REUSE) {
   const oc = await call({ op: 'ownerCourses', owner: OWNER });
@@ -674,7 +681,7 @@ if (WRITE) {
      post from its own future, so anything dated after the pinned day goes
      before the day's posts are written. */
   const streamNow = (((await call({ op: 'course', key: KEY })).result || {}).stream || []);
-  const cutoff = iso(PIN_DAY, '23:59');
+  const cutoff = PIN_DAY ? iso(PIN_DAY, '23:59') : PIN + 'T23:59:00.000Z';
   for (const stale of streamNow.filter(p => p && String(p.at) > cutoff)) {
     const r = await call({ op: 'unpost', key: KEY, id: stale.id });
     console.log('   dropped a post dated after the pinned day: ' + String(stale.text).slice(0, 44) + (r.ok ? '' : ' (FAILED: ' + r.error + ')'));

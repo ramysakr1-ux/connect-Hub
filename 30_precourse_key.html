@@ -22,7 +22,7 @@
 <title>Pre-course task: the answer key</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610261845">
+<link rel="stylesheet" href="hub-tokens.css?v=202610261907">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -68,19 +68,19 @@
   @media(prefers-reduced-motion:reduce){ .pk .task .a, .pk-show, .pk-bar i{transition:none;} }
   @media print{ .pk .task.pk-cov .a{filter:none; opacity:1;} .pk-show, .pk-count{display:none;} .pk .task.pk-seen h3::after{content:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610261845">
+<link rel="stylesheet" href="hub-house.css?v=202610261907">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610261845"></script>
-<script src="hub-store.js?v=202610261845"></script>
-<script src="hub-say.js?v=202610261845"></script>
-<script src="hub-sync.js?v=202610261845"></script>
-<script src="hub-notebook.js?v=202610261845"></script>
-<script src="precourse-key.js?v=202610261845"></script>
+<script src="hub-shared.js?v=202610261907"></script>
+<script src="hub-store.js?v=202610261907"></script>
+<script src="hub-say.js?v=202610261907"></script>
+<script src="hub-sync.js?v=202610261907"></script>
+<script src="hub-notebook.js?v=202610261907"></script>
+<script src="precourse-key.js?v=202610261907"></script>
 <script type="text/x-hub-app">
 /* A volunteer student is not on the course and has no pre-course task. */
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
@@ -91,7 +91,7 @@ const IS_TRAINEE = !!(window.HubStore && HubStore.isTrainee && HubStore.isTraine
 function settings(){ try { return JSON.parse(localStorage.getItem('connect_course_settings') || 'null') || {}; } catch(e){ return {}; } }
 /* Two days before the start, date-only, the way every reading of a course
    date is done here (hubToday honours a demo's pinned day). */
-function opensOn(start){ const m = String(start || '').match(/^(\d{4})-(\d{2})-(\d{2})/); if (!m) return ''; const d = new Date(Date.UTC(+m[1], +m[2]-1, +m[3])); d.setUTCDate(d.getUTCDate() - 2); return d.toISOString().slice(0, 10); }
+function opensOn(start){ if (window.hubPreOpens) return hubPreOpens(start); const m = String(start || '').match(/^(\d{4})-(\d{2})-(\d{2})/); if (!m) return ''; const d = new Date(Date.UTC(+m[1], +m[2]-1, +m[3])); d.setUTCDate(d.getUTCDate() - 2); return d.toISOString().slice(0, 10); }
 function longDate(iso){ const m = String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/); if (!m) return iso; return new Date(Date.UTC(+m[1], +m[2]-1, +m[3])).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric', timeZone:'UTC' }); }
 if (!IS_TRAINEE) $('back').href = (window.HubStore && HubStore.isAssessor && HubStore.isAssessor()) ? '12_assessor_pack.html' : '5_tutor_dashboard.html';
 
@@ -103,7 +103,7 @@ function render(){
     <p>${esc(cs.centreName || 'Your centre')}${cs.courseName ? ' &middot; ' + esc(cs.courseName) : ''} &mdash; ${n} tasks in ${KEY.length} sections. Check your own answers against it; nothing you write is kept here. The task itself is the document your center sent you.</p></div>`;
   const opens = opensOn(cs.start), today = (window.hubToday && hubToday()) || new Date().toISOString().slice(0, 10);
   if (IS_TRAINEE && opens && today < opens) {
-    $('app').innerHTML = head + `<div class="empty"><b>The key opens on ${esc(longDate(opens))}</b>, two days before the course starts${cs.start ? ' on ' + esc(longDate(cs.start)) : ''}. Finish the task before then; the answers are more use once you have tried.</div>`;
+    $('app').innerHTML = head + `<div class="empty"><b>The key opens on ${esc(longDate(opens))}</b>, the last working day before the course starts${cs.start ? ' on ' + esc(longDate(cs.start)) : ''}. Finish the task before then; the answers are more use once you have tried.</div>`;
     return;
   }
   const body = KEY.map(s => `<div class="sec"><h2>${esc(s.title)}</h2><p class="count">${s.items.length} task${s.items.length === 1 ? '' : 's'}</p>

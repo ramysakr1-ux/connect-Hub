@@ -1577,6 +1577,14 @@ window.hubSpinner = function(size){
     + '<path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"></path></svg></span>';
 };
 window.hubCredit = function(size){ return window.hubMark(size || 16) + '<span class="hub-cred">designed and built by <b>Ramy</b></span>'; };
+/* The day the pre-course things open: the last working day before the course (Friday for a Monday start).
+   Ramy, 26 Oct 2026. One rule for the home and the answer key page. */
+window.hubPreOpens = function(start){
+  var m = String(start || '').match(/^(\d{4})-(\d{2})-(\d{2})/); if (!m) return '';
+  var d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+  do { d.setUTCDate(d.getUTCDate() - 1); } while (d.getUTCDay() === 0 || d.getUTCDay() === 6);
+  return d.toISOString().slice(0, 10);
+};
 window.hubLockup = function(size){
   var s = size || 18;
   return '<span class="hub-lockup"><span class="hub-lockup-tile" style="width:' + s + 'px;height:' + s + 'px;border-radius:' + Math.round(s * 0.23) + 'px">'
