@@ -1873,9 +1873,14 @@ case 'inbox': {
       if (!onKey) throw new Error('Writing is not switched on');
       var onNotes = String(req.notes || '').slice(0, 6000).trim();
       if (!onNotes) return { text: '' };
-      var onTone = req.tone === 'direct' ? 'direct' : 'supportive';
+      var onTone = req.tone === 'direct' ? 'direct' : req.tone === 'own' ? 'own' : 'supportive';
+      /* "My own words" (Ramy, 27 Oct 2026: "some want to use it, but keep their own language
+         style. Their own voice"): the tutor's lines joined into prose, only spelling and grammar
+         put right; no voice of the model's own. */
       var onVoice = onTone === 'direct'
         ? 'direct: clear and concise, unambiguous about what needs to change, no hedging, action-oriented'
+        : onTone === 'own'
+        ? 'the tutor\'s own: keep their words, phrasing and order as far as possible; only join the lines into sentences, write shorthand out, and put spelling and grammar right; add no warmth, softening, praise or emphasis that is not in the lines'
         : 'supportive: warm and encouraging, leads with what went well, frames what to work on gently';
       var onSys = 'You help a CELTA tutor write the Overall comment on a trainee\'s teaching practice lesson from the rough notes the tutor wrote while watching it. '
         + 'The Overall comment is a short piece of prose, the one or two things that mattered most in this lesson: how it went as a whole, what carried it, and what to take into the next lesson. '

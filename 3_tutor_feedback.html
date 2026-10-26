@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610270141">
+<link rel="stylesheet" href="hub-tokens.css?v=202610270157">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -194,7 +194,8 @@
   @media(min-width:1080px){ .rail{margin-top:46px;} }  /* level with the first frame's boxes, under the Planning heading */
   .rail summary{cursor:pointer; font-family:'Newsreader',Georgia,serif; font-size:1.05rem; color:var(--teal); list-style:none; display:flex; align-items:center; gap:8px;}
   .rail summary::-webkit-details-marker{display:none;}
-  .rail summary::after{content:''; width:7px; height:7px; border-right:2px solid var(--grey); border-bottom:2px solid var(--grey); transform:rotate(45deg); margin-left:auto; transition:transform .15s;}
+  .rail summary .rail-hide{margin-left:auto;}
+  .rail summary::after{content:''; width:7px; height:7px; border-right:2px solid var(--grey); border-bottom:2px solid var(--grey); transform:rotate(45deg); margin-left:14px; transition:transform .15s;}
   .rail details[open] summary::after{transform:rotate(-135deg);}
   .rail .rail-hint{margin:6px 0 8px; font-size:0.78rem; color:var(--grey); line-height:1.45; min-height:1.2em;}
   .rail .rail-hint.now{color:var(--teal); font-weight:600;}
@@ -222,6 +223,19 @@
   @keyframes ask-turn{from{transform:rotateY(0deg);} to{transform:rotateY(360deg);}}
   .btn.ask.busy .ask-mark{animation:ask-turn 1.4s linear infinite;}
   @media(prefers-reduced-motion:reduce){ .btn.ask.busy .ask-mark{animation:none; opacity:.5;} }
+  /* ASK CONNECT'S CHOICES (Ramy, 27 Oct 2026: "some people want to use it, some people don't
+     ... some want to use it but keep their own language style"). Remembered on the device. */
+  .ask-opts{display:flex; align-items:center; gap:10px 18px; flex-wrap:wrap; margin-top:12px;}
+  .ask-opt{display:inline-flex; align-items:center; gap:7px; font-size:0.86rem; font-weight:600; color:var(--ink); cursor:pointer;}
+  .ask-opt input{width:17px; height:17px; accent-color:var(--a-forest); margin:0;}
+  .notes .tone.off{opacity:.45; pointer-events:none;}
+  .ask-what{margin:8px 0 0; font-size:0.8rem; color:var(--grey); line-height:1.45;}
+  .btn.ask[disabled]{opacity:.5; cursor:not-allowed;}
+  /* the criteria panel can go away once a tutor trusts the suggestions, and come back */
+  .rail-hide{margin-left:auto; font:inherit; font-family:'Karla',sans-serif; font-size:0.78rem; font-weight:700; color:var(--teal); background:none; border:0; text-decoration:underline; text-decoration-color:var(--sand-line); text-underline-offset:3px; cursor:pointer; pointer-events:auto; padding:4px 0;}
+  .rail-show{margin-left:auto; font-family:'Karla',sans-serif; font-size:0.8rem; font-weight:700; color:var(--teal); background:none; border:0; text-decoration:underline; text-decoration-color:var(--sand-line); text-underline-offset:3px; cursor:pointer; padding:4px 0;}
+  body.rail-off .rail{display:none;}
+  @media(min-width:1080px){ body.rail-off .fb-grid{grid-template-columns:minmax(0,1fr); grid-template-areas:"top" "bottom";} }
   .notes .tone{display:inline-flex; border:1.5px solid var(--sand-line); border-radius:999px; overflow:hidden;}
   .notes .tone button{font:inherit; font-size:0.8rem; font-weight:600; padding:6px 12px; border:0; background:var(--paper); color:var(--grey); cursor:pointer;}
   .notes .tone button.on{background:var(--a-forest); color:var(--pill-good-text);}
@@ -480,7 +494,7 @@
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610270141">
+<link rel="stylesheet" href="hub-house.css?v=202610270157">
 </head>
 <body>
 <div class="board">
@@ -567,11 +581,16 @@
        One Undo takes both back. Stays in this browser; never reaches the trainee. -->
   <div class="card notes" id="notesCard">
     <h2>While you watch</h2>
-    <p class="guide">Write what you see, in any order, one point per line. When the lesson is over, Ask Connect: each line goes into the right box below as you wrote it, with a suggested criterion, and the Overall comment is drafted from the same lines in the voice you choose. Nothing is added that you did not write. What you write here stays in this browser; the trainee never sees it.</p>
+    <p class="guide">Write what you see, in any order, one point per line. When the lesson is over, Ask Connect, and choose what it does: put each line into the right box below as you wrote it, with a suggested criterion; draft the Overall comment from the same lines, in a supportive or a direct voice or in your own words; or both. Nothing is added that you did not write. What you write here stays in this browser; the trainee never sees it.</p>
     <textarea id="tNotes" rows="5" placeholder="great rapport, Ss laughing in lead-in. instr for ex 2 too long, no demo. CCQs for used to good. ran 10 min over, no time for delayed EC"></textarea>
+    <div class="ask-opts" role="group" aria-label="What Ask Connect does">
+      <label class="ask-opt"><input type="checkbox" id="optSort" checked> Sort my lines into the boxes</label>
+      <label class="ask-opt"><input type="checkbox" id="optDraft" checked> Draft the overall comment</label>
+      <div class="tone" id="toneGroup" role="radiogroup" aria-label="Voice of the overall comment"><button type="button" class="on" data-tone="supportive" role="radio" aria-checked="true">Supportive</button><button type="button" data-tone="direct" role="radio" aria-checked="false">Direct</button><button type="button" data-tone="own" role="radio" aria-checked="false">My own words</button></div>
+    </div>
+    <p class="ask-what" id="askWhat"></p>
     <div class="notes-acts">
-      <button type="button" class="btn btn-sand ask" id="askBtn"><svg class="ask-mark" viewBox="8 28 104 64" width="22" height="14" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path></svg>Ask Connect</button>
-      <div class="tone" role="radiogroup" aria-label="Voice of the overall comment"><button type="button" class="on" data-tone="supportive" role="radio" aria-checked="true">Supportive</button><button type="button" data-tone="direct" role="radio" aria-checked="false">Direct</button></div>
+      <button type="button" class="btn btn-sand ask" id="askBtn"><svg class="ask-mark" viewBox="8 28 104 64" width="22" height="14" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path></svg><span id="askLabel">Ask Connect</span></button>
       <button type="button" class="example-btn" id="askUndo" hidden>Undo</button><span class="guide" id="askMsg" role="status"></span></div>
   </div>
 
@@ -593,14 +612,14 @@
   </div><!-- /fb-top -->
   <aside class="rail" id="rail" aria-label="Criteria">
     <details class="railfold" id="railFold">
-      <summary>Criteria</summary>
+      <summary>Criteria <button type="button" class="rail-hide" id="railHide">Hide</button></summary>
       <p class="rail-hint" id="railHint">Click into a point, then a criterion, and the tag lands where you are writing.</p>
       <div id="railList"></div>
     </details>
   </aside>
   <div class="fb-bottom">
   <section class="area">
-    <h2 class="area-h">Planning <small>the plan, the analysis, the materials</small></h2>
+    <h2 class="area-h">Planning <small>the plan, the analysis, the materials</small><button type="button" class="rail-show" id="railShow" hidden>Show the criteria</button></h2>
     <div class="pair">
       <div class="card points">
         <h2>Strengths</h2>
@@ -668,14 +687,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202610270141"></script>
-<script src="hub-shared.js?v=202610270141"></script>
-<script src="hub-store.js?v=202610270141"></script>
-<script src="hub-say.js?v=202610270141"></script>
-<script src="hub-crit-learn.js?v=202610270141"></script>
-<script src="hub-crit-vocab.js?v=202610270141"></script>
-<script src="hub-sync.js?v=202610270141"></script>
-<script src="hub-notebook.js?v=202610270141"></script>
+<script src="hub-exchange.js?v=202610270157"></script>
+<script src="hub-shared.js?v=202610270157"></script>
+<script src="hub-store.js?v=202610270157"></script>
+<script src="hub-say.js?v=202610270157"></script>
+<script src="hub-crit-learn.js?v=202610270157"></script>
+<script src="hub-crit-vocab.js?v=202610270157"></script>
+<script src="hub-sync.js?v=202610270157"></script>
+<script src="hub-notebook.js?v=202610270157"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1089,6 +1108,10 @@ document.querySelectorAll('.add-pt').forEach(b=>{
   });
   host.innerHTML=html;
   const fold=$('railFold'); fold.open = window.innerWidth>=1080;
+  const railOff=on=>{ document.body.classList.toggle('rail-off', on); $('railShow').hidden=!on; try{ localStorage.setItem('chub:railOff', on?'1':''); }catch(e){} };
+  try{ if(localStorage.getItem('chub:railOff')==='1') railOff(true); }catch(e){}
+  $('railHide').addEventListener('click',e=>{ e.preventDefault(); e.stopPropagation(); railOff(true); });
+  $('railShow').addEventListener('click',()=>{ railOff(false); fold.open=true; });
   host.addEventListener('mousedown',e=>e.preventDefault());
   host.addEventListener('click',e=>{
     const item=e.target.closest('.crit-item'); if(!item) return;
@@ -2201,13 +2224,32 @@ function notesTP(){ return (($('fTP')||{}).value||'').trim(); }
   try{ const n=JSON.parse(localStorage.getItem(NOTES_KEY)||'null'); if(n && n.text && (!n.tp || !notesTP() || n.tp===notesTP())) ta.value=n.text; }catch(e){}
   ta.addEventListener('input',()=>{ try{ localStorage.setItem(NOTES_KEY, JSON.stringify({ tp:notesTP(), text:ta.value })); }catch(e){} });
 })();
-/* the voice of the overall comment, remembered on this device (as Connect's tone toggle is per tutor) */
-let TONE='supportive'; try{ TONE=localStorage.getItem('chub:fbTone')==='direct'?'direct':'supportive'; }catch(e){}
+/* the voice of the overall comment, remembered on this device (as Connect's tone toggle is per tutor):
+   supportive, direct, or the tutor's own words (their lines joined into prose, only spelling and grammar fixed) */
+let TONE='supportive'; try{ const t=localStorage.getItem('chub:fbTone'); TONE=(t==='direct'||t==='own')?t:'supportive'; }catch(e){}
 document.querySelectorAll('.notes .tone button').forEach(b=>{
   b.classList.toggle('on', b.dataset.tone===TONE); b.setAttribute('aria-checked', String(b.dataset.tone===TONE));
   b.addEventListener('click',()=>{ TONE=b.dataset.tone; try{ localStorage.setItem('chub:fbTone',TONE); }catch(e){}
-    document.querySelectorAll('.notes .tone button').forEach(x=>{ x.classList.toggle('on', x===b); x.setAttribute('aria-checked', String(x===b)); }); });
+    document.querySelectorAll('.notes .tone button').forEach(x=>{ x.classList.toggle('on', x===b); x.setAttribute('aria-checked', String(x===b)); }); askSay(); });
 });
+/* what to ask for, remembered on this device; the button and the line under the choices say what will happen */
+(function(){
+  let o={}; try{ o=JSON.parse(localStorage.getItem('chub:askOpts')||'{}'); }catch(e){}
+  if(o.sort===false) $('optSort').checked=false;
+  if(o.draft===false) $('optDraft').checked=false;
+  ['optSort','optDraft'].forEach(id=>$(id).addEventListener('change',()=>{ try{ localStorage.setItem('chub:askOpts', JSON.stringify({ sort:$('optSort').checked, draft:$('optDraft').checked })); }catch(e){} askSay(); }));
+})();
+function askSay(){
+  const sort=$('optSort').checked, draft=$('optDraft').checked;
+  $('toneGroup').classList.toggle('off', !draft);
+  $('askBtn').disabled = !sort && !draft;
+  $('askLabel').textContent = sort && draft ? 'Ask Connect: sort and draft' : sort ? 'Ask Connect: sort my lines' : draft ? 'Ask Connect: draft the comment' : 'Ask Connect';
+  const voice = TONE==='own' ? 'in your own words, with only the spelling and grammar put right' : TONE==='direct' ? 'in a direct voice' : 'in a supportive voice';
+  $('askWhat').textContent = !sort && !draft ? 'Choose at least one, or leave Connect out and write it all yourself.'
+    : (sort ? 'Each line goes into its box as you wrote it, with a suggested criterion. ' : 'Your boxes are left as they are. ')
+    + (draft ? 'The overall comment is drafted from your lines '+voice+'.' : 'The overall comment is left to you.');
+}
+askSay();
 /* ASK CONNECT (Ramy, 27 Oct 2026: "Ask Connect, one button"). Two things from one
    press: the lines into the four boxes as written, each with its suggested
    criterion (tidyNotes), and the Overall comment drafted in the chosen voice
@@ -2238,22 +2280,24 @@ async function askConnect(){
   btn.disabled=true; btn.classList.add('busy'); msg.textContent='Connect is reading your lines…';
   const token=(window.HubStore && HubStore.token && HubStore.token())||'';
   const withTok=b=>{ if(token) b.token=token; return b; };
+  const sort=$('optSort').checked, draft=$('optDraft').checked;
+  const skip=Promise.resolve(null);
   const [pts, ov] = await Promise.allSettled([
-    HubStore.call(withTok({ op:'tidyNotes', notes, criteria:CRITERIA.map(c=>[c[0], c[2]]) }), 60000),
-    HubStore.call(withTok({ op:'overallFromNotes', notes, tone:TONE, tp:notesTP() }), 60000)
+    sort ? HubStore.call(withTok({ op:'tidyNotes', notes, criteria:CRITERIA.map(c=>[c[0], c[2]]) }), 60000) : skip,
+    draft ? HubStore.call(withTok({ op:'overallFromNotes', notes, tone:TONE, tp:notesTP() }), 60000) : skip
   ]);
   const said=[];
-  if(pts.status==='fulfilled'){ const { added, n }=placePoints(pts.value); ASK_ADDED=added; if(n) said.push(n+(n===1?' point':' points')+' in the boxes below, as you wrote '+(n===1?'it':'them')); }
-  const text=ov.status==='fulfilled' ? String((ov.value && ov.value.text)||'').trim() : '';
+  if(pts.status==='fulfilled' && pts.value){ const { added, n }=placePoints(pts.value); ASK_ADDED=added; if(n) said.push(n+(n===1?' point':' points')+' in the boxes below, as you wrote '+(n===1?'it':'them')); }
+  const text=ov.status==='fulfilled' && ov.value ? String((ov.value && ov.value.text)||'').trim() : '';
   if(text){ ASK_OVERALL_WAS=out.value; out.value=text; autoGrow(out); out.dispatchEvent(new Event('input',{bubbles:true})); said.push('the overall comment drafted'); }
-  btn.disabled=false; btn.classList.remove('busy');
+  btn.classList.remove('busy'); askSay();
   if(!said.length){
     const err=String((pts.reason||ov.reason)||'');
     msg.textContent=/demo/.test(err) ? 'Ask Connect needs a real course.' : 'Connect could not answer just now. Your lines are still here.';
     return;
   }
   ASK_DONE=true; dirty=true; $('askUndo').hidden=false;
-  msg.textContent=said.join(', and ')+'. Read it all through, click a suggested code to tag a point, and make the comment yours.';
+  const line=said.join(', and '); msg.textContent=line.charAt(0).toUpperCase()+line.slice(1)+'. Read it through'+(sort?', click a suggested code to tag a point':'')+(draft?', and make the comment yours':'')+'.';
 }
 $('askBtn').addEventListener('click',askConnect);
 $('askUndo').addEventListener('click',()=>{
