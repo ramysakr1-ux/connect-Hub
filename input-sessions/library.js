@@ -237,6 +237,7 @@ window.InputLib = (function(){
     [/\s*Click each one\./g, ''],
     [/^Spin the wheel\s*$/, 'Thirteen areas'],
     [/^\s*(click|tap)( each)?( one| word| the words)?( to (reveal|hear|fix|turn)[^.]*)?\.?\s*$/i, ''],
+    [/\s*Click to reveal which word is stressed, and why\.?/g, ''],
     [/\s*click to reveal( the phrase and fact)?\.?/gi, '']
   ];
   var CONTROL = /^(reveal|hide|show|check|reset|next|play|spin|start again|try again|reshuffle|print|add a stage|watch the film|compare|see all|play again|done|listen|hear it|again|clear|undo|new|shuffle|open on|open wordwall)/i;

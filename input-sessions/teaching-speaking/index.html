@@ -149,8 +149,10 @@
       <div id="orderArea"></div>
       <div class="btn-row">
         <button class="btn secondary" onclick="resetOrder()">Reset</button>
+        <button class="btn secondary" type="button" onclick="showOrder(this)">Reveal answer</button>
         <span class="feedback" id="orderFeedback"></span>
       </div>
+      <div class="reveal-box" id="orderKey"><h4>The order</h4><ol id="orderKeyList" style="margin:0;padding-left:22px;font-size:.92rem;line-height:1.6;"></ol></div>
       <div class="reveal-box" id="orderReveal">
         <h4>This is the productive skills shape</h4>
         <p style="margin:0;font-size:.92rem;">What you just ordered is a full staging sequence for teaching speaking. It maps onto a five-part lesson shape; the next section looks at it properly.</p>
@@ -351,11 +353,19 @@ function checkOrder(){
     fb.className='feedback good';
     document.getElementById('orderReveal').classList.add('shown');
   } else {
-    fb.textContent = 'Not quite. Reset and try again.';
+    fb.textContent = 'Not quite. Reset and try again, or reveal the answer.';
     fb.className='feedback bad';
   }
 }
 function resetOrder(){ buildOrder(); }
+/* "Order, then reveal" had nothing to reveal unless the order came out right (Ramy, 26 Oct 2026) */
+function showOrder(btn){
+  const key = document.getElementById('orderKey'), list = document.getElementById('orderKeyList');
+  if (!list.children.length) [...stages].sort((a,b)=>a.correct-b.correct).forEach(st=>{ const li=document.createElement('li'); li.textContent=st.text; list.appendChild(li); });
+  const open = key.classList.toggle('shown');
+  document.getElementById('orderReveal').classList.toggle('shown', open);
+  btn.textContent = open ? 'Hide answer' : 'Reveal answer';
+}
 buildOrder();
 
 // ---- Problems and solutions ----
