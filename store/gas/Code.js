@@ -1822,11 +1822,11 @@ case 'inbox': {
        same detail, strengths as short phrases, action points as imperatives,
        and joins two that say the same thing. Codes come back as they were
        sent. Tutors only; the tutor edits what comes back before returning it. */
-    /* TIDY MY NOTES (Ramy, 26 Oct 2026). A tutor's rough notes from watching
-       a lesson, sorted into the feedback form's four boxes as full sentences,
-       each with up to two suggested criteria. Only what the notes say: nothing
-       added, no grades, the tutor's own words kept where they can be. The
-       codes are suggestions the tutor clicks to accept. Tutors only. */
+    /* WHILE YOU WATCH -> THE BOXES (Ramy, 26-27 Oct 2026: "it shouldn't really
+       change what you said. It should just carry over what you said in the right
+       box ... with the criteria"). The tutor's lines, each copied as written into
+       the right one of the feedback form's four boxes, with up to two suggested
+       criteria. Nothing rewritten, nothing added, no grades. Tutors only. */
     case 'tidyNotes': {
       requireTutor_(tutor);
       var tnKey = PropertiesService.getScriptProperties().getProperty('OPENAI_KEY');
@@ -1835,30 +1835,24 @@ case 'inbox': {
       if (!tnNotes) return { sp: [], ap: [], st: [], at: [] };
       var tnCrit = (Array.isArray(req.criteria) ? req.criteria : []).filter(function(c){ return Array.isArray(c) && /^[1-5][a-n]$/.test(String(c[0])); })
         .map(function(c){ return String(c[0]) + ' ' + String(c[1] || '').slice(0, 200); }).slice(0, 41);
-      var tnSys = 'You help a CELTA tutor turn rough notes, written while watching a trainee teach, into feedback points. '
-        + 'Use only what is in the notes. Never add a strength, a problem, a judgement or a grade that the notes do not contain. '
-        + 'Keep the tutor\'s own words wherever you can. Correct spelling, grammar and punctuation, and expand shorthand into a plain, complete sentence, but do not polish it or make it sound different. Plain, everyday words. '
-        + 'One idea per point; split a note that holds two. '
-        + 'Sort every point into exactly one list. Most notes are about TEACHING, what happened in the room: rapport, instructions, CCQs and ICQs, eliciting, board work, monitoring, feedback to students, error correction, pace, timing on the day, interaction. '
-        + 'Use PLANNING only for the written plan and the materials as prepared: aims, staging on paper, language analysis, anticipated problems and solutions, timings planned, the look of materials, and acknowledging sources and copyright. '
-        + 'sp = strength in planning, ap = action point in planning, st = strength in teaching, at = action point in teaching. '
-        + 'Strengths say what the trainee did, as a phrase or sentence. Action points are imperatives addressed to the trainee, e.g. "Give an example before the task starts". '
-        + 'Never drop what the tutor saw. When the notes give evidence beyond the problem itself (what it led to, where, how much: confused, lost, bored, off task, finished early, '
-        + 'didn\'t understand, ran 10 minutes over), the action point says what to do and then that evidence, after a colon: '
-        + 'notes "instr for ex 2 too long, no demo, Ss confused" give "Keep instructions short and demonstrate first: in exercise 2 they were long, with no demonstration, and the students were confused". '
-        + 'When the notes only name the problem, write the action alone, with no colon and nothing after it: "no ICQs" gives "Check instructions with ICQs", never "...: there were none today". '
-        + '"Not referenced", "no refs" or "no sources" about materials, pictures, texts or handouts means the sources were not acknowledged (4d), never how they were used in class. '
-        + celtaShorthand_()
-        + 'In the points, write these out in full, except TTT, STT, CCQs and ICQs, which trainees know. Write "students", never Ss. '
-        + 'Give every point the one or two criterion codes that fit it best: planning points use 4a to 4n only, teaching points use 1a to 3b and 5a to 5n only. '
+      var tnSys = 'You help a CELTA tutor file the notes they wrote while watching a trainee teach. '
+        + 'Split the notes into the tutor\'s own points, one per line or sentence as the tutor separated them, and COPY EACH POINT EXACTLY AS WRITTEN: the same words, spelling, shorthand and punctuation. '
+        + 'Do not rewrite, correct, expand, shorten, join, split further or add anything. Drop only a bare bullet mark or dash at the start of a line. '
+        + 'Your whole job is to put each point in the right list and to suggest its criteria. '
+        + 'Lists: sp = strength in planning (the written plan and the materials as prepared: aims, staging on paper, language analysis, anticipated problems, timings planned, the look of materials, acknowledging sources); '
+        + 'ap = action point in planning; st = strength in teaching (what happened in the room: rapport, instructions, CCQs and ICQs, eliciting, board work, monitoring, feedback to students, error correction, pace, timing on the day); at = action point in teaching. '
+        + 'A point that praises or says something went well is a strength; a point that names a problem, a lack or something to change is an action point. Most notes are about teaching. '
+        + 'For each point give the one or two criterion codes that fit it best: planning points use 4a to 4n only, teaching points use 1a to 3b and 5a to 5n only. '
+        + '"Not referenced", "no refs" or "no sources" about materials means the sources were not acknowledged (4d). '
         + 'Criteria: ' + tnCrit.join('; ') + '. '
+        + celtaShorthand_()
         + 'Example. Notes: "good rapport. instr too long. vocab analysis clear. no sources on handout". '
-        + 'Answer: {"sp":[{"text":"Clear vocabulary analysis","codes":["4i"]}],"ap":[{"text":"Acknowledge the source of the handout","codes":["4d"]}],'
-        + '"st":[{"text":"Good rapport with the students","codes":["1d"]}],"at":[{"text":"Keep your instructions short","codes":["5f"]}]}. '
-        + 'American spelling. No names. Answer as JSON with the four lists sp, ap, st, at.';
+        + 'Answer: {"sp":[{"text":"vocab analysis clear","codes":["4i"]}],"ap":[{"text":"no sources on handout","codes":["4d"]}],'
+        + '"st":[{"text":"good rapport","codes":["1d"]}],"at":[{"text":"instr too long","codes":["5f"]}]}. '
+        + 'Answer as JSON with the four lists sp, ap, st, at.';
       var tnResp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
         method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + tnKey },
-        payload: JSON.stringify({ model: 'gpt-4.1', temperature: 0.2, response_format: { type: 'json_object' },
+        payload: JSON.stringify({ model: 'gpt-4.1', temperature: 0, response_format: { type: 'json_object' },
           messages: [{ role: 'system', content: tnSys }, { role: 'user', content: tnNotes }] })
       });
       if (tnResp.getResponseCode() !== 200) throw new Error('The notes could not be tidied (' + tnResp.getResponseCode() + ')');
