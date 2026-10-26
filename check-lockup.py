@@ -61,6 +61,8 @@ for p in sorted(glob.glob('film/*.html')):
 need('input-sessions/session.css', r"\.hub-word\{font-family:[^;]*; font-weight:600; font-size:8px; letter-spacing:0\.24em", "session LITE 600 / 8px / 0.24em", 1)
 need('input-sessions/session.css', r"\.hub-pair\{display:inline-flex; align-items:baseline", "session logo on one baseline", 1)
 need('input-sessions/session.css', r"\.hub-lockup-l\{[^}]*font-weight:600; font-size:6\.5px; letter-spacing:\.24em", "session credit LITE 600 / 8/21 of 17px", 1)
+# the credit's Connect and LITE on one baseline: align-items:center lifted LITE above the word (26 Oct 2026)
+need('input-sessions/session.css', r"\.hub-lockup\{display:inline-flex; align-items:baseline", "session credit on one baseline", 1)
 need('12_assessor_pack.html', r"\.hub-word\{font-family:[^;]*;font-weight:600;font-size:10\.3px;letter-spacing:0\.24em", "pack LITE 600 / 8/21 of 27px", 1)
 
 if bad:
