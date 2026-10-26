@@ -32,19 +32,24 @@
   table.dt th, table.stages th{font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; color:var(--grey); background:var(--field);}
   table.stages td:first-child{width:26%; font-weight:600;}
   table.dt td:first-child{width:36%; font-weight:600;}
-  /* the decision tree: a tree you read down, with the answer on each branch */
-  .tree, .tree ul{list-style:none; margin:0; padding:0;}
-  .tree ul{margin-left:14px; padding-left:24px;}
-  .tree li{position:relative; padding:5px 0;}
-  .tree ul > li::before{content:''; position:absolute; left:-24px; top:0; height:30px; width:22px; border-left:2px solid var(--amber-edge); border-bottom:2px solid var(--amber-edge); border-bottom-left-radius:10px;}
-  .tree ul > li:not(:last-child)::after{content:''; position:absolute; left:-24px; top:30px; bottom:0; border-left:2px solid var(--amber-edge);}
-  .tree .line{display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-height:50px;}
-  .tree .edge{font-family:'Instrument Sans','Karla',sans-serif; font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; font-weight:700; color:var(--gold-deep); background:var(--gold-wash); border-radius:999px; padding:4px 10px; white-space:nowrap;}
-  .tree .node{display:inline-block; border-radius:var(--r-control); padding:9px 14px; font-size:.92rem; line-height:1.4; max-width:34em;}
-  .tree .node.q{background:var(--paper); border:1.5px solid var(--sand-line); font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1rem;}
-  .tree .node.end{background:var(--a-forest, var(--teal)); color:#F0EEE9; font-weight:700;}
-  @media (max-width:560px){ .tree ul{margin-left:8px; padding-left:18px;} .tree ul > li::before{left:-18px; width:16px;} .tree ul > li:not(:last-child)::after{left:-18px;} .tree .node{font-size:.86rem;} .tree .line{flex-direction:column; align-items:flex-start; gap:6px; min-height:0;} .tree ul > li::before{height:20px;} .tree ul > li:not(:last-child)::after{top:20px;} }
-  @media print{ .tree .node.end{background:none; color:#000; border:2px solid #000;} }
+  /* the decision tree, as Connect draws it (Ramy, 26 Oct 2026: "we have a good one on Connect"): the question, then
+     Language and Skills side by side, each answer a tinted box under its question */
+  .dtree{display:flex; flex-direction:column; align-items:center; background:var(--paper); border:1.5px solid var(--sand-line); border-radius:var(--r-strip); padding:20px;}
+  .dq{margin:0 0 8px; text-align:center; font-size:.9rem; color:var(--grey); line-height:1.45;}
+  .dq.top{margin:0; background:var(--field); border:1.5px solid var(--sand-line); border-radius:var(--r-control); padding:10px 20px; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.12rem; color:var(--ink);}
+  .dstem{width:2px; height:20px; background:var(--sand-line);}
+  .dcols{display:grid; grid-template-columns:1fr 1fr; gap:36px; width:100%; border-top:2px solid var(--sand-line); padding-top:16px;}
+  .dcol{display:flex; flex-direction:column; align-items:center; gap:4px;}
+  .dtag{margin:0 0 4px; font-size:.7rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;}
+  .lang .dtag{color:var(--a-forest, var(--teal));} .skills .dtag{color:var(--a-red, var(--brick));}
+  .dpair{display:flex; gap:8px; width:100%; margin:0 0 14px;}
+  .dans{flex:1; border-radius:8px; padding:9px 10px; text-align:center; font-size:.9rem; font-weight:700; line-height:1.35;}
+  .dans b{display:block; font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; font-weight:700; opacity:.8; margin-bottom:3px;}
+  .lang .dans{border:1.5px solid color-mix(in oklab, var(--a-forest, var(--teal)) 25%, transparent); background:color-mix(in oklab, var(--a-forest, var(--teal)) 7%, var(--paper)); color:var(--a-forest, var(--teal));}
+  .skills .dans{border:1.5px solid color-mix(in oklab, var(--a-red, var(--brick)) 25%, transparent); background:color-mix(in oklab, var(--a-red, var(--brick)) 6%, var(--paper)); color:var(--a-red, var(--brick));}
+  .lang .dans.next{background:var(--field); color:var(--grey); border-style:dashed;}
+  @media (max-width:640px){ .dcols{grid-template-columns:1fr; gap:22px;} .dtree{padding:16px 12px;} }
+  @media print{ .dans{background:none !important;} }
   .note{background:var(--field); border-left:3px solid var(--a-red); border-radius:0 var(--r-control) var(--r-control) 0; padding:9px 14px; font-size:.86rem; line-height:1.55; margin:8px 0 6px;}
   ul.rules{margin:6px 0 12px; padding-left:20px; font-size:.92rem; line-height:1.65;}
   @media print{ .doc h2{break-after:avoid;} table{break-inside:avoid;} }
@@ -85,33 +90,33 @@
   <section id="tree">
     <h2>Which framework? The decision tree</h2>
     <p class="lead">Start at the top and answer each question about the <b>main aim</b> of your lesson. Language is grammar, lexis and functional language. Skills are reading and listening (receptive) and speaking and writing (productive).</p>
-    <ul class="tree" aria-label="Decision tree">
-      <li>
-        <div class="line"><span class="node q">Is the main focus of the lesson language or skills?</span></div>
-        <ul>
-          <li>
-            <div class="line"><span class="edge">Language</span><span class="node q">Is the main aim clarification, practice, or both?</span></div>
-            <ul>
-              <li><div class="line"><span class="edge">Practice only</span><span class="node end">Language Practice</span></div></li>
-              <li>
-                <div class="line"><span class="edge">Clarification, or both</span><span class="node q">Does the target language arise out of a reading or listening text?</span></div>
-                <ul>
-                  <li><div class="line"><span class="edge">Yes</span><span class="node end">Text-Based (Guided Discovery)</span></div></li>
-                  <li><div class="line"><span class="edge">No</span><span class="node end">Test-Teach-Test or PPP</span></div></li>
-                </ul>
-              </li>
-            </ul>
-          </li>
-          <li>
-            <div class="line"><span class="edge">Skills</span><span class="node q">Is the main aim listening or reading?</span></div>
-            <ul>
-              <li><div class="line"><span class="edge">Yes</span><span class="node end">Receptive Skills</span></div></li>
-              <li><div class="line"><span class="edge">No: speaking or writing</span><span class="node end">Productive Skills</span></div></li>
-            </ul>
-          </li>
-        </ul>
-      </li>
-    </ul>
+    <div class="dtree" aria-label="Decision tree">
+      <p class="dq top">Is the main aim language or skills?</p>
+      <div class="dstem"></div>
+      <div class="dcols">
+        <div class="dcol lang">
+          <p class="dtag">Language</p>
+          <p class="dq">Is the main aim clarification, practice, or both?</p>
+          <div class="dpair">
+            <div class="dans"><b>Practice only</b>Language Practice</div>
+            <div class="dans next"><b>Clarification, or both</b>Go on below</div>
+          </div>
+          <p class="dq">Does the target language arise out of a reading or listening text?</p>
+          <div class="dpair">
+            <div class="dans"><b>Yes</b>Text-Based (Guided Discovery)</div>
+            <div class="dans"><b>No</b>Test-Teach-Test or PPP</div>
+          </div>
+        </div>
+        <div class="dcol skills">
+          <p class="dtag">Skills</p>
+          <p class="dq">Is the main aim listening or reading?</p>
+          <div class="dpair">
+            <div class="dans"><b>Yes</b>Receptive Skills</div>
+            <div class="dans"><b>No: speaking or writing</b>Productive Skills</div>
+          </div>
+        </div>
+      </div>
+    </div>
     <p class="note">Not sure? Check again, then ask your tutor. Task-based learning and Dogme ELT are not on this chart; talk to your tutor if you are interested in either of these lesson systems.</p>
   </section>
 
