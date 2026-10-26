@@ -1837,18 +1837,22 @@ case 'inbox': {
         .map(function(c){ return String(c[0]) + ' ' + String(c[1] || '').slice(0, 200); }).slice(0, 41);
       var tnSys = 'You help a CELTA tutor turn rough notes, written while watching a trainee teach, into feedback points. '
         + 'Use only what is in the notes. Never add a strength, a problem, a judgement or a grade that the notes do not contain. '
-        + 'Keep the tutor\'s own words wherever you can: expand shorthand into a plain, complete sentence and fix spelling and grammar, but do not polish it or make it sound different. Plain, everyday words. '
+        + 'Keep the tutor\'s own words wherever you can. Correct spelling, grammar and punctuation, and expand shorthand into a plain, complete sentence, but do not polish it or make it sound different. Plain, everyday words. '
         + 'One idea per point; split a note that holds two. '
-        + 'Sort every point into one list: sp = strength in planning (the plan, aims, materials, language analysis, anticipated problems, timing on paper); ap = action point in planning; '
-        + 'st = strength in teaching (what happened in the room); at = action point in teaching. '
-        + 'Strengths say what the trainee did. Action points are imperatives addressed to the trainee, e.g. "Give an example before the task starts". '
+        + 'Sort every point into exactly one list. Most notes are about TEACHING, what happened in the room: rapport, instructions, CCQs and ICQs, eliciting, board work, monitoring, feedback to students, error correction, pace, timing on the day, interaction. '
+        + 'Use PLANNING only for the written plan and the materials as prepared: aims, staging on paper, language analysis, anticipated problems and solutions, timings planned, the look of materials, and acknowledging sources and copyright. '
+        + 'sp = strength in planning, ap = action point in planning, st = strength in teaching, at = action point in teaching. '
+        + 'Strengths say what the trainee did, as a phrase or sentence. Action points are imperatives addressed to the trainee, e.g. "Give an example before the task starts". '
         + 'Write "students" for Ss or sts. Keep standard terms as they are: TTT, CCQs, ICQs, WCFB, ELP, TL. '
-        + 'For each point suggest up to two criterion codes from this list, only where one clearly fits: planning points 4a to 4n, teaching points 1a to 3b and 5a to 5n. '
+        + 'Give every point the one or two criterion codes that fit it best: planning points use 4a to 4n only, teaching points use 1a to 3b and 5a to 5n only. '
         + 'Criteria: ' + tnCrit.join('; ') + '. '
-        + 'American spelling. No names. Answer as JSON: {"sp":[{"text":"...","codes":["4c"]}],"ap":[],"st":[],"at":[]}.';
+        + 'Example. Notes: "good rapport. instr too long. vocab analysis clear. no sources on handout". '
+        + 'Answer: {"sp":[{"text":"Clear vocabulary analysis","codes":["4i"]}],"ap":[{"text":"Acknowledge the source of the handout","codes":["4d"]}],'
+        + '"st":[{"text":"Good rapport with the students","codes":["1d"]}],"at":[{"text":"Keep your instructions short","codes":["5f"]}]}. '
+        + 'American spelling. No names. Answer as JSON with the four lists sp, ap, st, at.';
       var tnResp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
         method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + tnKey },
-        payload: JSON.stringify({ model: 'gpt-4.1-mini', temperature: 0.2, response_format: { type: 'json_object' },
+        payload: JSON.stringify({ model: 'gpt-4.1', temperature: 0.2, response_format: { type: 'json_object' },
           messages: [{ role: 'system', content: tnSys }, { role: 'user', content: tnNotes }] })
       });
       if (tnResp.getResponseCode() !== 200) throw new Error('The notes could not be tidied (' + tnResp.getResponseCode() + ')');
