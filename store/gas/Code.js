@@ -1848,22 +1848,7 @@ case 'inbox': {
         + 'notes "instr for ex 2 too long, no demo, Ss confused" give "Keep instructions short and demonstrate first: in exercise 2 they were long, with no demonstration, and the students were confused". '
         + 'When the notes only name the problem, write the action alone, with no colon and nothing after it: "no ICQs" gives "Check instructions with ICQs", never "...: there were none today". '
         + '"Not referenced", "no refs" or "no sources" about materials, pictures, texts or handouts means the sources were not acknowledged (4d), never how they were used in class. '
-        /* The shorthand, from Lite's own TP points glossary (24_tp_points.html GLOSSARY), the
-           acronyms and terms of the CELTA glossary the C/17 course used, and the shorthand
-           tutors write in notes (Ramy, 27 Oct 2026: "use the glossary from C17 ... and the one
-           we have at the bottom of TP points"). The C/17 terms are named, not quoted. */
-        + 'The tutor writes in CELTA shorthand. From the TP points: SB = student\'s book; WB = workbook; p. = page; HO = handout; AK = answer key; TL = target language; '
-        + 'MFP = meaning, form and pronunciation; CCQ = concept checking question; ICQ = instruction checking question; ECDW = elicit, CCQ, drill, write; PW = pair work; GW = group work; '
-        + 'PC = peer check; Ind. = individually; OC = open class; WC = whole class; Ming. = mingle; T–S = teacher to students; S–S = student to student; FB = feedback; '
-        + 'WCFB = whole class feedback; TTT = teacher talking time; STT = student talking time. '
-        + 'From the CELTA glossary: MFPA = meaning, form, pronunciation and appropriacy; L1 = the learner\'s first language; L2 = their second language; TBL = task-based learning; '
-        + 'TPR = Total Physical Response; CALL = computer assisted language learning; DOS/ADOS = Director and Assistant Director of Studies; EAP, ESP, ESOL, ELT, IELTS as usual. '
-        + 'Terms tutors use as written: appropriacy, backchaining, choral and individual drilling, cline, concept questions, connected speech, controlled and freer practice, '
-        + 'deducing meaning from context, elicit, finger highlighting, grade (language), guided discovery, language feedback, lead-in, lexical set, live listening, monitor, nominate, '
-        + 'peer check, realia, reformulate, receptive and productive skills, sub-skills, student-centred and teacher-centred, timelines, top-down and bottom-up, weak forms, word stress. '
-        + 'Note-taking shorthand: Ss or sts = students; T = teacher; EC = error correction; DEC = delayed error correction; instr = instructions; demo = demonstration; ex = exercise; '
-        + 'BW = board work; monit = monitoring; pron = pronunciation; voc or vocab = vocabulary; gram = grammar; prep = preparation; LA = language analysis; GD = guided discovery; '
-        + 'PPP = presentation, practice, production; v = very; + = and; w/ = with; w/o = without; b4 = before. '
+        + celtaShorthand_()
         + 'In the points, write these out in full, except TTT, STT, CCQs and ICQs, which trainees know. Write "students", never Ss. '
         + 'Give every point the one or two criterion codes that fit it best: planning points use 4a to 4n only, teaching points use 1a to 3b and 5a to 5n only. '
         + 'Criteria: ' + tnCrit.join('; ') + '. '
@@ -1890,16 +1875,20 @@ case 'inbox': {
       var swPts = function(a){ return (Array.isArray(a) ? a : []).slice(0, 30).map(function(x){
         return { text: String((x && x.text) || '').slice(0, 600), codes: (Array.isArray(x && x.codes) ? x.codes : []).map(String).slice(0, 4) }; }).filter(function(x){ return x.text; }); };
       var swIn = { strengths: swPts(req.strengths), actions: swPts(req.actions) };
-      var swSys = 'You help a CELTA tutor write a trainee\'s Stage 1 record from the tutors\' feedback on the first lessons. '
-        + 'Rewrite every point in your own words: keep its meaning and its specific detail, and do not copy the original phrasing. '
-        + 'Strengths: short noun phrases, no full stop, e.g. "Warm welcome and great rapport, with a relaxed atmosphere". '
+      var swSys = 'You help a CELTA tutor write a trainee\'s Stage 1 record from the tutors\' feedback on the first two lessons. '
+        + 'Say every point again in your own words, so it does not repeat the feedback writer\'s phrasing, but keep its meaning, its detail and its strength: '
+        + 'a firm point stays firm, a mild one stays mild, and nothing a point names is lost (where, how much, what it led to). '
+        + 'Plain, everyday words a tutor would say to a trainee; never formal words like prior to, simultaneously, distribute, utilize, facilitate. '
+        + 'Strengths: short phrases saying what the trainee did, no full stop, e.g. "Warm welcome and great rapport, with a relaxed atmosphere". '
         + 'Action points: imperatives addressed to the trainee, e.g. "Keep instructions short and demonstrate first". '
         + 'If two points say the same thing, join them into one and keep both codes. Keep each point\'s codes exactly as given; never add, change or guess a code. '
-        + 'No praise words that are not in the original, no grades, no names, no arrows. American spelling. '
+        + 'Write "students", never Ss. ' + celtaShorthand_()
+        + 'In the points, write shorthand out in full, except TTT, STT, CCQs and ICQs, which trainees know. '
+        + 'No praise that is not in the original, no grades, no names, no arrows. American spelling. '
         + 'Answer as JSON: {"strengths":[{"text":"...","codes":["1d"]}],"actions":[{"text":"...","codes":["5f"]}]}.';
       var swResp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
         method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + swKey },
-        payload: JSON.stringify({ model: 'gpt-4.1-mini', temperature: 0.4, response_format: { type: 'json_object' },
+        payload: JSON.stringify({ model: 'gpt-4.1', temperature: 0.3, response_format: { type: 'json_object' },
           messages: [{ role: 'system', content: swSys }, { role: 'user', content: JSON.stringify(swIn) }] })
       });
       if (swResp.getResponseCode() !== 200) throw new Error('The points could not be reworded (' + swResp.getResponseCode() + ')');
@@ -3486,6 +3475,25 @@ function nextCourseId_() {
   courses_(true).forEach(function (c) { used[c.id] = 1; });   // a binned id stays taken: a reused id would inherit its rows
   for (var i = 1; i < 10000; i++) if (!used['c' + i]) return 'c' + i;
   throw new Error('Too many courses');
+}
+
+/* The shorthand tutors write, for the note tidier and Stage 1: Lite's own TP points glossary
+   (24_tp_points.html GLOSSARY), the acronyms and terms of the CELTA glossary the C/17 course
+   used, and note-taking shorthand (Ramy, 27 Oct 2026: "use the glossary from C17 ... and the one
+   we have at the bottom of TP points"). The C/17 terms are named, not quoted. */
+function celtaShorthand_() {
+  return 'The tutor writes in CELTA shorthand. From the TP points: SB = student\'s book; WB = workbook; p. = page; HO = handout; AK = answer key; TL = target language; '
+    + 'MFP = meaning, form and pronunciation; CCQ = concept checking question; ICQ = instruction checking question; ECDW = elicit, CCQ, drill, write; PW = pair work; GW = group work; '
+    + 'PC = peer check; Ind. = individually; OC = open class; WC = whole class; Ming. = mingle; T–S = teacher to students; S–S = student to student; FB = feedback; '
+    + 'WCFB = whole class feedback; TTT = teacher talking time; STT = student talking time. '
+    + 'From the CELTA glossary: MFPA = meaning, form, pronunciation and appropriacy; L1 = the learner\'s first language; L2 = their second language; TBL = task-based learning; '
+    + 'TPR = Total Physical Response; CALL = computer assisted language learning; DOS/ADOS = Director and Assistant Director of Studies; EAP, ESP, ESOL, ELT, IELTS as usual. '
+    + 'Terms tutors use as written: appropriacy, backchaining, choral and individual drilling, cline, concept questions, connected speech, controlled and freer practice, '
+    + 'deducing meaning from context, elicit, finger highlighting, grade (language), guided discovery, language feedback, lead-in, lexical set, live listening, monitor, nominate, '
+    + 'peer check, realia, reformulate, receptive and productive skills, sub-skills, student-centred and teacher-centred, timelines, top-down and bottom-up, weak forms, word stress. '
+    + 'Note-taking shorthand: Ss or sts = students; T = teacher; EC = error correction; DEC = delayed error correction; instr = instructions; demo = demonstration; ex = exercise; '
+    + 'BW = board work; monit = monitoring; pron = pronunciation; voc or vocab = vocabulary; gram = grammar; prep = preparation; LA = language analysis; GD = guided discovery; '
+    + 'PPP = presentation, practice, production; v = very; + = and; w/ = with; w/o = without; b4 = before. ';
 }
 
 // ---- keys --------------------------------------------------------------------
