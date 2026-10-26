@@ -9,7 +9,8 @@
   arc in the corner of every page writes into it (hub-notebook.js). A trainee's
   notebook is theirs alone; a tutor's is theirs alone. A note reaches anyone
   else only when its writer CONNECTS it: a trainee with their TP group or the
-  whole course, a tutor with the other tutors. What others connected with you
+  whole course, a tutor with the other tutors or, for a note written on a
+  trainee's page, with that trainee or their TP group (tutorConnectNote). What others connected with you
   sits under "Connected", with the two arcs linked.
 -->
 <html lang="en">
@@ -22,7 +23,7 @@
 <title>Your notebook</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610270204">
+<link rel="stylesheet" href="hub-tokens.css?v=202610270211">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:36px 20px 120px; display:flex; justify-content:center;}
@@ -116,18 +117,18 @@
   }
   @media print{ .back, .title .write, .tabs, .acts, .nbk-arc{display:none !important;} body{background:#fff; padding:0;} .note, .thread{box-shadow:none; border:1px solid #ddd;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610270204">
+<link rel="stylesheet" href="hub-house.css?v=202610270211">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610270204"></script>
-<script src="hub-store.js?v=202610270204"></script>
-<script src="hub-say.js?v=202610270204"></script>
-<script src="hub-sync.js?v=202610270204"></script>
-<script src="hub-notebook.js?v=202610270204"></script>
+<script src="hub-shared.js?v=202610270211"></script>
+<script src="hub-store.js?v=202610270211"></script>
+<script src="hub-say.js?v=202610270211"></script>
+<script src="hub-sync.js?v=202610270211"></script>
+<script src="hub-notebook.js?v=202610270211"></script>
 <script type="text/x-hub-app">
 /* Two people have a notebook: a trainee and a tutor. Nobody else has a door. */
 (function(){
@@ -315,7 +316,7 @@ function viewThread(){
 /* ---- connected ------------------------------------------------------------ */
 function viewConnected(){
   const list = connected().slice().sort((a, b) => String(b.at).localeCompare(String(a.at)));
-  const sub = TUTOR ? 'Notes the other tutors connected with you. Yours stay yours until you connect them.' : 'Notes your tutors connected with you, and notes your classmates connected with your TP group or with the whole course. You can reply to a tutor\u2019s note; yours stay yours until you connect them.';
+  const sub = TUTOR ? 'Notes the other tutors connected with you. Yours stay yours until you connect them, with the tutors or with a trainee.' : 'Notes your tutors connected with you, and notes your classmates connected with your TP group or with the whole course. You can reply to a tutor\u2019s note; yours stay yours until you connect them.';
   return '<section class="connected"><h2>' + NB.arc(true, 18) + 'Connected</h2><p class="gsub">' + esc(sub) + '</p>'
     + (list.length ? list.map(n => noteHTML(n, { theirs: true, showDay: true })).join('') : '<p class="shape">Nothing connected with you yet.</p>') + '</section>';
 }
@@ -324,7 +325,7 @@ function viewConnected(){
 function render(){
   const who = TUTOR ? NB.who() : (ME.name || '');
   const head = '<div class="title"><div><p class="eyebrow">' + (TUTOR ? 'Tutor' : 'Trainee') + (who ? ' · ' + esc(who) : '') + '</p><h1>Your notebook</h1>'
-    + '<p>' + (TUTOR ? 'Yours alone. The other tutors see only the notes you connect with them.' : 'Yours alone. Your tutors never see it; a note reaches your classmates only when you connect it with them.') + '</p></div>'
+    + '<p>' + (TUTOR ? 'Yours alone. A note reaches someone only when you connect it: with the other tutors, or, on a trainee\u2019s page, with that trainee or their TP group.' : 'Yours alone. Your tutors never see it; a note reaches your classmates only when you connect it with them.') + '</p></div>'
     + '<button type="button" class="btn primary write" id="writeNow">Write a note</button></div>';
   if (TUTOR && !NB.who()) {
     $('app').innerHTML = head + '<div class="namecard"><p>The notebook is yours alone, so it needs your name once: the same one the dashboard asks for.</p><input type="text" id="whoIn" placeholder="Your name" autocomplete="name"><button type="button" class="btn primary" id="whoGo">Open my notebook</button></div>';
