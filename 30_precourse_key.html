@@ -24,7 +24,7 @@
 <title>Pre-course task</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610262124">
+<link rel="stylesheet" href="hub-tokens.css?v=202610262144">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -88,6 +88,14 @@
   /* on a phone the strip is five numbers in a row; the open section's name is the heading under it */
   @media (max-width:700px){ .secbtn{align-items:center; padding:8px 4px;} .secbtn .st, .secbtn .sw{display:none;} .secbtn .sn{font-size:1.2rem;} }
   @media print{ .secnav, .secfoot{display:none !important;} .sec[hidden]{display:block !important;} .sec-eye{display:none;} }
+  /* the self-test at the end */
+  .st-box{border-top:3px solid var(--gold);}
+  .st-q{margin:12px 0 0; padding:10px 12px; border-radius:8px; background:var(--field);}
+  .st-q.right{background:color-mix(in oklch, var(--a-forest, var(--teal)) 8%, var(--field));} .st-q.wrong{background:color-mix(in oklch, var(--a-red, var(--brick)) 8%, var(--field));}
+  .st-t{margin:0 0 6px; font-weight:600; font-size:.92rem;}
+  .st-opts{display:flex; flex-direction:column; gap:4px; font-size:.9rem;} .st-opts label{display:flex; gap:7px; align-items:baseline; cursor:pointer;}
+  .st-k{margin:6px 0 0; font-size:.84rem; color:var(--grey);} .st-k b{color:var(--ink);}
+  @media print{ .st-box{display:none;} }
   .a-wait{margin:10px 0 0; padding:10px 14px; border-left:3px solid var(--sand-line); background:var(--field); font-size:.88rem; color:var(--grey);}
   @media (max-width:560px){ .pt-row, .pt-row:has(select){grid-template-columns:minmax(0,1fr);} .pt-table{display:block; overflow-x:auto;} }
   @media print{ .pt-read{background:none;} .pt-in, .pt-table input, .pt-row select{border:1px solid #999; background:none;} .a-wait{display:none;} }
@@ -113,19 +121,19 @@
   @media(prefers-reduced-motion:reduce){ .pk .task .a, .pk-show, .pk-bar i{transition:none;} }
   @media print{ .pk .task.pk-cov .a{display:none;} .pk-show, .pk-count{display:none;} .pk .task.pk-seen h3::after{content:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610262124">
+<link rel="stylesheet" href="hub-house.css?v=202610262144">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610262124"></script>
-<script src="hub-store.js?v=202610262124"></script>
-<script src="hub-say.js?v=202610262124"></script>
-<script src="hub-sync.js?v=202610262124"></script>
-<script src="hub-notebook.js?v=202610262124"></script>
-<script src="precourse-key.js?v=202610262124"></script>
+<script src="hub-shared.js?v=202610262144"></script>
+<script src="hub-store.js?v=202610262144"></script>
+<script src="hub-say.js?v=202610262144"></script>
+<script src="hub-sync.js?v=202610262144"></script>
+<script src="hub-notebook.js?v=202610262144"></script>
+<script src="precourse-key.js?v=202610262144"></script>
 <script src="precourse-task.js?v=202610261907"></script>
 <script type="text/x-hub-app">
 /* A volunteer student is not on the course and has no pre-course task. */
@@ -207,9 +215,29 @@ function render(){
       return `<div class="task" id="task-${t.n}"><h3><span class="tn">${t.n}</span>Task ${t.n}</h3>${it.lead ? `<details class="pt-read" open><summary>Read first</summary>${reading(it.lead)}</details>` : ''}${(q => q ? `<p class="q">${esc(q)}</p>` : '')(ask(t.prompt, it.shape))}
         <div class="pt-yours"><span class="pt-lab">Your answer</span>${inputs(t.n, it.shape)}</div>
         <div class="pt-key"><span class="pt-lab key">The answer</span>${ans}</div></div>`; }).join('')}
+    ${si === KEY.length - 1 ? selfTest() : ''}
     <div class="secfoot">${si > 0 ? `<button type="button" class="btn" data-sec="${si - 1}">Back: ${esc(KEY[si - 1].title)}</button>` : '<span></span>'}${si < KEY.length - 1 ? `<button type="button" class="btn next" data-sec="${si + 1}">Next: ${esc(KEY[si + 1].title)}</button>` : '<span class="done-note">That is the whole task.</span>'}</div></div>`; }).join('');
   $('app').innerHTML = head + `<div class="tools"><button class="btn" type="button" onclick="window.print()">Print / Save as PDF</button></div>` + strip + body;
 }
+/* A SELF-TEST TO FINISH (Ramy, 26 Oct 2026: "an opportunity to see who actually did it"; then its own thing, before day
+   one, not a round of the intro session). Six questions drawn from the task, answered alone; the score is shown once and
+   kept nowhere. Each answer is the booklet's own. */
+const SELF = [
+  { q: 'Which tense is “I have been feeling unwell for a while”?', o: ['Present perfect', 'Present perfect progressive', 'Past progressive'], r: 1, k: 'Task 16' },
+  { q: 'Which tense is “It happened as I was driving home”?', o: ['Simple past, then past progressive', 'Past perfect, then simple past', 'Present simple, then past progressive'], r: 0, k: 'Task 16' },
+  { q: 'What does the modal mean in “This letter must be from Frank – he’s the only one who hasn’t written so far”?', o: ['Advice', 'Permission', 'Logical deduction'], r: 2, k: 'Task 12' },
+  { q: 'Which of these is correct?', o: ['I’ve been to the movies last night.', 'People with 12 items or fewer can queue here.', 'He often come late.'], r: 1, k: 'Task 7' },
+  { q: 'Which word means “an individual sound”?', o: ['Phoneme', 'Stress', 'Intonation'], r: 0, k: 'Task 24' },
+  { q: 'You comment on the weather to a stranger at a bus stop. That conversation is…', o: ['Transactional', 'Interactional'], r: 1, k: 'Task 38' }
+];
+function selfTest(){
+  return `<div class="task st-box" id="selftest"><h3>Before day one: a quick self-test</h3><p class="q">Six questions from the task, answered without looking back. The score is yours alone: it is shown once and saved nowhere.</p>
+    ${SELF.map((x, i) => `<div class="st-q" data-r="${x.r}"><p class="st-t">${i + 1}. ${esc(x.q)}</p><div class="st-opts">${x.o.map((o, j) => `<label><input type="radio" name="st${i}" value="${j}"> ${esc(o)}</label>`).join('')}</div><p class="st-k" hidden>${esc(x.k)}: the answer is <b>${esc(x.o[x.r])}</b>.</p></div>`).join('')}
+    <div class="tools" style="margin-top:12px"><button type="button" class="btn" id="stCheck">Check my answers</button><span class="pk-count" id="stScore" aria-live="polite"></span></div></div>`;
+}
+document.addEventListener('click', e => { if (!e.target.closest || !e.target.closest('#stCheck')) return;
+  let n = 0, done = 0; document.querySelectorAll('.st-q').forEach(q => { const pick = q.querySelector('input:checked'); const k = q.querySelector('.st-k'); k.hidden = false; q.classList.remove('right', 'wrong'); if (!pick) return; done++; const ok = +pick.value === +q.dataset.r; if (ok) n++; q.classList.add(ok ? 'right' : 'wrong'); });
+  const s = document.getElementById('stScore'); if (s) s.innerHTML = done < SELF.length ? '<b>' + n + '</b> right so far; ' + (SELF.length - done) + ' not answered.' : '<b>' + n + '</b> of ' + SELF.length + ' right' + (n === SELF.length ? '. You did the task.' : n >= 4 ? '. Nearly there: look again at the ones marked.' : '. Worth another look at the task before day one.'); });
 /* which section is open: the address keeps it, so Back from a reading returns to the same place */
 let SEC = (function(){ const m = String(location.hash || '').match(/^#s(\d+)$/); return m ? +m[1] - 1 : 0; })();
 function started(n){ return Object.keys(ANS).some(k => (k === String(n) || k.indexOf(n + '.') === 0) && ANS[k] !== '' && ANS[k] !== false && ANS[k] != null); }

@@ -11,6 +11,8 @@ window.InputLib = (function(){
      discovery"), so every rule that matches counts. The rules are tight on
      purpose: a title must not open a page it does not name. */
   var RULES = [
+    /* day one's opener (26 Oct 2026): a tile called Course introduction, or anything naming the course on Lite */
+    [/course intro|introduction to the course|welcome to the course|induction|connect lite|your celta on/, 'course-introduction'],
     [/\bstress\b/, 'word-and-sentence-stress'],
     [/connected speech|intonation/, 'connected-speech'],
     [/\bsounds\b|phonemic|the chart/, 'phonology-sounds'],
