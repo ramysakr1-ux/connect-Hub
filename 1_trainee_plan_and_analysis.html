@@ -16,7 +16,7 @@
 <title>1 · Lesson Plan &amp; Language Analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610261924">
+<link rel="stylesheet" href="hub-tokens.css?v=202610262006">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -343,6 +343,9 @@
     padding:12px 18px; margin-bottom:16px; font-size:0.86rem; color:var(--ink); line-height:1.5;}
   .turnstatus.show{display:flex;}
   .turnstatus button{flex:none;}
+  /* "Take it back" refused once the day's teaching practice has begun: a small box, in words (26 Oct 2026) */
+  .turnstatus .tb-locked{flex-basis:100%; padding:9px 12px; border-radius:8px; border-left:3px solid var(--tone-stuck, var(--a-red)); background:var(--paper); color:var(--ink) !important; font-size:0.84rem;}
+  .turnstatus .tb-locked[hidden]{display:none;}
   .btn-submit{background:var(--teal); color:var(--paper); font-size:0.98rem; font-weight:700;
     padding:13px 34px; border-radius:24px; letter-spacing:.02em; border:none; cursor:pointer;}
   .btn-submit:hover{background:oklch(44% 0.062 195);}
@@ -442,7 +445,7 @@
   @media(max-width:640px){ .pv2{display:none;} }
   @media print{ .pv2{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610261924">
+<link rel="stylesheet" href="hub-house.css?v=202610262006">
 </head>
 <body>
 <div class="board">
@@ -671,13 +674,13 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202610261924"></script>
-<script src="hub-shared.js?v=202610261924"></script>
-<script src="hub-rotation.js?v=202610261924"></script>
-<script src="hub-store.js?v=202610261924"></script>
-<script src="hub-say.js?v=202610261924"></script>
-<script src="hub-sync.js?v=202610261924"></script>
-<script src="hub-notebook.js?v=202610261924"></script>
+<script src="hub-due.js?v=202610262006"></script>
+<script src="hub-shared.js?v=202610262006"></script>
+<script src="hub-rotation.js?v=202610262006"></script>
+<script src="hub-store.js?v=202610262006"></script>
+<script src="hub-say.js?v=202610262006"></script>
+<script src="hub-sync.js?v=202610262006"></script>
+<script src="hub-notebook.js?v=202610262006"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -2102,13 +2105,17 @@ function setLock(on){
      2026). Back and Print are the two that stay. */
   document.querySelectorAll('.board input, .board textarea, .board select').forEach(el=>{ el.disabled=on; });
   document.querySelectorAll('.board button').forEach(el=>{
-    if (el.closest('.back') || el.classList.contains('btn-print') || el.id === 'backLink') return;
+    if (el.closest('.back') || el.classList.contains('btn-print') || el.id === 'backLink' || el.id === 'takeBackBtn') return;
     el.disabled = on;
   });
   $('prevBtn').disabled=on;
   /* ...and then the share switch states its own case again, because the sweep
-     above has just overruled it in both directions. */
-  SV_LOCKED = on;
+     above has just overruled it in both directions. Sharing with the volunteer
+     students is not part of what goes to the tutor, so it stays live after the
+     plan or material is sent: a trainee can share, or take it back, up to the
+     lesson (Ramy, 26 Oct 2026: "when they share material with the students, can
+     they take it back?"). */
+  SV_LOCKED = false;
   if (typeof renderShareVol === 'function') renderShareVol();
 }
 function renderTurnStatus(){
@@ -2122,15 +2129,46 @@ function renderTurnStatus(){
     // role, 21 Sep 2026). A turn-in has written turnedInAt since it was built,
     // so this is for records that predate it or arrive without it.
     const when = fmtDate(rec.turnedInAt);
-    el.innerHTML=(isMatOnly()?'Sent to your tutor':'Turned in')+(when?' — '+when:'')+'. Your tutor has it now; you can\'t edit it.';
+    el.innerHTML=(isMatOnly()?'Sent to your tutor':'Turned in')+(when?' — '+when:'')+'. Your tutor has it now; you can\'t edit it.'
+      +' <button class="btn quiet" type="button" id="takeBackBtn">Take it back</button><span class="tb-locked" id="tbLocked" hidden></span>';
     el.classList.add('show');
     $('turnInBtn').style.display='none';
+    $('takeBackBtn').addEventListener('click', takeBack);
   } else {
     setLock(false);
     el.classList.remove('show');
     el.innerHTML='';
     $('turnInBtn').style.display='';
   }
+}
+/* TAKING IT BACK (Ramy, 26 Oct 2026: "They can take it back if they want to. But they cannot take it back once the
+   first TP of the day starts. After that, if they try, there should be a little box that tells them this is locked.
+   Ask your tutor to return it to you"). Until the first teaching practice of that day begins (the timetable's first TP
+   session on the plan's date, in the course's own time), Take it back makes it a draft again and the tutor stops seeing
+   it as sent. From then on the button says why it cannot. A plan with no date, or a day with no TP on the timetable,
+   can be taken back. The tutor gives a locked one back from the feedback page. */
+function takeBackCloses(){
+  const date = String(($('fDate') || {}).value || '').slice(0, 10); if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  let tt = null, cs = {}; try { tt = JSON.parse(localStorage.getItem('connect_timetable_v1') || 'null'); cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
+  const tps = (window.hubSlotsFor ? hubSlotsFor(tt, date) : []).filter(x => x && x.kind === 'tp' && /^\d{1,2}:\d{2}/.test(x.from || '')).map(x => x.from).sort();
+  if (!tps.length) return null;
+  const at = (window.hubZonedInstant && cs.timeZone) ? hubZonedInstant(date, tps[0], cs.timeZone) : null;
+  if (at) return { at: at, time: tps[0] };
+  const m = tps[0].match(/^(\d{1,2}):(\d{2})/), d = window.hubDateOf ? hubDateOf(date) : new Date(date);
+  d.setHours(+m[1], +m[2], 0, 0); return { at: d.getTime(), time: tps[0] };
+}
+async function takeBack(){
+  const c = takeBackCloses(), now = window.hubNow ? hubNow() : Date.now();
+  if (c && now >= c.at) {
+    const box = $('tbLocked');
+    if (box) { box.textContent = 'This is locked: teaching practice started at ' + (window.hubClock ? hubClock(c.time) : c.time) + '. Ask your tutor to give it back to you.'; box.hidden = false; }
+    return;
+  }
+  const MAT = isMatOnly();
+  if (!await confirmModal((MAT ? 'Take your material back? ' : 'Take your plan back? ') + 'Your tutor stops seeing it as sent until you send it again.', 'Take it back')) return;
+  savePlanRecord({ status: 'draft', turnedInAt: null, takenBackAt: Date.now() });
+  renderTurnStatus();
+  setStatus(MAT ? 'Taken back. Send it again when it is ready.' : 'Taken back. Turn it in again when it is ready.');
 }
 (function initFromStorage(){
   const rec=loadPlanRecord();

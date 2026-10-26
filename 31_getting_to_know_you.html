@@ -26,7 +26,7 @@
 <title>Getting to know you</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610261924">
+<link rel="stylesheet" href="hub-tokens.css?v=202610262006">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -70,6 +70,10 @@
   .gk .act .btn:not(.ghost){transition:transform .15s ease, box-shadow .15s ease;}
   .gk .act .btn:not(.ghost):hover{transform:translateY(-1px); box-shadow:0 8px 16px -10px oklch(37.5% 0.058 195 / .8);}
   .gk .act.chosen{background:var(--paper);}
+  /* Take it back is the quiet one beside a pick: a light button that lifts and washes like every other (the motion
+     rule). The house rule for the home's action rows (.act .btn, forest) caught it here, so it sat dark and flipped
+     pale on hover (Ramy, 26 Oct 2026). */
+  .act .btn.ghost{background:var(--paper) !important; color:var(--ink) !important; box-shadow:var(--nb-shadow) !important;}
   .gk .act.chosen::after{content:'Your pick'; position:absolute; top:14px; right:16px; padding:5px 12px 4px; border:2px solid var(--gold-deep); border-radius:6px;
     font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:0.95rem; color:var(--gold-deep); transform:rotate(-6deg); background:var(--paper);}
   .gk .act.chosen.gk-new::after{animation:gk-stamp .5s cubic-bezier(.3,1.5,.5,1) both;}
@@ -104,20 +108,20 @@
   .iv-tutor td, .iv-tutor th{text-align:left; padding:6px 10px 6px 0; font-size:.88rem; vertical-align:top;}
   @media print{ .gk .act{animation:none;} .gk.gk-picked .act:not(.chosen) ol{display:block;} .gk-peek{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610261924">
+<link rel="stylesheet" href="hub-house.css?v=202610262006">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610261924"></script>
-<script src="hub-store.js?v=202610261924"></script>
-<script src="hub-say.js?v=202610261924"></script>
-<script src="hub-sync.js?v=202610261924"></script>
-<script src="hub-notebook.js?v=202610261924"></script>
-<script src="gtky-bank.js?v=202610261924"></script>
-<script src="fol-interview.js?v=202610261924"></script>
+<script src="hub-shared.js?v=202610262006"></script>
+<script src="hub-store.js?v=202610262006"></script>
+<script src="hub-say.js?v=202610262006"></script>
+<script src="hub-sync.js?v=202610262006"></script>
+<script src="hub-notebook.js?v=202610262006"></script>
+<script src="gtky-bank.js?v=202610262006"></script>
+<script src="fol-interview.js?v=202610262006"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -134,7 +138,12 @@ const BAND_NAME = { low: 'Beginner and elementary', high: 'Pre-intermediate and 
 /* The group's level, from the TP point set the centre gave it: A1/A2 are the
    low band, A2+ and up the high one (Connect's two-band rule). */
 function bandFromLevel(level){ const m = String(level || '').toUpperCase().match(/\b([ABC][12])(\+?)/); if (!m) return ''; const code = m[1] + m[2]; return code === 'A1' || code === 'A2' ? 'low' : 'high'; }
-function groupBand(g){ const P = rec('connect_tp_points_v1') || {}; const set = (P.set || {}); const id = (set.setFor || {})[g]; const S = id && (set.library || {})[id]; return S ? bandFromLevel(S.level || S.book) : ''; }
+/* A trainee never receives the set itself, so the store sends their group's level beside their points (v153, 26 Oct
+   2026); the room a group teaches in can name it too (Course admin, Online rooms). */
+function groupBand(g){ const P = rec('connect_tp_points_v1') || {}; if (P.level) return bandFromLevel(P.level);
+  const set = (P.set || {}); const id = (set.setFor || {})[g]; const S = id && (set.library || {})[id]; if (S) return bandFromLevel(S.level || S.book);
+  const room = (settings().onlineRooms || []).find(r => r && String(r.group || '') === String(g || '') && r.level); return room ? bandFromLevel(room.level) : ''; }
+let KNOWN = '';
 function settings(){ return rec('connect_course_settings') || {}; }
 function mode(){ const m = String(settings().deliveryMode || 'f2f'); return m === 'online' ? 'online' : 'f2f'; }
 function roster(){ const r = rec('connect_roster_v1') || {}; return Object.values(r.trainees || {}); }
@@ -167,7 +176,7 @@ function switcher(){ return fmt() === 'both' ? `<div class="fmt"><button class="
 function render(){
   if (curView() === 'interview') { renderInterview(); return; }
   const g = MY_GROUP, m = mode();
-  if (!band) band = groupBand(g) || (IS_TRAINEE ? '' : 'high');
+  if (!band) { KNOWN = IS_TRAINEE ? groupBand(g) : ''; band = KNOWN || groupBand(g) || (IS_TRAINEE ? '' : 'high'); }
   const mine = IS_TRAINEE ? pickOf(MY_NAME) : null;
   const head = `<div class="title"><h1>Getting to know you</h1>
     <p>${IS_TRAINEE ? 'One short activity to run with your students, after the demonstration lesson. Unassessed, no tutor in the room. Here are three for the level you teach: read them, pick one, and that is all you need to do before day one. ' + esc(minutesLine()) : 'What the trainees see before day one: three activities each from Connect’s bank for the level they teach, and a pick. The picks land on the shelf on your dashboard. ' + esc(minutesLine())}</p></div>`;
@@ -177,7 +186,9 @@ function render(){
     : (function(){ const picks = shared(); return picks.length
         ? `<div class="pick"><b>${picks.length} pick${picks.length === 1 ? '' : 's'} so far</b><br><span class="note">${picks.map(x => esc(String(x.name || ''))).join(' &middot; ')}</span></div>`
         : '<div class="pick"><b>No picks yet.</b><br><span class="note">Each trainee picks from their own link; the picks show here and on your shelf.</span></div>'; })();
-  const bands = `<div class="bands"><span>${IS_TRAINEE ? 'Level of your students:' : 'Level:'}</span>
+  /* Ramy, 26 Oct 2026: "Since we already know who the trainee is, we know what level they're teaching, why don't they
+     just get their own". Known: the level is said, not offered. Not known yet: they choose. */
+  const bands = KNOWN ? `<div class="bands"><span>Your students: <b>${esc(BAND_NAME[KNOWN].toLowerCase().replace(/^./, c => c.toUpperCase()))}</b> &middot; ${m === 'online' ? 'online course' : 'in the room'}</span></div>` : `<div class="bands"><span>${IS_TRAINEE ? 'Level of your students:' : 'Level:'}</span>
     <button class="chip${band === 'low' ? ' on' : ''}" type="button" data-band="low">${BAND_NAME.low}</button>
     <button class="chip${band === 'high' ? ' on' : ''}" type="button" data-band="high">${BAND_NAME.high}</button>
     <span>&middot; ${m === 'online' ? 'online course' : 'in the room'}</span></div>`;

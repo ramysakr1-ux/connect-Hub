@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610261924">
+<link rel="stylesheet" href="hub-tokens.css?v=202610262006">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -429,7 +429,7 @@
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610261924">
+<link rel="stylesheet" href="hub-house.css?v=202610262006">
 </head>
 <body>
 <div class="board">
@@ -582,14 +582,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202610261924"></script>
-<script src="hub-shared.js?v=202610261924"></script>
-<script src="hub-store.js?v=202610261924"></script>
-<script src="hub-say.js?v=202610261924"></script>
-<script src="hub-crit-learn.js?v=202610261924"></script>
-<script src="hub-crit-vocab.js?v=202610261924"></script>
-<script src="hub-sync.js?v=202610261924"></script>
-<script src="hub-notebook.js?v=202610261924"></script>
+<script src="hub-exchange.js?v=202610262006"></script>
+<script src="hub-shared.js?v=202610262006"></script>
+<script src="hub-store.js?v=202610262006"></script>
+<script src="hub-say.js?v=202610262006"></script>
+<script src="hub-crit-learn.js?v=202610262006"></script>
+<script src="hub-crit-vocab.js?v=202610262006"></script>
+<script src="hub-sync.js?v=202610262006"></script>
+<script src="hub-notebook.js?v=202610262006"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1802,6 +1802,21 @@ function renderTurnStatus(){
     $('loadedInfo').textContent='Pulled in: '+((META().tp||'TP')+' · '+(META().name||''))+
       (DOC.self?' · self-evaluation included':' · no self-evaluation yet')+
       (planRec.status==='turned_in'?'':' · plan not turned in yet');
+    /* GIVING IT BACK (Ramy, 26 Oct 2026). A trainee can take their own plan or material back until the first teaching
+       practice of the day starts; after that theirs is locked and says "ask your tutor to give it back to you". This is
+       that: the trainee's sent plan becomes a draft again, theirs to change and send once more. */
+    if (TRAINEE_ID && planRec.status==='turned_in') {
+      $('loadedInfo').insertAdjacentHTML('beforeend', ' <button class="btn quiet" type="button" id="giveBackBtn">Give it back</button>');
+      $('giveBackBtn').addEventListener('click', async function(){
+        if(!(await confirmModal('Give this back to '+traineeLabel('the trainee')+'? It becomes theirs to change again, and it is no longer sent until they send it again.','Give it back'))) return;
+        const r=loadRoster(), tr=r.trainees&&r.trainees[TRAINEE_ID];
+        if(!(tr&&tr.tp&&tr.tp.plan)) return;
+        Object.assign(tr.tp.plan, { status:'draft', turnedInAt:null, givenBackAt:Date.now() });
+        saveRosterObj(r);
+        this.remove();
+        $('loadedInfo').insertAdjacentText('beforeend', ' · given back');
+      });
+    }
   } else {
     $('loadedInfo').textContent='Nothing turned in yet — you can still write feedback on its own.';
   }

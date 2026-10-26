@@ -143,7 +143,9 @@ window.hubObservationHours = function(records){
          its own (hub-say.js). Ramy, 6 Oct 2026, on the tutor's dashboard: "it
          just goes completely washed." This rule was turning the plum to the
          wash with the label still paper. */
-      "button:not(:disabled):not(.primary):not(.btn):not(.btn-teal):not(.btn-gold):not(.btn-add):not(.btn-submit):not(.active):not(.on):not(.picked):not(.confirm-action):not(.act):not(.tab):not(.filter):not(.sg):not(.say-pill):hover{ background-color: var(--hub-wash); }"+
+      /* ...and every other filled one the hover sweep found (26 Oct 2026, 947 controls on every screen): a chosen tab or
+         language, the red "today" day, a red deadline, a gold Save, Print my TP point. hub-house.css lifts them instead. */
+      "button:not(:disabled):not(.primary):not(.btn):not(.btn-teal):not(.btn-gold):not(.btn-add):not(.btn-submit):not(.active):not(.on):not(.picked):not(.confirm-action):not(.act):not(.tab):not(.filter):not(.sg):not(.say-pill):not([aria-pressed=\"true\"]):not([aria-selected=\"true\"]):not(.today):not(.ls-primary):not(.gold):not(.due):hover{ background-color: var(--hub-wash); }"+
       "@media (prefers-reduced-motion: reduce){ a.card, a.room, .cell, button, .btn{ transition: none; } a.card:hover, a.room:hover, .cell:hover{ transform: none; } }";
     document.head.appendChild(hcss);
   }

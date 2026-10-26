@@ -3111,10 +3111,15 @@ function tpPointsFor_(p, reader, me) {
   var hide = hideTokens_(me.course || '', me);
   var sets = (p.sets || {})[grp] || null;
   if (Array.isArray(sets)) sets = sets.map(function (set) { return Array.isArray(set) ? set.map(hide) : set; });
-  if (!rel[grp]) return { released: false, group: grp, sets: sets, me: me.token };
+  /* v153 (26 Oct 2026): the LEVEL of the set the group teaches from, and nothing else of the set, so the
+     getting-to-know-you page can deal a trainee the three for their own students before day one (Ramy: "we know what
+     level they're teaching, why don't they just get their own"). */
+  var level = '';
+  try { var st = p.set || {}, sid = (st.setFor || {})[grp], S = sid && (st.library || {})[sid]; level = S ? String(S.level || S.book || '').slice(0, 40) : ''; } catch (e) { level = ''; }
+  if (!rel[grp]) return { released: false, group: grp, sets: sets, me: me.token, level: level };
   var pts = byGroup[grp] || {}, mine = {};
   Object.keys(pts).forEach(function (t) { mine[hide(t)] = pts[t]; });
-  return { released: true, group: grp, points: mine, sets: sets, me: me.token };
+  return { released: true, group: grp, points: mine, sets: sets, me: me.token, level: level };
 }
 function courseWriteRaw_(courseId, kind, data) {
   var sh = sheet_(SHEET_COURSE);

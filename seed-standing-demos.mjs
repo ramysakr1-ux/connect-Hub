@@ -5,6 +5,7 @@
  *   node seed-standing-demos.mjs --which start --write    build the beginning demo, pinned to day 6
  *   node seed-standing-demos.mjs --which visit --write    build the before-the-visit demo, pinned to day 17
  *   node seed-standing-demos.mjs --which visit --write --course c7    re-dress a course this made
+ *   node seed-standing-demos.mjs --which dayone --write --course c9 --also <c11 Aiko token>    day one, with the Friday's door on Aiko's card
  *
  * Ramy, 30 Sep 2026: "I want to do a demo for a course that has no end date
  * so it would last. Two perhaps: one showing the beginning of the course and
@@ -209,6 +210,9 @@ function settingsFor(tokens) {
   if (WHICH === 'visit') { s.docs = DOCS; s.assessorVisit = [tokens[0], tokens[3]]; }
   if (DAYONE) s.demoAskName = true;   // the card asks who is visiting (25 Oct 2026)
   /* the walk is a real course: each trainee's link is theirs, and the clock is the real one */
+  /* the day-one trainee card's second door (26 Oct 2026): --also <the Friday demo's Aiko token> */
+  { const ai = process.argv.indexOf('--also'), at = ai > 0 ? String(process.argv[ai + 1] || '') : '';
+    if (WHICH === 'dayone' && /^[0-9a-z]{8,40}$/i.test(at)) s.demoAlso = { t: at, label: 'Open the Friday before the course', here: 'Open day one' }; }
   /* the Friday demo's pre-course task is Lite's own page (30_precourse_key.html, 26 Oct 2026): no Drive placeholder */
   if (WALK) { delete s.demoToday; delete s.demoAskName; s.courseName = 'CELTA — Launch walk'; s.notificationRef = 'TR999-LW/2026'; }
   if (DAYONE) {
