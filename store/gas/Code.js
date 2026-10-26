@@ -742,6 +742,18 @@ case 'inbox': {
       courseWrite_('_defaults', 'homework:' + hwSet, req.data || null);
       return { saved: true, set: hwSet, lessons: Object.keys(req.data || {}).length };
     }
+    /* v150: Build up your vocab, written per library lesson: {"1A·1": [{w, def, ex}, ...]} */
+    case 'putVocab': {
+      requireOwner_(owner);
+      var vbSet = String(req.set || '');
+      if (!/^s\d{1,3}$/.test(vbSet)) throw new Error('A library set id like s8 is needed');
+      courseWrite_('_defaults', 'vocab:' + vbSet, req.data || null);
+      return { saved: true, set: vbSet, lessons: Object.keys(req.data || {}).length };
+    }
+    case 'getVocab': {
+      requireOwner_(owner);
+      return { set: String(req.set || ''), data: courseRead_('_defaults', 'vocab:' + String(req.set || '')) };
+    }
     case 'getHomework': {
       requireOwner_(owner);
       var hwGet = String(req.set || '');
@@ -1923,31 +1935,16 @@ case 'inbox': {
       var cefr = function (x) { var m = String(x || '').match(/\b([ABC][12])\b/i); return m ? m[1].toUpperCase() : String(x || '').trim().toLowerCase(); };
       var vcLevel = cefr(vol.level);
       if (!vcLevel) return { today: vcToday, classes: [] };
-      var clip = function (x, n) { return String(x || '').replace(/\s+/g, ' ').trim().slice(0, n); };
-      var byDay = {}, lvlOf = {};
+      /* v150 (Ramy, 26 Oct 2026: "really worried about this taking things from the trainees plan, because sometimes it's
+         wrong"): nothing of a trainee's plan reaches a volunteer any more. Only each plan's level is read, to find the
+         library set a lesson was taught from; the day's words now come from our own library (Build up your vocab). */
+      var lvlOf = {};
       rosterWithRecords_(course.id, { tpHistory: true, plan: true }).forEach(function (t) {
         var R = t.records || {}, docs = {};
         Object.keys(R.tpHistory || {}).forEach(function (k) { var h = R.tpHistory[k]; if (h && h.state && h.state.doc) docs[k] = h.state.doc; });
         if (R.plan && R.plan.state && R.plan.state.meta && !docs[R.plan.state.meta.tp]) docs[R.plan.state.meta.tp] = R.plan.state;
-        Object.keys(docs).forEach(function (k) {
-          var d = docs[k], m = d.meta || {}, la = d.la;
-          var date = String(m.date || '').slice(0, 10);
-          if (m.level) lvlOf[t.token + '|' + k] = cefr(m.level);   // the level this lesson was planned at, for the homework below
-          if (!la || !date || date > vcToday || cefr(m.level) !== vcLevel) return;
-          var cards = [];
-          (la.vocab || []).forEach(function (v) { if (v && v.item) cards.push({ front: clip(v.item, 80), back: clip(v.def, 200), say: clip((String(v.form || '').match(/\/[^\/\n]{1,60}\//g) || []).join('  '), 120) }); });
-          (la.blocks || []).forEach(function (b) {
-            var f = {}; (b && b.fields || []).forEach(function (x) { if (x && x.key) f[x.key] = x.value; });
-            var ex = f.marker || f.exponents || f.exponent || '';
-            if (ex) cards.push({ front: clip(ex, 220), back: clip(f.meaning || f['function'] || '', 320), name: clip(f.item, 120) });
-          });
-          if (!cards.length) return;
-          var title = clip(String(la.context || '').split(/[:(]/)[0], 80);
-          /* v149: the TP number travels too -- the words cards are the trainee's, so they carry "TP3 · Nour" */
-          (byDay[date] = byDay[date] || []).push({ by: String(t.name || '').split(/\s+/)[0], tp: String(m.tp || k).replace(/\D/g, ''), title: title, cards: cards.slice(0, 24) });
-        });
+        Object.keys(docs).forEach(function (k) { var m = (docs[k] || {}).meta || {}; if (m.level) lvlOf[t.token + '|' + k] = cefr(m.level); });
       });
-      /* today's words wait for the end of the TP day too (v147, below) */
       /* HOMEWORK: each lesson taught that day at this level, from the course's TP points. The trainee who taught it
          is found from the TP points (group, token, TP number), the day from the timetable (the TP number and which
          set of the group teaches that day), the level from the library set the group uses. */
@@ -1956,7 +1953,7 @@ case 'inbox': {
       var ttb = courseRead_(course.id, 'timetable') || {};
       var libs = (tpp.set && tpp.set.library) || {}, setFor = (tpp.set && tpp.set.setFor) || {};
       var firsts = {}; roster_(course.id).forEach(function (t) { firsts[t.token] = String(t.name || '').split(/\s+/)[0]; });
-      var hwMaps = {};
+      var hwMaps = {}, vbMaps = {}, vbByDay = {};
       Object.keys(tpp.groups || {}).forEach(function (g) {
         var halves = (tpp.sets && tpp.sets[g]) || [];
         Object.keys(tpp.groups[g] || {}).forEach(function (tok) {
@@ -1979,10 +1976,12 @@ case 'inbox': {
             var L = sid && libs[sid];
             if (!L || cefr(L.level) !== vcLevel) return;
             var hwMap = hwMaps[sid] || (hwMaps[sid] = courseRead_('_defaults', 'homework:' + sid) || {});
-            if (!hwMap[x.from]) return;
+            var vbMap = vbMaps[sid] || (vbMaps[sid] = courseRead_('_defaults', 'vocab:' + sid) || {});
+            if (!hwMap[x.from] && !vbMap[x.from]) return;
             var day = (ttb.days || []).filter(function (d) { return d && d.date && d.tp && String(d.tp) === m[1] && (d.setIndex || 0) === si; })[0];
             if (!day || String(day.date) > vcToday) return;
-            (hwByDay[day.date] = hwByDay[day.date] || []).push({ by: firsts[tok] || '', from: x.from, aim: String(x.aim || ''), hw: hwMap[x.from] });
+            if (hwMap[x.from]) (hwByDay[day.date] = hwByDay[day.date] || []).push({ by: firsts[tok] || '', from: x.from, aim: String(x.aim || ''), hw: hwMap[x.from] });
+            if (vbMap[x.from]) (vbByDay[day.date] = vbByDay[day.date] || []).push({ from: x.from, words: vbMap[x.from] });
           });
         });
       });
@@ -1990,18 +1989,28 @@ case 'inbox': {
          the TP day, depending how many TPs are per day"): the end of the day's last TP lesson, however many there are,
          from that day's own sessions, else from the timetable's TP slots. The demo's clock is a date, so it shows at once.
          v147: today's words (the flip cards) wait for the same moment ("words cards wait for the end of TP too"). */
-      if (!vcSet.demoToday && (hwByDay[vcToday] || byDay[vcToday])) {
+      if (!vcSet.demoToday && (hwByDay[vcToday] || vbByDay[vcToday])) {
         var hwDay = (ttb.days || []).filter(function (d) { return d && d.date === vcToday; })[0];
         var hwEnds = ((hwDay && hwDay.sessions) || []).filter(function (s) { return s && s.e && (s.k === 'tp' || s.room === 'Teaching practice'); }).map(function (s) { return String(s.e); });
         if (!hwEnds.length) hwEnds = (ttb.slots || []).filter(function (x) { return x && x.kind === 'tp' && x.to; }).map(function (x) { return String(x.to); });
         var hwOpen = hwEnds.sort().pop();
-        if (hwOpen && Utilities.formatDate(new Date(), vcTz, 'HH:mm') < hwOpen) { delete hwByDay[vcToday]; delete byDay[vcToday]; }
+        if (hwOpen && Utilities.formatDate(new Date(), vcTz, 'HH:mm') < hwOpen) { delete hwByDay[vcToday]; delete vbByDay[vcToday]; }
       }
-      var allDays = {}; Object.keys(byDay).forEach(function (d) { allDays[d] = 1; }); Object.keys(hwByDay).forEach(function (d) { allDays[d] = 1; });
-      var vcDays = Object.keys(allDays).sort().reverse().slice(0, 12);
+      /* BUILD UP YOUR VOCAB (v150): ten words a day, taken in turn from each of the day's lessons (4, 3, 3 on a
+         three-lesson day), each lesson's words written by us from its coursebook pages, with our own meaning and example. */
+      var vbDay = function (d) {
+        var ls = (vbByDay[d] || []).sort(function (a, b) { return a.from < b.from ? -1 : 1; }), out = [], seen = {};
+        for (var r = 0; out.length < 10 && r < 12; r++) ls.forEach(function (l) {
+          var w = (l.words || [])[r];
+          if (w && w.w && !seen[String(w.w).toLowerCase()] && out.length < 10) { seen[String(w.w).toLowerCase()] = 1; out.push({ w: String(w.w), def: String(w.def || ''), ex: String(w.ex || ''), from: l.from }); }
+        });
+        return out;
+      };
+      var allDays = {}; Object.keys(vbByDay).forEach(function (d) { allDays[d] = 1; }); Object.keys(hwByDay).forEach(function (d) { allDays[d] = 1; });
+      var vcDays = Object.keys(allDays).sort().reverse().slice(0, 20);
       return { today: vcToday, classes: vcDays.map(function (d) {
         var hws = (hwByDay[d] || []).sort(function (a, b) { return a.from < b.from ? -1 : 1; });
-        return { date: d, lessons: byDay[d] || [], homework: hws };
+        return { date: d, vocab: vbDay(d), homework: hws };
       }) };
     }
     case 'volunteerAgree': {
