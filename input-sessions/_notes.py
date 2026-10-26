@@ -527,3 +527,24 @@ NOTES['guided-discovery-vs-ppp'] = '''
 <li>The film: trainees who count every activity as a stage. Push them to the three big moves and what changes at each.</li>
 <li>"Presentation" heard as a lecture. The teacher on film elicits from a picture and drawings; point at that.</li>
 </ul>'''
+
+# Course introduction (26 Oct 2026): its page is built by hand, so its notes were in the page;
+# they live here now with the rest, so the store can serve them to tutors only.
+NOTES['course-introduction'] = '''
+<h4>What this session is for</h4>
+<p>Day one, first thing. They meet each other, and they find out how the course runs on Lite by looking for the answers on their own laptops. Nothing here is a lecture; if you catch yourself explaining, turn it into a question and let a team find it.</p>
+<h4>Before the session</h4>
+<p>Put this session on the timetable as an Input tile titled <b>Course introduction</b> (or anything with “introduction” or “Connect Lite” in it): that is what opens it for the trainees on the day. Make sure the timetable is published, the TP points are released to each group, and the assignment deadlines are set, because Round 1 reads all three from the course. The bingo prompts are yours to change in Course admin, under Before the course: one a line, and Lite deals nine to each person. The twenty Lite ships with are generic on purpose; if you add ones about the people in the room, add only what they would be happy to have found out.</p>
+<h4>Running it</h4>
+<table class="tn-time"><tr><th>Min</th><th>Stage</th><th>What you do</th></tr>
+<tr><td>12</td><td>Bingo</td><td>Laptops open, everyone up. Call time at ten minutes whatever the cards say. Then six or seven introductions to the room, not all of them. Teams of three form from each person’s first three names; sort out the leftovers yourself.</td></tr>
+<tr><td>15</td><td>Round 1</td><td>Six questions, all answerable from their own home, timetable and TP points. Teams work on one laptop. Reveal is read from the course, so it is right for this course and only this course. Expect the lesson plan and language analysis TP numbers to surprise them.</td></tr>
+<tr><td>13</td><td>Round 2</td><td>Ten questions on the rules. Each answer quotes the Handbook by section and page, or names where Lite does it. The failed-assignment pair (one, then two) is the one they get wrong; let the room argue before anyone clicks.</td></tr>
+<tr><td>15</td><td>Round 3</td><td>Eight parts of the CELTA 5, who fills each in. After each click the team opens that part on one person’s own CELTA 5 page. Stage 2 is the one to dwell on: they rate themselves on every criterion before the tutorial.</td></tr>
+<tr><td>10</td><td>The hunt</td><td>Six screens. The first team with one open calls it. The notebook and Take it back are the two most people have not seen.</td></tr>
+<tr><td>5</td><td>Scores</td><td>Type the points on your own screen (the board saves nothing). Then one written question each; answer them now, or on the noticeboard by the end of the day.</td></tr></table>
+<h4>What Lite says that Cambridge does not</h4>
+<p>Three answers in Round 2 are Lite’s rules, not Cambridge’s, and the answer says so: a plan or material sent to you can be taken back until the day’s first TP starts (after that you give it back from the feedback page); nobody reads the pre-course task, they check it against the key; and there are no tutor references, the CELTA report is the reference.</p>
+<h4>If a course has no timetable yet</h4>
+<p>Round 1 then says so and gives the general answer for each question. Everything else works without a course, so the session can be run in the library too.</p>
+'''

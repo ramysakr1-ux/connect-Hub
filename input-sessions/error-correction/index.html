@@ -192,35 +192,10 @@
     </div>
   </section>
 
-  <section id="trainer" class="trainer-notes" hidden>
+  <section id="trainer" class="trainer-notes" data-slug="error-correction" hidden>
     <div class="card">
       <div class="stage-title">Trainer notes <span class="badge">Tutor only</span></div>
-      <div class="guide-box gb-plain tn-box"><div class="gb">
-<h4>Before</h4>
-<p>Check the sound for the lead-in film (the Mitchell and Webb sketch, 3 minutes). The two practice tables print from the handout; a printed copy per pair saves the typing.</p>
-<h4>Running it</h4>
-<table class="tn-time"><tr><th>Min</th><th>Stage</th><th>What you do</th></tr><tr><td>3</td><td>Lead-in</td><td>Read the two viewing questions aloud before you press play. After the film, pairs compare; take one or two answers to each. The errors are small and the correcting is relentless: that contrast is the session.</td></tr><tr><td>7</td><td>Attitudes</td><td>Each trainee ranks the nine alone, then compares in threes. No key. Draw out the two that split a room: "You will not improve unless somebody corrects you" and "A slip means you’ve learned it the wrong way".</td></tr><tr><td>8</td><td>The decision flow</td><td>Part A in pairs on screen; the order is type, deal or not, when, who, technique. Part B the same. Ask which decision they skip in TP: usually "who": the teacher always does it.</td></tr><tr><td>7</td><td>Match the errors</td><td>Individually, then check. The eight are a mix on purpose: three grammar, three pronunciation, two vocabulary. Ask which ones a student could self-correct if pointed at, and which need telling.</td></tr><tr><td>8</td><td>How to correct</td><td>Click the twelve as a class. Demonstrate three on a volunteer: finger correction, the echo with a rising tone, the one-word question. They need to see them, not read them.</td></tr><tr><td>12</td><td>Practice 1 and 2</td><td>Pairs, one table each, then swap and check each other’s. The key is below; the page has none for these two tables, so it is yours to give.</td></tr></table>
-<h4>The key: the practice tables</h4>
-<table class="tn-time"><tr><th></th><th>Corrected</th><th>Type</th><th>A technique</th></tr>
-<tr><td>A</td><td>We must leave early today.</td><td>Grammar: modal + bare infinitive</td><td>Finger correction, take out "to"</td></tr>
-<tr><td>B</td><td>He visited the museum yesterday.</td><td>Grammar: word order</td><td>Repeat up to the error, rising tone</td></tr>
-<tr><td>C</td><td>She’s wearing a hat.</td><td>Grammar: article</td><td>Finger correction, a missing finger</td></tr>
-<tr><td>D</td><td>How many bottles did you buy?</td><td>Grammar: countable, much or many</td><td>One-word question: "Countable?"</td></tr>
-<tr><td>E</td><td>He walks to work slowly every day.</td><td>Grammar: third person -s</td><td>Gesture: the S drawn in the air</td></tr>
-<tr><td>F</td><td>I stayed three days in the hotel last week.</td><td>Grammar: past simple</td><td>Timeline, or "Last week?" with a hand behind the shoulder</td></tr>
-<tr><td>G</td><td>Can I borrow your umbrella?</td><td>Appropriacy: too formal between friends</td><td>"Your friend? Really?" and a raised eyebrow</td></tr>
-<tr><td>H</td><td>…because I had a cold.</td><td>Vocabulary: false friend (constipado)</td><td>Tell them, with the smile; then CCQ the two words</td></tr>
-<tr><td>I</td><td>I’m bored.</td><td>Vocabulary: -ed and -ing adjectives</td><td>Echo "I’m boring?" and point at yourself</td></tr>
-<tr><td>J</td><td>…fill the tank on Fridays.</td><td>Pronunciation: /iː/ and /ɪ/</td><td>Phonemic chart, or draw a full tank</td></tr>
-<tr><td>K</td><td>…to bake cakes on Sundays.</td><td>Pronunciation: the diphthong</td><td>Model and drill the one word</td></tr>
-<tr><td>L</td><td>At the party she enjoyed herself a lot.</td><td>Grammar: enjoy is a verb, not an adjective</td><td>Board the sentence, let them find it</td></tr>
-<tr><td>M</td><td>Please bring a chair.</td><td>Pronunciation: /tʃ/ and /ʃ/</td><td>Minimal pair on the board: share, chair</td></tr></table>
-<h4>Watch for</h4>
-<ul>
-<li>Trainees who correct everything in their TPs the week after this session. The attitudes task is where to plant "not every error, not every time".</li>
-<li>The decision flow learned as a list. Ask for it as a story: "A student says X. What do you decide first?"</li>
-</ul>
-      </div></div>
+      <div class="guide-box gb-plain tn-box"><div class="gb" id="tnBody"></div></div>
     </div>
   </section>
 
@@ -509,6 +484,14 @@ onScroll();
     if (!r || !r.tutor) return;
     document.body.classList.add('tutor');
     var s = document.getElementById('trainer'); if (s) s.hidden = false;
+    /* the notes come from the store, for a tutor's link only (26 Oct 2026) */
+    var tb = document.getElementById('tnBody');
+    if (s && tb && !tb.innerHTML.trim() && s.dataset.slug) {
+      tb.innerHTML = '<p>Loading the trainer notes…</p>';
+      HubStore.call({ op: 'trainerNotes', slug: s.dataset.slug }).then(function(x){
+        tb.innerHTML = (x && x.html) || '<p>No trainer notes for this session yet.</p>';
+      }, function(){ tb.innerHTML = '<p>The trainer notes could not be loaded. Check the connection and open the page again.</p>'; });
+    }
     var a = document.querySelector('nav.sticky-nav a.tn-link'); if (a) a.hidden = false;
     var b = document.querySelector('.print-btn'); if (b) b.textContent = 'Print with the trainer notes';
     var r = document.getElementById('roleLabel'); if (r) r.textContent = 'Tutor';

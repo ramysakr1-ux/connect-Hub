@@ -736,23 +736,10 @@
   </div>
 </section>
 
-  <section id="trainer" class="trainer-notes" hidden>
+  <section id="trainer" class="trainer-notes" data-slug="alternative-teaching-techniques" hidden>
     <div class="card">
       <div class="stage-title">Trainer notes <span class="badge">Tutor only</span></div>
-      <div class="guide-box gb-plain tn-box"><div class="gb">
-<h4>Before</h4>
-<p>This page is the lesson plan, step by step with your asides; the trainees see the lesson as their students would. Decide whether the story suits your group (somebody is attacked in it; see the note in Before you start). Print the cut-ups for step 6: the practice tasks PDF has them, one set per pair, and the ranking cards for step 8. The picture is on the page.</p>
-<h4>Running it</h4>
-<table class="tn-time"><tr><th>Min</th><th>Stage</th><th>What you do</th></tr><tr><td>6</td><td>The story</td><td>Tell it, do not read it. The beats are under "The story, beat by beat". Six minutes; the clock note on the page is right.</td></tr><tr><td>6</td><td>Elicit</td><td>Who is most responsible? Then why, pushed to a full sentence. Take what they give you and shape it on the board. The one rule: do not explain the grammar first.</td></tr><tr><td>8</td><td>Meaning</td><td>Six CCQs on screen, answered by the room. Then the concept and the timeline.</td></tr><tr><td>8</td><td>Form</td><td>The gap-fill on screen, then the two clause orders. The strips on the board, swapped, the comma rubbed out.</td></tr><tr><td>4</td><td>Drilling</td><td>Backchain both halves. Weak have, contracted had. Natural speed or it does not count.</td></tr><tr><td>6</td><td>Controlled</td><td>The cut-ups in pairs; on screen to check. Ask who said each sentence.</td></tr><tr><td>7</td><td>Semi-controlled</td><td>Finish the sentences. Two or three endings for the same beginning.</td></tr><tr><td>10</td><td>Freer</td><td>Rank the five, defend with third conditionals only. Stay out; write down the errors for the end.</td></tr><tr><td>5</td><td>The twist</td><td>Love, work, desire, money, power. Light, then the delayed correction from step 8.</td></tr></table>
-<h4>The key</h4>
-<p>On the page: the CCQs, the form gap-fill, the cut-up matches, possible endings for the stems, and how to read the twist.</p>
-<h4>Watch for</h4>
-<ul>
-<li>The teal asides on the page (the one rule, while you tell it, how to get it across, teach less than this, while they work) are yours; a trainee link never shows them. The page itself now reads as the lesson the class gets.</li>
-<li>Step 1 overrunning. Ten minutes of story is a lecture.</li>
-<li>"If she would have stayed": it will come; board it at the end, not in the middle of the ranking.</li>
-</ul>
-      </div></div>
+      <div class="guide-box gb-plain tn-box"><div class="gb" id="tnBody"></div></div>
     </div>
   </section>
 
@@ -1139,6 +1126,14 @@ var __lrS = 51090; function __lr(){ __lrS = (__lrS * 16807) % 2147483647; return
     if (!r || !r.tutor) return;
     document.body.classList.add('tutor');
     var s = document.getElementById('trainer'); if (s) s.hidden = false;
+    /* the notes come from the store, for a tutor's link only (26 Oct 2026) */
+    var tb = document.getElementById('tnBody');
+    if (s && tb && !tb.innerHTML.trim() && s.dataset.slug) {
+      tb.innerHTML = '<p>Loading the trainer notes…</p>';
+      HubStore.call({ op: 'trainerNotes', slug: s.dataset.slug }).then(function(x){
+        tb.innerHTML = (x && x.html) || '<p>No trainer notes for this session yet.</p>';
+      }, function(){ tb.innerHTML = '<p>The trainer notes could not be loaded. Check the connection and open the page again.</p>'; });
+    }
     var a = document.querySelector('nav.sticky-nav a.tn-link'); if (a) a.hidden = false;
     var b = document.querySelector('.print-btn'); if (b) b.textContent = 'Print with the trainer notes';
     var r = document.getElementById('roleLabel'); if (r) r.textContent = 'Tutor';

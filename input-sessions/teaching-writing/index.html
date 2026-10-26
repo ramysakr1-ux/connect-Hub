@@ -262,22 +262,10 @@
     </div>
   </section>
 
-  <section id="trainer" class="trainer-notes" hidden>
+  <section id="trainer" class="trainer-notes" data-slug="teaching-writing" hidden>
     <div class="card">
       <div class="stage-title">Trainer notes <span class="badge">Tutor only</span></div>
-      <div class="guide-box gb-plain tn-box"><div class="gb">
-<h4>Before</h4>
-<p>Scraps of paper for the mystery present; the model letter is on the page. Part 4 needs the cartoon strip of someone stuck in front of a blank page from your own materials: it is copyrighted, so it is not on the page. A wall for the running dictation, or do it on screen line by line. Online: the page carries the online version of each step in brackets.</p>
-<h4>Running it</h4>
-<table class="tn-time"><tr><th>Min</th><th>Stage</th><th>What you do</th></tr><tr><td>8</td><td>The mystery present</td><td>Live, no screen. Everyone writes a present for someone in the room, you redistribute, elicit "say thank you", and they will write a thank-you letter to find the giver.</td></tr><tr><td>12</td><td>The thank-you letter</td><td>Show the model. Ask what the features are, and whether the present is named (it is only implied). They write; then the mingle: letters held up, read aloud, delivered.</td></tr><tr><td>6</td><td>Attitudes</td><td>Sort the eight on screen in pairs. Ask which attitude their students will have.</td></tr><tr><td>6</td><td>Before we write</td><td>Your strip, then the brainstorm, then the checklist reveal. Eleven considerations; they will get seven.</td></tr><tr><td>6</td><td>Product or process</td><td>Sort the ten. Then: which approach was the thank-you letter? (Product, with a model.)</td></tr><tr><td>8</td><td>Wall dictation</td><td>Running dictation if the room allows, line by line on screen if not. Then the comprehension questions; the key is on the page.</td></tr><tr><td>6</td><td>Parallel writing</td><td>The Dan and Ruth paragraph from the prompts; compare with the model.</td></tr><tr><td>4</td><td>Controlled to freer</td><td>Sort the five on the continuum.</td></tr><tr><td>4</td><td>Backs to the board</td><td>New term, describe it, guess it. Four or five terms is enough.</td></tr></table>
-<h4>The key</h4>
-<p>On the page: the three sorts (attitudes, product and process, controlled to freer), the considerations list, the dictation answers (the handball catch is in there), and the parallel-writing model.</p>
-<h4>Watch for</h4>
-<ul>
-<li>The page gives the trainee each activity as a student would get it. The running of it (collecting and redistributing the presents, posting the dictation text on the wall, your copy of the cartoon strip) is yours, above.</li>
-<li>The mingle needs the room. Online it is chat and breakout rooms, as the page says.</li>
-</ul>
-      </div></div>
+      <div class="guide-box gb-plain tn-box"><div class="gb" id="tnBody"></div></div>
     </div>
   </section>
 
@@ -528,6 +516,14 @@ document.getElementById('termBtn').addEventListener('click', () => {
     if (!r || !r.tutor) return;
     document.body.classList.add('tutor');
     var s = document.getElementById('trainer'); if (s) s.hidden = false;
+    /* the notes come from the store, for a tutor's link only (26 Oct 2026) */
+    var tb = document.getElementById('tnBody');
+    if (s && tb && !tb.innerHTML.trim() && s.dataset.slug) {
+      tb.innerHTML = '<p>Loading the trainer notes…</p>';
+      HubStore.call({ op: 'trainerNotes', slug: s.dataset.slug }).then(function(x){
+        tb.innerHTML = (x && x.html) || '<p>No trainer notes for this session yet.</p>';
+      }, function(){ tb.innerHTML = '<p>The trainer notes could not be loaded. Check the connection and open the page again.</p>'; });
+    }
     var a = document.querySelector('nav.sticky-nav a.tn-link'); if (a) a.hidden = false;
     var b = document.querySelector('.print-btn'); if (b) b.textContent = 'Print with the trainer notes';
     var r = document.getElementById('roleLabel'); if (r) r.textContent = 'Tutor';

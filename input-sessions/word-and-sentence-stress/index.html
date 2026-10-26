@@ -282,25 +282,10 @@
   </details>
   </div></section>
 
-  <section id="trainer" class="trainer-notes" hidden>
+  <section id="trainer" class="trainer-notes" data-slug="word-and-sentence-stress" hidden>
     <div class="card">
       <div class="stage-title">Trainer notes <span class="badge">Tutor only</span></div>
-      <div class="guide-box gb-plain tn-box"><div class="gb">
-<h4>Before</h4>
-<p>Sound for the Hamlet sketch (about five minutes: the page plays the first actor and then the second actor’s note (to be or not to BE), and jumps past the long chat about the skull and Hamlet to the next actor; it is a fan upload, so check it still plays, and the RSC’s own short cut is the fallback link under the frame). Nothing to print; the chant and the balloons sentence are on screen.</p>
-<h4>Running it</h4>
-<table class="tn-time"><tr><th>Min</th><th>Stage</th><th>What you do</th></tr><tr><td>8</td><td>Lead-in</td><td>Watch once: tick the word each actor lands on. Watch again in pairs: what does the line mean each time, which would you choose. Then the reveal. If you want a word-by-word key for the nine, add it after one viewing; the page does not claim one.</td></tr><tr><td>6</td><td>Rhythm</td><td>Clap the four beats and say the four lines over them, faster each time. The reveal names stress timing.</td></tr><tr><td>8</td><td>Word stress</td><td>Sixteen countries; say each before clicking. Have them sort the words into the bubble patterns first, then click. Pakistan and Montreal carry a secondary stress; make them hear it. Show how you mark stress on the board: bubbles, never accent marks.</td></tr><tr><td>8</td><td>Contrastive</td><td>The balloons sentence seven ways, round the room, one word each. Reveal the implication after each.</td></tr><tr><td>7</td><td>In context</td><td>Step 1 alone: mark the five questions. Only then open the conversation (on paper, fold the page). Pairs read it with their own names and mark again. Ask what moved before the reveal.</td></tr><tr><td>7</td><td>The café</td><td>Pairs read the five exchanges aloud, the server leaning on a different word each time. Agree the stress, then reveal. Push for why: the stress answers what the customer just said.</td></tr><tr><td>7</td><td>Attitudinal</td><td>Five Lisbon exchanges in pairs: which word, before revealing.</td></tr><tr><td>8</td><td>Noun or verb</td><td>Eight quiz items individually. Then two more pairs of their own (import, present, record, object, contract, conduct).</td></tr><tr><td>6</td><td>Make it productive</td><td>Ask the room which tasks so far were receptive (all of them). Each trainee picks one and writes how Ss would say it. Hear three, then the reveal. Tie it to their next TP plan.</td></tr><tr><td>3</td><td>Round-up</td><td>Trainees write their three before opening. Collect them aloud; the reveal is the board summary.</td></tr></table>
-<h4>The key</h4>
-<p>On the page for every task. Primary stress: aus-TRA-lia, HUN-ga-ry, bra-ZIL, ja-PAN, IT-a-ly, LON-don, pak-i-STAN (secondary on pak), GER-ma-ny, chi-CA-go, mon-tre-AL (secondary on mon), tor-QUAY, TUR-key, IN-di-a, SWIT-zer-land, a-MER-i-ca, slo-VA-ki-a.</p>
-<h4>Watch for</h4>
-<ul>
-<li>Stress shown by volume alone. Length and pitch carry it too; the chant is where they feel that.</li>
-<li>Trainees who mark every word. One stress per thought group; contrastive stress moves it.</li>
-<li>Australia and America in the sort. Some accents give them a syllable less; the main stress stays put. Accept both.</li>
-</ul>
-<h4>If you want another lead-in</h4>
-<p>A published jazz chant built on echo questions ("Spectacles?" "Spectacles.") works well before the rhythm task. It is not reproduced on the page; bring your own copy.</p>
-      </div></div>
+      <div class="guide-box gb-plain tn-box"><div class="gb" id="tnBody"></div></div>
     </div>
   </section>
 
@@ -528,6 +513,14 @@ QUIZ.forEach(function(q, qi){
     if (!r || !r.tutor) return;
     document.body.classList.add('tutor');
     var s = document.getElementById('trainer'); if (s) s.hidden = false;
+    /* the notes come from the store, for a tutor's link only (26 Oct 2026) */
+    var tb = document.getElementById('tnBody');
+    if (s && tb && !tb.innerHTML.trim() && s.dataset.slug) {
+      tb.innerHTML = '<p>Loading the trainer notes…</p>';
+      HubStore.call({ op: 'trainerNotes', slug: s.dataset.slug }).then(function(x){
+        tb.innerHTML = (x && x.html) || '<p>No trainer notes for this session yet.</p>';
+      }, function(){ tb.innerHTML = '<p>The trainer notes could not be loaded. Check the connection and open the page again.</p>'; });
+    }
     var a = document.querySelector('nav.sticky-nav a.tn-link'); if (a) a.hidden = false;
     var b = document.querySelector('.print-btn'); if (b) b.textContent = 'Print with the trainer notes';
     var r = document.getElementById('roleLabel'); if (r) r.textContent = 'Tutor';

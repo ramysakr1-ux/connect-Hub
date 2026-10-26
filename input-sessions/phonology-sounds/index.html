@@ -215,23 +215,10 @@
     </div>
   </section>
 
-  <section id="trainer" class="trainer-notes" hidden>
+  <section id="trainer" class="trainer-notes" data-slug="phonology-sounds" hidden>
     <div class="card">
       <div class="stage-title">Trainer notes <span class="badge">Tutor only</span></div>
-      <div class="guide-box gb-plain tn-box"><div class="gb">
-<h4>Before</h4>
-<p>Test the sound on the room’s machine: press Play on the first word and turn the speakers up until the back row hears it. The words are recordings, so they sound the same on every machine and play without the internet once heard. The Seeing Speech link in part 3 needs the internet.</p>
-<h4>Running it</h4>
-<table class="tn-time"><tr><th>Min</th><th>Stage</th><th>What you do</th></tr><tr><td>8</td><td>Sounds and letters</td><td>Play each word twice; they write it, then count. Let the room disagree about "letter" (four or five sounds) before you reveal: the disagreement is the lesson.</td></tr><tr><td>7</td><td>Terms</td><td>Pairs match the six. Then say each definition in your own words with your hand on your throat for voiced.</td></tr><tr><td>10</td><td>Consonants</td><td>Everyone says the eight sounds aloud, hand to mouth, before choosing. Then Seeing Speech on the screen for two of them.</td></tr><tr><td>8</td><td>Voicing</td><td>Pairs: read the phonemic script aloud first, write the word, then first and last sound. Throat check for every answer.</td></tr><tr><td>7</td><td>The chart</td><td>Click round the vowels in rows; ask them to feel the jaw drop from /iː/ to /ɑː/. Then the three places the consonant rows go.</td></tr><tr><td>10</td><td>Script</td><td>Individually on their own devices, using the symbol keys. Check as a class; reveal only after.</td></tr><tr><td>10</td><td>Film titles</td><td>Pairs, first to finish. Then the question that matters: which of these would you use with a class, and at what level?</td></tr></table>
-<h4>The key</h4>
-<p>All on the page: Check answers under each task, Reveal for the script and the films. The obstruction answers are: b, m and p at the lips; v at the lower lip and top teeth; n and t at the tongue tip and ridge; r at the tongue tip near the ridge; k at the back of the tongue and soft palate.</p>
-<h4>Watch for</h4>
-<ul>
-<li>The voice. The recordings model single words; they are not a model for connected speech, so say the words yourself too.</li>
-<li>Trainees who stop at "I can’t do phonemic script". The keys on the page mean nobody has to draw a symbol; they only have to choose one.</li>
-<li>American and British counts for "letter": both are right; the chart is British.</li>
-</ul>
-      </div></div>
+      <div class="guide-box gb-plain tn-box"><div class="gb" id="tnBody"></div></div>
     </div>
   </section>
 
@@ -474,6 +461,14 @@ document.addEventListener('scroll',onScroll); onScroll();
     if (!r || !r.tutor) return;
     document.body.classList.add('tutor');
     var s = document.getElementById('trainer'); if (s) s.hidden = false;
+    /* the notes come from the store, for a tutor's link only (26 Oct 2026) */
+    var tb = document.getElementById('tnBody');
+    if (s && tb && !tb.innerHTML.trim() && s.dataset.slug) {
+      tb.innerHTML = '<p>Loading the trainer notes…</p>';
+      HubStore.call({ op: 'trainerNotes', slug: s.dataset.slug }).then(function(x){
+        tb.innerHTML = (x && x.html) || '<p>No trainer notes for this session yet.</p>';
+      }, function(){ tb.innerHTML = '<p>The trainer notes could not be loaded. Check the connection and open the page again.</p>'; });
+    }
     var a = document.querySelector('nav.sticky-nav a.tn-link'); if (a) a.hidden = false;
     var b = document.querySelector('.print-btn'); if (b) b.textContent = 'Print with the trainer notes';
     var r = document.getElementById('roleLabel'); if (r) r.textContent = 'Tutor';

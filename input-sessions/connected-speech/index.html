@@ -193,23 +193,10 @@
     </div>
   </section>
 
-  <section id="trainer" class="trainer-notes" hidden>
+  <section id="trainer" class="trainer-notes" data-slug="connected-speech" hidden>
     <div class="card">
       <div class="stage-title">Trainer notes <span class="badge">Tutor only</span></div>
-      <div class="guide-box gb-plain tn-box"><div class="gb">
-<h4>Before</h4>
-<p>Nothing to print; everything is on screen. Say every example aloud yourself at natural speed before the trainees try it; a page cannot do that part.</p>
-<h4>Running it</h4>
-<table class="tn-time"><tr><th>Min</th><th>Stage</th><th>What you do</th></tr><tr><td>7</td><td>Lead-in</td><td>Six puzzles, said fast until the sentence appears. Reveal each.</td></tr><tr><td>8</td><td>Elision</td><td>Two phrases, the dropped /t/. Then two more from the room (next day, must be).</td></tr><tr><td>10</td><td>The dictation computer</td><td>Ten printed sentences, ten replies. Pairs match; the real sentence and the feature appear on a match. Show all answers at the end.</td></tr><tr><td>12</td><td>The link maze</td><td>Say the phrase in the cell, name the sound, click the way. The route is below if a group gets stuck.</td></tr><tr><td>8</td><td>Linking</td><td>Mark the links in the story text, read it aloud smoothly, then the suggested links.</td></tr><tr><td>8</td><td>Weak forms</td><td>Five sentences; click the swallowed words; reveal.</td></tr><tr><td>5</td><td>All together</td><td>Five cards; say the examples first, then open each.</td></tr></table>
-<h4>The key</h4>
-<p>Lead-in: I’d like to buy a new pair of shoes; She’s waiting for the weather to clear; Our dog hasn’t eaten his dinner; They’re sure you’ll love it; My brother’s been to Rome twice; Pete knows the right answer. The dictation computer’s ten answers are on the page after each match.</p>
-<p>The maze route, from the start cell: Draw a line (/r/) right to We saw a film (/r/) right to Two or three (/w/) up to A queue of people (/w/) up to Hello everybody (/w/) up to Three and a half (/j/) left to Tea or coffee (/j/) left to I agree (/j/) left to Give me a ring (/j/) left to Go ahead (/w/) up to Never again (/r/) right to Score a goal (/r/) right to Finish.</p>
-<h4>Watch for</h4>
-<ul>
-<li>Reading the phonemic script letter by letter. The sound comes first; the script is a record of it.</li>
-<li>The maze done by trial and error. Make them say the phrase out loud before every click; that is the activity.</li>
-</ul>
-      </div></div>
+      <div class="guide-box gb-plain tn-box"><div class="gb" id="tnBody"></div></div>
     </div>
   </section>
 
@@ -504,6 +491,14 @@ document.addEventListener('scroll',onScroll); onScroll();
     if (!r || !r.tutor) return;
     document.body.classList.add('tutor');
     var s = document.getElementById('trainer'); if (s) s.hidden = false;
+    /* the notes come from the store, for a tutor's link only (26 Oct 2026) */
+    var tb = document.getElementById('tnBody');
+    if (s && tb && !tb.innerHTML.trim() && s.dataset.slug) {
+      tb.innerHTML = '<p>Loading the trainer notes…</p>';
+      HubStore.call({ op: 'trainerNotes', slug: s.dataset.slug }).then(function(x){
+        tb.innerHTML = (x && x.html) || '<p>No trainer notes for this session yet.</p>';
+      }, function(){ tb.innerHTML = '<p>The trainer notes could not be loaded. Check the connection and open the page again.</p>'; });
+    }
     var a = document.querySelector('nav.sticky-nav a.tn-link'); if (a) a.hidden = false;
     var b = document.querySelector('.print-btn'); if (b) b.textContent = 'Print with the trainer notes';
     var r = document.getElementById('roleLabel'); if (r) r.textContent = 'Tutor';

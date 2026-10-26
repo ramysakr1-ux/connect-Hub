@@ -203,24 +203,10 @@
     </div>
   </section>
 
-  <section id="trainer" class="trainer-notes" hidden>
+  <section id="trainer" class="trainer-notes" data-slug="eliciting-and-ccqs" hidden>
     <div class="card">
       <div class="stage-title">Trainer notes <span class="badge">Tutor only</span></div>
-      <div class="guide-box gb-plain tn-box"><div class="gb">
-<h4>Before</h4>
-<p>Open the page on the screen; trainees follow on their own devices for the game, the two tasks and the worksheet. Print the handout gives the tasks and the worksheet with the answers hidden.</p>
-<h4>Running it</h4>
-<table class="tn-time"><tr><th>Min</th><th>Stage</th><th>What you do</th></tr><tr><td>5</td><td>Spot the elicitor</td><td>Read both teachers aloud yourself, with the voices. Ask the room who is eliciting before anyone clicks.</td></tr><tr><td>5</td><td>Why do we elicit?</td><td>Pairs list reasons in the box. Collect a few aloud, then reveal the five and the warning: you can’t elicit what isn’t there.</td></tr><tr><td>10</td><td>Name the technique</td><td>Pairs or two teams. One moment at a time; a point only for a first-time answer. See all eleven at the end, and ask for a twelfth of their own.</td></tr><tr><td>8</td><td>In the classroom</td><td>The film is three and a half minutes. Play it once; pairs write the techniques in order and the moment they would have told the class. Name the techniques yourself before the session: the page gives no key, so the room builds it.</td></tr><tr><td>10</td><td>Building CCQs</td><td>Walk the managed-to model on the board: the sentence, what it means, simpler statements, then questions. Task A in pairs (find the sentence), Task B as a class (what is wrong).</td></tr><tr><td>10</td><td>CCQ worksheet</td><td>Item 1 is done. Do item 2 together first: meaning in plain words, then CCQs. Pairs on 3 to 7; reveal as they finish.</td></tr><tr><td>5</td><td>Other ways to check meaning</td><td>Click through the eight. Ask which suits the language in their next TP.</td></tr><tr><td>15</td><td>Your turn</td><td>Pairs plan the elicitation and one CCQ for two words, then elicit them from another pair. Monitor for CCQs that use the target word.</td></tr></table>
-<h4>The key</h4>
-<p>Every task’s answer is on the page behind its reveal. The practice words in Your turn have no key: any technique that gets the word out of a student is right, and any CCQ with a short answer that does not contain the word is right.</p>
-<h4>Watch for</h4>
-<ul>
-<li>CCQs that contain the target language (“Did he use to bite his nails?”). Send them back to meaning.</li>
-<li>“Do you understand?” dressed up as a CCQ. A CCQ has an answer you can hear.</li>
-<li>CCQs about things the sentence doesn’t say: Task B’s first set is the model of that mistake.</li>
-<li>Eliciting that becomes a guessing game with no context. The scenario does the work.</li>
-</ul>
-      </div></div>
+      <div class="guide-box gb-plain tn-box"><div class="gb" id="tnBody"></div></div>
     </div>
   </section>
 
@@ -514,6 +500,14 @@ document.addEventListener('scroll',onScroll); onScroll();
     if (!r || !r.tutor) return;
     document.body.classList.add('tutor');
     var s = document.getElementById('trainer'); if (s) s.hidden = false;
+    /* the notes come from the store, for a tutor's link only (26 Oct 2026) */
+    var tb = document.getElementById('tnBody');
+    if (s && tb && !tb.innerHTML.trim() && s.dataset.slug) {
+      tb.innerHTML = '<p>Loading the trainer notes…</p>';
+      HubStore.call({ op: 'trainerNotes', slug: s.dataset.slug }).then(function(x){
+        tb.innerHTML = (x && x.html) || '<p>No trainer notes for this session yet.</p>';
+      }, function(){ tb.innerHTML = '<p>The trainer notes could not be loaded. Check the connection and open the page again.</p>'; });
+    }
     var a = document.querySelector('nav.sticky-nav a.tn-link'); if (a) a.hidden = false;
     var b = document.querySelector('.print-btn'); if (b) b.textContent = 'Print with the trainer notes';
     var r = document.getElementById('roleLabel'); if (r) r.textContent = 'Tutor';

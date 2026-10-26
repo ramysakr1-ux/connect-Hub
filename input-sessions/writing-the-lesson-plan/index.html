@@ -173,22 +173,10 @@ A magazine article, about 350 words: “The baker who never sees the sun”, abo
     </div>
   </section>
 
-  <section id="trainer" class="trainer-notes" hidden>
+  <section id="trainer" class="trainer-notes" data-slug="writing-the-lesson-plan" hidden>
     <div class="card">
       <div class="stage-title">Trainer notes <span class="badge">Tutor only</span></div>
-      <div class="guide-box gb-plain tn-box"><div class="gb">
-<h4>Before</h4>
-<p>Their own lesson plan template and language analysis sheet open beside the page; every judgment on the page is about those two documents. Nothing to print.</p>
-<h4>Running it</h4>
-<table class="tn-time"><tr><th>Min</th><th>Stage</th><th>What you do</th></tr><tr><td>12</td><td>Aims</td><td>The four criteria on screen. Each aim: Ready to teach from, or Needs work; the feedback says why. Do the first two together, the rest in pairs.</td></tr><tr><td>12</td><td>Procedure</td><td>Same again. The one to stop on: a procedure a colleague could not teach from.</td></tr><tr><td>6</td><td>Interaction patterns</td><td>Match each description to the pattern. Ind, PW, GW, T-S, S-S, OC, OCFB.</td></tr><tr><td>10</td><td>Anticipated problems</td><td>Lesson plan or language analysis sheet. The rule is on the page: management, tasks, materials, technology and timing on the plan; meaning, form and pronunciation on the sheet.</td></tr><tr><td>12</td><td>Fix this plan</td><td>Pairs find the six problems and rewrite each line. Take one fix per pair before the reveal.</td></tr><tr><td>15</td><td>Your turn</td><td>Pairs plan the lead-in and the gist task from the made-up page, then swap with another pair and check against the four decisions.</td></tr><tr><td>5</td><td>Recap</td><td>Read the four boxes aloud; they are the checklist for their next plan.</td></tr></table>
-<h4>The key</h4>
-<p>Every item carries its own feedback on the page. Start again resets a part.</p>
-<h4>Watch for</h4>
-<ul>
-<li>Aims that start with the right words and say nothing. "By the end of the lesson students will be better able to…" followed by nothing specific is the one they all write.</li>
-<li>Procedures in the future tense ("students will discuss"). Imperatives, bullet points, timed.</li>
-</ul>
-      </div></div>
+      <div class="guide-box gb-plain tn-box"><div class="gb" id="tnBody"></div></div>
     </div>
   </section>
 
@@ -362,6 +350,14 @@ document.querySelectorAll('[data-reset]').forEach(btn=>{
     if (!r || !r.tutor) return;
     document.body.classList.add('tutor');
     var s = document.getElementById('trainer'); if (s) s.hidden = false;
+    /* the notes come from the store, for a tutor's link only (26 Oct 2026) */
+    var tb = document.getElementById('tnBody');
+    if (s && tb && !tb.innerHTML.trim() && s.dataset.slug) {
+      tb.innerHTML = '<p>Loading the trainer notes…</p>';
+      HubStore.call({ op: 'trainerNotes', slug: s.dataset.slug }).then(function(x){
+        tb.innerHTML = (x && x.html) || '<p>No trainer notes for this session yet.</p>';
+      }, function(){ tb.innerHTML = '<p>The trainer notes could not be loaded. Check the connection and open the page again.</p>'; });
+    }
     var a = document.querySelector('nav.sticky-nav a.tn-link'); if (a) a.hidden = false;
     var b = document.querySelector('.print-btn'); if (b) b.textContent = 'Print with the trainer notes';
     var r = document.getElementById('roleLabel'); if (r) r.textContent = 'Tutor';

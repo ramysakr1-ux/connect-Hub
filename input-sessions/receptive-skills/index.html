@@ -244,22 +244,10 @@
     <p id="keyOrder"></p>
   
 
-  <section id="trainer" class="trainer-notes" hidden>
+  <section id="trainer" class="trainer-notes" data-slug="receptive-skills" hidden>
     <div class="card">
       <div class="stage-title">Trainer notes <span class="badge">Tutor only</span></div>
-      <div class="guide-box gb-plain tn-box"><div class="gb">
-<h4>Before</h4>
-<p>A loop input: do not name the stages until the debrief. Read the text on the page yourself; it carries the shape. The timer is on the page. Nothing to print; the answer key is at the end of the page and prints from your view.</p>
-<h4>Running it</h4>
-<table class="tn-time"><tr><th>Min</th><th>Stage</th><th>What you do</th></tr><tr><td>2</td><td>Lead-in</td><td>The reveal card: what is a receptive skill.</td></tr><tr><td>5</td><td>Pre-teach</td><td>Match the six terms in pairs. Say nothing about why you are doing this.</td></tr><tr><td>3</td><td>Predict</td><td>Pairs: how should a receptive skills lesson be taught. Two ideas on the board.</td></tr><tr><td>12</td><td>Read</td><td>Start the one-minute timer, silent gist read. Check the predictions.</td></tr><tr><td>10</td><td>Detail</td><td>Twelve true-or-false, individually, pairs, reveal. Numbers 1 and 3 are the ones they argue.</td></tr><tr><td>10</td><td>Debrief</td><td>Order the seven stages. Then ask them what you did between stages (peer check before whole-class feedback, every time).</td></tr><tr><td>3</td><td>Task types</td><td>The bank by stage, as reference. Reading and listening: what changes.</td></tr></table>
-<h4>The key</h4>
-<p>At the foot of the page (Answer key): the six terms, the twelve true-or-false with a line of reasoning each, and the stage order.</p>
-<h4>Watch for</h4>
-<ul>
-<li>The gist read taken slowly. The timer is the point; stop them at one minute.</li>
-<li>"Pre-teach vocabulary" heard as "teach all the hard words". Only the words the tasks depend on.</li>
-</ul>
-      </div></div>
+      <div class="guide-box gb-plain tn-box"><div class="gb" id="tnBody"></div></div>
     </div>
   </section>
 
@@ -484,6 +472,14 @@ var __lrS = 14197; function __lr(){ __lrS = (__lrS * 16807) % 2147483647; return
     if (!r || !r.tutor) return;
     document.body.classList.add('tutor');
     var s = document.getElementById('trainer'); if (s) s.hidden = false;
+    /* the notes come from the store, for a tutor's link only (26 Oct 2026) */
+    var tb = document.getElementById('tnBody');
+    if (s && tb && !tb.innerHTML.trim() && s.dataset.slug) {
+      tb.innerHTML = '<p>Loading the trainer notes…</p>';
+      HubStore.call({ op: 'trainerNotes', slug: s.dataset.slug }).then(function(x){
+        tb.innerHTML = (x && x.html) || '<p>No trainer notes for this session yet.</p>';
+      }, function(){ tb.innerHTML = '<p>The trainer notes could not be loaded. Check the connection and open the page again.</p>'; });
+    }
     var a = document.querySelector('nav.sticky-nav a.tn-link'); if (a) a.hidden = false;
     var b = document.querySelector('.print-btn'); if (b) b.textContent = 'Print with the trainer notes';
     var r = document.getElementById('roleLabel'); if (r) r.textContent = 'Tutor';

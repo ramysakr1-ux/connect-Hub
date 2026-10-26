@@ -259,58 +259,10 @@
 
   <p class="sources"><b>Sources.</b> The session follows Connect's own Teaching productive skills input; the product and process approaches to writing follow the account in Jeremy Harmer, <i>How to Teach Writing</i> (Pearson, 2004).</p>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  <section id="trainer" class="trainer-notes" hidden>
+  <section id="trainer" class="trainer-notes" data-slug="teaching-productive-skills" hidden>
     <div class="card">
       <div class="stage-title">Trainer notes <span class="badge">Tutor only</span></div>
-      <div class="guide-box gb-plain tn-box"><div class="gb">
-<h4>Before</h4>
-<p>Sound for the SpongeBob clip (it stops at 1:50, after he has written his first word). A loop input: do not name the five stages until the debrief. Nothing to print.</p>
-<h4>Running it</h4>
-<table class="tn-time"><tr><th>Min</th><th>Stage</th><th>What you do</th></tr><tr><td>2</td><td>Lead-in</td><td>The reveal, the clip, the question. One minute of talk, no more.</td></tr><tr><td>3</td><td>Preparing</td><td>Both prompts, a minute alone, then a partner. Point out afterward that nobody was given any language first.</td></tr><tr><td>8</td><td>Useful language</td><td>Eight terms, click to reveal; the tag says which skill. The counter at the top tells you where they are.</td></tr><tr><td>7</td><td>The task types</td><td>Ten cards in two lanes. Pairs pick one for the opinion and one for the piece of writing from Stage 2, and say why.</td></tr><tr><td>8</td><td>Read and check</td><td>Silent read, then: were your ideas right? Where does writing go its own way? (The last paragraph.)</td></tr><tr><td>8</td><td>Detail, and the feedback split</td><td>Five questions, then six scenarios: task achievement or language feedback.</td></tr><tr><td>7</td><td>Debrief</td><td>Order the five stages. Then the table: four rows the same, one different.</td></tr><tr><td>2</td><td>Wrap-up</td><td>One sentence each: the difference between speaking and writing in one word. (Redraft.)</td></tr></table>
-<h4>The key</h4>
-<p>On the page: the five detail answers, the six scenarios (task achievement; language; task achievement; task achievement; language; language, and positive), the stage order (lead-in, preparing, useful language, task, feedback).</p>
-<h4>Watch for</h4>
-<ul>
-<li>Useful language taught as a presentation. Optional, a handful of phrases, often carried by the model text.</li>
-<li>Feedback that starts with errors. Task achievement first, every time.</li>
-</ul>
-      </div></div>
+      <div class="guide-box gb-plain tn-box"><div class="gb" id="tnBody"></div></div>
     </div>
   </section>
 
@@ -507,6 +459,14 @@ document.addEventListener('scroll', onScroll); onScroll();
     if (!r || !r.tutor) return;
     document.body.classList.add('tutor');
     var s = document.getElementById('trainer'); if (s) s.hidden = false;
+    /* the notes come from the store, for a tutor's link only (26 Oct 2026) */
+    var tb = document.getElementById('tnBody');
+    if (s && tb && !tb.innerHTML.trim() && s.dataset.slug) {
+      tb.innerHTML = '<p>Loading the trainer notes…</p>';
+      HubStore.call({ op: 'trainerNotes', slug: s.dataset.slug }).then(function(x){
+        tb.innerHTML = (x && x.html) || '<p>No trainer notes for this session yet.</p>';
+      }, function(){ tb.innerHTML = '<p>The trainer notes could not be loaded. Check the connection and open the page again.</p>'; });
+    }
     var a = document.querySelector('nav.sticky-nav a.tn-link'); if (a) a.hidden = false;
     var b = document.querySelector('.print-btn'); if (b) b.textContent = 'Print with the trainer notes';
     var r = document.getElementById('roleLabel'); if (r) r.textContent = 'Tutor';
