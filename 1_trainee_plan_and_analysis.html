@@ -16,7 +16,7 @@
 <title>1 · Lesson Plan &amp; Language Analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610261427">
+<link rel="stylesheet" href="hub-tokens.css?v=202610261444">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -434,11 +434,15 @@
   #turnInBtn.pv2-ready{animation:pv2-ready 1.6s ease-out 1;}
   @keyframes pv2-ready{0%{box-shadow:0 0 0 0 oklch(70% 0.12 72 / .6);}100%{box-shadow:0 0 0 12px oklch(70% 0.12 72 / 0);}}
   @media(prefers-reduced-motion:reduce){ .pv2 .stg i{transition:none;} #turnInBtn.pv2-ready{animation:none;} }
+  /* a practice that asks for material only (26 Oct 2026): the plan's sections step aside */
+  body.mat-only .board > .part, body.mat-only .board > .card:not(.mats), body.mat-only .board > .proc-wrap,
+  body.mat-only .board > #laSection, body.mat-only #laNote, body.mat-only #pv2{display:none !important;}
+  #matNote{margin:18px 0 0;} body:not(.mat-only) #matNote{display:none;}
   @media(max-width:1000px){ .pv2 .chk span:not(.lead){display:none;} }
   @media(max-width:640px){ .pv2{display:none;} }
   @media print{ .pv2{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610261427">
+<link rel="stylesheet" href="hub-house.css?v=202610261444">
 </head>
 <body>
 <div class="board">
@@ -667,13 +671,13 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202610261427"></script>
-<script src="hub-shared.js?v=202610261427"></script>
-<script src="hub-rotation.js?v=202610261427"></script>
-<script src="hub-store.js?v=202610261427"></script>
-<script src="hub-say.js?v=202610261427"></script>
-<script src="hub-sync.js?v=202610261427"></script>
-<script src="hub-notebook.js?v=202610261427"></script>
+<script src="hub-due.js?v=202610261444"></script>
+<script src="hub-shared.js?v=202610261444"></script>
+<script src="hub-rotation.js?v=202610261444"></script>
+<script src="hub-store.js?v=202610261444"></script>
+<script src="hub-say.js?v=202610261444"></script>
+<script src="hub-sync.js?v=202610261444"></script>
+<script src="hub-notebook.js?v=202610261444"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -1966,19 +1970,24 @@ function setStatus(msg){
 
 $('turnInBtn').addEventListener('click', async()=>{
   const d=collect();
+  const MAT = isMatOnly();
   const missing=[];
   if(!d.meta.name.trim()) missing.push('your name');
-  if(!d.plan.main.trim()) missing.push('the main aims');
-  if(!d.plan.rows.some(r=>r.proc.trim())) missing.push('the procedure');
+  if(MAT && !(String(d.plan.mats||'').trim() || String(d.plan.matsLink||'').trim() || MATS_FILE)) missing.push('your material');
+  if(!MAT && !d.plan.main.trim()) missing.push('the main aims');
+  if(!MAT && !d.plan.rows.some(r=>r.proc.trim())) missing.push('the procedure');
   /* The sentence that used to sit beside the button now asks at the moment it
      applies (Ramy, 6 Oct 2026: "turn in is turn in" -- and then yes to being
      asked instead). One dialog, never two: when something is missing it says
      so in the same breath. */
   const LOCKS = 'Your tutor gets access to this plan, and you will not be able to edit it until they reopen it for you.';
-  const ask = missing.length
+  const MLOCKS = 'Your tutor gets your material, and you will not be able to change it until they reopen it for you.';
+  const ask = MAT
+    ? (missing.length ? 'You haven\'t added ' + missing.join(', ') + '. ' + MLOCKS + ' Send it anyway?' : MLOCKS + ' Send it?')
+    : missing.length
     ? 'You haven\'t filled in ' + missing.join(', ') + '. ' + LOCKS + ' Turn in anyway?'
     : LOCKS + ' Turn it in?';
-  if(!await confirmModal(ask, missing.length ? 'Turn in anyway' : 'Turn in')) return;
+  if(!await confirmModal(ask, MAT ? (missing.length ? 'Send anyway' : 'Send') : missing.length ? 'Turn in anyway' : 'Turn in')) return;
   /* The rendered document travels with the record, exactly as the tutor's
      feedback does. Handbook 14.1 asks the centre to give the assessor "lesson
      plans for trainees teaching in teaching practice on the day of the
@@ -1988,8 +1997,30 @@ $('turnInBtn').addEventListener('click', async()=>{
   savePlanRecord({ state:d, label:draftLabel(), status:'turned_in', turnedInAt:Date.now(), docHTML:docHTML(d) });
   dirty=false;
   renderTurnStatus();
-  setStatus('Turned in.');
+  setStatus(MAT ? 'Sent to your tutor.' : 'Turned in.');
 });
+
+/* ---- a practice that asks for material only (Ramy, 26 Oct 2026) ---------------------------------
+   "For TP1 it will not read write your lesson plan but it will read something like prepare your
+   material." Before the centre's first plan practice (Course admin, planFrom; unset, TP 2, as the TP
+   points page reads it) this page holds the Materials card alone: the trainee adds their material,
+   shares it with the students or the group, and sends it to their tutor. Sending is the turn-in, so
+   the self-evaluation still opens after it. A centre that sets planFrom to 1 gets the full plan at
+   TP 1, and "Start from your TP point" copies the point into it. */
+const PLAN_FROM = (function(){ try { const n = parseInt((JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}).planFrom, 10); return n >= 1 ? n : 2; } catch (e) { return 2; } })();
+function isMatOnly(){ const n = tpNumberOf((($('fTP') || {}).value) || ''); return !!n && n < PLAN_FROM; }
+const MAT_H1 = document.querySelector('.header h1'), MAT_SUB = document.querySelector('.header .sub');
+const PLAN_H1 = MAT_H1 ? MAT_H1.innerHTML : '', PLAN_SUB = MAT_SUB ? MAT_SUB.innerHTML : '';
+function matMode(){
+  const on = isMatOnly(), n = tpNumberOf((($('fTP') || {}).value) || '');
+  document.body.classList.toggle('mat-only', on);
+  if (MAT_H1) MAT_H1.innerHTML = on ? 'Your material for TP ' + n : PLAN_H1;
+  if (MAT_SUB) MAT_SUB.innerHTML = on ? 'Add the material for your lesson, and share it if the students or the group need it before class. It saves itself as you go. When it is ready, send it to your tutor.' : PLAN_SUB;
+  if (on && !$('matNote')) $('fMats').closest('.card').insertAdjacentHTML('beforebegin', '<div class="guide-box mat-note" id="matNote"><div class="gb"><p></p></div></div>');
+  if ($('matNote')) $('matNote').querySelector('p').textContent = 'No lesson plan for this one: you teach it from your TP points. The lesson plan starts at TP ' + PLAN_FROM + '.';
+  $('turnInBtn').textContent = on ? 'Send to your tutor' : 'Turn in';
+}
+if ($('fTP')) { $('fTP').addEventListener('input', matMode); $('fTP').addEventListener('change', matMode); }
 
 function draftLabel(){
   const t=$('fTP').value.trim(), n=$('fName').value.trim();
@@ -2091,7 +2122,7 @@ function renderTurnStatus(){
     // role, 21 Sep 2026). A turn-in has written turnedInAt since it was built,
     // so this is for records that predate it or arrive without it.
     const when = fmtDate(rec.turnedInAt);
-    el.innerHTML='Turned in'+(when?' — '+when:'')+'. Your tutor has it now; you can\'t edit it.';
+    el.innerHTML=(isMatOnly()?'Sent to your tutor':'Turned in')+(when?' — '+when:'')+'. Your tutor has it now; you can\'t edit it.';
     el.classList.add('show');
     $('turnInBtn').style.display='none';
   } else {
@@ -2126,6 +2157,7 @@ function renderTurnStatus(){
     f.dispatchEvent(new Event('input', { bubbles: true }));
     f.dispatchEvent(new Event('change', { bubbles: true }));
   })();
+  matMode(); renderTurnStatus();
 })();
 
 /* ================= dictation and spell check ================= */

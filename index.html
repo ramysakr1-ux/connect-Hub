@@ -38,7 +38,7 @@
 <meta name="twitter:image" content="https://lite.celtaconnect.com/brand/share-card.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610261427">
+<link rel="stylesheet" href="hub-tokens.css?v=202610261444">
 <style>
   :root{
     /* The pane. A card on this page is a sheet of glass lying on the paper,
@@ -452,7 +452,7 @@
     .tpgroup{padding:26px 11px 11px;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610261427">
+<link rel="stylesheet" href="hub-house.css?v=202610261444">
 </head>
 <body>
 <div class="board">
@@ -665,17 +665,17 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 28 104 64" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202610261427"></script>
-<script src="observation-defaults.js?v=202610261427"></script>
-<script src="hub-shared.js?v=202610261427"></script>
+<script src="hub-due.js?v=202610261444"></script>
+<script src="observation-defaults.js?v=202610261444"></script>
+<script src="hub-shared.js?v=202610261444"></script>
 <script src="input-sessions/library.js?v=202610141516"></script>
-<script src="hub-store.js?v=202610261427"></script>
-<script src="hub-say.js?v=202610261427"></script>
-<script src="hub-shelf.js?v=202610261427"></script>
-<script src="hub-front.js?v=202610261427"></script>
-<script src="hub-sync.js?v=202610261427"></script>
-<script src="hub-notebook.js?v=202610261427"></script>
-<script src="hub-feedback.js?v=202610261427"></script>
+<script src="hub-store.js?v=202610261444"></script>
+<script src="hub-say.js?v=202610261444"></script>
+<script src="hub-shelf.js?v=202610261444"></script>
+<script src="hub-front.js?v=202610261444"></script>
+<script src="hub-sync.js?v=202610261444"></script>
+<script src="hub-notebook.js?v=202610261444"></script>
+<script src="hub-feedback.js?v=202610261444"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -811,6 +811,14 @@ function line(el, text, tone){
   if (card){ card.classList.remove('act','stuck','done'); if (tone) card.classList.add(tone); }
 }
 
+/* WHAT A PRACTICE ASKS FOR IN WRITING (Ramy, 26 Oct 2026: TP1 "will not read write your lesson plan but it
+   will read something like prepare your material"). The centre sets the first practice that needs a lesson
+   plan in Course admin (planFrom; unset, TP 2, as the TP points page reads it). Before it the trainee hands in
+   their material only, through the same page, so the order below is unchanged. */
+const PLAN_FROM = (function(){ const n = parseInt((rec('connect_course_settings') || {}).planFrom, 10); return n >= 1 ? n : 2; })();
+const matOnly = n => !!n && n < PLAN_FROM;
+const PLAN_TP = TP_N || Math.min(filed + 1, tpTotal || HUB_MAX_TP);
+
 /* The next step, named once. Everything below reads NEXT rather than working
    the cycle out again, so the four cards cannot disagree about where you are. */
 const NEXT = tpDone           ? 'done'
@@ -823,8 +831,8 @@ const NEXT = tpDone           ? 'done'
 
 line(document.getElementById('badgePlan'),
   tpDone  ? 'All ' + tpTotal + ' taught'
-  : !plan   ? 'Write your lesson plan'
-  : !planIn ? 'Finish it and turn it in'
+  : !plan   ? (matOnly(PLAN_TP) ? 'Prepare your material' : 'Write your lesson plan')
+  : !planIn ? (matOnly(PLAN_TP) ? 'Finish it and send it' : 'Finish it and turn it in')
   : 'Turned in',
   NEXT === 'plan' ? 'act' : planIn ? 'done' : '');
 
@@ -834,7 +842,7 @@ line(document.getElementById('badgeSelf'),
   : selfIn          ? 'Turned in'
   : self            ? 'Finish it and turn it in'
   : planIn          ? 'Write your self-evaluation'
-  : 'After your lesson plan',
+  : matOnly(PLAN_TP) ? 'After your material' : 'After your lesson plan',
   NEXT === 'self' ? 'act' : selfIn ? 'done' : '');
 
 line(document.getElementById('badgeFeedback'),
@@ -844,7 +852,7 @@ line(document.getElementById('badgeFeedback'),
   : selfIn          ? 'With your tutor'
   : planIn          ? 'With your tutor'
   : filed           ? filed + ' returned'
-  : 'After your lesson plan',
+  : matOnly(PLAN_TP) ? 'After your material' : 'After your lesson plan',
   NEXT === 'feedback' && fbOpened ? 'act' : '');
 
 line(document.getElementById('badgeAssign'), ASG.text, ASG.tone);
@@ -1415,7 +1423,7 @@ if (fbBack){
   if (!beforeStart && !afterEnd && !tpDone) {
     /* the TP points first: what they teach, with its pages and its audio */
     if (NEXT === 'plan' && HERO_TP && PTS.released) add('Your TP points for TP ' + HERO_TP + ' — what you teach, with the pages and the audio', '24_tp_points.html');
-    if (NEXT === 'plan') add(HERO_TP ? 'Write your lesson plan for TP ' + HERO_TP : 'Write your lesson plan', '1_trainee_plan_and_analysis.html' + (HERO_TP ? '?tp=' + HERO_TP : ''));
+    if (NEXT === 'plan') add(HERO_TP ? (matOnly(HERO_TP) ? 'Prepare your material for TP ' + HERO_TP + ' and send it to your tutor' : 'Write your lesson plan for TP ' + HERO_TP) : 'Write your lesson plan', '1_trainee_plan_and_analysis.html' + (HERO_TP ? '?tp=' + HERO_TP : ''));
     if (NEXT === 'self') add(fbBack ? 'Write your self-evaluation — it opens your feedback' : 'Write your self-evaluation', '2_trainee_self_evaluation.html');
   }
   /* the planning grid's own row, when it is released and not filled */
@@ -1678,7 +1686,7 @@ if (fbBack){
 
   if (!started) {
     still('roomPlan', 'Opens' + startsOn + ', with your first teaching practice');
-    still('roomSelf', 'Opens after you have turned in your first lesson plan');
+    still('roomSelf', matOnly(1) ? 'Opens after you have sent your first material to your tutor' : 'Opens after you have turned in your first lesson plan');
     still('roomFeedback', 'Opens when your tutor returns your first teaching practice');
     still('roomObs', 'Opens' + startsOn + ' — the observations are on your timetable');
     still('roomAssign', 'Opens when your tutor sets the first assignment');
@@ -1689,7 +1697,7 @@ if (fbBack){
        day one"). */
     still('roomCelta5', 'Opens' + startsOn + ' \u2014 the two confirmations are the first thing you do');
   } else {
-    if (!everPlanned) still('roomSelf', 'Opens after you have turned in your first lesson plan');
+    if (!everPlanned) still('roomSelf', matOnly(1) ? 'Opens after you have sent your first material to your tutor' : 'Opens after you have turned in your first lesson plan');
     if (!everBack)    still('roomFeedback', 'Opens when your tutor returns your first teaching practice');
     if (!ASG.total)   still('roomAssign', 'Opens when your tutor sets the first assignment');
     if (!everBack && !everMarked) still('roomProgress', 'Opens when your first teaching practice or assignment comes back');
