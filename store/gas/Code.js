@@ -1943,7 +1943,8 @@ case 'inbox': {
           });
           if (!cards.length) return;
           var title = clip(String(la.context || '').split(/[:(]/)[0], 80);
-          (byDay[date] = byDay[date] || []).push({ by: String(t.name || '').split(/\s+/)[0], title: title, cards: cards.slice(0, 24) });
+          /* v149: the TP number travels too -- the words cards are the trainee's, so they carry "TP3 · Nour" */
+          (byDay[date] = byDay[date] || []).push({ by: String(t.name || '').split(/\s+/)[0], tp: String(m.tp || k).replace(/\D/g, ''), title: title, cards: cards.slice(0, 24) });
         });
       });
       /* today's words wait for the end of the TP day too (v147, below) */
