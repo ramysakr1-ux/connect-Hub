@@ -44,7 +44,7 @@
       consentHeading: 'Before we begin',
       consentIntro: 'Please note the following.',
       consentLines: [
-        'The information you provide will be shared with the centre for teacher-training purposes.',
+        'The information you provide will be shared with the center for teacher-training purposes.',
         'Trainee teachers may reference it in their coursework. It will not be shared with any other party.',
         'You may withdraw from the course at any time.'
       ],
@@ -53,7 +53,7 @@
       keptNote: 'Your agreement is kept on this device and noted on the course register.',
       readAgain: 'Read it again',
       close: 'Close',
-      agreedOn: 'You agreed to the centre’s note on {date}.',
+      agreedOn: 'You agreed to the center’s note on {date}.',
       howTitle: 'How your page works',
       howSub: 'You are being taught by teachers in training. Thank you. Here is how your page works.',
       /* The last line said "just tell your teacher", in every language: the
@@ -65,7 +65,7 @@
         'Your next class is at the top, with the time in the course’s own clock and in yours. Press Join to go into the online room. You do not need to prepare anything.',
         'Anything your teachers share for a lesson appears under For your next class. Have a look if you like; you do not have to.',
         'Your attendance is marked by the tutor, not by you. A class counts when you were there for most of it. Your hours add up on your page.',
-        'When your hours reach the centre’s number, your certificate appears on your page, already signed by the centre. Print it, or save it as a PDF.',
+        'When your hours reach the center’s number, your certificate appears on your page, already signed by the center. Print it, or save it as a PDF.',
         'Add the page to your phone: Add to Home Screen in Safari, or Install in Chrome. Then it opens like an app.',
         'If you cannot come to a class, press No under “Are you coming?” at the top of your page.'
       ],

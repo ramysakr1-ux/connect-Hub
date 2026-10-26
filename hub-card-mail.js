@@ -137,7 +137,7 @@
             + '</td></tr></table>'
           : '')
       ;
-    var ask = '<p style="font-family:' + SANS + '; font-size:14px; line-height:1.65; color:' + C.ink + '; margin:' + (STYLE === 'ticket' ? '0' : '22px 0 0; padding-top:16px; border-top:1px solid ' + C.line) + ';">Centres and trainers: email <a href="mailto:' + MAIL + '" style="color:' + C.teal + '; font-weight:700; text-decoration:none;">' + MAIL + '</a> for the rates and a demo link. You get a real course, two weeks in, to walk around as a tutor, a trainee, an assessor or a volunteer student, and you can type in all of it.</p>';
+    var ask = '<p style="font-family:' + SANS + '; font-size:14px; line-height:1.65; color:' + C.ink + '; margin:' + (STYLE === 'ticket' ? '0' : '22px 0 0; padding-top:16px; border-top:1px solid ' + C.line) + ';">Centers and trainers: email <a href="mailto:' + MAIL + '" style="color:' + C.teal + '; font-weight:700; text-decoration:none;">' + MAIL + '</a> for the rates and a demo link. You get a real course, two weeks in, to walk around as a tutor, a trainee, an assessor or a volunteer student, and you can type in all of it.</p>';
     return page('Connect Lite — the film', letter, wrap(ctx, 'A short film', 'A CELTA course, start to finish', '', sheet, ask));
   }
 
@@ -283,8 +283,8 @@
         + '<td align="right" style="vertical-align:bottom; padding-left:16px; white-space:nowrap;"><a href="mailto:' + MAIL + '" style="font-family:' + SANS + '; font-size:12px; font-weight:600; color:' + C.goldDeep + '; text-decoration:none;">' + MAIL + '</a></td>'
         + '</tr></table>'
       : contact('For the rates and demo links:');
-    var html = page('Connect Lite — for your centre', letter,
-      wrap(ctx, 'For a CELTA centre', 'Teach the course. Lite does the rest.',
+    var html = page('Connect Lite — for your center', letter,
+      wrap(ctx, 'For a CELTA center', 'Teach the course. Lite does the rest.',
         /* what it is, then the old line (Ramy, 24 Oct 2026) */
         'Connect Lite is the app a CELTA course runs on, from the first plan to the final grade. Every trainee gets a course of their own. Every tutor gets their evenings back. Built on Cambridge\u2019s handbook, made by a CELTA tutor, and simple enough for anyone.', sheet, stub));
     return html;

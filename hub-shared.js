@@ -68,7 +68,7 @@ window.hubObservationHours = function(records){
      course with NO live observation said nothing at all -- the one case that
      most needs saying. It now waits for the sheets to be in, then answers. */
   var complete = (f.turnedIn + l.turnedIn) >= set.all.length && set.all.length > 0;
-  if (f.minutes > 180) notes.push('over three hours of filmed observation \u2014 10.1 lets a centre provide up to three');
+  if (f.minutes > 180) notes.push('over three hours of filmed observation \u2014 10.1 lets a center provide up to three');
   if (complete && l.minutes < 180) notes.push('under three hours of live observation \u2014 10.1: three hours of live online or face-to-face observation must be provided');
   if (complete && total < 360) notes.push('under six hours in total \u2014 11.2: trainees are required to observe experienced teachers for a total of six hours');
   return { filmed: f, live: l, totalMinutes: total, turnedIn: f.turnedIn + l.turnedIn, of: set.all.length, notes: notes };
@@ -493,10 +493,10 @@ function hubRoomRefusal(title, who, mode){
 window.hubCentreRoomOnly = function(){
   var mode = window.HubMode;
   if (mode === 'tutor' || !mode) return false;
-  return hubRoomRefusal('This room belongs to the centre',
+  return hubRoomRefusal('This room belongs to the center',
     mode === 'assessor'
-      ? 'Your link is read-only, and this page is where the centre sets the course up.'
-      : 'This page is where your centre sets the course up.', mode);
+      ? 'Your link is read-only, and this page is where the center sets the course up.'
+      : 'This page is where your center sets the course up.', mode);
 };
 
 /* The tutor's own screens: writing feedback, marking an assignment.
@@ -1038,7 +1038,7 @@ window.hubAssignmentOrder = function(wording){
 };
 
 // The centre on the documents (Ramy, 20 Sep 2026: "put the centre name and
-// logo on the documents"). Course admin's Settings hold the centre's name,
+// logo on the documents"). Course admin's Settings hold the center's name,
 // number and logo; the store boots them into this browser, so every page and
 // every assembled document can carry them. A document keeps the letterhead it
 // was assembled with.
@@ -1052,10 +1052,10 @@ window.hubLetterheadHTML = function(eyebrow){
   return '<div style="display:flex;align-items:center;gap:12px;padding:0 0 12px;margin:0 0 16px;border-bottom:1px solid #e3ddd0;">'
     + (c.logo ? '<img src="' + c.logo + '" alt="" style="height:44px;width:auto;max-width:160px;object-fit:contain;flex-shrink:0;">' : '')
     + '<div><div style="font-family:Newsreader,Georgia,serif;font-size:16pt;font-weight:700;color:#1e4d4a;line-height:1.15;">' + esc(c.name) + '</div>'
-    + (c.number || eyebrow ? '<div style="font-family:Karla,Calibri,Arial,sans-serif;font-size:8.5pt;letter-spacing:0.12em;text-transform:uppercase;color:#6b665c;margin-top:3px;">' + esc([c.number ? 'Cambridge centre ' + c.number : '', eyebrow].filter(Boolean).join(' \u00b7 ')) + '</div>' : '')
+    + (c.number || eyebrow ? '<div style="font-family:Karla,Calibri,Arial,sans-serif;font-size:8.5pt;letter-spacing:0.12em;text-transform:uppercase;color:#6b665c;margin-top:3px;">' + esc([c.number ? 'Cambridge center ' + c.number : '', eyebrow].filter(Boolean).join(' \u00b7 ')) + '</div>' : '')
     + '</div></div>';
 };
-// The page headers' "Centre logo" box and centre-name line, filled from the settings.
+// The page headers' "Center logo" box and centre-name line, filled from the settings.
 window.hubApplyCentre = function(){
   var c = window.hubCentre();
   document.querySelectorAll('.hub-centre-logo').forEach(function(slot){
@@ -1209,7 +1209,7 @@ if (!window.HubStore) { if (document.readyState === 'loading') document.addEvent
         return 'Also in ' + (code ? esc(code) + ' ' : '') + 'on ' + esc(f.course || 'another course') + (f.centre ? ' (' + esc(f.centre) + ')' : '') + (f.round === 'sub2' ? ', the resubmission' : '') + (f.pct ? ' \u00b7 ' + f.pct + '% of this text shared' : '');
       };
       var whenF = function (iso) { if (!iso) return ''; var d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); };
-      html += '<div class="section flags"><h2>Passages found elsewhere</h2><p class="readonly" style="white-space:normal;">Marked in the text above. Attached by the tutors from the own-work check; the centre\u2019s plagiarism policy in the candidate agreement says what follows.</p>' + ['sub1', 'sub2'].map(function (r) {
+      html += '<div class="section flags"><h2>Passages found elsewhere</h2><p class="readonly" style="white-space:normal;">Marked in the text above. Attached by the tutors from the own-work check; the center\u2019s plagiarism policy in the candidate agreement says what follows.</p>' + ['sub1', 'sub2'].map(function (r) {
         var l = fl(r); if (!l.length) return '';
         return (sub.sub2 ? '<div class="roundlabel">' + (r === 'sub1' ? 'In the first submission' : 'In the resubmission') + '</div>' : '') +
           l.map(function (f) { return '<div class="comment"><em>\u201C' + esc(f.quote) + '\u201D</em><br>' + where(f) + ((f.by || f.at) ? ' <span style="color:#777;">(' + esc([f.by, whenF(f.at)].filter(Boolean).join(', ')) + ')</span>' : '') + '</div>'; }).join('');
@@ -1795,7 +1795,7 @@ window.hubTrapFound = function(word, sub){
 };
 window.hubTrapNote = function(word){
   word = String(word || '').replace(/[^A-Za-z]/g, '');
-  return word ? 'The hidden word for this assignment is ' + word + '. It is in every section of the brief: invisible on the page and in print, but anything that copies or reads the page’s text picks it up. If it appears in a trainee’s answer, the work was probably produced from a copy of the brief rather than from the brief as read. Treat it as a prompt to look more closely at how the work was produced, and follow the centre’s usual process rather than acting on it alone. Lite checks every submission for it and tells you on the marking page.' : '';
+  return word ? 'The hidden word for this assignment is ' + word + '. It is in every section of the brief: invisible on the page and in print, but anything that copies or reads the page’s text picks it up. If it appears in a trainee’s answer, the work was probably produced from a copy of the brief rather than from the brief as read. Treat it as a prompt to look more closely at how the work was produced, and follow the center’s usual process rather than acting on it alone. Lite checks every submission for it and tells you on the marking page.' : '';
 };
 /* Words for the hidden word: odd enough never to turn up in a CELTA
    assignment on their own, none of them the C/18 files' words. */
@@ -1849,7 +1849,7 @@ window.hubWorkChecks = function (a, snap, key, who) {
     var unused = names.filter(function (n, i) { return body.indexOf(n) < 0 && names.indexOf(n) === i; });
     if (!cited.length) add(key === 'lfc' ? 'info' : 'look', 'No source cited in the text',
       key === 'lfc' ? 'LFC has no referencing criterion: credit reading where it is cited.' : 'A source in the bibliography but never used in the body does not meet the referencing criterion.',
-      key === 'lfc' ? 'Not required here, but a book you mention by name in the text counts in your favour.' : 'Name your reading in the text where you use it, for example (Harmer, 2015). A bibliography on its own is not enough.');
+      key === 'lfc' ? 'Not required here, but a book you mention by name in the text counts in your favor.' : 'Name your reading in the text where you use it, for example (Harmer, 2015). A bibliography on its own is not enough.');
     else add(missing.length ? 'look' : 'ok', 'Sources in the text: ' + cited.join(', '),
       missing.length ? 'Not in the bibliography: ' + missing.join(', ') + '.' : 'Each one is in the bibliography.',
       missing.length ? 'Add to your bibliography: ' + missing.join(', ') + '.' : 'Each one is in your bibliography.');

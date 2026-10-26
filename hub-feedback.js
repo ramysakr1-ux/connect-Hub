@@ -45,7 +45,7 @@
   anchor.parentNode.insertBefore(box, anchor);
 
   function paint(thumb, sent){
-    if (sent) { box.innerHTML = '<span class="thanks">Thank you.</span> <span>Your note went to the centre' + (isOffer ? ' that built this' : '') + '.</span>'; return; }
+    if (sent) { box.innerHTML = '<span class="thanks">Thank you.</span> <span>Your note went to the center' + (isOffer ? ' that built this' : '') + '.</span>'; return; }
     box.innerHTML = '<b>' + (isOffer ? 'Useful?' : 'Is this demo useful?') + '</b>'
       + '<button type="button" data-t="up" class="' + (thumb === 'up' ? 'on' : '') + '" aria-label="Yes">👍</button>'
       + '<button type="button" data-t="down" class="' + (thumb === 'down' ? 'on' : '') + '" aria-label="No">👎</button>'

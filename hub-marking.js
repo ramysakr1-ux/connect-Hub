@@ -920,7 +920,7 @@
       '.mk-help-panel.mk-checks.go{background:color-mix(in oklab, var(--teal) 6%, var(--paper)); border-color:color-mix(in oklab, var(--teal) 32%, transparent); border-top:3px solid var(--teal);} .mk-help-panel.mk-checks.watch{background:color-mix(in oklab, oklch(70% 0.14 70) 7%, var(--paper)); border-color:color-mix(in oklab, oklch(70% 0.14 70) 35%, transparent); border-top:3px solid oklch(70% 0.14 70);}',
       '.mk-help-panel .mkc-lead, .mk-help-panel .mkc-note{column-span:all;}',
       '.mk-help-panel.mk-hbox{background:var(--gold-wash); border-color:var(--amber-edge);}',
-      /* THE BOXES ARE PILLS (Ramy, 19 Oct 2026: "treat those boxes as pills, so they change colour when you click on them"). The open one fills with the assignment's colour; Before you mark fills teal when it is good to go, amber when it says watch out. Hover moves the border only. */
+      /* THE BOXES ARE PILLS (Ramy, 19 Oct 2026: "treat those boxes as pills, so they change color when you click on them"). The open one fills with the assignment's colour; Before you mark fills teal when it is good to go, amber when it says watch out. Hover moves the border only. */
       /* The pill never swells (Ramy, 19 Oct 2026: "when I click a pill, the panel jumps"): on a laptop the text is drawn in the panel under the row only, so the frame between the click and the move no longer opens the pill. */
       '@media (min-width:900px){ .mk-help-grid > details{border-radius:999px; overflow:hidden;} .mk-help-grid > details > summary{border-bottom:none !important; min-height:44px; display:flex !important; align-items:center;} .mk-help-grid > details > .gb{display:none !important;} }',
       '.mk-help-grid > details:not([open]):hover{border-color:var(--as, var(--teal)) !important;}',

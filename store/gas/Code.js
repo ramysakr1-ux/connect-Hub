@@ -184,7 +184,7 @@ function notifyFeedback_() {
 /* The address a volunteer student sees. The name on the mail is the centre's
    and the reply goes to the centre's own address, but the envelope belongs to
    whoever runs this script -- which was Ramy's personal Gmail (2 Oct 2026:
-   "those should be coming from the centre... make it info"). No mail system
+   "those should be coming from the center... make it info"). No mail system
    would let Lite send AS the centre's own domain, so the envelope is Connect's
    own address instead of a private one.
 
@@ -888,7 +888,7 @@ case 'inbox': {
       // v74: a UK centre number is plain digits (10294 is IH London) and
       // Cambridge also issues a trailing letter (MX026b); the console's own
       // check has the same shape.
-      if (!/^([A-Z]{2})?\d{3,5}[A-Z]?$/.test(centreNumber)) throw new Error('A course needs its Cambridge centre number, e.g. TR001 or 10294');
+      if (!/^([A-Z]{2})?\d{3,5}[A-Z]?$/.test(centreNumber)) throw new Error('A course needs its Cambridge center number, e.g. TR001 or 10294');
       var centreName = String(req.centreName || '').trim();
       var cid = nextCourseId_();
       // A name is not asked for (Ramy, 21 Sep 2026: "each course I build should
@@ -935,7 +935,7 @@ case 'inbox': {
          the notification reference, the assessor's documents, the roster. */
       ['centreName', 'centreNumber', 'centreLocked', 'logo', 'tutorNames', 'tutorColours', 'planDueNote', 'selfDueNote', 'tpCount', 'totalHours', 'deliveryMode', 'appianUrl', 'courseLinks',
        'agreement', 'preCourseConnect', 'gtkyWhen', 'gtkyMinutes', 'tutorContacts', 'volunteerContact', 'onlineRooms', 'timeZone', 'clock', 'ttLayout', 'planFrom', 'analysisFrom', 'volunteerCertificateHours'].forEach(function (k) { if (s[k] !== undefined && s[k] !== '' && s[k] !== null) keep[k] = s[k]; });
-      /* Of the assessor's documents only the centre's own agreement link is the centre's. */
+      /* Of the assessor's documents only the center's own agreement link is the centre's. */
       if (s.docs && s.docs.docAgreement) keep.docs = { docAgreement: s.docs.docAgreement };
       keep.clonedFrom = fromId;
       // Ramy, 28 Sep 2026: "anything connected to a time that carries over
@@ -1406,7 +1406,7 @@ case 'inbox': {
       var folder = materialsFolder_(course);
       var file = folder.createFile(Utilities.newBlob(bytes, mType, mName));
       // Ramy, 23 Sep 2026: "anyone with the link". A tutor opening a
-      // candidate's worksheet is often not signed into the centre's Workspace,
+      // candidate's worksheet is often not signed into the center's Workspace,
       // and an assessor never is.
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       return { url: file.getUrl(), id: file.getId(), name: file.getName(), size: bytes.length };
@@ -1878,7 +1878,7 @@ case 'inbox': {
        Ramy: "the course tutors can't invite volunteer Ss" -- the register only
        had "Copy their link", so a tutor pasted it into their own mail, which
        also showed the volunteer the tutor's address. Now the store sends it
-       from lite@, in the centre's name, replies going to the centre's
+       from lite@, in the centre's name, replies going to the center's
        volunteer contact and never to a tutor. One volunteer a call, only a
        row on this course's register, and not twice inside ten minutes. The
        address may come with the call (typed a moment ago, before the register
@@ -1909,9 +1909,8 @@ case 'inbox': {
         + '<p style="margin:18px 0 6px"><a href="' + pmUrl + '" style="display:inline-block;padding:13px 22px;background:#1E3B2F;color:#ffffff;text-decoration:none;border-radius:10px;font:bold 16px Arial,Helvetica,sans-serif">Build your CV</a></p>'
         + '<p style="font:13px/1.5 Arial,Helvetica,sans-serif;color:#4a3a22;margin:0">lite.celtaconnect.com/cv</p></div>'
         + '<p style="font:15px/1.6 Arial,Helvetica,sans-serif;color:#444;margin:20px 0 10px">The link stays open: come back whenever you apply somewhere new, change what you need, and download a fresh copy. Nothing you type is sent to us.</p>'
-        + '<p style="font:15px/1.6 Arial,Helvetica,sans-serif;color:#444;margin:0 0 22px">Good luck, from all of us at Connect Lite.</p>'
-        + '<p style="font:11px Arial,Helvetica,sans-serif;color:#8a6d3b;margin:0">designed and built by <b style="color:#B8893F">Ramy</b></p>'
-        + '</div>';
+        + '<p style="font:15px/1.6 Arial,Helvetica,sans-serif;color:#444;margin:0">Good luck, from all of us at Connect Lite.</p>'
+        + '</div>';   /* no credit line: the picture carries the mark and the sign-off says who it is from (Ramy, 26 Oct 2026: "overkill") */
       var pmText = 'Well done' + (pmFirst ? ', ' + pmFirst : '') + '. Here’s to what comes next.\n\nYou’ve finished the course. Wherever you teach next, we hope it goes brilliantly.\n\nYour present: a modern teaching CV and cover letter, shaped for where you are in teaching and where you’re applying.\n\nBuild your CV: ' + pmUrl + '\n\nThe link stays open: come back whenever you apply somewhere new. Nothing you type is sent to us.\n\nGood luck, from all of us at Connect Lite.';
       sendAs_({ to: pmTo, subject: 'A present from Connect Lite: your teaching CV', htmlBody: pmHtml, body: pmText, name: 'Connect Lite' });
       pmProps.setProperty(pmKey, String(Date.now()));

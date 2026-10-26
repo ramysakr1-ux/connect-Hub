@@ -188,7 +188,7 @@
   function arcSVG(two, size){
     var s = size || 22;
     return two
-      /* the two linked arcs wear the mark's own colours, gold then ink (Ramy, 25 Oct 2026: "make sure the colours are right") */
+      /* the two linked arcs wear the mark's own colours, gold then ink (Ramy, 25 Oct 2026: "make sure the colors are right") */
       ? '<svg viewBox="8 28 104 64" width="' + Math.round(s * 1.6) + '" height="' + s + '" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--a-mustard)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--ink)" stroke-width="13" stroke-linecap="round"></path></svg>'
       : '<svg viewBox="8 28 56 64" width="' + Math.round(s * 0.88) + '" height="' + s + '" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path></svg>';
   }

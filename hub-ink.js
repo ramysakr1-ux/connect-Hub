@@ -110,7 +110,7 @@
       if (opts.askName) nameIn.value = opts.name || ''; else nameRow.remove();
       overlay.querySelector('.ink-sub').textContent = opts.askName
         ? 'This is your signature. It is written from your name, it is yours alone, and it is the same every time you sign — here, on this course, and on Cambridge’s booklet.'
-        : 'This is your signature, ' + (opts.name || '') + '. It is the same every time you sign — here, on this course, and on Cambridge’s booklet. It cannot be changed afterwards.';
+        : 'This is your signature, ' + (opts.name || '') + '. It is the same every time you sign — here, on this course, and on Cambridge’s booklet. It cannot be changed afterward.';
 
       /* A DEMO VISITOR'S OWN HAND (25 Oct 2026). On a demo whose card asks the visitor's name
          (settings.demoAskName), the hand is written from that name, in a script face, so each visitor

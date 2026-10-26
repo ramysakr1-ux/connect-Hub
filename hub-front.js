@@ -50,7 +50,7 @@
     document.body.innerHTML =
       '<div class="fp-card">'
       + '<div class="fp-mark">' + mark + '</div>'
-      + '<p class="fp-eyebrow">For a CELTA centre</p>'
+      + '<p class="fp-eyebrow">For a CELTA center</p>'
       + '<h1>Teach the course. Lite does the rest.</h1>'
       /* WHAT IT IS, before what it does (Ramy, 24 Oct 2026: "the card should tell people
          what Lite is. And it's not doing that right now"). */
@@ -76,7 +76,7 @@
 
       + '<div class="fp-have">'
       + '<b>Already on a course?</b>'
-      + '<p>You need your own link. Your centre emailed it as a card, with a button and a QR code. Open Lite from that card and your course is there. Lost it? Ask your course admin to send it again.</p>'
+      + '<p>You need your own link. Your center emailed it as a card, with a button and a QR code. Open Lite from that card and your course is there. Lost it? Ask your course admin to send it again.</p>'
       + '</div>'
 
       + '<div class="fp-foot"><span>' + (window.hubMark ? hubMark(16) : '') + 'designed and built by <b>Ramy</b></span><a href="mailto:lite@celtaconnect.com">lite@celtaconnect.com</a></div>'

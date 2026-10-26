@@ -106,7 +106,7 @@
     var S = window.HubStore || {};
     var learner = (S.token && S.token()) || (S.volunteerToken && S.volunteerToken());
     var staff = (S.key && S.key()) || (S.assessorKey && S.assessorKey());
-    if (learner && !staff) return 'This goes to <b>Connect</b>, the team that makes Lite — <b>not to your tutor</b> or your centre. Anything about your course, ask your tutor.';
+    if (learner && !staff) return 'This goes to <b>Connect</b>, the team that makes Lite — <b>not to your tutor</b> or your center. Anything about your course, ask your tutor.';
     return 'This goes to <b>Connect</b>, the team that makes Lite — not to anyone on your course.';
   }
 

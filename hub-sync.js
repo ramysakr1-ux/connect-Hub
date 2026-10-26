@@ -175,7 +175,7 @@
       + '</span></div>'
       + '<h1 style="font-family:Newsreader,Georgia,serif;font-weight:400;font-size:2rem;line-height:1.2;margin:0 0 12px;color:#232220;">' + (reason ? 'The course could not be opened from this link' : 'Open your course link') + '</h1>'
       + (reason ? '<p style="font-size:0.92rem;line-height:1.65;color:#7A2E2E;font-weight:700;margin:0 0 14px;">' + String(reason).replace(/[<&]/g, ' ') + '</p>' : '')
-      + '<p style="font-size:0.92rem;line-height:1.65;color:#55524c;margin:0;">This page reads one course, through the link your centre sent you. Trainees have their own personal link, tutors share the tutor link, and an assessor has a read-only one. Open the page from that link and everything appears.</p>'
+      + '<p style="font-size:0.92rem;line-height:1.65;color:#55524c;margin:0;">This page reads one course, through the link your center sent you. Trainees have their own personal link, tutors share the tutor link, and an assessor has a read-only one. Open the page from that link and everything appears.</p>'
       + '<p style="font-size:0.92rem;line-height:1.65;color:#55524c;margin:14px 0 0;">Lost it? Your course admin can send it again from the Roster and links tab.</p>'
       + '</div>';
     /* This page has just been wiped. If anything of this person's is unsaved,

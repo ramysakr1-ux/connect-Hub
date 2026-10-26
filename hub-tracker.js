@@ -227,7 +227,7 @@ window.HubTracker = (function(){
        Two not-to-standard lessons running in the second half is worth a tutor's
        eye; it is not a rule and it does not make anyone a potential Fail. */
     var watch = (backToBack && backToBack[1] >= secondHalfFrom() && !potentialFail)
-      ? 'TP' + backToBack[0] + ' and TP' + backToBack[1] + ' not to standard back to back — worth a look (the centre\'s own signal, not a Cambridge rule)'
+      ? 'TP' + backToBack[0] + ' and TP' + backToBack[1] + ' not to standard back to back — worth a look (the center\'s own signal, not a Cambridge rule)'
       : null;
     var letterIssued = !!(c.failLetter && String(c.failLetter).trim());
     var letterDue = potentialFail && !letterIssued;
