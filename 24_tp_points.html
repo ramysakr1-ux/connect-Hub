@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610262033">
+<link rel="stylesheet" href="hub-tokens.css?v=202610262103">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -215,6 +215,8 @@
   .proc li:last-child{margin-bottom:0;}
   .proc .pst{display:flex; gap:9px; align-items:baseline; flex-wrap:wrap;}
   .proc .pst b{font-size:0.82rem;}
+  /* a stage's aim, under its name: the example of how to write one (TP 1–2) */
+  .paim{margin:2px 0 3px; font-size:0.8rem; font-style:italic; color:var(--ink-warm);}
   .proc .pmin{font-variant-numeric:tabular-nums; font-weight:700; color:var(--teal); font-size:0.72rem;}
   .proc .pint{font-size:0.7rem; letter-spacing:.05em; text-transform:uppercase; color:var(--grey);}
   .proc .pdo, .proc .pavl{margin:2px 0 0; padding-left:17px; list-style:disc;}
@@ -289,9 +291,10 @@
     border-radius:8px;}
   .gloss dl{display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:2px 16px; margin:0;}
   .gloss dt{grid-column:auto; font-weight:700; font-size:0.74rem; color:var(--ink); display:inline;}
-  .gloss dd{margin:0 0 3px; font-size:0.74rem; color:var(--grey); display:inline;}
-  .gloss dt::after{content:' \2014 ';}
-  .gloss dd::after{content:''; display:block;}
+  .gloss dd{margin:0; font-size:0.74rem; color:var(--grey); display:inline;}
+  .gloss dt::after{content:' \2014\00a0';}
+  /* each shorthand and its meaning stay one cell: as separate cells the grid paired SB with "workbook" (26 Oct 2026) */
+  .gloss .gl{margin:0 0 3px;}
   .gloss .glossnote{margin:7px 0 0; font-size:0.7rem; color:var(--faint);}
   .req{margin:7px 0 0; font-size:0.76rem; color:var(--grey); line-height:1.55;}
   .req.first{color:var(--teal); font-weight:600;}
@@ -401,7 +404,7 @@
   @media(prefers-reduced-motion:reduce){ .tbl select.fm, .fm-pips i{transition:none;} }
   @media print{ .fm-key, .fm-pips{display:none;} .tbl select.fm{border-left-width:1px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610262033">
+<link rel="stylesheet" href="hub-house.css?v=202610262103">
 <style>
 /* THE CARD A TRAINEE RECEIVES, IN COLOUR (Ramy, 21 Oct 2026: "the card that
    the trainees receive ... could use a bit of color and distinction"). Each
@@ -558,14 +561,14 @@ body.ls-open{overflow:hidden;}
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610262033"></script>
-<script src="hub-tracker.js?v=202610262033"></script>
-<script src="hub-rotation.js?v=202610262033"></script>
-<script src="hub-shared.js?v=202610262033"></script>
-<script src="hub-store.js?v=202610262033"></script>
-<script src="hub-say.js?v=202610262033"></script>
-<script src="hub-sync.js?v=202610262033"></script>
-<script src="hub-notebook.js?v=202610262033"></script>
+<script src="hub-due.js?v=202610262103"></script>
+<script src="hub-tracker.js?v=202610262103"></script>
+<script src="hub-rotation.js?v=202610262103"></script>
+<script src="hub-shared.js?v=202610262103"></script>
+<script src="hub-store.js?v=202610262103"></script>
+<script src="hub-say.js?v=202610262103"></script>
+<script src="hub-sync.js?v=202610262103"></script>
+<script src="hub-notebook.js?v=202610262103"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -808,7 +811,7 @@ function stamp(cell, found){
     out.pages = sl.files.map(f => ({ name: f.name, url: f.url, fromSet: 1 })).concat(own);
   }
   out.stages = (sl.stages || []).filter(s => s && (s.name || s.todo))
-    .map(s => ({ name: s.name || '', minutes: s.minutes || '', interaction: s.interaction || '', todo: s.todo || '', avoid: s.avoid || '' }));
+    .map(s => ({ name: s.name || '', aim: s.aim || '', minutes: s.minutes || '', interaction: s.interaction || '', todo: s.todo || '', avoid: s.avoid || '' }));
   out.scaffold = found.scaffold;
   if (found.context) out.context = found.context;
   /* Sourcing is taught once, by being shown. The references ride on the first
@@ -1083,7 +1086,7 @@ const GLOSSARY_UNTIL = 3;          // after the third TP they know it
 function glossary(tp){
   if (tp > GLOSSARY_UNTIL) return '';
   return `<div class="gloss"><div class="plab">What the shorthand means</div>
-    <dl>${GLOSSARY.map(g => `<dt>${esc(g[0])}</dt><dd>${esc(g[1])}</dd>`).join('')}</dl>
+    <dl>${GLOSSARY.map(g => `<div class="gl"><dt>${esc(g[0])}</dt><dd>${esc(g[1])}</dd></div>`).join('')}</dl>
     <p class="glossnote">This sits on your first ${GLOSSARY_UNTIL} TPs only.</p></div>`;
 }
 
@@ -1337,6 +1340,9 @@ function audioBits(c, mine){
   return { players, links: got };
 }
 
+/* What each level of the Connect standard leaves to the trainee (TP-POINT-STANDARD.md, 26 Oct 2026). */
+const LEVEL_NOTE = { guided: 'the stages, one line each; the shape, the timing and the rest are yours',
+                     outline: 'the stages by name; everything under them is yours' };
 /* The procedure of a cell (lifted out of matsRead, 24 Oct 2026). */
 function procOf(c, mine){
   let proc = '';
@@ -1348,12 +1354,12 @@ function procOf(c, mine){
     const body = `<ol>${stages.map(s => `<li${isFlexi(s) ? ' class="flexi"' : ''}><div class="pst"><b>${esc(s.name || 'Stage')}</b>${
         isFlexi(s) ? '<span class="pflex">if time allows</span>'
                    : (minSpan(s.minutes)[1] > 0 ? `<span class="pmin">${esc(String(s.minutes).replace(/\s*-\s*/, '–'))} min</span>` : '')}${
-        s.interaction ? `<span class="pint">${esc(s.interaction)}</span>` : ''}</div>${
+        s.interaction ? `<span class="pint">${esc(s.interaction)}</span>` : ''}</div>${s.aim ? `<p class="paim">${esc(s.aim)}</p>` : ''}${
         s.todo ? bulletsHTML(s.todo, 'pdo') : ''}${
         s.avoid ? `<div class="pav">Watch out for:${bulletsHTML(s.avoid, 'pavl')}</div>` : ''}</li>`).join('')}</ol>
       ${span[1] ? `<p class="pclock">${total} minutes of stages${flexi ? ', and ' + (flexi === 1 ? 'one flexi stage' : flexi + ' flexi stages') + ' if the time is there' : ''}.</p>` : ''}`;
     proc = mine
-      ? `<div class="proc"><div class="plab">The procedure${c.scaffold === 'guided' ? ' — the stages and the clock; the instructions are yours to write' : ''}</div>${body}</div>`
+      ? `<div class="proc"><div class="plab">The procedure${LEVEL_NOTE[c.scaffold] ? ' — ' + LEVEL_NOTE[c.scaffold] : ''}</div>${body}</div>`
       : `<details class="proc ref"><summary>Their procedure</summary>${body}</details>`;
   }
   return proc;
@@ -1549,6 +1555,7 @@ function renderCore(){
       const span = stages.reduce((a, s) => { const r = minSpan(s.minutes); return [a[0] + r[0], a[1] + r[1]]; }, [0, 0]);
       const procRows = stages.map((s, i) => `<li class="ls-st${isFlexi(s) ? ' flexi' : ''}"><span class="ls-n" aria-hidden="true">${i + 1}</span><div>
           <div class="ls-sth"><b>${esc(s.name || 'Stage')}</b><span>${isFlexi(s) ? 'if time allows' : (minSpan(s.minutes)[1] > 0 ? esc(String(s.minutes).replace(/\s*-\s*/, '–')) + ' min' : '')}${s.interaction ? (isFlexi(s) || minSpan(s.minutes)[1] > 0 ? ' · ' : '') + esc(lsInter(s.interaction)) : ''}</span></div>
+          ${s.aim ? `<p class="paim">${esc(s.aim)}</p>` : ''}
           ${s.todo ? bulletsHTML(s.todo, 'pdo') : ''}
           ${s.avoid ? `<div class="ls-watch"><b>Watch out for:</b>${bulletsHTML(s.avoid, 'pavl')}</div>` : ''}
         </div></li>`).join('');
@@ -1584,7 +1591,7 @@ function renderCore(){
               <div class="ls-aim"><span class="ls-eye">Main aim</span>${written ? `<p>${esc(c.point)}</p>` : `<p class="ls-you">You write this in your plan.</p>`}</div>
               ${sub ? `<div class="ls-aim"><span class="ls-eye">Sub aim</span><p>${/^you decide$/i.test(sub) ? '<span class="ls-you">Yours to choose.</span>' : esc(sub)}</p></div>` : ''}
             </div>
-            ${stages.length ? `<div class="ls-card ls-proc"><h4>The procedure${c.scaffold === 'guided' ? '<span> · the stages and the clock; the instructions are yours to write</span>' : ''}</h4>
+            ${stages.length ? `<div class="ls-card ls-proc"><h4>The procedure${LEVEL_NOTE[c.scaffold] ? '<span> · ' + LEVEL_NOTE[c.scaffold] + '</span>' : ''}</h4>
               <ol class="ls-stages">${procRows}</ol>
               ${span[1] ? `<p class="ls-clock">${span[0] === span[1] ? span[0] : span[0] + '–' + span[1]} minutes of stages.</p>` : ''}</div>` : ''}
             ${sourcesOf(c, true)}
