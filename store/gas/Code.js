@@ -1884,6 +1884,39 @@ case 'inbox': {
        address may come with the call (typed a moment ago, before the register
        has saved); it is written onto that row, so the register and the mail
        agree. A pinned demo course sends but writes nothing. */
+    /* THE PRESENT (v151, 26 Oct 2026; Ramy: "how do they take this card?"). On the last page a trainee can have the
+       CV present's card sent to themselves: to the address the centre has for them, or one they type. Only the
+       trainee, only to themselves, never from a demo course, and not twice in ten minutes. The link it carries is
+       public (cv/), so the email keeps working after the course link has gone. */
+    case 'presentMail': {
+      if (!me || tutor || assessor || vol) throw new Error('Only the trainee can send this to themselves');
+      var pmSet = courseRead_(course.id, 'settings') || {};
+      if (pmSet.demoToday) throw new Error('This is a demo course, so nothing is sent from it.');
+      var pmTo = String(req.email || me.email || '').trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(pmTo)) throw new Error('Type your email first');
+      var pmProps = PropertiesService.getScriptProperties(), pmKey = 'presentMail:' + me.token;
+      if (Date.now() - Number(pmProps.getProperty(pmKey) || 0) < 10 * 60 * 1000) throw new Error('Sent a few minutes ago. Check your inbox, and the spam folder, before sending again.');
+      var pmEsc = function (x) { return String(x == null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+      var pmFirst = String(me.name || '').trim().split(/\s+/)[0];
+      var pmUrl = SITE_ + 'cv/';
+      var pmP = 'font:16px/1.6 Arial,Helvetica,sans-serif;color:#3d3020;margin:0 0 12px';
+      var pmHtml = '<div style="max-width:560px">'
+        + '<a href="' + pmUrl + '" style="display:block;text-decoration:none"><img src="' + pmUrl + 'share-card.jpg" width="560" alt="A present from Connect Lite: your teaching CV" style="display:block;width:100%;max-width:560px;height:auto;border:0;border-radius:14px"></a>'
+        + '<div style="background:#E2C27E;border-radius:14px;padding:24px 26px;margin:14px 0 0">'
+        + '<p style="font:500 26px/1.15 Georgia,serif;color:#2b2218;margin:0 0 12px">Well done' + (pmFirst ? ', ' + pmEsc(pmFirst) : '') + '.<br><i>Here’s to what comes next.</i></p>'
+        + '<p style="' + pmP + '">You’ve finished the course. Wherever you teach next, we hope it goes brilliantly.</p>'
+        + '<p style="' + pmP + '">Your present: a modern teaching CV and cover letter, shaped for where you are in teaching and where you’re applying.</p>'
+        + '<p style="margin:18px 0 6px"><a href="' + pmUrl + '" style="display:inline-block;padding:13px 22px;background:#1E3B2F;color:#ffffff;text-decoration:none;border-radius:10px;font:bold 16px Arial,Helvetica,sans-serif">Build your CV</a></p>'
+        + '<p style="font:13px/1.5 Arial,Helvetica,sans-serif;color:#4a3a22;margin:0">lite.celtaconnect.com/cv</p></div>'
+        + '<p style="font:15px/1.6 Arial,Helvetica,sans-serif;color:#444;margin:20px 0 10px">The link stays open: come back whenever you apply somewhere new, change what you need, and download a fresh copy. Nothing you type is sent to us.</p>'
+        + '<p style="font:15px/1.6 Arial,Helvetica,sans-serif;color:#444;margin:0 0 22px">Good luck, from all of us at Connect Lite.</p>'
+        + '<p style="font:11px Arial,Helvetica,sans-serif;color:#8a6d3b;margin:0">designed and built by <b style="color:#B8893F">Ramy</b></p>'
+        + '</div>';
+      var pmText = 'Well done' + (pmFirst ? ', ' + pmFirst : '') + '. Here’s to what comes next.\n\nYou’ve finished the course. Wherever you teach next, we hope it goes brilliantly.\n\nYour present: a modern teaching CV and cover letter, shaped for where you are in teaching and where you’re applying.\n\nBuild your CV: ' + pmUrl + '\n\nThe link stays open: come back whenever you apply somewhere new. Nothing you type is sent to us.\n\nGood luck, from all of us at Connect Lite.';
+      sendAs_({ to: pmTo, subject: 'A present from Connect Lite: your teaching CV', htmlBody: pmHtml, body: pmText, name: 'Connect Lite' });
+      pmProps.setProperty(pmKey, String(Date.now()));
+      return { to: pmTo };
+    }
     case 'volunteerInvite': {
       requireTutor_(tutor);
       var viTok = String(req.v || '');

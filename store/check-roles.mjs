@@ -104,6 +104,9 @@ const DANGER = new Set(['deleteCourse', 'purgeCourse', 'undeleteCourse', 'restor
   'putAsset', 'putMaterial', 'purgeMaterials', 'purgeTrainee', 'removeTrainee', 'reissueTrainee', 'renameTrainee', 'renameCourse', 'cloneCourse', 'createCourse', 'addTrainee', 'addTrainees',
   'centresSeed', 'putDefaultGuidance', 'inboxRow', 'postAt', 'contribute', 'poolHeard', 'feedback', 'report', 'webCheck', 'aiCheck', 'setSearchKey', 'setClaudeKey']);
 const MAY = { tutor: 1, owner: 1 };   // the roles a DANGER op is never exercised as
+/* presentMail as the trainee is the one call that would really send an email (to the test trainee's address), so it is
+   never exercised; every other role is still asked, and must be refused (26 Oct 2026). */
+const SENDS_AS = { presentMail: { trainee: 1 } };
 
 /* ---- 1. the matrix ---------------------------------------------------- */
 const matrix = {}, replies = {};
@@ -118,6 +121,7 @@ const one = async (op) => {
   matrix[op] = {};
   await Promise.all(Object.entries(ROLES).map(async ([role, cred]) => {
     if (DANGER.has(op) && MAY[role]) { matrix[op][role] = '(not exercised)'; return; }
+    if (SENDS_AS[op] && SENDS_AS[op][role]) { matrix[op][role] = '(not exercised: sends mail)'; return; }
     const r = await raw(Object.assign({ op }, cred, argsFor(op, role)));
     matrix[op][role] = r.ok ? 'ok' : String(r.error || 'refused').slice(0, 60);
     (replies[role] = replies[role] || {})[op] = r;

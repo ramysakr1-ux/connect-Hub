@@ -64,6 +64,11 @@ need('input-sessions/session.css', r"\.hub-lockup-l\{[^}]*font-weight:600; font-
 # the credit's Connect and LITE on one baseline: align-items:center lifted LITE above the word (26 Oct 2026)
 need('input-sessions/session.css', r"\.hub-lockup\{display:inline-flex; align-items:baseline", "session credit on one baseline", 1)
 need('12_assessor_pack.html', r"\.hub-word\{font-family:[^;]*;font-weight:600;font-size:10\.3px;letter-spacing:0\.24em", "pack LITE 600 / 8/21 of 27px", 1)
+# the CV present (26 Oct 2026): its page header (21px word) and its link card (38px word)
+need('cv/index.html', r"\.lockup \.pair\{display:inline-flex; align-items:baseline;\}", "CV page logo on one baseline", 1)
+need('cv/index.html', r"\.lockup \.lite\{font-family:[^;]*; font-weight:600; font-size:8px; line-height:1; letter-spacing:\.24em; text-transform:uppercase; color:[^;]*; margin-left:4px;\}", "CV page LITE 600 / 8/21 of 21px / 0.19 after", 1)
+need('cv/share-card.html', r"\.pair\{display:inline-flex; align-items:baseline;\}", "CV link card logo on one baseline", 1)
+need('cv/share-card.html', r"\.lite\{font-family:[^;]*; font-weight:600; font-size:14\.5px; line-height:1; letter-spacing:\.24em; text-transform:uppercase; color:[^;]*; margin-left:7\.2px;\}", "CV link card LITE 600 / 8/21 of 38px / 0.19 after", 1)
 
 if bad:
     print("LOGO CHECK FAILED -- Connect LITE is not the films' logo everywhere:")
