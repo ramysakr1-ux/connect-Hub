@@ -497,6 +497,19 @@
   if (!mode) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ gate(); }); else gate(); return; }
   showUnsaved();   // a refusal from an earlier session is still a refusal
   var identity = mode + ':' + (mode === 'tutor' ? S.key() : mode === 'assessor' ? S.assessorKey() : mode === 'volunteer' ? S.volunteerToken() : S.token());
+  /* A DIFFERENT PERSON IN THIS BROWSER (26 Oct 2026, walking the launch course: Nour's first day said "TP 5", because
+     this browser had last been Tomas's on the demo and the history rule further down kept his four returned TPs as if
+     they were Nour's). A real course's records belong to one link: when another trainee's or tutor's link opens here,
+     what the last link left in this browser goes first, as a demo visit's does, except the link itself and anything
+     still waiting to be sent. A volunteer's phone is left alone: its notebook lives only there. */
+  var lastOwner = null; try { lastOwner = localStorage.getItem('hub:booted'); } catch (e) {}
+  var sameOwner = lastOwner === identity;
+  if (!DEMO && lastOwner && !sameOwner && (mode === 'trainee' || mode === 'tutor' || mode === 'assessor')) { try {
+    var KEEPN = /^(hub:(t|k|a|v|o|p|kpin|pin)$|hub:o:|hub:pending:|hub:unsaved:|chub:passDays$|chub:card|chub:installHintDone$|mk:)/;
+    var goneN = [];
+    for (var gn = localStorage.length - 1; gn >= 0; gn--) { var kn = localStorage.key(gn); if (kn && !KEEPN.test(kn) && /^(chub[:_]|connect_|hub:)/.test(kn)) goneN.push(kn); }
+    goneN.forEach(function(k){ try { origRemove(k); } catch (e) {} });
+  } catch (e) {} }
   var cached = false; try { cached = localStorage.getItem('hub:booted') === identity; } catch (e) {}
   if (DEMO && !demoSession()) cached = false;   /* a new visit: wait for the clean course, not last visit's copy */
   var dirty = {}, started = false;
@@ -662,7 +675,7 @@
            this browser holds, and on a demo that filing is a past visit's: a browser that saw the demo when it was
            pinned at the visit kept TP5-8 for good, and every later visit put them back. A demo's history is the
            store's, always. */
-        if (DEMO) return out['chub:tpHistory'];
+        if (DEMO || !sameOwner) return out['chub:tpHistory'];   /* only this person's own filings are kept */
         var theirs = me.records.tpHistory || {}, mine = parse(current('chub:tpHistory')) || {};
         var merged = null;
         Object.keys(mine).forEach(function(n){
@@ -689,7 +702,7 @@
        returnedAt); a filing only this browser holds is kept, and sent, so the
        store catches up rather than the browser forgetting. Tutor only: an
        assessor writes nothing. */
-    var mine = (mode === 'tutor' && !DEMO) ? (parse(current('connect_roster_v1')) || {}).trainees || {} : {};   // not on a demo: a past visit's filings are not this one's
+    var mine = (mode === 'tutor' && !DEMO && sameOwner) ? (parse(current('connect_roster_v1')) || {}).trainees || {} : {};   // not on a demo: a past visit's filings are not this one's
     (boot.roster || []).forEach(function(t){
       var r = t.records || {};
       var history = r.tpHistory || {};
