@@ -41,7 +41,7 @@
 <title>Connect Lite — CELTA 5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610262256">
+<link rel="stylesheet" href="hub-tokens.css?v=202610262313">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:980px; margin:0 auto; padding:26px 20px 80px;}
@@ -77,6 +77,9 @@
   .rating{display:flex; gap:6px; flex-wrap:wrap;}
   .rating label{font-size:0.8rem; font-weight:600; border:1px solid var(--sand-line); border-radius:999px; padding:5px 11px; cursor:pointer; background:var(--paper);}
   .rating input{display:none;}
+  .tut-hint{margin:6px 0 0; font-size:0.78rem; color:var(--grey); line-height:1.5; max-width:60ch;}
+  .tut-need{margin:4px 0 0; font-size:0.8rem; font-weight:700; color:var(--brick);}
+  .tut-need[hidden]{display:none;}
   .rating input:checked + span{color:var(--paper);}
   .rating label:has(input:checked){background:var(--teal); border-color:var(--teal); color:var(--paper);}
   .rating label.dis{cursor:default; opacity:.7;}
@@ -210,7 +213,7 @@
   @media(prefers-reduced-motion:reduce){ .c5r i{transition:none;} .c5r li.attn.first i, section.part:target{animation:none;} }
   @media print{ .c5r{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610262256">
+<link rel="stylesheet" href="hub-house.css?v=202610262313">
 </head>
 <body class="hub-celta5 hub-paper hub-course">
 <div class="board">
@@ -223,20 +226,20 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202610262256"></script>
-<script src="hub-hand.js?v=202610262256"></script>
-<script src="hub-ink.js?v=202610262256"></script>
-<script src="assignment-defaults.js?v=202610262256"></script>
-<script src="celta5-text.js?v=202610262256"></script>
-<script src="celta5-appendix.js?v=202610262256"></script>
-<script src="celta5-criteria.js?v=202610262256"></script>
-<script src="hub-tracker.js?v=202610262256"></script>
-<script src="observation-defaults.js?v=202610262256"></script>
-<script src="hub-shared.js?v=202610262256"></script>
-<script src="hub-store.js?v=202610262256"></script>
-<script src="hub-say.js?v=202610262256"></script>
-<script src="hub-sync.js?v=202610262256"></script>
-<script src="hub-notebook.js?v=202610262256"></script>
+<script src="celta5-pdf.js?v=202610262313"></script>
+<script src="hub-hand.js?v=202610262313"></script>
+<script src="hub-ink.js?v=202610262313"></script>
+<script src="assignment-defaults.js?v=202610262313"></script>
+<script src="celta5-text.js?v=202610262313"></script>
+<script src="celta5-appendix.js?v=202610262313"></script>
+<script src="celta5-criteria.js?v=202610262313"></script>
+<script src="hub-tracker.js?v=202610262313"></script>
+<script src="observation-defaults.js?v=202610262313"></script>
+<script src="hub-shared.js?v=202610262313"></script>
+<script src="hub-store.js?v=202610262313"></script>
+<script src="hub-say.js?v=202610262313"></script>
+<script src="hub-sync.js?v=202610262313"></script>
+<script src="hub-notebook.js?v=202610262313"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -495,6 +498,12 @@ function stageState(sub, ret, sig){ return sig ? ['Signed','good'] : ret ? [IS_T
    carried a sentence I had written myself ("X is yours alone") and a
    paraphrase of Cambridge's Stage Two instructions. Ramy: "the CELTA 5, don't
    meddle with it. Do not change the wordings." */
+/* GIVEN MEANS YOU TALKED (Ramy, 26 Oct 2026: "Tutorial given means you have
+   to talk to them"). The choice has no default, and Return waits for one:
+   a Stage 1 or 3 written and sent without a conversation is Not given. */
+function tutHint(stage){
+  return `<p class="tut-hint">Given means you sat down with the trainee and talked it through. If you have only written it, choose Not given.</p><p class="tut-need" id="tutNeed-${stage}" hidden>Choose Given or Not given before you return it.</p>`;
+}
 function stageText(which){
   const T = (window.CONNECT_HUB_CELTA5_STAGE_TEXT || {})[which] || [];
   if (!T.length) return '';
@@ -584,6 +593,7 @@ function render(){
         <label class="f">Stage 1 tutorial</label><div class="rating">${[['yes','Given'],['no','Not given']].map(([k,l]) => tut && !s1.returnedAt
           ? `<label><input type="radio" name="s1-tut" data-o="s1" data-k="tutorialGiven" value="${k}"${(s1.tutorialGiven===k || (s1.tutorialGiven===true && k==='yes'))?' checked':''}><span>${l}</span></label>`
           : `<label class="dis" style="${(s1.tutorialGiven===k || (s1.tutorialGiven===true && k==='yes')) ? 'background:var(--teal);border-color:var(--teal);color:var(--paper)' : 'opacity:.55'}">${l}</label>`).join('')}</div>
+        ${tut && !s1.returnedAt ? tutHint('stage1') : ''}
         ${field(s1, 'hoursTaught', 'Hours taught so far', { o:'s1', mine: tut, input:'text', locked: !!s1.returnedAt })}
         ${field(s1, 'strengths', 'Strengths', { o:'s1', mine: tut, locked: !!s1.returnedAt })}
         ${field(s1, 'actionPlan', 'Action plan', { o:'s1', mine: tut, locked: !!s1.returnedAt })}
@@ -628,7 +638,7 @@ function render(){
     ${tut || s3.returnedAt ? `<div class="oneline">
       <div class="ol wide"><label class="f">Tutorial</label><div class="rating">${[['yes','Given'],['no','Not given']].map(([k,l]) => tut && !s3.returnedAt
         ? `<label><input type="radio" name="s3-tut" data-o="s3" data-k="tutorialGiven" value="${k}"${s3.tutorialGiven===k?' checked':''}><span>${l}</span></label>`
-        : `<label class="dis" style="${s3.tutorialGiven===k ? 'background:var(--teal);border-color:var(--teal);color:var(--paper)' : 'opacity:.55'}">${l}</label>`).join('')}</div></div>
+        : `<label class="dis" style="${s3.tutorialGiven===k ? 'background:var(--teal);border-color:var(--teal);color:var(--paper)' : 'opacity:.55'}">${l}</label>`).join('')}</div>${tut && !s3.returnedAt ? tutHint('stage3') : ''}</div>
       <div class="ol">${field(s3, 'hoursTaught', 'Hours taught', { o:'s3', mine: tut, input:'text', locked: !!s3.returnedAt })}</div>
     </div>` : ''}
     ${(tut || s3.returnedAt || s3.marks) ? marksGrid(null, s3.marks, { topics:['1','2','3','4','5'], showCand:false, candMine:false, tutorMine: tut && !s3.returnedAt }) : '<div class="ro empty">No Stage 3 record yet</div>'}
@@ -910,6 +920,10 @@ function bind(){
   app.querySelectorAll('[data-submit]').forEach(b => b.addEventListener('click', () => { if (!IS_TRAINEE) return; C.stage2 = C.stage2 || {}; C.stage2.submittedAt = now(); saveC(); render(); }));
   app.querySelectorAll('[data-return]').forEach(b => b.addEventListener('click', async () => {
     if (!IS_TUTOR) return; const stage = b.dataset.return;
+    if ((stage === 'stage1' || stage === 'stage3') && !['yes', 'no', true, false].includes((TT[stage] || {}).tutorialGiven)) {
+      const need = $('tutNeed-' + stage); if (need) { need.hidden = false; need.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+      return;
+    }
     /* A tutor who saw and kept their signature on the dashboard signs with
        the click itself; anyone else gets the dialog as before. */
     const tn = tutorName();
@@ -926,6 +940,8 @@ function bind(){
   }));
 }
 render();
+/* a link to one part (the tutor dashboard's Stage 1 due opens #s1) */
+try { const at = location.hash && document.querySelector(location.hash); if (at) at.scrollIntoView(); } catch (e) {}
 </script>
 </body>
 </html>
