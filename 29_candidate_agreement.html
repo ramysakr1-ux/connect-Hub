@@ -26,7 +26,7 @@
 <title>Candidate agreement</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610261331">
+<link rel="stylesheet" href="hub-tokens.css?v=202610261427">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -38,6 +38,7 @@
   .title{border-top:2px solid var(--teal); padding-top:22px;}
   .title h1{margin:0; font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.9rem; line-height:1.15;}
   .title p{margin:7px 0 0; font-size:0.9rem; color:var(--grey); line-height:1.55;}
+  .title .kk{margin:0 0 10px; font-size:0.72rem; letter-spacing:.14em; text-transform:uppercase; font-weight:700; color:var(--a-forest);}
   .sec{background:var(--surface); border:1px solid var(--sand-line); border-radius:10px; padding:20px 22px; margin-top:16px;}
   .sec.c0{border-left:4px solid var(--teal);} .sec.c1{border-left:4px solid var(--gold);} .sec.c2{border-left:4px solid var(--brick);}
   .sec h2{margin:0 0 8px; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.1rem;}
@@ -72,20 +73,20 @@
   .decl textarea:disabled{opacity:0.55;}
   @media print{ body{background:#fff; padding:0;} .back,.signbox .row,.btn{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610261331">
+<link rel="stylesheet" href="hub-house.css?v=202610261427">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610261331"></script>
-<script src="hub-store.js?v=202610261331"></script>
-<script src="hub-hand.js?v=202610261331"></script>
-<script src="hub-ink.js?v=202610261331"></script>
-<script src="hub-say.js?v=202610261331"></script>
-<script src="hub-sync.js?v=202610261331"></script>
-<script src="hub-notebook.js?v=202610261331"></script>
+<script src="hub-shared.js?v=202610261427"></script>
+<script src="hub-store.js?v=202610261427"></script>
+<script src="hub-hand.js?v=202610261427"></script>
+<script src="hub-ink.js?v=202610261427"></script>
+<script src="hub-say.js?v=202610261427"></script>
+<script src="hub-sync.js?v=202610261427"></script>
+<script src="hub-notebook.js?v=202610261427"></script>
 <script type="text/x-hub-app">
 /* A volunteer student is not on the course. They come in off the street to be
    taught, and what the centre asks of its TRAINEES -- attendance, plagiarism,
@@ -130,6 +131,10 @@ if (!IS_TRAINEE && TRAINEE_ID) {
   } catch (e) {}
 }
 if (!IS_TRAINEE && TRAINEE_ID) $('back').href = '12_assessor_pack.html';
+/* THE FIRST VISIT (Ramy, 26 Oct 2026): the home sends a trainee here until they have signed, so the page
+   welcomes them, has no way round it, and once the signature is down takes them to their course. */
+const FIRST = IS_TRAINEE && P.get('first') === '1';
+if (FIRST) $('back').style.display = 'none';
 
 function settings(){ try { return JSON.parse(localStorage.getItem('connect_course_settings') || 'null') || {}; } catch(e){ return {}; } }
 /* The trainee's own browser is the record while they hold the link -- the
@@ -216,7 +221,9 @@ function render(){
     ? 'what the centre asks of you and what you may ask of it. Read it, then sign at the bottom.'
     : WHO ? esc(WHO) + '\u2019s copy \u2014 read, and signed below if they have.'
     : 'what the centre asks every trainee to read and sign on joining.';
-  let head = `<div class="title"><h1>Candidate agreement</h1>
+  if (FIRST && rec.at && !(rec.print && rec.print !== fp)) { location.replace('index.html'); return; }
+  let head = FIRST ? `<div class="title"><p class="kk">Welcome to ${esc(cs.centreName || 'your course')}</p><h1>Before you start, sign the agreement</h1>
+    <p>Read what the centre asks of you and what you may ask of it, then sign at the bottom. Your course opens as soon as you have signed.</p></div>` : `<div class="title"><h1>Candidate agreement</h1>
     <p>${esc(cs.centreName || 'Your centre')}${cs.courseName ? ' &middot; ' + esc(cs.courseName) : ''} &mdash; ${lede}</p></div>`;
 
   if (!written.length && !own) {
@@ -287,6 +294,11 @@ function render(){
     if (ink) r.ink = ink;
     const d = readDecl(); if (d) r.special = d;
     saveRecord(r);
+    /* the signature is saved before the page moves on, so leaving never asks "Leave site?" over it */
+    if (FIRST) { const st = $('status'); if (st) st.textContent = 'Signed. Opening your course.';
+      const pause = new Promise(ok => setTimeout(ok, 1200));
+      try { if (window.HubSync) await HubSync.flushNow(true); } catch (e) {}
+      await pause; location.replace('index.html'); return; }
     render();
   });
 }
