@@ -1822,6 +1822,42 @@ case 'inbox': {
        same detail, strengths as short phrases, action points as imperatives,
        and joins two that say the same thing. Codes come back as they were
        sent. Tutors only; the tutor edits what comes back before returning it. */
+    /* TIDY MY NOTES (Ramy, 26 Oct 2026). A tutor's rough notes from watching
+       a lesson, sorted into the feedback form's four boxes as full sentences,
+       each with up to two suggested criteria. Only what the notes say: nothing
+       added, no grades, the tutor's own words kept where they can be. The
+       codes are suggestions the tutor clicks to accept. Tutors only. */
+    case 'tidyNotes': {
+      requireTutor_(tutor);
+      var tnKey = PropertiesService.getScriptProperties().getProperty('OPENAI_KEY');
+      if (!tnKey) throw new Error('Tidying is not switched on');
+      var tnNotes = String(req.notes || '').slice(0, 6000).trim();
+      if (!tnNotes) return { sp: [], ap: [], st: [], at: [] };
+      var tnCrit = (Array.isArray(req.criteria) ? req.criteria : []).filter(function(c){ return Array.isArray(c) && /^[1-5][a-n]$/.test(String(c[0])); })
+        .map(function(c){ return String(c[0]) + ' ' + String(c[1] || '').slice(0, 200); }).slice(0, 41);
+      var tnSys = 'You help a CELTA tutor turn rough notes, written while watching a trainee teach, into feedback points. '
+        + 'Use only what is in the notes. Never add a strength, a problem, a judgement or a grade that the notes do not contain. '
+        + 'Keep the tutor\'s own words wherever you can: expand shorthand into a plain, complete sentence and fix spelling and grammar, but do not polish it or make it sound different. Plain, everyday words. '
+        + 'One idea per point; split a note that holds two. '
+        + 'Sort every point into one list: sp = strength in planning (the plan, aims, materials, language analysis, anticipated problems, timing on paper); ap = action point in planning; '
+        + 'st = strength in teaching (what happened in the room); at = action point in teaching. '
+        + 'Strengths say what the trainee did. Action points are imperatives addressed to the trainee, e.g. "Give an example before the task starts". '
+        + 'Write "students" for Ss or sts. Keep standard terms as they are: TTT, CCQs, ICQs, WCFB, ELP, TL. '
+        + 'For each point suggest up to two criterion codes from this list, only where one clearly fits: planning points 4a to 4n, teaching points 1a to 3b and 5a to 5n. '
+        + 'Criteria: ' + tnCrit.join('; ') + '. '
+        + 'American spelling. No names. Answer as JSON: {"sp":[{"text":"...","codes":["4c"]}],"ap":[],"st":[],"at":[]}.';
+      var tnResp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + tnKey },
+        payload: JSON.stringify({ model: 'gpt-4.1-mini', temperature: 0.2, response_format: { type: 'json_object' },
+          messages: [{ role: 'system', content: tnSys }, { role: 'user', content: tnNotes }] })
+      });
+      if (tnResp.getResponseCode() !== 200) throw new Error('The notes could not be tidied (' + tnResp.getResponseCode() + ')');
+      var tnOut = JSON.parse(JSON.parse(tnResp.getContentText()).choices[0].message.content || '{}');
+      var tnList = function(a, planning){ return (Array.isArray(a) ? a : []).slice(0, 20).map(function(x){
+        return { text: String((x && x.text) || '').trim().slice(0, 400), codes: (Array.isArray(x && x.codes) ? x.codes : []).map(function(c){ return String(c).toLowerCase(); })
+          .filter(function(c){ return /^[1-5][a-n]$/.test(c) && (planning ? c.charAt(0) === '4' : c.charAt(0) !== '4'); }).slice(0, 2) }; }).filter(function(x){ return x.text; }); };
+      return { sp: tnList(tnOut.sp, true), ap: tnList(tnOut.ap, true), st: tnList(tnOut.st, false), at: tnList(tnOut.at, false) };
+    }
     case 'stage1Words': {
       requireTutor_(tutor);
       var swKey = PropertiesService.getScriptProperties().getProperty('OPENAI_KEY');

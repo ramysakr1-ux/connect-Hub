@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610262333">
+<link rel="stylesheet" href="hub-tokens.css?v=202610270003">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -183,6 +183,10 @@
     border-radius:6px; padding:10px 14px; max-height:250px; overflow-y:auto;}
   @keyframes critIn{from{opacity:0} to{opacity:1}}
   .crit-panel.open{display:block; animation:critIn 160ms ease-out;}
+  .notes textarea{width:100%; min-height:110px;}
+  .notes-acts{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:10px;}
+  .notes-acts .guide{margin:0;}
+  .notes-acts .btn[disabled]{opacity:.6; cursor:progress;}
   .suggest-row{display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:6px 0 0 34px; min-height:0;}
   .suggest-label{font-size:0.7rem; color:var(--grey); font-style:italic;}
   .suggest-chip{position:relative; background:none; border:1.5px dashed var(--teal); color:var(--teal); font-size:0.72rem;
@@ -429,7 +433,7 @@
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610262333">
+<link rel="stylesheet" href="hub-house.css?v=202610270003">
 </head>
 <body>
 <div class="board">
@@ -507,6 +511,16 @@
     <p class="guide" id="xDone" style="display:none; margin:10px 0 0;"></p>
   </div>
 
+  <!-- TIDY MY NOTES (Ramy, 26 Oct 2026). The tutor's own rough notes from
+       watching, sorted into the four boxes below in full sentences, with
+       suggested criteria. Notes stay in this browser and never reach the trainee. -->
+  <div class="card notes" id="notesCard">
+    <h2>Your notes</h2>
+    <p class="guide">Jot what you see as you watch, in any order and any shorthand. Tidy my notes sorts them into the four boxes below as full sentences and suggests criteria for each. It uses only what you wrote. Your notes stay in this browser; the trainee never sees them.</p>
+    <textarea id="tNotes" rows="5" placeholder="great rapport, Ss laughing in lead-in. instr for ex 2 too long, no demo. CCQs for used to good. ran 10 min over, no time for delayed EC"></textarea>
+    <div class="notes-acts"><button type="button" class="btn btn-sand" id="tidyBtn">Tidy my notes</button><button type="button" class="example-btn" id="tidyUndo" hidden>Undo</button><span class="guide" id="tidyMsg" role="status"></span></div>
+  </div>
+
   <div class="card grade" style="text-align:center;">
     <h2 style="text-align:center;">Lesson grade at this stage of the course</h2>
     <div class="gv2" id="gv2" role="radiogroup" aria-label="Lesson grade">
@@ -582,14 +596,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202610262333"></script>
-<script src="hub-shared.js?v=202610262333"></script>
-<script src="hub-store.js?v=202610262333"></script>
-<script src="hub-say.js?v=202610262333"></script>
-<script src="hub-crit-learn.js?v=202610262333"></script>
-<script src="hub-crit-vocab.js?v=202610262333"></script>
-<script src="hub-sync.js?v=202610262333"></script>
-<script src="hub-notebook.js?v=202610262333"></script>
+<script src="hub-exchange.js?v=202610270003"></script>
+<script src="hub-shared.js?v=202610270003"></script>
+<script src="hub-store.js?v=202610270003"></script>
+<script src="hub-say.js?v=202610270003"></script>
+<script src="hub-crit-learn.js?v=202610270003"></script>
+<script src="hub-crit-vocab.js?v=202610270003"></script>
+<script src="hub-sync.js?v=202610270003"></script>
+<script src="hub-notebook.js?v=202610270003"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -917,19 +931,22 @@ function addPoint(listId, html, _unused){
   function renderSuggestions(){
     const existing=[...box.querySelectorAll('.tag')].map(t=>t.dataset.c);
     const text=box.textContent||'';
-    const picks=scoreCriteria(text, scope).filter(x=>existing.indexOf(x.code)<0).slice(0,3);
+    /* codes the note tidier proposed come first, as suggestions like any other (tidyNotes) */
+    const ai=(row.dataset.ai||'').split(',').filter(c=>c && VALID_CODES.has(c) && existing.indexOf(c)<0).map(c=>({code:c, learned:0, wording:0, ai:true}));
+    const picks=ai.concat(scoreCriteria(text, scope).filter(x=>existing.indexOf(x.code)<0 && !ai.some(a=>a.code===x.code))).slice(0, Math.max(3, ai.length));
     if(!text.trim() || !picks.length){ suggestRow.innerHTML=''; return; }
     suggestRow.innerHTML='<span class="suggest-label">Suggested:</span>'+
       picks.map(x=>{
         /* A suggestion the criteria wording would never have made is the
            course's own habit talking, and says so rather than appearing from
            nowhere. */
-        const taught = x.learned > x.wording;
+        const taught = !x.ai && x.learned > x.wording;
         const tip = (CRIT_TEXT[x.code]||'') + (taught && window.HubCritLearn
           ? ' \u2014 ' + HubCritLearn.evidence(CRIT_MODEL, x.code) : '');
         return `<button type="button" class="suggest-chip${taught?' taught':''}" data-code="${x.code}" data-tip="${esc(tip)}">+ ${x.code}</button>`;
       }).join('');
   }
+  row.addEventListener('ai-suggest',renderSuggestions);
   suggestRow.addEventListener('mousedown',e=>e.preventDefault());
   suggestRow.addEventListener('click',e=>{
     const chip=e.target.closest('.suggest-chip');
@@ -1003,6 +1020,7 @@ function addPoint(listId, html, _unused){
 document.querySelectorAll('.add-pt').forEach(b=>{
   b.addEventListener('click',()=>{ addPoint(b.dataset.list,''); dirty=true; });
 });
+
 
 /* only plain text and criteria tags survive into the document */
 function cleanPoint(box){
@@ -2086,6 +2104,60 @@ if (window.hubReserveForBar) hubReserveForBar('.actionbar');
     setStatus('Filled from what you pasted \u2014 read it through before you return it.');
   }
 })();
+
+/* ================= tidy my notes ================= */
+/* The notes live in this browser only, one note per trainee and TP; they are
+   not part of the feedback record, so the trainee cannot read them. */
+const NOTES_KEY='chub:fbNotes:'+(TRAINEE_ID||'x');
+function notesTP(){ return (($('fTP')||{}).value||'').trim(); }
+(function(){
+  const ta=$('tNotes'); if(!ta) return;
+  try{ const n=JSON.parse(localStorage.getItem(NOTES_KEY)||'null'); if(n && n.text && (!n.tp || !notesTP() || n.tp===notesTP())) ta.value=n.text; }catch(e){}
+  ta.addEventListener('input',()=>{ try{ localStorage.setItem(NOTES_KEY, JSON.stringify({ tp:notesTP(), text:ta.value })); }catch(e){} });
+})();
+let TIDY_ADDED=[];
+async function tidyNotes(){
+  const ta=$('tNotes'), btn=$('tidyBtn'), msg=$('tidyMsg');
+  const notes=(ta.value||'').trim();
+  if(!notes){ msg.textContent='Write some notes first.'; ta.focus(); return; }
+  btn.disabled=true; msg.textContent='Sorting your notes\u2026';
+  try{
+    const body={ op:'tidyNotes', notes, criteria:CRITERIA.map(c=>[c[0], c[2]]) };
+    if(window.HubStore && HubStore.token && HubStore.token()) body.token=HubStore.token();
+    const r=await HubStore.call(body, 60000);
+    const lists={ sp:'lSP', ap:'lAP', st:'lST', at:'lAT' };
+    const added=[]; let n=0;
+    Object.keys(lists).forEach(k=>{
+      (Array.isArray(r && r[k]) ? r[k] : []).forEach(pt=>{
+        const text=String((pt && pt.text)||'').trim(); if(!text) return;
+        const host=$(lists[k]);
+        let row=[...host.querySelectorAll('.pt')].find(x=>isBlankPoint(x.querySelector('.pt-text')) && !x.dataset.tidied);
+        const created=!row; if(!row) row=addPoint(lists[k],'');
+        row.dataset.tidied='1';
+        row.querySelector('.pt-text').innerHTML=POINT_BULLET+esc(text);
+        row.dataset.ai=(Array.isArray(pt.codes)?pt.codes:[]).map(c=>String(c).toLowerCase()).filter(c=>VALID_CODES.has(c)).join(',');
+        row.dispatchEvent(new Event('ai-suggest'));
+        added.push({ row, created }); n++;
+      });
+    });
+    if(!n) throw new Error('nothing came back');
+    TIDY_ADDED=added; dirty=true;
+    $('tidyUndo').hidden=false;
+    msg.textContent=n+(n===1?' point':' points')+' sorted into the boxes below. Read each one, and click a suggested code to tag it.';
+  }catch(e){
+    msg.textContent=/demo/.test(String(e)) ? 'Tidying needs a real course.' : 'Tidying is not available just now. Your notes are still here.';
+  }
+  btn.disabled=false;
+}
+$('tidyBtn').addEventListener('click',tidyNotes);
+$('tidyUndo').addEventListener('click',()=>{
+  TIDY_ADDED.forEach(({row, created})=>{
+    if(created) row.remove();
+    else { row.querySelector('.pt-text').innerHTML=''; delete row.dataset.tidied; delete row.dataset.ai; row.dispatchEvent(new Event('ai-suggest')); }
+  });
+  TIDY_ADDED=[]; $('tidyUndo').hidden=true; $('tidyMsg').textContent='Taken back out. Your notes are still here.'; dirty=true;
+});
+
 </script>
 </body>
 </html>
