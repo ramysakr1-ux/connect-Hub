@@ -59,7 +59,12 @@ const R = (() => { const src = readFileSync(join(HERE, 'hub-rotation.js'), 'utf8
 
 const WRITE = process.argv.includes('--write');
 const WHICH = process.argv[process.argv.indexOf('--which') + 1];
-if (!['start', 'visit', 'dayone'].includes(WHICH)) { console.log('say --which start, --which visit or --which dayone'); process.exit(1); }
+if (!['start', 'visit', 'dayone', 'walk'].includes(WHICH)) { console.log('say --which start, --which visit, --which dayone or --which walk'); process.exit(1); }
+/* walk (Ramy, 26 Oct 2026: "walking through it from the start, from day one"): the day-one course, but on
+   the real calendar from Monday 26 October, with no demo clock. Nothing is pinned, every write saves, and
+   tomorrow is day 2. Ramy walks it as a trainee, Claude as the tutor. */
+const WALK = WHICH === 'walk';
+const DAYONE = WHICH === 'dayone' || WALK;
 const REUSE = (process.argv[process.argv.indexOf('--course') + 1] || '').match(/^c\d+$/) ? process.argv[process.argv.indexOf('--course') + 1] : '';
 const KEEP = new Set(['c1', 'c2', 'c3', 'c4', 'c5']);
 
@@ -78,7 +83,7 @@ const call = async (b, tries = 6) => {
 const must = async (label, b) => { const r = await call(b); if (!r.ok) { console.log('   ' + label + ' FAILED: ' + r.error); process.exitCode = 1; } return r; };
 
 /* ---- the calendar --------------------------------------------------------- */
-const START = '2026-03-02', END = '2026-03-27';
+const START = WALK ? '2026-10-26' : '2026-03-02', END = WALK ? '2026-11-20' : '2026-03-27';
 const DAYS = (() => { const out = []; for (let d = new Date(START + 'T00:00:00Z'); d <= new Date(END + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + 1)) { const w = d.getUTCDay(); if (w && w !== 6) out.push(d.toISOString().slice(0, 10)); } return out; })();
 const DAY = i => DAYS[i - 1];                                  // 1-based course day
 /* Ramy, 1 Oct 2026: "why is C1 TP8? It should be before the assessor visit,
@@ -90,7 +95,7 @@ const DAY = i => DAYS[i - 1];                                  // 1-based course
    the visit four days out. */
 /* dayone (Ramy, 25 Oct 2026): the link for trainees, pinned to day 1 -- they sign the agreement, pick a
    getting-to-know-you activity, read the timetable and TP1's points, and open the day's input session. */
-const PIN_DAY = WHICH === 'dayone' ? 1 : WHICH === 'start' ? 6 : 13;
+const PIN_DAY = DAYONE ? 1 : WHICH === 'start' ? 6 : 13;
 const PIN = DAY(PIN_DAY);
 const VISIT_DAY = 17;
 /* London is on GMT in March, so a course time is a UTC time. */
@@ -196,8 +201,10 @@ function settingsFor(tokens) {
     certSigner: { name: 'Helen Ward', role: 'Director of Studies', ink: '@greatvibes,0' },
   };
   if (WHICH === 'visit') { s.docs = DOCS; s.assessorVisit = [tokens[0], tokens[3]]; }
-  if (WHICH === 'dayone') s.demoAskName = true;   // the card asks who is visiting (25 Oct 2026)
-  if (WHICH === 'dayone') {
+  if (DAYONE) s.demoAskName = true;   // the card asks who is visiting (25 Oct 2026)
+  /* the walk is a real course: each trainee's link is theirs, and the clock is the real one */
+  if (WALK) { delete s.demoToday; delete s.demoAskName; s.courseName = 'CELTA — Launch walk'; s.notificationRef = 'TR999-LW/2026'; }
+  if (DAYONE) {
     /* the agreement, in Lite's own words, for the trainee to read and sign; the pre-course key and the
        getting-to-know-you pick switched on */
     const src = readFileSync(join(HERE, 'agreement-defaults.js'), 'utf8'); const scope = { window: {} }; new Function('window', src)(scope.window);
@@ -265,7 +272,7 @@ const INPUT = [
 ];
 /* On the day-one demo the afternoon of day 1 is a real session the library carries, so the trainee's home
    has one to open (Ramy, 25 Oct 2026: "one input session on that day, maybe classroom management"). */
-if (WHICH === 'dayone') INPUT[0] = ['Welcome, the course and the portfolio', 'Classroom management'];
+if (DAYONE) INPUT[0] = ['Welcome, the course and the portfolio', 'Classroom management'];
 /* What a slot is, the way the timetable colours it (Ramy, 26 Oct 2026: the input sessions page "should read
    what's on the timetable, that is an input session really"). An assignment briefing or a tutorial is not an
    input session, the assessor's slots are the assessor's, and the last day's are the whole group's, so none of
@@ -281,7 +288,7 @@ function timetable() {
   /* The day-one demo carries the timetable page's own session shape (v3) as well, so the trainee's home can
      name the day's input session and the getting-to-know-you slot, and the tutors take turns with the
      inputs (Ramy, 25 Oct 2026). Written for c9 by hand first; the seed now makes the same. */
-  if (WHICH === 'dayone') {
+  if (DAYONE) {
     let n = 0; const T = TUTORS.length;
     days.forEach((d, di) => { const c = d.cells || {}; const S = []; let i = 0; const id = p => p + (++i);
       S.push({ id: id('input'), s: '10:00', e: '11:00', k: kindOf(c.i1 || ''), t: c.i1 || 'Input', by: n % T }); n++;
@@ -383,7 +390,7 @@ async function candidateRecords(cand, ci, token, setIndex, rot, buildDoc, volunt
     const day = teachDay(nextTp);
     /* And Olivia's next plan is still blank on the first-week demo, so scene 6
        can write one on camera (stubbed): she teaches tomorrow, it is due today. */
-    if (WHICH !== 'dayone' && day - 1 <= PIN_DAY && !(WHICH === 'start' && ci === 0)) {
+    if (!DAYONE && day - 1 <= PIN_DAY && !(WHICH === 'start' && ci === 0)) {
       const { doc } = plan(cand, ci, nextTp, rot.rows[token]['tp' + nextTp], setIndex);
       recs.plan = { status: 'turned_in', label: nextTp + ' · ' + cand.name, state: doc, centreName: 'Elmswood English Centre', turnedInAt: ts(Math.min(day - 1, PIN_DAY), ci % 2 ? '16:52' : '09:14'), docHTML: '' };
     }
@@ -399,7 +406,7 @@ async function candidateRecords(cand, ci, token, setIndex, rot, buildDoc, volunt
   const obs = {};
   const filmedDays = { filmed1: 1, filmed2: 4, filmed3: 8, filmed4: 11 };
   Object.entries(filmedDays).forEach(([id, day]) => {
-    if (day > PIN_DAY || WHICH === 'dayone') return;
+    if (day > PIN_DAY || DAYONE) return;
     if (WHICH === 'start' && id === 'filmed2' && ci >= 3) return;   // three of six have not done the second yet
     const sheet = OBS_WORDING.filmed.find(t => t.id === id);
     const a = { hLesson: ['A2 reading: a day in the life', 'B1 grammar: past simple stories', 'A2 speaking: giving directions', 'B1 vocabulary: food and cooking'][Number(id.slice(-1)) - 1], hLevel: Number(id.slice(-1)) % 2 ? 'A2' : 'B1', hLength: '45', hDate: DAY(day), hLearners: '10', hSigned: 'Recorded lesson' };
@@ -418,10 +425,10 @@ async function candidateRecords(cand, ci, token, setIndex, rot, buildDoc, volunt
   /* The CELTA 5, both halves. */
   /* For the film (30 Sep 2026): on the first-week demo Selin has not yet
      confirmed Cambridge's words, so scene 3 can sign them on camera (stubbed). */
-  const C = (WHICH === 'dayone' || (WHICH === 'start' && ci === 5)) ? { confirms: {} } : { confirms: { portfolio: signed(cand.name, 1, '12:05'), appeals: signed(cand.name, 1, '12:06') } };
+  const C = (DAYONE || (WHICH === 'start' && ci === 5)) ? { confirms: {} } : { confirms: { portfolio: signed(cand.name, 1, '12:05'), appeals: signed(cand.name, 1, '12:06') } };
   const T = { cover: { uln: '' } };
   const stage1Day = WHICH === 'start' ? 5 : 10;
-  if (WHICH === 'dayone' ? false : WHICH === 'start' ? ci < 2 : true) {
+  if (DAYONE ? false : WHICH === 'start' ? ci < 2 : true) {
     T.stage1 = { tutorialGiven: 'yes', /* Stage 1 is written after TP2, whenever it is read: 1.5 hours on both
        demos, not 3 on the later one. */
       hoursTaught: '1.5', /* Bulleted, and each point carrying the criterion it was tagged
@@ -453,7 +460,7 @@ async function candidateRecords(cand, ci, token, setIndex, rot, buildDoc, volunt
   const draftSub = (code) => { const full = assignment(cand, code, 'pass', DEFAULT_WORDING, asgAt); return { stage: 'submitted', usedResubmission: false, sub1: full.sub1, sub2: null, criteriaMarks: { sub1: [], sub2: [] }, criteriaComments: { sub1: [], sub2: [] }, markers: { first: '', second: '', doubleMarked: false }, sub1At: asgAt[code] - 5 * 36e5, feedback: { outcome: '', generalComment1: '', generalComment2: '' } }; };
   Object.entries(cand.assignments).forEach(([code, how]) => {
     const due = ASG_DUE_DAY[code];
-    if (WHICH === 'dayone') return;
+    if (DAYONE) return;
     if (WHICH === 'start') {
       if (code !== 'fol') return;
       if (ci === 0) asg[code] = Object.assign(assignment(cand, code, 'pass', DEFAULT_WORDING, asgAt), { sub1At: ts(4, '21:40'), marked1At: ts(6, '08:50') });
@@ -490,7 +497,7 @@ function volunteers(courseId) {
     });
     const s = { name: v.name, note: v.note, level: v.level, token: tok, marks };
     if (v.carried) s.carried = v.carried;
-    if (i !== 3) s.agreed = iso(1, ['12:40', '13:05', '18:20', '', '12:55'][i] || '12:00');
+    if (i !== 3 && !WALK) s.agreed = iso(1, ['12:40', '13:05', '18:20', '', '12:55'][i] || '12:00');
     return s;
   });
   if (WHICH === 'visit') list[0].cert = signed(TUTORS[0], 16, '17:55');
@@ -520,7 +527,7 @@ async function docBuilder(settings) {
 }
 
 /* ---- the course ------------------------------------------------------------ */
-const NAME = WHICH === 'dayone' ? 'Demo — day one' : WHICH === 'start' ? 'Demo — the first week' : 'Demo — before the visit';
+const NAME = WALK ? 'Launch walk — from day one' : DAYONE ? 'Demo — day one' : WHICH === 'start' ? 'Demo — the first week' : 'Demo — before the visit';
 let course;
 if (REUSE) {
   const oc = await call({ op: 'ownerCourses', owner: OWNER });
@@ -630,7 +637,7 @@ const SHARES = [
    demo-media/dayone-demo/bridge-story with the level at B2, its header and opening paragraph as a demonstration
    lesson, and open to everyone on the course whatever the timetable has given; the library page itself is not
    changed. It goes on the tutors' shelf before the 13:30 lesson. Day one only. */
-const DEMO_SHARES = WHICH === 'dayone' ? [
+const DEMO_SHARES = DAYONE ? [
   [1, '13:05', 'Demonstration lesson: the bridge story, the third conditional (B2)', 'https://lite.celtaconnect.com/demo-media/dayone-demo/bridge-story/'],
 ] : [];
 /* Six rows, one per trainee in a group -- and a course of twelve has two
