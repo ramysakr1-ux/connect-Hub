@@ -1829,6 +1829,7 @@ case 'inbox': {
        criteria. Nothing rewritten, nothing added, no grades. Tutors only. */
     case 'tidyNotes': {
       requireTutor_(tutor);
+      if (course && (courseRead_(course.id, 'settings') || {}).askConnect === false) throw new Error('Ask Connect is switched off for this course');
       var tnKey = PropertiesService.getScriptProperties().getProperty('OPENAI_KEY');
       if (!tnKey) throw new Error('Tidying is not switched on');
       var tnNotes = String(req.notes || '').slice(0, 6000).trim();
@@ -1869,6 +1870,7 @@ case 'inbox': {
        tone tool offers them. Only what the notes say: nothing added, no grade. Tutors only. */
     case 'overallFromNotes': {
       requireTutor_(tutor);
+      if (course && (courseRead_(course.id, 'settings') || {}).askConnect === false) throw new Error('Ask Connect is switched off for this course');
       var onKey = PropertiesService.getScriptProperties().getProperty('OPENAI_KEY');
       if (!onKey) throw new Error('Writing is not switched on');
       var onNotes = String(req.notes || '').slice(0, 6000).trim();
@@ -1882,12 +1884,17 @@ case 'inbox': {
         : onTone === 'own'
         ? 'the tutor\'s own: keep their words, phrasing and order as far as possible; only join the lines into sentences, write shorthand out, and put spelling and grammar right; add no warmth, softening, praise or emphasis that is not in the lines'
         : 'supportive: warm and encouraging, leads with what went well, frames what to work on gently';
+      /* Register (Ramy, 27 Oct 2026: "you made OpenAI a little bit too informal ... I don't mind
+         telling the trainee what to do next, because it makes it more supportive and encouraging"):
+         the professional voice of a CELTA candidate record. What happened comes only from the
+         notes; what to try next may follow from them, in the supportive and direct voices. */
       var onSys = 'You help a CELTA tutor write the Overall comment on a trainee\'s teaching practice lesson from the rough notes the tutor wrote while watching it. '
-        + 'The Overall comment is a short piece of prose, the one or two things that mattered most in this lesson: how it went as a whole, what carried it, and what to take into the next lesson. '
-        + 'Write it in a ' + onVoice + ' voice. '
-        + 'Use only what is in the notes. Never add a strength, a problem, a judgement or a grade that the notes do not contain, and never give a grade or a standard. '
+        + 'The Overall comment is a short piece of prose: how the lesson went as a whole, what carried it, and what to take into the next lesson. '
+        + 'Write it in a ' + onVoice + ' voice, in the clear, professional register of feedback written for a CELTA candidate record: natural and readable, never chatty or slangy, never stiff. '
+        + 'Every observation must come from the notes: never add a strength, a problem, an event or a judgement the notes do not contain, and never give a grade or a standard. '
+        + (onTone === 'own' ? 'Do not add advice the notes do not give. ' : 'You may say what the trainee could do next where it follows directly from a point in the notes. ')
         + 'Keep the tutor\'s own observations and words where you can; correct spelling and grammar; write shorthand out in full, except TTT, STT, CCQs and ICQs, which trainees know. '
-        + 'Address the trainee as "you". Plain, everyday words a tutor would say; no formal words like prior to, utilize, facilitate. No bullet points, no headings, no criterion codes. '
+        + 'Address the trainee as "you". No bullet points, no headings, no criterion codes. '
         + 'One or two paragraphs, about 80 to 150 words; shorter if the notes are short. American spelling. No names. '
         + celtaShorthand_()
         + 'Answer as JSON: {"text":"..."}.';
@@ -1910,7 +1917,7 @@ case 'inbox': {
       var swSys = 'You help a CELTA tutor write a trainee\'s Stage 1 record from the tutors\' feedback on the first two lessons. '
         + 'Say every point again in your own words, so it does not repeat the feedback writer\'s phrasing, but keep its meaning, its detail and its strength: '
         + 'a firm point stays firm, a mild one stays mild, and nothing a point names is lost (where, how much, what it led to). '
-        + 'Plain, everyday words a tutor would say to a trainee; never formal words like prior to, simultaneously, distribute, utilize, facilitate. '
+        + 'The clear, professional register of a CELTA candidate record: natural and readable, never chatty, never stiff or bureaucratic (not prior to, simultaneously, utilize, facilitate). '
         + 'Strengths: short phrases saying what the trainee did, no full stop, e.g. "Warm welcome and great rapport, with a relaxed atmosphere". '
         + 'Action points: imperatives addressed to the trainee, e.g. "Keep instructions short and demonstrate first". '
         + 'If two points say the same thing, join them into one and keep both codes. Keep each point\'s codes exactly as given; never add, change or guess a code. '
