@@ -436,13 +436,13 @@ NOTES['writing-the-lesson-plan'] = '''
 
 NOTES['life-after-celta'] = '''
 <h4>Before</h4>
-<p>The links were checked when the page was written; open two or three before the session to make sure they still are. The Istanbul table is local; if you run this elsewhere, swap part 4 for your own city. Their CELTA report is their reference: say so early.</p>
+<p>The links were checked when the page was written; open two or three before the session to make sure they still are. Part 4 names the kinds of employer and leaves the names to you: say them in the room. As a worked example, Istanbul's are: language schools (International House, Britishside, American Kültür, British Culture, Dilko, English Time); private universities (Bilgi, Koç, Sabancı, Yeditepe, Kadir Has, Özyeğin, İstek, Bahçeşehir; Koç and Sabancı normally want an MA); state universities (İTÜ, YTÜ, Boğaziçi, İstanbul, Marmara); private schools (MEF, Hisar, Şişli Terakki, ACI, Bilfen, Doğa Koleji, Işık). Add the teacher groups and the blacklist group for your own city. Their CELTA report is their reference: say so early.</p>
 <h4>Running it</h4>
 ''' + T(mins=False, rows=[
     (5, 'Where next', 'Three minutes in pairs on the four questions. The tip on the page is the frame for the whole session: CELTA gets you in, the next two years make you good.'),
     (8, 'CV and letter', 'Read the ten-second list aloud. Ask them to write the levels, books and hours they taught before they leave the room.'),
     (10, 'Where the jobs are', 'The boards by region. Two minutes on one board each, then report what it asks for.'),
-    (8, 'Istanbul', 'The table. Be honest about universities.'),
+    (8, 'Where you are', 'The table of employer types, with your city\u2019s names said aloud. Be honest about universities.'),
     (12, 'The interview', 'The ten questions: pairs interview each other, two minutes each way. Then the awkward ones.'),
     (5, 'Paperwork', 'Residence, work permit, insurance. Plain and short.'),
     (12, 'Carrying on', 'On your own, with others, with a certificate. The Delta table; the realistic first year.'),

@@ -1938,9 +1938,9 @@ RECIPES.append(dict(
 RECIPES.append(dict(
     slug='life-after-celta', src='life-after-celta/index.html', start='<div id="bar"></div>', end='<footer>',
     eyebrow='End-of-course session', title='Life after CELTA',
-    sub='Finding work, settling in, and carrying on developing. Where next, your CV, where the jobs are, Istanbul, the interview, the paperwork, and a first-year plan to take with you.',
-    nav=[('next', 'Where next'), ('cv', 'CV'), ('jobs', 'Jobs'), ('istanbul', 'Istanbul'), ('interview', 'Interview'), ('legal', 'Paperwork'), ('cpd', 'Developing'), ('resources', 'Resources'), ('plan', 'Plan')],
-    sources="""The links were checked when the session was written; the interview questions and the Istanbul table are the tutor's own. The books to own are listed under their authors.""",
+    sub='Finding work, settling in, and carrying on developing. Where next, your CV, where the jobs are, the interview, the paperwork, and a first-year plan to take with you.',
+    nav=[('next', 'Where next'), ('cv', 'CV'), ('jobs', 'Jobs'), ('local', 'Where you are'), ('interview', 'Interview'), ('legal', 'Paperwork'), ('cpd', 'Developing'), ('resources', 'Resources'), ('plan', 'Plan')],
+    sources="""The links were checked when the session was written; the interview questions are the tutor's own. The books to own are listed under their authors.""",
     css=IH_CSS + r"""
   .links{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:8px; margin:8px 0 4px;}
   .lk{display:block; background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:10px 12px; text-decoration:none; color:inherit; transition:border-color .12s ease;}
@@ -1978,8 +1978,6 @@ RECIPES.append(dict(
         ('International House — 140-odd schools worldwide,', 'International House: 140-odd schools worldwide,'),
         ('EF — large, recruits heavily at entry level across many countries.', 'EF: large, and recruits heavily at entry level across many countries.'),
         ('Ask to speak to a teacher who already works there — a school with nothing to hide will put you in touch.', 'Ask to speak to a teacher who already works there; a school with nothing to hide will put you in touch.'),
-        ('where teachers name schools that pay late — or pay properly.', 'where teachers name schools that pay late, or pay properly.'),
-        ('That doesn\'t mean don\'t apply — it means apply anyway,', 'That doesn\'t mean you shouldn\'t apply. It means apply anyway,'),
         ('It is normal — don\'t be caught out by it.', 'It is normal; expect it.'),
         ('Then plan something you can actually deliver — a clear context,', 'Then plan something you can actually deliver: a clear context,'),
         ('Name one real thing from your TPs — timing, instructions, error correction — and say what you\'re doing about it.', 'Name one real thing from your TPs (timing, instructions, error correction) and say what you\'re doing about it.'),
