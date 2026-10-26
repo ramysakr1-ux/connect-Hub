@@ -41,7 +41,7 @@
 <title>Connect Lite — CELTA 5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610262325">
+<link rel="stylesheet" href="hub-tokens.css?v=202610262333">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:980px; margin:0 auto; padding:26px 20px 80px;}
@@ -213,7 +213,7 @@
   @media(prefers-reduced-motion:reduce){ .c5r i{transition:none;} .c5r li.attn.first i, section.part:target{animation:none;} }
   @media print{ .c5r{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610262325">
+<link rel="stylesheet" href="hub-house.css?v=202610262333">
 </head>
 <body class="hub-celta5 hub-paper hub-course">
 <div class="board">
@@ -226,21 +226,20 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202610262325"></script>
-<script src="hub-hand.js?v=202610262325"></script>
-<script src="hub-ink.js?v=202610262325"></script>
-<script src="assignment-defaults.js?v=202610262325"></script>
-<script src="celta5-text.js?v=202610262325"></script>
-<script src="celta5-appendix.js?v=202610262325"></script>
-<script src="celta5-criteria.js?v=202610262325"></script>
-<script src="celta5-criteria-voice.js?v=202610262325"></script>
-<script src="hub-tracker.js?v=202610262325"></script>
-<script src="observation-defaults.js?v=202610262325"></script>
-<script src="hub-shared.js?v=202610262325"></script>
-<script src="hub-store.js?v=202610262325"></script>
-<script src="hub-say.js?v=202610262325"></script>
-<script src="hub-sync.js?v=202610262325"></script>
-<script src="hub-notebook.js?v=202610262325"></script>
+<script src="celta5-pdf.js?v=202610262333"></script>
+<script src="hub-hand.js?v=202610262333"></script>
+<script src="hub-ink.js?v=202610262333"></script>
+<script src="assignment-defaults.js?v=202610262333"></script>
+<script src="celta5-text.js?v=202610262333"></script>
+<script src="celta5-appendix.js?v=202610262333"></script>
+<script src="celta5-criteria.js?v=202610262333"></script>
+<script src="hub-tracker.js?v=202610262333"></script>
+<script src="observation-defaults.js?v=202610262333"></script>
+<script src="hub-shared.js?v=202610262333"></script>
+<script src="hub-store.js?v=202610262333"></script>
+<script src="hub-say.js?v=202610262333"></script>
+<script src="hub-sync.js?v=202610262333"></script>
+<script src="hub-notebook.js?v=202610262333"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -302,15 +301,17 @@ function standardHours(which) {
 }
 
 /* STAGE 1 FILLS ITSELF IN (Ramy, 26 Oct 2026: "Why wouldn't Lite just
-   pre-fill stage one? ... it will just put down the criteria for action points
-   and strengths, and maybe the tutor will make a comment"). Strengths and the
-   action plan arrive holding the criteria the tutors tagged in the first
-   third's feedback (TP1 and TP2 of eight), each with the lessons it came from;
-   starred action points first, since those were carried into the next plan.
-   A point with no criterion tagged keeps the tutor's own words. Not canned
-   text: it is this trainee's own record. It waits until every lesson in the
-   first third has its feedback back, so a box is never filled from half the
-   evidence, and like the hours it is written only when the tutor next saves. */
+   pre-fill stage one?"). Once every lesson in the first third has its feedback
+   back (TP1 and TP2 of eight), Strengths opens with a short paragraph, the same
+   for everyone but for the name ("It's generic for everybody"), and then the
+   strengths from that feedback as bullets; the action plan holds the action
+   points, starred ones first. Each bullet keeps its criterion codes. The points
+   are this trainee's own, never canned, but not in the feedback writers' exact
+   words ("I don't want to use the exact wording ... there's someone else's
+   wordings"): the store says each again in fresh words (stage1Words), and until
+   it answers, or if it cannot, the points stand as written and the line under
+   the boxes asks the tutor to put them in their own words. Nothing is written
+   until the tutor next saves, and a box the tutor has touched is never replaced. */
 function s1Evidence(){
   const T = window.HubTracker, tr = who && who.tr;
   if (!T || !tr) return null;
@@ -319,47 +320,68 @@ function s1Evidence(){
   for (let n = 1; n <= end; n++) if (hist[n]) tps.push(n);
   return { end, tps, hist, ready: tps.length === end };
 }
+/* the points as the feedback holds them: words with the criterion tags taken out, and the tags as codes */
+function s1Points(ev){
+  const out = { strengths: [], actions: [] };
+  ev.tps.forEach(n => {
+    const L = (ev.hist[n].state && ev.hist[n].state.lists) || {};
+    [['strengths', ['lSP', 'lST']], ['actions', ['lAP', 'lAT']]].forEach(([k, ids]) => ids.forEach(id => (L[id] || []).forEach(it => {
+      const d = document.createElement('div'); d.innerHTML = (it && it.html) || '';
+      const codes = [...d.querySelectorAll('[data-c]')].map(t => t.getAttribute('data-c')).filter(Boolean);
+      d.querySelectorAll('[data-c]').forEach(t => t.remove());
+      const text = d.textContent.replace(/ /g, ' ').replace(/\s+/g, ' ').trim().replace(/^[\s,;:.\-]+/, '');
+      if (text) out[k].push({ text, codes: [...new Set(codes)], star: !!(it && it.star) });
+    })));
+  });
+  out.actions.sort((x, y) => (y.star ? 1 : 0) - (x.star ? 1 : 0));
+  return out;
+}
+function s1Opening(ev){
+  const first = String((who && who.name) || '').trim().split(/\s+/)[0];
+  const tps = ev.tps.map(n => 'TP' + n);
+  const done = tps.length > 1 ? tps.slice(0, -1).join(', ') + ' and ' + tps[tps.length - 1] : tps[0];
+  return 'Well done on finishing ' + done + (first ? ', ' + first : '') + '. This is a short summary of where you are at this early point in the course: what is already working, and what to focus on over the next few TPs.'
+    + (ev.end === 2 ? ' So far you have taught from the TP points, and full lesson planning starts at TP3, so some of the points below are about habits to build now.' : '');
+}
+const s1Bullets = list => list.map(p => '• ' + p.text.replace(/\.$/, '') + (p.codes.length ? ' (' + p.codes.join(', ') + ')' : '')).join('\n');
+function s1Build(ev, pts){
+  const good = s1Bullets(pts.strengths), act = s1Bullets(pts.actions);
+  return { strengths: s1Opening(ev) + (good ? '\n\n' + good : ''), actionPlan: act };
+}
+let S1_RAW = null, S1_WORDS = 'idle';   // idle | asking | done | failed
 function s1Prefill(){
   const ev = s1Evidence(); if (!ev || !ev.ready) return null;
-  const words = {}; CRIT.forEach(c => { words[c[0]] = c[2]; });
-  /* each criterion said to the trainee: "you" for a strength, the imperative for an action point */
-  const VOICE = window.CONNECT_HUB_CRITERIA_VOICE || {};
-  const take = (ids, keepStar) => {
-    const by = {}, order = [];
-    ev.tps.forEach(n => {
-      const L = (ev.hist[n].state && ev.hist[n].state.lists) || {};
-      ids.forEach(id => (L[id] || []).forEach(it => {
-        const d = document.createElement('div'); d.innerHTML = (it && it.html) || '';
-        const codes = [...d.querySelectorAll('[data-c]')].map(t => t.getAttribute('data-c')).filter(c => words[c]);
-        d.querySelectorAll('[data-c]').forEach(t => t.remove());
-        const own = d.textContent.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
-        const keys = codes.length ? codes : (own ? ['=' + own] : []);
-        keys.forEach(k => { if (!by[k]) { by[k] = { tps: [], star: false }; order.push(k); }
-          if (!by[k].tps.includes(n)) by[k].tps.push(n); if (keepStar && it.star) by[k].star = true; });
-      }));
-    });
-    const rank = k => (by[k].star ? 0 : 1);
-    return order.slice().sort((a, b) => rank(a) - rank(b))
-      .map(k => { const from = by[k].tps.map(n => 'TP' + n).join(', ');
-        if (k.charAt(0) === '=') return '\u2022 ' + k.slice(1) + ' (' + from + ')';
-        const said = (VOICE[k] || [])[keepStar ? 1 : 0];
-        return '\u2022 ' + (said || words[k]) + ' (' + k + ', ' + from + ')'; }).join('\n');
-  };
-  /* The box reads as a short overall comment and then the criteria as bullets (Ramy,
-     26 Oct 2026). The comment opens with this trainee's own grades as the feedback gave
-     them, and the tutor writes the rest; it is in the box, so editable like everything
-     else ("also editable"). Not a paragraph by band: that would be canned feedback. */
-  const graded = ev.tps.map(n => { const g = String(((ev.hist[n].state || {}).f || {}).fGrade || '').trim(); return g ? 'TP' + n + ' ' + g.charAt(0).toLowerCase() + g.slice(1) : ''; }).filter(Boolean);
-  const top = graded.length ? graded.join(', ') + '. ' : '';
-  const good = take(['lSP', 'lST'], false), act = take(['lAP', 'lAT'], true);
-  return { strengths: good || top ? top + '\n\n' + good : '', actionPlan: act ? '\n\n' + act : '' };
+  if (!S1_RAW) S1_RAW = s1Build(ev, s1Points(ev));
+  return S1_RAW;
+}
+/* after a render that filled a box: ask the store once for the same points in new words */
+async function s1Reword(){
+  if (S1_WORDS !== 'idle' || !S1_RAW || !IS_TUTOR) return;
+  const s1 = TT.stage1 || {};
+  if (s1.returnedAt || (s1.strengths !== S1_RAW.strengths && s1.actionPlan !== S1_RAW.actionPlan)) return;
+  const ev = s1Evidence(); if (!ev || !ev.ready) return;
+  S1_WORDS = 'asking'; const note = $('s1Note'); if (note) note.textContent = 'Putting the points from the feedback into new words…';
+  try {
+    const pts = s1Points(ev), body = { op: 'stage1Words', strengths: pts.strengths, actions: pts.actions };
+    if (HubStore.token && HubStore.token()) body.token = HubStore.token();
+    const r = await HubStore.call(body, 60000);
+    if (!r || !Array.isArray(r.strengths) || !Array.isArray(r.actions) || (!r.strengths.length && !r.actions.length)) throw new Error('no words');
+    const built = s1Build(ev, { strengths: r.strengths, actions: r.actions });
+    const t = TT.stage1 || {};
+    if (t.strengths === S1_RAW.strengths) t.strengths = built.strengths;
+    if (t.actionPlan === S1_RAW.actionPlan) t.actionPlan = built.actionPlan;
+    S1_WORDS = 'done';
+  } catch (e) { S1_WORDS = 'failed'; }
+  render();
 }
 function s1AidNote(){
   const ev = s1Evidence(); if (!ev) return '';
-  const last = 'TP' + ev.end;
-  return ev.ready
-    ? `<p class="tut-hint">The grades and the criteria come from your feedback for ${ev.tps.map(n => 'TP' + n).join(' and ')}. Write a short comment at the top of each box, above the criteria, and change anything you like.</p>`
-    : `<p class="tut-hint">Strengths and the action plan fill in from the feedback once ${last}'s feedback is returned.</p>`;
+  const from = ev.tps.map(n => 'TP' + n).join(' and ');
+  const say = !ev.ready ? 'Strengths and the action plan fill in from the feedback once TP' + ev.end + '’s feedback is returned.'
+    : S1_WORDS === 'done' ? 'The points come from the feedback for ' + from + ', put into new words. Add to the paragraph, change anything, and join or cut points as you see fit.'
+    : S1_WORDS === 'failed' ? 'These are the points as the feedback for ' + from + ' wrote them. Put them in your own words before you return it.'
+    : 'The points come from the feedback for ' + from + '.';
+  return `<p class="tut-hint" id="s1Note">${say}</p>`;
 }
 
 const field = (obj, key, label, opts) => {
@@ -920,6 +942,7 @@ const isMineObj = o => /^(wa|conf|c1|s2c|c2|c3|fin)$/.test(o) ? IS_TRAINEE : IS_
 const save = o => (isMineObj(o) && /^(wa|conf|c1|s2c|c2|c3|fin)$/.test(o)) ? saveC() : saveT();
 function bind(){
   const app = $('app');
+  if (S1_RAW && S1_WORDS === 'idle') s1Reword();
   /* Stage 1's boxes open to their whole text, filled in or not */
   app.querySelectorAll('#s1 textarea').forEach(t => { const fit = () => { t.style.height = 'auto'; t.style.height = (t.scrollHeight + 4) + 'px'; }; fit(); t.addEventListener('input', fit); });
   app.querySelectorAll('[data-o][data-k]').forEach(el => el.addEventListener('input', () => {

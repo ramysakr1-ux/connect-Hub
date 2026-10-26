@@ -1815,6 +1815,39 @@ case 'inbox': {
     case 'transcriptionOn': {
       return { on: !!PropertiesService.getScriptProperties().getProperty('OPENAI_KEY') };
     }
+    /* STAGE 1 IN NEW WORDS (Ramy, 26 Oct 2026: "I don't want to use the exact
+       wording ... there's someone else's wordings"). The CELTA 5 sends the
+       points from the first third's feedback, each with its criterion codes;
+       the model says each again in fresh words with the same meaning and the
+       same detail, strengths as short phrases, action points as imperatives,
+       and joins two that say the same thing. Codes come back as they were
+       sent. Tutors only; the tutor edits what comes back before returning it. */
+    case 'stage1Words': {
+      requireTutor_(tutor);
+      var swKey = PropertiesService.getScriptProperties().getProperty('OPENAI_KEY');
+      if (!swKey) throw new Error('Rewording is not switched on');
+      var swPts = function(a){ return (Array.isArray(a) ? a : []).slice(0, 30).map(function(x){
+        return { text: String((x && x.text) || '').slice(0, 600), codes: (Array.isArray(x && x.codes) ? x.codes : []).map(String).slice(0, 4) }; }).filter(function(x){ return x.text; }); };
+      var swIn = { strengths: swPts(req.strengths), actions: swPts(req.actions) };
+      var swSys = 'You help a CELTA tutor write a trainee\'s Stage 1 record from the tutors\' feedback on the first lessons. '
+        + 'Rewrite every point in your own words: keep its meaning and its specific detail, and do not copy the original phrasing. '
+        + 'Strengths: short noun phrases, no full stop, e.g. "Warm welcome and great rapport, with a relaxed atmosphere". '
+        + 'Action points: imperatives addressed to the trainee, e.g. "Keep instructions short and demonstrate first". '
+        + 'If two points say the same thing, join them into one and keep both codes. Keep each point\'s codes exactly as given; never add, change or guess a code. '
+        + 'No praise words that are not in the original, no grades, no names, no arrows. American spelling. '
+        + 'Answer as JSON: {"strengths":[{"text":"...","codes":["1d"]}],"actions":[{"text":"...","codes":["5f"]}]}.';
+      var swResp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + swKey },
+        payload: JSON.stringify({ model: 'gpt-4.1-mini', temperature: 0.4, response_format: { type: 'json_object' },
+          messages: [{ role: 'system', content: swSys }, { role: 'user', content: JSON.stringify(swIn) }] })
+      });
+      if (swResp.getResponseCode() !== 200) throw new Error('The points could not be reworded (' + swResp.getResponseCode() + ')');
+      var swOut = JSON.parse(JSON.parse(swResp.getContentText()).choices[0].message.content || '{}');
+      var swAllowed = {}; swIn.strengths.concat(swIn.actions).forEach(function(x){ x.codes.forEach(function(c){ swAllowed[c] = 1; }); });
+      var swClean = function(a){ return (Array.isArray(a) ? a : []).map(function(x){
+        return { text: String((x && x.text) || '').trim().slice(0, 400), codes: (Array.isArray(x && x.codes) ? x.codes : []).map(String).filter(function(c){ return swAllowed[c]; }) }; }).filter(function(x){ return x.text; }); };
+      return { strengths: swClean(swOut.strengths), actions: swClean(swOut.actions) };
+    }
     /* ---- IS IT THEIR OWN WORK? (25 Oct 2026) ------------------------------
        Ramy: "a deterrent against plagiarism ... anything to do with another
        assignment that was maybe written on Lite, like other courses ... scan
