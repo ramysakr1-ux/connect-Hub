@@ -43,7 +43,7 @@
 <title>Connect Lite — My classes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610261046">
+<link rel="stylesheet" href="hub-tokens.css?v=202610261150">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:720px; margin:0 auto; padding:22px 20px 60px;}
@@ -105,6 +105,10 @@
   .hw-back{background:var(--a-forest); color:var(--a-stone); transform:rotateY(180deg);}
   .hw-face small{font-size:0.72rem; letter-spacing:.06em; color:var(--faint);}
   .hw-back small{color:var(--a-lemon);}
+  /* The Connect LITE logo heads every Self-study card, front and back (Ramy, 26 Oct 2026: "the self-study and connect lite logo. That's all."). */
+  .hw-top{display:flex; align-items:flex-start; justify-content:space-between; gap:12px;}
+  .hw-top .hub-lockup{flex:none;}
+  .hw-back .hw-top .hub-lockup .hub-lockup-l{color:var(--a-stone) !important;}
   .hw-do{margin:0; font-family:'Newsreader',Georgia,serif; font-size:1.15rem; font-weight:600; line-height:1.35; color:var(--ink);}
   .hw-text{margin:0; padding:10px 12px; border-radius:8px; background:color-mix(in oklch, var(--sand-line) 35%, var(--paper)); font-size:0.95rem; line-height:1.6;}
   .hw-text p{margin:0 0 6px;} .hw-text p:last-child{margin:0;}
@@ -253,17 +257,17 @@
   @keyframes v4-sheen{from{left:-50%;}to{left:120%;}}
   @media(prefers-reduced-motion:reduce){ .next.v4 *, .cert.earned::after, .track i{animation:none !important; transition:none !important;} .cert.earned::after{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610261046">
+<link rel="stylesheet" href="hub-house.css?v=202610261150">
 </head>
 <body class="hub-grid hub-paper" data-signout="float">
 <div class="board" id="app"></div>
 <div id="consent"></div>
-<script src="hub-shared.js?v=202610261046"></script>
-<script src="hub-attendance.js?v=202610261046"></script>
-<script src="hub-volunteer-i18n.js?v=202610261046"></script>
-<script src="hub-store.js?v=202610261046"></script>
-<script src="hub-say.js?v=202610261046"></script>
-<script src="hub-sync.js?v=202610261046"></script>
+<script src="hub-shared.js?v=202610261150"></script>
+<script src="hub-attendance.js?v=202610261150"></script>
+<script src="hub-volunteer-i18n.js?v=202610261150"></script>
+<script src="hub-store.js?v=202610261150"></script>
+<script src="hub-say.js?v=202610261150"></script>
+<script src="hub-sync.js?v=202610261150"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -524,15 +528,16 @@ function hwBlock(){
   const play = canSpeak ? `<button type="button" class="hw-play" id="hwPlay"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>Listen</button>` : '';
   const said = h.script ? `<p class="hw-said"><b>What was said</b><br>${(Array.isArray(h.script) ? h.script : [h.script]).map(esc).join('<br>')}</p>` : '';
   const flip = !!st.flipped;
+  const mark = window.hubLockup ? hubLockup(16) : '';
   return `<div class="card" id="hw"><h3>${esc(head)}</h3>
       <p class="note">${cls === days[0] && cls.date !== TODAY ? esc(longDay(cls.date)) + '. ' : ''}A little practice for you to do on your own. Try it, check it, then turn the card over for the answers.</p>
       ${cls.homework.length > 1 ? `<div class="fc-days">${cls.homework.map((x, i) => `<button type="button" data-hwi="${i}" class="${i === hwIdx ? 'on' : ''}">${esc(x.aim || ('Lesson ' + (i + 1)))}${x.by ? ' \u00b7 ' + esc(x.by) : ''}</button>`).join('')}</div>` : ''}
       <div class="hw-card${flip ? ' on' : ''}" id="hwCard"><div class="hw-in">
-        <div class="hw-face hw-front"${flip ? ' inert aria-hidden="true"' : ''}><small>${esc(from)}</small><p class="hw-do">${esc(h.do || '')}</p>${h.text ? `<div class="hw-text">${(Array.isArray(h.text) ? h.text : [h.text]).map(t => '<p>' + esc(t) + '</p>').join('')}</div>` : ''}${play}
+        <div class="hw-face hw-front"${flip ? ' inert aria-hidden="true"' : ''}><div class="hw-top"><small>${esc(from)}</small>${mark}</div><p class="hw-do">${esc(h.do || '')}</p>${h.text ? `<div class="hw-text">${(Array.isArray(h.text) ? h.text : [h.text]).map(t => '<p>' + esc(t) + '</p>').join('')}</div>` : ''}${play}
           <ol class="hw-list">${items.map((it, i) => hwItem(h, it, i, st)).join('')}</ol>
           ${st.checked ? `<p class="hw-score" role="status">${nOk} of ${items.length} right. ${nOk === items.length ? 'Well done.' : 'Change the red ones and check again.'}</p>` : ''}
           <div class="hw-bar"><button type="button" class="hw-b" id="hwCheck">Check my answers</button><button type="button" class="hw-b q" id="hwFlip">Turn over for the answers</button></div></div>
-        <div class="hw-face hw-back"${flip ? '' : ' inert aria-hidden="true"'}><small>Answers</small>
+        <div class="hw-face hw-back"${flip ? '' : ' inert aria-hidden="true"'}><div class="hw-top"><small>Answers</small>${mark}</div>
           <ol class="hw-list hw-key">${items.map((it, i) => hwKeyItem(h, it, i)).join('')}</ol>${said}
           <div class="hw-bar"><button type="button" class="hw-b" id="hwBack">Turn back</button><button type="button" class="hw-b q" id="hwClear">Start again</button></div></div>
       </div></div>
