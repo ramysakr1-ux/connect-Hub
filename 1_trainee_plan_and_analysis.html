@@ -16,7 +16,7 @@
 <title>1 · Lesson Plan &amp; Language Analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610262006">
+<link rel="stylesheet" href="hub-tokens.css?v=202610262021">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -445,7 +445,7 @@
   @media(max-width:640px){ .pv2{display:none;} }
   @media print{ .pv2{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610262006">
+<link rel="stylesheet" href="hub-house.css?v=202610262021">
 </head>
 <body>
 <div class="board">
@@ -674,13 +674,13 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202610262006"></script>
-<script src="hub-shared.js?v=202610262006"></script>
-<script src="hub-rotation.js?v=202610262006"></script>
-<script src="hub-store.js?v=202610262006"></script>
-<script src="hub-say.js?v=202610262006"></script>
-<script src="hub-sync.js?v=202610262006"></script>
-<script src="hub-notebook.js?v=202610262006"></script>
+<script src="hub-due.js?v=202610262021"></script>
+<script src="hub-shared.js?v=202610262021"></script>
+<script src="hub-rotation.js?v=202610262021"></script>
+<script src="hub-store.js?v=202610262021"></script>
+<script src="hub-say.js?v=202610262021"></script>
+<script src="hub-sync.js?v=202610262021"></script>
+<script src="hub-notebook.js?v=202610262021"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -1098,12 +1098,12 @@ function fwRender(){
    which is the scaffolding the first practices are supposed to have (Ramy,
    4 Oct 2026: "especially the first two TPs").
 
-   What it does NOT fill is the aim of each stage or the procedure itself.
-   Those are the two things the trainee is assessed on (4b, 4e), and the
-   standing rule from 23 Sep 2026 — "it feels like cheating a little bit,
-   we're just giving them the stages" — draws the line exactly there. The
-   instructions stay readable on the TP points screen; they are not typed into
-   the plan on the trainee's behalf. */
+   EVERYTHING, since 26 Oct 2026 (Ramy: "I wanted to import everything, interaction patterns, aims, everything. Timing,
+   stage, aims, the whole thing is being copied into the lesson plan"). This replaces the 23 Sep line ("we're just giving
+   them the stages"): the early TP points are written in full and shrink from TP 3, so the import gives as much as the
+   point holds -- the main and subsidiary aims, the context, each stage's name, timing and interaction, and its
+   procedure as bullets. A field the trainee has already written is never overwritten. The set has no aim per stage, so
+   that one stays theirs to write. */
 function tpPointStages(){
   let me=null, P=null;
   try{ me=JSON.parse(localStorage.getItem('hub:me')||'null'); }catch(e){}
@@ -1126,14 +1126,17 @@ function tpStartRender(){
   btn.hidden=!got; hint.hidden=!got;
   if(got){
     btn.textContent='Start from your TP point ('+got.stages.length+' stages)';
-    hint.textContent='Names, timings and interaction come across from what your tutor set for TP '+got.n+'. The aim of each stage and the procedure are yours to write.';
+    hint.textContent='Everything your tutor set for TP '+got.n+' comes into your plan: the aims, the stages with their timings and interaction, and the procedure. Anything you have already written stays.';
   }
 }
 async function tpStartApply(){
   const got=tpPointStages();
   if(!got) return;
   const filled=rows().some(rowIsTheirs);
-  if(filled && !await confirmModal('This renames the stages and replaces their timings and interaction patterns with the ones your tutor set. Anything you have typed in Procedure stays. Continue?','Replace anyway')) return;
+  if(filled && !await confirmModal('This renames the stages and replaces their timings and interaction patterns with the ones your tutor set. Anything you have already written in the aims or the procedure stays. Continue?','Replace anyway')) return;
+  /* a paragraph from the set becomes the bullets the plan asks for: one sentence, one line */
+  const bullets=t=>String(t||'').split(/\n+|(?<=[.?!])\s+(?=[A-Z“"‘(])/).map(x=>x.trim()).filter(Boolean).map(x=>BULLET+x).join('\n');
+  const fillIfEmpty=(el,v)=>{ if(el&&v&&!procText(el.value).trim()){ el.value=v; autoGrow(el); } };
   const all=rows();
   got.stages.forEach((st,i)=>{
     const tr=all[i]||addRow('','','');
@@ -1142,8 +1145,12 @@ async function tpStartApply(){
     tr.querySelector('.t-aim').value='';
     tr.querySelector('.t-time').value=st.minutes?String(st.minutes):'';
     tr.querySelector('.t-int').value=st.interaction||'';
+    fillIfEmpty(tr.querySelector('.t-proc'), bullets(st.todo));
     tr.querySelectorAll('textarea').forEach(autoGrow);
   });
+  fillIfEmpty($('fMain'), got.cell.point ? BULLET+String(got.cell.point).trim() : '');
+  fillIfEmpty($('fSub'), got.cell.sub ? BULLET+String(got.cell.sub).trim() : '');
+  if($('fContext')&&!$('fContext').value.trim()&&got.cell.context) $('fContext').value=String(got.cell.context).trim();
   all.slice(got.stages.length).forEach(tr=>{
     const used=procText(tr.querySelector('.t-proc').value).trim()||tr.querySelector('.t-aim').value.trim();
     if(!used) tr.remove();
@@ -1168,7 +1175,7 @@ async function tpStartApply(){
       || (/receptive|reading|listening/.test(want)?'receptive':/productive|speaking|writing/.test(want)?'productive':/ppp|present/.test(want)?'ppp':/test\s*[-–]\s*teach/.test(want)?'ttt':'');
     if(key&&FRAMEWORKS[key]){ fwSel.value=key; fwRender(); }
   }
-  paintAll(); setStatus('Stages filled from your TP point. Write the aim of each one.'); dirty=true;
+  paintAll(); setStatus('Your TP point is in your plan. Write the aim of each stage.'); dirty=true;
 }
 if($('tpStart')) $('tpStart').addEventListener('click',tpStartApply);
 if($('fTP')) $('fTP').addEventListener('change',tpStartRender);
