@@ -1845,11 +1845,22 @@ case 'inbox': {
         + 'Strengths say what the trainee did, as a phrase or sentence. Action points are imperatives addressed to the trainee, e.g. "Give an example before the task starts". '
         + 'Never drop a reason or a consequence the notes give: "instr too long, Ss confused" keeps that the students were confused. '
         + '"Not referenced", "no refs" or "no sources" about materials, pictures, texts or handouts means the sources were not acknowledged (4d), never how they were used in class. '
-        + 'The tutor writes in CELTA shorthand. Ss or sts = students; T = teacher; TTT = teacher talking time; STT = student talking time; CCQ = concept-checking question; ICQ = instruction-checking question; '
-        + 'EC = error correction; DEC = delayed error correction; WC = whole class; WCFB or FB = whole-class feedback or feedback; PW = pair work; GW = group work; OCFB = open-class feedback; '
-        + 'MFP = meaning, form and pronunciation; TL = target language; LA = language analysis; GD = guided discovery; PPP = presentation, practice, production; TBL = task-based learning; '
-        + 'HO = handout; WB or BW = board or board work; ex = exercise; instr = instructions; demo = demonstration; monit = monitoring; pron = pronunciation; voc or vocab = vocabulary; gram = grammar; '
-        + 'L1 = the students\' first language; lead-in = the opening stage; prep = preparation; TP = teaching practice; v = very; + = and; w/ = with; w/o = without; b4 = before. '
+        /* The shorthand, from Lite's own TP points glossary (24_tp_points.html GLOSSARY), the
+           acronyms and terms of the CELTA glossary the C/17 course used, and the shorthand
+           tutors write in notes (Ramy, 27 Oct 2026: "use the glossary from C17 ... and the one
+           we have at the bottom of TP points"). The C/17 terms are named, not quoted. */
+        + 'The tutor writes in CELTA shorthand. From the TP points: SB = student\'s book; WB = workbook; p. = page; HO = handout; AK = answer key; TL = target language; '
+        + 'MFP = meaning, form and pronunciation; CCQ = concept checking question; ICQ = instruction checking question; ECDW = elicit, CCQ, drill, write; PW = pair work; GW = group work; '
+        + 'PC = peer check; Ind. = individually; OC = open class; WC = whole class; Ming. = mingle; T–S = teacher to students; S–S = student to student; FB = feedback; '
+        + 'WCFB = whole class feedback; TTT = teacher talking time; STT = student talking time. '
+        + 'From the CELTA glossary: MFPA = meaning, form, pronunciation and appropriacy; L1 = the learner\'s first language; L2 = their second language; TBL = task-based learning; '
+        + 'TPR = Total Physical Response; CALL = computer assisted language learning; DOS/ADOS = Director and Assistant Director of Studies; EAP, ESP, ESOL, ELT, IELTS as usual. '
+        + 'Terms tutors use as written: appropriacy, backchaining, choral and individual drilling, cline, concept questions, connected speech, controlled and freer practice, '
+        + 'deducing meaning from context, elicit, finger highlighting, grade (language), guided discovery, language feedback, lead-in, lexical set, live listening, monitor, nominate, '
+        + 'peer check, realia, reformulate, receptive and productive skills, sub-skills, student-centred and teacher-centred, timelines, top-down and bottom-up, weak forms, word stress. '
+        + 'Note-taking shorthand: Ss or sts = students; T = teacher; EC = error correction; DEC = delayed error correction; instr = instructions; demo = demonstration; ex = exercise; '
+        + 'BW = board work; monit = monitoring; pron = pronunciation; voc or vocab = vocabulary; gram = grammar; prep = preparation; LA = language analysis; GD = guided discovery; '
+        + 'PPP = presentation, practice, production; v = very; + = and; w/ = with; w/o = without; b4 = before. '
         + 'In the points, write these out in full, except TTT, STT, CCQs and ICQs, which trainees know. Write "students", never Ss. '
         + 'Give every point the one or two criterion codes that fit it best: planning points use 4a to 4n only, teaching points use 1a to 3b and 5a to 5n only. '
         + 'Criteria: ' + tnCrit.join('; ') + '. '
