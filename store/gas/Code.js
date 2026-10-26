@@ -1946,12 +1946,7 @@ case 'inbox': {
           (byDay[date] = byDay[date] || []).push({ by: String(t.name || '').split(/\s+/)[0], title: title, cards: cards.slice(0, 24) });
         });
       });
-      /* today's lessons once the class has begun, never before it (a real course; the demo's clock is a date) */
-      if (!vcSet.demoToday && byDay[vcToday]) {
-        var vcTt = courseRead_(course.id, 'timetable') || {};
-        var vcTp = (vcTt.slots || []).filter(function (x) { return x && x.kind === 'tp' && x.from; })[0];
-        if (vcTp && Utilities.formatDate(new Date(), vcTz, 'HH:mm') < String(vcTp.from)) delete byDay[vcToday];
-      }
+      /* today's words wait for the end of the TP day too (v147, below) */
       /* HOMEWORK: each lesson taught that day at this level, from the course's TP points. The trainee who taught it
          is found from the TP points (group, token, TP number), the day from the timetable (the TP number and which
          set of the group teaches that day), the level from the library set the group uses. */
@@ -1992,13 +1987,14 @@ case 'inbox': {
       });
       /* v146: today's Self-study is released when the day's TP is over (Ramy, 26 Oct 2026: "released at the end of
          the TP day, depending how many TPs are per day"): the end of the day's last TP lesson, however many there are,
-         from that day's own sessions, else from the timetable's TP slots. The demo's clock is a date, so it shows at once. */
-      if (!vcSet.demoToday && hwByDay[vcToday]) {
+         from that day's own sessions, else from the timetable's TP slots. The demo's clock is a date, so it shows at once.
+         v147: today's words (the flip cards) wait for the same moment ("words cards wait for the end of TP too"). */
+      if (!vcSet.demoToday && (hwByDay[vcToday] || byDay[vcToday])) {
         var hwDay = (ttb.days || []).filter(function (d) { return d && d.date === vcToday; })[0];
         var hwEnds = ((hwDay && hwDay.sessions) || []).filter(function (s) { return s && s.e && (s.k === 'tp' || s.room === 'Teaching practice'); }).map(function (s) { return String(s.e); });
         if (!hwEnds.length) hwEnds = (ttb.slots || []).filter(function (x) { return x && x.kind === 'tp' && x.to; }).map(function (x) { return String(x.to); });
         var hwOpen = hwEnds.sort().pop();
-        if (hwOpen && Utilities.formatDate(new Date(), vcTz, 'HH:mm') < hwOpen) delete hwByDay[vcToday];
+        if (hwOpen && Utilities.formatDate(new Date(), vcTz, 'HH:mm') < hwOpen) { delete hwByDay[vcToday]; delete byDay[vcToday]; }
       }
       var allDays = {}; Object.keys(byDay).forEach(function (d) { allDays[d] = 1; }); Object.keys(hwByDay).forEach(function (d) { allDays[d] = 1; });
       var vcDays = Object.keys(allDays).sort().reverse().slice(0, 12);
