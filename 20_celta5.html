@@ -41,7 +41,7 @@
 <title>Connect Lite — CELTA 5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610270026">
+<link rel="stylesheet" href="hub-tokens.css?v=202610270040">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:980px; margin:0 auto; padding:26px 20px 80px;}
@@ -213,7 +213,7 @@
   @media(prefers-reduced-motion:reduce){ .c5r i{transition:none;} .c5r li.attn.first i, section.part:target{animation:none;} }
   @media print{ .c5r{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610270026">
+<link rel="stylesheet" href="hub-house.css?v=202610270040">
 </head>
 <body class="hub-celta5 hub-paper hub-course">
 <div class="board">
@@ -226,20 +226,20 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202610270026"></script>
-<script src="hub-hand.js?v=202610270026"></script>
-<script src="hub-ink.js?v=202610270026"></script>
-<script src="assignment-defaults.js?v=202610270026"></script>
-<script src="celta5-text.js?v=202610270026"></script>
-<script src="celta5-appendix.js?v=202610270026"></script>
-<script src="celta5-criteria.js?v=202610270026"></script>
-<script src="hub-tracker.js?v=202610270026"></script>
-<script src="observation-defaults.js?v=202610270026"></script>
-<script src="hub-shared.js?v=202610270026"></script>
-<script src="hub-store.js?v=202610270026"></script>
-<script src="hub-say.js?v=202610270026"></script>
-<script src="hub-sync.js?v=202610270026"></script>
-<script src="hub-notebook.js?v=202610270026"></script>
+<script src="celta5-pdf.js?v=202610270040"></script>
+<script src="hub-hand.js?v=202610270040"></script>
+<script src="hub-ink.js?v=202610270040"></script>
+<script src="assignment-defaults.js?v=202610270040"></script>
+<script src="celta5-text.js?v=202610270040"></script>
+<script src="celta5-appendix.js?v=202610270040"></script>
+<script src="celta5-criteria.js?v=202610270040"></script>
+<script src="hub-tracker.js?v=202610270040"></script>
+<script src="observation-defaults.js?v=202610270040"></script>
+<script src="hub-shared.js?v=202610270040"></script>
+<script src="hub-store.js?v=202610270040"></script>
+<script src="hub-say.js?v=202610270040"></script>
+<script src="hub-sync.js?v=202610270040"></script>
+<script src="hub-notebook.js?v=202610270040"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -294,15 +294,15 @@ const pill = (t, cls) => `<span class="st ${cls||''}">${t}</span>`;
 const ASSESSED_HOURS = 6;
 function standardHours(which) {
   const tps = Math.max(2, parseInt(SETTINGS.tpCount, 10) || 8);
-  /* Stage 1 closes the first third (10.2), the tracker's own band: TP2 of eight, TP3 of nine */
+  /* Stage 1 closes the first third (10.2), the tracker's own band: after TP2 */
   const done = which === 's1' ? Math.max(1, Math.floor(tps / 3)) : which === 's3' ? tps : Math.round(tps / 2);
   const h = ASSESSED_HOURS * done / tps;
   return String(Math.round(h * 100) / 100);
 }
 
 /* STAGE 1 FILLS ITSELF IN (Ramy, 26 Oct 2026: "Why wouldn't Lite just
-   pre-fill stage one?"). Once every lesson in the first third has its feedback
-   back (TP1 and TP2 of eight), Strengths opens with a short paragraph, the same
+   pre-fill stage one?"). Once TP1 and TP2 have their feedback back,
+   Strengths opens with a short paragraph, the same
    for everyone but for the name ("It's generic for everybody"), and then the
    strengths from that feedback as bullets; the action plan holds the action
    points, starred ones first. Each bullet keeps its criterion codes. The points
@@ -363,8 +363,15 @@ async function s1Reword(){
   S1_WORDS = 'asking'; const note = $('s1Note'); if (note) note.textContent = 'Putting the points from the feedback into new words…';
   try {
     const pts = s1Points(ev), body = { op: 'stage1Words', strengths: pts.strengths, actions: pts.actions };
-    if (HubStore.token && HubStore.token()) body.token = HubStore.token();
-    const r = await HubStore.call(body, 60000);
+    /* the first answer is kept in this browser for these same points, so reopening an
+       unsaved Stage 1 does not ask (and pay) again */
+    const cacheKey = 'chub:s1words:' + (who.token || '') + ':' + JSON.stringify(pts).length + ':' + JSON.stringify(pts).split('').reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 0);
+    let r = null; try { r = JSON.parse(localStorage.getItem(cacheKey) || 'null'); } catch (e) {}
+    if (!r) {
+      if (HubStore.token && HubStore.token()) body.token = HubStore.token();
+      r = await HubStore.call(body, 60000);
+      try { if (r && Array.isArray(r.strengths)) localStorage.setItem(cacheKey, JSON.stringify(r)); } catch (e) {}
+    }
     if (!r || !Array.isArray(r.strengths) || !Array.isArray(r.actions) || (!r.strengths.length && !r.actions.length)) throw new Error('no words');
     const built = s1Build(ev, { strengths: r.strengths, actions: r.actions });
     const t = TT.stage1 || {};
