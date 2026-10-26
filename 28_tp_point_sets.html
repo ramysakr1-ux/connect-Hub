@@ -35,7 +35,7 @@
 <title>Connect Lite — TP point sets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610262033">
+<link rel="stylesheet" href="hub-tokens.css?v=202610262111">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1020px; margin:0 auto; padding:26px 20px 90px;}
@@ -128,6 +128,9 @@
   .libmix span{font-size:0.68rem; background:var(--box); border-radius:999px; padding:2px 8px; color:var(--grey);}
   .libcard .act{margin-top:auto; display:flex; align-items:center; gap:9px; flex-wrap:wrap;}
   .libcard .have{font-size:0.74rem; color:var(--teal); font-weight:600;}
+  .std-warn{margin:0 0 12px; padding:9px 12px; border-left:3px solid var(--tone-stuck, var(--brick)); background:var(--paper); font-size:0.8rem; line-height:1.5;}
+  .std-warn ul{margin:4px 0 0; padding-left:18px;}
+  .st .st-aim{margin-top:5px; font-size:0.8rem; font-style:italic;}
   .libwarn{font-size:0.76rem; color:var(--ink-warm); background:var(--gold-wash);
     border-left:2px solid var(--amber-edge); border-radius:0 6px 6px 0; padding:7px 10px; margin:11px 0 0;}
   .groupsel{display:flex; flex-wrap:wrap; gap:8px;}
@@ -223,7 +226,7 @@
   @media(max-width:560px){ .sm-cell{height:18px; padding:2px;} .sm-grid{gap:4px 3px;} }
   @media print{ .sm-map{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610262033">
+<link rel="stylesheet" href="hub-house.css?v=202610262111">
 <style>
 /* COLOUR FOR A SET (Ramy, 21 Oct 2026: "I feel like we should give it some
    color"). The notebook's own: white cards with the shadow, a forest band for
@@ -257,12 +260,12 @@ body.hub-paper .shead .state.done{background:var(--a-forest, var(--teal)); color
   <a class="back" id="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610262033"></script>
-<script src="hub-rotation.js?v=202610262033"></script>
-<script src="hub-store.js?v=202610262033"></script>
-<script src="hub-say.js?v=202610262033"></script>
-<script src="hub-sync.js?v=202610262033"></script>
-<script src="hub-pages.js?v=202610262033"></script>
+<script src="hub-shared.js?v=202610262111"></script>
+<script src="hub-rotation.js?v=202610262111"></script>
+<script src="hub-store.js?v=202610262111"></script>
+<script src="hub-say.js?v=202610262111"></script>
+<script src="hub-sync.js?v=202610262111"></script>
+<script src="hub-pages.js?v=202610262111"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
@@ -302,14 +305,48 @@ const INT_LABEL = { 'T–S':'Teacher to students', 'S–T':'Students to teacher'
 /* How much a session hands over. Ramy, 4 Oct 2026: scripted for the first
    practices, then stages and timings only, then the aim and the materials and
    they build it. Set per session, not per practice number. */
+/* THE CONNECT STANDARD FOR A TP POINT (Ramy, 26 Oct 2026; TP-POINT-STANDARD.md). Every set in the library and every set
+   offered to the Pool follows it, so a trainee meets the same fade whoever wrote the set:
+     TP 1–2 full    aims in full; the lesson shape; each stage with its aim ("To…"), time, interaction and instructions
+     TP 3–4 guided  aims one word (TP 4's sub aim theirs); stages named, one short line each; no shape, no times
+     TP 5   outline aims one word; the stages named and nothing under them (Ramy: "we gotta give them something for TP5")
+     TP 6   bare    the main aim (one word), the sub aim theirs, the pages, and a few things to watch out for; no stages
+                    (Ramy: "TP6 thing as main aim and just like some watch out for that's all")
+   A trainee's first lesson at a new level may be written one level up. */
 const SCAFFOLD = {
-  full:   { name: 'Fully written — every stage, what to do, timings',
-            blurb: 'For a trainee who has never taught: the stages are written out and timed.' },
-  guided: { name: 'Stages and timings — they write the instructions',
-            blurb: 'The shape and the clock are given; what happens in each stage is theirs.' },
-  bare:   { name: 'Aims and materials only — they build the lesson',
-            blurb: 'No stages. They choose the shape and plan it themselves.' },
+  full:   { name: 'Full — TP 1–2: aims, shape, stages with aims, times and instructions',
+            blurb: 'For a trainee who has never taught: everything written out, each stage with its aim and its time.' },
+  guided: { name: 'Guided — TP 3–4: one-word aims, stages named with one line each',
+            blurb: 'No lesson shape and no times. Each stage gets one short line: which exercise, and what it is for.' },
+  outline: { name: 'Outline — TP 5: one-word aims and the stages named',
+            blurb: 'The stages by name only, nothing under them, no shape and no times.' },
+  bare:   { name: 'Bare — TP 6: the main aim and what to watch out for',
+            blurb: 'No stages and no shape. The one-word aim, the pages, and a few things to watch out for; the lesson is theirs to build.' },
 };
+/* What breaks the standard, said plainly on the lesson (the same rules as scratchpad's tpstandard check). */
+function standardIssues(sl, scaffold){
+  const out = [], words = t => String(t || '').trim().split(/\s+/).filter(Boolean).length;
+  const st = (sl.stages || []).filter(x => x && (x.name || x.todo));
+  if (scaffold === 'full') {
+    if (sl.aim && !/^by the end of the lesson/i.test(String(sl.aim).trim())) out.push('The main aim starts “By the end of the lesson, students will have…”.');
+    if (sl.sub && !/^to\b/i.test(String(sl.sub).trim())) out.push('The sub aim starts “To…”.');
+    if (!sl.shape) out.push('Name the lesson shape.');
+    if (st.some(x => !String(x.aim || '').trim())) out.push('Every stage has its aim, one short line starting “To…”.');
+    if (st.some(x => !String(x.minutes || '').trim() && !/flexi|if time/i.test(x.name || ''))) out.push('Every stage has its time.');
+  } else {
+    if (words(sl.aim) > 2) out.push('From TP 3 the main aim is one word: the lesson type.');
+    if (words(sl.sub) > 2) out.push('From TP 3 the sub aim is one word, or the trainee’s own.');
+    if (sl.shape) out.push('From TP 3 the lesson shape is not given.');
+    if (scaffold === 'guided') {
+      if (st.some(x => String(x.minutes || '').trim() || String(x.interaction || '').trim())) out.push('Guided stages carry no times and no interaction.');
+      if (st.some(x => String(x.todo || '').length > 160)) out.push('Guided stages get one short line each.');
+    }
+    if (scaffold === 'outline' && st.some(x => String(x.todo || '').trim() || String(x.minutes || '').trim() || String(x.interaction || '').trim())) out.push('Outline stages are names only: nothing under them, no times.');
+    if (scaffold === 'bare' && st.length) out.push('A bare lesson has no stages.');
+    if (scaffold === 'bare' && !String(sl.watch || '').trim()) out.push('Give a few things to watch out for.');
+  }
+  return out;
+}
 
 /* A COURSE HOLDS SEVERAL SETS. Ramy, 4 Oct 2026: "we will definitely need at
    least four sets in case it's a course of 24." A set belongs to a tutor and
@@ -367,11 +404,11 @@ function sessionIds(){
   for (let tp = 1; tp <= TPS; tp++) { out.push(tp + 'A'); out.push(tp + 'B'); }
   return out;
 }
-const blankStage = () => ({ name: '', minutes: '', interaction: '', todo: '', avoid: '' });
-const blankSlot = () => ({ type: '', aim: '', sub: '', shape: '', pages: '', page: '', tracks: '', stages: [] });
+const blankStage = () => ({ name: '', aim: '', minutes: '', interaction: '', todo: '', avoid: '' });
+const blankSlot = () => ({ type: '', aim: '', sub: '', shape: '', pages: '', page: '', tracks: '', watch: '', stages: [] });
 function blankSet(){
   const sessions = {};
-  sessionIds().forEach(id => { sessions[id] = { scaffold: parseInt(id, 10) <= 2 ? 'full' : parseInt(id, 10) <= 4 ? 'guided' : 'bare', slots: [blankSlot(), blankSlot(), blankSlot()] }; });
+  sessionIds().forEach(id => { sessions[id] = { scaffold: parseInt(id, 10) <= 2 ? 'full' : parseInt(id, 10) <= 4 ? 'guided' : parseInt(id, 10) === 5 ? 'outline' : 'bare', slots: [blankSlot(), blankSlot(), blankSlot()] }; });
   return { book: '', level: '', minutes: 45, sessions: sessions };
 }
 /* ---------------- the library ----------------
@@ -418,11 +455,11 @@ function offerFile(){
         pages += files.length;
         const lines = String(sl.tracks || '').split('\n').map(l => l.split('|')[0].trim()).filter(Boolean);
         tracks += lines.length;
-        return { type: sl.type || '', aim: sl.aim || '', sub: sl.sub || '',
+        return { type: sl.type || '', aim: sl.aim || '', sub: sl.sub || '', watch: sl.watch || '',
                  shape: sl.shape || '', pages: sl.pages || '', page: sl.page || '',
                  tracks: lines.join('\n'),
                  files: files.map(f => ({ name: f.name || '', src: f.src || '', page: f.page })),
-                 stages: (sl.stages || []).map(st => ({ name: st.name || '', minutes: st.minutes || 0,
+                 stages: (sl.stages || []).map(st => ({ name: st.name || '', aim: st.aim || '', minutes: st.minutes || 0,
                    interaction: st.interaction || '', todo: st.todo || '', avoid: st.avoid || '' })) };
       })
     };
@@ -954,21 +991,26 @@ function sessionBody(id, ses){
 function slotBody(id, i, sl, scaffold){
   const total = slotMinutes(sl), cap = parseInt(S.minutes, 10) || 45;
   const over = total > cap;
-  const stages = scaffold === 'bare' ? '' : `
+  const FULL = scaffold === 'full', issues = standardIssues(sl, scaffold);
+  const stages = scaffold === 'bare' ? `
+    <div class="frow"><label class="lab">Watch out for</label><div>
+      <textarea rows="3" data-sl="${id}|${i}|watch" placeholder="The class read the article last lesson. Do not set it again.&#10;One line each">${esc(sl.watch || '')}</textarea>
+      <p class="hint">At TP 6 this is all they get beside the aim and the pages: a few things that catch people out.</p></div></div>` : `
     <div class="frow"><label class="lab">Procedure</label><div>
-      <table class="st"><thead><tr><th></th><th style="width:30%">Stage</th><th style="width:62px">Mins</th><th style="width:108px">Interaction</th><th>What to do · what to watch out for</th><th></th></tr></thead>
+      <table class="st"><thead><tr><th></th><th style="width:30%">Stage${FULL ? ' · its aim' : ''}</th>${FULL ? '<th style="width:62px">Mins</th><th style="width:108px">Interaction</th>' : ''}<th>${FULL ? 'What to do · what to watch out for' : scaffold === 'outline' ? 'At TP 5 the stage names are all they get' : 'One line: which exercise, and what it is for'}</th><th></th></tr></thead>
       <tbody>${(sl.stages || []).map((st, j) => `<tr>
         <td class="n">${j + 1}</td>
-        <td><input data-st="${id}|${i}|${j}|name" value="${esc(st.name)}" placeholder="Lead-in"></td>
+        <td><input data-st="${id}|${i}|${j}|name" value="${esc(st.name)}" placeholder="Lead-in">${FULL ? `
+          <input class="st-aim" data-st="${id}|${i}|${j}|aim" value="${esc(st.aim || '')}" placeholder="To get students interested in the topic">` : ''}</td>${FULL ? `
         <td><input type="number" min="0" max="90" data-st="${id}|${i}|${j}|minutes" value="${esc(st.minutes)}"></td>
         <td><select data-st="${id}|${i}|${j}|interaction" title="Interaction pattern">${INTERACTIONS.map(x =>
-          `<option value="${esc(x)}"${st.interaction === x ? ' selected' : ''}>${esc(x ? x + ' · ' + INT_LABEL[x] : '—')}</option>`).join('')}</select></td>
-        <td><textarea rows="2" data-st="${id}|${i}|${j}|todo" placeholder="${scaffold === 'guided' ? 'One line of guidance' : 'What the trainee does in this stage'}">${esc(st.todo)}</textarea>
-          <textarea rows="1" data-st="${id}|${i}|${j}|avoid" placeholder="Watch out for… (optional)">${esc(st.avoid)}</textarea></td>
+          `<option value="${esc(x)}"${st.interaction === x ? ' selected' : ''}>${esc(x ? x + ' · ' + INT_LABEL[x] : '—')}</option>`).join('')}</select></td>` : ''}
+        <td>${scaffold === 'outline' ? '' : `<textarea rows="${FULL ? 2 : 1}" data-st="${id}|${i}|${j}|todo" placeholder="${FULL ? 'What the trainee does in this stage, in short imperative bullets' : 'Ex 1b: the paragraph about the day, for gist'}">${esc(st.todo)}</textarea>`}
+          ${scaffold === 'outline' ? '' : `<textarea rows="1" data-st="${id}|${i}|${j}|avoid" placeholder="Watch out for… (optional)">${esc(st.avoid)}</textarea>`}</td>
         <td><button type="button" class="xbtn" data-strm="${id}|${i}|${j}">Remove</button></td></tr>`).join('')}
       </tbody></table>
       <div class="clock${over ? ' over' : ''}"><button type="button" class="btn quiet sm" data-stadd="${id}|${i}">Add a stage</button>
-        <span>${(sl.stages || []).length ? `<b>${total}</b> of ${cap} minutes${over ? ' — over the slot' : total && total < cap - 5 ? ' · ' + (cap - total) + ' spare' : ''}` : 'No stages yet.'}</span></div>
+        <span>${(sl.stages || []).length ? (FULL ? `<b>${total}</b> of ${cap} minutes${over ? ' — over the slot' : total && total < cap - 5 ? ' · ' + (cap - total) + ' spare' : ''}` : (sl.stages || []).length + ' stages, no times: the trainee times the lesson') : 'No stages yet.'}</span></div>
       <details class="paste"><summary>Paste a written-up lesson instead</summary>
         <textarea rows="4" data-paste="${id}|${i}" placeholder="Paste a document whose lines read &quot;Lead-in: ask a couple of simple questions…&quot; — each line becomes a stage."></textarea>
         <button type="button" class="btn quiet sm" style="margin-top:7px" data-pasted="${id}|${i}">Turn it into stages</button>
@@ -983,15 +1025,16 @@ function slotBody(id, i, sl, scaffold){
   return `<div class="slot" data-say="${esc((S.book || 'set').split(',')[0])} · TP ${id} · slot ${i + 1}${
       sl.type ? ' (' + esc(sl.type) + ')' : ''}" data-say-label="Something wrong with this lesson?">
     <h3>Slot ${i + 1} <small>the ${['first','second','third'][i] || (i + 1) + 'th'} trainee to teach</small></h3>
+    ${issues.length ? `<div class="std-warn"><b>Not yet to the Connect standard.</b><ul>${issues.map(x => '<li>' + esc(x) + '</li>').join('')}</ul></div>` : ''}
     <div class="frow"><label class="lab">Lesson type</label><div>
       <select data-sl="${id}|${i}|type"><option value="">— choose —</option>${TYPES.map(t =>
         `<option value="${esc(t)}"${sl.type === t ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select>
       <p class="hint">What the CELTA 5 records, and what the rotation checks for a range. The aim below is the sentence.</p></div></div>
     <div class="frow"><label class="lab">Main aim</label><textarea rows="2" data-sl="${id}|${i}|aim" placeholder="By the end of the lesson, learners will be better able to…">${esc(sl.aim)}</textarea></div>
     <div class="frow"><label class="lab">Sub aim</label><input data-sl="${id}|${i}|sub" value="${esc(sl.sub)}" placeholder="Oral fluency in the same context"></div>
-    <div class="frow"><label class="lab">Lesson shape</label><div>
+    ${FULL || sl.shape ? `<div class="frow"><label class="lab">Lesson shape</label><div>
       <input list="shapes" data-sl="${id}|${i}|shape" value="${esc(sl.shape)}" placeholder="Receptive Skills (reading or listening)">
-      <p class="hint">Named as the trainee’s own plan names it, so their stages can be filled in one press.</p></div></div>
+      <p class="hint">${FULL ? 'Named as the trainee’s own plan names it, so their stages can be filled in one press.' : 'Not given from TP 3: the trainee chooses the shape. Clear this box.'}</p></div></div>` : ''}
     <div class="frow"><label class="lab">Pages</label><div class="pair">
       <textarea rows="2" data-sl="${id}|${i}|pages" placeholder="SB p. 12, ex. A–D&#10;WB p. 9, ex. 1a—one line each">${esc(sl.pages)}</textarea>
       <input type="number" min="1" data-sl="${id}|${i}|page" value="${esc(sl.page)}" placeholder="Open at p."></div></div>

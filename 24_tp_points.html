@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610262103">
+<link rel="stylesheet" href="hub-tokens.css?v=202610262111">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -404,7 +404,7 @@
   @media(prefers-reduced-motion:reduce){ .tbl select.fm, .fm-pips i{transition:none;} }
   @media print{ .fm-key, .fm-pips{display:none;} .tbl select.fm{border-left-width:1px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610262103">
+<link rel="stylesheet" href="hub-house.css?v=202610262111">
 <style>
 /* THE CARD A TRAINEE RECEIVES, IN COLOUR (Ramy, 21 Oct 2026: "the card that
    the trainees receive ... could use a bit of color and distinction"). Each
@@ -561,14 +561,14 @@ body.ls-open{overflow:hidden;}
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610262103"></script>
-<script src="hub-tracker.js?v=202610262103"></script>
-<script src="hub-rotation.js?v=202610262103"></script>
-<script src="hub-shared.js?v=202610262103"></script>
-<script src="hub-store.js?v=202610262103"></script>
-<script src="hub-say.js?v=202610262103"></script>
-<script src="hub-sync.js?v=202610262103"></script>
-<script src="hub-notebook.js?v=202610262103"></script>
+<script src="hub-due.js?v=202610262111"></script>
+<script src="hub-tracker.js?v=202610262111"></script>
+<script src="hub-rotation.js?v=202610262111"></script>
+<script src="hub-shared.js?v=202610262111"></script>
+<script src="hub-store.js?v=202610262111"></script>
+<script src="hub-say.js?v=202610262111"></script>
+<script src="hub-sync.js?v=202610262111"></script>
+<script src="hub-notebook.js?v=202610262111"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -814,6 +814,8 @@ function stamp(cell, found){
     .map(s => ({ name: s.name || '', aim: s.aim || '', minutes: s.minutes || '', interaction: s.interaction || '', todo: s.todo || '', avoid: s.avoid || '' }));
   out.scaffold = found.scaffold;
   if (found.context) out.context = found.context;
+  /* TP 6 under the Connect standard: no stages, a few things to watch out for (26 Oct 2026) */
+  if (sl.watch) out.watch = sl.watch; else delete out.watch;
   /* Sourcing is taught once, by being shown. The references ride on the first
      two practices only; by TP 3 the trainee writes their own, which is the
      same hand-over the aims and the procedure make (Ramy, 4 Oct 2026). */
@@ -1551,6 +1553,9 @@ function renderCore(){
       const fact = (lab, val, sub) => `<div class="ls-fact"><span class="ls-eye">${lab}</span><b>${val}</b>${sub ? `<span>${sub}</span>` : ''}</div>`;
       const written = c.point && c.point !== c.aim;
       const sub = String(c.sub || '').trim();
+      /* "You write it in full" is said at TP 3 and TP 4, where the aims first become one word; by TP 5 they know
+         (Ramy, 26 Oct 2026: "you say it for TP4 as well. And then you stop because now they understand"). */
+      const FULL_NOTE = tp >= 3 && tp <= 4;
       const ab = audioBits(c, true);
       const span = stages.reduce((a, s) => { const r = minSpan(s.minutes); return [a[0] + r[0], a[1] + r[1]]; }, [0, 0]);
       const procRows = stages.map((s, i) => `<li class="ls-st${isFlexi(s) ? ' flexi' : ''}"><span class="ls-n" aria-hidden="true">${i + 1}</span><div>
@@ -1588,9 +1593,14 @@ function renderCore(){
         <div class="ls-grid">
           <div class="ls-main">
             <div class="ls-card ls-aims">
-              <div class="ls-aim"><span class="ls-eye">Main aim</span>${written ? `<p>${esc(c.point)}</p>` : `<p class="ls-you">You write this in your plan.</p>`}</div>
-              ${sub ? `<div class="ls-aim"><span class="ls-eye">Sub aim</span><p>${/^you decide$/i.test(sub) ? '<span class="ls-you">Yours to choose.</span>' : esc(sub)}</p></div>` : ''}
+              <div class="ls-aim"><span class="ls-eye">Main aim</span>${written ? `<p>${esc(c.point)}</p>`
+                : (c.point || c.aim) ? `<p><b>${esc(c.point || c.aim)}</b></p>${FULL_NOTE ? '<p class="ls-you">You write the main aim in full in your plan.</p>' : ''}`
+                : `<p class="ls-you">You write this in your plan.</p>`}</div>
+              ${sub ? `<div class="ls-aim"><span class="ls-eye">Sub aim</span>${/^you decide$/i.test(sub) ? '<p><span class="ls-you">Yours to choose.</span></p>'
+                : /^to\b/i.test(sub) || sub.split(/\s+/).length > 2 ? `<p>${esc(sub)}</p>`
+                : `<p><b>${esc(sub)}</b></p>${FULL_NOTE ? '<p class="ls-you">You write the sub aim in full in your plan.</p>' : ''}`}</div>` : ''}
             </div>
+            ${!stages.length && String(c.watch || '').trim() ? `<div class="ls-card ls-proc"><h4>Watch out for</h4>${bulletsHTML(c.watch, 'pavl')}</div>` : ''}
             ${stages.length ? `<div class="ls-card ls-proc"><h4>The procedure${LEVEL_NOTE[c.scaffold] ? '<span> · ' + LEVEL_NOTE[c.scaffold] + '</span>' : ''}</h4>
               <ol class="ls-stages">${procRows}</ol>
               ${span[1] ? `<p class="ls-clock">${span[0] === span[1] ? span[0] : span[0] + '–' + span[1]} minutes of stages.</p>` : ''}</div>` : ''}
