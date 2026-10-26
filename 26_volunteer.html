@@ -43,7 +43,7 @@
 <title>Connect Lite — My classes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610261235">
+<link rel="stylesheet" href="hub-tokens.css?v=202610261241">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:720px; margin:0 auto; padding:22px 20px 60px;}
@@ -253,17 +253,17 @@
   @keyframes v4-sheen{from{left:-50%;}to{left:120%;}}
   @media(prefers-reduced-motion:reduce){ .next.v4 *, .cert.earned::after, .track i{animation:none !important; transition:none !important;} .cert.earned::after{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610261235">
+<link rel="stylesheet" href="hub-house.css?v=202610261241">
 </head>
 <body class="hub-grid hub-paper" data-signout="float">
 <div class="board" id="app"></div>
 <div id="consent"></div>
-<script src="hub-shared.js?v=202610261235"></script>
-<script src="hub-attendance.js?v=202610261235"></script>
-<script src="hub-volunteer-i18n.js?v=202610261235"></script>
-<script src="hub-store.js?v=202610261235"></script>
-<script src="hub-say.js?v=202610261235"></script>
-<script src="hub-sync.js?v=202610261235"></script>
+<script src="hub-shared.js?v=202610261241"></script>
+<script src="hub-attendance.js?v=202610261241"></script>
+<script src="hub-volunteer-i18n.js?v=202610261241"></script>
+<script src="hub-store.js?v=202610261241"></script>
+<script src="hub-say.js?v=202610261241"></script>
+<script src="hub-sync.js?v=202610261241"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -561,7 +561,7 @@ function hwBlock(){
   const nOk = items.filter((it, i) => hwOk(it, (st.a || {})[i])).length;
   const head = cls.date === TODAY ? 'Self-study from today\u2019s class' : cls === days[0] ? 'Self-study from your last class' : 'Self-study from ' + longDay(cls.date);
   const from = [h.title, e.by ? e.by + '\u2019s lesson' : ''].filter(Boolean).join(' \u00b7 ');
-  const canSpeak = !!(h.script && window.speechSynthesis);
+  const canSpeak = !!(h.script && ((h.audio && h.audio.length) || window.speechSynthesis));
   const play = canSpeak ? `<button type="button" class="hw-play" id="hwPlay"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>Listen</button>` : '';
   const said = h.script ? `<p class="hw-said"><b>What was said</b><br>${(Array.isArray(h.script) ? h.script : [h.script]).map(esc).join('<br>')}</p>` : '';
   const flip = !!st.flipped;
@@ -581,6 +581,30 @@ function hwBlock(){
       ${days.length > 1 ? `<div class="fc-days">${days.map(x => `<button type="button" data-hwday="${esc(x.date)}" class="${x === cls ? 'on' : ''}">${esc(shortDay(x.date))}</button>`).join('')}</div>` : ''}
     </div>`;
 }
+/* The listening is played in Lite's house voices, recorded once with OpenAI and paced for the set's level (Ramy, 26 Oct
+   2026: "We want to use the one from OpenAI"; "needs to be level appropriate"): the lines one after another, with the
+   lesson's pause between them, from films.connectlitefilms.com. A lesson not recorded yet falls back to the phone's voice. */
+const HW_AUDIO = 'https://films.connectlitefilms.com/';
+let hwPlayer = null;
+function stopHw(){
+  if (hwPlayer) { hwPlayer.stop = true; try { hwPlayer.el.pause(); } catch (e) {} clearTimeout(hwPlayer.t); hwPlayer = null; }
+  if (window.speechSynthesis) try { speechSynthesis.cancel(); } catch (e) {}
+  const b = $('hwPlay'); if (b) b.lastChild.textContent = 'Listen';
+}
+function playHw(h){
+  if (hwPlayer) return stopHw();
+  if (!(h.audio && h.audio.length)) return speakHw(h.script, h.dialogue);
+  const me = hwPlayer = { el: new Audio(), i: 0, stop: false, t: 0 };
+  const b = $('hwPlay'); if (b) b.lastChild.textContent = 'Stop';
+  const next = () => {
+    if (me.stop) return;
+    if (me.i >= h.audio.length) { hwPlayer = null; const bb = $('hwPlay'); if (bb) bb.lastChild.textContent = 'Listen again'; return; }
+    me.el.src = HW_AUDIO + h.audio[me.i++];
+    me.el.play().catch(() => { if (!me.stop) { hwPlayer = null; speakHw(h.script, h.dialogue); } });
+  };
+  me.el.addEventListener('ended', () => { if (!me.stop) me.t = setTimeout(next, h.gap || 700); });
+  next();
+}
 function speakHw(script, dialogue){
   try {
     const sy = window.speechSynthesis; if (!sy) return; sy.cancel();
@@ -589,7 +613,7 @@ function speakHw(script, dialogue){
     lines.forEach((l, i) => { const u = new SpeechSynthesisUtterance(String(l)); u.lang = 'en-GB'; if (v) u.voice = v; u.rate = 0.85; if (dialogue) u.pitch = i % 2 ? 1.25 : 0.85; sy.speak(u); });
   } catch (e) {}
 }
-function paintHw(){ if (window.speechSynthesis) try { speechSynthesis.cancel(); } catch (e) {} const el = $('hw'); if (!el) return; el.outerHTML = hwBlock(); bindHw(); }
+function paintHw(){ stopHw(); const el = $('hw'); if (!el) return; el.outerHTML = hwBlock(); bindHw(); }
 function bindHw(){
   const card = $('hwCard'); if (!card) return;
   const cur = () => hwCur();
@@ -605,12 +629,12 @@ function bindHw(){
   const flipTo = on => { const c = cur(); if (!c) return; const st = HWS[c.key] = HWS[c.key] || {}; st.flipped = on; saveJ(HWKEY, HWS);
     card.classList.toggle('on', on); const f = card.querySelector('.hw-front'), b = card.querySelector('.hw-back');
     f.toggleAttribute('inert', on); b.toggleAttribute('inert', !on); f.setAttribute('aria-hidden', on); b.setAttribute('aria-hidden', !on);
-    if (window.speechSynthesis) try { speechSynthesis.cancel(); } catch (e) {} };
+    stopHw(); };
   $('hwFlip').addEventListener('click', () => flipTo(true));
   $('hwBack').addEventListener('click', () => flipTo(false));
   $('hwCheck').addEventListener('click', () => { const c = cur(); if (!c) return; const st = HWS[c.key] = HWS[c.key] || {}; st.checked = true; saveJ(HWKEY, HWS); paintHw(); });
   $('hwClear').addEventListener('click', () => { const c = cur(); if (!c) return; delete HWS[c.key]; saveJ(HWKEY, HWS); paintHw(); });
-  if ($('hwPlay')) $('hwPlay').addEventListener('click', () => { const c = cur(); if (c) speakHw(c.h.script, c.h.dialogue); });
+  if ($('hwPlay')) $('hwPlay').addEventListener('click', () => { const c = cur(); if (c) playHw(c.h); });
   document.querySelectorAll('[data-hwi]').forEach(b => b.addEventListener('click', () => { hwIdx = +b.getAttribute('data-hwi'); paintHw(); }));
   document.querySelectorAll('[data-hwday]').forEach(b => b.addEventListener('click', () => { hwDay = b.getAttribute('data-hwday'); hwIdx = 0; if (hwDay <= TODAY) nbDay = hwDay; paintHw(); paintNb(); }));
 }
