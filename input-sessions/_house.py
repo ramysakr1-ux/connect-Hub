@@ -875,7 +875,7 @@ RECIPES.append(dict(
     slug='teaching-speaking',
     sources="""Lesson Shape (F) and the staging task follow the International House CELTA lesson shapes. The fluency principles follow Jim Scrivener, <i>Learning Teaching</i> (Macmillan).""", src='desktop:Teaching-Speaking.html', eyebrow='Input session · 75 to 90 minutes',
     title='Teaching speaking', sub='A loop input: you do the tasks first, the way your students would, before the framework gets its name. Lesson Shape (F), productive skills.',
-    nav=[('s1', '1 · Warm-up'), ('s2', '2 · Fluency or accuracy'), ('s3', '3 · What makes it work'), ('s4', '4 · Stage order'), ('s5', '5 · The framework'), ('s6', '6 · Problems'), ('s7', '7 · Plan a stage'), ('s8', '8 · Wrap-up')],
+    nav=[('s1', '1 · Warm-up'), ('s1b', '2 · Do it first'), ('s2', '3 · Fluency or accuracy'), ('s3', '4 · What makes it work'), ('s4', '5 · Stage order'), ('s5', '6 · The framework'), ('s6', '7 · Problems'), ('s7', '8 · Plan a stage'), ('s8', '9 · Wrap-up')],
     css=r"""
   .phrase-list{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0;}
   @media(max-width:680px){ .phrase-list{grid-template-columns:1fr;} }
@@ -944,7 +944,7 @@ RECIPES.append(dict(
     slug='teaching-exam-classes',
     sources="""Exam facts are from Cambridge English, IELTS, ETS and Pearson's own published descriptions of each exam.""", src='desktop:Teaching-Exam-Classes-Input-Session.html',
     title='Teaching exam classes', sub='Young learners to C2: Cambridge, IELTS, TOEFL and PTE, which exam to recommend, and how to become an examiner yourself.',
-    nav=[('s1', '1 · The CEFR ladder'), ('s2', '2 · Acronyms'), ('s3', '3 · The exams'), ('s4', '4 · Which exam?'), ('s5', '5 · Be an examiner'), ('s6', '6 · Wrap-up')],
+    nav=[('s1', '1 · The CEFR ladder'), ('s2', '2 · Acronyms'), ('s3', '3 · The exams'), ('s4', '4 · Which exam?'), ('s4b', '5 · Try it'), ('s5', '6 · Be an examiner'), ('s6', '7 · Wrap-up')],
     css=r"""
   .ladder{display:flex; flex-direction:column-reverse; gap:8px; margin:12px 0;}
   .rung{border-radius:var(--r-strip); padding:12px 16px; cursor:pointer; border:1.5px solid var(--sand-line); background:var(--paper); transition:border-color .12s ease; display:flex; align-items:center; gap:14px;}
@@ -1877,8 +1877,8 @@ RECIPES.append(dict(
 # ---- Writing the lesson plan -------------------------------------------------
 RECIPES.append(dict(
     slug='writing-the-lesson-plan', src='writing-the-lesson-plan/index.html', end='<footer>', number_sections=True,
-    title='Writing the lesson plan', sub='Four decisions you make on every plan: your aims, your procedure, your interaction patterns, and what could go wrong.',
-    nav=[('s1', '1 · Aims'), ('s2', '2 · Procedure'), ('s3', '3 · Interaction'), ('s4', '4 · Anticipated problems'), ('s5', 'Recap')],
+    title='Writing the lesson plan', sub='Four decisions you make on every plan: your aims, your procedure, your interaction patterns, and what could go wrong. Then a plan to fix, and two stages to write yourself.',
+    nav=[('s1', '1 · Aims'), ('s2', '2 · Procedure'), ('s3', '3 · Interaction'), ('s4', '4 · Anticipated problems'), ('s5', '5 · Fix this plan'), ('s6', '6 · Your turn')],
     sources="""The aims, procedures and problems to judge are the tutor's own, written for this course's lesson plan and language analysis sheets.""",
     css=r"""
   section{background:var(--surface); border-left:5px solid var(--gold); border-radius:var(--r-control); padding:20px 22px 22px; margin:0 0 14px;}

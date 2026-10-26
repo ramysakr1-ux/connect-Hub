@@ -8,6 +8,11 @@
 def tl(s):
     return '<span class="hl-tl">' + s + '</span>'
 
+# inside a script string written in double quotes the class takes single quotes, or the quote ends the string
+# and the whole script stops (lesson-framework's MFPA task, broken from 21 to 26 Oct 2026)
+def tlq(s):
+    return "<span class='hl-tl'>" + s + '</span>'
+
 TL = {}
 
 TL['eliciting-and-ccqs'] = [
@@ -45,7 +50,7 @@ TL['functional-language'] = [
 ]
 
 TL['lesson-framework'] = [
-    ('example: "used to / play / basketball / I / every day."', 'example: "' + tl('used to') + ' / play / basketball / I / every day."'),
-    ('example: "I used to / would play basketball."', 'example: "I ' + tl('used to / would play') + ' basketball."'),
-    ('example: "I used playing basketball every day."', 'example: "I ' + tl('used playing') + ' basketball every day."'),
+    ('example: "used to / play / basketball / I / every day."', 'example: "' + tlq('used to') + ' / play / basketball / I / every day."'),
+    ('example: "I used to / would play basketball."', 'example: "I ' + tlq('used to / would play') + ' basketball."'),
+    ('example: "I used playing basketball every day."', 'example: "I ' + tlq('used playing') + ' basketball every day."'),
 ]
