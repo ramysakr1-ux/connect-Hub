@@ -38,7 +38,7 @@
 <meta name="twitter:image" content="https://lite.celtaconnect.com/brand/share-card.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610262216">
+<link rel="stylesheet" href="hub-tokens.css?v=202610262225">
 <style>
   :root{
     /* The pane. A card on this page is a sheet of glass lying on the paper,
@@ -214,6 +214,8 @@
   .room.still{opacity:.62; cursor:default; box-shadow:none;}
   .room.still:hover{box-shadow:none; border-color:var(--row-line); transform:none;}
   .room.still .st{color:var(--faint); font-weight:600;}
+  .room.still{cursor:pointer;}
+  .still-note{margin:9px 0 0; padding:7px 10px; border-left:3px solid var(--sand-line); background:var(--paper); font-size:.78rem; line-height:1.45; color:var(--ink); font-weight:500;}
   .title h1{margin:0; font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:2.1rem;
     line-height:1.15; color:var(--ink);}
   .title p{margin:7px 0 0; font-size:0.9rem; color:var(--grey); line-height:1.6; max-width:600px;}
@@ -457,7 +459,7 @@
   body.asking-name > :not(.board):not(script):not(style):not(link){display:none !important;}
   body.asking-name #hero > :not(.hero-name):not(h2):not(h1):not(.kind):not(#heroKind):not(#heroTitle):not(#heroWhen):not(.when){display:none !important;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610262216">
+<link rel="stylesheet" href="hub-house.css?v=202610262225">
 </head>
 <body>
 <div class="board">
@@ -670,19 +672,19 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 28 104 64" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202610262216"></script>
-<script src="observation-defaults.js?v=202610262216"></script>
-<script src="hub-shared.js?v=202610262216"></script>
-<script src="hub-hand.js?v=202610262216"></script>
-<script src="hub-ink.js?v=202610262216"></script>
+<script src="hub-due.js?v=202610262225"></script>
+<script src="observation-defaults.js?v=202610262225"></script>
+<script src="hub-shared.js?v=202610262225"></script>
+<script src="hub-hand.js?v=202610262225"></script>
+<script src="hub-ink.js?v=202610262225"></script>
 <script src="input-sessions/library.js?v=202610141516"></script>
-<script src="hub-store.js?v=202610262216"></script>
-<script src="hub-say.js?v=202610262216"></script>
-<script src="hub-shelf.js?v=202610262216"></script>
-<script src="hub-front.js?v=202610262216"></script>
-<script src="hub-sync.js?v=202610262216"></script>
-<script src="hub-notebook.js?v=202610262216"></script>
-<script src="hub-feedback.js?v=202610262216"></script>
+<script src="hub-store.js?v=202610262225"></script>
+<script src="hub-say.js?v=202610262225"></script>
+<script src="hub-shelf.js?v=202610262225"></script>
+<script src="hub-front.js?v=202610262225"></script>
+<script src="hub-sync.js?v=202610262225"></script>
+<script src="hub-notebook.js?v=202610262225"></script>
+<script src="hub-feedback.js?v=202610262225"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -1720,7 +1722,32 @@ if (fbBack){
     card.setAttribute('aria-disabled', 'true');
     const st = card.querySelector('.st');
     if (st) { st.className = 'st'; st.textContent = line2; }
+    /* A CARD THAT IS NOT OPEN SAYS SO WHEN IT IS PRESSED (Ramy, 26 Oct 2026: "when they click, the card should tell them
+       something"). The line on the card names what opens it; pressing it says so in a sentence and says there is
+       nothing to do, then goes quiet again. Nothing is opened, nothing is sent. */
+    card.setAttribute('role', 'button'); card.setAttribute('tabindex', '0');
   }
+  /* one listener for every card that is not open, so a redraw of the cards cannot lose it */
+  function sayNotOpen(e, card){
+    if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    let n = card.querySelector('.still-note');
+    if (n) { n.remove(); return; }
+    const line = String((card.querySelector('.st') || {}).textContent || '').trim();
+    n = document.createElement('p'); n.className = 'still-note'; n.setAttribute('role', 'status');
+    n.textContent = 'Not open yet. ' + (line ? line.replace(/\.?$/, '.') + ' ' : '') + 'Nothing to do until then.';
+    card.appendChild(n); setTimeout(function(){ if (n.parentNode) n.remove(); }, 6000);
+  }
+  /* once only: this part of the page can run more than once, and two listeners would open the note and close it again */
+  window.__stillSay = function(e){ const c = e.target.closest && e.target.closest('.room.still'); if (c) sayNotOpen(e, c); };
+  if (!window.__stillBound) { window.__stillBound = true; ['click', 'keydown'].forEach(function(t){ document.addEventListener(t, function(e){ window.__stillSay(e); }); }); }
+  /* The first assignment the course holds back and gives a date to: the card names it. */
+  function nextAssignmentOpens(){
+    const w = rec('connect_assignment_wording_v2') || {}; let best = '';
+    hubAssignmentOrder(w).forEach(function(k){ const x = w[k]; if (x && x.released === false && x.releaseFrom && (!best || x.releaseFrom < best)) best = x.releaseFrom; });
+    return best ? shortDay(String(best).slice(0, 10)) : '';
+  }
+  const ASG_STILL = function(){ const d = nextAssignmentOpens(); return d ? 'Opens on ' + d + ', when your tutor gives the first assignment' : 'Opens when your tutor sets the first assignment'; };
   const SUBS = rec('connect_assignment_submissions_v1') || {};
   /* Once the course has ended nothing is still: a card saying "opens after you
      turn in your first lesson plan" on a course that is over is a promise
@@ -1737,7 +1764,7 @@ if (fbBack){
     still('roomSelf', matOnly(1) ? 'Opens after you have sent your first material to your tutor' : 'Opens after you have turned in your first lesson plan');
     still('roomFeedback', 'Opens when your tutor returns your first teaching practice');
     still('roomObs', 'Opens' + startsOn + ' — the observations are on your timetable');
-    still('roomAssign', 'Opens when your tutor sets the first assignment');
+    still('roomAssign', ASG_STILL());
     still('roomProgress', 'Opens when your first teaching practice comes back');
     /* The booklet opens on day one with the two confirmations, so it waits
        with the rest rather than inviting a signature a week early (Ramy,
@@ -1747,7 +1774,7 @@ if (fbBack){
   } else {
     if (!everPlanned) still('roomSelf', matOnly(1) ? 'Opens after you have sent your first material to your tutor' : 'Opens after you have turned in your first lesson plan');
     if (!everBack)    still('roomFeedback', 'Opens when your tutor returns your first teaching practice');
-    if (!ASG.total)   still('roomAssign', 'Opens when your tutor sets the first assignment');
+    if (!ASG.total)   still('roomAssign', ASG_STILL());
     if (!everBack && !everMarked) still('roomProgress', 'Opens when your first teaching practice or assignment comes back');
   }
 })();
