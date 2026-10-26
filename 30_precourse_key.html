@@ -24,7 +24,7 @@
 <title>Pre-course task</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610262116">
+<link rel="stylesheet" href="hub-tokens.css?v=202610262124">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -67,6 +67,27 @@
   .pt-table th, .pt-table td{border:1px solid var(--sand-line); padding:6px 8px; text-align:left; vertical-align:top;}
   .pt-table th{font-size:.76rem; letter-spacing:.06em; text-transform:uppercase; color:var(--grey);}
   .pt-table input{width:100%; font:inherit; font-size:.88rem; border:0; background:transparent; padding:2px;}
+  /* one section at a time, and the four parts of a task named (26 Oct 2026) */
+  .secnav{display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:8px; margin:18px 0 6px;}
+  .secbtn{display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left; font:inherit; padding:10px 12px; border-radius:10px; border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink); cursor:pointer;}
+  .secbtn .sn{font-family:'Newsreader',Georgia,serif; font-size:1.1rem; font-weight:700; color:var(--grey);}
+  .secbtn .st{font-size:0.78rem; font-weight:600; line-height:1.3;}
+  .secbtn .sw{font-size:0.7rem; color:var(--grey);}
+  .secbtn.on{border-color:var(--a-forest, var(--teal)); background:color-mix(in oklch, var(--a-forest, var(--teal)) 6%, var(--paper));}
+  .secbtn.on .sn{color:var(--a-forest, var(--teal));}
+  .sec-eye{margin:0; font-size:0.72rem; letter-spacing:.1em; text-transform:uppercase; color:var(--grey);}
+  .task h3 .tn{display:none;}
+  .pt-lab{display:block; margin:0 0 2px; font-size:0.7rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--a-forest, var(--teal));}
+  .pt-lab.key{color:var(--a-red, var(--brick));}   /* the key in the checking pen, oxblood: Lite's gold is forest, like Your answer */
+  .pt-key .a{border-left-color:var(--a-red, var(--brick));}
+  .pt-yours{margin:14px 0 0; padding:2px 0 2px 12px; border-left:3px solid var(--a-forest, var(--teal));}
+  .pt-key{margin:16px 0 0;}
+  .pt-key .a, .pt-key .a-wait{margin-top:4px;}
+  .secfoot{display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; margin:22px 0 0;}
+  .secfoot .done-note{font-size:0.86rem; color:var(--grey); align-self:center;}
+  /* on a phone the strip is five numbers in a row; the open section's name is the heading under it */
+  @media (max-width:700px){ .secbtn{align-items:center; padding:8px 4px;} .secbtn .st, .secbtn .sw{display:none;} .secbtn .sn{font-size:1.2rem;} }
+  @media print{ .secnav, .secfoot{display:none !important;} .sec[hidden]{display:block !important;} .sec-eye{display:none;} }
   .a-wait{margin:10px 0 0; padding:10px 14px; border-left:3px solid var(--sand-line); background:var(--field); font-size:.88rem; color:var(--grey);}
   @media (max-width:560px){ .pt-row, .pt-row:has(select){grid-template-columns:minmax(0,1fr);} .pt-table{display:block; overflow-x:auto;} }
   @media print{ .pt-read{background:none;} .pt-in, .pt-table input, .pt-row select{border:1px solid #999; background:none;} .a-wait{display:none;} }
@@ -92,19 +113,19 @@
   @media(prefers-reduced-motion:reduce){ .pk .task .a, .pk-show, .pk-bar i{transition:none;} }
   @media print{ .pk .task.pk-cov .a{display:none;} .pk-show, .pk-count{display:none;} .pk .task.pk-seen h3::after{content:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610262116">
+<link rel="stylesheet" href="hub-house.css?v=202610262124">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610262116"></script>
-<script src="hub-store.js?v=202610262116"></script>
-<script src="hub-say.js?v=202610262116"></script>
-<script src="hub-sync.js?v=202610262116"></script>
-<script src="hub-notebook.js?v=202610262116"></script>
-<script src="precourse-key.js?v=202610262116"></script>
+<script src="hub-shared.js?v=202610262124"></script>
+<script src="hub-store.js?v=202610262124"></script>
+<script src="hub-say.js?v=202610262124"></script>
+<script src="hub-sync.js?v=202610262124"></script>
+<script src="hub-notebook.js?v=202610262124"></script>
+<script src="precourse-key.js?v=202610262124"></script>
 <script src="precourse-task.js?v=202610261907"></script>
 <script type="text/x-hub-app">
 /* A volunteer student is not on the course and has no pre-course task. */
@@ -172,14 +193,38 @@ function render(){
   const head = `<div class="title"><h1>Pre-course task</h1>
     <p>${esc(cs.centreName || 'Your centre')}${cs.courseName ? ' &middot; ' + esc(cs.courseName) : ''} &mdash; Cambridge’s pre-course task: ${n} tasks in ${KEY.length} sections, about four hours. Write your answers here or on paper. What you write stays in this browser and is never sent anywhere.</p>
     ${waiting ? `<p><b>The answers open on ${esc(longDate(opens))}</b>, the last working day before the course starts${cs.start ? ' on ' + esc(longDate(cs.start)) : ''}. Try the tasks first; the answers are more use once you have.</p>` : ''}</div>`;
+  /* ONE SECTION AT A TIME (Ramy, 26 Oct 2026: "it's just like a one very long sheet"). A strip names the five sections
+     and how far they have got in each; Back and Next walk them. Inside a task, four parts in one order, each labeled:
+     Read first, the question, Your answer (a forest rule), The answer (Cambridge's, a gold rule). Print still has it all. */
+  if (SEC >= KEY.length) SEC = 0;
+  const strip = `<nav class="secnav" aria-label="Sections">${KEY.map((s, si) => { const w = s.items.filter(t => started(t.n)).length;
+      return `<button type="button" class="secbtn${si === SEC ? ' on' : ''}" data-sec="${si}"${si === SEC ? ' aria-current="true"' : ''}><span class="sn">${si + 1}</span><span class="st">${esc(s.title)}</span><span class="sw" data-sw="${si}">${w ? w + ' of ' + s.items.length + ' started' : s.items.length + ' tasks'}</span></button>`; }).join('')}</nav>`;
   const body = KEY.map((s, si) => { const meta = (TASK.sections || [])[si] || {};
-    return `<div class="sec"><h2>${esc(s.title)}</h2><p class="count">${s.items.length} task${s.items.length === 1 ? '' : 's'}</p>${meta.intro ? `<details class="pt-read"><summary>About this section</summary>${reading(meta.intro)}</details>` : ''}
+    return `<div class="sec" data-secbox="${si}"${si === SEC ? '' : ' hidden'}><p class="sec-eye">Section ${si + 1} of ${KEY.length}</p><h2>${esc(s.title)}</h2><p class="count">${s.items.length} task${s.items.length === 1 ? '' : 's'}</p>${meta.intro ? `<details class="pt-read"><summary>About this section</summary>${reading(meta.intro)}</details>` : ''}
     ${s.items.map(t => { const it = (TASK.items || {})[t.n] || {};
       const ans = waiting ? `<div class="a-wait">The answer opens on ${esc(longDate(opens))}.</div>`
         : t.answer ? `<div class="a">${esc(t.answer)}</div>` : '<div class="a none">Your own answer. The booklet gives no key for this one.</div>';
-      return `<div class="task" id="task-${t.n}"><h3>Task ${t.n}</h3>${it.lead ? `<details class="pt-read" open><summary>Read first</summary>${reading(it.lead)}</details>` : ''}${(q => q ? `<p class="q">${esc(q)}</p>` : '')(ask(t.prompt, it.shape))}${inputs(t.n, it.shape)}${ans}</div>`; }).join('')}</div>`; }).join('');
-  $('app').innerHTML = head + `<div class="tools"><button class="btn" type="button" onclick="window.print()">Print / Save as PDF</button></div>` + body;
+      return `<div class="task" id="task-${t.n}"><h3><span class="tn">${t.n}</span>Task ${t.n}</h3>${it.lead ? `<details class="pt-read" open><summary>Read first</summary>${reading(it.lead)}</details>` : ''}${(q => q ? `<p class="q">${esc(q)}</p>` : '')(ask(t.prompt, it.shape))}
+        <div class="pt-yours"><span class="pt-lab">Your answer</span>${inputs(t.n, it.shape)}</div>
+        <div class="pt-key"><span class="pt-lab key">The answer</span>${ans}</div></div>`; }).join('')}
+    <div class="secfoot">${si > 0 ? `<button type="button" class="btn" data-sec="${si - 1}">Back: ${esc(KEY[si - 1].title)}</button>` : '<span></span>'}${si < KEY.length - 1 ? `<button type="button" class="btn next" data-sec="${si + 1}">Next: ${esc(KEY[si + 1].title)}</button>` : '<span class="done-note">That is the whole task.</span>'}</div></div>`; }).join('');
+  $('app').innerHTML = head + `<div class="tools"><button class="btn" type="button" onclick="window.print()">Print / Save as PDF</button></div>` + strip + body;
 }
+/* which section is open: the address keeps it, so Back from a reading returns to the same place */
+let SEC = (function(){ const m = String(location.hash || '').match(/^#s(\d+)$/); return m ? +m[1] - 1 : 0; })();
+function started(n){ return Object.keys(ANS).some(k => (k === String(n) || k.indexOf(n + '.') === 0) && ANS[k] !== '' && ANS[k] !== false && ANS[k] != null); }
+function showSec(i){
+  SEC = i;
+  document.querySelectorAll('[data-secbox]').forEach(b => { b.hidden = +b.dataset.secbox !== i; });
+  document.querySelectorAll('.secbtn').forEach(b => { const on = +b.dataset.sec === i; b.classList.toggle('on', on); if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); });
+  try { history.replaceState(null, '', '#s' + (i + 1)); } catch (e) {}
+  const nav = document.querySelector('.secnav'); if (nav) window.scrollTo({ top: nav.getBoundingClientRect().top + window.scrollY - 12, behavior: 'smooth' });
+}
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-sec]'); if (!b) return; showSec(+b.dataset.sec); });
+/* the strip's counts follow what is written */
+function paintCounts(){ const KEY = window.CONNECT_HUB_PRECOURSE_KEY || [];
+  document.querySelectorAll('[data-sw]').forEach(el => { const s = KEY[+el.dataset.sw]; if (!s) return; const w = s.items.filter(t => started(t.n)).length; el.textContent = w ? w + ' of ' + s.items.length + ' started' : s.items.length + ' tasks'; }); }
+document.addEventListener('input', () => { clearTimeout(paintCounts._t); paintCounts._t = setTimeout(paintCounts, 400); });
 /* what is written is kept as it is written, in this browser only */
 document.addEventListener('input', e => { const el = e.target.closest && e.target.closest('[data-a]'); if (!el) return; ANS[el.dataset.a] = el.type === 'checkbox' ? el.checked : el.value; saveAns(); });
 document.addEventListener('change', e => { const el = e.target.closest && e.target.closest('[data-a]'); if (!el) return; ANS[el.dataset.a] = el.type === 'checkbox' ? el.checked : el.value; saveAns();

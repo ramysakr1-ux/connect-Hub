@@ -26,7 +26,7 @@
 <title>Getting to know you</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610262116">
+<link rel="stylesheet" href="hub-tokens.css?v=202610262124">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -108,20 +108,20 @@
   .iv-tutor td, .iv-tutor th{text-align:left; padding:6px 10px 6px 0; font-size:.88rem; vertical-align:top;}
   @media print{ .gk .act{animation:none;} .gk.gk-picked .act:not(.chosen) ol{display:block;} .gk-peek{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610262116">
+<link rel="stylesheet" href="hub-house.css?v=202610262124">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610262116"></script>
-<script src="hub-store.js?v=202610262116"></script>
-<script src="hub-say.js?v=202610262116"></script>
-<script src="hub-sync.js?v=202610262116"></script>
-<script src="hub-notebook.js?v=202610262116"></script>
-<script src="gtky-bank.js?v=202610262116"></script>
-<script src="fol-interview.js?v=202610262116"></script>
+<script src="hub-shared.js?v=202610262124"></script>
+<script src="hub-store.js?v=202610262124"></script>
+<script src="hub-say.js?v=202610262124"></script>
+<script src="hub-sync.js?v=202610262124"></script>
+<script src="hub-notebook.js?v=202610262124"></script>
+<script src="gtky-bank.js?v=202610262124"></script>
+<script src="fol-interview.js?v=202610262124"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -216,7 +216,12 @@ async function pickIt(slug){
   try {
     const body = { op: 'shareMaterial', name: a.name + SEP + MY_NAME, url: location.href.split('#')[0] + '#' + a.slug, by: MY_NAME, tp: '', kind: 'gtky' };
     if (HubStore.token && HubStore.token()) body.token = HubStore.token();
-    const r = await HubStore.call(body); write(r.shared || []); note = 'Picked. Your tutor sees it on the shelf.';
+    const r = await HubStore.call(body);
+    /* A demo saves nothing at the store and answers { demo: true } with no list, so the pick is kept on this device
+       instead -- it used to clear the list and say "Picked" over "You have not picked yet" (Ramy, 26 Oct 2026). */
+    if (r && r.demo) write(shared().filter(x => !String(x.name || '').endsWith(SEP + MY_NAME)).concat([{ id: 'demo-' + Date.now(), name: body.name, url: body.url, by: MY_NAME, tp: '', kind: 'gtky', at: new Date().toISOString() }]).concat((rec('connect_shared_v1') || []).filter(x => (x.kind || '') !== 'gtky')));
+    else write(r.shared || []);
+    note = 'Picked. Your tutor sees it on the shelf.';
   } catch (err) { note = 'Not picked — ' + (err && err.message || err); }
   busy = false; render(); setTimeout(() => { note = ''; render(); }, 3000);
 }
@@ -226,7 +231,10 @@ async function unpick(id){
   try {
     const body = { op: 'unshareMaterial', id: id };
     if (HubStore.token && HubStore.token()) body.token = HubStore.token();
-    const r = await HubStore.call(body); write(r.shared || []); note = 'Taken back. Pick again.';
+    const r = await HubStore.call(body);
+    if (r && r.demo) write((rec('connect_shared_v1') || []).filter(x => x && x.id !== id));
+    else write(r.shared || []);
+    note = 'Taken back. Pick again.';
   } catch (err) { note = 'Not taken back — ' + (err && err.message || err); }
   busy = false; render(); setTimeout(() => { note = ''; render(); }, 2600);
 }

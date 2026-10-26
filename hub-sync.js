@@ -635,6 +635,12 @@
        handouts, not anybody's private data -- and it is written through the
        store's shareMaterial op, never put whole. */
     out['connect_shared_v1'] = course.shared ? JSON.stringify(course.shared) : null;
+    /* A demo saves nothing at the store, so what this visitor picked or shared lives only here (rows marked demo-…):
+       keep them across the visit's page loads instead of letting the store's list replace them (26 Oct 2026). */
+    if (DEMO && sameOwner) { try {
+      var mineDemo = (parse(current('connect_shared_v1')) || []).filter(function(x){ return x && /^demo-/.test(String(x.id || '')); });
+      if (mineDemo.length) out['connect_shared_v1'] = JSON.stringify((course.shared || []).concat(mineDemo));
+    } catch (e) {} }
     /* The Focus on the Learner pool (15 Oct 2026): what trainees heard in their
        student interviews, one list for the course; tutors get who heard it. */
     out['connect_fol_pool_v1'] = course.folpool ? JSON.stringify(course.folpool) : null;
