@@ -14,6 +14,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="../library.js"></script>
+<script src="../voices.js"></script>
 <link rel="icon" href="../../brand/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../../brand/apple-touch-icon.png">
 <title>Eliciting and CCQs — Connect Lite</title>
@@ -140,7 +141,7 @@
 <div class="card" data-n="4">
 <div class="stage-title">In the classroom: a dialogue the students build <span class="badge">Watch, then name it</span></div>
 <p class="lead">A teacher gets a whole dialogue out of a class without reading them a line of it. Watch once, with the eleven techniques in front of you. Which do you see, and what do the students say that the teacher never said?</p>
-<div class="film sd closed" data-video="https://films.connectlitefilms.com/input-sessions/eliciting-and-ccqs/elicited-dialogue.mp4" data-title="An elicited dialogue"><button type="button" class="btn teal film-btn">Watch the film</button></div>
+<div class="film sd closed" data-video="elicited-dialogue.mp4" data-title="An elicited dialogue"><button type="button" class="btn teal film-btn">Watch the film</button></div>
 <p class="lead" style="margin-top:12px"><b>Write as you watch.</b> The techniques you spotted, in order, and the moment you would have given up and told them.</p>
 <textarea class="write-area" rows="4" aria-label="What you saw" placeholder="The techniques, in order, and the moment you would have told them"></textarea>
 <details class="reveal">
@@ -415,14 +416,31 @@ tableItems.forEach(item=>{
 });
 
 // ---------- 6. Practice words ----------
-const words = ['intelligent','hard working','diligent','clever','funny','has a good sense of humour','laugh','forget','self-centred','cool','happy','kind'];
+/* each word carries one way to elicit it and a CCQ, behind Reveal answer (Ramy, 26 Oct 2026: "click to
+   reveal answer for anything that is not already answered in the activity"); one way among several */
+const words = [
+  ['intelligent','<b>Definitions:</b> “She understands difficult ideas quickly and learns fast. She’s very…”','Does an intelligent person understand things quickly? (Yes.) Is it about being kind or about using your mind? (Your mind.)'],
+  ['hard working','<b>An anecdote:</b> a friend who starts work at seven, stays late and never stops. “She’s very…”','Does a hard-working person do a lot of work? (Yes.) Are they lazy? (No.)'],
+  ['diligent','<b>Antonyms / Synonyms:</b> “A more formal word for a hard-working, careful student.”','Does a diligent student do their work carefully? (Yes.) Do they do it fast and badly? (No.) Is it formal or informal? (Fairly formal.)'],
+  ['clever','<b>Drawing pictures:</b> a child solving a puzzle the adults can’t, with a light bulb over her head.','Is clever a good thing? (Usually, yes.) Is it about the body or the mind? (The mind.) Is it more or less formal than intelligent? (Less.)'],
+  ['funny','<b>Acting out — gestures &amp; mime:</b> tell a joke, then laugh. “My friend tells jokes all the time. He’s really…”','Does a funny person make you laugh? (Yes.)'],
+  ['has a good sense of humour','<b>Unfinished sentences:</b> “She doesn’t tell many jokes, but she loves them and laughs a lot. She has a good…”','Does she enjoy jokes and funny things? (Yes.) Does she have to tell jokes herself? (No, not necessarily.)'],
+  ['laugh','<b>Acting out — gestures &amp; mime:</b> laugh out loud at something on your phone.','Do you make a sound when you laugh? (Yes.) Is it because something is funny or sad? (Funny.)'],
+  ['forget','<b>Gap-fill exercises:</b> “I got to class and realised I’d ___ my homework at home. I didn’t remember it.”','Did I remember my homework? (No.) Was it in my head at that moment? (No.)'],
+  ['self-centred','<b>An anecdote:</b> a dinner where one guest talked only about himself all evening and asked nobody a question.','Does he think much about other people? (No, not much.) Is it a positive or a negative word? (Negative.)'],
+  ['cool','<b>Use visuals:</b> a photo of someone in sunglasses and a smart jacket. “Do you like his style? He looks…”','Is cool about the temperature here? (No.) Is it positive or negative? (Positive.) Would you write it in a job application? (No, it’s informal.)'],
+  ['happy','<b>Use visuals:</b> a photo of a smiling child with a birthday cake.','Does she feel good or bad? (Good.)'],
+  ['kind','<b>An anecdote:</b> a stranger who carried an old woman’s shopping up three flights of stairs.','Does a kind person help other people? (Yes.) Is it about being clever or being nice to people? (Being nice.)']
+];
 const wordArea = document.getElementById('wordArea');
-words.forEach((w,i)=>{
+words.forEach(([w,how,ccq],i)=>{
   const pairIdx = Math.floor(i/2);
   const d = document.createElement('div'); d.className='word-card';
   d.innerHTML = '<div class="wname">'+w+' <span class="pair-tag">Pair '+(pairIdx+1)+'</span></div>'+
     '<label>How would you elicit it?</label><textarea class="write-area" rows="2" placeholder="Which technique, and what would you say/do?"></textarea>'+
-    '<label>Your CCQ</label><textarea class="write-area" rows="1" placeholder="Write one CCQ..."></textarea>';
+    '<label>Your CCQ</label><textarea class="write-area" rows="1" placeholder="Write one CCQ..."></textarea>'+
+    '<div class="btn-row"><button class="btn secondary" onclick="revealRow(this)">Reveal answer</button></div>'+
+    '<div class="reveal-card" style="cursor:default;margin-top:8px;"><div class="a"><b>One way to elicit it.</b> '+how+'<br><b>CCQs:</b> '+ccq+'</div></div>';
   wordArea.appendChild(d);
 });
 
@@ -447,7 +465,7 @@ document.addEventListener('scroll',onScroll); onScroll();
     if (!d || d.event !== 'infoDelivery' || !d.info) return;
     var t = d.info.currentTime, st = d.info.playerState;
     if ((open.end && t != null && t >= open.end) || st === 0) { open.close(); return; }
-    /* data-skip="10-89": a stretch of the film the session does not need
+    /* data-skip="26.5-89": a stretch of the film the session does not need
        (Ramy, 20 Oct 2026: the Hamlet sketch's first conversation). The
        player jumps past it; nothing is cut from the film itself. */
     if (open.skip && t != null && t >= open.skip[0] && t < open.skip[1]) {
@@ -461,7 +479,7 @@ document.addEventListener('scroll',onScroll); onScroll();
     function close(){ var v = f.querySelector('video'); if (v) { try { v.pause(); } catch (x) {} } f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
     btn.addEventListener('click', function(){
       f.classList.remove('closed'); f.innerHTML = '';
-      var v = document.createElement('video'); v.crossOrigin = 'anonymous'; v.src = f.dataset.video; v.controls = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'metadata'; v.title = f.dataset.title || 'Film';
+      var v = document.createElement('video'); v.src = f.dataset.video; v.controls = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'metadata'; v.title = f.dataset.title || 'Film';
       v.addEventListener('ended', close); f.appendChild(v);
       var acts = document.createElement('p'); acts.className = 'film-acts';
       var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = hide; c.addEventListener('click', close);
