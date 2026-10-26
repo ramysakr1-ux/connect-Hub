@@ -606,8 +606,6 @@ ALIAS['lesson-framework'] = [
     ("""<div class="cb-grid" id="cbGrid"></div>""", '<div id="spread"></div>'),
     ("Pull up each page from your own copy of the coursebook using the reference on the card. As a group, decide: how many separate 45-minute lessons could you build from this page, and which framework would each one use? Tap the card to compare against a suggested breakdown.",
      "A coursebook page usually holds more than one lesson. Here is one page, with everything on it printed: in pairs, put each activity into the lesson it belongs to, then name each lesson's shape. Nothing here needs a book."),
-    ("The coursebook pages in part 10 are Speakout; have the book in the room.", "Part 10 is one made-up page with all eight of its activities printed on it; no book is needed."),
-    ("Part 10 only if time: with the book open, how many 45-minute lessons from this page, which framework each.", "Part 10 only if time: eight activities from one page into three lessons, then the shape of each. The key is under each answer."),
     (r"re:const cbItems = \[.*?\n\];\s*const cbGrid = document\.getElementById\('cbGrid'\);\s*cbItems\.forEach\(\(item, i\) => \{.*?cbGrid\.appendChild\(card\);\s*\}\);",
      '''const SPREAD = [
   { n: 'Ex 1', t: 'Read the blog “A Week of Leftovers” (about 150 words) and answer two questions for gist.', lesson: 0, why: 'A reading first, then the language comes out of it: this is the opening of the grammar lesson.' },

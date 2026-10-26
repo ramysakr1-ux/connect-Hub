@@ -13,7 +13,10 @@ def T(rows, mins=False):
     """The running table: (minutes, stage, what you do). Ramy, 14 Oct 2026: the
     minutes stay only where the page itself gives them; a session whose page
     carries no times gets the stages and what to do, and no invented clock."""
-    mins = False   # Ramy, 15 Oct 2026: no lengths anywhere in the library
+    # Ramy, 15 Oct 2026: no lengths on the trainees' pages (strip_lengths in _house.py
+    # sees to that). Ramy, 26 Oct 2026: time every session part by part, for the tutor:
+    # the trainer notes carry the minutes, and only tutors open them.
+    mins = True
     if not mins:
         return '<table class="tn-time"><tr><th>Stage</th><th>What you do</th></tr>' + ''.join(
             '<tr><td>%s</td><td>%s</td></tr>' % (r[1], r[2]) for r in rows) + '</table>'
@@ -278,11 +281,11 @@ NOTES['teaching-writing'] = '''
 
 NOTES['lesson-framework'] = '''
 <h4>Before</h4>
-<p>Ten parts, sixty minutes; parts 7 to 10 are optional and the page says which to drop. The coursebook pages in part 10 are Speakout; have the book in the room. Nothing to print.</p>
+<p>Ten parts, about seventy-five minutes; parts 7 to 9 can go if time is short. Part 10 is one made-up page with all eight of its activities printed on it; no book is needed. Nothing to print.</p>
 <h4>Running it</h4>
 ''' + T(mins=False, rows=[
     (5, 'The decision tree', 'Walk it from the top with one lesson they have taught this week. Language or skills, text or no text.'),
-    (8, 'The six shapes', 'Read the six cards aloud fast; this is reference, not teaching. Ask which they have taught and which they have not.'),
+    (12, 'The six shapes', 'Pairs write the stages of each shape before anything is revealed; then reveal and compare. Ask which they have taught and which they have not.'),
     (7, 'Card sort', 'Six stages, six shapes, pairs on screen.'),
     (8, 'Quiz', 'Eight cards, flip and answer, whole class. Number 4 (underlining is not practice) is the one to stop on.'),
     (8, 'Scenarios', 'Six mini lessons; name the framework. The key is below.'),
@@ -290,7 +293,7 @@ NOTES['lesson-framework'] = '''
     (6, 'The flaw', 'Two plans; what is structurally wrong. Read the fix aloud.'),
     (5, 'Pacing', 'Budget 45 minutes across three stages; the page checks the total. Then the question: which stage do you trim? (Practice, not clarification.)'),
     (7, 'Sequence', 'Pick a framework, order the stages, check. Four frameworks; two is enough.'),
-    (0, 'Coursebook', 'Part 10 only if time: with the book open, how many 45-minute lessons from this page, which framework each.'),
+    (10, 'One page, three lessons', 'Eight activities from one printed page, put into three lessons in pairs, then the shape of each named. Check, and ask where they would cut.'),
 ]) + '''
 <h4>The key</h4>
 <p>On the page for every task. The scenarios: TTT; text-based; language practice; productive skills; PPP; receptive skills. Meaning or form: gap-fill, sentence jumble and spot the mistake are form only; grammaring and transformation are meaning and form; contrastive analysis is meaning only. Pacing target: 10 to 12, 15, 15 to 18.</p>
@@ -424,6 +427,8 @@ NOTES['writing-the-lesson-plan'] = '''
     (12, 'Procedure', 'Same again. The one to stop on: a procedure a colleague could not teach from.'),
     (6, 'Interaction patterns', 'Match each description to the pattern. Ind, PW, GW, T-S, S-S, OC, OCFB.'),
     (10, 'Anticipated problems', 'Lesson plan or language analysis sheet. The rule is on the page: management, tasks, materials, technology and timing on the plan; meaning, form and pronunciation on the sheet.'),
+    (12, 'Fix this plan', 'Pairs find the six problems and rewrite each line. Take one fix per pair before the reveal.'),
+    (15, 'Your turn', 'Pairs plan the lead-in and the gist task from the made-up page, then swap with another pair and check against the four decisions.'),
     (5, 'Recap', 'Read the four boxes aloud; they are the checklist for their next plan.'),
 ]) + '''
 <h4>The key</h4>

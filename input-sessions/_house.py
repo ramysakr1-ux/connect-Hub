@@ -2106,7 +2106,7 @@ def hand(slug):
     page = page.replace('\n  <footer class="hub-brand-foot">', notes_block(slug) + '\n\n  <footer class="hub-brand-foot">', 1)
     if 'class="tn-link"' not in page:
         page = page.replace('    <button class="print-btn"', '    <a href="#trainer" class="tn-link" hidden>Trainer notes</a>\n    <button class="print-btn"', 1)
-    page = re.sub(r"\n<script src=\"\.\./\.\./hub-store\.js\"></script>\n<script>\n\(function\(\)\{\n(?:  if \(window\.InputLib\) InputLib\.gate\(\);\n)?  if \(!window\.HubStore.*?</script>", '', page, count=1, flags=re.S)
+    page = re.sub(r"\n<script src=\"\.\./\.\./hub-store\.js\"></script>\n(?:<script src=\"\.\./\.\./hub-notebook\.js\"></script>\n)?<script>\n\(function\(\)\{\n(?:  if \(window\.InputLib\) InputLib\.gate\(\);\n)?  if \(!window\.HubStore.*?</script>", '', page, count=1, flags=re.S)
     if 'class="gating"' not in page:
         page = page.replace('<html lang="en">', '<html lang="en" class="gating">', 1)
     if '../library.js' not in page:
