@@ -41,7 +41,7 @@
 <title>Connect Lite — CELTA 5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610262316">
+<link rel="stylesheet" href="hub-tokens.css?v=202610262322">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:980px; margin:0 auto; padding:26px 20px 80px;}
@@ -213,7 +213,7 @@
   @media(prefers-reduced-motion:reduce){ .c5r i{transition:none;} .c5r li.attn.first i, section.part:target{animation:none;} }
   @media print{ .c5r{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610262316">
+<link rel="stylesheet" href="hub-house.css?v=202610262322">
 </head>
 <body class="hub-celta5 hub-paper hub-course">
 <div class="board">
@@ -226,20 +226,20 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202610262316"></script>
-<script src="hub-hand.js?v=202610262316"></script>
-<script src="hub-ink.js?v=202610262316"></script>
-<script src="assignment-defaults.js?v=202610262316"></script>
-<script src="celta5-text.js?v=202610262316"></script>
-<script src="celta5-appendix.js?v=202610262316"></script>
-<script src="celta5-criteria.js?v=202610262316"></script>
-<script src="hub-tracker.js?v=202610262316"></script>
-<script src="observation-defaults.js?v=202610262316"></script>
-<script src="hub-shared.js?v=202610262316"></script>
-<script src="hub-store.js?v=202610262316"></script>
-<script src="hub-say.js?v=202610262316"></script>
-<script src="hub-sync.js?v=202610262316"></script>
-<script src="hub-notebook.js?v=202610262316"></script>
+<script src="celta5-pdf.js?v=202610262322"></script>
+<script src="hub-hand.js?v=202610262322"></script>
+<script src="hub-ink.js?v=202610262322"></script>
+<script src="assignment-defaults.js?v=202610262322"></script>
+<script src="celta5-text.js?v=202610262322"></script>
+<script src="celta5-appendix.js?v=202610262322"></script>
+<script src="celta5-criteria.js?v=202610262322"></script>
+<script src="hub-tracker.js?v=202610262322"></script>
+<script src="observation-defaults.js?v=202610262322"></script>
+<script src="hub-shared.js?v=202610262322"></script>
+<script src="hub-store.js?v=202610262322"></script>
+<script src="hub-say.js?v=202610262322"></script>
+<script src="hub-sync.js?v=202610262322"></script>
+<script src="hub-notebook.js?v=202610262322"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -294,9 +294,59 @@ const pill = (t, cls) => `<span class="st ${cls||''}">${t}</span>`;
 const ASSESSED_HOURS = 6;
 function standardHours(which) {
   const tps = Math.max(2, parseInt(SETTINGS.tpCount, 10) || 8);
-  const done = which === 's1' ? 2 : which === 's3' ? tps : Math.round(tps / 2);
+  /* Stage 1 closes the first third (10.2), the tracker's own band: TP2 of eight, TP3 of nine */
+  const done = which === 's1' ? Math.max(1, Math.floor(tps / 3)) : which === 's3' ? tps : Math.round(tps / 2);
   const h = ASSESSED_HOURS * done / tps;
   return String(Math.round(h * 100) / 100);
+}
+
+/* STAGE 1 FILLS ITSELF IN (Ramy, 26 Oct 2026: "Why wouldn't Lite just
+   pre-fill stage one? ... it will just put down the criteria for action points
+   and strengths, and maybe the tutor will make a comment"). Strengths and the
+   action plan arrive holding the criteria the tutors tagged in the first
+   third's feedback (TP1 and TP2 of eight), each with the lessons it came from;
+   starred action points first, since those were carried into the next plan.
+   A point with no criterion tagged keeps the tutor's own words. Not canned
+   text: it is this trainee's own record. It waits until every lesson in the
+   first third has its feedback back, so a box is never filled from half the
+   evidence, and like the hours it is written only when the tutor next saves. */
+function s1Evidence(){
+  const T = window.HubTracker, tr = who && who.tr;
+  if (!T || !tr) return null;
+  const end = T.stageBands(Math.max(2, parseInt(SETTINGS.tpCount, 10) || 8)).s1End;
+  const hist = T.tpHistory(tr), tps = [];
+  for (let n = 1; n <= end; n++) if (hist[n]) tps.push(n);
+  return { end, tps, hist, ready: tps.length === end };
+}
+function s1Prefill(){
+  const ev = s1Evidence(); if (!ev || !ev.ready) return null;
+  const words = {}; CRIT.forEach(c => { words[c[0]] = c[2]; });
+  const take = (ids, keepStar) => {
+    const by = {}, order = [];
+    ev.tps.forEach(n => {
+      const L = (ev.hist[n].state && ev.hist[n].state.lists) || {};
+      ids.forEach(id => (L[id] || []).forEach(it => {
+        const d = document.createElement('div'); d.innerHTML = (it && it.html) || '';
+        const codes = [...d.querySelectorAll('[data-c]')].map(t => t.getAttribute('data-c')).filter(c => words[c]);
+        d.querySelectorAll('[data-c]').forEach(t => t.remove());
+        const own = d.textContent.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+        const keys = codes.length ? codes : (own ? ['=' + own] : []);
+        keys.forEach(k => { if (!by[k]) { by[k] = { tps: [], star: false }; order.push(k); }
+          if (!by[k].tps.includes(n)) by[k].tps.push(n); if (keepStar && it.star) by[k].star = true; });
+      }));
+    });
+    const rank = k => (by[k].star ? 0 : 1);
+    return order.slice().sort((a, b) => rank(a) - rank(b))
+      .map(k => (k.charAt(0) === '=' ? k.slice(1) : k + ' ' + words[k]) + ' (' + by[k].tps.map(n => 'TP' + n).join(', ') + ')').join('\n');
+  };
+  return { strengths: take(['lSP', 'lST'], false), actionPlan: take(['lAP', 'lAT'], true) };
+}
+function s1AidNote(){
+  const ev = s1Evidence(); if (!ev) return '';
+  const last = 'TP' + ev.end;
+  return ev.ready
+    ? `<p class="tut-hint">Strengths and the action plan come from the criteria you tagged in the feedback for ${ev.tps.map(n => 'TP' + n).join(' and ')}. Change anything, and add your own comment.</p>`
+    : `<p class="tut-hint">Strengths and the action plan fill in from the feedback once ${last}'s feedback is returned.</p>`;
 }
 
 const field = (obj, key, label, opts) => {
@@ -305,6 +355,11 @@ const field = (obj, key, label, opts) => {
   if (key === 'hoursTaught' && opts.mine && !opts.locked && !obj[key]) {
     obj[key] = standardHours(opts.o === 's2t' ? 's2' : opts.o);
   }
+  if (opts.o === 's1' && (key === 'strengths' || key === 'actionPlan') && opts.mine && !opts.locked && !obj[key]) {
+    const pre = s1Prefill(); if (pre && pre[key]) obj[key] = pre[key];
+  }
+  /* a Stage 1 nobody has touched is a fresh object here; keep what was filled in */
+  if (opts.o === 's1' && opts.mine && !TT.stage1 && Object.keys(obj).length) TT.stage1 = obj;
   const v = obj[key] || '';
   const mine = opts.mine;
   if (!mine) return `<label class="f">${label}</label><div class="ro ${v ? '' : 'empty'}">${v ? esc(v) : 'Nothing written yet'}</div>`;
@@ -597,6 +652,7 @@ function render(){
         ${field(s1, 'hoursTaught', 'Hours taught so far', { o:'s1', mine: tut, input:'text', locked: !!s1.returnedAt })}
         ${field(s1, 'strengths', 'Strengths', { o:'s1', mine: tut, locked: !!s1.returnedAt })}
         ${field(s1, 'actionPlan', 'Action plan', { o:'s1', mine: tut, locked: !!s1.returnedAt })}
+        ${tut && !s1.returnedAt ? s1AidNote() : ''}
         ${tut ? (s1.returnedAt ? `<div class="bar"><button class="btn quiet" type="button" data-reopen="stage1">Reopen</button><span class="status">Returned by ${esc((s1.signedBy||{}).name||'')}</span></div>` : `<div class="bar"><button class="btn primary" type="button" data-return="stage1">Return to candidate</button><span class="status" id="savedNote"></span></div>`) : ''}
         ${signature(s1, 'signedBy', { o:'s1', mine:false, waiting: 'Not returned yet' })}
       </div>
@@ -851,6 +907,8 @@ const isMineObj = o => /^(wa|conf|c1|s2c|c2|c3|fin)$/.test(o) ? IS_TRAINEE : IS_
 const save = o => (isMineObj(o) && /^(wa|conf|c1|s2c|c2|c3|fin)$/.test(o)) ? saveC() : saveT();
 function bind(){
   const app = $('app');
+  /* Stage 1's boxes open to their whole text, filled in or not */
+  app.querySelectorAll('#s1 textarea').forEach(t => { const fit = () => { t.style.height = 'auto'; t.style.height = (t.scrollHeight + 4) + 'px'; }; fit(); t.addEventListener('input', fit); });
   app.querySelectorAll('[data-o][data-k]').forEach(el => el.addEventListener('input', () => {
     const o = el.dataset.o; if (!isMineObj(o)) return;
     const obj = OBJ[o](); obj[el.dataset.k] = el.type === 'checkbox' ? el.checked : el.type === 'radio' ? el.value : el.value; save(o);
