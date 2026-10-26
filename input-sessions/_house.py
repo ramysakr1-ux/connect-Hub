@@ -1137,8 +1137,8 @@ RECIPES.append(dict(
 RECIPES.append(dict(
     slug='lesson-framework',
     sources="""The six shapes and the decision tree follow the International House CELTA lesson shapes; the MFPA table is the course's own.""", src='lesson-framework/index.html', root='board', number_sections=True,
-    title='Lesson frameworks: finding your shape', sub='Which shape fits which lesson. A decision tree, the six shapes, then nine ways to test yourself on them: sorting, a quiz, scenarios, meaning or form, flawed plans, pacing, sequencing, and a coursebook page.',
-    nav=[('s1', '1 · Decision tree'), ('s2', '2 · Six shapes'), ('s3', '3 · Card sort'), ('s4', '4 · Quiz'), ('s5', '5 · Scenarios'), ('s6', '6 · Meaning or form'), ('s7', '7 · The flaw'), ('s8', '8 · Pacing'), ('s9', '9 · Sequence'), ('s10', '10 · Coursebook')],
+    title='Lesson frameworks: finding your shape', sub='Which shape fits which lesson. A decision tree, the six shapes, then nine ways to test yourself on them: sorting, a quiz, scenarios, meaning or form, flawed plans, pacing, sequencing, and one page split into lessons.',
+    nav=[('s1', '1 · Decision tree'), ('s2', '2 · Six shapes'), ('s3', '3 · Card sort'), ('s4', '4 · Quiz'), ('s5', '5 · Scenarios'), ('s6', '6 · Meaning or form'), ('s7', '7 · The flaw'), ('s8', '8 · Pacing'), ('s9', '9 · Sequence'), ('s10', '10 · One page')],
     css=BOARD_CSS + r"""
   .flow, .sort-wrap{background:var(--surface); border-left:5px solid var(--gold); border-radius:var(--r-control); padding:18px 20px 20px; margin:0 0 14px;}
   @media(max-width:560px){ .flow, .sort-wrap{padding:14px 14px 16px;} }
@@ -1221,7 +1221,23 @@ RECIPES.append(dict(
   .cb-flip-back{border-color:var(--teal); transform:rotateY(180deg); overflow-y:auto; font-size:.78rem; line-height:1.5; justify-content:flex-start;}
   .cb-flip-back strong{display:block; margin-bottom:4px; color:var(--teal);}
   .cb-flip-back.cb-dense{font-size:.7rem; line-height:1.4; padding:12px 14px;}
-  @media print{ .quiz-grid .flip-card{height:auto;} .flip-inner{transform:none !important;} .quiz-grid .flip-back, .cb-flip-back{display:none !important;} .quiz-grid .flip-face, .cb-flip-face{position:static; transform:none;} .cb-flip-card{height:auto;} }
+  /* part 10: one page, three lessons (26 Oct 2026) */
+  .sp-page{background:var(--paper); border:1.5px solid var(--sand-line); border-radius:var(--r-strip); padding:12px 16px;}
+  .sp-head{margin:0; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.15rem;}
+  .sp-sub{margin:2px 0 0; font-size:.82rem; color:var(--grey);}
+  .sp-row{background:var(--paper); border:1.5px solid var(--sand-line); border-radius:var(--r-strip); padding:11px 14px; margin:0 0 8px;}
+  .sp-t{margin:0 0 8px; font-size:.92rem; line-height:1.5;}
+  .sp-opts{display:flex; gap:8px; flex-wrap:wrap;}
+  .sp-opt{font-family:'Karla',sans-serif; font-size:.84rem; padding:8px 12px; border-radius:var(--r-control); border:1.5px solid var(--sand-line); background:var(--field); color:var(--ink); cursor:pointer; text-align:left;}
+  .sp-opt:hover{border-color:var(--gold);}
+  .sp-opt.good{border-color:var(--teal); background:color-mix(in oklab, var(--teal) 8%, var(--field)); font-weight:600;}
+  .sp-opt.bad{border-color:color-mix(in oklab, var(--brick) 40%, transparent); background:color-mix(in oklab, var(--brick) 6%, var(--field));}
+  .sp-opt.dim{opacity:.6;}
+  .sp-why{display:none; margin:9px 0 0; padding-top:8px; border-top:1px solid var(--row-line); font-size:.86rem; line-height:1.55; color:var(--grey);}
+  .sp-row.done .sp-why{display:block;}
+  .sp-res{font-weight:700; color:var(--ink);}
+  .sp-score{margin:8px 0 0; font-weight:600; font-size:.92rem;}
+  @media print{ .quiz-grid .flip-card{height:auto;} .flip-inner{transform:none !important;} .quiz-grid .flip-back, .cb-flip-back, .sp-why{display:none !important;} .quiz-grid .flip-face, .cb-flip-face{position:static; transform:none;} .cb-flip-card{height:auto;} }
 """,
     drop=[r'\s*<div class="header-pin-wrap">.*?</h1>\s*</div>\s*</div>'],
     body=[

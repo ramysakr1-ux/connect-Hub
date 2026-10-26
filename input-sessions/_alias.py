@@ -595,52 +595,49 @@ ALIAS['drama-in-the-elt-classroom'] = [
 ALIAS['lesson-framework'] = [
     # the sources line first
     ("The six shapes and the decision tree follow the International House CELTA lesson shapes; the MFPA table is the course's own.",
-     "The six shapes, the decision tree and the coursebook spreads are made up for this session; they draw on common ways of shaping a language lesson."),
+     "The six shapes, the decision tree and the coursebook page are made up for this session; they draw on common ways of shaping a language lesson."),
     # part 10: made-up coursebook spreads instead of pages from a real book
-    ("10 · Build your own lessons from a coursebook page", "10 · Build lessons from a coursebook spread"),
+    ("10 · Build your own lessons from a coursebook page", "10 · One page, three lessons"),
+    ("""<div class="cb-grid" id="cbGrid"></div>""", '<div id="spread"></div>'),
     ("Pull up each page from your own copy of the coursebook using the reference on the card. As a group, decide: how many separate 45-minute lessons could you build from this page, and which framework would each one use? Tap the card to compare against a suggested breakdown.",
-     "Each card describes one spread from a made-up coursebook. As a group, decide: how many separate 45-minute lessons could you build from this spread, and which framework would each one use? Tap the card to compare against a suggested breakdown."),
-    ("The coursebook pages in part 10 are Speakout; have the book in the room.", "The coursebook spreads in part 10 are made up; no book is needed."),
-    ("Part 10 only if time: with the book open, how many 45-minute lessons from this page, which framework each.", "Part 10 only if time: how many 45-minute lessons from each spread, which framework each."),
-    (r"re:const cbItems = \[.*?\n\];",
-     '''const cbItems = [
-  {
-    page: "Pages 6–7",
-    title: "1.3 What's in the Fridge?",
-    topic: "Vocabulary (food and containers) + Reading + Grammar: some/any, countable and uncountable nouns + Listening + Speaking",
-    answer: "<strong>Suggested: 2–3 lessons</strong>Lesson 1 — Text-Based / Guided Discovery: the reading, 'A Week of Leftovers', is where some/any and countable and uncountable nouns are highlighted and checked, so stage lead-in, reading for gist and detail, TL highlighting, clarification, then controlled practice.<br><br>Lesson 2 — Receptive Skills: the supermarket listening (gist, detail, key words) stands alone well as a listening lesson.<br><br>Lesson 3 — Productive Skills: combine the food and containers vocabulary with the speaking task (planning a dinner for six) into one lesson, noting that this is a skills lesson, not grammar practice through speaking."
-  },
-  {
-    page: "Pages 2–3",
-    title: "1.1 Cities and Neighbours",
-    topic: "Listening + Grammar: present simple be (+/-) + Pronunciation: sentence stress + Vocabulary: places in a city + Speaking",
-    answer: "<strong>Suggested: 2 lessons</strong>Lesson 1 — Text-Based / Guided Discovery: the bus-stop conversation between Tomas and Priya is where present simple 'be' positive and negative is checked and clarified from the transcript, so stage listening for gist and detail into TL highlighting, clarification, and controlled practice (completing Mei's introduction).<br><br>Lesson 2 — Language Practice: focus on the places vocabulary and sentence stress through speaking pair work, as controlled-to-freer practice with the language already clarified."
-  },
-  {
-    page: "Pages 14–15",
-    title: "What's Your Hobby?",
-    topic: "Video interviews + Grammar: like/love/hate + -ing, have/has + Speaking & Writing",
-    answer: "<strong>Suggested: 2–3 lessons</strong>Lesson 1 — Receptive Skills: use the video-watching tasks (numbering speakers, matching hobbies to people) as a listening-for-gist/detail lesson.<br><br>Lesson 2 — PPP: the grammar (like/love/hate + -ing, have/has) is practised through standalone exercises rather than pulled from a text, so this fits a fresh presentation.<br><br>Lesson 3 — Productive Skills: combine the speaking task (a hobby survey) and the writing task (a short profile for a club noticeboard) into one or two lessons depending on your group's needs, noting that this is a skills lesson, not vocabulary or grammar practice through speaking."
-  },
-  {
-    page: "Pages 10–11",
-    title: "Two Weekends",
-    topic: "Vocabulary (free-time activities) + Reading + Grammar: present simple (he/she/it)",
-    answer: "<strong>Suggested: 2 lessons</strong>Lesson 1 — Text-Based / Guided Discovery: the 'Weekend Away' reading text is where the target grammar (present simple, third person) is checked and clarified, so stage it as gist and detail reading into TL highlighting and practice.<br><br>Lesson 2 — Language Practice or Productive Skills: the free-time vocabulary, pronunciation (word stress) and the speaking mime activity work well as a separate lesson, either as language practice or as a speaking lesson."
-  },
-  {
-    page: "Pages 16–17",
-    title: "Moods",
-    topic: "Video interviews + Grammar: although/however + Speaking & Writing",
-    answer: "<strong>Suggested: 2–3 lessons</strong>Lesson 1 — Receptive Skills: the video-watching tasks (matching adjectives, choosing correct meanings) make a solid listening lesson.<br><br>Lesson 2 — Text-Based / Guided Discovery: although and however are drawn directly from what the interviewees say, so this is a listening-text-based grammar lesson.<br><br>Lesson 3 — Productive Skills: split speaking (discussing how a day made you feel) and writing (a short diary entry) into separate lessons, or combine them if the group is strong."
-  },
-  {
-    page: "Pages 22–23",
-    title: "Weather Forecasts & Living Greener",
-    topic: "Grammar: future probability (might, will probably) + Listening + Grammar: quantifiers",
-    answer: "<strong>Suggested: 2 lessons</strong>Lesson 1 — Language Practice or PPP: the future probability language (might, will probably, is sure to) is practised through standalone sentence completion rather than a text, so treat this as controlled-to-freer practice, or a fresh PPP presentation if this is new language for your group.<br><br>Lesson 2 — Text-Based / Guided Discovery: the 'Cities That Grow Their Own Food' listening leads into the quantifier language via the listener comments, so stage it as listening comprehension into TL highlighting and clarification."
-  }
-];'''),
+     "A coursebook page usually holds more than one lesson. Here is one page, with everything on it printed: in pairs, put each activity into the lesson it belongs to, then name each lesson's shape. Nothing here needs a book."),
+    ("The coursebook pages in part 10 are Speakout; have the book in the room.", "Part 10 is one made-up page with all eight of its activities printed on it; no book is needed."),
+    ("Part 10 only if time: with the book open, how many 45-minute lessons from this page, which framework each.", "Part 10 only if time: eight activities from one page into three lessons, then the shape of each. The key is under each answer."),
+    (r"re:const cbItems = \[.*?\n\];\s*const cbGrid = document\.getElementById\('cbGrid'\);\s*cbItems\.forEach\(\(item, i\) => \{.*?cbGrid\.appendChild\(card\);\s*\}\);",
+     '''const SPREAD = [
+  { n: 'Ex 1', t: 'Read the blog “A Week of Leftovers” (about 150 words) and answer two questions for gist.', lesson: 0, why: 'A reading first, then the language comes out of it: this is the opening of the grammar lesson.' },
+  { n: 'Ex 2', t: 'Find the nouns with some and any in the blog. Which of them can you count?', lesson: 0, why: 'The grammar is found in the text the class has just read: highlighting the target language.' },
+  { n: 'Ex 3', t: 'Complete the rule box: some and any, countable and uncountable nouns.', lesson: 0, why: 'Clarifying the meaning and the form of the grammar from the examples they found.' },
+  { n: 'Ex 4', t: 'Gap-fill: eight sentences with some or any.', lesson: 0, why: 'Controlled practice of the same grammar, to finish the lesson.' },
+  { n: 'Ex 5', t: 'Listen to two people shopping in a supermarket. What do they buy?', lesson: 1, why: 'A listening with its own gist task: the start of a separate listening lesson.' },
+  { n: 'Ex 6', t: 'Listen again and tick the items on the list.', lesson: 1, why: 'Listening for detail: the second stage of the same receptive lesson.' },
+  { n: 'Ex 7', t: 'Speaking: plan a dinner for six people and tell the class.', lesson: 2, why: 'A speaking task is its own skills lesson, not grammar practice done through speaking.' },
+  { n: 'Ex 8', t: 'Vocabulary: match eight food containers (a bottle, a can, a carton…) to the pictures.', lesson: 2, why: 'The container words are what the dinner plan needs, so they sit in the speaking lesson as its useful language.' }
+];
+/* the activities in no order, so the right lesson is spread across the buttons: 1 2 1 3 2 1 3 1 */
+const SPREAD_ORDER = [4, 0, 6, 2, 5, 1, 7, 3];
+const LESSONS = ['Lesson 1: grammar from the blog', 'Lesson 2: a listening lesson', 'Lesson 3: a speaking lesson'];
+const SHAPES = [
+  { q: 'Lesson 1 starts from the blog, and the grammar is lifted out of it. Which shape?', opts: ['Text-Based', 'PPP', 'Receptive Skills', 'Productive Skills'], r: 0, why: 'Text-Based: the text comes first, and the language is highlighted, clarified and practiced from it.' },
+  { q: 'Lesson 2 is the supermarket listening with a gist task and a detail task. Which shape?', opts: ['Language Practice', 'PPP', 'Receptive Skills', 'Test-Teach-Test'], r: 2, why: 'Receptive Skills: lead-in, gist, detail, response. The listening is the aim, not a way into grammar.' },
+  { q: 'Lesson 3 is the container words and a dinner-plan speaking task. Which shape?', opts: ['Test-Teach-Test', 'Productive Skills', 'Text-Based', 'PPP'], r: 1, why: 'Productive Skills: prepare ideas, useful language, the task, then feedback. The vocabulary is the useful language.' }
+];
+const sp = document.getElementById('spread'); let spDone = 0;
+sp.innerHTML = '<div class="sp-page"><p class="sp-head">Pages 6–7 · What’s in the Fridge?</p><p class="sp-sub">One spread of a made-up coursebook, with its eight activities in no order.</p></div><p class="sort-instructions" style="margin:12px 0 6px"><b>Step 1.</b> Which of three lessons does each activity belong to?</p><div id="spRows"></div><p class="sp-score" id="spScore"></p><p class="sort-instructions" id="spShapeHead" style="margin:16px 0 6px" hidden><b>Step 2.</b> Name each lesson’s shape.</p><div id="spShapes" hidden></div>';
+const rows = document.getElementById('spRows');
+SPREAD_ORDER.forEach(i => { const a = SPREAD[i], r = document.createElement('div'); r.className = 'sp-row';
+  r.innerHTML = '<p class="sp-t"><b>' + a.n + '</b> ' + a.t + '</p><div class="sp-opts">' + LESSONS.map((l, j) => '<button type="button" class="sp-opt" data-j="' + j + '">' + l + '</button>').join('') + '</div><p class="sp-why"><span class="sp-res"></span> ' + a.why + '</p>';
+  r.querySelectorAll('.sp-opt').forEach(b => b.onclick = () => { if (r.classList.contains('done')) return; const j = +b.dataset.j, ok = j === a.lesson;
+    r.classList.add('done', ok ? 'right' : 'wrong'); r.querySelectorAll('.sp-opt').forEach(o => { const k = +o.dataset.j; o.classList.add(k === a.lesson ? 'good' : (k === j ? 'bad' : 'dim')); });
+    r.querySelector('.sp-res').textContent = ok ? 'Right.' : 'It belongs to ' + LESSONS[a.lesson].replace(/^Lesson (\d): .*/, 'lesson $1') + '.';
+    spDone++; if (spDone === SPREAD.length) { const right = rows.querySelectorAll('.sp-row.right').length; document.getElementById('spScore').textContent = right + ' of ' + SPREAD.length + ' in the right lesson.'; document.getElementById('spShapeHead').hidden = false; document.getElementById('spShapes').hidden = false; } });
+  rows.appendChild(r); });
+const shapes = document.getElementById('spShapes');
+SHAPES.forEach((x, i) => { const r = document.createElement('div'); r.className = 'sp-row';
+  r.innerHTML = '<p class="sp-t">' + (i + 1) + '. ' + x.q + '</p><div class="sp-opts">' + x.opts.map((o, j) => '<button type="button" class="sp-opt" data-j="' + j + '">' + o + '</button>').join('') + '</div><p class="sp-why"><span class="sp-res"></span> ' + x.why + '</p>';
+  r.querySelectorAll('.sp-opt').forEach(b => b.onclick = () => { if (r.classList.contains('done')) return; const j = +b.dataset.j, ok = j === x.r;
+    r.classList.add('done', ok ? 'right' : 'wrong'); r.querySelectorAll('.sp-opt').forEach(o => { const k = +o.dataset.j; o.classList.add(k === x.r ? 'good' : (k === j ? 'bad' : 'dim')); }); r.querySelector('.sp-res').textContent = ok ? 'Right.' : 'The answer is ' + x.opts[x.r] + '.'; });
+  shapes.appendChild(r); });'''),
 ]
 
 ALIAS['receptive-skills'] = [
