@@ -209,7 +209,7 @@ function settingsFor(tokens) {
   if (WHICH === 'visit') { s.docs = DOCS; s.assessorVisit = [tokens[0], tokens[3]]; }
   if (DAYONE) s.demoAskName = true;   // the card asks who is visiting (25 Oct 2026)
   /* the walk is a real course: each trainee's link is theirs, and the clock is the real one */
-  if (FRIDAY) s.courseLinks = COURSE_LINKS.concat([{ label: 'Pre-course task', url: 'https://drive.google.com/file/d/demo-precourse-task/view', card: 'Before the course', show: true }]);
+  /* the Friday demo's pre-course task is Lite's own page (30_precourse_key.html, 26 Oct 2026): no Drive placeholder */
   if (WALK) { delete s.demoToday; delete s.demoAskName; s.courseName = 'CELTA — Launch walk'; s.notificationRef = 'TR999-LW/2026'; }
   if (DAYONE) {
     /* the agreement, in Lite's own words, for the trainee to read and sign; the pre-course key and the
