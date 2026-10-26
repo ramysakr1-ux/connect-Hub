@@ -18,6 +18,7 @@ import re, sys, pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from _notes import NOTES   # the trainer's side of each session, one block per slug
 from _alias import ALIAS   # made-up names and examples, per slug
+from _american import american   # American spelling, except the British-English sessions and recorded lines (26 Oct 2026)
 from _tl import TL         # the target language, marked in green, per slug
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -289,6 +290,7 @@ def build(r):
     for bad in ('Nunito', 'Playfair', 'progressFill', 'class="watermark"', 'International House Istanbul'):
         assert bad not in page.replace(sources, '').replace(notes_block(r['slug']), ''), f"{r['slug']}: {bad} still in the page"
     page = number_from_nav(strip_lengths(mark_tl(alias(page, r['slug']), r['slug'])))
+    page = american(page, r['slug'], HERE)
     out = HERE / r['slug'] / 'index.html'
     out.parent.mkdir(exist_ok=True)
     out.write_text(page, encoding='utf-8')
@@ -2102,7 +2104,7 @@ def hand(slug):
     page = page.replace('\n</body>', '\n' + FILM_JS + '\n' + GATE + '\n</body>', 1)
     assert page.count('id="trainer"') == 1 and page.count('hub-store.js') == 1 and page.count('hub-notebook.js') == 1, slug
     assert page.count('A film with an end time') == 1, slug + ': the film script is not there once'
-    page = number_from_nav(strip_lengths(alias(page, slug)))
+    page = american(number_from_nav(strip_lengths(alias(page, slug))), slug, HERE)
     p.write_text(page, encoding='utf-8')
     print('patched', p.relative_to(ROOT), len(page))
 
