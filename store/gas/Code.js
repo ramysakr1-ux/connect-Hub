@@ -1843,9 +1843,10 @@ case 'inbox': {
         + 'Use PLANNING only for the written plan and the materials as prepared: aims, staging on paper, language analysis, anticipated problems and solutions, timings planned, the look of materials, and acknowledging sources and copyright. '
         + 'sp = strength in planning, ap = action point in planning, st = strength in teaching, at = action point in teaching. '
         + 'Strengths say what the trainee did, as a phrase or sentence. Action points are imperatives addressed to the trainee, e.g. "Give an example before the task starts". '
-        + 'Never drop what the tutor saw. An action point says what to do and then what happened in this lesson, joined with a colon: '
+        + 'Never drop what the tutor saw. When the notes give evidence beyond the problem itself (what it led to, where, how much: confused, lost, bored, off task, finished early, '
+        + 'didn\'t understand, ran 10 minutes over), the action point says what to do and then that evidence, after a colon: '
         + 'notes "instr for ex 2 too long, no demo, Ss confused" give "Keep instructions short and demonstrate first: in exercise 2 they were long, with no demonstration, and the students were confused". '
-        + 'Every word of evidence in the notes (confused, lost, bored, off task, finished early, didn\'t understand) must appear in a point. '
+        + 'When the notes only name the problem, write the action alone, with no colon and nothing after it: "no ICQs" gives "Check instructions with ICQs", never "...: there were none today". '
         + '"Not referenced", "no refs" or "no sources" about materials, pictures, texts or handouts means the sources were not acknowledged (4d), never how they were used in class. '
         /* The shorthand, from Lite's own TP points glossary (24_tp_points.html GLOSSARY), the
            acronyms and terms of the CELTA glossary the C/17 course used, and the shorthand
@@ -1868,7 +1869,7 @@ case 'inbox': {
         + 'Criteria: ' + tnCrit.join('; ') + '. '
         + 'Example. Notes: "good rapport. instr too long. vocab analysis clear. no sources on handout". '
         + 'Answer: {"sp":[{"text":"Clear vocabulary analysis","codes":["4i"]}],"ap":[{"text":"Acknowledge the source of the handout","codes":["4d"]}],'
-        + '"st":[{"text":"Good rapport with the students","codes":["1d"]}],"at":[{"text":"Keep your instructions short: they were long today","codes":["5f"]}]}. '
+        + '"st":[{"text":"Good rapport with the students","codes":["1d"]}],"at":[{"text":"Keep your instructions short","codes":["5f"]}]}. '
         + 'American spelling. No names. Answer as JSON with the four lists sp, ap, st, at.';
       var tnResp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
         method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + tnKey },
