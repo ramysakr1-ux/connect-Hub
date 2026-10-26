@@ -1868,6 +1868,39 @@ case 'inbox': {
           .filter(function(c){ return /^[1-5][a-n]$/.test(c) && (planning ? c.charAt(0) === '4' : c.charAt(0) !== '4'); }).slice(0, 2) }; }).filter(function(x){ return x.text; }); };
       return { sp: tnList(tnOut.sp, true), ap: tnList(tnOut.ap, true), st: tnList(tnOut.st, false), at: tnList(tnOut.at, false) };
     }
+    /* THE OVERALL COMMENT FROM THE TUTOR'S NOTES (Ramy, 27 Oct 2026: "the overall
+       comment ... that's the prose ... a running commentary about the lesson or a
+       summary"; "let's do both"). The same rough notes become a draft of the TP
+       feedback's Overall comment, in the supportive or the direct voice as Connect's
+       tone tool offers them. Only what the notes say: nothing added, no grade. Tutors only. */
+    case 'overallFromNotes': {
+      requireTutor_(tutor);
+      var onKey = PropertiesService.getScriptProperties().getProperty('OPENAI_KEY');
+      if (!onKey) throw new Error('Writing is not switched on');
+      var onNotes = String(req.notes || '').slice(0, 6000).trim();
+      if (!onNotes) return { text: '' };
+      var onTone = req.tone === 'direct' ? 'direct' : 'supportive';
+      var onVoice = onTone === 'direct'
+        ? 'direct: clear and concise, unambiguous about what needs to change, no hedging, action-oriented'
+        : 'supportive: warm and encouraging, leads with what went well, frames what to work on gently';
+      var onSys = 'You help a CELTA tutor write the Overall comment on a trainee\'s teaching practice lesson from the rough notes the tutor wrote while watching it. '
+        + 'The Overall comment is a short piece of prose, the one or two things that mattered most in this lesson: how it went as a whole, what carried it, and what to take into the next lesson. '
+        + 'Write it in a ' + onVoice + ' voice. '
+        + 'Use only what is in the notes. Never add a strength, a problem, a judgement or a grade that the notes do not contain, and never give a grade or a standard. '
+        + 'Keep the tutor\'s own observations and words where you can; correct spelling and grammar; write shorthand out in full, except TTT, STT, CCQs and ICQs, which trainees know. '
+        + 'Address the trainee as "you". Plain, everyday words a tutor would say; no formal words like prior to, utilize, facilitate. No bullet points, no headings, no criterion codes. '
+        + 'One or two paragraphs, about 80 to 150 words; shorter if the notes are short. American spelling. No names. '
+        + celtaShorthand_()
+        + 'Answer as JSON: {"text":"..."}.';
+      var onResp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + onKey },
+        payload: JSON.stringify({ model: 'gpt-4.1', temperature: 0.4, response_format: { type: 'json_object' },
+          messages: [{ role: 'system', content: onSys }, { role: 'user', content: (req.tp ? 'Lesson: ' + String(req.tp).slice(0, 20) + '\n' : '') + onNotes }] })
+      });
+      if (onResp.getResponseCode() !== 200) throw new Error('The comment could not be written (' + onResp.getResponseCode() + ')');
+      var onOut = JSON.parse(JSON.parse(onResp.getContentText()).choices[0].message.content || '{}');
+      return { text: String(onOut.text || '').trim().slice(0, 2000) };
+    }
     case 'stage1Words': {
       requireTutor_(tutor);
       var swKey = PropertiesService.getScriptProperties().getProperty('OPENAI_KEY');
