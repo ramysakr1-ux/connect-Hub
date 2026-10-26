@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610270114">
+<link rel="stylesheet" href="hub-tokens.css?v=202610270132">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -49,9 +49,20 @@
 
   /* Gold edges the card, as on the assignment screens (Ramy, 24 Sep 2026). The cards that mean something keep their own colour below. */
   .card{background:var(--surface); border-radius:6px; padding:20px 24px; margin-bottom:16px; border-left:5px solid var(--gold);}
-  .card.good{border-left-color:var(--teal);}
-  /* Action points garnet, strengths teal: Connect's own pairing (Ramy, 24 Sep 2026). Not gold for strengths -- gold is the neutral edge on this form, and Overall comment sits right under them. */
-  .card.action{border-left-color:var(--garnet, oklch(42% 0.13 27));}
+  /* THE FOUR BOXES, ONE LOOK (Ramy, 27 Oct 2026: "make all those boxes the same
+     color ... the same size ... a clearer design"). Planning and Teaching are two
+     frames, each holding Strengths and Action points side by side; the cards are
+     the same card, the point boxes the same height, and nothing on a row but the
+     words, the star and the cross. The criteria live in the rail on the right. */
+  .area{margin-bottom:18px;}
+  .area-h{display:flex; align-items:baseline; gap:12px; margin:0 0 10px; font-family:'Newsreader',Georgia,serif; font-size:1.25rem; color:var(--teal);}
+  .area-h small{font-family:'Karla',sans-serif; font-size:0.8rem; font-weight:500; color:var(--grey);}
+  .pair{display:grid; grid-template-columns:1fr; gap:14px;}
+  @media(min-width:900px){ .pair{grid-template-columns:1fr 1fr;} }
+  .card.points{margin-bottom:0; border-left-color:var(--gold); display:flex; flex-direction:column;}
+  .card.points h2{font-size:1.02rem; margin-bottom:4px;}
+  .card.points .guide{margin-bottom:8px;}
+  .card.points .btn-add{margin-top:auto; align-self:flex-start;}
   .card.grade{border-left-color:var(--gold);}
   .card.xchg{border-left-color:var(--gold);}
   .xchg-acts{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
@@ -108,7 +119,9 @@
   .gv2 span{font-size:0.78rem; font-weight:700;}
   .gv2 button:hover{transform:translateY(-2px); border-color:var(--sand-line-deep, oklch(78% 0.02 80)); box-shadow:0 10px 20px -14px oklch(30% 0.04 60 / .5);}
   .gv2 button:focus-visible{outline:2px solid var(--teal); outline-offset:3px;}
-  .gv2 .above.on{background:var(--gold); border-color:var(--gold); color:var(--ink-warm);}
+  /* S+ in the mustard the returned page stamps it in (Ramy, 27 Oct 2026: "above standard the
+     same color as the standard": --gold is the forest on this look, the same as S) */
+  .gv2 .above.on{background:var(--a-mustard); border-color:var(--a-mustard); color:var(--ink);}
   .gv2 .to.on{background:var(--teal); border-color:var(--teal); color:var(--paper);}
   .gv2 .not.on{background:var(--brick); border-color:var(--brick); color:var(--paper);}
   .gv2 button.on{box-shadow:0 12px 22px -14px oklch(30% 0.04 60 / .6);}
@@ -144,7 +157,7 @@
      these now copy, has no number either. */
   .pt-text{flex:1; min-width:0; font-family:'Karla',sans-serif; font-size:0.9rem;
     padding:10px 12px; border:2px solid var(--sand-line); border-radius:6px;
-    background:var(--field); color:var(--ink); line-height:1.7; min-height:56px;}
+    background:var(--field); color:var(--ink); line-height:1.7; min-height:76px;}
   .pt-text:focus{outline:none; border-color:var(--teal);}
   /* A contenteditable has no ::placeholder, so this stands in for one -- and
      it takes the same colour as a real one: --grey does not clear 4.5 on the
@@ -158,15 +171,6 @@
     margin-top:9px;}
   .star:hover{border-color:var(--gold); color:var(--gold);}
   .star.on{background:var(--gold); border-color:var(--gold); color:var(--ink-warm);}
-  /* One of these sits on every point, so eight or more of them run down the
-     screen. In teal they read as loud as the decision at the bottom of the
-     page; they are a per-row utility, so they go quiet like .btn-quiet
-     (Ramy, 23 Sep 2026). The CHIPS they produce keep the teal fill -- the tag
-     is the result and carries meaning, the toggle is only the way in. */
-  .crit-toggle{flex:none; background:none; border:1.5px solid var(--sand-line); color:var(--grey);
-    font-size:0.72rem; font-weight:700; cursor:pointer; padding:5px 10px; border-radius:12px;
-    white-space:nowrap; margin-top:9px;}
-  .crit-toggle:hover{border-color:var(--grey); color:var(--ink);}
   .crit-item{display:flex; gap:8px; align-items:flex-start; font-size:0.8rem; line-height:1.45;
     padding:4px 6px; cursor:pointer; border-radius:5px;}
   .crit-item:hover{background:var(--sand-deep);}
@@ -178,11 +182,33 @@
   .chip{background:color-mix(in oklab, var(--teal) 12%, transparent); color:var(--teal);
     border:1px solid color-mix(in oklab, var(--teal) 30%, transparent);
     font-size:0.73rem; font-weight:700; padding:3px 9px; border-radius:11px; cursor:help;}
-  /* The hex was the one colour on this screen outside the palette. */
-  .crit-panel{display:none; margin-top:9px; background:var(--surface); border-left:4px solid var(--gold);
-    border-radius:6px; padding:10px 14px; max-height:250px; overflow-y:auto;}
-  @keyframes critIn{from{opacity:0} to{opacity:1}}
-  .crit-panel.open{display:block; animation:critIn 160ms ease-out;}
+  /* THE CRITERIA RAIL (Ramy, 27 Oct 2026: "why can't we just have the criteria
+     traveling with us on the side. You click on it"). On a wide screen the 41
+     criteria sit in a column on the right that scrolls with the page, as the
+     decision does on the marking page; click into a point, then a criterion,
+     and the tag lands at the cursor. The ones the point already carries are
+     marked. Below 1080px the rail is a folded card above the boxes. */
+  .fb-grid{display:block;}
+  .rail{margin-bottom:16px;}
+  .rail .railfold{background:var(--surface); border-radius:6px; border-left:5px solid var(--gold); padding:14px 18px;}
+  .rail summary{cursor:pointer; font-family:'Newsreader',Georgia,serif; font-size:1.05rem; color:var(--teal); list-style:none; display:flex; align-items:center; gap:8px;}
+  .rail summary::-webkit-details-marker{display:none;}
+  .rail summary::after{content:''; width:7px; height:7px; border-right:2px solid var(--grey); border-bottom:2px solid var(--grey); transform:rotate(45deg); margin-left:auto; transition:transform .15s;}
+  .rail details[open] summary::after{transform:rotate(-135deg);}
+  .rail .rail-hint{margin:6px 0 8px; font-size:0.78rem; color:var(--grey); line-height:1.45; min-height:1.2em;}
+  .rail .rail-hint.now{color:var(--teal); font-weight:600;}
+  .rail .crit-item{padding:4px 6px;}
+  .rail .crit-item.on{background:color-mix(in oklab, var(--teal) 12%, transparent);}
+  .rail .crit-item.on b::after{content:' \2713';}
+  @media(min-width:1080px){
+    /* the whole screen, as the marking page uses it (Ramy, 27 Oct 2026: "We'll use the full page then") */
+    .board{max-width:none;}
+    body{padding-left:28px; padding-right:28px;}
+    .fb-grid{display:grid; grid-template-columns:minmax(0,1fr) 320px; grid-template-areas:"top rail" "bottom rail"; column-gap:24px; align-items:start;}
+    .fb-top{grid-area:top;} .fb-bottom{grid-area:bottom;}
+    .rail{grid-area:rail; align-self:start; position:sticky; top:16px; max-height:calc(100vh - 32px); overflow:auto; margin:0;}
+    .rail summary{pointer-events:none;} .rail summary::after{display:none;}
+  }
   .notes textarea{width:100%; min-height:110px;}
   .notes-acts{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:10px;}
   .notes-acts .guide{margin:0;}
@@ -240,7 +266,7 @@
   @media(max-width:560px){
     .pt-row{flex-wrap:wrap; gap:8px;}
     .pt-text{flex:1 1 100%;}
-    .star, .crit-toggle{margin-top:0; min-height:44px; display:inline-flex; align-items:center; padding:0 14px;}
+    .star{margin-top:0; min-height:44px; display:inline-flex; align-items:center; padding:0 14px;}
     .del-btn{margin-left:auto; min-width:44px; min-height:44px; padding:0;}
     .btn-add{min-height:44px;}
     .example-btn{min-height:40px;}
@@ -434,7 +460,7 @@
   .done .row{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;}
   @media print{
     body{background:#fff; padding:0; display:block;}
-    .actionbar,.btn,.del-btn,.crit-toggle,.crit-panel,.loadbar,.suggest-row,.credit-pill{display:none !important;}
+    .actionbar,.btn,.del-btn,.rail,.loadbar,.suggest-row,.credit-pill{display:none !important;}
     .card,.header{ border-radius:0; page-break-inside:avoid;}
     textarea,input,select{border:1px solid #999 !important; background:#fff !important;}  }
 
@@ -445,7 +471,7 @@
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610270114">
+<link rel="stylesheet" href="hub-house.css?v=202610270132">
 </head>
 <body>
 <div class="board">
@@ -490,6 +516,7 @@
     </div>
   </div>
 
+  <div class="fb-grid"><div class="fb-top">
   <div class="card seen" id="seen" style="display:none;">
     <div class="seen-head">
       <h2>What they planned</h2>
@@ -556,34 +583,50 @@
     </select></div>
   </div>
 
-  <div class="card good">
-    <h2>Strengths in planning</h2>
-    <p class="guide">One point per line. Tag each with the planning criteria it shows.</p>
-    <div id="lSP" data-scope="planning"></div>
-    <button type="button" class="btn-add add-pt" data-list="lSP">+ Add point</button>
-  </div>
+  </div><!-- /fb-top -->
+  <aside class="rail" id="rail" aria-label="Criteria">
+    <details class="railfold" id="railFold">
+      <summary>Criteria</summary>
+      <p class="rail-hint" id="railHint">Click into a point, then a criterion, and the tag lands where you are writing.</p>
+      <div id="railList"></div>
+    </details>
+  </aside>
+  <div class="fb-bottom">
+  <section class="area">
+    <h2 class="area-h">Planning <small>the plan, the analysis, the materials</small></h2>
+    <div class="pair">
+      <div class="card points">
+        <h2>Strengths</h2>
+        <p class="guide">One point per line.</p>
+        <div id="lSP" data-scope="planning"></div>
+        <button type="button" class="btn-add add-pt" data-list="lSP">+ Add point</button>
+      </div>
+      <div class="card points">
+        <h2>Action points</h2>
+        <p class="guide">Star the ones to prioritize in the next TP; starred points carry into their next plan.</p>
+        <div id="lAP" data-scope="planning" data-star="1"></div>
+        <button type="button" class="btn-add add-pt" data-list="lAP">+ Add point</button>
+      </div>
+    </div>
+  </section>
 
-  <div class="card action">
-    <h2>Action points in planning</h2>
-    <p class="guide">Star the ones you want them to prioritize in the next TP — starred points carry into
-    the Personal Aims of their next plan.</p>
-    <div id="lAP" data-scope="planning" data-star="1"></div>
-    <button type="button" class="btn-add add-pt" data-list="lAP">+ Add point</button>
-  </div>
-
-  <div class="card good">
-    <h2>Strengths in teaching</h2>
-    <p class="guide">What happened in the room — rapport, clarity, management, language work.</p>
-    <div id="lST" data-scope="teaching"></div>
-    <button type="button" class="btn-add add-pt" data-list="lST">+ Add point</button>
-  </div>
-
-  <div class="card action">
-    <h2>Action points in teaching</h2>
-    <p class="guide">Star the ones to prioritize next time.</p>
-    <div id="lAT" data-scope="teaching" data-star="1"></div>
-    <button type="button" class="btn-add add-pt" data-list="lAT">+ Add point</button>
-  </div>
+  <section class="area">
+    <h2 class="area-h">Teaching <small>what happened in the room</small></h2>
+    <div class="pair">
+      <div class="card points">
+        <h2>Strengths</h2>
+        <p class="guide">One point per line.</p>
+        <div id="lST" data-scope="teaching"></div>
+        <button type="button" class="btn-add add-pt" data-list="lST">+ Add point</button>
+      </div>
+      <div class="card points">
+        <h2>Action points</h2>
+        <p class="guide">Star the ones to prioritize next time.</p>
+        <div id="lAT" data-scope="teaching" data-star="1"></div>
+        <button type="button" class="btn-add add-pt" data-list="lAT">+ Add point</button>
+      </div>
+    </div>
+  </section>
 
   <div class="card">
     <h2>Overall comment</h2>
@@ -602,6 +645,8 @@
     <textarea id="tLA" rows="3" placeholder="Only if you have something to add — otherwise leave it empty."></textarea>
   </div>
 
+  </div><!-- /fb-bottom -->
+  </div><!-- /fb-grid -->
 </div>
 
 <div class="actionbar">
@@ -616,14 +661,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202610270114"></script>
-<script src="hub-shared.js?v=202610270114"></script>
-<script src="hub-store.js?v=202610270114"></script>
-<script src="hub-say.js?v=202610270114"></script>
-<script src="hub-crit-learn.js?v=202610270114"></script>
-<script src="hub-crit-vocab.js?v=202610270114"></script>
-<script src="hub-sync.js?v=202610270114"></script>
-<script src="hub-notebook.js?v=202610270114"></script>
+<script src="hub-exchange.js?v=202610270132"></script>
+<script src="hub-shared.js?v=202610270132"></script>
+<script src="hub-store.js?v=202610270132"></script>
+<script src="hub-say.js?v=202610270132"></script>
+<script src="hub-crit-learn.js?v=202610270132"></script>
+<script src="hub-crit-vocab.js?v=202610270132"></script>
+<script src="hub-sync.js?v=202610270132"></script>
+<script src="hub-notebook.js?v=202610270132"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -934,16 +979,12 @@ function addPoint(listId, html, _unused){
   row.innerHTML=`<div class="pt-row">
       <div class="pt-text" contenteditable="true" data-ph="Write one point — then tag it"></div>
       ${host.dataset.star ? `<button class="star" type="button" title="Prioritize this in the next TP">★</button>` : ''}
-      <button class="crit-toggle" type="button">＋ criteria</button>
       <button class="del-btn" type="button" title="Remove this point">✕</button>
     </div>
-    <div class="suggest-row"></div>
-    <div class="crit-panel"></div>`;
+    <div class="suggest-row"></div>`;
   host.appendChild(row);
 
   const box=row.querySelector('.pt-text');
-  const panel=row.querySelector('.crit-panel');
-  const toggle=row.querySelector('.crit-toggle');
   const suggestRow=row.querySelector('.suggest-row');
   if(html) box.innerHTML=html;
 
@@ -1017,20 +1058,8 @@ function addPoint(listId, html, _unused){
     rememberCaret(box); dirty=true;
   });
 
-  toggle.addEventListener('click',()=>{
-    if(!panel.dataset.built){ panel.innerHTML=critPanelHTML(scope); panel.dataset.built='1'; }
-    panel.classList.toggle('open');
-    if(panel.classList.contains('open') && caretBox!==box){ box.focus(); rememberCaret(box); }
-  });
-
-  /* click a criterion — the tag is inserted inside the box, where the cursor is */
-  panel.addEventListener('mousedown',e=>e.preventDefault());
-  panel.addEventListener('click',e=>{
-    const item=e.target.closest('.crit-item');
-    if(!item) return;
-    insertTag(box, item.dataset.code);
-    panel.classList.remove('open');
-  });
+  /* the rail marks what this point already carries */
+  ['focus','keyup','mouseup'].forEach(ev=>box.addEventListener(ev,()=>railMark(box)));
 
   const star=row.querySelector('.star');
   if(star) star.addEventListener('click',()=>{ star.classList.toggle('on'); dirty=true; });
@@ -1042,6 +1071,32 @@ function addPoint(listId, html, _unused){
 document.querySelectorAll('.add-pt').forEach(b=>{
   b.addEventListener('click',()=>{ addPoint(b.dataset.list,''); dirty=true; });
 });
+
+/* ---- the criteria rail: all five topics, planning first ---- */
+(function buildRail(){
+  const host=$('railList'); if(!host) return;
+  let html='';
+  ['4','1','2','3','5'].forEach(t=>{
+    html+=`<p class="crit-topic">${TOPIC_NAMES[t]}</p>`;
+    CRITERIA.filter(c=>c[1]===t).forEach(([code,,text])=>{ html+=`<div class="crit-item" data-code="${code}"><b>${code}</b><span>${text}</span></div>`; });
+  });
+  host.innerHTML=html;
+  const fold=$('railFold'); fold.open = window.innerWidth>=1080;
+  host.addEventListener('mousedown',e=>e.preventDefault());
+  host.addEventListener('click',e=>{
+    const item=e.target.closest('.crit-item'); if(!item) return;
+    const hint=$('railHint');
+    if(!caretBox || !document.body.contains(caretBox) || locked){ hint.textContent='Click into a point first, then the criterion.'; hint.classList.add('now'); return; }
+    insertTag(caretBox, item.dataset.code); railMark(caretBox);
+    hint.textContent=item.dataset.code+' tagged.'; hint.classList.add('now');
+    const row=caretBox.closest('.pt'); if(row) row.dispatchEvent(new Event('ai-suggest'));
+  });
+})();
+function railMark(box){
+  const have=new Set([...box.querySelectorAll('.tag')].map(t=>t.dataset.c));
+  document.querySelectorAll('#railList .crit-item').forEach(it=>it.classList.toggle('on', have.has(it.dataset.code)));
+  const hint=$('railHint'); if(hint){ hint.classList.remove('now'); hint.textContent=have.size?'This point carries '+[...have].join(', ')+'. Click another to add it.':'Click a criterion to tag this point.'; }
+}
 
 
 /* only plain text and criteria tags survive into the document */
