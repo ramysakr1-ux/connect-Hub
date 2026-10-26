@@ -185,6 +185,99 @@ window.InputLib = (function(){
   window.addEventListener('beforeprint', function(){ document.documentElement.classList.toggle('hub-demo-lock', demo()); });
 })();
 
+/* THE HANDOUT ON PAPER (Ramy, 26 Oct 2026: "printing the handout should be possible for all input sessions,
+   and anything that is not meant to be printed will disappear, like click here"). Just before printing, the
+   screen's instructions are swapped for paper ones ("Click a term, then click its definition" becomes
+   "Match each term to its definition"), a label that only means something on screen ("Click to reveal")
+   goes, and so do the buttons that work the page (Reveal, Play, Reset, Next). Answer choices stay, drawn as
+   words to circle. Everything is put back the moment the print dialog closes. */
+(function(){
+  var SAY = [
+    [/Click a term on the left, then click its definition on the right/g, 'Match each term on the left to its definition on the right'],
+    [/Click a term, then click the meaning that goes with it/g, 'Match each term to its meaning'],
+    [/Click a pill on the left, then click its matching example on the right/g, 'Match each one on the left to its example on the right'],
+    [/Click a phrase on the left, then its function on the right/g, 'Match each phrase on the left to its function on the right'],
+    [/Click one on the left, then its full name on the right/g, 'Match each one on the left to its full name on the right'],
+    [/Click a word, then click a gap/g, 'Write each word in its gap'],
+    [/Click each stage, in the order you think it happens, from first to last/g, 'Number the stages in the order you think they happen, from first to last'],
+    [/Click each stage in the order/g, 'Number the stages in the order'],
+    [/Click each one in the order/g, 'Number them in the order'],
+    [/Click the boxes below in the order/g, 'Number the boxes below in the order'],
+    [/Click the steps in order/g, 'Number the steps in order'],
+    [/then tap the shuffled stages below in the order/g, 'then number the stages below in the order'],
+    [/Tap a stage card below, then tap the shape it belongs to/g, 'Write the shape each stage belongs to'],
+    [/Tap each word, then tap Positive or Negative to sort it/g, 'Sort each word: Positive or Negative'],
+    [/Tap each statement, then tap Product or Process/g, 'Mark each statement Product or Process'],
+    [/Tap each example, then tap the zone it belongs to on the/g, 'Place each example on the'],
+    [/tap whether the focus is on/g, 'mark whether the focus is on'],
+    [/then tap the framework you think it is/g, 'then circle the framework you think it is'],
+    [/Click your answer for each/g, 'Circle your answer for each'],
+    [/Click the word or words you think/g, 'Underline the word or words you think'],
+    [/Click between two words to mark a link \(just like drawing a ◡ shape by hand\)/g, 'Draw a ◡ between two words to mark a link'],
+    [/Before you click anything, say/g, 'First say'],
+    [/Click in a box, then use the symbol keys to type/g, 'Write the symbols in the boxes'],
+    [/On screen, click one from each column to join them/g, 'Join one from each column'],
+    [/Click to build it, and say each chunk as it appears/g, 'Say it chunk by chunk'],
+    [/Read both, then click to reveal who is eliciting and who is telling/g, 'Read both: who is eliciting, and who is telling?'],
+    [/Say the examples on each card out loud first, then click the card to reveal what[^.]*\./g, 'Say the examples on each card out loud.'],
+    [/Decide what.s structurally wrong before you tap .Reveal the fix.?/g, 'Decide what is structurally wrong'],
+    [/Spin, then discuss:/g, 'Discuss each area:'],
+    [/\s*·?\s*Quick quiz: tap a card to turn it/g, ' · Quick quiz'],
+    /* sentences that only make sense on screen go altogether */
+    [/\s*Click a rung to see what a learner at that level can actually do\.?/g, ''],
+    [/\s*Click any card to open it:[^.]*\.(\s*Come back to any you like\.)?/g, ''],
+    [/\s*Click whichever role interests you\.?/g, ''],
+    [/\s*Click any sound to hear its example word\.?/g, ''],
+    [/\s*Then click the words to check\.?/g, ''],
+    [/\s*Click each word to check\.?/g, ''],
+    [/\s*Click each idea to reveal a short explanation\.?/g, ''],
+    [/\s*Click each (one )?to reveal[^.]*\.?/gi, ''],
+    [/\s*Tap each one to see a clearer version\.?/g, ''],
+    [/\s*Click the one that comes first\.?/g, ''],
+    [/\s*Click each one\./g, ''],
+    [/^Spin the wheel\s*$/, 'Thirteen areas'],
+    [/^\s*(click|tap)( each)?( one| word| the words)?( to (reveal|hear|fix|turn)[^.]*)?\.?\s*$/i, ''],
+    [/\s*click to reveal( the phrase and fact)?\.?/gi, '']
+  ];
+  var CONTROL = /^(reveal|hide|show|check|reset|next|play|spin|start again|try again|reshuffle|print|add a stage|watch the film|compare|see all|play again|done|listen|hear it|again|clear|undo|new|shuffle|open on|open wordwall)/i;
+  var undo = [];
+  function paper(){
+    undo = [];
+    var root = document.querySelector('.wrap') || document.body;
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    var n, list = [];
+    while ((n = w.nextNode())) {
+      var host = n.parentElement;
+      if (!host || host.closest('#trainer, .sources, script, style, textarea, .hub-brand-foot')) continue;
+      if (/click|tap|spin/i.test(n.nodeValue)) list.push(n);
+    }
+    list.forEach(function(t){
+      var was = t.nodeValue, now = was;
+      SAY.forEach(function(r){ now = now.replace(r[0], r[1]); });
+      if (now === was) return;
+      undo.push(function(){ t.nodeValue = was; });
+      t.nodeValue = now;
+      var el = t.parentElement;
+      if (el && !el.textContent.trim()) { var d = el.style.getPropertyValue('display'), dp = el.style.getPropertyPriority('display'); el.style.setProperty('display', 'none', 'important'); undo.push(function(){ el.style.setProperty('display', d, dp); }); }
+    });
+    document.querySelectorAll('button, [role="button"], a.btn').forEach(function(b){
+      var label = (b.textContent || '').trim();
+      if (!CONTROL.test(label) && !b.classList.contains('reveal')) return;
+      var d = b.style.getPropertyValue('display'), dp = b.style.getPropertyPriority('display'); b.style.setProperty('display', 'none', 'important'); undo.push(function(){ b.style.setProperty('display', d, dp); });
+    });
+    document.documentElement.classList.add('hub-paper-print');
+    undo.push(function(){ document.documentElement.classList.remove('hub-paper-print'); });
+  }
+  function screen(){ while (undo.length) { try { undo.pop()(); } catch (e) {} } }
+  window.addEventListener('beforeprint', paper);
+  window.addEventListener('afterprint', screen);
+  var st = document.createElement('style');
+  /* an answer choice is a word to circle; a dropdown is a line to write on */
+  st.textContent = '@media print{html.hub-paper-print button{background:none !important;color:#000 !important;border:1px solid #999 !important;box-shadow:none !important;}'
+    + 'html.hub-paper-print select{appearance:none;-webkit-appearance:none;background:none !important;border:0 !important;border-bottom:1px solid #999 !important;color:transparent !important;min-width:140px;}}';
+  (document.head || document.documentElement).appendChild(st);
+})();
+
 /* The offline copy (sw.js at the site root). The input sessions do not load hub-shared.js,
    which is where every other screen registers it, so a visitor who opened a session first
    never got the worker. Registered here, with the address worked out from this script. */
