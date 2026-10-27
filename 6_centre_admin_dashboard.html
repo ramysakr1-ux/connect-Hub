@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610272303">
+<link rel="stylesheet" href="hub-tokens.css?v=202610272316">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -360,6 +360,17 @@
   .grid.roster .temail:focus{outline:2px solid var(--teal); outline-offset:1px; background:var(--field-focus);}
   .rnote{margin:2px 0 14px; font-size:0.84rem; color:var(--grey); line-height:1.5;}
   .rset{margin:20px 4px 2px; font-size:0.7rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--gold-deep);}
+  /* DRAG TO CHANGE A TEACHING SET (Ramy, 27 Oct 2026) */
+  .grid.roster .grip{display:inline-flex; align-items:center; justify-content:center; width:22px; height:30px; margin:0 4px 0 -6px; border-radius:6px;
+    color:var(--grey); fill:currentColor; cursor:grab; touch-action:none; flex-shrink:0;}
+  .grid.roster .grip:hover{background:var(--box); color:var(--ink);}
+  .grid.roster.grow.rdrag-src{opacity:.35;}
+  .grid.roster.grow.rdrop{outline:2px dashed var(--a-forest, var(--teal)); outline-offset:-2px; border-radius:10px; background:var(--box);}
+  .rset.rdrop{outline:2px dashed var(--a-forest, var(--teal)); outline-offset:4px; border-radius:6px;}
+  .rdrag-ghost{position:fixed; z-index:3000; pointer-events:none; background:var(--paper); border-radius:10px; box-shadow:0 18px 40px -16px rgba(0,0,0,.45);
+    padding:10px 14px; font:700 0.92rem 'Karla',sans-serif; color:var(--ink); display:flex; align-items:center; gap:10px; max-width:min(420px, 90vw);}
+  .rdrag-ghost small{font-weight:600; color:var(--grey);}
+  body.rdragging, body.rdragging *{cursor:grabbing !important; user-select:none;}
   .rset:first-of-type{margin-top:8px;}
   .grow .name{display:flex; align-items:center; gap:10px; min-width:0;}
   .grow .name .nm{display:flex; flex-direction:column; min-width:0; font-weight:600;}
@@ -515,7 +526,7 @@
   .tcol-opt input:checked + span{box-shadow:0 0 0 2px var(--paper), 0 0 0 4px var(--teal);}
   .tcol-opt input:focus-visible + span{outline:2px solid var(--gold-lifted); outline-offset:3px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610272303">
+<link rel="stylesheet" href="hub-house.css?v=202610272316">
 </head>
 <body>
 <div class="board">
@@ -1017,18 +1028,18 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610272303"></script>
-<script src="hub-store.js?v=202610272303"></script>
-<script src="hub-say.js?v=202610272303"></script>
-<script src="agreement-defaults.js?v=202610272303"></script>
-<script src="observation-defaults.js?v=202610272303"></script>
-<script src="hub-shared.js?v=202610272303"></script>
-<script src="hub-rotation.js?v=202610272303"></script>
-<script src="hub-due.js?v=202610272303"></script>
-<script src="hub-sync.js?v=202610272303"></script>
-<script src="hub-notebook.js?v=202610272303"></script>
-<script src="hub-hand.js?v=202610272303"></script>
-<script src="hub-ink.js?v=202610272303"></script>
+<script src="assignment-defaults.js?v=202610272316"></script>
+<script src="hub-store.js?v=202610272316"></script>
+<script src="hub-say.js?v=202610272316"></script>
+<script src="agreement-defaults.js?v=202610272316"></script>
+<script src="observation-defaults.js?v=202610272316"></script>
+<script src="hub-shared.js?v=202610272316"></script>
+<script src="hub-rotation.js?v=202610272316"></script>
+<script src="hub-due.js?v=202610272316"></script>
+<script src="hub-sync.js?v=202610272316"></script>
+<script src="hub-notebook.js?v=202610272316"></script>
+<script src="hub-hand.js?v=202610272316"></script>
+<script src="hub-ink.js?v=202610272316"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -2039,8 +2050,8 @@ function rosterSets(list){
     people.forEach(t => (t.idx == null || t.idx > 5 ? rest : sets[t.idx < 3 ? 0 : 1]).push(t));
     const gHead = gs.length > 1 ? 'Group ' + g : '';
     const named = sets.filter(x => x.length);
-    if (named.length > 1) named.forEach((x, i) => out.push({ head: (gHead ? gHead + ' · ' : '') + 'Teaching set ' + x.map(t => t.letter).join(''), people: x }));
-    else if (named.length) out.push({ head: gHead, people: named[0] });
+    if (named.length > 1) named.forEach((x, i) => out.push({ head: (gHead ? gHead + ' · ' : '') + 'Teaching set ' + x.map(t => t.letter).join(''), people: x, group: g, set: sets.indexOf(x) }));
+    else if (named.length) out.push({ head: gHead, people: named[0], group: g, set: sets.indexOf(named[0]) });
     if (rest.length) out.push({ head: named.length ? (gHead ? gHead + ' · ' : '') + 'Not in a set yet' : gHead, people: rest });
   });
   return out;
@@ -2164,8 +2175,8 @@ async function renderStoreRoster(next){
            Remove sit apart at the end, the one that undoes something last. -->
       ${trainees.length ? `<p class="rnote">Each trainee’s personal link is theirs alone. Copy it into Classroom, or email it once their address is in.</p>
       <div class="grid roster ghead"><div>Trainee</div><div class="col-email">Email</div><div class="col-link">Personal link</div><div></div></div>` : ''}
-      ${trainees.length ? rosterSets(trainees).map(sec => `${sec.head ? `<div class="rset">${esc(sec.head)}</div>` : ''}${sec.people.map(t=>`<div class="grid roster grow">
-        <div class="name">${t.letter ? `<span class="avi avi-cand" aria-hidden="true">${esc(t.letter)}</span>` : ''}<span class="nm">${esc(t.name)}${SHOW_URLS ? `<code class="addr">${esc(S.inviteFor('trainee', t.token))}</code>` : ''}</span></div>
+      ${trainees.length ? rosterSets(trainees).map(sec => `${sec.head ? `<div class="rset"${sec.group != null && sec.set >= 0 ? ` data-rgroup="${esc(sec.group)}" data-rset="${sec.set}"` : ''}>${esc(sec.head)}</div>` : ''}${sec.people.map(t=>`<div class="grid roster grow" data-tok="${esc(t.token)}" data-rgroup="${esc(String(t.group || '1'))}">
+        <div class="name">${t.letter ? `<span class="grip" title="Drag onto another trainee to swap places, or onto a set to move there" aria-label="Move ${esc(t.name)}"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4"/><circle cx="7.5" cy="3" r="1.4"/><circle cx="2.5" cy="8" r="1.4"/><circle cx="7.5" cy="8" r="1.4"/><circle cx="2.5" cy="13" r="1.4"/><circle cx="7.5" cy="13" r="1.4"/></svg></span><span class="avi avi-cand" aria-hidden="true">${esc(t.letter)}</span>` : ''}<span class="nm">${esc(t.name)}${SHOW_URLS ? `<code class="addr">${esc(S.inviteFor('trainee', t.token))}</code>` : ''}</span></div>
         <div class="col-email"><input type="email" class="temail" value="${esc(t.email || '')}" placeholder="Add their email" data-email-for="${esc(t.token)}" title="The trainee’s email. Saved when you leave the box."></div>
         <div class="acts col-link">
           <button class="pillbtn" type="button" data-copy="${esc(S.inviteFor('trainee', t.token))}">Copy link</button>
@@ -2361,6 +2372,107 @@ async function setPinSwitch(on){
   await S.putCourse('settings', next);
   try { localStorage.setItem('connect_course_settings', JSON.stringify(next)); } catch (e) {}
 }
+/* DRAG TO CHANGE A TEACHING SET (Ramy, 27 Oct 2026: "I should be able to drag and drop and change the order ABC, DEF
+   ... Amara becomes A and Aiko becomes B"; "ask first after TP1"). The grip on a row picks a trainee up. Dropped on
+   another trainee, the two swap places -- letter, set and, across groups, group -- and nobody else moves: the same rule
+   as the letter menus on the TP points page ("a taken letter swaps the two"). Dropped on a set's heading, they take a
+   free place in that set. Places are kept where the TP points keep them (settings.slotOf), so every screen agrees; a
+   group change goes to the roster. Once the first TP has been taught, it asks before moving anyone. */
+(function(){
+  const host = document.getElementById('storeRoster'); if (!host) return;
+  const R = window.hubRotation;
+  const grp = t => String((t && t.group) || '1');
+  const list = () => Array.isArray(ROSTER) ? ROSTER : Object.values((ROSTER && ROSTER.trainees) || {});
+  const placesIn = (all, g) => { const m = {}; R.lettersFor(all.filter(t => grp(t) === g).map(t => ({ token: t.token, name: t.name }))).forEach(p => { m[p.token] = p.idx; }); return m; };
+  const tpStarted = () => {
+    try { const tt = JSON.parse(localStorage.getItem('connect_timetable_v1') || '{}') || {};
+      const first = ((tt.days || []).filter(d => d && d.date && d.tp)[0] || {}).date;
+      const today = window.hubToday ? hubToday() : new Date().toISOString().slice(0, 10);
+      return !!first && first <= today; } catch (e) { return false; }
+  };
+  const say = (t) => { const st = document.getElementById('storeBulkStatus') || document.getElementById('storeAddStatus'); if (st) st.textContent = t; };
+  let drag = null;
+  function targetAt(x, y){
+    drag.ghost.style.display = 'none';
+    const el = document.elementFromPoint(x, y);
+    drag.ghost.style.display = '';
+    if (!el) return null;
+    const row = el.closest('.grid.roster.grow[data-tok]');
+    if (row && row.dataset.tok !== drag.tok) return { el: row, tok: row.dataset.tok };
+    const head = el.closest('.rset[data-rgroup]');
+    if (head) return { el: head, group: head.dataset.rgroup, set: +head.dataset.rset };
+    return null;
+  }
+  host.addEventListener('pointerdown', e => {
+    const g = e.target.closest('.grip'); if (!g || e.button > 0) return;
+    const row = g.closest('.grid.roster.grow[data-tok]'); if (!row) return;
+    e.preventDefault();
+    const nm = (row.querySelector('.nm') || {}).textContent || '', av = (row.querySelector('.avi') || {}).textContent || '';
+    const ghost = document.createElement('div'); ghost.className = 'rdrag-ghost';
+    ghost.innerHTML = '<span class="avi avi-cand">' + esc(av) + '</span><span>' + esc(nm.trim()) + ' <small id="rdragHint">Drop on a trainee to swap places</small></span>';
+    document.body.appendChild(ghost);
+    drag = { tok: row.dataset.tok, row, ghost, over: null };
+    row.classList.add('rdrag-src'); document.body.classList.add('rdragging');
+    move(e);
+    try { g.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  function move(e){
+    if (!drag) return;
+    drag.ghost.style.left = (e.clientX + 14) + 'px'; drag.ghost.style.top = (e.clientY - 18) + 'px';
+    if (e.clientY < 70) window.scrollBy(0, -14); else if (e.clientY > window.innerHeight - 70) window.scrollBy(0, 14);
+    const t = targetAt(e.clientX, e.clientY);
+    if (drag.over && (!t || t.el !== drag.over.el)) drag.over.el.classList.remove('rdrop');
+    drag.over = t; if (t) t.el.classList.add('rdrop');
+    const h = document.getElementById('rdragHint');
+    if (h) h.textContent = !t ? 'Drop on a trainee to swap places' : t.tok ? 'Swap places with ' + ((t.el.querySelector('.nm') || {}).textContent || '').trim().split(/\s+/)[0] : 'Move into this set';
+  }
+  function end(){
+    if (!drag) return null;
+    const d = drag; drag = null;
+    d.ghost.remove(); d.row.classList.remove('rdrag-src'); document.body.classList.remove('rdragging');
+    if (d.over) d.over.el.classList.remove('rdrop');
+    return d;
+  }
+  document.addEventListener('pointermove', move);
+  document.addEventListener('pointerup', () => { const d = end(); if (d && d.over) moveTrainee(d.tok, d.over); });
+  document.addEventListener('pointercancel', end);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') end(); });
+
+  async function moveTrainee(tok, target){
+    const S = window.HubStore, all = list(), me = all.find(t => t.token === tok); if (!me || !R) return;
+    const fromG = grp(me);
+    let toG, myNew, other = null, otherNew = null;
+    if (target.tok) {
+      const o = all.find(t => t.token === target.tok); if (!o) return;
+      toG = grp(o); myNew = placesIn(all, toG)[o.token]; other = o.token; otherNew = placesIn(all, fromG)[tok];
+      if (myNew == null || otherNew == null || myNew > 5 || otherNew > 5) { say('One of them is not in a teaching set yet: open the TP points to place them.'); return; }
+    } else {
+      toG = target.group;
+      const p = placesIn(all, toG), taken = {};
+      Object.keys(p).forEach(t => { if (t !== tok) taken[p[t]] = 1; });
+      myNew = [0, 1, 2].map(i => target.set * 3 + i).find(i => !taken[i]);
+      if (myNew == null) { say('That set is full. Drop onto a trainee in it to swap places.'); return; }
+      if (toG === fromG && p[tok] === myNew) return;
+    }
+    if (tpStarted() && !(await confirmModal('Teaching practice has started. This changes who teaches on which day from now on. Move them?', 'Move'))) return;
+    /* every trainee in the groups it touches keeps an explicit place, so nobody else shifts */
+    const S0 = (() => { try { return JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) { return {}; } })();
+    const slot = Object.assign({}, S0.slotOf || {});
+    [fromG, toG].forEach(g => { const p = placesIn(all, g); Object.keys(p).forEach(t => { if (p[t] <= 5) slot[t] = R.LETTERS[p[t]]; }); });
+    slot[tok] = R.LETTERS[myNew]; if (other) slot[other] = R.LETTERS[otherNew];
+    S0.slotOf = slot;
+    try {
+      localStorage.setItem('connect_course_settings', JSON.stringify(S0));
+      say('Moving…');
+      await S.putCourse('settings', S0);
+      let res = null;
+      if (toG !== fromG) { res = await S.renameTrainee(tok, null, toG, null); if (other) res = await S.renameTrainee(other, null, fromG, null); }
+      renderStoreRoster(res && res.trainees ? res.trainees : undefined);
+      say('Moved. The TP points follow the next time they are opened.');
+    } catch (err) { say('Not moved: ' + ((err && err.message) || err)); renderStoreRoster(); }
+  }
+})();
+
 /* An address typed into a row is saved when the box is left; the roster
    repaints from the store's answer, so what shows is what was kept. */
 document.getElementById('storeRoster').addEventListener('change', async e=>{
