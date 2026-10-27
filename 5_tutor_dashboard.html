@@ -23,7 +23,7 @@
 <title>Connect Lite — Tutor dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610280044">
+<link rel="stylesheet" href="hub-tokens.css?v=202610280055">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -499,7 +499,7 @@
   @media(max-width:560px){ .welcome.join{padding:24px 18px 20px;} .welcome.join .wname{transform:none;} .dv6-date{flex-basis:100%;} }
   @media print{ .dv6-brief{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610280044">
+<link rel="stylesheet" href="hub-house.css?v=202610280055">
 </head>
 <body>
 <div class="board">
@@ -600,24 +600,24 @@
 
 </div>
 
-<script src="hub-due.js?v=202610280044"></script>
-<script src="observation-defaults.js?v=202610280044"></script>
-<script src="hub-rotation.js?v=202610280044"></script>
-<script src="hub-shared.js?v=202610280044"></script>
-<script src="hub-store.js?v=202610280044"></script>
-<script src="hub-say.js?v=202610280044"></script>
-<script src="hub-hand.js?v=202610280044"></script>
-<script src="hub-ink.js?v=202610280044"></script>
-<script src="hub-shelf.js?v=202610280044"></script>
+<script src="hub-due.js?v=202610280055"></script>
+<script src="observation-defaults.js?v=202610280055"></script>
+<script src="hub-rotation.js?v=202610280055"></script>
+<script src="hub-shared.js?v=202610280055"></script>
+<script src="hub-store.js?v=202610280055"></script>
+<script src="hub-say.js?v=202610280055"></script>
+<script src="hub-hand.js?v=202610280055"></script>
+<script src="hub-ink.js?v=202610280055"></script>
+<script src="hub-shelf.js?v=202610280055"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202610280044"></script>
-<script src="hub-sync.js?v=202610280044"></script>
-<script src="hub-notebook.js?v=202610280044"></script>
-<script src="hub-tracker.js?v=202610280044"></script>
-<script src="hub-feedback.js?v=202610280044"></script>
+<script src="assignment-defaults.js?v=202610280055"></script>
+<script src="hub-sync.js?v=202610280055"></script>
+<script src="hub-notebook.js?v=202610280055"></script>
+<script src="hub-tracker.js?v=202610280055"></script>
+<script src="hub-feedback.js?v=202610280055"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a trainee's link opened it and read the course and
@@ -1040,7 +1040,7 @@ function paintSetup(s){
         '<div class="wv2-count"><b>' + done + '</b><span>of ' + steps.length + '<br>done</span></div>' +
         '<div class="wv2-cta">' +
           (next ? '<a class="btn primary" href="' + next.href + '">' + (begun ? 'Next: ' + next.short.charAt(0).toLowerCase() + next.short.slice(1) : 'Start setting up the course') + '</a>' : '') +
-          '<small>' + (next ? 'Each step opens where it is done.' : 'All seven done \u2014 add the trainees and this page becomes your working list.') + '</small>' +
+          '<small>' + (next ? 'Each step opens where it is done.' + (s.ready ? ' <button type="button" class="linkbtn" id="wv2Skip">Open the course as it is</button>' : '') : 'All seven done \u2014 add the trainees and this page becomes your working list.') + '</small>' +
         '</div>' +
         '<div class="wv2-track"><span class="wv2-fill" id="wv2Fill"></span><div class="wv2-dots">' +
           steps.map((st, i) => '<a class="wv2-dot ' + state(st, i) + '" href="' + st.href + '" title="' + esc(st.title) + '">' + (i + 1) + '<span>' + st.short + '</span></a>').join('') +
@@ -1060,6 +1060,8 @@ function paintSetup(s){
   requestAnimationFrame(() => requestAnimationFrame(() => { const el = document.getElementById('wv2Fill'); if (el) el.style.width = 'calc((100% - 22px) * ' + fill.toFixed(3) + ')'; }));
   /* one name, two fields: the welcome's is the one on screen now, the header's
      is what every other screen reads */
+  const skip = document.getElementById('wv2Skip');
+  if (skip) skip.addEventListener('click', () => { try { localStorage.setItem('chub:setupSkipped', '1'); } catch (e) {} paint(); });
   const w = document.getElementById('welcomeName');
   const sig = document.getElementById('welcomeSig'), ph = document.getElementById('welcomeSigPh');
   const draw = v => { drawSig(sig, v); ph.hidden = !sig.hidden; };
@@ -1119,7 +1121,13 @@ function isSetter(s){
 }
 function paint(){
   const s = setupState();
-  if (!s.ready && isSetter(s)) { try { localStorage.setItem('chub:setsUp', '1'); } catch (e) {} paintSetup(s); return; }
+  /* THE ONE SETTING IT UP STAYS ON THE SETUP WELCOME UNTIL EVERY STEP IS DONE (Ramy, 27 Oct 2026: "as course admin I
+     landed in the trainer view before finishing ... it was only by accident that I saw this little line telling me I
+     still need to set up the timetable and the TP points"). It used to hand over the moment the trainees were in. Now
+     the seven steps must all be done, or the setter must say they want the course anyway. */
+  const left = setupSteps(s).some(x => !x.done);
+  let skipped = false; try { skipped = localStorage.getItem('chub:setupSkipped') === '1'; } catch (e) {}
+  if ((!s.ready || left) && isSetter(s) && !skipped) { try { localStorage.setItem('chub:setsUp', '1'); } catch (e) {} paintSetup(s); return; }
   if (!isSetter(s)) { try { localStorage.setItem('chub:joined', '1'); } catch (e) {} }
   paintJoin(s);
   document.body.classList.remove('firstrun');

@@ -524,7 +524,7 @@
   /* WHO IS AT THE KEYBOARD GOES WITH THE LINK (Ramy, 27 Oct 2026: a fresh Connect demo greeted him by name). A tutor's
      name and signature are kept on the device; when another link opens here they go, demo or not -- the clean-up
      above stands down when the last course was a demo, and a demo visit keeps the name for its own next visit. */
-  if (lastOwner && !sameOwner && !samePres) { ['chub:tutorName', 'chub:tutorSigKept', 'chub:setsUp', 'chub:joined'].forEach(function(k){ try { origRemove(k); } catch (e) {} }); }
+  if (lastOwner && !sameOwner && !samePres) { ['chub:tutorName', 'chub:tutorSigKept', 'chub:setsUp', 'chub:joined', 'chub:setupSkipped'].forEach(function(k){ try { origRemove(k); } catch (e) {} }); }
   var cached = false; try { cached = localStorage.getItem('hub:booted') === identity; } catch (e) {}
   if (DEMO && !demoSession()) cached = false;   /* a new visit: wait for the clean course, not last visit's copy */
   var dirty = {}, started = false;

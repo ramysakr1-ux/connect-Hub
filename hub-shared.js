@@ -923,6 +923,41 @@ window.hubTutorNames = function(cs){
   return out;
 };
 /* Every tutor's colour, in the order the names are typed. */
+/* COLOUR SETS FOR THE TUTORS (Ramy, 27 Oct 2026: "I don't want it to be a salad ... sets of colours to choose from, the
+   whole package, so we know they fit ... bright, shiny, alive"). Four sets from his research, five colours each, the
+   deep and mid tones only, with cream type like every other solid tile; the pale tones were left out, and so was any
+   tone that reads as Connect's own (teaching practice red, the assessor's navy). A course picks ONE set on Course admin
+   (settings.tutorSet); its tutors take the set's colours in turn, and the set replaces the palette on every page. */
+window.HUB_TUTOR_SETS = {
+  /* the mid tones deepened by the least that lets cream type pass 4.5:1 (Ramy: "make sure the writing is clear") */
+  A: { name: 'Sage & Forest',      cols: ['#4D7268', '#274C77', '#6096BA', '#84A98C', '#244C45'] },
+  B: { name: 'Rose & Plum',        cols: ['#654C83', '#995660', '#776092', '#D58A91', '#B5A1CE'] },
+  C: { name: 'Teal & Caramel',     cols: ['#337379', '#8A5F3E', '#1F4E5F', '#D5AA7B', '#77B5AE'] },
+  D: { name: 'Slate & Terracotta', cols: ['#486581', '#975B36', '#829AB1', '#D99A6C', '#BCCCDC'] }
+};
+(function(){
+  var DEFAULT = window.HUB_TUTOR_COLOURS.slice();
+  function lum(hex){ var n = parseInt(hex.slice(1), 16), f = function(c){ c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * f(n >> 16) + 0.7152 * f((n >> 8) & 255) + 0.0722 * f(n & 255); }
+  window.hubTutorSet = function(settings){ var k = String((settings && settings.tutorSet) || ''); return window.HUB_TUTOR_SETS[k] ? k : ''; };
+  /* the palette and the tiles' colours follow the set: a style sheet that outranks the timetable's own by coming later */
+  window.hubApplyTutorSet = function(settings){
+    var k = window.hubTutorSet(settings), set = k ? window.HUB_TUTOR_SETS[k] : null;
+    var st = document.getElementById('hubTutorSetCss');
+    if (!set) { window.HUB_TUTOR_COLOURS = DEFAULT.slice(); if (st) st.remove(); return ''; }
+    window.HUB_TUTOR_COLOURS = set.cols.map(function(c, i){ var dark = lum(c) < 0.26; return { name: set.name + ' ' + (i + 1), bg: c, bd: c, fg: dark ? '#F0EEE9' : '#1E2A24' }; });
+    var css = set.cols.map(function(c, i){
+      var dark = lum(c) < 0.26, fg = dark ? '#F0EEE9' : '#1E2A24';
+      return '.k-input.by-' + i + '{background:' + c + ' !important; border-color:' + c + ' !important; color:' + fg + ' !important;}'
+        + (dark ? '' : '.k-input.by-' + i + ' .tm, .k-input.by-' + i + ' .rm, .k-input.by-' + i + ' .tm .lt{color:inherit !important; opacity:.8;}')
+        + '.tgrid .due.out.by-' + i + '{background:color-mix(in oklch, ' + c + ' 16%, white) !important; border-color:color-mix(in oklch, ' + c + ' 45%, white) !important; color:color-mix(in oklch, ' + c + ' 80%, black) !important;}';
+    }).join('\n');
+    if (!st) { st = document.createElement('style'); st.id = 'hubTutorSetCss'; (document.head || document.documentElement).appendChild(st); }
+    st.textContent = css;
+    return k;
+  };
+  try { window.hubApplyTutorSet(JSON.parse(localStorage.getItem('connect_course_settings') || 'null') || {}); } catch (e) {}
+  document.addEventListener('hub:ready', function(){ try { window.hubApplyTutorSet(JSON.parse(localStorage.getItem('connect_course_settings') || 'null') || {}); } catch (e) {} });
+})();
 window.hubTutorColours = function(names, chosen){
   var P = window.HUB_TUTOR_COLOURS.length, pick = chosen && typeof chosen === 'object' ? chosen : {};
   var out = [], taken = {};

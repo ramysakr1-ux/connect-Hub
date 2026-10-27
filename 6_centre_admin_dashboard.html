@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610280044">
+<link rel="stylesheet" href="hub-tokens.css?v=202610280055">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -549,6 +549,14 @@
   .certsig-ink i{font-size:0.82rem; color:var(--grey);}
   .certsig-ink svg{height:46px; max-width:240px;}
   /* the input tutors' colours, one row each */
+  .tsets{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;}
+  .fields .tset-opt, .tset-opt{position:relative; display:flex !important; flex-direction:column !important; align-items:flex-start !important; gap:7px !important; padding:9px 12px 9px !important; border:1.5px solid var(--sand-line) !important; border-radius:10px; background:var(--paper); cursor:pointer; min-width:150px; margin:0 !important;}
+  .tset-opt b{letter-spacing:0; text-transform:none; font-size:0.82rem;}
+  .tset-opt input{position:absolute; opacity:0; inset:0; margin:0; cursor:pointer;}
+  .tset-opt b{font-size:0.78rem; font-weight:700; color:var(--ink);}
+  .tset-opt .sw{display:flex; gap:3px;} .tset-opt .sw i{display:block; width:22px; height:22px; border-radius:5px;}
+  .tset-opt:has(input:checked){border-color:var(--a-forest, var(--teal)); box-shadow:0 0 0 2px color-mix(in oklch, var(--a-forest, var(--teal)) 25%, transparent);}
+  .tsets .hintline{flex-basis:100%; margin:0;}
   .tcols{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
   .tcol-row{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
   .tcol-name{min-width:9em; font-weight:600; color:var(--ink);}
@@ -559,7 +567,7 @@
   .tcol-opt input:checked + span{box-shadow:0 0 0 2px var(--paper), 0 0 0 4px var(--teal);}
   .tcol-opt input:focus-visible + span{outline:2px solid var(--gold-lifted); outline-offset:3px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610280044">
+<link rel="stylesheet" href="hub-house.css?v=202610280055">
 </head>
 <body>
 <div class="board">
@@ -691,6 +699,8 @@
         <p class="hintline">Every tutor, including anyone who only teaches input sessions. The timetable and the course records use these names.</p>
         <!-- THE INPUT TUTORS' COLOURS (Ramy, 10 Oct 2026): one row per name above,
              eight colours each; the timetable paints each tutor's input sessions in it. -->
+        <!-- ONE SET FOR THE COURSE (Ramy, 27 Oct 2026): the tutors' colours come as a set that fits, chosen once here -->
+        <div class="tsets" id="tutorSets"></div>
         <div class="tcols" id="tutorColours"></div>
         <p class="hintline" id="tutorColoursHint" hidden>Each tutor’s color on the timetable, for the input sessions they teach. Tap one to change it.</p>
       </div>
@@ -1080,18 +1090,18 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610280044"></script>
-<script src="hub-store.js?v=202610280044"></script>
-<script src="hub-say.js?v=202610280044"></script>
-<script src="agreement-defaults.js?v=202610280044"></script>
-<script src="observation-defaults.js?v=202610280044"></script>
-<script src="hub-shared.js?v=202610280044"></script>
-<script src="hub-rotation.js?v=202610280044"></script>
-<script src="hub-due.js?v=202610280044"></script>
-<script src="hub-sync.js?v=202610280044"></script>
-<script src="hub-notebook.js?v=202610280044"></script>
-<script src="hub-hand.js?v=202610280044"></script>
-<script src="hub-ink.js?v=202610280044"></script>
+<script src="assignment-defaults.js?v=202610280055"></script>
+<script src="hub-store.js?v=202610280055"></script>
+<script src="hub-say.js?v=202610280055"></script>
+<script src="agreement-defaults.js?v=202610280055"></script>
+<script src="observation-defaults.js?v=202610280055"></script>
+<script src="hub-shared.js?v=202610280055"></script>
+<script src="hub-rotation.js?v=202610280055"></script>
+<script src="hub-due.js?v=202610280055"></script>
+<script src="hub-sync.js?v=202610280055"></script>
+<script src="hub-notebook.js?v=202610280055"></script>
+<script src="hub-hand.js?v=202610280055"></script>
+<script src="hub-ink.js?v=202610280055"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1383,6 +1393,7 @@ try {
       } }
     if(cs.deliveryMode) document.getElementById('deliveryMode').value = cs.deliveryMode;
     if(cs.tutorNames) document.getElementById('tutorNames').value = cs.tutorNames;
+    TUTOR_SET = window.hubTutorSet ? hubTutorSet(cs) : ''; if (window.hubApplyTutorSet) hubApplyTutorSet(cs); renderTutorSets();
     TUTOR_COLOURS = (cs.tutorColours && typeof cs.tutorColours === 'object') ? Object.assign({}, cs.tutorColours) : {}; renderTutorColours();
     if(cs.appianUrl) document.getElementById('appianUrl').value = cs.appianUrl;
     if(cs.visitDate) document.getElementById('visitDate').value = cs.visitDate;
@@ -1530,6 +1541,7 @@ function saveSettings(how){
     deliveryMode: document.getElementById('deliveryMode').value || 'f2f',
     tutorNames: document.getElementById('tutorNames').value.trim(),
     /* only the colours somebody chose; the rest are worked out (hub-shared.js hubTutorColours) */
+    tutorSet: TUTOR_SET || '',
     tutorColours: (function(){ const o = {}; tutorsForColours().forEach(n => { if (TUTOR_COLOURS[n] !== undefined) o[n] = TUTOR_COLOURS[n]; }); return o; })(),
     appianUrl: document.getElementById('appianUrl').value.trim(),
     visitDate: document.getElementById('visitDate').value,
@@ -1616,8 +1628,24 @@ var TUTOR_COLOURS = TUTOR_COLOURS || {};
 function tutorNamesTyped(){ return (document.getElementById('tutorNames').value || '').split(/[,\n;]+/).map(s => s.trim()).filter(Boolean); }
 /* Everyone the timetable will know: the signatures, then the contacts (hubTutorNames). */
 function tutorsForColours(){ return window.hubTutorNames({ tutorNames: tutorNamesTyped().join(', '), tutorContacts: [...document.querySelectorAll('.tc-name')].map(el => ({ name: el.value })) }); }
+var TUTOR_SET = TUTOR_SET || '';
+function renderTutorSets(){
+  const host = document.getElementById('tutorSets'); if (!host) return;
+  const S = window.HUB_TUTOR_SETS || {}, keys = Object.keys(S);
+  const card = (k, name, cols) => `<label class="tset-opt"><input type="radio" name="tutorSet" value="${k}"${TUTOR_SET === k ? ' checked' : ''}><b>${esc(name)}</b><span class="sw">${cols.map(c => `<i style="background:${c}"></i>`).join('')}</span></label>`;
+  host.innerHTML = card('', 'Connect’s own', (window.HUB_TUTOR_SETS ? ['oklch(52% 0.14 32)', 'oklch(46% 0.1 250)', 'oklch(44% 0.08 150)', 'oklch(45% 0.09 320)', 'oklch(50% 0.12 355)'] : []))
+    + keys.map(k => card(k, S[k].name, S[k].cols)).join('')
+    + '<p class="hintline">One set for the course, so the colours fit together. Each tutor takes the next colour in it; tap a swatch below to swap two.</p>';
+}
+document.getElementById('tutorSets').addEventListener('change', e => {
+  const r = e.target.closest('input[name=tutorSet]'); if (!r) return;
+  TUTOR_SET = r.value; window.hubApplyTutorSet({ tutorSet: TUTOR_SET });
+  TUTOR_COLOURS = {};   /* the tutors take the set's colours in turn */
+  renderTutorSets(); renderTutorColours();
+});
 function renderTutorColours(){
   const host = document.getElementById('tutorColours'); if (!host) return;
+  if (!document.getElementById('tutorSets').children.length) renderTutorSets();
   const names = tutorsForColours(), P = window.HUB_TUTOR_COLOURS || [];
   const cols = window.hubTutorColours(names, TUTOR_COLOURS);
   const hint = document.getElementById('tutorColoursHint'); if (hint) hint.hidden = !names.length;
