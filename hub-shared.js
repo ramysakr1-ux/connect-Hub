@@ -635,7 +635,20 @@ window.hubReserveForBar = function(selector){
 
    So: the modern API, then execCommand, which needs no permission, and if both
    are gone the link is put on screen, selected, to be copied by hand. */
-window.hubCopy = async function(text){
+window.hubCopy = async function(text, html){
+  /* With html, the clipboard carries both: a document (Google Docs, Word) pastes the formatted one, a chat or a
+     plain field the text (the lesson plan, 27 Oct 2026). */
+  if (html) {
+    try { if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+      await navigator.clipboard.write([new ClipboardItem({ 'text/plain': new Blob([text], { type: 'text/plain' }), 'text/html': new Blob([html], { type: 'text/html' }) })]);
+      return true; } } catch(e){}
+    try {
+      var put = function(e){ e.clipboardData.setData('text/plain', text); e.clipboardData.setData('text/html', html); e.preventDefault(); };
+      document.addEventListener('copy', put, { once: true });
+      if (document.execCommand('copy')) return true;
+      document.removeEventListener('copy', put);
+    } catch(e){}
+  }
   try { await navigator.clipboard.writeText(text); return true; } catch(e){}
   try {
     var ta=document.createElement('textarea');
@@ -652,7 +665,7 @@ window.hubCopy = async function(text){
 
 /* The button-shaped version: says "Copied", and when it cannot, shows the link
    instead of pretending. Pass the button and what should land on the clipboard. */
-window.hubCopyButton = async function(btn, text){
+window.hubCopyButton = async function(btn, text, html){
   /* A ticket (the console's ticket book, 1b) is a whole button with a small
      state line inside it: only that line says "Copied", or the ticket's name
      and note would be wiped. */
@@ -666,7 +679,7 @@ window.hubCopyButton = async function(btn, text){
      ever one, and only where the copy has just failed (walk, 21 Sep 2026). */
   var stale = document.querySelectorAll('.copy-fallback');
   for (var i = 0; i < stale.length; i++) stale[i].remove();
-  if(await window.hubCopy(text)){
+  if(await window.hubCopy(text, html)){
     /* "Copied ✓" for 1.8s, and the row it sits in lit while it lasts (the
        link cards, 7 Oct 2026); a page with no .copied style just sees the
        word change, as before. */

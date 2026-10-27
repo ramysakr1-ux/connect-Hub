@@ -145,6 +145,71 @@
     return md.join('\n');
   }
 
+  /* THE SAME PLAN, AS A DOCUMENT (Ramy, 27 Oct 2026: "pasting this into a Google Doc or a Word doc, it's just
+     a plain text. It's not pasting as a lesson plan ... Is there a way to make it more lesson plan friendly"). Copy
+     puts this beside the text: a document takes the formatted version (headings and tables a tutor can comment
+     on), a chat takes the text. The colors are written out because a pasted document has none of the page's
+     tokens; plain greys only. */
+  function h(v){ return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function cell(v){ var ls = lines(v); return ls.length ? ls.map(h).join('<br>') : ''; }
+  var TB = 'border-collapse:collapse; width:100%; margin:0 0 14px;';
+  var TH = 'border:1px solid #999; padding:6px 8px; background:#eee; text-align:left; vertical-align:top; font-weight:bold;';
+  var TD = 'border:1px solid #999; padding:6px 8px; text-align:left; vertical-align:top;';
+  function table(head, rows){
+    return '<table style="' + TB + '"><tr>' + head.map(function(x){ return '<th style="' + TH + '">' + h(x) + '</th>'; }).join('') + '</tr>' +
+      rows.map(function(r){ return '<tr>' + r.map(function(x){ return '<td style="' + TD + '">' + x + '</td>'; }).join('') + '</tr>'; }).join('') + '</table>';
+  }
+  function planHTML(doc){
+    var m = doc.meta || {}, p = doc.plan || {}, l = doc.la || {};
+    var o = [];
+    o.push('<h1>Lesson plan: ' + h(m.name || 'trainee') + ', ' + h(m.tp ? (/^TP/i.test(m.tp) ? m.tp : 'TP' + m.tp) : 'TP') + '</h1>');
+    var meta = [];
+    if (m.level) meta.push(['Level', h(m.level)]); if (m.date) meta.push(['Date', h(m.date)]);
+    if (m.length) meta.push(['Length', h(m.length) + ' min']); if (m.framework) meta.push(['Lesson shape', h(m.framework)]);
+    if (meta.length) o.push(table(meta.map(function(x){ return x[0]; }), [meta.map(function(x){ return x[1]; })]));
+    var aims = [['Main aim', p.main], ['Subsidiary aim', p.sub], ['Personal aim', p.pers]].filter(function(x){ return lines(x[1]).length; });
+    if (aims.length) { o.push('<h2>Aims</h2>'); o.push(table(['', ''], aims.map(function(x){ return ['<b>' + h(x[0]) + '</b>', cell(x[1])]; })).replace(/<tr><th[^]*?<\/tr>/, '')); }
+    if ((p.profile || '').trim()) { o.push('<h2>Class profile</h2><p>' + cell(p.profile) + '</p>'); }
+    if (lines(p.mats).length) { o.push('<h2>Materials</h2><p>' + cell(p.mats) + '</p>'); }
+    var probs = (p.probs || []).filter(function(x){ return lines(x.problem).length || lines(x.solution).length; });
+    if (probs.length) { o.push('<h2>Anticipated problems and solutions</h2>'); o.push(table(['Problem', 'Solution'], probs.map(function(x){ return [cell(x.problem), cell(x.solution)]; }))); }
+    if ((p.rows || []).length) {
+      o.push('<h2>Procedure</h2>');
+      o.push(table(['Stage and aim', 'Procedure', 'Time', 'Interaction'], p.rows.map(function(r, i){
+        return ['<b>' + (i + 1) + '. ' + h(r.stage || '') + '</b>' + (r.aim ? '<br><i>' + h(r.aim) + '</i>' : ''), cell(r.proc), h(r.time ? r.time + ' min' : ''), h(r.int || '')];
+      })));
+    }
+    var laLabel = l.type === 'vocab' ? 'Vocabulary' : (l.type === 'grammar' ? 'Grammar' : 'Functional language');
+    if (l.type === 'vocab' && (l.vocab || []).length) {
+      o.push('<h2>Language analysis: ' + laLabel + '</h2>');
+      if (l.context) o.push('<p><b>Context:</b> ' + h(l.context) + '</p>');
+      o.push(table(['Item', 'Meaning', 'Conveying meaning', 'Checking meaning', 'Form', 'Anticipated problems'], l.vocab.map(function(r){
+        return ['<b>' + cell(r.item) + '</b>', cell(r.def), cell(r.convey), cell(r.clar), cell(r.form), cell(r.prob)];
+      })));
+    } else if ((l.blocks || []).length) {
+      o.push('<h2>Language analysis: ' + laLabel + '</h2>');
+      if (l.context) o.push('<p><b>Context:</b> ' + h(l.context) + '</p>');
+      l.blocks.forEach(function(b, bi){
+        var rows = [];
+        (b.fields || []).forEach(function(f){
+          if (f.pairs) { f.pairs.forEach(function(x){ rows.push(['<b>' + h(f.label) + '</b>', '<b>Problem:</b> ' + cell(x.problem) + '<br><b>Solution:</b> ' + cell(x.solution)]); }); }
+          else if ((f.value || '').trim()) rows.push(['<b>' + h(f.label) + '</b>', cell(f.value)]);
+        });
+        if (rows.length) { o.push('<h3>' + (bi + 1) + (b.title ? '. ' + h(b.title) : '') + '</h3>'); o.push(table(['', ''], rows).replace(/<tr><th[^]*?<\/tr>/, '')); }
+      });
+    }
+    if (doc.self) {
+      var s = doc.self, sr = [['What went well', s.well], ['What did not', s.not], ['What they learned', s.learn], ['What they found difficult', s.diff], ['Next time', s.next]].filter(function(x){ return lines(x[1]).length; });
+      if (sr.length) { o.push('<h2>Their self-evaluation</h2>'); o.push(table(['', ''], sr.map(function(x){ return ['<b>' + h(x[0]) + '</b>', cell(x[1])]; })).replace(/<tr><th[^]*?<\/tr>/, '')); }
+    }
+    return '<div style="font-family:Arial, Helvetica, sans-serif; font-size:11pt;">' + o.join('\n') + '</div>';
+  }
+  /* The document view of the brief: the plan, then each feedback heading with room under it. */
+  function briefHTML(doc){
+    return planHTML(doc).replace(/<\/div>$/, '') + '\n<h2>Feedback</h2>\n' +
+      slots(doc).map(function(x){ return '<h3>' + h(x.heading) + '</h3><p>&nbsp;</p>'; }).join('\n') + '</div>';
+  }
+
   /* The brief. The plan, then the slots, then the rule for filling them. The
      headings are repeated exactly in a manifest at the end so a model that
      rewrites one can still be matched by the reader, and so that what comes
@@ -301,5 +366,5 @@
     return { found: found, unplaced: unplaced, manifest: man };
   }
 
-  window.HubExchange = { brief: brief, planMarkdown: planMarkdown, slots: slots, read: read, sections: sections, bestLevel: bestLevel, deNumber: deNumber };
+  window.HubExchange = { brief: brief, briefHTML: briefHTML, planHTML: planHTML, planMarkdown: planMarkdown, slots: slots, read: read, sections: sections, bestLevel: bestLevel, deNumber: deNumber };
 })();
