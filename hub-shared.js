@@ -884,7 +884,7 @@ window.hubClockRange = function(a, b){
   return (sa === sb ? A.slice(0, -3) : A) + '\u2013' + B;
 };
 /* THE INPUT TUTORS' COLOURS (Ramy, 10 Oct 2026: "what if there are four
-   different tutors doing input sessions?" -- build the picker). Eight colours,
+   different tutors doing input sessions?" -- build the picker). Ten colours (eight strong, two soft),
    and none of them is one that already means something on the board: teal is
    an input with no tutor, gold teaching practice, amber a plan not in, garnet
    a lesson not to standard. The first four are the board's colours since 30
@@ -903,7 +903,11 @@ window.HUB_TUTOR_COLOURS = [
   { name: 'Pink',   bg: 'oklch(50% 0.12 355)', bd: 'oklch(50% 0.12 355)', fg: '#F0EEE9' },
   { name: 'Olive',  bg: 'oklch(46% 0.08 115)', bd: 'oklch(46% 0.08 115)', fg: '#F0EEE9' },
   { name: 'Indigo', bg: 'oklch(44% 0.12 280)', bd: 'oklch(44% 0.12 280)', fg: '#F0EEE9' },
-  { name: 'Sky',    bg: 'oklch(48% 0.1 230)',  bd: 'oklch(48% 0.1 230)',  fg: '#F0EEE9' }
+  { name: 'Sky',    bg: 'oklch(48% 0.1 230)',  bd: 'oklch(48% 0.1 230)',  fg: '#F0EEE9' },
+  /* Two soft ones (Ramy, 27 Oct 2026: "a light orange ... and light blue ... nice soft colors"): a pale fill with
+     dark type, so an input tile still reads apart from teaching practice's red and the board's other tiles. */
+  { name: 'Soft orange', bg: 'oklch(90% 0.07 62)',  bd: 'oklch(80% 0.1 60)',   fg: 'oklch(34% 0.08 50)' },
+  { name: 'Soft blue',   bg: 'oklch(91% 0.045 235)', bd: 'oklch(80% 0.07 238)', fg: 'oklch(32% 0.08 245)' }
 ];
 /* THE COURSE'S TUTORS, from both lists on Course admin (10 Oct 2026). Ramy
    added Narges under "Add a tutor" and the timetable never knew her: it read

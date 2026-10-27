@@ -154,7 +154,7 @@
     var st = nextMonday(), en = new Date(st); en.setDate(en.getDate() + 25);
     var C = P.course, f = [];
     var put = function(id, v){ var el = $(id); if (el && v != null && String(v) !== '') f.push({ el: el, text: String(v) }); };
-    put('courseName', C.courseName); put('tutorNames', C.tutorNames); put('totalHours', C.totalHours);
+    put('courseName', C.courseName); put('courseNumber', C.courseNumber); put('tutorNames', C.tutorNames); put('totalHours', C.totalHours);
     put('planDueNote', C.planDueNote); put('selfDueNote', C.selfDueNote);
     Object.keys(C.agreement || {}).forEach(function(k){ put(k, C.agreement[k]); });
     var set = function(id, v){ var el = $(id); if (!el) return; setVal(el, v); el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); if (el._flatpickr) el._flatpickr.setDate(v, true); };
@@ -165,6 +165,11 @@
     var tick = function(id){ var el = $(id); if (el && !el.checked) { el.checked = true; el.dispatchEvent(new Event('change', { bubbles: true })); } };
     tick('preCourseConnect'); set('gtkyFormat', 'both'); tick('interviewRecording');
     if ($('deliveryMode')) set('deliveryMode', C.deliveryMode || 'f2f');
+    /* New York, on the 12-hour clock, and each tutor's input in a soft colour of their own */
+    if ($('courseZone')) set('courseZone', C.timeZone || 'America/New_York');
+    if ($('courseClock')) set('courseClock', C.clock || '12');
+    var TC = g('TUTOR_COLOURS');
+    if (TC && typeof TC === 'object') { Object.keys(C.tutorColours || {}).forEach(function(n){ TC[n] = C.tutorColours[n]; }); if (typeof g('renderTutorColours') === 'function') g('renderTutorColours')(); }
     await typeAll(f);
     if (typeof g('saveSettings') === 'function') {
       g('saveSettings')('Saved');

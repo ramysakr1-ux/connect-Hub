@@ -932,9 +932,10 @@ case 'inbox': {
       var forWho = String(req.forName || '').trim().slice(0, 60);
       var pname = 'Connect demo' + (forWho ? ' \u00b7 ' + forWho : '');
       sheet_(SHEET_COURSES).appendRow([pid, pname, new Date()]);
-      var ptz = Session.getScriptTimeZone();
-      var pseed = { centreNumber: 'TR999', centreLocked: true, centreName: 'Elmswood English Centre', courseName: 'Connect demo',
-                    presentToday: Utilities.formatDate(new Date(), ptz, 'yyyy-MM-dd'), presentFor: forWho };
+      /* a New York course on New York time (Ramy, 27 Oct 2026: "let's go with a New York course, New York time zone") */
+      var ptz = 'America/New_York';
+      var pseed = { centreNumber: 'US999', centreLocked: true, centreName: 'Elmswood English Center', courseName: 'Connect demo', courseNumber: 'C/1',
+                    timeZone: ptz, clock: '12', presentToday: Utilities.formatDate(new Date(), ptz, 'yyyy-MM-dd'), presentFor: forWho };
       var pdays = parseInt(req.days, 10);
       if (pdays > 0) pseed.demoExpires = Utilities.formatDate(new Date(Date.now() + pdays * 864e5), ptz, 'yyyy-MM-dd');
       courseWrite_(pid, 'settings', pseed);
