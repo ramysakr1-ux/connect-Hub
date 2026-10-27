@@ -20,7 +20,9 @@
   var rd = function(k){ try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
   var ls = function(k, v){ try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} };
   var cs = function(){ return rd('connect_course_settings') || {}; };
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(cs().presentToday || ''))) return;
+  /* a new link clears the browser before the course's settings arrive: step aside, and hub-shared loads the bar
+     again on hub:ready, once the day is known (the assessor's page lost its bar that way, 27 Oct 2026) */
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(cs().presentToday || ''))) { var me0 = document.getElementById('hubPresentJs'); if (me0) me0.remove(); return; }
   var PAGE = (location.pathname.split('/').pop() || 'index.html');
   var S = window.HubStore || {};
   var role = function(){
@@ -38,6 +40,10 @@
 
   /* ---- what the switch needs, kept while the tutor is here -------------------------------------------- */
   if (ROLE === 'tutor') {
+    /* a fresh copy: what the switch remembered of the last one (its trainees, volunteer, assessor) goes first */
+    if (localStorage.getItem('hub:present:k') && localStorage.getItem('hub:present:k') !== localStorage.getItem('hub:k')) {
+      ['hub:present:trainees', 'hub:present:v', 'hub:present:a', 'hub:present:who'].forEach(function(k){ ls(k, null); });
+    }
     ls('hub:present:k', localStorage.getItem('hub:k'));
     var ro = rd('connect_roster_v1');
     if (ro && ro.trainees) {
@@ -203,7 +209,7 @@
     var named = false; try { named = !!localStorage.getItem('chub:tutorName'); } catch (e) {}
     if (nm && !named && !nm.value.trim()) { nm.scrollIntoView({ block: 'center', behavior: 'smooth' }); await sleep(300); await typeAll([{ el: nm, text: (P.course.tutorNames || 'Jordan Blake').split(',')[0].trim() }]); await sleep(400); }
     var box = $('streamText');
-    if (!box || box.offsetParent === null) { say('Open the announcement box first.'); return; }
+    if (!box || box.offsetParent === null) { say(nm ? 'Jordan Blake is the tutor on this course. Start setting it up in Course admin.' : 'Open the announcement box first.'); return; }
     box.scrollIntoView({ block: 'center', behavior: 'smooth' }); await sleep(300);
     await typeAll([{ el: box, text: P.announcement }]);
     say('An announcement to the whole course. Post it, then switch to a trainee to see it arrive.');

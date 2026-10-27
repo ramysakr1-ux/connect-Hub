@@ -504,15 +504,27 @@
      still waiting to be sent. A volunteer's phone is left alone: its notebook lives only there. */
   var lastOwner = null; try { lastOwner = localStorage.getItem('hub:booted'); } catch (e) {}
   var sameOwner = lastOwner === identity;
+  /* ...except the presenter moving between the roles of one Connect demo (hub:present:*): the same person, the same course */
+  var samePres = false; try {
+    var pk = localStorage.getItem('hub:present:k') || '', pt = JSON.parse(localStorage.getItem('hub:present:trainees') || '[]') || [],
+        pv = (JSON.parse(localStorage.getItem('hub:present:v') || 'null') || {}).token || '', pa = localStorage.getItem('hub:present:a') || '';
+    var ours = function(id){ id = String(id || ''); return !!pk && (id === 'tutor:' + pk || (!!pa && id === 'assessor:' + pa) || (!!pv && id === 'volunteer:' + pv)
+      || pt.some(function(x){ return x && id === 'trainee:' + x.t; })); };
+    samePres = ours(lastOwner) && ours(identity);
+  } catch (e) {}
   if (!DEMO && lastOwner && !sameOwner && (mode === 'trainee' || mode === 'tutor' || mode === 'assessor')) { try {
     var KEEPN = /^(hub:(t|k|a|v|o|p|kpin|pin)$|hub:o:|hub:pending:|hub:unsaved:|chub:passDays$|chub:card|chub:installHintDone$|mk:)/;
     /* A Connect demo is one presenter's browser playing every part (27 Oct 2026): its switch's own keys (hub:present:*,
        written only by hub-present.js on a presentation course) stay, whoever the last link was. A volunteer's page does
        not hold the course settings, so the course itself cannot be asked. */
     var goneN = [];
-    for (var gn = localStorage.length - 1; gn >= 0; gn--) { var kn = localStorage.key(gn); if (kn && !KEEPN.test(kn) && !/^hub:present:/.test(kn) && /^(chub[:_]|connect_|hub:)/.test(kn)) goneN.push(kn); }
+    for (var gn = localStorage.length - 1; gn >= 0; gn--) { var kn = localStorage.key(gn); if (kn && !KEEPN.test(kn) && !/^hub:present:/.test(kn) && !(samePres && /^chub:tutor(Name|SigKept)$/.test(kn)) && /^(chub[:_]|connect_|hub:)/.test(kn)) goneN.push(kn); }
     goneN.forEach(function(k){ try { origRemove(k); } catch (e) {} });
   } catch (e) {} }
+  /* WHO IS AT THE KEYBOARD GOES WITH THE LINK (Ramy, 27 Oct 2026: a fresh Connect demo greeted him by name). A tutor's
+     name and signature are kept on the device; when another link opens here they go, demo or not -- the clean-up
+     above stands down when the last course was a demo, and a demo visit keeps the name for its own next visit. */
+  if (lastOwner && !sameOwner && !samePres) { ['chub:tutorName', 'chub:tutorSigKept', 'chub:setsUp', 'chub:joined'].forEach(function(k){ try { origRemove(k); } catch (e) {} }); }
   var cached = false; try { cached = localStorage.getItem('hub:booted') === identity; } catch (e) {}
   if (DEMO && !demoSession()) cached = false;   /* a new visit: wait for the clean course, not last visit's copy */
   var dirty = {}, started = false;
