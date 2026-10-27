@@ -35,7 +35,7 @@
 <title>Connect Lite — TP point sets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610271249">
+<link rel="stylesheet" href="hub-tokens.css?v=202610271253">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1020px; margin:0 auto; padding:26px 20px 90px;}
@@ -110,6 +110,24 @@
     border-radius:10px; padding:15px 18px 17px; margin:0 0 18px;}
   .libwrap h2{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.12rem; margin:0 0 3px;}
   .libwrap .lede{margin:0 0 12px;}
+  /* THE LIBRARY'S INDEX. Ramy, 27 Oct 2026: "something on top that just quickly tells me the content of the library". */
+  .idxstats{display:grid; grid-template-columns:repeat(auto-fit,minmax(104px,1fr)); gap:9px; margin:0 0 13px;}
+  .idxstat{background:var(--box); border-radius:9px; padding:9px 12px;}
+  .idxstat b{display:block; font-family:'Newsreader',Georgia,serif; font-size:1.5rem; font-weight:700; line-height:1.1; color:var(--ink);}
+  .idxstat span{font-size:0.74rem; color:var(--grey);}
+  .idxlv{display:flex; flex-wrap:wrap; gap:6px; margin:0 0 13px; align-items:center;}
+  .idxlv .lab{margin-right:3px;}
+  .idxlv span.chip{font-size:0.76rem; background:var(--box); border-radius:999px; padding:3px 10px; color:var(--ink);}
+  .idxlv span.chip b{font-variant-numeric:tabular-nums;}
+  .idxscroll{overflow-x:auto;}
+  .idxtable{width:100%; border-collapse:collapse; font-size:0.84rem;}
+  .idxtable th{font-size:0.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--grey); font-weight:700; text-align:left; padding:6px 8px; border-bottom:1px solid var(--sand-line); white-space:nowrap;}
+  .idxtable td{padding:7px 8px; border-bottom:1px solid var(--row-line, var(--sand-line)); vertical-align:top;}
+  .idxtable td.n{font-variant-numeric:tabular-nums; white-space:nowrap;}
+  .idxtable tr.on td{background:var(--box);}
+  .idxname{font:inherit; font-weight:700; color:var(--teal); background:none; border:0; padding:0; cursor:pointer; text-align:left;}
+  .idxname:hover{text-decoration:underline;}
+  @media(max-width:640px){ .idxtable .hm{display:none;} }
   .libfilter{display:flex; flex-wrap:wrap; gap:7px; margin:0 0 13px; align-items:center;}
   .libfilter .lab{margin-right:3px;}
   .lvchip{font-family:inherit; font-size:0.78rem; font-weight:600; cursor:pointer; padding:4px 11px;
@@ -226,7 +244,7 @@
   @media(max-width:560px){ .sm-cell{height:18px; padding:2px;} .sm-grid{gap:4px 3px;} }
   @media print{ .sm-map{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610271249">
+<link rel="stylesheet" href="hub-house.css?v=202610271253">
 <style>
 /* COLOUR FOR A SET (Ramy, 21 Oct 2026: "I feel like we should give it some
    color"). The notebook's own: white cards with the shadow, a forest band for
@@ -260,12 +278,12 @@ body.hub-paper .shead .state.done{background:var(--a-forest, var(--teal)); color
   <a class="back" id="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610271249"></script>
-<script src="hub-rotation.js?v=202610271249"></script>
-<script src="hub-store.js?v=202610271249"></script>
-<script src="hub-say.js?v=202610271249"></script>
-<script src="hub-sync.js?v=202610271249"></script>
-<script src="hub-pages.js?v=202610271249"></script>
+<script src="hub-shared.js?v=202610271253"></script>
+<script src="hub-rotation.js?v=202610271253"></script>
+<script src="hub-store.js?v=202610271253"></script>
+<script src="hub-say.js?v=202610271253"></script>
+<script src="hub-sync.js?v=202610271253"></script>
+<script src="hub-pages.js?v=202610271253"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
@@ -605,6 +623,40 @@ function libraryPanel(){
   </div>`;
 }
 
+/* THE INDEX. What the library holds, at a glance, above the sets: how many sets, books and
+   levels, how much is written, and one row a set to go to. It is for the library course
+   (and any course that has grown to three sets or more); a course with one or two sets
+   has the tabs and needs no index. */
+const levelRank = l => { const m = /\b([ABC])([12])(\+)?/.exec(String(l || '')); return m ? (('ABC'.indexOf(m[1]) * 2 + (+m[2])) * 2 + (m[3] ? 1 : 0)) : 99; };
+const levelKey = l => String(l || '').split('(')[0].trim() || 'No level';
+function indexPanel(){
+  const ids = Object.keys(LIB);
+  /* the library course carries no course name and the company as its centre */
+  const isLib = /not a course/i.test(String(SETTINGS.courseName || '')) || (!SETTINGS.courseName && SETTINGS.centreName === 'Connect');
+  if (!isLib && ids.length < 3) return '';
+  const slotsOf = x => Object.values(x.sessions || {}).flatMap(ses => ses.slots || []);
+  const lineCount = t => (Array.isArray(t) ? t : String(t || '').split('\n')).filter(l => String(l).trim()).length;
+  const rows = ids.map(id => {
+    const x = LIB[id], all = slotsOf(x);
+    return { id, name: x.name || x.book || 'Untitled set', book: String(x.book || '').split(',')[0].trim(), level: String(x.level || ''),
+      lessons: all.filter(sl => sl.type || sl.aim || (sl.stages || []).length).length, total: all.length,
+      pages: all.reduce((n, sl) => n + (sl.files || []).length, 0), tracks: all.reduce((n, sl) => n + lineCount(sl.tracks), 0), by: x.by || '' };
+  }).sort((p, q) => levelRank(p.level) - levelRank(q.level) || p.name.localeCompare(q.name));
+  const sum = k => rows.reduce((n, r) => n + r[k], 0);
+  const books = new Set(rows.map(r => r.book.toLowerCase()).filter(Boolean));
+  const levels = {}; rows.forEach(r => { const k = levelKey(r.level); levels[k] = (levels[k] || 0) + 1; });
+  const lvKeys = Object.keys(levels).sort((p, q) => levelRank(p) - levelRank(q));
+  const stat = (n, w) => `<div class="idxstat"><b>${n}</b><span>${w}</span></div>`;
+  return `<div class="libwrap">
+    <h2>${isLib ? 'What is in the library' : 'The sets on this course'}</h2>
+    <div class="idxstats">${stat(rows.length, rows.length === 1 ? 'set' : 'sets')}${stat(books.size, books.size === 1 ? 'coursebook' : 'coursebooks')}${stat(lvKeys.length, lvKeys.length === 1 ? 'level' : 'levels')}${
+      stat(sum('lessons'), 'of ' + sum('total') + ' lessons written')}${stat(sum('pages'), 'pages attached')}${stat(sum('tracks'), 'recordings')}</div>
+    <div class="idxlv"><span class="lab">Levels</span>${lvKeys.map(k => `<span class="chip">${esc(k)} <b>${levels[k]}</b></span>`).join('')}</div>
+    <div class="idxscroll"><table class="idxtable"><thead><tr><th>Set</th><th class="hm">Coursebook</th><th>Level</th><th>Lessons</th><th class="hm">Pages</th><th class="hm">Recordings</th><th class="hm">By</th></tr></thead><tbody>${
+      rows.map(r => `<tr${r.id === CUR ? ' class="on"' : ''}><td><button type="button" class="idxname" data-set="${esc(r.id)}">${esc(r.name)}</button></td><td class="hm">${esc(r.book)}</td><td class="n">${esc(levelKey(r.level))}</td><td class="n">${r.lessons} of ${r.total}</td><td class="n hm">${r.pages}</td><td class="n hm">${r.tracks}</td><td class="hm">${esc(r.by)}</td></tr>`).join('')}</tbody></table></div>
+  </div>`;
+}
+
 function load(){
   const P = rec(KEY) || {};
   const holder = P.set || {};
@@ -688,6 +740,7 @@ function render(){
 
   $('app').innerHTML = `<p class="eyebrow">Teaching practice</p><h1>TP point sets</h1>
     <p class="lede">The lessons this course teaches, written once against the book. A set belongs to a tutor and their book; the rotation on the TP points screen deals its slots to whoever is teaching. Give a slot its stages and the trainee’s own plan can start from them.</p>
+    ${indexPanel()}
     ${tabs}
     ${libraryPanel()}
     ${offerPanel()}
