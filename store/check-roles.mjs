@@ -51,7 +51,7 @@ const hex = (n) => Array.from({ length: n / 2 }, () => Math.floor(Math.random() 
 let { courses } = (await raw({ op: 'ownerCourses', owner: OWNER })).result;
 let sc = courses.find((c) => c.name === NAME && !c.deleted);
 if (!sc) {
-  const made = await raw({ op: 'createCourse', owner: OWNER, centreNumber: 'TR999', centreName: 'Elmswood English Centre', name: NAME });
+  const made = await raw({ op: 'createCourse', owner: OWNER, centreNumber: 'TR999', centreName: 'Elmswood English Center', name: NAME });
   if (!made.ok) { console.error('could not make the scratch course: ' + made.error); process.exit(1); }
   courses = made.result.courses; sc = courses.find((c) => c.id === made.result.id);
   console.log('made the scratch course', sc.id);

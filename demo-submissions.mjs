@@ -7,7 +7,7 @@
  * inside 750-1,000 words as screen 9 and screen 10 count them: every text box
  * plus every analysis table.
  *
- * They are written for the demo's own world: Elmswood English Centre, two TP
+ * They are written for the demo's own world: Elmswood English Center, two TP
  * groups (group 1 at A2, group 2 at B1, Speakout), the volunteers the seed
  * makes, tutors Jordan Blake and Diane Okonkwo. Nothing here is a real
  * trainee's work. Keys are the section INDEXES of the shipped wording; a

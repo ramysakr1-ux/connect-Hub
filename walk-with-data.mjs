@@ -87,7 +87,7 @@ TOKENS.forEach((tok, i) => {
     agreement: i===0 ? { name:NAMES[0], at:'2026-03-05T08:00:00Z', print:'abc' } : {} };
 });
 
-const SETTINGS = { centreName:'Elmswood English Centre', centreNumber:'TR999', courseName:'CELTA — C/1 2026',
+const SETTINGS = { centreName:'Elmswood English Center', centreNumber:'TR999', courseName:'CELTA — C/1 2026',
   start:'2026-03-02', end:'2026-03-27', timeZone:'Europe/Istanbul', deliveryMode:'f2f',
   tutorNames:'Selin Yilmaz, Olivia Hart', totalHours:120, planFrom:1, analysisFrom:3,
   volunteerCertificateHours:20, visitDate:'2026-03-24', demoToday:'2026-03-09',

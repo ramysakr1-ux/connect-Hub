@@ -26,7 +26,7 @@ export const COURSE = {
   name: 'CELTA — C/1 2026',
   settings: {
     start: '2026-08-10', end: '2026-09-04',
-    centreName: 'Elmswood English Centre', centreNumber: 'TR999',
+    centreName: 'Elmswood English Center', centreNumber: 'TR999',
     courseName: 'CELTA — C/1 2026',
     tpCount: 8, totalHours: 120, deliveryMode: 'f2f',
     tutorNames: 'Jordan Blake, Diane Okonkwo',

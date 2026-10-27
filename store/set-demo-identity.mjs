@@ -6,7 +6,7 @@
 // WHY. Ramy, 27 Sep 2026: the demo must look authentic and be entirely made
 // up. "I don't want a real centre — a made up centre with a made up logo."
 //
-// Elmswood English Centre is already invented, and stays. Three things were
+// Elmswood English Center is already invented, and stays. Three things were
 // not right:
 //
 //   centreNumber  XX000 reads as an unfilled placeholder, not as a centre.
@@ -38,7 +38,7 @@ const STORE = (readFileSync(join(HERE, 'hub-store.js'), 'utf8').match(/https:\/\
 const OWNER = readFileSync(join(HERE, '.owner-key'), 'utf8').trim();
 const WRITE = process.argv.includes('--write');
 
-const CENTRE_NAME = 'Elmswood English Centre';
+const CENTRE_NAME = 'Elmswood English Center';
 const CENTRE_NUMBER = 'TR999';
 const LOGO = (() => {
   const svg = readFileSync(join(HERE, 'assets/elmswood-logo.svg'), 'utf8').replace(/\n\s*/g, ' ').trim();

@@ -58,7 +58,7 @@ const plus = (d, n) => { const x = new Date(d); x.setUTCDate(x.getUTCDate() + n)
 const SETTINGS = {
   start: iso(monday),
   end: iso(plus(monday, 25)),
-  centreName: 'Elmswood English Centre',
+  centreName: 'Elmswood English Center',
   centreNumber: 'TR999',
   courseName: 'CELTA — October 2026',
   tpCount: 8,
@@ -98,7 +98,7 @@ if (!course) {
     console.log(`No scratch course yet. Run with --make.`);
     process.exit(0);
   }
-  const made = await call({ op: 'createCourse', owner: OWNER, centreNumber: 'TR999', centreName: 'Elmswood English Centre', name: NAME });
+  const made = await call({ op: 'createCourse', owner: OWNER, centreNumber: 'TR999', centreName: 'Elmswood English Center', name: NAME });
   if (!made.ok) { console.error('could not create it: ' + made.error); process.exit(1); }
   course = made.result.course || made.result;
   if (KEEP.has(course.id)) { console.error('refusing: got ' + course.id); process.exit(1); }

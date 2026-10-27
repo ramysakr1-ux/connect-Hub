@@ -15,7 +15,7 @@
  * (DEMO-ANIMATION-SPEC.md, parts 1-4); part 5 is shot from the finished
  * course, which demo-finished.mjs builds.
  *
- * THE COURSE. Elmswood English Centre (the invented demo centre, TR999),
+ * THE COURSE. Elmswood English Center (the invented demo centre, TR999),
  * "CELTA — C/1 2026", Monday 2 March to Friday 27 March 2026, six trainees
  * in one group, two tutors. Day 1 is orientation; teaching runs from day 2
  * with the two sets (ABC, DEF) taking alternate days, the same practice
@@ -183,7 +183,7 @@ const DOCS = {
 function settingsFor(tokens) {
   const s = {
     start: START, end: END,
-    centreName: 'Elmswood English Centre', centreNumber: 'TR999', courseName: 'CELTA — C/1 2026',
+    centreName: 'Elmswood English Center', centreNumber: 'TR999', courseName: 'CELTA — C/1 2026',
     courseNumber: '1 / 2026', notificationRef: 'TR999-C1/2026',
     tpCount: TP_COUNT, totalHours: 120, deliveryMode: 'f2f',
     tutorNames: TUTORS.join(', '),
@@ -219,7 +219,7 @@ function settingsFor(tokens) {
     /* the agreement, in Lite's own words, for the trainee to read and sign; the pre-course key and the
        getting-to-know-you pick switched on */
     const src = readFileSync(join(HERE, 'agreement-defaults.js'), 'utf8'); const scope = { window: {} }; new Function('window', src)(scope.window);
-    const agr = {}; Object.entries(scope.window.CONNECT_HUB_AGREEMENT_DEFAULTS || {}).forEach(([k, v]) => { agr[k] = String(v || '').replace(/\{centre\}/g, 'Elmswood English Centre'); });
+    const agr = {}; Object.entries(scope.window.CONNECT_HUB_AGREEMENT_DEFAULTS || {}).forEach(([k, v]) => { agr[k] = String(v || '').replace(/\{centre\}/g, 'Elmswood English Center'); });
     s.agreement = agr; s.preCourseConnect = true; s.gtkyFormat = 'activity'; s.gtkyMinutes = '10';
   }
   return s;
@@ -394,7 +394,7 @@ async function candidateRecords(cand, ci, token, setIndex, rot, buildDoc, volunt
   const nextTp = returnedTps.length + 1;
   if (waiting) {
     const { doc } = plan(cand, ci, 2, rot.rows[token].tp2, setIndex);
-    recs.plan = { status: 'turned_in', label: '2 · ' + cand.name, state: doc, centreName: 'Elmswood English Centre', turnedInAt: ts(teachDay(2) - 1, '16:40'), docHTML: '' };
+    recs.plan = { status: 'turned_in', label: '2 · ' + cand.name, state: doc, centreName: 'Elmswood English Center', turnedInAt: ts(teachDay(2) - 1, '16:40'), docHTML: '' };
     recs.selfeval = { status: 'turned_in', label: '2 · ' + cand.name, state: doc.self, turnedInAt: ts(teachDay(2), '16:30') };
   } else if (nextTp <= TP_COUNT) {
     /* The next lesson: its plan is in once the day before has passed (or is today). */
@@ -403,13 +403,13 @@ async function candidateRecords(cand, ci, token, setIndex, rot, buildDoc, volunt
        can write one on camera (stubbed): she teaches tomorrow, it is due today. */
     if (!DAYONE && day - 1 <= PIN_DAY && !(WHICH === 'start' && ci === 0)) {
       const { doc } = plan(cand, ci, nextTp, rot.rows[token]['tp' + nextTp], setIndex);
-      recs.plan = { status: 'turned_in', label: nextTp + ' · ' + cand.name, state: doc, centreName: 'Elmswood English Centre', turnedInAt: ts(Math.min(day - 1, PIN_DAY), ci % 2 ? '16:52' : '09:14'), docHTML: '' };
+      recs.plan = { status: 'turned_in', label: nextTp + ' · ' + cand.name, state: doc, centreName: 'Elmswood English Center', turnedInAt: ts(Math.min(day - 1, PIN_DAY), ci % 2 ? '16:52' : '09:14'), docHTML: '' };
     }
     if (nextTp > 1 && returnedTps.length) recs.feedback = history[returnedTps[returnedTps.length - 1]];
   } else {
     /* Every practice returned: the last one is what is on the desk. */
     recs.feedback = history[TP_COUNT];
-    recs.plan = { status: 'turned_in', label: '8 · ' + cand.name, state: lastDoc, centreName: 'Elmswood English Centre', turnedInAt: ts(teachDay(8) - 1, '16:20'), docHTML: '' };
+    recs.plan = { status: 'turned_in', label: '8 · ' + cand.name, state: lastDoc, centreName: 'Elmswood English Center', turnedInAt: ts(teachDay(8) - 1, '16:20'), docHTML: '' };
     recs.selfeval = { status: 'turned_in', label: '8 · ' + cand.name, state: lastDoc.self, turnedInAt: ts(teachDay(8), '16:35') };
   }
 
@@ -545,7 +545,7 @@ if (REUSE) {
   course = (oc.result.courses || []).find(c => c.id === REUSE);
   if (!course) { console.log('no course ' + REUSE); process.exit(1); }
 } else if (WRITE) {
-  const made = await call({ op: 'createCourse', owner: OWNER, centreNumber: 'TR999', centreName: 'Elmswood English Centre', name: NAME });
+  const made = await call({ op: 'createCourse', owner: OWNER, centreNumber: 'TR999', centreName: 'Elmswood English Center', name: NAME });
   if (!made.ok) { console.log('could not make the course: ' + made.error); process.exit(1); }
   course = made.result;
   console.log('made ' + course.id + ' — ' + NAME);
