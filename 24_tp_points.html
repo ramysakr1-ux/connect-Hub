@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610280156">
+<link rel="stylesheet" href="hub-tokens.css?v=202610280243">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -389,6 +389,8 @@
      the rotation, the warnings and saving are untouched. Design: Magic
      Touches, 11b. */
   .tbl select.fm{border-left:4px solid var(--sand-line); padding-left:6px; transition:border-color .2s ease, box-shadow .15s ease;}
+  .bookrow{display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; margin:0 0 10px; font-size:0.86rem;} .bookrow label{display:flex; align-items:center; gap:8px; font-weight:600; flex:1 1 260px; min-width:0;}
+  .bookrow select{font-family:inherit; font-size:0.86rem; padding:6px 10px; border:1px solid var(--sand-line); border-radius:10px; background:var(--paper); color:var(--ink); flex:1 1 auto; min-width:0; max-width:100%;}
   .tbl select.fm-language{border-left-color:var(--a-red);}
   .tbl select.fm-receptive{border-left-color:var(--a-navy);}
   .tbl select.fm-productive{border-left-color:var(--a-forest);}
@@ -404,7 +406,7 @@
   @media(prefers-reduced-motion:reduce){ .tbl select.fm, .fm-pips i{transition:none;} }
   @media print{ .fm-key, .fm-pips{display:none;} .tbl select.fm{border-left-width:1px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610280156">
+<link rel="stylesheet" href="hub-house.css?v=202610280243">
 <style>
 /* THE CARD A TRAINEE RECEIVES, IN COLOUR (Ramy, 21 Oct 2026: "the card that
    the trainees receive ... could use a bit of color and distinction"). Each
@@ -561,14 +563,14 @@ body.ls-open{overflow:hidden;}
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610280156"></script>
-<script src="hub-tracker.js?v=202610280156"></script>
-<script src="hub-rotation.js?v=202610280156"></script>
-<script src="hub-shared.js?v=202610280156"></script>
-<script src="hub-store.js?v=202610280156"></script>
-<script src="hub-say.js?v=202610280156"></script>
-<script src="hub-sync.js?v=202610280156"></script>
-<script src="hub-notebook.js?v=202610280156"></script>
+<script src="hub-due.js?v=202610280243"></script>
+<script src="hub-tracker.js?v=202610280243"></script>
+<script src="hub-rotation.js?v=202610280243"></script>
+<script src="hub-shared.js?v=202610280243"></script>
+<script src="hub-store.js?v=202610280243"></script>
+<script src="hub-say.js?v=202610280243"></script>
+<script src="hub-sync.js?v=202610280243"></script>
+<script src="hub-notebook.js?v=202610280243"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -859,7 +861,7 @@ const setName = s => (s && (s.name || s.book)) || 'The set';
 function setBar(){
   const lib = library(), ids = Object.keys(lib);
   if (!ids.length) return `<div class="setbar"><span class="status">No TP point set on this course — the rotation is generating the lesson types itself.</span>
-    <a class="btn quiet sm" href="28_tp_point_sets.html">Write a set</a></div>`;
+    <a class="btn quiet sm" href="28_tp_point_sets.html?from=tp">Write a set</a></div>`;
   const sess = sessionIds();
   const gs = groups();
   /* A set with no name, no book and nothing written is not shown: an empty
@@ -881,7 +883,8 @@ function setBar(){
      just pressed. */
   const applied = /^(Built from|Rotation built)/.test(note || '');
   return `<div class="setbar on">${line}
-    <a class="btn quiet sm" href="28_tp_point_sets.html">${shown.length > 1 ? 'Write the sets' : 'Write the set'}</a>
+    <a class="btn quiet sm" href="28_tp_point_sets.html?from=tp">${shown.length > 1 ? 'Write the sets' : 'Write the set'}</a>
+    <a class="btn quiet sm" href="28_tp_point_sets.html?from=tp&add=1">Another book</a>
     <button type="button" class="btn sm" id="applyset"${applied ? ' disabled' : ''}>${
       applied ? 'Applied' : 'Apply ' + (shown.length > 1 ? 'them' : 'it')}</button>${
       applied ? `<span class="status">${esc(note)}</span>` : ''}</div>`;
@@ -1847,6 +1850,12 @@ function renderCore(){
       <div class="wrap"><table class="tbl ord stack"><tr><th>Teaching order</th>${Array.from({length:TPS},(_,i)=>`<th>TP ${i+1}</th>`).join('')}</tr>
         ${sets.filter(st => st.length).map(st => `<tr><td class="who">${esc(R.setName(st))}</td>${
           Array.from({length:TPS},(_,i)=>i+1).map(tp => `<td data-lab="TP ${tp}"><span class="ord">${esc(R.orderDealt(st, tp, (t, n) => (rows[t] || {})['tp' + n]).map(x => x.letter).join(' '))}</span></td>`).join('')}</tr>`).join('')}</table></div>
+      ${(function(){
+        /* WHICH BOOK THIS GROUP TEACHES FROM (Ramy, 28 Oct 2026: "I cannot go back to choose another book for the other group").
+           The choice lived only on the sets page, under Taught by; now each group's card says it, and changes it, here. */
+        const lib = library(), ids = Object.keys(lib); if (ids.length < 2) return '';
+        const cur = setIdFor(g.group);
+        return `<p class="bookrow"><label>Teaches from <select data-book="${esc(g.group)}">${ids.map(id => `<option value="${esc(id)}"${id === cur ? ' selected' : ''}>${esc(setName(lib[id]))}${lib[id].level ? ' · ' + esc(lib[id].level) : ''}</option>`).join('')}</select></label><span class="status">Apply it afterwards to deal this book's lessons.</span></p>`; })()}
       <div class="relbar">${on
         ? `<span class="chip on">Released</span><button class="btn quiet" data-rel="${esc(g.group)}" data-on="0">Take it back</button><span class="status">The trainees can see their own points.</span>`
         : `<span class="chip">Not released</span><button class="btn" data-rel="${esc(g.group)}" data-on="1">Release to Group ${esc(g.group) || '—'}</button><span class="status">Only tutors can see it until it is released.</span>`}</div>
@@ -1931,6 +1940,10 @@ function renderCore(){
     OPEN = (OPEN === el.dataset.mats) ? null : el.dataset.mats; render();
   }));
   wireMats();
+  document.querySelectorAll('select[data-book]').forEach(el => el.addEventListener('change', () => {
+    P.set = P.set || {}; P.set.setFor = Object.assign({}, assigned(), { [el.dataset.book]: el.value });
+    persist('Group ' + el.dataset.book + ' teaches from ' + setName(library()[el.value]));
+  }));
   document.querySelectorAll('button[data-rel]').forEach(el => el.addEventListener('click', () => {
     P.released = P.released || {};
     P.released[el.dataset.rel] = el.dataset.on === '1';
