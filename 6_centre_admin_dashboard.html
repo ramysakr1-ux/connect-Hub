@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610272237">
+<link rel="stylesheet" href="hub-tokens.css?v=202610272303">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -515,7 +515,7 @@
   .tcol-opt input:checked + span{box-shadow:0 0 0 2px var(--paper), 0 0 0 4px var(--teal);}
   .tcol-opt input:focus-visible + span{outline:2px solid var(--gold-lifted); outline-offset:3px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610272237">
+<link rel="stylesheet" href="hub-house.css?v=202610272303">
 </head>
 <body>
 <div class="board">
@@ -899,6 +899,20 @@
     <section class="setcard">
     <h3 class="docsh">Files for trainees</h3>
     <div class="guide-box gb-plain"><div class="gb"><p>Links the trainees read: the input sessions, and anything else. Each becomes a line on their home. What they meet before day one is on the Before the course card above.</p></div></div>
+    <!-- WHICH INPUT SESSIONS (Ramy, 27 Oct 2026: "if they add a link does that mean they're not using Connect's
+         input sessions? ... can they use both? I don't see anything here, an option to choose"). Read by
+         input-sessions/library.js (InputLib.mode): the trainee's home, their Input sessions page and every session. -->
+    <div class="fields" style="margin:4px 0 18px;">
+      <div class="wide">
+        <label for="inputSessions">Input sessions</label>
+        <div class="house-sel"><select id="inputSessions">
+          <option value="connect">Connect’s sessions</option>
+          <option value="own">Our own links only</option>
+          <option value="both">Both</option>
+        </select></div>
+        <p class="hintline" id="inputSessionsHint">Connect’s sessions, your own links, or both side by side. Each opens for the trainees on the day the timetable gives it, and stays open after. Tutors see every session.</p>
+      </div>
+    </div>
     <!-- Ramy, 15 Oct 2026: trainees see an input session link only on the day the
          timetable gives that session; "make it clear to the centre how it works". -->
     <div class="guide-box"><h3>How input session links reach the trainees</h3><div class="gb"><p>Add each one with Add an input session, and give it the same name as its session on your timetable, for example Receptive skills. The trainees see a link on the day that session comes round on the timetable, and they keep it after. A link whose name no timetable session carries stays hidden from the trainees. You and the other tutors always see every link. Until your timetable lists input sessions, every link shows. Other links show as soon as they are switched on.</p></div></div>
@@ -1003,18 +1017,18 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610272237"></script>
-<script src="hub-store.js?v=202610272237"></script>
-<script src="hub-say.js?v=202610272237"></script>
-<script src="agreement-defaults.js?v=202610272237"></script>
-<script src="observation-defaults.js?v=202610272237"></script>
-<script src="hub-shared.js?v=202610272237"></script>
-<script src="hub-rotation.js?v=202610272237"></script>
-<script src="hub-due.js?v=202610272237"></script>
-<script src="hub-sync.js?v=202610272237"></script>
-<script src="hub-notebook.js?v=202610272237"></script>
-<script src="hub-hand.js?v=202610272237"></script>
-<script src="hub-ink.js?v=202610272237"></script>
+<script src="assignment-defaults.js?v=202610272303"></script>
+<script src="hub-store.js?v=202610272303"></script>
+<script src="hub-say.js?v=202610272303"></script>
+<script src="agreement-defaults.js?v=202610272303"></script>
+<script src="observation-defaults.js?v=202610272303"></script>
+<script src="hub-shared.js?v=202610272303"></script>
+<script src="hub-rotation.js?v=202610272303"></script>
+<script src="hub-due.js?v=202610272303"></script>
+<script src="hub-sync.js?v=202610272303"></script>
+<script src="hub-notebook.js?v=202610272303"></script>
+<script src="hub-hand.js?v=202610272303"></script>
+<script src="hub-ink.js?v=202610272303"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1288,6 +1302,8 @@ try {
     if(cs.courseName) document.getElementById('courseName').value = cs.courseName;
     if(cs.tpCount) document.getElementById('tpCount').value = cs.tpCount;
     document.getElementById('askConnect').value = cs.askConnect === false ? 'off' : 'on';
+    { const own = (cs.courseLinks || []).some(l => l && /input session/i.test(String(l.card || '') + ' ' + String(l.label || '')));
+      document.getElementById('inputSessions').value = /^(connect|own|both)$/.test(String(cs.inputSessions || '')) ? cs.inputSessions : (own ? 'both' : 'connect'); }
     { const r = document.querySelector('input[name="cardStyle"][value="' + (cs.cardStyle === 'ticket' ? 'ticket' : 'welcome') + '"]'); if (r) r.checked = true; }
     if(cs.planFrom) document.getElementById('planFrom').value = cs.planFrom;
     if(cs.analysisFrom) document.getElementById('analysisFrom').value = cs.analysisFrom;
@@ -1447,6 +1463,7 @@ function saveSettings(how){
     /* across ('h') or down ('v'): 23_timetable.html ACROSS() */
     ttLayout: (document.getElementById('courseLayout') || {}).value === 'h' ? 'h' : 'v',
     askConnect: (document.getElementById('askConnect') || {}).value !== 'off',
+    inputSessions: (document.getElementById('inputSessions') || {}).value || 'both',
     deliveryMode: document.getElementById('deliveryMode').value || 'f2f',
     tutorNames: document.getElementById('tutorNames').value.trim(),
     /* only the colours somebody chose; the rest are worked out (hub-shared.js hubTutorColours) */
@@ -1810,6 +1827,10 @@ document.getElementById('addBeforeLink').addEventListener('click', () => {
   const el = [...document.querySelectorAll('#beforeLinks .cl-label')].pop(); if (el) el.focus();
 });
 document.getElementById('addInputSession').addEventListener('click', () => {
+  /* a link of their own would stay hidden under "Connect's sessions": it moves to Both, and the line under it says so */
+  const isel = document.getElementById('inputSessions');
+  if (isel && isel.value === 'connect') { isel.value = 'both'; isel.dispatchEvent(new Event('change', { bubbles: true }));
+    const h = document.getElementById('inputSessionsHint'); if (h) h.textContent = 'Set to Both, so the trainees see your link as well as Connect’s session. Each opens on the day the timetable gives it.'; }
   readCandLinks(); CAND_LINKS.push({ label:'', url:'', card:'Input sessions', show:false }); renderCandLinks();
   const last = [...document.querySelectorAll('.cl-card')].filter(c => /input session/i.test(c.value)).pop();
   if (last) { const i = last.dataset.i; const el = document.querySelector(`.cl-label[data-i="${i}"]`); if (el) el.focus(); }

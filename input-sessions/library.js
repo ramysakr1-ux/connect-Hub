@@ -78,6 +78,15 @@ window.InputLib = (function(){
     });
     return out;
   }
+  /* WHICH SESSIONS A COURSE USES (Ramy, 27 Oct 2026: "if they add a link does that mean they're not using Connect's
+     input sessions? ... can they use both?"). settings.inputSessions, chosen on Course admin:
+       connect  Connect's sessions; a link of the center's own for an input session stays hidden from trainees
+       own      the center's own links only; Connect's sessions stay hidden from trainees
+       both     both, side by side -- and what a course that never chose has always had
+     Either way a session opens on the day the timetable gives it. Tutors and the assessor see everything. */
+  function mode(cs){ var m = String((cs && cs.inputSessions) || ''); return /^(connect|own|both)$/.test(m) ? m : 'both'; }
+  function connectOn(cs){ return mode(cs) !== 'own'; }
+  function ownOn(cs){ return mode(cs) !== 'connect'; }
   function isInputLink(l){ return /input session/i.test(String((l && l.card) || '') + ' ' + String((l && l.label) || '')); }
   function linkOpen(l, tt, cs){
     var inputs = rawInputs(tt);
@@ -90,7 +99,7 @@ window.InputLib = (function(){
       return ls.length > 0 && slugsFor(x.t).some(function(sl){ return ls.indexOf(sl) !== -1; });
     });
   }
-  function homeLinkOk(l, tt, cs){ return !isInputLink(l) || linkOpen(l, tt, cs); }
+  function homeLinkOk(l, tt, cs){ return !isInputLink(l) || (ownOn(cs) && linkOpen(l, tt, cs)); }
 
   /* ---- the gate on a session page ---- */
   var root = document.documentElement;
@@ -103,7 +112,9 @@ window.InputLib = (function(){
       var after = wrap.querySelector('a.back') || wrap.querySelector('.chrome');
       if (after && after.parentNode === wrap) wrap.insertBefore(n, after.nextSibling); else wrap.insertBefore(n, wrap.firstChild);
     }
-    n.innerHTML = kind === 'later'
+    n.innerHTML = kind === 'own'
+      ? '<div class="stage-title">Your course has its own</div><p class="lead" style="margin:0">Your center teaches this session from its own material. Its link is on your Input sessions page on the day the timetable gives it.</p>'
+      : kind === 'later'
       ? '<div class="stage-title">Not open yet</div><p class="lead" style="margin:0">This session comes later on your course. It opens here once it has been given.</p>'
       : '<div class="stage-title">Not on your course</div><p class="lead" style="margin:0">This session is not on the timetable of your course.</p>';
     root.classList.add('sealed'); root.classList.remove('gating');
@@ -146,6 +157,7 @@ window.InputLib = (function(){
         return;
       }
       if (!H || H.isTutor() || H.isAssessor() || !H.token()) { reveal(); return; }
+      if (!connectOn(cs)) { seal('own'); return; }
       var now = today(cs), mine = inputsOf(tt).filter(function(x){ return x.slug === slug; });
       if (mine.some(function(x){ return x.date <= now; })) reveal(); else seal(mine.length ? 'later' : 'never');
     }
@@ -164,7 +176,7 @@ window.InputLib = (function(){
   /* If anything goes wrong the page opens: a gate that can strand a trainee
      on a blank page is worse than no gate. */
   setTimeout(function(){ if (root.classList.contains('gating')) root.classList.remove('gating'); }, 8000);
-  return { linkOpen: linkOpen, homeLinkOk: homeLinkOk, isInputLink: isInputLink, slugsFor: slugsFor, inputsOf: inputsOf, today: today, rd: rd, iso: iso, dateOf: dateOf, gate: gate };
+  return { mode: mode, connectOn: connectOn, ownOn: ownOn, linkOpen: linkOpen, homeLinkOk: homeLinkOk, isInputLink: isInputLink, slugsFor: slugsFor, inputsOf: inputsOf, today: today, rd: rd, iso: iso, dateOf: dateOf, gate: gate };
 })();
 
 /* The demo is view only (Ramy, 24 Oct 2026): a session's "Print the handout"

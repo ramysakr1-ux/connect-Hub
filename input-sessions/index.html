@@ -246,7 +246,7 @@
   var NAMES = {};
   document.querySelectorAll('#connectCard a.s[href]').forEach(function(a){ var h3 = a.querySelector('h3'); NAMES[a.getAttribute('href').replace(/\/$/, '')] = h3 ? h3.textContent : ''; });
   function shownLink(l){ return !!(l && l.url && (l.show !== false || (l.showFrom && new Date(l.showFrom).getTime() <= Date.now()))); }
-  function centreLinks(cs, tt, who){ return ((cs && cs.courseLinks) || []).filter(function(l){ return shownLink(l) && L.isInputLink(l) && (who === 'tutor' || who === 'assessor' || L.linkOpen(l, tt, cs)); }); }
+  function centreLinks(cs, tt, who){ return ((cs && cs.courseLinks) || []).filter(function(l){ return shownLink(l) && L.isInputLink(l) && (who === 'tutor' || who === 'assessor' || (L.ownOn(cs) && L.linkOpen(l, tt, cs))); }); }
   function weekOf(now){
     var nd = dateOf(now), mon = new Date(nd); mon.setDate(nd.getDate() - ((nd.getDay() + 6) % 7));
     var sun = new Date(mon); sun.setDate(mon.getDate() + 6);
@@ -335,7 +335,8 @@
      one, otherwise a card saying it is taught in the room. */
   function paintTrainee(tt, cs){
     var now = today(cs), wk = weekOf(now);
-    var isPage = function(x){ return !!(x.slug && NAMES[x.slug] != null); };
+    /* a course that uses its own links only: Connect's pages are not offered, and the center's link takes each session's place */
+    var isPage = function(x){ return L.connectOn(cs) && !!(x.slug && NAMES[x.slug] != null); };
     var nameOf = function(x){ return isPage(x) ? NAMES[x.slug] : x.t; };
     var seenK = {}, all = inputsOf(tt).filter(function(x){ var k = x.date + '|' + x.s + '|' + (isPage(x) ? x.slug : x.t); if (seenK[k]) return false; seenK[k] = 1; return true; });
     var given = {};
