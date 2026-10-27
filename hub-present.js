@@ -187,11 +187,9 @@
     var tick = function(id){ var el = $(id); if (el && !el.checked) { el.checked = true; el.dispatchEvent(new Event('change', { bubbles: true })); } };
     tick('preCourseConnect'); set('gtkyFormat', 'both'); tick('interviewRecording');
     if ($('deliveryMode')) set('deliveryMode', C.deliveryMode || 'f2f');
-    /* New York, on the 12-hour clock, and each tutor's input in a soft colour of their own */
+    /* New York, on the 12-hour clock */
     if ($('courseZone')) set('courseZone', C.timeZone || 'America/New_York');
     if ($('courseClock')) set('courseClock', C.clock || '12');
-    var TC = g('TUTOR_COLOURS');
-    if (TC && typeof TC === 'object') { Object.keys(C.tutorColours || {}).forEach(function(n){ TC[n] = C.tutorColours[n]; }); if (typeof g('renderTutorColours') === 'function') g('renderTutorColours')(); }
     await typeAll(f);
     if (typeof g('saveSettings') === 'function') {
       g('saveSettings')('Saved');
