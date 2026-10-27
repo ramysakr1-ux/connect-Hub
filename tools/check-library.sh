@@ -43,6 +43,7 @@ if [ -n "$1" ]; then
       }
     }).catch(e => { console.error("  " + e.message); process.exit(1); });
   ' || exit 1
+  echo "###### the standard"; node standard.mjs      2>&1 | grep -v 'to the standard' | tail -6
   echo "###### clocks";     node mins-all.mjs        2>&1 | tail -2
   echo "###### audio gaps"; node gaps-audio.mjs      2>&1 | tail -3
   echo "   (read this one loosely: tracks-plan.json clears the slots in OUR"
@@ -65,6 +66,7 @@ fi
 
 echo "###### pages";      node verify-pages.mjs    2>&1 | tail -6
 echo "###### audio";      node audio-store.mjs     2>&1 | tail -2
+echo "###### the standard"; node standard.mjs      2>&1 | grep -v 'to the standard' | tail -6
 echo "###### clocks";     node mins-all.mjs        2>&1 | tail -2
 echo "###### stage refs"; node stageref.mjs        2>&1 | tail -3
 echo "###### audio gaps"; node gaps-audio.mjs      2>&1 | tail -3

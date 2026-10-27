@@ -94,12 +94,16 @@ function answeredBy(sub, stages) {
 
 const L = (await readCourse(LIBRARY)).rec.set.library;
 const ALL = process.argv.includes('--all');
-let checked = 0, theirs = 0, miss = 0;
+/* TP 5 (outline) is stage names only and TP 6 (bare) has no stages, so there is no line
+   to read a sub aim against; the standard leaves the planning to the trainee. */
+const level = (x, ses) => ses.scaffold || (parseInt(x, 10) <= 2 ? 'full' : parseInt(x, 10) <= 4 ? 'guided' : parseInt(x, 10) === 5 ? 'outline' : 'bare');
+let checked = 0, theirs = 0, miss = 0, names = 0;
 
 for (const id of Object.keys(L).sort())
   for (const [nm, s] of Object.entries(L[id].sessions))
     (s.slots || []).forEach((sl, i) => {
       const sub = String(sl.sub || '').trim();
+      if (['outline', 'bare'].includes(level(nm, s))) { names++; return; }
       const where = `${id} ${nm}·${i + 1} [${sl.type}]`;
       if (!sub || /^you decide$/i.test(sub)) { theirs++; return; }
       checked++;
@@ -116,4 +120,4 @@ for (const id of Object.keys(L).sort())
     });
 
 console.log(`\n${checked} sub aims read against their stages · ${miss} with no stage working on them` +
-  ` · ${theirs} left to the trainee`);
+  ` · ${theirs} left to the trainee · ${names} outline and bare slots have no lines to read, by the standard`);
