@@ -27,7 +27,7 @@
 <title>Connect Lite — your course link</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610271951">
+<link rel="stylesheet" href="hub-tokens.css?v=202610272014">
 <style>
   /* THE WELCOME FAMILY (1a, the link cards, Ramy's pick 7 Oct 2026): a teal
      panel with the big mark drifting behind it, then a paper sheet. The same
@@ -94,6 +94,10 @@
   .langs button:focus-visible{outline:2px solid var(--gold-lifted); outline-offset:3px; border-radius:3px;}
 
   .until{margin:0 0 14px; font-size:0.84rem; color:var(--grey); font-weight:600;}
+  .steps{list-style:none; margin:16px 0 6px; padding:0; counter-reset:st;}
+  .steps li{counter-increment:st; display:grid; grid-template-columns:30px 1fr; column-gap:10px; padding:10px 0; border-top:1px solid var(--sand-line); font-size:0.92rem; line-height:1.45; color:var(--grey);}
+  .steps li::before{content:counter(st); grid-row:span 2; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.35rem; line-height:1.05; color:var(--tone);}
+  .steps li b{display:block; color:var(--ink); font-weight:700;}
   .askname{display:block; margin:16px 0 14px;}
   .askname span{display:block; font-size:0.68rem; letter-spacing:.08em; text-transform:uppercase; color:var(--grey); font-weight:700; margin-bottom:6px;}
   .askname input{width:100%; box-sizing:border-box; font-family:'Karla',sans-serif; font-size:1rem; padding:11px 13px; border:1.5px solid var(--sand-line); border-radius:var(--r-control, 10px); background:var(--field); color:var(--ink);}
@@ -209,7 +213,7 @@
     .t-go{background:none !important; border:2px solid var(--teal);} .t-go .g, .t-go .a{color:var(--teal) !important;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610271951">
+<link rel="stylesheet" href="hub-house.css?v=202610272014">
 <style>
   /* The welcome card's panel stays dark (23 Oct 2026). The notebook's "cards are
      white" rule caught .panel and left its light title, centre line and LITE on
@@ -243,6 +247,14 @@
 
   <div class="sheet">
     <p class="what" id="what"></p>
+    <!-- THE COURSE ADMIN'S CARD (Ramy, 27 Oct 2026: "the first person to get the first link had a separate door ... a nice
+         welcoming door. Your first experience at Connect Lite should be awesome"). The tutors' link with &admin=1: the
+         same course, worded for the one person who sets it up, and Open leads into the setup welcome. -->
+    <ol class="steps" id="adminSteps" hidden>
+      <li><b>Your name</b>It becomes your signature on the course.</li>
+      <li><b>The course</b>The dates, the trainees, the timetable and the TP points. Cambridge’s four assignments and fifteen observation sheets come ready.</li>
+      <li><b>The tutors</b>When it is set up, Course admin has the tutors’ link. They open this same course.</li>
+    </ol>
     <p class="keep" id="keep"></p>
     <p class="until" id="until" hidden></p>
     <p class="pinnote" id="pinnote"><b>This link also asks for a PIN.</b> <span id="pinwho"></span></p>
@@ -302,13 +314,13 @@
 /* The card never asks for a PIN itself: the page behind Open does. A link with
    a PIN gets a line on the card instead (hub-sync marks body[data-pin]). */
 window.HUB_NO_PIN_PROMPT = true;</script>
-<script src="hub-shared.js?v=202610271951"></script>
-<script src="hub-store.js?v=202610271951"></script>
-<script src="hub-say.js?v=202610271951"></script>
-<script src="hub-sync.js?v=202610271951"></script>
-<script src="hub-volunteer-i18n.js?v=202610271951"></script>
-<script src="vendor/qrcode.js?v=202610271951"></script>
-<script src="hub-qr.js?v=202610271951"></script>
+<script src="hub-shared.js?v=202610272014"></script>
+<script src="hub-store.js?v=202610272014"></script>
+<script src="hub-say.js?v=202610272014"></script>
+<script src="hub-sync.js?v=202610272014"></script>
+<script src="hub-volunteer-i18n.js?v=202610272014"></script>
+<script src="vendor/qrcode.js?v=202610272014"></script>
+<script src="hub-qr.js?v=202610272014"></script>
 <script>
 (function(){
   var $ = function(id){ return document.getElementById(id); };
@@ -354,6 +366,13 @@ window.HUB_NO_PIN_PROMPT = true;</script>
       go: 'Open my page'
     }
   }[ROLE];
+  var ADMIN = ROLE === 'tutor' && p.get('admin') === '1';
+  if (ADMIN) COPY = {
+    chip: 'Course admin', eyebrow: 'Your course on Connect Lite', forWho: 'Yours to set up', admit: 'The course admin', seal: 'Set it up',
+    what: 'This course is yours to set up. Three things, and each step opens where it is done.',
+    keepB: 'This link opens the whole course.', keep: 'Keep it to yourself and the training team. If it gets out, Course admin can change it, and every old copy stops working.',
+    go: 'Start setting up'
+  };
 
   var DEST = ROLE === 'tutor' ? '5_tutor_dashboard.html?k=' + encodeURIComponent(p.get('k'))
            : ROLE === 'assessor' ? '12_assessor_pack.html?ak=' + encodeURIComponent(p.get('ak'))
@@ -377,6 +396,11 @@ window.HUB_NO_PIN_PROMPT = true;</script>
   both('eyebrow', function(el){ el.textContent = COPY.eyebrow; });
   $('t_seal').textContent = COPY.seal;
   both('go', function(el){ el.setAttribute('href', DEST); });
+  if (ADMIN) {
+    $('adminSteps').hidden = false;
+    /* the tutors' home opens on the setup welcome for whoever came through this door */
+    both('go', function(el){ el.addEventListener('click', function(){ try { localStorage.setItem('chub:setsUp', '1'); localStorage.removeItem('chub:joined'); } catch (e) {} }); });
+  }
   /* the visitor's name goes with them, in this tab only */
   both('go', function(el){ el.addEventListener('click', function(){ try { var i = $('demoName'), ti = $('t_demoName'); var v = ((i && !i.closest('[hidden]') && i.value) || (ti && !ti.closest('[hidden]') && ti.value) || '').trim().slice(0, 80); if (!v) return; if (ROLE === 'tutor') { localStorage.setItem('chub:tutorName', v); try { localStorage.setItem('chub:tutorSigKept', v); } catch (e2) {} } else sessionStorage.setItem('hub:demoName', v); } catch (e) {} }); });
   /* The code encodes the full link, not the relative page: a phone scanning a
@@ -516,7 +540,9 @@ window.HUB_NO_PIN_PROMPT = true;</script>
        keyboard; the dashboard asks for it otherwise. Given here, it is kept on this device and the dashboard
        greets them by it. A trainee on a real course never types a name: the centre's roster names them, and
        their signature is written from that name. */
-    var ASK_T = ROLE === 'tutor';
+    /* ...and then not (Ramy, 27 Oct 2026: "let him write his name inside, not on the ticket, not on the welcome card ...
+       unless they do it twice, which kind of doesn't make sense"). The tutors' home asks it once, as a signature. */
+    var ASK_T = false;
     /* the name is asked once, on the home, where it becomes a signature (Ramy, 26 Oct 2026); only the tutors' card asks */
     both('askName', function(el){ el.hidden = !ASK_T; var lb = el.querySelector('span'); if (lb) lb.textContent = ASK_T ? 'Your name, as the course has it' : 'Your name, for this visit'; });
     /* the course's own tutor names, offered as they are typed (Ramy, 25 Oct 2026: "the name they type should

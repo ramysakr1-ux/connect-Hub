@@ -38,7 +38,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610271951">
+<link rel="stylesheet" href="hub-tokens.css?v=202610272014">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 70px;}
@@ -247,7 +247,7 @@
   @media (max-width:760px){ .demo .doors{grid-template-columns:1fr 1fr;} .setting{grid-template-columns:1fr;} }
   @media (max-width:520px){ .demo .doors{grid-template-columns:1fr;} .title h1{font-size:1.8rem;} body{padding:0 14px 60px;} .card{padding:16px;} .row-course .acts .btn{flex:1 1 auto; justify-content:center;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610271951">
+<link rel="stylesheet" href="hub-house.css?v=202610272014">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -270,10 +270,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610271951"></script>
-<script src="hub-store.js?v=202610271951"></script>
-<script src="hub-say.js?v=202610271951"></script>
-<script src="hub-card-mail.js?v=202610271951"></script>
+<script src="hub-shared.js?v=202610272014"></script>
+<script src="hub-store.js?v=202610272014"></script>
+<script src="hub-say.js?v=202610272014"></script>
+<script src="hub-card-mail.js?v=202610272014"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after. */
 const OWNER_STORE = 'hub:o';
@@ -471,11 +471,12 @@ async function noteFor(c){
 }
 function tutorNoteFor(c){
   const centre = c.centreName ? ' at ' + c.centreName : '';
-  return ['Hi,', '', 'Your CELTA course' + centre + ' is set up on Connect Lite. This is the tutor link:', '', base() + 'invite.html?k=' + encodeURIComponent(c.tutorKey), '',
-    'It is one link for the whole training team: the course admin and every tutor open the same one. The first visit lands on a short welcome that takes you through setting the course up — the name and dates, the timetable, the trainees — and from then on it opens on the course.',
-    '', 'Keep this link to the training team. Anyone who has it can read and change every trainee’s record. If it ever gets out, Course admin can rotate it and every old copy stops working.', '', 'Any questions, just reply.', '', 'Ramy'].join('\n');
+  /* the course admin's card (27 Oct 2026): the message goes to whoever sets the course up */
+  return ['Hi,', '', 'Your CELTA course' + centre + ' is ready on Connect Lite. This link is for the course admin, whoever sets it up:', '', base() + 'invite.html?k=' + encodeURIComponent(c.tutorKey) + '&admin=1', '',
+    'It opens on a short welcome that takes you through setting the course up: the dates, the trainees, the timetable. When it is set up, Course admin has the tutors\u2019 link for the other tutors. They open the same course.',
+    '', 'Keep this link to yourself and the training team. Anyone who has it can read and change every trainee\u2019s record. If it ever gets out, Course admin can change it, and every old copy stops working.', '', 'Any questions, just reply.', '', 'Ramy'].join('\n');
 }
-function tutorSubject(c){ return 'Your CELTA course on Connect Lite — the tutor link' + (c.centreName ? ' (' + c.centreName + ')' : ''); }
+function tutorSubject(c){ return 'Your CELTA course on Connect Lite — the course admin\u2019s link' + (c.centreName ? ' (' + c.centreName + ')' : ''); }
 
 /* ---- drawing ---- */
 let COURSES = [], INBOX = null, INBOX_ALL = false, BUSY = false;
@@ -548,7 +549,7 @@ function liveRow(c){
         ${kbtn(`data-copy="${esc(tutor)}" title="The training team: their tutors and course admin all use it"`, 'Tutor link')}
         ${kbtn(`data-copy="${esc(assessor)}" title="Read-only, for the visit"`, 'Assessor link')}
         ${kbtn(`data-vol="${esc(c.id)}" data-key="${esc(c.tutorKey)}" title="One student’s own page"`, 'Volunteer link')}
-        ${kbtn(`data-note="${esc(c.id)}" data-what="tutor" title="A short message with the tutor link in it, for whoever runs the course at the center"`, 'Message to the center', true)}
+        ${kbtn(`data-note="${esc(c.id)}" data-what="tutor" title="A short message with the course admin\u2019s link in it, for whoever sets the course up at the center"`, 'Message to the center', true)}
         <a class="linkbtn" data-mail="${esc(c.id)}" data-what="tutor" href="#">Email it</a>
       </div>
       <div class="facts">
@@ -630,13 +631,13 @@ function presentCard(){
   const pres = COURSES.filter(c => courseKind(c) === 'present');
   const mine = pres.filter(c => !c.presentFor).sort((a, b) => String(b.created || '').localeCompare(String(a.created || '')))[0] || null;
   /* it starts where a centre starts: the tutor's invitation card */
-  const tutorUrl = c => base() + 'invite.html?k=' + encodeURIComponent(c.tutorKey);
+  const tutorUrl = c => base() + 'invite.html?k=' + encodeURIComponent(c.tutorKey) + '&admin=1';
   return `<div class="pdcard" id="pdCard">
     <h2>Connect demo</h2>
-    <p class="lede">A fresh, empty course to present: it opens on the tutor\u2019s invitation card, and the bar at the top of every page switches between tutor, trainee, volunteer and assessor, moves the course\u2019s day, and Fill in writes each page in front of the room. Everything saves for real; no email leaves Lite.</p>
+    <p class="lede">A fresh, empty course to present: it opens on the course admin\u2019s card, and the bar at the top of every page switches between tutor, trainee, volunteer and assessor, moves the course\u2019s day, and Fill in writes each page in front of the room. Everything saves for real; no email leaves Lite.</p>
     <div class="pd-row">${mine
       ? `<b>Yours</b><small>${mine.created ? 'started ' + esc(niceDate(String(mine.created).slice(0, 10))) : 'ready'}</small>
-         <a class="btn small primary" href="${esc(tutorUrl(mine))}" target="_blank" rel="noopener">Open the tutor\u2019s card</a>
+         <a class="btn small primary" href="${esc(tutorUrl(mine))}" target="_blank" rel="noopener">Open the course admin\u2019s card</a>
          <button class="btn small" type="button" id="pdAgain" data-id="${esc(mine.id)}">Start again</button>`
       : `<button class="btn primary" type="button" id="pdStart">Start a Connect demo</button><small>It never ends. Start again before each presentation: a fresh copy, and the old one goes to the bin.</small>`}</div>
   </div>`;
@@ -679,7 +680,7 @@ function render(courses, msg){
     ${demo ? `<section class="sec"><div class="cards">${demoCard(demo)}${sendCard()}${dayOne ? dayOneCard(dayOne) : ''}</div></section>` : `<section class="sec"><div class="empty">No demo course. Seed one, and every card will open it.</div></section>`}
 
     <section class="sec"><h2>Live courses <small>real centers, real trainees — never practice on these</small></h2>
-      <div class="cards">${live.length ? live.map(liveRow).join('') : '<div class="empty">No live course yet. Make one above and send the centre its tutor link.</div>'}</div></section>
+      <div class="cards">${live.length ? live.map(liveRow).join('') : '<div class="empty">No live course yet. Make one above and send the center its message: it carries the course admin\u2019s card.</div>'}</div></section>
 
     ${lib ? `<a class="libdoor" id="libDoor" href="28_tp_point_sets.html?k=${encodeURIComponent(lib.tutorKey)}&amp;from=console">
       <span class="lib-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5.5A1.5 1.5 0 0 1 5.5 4H8v15H5.5A1.5 1.5 0 0 0 4 20.5"/><path d="M8 4h3.5A1.5 1.5 0 0 1 13 5.5V19"/><path d="M15.2 5.1l2.9-.8a1.5 1.5 0 0 1 1.8 1l3 11.2a1.5 1.5 0 0 1-1 1.8l-2.9.8"/><path d="M4 20.5A1.5 1.5 0 0 0 5.5 22H13v-3"/></svg></span>
@@ -854,7 +855,7 @@ $('app').addEventListener('click', async e => {
     if (BUSY) return; const b = T('#pdStart') || T('#pdAgain');
     if (b.id === 'pdAgain' && !confirm('Start a fresh Connect demo? The one you have now goes to the bin.')) return;
     BUSY = true; b.disabled = true; status('Making a fresh Connect demo\u2026');
-    try { const r = await call({ op: 'createPresentation', replace: b.dataset.id || '' }); render(r.courses, 'A fresh Connect demo is ready. Open the tutor\u2019s card to begin.'); }
+    try { const r = await call({ op: 'createPresentation', replace: b.dataset.id || '' }); render(r.courses, 'A fresh Connect demo is ready. Open the course admin\u2019s card to begin.'); }
     catch (err) { status(err.message); b.disabled = false; }
     BUSY = false; return;
   }
@@ -868,7 +869,7 @@ $('app').addEventListener('click', async e => {
     const centreName = $('mkName').value.trim();
     BUSY = true; make.disabled = true; status('Making the course…');
     try { const made = await call({ op: 'createCourse', centreNumber, centreName }); if (made && made.centres) CENTRES = made.centres; NEW_ID = made.id;
-      render(made.courses, 'Made ' + made.id + ' for ' + centreNumber + '. Copy its tutor link, or send the message to the center.'); const card = $('course-' + made.id); if (card) hubScrollIntoView(card, 'start');
+      render(made.courses, 'Made ' + made.id + ' for ' + centreNumber + '. Send the message to the center: it carries the course admin\u2019s card.'); const card = $('course-' + made.id); if (card) hubScrollIntoView(card, 'start');
     } catch (err) { status(err.message); make.disabled = false; }
     BUSY = false; return;
   }
@@ -961,7 +962,7 @@ $('app').addEventListener('click', async e => {
   if (cl) { if (BUSY) return;
     const ok = await confirmModal(`Start the next course from ${cl.dataset.label}? The center’s settings, logo, tutors, standing instructions, shared links, assignment wording and observation sheets carry over. Dates, the assessment date, the roster and every record start fresh, and the new course gets its own tutor and assessor links.`, 'Start the next course');
     if (!ok) return; BUSY = true; status('Starting the next course from ' + cl.dataset.label + '…');
-    try { const made = await call({ op: 'cloneCourse', from: cl.dataset.clone }); NEW_ID = made.id; render(made.courses, 'Made ' + made.id + ' from ' + cl.dataset.label + '. Open its Course admin, set the dates, then send the tutor link to the center.'); const card = $('course-' + made.id); if (card) hubScrollIntoView(card, 'start'); } catch (err) { status(err.message); }
+    try { const made = await call({ op: 'cloneCourse', from: cl.dataset.clone }); NEW_ID = made.id; render(made.courses, 'Made ' + made.id + ' from ' + cl.dataset.label + '. Open its Course admin, set the dates, then send the message to the center.'); const card = $('course-' + made.id); if (card) hubScrollIntoView(card, 'start'); } catch (err) { status(err.message); }
     BUSY = false; return; }
   const d = T('[data-delete]');
   if (d) { if (BUSY) return; const n = Number(d.dataset.trainees || 0);
