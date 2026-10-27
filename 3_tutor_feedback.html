@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610271614">
+<link rel="stylesheet" href="hub-tokens.css?v=202610271636">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -139,6 +139,10 @@
   .sv2 .ready span{display:inline-flex; align-items:center; gap:4px;}
   .sv2 .ready span:before{content:''; width:8px; height:8px; border-radius:50%; border:1.5px solid var(--sand-line);}
   .sv2 .ready span.ok{color:var(--teal-deep);} .sv2 .ready span.ok:before{background:var(--teal); border-color:var(--teal);}
+  .sv2 .ready span.g-above{color:color-mix(in oklab, var(--a-mustard) 72%, var(--ink));} .sv2 .ready span.g-above:before{background:var(--a-mustard); border-color:var(--a-mustard);}
+  .sv2 .ready span.g-to{color:var(--teal-deep);} .sv2 .ready span.g-to:before{background:var(--teal); border-color:var(--teal);}
+  .sv2 .ready span.g-not{color:var(--brick);} .sv2 .ready span.g-not:before{background:var(--brick); border-color:var(--brick);}
+  .sv2 .ready span b{font-family:'Newsreader',Georgia,serif; font-size:0.95rem;}
   #returnBtn.fv2-ready{box-shadow:0 0 0 0 oklch(70% 0.12 72 / .6); animation:sv2-ready 1.6s ease-out 1;}
   @keyframes sv2-ready{0%{box-shadow:0 0 0 0 oklch(70% 0.12 72 / .6);}100%{box-shadow:0 0 0 12px oklch(70% 0.12 72 / 0);}}
   @media(prefers-reduced-motion:reduce){ .gv2 button, .sv2 .topics i{transition:none;} #returnBtn.fv2-ready{animation:none;} }
@@ -226,7 +230,7 @@
     background:repeating-linear-gradient(to bottom, transparent 0 31px, color-mix(in oklab, var(--a-mustard, var(--amber-edge)) 20%, transparent) 31px 32px),
                linear-gradient(160deg, color-mix(in oklab, var(--a-mustard, var(--amber-edge)) 24%, var(--paper)), color-mix(in oklab, var(--a-mustard, var(--amber-edge)) 14%, var(--paper))) !important;}
   #notesCard::after{content:'Not part of the feedback'; position:absolute; right:24px; bottom:42px; transform:rotate(-4deg); transform-origin:right bottom;
-    font:italic 600 clamp(1.8rem, 4.6vw, 3.4rem)/1 'Newsreader',Georgia,serif; color:var(--a-mustard, var(--gold)); opacity:.28; pointer-events:none; white-space:nowrap;}
+    font:italic 600 clamp(1.8rem, 4.6vw, 3.4rem)/1 'Newsreader',Georgia,serif; color:var(--a-mustard, var(--gold)); opacity:.11; pointer-events:none; white-space:nowrap;}
   #notesCard > *{position:relative; z-index:1;}
   #notesCard h2{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
   #notesCard .private{display:inline-flex; align-items:center; gap:6px; font:700 0.68rem/1 'Karla',sans-serif; letter-spacing:.07em; text-transform:uppercase;
@@ -528,7 +532,7 @@
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610271614">
+<link rel="stylesheet" href="hub-house.css?v=202610271636">
 </head>
 <body>
 <div class="board">
@@ -720,14 +724,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202610271614"></script>
-<script src="hub-shared.js?v=202610271614"></script>
-<script src="hub-store.js?v=202610271614"></script>
-<script src="hub-say.js?v=202610271614"></script>
-<script src="hub-crit-learn.js?v=202610271614"></script>
-<script src="hub-crit-vocab.js?v=202610271614"></script>
-<script src="hub-sync.js?v=202610271614"></script>
-<script src="hub-notebook.js?v=202610271614"></script>
+<script src="hub-exchange.js?v=202610271636"></script>
+<script src="hub-shared.js?v=202610271636"></script>
+<script src="hub-store.js?v=202610271636"></script>
+<script src="hub-say.js?v=202610271636"></script>
+<script src="hub-crit-learn.js?v=202610271636"></script>
+<script src="hub-crit-vocab.js?v=202610271636"></script>
+<script src="hub-sync.js?v=202610271636"></script>
+<script src="hub-notebook.js?v=202610271636"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1233,6 +1237,14 @@ $('fGrade').addEventListener('change', e=>{
   });
   const filled = id => [...document.querySelectorAll('#' + id + ' .pt')].filter(r => (r.querySelector('.pt-text') || {}).textContent && r.querySelector('.pt-text').textContent.trim()).length;
   let wasReady = false;
+  /* the grade in the bar is the grade, in its own color (Ramy, 27 Oct 2026: "the grade at the bottom ... should be like red if it's not standard and green") */
+  function gradeMark(){
+    const v = String(sel.value || ''), t = tiles.querySelector('[data-v="' + v.replace(/"/g, '') + '"]');
+    if (!v || !t) return '<span>Grade</span>';
+    const k = t.classList.contains('above') ? 'above' : t.classList.contains('not') ? 'not' : 'to';
+    const short = { above: 'S+', to: 'S', not: 'N' }[k];
+    return '<span class="ok g-' + k + '" title="' + esc(v) + '"><b>' + short + '</b> ' + esc(v) + '</span>';
+  }
   function paint(){
     tiles.querySelectorAll('[data-v]').forEach(b => { const on = b.dataset.v === sel.value; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); b.disabled = sel.disabled; });
     const good = filled('lSP') + filled('lST'), act = filled('lAP') + filled('lAT');
@@ -1248,7 +1260,7 @@ $('fGrade').addEventListener('change', e=>{
       + '<span class="n star" title="Starred: carried into the next plan"><b>' + stars + '</b>\u2605</span>'
       + '<span class="topics" title="' + Object.keys(per).map(k => 'Topic ' + k + ': ' + per[k]).join(' \u00b7 ') + '">'
       + Object.keys(per).map(k => '<i class="' + (per[k] ? 'on' : '') + '" style="height:' + (per[k] ? 6 + Math.round(16 * per[k] / max) : 4) + 'px"></i>').join('') + '</span>'
-      + '<span class="ready"><span class="' + (sel.value ? 'ok' : '') + '">Grade</span><span class="' + (overall ? 'ok' : '') + '">Overall</span></span>';
+      + '<span class="ready">' + gradeMark() + '<span class="' + (overall ? 'ok' : '') + '">Overall comment</span></span>';
     const btn = $('returnBtn');
     if (btn) { if (ready && !wasReady) { btn.classList.remove('fv2-ready'); void btn.offsetWidth; btn.classList.add('fv2-ready'); } if (!ready) btn.classList.remove('fv2-ready'); }
     wasReady = ready;
