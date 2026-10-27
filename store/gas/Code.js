@@ -2431,6 +2431,23 @@ case 'inbox': {
       }
       return { added: added.length, skipped: skipped, trainees: rosterWithRecords_(course.id, TUTOR_WRITES) };
     }
+    /* A CENTER'S FOLDER, ONE SUBFOLDER PER TRAINEE (v170, 27 Oct 2026). Ramy: "they link it to a folder with the
+       different subfolders for the trainees ... could be pushed automatically into their own folders on Lite."
+       Tutors only, and it reads names alone: the folders directly inside the one linked, with their links. Never a
+       file, never a file's contents, and nothing is copied or kept here -- Course admin matches the names to the
+       roster and files each link in that trainee's staff file. Lite sees only what is shared with its account. */
+    case 'folderTrainees': {
+      requireTutor_(tutor);
+      var ftUrl = String(req.url || '');
+      var ftId = (ftUrl.match(/\/folders\/([A-Za-z0-9_-]{10,})/) || ftUrl.match(/[?&]id=([A-Za-z0-9_-]{10,})/) || [])[1];
+      if (!ftId) throw new Error('That is not a link to a Drive folder');
+      var ftFolder = null;
+      try { ftFolder = DriveApp.getFolderById(ftId); ftFolder.getName(); } catch (e) { throw new Error('Lite cannot see inside that folder. Share it so anyone with the link can view, then try again.'); }
+      var ftOut = [], ftIt = ftFolder.getFolders();
+      while (ftIt.hasNext() && ftOut.length < 200) { var ftF = ftIt.next(); ftOut.push({ name: ftF.getName(), url: ftF.getUrl() }); }
+      ftOut.sort(function (a, b) { return a.name.localeCompare(b.name); });
+      return { folder: ftFolder.getName(), folders: ftOut };
+    }
     case 'renameTrainee': {
       requireTutor_(tutor);
       var sh2 = sheet_(SHEET_TRAINEES);

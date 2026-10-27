@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610272316">
+<link rel="stylesheet" href="hub-tokens.css?v=202610272328">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -360,6 +360,16 @@
   .grid.roster .temail:focus{outline:2px solid var(--teal); outline-offset:1px; background:var(--field-focus);}
   .rnote{margin:2px 0 14px; font-size:0.84rem; color:var(--grey); line-height:1.5;}
   .rset{margin:20px 4px 2px; font-size:0.7rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--gold-deep);}
+  /* the folder match, under Applications and interviews */
+  .fmatch{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:10px 0 0;}
+  .fmatch .muted{font-size:0.8rem; color:var(--grey);}
+  #folderMatchList{flex-basis:100%; background:var(--box); border-radius:12px; padding:12px 14px; margin-top:4px;}
+  #folderMatchList .fm-row{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; padding:7px 0; border-top:1px solid var(--sand-line); font-size:0.88rem;}
+  #folderMatchList .fm-row:first-of-type{border-top:0;}
+  #folderMatchList .fm-row b{font-weight:700;} #folderMatchList .fm-row .none{color:var(--brick);}
+  #folderMatchList .fm-row a{color:var(--a-forest, var(--teal)); text-decoration:underline; text-underline-offset:3px; word-break:break-word;}
+  #folderMatchList .fm-foot{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin-top:10px;}
+  #folderMatchList .fm-left{font-size:0.82rem; color:var(--grey); margin:8px 0 0;}
   /* DRAG TO CHANGE A TEACHING SET (Ramy, 27 Oct 2026) */
   .grid.roster .grip{display:inline-flex; align-items:center; justify-content:center; width:22px; height:30px; margin:0 4px 0 -6px; border-radius:6px;
     color:var(--grey); fill:currentColor; cursor:grab; touch-action:none; flex-shrink:0;}
@@ -526,7 +536,7 @@
   .tcol-opt input:checked + span{box-shadow:0 0 0 2px var(--paper), 0 0 0 4px var(--teal);}
   .tcol-opt input:focus-visible + span{outline:2px solid var(--gold-lifted); outline-offset:3px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610272316">
+<link rel="stylesheet" href="hub-house.css?v=202610272328">
 </head>
 <body>
 <div class="board">
@@ -959,7 +969,13 @@
     <div class="fields docs">
       <div class="wide"><label for="docAssessTimetable">Assessment timetable <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0;">the assessor’s own plan for the visit day. Leave it empty and the pack opens the visit day on Lite’s timetable instead.</span></label><input type="text" id="docAssessTimetable" placeholder="https://…"></div>
       <div class="wide"><label for="docDescriptions">Candidate descriptions <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0;">a short description of each trainee, with a photo if you can. Tell them it is shared with the assessor.</span></label><input type="text" id="docDescriptions" placeholder="https://…"></div>
-      <div class="wide"><label for="docApplications">Applications and interviews <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0;">the application tasks and interview notes for everyone who applied, including anyone you turned down and anyone who has since withdrawn. Names only, nothing else that identifies them. Usually your Appian course folder.</span></label><input type="text" id="docApplications" placeholder="https://…"></div>
+      <div class="wide"><label for="docApplications">Applications and interviews <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0;">the application tasks and interview notes for everyone who applied, including anyone you turned down and anyone who has since withdrawn. Names only, nothing else that identifies them. Usually your Appian course folder.</span></label><input type="text" id="docApplications" placeholder="https://…">
+        <!-- ONE FOLDER, EACH TRAINEE'S OWN (Ramy, 27 Oct 2026: centers keep one folder with a subfolder per trainee;
+             "Lite would take care of business"). Reads the subfolders' names, matches them to the roster, and on one
+             press files each trainee's folder in their staff file (roster > Links). -->
+        <div class="fmatch" id="folderMatch"><button type="button" class="btn ghost small" id="folderMatchBtn">Match the folders to the trainees</button>
+          <span class="muted" id="folderMatchNote">If this folder has one folder inside it for each trainee, each goes in that trainee’s staff file.</span>
+          <div id="folderMatchList" hidden></div></div></div>
       <div class="wide"><label for="docPrevReport">Previous assessor’s report <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0;">from your last visit</span></label><input type="text" id="docPrevReport" placeholder="https://…"></div>
       <div class="wide"><label for="docActionPlan">Action plan agreed with Cambridge <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0;">only if one is in place</span></label><input type="text" id="docActionPlan" placeholder="https://…"></div>
       <div class="wide"><label for="docWithdrawals">Withdrawal letters <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0;">only if a trainee has left the course: the assessor checks the paperwork, such as the letter confirming it</span></label><input type="text" id="docWithdrawals" placeholder="https://…"></div>
@@ -1028,18 +1044,18 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610272316"></script>
-<script src="hub-store.js?v=202610272316"></script>
-<script src="hub-say.js?v=202610272316"></script>
-<script src="agreement-defaults.js?v=202610272316"></script>
-<script src="observation-defaults.js?v=202610272316"></script>
-<script src="hub-shared.js?v=202610272316"></script>
-<script src="hub-rotation.js?v=202610272316"></script>
-<script src="hub-due.js?v=202610272316"></script>
-<script src="hub-sync.js?v=202610272316"></script>
-<script src="hub-notebook.js?v=202610272316"></script>
-<script src="hub-hand.js?v=202610272316"></script>
-<script src="hub-ink.js?v=202610272316"></script>
+<script src="assignment-defaults.js?v=202610272328"></script>
+<script src="hub-store.js?v=202610272328"></script>
+<script src="hub-say.js?v=202610272328"></script>
+<script src="agreement-defaults.js?v=202610272328"></script>
+<script src="observation-defaults.js?v=202610272328"></script>
+<script src="hub-shared.js?v=202610272328"></script>
+<script src="hub-rotation.js?v=202610272328"></script>
+<script src="hub-due.js?v=202610272328"></script>
+<script src="hub-sync.js?v=202610272328"></script>
+<script src="hub-notebook.js?v=202610272328"></script>
+<script src="hub-hand.js?v=202610272328"></script>
+<script src="hub-ink.js?v=202610272328"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the centre's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -2471,6 +2487,52 @@ async function setPinSwitch(on){
       say('Moved. The TP points follow the next time they are opened.');
     } catch (err) { say('Not moved: ' + ((err && err.message) || err)); renderStoreRoster(); }
   }
+})();
+
+/* MATCH THE FOLDERS TO THE TRAINEES. The store reads the names of the folders inside the one linked (op
+   folderTrainees, names and links only); here they are matched to the roster by name -- letters with accents
+   or Turkish dotless i read as their plain forms, and a full name wins over first and last alone -- shown, and on
+   one press each trainee's folder goes in their staff file as "Application folder", replacing an earlier one. */
+(function(){
+  const btn = document.getElementById('folderMatchBtn'); if (!btn) return;
+  const list = document.getElementById('folderMatchList'), note = document.getElementById('folderMatchNote');
+  const plain = t => String(t || '').replace(/ı/g, 'i').replace(/İ/g, 'I').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const ends = t => { const w = plain(t).split(' ').filter(Boolean); return w.length ? w[0] + ' ' + w[w.length - 1] : ''; };
+  let MATCH = [];
+  btn.addEventListener('click', async () => {
+    const url = (document.getElementById('docApplications').value || '').trim();
+    if (!/\/folders\/|[?&]id=/.test(url)) { note.textContent = 'Paste a link to a Drive folder first.'; return; }
+    btn.disabled = true; note.textContent = 'Reading the folder…'; list.hidden = true;
+    try {
+      const r = await window.HubStore.call({ op: 'folderTrainees', url: url });
+      const roster = (Array.isArray(ROSTER) ? ROSTER : Object.values((ROSTER && ROSTER.trainees) || {})).length
+        ? (Array.isArray(ROSTER) ? ROSTER : Object.values(ROSTER.trainees)) : Object.values(loadRoster().trainees || {});
+      const folders = r.folders || [], used = {};
+      MATCH = roster.slice().sort((a, b) => String(a.name).localeCompare(String(b.name))).map(t => {
+        let f = folders.find(x => !used[x.url] && plain(x.name) === plain(t.name)) || folders.find(x => !used[x.url] && ends(x.name) && ends(x.name) === ends(t.name));
+        if (f) used[f.url] = 1;
+        return { token: t.token, name: t.name, folder: f || null };
+      });
+      const left = folders.filter(x => !used[x.url]);
+      const got = MATCH.filter(m => m.folder).length;
+      list.innerHTML = MATCH.map(m => `<div class="fm-row"><b>${esc(m.name)}</b>${m.folder ? `<a href="${esc(m.folder.url)}" target="_blank" rel="noopener">${esc(m.folder.name)}</a>` : '<span class="none">No folder with this name</span>'}</div>`).join('')
+        + (left.length ? `<p class="fm-left">In the folder but not on the roster: ${left.map(x => esc(x.name)).join(', ')}.</p>` : '')
+        + `<div class="fm-foot">${got ? `<button type="button" class="btn primary small" id="folderMatchSave">Put each folder in its trainee’s staff file</button>` : ''}<span class="muted" id="folderMatchDone">${got} of ${MATCH.length} matched in “${esc(r.folder || 'the folder')}”.</span></div>`;
+      list.hidden = false; note.textContent = '';
+      const save = document.getElementById('folderMatchSave');
+      if (save) save.addEventListener('click', () => {
+        let n = 0;
+        MATCH.filter(m => m.folder).forEach(m => {
+          const staff = staffLinksOf(m.token).filter(l => !(l && (l.from === 'folder' || l.label === 'Application folder'))).concat([{ label: 'Application folder', url: m.folder.url, from: 'folder' }]);
+          savePrivateLinks(m.token, privateLinksOf(m.token), staff); n++;
+        });
+        document.getElementById('folderMatchDone').textContent = n + ' staff file' + (n === 1 ? '' : 's') + ' filled. Each is under Links on the roster, and on the trainee’s portfolio for the assessor.';
+        save.remove();
+        if (typeof renderStoreRoster === 'function') renderStoreRoster();
+      });
+    } catch (err) { note.textContent = (err && err.message) || 'The folder could not be read.'; }
+    btn.disabled = false;
+  });
 })();
 
 /* An address typed into a row is saved when the box is left; the roster
