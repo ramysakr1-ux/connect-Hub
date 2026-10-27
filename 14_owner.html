@@ -38,7 +38,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610271753">
+<link rel="stylesheet" href="hub-tokens.css?v=202610271755">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 70px;}
@@ -247,7 +247,7 @@
   @media (max-width:760px){ .demo .doors{grid-template-columns:1fr 1fr;} .setting{grid-template-columns:1fr;} }
   @media (max-width:520px){ .demo .doors{grid-template-columns:1fr;} .title h1{font-size:1.8rem;} body{padding:0 14px 60px;} .card{padding:16px;} .row-course .acts .btn{flex:1 1 auto; justify-content:center;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610271753">
+<link rel="stylesheet" href="hub-house.css?v=202610271755">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -270,10 +270,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610271753"></script>
-<script src="hub-store.js?v=202610271753"></script>
-<script src="hub-say.js?v=202610271753"></script>
-<script src="hub-card-mail.js?v=202610271753"></script>
+<script src="hub-shared.js?v=202610271755"></script>
+<script src="hub-store.js?v=202610271755"></script>
+<script src="hub-say.js?v=202610271755"></script>
+<script src="hub-card-mail.js?v=202610271755"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after. */
 const OWNER_STORE = 'hub:o';
@@ -629,22 +629,16 @@ function binRow(c){
 function presentCard(){
   const pres = COURSES.filter(c => courseKind(c) === 'present');
   const mine = pres.filter(c => !c.presentFor).sort((a, b) => String(b.created || '').localeCompare(String(a.created || '')))[0] || null;
-  const theirs = pres.filter(c => c.presentFor);
-  const tutorUrl = c => base() + '5_tutor_dashboard.html?k=' + encodeURIComponent(c.tutorKey);
-  const ends = c => c.demoExpires ? 'until ' + niceDate(c.demoExpires) : 'no end';
+  /* it starts where a centre starts: the tutor's invitation card */
+  const tutorUrl = c => base() + 'invite.html?k=' + encodeURIComponent(c.tutorKey);
   return `<div class="pdcard" id="pdCard">
     <h2>Connect demo</h2>
-    <p class="lede">A fresh, empty course to run in front of people: the bar at the top switches between tutor, trainee, volunteer and assessor, moves the course\u2019s day, and Fill in writes each page in front of the room. Everything saves for real, and nobody\u2019s email is reached.</p>
+    <p class="lede">A fresh, empty course to present: it opens on the tutor\u2019s invitation card, and the bar at the top of every page switches between tutor, trainee, volunteer and assessor, moves the course\u2019s day, and Fill in writes each page in front of the room. Everything saves for real; no email leaves Lite.</p>
     <div class="pd-row">${mine
       ? `<b>Yours</b><small>${mine.created ? 'started ' + esc(niceDate(String(mine.created).slice(0, 10))) : 'ready'}</small>
-         <a class="btn small primary" href="${esc(tutorUrl(mine))}" target="_blank" rel="noopener">Open as the tutor</a>
+         <a class="btn small primary" href="${esc(tutorUrl(mine))}" target="_blank" rel="noopener">Open the tutor\u2019s card</a>
          <button class="btn small" type="button" id="pdAgain" data-id="${esc(mine.id)}">Start again</button>`
-      : `<button class="btn primary" type="button" id="pdStart">Start a Connect demo</button><small>Yours never ends. Start again whenever you like: a fresh copy, and the old one goes to the bin.</small>`}</div>
-    <div class="pd-row"><b>Send it to someone</b>
-      <input type="text" id="pdFor" placeholder="Their name" autocomplete="off" style="flex:1 1 180px; max-width:260px">
-      <select id="pdDays" aria-label="For how long"><option value="1">for a day</option><option value="2" selected>for two days</option><option value="3">for three days</option><option value="7">for a week</option></select>
-      <button class="btn small" type="button" id="pdSend">Make their copy</button></div>
-    ${theirs.length ? `<div class="pd-list">${theirs.map(c => `<div class="pd-v"><b>${esc(c.presentFor)}</b><small>${esc(ends(c))}</small>${kbtn(`data-copy="${esc(tutorUrl(c))}"`, 'Copy their link')}</div>`).join('')}</div>` : ''}
+      : `<button class="btn primary" type="button" id="pdStart">Start a Connect demo</button><small>It never ends. Start again before each presentation: a fresh copy, and the old one goes to the bin.</small>`}</div>
   </div>`;
 }
 function render(courses, msg){
@@ -855,14 +849,6 @@ $('app').addEventListener('click', async e => {
     if (b.id === 'pdAgain' && !confirm('Start a fresh Connect demo? The one you have now goes to the bin.')) return;
     BUSY = true; b.disabled = true; status('Making a fresh Connect demo\u2026');
     try { const r = await call({ op: 'createPresentation', replace: b.dataset.id || '' }); render(r.courses, 'A fresh Connect demo is ready. Open it as the tutor.'); }
-    catch (err) { status(err.message); b.disabled = false; }
-    BUSY = false; return;
-  }
-  if (T('#pdSend')) {
-    if (BUSY) return; const who = ($('pdFor').value || '').trim(); if (!who) { status('Type their name first.'); $('pdFor').focus(); return; }
-    const days = +$('pdDays').value || 2, b = T('#pdSend');
-    BUSY = true; b.disabled = true; status('Making ' + who + '\u2019s Connect demo\u2026');
-    try { const r = await call({ op: 'createPresentation', forName: who, days }); render(r.courses, who + '\u2019s copy is ready until ' + niceDate(r.expires) + '. Copy their link below and send it.'); }
     catch (err) { status(err.message); b.disabled = false; }
     BUSY = false; return;
   }

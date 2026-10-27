@@ -161,6 +161,9 @@
     set('courseStart', iso(st)); set('courseEnd', iso(en)); set('tpCount', C.tpCount || '8');
     /* the demo shows a full plan and analysis from TP1 */
     set('planFrom', '1'); set('analysisFrom', '1');
+    /* the Connect way before day one: Connect's pre-course set on, and both getting-to-know-you options for the trainee */
+    var tick = function(id){ var el = $(id); if (el && !el.checked) { el.checked = true; el.dispatchEvent(new Event('change', { bubbles: true })); } };
+    tick('preCourseConnect'); set('gtkyFormat', 'both'); tick('interviewRecording');
     if ($('deliveryMode')) set('deliveryMode', C.deliveryMode || 'f2f');
     await typeAll(f);
     if (typeof g('saveSettings') === 'function') {
