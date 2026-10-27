@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610280028">
+<link rel="stylesheet" href="hub-tokens.css?v=202610280035">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -309,6 +309,9 @@
   .tsw{display:inline-flex; gap:6px; align-items:center;}
   .tsw i{position:static; display:inline-block; width:14px; height:14px; padding:0; border-radius:4px;}
   .tgrid.across .tile .tm .own{color:var(--brick); font-weight:700;}
+  /* less to read (Ramy, 27 Oct 2026: "too busy"): the reader's time wraps rather than being cut off, and lunch and breaks do not carry one */
+  .tgrid.across .tile .tm .lt{white-space:normal;}
+  .tgrid.across .k-lunch .tm, .tgrid.across .k-break .tm{display:none;}
   .tgrid.across .k-tp.mine .tm .own{color:var(--gold-lifted);}
   .tgrid.across .k-tp .who{margin:0 1px; padding:0 3px; min-width:0;}
   .tgrid.across .flags{display:flex; flex-wrap:wrap; gap:4px; align-items:flex-start; padding:0 0 4px; z-index:3; pointer-events:none;}
@@ -337,6 +340,9 @@
   .tgrid .day.drop-hover.drop-block .body{background:color-mix(in oklch, var(--brick) 16%, transparent);}
   .drophint{position:absolute; left:2px; right:2px; bottom:4px; z-index:6; font-size:0.66rem; font-weight:700; line-height:1.3; padding:5px 7px; border-radius:5px;}
   .drophint.shift{background:var(--gold-lifted); color:var(--ink-warm);}
+  .drophint.swap{background:var(--a-forest, var(--teal)); color:var(--paper);}
+  .tgrid .day.drop-swap .body, .tgrid.across .day.drop-swap{background:color-mix(in oklch, var(--teal) 7%, transparent);} .tgrid .day.drop-swap{border-color:var(--teal-lifted);}
+  .tgrid .day.drop-hover.drop-swap .body, .tgrid.across .day.drop-hover.drop-swap{background:color-mix(in oklch, var(--teal) 15%, transparent);}
   .drophint.block{background:var(--brick); color:var(--paper);}
   .tile.ghost{position:fixed; z-index:50; pointer-events:none; opacity:.92; box-shadow:0 14px 28px -12px oklch(30% 0.04 60 / .65); cursor:grabbing;}
   .tile.lifted{opacity:.35;}
@@ -487,25 +493,25 @@
     h1{font-size:1.4rem;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610280028">
+<link rel="stylesheet" href="hub-house.css?v=202610280035">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610280028"></script>
-<script src="hub-tracker.js?v=202610280028"></script>
-<script src="hub-rotation.js?v=202610280028"></script>
-<script src="hub-xlsx.js?v=202610280028"></script>
-<script src="hub-docx.js?v=202610280028"></script>
-<script src="hub-timetable-parse.js?v=202610280028"></script>
-<script src="assignment-defaults.js?v=202610280028"></script>
-<script src="hub-shared.js?v=202610280028"></script>
-<script src="hub-store.js?v=202610280028"></script>
-<script src="hub-say.js?v=202610280028"></script>
-<script src="hub-sync.js?v=202610280028"></script>
-<script src="hub-notebook.js?v=202610280028"></script>
+<script src="hub-due.js?v=202610280035"></script>
+<script src="hub-tracker.js?v=202610280035"></script>
+<script src="hub-rotation.js?v=202610280035"></script>
+<script src="hub-xlsx.js?v=202610280035"></script>
+<script src="hub-docx.js?v=202610280035"></script>
+<script src="hub-timetable-parse.js?v=202610280035"></script>
+<script src="assignment-defaults.js?v=202610280035"></script>
+<script src="hub-shared.js?v=202610280035"></script>
+<script src="hub-store.js?v=202610280035"></script>
+<script src="hub-say.js?v=202610280035"></script>
+<script src="hub-sync.js?v=202610280035"></script>
+<script src="hub-notebook.js?v=202610280035"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1881,6 +1887,22 @@ function settle(day, keep){
 }
 
 /* What dropping `x` (from `fromDay`) on `day` at `start` would do. */
+/* DROP A TILE ON ANOTHER TILE AND THE TWO SWAP PLACES (Ramy, 27 Oct 2026: "I can move them sideways, but I can't seem
+   to move them up and down"). On a full timetable every slot is taken, so a drop onto one used to shove the rest of the
+   day later (same day) or be refused as a clash (another day). Now the two tiles exchange their times -- and, across
+   days, their days -- and nothing else moves, so every tile stays on the week's grid. A drop into an empty slot moves
+   as before. A TP lesson still stays with its practice's day. */
+function tileUnder(clientX, clientY, notId){
+  const els = document.elementsFromPoint(clientX, clientY);
+  return els.find(el => el.classList && el.classList.contains('tile') && !el.classList.contains('ghost') && el.dataset.id && el.dataset.id !== notId) || null;
+}
+function swapCheck(x, fromDay, date, id){
+  const day = dayOfDate(date); if (!day || day.closed) return null;
+  const o = (day.sessions || []).find(s => s.id === id); if (!o || o === x) return null;
+  if (day !== fromDay && (x.k === 'tp' || o.k === 'tp')) return { kind: 'block', why: 'A TP lesson stays with its practice’s day — change the practice from the tile' };
+  if (o.locked) return { kind: 'block', why: '“' + tileName(o, day) + '” is fixed' };
+  return { kind: 'swap', effects: ['“' + tileName(x, fromDay) + '” and “' + tileName(o, day) + '” swap places' + (day !== fromDay ? ' (' + dayName(fromDay.date) + ' and ' + dayName(day.date) + ')' : '')] };
+}
 function evaluate(x, fromDay, day, start, endAt){
   if (day.closed) return { kind: 'block', why: 'This day is closed' };
   const len = toMin(x.e) - toMin(x.s), end = endAt != null ? endAt : start + len;
@@ -1913,7 +1935,7 @@ function placeTiles(day){
     const tm = el.querySelector('.tm'); if (tm) tm.textContent = hubClockRange(x.s, x.e);
   });
 }
-function clearTints(){ document.querySelectorAll('.tgrid .day').forEach(el => { el.classList.remove('drop-clean', 'drop-shift', 'drop-block', 'drop-hover'); el.querySelectorAll('.drophint, .dropcell').forEach(h => h.remove()); }); }
+function clearTints(){ document.querySelectorAll('.tgrid .day').forEach(el => { el.classList.remove('drop-clean', 'drop-shift', 'drop-block', 'drop-swap', 'drop-hover'); el.querySelectorAll('.drophint, .dropcell').forEach(h => h.remove()); }); }
 function dayUnder(x, y){
   const els = document.elementsFromPoint(x, y);
   const col = els.find(el => el.classList && el.classList.contains('day') && el.id && el.id.indexOf('d-') === 0);
@@ -1984,6 +2006,14 @@ function wireBoard(){
       if (col && date !== DRAG.from) { const r = evaluateDue(DRAG.due, date); col.classList.add('drop-hover'); hint(col, r); DRAG.target = { date, r }; } else DRAG.target = null;
       return;
     }
+    const over = col ? tileUnder(e.clientX, e.clientY, DRAG.x.id) : null;
+    const sw = over ? swapCheck(DRAG.x, DRAG.day, over.dataset.date, over.dataset.id) : null;
+    if (sw) {
+      DRAG.ghost.style.left = (e.clientX - DRAG.grabX) + 'px'; DRAG.ghost.style.top = (e.clientY - DRAG.grab) + 'px'; DRAG.ghost.style.width = (DRAG.w || DRAG.el.offsetWidth) + 'px';
+      clearTints(); col.classList.add('drop-hover', 'drop-' + sw.kind); hint(col, sw);
+      DRAG.target = sw.kind === 'swap' ? { date: over.dataset.date, swap: over.dataset.id, r: sw } : { date: over.dataset.date, r: sw };
+      return;
+    }
     if (ACROSS()) {
       DRAG.ghost.style.left = (e.clientX - DRAG.grabX) + 'px'; DRAG.ghost.style.top = (e.clientY - DRAG.grab) + 'px';
       clearTints();
@@ -2035,6 +2065,15 @@ function wireBoard(){
     const t = was.target;
     if (!t || t.r.kind === 'block') { render(); return; }
     UNDO.push(was.before);
+    if (t.swap) {
+      const to = dayOfDate(t.date), x = was.day.sessions.find(s => s.id === was.x.id), o = to && to.sessions.find(s => s.id === t.swap);
+      if (!x || !o) { render(); return; }
+      const xs = x.s, xe = x.e; x.s = o.s; x.e = o.e; o.s = xs; o.e = xe;
+      if (to !== was.day) { was.day.sessions = was.day.sessions.filter(s => s !== x).concat([o]); to.sessions = to.sessions.filter(s => s !== o).concat([x]); }
+      was.day.sessions.sort(byStart); to.sessions.sort(byStart);
+      save('Swapped', { text: '“' + tileName(x, to) + '” and “' + tileName(o, was.day) + '” swapped places' + (to !== was.day ? ' between ' + dayName(was.day.date) + ' and ' + dayName(to.date) : ' on ' + dayName(to.date)), effects: [] });
+      render(); return;
+    }
     const to = dayOfDate(t.date), x = was.day.sessions.find(s => s.id === was.x.id);
     const len = toMin(x.e) - toMin(x.s);
     x.s = toHM(t.start); x.e = toHM(t.end != null ? t.end : t.start + len);
