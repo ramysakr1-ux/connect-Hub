@@ -38,7 +38,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610271727">
+<link rel="stylesheet" href="hub-tokens.css?v=202610271753">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 70px;}
@@ -149,6 +149,16 @@
   .libdoor .lib-go{flex:none; margin-left:auto; background:var(--a-forest, var(--teal)); color:var(--paper); border-radius:999px; padding:8px 18px;
     font-size:0.84rem; font-weight:600;}
   @media (max-width:520px){ .libdoor{border-radius:22px;} .libdoor .lib-go{padding:7px 13px;} }
+  /* THE CONNECT DEMO (27 Oct 2026): a fresh course for a presentation, or one to send for a day or two. */
+  .pdcard{background:var(--surface); border-radius:var(--r-card, 14px); box-shadow:var(--nb-shadow, none); padding:0 20px 18px; overflow:hidden; border-top:5px solid var(--a-mustard, var(--gold));}
+  .pdcard h2{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.2rem; margin:16px 0 4px;}
+  .pdcard p.lede{margin:0 0 14px; color:var(--grey); font-size:0.88rem; max-width:70ch;}
+  .pdcard .pd-row{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:0 0 12px;}
+  .pdcard .pd-row b{font-family:'Newsreader',Georgia,serif; font-size:1.02rem;}
+  .pdcard .pd-row small{color:var(--grey);}
+  .pdcard input[type=text], .pdcard select{font:inherit; font-size:0.88rem; padding:8px 11px; border:1.5px solid var(--sand-line); border-radius:8px; background:var(--paper); color:var(--ink);}
+  .pdcard .pd-list{border-top:1px solid var(--row-line, var(--sand-line)); margin-top:6px; padding-top:10px;}
+  .pdcard .pd-v{display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; padding:6px 0; font-size:0.86rem;}
   .card.bin .name b{text-decoration:line-through; text-decoration-color:var(--grey); text-decoration-thickness:1px;}
   code{font-family:'Karla',sans-serif; font-size:0.78rem; color:var(--grey);}
   .addr{flex:1 1 100%; font-size:0.74rem; word-break:break-all; color:var(--grey);}
@@ -237,7 +247,7 @@
   @media (max-width:760px){ .demo .doors{grid-template-columns:1fr 1fr;} .setting{grid-template-columns:1fr;} }
   @media (max-width:520px){ .demo .doors{grid-template-columns:1fr;} .title h1{font-size:1.8rem;} body{padding:0 14px 60px;} .card{padding:16px;} .row-course .acts .btn{flex:1 1 auto; justify-content:center;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610271727">
+<link rel="stylesheet" href="hub-house.css?v=202610271753">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -260,10 +270,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202610271727"></script>
-<script src="hub-store.js?v=202610271727"></script>
-<script src="hub-say.js?v=202610271727"></script>
-<script src="hub-card-mail.js?v=202610271727"></script>
+<script src="hub-shared.js?v=202610271753"></script>
+<script src="hub-store.js?v=202610271753"></script>
+<script src="hub-say.js?v=202610271753"></script>
+<script src="hub-card-mail.js?v=202610271753"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after. */
 const OWNER_STORE = 'hub:o';
@@ -345,6 +355,7 @@ function courseKind(c){
   if (/scratch/i.test(n)) return 'scratch';
   if (/tp point library/i.test(n) || /tp point library/i.test(cn)) return 'library';
   if (/grades/i.test(cn) || /grades/i.test(n)) return 'grades';
+  if (c.presentToday) return 'present';
   if (c.demoToday || /^Demo —|^Finished course/.test(n)) return 'demo';
   return 'live';
 }
@@ -615,6 +626,27 @@ function binRow(c){
   </div></div>`;
 }
 
+function presentCard(){
+  const pres = COURSES.filter(c => courseKind(c) === 'present');
+  const mine = pres.filter(c => !c.presentFor).sort((a, b) => String(b.created || '').localeCompare(String(a.created || '')))[0] || null;
+  const theirs = pres.filter(c => c.presentFor);
+  const tutorUrl = c => base() + '5_tutor_dashboard.html?k=' + encodeURIComponent(c.tutorKey);
+  const ends = c => c.demoExpires ? 'until ' + niceDate(c.demoExpires) : 'no end';
+  return `<div class="pdcard" id="pdCard">
+    <h2>Connect demo</h2>
+    <p class="lede">A fresh, empty course to run in front of people: the bar at the top switches between tutor, trainee, volunteer and assessor, moves the course\u2019s day, and Fill in writes each page in front of the room. Everything saves for real, and nobody\u2019s email is reached.</p>
+    <div class="pd-row">${mine
+      ? `<b>Yours</b><small>${mine.created ? 'started ' + esc(niceDate(String(mine.created).slice(0, 10))) : 'ready'}</small>
+         <a class="btn small primary" href="${esc(tutorUrl(mine))}" target="_blank" rel="noopener">Open as the tutor</a>
+         <button class="btn small" type="button" id="pdAgain" data-id="${esc(mine.id)}">Start again</button>`
+      : `<button class="btn primary" type="button" id="pdStart">Start a Connect demo</button><small>Yours never ends. Start again whenever you like: a fresh copy, and the old one goes to the bin.</small>`}</div>
+    <div class="pd-row"><b>Send it to someone</b>
+      <input type="text" id="pdFor" placeholder="Their name" autocomplete="off" style="flex:1 1 180px; max-width:260px">
+      <select id="pdDays" aria-label="For how long"><option value="1">for a day</option><option value="2" selected>for two days</option><option value="3">for three days</option><option value="7">for a week</option></select>
+      <button class="btn small" type="button" id="pdSend">Make their copy</button></div>
+    ${theirs.length ? `<div class="pd-list">${theirs.map(c => `<div class="pd-v"><b>${esc(c.presentFor)}</b><small>${esc(ends(c))}</small>${kbtn(`data-copy="${esc(tutorUrl(c))}"`, 'Copy their link')}</div>`).join('')}</div>` : ''}
+  </div>`;
+}
 function render(courses, msg){
   COURSES = courses || [];
   const demo = theDemo();
@@ -641,6 +673,8 @@ function render(courses, msg){
       <button class="btn quiet" id="makeCancel" type="button">Cancel</button>
       <span class="note" id="mkNote">Only a course with a real center number gets made, and the center cannot edit it afterward.</span>
     </div>
+
+    <section class="sec">${presentCard()}</section>
 
     ${demo ? `<section class="sec"><div class="cards">${demoCard(demo)}${sendCard()}${dayOne ? dayOneCard(dayOne) : ''}</div></section>` : `<section class="sec"><div class="empty">No demo course. Seed one, and every card will open it.</div></section>`}
 
@@ -816,6 +850,22 @@ $('app').addEventListener('click', async e => {
   const T = sel => e.target.closest(sel);
   if (T('#toggleUrls')) { SHOW_URLS = !SHOW_URLS; ls.set(URLS_KEY, SHOW_URLS ? '1' : '0'); render(COURSES); return; }
   if (T('#retryBtn')) { load(); return; }
+  if (T('#pdStart') || T('#pdAgain')) {
+    if (BUSY) return; const b = T('#pdStart') || T('#pdAgain');
+    if (b.id === 'pdAgain' && !confirm('Start a fresh Connect demo? The one you have now goes to the bin.')) return;
+    BUSY = true; b.disabled = true; status('Making a fresh Connect demo\u2026');
+    try { const r = await call({ op: 'createPresentation', replace: b.dataset.id || '' }); render(r.courses, 'A fresh Connect demo is ready. Open it as the tutor.'); }
+    catch (err) { status(err.message); b.disabled = false; }
+    BUSY = false; return;
+  }
+  if (T('#pdSend')) {
+    if (BUSY) return; const who = ($('pdFor').value || '').trim(); if (!who) { status('Type their name first.'); $('pdFor').focus(); return; }
+    const days = +$('pdDays').value || 2, b = T('#pdSend');
+    BUSY = true; b.disabled = true; status('Making ' + who + '\u2019s Connect demo\u2026');
+    try { const r = await call({ op: 'createPresentation', forName: who, days }); render(r.courses, who + '\u2019s copy is ready until ' + niceDate(r.expires) + '. Copy their link below and send it.'); }
+    catch (err) { status(err.message); b.disabled = false; }
+    BUSY = false; return;
+  }
   if (T('#otherKeyBtn')) { ls.del(OWNER_STORE); gate(); return; }
   if (T('#makeBtn')) { const row = $('makeRow'); row.hidden = !row.hidden; if (!row.hidden) $('mkNumber').focus(); return; }
   if (T('#makeCancel')) { $('makeRow').hidden = true; return; }

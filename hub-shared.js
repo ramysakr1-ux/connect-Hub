@@ -1475,12 +1475,20 @@ window.hubIsReference = function(s){
     var m = String(s == null ? '' : s).match(/^(\d{4})-(\d{2})-(\d{2})$/);
     return m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(s);
   };
-  window.hubToday = function(){
+  /* THE COURSE'S DAY (27 Oct 2026): a demo's pinned day, or a PRESENTATION course's day (settings.presentToday),
+     which moves the same clock but saves for real. Only the demo is read-only; hubDemoToday stays the demo's alone,
+     so a presentation course prints, downloads and saves like any course. */
+  window.hubCourseDay = function(){
     var d = window.hubDemoToday(); if (d) return d;
+    try { var cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; var p = String(cs.presentToday || ''); return /^\d{4}-\d{2}-\d{2}$/.test(p) ? p : ''; }
+    catch (e) { return ''; }
+  };
+  window.hubToday = function(){
+    var d = window.hubCourseDay(); if (d) return d;
     var n = new Date(); return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
   };
   window.hubNow = function(){
-    var d = window.hubDemoToday(); if (!d) return Date.now();
+    var d = window.hubCourseDay(); if (!d) return Date.now();
     var n = new Date(), p = d.split('-');
     return new Date(+p[0], +p[1] - 1, +p[2], n.getHours(), n.getMinutes(), n.getSeconds()).getTime();
   };
@@ -2316,4 +2324,28 @@ window.hubHeadHTML = function (text, heads) {
   var realClick = HTMLAnchorElement.prototype.click;
   HTMLAnchorElement.prototype.click = function(){ if (isDownload(this) && demo()) { say(); return; } return realClick.apply(this, arguments); };
   window.hubDemoLocked = demo; window.hubDemoSay = say;
+})();
+
+/* ---- A PRESENTATION COURSE (27 Oct 2026) ---------------------------------
+   Ramy: "open a new course in front of everyone ... a tab on top that says fill in, and it would just fill in
+   everything ... I want to see it live being filled in." A course made for a presentation (settings.presentToday)
+   loads hub-present.js: the day it is, a switch to move the day, and Fill in on every page that has something to
+   fill. Every other course never fetches it. */
+(function(){
+  var src0 = (document.currentScript && document.currentScript.src) || '';
+  var base = src0.replace(/hub-shared\.js.*$/, '') || '';
+  var ver = (src0.match(/[?&]v=([^&#]+)/) || [])[1] || String(Date.now()).slice(0, 8);   /* the page's own stamp, so a push reaches the room */
+  function maybe(){
+    try {
+      if (window.HubPresent || document.getElementById('hubPresentJs')) return;
+      var cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {};
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(cs.presentToday || ''))) return;
+      if (/\/(offer\.html|film\/|brand\/|cv\/)/.test(location.pathname)) return;
+      var sc = document.createElement('script'); sc.id = 'hubPresentJs'; sc.src = base + 'hub-present.js?v=' + ver; sc.defer = true;
+      document.head.appendChild(sc);
+    } catch (e) {}
+  }
+  maybe();
+  /* a trainee's first page can open before the course's settings arrive */
+  document.addEventListener('hub:ready', maybe);
 })();

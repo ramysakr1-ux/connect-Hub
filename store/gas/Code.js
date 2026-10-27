@@ -91,7 +91,7 @@ function nextClass_(courseId) {
   var tt = courseRead_(courseId, 'timetable') || {};
   if (!tt.published) return null;
   var tp = (tt.slots || []).filter(function (s) { return s && s.kind === 'tp' && s.from; })[0];
-  var now = set.demoToday ? localInstant_(String(set.demoToday), '09:00', tz) : new Date();
+  var now = courseDay_(set) ? localInstant_(courseDay_(set), '09:00', tz) : new Date();
   /* A class is a teaching practice day, or a day with a slot in the Teaching practice room: the demonstration
      lesson, getting to know a new class (Ramy, 26 Oct 2026: "count Monday"; hub-attendance.js classDays). */
   var inRoom = function (d) { return (d.sessions || []).filter(function (x) { return x && x.s && x.e && x.k !== 'break' && x.k !== 'lunch' && /teaching practice/i.test(String(x.room || '')); }).sort(function (a, b) { return a.s < b.s ? -1 : 1; }); };
@@ -197,9 +197,22 @@ function notifyFeedback_() {
    verified "send mail as" alias -- which the Workspace account does natively,
    since lite@ is an alias on it; otherwise the mail goes as before rather
    than not at all. */
+/* THE COURSE'S DAY (v166, 27 Oct 2026). A demo is pinned to a day (settings.demoToday) and keeps every write off
+   the store; a PRESENTATION course (settings.presentToday, Ramy: "open a new course in front of everyone ... fill in")
+   moves its day the same way but saves for real, so the tutor's tab and the trainee's tab talk to each other. Either
+   one is the course's clock; only the demo is read-only. */
+function courseDay_(set) { var d = String((set && (set.demoToday || set.presentToday)) || ''); return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : ''; }
+/* Nothing is ever sent to a made-up address: the presentation course's trainees (and any example) live at
+   example.com, .test, .example or .invalid, which no mail should reach. */
+function realTo_(to) {
+  return String(to || '').split(',').map(function (x) { return x.trim(); })
+    .filter(function (x) { return x && !/@(example\.(com|org|net)|[^@]*\.(test|example|invalid))$/i.test(x); }).join(', ');
+}
 var FROM_ = 'lite@celtaconnect.com';
 var FROM_OK_ = null;
 function sendAs_(msg) {
+  msg.to = realTo_(msg.to); if (msg.bcc) msg.bcc = realTo_(msg.bcc);
+  if (!msg.to) return;
   if (FROM_OK_ === null) {
     try { FROM_OK_ = GmailApp.getAliases().indexOf(FROM_) !== -1; } catch (e) { FROM_OK_ = false; }
   }
@@ -216,7 +229,7 @@ function sendVolunteerReminders() {
   courses_().forEach(function (c) {
     try {
       var set = courseRead_(c.id, 'settings') || {};
-      if (set.demoToday) return;
+      if (set.demoToday || set.presentToday) return;
       var tz = set.timeZone || 'Europe/London';
       if (set.end && Utilities.formatDate(now, tz, 'yyyy-MM-dd') > String(set.end)) return;
       var nx = nextClass_(c.id); if (!nx) return;
@@ -514,7 +527,7 @@ function handle_(req) {
         var set = courseRead_(c.id, 'settings') || {};
         // "not a course": the TP point library is kept as a course record, as
         // the pulse below already knows (20 Oct 2026: it counted a test name).
-        if (set.demoToday || /scratch|not a course/i.test(String(c.name || '') + ' ' + String(set.courseName || ''))) return;
+        if (set.demoToday || set.presentToday || /scratch|not a course/i.test(String(c.name || '') + ' ' + String(set.courseName || ''))) return;
         if (/grades/i.test(String(set.courseName || '')) || /grades/i.test(String(c.name || ''))) return;
         out.courses.total++;
         var num = String(set.centreNumber || '').trim().toUpperCase();
@@ -793,7 +806,7 @@ case 'inbox': {
       var pPeople = peopleByCourse_({ assignments: 1 });
       courses_().forEach(function (c) {
         var set = courseRead_(c.id, 'settings') || {};
-        if (set.demoToday || /scratch|not a course/i.test(String(c.name || '') + ' ' + String(set.courseName || ''))) return;
+        if (set.demoToday || set.presentToday || /scratch|not a course/i.test(String(c.name || '') + ' ' + String(set.courseName || ''))) return;
         if (/grades/i.test(String(set.courseName || '')) || /grades/i.test(String(c.name || ''))) return;
         var people = pPeople[c.id] || {};
         var heads = 0, waiting = 0, resubs = 0, passed = 0, failed = 0;
@@ -907,6 +920,27 @@ case 'inbox': {
       // pair cost two of those end to end -- which is what Ramy was waiting
       // through on 21 Sep 2026 ("making the course takes a while").
       return { id: cid, name: cname, tutorKey: courseKey_('tutor', cid), assessorKey: courseKey_('assessor', cid), courses: ownerList_(), centres: centreBook_() };
+    }
+    /* A CONNECT DEMO (v166, 27 Oct 2026). Ramy: "open a new course in front of everyone ... it resets itself ... I can
+       also send it to people if they want to play with it ... maybe just for a day or two ... mine will just stay."
+       A fresh, empty course at the invented centre, named Connect demo, that saves for real and keeps a movable day
+       (settings.presentToday). Each run or visitor gets a fresh copy; `replace` puts the presenter's previous copy in the
+       bin; `days` gives a visitor's copy an end (settings.demoExpires), after which every link on it is refused. */
+    case 'createPresentation': {
+      requireOwner_(owner);
+      var pid = nextCourseId_();
+      var forWho = String(req.forName || '').trim().slice(0, 60);
+      var pname = 'Connect demo' + (forWho ? ' \u00b7 ' + forWho : '');
+      sheet_(SHEET_COURSES).appendRow([pid, pname, new Date()]);
+      var ptz = Session.getScriptTimeZone();
+      var pseed = { centreNumber: 'TR999', centreLocked: true, centreName: 'Elmswood English Centre', courseName: 'Connect demo',
+                    presentToday: Utilities.formatDate(new Date(), ptz, 'yyyy-MM-dd'), presentFor: forWho };
+      var pdays = parseInt(req.days, 10);
+      if (pdays > 0) pseed.demoExpires = Utilities.formatDate(new Date(Date.now() + pdays * 864e5), ptz, 'yyyy-MM-dd');
+      courseWrite_(pid, 'settings', pseed);
+      var rep = req.replace ? courseById_(String(req.replace)) : null;
+      if (rep) { var rset = courseRead_(rep.id, 'settings') || {}; if (rset.presentToday && !rep.deleted) setCourseField_(rep.id, 'deleted', new Date().toISOString()); }
+      return { id: pid, name: pname, tutorKey: courseKey_('tutor', pid), assessorKey: courseKey_('assessor', pid), expires: pseed.demoExpires || '', courses: ownerList_() };
     }
     // The next course from this one (Ramy, 28 Sep 2026: "can we duplicate the
     // course at the end?"). What is the CENTRE's carries over -- name, number,
@@ -1039,7 +1073,7 @@ case 'inbox': {
         if (!dc) throw new Error('No such course');
         var dset = courseRead_(did, 'settings') || {};
         var dToday = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
-        if (!dset.demoToday && dset.end && String(dset.end) >= dToday && roster_(did).length) throw new Error('This is a live course until ' + dset.end + '. Lite does not delete a live course; end it in its settings first.');
+        if (!dset.demoToday && !dset.presentToday && dset.end && String(dset.end) >= dToday && roster_(did).length) throw new Error('This is a live course until ' + dset.end + '. Lite does not delete a live course; end it in its settings first.');
         setCourseField_(did, 'deleted', new Date().toISOString());
       } finally { dlock.releaseLock(); }
       return { deleted: did, binned: true, until: Utilities.formatDate(new Date(Date.now() + BIN_DAYS * 86400000), Session.getScriptTimeZone(), 'yyyy-MM-dd'), courses: ownerList_() };
@@ -1439,6 +1473,12 @@ case 'inbox': {
         // TR001 is TR001 whatever Course admin sends.
         var was = courseRead_(course.id, 'settings') || {};
         if (was.centreLocked && was.centreNumber && data && typeof data === 'object') { data.centreNumber = was.centreNumber; data.centreLocked = true; }
+        /* v166: a Connect demo keeps its day and a visitor's copy keeps its end, whatever a page sends; the day
+           moves only when the presenter's switch sends a new one. */
+        if (data && typeof data === 'object') {
+          if (was.presentToday && !data.presentToday) data.presentToday = was.presentToday;
+          if (was.demoExpires && !owner) data.demoExpires = was.demoExpires;
+        }
       }
       courseWrite_(course.id, ck, data);
       return { saved: true };
@@ -2095,7 +2135,7 @@ case 'inbox': {
       if (!vol) throw new Error('Volunteer students only');
       var vcSet = courseRead_(course.id, 'settings') || {};
       var vcTz = vcSet.timeZone || 'Europe/London';
-      var vcToday = /^\d{4}-\d{2}-\d{2}$/.test(String(vcSet.demoToday || '')) ? String(vcSet.demoToday) : Utilities.formatDate(new Date(), vcTz, 'yyyy-MM-dd');
+      var vcToday = courseDay_(vcSet) || Utilities.formatDate(new Date(), vcTz, 'yyyy-MM-dd');
       var cefr = function (x) { var m = String(x || '').match(/\b([ABC][12])\b/i); return m ? m[1].toUpperCase() : String(x || '').trim().toLowerCase(); };
       var vcLevel = cefr(vol.level);
       if (!vcLevel) return { today: vcToday, classes: [] };
@@ -2153,7 +2193,7 @@ case 'inbox': {
          the TP day, depending how many TPs are per day"): the end of the day's last TP lesson, however many there are,
          from that day's own sessions, else from the timetable's TP slots. The demo's clock is a date, so it shows at once.
          v147: today's words (the flip cards) wait for the same moment ("words cards wait for the end of TP too"). */
-      if (!vcSet.demoToday && (hwByDay[vcToday] || vbByDay[vcToday])) {
+      if (!courseDay_(vcSet) && (hwByDay[vcToday] || vbByDay[vcToday])) {
         var hwDay = (ttb.days || []).filter(function (d) { return d && d.date === vcToday; })[0];
         var hwEnds = ((hwDay && hwDay.sessions) || []).filter(function (s) { return s && s.e && (s.k === 'tp' || s.room === 'Teaching practice'); }).map(function (s) { return String(s.e); });
         if (!hwEnds.length) hwEnds = (ttb.slots || []).filter(function (x) { return x && x.kind === 'tp' && x.to; }).map(function (x) { return String(x.to); });
@@ -3464,6 +3504,8 @@ function ownerList_() {
       cardStyle: s.cardStyle === 'ticket' ? 'ticket' : '',
       start: s.start || '', end: s.end || '',
       demoToday: s.demoToday || '',     // v50: the console marks a pinned demo course
+      presentToday: s.presentToday || '',   // v166: and a Connect demo
+      presentFor: s.presentFor || '', demoExpires: s.demoExpires || '',
       trainees: counts[c.id] || 0,
       tutorKey: keyOf('tutor', c.id),
       assessorKey: keyOf('assessor', c.id)
@@ -3581,8 +3623,7 @@ function streamFor_(course, list, tutor) {
   list = Array.isArray(list) ? list : [];
   if (tutor) return list;
   var s = course ? courseRead_(course.id, 'settings') : null;
-  var now = (s && s.demoToday && /^\d{4}-\d{2}-\d{2}$/.test(String(s.demoToday)))
-    ? new Date(String(s.demoToday) + 'T23:59:59Z').getTime() : Date.now();
+  var now = courseDay_(s) ? new Date(courseDay_(s) + 'T23:59:59Z').getTime() : Date.now();
   return list.filter(function (p) {
     if (!p || p.draft) return false;
     if (!p.publishAt) return true;
