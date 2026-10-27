@@ -935,6 +935,8 @@ case 'inbox': {
       /* a New York course on New York time (Ramy, 27 Oct 2026: "let's go with a New York course, New York time zone") */
       var ptz = 'America/New_York';
       var pseed = { centreNumber: 'US999', centreLocked: true, centreName: 'Elmswood English Center', courseName: 'Connect Lite demo', courseNumber: 'C/1',
+                     /* v169: Elmswood's elm leaf, so the center has its logo from the first screen (assets/elmswood-logo.svg) */
+                     logo: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJFbG1zd29vZCBFbmdsaXNoIENlbnRlciI+IDxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgcng9IjEyIiBmaWxsPSIjMkY0RjNBIi8+IDxwYXRoIGQ9Ik0zMiAxM2M5IDYgMTMuNSAxMyAxMy41IDIxIDAgOC4yLTUuNiAxNC40LTEzLjUgMTcuNEMyNC4xIDQ4LjQgMTguNSA0Mi4yIDE4LjUgMzRjMC04IDQuNS0xNSAxMy41LTIxeiIgZmlsbD0iI0YzRUZFMiIvPiA8cGF0aCBkPSJNMzIgMTkuNXYyOCIgc3Ryb2tlPSIjMkY0RjNBIiBzdHJva2Utd2lkdGg9IjIuMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+IDxwYXRoIGQ9Ik0zMiAyNy41bDYuNS00LjVNMzIgMzQuNWw3LjUtNU0zMiA0MS41bDYuNS00LjVNMzIgMjcuNWwtNi41LTQuNU0zMiAzNC41bC03LjUtNU0zMiA0MS41bC02LjUtNC41IiBzdHJva2U9IiMyRjRGM0EiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4gPC9zdmc+',
                     timeZone: ptz, clock: '12', presentToday: Utilities.formatDate(new Date(), ptz, 'yyyy-MM-dd'), presentFor: forWho };
       var pdays = parseInt(req.days, 10);
       if (pdays > 0) pseed.demoExpires = Utilities.formatDate(new Date(Date.now() + pdays * 864e5), ptz, 'yyyy-MM-dd');
