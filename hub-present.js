@@ -156,6 +156,13 @@
     }
     var st = nextMonday(), en = new Date(st); en.setDate(en.getDate() + 25);
     var C = P.course, f = [];
+    /* the center's logo first: Elmswood's elm leaf, made up like the center (assets/elmswood-logo.svg) */
+    if (!g('courseLogo') && typeof g('applyLogoPreview') === 'function') { try {
+      var svg = await (await fetch('assets/elmswood-logo.svg', { cache: 'no-store' })).text();
+      window.__hp = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg.replace(/\n\s*/g, ' ').trim())));
+      var slot = $('logoSlot'); if (slot) slot.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      await sleep(300); window.eval('courseLogo = window.__hp; applyLogoPreview(courseLogo)'); await sleep(500);
+    } catch (e) {} }
     var put = function(id, v){ var el = $(id); if (el && v != null && String(v) !== '') f.push({ el: el, text: String(v) }); };
     put('courseName', C.courseName); put('courseNumber', C.courseNumber); put('tutorNames', C.tutorNames); put('totalHours', C.totalHours);
     put('planDueNote', C.planDueNote); put('selfDueNote', C.selfDueNote);
