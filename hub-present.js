@@ -145,11 +145,14 @@
   FILL['6_centre_admin_dashboard.html'] = { who: 'tutor', label: 'Fill in', run: async function(P){
     var bulk = $('storeBulkNames');
     var rosterEmpty = !Object.keys((rd('connect_roster_v1') || {}).trainees || {}).length;
-    if (bulk && rosterEmpty && cs().start) {
-      if (bulk.offsetParent === null && $('toggleBulk')) $('toggleBulk').click();
-      await sleep(200);
+    if (bulk && rosterEmpty && cs().presentSetUp) {
+      var rp = $('panel-roster'), rt = document.querySelector('.tab[data-tab="roster"]');
+      if (rp && rp.style.display === 'none' && rt) { rt.click(); await sleep(300); }
+      if ($('addBox') && $('addBox').style.display === 'none' && $('toggleAdd')) $('toggleAdd').click();
+      if ($('bulkWrap') && $('bulkWrap').style.display === 'none' && $('toggleBulk')) $('toggleBulk').click();
+      await sleep(200); bulk.scrollIntoView({ block: 'center', behavior: 'smooth' }); await sleep(400);
       await typeAll([{ el: $('storeBulkNames'), text: P.roster.map(function(r){ return r.name + ', ' + r.group + ', ' + r.email; }).join('\n') }]);
-      say('The twelve trainees are in the box. Press Add them all.'); return;
+      say('The twelve trainees are in the box. Press Add all.'); return;
     }
     var st = nextMonday(), en = new Date(st); en.setDate(en.getDate() + 25);
     var C = P.course, f = [];
@@ -157,7 +160,13 @@
     put('courseName', C.courseName); put('courseNumber', C.courseNumber); put('tutorNames', C.tutorNames); put('totalHours', C.totalHours);
     put('planDueNote', C.planDueNote); put('selfDueNote', C.selfDueNote);
     Object.keys(C.agreement || {}).forEach(function(k){ put(k, C.agreement[k]); });
-    var set = function(id, v){ var el = $(id); if (!el) return; setVal(el, v); el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); if (el._flatpickr) el._flatpickr.setDate(v, true); };
+    var set = function(id, v){
+      var el = $(id); if (!el) return;
+      /* a choice made of radio buttons: tick the one with this value */
+      if (!/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) { var r = el.querySelector('input[type=radio][value="' + v + '"]'); if (r && !r.checked) { r.checked = true; r.dispatchEvent(new Event('change', { bubbles: true })); } return; }
+      if (el.tagName === 'SELECT') el.value = v; else setVal(el, v);
+      el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); if (el._flatpickr) el._flatpickr.setDate(v, true);
+    };
     set('courseStart', iso(st)); set('courseEnd', iso(en)); set('tpCount', C.tpCount || '8');
     /* the demo shows a full plan and analysis from TP1 */
     set('planFrom', '1'); set('analysisFrom', '1');
@@ -173,17 +182,22 @@
     await typeAll(f);
     if (typeof g('saveSettings') === 'function') {
       g('saveSettings')('Saved');
-      /* the course's day starts on the Friday before it */
+      /* the course's day starts on the Friday before it; the next Fill in here adds the trainees */
       var fri = new Date(st); fri.setDate(fri.getDate() - 3);
-      await sleep(400); await setDayQuiet(iso(fri));
+      await sleep(400);
+      var next = Object.assign({}, cs(), { presentToday: iso(fri), presentSetUp: true });
+      try { await S.putCourse('settings', next); ls('connect_course_settings', JSON.stringify(next)); paint(); } catch (e) {}
     }
     say('The course is set up: four weeks from ' + short(iso(st)) + '. Fill in again here to add the trainees.');
   }};
-  async function setDayQuiet(date){ var next = Object.assign({}, cs(), { presentToday: date }); try { await S.putCourse('settings', next); ls('connect_course_settings', JSON.stringify(next)); paint(); } catch (e) {} }
 
   FILL['5_tutor_dashboard.html'] = { who: 'tutor', label: 'Fill in', run: async function(P){
+    var nm = ['joinName', 'welcomeName', 'tutorName'].map($).filter(function(x){ return x && x.offsetParent !== null; })[0];
+    var named = false; try { named = !!localStorage.getItem('chub:tutorName'); } catch (e) {}
+    if (nm && !named && !nm.value.trim()) { nm.scrollIntoView({ block: 'center', behavior: 'smooth' }); await sleep(300); await typeAll([{ el: nm, text: (P.course.tutorNames || 'Jordan Blake').split(',')[0].trim() }]); await sleep(400); }
     var box = $('streamText');
     if (!box || box.offsetParent === null) { say('Open the announcement box first.'); return; }
+    box.scrollIntoView({ block: 'center', behavior: 'smooth' }); await sleep(300);
     await typeAll([{ el: box, text: P.announcement }]);
     say('An announcement to the whole course. Post it, then switch to a trainee to see it arrive.');
   }};
@@ -210,18 +224,66 @@
     say('Twenty days laid onto this course’s dates. Press Set when it looks right.');
   }};
 
+  /* Two books from the library: Speakout Elementary for Group 1, Empower B2 for Group 2. */
+  FILL['28_tp_point_sets.html'] = { who: 'tutor', label: 'Fill in', run: async function(){
+    if (typeof g('takeFromLibrary') !== 'function' || typeof g('openLibrary') !== 'function') { say('Nothing to fill in here.'); return; }
+    var books = [['s8', '1'], ['s11', '2']];
+    var lib = function(){ return g('LIB') || {}; };
+    var idOf = function(from){ var L = lib(); return Object.keys(L).filter(function(k){ return L[k].from === from; })[0]; };
+    for (var i = 0; i < books.length; i++) {
+      if (idOf(books[i][0])) continue;
+      if (!g('CAT')) { await g('openLibrary')(); }
+      for (var w = 0; w < 40 && !g('CAT'); w++) await sleep(250);
+      await g('takeFromLibrary')(books[i][0]);
+      for (var w2 = 0; w2 < 60 && g('TAKING'); w2++) await sleep(250);
+    }
+    var FOR = g('FOR') || {};
+    books.forEach(function(b){ var id = idOf(b[0]); if (id) FOR[b[1]] = id; });
+    window.__hp = idOf('s8'); window.eval('CUR = window.__hp; S = LIB[CUR]; OPEN = null');
+    g('persist')('Group 1 teaches from Speakout, Group 2 from Empower');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    say('Two books on the course: Speakout Elementary for Group 1, Empower B2 for Group 2.');
+  }};
+
+  /* Deal the rotation from the two books and release it to both groups, so the trainees see their full TP points. */
+  FILL['24_tp_points.html'] = { who: 'tutor', label: 'Fill in', run: async function(){
+    var b = $('build');
+    if (b) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); await sleep(500); b.click(); for (var w = 0; w < 40 && !document.querySelector('button[data-rel]'); w++) await sleep(250); }
+    var rel = [].slice.call(document.querySelectorAll('button[data-rel][data-on="1"]'));
+    if (!rel.length && !document.querySelector('button[data-rel]')) { say('Put the trainees and a TP point set on the course first.'); return; }
+    for (var i = 0; i < 4; i++) {
+      var r = document.querySelector('button[data-rel][data-on="1"]'); if (!r) break;
+      r.scrollIntoView({ block: 'center', behavior: 'smooth' }); await sleep(600); r.click(); await sleep(700);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    say('The rotation is dealt from the two books and released to both groups. Switch to a trainee to see their TP points.');
+  }};
+
   FILL['29_candidate_agreement.html'] = { who: 'trainee', label: 'Fill in', run: async function(){
     var b = $('signBtn'); if (!b) { say('Already signed.'); return; }
+    var no = document.querySelector('input[name="decl"][value="no"]');
+    if (no && !document.querySelector('input[name="decl"]:checked')) { no.scrollIntoView({ block: 'center', behavior: 'smooth' }); await sleep(500); no.checked = true; no.dispatchEvent(new Event('change', { bubbles: true })); no.dispatchEvent(new Event('input', { bubbles: true })); await sleep(500); }
+    b = $('signBtn'); if (!b) { say('Already signed.'); return; }
     b.click(); await sleep(400);
     var inp = document.querySelector('.ink-modal .ink-name input');
     if (inp && inp.offsetParent !== null) { var me = (trainees().filter(function(x){ return x.t === (S.token && S.token()); })[0] || {}).name || 'Aiko Tanaka'; await typeAll([{ el: inp, text: me }]); }
-    say('Sign it in the box.');
+    say('Her signature is written from her name. Press Sign.');
   }};
 
   FILL['1_trainee_plan_and_analysis.html'] = { who: 'trainee', label: 'Fill in', run: async function(P){
     if (typeof g('draftApply') !== 'function' || typeof g('collect') !== 'function') { say('Nothing to fill in here.'); return; }
     var cur = g('collect')() || {}, st = clone(P.plan);
-    st.meta = Object.assign({}, st.meta, { name: (cur.meta || {}).name || st.meta.name, tp: (cur.meta || {}).tp || st.meta.tp, date: (cur.meta || {}).date || st.meta.date });
+    /* The written lesson is Aiko's TP 4, the Time twins reading in Speakout, which is what her TP point says that day. */
+    var num = function(x){ return parseInt(String(x || '').replace(/\D/g, ''), 10) || 0; };
+    if ($('fTP') && $('fTP').disabled) { say('This plan is turned in. Take it back to change it.'); return; }
+    var todayLbl = (days().filter(function(d){ return d.date === cs().presentToday; })[0] || {}).label || '';
+    var tpNow = num((cur.meta || {}).tp) || num((todayLbl.match(/TP\s?\d+$/) || [])[0]);
+    if (tpNow && tpNow !== num(st.meta.tp)) {
+      var d4 = days().filter(function(d){ return /TP4$/.test(String(d.label).replace(/\s/g, '')); })[0];
+      say('This demo’s written lesson is Aiko’s TP 4, the Time twins reading. As the tutor, move the day to ' + (d4 ? d4.label.replace(/ · TP\s?4$/, '') : 'her TP 4') + ', then Fill in here.'); return;
+    }
+    var tdate = typeof g('timetableDateFor') === 'function' ? g('timetableDateFor')(num(st.meta.tp)) : '';
+    st.meta = Object.assign({}, st.meta, { name: (cur.meta || {}).name || st.meta.name, tp: (cur.meta || {}).tp || ('TP' + num(st.meta.tp)), date: (cur.meta || {}).date || tdate || cs().presentToday || st.meta.date });
     g('draftApply')(st);
     await sleep(150); await retype(document.querySelector('main') || document.body);
     var link = $('fMatsLink');
@@ -248,7 +310,8 @@
     }
     if (typeof g('draftApply') !== 'function' || typeof g('draftState') !== 'function') return;
     var cur = g('draftState')(), F = clone(P.feedback);
-    var keep = ['fTP', 'fDate', 'fTutor', 'fLevel', 'fTime']; keep.forEach(function(k){ if (cur.f && cur.f[k]) F.f[k] = cur.f[k]; });
+    var keep = ['fTP', 'fDate', 'fTutor', 'fLevel', 'fTime', 'fName']; keep.forEach(function(k){ if (cur.f && cur.f[k]) F.f[k] = cur.f[k]; });
+    if (!(cur.f && cur.f.fDate)) F.f.fDate = cs().presentToday || F.f.fDate;
     g('draftApply')({ f: F.f, lists: F.lists, tcomm: F.tcomm });
     await sleep(200);
     var boxes = visibleBoxes(document.querySelector('.fb-grid') || document.body).filter(function(el){ return el.tagName === 'TEXTAREA' && el.id !== 'tNotes'; });
@@ -273,6 +336,7 @@
     if (g('CURRENT') !== P.assignment.key) { say('Open the LSRT to fill in its marking.'); return; }
     var sub = g('subFor')(P.assignment.key);
     if (!sub || !sub.sub1) { say('Nothing has been submitted yet.'); return; }
+    if (!$('saveBtn')) { say('This assignment is marked and returned.'); return; }
     sub.criteriaMarks = sub.criteriaMarks || { sub1: [], sub2: [] };
     sub.criteriaMarks.sub1 = clone((P.assignment.criteriaMarks || {}).sub1 || []);
     if (typeof g('saveSubs') === 'function') g('saveSubs')();
@@ -281,6 +345,7 @@
     var list = [];
     (P.marking.comments || []).forEach(function(t, i){ var el = document.querySelector('[data-crit-comment="' + i + '"]'); if (el) list.push({ el: el, text: t }); });
     if ($('comment')) list.push({ el: $('comment'), text: P.marking.general });
+    var m1 = $('marker1'); if (m1 && !m1.value.trim()) list.push({ el: m1, text: (P.course.tutorNames || 'Jordan Blake').split(',')[0].trim() });
     await typeAll(list);
     say('Marked. Save it, and it goes back to the trainee.');
   }};
@@ -302,22 +367,35 @@
       ['summary', 'notesWA', 'notesOther'].forEach(function(k){ var el = document.querySelector('[data-o="s2t"][data-k="' + k + '"]'); if (el && !el.readOnly) list.push({ el: el, text: s2[k] || '' }); });
     }
     if (ROLE === 'trainee') {
+      /* her own column first: modest, S almost everywhere, S+ where she knows it went well */
+      var tm = (P.celta5.stage2 || {}).marks || {}, mine = ['1d', '4b'];
+      var codes = Object.keys(tm), first = null;
+      for (var ci = 0; ci < codes.length; ci++) {
+        var v = mine.indexOf(codes[ci]) >= 0 ? 'S+' : (tm[codes[ci]] === 'N' ? 'N' : 'S');
+        var r = document.querySelector('input[data-marks="cand"][data-code="' + codes[ci] + '"][value="' + v + '"]');
+        if (!r || r.disabled || document.querySelector('input[data-marks="cand"][data-code="' + codes[ci] + '"]:checked')) continue;
+        if (!first) { first = r; r.scrollIntoView({ block: 'center', behavior: 'smooth' }); await sleep(500); }
+        r.checked = true; r.dispatchEvent(new Event('change', { bubbles: true })); await sleep(60);
+      }
+      await sleep(300);
       ['notesWA', 'notesOther'].forEach(function(k){ var el = document.querySelector('[data-o="s2c"][data-k="' + k + '"]'); if (el && !el.readOnly) list.push({ el: el, text: P.celta5cand[k] || '' }); });
     }
     if (!list.length) { say('Stage 1 fills itself in from the TP1 and TP2 feedback. Stage 2 opens after TP4.'); return; }
     await typeAll(list);
-    say('Written. Return it when you are ready.');
+    say(ROLE === 'trainee' ? 'Aiko’s half of Stage 2 is written. Submit it when you are ready.' : 'Stage 2 is written. Return it when you are ready.');
   }};
 
   /* ---- the bar --------------------------------------------------------------------------------------------- */
   function say(msg){
     var t = $('hpSay'); if (!t) return;
+    var bar = $('hpBar'); if (bar && window.innerWidth > 640) t.style.top = Math.round(bar.getBoundingClientRect().bottom + 8) + 'px';
     t.textContent = msg; t.hidden = false; clearTimeout(say._t); say._t = setTimeout(function(){ t.hidden = true; }, 5200);
   }
   var css = '.hp-bar{position:fixed; top:8px; left:50%; transform:translateX(-50%); z-index:2600; display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:center;'
-    + ' max-width:calc(100vw - 24px); padding:6px 8px; border-radius:999px; background:var(--a-forest); color:var(--paper, #fff); box-shadow:0 8px 28px -10px rgba(0,0,0,.45); font:600 0.78rem/1 Karla, sans-serif;}'
+    + ' width:max-content; max-width:calc(100vw - 24px); box-sizing:border-box; padding:6px 8px; border-radius:999px; background:var(--a-forest); color:var(--paper, #fff); box-shadow:0 8px 28px -10px rgba(0,0,0,.45); font:600 0.78rem/1 Karla, sans-serif;}'
     + '.hp-bar .hp-tag{padding:0 8px 0 6px; letter-spacing:.06em; text-transform:uppercase; font-size:0.66rem; opacity:.85;}'
     + '.hp-bar button, .hp-bar select{font:inherit; border:0; border-radius:999px; padding:7px 12px; cursor:pointer; background:rgba(255,255,255,.12); color:inherit;}'
+    + '.hp-bar select{width:auto; max-width:200px; min-width:0; height:auto; margin:0; box-shadow:none; appearance:auto;}'
     + '.hp-bar button:hover, .hp-bar select:hover{background:rgba(255,255,255,.22);}'
     + '.hp-bar button.on{background:var(--paper, #fff); color:var(--a-forest);}'
     + '.hp-bar .hp-fill{background:var(--a-mustard); color:var(--ink);}'

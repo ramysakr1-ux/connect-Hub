@@ -1327,6 +1327,8 @@ case 'inbox': {
                                        /* v48: the demo clock, and the centre's own certificate threshold
                                           (which never reached the student's page before: it fell back to 20). */
                                        demoToday: vset.demoToday || '', volunteerCertificateHours: vset.volunteerCertificateHours || '',
+                                       /* v168: a Connect demo's day, so its bar and clock reach the volunteer's page too */
+                                       presentToday: vset.presentToday || '',
                                        /* v78 (8 Oct 2026): which card the link opens on, so a volunteer
                                           on a ticket course gets the ticket like everyone else. */
                                        cardStyle: vset.cardStyle === 'ticket' ? 'ticket' : '',

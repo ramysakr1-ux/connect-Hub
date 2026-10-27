@@ -506,8 +506,11 @@
   var sameOwner = lastOwner === identity;
   if (!DEMO && lastOwner && !sameOwner && (mode === 'trainee' || mode === 'tutor' || mode === 'assessor')) { try {
     var KEEPN = /^(hub:(t|k|a|v|o|p|kpin|pin)$|hub:o:|hub:pending:|hub:unsaved:|chub:passDays$|chub:card|chub:installHintDone$|mk:)/;
+    /* A Connect demo is one presenter's browser playing every part (27 Oct 2026): its switch's own keys (hub:present:*,
+       written only by hub-present.js on a presentation course) stay, whoever the last link was. A volunteer's page does
+       not hold the course settings, so the course itself cannot be asked. */
     var goneN = [];
-    for (var gn = localStorage.length - 1; gn >= 0; gn--) { var kn = localStorage.key(gn); if (kn && !KEEPN.test(kn) && /^(chub[:_]|connect_|hub:)/.test(kn)) goneN.push(kn); }
+    for (var gn = localStorage.length - 1; gn >= 0; gn--) { var kn = localStorage.key(gn); if (kn && !KEEPN.test(kn) && !/^hub:present:/.test(kn) && /^(chub[:_]|connect_|hub:)/.test(kn)) goneN.push(kn); }
     goneN.forEach(function(k){ try { origRemove(k); } catch (e) {} });
   } catch (e) {} }
   var cached = false; try { cached = localStorage.getItem('hub:booted') === identity; } catch (e) {}

@@ -43,7 +43,8 @@ window.InputLib = (function(){
   function rd(k){ try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
   function iso(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function dateOf(s){ var m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; }
-  function today(cs){ var d = String((cs && cs.demoToday) || ''); return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : iso(new Date()); }
+  /* a demo's pinned day, or a Connect demo's day (presentToday), or the real one */
+  function today(cs){ var d = String((cs && (cs.demoToday || cs.presentToday)) || ''); return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : iso(new Date()); }
   /* The timetable's input sessions, oldest first, one entry per page a title
      names (slug), or one with slug '' when no page matches. */
   function inputsOf(tt){
