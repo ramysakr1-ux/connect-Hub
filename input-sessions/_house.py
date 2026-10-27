@@ -1359,10 +1359,10 @@ RECIPES.append(dict(
   p{margin:8px 0; font-size:.95rem; line-height:1.6;}
   .lead{margin:0 0 10px;}
   ul, ol{margin:8px 0; padding-left:22px; font-size:.95rem;} li{margin:4px 0;}
-  .tutor, .note, .key{border-radius:var(--r-control); padding:12px 16px; margin:14px 0; font-size:.9rem; line-height:1.6; background:var(--paper); border:1px solid var(--sand-line);}
-  .tutor{border-left:4px solid var(--teal);} .note{border-left:4px solid var(--gold);} .key{border-left:4px solid var(--gold); background:var(--gold-wash); border-color:var(--amber-edge);}
-  .tutor b:first-child, .note b:first-child, .key b:first-child{display:block; margin-bottom:3px; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; font-weight:600;}
-  .tutor b:first-child{color:var(--teal);} .note b:first-child, .key b:first-child{color:var(--gold-deep);}
+  .wrap .tutor, .note, .key{border-radius:var(--r-control); padding:12px 16px; margin:14px 0; font-size:.9rem; line-height:1.6; background:var(--paper); border:1px solid var(--sand-line);}
+  .wrap .tutor{border-left:4px solid var(--teal);} .note{border-left:4px solid var(--gold);} .key{border-left:4px solid var(--gold); background:var(--gold-wash); border-color:var(--amber-edge);}
+  .wrap .tutor b:first-child, .note b:first-child, .key b:first-child{display:block; margin-bottom:3px; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; font-weight:600;}
+  .wrap .tutor b:first-child{color:var(--teal);} .note b:first-child, .key b:first-child{color:var(--gold-deep);}
   .btn.t{background:var(--teal); color:var(--paper); border-color:var(--teal);} .btn.t:hover{background:var(--teal-lifted); border-color:var(--teal-lifted);}
   .btn.ghost{background:none;}
   .btns{display:flex; gap:9px; flex-wrap:wrap; margin-top:12px;}
@@ -1455,8 +1455,8 @@ RECIPES.append(dict(
   th{background:var(--gold-wash); color:var(--gold-deep); font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; letter-spacing:.1em; text-transform:uppercase; font-weight:600;}
   @media(max-width:780px){ .grid2, .match{grid-template-columns:1fr;} .frame{font-size:.95rem; line-height:2.3;} }
   /* The teal asides are the tutor's; a trainee link never shows them (13 Oct 2026). */
-  .tutor{display:none;} body.tutor .tutor{display:block;}
-  @media print{ .hidden{display:block !important;} .tutor, .note, .key{display:none !important;} body.tutor .tutor, body.tutor .key{display:block !important;} .ladder li{opacity:1;} .flip .val{display:block; color:#000;} .board{background:none; color:#000; border:1px solid #999;} }
+  .wrap .tutor{display:none;} body.tutor .wrap .tutor{display:block;}
+  @media print{ .hidden{display:block !important;} .wrap .tutor, .wrap .note, .wrap .key{display:none !important;} body.tutor .wrap .tutor, body.tutor .wrap .key{display:block !important;} .ladder li{opacity:1;} .flip .val{display:block; color:#000;} .board{background:none; color:#000; border:1px solid #999;} }
 """,
     body=[
         ('Somebody dies in it. Nothing is described in any detail, but read the beats in step 1 before class and decide whether it suits your group. If you\'d rather soften it, say she was attacked and badly hurt — every sentence in the lesson still works.',
@@ -2176,4 +2176,8 @@ if __name__ == '__main__':
     for slug in HAND:
         if not want or slug in want:
             hand(slug)
+    # the parts added to the sessions that ran under 75 minutes (27 Oct 2026), put back on a rebuilt page
+    import _adds_all   # noqa: F401  (fills _adds.ADD)
+    from _adds import apply_all
+    apply_all(want, number_from_nav, NOTES, american)
     externalize_notes()

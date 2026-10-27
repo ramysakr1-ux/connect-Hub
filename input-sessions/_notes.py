@@ -27,7 +27,7 @@ NOTES = {}
 
 NOTES['eliciting-and-ccqs'] = '''
 <h4>Before</h4>
-<p>Open the page on the screen; trainees follow on their own devices for the game, the two tasks and the worksheet. Print the handout gives the tasks and the worksheet with the answers hidden.</p>
+<p>Open the page on the screen; trainees follow on their own devices for the game, the two tasks and the worksheet. Print the handout gives the tasks and the worksheet with the answers hidden. Paper for the folded slips in the blind test.</p>
 <h4>Running it</h4>
 ''' + T([
     (5, 'Spot the elicitor', 'Read both teachers aloud yourself, with the voices. Ask the room who is eliciting before anyone clicks.'),
@@ -38,6 +38,7 @@ NOTES['eliciting-and-ccqs'] = '''
     (10, 'CCQ worksheet', 'Item 1 is done. Do item 2 together first: meaning in plain words, then CCQs. Pairs on 3 to 7; reveal as they finish.'),
     (5, 'Other ways to check meaning', 'Click through the eight. Ask which suits the language in their next TP.'),
     (15, 'Your turn', 'Pairs plan the elicitation and one CCQ for two words, then elicit them from another pair. Monitor for CCQs that use the target word.'),
+    (10, 'The blind test', 'Each trainee takes three items from their next TP, folds the sentence into a paper slip and writes the CCQs on the page. The partner answers the CCQs aloud, then writes the sentence they think it was. Compare. A wrong guess shows a missing CCQ; the key gives two cases. Paper for the slips.'),
 ]) + '''
 <h4>The key</h4>
 <p>Every task\u2019s answer is on the page behind its reveal. The practice words in Your turn have no key: any technique that gets the word out of a student is right, and any CCQ with a short answer that does not contain the word is right.</p>
@@ -60,6 +61,7 @@ NOTES['error-correction'] = '''
     (7, 'Match the errors', 'Individually, then check. The eight are a mix on purpose: three grammar, three pronunciation, two vocabulary. Ask which ones a student could self-correct if pointed at, and which need telling.'),
     (8, 'How to correct', 'Click the twelve as a class. Demonstrate three on a volunteer: finger correction, the echo with a rising tone, the one-word question. They need to see them, not read them.'),
     (12, 'Practice 1 and 2', 'Pairs, one table each, then swap and check each other’s. The key is below; the page has none for these two tables, so it is yours to give.'),
+    (30, 'Correct me, live', 'Groups of four, one teacher and three students, swapping until each has taught: four rounds of about seven minutes, with the teacher’s decisions written down after each, then the key together. The cards are on the page; each student plays the three with their number. Listen for card 3b, the self-repair: the teacher should leave it alone and praise it later. Ask who dealt with an error that was not the target language, and why.'),
 ]) + '''
 <h4>The key: the practice tables</h4>
 <table class="tn-time"><tr><th></th><th>Corrected</th><th>Type</th><th>A technique</th></tr>
@@ -93,6 +95,7 @@ NOTES['classroom-management'] = '''
     (10, 'Yes, no or maybe', 'Pairs decide, then reveal one at a time with the whole room. Number 7 (repeating what a student said) is the one to stop on: it is the echo they all do.'),
     (12, 'Spot the problem', 'Whole class on screen, one moment at a time, a different trainee each time. These are Scrivener’s fourteen; say so at the end, not the start.'),
     (8, 'Grade your language', 'The six fixes as a class, then the rescue in pairs. Compare two or three rewrites against the model on screen.'),
+    (15, 'Instructions clinic', 'Groups of three: giver, timer, noticer. Each trainee picks the task from their next TP that they are least sure how to set up, gives the instructions and ICQs, is timed, and gets the six notices; about four minutes each. Over half a minute means cut a step. The key has one set that works. Hold them to ICQs with answers you can hear.'),
     (4, 'Into TP', 'Each trainee ticks two, not eight, and says which two.'),
 ]) + '''
 <h4>The key</h4>
@@ -115,6 +118,7 @@ NOTES['functional-language'] = '''
     (8, 'Matching', 'Individually on the page or on Wordwall, then the key (part 7).'),
     (6, 'Requests', 'Six exponents of the same request. Rank them from most to least formal on the board, then ask who would say each to whom. Appropriacy is the point: a request can be perfect grammar and still wrong.'),
     (4, 'Responding', 'The gap is "respond". Collect accepting and declining exponents from the room before revealing the examples.'),
+    (30, 'Board it, then teach it', 'Pairs take the function with their own number and plan the board for ten minutes: marker sentence with a more formal and a less formal version, context, CCQs, form as chunks with stress and intonation. Each pair then teaches another pair in four minutes and hears one thing that worked and one that confused. Finish with the worked example, making an offer. Watch for CCQs that check the words and not the meaning or the appropriacy.'),
 ]) + '''
 <h4>The key</h4>
 <p>On the page: parts 2, 7, 10 and 11, and the examples in part 9. The gap in part 9 accepts respond, reply or answer.</p>
@@ -137,6 +141,7 @@ NOTES['phonology-sounds'] = '''
     (7, 'The chart', 'Click round the vowels in rows; ask them to feel the jaw drop from /iː/ to /ɑː/. Then the three places the consonant rows go.'),
     (10, 'Script', 'Individually on their own devices, using the symbol keys. Check as a class; reveal only after.'),
     (10, 'Film titles', 'Pairs, first to finish. Then the question that matters: which of these would you use with a class, and at what level?'),
+    (15, 'Your TP words', 'Each trainee chooses five words from their next TP and writes them in phonemic script without looking anything up: about five minutes. Then the dictionary (any online learner’s dictionary), a note of what was different, and drilling in pairs for the rest. The mistakes they made are the ones their learners will make: send them to the Language Analysis sheet.'),
 ]) + '''
 <h4>The key</h4>
 <p>All on the page: Check answers under each task, Reveal for the script and the films. The obstruction answers are: b, m and p at the lips; v at the lower lip and top teeth; n and t at the tongue tip and ridge; r at the tongue tip near the ridge; k at the back of the tongue and soft palate.</p>
@@ -159,6 +164,7 @@ NOTES['ppp'] = '''
     (12, 'Read', 'Silently, one minute against your watch, for the gist. Then: were your predictions right? That is the gist check.'),
     (8, 'Detail', 'Six true-or-false, individually, then pairs, then click. Number 6 is the one to argue about.'),
     (9, 'Debrief', 'Order the stages. Then the question: which stages of a PPP lesson did this session just model, and which did it skip (production: they will notice there was no freer stage, and that is a fair criticism of a short input).'),
+    (30, 'Stage a real page', 'Pairs stage the made-up page as a PPP lesson for 45 minutes, with minutes against each stage, then swap and check against the five questions. Most plans spend too long on the presentation: ask where the time went. The key gives one way, 5, 10, 12, 13 and 5. Hold the line that the practice stages are where the learning happens.'),
 ]) + '''
 <h4>The key</h4>
 <p>On the page: the matches, the six true-or-false with reasons, the debrief order (pre-teach terms, predict the staging, read to check, detail check).</p>
@@ -179,6 +185,7 @@ NOTES['text-based-teaching'] = '''
     (14, 'Read', 'The text is long on purpose; it carries the whole shape. Silently, one minute for the gist: a skim, not a full read. Then check the predictions.'),
     (10, 'Detail', 'Nine true-or-false. Individually, pairs, click. Numbers 6 and 7 (form elicited, pronunciation not skipped) are the ones trainees get wrong in TP.'),
     (10, 'Debrief', 'Order the four stages. Then ask them to map the text onto a TP: which coursebook page they teach next, and where the language would be lifted from.'),
+    (30, 'Find it in the text', 'Pairs write the highlighting task and two CCQs for the present perfect in Mira’s text, then swap and say whether each task works. Two traps in the swap: a task that names the language (“find the present perfect”), and one that sends them to every verb. The key has a task, CCQs and the places the language is.'),
     (3, 'Close', 'One difference between this and PPP, in one sentence each.'),
 ]) + '''
 <h4>The key</h4>
@@ -203,6 +210,7 @@ NOTES['guided-to-less-guided-practice'] = '''
     (4, 'Jazz chant', 'Beat first, then the chant, twice. Do not explain it.'),
     (5, 'Transformation and substitution', 'Run both on the room from the page, then they write two cues of their own.'),
     (8, 'Information gap', 'Pairs, A and B, lists hidden from each other. Then the question: where on the guided-to-free line does this sit, and why?'),
+    (16, 'Build the bridge', 'Pairs write the semi-controlled and the freer step that follow the can and can’t exercise. Each step must be doable with what the one before gave: ask them to say what each step takes away. The key has one way. The last question is the useful one: does the third step still need the language, or has it become a task any language could do?'),
 ]) + '''
 <h4>The key</h4>
 <p>On the page: the nine technique matches, the thirteen drill types with an example each after checking, the exit ticket has none. The cued dialogue has no key; any line that fits the cue is right.</p>
@@ -246,6 +254,7 @@ NOTES['teaching-exam-classes'] = '''
     (15, 'The exams', 'Nine cards, at their own pace on their own devices. Then one fact each that surprised them.'),
     (8, 'Which exam?', 'Five corridor questions. Pairs choose, Check my recommendations, argue the ones that split.'),
     (10, 'Being an examiner', 'Two panels. Say what the route looks like from here: a teaching qualification, about two years, an approved centre, standardisation.'),
+    (21, 'Mark a sample', 'Pairs mark the Ana email in the four categories, 0 to 5, then each pair gives its marks and the room agrees one set. The spread is the lesson: a gap of two or more between pairs is normal. The key’s marks are classroom estimates for a made-up sample, not Cambridge’s; after the marking, open the exam’s public scale on the Cambridge English website and compare. About eleven minutes for the marking and ten for the room.'),
     (5, 'Wrap-up', 'The three questions on the page. The certificate is a joke; let it be one.'),
 ]) + '''
 <h4>The key</h4>
@@ -269,6 +278,7 @@ NOTES['teaching-writing'] = '''
     (8, 'Wall dictation', 'Running dictation if the room allows, line by line on screen if not. Then the comprehension questions; the key is on the page.'),
     (6, 'Parallel writing', 'The Joe and Barbara paragraph from the prompts; compare with the model.'),
     (4, 'Controlled to freer', 'Sort the five on the continuum.'),
+    (15, 'Write the model first', 'Pairs write the A2 model answer to the invitation task, then underline the chunks their learners would need first. The key has one model and five chunks. The point to draw out: writing it yourself tells you how long the task takes and what it needs, and checks your own instructions.'),
     (4, 'Backs to the board', 'New term, describe it, guess it. Four or five terms is enough.'),
 ]) + '''
 <h4>The key</h4>
@@ -317,6 +327,7 @@ NOTES['alternative-teaching-techniques'] = '''
     (7, 'Semi-controlled', 'Finish the sentences. Two or three endings for the same beginning.'),
     (10, 'Freer', 'Rank the five, defend with third conditionals only. Stay out; write down the errors for the end.'),
     (5, 'The twist', 'Love, work, desire, money, power. Light, then the delayed correction from step 8.'),
+    (15, 'Your own story', 'Pairs plan a story lead-in for one item from their next TP: the story in five to seven sentences, the one question it is built for, and what goes on the board. Then each pair tells it, books closed, to another pair. The test is in the key: could a learner answer the question well without the language? If so, the question is wrong.'),
 ]) + '''
 <h4>The key</h4>
 <p>On the page: the CCQs, the form gap-fill, the cut-up matches, possible endings for the stems, and how to read the twist.</p>
@@ -337,6 +348,7 @@ NOTES['teaching-literacy'] = '''
     (7, 'Spot the barrier', 'Four moments, pairs decide, click to check.'),
     (8, 'Adapt the handout', 'Two handouts, three versions each. Pairs pick; the notes under each option say why.'),
     (12, 'Techniques', 'Five techniques, week one or later, pairs, then the note.'),
+    (30, 'Adapt a TP handout', 'Pairs redesign the hotel handout for two learners who are still decoding, on paper, in about fifteen minutes; then a gallery of ten, where each trainee looks at three other designs and says what a pre-literate learner could do on each. Paper and pens for the sketches. The key lists the changes most good redesigns make. Ask which change they would make for literate learners as well.'),
     (5, 'Wrap-up', 'The one question. Protect it.'),
 ]) + '''
 <h4>"Spot the barrier": there is no trick answer</h4>
@@ -362,6 +374,7 @@ NOTES['word-and-sentence-stress'] = '''
     (7, 'Attitudinal', 'Five Paris exchanges in pairs: which word, before revealing.'),
     (8, 'Noun or verb', 'Eight quiz items individually. Then two more pairs of their own (import, present, record, object, contract, conduct).'),
     (6, 'Make it productive', 'Ask the room which tasks so far were receptive (all of them). Each trainee picks one and writes how Ss would say it. Hear three, then the reveal. Tie it to their next TP plan.'),
+    (7, 'Mark it, drill it', 'Each trainee marks the stress in two sentences from their next TP, swaps and checks, then drills them on a beat, building long ones from the end. The key has one example. Check that the stress falls on content words only.'),
     (3, 'Round-up', 'Trainees write their three before opening. Collect them aloud; the reveal is the board summary.'),
 ]) + '''
 <h4>The key</h4>
@@ -386,6 +399,7 @@ NOTES['connected-speech'] = '''
     (12, 'The link maze', 'Say the phrase in the cell, name the sound, click the way. The route is below if a group gets stuck.'),
     (8, 'Linking', 'Mark the links in the Holmes text, read it aloud smoothly, then the suggested links.'),
     (8, 'Weak forms', 'Five sentences; click the swallowed words; reveal.'),
+    (17, 'Dictogloss', 'Read this twice at natural speed, without slowing for the joins: “I’d have gone out last night, but my mum rang just as I was leaving. She’d lost her keys and couldn’t get into the flat. So I picked up a pizza, drove over, and spent half the evening looking for them. They were in the fridge, next to the milk.” The first time they only listen; the second time they write words. Pairs rebuild it in about eight minutes; then reveal, and ask which missing words were weak, which joined and which dropped. The key table has seven.'),
     (5, 'All together', 'Five cards; say the examples first, then open each.'),
 ]) + '''
 <h4>The key</h4>
@@ -409,6 +423,7 @@ NOTES['receptive-skills'] = '''
     (10, 'Detail', 'Twelve true-or-false, individually, pairs, reveal. Numbers 1 and 3 are the ones they argue.'),
     (10, 'Debrief', 'Order the seven stages. Then ask them what you did between stages (peer check before whole-class feedback, every time).'),
     (3, 'Task types', 'The bank by stage, as reference. Reading and listening: what changes.'),
+    (30, 'Write the tasks', 'Pairs write a gist task and a detail task for the bridge-keeper text, then swap and do each other’s, stopping at the gist time limit. The question to ask: could you answer the gist task without reading every word, and the detail task without the text? The faults to look for are in the key.'),
 ]) + '''
 <h4>The key</h4>
 <p>At the foot of the page (Answer key): the six terms, the twelve true-or-false with a line of reasoning each, and the stage order.</p>
@@ -429,6 +444,7 @@ NOTES['writing-the-lesson-plan'] = '''
     (10, 'Anticipated problems', 'Lesson plan or language analysis sheet. The rule is on the page: management, tasks, materials, technology and timing on the plan; meaning, form and pronunciation on the sheet.'),
     (12, 'Fix this plan', 'Pairs find the six problems and rewrite each line. Take one fix per pair before the reveal.'),
     (15, 'Your turn', 'Pairs plan the lead-in and the gist task from the made-up page, then swap with another pair and check against the four decisions.'),
+    (8, 'One Language Analysis item', 'Pairs fill one item of the Language Analysis sheet in eight minutes (meaning, form, pronunciation, anticipated problems with solutions) for “She’s been living in Madrid for three years.” The key shows one way. The check: does any problem about the task or the room appear? It belongs on the lesson plan.'),
     (5, 'Recap', 'Read the four boxes aloud; they are the checklist for their next plan.'),
 ]) + '''
 <h4>The key</h4>
@@ -446,6 +462,7 @@ NOTES['life-after-celta'] = '''
 ''' + T(mins=False, rows=[
     (5, 'Where next', 'Three minutes in pairs on the four questions. The tip on the page is the frame for the whole session: CELTA gets you in, the next two years make you good.'),
     (8, 'CV and letter', 'Read the ten-second list aloud. Ask them to write the levels, books and hours they taught before they leave the room.'),
+    (5, 'One CV line', 'Each trainee writes the CELTA line of their CV in one or two lines, swaps, and the partner finds one missing detail. The key has a weak line and a stronger one. Remind them there are no separate tutor references: the CELTA report is the reference.'),
     (10, 'Where the jobs are', 'The boards by region. Two minutes on one board each, then report what it asks for.'),
     (8, 'Where you are', 'The table of employer types, with your city\u2019s names said aloud. Be honest about universities.'),
     (12, 'The interview', 'The ten questions: pairs interview each other, two minutes each way. Then the awkward ones.'),
@@ -471,6 +488,7 @@ NOTES['drama-in-the-elt-classroom'] = '''
     (18, 'Getting started', 'Miming a monster on two volunteers, then pairs. Listen and mime with Rod the frog: teach the actions, tell the story, they join in. The Hokey Pokey to finish, everybody.'),
     (8, 'Cooling down', 'Feeling my space, From seed to plant, Don’t break it. Quiet voice.'),
     (10, 'The birthday party', 'Out of the room, in one by one as guests; then Interplanetary greetings.'),
+    (15, 'Give it an aim', 'Pairs choose an activity from the page, take one item of language from their next TP and write the aim, the moment to stop and feed language in, and the feedback. Then each pair runs it for another pair for three minutes. The key is the birthday party with an aim. Ask what the stop changes: without it, it is a warm-up.'),
     (2, 'Close', 'The evaluation sheet: which three would you use with your TP class, and at what level?'),
 ]) + '''
 <h4>The key</h4>
@@ -493,6 +511,7 @@ NOTES['teaching-productive-skills'] = '''
     (8, 'Read and check', 'Silent read, then: were your ideas right? Where does writing go its own way? (The last paragraph.)'),
     (8, 'Detail, and the feedback split', 'Five questions, then six scenarios: task achievement or language feedback.'),
     (7, 'Debrief', 'Order the five stages. Then the table: four rows the same, one different.'),
+    (30, 'Run the task', 'Groups of four: teacher, two students, observer. Swap until everyone has taught: four rounds of about seven minutes. The teacher gives the instructions and an ICQ, monitors on the sheet without correcting, then gives content feedback first and language feedback on the board. The key says what good feedback sounds like. Watch for a teacher who corrects during the task, and feedback that is all language.'),
     (2, 'Wrap-up', 'One sentence each: the difference between speaking and writing in one word. (Redraft.)'),
 ]) + '''
 <h4>The key</h4>
@@ -517,6 +536,7 @@ NOTES['guided-discovery-vs-ppp'] = '''
     (12, 'Lesson two', 'Before you play it: how many stages, where does each start, what happens in each. Three boxes to start, Add a stage for more. Play it once through. Pairs compare their stages. Take a count of hands: two stages, three, four.'),
     (8, 'Which was which', 'The five questions in pairs, then open. Question 5 is the one to hold: why must guided discovery sit inside a text? Then Show which was which.'),
     (10, 'The stages', 'Individually, then pairs, then Check. The spare word is "explain". Close on one line from each: which shape will you try in your next TP, and why.'),
+    (21, 'Turn it round', 'Pairs turn the PPP clarification for <i>should</i> into a guided discovery handout: a text with four examples, three questions that do not give the answers, and what the learners put on the board. Swap and test: could another pair find the meaning and the form from it? The key shows one version. Ask what the guided version costs (time, wrong answers) and what it gives.'),
 ]) + '''
 <h4>The key</h4>
 <p>On the page: the ten discovery answers, the rule (two, the same time, past continuous, past simple), the form table, and the two gap texts (guided discovery: context, unfamiliar, normal, marker, Avoid, controlled and freer, mirror; PPP: elicits, target vocabulary, gave, board, teacher talk, practice, further, 90%). The stage notes on the film have no key on the page; this is the lesson, for the room.</p>
