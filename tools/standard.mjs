@@ -4,13 +4,9 @@
  * whether a lesson follows the fade: TP 1-2 in full, TP 3-4 one line a stage, TP 5 the stage
  * names, TP 6 the aim and what to watch out for. This does, with the same rules as
  * standardIssues() in 28_tp_point_sets.html.
- *
- * Set four (Speakout A1) is Narges's and still written to the older standard. It is
- * reported and left alone: it does not count against the library.
  */
 import { readCourse, LIBRARY } from './st.mjs';
 const L = (await readCourse(LIBRARY)).rec.set.library;
-const NARGES = ['s4'];
 const words = t => String(t || '').trim().split(/\s+/).filter(Boolean).length;
 const want = n => n <= 2 ? 'full' : n <= 4 ? 'guided' : n === 5 ? 'outline' : 'bare';
 function issues(sl, scaffold) {
@@ -43,9 +39,8 @@ for (const id of Object.keys(L).sort((a, b) => (+a.slice(1)) - (+b.slice(1)))) {
     if (ses.scaffold !== want(tpn)) { const m = `level ${ses.scaffold} at TP ${tpn} (want ${want(tpn)})`; tally[m] = (tally[m] || 0) + 1; n++; }
     for (const sl of ses.slots || []) for (const x of issues(sl, want(tpn))) { n++; tally[x] = (tally[x] || 0) + 1; }
   }
-  const mine = !NARGES.includes(id);
-  if (n && mine) off++;
+  if (n) off++;
   console.log(`${id.padEnd(4)} ${String(S.book || S.name || '').slice(0, 34).padEnd(34)} ` +
-    (n ? `${n} issues: ` + Object.entries(tally).map(([k, v]) => `${k} x${v}`).join(', ') + (mine ? '' : "  (Narges's set: left alone)") : 'to the standard'));
+    (n ? `${n} issues: ` + Object.entries(tally).map(([k, v]) => `${k} x${v}`).join(', ') : 'to the standard'));
 }
-console.log(`\n${off} sets off the standard (set four, Narges's, not counted)`);
+console.log(`\n${off} sets off the standard`);
