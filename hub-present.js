@@ -205,7 +205,7 @@
   FILL['25_volunteer_register.html'] = { who: 'tutor', label: 'Fill in', run: async function(P){
     var many = $('many');
     if (!many) { if ($('addOpen')) { $('addOpen').click(); await sleep(300); many = $('many'); } }
-    if (!many) { say('Open Add a student first.'); return; }
+    if (!many) { say($('addOpen') ? 'Open Add students first.' : 'Set the timetable first: the register counts the teaching days on it.'); return; }
     many.open = true; many.dispatchEvent(new Event('toggle')); await sleep(200);
     var rows = [].slice.call(document.querySelectorAll('.mrow')), list = [];
     P.volunteers.forEach(function(v, i){ var r = rows[i]; if (!r) return; list.push({ el: r.querySelector('.mName'), text: v[0] }); list.push({ el: r.querySelector('.mEmail'), text: v[1] }); });
