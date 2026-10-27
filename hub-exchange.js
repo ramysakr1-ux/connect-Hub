@@ -38,7 +38,7 @@
       .replace(/[^a-z0-9]+/g, ' ').trim();
   }
   function lines(v){
-    return String(v || '').split(/\r?\n/).map(function(l){ return l.replace(/^\s*[•\-*–]\s*/, '').trim(); })
+    return String(v || '').split(/\r?\n/).map(function(l){ return l.replace(/^\s*[•●◦▪\-*–]\s*/, '').trim(); })
       .filter(Boolean);
   }
   function bullets(v){ return lines(v).map(function(l){ return '- ' + l; }).join('\n'); }
@@ -310,6 +310,8 @@
        comment is removed first or the final slot swallows it. */
     text = String(text || '').replace(/<!--\s*lite:slots[\s\S]*?-->/g, '');
     var at = text.search(/^\s*#\s+Feedback\b/m);
+    /* from a document (the plan copied into Google Docs or Word, 27 Oct 2026) the marker is a plain line */
+    if (at < 0) at = text.search(/^\s*Feedback\s*$/m);
     var scoped = at >= 0;
     if (scoped) text = text.slice(at);
     var byName = {};
@@ -327,8 +329,20 @@
        that renders every slot as H3 was landing NOTHING, silently, because the
        level was hard-coded. Count the levels that actually match slot names
        and take the best; ties go to 2. */
-    if (!secs.some(function(sec){ return byName[norm(sec.heading)] || byName[norm(deNumber(sec.heading))]; })) {
+    var named = function(list){ return list.some(function(sec){ return byName[norm(sec.heading)] || byName[norm(deNumber(sec.heading))]; }); };
+    if (!named(secs)) {
       secs = sections(text, true);                 // the model bolded its headings
+    }
+    /* A document keeps no markers at all: its headings come back as plain lines. Read only below the
+       Feedback line, and a line that is exactly a feedback heading opens that heading's section. */
+    if (!named(secs) && scoped) {
+      var cur = null; secs = [];
+      text.split(/\r?\n/).forEach(function(raw){
+        var t = raw.trim();
+        if (t && byName[norm(t)] && byName[norm(t)] && t.length < 90) { cur = { level: 2, heading: t, body: [] }; secs.push(cur); return; }
+        if (cur) cur.body.push(raw);
+      });
+      secs.forEach(function(sec){ sec.text = sec.body.join('\n').replace(/^\s+|\s+$/g, ''); });
     }
     var useLevel = bestLevel(secs, byName);
     if (!scoped) {
