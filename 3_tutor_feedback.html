@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610271636">
+<link rel="stylesheet" href="hub-tokens.css?v=202610271646">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -143,6 +143,14 @@
   .sv2 .ready span.g-to{color:var(--teal-deep);} .sv2 .ready span.g-to:before{background:var(--teal); border-color:var(--teal);}
   .sv2 .ready span.g-not{color:var(--brick);} .sv2 .ready span.g-not:before{background:var(--brick); border-color:var(--brick);}
   .sv2 .ready span b{font-family:'Newsreader',Georgia,serif; font-size:0.95rem;}
+  .gchip{display:none;}
+  @media(max-width:600px){
+    .actionbar .lhs{flex-wrap:nowrap;}
+    #pdfBtn .pdf-more{display:none;}
+    .gchip:not([hidden]){display:inline-grid; place-items:center; flex:none; min-width:36px; height:36px; padding:0 6px; border-radius:999px;
+      font:700 1rem/1 'Newsreader',Georgia,serif; color:var(--paper);}
+    .gchip.g-above{background:var(--a-mustard); color:var(--ink);} .gchip.g-to{background:var(--teal);} .gchip.g-not{background:var(--brick);}
+  }
   #returnBtn.fv2-ready{box-shadow:0 0 0 0 oklch(70% 0.12 72 / .6); animation:sv2-ready 1.6s ease-out 1;}
   @keyframes sv2-ready{0%{box-shadow:0 0 0 0 oklch(70% 0.12 72 / .6);}100%{box-shadow:0 0 0 12px oklch(70% 0.12 72 / 0);}}
   @media(prefers-reduced-motion:reduce){ .gv2 button, .sv2 .topics i{transition:none;} #returnBtn.fv2-ready{animation:none;} }
@@ -532,7 +540,7 @@
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
   .back:hover{text-decoration:underline;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610271636">
+<link rel="stylesheet" href="hub-house.css?v=202610271646">
 </head>
 <body>
 <div class="board">
@@ -716,22 +724,23 @@
 <div class="actionbar">
   <div class="lhs">
     <button class="btn-submit" id="returnBtn">Return to trainee</button>
+    <span class="gchip" id="barGrade" hidden></span>
   </div>
   <div class="rhs">
     <div class="sv2" id="sv2" aria-live="polite"></div>
     <span class="status" id="status"></span>
-    <button class="btn-print" type="button" id="pdfBtn">Print / Save as PDF</button>
+    <button class="btn-print" type="button" id="pdfBtn">Print<span class="pdf-more"> / Save as PDF</span></button>
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202610271636"></script>
-<script src="hub-shared.js?v=202610271636"></script>
-<script src="hub-store.js?v=202610271636"></script>
-<script src="hub-say.js?v=202610271636"></script>
-<script src="hub-crit-learn.js?v=202610271636"></script>
-<script src="hub-crit-vocab.js?v=202610271636"></script>
-<script src="hub-sync.js?v=202610271636"></script>
-<script src="hub-notebook.js?v=202610271636"></script>
+<script src="hub-exchange.js?v=202610271646"></script>
+<script src="hub-shared.js?v=202610271646"></script>
+<script src="hub-store.js?v=202610271646"></script>
+<script src="hub-say.js?v=202610271646"></script>
+<script src="hub-crit-learn.js?v=202610271646"></script>
+<script src="hub-crit-vocab.js?v=202610271646"></script>
+<script src="hub-sync.js?v=202610271646"></script>
+<script src="hub-notebook.js?v=202610271646"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1246,6 +1255,11 @@ $('fGrade').addEventListener('change', e=>{
     return '<span class="ok g-' + k + '" title="' + esc(v) + '"><b>' + short + '</b> ' + esc(v) + '</span>';
   }
   function paint(){
+    /* on a phone the summary is hidden, so the grade rides beside Return as its colored letter */
+    const gb = $('barGrade');
+    if (gb) { const v = String(sel.value || ''), t = v && tiles.querySelector('[data-v="' + v.replace(/"/g, '') + '"]');
+      if (!t) { gb.hidden = true; } else { const k = t.classList.contains('above') ? 'above' : t.classList.contains('not') ? 'not' : 'to';
+        gb.hidden = false; gb.className = 'gchip g-' + k; gb.textContent = { above: 'S+', to: 'S', not: 'N' }[k]; gb.title = v; } }
     tiles.querySelectorAll('[data-v]').forEach(b => { const on = b.dataset.v === sel.value; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); b.disabled = sel.disabled; });
     const good = filled('lSP') + filled('lST'), act = filled('lAP') + filled('lAT');
     const stars = document.querySelectorAll('#lAP .star.on, #lAT .star.on').length;
