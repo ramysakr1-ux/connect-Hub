@@ -923,18 +923,18 @@ case 'inbox': {
     }
     /* A CONNECT DEMO (v166, 27 Oct 2026). Ramy: "open a new course in front of everyone ... it resets itself ... I can
        also send it to people if they want to play with it ... maybe just for a day or two ... mine will just stay."
-       A fresh, empty course at the invented centre, named Connect demo, that saves for real and keeps a movable day
+       A fresh, empty course at the invented centre, named Connect Lite demo, that saves for real and keeps a movable day
        (settings.presentToday). Each run or visitor gets a fresh copy; `replace` puts the presenter's previous copy in the
        bin; `days` gives a visitor's copy an end (settings.demoExpires), after which every link on it is refused. */
     case 'createPresentation': {
       requireOwner_(owner);
       var pid = nextCourseId_();
       var forWho = String(req.forName || '').trim().slice(0, 60);
-      var pname = 'Connect demo' + (forWho ? ' \u00b7 ' + forWho : '');
+      var pname = 'Connect Lite demo' + (forWho ? ' \u00b7 ' + forWho : '');
       sheet_(SHEET_COURSES).appendRow([pid, pname, new Date()]);
       /* a New York course on New York time (Ramy, 27 Oct 2026: "let's go with a New York course, New York time zone") */
       var ptz = 'America/New_York';
-      var pseed = { centreNumber: 'US999', centreLocked: true, centreName: 'Elmswood English Center', courseName: 'Connect demo', courseNumber: 'C/1',
+      var pseed = { centreNumber: 'US999', centreLocked: true, centreName: 'Elmswood English Center', courseName: 'Connect Lite demo', courseNumber: 'C/1',
                     timeZone: ptz, clock: '12', presentToday: Utilities.formatDate(new Date(), ptz, 'yyyy-MM-dd'), presentFor: forWho };
       var pdays = parseInt(req.days, 10);
       if (pdays > 0) pseed.demoExpires = Utilities.formatDate(new Date(Date.now() + pdays * 864e5), ptz, 'yyyy-MM-dd');
