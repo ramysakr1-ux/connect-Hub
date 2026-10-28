@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610282201">
+<link rel="stylesheet" href="hub-tokens.css?v=202610282230">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -523,25 +523,25 @@
   .ttstart .tcard .btn{align-self:flex-start;}
   .cxshapes{display:flex; flex-direction:column; gap:6px; margin:2px 0 4px;} .cxshapes label{display:flex; gap:8px; align-items:center; font-size:.9rem; cursor:pointer;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610282201">
+<link rel="stylesheet" href="hub-house.css?v=202610282230">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610282201"></script>
-<script src="hub-tracker.js?v=202610282201"></script>
-<script src="hub-rotation.js?v=202610282201"></script>
-<script src="hub-xlsx.js?v=202610282201"></script>
-<script src="hub-docx.js?v=202610282201"></script>
-<script src="hub-timetable-parse.js?v=202610282201"></script>
-<script src="assignment-defaults.js?v=202610282201"></script>
-<script src="hub-shared.js?v=202610282201"></script>
-<script src="hub-store.js?v=202610282201"></script>
-<script src="hub-say.js?v=202610282201"></script>
-<script src="hub-sync.js?v=202610282201"></script>
-<script src="hub-notebook.js?v=202610282201"></script>
+<script src="hub-due.js?v=202610282230"></script>
+<script src="hub-tracker.js?v=202610282230"></script>
+<script src="hub-rotation.js?v=202610282230"></script>
+<script src="hub-xlsx.js?v=202610282230"></script>
+<script src="hub-docx.js?v=202610282230"></script>
+<script src="hub-timetable-parse.js?v=202610282230"></script>
+<script src="assignment-defaults.js?v=202610282230"></script>
+<script src="hub-shared.js?v=202610282230"></script>
+<script src="hub-store.js?v=202610282230"></script>
+<script src="hub-say.js?v=202610282230"></script>
+<script src="hub-sync.js?v=202610282230"></script>
+<script src="hub-notebook.js?v=202610282230"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1760,10 +1760,10 @@ const CX_SHAPES = [
   ['four', 'Four weeks, Monday to Friday', [1, 2, 3, 4, 5]]
 ];
 const CX_ORDER = ['Lesson frameworks', 'Writing the lesson plan', 'Receptive skills', 'Language analysis', 'PPP', 'Eliciting and CCQs', 'Teaching vocabulary',
-  'Phonology: sounds', 'Text-based teaching', 'Guided discovery vs PPP', 'Error correction', 'Giving feedback on tasks', 'Word and sentence stress', 'Teaching speaking',
+  'Phonology: sounds', 'Text-based teaching', 'Guided discovery vs PPP', 'Error correction', 'Observation 1: an experienced teacher', 'Word and sentence stress', 'Teaching speaking',
   'Connected speech', 'Functional language', 'Teaching productive skills', 'Guided to less-guided practice', 'Teaching writing', 'Syllabus planning: TP7 and TP8',
-  'Teaching literacy', 'Adapting the coursebook', 'Teaching exam classes', 'Dealing with mixed levels', 'Alternative teaching techniques', 'Drama in the ELT classroom',
-  'Teaching online', 'Life after CELTA'];
+  'Teaching literacy', 'Observation 2: an experienced teacher', 'Teaching exam classes', 'Observation 3: an experienced teacher', 'Alternative teaching techniques', 'Drama in the ELT classroom',
+  'Observation 4: an experienced teacher', 'Life after CELTA'];
 /* the second morning slot of these days (or the first, where said) is a task, not an input session */
 const CX_TASKS = { '4.2': 'Focus on the Learner: the assignment', '7.2': 'Language Related Tasks: the assignment', '10.2': 'Stage 1 tutorials',
   '11.2': 'Language Skills Related Tasks: the assignment', '13.2': 'Stage 2 tutorials', '15.1': 'Lessons from the Classroom: the assignment' };
@@ -1776,16 +1776,23 @@ function cxDays(){
     Object.assign({ s: '11:15', e: '12:15' }, b),
     { s: '12:15', e: '13:15', k: 'lunch', t: 'Lunch' }];
   const order = CX_ORDER.slice(), days = [];
-  const slot = (d, n) => { const t = CX_TASKS[d + '.' + n]; return t ? { k: 'task', t, by: by(n - 1) } : { k: 'input', t: order.shift(), by: by(n - 1) }; };
+  /* an observation of an experienced teacher (Cambridge's six hours, syllabus p. 3) is a filmed lesson watched with its task: a demo tile */
+  const slot = (d, n) => { const t = CX_TASKS[d + '.' + n]; if (t) return { k: 'task', t, by: by(n - 1) }; const x = order.shift(); return /^Observation/.test(x) ? { k: 'demo', t: x + ' (film, with a task)', by: by(n - 1) } : { k: 'input', t: x, by: by(n - 1) }; };
   days.push({ sessions: morning({ k: 'input', t: 'Course introduction', by: by(0) }, { k: 'input', t: 'Classroom management', by: by(1) }).concat([
-    { s: '13:30', e: '14:15', k: 'demo', t: 'Demonstration lesson' }, { s: '14:15', e: '15:00', k: 'event', t: 'Getting to know you: your activity' },
-    { s: '15:15', e: '16:30', k: 'plan', t: 'Lesson planning: TP1' }]) });
+    { s: '13:30', e: '14:30', k: 'demo', t: 'Demonstration lesson' }, { s: '14:45', e: '15:30', k: 'event', t: 'Getting to know you: your activity' },
+    { s: '15:30', e: '18:00', k: 'plan', t: 'Lesson planning: TP1' }]) });
   for (let d = 1; d <= 16; d++) days.push({ tp: Math.ceil(d / 2), setIndex: (d - 1) % 2, sessions: morning(slot(d, 1), slot(d, 2)).concat([
     { s: '13:15', e: '13:30', k: 'plan', t: 'TP preparation' }, { s: '13:30', e: '14:15', k: 'tp' }, { s: '14:15', e: '15:00', k: 'tp' }, { s: '15:15', e: '16:00', k: 'tp' },
     { s: '16:15', e: '17:00', k: 'plan', t: 'Lesson planning' }, { s: '17:15', e: '18:00', k: 'feedback', t: 'TP feedback', room: 'Feedback and tutorials' }]) });
-  days.push({ sessions: morning(slot(17, 1), slot(17, 2)).concat([{ s: '13:30', e: '15:00', k: 'plan', t: 'Lesson planning' }, { s: '15:00', e: '16:30', k: 'event', t: 'Work on assignments' }]) });
-  days.push({ sessions: morning({ k: 'assessor', t: 'Assessor visit: teaching practice', by: by(0) }, { k: 'assessor', t: 'Assessor visit: feedback', by: by(1) }).concat([{ s: '13:30', e: '15:00', k: 'plan', t: 'Lesson planning' }, { s: '15:00', e: '16:30', k: 'event', t: 'Work on assignments' }]) });
-  days.push({ sessions: morning({ k: 'event', t: 'Course review and CELTA 5 checks', by: by(0) }, { k: 'event', t: 'End of course', by: by(1) }).concat([{ s: '13:30', e: '15:00', k: 'plan', t: 'Lesson planning' }, { s: '15:00', e: '16:30', k: 'event', t: 'Work on assignments' }]) });
+  /* the three days after TP 8: no teaching practice, and not study days (Ramy, 28 Oct 2026; Handbook 3.6 allows one study
+     day only, for a national holiday). Contact time to the end: a fifth observation, tutorials and consultation, so the
+     twenty days reach Cambridge's 120 contact hours (syllabus p. 3). */
+  days.push({ sessions: morning(slot(17, 1), slot(17, 2)).concat([{ s: '13:30', e: '14:30', k: 'demo', t: 'Observation 5: an experienced teacher (film, with a task)', by: by(0) },
+    { s: '14:45', e: '16:15', k: 'task', t: 'Tutorials', by: by(1) }, { s: '16:30', e: '18:00', k: 'task', t: 'Consultation: assignments and resubmissions', by: by(0) }]) });
+  days.push({ sessions: morning({ k: 'assessor', t: 'Assessor visit: teaching practice', by: by(0) }, { k: 'assessor', t: 'Assessor visit: feedback', by: by(1) }).concat([
+    { s: '13:30', e: '15:00', k: 'task', t: 'Tutorials', by: by(0) }, { s: '15:15', e: '18:00', k: 'task', t: 'Consultation: the CELTA 5 and the portfolio', by: by(1) }]) });
+  days.push({ sessions: morning({ k: 'event', t: 'Course review and CELTA 5 checks', by: by(0) }, { k: 'event', t: 'End of course', by: by(1) }).concat([
+    { s: '13:30', e: '15:00', k: 'task', t: 'Final tutorials', by: by(0) }, { s: '15:15', e: '18:00', k: 'task', t: 'Consultation: what comes next', by: by(1) }]) });
   days.forEach(day => day.sessions.forEach((x, i) => { x.id = (x.k || 'x') + (i + 1); if (x.by === undefined) delete x.by; }));
   return days;
 }
