@@ -301,6 +301,9 @@ function json_(obj) {
 function handle_(req) {
   migrate_();
   var op = String(req.op || '');
+  /* THE ROOM'S DOOR (28 Oct 2026): the one op with no key, no token. A Connect demo's audience asks a question on a page of
+     its own (ask.html?c=<course>&k=<code>); the code is the course's own and says nothing but "ask". See roomAsk_. */
+  if (op === 'roomAsk') return roomAsk_(req);
 
   // Which course is this? The credential says so: a tutor key and an assessor
   // key each belong to one course, and a trainee's token is on one course's
@@ -953,7 +956,7 @@ case 'inbox': {
       var pseed = { centreNumber: 'US999', centreLocked: true, centreName: 'Elmswood English Center', courseName: 'Connect Lite demo', courseNumber: 'C/1',
                      /* v169: Elmswood's elm leaf, so the center has its logo from the first screen (assets/elmswood-logo.svg) */
                      logo: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJFbG1zd29vZCBFbmdsaXNoIENlbnRlciI+IDxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgcng9IjEyIiBmaWxsPSIjMkY0RjNBIi8+IDxwYXRoIGQ9Ik0zMiAxM2M5IDYgMTMuNSAxMyAxMy41IDIxIDAgOC4yLTUuNiAxNC40LTEzLjUgMTcuNEMyNC4xIDQ4LjQgMTguNSA0Mi4yIDE4LjUgMzRjMC04IDQuNS0xNSAxMy41LTIxeiIgZmlsbD0iI0YzRUZFMiIvPiA8cGF0aCBkPSJNMzIgMTkuNXYyOCIgc3Ryb2tlPSIjMkY0RjNBIiBzdHJva2Utd2lkdGg9IjIuMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+IDxwYXRoIGQ9Ik0zMiAyNy41bDYuNS00LjVNMzIgMzQuNWw3LjUtNU0zMiA0MS41bDYuNS00LjVNMzIgMjcuNWwtNi41LTQuNU0zMiAzNC41bC03LjUtNU0zMiA0MS41bC02LjUtNC41IiBzdHJva2U9IiMyRjRGM0EiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4gPC9zdmc+',
-                    timeZone: ptz, clock: '12', presentToday: Utilities.formatDate(new Date(), ptz, 'yyyy-MM-dd'), presentFor: forWho };
+                    timeZone: ptz, clock: '12', presentToday: Utilities.formatDate(new Date(), ptz, 'yyyy-MM-dd'), presentFor: forWho, askCode: newKey_().slice(0, 12), askTo: 'Jordan Blake' };
       var pdays = parseInt(req.days, 10);
       if (pdays > 0) pseed.demoExpires = Utilities.formatDate(new Date(Date.now() + pdays * 864e5), ptz, 'yyyy-MM-dd');
       courseWrite_(pid, 'settings', pseed);
@@ -1699,6 +1702,48 @@ case 'inbox': {
         return pool;
       });
       return { dropped: true, mine: dtPool[dtWho] || [] };
+    }
+    /* QUESTIONS (v173, 28 Oct 2026; Ramy: "hold to ask ... into the tutor's notebook ... a question wall"). A trainee asks the tutor
+       of the input session they are in, by voice (up to thirty seconds) or typed; the audience of a Connect demo asks through
+       roomAsk. They land in the course's `questions` pool, one list, newest last. Tutors read them all and mark them
+       answered; the asker hears or reads their own. The voice is a file in the course's private notebook folder, described
+       by the question it belongs to. */
+    case 'askQuestion': {
+      if (!me || tutor || assessor) throw new Error('Trainees only');
+      if (!course) throw new Error('This link is not on a course');
+      var aqItem = questionClean_(course, req, { token: me.token, name: me.name, group: String(me.group || '') });
+      courseUpdateObj_(course.id, 'questions', function (pool) { return questionAdd_(pool, aqItem); });
+      return { asked: true, id: aqItem.id };
+    }
+    case 'questions': {
+      requireTutor_(tutor);
+      var qPool = courseRead_(course.id, 'questions') || {};
+      return { items: qPool.items || [] };
+    }
+    case 'answerQuestion': {
+      requireTutor_(tutor);
+      var anId = String(req.id || ''), anOn = req.state === 'open' ? 'open' : 'answered', anBy = String(req.who || '').trim().slice(0, 80);
+      var anPool = courseUpdateObj_(course.id, 'questions', function (pool) {
+        (pool.items || []).forEach(function (q) { if (q && q.id === anId) { q.state = anOn; q.answeredAt = anOn === 'answered' ? new Date().toISOString() : ''; q.answeredBy = anOn === 'answered' ? anBy : ''; } });
+        return pool;
+      });
+      return { items: anPool.items || [] };
+    }
+    case 'getQuestionAudio': {
+      if (!course) throw new Error('This link is not on a course');
+      var gqId = String(req.id || ''), gqPool = courseRead_(course.id, 'questions') || {};
+      var gqQ = (gqPool.items || []).filter(function (q) { return q && q.audio && q.audio.id === gqId; })[0];
+      if (!gqQ) throw new Error('No such recording');
+      if (!tutor && !(me && gqQ.token === me.token)) throw new Error('Not yours to hear');
+      var gqBlob = DriveApp.getFileById(gqId).getBlob();
+      return { type: gqBlob.getContentType(), bytes: Utilities.base64Encode(gqBlob.getBytes()) };
+    }
+    /* the link the room is given: made once, kept in the course's settings, handed only to a tutor */
+    case 'roomLink': {
+      requireTutor_(tutor);
+      var rlSet = courseRead_(course.id, 'settings') || {};
+      if (!rlSet.askCode) { rlSet = courseUpdateObj_(course.id, 'settings', function (st) { if (!st.askCode) st.askCode = newKey_().slice(0, 12); return st; }); }
+      return { course: course.id, code: rlSet.askCode };
     }
     /* A TUTOR CONNECTS A NOTE WITH A TRAINEE (v130, 25 Oct 2026; Ramy: "can the tutors share notes with
        trainees and email and whatnot?"). The note goes into the same `notes` pool the trainees connect
@@ -3309,6 +3354,7 @@ function settingsFor_(course, s, reader, me) {
   var hide = hideTokens_(course.id, me), out = {};
   Object.keys(s).forEach(function (k) { out[k] = s[k]; });
   delete out.assessorVisit;
+  delete out.askCode;   /* the room's question page is the tutors' to hand out (28 Oct 2026) */
   if (out.slotOf && typeof out.slotOf === 'object') { var so = {}; Object.keys(out.slotOf).forEach(function (t) { so[hide(t)] = out.slotOf[t]; }); out.slotOf = so; }
   if (Array.isArray(out.letterOrder)) out.letterOrder = out.letterOrder.map(hide);
   return out;
@@ -3489,6 +3535,57 @@ function requireOwner_(owner) { if (!owner) throw new Error('Not yours to open')
    the trainees sheet) and courseKey_() twice (a property read each). So
    listing N courses cost 2N+1 sheet reads and 2N property reads, and every
    course Ramy sold made the console slower for every course after it. */
+/* ---------- questions: the helpers (v173) ---------- */
+function questionAdd_(pool, item) {
+  var list = (pool.items || []).filter(function (q) { return q && q.id !== item.id; });
+  list.push(item);
+  pool.items = list.length > 400 ? list.slice(list.length - 400) : list;
+  return pool;
+}
+function questionClean_(course, req, asker) {
+  var text = String(req.text || '').replace(/\s+/g, ' ').trim().slice(0, 500);
+  var hasAudio = !!String(req.bytes || '');
+  if (!text && !hasAudio) throw new Error('Nothing to ask');
+  var q = {
+    id: Utilities.getUuid().slice(0, 12), at: new Date().toISOString(),
+    token: asker.token || '', name: String(asker.name || '').slice(0, 80), group: asker.group || '',
+    session: { k: String((req.session && req.session.k) || 'input').slice(0, 12), id: String((req.session && req.session.id) || '').slice(0, 80),
+               title: String((req.session && req.session.title) || '').slice(0, 120), date: String((req.session && req.session.date) || '').slice(0, 10) },
+    to: String(req.to || '').trim().slice(0, 80), text: text, audio: null, state: 'open', answeredAt: '', answeredBy: ''
+  };
+  if (hasAudio) {
+    var bytes = Utilities.base64Decode(String(req.bytes));
+    if (!bytes.length) throw new Error('Nothing was recorded');
+    if (bytes.length > 1.5 * 1024 * 1024) throw new Error('That recording is too long. Keep a question to thirty seconds.');
+    var type = String(req.type || '').split(';')[0]; if (!/^audio\//.test(type)) type = 'audio/webm';
+    var ext = type.indexOf('mp4') >= 0 ? 'm4a' : type.indexOf('ogg') >= 0 ? 'ogg' : type.indexOf('mpeg') >= 0 ? 'mp3' : 'webm';
+    var f = notebookFolder_(course).createFile(Utilities.newBlob(bytes, type, 'Question ' + q.name + ' ' + q.at.slice(0, 16).replace('T', ' ') + '.' + ext));
+    f.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE);
+    f.setDescription(JSON.stringify({ question: q.id, by: q.name }));
+    q.audio = { id: f.getId(), seconds: Math.min(60, Number(req.seconds) || 0), mime: type };
+  }
+  return q;
+}
+/* The room asks (ask.html). No key: the course's own ask code, a name, a question, and a ceiling on how many a name may send. */
+function roomAsk_(req) {
+  var c = courseById_(String(req.course || '').trim());
+  if (!c || c.deleted) throw new Error('This question page is not open');
+  var st = courseRead_(c.id, 'settings') || {};
+  var code = String(req.code || '');
+  if (!st.askCode || code.length < 8 || code !== String(st.askCode)) throw new Error('This question page is not open');
+  var name = String(req.name || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+  if (!name) throw new Error('Your name first');
+  var cache = CacheService.getScriptCache(), ck = 'rq:' + c.id + ':' + name.toLowerCase().slice(0, 40) + ':' + Utilities.formatDate(new Date(), 'UTC', 'yyyyMMddHH');
+  var n = parseInt(cache.get(ck) || '0', 10);
+  if (n >= 12) throw new Error('That is a lot of questions this hour. Ask the rest out loud.');
+  var to = String(st.askTo || '').trim() || String(st.tutorNames || '').split(/[,\n;]+/)[0].trim();
+  var item = questionClean_(c, { text: req.text, bytes: req.bytes, type: req.type, seconds: req.seconds, to: to,
+                                 session: { k: 'room', id: 'room', title: 'Questions from the room', date: String(st.presentToday || '') } },
+                            { token: 'room', name: name, group: '' });
+  courseUpdateObj_(c.id, 'questions', function (pool) { return questionAdd_(pool, item); });
+  cache.put(ck, String(n + 1), 3600);
+  return { asked: true };
+}
 function ownerList_() {
   var list = courses_(true);   // the bin too, marked, so the console can offer to put a course back
   if (!list.length) return [];

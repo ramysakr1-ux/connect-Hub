@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<!--
+  Connect Lite — the question wall.
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy, 28 Oct 2026: trainees "hold to ask" in an input session, and the Connect demo's audience asks from a page of
+  their own; "a question wall ... it should show the question and where it came from ... better than it would look on
+  Zoom". This is where those questions land. Tutors only.
+
+  Two ways to read them. THE WALL: one question at a time, big, the voice plays at the press of a button, Answered,
+  next (arrow keys work; the full-screen button shares well on Zoom). THE LIST: every question, grouped by the session
+  it came from, with the ones still open first. A question stays after it is answered, under its session; answered
+  is a tick, not a deletion.
+
+  The room's link (and its QR, for the demo's audience) is made here once per course by the store's roomLink.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="brand/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<title>Questions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hub-tokens.css?v=202610280837">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);}
+  .wrap{max-width:1040px; margin:0 auto; padding:32px 20px 90px;}
+  .back{display:inline-block; margin-bottom:14px; font-weight:600; font-size:.9rem; color:var(--teal); text-decoration:none;}
+  .back:hover{text-decoration:underline;}
+  .k{font-family:'Instrument Sans','Karla',sans-serif; font-weight:600; font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--brick); margin:0 0 6px;}
+  h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:32px; line-height:1.08; margin:0 0 8px;}
+  .lede{color:var(--grey); font-size:15px; line-height:1.5; margin:0 0 18px; max-width:680px;}
+  .bar{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 18px;}
+  .bar button, .btn{font:inherit; font-weight:700; font-size:13.5px; padding:9px 15px; border-radius:999px; border:1px solid var(--sand-line); background:var(--paper); color:var(--teal); cursor:pointer;}
+  .bar button[aria-pressed="true"]{background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  .bar .sp{flex:1;}
+  .btn.go{background:var(--a-mustard); border-color:var(--a-mustard); color:var(--ink);}
+  .count{font-weight:700; color:var(--grey); font-size:13.5px;}
+  /* the wall */
+  .wall{background:var(--teal); color:var(--paper); border-radius:var(--r-card); padding:34px 34px 28px; min-height:360px; display:flex; flex-direction:column; box-shadow:var(--nb-shadow);}
+  .wall .from{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:baseline; opacity:.92; font-size:15px; margin:0 0 18px;}
+  .wall .from b{font-family:'Newsreader',Georgia,serif; font-size:24px; font-weight:600;}
+  .wall .from .src{font-weight:700; letter-spacing:.1em; text-transform:uppercase; font-size:11.5px; opacity:.8;}
+  .wall .q{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:clamp(26px,4.2vw,52px); line-height:1.16; margin:0 0 22px; flex:1; overflow-wrap:anywhere;}
+  .wall .voice{margin:0 0 20px;}
+  .wall .play{font:inherit; font-weight:700; font-size:18px; border:0; border-radius:999px; padding:14px 24px; background:var(--a-lemon); color:var(--ink); cursor:pointer;}
+  .wall audio{display:block; width:100%; margin-top:12px;}
+  .wall .acts{display:flex; flex-wrap:wrap; gap:10px; align-items:center;}
+  .wall .acts button{font:inherit; font-weight:700; font-size:15px; border:0; border-radius:999px; padding:12px 22px; cursor:pointer; background:var(--paper); color:var(--teal);}
+  .wall .acts .done{background:var(--a-lemon); color:var(--ink);}
+  .wall .acts .sp{flex:1;} .wall .of{font-weight:700; opacity:.85;}
+  .wall.answered{background:var(--ink);} .wall .tick{font-weight:700; font-size:13px; letter-spacing:.1em; text-transform:uppercase; color:var(--a-lemon);}
+  .empty{background:var(--paper); border-radius:var(--r-card); padding:34px; text-align:center; color:var(--grey); box-shadow:var(--nb-shadow);}
+  .empty b{display:block; font-family:'Newsreader',Georgia,serif; font-size:22px; color:var(--ink); margin-bottom:6px;}
+  /* the list */
+  .sess{background:var(--paper); border-radius:var(--r-card); box-shadow:var(--nb-shadow); border-top:3px solid var(--teal); padding:16px 20px 8px; margin:0 0 16px;}
+  .sess h2{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:20px; margin:0 0 2px;} .sess .sub{color:var(--grey); font-size:13px; margin:0 0 8px;}
+  .row{display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-top:1px solid var(--sand-line);}
+  .row .t{flex:1; min-width:0;} .row .t b{display:block; font-size:13.5px;} .row .t span{display:block; font-size:15px; line-height:1.4; overflow-wrap:anywhere;}
+  .row .st{font-size:11.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:4px 10px; border-radius:999px; background:var(--sand); color:var(--grey); white-space:nowrap;}
+  .row.open .st{background:var(--a-lemon); color:var(--ink);}
+  .row button{font:inherit; font-weight:700; font-size:13px; border:1px solid var(--sand-line); background:var(--paper); color:var(--teal); border-radius:999px; padding:6px 12px; cursor:pointer;}
+  /* the room's link */
+  .room{background:var(--paper); border-radius:var(--r-card); box-shadow:var(--nb-shadow); padding:18px 20px; margin:0 0 18px; display:flex; gap:20px; flex-wrap:wrap; align-items:center;}
+  .room[hidden]{display:none;} .room .qr{width:150px; height:150px; flex:none;} .room .qr svg{width:100%; height:100%; display:block;}
+  .room .t{flex:1; min-width:240px;} .room h2{font-family:'Newsreader',Georgia,serif; font-size:20px; margin:0 0 4px;} .room p{margin:0 0 10px; color:var(--grey); font-size:14px; line-height:1.45;}
+  .room input{width:100%; font:inherit; font-size:13.5px; padding:9px 12px; border:1px solid var(--sand-line); border-radius:10px; background:var(--field); color:var(--ink);}
+  body.full .wrap{max-width:none; padding:0;} body.full .back, body.full .k, body.full h1, body.full .lede, body.full .bar, body.full .list, body.full .room{display:none !important;}
+  body.full .wall{min-height:100vh; border-radius:0; padding:5vw;}
+  .note{color:var(--grey); font-size:13px; margin:10px 0 0;}
+</style>
+<link rel="stylesheet" href="hub-house.css?v=202610280837">
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="5_tutor_dashboard.html">Back</a>
+  <p class="k">Input sessions</p>
+  <h1>Questions</h1>
+  <p class="lede">What trainees ask in an input session, and what the room asks from its own page. Open one on the wall to read it, hear it and answer it out loud, then tick it off.</p>
+  <div id="app"><p class="lede">Loading the questions…</p></div>
+</div>
+<script src="hub-shared.js?v=202610280837"></script>
+<script src="hub-store.js?v=202610280837"></script>
+<script src="hub-say.js?v=202610280837"></script>
+<script src="hub-sync.js?v=202610280837"></script>
+<script src="vendor/qrcode.js?v=202610280837"></script>
+<script src="hub-qr.js?v=202610280837"></script>
+<script src="hub-notebook.js?v=202610280837"></script>
+<script>
+/* Whose room this is: the tutors'. */
+if (window.hubTutorRoomOnly && hubTutorRoomOnly()) { /* refused; hubTutorRoomOnly drew the room */ }
+else (async function(){
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const S = window.HubStore;
+  const me = () => { try { return (localStorage.getItem('chub:tutorName') || '').trim(); } catch (e) { return ''; } };
+  let items = [], view = 'wall', cur = '', mineOnly = false, room = null, tz;
+  let settings = {}; try { settings = (await S.call({ op: 'course' })).settings || {}; tz = settings.timeZone || undefined; } catch (e) {}
+  const when = iso => { try { return new Date(iso).toLocaleString('en-GB', { weekday: 'short', hour: 'numeric', minute: '2-digit', hour12: window.hubClockIs24 ? !hubClockIs24() : true, timeZone: tz }); } catch (e) { return ''; } };
+  const first = n => String(n || '').trim().split(/\s+/)[0];
+  const src = q => q.session && q.session.k === 'room' ? 'From the room' : (q.session && q.session.title) || 'An input session';
+  const mine = q => !mineOnly || !me() || !q.to || String(q.to).toLowerCase() === me().toLowerCase();
+  const shown = () => items.filter(mine);
+  const queue = () => shown().filter(q => q.state !== 'answered');
+
+  async function load(quiet){
+    try { const r = await S.call({ op: 'questions' }); const next = (r && r.items) || []; const sig = a => a.map(q => q.id + q.state).join(); if (quiet && sig(next) === sig(items)) return; const fresh = next.length - items.length; items = next; if (!cur || !items.some(q => q.id === cur)) { const o = queue()[0] || shown()[0]; cur = o ? o.id : ''; } paint(); if (quiet && fresh > 0) { const b = $('newb'); if (b) b.textContent = fresh + ' new'; } }
+    catch (e) { if (!quiet) $('app').innerHTML = '<p class="lede">The questions could not be read: ' + esc(e.message) + '</p>'; }
+  }
+  function head(){
+    const open = queue().length, all = shown().length;
+    return `<div class="bar">
+      <button type="button" data-v="wall" aria-pressed="${view === 'wall'}">The wall</button>
+      <button type="button" data-v="list" aria-pressed="${view === 'list'}">The list</button>
+      ${me() ? `<button type="button" id="mine" aria-pressed="${mineOnly}">Only mine</button>` : ''}
+      <span class="count">${open} open · ${all} in all <span id="newb"></span></span><span class="sp"></span>
+      <button type="button" id="roomb">The room's link</button>
+      <button type="button" class="btn go" id="full">Full screen</button>
+    </div>
+    <div class="room" id="room" hidden></div>`;
+  }
+  function wall(){
+    const list = shown(); if (!list.length) return '<div class="empty"><b>No questions yet.</b>They arrive here as they are asked: in an input session, or from the room’s own page.</div>';
+    const q = list.find(x => x.id === cur) || list[0], i = list.indexOf(q);
+    const voice = q.audio ? `<div class="voice"><button type="button" class="play" id="play">▶ Hear it · ${q.audio.seconds || ''}${q.audio.seconds ? ' s' : ''}</button><div id="aslot"></div></div>` : '';
+    return `<section class="wall${q.state === 'answered' ? ' answered' : ''}">
+      <div class="from"><b>${esc(q.name || 'Someone')}</b><span>${esc(when(q.at))}</span><span class="src">${esc(src(q))}${q.session && q.session.date && q.session.k !== 'room' ? ' · ' + esc(q.session.date) : ''}</span>${q.to ? `<span class="src">for ${esc(first(q.to))}</span>` : ''}${q.state === 'answered' ? '<span class="tick">Answered</span>' : ''}</div>
+      <p class="q">${q.text ? esc(q.text) : '<em>A voice question.</em>'}</p>
+      ${voice}
+      <div class="acts"><button type="button" id="prev"${i === 0 ? ' disabled' : ''}>Previous</button><button type="button" id="next"${i === list.length - 1 ? ' disabled' : ''}>Next</button><span class="of">${i + 1} of ${list.length}</span><span class="sp"></span>
+        <button type="button" class="done" id="ans">${q.state === 'answered' ? 'Put it back' : 'Answered'}</button></div>
+    </section><p class="note">Left and right arrow keys move along. The newest asked is last.</p>`;
+  }
+  function list(){
+    const groups = {}, order = [];
+    shown().slice().reverse().forEach(q => { const key = (q.session && q.session.k === 'room') ? 'room' : ((q.session && q.session.date || '') + '|' + (q.session && q.session.title || '')); if (!groups[key]) { groups[key] = { q, items: [] }; order.push(key); } groups[key].items.push(q); });
+    if (!order.length) return '<div class="empty"><b>No questions yet.</b>They arrive here as they are asked.</div>';
+    return '<div class="list">' + order.map(k => { const g = groups[k], q0 = g.q, room_ = q0.session && q0.session.k === 'room'; const sorted = g.items.slice().sort((a, b) => (a.state === 'answered') - (b.state === 'answered') || String(a.at).localeCompare(String(b.at)));
+      return `<section class="sess"><h2>${esc(room_ ? 'Questions from the room' : src(q0))}</h2><p class="sub">${esc(room_ ? 'Asked from the room’s own page' : (q0.session && q0.session.date) || '')} · ${sorted.filter(x => x.state !== 'answered').length} open of ${sorted.length}</p>
+        ${sorted.map(q => `<div class="row ${q.state === 'answered' ? 'done' : 'open'}"><div class="t"><b>${esc(q.name || 'Someone')} · ${esc(when(q.at))}</b><span>${q.text ? esc(q.text) : '<em>A voice question.</em>'}</span></div><span class="st">${q.state === 'answered' ? 'Answered' : 'Open'}</span><button type="button" data-open="${esc(q.id)}">Open</button></div>`).join('')}</section>`; }).join('') + '</div>';
+  }
+  function paint(){
+    $('app').innerHTML = head() + (view === 'wall' ? wall() : list());
+    $('app').querySelectorAll('[data-v]').forEach(b => b.onclick = () => { view = b.dataset.v; paint(); });
+    if ($('mine')) $('mine').onclick = () => { mineOnly = !mineOnly; cur = ''; load(); };
+    $('full').onclick = () => { document.body.classList.toggle('full'); view = 'wall'; if (document.body.classList.contains('full') && document.documentElement.requestFullscreen) { try { document.documentElement.requestFullscreen(); } catch (e) {} } paint(); };
+    $('roomb').onclick = roomLink;
+    document.querySelectorAll('[data-open]').forEach(b => b.onclick = () => { cur = b.dataset.open; view = 'wall'; paint(); window.scrollTo(0, 0); });
+    const list_ = shown(), q = list_.find(x => x.id === cur) || list_[0];
+    if ($('prev')) $('prev').onclick = () => step(-1); if ($('next')) $('next').onclick = () => step(1);
+    if ($('ans')) $('ans').onclick = () => mark(q);
+    if ($('play')) $('play').onclick = () => hear(q);
+  }
+  function step(d){ const l = shown(), i = l.findIndex(x => x.id === cur); const n = l[i + d]; if (n) { cur = n.id; paint(); } }
+  async function mark(q){
+    const to = q.state === 'answered' ? 'open' : 'answered'; q.state = to;
+    const l = queue(); if (to === 'answered' && l.length) cur = l[0].id; paint();
+    try { const r = await S.call({ op: 'answerQuestion', id: q.id, state: to, who: me() }); if (r && r.items) items = r.items; } catch (e) {}
+  }
+  const heard = {};
+  async function hear(q){
+    const slot = $('aslot'), b = $('play'); if (!q.audio || !slot) return;
+    const show = url => { slot.innerHTML = '<audio controls autoplay src="' + url + '"></audio>'; };
+    if (heard[q.audio.id]) { show(heard[q.audio.id]); return; }
+    b.disabled = true; b.textContent = 'Loading…';
+    try { const r = await S.call({ op: 'getQuestionAudio', id: q.audio.id }, 90000); const bin = atob(r.bytes), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      heard[q.audio.id] = URL.createObjectURL(new Blob([u8], { type: r.type || q.audio.mime || 'audio/webm' })); b.hidden = true; show(heard[q.audio.id]);
+    } catch (e) { b.disabled = false; b.textContent = '▶ Hear it'; slot.textContent = (e && e.message) || 'Could not load the recording'; }
+  }
+  async function roomLink(){
+    const box = $('room'); if (!box.hidden) { box.hidden = true; return; }
+    box.hidden = false; box.innerHTML = '<p>Making the link…</p>';
+    try {
+      if (!room) room = await S.call({ op: 'roomLink' });
+      const url = location.origin + location.pathname.replace(/[^/]*$/, '') + 'ask.html?c=' + encodeURIComponent(room.course) + '&k=' + encodeURIComponent(room.code);
+      box.innerHTML = '<div class="qr" id="qr"></div><div class="t"><h2>The room’s own page</h2><p>Share this link, or the code, in the Zoom chat. Anyone with it can ask a question by voice or typed, from a phone or a laptop, muted or not. Their name is asked once.</p><input readonly value="' + esc(url) + '"><p style="margin-top:8px"><button type="button" class="btn" id="cp">Copy the link</button></p></div>';
+      try { $('qr').appendChild(window.hubQr(url)); } catch (e) {}
+      $('cp').onclick = async () => { try { await navigator.clipboard.writeText(url); $('cp').textContent = 'Copied'; } catch (e) { $('app').querySelector('#room input').select(); } };
+    } catch (e) { box.innerHTML = '<p>The link could not be made: ' + esc(e.message) + '</p>'; }
+  }
+  document.addEventListener('keydown', e => { if (/INPUT|TEXTAREA|SELECT/.test((e.target || {}).tagName || '')) return; if (e.key === 'ArrowRight') step(1); else if (e.key === 'ArrowLeft') step(-1); else if (e.key === 'Escape' && document.body.classList.contains('full')) { document.body.classList.remove('full'); paint(); } });
+  await load();
+  setInterval(() => load(true), 8000);
+})();
+</script>
+</body>
+</html>

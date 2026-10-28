@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<!--
+  Connect Lite — ask from the room.
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy, 28 Oct 2026: a Connect demo's Zoom audience asks a question "while muted on Zoom ... one separate link ... name
+  asked once and remembered ... hold to ask". The page opens from a link of the form ask.html?c=<course>&k=<code>, made
+  by the presenter's tutor page (roomLink). No sign-in, no notebook: a name, a question by voice (thirty seconds) or typed,
+  and Send. It goes to the store's roomAsk, which checks the course's own ask code and limits how many a name may send
+  in an hour, and lands on the tutor's question wall (38_questions.html) as "Questions from the room".
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<meta name="robots" content="noindex">
+<title>Ask a question</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,600;6..72,700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hub-tokens.css?v=202610280837">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0; min-height:100vh; background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif;}
+  .wrap{max-width:520px; margin:0 auto; padding:28px 18px 60px;}
+  .eye{font-size:11px; letter-spacing:.22em; text-transform:uppercase; font-weight:700; color:var(--brick); margin:0 0 6px;}
+  h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:2rem; line-height:1.08; margin:0 0 8px;}
+  .lede{color:var(--grey); line-height:1.5; margin:0 0 20px;}
+  .card{background:var(--paper); border-radius:var(--r-card); box-shadow:var(--nb-shadow); padding:20px 20px 22px; border-top:3px solid var(--teal);}
+  label.lab{display:block; font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; font-weight:700; color:var(--grey); margin:0 0 6px;}
+  input[type=text], textarea{width:100%; padding:11px 13px; border:1px solid var(--sand-line); border-radius:12px; background:var(--field); font:inherit; font-size:1rem; color:var(--ink);}
+  textarea{min-height:84px; resize:vertical;}
+  .mic{display:flex; align-items:center; justify-content:center; gap:10px; width:100%; border:0; border-radius:16px; padding:22px 14px; margin:16px 0 0; background:var(--teal); color:var(--paper); font:700 1.05rem/1.2 'Karla',sans-serif; cursor:pointer; touch-action:none; user-select:none; -webkit-user-select:none;}
+  .mic.on{background:var(--a-red);} .mic .dot{width:12px; height:12px; border-radius:50%; background:var(--paper);} .mic.on .dot{animation:pulse 1s infinite;} @keyframes pulse{50%{opacity:.25}}
+  .heard{display:none; margin:12px 0 0; padding:10px 12px; border-radius:12px; background:var(--sand);} .heard.on{display:block;} .heard audio{display:block; width:100%; margin-top:6px;} .heard .rm{border:0; background:none; color:var(--a-red); font-weight:700; cursor:pointer; padding:0; margin-left:8px; font:inherit;}
+  .or{margin:16px 0 8px; font-size:.74rem; letter-spacing:.12em; text-transform:uppercase; font-weight:700; color:var(--grey); text-align:center;}
+  .go{margin-top:16px; width:100%; border:0; border-radius:999px; padding:14px; background:var(--a-mustard); color:var(--ink); font:700 1.05rem/1 'Karla',sans-serif; cursor:pointer;} .go:disabled{opacity:.45; cursor:default;}
+  .msg{min-height:1.4em; margin:12px 0 0; font-size:.92rem; color:var(--grey);} .msg.ok{color:var(--teal); font-weight:700;} .msg.err{color:var(--a-red);}
+  .who{display:none;} .who.on{display:block;} .hi{display:none; margin:0 0 14px; color:var(--grey);} .hi.on{display:block;} .hi button{border:0; background:none; color:var(--teal); font:inherit; font-weight:700; text-decoration:underline; cursor:pointer; padding:0;}
+  .closed{text-align:center; padding:30px 10px;}
+  .foot{margin-top:28px; text-align:center; font-size:.8rem; color:var(--grey);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eye">Connect Lite</p>
+  <h1>Ask a question</h1>
+  <p class="lede" id="lede">Ask it here and the person presenting sees it as you send it. Muted on Zoom is fine: this is a page of its own.</p>
+  <div class="card" id="card">
+    <div class="who on" id="who"><label class="lab" for="name">Your name</label><input type="text" id="name" maxlength="60" autocomplete="name" placeholder="First name is enough"></div>
+    <p class="hi" id="hi"></p>
+    <button type="button" class="mic" id="mic"><span class="dot"></span><span id="lbl">Hold to ask</span></button>
+    <div class="heard" id="heard"><span id="len"></span><button type="button" class="rm" id="rm">Take it again</button><audio controls id="aud"></audio></div>
+    <p class="or">or type it</p>
+    <textarea id="text" maxlength="500" placeholder="Your question"></textarea>
+    <button type="button" class="go" id="go" disabled>Send</button>
+    <p class="msg" id="msg" role="status"></p>
+  </div>
+  <p class="foot">designed and built by <b>Ramy</b></p>
+</div>
+<script src="hub-store.js?v=202610280837"></script>
+<script src="hub-rec.js?v=202610280837"></script>
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var q = new URLSearchParams(location.search), COURSE = q.get('c') || '', CODE = q.get('k') || '';
+  var KEY = 'hub:askname', got = null;
+  if (!COURSE || !CODE) { $('card').innerHTML = '<div class="closed"><p><b>This question page is not open.</b></p><p>Use the link from the person presenting.</p></div>'; $('lede').hidden = true; return; }
+  function name(){ var n = ''; try { n = (localStorage.getItem(KEY) || '').trim(); } catch (e) {} return n; }
+  function paintName(){
+    var n = name();
+    $('who').classList.toggle('on', !n); $('hi').classList.toggle('on', !!n);
+    if (n) { $('hi').innerHTML = 'Asking as <b></b>. <button type="button" id="chg">Not you?</button>'; $('hi').querySelector('b').textContent = n; $('chg').onclick = function(){ try { localStorage.removeItem(KEY); } catch (e) {} paintName(); ready(); $('name').focus(); }; }
+  }
+  function who(){ return name() || $('name').value.trim(); }
+  function ready(){ $('go').disabled = !(who() && (got || $('text').value.trim())); }
+  $('name').addEventListener('input', ready); $('text').addEventListener('input', ready);
+  HubRec.hold($('mic'), { max: 30,
+    onTick: function(s){ $('lbl').textContent = 'Recording · ' + s + 's of 30. Let go to keep it.'; },
+    onDone: function(r){ got = r; $('lbl').textContent = 'Hold to ask again'; $('heard').classList.add('on'); $('len').textContent = 'Your question, ' + r.seconds + ' seconds.'; $('aud').src = URL.createObjectURL(r.blob); $('msg').textContent = ''; ready(); },
+    onError: function(m){ $('lbl').textContent = 'Hold to ask'; $('msg').className = 'msg err'; $('msg').textContent = m; } });
+  $('rm').onclick = function(){ got = null; $('heard').classList.remove('on'); $('aud').removeAttribute('src'); ready(); };
+  $('go').onclick = function(){
+    if ($('go').disabled) return;
+    var n = who(); try { localStorage.setItem(KEY, n); } catch (e) {}
+    $('go').disabled = true; $('go').textContent = 'Sending…'; $('msg').className = 'msg'; $('msg').textContent = '';
+    var body = { course: COURSE, code: CODE, name: n, text: $('text').value.trim() };
+    var step = got ? HubRec.b64(got.blob).then(function(b){ body.bytes = b; body.type = got.type; body.seconds = got.seconds; }) : Promise.resolve();
+    step.then(function(){ return HubStore.room(body); }).then(function(){
+      $('msg').className = 'msg ok'; $('msg').textContent = 'Sent. They have it.'; $('go').textContent = 'Send'; $('text').value = ''; got = null; $('heard').classList.remove('on'); paintName(); ready();
+    }, function(e){ $('go').textContent = 'Send'; $('msg').className = 'msg err'; $('msg').textContent = 'Not sent: ' + ((e && e.message) || e); ready(); });
+  };
+  paintName(); ready();
+})();
+</script>
+</body>
+</html>

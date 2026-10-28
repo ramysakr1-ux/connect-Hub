@@ -37,6 +37,8 @@ FOOT = '''  <footer class="hub-brand-foot">
 # page talks to the store.
 GATE = '''<script src="../../hub-store.js"></script>
 <script src="../../hub-notebook.js"></script>
+<script src="../../hub-rec.js"></script>
+<script src="../../hub-ask.js"></script>
 <script>
 (function(){
   if (window.InputLib) InputLib.gate();

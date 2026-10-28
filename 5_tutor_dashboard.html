@@ -23,7 +23,7 @@
 <title>Connect Lite — Tutor dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610280825">
+<link rel="stylesheet" href="hub-tokens.css?v=202610280837">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -151,6 +151,7 @@
   .welcome.join .wgo{display:flex; gap:16px; align-items:center; flex-wrap:wrap;}
   .welcome .linkbtn{background:none; border:none; padding:0; font:inherit; font-size:0.85rem; font-weight:600; color:var(--teal); cursor:pointer; text-decoration:underline; text-decoration-color:var(--sand-line); text-underline-offset:3px;}
   .welcome .linkbtn:hover{text-decoration-color:var(--teal);}
+  .qcount{display:inline-block; margin-left:8px; min-width:20px; padding:1px 7px; border-radius:999px; background:var(--gold-lifted); color:var(--ink); font-size:.75rem; font-weight:700; text-align:center;}
   /* The signature as a signing line (8 Oct 2026: "make those two boxes look
      better"): the hand large on a rule, the name and role under it, the
      note last and quiet. */
@@ -502,7 +503,7 @@
   @media(max-width:560px){ .welcome.join{padding:24px 18px 20px;} .welcome.join .wname{transform:none;} .dv6-date{flex-basis:100%;} }
   @media print{ .dv6-brief{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610280825">
+<link rel="stylesheet" href="hub-house.css?v=202610280837">
 </head>
 <body>
 <div class="board">
@@ -548,6 +549,8 @@
       <!-- Lite's own library of input sessions (13 Oct 2026); a centre's pasted
            links still live in Course admin. -->
       <a class="btn" id="inputDoor" href="input-sessions/">Input sessions</a>
+      <!-- What trainees ask in an input session, and what the room asks (28 Oct 2026). The count is the ones still open. -->
+      <a class="btn" id="qDoor" href="38_questions.html">Questions<span id="qCount" class="qcount" hidden></span></a>
       <a class="btn" id="interviewDoor" href="31_getting_to_know_you.html" hidden>Student interviews</a>
       <a class="btn" href="7_candidate_tracker.html">Trainee tracker</a>
       <a class="btn" href="34_handover.html">Handover</a>
@@ -603,24 +606,24 @@
 
 </div>
 
-<script src="hub-due.js?v=202610280825"></script>
-<script src="observation-defaults.js?v=202610280825"></script>
-<script src="hub-rotation.js?v=202610280825"></script>
-<script src="hub-shared.js?v=202610280825"></script>
-<script src="hub-store.js?v=202610280825"></script>
-<script src="hub-say.js?v=202610280825"></script>
-<script src="hub-hand.js?v=202610280825"></script>
-<script src="hub-ink.js?v=202610280825"></script>
-<script src="hub-shelf.js?v=202610280825"></script>
+<script src="hub-due.js?v=202610280837"></script>
+<script src="observation-defaults.js?v=202610280837"></script>
+<script src="hub-rotation.js?v=202610280837"></script>
+<script src="hub-shared.js?v=202610280837"></script>
+<script src="hub-store.js?v=202610280837"></script>
+<script src="hub-say.js?v=202610280837"></script>
+<script src="hub-hand.js?v=202610280837"></script>
+<script src="hub-ink.js?v=202610280837"></script>
+<script src="hub-shelf.js?v=202610280837"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202610280825"></script>
-<script src="hub-sync.js?v=202610280825"></script>
-<script src="hub-notebook.js?v=202610280825"></script>
-<script src="hub-tracker.js?v=202610280825"></script>
-<script src="hub-feedback.js?v=202610280825"></script>
+<script src="assignment-defaults.js?v=202610280837"></script>
+<script src="hub-sync.js?v=202610280837"></script>
+<script src="hub-notebook.js?v=202610280837"></script>
+<script src="hub-tracker.js?v=202610280837"></script>
+<script src="hub-feedback.js?v=202610280837"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a trainee's link opened it and read the course and
@@ -1252,6 +1255,12 @@ try{
   }
 }catch(e){}
 
+/* the questions still open, on the Questions button; asked again every half minute */
+(function(){
+  const S = window.HubStore, el = document.getElementById('qCount'); if (!S || !el) return;
+  async function count(){ try { const r = await S.call({ op: 'questions' }); const n = ((r && r.items) || []).filter(q => q && q.state !== 'answered').length; el.textContent = n; el.hidden = !n; } catch (e) {} }
+  count(); setInterval(count, 30000);
+})();
 if (window.hubInstallHint) hubInstallHint(document.getElementById('installHint'), 'tutor');
 const nameInput=document.getElementById('tutorName');
 nameInput.value = localStorage.getItem('chub:tutorName') || '';
