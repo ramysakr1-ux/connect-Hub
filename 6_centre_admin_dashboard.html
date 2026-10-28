@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610281352">
+<link rel="stylesheet" href="hub-tokens.css?v=202610281358">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -564,6 +564,9 @@
   .certsig-ink i{font-size:0.82rem; color:var(--grey);}
   .certsig-ink svg{height:46px; max-width:240px;}
   /* the input tutors' colors, one row each */
+  .addgrp{margin-top:10px; display:inline-flex; align-items:center; gap:8px; border-radius:999px; font-weight:700;}
+  .addgrp-input{background:var(--a-forest) !important; color:var(--paper) !important; border:0 !important; padding:10px 18px !important;} .addgrp-input::before{content:'+'; font-size:1.1em;}
+  .addgrp-link{background:transparent !important; color:var(--teal) !important; border:1.5px dashed var(--sand-line) !important; box-shadow:none !important; padding:9px 17px !important;} .addgrp-link::before{content:'+'; font-size:1.1em;}
   .prechoice{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:10px 0 4px;}
   .prec{display:flex; flex-direction:column; gap:6px; text-align:left; font:inherit; color:var(--ink); background:var(--paper); border:1.5px solid var(--sand-line); border-top:3px solid var(--sand-line); border-radius:12px; padding:14px 16px; cursor:pointer;}
   .prec b{font-family:'Newsreader',Georgia,serif; font-size:1.08rem;} .prec span{font-size:0.84rem; color:var(--grey); line-height:1.45;}
@@ -580,7 +583,7 @@
   .tset-opt:has(input:checked){border-color:var(--a-forest, var(--teal)); box-shadow:0 0 0 2px color-mix(in oklch, var(--a-forest, var(--teal)) 25%, transparent);}
   .tsets .hintline{flex-basis:100%; margin:0;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610281352">
+<link rel="stylesheet" href="hub-house.css?v=202610281358">
 </head>
 <body>
 <div class="board">
@@ -883,7 +886,8 @@
          timetable gives that session; "make it clear to the center how it works". -->
     <div class="guide-box"><h3>How input session links reach the trainees</h3><div class="gb"><p>Add each one with Add an input session, and give it the same name as its session on your timetable, for example Receptive skills. The trainees see a link on the day that session comes round on the timetable, and they keep it after. A link whose name no timetable session carries stays hidden from the trainees. You and the other tutors always see every link. Until your timetable lists input sessions, every link shows. Other links show as soon as they are switched on.</p></div></div>
     <div id="candLinks" class="fields docs"></div>
-    <button type="button" class="btn ghost" id="addInputSession" style="margin-top:10px;">Add an input session</button> <button type="button" class="btn ghost" id="addCandLink" style="margin-top:10px;">Add a link</button>
+    <!-- the two adds live under their own groups now (data-addgrp); these stay, hidden, as what those buttons press -->
+    <button type="button" class="btn ghost" id="addInputSession" hidden>Add an input session</button> <button type="button" class="btn ghost" id="addCandLink" hidden>Add a link</button>
     </section>
     </div>
     <div class="chap chap-c" id="chap-c">
@@ -1135,18 +1139,18 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610281352"></script>
-<script src="hub-store.js?v=202610281352"></script>
-<script src="hub-say.js?v=202610281352"></script>
-<script src="agreement-defaults.js?v=202610281352"></script>
-<script src="observation-defaults.js?v=202610281352"></script>
-<script src="hub-shared.js?v=202610281352"></script>
-<script src="hub-rotation.js?v=202610281352"></script>
-<script src="hub-due.js?v=202610281352"></script>
-<script src="hub-sync.js?v=202610281352"></script>
-<script src="hub-notebook.js?v=202610281352"></script>
-<script src="hub-hand.js?v=202610281352"></script>
-<script src="hub-ink.js?v=202610281352"></script>
+<script src="assignment-defaults.js?v=202610281358"></script>
+<script src="hub-store.js?v=202610281358"></script>
+<script src="hub-say.js?v=202610281358"></script>
+<script src="agreement-defaults.js?v=202610281358"></script>
+<script src="observation-defaults.js?v=202610281358"></script>
+<script src="hub-shared.js?v=202610281358"></script>
+<script src="hub-rotation.js?v=202610281358"></script>
+<script src="hub-due.js?v=202610281358"></script>
+<script src="hub-sync.js?v=202610281358"></script>
+<script src="hub-notebook.js?v=202610281358"></script>
+<script src="hub-hand.js?v=202610281358"></script>
+<script src="hub-ink.js?v=202610281358"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the center's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1920,7 +1924,10 @@ function renderCandLinks(){
   if (beforeOwn) beforeOwn.hidden = connectPre;
   if (beforeHost) beforeHost.innerHTML = connectPre ? '' : groups[0][2].map(row).join('');
   document.getElementById('candLinks').innerHTML = groups.slice(1).map(([title, note, list], gi2) =>
-    `<div class="wide" style="margin-top:${gi2 === 0 ? '0' : '18px'};"><h3 class="docsh" style="margin:0 0 2px;font-size:0.98rem;">${esc(title)}</h3><p class="note" style="margin:0 0 6px;">${note}</p></div>` + list.map(row).join('')).join('') +
+    `<div class="wide" style="margin-top:${gi2 === 0 ? '0' : '18px'};"><h3 class="docsh" style="margin:0 0 2px;font-size:0.98rem;">${esc(title)}</h3><p class="note" style="margin:0 0 6px;">${note}</p></div>` + list.map(row).join('')
+    /* each group its own button, under its own rows (Ramy, 28 Oct 2026: "make add an input session and add a link distinct") */
+    + (gi2 === 0 ? '<div class="wide"><button type="button" class="btn addgrp addgrp-input" data-addgrp="addInputSession">Add an input session</button></div>'
+                 : '<div class="wide"><button type="button" class="btn addgrp addgrp-link" data-addgrp="addCandLink">Add a link</button></div>')).join('') +
     `<datalist id="cardNames">${cards.map(c => `<option value="${esc(c)}">`).join('')}</datalist>`;
 }
 function readCandLinks(){
@@ -1949,6 +1956,7 @@ document.getElementById('addBeforeLink').addEventListener('click', () => {
   readCandLinks(); CAND_LINKS.push({ label:'', url:'', card:'Before the course', show:true }); renderCandLinks();
   const el = [...document.querySelectorAll('#beforeLinks .cl-label')].pop(); if (el) el.focus();
 });
+document.getElementById('candLinks').addEventListener('click', e => { const b = e.target.closest('[data-addgrp]'); if (b) document.getElementById(b.dataset.addgrp).click(); });
 /* the line under the center's own sessions says what the Input sessions choice means for them */
 if (document.getElementById('inputSessions')) document.getElementById('inputSessions').addEventListener('change', () => { readCandLinks(); renderCandLinks(); });
 document.getElementById('addInputSession').addEventListener('click', () => {
