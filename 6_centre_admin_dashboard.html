@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610281502">
+<link rel="stylesheet" href="hub-tokens.css?v=202610281533">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -220,6 +220,10 @@
   .ilrow .cl-url{flex:2 1 220px; min-width:0;}
   .ilrow .cl-from{flex:0 0 185px; font-size:0.84rem; padding:8px 10px;}
   .ilrow .sw.short{flex:0 0 auto; padding:0;}
+  /* which timetable session each of the center's own input sessions found (Ramy, 28 Oct 2026: "it has to be the exact
+     wording, right?" -- it does not, and this line shows what it found) */
+  .ilmatch{margin:-2px 0 8px; font-size:.8rem; color:var(--grey);} .ilmatch:empty{display:none;} .ilmatch b{color:var(--ink); font-weight:700;}
+  .ilmatch.none{color:var(--a-red); font-weight:600;}
   .ilrow .sw.short .lbl{min-width:0; font-size:0.78rem; white-space:nowrap;}
   .ilrow + .ilrow{border-top:1px solid var(--row-line);}
   .ilrow .house-sel{flex:0 0 auto;}
@@ -595,7 +599,7 @@
   .tset-opt:has(input:checked){border-color:var(--a-forest, var(--teal)); box-shadow:0 0 0 2px color-mix(in oklch, var(--a-forest, var(--teal)) 25%, transparent);}
   .tsets .hintline{flex-basis:100%; margin:0;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610281502">
+<link rel="stylesheet" href="hub-house.css?v=202610281533">
 </head>
 <body>
 <div class="board">
@@ -907,7 +911,7 @@
     </div>
     <!-- Ramy, 15 Oct 2026: trainees see an input session link only on the day the
          timetable gives that session; "make it clear to the center how it works". -->
-    <div class="guide-box"><h3>How input session links reach the trainees</h3><div class="gb"><p>Add each one with Add an input session, and give it the same name as its session on your timetable, for example Receptive skills. The trainees see a link when that session opens (When the trainees can open them, above), and they keep it after. A link whose name no timetable session carries stays hidden from the trainees. You and the other tutors always see every link. Until your timetable lists input sessions, every link shows. Other links show as soon as they are switched on.</p></div></div>
+    <div class="guide-box"><h3>How input session links reach the trainees</h3><div class="gb"><p>Add each one with Add an input session, and name it as your timetable does, or close to it: Teaching receptive skills finds Receptive skills, and so does Teaching reading. The line under each one says which session it found. The trainees see the link when that session opens (When the trainees can open them, above), and they keep it after. A link that finds no session stays hidden from the trainees. You and the other tutors always see every link. Until your timetable lists input sessions, every link shows. Other links show as soon as they are switched on.</p></div></div>
     <div id="candLinks" class="fields docs"></div>
     <!-- the two adds live under their own groups now (data-addgrp); these stay, hidden, as what those buttons press -->
     <button type="button" class="btn ghost" id="addInputSession" hidden>Add an input session</button> <button type="button" class="btn ghost" id="addCandLink" hidden>Add a link</button>
@@ -1174,19 +1178,21 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610281502"></script>
-<script src="hub-store.js?v=202610281502"></script>
-<script src="hub-xlsx.js?v=202610281502"></script>
-<script src="hub-say.js?v=202610281502"></script>
-<script src="agreement-defaults.js?v=202610281502"></script>
-<script src="observation-defaults.js?v=202610281502"></script>
-<script src="hub-shared.js?v=202610281502"></script>
-<script src="hub-rotation.js?v=202610281502"></script>
-<script src="hub-due.js?v=202610281502"></script>
-<script src="hub-sync.js?v=202610281502"></script>
-<script src="hub-notebook.js?v=202610281502"></script>
-<script src="hub-hand.js?v=202610281502"></script>
-<script src="hub-ink.js?v=202610281502"></script>
+<script src="assignment-defaults.js?v=202610281533"></script>
+<script src="hub-store.js?v=202610281533"></script>
+<script src="hub-xlsx.js?v=202610281533"></script>
+<script src="hub-say.js?v=202610281533"></script>
+<script src="agreement-defaults.js?v=202610281533"></script>
+<script src="observation-defaults.js?v=202610281533"></script>
+<script src="hub-shared.js?v=202610281533"></script>
+<script src="hub-rotation.js?v=202610281533"></script>
+<script src="hub-due.js?v=202610281533"></script>
+<script src="hub-sync.js?v=202610281533"></script>
+<script src="hub-notebook.js?v=202610281533"></script>
+<script src="hub-hand.js?v=202610281533"></script>
+<script src="hub-ink.js?v=202610281533"></script>
+<script>window.INPUTLIB_ONLY = true;</script>
+<script src="input-sessions/library.js?v=202610281502"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the center's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1913,6 +1919,18 @@ function preCourseLabel(){
 document.querySelectorAll('.prec').forEach(b => b.addEventListener('click', () => { const cb = document.getElementById('preCourseConnect'); const want = b.dataset.prec === '1'; if (cb.checked === want) return; cb.checked = want; cb.dispatchEvent(new Event('change', { bubbles: true })); }));
 document.getElementById('preCourseConnect').addEventListener('change', () => { preCourseLabel(); readCandLinks(); renderCandLinks(); });
 preCourseLabel();   /* the cards painted before the settings arrive */
+/* The line under each of the center's own input sessions: the timetable session its name finds, or that it finds none. */
+function ilMatch(label){
+  const L = window.InputLib, name = String(label || '').trim();
+  let tt = null; try { tt = JSON.parse(localStorage.getItem('connect_timetable_v1')); } catch (e) {}
+  if (!L || !L.matchesFor || !name) return { html: '' };
+  if (!L.hasInputs(tt)) return { html: 'Your timetable has no input sessions yet, so this follows its switch alone.' };
+  const m = L.matchesFor(name, tt);
+  if (!m.length) return { none: true, html: 'Matches nothing on your timetable, so the trainees will not see it. Use a name close to the one the timetable gives it.' };
+  const day = d => { const x = L.dateOf(d); return x ? x.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : d; };
+  const more = m.length - 1;
+  return { html: 'Opens with <b>' + esc(m[0].t) + '</b>, ' + esc(day(m[0].date)) + (more ? ' (and ' + more + ' more on the timetable)' : '') + '.' };
+}
 function renderCandLinks(){
   if (!CAND_LINKS) CAND_LINKS = []; // the load block calls this before the var below is assigned
   /* Ramy, 28 Sep 2026: the cards are Timetable, CELTA 5, Input sessions and
@@ -2000,7 +2018,7 @@ function renderCandLinks(){
      <input type="hidden" class="cl-card" data-i="${i}" value="${esc(l.card || 'Input sessions')}">
      <label class="sw short" title="Shown to the trainees"><input type="checkbox" class="cl-show" data-i="${i}"${l.show === false ? '' : ' checked'}><span class="track"></span><span class="lbl">${esc(shortWhen(l))}</span></label>
      <input type="datetime-local" class="cl-from" data-i="${i}" value="${l.showFrom && window.HubDue ? esc(HubDue.toLocalInput(l.showFrom)) : ''}" title="Or shown from this day and time">
-   </div>`; };
+   </div><p class="wide ilmatch${ilMatch(l.label).none ? ' none' : ''}" data-m="${i}">${ilMatch(l.label).html}</p>`; };
   const row = l => { if (isInput(l) && !isBefore(l)) return inputRow(l); const i = gi++; return `<div><label>Name</label><input type="text" class="cl-label" data-i="${i}" value="${esc(l.label)}" placeholder="What the trainee sees"></div>
      <div><label>Link</label><input type="text" class="cl-url" data-i="${i}" value="${esc(l.url)}" placeholder="https://…"></div>
      <div class="wide" style="display:flex;gap:14px;align-items:end;flex-wrap:wrap;">${isBefore(l) || isInput(l)
@@ -2033,6 +2051,11 @@ function readCandLinks(){
   CAND_LINKS = all.concat(HELD_BEFORE || []);
   return CAND_LINKS.filter(l => l.url || (l.label && l.card)).map(l => { const o = { label: l.label, url: l.url, card: l.card }; if (!l.show && !hubLinkIsTimetable(l)) o.show = false; if (l.showFrom) o.showFrom = l.showFrom; return o; });
 }
+document.getElementById('candLinks').addEventListener('input', e => {
+  const el = e.target.closest('.cl-label'); if (!el) return;
+  const p = document.querySelector('.ilmatch[data-m="' + el.dataset.i + '"]'); if (!p) return;
+  const r = ilMatch(el.value); p.innerHTML = r.html; p.classList.toggle('none', !!r.none);
+});
 document.getElementById('candLinks').addEventListener('change', e => {
   const sw = e.target.closest('.cl-show'), fr = e.target.closest('.cl-from'); if (!sw && !fr) return;
   const i = (sw || fr).dataset.i, S = document.querySelector(`.cl-show[data-i="${i}"]`), F = document.querySelector(`.cl-from[data-i="${i}"]`);

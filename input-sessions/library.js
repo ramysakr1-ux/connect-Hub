@@ -104,16 +104,19 @@ window.InputLib = (function(){
   function isOpen(x, cs){ return !!(x && x.date) && opensOn(x.date, cs) <= today(cs); }
   function whenText(cs){ var m = openMode(cs); return m === 'before' ? 'the day before it is taught' : m === 'weekend' ? 'on the weekend before its week' : 'on the day it is taught'; }
   function isInputLink(l){ return /input session/i.test(String((l && l.card) || '') + ' ' + String((l && l.label) || '')); }
-  function linkOpen(l, tt, cs){
-    var inputs = rawInputs(tt);
-    if (!inputs.length) return true;
-    var now = today(cs), ln = norm(l && l.label), ls = slugsFor(l && l.label);
-    return inputs.some(function(x){
-      if (opensOn(x.date, cs) > now) return false;
+  /* the timetable's input sessions a link's name finds; Course admin shows the first under each row */
+  function matchesFor(label, tt){
+    var ln = norm(label), ls = slugsFor(label);
+    return rawInputs(tt).filter(function(x){
       var tn = norm(x.t);
       if (ln && tn && (tn.indexOf(ln) !== -1 || ln.indexOf(tn) !== -1)) return true;
       return ls.length > 0 && slugsFor(x.t).some(function(sl){ return ls.indexOf(sl) !== -1; });
-    });
+    }).sort(function(a, b){ return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+  }
+  function linkOpen(l, tt, cs){
+    if (!rawInputs(tt).length) return true;
+    var now = today(cs);
+    return matchesFor(l && l.label, tt).some(function(x){ return opensOn(x.date, cs) <= now; });
   }
   function homeLinkOk(l, tt, cs){ return !isInputLink(l) || (ownOn(cs) && linkOpen(l, tt, cs)); }
 
@@ -192,13 +195,14 @@ window.InputLib = (function(){
   /* If anything goes wrong the page opens: a gate that can strand a trainee
      on a blank page is worse than no gate. */
   setTimeout(function(){ if (root.classList.contains('gating')) root.classList.remove('gating'); }, 8000);
-  return { openMode: openMode, opensOn: opensOn, isOpen: isOpen, whenText: whenText, mode: mode, connectOn: connectOn, ownOn: ownOn, linkOpen: linkOpen, homeLinkOk: homeLinkOk, isInputLink: isInputLink, slugsFor: slugsFor, inputsOf: inputsOf, today: today, rd: rd, iso: iso, dateOf: dateOf, gate: gate };
+  return { matchesFor: matchesFor, hasInputs: function(tt){ return rawInputs(tt).length > 0; }, openMode: openMode, opensOn: opensOn, isOpen: isOpen, whenText: whenText, mode: mode, connectOn: connectOn, ownOn: ownOn, linkOpen: linkOpen, homeLinkOk: homeLinkOk, isInputLink: isInputLink, slugsFor: slugsFor, inputsOf: inputsOf, today: today, rd: rd, iso: iso, dateOf: dateOf, gate: gate };
 })();
 
 /* The demo is view only (Ramy, 24 Oct 2026): a session's "Print the handout"
    says so on a demo course instead of printing. The sessions do not load
    hub-shared.js, which carries the same lock for every other screen. */
 (function(){
+  if (window.INPUTLIB_ONLY) return;   /* Course admin loads this file for the matching only */
   function demo(){ try { return !!(JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}).demoToday; } catch (e) { return false; } }
   var real = window.print;
   window.print = function(){
@@ -223,6 +227,7 @@ window.InputLib = (function(){
    goes, and so do the buttons that work the page (Reveal, Play, Reset, Next). Answer choices stay, drawn as
    words to circle. Everything is put back the moment the print dialog closes. */
 (function(){
+  if (window.INPUTLIB_ONLY) return;
   var SAY = [
     [/Click a term on the left, then click its definition on the right/g, 'Match each term on the left to its definition on the right'],
     [/Click a term, then click the meaning that goes with it/g, 'Match each term to its meaning'],
