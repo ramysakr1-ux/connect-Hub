@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610281646">
+<link rel="stylesheet" href="hub-tokens.css?v=202610281712">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -418,7 +418,12 @@
   .grid.roster .grip:hover{background:var(--box); color:var(--ink);}
   /* the name picks a trainee up too, with a mouse (Ramy, 28 Oct 2026: "the drag and drop for the different groups ... a bit
      finicky"); on a touch screen the grip does, so a finger on a name still scrolls the page */
-  @media (hover:hover) and (pointer:fine){ .grid.roster.grow .name:has(.grip){cursor:grab;} .grid.roster.grow .name:has(.grip):hover .grip{background:var(--box); color:var(--ink);} }
+  /* two clicks swap (28 Oct 2026): the name, letter and grip pick a trainee; the picked row is marked, the rest invite the second click */
+  .grid.roster.grow .name:has(.grip){cursor:pointer;} .grid.roster.grow .name:has(.grip):hover .grip{background:var(--box); color:var(--ink);}
+  .grid.roster .grip{cursor:pointer;}
+  .grid.roster.grow.rpick{background:color-mix(in oklch, var(--a-forest, var(--teal)) 10%, var(--paper)); box-shadow:inset 3px 0 0 var(--a-forest, var(--teal)); border-radius:8px;}
+  body.rpicking .grid.roster.grow:not(.rpick) .name:has(.grip):hover{outline:2px dashed var(--a-forest, var(--teal)); outline-offset:3px; border-radius:6px;}
+  body.rpicking .rset[data-rgroup]{cursor:pointer;} body.rpicking .rset[data-rgroup]:hover{outline:2px dashed var(--a-forest, var(--teal)); outline-offset:4px; border-radius:6px;}
   @media (pointer:coarse){ .grid.roster .grip{width:34px; height:40px;} }
   .rmovemsg{margin:2px 0 8px; font-size:.86rem; font-weight:600; color:var(--a-forest, var(--teal)); min-height:1.2em;} .rmovemsg:empty{display:none;}
   .rmovemsg.err{color:var(--a-red);}
@@ -605,7 +610,7 @@
   .tset-opt:has(input:checked){border-color:var(--a-forest, var(--teal)); box-shadow:0 0 0 2px color-mix(in oklch, var(--a-forest, var(--teal)) 25%, transparent);}
   .tsets .hintline{flex-basis:100%; margin:0;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610281646">
+<link rel="stylesheet" href="hub-house.css?v=202610281712">
 </head>
 <body>
 <div class="board">
@@ -1184,19 +1189,19 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610281646"></script>
-<script src="hub-store.js?v=202610281646"></script>
-<script src="hub-xlsx.js?v=202610281646"></script>
-<script src="hub-say.js?v=202610281646"></script>
-<script src="agreement-defaults.js?v=202610281646"></script>
-<script src="observation-defaults.js?v=202610281646"></script>
-<script src="hub-shared.js?v=202610281646"></script>
-<script src="hub-rotation.js?v=202610281646"></script>
-<script src="hub-due.js?v=202610281646"></script>
-<script src="hub-sync.js?v=202610281646"></script>
-<script src="hub-notebook.js?v=202610281646"></script>
-<script src="hub-hand.js?v=202610281646"></script>
-<script src="hub-ink.js?v=202610281646"></script>
+<script src="assignment-defaults.js?v=202610281712"></script>
+<script src="hub-store.js?v=202610281712"></script>
+<script src="hub-xlsx.js?v=202610281712"></script>
+<script src="hub-say.js?v=202610281712"></script>
+<script src="agreement-defaults.js?v=202610281712"></script>
+<script src="observation-defaults.js?v=202610281712"></script>
+<script src="hub-shared.js?v=202610281712"></script>
+<script src="hub-rotation.js?v=202610281712"></script>
+<script src="hub-due.js?v=202610281712"></script>
+<script src="hub-sync.js?v=202610281712"></script>
+<script src="hub-notebook.js?v=202610281712"></script>
+<script src="hub-hand.js?v=202610281712"></script>
+<script src="hub-ink.js?v=202610281712"></script>
 <script>window.INPUTLIB_ONLY = true;</script>
 <script src="input-sessions/library.js?v=202610281502"></script>
 <script type="text/x-hub-app">
@@ -2430,7 +2435,7 @@ async function renderStoreRoster(next){
       ${trainees.length ? `<p class="rnote">Each trainee’s personal link is theirs alone. Copy it into Classroom, or email it once their address is in.</p>
       <div class="grid roster ghead"><div>Trainee</div><div class="col-email">Email</div><div class="col-link">Personal link</div><div></div></div>` : ''}
       ${trainees.length ? rosterSets(trainees).map(sec => `${sec.head ? `<div class="rset"${sec.group != null && sec.set >= 0 ? ` data-rgroup="${esc(sec.group)}" data-rset="${sec.set}"` : ''}>${esc(sec.head)}</div>` : ''}${sec.people.map(t=>`<div class="grid roster grow" data-tok="${esc(t.token)}" data-rgroup="${esc(String(t.group || '1'))}">
-        <div class="name">${t.letter ? `<span class="grip" title="Drag onto another trainee to swap places, or onto a set to move there" aria-label="Move ${esc(t.name)}"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4"/><circle cx="7.5" cy="3" r="1.4"/><circle cx="2.5" cy="8" r="1.4"/><circle cx="7.5" cy="8" r="1.4"/><circle cx="2.5" cy="13" r="1.4"/><circle cx="7.5" cy="13" r="1.4"/></svg></span><span class="avi avi-cand" aria-hidden="true">${esc(t.letter)}</span>` : ''}<span class="nm">${esc(t.name)}${SHOW_URLS ? `<code class="addr">${esc(S.inviteFor('trainee', t.token))}</code>` : ''}</span></div>
+        <div class="name">${t.letter ? `<span class="grip" title="Click, then click another trainee to swap places, or a set to move there" aria-label="Move ${esc(t.name)}"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4"/><circle cx="7.5" cy="3" r="1.4"/><circle cx="2.5" cy="8" r="1.4"/><circle cx="7.5" cy="8" r="1.4"/><circle cx="2.5" cy="13" r="1.4"/><circle cx="7.5" cy="13" r="1.4"/></svg></span><span class="avi avi-cand" aria-hidden="true">${esc(t.letter)}</span>` : ''}<span class="nm">${esc(t.name)}${SHOW_URLS ? `<code class="addr">${esc(S.inviteFor('trainee', t.token))}</code>` : ''}</span></div>
         <div class="col-email"><input type="email" class="temail" value="${esc(t.email || '')}" placeholder="Add their email" data-email-for="${esc(t.token)}" title="The trainee’s email. Saved when you leave the box."></div>
         <div class="acts col-link">
           <button class="pillbtn" type="button" data-copy="${esc(S.inviteFor('trainee', t.token))}">Copy link</button>
@@ -2662,7 +2667,7 @@ async function setPinSwitch(on){
   await S.putCourse('settings', next);
   try { localStorage.setItem('connect_course_settings', JSON.stringify(next)); } catch (e) {}
 }
-/* DRAG TO CHANGE A TEACHING SET (Ramy, 27 Oct 2026: "I should be able to drag and drop and change the order ABC, DEF
+/* MOVING A TRAINEE BETWEEN SETS: two clicks since 28 Oct 2026 (below), a drag before (Ramy, 27 Oct 2026: "I should be able to drag and drop and change the order ABC, DEF
    ... Amara becomes A and Aiko becomes B"; "ask first after TP1"). The grip on a row picks a trainee up. Dropped on
    another trainee, the two swap places -- letter, set and, across groups, group -- and nobody else moves: the same rule
    as the letter menus on the TP points page ("a taken letter swaps the two"). Dropped on a set's heading, they take a
@@ -2688,64 +2693,30 @@ async function setPinSwitch(on){
     const st = document.getElementById('rosterMoveMsg'); if (st) { st.textContent = t; st.classList.toggle('err', !!err); }
     clearTimeout(sayT); if (t && !/…$/.test(t)) sayT = setTimeout(() => { if ((window.ROSTER_MSG || {}).t === t) say(''); }, 9000);
   };
-  let drag = null;
-  function targetAt(x, y){
-    drag.ghost.style.display = 'none';
-    const el = document.elementFromPoint(x, y);
-    drag.ghost.style.display = '';
-    if (!el) return null;
-    const row = el.closest('.grid.roster.grow[data-tok]');
-    if (row && row.dataset.tok !== drag.tok) return { el: row, tok: row.dataset.tok };
-    const head = el.closest('.rset[data-rgroup]');
-    if (head) return { el: head, group: head.dataset.rgroup, set: +head.dataset.rset };
-    return null;
+  /* TWO CLICKS, NOT A DRAG (Ramy, 28 Oct 2026: "the drag and drop is still very tricky ... you click on Mateo and then
+     you click on Amara ... two clicks, and then they swap"). The first click, on a trainee's grip, letter or name, picks
+     them; the second, on another trainee, swaps the two, or on a set's heading moves them there. The same click again,
+     or Esc, puts them down. */
+  let pick = null;
+  const first = n => String(n || '').trim().split(/\s+/)[0];
+  function paintPick(){
+    host.querySelectorAll('.grid.roster.grow.rpick').forEach(r => r.classList.remove('rpick'));
+    document.body.classList.toggle('rpicking', !!pick);
+    if (!pick) return;
+    const row = host.querySelector('.grid.roster.grow[data-tok="' + pick.tok + '"]'); if (row) row.classList.add('rpick');
   }
-  host.addEventListener('pointerdown', e => {
-    if (e.button > 0) return;
-    /* the grip, or (with a mouse) the letter and name beside it */
-    let g = e.target.closest('.grip');
-    if (!g && e.pointerType === 'mouse' && !e.target.closest('code, a, button, input')) { const nm = e.target.closest('.grid.roster.grow[data-tok] .name'); g = nm && nm.querySelector('.grip'); }
-    if (!g) return;
-    const row = g.closest('.grid.roster.grow[data-tok]'); if (!row) return;
-    e.preventDefault();
-    const nm = (row.querySelector('.nm') || {}).textContent || '', av = (row.querySelector('.avi') || {}).textContent || '';
-    const ghost = document.createElement('div'); ghost.className = 'rdrag-ghost';
-    ghost.innerHTML = '<span class="avi avi-cand">' + esc(av) + '</span><span>' + esc(nm.trim()) + ' <small id="rdragHint">Drop on a trainee to swap places</small></span>';
-    document.body.appendChild(ghost);
-    drag = { tok: row.dataset.tok, row, ghost, over: null, x: e.clientX, y: e.clientY };
-    /* the page scrolls by itself while the pointer rests near the top or bottom, faster the nearer it is */
-    (function edge(){ if (!drag) return; const H = window.innerHeight, z = 120, y = drag.y;
-      const v = y < z ? -Math.ceil((z - y) / 6) : y > H - z ? Math.ceil((y - (H - z)) / 6) : 0;
-      if (v) { window.scrollBy(0, v); aim(); } requestAnimationFrame(edge); })();
-    row.classList.add('rdrag-src'); document.body.classList.add('rdragging');
-    move(e);
-    try { g.setPointerCapture(e.pointerId); } catch (err) {}
+  function drop(){ pick = null; paintPick(); }
+  host.addEventListener('click', e => {
+    if (e.target.closest('code, a, button:not(.grip), input, select, textarea, label')) return;
+    const head = pick && e.target.closest('.rset[data-rgroup]');
+    if (head) { const p = pick; drop(); moveTrainee(p.tok, { el: head, group: head.dataset.rgroup, set: +head.dataset.rset }); return; }
+    const cell = e.target.closest('.grid.roster.grow[data-tok] .name'); if (!cell || !cell.querySelector('.grip')) return;
+    const row = cell.closest('.grid.roster.grow[data-tok]'), tok = row.dataset.tok, nm = ((row.querySelector('.nm') || {}).textContent || '').trim();
+    if (!pick) { pick = { tok, name: nm }; paintPick(); say('Moving ' + first(nm) + ': click the trainee to swap with, or a set’s heading to move there. Click ' + first(nm) + ' again to stop.'); return; }
+    if (pick.tok === tok) { drop(); say(''); return; }
+    const p = pick; drop(); moveTrainee(p.tok, { el: row, tok });
   });
-  function move(e){
-    if (!drag) return;
-    drag.x = e.clientX; drag.y = e.clientY;
-    drag.ghost.style.left = (e.clientX + 14) + 'px'; drag.ghost.style.top = (e.clientY - 18) + 'px';
-    aim();
-  }
-  function aim(){
-    if (!drag) return;
-    const t = targetAt(drag.x, drag.y);
-    if (drag.over && (!t || t.el !== drag.over.el)) drag.over.el.classList.remove('rdrop');
-    drag.over = t; if (t) t.el.classList.add('rdrop');
-    const h = document.getElementById('rdragHint');
-    if (h) h.textContent = !t ? 'Drop on a trainee to swap places' : t.tok ? 'Swap places with ' + ((t.el.querySelector('.nm') || {}).textContent || '').trim().split(/\s+/)[0] : 'Move into this set';
-  }
-  function end(){
-    if (!drag) return null;
-    const d = drag; drag = null;
-    d.ghost.remove(); d.row.classList.remove('rdrag-src'); document.body.classList.remove('rdragging');
-    if (d.over) d.over.el.classList.remove('rdrop');
-    return d;
-  }
-  document.addEventListener('pointermove', move);
-  document.addEventListener('pointerup', () => { const d = end(); if (d && d.over) moveTrainee(d.tok, d.over); });
-  document.addEventListener('pointercancel', end);
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') end(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && pick) { drop(); say(''); } });
 
   async function moveTrainee(tok, target){
     const S = window.HubStore, all = list(), me = all.find(t => t.token === tok); if (!me || !R) return;
