@@ -794,6 +794,22 @@ case 'inbox': {
       return { courses: ownerList_() };
     }
 
+    /* 28 Oct 2026: point the store back at its data sheet, after the incident above. Owner only; the sheet must open and
+       hold the courses sheet with rows in it, so it cannot be pointed at an empty one by mistake. */
+    case 'setSpreadsheet': {
+      requireOwner_(owner);
+      var nid = String(req.id || '').trim();
+      if (!/^[\w-]{20,}$/.test(nid)) throw new Error('Which spreadsheet?');
+      var nss = SpreadsheetApp.openById(nid);
+      var nc = nss.getSheetByName(SHEET_COURSES);
+      if (!nc || nc.getLastRow() < 2) throw new Error('That spreadsheet has no courses in it, so the store was not pointed at it');
+      var was = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID') || '';
+      PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', nid);
+      PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID_PREVIOUS', was);
+      COURSE_MEMO_ = null;
+      return { pointedAt: nid, was: was, courses: courses_(true).length };
+    }
+
     /* v88 (19 Oct 2026): the pulse Connect's Command Center reads, with the
        owner key held on Connect's server. One call, every course that is not
        a demo or scratch, read-only: where it is, who is on it, what is waiting
@@ -2632,8 +2648,19 @@ function spreadsheet_() {
   var props = PropertiesService.getScriptProperties();
   var id = props.getProperty('SPREADSHEET_ID');
   var ss = null;
-  if (id) { try { ss = SpreadsheetApp.openById(id); } catch (e) { ss = null; } }
-  if (!ss) { ss = SpreadsheetApp.create('Connect Lite (data)'); props.setProperty('SPREADSHEET_ID', ss.getId()); }
+  /* NEVER REPLACE A SHEET THAT IS MERELY SLOW TO OPEN (28 Oct 2026). One transient failure of openById, with a burst of
+     requests in flight, used to fall through to SpreadsheetApp.create and overwrite SPREADSHEET_ID: twenty empty
+     "Connect Lite (data)" sheets in two seconds, and every course vanished from the list until the property was put
+     back by hand. A sheet that is set is retried, and then reported; only a store with no sheet at all makes one. */
+  if (id) {
+    var lastErr = null;
+    for (var tries = 0; tries < 4 && !ss; tries++) {
+      try { ss = SpreadsheetApp.openById(id); } catch (e) { lastErr = e; Utilities.sleep(400 * (tries + 1)); }
+    }
+    if (!ss) throw new Error('The data sheet could not be opened just now (' + lastErr + '). Nothing was changed; try again in a moment.');
+    return ss;
+  }
+  ss = SpreadsheetApp.create('Connect Lite (data)'); props.setProperty('SPREADSHEET_ID', ss.getId());
   return ss;
 }
 function dataSheetUrl() { var u = spreadsheet_().getUrl(); Logger.log(u); return u; }

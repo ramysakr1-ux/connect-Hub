@@ -310,7 +310,68 @@
     });
   }
 
-  const api = { inLetterOrder, AIMS, LANGUAGE_FOCUS, LETTERS, FAMILY, FAMILY_WORD, familyOf, aimsInFamily,
+  /* ONE LEVEL, ONE TYPE ONCE (Ramy, 28 Oct 2026: "it's fine if they repeat grammar over two levels, but not in one level
+     unless they fail the grammar lesson ... they can do grammar at, say, A2 and B2. Just not back-to-back unless there's a
+     problem"). The set fixes WHAT a session's three slots are; the teaching order within a day may change WHO takes
+     which. dealSet(day, n, opts) chooses, for a set of n trainees, the slot each takes at every practice so that no trainee
+     meets a type twice inside one level, every trainee meets a language-focus lesson, and, as far as that allows, the
+     days keep the rotation's own order and everyone leads about as often.
+       day[t][s]  the type of slot s at practice t+1 ('' when unwritten)
+       opts.levelAt   the first practice of the second level (the change of class); default none
+       opts.fixed     { t: [aim or '' per trainee] } where a tutor's own cell stands; that practice is left as the rotation has it
+     Returns { perms: perms[t][i] = slot trainee i takes at practice t+1, repeats, spread }. Exhaustive: six practices of
+     three is 46,656 deals. */
+  function dealSet(day, n, opts) {
+    opts = opts || {};
+    const T = (day || []).length, levelAt = opts.levelAt || 0, fixed = opts.fixed || {};
+    const perms = [];
+    (function gen(a, k) { if (k === a.length) { perms.push(a.slice()); return; }
+      for (let i = k; i < a.length; i++) { [a[k], a[i]] = [a[i], a[k]]; gen(a, k + 1); [a[k], a[i]] = [a[i], a[k]]; } })(Array.from({ length: n }, (_, i) => i), 0);
+    const rot = (t) => Array.from({ length: n }, (_, i) => (((i - t) % n) + n) % n);
+    const levelOf = (t) => (levelAt && t + 1 >= levelAt ? 1 : 0);
+    const typeOf = (t, i, perm) => { const f = (fixed[t] || [])[i]; return f || ((day[t] || [])[perm[i]] || ''); };
+    const choices = (t) => (fixed[t] && fixed[t].some(Boolean)) ? [rot(t)] : perms;
+    const seen = Array.from({ length: n }, () => [{}, {}]);
+    const lang = Array.from({ length: n }, () => 0), lead = Array.from({ length: n }, () => 0);
+    let best = null, cur = [];
+    function walk(t, rep, dist) {
+      if (best && rep > best.rep) return;
+      if (t === T) {
+        const noLang = lang.filter((x) => !x).length, spread = Math.max.apply(null, lead) - Math.min.apply(null, lead);
+        const score = rep * 1000 + noLang * 1000 + spread * 5 + dist;
+        if (!best || score < best.score) best = { score: score, rep: rep, spread: spread, perms: cur.slice() };
+        return;
+      }
+      const r = rot(t);
+      choices(t).forEach((perm) => {
+        let add = 0, d = 0; const undo = [];
+        for (let i = 0; i < n; i++) {
+          const ty = typeOf(t, i, perm), lv = levelOf(t);
+          if (ty) { if (seen[i][lv][ty]) add++; seen[i][lv][ty] = (seen[i][lv][ty] || 0) + 1; undo.push([i, lv, ty]); }
+          if (ty && LANGUAGE_FOCUS.indexOf(ty) >= 0) lang[i]++;
+          if (perm[i] === 0) lead[i]++;
+          if (perm[i] !== r[i]) d++;
+        }
+        cur[t] = perm.slice(); walk(t + 1, rep + add, dist + d);
+        undo.forEach((u) => { seen[u[0]][u[1]][u[2]]--; });
+        for (let i = 0; i < n; i++) { const ty = typeOf(t, i, perm); if (ty && LANGUAGE_FOCUS.indexOf(ty) >= 0) lang[i]--; if (perm[i] === 0) lead[i]--; }
+      });
+    }
+    walk(0, 0, 0);
+    return best || { perms: [], rep: 0, spread: 0, score: 0 };
+  }
+
+  /* The types a trainee meets twice inside one level, for the page's warning and the set page's paths:
+     path = [type per practice]; returns the repeated types. A level is every practice before levelAt, and from it on. */
+  function repeatsInLevel(path, levelAt) {
+    const out = [];
+    [[0, levelAt ? levelAt - 1 : path.length], [levelAt ? levelAt - 1 : path.length, path.length]].forEach((rg) => {
+      const seen = {}; for (let t = rg[0]; t < rg[1]; t++) { const ty = path[t]; if (!ty) continue; if (seen[ty] && out.indexOf(ty) < 0) out.push(ty); seen[ty] = 1; }
+    });
+    return out;
+  }
+
+  const api = { inLetterOrder, dealSet, repeatsInLevel, AIMS, LANGUAGE_FOCUS, LETTERS, FAMILY, FAMILY_WORD, familyOf, aimsInFamily,
                 lettersFor, setsFor, setName, aimFor, rotate, orderFor, orderDealt, dayOfSet,
                 languageFocusCheck, clashes, afterFail };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
