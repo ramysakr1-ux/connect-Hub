@@ -568,6 +568,12 @@
   .ownterms{background:color-mix(in oklch, var(--a-mustard) 12%, var(--paper)); border:1px solid color-mix(in oklch, var(--a-mustard) 45%, var(--paper)); border-radius:12px; padding:12px 14px 14px; margin-top:6px;}
   .ownterms label{color:var(--ink) !important;}
   .agrchoice{margin:14px 0 10px;}
+  /* Connect's agreement is read, not edited (Ramy, 28 Oct 2026: "if I choose the connect agreement, I just get it ... if they
+     want, then just choose their own"). The ten boxes stay in the page, hidden, and carry the wording to Save. */
+  #agrConnectBox .fields.agreement > div:not(.ownterms){display:none;}
+  .agrread{margin:12px 0 4px; padding:16px 18px 6px; border:1px solid var(--sand-line); border-radius:12px; background:var(--paper); max-height:420px; overflow:auto;}
+  .agrread h4{margin:0 0 4px; font:700 .95rem/1.3 Karla,sans-serif; color:var(--ink);}
+  .agrread p{margin:0 0 12px; font-size:.9rem; line-height:1.5; color:var(--ink); white-space:pre-line;}
   .bulkimp{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:8px 0 10px;} .bulkimp .muted{font-size:0.8rem;}
   .pinwho{margin:8px 0 0; padding-left:18px; font-size:0.86rem; line-height:1.5;} .pinwho li{margin:2px 0;}
   .addgrp{margin-top:10px; display:inline-flex; align-items:center; gap:8px; border-radius:999px; font-weight:700;}
@@ -982,11 +988,12 @@
          ... your own agreement instead ... should be a little bit separated ... the card thing you did before the course, your own
          or Connect's, so it's consistent"). Your own agreement is the link (docs.docAgreement); choosing Connect's empties it. -->
     <div class="prechoice agrchoice" role="radiogroup" aria-label="The candidate agreement">
-      <button type="button" class="prec" data-agrc="connect" role="radio"><b>Connect’s agreement</b><span>Connect’s wording for every part Cambridge names, ready as it is or changed to suit you, and your center’s own terms at the end if you have any. Your trainees read it and sign it on their first visit.</span></button>
+      <button type="button" class="prec" data-agrc="connect" role="radio"><b>Connect’s agreement</b><span>Connect’s wording for every part Cambridge names, ready as it is, with your center’s name in it. Add your own terms at the end if you have any. Your trainees read it and sign it on their first visit.</span></button>
       <button type="button" class="prec" data-agrc="own" role="radio"><b>Your own agreement</b><span>Your center’s own document, as a link. Your trainees read and sign against it, and the assessor sees the same link.</span></button>
     </div>
     <div id="agrConnectBox">
-    <div style="margin:10px 0 2px;display:flex;gap:10px;flex-wrap:wrap;"><button type="button" class="btn ghost" data-agr-all="1">Use Connect’s wording for all the empty boxes</button><button type="button" class="btn ghost" data-agr-out="1" hidden>Take Connect’s wording out</button><span id="agrBlanks" class="muted" style="font-size:0.82rem;color:var(--brick);font-weight:600;" hidden></span></div>
+    <div id="agrRead" class="agrread" aria-label="Connect’s agreement as your trainees read it"></div>
+    <div hidden style="margin:10px 0 2px;display:flex;gap:10px;flex-wrap:wrap;"><button type="button" class="btn ghost" data-agr-all="1">Use Connect’s wording for all the empty boxes</button><button type="button" class="btn ghost" data-agr-out="1" hidden>Take Connect’s wording out</button><span id="agrBlanks" class="muted" style="font-size:0.82rem;color:var(--brick);font-weight:600;" hidden></span></div>
     <div class="fields docs agreement">
       <div class="wide"><label for="agrExpectations">What we expect of you, and what happens if it is not met <button class="connect-chip" type="button" data-agr="agrExpectations">Use Connect’s wording</button></label><textarea id="agrExpectations" rows="3" placeholder="Conduct, punctuality, deadlines, taking part — and the written warning that comes before any sanction."></textarea></div>
       <div class="wide"><label for="agrSpecialRequirements">Declaring special requirements <button class="connect-chip" type="button" data-agr="agrSpecialRequirements">Use Connect’s wording</button></label><textarea id="agrSpecialRequirements" rows="3" placeholder="Tell us at application, or as soon as it arises. Cambridge has a formal process and it needs notice."></textarea></div>
@@ -1483,7 +1490,7 @@ try {
     if(cs.agreement) AGREEMENT_FIELDS.forEach(k=>{ if(cs.agreement[k]) document.getElementById(k).value = cs.agreement[k]; });
     if (typeof agrButtons === 'function') agrButtons();
     if(cs.docs) DOC_FIELDS.forEach(k=>{ if(cs.docs[k]) document.getElementById(k).value = cs.docs[k]; });
-    if (typeof agrPaint === 'function') { AGR_OWN = null; agrPaint(); }
+    if (typeof agrPaint === 'function') { AGR_OWN = null; agrPaint('load'); }
     if(cs.logo){ courseLogo = cs.logo; applyLogoPreview(courseLogo); }
     document.getElementById('preCourseConnect').checked = !!cs.preCourseConnect; preCourseLabel();
     if(cs.gtkyWhen) document.getElementById('gtkyWhen').value = cs.gtkyWhen;
@@ -1865,19 +1872,36 @@ document.getElementById('onlineRooms').addEventListener('input', paintAvRooms);
 
 /* the agreement's two cards: Your own when a link is there, Connect's otherwise */
 var AGR_OWN = null, AGR_KEPT = '';   /* var: the settings load paints the cards before this line runs */
-function agrPaint(){
+function agrPaint(mode){
   const link = document.getElementById('docAgreement');
   const own = AGR_OWN === null ? !!(link && link.value.trim()) : AGR_OWN;
   document.querySelectorAll('[data-agrc]').forEach(b => { const me = (b.dataset.agrc === 'own') === own; b.classList.toggle('on', me); b.setAttribute('aria-checked', me ? 'true' : 'false'); });
   const cb = document.getElementById('agrConnectBox'), ob = document.getElementById('agrOwnBox');
   if (cb) cb.hidden = own; if (ob) ob.hidden = !own;
+  if (!own) agrRead(mode);
+}
+/* Connect's agreement as the trainees will read it. fresh (the Connect card pressed): every box takes Connect's wording
+   with the center's name, and it saves. On opening the page a course that never set its agreement is filled the same way
+   but not saved; a course that has wording keeps it as saved, so nothing a trainee signed changes by itself. */
+function agrRead(mode){
+  const fresh = mode === 'fresh';
+  const box = document.getElementById('agrRead'); if (!box || typeof AGREEMENT_FIELDS === 'undefined') return;
+  const ten = AGREEMENT_FIELDS.filter(k => k !== 'agrCentre');
+  const none = ten.every(k => !document.getElementById(k).value.trim());
+  if (fresh || (mode === 'load' && none)) ten.forEach(k => { const t = connectWording(k); if (t) document.getElementById(k).value = t; });
+  box.innerHTML = ten.map(k => {
+    const v = document.getElementById(k).value.trim(); if (!v) return '';
+    const lab = document.querySelector('label[for="' + k + '"]'); const name = lab ? (lab.firstChild.textContent || '').trim() : k;
+    return '<h4>' + esc(name) + '</h4><p>' + esc(v) + '</p>';
+  }).join('');
+  if (fresh) scheduleSave();
 }
 document.querySelectorAll('[data-agrc]').forEach(b => b.addEventListener('click', () => {
   const link = document.getElementById('docAgreement'), own = b.dataset.agrc === 'own';
   AGR_OWN = own;
   if (!own && link && link.value.trim()) { AGR_KEPT = link.value.trim(); link.value = ''; link.dispatchEvent(new Event('input', { bubbles: true })); }
   if (own && link && !link.value.trim() && AGR_KEPT) { link.value = AGR_KEPT; link.dispatchEvent(new Event('input', { bubbles: true })); }
-  agrPaint(); if (own && link) link.focus();
+  agrPaint(); if (!own) agrRead('fresh'); if (own && link) link.focus();
 }));
 agrPaint();
 function preCourseLabel(){
