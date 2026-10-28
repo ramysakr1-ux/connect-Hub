@@ -789,16 +789,16 @@ window.hubIsConnectsAsg = function(k, a){
   var fp = h.toString(36) + '.' + ta.length.toString(36), F = window.CONNECT_HUB_WORDING_FP;
   return !!(F && F[k] && F[k].indexOf(fp) >= 0);
 };
-/* The Connect mark, faint, for Connect's assignments: the two arcs in their own colors (the company colorway, gold and
-   ink), shown softly and never tinted. */
-window.hubConnectWatermark = function(){
-  return '<svg class="cx-wm" viewBox="8 28 104 64" aria-hidden="true" focusable="false"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold)" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--ink)" stroke-width="13" stroke-linecap="round" fill="none"/></svg>';
+/* The footer on Connect's assignments (Ramy, 28 Oct 2026: "I wanted a footer ... not in someone's face ... not like
+   it's a Cambridge document"): the two Connect arcs, small, in their own colors (gold and ink), and "Connect's
+   assignment". Never on a center's own, so the two look different. */
+window.hubConnectFooter = function(){
+  return '<div class="cx-foot"><svg viewBox="8 28 104 64" width="22" height="14" aria-hidden="true" focusable="false"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold)" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--ink)" stroke-width="13" stroke-linecap="round" fill="none"/></svg><span>Connect’s assignment</span></div>';
 };
 (function(){
   var st = document.createElement('style');
-  st.textContent = '.cx-host{position:relative;overflow:hidden;} .cx-wm{position:absolute;right:-18px;bottom:-26px;width:190px;height:117px;opacity:.07;pointer-events:none;}'
-    + '.cx-line{display:inline-block;margin:6px 0 0;font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--grey);}'
-    + '@media print{.cx-wm{opacity:.09;}}';
+  st.textContent = '.cx-foot{display:flex;align-items:center;justify-content:center;gap:8px;margin:22px 0 4px;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--grey);}'
+    + '@media print{.cx-foot{margin-top:28px;}}';
   (document.head || document.documentElement).appendChild(st);
 })();
 window.hubWordingFilled = function(w){
