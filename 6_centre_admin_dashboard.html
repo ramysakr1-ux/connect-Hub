@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610281417">
+<link rel="stylesheet" href="hub-tokens.css?v=202610281423">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -568,6 +568,7 @@
   .ownterms{background:color-mix(in oklch, var(--a-mustard) 12%, var(--paper)); border:1px solid color-mix(in oklch, var(--a-mustard) 45%, var(--paper)); border-radius:12px; padding:12px 14px 14px; margin-top:6px;}
   .ownterms label{color:var(--ink) !important;}
   .agrchoice{margin:14px 0 10px;}
+  .bulkimp{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:8px 0 10px;} .bulkimp .muted{font-size:0.8rem;}
   .pinwho{margin:8px 0 0; padding-left:18px; font-size:0.86rem; line-height:1.5;} .pinwho li{margin:2px 0;}
   .addgrp{margin-top:10px; display:inline-flex; align-items:center; gap:8px; border-radius:999px; font-weight:700;}
   .addgrp-input{background:var(--a-forest) !important; color:var(--paper) !important; border:0 !important; padding:10px 18px !important;} .addgrp-input::before{content:'+'; font-size:1.1em;}
@@ -588,7 +589,7 @@
   .tset-opt:has(input:checked){border-color:var(--a-forest, var(--teal)); box-shadow:0 0 0 2px color-mix(in oklch, var(--a-forest, var(--teal)) 25%, transparent);}
   .tsets .hintline{flex-basis:100%; margin:0;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610281417">
+<link rel="stylesheet" href="hub-house.css?v=202610281423">
 </head>
 <body>
 <div class="board">
@@ -1155,18 +1156,19 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610281417"></script>
-<script src="hub-store.js?v=202610281417"></script>
-<script src="hub-say.js?v=202610281417"></script>
-<script src="agreement-defaults.js?v=202610281417"></script>
-<script src="observation-defaults.js?v=202610281417"></script>
-<script src="hub-shared.js?v=202610281417"></script>
-<script src="hub-rotation.js?v=202610281417"></script>
-<script src="hub-due.js?v=202610281417"></script>
-<script src="hub-sync.js?v=202610281417"></script>
-<script src="hub-notebook.js?v=202610281417"></script>
-<script src="hub-hand.js?v=202610281417"></script>
-<script src="hub-ink.js?v=202610281417"></script>
+<script src="assignment-defaults.js?v=202610281423"></script>
+<script src="hub-store.js?v=202610281423"></script>
+<script src="hub-xlsx.js?v=202610281423"></script>
+<script src="hub-say.js?v=202610281423"></script>
+<script src="agreement-defaults.js?v=202610281423"></script>
+<script src="observation-defaults.js?v=202610281423"></script>
+<script src="hub-shared.js?v=202610281423"></script>
+<script src="hub-rotation.js?v=202610281423"></script>
+<script src="hub-due.js?v=202610281423"></script>
+<script src="hub-sync.js?v=202610281423"></script>
+<script src="hub-notebook.js?v=202610281423"></script>
+<script src="hub-hand.js?v=202610281423"></script>
+<script src="hub-ink.js?v=202610281423"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the center's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -2336,6 +2338,10 @@ async function renderStoreRoster(next){
       <button class="linkbtn" type="button" id="toggleBulk" style="margin-top:12px;">Add several at once</button>
       <div class="bulkwrap" id="bulkWrap" style="display:none;">
         <p class="bulkhint">One trainee a line: a name, then the group (1 to 4) and an email if you have them. Leave the group out and Lite fills group 1, then 2.</p>
+        <!-- FROM A SHEET (Ramy, 28 Oct 2026: "adding several trainees at once is a copy-paste ... there's no import from a sheet ...
+             maybe there should be"). An Excel or CSV file fills this box; nothing is added until Add all is pressed. -->
+        <div class="bulkimp"><label class="btn quiet" for="rosterFile">Import from a sheet</label><input type="file" id="rosterFile" accept=".xlsx,.csv,.tsv,.txt" hidden>
+          <span class="muted">An Excel or CSV file, or a Google Sheet downloaded as one. Lite finds the name, group and email columns and fills the box below.</span></div>
         <textarea id="storeBulkNames" rows="4" placeholder="Amara Okafor, 1, amara@example.org&#10;Daniel Kim, 1&#10;Priya Sharma"></textarea>
         <div style="display:flex;align-items:center;gap:10px;margin-top:9px;">
           <button class="btn primary" type="button" id="storeBulkAddBtn">Add all</button>
@@ -2494,6 +2500,42 @@ async function renderStoreRoster(next){
      each: minutes of watching "Adding 4 of 12...". The earlier note here said
      the store copes badly with a burst; that was true of twelve SEPARATE
      writes, and the answer is one write of twelve rows, not a queue. */
+  /* a class list from a sheet: the name, group and email columns found by their headings, or guessed when there are none */
+  const rosterFile = document.getElementById('rosterFile');
+  if (rosterFile) rosterFile.addEventListener('change', async () => {
+    const f = rosterFile.files && rosterFile.files[0]; if (!f) return;
+    const st = document.getElementById('storeBulkStatus'), box = document.getElementById('storeBulkNames');
+    const csv = t => { const rows = []; let row = [], cur = '', q = false; const sep = /\t/.test(t.split('\n')[0]) && !/,/.test(t.split('\n')[0]) ? '\t' : ',';
+      for (let i = 0; i < t.length; i++) { const c = t[i];
+        if (q) { if (c === '"' && t[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') q = false; else cur += c; continue; }
+        if (c === '"') q = true; else if (c === sep) { row.push(cur); cur = ''; } else if (c === '\n' || c === '\r') { if (c === '\r' && t[i + 1] === '\n') i++; row.push(cur); rows.push(row); row = []; cur = ''; } else cur += c; }
+      if (cur || row.length) { row.push(cur); rows.push(row); } return rows; };
+    try {
+      st.textContent = 'Reading the sheet…';
+      let rows = /\.xlsx$/i.test(f.name) ? await window.hubXlsxRows(f) : csv(await f.text());
+      rows = rows.map(r => r.map(c => String(c == null ? '' : c).trim())).filter(r => r.some(Boolean));
+      if (!rows.length) { st.textContent = 'That sheet is empty.'; return; }
+      const head = rows[0].map(c => c.toLowerCase());
+      const find = re => head.findIndex(h => re.test(h));
+      let iName = find(/^(full )?name$|trainee|candidate|^student$/), iFirst = find(/first|given|forename/), iLast = find(/last|surname|family/),
+          iGroup = find(/group|^tp|^set$/), iMail = find(/e-?mail/);
+      const hasHead = iName >= 0 || iFirst >= 0 || iMail >= 0 || iGroup >= 0;
+      const body = hasHead ? rows.slice(1) : rows;
+      if (!hasHead) { iName = 0; iMail = rows[0].findIndex(c => /@/.test(c)); iGroup = rows[0].findIndex((c, k) => k !== iMail && /^[1-4]$/.test(c)); }
+      const clean = v => String(v || '').replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
+      const lines = body.map(r => {
+        let name = iName >= 0 ? r[iName] : [iFirst >= 0 ? r[iFirst] : '', iLast >= 0 ? r[iLast] : ''].join(' ');
+        name = clean(name); if (!name || /@/.test(name)) return '';
+        const g = iGroup >= 0 ? clean(r[iGroup]).replace(/^group\s*/i, '') : '', m = iMail >= 0 ? clean(r[iMail]) : (r.find(c => /@/.test(c)) || '');
+        return [name, /^[1-4]$/.test(g) ? g : '', m].filter((x, k) => x || (k === 1 && m)).join(', ').replace(/, ,/, ',,');
+      }).filter(Boolean);
+      if (!lines.length) { st.textContent = 'No names found in that sheet. Paste them instead.'; return; }
+      box.value = (box.value.trim() ? box.value.trim() + '\n' : '') + lines.join('\n');
+      box.dispatchEvent(new Event('input', { bubbles: true }));
+      st.textContent = lines.length + ' trainee' + (lines.length === 1 ? '' : 's') + ' from the sheet. Check them, then press Add all.';
+    } catch (e) { st.textContent = 'That file could not be read: ' + ((e && e.message) || e); }
+    rosterFile.value = '';
+  });
   document.getElementById('storeBulkAddBtn').addEventListener('click', async () => {
     const tbox = document.getElementById('storeBulkNames');
     const status = document.getElementById('storeBulkStatus');
