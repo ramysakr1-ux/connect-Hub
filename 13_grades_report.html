@@ -23,7 +23,7 @@
 <title>Connect Lite — Grades report</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610282244">
+<link rel="stylesheet" href="hub-tokens.css?v=202610282303">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -268,8 +268,15 @@
   .gr-left b{color:var(--ink);}
   @media(prefers-reduced-motion:reduce){ .jump a .gr-ring, .gr-spread i{transition:none;} }
   @media print{ .gr-spread, .gr-key, .gr-move, .gr-left{display:none !important;} }
+
+  /* clearer, as everywhere else (28 Oct 2026): a heading per group and teaching set, each trainee a card of their own */
+  .gband{margin:34px 0 0; font-family:'Newsreader',Georgia,serif; font-size:1.25rem; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:12px;}
+  .gband::after{content:''; flex:1; height:1px; background:var(--row-line);}
+  .cand{margin-top:14px;}   /* a white card, as the house draws it (hub-house.css) */
+  .chead .ltr{display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:8px; background:var(--box); color:var(--ink); font-size:13px; letter-spacing:0; margin-right:12px; vertical-align:2px;}
+  .gt tr.band td{padding:12px 20px 5px; border-top:0; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--gold-deep); background:var(--surface);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610282244">
+<link rel="stylesheet" href="hub-house.css?v=202610282303">
 </head>
 <body>
 <div class="board">
@@ -322,12 +329,12 @@
 
 </div>
 
-<script src="hub-tracker.js?v=202610282244"></script>
-<script src="hub-store.js?v=202610282244"></script>
-<script src="hub-say.js?v=202610282244"></script>
-<script src="hub-rotation.js?v=202610282244"></script>
-<script src="hub-shared.js?v=202610282244"></script>
-<script src="hub-sync.js?v=202610282244"></script>
+<script src="hub-tracker.js?v=202610282303"></script>
+<script src="hub-store.js?v=202610282303"></script>
+<script src="hub-say.js?v=202610282303"></script>
+<script src="hub-rotation.js?v=202610282303"></script>
+<script src="hub-shared.js?v=202610282303"></script>
+<script src="hub-sync.js?v=202610282303"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a trainee's link opened it and read the course and
@@ -570,6 +577,11 @@ function roster(){
     .map(t=>({ id:t.id||t.name, name:t.name, group:String(t.group||''), letter: at(t).letter || '', withdrawn: !!(t.tracker && t.tracker.withdrawn), saved:(t.tracker && t.tracker.grades) || null, cap: capFor(t) }));
 }
 const MANY_GROUPS = () => new Set(ORDER.map(p => p.group)).size > 1;
+/* GROUPS AND TEACHING SETS, AS EVERYWHERE ELSE (Ramy, 28 Oct 2026: "follow the example of everything else: A, B, C,
+   group one, group two ... it'll make it a little bit clearer"). A trainee's teaching set is their letter's three. */
+const setOf = p => { const i = 'ABCDEF'.indexOf(String(p.letter || '').toUpperCase()); return i < 0 ? '' : (i < 3 ? 'ABC' : 'DEF'); };
+const bandKey = p => p.group + '|' + setOf(p);
+function bandLabel(p){ return (MANY_GROUPS() || p.group ? 'Group ' + p.group : '') + (setOf(p) ? (MANY_GROUPS() || p.group ? ' · ' : '') + 'Teaching set ' + setOf(p) : ''); }
 function letterFor(i){ const p = ORDER[i]; return p ? p.letter : ''; }
 
 function fit(el){ if(!el) return; el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
@@ -603,9 +615,9 @@ function paintJump(){
 /* The whole cohort, twice: what goes on the center grade form before the
    visit, and what is agreed with the assessor at the end. */
 function paintCohort(){
-  const table = (kind, opts) => `<table><tbody>${ORDER.map((p, i) => `<tr>
+  const table = (kind, opts) => `<table><tbody>${ORDER.map((p, i) => (i === 0 || bandKey(ORDER[i - 1]) !== bandKey(p) ? `<tr class="band"><td colspan="3">${esc(bandLabel(p))}</td></tr>` : '') + `<tr>
     <td class="l">${letterFor(i)}</td>
-    <td class="n">${esc(p.name)}${MANY_GROUPS() ? '<span class="wd">Group ' + esc(p.group) + '</span>' : ''}${p.withdrawn ? '<span class="wd">withdrawn</span>' : ''}</td>
+    <td class="n">${esc(p.name)}${p.withdrawn ? '<span class="wd">withdrawn</span>' : ''}</td>
     <td class="s">${gradeSelect(kind, opts, DATA[p.id][kind], p)}</td></tr>`).join('')}</tbody></table>`;
   document.getElementById('cohort').innerHTML = `
     <div class="gt">
@@ -652,9 +664,10 @@ function proseSection(p, f){
 function paintCands(){
   document.getElementById('cands').innerHTML = ORDER.map((p, i) => {
     const d = DATA[p.id];
-    return `<section class="cand${OPEN_ID === p.id ? ' open' : ''}" id="c${i}" data-id="${esc(p.id)}">
+    const band = (i === 0 || bandKey(ORDER[i - 1]) !== bandKey(p)) ? `<h2 class="gband"><span>${esc(bandLabel(p))}</span></h2>` : '';
+    return band + `<section class="cand${OPEN_ID === p.id ? ' open' : ''}${d.final ? ' done' : ''}" id="c${i}" data-id="${esc(p.id)}">
       <div class="chead">
-        <h2><span class="ltr">${letterFor(i)}</span>${esc(d.name)}${p.withdrawn ? ' <span class="src">(withdrawn)</span>' : ''}</h2>
+        <h2>${letterFor(i) ? `<span class="ltr">${letterFor(i)}</span>` : ''}${esc(d.name)}${p.withdrawn ? ' <span class="src">(withdrawn)</span>' : ''}</h2>
         ${p.cap ? `<div class="cap">${esc(p.cap.line)}</div>` : ''}
         <span class="ctoggle" aria-hidden="true">${OPEN_ID === p.id ? 'Close' : 'Open'}</span>
       </div>
