@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610282321">
+<link rel="stylesheet" href="hub-tokens.css?v=202610282339">
 <style>
   /* design_handoff_candidate_tracker (Ramy, 20 Sep 2026), with the Hub's
      colour-coded chips in the cells -- "I like the chips that you created.
@@ -81,6 +81,8 @@
   @media (prefers-reduced-motion:reduce){ .gridbox::after{ transition:none; } }
   .grid{ display:grid; align-items:center; --who-col:210px; --cell-min:0px; --tail-col:58px; }
   .bands{ padding-top:10px; }
+  .grpband{ margin:22px 0 0; padding:9px 0 7px; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold-deep); border-bottom:2px solid color-mix(in oklch, var(--gold) 45%, transparent); }
+  .grpband.first{ margin-top:6px; }
   .band{ font-size:9px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--mut2); text-align:center; padding-bottom:5px; border-bottom:1px solid oklch(91% 0.012 82); margin:0 4px; }
   .colhead{ align-items:end; padding:12px 0 9px; border-bottom:1px solid oklch(88% 0.014 82); }
   .count, .tail-h{ font-size:9px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--mut2); }
@@ -242,7 +244,7 @@
   @media(hover:none){ .row.tk-row{background:none;} .cell.tk-col{background:none;} }
   @media print{ .tk-bar{display:none;} .row.tk-row, .cell.tk-col{background:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610282321">
+<link rel="stylesheet" href="hub-house.css?v=202610282339">
 </head>
 <body>
 <div class="page">
@@ -271,15 +273,15 @@
   </div>
   <div id="detail"></div>
 </div>
-<script src="hub-due.js?v=202610282321"></script>
-<script src="hub-shared.js?v=202610282321"></script>
-<script src="hub-rotation.js?v=202610282321"></script>
-<script src="assignment-defaults.js?v=202610282321"></script>
-<script src="hub-tracker.js?v=202610282321"></script>
-<script src="hub-store.js?v=202610282321"></script>
-<script src="hub-say.js?v=202610282321"></script>
-<script src="hub-sync.js?v=202610282321"></script>
-<script src="hub-notebook.js?v=202610282321"></script>
+<script src="hub-due.js?v=202610282339"></script>
+<script src="hub-shared.js?v=202610282339"></script>
+<script src="hub-rotation.js?v=202610282339"></script>
+<script src="assignment-defaults.js?v=202610282339"></script>
+<script src="hub-tracker.js?v=202610282339"></script>
+<script src="hub-store.js?v=202610282339"></script>
+<script src="hub-say.js?v=202610282339"></script>
+<script src="hub-sync.js?v=202610282339"></script>
+<script src="hub-notebook.js?v=202610282339"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
@@ -560,8 +562,16 @@ function render(){
       (s2 > 0 ? `<div class="band" style="grid-column:span ${s2}">Stage 2</div>` : '') +
       (s3 > 0 ? `<div class="band" style="grid-column:span ${s3}">Stage 3</div>` : '') + `<div></div></div>`; }
   html += `<div class="grid colhead" style="grid-template-columns:${gridCols}"><div class="count">${shown.length} trainee${shown.length===1?'':'s'}</div>${cols.map(c=>`<div class="col"><b>${c.label}</b><span>mark / DM</span></div>`).join('')}<div class="tail-h">${isA?'Passed':'To std'}</div></div>`;
-  html += shown.map(p=>{
+  /* GROUPS AND TEACHING SETS, AS ON THE GRADES REPORT (Ramy, 28 Oct 2026: "the tracker should be also group one, group two,
+     A, B, C, D, E, F ... make it a little bit clearer"). A heading before each group and teaching set. */
+  const grpOf = p => { const t = (loadRoster().trainees || {})[p.tr.id] || Object.values(loadRoster().trainees || {}).find(x => (x.id || x.token) === p.tr.id) || {}; return String(t.group || p.tr.group || ''); };
+  const setOfP = p => { if (!LETTER_OF) LETTER_OF = lettersMap(); const i = 'ABCDEF'.indexOf(String(LETTER_OF[p.tr.id || p.tr.token] || '').toUpperCase()); return i < 0 ? '' : (i < 3 ? 'ABC' : 'DEF'); };
+  const manyGroups = new Set(shown.map(grpOf)).size > 1;
+  const bandOf = p => { const g = grpOf(p), st = setOfP(p); return [(g && (manyGroups || g)) ? 'Group ' + g : '', st ? 'Teaching set ' + st : ''].filter(Boolean).join(' · '); };
+  html += shown.map((p, i)=>{
     const risk = atRisk(p);
+    const band = ME ? '' : bandOf(p);
+    const head = band && (i === 0 || bandOf(shown[i - 1]) !== band) ? `<div class="grpband${i ? '' : ' first'}">${esc(band)}</div>` : '';
     const cells = cols.map(col=>{
       let chip, selected = SEL && SEL.id===p.tr.id && SEL.col===col.key;
       if (isA){
@@ -591,7 +601,7 @@ function render(){
     const window_ = TPS.slice(0,tailOf).filter(t=>['STD','ABOVE','NOTSTD'].includes(p.tps[t.key].g));
     const toStd = window_.filter(t=>['STD','ABOVE'].includes(p.tps[t.key].g)).length;
     const outOf = window_.length;
-    return `<div class="grid row ${risk?'risk':''}" style="grid-template-columns:${gridCols}"><div class="who"><div class="nm">${letterChip(p.tr)}${esc(p.tr.name)}</div>${risk?'<div class="flag">at risk</div>':''}</div>${cells}<div class="tail">${isA?(marked ? passed+'/'+marked : '·'):(outOf ? toStd+'/'+outOf : '·')}</div></div>`;
+    return head + `<div class="grid row ${risk?'risk':''}" style="grid-template-columns:${gridCols}"><div class="who"><div class="nm">${letterChip(p.tr)}${esc(p.tr.name)}</div>${risk?'<div class="flag">at risk</div>':''}</div>${cells}<div class="tail">${isA?(marked ? passed+'/'+marked : '·'):(outOf ? toStd+'/'+outOf : '·')}</div></div>`;
   }).join('');
   const leg = isA ? ['DUE','MISSING','WAIT','FAILRES','WAIT2','UNMARKED','FAIL','PASS','RES'].map(k=>A_STATE[k]) : ['un','NOTSTD','STD','ABOVE'].map(k=>T_STATE[k]);
   html += `<div class="legend">${leg.map(s=>`<div class="it"><span class="chip ${s.cls}">${s.t}</span><span class="lb">${s.name}</span></div>`).join('')}<p class="legend-note">Inside a chip: <b>/ —</b> not double marked · <b>/ DM JB</b> the second marker’s initials</p></div>`;
