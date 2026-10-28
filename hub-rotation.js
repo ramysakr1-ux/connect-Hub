@@ -205,6 +205,8 @@
     const n = base.length;
     const pos = base.map((p) => {
       const c = cellOf(p && typeof p === 'object' ? p.token : p, tp);
+      /* a time set by hand on the TP points grid (28 Oct 2026: "rearrange the order ... without swapping lessons") */
+      if (c && Number.isInteger(c.at)) return c.at;
       const m = c && /\u00b7(\d+)$/.exec(String(c.from || ''));
       return m ? +m[1] - 1 : -1;
     });
