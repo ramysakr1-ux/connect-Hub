@@ -36,8 +36,21 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610281952">
+<link rel="stylesheet" href="hub-tokens.css?v=202610282025">
 <style>
+  /* the start, in two steps (28 Oct 2026) */
+  .tstep{margin:18px 0 0; padding:16px 18px 18px; border-radius:16px; background:var(--paper); box-shadow:var(--nb-shadow, 0 8px 24px -16px rgba(0,0,0,.3)); border-top:3px solid var(--a-forest, var(--teal));}
+  .tstep.wait{border-top-color:var(--sand-line); opacity:.75;} .tstep.done{border-top-color:var(--a-forest, var(--teal));}
+  .tstep .relbar{margin:6px 0 0;} .tstep .setbar{margin:0;}
+  .tsn{margin:0 0 10px; font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; font-weight:700; color:var(--gold-deep);}
+  .tchoice{display:grid; grid-template-columns:1fr 1fr; gap:12px;} @media (max-width:640px){ .tchoice{grid-template-columns:1fr;} }
+  .tcard{display:flex; flex-direction:column; gap:6px; padding:16px 18px; border-radius:14px; text-decoration:none; color:var(--ink); border:1.5px solid transparent; transition:background-color .15s, border-color .15s;}
+  .tcard b{font:700 1.08rem/1.2 Newsreader,Georgia,serif;} .tcard span{font-size:.88rem; line-height:1.45; color:var(--ink-2, var(--grey));}
+  .tcard em{margin-top:4px; font-style:normal; font-weight:700; font-size:.86rem; text-decoration:underline; text-underline-offset:3px;}
+  .tcard.lib{background:color-mix(in oklch, var(--a-forest, var(--teal)) 9%, var(--paper)); border-color:color-mix(in oklch, var(--a-forest, var(--teal)) 30%, transparent);} .tcard.lib em{color:var(--a-forest, var(--teal));}
+  .tcard.lib:hover{background:color-mix(in oklch, var(--a-forest, var(--teal)) 15%, var(--paper));}
+  .tcard.own{background:var(--sand); border-color:var(--sand-line);} .tcard.own em{color:var(--brick);} .tcard.own:hover{background:color-mix(in oklch, var(--sand) 80%, var(--brick) 6%);}
+  .tquiet{display:block; margin:12px 0 0; padding:0; border:0; background:none; font:inherit; font-size:.84rem; color:var(--grey); text-align:left; cursor:pointer;} button.tquiet{text-decoration:underline; text-underline-offset:3px;}
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
@@ -424,7 +437,7 @@
   @media(prefers-reduced-motion:reduce){ .tbl select.fm, .fm-pips i{transition:none;} }
   @media print{ .fm-key, .fm-pips{display:none;} .tbl select.fm{border-left-width:1px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610281952">
+<link rel="stylesheet" href="hub-house.css?v=202610282025">
 <style>
 /* THE CARD A TRAINEE RECEIVES, IN COLOR (Ramy, 21 Oct 2026: "the card that
    the trainees receive ... could use a bit of color and distinction"). Each
@@ -581,14 +594,14 @@ body.ls-open{overflow:hidden;}
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610281952"></script>
-<script src="hub-tracker.js?v=202610281952"></script>
-<script src="hub-rotation.js?v=202610281952"></script>
-<script src="hub-shared.js?v=202610281952"></script>
-<script src="hub-store.js?v=202610281952"></script>
-<script src="hub-say.js?v=202610281952"></script>
-<script src="hub-sync.js?v=202610281952"></script>
-<script src="hub-notebook.js?v=202610281952"></script>
+<script src="hub-due.js?v=202610282025"></script>
+<script src="hub-tracker.js?v=202610282025"></script>
+<script src="hub-rotation.js?v=202610282025"></script>
+<script src="hub-shared.js?v=202610282025"></script>
+<script src="hub-store.js?v=202610282025"></script>
+<script src="hub-say.js?v=202610282025"></script>
+<script src="hub-sync.js?v=202610282025"></script>
+<script src="hub-notebook.js?v=202610282025"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -1060,8 +1073,27 @@ function chooseType(g, t, tp, want){
   return (myPos >= 0 && D.slots[myPos]) ? 'The set has no ' + want + ' lesson that day, so ' + (D.slots[myPos].type || 'the old lesson') + ' now has nobody to teach it' : 'Saved';
 }
 /* two lessons trade places in the day; their teachers go with them */
+/* WITHOUT A SET TOO (Ramy, 28 Oct 2026: "the drag and drop ... doesn't seem to be working"): a course whose rotation
+   deals lesson types itself has no set slots, so a cell has no place of its own in the day. pinDay writes every
+   teacher's place as the page shows it, so a swap or a move has places to trade. */
+function pinDay(g, tp, si){
+  const mates = (((P.sets && P.sets[g]) || [])[si] || []).filter(Boolean);
+  const order = R.orderDealt(mates.map(t => ({ token: t })), +tp, (t, n) => ((P.groups[g] || {})[t] || {})['tp' + n]).map(x => x.token);
+  order.forEach((t, k) => { const c = cellOf(g, t, tp); if (!Number.isInteger(c.at) && slotPos(c) !== k) c.at = k; });
+  return order;
+}
+/* the two trainees trade lessons; each lesson keeps its place in the day */
+function swapCells(g, tp, a, b){
+  const si = siOf(g, a); if (si < 0 || siOf(g, b) !== si) return 'They teach on different days';
+  const order = pinDay(g, tp, si), A = cellAt(g, a, tp), B = cellAt(g, b, tp);
+  const lesson = c => { const x = Object.assign({}, c); delete x.missed; delete x.makeup; delete x.at; return x; };
+  P.groups[g][a]['tp' + tp] = Object.assign(lesson(B), { edited: true, at: order.indexOf(b) }, keptMakeup(A));
+  P.groups[g][b]['tp' + tp] = Object.assign(lesson(A), { edited: true, at: order.indexOf(a) }, keptMakeup(B));
+  return 'Swapped with ' + ((lettersOf(g).find(p => p.token === b) || {}).letter || 'the other trainee');
+}
 function swapTimes(g, tp, si, a, b){
   const D = dayCtx(g, tp, si);
+  if (!D.set) pinDay(g, tp, si);
   const at = {}; D.mates.forEach(m => { at[m] = timePos(cellAt(g, m, tp)); });
   const ta = D.mates.find(m => at[m] === a), tb = D.mates.find(m => at[m] === b);
   if (!ta || !tb || ta === tb) return 'Saved';
@@ -1116,7 +1148,11 @@ function wireGrid(){
     const holder = R.orderDealt(((P.sets[g] || [])[+csi] || []).filter(Boolean).map(t => ({ token: t })), +tp, (t, n) => ((P.groups[g] || {})[t] || {})['tp' + n]).map(x => x.token)[+ck];
     if (!holder || holder === tok) return;
     const pos = slotPos(cellAt(g, holder, tp));
-    persist(pos >= 0 ? takeLesson(g, tok, tp, pos) : 'That lesson is one of your own; swap it from its Own lesson card');
+    /* the set's lesson, when the cells still hold what the set says; otherwise (no set, or cells dealt from another
+       version of it) the two lessons as the page shows them */
+    const D = dayCtx(g, tp, siOf(g, tok));
+    const agrees = c => { const k = slotPos(c), sl = D.slots[k]; return k >= 0 && sl && (!sl.type || !c.aim || sl.type === c.aim); };
+    persist(pos >= 0 && D.set && agrees(cellAt(g, tok, tp)) && agrees(cellAt(g, holder, tp)) ? takeLesson(g, tok, tp, pos) : swapCells(g, tp, tok, holder));
   };
   document.querySelectorAll('[data-gchip]').forEach(el => {
     el.addEventListener('dragstart', e => { chip = el.dataset.gchip; card = null; e.stopPropagation(); try { e.dataTransfer.setData('text/plain', 'chip'); e.dataTransfer.effectAllowed = 'move'; } catch (er) {} });
@@ -1988,11 +2024,14 @@ function renderCore(){
     return g.people.length && g.people.every(t => rows[t.token] && Object.keys(rows[t.token]).length);
   });
   if (!built) {
-    app.innerHTML = head + setBar() + `<div class="relbar"><button class="btn" id="build">Build the rotation</button><span class="status">${Object.keys(library()).length ? 'Deals the trainees into their set’s slots, and generates a type wherever the set is silent.' : 'Works out the lesson type for every trainee across TP 1 to ' + TPS + '.'}</span></div>`;
-    $('build').addEventListener('click', () => build(false));
+    BUILT = false;
+    app.innerHTML = head + startHTML();
+    const bb = $('build'); if (bb) bb.addEventListener('click', () => build(false));
+    const tonly = $('typesOnly'); if (tonly) tonly.addEventListener('click', () => { TYPES_ONLY = true; render(); });
     wireSetBar();
     return;
   }
+  BUILT = true;
 
   app.innerHTML = head + setBar() + `<div class="relbar"><button class="btn quiet" id="rebuild">Rebuild</button><span class="status">${esc(note)}</span></div>` + gs.map(g => {
     const rows = (P.groups || {})[g.group] || {};
@@ -2110,6 +2149,27 @@ function renderCore(){
   }));
 }
 
+var BUILT = false, TYPES_ONLY = false;   // the rotation is dealt; a tutor chose to deal lesson types without a set
+/* THE START, IN ORDER (Ramy, 28 Oct 2026: "why would I build a rotation now? I haven't chosen a set yet ... write a set,
+   open the library ... work this out"). Before anything is dealt the page asks two things, in this order: where the
+   lessons come from (Connect's library, or a set of the course's own; or, quietly, lesson types only), then deal the
+   trainees into them. Nobody is shown "see it as" a trainee while there is nothing for a trainee to see. */
+function startHTML(){
+  const lib = library(), has = Object.keys(lib).some(id => { const x = lib[id]; return !!(x.name || x.book) || sessionIds().some(k => ((x.sessions || {})[k] || {}).slots && x.sessions[k].slots.some(sl => sl && (sl.type || sl.aim))); });
+  const ready = has || TYPES_ONLY;
+  const step1 = has
+    ? `<div class="tstep done"><p class="tsn">Step 1 · The lessons</p>${setBar()}</div>`
+    : `<div class="tstep"><p class="tsn">Step 1 · Choose the lessons</p>
+        <div class="tchoice">
+          <a class="tcard lib" href="28_tp_point_sets.html?from=tp&add=1"><b>Connect’s library</b><span>TP points already written for Speakout, Empower and other coursebooks, level by level. Pick one for each group.</span><em>Open the library</em></a>
+          <a class="tcard own" href="28_tp_point_sets.html?from=tp&make=1"><b>Your own set</b><span>Write your course’s TP points against your coursebook, or import them from a document.</span><em>Write a set</em></a>
+        </div>
+        ${TYPES_ONLY ? '<p class="tquiet">Lesson types only: Lite deals grammar, vocabulary and skills, and you add the pages and aims afterwards.</p>' : '<button type="button" class="tquiet lnk" id="typesOnly">Or deal lesson types only, without a set</button>'}</div>`;
+  const step2 = `<div class="tstep${ready ? '' : ' wait'}"><p class="tsn">Step 2 · Deal the trainees</p>
+      <div class="relbar"><button class="btn${ready ? ' primary' : ''}" id="build"${ready ? '' : ' disabled'}>Deal the trainees</button>
+      <span class="status">${ready ? (has ? 'Each trainee takes a lesson from the set, so nobody in a teaching set teaches the same type on the same day.' : 'Each trainee gets a lesson type for every TP, spread across the language and skills areas.') : 'Choose the lessons first.'}</span></div></div>`;
+  return step1 + step2;
+}
 let VIEW_AS = null;   // a tutor's "see it as": { token, name, group }, or null for the tutor's own view
 
 /* THE PICKER (Ramy, 21 Oct 2026: the TP points page is the one a tutor cannot
@@ -2128,7 +2188,7 @@ function render(){
   renderCore();
   if (!IS_TUTOR) return;
   const app = $('app');
-  const bar = viewAsBar(); if (!bar) return;
+  const bar = BUILT ? viewAsBar() : ''; if (!bar) return;
   const lede = app.querySelector('.lede');
   if (lede) lede.insertAdjacentHTML('afterend', bar); else app.insertAdjacentHTML('afterbegin', bar);
   const sel = $('viewas');

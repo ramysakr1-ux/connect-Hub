@@ -35,8 +35,15 @@
 <title>Connect Lite — TP point sets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610281952">
+<link rel="stylesheet" href="hub-tokens.css?v=202610282025">
 <style>
+  .tchoice{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:18px 0 0;} @media (max-width:640px){ .tchoice{grid-template-columns:1fr;} }
+  .tcard{display:flex; flex-direction:column; gap:6px; padding:18px 20px; border-radius:14px; text-align:left; font:inherit; color:var(--ink); cursor:pointer; border:1.5px solid transparent; transition:background-color .15s;}
+  .tcard b{font:700 1.08rem/1.2 Newsreader,Georgia,serif;} .tcard span{font-size:.88rem; line-height:1.45; color:var(--ink-2, var(--grey));}
+  .tcard em{margin-top:4px; font-style:normal; font-weight:700; font-size:.86rem; text-decoration:underline; text-underline-offset:3px;}
+  .tcard.lib{background:color-mix(in oklch, var(--a-forest, var(--teal)) 9%, var(--paper)); border-color:color-mix(in oklch, var(--a-forest, var(--teal)) 30%, transparent);} .tcard.lib em{color:var(--a-forest, var(--teal));}
+  .tcard.lib:hover{background:color-mix(in oklch, var(--a-forest, var(--teal)) 15%, var(--paper));}
+  .tcard.own{background:var(--sand); border-color:var(--sand-line);} .tcard.own em{color:var(--brick);} .tcard.own:hover{background:color-mix(in oklch, var(--sand) 80%, var(--brick) 6%);}
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1020px; margin:0 auto; padding:26px 20px 90px;}
   .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
@@ -234,7 +241,7 @@
   @media(max-width:560px){ .sm-cell{height:18px; padding:2px;} .sm-grid{gap:4px 3px;} }
   @media print{ .sm-map{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610281952">
+<link rel="stylesheet" href="hub-house.css?v=202610282025">
 <style>
 /* COLOR FOR A SET (Ramy, 21 Oct 2026: "I feel like we should give it some
    color"). The notebook's own: white cards with the shadow, a forest band for
@@ -277,12 +284,12 @@ body.hub-paper .shead .state.done{background:var(--a-forest, var(--teal)); color
   </script>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610281952"></script>
-<script src="hub-rotation.js?v=202610281952"></script>
-<script src="hub-store.js?v=202610281952"></script>
-<script src="hub-say.js?v=202610281952"></script>
-<script src="hub-sync.js?v=202610281952"></script>
-<script src="hub-pages.js?v=202610281952"></script>
+<script src="hub-shared.js?v=202610282025"></script>
+<script src="hub-rotation.js?v=202610282025"></script>
+<script src="hub-store.js?v=202610282025"></script>
+<script src="hub-say.js?v=202610282025"></script>
+<script src="hub-sync.js?v=202610282025"></script>
+<script src="hub-pages.js?v=202610282025"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
@@ -695,12 +702,14 @@ function render(){
     $('app').innerHTML = `<p class="eyebrow">Teaching practice</p><h1>TP point sets</h1>
       <p class="lede">A set is the course’s teaching practice points, written once against a coursebook: ${TPS} TPs, each taught twice because the group teaches on alternate days, and three slots in each. The rotation then deals the trainees into the slots.</p>
       ${libraryPanel()}
-      <div class="empty"><p style="margin:0 0 12px">This course has no set yet. Take one from the library, or start your own.</p>
-      <button class="btn" id="takelib">Open the library</button>
-      <button class="btn quiet" id="make">Start a set by hand</button></div>`;
+      <div class="tchoice">
+        <button type="button" class="tcard lib" id="takelib"><b>Connect’s library</b><span>TP points already written for Speakout, Empower and other coursebooks, level by level. Pick one for each group.</span><em>Open the library</em></button>
+        <button type="button" class="tcard own" id="make"><b>Your own set</b><span>Write your course’s TP points against your coursebook, session by session, or import each from a document.</span><em>Start a set</em></button>
+      </div>`;
     wireLibrary();
     const mk = $('make'); if (mk) mk.onclick = () => { const id = newId(); LIB[id] = blankSet(); CUR = id; S = LIB[id]; persist('Set started'); };
     const tl = $('takelib'); if (tl) tl.onclick = openLibrary;
+    if (new URLSearchParams(location.search).get('make') === '1' && mk && !MADE) { MADE = true; mk.click(); }
     return;
   }
   const names = setNames();
@@ -1385,6 +1394,7 @@ function parseDoc(text){
 load();
 render();
 /* "Another book" on the TP points screen lands here with the library open (28 Oct 2026) */
+var MADE = false;
 if (new URLSearchParams(location.search).get('add') === '1') { try { openLibrary(); } catch (e) {} }
 
 /* ---- v2 (7 Oct 2026): the set at a glance -----------------------------------
