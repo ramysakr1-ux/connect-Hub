@@ -25,7 +25,7 @@
 <title>Connect Lite — Assessor pack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610290055">
+<link rel="stylesheet" href="hub-tokens.css?v=202610290110">
 <style>
   :root{
     /* the control fill, for the shared confirm modal's Cancel button */
@@ -291,7 +291,7 @@
   @media(max-width:560px){ .ap9{padding:22px 18px 18px; border-radius:12px;} .ap9-stats div{min-width:0; flex:1 1 120px;} }
   @media print{ .ap9{display:none !important;} .panel.ap9-obs{border-left:0; background:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610290055">
+<link rel="stylesheet" href="hub-house.css?v=202610290110">
 </head>
 <body data-signout="float">
 <div class="board">
@@ -323,16 +323,17 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202610290055"></script>
-<script src="hub-shared.js?v=202610290055"></script>
-<script src="fol-interview.js?v=202610290055"></script>
-<script src="assignment-defaults.js?v=202610290055"></script>
-<script src="hub-tracker.js?v=202610290055"></script>
-<script src="hub-rotation.js?v=202610290055"></script>
-<script src="hub-attendance.js?v=202610290055"></script>
-<script src="hub-store.js?v=202610290055"></script>
-<script src="hub-say.js?v=202610290055"></script>
-<script src="hub-sync.js?v=202610290055"></script>
+<script src="observation-defaults.js?v=202610290110"></script>
+<script src="hub-shared.js?v=202610290110"></script>
+<script src="fol-interview.js?v=202610290110"></script>
+<script src="gtky-bank.js?v=202610290110"></script>
+<script src="assignment-defaults.js?v=202610290110"></script>
+<script src="hub-tracker.js?v=202610290110"></script>
+<script src="hub-rotation.js?v=202610290110"></script>
+<script src="hub-attendance.js?v=202610290110"></script>
+<script src="hub-store.js?v=202610290110"></script>
+<script src="hub-say.js?v=202610290110"></script>
+<script src="hub-sync.js?v=202610290110"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -1010,19 +1011,31 @@ function observationBlock(tr){
     `<div class="tp"><div class="tp-row"><span class="n"></span><span class="meta"></span><a class="btn ghost" href="18_observation_tasks.html?trainee=${encodeURIComponent(tr.id)}">Open the sheets</a></div></div>`;
 }
 /* The CELTA 5 Record Booklet: where each stage stands, and the door. */
-/* THE TRAINEE'S OWN GETTING TO KNOW YOU (Ramy, 28 Oct 2026: "for every trainee, it's only the getting to know you that
-   they chose to do ... and their interview, the transcription, what they heard"). The activity picked, every pick if
-   there was more than one, and the student interview as the trainee wrote it: answers, recordings, transcripts, what
-   was heard. The bank of activities lives in the library; the pool across the course is the tutors' own door. */
+/* GETTING TO KNOW YOU AND THE STUDENT INTERVIEW, THE TRAINEE'S OWN (Ramy, 28 Oct 2026: "the three tasks they were
+   assigned and the one they chose ... and the FOL transcription for the student they interviewed, so in case of
+   suspicion we can go back and check"). The three offered are dealt the way the trainee's own page dealt them; a
+   pick from an earlier three is shown too. The interview as the trainee wrote it: answers, recordings, transcripts,
+   what was heard. The bank lives with the TP points; the pool across the course is the tutors' own door. */
 function gtkyBlock(tr){
-  const SEP = ' \u2014 ';
+  const SEP = ' — ';
+  const H = window.CONNECT_HUB_GTKY_HELPERS;
   const picks = (rec('connect_shared_v1') || []).filter(x => x && (x.kind || '') === 'gtky' && String(x.name || '').endsWith(SEP + tr.name)).map(x => String(x.name).slice(0, String(x.name).lastIndexOf(SEP)));
   const iv = tr.interview && tr.interview.students ? tr.interview : null;
   const FOL = window.CONNECT_HUB_FOL;
   const ivHtml = iv && FOL ? FOL.summaryHtml(iv) : '';
-  if (!picks.length && !ivHtml) return '';
-  const act = picks.length ? `<div class="tp"><div class="tp-row"><span class="n">Activity</span><span class="meta"><b>${picks.map(esc).join('</b>, then <b>')}</b>${picks.length > 1 ? ' <span class="sub">(picked ' + picks.length + ' times)</span>' : ''}</span></div></div>` : '';
-  const int = ivHtml ? `<div class="tp"><div class="tp-row"><span class="n">Interview</span><span class="meta"><b>${Object.keys(iv.students).length}</b> student${Object.keys(iv.students).length === 1 ? '' : 's'} interviewed, for Focus on the Learner</span><button class="btn ghost" type="button" data-doc="gtky">Show the interview</button></div><div class="doc" id="doc-gtky" hidden>${ivHtml}</div></div>` : '';
+  /* the band from the group's TP point set, or the room its level is named on */
+  let band = '';
+  if (H) { try { const P = rec('connect_tp_points_v1') || {}; const g = String(tr.group || ''); const id = ((P.set || {}).setFor || {})[g]; const S = id && ((P.set || {}).library || {})[id];
+    if (S) band = H.bandFromLevel(S.level || S.book); if (!band) { const room = (SETTINGS.onlineRooms || []).find(r => r && String(r.group || '') === g && r.level); if (room) band = H.bandFromLevel(room.level); } } catch (e) {} }
+  const mode = String(SETTINGS.deliveryMode || 'f2f') === 'online' ? 'online' : 'f2f';
+  const three = H && band ? H.offered(H.poolFor(band, mode), tr.id || tr.name) : [];
+  if (!picks.length && !ivHtml && !three.length) return '';
+  const names = three.map(a => a.name); picks.forEach(p => { if (!names.includes(p)) names.push(p); });
+  const pills = names.map(n => `<span class="chip ${picks.includes(n) ? 'fine' : 'nd'}" style="text-transform:none;letter-spacing:0;font-size:12.5px">${esc(n)}${picks.includes(n) ? ' · chosen' : ''}</span>`).join(' ');
+  const act = names.length ? `<div class="tp"><div class="tp-row"><span class="n">Activity</span><span class="meta col"><span class="line">${pills}</span><span class="sub2">${picks.length ? (picks.length > 1 ? 'Picked ' + picks.length + ' times' : 'The three offered, and the one picked') : 'The three offered; nothing picked yet'}${band ? ' · ' + (band === 'low' ? 'beginner and elementary' : 'pre-intermediate and above') : ''}</span></span></div></div>` : '';
+  const n = iv ? Object.keys(iv.students).length : 0;
+  const int = ivHtml ? `<div class="tp"><div class="tp-row"><span class="n">Interview</span><span class="meta"><b>${n}</b> student${n === 1 ? '' : 's'} interviewed for Focus on the Learner: the answers, the recordings and their transcripts, and what was heard</span><button class="btn ghost" type="button" data-doc="gtky">Show the interview</button></div><div class="doc" id="doc-gtky" hidden>${ivHtml}</div></div>`
+    : `<div class="tp"><div class="tp-row"><span class="n">Interview</span><span class="meta"><span class="chip nd">no interview recorded</span></span></div></div>`;
   return act + int;
 }
 function agreementRow(tr){
@@ -1073,7 +1086,7 @@ function renderOne(tr){
     </div>
     <h2 class="sect">Teaching practice <small>the document the trainee received, as returned</small></h2>
     <div class="panel">${tpSection(tr, c)}</div>
-    ${gtkyBlock(tr) ? `<h2 class="sect">Getting to know you <small>day one, unassessed</small></h2>
+    ${gtkyBlock(tr) ? `<h2 class="sect">Getting to know you and the student interview <small>the first afternoon, unassessed</small></h2>
     <div class="panel">${gtkyBlock(tr)}</div>` : ''}
     <h2 class="sect">Assignments <small>in the center’s order</small></h2>
     <div class="panel">${assignmentSection(tr)}</div>

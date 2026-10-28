@@ -1180,3 +1180,13 @@ window.CONNECT_HUB_GTKY = [
   "onlineNote": null
  }
 ];
+/* THE SAME THREE, ANYWHERE (28 Oct 2026). The portfolio shows a trainee the three they were offered, so the dealing
+   lives here beside the bank: a hash of their token steps through the pool for their band and the course's mode. */
+window.CONNECT_HUB_GTKY_HELPERS = (function () {
+  var HIGH = { pre: 1, inter: 1, upper: 1 };
+  function bandFromLevel(level) { var m = String(level || '').toUpperCase().match(/\b([ABC][12])(\+?)/); if (!m) return ''; var code = m[1] + m[2]; return code === 'A1' || code === 'A2' ? 'low' : 'high'; }
+  function hash(str) { var h = 2166136261; for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h; }
+  function offered(pool, seed) { if (pool.length <= 3) return pool.slice(); var out = [], n = pool.length, start = hash(seed) % n, step = 1 + (hash(seed + '|') % (n - 1)); var i = start; for (var k = 0; k < n && out.length < 3; k++, i += step) { var a = pool[i % n]; if (out.indexOf(a) < 0) out.push(a); } for (var j = start; out.length < 3; j++) { var b = pool[j % n]; if (out.indexOf(b) < 0) out.push(b); } return out; }
+  function poolFor(band, mode) { return (window.CONNECT_HUB_GTKY || []).filter(function (a) { return (band === 'high') === !!HIGH[a.level] && (a.mode === 'both' || a.mode === mode); }); }
+  return { bandFromLevel: bandFromLevel, offered: offered, poolFor: poolFor };
+})();
