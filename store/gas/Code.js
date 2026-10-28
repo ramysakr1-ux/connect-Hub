@@ -42,10 +42,11 @@ var SHEET_CENTRES = 'centres';   // number | name | first seen | courses made   
 // the trainee submits into it and the tutor marks into it, so both may write
 // it and the screens keep the two halves apart.
 // celta5: the candidate's half of the CELTA 5 record booklet; celta5t: the tutors' half (28 Sep 2026)
-var TRAINEE_WRITES = { plan:1, selfeval:1, assignments:1, observations:1, celta5:1, agreement:1, interview:1, notebook:1, tpHistory:0 };// staffLinks: about a candidate, for the tutors and the assessor only -- deliberately absent from TRAINEE_READS (28 Sep 2026)
-var TUTOR_WRITES = { plan:1, selfeval:1, feedback:1, assignments:1, tracker:1, observations:1, links:1, staffLinks:1, celta5:1, celta5t:1, interview:1, tpHistory:1 };
+var TRAINEE_WRITES = { plan:1, selfeval:1, assignments:1, observations:1, celta5:1, agreement:1, interview:1, notebook:1, about:1, tpHistory:0 };// staffLinks: about a candidate, for the tutors and the assessor only -- deliberately absent from TRAINEE_READS (28 Sep 2026)
+/* about (28 Oct 2026): first language, nationality, teaching experience and gender, for mixing the groups; the trainee's own answers, or Course admin's */
+var TUTOR_WRITES = { plan:1, selfeval:1, feedback:1, assignments:1, tracker:1, observations:1, links:1, staffLinks:1, celta5:1, celta5t:1, interview:1, about:1, tpHistory:1 };
 // links: a candidate's private links (their CELTA 5, a reading), written by the tutor, read by the candidate (28 Sep 2026)
-var TRAINEE_READS = { plan:1, selfeval:1, feedback:1, assignments:1, tracker:1, observations:1, links:1, celta5:1, celta5t:1, agreement:1, interview:1, tpHistory:1, courseFeedbackSent:1, notebook:1 };
+var TRAINEE_READS = { plan:1, selfeval:1, feedback:1, assignments:1, tracker:1, observations:1, links:1, celta5:1, celta5t:1, agreement:1, interview:1, tpHistory:1, courseFeedbackSent:1, notebook:1, about:1 };
 /* THE NOTEBOOK (v129, 25 Oct 2026). Ramy: "a smart notebook... personal, obviously". A trainee's notes are
    theirs alone: written and read on their own token, and NEVER folded into the roster a tutor or the
    assessor boots with, nor answered to a reader's `get`. A note reaches anyone else only when its writer

@@ -24,7 +24,7 @@ assets = ["hub-shared.js", "hub-store.js", "hub-sync.js", "hub-tracker.js", "hub
           "hub-pages.js", "hub-qr.js", "vendor/qrcode.js", "hub-pin.js",
           # added 5 Oct 2026: hub-say.js is new; the other five had been
           # shipping unstamped since they were written
-          "hub-say.js", "hub-peers.js", "celta5-appendix.js", "hub-card-mail.js", "hub-feedback.js", "hub-front.js", "hub-shelf.js", "hub-marking.js", "hub-notebook.js", "hub-rec.js", "hub-ask.js",
+          "hub-say.js", "hub-peers.js", "celta5-appendix.js", "hub-card-mail.js", "hub-feedback.js", "hub-front.js", "hub-shelf.js", "hub-marking.js", "hub-notebook.js", "hub-rec.js", "hub-ask.js", "hub-about.js",
           "hub-tokens.css", "hub-house.css", "hub-record.css"]
 for f in glob.glob("*.html"):
     p = pathlib.Path(f); s = p.read_text(); orig = s
