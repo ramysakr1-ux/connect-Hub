@@ -1713,6 +1713,7 @@ case 'inbox': {
       if (!course) throw new Error('This link is not on a course');
       var aqItem = questionClean_(course, req, { token: me.token, name: me.name, group: String(me.group || '') });
       courseUpdateObj_(course.id, 'questions', function (pool) { return questionAdd_(pool, aqItem); });
+      questionToNotebook_(course.id, aqItem);
       return { asked: true, id: aqItem.id };
     }
     case 'questions': {
@@ -3563,8 +3564,34 @@ function questionClean_(course, req, asker) {
     f.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE);
     f.setDescription(JSON.stringify({ question: q.id, by: q.name }));
     q.audio = { id: f.getId(), seconds: Math.min(60, Number(req.seconds) || 0), mime: type };
+    /* the words, for the wall and the notebook (v174): the recording stays the question, the text is a convenience */
+    var oKey = PropertiesService.getScriptProperties().getProperty('OPENAI_KEY');
+    if (oKey) {
+      try {
+        var tr = UrlFetchApp.fetch('https://api.openai.com/v1/audio/transcriptions', { method: 'post', muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + oKey },
+          payload: { file: f.getBlob(), model: 'gpt-4o-transcribe', response_format: 'text', language: 'en' } });
+        if (tr.getResponseCode() === 200) q.heard = String(tr.getContentText() || '').trim().slice(0, 600);
+      } catch (e) { /* the voice is there either way */ }
+    }
   }
   return q;
+}
+/* A copy in the tutor's notebook, under the session it came from (v174; Ramy: "it lands in the tutor's notebook"). */
+function questionToNotebook_(courseId, q) {
+  if (!q || !q.to) return;
+  try {
+    var who = tutorWho_(q.to), words = q.text || q.heard || '';
+    var note = noteClean_({ id: 'q-' + q.id, at: q.at, day: q.session.date || q.at.slice(0, 10),
+      thread: q.session.k === 'room' ? { k: 'input', id: 'room', t: 'Questions from the room' } : { k: 'input', id: q.session.id, t: q.session.title },
+      text: 'Question from ' + q.name + (words ? ': \u201c' + words + '\u201d' : '') + (q.audio ? ' (asked by voice; it plays on the question wall)' : '') }, q.name);
+    if (!note) return;
+    courseUpdateObj_(courseId, 'tutorNotes', function (pool) {
+      var list = (pool[who] || []).filter(function (x) { return x && x.id !== note.id; });
+      list.push(note); list.sort(function (a, b) { return String(a.at).localeCompare(String(b.at)); });
+      pool[who] = list.length > 400 ? list.slice(list.length - 400) : list;
+      return pool;
+    });
+  } catch (e) { /* the wall has it either way */ }
 }
 /* The room asks (ask.html). No key: the course's own ask code, a name, a question, and a ceiling on how many a name may send. */
 function roomAsk_(req) {
@@ -3583,6 +3610,7 @@ function roomAsk_(req) {
                                  session: { k: 'room', id: 'room', title: 'Questions from the room', date: String(st.presentToday || '') } },
                             { token: 'room', name: name, group: '' });
   courseUpdateObj_(c.id, 'questions', function (pool) { return questionAdd_(pool, item); });
+  questionToNotebook_(c.id, item);
   cache.put(ck, String(n + 1), 3600);
   return { asked: true };
 }

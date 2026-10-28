@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610280858">
+<link rel="stylesheet" href="hub-tokens.css?v=202610281003">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -471,6 +471,7 @@
   .bld .brow.lens label{display:inline-flex; align-items:center; gap:5px; font-size:0.78rem; color:var(--grey);} .bld .brow.lens input[type=number]{width:58px;}
   .bld input[type=number]{font:inherit; font-size:0.82rem; padding:5px 7px; border:1px solid var(--sand-line); border-radius:7px; background:var(--field); color:var(--ink); width:62px;}
   .bld .pday{display:flex; flex-direction:column; gap:6px; margin:10px 0 4px; max-width:640px;}
+  .bld .pday.over{outline:2px dashed var(--ink); outline-offset:4px; border-radius:10px;}
   .bld .bchip{border-radius:10px; padding:9px 13px 8px; cursor:grab; border:2px solid transparent;} .bld .bchip.drag{opacity:.45;} .bld .bchip.over{border-color:var(--ink);}
   .bld .bchip .top{display:flex; justify-content:space-between; gap:10px; align-items:baseline;} .bld .bchip .top b{font-size:0.92rem;} .bld .bchip .tm{font-size:0.76rem; font-weight:700; font-variant-numeric:tabular-nums; opacity:.85;}
   .bld .bchip .ctl{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; margin-top:6px;} .bld .bchip .ctl label{display:inline-flex; align-items:center; gap:5px; font-size:0.74rem; font-weight:600;}
@@ -514,25 +515,25 @@
     h1{font-size:1.4rem;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610280858">
+<link rel="stylesheet" href="hub-house.css?v=202610281003">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610280858"></script>
-<script src="hub-tracker.js?v=202610280858"></script>
-<script src="hub-rotation.js?v=202610280858"></script>
-<script src="hub-xlsx.js?v=202610280858"></script>
-<script src="hub-docx.js?v=202610280858"></script>
-<script src="hub-timetable-parse.js?v=202610280858"></script>
-<script src="assignment-defaults.js?v=202610280858"></script>
-<script src="hub-shared.js?v=202610280858"></script>
-<script src="hub-store.js?v=202610280858"></script>
-<script src="hub-say.js?v=202610280858"></script>
-<script src="hub-sync.js?v=202610280858"></script>
-<script src="hub-notebook.js?v=202610280858"></script>
+<script src="hub-due.js?v=202610281003"></script>
+<script src="hub-tracker.js?v=202610281003"></script>
+<script src="hub-rotation.js?v=202610281003"></script>
+<script src="hub-xlsx.js?v=202610281003"></script>
+<script src="hub-docx.js?v=202610281003"></script>
+<script src="hub-timetable-parse.js?v=202610281003"></script>
+<script src="assignment-defaults.js?v=202610281003"></script>
+<script src="hub-shared.js?v=202610281003"></script>
+<script src="hub-store.js?v=202610281003"></script>
+<script src="hub-say.js?v=202610281003"></script>
+<script src="hub-sync.js?v=202610281003"></script>
+<script src="hub-notebook.js?v=202610281003"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1901,7 +1902,7 @@ function shelfHTML(B){
   const P = B.pattern, L = layout(P), endM = L.length ? L[L.length - 1].e : toMin(P.start);
   const clock = m => (window.hubClock ? hubClock(hm(m)) : hm(m));
   const lens = SHELF_KINDS.filter(x => x[0] !== 'blank').map(([k, l]) => `<label>${esc(l)} <input type="number" min="5" max="300" step="5" data-plen="${k}" value="${P.lens[k] || KIND_LEN[k]}"> min</label>`).join('');
-  const shelf = SHELF_KINDS.map(([k, l]) => `<button type="button" class="sh k-${k === 'blank' ? 'event' : k}" data-padd="${k}" title="Add to the end of the day">${esc(l)}<small>${k === 'blank' ? 'typed' : (P.lens[k] || KIND_LEN[k]) + ' min'}</small></button>`).join('');
+  const shelf = SHELF_KINDS.map(([k, l]) => `<button type="button" class="sh k-${k === 'blank' ? 'event' : k}" data-padd="${k}" draggable="true" title="Press to add it to the end of the day, or drag it onto the day">${esc(l)}<small>${k === 'blank' ? 'typed' : (P.lens[k] || KIND_LEN[k]) + ' min'}</small></button>`).join('');
   const chips = L.map((x, i) => {
     const t = x.tile, kk = x.k === 'blank' ? 'event' : x.k;
     return `<div class="bchip k-${kk}${t.len ? ' custom' : ''}${x.late ? ' late' : ''}" draggable="true" data-ptile="${i}">
@@ -1914,7 +1915,7 @@ function shelfHTML(B){
   }).join('');
   return `<div class="bsec shelfsec"><h4>1 · One day <small>the pattern every day follows</small></h4>
     <div class="brow"><span class="hint" style="margin:0">Start from</span><button type="button" class="btn quiet" data-ppreset="inputFirst">Input in the morning</button><button type="button" class="btn quiet" data-ppreset="tpFirst">Teaching practice in the morning</button></div>
-    <p class="hint">The shelf: press a tile to add it to the end of the day, drag the tiles on the day to put them in order. The times follow from the lengths, so you only say when the day starts.</p>
+    <p class="hint">The shelf: drag a tile onto the day where you want it, or press it to add it at the end; drag the tiles on the day to put them in order. The times follow from the lengths, so you only say when the day starts.</p>
     <div class="shelf">${shelf}</div>
     <div class="brow lens"><span class="hint" style="margin:0">How long, for the whole course:</span>${lens}</div>
     <div class="brow times"><label>The day starts <input type="time" id="bStart" value="${esc(P.start)}"></label><span class="hint" style="margin:0">and ends at <b>${esc(clock(endM))}</b></span></div>
@@ -1935,14 +1936,24 @@ function wireShelf(B){
   document.querySelectorAll('[data-punpin]').forEach(b => b.addEventListener('click', () => { delete P.tiles[+b.dataset.punpin].pin; render(); }));
   document.querySelectorAll('[data-pmove]').forEach(b => b.addEventListener('click', () => { const i = +b.dataset.pmove, j = i + (+b.dataset.d); if (j < 0 || j >= P.tiles.length) return; const t = P.tiles.splice(i, 1)[0]; P.tiles.splice(j, 0, t); render(); }));
   document.querySelectorAll('[data-prm]').forEach(b => b.addEventListener('click', () => { P.tiles.splice(+b.dataset.prm, 1); render(); }));
-  /* drag to reorder (a mouse; a phone uses Earlier and Later) */
-  let from = -1;
+  /* drag to reorder, and drag from the shelf onto the day (a mouse; a phone presses a shelf tile and uses Earlier and Later) */
+  let from = -1, kind = '';
+  document.querySelectorAll('[data-padd]').forEach(b => {
+    b.addEventListener('dragstart', e => { kind = b.dataset.padd; from = -1; try { e.dataTransfer.effectAllowed = 'copy'; e.dataTransfer.setData('text/plain', 'shelf:' + kind); } catch (er) {} });
+    b.addEventListener('dragend', () => { kind = ''; document.querySelectorAll('.bchip.over, .pday.over').forEach(x => x.classList.remove('over')); });
+  });
+  const pday = $('pday');
+  if (pday) {
+    pday.addEventListener('dragover', e => { if (!kind) return; e.preventDefault(); pday.classList.add('over'); });
+    pday.addEventListener('dragleave', e => { if (e.target === pday) pday.classList.remove('over'); });
+    pday.addEventListener('drop', e => { if (!kind || e.target.closest('.bchip')) return; e.preventDefault(); P.tiles.push({ k: kind }); kind = ''; render(); });
+  }
   document.querySelectorAll('.bchip').forEach(c => {
     c.addEventListener('dragstart', e => { from = +c.dataset.ptile; c.classList.add('drag'); try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(from)); } catch (er) {} });
     c.addEventListener('dragend', () => { c.classList.remove('drag'); document.querySelectorAll('.bchip.over').forEach(x => x.classList.remove('over')); });
-    c.addEventListener('dragover', e => { if (from < 0) return; e.preventDefault(); c.classList.add('over'); });
+    c.addEventListener('dragover', e => { if (from < 0 && !kind) return; e.preventDefault(); c.classList.add('over'); });
     c.addEventListener('dragleave', () => c.classList.remove('over'));
-    c.addEventListener('drop', e => { e.preventDefault(); const to = +c.dataset.ptile; if (from < 0 || from === to) return; const t = P.tiles.splice(from, 1)[0]; P.tiles.splice(to, 0, t); from = -1; render(); });
+    c.addEventListener('drop', e => { e.preventDefault(); const to = +c.dataset.ptile; if (kind) { P.tiles.splice(to, 0, { k: kind }); kind = ''; render(); return; } if (from < 0 || from === to) return; const t = P.tiles.splice(from, 1)[0]; P.tiles.splice(to, 0, t); from = -1; render(); });
   });
 }
 function buildPanelHTML(){

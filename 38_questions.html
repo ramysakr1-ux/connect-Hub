@@ -24,7 +24,7 @@
 <title>Questions</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610280858">
+<link rel="stylesheet" href="hub-tokens.css?v=202610281003">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);}
@@ -47,6 +47,7 @@
   .wall .from .src{font-weight:700; letter-spacing:.1em; text-transform:uppercase; font-size:11.5px; opacity:.8;}
   .wall .q{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:clamp(26px,4.2vw,52px); line-height:1.16; margin:0 0 22px; flex:1; overflow-wrap:anywhere;}
   .wall .voice{margin:0 0 20px;}
+  .wall .heardnote{margin:-14px 0 18px; font-size:13px; opacity:.75;}
   .wall .play{font:inherit; font-weight:700; font-size:18px; border:0; border-radius:999px; padding:14px 24px; background:var(--a-lemon); color:var(--ink); cursor:pointer;}
   .wall audio{display:block; width:100%; margin-top:12px;}
   .wall .acts{display:flex; flex-wrap:wrap; gap:10px; align-items:center;}
@@ -73,7 +74,7 @@
   body.full .wall{min-height:100vh; border-radius:0; padding:5vw;}
   .note{color:var(--grey); font-size:13px; margin:10px 0 0;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610280858">
+<link rel="stylesheet" href="hub-house.css?v=202610281003">
 </head>
 <body>
 <div class="wrap">
@@ -83,13 +84,13 @@
   <p class="lede">What trainees ask in an input session, and what the room asks from its own page. Open one on the wall to read it, hear it and answer it out loud, then tick it off.</p>
   <div id="app"><p class="lede">Loading the questions…</p></div>
 </div>
-<script src="hub-shared.js?v=202610280858"></script>
-<script src="hub-store.js?v=202610280858"></script>
-<script src="hub-say.js?v=202610280858"></script>
-<script src="hub-sync.js?v=202610280858"></script>
-<script src="vendor/qrcode.js?v=202610280858"></script>
-<script src="hub-qr.js?v=202610280858"></script>
-<script src="hub-notebook.js?v=202610280858"></script>
+<script src="hub-shared.js?v=202610281003"></script>
+<script src="hub-store.js?v=202610281003"></script>
+<script src="hub-say.js?v=202610281003"></script>
+<script src="hub-sync.js?v=202610281003"></script>
+<script src="vendor/qrcode.js?v=202610281003"></script>
+<script src="hub-qr.js?v=202610281003"></script>
+<script src="hub-notebook.js?v=202610281003"></script>
 <script>
 /* Whose room this is: the tutors'. */
 if (window.hubTutorRoomOnly && hubTutorRoomOnly()) { /* refused; hubTutorRoomOnly drew the room */ }
@@ -129,7 +130,7 @@ else (async function(){
     const voice = q.audio ? `<div class="voice"><button type="button" class="play" id="play">▶ Hear it · ${q.audio.seconds || ''}${q.audio.seconds ? ' s' : ''}</button><div id="aslot"></div></div>` : '';
     return `<section class="wall${q.state === 'answered' ? ' answered' : ''}">
       <div class="from"><b>${esc(q.name || 'Someone')}</b><span>${esc(when(q.at))}</span><span class="src">${esc(src(q))}${q.session && q.session.date && q.session.k !== 'room' ? ' · ' + esc(q.session.date) : ''}</span>${q.to ? `<span class="src">for ${esc(first(q.to))}</span>` : ''}${q.state === 'answered' ? '<span class="tick">Answered</span>' : ''}</div>
-      <p class="q">${q.text ? esc(q.text) : '<em>A voice question.</em>'}</p>
+      <p class="q">${q.text ? esc(q.text) : q.heard ? esc(q.heard) : '<em>A voice question.</em>'}</p>${!q.text && q.heard ? '<p class="heardnote">Written from the voice. The recording is the question.</p>' : ''}
       ${voice}
       <div class="acts"><button type="button" id="prev"${i === 0 ? ' disabled' : ''}>Previous</button><button type="button" id="next"${i === list.length - 1 ? ' disabled' : ''}>Next</button><span class="of">${i + 1} of ${list.length}</span><span class="sp"></span>
         <button type="button" class="done" id="ans">${q.state === 'answered' ? 'Put it back' : 'Answered'}</button></div>
@@ -141,7 +142,7 @@ else (async function(){
     if (!order.length) return '<div class="empty"><b>No questions yet.</b>They arrive here as they are asked.</div>';
     return '<div class="list">' + order.map(k => { const g = groups[k], q0 = g.q, room_ = q0.session && q0.session.k === 'room'; const sorted = g.items.slice().sort((a, b) => (a.state === 'answered') - (b.state === 'answered') || String(a.at).localeCompare(String(b.at)));
       return `<section class="sess"><h2>${esc(room_ ? 'Questions from the room' : src(q0))}</h2><p class="sub">${esc(room_ ? 'Asked from the room’s own page' : (q0.session && q0.session.date) || '')} · ${sorted.filter(x => x.state !== 'answered').length} open of ${sorted.length}</p>
-        ${sorted.map(q => `<div class="row ${q.state === 'answered' ? 'done' : 'open'}"><div class="t"><b>${esc(q.name || 'Someone')} · ${esc(when(q.at))}</b><span>${q.text ? esc(q.text) : '<em>A voice question.</em>'}</span></div><span class="st">${q.state === 'answered' ? 'Answered' : 'Open'}</span><button type="button" data-open="${esc(q.id)}">Open</button></div>`).join('')}</section>`; }).join('') + '</div>';
+        ${sorted.map(q => `<div class="row ${q.state === 'answered' ? 'done' : 'open'}"><div class="t"><b>${esc(q.name || 'Someone')} · ${esc(when(q.at))}</b><span>${q.text ? esc(q.text) : q.heard ? esc(q.heard) + ' <em>(by voice)</em>' : '<em>A voice question.</em>'}</span></div><span class="st">${q.state === 'answered' ? 'Answered' : 'Open'}</span><button type="button" data-open="${esc(q.id)}">Open</button></div>`).join('')}</section>`; }).join('') + '</div>';
   }
   function paint(){
     $('app').innerHTML = head() + (view === 'wall' ? wall() : list());
