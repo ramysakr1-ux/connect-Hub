@@ -266,7 +266,7 @@
     }).join('');
     $('centreLede').textContent = (who === 'tutor' || who === 'assessor')
       ? 'Links the center has added. Trainees see each one on the day the timetable gives that session; you see them all. They open where the center keeps them.'
-      : (tt && L.inputsOf(tt).length ? 'Each opens on the day the timetable gives that session, and stays here after. It opens where the center keeps it.' : 'Links the center has added. They open where the center keeps them.');
+      : (tt && L.inputsOf(tt).length ? 'Each opens ' + L.whenText(cs) + ', and stays here after. It opens where the center keeps it.' : 'Links the center has added. They open where the center keeps them.');
     $('centreCard').hidden = false;
   }
   function setStrip(show, tone, title, line, slug){
@@ -340,10 +340,16 @@
     var nameOf = function(x){ return isPage(x) ? NAMES[x.slug] : x.t; };
     var seenK = {}, all = inputsOf(tt).filter(function(x){ var k = x.date + '|' + x.s + '|' + (isPage(x) ? x.slug : x.t); if (seenK[k]) return false; seenK[k] = 1; return true; });
     var given = {};
-    all.forEach(function(x){ if (isPage(x) && x.date <= now) given[x.slug] = 1; });
+    all.forEach(function(x){ if (isPage(x) && L.isOpen(x, cs)) given[x.slug] = 1; });
     var todays = all.filter(function(x){ return x.date === now; });
+    /* opened early (settings.inputOpen): a session still to come that is already open */
+    var earlySeen = {}, early = all.filter(function(x){
+      if (x.date <= now || !L.isOpen(x, cs)) return false;
+      if (isPage(x)) { if (earlySeen[x.slug] || todays.some(function(t){ return t.slug === x.slug; })) return false; earlySeen[x.slug] = 1; }
+      return true;
+    });
     var aheadSeen = {}, ahead = all.filter(function(x){
-      if (x.date <= now || x.date > wk.sun) return false;
+      if (x.date <= now || x.date > wk.sun || L.isOpen(x, cs)) return false;
       if (isPage(x)) { if (given[x.slug] || aheadSeen[x.slug]) return false; aheadSeen[x.slug] = 1; }
       return true;
     });
@@ -358,15 +364,15 @@
         ? '<a class="s ext" href="' + esc(link.url) + '" target="_blank" rel="noopener noreferrer">' + head(x) + '<p class="m">' + pill + ' Opens where the center keeps it</p></a>'
         : '<div class="s still">' + head(x) + '<p class="m">' + pill + ' Taught in the room</p></div>';
     };
-    var lockedCard = function(x){ return '<div class="s locked" aria-disabled="true">' + head(x) + '<p class="m"><span class="pill">Opens ' + esc(dayName(x.date, true).split(' ')[0]) + '</span></p></div>'; };
-    var html = todays.map(openCard).join('') + ahead.map(lockedCard).join('') + earlier.map(openCard).join('');
+    var lockedCard = function(x){ return '<div class="s locked" aria-disabled="true">' + head(x) + '<p class="m"><span class="pill">Opens ' + esc(dayName(L.opensOn(x.date, cs), true).split(' ')[0]) + '</span></p></div>'; };
+    var html = todays.map(openCard).join('') + early.map(openCard).join('') + ahead.map(lockedCard).join('') + earlier.map(openCard).join('');
     $('myCards').innerHTML = html || '<p class="cardlede">No input sessions have been given on your course yet.</p>';
     var last = all.filter(function(x){ return isPage(x) && x.date <= now; }).pop();
     var next = all.filter(function(x){ return x.date > now; })[0] || null;
     if (last) setStrip(true, (last.date === now ? 'Today' : 'Last session') + ' · ' + dayName(last.date, true) + (last.s ? ' · ' + clockOf(last.s, cs) : ''),
       NAMES[last.slug], 'Open it again whenever you need it.', last.slug);
     else if (next) setStrip(true, 'Next · ' + dayName(next.date, true) + (next.s ? ' · ' + clockOf(next.s, cs) : ''),
-      nameOf(next), 'It opens here on the day it is taught.', '');
+      nameOf(next), 'It opens here ' + L.whenText(cs) + '.', '');
     else { setStrip(false); return; }
     var week = all.filter(function(x){ return x.date >= wk.mon && x.date <= wk.sun; });
     $('weekHead').textContent = 'This week';
@@ -375,7 +381,7 @@
       var cls = x.date < now ? 'done' : x.date === now ? 'now' : '';
       var name = open ? '<a href="' + esc(x.slug) + '/">' + esc(NAMES[x.slug]) + '</a>' : esc(nameOf(x));
       return '<li class="' + cls + '"><span>' + name + '</span><span>' + esc(dayName(x.date)) + '</span></li>';
-    }).join('') + '<li><span class="none">Each session opens here on the day it is taught.</span></li>'
+    }).join('') + '<li><span class="none">Each session opens here ' + esc(L.whenText(cs)) + '.</span></li>'
       : '<li><span class="none">No input sessions this week.</span></li>';
   }
   function run(tt, cs, who){

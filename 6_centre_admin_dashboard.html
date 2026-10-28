@@ -885,12 +885,23 @@
           <option value="own">Our own links only</option>
           <option value="both">Both</option>
         </select></div>
-        <p class="hintline" id="inputSessionsHint">Connect’s sessions, your own links, or both side by side. Each opens for the trainees on the day the timetable gives it, and stays open after. Tutors see every session.</p>
+        <p class="hintline" id="inputSessionsHint">Connect’s sessions, your own links, or both side by side. Each stays open for the trainees after it opens. Tutors see every session.</p>
+      </div>
+      <!-- WHEN THEY OPEN (Ramy, 28 Oct 2026: "is there an option to reveal them earlier? ... on the weekend or
+           something. Or not." / "good to have an option"). Read by input-sessions/library.js (InputLib.opensOn). -->
+      <div class="wide">
+        <label for="inputOpen">When the trainees can open them</label>
+        <div class="house-sel"><select id="inputOpen">
+          <option value="day">On the day it is taught</option>
+          <option value="before">The day before</option>
+          <option value="weekend">The whole week, from the weekend before</option>
+        </select></div>
+        <p class="hintline">Earlier lets the trainees read ahead. The timetable decides the day either way.</p>
       </div>
     </div>
     <!-- Ramy, 15 Oct 2026: trainees see an input session link only on the day the
          timetable gives that session; "make it clear to the center how it works". -->
-    <div class="guide-box"><h3>How input session links reach the trainees</h3><div class="gb"><p>Add each one with Add an input session, and give it the same name as its session on your timetable, for example Receptive skills. The trainees see a link on the day that session comes round on the timetable, and they keep it after. A link whose name no timetable session carries stays hidden from the trainees. You and the other tutors always see every link. Until your timetable lists input sessions, every link shows. Other links show as soon as they are switched on.</p></div></div>
+    <div class="guide-box"><h3>How input session links reach the trainees</h3><div class="gb"><p>Add each one with Add an input session, and give it the same name as its session on your timetable, for example Receptive skills. The trainees see a link when that session opens (When the trainees can open them, above), and they keep it after. A link whose name no timetable session carries stays hidden from the trainees. You and the other tutors always see every link. Until your timetable lists input sessions, every link shows. Other links show as soon as they are switched on.</p></div></div>
     <div id="candLinks" class="fields docs"></div>
     <!-- the two adds live under their own groups now (data-addgrp); these stay, hidden, as what those buttons press -->
     <button type="button" class="btn ghost" id="addInputSession" hidden>Add an input session</button> <button type="button" class="btn ghost" id="addCandLink" hidden>Add a link</button>
@@ -1444,6 +1455,7 @@ try {
     document.getElementById('askConnect').value = cs.askConnect === false ? 'off' : 'on';
     { const own = (cs.courseLinks || []).some(l => l && /input session/i.test(String(l.card || '') + ' ' + String(l.label || '')));
       document.getElementById('inputSessions').value = /^(connect|own|both)$/.test(String(cs.inputSessions || '')) ? cs.inputSessions : (own ? 'both' : 'connect'); }
+    document.getElementById('inputOpen').value = /^(day|before|weekend)$/.test(String(cs.inputOpen || '')) ? cs.inputOpen : 'day';
     { const r = document.querySelector('input[name="cardStyle"][value="' + (cs.cardStyle === 'ticket' ? 'ticket' : 'welcome') + '"]'); if (r) r.checked = true; }
     if(cs.planFrom) document.getElementById('planFrom').value = cs.planFrom;
     if(cs.analysisFrom) document.getElementById('analysisFrom').value = cs.analysisFrom;
@@ -1606,6 +1618,7 @@ function saveSettings(how){
     ttLayout: (document.getElementById('courseLayout') || {}).value === 'h' ? 'h' : 'v',
     askConnect: (document.getElementById('askConnect') || {}).value !== 'off',
     inputSessions: (document.getElementById('inputSessions') || {}).value || 'both',
+    inputOpen: (document.getElementById('inputOpen') || {}).value || 'day',
     deliveryMode: document.getElementById('deliveryMode').value || 'f2f',
     tutorNames: document.getElementById('tutorNames').value.trim(),
     timetableSet: TT_SET || 'forest',
@@ -2018,7 +2031,7 @@ document.getElementById('addInputSession').addEventListener('click', () => {
   /* a link of their own would stay hidden under "Connect's sessions": it moves to Both, and the line under it says so */
   const isel = document.getElementById('inputSessions');
   if (isel && isel.value === 'connect') { isel.value = 'both'; isel.dispatchEvent(new Event('change', { bubbles: true }));
-    const h = document.getElementById('inputSessionsHint'); if (h) h.textContent = 'Set to Both, so the trainees see your link as well as Connect’s session. Each opens on the day the timetable gives it.'; }
+    const h = document.getElementById('inputSessionsHint'); if (h) h.textContent = 'Set to Both, so the trainees see your link as well as Connect’s session.'; }
   readCandLinks(); CAND_LINKS.push({ label:'', url:'', card:'Input sessions', show:false }); renderCandLinks();
   const last = [...document.querySelectorAll('.cl-card')].filter(c => /input session/i.test(c.value)).pop();
   if (last) { const i = last.dataset.i; const el = document.querySelector(`.cl-label[data-i="${i}"]`); if (el) el.focus(); }

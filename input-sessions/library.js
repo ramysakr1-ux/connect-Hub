@@ -84,17 +84,32 @@ window.InputLib = (function(){
        connect  Connect's sessions; a link of the center's own for an input session stays hidden from trainees
        own      the center's own links only; Connect's sessions stay hidden from trainees
        both     both, side by side -- and what a course that never chose has always had
-     Either way a session opens on the day the timetable gives it. Tutors and the assessor see everything. */
+     Either way a session opens when settings.inputOpen says (below). Tutors and the assessor see everything. */
   function mode(cs){ var m = String((cs && cs.inputSessions) || ''); return /^(connect|own|both)$/.test(m) ? m : 'both'; }
   function connectOn(cs){ return mode(cs) !== 'own'; }
   function ownOn(cs){ return mode(cs) !== 'connect'; }
+  /* WHEN A SESSION OPENS (Ramy, 28 Oct 2026: "is there an option to reveal them earlier? ... on the weekend or
+     something. Or not." / "good to have an option"). settings.inputOpen, chosen on Course admin:
+       day      on the day the timetable gives it (what every course had before)
+       before   the day before
+       weekend  the whole week's sessions from the Saturday before that week
+     A session stays open after. Tutors and the assessor see everything. */
+  function openMode(cs){ var m = String((cs && cs.inputOpen) || ''); return /^(day|before|weekend)$/.test(m) ? m : 'day'; }
+  function opensOn(date, cs){
+    var d = dateOf(date), m = openMode(cs); if (!d || m === 'day') return String(date || '');
+    if (m === 'before') d.setDate(d.getDate() - 1);
+    else d.setDate(d.getDate() - ((d.getDay() + 6) % 7) - 2);
+    return iso(d);
+  }
+  function isOpen(x, cs){ return !!(x && x.date) && opensOn(x.date, cs) <= today(cs); }
+  function whenText(cs){ var m = openMode(cs); return m === 'before' ? 'the day before it is taught' : m === 'weekend' ? 'on the weekend before its week' : 'on the day it is taught'; }
   function isInputLink(l){ return /input session/i.test(String((l && l.card) || '') + ' ' + String((l && l.label) || '')); }
   function linkOpen(l, tt, cs){
     var inputs = rawInputs(tt);
     if (!inputs.length) return true;
     var now = today(cs), ln = norm(l && l.label), ls = slugsFor(l && l.label);
     return inputs.some(function(x){
-      if (x.date > now) return false;
+      if (opensOn(x.date, cs) > now) return false;
       var tn = norm(x.t);
       if (ln && tn && (tn.indexOf(ln) !== -1 || ln.indexOf(tn) !== -1)) return true;
       return ls.length > 0 && slugsFor(x.t).some(function(sl){ return ls.indexOf(sl) !== -1; });
@@ -160,7 +175,7 @@ window.InputLib = (function(){
       if (!H || H.isTutor() || H.isAssessor() || !H.token()) { reveal(); return; }
       if (!connectOn(cs)) { seal('own'); return; }
       var now = today(cs), mine = inputsOf(tt).filter(function(x){ return x.slug === slug; });
-      if (mine.some(function(x){ return x.date <= now; })) reveal(); else seal(mine.length ? 'later' : 'never');
+      if (mine.some(function(x){ return isOpen(x, cs); })) reveal(); else seal(mine.length ? 'later' : 'never');
     }
     if (!slug) { reveal(); return; }
     var demoCs = rd('connect_course_settings') || {};
@@ -177,7 +192,7 @@ window.InputLib = (function(){
   /* If anything goes wrong the page opens: a gate that can strand a trainee
      on a blank page is worse than no gate. */
   setTimeout(function(){ if (root.classList.contains('gating')) root.classList.remove('gating'); }, 8000);
-  return { mode: mode, connectOn: connectOn, ownOn: ownOn, linkOpen: linkOpen, homeLinkOk: homeLinkOk, isInputLink: isInputLink, slugsFor: slugsFor, inputsOf: inputsOf, today: today, rd: rd, iso: iso, dateOf: dateOf, gate: gate };
+  return { openMode: openMode, opensOn: opensOn, isOpen: isOpen, whenText: whenText, mode: mode, connectOn: connectOn, ownOn: ownOn, linkOpen: linkOpen, homeLinkOk: homeLinkOk, isInputLink: isInputLink, slugsFor: slugsFor, inputsOf: inputsOf, today: today, rd: rd, iso: iso, dateOf: dateOf, gate: gate };
 })();
 
 /* The demo is view only (Ramy, 24 Oct 2026): a session's "Print the handout"
