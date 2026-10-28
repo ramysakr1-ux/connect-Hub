@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610282149">
+<link rel="stylesheet" href="hub-tokens.css?v=202610282201">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -514,26 +514,34 @@
     .day.today{border-width:1px;}
     h1{font-size:1.4rem;}
   }
+
+  /* the empty timetable's three starts (28 Oct 2026) */
+  .ttstart{display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:12px; margin:6px 0 4px;} @media (max-width:820px){ .ttstart{grid-template-columns:1fr;} }
+  .ttstart .tcard{display:flex; flex-direction:column; gap:8px; padding:18px 20px; border-radius:14px; background:var(--paper); border:1.5px solid var(--sand-line); box-shadow:var(--nb-shadow, 0 8px 24px -16px rgba(0,0,0,.25));}
+  .ttstart .tcard.cx{background:color-mix(in oklch, var(--a-forest, var(--teal)) 8%, var(--paper)); border-color:color-mix(in oklch, var(--a-forest, var(--teal)) 30%, transparent);}
+  .ttstart .tcard b{font:700 1.1rem/1.2 Newsreader,Georgia,serif;} .ttstart .tcard > span{font-size:.88rem; line-height:1.45; color:var(--ink-2, var(--grey)); flex:1;}
+  .ttstart .tcard .btn{align-self:flex-start;}
+  .cxshapes{display:flex; flex-direction:column; gap:6px; margin:2px 0 4px;} .cxshapes label{display:flex; gap:8px; align-items:center; font-size:.9rem; cursor:pointer;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610282149">
+<link rel="stylesheet" href="hub-house.css?v=202610282201">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610282149"></script>
-<script src="hub-tracker.js?v=202610282149"></script>
-<script src="hub-rotation.js?v=202610282149"></script>
-<script src="hub-xlsx.js?v=202610282149"></script>
-<script src="hub-docx.js?v=202610282149"></script>
-<script src="hub-timetable-parse.js?v=202610282149"></script>
-<script src="assignment-defaults.js?v=202610282149"></script>
-<script src="hub-shared.js?v=202610282149"></script>
-<script src="hub-store.js?v=202610282149"></script>
-<script src="hub-say.js?v=202610282149"></script>
-<script src="hub-sync.js?v=202610282149"></script>
-<script src="hub-notebook.js?v=202610282149"></script>
+<script src="hub-due.js?v=202610282201"></script>
+<script src="hub-tracker.js?v=202610282201"></script>
+<script src="hub-rotation.js?v=202610282201"></script>
+<script src="hub-xlsx.js?v=202610282201"></script>
+<script src="hub-docx.js?v=202610282201"></script>
+<script src="hub-timetable-parse.js?v=202610282201"></script>
+<script src="assignment-defaults.js?v=202610282201"></script>
+<script src="hub-shared.js?v=202610282201"></script>
+<script src="hub-store.js?v=202610282201"></script>
+<script src="hub-say.js?v=202610282201"></script>
+<script src="hub-sync.js?v=202610282201"></script>
+<script src="hub-notebook.js?v=202610282201"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1478,9 +1486,11 @@ function render(){
         ? `<div class="carried"><h3>Start from ${esc(carried.from)}’s timetable</h3>
             <p>${carried.days.length} days came across with this course: their sessions, their times, the teaching practices and the notes. They go onto this course’s dates in order, day 1 on day 1. Everything stays editable.</p>
             <div class="bar"><button class="btn" id="fromCarried"${noDates ? ' disabled' : ''}>Start from ${esc(carried.from)}</button><button class="btn quiet" id="build"${noDates ? ' disabled' : ''}>Build a fresh one</button><span class="status">${noDates ? 'Set the course start and end dates on Course admin first.' : ''}</span></div></div>`
-        : `<div class="bar"><button class="btn primary" id="build"${noDates ? ' disabled' : ''}>Build the timetable</button><span class="status">${noDates ? 'Set the course start and end dates on Course admin first.' : 'Shape one day, tick the sessions, and Connect lays out every day with the teaching practices along it. Everything stays editable.'}</span></div>`)
-      : `<div class="empty">The timetable has not been set up yet.</div>`) + (IS_TUTOR ? buildPanelHTML() : '');
-    wireBuild();
+        : startCardsHTML(noDates) + (note ? `<p class="status" style="margin:10px 0 0">${esc(note)}</p>` : ''))
+      : `<div class="empty">The timetable has not been set up yet.</div>`) + (IS_TUTOR ? buildPanelHTML() + importHTML() : '');
+    wireBuild(); wireImport();
+    document.querySelectorAll('input[name=cxShape]').forEach(r => r.addEventListener('change', () => { CX_SHAPE = r.value; }));
+    if ($('cxUse')) $('cxUse').addEventListener('click', cxApply);
     if ($('fromCarried')) $('fromCarried').addEventListener('click', startFromCarried);
     return;
   }
@@ -1737,6 +1747,79 @@ const LIB_SESSIONS = [
   ['teaching-writing', 'Teaching writing'], ['teaching-literacy', 'Teaching literacy'], ['teaching-exam-classes', 'Teaching exam classes'],
   ['alternative-teaching-techniques', 'Alternative teaching techniques'], ['drama-in-the-elt-classroom', 'Drama in the ELT classroom'], ['life-after-celta', 'Life after CELTA']
 ];
+/* CONNECT'S TIMETABLE (Ramy, 28 Oct 2026: "the same thing we had with everything else ... the Connect timetable, you can
+   just go ahead and use it ... edit a few things inside the tiles ... drag and drop"; "the 4-week version, the 5-week
+   version"; Connect's own COURSE_SHAPES, src/lib/timetable-skeleton.ts: the same 20 contact days, only the weekdays
+   differ). Twenty days, finished: day one opens the course, sixteen days of teaching practice (TP 1 to 8, each over two
+   days, one teaching set a day), then a day of input and planning, the assessor's visit and the last day. Two input
+   sessions each morning in the library's teaching order, the tutors taking turns; the assignment sessions and the
+   Stage 1 and 2 tutorials in their places. Laid onto the course's own dates and weekdays, then changed like any other. */
+const CX_SHAPES = [
+  ['five_fri', 'Five weeks, Friday off', [1, 2, 3, 4]],
+  ['five_wed', 'Five weeks, Wednesday off', [1, 2, 4, 5]],
+  ['four', 'Four weeks, Monday to Friday', [1, 2, 3, 4, 5]]
+];
+const CX_ORDER = ['Lesson frameworks', 'Writing the lesson plan', 'Receptive skills', 'Language analysis', 'PPP', 'Eliciting and CCQs', 'Teaching vocabulary',
+  'Phonology: sounds', 'Text-based teaching', 'Guided discovery vs PPP', 'Error correction', 'Giving feedback on tasks', 'Word and sentence stress', 'Teaching speaking',
+  'Connected speech', 'Functional language', 'Teaching productive skills', 'Guided to less-guided practice', 'Teaching writing', 'Syllabus planning: TP7 and TP8',
+  'Teaching literacy', 'Adapting the coursebook', 'Teaching exam classes', 'Dealing with mixed levels', 'Alternative teaching techniques', 'Drama in the ELT classroom',
+  'Teaching online', 'Life after CELTA'];
+/* the second morning slot of these days (or the first, where said) is a task, not an input session */
+const CX_TASKS = { '4.2': 'Focus on the Learner: the assignment', '7.2': 'Language Related Tasks: the assignment', '10.2': 'Stage 1 tutorials',
+  '11.2': 'Language Skills Related Tasks: the assignment', '13.2': 'Stage 2 tutorials', '15.1': 'Lessons from the Classroom: the assignment' };
+function cxDays(){
+  const two = (String(SETTINGS.tutorNames || '').split(/[,\n;]+/).filter(x => x.trim()).length) > 1;
+  const by = k => (two ? k : 0);
+  const morning = (a, b) => [
+    Object.assign({ s: '10:00', e: '11:00' }, a),
+    { s: '11:00', e: '11:15', k: 'break', t: 'Break' },
+    Object.assign({ s: '11:15', e: '12:15' }, b),
+    { s: '12:15', e: '13:15', k: 'lunch', t: 'Lunch' }];
+  const order = CX_ORDER.slice(), days = [];
+  const slot = (d, n) => { const t = CX_TASKS[d + '.' + n]; return t ? { k: 'task', t, by: by(n - 1) } : { k: 'input', t: order.shift(), by: by(n - 1) }; };
+  days.push({ sessions: morning({ k: 'input', t: 'Course introduction', by: by(0) }, { k: 'input', t: 'Classroom management', by: by(1) }).concat([
+    { s: '13:30', e: '14:15', k: 'demo', t: 'Demonstration lesson' }, { s: '14:15', e: '15:00', k: 'event', t: 'Getting to know you: your activity' },
+    { s: '15:15', e: '16:30', k: 'plan', t: 'Lesson planning: TP1' }]) });
+  for (let d = 1; d <= 16; d++) days.push({ tp: Math.ceil(d / 2), setIndex: (d - 1) % 2, sessions: morning(slot(d, 1), slot(d, 2)).concat([
+    { s: '13:15', e: '13:30', k: 'plan', t: 'TP preparation' }, { s: '13:30', e: '14:15', k: 'tp' }, { s: '14:15', e: '15:00', k: 'tp' }, { s: '15:15', e: '16:00', k: 'tp' },
+    { s: '16:15', e: '17:00', k: 'plan', t: 'Lesson planning' }, { s: '17:15', e: '18:00', k: 'feedback', t: 'TP feedback', room: 'Feedback and tutorials' }]) });
+  days.push({ sessions: morning(slot(17, 1), slot(17, 2)).concat([{ s: '13:30', e: '15:00', k: 'plan', t: 'Lesson planning' }, { s: '15:00', e: '16:30', k: 'event', t: 'Work on assignments' }]) });
+  days.push({ sessions: morning({ k: 'assessor', t: 'Assessor visit: teaching practice', by: by(0) }, { k: 'assessor', t: 'Assessor visit: feedback', by: by(1) }).concat([{ s: '13:30', e: '15:00', k: 'plan', t: 'Lesson planning' }, { s: '15:00', e: '16:30', k: 'event', t: 'Work on assignments' }]) });
+  days.push({ sessions: morning({ k: 'event', t: 'Course review and CELTA 5 checks', by: by(0) }, { k: 'event', t: 'End of course', by: by(1) }).concat([{ s: '13:30', e: '15:00', k: 'plan', t: 'Lesson planning' }, { s: '15:00', e: '16:30', k: 'event', t: 'Work on assignments' }]) });
+  days.forEach(day => day.sessions.forEach((x, i) => { x.id = (x.k || 'x') + (i + 1); if (x.by === undefined) delete x.by; }));
+  return days;
+}
+/* the dates: from the course's start, on the shape's weekdays, twenty of them */
+function cxDates(meets){
+  const s = parse(SETTINGS.start); if (!s) return [];
+  const out = []; for (let d = new Date(s); out.length < 20 && out.length < 400; d.setDate(d.getDate() + 1)) if (meets.indexOf(d.getDay()) !== -1) out.push(ymd(d));
+  return out;
+}
+let CX_SHAPE = 'five_fri';
+function cxApply(){
+  const shape = CX_SHAPES.find(x => x[0] === CX_SHAPE) || CX_SHAPES[0], dates = cxDates(shape[2]);
+  if (dates.length < 20) { note = 'Set the course start date on Course admin first.'; render(); return; }
+  const end = parse(SETTINGS.end), last = parse(dates[19]);
+  const days = cxDays().map((d, i) => Object.assign({ date: dates[i], notes: '' }, d));
+  if (!TT) TT = { v: 3, days: [], slots: [] };
+  remember();
+  TT = { v: 3, days, slots: [], published: false, built: new Date().toISOString(), meets: shape[2].slice(), from: 'connect:' + shape[0] };
+  const inputs = days.reduce((a, d) => a + d.sessions.filter(x => x.k === 'input').length, 0);
+  save('Built', { text: 'Connect’s timetable (' + shape[1] + '): 20 days, 16 with teaching practice, ' + inputs + ' input sessions' });
+  note = 'Connect’s timetable is on the board (' + shape[1] + '), ' + dayName(dates[0]) + ' to ' + dayName(dates[19]) + '. Drag a tile to move it, click one to change it, then set it for the course.'
+    + (end && last && last > end ? ' The course ends ' + dayName(SETTINGS.end) + ' on Course admin, before the last day here: change the end date there.' : '');
+  render();
+}
+/* the empty timetable: three ways to start, as everywhere else (Connect's, your own from a sheet, or built) */
+function startCardsHTML(noDates){
+  return `<div class="ttstart">
+    <div class="tcard cx"><b>Connect’s timetable</b><span>Twenty days, ready to teach: the input sessions in teaching order with the tutors’ turns, teaching practice, feedback, the assignment sessions and the tutorials. Laid onto your course’s dates, then yours to change.</span>
+      <div class="cxshapes">${CX_SHAPES.map(([k, l]) => `<label><input type="radio" name="cxShape" value="${k}"${CX_SHAPE === k ? ' checked' : ''}> ${esc(l)}</label>`).join('')}</div>
+      <button class="btn primary" id="cxUse"${noDates ? ' disabled' : ''}>Use Connect’s timetable</button></div>
+    <div class="tcard"><b>Import yours from a sheet</b><span>A Google Sheet, an Excel or Word file, or rows pasted in: one row a day. Connect lays it onto your dates.</span><button class="btn quiet" id="importOpen"${noDates ? ' disabled' : ''}>Import from a sheet</button></div>
+    <div class="tcard"><b>Build your own</b><span>Shape one day from tiles, choose the sessions, and Connect lays out every day.</span><button class="btn quiet" id="build"${noDates ? ' disabled' : ''}>Build the timetable</button></div>
+  </div>${noDates ? '<p class="status">Set the course start and end dates on Course admin first.</p>' : ''}`;
+}
 function courseDates(){
   const s = parse(SETTINGS.start), e = parse(SETTINGS.end); if (!s || !e) return [];
   const MEETS = window.hubMeets ? hubMeets(TT) : [1, 2, 3, 4, 5], out = [];
