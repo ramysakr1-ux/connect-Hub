@@ -23,7 +23,7 @@
 <title>Connect Lite — Tutor dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610282339">
+<link rel="stylesheet" href="hub-tokens.css?v=202610282350">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -506,7 +506,7 @@
   @media(max-width:560px){ .welcome.join{padding:24px 18px 20px;} .welcome.join .wname{transform:none;} .dv6-date{flex-basis:100%;} }
   @media print{ .dv6-brief{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610282339">
+<link rel="stylesheet" href="hub-house.css?v=202610282350">
 </head>
 <body>
 <div class="board">
@@ -588,7 +588,7 @@
   <div id="onlineRooms"></div>
   <!-- The course stream: the tutors' posts to the whole course or to a TP
        group, with the composer on top (Ramy, 28 Sep 2026). -->
-  <section class="stream" id="stream"></section>
+  <section class="stream board" id="stream"></section>
   <!-- From the course (2 Oct 2026): the demonstration lesson and the GTKY
        activities, shared by link with everyone on the course. hub-shelf.js. -->
   <section class="stream shelf" id="shelf" hidden></section>
@@ -612,24 +612,24 @@
 
 </div>
 
-<script src="hub-due.js?v=202610282339"></script>
-<script src="observation-defaults.js?v=202610282339"></script>
-<script src="hub-rotation.js?v=202610282339"></script>
-<script src="hub-shared.js?v=202610282339"></script>
-<script src="hub-store.js?v=202610282339"></script>
-<script src="hub-say.js?v=202610282339"></script>
-<script src="hub-hand.js?v=202610282339"></script>
-<script src="hub-ink.js?v=202610282339"></script>
-<script src="hub-shelf.js?v=202610282339"></script>
+<script src="hub-due.js?v=202610282350"></script>
+<script src="observation-defaults.js?v=202610282350"></script>
+<script src="hub-rotation.js?v=202610282350"></script>
+<script src="hub-shared.js?v=202610282350"></script>
+<script src="hub-store.js?v=202610282350"></script>
+<script src="hub-say.js?v=202610282350"></script>
+<script src="hub-hand.js?v=202610282350"></script>
+<script src="hub-ink.js?v=202610282350"></script>
+<script src="hub-shelf.js?v=202610282350"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202610282339"></script>
-<script src="hub-sync.js?v=202610282339"></script>
-<script src="hub-notebook.js?v=202610282339"></script>
-<script src="hub-tracker.js?v=202610282339"></script>
-<script src="hub-feedback.js?v=202610282339"></script>
+<script src="assignment-defaults.js?v=202610282350"></script>
+<script src="hub-sync.js?v=202610282350"></script>
+<script src="hub-notebook.js?v=202610282350"></script>
+<script src="hub-tracker.js?v=202610282350"></script>
+<script src="hub-feedback.js?v=202610282350"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a trainee's link opened it and read the course and
@@ -1294,7 +1294,7 @@ nameInput.addEventListener('input', ()=>{ localStorage.setItem('chub:tutorName',
   const when = iso => { const d = new Date(iso); if (isNaN(d)) return ''; const same = d.toDateString() === new Date().toDateString(); return same ? 'Today, ' + window.hubTimeOf(d) : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }); };
   const read = () => { try { return (JSON.parse(localStorage.getItem(KEY)) || []).filter(p => p && p.text); } catch(err) { return []; } };
   const groups = () => [...new Set(people().map(p => p.group).filter(Boolean).map(String))].sort();
-  let showAll = false, busy = false, note = '', pending = null;
+  let showAll = false, busy = false, note = '', pending = null, composing = false;
   /* A post with a "by when" (28 Sep 2026): a gold pill counting down, and
      the post stays at the top until the date passes. Shared with the home. */
   const dueState = p => (p && p.due && window.HubDue) ? HubDue.state(p.due) : { has: false };
@@ -1335,13 +1335,18 @@ nameInput.addEventListener('input', ()=>{ localStorage.setItem('chub:tutorName',
     const SHOWN = 2;
     const list = showAll ? posts : posts.slice(0, SHOWN);
     const gs = groups(); const last = localStorage.getItem('chub:streamTo') || '';
-    host.innerHTML = `<div class="shead"><h2>Course noticeboard</h2><span class="new">${e(note)}</span>${posts.length > SHOWN ? `<button class="more" type="button">${showAll ? 'Fewer' : 'Older posts (' + (posts.length - SHOWN) + ')'}</button>` : ''}</div>`
-      + `<div class="compose"><div class="row"><span class="who" aria-hidden="true">${e(initials(nameInput.value))}</span><textarea id="streamText" placeholder="Tell the course something — a room change, a deadline, where to find a file. Links become clickable."></textarea></div>
+    /* A NOTICEBOARD (Ramy, 28 Oct 2026: "the course noticeboard needs to look like a course noticeboard"): the notices
+       are pinned papers on a board; the form waits behind Pin a notice. */
+    const open = composing || pending;
+    host.innerHTML = `<div class="shead"><h2>Course noticeboard</h2><span class="new">${e(note)}</span>${posts.length > SHOWN ? `<button class="more" type="button">${showAll ? 'Fewer' : 'Older notices (' + (posts.length - SHOWN) + ')'}</button>` : ''}${open ? '' : '<button class="pinbtn" type="button" id="pinOpen">Pin a notice</button>'}</div>`
+      + `<div class="compose"${open ? '' : ' hidden'}><div class="row"><span class="who" aria-hidden="true">${e(initials(nameInput.value))}</span><textarea id="streamText" placeholder="Tell the course something — a room change, a deadline, where to find a file. Links become clickable."></textarea></div>
          ${pending ? (() => { const a = audience(pending.to); return `<div class="check" role="alert"><div class="ttl">Are you sure?</div><div class="msg">This post is going to <b>${e(a.name)}</b> — ${a.n} trainee${a.n === 1 ? '' : 's'}${pending.to ? '' : ', every group'}. ${pending.publishAt && window.HubDue ? `It goes out on <b>${e(HubDue.state(pending.publishAt).due)}</b>; until then only the tutors see it.` : 'They will see it on their home the moment you post.'}${pending.due && window.HubDue ? ` It counts down to <b>${e(HubDue.state(pending.due).due)}</b> and stays at the top of their noticeboard until then.` : ''}</div><div class="acts"><button class="btn-back" type="button" id="streamBack">Cancel</button><button class="btn-post primary" type="button" id="streamConfirm"${busy ? ' disabled' : ''}>${pending.publishAt ? 'Schedule it' : 'Post anyway'}</button></div></div>`; })() : ''}
-         <div class="bar"${pending ? ' hidden' : ''}><div class="house-sel"><select id="streamTo"><option value="">The whole course</option>${gs.map(g => `<option value="${e(g)}"${g === last ? ' selected' : ''}>Group ${e(g)}</option>`).join('')}</select></div><label class="bywhen">By when <input type="datetime-local" id="streamDue" title="Optional — a date the post counts down to"></label><label class="bywhen">Post on <input type="datetime-local" id="streamWhen" title="Optional — leave it empty to post now"></label><span class="hint">The whole course is the main course tutor’s; a group is its tutor’s.</span><button class="btn-post primary" type="button" id="streamPost"${busy ? ' disabled' : ''}>Post</button></div></div>`
-      + (back.length ? `<p class="slabel">Held back — the trainees do not see these yet</p>` + back.map(heldRow).join('') + (posts.length ? `<p class="slabel">Posted</p>` : '') : '')
-      + list.map(p => `<article class="post" data-id="${e(p.id)}"><span class="who" aria-hidden="true">${e(initials(p.by))}</span><div><div class="top"><b>${e(p.by || 'Tutor')}</b><span class="to">${p.to ? 'Group ' + e(p.to) : 'Whole course'}</span><span>${e(when(p.at))}</span>${duePill(p)}<button class="rm" type="button" data-rm="${e(p.id)}" title="Delete this post">Delete</button></div><p class="body">${linkify(p.text)}</p></div></article>`).join('')
-      + (posts.length || back.length ? '' : '<p class="empty">Nothing posted yet. The trainees see this noticeboard on their home.</p>');
+         <div class="bar"${pending ? ' hidden' : ''}><div class="house-sel"><select id="streamTo"><option value="">The whole course</option>${gs.map(g => `<option value="${e(g)}"${g === last ? ' selected' : ''}>Group ${e(g)}</option>`).join('')}</select></div><label class="bywhen">By when <input type="datetime-local" id="streamDue" title="Optional — a date the post counts down to"></label><label class="bywhen">Post on <input type="datetime-local" id="streamWhen" title="Optional — leave it empty to post now"></label><span class="hint">The whole course is the main course tutor’s; a group is its tutor’s.</span><button class="btn-back" type="button" id="pinClose">Cancel</button><button class="btn-post primary" type="button" id="streamPost"${busy ? ' disabled' : ''}>Pin it</button></div></div>`
+      + (back.length ? `<p class="slabel">Held back — the trainees do not see these yet</p><div class="pins">` + back.map(heldRow).join('') + '</div>' + (posts.length ? `<p class="slabel">On the board</p>` : '') : '')
+      + (list.length ? '<div class="pins">' : '') + list.map(p => `<article class="post" data-id="${e(p.id)}"><span class="who" aria-hidden="true">${e(initials(p.by))}</span><div><div class="top"><b>${e(p.by || 'Tutor')}</b><span class="to">${p.to ? 'Group ' + e(p.to) : 'Whole course'}</span><span>${e(when(p.at))}</span>${duePill(p)}<button class="rm" type="button" data-rm="${e(p.id)}" title="Delete this post">Delete</button></div><p class="body">${linkify(p.text)}</p></div></article>`).join('') + (list.length ? '</div>' : '')
+      + (posts.length || back.length ? '' : '<p class="empty">Nothing on the board yet. The trainees see this noticeboard on their home.</p>');
+    const po = host.querySelector('#pinOpen'); if (po) po.addEventListener('click', () => { composing = true; draw(); host.querySelector('#streamText').focus(); });
+    const pc = host.querySelector('#pinClose'); if (pc) pc.addEventListener('click', () => { composing = false; draw(); });
     host.querySelectorAll('[data-now]').forEach(b => b.addEventListener('click', () => postAt(b.dataset.now, '')));
     host.querySelectorAll('[data-when]').forEach(b => b.addEventListener('click', () => { whenFor = b.dataset.when; draw(); const i = host.querySelector('.whenpick'); if (i) i.focus(); }));
     host.querySelectorAll('[data-unpick]').forEach(b => b.addEventListener('click', () => { whenFor = null; draw(); }));
@@ -1375,7 +1380,7 @@ nameInput.addEventListener('input', ()=>{ localStorage.setItem('chub:tutorName',
   async function send(){
     if (!pending) return; const { to, text, due, publishAt } = pending; const by = nameInput.value.trim();
     busy = true; note = publishAt ? 'Scheduling…' : 'Posting…'; draw();
-    try { const r = await window.HubStore.call(Object.assign({ op: 'post', by, to, text }, due ? { due } : {}, publishAt ? { publishAt } : {})); localStorage.setItem(KEY, JSON.stringify(r.stream || [])); note = ''; pending = null; }
+    try { const r = await window.HubStore.call(Object.assign({ op: 'post', by, to, text }, due ? { due } : {}, publishAt ? { publishAt } : {})); localStorage.setItem(KEY, JSON.stringify(r.stream || [])); note = ''; pending = null; composing = false; }
     catch(err) { note = 'Could not post — ' + (err.message || err); }
     busy = false; draw();
   }
