@@ -331,7 +331,7 @@
     const levelOf = (t) => (levelAt && t + 1 >= levelAt ? 1 : 0);
     const typeOf = (t, i, perm) => { const f = (fixed[t] || [])[i]; return f || ((day[t] || [])[perm[i]] || ''); };
     const choices = (t) => (fixed[t] && fixed[t].some(Boolean)) ? [rot(t)] : perms;
-    const seen = Array.from({ length: n }, () => [{}, {}]);
+    const seen = Array.from({ length: n }, () => [{}, {}]), last = Array.from({ length: n }, () => '');
     const lang = Array.from({ length: n }, () => 0), lead = Array.from({ length: n }, () => 0);
     let best = null, cur = [];
     function walk(t, rep, dist) {
@@ -344,16 +344,19 @@
       }
       const r = rot(t);
       choices(t).forEach((perm) => {
-        let add = 0, d = 0; const undo = [];
+        let add = 0, d = 0, back = 0; const undo = [], prev = last.slice();
         for (let i = 0; i < n; i++) {
           const ty = typeOf(t, i, perm), lv = levelOf(t);
+          if (ty && ty === last[i]) back++;     // the same type two practices running, across the change of class too
           if (ty) { if (seen[i][lv][ty]) add++; seen[i][lv][ty] = (seen[i][lv][ty] || 0) + 1; undo.push([i, lv, ty]); }
+          last[i] = ty || last[i];
           if (ty && LANGUAGE_FOCUS.indexOf(ty) >= 0) lang[i]++;
           if (perm[i] === 0) lead[i]++;
           if (perm[i] !== r[i]) d++;
         }
-        cur[t] = perm.slice(); walk(t + 1, rep + add, dist + d);
+        cur[t] = perm.slice(); walk(t + 1, rep + add, dist + d + back * 200);   // 200 a back-to-back: below a repeat in a level, above the rotation's own order
         undo.forEach((u) => { seen[u[0]][u[1]][u[2]]--; });
+        for (let i = 0; i < n; i++) last[i] = prev[i];
         for (let i = 0; i < n; i++) { const ty = typeOf(t, i, perm); if (ty && LANGUAGE_FOCUS.indexOf(ty) >= 0) lang[i]--; if (perm[i] === 0) lead[i]--; }
       });
     }
