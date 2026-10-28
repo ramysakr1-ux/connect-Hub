@@ -262,6 +262,19 @@
     if (b) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); await sleep(500); b.click(); for (var w = 0; w < 40 && !document.querySelector('button[data-rel]'); w++) await sleep(250); }
     var rel = [].slice.call(document.querySelectorAll('button[data-rel][data-on="1"]'));
     if (!rel.length && !document.querySelector('button[data-rel]')) { say('Put the trainees and a TP point set on the course first.'); return; }
+    /* THE AUDIO IS BUILT IN (Ramy, 28 Oct 2026: "this is very important ... to show that the audio is built in, that the pages
+       you teach from are there, that the other two teachers' are there"). The books' own recordings are not ours to ship, so
+       every lesson that names a track gets a short recording of one of Connect's own scripts in the house voices, labelled
+       as made for the demo. The track number stays: it is what the book would say. The pages are the set's own. */
+    (function(){
+      var Pp = g('P'); if (!Pp || !Pp.groups) return;
+      var n = 0, base = new URL('demo-media/connect-demo/audio/', location.href).href;
+      Object.keys(Pp.groups).forEach(function(grp){ Object.keys(Pp.groups[grp]).forEach(function(tok){ var row = Pp.groups[grp][tok]; Object.keys(row).forEach(function(k){
+        var c = row[k]; if (!c || !c.audio || !c.audio.url) return;
+        c.audio.url = String(c.audio.url).split(/\n+/).map(function(line){ line = line.trim(); if (!line || line.indexOf('|') > -1 || /^(https?:)?\/\//i.test(line)) return line; n++; return line + ' \u00b7 made for the Connect demo | ' + base + 'track-' + ((n % 5) + 1) + '.mp3'; }).join('\n');
+      }); }); });
+      if (n && typeof g('persist') === 'function') g('persist')('Demo recordings attached');
+    })();
     for (var i = 0; i < 4; i++) {
       var r = document.querySelector('button[data-rel][data-on="1"]'); if (!r) break;
       r.scrollIntoView({ block: 'center', behavior: 'smooth' }); await sleep(600); r.click(); await sleep(700);
