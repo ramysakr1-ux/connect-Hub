@@ -25,7 +25,7 @@
 <title>Connect Lite — Assessor pack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610290033">
+<link rel="stylesheet" href="hub-tokens.css?v=202610290039">
 <style>
   :root{
     /* the control fill, for the shared confirm modal's Cancel button */
@@ -291,7 +291,7 @@
   @media(max-width:560px){ .ap9{padding:22px 18px 18px; border-radius:12px;} .ap9-stats div{min-width:0; flex:1 1 120px;} }
   @media print{ .ap9{display:none !important;} .panel.ap9-obs{border-left:0; background:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610290033">
+<link rel="stylesheet" href="hub-house.css?v=202610290039">
 </head>
 <body data-signout="float">
 <div class="board">
@@ -323,15 +323,16 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202610290033"></script>
-<script src="hub-shared.js?v=202610290033"></script>
-<script src="assignment-defaults.js?v=202610290033"></script>
-<script src="hub-tracker.js?v=202610290033"></script>
-<script src="hub-rotation.js?v=202610290033"></script>
-<script src="hub-attendance.js?v=202610290033"></script>
-<script src="hub-store.js?v=202610290033"></script>
-<script src="hub-say.js?v=202610290033"></script>
-<script src="hub-sync.js?v=202610290033"></script>
+<script src="observation-defaults.js?v=202610290039"></script>
+<script src="hub-shared.js?v=202610290039"></script>
+<script src="fol-interview.js?v=202610290039"></script>
+<script src="assignment-defaults.js?v=202610290039"></script>
+<script src="hub-tracker.js?v=202610290039"></script>
+<script src="hub-rotation.js?v=202610290039"></script>
+<script src="hub-attendance.js?v=202610290039"></script>
+<script src="hub-store.js?v=202610290039"></script>
+<script src="hub-say.js?v=202610290039"></script>
+<script src="hub-sync.js?v=202610290039"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -1009,6 +1010,21 @@ function observationBlock(tr){
     `<div class="tp"><div class="tp-row"><span class="n"></span><span class="meta"></span><a class="btn ghost" href="18_observation_tasks.html?trainee=${encodeURIComponent(tr.id)}">Open the sheets</a></div></div>`;
 }
 /* The CELTA 5 Record Booklet: where each stage stands, and the door. */
+/* THE TRAINEE'S OWN GETTING TO KNOW YOU (Ramy, 28 Oct 2026: "for every trainee, it's only the getting to know you that
+   they chose to do ... and their interview, the transcription, what they heard"). The activity picked, every pick if
+   there was more than one, and the student interview as the trainee wrote it: answers, recordings, transcripts, what
+   was heard. The bank of activities lives in the library; the pool across the course is the tutors' own door. */
+function gtkyBlock(tr){
+  const SEP = ' \u2014 ';
+  const picks = (rec('connect_shared_v1') || []).filter(x => x && (x.kind || '') === 'gtky' && String(x.name || '').endsWith(SEP + tr.name)).map(x => String(x.name).slice(0, String(x.name).lastIndexOf(SEP)));
+  const iv = tr.interview && tr.interview.students ? tr.interview : null;
+  const FOL = window.CONNECT_HUB_FOL;
+  const ivHtml = iv && FOL ? FOL.summaryHtml(iv) : '';
+  if (!picks.length && !ivHtml) return '';
+  const act = picks.length ? `<div class="tp"><div class="tp-row"><span class="n">Activity</span><span class="meta"><b>${picks.map(esc).join('</b>, then <b>')}</b>${picks.length > 1 ? ' <span class="sub">(picked ' + picks.length + ' times)</span>' : ''}</span></div></div>` : '';
+  const int = ivHtml ? `<div class="tp"><div class="tp-row"><span class="n">Interview</span><span class="meta"><b>${Object.keys(iv.students).length}</b> student${Object.keys(iv.students).length === 1 ? '' : 's'} interviewed, for Focus on the Learner</span><button class="btn ghost" type="button" data-doc="gtky">Show the interview</button></div><div class="doc" id="doc-gtky" hidden>${ivHtml}</div></div>` : '';
+  return act + int;
+}
 function agreementRow(tr){
   const a = tr.agreement || {};
   if (!a.at) return '';
@@ -1057,6 +1073,8 @@ function renderOne(tr){
     </div>
     <h2 class="sect">Teaching practice <small>the document the trainee received, as returned</small></h2>
     <div class="panel">${tpSection(tr, c)}</div>
+    ${gtkyBlock(tr) ? `<h2 class="sect">Getting to know you <small>day one, unassessed</small></h2>
+    <div class="panel">${gtkyBlock(tr)}</div>` : ''}
     <h2 class="sect">Assignments <small>in the center’s order</small></h2>
     <div class="panel">${assignmentSection(tr)}</div>
     <h2 class="sect">Observations <small>the sheets, as the trainee wrote them</small></h2>
@@ -1075,7 +1093,8 @@ function renderOne(tr){
   $('app').addEventListener('click', e => {
     const b = e.target.closest('[data-doc]'); if (!b) return;
     const d = $('doc-' + b.dataset.doc); if (!d) return;
-    d.hidden = !d.hidden; b.textContent = d.hidden ? 'Show the document' : 'Hide the document';
+    d.hidden = !d.hidden; const what = b.dataset.doc === 'gtky' ? 'the interview' : 'the document'; b.textContent = (d.hidden ? 'Show ' : 'Hide ') + what;
+    if (b.dataset.doc === 'gtky' && !d.hidden && window.CONNECT_HUB_FOL && !d.dataset.wired) { d.dataset.wired = '1'; try { CONNECT_HUB_FOL.wirePlay(d); } catch (e) {} }
   });
   if (location.hash && /^#tp\d$/.test(location.hash)) { const b = document.querySelector(`[data-doc="${location.hash.slice(1)}"]`); if (b) b.click(); const el = $(location.hash.slice(1)); if (el) hubScrollIntoView(el, 'start'); }
 }
