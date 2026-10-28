@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610281406">
+<link rel="stylesheet" href="hub-tokens.css?v=202610281417">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -568,6 +568,7 @@
   .ownterms{background:color-mix(in oklch, var(--a-mustard) 12%, var(--paper)); border:1px solid color-mix(in oklch, var(--a-mustard) 45%, var(--paper)); border-radius:12px; padding:12px 14px 14px; margin-top:6px;}
   .ownterms label{color:var(--ink) !important;}
   .agrchoice{margin:14px 0 10px;}
+  .pinwho{margin:8px 0 0; padding-left:18px; font-size:0.86rem; line-height:1.5;} .pinwho li{margin:2px 0;}
   .addgrp{margin-top:10px; display:inline-flex; align-items:center; gap:8px; border-radius:999px; font-weight:700;}
   .addgrp-input{background:var(--a-forest) !important; color:var(--paper) !important; border:0 !important; padding:10px 18px !important;} .addgrp-input::before{content:'+'; font-size:1.1em;}
   .addgrp-link{background:transparent !important; color:var(--teal) !important; border:1.5px dashed var(--sand-line) !important; box-shadow:none !important; padding:9px 17px !important;} .addgrp-link::before{content:'+'; font-size:1.1em;}
@@ -587,7 +588,7 @@
   .tset-opt:has(input:checked){border-color:var(--a-forest, var(--teal)); box-shadow:0 0 0 2px color-mix(in oklch, var(--a-forest, var(--teal)) 25%, transparent);}
   .tsets .hintline{flex-basis:100%; margin:0;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610281406">
+<link rel="stylesheet" href="hub-house.css?v=202610281417">
 </head>
 <body>
 <div class="board">
@@ -1154,18 +1155,18 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610281406"></script>
-<script src="hub-store.js?v=202610281406"></script>
-<script src="hub-say.js?v=202610281406"></script>
-<script src="agreement-defaults.js?v=202610281406"></script>
-<script src="observation-defaults.js?v=202610281406"></script>
-<script src="hub-shared.js?v=202610281406"></script>
-<script src="hub-rotation.js?v=202610281406"></script>
-<script src="hub-due.js?v=202610281406"></script>
-<script src="hub-sync.js?v=202610281406"></script>
-<script src="hub-notebook.js?v=202610281406"></script>
-<script src="hub-hand.js?v=202610281406"></script>
-<script src="hub-ink.js?v=202610281406"></script>
+<script src="assignment-defaults.js?v=202610281417"></script>
+<script src="hub-store.js?v=202610281417"></script>
+<script src="hub-say.js?v=202610281417"></script>
+<script src="agreement-defaults.js?v=202610281417"></script>
+<script src="observation-defaults.js?v=202610281417"></script>
+<script src="hub-shared.js?v=202610281417"></script>
+<script src="hub-rotation.js?v=202610281417"></script>
+<script src="hub-due.js?v=202610281417"></script>
+<script src="hub-sync.js?v=202610281417"></script>
+<script src="hub-notebook.js?v=202610281417"></script>
+<script src="hub-hand.js?v=202610281417"></script>
+<script src="hub-ink.js?v=202610281417"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the center's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1848,7 +1849,7 @@ document.getElementById('onlineRooms').addEventListener('change', paintAvRooms);
 document.getElementById('onlineRooms').addEventListener('input', paintAvRooms);
 
 /* the agreement's two cards: Your own when a link is there, Connect's otherwise */
-let AGR_OWN = null, AGR_KEPT = '';
+var AGR_OWN = null, AGR_KEPT = '';   /* var: the settings load paints the cards before this line runs */
 function agrPaint(){
   const link = document.getElementById('docAgreement');
   const own = AGR_OWN === null ? !!(link && link.value.trim()) : AGR_OWN;
@@ -2296,9 +2297,15 @@ async function renderStoreRoster(next){
       <div class="linkrow">
         <div class="body">
           <b>PINs on the links</b>
-          <p>${PINS.on
-            ? `On. Each trainee chooses a PIN the first time they open their link; the first tutor to open the tutor link chooses the team\u2019s. ${PINS.tutor ? 'The team\u2019s PIN is set.' : 'No tutor has chosen the team\u2019s PIN yet.'} A lost PIN is not reset: give the trainee a new link (New link, on their row), or rotate the tutor link.`
-            : 'Off. A link opens on its own. Switch on and every link asks the person to choose a PIN of four to twelve letters or numbers the first time, then on each new device.'}</p>
+          <p>${PINS.on ? 'On.' : 'Off: every link opens on its own.'} With PINs on, a link asks for a PIN of four to twelve letters or numbers the first time it is opened, and again on each new device. Nobody else ever sees a PIN, Course admin included.</p>
+          <!-- WHO HAS A PIN, said plainly (Ramy, 28 Oct 2026: "make it clear how it works ... for volunteer students, trainees and trainers ... the assessor doesn't get one") -->
+          <ul class="pinwho">
+            <li><b>Trainees</b> each choose their own, on their own link.</li>
+            <li><b>Tutors</b> share one: the first tutor to open the tutor link chooses it for the whole team${PINS.on ? (PINS.tutor ? ' (it is set)' : ' (not chosen yet)') : ''}. Course admin does not set it.</li>
+            <li><b>Volunteer students</b> have no PIN: their page shows only their own classes and messages.</li>
+            <li><b>The assessor</b> has no PIN: their link only reads, and stops at the end of the course.</li>
+          </ul>
+          <p class="note" style="margin:6px 0 0;">A forgotten PIN is not reset. A trainee gets a new link (New link, on their row); the tutors get a new tutor link.</p>
         </div>
         <div class="acts">
           <button class="btn quiet small" type="button" id="storePinSwitch">${PINS.on ? 'Switch off' : 'Switch on'}</button>
