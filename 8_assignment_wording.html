@@ -13,7 +13,7 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610281908">
+<link rel="stylesheet" href="hub-tokens.css?v=202610281932">
 <style>
   /* ---- The assignment editor, v2 (11 Oct 2026) -------------------------------
      From the designer's handoff "Assignment editor v2". The page behind Edit
@@ -321,7 +321,7 @@
   .modes .tvlink{display:inline-flex;align-items:center;padding:7px 14px;font-weight:700;font-size:.86rem;color:var(--ink);text-decoration:none;border-radius:999px;}
   .modes .tvlink:hover{background:var(--box);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610281908">
+<link rel="stylesheet" href="hub-house.css?v=202610281932">
 </head>
 <body class="hub-paper" data-sync-ok="Connected to the course &mdash; wording is kept when you press Save" data-sync-ok-short="Connected">
 <div class="board">
@@ -340,15 +340,15 @@
   </div>
 </div></div>
 <div class="menu" id="menu" hidden></div>
-<script src="assignment-defaults.js?v=202610281908"></script>
-<script src="assignment-history.js?v=202610281908"></script>
-<script src="hub-due.js?v=202610281908"></script>
-<script src="hub-rotation.js?v=202610281908"></script>
-<script src="hub-docx.js?v=202610281908"></script>
-<script src="hub-shared.js?v=202610281908"></script>
-<script src="hub-store.js?v=202610281908"></script>
-<script src="hub-say.js?v=202610281908"></script>
-<script src="hub-sync.js?v=202610281908"></script>
+<script src="assignment-defaults.js?v=202610281932"></script>
+<script src="assignment-history.js?v=202610281932"></script>
+<script src="hub-due.js?v=202610281932"></script>
+<script src="hub-rotation.js?v=202610281932"></script>
+<script src="hub-docx.js?v=202610281932"></script>
+<script src="hub-shared.js?v=202610281932"></script>
+<script src="hub-store.js?v=202610281932"></script>
+<script src="hub-say.js?v=202610281932"></script>
+<script src="hub-sync.js?v=202610281932"></script>
 <script>
 /* The course pill goes into the save bar, left of Discard, on every screen
    size: floating in the corner it covered the brief (12 Oct 2026). A plain
@@ -1361,6 +1361,9 @@ function sectionsFromText(text){
       else { if (!cur) cur = add('Before you start'); append(cur, b); }
     });
   }
+  /* the file's own title, a heading with another straight under it, names the assignment rather than opening its text
+     (28 Oct 2026: an imported "Focus on the Learner (our version)" landed inside Before you start) */
+  const titleLine = out.length > 1 && !out[0].body ? out.shift().label : '';
   // a heading with nothing under it joins the section after it (or before, at the end)
   for (let i = out.length - 1; i >= 0; i--) {
     if (out[i].body) continue;
@@ -1369,7 +1372,8 @@ function sectionsFromText(text){
     else continue;
     out.splice(i, 1);
   }
-  return out.filter(x => x.body || x.label);
+  const res = out.filter(x => x.body || x.label); res.titleLine = titleLine;
+  return res;
 }
 /* A brief usually opens with its own title ("Focus on the Learner"), which
    the page already shows above it, so the candidate read it twice (12 Oct
@@ -1391,7 +1395,8 @@ async function handleImport(file){
   if(!file) return;
   let text = '';
   try { text = await window.hubFileText(file); } catch (err) { alert(err && err.message ? err.message : 'That file could not be read.'); return; }
-  const sections = dropTitleHeading(sectionsFromText(text), DATA[CURRENT] ? DATA[CURRENT].title : '');
+  const parsed = sectionsFromText(text), docTitle = parsed.titleLine || '';
+  const sections = dropTitleHeading(parsed, DATA[CURRENT] ? DATA[CURRENT].title : '');
   if (!sections.length) { alert('Could not find any text to import from that file.'); return; }
   const n = sections.length, what = `${n} section${n===1?'':'s'}`;
   const a = DATA[CURRENT];
@@ -1402,7 +1407,7 @@ async function handleImport(file){
     const ok = await confirmModal(`Found ${what} in this file. They become ${NAMES[CURRENT]} on this course, with one answer box at the end and the own-work declaration. Continue?`, 'Use this file');
     if (!ok) return;
     DATA[CURRENT] = {
-      title: file.name.replace(/\.[^.]+$/,''), wordMin: 750, wordMax: 1000,
+      title: docTitle || file.name.replace(/\.[^.]+$/,''), wordMin: 750, wordMax: 1000,
       criteria: [{ text: 'Using written language that is clear, accurate and appropriate to the task', sectionIndex: null }],
       sections: replacedSections(sections, null)
     };
@@ -1428,6 +1433,7 @@ async function handleImport(file){
     IMPORT_NOTE = { file: file.name, n, replaced: false };
   } else {
     a.sections = replacedSections(sections, a.sections);
+    if (docTitle && srcOf(CURRENT) === 'own') a.title = docTitle;
     // the old ties pointed at sections that have gone: every criterion becomes general
     (a.criteria || []).forEach(c => { if (c && typeof c === 'object') c.sectionIndex = null; });
     IMPORT_NOTE = { file: file.name, n, replaced: true };
