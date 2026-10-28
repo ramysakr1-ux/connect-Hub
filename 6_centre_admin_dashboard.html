@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610281628">
+<link rel="stylesheet" href="hub-tokens.css?v=202610281646">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -416,6 +416,12 @@
   .grid.roster .grip{display:inline-flex; align-items:center; justify-content:center; width:22px; height:30px; margin:0 4px 0 -6px; border-radius:6px;
     color:var(--grey); fill:currentColor; cursor:grab; touch-action:none; flex-shrink:0;}
   .grid.roster .grip:hover{background:var(--box); color:var(--ink);}
+  /* the name picks a trainee up too, with a mouse (Ramy, 28 Oct 2026: "the drag and drop for the different groups ... a bit
+     finicky"); on a touch screen the grip does, so a finger on a name still scrolls the page */
+  @media (hover:hover) and (pointer:fine){ .grid.roster.grow .name:has(.grip){cursor:grab;} .grid.roster.grow .name:has(.grip):hover .grip{background:var(--box); color:var(--ink);} }
+  @media (pointer:coarse){ .grid.roster .grip{width:34px; height:40px;} }
+  .rmovemsg{margin:2px 0 8px; font-size:.86rem; font-weight:600; color:var(--a-forest, var(--teal)); min-height:1.2em;} .rmovemsg:empty{display:none;}
+  .rmovemsg.err{color:var(--a-red);}
   .grid.roster.grow.rdrag-src{opacity:.35;}
   .grid.roster.grow.rdrop{outline:2px dashed var(--a-forest, var(--teal)); outline-offset:-2px; border-radius:10px; background:var(--box);}
   .rset.rdrop{outline:2px dashed var(--a-forest, var(--teal)); outline-offset:4px; border-radius:6px;}
@@ -599,7 +605,7 @@
   .tset-opt:has(input:checked){border-color:var(--a-forest, var(--teal)); box-shadow:0 0 0 2px color-mix(in oklch, var(--a-forest, var(--teal)) 25%, transparent);}
   .tsets .hintline{flex-basis:100%; margin:0;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610281628">
+<link rel="stylesheet" href="hub-house.css?v=202610281646">
 </head>
 <body>
 <div class="board">
@@ -1178,19 +1184,19 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610281628"></script>
-<script src="hub-store.js?v=202610281628"></script>
-<script src="hub-xlsx.js?v=202610281628"></script>
-<script src="hub-say.js?v=202610281628"></script>
-<script src="agreement-defaults.js?v=202610281628"></script>
-<script src="observation-defaults.js?v=202610281628"></script>
-<script src="hub-shared.js?v=202610281628"></script>
-<script src="hub-rotation.js?v=202610281628"></script>
-<script src="hub-due.js?v=202610281628"></script>
-<script src="hub-sync.js?v=202610281628"></script>
-<script src="hub-notebook.js?v=202610281628"></script>
-<script src="hub-hand.js?v=202610281628"></script>
-<script src="hub-ink.js?v=202610281628"></script>
+<script src="assignment-defaults.js?v=202610281646"></script>
+<script src="hub-store.js?v=202610281646"></script>
+<script src="hub-xlsx.js?v=202610281646"></script>
+<script src="hub-say.js?v=202610281646"></script>
+<script src="agreement-defaults.js?v=202610281646"></script>
+<script src="observation-defaults.js?v=202610281646"></script>
+<script src="hub-shared.js?v=202610281646"></script>
+<script src="hub-rotation.js?v=202610281646"></script>
+<script src="hub-due.js?v=202610281646"></script>
+<script src="hub-sync.js?v=202610281646"></script>
+<script src="hub-notebook.js?v=202610281646"></script>
+<script src="hub-hand.js?v=202610281646"></script>
+<script src="hub-ink.js?v=202610281646"></script>
 <script>window.INPUTLIB_ONLY = true;</script>
 <script src="input-sessions/library.js?v=202610281502"></script>
 <script type="text/x-hub-app">
@@ -2382,6 +2388,7 @@ async function renderStoreRoster(next){
       <h2>Trainees <span class="count">${trainees.length || ''}</span></h2>
       <button class="btn primary" type="button" id="toggleAdd">Add trainee</button>
     </div>
+    <p class="rmovemsg${(window.ROSTER_MSG || {}).err ? ' err' : ''}" id="rosterMoveMsg" role="status">${esc((window.ROSTER_MSG || {}).t || '')}</p>
 
     <div class="addbox" id="addBox" style="display:none;">
       <form id="storeAddForm" class="row">
@@ -2673,7 +2680,14 @@ async function setPinSwitch(on){
       const today = window.hubToday ? hubToday() : new Date().toISOString().slice(0, 10);
       return !!first && first <= today; } catch (e) { return false; }
   };
-  const say = (t) => { const st = document.getElementById('storeBulkStatus') || document.getElementById('storeAddStatus'); if (st) st.textContent = t; };
+  /* said under the Trainees heading, where it is seen: it used to go to the add panel, closed while moving people */
+  let sayT = null;
+  /* kept in ROSTER_MSG as well, so a repaint of the roster a moment later draws it again */
+  const say = (t, err) => {
+    window.ROSTER_MSG = t ? { t, err: !!err } : null;
+    const st = document.getElementById('rosterMoveMsg'); if (st) { st.textContent = t; st.classList.toggle('err', !!err); }
+    clearTimeout(sayT); if (t && !/…$/.test(t)) sayT = setTimeout(() => { if ((window.ROSTER_MSG || {}).t === t) say(''); }, 9000);
+  };
   let drag = null;
   function targetAt(x, y){
     drag.ghost.style.display = 'none';
@@ -2687,23 +2701,35 @@ async function setPinSwitch(on){
     return null;
   }
   host.addEventListener('pointerdown', e => {
-    const g = e.target.closest('.grip'); if (!g || e.button > 0) return;
+    if (e.button > 0) return;
+    /* the grip, or (with a mouse) the letter and name beside it */
+    let g = e.target.closest('.grip');
+    if (!g && e.pointerType === 'mouse' && !e.target.closest('code, a, button, input')) { const nm = e.target.closest('.grid.roster.grow[data-tok] .name'); g = nm && nm.querySelector('.grip'); }
+    if (!g) return;
     const row = g.closest('.grid.roster.grow[data-tok]'); if (!row) return;
     e.preventDefault();
     const nm = (row.querySelector('.nm') || {}).textContent || '', av = (row.querySelector('.avi') || {}).textContent || '';
     const ghost = document.createElement('div'); ghost.className = 'rdrag-ghost';
     ghost.innerHTML = '<span class="avi avi-cand">' + esc(av) + '</span><span>' + esc(nm.trim()) + ' <small id="rdragHint">Drop on a trainee to swap places</small></span>';
     document.body.appendChild(ghost);
-    drag = { tok: row.dataset.tok, row, ghost, over: null };
+    drag = { tok: row.dataset.tok, row, ghost, over: null, x: e.clientX, y: e.clientY };
+    /* the page scrolls by itself while the pointer rests near the top or bottom, faster the nearer it is */
+    (function edge(){ if (!drag) return; const H = window.innerHeight, z = 120, y = drag.y;
+      const v = y < z ? -Math.ceil((z - y) / 6) : y > H - z ? Math.ceil((y - (H - z)) / 6) : 0;
+      if (v) { window.scrollBy(0, v); aim(); } requestAnimationFrame(edge); })();
     row.classList.add('rdrag-src'); document.body.classList.add('rdragging');
     move(e);
     try { g.setPointerCapture(e.pointerId); } catch (err) {}
   });
   function move(e){
     if (!drag) return;
+    drag.x = e.clientX; drag.y = e.clientY;
     drag.ghost.style.left = (e.clientX + 14) + 'px'; drag.ghost.style.top = (e.clientY - 18) + 'px';
-    if (e.clientY < 70) window.scrollBy(0, -14); else if (e.clientY > window.innerHeight - 70) window.scrollBy(0, 14);
-    const t = targetAt(e.clientX, e.clientY);
+    aim();
+  }
+  function aim(){
+    if (!drag) return;
+    const t = targetAt(drag.x, drag.y);
     if (drag.over && (!t || t.el !== drag.over.el)) drag.over.el.classList.remove('rdrop');
     drag.over = t; if (t) t.el.classList.add('rdrop');
     const h = document.getElementById('rdragHint');
@@ -2728,13 +2754,13 @@ async function setPinSwitch(on){
     if (target.tok) {
       const o = all.find(t => t.token === target.tok); if (!o) return;
       toG = grp(o); myNew = placesIn(all, toG)[o.token]; other = o.token; otherNew = placesIn(all, fromG)[tok];
-      if (myNew == null || otherNew == null || myNew > 5 || otherNew > 5) { say('One of them is not in a teaching set yet: open the TP points to place them.'); return; }
+      if (myNew == null || otherNew == null || myNew > 5 || otherNew > 5) { say('One of them is not in a teaching set yet: open the TP points to place them.', true); return; }
     } else {
       toG = target.group;
       const p = placesIn(all, toG), taken = {};
       Object.keys(p).forEach(t => { if (t !== tok) taken[p[t]] = 1; });
       myNew = [0, 1, 2].map(i => target.set * 3 + i).find(i => !taken[i]);
-      if (myNew == null) { say('That set is full. Drop onto a trainee in it to swap places.'); return; }
+      if (myNew == null) { say('That set is full. Drop onto a trainee in it to swap places.', true); return; }
       if (toG === fromG && p[tok] === myNew) return;
     }
     if (tpStarted() && !(await confirmModal('Teaching practice has started. This changes who teaches on which day from now on. Move them?', 'Move'))) return;
@@ -2751,8 +2777,8 @@ async function setPinSwitch(on){
       let res = null;
       if (toG !== fromG) { res = await S.renameTrainee(tok, null, toG, null); if (other) res = await S.renameTrainee(other, null, fromG, null); }
       renderStoreRoster(res && res.trainees ? res.trainees : undefined);
-      say('Moved. The TP points follow the next time they are opened.');
-    } catch (err) { say('Not moved: ' + ((err && err.message) || err)); renderStoreRoster(); }
+      { const nm = n => (((all.find(t => t.token === n) || {}).name) || '').split(/\s+/)[0]; say(other ? nm(tok) + ' and ' + nm(other) + ' have swapped places. The TP points follow.' : nm(tok) + ' has moved. The TP points follow.'); }
+    } catch (err) { say('Not moved: ' + ((err && err.message) || err), true); renderStoreRoster(); }
   }
 })();
 
