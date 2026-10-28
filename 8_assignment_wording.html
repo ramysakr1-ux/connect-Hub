@@ -13,7 +13,7 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610281743">
+<link rel="stylesheet" href="hub-tokens.css?v=202610281834">
 <style>
   /* ---- The assignment editor, v2 (11 Oct 2026) -------------------------------
      From the designer's handoff "Assignment editor v2". The page behind Edit
@@ -312,8 +312,10 @@
     .savebar .acts{margin-left:auto; width:100%;}
     #hubSync.inbar{margin-right:auto; max-width:calc(100% - 272px);}
   }
+  .modes .tvlink{display:inline-flex;align-items:center;padding:7px 14px;font-weight:700;font-size:.86rem;color:var(--ink);text-decoration:none;border-radius:999px;}
+  .modes .tvlink:hover{background:var(--box);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610281743">
+<link rel="stylesheet" href="hub-house.css?v=202610281834">
 </head>
 <body class="hub-paper" data-sync-ok="Connected to the course &mdash; wording is kept when you press Save" data-sync-ok-short="Connected">
 <div class="board">
@@ -332,14 +334,14 @@
   </div>
 </div></div>
 <div class="menu" id="menu" hidden></div>
-<script src="assignment-defaults.js?v=202610281743"></script>
-<script src="hub-due.js?v=202610281743"></script>
-<script src="hub-rotation.js?v=202610281743"></script>
-<script src="hub-docx.js?v=202610281743"></script>
-<script src="hub-shared.js?v=202610281743"></script>
-<script src="hub-store.js?v=202610281743"></script>
-<script src="hub-say.js?v=202610281743"></script>
-<script src="hub-sync.js?v=202610281743"></script>
+<script src="assignment-defaults.js?v=202610281834"></script>
+<script src="hub-due.js?v=202610281834"></script>
+<script src="hub-rotation.js?v=202610281834"></script>
+<script src="hub-docx.js?v=202610281834"></script>
+<script src="hub-shared.js?v=202610281834"></script>
+<script src="hub-store.js?v=202610281834"></script>
+<script src="hub-say.js?v=202610281834"></script>
+<script src="hub-sync.js?v=202610281834"></script>
 <script>
 /* The course pill goes into the save bar, left of Discard, on every screen
    size: floating in the corner it covered the brief (12 Oct 2026). A plain
@@ -580,12 +582,24 @@ function renderHead(){
           : `<input type="text" class="h1" value="${esc(title)}" readonly aria-label="Assignment title">`}
       <p class="stateline" id="stateline">${stateHTML()}</p>
     </div>
-    ${a ? `<div class="modes" role="tablist">
-      <button type="button" role="tab" class="${MODE==='edit'?'on':''}" aria-selected="${MODE==='edit'}" onclick="setMode('edit')">Edit</button>
-      <button type="button" role="tab" class="${MODE==='preview'?'on':''}" aria-selected="${MODE==='preview'}" onclick="setMode('preview')">As the candidate sees it</button>
-    </div>` : ''}`;
+    ${a ? (MODE === 'preview' && !PRINTING
+      ? `<div class="modes"><button type="button" class="on" onclick="setMode('edit')">Edit the wording</button></div>`
+      /* ONE VIEW (Ramy, 28 Oct 2026: "why do we have them in two places?"): the trainees' own page, view only, and
+         paper. The whole-assignment page stays for the marking screen's Read the whole assignment, and for printing. */
+      : `<div class="modes"><a class="tvlink" href="9_assignment_submission.html?a=${CURRENT}&view=trainee" onclick="return tvGo()">Trainee view</a><button type="button" onclick="printWhole()">Print</button></div>`) : ''}`;
 }
 function setMode(m){ MODE = m; closeMenu(); render(); }
+let PRINTING = false;
+function printWhole(){ PRINTING = true; MODE = 'preview'; render(); setTimeout(() => { window.print(); }, 60); }
+window.addEventListener('afterprint', () => { if (PRINTING) { PRINTING = false; MODE = 'edit'; render(); } });
+/* the trainee view reads what is saved for the course */
+function tvGo(){
+  const n = Object.values(allUnsaved()).reduce((t, u) => t + u.length, 0);
+  if (!n) return true;
+  confirmModal('Your changes are not saved yet. The trainee view shows the wording as saved for the course. Open it anyway?', 'Open it')
+    .then(ok => { if (ok) location.href = '9_assignment_submission.html?a=' + CURRENT + '&view=trainee'; });
+  return false;
+}
 
 /* ---- the rail ---------------------------------------------------------------- */
 const EDGE = { text:'oklch(80% 0.012 80)', picker:'var(--teal)', fields:'var(--teal)', declaration:'var(--ink-warm)' };
@@ -889,7 +903,8 @@ function longDate(iso){
 function previewHTML(a){
   const meta = [];
   if (a.wordMin || a.wordMax) meta.push(`${(a.wordMin || 0).toLocaleString('en-GB')}–${(a.wordMax || 0).toLocaleString('en-GB')} words`);
-  if (a.dueAt) meta.push('due ' + longDate(a.dueAt) + (a.dueSets && Object.keys(a.dueSets).length ? ' (each teaching set sees its own date)' : ''));
+  /* the course's own clock, as the trainee's page reads it (28 Oct 2026: this said 20:00 for a 5:00 PM deadline) */
+  if (a.dueAt) meta.push('due ' + (HubDue.fmt ? HubDue.fmt(a.dueAt) : longDate(a.dueAt)) + (a.dueSets && Object.keys(a.dueSets).length ? ' (each teaching set sees its own date)' : ''));
   const secs = a.sections.map(s => {
     let body = '';
     if (s.type === 'picker') {
@@ -934,7 +949,7 @@ function render(){
       <input type="file" id="importFile" accept=".docx,.txt,.md" style="display:none;" onchange="handleImport(this.files[0]); this.value=''"></div></div>`;
     refreshMarks(); return;
   }
-  if (MODE === 'preview') { $('body').innerHTML = '<div class="wholebar"><button type="button" class="btn ghost" onclick="window.print()">Print the whole assignment</button></div>' + previewHTML(a); refreshMarks(); return; }
+  if (MODE === 'preview') { $('body').innerHTML = (PRINTING ? '' : '<div class="wholebar"><a class="lnk" href="9_assignment_submission.html?a=' + CURRENT + '&view=trainee" style="margin-right:14px">Trainee view</a><button type="button" class="btn ghost" onclick="window.print()">Print the whole assignment</button></div>') + previewHTML(a); refreshMarks(); return; }
   $('body').innerHTML = `<div class="ewrap">${railHTML(a)}
     <div class="doc" id="doc">${importNoteHTML()}${a.sections.map(sectionHTML).join('')}${addCardHTML()}${critCardHTML(a)}${guideCardHTML(a)}</div></div>`;
   refreshMarks();

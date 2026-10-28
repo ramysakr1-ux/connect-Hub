@@ -551,6 +551,9 @@ window.hubNotVolunteerRoom = function(){
 window.hubTraineeRoomOnly = function(){
   var mode = window.HubMode;
   if (mode === 'trainee' || !mode) return false;
+  /* Trainee view (Ramy, 28 Oct 2026: "just say trainee view, and then we show what the trainee actually gets ... view
+     only"): a tutor may open the assignment page itself with ?view=trainee, empty and read-only. */
+  if (mode === 'tutor' && /[?&]view=trainee(&|$)/.test(location.search)) return false;
   return hubRoomRefusal('This room belongs to the trainee',
     mode === 'assessor'
       ? 'Your link is read-only. Submitted work is in the trainee portfolios and the assignment records.'
