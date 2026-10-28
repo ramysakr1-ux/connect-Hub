@@ -326,3 +326,20 @@ try {
     if (__me) navigator.serviceWorker.register(new URL('../sw.js', __me).href);
   }
 } catch (e) {}
+
+/* The section links on a phone are one row that scrolls sideways (session.css, 28 Oct 2026). As the page marks the
+   section in view, the row slides so that link stays on screen. Sideways only: the page itself does not move. */
+(function(){
+  if (window.INPUTLIB_ONLY) return;
+  function wire(){
+    var nav = document.querySelector('nav.sticky-nav'); if (!nav || !window.MutationObserver) return;
+    var last = null;
+    new MutationObserver(function(){
+      var a = nav.querySelector('a.on, a.active'); if (!a || a === last || nav.scrollWidth <= nav.clientWidth) return;
+      last = a;
+      var left = a.offsetLeft - nav.offsetLeft - 16;
+      if (a.offsetLeft - nav.scrollLeft < nav.offsetLeft || a.offsetLeft + a.offsetWidth - nav.scrollLeft > nav.offsetLeft + nav.clientWidth) nav.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+    }).observe(nav, { subtree: true, attributes: true, attributeFilter: ['class'] });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire); else wire();
+})();
