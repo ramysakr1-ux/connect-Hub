@@ -571,23 +571,26 @@ NOTES['course-introduction'] = '''
 
 NOTES['language-analysis'] = '''
 <h4>Before</h4>
-<p>Each trainee has their next TP's language analysis sheet open beside the page, blank or half done, and the course's two sheets (grammar and functional language; vocabulary) to point at. Every task on the page is about those sheets. Nothing to print; the checklist at the end prints from the page.</p>
+<p>Each trainee has Lite open on their next TP's lesson plan, with Language analysis opened beside this page. Every box the session names is a box on that page, in the same order. Nothing to print; the handout prints from the page.</p>
 <h4>Running it</h4>
 ''' + T([
-    (5, 'Two sheets', 'Six aims: which sheet. The one they get wrong is the reading lesson with four items pre-taught: it still needs the vocabulary grid.'),
-    (8, 'Target language', 'The three rows, then the model sentence task. Show the filled-in example and ask the test question: could a colleague run your first two minutes from this?'),
-    (10, 'Meaning', 'Concept first, then the six CCQs in pairs. Stop on the one that uses the target language to check the target language.'),
-    (8, 'Form', 'Build the form line, then the three-line box. Ask what is missing from a form box with only the affirmative.'),
-    (7, 'Pronunciation', 'Name the feature for each note. The giveaway: a box that would fit any other lesson.'),
-    (8, 'Problems', 'Lesson plan page or language analysis sheet, then the three problems and solutions. The pattern: a solution names a technique and a moment.'),
-    (10, 'Vocabulary', 'The exhausted row together, then they do commute alone and compare.'),
-    (6, 'Before you submit', 'Spot the five problems on the handed-in sheet, then the reference books and the checklist.'),
+    (6, 'Three kinds', 'What are you analyzing, and is it the main aim. Seven aims. The one they get wrong is the reading lesson with four items clarified: vocabulary, with No for the main aim.'),
+    (8, 'Name and marker', 'Name of the structure with its area of use; marker sentences a student would say; the overall context as a situation with the eliciting question. Show the filled-in top and ask the test question.'),
+    (10, 'Meaning', 'Meaning analysis first, then the six CCQs in pairs. Stop on the one that uses the target language to check the target language.'),
+    (10, 'Form', 'Build the form line. They write what else belongs in the box before they compare.'),
+    (8, 'Pronunciation', 'The transcription with the IPA bar on their own page; then name the feature for each note.'),
+    (10, 'Problems', 'Which box: meaning, form, pronunciation, or the plan. Then the two solutions that are not solutions.'),
+    (10, 'Functional language', 'The four boxes at the top of a function block, register for four exponents, then the patterns after the three openers.'),
+    (12, 'Vocabulary', 'The exhausted row together, then commute alone and compare. The first column wants all three: stress, transcription, part of speech.'),
+    (4, 'Source', 'Accept it or not enough, four answers.'),
+    (7, 'Before you submit', 'Spot the five problems in the filled-in block, the checklist, then they open their own analysis and start.'),
 ]) + '''
 <h4>The key</h4>
-<p>Under each task (Show answer). The five problems on the handed-in sheet: the language point does not say which use or which forms, the model sentence is a rule, the context is a topic with no eliciting question, the concept box holds the form, and the CCQs check nothing and have no answers. The form, the pronunciation and the reference are fine.</p>
+<p>Under each task (Show answer). The five problems in the filled-in block: the name gives no use or forms, the marker sentence is a rule, the meaning box holds the form, the CCQs check nothing and have no answers, and the pronunciation problems box names no feature and no technique. The form analysis and the source are fine.</p>
 <h4>Watch for</h4>
 <ul>
 <li>"I will drill it", "I will explain", "I will correct" as solutions. None names a technique or a moment.</li>
 <li>CCQs written without their answers.</li>
-<li>A pronunciation box that describes drilling rather than a feature of this language.</li>
+<li>Task and technology problems put in the problems boxes; they belong on the plan.</li>
+<li>A vocabulary row with no stress or transcription in the first column.</li>
 </ul>'''
