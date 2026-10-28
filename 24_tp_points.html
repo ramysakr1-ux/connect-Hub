@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610281003">
+<link rel="stylesheet" href="hub-tokens.css?v=202610281033">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1120px; margin:0 auto; padding:26px 20px 80px;}
@@ -406,7 +406,7 @@
   @media(prefers-reduced-motion:reduce){ .tbl select.fm, .fm-pips i{transition:none;} }
   @media print{ .fm-key, .fm-pips{display:none;} .tbl select.fm{border-left-width:1px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610281003">
+<link rel="stylesheet" href="hub-house.css?v=202610281033">
 <style>
 /* THE CARD A TRAINEE RECEIVES, IN COLOUR (Ramy, 21 Oct 2026: "the card that
    the trainees receive ... could use a bit of color and distinction"). Each
@@ -563,14 +563,14 @@ body.ls-open{overflow:hidden;}
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610281003"></script>
-<script src="hub-tracker.js?v=202610281003"></script>
-<script src="hub-rotation.js?v=202610281003"></script>
-<script src="hub-shared.js?v=202610281003"></script>
-<script src="hub-store.js?v=202610281003"></script>
-<script src="hub-say.js?v=202610281003"></script>
-<script src="hub-sync.js?v=202610281003"></script>
-<script src="hub-notebook.js?v=202610281003"></script>
+<script src="hub-due.js?v=202610281033"></script>
+<script src="hub-tracker.js?v=202610281033"></script>
+<script src="hub-rotation.js?v=202610281033"></script>
+<script src="hub-shared.js?v=202610281033"></script>
+<script src="hub-store.js?v=202610281033"></script>
+<script src="hub-say.js?v=202610281033"></script>
+<script src="hub-sync.js?v=202610281033"></script>
+<script src="hub-notebook.js?v=202610281033"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* "Print the pages" puts the card into a mode where only the scans print, one
@@ -1943,23 +1943,38 @@ function renderCore(){
   document.querySelectorAll('select[data-tp]').forEach(el => el.addEventListener('change', () => {
     const { g, t, tp } = el.dataset;
     P.groups[g] = P.groups[g] || {}; P.groups[g][t] = P.groups[g][t] || {};
-    /* A TYPE CHOSEN BY HAND BRINGS ITS LESSON (11 Oct 2026). This kept the word
-       and nothing else, so a trainee moved from the rotation's Reading to the
-       day's Vocabulary got a cell reading "Vocabulary" with no aim, no pages
-       and no stages -- the set's slot was written and sitting right there.
-       Where the trainee's own day has a slot of that type, the cell is stamped
-       from it, `from` included, and the order follows (orderDealt). */
-    const cell = { aim: el.value };
+    /* A TYPE CHOSEN BY HAND IS A SWAP (Ramy, 28 Oct 2026: "They're both going to teach the same lesson? ... Can't teach the
+       same lesson."). A day's lessons are the set's, one teacher each. Choosing Vocabulary for a trainee who had Grammar
+       gives them that day's Vocabulary lesson and gives their Grammar lesson to whoever had the Vocabulary one, so the three
+       lessons stay with three different trainees and the day's order follows (orderDealt). Where nobody in the teaching set
+       holds a lesson of that type that day, the trainee takes the day's free lesson of that type if there is one; if the set
+       has no lesson of that type that day, the cell keeps only the type and the page says which lesson nobody teaches now. */
     const set = setFor(g);
-    const si = ((P.sets && P.sets[g]) || []).findIndex(st => (st || []).indexOf(t) !== -1);
-    let found = null;
-    if (set && si >= 0 && el.value) {
-      const ses = (set.sessions || {})[tp + (si === 0 ? 'A' : 'B')];
-      const pos = ((ses && ses.slots) || []).findIndex(sl => sl && sl.type === el.value);
-      if (pos >= 0) found = slotFor(set, +tp, si, pos);
+    const sets = (P.sets && P.sets[g]) || [];
+    const si = sets.findIndex(st => (st || []).indexOf(t) !== -1);
+    const mates = si >= 0 ? (sets[si] || []).filter(Boolean) : [t];
+    const cellOf = tok => (P.groups[g][tok] || {})['tp' + tp] || {};
+    const posOf = c => { const m = /·(\d+)$/.exec(String(c.from || '')); return m ? +m[1] - 1 : -1; };
+    const ses = set && si >= 0 ? (set.sessions || {})[tp + (si === 0 ? 'A' : 'B')] : null;
+    const slots = (ses && ses.slots) || [];
+    const mine = cellOf(t), myPos = posOf(mine);
+    let msg = 'Saved';
+    const place = (tok, pos) => { const f = slotFor(set, +tp, si, pos); P.groups[g][tok] = P.groups[g][tok] || {}; P.groups[g][tok]['tp' + tp] = Object.assign(f ? stamp({ aim: (slots[pos] || {}).type || '' }, f) : { aim: (slots[pos] || {}).type || '' }, { edited: true }, keptMakeup(cellOf(tok))); };
+    const want = el.value;
+    /* the day's lessons of that type, the one nobody else holds first */
+    const held = {}; mates.forEach(m => { const p = posOf(cellOf(m)); if (p >= 0) held[p] = m; });
+    const cands = slots.map((sl, k) => (sl && sl.type === want) ? k : -1).filter(k => k >= 0 && k !== myPos);
+    const pos = cands.find(k => !held[k] || held[k] === t) ?? cands[0];
+    if (set && si >= 0 && want && pos !== undefined && pos >= 0) {
+      const other = held[pos] && held[pos] !== t ? held[pos] : null;
+      place(t, pos);
+      if (other && myPos >= 0) { place(other, myPos); const nm = (R.lettersFor(groups().find(x => x.group === g).people).find(p => p.token === other) || {}).letter || 'the other trainee'; msg = 'Swapped with ' + nm; }
+      else if (other) { P.groups[g][other]['tp' + tp] = Object.assign({ aim: '' }, { edited: true }); msg = 'Swapped; the other trainee needs a lesson'; }
+    } else {
+      P.groups[g][t]['tp' + tp] = Object.assign({ aim: want }, { edited: true }, keptMakeup(mine));
+      if (myPos >= 0 && slots[myPos]) msg = 'The set has no ' + want + ' lesson that day, so ' + (slots[myPos].type || 'the old lesson') + ' now has nobody to teach it';
     }
-    P.groups[g][t]['tp'+tp] = Object.assign(found ? stamp(cell, found) : cell, { edited: true }, keptMakeup(P.groups[g][t]['tp'+tp]));
-    persist('Saved');
+    persist(msg);
   }));
   document.querySelectorAll('button[data-mats]').forEach(el => el.addEventListener('click', () => {
     OPEN = (OPEN === el.dataset.mats) ? null : el.dataset.mats; render();
