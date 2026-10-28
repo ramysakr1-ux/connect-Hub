@@ -170,6 +170,8 @@
       await sleep(300); window.eval('courseLogo = window.__hp; applyLogoPreview(courseLogo)'); await sleep(500);
     } catch (e) {} }
     var put = function(id, v){ var el = $(id); if (el && v != null && String(v) !== '') f.push({ el: el, text: String(v) }); };
+    /* the center as well: a Connect demo starts blank (store v175) */
+    put('centreName', C.centreName || 'Elmswood English Center'); put('centreNumber', C.centreNumber || 'US999');
     put('courseName', C.courseName); put('courseNumber', C.courseNumber); put('tutorNames', C.tutorNames); put('totalHours', C.totalHours);
     put('planDueNote', C.planDueNote); put('selfDueNote', C.selfDueNote);
     Object.keys(C.agreement || {}).forEach(function(k){ put(k, C.agreement[k]); });
