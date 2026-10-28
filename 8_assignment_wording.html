@@ -13,7 +13,7 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610281932">
+<link rel="stylesheet" href="hub-tokens.css?v=202610281952">
 <style>
   /* ---- The assignment editor, v2 (11 Oct 2026) -------------------------------
      From the designer's handoff "Assignment editor v2". The page behind Edit
@@ -321,7 +321,7 @@
   .modes .tvlink{display:inline-flex;align-items:center;padding:7px 14px;font-weight:700;font-size:.86rem;color:var(--ink);text-decoration:none;border-radius:999px;}
   .modes .tvlink:hover{background:var(--box);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610281932">
+<link rel="stylesheet" href="hub-house.css?v=202610281952">
 </head>
 <body class="hub-paper" data-sync-ok="Connected to the course &mdash; wording is kept when you press Save" data-sync-ok-short="Connected">
 <div class="board">
@@ -340,15 +340,15 @@
   </div>
 </div></div>
 <div class="menu" id="menu" hidden></div>
-<script src="assignment-defaults.js?v=202610281932"></script>
-<script src="assignment-history.js?v=202610281932"></script>
-<script src="hub-due.js?v=202610281932"></script>
-<script src="hub-rotation.js?v=202610281932"></script>
-<script src="hub-docx.js?v=202610281932"></script>
-<script src="hub-shared.js?v=202610281932"></script>
-<script src="hub-store.js?v=202610281932"></script>
-<script src="hub-say.js?v=202610281932"></script>
-<script src="hub-sync.js?v=202610281932"></script>
+<script src="assignment-defaults.js?v=202610281952"></script>
+<script src="assignment-history.js?v=202610281952"></script>
+<script src="hub-due.js?v=202610281952"></script>
+<script src="hub-rotation.js?v=202610281952"></script>
+<script src="hub-docx.js?v=202610281952"></script>
+<script src="hub-shared.js?v=202610281952"></script>
+<script src="hub-store.js?v=202610281952"></script>
+<script src="hub-say.js?v=202610281952"></script>
+<script src="hub-sync.js?v=202610281952"></script>
 <script>
 /* The course pill goes into the save bar, left of Discard, on every screen
    size: floating in the corner it covered the brief (12 Oct 2026). A plain
@@ -617,7 +617,7 @@ function tvGo(){
 
 /* ---- the rail ---------------------------------------------------------------- */
 const EDGE = { text:'oklch(80% 0.012 80)', picker:'var(--teal)', fields:'var(--teal)', declaration:'var(--ink-warm)' };
-function railHTML(a){
+function railHTML(a, datesOnly){
   const syl = sylState();
   const crit = (a.criteria || []).length;
   const sylLine = !syl ? '<div class="rsyl own">The center’s own criteria</div>'
@@ -628,7 +628,7 @@ function railHTML(a){
   const dueSets = a.dueSets && Object.keys(a.dueSets).length;
   const resub = a.resubDueAt ? 'By ' + HubDue.fmt(a.resubDueAt) : a.resubDays ? a.resubDays + ' day' + (a.resubDays === 1 ? '' : 's') : 'Open';
   const words = (a.wordMin || a.wordMax) ? `${(a.wordMin || 0).toLocaleString('en-GB')}–${(a.wordMax || 0).toLocaleString('en-GB')}` : 'Not set';
-  return `<aside class="rail${SHOW_META ? ' open' : ''}" id="rail">
+  return `<aside class="rail${SHOW_META ? ' open' : ''}" id="rail">${datesOnly ? '' : `
     <nav class="rcard brief${BRIEF_OPEN ? ' open' : ''}" aria-label="The brief">
       <p class="rlabel">The brief</p>
       <button type="button" class="brieftoggle" aria-expanded="${BRIEF_OPEN}" onclick="toggleBrief()"><span class="rlabel">The brief</span><span class="bcount">${a.sections.length} section${a.sections.length === 1 ? '' : 's'}${a.sections.some((s, i) => sectionChanged(CURRENT, i)) ? ' \u00b7 ' + a.sections.filter((s, i) => sectionChanged(CURRENT, i)).length + ' yours' : ''}</span><span class="chev" aria-hidden="true"></span></button>
@@ -642,7 +642,7 @@ function railHTML(a){
       <p class="rlabel">Marked against</p>
       <div class="rcount" id="rcount">${crit} criteri${crit === 1 ? 'on' : 'a'}</div>
       <span id="rsyl">${sylLine}</span>
-    </a>
+    </a>`}
     ${CURRENT === 'a5' ? '' : `<div class="rcard course">
       <p class="rlabel">This course</p>
       <div class="kv"><span>Words</span><span>${words}</span></div>
@@ -663,11 +663,13 @@ function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&
 function metaHTML(a){
   const core = hubAssignmentOrder(DATA).filter(k => k !== 'a5'), pos = core.indexOf(CURRENT);
   const pc = proseCount();
-  return `<div class="meta">
+  /* Connect's assignment: the dates only; its word range and format are Connect's (28 Oct 2026) */
+  const cxm = srcOf(CURRENT) === 'connect';
+  return `<div class="meta">${cxm ? '' : `
     <div class="mf"><span class="ml">Word count</span>
       <div class="line"><input type="text" class="num" value="${a.wordMin||''}" oninput="updateMeta('wordMin',this.value)" placeholder="750" aria-label="Fewest words"> to
       <input type="text" class="num" value="${a.wordMax||''}" oninput="updateMeta('wordMax',this.value)" placeholder="1000" aria-label="Most words"> words</div>
-      <p class="mh">Handbook range: 750–1,000.</p></div>
+      <p class="mh">Handbook range: 750–1,000.</p></div>`}
     <div class="mf"><label for="mRel">Candidates</label>
       <select id="mRel" onchange="updateReleased(this.value)">
         <option value="yes" ${hubReleased(DATA, CURRENT) ? 'selected' : ''}>Can open it now</option>
@@ -685,12 +687,12 @@ function metaHTML(a){
       <input type="datetime-local" value="${HubDue.toLocalInput(a.resubDueAt)}" onchange="updateResubDue(this.value)" aria-label="One resubmission date for everyone">
       ${a.resubDueAt ? `<button type="button" class="lnk clear" onclick="updateResubDue('')">Clear</button>` : ''}
       <p class="mh">Days are counted from the day it goes back, because that differs for each trainee. A date is one closing time for everyone, and it wins over the days. Handbook 9.2.3 wants the resubmission inside the course. Leave both empty and it stays open.</p></div>
-    <div class="mf"><label for="mFmt">Format</label>
+    ${cxm ? '' : `<div class="mf"><label for="mFmt">Format</label>
       <select id="mFmt" onchange="updateMeta('format',this.value)">
         <option value="prose" ${a.format==='prose'?'selected':''}>Continuous prose</option>
         <option value="structured" ${a.format==='structured'?'selected':''}>Structured (sections/tables)</option>
       </select>
-      <p class="mh${pc < 2 ? ' bad' : ''}" id="proseLine">${pc} of the four are in continuous prose. The syllabus and the CELTA 5 say two must be (Handbook 9.2.1 says should).</p></div>
+      <p class="mh${pc < 2 ? ' bad' : ''}" id="proseLine">${pc} of the four are in continuous prose. The syllabus and the CELTA 5 say two must be (Handbook 9.2.1 says should).</p></div>`}
     ${pos > -1 ? `<div class="mf"><span class="ml">Order in the course</span>
       <div class="line">${['First','Second','Third','Fourth'][pos] || (pos + 1)} of the four
         <button type="button" class="lnk" style="margin-left:6px;" onclick="moveAssignment('${CURRENT}',-1)" ${pos <= 0 ? 'disabled' : ''}>Earlier</button>
@@ -966,7 +968,7 @@ function render(){
   }
   if (MODE === 'preview') { $('body').innerHTML = (PRINTING ? '' : '<div class="wholebar"><a class="lnk" href="9_assignment_submission.html?a=' + CURRENT + '&view=trainee" style="margin-right:14px">Trainee view</a><button type="button" class="btn ghost" onclick="window.print()">Print the whole assignment</button></div>') + previewHTML(a); refreshMarks(); return; }
   if (CURRENT !== 'a5' && srcOf(CURRENT) === 'connect' && DEFAULT_DATA && DEFAULT_DATA[CURRENT]) {
-    $('body').innerHTML = choiceHTML() + `<div class="cxread"><p class="cxnote">Connect’s ${esc(CODES[CURRENT])} is ready as it is and is not edited here. The dates and when it opens are set on Course admin, under Assignments. For different wording, choose Your own assignment.${isEdited(CURRENT) ? ` <b>This course has an earlier version of it.</b> <button type="button" class="lnk" onclick="updateConnects()">Update to the current version</button>` : ''}</p>${previewHTML(a)}</div>`;
+    $('body').innerHTML = choiceHTML() + `<div class="ewrap">${railHTML(a, true)}<div class="doc cxread"><p class="cxnote">Connect’s ${esc(CODES[CURRENT])} is ready as it is and is not edited here. Its dates, the resubmission and when it opens are yours: here under This course, or on Course admin. For different wording, choose Your own assignment.${isEdited(CURRENT) ? ` <b>This course has an earlier version of it.</b> <button type="button" class="lnk" onclick="updateConnects()">Update to the current version</button>` : ''}</p>${previewHTML(a)}</div></div>`;
     refreshMarks(); return;
   }
   $('body').innerHTML = (CURRENT !== 'a5' ? choiceHTML() : '') + `<div class="ewrap">${railHTML(a)}

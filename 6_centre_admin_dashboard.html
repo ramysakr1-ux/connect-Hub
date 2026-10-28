@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610281932">
+<link rel="stylesheet" href="hub-tokens.css?v=202610281952">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -382,6 +382,10 @@
   /* THE ASSIGNMENT AND OBSERVATION CARDS (27 Oct 2026) */
   .asg-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:14px; margin-top:14px;}
   .asg{display:flex; flex-direction:column; gap:10px; min-width:0; padding:18px 20px 16px; border-radius:14px; background:var(--paper); box-shadow:var(--nb-shadow, 0 8px 24px -16px rgba(0,0,0,.3)); border-top:3px solid var(--sand-line);}
+  /* a quiet hover, no rise (Ramy, 28 Oct 2026: "maybe just hover, no rise"); a touch shows it too */
+  .asg{transition:box-shadow .15s, background-color .15s;}
+  #onlineRooms{scroll-margin-top:70px;}
+  .asg:hover, .asg:focus-within, .asg:active{background:color-mix(in oklch, var(--a-forest, var(--teal)) 4%, var(--paper)); box-shadow:var(--nb-shadow, 0 8px 24px -16px rgba(0,0,0,.3)), 0 0 0 2px color-mix(in oklch, var(--a-forest, var(--teal)) 28%, transparent);}
   .asg.on{border-top-color:var(--a-forest, var(--teal));} .asg.soon{border-top-color:var(--gold);}
   .asg-head{display:flex; align-items:center; justify-content:space-between; gap:10px;}
   .asg .code{font-size:0.72rem; font-weight:700; letter-spacing:0.08em; color:var(--a-forest, var(--teal));}
@@ -622,7 +626,7 @@
   .tset-opt:has(input:checked){border-color:var(--a-forest, var(--teal)); box-shadow:0 0 0 2px color-mix(in oklch, var(--a-forest, var(--teal)) 25%, transparent);}
   .tsets .hintline{flex-basis:100%; margin:0;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610281932">
+<link rel="stylesheet" href="hub-house.css?v=202610281952">
 </head>
 <body>
 <div class="board">
@@ -1164,7 +1168,7 @@
          which stopped being true when the editor gained Add section, Add field,
          Add a group, Add checkbox and Add criterion. It was the door telling a
          course admin they had less than they have (26 Sep 2026). -->
-    <p class="lede">Yours to rewrite: the sections, the fields, the checkboxes a trainee signs, and the criteria it is marked against. The four Cambridge assignments are the four; A5 is the center's own.</p>
+    <p class="lede">Each of the four is Connect’s, ready as it is, or your center’s own, written or imported. The dates and when trainees see it are yours either way. A5 is the center’s own.</p>
     <!-- THE CARDS (Ramy, 27 Oct 2026: "the whole thing just looks hideous ... the pill goes outside of the page ... why do we have Whole
          assignment ... this really needs an upgrade"). One card each: its state, the switch, the day it opens, the due date, and
          two doors: the editor, and the assignment as a trainee reads it. -->
@@ -1201,19 +1205,19 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610281932"></script>
-<script src="hub-store.js?v=202610281932"></script>
-<script src="hub-xlsx.js?v=202610281932"></script>
-<script src="hub-say.js?v=202610281932"></script>
-<script src="agreement-defaults.js?v=202610281932"></script>
-<script src="observation-defaults.js?v=202610281932"></script>
-<script src="hub-shared.js?v=202610281932"></script>
-<script src="hub-rotation.js?v=202610281932"></script>
-<script src="hub-due.js?v=202610281932"></script>
-<script src="hub-sync.js?v=202610281932"></script>
-<script src="hub-notebook.js?v=202610281932"></script>
-<script src="hub-hand.js?v=202610281932"></script>
-<script src="hub-ink.js?v=202610281932"></script>
+<script src="assignment-defaults.js?v=202610281952"></script>
+<script src="hub-store.js?v=202610281952"></script>
+<script src="hub-xlsx.js?v=202610281952"></script>
+<script src="hub-say.js?v=202610281952"></script>
+<script src="agreement-defaults.js?v=202610281952"></script>
+<script src="observation-defaults.js?v=202610281952"></script>
+<script src="hub-shared.js?v=202610281952"></script>
+<script src="hub-rotation.js?v=202610281952"></script>
+<script src="hub-due.js?v=202610281952"></script>
+<script src="hub-sync.js?v=202610281952"></script>
+<script src="hub-notebook.js?v=202610281952"></script>
+<script src="hub-hand.js?v=202610281952"></script>
+<script src="hub-ink.js?v=202610281952"></script>
 <script>window.INPUTLIB_ONLY = true;</script>
 <script src="input-sessions/library.js?v=202610281502"></script>
 <script type="text/x-hub-app">
@@ -1892,7 +1896,9 @@ function paintAvRooms(){
 }
 document.getElementById('avRoomsGo').addEventListener('click', () => {
   const box = document.getElementById('onlineRooms'); if (!box) return;
-  box.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  /* to the top of the list, not its middle: on a phone the list is taller than the screen and the middle hid its start */
+  const card = box.closest('.setcard, .card, section') || box;
+  window.scrollTo({ top: card.getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' });
   box.classList.add('flash'); setTimeout(() => box.classList.remove('flash'), 1800);
   const first = box.querySelector('.or-assessor'); if (first) setTimeout(() => first.focus({ preventScroll: true }), 600);
 });
@@ -3016,7 +3022,9 @@ renderStoreRoster();
       st.textContent = live ? 'Trainees see it' : opens && opens.has ? 'Opens later' : 'Hidden';
       if (!when.querySelector('.sw')) when.innerHTML = '<label class="sw"><input type="checkbox" class="as-show"><span class="track"></span><span class="lbl"></span></label>'
         + '<label class="as-from"><span>Or opens on</span><input type="datetime-local"></label>'
-        + '<label class="as-due"><span>Due</span><input type="datetime-local"><button type="button" class="as-clear">Clear</button></label>';
+        + '<label class="as-due"><span>Due</span><input type="datetime-local"><button type="button" class="as-clear">Clear</button></label>'
+        /* the resubmission, beside the due date (Ramy, 28 Oct 2026: "is there also a resubmission date ... can I come back here and change it?") */
+        + '<label class="as-due as-resub"><span>Resubmit within</span><input type="number" min="1" max="30" step="1" placeholder="days" style="flex:0 0 84px"><small class="as-zone"></small></label>';
       const sw = when.querySelector('.sw'); sw.querySelector('input').checked = onNow;
       sw.querySelector('.lbl').textContent = onNow ? 'Trainees can see it' : opens && opens.has ? (opens.past ? 'Trainees can see it (opened ' + HubDue.fmt(x.releaseFrom) + ')' : 'Hidden until it opens') : 'Hidden from trainees';
       const from = when.querySelector('.as-from'); from.hidden = onNow;
@@ -3034,12 +3042,17 @@ renderStoreRoster();
       let dz = due.querySelector('.as-zone'); if (!dz) { dz = document.createElement('small'); dz.className = 'as-zone'; due.appendChild(dz); }
       dz.textContent = dv && window.HubDue ? HubDue.fmt(dv) : '';
       let note = due.querySelector('.as-sets'); if (sets && !note) { note = document.createElement('a'); note.className = 'as-sets'; note.href = '8_assignment_wording.html?a=' + k + '&dates=1'; note.textContent = 'each teaching set has its own date'; due.appendChild(note); } else if (!sets && note) note.remove();
+      const rs = when.querySelector('.as-resub'), ri = rs.querySelector('input');
+      if (document.activeElement !== ri) ri.value = x.resubDays || '';
+      rs.querySelector('.as-zone').innerHTML = x.resubDueAt && window.HubDue ? 'One date for everyone: ' + esc(HubDue.fmt(x.resubDueAt)) + ', which wins over the days. <a href="8_assignment_wording.html?a=' + k + '&dates=1">Change</a>'
+        : (x.resubDays ? 'days after their tutor sends it back. ' : 'Leave it empty and there is no closing day. ') + '<a href="8_assignment_wording.html?a=' + k + '&dates=1">Or one date for everyone</a>';
     });
     paint();
     host.addEventListener('change', e => {
       const row = e.target.closest('.asg'); if (!row) return; const k = row.dataset.key; w[k] = w[k] || {};
       if (e.target.closest('.as-show')) { w[k].released = e.target.checked; if (e.target.checked) delete w[k].releaseFrom; write(); paint(); return; }
       if (e.target.closest('.as-from')) { const v = e.target.value; if (v && window.HubDue) w[k].releaseFrom = HubDue.fromLocalInput(v); else delete w[k].releaseFrom; write(); paint(); return; }
+      if (e.target.closest('.as-resub')) { const n = parseInt(e.target.value, 10); if (n > 0) w[k].resubDays = Math.min(30, n); else delete w[k].resubDays; write(); paint(); return; }
       if (e.target.closest('.as-due')) { const v = e.target.value; w[k].dueAt = v && window.HubDue ? HubDue.fromLocalInput(v) : ''; w[k].due = w[k].dueAt; write(); paint(); }
     });
     host.addEventListener('click', e => {
