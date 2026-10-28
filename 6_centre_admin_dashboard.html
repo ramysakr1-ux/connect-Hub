@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610281345">
+<link rel="stylesheet" href="hub-tokens.css?v=202610281352">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -580,7 +580,7 @@
   .tset-opt:has(input:checked){border-color:var(--a-forest, var(--teal)); box-shadow:0 0 0 2px color-mix(in oklch, var(--a-forest, var(--teal)) 25%, transparent);}
   .tsets .hintline{flex-basis:100%; margin:0;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610281345">
+<link rel="stylesheet" href="hub-house.css?v=202610281352">
 </head>
 <body>
 <div class="board">
@@ -1135,18 +1135,18 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610281345"></script>
-<script src="hub-store.js?v=202610281345"></script>
-<script src="hub-say.js?v=202610281345"></script>
-<script src="agreement-defaults.js?v=202610281345"></script>
-<script src="observation-defaults.js?v=202610281345"></script>
-<script src="hub-shared.js?v=202610281345"></script>
-<script src="hub-rotation.js?v=202610281345"></script>
-<script src="hub-due.js?v=202610281345"></script>
-<script src="hub-sync.js?v=202610281345"></script>
-<script src="hub-notebook.js?v=202610281345"></script>
-<script src="hub-hand.js?v=202610281345"></script>
-<script src="hub-ink.js?v=202610281345"></script>
+<script src="assignment-defaults.js?v=202610281352"></script>
+<script src="hub-store.js?v=202610281352"></script>
+<script src="hub-say.js?v=202610281352"></script>
+<script src="agreement-defaults.js?v=202610281352"></script>
+<script src="observation-defaults.js?v=202610281352"></script>
+<script src="hub-shared.js?v=202610281352"></script>
+<script src="hub-rotation.js?v=202610281352"></script>
+<script src="hub-due.js?v=202610281352"></script>
+<script src="hub-sync.js?v=202610281352"></script>
+<script src="hub-notebook.js?v=202610281352"></script>
+<script src="hub-hand.js?v=202610281352"></script>
+<script src="hub-ink.js?v=202610281352"></script>
 <script type="text/x-hub-app">
 /* Whose room this is. Course admin and the wording editor are the center's;
    an assessor or a trainee who reaches either used to get the full editable
@@ -1854,13 +1854,18 @@ function renderCandLinks(){
      links against names. Only on a course with no input sessions yet. */
   const INPUT_SESSIONS = ['Lesson framework', 'Classroom management', 'Concept checking and instructions', 'Presenting grammar', 'Teaching vocabulary', 'Phonology: sounds and the chart', 'Phonology: stress and intonation', 'Receptive skills: reading', 'Receptive skills: listening', 'Productive skills: speaking', 'Productive skills: writing', 'Functional language', 'Error correction and feedback', 'Materials and adapting the coursebook', 'Analyzing language for teaching', 'Learner needs and Focus on the Learner', 'Teaching at low levels', 'Test-teach-test and task-based learning', 'Developing as a teacher'];
   CAND_LINKS.forEach(l => { if (!l.url && /^lesson shapes and staging$/i.test(String(l.label || '').trim())) l.label = 'Lesson framework'; });
+  /* NO LONG LIST OF EMPTY SESSIONS (Ramy, 28 Oct 2026: "I don't think we need a long list of empty input sessions ... just show
+     one and they can add to it ... make it clear that this is the center's own"). The twenty named but empty rows a course
+     used to start with are dropped: a row that only carries one of those names, with no link and hidden from the trainees,
+     showed them nothing. A row the center filled or switched on stays. */
+  for (let k = CAND_LINKS.length - 1; k >= 0; k--) { const l = CAND_LINKS[k]; if (/input session/i.test(String(l.card || '')) && !l.url && l.show === false && !l.showFrom && INPUT_SESSIONS.indexOf(String(l.label || '').trim()) !== -1) CAND_LINKS.splice(k, 1); }
   const hasInput = CAND_LINKS.some(l => /input session/i.test((l.card || '') + ' ' + (l.label || '')));
   const have = CAND_LINKS.map(l => l.label), haveUrl = CAND_LINKS.map(l => l.url);
   /* A before-course row of the center's own is kept while the switch is on
      (not drawn, not lost): it comes back when the switch goes off. */
   HELD_BEFORE = connectPre ? CAND_LINKS.filter(l => /^before the course$/i.test(String(l.card || '').trim())) : [];
   const rows = CAND_LINKS.concat(SUG.filter(([label, url]) => !have.includes(label) && !(url && haveUrl.includes(url))).map(([label, url, card]) => ({ label, url, card })))
-    .concat(hasInput ? [] : INPUT_SESSIONS.map(label => ({ label, url: '', card: 'Input sessions', show: false })));
+    .concat(hasInput ? [] : [{ label: '', url: '', card: 'Input sessions', show: false }]);   /* one empty row to start from */
   /* Ramy, 27 Sep 2026: "you have an input session card and then they just go
      underneath that card." The third field names the card; the same name on
      several rows is one card with several lines. */
@@ -1877,7 +1882,9 @@ function renderCandLinks(){
     ['Before the course', connectPre
         ? 'Connect’s pre-course set is on (the card above), so nothing is needed here. Add a row only for something of your own on top.'
         : 'What a trainee meets before day one: the pre-course task and its key, the getting-to-know-you activities, in your own documents.', rows.filter(isBefore)],
-    ['Input sessions', 'Each on a line: the session, its link, whether the trainees see it, and if not, the day and time it appears. A session that is on without a link shows them the name and “no link yet”.', rows.filter(l => !isBefore(l) && isInput(l))],
+    ['Your center’s own input sessions', ((document.getElementById('inputSessions') || {}).value === 'connect'
+        ? 'The course uses Connect’s sessions only (The course, Input sessions), so these stay hidden from the trainees until you choose your own or both. '
+        : 'Your own sessions, as links, beside Connect’s or instead of them. ') + 'One row each: the name, the link, and whether the trainees see it now or from a day and time. Add a session for every one you have.', rows.filter(l => !isBefore(l) && isInput(l))],
     ['Other links', 'Anything else the trainees should have a link to \u2014 a reading list, a folder \u2014 each on a card of its own unless you name one.', rows.filter(l => !isBefore(l) && !isInput(l))],
   ];
   const whenLabel = l => {
@@ -1942,6 +1949,8 @@ document.getElementById('addBeforeLink').addEventListener('click', () => {
   readCandLinks(); CAND_LINKS.push({ label:'', url:'', card:'Before the course', show:true }); renderCandLinks();
   const el = [...document.querySelectorAll('#beforeLinks .cl-label')].pop(); if (el) el.focus();
 });
+/* the line under the center's own sessions says what the Input sessions choice means for them */
+if (document.getElementById('inputSessions')) document.getElementById('inputSessions').addEventListener('change', () => { readCandLinks(); renderCandLinks(); });
 document.getElementById('addInputSession').addEventListener('click', () => {
   /* a link of their own would stay hidden under "Connect's sessions": it moves to Both, and the line under it says so */
   const isel = document.getElementById('inputSessions');
