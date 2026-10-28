@@ -797,7 +797,8 @@ window.hubConnectFooter = function(){
 };
 (function(){
   var st = document.createElement('style');
-  st.textContent = '.cx-foot{display:flex;align-items:center;justify-content:center;gap:8px;margin:22px 0 4px;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--grey);}'
+  /* faint, a watermark you barely see (Ramy, 28 Oct 2026: "emphasis on faint") */
+  st.textContent = '.cx-foot{display:flex;align-items:center;justify-content:center;gap:8px;margin:22px 0 4px;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--grey);opacity:.28;}'
     + '@media print{.cx-foot{margin-top:28px;}}';
   (document.head || document.documentElement).appendChild(st);
 })();
