@@ -26,7 +26,7 @@
 <title>Getting to know you</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610281533">
+<link rel="stylesheet" href="hub-tokens.css?v=202610281628">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -108,20 +108,20 @@
   .iv-tutor td, .iv-tutor th{text-align:left; padding:6px 10px 6px 0; font-size:.88rem; vertical-align:top;}
   @media print{ .gk .act{animation:none;} .gk.gk-picked .act:not(.chosen) ol{display:block;} .gk-peek{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610281533">
+<link rel="stylesheet" href="hub-house.css?v=202610281628">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610281533"></script>
-<script src="hub-store.js?v=202610281533"></script>
-<script src="hub-say.js?v=202610281533"></script>
-<script src="hub-sync.js?v=202610281533"></script>
-<script src="hub-notebook.js?v=202610281533"></script>
-<script src="gtky-bank.js?v=202610281533"></script>
-<script src="fol-interview.js?v=202610281533"></script>
+<script src="hub-shared.js?v=202610281628"></script>
+<script src="hub-store.js?v=202610281628"></script>
+<script src="hub-say.js?v=202610281628"></script>
+<script src="hub-sync.js?v=202610281628"></script>
+<script src="hub-notebook.js?v=202610281628"></script>
+<script src="gtky-bank.js?v=202610281628"></script>
+<script src="fol-interview.js?v=202610281628"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -248,26 +248,27 @@ function wire(){
 const IKEY = 'connect_fol_interview_v1';
 const FOL = window.CONNECT_HUB_FOL || { questions: [], advice: [], summaryHtml: () => '' };
 function ivData(){ const d = rec(IKEY); return d && d.students ? d : { students: {} }; }
-function ivSave(d){ try { localStorage.setItem(IKEY, JSON.stringify(d)); } catch (e) {} }
-/* THE POOL (15 Oct 2026). What the trainee heard goes to the course's pool, so
-   everyone sees it and the tutors know who heard it. The whole list is sent
+function ivSave(d){ try { localStorage.setItem(IKEY, JSON.stringify(d)); } catch (e) {} if (IS_TRAINEE && typeof pushPool === 'function') pushPool(); }
+/* THE POOL (15 Oct 2026). What the trainee heard goes to the pool of their TP group (28 Oct 2026: the group only, as
+   are the answers, recordings and transcripts, below), and the tutors know who heard it. The whole list is sent
    each time, so a removed note leaves the pool too. Offline, it is sent next
    time. */
-const PKEY = 'connect_fol_pool_v1';
+const PKEY = 'connect_fol_pool_v1', GKEY = 'connect_fol_profiles_v1';
+function groupList(){ const p = rec(GKEY); return Array.isArray(p) ? p : []; }
 function poolList(){ const p = rec(PKEY); return Array.isArray(p) ? p : []; }
 let poolTimer = null, poolSent = '';
 function pushPool(force){
   if (!IS_TRAINEE) return;
   clearTimeout(poolTimer);
   poolTimer = setTimeout(async () => {
-    const items = FOL.itemsFrom(ivData());
-    const sig = JSON.stringify(items);
+    const items = FOL.itemsFrom(ivData()), profiles = FOL.profilesFrom(ivData());
+    const sig = JSON.stringify([items, profiles]);
     if (!force && sig === poolSent) return;
     try {
-      const body = { op: 'poolHeard', items }; if (HubStore.token && HubStore.token()) body.token = HubStore.token();
+      const body = { op: 'poolHeard', items, profiles }; if (HubStore.token && HubStore.token()) body.token = HubStore.token();
       const r = await HubStore.call(body); poolSent = sig;
-      try { localStorage.setItem(PKEY, JSON.stringify(r.folpool || [])); } catch (e) {}
-      if (curView() === 'interview') { const box = $('ivPool'); if (box) box.innerHTML = FOL.poolHtml(poolList()); const n = $('ivPoolN'); if (n) n.textContent = poolList().length; }
+      try { localStorage.setItem(PKEY, JSON.stringify(r.folpool || [])); localStorage.setItem(GKEY, JSON.stringify(r.folprofiles || [])); } catch (e) {}
+      if (curView() === 'interview') { const gb = $('ivGroup'); if (gb) { gb.innerHTML = FOL.groupHtml(groupList(), { others: true }); FOL.wirePlay(gb); } const box = $('ivPool'); if (box) box.innerHTML = FOL.poolHtml(poolList()); const n = $('ivPoolN'); if (n) n.textContent = poolList().length; }
     } catch (err) { /* offline or refused: tried again on the next change and on the next visit */ }
   }, 900);
 }
@@ -299,7 +300,7 @@ function renderInterview(){
   let body = '';
   if (ivSel) {
     const s = d.students[ivSel] || { answers: {}, heard: [] };
-    body = `<div class="iv-box"><h2>Questions for ${esc(ivSel)}<span class="iv-saved" id="ivSaved"></span></h2><p class="note">Write what they say. Your answers stay with you and your tutors.</p>
+    body = `<div class="iv-box"><h2>Questions for ${esc(ivSel)}<span class="iv-saved" id="ivSaved"></span></h2><p class="note">Write what they say. Your answers, recordings and transcripts are shared with your TP group and your tutors: Part A of Focus on the Learner is about the whole group.</p>
       ${FOL.questions.map((q, i) => `<div class="iv-q"><div class="t">${i + 1} &middot; ${esc(q.topic)}</div><div class="a">${esc(q.ask)}</div><div class="l">${esc(q.listenFor)}</div><textarea data-q="${esc(q.key)}" rows="2">${esc((s.answers || {})[q.key] || '')}</textarea></div>`).join('')}</div>
       <div class="iv-box iv-heard"><h2>What you heard</h2><p class="note">A grammar or sound problem, with the student's own words.</p>
       ${(s.heard || []).length ? (s.heard || []).map(h => `<div class="item"><div><b>${h.type === 'pronunciation' ? 'Pronunciation' : 'Grammar'}</b>${esc(h.note)}</div><button class="btn ghost" type="button" data-unheard="${esc(h.id)}">Remove</button></div>`).join('') : '<p class="note">Nothing added yet.</p>'}
@@ -307,8 +308,9 @@ function renderInterview(){
       <textarea id="ivHeard" rows="2" placeholder="What ${esc(ivSel)} said, in their words"></textarea>
       <div style="margin-top:8px"><button class="btn" type="button" id="ivHeardAdd">Add what you heard</button></div></div>`;
   }
-  const pool = `<div class="iv-box"><h2>The pool &mdash; <span id="ivPoolN">${poolList().length}</span> heard so far</h2><p class="note">What everyone on the course has heard in their interviews: the problem and the student's words. Name a specific structure or sound that something here backs.</p><div id="ivPool">${FOL.poolHtml(poolList())}</div></div>`;
-  $('app').innerHTML = head + switcher() + who + adv + recBox() + body + pool;
+  const pool = `<div class="iv-box"><h2>The pool &mdash; <span id="ivPoolN">${poolList().length}</span> heard so far</h2><p class="note">What everyone in your TP group has heard in their interviews: the problem and the student's words. Name a specific structure or sound that something here backs.</p><div id="ivPool">${FOL.poolHtml(poolList())}</div></div>`;
+  const group = `<div class="iv-box"><h2>Your TP group&rsquo;s interviews</h2><p class="note">The students the others in your group interviewed: their answers, recordings and transcripts. Together with yours, this is the group for Part A.</p><div id="ivGroup">${FOL.groupHtml(groupList(), { others: true })}</div></div>`;
+  $('app').innerHTML = head + switcher() + who + adv + recBox() + body + group + pool;
   wireInterview(); wireRecording(); wire();
   if (window.CONNECT_HUB_FOL && FOL.wirePlay) FOL.wirePlay($('app'));
 }
@@ -421,7 +423,7 @@ function wireInterview(){
 }
 
 render();
-document.addEventListener('hub:ready', () => { band = band || groupBand(MY_GROUP); render(); if (curView() === 'interview' && FOL.itemsFrom(ivData()).length) pushPool(); });
+document.addEventListener('hub:ready', () => { band = band || groupBand(MY_GROUP); render(); if (curView() === 'interview' && (FOL.itemsFrom(ivData()).length || FOL.profilesFrom(ivData()).length)) pushPool(); });
 
 /* ---- v2 (7 Oct 2026): three cards, dealt ------------------------------------
    Trainee view only. Layered on render() through a MutationObserver on #app;

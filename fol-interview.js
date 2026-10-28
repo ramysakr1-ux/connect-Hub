@@ -48,14 +48,14 @@
       var recs = (s.audio || []).map(function (a, i) {
         return '<div style="margin:8px 0 0;font-size:.86rem"><button type="button" data-play="' + esc(a.id) + '" style="font:inherit;font-size:.8rem;font-weight:600;padding:5px 12px;border-radius:8px;border:1.5px solid var(--sand-line);background:var(--field);cursor:pointer">Listen</button> ' +
           '<span style="color:var(--grey)">Recording ' + (i + 1) + (a.seconds ? ', ' + Math.floor(a.seconds / 60) + ':' + ('0' + (a.seconds % 60)).slice(-2) : '') + '</span>' +
-          (a.transcript ? '<p style="margin:6px 0 0;line-height:1.5"><b>Transcript.</b> ' + esc(a.transcript) + '</p>' : '') + '<span class="fol-audio"></span></div>';
+          (a.transcript ? '<p style="margin:6px 0 0;line-height:1.5;white-space:pre-line"><b>Transcript.</b>\n' + esc(a.transcript) + '</p>' : '') + '<span class="fol-audio"></span></div>';
       }).join('');
       return '<div style="margin:10px 0 0;padding-top:8px;border-top:1px solid var(--row-line, #e6e0d4)"><p style="margin:0;font-weight:700">' + esc(s.name) + '</p>' + ans + recs +
         (heard ? '<p style="margin:8px 0 2px;font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--grey)">What was heard</p><ul style="margin:0;padding-left:18px;font-size:.86rem;line-height:1.5">' + heard + '</ul>' : '') + '</div>';
     }).join('');
   }
-  /* THE POOL (15 Oct 2026, Ramy: "make Lite pool them too"). What everyone on
-     the course heard in their student interviews: the problem and the student's
+  /* THE POOL (15 Oct 2026, Ramy: "make Lite pool them too"). What everyone in
+     the trainee's TP group heard in their student interviews (28 Oct 2026: the group only, never the course): the problem and the student's
      words, never the answers. Trainees see the notes alone; tutors also see who
      heard each (the store only sends the name to a tutor). */
   function poolHtml(list) {
@@ -77,6 +77,26 @@
       var s = st[k]; (s && s.heard || []).forEach(function (h) { if (h && String(h.note || '').trim()) out.push({ id: h.id, type: h.type, note: h.note, student: s.name || k }); });
     });
     return out;
+  }
+  /* THE TP GROUP'S INTERVIEWS (Ramy, 28 Oct 2026: Part A is the whole group, and "everything should be shared in the TP
+     group, including the transcripts"). profilesFrom: what this trainee sends, one entry per student, the answers and the
+     recordings with their transcripts. groupHtml: the group's, as the store sends them back (never the whole course). */
+  function profilesFrom(rec) {
+    var out = [], st = rec && rec.students ? rec.students : {};
+    Object.keys(st).forEach(function (k) {
+      var s = st[k]; if (!s) return;
+      var answers = {}; QUESTIONS.forEach(function (q) { var v = String((s.answers || {})[q.key] || '').trim(); if (v) answers[q.key] = v; });
+      var audio = (s.audio || []).filter(function (a) { return a && a.id; }).map(function (a) { return { id: a.id, seconds: a.seconds || 0, transcript: a.transcript == null ? null : a.transcript }; });
+      if (Object.keys(answers).length || audio.length) out.push({ student: s.name || k, answers: answers, audio: audio });
+    });
+    return out;
+  }
+  function groupHtml(list, opts) {
+    list = (Array.isArray(list) ? list : []).filter(function (p) { return p && !(opts && opts.others && p.mine); });
+    if (!list.length) return '<p class="note" style="margin:0">' + (opts && opts.others ? 'Nobody else in your TP group has written up an interview yet.' : 'No interviews written up yet.') + '</p>';
+    var students = {};
+    list.forEach(function (p, i) { students['p' + i] = { name: p.student + (p.mine ? ' (yours)' : '') + (p.by ? ', interviewed by ' + p.by : ''), answers: p.answers || {}, audio: p.audio || [], heard: [] }; });
+    return summaryHtml({ students: students });
   }
   /* Playing a recording: it lives in a private folder, so it comes through the
      store (the trainee who made it and the tutors only), as audio in the page. */
@@ -100,5 +120,5 @@
       });
     });
   }
-  window.CONNECT_HUB_FOL = { questions: QUESTIONS, advice: ADVICE, summaryHtml: summaryHtml, poolHtml: poolHtml, itemsFrom: itemsFrom, wirePlay: wirePlay, audioUrl: audioUrl };
+  window.CONNECT_HUB_FOL = { questions: QUESTIONS, advice: ADVICE, summaryHtml: summaryHtml, poolHtml: poolHtml, profilesFrom: profilesFrom, groupHtml: groupHtml, itemsFrom: itemsFrom, wirePlay: wirePlay, audioUrl: audioUrl };
 })();

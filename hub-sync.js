@@ -657,8 +657,10 @@
       if (mineDemo.length) out['connect_shared_v1'] = JSON.stringify((course.shared || []).concat(mineDemo));
     } catch (e) {} }
     /* The Focus on the Learner pool (15 Oct 2026): what trainees heard in their
-       student interviews, one list for the course; tutors get who heard it. */
+       student interviews, the trainee's TP group only (28 Oct 2026); tutors get who heard it. */
     out['connect_fol_pool_v1'] = course.folpool ? JSON.stringify(course.folpool) : null;
+    /* the TP group's interviews (28 Oct 2026): answers, recordings and transcripts, the group's only */
+    out['connect_fol_profiles_v1'] = course.folprofiles ? JSON.stringify(course.folprofiles) : null;
     /* The register as a trainee may read it: names, levels, and whether each
        student has agreed to be recorded. Tutors read the whole register above. */
     out['connect_volunteer_names_v1'] = course.volunteerNames ? JSON.stringify(course.volunteerNames) : null;

@@ -351,7 +351,7 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
       {
         "type": "text",
         "label": "Before you start",
-        "body": "Describe your current TP group, identify one grammar and one pronunciation difficulty you have noticed in TP1–4, and present one activity for each. At least one activity must come from a published source.\n\n750–1,000 words of continuous prose, not counting the bibliography and appendices. Attach the two tasks with the materials link, each saying where it came from. Passing on first or second submission does not affect your certificate grade.",
+        "body": "Describe your current TP group, identify one grammar and one pronunciation difficulty you have noticed in TP1–4 or in the student interviews, and present one activity for each. At least one activity must come from a published source.\n\n750–1,000 words of continuous prose, not counting the bibliography and appendices. Attach the two tasks with the materials link, each saying where it came from. Passing on first or second submission does not affect your certificate grade.",
         "readonly": true
       },
       {
@@ -364,13 +364,13 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
         "type": "text",
         "label": "B.  The Grammar Problem",
         "heads": ["The grammar area", "Example 1", "Example 2", "Why they make it"],
-        "body": "• Name the grammar area, using the correct term.\n• Give two examples of the mistake. For each: who made it, spoken or written, which lesson stage, and the correct version.\n• Explain why they make it — L1 interference, level, fossilisation, not enough practice."
+        "body": "• Name the grammar area, using the correct term.\n• Give two examples of the mistake, from your TP lessons or the student interviews. For each: who made it, spoken or written, where (the lesson stage, or the interview), and the correct version.\n• Explain why they make it — L1 interference, level, fossilisation, not enough practice."
       },
       {
         "type": "text",
         "label": "C.  The Pronunciation Problem",
         "heads": ["The pronunciation area", "Example 1", "Example 2", "Why they make it"],
-        "body": "• Name the area, using the correct term and IPA.\n• Give two examples. For each: who made it, and both the wrong and the correct pronunciation in IPA.\n• Explain why they make it, as in B."
+        "body": "• Name the area, using the correct term and IPA.\n• Give two examples, from your TP lessons or the student interviews. For each: who made it, where, and both the wrong and the correct pronunciation in IPA.\n• Explain why they make it, as in B."
       },
       {
         "type": "text",
