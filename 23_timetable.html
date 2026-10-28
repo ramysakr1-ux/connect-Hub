@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610281053">
+<link rel="stylesheet" href="hub-tokens.css?v=202610281231">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -515,25 +515,25 @@
     h1{font-size:1.4rem;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610281053">
+<link rel="stylesheet" href="hub-house.css?v=202610281231">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610281053"></script>
-<script src="hub-tracker.js?v=202610281053"></script>
-<script src="hub-rotation.js?v=202610281053"></script>
-<script src="hub-xlsx.js?v=202610281053"></script>
-<script src="hub-docx.js?v=202610281053"></script>
-<script src="hub-timetable-parse.js?v=202610281053"></script>
-<script src="assignment-defaults.js?v=202610281053"></script>
-<script src="hub-shared.js?v=202610281053"></script>
-<script src="hub-store.js?v=202610281053"></script>
-<script src="hub-say.js?v=202610281053"></script>
-<script src="hub-sync.js?v=202610281053"></script>
-<script src="hub-notebook.js?v=202610281053"></script>
+<script src="hub-due.js?v=202610281231"></script>
+<script src="hub-tracker.js?v=202610281231"></script>
+<script src="hub-rotation.js?v=202610281231"></script>
+<script src="hub-xlsx.js?v=202610281231"></script>
+<script src="hub-docx.js?v=202610281231"></script>
+<script src="hub-timetable-parse.js?v=202610281231"></script>
+<script src="assignment-defaults.js?v=202610281231"></script>
+<script src="hub-shared.js?v=202610281231"></script>
+<script src="hub-store.js?v=202610281231"></script>
+<script src="hub-say.js?v=202610281231"></script>
+<script src="hub-sync.js?v=202610281231"></script>
+<script src="hub-notebook.js?v=202610281231"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1805,12 +1805,43 @@ function dayShape(B){
 }
 /* what a day is, and its shape: so a day changed by hand, or one that is an exception, can show it */
 const daySig = day => (day.sessions || []).slice().sort(byStart).map(x => [x.k, x.s, x.e].join(',')).join('|');
-const HOW_LABEL = { intro: 'Day one', tutorials: 'Tutorials', newclass: 'New class', planning: 'Planning', free: 'No teaching practice', guided: 'Guided planning', visit: 'Assessor' };
+const HOW_LABEL = { differs: 'Differs', intro: 'Day one', tutorials: 'Tutorials', newclass: 'New class', planning: 'Planning', free: 'No teaching practice', guided: 'Guided planning', visit: 'Assessor' };
 function dayMark(day){
   if (!IS_TUTOR || !EDIT || !day || !day.how) return '';
   if (day.how !== 'pattern') return `<span class="dmark" title="This day is not the pattern's: ${esc(HOW_LABEL[day.how] || day.how)}. ⋯ on the day puts it back.">${esc(HOW_LABEL[day.how] || 'Differs')}</span>`;
   if (day.sig && daySig(day) !== day.sig) return '<span class="dmark" title="This day was changed by hand. ⋯ on the day puts it back on the pattern.">Changed by hand</span>';
   return '';
+}
+/* AN IMPORTED TIMETABLE GETS A PATTERN (Ramy, 28 Oct 2026: "if someone was to import from a grid or an Excel file or a
+   Google Sheet, it will also turn into the same Connect Lite timetable"). The shape most of its teaching days share (the
+   kinds of tile, in order, at their times) becomes the shelf's day: the lengths for the course from it, a tile's own length
+   where it differs, a gap where the sheet left one. Days of that shape follow the pattern; the rest are marked Differs and
+   can be put back on it, and "Change only the days that follow the pattern" works as on a built timetable. */
+function patternFromDays(){
+  if (!TT || !Array.isArray(TT.days) || !TT.days.length) return;
+  /* a day's SHAPE is its times: what sits in a slot (an input, the planning, a tutorial) is what the day says, and an
+     empty slot is still the same shape */
+  const shapeKey = d => (d.sessions || []).slice().sort(byStart).map(x => x.s + '-' + x.e).join('|');
+  const fits = (d, model) => { const ok = new Set(model.split('|')); return (d.sessions || []).every(x => ok.has(x.s + '-' + x.e)); };
+  const count = {}, pool = TT.days.filter(d => !d.closed && (d.sessions || []).length && d.tp);
+  (pool.length ? pool : TT.days.filter(d => !d.closed && (d.sessions || []).length)).forEach(d => { const k = shapeKey(d); count[k] = (count[k] || 0) + 1; });
+  const best = Object.keys(count).sort((a, b) => count[b] - count[a])[0]; if (!best) return;
+  const model = TT.days.find(d => shapeKey(d) === best);
+  const lens = Object.assign({}, KIND_LEN), seen = {}, tiles = [];
+  let prevEnd = null, start = null;
+  (model.sessions || []).slice().sort(byStart).forEach(x => {
+    const s0 = toMin(x.s), e0 = toMin(x.e); if (s0 == null || e0 == null) return;
+    if (start == null) start = x.s;
+    const k = KIND_LEN[x.k] != null ? x.k : 'event', len = Math.max(5, e0 - s0);
+    if (!seen[k]) { lens[k] = len; seen[k] = 1; }
+    const t = { k };
+    if (len !== lens[k]) t.len = len;
+    if (prevEnd != null && s0 > prevEnd) t.gap = s0 - prevEnd;
+    if ((k === 'event' || k === 'plan' || k === 'task') && x.t) t.t = x.t;
+    tiles.push(t); prevEnd = e0;
+  });
+  TT.pattern = { start: start || '10:00', lens, tiles, from: 'import' };
+  TT.days.forEach(d => { if (d.closed) return; d.how = fits(d, best) ? 'pattern' : 'differs'; d.sig = daySig(d); });
 }
 /* a day laid from the pattern again, keeping the names it has (shape only: titles, tutors and rooms are the day's own) */
 function relayDay(day, B){
@@ -2915,6 +2946,7 @@ function applyReview(){
   /* the terms to remember, on the course */
   const kept = [];
   r.questions.filter(q => q.kind === 'term' && r.remember[q.term]).forEach(q => { const s = rec('connect_course_settings') || {}; s.importTerms = Object.assign({}, s.importTerms, { [q.term]: r.answers[q.id] }); try { localStorage.setItem('connect_course_settings', JSON.stringify(s)); } catch (e) {} SETTINGS.importTerms = s.importTerms; kept.push(q.term); });
+  patternFromDays();   /* the sheet's usual day becomes the pattern, so an imported timetable behaves like one built on the shelf */
   BUILT = { days: rows.length, sessions, timed, dues, kept, from: r.from, shapes: (r.shapes || []).map(x => x.from) };
   REVIEW = null; IMPORT_OPEN = false;
   save('Imported', { text: 'Imported from a sheet: ' + rows.length + ' day' + (rows.length === 1 ? '' : 's') + ' updated', effects: [timed ? timed + ' session' + (timed === 1 ? '' : 's') + ' at the times the sheet wrote' : ''].concat(dues.map(d => 'Deadline set: ' + d)).filter(Boolean) });
