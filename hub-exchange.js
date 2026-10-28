@@ -5,14 +5,14 @@
  * can dictate and it will write... like an API, but through an AI model."
  *
  * What this is: a BRIEF. The plan and analysis rendered as plain Markdown,
- * followed by a template with one labelled slot for every box on the feedback
+ * followed by a template with one labeled slot for every box on the feedback
  * form -- the grade, each stage, each vocabulary item or analysis section, the
  * four lists, the three comments. Paste it into any model, dictate, and the
  * model writes into the slots. Paste the result back here and each slot lands
  * in its box. The model never needs to know Lite exists; it only needs to keep
  * the headings, and models are good at keeping headings.
  *
- * Why the slots are labelled by NAME and matched by name, not by position: a
+ * Why the slots are labeled by NAME and matched by name, not by position: a
  * model that drops an empty section, reorders two, or adds a heading of its
  * own must not shift every comment one stage down. Matching is on the heading
  * text, case-insensitive, punctuation-insensitive, and the original headings
@@ -222,7 +222,7 @@
     md.push('');
     md.push('# Feedback — fill in below');
     md.push('');
-    md.push('You are helping a CELTA tutor write feedback on the lesson plan above. The tutor will dictate; write what they say into the slots, in the second person to the trainee ("you"), concise and specific. Keep every heading exactly as it is. Leave a slot empty if there is nothing to say. One point per line in the four lists; start a point with a star (★) if the tutor wants it prioritised next time. For Grade write exactly one of: ' + GRADES.join(' / ') + '.');
+    md.push('You are helping a CELTA tutor write feedback on the lesson plan above. The tutor will dictate; write what they say into the slots, in the second person to the trainee ("you"), concise and specific. Keep every heading exactly as it is. Leave a slot empty if there is nothing to say. One point per line in the four lists; start a point with a star (★) if the tutor wants it prioritized next time. For Grade write exactly one of: ' + GRADES.join(' / ') + '.');
     md.push('');
     sl.forEach(function(s){
       md.push('## ' + s.heading);

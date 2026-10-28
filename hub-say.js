@@ -66,7 +66,7 @@
          collision looking for a screen. In the flow at the foot of the page it
          cannot cover anything, on any screen, at any width, for ever. It is a
          way to report something, not a tool anybody reaches for mid-task. */
-      /* QUIET. It was garnet, then plum (Ramy, 6 Oct 2026: "a nice colour
+      /* QUIET. It was garnet, then plum (Ramy, 6 Oct 2026: "a nice color
          different from the rest of the page") -- and then, seeing it on every
          screen: "it's just too much... it doesn't need to be that bright."
          A filled button at the foot of every page is a shout. Outlined,
@@ -217,7 +217,7 @@
     host().appendChild(b);
   }
 
-  /* WHERE IN THE FLOW. Not simply the end of <body>: ten screens centre their
+  /* WHERE IN THE FLOW. Not simply the end of <body>: ten screens center their
      board with body{display:flex; justify-content:center}, a flex ROW, so a
      pill appended to the body there became a second column squeezed in beside
      the board -- off the right edge at phone width, and under the action bar

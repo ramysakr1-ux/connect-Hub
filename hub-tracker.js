@@ -62,7 +62,7 @@ window.HubTracker = (function(){
     { field:'stage3', label:'Stage 3', cycle:STAGE2_CYCLE, labels:STAGE2_LABEL }
   ];
   /* How many teaching practices this course gives each trainee, set by the
-     centre on Course admin > Settings. Eight when unset, which is every course
+     center on Course admin > Settings. Eight when unset, which is every course
      made before that field existed. */
   function tpTotal(){
     try { var cs = JSON.parse(localStorage.getItem('connect_course_settings') || 'null');
@@ -149,7 +149,7 @@ window.HubTracker = (function(){
     /* Handbook 15.1 DEFINES a potential Fail: "the portfolios of all candidates
        identified as potential Fails, i.e., Pass/Fail at the provisional
        grading meeting". The grade was sitting in tracker.grades.provisional
-       and recordFor never read it, so a trainee the centre had just put on
+       and recordFor never read it, so a trainee the center had just put on
        the Appian form as FAIL / PASS was a potential Fail nowhere in Lite
        (audit, 29 Sep 2026). */
     var grades = manual.grades || {};
@@ -223,7 +223,7 @@ window.HubTracker = (function(){
     if (provisionalPassFail) failWhy.push('provisionally graded ' + c.provisional + ' — borderline, which 15.1 calls a potential Fail');
     if (standard === 'NOTSTD' && from.indexOf('Stage') === 0) failWhy.push(from + ' not to standard');
     var potentialFail = failWhy.length > 0;
-    /* The centre's own early-warning signal, not Cambridge's, and labelled so.
+    /* The center's own early-warning signal, not Cambridge's, and labeled so.
        Two not-to-standard lessons running in the second half is worth a tutor's
        eye; it is not a rule and it does not make anyone a potential Fail. */
     var watch = (backToBack && backToBack[1] >= secondHalfFrom() && !potentialFail)
@@ -264,9 +264,9 @@ window.HubTracker = (function(){
        Stage 2. The three that used to sit here -- back-to-back lessons with no
        Stage 2 record, a failed assignment, more than one failed assignment --
        have no authority in 10.2, so they no longer claim Cambridge's name.
-       stage2Hint went the same way: it told a tutor what judgement to enter
+       stage2Hint went the same way: it told a tutor what judgment to enter
        ("Stage 2 should be recorded as not to standard") on arithmetic no
-       Cambridge document recognises. */
+       Cambridge document recognizes. */
     var stage2Hint = null;
     /* Due dates come from the course's own bands, as 10.2 measures them --
        "the first third", "the halfway point" -- not from fixed lesson counts.

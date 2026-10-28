@@ -702,7 +702,7 @@
     var ch = checksHTML(); if (ch) parts.push(ch);
     var fs = firstSectionBox(); if (fs) parts.push(fs);
     var gen = g ? splitGeneral(g.general).rest : '';
-    /* Standardisation, not instruction (Ramy, 19 Oct 2026: "I'm talking to CELTA trainers"): the centre's own lines for this assignment, nothing on how assignments are marked. */
+    /* Standardisation, not instruction (Ramy, 19 Oct 2026: "I'm talking to CELTA trainers"): the center's own lines for this assignment, nothing on how assignments are marked. */
     if (gen) parts.push(gbox('how', 'Standardisation', hubGuidanceHTML(gen), 'mk-hbox'));
     if (g && g.sections) parts.push(gbox('bysec', 'Section by section', hubGuidanceHTML(g.sections), 'mk-hbox'));
     /* its own box (Ramy, 19 Oct 2026), so How to mark is only about the assignment */
@@ -783,7 +783,7 @@
     st.textContent = [
       '.mloc{position:relative;}',
       '.mloc .readonly{margin-bottom:10px;}',
-      /* the colours of a comment: green is good, terracotta is to work on, a calm blue-grey is neither (Ramy, 18 Oct 2026: the yellow is gone) */
+      /* the colors of a comment: green is good, terracotta is to work on, a calm blue-grey is neither (Ramy, 18 Oct 2026: the yellow is gone) */
       ':root{--tone-good:oklch(46% 0.1 158); --tone-good-w:oklch(70% 0.1 158 / .22); --tone-fix:oklch(52% 0.13 40); --tone-fix-w:oklch(72% 0.11 40 / .24); --tone-note:oklch(52% 0.045 250); --tone-note-w:oklch(72% 0.035 250 / .2);}',
       'mark.mc{background:var(--tone-note-w); color:inherit; border-bottom:2px solid var(--tone-note); border-radius:2px; cursor:pointer; padding:0 1px;}',
       'mark.mc.mc-good{background:var(--tone-good-w); border-bottom-color:var(--tone-good);} mark.mc.mc-fix{background:var(--tone-fix-w); border-bottom-color:var(--tone-fix);}',
@@ -801,7 +801,7 @@
       '.mc-by{font-size:0.8rem; color:var(--grey);}',
       '.mc-acts{float:right;} .mc-acts button{background:none; border:none; padding:0 0 0 10px; font:600 0.76rem Karla,sans-serif; color:var(--teal); cursor:pointer; text-decoration:underline; text-decoration-color:var(--sand-line);}',
       '.mc-acts button:hover{background:none !important; box-shadow:none !important;}',
-      /* Which comment is it? The card gives a little shake: no colour, no gold frame (Ramy, 18 Oct 2026). The words, when you jump to them, get a faint ink outline that fades. */
+      /* Which comment is it? The card gives a little shake: no color, no gold frame (Ramy, 18 Oct 2026). The words, when you jump to them, get a faint ink outline that fades. */
       '.mcard.mc-hit{animation:mcShake .5s ease-in-out 1;} @keyframes mcShake{0%,100%{transform:translateX(0);}18%{transform:translateX(-5px);}36%{transform:translateX(5px);}54%{transform:translateX(-3px);}72%{transform:translateX(3px);}}',
       'mark.mc.mc-hit{animation:mcWords .9s ease-out 1;} @keyframes mcWords{0%{outline:2px solid oklch(40% 0.02 60 / .55); outline-offset:2px;}100%{outline:2px solid transparent; outline-offset:2px;}}',
       '@media (prefers-reduced-motion: reduce){ .mcard.mc-hit, mark.mc.mc-hit{animation:none;} }',
@@ -920,7 +920,7 @@
       '.mk-help-panel.mk-checks.go{background:color-mix(in oklab, var(--teal) 6%, var(--paper)); border-color:color-mix(in oklab, var(--teal) 32%, transparent); border-top:3px solid var(--teal);} .mk-help-panel.mk-checks.watch{background:color-mix(in oklab, oklch(70% 0.14 70) 7%, var(--paper)); border-color:color-mix(in oklab, oklch(70% 0.14 70) 35%, transparent); border-top:3px solid oklch(70% 0.14 70);}',
       '.mk-help-panel .mkc-lead, .mk-help-panel .mkc-note{column-span:all;}',
       '.mk-help-panel.mk-hbox{background:var(--gold-wash); border-color:var(--amber-edge);}',
-      /* THE BOXES ARE PILLS (Ramy, 19 Oct 2026: "treat those boxes as pills, so they change color when you click on them"). The open one fills with the assignment's colour; Before you mark fills teal when it is good to go, amber when it says watch out. Hover moves the border only. */
+      /* THE BOXES ARE PILLS (Ramy, 19 Oct 2026: "treat those boxes as pills, so they change color when you click on them"). The open one fills with the assignment's color; Before you mark fills teal when it is good to go, amber when it says watch out. Hover moves the border only. */
       /* The pill never swells (Ramy, 19 Oct 2026: "when I click a pill, the panel jumps"): on a laptop the text is drawn in the panel under the row only, so the frame between the click and the move no longer opens the pill. */
       '@media (min-width:900px){ .mk-help-grid > details{border-radius:999px; overflow:hidden;} .mk-help-grid > details > summary{border-bottom:none !important; min-height:44px; display:flex !important; align-items:center;} .mk-help-grid > details > .gb{display:none !important;} }',
       '.mk-help-grid > details:not([open]):hover{border-color:var(--as, var(--teal)) !important;}',
@@ -937,7 +937,7 @@
       '.hb-acts{display:flex; gap:18px;}',
       'body .hub-brand-foot{margin-bottom:96px;}',
       '.mk-sbox{margin:2px 0 10px;} .mk-sbox > summary{font-size:0.8rem;}',
-      /* While you read B, C, D are pills like While you read A (Ramy, 19 Oct 2026: "so it's consistent"). The pill sits on its own, the width of its words; open, it fills with the assignment's colour and the text opens full width under it. */
+      /* While you read B, C, D are pills like While you read A (Ramy, 19 Oct 2026: "so it's consistent"). The pill sits on its own, the width of its words; open, it fills with the assignment's color and the text opens full width under it. */
       '.mk-sbox{background:none !important; border:none !important;} .mk-sbox > summary{display:inline-flex !important; align-items:center; min-height:44px; padding:8px 40px 8px 16px !important; border:1px solid var(--amber-edge) !important; border-radius:999px; background:var(--gold-wash); font-size:0.86rem !important; max-width:100%; box-sizing:border-box;}',
       '.mk-sbox:not([open]) > summary:hover{border-color:var(--as, var(--teal)) !important;}',
       '.mk-sbox[open] > summary{background:var(--as, var(--teal)); border-color:var(--as, var(--teal)) !important; color:var(--paper) !important;} .mk-sbox[open] > summary::after{border-color:var(--paper) !important;}',

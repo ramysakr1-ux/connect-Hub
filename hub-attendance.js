@@ -32,7 +32,7 @@
  *
  * THE THRESHOLD. Connect's is 160 hours and banks them ACROSS courses, so a
  * volunteer earns one certificate over several courses. Lite holds one course
- * at a time and has no bank, so its threshold is per course and the centre
+ * at a time and has no bank, so its threshold is per course and the center
  * sets it (settings.volunteerCertificateHours). A four-week course is about
  * 36 hours, so Connect's 160 would mean no certificate is ever earned here.
  */
@@ -58,7 +58,7 @@
     if (mark === 'present') return { tier: 'present', creditedMinutes: total };
     /* HALF A TICK. Ramy, 1 Oct 2026: "make partial half a tick." It used to
        credit nothing at all, which made coming for part of a day worth the
-       same as not coming -- and these are people giving a centre their
+       same as not coming -- and these are people giving a center their
        evenings. Half the day, rounded to the minute. */
     if (mark === 'partial') return { tier: 'partial', creditedMinutes: Math.round(total / 2) };
     return { tier: 'absent', creditedMinutes: 0 };
@@ -94,11 +94,11 @@
 
   /* Is the certificate earned, and how far off is it? Stated in CLASSES,
      because "two more classes" is a thing a person can act on. */
-  /* `carried` is what a student already had at this centre before this
+  /* `carried` is what a student already had at this center before this
      course. Ramy, 1 Oct 2026: the certificate is "160 hours across the
-     centre", and a four-week course can only give a volunteer about 36 -- so
+     center", and a four-week course can only give a volunteer about 36 -- so
      the hours have to come forward. Lite has no identity across courses (a
-     volunteer is a token on one course), so the centre types the figure into
+     volunteer is a token on one course), so the center types the figure into
      the register and it is added here. */
   function certificate(hours, target, lessonsInDay, lessonMinutes, carried) {
     target = parseFloat(target) || 0;
@@ -121,7 +121,7 @@
      cumulative from beginner: A1 90-100, A2 180-200, B1 350-400, B2 500-600,
      C1 700-800, C2 1,000-1,200 (support.cambridgeenglish.org, "Guided
      learning hours"). The hours for a level alone are the step from the one
-     below it. A centre's own number, when it sets one, still wins. */
+     below it. A center's own number, when it sets one, still wins. */
   var LEVEL_HOURS = { A1: 100, A2: 100, B1: 200, B2: 200, C1: 200, C2: 400 };
   function hoursForLevel(level, settings) {
     var own = settings && Number(settings.volunteerCertificateHours);
@@ -133,7 +133,7 @@
      AT A LEVEL -- a level's 200 hours less twenty per cent leeway -- so the
      count is the hours at the student's current level: what they carried in
      at that level, plus this course's days from the day they moved up (if the
-     centre moved them up during this course). `levelFrom` is that day; the
+     center moved them up during this course). `levelFrom` is that day; the
      days before it belonged to the level they left. */
   function atLevel(marks, levelFrom) {
     if (!levelFrom) return marks || {};

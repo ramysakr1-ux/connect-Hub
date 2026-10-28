@@ -1,7 +1,7 @@
 /* Cutting a course's own book into the pages its lessons need.
  *
  * A set carries citations -- "SB p.61, ex 3A-B" -- and the pages themselves are
- * whoever's copy of the book attached them. A set written by another centre, or
+ * whoever's copy of the book attached them. A set written by another center, or
  * shared through Connect, arrives with the citations and none of the pages: we
  * tell you which page, you bring your own book. Doing that by hand is 37 pages
  * for Language Hub, 71 for Straightforward, one upload at a time. Nobody will.
@@ -27,7 +27,7 @@
  * needs and the two offsets compared; `pageMap` below is what a disagreement
  * turns into.
  *
- * Ramy, 5 Oct 2026, on sets travelling without our scans: "where do they lead
+ * Ramy, 5 Oct 2026, on sets traveling without our scans: "where do they lead
  * if we're not attaching anything?" This is the other half of that answer --
  * the book link tells a trainee where the page lives, this puts the page on
  * the card. */

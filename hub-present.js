@@ -266,7 +266,7 @@
     if (!rel.length && !document.querySelector('button[data-rel]')) { say('Put the trainees and a TP point set on the course first.'); return; }
     /* THE AUDIO IS BUILT IN (Ramy, 28 Oct 2026: "this is very important ... to show that the audio is built in, that the pages
        you teach from are there, that the other two teachers' are there"). The books' own recordings are not ours to ship, so
-       every lesson that names a track gets a short recording of one of Connect's own scripts in the house voices, labelled
+       every lesson that names a track gets a short recording of one of Connect's own scripts in the house voices, labeled
        as made for the demo. The track number stays: it is what the book would say. The pages are the set's own. */
     (function(){
       var Pp = g('P'); if (!Pp || !Pp.groups) return;

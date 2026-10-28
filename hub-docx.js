@@ -94,7 +94,7 @@
      reads -- the flat text above loses a sheet's stage map and tick-boxes,
      which is how an imported Live Task 2 came through as column names and
      the digits one to seven (29 Sep 2026). Matches the shape the generator
-     builds in Node, so a centre's file reads here exactly as Ramy's did. */
+     builds in Node, so a center's file reads here exactly as Ramy's did. */
   function xmlToBlocks(xml){
     const body = xml.slice(Math.max(0, xml.indexOf('<w:body>')));
     /* Word's Insert Symbol tick (Wingdings F0FC/F0FE, Wingdings 2 F050/F051) comes as <w:sym>, not text: read it as ✓ (Ramy, 19 Oct 2026: ticks typed into the paragraph). */

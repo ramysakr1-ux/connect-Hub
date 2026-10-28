@@ -22,7 +22,7 @@
      should be able to easily get back"). On every page an assessor opens from the pack, a clear forest
      pill at the top goes back to it. Only for the assessor; the pack itself does not need it, and nor
      does the invitation card (23 Oct 2026): it is the way in, and the pill sat beside the card and
-     pushed it off centre. */
+     pushed it off center. */
   if (mode === 'assessor' && !/(12_assessor_pack|invite)\.html/.test(location.pathname)) {
     var addWayBack = function(){
       if (!document.body || document.getElementById('hubAkBack')) return;

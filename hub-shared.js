@@ -11,7 +11,7 @@ window.HUB_MAX_TP = 12;
 
 /* WHICH observation sheets a trainee turns in, and what Cambridge asks of
    the set. Four screens each held the literal list
-   ['filmed1'..'filmed4','live1','live2'], so a centre that imported a
+   ['filmed1'..'filmed4','live1','live2'], so a center that imported a
    different split -- three filmed and three live, which is what 10.1 actually
    allows -- broke them: live3 never counted and filmed4 was demanded forever,
    so the home page asked for a sheet that did not exist (audit, 29 Sep 2026).
@@ -20,9 +20,9 @@ window.HUB_MAX_TP = 12;
 
    11.2 lists six hours of observation among what trainees "are required
    to" do to meet the course requirements. 10.1, in its own verbs: trainees are given six hours' directed
-   observation; "All six hours CAN be live observation, but a centre MAY
+   observation; "All six hours CAN be live observation, but a center MAY
    choose to provide up to three hours of filmed lessons", and "three hours of
-   live online or face-to-face observation MUST be provided by the centre".
+   live online or face-to-face observation MUST be provided by the center".
    So: at most three filmed hours, at least three live hours, six in total --
    and the count that matters is HOURS, not sheets. Lite counted sheets and
    reported "All six turned in", which reads as the six-hour requirement
@@ -106,15 +106,15 @@ window.hubObservationHours = function(records){
   }
   // One hover rule for every clickable card, one for every pill and button
   // (Ramy, 20 Sep 2026: "one rule for all the cards, one rule for all the
-  // pills"), on every screen. Chosen states keep their own colour; disabled
+  // pills"), on every screen. Chosen states keep their own color; disabled
   // things do nothing.
   //
   // The ring and wash carry NO HUE (Ramy, 23 Sep 2026: "that green hover on
-  // the pills is a bit too much... a softer green or a different colour
+  // the pills is a bit too much... a softer green or a different color
   // altogether", then option D of four). They used to be teal in three
   // places at once -- ring, wash and border -- which put a green halo on
-  // every control whatever colour the control itself was, and once the
-  // structural colour went gold that meant a green ring around a gold fill.
+  // every control whatever color the control itself was, and once the
+  // structural color went gold that meant a green ring around a gold fill.
   // Hue-free, hover says "your mouse is on something" and nothing else, so
   // gold still means "the action here" and teal "the decision".
   //
@@ -204,8 +204,8 @@ window.hubObservationHours = function(records){
     var mine=String(opts.group||'');
     if(mine) rooms=rooms.slice().sort(function(a,b){ return (String(b.group||'')===mine)-(String(a.group||'')===mine); });
     var e=function(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); };
-    /* An assessor is not choosing between rooms -- the centre has ticked the
-       one they are joining -- so the button does not need the centre's own
+    /* An assessor is not choosing between rooms -- the center has ticked the
+       one they are joining -- so the button does not need the center's own
        label for it. Ramy, 1 Oct 2026: "the assessor link, the online room,
        should not read teaching practice, it should just say join here." It
        says Join the room -- generic on purpose, because the same room holds
@@ -225,8 +225,8 @@ window.hubObservationHours = function(records){
   };
   /* An initials tile for a person (Ramy, 28 Sep 2026: "should trainees have
      avatars as well, with their initials, like the tutors? perhaps a
-     different colour?"). Staff are teal, trainees sand with ink initials,
-     so the two read apart at a glance; the colour never follows the person. */
+     different color?"). Staff are teal, trainees sand with ink initials,
+     so the two read apart at a glance; the color never follows the person. */
   window.hubInitials=function(name){ return String(name||'').trim().split(/\s+/).slice(0,2).map(function(w){ return w[0]||''; }).join('').toUpperCase(); };
   /* ONE RULE FOR A TRAINEE'S TILE (Ramy, 24 Oct 2026: "lose the avatar with
      the initials ... keep the letters all the way through everywhere"). A
@@ -448,7 +448,7 @@ window.hubScrollIntoView = function(el, block){
    they never checked who was in them. An assessor -- or a trainee -- who
    reached either got the full form: 13 editable fields and a live Save on
    Course admin, 41 on the wording editor. hub-sync blocks the write, so
-   nothing they typed ever reached the course and the centre's record was never
+   nothing they typed ever reached the course and the center's record was never
    at risk. But the screen said "Saved -- <course>." and their own copy of the
    course took the change, so from then on they were reading a course that did
    not exist: walking the assessor role on 21 Sep 2026 the header read
@@ -459,7 +459,7 @@ window.hubScrollIntoView = function(el, block){
    untouched. */
 /* Whose room a screen belongs to. A link that is not for this room gets the
    refusal below rather than the working screen: before this, a trainee or an
-   assessor who reached the centre's setup got the full editable form and a
+   assessor who reached the center's setup got the full editable form and a
    Save that said "Saved" while hub-sync quietly dropped the write (walk,
    21 Sep 2026) -- and the tutor's feedback screen and the trainee's
    submission form were still open to everyone (walk, 22 Sep 2026). */
@@ -523,7 +523,7 @@ window.hubTutorRoomOnly = function(opts){
 /* A VOLUNTEER STUDENT'S OWN PAGES (30 Sep 2026). A member of the public who
    came in to be taught has exactly two: their own page and the certificate
    printed from it. `hubVolunteerRoomOnly({ tutor: true })` lets a tutor in as
-   well, for the certificate, which a centre sometimes has to print from the
+   well, for the certificate, which a center sometimes has to print from the
    register. */
 window.hubVolunteerRoomOnly = function(opts){
   var mode = window.HubMode;
@@ -625,7 +625,7 @@ window.hubReserveForBar = function(selector){
 };
 
 /* Copying a link is the whole product of two screens -- the owner console hands
-   a centre its course, and the roster hands a trainee their workspace -- and it
+   a center its course, and the roster hands a trainee their workspace -- and it
    used to be able to fail in total silence. Both called
    navigator.clipboard.writeText and, if it threw, prompt(). Walking the owner
    console on 21 Sep 2026 both failed at once: the clipboard refused with
@@ -705,8 +705,8 @@ window.hubCopyButton = async function(btn, text, html){
   return false;
 };
 
-// A centre's assignment wording. Screen 8 writes this key; every other screen
-// reads it, so the centre's own wording is what a trainee writes against and
+// A center's assignment wording. Screen 8 writes this key; every other screen
+// reads it, so the center's own wording is what a trainee writes against and
 // what a tutor marks from.
 //
 // It used to travel as a FILE between browsers (Ramy, 20 Sep 2026: "export the
@@ -714,7 +714,7 @@ window.hubCopyButton = async function(btn, text, html){
 // The store replaced that: the key is a COURSE_KEY in hub-sync (carried as
 // `wording`), so an edit on screen 8 reaches the course by itself and there is
 // no export to look for. Screen 8's "Import from a file" is a different thing
-// and still earns its place -- it lifts section text out of the centre's own
+// and still earns its place -- it lifts section text out of the center's own
 // document into the editor.
 // Schema: connect-hub-wording-v1.
 window.HUB_WORDING_KEY = 'connect_assignment_wording_v2';
@@ -797,7 +797,7 @@ window.hubWordingFilled = function(w){
   return w;
 };
 
-// Assignment 5 (the plagiarism reflection) is a centre sanction, not one of
+// Assignment 5 (the plagiarism reflection) is a center sanction, not one of
 // the four: it exists for a trainee only once a tutor has set it after a
 // plagiarism finding. Ramy, 20 Sep 2026: "I don't want assignment five to be
 // visible... can we have it out of the way somehow?" Nothing lists it until
@@ -816,11 +816,11 @@ window.a5InPlay = function(subs){
 /* WHEN THE GETTING-TO-KNOW-YOU RUNS, AND FOR HOW LONG. Day one on the
    timetable is the demonstration lesson and then forty-five minutes of
    unassessed teaching (23_timetable), which is where the activities go; so
-   the day and the hour are read off the timetable, and the centre may type
+   the day and the hour are read off the timetable, and the center may type
    over either on Course admin (settings.gtkyWhen, settings.gtkyMinutes).
    Ramy, 8 Oct 2026: "not necessarily the first afternoon... this should be
    editable, but also connected to the timetable". A trainee's browser holds
-   no roster, so the minutes are only ever stated when the centre set them;
+   no roster, so the minutes are only ever stated when the center set them;
    otherwise the page says the slot is shared. */
 window.hubGtkyPlan = function(settings, tt){
   var cs = settings || {}, T = tt || {};
@@ -961,10 +961,10 @@ window.hubMeets = function(tt){
 };
 window.hubLinkIsTimetable = function(l){ return /timetable/i.test(String((l && l.label) || '') + ' ' + String((l && l.card) || '')); };
 /* The CELTA 5 and the TP points are Lite's own rooms now (20_celta5, 24_tp_points),
-   so a bare row by that name shows the trainees nothing; a row the centre LINKED
+   so a bare row by that name shows the trainees nothing; a row the center LINKED
    under that name is theirs and stays (8 Oct 2026). */
 window.hubLinkIsNative = function(l){ return !!l && !l.url && /^(celta ?5|tp points)$/i.test(String(l.label || '').trim()); };
-/* Shown when switched on, or from the moment the centre set (showFrom, an
+/* Shown when switched on, or from the moment the center set (showFrom, an
    instant, the noticeboard's publishAt rule): an input session held back
    until its day (Ramy, 8 Oct 2026: "the default should be that trainees
    cannot see it... shown depending on the date and time, or triggered
@@ -989,9 +989,9 @@ window.hubReleased = function(wording, key){
   return false;
 };
 
-// The four assignments in the order this centre runs them. The order lives
+// The four assignments in the order this center runs them. The order lives
 // in the wording as `_order` (screen 8 sets it; Ramy, 20 Sep 2026: "the
-// order also could change, maybe depending on the centre"). Anything missing
+// order also could change, maybe depending on the center"). Anything missing
 // falls in after in the default order; Assignment 5 is always last.
 window.hubAssignmentOrder = function(wording){
   var base = ['fol', 'lrt', 'lsrt', 'lfc'];
@@ -1000,7 +1000,7 @@ window.hubAssignmentOrder = function(wording){
   return o.concat(['a5']);
 };
 
-// The centre on the documents (Ramy, 20 Sep 2026: "put the centre name and
+// The center on the documents (Ramy, 20 Sep 2026: "put the center name and
 // logo on the documents"). Course admin's Settings hold the center's name,
 // number and logo; the store boots them into this browser, so every page and
 // every assembled document can carry them. A document keeps the letterhead it
@@ -1022,8 +1022,8 @@ window.hubLetterheadHTML = function(eyebrow){
 window.hubApplyCentre = function(){
   var c = window.hubCentre();
   document.querySelectorAll('.hub-centre-logo').forEach(function(slot){
-    /* No logo: the slot GOES. It used to stay, a dashed box reading "Centre
-       logo" -- an instruction addressed to the centre, sitting on the
+    /* No logo: the slot GOES. It used to stay, a dashed box reading "Center
+       logo" -- an instruction addressed to the center, sitting on the
        trainee's own lesson plan, self-evaluation and teaching practice
        record, where it reads as a broken image (walk, 21 Sep 2026). The
        letterhead in the printed document has always simply left the logo out;
@@ -1047,8 +1047,8 @@ window.hubApplyCentre = function(){
   });
 };
 /* THE RULE (Ramy, 8 Oct 2026): "the assessor, trainee, trainer sort of
-   landing pages should show the centre name and the centre logo." Each of
-   those pages writes its centre line (name, number, dates); this puts the
+   landing pages should show the center name and the center logo." Each of
+   those pages writes its center line (name, number, dates); this puts the
    logo in front of it, in the logo's own shape, 28px high and up to 84 wide.
    Call it AFTER the line's text is set -- setting textContent clears it. */
 window.hubCentreLogo = function(el){
@@ -1161,7 +1161,7 @@ if (!window.HubStore) { if (document.readyState === 'loading') document.addEvent
     if (sub.sub2) html += '<div class="section"><h2>Resubmission</h2>' + submissionHTML(a, sub.sub2, (sub.flags || {}).sub2) + '</div>';
     /* PASSAGES FOUND ELSEWHERE (Ramy, 25 Oct 2026): what the tutor attached from the own-work check
        goes back with the assignment, for the trainee and the assessor alike. Each is marked in the
-       text above and listed here with where it was found: a course and a centre, or a web page,
+       text above and listed here with where it was found: a course and a center, or a web page,
        never a person. The warning letter stays the letter. */
     var FL = sub.flags || {}, fl = function (r) { return (FL[r] || []).filter(Boolean); };
     if (fl('sub1').length || fl('sub2').length) {
@@ -1237,7 +1237,7 @@ try { if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) n
  * phone").
  *
  * Rather than change the generator, which would only help records written
- * from today, each table is labelled as it is rendered: the first row is the
+ * from today, each table is labeled as it is rendered: the first row is the
  * header, so its cells name the columns, and every cell below carries its
  * column's name in data-l. hub-house.css turns that into a stacked row at
  * narrow widths and ignores it everywhere else, so A4 and print are untouched.
@@ -1255,7 +1255,7 @@ window.hubStackTables = function(root){
     /* A row of <th> IS a header, however few rows follow it -- which is how
        the assessor pack's two tables say so, and they can have one trainee
        on them. Everything else has to earn it by having rows to spare, because
-       the stored documents mark their header row with a background colour on
+       the stored documents mark their header row with a background color on
        plain <td>s and a label/value grid's first row is data. */
     var headRow = [].every.call(rows[0].cells, function(c){ return c.tagName === 'TH'; });
     if (!headRow && rows.length < 3) return;
@@ -1265,12 +1265,12 @@ window.hubStackTables = function(root){
        feedback points, the analysis sheets, the meta band -- whose first row
        is DATA, not headings. Stacking those put "Strengths in planning" over
        every row beneath it (caught on a phone, 24 Sep 2026). */
-    /* Three columns or more, and enough of them named to be worth labelling --
+    /* Three columns or more, and enough of them named to be worth labeling --
        a trailing empty heading (the pack's actions column) is allowed. */
     if (labels.length < 3 || labels.filter(Boolean).length < 3) return;
     for (var i = 1; i < rows.length; i++){
       /* Count COLUMNS, not cells: the procedure table's Total row spans three,
-         so the number after it is the fourth column and was being labelled
+         so the number after it is the fourth column and was being labeled
          with the second one's name. */
       var col = 0;
       [].forEach.call(rows[i].cells, function(c){
@@ -1284,11 +1284,11 @@ window.hubStackTables = function(root){
   });
 };
 
-/* ---- assignment sections: two shapes a real centre's assignments need ----
+/* ---- assignment sections: two shapes a real center's assignments need ----
  *
  * Both came out of copying IH Istanbul's C/17 assignments into Lite word for
  * word (25 Sep 2026). Neither could be expressed before, and both are general:
- * they are not about that centre.
+ * they are not about that center.
  *
  * 1. A picker with more than two groups, each with its own count, and a group
  *    the trainee does not choose. C/17's Language Related Tasks analyses
@@ -1397,7 +1397,7 @@ window.hubIsReference = function(s){
   };
   /* What a timetable time reads as for THIS reader. Returns the course's own
      label always, and a local one only when the reader is somewhere that
-     makes it a different time — a face-to-face centre never sees two clocks. */
+     makes it a different time — a face-to-face center never sees two clocks. */
   /* THE DEMO CLOCK (30 Sep 2026). Ramy: "a demo for a course that has no end
      date so it would last... one showing the beginning of the course and one
      towards the end before the assessor visit." A course pinned to a day
@@ -1471,7 +1471,7 @@ window.hubIsReference = function(s){
    dropped on the page (Ramy: "can we make it prettier somehow"). flatpickr,
    vendored under assets/ so the shell caches it and nothing is fetched from
    anyone else's server, is put on every date and date-time box, dressed in
-   the house colours (hub-house.css, .flatpickr-*). The box's own value stays
+   the house colors (hub-house.css, .flatpickr-*). The box's own value stays
    exactly what the page reads -- YYYY-MM-DD, or YYYY-MM-DDTHH:MM -- and the
    picker shows a readable copy beside it. On a phone the native picker is
    kept: it is the better one there. If the script does not load, nothing
@@ -1693,7 +1693,7 @@ window.hubLockup = function(size){
    every trainee reads, and never in this public code: the defaults are kept
    in the store. Plain text; a line starting "• " is a bullet, a short line
    with no full stop followed by text is a heading. */
-/* A course's criteria can be the syllabus's, the centre's own rows among them,
+/* A course's criteria can be the syllabus's, the center's own rows among them,
    or any list a tutor has made, so the guidance for a criterion is found by the
    criterion's WORDS, not its position (18 Oct 2026): each entry carries
    critText, the criterion it is for, and a criterion whose words begin with
@@ -1983,7 +1983,7 @@ window.hubTickSVG = function(cls){
 
 /* HEADLINES FOR THE PARTS OF AN ANSWER (18 Oct 2026). Ramy: "give headlines to
    each part of the assignment, for the trainees to write under... length,
-   level, genre... in a different color... it's already organised, we just
+   level, genre... in a different color... it's already organized, we just
    give it a bit of a nudge... and on the trainee side too."
    A text section may carry `heads`: ["Level", "Length", ...]. The trainee
    writes under each headline in its own box; the answer is still STORED as
@@ -2019,7 +2019,7 @@ window.hubBareText = function (text, heads) {
   var t = String(text || ''); if (!heads || !heads.length) return t;
   return t.split('\n\n').map(function (p) { var h = heads.filter(function (x) { return p.indexOf(x + ': ') === 0; })[0]; return h ? p.slice(h.length + 2) : p; }).join('\n\n');
 };
-/* the same text, read-only, with each headline in its colour on its own line */
+/* the same text, read-only, with each headline in its color on its own line */
 window.hubHeadHTML = function (text, heads) {
   var e = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
   var paras = String(text || '').split('\n\n'), hs = heads || [];
@@ -2254,9 +2254,9 @@ window.hubHeadHTML = function (text, heads) {
   document.addEventListener('click', function(e){
     var a = e.target && e.target.closest ? e.target.closest('a') : null;
     if (isDownload(a) && demo()) { e.preventDefault(); e.stopPropagation(); say(); return; }
-    /* The demo centre's own documents are placeholders (drive.google.com/.../demo-...),
+    /* The demo center's own documents are placeholders (drive.google.com/.../demo-...),
        and opened a Drive error (assessor walk, 24 Oct 2026). Say what would open. */
-    /* Every link on the Course files card, too (Ramy, 25 Oct 2026): on the demo its rows are the centre's own
+    /* Every link on the Course files card, too (Ramy, 25 Oct 2026): on the demo its rows are the center's own
        files, and one of them opened Cambridge's site instead of saying what it is. */
     if (a && demo() && a.closest && a.closest('.room.files') && a.target === '_blank') {
       e.preventDefault(); e.stopPropagation(); say('This is a demo course. On a real course this opens the file itself.'); return;

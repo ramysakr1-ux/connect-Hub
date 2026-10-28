@@ -11,7 +11,7 @@
  * is where the tutor / trainee / assessor doors live. The store sends it
  * (op sendCard, v64) from lite@celtaconnect.com.
  *
- * Email HTML, so: tables, inline styles, hex colours (the tokens' oklch
+ * Email HTML, so: tables, inline styles, hex colors (the tokens' oklch
  * values converted once, below), web-safe fallbacks for the card's faces.
  * No images and no SVG -- the mark is set in type so nothing has to load.
  */
@@ -142,7 +142,7 @@
   }
 
 
-  /* The rates, as a block an email can carry: a centre that asked what it
+  /* The rates, as a block an email can carry: a center that asked what it
      costs gets the answer in the message, not behind a link. NO FIGURE LIVES
      IN THIS FILE (Ramy, 7 Oct 2026: the rates are not public, and the code
      is): the console passes the four package totals it keeps in the owner's

@@ -24,7 +24,7 @@
  *   derived from the signer every time it is drawn (hub-hand.js).
  *
  *   hubInk.confirm({ name, seed, title, askName }) -> Promise<spec|{name,ink}|null>
- *       null = cancelled. Otherwise the signature to keep in the record.
+ *       null = canceled. Otherwise the signature to keep in the record.
  *   hubInk.svg(ink, cls, name) -> the signature for the screen
  *
  * `svg` still renders a drawn path, because signatures drawn before this are

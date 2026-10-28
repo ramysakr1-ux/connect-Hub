@@ -21,7 +21,7 @@
 // their own or they can use Connect's. For all the policies").
 //
 // THE VOICE. The center speaks ("we", "us") to the candidate ("you"); the
-// centre's name, {center}, appears once, in the opening line, and is filled
+// center's name, {center}, appears once, in the opening line, and is filled
 // in by Course admin when the wording is dropped in. No notes to the admin
 // inside the text: a trainee reads and signs it as it stands.
 //
@@ -33,7 +33,7 @@
 // the serious and unforeseen DURING the course. Two sections, kept apart,
 // and the signing declaration asks about the first.
 //
-// It is a STARTING POINT, not a policy. Where a rule is the centre's own --
+// It is a STARTING POINT, not a policy. Where a rule is the center's own --
 // the attendance threshold, who hears a complaint last, the resubmission
 // deadline -- it is left as a visible blank in square brackets rather than
 // invented: a drafted placeholder that reads as settled policy is worse than

@@ -207,7 +207,7 @@ window.HubStore = (function(){
     /* v96 (23 Oct 2026): the end-of-course feedback, sent once, anonymous unless `named` */
     mailCourseFeedback: function(m){ return call({ op: 'mailCourseFeedback', to: m.to, subject: m.subject, body: m.body, csv: m.csv, filename: m.filename }); },
     courseFeedback: function(answers, named){ return call({ op: 'courseFeedback', answers: answers, named: named === true }); },
-    /* A centre's next course starts from what its last one taught the criteria
+    /* A center's next course starts from what its last one taught the criteria
        suggester. The store decides whether there is anything to take: it
        refuses if this course has tagging of its own, so this can only seed. */
     seedCritLearn: function(){ return call({ op: 'seedCritLearn' }); },
@@ -229,7 +229,7 @@ window.HubStore = (function(){
     renameTrainee: function(tok, name, group, email){ var b = { op: 'renameTrainee', token: tok, name: name, group: group }; if (email != null) b.email = email; return call(b); },
     removeTrainee: function(tok){ return call({ op: 'removeTrainee', token: tok }); },
     traineeLink: function(tok){ return base() + 'index.html?t=' + encodeURIComponent(tok); },
-    /* The link a centre actually hands out. It opens the invitation card --
+    /* The link a center actually hands out. It opens the invitation card --
        which says whose link it is, what it opens and that it must not be
        passed on -- and the card opens the room. The direct links above still
        work and are what the card's button uses; this is the front door, not a

@@ -7,7 +7,7 @@
  * their page; the tutors' and the assessor's cards likewise.
  *
  * hubQr(url, opts) -> an <svg> element. Rounded ink modules, the three finder
- * eyes solid with a gold centre, the Lite mark on a plate in the middle
+ * eyes solid with a gold center, the Lite mark on a plate in the middle
  * (error correction Q leaves room for it). The encoder is vendor/qrcode.js
  * (Kazuhiko Arase, MIT). Checked 15 Oct 2026 with a reader at phone size:
  * the same drawing, from the Connect repo's scripts/front/qr.py, decodes at

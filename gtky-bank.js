@@ -43,7 +43,7 @@ window.CONNECT_HUB_GTKY = [
   "steps": [
    "Ask them to stand in a line by birthday, January at one end, December at the other.",
    "They have to talk to each other to work out where they go.",
-   "Do it again by the first letter of their name, or how far they travelled today."
+   "Do it again by the first letter of their name, or how far they traveled today."
   ],
   "mode": "f2f",
   "onlineNote": null
@@ -82,7 +82,7 @@ window.CONNECT_HUB_GTKY = [
   "steps": [
    "Each corner of the room is a type of music — jazz, classical, pop, rock.",
    "Clap, and everyone moves to the corner that fits them, then explains why to someone else there.",
-   "Stop, take quick feedback, and run it again with seasons, films, or favourite thing about Istanbul."
+   "Stop, take quick feedback, and run it again with seasons, films, or favorite thing about Istanbul."
   ],
   "mode": "f2f",
   "onlineNote": null
@@ -341,7 +341,7 @@ window.CONNECT_HUB_GTKY = [
   "meta": "Mingle · 20 min · nothing",
   "steps": [
    "They must find two people with whom they share three things.",
-   "Not age, nationality or hair colour — hobbies, where they live, what they studied.",
+   "Not age, nationality or hair color — hobbies, where they live, what they studied.",
    "When they have found them, they sit together as a group."
   ],
   "mode": "both",
@@ -414,13 +414,13 @@ window.CONNECT_HUB_GTKY = [
  },
  {
   "slug": "colour_of_my_day",
-  "name": "Colour of My Day",
+  "name": "Color of My Day",
   "level": "a1",
   "meta": "Whole class · 20 min · nothing",
   "steps": [
-   "Say a colour and one word about why. Blue — sea.",
-   "Each learner gives their colour and their word.",
-   "Group everyone by colour and see who chose the same."
+   "Say a color and one word about why. Blue — sea.",
+   "Each learner gives their color and their word.",
+   "Group everyone by color and see who chose the same."
   ],
   "mode": "both",
   "onlineNote": null
@@ -518,7 +518,7 @@ window.CONNECT_HUB_GTKY = [
  },
  {
   "slug": "my_favourite_place",
-  "name": "My Favourite Place",
+  "name": "My Favorite Place",
   "level": "elem",
   "meta": "Pairs · 20 min · nothing",
   "steps": [
@@ -769,7 +769,7 @@ window.CONNECT_HUB_GTKY = [
   "level": "pre",
   "meta": "Whole class · 20 min · nothing",
   "steps": [
-   "Find who has travelled furthest, studied English longest, has the most siblings.",
+   "Find who has traveled furthest, studied English longest, has the most siblings.",
    "Everyone asks everyone, then the class agrees each record.",
    "Write the records on the board."
   ],

@@ -5,7 +5,7 @@
  * different languages. I don't know how many you have." Connect has six for
  * its volunteer sign-up (src/lib/fol/volunteer-signup-i18n.ts): Turkish,
  * Arabic, Russian, Persian, Ukrainian, English. The same six here, for the
- * two things a volunteer reads in their own language: the centre's joining
+ * two things a volunteer reads in their own language: the center's joining
  * note, and how their page works. Everything else on their page stays in
  * English -- it is an English class.
  *

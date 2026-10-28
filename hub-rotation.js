@@ -1,10 +1,10 @@
 /* Connect Lite — who teaches what, and on which day.
  * © 2026 Ramy Sakr. All rights reserved.
  *
- * Handbook 9.1.2 is a MUST, twice over: "Centres must ensure that all
+ * Handbook 9.1.2 is a MUST, twice over: "Centers must ensure that all
  * candidates have practice in a range of lessons covering all aspects of
  * language teaching and must include language-focus lessons. The type of
- * lesson must be recorded in the CELTA 5." A centre satisfies that by
+ * lesson must be recorded in the CELTA 5." A center satisfies that by
  * rotating the lesson types round the group rather than letting them fall
  * where they may, and Lite already knows enough to do the rotation itself.
  *
@@ -48,7 +48,7 @@
      rule: Ramy, 29 Sep 2026 -- "if they fail a receptive skill, they should
      get another receptive skill. Doesn't have to be the same receptive, but a
      receptive nonetheless. And if they fail language, they should also get
-     another language lesson." He was explicit that this is the centre's
+     another language lesson." He was explicit that this is the center's
      recommendation and NOT a Cambridge rule, so it suggests and says why; it
      never overrides a tutor and never goes red. */
   const FAMILY = {
@@ -226,7 +226,7 @@
 
   /* Does every trainee get a language-focus lesson? This is the MUST, so it
      is checked rather than assumed -- a tutor's overrides can break what the
-     rotation guaranteed, and then the centre needs telling. */
+     rotation guaranteed, and then the center needs telling. */
   function languageFocusCheck(rows, tps) {
     tps = tps || 6;
     const out = [];

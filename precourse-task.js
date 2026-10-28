@@ -84,7 +84,7 @@ window.CONNECT_HUB_PRECOURSE_TASK = {
 {
 "n": 5,
 "title": "Developing Teaching Skills and Professionalism",
-"intro": "Section 5: Developing Teaching Skills and Professionalism\n\nA Developing Teaching Skills\n\nIn the Teaching Practice sessions on the CELTA course you will be encouraged to develop different teaching skills and you will need to demonstrate competence in managing and organising the learning environment.\n\nTeacher language\n\nDepending on the group you teach, your learners will have different levels of language skills. At all levels it is important to think about your own language use in the classroom. This is because you serve as an example of the language they are trying to learn – you provide a language model, so it is important to be accurate. In addition, you will need to grade or modify your language so that learners will understand the language you use to manage the classroom, mainly in the form of instructions.",
+"intro": "Section 5: Developing Teaching Skills and Professionalism\n\nA Developing Teaching Skills\n\nIn the Teaching Practice sessions on the CELTA course you will be encouraged to develop different teaching skills and you will need to demonstrate competence in managing and organizing the learning environment.\n\nTeacher language\n\nDepending on the group you teach, your learners will have different levels of language skills. At all levels it is important to think about your own language use in the classroom. This is because you serve as an example of the language they are trying to learn – you provide a language model, so it is important to be accurate. In addition, you will need to grade or modify your language so that learners will understand the language you use to manage the classroom, mainly in the form of instructions.",
 "tasks": [
 45,
 46,
@@ -229,7 +229,7 @@ window.CONNECT_HUB_PRECOURSE_TASK = {
 }
 },
 "10": {
-"lead": "Types of verbs\n\nMuch of the study of grammar centres around verbs and the way they behave in combination with each other. The reasons for this are that verbs help us convey a lot of information about states, actions, time and attitude and involve many subtleties of meaning that learners of English find quite challenging.\n\nWe can look at verbs as belonging to two broad categories: lexical and auxiliary.  Lexical verbs contain some sort of meaning and can stand alone.  Therefore, in the sentence I love chocolate ice cream, the verb love is lexical: it has meaning and does not need another verb to help it in any way.\n\nHowever, other verbs fulfil the purpose of acting as a help or support to lexical verbs and are called auxiliary. For example, in the following sentence He’s watching TV at the moment the verb is (contracted with he to make he’s) performs the role of helping the main verb watch to make the present progressive tense and has no independent meaning of its own.\n\nAuxiliary verbs can help make tenses that contain more than one verb.  They can also be used to create negative and interrogative (or question) forms.  For example, to make the sentence He lives here negative, we need to add auxiliary does as well as not i.e. He doesn’t live here.  In order to create a question, we add does and alter the word order i.e. Does he live here?",
+"lead": "Types of verbs\n\nMuch of the study of grammar centers around verbs and the way they behave in combination with each other. The reasons for this are that verbs help us convey a lot of information about states, actions, time and attitude and involve many subtleties of meaning that learners of English find quite challenging.\n\nWe can look at verbs as belonging to two broad categories: lexical and auxiliary.  Lexical verbs contain some sort of meaning and can stand alone.  Therefore, in the sentence I love chocolate ice cream, the verb love is lexical: it has meaning and does not need another verb to help it in any way.\n\nHowever, other verbs fulfill the purpose of acting as a help or support to lexical verbs and are called auxiliary. For example, in the following sentence He’s watching TV at the moment the verb is (contracted with he to make he’s) performs the role of helping the main verb watch to make the present progressive tense and has no independent meaning of its own.\n\nAuxiliary verbs can help make tenses that contain more than one verb.  They can also be used to create negative and interrogative (or question) forms.  For example, to make the sentence He lives here negative, we need to add auxiliary does as well as not i.e. He doesn’t live here.  In order to create a question, we add does and alter the word order i.e. Does he live here?",
 "shape": {
 "kind": "rows_choice",
 "rows": [
@@ -346,7 +346,7 @@ window.CONNECT_HUB_PRECOURSE_TASK = {
 }
 },
 "16": {
-"lead": "While we have focused on these different elements in terms of identifying their form, it is worth remembering that these changes also affect the meaning of the verb phrase.\n\nSo far, we have called these combinations verb phrases.  In many grammar reference books, English language course books and other materials, they are often known as tenses.  Therefore, each verb phrase can be labelled with a tense name for ease of identification.  Look at the following example: I’m studying really hard at the moment. The auxiliary verb am (from be) is in the present tense, while the -ing form of the lexical verb study indicates a progressive form.  They combine to create what is known as the present progressive tense (often called the present continuous).\n\nHere is another example: Her jewellery has been stolen. The auxiliary have is in the present tense; it combines with be (been – past participle form) to indicate the passive voice; been also combines with a second past participle stolen to indicate the perfect aspect.  The three combinations create the present perfect passive tense.",
+"lead": "While we have focused on these different elements in terms of identifying their form, it is worth remembering that these changes also affect the meaning of the verb phrase.\n\nSo far, we have called these combinations verb phrases.  In many grammar reference books, English language course books and other materials, they are often known as tenses.  Therefore, each verb phrase can be labeled with a tense name for ease of identification.  Look at the following example: I’m studying really hard at the moment. The auxiliary verb am (from be) is in the present tense, while the -ing form of the lexical verb study indicates a progressive form.  They combine to create what is known as the present progressive tense (often called the present continuous).\n\nHere is another example: Her jewellery has been stolen. The auxiliary have is in the present tense; it combines with be (been – past participle form) to indicate the passive voice; been also combines with a second past participle stolen to indicate the perfect aspect.  The three combinations create the present perfect passive tense.",
 "shape": {
 "cols": [
 "Tense name"
@@ -365,7 +365,7 @@ window.CONNECT_HUB_PRECOURSE_TASK = {
 }
 },
 "17": {
-"lead": "Grammar and meaning\n\nDifferent tenses have a variety of uses or meanings.  In most cases, tenses give us some indication of time reference.  For example in the sentence: I played squash with Liz yesterday afternoon. the use of the simple past with the verb played signals that the action took place in the past.  However, there is not always a one-to-one relationship between tenses and the time they refer to.  For example, in the following question: What if I wanted to go now? the simple past is used, but the time reference is now, the present.  In this example, the simple past has been used to emphasise an idea of hypothesis.  The speaker is speculating on a scenario that is different from the real present.  Therefore, in the above question, we can say that the simple past has been used to show distance from reality rather than distance from the present.",
+"lead": "Grammar and meaning\n\nDifferent tenses have a variety of uses or meanings.  In most cases, tenses give us some indication of time reference.  For example in the sentence: I played squash with Liz yesterday afternoon. the use of the simple past with the verb played signals that the action took place in the past.  However, there is not always a one-to-one relationship between tenses and the time they refer to.  For example, in the following question: What if I wanted to go now? the simple past is used, but the time reference is now, the present.  In this example, the simple past has been used to emphasize an idea of hypothesis.  The speaker is speculating on a scenario that is different from the real present.  Therefore, in the above question, we can say that the simple past has been used to show distance from reality rather than distance from the present.",
 "shape": {
 "cols": [
 "Time reference"
@@ -433,7 +433,7 @@ window.CONNECT_HUB_PRECOURSE_TASK = {
 ],
 "kind": "rows_text",
 "rows": [
-"He's the highest person in the family by more than 2 centimetres.",
+"He's the highest person in the family by more than 2 centimeters.",
 "I think I'll go to bed now. I'm feeling a little enervated.",
 "It is an extremely good essay. The ideas in it are original and pretentious.",
 "Her grandfather gave her a loving slap on her face.",
@@ -459,7 +459,7 @@ window.CONNECT_HUB_PRECOURSE_TASK = {
 }
 },
 "24": {
-"lead": "To summarise, in order to be able to say we know the meaning of a word, we need to think about the following: • semantic meaning • register • connotation • collocation\n\nC Phonology\n\nSection C of this unit aims to: • clarify key terminology associated with pronunciation • highlight the role phonology has to play in English language teaching • exemplify the relationship between sounds and phonemic script • illustrate stress in individual words.\n\nOverview\n\nPhonology is the study of speech sounds.  It is related to the ‘noises’ we produce when we speak English.  This includes not only individual sounds, but also different rhythms and the way our voices rise and fall.",
+"lead": "To summarize, in order to be able to say we know the meaning of a word, we need to think about the following: • semantic meaning • register • connotation • collocation\n\nC Phonology\n\nSection C of this unit aims to: • clarify key terminology associated with pronunciation • highlight the role phonology has to play in English language teaching • exemplify the relationship between sounds and phonemic script • illustrate stress in individual words.\n\nOverview\n\nPhonology is the study of speech sounds.  It is related to the ‘noises’ we produce when we speak English.  This includes not only individual sounds, but also different rhythms and the way our voices rise and fall.",
 "shape": {
 "kind": "rows_select",
 "rows": [
@@ -583,7 +583,7 @@ window.CONNECT_HUB_PRECOURSE_TASK = {
 }
 },
 "34": {
-"lead": "As is the case with reading, we do not always listen to everything in the same way.  The way in which we listen is determined by what we are listening to, our motivation for listening and where we are listening.  For example, you might be on a bus listening to two people gossiping about a work colleague who you do not know.  In this situation, you are likely to tune in and out of the conversation or ignore it all together.  However, if you recognise the name of their colleague and the gossip sounds particularly interesting, you are likely to listen more carefully (unless you feel it would be socially inappropriate to do so).",
+"lead": "As is the case with reading, we do not always listen to everything in the same way.  The way in which we listen is determined by what we are listening to, our motivation for listening and where we are listening.  For example, you might be on a bus listening to two people gossiping about a work colleague who you do not know.  In this situation, you are likely to tune in and out of the conversation or ignore it all together.  However, if you recognize the name of their colleague and the gossip sounds particularly interesting, you are likely to listen more carefully (unless you feel it would be socially inappropriate to do so).",
 "shape": {
 "kind": "open"
 }
@@ -598,7 +598,7 @@ window.CONNECT_HUB_PRECOURSE_TASK = {
 "Announcements at a train station when you are waiting to hear the time of the next train.",
 "Instructions from your boss for a new task that is critical for your job.",
 "An interview with someone famous whose political opinion you would like to find out about.",
-"A radio programme on a topic that is mildly interesting for you."
+"A radio program on a topic that is mildly interesting for you."
 ],
 "options": [
 "Scan listening",
@@ -615,7 +615,7 @@ window.CONNECT_HUB_PRECOURSE_TASK = {
 }
 },
 "37": {
-"lead": "While grammar is important, students need to learn how to activate their passive grammatical knowledge by way of oral practice of grammar.  At the same time, they need to be able to practise speaking fluently without worrying too much about grammar.  The aim is for them to focus on the message and on communicating effectively.",
+"lead": "While grammar is important, students need to learn how to activate their passive grammatical knowledge by way of oral practice of grammar.  At the same time, they need to be able to practice speaking fluently without worrying too much about grammar.  The aim is for them to focus on the message and on communicating effectively.",
 "shape": {
 "kind": "rows_choice",
 "rows": [
@@ -631,7 +631,7 @@ window.CONNECT_HUB_PRECOURSE_TASK = {
 }
 },
 "38": {
-"lead": "Most oral interaction can usually be described as transactional or interactional.  Transactional communication takes place when you want the person you are addressing to do something as a result of the communication. For example, you may want to find out information, buy a product or get feedback on some kind of task that you have performed.  Conversely, interactional communication fulfils a more social role.  You may just want to chat with a friend or make small talk with a colleague.",
+"lead": "Most oral interaction can usually be described as transactional or interactional.  Transactional communication takes place when you want the person you are addressing to do something as a result of the communication. For example, you may want to find out information, buy a product or get feedback on some kind of task that you have performed.  Conversely, interactional communication fulfills a more social role.  You may just want to chat with a friend or make small talk with a colleague.",
 "shape": {
 "kind": "rows_choice",
 "rows": [
@@ -655,7 +655,7 @@ window.CONNECT_HUB_PRECOURSE_TASK = {
 }
 },
 "40": {
-"lead": "D Writing\n\nDifferences between written and spoken English\n\nSpoken and written English differ in many ways.  It is not possible to say that written language is just spoken language written down.  Conversely, spoken language is not like some kind of oral script that is already ‘written’ in our heads.  It is tempting to say that written language is more organised than spoken language.  However, applied linguists would dispute this and say that spoken language merely has different organisation from written language.  Some people say that written language is more formal than spoken language.  However, a text message sent from a mobile phone (written language) is likely to be far less formal than a parliamentary debate (spoken language).",
+"lead": "D Writing\n\nDifferences between written and spoken English\n\nSpoken and written English differ in many ways.  It is not possible to say that written language is just spoken language written down.  Conversely, spoken language is not like some kind of oral script that is already ‘written’ in our heads.  It is tempting to say that written language is more organized than spoken language.  However, applied linguists would dispute this and say that spoken language merely has different organization from written language.  Some people say that written language is more formal than spoken language.  However, a text message sent from a mobile phone (written language) is likely to be far less formal than a parliamentary debate (spoken language).",
 "shape": {
 "kind": "rows_choice",
 "rows": [
@@ -668,7 +668,7 @@ window.CONNECT_HUB_PRECOURSE_TASK = {
 "Is spontaneous and planning usually takes place in the moment of communicating.",
 "Suggests that meaning is static in the communication, although open to interpretation.",
 "The communicator may never find out what the person he is communicating with thinks of his message.",
-"Includes headlines, different type sizes and colours to enhance the content.",
+"Includes headlines, different type sizes and colors to enhance the content.",
 "Is usually smooth-flowing.",
 "Involves negotiation of meaning between the communicator and the person they are communicating with."
 ],
@@ -774,7 +774,7 @@ window.CONNECT_HUB_PRECOURSE_TASK = {
 }
 },
 "46": {
-"lead": "Managing the learning environment\n\nLearners will often bring to your lessons strong views about how they want to learn and how you should teach. It is important that you listen to these views, but balance them with the views of the other students and with your own knowledge about teaching and learning.  Some of the issues that may arise could be:\n\nPair/group work As language is about communication, you maximise communication in the classroom by including some activities that learners do in pairs or small groups.  You also use pair/group work to promote peer teaching, where learners help each other and reinforce their own learning.  Some learners may be resistant to pair/group work, perhaps because they are used to a more teacher-centred approach, where all communication is through the teacher.  They may also not want to work with certain individuals in the class or they may feel that they won’t learn when they are not talking directly to the teacher.\n\nLearning preferences We all learn differently and have a preferred approach or approaches to learning.  Your learners will be keener to do activites that correspond to their learning preferences.  So it is important to use a variety of learning materials and teaching approaches, which personalises your teaching for all your learners.\n\nUse of learners’ first language Many learners’ previous language learning experience may have been in monolingual classes, where the teacher also spoke the learners’ first language.  Using the learners’ first language can be a useful tool for teaching and learning and many coursebooks suggest that learners use translation.  On the other hand, it can also make the learner dependent on translation and at a loss, for example, when a language point arises where there is not a one-to-one translation with the first language.  Also, in a multilingual classroom it would be impossible to expect the teacher to know all the languages represented!",
+"lead": "Managing the learning environment\n\nLearners will often bring to your lessons strong views about how they want to learn and how you should teach. It is important that you listen to these views, but balance them with the views of the other students and with your own knowledge about teaching and learning.  Some of the issues that may arise could be:\n\nPair/group work As language is about communication, you maximise communication in the classroom by including some activities that learners do in pairs or small groups.  You also use pair/group work to promote peer teaching, where learners help each other and reinforce their own learning.  Some learners may be resistant to pair/group work, perhaps because they are used to a more teacher-centred approach, where all communication is through the teacher.  They may also not want to work with certain individuals in the class or they may feel that they won’t learn when they are not talking directly to the teacher.\n\nLearning preferences We all learn differently and have a preferred approach or approaches to learning.  Your learners will be keener to do activites that correspond to their learning preferences.  So it is important to use a variety of learning materials and teaching approaches, which personalizes your teaching for all your learners.\n\nUse of learners’ first language Many learners’ previous language learning experience may have been in monolingual classes, where the teacher also spoke the learners’ first language.  Using the learners’ first language can be a useful tool for teaching and learning and many coursebooks suggest that learners use translation.  On the other hand, it can also make the learner dependent on translation and at a loss, for example, when a language point arises where there is not a one-to-one translation with the first language.  Also, in a multilingual classroom it would be impossible to expect the teacher to know all the languages represented!",
 "shape": {
 "cols": [
 "How would you respond?"
@@ -789,19 +789,19 @@ window.CONNECT_HUB_PRECOURSE_TASK = {
 }
 },
 "47": {
-"lead": "Organisation of the classroom\n\nOne of the things you plan as a teacher is how you organise the physical environment of the classroom – desks, chairs, students, equipment, etc.  How you organise the physical environment can have a significant impact on how effective your teaching and learning activities are.  If, for example, you are planning something where students work in groups, it will help if all students in the group have eye contact.  This may mean moving the seating so that they are facing each other.  If you have a learner who has difficulty reading something on the board, you may need to ensure that this learner is seated near the board at all times.",
+"lead": "Organization of the classroom\n\nOne of the things you plan as a teacher is how you organize the physical environment of the classroom – desks, chairs, students, equipment, etc.  How you organize the physical environment can have a significant impact on how effective your teaching and learning activities are.  If, for example, you are planning something where students work in groups, it will help if all students in the group have eye contact.  This may mean moving the seating so that they are facing each other.  If you have a learner who has difficulty reading something on the board, you may need to ensure that this learner is seated near the board at all times.",
 "shape": {
 "ask": "Below is a description of an activity you might use in a language learning classroom. Read it, then answer the three questions.\n\nInformation gap role play\nHalf of the students will play the role of assistants working at an information desk.  They will have information about a range of computer courses at different prices and with different numbers of hours and different times.  The rest of the students will be given the task of finding the most suitable course for the character they have been given.  The students have 20 minutes to ask the assistants about their courses and agree a transaction.",
 "kind": "parts",
 "parts": [
 "How would you arrange the classroom (position of desks, chairs, students and teacher)?",
 "What resources could you use to make the activity more effective?",
-"What problems about the organisation of the activity could you anticipate?"
+"What problems about the organization of the activity could you anticipate?"
 ]
 }
 },
 "48": {
-"lead": "Dealing with language\n\nWhen you deal with language in the classroom, you will deal with meaning, form and pronunciation.  Learners often have difficulty understanding the core meaning of new words and structures.  You will need to be able to make the meaning clear.  It is important to avoid long explanations, as this can confuse learners, who are then trying to process your explanation as well as understand the particular language area they are having difficulty with.  If possible, you should demonstrate meaning by using visuals, making comparisons and contrasts, getting them to deduce from examples and, in general, giving the language a context (through situations and examples).\n\nWhen learners encounter difficulties with pronunciation, there may be different reasons.  They may be unable to discriminate between similar sounds or stress patterns (the part of a word or sentence with more emphasis when spoken).  Strategies for helping students include: showing them how a sound is produced, repetition of the sound, comparing similar sounds and practising discrimination, beating out stress by clapping, showing stress visually by highlighting what is stressed.",
+"lead": "Dealing with language\n\nWhen you deal with language in the classroom, you will deal with meaning, form and pronunciation.  Learners often have difficulty understanding the core meaning of new words and structures.  You will need to be able to make the meaning clear.  It is important to avoid long explanations, as this can confuse learners, who are then trying to process your explanation as well as understand the particular language area they are having difficulty with.  If possible, you should demonstrate meaning by using visuals, making comparisons and contrasts, getting them to deduce from examples and, in general, giving the language a context (through situations and examples).\n\nWhen learners encounter difficulties with pronunciation, there may be different reasons.  They may be unable to discriminate between similar sounds or stress patterns (the part of a word or sentence with more emphasis when spoken).  Strategies for helping students include: showing them how a sound is produced, repetition of the sound, comparing similar sounds and practicing discrimination, beating out stress by clapping, showing stress visually by highlighting what is stressed.",
 "shape": {
 "cols": [
 "How would you make the difference clear?"
@@ -822,7 +822,7 @@ window.CONNECT_HUB_PRECOURSE_TASK = {
 }
 },
 "49": {
-"lead": "B Developing skills\n\nYour learners will also be developing the skills of reading and listening (receptive skills) and speaking and writing (productive skills).  You will help them by using activities which practise and develop the various sub-skills (see section 3 for definitions).  It is clearly important that the activities you provide have a task which relates to the skills you wish to develop.  If you are developing learners’ ability to read for specific information, for example, they must know beforehand what information they are looking for.",
+"lead": "B Developing skills\n\nYour learners will also be developing the skills of reading and listening (receptive skills) and speaking and writing (productive skills).  You will help them by using activities which practice and develop the various sub-skills (see section 3 for definitions).  It is clearly important that the activities you provide have a task which relates to the skills you wish to develop.  If you are developing learners’ ability to read for specific information, for example, they must know beforehand what information they are looking for.",
 "shape": {
 "kind": "parts",
 "parts": [
@@ -832,7 +832,7 @@ window.CONNECT_HUB_PRECOURSE_TASK = {
 }
 },
 "50": {
-"lead": "C Professionalism\n\nAs a teacher you have a range of responsibilities not always clearly related to teaching and learning.  You are required to comply with your school/college’s requirements and these may range from the lesson plan format you use to a dress code!  You will also be responsible for ensuring that you uphold the school/college’s equal opportunities policy, so that all learners have equal access to learning.\n\nOnce you have completed the course, there are numerous opportunities for you to continue to train and develop as a teacher.  The English Language Teaching profession has a number of professional organisations, which operate worldwide.  There are also higher-level qualifications which you can do once you have gained more experience.  These include ICELT (in-Service Certificate in English Language Teaching ) and  Delta (Diploma in English Language Teaching to Adults), also offered by Cambridge English.",
+"lead": "C Professionalism\n\nAs a teacher you have a range of responsibilities not always clearly related to teaching and learning.  You are required to comply with your school/college’s requirements and these may range from the lesson plan format you use to a dress code!  You will also be responsible for ensuring that you uphold the school/college’s equal opportunities policy, so that all learners have equal access to learning.\n\nOnce you have completed the course, there are numerous opportunities for you to continue to train and develop as a teacher.  The English Language Teaching profession has a number of professional organizations, which operate worldwide.  There are also higher-level qualifications which you can do once you have gained more experience.  These include ICELT (in-Service Certificate in English Language Teaching ) and  Delta (Diploma in English Language Teaching to Adults), also offered by Cambridge English.",
 "shape": {
 "kind": "open"
 }

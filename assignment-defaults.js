@@ -1,35 +1,35 @@
 // The assignments Connect Lite ships with.
 // © 2026 Ramy Sakr. All rights reserved.
 //
-// Shared by screens 8, 9, 10, 11 and 12. Screen 8 is where a centre rewrites
+// Shared by screens 8, 9, 10, 11 and 12. Screen 8 is where a center rewrites
 // them; the others fall back to these when the browser holds no saved wording.
 //
 // These are COMPLETE assignments, not a skeleton -- the brief, what to write
 // under each heading, the reading text, the criteria, the recommended reading
 // and the declaration (Ramy, 25 Sep 2026: "it's like Connect Lite's default
-// assignments and could be duplicated or the centre can write their own but
+// assignments and could be duplicated or the center can write their own but
 // they come with the package"). They are IH Istanbul's four, as set on C/17
-// 2026, copied word for word from the centre's own documents, with three
+// 2026, copied word for word from the center's own documents, with three
 // things reworded because the mechanism here is not a Word file:
 //
 //   1. "Use the white boxes" / "Use the blue boxes" -- on paper the two rounds
-//      are two colours of box in one document. Here they are two rounds the app
+//      are two colors of box in one document. Here they are two rounds the app
 //      runs and the trainee never picks, so the line says what the app does.
 //   2. "Attach it as Appendix 2, laid out as a handout" -- there are no
 //      appendices; a trainee attaches materials to the submission. The
 //      appendix NUMBERS stay, because the briefs refer to them.
 //   3. "submitted through Google Classroom" becomes submitted here.
 //
-// Two things are left exactly as the centre wrote them, and both are worth
-// knowing before anyone copies them into another centre's course:
+// Two things are left exactly as the center wrote them, and both are worth
+// knowing before anyone copies them into another center's course:
 //
 //   - "You must pass 3 of 4 assignments to be eligible for a PASS." This is
-//     the centre's wording and it is left alone, but the comment here used to
+//     the center's wording and it is left alone, but the comment here used to
 //     say the Handbook "requires all four", which is backwards (audit, 29 Sep
 //     2026). 11.6 says a trainee who fails a SINGLE assignment may still be
 //     recommended a Pass, on sufficient evidence elsewhere, but is not
 //     eligible for Pass A; more than one failed means no Pass. 9.2.1's "all
-//     four" is about COMPLETING them, not passing. The centre's sentence is
+//     four" is about COMPLETING them, not passing. The center's sentence is
 //     closer to Cambridge than the old comment claimed -- what it leaves out
 //     is the evidence condition and the loss of Pass A.
 //   - The word count is a submission requirement, never a criterion -- which
@@ -42,13 +42,13 @@
 //     of them promoted from the syllabus's DESIGN column (what the assignment
 //     must ASK FOR) and two reworded so they asked more than Cambridge does:
 //     FOL c turned "language systems and/or language skills" into "and", and
-//     FOL d dropped "and/or skills" while carrying the centre's
+//     FOL d dropped "and/or skills" while carrying the center's
 //     published-materials condition. That condition is NOT lost -- it is an
 //     instruction in FOL's own brief ("At least one activity must come from a
 //     published source"), where a design requirement belongs.
 //
 //     Because they are assigned rather than typed, the two can no longer
-//     drift. Designing the assignments is still the centre's job under 9.2.1
+//     drift. Designing the assignments is still the center's job under 9.2.1
 //     and a course may write its own; a course that already has stored
 //     wording keeps it untouched, and the editor's panel shows it the
 //     syllabus's beside its own.
@@ -61,7 +61,7 @@
 //     record on any trainee (a fresh clone, say) is moved to the seventeen
 //     at its next tutor boot; hub-sync's guard refuses the moment any
 //     trainee has an assignments record, so marked work is never touched.
-//     That is the behaviour, stated plainly (second audit, 29 Sep 2026): the
+//     That is the behavior, stated plainly (second audit, 29 Sep 2026): the
 //     earlier version of this note claimed no course would move at all.
 //
 // The three reading texts in the skills assignment are VOA Learning English,
@@ -78,8 +78,8 @@
 // to write" labels over bullets that the section heading already introduces.
 // The bullets themselves are the assignment and stay.
 //
-// Cambridge makes the centre responsible for designing its four assignments,
-// so every word here is meant to be rewritten on screen 8 by a centre that
+// Cambridge makes the center responsible for designing its four assignments,
+// so every word here is meant to be rewritten on screen 8 by a center that
 // wants its own. That is the point of shipping them: a course that changes
 // nothing still has four real assignments on day one.
 window.CONNECT_HUB_DEFAULT_WORDING = {
@@ -90,11 +90,11 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
     "format": "structured",
     "criteria": [
       {
-        "text": "Analysing language correctly for teaching purposes",
+        "text": "Analyzing language correctly for teaching purposes",
         "sectionIndex": null
       },
       {
-        "text": "Correctly using terminology relating to form, meaning and phonology when analysing language",
+        "text": "Correctly using terminology relating to form, meaning and phonology when analyzing language",
         "sectionIndex": null
       },
       {
@@ -110,7 +110,7 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
       {
         "type": "text",
         "label": "Before you start",
-        "body": "Choose four items from the letter below — one grammar structure, one functional exponent, and two vocabulary items — and analyse each one: meaning, form, pronunciation and use, and what learners will find difficult. Analyse only the words in bold.\n\n750–1,000 words, not counting the letter. Research every item and name your sources, with a page number where you can. Don't use this analysis as the basis of an assessed TP lesson. Passing on first or second submission does not affect your certificate grade.",
+        "body": "Choose four items from the letter below — one grammar structure, one functional exponent, and two vocabulary items — and analyze each one: meaning, form, pronunciation and use, and what learners will find difficult. Analyze only the words in bold.\n\n750–1,000 words, not counting the letter. Research every item and name your sources, with a page number where you can. Don't use this analysis as the basis of an assessed TP lesson. Passing on first or second submission does not affect your certificate grade.",
         "readonly": true
       },
       {
@@ -158,7 +158,7 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
       },
       {
         "type": "fields",
-        "label": "Analyse each item",
+        "label": "Analyze each item",
         "intro": "One table for each item you chose.",
         "fields": [
           {
@@ -167,7 +167,7 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
           },
           {
             "label": "Clarification of meaning",
-            "hint": "CCQs with answers, timelines, diagrams, personalised examples."
+            "hint": "CCQs with answers, timelines, diagrams, personalized examples."
           },
           {
             "label": "Form",
@@ -226,7 +226,7 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
         "sectionIndex": null
       },
       {
-        "text": "Identifying receptive and productive skills that could be practised in relation to the text",
+        "text": "Identifying receptive and productive skills that could be practiced in relation to the text",
         "sectionIndex": null
       },
       {
@@ -261,13 +261,13 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
         "type": "text",
         "label": "Text B — Five Tips for Great Language Exchanges",
         "readonly": true,
-        "body": "VOA Learning English\n\nHarry Qiu began learning English as a young boy in Shanghai, China. He later came to the United States for college, where he is now learning two more languages.\n\nThrough his school, he talks one-on-one with native speakers online. When he meets his Japanese partner, Qiu helps his partner practise English. His partner helps him practise Japanese. We call this a language exchange.\n\nSuch exchanges can be one of the best ways to improve your conversation skills. Today, many websites and apps connect language learners around the world. But doing an exchange without knowing what to expect can lead to wasted time. So here are five tips.\n\nFirst, ask yourself some questions. Todd Bryant runs a language exchange website with more than 35,000 users. He says the most important question is why you want to learn the language. People who have a serious reason are usually more dependable partners. Also think about how much free time you really have, and whether you want speaking practice or written messages.\n\nSecond, find the right partner. Many websites have hundreds to choose from. Bryant says to look for people who have been active on the site and have a clear reason to learn the language. It is also better to find at least two partners, because one person may not be free every week.\n\nThird, state your expectations. Be clear in your first message about how long you would like meetings to be and how often you would like to meet. Bryant says this gives the partnership a better chance of working. But avoid being too rigid — offer more than one possible time.\n\nFourth, come prepared. Before each meeting, prepare some questions on a topic of your choice. This gives you the chance to look up related words, and it stops you running out of things to say ten minutes in.\n\nFifth, focus on communication. The main goal is conversation practice, so let your partner speak freely, even if they make mistakes. Bryant recommends giving only one or two corrections after each piece of dialogue. Qiu corrects a partner only if the person cannot finish a sentence.\n\nQiu’s advice to anyone who wants to try a language exchange is simple: don’t be afraid to make mistakes.\n\nSource: ‘Five Tips for Great Language Exchanges’ by Alice Bryant, VOA Learning English (learningenglish.voanews.com). VOA Learning English texts are in the public domain and may be reprinted with credit."
+        "body": "VOA Learning English\n\nHarry Qiu began learning English as a young boy in Shanghai, China. He later came to the United States for college, where he is now learning two more languages.\n\nThrough his school, he talks one-on-one with native speakers online. When he meets his Japanese partner, Qiu helps his partner practice English. His partner helps him practice Japanese. We call this a language exchange.\n\nSuch exchanges can be one of the best ways to improve your conversation skills. Today, many websites and apps connect language learners around the world. But doing an exchange without knowing what to expect can lead to wasted time. So here are five tips.\n\nFirst, ask yourself some questions. Todd Bryant runs a language exchange website with more than 35,000 users. He says the most important question is why you want to learn the language. People who have a serious reason are usually more dependable partners. Also think about how much free time you really have, and whether you want speaking practice or written messages.\n\nSecond, find the right partner. Many websites have hundreds to choose from. Bryant says to look for people who have been active on the site and have a clear reason to learn the language. It is also better to find at least two partners, because one person may not be free every week.\n\nThird, state your expectations. Be clear in your first message about how long you would like meetings to be and how often you would like to meet. Bryant says this gives the partnership a better chance of working. But avoid being too rigid — offer more than one possible time.\n\nFourth, come prepared. Before each meeting, prepare some questions on a topic of your choice. This gives you the chance to look up related words, and it stops you running out of things to say ten minutes in.\n\nFifth, focus on communication. The main goal is conversation practice, so let your partner speak freely, even if they make mistakes. Bryant recommends giving only one or two corrections after each piece of dialogue. Qiu corrects a partner only if the person cannot finish a sentence.\n\nQiu’s advice to anyone who wants to try a language exchange is simple: don’t be afraid to make mistakes.\n\nSource: ‘Five Tips for Great Language Exchanges’ by Alice Bryant, VOA Learning English (learningenglish.voanews.com). VOA Learning English texts are in the public domain and may be reprinted with credit."
       },
       {
         "type": "text",
         "label": "Text C — When in Rome …",
         "readonly": true,
-        "body": "VOA Learning English\n\nOne of the best things about travelling to a new country is learning about new traditions and customs. They can be very different from our own.\n\nWhen visiting a foreign country, it is smart to follow the local social rules and customs of the people who live there. This can make your stay easier and more enjoyable.\n\nThere is an expression for this that goes all the way back to ancient Rome: When in Rome, do as the Romans do.\n\nIt means that when we visit a place, we should follow the customs of that place. It shows an attitude: you are willing to change your way of doing things to fit in with those around you.\n\nThe place does not have to be a new country. It can simply be a new situation. For example, you may usually speak very loudly. But in an art museum or a library, you whisper. You follow the rules of that place.\n\nThe expression has another meaning too. When you are in an unfamiliar situation, you should follow the lead of those who know the rules. These people know how to behave with others, and how to work within the system. They blend in.\n\nBut what does Rome have to do with following other people’s customs? Here is how the story goes. More than 1500 years ago, a Christian leader, Saint Augustine, moved from Rome to Milan. In the new city, he found some parts of religious life to be different. In Rome he fasted, or did not eat, on Saturday. But in Milan, people did not fast on Saturday.\n\nAnother church leader, Saint Ambrose, gave him some advice. He said that when he goes to Rome he fasts on Saturdays, but when he is in Milan, he does not. Problem solved.\n\nThis advice has survived over the years. Some word experts say it first appeared in English around 500 years ago. We still use it today, either to give advice or to describe a situation where we have to change our behaviour to fit in.\n\nSource: ‘When in Rome …’ by Anna Matteo, Words and Their Stories, VOA Learning English (learningenglish.voanews.com). VOA Learning English texts are in the public domain and may be reprinted with credit."
+        "body": "VOA Learning English\n\nOne of the best things about traveling to a new country is learning about new traditions and customs. They can be very different from our own.\n\nWhen visiting a foreign country, it is smart to follow the local social rules and customs of the people who live there. This can make your stay easier and more enjoyable.\n\nThere is an expression for this that goes all the way back to ancient Rome: When in Rome, do as the Romans do.\n\nIt means that when we visit a place, we should follow the customs of that place. It shows an attitude: you are willing to change your way of doing things to fit in with those around you.\n\nThe place does not have to be a new country. It can simply be a new situation. For example, you may usually speak very loudly. But in an art museum or a library, you whisper. You follow the rules of that place.\n\nThe expression has another meaning too. When you are in an unfamiliar situation, you should follow the lead of those who know the rules. These people know how to behave with others, and how to work within the system. They blend in.\n\nBut what does Rome have to do with following other people’s customs? Here is how the story goes. More than 1500 years ago, a Christian leader, Saint Augustine, moved from Rome to Milan. In the new city, he found some parts of religious life to be different. In Rome he fasted, or did not eat, on Saturday. But in Milan, people did not fast on Saturday.\n\nAnother church leader, Saint Ambrose, gave him some advice. He said that when he goes to Rome he fasts on Saturdays, but when he is in Milan, he does not. Problem solved.\n\nThis advice has survived over the years. Some word experts say it first appeared in English around 500 years ago. We still use it today, either to give advice or to describe a situation where we have to change our behavior to fit in.\n\nSource: ‘When in Rome …’ by Anna Matteo, Words and Their Stories, VOA Learning English (learningenglish.voanews.com). VOA Learning English texts are in the public domain and may be reprinted with credit."
       },
       {
         "type": "text",
@@ -488,18 +488,18 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
       }
     ]
   },
-  a5: { title:'Assignment 5 \u2014 Plagiarism Reflection (centre sanction)', criteria:[
+  a5: { title:'Assignment 5 \u2014 Plagiarism Reflection (center sanction)', criteria:[
       {text:'Gives their own honest account of what happened and how it came about — not an apology, an account.', sectionIndex:null},
-      {text:'Quotes the specific centre policy clause breached, and explains why it applies here.', sectionIndex:null},
-      {text:'Explains what it would mean for a learner, a colleague, or the centre if a teacher’s materials or claims were not their own.', sectionIndex:null},
+      {text:'Quotes the specific center policy clause breached, and explains why it applies here.', sectionIndex:null},
+      {text:'Explains what it would mean for a learner, a colleague, or the center if a teacher’s materials or claims were not their own.', sectionIndex:null},
       {text:'Describes specific, concrete changes to how they will work — source-noting, AI use and declaration — going forward.', sectionIndex:null},
       {text:'The assignment meets the 750-1,000-word count requirement.', sectionIndex:null},
     ], sections:[
     { type:'text', label:'Before you start', body:'This is not a research essay about plagiarism. It is an account of what happened in your own case, which rule it breached, and what you will do differently. Write it in your own words \u2014 a general essay on academic honesty will not pass, and will be scanned like everything else.\n\n750\u20131,000 words, due by the last day of the course.' },
-    { type:'text', label:'What this does and does not affect', body:'It does not count toward the three-of-four rule, and it cannot raise or lower your certificate grade.\nOne chance, pass or fail \u2014 the same as the resubmission it accompanies.\nIt is a condition set by the centre, not a Cambridge assignment, and it is not numbered with the four.\nIt stays with the case in your file. An assessor asking how the centre handled this sees both the decision and what followed.' },
+    { type:'text', label:'What this does and does not affect', body:'It does not count toward the three-of-four rule, and it cannot raise or lower your certificate grade.\nOne chance, pass or fail \u2014 the same as the resubmission it accompanies.\nIt is a condition set by the center, not a Cambridge assignment, and it is not numbered with the four.\nIt stays with the case in your file. An assessor asking how the center handled this sees both the decision and what followed.' },
     { type:'text', label:'1 \u2014 What happened (~200 words)', body:'In your own words: what you submitted, and how it came about.\nAn account, not an apology. What you were doing, when, and what you were thinking.\nIf you disagree with the finding, say so here \u2014 that is allowed, and this section is where it goes.' },
-    { type:'text', label:'2 \u2014 Which rule it breached (~200 words)', body:'Quote the clause from the centre\u2019s malpractice policy that applies, and say why it applies to what you did.\nIf you are not sure which clause, ask \u2014 the policy is the centre\u2019s to hand you, and quoting the wrong line is not what this section is testing.' },
-    { type:'text', label:'3 \u2014 Why it matters here (~150 words)', body:'What it would mean for a learner, a colleague or a centre if a teacher\u2019s materials or claims were not their own.\nNot why plagiarism is wrong in general \u2014 why it matters for someone about to teach.' },
+    { type:'text', label:'2 \u2014 Which rule it breached (~200 words)', body:'Quote the clause from the center\u2019s malpractice policy that applies, and say why it applies to what you did.\nIf you are not sure which clause, ask \u2014 the policy is the center\u2019s to hand you, and quoting the wrong line is not what this section is testing.' },
+    { type:'text', label:'3 \u2014 Why it matters here (~150 words)', body:'What it would mean for a learner, a colleague or a center if a teacher\u2019s materials or claims were not their own.\nNot why plagiarism is wrong in general \u2014 why it matters for someone about to teach.' },
     { type:'text', label:'4 \u2014 What you will do differently (~250 words)', body:'How you will note sources while you read, so this cannot happen by accident.\nHow you will use AI tools and declare them, specifically.\nWhat you will do at 1am with a deadline in seven hours and nothing written. That is the situation this is really about.' },
     { type:'declaration', label:'Declaration', items:['This is my own work.', 'All sources are referenced, in the format (Author, Year, p. ##).'], aiToggle:true }
   ]}
@@ -507,11 +507,11 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
 
 /* A course's stored wording is a frozen COPY, made when the course was set up,
    so changing the defaults above reaches new courses and no existing one. That
-   is right when a centre has rewritten its own wording on screen 8 -- their
+   is right when a center has rewritten its own wording on screen 8 -- their
    words must never be overwritten -- and wrong when the stored copy is simply
    an old shipped default and nobody has touched it.
 
-   Nothing in the record says whether a centre edited anything, so this asks the
+   Nothing in the record says whether a center edited anything, so this asks the
    only question that can be answered: is the stored copy still one of the
    defaults Lite used to ship, word for word? A LIST, not one snapshot, because
    the defaults changed twice on 25 Sep 2026 -- first the criteria were
@@ -528,14 +528,14 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
        full brief: the reading text, what to write under each heading, the
        recommended reading.
 
-   A centre that rewrote the sections but not the criteria keeps its sections.
+   A center that rewrote the sections but not the criteria keeps its sections.
    Once replaced, nothing matches any version, so this cannot fire twice.
 
    Three limits, enforced in hub-sync's plan(): the TUTOR adopts, never a
    trainee, so there is one writer and the store is healed for everyone; only
    while the course has NO assignment record at all, because criteriaMarks are
    POSITIONAL and a shorter list would move a Met onto a different criterion;
-   and dueAt, resubDays and releaseAt are the centre's and are carried over
+   and dueAt, resubDays and releaseAt are the center's and are carried over
    untouched. */
 window.CONNECT_HUB_SUPERSEDED_WORDING = [
   {
@@ -552,7 +552,7 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
         {
           "type": "text",
           "label": "Before you start",
-          "body": "You’ll pick 2 items from Category A and 2 from Category B, then analyse each one — meaning, form, pronunciation and so on. Work through this one step at a time; nothing is submitted until the last step."
+          "body": "You’ll pick 2 items from Category A and 2 from Category B, then analyze each one — meaning, form, pronunciation and so on. Work through this one step at a time; nothing is submitted until the last step."
         },
         {
           "type": "picker",
@@ -577,7 +577,7 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
         },
         {
           "type": "fields",
-          "label": "Analyse each item",
+          "label": "Analyze each item",
           "intro": "Repeat this for each item you picked above.",
           "fields": [
             {
@@ -586,7 +586,7 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
             },
             {
               "label": "Clarification of meaning",
-              "hint": "CCQs (with answers), and/or a timeline, diagram, or personalised example."
+              "hint": "CCQs (with answers), and/or a timeline, diagram, or personalized example."
             },
             {
               "label": "Form",
@@ -620,7 +620,7 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
     "lsrt": {
       "title": "Language Skills Related Task",
       "criteria": [
-        "Identifying receptive/productive skills that could be practised in relation to the text",
+        "Identifying receptive/productive skills that could be practiced in relation to the text",
         "Correctly using terminology that relates to language skills and sub-skills",
         "Designing tasks in relation to the text with a rationale",
         "Finding, selecting and showing evidence of background reading in the topic area i.e. at least one sourced quote in the body of the assignment.",
@@ -631,7 +631,7 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
         {
           "type": "text",
           "label": "The material",
-          "body": "The lesson or extract you are analysing — not the whole unit, just the skills-focused part."
+          "body": "The lesson or extract you are analyzing — not the whole unit, just the skills-focused part."
         },
         {
           "type": "text",
@@ -728,7 +728,7 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
         {
           "type": "text",
           "label": "Before you start",
-          "body": "This assignment is a reflection on your progress during the course. You’ll summarise your main teaching strengths and action points, insights from observing peers and experienced teachers, and how you’ll continue developing after the CELTA. Word count: 750–1,000 words of continuous prose, not counting the bibliography or appendices."
+          "body": "This assignment is a reflection on your progress during the course. You’ll summarize your main teaching strengths and action points, insights from observing peers and experienced teachers, and how you’ll continue developing after the CELTA. Word count: 750–1,000 words of continuous prose, not counting the bibliography or appendices."
         },
         {
           "type": "text",
@@ -766,8 +766,8 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
     "lrt": {
       "title": "Language Related Tasks",
       "criteria": [
-        "Analysing language correctly for teaching purposes",
-        "Correctly using terminology relating to form, meaning and phonology when analysing language",
+        "Analyzing language correctly for teaching purposes",
+        "Correctly using terminology relating to form, meaning and phonology when analyzing language",
         "Accessing reference materials and referencing information they have learned about language to an appropriate source",
         "Using written language that is clear, accurate and appropriate to the task"
       ],
@@ -775,7 +775,7 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
         {
           "type": "text",
           "label": "Before you start",
-          "body": "You’ll pick 2 items from Category A and 2 from Category B, then analyse each one — meaning, form, pronunciation and so on. Work through this one step at a time; nothing is submitted until the last step."
+          "body": "You’ll pick 2 items from Category A and 2 from Category B, then analyze each one — meaning, form, pronunciation and so on. Work through this one step at a time; nothing is submitted until the last step."
         },
         {
           "type": "picker",
@@ -800,7 +800,7 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
         },
         {
           "type": "fields",
-          "label": "Analyse each item",
+          "label": "Analyze each item",
           "intro": "Repeat this for each item you picked above.",
           "fields": [
             {
@@ -809,7 +809,7 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
             },
             {
               "label": "Clarification of meaning",
-              "hint": "CCQs (with answers), and/or a timeline, diagram, or personalised example."
+              "hint": "CCQs (with answers), and/or a timeline, diagram, or personalized example."
             },
             {
               "label": "Form",
@@ -844,7 +844,7 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
       "title": "Language Skills Related Tasks",
       "criteria": [
         "Correctly using terminology that relates to language skills and sub-skills",
-        "Identifying receptive and productive skills that could be practised in relation to the text",
+        "Identifying receptive and productive skills that could be practiced in relation to the text",
         "Relating task design to language skills development, with a rationale",
         "Finding, selecting and referencing information from one or more sources, using written language that is clear, accurate and appropriate to the task"
       ],
@@ -852,7 +852,7 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
         {
           "type": "text",
           "label": "The material",
-          "body": "The lesson or extract you are analysing — not the whole unit, just the skills-focused part."
+          "body": "The lesson or extract you are analyzing — not the whole unit, just the skills-focused part."
         },
         {
           "type": "text",
@@ -945,7 +945,7 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
         {
           "type": "text",
           "label": "Before you start",
-          "body": "This assignment is a reflection on your progress during the course. You’ll summarise your main teaching strengths and action points, insights from observing peers and experienced teachers, and how you’ll continue developing after the CELTA. Word count: 750–1,000 words of continuous prose, not counting the bibliography or appendices."
+          "body": "This assignment is a reflection on your progress during the course. You’ll summarize your main teaching strengths and action points, insights from observing peers and experienced teachers, and how you’ll continue developing after the CELTA. Word count: 750–1,000 words of continuous prose, not counting the bibliography or appendices."
         },
         {
           "type": "text",
@@ -983,8 +983,8 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
     "lrt": {
       "title": "Language Related Tasks",
       "criteria": [
-        "Analysing language correctly for teaching purposes",
-        "Correctly using terminology relating to form, meaning and phonology when analysing language",
+        "Analyzing language correctly for teaching purposes",
+        "Correctly using terminology relating to form, meaning and phonology when analyzing language",
         "Accessing reference materials and referencing information they have learned about language to an appropriate source",
         "Using written language that is clear, accurate and appropriate to the task"
       ],
@@ -993,13 +993,13 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
           "type": "text",
           "label": "Before you start",
           "readonly": true,
-          "body": "Analysing meaning, form, pronunciation and use, and anticipating what learners will find difficult.\n\nThis assignment is for you to practise researching and analysing language before you teach it. You will choose four items from the letter below and analyse each one in detail.\n\nWhat you analyse — four items in total: one grammar structure, one functional exponent, and two vocabulary items.\nWord count — 750–1,000 words, excluding the letter and these instructions.\nFirst submission — complete a table for each item and submit.\nSecond submission — if a resubmission is needed, your tutor returns this with their comments and the tables open again. Passing on first or second submission does not affect your certificate grade. You must pass 3 of 4 assignments to be eligible for a PASS.\nWhen resubmitting — your tutor’s comments stay where they are. Write your new analysis in the tables below each item.\n\nReferencing and use of AI\n• Analysing language means researching it. Use grammar references, learner dictionaries and pronunciation sources, and name them — with a page number where you can.\n• AI is allowed only for ideas, initial research and bibliography — not for writing or rewriting your text. Cite every use in the text (prompt, tool, year) and in your reference list with the conversation link, as set out in Your Own Work. AI is not a reference source for language analysis: check anything it tells you against a published grammar or dictionary."
+          "body": "Analyzing meaning, form, pronunciation and use, and anticipating what learners will find difficult.\n\nThis assignment is for you to practice researching and analyzing language before you teach it. You will choose four items from the letter below and analyze each one in detail.\n\nWhat you analyze — four items in total: one grammar structure, one functional exponent, and two vocabulary items.\nWord count — 750–1,000 words, excluding the letter and these instructions.\nFirst submission — complete a table for each item and submit.\nSecond submission — if a resubmission is needed, your tutor returns this with their comments and the tables open again. Passing on first or second submission does not affect your certificate grade. You must pass 3 of 4 assignments to be eligible for a PASS.\nWhen resubmitting — your tutor’s comments stay where they are. Write your new analysis in the tables below each item.\n\nReferencing and use of AI\n• Analyzing language means researching it. Use grammar references, learner dictionaries and pronunciation sources, and name them — with a page number where you can.\n• AI is allowed only for ideas, initial research and bibliography — not for writing or rewriting your text. Cite every use in the text (prompt, tool, year) and in your reference list with the conversation link, as set out in Your Own Work. AI is not a reference source for language analysis: check anything it tells you against a published grammar or dictionary."
         },
         {
           "type": "text",
           "label": "What to do",
           "readonly": true,
-          "body": "• Read the letter below. The target language is in bold.\n• Choose FOUR items: one grammar structure, one functional exponent, two vocabulary items.\n• Analyse only the words in bold, not the sentence around them.\n• Complete a table for each. Each row tells you what it needs.\n\nCommon reasons for resubmission\n• CCQs that use the target item itself to check it, or have no answers.\n• Form named but not broken down.\n• Invented pronunciation notation instead of phonemic script, or no stress marked.\n• Anticipated problems that cover only one or two of meaning, form and pronunciation.\n• No real source named for an item."
+          "body": "• Read the letter below. The target language is in bold.\n• Choose FOUR items: one grammar structure, one functional exponent, two vocabulary items.\n• Analyze only the words in bold, not the sentence around them.\n• Complete a table for each. Each row tells you what it needs.\n\nCommon reasons for resubmission\n• CCQs that use the target item itself to check it, or have no answers.\n• Form named but not broken down.\n• Invented pronunciation notation instead of phonemic script, or no stress marked.\n• Anticipated problems that cover only one or two of meaning, form and pronunciation.\n• No real source named for an item."
         },
         {
           "type": "text",
@@ -1046,8 +1046,8 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
         },
         {
           "type": "fields",
-          "label": "Analyse each item",
-          "intro": "Write the item you are analysing above, then complete each row. Repeat this for each item you chose.",
+          "label": "Analyze each item",
+          "intro": "Write the item you are analyzing above, then complete each row. Repeat this for each item you chose.",
           "fields": [
             {
               "label": "Meaning",
@@ -1055,7 +1055,7 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
             },
             {
               "label": "Clarification of meaning",
-              "hint": "CCQs with answers, timelines, diagrams, personalised examples."
+              "hint": "CCQs with answers, timelines, diagrams, personalized examples."
             },
             {
               "label": "Form",
@@ -1101,7 +1101,7 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
       "title": "Language Skills Related Tasks",
       "criteria": [
         "Correctly using terminology that relates to language skills and sub-skills",
-        "Identifying receptive and productive skills that could be practised in relation to the text",
+        "Identifying receptive and productive skills that could be practiced in relation to the text",
         "Relating task design to language skills development, with a rationale",
         "Finding, selecting and referencing information from one or more sources, using written language that is clear, accurate and appropriate to the task"
       ],
@@ -1110,7 +1110,7 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
           "type": "text",
           "label": "Before you start",
           "readonly": true,
-          "body": "Choosing a text, designing reading tasks, and building a productive follow-up.\n\nThis assignment is for you to practise designing receptive and productive skills tasks. You will choose one text from the three provided, then design two reading tasks and one productive follow-up task, and explain your decisions.\n\nWhat you submit — this assignment, with your tasks attached using the materials link.\nWord count — 750–1,000 words, in continuous prose, excluding the bibliography and appendices.\nFirst submission — write your answers in the boxes below and submit.\nSecond submission — if a resubmission is needed, your tutor returns this with their comments and the boxes open again. Passing on first or second submission does not affect your certificate grade. You must pass 3 of 4 assignments to be eligible for a PASS.\nWhen resubmitting — your tutor’s comments stay where they are. Do not delete old appendices — add new ones.\n\nSubmission requirements — check these before you submit.\n750–1,000 words. Continuous prose, excluding the bibliography and appendices.\nAppendices attached. Both reading tasks with answer keys, and the productive task.\nDeclaration completed. Including the AI conversation link, if a tool was used.\n\nReferencing and use of AI\n• Refer to at least one published source in the body of your assignment, and cite it clearly enough that a reader could find it. Any consistent style is fine. Recommended reading is listed at the end.\n• AI is allowed only for ideas, initial research and bibliography — not for writing or rewriting your text. Cite every use in the text (prompt, tool, year) and in your reference list with the conversation link, as set out in Your Own Work."
+          "body": "Choosing a text, designing reading tasks, and building a productive follow-up.\n\nThis assignment is for you to practice designing receptive and productive skills tasks. You will choose one text from the three provided, then design two reading tasks and one productive follow-up task, and explain your decisions.\n\nWhat you submit — this assignment, with your tasks attached using the materials link.\nWord count — 750–1,000 words, in continuous prose, excluding the bibliography and appendices.\nFirst submission — write your answers in the boxes below and submit.\nSecond submission — if a resubmission is needed, your tutor returns this with their comments and the boxes open again. Passing on first or second submission does not affect your certificate grade. You must pass 3 of 4 assignments to be eligible for a PASS.\nWhen resubmitting — your tutor’s comments stay where they are. Do not delete old appendices — add new ones.\n\nSubmission requirements — check these before you submit.\n750–1,000 words. Continuous prose, excluding the bibliography and appendices.\nAppendices attached. Both reading tasks with answer keys, and the productive task.\nDeclaration completed. Including the AI conversation link, if a tool was used.\n\nReferencing and use of AI\n• Refer to at least one published source in the body of your assignment, and cite it clearly enough that a reader could find it. Any consistent style is fine. Recommended reading is listed at the end.\n• AI is allowed only for ideas, initial research and bibliography — not for writing or rewriting your text. Cite every use in the text (prompt, tool, year) and in your reference list with the conversation link, as set out in Your Own Work."
         },
         {
           "type": "text",
@@ -1128,13 +1128,13 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
           "type": "text",
           "label": "Text B — Five Tips for Great Language Exchanges",
           "readonly": true,
-          "body": "VOA Learning English\n\nHarry Qiu began learning English as a young boy in Shanghai, China. He later came to the United States for college, where he is now learning two more languages.\n\nThrough his school, he talks one-on-one with native speakers online. When he meets his Japanese partner, Qiu helps his partner practise English. His partner helps him practise Japanese. We call this a language exchange.\n\nSuch exchanges can be one of the best ways to improve your conversation skills. Today, many websites and apps connect language learners around the world. But doing an exchange without knowing what to expect can lead to wasted time. So here are five tips.\n\nFirst, ask yourself some questions. Todd Bryant runs a language exchange website with more than 35,000 users. He says the most important question is why you want to learn the language. People who have a serious reason are usually more dependable partners. Also think about how much free time you really have, and whether you want speaking practice or written messages.\n\nSecond, find the right partner. Many websites have hundreds to choose from. Bryant says to look for people who have been active on the site and have a clear reason to learn the language. It is also better to find at least two partners, because one person may not be free every week.\n\nThird, state your expectations. Be clear in your first message about how long you would like meetings to be and how often you would like to meet. Bryant says this gives the partnership a better chance of working. But avoid being too rigid — offer more than one possible time.\n\nFourth, come prepared. Before each meeting, prepare some questions on a topic of your choice. This gives you the chance to look up related words, and it stops you running out of things to say ten minutes in.\n\nFifth, focus on communication. The main goal is conversation practice, so let your partner speak freely, even if they make mistakes. Bryant recommends giving only one or two corrections after each piece of dialogue. Qiu corrects a partner only if the person cannot finish a sentence.\n\nQiu’s advice to anyone who wants to try a language exchange is simple: don’t be afraid to make mistakes.\n\nSource: ‘Five Tips for Great Language Exchanges’ by Alice Bryant, VOA Learning English (learningenglish.voanews.com). VOA Learning English texts are in the public domain and may be reprinted with credit."
+          "body": "VOA Learning English\n\nHarry Qiu began learning English as a young boy in Shanghai, China. He later came to the United States for college, where he is now learning two more languages.\n\nThrough his school, he talks one-on-one with native speakers online. When he meets his Japanese partner, Qiu helps his partner practice English. His partner helps him practice Japanese. We call this a language exchange.\n\nSuch exchanges can be one of the best ways to improve your conversation skills. Today, many websites and apps connect language learners around the world. But doing an exchange without knowing what to expect can lead to wasted time. So here are five tips.\n\nFirst, ask yourself some questions. Todd Bryant runs a language exchange website with more than 35,000 users. He says the most important question is why you want to learn the language. People who have a serious reason are usually more dependable partners. Also think about how much free time you really have, and whether you want speaking practice or written messages.\n\nSecond, find the right partner. Many websites have hundreds to choose from. Bryant says to look for people who have been active on the site and have a clear reason to learn the language. It is also better to find at least two partners, because one person may not be free every week.\n\nThird, state your expectations. Be clear in your first message about how long you would like meetings to be and how often you would like to meet. Bryant says this gives the partnership a better chance of working. But avoid being too rigid — offer more than one possible time.\n\nFourth, come prepared. Before each meeting, prepare some questions on a topic of your choice. This gives you the chance to look up related words, and it stops you running out of things to say ten minutes in.\n\nFifth, focus on communication. The main goal is conversation practice, so let your partner speak freely, even if they make mistakes. Bryant recommends giving only one or two corrections after each piece of dialogue. Qiu corrects a partner only if the person cannot finish a sentence.\n\nQiu’s advice to anyone who wants to try a language exchange is simple: don’t be afraid to make mistakes.\n\nSource: ‘Five Tips for Great Language Exchanges’ by Alice Bryant, VOA Learning English (learningenglish.voanews.com). VOA Learning English texts are in the public domain and may be reprinted with credit."
         },
         {
           "type": "text",
           "label": "Text C — When in Rome …",
           "readonly": true,
-          "body": "VOA Learning English\n\nOne of the best things about travelling to a new country is learning about new traditions and customs. They can be very different from our own.\n\nWhen visiting a foreign country, it is smart to follow the local social rules and customs of the people who live there. This can make your stay easier and more enjoyable.\n\nThere is an expression for this that goes all the way back to ancient Rome: When in Rome, do as the Romans do.\n\nIt means that when we visit a place, we should follow the customs of that place. It shows an attitude: you are willing to change your way of doing things to fit in with those around you.\n\nThe place does not have to be a new country. It can simply be a new situation. For example, you may usually speak very loudly. But in an art museum or a library, you whisper. You follow the rules of that place.\n\nThe expression has another meaning too. When you are in an unfamiliar situation, you should follow the lead of those who know the rules. These people know how to behave with others, and how to work within the system. They blend in.\n\nBut what does Rome have to do with following other people’s customs? Here is how the story goes. More than 1500 years ago, a Christian leader, Saint Augustine, moved from Rome to Milan. In the new city, he found some parts of religious life to be different. In Rome he fasted, or did not eat, on Saturday. But in Milan, people did not fast on Saturday.\n\nAnother church leader, Saint Ambrose, gave him some advice. He said that when he goes to Rome he fasts on Saturdays, but when he is in Milan, he does not. Problem solved.\n\nThis advice has survived over the years. Some word experts say it first appeared in English around 500 years ago. We still use it today, either to give advice or to describe a situation where we have to change our behaviour to fit in.\n\nSource: ‘When in Rome …’ by Anna Matteo, Words and Their Stories, VOA Learning English (learningenglish.voanews.com). VOA Learning English texts are in the public domain and may be reprinted with credit."
+          "body": "VOA Learning English\n\nOne of the best things about traveling to a new country is learning about new traditions and customs. They can be very different from our own.\n\nWhen visiting a foreign country, it is smart to follow the local social rules and customs of the people who live there. This can make your stay easier and more enjoyable.\n\nThere is an expression for this that goes all the way back to ancient Rome: When in Rome, do as the Romans do.\n\nIt means that when we visit a place, we should follow the customs of that place. It shows an attitude: you are willing to change your way of doing things to fit in with those around you.\n\nThe place does not have to be a new country. It can simply be a new situation. For example, you may usually speak very loudly. But in an art museum or a library, you whisper. You follow the rules of that place.\n\nThe expression has another meaning too. When you are in an unfamiliar situation, you should follow the lead of those who know the rules. These people know how to behave with others, and how to work within the system. They blend in.\n\nBut what does Rome have to do with following other people’s customs? Here is how the story goes. More than 1500 years ago, a Christian leader, Saint Augustine, moved from Rome to Milan. In the new city, he found some parts of religious life to be different. In Rome he fasted, or did not eat, on Saturday. But in Milan, people did not fast on Saturday.\n\nAnother church leader, Saint Ambrose, gave him some advice. He said that when he goes to Rome he fasts on Saturdays, but when he is in Milan, he does not. Problem solved.\n\nThis advice has survived over the years. Some word experts say it first appeared in English around 500 years ago. We still use it today, either to give advice or to describe a situation where we have to change our behavior to fit in.\n\nSource: ‘When in Rome …’ by Anna Matteo, Words and Their Stories, VOA Learning English (learningenglish.voanews.com). VOA Learning English texts are in the public domain and may be reprinted with credit."
         },
         {
           "type": "text",
@@ -1258,7 +1258,7 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
           "type": "text",
           "label": "Before you start",
           "readonly": true,
-          "body": "Reflecting on your teaching, what you learned from watching others, and where you go next.\n\nThis assignment is a reflection on your progress during the course. You will summarise your main teaching strengths and action points, what you learned from observing peers and experienced teachers, and how you plan to keep developing after the CELTA.\n\nWord count — 750–1,000 words, in continuous prose, excluding the bibliography.\nFirst submission — write your answers in the boxes below and submit.\nSecond submission — if a resubmission is needed, your tutor returns this with their comments and the boxes open again. Passing on first or second submission does not affect your certificate grade. You must pass 3 of 4 assignments to be eligible for a PASS.\nWhen resubmitting — your tutor’s comments stay where they are.\n\nSubmission requirements — check these before you submit.\n750–1,000 words. Continuous prose, excluding the bibliography.\nDeclaration completed. Including any AI use, as set out in Your Own Work.\n\nReferencing and use of AI\n• This is a reflection on your own teaching, so most of it will not need references. Where you draw on reading, cite it clearly enough that a reader could find it. Recommended reading is at the end.\n• AI is allowed only for ideas, initial research and bibliography — not for writing or rewriting your text. Cite every use in the text (prompt, tool, year) and in your reference list with the conversation link, as set out in Your Own Work."
+          "body": "Reflecting on your teaching, what you learned from watching others, and where you go next.\n\nThis assignment is a reflection on your progress during the course. You will summarize your main teaching strengths and action points, what you learned from observing peers and experienced teachers, and how you plan to keep developing after the CELTA.\n\nWord count — 750–1,000 words, in continuous prose, excluding the bibliography.\nFirst submission — write your answers in the boxes below and submit.\nSecond submission — if a resubmission is needed, your tutor returns this with their comments and the boxes open again. Passing on first or second submission does not affect your certificate grade. You must pass 3 of 4 assignments to be eligible for a PASS.\nWhen resubmitting — your tutor’s comments stay where they are.\n\nSubmission requirements — check these before you submit.\n750–1,000 words. Continuous prose, excluding the bibliography.\nDeclaration completed. Including any AI use, as set out in Your Own Work.\n\nReferencing and use of AI\n• This is a reflection on your own teaching, so most of it will not need references. Where you draw on reading, cite it clearly enough that a reader could find it. Recommended reading is at the end.\n• AI is allowed only for ideas, initial research and bibliography — not for writing or rewriting your text. Cite every use in the text (prompt, tool, year) and in your reference list with the conversation link, as set out in Your Own Work."
         },
         {
           "type": "text",
@@ -1315,11 +1315,11 @@ window.CONNECT_HUB_SUPERSEDED_WORDING = [
  * three, four.
  *
  * These are NOT what Lite ships. Designing the four assignments is the
- * centre's job under 9.2.1 and the shipped criteria are the centre's, which
+ * center's job under 9.2.1 and the shipped criteria are the center's, which
  * is legitimate -- but they are nineteen, two of them promoted from the
  * design column, and two reworded in a way that raises the bar above
  * Cambridge's (FOL c turns "language systems and/or language skills" into
- * "and"; FOL d drops "and/or skills"). A centre that wants Cambridge's own
+ * "and"; FOL d drops "and/or skills"). A center that wants Cambridge's own
  * wording can now see it and take it; nothing adopts it automatically,
  * because criteriaMarks are POSITIONAL and replacing a list under existing
  * marking would move every mark (audit, 29 Sep 2026).
@@ -1334,8 +1334,8 @@ window.CONNECT_HUB_SYLLABUS_CRITERIA = {
     'Finding, selecting and referencing information from one or more sources using written language that is clear, accurate and appropriate to the task'
   ],
   lrt: [
-    'Analysing language correctly for teaching purposes',
-    'Correctly using terminology relating to form, meaning and phonology when analysing language',
+    'Analyzing language correctly for teaching purposes',
+    'Correctly using terminology relating to form, meaning and phonology when analyzing language',
     'Accessing reference materials and referencing information they have learned about language to an appropriate source',
     'Using written language that is clear, accurate and appropriate to the task'
   ],
@@ -1354,7 +1354,7 @@ window.CONNECT_HUB_SYLLABUS_CRITERIA = {
 
 /* The four shipped lists ARE the syllabus's, assigned rather than retyped so
    the two cannot drift. Everything else about each assignment -- its title,
-   its word range, its brief, its declaration -- stays the centre's. */
+   its word range, its brief, its declaration -- stays the center's. */
 ['fol', 'lrt', 'lsrt', 'lfc'].forEach(function(k){
   var a = window.CONNECT_HUB_DEFAULT_WORDING[k];
   if (!a) return;
@@ -1362,18 +1362,18 @@ window.CONNECT_HUB_SYLLABUS_CRITERIA = {
 });
 
 /* THE CENTRE'S OWN ROWS (18 Oct 2026). Ramy: C/18's cover sheets carry one row
-   more than the syllabus for two assignments, and "a lot of centres use four
+   more than the syllabus for two assignments, and "a lot of centers use four
    because it just makes it easier". The syllabus lists above stay Cambridge's,
-   word for word; these two are the centre's, put among them so a course starts
+   word for word; these two are the center's, put among them so a course starts
    with the same rows as the C/18 documents. The wording page marks them as
    "this course" (not the syllabus's words) and still says the syllabus is
    covered. Each is Cambridge's own design requirement, made a row:
      2.3  "identification of the receptive language skills and/or subskills that
-          could be practised ... identification of productive language skills"
+          could be practiced ... identification of productive language skills"
      2.4  "reflections on the implications for their own teaching from the
           observations of experienced ELT professionals and colleagues" */
 window.CONNECT_HUB_CENTRE_ROWS = {
-  lsrt: [{ at: 1, text: 'Identifying receptive and productive skills that could be practised in relation to the text' }],
+  lsrt: [{ at: 1, text: 'Identifying receptive and productive skills that could be practiced in relation to the text' }],
   lfc:  [{ at: 2, text: 'Reflecting on the implications for their own teaching of observing experienced teachers and colleagues on the course' }]
 };
 Object.keys(window.CONNECT_HUB_CENTRE_ROWS).forEach(function(k){
@@ -1403,7 +1403,7 @@ window.CONNECT_HUB_ADOPT_CORRECTED_CRITERIA = function(wording){
       var next;
       if (same(a.sections, was[k].sections)) {
         // Untouched end to end: give the course the whole shipped assignment,
-        // keeping only what the centre set on this course.
+        // keeping only what the center set on this course.
         next = JSON.parse(JSON.stringify(now[k]));
         ['dueAt','due','dueSets','resubDays','resubDueAt','outAt','setBy','releaseAt','released'].forEach(function(f){ if (a[f] !== undefined) next[f] = a[f]; });
       } else {

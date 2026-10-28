@@ -1,9 +1,9 @@
 /* Connect Lite — the observation tasks a course starts with.
  * © 2026 Ramy Sakr. All rights reserved.
  *
- * GENERATED from the centre's own Word sheets by
+ * GENERATED from the center's own Word sheets by
  * store/build-observation-defaults.mjs. Do not hand-edit: re-run it.
- * A centre changes these on its own course, not here — the same arrangement
+ * A center changes these on its own course, not here — the same arrangement
  * as assignment-defaults.js.
  *
  * SHAPES, because the sheets are not all one thing:
@@ -90,7 +90,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
       "brief": "",
       "rows": [
         "What is the TL or skill aim of this lesson?",
-        "What is the context of this lesson? Is it appropriate for the TL / sub-skill being practised?",
+        "What is the context of this lesson? Is it appropriate for the TL / sub-skill being practiced?",
         "Is the context the same as or different from the other two lessons? Is this logical?",
         "Did the teacher set the context at the beginning of the lesson? How? Was it effective? Why / why not?",
         "Make a few comments on the lead-in. Too long? Too short? T-centred? S-centred? Engaging? Relevant?",
@@ -114,7 +114,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
         "Is the language elicited from the students or given directly to them?",
         "Is the meaning of the language checked? How?",
         "Is the form clarified?",
-        "Is the form elicited? Is it clearly labelled on the board?",
+        "Is the form elicited? Is it clearly labeled on the board?",
         "Is the pronunciation clarified? Which features? How?",
         "Was the clarification mostly T-centred or S-centred? Can you account for this?",
         "In your opinion, did the learners know any of the target language before the lesson? Has the teacher handled this appropriately?"
@@ -132,7 +132,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
         "Did the teacher set the context of the reading / listening separately? Was it necessary?",
         "Did they pre-teach any vocabulary? Were the words necessary to complete the task? Were they new?",
         "Is there a clear gist task? Is it logical for the text?",
-        "Is there a second task for the reading / listening? What sub-skill is it practising? Is it logical?",
+        "Is there a second task for the reading / listening? What sub-skill is it practicing? Is it logical?",
         "Reading: Did they give clear timing for each task? Was it appropriate for the sub-skill? Why or why not? Listening: Did they play the recording an appropriate number of times for each task? Why or why not?",
         "Did they help the learners understand why their answers were correct in feedback? How?",
         "Was the post-reading / listening task logical for the context of the lesson?",
@@ -146,7 +146,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
       "tp": 6,
       "title": "Feedback Techniques",
       "variant": 0,
-      "brief": "Feedback helps consolidate what learners have learnt and contributes to successful task achievement, especially when learners have found something difficult. Feedback can come in many forms, for example:\nThe teacher providing a clear conclusion to a task\nPraise / acknowledgement\nLetting learners know how well they did\nAcknowledging and responding to the content of what learners say\nAcknowledging, praising or correcting the language that learners use\nProviding the answers on a handout, on the board or orally\nEliciting the answers orally\nGetting learners to write up answers on the board\nDuring the lesson — Pay close attention to the feedback to tasks that all the teachers provide in TP6.",
+      "brief": "Feedback helps consolidate what learners have learned and contributes to successful task achievement, especially when learners have found something difficult. Feedback can come in many forms, for example:\nThe teacher providing a clear conclusion to a task\nPraise / acknowledgement\nLetting learners know how well they did\nAcknowledging and responding to the content of what learners say\nAcknowledging, praising or correcting the language that learners use\nProviding the answers on a handout, on the board or orally\nEliciting the answers orally\nGetting learners to write up answers on the board\nDuring the lesson — Pay close attention to the feedback to tasks that all the teachers provide in TP6.",
       "rows": [
         "How many different types of feedback technique did you see?",
         "Did any of the teachers provide feedback on the content of what learners had to say (i.e. the message rather than the language)?",
@@ -197,7 +197,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
         "Is the target language elicited from the learners or given to them? How much do the learners already know?",
         "How is meaning conveyed — situation, timeline, visual, concept questions? Note the CCQs used and the learners’ responses.",
         "Is the hypothetical or unreal nature of the form dealt with explicitly? How does the teacher handle the past form used for present or future meaning?",
-        "How is form clarified? Note exactly what goes on the board, including the labelling of the clauses.",
+        "How is form clarified? Note exactly what goes on the board, including the labeling of the clauses.",
         "Is pronunciation addressed — contractions, the weak form of “would”, sentence stress, intonation across the two clauses? How is it drilled?",
         "What controlled practice is provided? Is the task genuinely restricted to the target form, and how is it checked?",
         "What freer practice follows? Does the task create a real reason to use the target language, or could learners complete it without the form?",
@@ -223,7 +223,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
         "Which lexical items are clarified after the reading? How is meaning conveyed, and how is it checked?",
         "How thoroughly is form dealt with — part of speech, collocation, register, spelling? What goes on the board?",
         "Is pronunciation of the new lexis addressed? Note stress marking, drilling and any use of phonemic script.",
-        "What practice of the new lexis do the learners get? Is it personalised, and does it move from controlled towards freer use?"
+        "What practice of the new lexis do the learners get? Is it personalized, and does it move from controlled towards freer use?"
       ],
       "after": [
         "Which single decision by the teacher had the biggest effect on how well the learners read the text?",
@@ -240,7 +240,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
         "How is the situation set up so that the language is clearly needed? Is the situation plausible for these learners?",
         "How is meaning conveyed for each item, and how is it checked? Note the CCQs used.",
         "Is register and appropriacy dealt with — how formal or direct each exponent is, and when it would be used? How?",
-        "How is form dealt with for functional language, which is often best treated as a fixed chunk rather than analysed grammatically?",
+        "How is form dealt with for functional language, which is often best treated as a fixed chunk rather than analyzed grammatically?",
         "Which features of pronunciation are worked on — word stress, sentence stress, connected speech, intonation? Note the specific features.",
         "How is the drilling staged? Note the balance of choral and individual drilling, and whether the model is clear and natural.",
         "Is phonemic script used on the board? Is stress marked? How useful is the board work as a record for the learners?",
@@ -363,7 +363,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
                 {
                   "label": "Language lessons",
                   "options": [
-                    "PPP — present, practise, produce",
+                    "PPP — present, practice, produce",
                     "TTT — test, teach, test",
                     "Text-based — language taken from a text",
                     "Guided discovery — learners work out the rule"

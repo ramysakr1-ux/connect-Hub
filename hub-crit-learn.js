@@ -19,9 +19,9 @@
  * - It is not a grader and never touches one. It suggests which criterion a
  *   sentence is about; the tutor writes the sentence and chooses the tag.
  * - It never tags anything by itself. A suggestion is still a chip to click.
- * - It is per course, not per centre and not global: the record lives beside
+ * - It is per course, not per center and not global: the record lives beside
  *   the course's settings, so one course's habits cannot leak into another
- *   centre's, and a new course starts from the wording alone.
+ *   center's, and a new course starts from the wording alone.
  * - It learns only from points a tutor tagged. An untagged point is a point
  *   the tutor did not think about, not a point where every criterion is wrong.
  * - It cannot be read by a trainee or an assessor: the store hands the record

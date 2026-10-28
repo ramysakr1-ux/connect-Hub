@@ -1,4 +1,4 @@
-/* Connect Lite — reading a centre's timetable out of a sheet.
+/* Connect Lite — reading a center's timetable out of a sheet.
  * © 2026 Ramy Sakr. All rights reserved.
  *
  * Ramy, 29 Sep 2026: "is it possible to just import a timetable the same way
@@ -16,13 +16,13 @@
  *     the link", and refuses a private one -- the page says how to share it.
  *
  * THE WEEK GRID (8 Oct 2026). Ramy's own C/18 sheet is not a row per day: each
- * week is a row of dates across Monday to Friday, with labelled rows under it
+ * week is a row of dates across Monday to Friday, with labeled rows under it
  * ("Input 11:00", "TP 15:00", "Assignments"). gridRows() turns that into the
- * row-per-day shape before anything else reads it, so a centre's grid lands
+ * row-per-day shape before anything else reads it, so a center's grid lands
  * the same as a list.
  *
  * WHAT IT LOOKS FOR. A header row naming the columns, in any order and in
- * whatever words the centre uses (date / day, input, teaching practice,
+ * whatever words the center uses (date / day, input, teaching practice,
  * notes). Without one it falls back to position: date, input 1, input 2,
  * notes. Anything it cannot place is reported rather than guessed at.
  *
@@ -119,7 +119,7 @@
 
   /* A week grid, as one row per day: [Date, Input, Session 2, TP, Notes,
      InputAt, TpAt]. A row with dates in three or more of its cells starts a
-     week; the labelled rows under it fill that week's days, column by column,
+     week; the labeled rows under it fill that week's days, column by column,
      until the next row of dates. The TP cell gives its practice number to the
      TP column; whatever else it says goes on as written -- a piece with its own
      time ("Demo lesson 1 · 15:00", "filmed observations (14:00)") is a session
@@ -178,7 +178,7 @@
     return out;
   }
 
-  /* A cell, as the sessions it holds. "Classroom management · Analysing
+  /* A cell, as the sessions it holds. "Classroom management · Analyzing
      language and context (12:30)" is two sessions: the first at the row's
      time, the second at its own. A piece carrying a time starts a session of
      its own; pieces without one run together ("Phonology 1 · Word and

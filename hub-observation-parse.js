@@ -1,8 +1,8 @@
-/* Connect Lite — reading a centre's observation sheets into tasks.
+/* Connect Lite — reading a center's observation sheets into tasks.
  * © 2026 Ramy Sakr. All rights reserved.
  *
  * ONE parser, two readers. The generator (store/build-observation-defaults.mjs)
- * reads the centre's Word files in Node and ships the result as
+ * reads the center's Word files in Node and ships the result as
  * observation-defaults.js; the wording editor (screen 19) reads a Word file
  * in the browser and offers to replace a group with what it finds. Until
  * 29 Sep 2026 those were two parsers, and the browser's knew nothing of

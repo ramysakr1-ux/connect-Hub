@@ -3,7 +3,7 @@
  *
  * Ramy, 3 Oct 2026, reading his own signature: "what is lite.celtaconnect.com?"
  * A fair question, because until now the answer was a locked door. Every page
- * of Lite is opened with a link, so a centre director who got an email, grew
+ * of Lite is opened with a link, so a center director who got an email, grew
  * curious and clicked the address in it landed on "Open your course link" --
  * a page written for somebody who has mislaid theirs, not for somebody who has
  * never had one.

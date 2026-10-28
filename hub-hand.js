@@ -9,7 +9,7 @@
  *
  * So a signature is written, not traced, and three rules hold it together:
  *
- *   IT IS NOT TYPED.      The name comes from the roster the centre keeps,
+ *   IT IS NOT TYPED.      The name comes from the roster the center keeps,
  *                         so a candidate never writes it and cannot vary it.
  *   IT IS DERIVED.        The hand comes from the signer — a candidate's own
  *                         token, a tutor's course key and name — so two people
@@ -35,8 +35,8 @@
  * characters a name holds. All five write Turkish — ş ğ ı İ ö ü ç — which is
  * why four prettier ones are not here: Mr De Haviland, Mrs Saint Delafield,
  * Herr Von Muellerhoff and Homemade Apple have no ş, ğ or İ at all, and a
- * centre in Istanbul cannot use a signature that drops letters out of a name.
- * See fonts/README.md for the licences.
+ * center in Istanbul cannot use a signature that drops letters out of a name.
+ * See fonts/README.md for the licenses.
  */
 (function(){
   'use strict';
