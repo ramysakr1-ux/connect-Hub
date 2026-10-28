@@ -26,7 +26,7 @@
 <title>Getting to know you</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610290013">
+<link rel="stylesheet" href="hub-tokens.css?v=202610290033">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -108,20 +108,20 @@
   .iv-tutor td, .iv-tutor th{text-align:left; padding:6px 10px 6px 0; font-size:.88rem; vertical-align:top;}
   @media print{ .gk .act{animation:none;} .gk.gk-picked .act:not(.chosen) ol{display:block;} .gk-peek{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610290013">
+<link rel="stylesheet" href="hub-house.css?v=202610290033">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610290013"></script>
-<script src="hub-store.js?v=202610290013"></script>
-<script src="hub-say.js?v=202610290013"></script>
-<script src="hub-sync.js?v=202610290013"></script>
-<script src="hub-notebook.js?v=202610290013"></script>
-<script src="gtky-bank.js?v=202610290013"></script>
-<script src="fol-interview.js?v=202610290013"></script>
+<script src="hub-shared.js?v=202610290033"></script>
+<script src="hub-store.js?v=202610290033"></script>
+<script src="hub-say.js?v=202610290033"></script>
+<script src="hub-sync.js?v=202610290033"></script>
+<script src="hub-notebook.js?v=202610290033"></script>
+<script src="gtky-bank.js?v=202610290033"></script>
+<script src="fol-interview.js?v=202610290033"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -178,21 +178,24 @@ function render(){
   const g = MY_GROUP, m = mode();
   if (!band) { KNOWN = IS_TRAINEE ? groupBand(g) : ''; band = KNOWN || groupBand(g) || (IS_TRAINEE ? '' : 'high'); }
   const mine = IS_TRAINEE ? pickOf(MY_NAME) : null;
+  /* who picked what, for the tutors (Ramy, 28 Oct 2026: "which getting to know you everyone is doing") */
+  const picksBox = IS_TRAINEE ? '' : (() => { const picks = shared(); const byName = {}; picks.forEach(x => { const n = String(x.name || ''); const i = n.lastIndexOf(SEP); if (i > 0) byName[n.slice(i + SEP.length).trim()] = n.slice(0, i); });
+    const tr = roster().filter(t => !t.withdrawn).sort((a, b) => String(a.group || '').localeCompare(String(b.group || ''), undefined, { numeric: true }) || String(a.name).localeCompare(String(b.name)));
+    const manyG = new Set(tr.map(t => String(t.group || ''))).size > 1;
+    return `<div class="iv-box"><h2>Who picked what</h2>${tr.length ? `<table class="iv-tutor"><thead><tr>${manyG ? '<th>Group</th>' : ''}<th>Trainee</th><th>Activity</th></tr></thead><tbody>${tr.map(t => `<tr>${manyG ? '<td>' + esc(String(t.group || '')) + '</td>' : ''}<td>${esc(t.name)}</td><td>${byName[t.name] ? esc(byName[t.name]) : '<span class="note">Not picked yet</span>'}</td></tr>`).join('')}</tbody></table>` : '<p class="note">No trainees on the course yet.</p>'}</div>`; })();
   const head = `<div class="title"><h1>Getting to know you</h1>
     <p>${IS_TRAINEE ? 'One short activity to run with your students, after the demonstration lesson. Unassessed, no tutor in the room. Here are three for the level you teach: read them, pick one, and that is all you need to do before day one. ' + esc(minutesLine()) : 'What the trainees see before day one: three activities each from Connect’s bank for the level they teach, and a pick. The picks land on the shelf on your dashboard. ' + esc(minutesLine())}</p></div>`;
   const pickBox = IS_TRAINEE
     ? (mine ? `<div class="pick"><b>Your pick: ${esc(activityOf(mine))}</b><br><span class="note">Your tutor and your group see it on the shelf. Changed your mind? Take it back below and pick again.</span></div>`
             : `<div class="pick"><b>You have not picked yet.</b><br><span class="note">Pick one of the three. You can change it until day one.</span></div>`)
-    : (function(){ const picks = shared(); return picks.length
-        ? `<div class="pick"><b>${picks.length} pick${picks.length === 1 ? '' : 's'} so far</b><br><span class="note">${picks.map(x => esc(String(x.name || ''))).join(' &middot; ')}</span></div>`
-        : '<div class="pick"><b>No picks yet.</b><br><span class="note">Each trainee picks from their own link; the picks show here and on your shelf.</span></div>'; })();
+    : '';   /* the tutors' table above says who picked what */
   /* Ramy, 26 Oct 2026: "Since we already know who the trainee is, we know what level they're teaching, why don't they
      just get their own". Known: the level is said, not offered. Not known yet: they choose. */
   const bands = KNOWN ? `<div class="bands"><span>Your students: <b>${esc(BAND_NAME[KNOWN].toLowerCase().replace(/^./, c => c.toUpperCase()))}</b> &middot; ${m === 'online' ? 'online course' : 'in the room'}</span></div>` : `<div class="bands"><span>${IS_TRAINEE ? 'Level of your students:' : 'Level:'}</span>
     <button class="chip${band === 'low' ? ' on' : ''}" type="button" data-band="low">${BAND_NAME.low}</button>
     <button class="chip${band === 'high' ? ' on' : ''}" type="button" data-band="high">${BAND_NAME.high}</button>
     <span>&middot; ${m === 'online' ? 'online course' : 'in the room'}</span></div>`;
-  if (!band) { $('app').innerHTML = head + switcher() + pickBox + bands + '<div class="empty">Choose the level of your students above and your three appear.</div>'; wire(); return; }
+  if (!band) { $('app').innerHTML = head + switcher() + picksBox + pickBox + bands + '<div class="empty">Choose the level of your students above and your three appear.</div>'; wire(); return; }
   const pool = BANK.filter(a => (band === 'high') === !!HIGH[a.level] && (a.mode === 'both' || a.mode === m));
   const show = IS_TRAINEE ? offered(pool, MY_TOKEN || MY_NAME || 'x') : pool;
   /* A pick made from an earlier three (the level changed) stays visible. */
@@ -205,7 +208,7 @@ function render(){
           ? `<button class="btn ghost" type="button" data-unpick="${esc(mine.id)}"${busy ? ' disabled' : ''}>Take it back</button><span class="note">Your pick.</span>`
           : (mine ? '<span class="note">Take your pick back to choose this instead.</span>' : `<button class="btn" type="button" data-pick="${esc(a.slug)}"${busy ? ' disabled' : ''}>Pick this one</button>`)}</div>` : ''}
     </div>`; }).join('');
-  $('app').innerHTML = head + switcher() + pickBox + bands + (note ? `<p class="note" style="margin:12px 0 0;">${esc(note)}</p>` : '') + list;
+  $('app').innerHTML = head + switcher() + picksBox + pickBox + bands + (note ? `<p class="note" style="margin:12px 0 0;">${esc(note)}</p>` : '') + list;
   wire();
 }
 function write(list){ try { localStorage.setItem('connect_shared_v1', JSON.stringify(list || [])); } catch(e){} }
@@ -285,10 +288,17 @@ function renderInterview(){
     <p>${IS_TRAINEE ? 'Choose a student and ask the questions below. Write down what they say, then add the grammar or sound problems you heard. Those notes count as evidence for your Focus on the Learner assignment, so the exact words matter.' : 'This course runs its getting-to-know-you session as a Focus on the Learner interview. Each trainee asks a student the questions below and writes down what they hear; it shows back on their Focus on the Learner page.'}</p></div>`;
   const adv = `<div class="iv-box"><h2>Before you start</h2><ul class="adv">${FOL.advice.map(x => '<li>' + esc(x) + '</li>').join('')}</ul></div>`;
   if (!IS_TRAINEE) {
-    const tr = roster().map(t => { const rc = t.interview || null; const st = rc && rc.students ? Object.values(rc.students) : []; return { name: t.name, n: st.length, h: st.reduce((a, s) => a + ((s.heard || []).length), 0) }; });
-    const rows = tr.length ? `<table class="iv-tutor"><thead><tr><th>Trainee</th><th>Students interviewed</th><th>Problems heard</th></tr></thead><tbody>${tr.map(t => `<tr><td>${esc(t.name)}</td><td>${t.n || 'Not yet'}</td><td>${t.h || 'None yet'}</td></tr>`).join('')}</tbody></table>` : '<p class="note">No trainees on the course yet.</p>';
-    $('app').innerHTML = head + switcher() + `<div class="iv-box"><h2>Who has interviewed</h2>${rows}</div>` + adv +
-      `<div class="iv-box"><h2>The pool &mdash; ${poolList().length} heard so far</h2>${FOL.poolHtml(poolList())}</div><div class="iv-box"><h2>The eight questions</h2>${FOL.questions.map((q, i) => `<div class="iv-q"><div class="t">${i + 1} &middot; ${esc(q.topic)}</div><div class="a">${esc(q.ask)}</div><div class="l">${esc(q.listenFor)}</div></div>`).join('')}</div>`;
+    /* who interviewed whom, by name, and under which group (Ramy, 28 Oct 2026: "who was interviewed by whom, how do we access this information?") */
+    const tr = roster().filter(t => !t.withdrawn).sort((a, b) => String(a.group || '').localeCompare(String(b.group || ''), undefined, { numeric: true }) || String(a.name).localeCompare(String(b.name)))
+      .map(t => { const rc = t.interview || null; const st = rc && rc.students ? Object.values(rc.students) : []; return { name: t.name, group: String(t.group || ''), who: st.map(x => x.name).filter(Boolean), h: st.reduce((a, s) => a + ((s.heard || []).length), 0) }; });
+    const manyG = new Set(tr.map(t => t.group)).size > 1;
+    const rows = tr.length ? `<table class="iv-tutor"><thead><tr>${manyG ? '<th>Group</th>' : ''}<th>Trainee</th><th>Interviewed</th><th>Problems heard</th></tr></thead><tbody>${tr.map(t => `<tr>${manyG ? '<td>' + esc(t.group) + '</td>' : ''}<td>${esc(t.name)}</td><td>${t.who.length ? esc(t.who.join(', ')) : '<span class="note">Not yet</span>'}</td><td>${t.h || '<span class="note">None yet</span>'}</td></tr>`).join('')}</tbody></table>` : '<p class="note">No trainees on the course yet.</p>';
+    $('app').innerHTML = head + switcher() + `<div class="iv-box"><h2>Who interviewed whom</h2>${rows}</div>` + adv +
+      (() => { /* the pool by TP group, as the trainees share it (Ramy, 28 Oct 2026: "they will still need something for the pool") */
+        const all = poolList(); const gOf = {}; roster().forEach(t => { gOf[t.name] = String(t.group || ''); });
+        const groups = [...new Set(all.map(h => gOf[h.by] || ''))].sort((x, y) => x.localeCompare(y, undefined, { numeric: true }));
+        const body = groups.length > 1 ? groups.map(g => { const list = all.filter(h => (gOf[h.by] || '') === g); return `<h3 style="margin:14px 0 4px;font:700 .78rem/1.2 'Karla',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--grey)">${g ? 'Group ' + esc(g) : 'No group yet'} &middot; ${list.length}</h3>` + FOL.poolHtml(list); }).join('') : FOL.poolHtml(all);
+        return `<div class="iv-box"><h2>The pool &mdash; ${all.length} heard so far</h2><p class="note">Everything the trainees heard in their interviews, with who heard it. Each TP group sees only its own; you see them all.</p>${body}</div>`; })() + `<div class="iv-box"><h2>The eight questions</h2>${FOL.questions.map((q, i) => `<div class="iv-q"><div class="t">${i + 1} &middot; ${esc(q.topic)}</div><div class="a">${esc(q.ask)}</div><div class="l">${esc(q.listenFor)}</div></div>`).join('')}</div>`;
     wire(); return;
   }
   const names = ivStudents();
