@@ -71,7 +71,7 @@
          screen: "it's just too much... it doesn't need to be that bright."
          A filled button at the foot of every page is a shout. Outlined,
          grey, teal when the pointer is on it. */
-      '.say-pill{display:block; margin:34px auto 26px; font:600 0.8rem/1 inherit;',
+      '.say-pill{display:block; margin:34px auto 26px; font-family:inherit; font-weight:600; font-size:0.8rem; line-height:1;',
       '  background:none; color:var(--grey,#555); border:1px solid var(--sand-line,#ddd);',
       '  border-radius:999px; padding:10px 18px; cursor:pointer;}',
       '.say-pill:hover{color:var(--teal,#0b6); border-color:var(--teal,#0b6); background:none;}',
@@ -215,6 +215,8 @@
        up under the pointer is a thing happening that nobody asked for. */
     b.onclick = function () { open(''); };
     host().appendChild(b);
+    /* a page that draws itself late (the last page) can wipe the container it landed in: put it back once the page has settled */
+    [1500, 5000].forEach(function (ms) { setTimeout(function () { if (!b.isConnected && !document.querySelector('.say-pill')) host().appendChild(b); }, ms); });
   }
 
   /* WHERE IN THE FLOW. Not simply the end of <body>: ten screens center their
@@ -231,6 +233,8 @@
     var best = null, tall = 0, last = null;
     [].forEach.call(document.body.children, function (el) {
       if (/^(SCRIPT|STYLE|LINK|TEMPLATE|NOSCRIPT)$/.test(el.tagName)) return;
+      /* never into the credit line: on a page drawn late it was the tallest thing, and the pill pushed the credit to the edge (28 Oct 2026) */
+      if (el.classList.contains('hub-brand-foot')) return;
       var cs = getComputedStyle(el);
       if (cs.display === 'none' || /^(fixed|absolute|sticky)$/.test(cs.position)) return;
       last = el;

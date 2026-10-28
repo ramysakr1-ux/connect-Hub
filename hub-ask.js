@@ -12,6 +12,7 @@
 (function(){
   'use strict';
   var S = window.HubStore, NB = window.HubNotebook, L = window.InputLib;
+  if (S && S.isTutor && S.isTutor() && NB && NB.context) { tutorSide(); return; }
   if (!S || !S.isTrainee || !S.isTrainee() || !NB || !NB.context || !L || !window.HubRec) return;
   var ctx = NB.context(); if (!ctx || ctx.k !== 'input' || !ctx.id) return;
 
@@ -111,4 +112,59 @@
   /* the timetable may arrive a moment after the page; look again, and each minute (a session starts and ends) */
   pill(); setTimeout(pill, 2500); setInterval(pill, 60000);
   document.addEventListener('hub:ready', pill);
+  /* THE QUESTIONS LIVE IN THE SESSION (Ramy, 28 Oct 2026: "questions should be inside the input sessions ... inside the
+     trainer notes ... it would just give a number of questions ... you have the trainer notes with you everywhere you
+     go ... so why do they have their own tab?"). On a tutor's link the trainer notes open with this session's questions,
+     and those asked from the room's own page (the Connect demo's audience): read, hear, mark answered. The Trainer notes
+     link carries the number still open. */
+  function tutorSide(){
+    var ctx = NB.context(); if (!ctx || ctx.k !== 'input' || !ctx.id) return;
+    var items = [], heard = {}, tz;
+    function esc2(t){ return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+    function css2(){
+      if (document.getElementById('hub-askt-css')) return;
+      var st = document.createElement('style'); st.id = 'hub-askt-css';
+      st.textContent = '.tq{margin:0 0 18px;padding:16px 18px;border-radius:14px;background:var(--surface);}'
+        + '.tq h3{margin:0 0 4px;font:700 1.1rem/1.2 Newsreader,Georgia,serif;} .tq .sub{margin:0 0 10px;font-size:.84rem;color:var(--grey);}'
+        + '.tq .row{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:start;padding:10px 0;border-top:1px solid var(--row-line);} .tq .row:first-of-type{border-top:0;}'
+        + '.tq .who{font-size:.78rem;color:var(--grey);font-weight:700;} .tq .txt{font-size:.95rem;line-height:1.5;margin:2px 0 0;} .tq .row.done .txt{color:var(--grey);text-decoration:line-through;}'
+        + '.tq .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;} .tq button{border:1.5px solid var(--sand-line);background:var(--paper);border-radius:999px;padding:5px 12px;font:700 .78rem Karla,sans-serif;cursor:pointer;color:var(--ink);}'
+        + '.tq button.ans{border-color:var(--a-forest,var(--teal));color:var(--a-forest,var(--teal));} .tq audio{grid-column:1/-1;width:100%;}'
+        + '.tq .none{font-size:.88rem;color:var(--grey);margin:0;} .tq .wall{font-size:.82rem;font-weight:700;color:var(--a-forest,var(--teal));}'
+        + '.tn-link .tqn{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;margin-left:6px;padding:0 5px;border-radius:999px;background:var(--a-red);color:var(--paper);font-size:.7rem;}'
+        + '@media print{.tq{display:none !important;}}';
+      document.head.appendChild(st);
+    }
+    function mine(q){ var se = q.session || {}; return se.k === 'room' || se.id === ctx.id; }
+    function when(iso){ try { return new Date(iso).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: tz }); } catch (e) { return ''; } }
+    function paint(){
+      var list = items.filter(mine), open = list.filter(function(q){ return q.state !== 'answered'; }).length;
+      var a = document.querySelector('nav.sticky-nav a.tn-link');
+      if (a) { var n = a.querySelector('.tqn'); if (open) { if (!n) { n = document.createElement('span'); n.className = 'tqn'; a.appendChild(n); } n.textContent = open; n.title = open + ' question' + (open === 1 ? '' : 's') + ' open'; } else if (n) n.remove(); }
+      var host = document.getElementById('trainer'); if (!host) return;
+      var box = document.getElementById('tutorQs');
+      if (!box) { css2(); box = document.createElement('div'); box.id = 'tutorQs'; box.className = 'tq'; var card = host.querySelector('.card') || host; var t = card.querySelector('.stage-title'); if (t && t.nextSibling) card.insertBefore(box, t.nextSibling); else card.insertBefore(box, card.firstChild); }
+      list.sort(function(x, y){ return ((x.state === 'answered') - (y.state === 'answered')) || String(x.at).localeCompare(String(y.at)); });
+      box.innerHTML = '<h3>Questions' + (open ? ' · ' + open + ' open' : '') + '</h3><p class="sub">What the trainees asked in this session, and anything asked from the room’s own page. <a class="wall" href="../../38_questions.html">Show them full screen</a></p>'
+        + (list.length ? list.map(function(q){ var room = (q.session || {}).k === 'room';
+            return '<div class="row' + (q.state === 'answered' ? ' done' : '') + '" data-q="' + esc2(q.id) + '"><div><div class="who">' + esc2(q.name || 'Someone') + ' · ' + esc2(when(q.at)) + (room ? ' · from the room' : '') + '</div><p class="txt">' + (q.text ? esc2(q.text) : q.heard ? esc2(q.heard) + ' <em>(by voice)</em>' : '<em>A voice question.</em>') + '</p></div>'
+              + '<div class="acts">' + (q.audio ? '<button type="button" data-hear="' + esc2(q.id) + '">Hear it</button>' : '') + '<button type="button" class="ans" data-ans="' + esc2(q.id) + '">' + (q.state === 'answered' ? 'Put it back' : 'Answered') + '</button></div><span class="aslot"></span></div>'; }).join('')
+          : '<p class="none">No questions yet. They arrive here as they are asked.</p>');
+      box.querySelectorAll('[data-ans]').forEach(function(b){ b.onclick = function(){ var q = items.filter(function(x){ return x.id === b.dataset.ans; })[0]; if (!q) return; var to = q.state === 'answered' ? 'open' : 'answered'; q.state = to; paint();
+        var who = ''; try { who = (localStorage.getItem('chub:tutorName') || '').trim(); } catch (e) {}
+        S.call({ op: 'answerQuestion', id: q.id, state: to, who: who }).then(function(r){ if (r && r.items) { items = r.items; paint(); } }, function(){}); }; });
+      box.querySelectorAll('[data-hear]').forEach(function(b){ b.onclick = function(){ var q = items.filter(function(x){ return x.id === b.dataset.hear; })[0]; if (!q || !q.audio) return; var slot = b.closest('.row').querySelector('.aslot');
+        var show = function(u){ slot.innerHTML = '<audio controls autoplay src="' + u + '"></audio>'; };
+        if (heard[q.audio.id]) { show(heard[q.audio.id]); return; }
+        b.disabled = true; b.textContent = 'Loading';
+        S.call({ op: 'getQuestionAudio', id: q.audio.id }, 90000).then(function(r){ var bin = atob(r.bytes), u8 = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+          heard[q.audio.id] = URL.createObjectURL(new Blob([u8], { type: r.type || q.audio.mime || 'audio/webm' })); b.remove(); show(heard[q.audio.id]); }, function(e){ b.disabled = false; b.textContent = 'Hear it'; slot.textContent = (e && e.message) || 'Could not load the recording'; }); }; });
+    }
+    function load(){
+      return S.call({ op: 'questions' }).then(function(r){ var next = (r && r.items) || []; var sig = function(a){ return a.map(function(q){ return q.id + q.state; }).join(); }; if (sig(next) === sig(items) && document.getElementById('tutorQs')) return; items = next; paint(); }, function(){});
+    }
+    try { tz = (JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}).timeZone || undefined; } catch (e) {}
+    /* after the gate has confirmed the tutor and opened the notes */
+    var tries = 0, wait = setInterval(function(){ var t = document.getElementById('trainer'); if ((t && !t.hidden) || ++tries > 40) { clearInterval(wait); if (t && !t.hidden) { load(); setInterval(load, 20000); } } }, 300);
+  }
 })();
