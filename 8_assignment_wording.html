@@ -13,7 +13,7 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610281834">
+<link rel="stylesheet" href="hub-tokens.css?v=202610281849">
 <style>
   /* ---- The assignment editor, v2 (11 Oct 2026) -------------------------------
      From the designer's handoff "Assignment editor v2". The page behind Edit
@@ -312,10 +312,16 @@
     .savebar .acts{margin-left:auto; width:100%;}
     #hubSync.inbar{margin-right:auto; max-width:calc(100% - 272px);}
   }
+  .cxchoice{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:0 0 18px;} @media (max-width:640px){ .cxchoice{grid-template-columns:1fr;} }
+  .cxc{display:flex; flex-direction:column; gap:4px; text-align:left; padding:14px 16px; border:1.5px solid var(--sand-line); border-radius:14px; background:var(--paper); cursor:pointer; font:inherit; color:var(--ink);}
+  .cxc b{font:700 1rem/1.25 Newsreader,Georgia,serif;} .cxc span{font-size:.84rem; line-height:1.45; color:var(--grey);}
+  .cxc.on{border-color:var(--a-forest, var(--teal)); box-shadow:inset 0 0 0 1px var(--a-forest, var(--teal)); background:color-mix(in oklch, var(--a-forest, var(--teal)) 6%, var(--paper));}
+  .cxc .cximp{margin-top:6px; color:var(--a-forest, var(--teal)) !important; font-weight:700; text-decoration:underline; cursor:pointer;}
+  .cxnote{margin:0 0 12px; padding:10px 14px; border-radius:10px; background:var(--sand); font-size:.88rem; line-height:1.45;}
   .modes .tvlink{display:inline-flex;align-items:center;padding:7px 14px;font-weight:700;font-size:.86rem;color:var(--ink);text-decoration:none;border-radius:999px;}
   .modes .tvlink:hover{background:var(--box);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610281834">
+<link rel="stylesheet" href="hub-house.css?v=202610281849">
 </head>
 <body class="hub-paper" data-sync-ok="Connected to the course &mdash; wording is kept when you press Save" data-sync-ok-short="Connected">
 <div class="board">
@@ -334,14 +340,15 @@
   </div>
 </div></div>
 <div class="menu" id="menu" hidden></div>
-<script src="assignment-defaults.js?v=202610281834"></script>
-<script src="hub-due.js?v=202610281834"></script>
-<script src="hub-rotation.js?v=202610281834"></script>
-<script src="hub-docx.js?v=202610281834"></script>
-<script src="hub-shared.js?v=202610281834"></script>
-<script src="hub-store.js?v=202610281834"></script>
-<script src="hub-say.js?v=202610281834"></script>
-<script src="hub-sync.js?v=202610281834"></script>
+<script src="assignment-defaults.js?v=202610281849"></script>
+<script src="assignment-history.js?v=202610281849"></script>
+<script src="hub-due.js?v=202610281849"></script>
+<script src="hub-rotation.js?v=202610281849"></script>
+<script src="hub-docx.js?v=202610281849"></script>
+<script src="hub-shared.js?v=202610281849"></script>
+<script src="hub-store.js?v=202610281849"></script>
+<script src="hub-say.js?v=202610281849"></script>
+<script src="hub-sync.js?v=202610281849"></script>
 <script>
 /* The course pill goes into the save bar, left of Discard, on every screen
    size: floating in the corner it covered the brief (12 Oct 2026). A plain
@@ -414,7 +421,12 @@ const $ = id => document.getElementById(id);
 const SETTINGS_KEYS = ['dueAt', 'due', 'dueSets', 'resubDueAt', 'outAt', 'setBy', 'released', 'savedAt'];
 const clone = x => JSON.parse(JSON.stringify(x));
 const normC = a => { if (!a) return 'null'; const c = clone(a); (c.criteria || []).forEach((x, i) => { if (typeof x === 'string') c.criteria[i] = { text: x, sectionIndex: null }; }); return JSON.stringify(c); };
-const wording = a => { if (!a) return ''; const c = JSON.parse(normC(a)); SETTINGS_KEYS.forEach(k => delete c[k]); return JSON.stringify(c); };
+const wording = a => { if (!a) return ''; const c = JSON.parse(normC(a)); SETTINGS_KEYS.forEach(k => delete c[k]); delete c.source; return JSON.stringify(c); };
+/* CONNECT'S OR YOUR OWN (Ramy, 28 Oct 2026: "the Connect assignments ... should not be edited ... they can have their
+   own ... write or upload"). `source` on each assignment: 'connect' is Connect's wording, read only and always current
+   (hubWordingFilled); 'own' is the center's, written here or imported. A course from before the choice reads as
+   Connect's while its wording is untouched, and as its own once changed. */
+function srcOf(k){ const a = DATA[k]; if (!a) return ''; return a.source || (!isEdited(k) || (window.hubIsConnectsAsg && hubIsConnectsAsg(k, a)) ? 'connect' : 'own'); }
 function savedRecord(){ try { return JSON.parse(localStorage.getItem(STORE_KEY)) || null; } catch (e) { return null; } }
 function base(){ const s = savedRecord(); return normaliseAll(s || clone(DEFAULT_DATA || {})); }
 function isEdited(k){ return !!(DATA[k] && DEFAULT_DATA && DEFAULT_DATA[k] && wording(DATA[k]) !== wording(DEFAULT_DATA[k])) || !!(DATA[k] && DEFAULT_DATA && !DEFAULT_DATA[k]); }
@@ -460,6 +472,7 @@ function changeUnits(k){
   if ((a.wordMin || 0) !== (b.wordMin || 0) || (a.wordMax || 0) !== (b.wordMax || 0)) u.push('the word range');
   if ((a.format || '') !== (b.format || '')) u.push('the format');
   if ((a.resubDays || 0) !== (b.resubDays || 0)) u.push('the resubmission days');
+  if ((a.source || '') !== (b.source || '')) u.push('the choice of Connect’s or your own');
   if (!u.length) u.push('a setting');
   return [...new Set(u)];
 }
@@ -560,6 +573,7 @@ function savedLine(){
 }
 function stateHTML(){
   const a = DATA[CURRENT]; if (!a) return '<span>Not set up on this course yet</span>';
+  if (CURRENT !== 'a5' && srcOf(CURRENT) === 'connect') return `<span class="whose connect">Connect’s assignment</span><span>${isEdited(CURRENT) ? 'An earlier version' : 'The current version'}</span><span>${esc(savedLine())}</span>`;
   const m = a.sections.length, mine = a.sections.filter((s, i) => sectionChanged(CURRENT, i)).length;
   const edited = isEdited(CURRENT);
   const parts = [
@@ -922,9 +936,10 @@ function previewHTML(a){
     return `<div class="psec"><h3>${esc(s.label)}</h3>${body}${window.hubTrapSpan ? hubTrapSpan(a.trap) : ''}</div>`;
   }).join('');
   const crit = (a.criteria || []).length ? `<div class="psec"><h3>How it is marked</h3><ol class="pcrit">${a.criteria.map(c => `<li>${esc(c.text)}</li>`).join('')}</ol></div>` : '';
-  return `<div class="preview">
+  const cx = srcOf(CURRENT) === 'connect';
+  return `<div class="preview${cx ? ' cx-host' : ''}">${cx ? hubConnectWatermark() : ''}
     <p class="pe">Written assignment · ${CODES[CURRENT]}</p>
-    <h2>${esc(a.title)}</h2>
+    <h2>${esc(a.title)}</h2>${cx ? '<span class="cx-line">Connect’s assignment</span>' : ''}
     <p class="pm">${meta.map(esc).join(' · ') || ' '}</p>
     ${secs}${crit}
   </div>`;
@@ -950,16 +965,48 @@ function render(){
     refreshMarks(); return;
   }
   if (MODE === 'preview') { $('body').innerHTML = (PRINTING ? '' : '<div class="wholebar"><a class="lnk" href="9_assignment_submission.html?a=' + CURRENT + '&view=trainee" style="margin-right:14px">Trainee view</a><button type="button" class="btn ghost" onclick="window.print()">Print the whole assignment</button></div>') + previewHTML(a); refreshMarks(); return; }
-  $('body').innerHTML = `<div class="ewrap">${railHTML(a)}
+  if (CURRENT !== 'a5' && srcOf(CURRENT) === 'connect' && DEFAULT_DATA && DEFAULT_DATA[CURRENT]) {
+    $('body').innerHTML = choiceHTML() + `<div class="cxread"><p class="cxnote">Connect’s ${esc(CODES[CURRENT])} is ready as it is and is not edited here. The dates and when it opens are set on Course admin, under Assignments. For different wording, choose Your own assignment.${isEdited(CURRENT) ? ` <b>This course has an earlier version of it.</b> <button type="button" class="lnk" onclick="updateConnects()">Update to the current version</button>` : ''}</p>${previewHTML(a)}</div>`;
+    refreshMarks(); return;
+  }
+  $('body').innerHTML = (CURRENT !== 'a5' ? choiceHTML() : '') + `<div class="ewrap">${railHTML(a)}
     <div class="doc" id="doc">${importNoteHTML()}${a.sections.map(sectionHTML).join('')}${addCardHTML()}${critCardHTML(a)}${guideCardHTML(a)}</div></div>`;
   refreshMarks();
+}
+function choiceHTML(){
+  const own = srcOf(CURRENT) === 'own';
+  return `<div class="cxchoice" role="radiogroup" aria-label="Whose assignment">
+    <button type="button" role="radio" aria-checked="${!own}" class="cxc${own ? '' : ' on'}" onclick="chooseSource('connect')"><b>Connect’s assignment</b><span>Ready as it is, checked against Cambridge’s syllabus, and kept up to date. Read only: you set the dates.</span></button>
+    <button type="button" role="radio" aria-checked="${own}" class="cxc${own ? ' on' : ''}" onclick="chooseSource('own')"><b>Your own assignment</b><span>Your center’s own, written here or imported from a file. Your trainees get it the same way.</span>${own ? `<span class="cximp" onclick="event.stopPropagation(); $('ownImport').click();">Import from a file</span><input type="file" id="ownImport" accept=".docx,.txt,.md" style="display:none;" onchange="handleImport(this.files[0]); this.value=''">` : ''}</button>
+  </div>`;
+}
+async function updateConnects(){
+  const marked = countMarked();
+  if (marked) { await confirmModal('Not while marking exists. ' + marked + ' submission' + (marked === 1 ? ' has' : 's have') + ' marks against this version’s criteria.', 'OK'); return; }
+  const keep = {}; Object.keys(DATA[CURRENT] || {}).forEach(f => { if (['title', 'wordMin', 'wordMax', 'format', 'criteria', 'sections', 'source'].indexOf(f) < 0) keep[f] = clone(DATA[CURRENT][f]); });
+  DATA[CURRENT] = Object.assign(clone(DEFAULT_DATA[CURRENT]), keep, { source: 'connect' });
+  normaliseAll(DATA); TOUCHED = true; render();
+}
+async function chooseSource(which){
+  if (srcOf(CURRENT) === which) return;
+  const marked = countMarked();
+  if (marked) { await confirmModal('Not while marking exists. ' + marked + ' submission' + (marked === 1 ? ' has' : 's have') + ' marks against these criteria, and changing the assignment would leave them pointing at different ones.', 'OK'); return; }
+  const keep = {}; Object.keys(DATA[CURRENT] || {}).forEach(f => { if (['title', 'wordMin', 'wordMax', 'format', 'criteria', 'sections', 'source'].indexOf(f) < 0) keep[f] = clone(DATA[CURRENT][f]); });
+  if (which === 'connect') {
+    if (isEdited(CURRENT) && !(await confirmModal('Use Connect’s ' + CODES[CURRENT] + ' instead of your own? Your wording is replaced when you save.', 'Use Connect’s'))) return;
+    DATA[CURRENT] = Object.assign(clone(DEFAULT_DATA[CURRENT]), keep, { source: 'connect' });
+  } else {
+    startBlank();
+    DATA[CURRENT] = Object.assign(DATA[CURRENT], keep, { source: 'own' });
+  }
+  normaliseAll(DATA); TOUCHED = true; render();
 }
 
 /* What changes as you type, without a re-render: the CHANGED chips and gold
    edges, the brief's dots and labels, the header, the pills and the save bar. */
 function refreshMarks(){
   const a = DATA[CURRENT];
-  document.querySelectorAll('#switcher [data-a]').forEach(b => { const d = b.querySelector('.edot'); if (d) d.hidden = !isEdited(b.dataset.a); });
+  document.querySelectorAll('#switcher [data-a]').forEach(b => { const d = b.querySelector('.edot'); if (d) d.hidden = srcOf(b.dataset.a) !== 'own'; });
   const sl = $('stateline'); if (sl) sl.innerHTML = stateHTML();
   if (a && MODE === 'edit') {
     document.querySelectorAll('#doc .sec[data-i]').forEach(sec => {

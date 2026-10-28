@@ -776,6 +776,31 @@ window.hubDueFor = function(a, token, group){
    timetable never reached the trainee, and one set in the wording editor never
    showed on the timetable. Every writer now sets both; here, a course that
    holds only one has the other filled from it, so every reader agrees. */
+var HUB_ASG_TEXT = ['title', 'wordMin', 'wordMax', 'format', 'criteria', 'sections'];
+/* Is this assignment Connect's? Chosen as Connect's, or (a course from before the choice) still word for word as shipped. */
+window.hubIsConnectsAsg = function(k, a){
+  var D = window.CONNECT_HUB_DEFAULT_WORDING, d = D && D[k];
+  if (!a || !d) return false;
+  if (a.source) return a.source === 'connect';
+  var t = function(x){ return JSON.stringify({ s: x.sections || [], c: (x.criteria || []).map(function(c){ return typeof c === 'string' ? c : c && c.text; }) }); };
+  var ta = t(a); if (ta === t(d)) return true;
+  /* an older copy of Connect's own wording is still Connect's (assignment-history.js, tools/wording-history.mjs) */
+  var h = 5381; for (var i = 0; i < ta.length; i++) h = ((h * 33) ^ ta.charCodeAt(i)) >>> 0;
+  var fp = h.toString(36) + '.' + ta.length.toString(36), F = window.CONNECT_HUB_WORDING_FP;
+  return !!(F && F[k] && F[k].indexOf(fp) >= 0);
+};
+/* The Connect mark, faint, for Connect's assignments: the two arcs in their own colors (the company colorway, gold and
+   ink), shown softly and never tinted. */
+window.hubConnectWatermark = function(){
+  return '<svg class="cx-wm" viewBox="8 28 104 64" aria-hidden="true" focusable="false"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold)" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--ink)" stroke-width="13" stroke-linecap="round" fill="none"/></svg>';
+};
+(function(){
+  var st = document.createElement('style');
+  st.textContent = '.cx-host{position:relative;overflow:hidden;} .cx-wm{position:absolute;right:-18px;bottom:-26px;width:190px;height:117px;opacity:.07;pointer-events:none;}'
+    + '.cx-line{display:inline-block;margin:6px 0 0;font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--grey);}'
+    + '@media print{.cx-wm{opacity:.09;}}';
+  (document.head || document.documentElement).appendChild(st);
+})();
 window.hubWordingFilled = function(w){
   var D = window.CONNECT_HUB_DEFAULT_WORDING;
   if (!w || typeof w !== 'object') return w;
@@ -790,6 +815,9 @@ window.hubWordingFilled = function(w){
   Object.keys(w).forEach(function(k){
     var a = w[k], d = D[k];
     if (!a || typeof a !== 'object' || !d) return;
+    /* CONNECT'S ASSIGNMENT IS NOT EDITED (Ramy, 28 Oct 2026: "they should not be edited ... they can have their own"):
+       a course that chose it carries only its dates; the wording is always Connect's current one. */
+    if (a.source === 'connect') { HUB_ASG_TEXT.forEach(function(f){ if (d[f] !== undefined) a[f] = JSON.parse(JSON.stringify(d[f])); else delete a[f]; }); return; }
     if (Array.isArray(a.criteria) && Array.isArray(a.sections)) return;
     var full = JSON.parse(JSON.stringify(d));
     Object.keys(a).forEach(function(f){ if (a[f] != null) full[f] = a[f]; });
