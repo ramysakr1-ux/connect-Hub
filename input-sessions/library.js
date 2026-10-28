@@ -28,6 +28,8 @@ window.InputLib = (function(){
     [/speaking/, 'teaching-speaking'],
     [/\bexam/, 'teaching-exam-classes'],
     [/lesson plan/, 'writing-the-lesson-plan'],
+    /* the language analysis sheets (28 Oct 2026): Connect's "Language analysis 1", "Analysing language" */
+    [/language analysis|analys[iz]ing language|analy[sz]e (the )?language|la sheets?/, 'language-analysis'],
     [/\bwriting\b(?! the lesson)/, 'teaching-writing'],
     [/alternative|third conditional/, 'alternative-teaching-techniques'],
     [/receptive|reading|listening/, 'receptive-skills'],

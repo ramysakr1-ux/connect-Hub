@@ -20,7 +20,7 @@
  * VERSION is stamped by bump-assets.py with the same stamp as the ?v= links,
  * so each push retires the previous cache on activate.
  */
-const VERSION = 'lite-202610282039';
+const VERSION = 'lite-202610282136';
 const SHELL = [
   './', 'index.html', 'invite.html', 'hub-qr.js', 'vendor/qrcode.js', 'hub-pin.js',
   '1_trainee_plan_and_analysis.html', '2_trainee_self_evaluation.html', '3_tutor_feedback.html',
@@ -52,7 +52,7 @@ const SHELL = [
      with the shell: it is kept once played, like the others (see the media route below). */
   'input-sessions/', 'input-sessions/library.js', 'input-sessions/session.css',
   'input-sessions/_art/drama-frog.svg', 'input-sessions/_art/drama-monster.svg', 'input-sessions/_art/story-map.svg',
-  'input-sessions/course-introduction/', 'input-sessions/lesson-frameworks-document/', 'input-sessions/alternative-teaching-techniques/', 'input-sessions/classroom-management/', 'input-sessions/connected-speech/', 'input-sessions/drama-in-the-elt-classroom/', 'input-sessions/eliciting-and-ccqs/', 'input-sessions/error-correction/', 'input-sessions/functional-language/', 'input-sessions/guided-discovery-vs-ppp/', 'input-sessions/guided-to-less-guided-practice/', 'input-sessions/lesson-framework/', 'input-sessions/life-after-celta/', 'input-sessions/phonology-sounds/', 'input-sessions/ppp/', 'input-sessions/receptive-skills/', 'input-sessions/teaching-exam-classes/', 'input-sessions/teaching-literacy/', 'input-sessions/teaching-productive-skills/', 'input-sessions/teaching-speaking/', 'input-sessions/teaching-writing/', 'input-sessions/text-based-teaching/', 'input-sessions/word-and-sentence-stress/', 'input-sessions/writing-the-lesson-plan/',
+  'input-sessions/course-introduction/', 'input-sessions/language-analysis/', 'input-sessions/lesson-frameworks-document/', 'input-sessions/alternative-teaching-techniques/', 'input-sessions/classroom-management/', 'input-sessions/connected-speech/', 'input-sessions/drama-in-the-elt-classroom/', 'input-sessions/eliciting-and-ccqs/', 'input-sessions/error-correction/', 'input-sessions/functional-language/', 'input-sessions/guided-discovery-vs-ppp/', 'input-sessions/guided-to-less-guided-practice/', 'input-sessions/lesson-framework/', 'input-sessions/life-after-celta/', 'input-sessions/phonology-sounds/', 'input-sessions/ppp/', 'input-sessions/receptive-skills/', 'input-sessions/teaching-exam-classes/', 'input-sessions/teaching-literacy/', 'input-sessions/teaching-productive-skills/', 'input-sessions/teaching-speaking/', 'input-sessions/teaching-writing/', 'input-sessions/text-based-teaching/', 'input-sessions/word-and-sentence-stress/', 'input-sessions/writing-the-lesson-plan/',
   'offer.html',
   'assignment-defaults.js', 'assignment-history.js', 'agreement-defaults.js', 'hub-tokens.css', 'hub-house.css', 'hub-record.css',
   /* 8 Oct 2026: the date picker, vendored so the shell has it offline. */

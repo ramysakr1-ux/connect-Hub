@@ -568,3 +568,26 @@ NOTES['course-introduction'] = '''
 <h4>If a course has no timetable yet</h4>
 <p>Round 1 then says so and gives the general answer for each question. Everything else works without a course, so the session can be run in the library too.</p>
 '''
+
+NOTES['language-analysis'] = '''
+<h4>Before</h4>
+<p>Each trainee has their next TP's language analysis sheet open beside the page, blank or half done, and the course's two sheets (grammar and functional language; vocabulary) to point at. Every task on the page is about those sheets. Nothing to print; the checklist at the end prints from the page.</p>
+<h4>Running it</h4>
+''' + T([
+    (5, 'Two sheets', 'Six aims: which sheet. The one they get wrong is the reading lesson with four items pre-taught: it still needs the vocabulary grid.'),
+    (8, 'Target language', 'The three rows, then the model sentence task. Show the filled-in example and ask the test question: could a colleague run your first two minutes from this?'),
+    (10, 'Meaning', 'Concept first, then the six CCQs in pairs. Stop on the one that uses the target language to check the target language.'),
+    (8, 'Form', 'Build the form line, then the three-line box. Ask what is missing from a form box with only the affirmative.'),
+    (7, 'Pronunciation', 'Name the feature for each note. The giveaway: a box that would fit any other lesson.'),
+    (8, 'Problems', 'Lesson plan page or language analysis sheet, then the three problems and solutions. The pattern: a solution names a technique and a moment.'),
+    (10, 'Vocabulary', 'The exhausted row together, then they do commute alone and compare.'),
+    (6, 'Before you submit', 'Spot the five problems on the handed-in sheet, then the reference books and the checklist.'),
+]) + '''
+<h4>The key</h4>
+<p>Under each task (Show answer). The five problems on the handed-in sheet: the language point does not say which use or which forms, the model sentence is a rule, the context is a topic with no eliciting question, the concept box holds the form, and the CCQs check nothing and have no answers. The form, the pronunciation and the reference are fine.</p>
+<h4>Watch for</h4>
+<ul>
+<li>"I will drill it", "I will explain", "I will correct" as solutions. None names a technique or a moment.</li>
+<li>CCQs written without their answers.</li>
+<li>A pronunciation box that describes drilling rather than a feature of this language.</li>
+</ul>'''
