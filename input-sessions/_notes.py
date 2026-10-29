@@ -594,3 +594,53 @@ NOTES['language-analysis'] = '''
 <li>Task and technology problems put in the problems boxes; they belong on the plan.</li>
 <li>A vocabulary row with no stress or transcription in the first column.</li>
 </ul>'''
+
+NOTES['teaching-vocabulary'] = '''
+<h4>Before</h4>
+<p>Nothing to print; the handout prints from the page, with the twenty words shown. Trainees need their next TP's coursebook page, or its words, for the last part. This session does not teach eliciting techniques or building CCQs: they had those in Eliciting and CCQs. When a trainee drifts into "how would you elicit it", send them back there and keep to the choice.</p>
+<h4>Running it</h4>
+''' + T([
+    (8, 'Twenty words', 'Run the two minutes from the page on the screen; nobody writes until the list closes. Pairs compare, then the seven reasons. Draw out the four that helped: picture it, group it, feel something, already know it.'),
+    (10, 'Knowing a word', 'The gap fill in pairs, then the six students. Stop on Amira and explain: grammar of a word is vocabulary work too. End on recognizing against using.'),
+    (10, 'What makes it hard', 'Nine items, the main problem each. Then Is it vocabulary: the two Maybes are the discussion. Point them at the vocabulary table on their language analysis.'),
+    (10, 'Which words', 'They read the text and the three tasks before deciding. Expect them to want to teach everything. Ask of each word: which task fails without it?'),
+    (10, 'Showing meaning', 'The ten items fast, against the clock if the room likes it. Then translation true or false. Read the five reckon sentences aloud with a pause after each, then they tell a partner.'),
+    (8, 'The board', 'Spot the five, alone, then compare. Ask what a student copies from advice (v). Then the two boxes on saying and writing.'),
+    (10, 'Words at work', 'The eight activities, then the odd one out in pairs (accept any reason) and the ranking. Ask which took more thinking and why.'),
+    (8, 'Bringing them back', 'Eight statements, then they write a review order for the clothes and compare it with the key. Word cards and notebooks: show your own notebook or a set of cards if you have one.'),
+    (12, 'Your turn', 'Their own words, six rows. Pair trainees teaching different levels. Check the problem column names a feature, not "students may find it difficult".'),
+]) + '''
+<h4>The key</h4>
+<p>Under each task (Show answers, Reveal answer). The five problems on the board: no stress on embarrassed, stress on the wrong syllable of photograph, advice marked as a verb, a wrong transcription of interesting, and a furniture. make a mistake and look after sb are fine. Which words: teach hardly, landlord and cozy; gloss cinnamon and dough; leave giving up, a line around the block and employs.</p>
+<h4>Watch for</h4>
+<ul>
+<li>"Pre-teach all the hard words." Only what the tasks depend on.</li>
+<li>A list of ways to show a meaning instead of one choice.</li>
+<li>Words that never come back after the presentation.</li>
+<li>Boards with no stress, no part of speech, and chunks broken into single words.</li>
+</ul>'''
+
+NOTES['teaching-one-to-one'] = '''
+<h4>Before</h4>
+<p>Nothing to print; the handout prints from the page. Pair trainees for most of it: one plays the student when a task asks for it. If anyone in the room has taught one-to-one, use them in Better or worse and When it goes wrong. This session does not reteach error correction or eliciting; keep to what changes when there is one student.</p>
+<h4>Running it</h4>
+''' + T([
+    (8, 'Will it transfer?', 'Nine stages from their own TP. Draw out the pattern: anything that needs a second student or a teacher standing back has to change.'),
+    (8, 'Better or worse', 'Ten points, fast. Stop on the teacher listening as an outsider: it leads into roles and correction.'),
+    (12, 'Tuning in', 'Pairs write their questions under the five headings before they reveal. Then need, lack or want. Ask what they would do about Paulo wanting to talk while he lacks accuracy.'),
+    (8, 'The first lesson', 'Seven stages in order. The two they get wrong: telling him the same things about yourself (it equalizes), and the notes coming at the end, not during.'),
+    (7, 'Your roles', 'Seven moments. Then the note on playing a part: ask a pair to try thirty seconds of the supplier who won\'t lower the price.'),
+    (12, 'Correction', 'Read the ski story aloud. Then the seven cases and the three reformulations, written before they reveal.'),
+    (10, 'The student as material', 'The four steps, then three recycling questions on Paulo\'s words, with no preparation, against the clock.'),
+    (8, 'When it goes wrong', 'Six problems. Ask for their own worst lesson with one person, if they have one.'),
+    (12, 'Your turn', 'Each pair chooses a different student. Two minutes each to explain the plan to another pair.'),
+]) + '''
+<h4>The key</h4>
+<p>Under each task (Show answers, Reveal answer). The first lesson: welcome, his profile, the same about yourself, agree how you will work, a first real task while you take notes, ten minutes on the notes, something easy to end on and something to take away.</p>
+<h4>Watch for</h4>
+<ul>
+<li>Plans that are a group lesson with the pair work deleted.</li>
+<li>Correcting everything because there is time to.</li>
+<li>A first lesson that is all questionnaire and no English used for something real.</li>
+<li>Forcing what the student "needs" on a student who does not want it.</li>
+</ul>'''
