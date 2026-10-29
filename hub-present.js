@@ -91,6 +91,36 @@
     }
     return out;
   }
+  function moments(){
+    var c = cs(), st = dateOf(c.start), tr = trainees(); if (!st || tr.length < 3) return [];
+    var wk = new Date(st); wk.setDate(wk.getDate() - 7);
+    var fri = new Date(st); do { fri.setDate(fri.getDate() - 1); } while (fri.getDay() !== 5);
+    var first = function(x){ return String(x.name || '').split(' ')[0]; };
+    return [
+      { m: 'week', t: tr[0].t, date: iso(wk), label: 'A week before · ' + first(tr[0]) },
+      { m: 'friday', t: tr[1].t, date: iso(fri), label: 'The Friday before · ' + first(tr[1]) },
+      { m: 'day1', t: tr[2].t, date: c.start, label: 'Day one · ' + first(tr[2]) }
+    ];
+  }
+  /* the day moves for the whole demo course (it is the presenter's own copy), then the trainee opens; the store is told with
+     the tutor's key, kept from the presenter's first tutor visit, since a trainee's link cannot change the course */
+  async function goMoment(v){
+    var parts = String(v).split(':'), m = parts[1], t = parts.slice(2).join(':');
+    var mm = moments().filter(function(x){ return x.m === m; })[0]; if (!mm) return;
+    ls('hub:present:moment', JSON.stringify({ m: m, t: t })); ls('hub:present:who', t);
+    var c = cs();
+    if (c.presentToday !== mm.date) {
+      var k = localStorage.getItem('hub:present:k');
+      if (!k) { say('Open the tutor once first, so the day can be changed.'); return; }
+      var next = Object.assign({}, c, { presentToday: mm.date });
+      try {
+        var res = await fetch(S.url, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ key: k, op: 'putCourse', kind: 'settings', data: next }) }).then(function(r){ return r.json(); });
+        if (!res || !res.ok) throw new Error((res && res.error) || 'not saved');
+        ls('connect_course_settings', JSON.stringify(next));
+      } catch (e) { say('The day could not be changed: ' + (e.message || e)); return; }
+    }
+    location.href = 'index.html?t=' + encodeURIComponent(t);
+  }
   async function setDay(date){
     var next = Object.assign({}, cs(), { presentToday: date });
     try { await S.putCourse('settings', next); ls('connect_course_settings', JSON.stringify(next)); location.reload(); }
@@ -446,8 +476,15 @@
       ? '<select class="hp-day" id="hpDay" aria-label="The course’s day">' + ds.map(function(d){ return '<option value="' + d.date + '"' + (d.date === today ? ' selected' : '') + '>' + esc(d.label) + '</option>'; }).join('')
         + (ds.some(function(d){ return d.date === today; }) ? '' : '<option value="' + esc(today) + '" selected>' + esc(short(today)) + '</option>') + '</select>'
       : '<span class="hp-tag" style="text-transform:none; letter-spacing:0; font-size:0.78rem;">' + esc((ds.filter(function(d){ return d.date === today; })[0] || { label: short(today) }).label) + '</span>';
+    /* THREE MOMENTS BEFORE THE COURSE (Ramy, 30 Oct 2026: "a week before the course starts, the Friday before, and the
+       first day ... so they get to see all of them"): the first three trainees, each opened on that day. A week before,
+       the agreement comes first (his rule, 26 Oct); the Friday before and day one have signed. */
+    var mo = moments(), cur = rd('hub:present:moment') || {};
     var trSel = tr.length > 1
-      ? '<select id="hpTrainee" aria-label="Which trainee">' + tr.map(function(x){ return '<option value="' + esc(x.t) + '"' + ((me ? x.t === me : x.t === who) ? ' selected' : '') + '>' + esc(x.name.split(' ')[0]) + '</option>'; }).join('') + '</select>'
+      ? '<select id="hpTrainee" aria-label="Which trainee">'
+        + (mo.length ? '<optgroup label="Before the course">' + mo.map(function(m){ return '<option value="m:' + m.m + ':' + esc(m.t) + '"' + (me === m.t && cur.m === m.m ? ' selected' : '') + '>' + esc(m.label) + '</option>'; }).join('') + '</optgroup><optgroup label="Trainees">' : '')
+        + tr.map(function(x){ return '<option value="' + esc(x.t) + '"' + ((me ? x.t === me && !(cur.t === me) : x.t === who) ? ' selected' : '') + '>' + esc(x.name.split(' ')[0]) + '</option>'; }).join('')
+        + (mo.length ? '</optgroup>' : '') + '</select>'
       : '';
     var f = FILL[PAGE], canFill = f && (f.who === 'both' || f.who === ROLE);
     bar.innerHTML = '<span class="hp-tag">Connect demo</span>'
@@ -459,10 +496,11 @@
       + (canFill ? '<button type="button" class="hp-fill" id="hpFill">' + esc(f.label) + '</button>' : '');
     bar.querySelectorAll('[data-go]').forEach(function(b){ b.onclick = function(){
       var k = b.dataset.go;
+      if (k === 'trainee' && $('hpTrainee') && /^m:/.test($('hpTrainee').value)) { goMoment($('hpTrainee').value); return; }
       if (k === 'trainee') { var sel = $('hpTrainee'); var t = (sel && sel.value) || (tr[0] && tr[0].t); if (!t) { say('Add the trainees in Course admin first.'); return; } go.trainee(t); return; }
       go[k]();
     }; });
-    var ts = $('hpTrainee'); if (ts) ts.onchange = function(){ if (ROLE === 'trainee') go.trainee(ts.value); else ls('hub:present:who', ts.value); };
+    var ts = $('hpTrainee'); if (ts) ts.onchange = function(){ if (/^m:/.test(ts.value)) { goMoment(ts.value); return; } ls('hub:present:moment', null); if (ROLE === 'trainee') go.trainee(ts.value); else ls('hub:present:who', ts.value); };
     var dsel = $('hpDay'); if (dsel) dsel.onchange = function(){ setDay(dsel.value); };
     var fb = $('hpFill'); if (fb) fb.onclick = async function(){
       fb.disabled = true; var was = fb.textContent; fb.textContent = 'Filling in…';
