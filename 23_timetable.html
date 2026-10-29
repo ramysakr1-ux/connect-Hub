@@ -725,6 +725,7 @@
   .ttpop .phead{display:grid; grid-template-columns:112px 112px minmax(0,1fr) 26px; gap:6px; font-size:0.6rem; letter-spacing:.1em; text-transform:uppercase; font-weight:700; color:var(--grey); margin:0 0 4px;}
   .ttpop .more{display:flex; flex-direction:column; gap:6px; align-items:stretch;}
   .ttpop .more .btn{text-align:left;}
+  .ttpop .pch{margin:16px 0 8px; font-size:0.72rem; letter-spacing:.1em; text-transform:uppercase; color:var(--grey);}
   .ttpop .info{margin:10px 0; padding:10px 12px; border-radius:8px; background:var(--field); font-size:0.8rem; color:var(--ink);}
   .slegend{display:flex; flex-wrap:wrap; gap:8px 16px; margin:14px 0 0; font-size:0.78rem; color:var(--ink);}
   .slegend i.due{display:inline-block; width:14px; height:4px; margin-right:6px; border-radius:2px; background:var(--brick); vertical-align:2px;}
@@ -1856,7 +1857,7 @@ function render(){
      The old row of buttons stays on the page, out of sight, because Course setup opens its panels through it. */
   if (WEEK == null || WEEK >= weeks.length || WEEK < 0) { const t = weeks.findIndex(w => w.some(d => d.date >= TODAY)); WEEK = t === -1 ? weeks.length - 1 : t; }
   const oldBar = IS_TUTOR ? `<div id="ttOldBar">${pub ? '<button type="button" id="unpublish">Take it back</button>' : ''}<button type="button" id="buildOpen">Build it again</button><button type="button" id="setOpen">Timetable settings</button><button type="button" id="daysOpen">The course’s days</button><button type="button" id="asgOpen">Assignment dates</button><button type="button" id="importOpen">Import from a sheet</button></div>` : '';
-  const bar = IS_TUTOR ? oldBar + (EDIT ? `<p class="status" style="margin:0 0 10px">${esc(note)}</p>` + statusHTML() + checksHTML() : '')
+  const bar = IS_TUTOR ? oldBar + (EDIT ? `<p class="status" style="margin:0 0 10px">${esc(note)}</p>` + statusHTML() : '')
       + (PREVIEW ? '' : asgDatesHTML() + moveHTML() + buildPanelHTML() + settingsPanelHTML() + daysPanelHTML() + builtHTML() + importHTML()) : '';
   /* Where teaching practice starts at a different time from the teaching day
      before it, the week says so above its days, in words: "From Monday 26
@@ -1889,7 +1890,7 @@ function render(){
   const used2 = [...new Set((TT.days || []).flatMap(d => (d.sessions || []).filter(x => x.by !== undefined && x.by !== null && x.by !== '' && TUTORS[+x.by]).map(x => String(+x.by))))];
   if (TFILTER !== '' && used2.indexOf(TFILTER) === -1) TFILTER = '';
   const filt = used2.length > 1 ? `<select id="tFilter" aria-label="Show one tutor’s sessions"><option value="">All tutors</option>${used2.map(i => `<option value="${i}"${TFILTER === i ? ' selected' : ''}>${esc(initialsOf(TUTORS[+i]))} · ${esc(TUTORS[+i])}</option>`).join('')}</select>` : '';
-  const pubBtn = !IS_TUTOR || !EDIT ? '' : !pub ? `<button type="button" class="btn" id="publish">Set it for the course</button>`
+  const pubBtn = !IS_TUTOR || !EDIT ? '' : !pub ? `<button type="button" class="btn" id="setBtn">Set it for the course</button>`
     : `<button type="button" class="btn" id="pubBtn"${CHANGES.length ? '' : ' disabled'}>${CHANGES.length ? 'Publish changes' : 'Published'}</button>`;
   const tool = `<div class="stool"><div><h2>Week ${two(WEEK + 1)}</h2><p class="wkd">${esc(DOW[wa.getDay()] + ' ' + dm(wa))} – ${esc(DOW[wb.getDay()] + ' ' + dm(wb))}</p>${changeNote(w)}</div>
     <div class="sacts">${filt}<button type="button" class="btn quiet" id="tOrient" title="Switch the board round">${ACROSS() ? 'Days down' : 'Days across'}</button>
@@ -2919,13 +2920,9 @@ function openDetails(date, id){
    any other; closing it with nothing typed keeps an empty tile the tutor can name later or remove. */
 function newSession(date, s, e, t){
   const day = dayOfDate(date); if (!day || day.closed) return;
-  remember();
-  day.sessions = day.sessions || [];
-  const x = { id: newId(), s, e, k: t ? 'input' : 'event', t: t || '' };
-  if (t) x.room = 'Input';
-  day.sessions.push(x); day.sessions.sort(byStart);
-  save('Added', { text: '“' + (t || 'A new session') + '” added on ' + dayName(date) + ', ' + hubClockRange(s, e) });
-  render(); openTile(date, x.id);
+  const x = { id: newId(), s, e, k: t ? 'input' : 'event' };
+  if (t) { x.t = t; x.room = 'Input'; }
+  openTile(date, x.id, x);
 }
 function freeAfter(day){
   const end = (day.sessions || []).length ? Math.max(...day.sessions.map(x => toMin(x.e) || 0)) : 10 * 60;
@@ -3020,6 +3017,20 @@ function openSetup(){
     note = 'Laid again: ' + made.days.length + ' days, ' + made.teachDays + ' with teaching practice.'; render();
   });
 }
+/* BEFORE THE COURSE SEES IT: the checks (sessions, deadlines, Cambridge's timings) used to sit above the board for every
+   tutor all the time (Ramy, 30 Oct 2026: "why do we need that top part ... who sees this?"); they show here, when a tutor
+   sets the timetable or publishes a change, with what changed */
+function openPublish(first){
+  closePop();
+  const el = pop('ttpop'), c = first ? null : draftCounts();
+  el.innerHTML = `${c ? `<p class="dt1"><b>${c.add}</b> added · <b>${c.ed}</b> changed · <b>${c.rm}</b> removed</p>` : '<p class="dt1">The course sees the timetable from now on, and every change after this waits for Publish changes.</p>'}
+    <h4 class="pch">Checks</h4>${checksHTML() || '<p class="muted">Nothing to check.</p>'}
+    <p class="muted">${first ? '' : 'Trainees get a short note of what moved.'}</p>
+    <div class="acts three"><button type="button" class="btn quiet" id="pbNo">Not yet</button><button type="button" class="btn" id="pbGo">${first ? 'Set it for the course' : 'Publish changes'}</button></div>`;
+  el.hidden = false; asDrawer(el, first ? 'Set it for the course' : 'Publish changes');
+  $('pbNo').addEventListener('click', () => closePop());
+  $('pbGo').addEventListener('click', () => { closePop(); if (first) { TT.published = true; CHANGES = []; LIVE = pickLive(TT); save('Set \u2014 the course can see it'); render(); } else publish(); });
+}
 function wireStudio(weeks){
   document.querySelectorAll('[data-week]').forEach(b => b.addEventListener('click', () => { WEEK = +b.dataset.week; closePop(); render(); }));
   if ($('tFilter')) $('tFilter').addEventListener('change', e => { TFILTER = e.target.value; render(); });
@@ -3030,11 +3041,8 @@ function wireStudio(weeks){
     const w = weeks[WEEK] || [], day = w.find(d => !d.closed && d.date >= TODAY) || w.find(d => !d.closed); if (!day) return;
     const s = freeAfter(day); newSession(day.date, toHM(s), toHM(Math.min(23 * 60, s + 45)), '');
   });
-  if ($('pubBtn')) $('pubBtn').addEventListener('click', async () => {
-    const c = draftCounts();
-    if (!(await ask('Publish these changes to the course? ' + c.add + ' added · ' + c.ed + ' changed · ' + c.rm + ' removed. Trainees get a short note of what moved.', 'Publish'))) return;
-    publish();
-  });
+  if ($('pubBtn')) $('pubBtn').addEventListener('click', () => openPublish(false));
+  if ($('setBtn')) $('setBtn').addEventListener('click', () => openPublish(true));
   if ($('libQ')) $('libQ').addEventListener('input', e => { LIB_Q = e.target.value; $('libList').innerHTML = libListHTML(); });
 }
 /* the side panel's clicks: a tile read (a trainee, or a tutor in the trainee view), an empty place or a library session
@@ -3182,7 +3190,7 @@ function wireBoard(){
     if (to !== was.day) { was.day.sessions = was.day.sessions.filter(s => s !== x); to.sessions = (to.sessions || []).concat([x]); to.sessions.sort(byStart); }
     else settle(to, x);
     save('Moved', { text: '“' + tileName(x, to) + '” ' + (to !== was.day ? 'moved from ' + dayName(was.day.date) + ' to ' + dayName(to.date) + ', ' : 'on ' + dayName(to.date) + ' moved to ') + hubClockRange(x.s, x.e), effects: t.r.effects || [] });
-    render();
+    render(); openTile(to.date, x.id);   /* the design: a moved session opens in its form to check */
   });
   document.addEventListener('click', e => {
     if (!EDIT) return;
@@ -3192,11 +3200,7 @@ function wireBoard(){
     const a = e.target.closest('[data-add]');
     if (a) {
       const day = dayOfDate(a.dataset.add); if (!day) return;
-      remember();
-      day.sessions = day.sessions || [];
-      const end = day.sessions.length ? Math.max(...day.sessions.map(x => toMin(x.e) || 0)) : 11 * 60;
-      const x = { id: newId(), s: toHM(end), e: toHM(Math.min(23 * 60, end + 30)), k: 'event', t: '' };
-      day.sessions.push(x); save('Added', { text: 'A tile was added on ' + dayName(day.date) + ', ' + hubClockRange(x.s, x.e) }); render(); openTile(day.date, x.id); return;
+      const end = freeAfter(day); newSession(day.date, toHM(end), toHM(Math.min(23 * 60, end + 45)), ''); return;
     }
     if (e.target.id === 'ttUndo') { undo(); return; }
     if (!e.target.closest('.ttpop, .ttmenu, .tile')) closePop();
@@ -3343,82 +3347,93 @@ function placeNear(el, anchor){
    lock for a tile that must not be dragged (an orientation, a course close).
    A TP tile names the practice and which set teaches -- that is the day's, so
    it changes every lesson of the day at once. */
-function openTile(date, id){
+function openTile(date, id, fresh){
   closePop();
-  const day = dayOfDate(date); if (!day) return;
-  const x = (day.sessions || []).find(s => s.id === id); if (!x) return;
-  remember();
-  OPEN_TILE = { date, id, before: JSON.stringify({ x, tp: day.tp, set: day.setIndex }) };
+  /* THE SESSION FORM (Ramy's design, 29 Oct 2026, section 9): click a session, change it in the side panel, and nothing
+     moves until Save draft. The design's fields in its order: title, date, start and end, category, tutor, group,
+     preparation, a link. A new session (+ Session, an empty place, the library, Duplicate) opens here unsaved. */
+  const day0 = dayOfDate(date); if (!day0) return;
+  const x0 = fresh || (day0.sessions || []).find(s => s.id === id); if (!x0) return;
+  const isNew = !!fresh;
   const el = pop('ttpop');
   const sets = (GROUPS[0] && GROUPS[0].sets) || [];
-  el.innerHTML = `<label>What it is<select id="tK">${KIND_ORDER.map(k => `<option value="${k}"${x.k === k ? ' selected' : ''}>${esc(KIND_LABEL[k])}</option>`).join('')}</select></label>
-    ${x.k === 'tp'
-      ? `<div class="two"><label>Practice<input id="tTp" type="number" min="1" max="20" value="${esc(day.tp || '')}" placeholder="—"></label>
-         <label>Who teaches<select id="tSet">${sets.length ? sets.map((st, i) => `<option value="${i}"${+day.setIndex === i ? ' selected' : ''}>${esc(R.setName(st) || (i ? 'Second set' : 'First set'))}</option>`).join('') : `<option value="0">First set</option><option value="1"${+day.setIndex === 1 ? ' selected' : ''}>Second set</option>`}</select></label></div>`
-      : `<label>Name<input id="tT" value="${esc(x.t || '')}" placeholder="${esc(KIND_LABEL[x.k] || '')}"></label>`}
-    ${x.k === 'input' && TUTORS.length ? `<label>Who teaches it<select id="tBy"><option value="">—</option>${TUTORS.map((n, i) => `<option value="${i}"${String(x.by) === String(i) ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>` : ''}
-    <div class="two"><label>From<input id="tS" type="time" value="${esc(x.s)}"></label><label>To<input id="tE" type="time" value="${esc(x.e)}"></label></div>
-    ${(() => { const rooms = (Array.isArray(SETTINGS.onlineRooms) ? SETTINGS.onlineRooms : []).filter(r => r && r.url); const labels = [...new Set(rooms.map(r => String(r.label || '').trim()).filter(Boolean))]; const cur = x.url ? '__url' : (x.room || ''); const dflt = roomLabelOf(Object.assign({}, x, { room: '' }));
-      return (labels.length || x.url) ? `<label>Online room<select id="tRoom"><option value=""${cur === '' ? ' selected' : ''}>${esc(dflt ? 'The ' + dflt + ' room' : 'None')}</option>${labels.map(l => `<option value="${esc(l)}"${cur === l ? ' selected' : ''}>${esc(l)}</option>`).join('')}<option value="__url"${cur === '__url' ? ' selected' : ''}>A link of its own</option></select></label>${cur === '__url' ? `<label>Link<input id="tUrl" type="url" value="${esc(x.url || '')}" placeholder="https://…"></label>` : ''}` : ''; })()}
-    ${isSheet(x) && BOOK ? `<div class="sheetin">${sheetHTML(day, x)}</div>` : ''}
-    <label>To prepare<textarea id="tD" placeholder="What trainees read or bring. They see this when they open the session.">${esc(x.d || '')}</textarea></label>
-    <p class="warn" id="tWarn"></p>
-    <label class="lock"><input type="checkbox" id="tLock"${x.locked ? ' checked' : ''}> Locked — can’t be dragged</label>
-    <div class="acts three"><button type="button" class="btn quiet del" id="tDel">Remove</button><button type="button" class="btn quiet" id="tDup">Duplicate</button><button type="button" class="btn" id="tOk">Done</button></div>`;
+  const days = (TT.days || []).filter(d => !d.closed || d.date === date);
+  const by = x0.by === undefined || x0.by === null ? '' : String(x0.by);
+  const groupsOpt = GROUPS.length > 1 ? GROUPS.map(g => String(g.group || '')).filter(Boolean) : [];
+  const tpField = k => k === 'tp'
+    ? `<div class="two"><label>TP number<input name="tp" type="number" min="1" max="8" value="${esc(day0.tp || '')}"></label>
+       <label>Who teaches<select name="set">${(sets.length ? sets.map((st, i) => [i, R.setName(st) || (i ? 'Second set' : 'First set')]) : [[0, 'First set'], [1, 'Second set']]).map(o => `<option value="${o[0]}"${+day0.setIndex === o[0] ? ' selected' : ''}>${esc(o[1])}</option>`).join('')}</select></label></div>`
+    : `<label>Session title<input name="t" required value="${esc(x0.t || '')}" placeholder="${esc(KIND_LABEL[k] || '')}"></label>`;
+  el.innerHTML = `<form id="sesForm" novalidate>
+    <div id="tpOrTitle">${tpField(x0.k)}</div>
+    <label>Date<select name="date">${days.map(d => `<option value="${esc(d.date)}"${d.date === date ? ' selected' : ''}>${esc(dayName(d.date))}</option>`).join('')}</select></label>
+    <div class="two"><label>Start<input name="s" type="time" required value="${esc(x0.s)}"></label><label>End<input name="e" type="time" required value="${esc(x0.e)}"></label></div>
+    <label>Category<select name="k">${KIND_ORDER.map(k => `<option value="${k}"${x0.k === k ? ' selected' : ''}>${esc(KIND_LABEL[k])}</option>`).join('')}</select></label>
+    <div class="two"><label>Tutor initials<select name="by"><option value="">Unassigned</option>${TUTORS.map((n, i) => `<option value="${i}"${by === String(i) ? ' selected' : ''}>${esc(initialsOf(n))} · ${esc(n)}</option>`).join('')}</select></label>
+      <label>Group<select name="g"><option value="">Whole course</option>${groupsOpt.map(g => `<option value="${esc(g)}"${String(x0.g || '') === g ? ' selected' : ''}>Group ${esc(g)}</option>`).join('')}</select></label></div>
+    <label>Preparation<textarea name="d" placeholder="What trainees read or bring. They see this when they open the session.">${esc(x0.d || '')}</textarea></label>
+    <label>Session or resources link<input name="url" type="url" placeholder="https://" value="${esc(x0.url && x0.url !== 'https://' ? x0.url : '')}"></label>
+    ${!isNew && isSheet(x0) && BOOK ? `<div class="sheetin">${sheetHTML(day0, x0)}</div>` : ''}
+    <label class="lock"><input type="checkbox" name="locked"${x0.locked ? ' checked' : ''}> Locked, so it can’t be dragged</label>
+    <p class="warn" id="tErr"></p>
+    <p class="muted">Overlaps are shown for you to check. Two groups can run side by side.</p>
+    <div class="acts three"><button type="submit" class="btn" id="tOk">Save draft</button>${isNew ? '<button type="button" class="btn quiet" id="tCancel">Cancel</button>' : '<button type="button" class="btn quiet" id="tDup">Duplicate</button><button type="button" class="btn quiet del" id="tDel">Delete</button>'}</div>
+  </form>`;
   el.hidden = false;
-  asDrawer(el, x.k === 'tp' ? 'TP ' + (day.tp || '') : (x.t || 'Edit session'));
-  /* a clash is said, not stopped: the same tutor twice at once (the design's section 10; two groups side by side are fine) */
-  const clash = () => {
-    const by = x.by, s0 = toMin(x.s), e0 = toMin(x.e);
-    const hit = by == null || by === '' ? [] : (day.sessions || []).filter(o => o !== x && String(o.by) === String(by) && toMin(o.s) < e0 && s0 < toMin(o.e));
-    if ($('tWarn')) $('tWarn').textContent = hit.length ? 'This overlaps ' + hit.map(o => '“' + (o.t || KIND_LABEL[o.k]) + '”').join(', ') + ', also with ' + (TUTORS[+by] || 'this tutor') + '.' : '';
-  };
-  clash();
-  const apply = () => {
-    const k = $('tK').value;
-    if (k !== x.k) {
-      x.k = k;
-      if (k === 'tp') { x.t = ''; if (!day.tp) { const prev = TT.days.slice(0, TT.days.indexOf(day)).reverse().find(d => d.tp); day.tp = prev ? prev.tp : 1; day.setIndex = 0; } }
-      if (k !== 'input') delete x.by;
-      if (k === 'tp' || k === 'input') x.room = k === 'tp' ? 'Teaching practice' : 'Input';
-      if (!day.sessions.some(s => s.k === 'tp')) { delete day.tp; delete day.setIndex; }
-      const keep = OPEN_TILE; OPEN_TILE = null; save('Saved'); render(); openTile(date, id); UNDO.pop(); if (keep) OPEN_TILE.before = keep.before; return;
-    }
-    if ($('tT')) x.t = $('tT').value;
-    if ($('tBy')) { if ($('tBy').value === '') delete x.by; else x.by = +$('tBy').value; }
-    if ($('tTp')) { const n = parseInt($('tTp').value, 10); if (n > 0) day.tp = n; }
-    if ($('tSet')) day.setIndex = +$('tSet').value;
-    if ($('tLock').checked) x.locked = true; else delete x.locked;
-    if ($('tRoom')) {
-      const v = $('tRoom').value;
-      if (v === '__url') { delete x.room; if (!x.url) x.url = 'https://'; }
-      else { delete x.url; if (v) x.room = v; else delete x.room; }
-      if ($('tUrl')) x.url = $('tUrl').value.trim() || 'https://';
-      if ((v === '__url') !== !!$('tUrl')) { const keep = OPEN_TILE; OPEN_TILE = null; save('Saved'); render(); openTile(date, id); UNDO.pop(); if (keep) OPEN_TILE.before = keep.before; return; }
-    }
-    if ($('tD')) { const d = $('tD').value.trim(); if (d) x.d = d; else delete x.d; }
-    const s = toMin($('tS').value), e = toMin($('tE').value);
-    if (s != null && e != null) { x.s = toHM(s); x.e = toHM(Math.max(s + 5, e)); settle(day, x); }
-    clash();
-  };
-  ['tK', 'tTp', 'tSet', 'tBy', 'tS', 'tE', 'tLock', 'tRoom', 'tUrl', 'tD'].forEach(i => { if ($(i)) $(i).addEventListener('change', apply); });
-  $('tDup').addEventListener('click', () => {
-    apply(); const c = clone(x); c.id = newId(); delete c.locked;
-    const len = toMin(x.e) - toMin(x.s), st = freeAfter(day); c.s = toHM(st); c.e = toHM(Math.min(23 * 60 + 55, st + len));
-    closePop(); remember(); day.sessions.push(c); day.sessions.sort(byStart);
-    save('Added', { text: '“' + tileName(c, day) + '” copied on ' + dayName(date) + ', ' + hubClockRange(c.s, c.e) }); render(); openTile(date, c.id);
+  asDrawer(el, isNew ? 'Schedule session' : 'Edit session');
+  const F = $('sesForm');
+  F.elements.k.addEventListener('change', () => { $('tpOrTitle').innerHTML = tpField(F.elements.k.value); });
+  const err = t => { $('tErr').textContent = t; };
+  F.addEventListener('submit', async ev => {
+    ev.preventDefault(); err('');
+    const v = n => F.elements[n] ? F.elements[n].value : '';
+    const k = v('k'), s0 = toMin(v('s')), e0 = toMin(v('e')), to = dayOfDate(v('date')), t = v('t').trim();
+    if (s0 == null || e0 == null) return err('Give it a start and an end.');
+    if (e0 <= s0) return err('The end must be after the start.');
+    if (k !== 'tp' && !t && k !== 'break' && k !== 'lunch') return err('Give the session a title.');
+    let url = v('url').trim();
+    if (url) { try { const u = new URL(url); if (!/^https?:$/.test(u.protocol)) throw 0; url = u.href; } catch (x) { return err('The link must start with http:// or https://.'); } }
+    const g = v('g'), byN = v('by');
+    /* the design's overlap check: the same tutor, or the same group (the whole course shares with every group) */
+    const clash = (to.sessions || []).filter(o => o.id !== x0.id && o.k !== 'break' && o.k !== 'lunch' && k !== 'break' && k !== 'lunch' && toMin(o.s) < e0 && s0 < toMin(o.e)
+      && ((byN !== '' && String(o.by) === byN) || !o.g || !g || String(o.g) === g));
+    if (clash.length && !(await ask('This overlaps ' + clash.map(o => '“' + tileName(o, to) + '”').join(', ') + '. Save it anyway?', 'Save it'))) return;
+    remember();
+    const from = dayOfDate(date);
+    let x = x0;
+    if (isNew) { x = Object.assign({}, x0); }
+    else OPEN_TILE = { date: to.date, id: x.id, before: JSON.stringify({ x: clone(x), tp: to === from ? from.tp : to.tp, set: to === from ? from.setIndex : to.setIndex }) };
+    x.k = k; x.s = toHM(s0); x.e = toHM(e0);
+    if (k === 'tp') { delete x.t; x.room = 'Teaching practice'; } else { if (t) x.t = t; else delete x.t; if (x.room === 'Teaching practice') delete x.room; if (k === 'input' && !x.room) x.room = 'Input'; }
+    if (byN === '') delete x.by; else x.by = +byN;
+    if (g) x.g = g; else delete x.g;
+    const d = v('d').trim(); if (d) x.d = d; else delete x.d;
+    if (url) x.url = url; else delete x.url;
+    if (F.elements.locked.checked) x.locked = true; else delete x.locked;
+    if (to !== from || isNew) {
+      if (!isNew) from.sessions = from.sessions.filter(o => o !== x);
+      to.sessions = (to.sessions || []).concat([x]); to.sessions.sort(byStart);
+      if (!isNew && !from.sessions.some(o => o.k === 'tp')) { delete from.tp; delete from.setIndex; }
+    } else to.sessions.sort(byStart);
+    if (k === 'tp') { const n = parseInt(v('tp'), 10); to.tp = n > 0 ? n : (to.tp || 1); to.setIndex = +v('set') || 0; }
+    else if (!to.sessions.some(o => o.k === 'tp')) { delete to.tp; delete to.setIndex; }
+    if (isNew) { OPEN_TILE = null; closePop(); save('Added', { text: '“' + tileName(x, to) + '” added on ' + dayName(to.date) + ', ' + hubClockRange(x.s, x.e) }); render(); return; }
+    if (to !== from) CHANGES.push({ at: new Date().toISOString(), key: 'tile:' + x.id, text: '“' + tileName(x, to) + '” moved from ' + dayName(from.date) + ' to ' + dayName(to.date) });
+    closePop();
+    if (to !== from) { save('Saved'); render(); }
   });
-  if ($('tT')) { $('tT').addEventListener('input', apply); $('tT').addEventListener('keydown', e => { if (e.key === 'Enter') { apply(); closePop(); } }); }
-  $('tOk').addEventListener('click', () => { apply(); closePop(); });
+  if ($('tCancel')) $('tCancel').addEventListener('click', () => closePop());
+  if ($('tDup')) $('tDup').addEventListener('click', () => { const c = clone(x0); c.id = newId(); delete c.locked; if (c.t) c.t += ' (copy)'; openTile(date, c.id, c); });
   el.querySelectorAll('[data-free]').forEach(b => b.addEventListener('click', () => { HubStore.call({ op: 'releaseSlot', date, id, n: +b.dataset.free }).then(() => { BOOK = null; loadBookings(true); closePop(); }).catch(() => {}); }));
-  $('tDel').addEventListener('click', () => {
-    const name = tileName(x, day);
-    OPEN_TILE = null;
-    day.sessions = day.sessions.filter(s => s !== x);
-    if (!day.sessions.some(s => s.k === 'tp')) { delete day.tp; delete day.setIndex; }
+  if ($('tDel')) $('tDel').addEventListener('click', async () => {
+    if (!(await ask('Delete “' + tileName(x0, day0) + '” from the draft?', 'Delete'))) return;
+    remember();
+    const name = tileName(x0, day0);
+    day0.sessions = day0.sessions.filter(o => o !== x0);
+    if (!day0.sessions.some(o => o.k === 'tp')) { delete day0.tp; delete day0.setIndex; }
     closePop(); save('Removed', { text: '“' + name + '” removed from ' + dayName(date) }); render();
   });
-  const f = $('tT') || $('tTp'); if (f) f.focus();
+  const f = F.elements.t || F.elements.tp; if (f) f.focus();
 }
 
 /* The day menu: use this day's shape for other days, and pin a day so that
