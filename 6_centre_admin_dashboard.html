@@ -2138,9 +2138,13 @@ document.getElementById('addInputSession').addEventListener('click', () => {
 });
 document.getElementById('addCandLink').addEventListener('click', () => {
   readCandLinks();
-  /* a new row joins the card of the row above it, which is what "add another input session" means */
-  const last = [...document.querySelectorAll('.cl-card')].pop();
-  CAND_LINKS.push({ label:'', url:'', card: (last && last.value.trim()) || '' }); renderCandLinks();
+  /* a new row joins the card of the OTHER link above it. It took the last card on the page, which was an input session's
+     whenever Other links was empty, so the row landed among the input sessions, above the button, and the button looked
+     dead (Ramy, 30 Oct 2026: "add a link ... doesn't seem to work") */
+  const other = CAND_LINKS.filter(l => !/^before the course$/i.test(String(l.card || '').trim()) && !/input session/i.test(String(l.card || '') + ' ' + String(l.label || '')));
+  const last = other[other.length - 1];
+  CAND_LINKS.push({ label:'', url:'', card: (last && String(last.card || '').trim()) || '' }); renderCandLinks();
+  const lab = [...document.querySelectorAll('.cl-label')].filter(el => !el.closest('.ilrow') && !el.closest('#beforeLinks')).pop(); if (lab) lab.focus();
 });
 
 /* ---- Observations tab ------------------------------------------------------ */
