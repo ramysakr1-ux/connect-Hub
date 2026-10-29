@@ -20,7 +20,8 @@
       + '.aboutme h2{margin:0 0 4px;font:700 1.15rem/1.2 Newsreader,Georgia,serif;} .aboutme .sub{margin:0 0 14px;color:var(--grey);font-size:.9rem;line-height:1.45;}'
       + '.aboutme .f{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px 16px;}'
       + '.aboutme label.l{display:block;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--grey);margin:0 0 5px;}'
-      + '.aboutme input[type=text],.aboutme select{box-sizing:border-box;width:100%;padding:10px 12px;border:1px solid var(--sand-line);border-radius:10px;background:var(--field);font:inherit;font-size:.95rem;color:var(--ink);}'
+      + '.aboutme input[type=text]{box-sizing:border-box;width:100%;padding:10px 12px;border:1px solid var(--sand-line);border-radius:10px;background:var(--field);font:inherit;font-size:.95rem;color:var(--ink);}'
+      + '.aboutme .house-sel select{height:44px;min-height:44px;border-radius:10px;font-weight:500;font-size:.95rem;} '
       + '.aboutme .opts{display:flex;flex-wrap:wrap;gap:8px;} .aboutme .opts label{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--sand-line);border-radius:999px;cursor:pointer;font-size:.88rem;background:var(--field);}'
       + '.aboutme .opts input{margin:0;} .aboutme .go{margin-top:16px;border:0;border-radius:999px;padding:11px 22px;background:var(--a-forest,var(--teal));color:var(--paper);font:700 .95rem/1 Karla,sans-serif;cursor:pointer;}'
       + '.aboutme .msg{margin:10px 0 0;font-size:.88rem;color:var(--grey);} .aboutme .msg.err{color:var(--a-red);}';
@@ -28,16 +29,19 @@
   }
   function mount(){
     var a = rd(); if ((a && a.at) || document.getElementById('aboutMe')) return;
+    /* ONLY BEFORE THE GROUPS (Ramy, 29 Oct 2026: "they have the TP group ... we already did the TP groups, so why are we
+       asking them now?"). The answers are for mixing the groups; once a trainee is in one, the card does not show. */
+    try { var me = JSON.parse(localStorage.getItem('hub:me') || '{}') || {}; if (String(me.group || '').trim()) return; } catch (e) {}
     var anchor = document.getElementById('onlineRooms'); if (!anchor) return;
     css();
     var box = document.createElement('section'); box.className = 'aboutme'; box.id = 'aboutMe';
-    var G = [['woman', 'Woman'], ['man', 'Man'], ['other', 'Another way'], ['unsaid', 'Prefer not to say']];
+    var G = [['woman', 'Woman'], ['man', 'Man'], ['other', 'Non-binary'], ['unsaid', 'Prefer not to say']];
     box.innerHTML = '<h2>Three questions for your tutors</h2>'
       + '<p class="sub">Your tutors use these to make mixed teaching practice groups. Only the tutors see them.</p>'
       + '<div class="f">'
       + '<div><label class="l" for="abLang">Your first language</label><input type="text" id="abLang" maxlength="60" placeholder="For example, Turkish"></div>'
       + '<div><label class="l" for="abNat">Your nationality</label><input type="text" id="abNat" maxlength="60" placeholder="For example, Brazilian"></div>'
-      + '<div><label class="l" for="abExp">Your teaching experience</label><select id="abExp"><option value="">Choose one</option><option value="none">None yet</option><option value="some">Some, under a year</option><option value="year">A year or more</option></select></div>'
+      + '<div><label class="l" for="abExp">Your teaching experience</label><div class="house-sel"><select id="abExp"><option value="">Choose one</option><option value="none">None yet</option><option value="some">Some, under a year</option><option value="year">A year or more</option></select></div></div>'
       + '</div>'
       + '<div style="margin-top:14px"><label class="l">Your gender <span style="text-transform:none;letter-spacing:0;font-weight:500">(optional)</span></label><div class="opts">'
       + G.map(function(g){ return '<label><input type="radio" name="abGender" value="' + g[0] + '">' + esc(g[1]) + '</label>'; }).join('') + '</div></div>'
