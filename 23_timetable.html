@@ -2912,8 +2912,9 @@ function openDetails(date, id){
     ${tut ? `<p class="dt1">With ${esc(tut)} (${esc(initialsOf(tut))})</p>` : ''}
     ${x.d ? `<div class="prep">${esc(x.d)}</div>` : ''}
     ${page ? `<a class="res" href="${esc(page)}">Open the session</a>` : ''}
+    ${x.k === 'feedback' && IS_TUTOR ? `<a class="res" href="40_tp_feedback.html?date=${esc(date)}${GVIEW ? '&group=' + encodeURIComponent(GVIEW) : ''}">Open the feedback screen</a>` : ''}
     ${room ? `<a class="res" href="${esc(room.url)}" target="_blank" rel="noopener noreferrer">Join · ${esc(room.label)}</a>` : ''}
-    ${!x.d && !page && !room ? '<p class="muted">Nothing to prepare for this one.</p>' : ''}`;
+    ${!x.d && !page && !room && !(x.k === 'feedback' && IS_TUTOR) ? '<p class="muted">Nothing to prepare for this one.</p>' : ''}`;
   el.hidden = false; asDrawer(el, name);
 }
 /* A new session (+ Session, an empty place, or the library): made on the draft at once and opened to change, the same as
@@ -3364,7 +3365,7 @@ function openTile(date, id, fresh){
     ? `<div class="two"><label>TP number<input name="tp" type="number" min="1" max="8" value="${esc(day0.tp || '')}"></label>
        <label>Who teaches<select name="set">${(sets.length ? sets.map((st, i) => [i, R.setName(st) || (i ? 'Second set' : 'First set')]) : [[0, 'First set'], [1, 'Second set']]).map(o => `<option value="${o[0]}"${+day0.setIndex === o[0] ? ' selected' : ''}>${esc(o[1])}</option>`).join('')}</select></label></div>`
     : `<label>Session title<input name="t" required value="${esc(x0.t || '')}" placeholder="${esc(KIND_LABEL[k] || '')}"></label>`;
-  el.innerHTML = `<form id="sesForm" novalidate>
+  el.innerHTML = `${x0.k === 'feedback' && !isNew ? `<a class="res" href="40_tp_feedback.html?date=${esc(date)}${GVIEW ? '&group=' + encodeURIComponent(GVIEW) : ''}">Open the feedback screen</a>` : ''}<form id="sesForm" novalidate>
     <div id="tpOrTitle">${tpField(x0.k)}</div>
     <label>Date<select name="date">${days.map(d => `<option value="${esc(d.date)}"${d.date === date ? ' selected' : ''}>${esc(dayName(d.date))}</option>`).join('')}</select></label>
     <div class="two"><label>Start<input name="s" type="time" required value="${esc(x0.s)}"></label><label>End<input name="e" type="time" required value="${esc(x0.e)}"></label></div>

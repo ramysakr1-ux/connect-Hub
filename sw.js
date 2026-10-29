@@ -43,7 +43,7 @@ const SHELL = [
   /* 5 Oct 2026: the candidate agreement, read and signed once at the start. */
   '29_candidate_agreement.html',
   /* 8 Oct 2026: the answer key and the getting-to-know-you bank, with their data. */
-  '30_precourse_key.html', '39_reading.html', 'readings.js', '31_getting_to_know_you.html', '32_last_page.html', '33_course_feedback.html', '34_handover.html', '36_shared_materials.html', 'precourse-key.js', 'gtky-bank.js', 'fol-interview.js',
+  '30_precourse_key.html', '39_reading.html', 'readings.js', '31_getting_to_know_you.html', '32_last_page.html', '33_course_feedback.html', '34_handover.html', '40_tp_feedback.html', '36_shared_materials.html', 'precourse-key.js', 'gtky-bank.js', 'fol-interview.js',
   /* 15 Oct 2026: the input sessions (the shelf, its two shared files, the three drawings and
      every session page). They were never in the shell, so one not opened before the
      connection dropped came up as "You are offline". Pages are kept by their directory

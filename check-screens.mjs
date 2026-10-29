@@ -49,6 +49,7 @@ const ROOMS = {
   '3_tutor_feedback.html':           { trainee:'refuse', tutor:'open',   assessor:'refuse' },
   '5_tutor_dashboard.html':          { trainee:'refuse', tutor:'open',   assessor:'refuse' },
   '34_handover.html':                { trainee:'refuse', tutor:'open',   assessor:'refuse' },
+  '40_tp_feedback.html':             { trainee:'refuse', tutor:'open',   assessor:'refuse' },
   '36_shared_materials.html':        { trainee:'open',   tutor:'open',   assessor:'open',   volunteer:'refuse' },
   '37_notebook.html':                { trainee:'open',   tutor:'open',   assessor:'refuse', volunteer:'refuse' },
   '38_questions.html':               { trainee:'refuse', tutor:'open',   assessor:'refuse', volunteer:'refuse' },

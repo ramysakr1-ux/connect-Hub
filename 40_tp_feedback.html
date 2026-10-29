@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<!--
+  TP feedback — the tutor's screen for oral feedback.
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy, 30 Oct 2026, on a mock-up he chose (docs/mockups/feedback-remembers.html):
+  "feedback that remembers" and the first feedback after the change of class;
+  "we want feedback to be positive as well, not just negative"; "it's coming from
+  the tutor's feedback"; "the trainees never actually see it".
+
+  Everything on a card is read from the tutors' own written TP feedback
+  (records.tpHistory and records.feedback: Strengths in planning and teaching,
+  Action points in planning and teaching, the grade, the tutor): what worked
+  today, the last action points, the next step. Nothing is generated. The one
+  thing the tutor sets here is whether each earlier action point was met, partly
+  met or not yet: kept in the trainee's staffLinks record as an entry
+  { fbcheck: true, marks }, the kind the store never hands to a trainee (as the
+  handover line is). No store change.
+
+  On the first feedback after the change of class each card also carries TP1
+  onward, the best moment so far, what came up more than once, and the
+  handover line.
+
+  Opened from the TP feedback tile on the timetable, or the tutor's dashboard.
+  Tutors only.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="brand/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<title>TP feedback</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hub-tokens.css?v=202610292155">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);}
+  .wrap{max-width:980px; margin:0 auto; padding:32px 20px 90px;}
+  .back{display:inline-block; margin-bottom:14px; font-weight:600; font-size:.9rem; color:var(--teal); text-decoration:none;}
+  .back:hover{text-decoration:underline;}
+  .k{font-family:'Instrument Sans','Karla',sans-serif; font-weight:600; font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--brick); margin:0 0 6px;}
+  h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:32px; line-height:1.08; margin:0 0 8px;}
+  .lede{color:var(--grey); font-size:15px; line-height:1.5; margin:0 0 20px; max-width:680px;}
+  .tabs{display:flex; gap:8px; margin:0 0 18px; flex-wrap:wrap;}
+  .tabs button{font:inherit; font-weight:700; font-size:13.5px; padding:8px 14px; border-radius:999px; border:1px solid var(--sand-line); background:var(--paper); color:var(--teal); cursor:pointer;}
+  .tabs button[aria-pressed="true"]{background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  .hand{display:flex; gap:12px 18px; align-items:center; flex-wrap:wrap; background:var(--teal); color:var(--paper); border-radius:var(--r-card); padding:16px 20px; margin:0 0 24px;}
+  .hand .who{display:flex; gap:10px; align-items:center; flex-wrap:wrap; font-family:'Newsreader',Georgia,serif; font-size:19px; font-weight:600;}
+  .hand select{font:inherit; font-family:'Karla',sans-serif; font-size:14px; font-weight:700; color:var(--teal); background:var(--paper); border:0; border-radius:8px; padding:6px 10px;}
+  .hand .when{color:var(--paper); opacity:.8; font-size:13.5px; flex-basis:100%;}
+  .hand .acts{margin-left:auto; display:flex; gap:8px;}
+  .hand .print{background:var(--paper); color:var(--teal); border:0; border-radius:999px; padding:9px 16px; font:inherit; font-weight:700; font-size:13.5px; cursor:pointer;}
+  .hand .print.go{background:var(--a-lemon); color:var(--ink);}
+  .hand .when b{color:var(--paper); font-weight:700;}
+  .hand .check{flex-basis:100%; background:var(--paper); color:var(--ink); border-radius:var(--r-strip); padding:12px 14px; font-size:14px; line-height:1.5;}
+  .hand .check .row{margin-top:8px;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:16px;}
+  .tr{background:var(--paper); border-radius:var(--r-card); box-shadow:var(--nb-shadow); padding:18px 20px 16px; border-top:3px solid var(--teal); break-inside:avoid;}
+  .tr.amber{border-top-color:var(--a-mustard);} .tr.red{border-top-color:var(--brick);}
+  .tr header{display:flex; justify-content:space-between; align-items:baseline; gap:10px;}
+  .tr h2{font-family:'Newsreader',Georgia,serif; font-size:21px; font-weight:700; margin:0;}
+  .letter{font-family:'Instrument Sans','Karla',sans-serif; font-weight:600; font-size:12px; color:var(--grey); background:var(--sand); border-radius:6px; padding:3px 8px; white-space:nowrap;}
+  .grades{display:flex; gap:6px; flex-wrap:wrap; margin:12px 0 2px;}
+  .g{font-size:11.5px; font-weight:600; border-radius:6px; padding:4px 8px; background:var(--sand); color:var(--grey);}
+  .g.above{background:var(--teal); color:var(--paper);} .g.not{background:var(--brick); color:var(--paper);} .g.to{background:var(--sand-deep); color:var(--ink);}
+  .stages{display:flex; gap:6px; flex-wrap:wrap; margin:8px 0 0;}
+  .st{font-size:11.5px; font-weight:600; border-radius:6px; padding:4px 8px; border:1px solid var(--sand-line); color:var(--ink); background:var(--paper);}
+  .st.above{border-color:var(--teal); color:var(--teal);} .st.not{border-color:var(--brick); color:var(--brick);} .st.pending{color:var(--grey); border-style:dashed;}
+  .tr .k{margin:14px 0 4px; font-size:10.5px; letter-spacing:.2em;}
+  ul{margin:0; padding-left:18px; font-size:14px; line-height:1.5;}
+  ul.plain{list-style:none; padding:0; color:var(--grey);}
+  .note{margin:0; font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:16.5px; line-height:1.4; color:var(--ink);}
+  .note.empty{color:var(--grey);}
+  textarea{width:100%; min-height:64px; font:inherit; font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:16px; line-height:1.4; color:var(--ink); background:var(--field); border:1px solid var(--sand-line); border-radius:var(--r-control); padding:8px 10px; resize:vertical;}
+  textarea:focus{outline:2px solid var(--teal); outline-offset:1px;}
+  .row{display:flex; gap:8px; align-items:center; margin-top:8px; flex-wrap:wrap;}
+  .row button{font:inherit; font-weight:700; font-size:13px; padding:7px 14px; border-radius:999px; border:0; background:var(--teal); color:var(--paper); cursor:pointer;}
+  .row button.quiet{background:var(--paper); color:var(--teal); border:1px solid var(--sand-line);}
+  .row .saved{font-size:12.5px; color:var(--grey);}
+  .empty-group{color:var(--grey); font-size:15px;}
+  @media (max-width:480px){ .wrap{padding:22px 16px 70px;} h1{font-size:27px;} .hand .acts{margin-left:0;} }
+  @media print{
+    body{background:var(--paper);} .wrap{max-width:none; padding:0;}
+    .back, .tabs, .hand .acts, .hand .check, .row, textarea{display:none !important;}
+    .hand{background:none; color:var(--ink); border:1px solid var(--sand-line); padding:10px 14px;} .hand .who{font-size:16px;} .hand select{appearance:none; -webkit-appearance:none; background:none; color:var(--ink); padding:0; font-size:15px;}
+    .hand .when{color:var(--grey); opacity:1;}
+    .grid{grid-template-columns:1fr 1fr; gap:12px;} .tr{box-shadow:none; border:1px solid var(--sand-line); border-top:3px solid var(--teal);}
+    .note.empty{display:none;}
+  }
+
+  .daybar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:0 0 16px;}
+  .daybar select{font:inherit; font-weight:700; font-size:14px; padding:7px 10px; border-radius:var(--r-control); border:1px solid var(--sand-line); background:var(--paper); color:var(--ink);}
+  .daybar .meta{color:var(--grey); font-size:14px;}
+  .grp{background:var(--paper); border-radius:var(--r-card); box-shadow:var(--nb-shadow); padding:14px 18px; margin:0 0 18px; font-size:14.5px; line-height:1.5;}
+  .grp b{font-family:'Newsreader',Georgia,serif; font-size:17px; display:block; margin:0 0 4px;}
+  .grp .plus{color:var(--teal); font-weight:700;} .grp .minus{color:var(--brick); font-weight:700;}
+  .fbgood{margin:12px 0 0; padding:10px 12px; border-radius:10px; background:oklch(95% 0.035 145); border-left:3px solid oklch(62% 0.1 145); box-shadow:none; color:var(--ink); font-size:14px; line-height:1.45;}
+  .fbgood .k, .fbnext .k{margin:0 0 4px;} .fbgood .k{color:oklch(40% 0.08 145);}
+  .fbgood ul, .fbnext ul{padding-left:16px;}
+  .fbgood small, .ap small, .fbnext small{display:block; color:var(--grey); font-size:12px;}
+  .fbnext{margin:12px 0 0; padding:10px 12px; border-radius:10px; background:oklch(95% 0.035 85); border-left:3px solid var(--a-mustard); box-shadow:none; color:var(--ink); font-size:14px; line-height:1.45;}
+  .wait{margin:12px 0 0; color:var(--grey); font-size:13.5px; font-style:italic;}
+  .ap{padding:8px 0; border-top:1px solid var(--row-line); font-size:14px; line-height:1.4;}
+  .ap:first-of-type{border-top:0;}
+  .marks{display:flex; gap:5px; margin:6px 0 0; flex-wrap:wrap;}
+  .marks button{font:inherit; font-size:12px; font-weight:700; padding:3px 10px; border-radius:999px; border:1px solid var(--sand-line); background:var(--paper); color:var(--grey); cursor:pointer;}
+  .marks button.on[data-m="met"]{background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  .marks button.on[data-m="part"]{background:var(--a-mustard); border-color:var(--a-mustard); color:var(--ink);}
+  .marks button.on[data-m="not"]{background:var(--brick); border-color:var(--brick); color:var(--paper);}
+  .rep{display:inline-block; margin:0 6px 6px 0; padding:3px 9px; border-radius:999px; font-size:12px; font-weight:600; background:color-mix(in oklch, var(--a-mustard) 28%, var(--paper));}
+  .swap{margin:12px 0 0; padding:10px 0 0; border-top:2px solid var(--sand-line);}
+  .code{font-family:'Instrument Sans','Karla',sans-serif; font-size:11px; font-weight:600; color:var(--grey); margin-left:4px;}
+</style>
+<link rel="stylesheet" href="hub-house.css?v=202610292155">
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="23_timetable.html">Back</a>
+  <div id="app"><p class="lede">Loading the course…</p></div>
+</div>
+<script src="hub-shared.js?v=202610292155"></script>
+<script src="hub-store.js?v=202610292155"></script>
+<script src="hub-say.js?v=202610292155"></script>
+<script src="hub-rotation.js?v=202610292155"></script>
+<script src="hub-sync.js?v=202610292155"></script>
+<script src="hub-notebook.js?v=202610292155"></script>
+<script>
+if (window.hubTutorRoomOnly && hubTutorRoomOnly()) { /* refused; hubTutorRoomOnly drew the room */ }
+else (async function(){
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const bare = s => String(s == null ? '' : s).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').replace(/\s*\b\d[a-z]\b\s*$/, '').trim();
+  const codeOf = x => { const m = /data-c="([0-9][a-z])"/.exec(String((x && x.html) || '')); return m ? m[1] : ''; };
+  const S = window.HubStore, R = window.hubRotation;
+  let course, roster;
+  try {
+    const [c, r] = await Promise.all([S.call({ op: 'course' }), S.call({ op: 'roster' })]);
+    course = c || {}; roster = Object.values((r && r.trainees) || {}).filter(Boolean);
+  } catch (e) { $('app').innerHTML = '<p class="lede">The course could not be read: ' + esc(e.message) + '</p>'; return; }
+  const cs = course.settings || {};
+  const tz = cs.timeZone || undefined;
+  const tpCount = parseInt(cs.tpCount, 10) || 8, half = Math.floor(tpCount / 2) + 1;
+  const days = ((course.timetable && course.timetable.days) || []).filter(d => d && d.date && d.tp && !d.closed);
+  const groups = [...new Set(roster.map(t => String(t.group || '')).filter(Boolean))].sort();
+  const Q = new URLSearchParams(location.search);
+  let group = (Q.get('group') && groups.includes(Q.get('group'))) ? Q.get('group') : (groups[0] || '');
+  const today = window.hubToday ? hubToday() : new Date().toISOString().slice(0, 10);
+  let date = Q.get('date') && days.some(d => d.date === Q.get('date')) ? Q.get('date') : ((days.filter(d => d.date <= today).pop() || days[0] || {}).date || '');
+  const fmtDay = s => { try { return new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).format(hubDateOf(s)); } catch (e) { return s; } };
+  const tpsPoints = (() => { try { return JSON.parse(localStorage.getItem('connect_tp_points_v1') || '{}') || {}; } catch (e) { return {}; } })();
+
+  /* every written feedback a trainee has, by TP number */
+  const historyOf = t => { const Rr = t.records || {}; const H = Object.assign({}, Rr.tpHistory || {});
+    if (Rr.feedback && Rr.feedback.state) { const n = String((Rr.feedback.state.f || {}).fTP || '').replace(/\D/g, ''); if (n) H[n] = Rr.feedback; }
+    const out = {}; Object.keys(H).forEach(k => { const st = H[k] && H[k].state; if (st && st.f) out[+k] = st; }); return out; };
+  const items = (st, keys) => { const L = (st && st.lists) || {}; const all = []; keys.forEach(k => (L[k] || []).forEach(x => { const t = bare(x && (x.html || x.t || x.text || '')); if (t) all.push({ t, star: !!(x && x.star), c: codeOf(x), k }); })); return all.sort((a, b) => (b.star - a.star)); };
+  const strengths = st => items(st, ['lST', 'lSP']);
+  const actions = st => items(st, ['lAT', 'lAP']);
+  const checkOf = t => (((t.records || {}).staffLinks || []).find(x => x && x.fbcheck)) || { fbcheck: true, marks: {} };
+  const MW = { met: 'Met', part: 'Partly', not: 'Not yet' };
+
+  /* who taught on the day: the day's teaching set in this group, in the order they taught */
+  function taughtOn(day){
+    const people = roster.filter(t => String(t.group || '') === group).map(t => ({ token: t.token, name: t.name, group }));
+    const sets = R ? R.setsFor(people) : [people];
+    const set = sets[day.setIndex || 0] || [];
+    const rows = (tpsPoints.groups && tpsPoints.groups[group]) || tpsPoints.points || {};
+    const order = R && R.orderDealt ? R.orderDealt(set, day.tp, (tok, tp) => (rows[tok] || {})['tp' + tp]) : set;
+    return order.map(p => Object.assign({ letter: p.letter }, roster.find(t => t.token === p.token) || {})).filter(t => t.token);
+  }
+
+  function card(t, day){
+    const H = historyOf(t), tp = +day.tp, now = H[tp] || null;
+    const prev = Object.keys(H).map(Number).filter(n => n < tp).sort((a, b) => a - b);
+    const chk = checkOf(t);
+    const last = prev.slice(-3).map(n => { const a = actions(H[n])[0]; return a ? Object.assign({ tp: n }, a) : null; }).filter(Boolean);
+    const good = now ? strengths(now).slice(0, 3) : [];
+    const next = now ? actions(now).slice(0, 2) : [];
+    const count = {}; prev.concat(now ? [tp] : []).forEach(n => { new Set(actions(H[n]).map(a => a.c).filter(Boolean)).forEach(c => { (count[c] = count[c] || { n: 0, t: '' }); count[c].n++; count[c].t = (actions(H[n]).find(a => a.c === c) || {}).t; }); });
+    const reps = Object.keys(count).filter(c => count[c].n >= 2).sort((a, b) => count[b].n - count[a].n);
+    const firstTutor = prev.length ? H[prev[0]].f.fTutor : '';
+    const swap = tp === half && prev.length > 0;
+    const grade = n => (H[n].f.fGrade || '').trim();
+    const GR = { 'Above standard': ['above', 'Above'], 'To standard': ['to', 'To'], 'Not to standard': ['not', 'Not to'], 'Below standard': ['not', 'Not to'] };
+    const rank = g => ({ 'Above standard': 3, 'To standard': 2 }[g] || 1);
+    const bestTp = prev.slice().sort((a, b) => rank(grade(b)) - rank(grade(a)) || b - a)[0];
+    const best = bestTp ? strengths(H[bestTp])[0] : null;
+    const hand = ((t.records || {}).staffLinks || []).find(x => x && x.handover) || null;
+    return `<article class="tr${reps.length ? ' amber' : ''}" data-token="${esc(t.token)}">
+      <header><h2>${esc(t.name)}</h2><span class="letter">${esc(t.letter || '')}</span></header>
+      ${now ? `<div class="fbgood"><p class="k">What worked</p><ul>${good.length ? good.map(x => `<li>${esc(x.t)}${x.c ? '<span class="code">' + esc(x.c) + '</span>' : ''}<small>TP${tp} feedback, Strengths</small></li>`).join('') : '<li>No strengths written yet.</li>'}</ul></div>`
+        : `<p class="wait">TP${tp} feedback is not written yet. What worked and the next step appear here once it is.</p>`}
+      ${last.length ? `<p class="k">Last action points</p>${last.map(a => { const key = a.tp + '|' + a.t.slice(0, 40); const m = (chk.marks || {})[key] || ''; return `<div class="ap">${esc(a.t)}${a.c ? '<span class="code">' + esc(a.c) + '</span>' : ''}<small>Set in TP${a.tp} feedback</small><div class="marks" data-key="${esc(key)}">${Object.keys(MW).map(k => `<button type="button" data-m="${k}" class="${m === k ? 'on' : ''}" aria-pressed="${m === k}">${MW[k]}</button>`).join('')}</div></div>`; }).join('')}` : ''}
+      ${now && next.length ? `<div class="fbnext"><p class="k">Next step</p><ul>${next.map(x => `<li>${esc(x.t)}${x.c ? '<span class="code">' + esc(x.c) + '</span>' : ''}<small>TP${tp} feedback, Action points</small></li>`).join('')}</ul></div>` : ''}
+      ${reps.length ? `<p class="k">Came up more than once</p>${reps.map(c => `<span class="rep" title="${esc(count[c].t)}">${esc(c)} · ${count[c].n === 2 ? 'twice' : count[c].n + ' times'}</span>`).join('')}` : ''}
+      ${swap ? `<div class="swap"><p class="k">TP1 to TP${half - 1}${firstTutor ? ' with ' + esc(firstTutor) : ''}</p>
+        <div class="grades">${prev.map(n => { const m = GR[grade(n)] || ['', grade(n) || '?']; return `<span class="g ${m[0]}">TP${n} · ${esc(m[1])}</span>`; }).join('')}</div>
+        ${best ? `<div class="fbgood"><p class="k">Best moment so far</p>${esc(best.t)}<small>TP${bestTp} feedback, Strengths</small></div>` : ''}
+        ${hand && hand.text ? `<p class="k">From ${esc(hand.by || 'the tutor')}</p><p class="note">${esc(hand.text)}</p>` : ''}</div>` : ''}
+    </article>`;
+  }
+
+  function groupLine(list, day){
+    const tp = +day.tp, have = list.map(t => historyOf(t)[tp]).filter(Boolean);
+    if (have.length < 2) return '';
+    const shared = fn => { const c = {}; have.forEach(st => new Set(fn(st).map(x => x.c).filter(Boolean)).forEach(k => { c[k] = (c[k] || 0) + 1; })); return Object.keys(c).filter(k => c[k] >= 2).sort((a, b) => c[b] - c[a]).map(k => [k, c[k], (have.map(st => fn(st).find(x => x.c === k)).find(Boolean) || {}).t]); };
+    const s = shared(strengths), a = shared(actions);
+    if (!s.length && !a.length) return '';
+    return `<div class="grp"><b>The whole group first</b>${s.length ? `<span class="plus">${s[0][1]} of ${have.length}</span> have ${esc(s[0][0])} in today’s strengths: ${esc(s[0][2] || '')}. ` : ''}${a.length ? `<span class="minus">${a[0][1]} of ${have.length}</span> have ${esc(a[0][0])} in today’s action points: ${esc(a[0][2] || '')}.` : ''}</div>`;
+  }
+
+  function draw(){
+    const day = days.find(d => d.date === date);
+    if (!day) { $('app').innerHTML = '<p class="k">Teaching practice</p><h1>TP feedback</h1><p class="lede">This course has no teaching practice days on its timetable yet.</p>'; return; }
+    const list = taughtOn(day);
+    const fbTile = (day.sessions || []).find(x => x.k === 'feedback');
+    $('app').innerHTML = `
+      <p class="k">Teaching practice · ${esc(cs.courseName || '')}</p>
+      <h1>TP${esc(day.tp)} feedback${group ? ' · Group ' + esc(group) : ''}</h1>
+      <p class="lede">Your screen for oral feedback. Everything here comes from the written TP feedback. Trainees never see this page.</p>
+      <div class="daybar"><select id="day" aria-label="Which day">${days.map(d => `<option value="${esc(d.date)}"${d.date === date ? ' selected' : ''}>${esc(fmtDay(d.date))} · TP${esc(d.tp)}</option>`).join('')}</select>
+        <span class="meta">${fbTile ? esc(hubClockRange ? hubClockRange(fbTile.s, fbTile.e) : fbTile.s + '–' + fbTile.e) : ''}${list.length ? ' · ' + list.length + ' taught' : ''}</span></div>
+      ${groups.length > 1 ? '<div class="tabs">' + groups.map(g => `<button type="button" data-group="${esc(g)}" aria-pressed="${g === group}">Group ${esc(g)}</button>`).join('') + '</div>' : ''}
+      ${groupLine(list, day)}
+      <div class="grid">${list.length ? list.map(t => card(t, day)).join('') : '<p class="empty-group">Nobody in this group teaches on this day.</p>'}</div>`;
+    $('day').onchange = e => { date = e.target.value; history2(); draw(); };
+    document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { group = b.dataset.group; history2(); draw(); });
+    document.querySelectorAll('.marks button').forEach(b => b.onclick = () => mark(b));
+  }
+  function history2(){ try { history.replaceState(null, '', '?date=' + encodeURIComponent(date) + '&group=' + encodeURIComponent(group) + (Q.get('k') ? '&k=' + encodeURIComponent(Q.get('k')) : '')); } catch (e) {} }
+  async function mark(b){
+    const art = b.closest('.tr'), token = art.dataset.token, key = b.closest('.marks').dataset.key, m = b.dataset.m;
+    const t = roster.find(x => x.token === token); if (!t) return;
+    const links = ((t.records || {}).staffLinks || []);
+    const cur = Object.assign({ fbcheck: true, marks: {} }, links.find(x => x && x.fbcheck) || {});
+    cur.marks = Object.assign({}, cur.marks); if (cur.marks[key] === m) delete cur.marks[key]; else cur.marks[key] = m;
+    const next = links.filter(x => x && !x.fbcheck).concat([cur]);
+    t.records = t.records || {}; t.records.staffLinks = next; draw();
+    try { const r = await S.put('staffLinks', next, token); if (r && r.demo && window.hubDemoSay) hubDemoSay('This is a demo course. The marks stay on this device.'); }
+    catch (e) { if (window.hubSay) hubSay('Not saved: ' + e.message); }
+  }
+  draw();
+})();
+</script>
+</body>
+</html>
