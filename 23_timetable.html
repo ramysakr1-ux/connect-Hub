@@ -347,6 +347,11 @@
   .tgrid.tboard .addtile{width:auto; margin:0; padding:3px 8px;}
   .tgrid.tboard .flags{display:flex; flex-direction:column; gap:3px; align-items:flex-start;}
   .tgrid.tboard .flags .due{position:static; display:inline-block; width:auto; max-width:100%; height:auto; line-height:1.35; padding:2px 7px; white-space:normal; text-transform:none; letter-spacing:0; font-size:0.66rem;}
+  .tgrid.tboard{--note:minmax(150px, 220px);} .tgrid.tboard.down{--note:auto;}
+  .tgrid.tboard .dnoteend{align-self:stretch; padding:8px 10px; font-size:0.8rem; line-height:1.45; color:var(--ink-warm); border-left:2px solid var(--sand-line);}
+  .tgrid.tboard.down .dnoteend{border-left:0; border-top:2px solid var(--sand-line); min-height:0;}
+  .tgrid.tboard .dnoteend b{display:block; font-size:0.62rem; letter-spacing:.08em; text-transform:uppercase; color:var(--grey);}
+  .tgrid.tboard .dnoteend:empty{border:0;}
   .tgrid.tboard .dnote{display:inline-block; font-size:0.62rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); padding:1px 7px; border:1px solid var(--sand-line); border-radius:999px; cursor:help;}
   .tgrid.tboard.down{align-items:stretch;}
   .tgrid.tboard .tile .tm .ct, .tgrid.tboard .tile .tm .lt{white-space:nowrap;}
@@ -414,6 +419,18 @@
   .tkey i.k-plan{--c:oklch(91% 0.09 100);} .tkey i.k-demo{--c:oklch(77% 0.08 300);} .tkey i.k-event{--c:oklch(78% 0.04 260);} .tkey i.k-task{--c:oklch(80% 0.075 15);} .tkey i.k-assessor{--c:oklch(40% 0.07 265);} .tkey i.k-break{--c:oklch(91% 0.008 260);}
   @media (max-width:760px){ .tgrid.tboard{--dcol:96px; --tw:124px; --th:100px; --cell:var(--tw);} .tgrid.tboard.down{grid-auto-columns:var(--tw);} .tgrid.tboard .tile{font-size:0.8rem; padding:8px 9px;} .tgrid.tboard .tile.twoclock .tm .ct{display:none;} .tgrid.tboard .flags .due{font-size:0.62rem;} }
   @media print{ .tgrid.tboard .tile{box-shadow:none; background:var(--c);} .tgrid.tboard .dh{position:static;} }
+  .tgrid.tboard .tile .tchrs{display:flex; flex-wrap:wrap; gap:4px 8px; margin-top:5px; font-weight:700;}
+  .tgrid.tboard .tile .tchr{display:inline-flex; align-items:center; gap:6px; font-size:0.86rem;}
+  .tgrid.tboard .tile .tchr .av{display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; font-style:normal; font-size:0.9rem; font-weight:700; letter-spacing:.02em;
+    background:var(--paper); color:var(--ink); box-shadow:inset 0 0 0 1.5px color-mix(in oklch, black 18%, var(--c)), 0 1px 2px color-mix(in oklch, black 18%, transparent);}
+  .tgrid.tboard .tile .tchr.me .av{background:var(--ink); color:var(--paper);}
+  .tgrid.tboard .tile .tchr .mk{margin:0;}
+  .tgrid.tboard .tile .tchr .gp{font-size:0.62rem; font-weight:700; letter-spacing:.04em; opacity:.7;}
+  .tgrid.tboard .tile.k-tp .tt{display:block; -webkit-line-clamp:unset; overflow:visible;}
+  /* the one teaching now: the avatar lights up (brass, as the reader's own time) */
+  .tgrid.tboard .tile.tv2-now .tchr .av{background:oklch(88% 0.1 90); color:oklch(25% 0.04 60); box-shadow:0 0 0 3px oklch(80% 0.13 85 / .55), 0 0 16px 4px oklch(85% 0.13 85 / .7); animation:teachNow 2.4s ease-in-out infinite;}
+  @keyframes teachNow{0%,100%{box-shadow:0 0 0 3px oklch(80% 0.13 85 / .45), 0 0 10px 2px oklch(85% 0.13 85 / .5);} 50%{box-shadow:0 0 0 3px oklch(80% 0.13 85 / .7), 0 0 20px 6px oklch(85% 0.13 85 / .8);}}
+  @media(prefers-reduced-motion:reduce){ .tgrid.tboard .tile.tv2-now .tchr .av{animation:none;} }
   .tgrid.tboard .tile .bk{font-size:0.64rem; font-weight:700; color:color-mix(in oklch, var(--on, var(--ink)) 80%, transparent);}
   .tgrid.tboard .tile .bk.mine{color:var(--on, var(--ink));} .tgrid.tboard .tile .bk.full{opacity:.7;}
   body:not(.editing) .tgrid.tboard .tile.bookable{cursor:pointer;}
@@ -1151,7 +1168,19 @@ function tileHTML(day, x, B, tpIdx, teachers, place){
     /* Across (the horizontal board): every TP tile names the practice and the
        whole set, the letter teaching in that slot lit -- "TP 1 · A̲BC", then
        "TP 1 · AB̲C" (Ramy, 10 Oct 2026). */
-    if (place && day.tp && teachers[0]) {
+    if (place && day.tp) {
+      /* ONE LETTER A TILE (Ramy, 29 Oct 2026: "remove the names ... put A, B, C in the order they are teaching ... inside a
+         little circle so it will have a little light, showing that it's on"): the trainee teaching this slot, so a day's
+         three tiles read CBA or BCA; the reader's own letter is dark; the circle lights while the lesson is on. */
+      /* two groups teaching side by side (a tutor's board) say whose letter is whose */
+      const many = teachers.length > 1;
+      const who = teachers.map(g => ({ g, p: g.order[tpIdx] })).filter(x => x.p).map(({ g, p }) => {
+        const me = !!meTok && p.token === meTok;
+        return `<span class="tchr${me ? ' me' : ''}" title="${esc((many ? 'Group ' + (g.group || '') + ' · ' : '') + (me ? 'You teach' : 'Teaching'))}"><i class="av">${esc(String(p.letter || ''))}</i>${many ? '<small class="gp">Group ' + esc(g.group || '') + '</small>' : ''}</span>`;
+      }).join('');
+      title = `TP ${day.tp}${who ? '<span class="tchrs">' + who + '</span>' : ''}`;
+    }
+    if (false && place && day.tp && teachers[0]) {
       const letters = teachers[0].order.map(p => String(p.letter)).sort();
       byLetter.forEach((t, l) => { if (letters.indexOf(l) === -1) letters.push(l); });
       title = (mine ? 'You teach · ' : '') + `TP ${day.tp} · ` + letters.map(l => byLetter.has(l)
@@ -1340,15 +1369,18 @@ function weekBoard(w, n){
     return out;
   };
   const maxFlags = Math.max(0, ...w.map(d => flagsOf(d).length));
+  const hasNotes = w.some(d => !d.closed && (d.notes || makeupNote(d.date)));
   const cells = (day, idx) => {
     const d = parse(day.date), isToday = day.date === TODAY;
     const mk = makeupNote(day.date), fl = flagsOf(day);
     /* no notes box on the day (Ramy, 29 Oct 2026: "those notes on top ... I don't like them"): a note shows as text, and is written from the day's ⋯ menu */
-    const notes = (day.notes || mk) ? `<span class="dnote" title="${esc((day.notes || '') + (mk ? ' ' + String(mk).replace(/<[^>]+>/g, ' ') : ''))}">Note</span>` : '';
+    /* a day's note sits at the END of the day (Ramy, 29 Oct 2026: "notes on the right if we're going across, at the bottom if we're going down") */
+    const notes = '', noteEnd = hasNotes ? `<div class="dnoteend">${day.notes ? '<b>Note</b> ' + esc(day.notes) : ''}${mk}</div>` : '';
     const dh = `<div class="dh"><div class="dt"${EDIT ? ` data-close="${esc(day.date)}" title="${day.closed ? 'Reopen this day' : 'Close this day (a holiday, a snow day)'}"` : ''}><span class="dow">${DOW[d.getDay()]}</span> <span class="dm">${dm(d)}${isToday ? ' · today' : ''}</span><small>${day.closed ? 'No course' : 'Day ' + (idx + 1)}</small>${day.closed ? '' : dayMark(day)}</div>`
       + (EDIT && !day.closed ? `<div class="dacts">${pinned(day.date) ? '<span class="pin" title="Copying a day’s shape leaves this one alone">Pinned</span>' : ''}<button type="button" class="more" data-menu="${esc(day.date)}" aria-label="Options for this day">⋯</button><button type="button" class="addtile" data-add="${esc(day.date)}" title="A new tile at the end of the day">+ Add a tile</button></div>` : '')
       + (fl.length ? `<div class="flags">${fl.join('')}</div>` : '') + (day.closed ? '' : notes) + '</div>';
     if (day.closed) return dh + `<div class="closedmsg">${EDIT ? 'Closed · click the date to reopen' : 'No course today'}</div>`;
+    /* (the note's place is kept on a closed day too, so the rows still line up) */
     const teachers = teachersOf(day);
     const tps = (day.sessions || []).filter(x => x.k === 'tp').sort(byStart);
     const byCol = new Map(places.get(day).at.map(t => [t.a, t]));
@@ -1356,9 +1388,9 @@ function weekBoard(w, n){
       const t = byCol.get(i);
       if (t) return tileHTML(day, t.x, null, tps.indexOf(t.x), teachers, { i, exact: t.exact, narrow: narrow[i], across });
       return `<div class="slot${narrow[i] ? ' narrow' : ''}" data-date="${esc(day.date)}" data-i="${i}"></div>`;
-    }).join('');
+    }).join('') + noteEnd;
   };
-  const track = cols.map((c, i) => narrow[i] ? 'var(--slim)' : 'var(--cell)').join(' ');
+  const track = cols.map((c, i) => narrow[i] ? 'var(--slim)' : 'var(--cell)').join(' ') + (hasNotes ? ' var(--note)' : '');
   const style = `--ncols:${cols.length};--track:${track};--hh:calc(var(--hh0) + ${maxFlags} * 22px)`;
   return `<div class="tscroll"><div class="tgrid tboard ${across ? 'across' : 'down'}" style="${style}">`
     + w.map(d => `<div class="day${d.date === TODAY ? ' today' : ''}${d.closed ? ' closed' : ''}" id="d-${esc(d.date)}">${cells(d, TT.days.indexOf(d))}</div>`).join('')
