@@ -113,6 +113,20 @@
   .rep{display:inline-block; margin:0 6px 6px 0; padding:3px 9px; border-radius:999px; font-size:12px; font-weight:600; background:color-mix(in oklch, var(--a-mustard) 28%, var(--paper));}
   .swap{margin:12px 0 0; padding:10px 0 0; border-top:2px solid var(--sand-line);}
   .code{font-family:'Instrument Sans','Karla',sans-serif; font-size:11px; font-weight:600; color:var(--grey); margin-left:4px;}
+
+  .act{background:var(--paper); border-radius:var(--r-card); box-shadow:var(--nb-shadow); border-top:3px solid var(--a-mustard); padding:18px 20px; margin:0 0 18px;}
+  .act .top{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;}
+  .act h2{font-family:'Newsreader',Georgia,serif; font-size:24px; margin:2px 0 4px;}
+  .act .why{color:var(--grey); font-size:14px; margin:0;}
+  .act .mins{font-size:12.5px; font-weight:700; padding:4px 10px; border-radius:999px; background:var(--field); white-space:nowrap;}
+  .act .steps{margin:14px 0 0; padding:0; list-style:none; counter-reset:s; display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px;}
+  .act .steps li{counter-increment:s; background:var(--field); border-radius:10px; padding:11px 13px 11px 42px; position:relative; font-size:14px; line-height:1.45;}
+  .act .steps li::before{content:counter(s); position:absolute; left:11px; top:10px; width:22px; height:22px; border-radius:50%; background:var(--ink); color:var(--paper); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px;}
+  .act .chips{display:flex; flex-wrap:wrap; gap:6px;}
+  .act .chip{font-size:12.5px; font-weight:600; padding:5px 11px; border-radius:999px; border:1px solid var(--sand-line); background:var(--paper);}
+  .act .chip em{font-style:normal; font-weight:500; color:var(--grey);}
+  .act .chip.now{background:var(--a-mustard); border-color:var(--a-mustard);}
+  @media (max-width:760px){ .act .steps{grid-template-columns:1fr;} }
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202610300010">
 </head>
@@ -212,6 +226,50 @@ else (async function(){
     return `<div class="grp"><b>The whole group first</b>${s.length ? `<span class="plus">${s[0][1]} of ${have.length}</span> have ${esc(s[0][0])} in today’s strengths: ${esc(s[0][2] || '')}. ` : ''}${a.length ? `<span class="minus">${a[0][1]} of ${have.length}</span> have ${esc(a[0][0])} in today’s action points: ${esc(a[0][2] || '')}.` : ''}</div>`;
   }
 
+
+  /* TODAY'S ACTIVITY (Ramy, 30 Oct 2026: "a pool of games ... keep the feedback fun and interactive ... a good balance of
+     positive things and some action points ... learner-centered, not too preachy"; mock-up docs/mockups/feedback-activity.html).
+     One a day for the group, never the same twice in a row; kept in the course settings as fbActs, so every tutor sees the
+     same. The peer sheets stay private until after the oral feedback (25 Oct), so the observers read from their own. */
+  const ACTS = [
+    ['steal', 'Steal a strength', 10, 'Starts from what the peers noticed. Everyone leaves with one thing to try, borrowed from a colleague.',
+      ['Each observer reads one line from their sheet: something that worked in a colleague’s lesson.', 'The teacher says what they were thinking at that moment.', 'Everyone picks one strength to “steal” for their next TP, and says when they’ll use it.']],
+    ['moment', 'Find the moment', 10, 'The observers’ notes take the group back into the lesson, one moment at a time.',
+      ['An observer reads one line from their sheet without saying which stage it was.', 'The teacher guesses the stage and says what was happening for the students.', 'The group names what made it work, or what one change would do.']],
+    ['eyes', 'Through the students’ eyes', 8, 'The lesson as the class lived it, not as the plan said.',
+      ['Each trainee takes one student from the class they watched.', 'As that student: what was easy, what was confusing, what helped?', 'The teacher picks one thing to keep and one to try next time.']],
+    ['rewind', 'One-minute rewind', 10, 'Talk turns into a quick try, in the room.',
+      ['The teacher chooses one minute of their lesson they would teach differently.', 'They teach that minute again, to the group, as they now would.', 'The observers say what was different and what it would do for the students.']],
+    ['criteria', 'Criteria match', 10, 'Connects what happened in the room to CELTA 5, without anyone reading it aloud.',
+      ['Each observer picks one note from their sheet.', 'The group matches it to a criterion together.', 'The teacher says whether it was a strength today or a next step.']],
+    ['line', 'Line up', 8, 'Everyone moves, everyone has a view.',
+      ['The tutor reads a statement about today’s lessons, such as “the instructions were clear”.', 'Trainees stand along a line from agree to disagree.', 'Two people at different ends say why, starting with something that worked.']],
+    ['ask', 'Ask your observer', 10, 'The teacher leads; the tutor comes in last.',
+      ['The teacher asks each observer one question about their lesson.', 'The observer answers from their sheet: one thing that worked, one to try.', 'The tutor adds what nobody has said yet.']]
+  ];
+  const actsOf = () => { const a = ((cs.fbActs || {})[group]) || []; return Array.isArray(a) ? a : []; };
+  function dealFor(dateISO, skip){
+    const used = actsOf(), today = used.find(x => x.date === dateISO);
+    if (today && !skip) return today.a;
+    const prev = used.filter(x => x.date < dateISO).sort((a, b) => a.date < b.date ? 1 : -1)[0];
+    const count = id => used.filter(x => x.a === id).length;
+    const pool = ACTS.map(x => x[0]).filter(id => id !== (prev && prev.a) && id !== skip).sort((a, b) => count(a) - count(b));
+    return pool[0] || ACTS[0][0];
+  }
+  async function keepAct(dateISO, id, loud){
+    const all = Object.assign({}, cs.fbActs || {}); const list = actsOf().filter(x => x.date !== dateISO).concat([{ date: dateISO, a: id }]).slice(-40);
+    all[group] = list; cs.fbActs = all;
+    try { const next = Object.assign({}, JSON.parse(localStorage.getItem('connect_course_settings') || '{}'), { fbActs: all }); localStorage.setItem('connect_course_settings', JSON.stringify(next)); const r = await S.putCourse('settings', next); if (loud && r && r.demo && window.hubDemoSay) hubDemoSay('This is a demo course. The activity is kept on this device.'); } catch (e) {}
+  }
+  function actHTML(day){
+    const id = dealFor(day.date), A = ACTS.find(x => x[0] === id) || ACTS[0], used = actsOf();
+    if (!used.some(x => x.date === day.date)) keepAct(day.date, id);
+    const usedAt = a => { const u = used.filter(x => x.a === a && x.date !== day.date).map(x => { const d = days.find(y => y.date === x.date); return d ? 'TP' + d.tp : ''; }).filter(Boolean); return u.length ? ' · used ' + u.join(', ') : ''; };
+    return `<section class="act"><div class="top"><div><p class="k">Today’s activity</p><h2>${esc(A[1])}</h2><p class="why">${esc(A[3])}</p></div><span class="mins">${A[2]} minutes</span></div>
+      <ol class="steps">${A[4].map(t => '<li>' + esc(t) + '</li>').join('')}</ol>
+      <div class="row"><button type="button" class="quiet" id="deal">Deal another</button><span class="saved">Then each trainee’s card, below.</span></div>
+      <p class="k" style="margin-top:14px">The pool</p><div class="chips">${ACTS.map(x => `<span class="chip${x[0] === A[0] ? ' now' : ''}">${esc(x[1])}<em>${esc(usedAt(x[0]))}</em></span>`).join('')}</div></section>`;
+  }
   function draw(){
     const day = days.find(d => d.date === date);
     if (!day) { $('app').innerHTML = '<p class="k">Teaching practice</p><h1>TP feedback</h1><p class="lede">This course has no teaching practice days on its timetable yet.</p>'; return; }
@@ -224,11 +282,13 @@ else (async function(){
       <div class="daybar"><select id="day" aria-label="Which day">${days.map(d => `<option value="${esc(d.date)}"${d.date === date ? ' selected' : ''}>${esc(fmtDay(d.date))} · TP${esc(d.tp)}</option>`).join('')}</select>
         <span class="meta">${fbTile ? esc(hubClockRange ? hubClockRange(fbTile.s, fbTile.e) : fbTile.s + '–' + fbTile.e) : ''}${list.length ? ' · ' + list.length + ' taught' : ''}</span></div>
       ${groups.length > 1 ? '<div class="tabs">' + groups.map(g => `<button type="button" data-group="${esc(g)}" aria-pressed="${g === group}">Group ${esc(g)}</button>`).join('') + '</div>' : ''}
+      ${list.length ? actHTML(day) : ''}
       ${groupLine(list, day)}
       <div class="grid">${list.length ? list.map(t => card(t, day)).join('') : '<p class="empty-group">Nobody in this group teaches on this day.</p>'}</div>`;
     $('day').onchange = e => { date = e.target.value; history2(); draw(); };
     document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { group = b.dataset.group; history2(); draw(); });
     document.querySelectorAll('.marks button').forEach(b => b.onclick = () => mark(b));
+    if ($('deal')) $('deal').onclick = async () => { const cur = dealFor(date); const nx = dealFor(date, cur); await keepAct(date, nx, true); draw(); };
   }
   function history2(){ try { history.replaceState(null, '', '?date=' + encodeURIComponent(date) + '&group=' + encodeURIComponent(group) + (Q.get('k') ? '&k=' + encodeURIComponent(Q.get('k')) : '')); } catch (e) {} }
   async function mark(b){
