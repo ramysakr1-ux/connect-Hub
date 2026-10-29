@@ -1581,11 +1581,20 @@ if (fbBack){
        page is the usual one. */
     const days = (TT.days || []).filter(d => d && !d.closed && ymd(d.date));
     const at = days.filter(d => ymd(d.date) <= TODAY).length;
-    kind = 'Welcome';
+    kind = TODAY === START ? 'Day one' : 'Welcome';
     title = firstName ? 'Welcome, ' + firstName + '.' : 'Welcome.';
-    when = 'The course started on <b>' + esc2(dayName(START)) + '</b>'
-      + (at && days.length ? ' — today is day ' + at + ' of ' + days.length + '.' : '.')
-      + (list.length ? ' Here is what is waiting for you, the most pressing first.' : ' There is nothing waiting on you yet — this page will tell you the moment there is.');
+    /* day one is not late (Ramy, 30 Oct 2026: "she joined the course on the first day ... the course is starting today ... she's
+       not late"): on the first day the card says the course starts today and lists what is on; from day two, what is waiting */
+    /* THE READINGS TO CATCH UP ON (Ramy, 30 Oct 2026: "she needs to read How to succeed on the CELTA, the CELTA glossary ... catch
+       up on what you haven't done yet"): whoever first opens their link on or after day one gets the pre-course readings too */
+    const CATCH = [{ text: 'Catch up: How to succeed on the CELTA', href: '39_reading.html?doc=succeed' }, { text: 'Catch up: The CELTA glossary', href: '39_reading.html?doc=glossary' }]
+      .concat(String(CS.deliveryMode || '') === 'online' ? [{ text: 'Catch up: The online room, how it works', href: '39_reading.html?doc=online' }] : []);
+    list = list.concat(CATCH);
+    when = TODAY === START
+      ? 'Your course starts today, <b>' + esc2(dayName(START)) + '</b>. Here is what is on for you today, and the readings to catch up on.'
+      : 'The course started on <b>' + esc2(dayName(START)) + '</b>'
+        + (at && days.length ? ' — today is day ' + at + ' of ' + days.length + '.' : '.')
+        + ' Here is what is waiting for you, the most pressing first, and the readings to catch up on.';
   } else if (list.length) {
     kind = 'Today';
     title = list[0].text;
