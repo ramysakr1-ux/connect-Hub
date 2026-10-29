@@ -130,6 +130,9 @@
   .due{color:var(--gold-deep); font-weight:600; font-size:0.72rem; padding:4px 11px;}
   .adrow{display:grid; grid-template-columns:minmax(150px,1fr) repeat(3, minmax(0,1.2fr)); gap:8px 12px; align-items:end; padding:10px 0; border-top:1px solid var(--row-line);}
   .adrow b{align-self:center; font-size:.92rem;} .adrow label{display:flex; flex-direction:column; gap:4px; font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--grey);}
+  .arules{margin:0 0 16px; padding:12px 14px; border:1px solid var(--sand-line); border-radius:10px; background:var(--paper);}
+  .arules h4{margin:0 0 4px;} .arule{display:flex; flex-wrap:wrap; gap:6px 16px; align-items:center; padding:8px 0; border-top:1px solid var(--row-line); font-size:.86rem;} .arule b{min-width:56px;}
+  .arule input{font:inherit; font-size:.84rem; padding:4px 6px; border:1px solid var(--sand-line); border-radius:6px; background:var(--field);} .arule input[type=number]{width:54px;} .arule small{flex-basis:100%; color:var(--grey);}
   .adrow input{font:inherit; font-size:.86rem; text-transform:none; letter-spacing:0; font-weight:500; color:var(--ink); padding:7px 9px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper);}
   @media (max-width:700px){ .adrow{grid-template-columns:1fr;} }
   .due.late{color:var(--brick);}
@@ -1571,10 +1574,40 @@ function asgDatesHTML(){
       <label><span>Opens</span><input type="datetime-local" data-f="open" value="${v(a.releaseFrom || a.outAt)}"></label>
       <label><span>Due</span><input type="datetime-local" data-f="due" value="${v(a.dueAt || a.due)}"></label>
       <label><span>Resubmission by</span><input type="datetime-local" data-f="resub" value="${v(a.resubDueAt)}"></label></div>`; }).join('');
+  /* THE RULES (Ramy, 29 Oct 2026: "we can't have fixed rules ... an option to say when they're due ... FoL due nine days
+     after ... LRT seven days after it's out"): per assignment, due N course days after the day its session is on, at a
+     time; the resubmission M course days after that. "Lay the dates" reads where each session tile is now. */
+  const R0 = TT.asgRules || {}, def = { fol: [5, '17:00', 5, '17:00'], lrt: [5, '17:00', 2, '17:00'], lsrt: [2, '17:00', 1, '17:00'], lfc: [4, '17:00', 1, '17:00'] };
+  const rule = k => { const r = R0[k] || {}, d = def[k] || [4, '17:00', 3, '17:00']; return { due: r.due != null ? r.due : d[0], dt: r.dt || d[1], re: r.re != null ? r.re : d[2], rt: r.rt || d[3] }; };
+  const rules = ASG_KEYS().map(k => { const r = rule(k), sess = asgSession(k);
+    return `<div class="arule" data-k="${esc(k)}"><b>${esc(asgShort(k, (w[k] || {}).title))}</b>
+      <span>due <input type="number" min="0" max="20" data-r="due" value="${r.due}"> course days after its session, at <input type="time" data-r="dt" value="${esc(r.dt)}"></span>
+      <span>resubmission <input type="number" min="0" max="20" data-r="re" value="${r.re}"> days after that, at <input type="time" data-r="rt" value="${esc(r.rt)}"></span>
+      <small>${sess ? 'Its session: ' + esc(dayName(sess.date)) + ', ' + esc(hubClock(sess.s)) : 'No session tile for it on the timetable yet'}</small></div>`; }).join('');
   return `<div class="imp" id="asgDates"><h3>Assignment dates</h3>
-    <p>When each assignment opens to the trainees, when it is due, and when a resubmission is due. They show on the days above, and the assignments follow them; the wording is in Course admin.</p>
+    <div class="arules"><h4>The rules</h4><p>Counted in course days from the day its session is on, so a weekend or a day off never takes a deadline.</p>${rules}
+      <div class="row"><button class="btn" id="asgLay">Lay the dates from the rules</button><span class="status" id="asgLaid"></span></div></div>
+    <h4>The dates</h4><p>When each assignment opens to the trainees, when it is due, and when a resubmission is due. Change any one by hand here; it shows on the day it falls. The wording is in Course admin.</p>
     ${rows || '<p class="status">No assignments on this course yet.</p>'}
     <div class="row"><button class="btn quiet" id="asgClose">Done</button></div></div>`;
+}
+/* the session tile an assignment goes out on: its short name or its title, at the start of a tile's name */
+function asgSession(k){
+  const w = rec('connect_assignment_wording_v2') || window.CONNECT_HUB_DEFAULT_WORDING || {}, a = w[k] || {};
+  const names = [asgShort(k, a.title), a.title || '', (window.CONNECT_HUB_DEFAULT_WORDING && (CONNECT_HUB_DEFAULT_WORDING[k] || {}).title) || ''].filter(Boolean).map(x => String(x).toLowerCase());
+  for (const d of (TT.days || [])) { if (d.closed) continue; const x = (d.sessions || []).find(t => { const n = String(t.t || '').toLowerCase(); return n && names.some(m => n.indexOf(m) === 0); }); if (x) return { date: d.date, s: x.s }; }
+  return null;
+}
+function layAsgDates(){
+  const open = (TT.days || []).filter(d => !d.closed).map(d => d.date), laid = [];
+  ASG_KEYS().forEach(k => {
+    const sess = asgSession(k); if (!sess) return;
+    const r = (TT.asgRules || {})[k] || {}, i = open.indexOf(sess.date); if (i < 0) return;
+    const due = open[Math.min(open.length - 1, i + (+r.due || 0))], re = open[Math.min(open.length - 1, open.indexOf(due) + (+r.re || 0))];
+    setAsgDate(k, 'open', sess.date + 'T' + sess.s); setAsgDate(k, 'due', due + 'T' + (r.dt || '17:00')); setAsgDate(k, 'resub', re + 'T' + (r.rt || '17:00'));
+    laid.push(asgShort(k));
+  });
+  return laid;
 }
 function setAsgDate(k, f, local){
   const w = rec('connect_assignment_wording_v2') || JSON.parse(JSON.stringify(window.CONNECT_HUB_DEFAULT_WORDING || {}));
@@ -1607,6 +1640,16 @@ function wireMove(){
   if (!IS_TUTOR) return;
   if ($('asgOpen')) $('asgOpen').addEventListener('click', () => { ASG_OPEN = !ASG_OPEN; render(); if (ASG_OPEN) { const b = $('asgDates'); if (b) b.scrollIntoView({ block: 'start', behavior: 'smooth' }); } });
   if ($('asgClose')) $('asgClose').addEventListener('click', () => { ASG_OPEN = false; render(); });
+  document.querySelectorAll('.arule input').forEach(inp => inp.addEventListener('change', () => {
+    const k = inp.closest('.arule').dataset.k, R1 = TT.asgRules = TT.asgRules || {}, r = R1[k] = R1[k] || {};
+    document.querySelectorAll('.arule[data-k="' + k + '"] input').forEach(x => { r[x.dataset.r] = x.type === 'number' ? (+x.value || 0) : x.value; });
+    save('Saved', { key: 'rule:' + k, text: asgShort(k) + ': due ' + r.due + ' days after its session at ' + r.dt + ', resubmission ' + r.re + ' days after' });
+  }));
+  if ($('asgLay')) $('asgLay').addEventListener('click', () => {
+    document.querySelectorAll('.arule').forEach(el => { const k = el.dataset.k, R1 = TT.asgRules = TT.asgRules || {}, r = R1[k] = R1[k] || {}; el.querySelectorAll('input').forEach(x => { r[x.dataset.r] = x.type === 'number' ? (+x.value || 0) : x.value; }); });
+    const laid = layAsgDates(); save('Dates laid', { text: 'Assignment dates laid from the rules: ' + (laid.join(', ') || 'none') });
+    note = laid.length ? 'Laid from the rules: ' + laid.join(', ') + '.' : 'No assignment has a session tile yet.'; render();
+  });
   document.querySelectorAll('#asgDates input[data-f]').forEach(i => i.addEventListener('change', () => { setAsgDate(i.closest('.adrow').dataset.k, i.dataset.f, i.value); note = 'Assignment dates saved'; render(); }));
   document.querySelectorAll('[data-move]').forEach(el => el.addEventListener('click', () => {
     MOVING = (MOVING === el.dataset.move) ? null : el.dataset.move; render();
@@ -2489,6 +2532,27 @@ function checksHTML(){
       if (teaching || !(x.who || []).length) lines.push(['note', `${x.title} is due on ${dayName(date)}, a day they teach`]);
     });
   });
+  /* WHAT CAMBRIDGE ASKS, SAID BEFORE IT IS SET (Ramy, 29 Oct 2026, the mock-up he chose): contact hours, observation
+     hours, the assessor's visit, Stage 2 after TP4 (Handbook 10, pp. 30-31), Stage 3 with two lessons left, and his own
+     rule of no resubmission on the last two days. Notes, never a block. */
+  (function(){
+    const mins = x => Math.max(0, (toMin(x.e) || 0) - (toMin(x.s) || 0));
+    const all = open.flatMap(d => (d.sessions || []).map(x => ({ x, d })));
+    const contact = all.filter(o => o.x.k !== 'lunch').reduce((a, o) => a + mins(o.x), 0) / 60;
+    const obs = all.filter(o => o.x.k === 'demo').reduce((a, o) => a + mins(o.x), 0) / 60;
+    if (contact < 120) lines.push(['note', `Contact hours: ${Math.round(contact * 4) / 4} of Cambridge’s 120`]);
+    if (obs < 6) lines.push(['note', `Observation: ${Math.round(obs * 4) / 4} hours of the 6 (demonstration lessons and observations)`]);
+    if (!all.some(o => o.x.k === 'assessor' || /assessor/i.test(o.x.t || ''))) lines.push(['note', 'No assessor visit on the timetable yet']);
+    const lastOf = n => { let at = -1; open.forEach((d, i) => { if (Number(d.tp) === n) at = i; }); return at; };
+    const firstOf = n => open.findIndex(d => Number(d.tp) === n);
+    const dayIdx = re => open.findIndex(d => (d.sessions || []).some(x => re.test(x.t || '')));
+    const s2 = dayIdx(/stage\s*2\s*tutorial/i), s3 = dayIdx(/stage\s*3\s*tutorial/i);
+    if (s2 < 0) lines.push(['note', 'No Stage 2 tutorials on the timetable yet (after TP4, as the groups change)']);
+    else if ((lastOf(4) >= 0 && s2 <= lastOf(4)) || (firstOf(5) >= 0 && s2 > firstOf(5))) lines.push(['note', 'Stage 2 tutorials should fall after TP4 and before TP5']);
+    if (s3 >= 0 && firstOf(7) >= 0 && s3 >= firstOf(7)) lines.push(['note', 'Stage 3 tutorials come with two lessons left, before TP7']);
+    const lastTwo = open.slice(-2).map(d => d.date);
+    Object.keys(DUES).forEach(date => { if (lastTwo.indexOf(date) !== -1) DUES[date].forEach(x => { if (/resub/i.test(x.title || '')) lines.push(['note', `${x.title} falls on ${dayName(date)}, one of the last two days`]); }); });
+  })();
   const un = Array.isArray(TT.unplaced) ? TT.unplaced : [];
   return `<div class="tchecks"><div class="cl"><span class="dot ${lines.some(l => l[0] === 'bad') || un.length ? 'bad' : 'ok'}"></span>${n} sessions on ${open.length} day${open.length === 1 ? '' : 's'}${un.length ? ` · <b>${un.length === 1 ? '1 day’s' : un.length + ' days’'} sessions don’t fit</b>` : ''}${lines.length ? '' : ' · no clashes'}</div>
     ${lines.map(l => `<div class="cl"><span class="dot ${l[0]}"></span>${esc(l[1])}</div>`).join('')}
@@ -3005,6 +3069,8 @@ function openMenu(date, anchor){
     <button type="button" data-copy="dow">Every ${esc(wd)}<small>The same weekday all course, except pinned days</small></button>
     <hr><button type="button" data-note="1">${day.notes ? 'Change this day’s note' : 'Add a note to this day'}<small>${day.notes ? esc(day.notes) : 'A line under the date, for everyone on the course'}</small></button>
     ${(TT.pattern && day.how && (day.how !== 'pattern' || day.sig !== daySig(day))) ? '<hr><button type="button" data-backpat="1">Put this day back on the pattern<small>Laid again from the day shaped on the shelf; its names stay</small></button>' : '<hr>'}<button type="button" data-pin="1">${pinned(date) ? 'Unpin this day' : 'Pin this day'}<small>${pinned(date) ? 'Copying a shape will change it again' : 'Copying a shape leaves it as it is — for an odd day like a demo lesson'}</small></button>
+    <button type="button" data-cut="late">Start this day later<small>Takes off what comes before a time you choose</small></button>
+    <button type="button" data-cut="early">Finish this day earlier<small>Takes off what comes after a time you choose</small></button>
     <button type="button" data-closeday="1">${day.closed ? 'Reopen this day' : 'Close this day'}<small>${day.closed ? 'Everything after it moves back one day' : 'A holiday or a snow day: everything after it moves along one day'}</small></button>`;
   el.hidden = false;
   const r = anchor.getBoundingClientRect();
@@ -3018,6 +3084,21 @@ function openMenu(date, anchor){
     closePop(); save(pinned(date) ? 'Pinned' : 'Unpinned'); render();
   });
   el.querySelector('[data-closeday]').addEventListener('click', () => { closePop(); toggleClosed(date); });
+  /* START LATER, FINISH EARLIER (the mock-up he chose): one day only; a tile cut across is shortened, one outside is
+     taken off; Undo puts it back */
+  el.querySelectorAll('[data-cut]').forEach(b => b.addEventListener('click', () => {
+    const late = b.dataset.cut === 'late', ses = (day.sessions || []).slice().sort(byStart);
+    const def = late ? (ses[1] ? ses[1].s : '11:30') : (ses.length ? ses[Math.max(0, ses.length - 3)].s : '14:00');
+    el.innerHTML = `<h4>${late ? 'Start' : 'Finish'} ${esc(dayName(date))} at</h4><input type="time" id="cutAt" value="${esc(def)}" step="300" style="font:inherit;padding:7px 9px;border:1px solid var(--sand-line);border-radius:var(--r-control);background:var(--field)"><div class="acts" style="margin-top:10px"><button type="button" class="btn quiet" id="cutX">Cancel</button><button type="button" class="btn" id="cutOk">${late ? 'Start later' : 'Finish earlier'}</button></div>`;
+    $('cutX').addEventListener('click', closePop);
+    $('cutOk').addEventListener('click', () => {
+      const at = toMin($('cutAt').value); if (at == null) return;
+      remember();
+      day.sessions = (day.sessions || []).filter(x => late ? toMin(x.e) > at : toMin(x.s) < at).map(x => { if (late && toMin(x.s) < at) x.s = toHM(at); if (!late && toMin(x.e) > at) x.e = toHM(at); return x; });
+      if (!day.sessions.some(x => x.k === 'tp')) { delete day.tp; delete day.setIndex; }
+      closePop(); save('Saved', { text: dayName(date) + (late ? ' starts at ' : ' finishes at ') + hubClock(toHM(at)) }); render();
+    });
+  }));
   el.querySelector('[data-note]').addEventListener('click', () => {
     el.innerHTML = `<h4>A note for ${esc(dayName(date))}</h4><input type="text" id="dNote" value="${esc(day.notes || '')}" placeholder="For example: bring your coursebook" style="width:100%;box-sizing:border-box;font:inherit;padding:8px 10px;border:1px solid var(--sand-line);border-radius:var(--r-control);background:var(--field)"><div class="acts" style="margin-top:10px"><button type="button" class="btn quiet" id="dNoteX">Cancel</button><button type="button" class="btn" id="dNoteOk">Save</button></div>`;
     const ok = () => { remember(); const v = $('dNote').value.trim(); if (v) day.notes = v; else delete day.notes; closePop(); save('Saved', { text: dayName(date) + (v ? ' has the note “' + v + '”' : '’s note was removed') }); render(); };
