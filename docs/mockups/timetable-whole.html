@@ -11,6 +11,7 @@
 <title>Timetable — mock-up</title>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../hub-tokens.css">
+<script src="../../input-sessions/library.js"></script>
 <style>
   body{margin:0; background:var(--paper); color:var(--ink); font-family:Karla,sans-serif;}
   .wrap{max-width:1480px; margin:0 auto; padding:28px 24px 60px;}
@@ -100,6 +101,8 @@
      not patchy"). Each kind has one colour, --c; the tile is lit from above (lighter top, deeper bottom), stands on a
      darker edge, and casts a soft shadow in its own colour. It rises under the pointer and sinks when it is picked up. */
   .k-input{--c:oklch(52% 0.09 155); --on:var(--paper);}
+  /* each tutor's own shade on their input sessions (Course admin's tutors' colours) */
+  .k-input.t-DO{--c:oklch(52% 0.09 155);} .k-input.t-JR{--c:oklch(50% 0.075 225);}
   .k-tp{--c:oklch(80% 0.085 150);}
   .k-feedback{--c:oklch(78% 0.09 240);}
   .k-break{--c:oklch(91% 0.008 260); --on:var(--grey);}
@@ -127,9 +130,17 @@
 
   .pop{position:absolute; z-index:20; background:var(--card); border:1px solid var(--sand-line); border-radius:12px; box-shadow:0 10px 30px var(--shade-far); padding:6px; min-width:200px;}
   .pop button{display:block; width:100%; text-align:left; border:0; background:none; padding:8px 10px; border-radius:8px; font:500 .86rem Karla,sans-serif; color:var(--ink); cursor:pointer;}
+  .pop.edit{width:310px; padding:12px 14px; display:grid; gap:10px;} .pop.edit .two{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .pop.edit .link{margin:-4px 0 0; font-size:.8rem; color:var(--grey);} .pop.edit .link b{color:var(--a-forest);}
+  .pop.edit .row2{display:flex; gap:12px; align-items:center;} .pop.edit .row2 button{width:auto; display:inline-block;}
+  .pop.edit button.q{background:none; padding:0; font-weight:700; text-decoration:underline; color:var(--grey);} .pop.edit button.q.red{color:var(--a-red); margin-left:auto;}
+  .pop.edit .btn{background:var(--a-forest); color:var(--paper); padding:9px 18px; border-radius:999px;} .pop.edit .btn:hover{background:var(--a-forest-2);}
   .pop button:hover{background:var(--sand-deep);} .pop button.on{font-weight:700;}
   .pop .ph{font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; font-weight:700; color:var(--grey); padding:6px 10px 2px;}
 
+  .swapbar{display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; margin:12px 0 0; padding:10px 14px; background:var(--card); border:1px solid var(--sand-line); border-left:4px solid var(--a-mustard); border-radius:var(--r-strip); font-size:.88rem; box-shadow:0 6px 18px var(--shade-far);}
+  .swapbar[hidden]{display:none;}
+  .swapbar button{border:0; background:none; font:700 .86rem Karla,sans-serif; color:var(--a-forest); text-decoration:underline; cursor:pointer; padding:0;}
   .checks{display:flex; flex-wrap:wrap; gap:8px 18px; margin:14px 0 0; font-size:.84rem;}
   .checks span{display:inline-flex; gap:6px; align-items:center;}
   .checks b{font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; padding:2px 6px; border-radius:4px;}
@@ -145,7 +156,7 @@
 <div class="wrap" id="root">
   <p class="eyebrow">Mock-up · Timetable</p>
   <h1 id="title">Week 1</h1>
-  <p class="lede">Connect's timetable, four weeks, Monday 2 November to Friday 27 November. No TP on the Fridays of weeks 2 and 3: Stage 2 tutorials after TP4, then Stage 3 tutorials and filmed observations after TP6. In edit mode: set the course's shape, who teaches, and when each assignment is due; drag from the shelf; click a day for a late start or an early finish.</p>
+  <p class="lede">Double-click a tile (or press and hold on a touch screen) to change it. Connect's timetable, four weeks, Monday 2 November to Friday 27 November. No TP on the Fridays of weeks 2 and 3: Stage 2 tutorials after TP4, then Stage 3 tutorials and filmed observations after TP6. In edit mode: set the course's shape, who teaches, and when each assignment is due; drag from the shelf; click a day for a late start or an early finish.</p>
   <div class="bar">
     <div class="seg" id="mode"><button data-v="view" class="on">View only</button><button data-v="edit">Edit</button></div>
     <div class="seg" id="lay"><button data-v="across" class="on">Across</button><button data-v="down">Down</button></div>
@@ -200,6 +211,7 @@
   </section>
 
   <div class="scroller"><div class="grid across" id="grid"></div></div>
+  <div class="swapbar" id="swapbar" hidden></div>
   <div class="checks" id="checks"></div>
   <div class="key" id="key"></div>
 </div>
@@ -345,10 +357,19 @@
     if (!x) el.className = 'cell empty';
     else {
       var showT = true;
-      el.className = 'cell k-' + x.k + (x.by ? ' has-who' : '') + (mins(BAR[c][1]) - mins(BAR[c][0]) <= 15 ? ' slim' : '');
+      el.className = 'cell k-' + x.k + (x.k === 'input' && x.by ? ' t-' + x.by : '') + (x.by ? ' has-who' : '') + (mins(BAR[c][1]) - mins(BAR[c][0]) <= 15 ? ' slim' : '');
       el.innerHTML = '<span class="t">' + esc(x.t) + (x.me ? ' <span class="me">' + x.me + '</span>' : '') + '</span>' + (x.by ? '<button class="who" type="button">' + x.by + '</button>' : '') + (showT ? '<span class="tm">' + x.s + (mins(BAR[c][1]) - mins(BAR[c][0]) <= 15 && lay === 'across' ? '<br>' : '–') + x.e + '</span>' : '');
       el.title = KINDS[x.k] + ': ' + x.t + (x.me ? ', trainee ' + x.me : '') + (x.by ? ', ' + (x.by === 'DO' ? 'Diane Okonkwo' : 'Jordan Reyes') : '') + ', ' + x.s + ' to ' + x.e;
       if (mode === 'edit' && x.by) el.querySelector('.who').addEventListener('click', function(e){ e.stopPropagation(); x.by = x.by === 'DO' ? 'JR' : 'DO'; render(); });
+      /* CHANGE A TILE (Ramy, 29 Oct 2026: "change the title of one of these inputs ... press and hold"): double-click on a
+         laptop, as in a spreadsheet; press and hold for half a second on a touch screen */
+      if (mode === 'edit') {
+        el.addEventListener('dblclick', function(e){ if (!e.target.closest('.who')) editTile(el, r, c); });
+        var hold = null, sx = 0, sy = 0;
+        el.addEventListener('pointerdown', function(e){ if (e.pointerType === 'mouse') return; sx = e.clientX; sy = e.clientY; hold = setTimeout(function(){ editTile(el, r, c); }, 500); });
+        el.addEventListener('pointermove', function(e){ if (hold && Math.hypot(e.clientX - sx, e.clientY - sy) > 8) { clearTimeout(hold); hold = null; } });
+        el.addEventListener('pointerup', function(){ clearTimeout(hold); hold = null; });
+      }
     }
     if (mode === 'edit') {
       el.draggable = !!x;
@@ -356,11 +377,56 @@
       el.addEventListener('dragover', function(e){ if (drag && drag.from !== 'flag') { e.preventDefault(); el.classList.add('over'); } });
       el.addEventListener('dragleave', function(){ el.classList.remove('over'); });
       el.addEventListener('drop', function(e){ e.preventDefault(); if (!drag) return;
-        if (drag.from === 'cell') { var a = CELLS[drag.r][drag.c], b = CELLS[r][c]; CELLS[r][c] = place(a, c); CELLS[drag.r][drag.c] = place(b, drag.c); }
+        if (drag.from === 'cell') { var a = CELLS[drag.r][drag.c], b = CELLS[r][c]; CELLS[r][c] = place(a, c); CELLS[drag.r][drag.c] = place(b, drag.c); if (a && b && a.by && b.by && a.by !== b.by) offer({ r1: drag.r, c1: drag.c, r2: r, c2: c, a: a, b: b }); }
         else if (drag.from === 'shelf') { var it = SHELF[drag.i], o = { k: it.k, t: it.t, asg: it.asg, s: BAR[c][0], e: hm(mins(BAR[c][0]) + it.len) }; if (it.k !== 'assessor' && it.k !== 'event') o.by = 'DO'; CELLS[r][c] = o; }
         drag = null; render(); });
     }
     return el;
+  }
+  /* the library's sessions, for the title box and the line that says which page a title opens */
+  var LIB = ['Course introduction','Classroom management','Lesson frameworks','Writing the lesson plan','Receptive skills','Language analysis','PPP','Eliciting and CCQs','Teaching vocabulary','Teaching one-to-one','Phonology: sounds','Text-based teaching','Guided discovery vs PPP','Error correction','Word and sentence stress','Teaching speaking','Connected speech','Functional language','Teaching productive skills','Guided to less-guided practice','Teaching writing','Teaching literacy','Teaching exam classes','Alternative teaching techniques','Drama in the ELT classroom','Life after CELTA'];
+  /* the same rules the library uses on the real site (input-sessions/library.js), so the line says what Lite will do */
+  function libFor(t){ var sl = (window.InputLib && InputLib.slugsFor(t)) || []; if (!sl.length) return ''; return sl.map(function(x){ return x.split('-').map(function(w, i){ return i ? w : w.charAt(0).toUpperCase() + w.slice(1); }).join(' '); }).join(' and '); }
+  function editTile(anchor, r, c){
+    closePop(); var x = CELLS[r][c]; if (!x) return;
+    var len = mins(x.e) - mins(x.s);
+    pop = document.createElement('div'); pop.className = 'pop edit';
+    pop.innerHTML = '<div class="ph">Change this tile</div>'
+      + '<label><span class="lab">Title</span><input type="text" id="edT" list="libList"></label><datalist id="libList">' + LIB.map(function(n){ return '<option value="' + esc(n) + '">'; }).join('') + '</datalist>'
+      + '<p class="link" id="edL"></p>'
+      + '<div class="two"><label><span class="lab">Tutor</span><select id="edB"><option value="">None</option><option value="DO">Diane (DO)</option><option value="JR">Jordan (JR)</option></select></label>'
+      + '<label><span class="lab">Kind</span><select id="edK">' + Object.keys(KINDS).map(function(k){ return '<option value="' + k + '">' + KINDS[k] + '</option>'; }).join('') + '</select></label></div>'
+      + '<div class="two"><label><span class="lab">Starts</span><input type="time" id="edS" step="300"></label>'
+      + '<label><span class="lab">Length</span><select id="edN">' + [15,30,45,60,75,90,120,150,180].map(function(m){ return '<option value="' + m + '">' + (m < 60 ? m + ' min' : Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + (m % 60) : '')) + '</option>'; }).join('') + '</select></label></div>'
+      + '<div class="row2"><button class="btn" id="edSave">Save</button><button type="button" class="q" id="edCancel">Cancel</button><button type="button" class="q red" id="edDel">Take it off</button></div>';
+    document.body.appendChild(pop);
+    var b = anchor.getBoundingClientRect(), left = Math.min(b.left + scrollX, scrollX + innerWidth - 330); pop.style.left = Math.max(8, left) + 'px'; pop.style.top = (b.bottom + scrollY + 6) + 'px';
+    var T = pop.querySelector('#edT'), L = pop.querySelector('#edL'), K = pop.querySelector('#edK');
+    T.value = x.t; pop.querySelector('#edB').value = x.by || ''; K.value = x.k; pop.querySelector('#edS').value = x.s; pop.querySelector('#edN').value = String(len);
+    function link(){ if (K.value !== 'input') { L.textContent = ''; return; } var m = libFor(T.value); L.innerHTML = m ? 'Opens Connect&rsquo;s session: <b>' + esc(m) + '</b>' : 'Your own session: no page in the library'; }
+    T.addEventListener('input', link); K.addEventListener('change', link); link(); T.focus(); T.select();
+    pop.querySelector('#edSave').addEventListener('click', function(){
+      var st = pop.querySelector('#edS').value, n = +pop.querySelector('#edN').value, by = pop.querySelector('#edB').value;
+      CELLS[r][c] = Object.assign({}, x, { t: T.value.trim() || x.t, k: K.value, s: st, e: hm(mins(st) + n), by: by || undefined }); closePop(); render();
+    });
+    pop.querySelector('#edCancel').addEventListener('click', closePop);
+    pop.querySelector('#edDel').addEventListener('click', function(){ CELLS[r][c] = null; closePop(); render(); });
+  }
+  /* AFTER A SWAP OF TWO TUTORS' SESSIONS (Ramy, 29 Oct 2026: "sometimes change the input but leave the trainer, and
+     sometimes change the trainers and the input"): by default each session takes its tutor with it; one click keeps
+     each tutor on their own day instead (initials and colour follow), or undoes the swap. */
+  var swapT = null;
+  function offer(w){
+    var bar = document.getElementById('swapbar'), A = w.a, B = w.b;
+    function nm(x){ return esc(x.t) + ' (' + x.by + ')'; }
+    bar.innerHTML = '<span><b>Swapped</b> ' + nm(A) + ' and ' + nm(B) + '. Each kept its tutor.</span><button type="button" data-a="keep">Keep each tutor on their day instead</button><button type="button" data-a="undo">Undo</button>';
+    bar.hidden = false; clearTimeout(swapT); swapT = setTimeout(function(){ bar.hidden = true; }, 12000);
+    bar.onclick = function(e){
+      var t = e.target.closest('button'); if (!t) return;
+      if (t.dataset.a === 'keep') { CELLS[w.r2][w.c2].by = B.by; CELLS[w.r1][w.c1].by = A.by; bar.innerHTML = '<span><b>Swapped the sessions;</b> each tutor kept their day.</span>'; }
+      if (t.dataset.a === 'undo') { CELLS[w.r1][w.c1] = A; CELLS[w.r2][w.c2] = B; bar.innerHTML = '<span>Put back as it was.</span>'; }
+      clearTimeout(swapT); swapT = setTimeout(function(){ bar.hidden = true; }, 3000); render();
+    };
   }
   /* a tile moved keeps its length; it starts where it lands */
   function place(x, c){ if (!x) return null; var o = Object.assign({}, x), len = mins(x.e) - mins(x.s); o.s = BAR[c][0]; o.e = hm(mins(o.s) + len); return o; }
@@ -389,7 +455,7 @@
     pop.addEventListener('click', function(e){ var t = e.target.closest('button'); if (!t) return; if (t.dataset.m) MOD[r] = t.dataset.m; else delete MOD[r]; closePop(); render(); });
   }
   function closePop(){ if (pop) { pop.remove(); pop = null; } }
-  document.addEventListener('click', function(e){ if (pop && !e.target.closest('.pop') && !e.target.closest('.day')) closePop(); });
+  document.addEventListener('click', function(e){ if (pop && !e.target.closest('.pop') && !e.target.closest('.day') && !e.target.closest('.cell')) closePop(); });
 
   function render(){
     closePop();
@@ -452,7 +518,7 @@
   seg('mode', function(x){ mode = x; }); seg('lay', function(x){ lay = x; }); seg('weeks', function(x){ week = +x; });
   document.querySelectorAll('.setup .f select, .setup .f input, #tutMode, #tutFrom').forEach(function(e){ e.addEventListener('change', function(){ document.getElementById('tutFrom').style.display = document.getElementById('tutMode').value === 'split' ? '' : 'none'; build(); render(); }); });
   document.getElementById('tutFrom').style.display = 'none';
-  document.getElementById('key').innerHTML = Object.keys(KINDS).map(function(k){ return '<span><i class="k-' + k + '"></i>' + KINDS[k] + '</span>'; }).join('');
+  document.getElementById('key').innerHTML = '<span><i class="k-input t-DO"></i>Input · Diane (DO)</span><span><i class="k-input t-JR"></i>Input · Jordan (JR)</span>' + Object.keys(KINDS).filter(function(k){ return k !== 'input'; }).map(function(k){ return '<span><i class="k-' + k + '"></i>' + KINDS[k] + '</span>'; }).join('');
   build(); render();
 })();
 </script>
