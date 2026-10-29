@@ -35,8 +35,9 @@
     var anchor = document.getElementById('onlineRooms'); if (!anchor) return;
     css();
     var box = document.createElement('section'); box.className = 'aboutme'; box.id = 'aboutMe';
-    var G = [['woman', 'Woman'], ['man', 'Man'], ['other', 'Non-binary'], ['unsaid', 'Prefer not to say']];
-    box.innerHTML = '<h2>Three questions for your tutors</h2>'
+    /* the words Ramy chose, in his order (29 Oct 2026); the stored values stay as they were */
+    var G = [['woman', 'Female'], ['man', 'Male'], ['other', 'Non-binary'], ['unsaid', 'Prefer not to say']];
+    box.innerHTML = '<h2>A few questions for your tutors</h2>'
       + '<p class="sub">Your tutors use these to make mixed teaching practice groups. Only the tutors see them.</p>'
       + '<div class="f">'
       + '<div><label class="l" for="abLang">Your first language</label><input type="text" id="abLang" maxlength="60" placeholder="For example, Turkish"></div>'
@@ -45,13 +46,15 @@
       + '</div>'
       + '<div style="margin-top:14px"><label class="l">Your gender <span style="text-transform:none;letter-spacing:0;font-weight:500">(optional)</span></label><div class="opts">'
       + G.map(function(g){ return '<label><input type="radio" name="abGender" value="' + g[0] + '">' + esc(g[1]) + '</label>'; }).join('') + '</div></div>'
+      /* pronouns (29 Oct 2026): optional, for the tutors who write about the trainee in their feedback and report */
+      + '<div style="margin-top:14px;max-width:320px"><label class="l" for="abPro">Your pronouns <span style="text-transform:none;letter-spacing:0;font-weight:500">(optional)</span></label><input type="text" id="abPro" maxlength="30" placeholder="For example, she/her or they/them"></div>'
       + '<button type="button" class="go">Save my answers</button><p class="msg" role="status"></p>';
     anchor.parentNode.insertBefore(box, anchor.nextSibling);
     box.querySelector('.go').addEventListener('click', function(){
       var lang = box.querySelector('#abLang').value.trim(), nat = box.querySelector('#abNat').value.trim(), exp = box.querySelector('#abExp').value;
       var g = box.querySelector('input[name=abGender]:checked'), msg = box.querySelector('.msg');
       if (!lang || !nat || !exp) { msg.className = 'msg err'; msg.textContent = 'Answer the first three, please. Gender is up to you.'; return; }
-      try { localStorage.setItem(KEY, JSON.stringify({ firstLanguage: lang, nationality: nat, experience: exp, gender: g ? g.value : 'unsaid', by: 'trainee', at: new Date().toISOString() })); } catch (e) {}
+      try { localStorage.setItem(KEY, JSON.stringify({ firstLanguage: lang, nationality: nat, experience: exp, gender: g ? g.value : 'unsaid', pronouns: box.querySelector('#abPro').value.trim(), by: 'trainee', at: new Date().toISOString() })); } catch (e) {}
       box.innerHTML = '<h2>Thank you</h2><p class="sub" style="margin:0">Your tutors have your answers.</p>';
       setTimeout(function(){ box.remove(); }, 3500);
     });
