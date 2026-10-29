@@ -99,7 +99,9 @@
     return [
       { m: 'week', t: tr[0].t, date: iso(wk), label: 'A week before · ' + first(tr[0]) },
       { m: 'friday', t: tr[1].t, date: iso(fri), label: 'The Friday before · ' + first(tr[1]) },
-      { m: 'day1', t: tr[2].t, date: c.start, label: 'Day one · ' + first(tr[2]) }
+      { m: 'day1', t: tr[2].t, date: c.start, label: 'Day one, first visit · ' + first(tr[2]) },
+      /* the one who signed on the Friday, on day one: their usual home (Ramy, 30 Oct 2026: "what do they see on day one") */
+      { m: 'day1s', t: tr[1].t, date: c.start, label: 'Day one, signed · ' + first(tr[1]) }
     ];
   }
   /* the day moves for the whole demo course (it is the presenter's own copy), then the trainee opens; the store is told with
@@ -477,8 +479,8 @@
         + (ds.some(function(d){ return d.date === today; }) ? '' : '<option value="' + esc(today) + '" selected>' + esc(short(today)) + '</option>') + '</select>'
       : '<span class="hp-tag" style="text-transform:none; letter-spacing:0; font-size:0.78rem;">' + esc((ds.filter(function(d){ return d.date === today; })[0] || { label: short(today) }).label) + '</span>';
     /* THREE MOMENTS BEFORE THE COURSE (Ramy, 30 Oct 2026: "a week before the course starts, the Friday before, and the
-       first day ... so they get to see all of them"): the first three trainees, each opened on that day. A week before,
-       the agreement comes first (his rule, 26 Oct); the Friday before and day one have signed. */
+       first day ... so they get to see all of them"): the first three trainees, each opened on that day. A week before
+       and on day one (a first visit) the agreement is the welcome card's first step; the Friday before has signed. */
     var mo = moments(), cur = rd('hub:present:moment') || {};
     var trSel = tr.length > 1
       ? '<select id="hpTrainee" aria-label="Which trainee">'

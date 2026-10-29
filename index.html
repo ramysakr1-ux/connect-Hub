@@ -170,6 +170,7 @@
   .hero.hv2.pre .todo a:focus-visible{outline:2px solid var(--gold-lifted); outline-offset:3px;}
   /* before the agreement is signed (30 Oct 2026): it is step one, and the rest say they come after it */
   .hero .todo a.sign:after, .hero.hv2.pre .todo a.sign:after{content:'Sign';}
+  .hero:not(.pre) .todo a.sign:after, .hero:not(.pre) .todo a.locked:after{display:inline-block; margin-left:10px; padding:1px 8px; border-radius:999px; font-size:.78em; font-weight:700; text-decoration:none; background:oklch(100% 0 0 / .14);}
   .hero .todo a.locked{opacity:.6;} .hero .todo a.locked:after, .hero.hv2.pre .todo a.locked:after{content:'After you sign';}
   html.needs-sign .titledoors{display:none !important;}
   .hero.hv2.pre .todo li:first-child a{background:var(--gold-wash); box-shadow:inset 0 0 0 2px var(--gold), 0 18px 30px -20px oklch(15% 0.04 195 / .8);}
@@ -735,7 +736,7 @@ function status(el,text,tone){ if(!el) return; el.textContent=text; el.className
   if (cs.presentToday && !(s && s.at)) {
     let mo = null; try { mo = JSON.parse(localStorage.getItem('hub:present:moment') || 'null'); } catch (e) {}
     const me = (rec('hub:me') || {});
-    if (mo && mo.m !== 'week' && me.token && mo.t === me.token) {
+    if (mo && (mo.m === 'friday' || mo.m === 'day1s') && me.token && mo.t === me.token) {   /* day one is a first visit too: she signs then (30 Oct 2026) */
       s = { name: me.name || '', at: new Date(Date.parse(cs.start + 'T09:00:00') - 9 * 864e5).toISOString(), special: { needs: false }, demo: 'present' };
       try { localStorage.setItem('chub:agreement', JSON.stringify(s)); } catch (e) {}
     }
@@ -1508,7 +1509,10 @@ if (fbBack){
   /* first time this link opens here (per device: nothing to sync, and a new
      phone saying hello once is no harm) */
   const WELCOMED = 'hub:welcomed:' + (ME.token || '');
-  const firstVisit = (function(){ try { return !!ME.token && !localStorage.getItem(WELCOMED); } catch (e) { return false; } })();
+  /* someone who signed their agreement before the course began has been here already, whatever this device remembers: on day
+     one they get their usual home (Ramy, 30 Oct 2026) */
+  const signedBefore = (function(){ const a = rec('chub:agreement'); return !!(a && a.at && START && String(a.at).slice(0, 10) < START); })();
+  const firstVisit = (function(){ try { return !!ME.token && !signedBefore && !localStorage.getItem(WELCOMED); } catch (e) { return false; } })();
   if (firstVisit && !beforeStart && !afterEnd) setTimeout(function(){ try { localStorage.setItem(WELCOMED, new Date().toISOString()); } catch (e) {} }, 0);
 
   if (ASK_NAME) {
@@ -1620,7 +1624,7 @@ if (fbBack){
      agreement, so a click never does nothing */
   if (window.NEEDS_SIGN && !ASK_NAME) {
     const AGR = '29_candidate_agreement.html?first=1';
-    list = [{ text: 'Sign your agreement with the center', href: AGR, sign: true }].concat(list.map(it => Object.assign({}, it, { href: AGR, out: false, locked: true })));
+    list = [{ text: 'Sign your agreement with the center', href: AGR, sign: true }].concat(list.filter(it => !/29_candidate_agreement/.test(String(it.href || ''))).map(it => Object.assign({}, it, { href: AGR, out: false, locked: true })));
     when = (when ? when + ' ' : '') + 'First, sign your agreement with the center; everything else opens once you have.';
   }
   door = ASK_NAME ? null
