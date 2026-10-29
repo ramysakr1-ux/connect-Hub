@@ -443,6 +443,10 @@
   .sheet-rows .linkish{margin-left:auto; border:0; background:none; padding:0; font:700 0.78rem 'Karla',sans-serif; color:var(--brick); text-decoration:underline; cursor:pointer;}
   .bkrule{font-size:0.78rem; color:var(--grey); margin:6px 0;} .bkmsg{font-size:0.82rem; font-weight:700; color:var(--ink-warm); margin:8px 0 0; min-height:1em;}
   .sheetin{margin:10px 0;}
+  .gswitch{display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; margin:0 0 14px;}
+  .gswitch button{border:1px solid var(--sand-line); background:var(--paper); border-radius:999px; padding:7px 16px; font:700 0.86rem 'Karla',sans-serif; color:var(--grey); cursor:pointer;}
+  .gswitch button.on{background:var(--a-forest); border-color:var(--a-forest); color:var(--paper);}
+  .gswitch span{font-size:0.8rem; color:var(--grey);}
   .swapbar{position:fixed; left:50%; bottom:22px; transform:translateX(-50%); z-index:50; display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; max-width:min(92vw, 760px); padding:11px 16px; background:var(--paper); border:1px solid var(--sand-line); border-left:4px solid var(--a-mustard); border-radius:12px; font-size:0.86rem; box-shadow:0 12px 30px -10px oklch(30% 0.04 60 / .45);}
   .swapbar[hidden]{display:none;}
   .swapbar button{border:0; background:none; padding:0; font:700 0.86rem 'Karla',sans-serif; color:var(--teal); text-decoration:underline; cursor:pointer;}
@@ -1136,7 +1140,7 @@ function teachersOf(day){
   const out = [];
   if (!day.tp) return out;
   if (TPP === null) TPP = rec('connect_tp_points_v1') || {};
-  GROUPS.forEach(gr => {
+  GROUPS.filter(gr => !GVIEW || GROUPS.length < 2 || IS_TRAINEE || String(gr.group) === GVIEW).forEach(gr => {
     const set = gr.sets[day.setIndex] || [];
     if (!set.length) return;
     const rows = (TPP.groups && TPP.groups[gr.group]) || TPP.points || {};
@@ -1173,7 +1177,7 @@ function tileHTML(day, x, B, tpIdx, teachers, place){
          little circle so it will have a little light, showing that it's on"): the trainee teaching this slot, so a day's
          three tiles read CBA or BCA; the reader's own letter is dark; the circle lights while the lesson is on. */
       /* two groups teaching side by side (a tutor's board) say whose letter is whose */
-      const many = teachers.length > 1;
+      const many = false;
       const who = teachers.map(g => ({ g, p: g.order[tpIdx] })).filter(x => x.p).map(({ g, p }) => {
         const me = !!meTok && p.token === meTok;
         return `<span class="tchr${me ? ' me' : ''}" title="${esc((many ? 'Group ' + (g.group || '') + ' · ' : '') + (me ? 'You teach' : 'Teaching'))}"><i class="av">${esc(String(p.letter || ''))}</i>${many ? '<small class="gp">Group ' + esc(g.group || '') + '</small>' : ''}</span>`;
@@ -1352,6 +1356,19 @@ function colAt(m, cols){
    and the assignments going out sit with the day's name. Every place on the grid, filled or not, carries its date and
    its slot (data-date, data-i), which is how a drop finds where it lands. */
 let WEEKCOLS = {};
+/* ONE GROUP AT A TIME (Ramy, 29 Oct 2026, on two letters in one tile: "are they co-teaching?"): where two groups teach
+   side by side, staff look at one group's letters at a time; a trainee only ever has their own. Remembered per browser. */
+let GVIEW = (function(){ try { return localStorage.getItem('tt:group') || ''; } catch (e) { return ''; } })();
+function groupSwitchHTML(){
+  if (IS_TRAINEE || GROUPS.length < 2) return '';
+  if (!GVIEW || !GROUPS.some(g => String(g.group) === GVIEW)) GVIEW = String(GROUPS[0].group);
+  return `<div class="gswitch" role="tablist" aria-label="Which group's teaching practice">${GROUPS.map(g => `<button type="button" role="tab" data-gview="${esc(g.group)}" class="${String(g.group) === GVIEW ? 'on' : ''}" aria-selected="${String(g.group) === GVIEW}">Group ${esc(g.group || '—')}</button>`).join('')}<span>Teaching practice shows one group at a time.</span></div>`;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-gview]'); if (!b) return;
+  GVIEW = b.dataset.gview; try { localStorage.setItem('tt:group', GVIEW); } catch (x) {}
+  render();
+});
 function weekBoard(w, n){
   const across = ACROSS(), cols = weekCols(w);
   w.forEach(d => { WEEKCOLS[d.date] = cols; });
@@ -1740,7 +1757,8 @@ function render(){
   const used = new Set(); (TT.days || []).forEach(d => (d.sessions || []).forEach(x => { if (x.k === 'input' && x.by !== undefined && x.by !== '' && TUTORS[+x.by]) used.add(+x.by); }));
   Object.values(OUTS || {}).forEach(list => list.forEach(o => { const i = TUTORS.indexOf(o.by); if (i !== -1) used.add(i); }));
   const key = `<div class="tkey"><span><i class="tile k-input"></i>Input sessions, in each tutor’s shade, with their initials</span><span><i class="tile k-tp"></i>Teaching practice</span><span><i class="tile k-feedback"></i>TP feedback</span><span><i class="tile k-plan"></i>Planning</span><span><i class="tile k-demo"></i>Demo lessons &amp; observations</span><span><i class="tile k-task"></i>Assignments &amp; tutorials</span><span><i class="tile k-assessor"></i>Assessor</span><span><i class="tile k-lunch"></i>Lunch</span><span><i class="tile k-break"></i>Breaks</span><span><i class="tile k-event"></i>Everything else</span><span><i class="due"></i>A deadline</span></div>`;
-  app.innerHTML = head + updatedHTML() + zoneLine() + bar + roomsStrip() + key + weeks.map((w, i) => {
+  const gsw = groupSwitchHTML();
+  app.innerHTML = head + updatedHTML() + zoneLine() + bar + roomsStrip() + key + gsw + weeks.map((w, i) => {
     const a = parse(w[0].date), b = parse(w[w.length-1].date);
     return `<section class="wk"><h2>Week ${i+1} <small>${dm(a)} – ${dm(b)}</small></h2>${changeNote(w)}${weekBoard(w, i)}</section>`;
   }).join('') + keyLine() + `<p class="legend">Teaching practice runs the same number on two days, one teaching set each: the letters name the trainees teaching that day. ${GROUPS.map(g => 'Group ' + esc(g.group || '—') + ': ' + g.sets.map(R.setName).filter(Boolean).join(' and ')).join('. ')}.</p>`;
