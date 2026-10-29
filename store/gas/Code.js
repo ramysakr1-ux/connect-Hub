@@ -313,7 +313,7 @@ function doPost(e) {
 var IN_REQUEST_ = false, CHANGED_ = {}, REQ_COURSE_ = null, REQ_VER_ = '';
 var READ_OPS_ = { ping: 1, boot: 1, version: 1, me: 1, get: 1, course: 1, roster: 1, celta5Assets: 1, audio: 1, materials: 1,
   questions: 1, getQuestionAudio: 1, getNoteAudio: 1, getInterviewAudio: 1, trainerNotes: 1, peerSheets: 1, passInfo: 1,
-  ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1 };
+  ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1 };
 function verKey_(id) { return 'ver:' + id; }
 function versionStamp_(id) {
   var v = PropertiesService.getScriptProperties().getProperty(verKey_(id)) || '0';
@@ -1547,6 +1547,70 @@ case 'inbox': {
       // other course kinds were added, so every course's learning was refused and lost.
       if (tutor) cres.critLearn = courseRead_(course.id, 'critLearn') || null;
       return cres;
+    }
+    /* ---- TUTORIALS AND CONSULTATIONS, BOOKED FROM THE TIMETABLE (v182, 29 Oct 2026) -----------------------------
+       Ramy: "a booking system for tutorials and consultations ... consultation will be 45 minutes ... 15 minutes each
+       ... take a look at the Connect rules, we're gonna apply the same rules here". Connect's rules (migration 0275,
+       consultation-actions.ts; build-spec.md rule 15): a tile is a sheet, cut into 15-minute places; a trainee books the
+       NEXT open place, in order. A consultation: before an assignment's first submission, any tutor; once it is
+       submitted, consultation on it is with their own tutor only (judged against the assignment they name, or, naming
+       none, against whether they have submitted anything). A tutorial is with their own tutor, one place a sheet.
+       Their own tutor is their group's tutor on Course admin > Tutor contacts. The sheets live in the course kind
+       `bookings`: { "<date>|<tile id>": { places: { "1": { token, name, asg, at } } } }. Trainees read only their own
+       places and how full each sheet is; tutors and the assessor read every name. */
+    case 'bookings': {
+      if (!course) throw new Error('This link is not on a course');
+      var allB = courseRead_(course.id, 'bookings') || {};
+      if (tutor || assessor) return { bookings: allB };
+      if (!me) throw new Error('No token');
+      var mineB = {};
+      Object.keys(allB).forEach(function (key) {
+        var pl = (allB[key] && allB[key].places) || {}, out = { taken: [], mine: [] };
+        Object.keys(pl).forEach(function (n) { if (pl[n] && pl[n].token) { out.taken.push(+n); if (pl[n].token === me.token) out.mine.push({ n: +n, asg: pl[n].asg || '' }); } });
+        mineB[key] = out;
+      });
+      return { bookings: mineB };
+    }
+    case 'bookSlot': {
+      if (!course) throw new Error('This link is not on a course');
+      if (!me || tutor || assessor) throw new Error('Only a trainee books a place');
+      var bDate = String(req.date || ''), bId = String(req.id || ''), bAsg = String(req.asg || '').toLowerCase();
+      var sheet = bookableTile_(course.id, bDate, bId);
+      var bSet = courseRead_(course.id, 'settings') || {};
+      var own = ownTutor_(bSet, me), isTut = /tutorial/i.test(sheet.tile.t || ''), sheetBy = tutorName_(bSet, sheet.tile.by);
+      var ownSheet = !own || !sheetBy || own.toLowerCase() === sheetBy.toLowerCase();
+      if (isTut && !ownSheet) throw new Error('Tutorials are with your own tutor, ' + own + '. Book on their sheet.');
+      if (!isTut && !ownSheet) {
+        var subs = read_(course.id, me.token, 'assignments') || {};
+        var sent = function (k) { var a = subs[k]; return !!(a && (a.sub1At || a.stage === 'submitted' || a.stage === 'resubmitted' || a.stage === 'resubmission_needed' || a.stage === 'closed')); };
+        var blocked = bAsg ? sent(bAsg) : Object.keys(subs).some(sent);
+        if (blocked) throw new Error(bAsg ? 'You have already submitted ' + bAsg.toUpperCase() + ', so consultation on it is with your own tutor only, ' + own + '.' : 'You have submitted an assignment, so consultation is with your own tutor only, ' + own + '. Book on their sheet, or say which assignment this is about.');
+      }
+      var key = bDate + '|' + bId, got = 0;
+      courseUpdateObj_(course.id, 'bookings', function (all) {
+        var sh = all[key] || { places: {} }; sh.places = sh.places || {};
+        var taken = Object.keys(sh.places).filter(function (n) { return sh.places[n] && sh.places[n].token; });
+        if (isTut && taken.some(function (n) { return sh.places[n].token === me.token; })) throw new Error('You already have a place on this sheet.');
+        for (var n = 1; n <= sheet.places; n++) { if (!sh.places[n] || !sh.places[n].token) { sh.places[n] = { token: me.token, name: me.name || '', asg: bAsg, at: new Date().toISOString() }; got = n; break; } }
+        if (!got) throw new Error('No places left on this sheet.');
+        all[key] = sh; return all;
+      });
+      return { booked: got, from: placeTime_(sheet.tile.s, got) };
+    }
+    case 'releaseSlot': {
+      if (!course) throw new Error('This link is not on a course');
+      var rKey = String(req.date || '') + '|' + String(req.id || ''), rN = req.n != null ? String(req.n) : '';
+      if (!tutor && !me) throw new Error('No token');
+      courseUpdateObj_(course.id, 'bookings', function (all) {
+        var sh = all[rKey]; if (!sh || !sh.places) return all;
+        Object.keys(sh.places).forEach(function (n) {
+          var p = sh.places[n]; if (!p) return;
+          /* a trainee frees their own place; a tutor frees any one, by its number */
+          if ((tutor && rN && n === rN) || (!tutor && me && p.token === me.token && (!rN || n === rN))) delete sh.places[n];
+        });
+        all[rKey] = sh; return all;
+      });
+      return { released: true };
     }
     case 'putCourse': {
       requireTutor_(tutor);
@@ -3134,6 +3198,30 @@ function courseRows_() {
   var last = sh.getLastRow();
   COURSE_MEMO_ = last < 2 ? [] : sh.getRange(2, 1, last - 1, 3).getValues();
   return COURSE_MEMO_;
+}
+/* ---- the booking sheets' helpers (v182) ---- */
+function bookableTile_(courseId, date, id) {
+  var tt = courseRead_(courseId, 'timetable') || {};
+  var days = (tt.days || []);
+  var day = null; for (var i = 0; i < days.length; i++) if (days[i] && days[i].date === date) { day = days[i]; break; }
+  if (!day) throw new Error('That day is not on the timetable.');
+  var tile = null; (day.sessions || []).forEach(function (x) { if (x && x.id === id) tile = x; });
+  if (!tile || !/consultation|tutorial/i.test(tile.t || '')) throw new Error('That is not a sheet you can book.');
+  var len = mins_(tile.e) - mins_(tile.s);
+  return { tile: tile, places: Math.max(1, Math.floor(len / 15)) };
+}
+function mins_(hm) { var m = /^(\d{1,2}):(\d{2})/.exec(String(hm || '')); return m ? +m[1] * 60 + +m[2] : 0; }
+function placeTime_(s, n) { var m = mins_(s) + (n - 1) * 15; return ('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + (m % 60)).slice(-2); }
+function tutorName_(set, by) {
+  if (by === undefined || by === null || by === '') return '';
+  var names = String((set && set.tutorNames) || '').split(/[,\n;]+/).map(function (x) { return x.trim(); }).filter(Boolean);
+  return names[+by] || '';
+}
+/* their own tutor: their group's row on Course admin > Tutor contacts */
+function ownTutor_(set, me) {
+  var rows = (set && set.tutorContacts) || [], g = String((me && me.group) || '');
+  for (var i = 0; i < rows.length; i++) if (rows[i] && rows[i].name && g && String(rows[i].group || '') === g) return String(rows[i].name);
+  return '';
 }
 function courseRead_(courseId, kind) {
   var rows = courseRows_();

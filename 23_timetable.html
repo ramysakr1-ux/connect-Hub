@@ -410,6 +410,18 @@
   .tkey i.k-plan{--c:oklch(91% 0.09 100);} .tkey i.k-demo{--c:oklch(77% 0.08 300);} .tkey i.k-event{--c:oklch(78% 0.04 260);} .tkey i.k-task{--c:oklch(80% 0.075 15);} .tkey i.k-assessor{--c:oklch(40% 0.07 265);} .tkey i.k-break{--c:oklch(91% 0.008 260);}
   @media (max-width:760px){ .tgrid.tboard{--dcol:96px; --tw:118px; --th:88px;} .tgrid.tboard .tile.twoclock .tm .ct{display:none;} .tgrid.tboard .flags .due{font-size:0.62rem;} }
   @media print{ .tgrid.tboard .tile{box-shadow:none; background:var(--c);} .tgrid.tboard .dh{position:static;} }
+  .tgrid.tboard .tile .bk{font-size:0.64rem; font-weight:700; color:color-mix(in oklch, var(--on, var(--ink)) 80%, transparent);}
+  .tgrid.tboard .tile .bk.mine{color:var(--on, var(--ink));} .tgrid.tboard .tile .bk.full{opacity:.7;}
+  body:not(.editing) .tgrid.tboard .tile.bookable{cursor:pointer;}
+  body:not(.editing) .tgrid.tboard .tile.bookable:hover{transform:translateY(-2px);}
+  .sheet-h{display:flex; flex-direction:column; gap:2px; margin:0 0 8px;} .sheet-h b{font-family:'Newsreader',Georgia,serif; font-size:1.05rem;} .sheet-h span{font-size:0.78rem; color:var(--grey);}
+  .sheet-rows{display:flex; flex-direction:column; border:1px solid var(--sand-line); border-radius:8px; overflow:hidden; margin:0 0 10px;}
+  .sheet-rows .sr{display:flex; gap:12px; align-items:center; padding:7px 10px; border-top:1px solid var(--row-line); font-size:0.84rem;} .sheet-rows .sr:first-child{border-top:0;}
+  .sheet-rows .at{min-width:70px; font-weight:700; font-variant-numeric:tabular-nums;}
+  .sheet-rows .pl.open{color:var(--grey); font-style:italic;} .sheet-rows .pl.you{color:var(--teal);}
+  .sheet-rows .linkish{margin-left:auto; border:0; background:none; padding:0; font:700 0.78rem 'Karla',sans-serif; color:var(--brick); text-decoration:underline; cursor:pointer;}
+  .bkrule{font-size:0.78rem; color:var(--grey); margin:6px 0;} .bkmsg{font-size:0.82rem; font-weight:700; color:var(--ink-warm); margin:8px 0 0; min-height:1em;}
+  .sheetin{margin:10px 0;}
   .swapbar{position:fixed; left:50%; bottom:22px; transform:translateX(-50%); z-index:50; display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; max-width:min(92vw, 760px); padding:11px 16px; background:var(--paper); border:1px solid var(--sand-line); border-left:4px solid var(--a-mustard); border-radius:12px; font-size:0.86rem; box-shadow:0 12px 30px -10px oklch(30% 0.04 60 / .45);}
   .swapbar[hidden]{display:none;}
   .swapbar button{border:0; background:none; padding:0; font:700 0.86rem 'Karla',sans-serif; color:var(--teal); text-decoration:underline; cursor:pointer;}
@@ -1179,9 +1191,10 @@ function tileHTML(day, x, B, tpIdx, teachers, place){
     /* the reader's own time is a colour, not words (Ramy, 29 Oct 2026: "you don't have to say your time ... this colour is their time") */
     /* with a second clock the course's own time is a watermark and the reader's is the one to read (Ramy, 29 Oct 2026) */
     if (lt) cls.push('twoclock');
+    const bk = bookLine(day, x); if (bk) cls.push('bookable');
     const tm = `<div class="tm"><span class="ct">${esc(place.narrow && place.across ? hubClock(x.s) : hubClockRange(x.s, x.e))}</span>${lt ? ' <span class="lt" title="Your time">' + esc(lt) + '</span>' : ''}${joinHTML}</div>`;
     return `<div class="${cls.join(' ')}" data-id="${esc(x.id)}" data-date="${esc(day.date)}" data-i="${place.i}" data-from="${esc(x.s)}" data-to="${esc(x.e)}" title="${esc(tip + (lt ? ' · ' + lt + ' your time' : ''))}">`
-      + `<div class="tt">${title}</div>${tm}</div>`;
+      + `<div class="tt">${title}</div>${bk}${tm}</div>`;
   }
   return `<div class="${cls.join(' ')}" data-id="${esc(x.id)}" data-date="${esc(day.date)}" data-from="${esc(x.s)}" data-to="${esc(x.e)}" style="top:${top}px;height:${h}px" title="${esc(tip + (lt ? ' · ' + lt + ' your time' : ''))}">`
     + `<div class="tt">${title}</div><div class="tm">${esc(hubClockRange(x.s, x.e))}${ls ? ' <span class="lt">' + esc(ls) + ' your time</span>' : ''}${joinHTML}</div>${EDIT ? '<span class="rs" data-rs="1"></span>' : ''}</div>`;
@@ -1708,6 +1721,7 @@ function render(){
   wireSettings();
   wireMove();
   wireBoard();
+  loadBookings();
   /* Twenty full days stacked on a phone is a long way to scroll to reach this
      afternoon, so a narrow screen opens on today.
      It has to survive a RE-RENDER. Replacing the grid's innerHTML puts the
@@ -2578,6 +2592,11 @@ function startFor(col, clientY, grabOffset){
 
 function wireBoard(){
   if (wireBoard.done) return; wireBoard.done = true;
+  document.addEventListener('click', e => {
+    if (EDIT) return;
+    const t = e.target.closest('.tgrid .tile.bookable'); if (!t || e.target.closest('a')) return;
+    openBooking(t.dataset.date, t.dataset.id);
+  });
   document.addEventListener('pointerdown', e => {
     if (!EDIT || e.button !== 0) return;
     const due = e.target.closest('.tgrid .due[data-move]');
@@ -2713,6 +2732,65 @@ function wireBoard(){
     if (EDIT && (e.metaKey || e.ctrlKey) && e.key === 'z' && !e.target.closest('input, textarea, select')) { e.preventDefault(); undo(); }
   });
 }
+/* ---- TUTORIALS AND CONSULTATIONS, BOOKED HERE (Ramy, 29 Oct 2026; Connect's rules, store v182) -----------------
+   A tile named Consultation or Tutorials is a sheet of 15-minute places; a trainee books the next open one. Before an
+   assignment's first submission, any tutor's consultation; after it, their own tutor's only; tutorials with their own
+   tutor. The store holds the sheets and judges the rule; this page shows them. */
+let BOOK = null, BOOK_AT = 0;
+const isSheet = x => x && /consultation|tutorial/i.test(x.t || '') && toMin(x.e) - toMin(x.s) >= 15;
+const placesOf = x => Math.max(1, Math.floor((toMin(x.e) - toMin(x.s)) / 15));
+const placeAt = (x, n) => toHM(toMin(x.s) + (n - 1) * 15);
+function loadBookings(force){
+  if (!window.HubStore || !HubStore.call || (!force && BOOK && Date.now() - BOOK_AT < 60000)) return;
+  BOOK_AT = Date.now();
+  HubStore.call({ op: 'bookings' }).then(r => { BOOK = (r && r.bookings) || {}; render(); }).catch(() => {});
+}
+function sheetOf(day, x){
+  const raw = (BOOK || {})[day.date + '|' + x.id] || {};
+  if (raw.places) { const taken = Object.keys(raw.places).filter(n => raw.places[n] && raw.places[n].token).map(Number); return { taken, mine: [], names: raw.places }; }
+  return { taken: raw.taken || [], mine: raw.mine || [], names: null };
+}
+function bookLine(day, x){
+  if (!isSheet(x) || !BOOK) return '';
+  const sh = sheetOf(day, x), N = placesOf(x);
+  if (sh.mine.length) return `<div class="bk mine">Your place · ${esc(hubClock(placeAt(x, sh.mine[0].n)))}</div>`;
+  return `<div class="bk${sh.taken.length >= N ? ' full' : ''}">${sh.taken.length >= N ? 'Full' : (N - sh.taken.length) + ' of ' + N + ' open'}</div>`;
+}
+function sheetHTML(day, x){
+  const sh = sheetOf(day, x), N = placesOf(x), tut = x.by != null && TUTORS[+x.by] ? TUTORS[+x.by] : '';
+  const rows = Array.from({ length: N }, (_, i) => {
+    const n = i + 1, at = esc(hubClock(placeAt(x, n))), mine = sh.mine.some(m => m.n === n), who = sh.names && sh.names[n] && sh.names[n].token ? sh.names[n] : null;
+    const state = mine ? '<b class="pl you">Yours</b>' : (who ? `<span class="pl">${esc(who.name || 'Booked')}${who.asg ? ' · ' + esc(asgShort(who.asg)) : ''}</span>${EDIT ? ` <button type="button" class="linkish" data-free="${n}">Free it</button>` : ''}` : (sh.taken.indexOf(n) !== -1 ? '<span class="pl">Booked</span>' : '<span class="pl open">Open</span>'));
+    return `<div class="sr"><span class="at">${at}</span>${state}</div>`;
+  }).join('');
+  return `<div class="sheet-h"><b>${esc(x.t || 'Sheet')}</b><span>${esc(dayName(day.date))}${tut ? ' · ' + esc(tut) : ''} · ${N} place${N === 1 ? '' : 's'} of 15 minutes</span></div><div class="sheet-rows">${rows}</div>`;
+}
+function openBooking(date, id){
+  closePop();
+  const day = dayOfDate(date); if (!day) return;
+  const x = (day.sessions || []).find(s => s.id === id); if (!x || !isSheet(x)) return;
+  const el = pop('ttpop'), sh = sheetOf(day, x), isTut = /tutorial/i.test(x.t || '');
+  const demo = !!SETTINGS.demoToday;
+  const can = IS_TRAINEE && !demo && !sh.mine.length && sh.taken.length < placesOf(x) && date >= TODAY;
+  el.innerHTML = sheetHTML(day, x) + (IS_TRAINEE ? (sh.mine.length
+      ? `<div class="acts"><button type="button" class="btn quiet" id="bkFree">Cancel my place</button><button type="button" class="btn" id="bkOk">Done</button></div>`
+      : can ? `${isTut ? '' : `<label>What is it about?<select id="bkAsg"><option value="">Something else</option>${['fol', 'lrt', 'lsrt', 'lfc'].map(k => `<option value="${k}">${asgShort(k)}</option>`).join('')}</select></label>`}
+        <p class="bkrule">${isTut ? 'Tutorials are with your own tutor.' : 'Before you submit an assignment, any tutor; after, your own tutor only.'}</p>
+        <div class="acts"><button type="button" class="btn quiet" id="bkOk">Close</button><button type="button" class="btn" id="bkGo">Book the next place</button></div><p class="bkmsg" id="bkMsg"></p>`
+      : `${demo ? '<p class="bkrule">This is a demo course, so places are not booked here.</p>' : ''}<div class="acts"><button type="button" class="btn" id="bkOk">Close</button></div>`) : `<div class="acts"><button type="button" class="btn" id="bkOk">Close</button></div>`);
+  el.hidden = false; el.classList.add('sheetpop');
+  placeNear(el, document.querySelector(`.tile[data-date="${date}"][data-id="${id}"]`));
+  $('bkOk').addEventListener('click', closePop);
+  if ($('bkGo')) $('bkGo').addEventListener('click', () => {
+    $('bkGo').disabled = true; $('bkMsg').textContent = 'Booking…';
+    HubStore.call({ op: 'bookSlot', date, id, asg: $('bkAsg') ? $('bkAsg').value : '' })
+      .then(r => { if (!r || !r.booked) { $('bkMsg').textContent = 'Nothing was booked. Try again.'; $('bkGo').disabled = false; return; } $('bkMsg').textContent = 'Booked: ' + hubClock(r.from) + '.'; BOOK = null; loadBookings(true); setTimeout(closePop, 900); })
+      .catch(e => { $('bkMsg').textContent = String((e && e.message) || e).replace(/^Error:\s*/, ''); $('bkGo').disabled = false; });
+  });
+  if ($('bkFree')) $('bkFree').addEventListener('click', () => {
+    HubStore.call({ op: 'releaseSlot', date, id }).then(() => { BOOK = null; loadBookings(true); closePop(); }).catch(() => {});
+  });
+}
 function swapOffer(x, o, before){
   let bar = $('swapbar');
   if (!bar) { bar = document.createElement('div'); bar.id = 'swapbar'; bar.className = 'swapbar'; document.body.appendChild(bar); }
@@ -2807,6 +2885,7 @@ function openTile(date, id){
     <div class="two"><label>From<input id="tS" type="time" value="${esc(x.s)}"></label><label>To<input id="tE" type="time" value="${esc(x.e)}"></label></div>
     ${(() => { const rooms = (Array.isArray(SETTINGS.onlineRooms) ? SETTINGS.onlineRooms : []).filter(r => r && r.url); const labels = [...new Set(rooms.map(r => String(r.label || '').trim()).filter(Boolean))]; const cur = x.url ? '__url' : (x.room || ''); const dflt = roomLabelOf(Object.assign({}, x, { room: '' }));
       return (labels.length || x.url) ? `<label>Online room<select id="tRoom"><option value=""${cur === '' ? ' selected' : ''}>${esc(dflt ? 'The ' + dflt + ' room' : 'None')}</option>${labels.map(l => `<option value="${esc(l)}"${cur === l ? ' selected' : ''}>${esc(l)}</option>`).join('')}<option value="__url"${cur === '__url' ? ' selected' : ''}>A link of its own</option></select></label>${cur === '__url' ? `<label>Link<input id="tUrl" type="url" value="${esc(x.url || '')}" placeholder="https://…"></label>` : ''}` : ''; })()}
+    ${isSheet(x) && BOOK ? `<div class="sheetin">${sheetHTML(day, x)}</div>` : ''}
     <label class="lock"><input type="checkbox" id="tLock"${x.locked ? ' checked' : ''}> Locked — can’t be dragged</label>
     <div class="acts"><button type="button" class="btn quiet del" id="tDel">Remove</button><button type="button" class="btn" id="tOk">Done</button></div>`;
   el.hidden = false;
@@ -2839,6 +2918,7 @@ function openTile(date, id){
   ['tK', 'tTp', 'tSet', 'tBy', 'tS', 'tE', 'tLock', 'tRoom', 'tUrl'].forEach(i => { if ($(i)) $(i).addEventListener('change', apply); });
   if ($('tT')) { $('tT').addEventListener('input', apply); $('tT').addEventListener('keydown', e => { if (e.key === 'Enter') { apply(); closePop(); } }); }
   $('tOk').addEventListener('click', () => { apply(); closePop(); });
+  el.querySelectorAll('[data-free]').forEach(b => b.addEventListener('click', () => { HubStore.call({ op: 'releaseSlot', date, id, n: +b.dataset.free }).then(() => { BOOK = null; loadBookings(true); closePop(); }).catch(() => {}); }));
   $('tDel').addEventListener('click', () => {
     const name = tileName(x, day);
     OPEN_TILE = null;
