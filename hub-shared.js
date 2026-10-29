@@ -2353,7 +2353,8 @@ window.hubHeadHTML = function (text, heads) {
   document.addEventListener('click', function (e) {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     var a = e.target && e.target.closest ? e.target.closest('a') : null;
-    if (!isBack(a) || !sameSite() || history.length < 2) return;
-    e.preventDefault(); history.back();
+    /* window.history, never the bare name: a page with its own `history` (the feedback page's TP history) hid it, and Back did nothing */
+    if (!isBack(a) || !sameSite() || window.history.length < 2) return;
+    e.preventDefault(); window.history.back();
   }, true);
 })();
