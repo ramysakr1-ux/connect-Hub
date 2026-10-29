@@ -823,7 +823,7 @@
     var sameCopy = !!(V0 && V0.cred === CRED && V0.v && !Object.keys(held).length);
     if (sameCopy && Date.now() - (V0.at || 0) < 60000) { settledQuietly(); return; }
     status('Checking the course\u2026', 'busy');
-    (sameCopy && S.version ? S.version().then(function(r){ return r && r.ver === V0.v; }, function(err){ if (err && err.refused) throw err; return false; }) : Promise.resolve(false)).then(function(fresh){
+    (sameCopy && S.version ? S.version().then(function(r){ return r && r.ver === V0.v; }, function(){ return false; /* any trouble, an older store included: boot as before, and the boot says if the link is dead */ }) : Promise.resolve(false)).then(function(fresh){
       if (fresh) { if (S.verPut) S.verPut({ cred: CRED, v: V0.v, at: Date.now() }); settledQuietly(); return; }
       return fullBoot();
     }).catch(function(err){

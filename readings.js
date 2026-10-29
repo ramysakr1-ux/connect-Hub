@@ -62,6 +62,16 @@ window.CONNECT_HUB_READINGS = {
     ]
   },
   glossary: {
+    /* in families, so it reads as a few short lists rather than one long one (Ramy, 29 Oct 2026: "a bit of distinction
+       ... different categories ... easier to read") */
+    families: [
+      ['Planning a lesson', 'The shape of a lesson and the words for its parts.', ['lead-in', 'stage aim', 'target language', 'language analysis', 'PPP', 'test-teach-test', 'task-based learning (TBL)', 'text-based presentation', 'guided discovery', 'TP points']],
+      ['Meaning and form', 'Working out what language means and how it is made.', ['meaning', 'form', 'MFP', 'appropriacy', 'register', 'connotation', 'collocation', 'lexis', 'lexical set', 'functional language', 'contraction', 'ellipsis', 'timeline', 'cline', 'CCQ (concept checking question)']],
+      ['Pronunciation', 'Sounds, stress and the music of English.', ['phoneme', 'phonemic chart', 'schwa', 'diphthong', 'word stress', 'sentence stress', 'weak form', 'connected speech', 'intonation', 'drilling', 'choral drilling', 'individual drilling', 'backchaining', 'finger highlighting']],
+      ['The four skills', 'Reading, listening, speaking and writing.', ['receptive skills', 'productive skills', 'sub-skills', 'gist', 'skimming', 'scanning', 'extensive reading or listening', 'top-down processing', 'bottom-up processing', 'deducing meaning from context', 'coherence', 'cohesion', 'linker', 'discourse']],
+      ['In the classroom', 'Managing the room and the people in it.', ['elicit', 'ICQ (instruction checking question)', 'nominate', 'interaction pattern', 'open class', 'peer check', 'monitoring', 'feedback (on a task)', 'grading language', 'STT, TTT', 'rapport', 'classroom language', 'realia', 'controlled practice', 'freer practice']],
+      ['Learners and their mistakes', 'Who the learners are, and how their English grows.', ['L1, L2', 'L1 interference', 'over-generalization', 'error correction', 'reformulation', 'monolingual, multilingual class']]
+    ],
     title: 'The CELTA glossary',
     lede: 'The words you will hear in input sessions, in feedback and in the assessment criteria, each said simply. Type to find one.',
     terms: [

@@ -15,7 +15,7 @@
 <title>Reading</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610291026">
+<link rel="stylesheet" href="hub-tokens.css?v=202610291031">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:36px 20px 90px; display:flex; justify-content:center;}
@@ -46,21 +46,34 @@
   dl.terms dt{font-weight:700; font-size:.95rem;}
   dl.terms dd{margin:0; font-size:.94rem; line-height:1.6;}
   .none{color:var(--grey); font-size:.94rem; margin:0;}
+  /* the glossary's families: a forest band on each card, a count, and a row of chips to jump between them */
+  .famnav{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 0;}
+  .famnav a{font-size:.82rem; font-weight:700; color:var(--a-forest, var(--teal)); text-decoration:none; padding:6px 12px; border-radius:999px; background:color-mix(in oklch, var(--a-forest, var(--teal)) 9%, var(--paper));}
+  .famnav a:hover{background:color-mix(in oklch, var(--a-forest, var(--teal)) 16%, var(--paper));}
+  .card.fam{padding:0; overflow:hidden; scroll-margin-top:16px;}
+  .famhead{position:relative; background:var(--a-forest, var(--teal)); color:var(--paper); padding:16px 60px 14px 26px;}
+  .famhead h2{margin:0; color:var(--paper); font-size:1.25rem;}
+  .famhead p{margin:3px 0 0; font-size:.88rem; color:color-mix(in oklch, var(--paper) 78%, transparent);}
+  .famn{position:absolute; top:16px; right:22px; font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.4rem; color:var(--a-lemon, var(--gold-lifted));}
+  .card.fam dl.terms{padding:6px 26px 12px;}
+  .card.fam dl.terms div:nth-child(even){background:color-mix(in oklch, var(--a-forest, var(--teal)) 3%, var(--paper)); margin:0 -26px; padding-left:26px; padding-right:26px;}
+  .card.fam dt{color:var(--a-forest, var(--teal));}
+  @media (max-width:560px){ .famhead{padding:14px 52px 12px 18px;} .card.fam dl.terms{padding:4px 18px 10px;} .card.fam dl.terms div:nth-child(even){margin:0 -18px; padding-left:18px; padding-right:18px;} }
   @media (max-width:560px){ dl.terms div{grid-template-columns:1fr;} .card{padding:18px 18px;} h1{font-size:1.75rem;} }
   @media print{ body{background:#fff; padding:0;} .back,.others,.find{display:none;} .card{box-shadow:none; border:1px solid #ddd;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610291026">
+<link rel="stylesheet" href="hub-house.css?v=202610291031">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202610291026"></script>
-<script src="hub-store.js?v=202610291026"></script>
-<script src="hub-say.js?v=202610291026"></script>
-<script src="hub-sync.js?v=202610291026"></script>
-<script src="readings.js?v=202610291026"></script>
+<script src="hub-shared.js?v=202610291031"></script>
+<script src="hub-store.js?v=202610291031"></script>
+<script src="hub-say.js?v=202610291031"></script>
+<script src="hub-sync.js?v=202610291031"></script>
+<script src="readings.js?v=202610291031"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -82,8 +95,15 @@ const href = k => '39_reading.html' + (keep ? keep + '&' : '?') + 'doc=' + k;
 const others = DOCS.filter(k => k !== key).map(k => '<a href="' + esc(href(k)) + '">' + esc(R[k].title) + '</a>').join('');
 let body = '';
 if (D.terms) {
+  /* the terms in their families, each family a card with a forest band; a term in no family goes in the last one */
+  const byName = {}; D.terms.forEach(t => { byName[t[0]] = t; });
+  const used = {}; const fams = (D.families || []).map(f => ({ h: f[0], sub: f[1], terms: f[2].map(n => { used[n] = 1; return byName[n]; }).filter(Boolean) }));
+  const rest = D.terms.filter(t => !used[t[0]]); if (rest.length) fams.push({ h: 'And more', sub: '', terms: rest });
+  const row = t => '<div data-k="' + esc((t[0] + ' ' + t[1]).toLowerCase()) + '"><dt>' + esc(t[0]) + '</dt><dd>' + esc(t[1]) + '</dd></div>';
   body = '<input class="find" id="find" type="search" placeholder="Find a word" aria-label="Find a word in the glossary">'
-    + '<div class="card"><dl class="terms" id="terms">' + D.terms.map(t => '<div data-k="' + esc((t[0] + ' ' + t[1]).toLowerCase()) + '"><dt>' + esc(t[0]) + '</dt><dd>' + esc(t[1]) + '</dd></div>').join('') + '</dl><p class="none" id="none" hidden>No word matches that. Try the start of it.</p></div>';
+    + '<nav class="famnav" aria-label="Families">' + fams.map((f, i) => '<a href="#fam' + i + '">' + esc(f.h) + '</a>').join('') + '</nav>'
+    + fams.map((f, i) => '<section class="card fam" id="fam' + i + '"><header class="famhead"><h2>' + esc(f.h) + '</h2>' + (f.sub ? '<p>' + esc(f.sub) + '</p>' : '') + '<span class="famn">' + f.terms.length + '</span></header><dl class="terms">' + f.terms.map(row).join('') + '</dl></section>').join('')
+    + '<p class="none card" id="none" hidden>No word matches that. Try the start of it.</p>';
 } else {
   body = (D.sections || []).map(s => '<section class="card"><h2>' + esc(s.h) + '</h2>'
     + (s.p || []).map(x => '<p>' + esc(x) + '</p>').join('')
@@ -94,7 +114,8 @@ $('app').innerHTML = '<p class="eyebrow">Something to read</p><h1>' + esc(D.titl
   + (others ? '<nav class="others" aria-label="More to read">' + others + '</nav>' : '') + body;
 const f = $('find');
 if (f) f.addEventListener('input', () => { const q = f.value.trim().toLowerCase(); let n = 0;
-  document.querySelectorAll('#terms > div').forEach(d => { const hit = !q || d.dataset.k.indexOf(q) !== -1; d.hidden = !hit; if (hit) n++; });
+  document.querySelectorAll('.fam').forEach(sec => { let m = 0; sec.querySelectorAll('dl.terms > div').forEach(d => { const hit = !q || d.dataset.k.indexOf(q) !== -1; d.hidden = !hit; if (hit) m++; }); sec.hidden = m === 0; n += m; });
+  document.querySelector('.famnav').hidden = !!q;
   $('none').hidden = n > 0; });
 </script>
 </body>
