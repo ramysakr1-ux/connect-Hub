@@ -37,7 +37,7 @@
 <title>The last page</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610291242">
+<link rel="stylesheet" href="hub-tokens.css?v=202610291253">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:linear-gradient(180deg,var(--paper) 0,var(--sand) 420px);}
@@ -180,22 +180,22 @@
   @media (max-width:560px){ .present{padding:26px 22px 24px;} .present h2{font-size:1.85rem;} .present .arcs{width:190px;} .present input.pmail{min-width:0; width:100%;} }
   @media print{ .present{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610291242">
+<link rel="stylesheet" href="hub-house.css?v=202610291253">
 </head>
 <body>
 <div id="app"></div>
 <div class="printcard" id="printcard" aria-hidden="true"></div>
-<script src="hub-shared.js?v=202610291242"></script>
-<script src="hub-store.js?v=202610291242"></script>
-<script src="hub-tracker.js?v=202610291242"></script>
-<script src="hub-hand.js?v=202610291242"></script>
-<script src="hub-ink.js?v=202610291242"></script>
-<script src="hub-say.js?v=202610291242"></script>
-<script src="observation-defaults.js?v=202610291242"></script>
-<script src="hub-rotation.js?v=202610291242"></script>
-<script src="hub-peers.js?v=202610291242"></script>
-<script src="hub-sync.js?v=202610291242"></script>
-<script src="hub-notebook.js?v=202610291242"></script>
+<script src="hub-shared.js?v=202610291253"></script>
+<script src="hub-store.js?v=202610291253"></script>
+<script src="hub-tracker.js?v=202610291253"></script>
+<script src="hub-hand.js?v=202610291253"></script>
+<script src="hub-ink.js?v=202610291253"></script>
+<script src="hub-say.js?v=202610291253"></script>
+<script src="observation-defaults.js?v=202610291253"></script>
+<script src="hub-rotation.js?v=202610291253"></script>
+<script src="hub-peers.js?v=202610291253"></script>
+<script src="hub-sync.js?v=202610291253"></script>
+<script src="hub-notebook.js?v=202610291253"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -578,8 +578,17 @@ async function saveAll(){
   $('save').disabled = false;
 }
 
+/* NOT BEFORE THE LAST DAY (Ramy, 29 Oct 2026). The home offers this page from the last day; a trainee who finds the
+   address earlier sees only when it opens, not a half-made page with no photo and lines from a course still running. */
+function notYet(){
+  const cs = S(), end = String(cs.end || '').slice(0, 10), today = (window.hubToday && hubToday()) || new Date().toISOString().slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(end) || today >= end) return false;
+  const when = new Date(end + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
+  $('app').innerHTML = '<div class="wrap staff"><p class="lbl">The last page</p><h1>Not yet.</h1><p class="sub">Your last page opens on your last day, <b>' + esc(when) + '</b>. Come back then.</p><p><a href="index.html">Back to your course</a></p></div>';
+  return true;
+}
 function render(){
-  if (IS_TRAINEE) { const R = recordsOf(); if (R) trainee(R); return; }
+  if (IS_TRAINEE) { if (notYet()) return; const R = recordsOf(); if (R) trainee(R); return; }
   if (VIEW_ID) { const R = recordsOf(VIEW_ID); if (R) { trainee(R); return; } }
   if (IS_TUTOR) { staff(); return; }
   $('app').innerHTML = '<div class="wrap staff"><h1>The last page</h1><p class="sub">Open this from your own course link.</p></div>';
