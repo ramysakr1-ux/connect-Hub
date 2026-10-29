@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610291337">
+<link rel="stylesheet" href="hub-tokens.css?v=202610291355">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -128,6 +128,10 @@
   .day .dow{font-weight:700; font-size:0.84rem;}
   .day .dm{font-size:0.74rem; color:var(--grey);}
   .due{color:var(--gold-deep); font-weight:600; font-size:0.72rem; padding:4px 11px;}
+  .adrow{display:grid; grid-template-columns:minmax(150px,1fr) repeat(3, minmax(0,1.2fr)); gap:8px 12px; align-items:end; padding:10px 0; border-top:1px solid var(--row-line);}
+  .adrow b{align-self:center; font-size:.92rem;} .adrow label{display:flex; flex-direction:column; gap:4px; font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--grey);}
+  .adrow input{font:inherit; font-size:.86rem; text-transform:none; letter-spacing:0; font-weight:500; color:var(--ink); padding:7px 9px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper);}
+  @media (max-width:700px){ .adrow{grid-template-columns:1fr;} }
   .due.late{color:var(--brick);}
 
   /* ---- v2 (7 Oct 2026): the course ribbon, the now line, due pills -------
@@ -523,25 +527,25 @@
   .ttstart .tcard .btn{align-self:flex-start;}
   .cxshapes{display:flex; flex-direction:column; gap:6px; margin:2px 0 4px;} .cxshapes label{display:flex; gap:8px; align-items:center; font-size:.9rem; cursor:pointer;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610291337">
+<link rel="stylesheet" href="hub-house.css?v=202610291355">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610291337"></script>
-<script src="hub-tracker.js?v=202610291337"></script>
-<script src="hub-rotation.js?v=202610291337"></script>
-<script src="hub-xlsx.js?v=202610291337"></script>
-<script src="hub-docx.js?v=202610291337"></script>
-<script src="hub-timetable-parse.js?v=202610291337"></script>
-<script src="assignment-defaults.js?v=202610291337"></script>
-<script src="hub-shared.js?v=202610291337"></script>
-<script src="hub-store.js?v=202610291337"></script>
-<script src="hub-say.js?v=202610291337"></script>
-<script src="hub-sync.js?v=202610291337"></script>
-<script src="hub-notebook.js?v=202610291337"></script>
+<script src="hub-due.js?v=202610291355"></script>
+<script src="hub-tracker.js?v=202610291355"></script>
+<script src="hub-rotation.js?v=202610291355"></script>
+<script src="hub-xlsx.js?v=202610291355"></script>
+<script src="hub-docx.js?v=202610291355"></script>
+<script src="hub-timetable-parse.js?v=202610291355"></script>
+<script src="assignment-defaults.js?v=202610291355"></script>
+<script src="hub-shared.js?v=202610291355"></script>
+<script src="hub-store.js?v=202610291355"></script>
+<script src="hub-say.js?v=202610291355"></script>
+<script src="hub-sync.js?v=202610291355"></script>
+<script src="hub-notebook.js?v=202610291355"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1370,6 +1374,34 @@ function teachesOn(dateISO){
   return GROUPS.filter(g => (g.sets[day.setIndex] || []).length).map(g => g.group);
 }
 
+/* THE ASSIGNMENT DATES LIVE ON THE TIMETABLE (Ramy, 29 Oct 2026: "the assignment due date and time should be on the
+   timetable itself, as we set up the timetable, not course admin ... course admin is just the wording"; "also need one
+   for resubmission"). Each assignment: when it opens (it opens by itself then; Course admin can still open it early),
+   when it is due, and when a resubmission is due. Written where every reader already looks, on the assignment record. */
+let ASG_OPEN = /^#asgDates$/.test(location.hash);
+const ASG_KEYS = () => { const w = rec('connect_assignment_wording_v2') || window.CONNECT_HUB_DEFAULT_WORDING || {}; const o = window.hubAssignmentOrder ? hubAssignmentOrder(w) : ['fol', 'lrt', 'lsrt', 'lfc']; return o.filter(k => k !== 'a5' && w[k]); };
+function asgDatesHTML(){
+  if (!ASG_OPEN || !IS_TUTOR) return '';
+  const w = rec('connect_assignment_wording_v2') || window.CONNECT_HUB_DEFAULT_WORDING || {};
+  const v = iso => iso && window.HubDue ? esc(HubDue.toLocalInput(iso)) : '';
+  const rows = ASG_KEYS().map(k => { const a = w[k] || {};
+    return `<div class="adrow" data-k="${esc(k)}"><b>${esc(a.title || k.toUpperCase())}</b>
+      <label><span>Opens</span><input type="datetime-local" data-f="open" value="${v(a.releaseFrom || a.outAt)}"></label>
+      <label><span>Due</span><input type="datetime-local" data-f="due" value="${v(a.dueAt || a.due)}"></label>
+      <label><span>Resubmission by</span><input type="datetime-local" data-f="resub" value="${v(a.resubDueAt)}"></label></div>`; }).join('');
+  return `<div class="imp" id="asgDates"><h3>Assignment dates</h3>
+    <p>When each assignment opens to the trainees, when it is due, and when a resubmission is due. They show on the days above, and the assignments follow them; the wording is in Course admin.</p>
+    ${rows || '<p class="status">No assignments on this course yet.</p>'}
+    <div class="row"><button class="btn quiet" id="asgClose">Done</button></div></div>`;
+}
+function setAsgDate(k, f, local){
+  const w = rec('connect_assignment_wording_v2') || JSON.parse(JSON.stringify(window.CONNECT_HUB_DEFAULT_WORDING || {}));
+  const a = w[k] = w[k] || {}, iso = local && window.HubDue ? HubDue.fromLocalInput(local) : '';
+  if (f === 'open') { if (iso) { a.releaseFrom = iso; a.outAt = iso; if (iso > new Date().toISOString()) a.released = false; } else { delete a.releaseFrom; delete a.outAt; } }
+  if (f === 'due') { a.dueAt = iso; a.due = iso; }
+  if (f === 'resub') { if (iso) a.resubDueAt = iso; else delete a.resubDueAt; }
+  try { localStorage.setItem('connect_assignment_wording_v2', JSON.stringify(w)); } catch (e) {}
+}
 function moveHTML(){
   if (!MOVING || !IS_TUTOR) return '';
   const w = rec('connect_assignment_wording_v2') || {};
@@ -1391,6 +1423,9 @@ function moveHTML(){
 
 function wireMove(){
   if (!IS_TUTOR) return;
+  if ($('asgOpen')) $('asgOpen').addEventListener('click', () => { ASG_OPEN = !ASG_OPEN; render(); if (ASG_OPEN) { const b = $('asgDates'); if (b) b.scrollIntoView({ block: 'start', behavior: 'smooth' }); } });
+  if ($('asgClose')) $('asgClose').addEventListener('click', () => { ASG_OPEN = false; render(); });
+  document.querySelectorAll('#asgDates input[data-f]').forEach(i => i.addEventListener('change', () => { setAsgDate(i.closest('.adrow').dataset.k, i.dataset.f, i.value); note = 'Assignment dates saved'; render(); }));
   document.querySelectorAll('[data-move]').forEach(el => el.addEventListener('click', () => {
     MOVING = (MOVING === el.dataset.move) ? null : el.dataset.move; render();
   }));
@@ -1514,11 +1549,12 @@ function render(){
       <button class="btn quiet" id="buildOpen">Build it again</button>
       <button class="btn quiet" id="setOpen">Timetable settings</button>
       <button class="btn quiet" id="daysOpen">The course’s days</button>
+      <button class="btn quiet" id="asgOpen">Assignment dates</button>
       <button class="btn quiet" id="importOpen">Import from a sheet</button>
       <span class="status">${esc(note)}</span></div>
       ${pub ? statusHTML() : '<p class="legend" style="margin:0 0 14px">Only tutors can see it until you set it.</p>'}${checksHTML()}`
       + (EDIT ? `<p class="legend" style="margin:-8px 0 14px">${ACROSS() ? 'Drag a tile to another slot or day to move it. Click a tile to change it, its times too.' : 'Drag a tile to move it, or its bottom edge to change its length. Click a tile to change it.'} ⋯ on a day copies its shape to other days.</p>` : '')
-      + (PREVIEW ? '' : moveHTML() + buildPanelHTML() + settingsPanelHTML() + daysPanelHTML() + builtHTML() + importHTML()) : '';
+      + (PREVIEW ? '' : asgDatesHTML() + moveHTML() + buildPanelHTML() + settingsPanelHTML() + daysPanelHTML() + builtHTML() + importHTML()) : '';
   /* Where teaching practice starts at a different time from the teaching day
      before it, the week says so above its days, in words: "From Monday 26
      October teaching practice starts at 2:00 PM" (Ramy, 9 Oct 2026: "the
@@ -1812,8 +1848,15 @@ function cxApply(){
   remember();
   TT = { v: 3, days, slots: [], published: false, built: new Date().toISOString(), meets: shape[2].slice(), from: 'connect:' + shape[0] };
   const inputs = days.reduce((a, d) => a + d.sessions.filter(x => x.k === 'input').length, 0);
+  /* and its assignment dates (29 Oct 2026): opens with its session, due five teaching days later at 5 pm, a resubmission
+     five days after that (Lessons from the Classroom: due day 19, resubmission on the last day) */
+  const CX_ASG = { fol: ['4.2', 9, 14], lrt: ['7.2', 12, 17], lsrt: ['11.2', 16, 19], lfc: ['15.1', 19, 20] };
+  Object.keys(CX_ASG).forEach(k => { const [slot, due, resub] = CX_ASG[k], [d, n] = slot.split('.').map(Number);
+    setAsgDate(k, 'open', dates[d - 1] + 'T' + (n === 1 ? '10:00' : '11:15'));
+    setAsgDate(k, 'due', dates[due - 1] + 'T17:00');
+    setAsgDate(k, 'resub', dates[resub - 1] + 'T17:00'); });
   save('Built', { text: 'Connect’s timetable (' + shape[1] + '): 20 days, 16 with teaching practice, ' + inputs + ' input sessions' });
-  note = 'Connect’s timetable is on the board (' + shape[1] + '), ' + dayName(dates[0]) + ' to ' + dayName(dates[19]) + '. Drag a tile to move it, click one to change it, then set it for the course.'
+  note = 'Connect’s timetable is on the board (' + shape[1] + '), ' + dayName(dates[0]) + ' to ' + dayName(dates[19]) + '. Drag a tile to move it, click one to change it, then set it for the course. The assignments’ dates are placed too: Assignment dates, above, to change them.'
     + (end && last && last > end ? ' The course ends ' + dayName(SETTINGS.end) + ' on Course admin, before the last day here: change the end date there.' : '');
   render();
 }

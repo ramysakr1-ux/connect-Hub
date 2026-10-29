@@ -1013,14 +1013,14 @@ window.hubLinkShown = function(l){
    (`releaseFrom`, an instant; Ramy, 17 Oct 2026: "where do I set the dates for
    the assignments to be released?"). From that moment the trainees see it, on
    the course's clock (hubNow, so the demo's pinned day counts too). */
+/* THE DATE IS THE SWITCH (29 Oct 2026). The opening date is set on the timetable and Course admin has no switch any more:
+   with a date, the trainees see the assignment from that moment; without one, they see it. The old `released` flag is
+   no longer read, so a course cloned with every assignment switched off cannot hide one for good. */
 window.hubReleased = function(wording, key){
   var x = wording && wording[key];
-  if (!x || x.released !== false) return true;
-  if (x.releaseFrom) {
-    var t = Date.parse(x.releaseFrom), now = window.hubNow ? window.hubNow() : Date.now();
-    if (!isNaN(t) && now >= t) return true;
-  }
-  return false;
+  if (!x || !x.releaseFrom) return true;
+  var t = Date.parse(x.releaseFrom), now = window.hubNow ? window.hubNow() : Date.now();
+  return isNaN(t) || now >= t;
 };
 
 // The four assignments in the order this center runs them. The order lives

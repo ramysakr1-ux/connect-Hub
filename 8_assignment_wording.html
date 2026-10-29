@@ -13,7 +13,7 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610291337">
+<link rel="stylesheet" href="hub-tokens.css?v=202610291355">
 <style>
   /* ---- The assignment editor, v2 (11 Oct 2026) -------------------------------
      From the designer's handoff "Assignment editor v2". The page behind Edit
@@ -321,7 +321,7 @@
   .modes .tvlink{display:inline-flex;align-items:center;padding:7px 14px;font-weight:700;font-size:.86rem;color:var(--ink);text-decoration:none;border-radius:999px;}
   .modes .tvlink:hover{background:var(--box);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610291337">
+<link rel="stylesheet" href="hub-house.css?v=202610291355">
 </head>
 <body class="hub-paper" data-sync-ok="Connected to the course &mdash; wording is kept when you press Save" data-sync-ok-short="Connected">
 <div class="board">
@@ -340,15 +340,15 @@
   </div>
 </div></div>
 <div class="menu" id="menu" hidden></div>
-<script src="assignment-defaults.js?v=202610291337"></script>
-<script src="assignment-history.js?v=202610291337"></script>
-<script src="hub-due.js?v=202610291337"></script>
-<script src="hub-rotation.js?v=202610291337"></script>
-<script src="hub-docx.js?v=202610291337"></script>
-<script src="hub-shared.js?v=202610291337"></script>
-<script src="hub-store.js?v=202610291337"></script>
-<script src="hub-say.js?v=202610291337"></script>
-<script src="hub-sync.js?v=202610291337"></script>
+<script src="assignment-defaults.js?v=202610291355"></script>
+<script src="assignment-history.js?v=202610291355"></script>
+<script src="hub-due.js?v=202610291355"></script>
+<script src="hub-rotation.js?v=202610291355"></script>
+<script src="hub-docx.js?v=202610291355"></script>
+<script src="hub-shared.js?v=202610291355"></script>
+<script src="hub-store.js?v=202610291355"></script>
+<script src="hub-say.js?v=202610291355"></script>
+<script src="hub-sync.js?v=202610291355"></script>
 <script>
 /* The course pill goes into the save bar, left of Discard, on every screen
    size: floating in the corner it covered the brief (12 Oct 2026). A plain
@@ -670,23 +670,9 @@ function metaHTML(a){
       <div class="line"><input type="text" class="num" value="${a.wordMin||''}" oninput="updateMeta('wordMin',this.value)" placeholder="750" aria-label="Fewest words"> to
       <input type="text" class="num" value="${a.wordMax||''}" oninput="updateMeta('wordMax',this.value)" placeholder="1000" aria-label="Most words"> words</div>
       <p class="mh">Handbook range: 750–1,000.</p></div>`}
-    <div class="mf"><label for="mRel">Candidates</label>
-      <select id="mRel" onchange="updateReleased(this.value)">
-        <option value="yes" ${hubReleased(DATA, CURRENT) ? 'selected' : ''}>Can open it now</option>
-        <option value="no" ${hubReleased(DATA, CURRENT) ? '' : 'selected'}>Held back for now</option>
-      </select>
-      <p class="mh">Held back hides it from every trainee’s assignment list. Anyone who has already submitted keeps theirs.</p></div>
+    ${datesHTML(a)}
     ${outHTML(a)}
-    <div class="mf"><label for="mDue">Due</label>
-      <input id="mDue" type="datetime-local" value="${HubDue.toLocalInput(a.dueAt)}" onchange="updateDue(this.value)">
-      ${a.dueAt ? `<button type="button" class="lnk clear" onclick="updateDue('')">Clear</button>` : ''}
-      <p class="mh">Submission closes then. Leave it empty and it stays open. A tutor can give one trainee longer without moving it for everyone.</p></div>
     ${dueSetsHTML(a)}
-    <div class="mf"><span class="ml">Resubmission</span>
-      <div class="line"><input type="number" class="num" min="1" max="30" step="1" value="${a.resubDays||''}" onchange="updateMeta('resubDays', this.value)" placeholder="days" aria-label="Days after it is returned"> days after you return it, or by</div>
-      <input type="datetime-local" value="${HubDue.toLocalInput(a.resubDueAt)}" onchange="updateResubDue(this.value)" aria-label="One resubmission date for everyone">
-      ${a.resubDueAt ? `<button type="button" class="lnk clear" onclick="updateResubDue('')">Clear</button>` : ''}
-      <p class="mh">Days are counted from the day it goes back, because that differs for each trainee. A date is one closing time for everyone, and it wins over the days. Handbook 9.2.3 wants the resubmission inside the course. Leave both empty and it stays open.</p></div>
     ${cxm ? '' : `<div class="mf"><label for="mFmt">Format</label>
       <select id="mFmt" onchange="updateMeta('format',this.value)">
         <option value="prose" ${a.format==='prose'?'selected':''}>Continuous prose</option>
@@ -1163,18 +1149,25 @@ function updateDue(v){
 /* WHEN IT GOES OUT, AND WHO SETS IT (10 Oct 2026). The timetable puts "… out"
    on the day in that tutor's color. It does not release the assignment: the
    Candidates row still decides that. */
+/* THE DATES ARE ON THE TIMETABLE (Ramy, 29 Oct 2026: "course admin is just setting up the wording"). Here they are a line,
+   with the way to change them; the assignment opens to the trainees on its opening date by itself. */
+function datesHTML(a){
+  const f = iso => iso ? HubDue.fmt(iso) : '';
+  const bits = [['Opens', f(a.releaseFrom || a.outAt)], ['Due', f(a.dueAt || a.due)], ['Resubmission', f(a.resubDueAt)]].filter(b => b[1]);
+  return `<div class="mf"><span class="ml">Dates</span>
+      <div class="line">${bits.length ? bits.map(b => '<b>' + b[0] + '</b> ' + esc(b[1])).join(' &middot; ') : 'None yet'}</div>
+      <p class="mh"><a href="23_timetable.html#asgDates">${bits.length ? 'Change them on the timetable' : 'Set them on the timetable'}</a></p></div>`;
+}
 function outHTML(a){
   let names = [];
   try { names = hubTutorNames(JSON.parse(localStorage.getItem('connect_course_settings')) || {}); } catch (e) {}
   const by = a.setBy || '';
   if (by && names.indexOf(by) === -1) names.push(by);
-  return `<div class="mf"><label for="mOut">Goes out</label>
-      <input id="mOut" type="datetime-local" value="${HubDue.toLocalInput(a.outAt)}" onchange="updateOut(this.value)">
-      ${a.outAt ? `<button type="button" class="lnk clear" onclick="updateOut('')">Clear</button>` : ''}
+  return `<div class="mf"><label>Set by</label>
       <select onchange="updateSetBy(this.value)" aria-label="Who sets it">
-        <option value="">Set by…</option>${names.map(n => `<option value="${esc(n)}"${n === by ? ' selected' : ''}>${esc(n)}</option>`).join('')}
+        <option value="">Choose a tutor</option>${names.map(n => `<option value="${esc(n)}"${n === by ? ' selected' : ''}>${esc(n)}</option>`).join('')}
       </select>
-      <p class="mh">The day it is handed out and the tutor who sets it. The timetable marks it on that day in the tutor’s color.${names.length ? '' : ' Add the tutors’ names on Course admin to pick one.'}</p></div>`;
+      <p class="mh">The tutor who hands it out. The timetable marks its opening day in their color.${names.length ? '' : ' Add the tutors’ names on Course admin to pick from them.'}</p></div>`;
 }
 function updateSetBy(v){ DATA[CURRENT].setBy = v; persistSettings(); soon(); }
 function updateOut(v){
