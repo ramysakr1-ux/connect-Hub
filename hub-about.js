@@ -27,11 +27,18 @@
       + '.aboutme .msg{margin:10px 0 0;font-size:.88rem;color:var(--grey);} .aboutme .msg.err{color:var(--a-red);}';
     document.head.appendChild(st);
   }
+  function myRecord(){ try { return JSON.parse(localStorage.getItem('hub:me') || '{}') || {}; } catch (e) { return {}; } }
+  function ready(){ var me = myRecord(), t = ''; try { t = localStorage.getItem('hub:t') || ''; } catch (e) {} return !!me.token && me.token === t && !String(me.group || '').trim(); }
+  function unmount(){ var b = document.getElementById('aboutMe'); if (b && !b.dataset.saved && !ready()) b.remove(); }
   function mount(){
     var a = rd(); if ((a && a.at) || document.getElementById('aboutMe')) return;
     /* ONLY BEFORE THE GROUPS (Ramy, 29 Oct 2026: "they have the TP group ... we already did the TP groups, so why are we
        asking them now?"). The answers are for mixing the groups; once a trainee is in one, the card does not show. */
-    try { var me = JSON.parse(localStorage.getItem('hub:me') || '{}') || {}; if (String(me.group || '').trim()) return; } catch (e) {}
+    /* AND ONLY ON THIS LINK'S OWN RECORD (29 Oct 2026, Ramy: "that was a bug then fix it"): the mid-course demo's Aiko,
+       in group 1, was shown the card. The six-second fallback could run before the record for this link had arrived,
+       or on a record left by an earlier link, find no group, and put the card up for good. Now it waits until the
+       record in the browser is this link's, and a card already up goes as soon as a group is there (unmount, below). */
+    if (!ready()) return;
     var anchor = document.getElementById('onlineRooms'); if (!anchor) return;
     css();
     var box = document.createElement('section'); box.className = 'aboutme'; box.id = 'aboutMe';
@@ -55,11 +62,15 @@
       var g = box.querySelector('input[name=abGender]:checked'), msg = box.querySelector('.msg');
       if (!lang || !nat || !exp) { msg.className = 'msg err'; msg.textContent = 'Answer the first three, please. Gender is up to you.'; return; }
       try { localStorage.setItem(KEY, JSON.stringify({ firstLanguage: lang, nationality: nat, experience: exp, gender: g ? g.value : 'unsaid', pronouns: box.querySelector('#abPro').value.trim(), by: 'trainee', at: new Date().toISOString() })); } catch (e) {}
-      box.innerHTML = '<h2>Thank you</h2><p class="sub" style="margin:0">Your tutors have your answers.</p>';
+      box.dataset.saved = '1'; box.innerHTML = '<h2>Thank you</h2><p class="sub" style="margin:0">Your tutors have your answers.</p>';
       setTimeout(function(){ box.remove(); }, 3500);
     });
   }
   /* after the store has handed back what is already answered, so nobody is asked twice */
-  document.addEventListener('hub:ready', mount);
-  setTimeout(mount, 6000);
+  function check(){ unmount(); mount(); }
+  document.addEventListener('hub:ready', check);
+  setTimeout(check, 6000);
+  /* a record that arrives later, in this tab or another, is checked again */
+  window.addEventListener('storage', function(e){ if (!e.key || e.key === 'hub:me') check(); });
+  setTimeout(check, 15000);
 })();
