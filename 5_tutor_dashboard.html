@@ -23,7 +23,7 @@
 <title>Connect Lite — Tutor dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610291253">
+<link rel="stylesheet" href="hub-tokens.css?v=202610291303">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -506,7 +506,7 @@
   @media(max-width:560px){ .welcome.join{padding:24px 18px 20px;} .welcome.join .wname{transform:none;} .dv6-date{flex-basis:100%;} }
   @media print{ .dv6-brief{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610291253">
+<link rel="stylesheet" href="hub-house.css?v=202610291303">
 </head>
 <body>
 <div class="board">
@@ -578,7 +578,7 @@
           <a href="13_grades_report.html">Grades report</a>
           <a href="12_assessor_pack.html">Assessor pack</a>
           <a href="33_course_feedback.html">Course feedback</a>
-          <a href="32_last_page.html">The last page</a>
+          <a href="32_last_page.html" id="menuLast" hidden>The last page</a>
           <a href="15_course_record.html">Save the whole course</a>
         </div>
       </div>
@@ -613,24 +613,24 @@
 
 </div>
 
-<script src="hub-due.js?v=202610291253"></script>
-<script src="observation-defaults.js?v=202610291253"></script>
-<script src="hub-rotation.js?v=202610291253"></script>
-<script src="hub-shared.js?v=202610291253"></script>
-<script src="hub-store.js?v=202610291253"></script>
-<script src="hub-say.js?v=202610291253"></script>
-<script src="hub-hand.js?v=202610291253"></script>
-<script src="hub-ink.js?v=202610291253"></script>
-<script src="hub-shelf.js?v=202610291253"></script>
+<script src="hub-due.js?v=202610291303"></script>
+<script src="observation-defaults.js?v=202610291303"></script>
+<script src="hub-rotation.js?v=202610291303"></script>
+<script src="hub-shared.js?v=202610291303"></script>
+<script src="hub-store.js?v=202610291303"></script>
+<script src="hub-say.js?v=202610291303"></script>
+<script src="hub-hand.js?v=202610291303"></script>
+<script src="hub-ink.js?v=202610291303"></script>
+<script src="hub-shelf.js?v=202610291303"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202610291253"></script>
-<script src="hub-sync.js?v=202610291253"></script>
-<script src="hub-notebook.js?v=202610291253"></script>
-<script src="hub-tracker.js?v=202610291253"></script>
-<script src="hub-feedback.js?v=202610291253"></script>
+<script src="assignment-defaults.js?v=202610291303"></script>
+<script src="hub-sync.js?v=202610291303"></script>
+<script src="hub-notebook.js?v=202610291303"></script>
+<script src="hub-tracker.js?v=202610291303"></script>
+<script src="hub-feedback.js?v=202610291303"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a trainee's link opened it and read the course and
@@ -764,6 +764,13 @@ function paintCourseMenu(){
   let cs = null, g = null; try { cs = JSON.parse(localStorage.getItem('connect_course_settings')); } catch(e) {} try { g = JSON.parse(localStorage.getItem('connect_tp_grid_v1')); } catch(e) {}
   const total = (cs && parseInt(cs.tpCount, 10) >= 2) ? parseInt(cs.tpCount, 10) : 8;
   const rel = Object.keys((g && g.released) || {}).filter(k => g.released[k]).sort();
+  /* THE LAST PAGE, IN THE LAST WEEK ONLY (Ramy, 29 Oct 2026): it is where the class photo goes up, which is a last-week
+     job; from seven days before the end, and after it, it is in the menu. */
+  { const ml = document.getElementById('menuLast'), end = String((cs && cs.end) || '').slice(0, 10);
+    if (ml) { let show = false;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(end)) { const today = (window.hubToday && hubToday()) || new Date().toISOString().slice(0, 10);
+        const from = new Date(end + 'T12:00:00Z'); from.setUTCDate(from.getUTCDate() - 7); show = today >= from.toISOString().slice(0, 10); }
+      ml.hidden = !show; } }
   const a = document.getElementById('menuGrid'); if (!a) return;
   a.firstChild.textContent = `TP${total - 1} & TP${total} grid `;
   document.getElementById('menuGridState').textContent = rel.length ? 'released to ' + rel.map(k => 'Group ' + (k || '\u2014')).join(', ') : 'not released';
