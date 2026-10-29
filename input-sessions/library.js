@@ -153,12 +153,16 @@ window.InputLib = (function(){
      today's input session ... the other ones, they should not be able to open
      them ... this is a demo course"). On a demo course, for every link, the
      sessions are all listed but only the latest one the timetable has given
-     opens; the rest say it is a demo and point to that one. */
+     opens (and, since 29 Oct, the next one); the rest say it is a demo and point to them. */
+  /* TWO OPEN, TO SHOW (Ramy, 29 Oct 2026: "I should have at least one or two.
+     Showcase."): the latest session given and the next one coming. */
   function demoOpen(tt, cs){
-    var now = today(cs), given = inputsOf(tt).filter(function(x){ return x.slug && x.date <= now; });
-    if (!given.length) return null;
-    var last = given[given.length - 1].date;
-    return given.filter(function(x){ return x.date === last; });
+    var now = today(cs), all = inputsOf(tt).filter(function(x){ return x.slug; });
+    var given = all.filter(function(x){ return x.date <= now; }), coming = all.filter(function(x){ return x.date > now; });
+    var out = [];
+    if (given.length) { var last = given[given.length - 1].date; out = given.filter(function(x){ return x.date === last; }); }
+    if (coming.length) { var next = coming[0].date; out = out.concat(coming.filter(function(x){ return x.date === next; })); }
+    return out.length ? out : null;
   }
   function sealDemo(open){
     var wrap = document.querySelector('.wrap'); if (!wrap) { reveal(); return; }
@@ -170,7 +174,7 @@ window.InputLib = (function(){
     }
     var esc = function(t){ return String(t).replace(/[&<>"]/g, function(c){ return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]; }); };
     var links = (open || []).map(function(x){ return '<a href="../' + esc(x.slug) + '/">' + esc(x.t) + '</a>'; }).join(' and ');
-    n.innerHTML = '<div class="stage-title">This is a demo course</div><p class="lead" style="margin:0">On a real course, each session opens on the day the timetable gives it. In the demo, only the latest one opens' + (links ? ': ' + links + '.' : '.') + '</p>';
+    n.innerHTML = '<div class="stage-title">This is a demo course</div><p class="lead" style="margin:0">On a real course, each session opens on the day the timetable gives it. In the demo, the latest one and the next one open' + (links ? ': ' + links + '.' : '.') + '</p>';
     root.classList.add('sealed'); root.classList.remove('gating');
   }
   function gate(){
