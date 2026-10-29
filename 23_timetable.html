@@ -151,6 +151,7 @@
   .tv2-seg{position:relative; height:30px; padding:0; border:0; border-radius:5px; background:var(--box); cursor:pointer;
     font:700 10px 'Karla',sans-serif; color:var(--grey); transition:transform .15s ease, background-color .2s;}
   .tv2-seg.wk1{margin-left:0;} .tv2-seg.mon{box-shadow:inset 2px 0 0 var(--sand-line);}
+  .tv2-seg.inwk{box-shadow:inset 0 0 0 1.5px color-mix(in oklch, var(--ink) 55%, transparent);}
   .tv2-seg.past{background:var(--a-forest); color:#F0EEE9;}
   .tv2-seg.today{background:var(--a-red); color:#fff; animation:tv2-pulse 2.2s ease-out infinite;}
   .tv2-seg:hover{transform:translateY(-2px); background:var(--teal-lifted) !important; color:var(--paper);}  /* !important: the shared button wash was out-specifying this and turning the white numbers white-on-white (18 Oct 2026) */
@@ -737,12 +738,17 @@
   .ttpop .phead{display:grid; grid-template-columns:112px 112px minmax(0,1fr) 26px; gap:6px; font-size:0.6rem; letter-spacing:.1em; text-transform:uppercase; font-weight:700; color:var(--grey); margin:0 0 4px;}
   .ttpop .more{display:flex; flex-direction:column; gap:6px; align-items:stretch;}
   .ttpop .more .btn{text-align:left;}
+  .ttpop .how{display:grid; grid-template-columns:30px minmax(0,1fr); gap:12px; padding:12px 0; border-top:1px solid var(--row-line);}
+  .ttpop .how:first-of-type{border-top:0; padding-top:0;}
+  .ttpop .how .hn{display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:var(--ink); color:var(--paper); font-weight:700; font-size:.88rem;}
+  .ttpop .how b{display:block; font-size:.98rem; margin:2px 0 4px;} .ttpop .how p{margin:0 0 8px; font-size:.88rem; line-height:1.5; color:var(--ink);} .ttpop .how p b{display:inline; font-size:inherit; margin:0;}
   .ttpop .pch{margin:16px 0 8px; font-size:0.72rem; letter-spacing:.1em; text-transform:uppercase; color:var(--grey);}
   .ttpop .info{margin:10px 0; padding:10px 12px; border-radius:8px; background:var(--field); font-size:0.8rem; color:var(--ink);}
   .slegend{display:flex; flex-wrap:wrap; gap:8px 16px; margin:14px 0 0; font-size:0.78rem; color:var(--ink);}
-  .slegend i.due{display:inline-block; width:14px; height:4px; margin-right:6px; border-radius:2px; background:var(--brick); vertical-align:2px;}
+  .slegend i.dl{display:inline-block; width:14px; height:4px; margin-right:6px; border-radius:2px; background:var(--brick); vertical-align:2px;}
   .slegend i.tile{position:static; display:inline-block; width:12px; height:12px; padding:0; margin-right:6px; border-radius:50%; vertical-align:-1px; background:var(--c); border:1px solid color-mix(in oklch, black 14%, var(--c));}
   #ttOldBar{display:none;}
+  .say-pill{margin-top:90px !important;}
   @media (max-width:760px){ .ttpop .prow, .ttpop .phead{grid-template-columns:92px 92px minmax(0,1fr) 22px;} .slayout.libopen{grid-template-columns:minmax(0,1fr);} .slib{position:static; max-height:320px;} .stool h2{font-size:1.3rem;} .ttpop.drawer{padding:18px 16px;} }
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
 </style>
@@ -1806,7 +1812,7 @@ let GROUPS = [], DUES = {}, OUTS = {}, ROOMS = {}, ZONE = '', STATE = {}, EDIT =
    there's the view-only timetable for the course once it's set"). */
 let PREVIEW = (function(){ try { return sessionStorage.getItem('tt:preview') === '1'; } catch (e) { return false; } })(), SCROLLED = false, SLOTS_OPEN = false;   /* the trainee view is kept for the visit (30 Oct 2026) */
 /* the course studio's own state: the week on show, the input library open or shut and its search, the tutor filter */
-let WEEK = null, LIB_OPEN = false, LIB_Q = '', TFILTER = '';
+let WEEK = null, LIB_OPEN = false, LIB_Q = '', TFILTER = '', WEEK_OF = {};
 
 function render(){
   TPP = null;
@@ -1829,7 +1835,7 @@ function render(){
   const mode = IS_TUTOR && TT && TT.days && TT.days.length ? `<div class="smode"><span class="chip${EDIT ? ' draft' : ' on'}">${EDIT ? (pubNow ? 'Editing · the course sees the published one' : 'Editing · not set for the course yet') : 'Read only · what the course sees'}</span><button type="button" class="btn quiet" id="preview">${EDIT ? 'Trainee view' : 'Edit timetable'}</button></div>` : '';
   const head = `<p class="eyebrow">Course</p><h1>Timetable</h1>
     <p class="lede">${IS_TUTOR
-      ? 'The course’s own timetable. The teaching practices and the assignment deadlines come from the course itself; the input sessions and notes are yours to type. Letters are people — a day is named by its date and by who teaches on it.'
+      ? 'The course’s timetable. Click a session to change it; trainees see it once you publish.'
       : IS_TRAINEE ? 'Every day of the course. The teaching practice cell says who is teaching that day; your assignment deadlines are marked on the day they fall.'
       : 'Every day of the course. The teaching practice cell says who is teaching that day, and each assignment deadline is marked on the day it falls.'}</p>${mode}`;
   /* Set, then seen. A skeleton is twenty empty days, and until 29 Sep 2026 the
@@ -1899,11 +1905,12 @@ function render(){
   for (let m = Math.ceil(B.from / 60) * 60; m <= B.to; m += 60) ruler += `<span style="top:${(m - B.from) * PXM}px">${esc(hubClock(toHM(m)).replace(':00', ''))}</span>`;
   const used = new Set(); (TT.days || []).forEach(d => (d.sessions || []).forEach(x => { if (x.k === 'input' && x.by !== undefined && x.by !== '' && TUTORS[+x.by]) used.add(+x.by); }));
   Object.values(OUTS || {}).forEach(list => list.forEach(o => { const i = TUTORS.indexOf(o.by); if (i !== -1) used.add(i); }));
-  const key = `<div class="slegend">${[['input', 'Input'], ['tp', 'Teaching practice'], ['feedback', 'TP feedback'], ['plan', 'Lesson planning'], ['demo', 'Demo lessons and observation'], ['event', 'Tutorials and whole group'], ['task', 'Assignments and admin'], ['reflect', 'Reflection'], ['assessor', 'Assessor'], ['break', 'Breaks and lunch']].map(k => `<span><i class="tile k-${k[0]}"></i>${k[1]}</span>`).join('')}<span><i class="due"></i>A deadline</span></div>`;
+  const key = `<div class="slegend">${[['input', 'Input'], ['tp', 'Teaching practice'], ['feedback', 'TP feedback'], ['plan', 'Lesson planning'], ['demo', 'Demo lessons and observation'], ['event', 'Tutorials and whole group'], ['task', 'Assignments and admin'], ['reflect', 'Reflection'], ['assessor', 'Assessor'], ['break', 'Breaks and lunch']].map(k => `<span><i class="tile k-${k[0]}"></i>${k[1]}</span>`).join('')}<span><i class="dl"></i>A deadline</span></div>`;
   const gsw = groupSwitchHTML();
   const w = weeks[WEEK] || [], wa = parse(w[0].date), wb = parse(w[w.length - 1].date);
   const two = n => String(n).padStart(2, '0');
-  const tabs = weeks.length > 1 ? `<nav class="swk" aria-label="Course weeks">${weeks.map((x, i) => `<button type="button" data-week="${i}" class="${i === WEEK ? 'on' : ''}" aria-current="${i === WEEK}">Week ${two(i + 1)}<small>${esc(DOW[parse(x[0].date).getDay()] + ' ' + dm(parse(x[0].date)))}</small></button>`).join('')}</nav>` : '';
+  WEEK_OF = {}; weeks.forEach((x, i) => x.forEach(d => { WEEK_OF[d.date] = i; }));
+  const tabs = false ? `<nav class="swk" aria-label="Course weeks">${weeks.map((x, i) => `<button type="button" data-week="${i}" class="${i === WEEK ? 'on' : ''}" aria-current="${i === WEEK}">Week ${two(i + 1)}<small>${esc(DOW[parse(x[0].date).getDay()] + ' ' + dm(parse(x[0].date)))}</small></button>`).join('')}</nav>` : '';
   const used2 = [...new Set((TT.days || []).flatMap(d => (d.sessions || []).filter(x => x.by !== undefined && x.by !== null && x.by !== '' && TUTORS[+x.by]).map(x => String(+x.by))))];
   if (TFILTER !== '' && used2.indexOf(TFILTER) === -1) TFILTER = '';
   const filt = used2.length > 1 ? `<select id="tFilter" aria-label="Show one tutor’s sessions"><option value="">All tutors</option>${used2.map(i => `<option value="${i}"${TFILTER === i ? ' selected' : ''}>${esc(initialsOf(TUTORS[+i]))} · ${esc(TUTORS[+i])}</option>`).join('')}</select>` : '';
@@ -1912,11 +1919,11 @@ function render(){
   const tool = `<div class="stool"><div><h2>Week ${two(WEEK + 1)}</h2><p class="wkd">${esc(DOW[wa.getDay()] + ' ' + dm(wa))} – ${esc(DOW[wb.getDay()] + ' ' + dm(wb))}</p>${changeNote(w)}</div>
     <div class="sacts">${filt}<button type="button" class="btn quiet" id="tOrient" title="Switch the board round">${ACROSS() ? 'Days down' : 'Days across'}</button>
       ${EDIT ? `<button type="button" class="btn quiet" id="libBtn" aria-pressed="${LIB_OPEN}">Input library</button><button type="button" class="btn quiet" id="addSes">+ Session</button><button type="button" class="btn quiet" id="setupBtn">Course setup</button><button type="button" class="btn quiet" id="ttUndo"${UNDO.length ? '' : ' disabled'}>Undo</button>${pubBtn}` : ''}
-      <button type="button" class="btn quiet" id="ttPrint">Print week</button></div></div>`;
+      <button type="button" class="btn quiet" id="ttPrint">Print week</button>${IS_TUTOR ? '<button type="button" class="btn quiet" id="howBtn">How it works</button>' : ''}</div></div>`;
   const lib = EDIT && LIB_OPEN ? `<aside class="slib"><h3>Input library</h3><p>Choose a session to schedule it, or drag it onto an empty place.</p><input id="libQ" type="search" placeholder="Search sessions" aria-label="Search the input sessions" value="${esc(LIB_Q)}"><div id="libList">${libListHTML()}</div></aside>` : '';
   app.innerHTML = head + updatedHTML() + zoneLine() + bar + tabs + tool + roomsStrip() + gsw
     + `<div class="slayout${lib ? ' libopen' : ''}">${lib}<div>${weekBoard(w, WEEK)}${key}</div></div>`
-    + keyLine() + `<p class="legend">Teaching practice runs the same number on two days, one teaching set each: the letters name the trainees teaching that day. ${GROUPS.map(g => 'Group ' + esc(g.group || '—') + ': ' + g.sets.map(R.setName).filter(Boolean).join(' and ')).join('. ')}.</p>`;
+    + '';   /* nothing written under the board (Ramy, 30 Oct 2026: "remove the writing underneath ... it's crowded") */
   if ($('preview')) $('preview').addEventListener('click', () => { PREVIEW = !PREVIEW; try { sessionStorage.setItem('tt:preview', PREVIEW ? '1' : ''); } catch (e) {} closePop(); render(); });
   wireStudio(weeks);
   if ($('publish')) $('publish').addEventListener('click', () => { TT.published = true; CHANGES = []; LIVE = pickLive(TT); save('Set \u2014 the course can see it'); render(); });
@@ -2621,7 +2628,7 @@ function wireDays(){
 function statusHTML(){
   if (!IS_TUTOR || !TT.published) return '';
   const n = CHANGES.length;
-  if (!n) return `<div class="tstatus"><span class="chip on">Published</span><span>The course sees this timetable. Edits stay a draft until you publish them.</span></div>`;
+  if (!n) return '';   /* the chip at the top already says it (30 Oct 2026) */
   return `<div class="tstatus draft"><span class="chip draft">Draft</span><span><b>${n} change${n === 1 ? '' : 's'}</b> the course can’t see yet.</span>
     <button class="btn" id="ttPublish">Publish to the course</button><button class="btn quiet" id="ttChanges">${CHANGES_OPEN ? 'Hide' : 'See'} the changes</button><button class="btn quiet" id="ttDiscard">Throw them away</button></div>
     ${CHANGES_OPEN ? `<div class="tchanges">${CHANGES.map(c => `<div class="ch"><b>${esc(c.text)}</b>${(c.effects || []).map(e => `<span>${esc(e)}</span>`).join('')}</div>`).join('')}<p class="hint">Publishing sends the course a short note of what moved.</p></div>` : ''}`;
@@ -3052,7 +3059,31 @@ function openPublish(first){
   $('pbNo').addEventListener('click', () => closePop());
   $('pbGo').addEventListener('click', () => { closePop(); if (first) { TT.published = true; CHANGES = []; LIVE = pickLive(TT); save('Set \u2014 the course can see it'); render(); } else publish(); });
 }
+
+/* HOW THE TIMETABLE WORKS (Ramy, 30 Oct 2026: "a trainer-facing option ... very simple terms ... 1, 2, 3, 4 ... five weeks or
+   part-time ... where's the import option"). Tutors only; each step can open the thing it names. */
+function openHow(){
+  closePop();
+  const el = pop('ttpop');
+  const step = (n, h, body, btn) => `<div class="how"><span class="hn">${n}</span><div><b>${h}</b><p>${body}</p>${btn || ''}</div></div>`;
+  el.innerHTML = `
+    ${step(1, 'Set up the course', 'Open <b>Course setup</b>. Choose the start date, how many weeks, the teaching days and the time zone, then type the usual day: when each part starts and ends. Press <b>Lay the timetable again</b> and Lite builds every day, with the teaching practices, input sessions and tutorials in their places.', '<button type="button" class="btn quiet" data-how="setup">Open Course setup</button>')}
+    ${step(2, 'Five weeks, or part-time', 'In Course setup, change the number of weeks and tick the days the course meets. A five-week course might meet Monday to Thursday; a part-time course might meet Tuesday and Thursday over twelve weeks. Then press <b>Lay the timetable again</b>.')}
+    ${step(3, 'Already have a timetable?', 'Bring it in instead of building one: a Google Sheet, an Excel or Word file, or rows pasted in, one row a day. Lite lays it onto your dates.', '<button type="button" class="btn quiet" data-how="import">Import from a sheet</button>')}
+    ${step(4, 'Change a session', 'Click it. Change the title, the day, the times, the tutor or what trainees prepare, then press <b>Save draft</b>. To move it, drag it to an empty place; drop it on another session to swap the two.')}
+    ${step(5, 'Add a session', 'Press <b>+ Session</b>, click an empty place on the board, or open the <b>Input library</b> and drag a session onto the board.', '<button type="button" class="btn quiet" data-how="lib">Open the Input library</button>')}
+    ${step(6, 'A day that is different', 'Use <b>⋯</b> on the day: start it later, finish it earlier, close it for a holiday, or copy its shape to other days.')}
+    ${step(7, 'Show it to the course', 'Press <b>Set it for the course</b>. Lite runs its checks first. After that every change is a draft until you press <b>Publish changes</b>, and <b>Undo</b> takes back the last one. <b>Trainee view</b> shows exactly what trainees see.')}`;
+  el.hidden = false; asDrawer(el, 'How the timetable works');
+  el.querySelectorAll('[data-how]').forEach(b => b.addEventListener('click', () => {
+    const w = b.dataset.how;
+    if (w === 'setup') { if (!EDIT) { PREVIEW = false; try { sessionStorage.setItem('tt:preview', ''); } catch (e) {} render(); } openSetup(); }
+    else if (w === 'import') { closePop(); const x = $('importOpen'); if (x) x.click(); }
+    else if (w === 'lib') { closePop(); if (!EDIT) { PREVIEW = false; try { sessionStorage.setItem('tt:preview', ''); } catch (e) {} } LIB_OPEN = true; render(); }
+  }));
+}
 function wireStudio(weeks){
+  if ($('howBtn')) $('howBtn').addEventListener('click', openHow);
   document.querySelectorAll('[data-week]').forEach(b => b.addEventListener('click', () => { WEEK = +b.dataset.week; closePop(); render(); }));
   if ($('tFilter')) $('tFilter').addEventListener('change', e => { TFILTER = e.target.value; render(); });
   if ($('tOrient')) $('tOrient').addEventListener('click', () => { ORIENT = ACROSS() ? 'v' : 'h'; try { localStorage.setItem('tt:orient', ORIENT); } catch (e) {} render(); });
@@ -3998,6 +4029,8 @@ function save(word, change){
   const nowD = () => { const n = window.hubNow ? hubNow() : new Date(); return n instanceof Date ? n : new Date(n); };
   const daysBetween = (a, b) => Math.round((Date.parse(b + 'T12:00:00') - Date.parse(a + 'T12:00:00')) / 864e5);
   const jump = date => {
+    /* a day in another week opens that week first */
+    if (WEEK_OF[date] != null && WEEK_OF[date] !== WEEK) { WEEK = WEEK_OF[date]; closePop(); render(); return setTimeout(() => jump(date), 80); }
     const el = document.getElementById('d-' + date); if (!el) return;
     /* on a phone the week is a row of days: bring the day across as well as down */
     if (el.parentElement && el.parentElement.scrollWidth > el.parentElement.clientWidth) el.parentElement.scrollTo({ left: el.offsetLeft - el.parentElement.offsetLeft, behavior: 'smooth' });
@@ -4006,7 +4039,8 @@ function save(word, change){
 
   function ribbon(){
     const days = (TT && TT.days) || []; if (!days.length || host.querySelector('.tv2-rib')) return;
-    const firstWk = host.querySelector('.tkey') || host.querySelector('.wk'); if (!firstWk) return;
+    /* the course's days, one tile each, above the week on show (Ramy, 30 Oct 2026: "where is the bar ... the timetable progressing") */
+    const firstWk = host.querySelector('.stool') || host.querySelector('.tkey') || host.querySelector('.wk'); if (!firstWk) return;
     const idx = days.findIndex(d => d.date === TODAY);
     const before = days[0] && TODAY < days[0].date, after = days[days.length - 1] && TODAY > days[days.length - 1].date;
     const head = idx >= 0 ? 'Day <em>' + (idx + 1) + '</em> of ' + days.length
@@ -4016,7 +4050,7 @@ function save(word, change){
     const sub = days.length + ' days \u00b7 ' + tps + ' with teaching practice';
     const segs = days.map((d, i) => {
       const dt = new Date(d.date + 'T12:00:00'), mon = dt.getDay() === 1 && i > 0;
-      const cls = ['tv2-seg', d.closed ? 'closed' : '', d.date < TODAY ? 'past' : '', d.date === TODAY ? 'today' : '', mon ? 'mon' : ''].filter(Boolean).join(' ');
+      const cls = ['tv2-seg', d.closed ? 'closed' : '', d.date < TODAY ? 'past' : '', d.date === TODAY ? 'today' : '', mon ? 'mon' : '', WEEK_OF[d.date] === WEEK ? 'inwk' : ''].filter(Boolean).join(' ');
       const due = (typeof DUES !== 'undefined' && DUES[d.date] && DUES[d.date].length) ? DUES[d.date].map(x => x.title).join(', ') : '';
       const tip = 'Day ' + (i + 1) + ' \u00b7 ' + dt.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) + (d.tp ? ' \u00b7 TP ' + d.tp : '') + (due ? ' \u00b7 ' + due + ' due' : '');
       return '<button type="button" class="' + cls + '" data-go="' + esc(d.date) + '" title="' + esc(tip) + '" aria-label="' + esc(tip) + '">' + (i + 1)
