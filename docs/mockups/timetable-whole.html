@@ -145,7 +145,7 @@
 <div class="wrap" id="root">
   <p class="eyebrow">Mock-up · Timetable</p>
   <h1 id="title">Week 1</h1>
-  <p class="lede">Connect's timetable, four weeks, Monday 2 November to Friday 27 November. No TP on the Fridays of weeks 2 and 3: tutorials, then filmed observations. In edit mode: set the course's shape, who teaches, and when each assignment is due; drag from the shelf; click a day for a late start or an early finish.</p>
+  <p class="lede">Connect's timetable, four weeks, Monday 2 November to Friday 27 November. No TP on the Fridays of weeks 2 and 3: Stage 2 tutorials after TP4, then Stage 3 tutorials and filmed observations after TP6. In edit mode: set the course's shape, who teaches, and when each assignment is due; drag from the shelf; click a day for a late start or an early finish.</p>
   <div class="bar">
     <div class="seg" id="mode"><button data-v="view" class="on">View only</button><button data-v="edit">Edit</button></div>
     <div class="seg" id="lay"><button data-v="across" class="on">Across</button><button data-v="down">Down</button></div>
@@ -215,7 +215,7 @@
   var SHELF = [
     { k:'task', t:'Focus on the Learner: the assignment', len:60, asg:'fol', req:1 }, { k:'task', t:'Language Related Tasks: the assignment', len:60, asg:'lrt', req:1 },
     { k:'task', t:'Language Skills Related Tasks: the assignment', len:60, asg:'lsrt', req:1 }, { k:'task', t:'Lessons from the Classroom: the assignment', len:60, asg:'lfc', req:1 },
-    { k:'task', t:'Stage 1 tutorials', len:60, req:1 }, { k:'task', t:'Stage 2 tutorials', len:60, req:1 }, { k:'task', t:'Stage 3 tutorials', len:60 },
+    { k:'task', t:'Stage 2 tutorials', len:45, req:1 }, { k:'task', t:'Stage 3 tutorials', len:45 }, { k:'task', t:'Stage 1 progress check', len:45 },
     { k:'assessor', t:'Assessor visit', len:180, req:1 }, { k:'task', t:'Consultation', len:60 },
     { k:'demo', t:'Observation: an experienced teacher', len:60, req:1 }, { k:'demo', t:'Observation: a filmed lesson, with a task', len:60, req:1 }, { k:'demo', t:'Demonstration lesson', len:60 },
     { k:'event', t:'Getting to know you', len:45 }, { k:'event', t:'Course review', len:60 }, { k:'plan', t:'Study time', len:60 }
@@ -261,7 +261,7 @@
     function put(row, x){ var c = col(x.s); while (row[c] && c < BAR.length - 1) c++; row[c] = x; }
     var tps = shape.filter(function(x){ return x.k === 'tp'; }), lunch = shape.filter(function(x){ return x.k === 'lunch'; })[0];
     var after = shape.filter(function(x){ return x.k === 'feedback' || x.k === 'plan'; });
-    var extra = { 9: [[0,'task','Language Related Tasks: the assignment','lrt'], [3,'task','Stage 1 tutorials']], 14: [[0,'task','Language Skills Related Tasks: the assignment','lsrt'], [3,'task','Stage 2 tutorials']] };
+    var extra = {};
     for (var d = 0; d < 20; d++) {
       CUR_DAY = d; var row = BAR.map(function(){ return null; }), p = P[d], isFri = DATES[d].getDay() === 5;
       shape.forEach(function(x){
@@ -296,7 +296,10 @@
         /* a filmed-observations Friday: three observations with their tasks, consultations, the week's assignment or tutorials */
         var slots = tps.concat(after), fill = [['demo','Filmed observation, with a task'], ['demo','Filmed observation, with a task'], ['task','Consultation'], ['demo','Filmed observation, with a task'], ['task','Consultation']];
         /* Ramy, 29 Oct 2026: "week 2 Friday will be tutorials" */
-        if (d === 9) fill = [['task','Stage 1 tutorials'], ['task','Stage 1 tutorials'], ['task','Language Related Tasks: the assignment','lrt'], ['task','Stage 1 tutorials'], ['task','Consultation']];
+        /* Handbook 10 (pp. 30-31): Stage 2 is the one-to-one tutorial at the halfway point, after TP4, as the trainees swap
+           tutors; Stage 3 in the final third, with at least two lessons left (after TP6) */
+        if (d === 9) fill = [['task','Stage 2 tutorials'], ['task','Stage 2 tutorials'], ['task','Language Related Tasks: the assignment','lrt'], ['task','Stage 2 tutorials'], ['task','Stage 2 tutorials']];
+        else if (d === 14) fill = [['demo','Filmed observation, with a task'], ['demo','Filmed observation, with a task'], ['task','Language Skills Related Tasks: the assignment','lsrt'], ['task','Stage 3 tutorials'], ['demo','Filmed observation, with a task']];
         else (extra[d] || []).forEach(function(e){ fill[e[0] === 0 ? 2 : 4] = [e[1], e[2], e[3]]; });
         slots.forEach(function(x, i){ var f = fill[i] || ['task','Consultation']; var o = { k: f[0], t: f[1], s: x.s, e: x.e }; if (f[2]) o.asg = f[2]; if (f[0] !== 'demo') o.by = who(d + i); put(row, o); });
       }
@@ -401,13 +404,18 @@
     else { rows.forEach(function(r){ grid.appendChild(dayCell(r, F)); }); BAR.forEach(function(_, c){ rows.forEach(function(r){ grid.appendChild(tile(r, c)); }); }); }
     checks();
   }
+  /* the day after a given TP has been taught by both groups */
+  function afterTP(n){ var last = -1; CELLS.forEach(function(row, r){ row.forEach(function(x){ if (x && x.k === 'tp' && new RegExp('^TP' + n + ' ').test(x.t)) last = r; }); }); return last; }
+  function dayOf(re){ var at = -1; CELLS.forEach(function(row, r){ row.forEach(function(x){ if (x && re.test(x.t) && at < 0) at = r; }); }); return at; }
+  function stage2ok(){ var d = dayOf(/Stage 2 tutorials/), a = afterTP(4), b = afterTP(5); return d > a && a >= 0 && (b < 0 || d < b); }
+  function stage3ok(){ var d = dayOf(/Stage 3 tutorials/), a = afterTP(7); return d >= 0 && d < a; }
   /* what Cambridge asks of every course, said before you lock it */
   function checks(){
     var all = []; CELLS.forEach(function(row, r){ if (MOD[r] !== 'off') row.forEach(function(x, c){ if (x && !off(r, c)) all.push(x); }); });
     var obs = all.filter(function(x){ return x.k === 'demo'; }).reduce(function(a, x){ return a + (mins(x.e) - mins(x.s)); }, 0) / 60;
     var tps = 0; CELLS.forEach(function(row, r){ if (MOD[r] !== 'off' && MOD[r] !== 'notp' && MOD[r] !== 'early') { if (row.some(function(x){ return x && x.k === 'tp'; })) tps++; } });
     function has(re){ return all.some(function(x){ return re.test(x.t); }); }
-    var L = [['Contact hours', CONTACT >= 120, (Math.round(CONTACT * 4) / 4) + ' of 120'], ['Observation hours', obs >= 6, obs + ' of 6'], ['Teaching practice days', tps >= 16, tps + ' of 16'], ['Assessor visit', has(/Assessor visit/)], ['Stage 1 tutorials', has(/Stage 1 tutorials/)], ['Stage 2 tutorials', has(/Stage 2 tutorials/)]]
+    var L = [['Contact hours', CONTACT >= 120, (Math.round(CONTACT * 4) / 4) + ' of 120'], ['Observation hours', obs >= 6, obs + ' of 6'], ['Teaching practice days', tps >= 16, tps + ' of 16'], ['Assessor visit', has(/Assessor visit/)], ['Stage 2 tutorials, after TP4', stage2ok()], ['Stage 3 tutorials, two lessons left', stage3ok()]]
       .concat(ASG.map(function(a){ return [a.full, all.some(function(x){ return x.asg === a.k; })]; }));
     /* his C/18 rule (8 Oct 2026): no resubmission on the last two days */
     var F = flags(), lateRe = [18, 19].some(function(i){ return (F[i] || []).some(function(f){ return f.w === 're'; }); });
