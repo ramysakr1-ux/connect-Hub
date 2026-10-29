@@ -451,6 +451,11 @@
   .gswitch button{border:1px solid var(--sand-line); background:var(--paper); border-radius:999px; padding:7px 16px; font:700 0.86rem 'Karla',sans-serif; color:var(--grey); cursor:pointer;}
   .gswitch button.on{background:var(--a-forest); border-color:var(--a-forest); color:var(--paper);}
   .gswitch span{font-size:0.8rem; color:var(--grey);}
+  .bld .shape .sgrid{display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:10px 14px; margin:8px 0;}
+  .bld .shape label span, .bld .shape .fixed span{display:block; font-size:0.66rem; letter-spacing:.1em; text-transform:uppercase; font-weight:700; color:var(--grey); margin:0 0 4px;}
+  .bld .shape select, .bld .shape input{box-sizing:border-box; width:100%; height:38px; padding:0 8px; border:1px solid var(--sand-line); border-radius:9px; background:var(--field); font:500 0.9rem 'Karla',sans-serif; color:var(--ink);}
+  .bld .shape .fixed b{display:block; padding-top:8px;} .bld .shape .fixed small{color:var(--faint); font-size:0.72rem;}
+  .bld .shelfalt{margin:0 0 14px;} .bld .shelfalt summary{cursor:pointer; font-weight:700; font-size:0.86rem; color:var(--teal);}
   .swapbar{position:fixed; left:50%; bottom:22px; transform:translateX(-50%); z-index:50; display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; max-width:min(92vw, 760px); padding:11px 16px; background:var(--paper); border:1px solid var(--sand-line); border-left:4px solid var(--a-mustard); border-radius:12px; font-size:0.86rem; box-shadow:0 12px 30px -10px oklch(30% 0.04 60 / .45);}
   .swapbar[hidden]{display:none;}
   .swapbar button{border:0; background:none; padding:0; font:700 0.86rem 'Karla',sans-serif; color:var(--teal); text-decoration:underline; cursor:pointer;}
@@ -2354,6 +2359,41 @@ function wireShelf(B){
     c.addEventListener('drop', e => { e.preventDefault(); const to = +c.dataset.ptile; if (kind) { P.tiles.splice(to, 0, { k: kind }); kind = ''; render(); return; } if (from < 0 || from === to) return; const t = P.tiles.splice(from, 1)[0]; P.tiles.splice(to, 0, t); from = -1; render(); });
   });
 }
+/* THE COURSE'S SHAPE (Ramy, 29 Oct 2026, the mock-up he chose: "set a usual teaching day once"; "build it again is still
+   the same old view"): the day as numbers, not tiles: when it starts, the inputs and their length, the breaks, the TP
+   lessons, lunch, feedback and planning. It writes the same pattern the shelf does, so every day is laid the same way. */
+const SHAPE_DEFAULT = { start: '10:00', inN: 1, inL: 75, br: 15, tpN: 3, tpL: 45, tpBr: 15, lu: 60, fb: 45, pl: 45 };
+function patternFromShape(S){
+  const tiles = [];
+  for (let i = 0; i < S.inN; i++) { tiles.push({ k: 'input', len: S.inL }); if (i < S.inN - 1 && S.br) tiles.push({ k: 'break', len: S.br }); }
+  if (S.br) tiles.push({ k: 'break', len: S.br });
+  for (let j = 0; j < S.tpN; j++) { tiles.push({ k: 'tp', len: S.tpL }); if (j === 1 && S.tpBr && S.tpN > 2) tiles.push({ k: 'break', len: S.tpBr }); }
+  if (S.lu) tiles.push({ k: 'lunch', len: S.lu });
+  if (S.fb) tiles.push({ k: 'feedback', len: S.fb });
+  if (S.pl) tiles.push({ k: 'plan', len: S.pl, t: 'Lesson planning' });
+  return { start: S.start, lens: Object.assign({}, KIND_LEN), tiles };
+}
+function shapeCardHTML(B){
+  if (!B.shape) { B.shape = Object.assign({}, SHAPE_DEFAULT); B.pattern = patternFromShape(B.shape); }
+  const S = B.shape, sel = (id, cur, opts) => `<select data-shape="${id}">${opts.map(o => `<option value="${o[0]}"${String(o[0]) === String(cur) ? ' selected' : ''}>${esc(o[1])}</option>`).join('')}</select>`;
+  const m = v => [v, v >= 60 ? (Math.floor(v / 60) + ' h' + (v % 60 ? ' ' + (v % 60) : '')) : v + ' min'];
+  const L = layout(B.pattern), end = L.length ? toHM(L[L.length - 1].e) : S.start;
+  return `<div class="bsec shape"><h4>1 · The course’s usual day</h4>
+    <div class="sgrid">
+      <label><span>The day starts</span><input type="time" data-shape="start" value="${esc(S.start)}" step="900"></label>
+      <label><span>Input sessions a day</span>${sel('inN', S.inN, [[1, '1'], [2, '2']])}</label>
+      <label><span>Each input session</span>${sel('inL', S.inL, [45, 60, 75, 90].map(m))}</label>
+      <label><span>Break after the inputs</span>${sel('br', S.br, [[0, 'None'], m(15), m(20), m(30)])}</label>
+      <label><span>TP lessons a day</span>${sel('tpN', S.tpN, [[2, '2'], [3, '3'], [4, '4']])}</label>
+      <label><span>Each TP lesson</span>${sel('tpL', S.tpL, [40, 45, 60].map(m))}</label>
+      <label><span>Break in the TP</span>${sel('tpBr', S.tpBr, [[0, 'None'], [15, '15 min, after lesson 2']])}</label>
+      <label><span>Lunch</span>${sel('lu', S.lu, [30, 45, 60].map(m))}</label>
+      <label><span>TP feedback</span>${sel('fb', S.fb, [[0, 'None'], m(30), m(45), m(60)])}</label>
+      <label><span>Lesson planning</span>${sel('pl', S.pl, [[0, 'None'], m(45), m(60)])}</label>
+      <div class="fixed"><span>Teaching practice</span><b>8 TPs, 6 hours</b><small>Cambridge’s, fixed</small></div>
+    </div>
+    <p class="hint">A teaching day: <b>${esc(hubClock(S.start))} to ${esc(hubClock(end))}</b>. Day one, the tutorial days and the last days keep their own shape.</p></div>`;
+}
 function buildPanelHTML(){
   if (!BUILD_OPEN) return '';
   const B = BUILD || (BUILD = buildDefaults());
@@ -2365,8 +2405,9 @@ function buildPanelHTML(){
   const teachLine = teaching === need ? `${teaching} teaching days, two for each of the ${tpCount} practices.`
     : teaching < need ? `<span class="warn">${teaching} teaching days: ${tpCount} practices need ${need}. Tap days to add.</span>` : `${teaching} teaching days: the first ${need} carry the ${tpCount} practices, the rest are study days.`;
   return `<div class="imp bld"><h3>Build the timetable</h3>
-    <p>Shape one day from the shelf, say which days teach and which sessions the course has. Connect lays every day from that pattern; drag anything after.</p>
-${shelfHTML(B)}
+    <p>Set the course’s usual day, say which days teach and which sessions the course has. Connect lays every day from it; drag anything after.</p>
+${shapeCardHTML(B)}
+    <details class="shelfalt"><summary>Or shape the day tile by tile</summary>${shelfHTML(B)}</details>
     <div class="bsec"><h4>2 · The days</h4>
       <div class="bdays">${dates.map(dayBox).join('')}</div>
       <p class="hint">${teachLine} Day 1 is the course introduction and the demonstration lesson. Tap a day to take teaching practice off it or put it back; the days without it get the tutorials, the new class and the planning.</p></div>
@@ -2392,6 +2433,9 @@ function wireBuild(){
   if ($('bClose')) $('bClose').addEventListener('click', () => { BUILD_OPEN = false; render(); });
   const rd = () => {};   /* the shelf keeps its own state as it is edited */
   wireShelf(B);
+  document.querySelectorAll('[data-shape]').forEach(el => el.addEventListener('change', () => {
+    const k = el.dataset.shape; B.shape[k] = k === 'start' ? el.value : +el.value; B.pattern = patternFromShape(B.shape); render();
+  }));
   document.querySelectorAll('[data-bday]').forEach(el => el.addEventListener('click', () => { const i = +el.dataset.bday; if (i === 0) return; rd(); B.teach[i] = !B.teach[i]; render(); }));
   document.querySelectorAll('[data-bon]').forEach(el => el.addEventListener('change', () => { rd(); B.sessions[+el.dataset.bon].on = el.checked; render(); }));
   document.querySelectorAll('[data-bby]').forEach(el => el.addEventListener('change', () => { B.sessions[+el.dataset.bby].by = el.value; }));
