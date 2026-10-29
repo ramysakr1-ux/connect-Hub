@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<!--
+  Feedback games — the trainees' own copy of the TP feedback games.
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy, 30 Oct 2026: "they're not doing this alone in breakout rooms, for example" -- then "add it to a trainee page". In a
+  breakout room one trainee opens this, shares their screen and taps for the group. The same games as the tutor's TP
+  feedback screen (hub-fbgames.js, one file for both): Spin the criteria, Criteria bingo, XO, on this week's criteria from the
+  course's timetable. Nothing from anyone's written feedback is here, and nothing is saved.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="brand/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<title>Feedback games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hub-tokens.css?v=202610300038">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);}
+  .wrap{max-width:900px; margin:0 auto; padding:32px 20px 90px;}
+  .back{display:inline-block; margin-bottom:14px; font-weight:600; font-size:.9rem; color:var(--teal); text-decoration:none;}
+  .k{font-family:'Instrument Sans','Karla',sans-serif; font-weight:600; font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--brick); margin:0 0 6px;}
+  h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:32px; line-height:1.08; margin:0 0 8px;}
+  .lede{color:var(--grey); font-size:15px; line-height:1.5; margin:0 0 18px; max-width:640px;}
+  .crits{display:flex; flex-wrap:wrap; gap:6px; margin:0 0 20px;}
+  .crits span{font-weight:700; font-size:13px; padding:4px 10px; border-radius:999px; background:var(--paper); border:1px solid var(--sand-line);}
+  .games{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:14px;}
+  .game-card{display:flex; flex-direction:column; gap:8px; text-align:left; background:var(--paper); border:0; border-radius:var(--r-card); box-shadow:var(--nb-shadow); border-top:3px solid var(--a-mustard); padding:18px; cursor:pointer; font:inherit; color:var(--ink);}
+  .game-card b{font-family:'Newsreader',Georgia,serif; font-size:22px;} .game-card span{color:var(--grey); font-size:14px; line-height:1.45;}
+  .game-card em{margin-top:auto; font-style:normal; font-weight:700; font-size:14px; color:var(--teal);}
+  .game-card:hover{transform:translateY(-2px);}
+  .how{margin:20px 0 0; padding:12px 14px; border-radius:10px; background:var(--paper); font-size:14px; line-height:1.5; color:var(--ink);}
+  @media (max-width:760px){ .games{grid-template-columns:1fr;} h1{font-size:27px;} }
+</style>
+<link rel="stylesheet" href="hub-house.css?v=202610292155">
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="23_timetable.html">Back</a>
+  <div id="app"><p class="lede">Loading the course…</p></div>
+</div>
+<script src="celta5-criteria.js?v=202610292155"></script>
+<script src="hub-fbgames.js?v=202610292155"></script>
+<script src="hub-shared.js?v=202610292155"></script>
+<script src="hub-store.js?v=202610292155"></script>
+<script src="hub-say.js?v=202610292155"></script>
+<script src="hub-sync.js?v=202610292155"></script>
+<script>
+if (window.hubNotVolunteerRoom && hubNotVolunteerRoom()) { /* refused */ }
+else (function(){
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const rec = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
+  const days = () => ((rec('connect_timetable_v1') || {}).days) || [];
+  HubFbGames.use(days);
+  function draw(){
+    const today = window.hubToday ? hubToday() : new Date().toISOString().slice(0, 10);
+    const ds = days().filter(d => d && d.date && !d.closed);
+    const day = ds.filter(d => d.date <= today).pop() || ds[0] || { date: today };
+    const codes = HubFbGames.focus(day.date);
+    $('app').innerHTML = `<p class="k">Teaching practice</p><h1>Feedback games</h1>
+      <p class="lede">For TP feedback in a breakout room: one of you opens a game, shares your screen and taps; everyone talks. The games use this week’s criteria, from the input sessions so far.</p>
+      ${codes.length ? '<div class="crits">' + codes.map(c => '<span>' + esc(c) + '</span>').join('') + '</div>' : ''}
+      <div class="games">
+        <button type="button" class="game-card" data-g="wheel"><b>Spin the criteria</b><span>Spin, land on a criterion, and talk about where it showed today: what went well, and what to try next time.</span><em>Spin</em></button>
+        <button type="button" class="game-card" data-g="bingo"><b>Criteria bingo</b><span>Nine criteria. Mark each one went well or next time; three went-well in a row is bingo.</span><em>Play</em></button>
+        <button type="button" class="game-card" data-g="xo"><b>XO</b><span>Two teams. Take a square by giving one real moment from today’s lessons for its criterion.</span><em>Play</em></button>
+      </div>
+      <p class="how">Nothing you tap here is saved, and nothing from anyone’s written feedback is on this page.</p>`;
+    document.querySelectorAll('[data-g]').forEach(b => b.onclick = () => b.dataset.g === 'wheel' ? HubFbGames.wheel(day) : HubFbGames.game(b.dataset.g, day));
+  }
+  draw();
+  document.addEventListener('hub:ready', draw);
+})();
+</script>
+</body>
+</html>
