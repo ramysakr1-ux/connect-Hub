@@ -1511,11 +1511,8 @@ function weekBoard(w, n){
   };
   const track = cols.map((c, i) => narrow[i] ? 'var(--slim)' : 'var(--cell)').join(' ') + (hasEnd ? ' var(--note)' : '');
   const style = `--ncols:${cols.length};--track:${track};--hh:calc(var(--hh0) + ${maxFlags} * 22px)`;
-  /* the times written once, down the left or across the top (Ramy's design, 29 Oct 2026: "chronological times at the left") */
-  /* in the reader's own time when it differs, as on the tiles, with the course's beneath (30 Oct 2026: "use the same timezone presentation throughout") */
-  const d0 = (w.find(d => !d.closed) || w[0] || {}).date;
-  const axis = `<div class="day timeaxis" aria-hidden="true"><div class="dh"><div class="dt">Time</div></div>${cols.map((c, i) => { const lr = d0 ? localRange(d0, c.s, c.e) : ''; const own = narrow[i] && across && !lr ? esc(hubClock(c.s)) + '<br>' + esc(hubClock(c.e)) : esc(lr || hubClockRange(c.s, c.e)); return `<div class="tlab${narrow[i] ? ' narrow' : ''}${lr ? ' two' : ''}">${lr ? '<span class="lt">' + own + '</span><span class="ct">' + esc(hubClockRange(c.s, c.e)) + '</span>' : own}</div>`; }).join('')}${hasEnd ? '<div class="tlab">End of the day</div>' : ''}</div>`;
-  return `<div class="tscroll"><div class="tgrid tboard ${across ? 'across' : 'down'}" style="${style}">` + axis
+  /* no time bar (Ramy, 30 Oct 2026: "we already have it in the tiles"): every tile carries its own time, in the reader's clock */
+  return `<div class="tscroll"><div class="tgrid tboard ${across ? 'across' : 'down'}" style="${style}">`
     + w.map(d => `<div class="day${d.date === TODAY ? ' today' : ''}${d.closed ? ' closed' : ''}" id="d-${esc(d.date)}">${cells(d, TT.days.indexOf(d))}</div>`).join('')
     + `</div></div>`;
 }
